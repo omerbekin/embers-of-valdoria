@@ -31,6 +31,7 @@ import {
   townRecruitOffer,
   townRestCount,
   townRestPrice,
+  restPriceLevel,
   type CampaignState,
 } from '../src/campaign';
 import {
@@ -286,7 +287,7 @@ type SmithCfg = { temper: { gainRatio: number; gainSpan: [number, number]; perLe
 const CONFIG_SMITH = (): SmithCfg => (CONFIG as unknown as { blacksmith: SmithCfg }).blacksmith;
 
 describe('madde 10: kasabada dinlenme, diriltme yok', () => {
-  it('ilk dinlenme bedava, sonrakiler rest.price (bölüme göre); yaşayanlar tam cana, düşmüş kalkmaz; sayaç kasaba başına', () => {
+  it('ilk dinlenme bedava, sonrakiler rest.price (takım levelına göre); yaşayanlar tam cana, düşmüş kalkmaz; sayaç kasaba başına', () => {
     const s0 = at('7', 'town');
     const s = { ...s0, gold: 100, townRests: {}, roster: s0.roster.map((h, i) => ({ ...h, hpRatio: i === 0 ? 0 : 0.4, alive: i !== 0 })) };
     expect(townRestPrice(s, '7')).toBe(0); // (eski kayıt: varışta sayaç yazılmamış) ilk dinlenme bedava
@@ -294,13 +295,26 @@ describe('madde 10: kasabada dinlenme, diriltme yok', () => {
     expect(a.gold).toBe(100);
     expect(a.roster.map((h) => [h.alive, h.hpRatio])).toEqual(s.roster.map((_, i) => (i === 0 ? [false, 0] : [true, 1])));
     expect(townRestCount(a, '7')).toBe(1);
-    const price = CONFIG.rest.price.base + CONFIG.rest.price.perChapter * 1;
+    const price = Math.round(CONFIG.rest.price.base + CONFIG.rest.price.perLevel * (restPriceLevel(a) - 1));
     expect(townRestPrice(a, '7')).toBe(price);
     const b = restInTown(a);
     expect(b.gold).toBe(100 - price);
     expect(townRestCount(b, '7')).toBe(2);
     expect(townRestPrice(b, '4')).toBe(0); // başka kasaba: kendi sayacı
     expect(() => restInTown({ ...a, gold: price - 1 })).toThrow(/more gold/);
+  });
+
+  it('dinlenme fiyatı level başına artar (Ömer 2026-10-26): L1 = 30, aktif takımın ortalama levelı (yuvarlanmış), dizilim dışı sayılmaz', () => {
+    const s0 = at('7', 'town');
+    expect(CONFIG.rest.price.base).toBe(30);
+    const lv = (n: number, extra?: number) => ({ ...s0, townRests: { '7': 1 }, roster: s0.roster.map((h, i) => ({ ...h, level: i === 0 && extra ? extra : n })) });
+    expect(townRestPrice(lv(1), '7')).toBe(30);
+    expect(restPriceLevel(lv(8))).toBe(8);
+    expect(townRestPrice(lv(8), '7')).toBe(Math.round(30 + CONFIG.rest.price.perLevel * 7));
+    expect(townRestPrice(lv(14), '7')).toBeGreaterThan(townRestPrice(lv(8), '7'));
+    const benched = { ...lv(5), roster: [...lv(5).roster, { ...lv(5).roster[0]!, id: 'bench', level: 40 }] };
+    expect(restPriceLevel(benched)).toBe(5); // yedek / dizilim dışı kahraman fiyatı etkilemez
+    expect(townRestPrice({ ...lv(8), townRests: {} }, '7')).toBe(0); // ilk dinlenme yine bedava
   });
 
   it('karar 364: kasabaya İLK varış = bedava dinlenme (tam şifa, sayaç 1); tekrar varışta şifa yok, ateş başı ücretli', () => {
@@ -312,7 +326,7 @@ describe('madde 10: kasabada dinlenme, diriltme yok', () => {
     const first = moveTo(hurt, '7');
     expect(first.roster.every((h) => h.hpRatio === 1)).toBe(true);
     expect(townRestCount(first, '7')).toBe(1);
-    expect(townRestPrice(first, '7')).toBe(CONFIG.rest.price.base + CONFIG.rest.price.perChapter * 1);
+    expect(townRestPrice(first, '7')).toBe(Math.round(CONFIG.rest.price.base + CONFIG.rest.price.perLevel * (restPriceLevel(first) - 1)));
     // kasabayı bitir, komşuya git, yaralı dön: varışta şifa YOK, sayaç aynı
     let s = first;
     for (let i = 0; i < 20 && nextStep(s).kind !== 'move'; i++) s = autoResolve(s);

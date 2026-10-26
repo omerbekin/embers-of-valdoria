@@ -99,7 +99,7 @@ describe('sefer kasma simülatörü', () => {
     const repeat = JSON.stringify(ITEMS.loot.repeat);
     const revive = JSON.stringify(valorRules.revive);
     const rest = JSON.stringify(CONFIG.rest.price);
-    const s = { mapId: 'valdoria', townRests: { ashford: 1 } };
+    const s = { mapId: 'valdoria', townRests: { ashford: 1 }, roster: [], active: [] };
     const price = townRestPrice(s, 'ashford');
     const undo = simOverrides({ repeat: 'off', valorRevive: [2, 1], restPrice: price + 7 });
     expect(ITEMS.loot.repeat.every((x) => x.items === 1)).toBe(true);

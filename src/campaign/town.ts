@@ -1,6 +1,5 @@
 import { CONFIG } from './data';
 import { node } from './graph';
-import { chapterOf } from './power';
 import { SMITH } from './smith';
 import { clearWounds, isDone, isFallen, mapOf, nextStep } from './state';
 import type { CampaignState, MapNode, NextStep, TownHotspot, TownSceneDef } from './types';
@@ -114,11 +113,22 @@ export function townRestCount(s: Pick<CampaignState, 'townRests'>, nodeId: strin
   return typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
 }
 
-/** Kasabada sıradaki dinlenmenin fiyatı: ilk dinlenme bedava (0), sonrakiler campaign.json > rest.price (base + perChapter x bölüm; PROVİZYON). */
-export function townRestPrice(s: Pick<CampaignState, 'townRests' | 'mapId'>, nodeId: string): number {
+/** Dinlenme fiyatının level'ı: aktif takımın (dizilimdeki, düşmüşler dahil) ortalama level'ı, yuvarlanmış; takım yoksa 1. */
+export function restPriceLevel(s: Pick<CampaignState, 'roster' | 'active'>): number {
+  const ids = new Set((s.active ?? []).filter(Boolean));
+  const team = (s.roster ?? []).filter((h) => ids.has(h.id));
+  if (!team.length) return 1;
+  return Math.max(1, Math.round(team.reduce((a, h) => a + (h.level ?? 1), 0) / team.length));
+}
+
+/**
+ * Kasabada sıradaki dinlenmenin fiyatı: ilk dinlenme bedava (0), sonrakiler campaign.json > rest.price: base + perLevel x (L - 1), L = takımın
+ * ortalama level'ı (restPriceLevel; Ömer 2026-10-26: 15 + 15 x level, L1 = 30). Yuvarlanır.
+ */
+export function townRestPrice(s: Pick<CampaignState, 'townRests' | 'roster' | 'active'>, nodeId: string): number {
   if (townRestCount(s, nodeId) === 0) return 0;
   const p = CONFIG.rest.price;
-  return Math.max(0, Math.round(p.base + p.perChapter * chapterOf(s.mapId).chapter));
+  return Math.max(0, Math.round(p.base + p.perLevel * (restPriceLevel(s) - 1)));
 }
 
 /** Kasaba dinlenmesinin can oranı (düğümün heal'i; yoksa tam). */

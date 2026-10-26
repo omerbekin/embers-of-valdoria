@@ -7,10 +7,10 @@
 //       ve kurallarla oynar, bitirirse takım continueToMap ile taşınır (seviye, ağaç, eşya, torba, altın, Valor, yedek); rapor yalnız Harita 2'nin.
 //     Güç kaldıracı (yalnızca sim; varsayılan 0): [--bonus-level=N] (bölük kurulunca herkes +N level) [--bonus-ilvl=N] (savaşta takılı her item +N
 //       item seviyesi) [--bonus-gold=N] (bölük kurulunca bir kez +N altın). Ayrıntı: campaign-grind.ts > GrindBonus.
-//     Seçenekler (yalnızca sim süreci; veri dosyası değişmez): [--repeat=today|soft|nocap|off] [--merchant=sell|on|off (varsayılan sell)] [--valor-revive=6:4] [--rest-price=19]
+//     Seçenekler (yalnızca sim süreci; veri dosyası değişmez): [--repeat=today|soft|nocap|off] [--merchant=sell|on|off (varsayılan sell)] [--valor-revive=6:4] [--rest-price=30]
 //       repeat: tekrar zaferinin item/altın oranı ve nadirlik tavanı (today = items.json loot.repeat; soft = 1/0,8/0,65/0,5 tavan aynen; nocap = oran aynen
 //       tavan yok; off = kesinti yok). merchant: tüccardan alışveriş (on = alır, sell = torbayı satar ve alır; off = eski davranış). valor-revive:
-//       Valor diriltme bedeli savaşta:savaş dışında. rest-price: 1. bölüm ücretli kasaba dinlenmesi fiyatı.
+//       Valor diriltme bedeli savaşta:savaş dışında. rest-price: ücretli kasaba dinlenmesinin L1 fiyatı (level başına artış aynen).
 // İyi oyuncu = Medium YZ + akıllı stat dağıtımı; ortalama oyuncu = Easy YZ + eşit stat dağıtımı. Her (zorluk, tip) ayrı; --overgrind > 0 ise
 // her biri bir de "aşırı kasma" koşusuyla (Ashford sonrası ilk yerlerde önceden N kasma savaşı) ölçülür.
 import { spawn } from 'node:child_process';

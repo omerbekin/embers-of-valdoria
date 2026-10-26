@@ -14,7 +14,7 @@
         "mods": {
           "spriteScale": 3,
           "actionsPerTurn": 2,
-          "hpMult": 0.88
+          "hpMult": 0.81
         }
       },
       {
@@ -22,8 +22,8 @@
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.92,
+          "powerMult": 0.92
         }
       },
       {
@@ -31,8 +31,8 @@
         "slot": 2,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.92,
+          "powerMult": 0.92
         }
       }
     ]
@@ -267,24 +267,24 @@
         "class": "ember_acolyte",
         "slot": 7,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
         "class": "ember_acolyte",
         "slot": 6,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
         "class": "charcoal_burner",
         "slot": 8,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       }
     ]
@@ -297,8 +297,8 @@
         "slot": 1,
         "name": "River Reaver",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
@@ -306,8 +306,8 @@
         "slot": 0,
         "name": "River Reaver",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
@@ -315,8 +315,8 @@
         "slot": 7,
         "name": "Reaver Archer",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       }
     ]
@@ -329,32 +329,32 @@
         "class": "drowned",
         "slot": 1,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
         "class": "drowned",
         "slot": 0,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
         "class": "ghoul",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
         "class": "fen_witchling",
         "slot": 7,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       }
     ]
@@ -367,8 +367,8 @@
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
@@ -376,16 +376,16 @@
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
         "class": "drowned",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       }
     ]
@@ -400,7 +400,7 @@
         "sprite": "reaver_chief_hook",
         "tier": "elite",
         "mods": {
-          "hpMult": 1.7,
+          "hpMult": 1.4,
           "powerMult": 1.1,
           "statMult": 1.15
         }
@@ -442,8 +442,8 @@
         "slot": 1,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
@@ -451,8 +451,8 @@
         "slot": 0,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
@@ -460,8 +460,8 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       }
     ]
@@ -474,8 +474,8 @@
         "slot": 1,
         "name": "River Reaver",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
@@ -483,16 +483,16 @@
         "slot": 0,
         "name": "River Reaver",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
         "class": "fen_witchling",
         "slot": 7,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
@@ -500,8 +500,8 @@
         "slot": 6,
         "name": "Marsh Light",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       }
     ]
@@ -514,8 +514,8 @@
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
@@ -523,24 +523,24 @@
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
         "class": "drowned",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       },
       {
         "class": "drowned",
         "slot": 4,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.1,
+          "powerMult": 1.1
         }
       }
     ]
@@ -549,21 +549,21 @@
     "name": "Marsh Hexes",
     "objective": { "type": "totem", "units": [{ "class": "drowned", "slot": 0 }, { "class": "drowned", "slot": 2 }] },
     "units": [
-      { "class": "iron_mooring", "slot": 4, "name": "Hex Totem", "sprite": "hex_totem", "objective": true },
+      { "class": "iron_mooring", "slot": 4, "name": "Hex Totem", "sprite": "hex_totem", "objective": true, "mods": { "hpMult": 1.9, "powerMult": 1.9 } },
       {
         "class": "fen_witchling",
         "slot": 7,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
         "class": "fen_witchling",
         "slot": 6,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -571,16 +571,16 @@
         "slot": 8,
         "name": "Marsh Light",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
         "class": "drowned",
         "slot": 1,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       }
     ]
@@ -593,8 +593,8 @@
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -602,8 +602,8 @@
         "slot": 0,
         "name": "Salt Crab",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -611,8 +611,8 @@
         "slot": 7,
         "name": "Salt Hag",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       }
     ]
@@ -626,8 +626,8 @@
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -635,8 +635,8 @@
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -644,16 +644,16 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
         "class": "drowned",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       }
     ]
@@ -708,8 +708,8 @@
         "slot": 1,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -717,8 +717,8 @@
         "slot": 0,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -726,8 +726,8 @@
         "slot": 2,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       }
     ]
@@ -740,8 +740,8 @@
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -749,8 +749,8 @@
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -758,8 +758,8 @@
         "slot": 7,
         "name": "Salt Hag",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -767,8 +767,8 @@
         "slot": 6,
         "name": "Marsh Light",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       }
     ]
@@ -781,24 +781,24 @@
         "class": "drowned",
         "slot": 1,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
         "class": "drowned",
         "slot": 0,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
         "class": "drowned",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -806,8 +806,8 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       }
     ]
@@ -820,8 +820,8 @@
         "slot": 7,
         "name": "Salt Hag",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -829,8 +829,8 @@
         "slot": 6,
         "name": "Salt Hag",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -838,8 +838,8 @@
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -847,8 +847,8 @@
         "slot": 0,
         "name": "Salt Crab",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       }
     ]
@@ -861,8 +861,8 @@
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -870,8 +870,8 @@
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
@@ -879,8 +879,8 @@
         "slot": 2,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       }
     ]
@@ -892,24 +892,24 @@
         "class": "oathsworn_brother",
         "slot": 1,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
         "class": "oathsworn_brother",
         "slot": 0,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       },
       {
         "class": "censer_monk",
         "slot": 7,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.9,
+          "powerMult": 1.9
         }
       }
     ]
@@ -921,32 +921,32 @@
         "class": "cutpurse",
         "slot": 1,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "cutpurse",
         "slot": 0,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "road_thug",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "road_thug",
         "slot": 4,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -1003,8 +1003,8 @@
         "slot": 1,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1012,24 +1012,24 @@
         "slot": 0,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "drowned",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "drowned",
         "slot": 4,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1037,8 +1037,8 @@
         "slot": 7,
         "name": "Marsh Light",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -1051,24 +1051,24 @@
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "drowned",
         "slot": 0,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "drowned",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1076,8 +1076,8 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -1090,8 +1090,8 @@
         "slot": 1,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1099,8 +1099,8 @@
         "slot": 0,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1108,8 +1108,8 @@
         "slot": 2,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1117,8 +1117,8 @@
         "slot": 4,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -1131,8 +1131,8 @@
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1140,8 +1140,8 @@
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1149,8 +1149,8 @@
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1158,8 +1158,8 @@
         "slot": 2,
         "name": "Dock Rat",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -1172,8 +1172,8 @@
         "slot": 1,
         "name": "Reef Wrecker",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1181,8 +1181,8 @@
         "slot": 0,
         "name": "Reef Wrecker",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1190,8 +1190,8 @@
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1199,8 +1199,8 @@
         "slot": 2,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -1213,8 +1213,8 @@
         "slot": 1,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1222,8 +1222,8 @@
         "slot": 0,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1231,8 +1231,8 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -1240,8 +1240,8 @@
         "slot": 6,
         "name": "Salt Hag",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -1254,8 +1254,8 @@
         "slot": 1,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1263,8 +1263,8 @@
         "slot": 0,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1272,8 +1272,8 @@
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1281,8 +1281,8 @@
         "slot": 6,
         "name": "Cliff Crossbowman",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1295,8 +1295,8 @@
         "slot": 1,
         "name": "Reef Wrecker",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1304,8 +1304,8 @@
         "slot": 0,
         "name": "Reef Wrecker",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1313,8 +1313,8 @@
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1322,8 +1322,8 @@
         "slot": 6,
         "name": "Salt Hag",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1336,8 +1336,8 @@
         "slot": 1,
         "name": "Dock Rat",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1345,8 +1345,8 @@
         "slot": 0,
         "name": "Dock Rat",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1354,8 +1354,8 @@
         "slot": 2,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1363,8 +1363,8 @@
         "slot": 4,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1376,16 +1376,16 @@
         "class": "drowned",
         "slot": 1,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
         "class": "drowned",
         "slot": 0,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1393,8 +1393,8 @@
         "slot": 2,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1402,8 +1402,8 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1416,8 +1416,8 @@
         "slot": 1,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1425,8 +1425,8 @@
         "slot": 0,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1434,8 +1434,8 @@
         "slot": 2,
         "name": "Reef Wrecker",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1443,8 +1443,8 @@
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1452,8 +1452,8 @@
         "slot": 6,
         "name": "Marsh Light",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1466,8 +1466,8 @@
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1475,8 +1475,8 @@
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1484,8 +1484,8 @@
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1493,8 +1493,8 @@
         "slot": 6,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1509,8 +1509,8 @@
         "sprite": "wrecker_captain",
         "tier": "elite",
         "mods": {
-          "hpMult": 1.7,
-          "powerMult": 1.1,
+          "hpMult": 1.53,
+          "powerMult": 0.99,
           "statMult": 1.15
         }
       },
@@ -1519,8 +1519,8 @@
         "slot": 0,
         "name": "Reef Wrecker",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.9,
+          "powerMult": 0.9
         }
       },
       {
@@ -1528,8 +1528,8 @@
         "slot": 2,
         "name": "Reef Wrecker",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.9,
+          "powerMult": 0.9
         }
       },
       {
@@ -1537,8 +1537,8 @@
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.9,
+          "powerMult": 0.9
         }
       },
       {
@@ -1546,8 +1546,8 @@
         "slot": 6,
         "name": "Salt Hag",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.9,
+          "powerMult": 0.9
         }
       }
     ]
@@ -1560,8 +1560,8 @@
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1569,8 +1569,8 @@
         "slot": 0,
         "name": "Salt Crab",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1578,8 +1578,8 @@
         "slot": 2,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1587,8 +1587,8 @@
         "slot": 4,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1601,8 +1601,8 @@
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1610,8 +1610,8 @@
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1619,8 +1619,8 @@
         "slot": 2,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1628,8 +1628,8 @@
         "slot": 4,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1643,8 +1643,8 @@
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1652,8 +1652,8 @@
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1661,8 +1661,8 @@
         "slot": 8,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1670,8 +1670,8 @@
         "slot": 2,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1684,8 +1684,8 @@
         "slot": 7,
         "name": "Siren",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1693,24 +1693,24 @@
         "slot": 6,
         "name": "Siren",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
         "class": "drowned",
         "slot": 1,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
         "class": "drowned",
         "slot": 0,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1723,8 +1723,8 @@
         "slot": 1,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1732,8 +1732,8 @@
         "slot": 0,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1741,8 +1741,8 @@
         "slot": 2,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1750,8 +1750,8 @@
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1818,8 +1818,8 @@
         "slot": 8,
         "name": "Siren",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1827,8 +1827,8 @@
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1836,8 +1836,8 @@
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1845,8 +1845,8 @@
         "slot": 6,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1859,8 +1859,8 @@
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1868,8 +1868,8 @@
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1877,16 +1877,16 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
         "class": "drowned",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1899,8 +1899,8 @@
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1908,8 +1908,8 @@
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1917,8 +1917,8 @@
         "slot": 2,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1926,8 +1926,8 @@
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1935,8 +1935,8 @@
         "slot": 6,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -1949,8 +1949,8 @@
         "slot": 7,
         "name": "Siren",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1958,8 +1958,8 @@
         "slot": 6,
         "name": "Siren",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1967,8 +1967,8 @@
         "slot": 8,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -1976,8 +1976,8 @@
         "slot": 4,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -2041,8 +2041,8 @@
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -2050,8 +2050,8 @@
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -2059,8 +2059,8 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       },
       {
@@ -2068,8 +2068,8 @@
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.15,
+          "powerMult": 1.15
         }
       }
     ]
@@ -2082,8 +2082,8 @@
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2091,8 +2091,8 @@
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2100,16 +2100,16 @@
         "slot": 7,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "drowned",
         "slot": 2,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -2122,8 +2122,8 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2131,24 +2131,24 @@
         "slot": 6,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "drowned",
         "slot": 1,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
         "class": "drowned",
         "slot": 0,
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -2161,8 +2161,8 @@
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2170,8 +2170,8 @@
         "slot": 0,
         "name": "Salt Crab",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2179,8 +2179,8 @@
         "slot": 7,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2188,8 +2188,8 @@
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -2202,8 +2202,8 @@
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2211,8 +2211,8 @@
         "slot": 7,
         "name": "Siren",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2220,8 +2220,8 @@
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2229,8 +2229,8 @@
         "slot": 0,
         "name": "Wreck Ghoul",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -2287,8 +2287,8 @@
         "slot": 1,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2296,8 +2296,8 @@
         "slot": 0,
         "name": "Reef Hound",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2305,8 +2305,8 @@
         "slot": 2,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2314,8 +2314,8 @@
         "slot": 4,
         "name": "Weir Eel",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2323,8 +2323,8 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -2337,8 +2337,8 @@
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2346,8 +2346,8 @@
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2355,8 +2355,8 @@
         "slot": 2,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -2369,8 +2369,8 @@
         "slot": 7,
         "name": "Siren",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2378,8 +2378,8 @@
         "slot": 6,
         "name": "Siren",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2387,8 +2387,8 @@
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2396,8 +2396,8 @@
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2405,8 +2405,8 @@
         "slot": 8,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]
@@ -2463,8 +2463,8 @@
         "slot": 7,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2472,8 +2472,8 @@
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2481,8 +2481,8 @@
         "slot": 8,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2490,8 +2490,8 @@
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       },
       {
@@ -2499,8 +2499,8 @@
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.4,
+          "powerMult": 1.4
         }
       }
     ]

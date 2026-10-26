@@ -102,7 +102,7 @@ export interface GrindSimOptions {
   merchant?: MerchantMode;
   /** Valor diriltme bedeli [savaşta, savaş dışında] (valor.json > revive), yalnızca simde. */
   valorRevive?: [number, number];
-  /** 1. bölümde ücretli kasaba dinlenmesinin fiyatı (campaign.json > rest.price), yalnızca simde. */
+  /** Ücretli kasaba dinlenmesinin L1 fiyatı (campaign.json > rest.price.base; level başına artış aynen), yalnızca simde. */
   restPrice?: number;
   /** Güç kaldıracı ölçümü (yalnızca sim; varsayılan 0 = bugünkü davranış). Bkz. GrindBonus. */
   bonus?: Partial<GrindBonus>;
@@ -190,9 +190,9 @@ export function simOverrides(o: Pick<GrindSimOptions, 'repeat' | 'valorRevive' |
     undo.push(() => Object.assign(valorRules.revive, old));
   }
   if (o.restPrice !== undefined) {
-    const p = CONFIG.rest.price as { base: number; perChapter: number };
+    const p = CONFIG.rest.price as { base: number; perLevel: number };
     const old = { ...p };
-    p.base = o.restPrice - p.perChapter; // 1. bölüm: base + perChapter x 1 = restPrice
+    p.base = o.restPrice; // L1 fiyatı
     undo.push(() => Object.assign(p, old));
   }
   return () => undo.reverse().forEach((f) => f());
@@ -387,7 +387,7 @@ const clearedTowns = (s: CampaignState): string[] => {
 };
 
 /** Ücretli bir kasaba dinlenmesinin fiyatı (tüccar payı; ilk bedava dinlenme sayılmaz). */
-const paidRestPrice = (s: CampaignState): number => townRestPrice({ mapId: s.mapId, townRests: { _: 1 } }, '_');
+const paidRestPrice = (s: CampaignState): number => townRestPrice({ ...s, townRests: { _: 1 } }, '_');
 
 /** Takımın (yaşayan) bir kahramanına göre malın IP kazancı: uygun yuvadaki takılı item'den IP farkı (boş yuva = 0); en iyi kahraman. */
 function wareGain(s: CampaignState, w: { itemId: string; rolls?: unknown }): number {

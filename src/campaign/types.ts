@@ -291,9 +291,9 @@ export interface CampaignConfig {
   enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Bölge çarpanı (Ömer 2026-10-24: bölge I biraz kolay, II-III biraz zor): all/elite/boss ölçeğinin can ve gücüyle çarpılır. */ regions?: Record<string, number>; /** Bölge çarpanının geçtiği harita (bölge id'leri haritalar arasında tekrar eder: I, II, III). Yoksa ilk harita. */ regionsMap?: string; /** Ölçeğin uygulanmadığı düğümler (eğitim: Mill Road .. Ashford; map-1-rework.md 4.3, eski skipRegions ["I"]). */ skipNodes?: string[] };
   /**
    * Dinlenme (Ömer 2026-10-11; 2026-10-18 TUR 1 madde 10): kamp ücretsiz iyileşme oranı; kasabada ilk dinlenme bedava, sonrakiler `price`
-   * (base + perChapter x bölüm). Dinlenme DİRİLTMEZ (diriltme yalnızca Valor).
+   * (base + perLevel x (takımın ortalama level'ı - 1); Ömer 2026-10-26). Dinlenme DİRİLTMEZ (diriltme yalnızca Valor).
    */
-  rest: { heal: number; price: { base: number; perChapter: number } };
+  rest: { heal: number; price: { base: number; perLevel: number } };
   /**
    * Serbest dolaşım / devriye (roadmap 2.2-2.3 A; campaign.json > replay): `xp[i]` = düğümün i. yeniden oynanışında XP çarpanı (0 = ilk zafer,
    * son değer taban). Altın ve item çarpanı items.json > loot.repeat'tedir (aynı sayılar). Yoksa yeniden oynama XP'si tam.
