@@ -617,3 +617,88 @@ html.short .bh-valor .vl-meter .vl-lbl {
 .bh-tt-ico {
   object-fit: contain;
 }
+
+/* Wounds bölümü (Ömer 2026-10-26): sancakların altında, yaralı yaşayan kahramanlar; Valor ile yara silme */
+.vg-wounds {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.vg-wounds[hidden] {
+  display: none;
+}
+
+.vg-wt {
+  font: 600 14px var(--g-disp);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+
+.vg-wl {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
+}
+
+.vg-wd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid rgba(201, 162, 86, 0.35);
+  border-radius: 6px;
+  background: rgba(20, 12, 8, 0.7);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.vg-wd:hover {
+  border-color: var(--g-gold);
+  box-shadow: 0 0 10px rgba(240, 140, 40, 0.25);
+  transform: translateY(-1px);
+}
+
+.vg-wd .pt {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 162, 86, 0.5);
+}
+
+.vg-wd .who {
+  text-align: left;
+}
+
+.vg-wd .nm {
+  font: 600 15px var(--g-disp);
+  color: var(--g-gold);
+}
+
+.vg-wd .wn {
+  font: 14px var(--g-body);
+  color: #cdb88d;
+}
+
+.vg-wbtn {
+  min-height: 36px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.vg-wbtn:disabled {
+  opacity: 0.5;
+}
+
+.vg-wnone {
+  font: 15px var(--g-body);
+  color: #cdb88d;
+}
+
+html.reduced-motion .vg-wd {
+  transition: none;
+}

@@ -96,6 +96,8 @@ import {
   type TownHotspot,
   reviveWithValor,
   valorReviveBlocked,
+  valorWoundHealBlocked,
+  healWoundWithValor,
   rulesFor,
   type Hero,
   arrivalStepLines,
@@ -2406,6 +2408,18 @@ export class CampaignMapScene extends Phaser.Scene {
         const why = valorReviveBlocked(this.s, id);
         if (why) return why;
         this.update2(reviveWithValor(this.s, id));
+        rememberShown('valor', this.s.valor ?? 0);
+        this.townSave();
+        return null;
+      },
+      wounded: () =>
+        this.s.roster
+          .filter((h) => !isFallen(h) && woundCount(h) > 0 && this.s.active.includes(h.id))
+          .map((h) => ({ id: h.id, name: content.classes[h.class]?.name ?? h.class, wounds: woundCount(h), blocked: valorWoundHealBlocked(this.s, h.id), ...(avatarUrl(h.class) ? { portraitUrl: avatarUrl(h.class)! } : {}) })),
+      heal: (id) => {
+        const why = valorWoundHealBlocked(this.s, id);
+        if (why) return why;
+        this.update2(healWoundWithValor(this.s, id));
         rememberShown('valor', this.s.valor ?? 0);
         this.townSave();
         return null;

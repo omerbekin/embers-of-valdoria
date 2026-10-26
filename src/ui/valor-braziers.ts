@@ -279,9 +279,28 @@ export interface ValorReviveHero {
   portraitUrl?: string;
 }
 
+/** Yaralı yaşayan kahraman (Wounds bölümü): `blocked` = yara silinemiyorsa İngilizce neden (state.valorWoundHealBlocked). */
+export interface ValorWoundedHero {
+  id: string;
+  name: string;
+  wounds: number;
+  blocked: string | null;
+  portraitUrl?: string;
+}
+
+/** Saf: Wounds satırı düğmesi (etiket, pasif mi, ipucu). Bedel yoksa (kural kapalı) null. */
+export function woundHealButton(h: Pick<ValorWoundedHero, 'name' | 'blocked'>, cost: number | null): { label: string; disabled: boolean; tip: string } | null {
+  if (cost === null) return null;
+  return { label: `Heal wound · ${cost}`, disabled: h.blocked !== null, tip: h.blocked ?? `Spend ${cost} embers to heal one wound of ${h.name}.` };
+}
+
 export interface ValorReviveOptions {
   valor: () => number;
   fallen: () => ValorReviveHero[];
+  /** Yaralı yaşayan aktif kahramanlar (yoksa bölüm gizli). */
+  wounded?: () => ValorWoundedHero[];
+  /** Bir yara siler; olmadıysa nedeni. */
+  heal?: (heroId: string) => string | null;
   /** Diriltir; olmadıysa nedeni (toast yerine pencerede). */
   revive: (heroId: string) => string | null;
   onClose?: () => void;
@@ -349,6 +368,7 @@ export function openValorRevive(o: ValorReviveOptions): void {
   const left = sideBr(0);
   const right = sideBr(1);
   const hang = el('div', 'vg-hang');
+  const wounds = el('div', 'vg-wounds');
   const count = el('div', 'vg-count');
   const msg = el('span', 'vz-msg');
   const close = el('button', 'el-btn primary', 'Close');
@@ -356,7 +376,7 @@ export function openValorRevive(o: ValorReviveOptions): void {
   const foot = el('div', 'vz-foot');
   foot.append(msg, close);
   row.append(left, hang, right);
-  panel.append(title, row, count, foot);
+  panel.append(title, row, wounds, count, foot);
   overlay.append(sparks, panel);
 
   let cancelHold: (() => void) | null = null;
@@ -372,6 +392,43 @@ export function openValorRevive(o: ValorReviveOptions): void {
     meters.forEach((m) => m.set(o.valor(), true));
     render();
     (hang.querySelector('.vg-bn') as HTMLElement | null)?.focus({ preventScroll: true });
+  };
+
+  const doHeal = (h: ValorWoundedHero): void => {
+    const why = o.heal?.(h.id) ?? 'Cannot heal here';
+    if (why) {
+      msg.textContent = why;
+      uiSound('error');
+      return;
+    }
+    uiSound('confirm');
+    msg.textContent = `A wound of ${h.name} is healed.`;
+    meters.forEach((m) => m.set(o.valor(), true));
+    render();
+  };
+  const woundRow = (h: ValorWoundedHero): HTMLElement => {
+    const b = woundHealButton(h, valorRules.woundHeal?.outsideCost ?? null);
+    const chip = el('div', 'vg-wd');
+    if (h.portraitUrl) {
+      const img = el('img', 'pt');
+      img.src = h.portraitUrl;
+      img.alt = '';
+      img.draggable = false;
+      chip.append(img);
+    }
+    const who = el('div', 'who');
+    who.append(el('div', 'nm', h.name), el('div', 'wn', `${h.wounds} ${h.wounds === 1 ? 'wound' : 'wounds'}`));
+    chip.append(who);
+    if (b) {
+      const btn = el('button', 'el-btn vg-wbtn', b.label);
+      btn.type = 'button';
+      btn.title = b.tip;
+      btn.setAttribute('aria-label', `${b.label}: ${h.name}. ${b.tip}`);
+      btn.disabled = b.disabled;
+      btn.addEventListener('click', () => doHeal(h));
+      chip.append(btn);
+    }
+    return chip;
   };
 
   const banner = (h: ValorReviveHero, v: number): HTMLElement => {
@@ -473,6 +530,11 @@ export function openValorRevive(o: ValorReviveOptions): void {
       empty.append(el('div', 't1', 'No hero has fallen.'), el('div', 't2', 'Keep your embers for the battles ahead.'));
       hang.replaceChildren(bar, empty);
     }
+    const hurt = o.wounded?.() ?? [];
+    wounds.hidden = !o.wounded;
+    const list = el('div', 'vg-wl');
+    list.append(...hurt.map(woundRow));
+    wounds.replaceChildren(el('div', 'vg-wt', 'Wounds'), hurt.length ? list : el('div', 'vg-wnone', 'No wounded heroes.'));
     if (overlay.isConnected) fit();
   };
   meters.forEach((m) => m.set(o.valor()));
@@ -483,7 +545,9 @@ export function openValorRevive(o: ValorReviveOptions): void {
     const cs = getComputedStyle(overlay);
     const availH = overlay.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
     const availW = overlay.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-    const kh = (availH - 100) / 500;
+    const hurt = o.wounded ? Math.max(1, o.wounded().length) : 0;
+    const extra = hurt ? 56 + 54 * Math.ceil(hurt / 3) : 0; // Wounds bölümü: başlık + üçlü satırlar
+    const kh = (availH - 100 - extra) / 500;
     const kw = availW / needW;
     overlay.style.setProperty('--k', Math.max(0.4, Math.min(1, kh, kw)).toFixed(3));
   };
