@@ -279,6 +279,37 @@ export function reviveWithValor(s: CampaignState, heroId: string): CampaignState
   return t;
 }
 
+/** Savaş dışı Valor yara silme bedeli (data/valor.json > woundHeal.outsideCost; yoksa null = kapalı). */
+export const valorWoundHealCost = (): number | null => valorRules.woundHeal?.outsideCost ?? null;
+
+/** Savaş dışında Valor ile yara silinebilir mi (açık, duraklatma yok, yaşayan yaralı kahraman, yeterli Valor)? Değilse nedeni (Ömer 2026-10-26). */
+export function valorWoundHealBlocked(s: CampaignState, heroId: string): string | null {
+  const cost = valorWoundHealCost();
+  if (cost === null) return 'Valor cannot heal wounds';
+  if (!valorUnlocked(s)) return 'Valor is not known yet';
+  const lock = pausedLock(s);
+  if (lock) return lock;
+  const h = heroById(s, heroId);
+  if (!h) return 'No such hero';
+  if (isFallen(h)) return 'A fallen hero must be revived first';
+  if (woundCount(h) <= 0) return 'This hero has no wounds';
+  if (s.valor! < cost) return `Needs ${cost} Valor (you have ${s.valor})`;
+  return null;
+}
+
+/** Savaş dışında (harita) Valor ile 1 yara sil: woundHeal.outsideCost Valor. Can oranı aynı kalır (maks can büyür; VARSAYIM open-questions 423). */
+export function healWoundWithValor(s: CampaignState, heroId: string): CampaignState {
+  const why = valorWoundHealBlocked(s, heroId);
+  if (why) throw new Error(why);
+  const t = clone(s);
+  const h = heroById(t, heroId)!;
+  t.valor = addValor(valorRules, t.valor! - valorWoundHealCost()!, 0);
+  const w = woundCount(h) - 1;
+  if (w > 0) h.wounds = w;
+  else delete h.wounds;
+  return t;
+}
+
 /** Oyuncu vekili (sim / otomatik): Valor yettikçe düşmüşleri savaş dışında diriltir (önce aktif takım; tutorial kahramanı hariç). */
 export function autoValorRevive(s: CampaignState): CampaignState {
   let t = s;

@@ -40,15 +40,15 @@ const win = (s: CampaignState, down: string[] = [], hp = 0.5) =>
   applyBattle(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: down.includes(h.id) ? 0 : hp, alive: !down.includes(h.id) })) });
 
 describe('yara kuralı (ortak, src/progression/wounds.ts)', () => {
-  it('veri: kalkış %10, yara başına -%20 (toplamsal), 3 yara ölümcül; sefer ve Endless aynı sayılar', () => {
-    expect(campaignJson.rules.wounds).toEqual({ riseRatio: 0.1, maxHpLoss: 0.2, lethal: 3 });
+  it('veri: kalkış %25, yara başına -%20 (toplamsal), 3 yara ölümcül; sefer ve Endless aynı sayılar', () => {
+    expect(campaignJson.rules.wounds).toEqual({ riseRatio: 0.25, maxHpLoss: 0.2, lethal: 3 });
     expect(endlessJson.carry.wounds).toEqual(campaignJson.rules.wounds);
     expect([0, 1, 2, 3].map((n) => woundHpFactor(n, W))).toEqual([1, 0.8, 0.6, 0.4]);
     expect(woundHpFactor(9, W)).toBe(0.4); // ölümcül sınırın üstü ek kayıp vermez
     expect(woundsLine(2, W)).toBe('Wounds: 2 (-40% max HP)');
     expect(woundsLine(0, W)).toBe('');
-    expect(fallAfterVictory(0, W)).toEqual({ corpse: false, wounds: 1, hpRatio: 0.1 });
-    expect(fallAfterVictory(2, W)).toEqual({ corpse: false, wounds: 3, hpRatio: 0.1 });
+    expect(fallAfterVictory(0, W)).toEqual({ corpse: false, wounds: 1, hpRatio: 0.25 });
+    expect(fallAfterVictory(2, W)).toEqual({ corpse: false, wounds: 3, hpRatio: 0.25 });
     expect(fallAfterVictory(3, W)).toEqual({ corpse: true, wounds: 3 });
   });
 
@@ -249,7 +249,7 @@ describe('Endless: aynı kurallar', () => {
     let run = fresh();
     for (let n = 1; n <= 3; n++) {
       run = { ...won(run, ['h1']), phase: 'ready', offer: undefined };
-      expect(run.heroes[0]).toMatchObject({ hpRatio: 0.1, wounds: n });
+      expect(run.heroes[0]).toMatchObject({ hpRatio: 0.25, wounds: n });
     }
     const mult = (r: EndlessRun) => {
       const plan = wavePlan(r);

@@ -19,13 +19,13 @@
   },
   "_townScreen": "Kasaba ekranı (Ömer 2026-10-12): tam ekran kasaba görseli, takım alttaki açık alanda durur (ayak çizgisi feetY x 1080), kahraman boyu ve aralığı 1920x1080 biriminde; yer etiketleri telefonda (html.short/compact) büyür. Yerler valdoria.json > nodes[].scene.",
   "townScreen": { "heroHeight": 250, "feetY": 0.9, "feetYPhone": 0.86, "gap": 230, "labelSize": 21, "labelSizePhone": 34 },
-  "_rules": "Can ve ölüm reworkü (Ömer 2026-10-19, docs/design/hp-death-rework.md; sefer ve Endless aynı kural): zafer şifası yalnızca YAŞAYANLARA, düğüm türüne göre: normal victoryHeal %25, elit eliteVictoryHeal %50, boss bossVictoryHeal tam (boss şifası yara SİLMEZ). Kazanılan savaşın SONUNDA hâlâ düşmüş olan kahraman wounds.riseRatio (%10) canla kalkar ve 1 Yara alır (savaşta Valor / Resurrection / Raise Dead ile kalkan yara almaz; zafer şifası almaz). Her yara maks canı wounds.maxHpLoss (%20) düşürür, TOPLAMSAL (3 yara = -%60; VARSAYIM open-questions 369); savaş kurulumunda UnitModifiers.hpMult / hpAdd ile (src/progression/wounds.ts). wounds.lethal (3) yaralı kahraman bir kazanılan savaşı daha düşmüş bitirirse CESET olur (sonraki savaşa ölü girer; Valor kaldırır, yaraları kalır). Yarayı yalnızca kasaba dinlenmesi siler (ilk varış bedava + ücretli ateş başı); kamp (Riverside Camp ve olaydan sonraki dinlenme) silmez. MP her savaşta dolu (sefer zaten taşımıyordu).",
+  "_rules": "Can ve ölüm reworkü (Ömer 2026-10-19, docs/design/hp-death-rework.md; sefer ve Endless aynı kural): zafer şifası yalnızca YAŞAYANLARA, düğüm türüne göre: normal victoryHeal %25, elit eliteVictoryHeal %50, boss bossVictoryHeal tam (boss şifası yara SİLMEZ). Kazanılan savaşın SONUNDA hâlâ düşmüş olan kahraman wounds.riseRatio (%25; Ömer 2026-10-26, eski %10) canla kalkar ve 1 Yara alır (savaşta Valor / Resurrection / Raise Dead ile kalkan yara almaz; zafer şifası almaz). Her yara maks canı wounds.maxHpLoss (%20) düşürür, TOPLAMSAL (3 yara = -%60; VARSAYIM open-questions 369); savaş kurulumunda UnitModifiers.hpMult / hpAdd ile (src/progression/wounds.ts). wounds.lethal (3) yaralı kahraman bir kazanılan savaşı daha düşmüş bitirirse CESET olur (sonraki savaşa ölü girer; Valor kaldırır, yaraları kalır). Yarayı kasaba dinlenmesi (ilk varış bedava + ücretli ateş başı), harita geçişi ve savaş dışı Valor (valor.json > woundHeal, 2026-10-26) siler; kamp (Riverside Camp ve olaydan sonraki dinlenme) silmez. MP her savaşta dolu (sefer zaten taşımıyordu).",
   "rules": {
     "carryHp": true,
     "victoryHeal": 0.25,
     "eliteVictoryHeal": 0.5,
     "bossVictoryHeal": 1.0,
-    "wounds": { "riseRatio": 0.1, "maxHpLoss": 0.2, "lethal": 3 },
+    "wounds": { "riseRatio": 0.25, "maxHpLoss": 0.2, "lethal": 3 },
     "maxSaves": { "normal": 5, "ironman": 1 },
     "slots": 3
   },

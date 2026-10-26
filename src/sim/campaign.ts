@@ -9,6 +9,7 @@
 // `maxAttempts` aşılırsa sefer o düğümde "takıldı" sayılır.
 import { valorInBattle, valorOutside, type ValorSimMode } from './valor-mode';
 import { Battle, chooseAction, content, type AiDifficulty } from '../engine';
+import { valorRules } from '../engine/content';
 import {
   CONFIG,
   activeHeroes,
@@ -16,6 +17,9 @@ import {
   autoAllocateAll,
   autoResolve,
   autoValorRevive,
+  healWoundWithValor,
+  valorWoundHealBlocked,
+  valorWoundHealCost,
   battlePlan,
   completeSimple,
   equipBest,
@@ -49,16 +53,23 @@ import type { TreeDir } from '../progression/skill-tree-data';
 import { RARITY_IDS, clampRarity, instanceIlvl, instanceRarity, itemDef } from '../progression/items';
 import { woundCount } from '../progression/wounds';
 
+/** Sim oyuncu varsayımı: elit / boss öncesi dinlenme eşiği (Ömer 2026-10-26: "zor çatışma öncesi dönme ihtimalini artır"). */
+export const SIM_HARD_HEAL_AT = 0.75;
+
 /**
- * Oyuncu vekilinin kasaba dinlenmesi (iki sefer simülatörü ortak; 2026-10-20): yaşayanların ort. canı `healAt`'in altındaysa YA DA yaşayan yaralı
- * kahraman varsa (yarayı yalnızca kasaba dinlenmesi siler) ve altın yetiyorsa temizlenmiş en ucuz kasabada dinlenir (yolculuk bedelsiz, serbest
- * dolaşım). VARSAYIM (open-questions 371). Dinlenmezse null.
+ * Oyuncu vekilinin kasaba dinlenmesi (iki sefer simülatörü ortak; 2026-10-20, eşikler 2026-10-26). OYUN KURALI DEĞİL, oyuncu varsayımı:
+ * - normal savaştan önce: yaşayanların ort. canı `healAt` (%50) altında YA DA 2+ yaralı yaşayan kahraman (tek yara artık sebep değil);
+ * - elit / boss öncesi (`hard`): ort. can SIM_HARD_HEAL_AT (%75) altında YA DA herhangi bir yara.
+ * Altın yetiyorsa temizlenmiş en ucuz kasabada dinlenir (yolculuk bedelsiz, serbest dolaşım). VARSAYIM (open-questions 371, 423). Dinlenmezse null.
+ * Kasabadan önce simValorWoundHeal denenir (çağıran yapar).
  */
-export function simTownRest(s: CampaignState, healAt: number): { state: CampaignState; price: number } | null {
+export function simTownRest(s: CampaignState, healAt: number, hard = false): { state: CampaignState; price: number } | null {
   if (!healAt) return null;
   const alive = activeHeroes(s).filter((h) => !isFallen(h));
   const hp = alive.length ? alive.reduce((a, h) => a + h.hpRatio, 0) / alive.length : 0;
-  if (hp >= healAt && !alive.some((h) => woundCount(h) > 0)) return null;
+  const wounded = alive.filter((h) => woundCount(h) > 0).length;
+  const need = hard ? hp < Math.max(healAt, SIM_HARD_HEAL_AT) || wounded > 0 : hp < healAt || wounded >= 2;
+  if (!need) return null;
   const map = getMap(s.mapId);
   const town = clearedNodes(s)
     .filter((id) => node(map, id).type === 'town')
@@ -66,6 +77,28 @@ export function simTownRest(s: CampaignState, healAt: number): { state: Campaign
     .sort((a, b) => a.price - b.price)[0];
   if (!town || s.gold < town.price) return null;
   return { state: restInTown(s, town.id), price: town.price };
+}
+
+/**
+ * Oyuncu vekilinin savaş dışı Valor yara silmesi (Ömer 2026-10-26; healWoundWithValor): bir savaş dışı diriltme payını (revive.outsideCost) ayırıp
+ * üstündeki Valor yettikçe aktif takımda en çok yaralı yaşayan kahramanın 1 yarasını siler (eşitlikte canı düşük olan). İyi ve ortalama oyuncu aynı.
+ * Dönen: yeni durum ve silinen yara sayısı.
+ */
+export function simValorWoundHeal(s: CampaignState): { state: CampaignState; healed: number } {
+  const cost = valorWoundHealCost();
+  if (cost === null || s.valor === undefined) return { state: s, healed: 0 };
+  const reserve = valorRules.revive.outsideCost;
+  let t = s;
+  let healed = 0;
+  for (let guard = 0; guard < 20 && (t.valor ?? 0) - cost >= reserve; guard++) {
+    const h = activeHeroes(t)
+      .filter((x) => !valorWoundHealBlocked(t, x.id))
+      .sort((a, b) => woundCount(b) - woundCount(a) || a.hpRatio - b.hpRatio)[0];
+    if (!h) break;
+    t = healWoundWithValor(t, h.id);
+    healed++;
+  }
+  return { state: t, healed };
 }
 
 /**
@@ -435,9 +468,12 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
           s = autoResolve(s, step);
           break;
         case 'move': {
-          s = simTownRest(s, o.healAt ?? 0.5)?.state ?? s; // yaralı / düşük canlı takım kasabada dinlenir (yara kuralı, 2026-10-20)
           const next = route[s.path.length];
-          s = moveTo(s, next && step.options.includes(next) ? next : step.options[0]!);
+          const to = next && step.options.includes(next) ? next : step.options[0]!;
+          if (valorOutside(o.valor)) s = simValorWoundHeal(s).state;
+          const tt = node(map, to).type;
+          s = simTownRest(s, o.healAt ?? 0.5, tt === 'elite' || tt === 'boss')?.state ?? s; // yaralı / düşük canlı takım kasabada dinlenir (eşikler 2026-10-26)
+          s = moveTo(s, to);
           break;
         }
       }

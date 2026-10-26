@@ -10,7 +10,10 @@
 // - Stat puanı: iyi oyuncu ana stata (autoAllocateAll, Medium YZ), ortalama oyuncu dört stata eşit (Easy YZ). İkisi de "Equip best".
 // - Valor: iyi oyuncu Medium YZ'nin değer tartan Valor kuralıyla, ortalama oyuncu sim'e özel geç kuralla (lateValorChoice: dost düşünce bir oyuncu turu
 //   gecikmeyle, bedel yetiyorsa diriltir; Ömer 2026-10-20). İkisi de zaferden sonra savaş dışı ceset diriltmeyi (autoValorRevive) kullanır.
-// - Can: savaştan önce yaşayanların ort. canı `healAt`'in altındaysa ya da yaşayan yaralı kahraman varsa ve altın yetiyorsa temizlenmiş bir kasabada ücretli dinlenir (yolculuk bedelsiz).
+// - Can (oyuncu varsayımı, Ömer 2026-10-26 "zor çatışma öncesi dönme ihtimalini artır"): savaştan önce önce Valor ile yara siler (simValorWoundHeal:
+//   bir savaş dışı diriltme payının üstündeki Valor'la en çok yaralı kahramanın 1 yarası; iyi ve ortalama oyuncu aynı), sonra altın yetiyorsa
+//   temizlenmiş bir kasabada ücretli dinlenir (yolculuk bedelsiz): normal savaş öncesi ort. can `healAt` (%50) altı YA DA 2+ yaralı; elit / boss
+//   öncesi ort. can %75 altı YA DA herhangi bir yara (simTownRest). Kasma savaşları normal sayılır.
 // - Demirci: her yola çıkışta (temizlenmiş kasaba varsa) parası yettikçe takımın en değerli silahını Temper eder; bir dinlenme parası ayrılır.
 // - Tüccar (--merchant, varsayılan sell; Ömer 2026-10-20): tüccar adımında / tüccarlı kasabada, parası (sıradaki Temper + bir ücretli dinlenme) payından fazlaysa
 //   takılı item'dan IP olarak daha iyi bir mal alır ('sell' = önce torbadaki item'leri satar).
@@ -67,7 +70,7 @@ import { woundCount } from '../progression/wounds';
 import { autoTreeHeroes, withTreesInMemory } from './tree-sim';
 import type { TreeDir } from '../progression/skill-tree-data';
 import { ATTRS, LEVELS, addXp, allocate, campaignMaxLevel, canAddPoint, xpToNext } from '../progression/levels';
-import { addCarry, allRoutes, emptyCarry, fightPlan, routeLabel, simMapChain, simTownRest, type SimCarry } from './campaign';
+import { addCarry, allRoutes, emptyCarry, fightPlan, routeLabel, simMapChain, simTownRest, simValorWoundHeal, type SimCarry } from './campaign';
 import { CAMPAIGN_TARGETS } from './campaign-targets';
 
 export type PlayerType = 'good' | 'average';
@@ -234,6 +237,8 @@ export interface GrindEcon {
   valorSpentOut: number;
   revivesBattle: number;
   revivesOut: number;
+  /** Savaş dışı Valor ile silinen yara (simValorWoundHeal; Ömer 2026-10-26). Harcanan Valor valorSpentOut'a da girer. */
+  woundsHealedValor: number;
 }
 
 /** Toplanabilir düğüm sayaçları (paralel parçalar birleştirilir). */
@@ -330,7 +335,7 @@ const emptyNode = (): GrindNodeAgg => ({
 const emptyEcon = (): GrindEcon => ({
   goldBattle: 0, goldElite: 0, goldBoss: 0, goldReplay: 0, goldTreasure: 0, goldSell: 0, goldMerchant: 0, itemsFirst: 0, itemsReplay: 0, itemsTreasure: 0,
   itemsLost: 0, rarity: Object.fromEntries(RARITY_IDS.map((r) => [r, 0])), itemsEquipped: 0, itemsSold: 0, itemsBought: 0, boughtEquipped: 0, merchantVisits: 0,
-  wounds: 0, corpses: 0, valorEarned: 0, valorWasted: 0, valorGift: 0, valorSpentBattle: 0, valorSpentOut: 0, revivesBattle: 0, revivesOut: 0,
+  wounds: 0, corpses: 0, valorEarned: 0, valorWasted: 0, valorGift: 0, valorSpentBattle: 0, valorSpentOut: 0, revivesBattle: 0, revivesOut: 0, woundsHealedValor: 0,
 });
 const emptyGroup = (): GrindGroupAgg => ({ runs: 0, completed: 0, walls: 0, grind: 0, battles: 0 });
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -548,8 +553,17 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     let goldStart = 0;
     const company = new Set<string>();
 
-    const heal = (t: CampaignState): CampaignState => {
-      const r = simTownRest(t, healAt);
+    /** Savaş öncesi: önce savaş dışı Valor yara silme (diriltme payı üstü), sonra gerekirse kasaba dinlenmesi (hard = sıradaki elit / boss). */
+    const heal = (t: CampaignState, hard = false): CampaignState => {
+      if (valorOutside(o.valor)) {
+        const v = simValorWoundHeal(t);
+        if (v.healed) {
+          E.woundsHealedValor += v.healed;
+          E.valorSpentOut += (t.valor ?? 0) - (v.state.valor ?? 0);
+          t = v.state;
+        }
+      }
+      const r = simTownRest(t, healAt, hard);
       if (!r) return t;
       R.goldRest += r.price;
       R.rests++;
@@ -816,13 +830,14 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
               break;
             }
           }
-          s = heal(smith(s));
           const seen = new Set(visitedNodes(s));
           const target = route.find((id) => !seen.has(id));
           if (!target) {
             stop = true;
             break;
           }
+          const tt = node(map, target).type;
+          s = heal(smith(s), tt === 'elite' || tt === 'boss'); // elit / boss öncesi sıkı dinlenme eşiği (2026-10-26)
           base = s;
           s = moveTo(s, target);
           break;

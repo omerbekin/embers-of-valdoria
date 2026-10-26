@@ -418,7 +418,7 @@ export function econLines(results: GrindSimResult[]): string[] {
     );
     L.push(
       `  ${pad} Valor: hediye ${k(e.valorGift)}, kazanç ${k(e.valorEarned)}, tavana vurup boşa giden ${k(e.valorWasted)} (%${fmt(pct(e.valorWasted, e.valorEarned + e.valorWasted), 0)}); ` +
-        `harcama savaşta ${k(e.valorSpentBattle)} (${k(e.revivesBattle)} diriltme), savaş dışında ${k(e.valorSpentOut)} (${k(e.revivesOut)} diriltme)`,
+        `harcama savaşta ${k(e.valorSpentBattle)} (${k(e.revivesBattle)} diriltme), savaş dışında ${k(e.valorSpentOut)} (${k(e.revivesOut)} diriltme, ${k(e.woundsHealedValor ?? 0)} yara silme)`,
     );
   }
   return L;

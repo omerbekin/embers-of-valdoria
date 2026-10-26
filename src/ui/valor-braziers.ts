@@ -60,6 +60,8 @@ export function valorTip(valor: number, where: 'battle' | 'map' | 'camp', rules:
     `Valor: ${valor} of ${rules.cap} embers. Win battles to light more (+${rules.earn.win}, +${rules.earn.elite} elite, +${rules.earn.boss} boss${flawless}).`,
     `In battle, ${rules.revive.battleCost} embers (the gold notch) raise a fallen ally with ${Math.round(rules.revive.hpRatio * 100)}% HP. It uses the turn.`,
     `Outside battle a revive costs only ${rules.revive.outsideCost} embers.`,
+    // Valor ile yara silme (Ömer 2026-10-26): yalnız sefer haritasında
+    ...(where === 'map' && rules.woundHeal ? [`On the map, ${rules.woundHeal.outsideCost} embers also heal one wound of a living hero.`] : []),
   ];
   if (where === 'battle') rows.push(ready ? 'Use Revive next to Rest / Skip / Move.' : `Not enough for a revive yet (${rules.revive.battleCost} needed).`);
   else rows.push(valor >= rules.revive.outsideCost ? 'Tap the braziers to revive a fallen hero.' : `A revive needs ${rules.revive.outsideCost} embers.`);

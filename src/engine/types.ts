@@ -2092,6 +2092,8 @@ export interface ValorRules {
   perBrazier: number;
   earn: { win: number; elite: number; boss: number; flawless: number };
   revive: { battleCost: number; outsideCost: number; hpRatio: number; mpRatio: number };
+  /** Savaş dışı (sefer haritası) Valor ile yara silme: outsideCost Valor = yaşayan kahramanın 1 yarası (Ömer 2026-10-26). Yoksa kapalı. */
+  woundHeal?: { outsideCost: number };
   campaign: { introNode: string; gift: number };
   endless: { start: number };
 }
