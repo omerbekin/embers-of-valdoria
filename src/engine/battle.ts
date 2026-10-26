@@ -14,7 +14,7 @@ import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range'
 import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
 import type { Attribute, Attributes, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
 import { advanceTurn, predictQueue, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
-import { condHolds, defaultSel, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
+import { condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
 import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BattleObjective, BattleRules, BetSpec, Combatant, CombatantDef, FloodRule, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleSetup {
@@ -481,9 +481,9 @@ export class Battle {
       this.turnAt.set(uid, ++this.treeClock);
       this.prevRage.set(uid, this.curRage.get(uid) ?? 0);
       this.curRage.delete(uid);
-      // Faz 2c (Rooted Stance): üst üste Move yapılmayan eylem sayısı
-      this.stillCount.set(uid, kind === 'move' ? 0 : (this.stillCount.get(uid) ?? 0) + 1);
     }
+    // Faz 2c (Rooted Stance) + a_steady affix'i (Ömer 2026-10-26): üst üste Move yapılmayan eylem sayısı (her savaşta izlenir; rastgele sayı tüketmez)
+    this.stillCount.set(uid, kind === 'move' ? 0 : (this.stillCount.get(uid) ?? 0) + 1);
   }
 
   /** Bir tarafın canlı birimleri, öndekinden arkadakine (slot sırası). */
@@ -595,6 +595,15 @@ export class Battle {
     const dtr = effNum(target, 'damageTakenReduce');
     if (dtr) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, dtr);
     for (const { v: lr } of effList(target, 'lowHpReduce')) if (target.hp > 0 && target.hp < lr.below * target.maxHp) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, lr.reduce);
+    // Yeni affix'ler (Ömer 2026-10-26): element direnci, elit / boss'tan alınan hasar, sütun koruması (yoksa çarpılmaz; yeni tavan yok, damageTaken sınırı)
+    if (element) {
+      const er = elemResistOf(target, element);
+      if (er) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, er);
+    }
+    const tdr = attacker && (attacker.tier !== undefined || attacker.boss !== undefined) ? effNum(target, 'tierDamageTakenReduce') : 0;
+    if (tdr) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, tdr);
+    const col = this.columnGuardOf(target);
+    if (col > 0) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, col);
     // Bone Ward (mob pasifi): yoksa çarpılmaz
     const bw = this.passiveTakenMult(target);
     if (bw !== 1) m *= bw;
@@ -610,6 +619,27 @@ export class Battle {
   private auraDamageOf(actor: Combatant): number {
     let best = 0;
     for (const a of this.living(actor.side)) if (a.uid !== actor.uid && effNum(a, 'auraDamage') > best && this.sideAdjacent(a, actor)) best = effNum(a, 'auraDamage');
+    return best;
+  }
+
+  /** `t`nin arkasındaki en yakın canlı birim: aynı tahta, aynı şerit, daha geride bir sıra (a_pierce); `skip` uid'leri ve inert hariç; yoksa undefined. */
+  private behindOf(t: Combatant, skip: ReadonlySet<string>): Combatant | undefined {
+    let best: Combatant | undefined;
+    for (const c of this.living(t.side)) {
+      if (c.board !== t.board || c.inert || skip.has(c.uid) || this.laneOf(c.slot) !== this.laneOf(t.slot) || this.rowOf(c.slot) <= this.rowOf(t.slot)) continue;
+      if (!best || this.rowOf(c.slot) < this.rowOf(best.slot)) best = c;
+    }
+    return best;
+  }
+
+  /** Hedefle aynı tahtada aynı şeritteki (sütun) canlı dostlarından gelen en yüksek columnGuard (a_column; hedefin kendisi hariç; yoksa 0). */
+  private columnGuardOf(target: Combatant): number {
+    let best = 0;
+    for (const a of this.living(target.side)) {
+      if (a.uid === target.uid || a.board !== target.board) continue;
+      const g = effNum(a, 'columnGuard');
+      if (g > best && this.laneOf(a.slot) === this.laneOf(target.slot)) best = g;
+    }
     return best;
   }
 
@@ -653,7 +683,9 @@ export class Battle {
     const st = this.effectiveStats(target);
     const red = armorReduction(damageType === 'magic' ? st.magicArmor : st.armor, f);
     const bw = this.passiveTakenMult(target); // Bone Ward: tik hasarı da azalır (yoksa 1, ifade aynı)
-    const em = this.statusElementMult(target, element); // M-B Soaked: zemin / DoT tikinde de (yoksa 1, ifade aynı)
+    let em = this.statusElementMult(target, element); // M-B Soaked: zemin / DoT tikinde de (yoksa 1, ifade aynı)
+    const er = elemResistOf(target, element); // element direnci (c_res_*; Ömer 2026-10-26): tik hasarı da azalır (yoksa 0, ifade aynı)
+    if (er) em *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, er);
     return Math.max(f.damage.minDamage, Math.round(em !== 1 ? amount * weak * (1 - red) * bw * em : amount * weak * (1 - red) * bw));
   }
 
@@ -929,6 +961,14 @@ export class Battle {
     if (actor.treeHooks) {
       const tm = this.treeMods(actor, target, skill, effect, q);
       if (tm && tm.power !== 1) m *= tm.power;
+    }
+    // Yeni affix'ler (Ömer 2026-10-26): ön / arka sıra hasarı (hedef tarafının canlı en ön sırası), sabit duruş (üst üste Move'suz eylem, en çok 3)
+    if (actor.side !== target.side && (actor.itemEffects || actor.treeFx)) {
+      const front = this.rowOf(target.slot) <= this.frontRowOf(target.side);
+      const rowDmg = effNum(actor, front ? 'frontRowDamage' : 'backRowDamage');
+      if (rowDmg) m *= 1 + rowDmg;
+      const steady = effNum(actor, 'steadyDamage');
+      if (steady) m *= 1 + steady * Math.min(3, this.stillCount.get(actor.uid) ?? 0);
     }
     // Hasar aurası (item affix auraDamage): yan komşu dosttan; yoksa çarpılmaz
     const aura = this.living(actor.side).some((a) => effNum(a, 'auraDamage') > 0) ? this.auraDamageOf(actor) : 0;
@@ -5253,6 +5293,21 @@ export class Battle {
         this.announceIfDead(other, emit);
       }
     }
+    // Delici vuruş (a_pierce, Ömer 2026-10-26): temel saldırı (sınıfın ilk skill'i) isabet ettiği her düşmanın arkasındaki en yakın düşmana da vurur
+    const pierce = effNum(actor, 'pierceBehind');
+    if (!debug && pierce && echoEffect && !skill.telegraph && skill.id === actor.skills[0] && hit.size > 0 && actor.hp > 0) {
+      const struck = new Set(targets.map((c) => c.uid));
+      for (const uid of [...hit]) {
+        const t = this.get(uid);
+        if (!t || t.side === actor.side || actor.hp <= 0) continue;
+        const behind = this.behindOf(t, struck);
+        if (!behind) continue;
+        struck.add(behind.uid);
+        emit({ type: 'passive', actor: actor.uid, passive: 'piercing_blows', name: 'Piercing Blows' });
+        this.strike(actor, behind, echoEffect, emit, pierce, false);
+        this.announceIfDead(behind, emit);
+      }
+    }
     // Iron Retort (retortStatus): yakın dövüş skill'iyle isabet ettirilen taşıyan, saldırana durum verir
     if (!debug && skill.motion === 'melee' && actor.hp > 0) {
       for (const uid of hit) {
@@ -6637,6 +6692,17 @@ export class Battle {
       if (back > 0) {
         emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
         this.applyHit(target, actor, this.tickDamage('physical', 'physical', back, actor), 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical' });
+        this.announceIfDead(actor, emit);
+      }
+    }
+    // Thorns (b_thorns, Ömer 2026-10-26): düşmanın yakın dövüş skill vuruşunda hedefe düşen hasarın (kalkan dahil; Guard payı hariç) bu oranı saldırana döner (zırhsız)
+    const thorns = target.itemEffects || target.treeFx ? effNum(target, 'thorns') : 0;
+    if (thorns && this.castingSkill?.motion === 'melee' && actor.hp > 0 && actor.side !== target.side) {
+      const landedOn = guard && guardian && guardian !== target && guardian.hp > 0 ? total - Math.round(total * (guard.share ?? 0.5)) : total;
+      const back = Math.round(landedOn * thorns);
+      if (back > 0) {
+        emit({ type: 'passive', actor: target.uid, passive: 'thorns', name: 'Thorns' });
+        this.applyHit(target, actor, back, 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical' });
         this.announceIfDead(actor, emit);
       }
     }

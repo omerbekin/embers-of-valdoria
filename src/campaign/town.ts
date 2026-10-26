@@ -1,7 +1,6 @@
-import { CONFIG } from './data';
 import { node } from './graph';
 import { SMITH } from './smith';
-import { clearWounds, isDone, isFallen, mapOf, nextStep } from './state';
+import { isDone, mapOf, nextStep } from './state';
 import type { CampaignState, MapNode, NextStep, TownHotspot, TownSceneDef } from './types';
 
 /**
@@ -85,6 +84,7 @@ export function hotspotOffered(n: MapNode, h: TownHotspot, s?: Pick<CampaignStat
   if (h.hidden) return false;
   if (h.action === 'trade') return !!n.merchant;
   if (h.action === 'story') return !!n.story && !(s && storyHeard(s, n));
+  if (h.action === 'rest') return false; // ESKİ ateş başı (2026-10-26 kalktı; yerine Inn)
   return true;
 }
 
@@ -105,58 +105,41 @@ export function idleStartFrame(index: number, totalFrames: number): number {
   return n > 1 ? Math.abs(Math.floor(index)) % n : 0;
 }
 
-// ---------------------------------------------------------------- kasabada dinlenme (Ömer 2026-10-18, ilerleme TUR 1 madde 10)
+// ---------------------------------------------------------------- ESKİ kasaba dinlenmesi (ateş başı; Ömer 2026-10-26'da kalktı, yerine Inn)
 
-/** Bu kasabada kaç kez dinlenildi (kayıtta townRests; bozuk / yok = 0). */
+/**
+ * ESKİ (ateş başı dinlenme kalktı, Ömer 2026-10-26 form econ/main; yerine Inn: state.ts > leaveAtInn). Kasaba ekranı / harita kartı (ui-dev)
+ * güncellenene dek derlensin diye duruyor: eski kayıttaki sayacı okur, artık yazılmaz. @deprecated
+ */
 export function townRestCount(s: Pick<CampaignState, 'townRests'>, nodeId: string): number {
   const v = s.townRests?.[nodeId];
   return typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
 }
 
-/** Dinlenme fiyatının level'ı: aktif takımın (dizilimdeki, düşmüşler dahil) ortalama level'ı, yuvarlanmış; takım yoksa 1. */
-export function restPriceLevel(s: Pick<CampaignState, 'roster' | 'active'>): number {
-  const ids = new Set((s.active ?? []).filter(Boolean));
-  const team = (s.roster ?? []).filter((h) => ids.has(h.id));
-  if (!team.length) return 1;
-  return Math.max(1, Math.round(team.reduce((a, h) => a + (h.level ?? 1), 0) / team.length));
+/** ESKİ (ateş başı dinlenme kalktı, 2026-10-26): fiyat yok, 0 döner. @deprecated */
+export function townRestPrice(_s: Pick<CampaignState, 'townRests' | 'roster' | 'active'>, _nodeId: string): number {
+  return 0;
 }
 
-/**
- * Kasabada sıradaki dinlenmenin fiyatı: ilk dinlenme bedava (0), sonrakiler campaign.json > rest.price: base + perLevel x (L - 1), L = takımın
- * ortalama level'ı (restPriceLevel; Ömer 2026-10-26: 15 + 15 x level, L1 = 30). Yuvarlanır.
- */
-export function townRestPrice(s: Pick<CampaignState, 'townRests' | 'roster' | 'active'>, nodeId: string): number {
-  if (townRestCount(s, nodeId) === 0) return 0;
-  const p = CONFIG.rest.price;
-  return Math.max(0, Math.round(p.base + p.perLevel * (restPriceLevel(s) - 1)));
-}
-
-/** Kasaba dinlenmesinin can oranı (düğümün heal'i; yoksa tam). */
-export const townRestHeal = (n: MapNode): number => Math.max(0, Math.min(1, n.heal ?? 1));
-
-/**
- * Kasabada dinlen (ateş başı): yaşayanlar kasabanın heal oranına (tam) iyileşir; düşmüşler KALKMAZ (diriltme yalnızca Valor). İlk dinlenme bedava,
- * sonrakiler ücretli; sayaç kasaba başına. Kasaba değilse ya da altın yetmezse Error. Saf: yeni durum döner.
- */
-export function restInTown(s: CampaignState, nodeId: string = s.at): CampaignState {
-  const n = node(mapOf(s), nodeId);
-  if (n.type !== 'town') throw new Error('You can only rest like this in a town');
-  const price = townRestPrice(s, nodeId);
-  if (s.gold < price) throw new Error(`Need ${price - s.gold} more gold`);
-  const t = JSON.parse(JSON.stringify(s)) as CampaignState;
-  const heal = townRestHeal(n);
-  for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(Math.max(h.hpRatio, heal) * 1000) / 1000;
-  clearWounds(t); // kasaba dinlenmesi yaraları siler (Ömer 2026-10-19; kamp silmez)
-  t.gold -= price;
-  t.townRests = { ...(t.townRests ?? {}), [nodeId]: townRestCount(s, nodeId) + 1 };
-  return t;
+/** ESKİ (ateş başı dinlenme kalktı, 2026-10-26): hiçbir şey yapmaz, durum aynen döner (iyileşme: Inn, kamp, Valor). @deprecated */
+export function restInTown(s: CampaignState, _nodeId: string = s.at): CampaignState {
+  return s;
 }
 
 // ---------------------------------------------------------------- demirci yeri (TUR 1 madde 7)
 
-/** Kasabanın demirci yeri (campaign.json > blacksmith.hotspots[kasaba görseli]); kasaba değilse null. Yer yoksa rect'siz (ekran kenarında plaka). */
+/** Kasabada demirci var mı (Ömer 2026-10-26: 2. kasabadan itibaren; Ashford `smith: false`). */
+export const townHasSmith = (n: MapNode): boolean => n.type === 'town' && n.smith !== false;
+
+/**
+ * Kasabanın demirci yeri (campaign.json > blacksmith.hotspots[kasaba görseli]); kasaba değilse ya da demircisi yoksa (Ashford) null. Yer yoksa
+ * rect'siz (ekran kenarında plaka).
+ */
 export function smithHotspot(n: MapNode): TownHotspot | null {
-  if (n.type !== 'town') return null;
+  if (!townHasSmith(n)) return null;
   const h = n.scene ? SMITH.hotspots?.[n.scene.background] : undefined;
   return { id: 'blacksmith', action: 'smith', label: h?.label ?? 'Blacksmith', rect: h?.rect ?? [0, 0, 0, 0] };
 }
+
+/** Kasabanın Inn yeri (veride action 'inn' olan yer; Ömer 2026-10-26: her kasabada Inn). Kasaba değilse ya da veride yoksa null. */
+export const innHotspot = (n: MapNode): TownHotspot | null => (n.type === 'town' ? (n.scene?.hotspots.find((h) => h.action === 'inn') ?? null) : null);

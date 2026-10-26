@@ -17,11 +17,13 @@ import {
   restAtCamp,
   reviveAtCamp,
   sellToMerchant,
-  shopRotations,
+  campaignDay,
+  campaignPrice,
+  campaignSellValue,
   addItem,
   type CampaignState,
 } from '../src/campaign';
-import { BAG_SIZE, itemDef, itemValue, sellValue } from '../src/progression';
+import { BAG_SIZE, instanceIlvl, instanceRarity, itemDef } from '../src/progression';
 
 // Valdoria A1-x (Ömer 2026-10-11): Riverside Camp = dinlenme (ücretsiz %50 iyileşme; 2026-10-18'den beri diriltme yok), Forward Camp = tüccar (Odo, Endless kuralları).
 const at = (node: string, seed = 5): CampaignState => debugTeleport(newCampaign({ mode: 'normal', seed }), node);
@@ -75,7 +77,10 @@ describe('tüccar (Forward Camp, Odo)', () => {
       const d = itemDef(w.itemId)!;
       expect(d.rarity).not.toBe('legendary');
       expect(d.ilvl).toBeLessThanOrEqual(ilvl);
-      expect(w.price).toBe(Math.round(itemValue({ id: w.itemId, ...(w.rolls ? { rolls: w.rolls } : {}) }) * (1 + (CONFIG.merchant.priceGrowth ?? 0) * (ilvl - 1))));
+      // Ömer 2026-10-26: fiyat = nadirlik tabanı x (1 + 0,1 x item seviyesi)
+      const inst = { id: w.itemId, ...(w.rolls ? { rolls: w.rolls } : {}) };
+      expect(w.price).toBe(Math.round(CONFIG.merchant.priceBase[instanceRarity(inst)]! * (1 + CONFIG.merchant.pricePerIlvl * instanceIlvl(inst))));
+      expect(w.price).toBe(campaignPrice(inst));
     }
     expect(openCampaignShop(t)).toBe(t); // açıkken yeniden kurulmaz
     expect(() => openCampaignShop(at('river'))).toThrow();
@@ -92,7 +97,8 @@ describe('tüccar (Forward Camp, Odo)', () => {
     expect(() => buyWare(s, 0)).toThrow(/Sold/);
     const before = s.gold;
     s = sellToMerchant(s, bought.uid);
-    expect(s.gold).toBe(before + sellValue(bought));
+    expect(s.gold).toBe(before + campaignSellValue(bought));
+    expect(campaignSellValue(bought)).toBe(Math.round(w.price / 2)); // satış = alım fiyatının yarısı (al-sat kârı yok)
     expect(s.inventory.find((i) => i.uid === bought.uid)).toBeUndefined();
     expect(s.shop!.buyback).toHaveLength(1);
     s = buyBackItem(s, 0);
@@ -111,35 +117,31 @@ describe('tüccar (Forward Camp, Odo)', () => {
     expect(s.shop!.buyback).toHaveLength(CONFIG.merchant.buybackSize);
   });
 
-  it('yavaş yenilenme: her rotateEvery ilerlemede (temizlenen düğüm + devriye) tek raf sırayla değişir, diğerleri aynı kalır', () => {
+  it('günlük yenilenme (Ömer 2026-10-26): aynı gün = aynı stok (ilerleme değiştirmez); ertesi gün bütün raflar yeni', () => {
     const base = at('camp');
-    const withProgress = (n: number): CampaignState => ({ ...base, cleared: [...base.cleared, ...Array.from({ length: n }, (_, i) => `x${i}`)] });
-    const s0 = withProgress(0);
-    const p0 = shopRotations(s0);
-    const every = CONFIG.merchant.rotateEvery;
-    const w0 = campaignStock(s0);
-    const sameRot = campaignStock(withProgress(every - 1 - (base.cleared.length % every)));
-    if (shopRotations(withProgress(every - 1 - (base.cleared.length % every))) === p0) expect(sameRot).toEqual(w0);
-    const next = withProgress(every - (base.cleared.length % every));
-    expect(shopRotations(next)).toBe(p0 + 1);
+    const d0 = campaignDay(base);
+    const w0 = campaignStock(base);
+    expect(campaignStock({ ...base, cleared: [...base.cleared, 'x1', 'x2', 'x3'] })).toEqual(w0); // ilerleme stok değiştirmez
+    const next = { ...base, day: d0 + 1 } as CampaignState;
+    expect(campaignDay(next)).toBe(d0 + 1);
     const w1 = campaignStock(next);
     const changed = w1.filter((w, i) => w.itemId !== w0[i]?.itemId || JSON.stringify(w.rolls) !== JSON.stringify(w0[i]?.rolls));
-    expect(changed.length).toBeGreaterThanOrEqual(1);
-    expect(changed.length).toBeLessThanOrEqual(2); // dönen raf + (nadiren) aynı taban yüzünden kayan bir raf
-    const replays = { ...s0, replays: { a: every } };
-    expect(shopRotations(replays)).toBe(p0 + 1);
+    expect(changed.length).toBeGreaterThanOrEqual(w0.length - 1);
   });
 
-  it('alınan mal: ilerleme aynıyken sonraki ziyarette "sold" kalır; rotateEvery ilerleme sonra raf yeni malla dolar', () => {
+  it('alınan mal: aynı gün sonraki ziyarette "sold" kalır; ertesi gün raf yeni malla dolar; açık / kapanan tezgâh gün değişince yenilenir', () => {
     let s = shopAt(10000);
     const w0 = s.shop!.wares[3]!;
     s = buyWare(s, 3);
     const again = campaignStock(s);
     expect(again[3]).toMatchObject({ itemId: w0.itemId, sold: true });
-    const later: CampaignState = { ...s, cleared: [...s.cleared, ...Array.from({ length: CONFIG.merchant.rotateEvery }, (_, i) => `x${i}`)] };
+    const later = { ...s, day: campaignDay(s) + 1 } as CampaignState;
     const w1 = campaignStock(later)[3]!;
     expect(w1.sold).toBeUndefined();
     expect(JSON.stringify([w1.itemId, w1.rolls])).not.toBe(JSON.stringify([w0.itemId, w0.rolls]));
+    const reopened = openCampaignShop(later);
+    expect(reopened.shop!.day).toBe(campaignDay(later));
+    expect(reopened.shop!.wares).toEqual(campaignStock(later));
   });
 
   it('yenileme rerollCost altın; stok değişir; ayrılınca tezgâh kapanır ve adım tamamlanır', () => {

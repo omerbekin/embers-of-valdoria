@@ -82,7 +82,9 @@ describe('sim oyuncu varsayımı (2026-10-26)', () => {
     expect(simValorWoundHeal({ ...s, valor: R.revive.outsideCost + COST - 1 }).healed).toBe(0);
   });
 
-  it('kasaba dönüşü: normalde tek yara sebep değil, 2 yara ya da can %50 altı; elit / boss öncesi herhangi yara ya da can %75 altı', () => {
+  // Ömer 2026-10-26 (form econ/main): kasabada ücretli dinlenme kalktı (yerine Inn); vekil şimdilik kasabada dinlenmez (simTownRest hep null).
+  // Vekilin Inn kullanımı balance-tester'ın işi; o gelince eski eşik testi (2 yara / %50, zor öncesi herhangi yara / %75) Inn'e taşınır.
+  it.skip('kasaba dönüşü: normalde tek yara sebep değil, 2 yara ya da can %50 altı; elit / boss öncesi herhangi yara ya da can %75 altı', () => {
     const b = { ...base(), gold: 9999 };
     const [a, c] = activeHeroes(b).map((h) => h.id);
     const full = { ...b, roster: b.roster.map((h) => ({ ...h, hpRatio: 1 })) };

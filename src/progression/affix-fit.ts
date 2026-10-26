@@ -27,6 +27,10 @@ export interface ClassTraits {
   debuff: boolean;
   summon: boolean;
   rage: boolean;
+  /** Ön saflarda dövüşür: temel saldırısı (ilk skill) yakın dövüş (Thorns; Ömer 2026-10-26). */
+  melee: boolean;
+  /** Arka sıraya ulaşan hasar skill'i var: yakın dövüş olmayan hasar skill'i (Rearguard bane). */
+  ranged: boolean;
 }
 
 const traitCache = new Map<string, ClassTraits>();
@@ -35,11 +39,12 @@ export function classTraits(classId: string): ClassTraits {
   const hit = traitCache.get(classId);
   if (hit) return hit;
   const c = classes[classId];
-  const t: ClassTraits = { mp: false, shield: false, heal: false, dot: false, debuff: false, summon: false, rage: c?.maxRage !== undefined };
+  const t: ClassTraits = { mp: false, shield: false, heal: false, dot: false, debuff: false, summon: false, rage: c?.maxRage !== undefined, melee: skillDefs[c?.skills[0] ?? '']?.motion === 'melee', ranged: false };
   for (const sid of c?.skills ?? []) {
     const sk = skillDefs[sid];
     if (!sk) continue;
     if (sk.cost.resource === 'mp' && sk.cost.amount > 0) t.mp = true;
+    if (sk.motion !== 'melee' && sk.effects.some((e) => e.type === 'damage')) t.ranged = true;
     for (const e of sk.effects) {
       if (e.type === 'shield') t.shield = true;
       if (e.type === 'heal' || e.type === 'hot' || e.type === 'revive') t.heal = true;
@@ -77,6 +82,10 @@ export function affixFit(classId: string, a: { id: string; def: Pick<AffixDef, '
       return t.heal || t.shield ? 1 : 0.1;
     case 'summon':
       return t.summon ? 1 : 0.1;
+    case 'melee':
+      return t.melee ? 1 : 0.3;
+    case 'ranged':
+      return t.ranged ? 1 : 0.3;
     default:
       return 1;
   }

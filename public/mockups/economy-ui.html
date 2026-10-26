@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Economy UI</title>
+<!-- GUN / INN / KAMP / DEMIRCI taslagi (ui-dev, 2026-10-26). Oyun kodu DEGIL. Her bolumde A/B/C icerik olarak farkli. Varliklar: economy-ui/ klasoru (oyundan kopya). -->
+<style>
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('economy-ui/f/Cinzel-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('economy-ui/f/Cinzel-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215; }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: block; src: url('economy-ui/f/EBGaramond-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: block; src: url('economy-ui/f/EBGaramond-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215; }
+
+:root { --text: #d9c8a2; --dim: #a8977a; --gold: #f3d999; --edge: rgba(217,178,106,.42); --line: rgba(217,178,106,.16); --line2: rgba(217,178,106,.3); --ember: #e0702a; --ember2: #ffb35a; --good: #9fd88a; --bad: #e0907a; --disp: Cinzel, Georgia, serif; --body: 'EB Garamond', Georgia, serif;
+  --c-common: #8a8a84; --c-unc: #5f8f3e; --c-rare: #3f6fa8; --c-epic: #7a3f9a; --c-leg: #f0a830; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #0b0806; color: var(--text); font-family: var(--body); font-style: normal; }
+body { min-height: 100vh; font-size: 18px; line-height: 1.3; }
+img { display: block; }
+button { font-family: inherit; color: inherit; }
+
+.pg { max-width: 1280px; margin: 0 auto; padding: 16px 16px 90px; }
+.pg > header h1 { margin: 0 0 4px; font: 600 24px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.pg > header p { margin: 0 0 14px; color: var(--dim); font-size: 17px; }
+.nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; font: 600 13px var(--disp); letter-spacing: .14em; text-transform: uppercase; color: var(--text); text-decoration: none; background: rgba(8,6,4,.7); border: 1px solid var(--line2); transition: border-color .2s, color .2s; }
+.nav a:hover { border-color: rgba(243,217,153,.85); color: var(--gold); }
+section.sec { margin-top: 38px; scroll-margin-top: 12px; }
+section.sec > h2 { margin: 0; padding-bottom: 8px; font: 600 22px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid var(--line2); }
+section.sec > .rule { margin: 8px 0 0; color: var(--dim); font-size: 17px; }
+.var { margin-top: 26px; }
+.vtag { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.vtag b { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; font: 700 18px var(--disp); color: #1a0f05; background: linear-gradient(180deg, #f3d999, #d9b26a); }
+.vtag span { font: 600 15px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.note { margin: 10px 0 0; padding: 10px 14px; border-left: 3px solid var(--ember); background: rgba(8,6,4,.55); font-size: 17px; color: var(--text); }
+.mockstrip { position: fixed; left: 0; bottom: 0; z-index: 20; padding: 6px 14px; font: 600 11px var(--disp); letter-spacing: .22em; text-transform: uppercase; color: #1a0f05; background: #e0b24a; border-top-right-radius: 4px; }
+
+/* ---- ortak oyun parcalari ---- */
+.pn { display: flex; flex-direction: column; gap: 14px; padding: 22px 26px; background: linear-gradient(180deg, rgba(30,22,14,.97), rgba(12,9,6,.97)); border: 1px solid var(--edge); box-shadow: 0 0 0 3px rgba(8,6,4,.7), 0 18px 40px rgba(0,0,0,.6); }
+.hd { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.ttl { margin: 0; font: 600 28px var(--disp); letter-spacing: .12em; text-transform: uppercase; background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.sub { font: 600 15px var(--disp); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.lab { font: 600 14px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); padding-bottom: 6px; border-bottom: 1px solid var(--line); margin: 0; }
+.dim { color: var(--dim); }
+.line { color: var(--dim); font-size: 17px; margin: 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 10px 0 6px; border: 1px solid var(--edge); background: rgba(8,6,4,.6); font: 600 12px var(--disp); letter-spacing: .08em; text-transform: uppercase; color: var(--text); white-space: nowrap; }
+.chip img { width: 22px; height: 22px; object-fit: contain; }
+.chip.cls { border-color: var(--ember); color: var(--gold); padding-left: 10px; }
+.chip.good { border-color: rgba(159,216,138,.6); color: var(--good); }
+.chip.bad { border-color: rgba(224,144,122,.6); color: var(--bad); }
+.btn { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 18px; font: 600 13px var(--disp); letter-spacing: .14em; text-transform: uppercase; color: var(--text); background: rgba(8,6,4,.7); border: 1px solid var(--line2); transition: transform .15s, border-color .2s, box-shadow .2s, color .2s; }
+.btn:hover { transform: translateY(-2px); border-color: rgba(243,217,153,.85); color: var(--gold); box-shadow: 0 0 14px rgba(240,140,40,.25); }
+.btn.pri { color: #1a0f05; background: linear-gradient(180deg, #f3d999, #d9b26a); border-color: #f3d999; }
+.btn.pri:hover { color: #1a0f05; }
+.btn:disabled, .btn.off { opacity: .45; cursor: default; transform: none; box-shadow: none; }
+.btn img { width: 20px; height: 20px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gold { display: inline-flex; align-items: center; gap: 6px; font: 600 18px var(--disp); color: var(--gold); }
+.gold img { width: 24px; height: 24px; }
+
+/* kahraman portresi + can cubugu */
+.av { width: 64px; height: 64px; flex: none; object-fit: cover; object-position: 50% 14%; border: 1px solid var(--line2); background: radial-gradient(circle at 50% 40%, rgba(224,112,42,.18), rgba(8,6,4,.85)); }
+.av.lg { width: 96px; height: 96px; }
+.av.sm { width: 44px; height: 44px; }
+.hp { position: relative; height: 12px; background: rgba(8,6,4,.8); border: 1px solid var(--line2); overflow: hidden; }
+.hp i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(180deg, #6fae56, #3f7a35); }
+.hp i.ghost { background: linear-gradient(180deg, rgba(159,216,138,.55), rgba(159,216,138,.25)); }
+.hp.low i { background: linear-gradient(180deg, #c9694a, #8a3a24); }
+.hpt { font: 15px var(--body); color: var(--dim); }
+.wd { display: inline-flex; align-items: center; gap: 2px; }
+.wd img { width: 22px; height: 22px; }
+.wd.zero { opacity: .35; }
+.hero { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; background: linear-gradient(180deg, rgba(24,17,10,.9), rgba(9,6,4,.9)); border: 1px solid var(--line2); transition: transform .15s, border-color .2s, box-shadow .2s; }
+.hero:hover { transform: translateY(-2px); border-color: var(--gold); box-shadow: 0 0 14px rgba(240,140,40,.25); }
+.hero .t { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.hero .nm { font: 600 16px var(--disp); letter-spacing: .05em; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero .meta { font-size: 15px; color: var(--dim); }
+.hero.sel { border-color: var(--gold); box-shadow: inset 0 0 18px rgba(240,140,40,.25), 0 0 14px rgba(240,140,40,.25); }
+.hero.inn { border-color: rgba(224,112,42,.55); }
+.slot-empty { display: flex; align-items: center; justify-content: center; min-height: 80px; padding: 8px; text-align: center; color: var(--dim); font-size: 16px; border: 1px dashed var(--line2); background: rgba(8,6,4,.35); }
+
+/* item plakasi (Gear > Hero plaka dili) */
+.plate { position: relative; display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; background: linear-gradient(180deg, rgba(24,17,10,.9), rgba(9,6,4,.9)); border: 1px solid color-mix(in srgb, var(--rc) 60%, rgba(217,178,106,.3)); box-shadow: inset 0 0 22px color-mix(in srgb, var(--rc) 16%, transparent), 0 0 0 2px rgba(8,6,4,.6); transition: transform .15s, box-shadow .2s; cursor: pointer; }
+.plate:hover { transform: translateY(-2px); box-shadow: inset 0 0 22px color-mix(in srgb, var(--rc) 22%, transparent), 0 0 14px rgba(240,140,40,.3), 0 0 0 2px rgba(8,6,4,.6); }
+.plate.sel { box-shadow: inset 0 0 0 1px var(--gold), 0 0 14px rgba(240,140,40,.35); }
+.plate .ic { width: 56px; height: 56px; flex: none; display: flex; align-items: center; justify-content: center; border: 1px solid var(--rc); background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--rc) 22%, transparent), rgba(8,6,4,.75) 72%); }
+.plate .ic img { width: 44px; height: 44px; object-fit: contain; }
+.plate .t { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.plate .nm { font: 600 16px var(--disp); letter-spacing: .04em; color: color-mix(in srgb, var(--rc) 55%, #fff); }
+.plate .mn { font-size: 16px; color: var(--gold); }
+.plate .af { font-size: 15px; color: var(--dim); }
+.plate .il { font: 600 12px var(--disp); letter-spacing: .08em; color: var(--dim); white-space: nowrap; }
+.plate.k { display: flex; }
+.plate::before, .plate::after { content: ''; position: absolute; width: 10px; height: 10px; pointer-events: none; border: 0 solid color-mix(in srgb, var(--rc) 70%, #fff); }
+.plate::before { left: -1px; top: -1px; border-left-width: 2px; border-top-width: 2px; }
+.plate::after { right: -1px; bottom: -1px; border-right-width: 2px; border-bottom-width: 2px; }
+.cm { --rc: var(--c-common); } .un { --rc: var(--c-unc); } .ra { --rc: var(--c-rare); } .ep { --rc: var(--c-epic); } .lg { --rc: var(--c-leg); }
+.cell { position: relative; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--rc); background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--rc) 22%, transparent), rgba(8,6,4,.75) 72%); cursor: pointer; transition: transform .15s, box-shadow .2s; }
+.cell:hover { transform: translateY(-2px); box-shadow: 0 0 12px rgba(240,140,40,.35); }
+.cell img { width: 48px; height: 48px; object-fit: contain; }
+.cell.sel { box-shadow: inset 0 0 0 1px var(--gold), 0 0 12px rgba(240,140,40,.45); }
+.cell .tm { position: absolute; right: 2px; bottom: 0; font: 700 12px var(--disp); color: var(--gold); text-shadow: 0 1px 2px #000; }
+.cell.big { width: 84px; height: 84px; } .cell.big img { width: 64px; height: 64px; }
+.cell.void { border: 1px dashed var(--line2); background: rgba(8,6,4,.45); color: var(--dim); font: 600 22px var(--disp); cursor: default; }
+.cell.void:hover { transform: none; box-shadow: none; }
+.bag { display: grid; grid-template-columns: repeat(auto-fill, 64px); gap: 8px; }
+
+.mapstage { position: relative; min-height: 230px; border: 1px solid var(--edge); background: #05080c url('economy-ui/a/map.webp') center 30% / cover; box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 18px 40px rgba(0,0,0,.55); overflow: hidden; }
+.mapstage::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,3,2,.55), rgba(5,3,2,.1) 45%, rgba(5,3,2,.35)); pointer-events: none; }
+.mapstage > * { position: relative; z-index: 1; }
+.mapstage .hint { position: absolute; left: 0; right: 0; bottom: 12px; text-align: center; font: 600 12px var(--disp); letter-spacing: .2em; text-transform: uppercase; color: rgba(243,217,153,.65); z-index: 1; }
+
+/* ---- 1 GUN ---- */
+.pip { width: 18px; height: 18px; transform: rotate(45deg); border: 2px solid var(--gold); background: transparent; flex: none; }
+.pip.on { background: linear-gradient(180deg, #ffb35a, #e0702a); border-color: #ffb35a; box-shadow: 0 0 10px rgba(240,140,40,.7); }
+.dA { margin: 0 auto; width: fit-content; max-width: 100%; margin-top: 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 40px 12px; background: linear-gradient(180deg, rgba(30,22,14,.95), rgba(12,9,6,.9)); border: 1px solid var(--edge); border-top: 0; box-shadow: 0 6px 20px rgba(0,0,0,.6); margin-top: 0; }
+.dA .day { font: 600 34px var(--disp); letter-spacing: .24em; text-transform: uppercase; background: linear-gradient(180deg, #fbe7b0, #e6c27a 55%, #b88a42); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px #000); }
+.dA .pips { display: flex; gap: 22px; padding: 4px 0; }
+.dA .nx { font: 17px var(--body); color: var(--text); text-align: center; }
+.dB { position: absolute !important; left: 16px; top: 16px; display: flex; align-items: center; gap: 14px; padding: 10px 18px 10px 12px; background: linear-gradient(180deg, rgba(30,22,14,.95), rgba(12,9,6,.92)); border: 1px solid var(--edge); box-shadow: 0 6px 20px rgba(0,0,0,.6); max-width: calc(100% - 32px); }
+.dB .dial { position: relative; width: 74px; height: 74px; flex: none; }
+.dB .dial svg { width: 74px; height: 74px; }
+.dB .dial b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 700 30px var(--disp); color: var(--gold); }
+.dB .dl small { display: block; font: 600 12px var(--disp); letter-spacing: .18em; text-transform: uppercase; color: var(--dim); }
+.dB .dl .big { font: 600 22px var(--disp); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.dB .dl .sm2 { font-size: 16px; color: var(--text); }
+.dB .dawn { margin-left: 8px; padding-left: 14px; border-left: 1px solid var(--line2); font-size: 16px; color: var(--dim); max-width: 230px; }
+.dB .dawn b { display: block; font: 600 12px var(--disp); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: 2px; }
+.dC { display: flex; align-items: stretch; gap: 0; margin: 0; background: linear-gradient(180deg, rgba(30,22,14,.95), rgba(12,9,6,.92)); border-bottom: 1px solid var(--edge); box-shadow: 0 6px 20px rgba(0,0,0,.6); overflow-x: auto; }
+.dC .d { flex: 1 0 150px; min-width: 150px; padding: 8px 12px 10px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; opacity: .6; }
+.dC .d.cur { opacity: 1; background: linear-gradient(180deg, rgba(224,112,42,.2), transparent); box-shadow: inset 0 -2px 0 var(--ember); }
+.dC .d.fut { opacity: .38; }
+.dC .d h4 { margin: 0; font: 600 14px var(--disp); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); display: flex; justify-content: space-between; align-items: center; }
+.dC .d .pips { display: flex; gap: 8px; }
+.dC .d .pip { width: 12px; height: 12px; border-width: 2px; }
+.dC .d p { margin: 0; font-size: 15px; color: var(--dim); }
+.dC .d p b { color: var(--text); font-weight: 500; }
+.dC .end { flex: 1 0 210px; padding: 8px 14px; font-size: 16px; color: var(--text); display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.dC .end b { font: 600 12px var(--disp); letter-spacing: .14em; text-transform: uppercase; color: var(--ember2); }
+
+/* ---- 2 INN ---- */
+.townhead { display: flex; align-items: center; gap: 16px; padding: 0; border: 1px solid var(--line2); background: rgba(8,6,4,.5); overflow: hidden; }
+.townhead img { width: 150px; height: 84px; object-fit: cover; flex: none; border-right: 1px solid var(--line2); }
+.townhead .tx { padding: 6px 12px 6px 0; }
+.townhead .tx b { display: block; font: 600 20px var(--disp); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.townhead .tx span { font-size: 16px; color: var(--dim); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.heal { font-size: 15px; color: var(--ember2); }
+.bar-note { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; color: var(--dim); }
+.bed { display: flex; flex-direction: column; gap: 10px; padding: 12px; background: linear-gradient(180deg, rgba(40,26,14,.9), rgba(9,6,4,.92)); border: 1px solid rgba(224,112,42,.5); box-shadow: inset 0 0 26px rgba(224,112,42,.12); }
+.bed .top { display: flex; gap: 12px; align-items: center; }
+.bed.free { border: 1px dashed var(--line2); background: rgba(8,6,4,.4); box-shadow: none; align-items: center; justify-content: center; text-align: center; color: var(--dim); min-height: 150px; font-size: 16px; }
+.bed .meter { display: flex; gap: 4px; }
+.bed .meter i { flex: 1; height: 8px; background: rgba(8,6,4,.8); border: 1px solid var(--line2); }
+.bed .meter i.on { background: linear-gradient(180deg, #ffb35a, #e0702a); border-color: #ffb35a; }
+.fgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.fgrid .lbl { grid-column: 1 / -1; font: 600 12px var(--disp); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+.fc { display: flex; flex-direction: column; gap: 6px; }
+table.fc2 { width: 100%; border-collapse: collapse; font-size: 16px; }
+.fc2 th { text-align: left; font: 600 12px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); padding: 6px 8px; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+.fc2 td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+.fc2 tr.in td { background: rgba(224,112,42,.08); }
+.fc2 td.hn { display: flex; align-items: center; gap: 10px; }
+.fc2 .full { color: var(--good); }
+.tscroll { overflow-x: auto; }
+.pstat { display: inline-block; padding: 2px 8px; border: 1px solid var(--line2); font: 600 11px var(--disp); letter-spacing: .1em; text-transform: uppercase; }
+.pstat.p { color: var(--gold); border-color: var(--gold); } .pstat.i { color: var(--ember2); border-color: var(--ember); } .pstat.r { color: var(--dim); }
+
+/* ---- 3 KAMP ---- */
+.fire { display: flex; align-items: center; gap: 14px; }
+.fire img { width: 56px; height: 56px; }
+.fire .ft { font-size: 17px; color: var(--dim); }
+.cards4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.cc { cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: 16px 14px; text-align: left; background: linear-gradient(180deg, rgba(30,22,14,.95), rgba(9,6,4,.95)); border: 1px solid var(--line2); transition: transform .18s, border-color .2s, box-shadow .2s; min-width: 0; }
+.cc:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 0 16px rgba(240,140,40,.3); }
+.cc.on { border-color: var(--gold); box-shadow: inset 0 0 22px rgba(240,140,40,.25), 0 0 16px rgba(240,140,40,.3); }
+.cc .ico { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--edge); background: radial-gradient(circle at 50% 45%, rgba(224,112,42,.22), rgba(8,6,4,.8)); font: 700 26px var(--disp); color: var(--gold); }
+.cc .ico img { width: 44px; height: 44px; object-fit: contain; }
+.cc h4 { margin: 0; font: 600 18px var(--disp); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.cc p { margin: 0; font-size: 17px; color: var(--text); }
+.cc small { font-size: 15px; color: var(--dim); }
+.pickrow { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.opt { cursor: pointer; display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 14px 10px 10px; text-align: left; background: rgba(8,6,4,.5); border: 1px solid var(--line2); transition: transform .15s, border-color .2s, box-shadow .2s; }
+.opt:hover { transform: translateX(3px); border-color: var(--gold); }
+.opt.on { border-color: var(--gold); box-shadow: inset 0 0 18px rgba(240,140,40,.25); background: rgba(40,26,14,.7); }
+.opt .ico { width: 48px; height: 48px; flex: none; display: flex; align-items: center; justify-content: center; border: 1px solid var(--edge); background: radial-gradient(circle at 50% 45%, rgba(224,112,42,.22), rgba(8,6,4,.8)); font: 700 22px var(--disp); color: var(--gold); }
+.opt .ico img { width: 38px; height: 38px; object-fit: contain; }
+.opt b { display: block; font: 600 16px var(--disp); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.opt span { font-size: 16px; color: var(--dim); }
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 22px; }
+.prev { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: rgba(8,6,4,.45); border: 1px solid var(--line2); }
+.prev .ba { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 18px; }
+.prev .ba .ar { color: var(--gold); } .prev .ba .to { color: var(--good); }
+.chips-hero { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips-hero .btn { min-height: 38px; padding: 0 12px; font-size: 12px; letter-spacing: .1em; }
+.chips-hero .btn.on { border-color: var(--gold); color: var(--gold); background: rgba(240,140,40,.15); }
+.hgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.hc { display: flex; flex-direction: column; gap: 10px; padding: 10px; background: linear-gradient(180deg, rgba(24,17,10,.9), rgba(9,6,4,.9)); border: 1px solid var(--line2); transition: border-color .2s; }
+.hc:hover { border-color: var(--gold); }
+.hc .top { display: flex; gap: 12px; align-items: center; }
+
+/* ---- 4 DEMIRCI ---- */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.tabs .tab { cursor: pointer; min-height: 44px; padding: 0 18px; font: 600 13px var(--disp); letter-spacing: .14em; text-transform: uppercase; color: var(--text); background: rgba(8,6,4,.7); border: 1px solid var(--line2); transition: border-color .2s, color .2s, background .2s; }
+.tabs .tab:hover { border-color: rgba(243,217,153,.85); color: var(--gold); }
+.tabs .tab.on { color: #1a0f05; background: linear-gradient(180deg, #f3d999, #d9b26a); border-color: #f3d999; }
+.tabs .tab i { font-style: normal; font-family: var(--body); letter-spacing: 0; text-transform: none; opacity: .75; margin-left: 6px; font-size: 15px; }
+.tp { display: none; flex-direction: column; gap: 12px; }
+.tp.on { display: flex; animation: fadein .2s ease; }
+@keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.smith { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; }
+.diff { display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; background: rgba(8,6,4,.45); border: 1px solid var(--line2); }
+.diff .r { display: flex; align-items: baseline; gap: 8px; font-size: 18px; }
+.diff .k { min-width: 120px; color: var(--dim); }
+.diff .ar { color: var(--gold); } .diff .to { color: var(--good); }
+.cost { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.cost .st { display: inline-flex; align-items: center; gap: 6px; font: 600 18px var(--disp); color: var(--gold); }
+.cost .st img { width: 30px; height: 30px; }
+.cost .st.short { color: var(--bad); }
+.stones { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 6px; border: 1px solid var(--edge); background: rgba(8,6,4,.6); font: 600 16px var(--disp); color: var(--gold); }
+.stones img { width: 32px; height: 32px; }
+.stones small { font: 14px var(--body); color: var(--dim); letter-spacing: 0; }
+.comb { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.comb .op { font: 700 24px var(--disp); color: var(--dim); }
+.odds { display: flex; flex-direction: column; gap: 6px; }
+.odds .bar2 { display: flex; height: 22px; border: 1px solid var(--line2); background: rgba(8,6,4,.8); overflow: hidden; }
+.odds .bar2 i { display: flex; align-items: center; justify-content: center; font: 600 12px var(--disp); color: #fff; letter-spacing: .06em; text-shadow: 0 1px 2px #000; }
+.odds .leg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 16px; color: var(--text); }
+.odds .leg b { font-weight: 600; }
+.bsl { display: flex; flex-direction: column; gap: 6px; }
+.aff { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 44px; padding: 6px 12px; background: rgba(8,6,4,.45); border: 1px solid var(--line2); font-size: 18px; transition: border-color .2s; text-align: left; width: 100%; }
+.aff:hover { border-color: var(--gold); }
+.aff.on { border-color: var(--gold); box-shadow: inset 0 0 18px rgba(240,140,40,.25); }
+.aff.main { opacity: .5; cursor: default; }
+.aff em { font-style: normal; font: 600 12px var(--disp); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.stations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.stn { display: flex; flex-direction: column; gap: 12px; padding: 14px; background: rgba(8,6,4,.4); border: 1px solid var(--line2); }
+.stn h3 { margin: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 600 16px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.stn h3 span { font: 15px var(--body); letter-spacing: 0; text-transform: none; color: var(--dim); }
+.bagstrip { display: flex; flex-direction: column; gap: 8px; }
+
+@media (max-width: 980px) {
+  .grid2, .split, .smith, .stations { grid-template-columns: 1fr; }
+  .cards4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  body { font-size: 17px; }
+  .pn { padding: 14px 14px; }
+  .ttl { font-size: 22px; }
+  .cards4 { grid-template-columns: 1fr; }
+  .townhead img { width: 96px; height: 70px; }
+  .dA { padding: 8px 18px 12px; } .dA .day { font-size: 26px; }
+  .dB { flex-wrap: wrap; } .dB .dawn { margin: 0; padding: 8px 0 0; border: 0; border-top: 1px solid var(--line2); max-width: none; }
+  .pg { padding: 12px 16px 90px; }
+  .diff .k { min-width: 90px; }
+}
+</style>
+</head>
+<body>
+<div class="pg">
+<header>
+  <h1>Economy UI</h1>
+  <p>Day counter, Inn, Camp choice, Blacksmith. Three variants per screen. In-game text English; notes are Turkish. Not the game.</p>
+  <nav class="nav"><a href="#day">1 Day counter</a><a href="#inn">2 Inn</a><a href="#camp">3 Camp</a><a href="#smith">4 Blacksmith</a></nav>
+</header>
+
+<!-- =============== 1 GUN =============== -->
+<section class="sec" id="day">
+  <h2>1 · Day counter (above the map)</h2>
+  <p class="rule">2 node completions = 1 day. Shown on top of the campaign map; says how many completions remain until the next day.</p>
+
+  <div class="var"><div class="vtag"><b>A</b><span>Centered banner</span></div>
+    <div class="mapstage"><div class="dA">
+      <div class="day">Day 7</div>
+      <div class="pips"><span class="pip on"></span><span class="pip"></span></div>
+      <div class="nx">1 more node until Day 8</div>
+    </div><div class="hint">Campaign map</div></div>
+    <p class="note">A: Haritanın üst ortasında sade bir tabela: büyük "Day 7", iki elmas (biri dolu) ve tek satır "1 more node until Day 8". En az bilgi, en temiz görünüm.</p>
+  </div>
+
+  <div class="var"><div class="vtag"><b>B</b><span>Corner dial + dawn preview</span></div>
+    <div class="mapstage" style="min-height:190px"><div class="dB">
+      <div class="dial"><svg viewBox="0 0 74 74"><circle cx="37" cy="37" r="31" fill="rgba(8,6,4,.8)" stroke="rgba(217,178,106,.3)" stroke-width="5"/><path d="M37 6 A31 31 0 0 1 37 68" fill="none" stroke="#ffb35a" stroke-width="5"/><path d="M37 68 A31 31 0 0 1 37 6" fill="none" stroke="rgba(217,178,106,.25)" stroke-width="5" stroke-dasharray="3 5"/></svg><b>7</b></div>
+      <div class="dl"><small>Today</small><div class="big">Day 7</div><div class="sm2">Half done · 1 more node</div></div>
+      <div class="dawn"><b>At dawn</b>Heroes at the Inn heal 50% HP and 1 wound.</div>
+    </div><div class="hint">Campaign map</div></div>
+    <p class="note">B: Sol üst köşede küçük bir kadran (yarısı dolu halka + gün numarası). Yanında "şafakta ne olacak" notu var: Inn'deki kahramanlar iyileşir. Daha bilgilendirici, köşede yer tutar.</p>
+  </div>
+
+  <div class="var"><div class="vtag"><b>C</b><span>Timeline strip</span></div>
+    <div class="mapstage" style="min-height:200px"><div class="dC">
+      <div class="d"><h4>Day 5</h4><div class="pips"><span class="pip on"></span><span class="pip on"></span></div><p><b>Ashford Road</b>, Wolf Den</p></div>
+      <div class="d"><h4>Day 6</h4><div class="pips"><span class="pip on"></span><span class="pip on"></span></div><p><b>Camp</b>, Old Mill</p></div>
+      <div class="d cur"><h4>Day 7 <span class="chip good" style="min-height:22px">Now</span></h4><div class="pips"><span class="pip on"></span><span class="pip"></span></div><p><b>Bridge Toll</b>, 1 to go</p></div>
+      <div class="d fut"><h4>Day 8</h4><div class="pips"><span class="pip"></span><span class="pip"></span></div><p>Dawn: Inn heals</p></div>
+      <div class="end"><b>Next dawn</b>After 1 more node. Inn heroes heal.</div>
+    </div><div class="hint">Campaign map</div></div>
+    <p class="note">C: Haritanın üstüne tam genişlikte gün şeridi: geçmiş günler (hangi düğümler bitti), bugün ve gelecek günler. Gidişatı gösterir; en fazla bilgi, en geniş yer.</p>
+  </div>
+</section>
+
+<!-- =============== 2 INN =============== -->
+<section class="sec" id="inn">
+  <h2>2 · Inn</h2>
+  <p class="rule">Leave a hero at the Inn (leaves the party; you go short-handed or swap in a reserve). Each day the hero heals 50% HP and 1 wound; no XP. Can only be taken back in the town they were left in.</p>
+
+  <div class="var"><div class="vtag"><b>A</b><span>Two-column roster board</span></div>
+    <div class="pn" id="innA"></div>
+    <p class="note">A: İki sütun: solda "At the Inn" (yatan kahramanlar + iyileşme çubuğu + "Take back"), sağda "On the road" takım (Leave here). Altta yedekler. En tanıdık, düz liste mantığı.</p>
+  </div>
+
+  <div class="var"><div class="vtag"><b>B</b><span>Bed cards + formation</span></div>
+    <div class="pn" id="innB"></div>
+    <p class="note">B: Inn'i dört yatak olarak gösterir: dolu yatakta büyük kart ve gün gün iyileşme sayacı, boş yatak "kahramanı buraya sürükle". Altında takım dizilimi (boş yuva uyarılı) ve yedekler. Sürükle-bırak odaklı, görsel.</p>
+  </div>
+
+  <div class="var"><div class="vtag"><b>C</b><span>Heal forecast table</span></div>
+    <div class="pn" id="innC"></div>
+    <p class="note">C: Tek tablo: her kahramanın durumu (Party / Inn / Reserve) tek tıkla değişir; yanında şimdi, 1 gün sonra, 2 gün sonra tahmini can ve yara. Planlama odaklı, takım dizilimi sağda küçük.</p>
+  </div>
+</section>
+
+<!-- =============== 3 KAMP =============== -->
+<section class="sec" id="camp">
+  <h2>3 · Camp node</h2>
+  <p class="rule">Once per camp, one choice: Rest (+50% HP) · Tend wounds (1 wound of one hero) · Sharpen (+1 temper on one item, free) · Train (extra XP to one hero).</p>
+
+  <div class="var"><div class="vtag"><b>A</b><span>Action first, 4 cards</span></div>
+    <div class="pn" id="campA"></div>
+    <p class="note">A: Önce eylem: dört büyük kart (ana menü kart mantığı). Kartı seçince altında hedef seçimi açılır (kahraman ya da item); Rest hedef istemez, doğrudan onaylanır.</p>
+  </div>
+
+  <div class="var"><div class="vtag"><b>B</b><span>List + live preview</span></div>
+    <div class="pn" id="campB"></div>
+    <p class="note">B: Solda dört satırlık liste, sağda seçilen eylemin önce → sonra önizlemesi ve hedef kahraman çipleri. Tek bakışta sonucu görürsün; onay düğmesi en sağ altta.</p>
+  </div>
+
+  <div class="var"><div class="vtag"><b>C</b><span>Hero first, per-hero actions</span></div>
+    <div class="pn" id="campC"></div>
+    <p class="note">C: Önce kahraman: her kahraman kartında can, yara ve dört eylem çipi var; çip o kahramana uygulanır. Rest kartı en üstte tüm takım için tek ayrı düğme. Karar kahramandan başlar.</p>
+  </div>
+</section>
+
+<!-- =============== 4 DEMIRCI =============== -->
+<section class="sec" id="smith">
+  <h2>4 · Blacksmith</h2>
+  <p class="rule">Temper costs a temper stone plus a little gold (2 stones above item level 15). New Combine mode: 3 items become 1 random item. Reroll affix (Epic) stays.</p>
+
+  <div class="var"><div class="vtag"><b>A</b><span>Tabs left, bag right (current layout)</span></div>
+    <div class="pn" id="smA"></div>
+    <p class="note">A: Mevcut demirci iskeleti: solda üç sekme (Temper / Combine / Reroll), sağda ortak çanta. Taş sayısı başlıkta. Sekmeleri tıklayarak üçünü de görebilirsin. En az değişiklik.</p>
+  </div>
+
+  <div class="var"><div class="vtag"><b>B</b><span>Full-width tabs, bag strip below</span></div>
+    <div class="pn" id="smB"></div>
+    <p class="note">B: Sekmeler üstte tam genişlik, işlem alanı geniş (Combine'da üç yuva + sonuç yan yana, ihtimal çubuğu), çanta altta tek şerit. Combine'ı öne çıkarır.</p>
+  </div>
+
+  <div class="var"><div class="vtag"><b>C</b><span>Three stations, no tabs</span></div>
+    <div class="pn" id="smC"></div>
+    <p class="note">C: Sekme yok: Temper, Combine, Reroll üç istasyon yan yana tek ekranda. Hepsi aynı anda görünür; her istasyon kendi seçili item'ini ister. Telefonda alt alta dizilir.</p>
+  </div>
+</section>
+</div>
+<div class="mockstrip">Mockup · not the game</div>
+
+<script>
+const A = 'economy-ui/a/';
+const heroes = {
+  paladin:  { n: 'Paladin',  cls: 'Tank',   lv: 6, hp: 100, w: 0, st: 'p' },
+  archer:   { n: 'Archer',   cls: 'Ranged', lv: 6, hp: 82,  w: 0, st: 'p' },
+  mage:     { n: 'Mage',     cls: 'Caster', lv: 5, hp: 64,  w: 1, st: 'p' },
+  defender: { n: 'Defender', cls: 'Tank',   lv: 5, hp: 45,  w: 1, st: 'i', days: 1 },
+  hexer:    { n: 'Hexer',    cls: 'Caster', lv: 6, hp: 30,  w: 2, st: 'i', days: 2 },
+  druid:    { n: 'Druid',    cls: 'Support',lv: 4, hp: 100, w: 0, st: 'r' }
+};
+const $ = (s) => document.querySelector(s);
+const av = (id, c = '') => `<img class="av ${c}" src="${A}${id}.webp" alt="">`;
+const wounds = (n) => `<span class="wd ${n ? '' : 'zero'}" title="${n} wound${n === 1 ? '' : 's'}">${n ? Array(n).fill(`<img src="${A}wound.webp" alt="">`).join('') : `<img src="${A}wound.webp" alt="">`}<span class="hpt">${n}</span></span>`;
+const hpbar = (p, ghost) => `<div class="hp ${p < 40 ? 'low' : ''}">${ghost ? `<i class="ghost" style="width:${ghost}%"></i>` : ''}<i style="width:${p}%"></i></div>`;
+const step = (p, w) => { const np = Math.min(100, p + 50); return [np, Math.max(0, w - 1)]; };
+const gold = (n) => `<span class="gold"><img src="${A}gold.webp" alt="">${n}</span>`;
+const plate = (it) => `<div class="plate ${it.r}"><div class="ic"><img src="${A}${it.i}.webp" alt=""></div><div class="t"><span class="nm">${it.n}</span><span class="mn">${it.m}</span><span class="af">${it.a}</span></div><span class="il">iL ${it.l}${it.t ? ' · +' + it.t : ''}</span></div>`;
+const cell = (it, extra = '') => `<div class="cell ${it.r} ${extra}" title="${it.n}"><img src="${A}${it.i}.webp" alt="">${it.t ? `<span class="tm">+${it.t}</span>` : ''}</div>`;
+const hero = (id, extra = '', right = '') => { const h = heroes[id]; return `<div class="hero ${extra}">${av(id)}<div class="t"><span class="nm">${h.n}</span><span class="meta">Lv ${h.lv} · ${h.cls}</span>${hpbar(h.hp)}<span class="row" style="gap:10px"><span class="hpt">${h.hp}% HP</span>${wounds(h.w)}</span></div>${right}</div>`; };
+
+/* ---------- INN ---------- */
+const townHead = `<div class="townhead"><img src="${A}ashford.webp" alt=""><div class="tx"><b>Ashford · The Rusty Lantern Inn</b><span>Day 7 · Rest here and the heroes mend at every dawn</span></div></div>`;
+const healLine = (id) => { const h = heroes[id]; return `Fully healed in ${h.days} day${h.days > 1 ? 's' : ''}`; };
+$('#innA').innerHTML = `
+  <div class="hd"><h3 class="ttl">Inn</h3><span class="sub">Ashford</span></div>${townHead}
+  <div class="grid2">
+    <div class="col"><h4 class="lab">At the Inn · 2 resting</h4>
+      ${['defender', 'hexer'].map((id) => { const h = heroes[id]; const [np, nw] = step(h.hp, h.w); return hero(id, 'inn', `<div class="col" style="gap:6px;align-items:flex-end"><span class="heal">${healLine(id)}</span><button class="btn" type="button">Take back</button></div>`); }).join('')}
+      <p class="line">Each dawn: +50% HP and 1 wound healed. Resting heroes earn no XP.</p>
+    </div>
+    <div class="col"><h4 class="lab">On the road · 3 / 4</h4>
+      ${['paladin', 'archer', 'mage'].map((id) => hero(id, '', `<button class="btn" type="button">Leave here</button>`)).join('')}
+      <div class="slot-empty">Empty slot · bring a reserve or travel short-handed</div>
+    </div>
+  </div>
+  <h4 class="lab">Reserves · 1</h4>
+  <div class="grid2">${hero('druid', '', `<button class="btn" type="button">Join party</button>`)}<div></div></div>
+  <div class="row" style="justify-content:flex-end"><button class="btn" type="button">Formation</button><button class="btn pri" type="button">Done</button></div>`;
+
+const bedFull = (id) => { const h = heroes[id]; const [np, nw] = step(h.hp, h.w); return `<div class="bed"><div class="top">${av(id, 'lg')}<div class="col" style="gap:4px;flex:1;min-width:0"><span class="nm" style="font:600 18px var(--disp);color:var(--gold)">${h.n}</span><span class="hpt">Lv ${h.lv} · ${h.cls}</span><span class="heal">${healLine(id)}</span></div></div>
+    ${hpbar(h.hp, np)}
+    <div class="bar-note"><span>Now ${h.hp}% · ${h.w} wound${h.w === 1 ? '' : 's'}</span><span>Dawn → ${np}% · ${nw} wound${nw === 1 ? '' : 's'}</span></div>
+    <div class="meter">${Array(h.days).fill('').map((_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('')}<i></i></div>
+    <button class="btn" type="button">Take back</button></div>`; };
+const bedFree = `<div class="bed free"><div>Free bed<br><span class="dim">Drag a hero here to leave them</span></div></div>`;
+const fmini = (id) => { const h = heroes[id]; return `<div class="hero">${av(id, 'sm')}<div class="t"><span class="nm">${h.n}</span>${hpbar(h.hp)}</div></div>`; };
+$('#innB').innerHTML = `
+  <div class="hd"><h3 class="ttl">Inn</h3><span class="sub">Ashford · 4 beds</span></div>
+  <div class="cards4">${bedFull('defender')}${bedFull('hexer')}${bedFree}${bedFree}</div>
+  <div class="split" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)">
+    <div class="col"><h4 class="lab">Formation · 3 / 4 <span class="chip bad" style="margin-left:8px">Short-handed</span></h4>
+      <div class="fgrid"><span class="lbl">Front row</span>${fmini('paladin')}${fmini('archer')}<span class="lbl">Back row</span>${fmini('mage')}<div class="slot-empty">Empty</div></div></div>
+    <div class="col"><h4 class="lab">Reserves</h4>${fmini('druid')}<p class="line">Drag to an empty slot or tap Join.</p></div>
+  </div>
+  <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button">Done</button></div>`;
+
+const rowC = (id) => { const h = heroes[id]; const [a1, w1] = step(h.hp, h.w); const [a2, w2] = step(a1, w1); const inn = h.st === 'i'; const cell2 = (p, w) => `${p >= 100 && w === 0 ? '<span class="full">Full</span>' : p + '% · ' + w + ' <img src="' + A + 'wound.webp" alt="" style="display:inline;width:18px;height:18px;vertical-align:-4px">'}`;
+  return `<tr class="${inn ? 'in' : ''}"><td class="hn">${av(id, 'sm')}<span><b style="font:600 15px var(--disp);color:var(--gold)">${h.n}</b><br><span class="dim" style="font-size:14px">Lv ${h.lv}</span></span></td><td><span class="pstat ${h.st}">${{ p: 'Party', i: 'At Inn', r: 'Reserve' }[h.st]}</span></td><td>${h.hp}% · ${h.w} <img src="${A}wound.webp" alt="" style="display:inline;width:18px;height:18px;vertical-align:-4px"></td><td>${inn ? cell2(a1, w1) : '<span class="dim">no change</span>'}</td><td>${inn ? cell2(a2, w2) : '<span class="dim">no change</span>'}</td><td><button class="btn" type="button" style="min-height:38px">${inn ? 'Take back' : h.st === 'p' ? 'Leave here' : 'Join party'}</button></td></tr>`; };
+$('#innC').innerHTML = `
+  <div class="hd"><h3 class="ttl">Inn</h3><span class="sub">Ashford · Day 7</span></div>
+  <div class="split" style="grid-template-columns:minmax(0,3fr) minmax(0,1fr)">
+    <div class="tscroll"><table class="fc2"><thead><tr><th>Hero</th><th>Status</th><th>Now</th><th>Day 8</th><th>Day 9</th><th></th></tr></thead><tbody>${['paladin', 'archer', 'mage', 'defender', 'hexer', 'druid'].map(rowC).join('')}</tbody></table>
+      <p class="line" style="margin-top:8px">Heroes at the Inn heal 50% HP and 1 wound per day. They gain no XP and can only be taken back here.</p></div>
+    <div class="col"><h4 class="lab">Party · 3 / 4</h4>${['paladin', 'archer', 'mage'].map(fmini).join('')}<div class="slot-empty" style="min-height:56px">Empty slot</div></div>
+  </div>
+  <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button">Done</button></div>`;
+
+/* ---------- KAMP ---------- */
+const acts = [
+  { k: 'rest',   n: 'Rest',        d: 'Everyone recovers 50% HP.',            t: 'Whole party',  ic: `<img src="${A}node-rest.webp" alt="">` },
+  { k: 'tend',   n: 'Tend wounds', d: 'Heal 1 wound of one hero.',            t: 'Pick a hero',  ic: `<img src="${A}wound.webp" alt="">` },
+  { k: 'sharp',  n: 'Sharpen',     d: 'One item gets +1 temper, free.',       t: 'Pick an item', ic: `<img src="${A}whetstone_of_ashford.webp" alt="">` },
+  { k: 'train',  n: 'Train',       d: 'One hero gains bonus XP.',             t: 'Pick a hero',  ic: '<span>XP</span>' }
+];
+const camphead = (s) => `<div class="hd"><h3 class="ttl">Camp</h3><span class="sub">${s}</span></div><div class="fire"><img src="${A}node-rest.webp" alt=""><span class="ft">The fire is low and the road is long. One choice only, and the camp is gone by morning.</span></div>`;
+const itemsC = [ { n: 'Arming Sword', i: 'arming_sword', r: 'ra', m: 'Weapon power 24', a: '+6% crit', l: 16, t: 2 }, { n: 'Brigandine', i: 'brigandine', r: 'un', m: 'Armor 31', a: '+12 HP', l: 14, t: 0 } ];
+$('#campA').innerHTML = camphead('Day 7 · Bridge Toll') + `
+  <div class="cards4" id="cA">${acts.map((a, i) => `<button class="cc ${i === 1 ? 'on' : ''}" type="button" data-k="${a.k}"><span class="ico">${a.ic}</span><h4>${a.n}</h4><p>${a.d}</p><small>${a.t}</small></button>`).join('')}</div>
+  <h4 class="lab" id="cAl">Tend wounds · who?</h4>
+  <div class="hgrid" id="cAt">${['paladin', 'archer', 'mage', 'hexer'].map((id) => hero(id, id === 'mage' ? 'sel' : '')).join('')}</div>
+  <div class="row" style="justify-content:flex-end"><button class="btn" type="button">Leave camp</button><button class="btn pri" type="button">Tend Mage</button></div>`;
+
+const prevMap = {
+  rest:  `<div class="ba"><b>Party HP</b> <span>46%</span><span class="ar">→</span><span class="to">96%</span></div>`,
+  tend:  `<div class="ba"><b>Mage wounds</b> <span>1</span><span class="ar">→</span><span class="to">0</span></div>`,
+  sharp: `<div class="ba"><b>Arming Sword</b> <span>+2</span><span class="ar">→</span><span class="to">+3</span><span class="dim">· weapon power 24 → 26</span></div>`,
+  train: `<div class="ba"><b>Archer XP</b> <span>340 / 600</span><span class="ar">→</span><span class="to">460 / 600</span></div>`
+};
+$('#campB').innerHTML = camphead('Day 7 · Bridge Toll') + `
+  <div class="split">
+    <div class="col" id="cBl">${acts.map((a, i) => `<button class="opt ${i === 1 ? 'on' : ''}" type="button" data-k="${a.k}"><span class="ico">${a.ic}</span><span><b>${a.n}</b><span>${a.d}</span></span></button>`).join('')}</div>
+    <div class="prev"><h4 class="lab" id="cBh">Tend wounds</h4>
+      <div class="chips-hero" id="cBc">${['Paladin', 'Archer', 'Mage', 'Hexer'].map((n, i) => `<button class="btn ${i === 2 ? 'on' : ''}" type="button">${n}</button>`).join('')}</div>
+      <div id="cBp">${prevMap.tend}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button" id="cBb">Confirm</button></div>
+    </div>
+  </div>`;
+
+const hc = (id) => { const h = heroes[id]; return `<div class="hc"><div class="top">${av(id)}<div class="t col" style="gap:3px;flex:1;min-width:0"><span class="nm" style="font:600 17px var(--disp);color:var(--gold)">${h.n}</span><span class="hpt">Lv ${h.lv} · ${h.hp}% HP · ${h.w} wound${h.w === 1 ? '' : 's'}</span>${hpbar(h.hp)}</div></div>
+  <div class="chips-hero"><button class="btn ${h.w ? '' : 'off'}" type="button" ${h.w ? '' : 'disabled'}>Tend</button><button class="btn" type="button">Train +120</button><button class="btn" type="button">Sharpen</button></div></div>`; };
+$('#campC').innerHTML = camphead('Day 7 · Bridge Toll') + `
+  <div class="prev" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap"><div class="row" style="gap:12px"><span class="ico" style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:1px solid var(--edge)"><img src="${A}node-rest.webp" alt="" style="width:38px;height:38px"></span><span><b style="font:600 16px var(--disp);letter-spacing:.1em;color:var(--gold);text-transform:uppercase">Rest · whole party</b><br><span class="dim">Everyone +50% HP</span></span></div><button class="btn pri" type="button">Rest</button></div>
+  <h4 class="lab">Or give one hero something</h4>
+  <div class="hgrid">${['paladin', 'archer', 'mage', 'hexer'].map(hc).join('')}</div>
+  <p class="line">Sharpen opens that hero's gear to pick the item. One action only.</p>`;
+
+/* ---------- DEMIRCI ---------- */
+const I = {
+  sword: { n: 'Arming Sword', i: 'arming_sword', r: 'ra', m: 'Weapon power 24', a: '+6% crit · +3 might', l: 16, t: 2 },
+  cap:   { n: 'Iron Cap', i: 'iron_cap', r: 'un', m: 'Armor 14', a: '+8 HP', l: 12, t: 0 },
+  jerk:  { n: 'Leather Jerkin', i: 'leather_jerkin', r: 'ra', m: 'Armor 22', a: '+5% evasion', l: 13, t: 0 },
+  boots: { n: 'Hobnailed Boots', i: 'hobnailed_boots', r: 'ra', m: 'Armor 9', a: '+4 speed', l: 14, t: 1 },
+  maul:  { n: 'War Maul', i: 'war_maul', r: 'ep', m: 'Weapon power 38', a: '+9% crit · +6 might · +11 HP', l: 20, t: 3 },
+  shield:{ n: 'Kite Shield', i: 'kite_shield', r: 'un', m: 'Armor 18', a: '+6 block', l: 15, t: 0 },
+  bow:   { n: 'Hunting Bow', i: 'hunting_bow', r: 'cm', m: 'Weapon power 17', a: '', l: 8, t: 0 },
+  ring:  { n: 'Copper Ring', i: 'copper_ring', r: 'cm', m: 'Luck 2', a: '', l: 6, t: 0 },
+  helm:  { n: 'Great Helm', i: 'great_helm', r: 'ra', m: 'Armor 26', a: '+14 HP', l: 17, t: 0 }
+};
+const bagItems = [I.sword, I.cap, I.jerk, I.boots, I.maul, I.shield, I.bow, I.ring, I.helm];
+const stones = (n, cls = '') => `<span class="stones ${cls}"><img src="${A}whetstone_of_ashford.webp" alt=""><span>${n}<small> temper stones</small></span></span>`;
+const bagHtml = (selI) => `<div class="bag">${bagItems.map((it, i) => cell(it, i === selI ? 'sel' : '')).join('')}</div>`;
+const temperBody = `
+  ${plate(I.sword)}
+  <div class="diff"><div class="r"><span class="k">Temper</span><span>+2</span><span class="ar">→</span><span class="to">+3</span></div><div class="r"><span class="k">Weapon power</span><span>24</span><span class="ar">→</span><span class="to">26</span></div><div class="r"><span class="k">Item level</span><span>16</span><span class="ar">→</span><span class="to">17</span></div><div class="r"><span class="k">Might</span><span>+3</span><span class="ar">→</span><span class="to">+4</span></div></div>
+  <div class="cost"><span class="st"><img src="${A}whetstone_of_ashford.webp" alt="">2 stones</span><span class="dim">item level above 15</span>${gold(60)}</div>
+  <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button">Temper</button></div>`;
+const combineBody = (wide) => `
+  <div class="comb">${cell(I.cap, 'big')}<span class="op">+</span>${cell(I.jerk, 'big')}<span class="op">+</span>${cell(I.boots, 'big')}<span class="op">=</span><div class="cell big void">?</div></div>
+  <div class="odds"><div class="bar2"><i style="width:33%;background:var(--c-unc)">33%</i><i style="width:67%;background:var(--c-rare)">67%</i></div>
+    <div class="leg"><span><b style="color:#9fd88a">Uncommon</b> 33%</span><span><b style="color:#7fa8d8">Rare</b> 67%</span><span class="dim">average of Uncommon + Rare + Rare</span></div></div>
+  <p class="line">${wide ? 'Three of the same base item give the same kind of item. Mixed items give a random item of the average rarity.' : 'Same base item x3 gives that kind of item; otherwise random.'}</p>
+  <div class="cost">${gold(120)}<span class="stones" style="padding:2px 10px 2px 4px"><img src="${A}whetstone_of_ashford.webp" alt="" style="width:24px;height:24px"><span style="font-size:15px">no stones</span></span></div>
+  <div class="row" style="justify-content:flex-end"><button class="btn" type="button">Clear</button><button class="btn pri" type="button">Combine</button></div>`;
+const rerollBody = `
+  ${plate(I.maul)}
+  <div class="bsl"><h4 class="lab">Pick an affix to reroll</h4>
+    <div class="aff main"><span>Weapon power 38</span><em>Main</em></div>
+    <button class="aff" type="button"><span>+9% crit</span><em>Same tier</em></button>
+    <button class="aff on" type="button"><span>+6 might</span><em>Same tier</em></button>
+    <button class="aff" type="button"><span>+11 HP</span><em>Same tier</em></button></div>
+  <div class="cost">${gold(180)}<span class="dim">price rises with each reroll</span></div>
+  <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button">Reroll</button></div>`;
+
+function tabsUi(root, defIdx, wide) {
+  const names = [['Temper', ''], ['Combine', ''], ['Reroll', 'Epic']];
+  const bodies = [temperBody, combineBody(wide), rerollBody];
+  return `<div class="tabs">${names.map((n, i) => `<button class="tab ${i === defIdx ? 'on' : ''}" type="button" data-i="${i}">${n[0]}${n[1] ? '<i>' + n[1] + '</i>' : ''}</button>`).join('')}</div>` +
+    bodies.map((b, i) => `<div class="tp ${i === defIdx ? 'on' : ''}" data-i="${i}">${b}</div>`).join('');
+}
+$('#smA').innerHTML = `
+  <div class="hd"><h3 class="ttl">Blacksmith</h3><span class="row">${stones(7)}${gold(840)}</span></div>
+  <p class="line">Bring me steel, leather or a charm. I can make it stronger, for a price.</p>
+  <div class="smith"><div class="col" style="gap:12px" id="smAl">${tabsUi('#smAl', 0, false)}</div><div class="col"><h4 class="lab">Bag</h4>${bagHtml(0)}</div></div>`;
+$('#smB').innerHTML = `
+  <div class="hd"><h3 class="ttl">Blacksmith</h3><span class="row">${stones(7)}${gold(840)}</span></div>
+  <div class="col" style="gap:12px" id="smBl">${tabsUi('#smBl', 1, true)}</div>
+  <div class="bagstrip"><h4 class="lab">Bag · tap items to place them</h4>${bagHtml(1)}</div>`;
+$('#smC').innerHTML = `
+  <div class="hd"><h3 class="ttl">Blacksmith</h3><span class="row">${stones(7)}${gold(840)}</span></div>
+  <div class="stations">
+    <div class="stn"><h3>Temper <span>stone + gold</span></h3>${plate(I.sword)}<div class="diff"><div class="r"><span class="k">Temper</span><span>+2</span><span class="ar">→</span><span class="to">+3</span></div><div class="r"><span class="k">Power</span><span>24</span><span class="ar">→</span><span class="to">26</span></div></div><div class="cost"><span class="st"><img src="${A}whetstone_of_ashford.webp" alt="">2</span>${gold(60)}</div><button class="btn pri" type="button">Temper</button></div>
+    <div class="stn"><h3>Combine <span>3 → 1</span></h3><div class="comb">${cell(I.cap)}${cell(I.jerk)}${cell(I.boots)}</div><div class="odds"><div class="bar2"><i style="width:33%;background:var(--c-unc)">33%</i><i style="width:67%;background:var(--c-rare)">67%</i></div><div class="leg"><span><b style="color:#9fd88a">Uncommon</b> 33%</span><span><b style="color:#7fa8d8">Rare</b> 67%</span></div></div><div class="cost">${gold(120)}</div><button class="btn pri" type="button">Combine</button></div>
+    <div class="stn"><h3>Reroll <span>Epic only</span></h3>${plate(I.maul)}<div class="bsl"><div class="aff main"><span>Power 38</span><em>Main</em></div><button class="aff" type="button"><span>+9% crit</span></button><button class="aff on" type="button"><span>+6 might</span></button></div><div class="cost">${gold(180)}</div><button class="btn pri" type="button">Reroll</button></div>
+  </div>
+  <div class="bagstrip"><h4 class="lab">Bag</h4>${bagHtml(0)}</div>`;
+
+/* ---------- etkilesim ---------- */
+document.addEventListener('click', (e) => {
+  const tab = e.target.closest('.tabs .tab');
+  if (tab) { const p = tab.closest('.col'); p.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t === tab)); p.querySelectorAll('.tp').forEach((t) => t.classList.toggle('on', t.dataset.i === tab.dataset.i)); return; }
+  const cc = e.target.closest('#cA .cc');
+  if (cc) { document.querySelectorAll('#cA .cc').forEach((c) => c.classList.toggle('on', c === cc)); const a = acts.find((x) => x.k === cc.dataset.k); $('#cAl').textContent = a.k === 'rest' ? 'Rest · whole party' : a.n + ' · ' + (a.k === 'sharp' ? 'which item?' : 'who?'); $('#cAt').innerHTML = a.k === 'rest' ? `<div class="line">Everyone recovers 50% HP. No target needed.</div>` : a.k === 'sharp' ? itemsC.map(plate).join('') : ['paladin', 'archer', 'mage', 'hexer'].map((id) => hero(id)).join(''); return; }
+  const op = e.target.closest('#cBl .opt');
+  if (op) { document.querySelectorAll('#cBl .opt').forEach((c) => c.classList.toggle('on', c === op)); const a = acts.find((x) => x.k === op.dataset.k); $('#cBh').textContent = a.n; $('#cBp').innerHTML = prevMap[a.k]; $('#cBc').style.display = a.k === 'rest' ? 'none' : ''; return; }
+  const ch = e.target.closest('#cBc .btn');
+  if (ch) { document.querySelectorAll('#cBc .btn').forEach((c) => c.classList.toggle('on', c === ch)); return; }
+  const pl = e.target.closest('#cAt .hero, #cAt .plate');
+  if (pl) { document.querySelectorAll('#cAt .hero, #cAt .plate').forEach((c) => c.classList.toggle('sel', c === pl)); }
+  const ce = e.target.closest('.bag .cell');
+  if (ce) { const b = ce.parentElement; b.querySelectorAll('.cell').forEach((c) => c.classList.toggle('sel', c === ce)); }
+});
+</script>
+</body>
+</html>

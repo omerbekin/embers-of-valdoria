@@ -7,7 +7,7 @@
 //  2) C1 koşul sözlüğü: TEK tablo COND (koşul anahtarı -> değerlendirici) + SCALE (ölçek anahtarı -> sayı). Yeni koşul = tabloya 1 satır
 //     (+ gerekiyorsa CondHost'a bir okuma). Değerlendirilemeyen koşul (ör. savaş bağlamı olmayan bedel hesabı) = tutmaz.
 //  3) Ölçüm: tetiklenen ağaç etkisi Battle.onTreeProc dinleyicisine { type: 'treeProc', uid, node } verir (olay akışına / kayda GİRMEZ).
-import type { Combatant, ItemEffects, SkillCost, SkillDef, SkillEffect } from './types';
+import type { Combatant, Element, ItemEffects, SkillCost, SkillDef, SkillEffect } from './types';
 
 /* ------------------------------------------------------------------ (b) unitFx kanalı ------------------------------------------------------------------ */
 
@@ -18,6 +18,7 @@ export const UNIT_FX_KEYS = [
   'ignoreFirstDebuff', 'shieldRefresh', 'moveStride', 'critHealAlly', 'blockChance', 'armorPen', 'magicPen', 'mpCostReduce', 'leech', 'manaLeech',
   'debuffAvoid', 'potencyTurns', 'auraDamage', 'damageTakenReduce', 'lowHpReduce', 'ultCdReduce', 'earlyImmunity', 'summonPower', 'rageGain',
   'retortStatus', 'critStatuses', 'killRush', 'lastStand', 'openerStatus', 'restBlessing', 'vengeance', 'tierStatus',
+  'elemResist', 'thorns', 'frontRowDamage', 'backRowDamage', 'tierDamageTakenReduce', 'columnGuard', 'pierceBehind', 'steadyDamage',
 ] as const satisfies readonly (keyof ItemEffects)[];
 type MissingKey = Exclude<keyof ItemEffects, (typeof UNIT_FX_KEYS)[number]>;
 const _allKeys: [MissingKey] extends [never] ? true : MissingKey = true;
@@ -85,6 +86,13 @@ export function effList<K extends FxKey>(c: FxHolder, key: K): Array<{ v: NonNul
 /** Sayaçlı tek kaynaklı kanca (nthSpellFree, moveStride): item varsa o, yoksa ağaç. */
 export function effFirst<K extends FxKey>(c: FxHolder, key: K): ItemEffects[K] | undefined {
   return c.itemEffects?.[key] ?? c.treeFx?.[key];
+}
+
+/** Element direnci (elemResist; Ömer 2026-10-26, c_res_*): kanalların toplamı (yoksa 0). */
+export function elemResistOf(c: FxHolder, element: Element): number {
+  const a = c.itemEffects?.elemResist?.[element] ?? 0;
+  const t = c.treeFx?.elemResist?.[element] ?? 0;
+  return a + t;
 }
 
 /** "Savaşta bir kez" tetiklerin item kanalındaki eski bayrakları (ağaç kanalı Combatant.treeOnce'ta tutulur). */

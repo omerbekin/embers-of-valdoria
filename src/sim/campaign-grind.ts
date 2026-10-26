@@ -59,7 +59,6 @@ import {
   startPatrol,
   temperItem,
   temperPreview,
-  townRestPrice,
   travelRoutes,
   visitedNodes,
   type CampaignState,
@@ -192,12 +191,7 @@ export function simOverrides(o: Pick<GrindSimOptions, 'repeat' | 'valorRevive' |
     valorRules.revive.outsideCost = o.valorRevive[1];
     undo.push(() => Object.assign(valorRules.revive, old));
   }
-  if (o.restPrice !== undefined) {
-    const p = CONFIG.rest.price as { base: number; perLevel: number };
-    const old = { ...p };
-    p.base = o.restPrice; // L1 fiyatı
-    undo.push(() => Object.assign(p, old));
-  }
+  // restPrice: ücretli kasaba dinlenmesi kalktı (Ömer 2026-10-26, yerine Inn); bayrak artık etkisiz (balance-tester kaldırabilir)
   return () => undo.reverse().forEach((f) => f());
 }
 
@@ -392,7 +386,8 @@ const clearedTowns = (s: CampaignState): string[] => {
 };
 
 /** Ücretli bir kasaba dinlenmesinin fiyatı (tüccar payı; ilk bedava dinlenme sayılmaz). */
-const paidRestPrice = (s: CampaignState): number => townRestPrice({ ...s, townRests: { _: 1 } }, '_');
+// 2026-10-26 (form econ/main): ücretli kasaba dinlenmesi kalktı (yerine Inn, ücretsiz); pay 0 (campaign-dev, derlensin diye; balance-tester güncelleyecek)
+const paidRestPrice = (_s: CampaignState): number => 0;
 
 /** Takımın (yaşayan) bir kahramanına göre malın IP kazancı: uygun yuvadaki takılı item'den IP farkı (boş yuva = 0); en iyi kahraman. */
 function wareGain(s: CampaignState, w: { itemId: string; rolls?: unknown }): number {
@@ -573,7 +568,7 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     const smith = (t: CampaignState): CampaignState => {
       const towns = clearedTowns(t);
       if (!towns.length) return t;
-      const reserve = Math.min(...towns.map((id) => townRestPrice(t, id)));
+      const reserve = 0; // ücretli kasaba dinlenmesi kalktı (2026-10-26): dinlenme payı ayrılmaz
       for (let guard = 0; guard < 60; guard++) {
         const weapons = activeHeroes(t)
           .map((h) => h.equipment?.weapon)

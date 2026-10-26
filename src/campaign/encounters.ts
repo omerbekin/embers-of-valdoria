@@ -8,7 +8,7 @@ import { battleSeed } from './seed';
 import { mobLook } from './mob-looks';
 import { chapterEnemyMods, nodeLevel } from './power';
 import { withEnemyLevel } from '../progression/levels';
-import { loadoutSetup } from '../progression/loadout';
+import { itemWoundSoft, loadoutSetup } from '../progression/loadout';
 import { activeHeroes, heroById, replayCount } from './state';
 import type { UnitSetup } from '../engine/types';
 import type { BattleOutcome, CampaignState, Difficulty, DifficultyEnemyMods, EncounterDef, EncounterUnit, UnitMods } from './types';
@@ -152,7 +152,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     // Güç toplama katmanı (temel + item; ileride level/ağaç): hiçbir şey takılı değilse boş => birim bugünküyle aynı
     const setup: UnitSetup = caps.unitMods ? loadoutSetup(h, { mode: 'campaign' }) : {};
     // Yara (Ömer 2026-10-19, hp-death-rework.md): her yara maks canı rules.wounds.maxHpLoss düşürür (kurulumda hpMult / hpAdd; motor aynı)
-    if (caps.unitMods && woundCount(h) > 0) applyWounds(setup, woundCount(h), CONFIG.rules.wounds);
+    if (caps.unitMods && woundCount(h) > 0) applyWounds(setup, woundCount(h), CONFIG.rules.wounds, itemWoundSoft(h)); // b_wound_soft affix'i (Ömer 2026-10-26)
     // Can taşıma: eksik canlı karakter o oranla başlar (motor en az 1 can verir)
     // Düşmüş kahraman (Ömer 2026-10-11, Endless gibi): savaşa CESET olarak girer (yuvasında; savaşta Resurrection ile kalkabilir)
     if (!h.alive || h.hpRatio <= 0) setup.startDead = 'revivable';

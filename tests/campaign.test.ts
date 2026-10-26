@@ -360,7 +360,7 @@ describe('can taşıma', () => {
     expect(t.roster[0]!.hpRatio).toBe(1); // tavan 1
   });
 
-  it('boss zaferi YAŞAYANLARI tam iyileştirir (düşen yaralı %10 kalkar); kasaba varışta yaşayanları tam iyileştirir, cesedi KALDIRMAZ (TUR 1 madde 10); yenilgi yalnızca sayaç', () => {
+  it('boss zaferi YAŞAYANLARI tam iyileştirir (düşen yaralı %10 kalkar); kasaba varışı iyileştirmez (Ömer 2026-10-26), cesedi KALDIRMAZ (TUR 1 madde 10); yenilgi yalnızca sayaç', () => {
     let s = playTo(fresh(11), '9');
     const team = activeHeroes(s);
     s = applyBattle(s, { victory: true, units: team.map((h, i) => ({ heroId: h.id, hpRatio: i === 0 ? 0 : 0.1, alive: i !== 0 })) });
@@ -375,8 +375,9 @@ describe('can taşıma', () => {
     expect(lost.roster).toEqual(t.roster);
     const down = t.roster[1]!.id;
     t = { ...t, roster: t.roster.map((h) => (h.id === down ? { ...h, hpRatio: 0, alive: false } : h)) };
+    const before = t;
     t = moveTo(t, '4');
-    expect(t.roster.every((h) => (h.id === down ? h.hpRatio === 0 && !h.alive : h.hpRatio === 1 && h.alive))).toBe(true); // dinlenme diriltmez (Ömer 2026-10-18)
+    expect(t.roster.every((h) => (h.id === down ? h.hpRatio === 0 && !h.alive : h.hpRatio === before.roster.find((x) => x.id === h.id)!.hpRatio && h.alive))).toBe(true); // varış şifası yok (2026-10-26), diriltme yok
   });
 });
 

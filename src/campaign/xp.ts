@@ -5,6 +5,7 @@ import { encounterWavesById } from './encounter-waves';
 import { node } from './graph';
 import { nodeLevel } from './power';
 import { LEVELS, addXp, allocate, autoAllocate, campaignMaxLevel, nodeXpMult, setLevel, splitXp, type KillRecord, type LevelUp, type StatAlloc } from '../progression/levels';
+import { itemXpBonus } from '../progression/loadout';
 import type { BattleOutcome, CampaignState, Hero } from './types';
 
 const clone = (s: CampaignState): CampaignState => JSON.parse(JSON.stringify(s)) as CampaignState;
@@ -49,7 +50,13 @@ export function battleXp(t: CampaignState, outcome: BattleOutcome, encounterId: 
   const kills: KillRecord[] = outcome.kills ?? Array.from({ length: encounterEnemyCount(encounterId) }, () => ({ down: [] }));
   const n = node(getMap(t.mapId), t.at);
   const waves = Math.max(1, encounterWavesById(encounterId).length); // dalga bonusu (D7)
-  return splitXp({ heroes: heroes.map((h) => ({ id: h.id, level: h.level })), nodeLevel: nodeLevel(t.mapId, t.at), mult: nodeXpMult(n.type, LEVELS, true), kills, waves });
+  const gains = splitXp({ heroes: heroes.map((h) => ({ id: h.id, level: h.level })), nodeLevel: nodeLevel(t.mapId, t.at), mult: nodeXpMult(n.type, LEVELS, true), kills, waves });
+  // c_xp affix'i (Ömer 2026-10-26): yalnızca takanın savaş XP'si artar
+  for (const h of heroes) {
+    const b = itemXpBonus(h);
+    if (b > 0 && gains[h.id]) gains[h.id] = Math.round(gains[h.id]! * (1 + b));
+  }
+  return gains;
 }
 
 /** Savaşsız olay / hazine düğümünün sabit XP'si: fixedEnemies düşmanlık XP x düğüm çarpanı (0,5), aktif takıma bölünür (düşmüşler fallenShare). */

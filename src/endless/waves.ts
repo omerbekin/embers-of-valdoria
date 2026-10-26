@@ -3,7 +3,7 @@ import { CELL_COUNT, bosses, classes, encounterUnit, randomCells, randomPool, su
 import { escortsOf, hasLeader, reinforcementGroup, waveOpening } from '../engine/wave-split';
 import { Rng } from '../engine/rng';
 import type { UnitModifiers, UnitSetup } from '../engine/types';
-import { loadoutSetup } from '../progression/loadout';
+import { itemWoundSoft, loadoutSetup } from '../progression/loadout';
 import { applyWounds, woundCount } from '../progression/wounds';
 import { LEVELS, withEnemyLevel } from '../progression/levels';
 import { ITEMS } from '../progression/items';
@@ -167,7 +167,7 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     if (run.blessing && run.blessing.waves > 0 && run.blessing.hpMult !== 1)
       setup.modifiers = { ...(setup.modifiers ?? {}), hpMult: r3((setup.modifiers?.hpMult ?? 1) * run.blessing.hpMult) };
     // Yara (Ömer 2026-10-19, hp-death-rework.md): her yara maks can -carry.wounds.maxHpLoss (kurulumda hpMult / hpAdd; motor aynı)
-    if (woundCount(h) > 0) applyWounds(setup, woundCount(h), endlessWoundRules(cfg));
+    if (woundCount(h) > 0) applyWounds(setup, woundCount(h), endlessWoundRules(cfg), itemWoundSoft(h)); // b_wound_soft affix'i (Ömer 2026-10-26)
     if (h.hpRatio < 1) setup.startHpRatio = Math.max(0, h.hpRatio);
     // Taşınan durum (MP oranı, buff'lar, Rage, kalkan, cooldown'lar) + dalga arası cooldown kuralı
     Object.assign(setup, carrySetup(h.carry, uidAt.get(slot)!, uidOf, keepCd));

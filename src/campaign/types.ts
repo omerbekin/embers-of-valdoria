@@ -65,8 +65,6 @@ export interface MapNode {
   event?: string;
   treasure?: string;
   recruit?: RecruitDef;
-  /** Varınca iyileşme oranı (kasaba: 1 = tam). */
-  heal?: number;
   endsTutorial?: boolean;
   newCompany?: { size: number; leader: 'firstPick' };
   partyCap?: number;
@@ -78,8 +76,13 @@ export interface MapNode {
   city?: boolean;
   final?: boolean;
   teaches?: string;
-  /** Dinlenme (Ömer 2026-10-11): ücretsiz iyileşme + altınla diriltme (campaign.json > rest). Dinlenme düğümünde ya da başka bir düğümün adımlarından sonra (Shepherd's Fold: olaydan sonra). */
+  /**
+   * Kamp (Ömer 2026-10-26, form econ/main): dinlenme düğümünde ya da başka bir düğümün adımlarından sonra (Shepherd's Fold: olaydan sonra). Bir kez
+   * kullanılır, tek seçim: Rest / Tend wounds / Sharpen / Train (state.ts > useCamp; campaign.json > camp).
+   */
   rest?: boolean;
+  /** Kasabada demirci var mı (Ömer 2026-10-26: demirci 2. kasabadan; Ashford false). Yoksa kasabada var (true). */
+  smith?: boolean;
   /** Tüccar (Odo; campaign.json > merchant): stok düğümün item seviyesinden. */
   merchant?: boolean;
   /** Tüccar stok boyutu (yoksa campaign.json > merchant.size). Kasabalar (T1): Ashford küçük, Valdren Keep büyük. */
@@ -108,7 +111,7 @@ export interface MapNode {
 }
 
 /** Kasaba ekranında bir yerin eylemi: tezgâh (Trade), ilan panosu / kışla (aday), hikâye NPC'si (sahne yeniden), ateş (dinlenme notu), çıkış. */
-export type TownAction = 'trade' | 'recruit' | 'story' | 'rest' | 'leave' | 'smith'; // smith: demirci (TUR 1 madde 7; kasaba ekranı kendisi açar)
+export type TownAction = 'trade' | 'recruit' | 'story' | 'rest' | 'leave' | 'smith' | 'inn'; // smith: demirci (TUR 1 madde 7; kasaba ekranı kendisi açar); inn: Inn (2026-10-26; rest = ESKİ ateş başı, veride artık yok)
 
 /** Kasaba ekranında tıklanabilir yer. `rect` = arka plan görselinin oranı [x0, y0, x1, y1] (0-1); görsel ölçeklenince birlikte ölçeklenir. */
 export interface TownHotspot {
@@ -289,18 +292,21 @@ export interface CampaignConfig {
    * `all` = rütbesiz ve elit birimler, `boss` = boss rütbeli birimler (`all` yerine). Endless'ı etkilemez (yalnızca sefer battlePlan'ı).
    */
   enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Bölge çarpanı (Ömer 2026-10-24: bölge I biraz kolay, II-III biraz zor): all/elite/boss ölçeğinin can ve gücüyle çarpılır. */ regions?: Record<string, number>; /** Bölge çarpanının geçtiği harita (bölge id'leri haritalar arasında tekrar eder: I, II, III). Yoksa ilk harita. */ regionsMap?: string; /** Ölçeğin uygulanmadığı düğümler (eğitim: Mill Road .. Ashford; map-1-rework.md 4.3, eski skipRegions ["I"]). */ skipNodes?: string[] };
-  /**
-   * Dinlenme (Ömer 2026-10-11; 2026-10-18 TUR 1 madde 10): kamp ücretsiz iyileşme oranı; kasabada ilk dinlenme bedava, sonrakiler `price`
-   * (base + perLevel x (takımın ortalama level'ı - 1); Ömer 2026-10-26). Dinlenme DİRİLTMEZ (diriltme yalnızca Valor).
-   */
-  rest: { heal: number; price: { base: number; perLevel: number } };
+  /** Kampın Rest seçeneği (Ömer 2026-10-26): yaşayanlar maks canın `heal` oranı kadar iyileşir. Dinlenme DİRİLTMEZ (diriltme yalnızca Valor). */
+  rest: { heal: number };
+  /** Kampın diğer seçenekleri (Ömer 2026-10-26): Tend wounds `tendWounds` yara; Train = o düğümdeki normal savaşın (`trainEnemies` düşman) kahraman payının `trainShare` oranı. */
+  camp: { tendWounds: number; trainShare: number; trainEnemies: number };
+  /** Inn (Ömer 2026-10-26): bırakılan kahraman her gün maks canın `healPerDay` oranı ve `woundsPerDay` yara iyileşir. */
+  inn: { healPerDay: number; woundsPerDay: number };
+  /** Gün (Ömer 2026-10-26): `completionsPerDay` tamamlama (ilk zafer ya da devriye zaferi) = 1 gün. */
+  days: { completionsPerDay: number };
   /**
    * Serbest dolaşım / devriye (roadmap 2.2-2.3 A; campaign.json > replay): `xp[i]` = düğümün i. yeniden oynanışında XP çarpanı (0 = ilk zafer,
    * son değer taban). Altın ve item çarpanı items.json > loot.repeat'tedir (aynı sayılar). Yoksa yeniden oynama XP'si tam.
    */
   replay?: { xp: number[] };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
-  merchant: { size: number; /** Yenileme tabanı; bedel = rerollCost + rerollPerLevel x aktif takımın ortalama level'ı (Ömer 2026-10-24). */ rerollCost: number; rerollPerLevel?: number; /** Fiyat çarpanı = 1 + priceGrowth x (item seviyesi - 1) (Ömer 2026-10-24; satış değeri etkilenmez). */ priceGrowth?: number; buybackSize: number; rotateEvery: number };
+  merchant: { size: number; /** Yenileme tabanı; bedel = rerollCost + rerollPerLevel x aktif takımın ortalama level'ı (Ömer 2026-10-24). */ rerollCost: number; rerollPerLevel?: number; /** Fiyat = priceBase[nadirlik] x (1 + pricePerIlvl x item seviyesi); satış yarısı (Ömer 2026-10-26, src/campaign/merchant.ts > campaignPrice). */ priceBase: Record<string, number>; pricePerIlvl: number; buybackSize: number };
   /** Kasaba ekranı yerleşimi (1920x1080 birim): kahraman boyu, ayak çizgisi (H oranı; telefonda alt yazıya yer kalsın diye feetYPhone), kahramanlar arası, yer etiketi yazı boyu (masaüstü / telefon). */
   townScreen: { heroHeight: number; feetY: number; feetYPhone: number; gap: number; labelSize: number; labelSizePhone: number };
 }
@@ -393,6 +399,8 @@ export interface CampaignState {
   inventory: ItemInstance[];
   /** Altın (Aşama 1'de loot/tüccar). */
   gold: number;
+  /** Temper taşı (Ömer 2026-10-26; boss / elit ilk zaferinden düşer, demircide Temper bedeli; src/campaign/loot.ts, smith.ts). Eski kayıtta yok = 0. */
+  temperStones?: number;
   /** Sıradaki item örneği numarası (uid 'i<n>'). */
   nextItemId: number;
   /**
@@ -402,11 +410,26 @@ export interface CampaignState {
   pendingHandover?: Handover;
   /** Loot sayaçları (items.md 3.3-3.4): Rare pity, düğüm başına zafer sayısı ('<düğüm>:battle' | '<düğüm>:treasure'; tekrar oynamada azalan ödül). */
   lootState: { rarePity: number; clears: Record<string, number>; rareMisses?: number };
-  /** Kasabada dinlenme sayacı (düğüm id -> kaç kez dinlenildi; TUR 1 madde 10: ilk bedava, sonrakiler ücretli). Eski kayıtta yok = hiç. */
+  /** ESKİ kasaba dinlenmesi sayacı (TUR 1 madde 10; Ömer 2026-10-26'da ateş başı dinlenmesi kalktı, Inn geldi). Artık yazılmaz; eski kayıtta kalabilir. @deprecated */
   townRests?: Record<string, number>;
+  /**
+   * Gün (Ömer 2026-10-26, form econ/main): 1'den başlar, yalnız düğüm tamamlamayla ilerler (ilk zafer ya da devriye zaferi; `days.completionsPerDay`
+   * tamamlama = 1 gün). Yürümek, kasaba / olay / kamp gün harcamaz; harita geçişinde sürer. Günle düşman güçlenmez. Tüccar / demirci stoğu ve Inn
+   * iyileşmesi bunu okur; ileride görev süresi / günle açılma için. Eski kayıtta yok = 1 (state.ts > dayOf).
+   */
+  day?: number;
+  /** Günün ilerlemesi (0-1; tamamlama başına 1 / completionsPerDay). Eski kayıtta yok = 0 (state.ts > dayProgressOf). */
+  dayProgress?: number;
+  /**
+   * Inn'de bırakılan kahramanlar (Ömer 2026-10-26): kadrodan ve dizilimden çıkar, savaşa girmez, XP almaz; her gün iyileşir (campaign.json > inn).
+   * Yalnız bırakıldığı kasabada (`mapId` + `town`) geri alınır; harita geçişinde kendiliğinden döner. `day` = bırakıldığı gün. Eski kayıtta yok = boş.
+   */
+  inn?: InnStay[];
+  /** Kullanılmış kamplar ('<harita>:<düğüm>' -> seçilen seçenek; Ömer 2026-10-26: kamp bir kez). Kamp adımı `done`'da da biter; bu, seçimin kaydı. */
+  campsUsed?: Record<string, CampChoice['kind']>;
   /** Tanışma paneli gösterilen tüccarlar (Ömer 2026-10-20: "her merchant instance'ında 1 kere"): '<harita>:<düğüm>' -> 1. Eski kayıtta yok = hiçbiri görülmedi (isteğe bağlı alan; sürüm değişmez). */
   merchantSeen?: Record<string, number>;
-  /** Tüccarda satın alınan raflar (Ömer 2026-10-24, "sonraki ziyaretten önce 2 node geçildiyse çıksın"): '<harita>:<düğüm>' -> raf -> alındığı andaki shopRotations. Aynı sayıdaysa raf "sold" kalır, ilerleme artınca yeni malla dolar. Eski kayıtta yok (isteğe bağlı alan; sürüm değişmez). */
+  /** Tüccarda satın alınan raflar (Ömer 2026-10-24, "sonraki ziyaretten önce 2 node geçildiyse çıksın"): '<harita>:<düğüm>' -> raf -> alındığı gün (CampaignState.day; Ömer 2026-10-26: stok günlük). Aynı günse raf "sold" kalır, ertesi gün bütün raflar yeni malla dolar. Eski kayıtta yok (isteğe bağlı alan; sürüm değişmez). */
   merchantSold?: Record<string, Record<number, number>>;
   /** Son düşüş: haritada "Spoils" kartı olarak gösterilir, onaylanınca silinir (`acknowledgeLoot`). */
   pendingLoot?: LootDrop;
@@ -453,6 +476,19 @@ export interface CampaignState {
   reserve?: Hero[];
 }
 
+/** Inn'de bekleyen kahraman (Ömer 2026-10-26). */
+export interface InnStay {
+  hero: Hero;
+  /** Bırakıldığı harita ve kasaba düğümü (yalnız orada geri alınır). */
+  mapId: string;
+  town: string;
+  /** Bırakıldığı gün. */
+  day: number;
+}
+
+/** Kamp seçimi (Ömer 2026-10-26; tek seçim, kamp bir kez): Rest (yaşayanlar), Tend wounds (bir kahraman), Sharpen (bir item, bedava Temper), Train (bir kahraman). */
+export type CampChoice = { kind: 'rest' } | { kind: 'tend'; heroId: string } | { kind: 'sharpen'; uid: string } | { kind: 'train'; heroId: string };
+
 /** Sefer savaşının duraklatılmış kaydı: düğüm, savaş seed'i, eylem günlüğü, tur, durum özeti, kurulum parmak izi (src/campaign/suspend.ts). */
 export interface CampaignSuspended {
   node: string;
@@ -472,6 +508,8 @@ export interface CampaignShop {
   wares: Array<{ itemId: string; rolls?: ItemInstance['rolls']; price: number; sold?: boolean }>;
   buyback: Array<{ item: ItemInstance; price: number }>;
   rerolls: number;
+  /** Stoğun günü (CampaignState.day; Ömer 2026-10-26: tüccar stoğu günlük yenilenir). Eski kayıtta yok = 0. */
+  day?: number;
 }
 
 /**
@@ -490,6 +528,8 @@ export interface LootDrop {
   leftRolls?: Array<ItemRoll | undefined>;
   /** Kasaba diyaloğu hediyesi (Spoils kartı başlığı "Gift", altın satırı yok). */
   gift?: boolean;
+  /** Bu düşüşte gelen Temper taşı (boss / elit ilk zaferi; Spoils kartında satır). Yoksa 0. */
+  stones?: number;
 }
 
 /** Teslim kaydı: kimden (ayrılan kahramanlar), hangi item'ler (torbadaki uid'ler), hangi düğümde. */

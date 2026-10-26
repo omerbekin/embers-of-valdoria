@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoResolve, canReplay, CONFIG, debugSetLevel, debugTeleport, getMap, newCampaign, nextStep, node, pickHero, townRestPrice } from '../src/campaign';
+import { autoResolve, canReplay, CONFIG, debugSetLevel, debugTeleport, getMap, newCampaign, nextStep, node, pickHero } from '../src/campaign';
 import { Battle, content } from '../src/engine';
 import { valorRules } from '../src/engine/content';
 import { lateValorChoice, nodeCategory, resolveSimMap, simMapChain } from '../src/sim/campaign';
@@ -98,17 +98,16 @@ describe('sefer kasma simülatörü', () => {
   it('seçenekler yalnızca sim süresince geçerli: veri kopyası sonra eski haline döner (oyun davranışı değişmez)', () => {
     const repeat = JSON.stringify(ITEMS.loot.repeat);
     const revive = JSON.stringify(valorRules.revive);
-    const rest = JSON.stringify(CONFIG.rest.price);
-    const s = { mapId: 'valdoria', townRests: { ashford: 1 }, roster: [], active: [] };
-    const price = townRestPrice(s, 'ashford');
-    const undo = simOverrides({ repeat: 'off', valorRevive: [2, 1], restPrice: price + 7 });
+    const rest = JSON.stringify(CONFIG.rest);
+    // restPrice: ücretli kasaba dinlenmesi kalktı (2026-10-26, yerine Inn); bayrak etkisiz, veri değişmez
+    const undo = simOverrides({ repeat: 'off', valorRevive: [2, 1], restPrice: 37 });
     expect(ITEMS.loot.repeat.every((x) => x.items === 1)).toBe(true);
     expect(valorRules.revive.battleCost).toBe(2);
-    expect(townRestPrice(s, 'ashford')).toBe(price + 7);
+    expect(JSON.stringify(CONFIG.rest)).toBe(rest);
     undo();
     expect(JSON.stringify(ITEMS.loot.repeat)).toBe(repeat);
     expect(JSON.stringify(valorRules.revive)).toBe(revive);
-    expect(JSON.stringify(CONFIG.rest.price)).toBe(rest);
+    expect(JSON.stringify(CONFIG.rest)).toBe(rest);
     // tüm koşu: tüccar 'sell' (satar + alır) ve seçenekler; bitince veri aynen
     const r = simulateGrind({ difficulty: 'easy', player: 'good', runs: 1, firstSeed: 3, merchant: 'sell', repeat: 'off', valorRevive: [4, 3], restPrice: 20 });
     expect(r.merchant).toBe('sell');
@@ -117,7 +116,7 @@ describe('sefer kasma simülatörü', () => {
     expect(r.econ.boughtEquipped).toBeLessThanOrEqual(r.econ.itemsBought);
     expect(JSON.stringify(ITEMS.loot.repeat)).toBe(repeat);
     expect(JSON.stringify(valorRules.revive)).toBe(revive);
-    expect(JSON.stringify(CONFIG.rest.price)).toBe(rest);
+    expect(JSON.stringify(CONFIG.rest)).toBe(rest);
   });
 
   it('güç kaldıracı bayrakları: varsayılan 0, --bonus-level / --bonus-ilvl / --bonus-gold okunur, geçersiz değer hata', () => {

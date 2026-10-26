@@ -173,23 +173,18 @@ describe('sefer: dinlenme', () => {
     expect(hero(r, id)).toMatchObject({ hpRatio: 0.7, wounds: 2 });
   });
 
-  it('kasabaya ilk varış bedava tam şifa + yaraları siler; sonraki ücretli dinlenme de siler; ceset kalkmaz ve yarası kalır', () => {
+  it('kasabaya varış iyileştirmez ve yara silmez (Ömer 2026-10-26: yerine Inn); ceset kalkmaz ve yarası kalır', () => {
     let p = debugTeleport(newCampaign({ mode: 'normal', seed: 4242 }), 'charcoal');
     for (let i = 0; i < 20 && nextStep(p).kind !== 'move'; i++) p = autoResolve(p);
     const [a, b] = p.roster;
     p = setHero(setHero(p, a!.id, { hpRatio: 0.3, wounds: 2 }), b!.id, { alive: false, hpRatio: 0, wounds: 3 });
     const first = moveTo(p, '7');
-    expect(hero(first, a!.id)).toMatchObject({ hpRatio: 1 });
-    expect(hero(first, a!.id).wounds).toBeUndefined();
+    expect(hero(first, a!.id)).toMatchObject({ hpRatio: 0.3, wounds: 2 });
     expect(hero(first, b!.id)).toMatchObject({ alive: false, wounds: 3 });
-    // ücretli ateş başı
-    const again = { ...setHero(first, a!.id, { wounds: 1, hpRatio: 0.5 }), gold: 999 };
-    const rested = restInTown(again, '7');
-    expect(rested.gold).toBeLessThan(999);
-    expect(hero(rested, a!.id)).toMatchObject({ hpRatio: 1 });
-    expect(hero(rested, a!.id).wounds).toBeUndefined();
-    expect(CONFIG.texts.townRest).toContain('wounds are healed');
+    expect(restInTown(first, '7')).toBe(first); // eski ateş başı etkisiz
+    expect(CONFIG.texts.townRest).toContain('inn');
   });
+
 });
 
 describe('sefer: kayıt (sürüm 11)', () => {

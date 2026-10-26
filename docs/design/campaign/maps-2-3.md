@@ -427,6 +427,9 @@ Tür: B savaş, E elit, S boss, T kasaba, Tr hazine (g = korunan), Ev olay, R di
 
 MP'ye dayanan pasif: 0 (Kindling hasar sürümü, Ömer kararı). **Hepsi onaylı (2026-10-20);** uygulama sırasında her biri Codex > Mechanics metni ve test ile gelir; M-N2 (zorla hareket) motorda birim taşıma kuralıdır: hedef hücre doluysa çekme olmaz, boss/elit rütbeliler çekilemez (VARSAYIM, uygulamada doğrulanır).
 
+
+**Not (campaign-dev 2026-10-26, form econ/main):** Görevler (Personal Quests) henüz yok; ileride görev süresi ve günle açılma için `CampaignState.day` (gün sayacı, 2 tamamlama = 1 gün) hazır bekliyor.
+
 ---
 
 ## 6. Sanat iş yükü (ChatGPT; tek art-pipeline, tek tek)

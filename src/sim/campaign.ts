@@ -31,17 +31,14 @@ import {
   nextStep,
   node,
   battleOutcomeOf,
-  clearedNodes,
   isFallen,
   outgoing,
   mainOutgoing,
   pickHero,
   recruit,
   moveTo,
-  restInTown,
   rngFor,
   shuffle,
-  townRestPrice,
   type CampaignMap,
   type CampaignState,
   type Difficulty,
@@ -70,13 +67,9 @@ export function simTownRest(s: CampaignState, healAt: number, hard = false): { s
   const wounded = alive.filter((h) => woundCount(h) > 0).length;
   const need = hard ? hp < Math.max(healAt, SIM_HARD_HEAL_AT) || wounded > 0 : hp < healAt || wounded >= 2;
   if (!need) return null;
-  const map = getMap(s.mapId);
-  const town = clearedNodes(s)
-    .filter((id) => node(map, id).type === 'town')
-    .map((id) => ({ id, price: townRestPrice(s, id) }))
-    .sort((a, b) => a.price - b.price)[0];
-  if (!town || s.gold < town.price) return null;
-  return { state: restInTown(s, town.id), price: town.price };
+  // Ömer 2026-10-26 (form econ/main): kasabada ücretli dinlenme (ateş başı) kalktı, yerine Inn (state.ts > leaveAtInn). Vekilin Inn kullanımı
+  // balance-tester'ın işi; o gelene dek vekil kasabada dinlenmez (campaign-dev, derlensin diye en küçük değişiklik).
+  return null;
 }
 
 /**

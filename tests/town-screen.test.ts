@@ -39,7 +39,7 @@ function at(target: string, until: string): CampaignState {
 
 const map = getMap('valdoria');
 const towns = map.nodes.filter((n) => n.type === 'town');
-const ACTIONS: TownAction[] = ['trade', 'recruit', 'story', 'rest', 'leave'];
+const ACTIONS: TownAction[] = ['trade', 'recruit', 'story', 'inn', 'leave']; // Ömer 2026-10-26: ateş başı (rest) yerine Inn
 
 describe('town scene data (valdoria.json > scene)', () => {
   it('every town has a scene with one place per action, rects inside the picture and not overlapping', () => {

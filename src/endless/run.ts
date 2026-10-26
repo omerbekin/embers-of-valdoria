@@ -1,7 +1,7 @@
 // Endless koşu durumu ve kuralları (saf; her fonksiyon yeni durum döner, girdiyi değiştirmez). Sayılar data/endless.json'dan.
 import { classes } from '../engine/content';
 import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, levelRequirement, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, planMoveEquipped, promoteOffhand, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
-import { heroSpeedRoll, itemRecovery } from '../progression/loadout';
+import { heroSpeedRoll, itemRecovery, itemXpBonus, partyGoldMult } from '../progression/loadout';
 import { rollDropRarity } from '../progression/drop';
 import { bestMoves, FALLEN_GEAR_MSG } from '../progression/equip';
 import { RARE, legendaryPool, rollRareDrop } from '../progression/rare';
@@ -277,7 +277,7 @@ export function waveXp(run: Pick<EndlessRun, 'heroes'>, wave: number, out: Pick<
     const others = fought.filter((o) => o.id !== h.id).map((o) => o.level ?? 1);
     const avg = others.length ? others.reduce((a, b) => a + b, 0) / others.length : h.level ?? 1;
     const bonus = Math.min(LEVELS.catchUp.max, Math.max(0, avg - (h.level ?? 1)) * LEVELS.catchUp.perLevel);
-    res[h.id] = Math.round(raw * (1 + bonus));
+    res[h.id] = Math.round(raw * (1 + bonus) * (1 + itemXpBonus(h))); // c_xp affix'i (Ömer 2026-10-26): yalnızca takan
   }
   return res;
 }
@@ -540,7 +540,7 @@ export function rewardOffer(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catal
   const rng = rngFor(run.seed, cleared, 'reward');
   const kind = waveKind(cleared, cfg);
   const sp = kind === 'elite' ? cfg.special.elite : kind === 'boss' ? cfg.special.boss : null;
-  const gold = Math.round(goldAmount(cleared, cfg) * (sp?.goldMult ?? 1));
+  const gold = Math.round(goldAmount(cleared, cfg) * (sp?.goldMult ?? 1) * partyGoldMult(run.heroes)); // c_gold affix'i (Ömer 2026-10-26): takımın toplamı
   const cards: RewardCard[] = [];
   const taken: string[] = [];
   for (let i = 0; i < (sp?.itemCards ?? 1); i++) {

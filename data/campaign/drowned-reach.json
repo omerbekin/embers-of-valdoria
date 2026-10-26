@@ -243,7 +243,7 @@
       "id": "dr12",
       "type": "town",
       "name": "Reedgate",
-      "subtitle": "Town · Rest, Recruits, Trade",
+      "subtitle": "Town · Inn, Smith, Recruits, Trade",
       "lore": "A reed-thatched village at the head of the marsh, where the river slows and the ferrymen gather.",
       "region": "I",
       "pos": [
@@ -251,7 +251,6 @@
         0.1328
       ],
       "partyCap": 4,
-      "heal": 1,
       "merchant": true,
       "merchantSize": 5,
       "story": "dr_the_ferryman",
@@ -282,14 +281,14 @@
             ]
           },
           {
-            "id": "campfire",
-            "action": "rest",
-            "label": "Campfire",
+            "id": "inn",
+            "action": "inn",
+            "label": "Inn",
             "rect": [
-              0.385,
-              0.42,
-              0.57,
-              0.63
+            0.68,
+            0.22,
+            0.88,
+            0.58
             ]
           },
           {
@@ -361,7 +360,7 @@
       "id": "dr16",
       "type": "town",
       "name": "Eelwick",
-      "subtitle": "Town · Rest, Recruits, Trade",
+      "subtitle": "Town · Inn, Smith, Recruits, Trade",
       "lore": "A town on stilts above the brackish water, smelling of smoke, salt and eel-oil.",
       "region": "II",
       "pos": [
@@ -369,7 +368,6 @@
         0.2019
       ],
       "partyCap": 4,
-      "heal": 1,
       "merchant": true,
       "merchantSize": 5,
       "story": "dr_weir_warden",
@@ -400,14 +398,14 @@
             ]
           },
           {
-            "id": "campfire",
-            "action": "rest",
-            "label": "Campfire",
+            "id": "inn",
+            "action": "inn",
+            "label": "Inn",
             "rect": [
-              0.385,
-              0.42,
-              0.57,
-              0.63
+            0.68,
+            0.22,
+            0.88,
+            0.58
             ]
           },
           {
@@ -587,7 +585,7 @@
       "id": "dr28",
       "type": "town",
       "name": "Saltmere",
-      "subtitle": "City · Rest, Recruits, Trade",
+      "subtitle": "City · Inn, Smith, Recruits, Trade",
       "lore": "The harbour city at the river mouth, grey stone and grey sea, its half-sunken cathedral leaning over the docks.",
       "region": "III",
       "pos": [
@@ -598,7 +596,6 @@
       "barracksSwap": {
         "offer": 3
       },
-      "heal": 1,
       "merchant": true,
       "merchantSize": 9,
       "story": "dr_harbor_master",
@@ -629,14 +626,14 @@
             ]
           },
           {
-            "id": "brazier",
-            "action": "rest",
-            "label": "Brazier",
+            "id": "inn",
+            "action": "inn",
+            "label": "Inn",
             "rect": [
-              0.415,
-              0.43,
-              0.545,
-              0.6
+            0.415,
+            0.43,
+            0.545,
+            0.6
             ]
           },
           {
@@ -1010,7 +1007,7 @@
       "id": "dr54",
       "type": "town",
       "name": "Fisher's Landing",
-      "subtitle": "Town · Rest, Recruits, Trade",
+      "subtitle": "Town · Inn, Smith, Recruits, Trade",
       "lore": "A fishing village with a long jetty, where boats leave for the islands when the weather allows.",
       "region": "IV",
       "pos": [
@@ -1018,7 +1015,6 @@
         0.6642
       ],
       "partyCap": 4,
-      "heal": 1,
       "merchant": true,
       "merchantSize": 5,
       "story": "dr_keepers_daughter",
@@ -1049,14 +1045,14 @@
             ]
           },
           {
-            "id": "campfire",
-            "action": "rest",
-            "label": "Campfire",
+            "id": "inn",
+            "action": "inn",
+            "label": "Inn",
             "rect": [
-              0.385,
-              0.42,
-              0.57,
-              0.63
+            0.68,
+            0.22,
+            0.88,
+            0.58
             ]
           },
           {

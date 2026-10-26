@@ -71,7 +71,7 @@ export interface AffixDef {
   desc?: string;
   /** Yalnızca bu yuvalarda (yoksa her yuvada). */
   slots?: SlotId[];
-  /** Equip best sınıf uyumu ipucu: element:<x> | element:magic | mp | shield | dot | debuff | support | summon. */
+  /** Equip best sınıf uyumu ipucu: element:<x> | element:magic | mp | shield | dot | debuff | support | summon | melee | ranged. */
   needs?: string;
   /** Satır ikonu ipucu (stat ikonu adı ya da element:<x>). */
   icon?: string;
@@ -841,7 +841,7 @@ export function migrateOffhand(equipment: EquipMap | null | undefined, overflow?
 
 // ------------------------------------------------------------ doğrulama
 
-const TARGET_RE = /^(mod|mult|fx|elem|attr|prog):[\w*]+$/;
+const TARGET_RE = /^(mod|mult|fx|elem|res|attr|prog):[\w*]+$/;
 
 /** items.json doğrulaması (boş liste = geçerli). Test: tests/items-data.test.ts. */
 export function validateItems(data: ItemsData = ITEMS): string[] {
@@ -867,6 +867,7 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
       if (!(p.step > 0) || !(p.ip >= 0) || !(p.base >= 0) || !(p.perIlvl >= 0)) errors.push(`${at}: part ${i} needs base, perIlvl, step and ip`);
       if (!TARGET_RE.test(p.to)) errors.push(`${at}: part ${i} has a bad target ${p.to}`);
       if (p.to.startsWith('elem:') && p.to !== 'elem:*' && !(ELEMENTS as readonly string[]).includes(p.to.slice(5))) errors.push(`${at}: unknown element ${p.to}`);
+      if (p.to.startsWith('res:') && !(ELEMENTS as readonly string[]).includes(p.to.slice(4))) errors.push(`${at}: unknown element ${p.to}`);
     });
     if (a.slots) for (const s of a.slots) if (!slotIds.includes(s)) errors.push(`${at}: unknown slot ${s}`);
     if (a.choices) for (const c of a.choices) if (!statusDefs[c]) errors.push(`${at}: unknown status ${c}`);

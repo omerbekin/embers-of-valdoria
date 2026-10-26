@@ -12,8 +12,10 @@ import { leaveMerchant } from './merchant';
 import { valorRules } from '../engine/content';
 import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
 import { applyXp, battleXp, fixedXp, fixedXpNode, joinLevel } from './xp';
-import { LEVELS, campaignMaxLevel, setLevel } from '../progression/levels';
-import type { BattleOutcome, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, MapNode, NextStep, StepKind } from './types';
+import { LEVELS, campaignMaxLevel, nodeXpMult, setLevel, splitXp } from '../progression/levels';
+import { nodeLevel } from './power';
+import { freeTemperItem, freeTemperPreview } from './smith';
+import type { BattleOutcome, CampChoice, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, InnStay, MapNode, NextStep, StepKind } from './types';
 
 /**
  * Sefer ilerlemesi (saf; durum JSON'dur ve her işlem YENİ bir durum döndürür). Akış: campaign.md 1.2 ve 4.
@@ -57,6 +59,8 @@ export function newCampaign(o: { mode: CampaignMode; seed: number; mapId?: strin
     gold: 0,
     nextItemId: 1,
     lootState: emptyLootState(),
+    day: 1,
+    dayProgress: 0,
   };
 }
 
@@ -151,7 +155,7 @@ export function recruitOffer(s: CampaignState, nodeId: string): string[] {
   const map = mapOf(s);
   const def = node(map, nodeId).recruit;
   if (!def) return [];
-  const owned = new Set(s.roster.map((h) => h.class));
+  const owned = new Set([...s.roster, ...innHeroes(s)].map((h) => h.class)); // Inn'deki kahramanın sınıfı da sahipli (dönünce iki aynı sınıf olmasın)
   const fixed = s.roster[0] ? def.byFirstHero?.[s.roster[0].class] : undefined;
   if (fixed) return fixed.filter((c) => !owned.has(c) && classes[c]).slice(0, def.offer);
   const pool = shuffle(CONFIG.recruitPool.filter((c) => !owned.has(c) && classes[c]), rngFor(s.seed, s.mapId, nodeId, 'recruit'));
@@ -454,7 +458,7 @@ export function swapOffer(s: CampaignState): SwapOffer | null {
   if (nextStep(s).kind !== 'town') return null;
   const n = node(mapOf(s), s.at);
   if (!n.barracksSwap) return null;
-  const owned = new Set([...s.roster, ...(s.reserve ?? [])].map((h) => h.class));
+  const owned = new Set([...s.roster, ...(s.reserve ?? []), ...innHeroes(s)].map((h) => h.class));
   const pool = shuffle(CONFIG.recruitPool.filter((c) => !!classes[c]), rngFor(s.seed, s.mapId, n.id, 'swap'));
   return { recruits: pool.filter((c) => !owned.has(c)).slice(0, n.barracksSwap.offer), reserve: [...(s.reserve ?? [])] };
 }
@@ -677,9 +681,9 @@ function winEventBattle(t: CampaignState): void {
   complete(t, 'event');
 }
 
-// ---------------------------------------------------------------- dinlenme noktası (Ömer 2026-10-11)
+// ---------------------------------------------------------------- kamp (Ömer 2026-10-26, form econ/main)
 
-/** Düşmüş mü (can 0 ya da alive false): dinlenme noktasında altınla diriltilebilir. */
+/** Düşmüş mü (can 0 ya da alive false): ceset; yalnız Valor kaldırır. */
 export const isFallen = (h: Hero): boolean => !h.alive || h.hpRatio <= 0;
 
 /**
@@ -696,18 +700,97 @@ export function reviveAtCamp(s: CampaignState, _heroId: string): CampaignState {
   return s;
 }
 
-/** Bu düğümün dinlenme oranı: rest.heal, ya da olay seçeneğinin `restHeal`'ı (Shepherd's Fold "Share your bread": 1 = tam). */
+/** Kampın Rest oranı: rest.heal, ya da olay seçeneğinin `restHeal`'ı (Shepherd's Fold "Share your bread": 1 = tam). */
 export const restHealOf = (s: CampaignState): number => (s.eventChoice?.node === s.at && s.eventChoice.restHeal !== undefined ? s.eventChoice.restHeal : CONFIG.rest.heal);
 
-/** Dinlen ve yola devam: ÜCRETSİZ, yaşayan herkes maks canın restHealOf oranı kadar iyileşir (düşmüşler kalkmaz: altınla diriltilir). */
-export function restAtCamp(s: CampaignState): CampaignState {
-  expectStep(s, 'rest');
-  const t = clone(s);
-  const heal = restHealOf(t);
-  for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(clamp01(h.hpRatio + heal) * 1000) / 1000;
+const campKey = (s: Pick<CampaignState, 'mapId'>, nodeId: string): string => `${s.mapId}:${nodeId}`;
+
+/** Bu kampta seçilen seçenek (kullanılmışsa; yoksa null). */
+export const campUsed = (s: CampaignState, nodeId: string = s.at): CampChoice['kind'] | null => s.campsUsed?.[campKey(s, nodeId)] ?? null;
+
+/**
+ * Kampın Train XP'si (Ömer 2026-10-26; miktar VARSAYIM campaign-dev): o düğümün seviyesindeki NORMAL savaşta (camp.trainEnemies düşman, savaş
+ * çarpanı, kimse düşmeden) bu kahramanın bugünkü aktif takımla alacağı payın camp.trainShare oranı (level farkı ve yakalama bonusu dahil).
+ * Kahraman aktif takımda değilse 0.
+ */
+export function campTrainXp(s: CampaignState, heroId: string): number {
+  const team = activeHeroes(s);
+  if (!team.some((h) => h.id === heroId)) return 0;
+  const c = CONFIG.camp;
+  const kills = Array.from({ length: Math.max(0, c.trainEnemies) }, () => ({ down: [] as string[] }));
+  const xp = splitXp({ heroes: team.map((h) => ({ id: h.id, level: h.level })), nodeLevel: nodeLevel(s.mapId, s.at), mult: nodeXpMult('battle', LEVELS, true), kills });
+  return Math.max(0, Math.round((xp[heroId] ?? 0) * c.trainShare));
+}
+
+/** Sharpen önizlemesi: demircinin Temper önizlemesi altın aranmadan (fiyat bilgi için; kampta ödenmez). Item yoksa null. */
+export const campSharpenPreview = (s: CampaignState, uid: string) => freeTemperPreview(s, uid); // engine-dev 2026-10-26: altın + Temper taşı aranmaz
+
+/**
+ * Kamp seçimi yapılabilir mi (null = evet, yoksa nedeni; İngilizce, arayüzde aynen). Kamp adımında olmalı (kullanılmış kamp açılmaz).
+ * Rest: her zaman. Tend wounds: aktif takımda yaşayan, yaralı kahraman. Train: aktif takımda yaşayan kahraman. Sharpen: torbadaki ya da kadrodaki
+ * item, demirci kuralıyla Temper edilebilir (bölge tavanı, takanın level şartı; altın aranmaz).
+ */
+export function campBlocked(s: CampaignState, c: CampChoice): string | null {
+  if (nextStep(s).kind !== 'rest') return 'There is no camp to use here';
+  if (pausedLock(s)) return PAUSED_LOCK;
+  switch (c.kind) {
+    case 'rest':
+      return null;
+    case 'tend':
+    case 'train': {
+      const h = activeHeroes(s).find((x) => x.id === c.heroId);
+      if (!h) return 'This hero is not in your company';
+      if (isFallen(h)) return 'A fallen hero must be revived first';
+      if (c.kind === 'tend' && woundCount(h) <= 0) return 'This hero has no wounds';
+      return null;
+    }
+    case 'sharpen': {
+      const p = campSharpenPreview(s, c.uid);
+      if (!p) return 'Unknown item';
+      return p.blocked ?? (p.after ? null : 'Cannot sharpen');
+    }
+    default:
+      return 'Unknown camp choice';
+  }
+}
+
+/**
+ * Kampı kullan (Ömer 2026-10-26, form econ/main): kamp BİR KEZ, tek seçim; gün harcamaz. Rest = yaşayanlar maks canın restHealOf oranı kadar
+ * (düşmüşler kalkmaz); Tend wounds = bir kahramanın camp.tendWounds yarası; Sharpen = bir item'e bedava +1 Temper (smith.ts > temperItem, fiyat
+ * geri verilir: tavan / level şartı demircininki); Train = bir kahramana campTrainXp. Seçim campsUsed'a yazılır, kamp adımı biter. Yapılamıyorsa Error.
+ */
+export function useCamp(s: CampaignState, c: CampChoice): CampaignState {
+  const why = campBlocked(s, c);
+  if (why) throw new Error(why);
+  let t = clone(s);
+  switch (c.kind) {
+    case 'rest': {
+      const heal = restHealOf(t);
+      for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(clamp01(h.hpRatio + heal) * 1000) / 1000;
+      break;
+    }
+    case 'tend': {
+      const h = heroById(t, c.heroId)!;
+      const w = healWounds(woundCount(h), CONFIG.camp.tendWounds);
+      if (w > 0) h.wounds = w;
+      else delete h.wounds;
+      break;
+    }
+    case 'sharpen': {
+      t = freeTemperItem(t, c.uid); // bedava: altın ve Temper taşı düşmez (engine-dev 2026-10-26)
+      break;
+    }
+    case 'train':
+      applyXp(t, { [c.heroId]: campTrainXp(s, c.heroId) });
+      break;
+  }
+  t.campsUsed = { ...(t.campsUsed ?? {}), [campKey(t, t.at)]: c.kind };
   complete(t, 'rest');
   return t;
 }
+
+/** Kampta Rest (useCamp { kind: 'rest' }; eski çağrılar ve oyuncu vekili için). */
+export const restAtCamp = (s: CampaignState): CampaignState => useCamp(s, { kind: 'rest' });
 
 // ---------------------------------------------------------------- can
 
@@ -826,23 +909,21 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   if (patrol) {
     t.replays = { ...(t.replays ?? {}), [t.at]: replayCount(t, t.at) + 1 };
     delete t.patrol;
+    advanceDay(t); // devriye zaferi bir tamamlama (gün)
     return t;
   }
   complete(t, 'battle');
+  advanceDay(t); // düğümün ilk zaferi bir tamamlama (gün)
   return t;
-}
-
-/** Kasaba şifası (Ömer 2026-10-11, denge paketi): ücretsiz, yaşayanlar `ratio` (tam) cana; düşmüşler KALKMAZ (TUR 1 madde 10: diriltme yalnızca Valor). */
-function healAll(s: CampaignState, ratio: number): void {
-  for (const h of s.roster) if (!isFallen(h)) h.hpRatio = Math.max(h.hpRatio, clamp01(ratio));
 }
 
 // ---------------------------------------------------------------- hareket
 
 /**
  * Yola çıkar: yalnızca düğüm temizlendiyse. Hedef bir komşu (tek hamle) ya da serbest dolaşımda temizlenmiş düğümler üzerinden ulaşılan
- * uzak düğüm (yolculuk, travelRoutes): aradaki düğümlerin içeriği tetiklenmez (iyileşme dahil), yalnızca varılan düğümünki (kasaba şifası,
- * ilk kez varılan düğümün adımları). Yolun her düğümü yürüyüş günlüğüne (path) yazılır.
+ * uzak düğüm (yolculuk, travelRoutes): aradaki düğümlerin içeriği tetiklenmez, yalnızca varılan düğümünki (ilk kez varılan düğümün adımları).
+ * Yolun her düğümü yürüyüş günlüğüne (path) yazılır. Yürümek gün harcamaz. Kasabaya varış İYİLEŞTİRMEZ (Ömer 2026-10-26: eski ilk varış
+ * şifası ve yara silme kalktı; iyileşme Inn, kamp, zafer şifası ve Valor ile).
  */
 export function moveTo(s: CampaignState, to: string): CampaignState {
   const step = nextStep(s);
@@ -861,18 +942,6 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
   delete t.closedShop;
   delete t.formationDue;
   delete t.patrol;
-  const n = node(mapOf(t), to);
-  // Varış şifası (Ömer 2026-10-18, karar 364: "Varış şifası ilk bedava dinlenme olsun. Her tekrar ziyaret para istesin"): kasabaya İLK
-  // varışta tam şifa ve o kasabanın bedava dinlenmesi kullanılmış sayılır (townRests = 1); sonraki varışlarda şifa yok, ateş başı ücretli.
-  if (n.heal) {
-    const rests = t.townRests?.[to];
-    const firstRest = !(typeof rests === 'number' && rests > 0);
-    if (n.type !== 'town' || firstRest) healAll(t, n.heal);
-    if (n.type === 'town' && firstRest) {
-      t.townRests = { ...(t.townRests ?? {}), [to]: 1 };
-      clearWounds(t); // ilk varış = bedava kasaba dinlenmesi: yaraları da siler (Ömer 2026-10-19)
-    }
-  }
   markCleared(t, to); // adımı olmayan düğüm varınca temizlenmiş sayılır
   return t;
 }
@@ -890,15 +959,26 @@ export function nextMapFor(s: CampaignState): string | null {
  * "Continue to ..." (M-Q): sıradaki haritanın başlangıcına geçer. Taşınan: kadro ve dizilim (level, XP, puanlar, ağaç, ekipman), torba, altın,
  * Valor, loot sayaçları, zafer / yenilgi sayıları, görülen ipuçları ve `done` (sinematik / hikâye işaretleri; düğüm id'leri haritalar arasında
  * çakışmaz). Can ve ölüm: boss zaferinin tam şifası zaten uygulanmıştır, can oranları aynen taşınır; yaşayan kahramanların YARALARI geçişte
- * silinir (Ömer 2026-10-26 denge formu D1 b; kasaba dinlenmesiyle aynı clearWounds); cesetler ceset taşınır (yalnız Valor kaldırır). Harita durumu sıfırlanır:
- * yürüyüş, temizlenen düğümler, devriye sayaçları; düğüme bağlı geçici alanlar (tezgâh, olay seçimi, duraklatma, devriye) atılır.
+ * silinir (Ömer 2026-10-26 denge formu D1 b; clearWounds); cesetler ceset taşınır (yalnız Valor kaldırır). Gün (day / dayProgress) sürer. Inn'deki
+ * kahramanlar (Ömer 2026-10-26) iyileştikleri kadarıyla kendiliğinden döner: takımda yer varsa takıma, yoksa yedeğe; onların yaraları da silinir.
+ * Harita durumu sıfırlanır: yürüyüş, temizlenen düğümler, devriye sayaçları; düğüme bağlı geçici alanlar (tezgâh, olay seçimi, duraklatma, devriye) atılır.
  * Kayıt şeması aynı (`mapId` zaten kayıtta); `mapsDone` önceki haritayı listeler.
  */
 export function continueToMap(s: CampaignState, mapId: string = nextMapFor(s) ?? ''): CampaignState {
   const map = getMap(mapId);
   if (map.continues !== s.mapId) throw new Error(`${mapId} does not continue ${s.mapId}`);
   if (!isComplete(s)) throw new Error('Finish this map first');
+  const cap = TEAM_MAX; // yeni haritada takım sınırı (partyCap yol günlüğüyle sıfırlanır)
   const t = clone(s);
+  // Inn'deki kahramanlar döner (yer varsa takıma, yoksa yedeğe)
+  for (const stay of t.inn ?? []) {
+    if (!isFallen(stay.hero)) delete stay.hero.wounds; // geçişte yaralar silinir (yedeğe gidene de)
+    if (t.roster.length < cap) {
+      t.roster.push(stay.hero);
+      place(t, stay.hero);
+    } else t.reserve = [...(t.reserve ?? []), stay.hero];
+  }
+  delete t.inn;
   t.mapsDone = [...(t.mapsDone ?? []), s.mapId];
   t.mapId = map.id;
   t.at = map.start;
@@ -907,9 +987,128 @@ export function continueToMap(s: CampaignState, mapId: string = nextMapFor(s) ??
   t.cleared = [];
   t.replays = {};
   for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover'] as const) delete t[k];
-  clearWounds(t); // D1 b: yeni haritaya yarasız girilir (cesetler aynen)
+  clearWounds(t); // D1 b: yeni haritaya yarasız girilir (cesetler aynen; yedekte bekleyenlere dokunulmaz)
   return t;
 }
+
+// ---------------------------------------------------------------- gün (Ömer 2026-10-26, form econ/main)
+
+/** Takımın en büyük boyu (kadro sınırı; partyCap'in üst sınırı). */
+const TEAM_MAX = 4;
+
+/** Bugünkü gün (1'den; eski kayıtta / bozuksa 1). Tüccar ve demirci stoğu, Inn iyileşmesi ve ileride görev süresi bunu okur. */
+export const dayOf = (s: Pick<CampaignState, 'day'>): number => (typeof s.day === 'number' && Number.isInteger(s.day) && s.day >= 1 ? s.day : 1);
+
+/** Günün ilerlemesi (0 <= p < 1; eski kayıtta / bozuksa 0). */
+export const dayProgressOf = (s: Pick<CampaignState, 'dayProgress'>): number => (typeof s.dayProgress === 'number' && s.dayProgress > 0 && s.dayProgress < 1 ? s.dayProgress : 0);
+
+/** Bir günün tamamlama sayısı (campaign.json > days.completionsPerDay; en az 1). */
+export const completionsPerDay = (): number => Math.max(1, Math.round(CONFIG.days?.completionsPerDay ?? 2));
+
+/**
+ * Bir tamamlama yazar (YERİNDE; çağıran klonlamış olmalı): düğümün ilk zaferi ya da devriye zaferi (applyBattle). completionsPerDay tamamlamada
+ * gün ilerler; yeni gün Inn'deki kahramanları iyileştirir (innNewDay). Dönen: gün ilerlediyse true. Günle düşman güçlenmez.
+ */
+export function advanceDay(t: CampaignState): boolean {
+  const per = completionsPerDay();
+  const steps = Math.round(dayProgressOf(t) * per) + 1;
+  if (steps < per) {
+    t.day = dayOf(t);
+    t.dayProgress = Math.round((steps / per) * 1000) / 1000;
+    return false;
+  }
+  t.day = dayOf(t) + 1;
+  t.dayProgress = 0;
+  innNewDay(t);
+  return true;
+}
+
+// ---------------------------------------------------------------- Inn (Ömer 2026-10-26, form econ/main)
+
+/** Inn'deki kahramanlar (tüm kasabalar). */
+export const innHeroes = (s: Pick<CampaignState, 'inn'>): Hero[] => (s.inn ?? []).map((x) => x.hero);
+
+/** Inn'de bekleyenler: `town` verilirse yalnız bu haritadaki o kasabanınkiler. */
+export function innGuests(s: Pick<CampaignState, 'inn' | 'mapId'>, town?: string): InnStay[] {
+  return (s.inn ?? []).filter((x) => town === undefined || (x.mapId === s.mapId && x.town === town));
+}
+
+/** Yeni gün (YERİNDE): Inn'deki her kahraman maks canın inn.healPerDay oranı ve inn.woundsPerDay yara iyileşir (tam cana, 0 yaraya kadar). */
+function innNewDay(t: CampaignState): void {
+  const r = CONFIG.inn;
+  for (const stay of t.inn ?? []) {
+    const h = stay.hero;
+    if (isFallen(h)) continue; // ceset Inn'e giremez; bozuk kayıtta kalkmaz
+    h.hpRatio = Math.round(clamp01(h.hpRatio + r.healPerDay) * 1000) / 1000;
+    const w = healWounds(woundCount(h), r.woundsPerDay);
+    if (w > 0) h.wounds = w;
+    else delete h.wounds;
+  }
+}
+
+/** Kasabanın Inn'i kullanılabilir mi (kasaba adımında, duraklatma yok)? Değilse nedeni. */
+function innClosed(s: CampaignState): string | null {
+  if (nextStep(s).kind !== 'town') return 'You can only use an inn in a town';
+  return pausedLock(s);
+}
+
+/** Kahraman Inn'e bırakılabilir mi (null = evet)? Kadroda, yaşayan (ceset olmaz: Valor kaldırır), ve takımda ayakta en az bir kahraman kalmalı. */
+export function innLeaveBlocked(s: CampaignState, heroId: string): string | null {
+  const closed = innClosed(s);
+  if (closed) return closed;
+  const h = heroById(s, heroId);
+  if (!h) return 'This hero is not in your company';
+  if (isFallen(h)) return 'The dead cannot rest at the inn: only Valor can raise them';
+  if (!activeHeroes(s).some((x) => x.id !== heroId && !isFallen(x))) return 'Someone must stay on the road';
+  return null;
+}
+
+/**
+ * Kahramanı bu kasabanın Inn'ine bırak: kadrodan ve dizilimden çıkar (takım eksik devam eder; boşluk kasabanın adayı / kışlası ile ya da kahraman
+ * geri alınınca dolar). Liderse liderlik kadrodaki ilk kahramana geçer. Inn'de XP almaz, her gün iyileşir. Yapılamıyorsa Error.
+ */
+export function leaveAtInn(s: CampaignState, heroId: string): CampaignState {
+  const why = innLeaveBlocked(s, heroId);
+  if (why) throw new Error(why);
+  const t = clone(s);
+  const hero = heroById(t, heroId)!;
+  t.roster = t.roster.filter((h) => h.id !== heroId);
+  t.active = t.active.map((id) => (id === heroId ? '' : id));
+  if (hero.leader) {
+    delete hero.leader;
+    if (t.roster[0]) t.roster[0].leader = true;
+  }
+  t.inn = [...(t.inn ?? []), { hero, mapId: t.mapId, town: t.at, day: dayOf(t) }];
+  return t;
+}
+
+/** Inn'deki kahraman geri alınabilir mi (null = evet)? Yalnız bırakıldığı kasabada ve takımda yer varsa (partyCap). */
+export function innTakeBlocked(s: CampaignState, heroId: string): string | null {
+  const closed = innClosed(s);
+  if (closed) return closed;
+  const stay = (s.inn ?? []).find((x) => x.hero.id === heroId);
+  if (!stay) return 'This hero is not at an inn';
+  if (stay.mapId !== s.mapId || stay.town !== s.at) {
+    const where = stay.mapId === s.mapId ? mapOf(s).nodes.find((n) => n.id === stay.town)?.name : undefined;
+    return where ? `This hero rests at the inn in ${where}` : 'This hero rests at an inn in another land';
+  }
+  if (s.roster.length >= Math.max(1, partyCap(s))) return 'Your company is full';
+  return null;
+}
+
+/** Inn'deki kahramanı takıma geri al (iyileştiği kadarıyla; dizilimde boş hücreye). Yapılamıyorsa Error. */
+export function takeFromInn(s: CampaignState, heroId: string): CampaignState {
+  const why = innTakeBlocked(s, heroId);
+  if (why) throw new Error(why);
+  const t = clone(s);
+  const stay = t.inn!.find((x) => x.hero.id === heroId)!;
+  t.inn = t.inn!.filter((x) => x !== stay);
+  if (!t.inn.length) delete t.inn;
+  t.roster.push(stay.hero);
+  place(t, stay.hero);
+  return t;
+}
+
 
 // ---------------------------------------------------------------- serbest dolaşım ve devriye (roadmap 2.1-2.4, 2.7)
 

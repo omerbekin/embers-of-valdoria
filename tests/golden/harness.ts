@@ -210,8 +210,11 @@ export function groupItems(): GoldenGroup {
     // Affix başına bir savaş: uygun taban (affix'in izinli yuvası) + uygun sınıf; item Epic, affix'i zorlanmış (q 0,8)
     Object.keys(ITEMS.affixDefs).forEach((id, i) => {
       const a = ITEMS.affixDefs[id]!;
-      const base = ITEMS.items.find((d) => d.rarity !== 'legendary' && (!a.slots || a.slots.includes(d.slot)) && classes.some((c) => canEquip(c, d) && affixFit(c, { id, def: a }) === 1))!;
-      const cls = classes.find((c) => canEquip(c, base) && affixFit(c, { id, def: a }) === 1)!;
+      // Uyan sınıf yoksa (c_lightning: henüz yıldırım skill'i olan sınıf yok; Ömer 2026-10-26) herhangi bir sınıf
+      const anyFit = classes.some((c) => affixFit(c, { id, def: a }) === 1);
+      const fits = (c: string) => !anyFit || affixFit(c, { id, def: a }) === 1;
+      const base = ITEMS.items.find((d) => d.rarity !== 'legendary' && (!a.slots || a.slots.includes(d.slot)) && classes.some((c) => canEquip(c, d) && fits(c)))!;
+      const cls = classes.find((c) => canEquip(c, base) && fits(c))!;
       const roll = rollItem(base, new Rng(900 + i), { rarity: 'common', forClass: cls });
       const x = a.choices?.[i % a.choices.length];
       roll.rarity = 'epic';

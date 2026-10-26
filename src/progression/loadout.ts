@@ -36,6 +36,12 @@ export interface LoadoutResult {
   itemEffects?: ItemEffects;
   /** Savaş sonrası toparlanma oranı (Recovery affix'i; 0-1; yalnızca takan). */
   recovery: number;
+  /** Savaş altını bonusu (c_gold; oran, 0,1 = +%10; yalnızca > 0 iken). Sefer ve Endless: savaşa giren kahramanların toplamı altına çarpılır. */
+  goldBonus?: number;
+  /** XP bonusu (c_xp; oran; yalnızca takan, yalnızca > 0 iken). Sefer savaş XP'si ve Endless dalga XP'si. */
+  xpBonus?: number;
+  /** Yara yumuşatma (b_wound_soft; oran 0-1, yalnızca > 0 iken): yaraların maks can kaybı bu oran az (src/progression/wounds.ts). */
+  woundSoft?: number;
   /** Takılı item'lerin affix'leri (yuva sırasıyla; arayüz önizlemesi için). */
   affixes: RolledAffix[];
   /** Etkisiz affix'ler (`<yuva>:<sıra>`): aynı A kademe affix'i aCopies'ten fazla item'deyse en zayıflar (Ömer 2026-10-13, itemcaps m2). */
@@ -106,7 +112,10 @@ const r4 = (v: number) => Math.round(v * 10000) / 10000;
 type Bag = Record<string, unknown>;
 
 /** Tek affix parçasını toplama yazar (veri eşlemesi `to`). */
-function applyPart(to: string, v: number, scale: number, ctx: { mods: Bag; fx: Bag; primary?: Attribute; acc: { recovery: number }; x?: string; below?: number; form?: string }): void {
+/** Savaş dışı (prog:) toplamlar: Recovery; altın / XP bonusu ve yara yumuşatma (Ömer 2026-10-26: c_gold, c_xp, b_wound_soft). */
+type ProgAcc = { recovery: number; gold: number; xp: number; woundSoft: number };
+
+function applyPart(to: string, v: number, scale: number, ctx: { mods: Bag; fx: Bag; primary?: Attribute; acc: ProgAcc; x?: string; below?: number; form?: string }): void {
   const [kind, key = ''] = to.split(':') as [string, string];
   const amt = v * scale;
   const add = (o: Bag, k: string, a: number) => (o[k] = ((o[k] as number | undefined) ?? 0) + a);
@@ -129,8 +138,14 @@ function applyPart(to: string, v: number, scale: number, ctx: { mods: Bag; fx: B
       else if (ctx.primary) add(rec, ctx.primary, amt);
       break;
     }
+    case 'res': {
+      // Element direnci (Ömer 2026-10-26, c_res_*): ItemEffects.elemResist[element]
+      const rec = ((ctx.fx.elemResist as Bag | undefined) ??= {}) as Bag;
+      add(rec, key, amt);
+      break;
+    }
     case 'prog':
-      if (key === 'recovery') ctx.acc.recovery += amt;
+      if (key === 'recovery' || key === 'gold' || key === 'xp' || key === 'woundSoft') ctx.acc[key] += amt;
       break;
     case 'fx':
       if (key === 'earlyImmunity') {
@@ -165,7 +180,7 @@ export function loadout(src: LoadoutSource): LoadoutResult {
   const missing: string[] = [];
   const mods: Bag = {};
   const fx: Bag = {};
-  const acc = { recovery: 0 };
+  const acc: ProgAcc = { recovery: 0, gold: 0, xp: 0, woundSoft: 0 };
   const all: RolledAffix[] = [];
   const primary = classes[src.class]?.primary;
   const off = inactiveAffixes(src.equipment, src.class);
@@ -232,6 +247,9 @@ export function loadout(src: LoadoutSource): LoadoutResult {
     ...(Object.keys(mods).length ? { modifiers: mods as UnitModifiers } : {}),
     ...(Object.keys(effects).length ? { itemEffects: effects } : {}),
     recovery: r4(acc.recovery),
+    ...(acc.gold > 0 ? { goldBonus: r4(acc.gold) } : {}),
+    ...(acc.xp > 0 ? { xpBonus: r4(acc.xp) } : {}),
+    ...(acc.woundSoft > 0 ? { woundSoft: r4(Math.min(1, acc.woundSoft)) } : {}),
     affixes: all,
     inactive: [...off],
     capped,
@@ -289,6 +307,18 @@ export function normalizeSpdRoll(h: { id: string; spdRoll?: number }, seed: numb
 
 /** Takılı item'lerin toparlanma oranı (Recovery affix'i; sefer / Endless savaş sonrası, yalnızca takan). */
 export const itemRecovery = (src: LoadoutSource): number => loadout(src).recovery;
+
+/** Takılı item'lerin savaş altını bonusu (c_gold; oran; yoksa 0). */
+export const itemGoldBonus = (src: LoadoutSource): number => loadout(src).goldBonus ?? 0;
+
+/** Takımın savaş altını çarpanı: savaşa giren kahramanların c_gold toplamı (1 = bonus yok). Sefer zafer loot'u ve Endless altın kartı. */
+export const partyGoldMult = (party: readonly LoadoutSource[]): number => r4(1 + party.reduce((t, h) => t + itemGoldBonus(h), 0));
+
+/** Takılı item'lerin XP bonusu (c_xp; oran; yoksa 0; yalnızca takan). */
+export const itemXpBonus = (src: LoadoutSource): number => loadout(src).xpBonus ?? 0;
+
+/** Takılı item'lerin yara yumuşatması (b_wound_soft; oran 0-1; yoksa 0). */
+export const itemWoundSoft = (src: LoadoutSource): number => loadout(src).woundSoft ?? 0;
 
 /**
  * Takılı item'lerin Legendary etkileri -> motor kancaları (UnitSetup.itemEffects). effectRules.stack kapalıysa (varsayılan) aynı etki iki item'den

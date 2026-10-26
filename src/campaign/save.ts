@@ -163,6 +163,22 @@ function upgradeState(s: CampaignState): void {
     if (valid.length) s.reserve = valid;
     else delete (s as { reserve?: unknown }).reserve;
   }
+  // Inn (Ömer 2026-10-26; isteğe bağlı alan): kahramanlar kadro gibi yükseltilir; bozuk / kadroyla ya da yedekle çakışan girdi atılır
+  if (s.inn !== undefined) {
+    const ids = new Set([...(Array.isArray(s.roster) ? s.roster : []), ...(s.reserve ?? [])].map((h) => h?.id));
+    const ok = Array.isArray(s.inn)
+      ? s.inn
+          .filter((x) => x && typeof x === 'object' && typeof x.town === 'string' && typeof x.mapId === 'string' && !!MAPS[x.mapId] && x.hero && typeof x.hero === 'object' && typeof x.hero.id === 'string' && typeof x.hero.class === 'string' && !!classes[x.hero.class] && typeof x.hero.hpRatio === 'number' && !ids.has(x.hero.id))
+          .map((x) => ({ hero: upgradeHero(x.hero), mapId: x.mapId, town: x.town, day: typeof x.day === 'number' && Number.isInteger(x.day) && x.day >= 1 ? x.day : 1 }))
+      : [];
+    const valid = ok.filter((x) => typeof x.hero.level === 'number' && typeof x.hero.xp === 'number' && !!x.hero.equipment);
+    if (valid.length) s.inn = valid;
+    else delete (s as { inn?: unknown }).inn;
+  }
+  // Gün (Ömer 2026-10-26; isteğe bağlı alanlar): eski kayıtta yok = gün 1, ilerleme 0; bozuk değer varsayılana
+  s.day = typeof s.day === 'number' && Number.isInteger(s.day) && s.day >= 1 ? s.day : 1;
+  s.dayProgress = typeof s.dayProgress === 'number' && s.dayProgress >= 0 && s.dayProgress < 1 ? s.dayProgress : 0;
+  if (s.campsUsed !== undefined && !(s.campsUsed && typeof s.campsUsed === 'object' && !Array.isArray(s.campsUsed))) delete (s as { campsUsed?: unknown }).campsUsed;
   s.inventory = [...(Array.isArray(s.inventory) ? s.inventory.filter(isItem) : []), ...overflow.filter(isItem)];
   // Bekleyen teslim: bozuksa atılır (item'ler zaten torbada; yalnızca gösterilecek an kaybolur)
   const ho = s.pendingHandover as unknown as Record<string, unknown> | undefined;
@@ -189,7 +205,7 @@ function upgradeState(s: CampaignState): void {
   if (s.valor !== undefined) s.valor = clampValor(valorRules, Number(s.valor));
   else if (Array.isArray(s.done) && (s.done.includes(`${intro}:story`) || s.done.includes(`${intro}:town`))) s.valor = clampValor(valorRules, valorRules.campaign.gift);
   // uid çakışmasın: sıradaki numara mevcut en büyük 'i<n>'den büyük
-  const heroes = [...(Array.isArray(s.roster) ? s.roster : []), ...(s.reserve ?? [])];
+  const heroes = [...(Array.isArray(s.roster) ? s.roster : []), ...(s.reserve ?? []), ...(s.inn ?? []).map((x) => x.hero)];
   const equipped = heroes.flatMap((h) => (h?.equipment ? SLOT_IDS.map((k) => h.equipment[k]) : []));
   const used = [...s.inventory, ...equipped].filter(isItem).map((it) => Number(/^i(\d+)$/.exec(it.uid)?.[1] ?? 0));
   const next = Math.max(0, ...used) + 1;

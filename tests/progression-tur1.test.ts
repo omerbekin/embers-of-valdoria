@@ -29,9 +29,7 @@ import {
   temperGain,
   temperPrice,
   townRecruitOffer,
-  townRestCount,
   townRestPrice,
-  restPriceLevel,
   type CampaignState,
 } from '../src/campaign';
 import {
@@ -139,7 +137,7 @@ describe('madde 9: Legendary ortak havuzdan, boss\'a bağlı değil', () => {
 });
 
 describe('madde 7: demirci (Temper / Reforge)', () => {
-  const town = (): CampaignState => ({ ...at('7', 'town'), gold: 5000 });
+  const town = (): CampaignState => ({ ...at('7', 'town'), gold: 5000, temperStones: 50 }); // Ömer 2026-10-26: Temper taş da ister
   const put = (s: CampaignState, inst: ItemInstance): CampaignState => ({ ...s, inventory: [...s.inventory, inst] });
   const weapon = (rarity: 'common' | 'epic' | 'legendary' = 'epic', ilvl = 5, uid = 'i900'): ItemInstance => {
     const d = ITEMS.items.find((x) => x.slot === 'weapon' && (rarity === 'legendary' ? x.rarity === 'legendary' : x.rarity !== 'legendary'))!;
@@ -150,7 +148,12 @@ describe('madde 7: demirci (Temper / Reforge)', () => {
     expect(campaignJson.blacksmith.ilvlPerChapter).toBe(10);
     expect(campaignJson._blacksmith).toMatch(/PROVİZYON/);
     expect(smithCap(town())).toBe(10);
-    for (const n of getMap('valdoria').nodes.filter((x) => x.type === 'town')) {
+    for (const n of [...getMap('valdoria').nodes, ...getMap('drowned-reach').nodes].filter((x) => x.type === 'town')) {
+      // Ömer 2026-10-26: demirci 2. kasabadan (Ashford'da yok)
+      if (n.id === '4') {
+        expect(smithHotspot(n)).toBeNull();
+        continue;
+      }
       const h = smithHotspot(n)!;
       expect(h.action).toBe('smith');
       const [x0, y0, x1, y1] = h.rect;
@@ -224,7 +227,7 @@ describe('madde 7: demirci (Temper / Reforge)', () => {
           expect(ps[i]! - ps[i - 1]!).toBeLessThanOrEqual(Math.max(1, Math.ceil(ps[i - 1]! * 0.1)));
         }
       }
-    // bölüm 1 (iL 1-9) ortalaması: eski kuralın (0,5 x yükseltilmiş item'in değeri) ±%15'i içinde
+    // bölüm 1 (iL 1-9) ortalaması: eski kuralın (0,5 x yükseltilmiş item'in değeri) ~%30'u (Ömer 2026-10-26: Temper artık taş + ~%30 altın), ±%15
     let now = 0;
     let old = 0;
     for (const d of ITEMS.items.filter((x) => x.rarity !== 'legendary'))
@@ -234,8 +237,8 @@ describe('madde 7: demirci (Temper / Reforge)', () => {
           now += temperPrice(it);
           old += 0.5 * itemValue({ ...it, rolls: { ...instanceRoll(it), ilvl: lv + 1 } });
         }
-    expect(now / old).toBeGreaterThan(0.85);
-    expect(now / old).toBeLessThan(1.15);
+    expect(now / old).toBeGreaterThan(0.3 * 0.85);
+    expect(now / old).toBeLessThan(0.3 * 1.15);
   });
 
   it('Temper takılı item\'de: takan kahraman yeni seviye şartını (ilvl - 3) karşılamalı', () => {
@@ -286,64 +289,21 @@ describe('madde 7: demirci (Temper / Reforge)', () => {
 type SmithCfg = { temper: { gainRatio: number; gainSpan: [number, number]; perLevelRise: number; minPrice: number; legendaryMult: number }; reforge: { valueRatio: number; growth: number } };
 const CONFIG_SMITH = (): SmithCfg => (CONFIG as unknown as { blacksmith: SmithCfg }).blacksmith;
 
-describe('madde 10: kasabada dinlenme, diriltme yok', () => {
-  it('ilk dinlenme bedava, sonrakiler rest.price (takım levelına göre); yaşayanlar tam cana, düşmüş kalkmaz; sayaç kasaba başına', () => {
-    const s0 = at('7', 'town');
-    const s = { ...s0, gold: 100, townRests: {}, roster: s0.roster.map((h, i) => ({ ...h, hpRatio: i === 0 ? 0 : 0.4, alive: i !== 0 })) };
-    expect(townRestPrice(s, '7')).toBe(0); // (eski kayıt: varışta sayaç yazılmamış) ilk dinlenme bedava
-    const a = restInTown(s);
-    expect(a.gold).toBe(100);
-    expect(a.roster.map((h) => [h.alive, h.hpRatio])).toEqual(s.roster.map((_, i) => (i === 0 ? [false, 0] : [true, 1])));
-    expect(townRestCount(a, '7')).toBe(1);
-    const price = Math.round(CONFIG.rest.price.base + CONFIG.rest.price.perLevel * (restPriceLevel(a) - 1));
-    expect(townRestPrice(a, '7')).toBe(price);
-    const b = restInTown(a);
-    expect(b.gold).toBe(100 - price);
-    expect(townRestCount(b, '7')).toBe(2);
-    expect(townRestPrice(b, '4')).toBe(0); // başka kasaba: kendi sayacı
-    expect(() => restInTown({ ...a, gold: price - 1 })).toThrow(/more gold/);
-  });
-
-  it('dinlenme fiyatı level başına artar (Ömer 2026-10-26): L1 = 30, aktif takımın ortalama levelı (yuvarlanmış), dizilim dışı sayılmaz', () => {
-    const s0 = at('7', 'town');
-    expect(CONFIG.rest.price.base).toBe(30);
-    const lv = (n: number, extra?: number) => ({ ...s0, townRests: { '7': 1 }, roster: s0.roster.map((h, i) => ({ ...h, level: i === 0 && extra ? extra : n })) });
-    expect(townRestPrice(lv(1), '7')).toBe(30);
-    expect(restPriceLevel(lv(8))).toBe(8);
-    expect(townRestPrice(lv(8), '7')).toBe(Math.round(30 + CONFIG.rest.price.perLevel * 7));
-    expect(townRestPrice(lv(14), '7')).toBeGreaterThan(townRestPrice(lv(8), '7'));
-    const benched = { ...lv(5), roster: [...lv(5).roster, { ...lv(5).roster[0]!, id: 'bench', level: 40 }] };
-    expect(restPriceLevel(benched)).toBe(5); // yedek / dizilim dışı kahraman fiyatı etkilemez
-    expect(townRestPrice({ ...lv(8), townRests: {} }, '7')).toBe(0); // ilk dinlenme yine bedava
-  });
-
-  it('karar 364: kasabaya İLK varış = bedava dinlenme (tam şifa, sayaç 1); tekrar varışta şifa yok, ateş başı ücretli', () => {
-    // Valdren Keep'e ilk varış (debugTeleport moveTo ile varır): şifa verildi ve bedava dinlenme kullanıldı
+describe('madde 10 (Ömer 2026-10-26 econ/main ile güncel): kasabada dinlenme yok, varış iyileştirmez, diriltme yok', () => {
+  it('kasabaya varış iyileştirmez ve yara silmez; ateş başı dinlenme kalktı (eski fonksiyonlar etkisiz)', () => {
     const pre = debugTeleport(newCampaign({ mode: 'normal', seed: 4242 }), 'charcoal');
     let p = pre;
     for (let i = 0; i < 20 && nextStep(p).kind !== 'move'; i++) p = autoResolve(p);
-    const hurt = { ...p, roster: p.roster.map((h) => ({ ...h, hpRatio: 0.3 })) };
+    const hurt = { ...p, roster: p.roster.map((h) => ({ ...h, hpRatio: 0.3, wounds: 1 })) };
     const first = moveTo(hurt, '7');
-    expect(first.roster.every((h) => h.hpRatio === 1)).toBe(true);
-    expect(townRestCount(first, '7')).toBe(1);
-    expect(townRestPrice(first, '7')).toBe(Math.round(CONFIG.rest.price.base + CONFIG.rest.price.perLevel * (restPriceLevel(first) - 1)));
-    // kasabayı bitir, komşuya git, yaralı dön: varışta şifa YOK, sayaç aynı
-    let s = first;
-    for (let i = 0; i < 20 && nextStep(s).kind !== 'move'; i++) s = autoResolve(s);
-    s = moveTo(s, 'charcoal');
-    const back = moveTo({ ...s, roster: s.roster.map((h) => ({ ...h, hpRatio: 0.3 })) }, '7');
-    expect(back.at).toBe('7');
-    expect(back.roster.every((h) => h.hpRatio === 0.3)).toBe(true);
-    expect(townRestCount(back, '7')).toBe(1);
-    // ateş başı dinlenme ücretli ve iyileştirir
-    const rested = restInTown({ ...back, gold: 100 });
-    expect(rested.gold).toBe(100 - townRestPrice(back, '7'));
-    expect(rested.roster.every((h) => h.hpRatio === 1)).toBe(true);
+    expect(first.roster.every((h) => h.hpRatio === 0.3 && h.wounds === 1)).toBe(true);
+    expect(first.townRests).toBeUndefined();
+    expect(townRestPrice(first, '7')).toBe(0);
+    expect(restInTown(first)).toBe(first);
   });
 
-  it('kasaba dışında yok; veride diriltme alanları yok, metinler diriltme demiyor', () => {
-    expect(() => restInTown(at('10', 'battle'))).toThrow();
-    expect(Object.keys(CONFIG.rest).sort()).toEqual(['heal', 'price']);
+  it('veride diriltme / fiyat alanları yok, metinler diriltme demiyor', () => {
+    expect(Object.keys(CONFIG.rest).sort()).toEqual(['heal']);
     expect(CONFIG.texts.townRest).not.toMatch(/back on their feet|revived/);
   });
 });

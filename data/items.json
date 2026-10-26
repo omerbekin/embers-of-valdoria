@@ -99,9 +99,9 @@
   "rolls": {
     "spread": 0.15
   },
-  "_affixes": "Affix tanımları (Ömer onayı 2026-10-11, items.md 1.3b). tier C/B/A; text: {0}/{1} = parça değerleri, {x} = zarlanan seçim, {primary} = sınıfın ana statı. parts[]: base + perIlvl x ilvl (x affixRules.power), step = yuvarlama adımı, ip = 1 birimin Item Points değeri (değer/fiyat/Equip best), to = motor eşlemesi (mod:<UnitModifiers alanı> toplanır, mult:<alan> 1 + toplam, fx:<ItemEffects alanı>, elem:<element|*>, attr:primary|all, prog:recovery), scale = yüzde -> oran (0,01). fixed = zar ve seviye yok; floor = aşağı yuvarlanır; noRoll = zar yok; noPower = affixRules.power işlemez (iri adımlı: ana stat, tüm statlar, hız, Immunity). slots = yalnızca bu yuvalarda rastgele çekilir (yuva kimliği, Ömer 2026-10-13 itemfix: bkz. _itemfix; slots yoksa her yuvada). needs = Equip best'in sınıf uyumu ipucu (element:<x>, element:magic, mp, shield, dot, debuff, support, summon). affixRules.rollFloorByRarity (Ömer 2026-10-11): nadirliğe göre zarın aralıktaki alt sınırı (oran; tavan aynı): Common tüm aralık, Uncommon üst %75, Rare %62,5, Epic %50, Legendary %37,5. Yalnızca yeni zarlar. affixRules.classFit (Ömer 2026-10-11): rastgele affix çekilirken item kimin için zarlandıysa ona yarayan affix'ler (needs uyumu) `weight` kat ağırlıklı, yalnızca `tiers` kademelerinde (C).",
+  "_affixes": "Affix tanımları (Ömer onayı 2026-10-11, items.md 1.3b). tier C/B/A; text: {0}/{1} = parça değerleri, {x} = zarlanan seçim, {primary} = sınıfın ana statı. parts[]: base + perIlvl x ilvl (x affixRules.power), step = yuvarlama adımı, ip = 1 birimin Item Points değeri (değer/fiyat/Equip best), to = motor eşlemesi (mod:<UnitModifiers alanı> toplanır, mult:<alan> 1 + toplam, fx:<ItemEffects alanı>, elem:<element|*>, attr:primary|all, res:<element> = element direnci (ItemEffects.elemResist), prog:recovery|gold|xp|woundSoft), scale = yüzde -> oran (0,01). fixed = zar ve seviye yok; floor = aşağı yuvarlanır; noRoll = zar yok; noPower = affixRules.power işlemez (iri adımlı: ana stat, tüm statlar, hız, Immunity). slots = yalnızca bu yuvalarda rastgele çekilir (yuva kimliği, Ömer 2026-10-13 itemfix: bkz. _itemfix; slots yoksa her yuvada). needs = Equip best'in sınıf uyumu ipucu (element:<x>, element:magic, mp, shield, dot, debuff, support, summon, melee = temel saldırısı yakın dövüş, ranged = yakın dövüş olmayan hasar skill'i var). affixRules.rollFloorByRarity (Ömer 2026-10-11): nadirliğe göre zarın aralıktaki alt sınırı (oran; tavan aynı): Common tüm aralık, Uncommon üst %75, Rare %62,5, Epic %50, Legendary %37,5. Yalnızca yeni zarlar. affixRules.classFit (Ömer 2026-10-11): rastgele affix çekilirken item kimin için zarlandıysa ona yarayan affix'ler (needs uyumu) `weight` kat ağırlıklı, yalnızca `tiers` kademelerinde (C).",
   "_itemfix": "Ömer 2026-10-13 (form itemfix): (1) YUVA KİMLİĞİ: her stat yalnızca 2-3 yuvada rastgele çıkar (affixDefs[].slots). Weapon = element/fiziksel hasar, kritik hasarı, delme, elit/boss hasarı (+ isabet, DoT, Keenness, Elemental, Potency, Summon); Off-hand kalkan = Armor, Shield power, Magic armor (+ HP regen, resist, auralar, Global defense, Max HP %, Support); Helm = HP, MP, debuff direnci (+ Armor, Magic armor, MP cost, Mana/Resource mastery); Armor = Armor, HP, Magic armor, auralar (+ HP regen, resist); Gloves = isabet, kritik şansı, can çalma (+ kaçınma, MP regen, Keenness, hasar, hız %); Boots = hız, kaçınma, Quick start (+ HP, MP, hız %); Trinket = HP/MP regen, şifa ve kalkan gücü, DoT, çağrı gücü (+ MP, MP cost, hız, Quick start, hasar, Elemental, Potency, Mana/Resource). Genel A affix'leri (Primary, All attributes, Recovery, Swift ultimate, Immunity, Endurance) her yuvada. Hançer ikinci elde silah havuzunu kullanır. Ana affix (main) tabanın örtük statıdır, havuzdan muaftır; Legendary'nin sabit affix'leri de muaf. Kalkanların ana affix'i Armor (main), yeni tabanlar Iron Buckler (Common), Kite Shield of the Stag (Rare), Warden's Pavise (Epic). (2) TEK ITEM TAVANI DOLDURMAZ: c_acc 1/0,17 -> 0,6/0,1 (adım 0,25), b_crit 2,4/0,4 -> 1,5/0,25, a_keen kritik 1,92/0,32 -> 1,2/0,2, b_speed 1/0,04 -> 0,7/0,03 (adım 0,25), b_mpcost 4,8/0,8 -> 3/0,5, a_recovery 3,84/0,64 -> 1,6/0,27: tavan artık 2-3 kaynakla dolar. (3) DEĞERLEME (yalnızca ip): c_shield ve c_dot 0,15 -> 0,2, a_allattr 1,25 -> 3, a_support 0,08 -> 0,12 (her parça), a_potency tur 1 -> 3. (7) DENGE: yuva kimliği boşa giden zarları azalttığı için item'ler Endless'ta güçlendi (ilk boss %58 -> %63); telafi için affixRules.power 1,5 -> 1,4 (tüm affix değerleri ~%7 düşük, Endless hedefleri yeniden bantta). (6) Sıfır aralık: adımlar küçüldü (c_mp 5 -> 2, c_hpregen 0,5 -> 0,25, c_mpregen 1 -> 0,25, a_primary 2 -> 1, a_allattr 2 -> 0,5, a_mana / a_resource MP regen 1 -> 0,5). Ayrıntı: docs/design/open-questions.md madde (itemfix).",
-  "_affixBalance": "Ömer 2026-10-12 (Endless item dengesi p4): a_primary ip 0,75 -> 2 (1 ana stat puanı gerçekte ~2 IP; Equip best ve fiyat artık doğru tartar), b_speed ip 2,75 -> 4 (hız çok değerli), a_speedpct perIlvl 0,32 -> 0,2 (yüksek seviyede hız % çok hızlı büyüyordu). Güç değişen tek affix a_speedpct; diğer ikisi yalnızca değerleme.",
+  "_affixBalance": "Ömer 2026-10-26 (form econ/main, 16 yeni affix; sayılar PROVİZYON, sim bekliyor): C c_lightning (c_fire kalıbı), c_res_fire/ice/holy/dark/nature (miğfer/zırh/kalkan; base 3 + 0,5/ilvl, ip 0,2; skill vuruşu + DoT/zemin tiki + Doom; toplam mevcut damageTaken sınırında, yeni tavan yok; Light = oyunun holy elementi), c_gold (takı; base 2 + 0,3/ilvl, ip 0,25; savaşa giren kahramanların toplamı savaş altınına çarpılır, sandık altını hariç; Endless altın kartına da), c_xp (miğfer/takı; base 3 + 0,5/ilvl, ip 0,15; yalnızca takanın savaş XP'si, Endless dalga XP'si dahil). B b_front / b_back (silah; b_tier kalıbı; ön sıra = hedef tarafının canlı en ön sırası, arka = gerisi), b_thorns (zırh/kalkan; base 6 + 1/ilvl, ip 0,12; yakın dövüş skill vuruşunda hedefe düşen hasarın oranı zırhsız döner), b_tier_def (zırh/miğfer; b_tier aynası), b_wound_soft (zırh/miğfer; base 6 + 1/ilvl, ip 0,1; yara başına maks can kaybı bu oran az, toplam en çok %100). A a_column (zırh/kalkan; a_auradef kalıbı, aynı şeritteki dostlar, taşıyan hariç), a_pierce (silah; base 15 + 1/ilvl, ip 0,1; temel saldırı = sınıfın ilk skill'i, isabet ettiği her düşmanın arkasındaki en yakın düşmana bu güç oranıyla ayrı vuruş), a_steady (eldiven/çizme; yığın başına base 1 + 0,17/ilvl, ip 1; Move olmayan her eylem 1 yığın, en çok 3, Move sıfırlar). Ömer 2026-10-12 (Endless item dengesi p4): a_primary ip 0,75 -> 2 (1 ana stat puanı gerçekte ~2 IP; Equip best ve fiyat artık doğru tartar), b_speed ip 2,75 -> 4 (hız çok değerli), a_speedpct perIlvl 0,32 -> 0,2 (yüksek seviyede hız % çok hızlı büyüyordu). Güç değişen tek affix a_speedpct; diğer ikisi yalnızca değerleme.",
   "affixRules": {
     "power": 1.6,
     "rollFloorByRarity": {
@@ -471,6 +471,178 @@
         }
       ]
     },
+    "c_lightning": {
+      "tier": "C",
+      "name": "Lightning damage",
+      "text": "+{0}% Lightning damage",
+      "slots": [
+        "weapon"
+      ],
+      "desc": "Damage of your lightning skills.",
+      "needs": "element:lightning",
+      "icon": "element:lightning",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "elem:lightning",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_res_fire": {
+      "tier": "C",
+      "name": "Fire resistance",
+      "text": "+{0}% Fire resistance",
+      "slots": [
+        "helm",
+        "armor",
+        "offhand"
+      ],
+      "desc": "You take less fire damage, from hits and from damage over time.",
+      "icon": "resist:fire",
+      "parts": [
+        {
+          "base": 3,
+          "perIlvl": 0.5,
+          "step": 1,
+          "ip": 0.2,
+          "to": "res:fire",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_res_ice": {
+      "tier": "C",
+      "name": "Ice resistance",
+      "text": "+{0}% Ice resistance",
+      "slots": [
+        "helm",
+        "armor",
+        "offhand"
+      ],
+      "desc": "You take less ice damage, from hits and from damage over time.",
+      "icon": "resist:ice",
+      "parts": [
+        {
+          "base": 3,
+          "perIlvl": 0.5,
+          "step": 1,
+          "ip": 0.2,
+          "to": "res:ice",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_res_holy": {
+      "tier": "C",
+      "name": "Holy resistance",
+      "text": "+{0}% Holy resistance",
+      "slots": [
+        "helm",
+        "armor",
+        "offhand"
+      ],
+      "desc": "You take less holy damage, from hits and from damage over time.",
+      "icon": "resist:holy",
+      "parts": [
+        {
+          "base": 3,
+          "perIlvl": 0.5,
+          "step": 1,
+          "ip": 0.2,
+          "to": "res:holy",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_res_dark": {
+      "tier": "C",
+      "name": "Dark resistance",
+      "text": "+{0}% Dark resistance",
+      "slots": [
+        "helm",
+        "armor",
+        "offhand"
+      ],
+      "desc": "You take less dark damage, from hits and from damage over time.",
+      "icon": "resist:dark",
+      "parts": [
+        {
+          "base": 3,
+          "perIlvl": 0.5,
+          "step": 1,
+          "ip": 0.2,
+          "to": "res:dark",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_res_nature": {
+      "tier": "C",
+      "name": "Nature resistance",
+      "text": "+{0}% Nature resistance",
+      "slots": [
+        "helm",
+        "armor",
+        "offhand"
+      ],
+      "desc": "You take less nature damage, from hits and from damage over time.",
+      "icon": "resist:nature",
+      "parts": [
+        {
+          "base": 3,
+          "perIlvl": 0.5,
+          "step": 1,
+          "ip": 0.2,
+          "to": "res:nature",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_gold": {
+      "tier": "C",
+      "name": "Gold find",
+      "text": "+{0}% gold from battles",
+      "slots": [
+        "trinket"
+      ],
+      "desc": "Battles you win drop more gold. Every hero who fought adds their bonus.",
+      "icon": "gold",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0.3,
+          "step": 1,
+          "ip": 0.25,
+          "to": "prog:gold",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_xp": {
+      "tier": "C",
+      "name": "Experience",
+      "text": "+{0}% experience gained",
+      "slots": [
+        "helm",
+        "trinket"
+      ],
+      "desc": "Only the wearer gains more experience from battles.",
+      "icon": "xp",
+      "parts": [
+        {
+          "base": 3,
+          "perIlvl": 0.5,
+          "step": 1,
+          "ip": 0.15,
+          "to": "prog:xp",
+          "scale": 0.01
+        }
+      ]
+    },
     "b_crit": {
       "tier": "B",
       "name": "Crit chance",
@@ -709,6 +881,110 @@
           "step": 1,
           "ip": 0.3,
           "to": "fx:debuffAvoid",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_front": {
+      "tier": "B",
+      "name": "Vanguard bane",
+      "text": "+{0}% damage to enemies in the front row",
+      "slots": [
+        "weapon"
+      ],
+      "desc": "The front row is the foremost row that still has a living enemy.",
+      "icon": "frontRow",
+      "parts": [
+        {
+          "base": 2.9,
+          "perIlvl": 0.48,
+          "step": 1,
+          "ip": 0.25,
+          "to": "fx:frontRowDamage",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_back": {
+      "tier": "B",
+      "name": "Rearguard bane",
+      "text": "+{0}% damage to enemies in the back row",
+      "slots": [
+        "weapon"
+      ],
+      "desc": "Every enemy standing behind the front row.",
+      "needs": "ranged",
+      "icon": "backRow",
+      "parts": [
+        {
+          "base": 2.9,
+          "perIlvl": 0.48,
+          "step": 1,
+          "ip": 0.25,
+          "to": "fx:backRowDamage",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_thorns": {
+      "tier": "B",
+      "name": "Thorns",
+      "text": "Reflect {0}% of melee damage taken",
+      "slots": [
+        "armor",
+        "offhand"
+      ],
+      "desc": "An enemy who hits you with a melee skill takes this share of the damage back. Armor does not reduce it.",
+      "needs": "melee",
+      "icon": "thorns",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.12,
+          "to": "fx:thorns",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_tier_def": {
+      "tier": "B",
+      "name": "Giantward",
+      "text": "-{0}% damage taken from elites and bosses",
+      "slots": [
+        "armor",
+        "helm"
+      ],
+      "icon": "defense",
+      "parts": [
+        {
+          "base": 2.9,
+          "perIlvl": 0.48,
+          "step": 1,
+          "ip": 0.25,
+          "to": "fx:tierDamageTakenReduce",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_wound_soft": {
+      "tier": "B",
+      "name": "Scarred hide",
+      "text": "Your wounds lower your Max HP {0}% less",
+      "slots": [
+        "armor",
+        "helm"
+      ],
+      "desc": "Each wound takes this much less of your max HP while you wear it.",
+      "icon": "wound",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.1,
+          "to": "prog:woundSoft",
           "scale": 0.01
         }
       ]
@@ -1141,6 +1417,68 @@
           "to": "fx:lowHpReduce",
           "scale": 0.01,
           "below": 0.3
+        }
+      ]
+    },
+    "a_column": {
+      "tier": "A",
+      "name": "Column ward",
+      "text": "Allies in your column take -{0}% damage",
+      "slots": [
+        "armor",
+        "offhand"
+      ],
+      "desc": "Your column is the line of cells in front of and behind you. You are not covered yourself.",
+      "icon": "auraGuard",
+      "parts": [
+        {
+          "base": 1.92,
+          "perIlvl": 0.32,
+          "step": 0.5,
+          "ip": 0.5,
+          "to": "fx:columnGuard",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_pierce": {
+      "tier": "A",
+      "name": "Piercing blows",
+      "text": "Your basic attacks also hit the enemy behind for {0}% damage",
+      "slots": [
+        "weapon"
+      ],
+      "desc": "Your basic attack is your first skill. The enemy behind is the nearest one in the same column, behind the one you hit.",
+      "icon": "pen",
+      "parts": [
+        {
+          "base": 15,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.1,
+          "to": "fx:pierceBehind",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_steady": {
+      "tier": "A",
+      "name": "Steady stance",
+      "text": "Each turn you don't move: +{0}% damage (stacks 3)",
+      "slots": [
+        "gloves",
+        "boots"
+      ],
+      "desc": "Every action that is not a Move adds a stack, up to 3. Moving clears them.",
+      "icon": "steady",
+      "parts": [
+        {
+          "base": 1,
+          "perIlvl": 0.17,
+          "step": 0.5,
+          "ip": 1,
+          "to": "fx:steadyDamage",
+          "scale": 0.01
         }
       ]
     }
@@ -2386,13 +2724,13 @@
     "stack": false,
     "endless": true
   },
-  "_dropRarity": "Düşüş nadirliği (Ömer onayı 2026-10-11): TEK ağırlık tablosu, sefer loot'u, Endless ödül kartları ve tüccar stoğu aynı tabloyu kullanır. weights = Common / Uncommon / Rare / Epic taban ağırlıkları (Legendary yok: yalnızca ortak nadir düşüş zarı, rareDrop). shift = kayma: perIlvl x item seviyesi + elite / boss / treasure eki, en çok max. Kayma kademe i'nin ağırlığını x(1 + kayma x i) yapar (Common sabit): kaymanın tavanında (0,5) bile Common ~%58, Uncommon ~%28, Rare ~%11, Epic ~%3. Ömer 2026-10-12 (p3, çok az): perIlvl 0,012 -> 0,015 (tavan 0,5 aynı; artık ilvl ~33'te dolar, eskiden ~42); ilvl 20'de Common %63,9 -> %62,6, ilvl 30'da %61,3 -> %59,4. Sefer de bu tabloyu kullanır (aynı küçük kayma). Taban (item) nadirlikten bağımsız; nadirlik önce zarlanır, sonra taban seçilir.",
+  "_dropRarity": "Düşüş nadirliği (Ömer onayı 2026-10-11): TEK ağırlık tablosu, sefer loot'u, Endless ödül kartları ve tüccar stoğu aynı tabloyu kullanır. weights = Common / Uncommon / Rare / Epic taban ağırlıkları (Legendary yok: yalnızca ortak nadir düşüş zarı, rareDrop). shift = kayma: perIlvl x item seviyesi + elite / boss / treasure eki, en çok max. Kayma kademe i'nin ağırlığını x(1 + kayma x i) yapar (Common sabit): kaymanın tavanında (0,5) Common ~%51, Uncommon ~%30, Rare ~%14, Epic ~%5 (2026-10-26 tablosuyla). Ömer 2026-10-12 (p3, çok az): perIlvl 0,012 -> 0,015 (tavan 0,5 aynı; artık ilvl ~33'te dolar, eskiden ~42); ilvl 20'de Common %63,9 -> %62,6, ilvl 30'da %61,3 -> %59,4. Sefer de bu tabloyu kullanır (aynı küçük kayma). Taban (item) nadirlikten bağımsız; nadirlik önce zarlanır, sonra taban seçilir. Ömer 2026-10-26 (form econ/main): taban ağırlıklar 70 / 22 / 6,5 / 1,5 -> 64 / 25 / 8,5 / 2,5 (mob düşüşü ve sefer tüccarı stoğu aynı tablo; kaymalar aynen; Endless ödül kartları da bu tabloyu kullandığı için onlar da biraz nadirleşir).",
   "dropRarity": {
     "weights": {
-      "common": 70,
-      "uncommon": 22,
-      "rare": 6.5,
-      "epic": 1.5
+      "common": 64,
+      "uncommon": 25,
+      "rare": 8.5,
+      "epic": 2.5
     },
     "shift": {
       "perIlvl": 0.015,
@@ -2402,7 +2740,7 @@
       "max": 0.5
     }
   },
-  "_loot": "Loot (items.md 3.1-3.4; Ömer kararları: düşen item SAYISI ve nadirlik her zorlukta AYNI (karar 6); boss/hazine düşüşleri otomatik, seçim ekranı yok (karar 8)). perPartyMember: zafer başına beklenen item = değer x aktif takım boyutu (kesir seed'li yuvarlanır). treasure: sandık = treasureBase + treasurePerMember x takım. minRarity: o kaynağın en az bir item'i bu nadirlikte ya da üstünde. Nadirlik: dropRarity tablosu (2026-10-11; eski rarityByChapter / eliteShift kalktı). pity.rareAfter: art arda bu kadar Rare'siz düşüşten sonra garanti Rare+. repeat: aynı düğümün N. kez kazanılışında item/altın çarpanı ve nadirlik tavanı (tekrar oynama, roadmap 2.3 A; bugünkü tek yönlü seferde yalnızca ilk zafer). gold: ilvl başına altın. Torba doluyken sığmayan item'ler Spoils kartında 'geride kalan' olarak bekler; oyuncu kartı kapatmadan yer açıp alabilir, kapatınca kaybolur (Ömer, madde 280). 2026-10-11 (Ömer): minRarity (boss / hazine en az Rare) ve pity (Rare garantisi) KALDIRILDI; nadirliği yalnızca dropRarity tablosu belirler. Ömer 2026-10-18 (ilerleme TUR 1 madde 8): dropMult = sefer item düşüşü çarpanı (0,65: %35 az; normal, elit, boss, hazine ve olay sandıkları; minItems tabanı aynen; Endless'a ve ortak nadir Legendary zarına (rareDrop) işlemez). gripWeight = taban seçiminde tutuş ağırlığı (balance-tester 2026-10-19, Ömer notu 'seferde çift el çok az düşüyor, Warrior hep tek el + kalkan'): aynı yuva ve ailedeki tabanlar arasından çift el x2,5 ağırlıkla seçilir (yalnızca tek el ve çift el karışık havuzlar, yani Axes & Swords ve Maces silahları etkilenir; yay, tılsım, asa, hançer, kalkan ve zırh aynen); yazılmayan tutuş 1. rarityFloor = o kaynağın HER item'inin nadirlik tabanı (elit en az Uncommon, boss en az Rare; zar tabanın altına düşerse taban; tekrar oynamanın nadirlik tavanı yine işler).",
+  "_loot": "Loot (items.md 3.1-3.4; Ömer kararları: düşen item SAYISI ve nadirlik her zorlukta AYNI (karar 6); boss/hazine düşüşleri otomatik, seçim ekranı yok (karar 8)). perPartyMember: zafer başına beklenen item = değer x aktif takım boyutu (kesir seed'li yuvarlanır). treasure: sandık = treasureBase + treasurePerMember x takım. minRarity: o kaynağın en az bir item'i bu nadirlikte ya da üstünde. Nadirlik: dropRarity tablosu (2026-10-11; eski rarityByChapter / eliteShift kalktı). pity.rareAfter: art arda bu kadar Rare'siz düşüşten sonra garanti Rare+. repeat: aynı düğümün N. kez kazanılışında item/altın çarpanı ve nadirlik tavanı (tekrar oynama, roadmap 2.3 A; bugünkü tek yönlü seferde yalnızca ilk zafer). gold: ilvl başına altın. Torba doluyken sığmayan item'ler Spoils kartında 'geride kalan' olarak bekler; oyuncu kartı kapatmadan yer açıp alabilir, kapatınca kaybolur (Ömer, madde 280). 2026-10-11 (Ömer): minRarity (boss / hazine en az Rare) ve pity (Rare garantisi) KALDIRILDI; nadirliği yalnızca dropRarity tablosu belirler. Ömer 2026-10-18 (ilerleme TUR 1 madde 8): dropMult = sefer item düşüşü çarpanı (0,65: %35 az; normal, elit, boss, hazine ve olay sandıkları; minItems tabanı aynen; Endless'a ve ortak nadir Legendary zarına (rareDrop) işlemez). gripWeight = taban seçiminde tutuş ağırlığı (balance-tester 2026-10-19, Ömer notu 'seferde çift el çok az düşüyor, Warrior hep tek el + kalkan'): aynı yuva ve ailedeki tabanlar arasından çift el x2,5 ağırlıkla seçilir (yalnızca tek el ve çift el karışık havuzlar, yani Axes & Swords ve Maces silahları etkilenir; yay, tılsım, asa, hançer, kalkan ve zırh aynen); yazılmayan tutuş 1. rarityFloor = o kaynağın HER item'inin nadirlik tabanı (elit en az Uncommon, boss en az Rare; zar tabanın altına düşerse taban; tekrar oynamanın nadirlik tavanı yine işler). Ömer 2026-10-26 (form econ/main): savaş altını x0,85 (gold.battle 4 -> 3,4, elite 8 -> 6,8, boss 16 -> 13,6; ilvl ile çarpılıp yuvarlanır; hazine sandığı altını 25 aynen, 'savaş ödülü' dışı). Temper taşı (yeni kaynak): boss İLK zaferi 1-3 taş (%60 / %30 / %10), elit İLK zaferi %50 ihtimalle 1 taş; devriye (tekrar) zaferi taş vermez; ayrı seed'li zar (loot zarını ve savaş RNG'sini bozmaz); sayılar campaign.json > blacksmith.stones (src/campaign/loot.ts > rollTemperStones).",
   "loot": {
     "dropMult": 0.65,
     "rarityFloor": { "elite": "uncommon", "boss": "rare" },
@@ -2430,9 +2768,9 @@
       }
     ],
     "gold": {
-      "battle": 4,
-      "elite": 8,
-      "boss": 16,
+      "battle": 3.4,
+      "elite": 6.8,
+      "boss": 13.6,
       "treasure": 25
     },
     "legendaryChance": 0

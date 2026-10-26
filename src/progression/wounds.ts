@@ -18,10 +18,14 @@ export const woundCount = (h: { wounds?: unknown } | undefined): number => {
   return typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
 };
 
-/** Yaraların maksimum can çarpanı (1 = yarasız). Ölümcül sınırın üstündeki yara (debug) ek kayıp vermez; en az %5. */
-export function woundHpFactor(wounds: number, r: WoundRules): number {
+/**
+ * Yaraların maksimum can çarpanı (1 = yarasız). Ölümcül sınırın üstündeki yara (debug) ek kayıp vermez; en az %5. `soften` (0-1; b_wound_soft
+ * affix'i, Ömer 2026-10-26: src/progression/loadout.ts > itemWoundSoft): yara başına kayıp bu oran az (verilmezse aynı).
+ */
+export function woundHpFactor(wounds: number, r: WoundRules, soften = 0): number {
   const n = Math.max(0, Math.min(Math.floor(wounds), Math.max(0, Math.floor(r.lethal))));
-  return Math.max(0.05, Math.round((1 - r.maxHpLoss * n) * 1000) / 1000);
+  const keep = 1 - Math.min(1, Math.max(0, soften));
+  return Math.max(0.05, Math.round((1 - r.maxHpLoss * keep * n) * 1000) / 1000);
 }
 
 /** Gösterim için yaranın maks can kaybı yüzdesi (2 yara -> 40). */
@@ -68,8 +72,8 @@ export function woundTipData(wounds: number, r: WoundRules, opts: { baseHp?: num
  * Yaraları savaş kurulumuna uygular (YERİNDE): maks can = (türetilen x hpMult + hpAdd) x çarpan. Motor saf kalır: yalnızca mevcut
  * UnitModifiers.hpMult / hpAdd alanları kullanılır (item'in düz can eki de aynı oranda düşer). Yarasızsa dokunmaz.
  */
-export function applyWounds(setup: UnitSetup, wounds: number, r: WoundRules): UnitSetup {
-  const f = woundHpFactor(wounds, r);
+export function applyWounds(setup: UnitSetup, wounds: number, r: WoundRules, soften = 0): UnitSetup {
+  const f = woundHpFactor(wounds, r, soften);
   if (f >= 1) return setup;
   const m = { ...(setup.modifiers ?? {}) };
   m.hpMult = Math.round((m.hpMult ?? 1) * f * 1000) / 1000;

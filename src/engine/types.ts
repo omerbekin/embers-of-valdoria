@@ -609,6 +609,26 @@ export interface ItemEffects {
   vengeance?: { statuses: string[]; turns: number; scope?: 'any' };
   /** Marked Quarry: elit / boss hedefe isabet eden skill vuruşu `status`, `turns` tur verir. */
   tierStatus?: { status: string; turns: number };
+  /*
+   * Yeni affix kancaları (Ömer onayı 2026-10-26, form econ/main). Oranlar 0-1; hepsi genel, verilmezse birim aynı. Yeni tavan yok:
+   * azaltmalar mevcut damageTaken sınırına (ITEM_HOOK_CAPS.damageTaken) tabidir.
+   */
+  /** Element direnci (c_res_*): bu elementten alınan hasar (skill vuruşu, DoT / zemin tiki, Doom) bu oran az. */
+  elemResist?: Partial<Record<Element, number>>;
+  /** Thorns (b_thorns): düşmanın yakın dövüş skill'iyle bu birime isabet ettirdiği hasarın bu oranı saldırana döner (zırhsız, sabit). */
+  thorns?: number;
+  /** Ön sıradaki düşmana (tarafının canlı en ön sırası) verilen skill hasarı bu oran fazla (b_front). */
+  frontRowDamage?: number;
+  /** Ön sıranın gerisindeki düşmana verilen skill hasarı bu oran fazla (b_back). */
+  backRowDamage?: number;
+  /** Elit / boss rütbeli (ya da boss tanımlı) saldırandan alınan hasar bu oran az (b_tier_def; tierDamageMult'un aynası). */
+  tierDamageTakenReduce?: number;
+  /** Sütun koruması (a_column): aynı tahtada aynı şeritteki (sütun) DOSTLAR bu oran az hasar alır (taşıyan hariç; birden çok kaynakta en yükseği). */
+  columnGuard?: number;
+  /** Delici vuruş (a_pierce): temel saldırı (sınıfın ilk skill'i) isabet ettiği her hedefin arkasındaki en yakın düşmana da bu güç oranıyla vurur. */
+  pierceBehind?: number;
+  /** Sabit duruş (a_steady): üst üste Move yapılmayan eylem başına (en çok 3) verilen skill hasarı bu oran fazla. */
+  steadyDamage?: number;
 }
 
 /** Birimin sefer rütbesi (arayüz çerçeve/rozet için; kural değiştirmez). */

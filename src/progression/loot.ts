@@ -101,7 +101,7 @@ export function rollLoot(o: LootInput): LootResult {
   // Sefer düşüşü %35 az (Ömer 2026-10-18, TUR 1 madde 8; items.json > loot.dropMult); garanti tabanı (minItems) aynen
   let count = roundChance(rng, expected * rep.items * (L.dropMult ?? 1));
   if (first) count = Math.max(count, L.minItems[o.kind] ?? 0);
-  const families = [...new Set(o.party.flatMap((h) => classWeaponFamilies(h.class)))];
+  const families = partyFamilies(o.party);
   const cap = rIdx(rep.maxRarity);
   const items: string[] = [];
   const rarities: RarityId[] = [];
@@ -111,21 +111,36 @@ export function rollLoot(o: LootInput): LootResult {
     // Nadirlik tabanı (TUR 1 madde 8): elit en az Uncommon, boss en az Rare; tekrar oynamanın tavanı yine işler
     const floor = L.rarityFloor?.[o.kind] ? rIdx(L.rarityFloor[o.kind]!) : 0;
     const r = Math.min(Math.max(rIdx(rollDropRarity(rng, o.ilvl, dropKind(o.kind))), floor), cap, rIdx('epic'));
-    const slot = rng.next() < L.smartSlotChance ? weakestSlot(rng, o.party) : SLOT_IDS[rng.int(0, SLOT_IDS.length - 1)]!;
-    let family: string | undefined;
-    if (slot === 'weapon' || slot === 'offhand') {
-      // İkinci el (2026-10-12): yalnızca ikinci el item'i olan aileler (kalkan: Maces & Shields, hançer)
-      const all = ITEMS.weaponFamilies.map((f) => f.id).filter((f) => slot === 'weapon' || ITEMS.items.some((d) => d.family === f && d.rarity !== 'legendary' && fitsSlot(d, 'offhand')));
-      const fams = families.filter((f) => all.includes(f));
-      const usable = fams.length && rng.next() < L.usableWeaponChance ? fams : all;
-      family = usable[rng.int(0, usable.length - 1)];
-    }
-    const d = pickBase(rng, slot, family, o.ilvl);
-    if (!d) continue;
-    items.push(d.id);
+    const pick = rollDropBase(rng, o.party, o.ilvl, families);
+    if (!pick) continue;
+    items.push(pick.def.id);
     rarities.push(RARITY_IDS[r]!);
-    forClass.push(d.family ? o.party.find((h) => classWeaponFamilies(h.class).includes(d.family ?? ''))?.class : undefined);
+    forClass.push(pick.forClass);
   }
   const gold = Math.round((L.gold[o.kind] ?? 0) * Math.max(1, o.ilvl) * rep.gold);
   return { items, rarities, forClass, gold, pity: o.pity ?? 0 };
+}
+
+/** Takımın kullandığı silah aileleri (tekrarsız). */
+const partyFamilies = (party: LootInput['party']): string[] => [...new Set(party.flatMap((h) => classWeaponFamilies(h.class)))];
+
+/**
+ * Düşüş üretecinin taban seçimi (rollLoot'un item başına adımı; demircinin Combine'ı da kullanır, src/campaign/smith.ts): smartSlotChance ile
+ * takımın en zayıf yuvası (yoksa rastgele yuva), silah / ikinci elde usableWeaponChance ile takımın kullandığı aile, sonra pickBase (ilvl <= `ilvl`).
+ * forClass = tabanın ailesini kullanan ilk takım üyesinin sınıfı. Zar sırası rollLoot'taki eski satır içi kodla birebir aynı.
+ */
+export function rollDropBase(rng: Rng, party: LootInput['party'], ilvl: number, families: string[] = partyFamilies(party)): { def: ItemDef; forClass: string | undefined } | undefined {
+  const L = ITEMS.loot;
+  const slot = rng.next() < L.smartSlotChance ? weakestSlot(rng, party) : SLOT_IDS[rng.int(0, SLOT_IDS.length - 1)]!;
+  let family: string | undefined;
+  if (slot === 'weapon' || slot === 'offhand') {
+    // İkinci el (2026-10-12): yalnızca ikinci el item'i olan aileler (kalkan: Maces & Shields, hançer)
+    const all = ITEMS.weaponFamilies.map((f) => f.id).filter((f) => slot === 'weapon' || ITEMS.items.some((d) => d.family === f && d.rarity !== 'legendary' && fitsSlot(d, 'offhand')));
+    const fams = families.filter((f) => all.includes(f));
+    const usable = fams.length && rng.next() < L.usableWeaponChance ? fams : all;
+    family = usable[rng.int(0, usable.length - 1)];
+  }
+  const d = pickBase(rng, slot, family, ilvl);
+  if (!d) return undefined;
+  return { def: d, forClass: d.family ? party.find((h) => classWeaponFamilies(h.class).includes(d.family ?? ''))?.class : undefined };
 }

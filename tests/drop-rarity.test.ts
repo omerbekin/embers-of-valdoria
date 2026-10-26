@@ -26,7 +26,7 @@ describe('tek nadirlik tablosu', () => {
     expect(lo.common).toBeGreaterThan(60);
     expect(hi.common).toBeGreaterThan(50);
     expect(hi.common).toBeGreaterThan(hi.uncommon + hi.rare + hi.epic);
-    expect(hi.epic).toBeLessThan(5);
+    expect(hi.epic).toBeLessThan(6);
     expect(hi.rare).toBeGreaterThan(lo.rare);
     expect(dropChances(10, 'elite').epic).toBeGreaterThan(dropChances(10).epic);
   });

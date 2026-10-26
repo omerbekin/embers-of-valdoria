@@ -1,8 +1,9 @@
 // Sefer tüccarı (Odo; Ömer 2026-10-11, Forward Camp düğümü): Endless tüccarıyla aynı kurallar (alım / satım / geri alım / yenileme), saf.
 // Stok: tek nadirlik tablosu (progression > rollDropRarity) + düğümün item seviyesine kadar taban item'ler, örnek takımdan birinin sınıfı için zarlanır;
-// fiyat = örneğin değeri, satış = değerin yarısı (progression > itemValue / sellValue). Sayılar data/campaign/campaign.json > merchant.
+// fiyat = nadirlik tabanı x (1 + 0,1 x item seviyesi), satış = bu fiyatın yarısı (Ömer 2026-10-26; campaignPrice / campaignSellValue); stok GÜNLÜK
+// yenilenir (CampaignState.day). Sayılar data/campaign/campaign.json > merchant.
 // Arayüz: src/game/campaign-merchant.ts (TEK giriş noktası; ortak DOM tüccar ekranı src/ui/merchant-screen.ts).
-import { BAG_SIZE, ITEMS, canEquip, itemDef, itemValue, rollDropRarity, rollItem, sellValue, type ItemInstance } from '../progression';
+import { BAG_SIZE, ITEMS, canEquip, instanceIlvl, instanceRarity, itemDef, rollDropRarity, rollItem, type ItemInstance, type RarityId } from '../progression';
 import { CONFIG } from './data';
 import { nodeIlvl } from './power';
 import { rngFor } from './seed';
@@ -10,16 +11,31 @@ import { activeHeroes, clone, closeShop, complete, expectStep, mapOf, nextStep }
 import { node } from './graph';
 import type { CampaignShop, CampaignState } from './types';
 
+/** Seferin günü (campaign-dev'in CampaignState.day alanı; Inn / kamp / dinlenme ilerletir). Alan yoksa (eski kayıt ya da henüz eklenmediyse) 0. */
+export const campaignDay = (s: CampaignState): number => Math.max(0, Math.floor((s as CampaignState & { day?: number }).day ?? 0));
+
 /**
- * Yavaş yenilenme (Ömer 2026-10-24, "node yaptıkça yavaş yavaş değişsin, 2 node 1 item"): sefer ilerlemesi = temizlenen düğüm + devriye
- * zaferi sayısı; her merchant.rotateEvery ilerlemede bir raf sırayla (0, 1, 2 ...) yeni mala döner. Rafın kaçıncı kez döndüğü zarın parçası.
+ * Sefer tüccarı fiyatı (Ömer 2026-10-26, form econ/main): priceBase[nadirlik] x (1 + pricePerIlvl x item seviyesi), yuvarlanır, en az 1.
+ * IP değerinden bağımsız (itemValue Endless tüccarında ve Reforge'da kalır). Nadirlik tabanı yoksa Epic'inki.
  */
-export function shopRotations(s: CampaignState): number {
-  const progress = s.cleared.length + Object.values(s.replays ?? {}).reduce((a, n) => a + n, 0);
-  return Math.floor(progress / Math.max(1, CONFIG.merchant.rotateEvery));
+export function campaignPrice(inst: Pick<ItemInstance, 'id'> & { rolls?: unknown }): number {
+  return Math.max(1, Math.round(rarityPrice(instanceRarity(inst), instanceIlvl(inst))));
 }
 
-/** Tezgâh stoğu (seed'li: aynı sefer + düğüm + yenileme sayısı + ilerleme = aynı mallar; ilerledikçe raflar teker teker değişir; alınmış raf ilerleme artana dek "sold"). */
+/** Nadirlik + item seviyesinin (yuvarlanmamış) tüccar fiyatı: priceBase[nadirlik] x (1 + pricePerIlvl x ilvl). Demircinin Combine bedeli de kullanır. */
+export function rarityPrice(rarity: RarityId, ilvl: number): number {
+  const M = CONFIG.merchant;
+  const base = M.priceBase[rarity] ?? M.priceBase['epic'] ?? 0;
+  return base * (1 + (M.pricePerIlvl ?? 0) * Math.max(0, ilvl));
+}
+
+/** Seferde satış değeri = tüccar fiyatının yarısı (items.json > budget.sellRatio), en az 1. Alım fiyatıyla tutarlı: al-sat kârı yok. */
+export const campaignSellValue = (inst: Pick<ItemInstance, 'id'> & { rolls?: unknown }): number => Math.max(1, Math.round(campaignPrice(inst) * ITEMS.budget.sellRatio));
+
+/**
+ * Tezgâh stoğu (Ömer 2026-10-26: GÜNLÜK yenilenme): seed'li, aynı sefer + düğüm + yenileme sayısı + gün = aynı mallar; gün değişince bütün raflar yeni.
+ * O gün alınmış raf (merchantSold = alındığı gün) yalnız ilk (yenilenmemiş) stokta "sold".
+ */
 export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 0): CampaignShop['wares'] {
   const ilvl = Math.max(1, nodeIlvl(s.mapId, nodeId));
   const team = activeHeroes(s).length ? activeHeroes(s) : s.roster;
@@ -27,14 +43,10 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
   const out: CampaignShop['wares'] = [];
   const used = new Set<string>();
   const size = node(mapOf(s), nodeId).merchantSize ?? CONFIG.merchant.size; // kasabalar (T1): Ashford küçük, Valdren Keep büyük stok
-  const turns = shopRotations(s);
+  const day = campaignDay(s);
   const sold = reroll ? undefined : s.merchantSold?.[`${s.mapId}:${nodeId}`]; // yalnız ilk (yenilenmemiş) stokta
   for (let i = 0; i < size; i++) {
-    const gen = Math.floor(turns / size) + (i < turns % size ? 1 : 0); // bu raf kaç kez döndü
-    const boughtAt = sold?.[i];
-    const refill = boughtAt !== undefined && turns > boughtAt; // alınmış raf, ilerleme artınca yeni malla dolar
-    const salt: Array<string | number> = refill ? ['refill', boughtAt] : [];
-    const rng = gen ? rngFor(s.seed, s.mapId, nodeId, 'shop', reroll, 'slot', i, gen, ...salt) : rngFor(s.seed, s.mapId, nodeId, 'shop', reroll, 'slot', i, ...salt);
+    const rng = rngFor(s.seed, s.mapId, nodeId, 'shop', reroll, 'day', day, 'slot', i);
     const rarity = rollDropRarity(rng, ilvl, 'normal');
     const pool = bases.filter((d) => !used.has(d.id));
     if (!pool.length) break;
@@ -42,8 +54,8 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
     used.add(d.id);
     const fits = team.filter((h) => canEquip(h.class, d));
     const forClass = fits.length ? fits[rng.int(0, fits.length - 1)]!.class : undefined;
-    const rolls = rollItem(d, rngFor(s.seed, s.mapId, nodeId, 'ware', reroll, i, gen, ...salt), { rarity, ...(forClass ? { forClass } : {}) });
-    out.push({ itemId: d.id, rolls, price: Math.round(itemValue({ id: d.id, rolls }) * (1 + (CONFIG.merchant.priceGrowth ?? 0) * (ilvl - 1))), ...(boughtAt === turns ? { sold: true } : {}) });
+    const rolls = rollItem(d, rngFor(s.seed, s.mapId, nodeId, 'ware', reroll, 'day', day, i), { rarity, ...(forClass ? { forClass } : {}) });
+    out.push({ itemId: d.id, rolls, price: campaignPrice({ id: d.id, rolls }), ...(sold?.[i] === day ? { sold: true } : {}) });
   }
   return out;
 }
@@ -57,9 +69,11 @@ export function merchantHere(s: CampaignState): boolean {
 /** Tüccara varış: tezgâh kurulur (tüccar adımında ya da tüccarlı kasabada; zaten açıksa durum aynen). */
 export function openCampaignShop(s: CampaignState): CampaignState {
   if (!merchantHere(s)) throw new Error('The merchant is not here');
-  if (s.shop?.node === s.at) return s;
+  const day = campaignDay(s);
+  if (s.shop?.node === s.at && (s.shop.day ?? 0) === day) return s;
   const t = clone(s);
-  t.shop = t.closedShop?.node === t.at ? t.closedShop : { node: t.at, wares: campaignStock(t), buyback: [], rerolls: 0 };
+  // Kapanan tezgâh aynı gün geri gelir; gün değiştiyse (ya da açık tezgâhın günü eskidiyse) yeni günün stoğu kurulur
+  t.shop = t.closedShop?.node === t.at && (t.closedShop.day ?? 0) === day ? t.closedShop : { node: t.at, wares: campaignStock(t), buyback: [], rerolls: 0, day };
   delete t.closedShop;
   return t;
 }
@@ -95,7 +109,7 @@ export function buyWare(s: CampaignState, index: number): CampaignState {
   tw.sold = true;
   if (!t.shop!.rerolls) {
     const k = `${t.mapId}:${t.at}`;
-    t.merchantSold = { ...(t.merchantSold ?? {}), [k]: { ...(t.merchantSold?.[k] ?? {}), [index]: shopRotations(t) } };
+    t.merchantSold = { ...(t.merchantSold ?? {}), [k]: { ...(t.merchantSold?.[k] ?? {}), [index]: campaignDay(t) } };
   }
   return t;
 }
@@ -107,7 +121,7 @@ export function sellToMerchant(s: CampaignState, uid: string): CampaignState {
   if (idx < 0) throw new Error('Item not in the bag');
   const t = clone(s);
   const [item] = t.inventory.splice(idx, 1) as [ItemInstance];
-  const price = itemDef(item.id) ? sellValue(item) : 0;
+  const price = itemDef(item.id) ? campaignSellValue(item) : 0;
   t.gold += price;
   const list = [...t.shop!.buyback, { item, price }];
   t.shop!.buyback = list.slice(Math.max(0, list.length - Math.max(1, CONFIG.merchant.buybackSize)));
