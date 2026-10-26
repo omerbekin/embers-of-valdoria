@@ -18,6 +18,7 @@ import { treeFlag } from './tree-sim';
 import { cpus } from 'node:os';
 import { writeFileSync } from 'node:fs';
 import { CONFIG, getMap, node, nodeIlvl, nodeLevel, type Difficulty } from '../campaign';
+import { valorRules } from '../engine/content';
 import { content } from '../engine';
 import { nodeCategory, resolveSimMap, type SimCarry } from './campaign';
 import { bonusOf, mergeGrindResults, simulateGrind, type GrindBonus, type GrindGroupAgg, type GrindNodeAgg, type GrindSimResult, type MerchantMode, type PlayerType, type RepeatMode } from './campaign-grind';
@@ -388,7 +389,7 @@ export function econLines(results: GrindSimResult[]): string[] {
       `  ${name(r)} altın ${k(total)}: savaş ${k(e.goldBattle)} + elit ${k(e.goldElite)} + boss ${k(e.goldBoss)} (ilk zafer %${fmt(pct(fights, total), 0)}), ` +
         `tekrar ${k(e.goldReplay)} (%${fmt(pct(e.goldReplay, total), 0)}), hazine ${k(e.goldTreasure)} (%${fmt(pct(e.goldTreasure, total), 0)}), satış ${k(e.goldSell)}`,
     );
-    L.push(`  ${pad} harcama: demirci ${k(r.goldSmith)}, dinlenme ${k(r.goldRest)}, tüccar ${k(e.goldMerchant)}; koşu sonunda kesede ${k(r.goldEarned + (r.goldBonus ?? 0) - r.goldSmith - r.goldRest - e.goldMerchant)}${r.goldBonus ? ` (bonus altın ${k(r.goldBonus)} dahil)` : ''}`);
+    L.push(`  ${pad} harcama: demirci ${k(r.goldSmith)}, dinlenme ${k(r.goldRest)}, tüccar ${k(e.goldMerchant)}; koşu sonunda kesede ${k(r.goldEarned + (r.goldBonus ?? 0) - r.goldSmith - r.goldRest - e.goldMerchant + (r.carry?.goldSum ?? 0))}${r.carry ? ` (haritaya ${k(r.carry.goldSum)} ile girdi)` : ''}${r.goldBonus ? ` (bonus altın ${k(r.goldBonus)} dahil)` : ''}`);
     const items = e.itemsFirst + e.itemsReplay + e.itemsTreasure;
     const rar = Object.entries(e.rarity)
       .filter(([, n]) => n > 0)
@@ -405,7 +406,7 @@ export function econLines(results: GrindSimResult[]): string[] {
   }
   L.push('');
   L.push('ÖLÜM / VALOR  (koşu başına ortalama)');
-  L.push('  Yara = kazanılan savaşın sonunda düşmüş kalıp %10 canla kalkan; ceset = 3 yaralıyken bir kez daha düşen. Valor tavanı 8: dolu keseye gelen kazanç boşa gider.');
+  L.push(`  Yara = kazanılan savaşın sonunda düşmüş kalıp %${fmt(CONFIG.rules.wounds.riseRatio * 100, 0)} canla kalkan; ceset = ${CONFIG.rules.wounds.lethal} yaralıyken bir kez daha düşen. Valor tavanı ${valorRules.cap}: dolu keseye gelen kazanç boşa gider.`);
   for (const r of rows) {
     const e = r.econ;
     const k = (v: number, d = 1) => fmt(v / r.runs, d);
