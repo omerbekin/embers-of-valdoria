@@ -763,7 +763,6 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       heroId,
       focus: focusInst(),
       ...(hero && (hero.hpRatio !== undefined || hero.alive === false) ? { hpRatio: hero.alive === false ? 0 : (hero.hpRatio ?? 1) } : {}),
-      ...(o.tutorial ? { hint: 'Your escort left their gear for the new company. Drag an item from the bag onto a hero or a slot, or let Equip best choose.' } : {}),
       onHero: (id) => {
         if (id !== heroId) flushPending();
         heroId = id;

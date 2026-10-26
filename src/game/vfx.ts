@@ -5071,6 +5071,7 @@ export const VFX: Record<VfxKind, (c: VfxCtx) => Promise<void>> = {
   vinesnare,
   taunt: tauntFx,
   guardlink,
+  darkbond: guardlink, // eski (v1) yedek: v2 dosyası (art-v2/undead/vfx.ts) varken kullanılmaz
   tremor,
   fistcrush,
   taunt2,

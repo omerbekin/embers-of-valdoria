@@ -66,8 +66,10 @@ function withQueue(fn) {
 }
 const readQueue = () => (existsSync(QUEUE) ? JSON.parse(readFileSync(QUEUE, 'utf8')) : { sessions: {} });
 const short = (sid) => sid.slice(0, 8);
+// Sohbetin modu girdiden ayrı saklanır (Ömer 2026-10-25): gönderim girdiyi silince yeni girdi varsayılan 'eşlik'e düşüyordu, kritik kanal unutuluyordu
+const rememberMode = (q, sid, mode) => { (q.modes ??= {})[short(sid)] = mode; };
 function entry(q, sid) {
-  const e = (q.sessions[sid] ??= { mode: 'eşlik', files: [], ready: false, notes: {}, created: new Date().toISOString(), updated: Date.now(), told: false });
+  const e = (q.sessions[sid] ??= { mode: q.modes?.[short(sid)] ?? 'eşlik', files: [], ready: false, notes: {}, created: new Date().toISOString(), updated: Date.now(), told: false });
   // Kısa kimlikle (add/ready) açılmış ayrı bir girdi varsa tam kimliğe katılır
   const s = short(sid);
   const dup = s !== sid && q.sessions[s];
@@ -127,6 +129,7 @@ function hookPrompt() {
     if (m) {
       const mode = MODES[m[1].toLowerCase().replace(/[ -]/g, '')] ?? 'eşlik';
       if (mode !== e.mode) { e.mode = mode; changed = true; }
+      rememberMode(q, sid, mode);
     }
     e.seen = Date.now();
     if (!e.label && prompt.trim() && !/^kuyruk/i.test(prompt.trim())) e.label = prompt.trim().replace(/\s+/g, ' ').slice(0, 50);
@@ -472,7 +475,9 @@ const main = {
   mode: () => withQueue((q) => {
     const mode = MODES[args.slice(1).join('').toLowerCase().replace(/[ -]/g, '')];
     if (!mode) throw new Error('mod: kritik | eşlik | gün sonu');
-    entry(q, findSid(q, args[0])).mode = mode;
+    const sidM = findSid(q, args[0]);
+    entry(q, sidM).mode = mode;
+    rememberMode(q, sidM, mode);
     console.log(`${args[0]} artık ${mode}.`);
   }),
   add: () => withQueue((q) => {

@@ -89,35 +89,39 @@
   },
   "treasures": {
     "dwarven_mine": {
+      "_not": "KORUNAN HAZİNE ÖDÜLÜ (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): standart sandık + 1 Uncommon hediye item; altın standart 100 (25 x item seviyesi 4) -> sabit 150 (x1,5). REVİZYON (Ömer 2026-10-25: koruma biraz daha zor; altın yalnız Mine / Abbey sandığından kalktı; «nadir item verme şansı olsun» için mevcut veride hediyeye şanslı nadirlik kolu YOK, hediye Uncommon kaldı, open-questions 417): altın 0 (standart altın zarı da 0). EKLENDİ (Ömer onayı 2026-10-25, «ekle bakalım»): giftUpgrade = hediye %35 şansla Rare, tutmazsa Uncommon (seed'li tek zar, deneme / yükleme değiştirmez).",
       "title": "Dwarven Mine",
       "text": "The wardens have fallen. Deep in the mine you find a sealed dwarven chest.",
-      "reward": "Open the chest to claim its gear and gold."
+      "reward": "Open the chest to claim the dwarven gear inside.",
+      "loot": { "gold": 0, "gift": "uncommon", "giftUpgrade": { "rarity": "rare", "chance": 0.35 } }
     },
     "relic_vault": {
+      "_not": "KORUNAN HAZİNE ÖDÜLÜ (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): standart sandık + 1 Uncommon hediye item; altın standart 150 (25 x item seviyesi 6) -> sabit 225 (x1,5). REVİZYON (Ömer 2026-10-25: koruma biraz daha zor; altın yalnız Mine / Abbey sandığından kalktı; «nadir item verme şansı olsun» için mevcut veride hediyeye şanslı nadirlik kolu YOK, hediye Uncommon kaldı, open-questions 417): altın 0 (standart altın zarı da 0). EKLENDİ (Ömer onayı 2026-10-25, «ekle bakalım»): giftUpgrade = hediye %35 şansla Rare, tutmazsa Uncommon (seed'li tek zar, deneme / yükleme değiştirmez).",
       "title": "St. Brann's Abbey",
       "text": "Beyond the vault keepers lies the abbey's relic vault, untouched for a hundred years.",
-      "reward": "Open the vault to claim its gear and gold."
+      "reward": "Open the vault to claim its relic gear.",
+      "loot": { "gold": 0, "gift": "uncommon", "giftUpgrade": { "rarity": "rare", "chance": 0.35 } }
     },
     "raiders_hoard": {
-      "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): altın ağırlıklı = sandık zarından 1 item + 45 altın.",
+      "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): altın ağırlıklı = sandık zarından 1 item + 45 altın. KORUNAN HAZİNE ÖDÜLÜ (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): +1 Uncommon hediye item, altın 45 -> 68 (x1,5).",
       "title": "Raiders' Hoard",
       "text": "The raiders never spent what they stole. Under a cairn of moor stones lies a chest heavy with coin.",
-      "reward": "Take the hoard: mostly coin, and one piece of gear.",
-      "loot": { "maxItems": 1, "gold": 45 }
+      "reward": "Take the hoard: mostly coin, and two pieces of gear.",
+      "loot": { "maxItems": 1, "gold": 68, "gift": "uncommon" }
     },
     "sunken_shrine": {
-      "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): az ama iyi = standart sandıktan 1 eksik item + 1 Uncommon hediye item + 10 altın.",
+      "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): az ama iyi = standart sandıktan 1 eksik item + 1 Uncommon hediye item + 10 altın. KORUNAN HAZİNE ÖDÜLÜ (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): eksik item kalktı (standart sandık + Uncommon hediye = +1 item), altın 10 -> 15 (x1,5).",
       "title": "Sunken Shrine",
       "text": "Pilgrims left their best at this shrine before the marsh rose. The offerings are few, but well kept.",
       "reward": "Take the offerings: a few fine pieces of gear.",
-      "loot": { "itemsDelta": -1, "gold": 10, "gift": "uncommon" }
+      "loot": { "gold": 15, "gift": "uncommon" }
     },
     "supply_wagons": {
-      "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): item ağırlıklı = standart sandık + 1 Common hediye item, 10 altın.",
+      "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): item ağırlıklı = standart sandık + 1 Common hediye item, 10 altın. KORUNAN HAZİNE ÖDÜLÜ (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): hediye Common -> Uncommon, altın 10 -> 15 (x1,5).",
       "title": "Supply Wagons",
       "text": "Morvane's quartermasters left the wagons to their guards. Crates of arms and armour wait under the tarps.",
       "reward": "Raid the wagons: plenty of gear, little coin.",
-      "loot": { "gold": 10, "gift": "common" }
+      "loot": { "gold": 15, "gift": "uncommon" }
     }
   },
   "stories": {

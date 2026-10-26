@@ -326,7 +326,7 @@ export class ItemTip {
     const W = this.host.clientWidth;
     const H = this.host.clientHeight;
     const tw = this.box.offsetWidth;
-    const th = this.box.offsetHeight;
+    const th = this.fitHeight(H);
     const gap = 8;
     let left: number;
     let top: number;
@@ -343,6 +343,17 @@ export class ItemTip {
     this.box.style.left = `${Math.max(6, Math.min(W - tw - 6, left))}px`;
     this.box.style.top = `${Math.max(6, Math.min(H - th - 6, top))}px`;
   }
+  /** İpucu görünür alandan uzunsa yüksekliği sınırlar ve içinde kaydırır (telefonda üst satırlar kesilmesin); yeni yüksekliği verir. */
+  private fitHeight(H: number): number {
+    this.box.style.maxHeight = '';
+    this.box.style.overflowY = '';
+    const max = H - 12;
+    if (this.box.offsetHeight > max) {
+      this.box.style.maxHeight = `${max}px`;
+      this.box.style.overflowY = 'auto';
+    }
+    return this.box.offsetHeight;
+  }
   private setPinned(on: boolean): void {
     this.isPinned = on;
     this.box.classList.toggle('pinned', on);
@@ -354,7 +365,7 @@ export class ItemTip {
     const W = this.host.clientWidth;
     const H = this.host.clientHeight;
     const tw = this.box.offsetWidth;
-    const th = this.box.offsetHeight;
+    const th = this.fitHeight(H);
     const gap = 18;
     let left = x + gap;
     let top = y + gap;

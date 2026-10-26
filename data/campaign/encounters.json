@@ -99,32 +99,32 @@
     ]
   },
   "mine_wardens": {
-    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,875 (düğümler aynı zorluğa çekildi). PLAYTEST 2026-10-23 D2 (Ömer seçti; 4 kahraman 73 turda ölüm): 2. dalganın iki Pass Crossbowman'i silindi (dalga 2 = yalnız Stonebound Warden; düşman 6 -> 4). 'Elite işaretle + Lv4 hedefle' seçeneği yerine bu: düğüm seviyesi kodda haritadan türüyor (veride düğüm başına level alanı yok) ve düğümü elite türüne çevirmek haritada zorluk işareti olurdu (U6 reddedildi). SİM ÖLÇÜMÜ BEKLİYOR (Ömer onayı).",
+    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,875 (düğümler aynı zorluğa çekildi). PLAYTEST 2026-10-23 D2 (Ömer seçti; 4 kahraman 73 turda ölüm): 2. dalganın iki Pass Crossbowman'i silindi (dalga 2 = yalnız Stonebound Warden; düşman 6 -> 4). 'Elite işaretle + Lv4 hedefle' seçeneği yerine bu: düğüm seviyesi kodda haritadan türüyor (veride düğüm başına level alanı yok) ve düğümü elite türüne çevirmek haritada zorluk işareti olurdu (U6 reddedildi). SİM ÖLÇÜMÜ BEKLİYOR (Ömer onayı). KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
     "name": "Mine Wardens",
     "units": [
-      { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.262, "powerMult": 1.262 } },
-      { "class": "deep_runecaller", "slot": 6, "mods": { "spdAdd": -1, "hpMult": 1.262, "powerMult": 1.172 } },
-      { "class": "deep_runecaller", "slot": 8, "mods": { "spdAdd": -1, "hpMult": 1.262, "powerMult": 1.172 } }
+      { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.413, "powerMult": 1.413 } },
+      { "class": "deep_runecaller", "slot": 6, "mods": { "spdAdd": -1, "hpMult": 1.413, "powerMult": 1.313 } },
+      { "class": "deep_runecaller", "slot": 8, "mods": { "spdAdd": -1, "hpMult": 1.413, "powerMult": 1.313 } }
     ],
     "waves": [
       { "units": [
-        { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 1.198, "powerMult": 1.198 } }
+        { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 1.342, "powerMult": 1.342 } }
       ] }
     ]
   },
   "vault_keepers": {
-    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,308 (düğümler aynı zorluğa çekildi).",
+    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,308 (düğümler aynı zorluğa çekildi). KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
     "name": "Vault Keepers",
     "units": [
-      { "class": "oathsworn_brother", "slot": 0, "mods": { "spdAdd": -1, "hpMult": 1.299, "powerMult": 1.299 } },
-      { "class": "oathsworn_brother", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.299, "powerMult": 1.299 } },
-      { "class": "censer_monk", "slot": 7, "mods": { "spdAdd": -1, "hpMult": 1.299, "powerMult": 1.299 } }
+      { "class": "oathsworn_brother", "slot": 0, "mods": { "spdAdd": -1, "hpMult": 1.455, "powerMult": 1.455 } },
+      { "class": "oathsworn_brother", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.455, "powerMult": 1.455 } },
+      { "class": "censer_monk", "slot": 7, "mods": { "spdAdd": -1, "hpMult": 1.455, "powerMult": 1.455 } }
     ],
     "waves": [
       { "units": [
-        { "class": "oathsworn_brother", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.369, "powerMult": 1.369 } },
-        { "class": "censer_monk", "slot": 6, "mods": { "spdAdd": -1, "hpMult": 1.369, "powerMult": 1.369 } },
-        { "class": "censer_monk", "slot": 8, "mods": { "spdAdd": -1, "hpMult": 1.369, "powerMult": 1.369 } }
+        { "class": "oathsworn_brother", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.533, "powerMult": 1.533 } },
+        { "class": "censer_monk", "slot": 6, "mods": { "spdAdd": -1, "hpMult": 1.533, "powerMult": 1.533 } },
+        { "class": "censer_monk", "slot": 8, "mods": { "spdAdd": -1, "hpMult": 1.533, "powerMult": 1.533 } }
       ] }
     ]
   },
@@ -444,53 +444,53 @@
     ]
   },
   "hoard_guards": {
-    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Cairn Hill + %10 (0,863 x 1,1 = 0,949). Raiders' Hoard korunan hazinesi (cep). Denge balance-tester'ın.",
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Cairn Hill + %10 (0,863 x 1,1 = 0,949). Raiders' Hoard korunan hazinesi (cep). Denge balance-tester'ın. KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
     "name": "Hoard Guards",
     "units": [
-      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 0.949, "powerMult": 0.949 } },
-      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 0.949, "powerMult": 0.949 } },
-      { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.949, "powerMult": 0.949 } },
-      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -8, "hpMult": 0.949, "powerMult": 0.949 } }
+      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 1.063, "powerMult": 1.063 } },
+      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 1.063, "powerMult": 1.063 } },
+      { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 1.063, "powerMult": 1.063 } },
+      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -8, "hpMult": 1.063, "powerMult": 1.063 } }
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 0.949, "powerMult": 0.949 } },
-        { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 0.949, "powerMult": 0.949 } },
-        { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 0.949, "powerMult": 0.949 } }
+        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 1.063, "powerMult": 1.063 } },
+        { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 1.063, "powerMult": 1.063 } },
+        { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 1.063, "powerMult": 1.063 } }
       ] }
     ]
   },
   "shrine_drowned": {
-    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Misty Marsh ile aynı (can 1,293, güç 1,091). Sunken Shrine korunan hazinesi (cep). Denge balance-tester'ın.",
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Misty Marsh ile aynı (can 1,293, güç 1,091). Sunken Shrine korunan hazinesi (cep). Denge balance-tester'ın. KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
     "name": "Shrine Drowned",
     "units": [
-      { "class": "drowned", "slot": 0, "mods": { "spdAdd": -2, "hpMult": 1.332, "powerMult": 1.124 } },
-      { "class": "drowned", "slot": 2, "mods": { "spdAdd": -2, "hpMult": 1.332, "powerMult": 1.124 } },
-      { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -2, "hpMult": 1.332, "powerMult": 1.124 } },
-      { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.332, "powerMult": 1.124 } }
+      { "class": "drowned", "slot": 0, "mods": { "spdAdd": -2, "hpMult": 1.492, "powerMult": 1.259 } },
+      { "class": "drowned", "slot": 2, "mods": { "spdAdd": -2, "hpMult": 1.492, "powerMult": 1.259 } },
+      { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -2, "hpMult": 1.492, "powerMult": 1.259 } },
+      { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.492, "powerMult": 1.259 } }
     ],
     "waves": [
       { "units": [
-        { "class": "ghoul", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.332, "powerMult": 1.124 } },
-        { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 1.332, "powerMult": 1.124 } },
-        { "class": "fen_witchling", "slot": 8, "mods": { "hpMult": 1.332, "powerMult": 1.124 } }
+        { "class": "ghoul", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.492, "powerMult": 1.259 } },
+        { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 1.492, "powerMult": 1.259 } },
+        { "class": "fen_witchling", "slot": 8, "mods": { "hpMult": 1.492, "powerMult": 1.259 } }
       ] }
     ]
   },
   "wagon_guard": {
-    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Siege Line + %10 (0,83 x 1,1 = 0,913). Supply Wagons korunan hazinesi (cep). Denge balance-tester'ın.",
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Siege Line + %10 (0,83 x 1,1 = 0,913). Supply Wagons korunan hazinesi (cep). Denge balance-tester'ın. KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
     "name": "Wagon Guard",
     "units": [
-      { "class": "moor_raider", "slot": 0, "name": "Ember Outrider", "mods": { "hpMult": 0.995, "powerMult": 0.995 } },
-      { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 0.995, "powerMult": 0.995 } },
-      { "class": "moor_raider", "slot": 2, "name": "Ember Outrider", "mods": { "hpMult": 0.995, "powerMult": 0.995 } },
-      { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 0.995, "powerMult": 0.995 } }
+      { "class": "moor_raider", "slot": 0, "name": "Ember Outrider", "mods": { "hpMult": 1.114, "powerMult": 1.114 } },
+      { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 1.114, "powerMult": 1.114 } },
+      { "class": "moor_raider", "slot": 2, "name": "Ember Outrider", "mods": { "hpMult": 1.114, "powerMult": 1.114 } },
+      { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.114, "powerMult": 1.114 } }
     ],
     "waves": [
       { "units": [
-        { "class": "morvane_halberdier", "slot": 1, "mods": { "hpMult": 0.995, "powerMult": 0.995 } },
-        { "class": "bandit_crossbowman", "slot": 6, "name": "Siege Crossbowman", "mods": { "hpMult": 0.995, "powerMult": 0.995 } },
-        { "class": "bandit_crossbowman", "slot": 8, "name": "Siege Crossbowman", "mods": { "hpMult": 0.995, "powerMult": 0.995 } }
+        { "class": "morvane_halberdier", "slot": 1, "mods": { "hpMult": 1.114, "powerMult": 1.114 } },
+        { "class": "bandit_crossbowman", "slot": 6, "name": "Siege Crossbowman", "mods": { "hpMult": 1.114, "powerMult": 1.114 } },
+        { "class": "bandit_crossbowman", "slot": 8, "name": "Siege Crossbowman", "mods": { "hpMult": 1.114, "powerMult": 1.114 } }
       ] }
     ]
   },

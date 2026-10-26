@@ -2,6 +2,72 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.9.9",
+      "date": "2026-10-27",
+      "groups": [
+        {
+          "heading": "New",
+          "items": [
+            "Map 2, The Drowned Reach, opens after Map 1: new regions, elites, bosses and enemies.",
+            "Days: the campaign now counts days. A counter at the top right shows the day and what comes next; click it for details.",
+            "Inn: leave wounded heroes at the Inn to heal over the coming days, and take them back when you need them.",
+            "Camp: after a battle, choose to rest, tend a hero, train or sharpen gear.",
+            "Blacksmith: Temper items with Temper Stones, Combine three items into a better one, and Reroll an item's bonuses.",
+            "16 new item bonuses.",
+            "Map nodes warn when they are far above your company's level: amber for Dangerous, red for Deadly."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Valor: the cap is now 10. Spend 3 Valor outside battle to heal a hero's wound.",
+            "Enemies hit a little softer; elites are a little tougher; bosses hit softer.",
+            "The four battles after the King's Bridge boss are a little easier.",
+            "Heroes below a battle's level now earn full XP; only higher-level heroes earn less.",
+            "Guarded treasure battles are a little harder and their chests a little better.",
+            "Merchant prices updated."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Phone: the loot window's bag shows small slots in several rows, and item previews always fit on screen.",
+            "Phone: hero names in the company picker sit on one line under spaced-out portraits.",
+            "Removed the escort hint text from the first Gear screen.",
+            "Campaign map: the Start battle card stays in place while the party walks instead of sliding away from the cursor.",
+            "The fullscreen and menu buttons in the top-right corner sit closer together."
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.9.8.14",
+      "date": "2026-10-25",
+      "groups": [
+        {
+          "heading": "Fixes",
+          "items": [
+            "Raise Dead's tooltip no longer shows a long decimal for the Skeleton's STR.",
+            "The party formation panel now marks each hero's ultimate skill, and the FRONT label runs vertically along the front row.",
+            "Recruit and hero cards: the Archer holds the bow naturally; Mage, Druid and Undead are no longer shrunk to fit their staff.",
+            "Skill tree: the tier headers line up with their columns again."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Guarded treasures fight harder. Their chests hold an extra Uncommon item; Mine and Abbey drop no gold but have a 35% chance at a Rare."
+          ]
+        },
+        {
+          "heading": "New",
+          "items": [
+            "Dark Bond has a new crimson tether effect and a new status icon."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.8.13",
       "date": "2026-10-25",
       "groups": [

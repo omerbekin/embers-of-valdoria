@@ -4634,6 +4634,11 @@ html.short .gr-pair > .gr-ledger .gr-inv .gr-bag {
   --bag-cols: 3;
 }
 
+/* ganimet penceresinin sağındaki yalnızca-torba paneli: tek sütunlu gövde ~420 px, 3 sütun 135 px'lik dev hücre yapıyordu (tek satır görünüyordu); 7 sütun ≈ 57 px (>= 44 px) */
+html.short .gr-pair > .gr-ledger.gr-bagonly .gr-inv .gr-bag {
+  --bag-cols: 7;
+}
+
 html.short .gr-ledger .gr-marks {
   gap: 4px;
   padding-top: 3px;

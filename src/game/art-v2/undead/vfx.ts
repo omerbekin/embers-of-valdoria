@@ -9,7 +9,7 @@
  * Bu class'ın skill'leri -> VFX anahtarları:
  *   bone_throw (Bone Throw) -> 'bonethrow'
  *   wail_of_the_dead (Wail of the Dead) -> 'wail'
- *   dark_bond (Dark Bond) -> 'guardlink'
+ *   dark_bond (Dark Bond) -> 'darkbond' (+ bond şifası: vampiricEcho > bondHealPulse)
  *   raise_dead (Raise Dead) -> 'raise' (+ olay efektleri 'corpsedrain' ve 'summon_skeleton')
  *   skeleton_strike (Bone Strike) -> 'bonestrike'
  *   skeleton_slash (Bone Slash) -> 'boneslash'
@@ -165,11 +165,10 @@ function vampiricEcho(c: VfxCtx, k: VfxKit, victims: CombatantView[]): void {
     void k.ring(c.scene, drainer.container.x, drainer.container.y - 4, { r: 90, flat: 0.32, n: 18, colors: SOUL, dur: 420, size: 8 });
     if (partner) {
       await k.wait(c.scene, k.slow(120));
-      await soulStream(c, k, to, chestOf(partner), { n: 4, arc: 70, dur: 440, colors: BLOODSOUL, hex: '#e5463b', size: 30 });
-      glowAt(c, k, chestOf(partner).x, chestOf(partner).y, 130, 480, k.DEPTH + 20, 0xff6a7a);
+      await bondHealPulse(c, k, to, chestOf(partner), partner);
       const hrt = k.v2Sprite(c, 'bondheart', '#b0304f', partner.container.x, partner.container.y - partner.h - 30, 44, k.DEPTH + 60);
       k.grow(c.scene, hrt, 0.4, 1.1, 200, 'Back.easeOut');
-      c.scene.tweens.add({ targets: hrt, alpha: 0, y: hrt.y - 30, delay: k.slow(380), duration: k.slow(360), onComplete: () => hrt.destroy() });
+      c.scene.tweens.add({ targets: hrt, alpha: 0, y: hrt.y - 30, delay: k.slow(120), duration: k.slow(240), onComplete: () => hrt.destroy() });
     }
   })();
 }
@@ -385,80 +384,131 @@ const wail: V2Vfx = (c, k) =>
 
 // ---------------------------------------------------------------------------------------------------------------- DARK BOND
 
+/** Dark Bond kan-duman renkleri (skill fx #8a1f3d, durum #b0304f): koyu duman -> bordo -> kan kırmızısı -> sıcak uç. */
+const BOND_SMOKE = [0x4a0f22, 0x8a1f3d, 0xb0304f];
+const BOND_HEX = ['#2a0a14', '#8a1f3d', '#b0304f', '#ff6a7a'];
+
+/** Çizgi üstündeki nokta: hafif dalgalı, hafif sarkık (u: 0..1, ph: dalga fazı). Çıktı `out`a yazılır (kare başına nesne üretilmez). */
+function wavyPt(out: Pt, a: Pt, b: Pt, u: number, ph: number, amp: number, sag: number): Pt {
+  out.x = a.x + (b.x - a.x) * u;
+  out.y = a.y + (b.y - a.y) * u - Math.sin(u * Math.PI) * sag + Math.sin(u * Math.PI * 3 + ph) * amp * Math.sin(u * Math.PI);
+  return out;
+}
+
+/** Yassı (zemine yatık) kan mührü: halka + iç halka + 6 rün çentiği; (0,0) merkezli çizilir, çağıran konumlar/ölçekler. */
+function bondSigil(c: VfxCtx, k: VfxKit, x: number, y: number, r: number): Phaser.GameObjects.Graphics {
+  const g = c.scene.add.graphics().setPosition(x, y).setDepth(k.FLOOR_FX + 4);
+  const dot = (px: number, py: number, s: number, col: number, al: number) => g.fillStyle(col, al).fillRect(k.snap(px) - s / 2, k.snap(py * 0.32) - s / 2, s, s);
+  for (let i = 0; i < 36; i++) {
+    const t = (i / 36) * Math.PI * 2;
+    dot(Math.cos(t) * r, Math.sin(t) * r, 8, 0xe0506a, 1);
+    if (i % 2 === 0) dot(Math.cos(t) * r * 0.62, Math.sin(t) * r * 0.62, 6, 0xb0304f, 0.95);
+  }
+  for (let i = 0; i < 6; i++) {
+    const t = (i / 6) * Math.PI * 2 + 0.26;
+    for (let s = 0.62; s <= 1.0; s += 0.1) dot(Math.cos(t) * r * s, Math.sin(t) * r * s, 6, 0xff8a9a, 0.95);
+  }
+  return g;
+}
+
 /**
- * Dark Bond (tek dost, kendisi hariç; 4 tur bağ; YARIM TUR): lich alçak sesle büyü mırıldanır, göğsünden dostunun göğsüne omur
- * boncuklarından bir kemik zincir uzanır (halkalar tek tek takılır), bağ mühürlenince iki göğüste kan-ruh kalbi atar ve zincir boyunca iki
- * kalp atışı akar (lifesteal'ın paylaşılacağı yol). Yarım tur: lich'in başının üstünde kum saati belirir, kumun YARISI akar ve saat söner.
+ * Dark Bond (tek dost, kendisi hariç; 4 tur bağ; YARIM TUR; 2026-10-25 yeniden tasarım): lich'in avuçlarında koyu kan-kırmızı duman toplanır,
+ * sonra ince, hafif dalgalı, atan bir kan teli dosta fırlar (üstünde küçük koyu zerrecikler dosta doğru süzülür); varınca dostun ayaklarının
+ * altında kırmızı bir mühür halkası çakar ve içine gömülür. Yarım tur: kum saati. Toplam ~0,9 sn.
  */
-const guardlink: V2Vfx = (c, k) =>
+const darkbond: V2Vfx = (c, k) =>
   k.playUntilHit(async (hit) => {
     const a = c.actor;
     const { used } = useEvents(c);
     const turnCost = typeof used?.['turnCost'] === 'number' ? (used['turnCost'] as number) : 1;
     c.sfx('darkChant');
     a.play('cast');
-    const fl = handFlare(c, k, 50, 300);
-    fl.setTint(0xff8a9a);
-    await k.wait(c.scene, k.slow(200));
+    // 1) avuçlarda koyu duman toplanır
+    const h = handOf(a);
+    billow(c, k, h.x, h.y, { n: 7, spread: 26, size: [56, 84], rise: [20, 50], life: [380, 560], tint: BOND_SMOKE, alpha: 0.9, grow: 1.4, depth: k.DEPTH + 31 });
+    glowAt(c, k, h.x, h.y, 110, 380, k.DEPTH + 32, 0xb0304f);
+    k.burst(c.scene, h.x, h.y, { colors: BOND_HEX, n: 6, speed: [20, 80], gravity: -120, life: [260, 480], size: [5, 9] });
+    await k.wait(c.scene, k.slow(240));
+    c.sfx('chainTether');
+    const tmp: Pt = { x: 0, y: 0 };
+    const hd: Pt = { x: 0, y: 0 };
     for (const t of c.targets) {
-      const from = chestOf(a);
+      const from = handOf(a);
       const to = chestOf(t);
-      // 1) kemik zincir: omur boncukları sırayla takılır
-      c.sfx('chainTether');
-      const n = Math.max(6, Math.round(Math.hypot(to.x - from.x, to.y - from.y) / 34));
-      const sag = 40;
-      const beads: Phaser.GameObjects.Image[] = [];
-      const thread = c.scene.add.graphics().setDepth(k.DEPTH + 33);
-      const drawThread = (upto: number, pulse: number) => {
-        thread.clear();
-        for (let i = 0; i <= 40 * upto; i++) {
-          const u = i / 40;
-          const p = { x: from.x + (to.x - from.x) * u, y: from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * sag };
-          const hot = pulse >= 0 && Math.abs(u - pulse) < 0.08;
-          thread.fillStyle(hot ? 0xff9aa8 : 0x8e1f2c, hot ? 1 : 0.85).fillRect(k.snap(p.x) - (hot ? 4 : 2), k.snap(p.y) - (hot ? 4 : 2), hot ? 8 : 4, hot ? 8 : 4);
+      const tether = c.scene.add.graphics().setDepth(k.DEPTH + 33);
+      const motes: Phaser.GameObjects.Image[] = [];
+      for (let i = 0; i < 5; i++) motes.push(k.v2Sprite(c, 'soulmote', '#8a1f3d', from.x, from.y, 20, k.DEPTH + 34).setTint(0x6a1020).setAlpha(0));
+      const draw = (reveal: number, beat: number) => {
+        tether.clear();
+        const steps = 44;
+        const last = Math.floor(steps * reveal);
+        const w = 5 + 2 * Math.min(beat, 1.5);
+        for (let i = 0; i <= last; i++) {
+          const u = i / steps;
+          wavyPt(tmp, from, to, u, beat * 2.2 + u * 4, 9, 34);
+          const x = k.snap(tmp.x);
+          const y = k.snap(tmp.y);
+          tether.fillStyle(0x2a0a14, 0.9).fillRect(x - w - 1, y - w - 1, w * 2 + 2, w * 2 + 2);
+          tether.fillStyle(0xe0506a, 1).fillRect(x - w * 0.7, y - w * 0.7, w * 1.4, w * 1.4);
+          if (i === last && reveal < 1) tether.fillStyle(0xff6a7a, 1).fillRect(x - 5, y - 5, 10, 10);
+        }
+        // zerrecikler tel boyunca dosta süzülür
+        for (let m = 0; m < motes.length; m++) {
+          const u = ((m / motes.length + beat * 0.5) % 1) * reveal;
+          wavyPt(hd, from, to, u, beat * 2.2 + u * 4, 9, 34);
+          motes[m]!.setPosition(k.snap(hd.x + Math.sin(u * 20 + m) * 5), k.snap(hd.y + Math.cos(u * 16 + m) * 6)).setAlpha(reveal * (0.35 + 0.65 * Math.sin(Math.PI * u)));
         }
       };
-      for (let i = 0; i <= n; i++) {
-        const u = i / n;
-        const p = { x: from.x + (to.x - from.x) * u, y: from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * sag };
-        const b = k.v2Sprite(c, 'vertebra', '#d9d4c0', p.x, p.y, 40, k.DEPTH + 34).setRotation(Math.atan2(to.y - from.y, to.x - from.x)).setAlpha(0);
-        void k.wait(c.scene, k.slow(i * 16)).then(() => {
-          b.setAlpha(1);
-          k.grow(c.scene, b, 1.6, 1, 90);
-          drawThread(u, -1);
-        });
-        beads.push(b);
-      }
-      await k.wait(c.scene, k.slow(n * 16 + 60));
-      // 2) bağ mühürlenir: iki kalp + zincir boyunca iki atış
+      // 2) tel fırlar
+      await k.counter(c.scene, k.slow(260), (u) => draw(u, u), 'Quad.easeOut');
+      // 3) varış: ayak altında mühür halkası çakar ve gömülür
       c.sfx('bondPulse');
-      for (const v of [a, t]) {
-        const hp = k.v2Sprite(c, 'bondheart', '#b0304f', v.container.x, v.container.y - v.h - 34, 56, k.DEPTH + 60);
-        k.grow(c.scene, hp, 0.3, 1, 220, 'Back.easeOut');
-        c.scene.tweens.add({ targets: hp, scaleX: hp.scaleX * 1.18, scaleY: hp.scaleY * 1.18, delay: k.slow(260), duration: k.slow(90), yoyo: true, repeat: 1 });
-        c.scene.tweens.add({ targets: hp, alpha: 0, y: hp.y - 24, delay: k.slow(900), duration: k.slow(320), onComplete: () => hp.destroy() });
-        glowAt(c, k, chestOf(v).x, chestOf(v).y, 130, 520, k.DEPTH + 20, 0xff6a7a);
-        void k.ring(c.scene, v.container.x, v.container.y - 4, { r: 96, flat: 0.32, n: 20, colors: BLOODSOUL, dur: 460, size: 9 });
-      }
+      const f = k.feet(t);
+      const sigil = bondSigil(c, k, f.x, f.y, 92);
+      sigil.setAlpha(0).setScale(1.5, 1.5);
+      // mührün altında yassı kırmızı ışık (ADD)
+      const sGlow = c.scene.add.image(f.x, f.y, soulGlowTex(c, k)).setDisplaySize(240, 84).setTint(0xb0304f).setAlpha(0).setDepth(k.FLOOR_FX + 3).setBlendMode(k.Phaser.BlendModes.ADD);
+      c.scene.tweens.add({ targets: sGlow, alpha: 0.9, duration: k.slow(110), yoyo: true, hold: k.slow(220), onComplete: () => sGlow.destroy() });
+      c.scene.tweens.add({ targets: sigil, alpha: 1, scaleX: 1, scaleY: 1, duration: k.slow(110), ease: 'Back.easeOut' });
+      c.scene.tweens.add({ targets: sigil, alpha: 0, scaleX: 0.3, scaleY: 0.3, y: f.y + 10, delay: k.slow(330), duration: k.slow(260), ease: 'Quad.easeIn', onComplete: () => sigil.destroy() });
+      void k.ring(c.scene, f.x, f.y, { r: 96, flat: 0.32, n: 20, colors: BOND_HEX, dur: 380, size: 8 });
+      glowAt(c, k, to.x, to.y, 140, 380, k.DEPTH + 20, 0xb0304f);
+      k.burst(c.scene, to.x, to.y, { colors: BOND_HEX, n: 8, speed: [40, 150], gravity: 0, life: [260, 480], size: [6, 10] });
       hit();
       if (turnCost < 1) halfTurnGlass(c, k, turnCost);
-      for (let beat = 0; beat < 2; beat++) {
-        await k.counter(c.scene, k.slow(230), (u) => {
-          drawThread(1, u);
-          const i = Math.round(u * n);
-          beads.forEach((b, j) => b.setTint(Math.abs(j - i) <= 1 ? 0xff9aa8 : 0xffffff));
-        });
-      }
-      // 3) zincir motlara dağılır (kalıcı bağ çizgisini arayüz çizer)
-      for (const b of beads) {
-        k.burst(c.scene, b.x, b.y, { colors: ['#d9d4c0', '#b0304f'], n: 1, speed: [10, 60], gravity: 80, life: [260, 460], size: [5, 8] });
-        c.scene.tweens.add({ targets: b, alpha: 0, scaleX: 0.2, scaleY: 0.2, duration: k.slow(260), delay: k.slow(k.rnd(0, 120)), onComplete: () => b.destroy() });
-      }
-      c.scene.tweens.add({ targets: thread, alpha: 0, duration: k.slow(300), onComplete: () => thread.destroy() });
+      await k.counter(c.scene, k.slow(260), (u) => draw(1, 1 + u));
+      c.scene.tweens.add({ targets: tether, alpha: 0, duration: k.slow(160), onComplete: () => tether.destroy() });
+      for (const m of motes) c.scene.tweens.add({ targets: m, alpha: 0, duration: k.slow(160), onComplete: () => m.destroy() });
     }
-    c.scene.tweens.add({ targets: fl, alpha: 0, duration: k.slow(200), onComplete: () => fl.destroy() });
     a.play('idle');
   }, c.actor);
+
+/**
+ * Bond şifası (cause 'dark_bond', ~0,4 sn, sık olabilir): Undead'den bağlı dosta kısa bir kan teli çizilir, üstünde kırmızı bir atış kafası
+ * koşar; varınca dostun göğsünde küçük kırmızı-siyah şifa parlaması (normal yeşil şifadan ayrı). Beklenebilir (Promise varışta çözülür).
+ */
+async function bondHealPulse(c: VfxCtx, k: VfxKit, from: Pt, to: Pt, partner: CombatantView): Promise<void> {
+  const g = c.scene.add.graphics().setDepth(k.DEPTH + 33);
+  const tmp: Pt = { x: 0, y: 0 };
+  await k.counter(c.scene, k.slow(250), (u) => {
+    g.clear();
+    const lo = Math.max(0, u - 0.35);
+    for (let i = Math.floor(lo * 24); i <= Math.floor(u * 24); i++) {
+      const v = i / 24;
+      wavyPt(tmp, from, to, v, 0.8, 6, 24);
+      const head = u - v < 0.08;
+      const s = head ? 7 : 4;
+      g.fillStyle(head ? 0xff8a9a : 0xd0405f, head ? 1 : 0.45 + 0.55 * (1 - (u - v) / 0.35)).fillRect(k.snap(tmp.x) - s, k.snap(tmp.y) - s, s * 2, s * 2);
+    }
+  });
+  g.destroy();
+  const p = chestOf(partner);
+  // kırmızı-siyah parlama: altta koyu leke (normal karışım), üstte kan kırmızısı ışık (ADD)
+  const dark = c.scene.add.image(p.x, p.y, soulGlowTex(c, k)).setDisplaySize(86, 86).setTint(0x1a0509).setAlpha(0.85).setDepth(k.DEPTH + 19);
+  c.scene.tweens.add({ targets: dark, alpha: 0, displayWidth: 130, displayHeight: 130, duration: k.slow(260), ease: 'Quad.easeOut', onComplete: () => dark.destroy() });
+  glowAt(c, k, p.x, p.y, 110, 240, k.DEPTH + 20, 0xb0304f);
+  k.burst(c.scene, p.x, p.y, { colors: ['#8e1f2c', '#2a0a14', '#b0304f'], n: 5, speed: [30, 110], gravity: -60, life: [200, 380], size: [5, 9] });
+}
 
 /**
  * Yarım tur göstergesi (turnCost < 1): lich'in başının yanında kum saati belirir, kumun yalnızca bir kısmı (turnCost oranı) akar, saat yarım
@@ -1337,7 +1387,7 @@ const boneslash: V2Vfx = async (c, k) => {
 export const VFX: Record<string, V2Vfx> = {
   bonethrow,
   wail,
-  guardlink,
+  darkbond,
   raise,
   // olay efektleri (docs/design/art-v2.md > 3.1): Raise Dead ceset emme ve Skeleton doğuşu
   corpsedrain,

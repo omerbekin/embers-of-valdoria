@@ -20,6 +20,8 @@ import {
   nodeVisibility,
   normalizeState,
   activeHeroes,
+  treasureGiftRarity,
+  validateTreasures,
   type CampaignState,
 } from '../src/campaign';
 import { content } from '../src/engine';
@@ -121,7 +123,7 @@ describe('Harita 1 yeniden çizim: cepler', () => {
     expect(st.kind === 'move' && st.options).toEqual(['cairn', 'hoard']);
   });
 
-  it('hazine içerikleri (3a): Raiders\' Hoard 1 item + 45 altın; Sunken Shrine 1 eksik item + Uncommon hediye + 10 altın; Supply Wagons standart + Common hediye, 10 altın', () => {
+  it('hazine içerikleri (3a + 417): Hoard 1 item + Uncommon hediye + 68 altın; Shrine / Wagons standart + Uncommon hediye + 15 altın; Mine / Abbey standart + Uncommon hediye, altın yok', () => {
     const chest = (id: string) => {
       const s = autoResolve(debugTeleport(fresh(), id)); // koruma savaşı kazanıldı, sandık sırada
       expect(nextStep(s).kind, id).toBe('treasure');
@@ -137,20 +139,70 @@ describe('Harita 1 yeniden çizim: cepler', () => {
       const items = [...newIds.map((uid) => t.inventory.find((i) => i.uid === uid)!), ...(loot.left ?? []).slice(before?.left?.length ?? 0).map((x) => ({ id: x }))];
       return { base: base.items.length + (base.left?.length ?? 0), items, gold: loot.gold - (before?.gold ?? 0), t };
     };
-    expect(TREASURES.raiders_hoard!.loot).toEqual({ maxItems: 1, gold: 45 });
+    // Korunan hazine ödülü (Ömer 2026-10-25, open-questions 417): her sandığa Uncommon hediye (+1 item ya da nadirlik yükseltmesi), altın x1,5
+    expect(TREASURES.raiders_hoard!.loot).toEqual({ maxItems: 1, gold: 68, gift: 'uncommon' });
     const hoard = chest('hoard');
-    expect(hoard.items).toHaveLength(Math.min(1, hoard.base));
-    expect(hoard.gold).toBe(45);
+    expect(hoard.items).toHaveLength(Math.min(1, hoard.base) + 1);
+    expect(hoard.gold).toBe(68);
     const shrine = chest('shrine');
-    expect(shrine.items).toHaveLength(Math.max(0, shrine.base - 1) + 1);
-    expect(shrine.gold).toBe(10);
-    expect(shrine.items.some((i) => (i as { rolls?: { rarity?: string } }).rolls?.rarity === 'uncommon')).toBe(true);
+    expect(shrine.items).toHaveLength(shrine.base + 1);
+    expect(shrine.gold).toBe(15);
     const wagons = chest('wagons');
     expect(wagons.items).toHaveLength(wagons.base + 1);
-    expect(wagons.gold).toBe(10);
-    // eski hazineler aynen standart sandık
-    expect(TREASURES.dwarven_mine!.loot).toBeUndefined();
-    expect(TREASURES.relic_vault!.loot).toBeUndefined();
+    expect(wagons.gold).toBe(15);
+    // eski hazineler: standart sandık + Uncommon hediye, ALTIN YOK (revizyon 2026-10-25: standart altın zarı da 0)
+    const mine = chest('6B');
+    expect(mine.items).toHaveLength(mine.base + 1);
+    expect(mine.gold).toBe(0);
+    const vault = chest('8A');
+    expect(vault.items).toHaveLength(vault.base + 1);
+    expect(vault.gold).toBe(0);
+    const rarityOf = (i: unknown) => (i as { rolls?: { rarity?: string } }).rolls?.rarity;
+    for (const c of [hoard, shrine, wagons]) expect(c.items.some((i) => rarityOf(i) === 'uncommon')).toBe(true);
+    // Mine / Abbey hediyesi: seed'li zarla Uncommon ya da Rare (open-questions 417)
+    for (const [c, id] of [[mine, '6B'], [vault, '8A']] as const) {
+      const want = treasureGiftRarity(c.t, id, 'uncommon', { rarity: 'rare', chance: 0.35 });
+      expect(c.items.some((i) => rarityOf(i) === want), id).toBe(true);
+    }
+  });
+});
+
+// Ömer onayı 2026-10-25 ("ekle bakalım", open-questions 417): hazine hediyesine şanslı nadirlik (giftUpgrade)
+describe('Korunan hazine: hediyenin Rare şansı (giftUpgrade)', () => {
+  it('veri: yalnız Mine / Abbey %35 Rare (taban Uncommon, altın 0); diğer üç sandıkta yok; şekil denetimi temiz', () => {
+    expect(validateTreasures()).toEqual([]);
+    for (const id of ['dwarven_mine', 'relic_vault']) expect(TREASURES[id]!.loot).toEqual({ gold: 0, gift: 'uncommon', giftUpgrade: { rarity: 'rare', chance: 0.35 } });
+    for (const id of ['raiders_hoard', 'sunken_shrine', 'supply_wagons']) expect(TREASURES[id]!.loot!.giftUpgrade).toBeUndefined();
+    // denetim bozuk veriyi yakalar
+    expect(validateTreasures({ x: { title: '', text: '', loot: { giftUpgrade: { rarity: 'rare', chance: 1.2 } } } } as never).length).toBe(2);
+    expect(validateTreasures({ x: { title: '', text: '', loot: { gift: 'rare', giftUpgrade: { rarity: 'uncommon', chance: 0.5 } } } } as never).length).toBe(1);
+  });
+
+  it('deterministik: aynı sefer + düğüm = aynı sonuç (deneme / yükleme değiştirmez); sandık açılışı aynı item\'i verir', () => {
+    const up = { rarity: 'rare' as const, chance: 0.35 };
+    const s = fresh(77);
+    const a = treasureGiftRarity(s, '6B', 'uncommon', up);
+    for (let i = 0; i < 5; i++) expect(treasureGiftRarity(JSON.parse(JSON.stringify(s)) as CampaignState, '6B', 'uncommon', up)).toBe(a);
+    const open = () => {
+      const r = autoResolve(debugTeleport(fresh(77), '6B'));
+      const t = completeSimple(r, 'treasure');
+      return t.inventory.map((i) => `${i.id}:${i.rolls?.rarity ?? ''}`).sort();
+    };
+    expect(open()).toEqual(open());
+    expect(treasureGiftRarity(s, '6B', 'uncommon')).toBe('uncommon'); // upgrade yoksa taban
+  });
+
+  it('dağılım: çok sayıda seed\'de yaklaşık %35 Rare, gerisi Uncommon', () => {
+    const up = { rarity: 'rare' as const, chance: 0.35 };
+    let rare = 0;
+    const N = 4000;
+    for (let seed = 1; seed <= N; seed++) {
+      const r = treasureGiftRarity({ seed, mapId: 'valdoria' }, seed % 2 ? '6B' : '8A', 'uncommon', up);
+      expect(['uncommon', 'rare']).toContain(r);
+      if (r === 'rare') rare++;
+    }
+    expect(rare / N).toBeGreaterThan(0.31);
+    expect(rare / N).toBeLessThan(0.39);
   });
 });
 

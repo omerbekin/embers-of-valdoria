@@ -169,6 +169,15 @@ export function acknowledgeLoot(s: CampaignState): CampaignState {
 }
 
 /**
+ * Hazine hediyesinin nadirliği (Ömer 2026-10-25, open-questions 417): `upgrade` varsa TEK seed'li zar (sefer + harita + düğüm + 'gift-upgrade'),
+ * `chance` tutarsa `upgrade.rarity`, tutmazsa `base`. Zar deneme / yenilgi / yükleme sayısından bağımsız: save-scum yok.
+ */
+export function treasureGiftRarity(t: Pick<CampaignState, 'seed' | 'mapId'>, nodeId: string, base: RarityId, upgrade?: { rarity: RarityId; chance: number }): RarityId {
+  if (!upgrade) return base;
+  return rngFor(t.seed, t.mapId, nodeId, 'gift-upgrade', 'treasure').next() < upgrade.chance ? upgrade.rarity : base;
+}
+
+/**
  * Hediye item'i (kasaba diyalog sahnesi; Ömer 2026-10-12): düğümün item seviyesine kadar bir taban, `rarity` nadirliğinde (Common), takımdan biri
  * için zarlanır (seed'li: aynı sefer + düğüm + etiket = aynı item). Torbaya; torba doluysa Spoils kartında "geride kalan". `t` klonlanmış olmalı.
  */

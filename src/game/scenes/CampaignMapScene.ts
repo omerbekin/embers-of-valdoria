@@ -421,7 +421,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.events.on('update', () => {
       this.updatePanButtons();
       this.syncOverlays();
-      if (this.cardPlace) {
+      if (this.cardPlace && !this.walking) { // yürürken kart yerinde durur (anchor varış kamerasına sabit); yürüyüş bitince bir kez oturur
         const c = this.cameras.main;
         const sig = `${c.scrollX.toFixed(1)}|${c.scrollY.toFixed(1)}|${c.zoom.toFixed(3)}`;
         if (sig !== this.cardCam) {
@@ -3414,6 +3414,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.closeModal();
     const info = o.info ?? startCardInfo(n.lore, o.fallback?.text ? o.fallback : undefined);
     let card: StartBattleHandle | null = null;
+    let frozen: { x: number; y: number } | null | undefined;
     const close = (): void => {
       card?.close();
       card = null;
@@ -3434,7 +3435,23 @@ export class CampaignMapScene extends Phaser.Scene {
       ...this.firstSteps(id),
       ...(o.note ? { note: o.note } : {}),
       ...(instant ? { instant: true } : {}),
-      anchor: () => this.nodeCssPoint(id, root),
+      anchor: () => {
+        // Yürüyüş sürerken kamera kafileyi izler: kart imlecin altından kaçmasın diye düğümü VARIŞ kamerasına göre bir kez sabitler
+        if (!this.walking) {
+          frozen = undefined;
+          return this.nodeCssPoint(id, root);
+        }
+        if (frozen === undefined) {
+          const cam = this.cameras.main;
+          const sx = cam.scrollX;
+          const sy = cam.scrollY;
+          const end = clampMid(this.P(id), this.panFrame(), this.viewSize());
+          cam.centerOn(end.x, end.y);
+          frozen = this.nodeCssPoint(id, root);
+          cam.setScroll(sx, sy);
+        }
+        return frozen;
+      },
       onFight: () => {
         this.closeModal();
         o.onGo();
@@ -3445,7 +3462,10 @@ export class CampaignMapScene extends Phaser.Scene {
     const handle = card;
     this.cardPlace = () => handle.place();
     this.cardCam = '';
-    onStageResize(this, () => handle.place());
+    onStageResize(this, () => {
+      frozen = undefined;
+      handle.place();
+    });
     // Esc / başka pencereler `this.modal.close()` ile kapatır; yalnızca close() kullanılır
     this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
   }

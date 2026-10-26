@@ -21,6 +21,8 @@ export const VFX_KINDS = [
   'bloodhands',
   'wail',
   'raise',
+  /** Undead Dark Bond: kan-kırmızısı duman, atan kan teli, ayak altı mühür (+ bond şifası nabzı). */
+  'darkbond',
   'bonestrike',
   /** Skeleton - Bone Slash: hedef ve yanındakileri kesen geniş kemik savrulması. */
   'boneslash',

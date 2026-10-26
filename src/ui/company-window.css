@@ -93,9 +93,10 @@ html.short .cw-chip img { display: none; }
 html.short .cw-card .tut { height: auto; min-height: 14px; margin-top: 2px; font-size: max(9px, calc(15 * var(--u))); white-space: nowrap; padding: 0 4px; }
 html.short .cw-card .tut:empty { display: none; }
 html.short .cw-sub { left: calc(20 * var(--u)); right: calc(20 * var(--u)); font-size: 10px; line-height: 1.2; top: calc(86 * var(--u)); }
-html.short .cw-strip { margin-bottom: 24px; }
-html.short .cw-pc { height: calc(100 * var(--u)); overflow: visible; }
+/* telefonda pencere 1500u = ~540px dar kalıyordu: 11 sınıf adı tek satıra sığmıyor, iki sıra zikzak oluyordu; pencere genişler, kartlar aralıklı, ad kartın altında tek satır */
+html.short .cw-win { width: min(calc(100vw - 24px), calc(2100 * var(--u))); }
+html.short .cw-strip { margin-bottom: 24px; gap: calc(26 * var(--u)); }
+html.short .cw-pc { width: calc(140 * var(--u)); height: calc(100 * var(--u)); overflow: visible; }
 html.short .cw-pc img { object-position: 50% 18%; }
-html.short .cw-pc .nm { left: -50%; right: -50%; bottom: auto; top: calc(100% + 4px); font-size: 9px; line-height: 11px; letter-spacing: 0; color: #cdb88d; }
-html.short .cw-strip .cw-pc:nth-child(even) .nm { top: calc(100% + 15px); }
+html.short .cw-pc .nm { left: -4px; right: -4px; bottom: auto; top: calc(100% + 5px); font-size: 8px; line-height: 11px; letter-spacing: .02em; color: #cdb88d; }
 html.short .cw-pc::after { overflow: hidden; }
