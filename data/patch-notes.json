@@ -8,34 +8,24 @@
         {
           "heading": "New",
           "items": [
-            "Map 2, The Drowned Reach, opens after Map 1: new regions, elites, bosses and enemies.",
-            "Days: the campaign now counts days. A counter at the top right shows the day and what comes next; click it for details.",
-            "Inn: leave wounded heroes at the Inn to heal over the coming days, and take them back when you need them.",
-            "Camp: after a battle, choose to rest, tend a hero, train or sharpen gear.",
-            "Blacksmith: Temper items with Temper Stones, Combine three items into a better one, and Reroll an item's bonuses.",
-            "16 new item bonuses.",
-            "Map nodes warn when they are far above your company's level: amber for Dangerous, red for Deadly."
+            "Map 2, The Drowned Reach, opens after Map 1 with new regions, elites, bosses and enemies.",
+            "Days, Inn and Camp: a day counter at the top right; leave wounded heroes at the Inn to heal; choose one camp action per camp.",
+            "Blacksmith: Temper with Temper Stones, Combine three items into a better one, Reroll bonuses; 16 new item bonuses.",
+            "Map nodes far above your company's level glow amber (Dangerous) or red (Deadly)."
           ]
         },
         {
           "heading": "Changes",
           "items": [
-            "Valor: the cap is now 10. Spend 3 Valor outside battle to heal a hero's wound.",
-            "Enemies hit a little softer; elites are a little tougher; bosses hit softer.",
-            "The four battles after the King's Bridge boss are a little easier.",
-            "Heroes below a battle's level now earn full XP; only higher-level heroes earn less.",
-            "Guarded treasure battles are a little harder and their chests a little better.",
-            "Merchant prices updated."
+            "Valor cap 10; spend 3 Valor outside battle to heal a wound.",
+            "Enemies and bosses hit softer, elites are tougher; heroes below a battle's level earn full XP.",
+            "Guarded treasure battles are a little harder, their chests a little better."
           ]
         },
         {
           "heading": "Fixes",
           "items": [
-            "Phone: the loot window's bag shows small slots in several rows, and item previews always fit on screen.",
-            "Phone: hero names in the company picker sit on one line under spaced-out portraits.",
-            "Removed the escort hint text from the first Gear screen.",
-            "Campaign map: the Start battle card stays in place while the party walks instead of sliding away from the cursor.",
-            "The fullscreen and menu buttons in the top-right corner sit closer together."
+            "Phone: smaller bag slots in the loot window, item previews fit on screen, tidier company picker; Start battle card no longer slides away."
           ]
         }
       ]
