@@ -12,7 +12,7 @@
         "boss": "giant",
         "noTierMods": true,
         "mods": {
-          "spriteScale": 2.2,
+          "spriteScale": 3,
           "actionsPerTurn": 2,
           "hpMult": 0.88
         }
@@ -51,7 +51,8 @@
         "mods": {
           "spriteScale": 2.2,
           "actionsPerTurn": 2,
-          "hpMult": 0.88
+          "hpMult": 0.774,
+          "powerMult": 0.88
         }
       },
       {
@@ -67,8 +68,8 @@
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.88,
+          "powerMult": 0.88
         }
       },
       {
@@ -76,8 +77,8 @@
         "slot": 2,
         "name": "Corsair Cutlass",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.88,
+          "powerMult": 0.88
         }
       },
       {
@@ -85,8 +86,8 @@
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.88,
+          "powerMult": 0.88
         }
       },
       {
@@ -94,8 +95,8 @@
         "slot": 8,
         "name": "Siren",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 0.88,
+          "powerMult": 0.88
         }
       }
     ]
@@ -110,8 +111,8 @@
         "sprite": "drowned_queen",
         "tier": "boss",
         "mods": {
-          "hpMult": 1.022,
-          "powerMult": 0.565,
+          "hpMult": 1.226,
+          "powerMult": 0.678,
           "spriteScale": 1.65
         }
       },
@@ -121,8 +122,8 @@
         "name": "The Drowned Champion",
         "sprite": "drowned_champion",
         "mods": {
-          "hpMult": 1.2,
-          "powerMult": 1
+          "hpMult": 1.44,
+          "powerMult": 1.2
         }
       },
       {
@@ -130,8 +131,8 @@
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.2,
+          "powerMult": 1.2
         }
       },
       {
@@ -139,8 +140,8 @@
         "slot": 8,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.2,
+          "powerMult": 1.2
         }
       }
     ]
@@ -2244,8 +2245,8 @@
         "sprite": "salt_bishop",
         "tier": "elite",
         "mods": {
-          "hpMult": 1.7,
-          "powerMult": 1.1,
+          "hpMult": 2.635,
+          "powerMult": 1.705,
           "statMult": 1.15
         }
       },
@@ -2254,8 +2255,8 @@
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.55,
+          "powerMult": 1.55
         }
       },
       {
@@ -2263,8 +2264,8 @@
         "slot": 8,
         "name": "Brine Maiden",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.55,
+          "powerMult": 1.55
         }
       },
       {
@@ -2272,8 +2273,8 @@
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.55,
+          "powerMult": 1.55
         }
       }
     ]
@@ -2420,8 +2421,8 @@
         "sprite": "drowned_champion",
         "tier": "elite",
         "mods": {
-          "hpMult": 1.7,
-          "powerMult": 1.1,
+          "hpMult": 2.55,
+          "powerMult": 1.65,
           "statMult": 1.15
         }
       },
@@ -2430,8 +2431,8 @@
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.5,
+          "powerMult": 1.5
         }
       },
       {
@@ -2439,8 +2440,8 @@
         "slot": 2,
         "name": "Drowned Knight",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.5,
+          "powerMult": 1.5
         }
       },
       {
@@ -2448,8 +2449,8 @@
         "slot": 7,
         "name": "Tide Caller",
         "mods": {
-          "hpMult": 1,
-          "powerMult": 1
+          "hpMult": 1.5,
+          "powerMult": 1.5
         }
       }
     ]

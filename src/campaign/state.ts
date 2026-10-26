@@ -858,8 +858,8 @@ export function nextMapFor(s: CampaignState): string | null {
 /**
  * "Continue to ..." (M-Q): sıradaki haritanın başlangıcına geçer. Taşınan: kadro ve dizilim (level, XP, puanlar, ağaç, ekipman), torba, altın,
  * Valor, loot sayaçları, zafer / yenilgi sayıları, görülen ipuçları ve `done` (sinematik / hikâye işaretleri; düğüm id'leri haritalar arasında
- * çakışmaz). Can ve ölüm (maps-2-3.md 8 önerisi): boss zaferinin tam şifası zaten uygulanmıştır, can oranları aynen taşınır; yaralar kalır ve
- * ilk kasabada var olan kuralla (ilk varış = bedava dinlenme) silinir; cesetler ceset taşınır (yalnız Valor kaldırır). Harita durumu sıfırlanır:
+ * çakışmaz). Can ve ölüm: boss zaferinin tam şifası zaten uygulanmıştır, can oranları aynen taşınır; yaşayan kahramanların YARALARI geçişte
+ * silinir (Ömer 2026-10-26 denge formu D1 b; kasaba dinlenmesiyle aynı clearWounds); cesetler ceset taşınır (yalnız Valor kaldırır). Harita durumu sıfırlanır:
  * yürüyüş, temizlenen düğümler, devriye sayaçları; düğüme bağlı geçici alanlar (tezgâh, olay seçimi, duraklatma, devriye) atılır.
  * Kayıt şeması aynı (`mapId` zaten kayıtta); `mapsDone` önceki haritayı listeler.
  */
@@ -876,6 +876,7 @@ export function continueToMap(s: CampaignState, mapId: string = nextMapFor(s) ??
   t.cleared = [];
   t.replays = {};
   for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover'] as const) delete t[k];
+  clearWounds(t); // D1 b: yeni haritaya yarasız girilir (cesetler aynen)
   return t;
 }
 

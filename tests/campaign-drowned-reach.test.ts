@@ -204,6 +204,24 @@ describe('Harita geçişi (M-Q)', () => {
     expect(() => continueToMap(newCampaign({ mode: 'normal', seed: 1 }), DROWNED_REACH)).toThrow();
   });
 
+  it('geçişte yaşayan kahramanların yaraları silinir (Ömer 2026-10-26 D1 b); ceset ceset kalır, yarası değişmez', () => {
+    setMapOverride(DROWNED_REACH, true);
+    const done = debugFinishMap1(newCampaign({ mode: 'normal', seed: 77 }));
+    const w = JSON.parse(JSON.stringify(done)) as typeof done;
+    const [a, b, c] = w.roster;
+    a!.wounds = 2;
+    b!.wounds = 1;
+    c!.wounds = 3;
+    c!.alive = false;
+    c!.hpRatio = 0;
+    const t = continueToMap(w);
+    expect(t.roster[0]!.wounds ?? 0).toBe(0);
+    expect(t.roster[1]!.wounds ?? 0).toBe(0);
+    expect(t.roster[2]!.alive).toBe(false);
+    expect(t.roster[2]!.wounds).toBe(3);
+    expect(w.roster[0]!.wounds).toBe(2); // giriş durumu değişmez
+  });
+
   it('kayıt: geçiş sonrası kayıt yüklenir; eski Harita 1 kaydı aynen kalır (mapsDone yok)', () => {
     setMapOverride(DROWNED_REACH, true);
     const kv = memoryKV();

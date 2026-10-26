@@ -463,7 +463,7 @@ Form soruları (tema, omurga, bitiş, boyut, boss sayısı, M-A…M-Q, Kindling,
 - Darkness hedefleme kısıtının range sistemiyle (`range.enabled`) birleşmesi; Lantern nesnesinin canı.
 - Black Caravel'in dolaşma düzeni (55→60→62→64→55) ve HUD rozeti.
 - Faction bayrağının kayıt şemasına eklenmesi; eski kayıtlar etkilenmez.
-- Harita geçişinde Valor/yara/ceset durumunun taşınma kuralı (önerim: boss tam şifası zaten uygulanmış olur, yaralar kasaba kuralıyla silinir, cesetler taşınır).
+- Harita geçişinde Valor/yara/ceset durumunun taşınma kuralı (önerim: boss tam şifası zaten uygulanmış olur, yaralar kasaba kuralıyla silinir, cesetler taşınır). Karar 2026-10-26 D1 b: yaralar geçişte silinir.
 - Mend bitişinde tacı takan kahramanın seçimi (önerim: lider; metin dışında etkisi yok).
 - Harita 2'nin ilk 3 düğümü L10 (Harita 1 sonu farmsız ~L8,5 ile geçiş yumuşak).
 
@@ -531,7 +531,7 @@ Adım 1 = harita geçişi (M-Q) + Harita 2 iskeleti. Yeni mekanik yok; aşağıd
 
 **Geçiş (M-Q) ve kayıt**
 - Morvane sonrası: Harita 2 açıksa pencere alt başlığı "Map Complete", düğmeler "Stay on the map" / "Continue to The Drowned Reach" -> Harita 2 giriş penceresi ("Not yet" / "Set out"). Kapalıysa Harita 1 sonu birebir aynı. Harita 2 sonu "Two Crowns · To Be Continued".
-- Taşınan: kadro, dizilim, level / XP / puan / ağaç / ekipman, torba, altın, Valor, loot sayaçları, istatistik, görülen ipuçları, `done`. Sıfırlanan: yürüyüş, temizlenenler, devriye sayaçları, düğüme bağlı geçici alanlar. Can oranları aynen (boss zaferi zaten tam şifa); yaralar ilk kasabanın bedava dinlenmesine kadar kalır; ceset ceset kalır (bölüm 8 önerisi).
+- Taşınan: kadro, dizilim, level / XP / puan / ağaç / ekipman, torba, altın, Valor, loot sayaçları, istatistik, görülen ipuçları, `done`. Sıfırlanan: yürüyüş, temizlenenler, devriye sayaçları, düğüme bağlı geçici alanlar. Can oranları aynen (boss zaferi zaten tam şifa); yaşayan kahramanların yaraları geçişte silinir (Ömer 2026-10-26 denge formu D1 b; eskiden ilk kasabanın bedava dinlenmesine kadar kalıyordu); ceset ceset kalır (bölüm 8 önerisi).
 - Kayıt sürümü **artırılmadı** (12): `mapId` zaten kayıtta; yeni isteğe bağlı alan `mapsDone` (geçersizse atılır). Main ile birleştirmede sürüm çakışması olmasın diye. **K**
 - Harita 2 başında kahraman seçimi yok (`continues: "valdoria"`); Harita 2'de bölük kurma yok, serbest dolaşım baştan açık.
 
@@ -545,7 +545,7 @@ Adım 1 = harita geçişi (M-Q) + Harita 2 iskeleti. Yeni mekanik yok; aşağıd
 - **K1 = b, kışla değişimi:** takım en fazla 4 kalır; Saltmere'de (dr28) kışla bir kahramanı DEĞİŞTİRMEYİ önerir. Veri `barracksSwap: { offer: 3 }` (düğüm alanı), durum `reserve` (isteğe bağlı; kayıt sürümü 12 kaldı). Kasaba ekranında Barracks: 1) gelen seçilir (3 yeni aday, seed'li, takımda ya da yedekte olmayan sınıflar; + yedektekiler "In reserve"), 2) çıkan seçilir ("Who steps aside?"). Gelen aynı dizilim hücresine girer, yeni aday katılım seviyesinde (joinLevel) gelir; çıkan level / XP / ağaç / ekipmanıyla yedekte bekler, aynı kışlada geri alınır (değişim kasabadayken istendiği kadar). Lider çıkarsa liderlik gelene geçer. Düşmüş kahraman da yedeğe çıkabilir (ceset kalır). Yedek savaşa girmez, XP almaz, sonraki haritaya taşınır. `src/campaign/state.ts > swapOffer / swapHero`, sahne `townSwapModal / townSwapOut`. Varsayımlar open-questions 417.
 - **K2 = a:** Saltmere yan sokakları çıkmaz kalır (değişiklik yok).
 - **K3 = b:** dr4, dr5, dr6 elle L11 (`level`); L10 -> L12 sıçraması yumuşadı (dr7'den sonra rampa aynı).
-- **K4 = a:** ceset / yaralar haritalar arası böyle kalır (değişiklik yok).
+- **K4 = a:** ceset / yaralar haritalar arası böyle kalır (değişiklik yok). **Güncelleme (Ömer 2026-10-26, denge formu D1 b):** yaralar harita geçişinde silinir; cesetler aynen taşınır.
 - **K5 = a:** Bölüm 2 adı "The Drowned Reach" kalır.
 - **K6 = b:** Harita 2 açıkken Morvane sonrası "Stay on the map" yok: "Map Complete" penceresinde yalnız "Continue to The Drowned Reach", giriş penceresinde yalnız "Set out" ("Not yet" kalktı). Bayrak kapalıyken Harita 1 sonu eskisi gibi ("Stay on the map" / "Main Menu").
 

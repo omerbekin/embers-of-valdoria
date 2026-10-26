@@ -6,14 +6,14 @@ import { CONFIG, POWER_BUDGET, chapterEnemyMods, chapterOf, enemyScale, enemySca
 const map = getMap('valdoria');
 
 describe('güç bütçesi', () => {
-  it('3 bölüm (Valdoria + The Drowned Reach + The Ember Throne), ilvl 1-10 / 11-20 / 21-30, item eğrisi +%15/+%30/+%45, telafi 0,8', () => {
+  it('3 bölüm (Valdoria + The Drowned Reach + The Ember Throne), ilvl 1-10 / 11-20 / 21-30, item eğrisi +%15/+%50/+%65 (bölüm 2: Ömer 2026-10-26 D2), telafi 0,8', () => {
     expect(POWER_BUDGET.chapters.map((c) => c.name)).toEqual(['Valdoria', 'The Drowned Reach', 'The Ember Throne']);
     expect(POWER_BUDGET.chapters.map((c) => c.ilvl)).toEqual([
       [1, 10],
       [11, 20],
       [21, 30],
     ]);
-    expect(POWER_BUDGET.chapters.map((c) => c.end.item)).toEqual([0.15, 0.3, 0.45]);
+    expect(POWER_BUDGET.chapters.map((c) => c.end.item)).toEqual([0.15, 0.5, 0.65]);
     expect(POWER_BUDGET.compensation).toBe(0.8);
     for (const k of POWER_BUDGET.systems) {
       const ends = POWER_BUDGET.chapters.map((c) => c.end[k]);
@@ -39,7 +39,8 @@ describe('güç bütçesi', () => {
     expect(enemyScaleAt(c1!, 0, ['item'])).toBe(1);
     expect(enemyScaleAt(c1!, 1, ['item'])).toBe(1.064);
     expect(enemyScaleAt(c2!, 0, ['item'])).toBe(1.064); // bölüm başı = önceki bölüm sonu
-    expect(enemyScaleAt(c3!, 1, ['item', 'level', 'tree'])).toBe(1.8);
+    expect(enemyScaleAt(c2!, 1, ['item'])).toBe(1.4); // Harita 2 sonu (D2 2026-10-26: item 0,5)
+    expect(enemyScaleAt(c3!, 1, ['item', 'level', 'tree'])).toBe(1.96);
     expect(expectedPowerAt(c1!, 0.5).item).toBeCloseTo(0.04, 9);
     expect(enemyScaleAt(c1!, 1, [])).toBe(1);
     expect(nodeDepth('valdoria', map.start)).toBe(0);
