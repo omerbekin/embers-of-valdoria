@@ -123,6 +123,7 @@ import { onStageResize, stageView } from '../stage';
 import { setItemValueSource } from '../../ui/item-tip';
 import { openCamp, type CampHandle } from '../../ui/camp-screen';
 import { BAND_NAME, nodeThreat, threatLine } from '../../campaign/level-gap';
+import { DayCounter } from '../../ui/day-counter';
 import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
 import { openStoryDialog, type StoryDialogHandle } from '../../ui/story-dialog';
 import { playCinematic, type CinematicHandle } from '../../ui/cinematic';
@@ -482,6 +483,19 @@ export class CampaignMapScene extends Phaser.Scene {
       if (this.valorMeter.el.hidden !== hide) this.valorMeter.el.hidden = hide;
       this.valorMeter.el.classList.toggle('vl-town', !!this.town);
     }
+    // Gün sayacı (Ömer 2026-10-26; sağ üst, Menu / tam ekranın solunda): Valor mangalları gibi pencere / menü açıkken gizli
+    if (!this.dayCounter) {
+      const root = document.getElementById('ui-root');
+      if (root) {
+        const d = new DayCounter(root);
+        this.dayCounter = d;
+        this.events.once('shutdown', () => {
+          d.destroy();
+          if (this.dayCounter === d) this.dayCounter = null;
+        });
+      }
+    }
+    this.dayCounter?.sync(this.s, cover || this.menuOpen || !!this.modal || isValorReviveOpen() || otherDialogOpen());
     if (this.tip) {
       const show = !cover && !this.menuOpen && !this.modal;
       if (this.tip.visible !== show) this.tip.setVisible(show);
@@ -2384,6 +2398,7 @@ export class CampaignMapScene extends Phaser.Scene {
   // ------------------------------------------------------------ Valor (Ömer 2026-10-13)
 
   private valorMeter: ValorMeter | null = null;
+  private dayCounter: DayCounter | null = null;
 
   /**
    * Valor mangalları sol üst bantta (her ekranda aynı yer; Valdren Keep'ten sonra). Haritaya dönüşte (zafer sonrası) artış varsa korlar tek tek tutuşur.

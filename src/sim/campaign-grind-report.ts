@@ -21,7 +21,7 @@ import { CONFIG, getMap, node, nodeIlvl, nodeLevel, type Difficulty } from '../c
 import { valorRules } from '../engine/content';
 import { content } from '../engine';
 import { nodeCategory, resolveSimMap, type SimCarry } from './campaign';
-import { bonusOf, mergeGrindResults, simulateGrind, type GrindBonus, type GrindGroupAgg, type GrindNodeAgg, type GrindSimResult, type MerchantMode, type PlayerType, type RepeatMode } from './campaign-grind';
+import { LEVEL_FARM_GAP, bonusOf, mergeGrindResults, simulateGrind, type GrindBonus, type GrindGroupAgg, type GrindNodeAgg, type GrindSimResult, type MerchantMode, type PlayerType, type RepeatMode } from './campaign-grind';
 import { CAMPAIGN_TARGETS as T, inBand, type Band, type GrindCategory } from './campaign-targets';
 import { valorMode } from './valor-mode';
 
@@ -406,7 +406,7 @@ export function econLines(results: GrindSimResult[]): string[] {
         .map(([id, n]) => `${id} ${k(n, 2)}`)
         .join(', ');
       L.push(
-        `  ${pad} level farmı (fark > ${r.player === 'good' ? 2 : 3}): yan dal ilk zafer savaşı ${k(e.lfNew, 2)} (elit / hazine / olay ${k(e.lfRich ?? 0, 2)}; temizlenen ${k(e.sideCleared, 2)}), devriye ${k(e.lfPatrol, 2)}; ` +
+        `  ${pad} level farmı (fark > ${LEVEL_FARM_GAP[r.player]}): yan dal ilk zafer savaşı ${k(e.lfNew, 2)} (elit / hazine / olay ${k(e.lfRich ?? 0, 2)}; temizlenen ${k(e.sideCleared, 2)}), devriye ${k(e.lfPatrol, 2)}; ` +
           `6 tavanına ulaşan hedef ${k(e.lfCap, 2)}; en çok farm (hedef düğüm, koşu başına): ${top || '-'}`,
       );
     }

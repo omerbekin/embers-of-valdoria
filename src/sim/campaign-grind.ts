@@ -16,7 +16,7 @@
 //   elit / boss öncesi %75 altı YA DA herhangi yara) doğruysa en kötü kahraman (4 kişilikte en çok 1) son temizlenen kasabanın Inn'ine bırakılır;
 //   normal öncesi takım eksik ilerler, elit / boss öncesi devriyeyle gün geçirip bekler (en çok 8 savaş, 2 yenilgi üst üste = vazgeç). Yürümek bedava.
 // - Level farmı (Ömer 2026-10-26; open-questions 425): sıradaki yeni düğümden önce fark = düğüm level - aktif takımın ort. level'ı (Inn'dekiler hariç)
-//   iyi oyuncuda 2'yi, ortalamada 3'ü aşarsa farm: (1) ulaşılabilir, hiç gidilmemiş, rotada olmayan savaşlı düğüm (yan dal; ilk zaferin XP / loot /
+//   iki tipte de 2'yi aşarsa (ortalama 3 -> 2, Ömer 2026-10-27) farm: (1) ulaşılabilir, hiç gidilmemiş, rotada olmayan savaşlı düğüm (yan dal; ilk zaferin XP / loot /
 //   altını): elit / savaşlı hazine / savaşlı olay fark <= 1 iken ve önce (getiri), normal savaş fark eşik içindeyse; aynı sınıfta en yüksek level'lı; kaybedilirse son kayda dönülür, o düğüm atlanır (duvar sayılmaz); (2) yan dal yoksa
 //   devriye: en az tekrarlanmış (XP çarpanı en yüksek), sonra level'ı en yüksek, farkı eşik içinde kalan düğüm. Fark eşiğe inince ya da hedef başına
 //   LEVEL_FARM_CAP (6) farm savaşında devam. Rota aynı kalır; duvar / kasma kuralları ayrı sayılır.
@@ -432,8 +432,8 @@ export function pickFarm(s: CampaignState, record?: Map<string, { w: number; n: 
   return best;
 }
 
-/** Level farmı eşiği (Ömer 2026-10-26): düğüm level - aktif takımın ort. level'ı bu farkı aşarsa farm; iyi 2, ortalama 3. Tavan: hedef başına 6 savaş. */
-export const LEVEL_FARM_GAP: Record<PlayerType, number> = { good: 2, average: 3 };
+/** Level farmı eşiği (Ömer 2026-10-26): düğüm level - aktif takımın ort. level'ı bu farkı aşarsa farm; iyi 2, ortalama 2 (Ömer 2026-10-27: ortalama 3 -> 2, ortalama oyuncu hiç farm yapmıyordu). Tavan: hedef başına 6 savaş. */
+export const LEVEL_FARM_GAP: Record<PlayerType, number> = { good: 2, average: 2 };
 export const LEVEL_FARM_CAP = 6;
 const teamLevel = (s: CampaignState): number => mean(activeHeroes(s).map((h) => h.level ?? 1));
 

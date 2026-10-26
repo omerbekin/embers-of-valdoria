@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Day Counter 6</title>
+<!-- GUN SAYACI taslagi v4 (ui-dev, 2026-10-26). N-W: minimal, mevcut sefer HUD'inin dogal parcasi. Oyun kodu DEGIL. Adres: #N ... #W (+ &phone). Tum olaylar ORNEK. Varliklar: kit-v2/ -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/valor.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="map-hud/mh.css" />
+<style>
+:root { --gold:#f3d999; --dim:#a8977a; --ember:#e0702a; --ember2:#ffb35a; --sc:.8333; --hk:1; --ex:0px; }
+html.mk-phone { --hk:1.45; --ex:209px; }
+html, body { background:#0b0806; }
+.pg { max-width:1700px; margin:0 auto; padding:14px 16px 40px; }
+h1 { margin:0 0 4px; font:600 22px var(--g-disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 8px; }
+.tabs button { min-width:44px; padding:0 10px; height:44px; font:700 15px var(--g-disp); color:#d9c8a2; background:rgba(8,6,4,.7); border:1px solid rgba(217,178,106,.3); cursor:pointer; transition:border-color .2s,color .2s; }
+.tabs button:hover { border-color:rgba(243,217,153,.85); color:var(--gold); }
+.tabs button.on { color:#1a0f05; background:linear-gradient(180deg,#f3d999,#d9b26a); border-color:#f3d999; }
+.vtag { margin:4px 0 2px; font:600 15px var(--g-disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.vnote { margin:0 0 8px; font:17px/1.35 var(--g-body); color:#cdb88d; max-width:1100px; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; padding:6px 8px; border:1px dashed var(--ember); width:fit-content; max-width:100%; }
+.ctl b { font:700 11px system-ui,sans-serif; letter-spacing:.06em; color:var(--ember); }
+.ctl button { min-height:44px; padding:0 14px; font:600 12px system-ui,sans-serif; letter-spacing:.04em; color:var(--gold); background:#1b120a; border:1px solid rgba(224,112,42,.55); cursor:pointer; }
+.ctl button:hover { background:#2a1a0e; }
+.ctl button.on { background:var(--ember); color:#1a0f06; }
+.ctl .ro { font:600 12px system-ui,sans-serif; color:#cdb88d; }
+[hidden] { display:none !important; }
+.zw { width:100%; overflow:hidden; }
+html, body { overflow-x:hidden; max-width:100%; }
+
+/* ---------- HUD katmani: cerceve kenarina kilitli (telefonda --ex kadar genis) ---------- */
+.dc-hud { position:absolute; left:calc(-1 * var(--ex)); top:0; width:calc(1920px + 2 * var(--ex)); height:1080px; pointer-events:none; }
+.dc-hud * { font-style:normal; }
+.dc-top { position:absolute; left:0; right:0; top:0; height:130px; background:linear-gradient(180deg,rgba(4,6,10,.55),rgba(4,6,10,0)); }
+.dc-leftg { position:absolute; left:0; top:0; bottom:0; width:560px; background:linear-gradient(90deg,rgba(4,6,10,.88),rgba(4,6,10,.55) 60%,rgba(4,6,10,0)); }
+.dc-l, .dc-r, .dc-c { position:absolute; top:0; width:0; height:1080px; }
+.dc-l { left:0; } .dc-r { right:0; } .dc-c { left:50%; }
+.dc-l, .dc-r { white-space:nowrap; }
+.dc-ttl { position:absolute; left:0; top:52px; transform:translate(-50%,-50%); white-space:nowrap; }
+.dc-ttl .t { position:relative; display:inline-block; font:600 31px var(--g-disp); letter-spacing:.2em; text-transform:uppercase; color:rgba(243,217,153,.78); text-shadow:0 2px 8px #000; }
+.dc-band { position:absolute; left:max(112px, calc(58px / var(--sc))); top:56px; transform:translateY(-50%); display:flex; align-items:center; gap:18px; padding:4px 14px 4px 8px; background:linear-gradient(90deg,rgba(12,9,6,.62),rgba(12,9,6,.38) 70%,rgba(12,9,6,0)); border-left:1px solid rgba(217,178,106,.3); pointer-events:auto; }
+.dc-band .vl-meter { --vl-h:44px; }
+.dc-band .vl-lbl { font-size:12px; }
+.dc-info { position:absolute; left:48px; top:812px; width:400px; color:var(--dim); }
+.dc-info .rg { font:600 18px var(--g-disp); letter-spacing:.06em; color:var(--gold); line-height:22px; white-space:nowrap; }
+.dc-info .pb { position:relative; height:5px; margin:8px 0 0; background:rgba(8,6,4,.85); border:1px solid rgba(217,178,106,.28); }
+.dc-info .pb i { position:absolute; left:1px; top:0; bottom:0; width:15%; background:#e8c47e; }
+.dc-info .cl, .dc-info .md { font:17px/1 var(--g-body); margin-top:14px; display:flex; justify-content:space-between; align-items:center; }
+.dc-info .gd { display:inline-flex; align-items:center; gap:6px; font:600 20px var(--g-disp); letter-spacing:.04em; color:var(--gold); }
+.dc-info .gd img { width:26px; height:26px; }
+.mh-row .ro, .mh-here .s { font-style:normal; }
+.mh-row .call { font-style:normal; }
+.mh-legend { pointer-events:auto; }
+
+/* ---------- ortak sayac parcalari ---------- */
+.anc { position:absolute; transform:var(--ty,none) scale(var(--hk)); transform-origin:var(--o,0 0); cursor:help; pointer-events:auto; outline:none; }
+.anc::before { content:''; position:absolute; inset:-8px -6px; }
+.anc:focus-visible { box-shadow:0 0 0 1px rgba(243,217,153,.8); }
+.P, .S, .V { transform:none; }
+.num { display:inline-block; }
+.num.roll { animation:dcroll .24s ease-out; }
+@keyframes dcroll { 0% { transform:translateY(-55%); opacity:0; } 100% { transform:none; opacity:1; } }
+.anc.glow { animation:dcglow .9s ease-out; }
+@keyframes dcglow { 0% { filter:drop-shadow(0 0 0 rgba(255,214,130,0)); } 28% { filter:drop-shadow(0 0 8px rgba(255,214,130,.95)); } 100% { filter:drop-shadow(0 0 0 rgba(255,214,130,0)); } }
+.evdot { width:8px; height:8px; border-radius:50%; background:var(--ember); box-shadow:0 0 8px rgba(224,112,42,.8); flex:none; }
+.evn { min-width:18px; height:18px; padding:0 4px; border-radius:9px; display:inline-grid; place-items:center; font:700 12px var(--g-disp); color:#1a120a; background:var(--ember); border:1px solid var(--ember2); line-height:1; flex:none; }
+.pr { color:var(--dim); }
+
+/* A Band ipucu kutusu */
+.dc-pop { position:absolute; z-index:40; display:none; pointer-events:none; width:max-content; text-transform:none; letter-spacing:0; white-space:normal; text-shadow:none; font-weight:400; cursor:default; }
+.dc-pop .bt { --bu:1.1px; }
+html.mk-phone .dc-pop .bt { --bu:1.4px; }
+.anc:hover > .dc-pop, .anc:focus-within > .dc-pop, .anc.tipon > .dc-pop { display:block; animation:dcpop .16s ease-out; }
+@keyframes dcpop { 0% { opacity:0; margin-top:4px; } 100% { opacity:1; } }
+.dc-pop.below-l { top:100%; left:0; margin-top:14px; } .dc-pop.below-c { top:100%; left:50%; translate:-50% 0; margin-top:14px; } .dc-pop.below-r { top:100%; right:0; margin-top:14px; }
+.dc-pop.above-l { bottom:100%; left:0; margin-bottom:14px; } .dc-pop.above-r { bottom:100%; right:0; margin-bottom:14px; }
+.dc-pop.right { left:100%; top:0; margin-left:14px; } .dc-pop.left { right:100%; top:50%; translate:0 -50%; margin-right:14px; }
+
+/* ---- U ailesi: ust kenar ortada cetvel ---- */
+.U { left:0; top:6px; width:760px; height:30px; --ty:translateX(-50%); --o:50% 0; display:flex; align-items:center; gap:18px; }
+.U .rl { position:relative; flex:1; height:2px; background:linear-gradient(90deg,rgba(217,178,106,0),rgba(217,178,106,.5)); }
+.U .rl.r { background:linear-gradient(270deg,rgba(217,178,106,0),rgba(217,178,106,.5)); }
+.U .rl b { position:absolute; inset:0; opacity:0; transition:opacity .25s; background:linear-gradient(90deg,rgba(243,217,153,0),#f3d999); box-shadow:0 0 8px rgba(243,217,153,.55); }
+.U .rl.r b { background:linear-gradient(270deg,rgba(243,217,153,0),#f3d999); }
+.U .rl b.on { opacity:1; }
+.U .ul { font:600 17px var(--g-disp); letter-spacing:.24em; text-transform:uppercase; color:rgba(243,217,153,.9); text-shadow:0 0 4px #000,0 1px 4px #000; white-space:nowrap; }
+.U .ul .num { margin-left:4px; font-size:19px; }
+.U .uev { position:absolute; left:50%; top:27px; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:var(--ember); box-shadow:0 0 8px rgba(224,112,42,.8); }
+@keyframes uspark { 0% { opacity:1; box-shadow:0 0 0 0 #ffb35a,0 0 0 0 #ffd890,0 0 0 0 #ffb35a,0 0 0 0 #ffd890; } 100% { opacity:0; box-shadow:-16px -12px 0 -1px #ffb35a,-10px 13px 0 -1px #ffd890,-24px 3px 0 -1px #ffb35a,-6px -16px 0 -1px #ffd890; } }
+@keyframes uflick { 0% { opacity:.75; transform:scale(.92); } 50% { opacity:1; transform:scale(1.08); } 100% { opacity:.85; transform:scale(.97); } }
+@keyframes ubreath { 0%,100% { text-shadow:0 0 4px #000,0 1px 4px #000; } 50% { text-shadow:0 0 4px #000,0 0 12px rgba(243,217,153,.65); } }
+.U .uev { animation:uflick .9s ease-in-out infinite alternate; }
+/* U8 cift satir + safak dalgasi */
+.U.u8 { height:26px; }
+.U.u8 .cap { position:absolute; left:50%; top:24px; transform:translateX(-50%); font:600 11px var(--g-disp); letter-spacing:.26em; text-transform:uppercase; color:var(--dim); white-space:nowrap; text-shadow:0 1px 3px #000; }
+.U.u8 .uev { top:42px; }
+.U.u8 .wv { position:absolute; left:0; right:0; top:10px; height:6px; pointer-events:none; opacity:0; background:linear-gradient(90deg,transparent,#c85a4a 30%,#f3d999 50%,#e8a050 70%,transparent) -40% 0/35% 100% no-repeat; filter:blur(3px); }
+.U.u8.glow .wv { animation:uwave .6s ease-out; }
+@keyframes uwave { 0% { opacity:0; background-position:-40% 0; } 25% { opacity:.95; } 100% { opacity:0; background-position:140% 0; } }
+/* ================= I ailesi: oyunun gercek HUD diliyle entegre ================= */
+/* Kaynaklar: style.css .nav-btn (30px cerceve, 1px rgba(217,178,106,.42), dolgu rgba(12,9,6,.45)), elegant.css .el-btn / .el-panel.corners, valor.css .dc-band seridi,
+   econ.css .ec-card / .ec-card-ico, map-window.css .mw-cap / .mw-chip / .mw-corner, harita sol alt sutunu (renderColumn: Cinzel 18 bolge, 5px cubuk, 17px soluk satirlar). */
+.k-quest { --kc:#f3d999; } .k-gate { --kc:#7fb0e0; } .k-market { --kc:#9fd88a; } .k-threat { --kc:#e8705a; } .k-inn { --kc:#6fd0c0; }
+svg.ic { width:24px; height:24px; flex:none; color:var(--kc); }
+.dia { display:inline-block; width:9px; height:9px; transform:rotate(45deg); background:var(--ember); box-shadow:0 0 0 1px var(--ember2),0 0 10px rgba(240,140,40,.6); flex:none; }
+.dia[hidden] { display:none; }
+.xp.open .nv, .xp.open .elb, .xp.open .sg, .xp.open .cr, .xp.open .dyb { border-color:rgba(243,217,153,.9); }
+.plk { font:600 10px var(--g-disp); letter-spacing:.2em; text-transform:uppercase; color:var(--dim); white-space:nowrap; line-height:1; }
+.pll { font:16px/1.1 var(--g-body); color:#d9c8a2; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
+.pnum { font:600 24px/1 var(--g-disp); color:var(--gold); text-shadow:0 1px 3px #000; }
+.ptx { display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
+.nv, .elb, .sg, .cr, .dyb { font:inherit; color:#d9c8a2; cursor:pointer; text-align:left; }
+
+/* panel = el-panel.corners + mw-cap + ec-card */
+.ipn { position:absolute; z-index:45; box-sizing:border-box; width:390px; background:linear-gradient(180deg,rgba(30,22,14,.97),rgba(12,9,6,.97)); border:1px solid rgba(217,178,106,.42); box-shadow:0 0 0 3px rgba(8,6,4,.7),0 18px 40px rgba(0,0,0,.6); opacity:0; visibility:hidden; pointer-events:none; transform:translateY(-6px); transition:opacity .22s ease-out,transform .22s ease-out,visibility .22s; white-space:normal; text-align:left; cursor:default; color:#d9c8a2; font:19px/1.3 var(--g-body); text-transform:none; letter-spacing:0; text-shadow:none; }
+.ipn .ipb { padding:18px 18px 14px; max-height:calc((1080px - 170px) / var(--hk)); overflow-y:auto; overflow-x:hidden; }
+.ipn .mw-corner { position:absolute; width:7px; height:7px; background:#130d07; border:1px solid rgba(217,178,106,.42); transform:rotate(45deg); z-index:2; }
+.ipn .mw-corner.tl { left:-4px; top:-4px; } .ipn .mw-corner.tr { right:-4px; top:-4px; } .ipn .mw-corner.bl { left:-4px; bottom:-4px; } .ipn .mw-corner.br { right:-4px; bottom:-4px; }
+.xp.open > .ipn, .xp.open > .bpn { opacity:1; visibility:visible; pointer-events:auto; transform:none; }
+.ipn.dn { top:100%; right:0; margin-top:14px; } .ipn.up { bottom:0; left:100%; margin-left:26px; transform:translateY(6px); }
+.cap { display:flex; align-items:center; gap:10px; margin:0 0 12px; font:600 14px var(--g-disp); letter-spacing:.24em; text-transform:uppercase; color:rgba(217,178,106,.85); }
+.cap::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,rgba(217,178,106,.4),transparent); }
+.cap .chp { order:3; padding:2px 9px; font:600 11px var(--g-disp); letter-spacing:.07em; background:rgba(12,9,6,.72); border:1px solid rgba(217,178,106,.3); color:#d9c8a2; }
+.nx { display:flex; align-items:center; gap:12px; margin:0 0 12px; }
+.nx .big { font:600 26px var(--g-disp); letter-spacing:.06em; color:var(--gold); white-space:nowrap; }
+.nx .bar { position:relative; flex:1; height:5px; background:rgba(8,6,4,.85); border:1px solid rgba(217,178,106,.28); }
+.nx .bar i { position:absolute; left:1px; top:0; bottom:0; width:calc(var(--f) * 100% - 2px); background:#e8c47e; transition:width .25s ease-out; }
+.nx .bar u { position:absolute; left:50%; top:-3px; bottom:-3px; width:1px; background:rgba(217,178,106,.6); }
+.nx .pr { font:17px var(--g-body); color:var(--dim); }
+.ecd { display:flex; align-items:center; gap:14px; padding:12px 14px; margin-bottom:8px; background:linear-gradient(180deg,rgba(30,22,14,.95),rgba(9,6,4,.95)); border:1px solid rgba(217,178,106,.3); transition:transform .18s cubic-bezier(.33,1,.68,1),border-color .2s,box-shadow .2s; }
+.ecd:hover { transform:translateY(-3px); border-color:#f3d999; box-shadow:0 0 16px rgba(240,140,40,.3); }
+.ecd .ico { width:48px; height:48px; flex:none; display:grid; place-items:center; border:1px solid rgba(217,178,106,.42); background:radial-gradient(circle at 50% 45%,rgba(224,112,42,.22),rgba(8,6,4,.8)); }
+.ecd .cx { flex:1; min-width:0; }
+.ecd h4 { margin:0; font:600 17px var(--g-disp); letter-spacing:.1em; text-transform:uppercase; color:#f3d999; }
+.ecd p { margin:2px 0 0; font:17px var(--g-body); color:#d9c8a2; }
+.ecd .kd { font:600 10px var(--g-disp); letter-spacing:.22em; text-transform:uppercase; color:var(--kc); }
+.ecd .cn { min-width:46px; text-align:center; font:600 28px/1 var(--g-disp); color:#f3d999; }
+.ecd .cn small { display:block; margin-top:3px; font:600 10px var(--g-disp); letter-spacing:.18em; text-transform:uppercase; color:var(--dim); }
+.innr { display:flex; align-items:center; gap:12px; padding:10px 14px; background:rgba(8,6,4,.45); border:1px solid rgba(217,178,106,.3); font:17px var(--g-body); color:#d9c8a2; }
+.ft { margin-top:12px; padding-top:9px; border-top:1px solid rgba(217,178,106,.16); font:600 11px var(--g-disp); letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }
+
+/* I1: Menu'nun solunda, nav dugmesiyle ayni cerceve ve dolgu */
+.I1 { right:calc(69px / var(--sc)); top:calc(28px / var(--sc)); --ty:translateY(-50%); --o:100% 0; }
+.I1 .nv { position:relative; display:flex; align-items:center; gap:10px; height:40px; padding:0 12px 0 11px; background:rgba(12,9,6,.45); border:1px solid rgba(217,178,106,.42); filter:drop-shadow(0 1px 3px rgba(12,8,5,.9)); transition:border-color .18s,color .18s; }
+.I1 .nv:hover { border-color:#f3d999; color:#f3d999; }
+.I1 .nv .pnum { font-size:22px; }
+.I1 .nv .dia { position:absolute; right:-5px; top:-5px; width:8px; height:8px; }
+/* I2: Menu'nun altinda, el-btn kardesi (elmas koseli) */
+.I2 { right:calc(13px / var(--sc)); top:calc(50px / var(--sc) + 8px); --o:100% 0; }
+.I2 .elb { position:relative; display:flex; align-items:center; gap:14px; min-height:56px; padding:0 22px; background:linear-gradient(180deg,rgba(30,22,14,.82),rgba(12,9,6,.86)); border:1px solid rgba(217,178,106,.3); box-shadow:0 0 0 3px rgba(12,8,5,.6); text-shadow:0 2px 4px rgba(12,8,5,.95); transition:border-color .2s,transform .25s cubic-bezier(.33,1,.68,1); }
+.I2 .elb::before, .I2 .elb::after { content:''; position:absolute; top:50%; width:9px; height:9px; margin-top:-5px; transform:rotate(45deg); background:#1a130c; box-shadow:0 0 0 1px rgba(217,178,106,.45); transition:box-shadow .2s; }
+.I2 .elb::before { left:-6px; } .I2 .elb::after { right:-6px; }
+.I2 .elb:hover { border-color:rgba(243,217,153,.9); transform:translateY(-2px); }
+.I2 .elb:hover::before, .I2 .elb:hover::after { box-shadow:0 0 0 1px var(--ember2); }
+.I2 .elb .pnum { font-size:30px; }
+.I2 .elb .pll { font-size:17px; max-width:190px; }
+.I2 .elb .dia { margin-left:4px; }
+.I2 .ipn { width:420px; }
+/* I3: sol ust Valor seridinin ikinci bolumu */
+.dc-band .I3 { position:relative; transform:none; display:block; padding-left:18px; border-left:1px solid rgba(217,178,106,.3); }
+.I3 .sg { display:flex; align-items:center; gap:12px; background:none; border:0; padding:2px 6px 2px 0; min-height:44px; transition:color .18s; }
+.I3 .sg:hover .pnum, .I3 .sg:hover .pll { color:#f3d999; }
+.I3 .sg .pnum { font-size:26px; }
+.I3 .sg .pips { display:flex; gap:5px; margin-top:1px; }
+.I3 .sg .pips i { width:8px; height:8px; transform:rotate(45deg); border:1px solid var(--gold); transition:background .22s,box-shadow .22s; }
+.I3 .sg .pips i.on { background:var(--ember); border-color:var(--ember2); box-shadow:0 0 8px rgba(224,112,42,.8); }
+.I3 .pll { font-size:15px; max-width:170px; color:var(--dim); }
+.I3 .ipn { top:100%; margin-top:18px; width:410px; }
+.dc-band { pointer-events:auto; }
+/* I4: sol alt bilgi sutununa ek satir blogu (bolge basligi gibi) */
+html.i4 .dc-info { top:774px; }
+.I4 { left:48px; top:894px; width:400px; --o:0 100%; }
+.I4 .dyb { display:block; width:100%; background:none; border:0; padding:0; }
+.I4 .rg { display:flex; justify-content:space-between; align-items:baseline; font:600 18px var(--g-disp); letter-spacing:.06em; color:var(--gold); line-height:22px; }
+.I4 .rg span { font:17px var(--g-body); color:var(--dim); letter-spacing:0; }
+.I4 .pb { position:relative; height:5px; margin:8px 0 0; background:rgba(8,6,4,.85); border:1px solid rgba(217,178,106,.28); }
+.I4 .pb i { position:absolute; left:1px; top:0; bottom:0; width:calc(var(--f) * 100% - 2px); background:#e8c47e; transition:width .25s ease-out; }
+.I4 .pb u { position:absolute; left:50%; top:-3px; bottom:-3px; width:1px; background:rgba(217,178,106,.6); }
+.I4 .dyb:hover .rg { color:#f3d999; }
+.I4 .ln { display:flex; align-items:center; gap:8px; margin-top:12px; font:17px/1 var(--g-body); color:var(--dim); }
+.I4 .ln span:first-of-type { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.I4 .ipn { width:410px; }
+/* I5: harita adinin altinda, bolge ipucu ("crumb") ile ayni medalyon dili; panel = A Band */
+.I5 { left:0; top:100px; --ty:translateX(-50%); --o:50% 0; }
+.I5 .cr { display:flex; align-items:center; gap:10px; background:none; border:0; padding:0; transition:transform .18s; }
+.I5 .cr:hover { transform:translateY(-2px); }
+.I5 .cr .md { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:#1c130b; border:2px solid #f0c25a; font:700 14px var(--g-disp); color:#f3d999; }
+.I5 .cr .tx { font:600 18px var(--g-disp); letter-spacing:.14em; text-transform:uppercase; color:#f3d999; text-shadow:0 0 4px #060402,0 0 4px #060402,0 2px 4px #060402; white-space:nowrap; }
+.I5 .cr .tx span { color:var(--dim); margin-left:8px; font-size:15px; }
+.I5 .cr .car { width:12px; height:12px; fill:none; stroke:#d9c8a2; stroke-width:2; transition:transform .2s; }
+.I5.open .cr .car { transform:rotate(180deg); }
+.bpn { position:absolute; z-index:45; top:100%; left:50%; translate:-50% 0; margin-top:16px; opacity:0; visibility:hidden; pointer-events:none; transform:translateY(-6px); transition:opacity .22s ease-out,transform .22s ease-out,visibility .22s; text-transform:none; letter-spacing:0; white-space:normal; width:max-content; }
+.bpn .bt { --bu:1.1px; }
+html.mk-phone .bpn .bt { --bu:1.4px; }
+.bpn .bt-meta .bt-chip { text-transform:uppercase; }
+@media (prefers-reduced-motion: reduce) { .num.roll, .anc.glow, .ipn, .bpn, .ecd, .nv, .elb, .cr, .nx .bar i, .I4 .pb i { animation:none !important; transition:none !important; } }
+
+</style>
+</head>
+<body>
+<div class="pg">
+<h1>Day counter · I1 - I5</h1>
+<div class="tabs" id="tabs"></div>
+<div class="vtag" id="vtag"></div>
+<p class="vnote" id="vnote"></p>
+<div class="ctl"><b>MOCKUP</b><button id="bSim" type="button">Simulate victory</button><button id="bRst" type="button">Reset</button><button id="bDesk" type="button" data-m="desk">1600x900</button><button id="bPhone" type="button" data-m="phone">844x390</button><span class="ro" id="ro"></span></div>
+<div class="zw" id="zw"><div class="mk-zoom" id="zoom"><div class="mk-frame" id="frame"><div class="mk-bg" id="bg"></div><div class="mk-ui" id="ui"></div></div></div></div>
+</div>
+<script src="kit-v2/mk.js"></script>
+<script>
+(function () {
+  const PARTY = [
+    { id: 'warrior', name: 'Warrior', role: 'Melee Bruiser', lv: 6, hp: 1 },
+    { id: 'archer', name: 'Archer', role: 'Marksman', lv: 6, hp: 0.7, pts: 2 },
+    { id: 'druid', name: 'Druid', role: 'Nature Summoner', lv: 5, hp: 0, fallen: true },
+    { id: 'mage', name: 'Mage', role: 'Elemental Mage', lv: 5, hp: 0.55 },
+  ];
+  const st = { day: 7, vic: 0, busy: false, tab: 'I1', phone: false, sub: 'Agenda', sel: 7, tick: 0, open: false };
+  const roman = (n) => n;
+  const pop = (pos) => `<div class="dc-pop ${pos}"></div>`;
+  const num = (f) => `<span class="num" data-f="${f || 'd'}"></span>`;
+  const anc = (cls, inner, extra) => `<div class="anc ${cls}" tabindex="0" ${extra || ''}>${inner}</div>`;
+
+  const IC = {
+    quest: '<path d="M6 3V22M6 4H19L15 9L19 14H6"/>',
+    gate: '<path d="M4 22V11a8 8 0 0 1 16 0V22ZM12 14V22"/>',
+    market: '<circle cx="12" cy="12" r="8"/><path d="M8.5 12H15.5M12 8.5V15.5"/>',
+    threat: '<path d="M4 4L20 20M20 4L4 20M3 8L8 3M16 21L21 16"/>',
+    inn: '<path d="M12 2C13 8 18 10 18 15A6 6 0 0 1 6 15C6 12 8 10.5 9 8C10 9 10.5 9.5 11 10C11.5 7 11.5 4.5 12 2Z"/>',
+  };
+  const ico = (k) => `<svg class="ic k-${k}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
+  const KN = { quest: 'Quest', gate: 'Gate', market: 'Market', threat: 'Threat', inn: 'Inn' };
+  const plu = (n) => `${n} ${n === 1 ? 'day' : 'days'}`;
+
+  /* ---- ornek olaylar (hepsi ORNEK) ---- */
+  function agenda() {
+    const d = st.day; const L = [];
+    const add = (day, k, title, sub, text) => { if (day >= d) L.push({ day, dd: day - d, k, title, sub, text }); };
+    add(10, 'quest', 'Rescue the captive', 10 === d ? 'last day' : `${plu(10 - d)} left`, 10 === d ? 'Rescue the captive: last day' : `Rescue the captive: ${plu(10 - d)} left`);
+    add(9, 'gate', 'Sunken Crypt opens', d === 9 ? 'today' : 'on Day 9', d === 9 ? 'Sunken Crypt opens today' : 'Sunken Crypt opens on Day 9');
+    const sd = d + ((4 - (d % 4)) % 4);
+    add(sd, 'market', 'Smith restocks', sd === d ? 'today' : `in ${plu(sd - d)}`, sd === d ? 'Smith restocks today' : `Smith restocks in ${plu(sd - d)}`);
+    add(11, 'threat', 'Bandit raid on Ravenwood', d === 11 ? 'today' : `in ${plu(11 - d)}`, d === 11 ? 'Bandit raid on Ravenwood today' : `Bandit raid on Ravenwood in ${plu(11 - d)}`);
+    const cd = d + ((6 - (d % 6)) % 6);
+    add(cd, 'market', 'Odo brings new stock', cd === d ? 'today' : `in ${plu(cd - d)}`, cd === d ? 'Odo brings new stock today' : `Odo brings new stock in ${plu(cd - d)}`);
+    add(d + 1, 'inn', 'Inn: heroes heal at dawn', 'every dawn', 'Inn: heroes heal at dawn');
+    return L.sort((a, b) => a.day - b.day);
+  }
+  const soon = (ag) => ag.filter((e) => e.k !== 'inn' && e.dd <= 2).length;
+  const dchip = (e) => (e.dd === 0 ? 'Today' : `Day ${e.day}`);
+  const row = (e) => `<div class="evr k-${e.k}${e.dd === 0 ? ' now' : ''}">${ico(e.k)}<span class="t">${e.text}</span><span class="d">${dchip(e)}</span></div>`;
+  const tipHtml = (ag) => MK.tip({ kind: 'Calendar', title: `Day ${st.day}`, value: `${st.vic}/2`, valueLabel: `to day ${st.day + 1}`, chips: [{ text: 'Example' }], lines: ag.slice(0, 4).map((e) => e.text), foot: '2 victories = 1 day' });
+
+  const FILL = {
+    list: (ag) => {
+      const g = [['Today', (e) => e.dd === 0], ['Tomorrow', (e) => e.dd === 1], ['Later', (e) => e.dd >= 2]];
+      return g.map(([n, f]) => { const r = ag.filter(f); return r.length ? `<div class="gh">${n}</div>${r.map(row).join('')}` : ''; }).join('') || '<div class="none">Nothing planned.</div>';
+    },
+    cal: (ag) => {
+      let h = '<div class="cal">';
+      for (let i = 0; i < 7; i++) {
+        const day = st.day + i; const es = ag.filter((e) => e.day === day && e.k !== 'inn');
+        h += `<button class="cc${i === 0 ? ' today' : ''}${st.sel === day ? ' sel' : ''}" data-cal="${day}"><b>${day}</b><span class="dots">${es.map((e) => `<i class="k-${e.k}"></i>`).join('')}</span></button>`;
+      }
+      const sel = ag.filter((e) => e.day === st.sel && e.k !== 'inn');
+      return h + `</div><div class="gh" style="margin-top:0">Day ${st.sel}</div>${sel.map(row).join('') || '<div class="none">Nothing planned.</div>'}<div class="evr k-inn">${ico('inn')}<span class="t">Inn: heroes heal at dawn</span></div>`;
+    },
+    tl: (ag) => {
+      let h = `<div class="tl"><div class="tn now"><i class="dt"></i><div class="td">Now · Day ${st.day}</div><div class="tt" style="color:var(--dim)">Win 2 battles to end the day</div></div>`;
+      h += ag.map((e) => `<div class="tn k-${e.k}"><i class="dt"></i><div class="td">Day ${e.day} · ${e.dd === 0 ? 'today' : e.dd === 1 ? 'tomorrow' : `in ${e.dd} days`}</div><div class="tt">${ico(e.k)}<span>${e.text}</span></div></div>`).join('');
+      return h + '</div>';
+    },
+    tabs: (ag) => {
+      const T = { Agenda: ['quest', 'gate'], Town: ['market', 'inn'], Danger: ['threat'] };
+      const rows = ag.filter((e) => T[st.sub].includes(e.k));
+      return `<div class="tbs">${Object.keys(T).map((t) => `<button class="tb${t === st.sub ? ' on' : ''}" data-tab="${t}">${t}</button>`).join('')}</div>${rows.map(row).join('') || '<div class="none">Nothing planned.</div>'}`;
+    },
+    cards: (ag) => ag.filter((e) => e.k !== 'inn').slice(0, 4).map((e) => `<div class="cd k-${e.k}"><span class="cm">${ico(e.k)}</span><div class="cx"><div class="ck">${KN[e.k]}</div><div class="ct">${e.title}</div><div class="cs">${e.sub}</div></div><div class="cn">${e.dd === 0 ? 'Now' : e.dd}<small>${e.dd === 0 ? 'today' : e.dd === 1 ? 'day' : 'days'}</small></div></div>`).join('') + `<div class="evr k-inn">${ico('inn')}<span class="t">Inn: heroes heal at dawn</span></div>`,
+    grid: (ag) => {
+      const G = [['quest', 'Quests'], ['gate', 'Gates'], ['market', 'Shops'], ['threat', 'Threats']];
+      return '<div class="gr">' + G.map(([k, n]) => { const e = ag.find((x) => x.k === k); return `<div class="gb k-${k}"><div class="gk">${ico(k)}${n}</div>${e ? `<div class="gn">${e.dd === 0 ? 'Now' : e.dd}<small>${e.dd === 0 ? '' : e.dd === 1 ? 'day' : 'days'}</small></div><div class="gt">${e.title}</div>` : '<div class="gn">-</div><div class="gt">Quiet</div>'}</div>`; }).join('') + `</div><div class="evr k-inn" style="margin-top:10px">${ico('inn')}<span class="t">Inn: heroes heal at dawn</span></div>`;
+    },
+    ticks: (ag) => `<i class="me"></i>${ag.filter((e) => e.k !== 'inn' && e.dd <= 6).map((e) => `<i class="tk k-${e.k}" style="left:${(e.dd / 6) * 100}%"></i>`).join('')}`,
+    chips: (ag) => ag.filter((e) => e.k !== 'inn').slice(0, 4).map((e) => `<span class="chip k-${e.k}">${ico(e.k)}${e.dd === 0 ? 'now' : e.dd + 'd'}</span>`).join(''),
+    rail: (ag) => ag.filter((e) => e.k !== 'inn').slice(0, 4).map((e) => `<span class="k-${e.k}">${ico(e.k)}${e.dd === 0 ? '!' : e.dd}</span>`).join(''),
+    ticker: (ag) => { const e = ag[st.tick % ag.length]; return `${ico(e.k)}<span>${e.text}</span>`; },
+    next: (ag) => { const e = ag.find((x) => x.k !== 'inn'); return e ? e.text : ''; },
+  };
+
+  /* ---- ortak HUD tabani: sefer haritasinin bugunku hali (CampaignMapScene.renderHud / renderColumn) ---- */
+  function base(h) {
+    h = h || {};
+    const rows = PARTY.map((p, i) => `<div class="mh-row${p.fallen ? ' fallen' : ''}" style="top:${194 + i * 112}px"><div class="pf"><img src="${MK.av(p.id)}" alt=""></div><span class="bd">${p.lv}</span>${p.pts ? `<span class="call">+${p.pts}</span>` : ''}<span class="nm">${p.name}</span><span class="ro">${p.fallen ? 'Fallen' : p.role}</span><div class="hp"><i style="width:${p.hp * 100}%"></i></div></div>`).join('');
+    const hereY = 194 + PARTY.length * 112 + 16;
+    const brs = ['4', '4', '2', '0'].map((n) => `<span class="vl-br"><img class="vl-img" src="${MK.brazier(`brazier-${n}`)}" alt=""></span>`).join('');
+    return `<div class="dc-hud">
+      <div class="dc-top"></div><div class="dc-leftg"></div>
+      <div class="dc-c"><div class="dc-ttl"><span class="t">Valdoria${h.titleAfter || ''}</span></div>${h.center || ''}</div>
+      <div class="dc-band"><span class="vl-meter"><span class="vl-brs">${brs}</span><span class="vl-lbl">Valor</span></span>${h.band || ''}</div>
+      <div class="dc-l">
+        <div class="mh-kick" style="left:48px;top:150px">Your party · ${PARTY.length}</div>${h.noKickline ? '' : '<div class="mh-kickline" style="left:48px;width:400px;top:168px"></div>'}${rows}
+        <div class="mh-kick" style="left:48px;top:${hereY}px">You are here</div><div class="mh-kickline" style="left:48px;width:400px;top:${hereY + 18}px"></div>
+        <div class="mh-here" style="top:${hereY}px"><div class="tile"><img src="${MK.node('battle')}" alt=""></div><span class="n">Ravenwood</span><span class="s">Battle · Outlaw Pack</span></div>
+        <div class="dc-info"><div class="rg">I · The Borderlands</div><div class="pb"><i></i></div><div class="cl"><span>Cleared 4/26 · Chapter 1</span></div><div class="md"><span>Normal · Medium</span><span class="gd"><img src="${MK.ui('gold')}" alt="">128</span></div></div>
+        <div class="mh-ibtn" style="left:24px;bottom:34px"><img src="${MK.ui('gear')}" alt=""></div><div class="mh-ibtn" style="left:102px;bottom:34px"><img src="${MK.ui('formation')}" alt=""></div>
+        ${h.left || ''}
+      </div>
+      <div class="dc-r">${h.right || ''}<div class="mh-legend">${h.legendTop || ''}<div class="h">Legend <span>hide</span></div><div class="g">${[['battle', 'Battle'], ['elite', 'Elite'], ['boss', 'Boss'], ['town', 'Town'], ['treasure', 'Treasure'], ['event', 'Event'], ['rest', 'Rest point'], ['merchant', 'Merchant']].map(([t, l]) => `<div><img src="${MK.node(t)}" alt="">${l}</div>`).join('')}</div></div></div>
+    </div>`;
+  }
+  const ev = (cls) => `<i class="evdot ${cls || ''}" data-ev></i>`;
+  const evn = () => '<span class="evn" data-ev></span>';
+
+  const CARET = '<svg class="car" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4"/></svg>';
+  const TALLY = '<span class="tally"><i data-step="1"></i><i data-step="2"></i></span>';
+  const FL = (s) => `<svg class="fl" data-step="${s}" viewBox="0 0 16 22"><path d="M8 1 C9 6 14 9 14 14 A6 6 0 0 1 2 14 C2 11 4 9.5 5 7 C6 8 6.5 8.5 7 9 C7.5 6 7.5 3.5 8 1 Z"/></svg>`;
+  const PH = (t) => `<div class="ph"><span class="k">${t}</span><span class="ex">Example</span></div>`;
+  const NX = '<div class="nx"><span class="big">Day <span class="num" data-f="d"></span></span><span class="bar"><i></i><u></u></span><span class="pr"></span></div>';
+  const PF = (t) => `<div class="pf">${t || '2 victories = 1 day'}</div>`;
+  const fill = (n) => `data-fill="${n}"`;
+  const xp = (cls, plate, panel, pos) => anc(`${cls} xp`, `${plate}<div class="pn ${pos}">${panel}</div>`, 'aria-expanded="false"');
+
+  /* U8 referans (day-counter-4) */
+  const RL = '<i class="rl"><b data-step="1"></b></i>';
+  const RR = '<i class="rl r"><b data-step="2"></b></i>';
+  const LAB = '<span class="ul">Day <span class="num" data-f="d"></span></span>';
+  const UEV = '<i class="uev" data-ev></i>';
+
+  FILL.ecards = (ag) => ag.filter((e) => e.k !== 'inn').slice(0, 4).map((e) => `<div class="ecd k-${e.k}"><span class="ico">${ico(e.k)}</span><div class="cx"><div class="kd">${KN[e.k]}</div><h4>${e.title}</h4><p>${e.sub}</p></div><div class="cn">${e.dd === 0 ? 'Now' : e.dd}<small>${e.dd === 0 ? 'today' : e.dd === 1 ? 'day' : 'days'}</small></div></div>`).join('') + `<div class="innr k-inn">${ico('inn')}<span>Inn: heroes heal at dawn</span></div>`;
+  FILL.band = (ag) => { const k = ag.filter((e) => e.k !== 'inn').slice(0, 4); return MK.tip({ kind: 'Calendar', title: `Day ${st.day}`, value: `${st.vic}/2`, valueLabel: `to day ${st.day + 1}`, chips: [{ text: 'Example' }, ...k.map((e) => ({ text: `${KN[e.k]} ${e.dd === 0 ? 'now' : e.dd + 'd'}` }))], lines: ag.slice(0, 5).map((e) => e.text), foot: '2 victories = 1 day' }); };
+  const CAR = '<svg class="car" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4"/></svg>';
+  const cn = '<i class="mw-corner tl"></i><i class="mw-corner tr"></i><i class="mw-corner bl"></i><i class="mw-corner br"></i>';
+  const NXI = '<div class="nx"><span class="big">Day <span class="num" data-f="d"></span></span><span class="bar"><i></i><u></u></span><span class="pr"></span></div>';
+  const body = '<div class="cap">Coming up<span class="chp">Example</span></div>' + NXI + '<div data-fill="ecards"></div><div class="ft">2 victories = 1 day</div>';
+  const ipn = (pos) => `<div class="ipn ${pos}">${cn}<div class="ipb">${body}</div></div>`;
+  const nvIn = '<span class="pnum"><span class="num" data-f="d"></span></span><span class="ptx"><span class="plk">Day · <span class="pr"></span></span><span class="pll" data-fill="next"></span></span><i class="dia" data-ev></i>';
+  const V = {
+    I1: { n: 'Menu\'nün yanında nav kardeşi', exp: true, note: 'Menu düğmesinin hemen soluna, nav düğmeleriyle AYNI çerçeve (1px altın .42, dolgu .45, aynı dikey merkez, 8px boşluk): rakam + "DAY · 1/2" + sıradaki olay; köşede Menu simgesindeki kor elması gibi olay elması. Tıklayınca altına el-panel (elmas köşeli, ec-card kartlı) açılır.', build: () => base({ right: xp('I1', `<button class="nv">${nvIn}</button>`, '', '') .replace('<div class="pn "></div>', ipn('dn')) }) },
+    I2: { n: 'Menu altında el-btn kardeşi', exp: true, note: 'Menu/tam ekran satırının ALTINA, sağ kenara hizalı, oyunun el-btn dili (degrade dolgu, 3px koyu halka, iki yanda elmas) ile asılı plaka: büyük rakam + "DAY · 1/2" + sıradaki olay. Panel plakaya yapışık aşağı açılır.', build: () => base({ right: xp('I2', `<button class="elb">${nvIn}</button>`, '', '').replace('<div class="pn "></div>', ipn('dn')) }) },
+    I3: { n: 'Valor şeridinin ikinci bölümü', exp: true, note: 'Sol üstteki mevcut Valor bandına (Back\'in yanındaki şerit) ince çizgiyle ayrılan ikinci bölüm: rakam, iki kor elması (1/2) ve soluk olay satırı. Ayrı kutu yok. Panel şeridin altından açılır. Valor henüz yokken şerit yalnız bu bölüm olur.', build: () => base({ band: xp('I3', `<button class="sg"><span class="pnum"><span class="num" data-f="d"></span></span><span class="ptx"><span class="plk">Day <span class="pips"><i data-step="1"></i><i data-step="2"></i></span></span><span class="pll" data-fill="next"></span></span><i class="dia" data-ev></i></button>`, '', '').replace('<div class="pn "></div>', ipn('dn')) }) },
+    I4: { n: 'Sol alt bilgi sütununda satır', exp: true, note: 'Sol alttaki bölge / ilerleme / mod / altın sütununa aynı tipografiyle eklenen satır bloğu: "Day 7  1/2" (bölge başlığı gibi Cinzel 18), aynı 5px çubuk (ortada çentik), altında soluk olay satırı. Mevcut blok biraz yukarı kayıyor. Panel sütunun sağına açılır.', build: () => base({ left: xp('I4', `<button class="dyb"><div class="rg">Day <span class="num" data-f="d"></span><span class="pr"></span></div><div class="pb"><i></i><u></u></div><div class="ln"><i class="dia" data-ev></i><span data-fill="next"></span></div></button>`, '', '').replace('<div class="pn "></div>', ipn('up')) }) },
+    I5: { n: 'Harita adı altında + A Band', exp: true, note: 'Harita adının altında bölge ipucu ("crumb") ile aynı dil: altın halkalı madalyon (gün rakamı) + "DAY 7 · 1/2". Tıklayınca oyunun gerçek A Band kutusu açılır: Calendar, 1/2, tür çipleri geri sayımla, olay satırları, alt not. (Bölgeye yakınlaşınca crumb\'ın yerine geçer: not.)', build: () => base({ center: anc('I5 xp', `<button class="cr"><span class="md"><span class="num" data-f="d"></span></span><span class="tx">Day · <span class="pr"></span><span data-fill="next"></span></span>${CAR}</button><div class="bpn" data-fill="band"></div>`, 'aria-expanded="false"') }) },
+  };
+  const ORDER = ['I1', 'I2', 'I3', 'I4', 'I5'];
+
+
+  /* ---- iskele ---- */
+  const $ = (s) => document.querySelector(s);
+  const ui = $('#ui');
+  const chrome = () => `${MK.navBtn('back', 'Back')}${MK.navBtn('fs', 'Fullscreen')}${MK.navBtn('menu', 'Menu')}`;
+  function render() {
+    const r = document.documentElement;
+    r.classList.toggle('i4', st.tab === 'I4'); r.classList.toggle('mk-phone', st.phone); r.classList.toggle('short', st.phone); r.classList.toggle('compact', st.phone);
+    r.style.setProperty('--sc', String((st.phone ? 390 : 900) / 1080));
+    $('#bg').style.backgroundImage = `url(${MK.bg('valdoria')})`;
+    ui.innerHTML = `<div class="mk-stage dc-stage" id="stg">${V[st.tab].build()}</div>${chrome()}`;
+    document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.t === st.tab));
+    $('#bDesk').classList.toggle('on', !st.phone); $('#bPhone').classList.toggle('on', st.phone);
+    $('#vtag').textContent = `${st.tab} · ${V[st.tab].n}${V[st.tab].exp ? ' · tıkla: açılır' : ''}`; $('#vnote').textContent = V[st.tab].note;
+    fit(); sync(false);
+    if (st.open) document.querySelectorAll('.anc.xp').forEach((a) => a.classList.add('open'));
+    location.hash = st.tab + (st.phone ? '&phone' : '') + (st.open ? '&open' : '');
+  }
+  function fit() { $('#zoom').style.zoom = String(Math.min(1, $('#zw').clientWidth / (st.phone ? 844 : 1600))); }
+  function sync(roll) {
+    const stg = $('#stg'); const ag = agenda();
+    stg.style.setProperty('--f', String(st.vic / 2));
+    const t = st.vic / 2;
+    stg.style.setProperty('--sx', `${10 + 280 * t}px`); stg.style.setProperty('--sy', `${52 - 46 * Math.sin(Math.PI * t)}px`);
+    stg.querySelectorAll('.num').forEach((e) => {
+      const v = String(st.day);
+      if (e.textContent !== v) { e.textContent = v; if (roll) { e.classList.remove('roll'); void e.offsetWidth; e.classList.add('roll'); } }
+    });
+    stg.querySelectorAll('.pr').forEach((e) => { e.textContent = `${st.vic}/2`; });
+    stg.querySelectorAll('[data-step]').forEach((e) => {
+      const was = e.classList.contains('on'); const on = st.vic >= +e.dataset.step;
+      e.classList.toggle('on', on);
+      if (on && !was) { e.classList.remove('hit'); void e.getBoundingClientRect(); e.classList.add('hit'); }
+    });
+    const c = soon(ag);
+    stg.querySelectorAll('[data-ev]').forEach((e) => { e.hidden = !c; if (e.classList.contains('evn')) e.textContent = String(c); });
+    stg.querySelectorAll('[data-fill]').forEach((e) => { e.innerHTML = FILL[e.dataset.fill](ag); });
+    const tp = tipHtml(ag);
+    stg.querySelectorAll('.dc-pop').forEach((p) => { p.innerHTML = tp; });
+    if (roll) stg.querySelectorAll('.anc').forEach((a) => { a.classList.remove('glow'); void a.offsetWidth; a.classList.add('glow'); });
+    $('#ro').textContent = `Day ${st.day} · ${st.vic}/2`;
+  }
+  function victory() {
+    if (st.busy) return;
+    if (st.vic === 0) { st.vic = 1; sync(false); return; }
+    st.vic = 2; st.busy = true; sync(false);
+    st.timer = setTimeout(() => { st.day += 1; st.vic = 0; st.busy = false; if (st.sel < st.day) st.sel = st.day; sync(true); }, 360);
+  }
+  function reset() { clearTimeout(st.timer); st.day = 7; st.vic = 0; st.busy = false; st.sel = 7; st.sub = 'Agenda'; sync(false); }
+  function closeAll(except) { document.querySelectorAll('.anc.open,.anc.tipon').forEach((x) => { if (x !== except) { x.classList.remove('open', 'tipon'); x.setAttribute('aria-expanded', 'false'); } }); st.open = !!document.querySelector('.anc.open'); }
+
+  const tabs = $('#tabs');
+  ORDER.forEach((k) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.t = k; b.textContent = k; b.title = V[k].n; b.addEventListener('click', () => { st.tab = k; closeAll(); st.open = false; render(); }); tabs.append(b); });
+  $('#bSim').addEventListener('click', victory); $('#bRst').addEventListener('click', reset);
+  $('#bDesk').addEventListener('click', () => { st.phone = false; render(); }); $('#bPhone').addEventListener('click', () => { st.phone = true; render(); });
+  document.addEventListener('click', (e) => {
+    const sub = e.target.closest('[data-tab]'); if (sub) { st.sub = sub.dataset.tab; sync(false); return; }
+    const cal = e.target.closest('[data-cal]'); if (cal) { st.sel = +cal.dataset.cal; sync(false); return; }
+    if (e.target.closest('.ctl') || e.target.closest('#tabs')) return;
+    const a = e.target.closest('.anc');
+    closeAll(a);
+    if (!a) return;
+    if (a.classList.contains('xp')) { if (e.target.closest('.pn,.ipn,.bpn')) return; a.classList.toggle('open'); a.setAttribute('aria-expanded', String(a.classList.contains('open'))); st.open = a.classList.contains('open'); }
+    else a.classList.toggle('tipon');
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
+  window.addEventListener('resize', fit);
+  setInterval(() => { st.tick += 1; const t = document.querySelector('.tick'); if (t) { t.innerHTML = FILL.ticker(agenda()); t.classList.remove('sw'); void t.offsetWidth; t.classList.add('sw'); } }, 3200);
+  function readHash() { const p = location.hash.replace(/^#/, '').split('&'); if (V[p[0]]) st.tab = p[0]; st.phone = p.includes('phone'); st.open = p.includes('open'); }
+  window.addEventListener('hashchange', () => { const b = st.tab + st.phone + st.open; readHash(); if (b !== st.tab + st.phone + st.open) render(); });
+  readHash(); render();
+})();
+</script>
+</body>
+</html>
