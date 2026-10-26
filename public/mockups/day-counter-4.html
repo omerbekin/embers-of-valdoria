@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Day Counter 4</title>
+<!-- GUN SAYACI taslagi v4 (ui-dev, 2026-10-26). N-W: minimal, mevcut sefer HUD'inin dogal parcasi. Oyun kodu DEGIL. Adres: #N ... #W (+ &phone). Tum olaylar ORNEK. Varliklar: kit-v2/ -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/valor.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="map-hud/mh.css" />
+<style>
+:root { --gold:#f3d999; --dim:#a8977a; --ember:#e0702a; --ember2:#ffb35a; --sc:.8333; --hk:1; --ex:0px; }
+html.mk-phone { --hk:1.45; --ex:209px; }
+html, body { background:#0b0806; }
+.pg { max-width:1700px; margin:0 auto; padding:14px 16px 40px; }
+h1 { margin:0 0 4px; font:600 22px var(--g-disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 8px; }
+.tabs button { min-width:44px; padding:0 10px; height:44px; font:700 15px var(--g-disp); color:#d9c8a2; background:rgba(8,6,4,.7); border:1px solid rgba(217,178,106,.3); cursor:pointer; transition:border-color .2s,color .2s; }
+.tabs button:hover { border-color:rgba(243,217,153,.85); color:var(--gold); }
+.tabs button.on { color:#1a0f05; background:linear-gradient(180deg,#f3d999,#d9b26a); border-color:#f3d999; }
+.vtag { margin:4px 0 2px; font:600 15px var(--g-disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.vnote { margin:0 0 8px; font:17px/1.35 var(--g-body); color:#cdb88d; max-width:1100px; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; padding:6px 8px; border:1px dashed var(--ember); width:fit-content; max-width:100%; }
+.ctl b { font:700 11px system-ui,sans-serif; letter-spacing:.06em; color:var(--ember); }
+.ctl button { min-height:44px; padding:0 14px; font:600 12px system-ui,sans-serif; letter-spacing:.04em; color:var(--gold); background:#1b120a; border:1px solid rgba(224,112,42,.55); cursor:pointer; }
+.ctl button:hover { background:#2a1a0e; }
+.ctl button.on { background:var(--ember); color:#1a0f06; }
+.ctl .ro { font:600 12px system-ui,sans-serif; color:#cdb88d; }
+[hidden] { display:none !important; }
+.zw { width:100%; overflow:hidden; }
+html, body { overflow-x:hidden; max-width:100%; }
+
+/* ---------- HUD katmani: cerceve kenarina kilitli (telefonda --ex kadar genis) ---------- */
+.dc-hud { position:absolute; left:calc(-1 * var(--ex)); top:0; width:calc(1920px + 2 * var(--ex)); height:1080px; pointer-events:none; }
+.dc-hud * { font-style:normal; }
+.dc-top { position:absolute; left:0; right:0; top:0; height:130px; background:linear-gradient(180deg,rgba(4,6,10,.55),rgba(4,6,10,0)); }
+.dc-leftg { position:absolute; left:0; top:0; bottom:0; width:560px; background:linear-gradient(90deg,rgba(4,6,10,.88),rgba(4,6,10,.55) 60%,rgba(4,6,10,0)); }
+.dc-l, .dc-r, .dc-c { position:absolute; top:0; width:0; height:1080px; }
+.dc-l { left:0; } .dc-r { right:0; } .dc-c { left:50%; }
+.dc-l, .dc-r { white-space:nowrap; }
+.dc-ttl { position:absolute; left:0; top:52px; transform:translate(-50%,-50%); white-space:nowrap; }
+.dc-ttl .t { position:relative; display:inline-block; font:600 31px var(--g-disp); letter-spacing:.2em; text-transform:uppercase; color:rgba(243,217,153,.78); text-shadow:0 2px 8px #000; }
+.dc-band { position:absolute; left:max(112px, calc(58px / var(--sc))); top:56px; transform:translateY(-50%); display:flex; align-items:center; gap:18px; padding:4px 14px 4px 8px; background:linear-gradient(90deg,rgba(12,9,6,.62),rgba(12,9,6,.38) 70%,rgba(12,9,6,0)); border-left:1px solid rgba(217,178,106,.3); pointer-events:auto; }
+.dc-band .vl-meter { --vl-h:44px; }
+.dc-band .vl-lbl { font-size:12px; }
+.dc-info { position:absolute; left:48px; top:812px; width:400px; color:var(--dim); }
+.dc-info .rg { font:600 18px var(--g-disp); letter-spacing:.06em; color:var(--gold); line-height:22px; white-space:nowrap; }
+.dc-info .pb { position:relative; height:5px; margin:8px 0 0; background:rgba(8,6,4,.85); border:1px solid rgba(217,178,106,.28); }
+.dc-info .pb i { position:absolute; left:1px; top:0; bottom:0; width:15%; background:#e8c47e; }
+.dc-info .cl, .dc-info .md { font:17px/1 var(--g-body); margin-top:14px; display:flex; justify-content:space-between; align-items:center; }
+.dc-info .gd { display:inline-flex; align-items:center; gap:6px; font:600 20px var(--g-disp); letter-spacing:.04em; color:var(--gold); }
+.dc-info .gd img { width:26px; height:26px; }
+.mh-row .ro, .mh-here .s { font-style:normal; }
+.mh-row .call { font-style:normal; }
+.mh-legend { pointer-events:auto; }
+
+/* ---------- ortak sayac parcalari ---------- */
+.anc { position:absolute; transform:var(--ty,none) scale(var(--hk)); transform-origin:var(--o,0 0); cursor:help; pointer-events:auto; outline:none; }
+.anc::before { content:''; position:absolute; inset:-8px -6px; }
+.anc:focus-visible { box-shadow:0 0 0 1px rgba(243,217,153,.8); }
+.P, .S, .V { transform:none; }
+.num { display:inline-block; }
+.num.roll { animation:dcroll .24s ease-out; }
+@keyframes dcroll { 0% { transform:translateY(-55%); opacity:0; } 100% { transform:none; opacity:1; } }
+.anc.glow { animation:dcglow .9s ease-out; }
+@keyframes dcglow { 0% { filter:drop-shadow(0 0 0 rgba(255,214,130,0)); } 28% { filter:drop-shadow(0 0 8px rgba(255,214,130,.95)); } 100% { filter:drop-shadow(0 0 0 rgba(255,214,130,0)); } }
+.evdot { width:8px; height:8px; border-radius:50%; background:var(--ember); box-shadow:0 0 8px rgba(224,112,42,.8); flex:none; }
+.evn { min-width:18px; height:18px; padding:0 4px; border-radius:9px; display:inline-grid; place-items:center; font:700 12px var(--g-disp); color:#1a120a; background:var(--ember); border:1px solid var(--ember2); line-height:1; flex:none; }
+.pr { color:var(--dim); }
+
+/* A Band ipucu kutusu */
+.dc-pop { position:absolute; z-index:40; display:none; pointer-events:none; width:max-content; text-transform:none; letter-spacing:0; white-space:normal; text-shadow:none; font-weight:400; cursor:default; }
+.dc-pop .bt { --bu:1.1px; }
+html.mk-phone .dc-pop .bt { --bu:1.4px; }
+.anc:hover > .dc-pop, .anc:focus-within > .dc-pop, .anc.tipon > .dc-pop { display:block; animation:dcpop .16s ease-out; }
+@keyframes dcpop { 0% { opacity:0; margin-top:4px; } 100% { opacity:1; } }
+.dc-pop.below-l { top:100%; left:0; margin-top:14px; } .dc-pop.below-c { top:100%; left:50%; translate:-50% 0; margin-top:14px; } .dc-pop.below-r { top:100%; right:0; margin-top:14px; }
+.dc-pop.above-l { bottom:100%; left:0; margin-bottom:14px; } .dc-pop.above-r { bottom:100%; right:0; margin-bottom:14px; }
+.dc-pop.right { left:100%; top:0; margin-left:14px; } .dc-pop.left { right:100%; top:50%; translate:0 -50%; margin-right:14px; }
+
+/* ---- U ailesi: ust kenar ortada cetvel ---- */
+.U { left:0; top:6px; width:760px; height:30px; --ty:translateX(-50%); --o:50% 0; display:flex; align-items:center; gap:18px; }
+.U .rl { position:relative; flex:1; height:2px; background:linear-gradient(90deg,rgba(217,178,106,0),rgba(217,178,106,.5)); }
+.U .rl.r { background:linear-gradient(270deg,rgba(217,178,106,0),rgba(217,178,106,.5)); }
+.U .rl b { position:absolute; inset:0; opacity:0; transition:opacity .25s; background:linear-gradient(90deg,rgba(243,217,153,0),#f3d999); box-shadow:0 0 8px rgba(243,217,153,.55); }
+.U .rl.r b { background:linear-gradient(270deg,rgba(243,217,153,0),#f3d999); }
+.U .rl b.on { opacity:1; }
+.U .ul { font:600 17px var(--g-disp); letter-spacing:.24em; text-transform:uppercase; color:rgba(243,217,153,.9); text-shadow:0 0 4px #000,0 1px 4px #000; white-space:nowrap; }
+.U .ul .num { margin-left:4px; font-size:19px; }
+.U .uev { position:absolute; left:50%; top:27px; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:var(--ember); box-shadow:0 0 8px rgba(224,112,42,.8); }
+@keyframes uspark { 0% { opacity:1; box-shadow:0 0 0 0 #ffb35a,0 0 0 0 #ffd890,0 0 0 0 #ffb35a,0 0 0 0 #ffd890; } 100% { opacity:0; box-shadow:-16px -12px 0 -1px #ffb35a,-10px 13px 0 -1px #ffd890,-24px 3px 0 -1px #ffb35a,-6px -16px 0 -1px #ffd890; } }
+@keyframes uflick { 0% { opacity:.75; transform:scale(.92); } 50% { opacity:1; transform:scale(1.08); } 100% { opacity:.85; transform:scale(.97); } }
+@keyframes ubreath { 0%,100% { text-shadow:0 0 4px #000,0 1px 4px #000; } 50% { text-shadow:0 0 4px #000,0 0 12px rgba(243,217,153,.65); } }
+.U .uev { animation:uflick .9s ease-in-out infinite alternate; }
+/* U2 akan kor */
+.U.u2 .rl::after { content:''; position:absolute; left:0; right:0; top:-1px; height:4px; background:linear-gradient(90deg,transparent,rgba(255,170,80,.95),transparent) -80px 0/80px 100% no-repeat; animation:uflowL 2.8s linear infinite; }
+.U.u2 .rl.r::after { animation-name:uflowR; background-position:right -80px top 0; }
+@keyframes uflowL { to { background-position:420px 0; } }
+@keyframes uflowR { to { background-position:right 420px top 0; } }
+/* U3 kilic uclari, kivilcim, eriyen rakam */
+.U.u3 .sw { position:absolute; top:50%; width:24px; height:10px; margin-top:-5px; fill:rgba(217,178,106,.7); stroke:rgba(217,178,106,.7); }
+.U.u3 .sw.l { left:-14px; } .U.u3 .sw.r { right:-14px; transform:scaleX(-1); }
+.U.u3 .rl b.hit::after { content:''; opacity:0; position:absolute; top:-1px; width:3px; height:3px; border-radius:50%; background:#ffd890; animation:uspark .5s ease-out; }
+.U.u3 .rl:not(.r) b::after { right:0; } .U.u3 .rl.r b::after { left:0; transform:scaleX(-1); }
+.U.u3 .num.roll { animation:umelt .5s ease-out; }
+@keyframes umelt { 0% { transform:translateY(-70%) scaleY(1.6); opacity:0; filter:blur(2px); text-shadow:0 0 10px #ff8a30; color:#ff9a45; } 60% { transform:translateY(8%) scaleY(.9); opacity:1; filter:none; text-shadow:0 0 10px #ff8a30; } 100% { transform:none; } }
+/* U4 muhur */
+.U.u4 .seal { position:relative; padding:5px 20px; border:1px solid rgba(217,178,106,.6); border-radius:20px; background:rgba(12,9,6,.72); box-shadow:0 0 0 3px rgba(8,6,4,.5); }
+.U.u4 .seal::after { content:''; position:absolute; inset:-1px; border-radius:20px; border:1px solid rgba(243,217,153,.9); opacity:0; }
+.U.u4.glow .seal { animation:ustamp .3s ease-out; } .U.u4.glow .seal::after { animation:uring .6s ease-out; }
+.U.u4 .num.roll { animation:none; }
+@keyframes ustamp { 0% { transform:scale(1.35); opacity:.4; } 60% { transform:scale(.96); opacity:1; } 100% { transform:none; } }
+@keyframes uring { 0% { opacity:.9; transform:scale(1); } 100% { opacity:0; transform:scale(1.5,1.9); } }
+/* U5 zincir */
+.U.u5 .rl, .U.u5 .rl.r { height:4px; background:repeating-linear-gradient(90deg,rgba(217,178,106,.5) 0 7px,transparent 7px 11px); -webkit-mask-image:linear-gradient(90deg,transparent,#000 40%); mask-image:linear-gradient(90deg,transparent,#000 40%); }
+.U.u5 .rl.r { -webkit-mask-image:linear-gradient(270deg,transparent,#000 40%); mask-image:linear-gradient(270deg,transparent,#000 40%); }
+.U.u5 .rl b, .U.u5 .rl.r b { opacity:1; background:repeating-linear-gradient(90deg,#f3d999 0 7px,transparent 7px 11px); box-shadow:none; filter:drop-shadow(0 0 4px rgba(243,217,153,.8)); clip-path:inset(0 100% 0 0); transition:clip-path .5s ease-out; }
+.U.u5 .rl.r b { clip-path:inset(0 0 0 100%); }
+.U.u5 .rl b.on { clip-path:inset(0 0 0 0); }
+.U.u5 .ring { width:9px; height:9px; border:2px solid rgba(217,178,106,.7); border-radius:50%; flex:none; }
+/* U6 alev uclari */
+.U.u6 .fl { width:15px; height:21px; flex:none; overflow:visible; }
+.U.u6 .fl path { fill:rgba(217,178,106,0); stroke:rgba(217,178,106,.55); stroke-width:1.3; stroke-linejoin:round; transition:fill .25s,stroke .25s; }
+.U.u6 .fl.on path { fill:#e8782e; stroke:#ffb35a; filter:drop-shadow(0 0 5px rgba(255,140,50,.8)); }
+.U.u6 .fl.on { animation:uflick 1.1s ease-in-out infinite alternate; transform-origin:50% 100%; }
+.U.u6 .uev { width:5px; height:8px; border-radius:50% 50% 50% 50%/60% 60% 40% 40%; background:#ff9a45; }
+/* U7 run + nefes */
+.U.u7 .ru { width:12px; height:16px; flex:none; fill:none; stroke:rgba(217,178,106,.45); stroke-width:1.6; stroke-linecap:round; transition:stroke .25s,filter .25s; }
+.U.u7 .ru.on { stroke:#f3d999; filter:drop-shadow(0 0 5px rgba(243,217,153,.85)); }
+.U.u7 .ul { animation:ubreath 4.2s ease-in-out infinite; }
+/* U8 cift satir + safak dalgasi */
+.U.u8 { height:26px; }
+html.u8 .dc-ttl { top:70px; }
+.U.u8 .cap { position:absolute; left:50%; top:24px; transform:translateX(-50%); font:600 11px var(--g-disp); letter-spacing:.26em; text-transform:uppercase; color:var(--dim); white-space:nowrap; text-shadow:0 1px 3px #000; }
+.U.u8 .uev { top:42px; }
+.U.u8 .wv { position:absolute; left:0; right:0; top:10px; height:6px; pointer-events:none; opacity:0; background:linear-gradient(90deg,transparent,#c85a4a 30%,#f3d999 50%,#e8a050 70%,transparent) -40% 0/35% 100% no-repeat; filter:blur(3px); }
+.U.u8.glow .wv { animation:uwave .6s ease-out; }
+@keyframes uwave { 0% { opacity:0; background-position:-40% 0; } 25% { opacity:.95; } 100% { opacity:0; background-position:140% 0; } }
+/* U9 ince cerceve */
+.U.u9 { gap:0; }
+.U.u9 .fr { position:relative; padding:5px 22px; border:1px solid rgba(217,178,106,.55); background:rgba(12,9,6,.72); animation:ufr 4.4s ease-in-out infinite; }
+.U.u9 .fr::before, .U.u9 .fr::after { content:''; position:absolute; width:7px; height:7px; transform:rotate(45deg); background:#130d07; border:1px solid rgba(217,178,106,.8); }
+.U.u9 .fr::before { left:-5px; top:50%; margin-top:-4px; } .U.u9 .fr::after { right:-5px; top:50%; margin-top:-4px; }
+.U.u9 .uev { top:34px; }
+@keyframes ufr { 0%,100% { box-shadow:0 0 0 rgba(243,217,153,0); } 50% { box-shadow:0 0 12px rgba(243,217,153,.3); } }
+/* U10 kor izi */
+.U.u10 .rl b, .U.u10 .rl.r b { opacity:1; transform:scaleX(0); transform-origin:0 50%; transition:transform .55s cubic-bezier(.3,.6,.3,1); background:linear-gradient(90deg,rgba(138,74,26,0),#c06a22 40%,#f3d999 90%,#fff1c8); box-shadow:0 0 8px rgba(255,170,80,.6); }
+.U.u10 .rl.r b { transform-origin:100% 50%; background:linear-gradient(270deg,rgba(138,74,26,0),#c06a22 40%,#f3d999 90%,#fff1c8); }
+.U.u10 .rl b.on { transform:scaleX(1); }
+.U.u10 .rl { height:3px; }
+.U.u10.glow .ul { animation:umelt .5s ease-out; }
+.U.u10 .num.roll { animation:none; }
+@media (prefers-reduced-motion: reduce) { .num.roll, .anc.glow, .anc:hover > .dc-pop, .U, .U * { animation:none !important; transition:none !important; } .U *::after { animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="pg">
+<h1>Day counter · U1 - U10</h1>
+<div class="tabs" id="tabs"></div>
+<div class="vtag" id="vtag"></div>
+<p class="vnote" id="vnote"></p>
+<div class="ctl"><b>MOCKUP</b><button id="bSim" type="button">Simulate victory</button><button id="bRst" type="button">Reset</button><button id="bDesk" type="button" data-m="desk">1600x900</button><button id="bPhone" type="button" data-m="phone">844x390</button><span class="ro" id="ro"></span></div>
+<div class="zw" id="zw"><div class="mk-zoom" id="zoom"><div class="mk-frame" id="frame"><div class="mk-bg" id="bg"></div><div class="mk-ui" id="ui"></div></div></div></div>
+</div>
+<script src="kit-v2/mk.js"></script>
+<script>
+(function () {
+  const PARTY = [
+    { id: 'warrior', name: 'Warrior', role: 'Melee Bruiser', lv: 6, hp: 1 },
+    { id: 'archer', name: 'Archer', role: 'Marksman', lv: 6, hp: 0.7, pts: 2 },
+    { id: 'druid', name: 'Druid', role: 'Nature Summoner', lv: 5, hp: 0, fallen: true },
+    { id: 'mage', name: 'Mage', role: 'Elemental Mage', lv: 5, hp: 0.55 },
+  ];
+  const st = { day: 7, vic: 0, busy: false, tab: 'U1', phone: false };
+  const roman = (n) => { const m = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]; let r = ''; for (const [v, s] of m) while (n >= v) { r += s; n -= v; } return r; };
+  const FLAME = '<svg class="fl" data-step="%s" viewBox="0 0 16 22"><path d="M8 1 C9 6 14 9 14 14 A6 6 0 0 1 2 14 C2 11 4 9.5 5 7 C6 8 6.5 8.5 7 9 C7.5 6 7.5 3.5 8 1 Z"/></svg>';
+  const pop = (pos) => `<div class="dc-pop ${pos}"></div>`;
+  const num = (f) => `<span class="num" data-f="${f || 'd'}"></span>`;
+  const anc = (cls, inner, extra) => `<div class="anc ${cls}" tabindex="0" ${extra || ''}>${inner}</div>`;
+
+  /* ---- ornek olaylar (gun sayisina gore turetilir; hepsi ORNEK) ---- */
+  function events() {
+    const d = st.day;
+    const cap = (((10 - d) % 12) + 12) % 12;
+    const sm = (4 - (d % 4)) % 4;
+    const plural = (n) => (n === 1 ? 'day' : 'days');
+    return {
+      count: (cap <= 3 ? 1 : 0) + (sm <= 1 ? 1 : 0),
+      lines: [
+        cap === 0 ? 'Rescue the captive: last day' : `Rescue the captive: ${cap} ${plural(cap)} left`,
+        sm === 0 ? 'Smith restocks today' : `Smith restocks in ${sm} ${plural(sm)}`,
+        'Inn: heroes heal at dawn',
+      ],
+    };
+  }
+  const tipHtml = () => MK.tip({ kind: 'Calendar', title: `Day ${st.day}`, value: `${st.vic}/2`, valueLabel: `to day ${st.day + 1}`, chips: [{ text: 'Example' }], lines: events().lines, foot: '2 victories = 1 day' });
+
+  /* ---- ortak HUD tabani: sefer haritasinin bugunku hali (CampaignMapScene.renderHud / renderColumn) ---- */
+  function base(h) {
+    h = h || {};
+    const rows = PARTY.map((p, i) => `<div class="mh-row${p.fallen ? ' fallen' : ''}" style="top:${194 + i * 112}px"><div class="pf"><img src="${MK.av(p.id)}" alt=""></div><span class="bd">${p.lv}</span>${p.pts ? `<span class="call">+${p.pts}</span>` : ''}<span class="nm">${p.name}</span><span class="ro">${p.fallen ? 'Fallen' : p.role}</span><div class="hp"><i style="width:${p.hp * 100}%"></i></div></div>`).join('');
+    const hereY = 194 + PARTY.length * 112 + 16;
+    const brs = ['4', '4', '2', '0'].map((n) => `<span class="vl-br"><img class="vl-img" src="${MK.brazier(`brazier-${n}`)}" alt=""></span>`).join('');
+    return `<div class="dc-hud">
+      <div class="dc-top"></div><div class="dc-leftg"></div>
+      <div class="dc-c"><div class="dc-ttl"><span class="t">Valdoria${h.titleAfter || ''}</span></div>${h.center || ''}</div>
+      <div class="dc-band"><span class="vl-meter"><span class="vl-brs">${brs}</span><span class="vl-lbl">Valor</span></span>${h.band || ''}</div>
+      <div class="dc-l">
+        <div class="mh-kick" style="left:48px;top:150px">Your party · ${PARTY.length}</div>${h.noKickline ? '' : '<div class="mh-kickline" style="left:48px;width:400px;top:168px"></div>'}${rows}
+        <div class="mh-kick" style="left:48px;top:${hereY}px">You are here</div><div class="mh-kickline" style="left:48px;width:400px;top:${hereY + 18}px"></div>
+        <div class="mh-here" style="top:${hereY}px"><div class="tile"><img src="${MK.node('battle')}" alt=""></div><span class="n">Ravenwood</span><span class="s">Battle · Outlaw Pack</span></div>
+        <div class="dc-info"><div class="rg">I · The Borderlands</div><div class="pb"><i></i></div><div class="cl"><span>Cleared 4/26 · Chapter 1</span></div><div class="md"><span>Normal · Medium</span><span class="gd"><img src="${MK.ui('gold')}" alt="">128</span></div></div>
+        <div class="mh-ibtn" style="left:24px;bottom:34px"><img src="${MK.ui('gear')}" alt=""></div><div class="mh-ibtn" style="left:102px;bottom:34px"><img src="${MK.ui('formation')}" alt=""></div>
+        ${h.left || ''}
+      </div>
+      <div class="dc-r">${h.right || ''}<div class="mh-legend">${h.legendTop || ''}<div class="h">Legend <span>hide</span></div><div class="g">${[['battle', 'Battle'], ['elite', 'Elite'], ['boss', 'Boss'], ['town', 'Town'], ['treasure', 'Treasure'], ['event', 'Event'], ['rest', 'Rest point'], ['merchant', 'Merchant']].map(([t, l]) => `<div><img src="${MK.node(t)}" alt="">${l}</div>`).join('')}</div></div></div>
+    </div>`;
+  }
+  const ev = (cls) => `<i class="evdot ${cls || ''}" data-ev></i>`;
+  const evn = () => '<span class="evn" data-ev></span>';
+
+  const RL = '<i class="rl"><b data-step="1"></b></i>';
+  const RR = '<i class="rl r"><b data-step="2"></b></i>';
+  const LAB = '<span class="ul">Day ' + '<span class="num" data-f="d"></span></span>';
+  const UEV = '<i class="uev" data-ev></i>';
+  const ua = (cls, inner) => anc('U ' + cls, inner + pop('below-c'));
+  const FL = (s) => `<svg class="fl" data-step="${s}" viewBox="0 0 16 22"><path d="M8 1 C9 6 14 9 14 14 A6 6 0 0 1 2 14 C2 11 4 9.5 5 7 C6 8 6.5 8.5 7 9 C7.5 6 7.5 3.5 8 1 Z"/></svg>`;
+  const SW = (c) => `<svg class="sw ${c}" viewBox="0 0 24 10"><path d="M1 5 L7 2.5 V7.5 Z"/><path d="M7 5 H21 M21 1 V9" fill="none" stroke-width="1.4"/></svg>`;
+  const RU = (s, d) => `<svg class="ru" data-step="${s}" viewBox="0 0 12 16"><path d="${d}"/></svg>`;
+  const V = {
+    U1: { n: 'U (referans)', note: 'Ömerin beğendiği U aynen: üst kenarda "—— DAY 7 ——", sol yarı 1., sağ yarı 2. zaferde altınlaşır; olay = altta turuncu nokta (hafif titrer).', build: () => base({ center: ua('u1', RL + LAB + RR + UEV) }) },
+    U2: { n: 'Akan kor', note: 'Cetvel çizgilerinde uçtan merkeze sürekli akan ince kor ışığı (2,8 sn döngü); zaferde yarı altınlaşır, gün dönüşü rakam kayar + parıltı.', build: () => base({ center: ua('u2', RL + LAB + RR + UEV) }) },
+    U3: { n: 'Kılıç uçları + kıvılcım + eriyen rakam', note: 'Cetvelin iki ucunda küçük kılıç ucu; zaferde yarı dolarken merkez ucundan kıvılcım sıçrar; gün dönüşünde rakam turuncu erimiş metal gibi yukarıdan dökülüp altına döner.', build: () => base({ center: ua('u3', SW('l') + RL + LAB + RR + SW('r') + UEV) }) },
+    U4: { n: 'Mühür', note: 'Gün yazısı ince halkalı küçük bir mühür içinde; gün dönüşünde mühür büyükten basılır gibi oturur ve çevresinde altın halka yayılır.', build: () => base({ center: ua('u4', RL + '<span class="seal">' + LAB + '</span>' + RR + UEV) }) },
+    U5: { n: 'Zincir', note: 'Çizgiler zincir halkası dizisi; her zaferde altın halkalar uçtan merkeze doğru tek tek yanar (0,5 sn); uçlarda küçük halka.', build: () => base({ center: ua('u5', '<i class="ring"></i>' + RL + LAB + RR + '<i class="ring"></i>' + UEV) }) },
+    U6: { n: 'Alev uçları', note: 'Cetvel uçlarında iki küçük alev: zafer başına bir alev tutuşur ve titrer; olay işareti de küçük kor alevi gibi dalgalanır.', build: () => base({ center: ua('u6', FL(1) + RL + LAB + RR + FL(2) + UEV) }) },
+    U7: { n: 'Rün + nefes', note: 'Uçlarda iki küçük rün: zaferde parlayıp altınlaşır; gün yazısı yavaşça nefes alır gibi parlar (4,2 sn).', build: () => base({ center: ua('u7', RU(1, 'M3 1 V15 M3 4 L9 1 M3 9 L9 6') + RL + LAB + RR + RU(2, 'M9 1 V15 M9 4 L3 1 M9 9 L3 6') + UEV) }) },
+    U8: { n: 'Çift satır + şafak dalgası', note: 'Cetvelin altında küçük ikinci satır ("Next day 1/2"); gün dönüşünde cetvel boyunca şafak rengi (kızıl-altın) dalga soldan sağa 0,6 sn süpürür.', build: () => base({ center: ua('u8', RL + LAB + RR + '<i class="wv"></i><span class="cap">Next day <span class="pr"></span></span>' + UEV) }) },
+    U9: { n: 'İnce çerçeve', note: 'Gün yazısı elmas köşeli ince çerçevede, çizgiler çerçeveden çıkar; çerçeve çok yavaş nefes alan altın hale verir; olay = çerçeve altında kor.', build: () => base({ center: ua('u9', RL + '<span class="fr">' + LAB + '</span>' + RR + UEV) }) },
+    U10: { n: 'Kor izi', note: 'Zaferde çizgi uçtan merkeze doğru sıcak bir iz bırakarak dolar (turuncudan altına, ucu beyaza yakın, 0,55 sn); gün dönüşünde yazı erimiş metal gibi düşer.', build: () => base({ center: ua('u10', RL + LAB + RR + UEV) }) },
+  };
+
+  /* ---- iskele ---- */
+  const $ = (s) => document.querySelector(s);
+  const ui = $('#ui');
+  function chrome() {
+    return `${MK.navBtn('back', 'Back')}${MK.navBtn('fs', 'Fullscreen')}${MK.navBtn('menu', 'Menu')}`;
+  }
+  function render() {
+    const r = document.documentElement;
+    r.classList.toggle('u8', st.tab === 'U8'); r.classList.toggle('mk-phone', st.phone); r.classList.toggle('short', st.phone); r.classList.toggle('compact', st.phone);
+    r.style.setProperty('--sc', String((st.phone ? 390 : 900) / 1080));
+    $('#bg').style.backgroundImage = `url(${MK.bg('valdoria')})`;
+    ui.innerHTML = `<div class="mk-stage dc-stage" id="stg">${V[st.tab].build()}</div>${chrome()}`;
+    document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.t === st.tab));
+    $('#bDesk').classList.toggle('on', !st.phone); $('#bPhone').classList.toggle('on', st.phone);
+    $('#vtag').textContent = `${st.tab} · ${V[st.tab].n}`; $('#vnote').textContent = V[st.tab].note;
+    fit(); sync(false);
+    location.hash = st.tab + (st.phone ? '&phone' : '');
+  }
+  function fit() {
+    const fw = st.phone ? 844 : 1600;
+    $('#zoom').style.zoom = String(Math.min(1, ($("#zw").clientWidth) / fw));
+  }
+  function sync(roll) {
+    const stg = $('#stg');
+    stg.style.setProperty('--f', String(st.vic / 2));
+    stg.querySelectorAll('.num').forEach((e) => {
+      const t = e.dataset.f === 'r' ? roman(st.day) : String(st.day);
+      e.classList.toggle('long', t.length > 3);
+      if (e.textContent !== t) { e.textContent = t; if (roll) { e.classList.remove('roll'); void e.offsetWidth; e.classList.add('roll'); } }
+    });
+    stg.querySelectorAll('.pr').forEach((e) => { e.textContent = `${st.vic}/2`; });
+    stg.querySelectorAll('[data-step]').forEach((e) => {
+      const was = e.classList.contains('on'); const on = st.vic >= +e.dataset.step;
+      e.classList.toggle('on', on);
+      if (on && !was) { e.classList.remove('hit'); void e.getBoundingClientRect(); e.classList.add('hit'); }
+    });
+    const evs = events();
+    stg.querySelectorAll('[data-ev]').forEach((e) => { e.hidden = !evs.count; if (e.classList.contains('evn')) e.textContent = String(evs.count); });
+    const t = tipHtml();
+    stg.querySelectorAll('.dc-pop').forEach((p) => { p.innerHTML = t; });
+    if (roll) stg.querySelectorAll('.anc').forEach((a) => { a.classList.remove('glow'); void a.offsetWidth; a.classList.add('glow'); });
+    $('#ro').textContent = `Day ${st.day} · ${st.vic}/2`;
+  }
+  function victory() {
+    if (st.busy) return;
+    if (st.vic === 0) { st.vic = 1; sync(false); return; }
+    st.vic = 2; st.busy = true; sync(false);
+    st.timer = setTimeout(() => { st.day += 1; st.vic = 0; st.busy = false; sync(true); }, 360);
+  }
+  function reset() { clearTimeout(st.timer); st.day = 7; st.vic = 0; st.busy = false; sync(false); }
+
+  const tabs = $('#tabs');
+  Object.keys(V).forEach((k) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.t = k; b.textContent = k; b.title = V[k].n; b.addEventListener('click', () => { st.tab = k; render(); }); tabs.append(b); });
+  $('#bSim').addEventListener('click', victory); $('#bRst').addEventListener('click', reset);
+  $('#bDesk').addEventListener('click', () => { st.phone = false; render(); }); $('#bPhone').addEventListener('click', () => { st.phone = true; render(); });
+  /* dokunmatik: tek dokunus ipucunu sabitler */
+  $('#frame').addEventListener('click', (e) => {
+    const a = e.target.closest('.anc');
+    const was = a && a.classList.contains('tipon');
+    document.querySelectorAll('.anc.tipon').forEach((x) => x.classList.remove('tipon'));
+    if (a && !was) a.classList.add('tipon');
+  });
+  window.addEventListener('resize', fit);
+  function readHash() {
+    const p = location.hash.replace(/^#/, '').split('&');
+    if (V[p[0]]) st.tab = p[0];
+    st.phone = p.includes('phone');
+  }
+  window.addEventListener('hashchange', () => { const before = st.tab + st.phone; readHash(); if (before !== st.tab + st.phone) render(); });
+  readHash(); render();
+})();
+</script>
+</body>
+</html>

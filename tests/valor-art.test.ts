@@ -17,22 +17,23 @@ function webpSize(file: string): { width: number; height: number } {
 
 describe('Valor mangal kareleri (assets/valor)', () => {
   it('kor sayısı kareyi seçer; alev yalnızca dolu mangalda VE Valor eşikteyken', () => {
-    expect(R.perBrazier).toBe(4);
-    expect(brazierLooks(0, R, R.revive.outsideCost).map((l) => [l.frame, l.ready])).toEqual([
+    // kare seti 4 korluk; perBrazier 4 kuralıyla (veri 2026-10-26'dan beri 5; brazierLooks oranla çevirir)
+    const R4 = { ...R, cap: 8, perBrazier: 4 };
+    expect(brazierLooks(0, R4, R4.revive.outsideCost).map((l) => [l.frame, l.ready])).toEqual([
       ['brazier-0', false],
       ['brazier-0', false],
     ]);
     // savaş dışında eşik 4: ilk dolu mangal alevli
-    expect(brazierLooks(5, R, R.revive.outsideCost).map((l) => [l.frame, l.ready])).toEqual([
+    expect(brazierLooks(5, R4, R4.revive.outsideCost).map((l) => [l.frame, l.ready])).toEqual([
       ['brazier-4', true],
       ['brazier-1', false],
     ]);
     // savaşta eşik 6: dolu mangal da alevsiz kalır (diriltme henüz yok)
-    expect(brazierLooks(5, R, R.revive.battleCost).map((l) => [l.frame, l.ready])).toEqual([
+    expect(brazierLooks(5, R4, R4.revive.battleCost).map((l) => [l.frame, l.ready])).toEqual([
       ['brazier-4', false],
       ['brazier-1', false],
     ]);
-    expect(brazierLooks(R.cap, R, R.revive.battleCost).every((l) => l.frame === 'brazier-4' && l.ready)).toBe(true);
+    expect(brazierLooks(R.cap, R4, R4.revive.battleCost).every((l) => l.frame === 'brazier-4' && l.ready)).toBe(true);
     for (let v = 0; v <= R.cap; v++) for (const l of brazierLooks(v, R)) expect(BRAZIER_FRAMES).toContain(l.frame);
   });
 

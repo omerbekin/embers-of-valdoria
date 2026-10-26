@@ -122,6 +122,7 @@ import { artFrames } from '../wide-map';
 import { onStageResize, stageView } from '../stage';
 import { setItemValueSource } from '../../ui/item-tip';
 import { openCamp, type CampHandle } from '../../ui/camp-screen';
+import { BAND_NAME, nodeThreat, threatLine } from '../../campaign/level-gap';
 import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
 import { openStoryDialog, type StoryDialogHandle } from '../../ui/story-dialog';
 import { playCinematic, type CinematicHandle } from '../../ui/cinematic';
@@ -970,6 +971,18 @@ export class CampaignMapScene extends Phaser.Scene {
       const bg = this.add.graphics();
       drawBadge(bg, 'lock', bx, bx);
       body.add(bg);
+    }
+    // Tehlike bandı (Ömer 2026-10-26; level farkı, campaign.json > levelGap): ince renkli halka + sol üstte küçük işaret (renk körlüğü için ünlem / kafatası)
+    const threat = nodeThreat(this.s, n.id);
+    if (threat && threat.band !== 'normal') {
+      const hex = CONFIG.levelGap.colors[threat.band];
+      const col = Phaser.Display.Color.HexStringToColor(hex).color;
+      const tr = this.add.graphics();
+      tr.lineStyle(2.5, col, goal ? 0.55 : 0.9).strokeCircle(0, 0, R + 3);
+      tr.fillStyle(0x140e09, 1).fillCircle(-R * 0.78, -R * 0.78, 11).lineStyle(1.6, col, 0.95).strokeCircle(-R * 0.78, -R * 0.78, 11);
+      body.add(tr);
+      if (threat.band === 'deadly') body.add(this.add.image(-R * 0.78, -R * 0.78, ensureIcon(this, 'skull', hex, false)).setDisplaySize(15, 15));
+      else body.add(elText(this, -R * 0.78, -R * 0.77, '!', 16, hex).setOrigin(0.5));
     }
     // Geçilen düğüm soluk (tik yok)
     if (done) body.setAlpha(0.74);
@@ -2170,6 +2183,7 @@ export class CampaignMapScene extends Phaser.Scene {
       subtitle: n.subtitle || TYPE_LABEL[n.type],
       nodeType: n.type,
       level: nodeLevel(this.s.mapId, id),
+      ...this.threatOpt(id),
       ...(o.foes ? { foes: o.foes } : {}),
       ...(info ? { info } : {}),
       then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
@@ -2181,6 +2195,13 @@ export class CampaignMapScene extends Phaser.Scene {
       onCancel: () => undefined,
     });
     this.previewId = id;
+  }
+
+  /** Kartın tehlike satırı (level farkı bandı); savaşmayan / tutorial / savaşılmayan düğümde boş. */
+  private threatOpt(id: string): { threat?: { line: string; band: 'normal' | 'danger' | 'deadly'; name: string; color: string } } {
+    const t = nodeThreat(this.s, id);
+    if (!t) return {};
+    return { threat: { line: threatLine(t), band: t.band, name: BAND_NAME[t.band], color: t.band === 'normal' ? '' : CONFIG.levelGap.colors[t.band] } };
   }
 
   private hideNodeTip(): void {
@@ -3391,6 +3412,7 @@ export class CampaignMapScene extends Phaser.Scene {
       subtitle: n.subtitle || TYPE_LABEL[n.type],
       nodeType: n.type,
       level: nodeLevel(this.s.mapId, id),
+      ...this.threatOpt(id),
       ...(o.foes ? { foes: o.foes } : {}),
       ...(info ? { info } : {}),
       then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),

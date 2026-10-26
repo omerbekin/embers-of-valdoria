@@ -399,6 +399,17 @@ export function econLines(results: GrindSimResult[]): string[] {
           `Sharpen ${cp(e.campSharpen)}, Train ${cp(e.campTrain)}; Temper taşı kazanılan ${k(e.stonesGained, 1)}, harcanan ${k(e.stonesSpent, 1)}; Combine ${k(e.combines, 1)} kez`,
       );
     }
+    if (e.lfNew !== undefined) {
+      const top = Object.entries(e.lfNodes ?? {})
+        .sort((x, y) => y[1] - x[1])
+        .slice(0, 5)
+        .map(([id, n]) => `${id} ${k(n, 2)}`)
+        .join(', ');
+      L.push(
+        `  ${pad} level farmı (fark > ${r.player === 'good' ? 2 : 3}): yan dal ilk zafer savaşı ${k(e.lfNew, 2)} (elit / hazine / olay ${k(e.lfRich ?? 0, 2)}; temizlenen ${k(e.sideCleared, 2)}), devriye ${k(e.lfPatrol, 2)}; ` +
+          `6 tavanına ulaşan hedef ${k(e.lfCap, 2)}; en çok farm (hedef düğüm, koşu başına): ${top || '-'}`,
+      );
+    }
     const items = e.itemsFirst + e.itemsReplay + e.itemsTreasure;
     const rar = Object.entries(e.rarity)
       .filter(([, n]) => n > 0)

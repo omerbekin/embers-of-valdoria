@@ -175,19 +175,19 @@
     ]
   },
   "ashen_plain": {
-    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Ash Hound x2 (Blood Scent, Run Down arkaya dalar) + Charcoal Burner + Grave Chanter (kemikler). Çarpanlar sim:campaign ile (balance.json > _regionIII). KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,079 (düğümler aynı zorluğa çekildi).",
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Ash Hound x2 (Blood Scent, Run Down arkaya dalar) + Charcoal Burner + Grave Chanter (kemikler). Çarpanlar sim:campaign ile (balance.json > _regionIII). KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,079 (düğümler aynı zorluğa çekildi). Ömer 2026-10-26: boss sonrası yaralı takım duvarı; tüm birimlerin güç çarpanı x0,9 (can aynı).",
     "name": "Ash and Bone",
     "units": [
-      { "class": "ash_hound", "slot": 0, "mods": { "hpMult": 1.16, "powerMult": 1.102 } },
-      { "class": "ash_hound", "slot": 2, "mods": { "hpMult": 1.16, "powerMult": 1.102 } },
-      { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.16, "powerMult": 1.102 } },
-      { "class": "grave_chanter", "slot": 7, "mods": { "hpMult": 1.16, "powerMult": 1.102 } }
+      { "class": "ash_hound", "slot": 0, "mods": { "hpMult": 1.16, "powerMult": 0.992 } },
+      { "class": "ash_hound", "slot": 2, "mods": { "hpMult": 1.16, "powerMult": 0.992 } },
+      { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.16, "powerMult": 0.992 } },
+      { "class": "grave_chanter", "slot": 7, "mods": { "hpMult": 1.16, "powerMult": 0.992 } }
     ],
     "waves": [
       { "units": [
-        { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 1.466, "powerMult": 1.386 } },
-        { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.466, "powerMult": 1.386 } },
-        { "class": "grave_chanter", "slot": 8, "mods": { "hpMult": 1.466, "powerMult": 1.386 } }
+        { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 1.466, "powerMult": 1.247 } },
+        { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.466, "powerMult": 1.247 } },
+        { "class": "grave_chanter", "slot": 8, "mods": { "hpMult": 1.466, "powerMult": 1.247 } }
       ] }
     ]
   },
@@ -347,20 +347,20 @@
     ]
   },
   "ember_road": {
-    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Ember Outrider (Moor Raider) x2 + Ash Hound + Ember Acolyte. KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,28 (düğümler aynı zorluğa çekildi).",
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Ember Outrider (Moor Raider) x2 + Ash Hound + Ember Acolyte. KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,28 (düğümler aynı zorluğa çekildi). Ömer 2026-10-26: boss sonrası yaralı takım duvarı; tüm birimlerin güç çarpanı x0,9 (can aynı).",
     "name": "Morvane's Outriders",
     "units": [
-      { "class": "moor_raider", "slot": 0, "name": "Ember Outrider", "mods": { "hpMult": 0.99, "powerMult": 0.99 } },
-      { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 0.99, "powerMult": 0.99 } },
-      { "class": "moor_raider", "slot": 2, "name": "Ember Outrider", "mods": { "hpMult": 0.99, "powerMult": 0.99 } },
-      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.99, "powerMult": 0.99 } }
+      { "class": "moor_raider", "slot": 0, "name": "Ember Outrider", "mods": { "hpMult": 0.99, "powerMult": 0.891 } },
+      { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 0.99, "powerMult": 0.891 } },
+      { "class": "moor_raider", "slot": 2, "name": "Ember Outrider", "mods": { "hpMult": 0.99, "powerMult": 0.891 } },
+      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.99, "powerMult": 0.891 } }
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 1, "name": "Ember Outrider", "mods": { "hpMult": 1.028, "powerMult": 1.028 } },
-        { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.028, "powerMult": 1.028 } },
-        { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 1.028, "powerMult": 1.028 } },
-        { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 1.028, "powerMult": 1.028 } }
+        { "class": "moor_raider", "slot": 1, "name": "Ember Outrider", "mods": { "hpMult": 1.028, "powerMult": 0.925 } },
+        { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.028, "powerMult": 0.925 } },
+        { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 1.028, "powerMult": 0.925 } },
+        { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 1.028, "powerMult": 0.925 } }
       ] }
     ]
   },
@@ -401,18 +401,18 @@
     ]
   },
   "thornwood_hollow": {
-    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Thornwood Hollow elit düğümü: Drake Priest (elit, Molten Shed) + Grey Wolf x2 (Pack Tactics) + Ember Acolyte. Endless'ın dragons_spine'ı (class kopyası) aynen kaldı. KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,95 (düğümler aynı zorluğa çekildi). Harita 1 yeniden çizimi sonrası (balance-tester 2026-10-23, open-questions): elit sırası bozulmuştu (normal 87,8 < elit 89,2); tüm birimlerin can/güç çarpanı x1,035 (Medium 120 sefer seed 7001: Thornwood ilk deneme 93,3 -> 83,3, elit kategori 89,2 -> 84,2).",
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Thornwood Hollow elit düğümü: Drake Priest (elit, Molten Shed) + Grey Wolf x2 (Pack Tactics) + Ember Acolyte. Endless'ın dragons_spine'ı (class kopyası) aynen kaldı. KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,95 (düğümler aynı zorluğa çekildi). Harita 1 yeniden çizimi sonrası (balance-tester 2026-10-23, open-questions): elit sırası bozulmuştu (normal 87,8 < elit 89,2); tüm birimlerin can/güç çarpanı x1,035 (Medium 120 sefer seed 7001: Thornwood ilk deneme 93,3 -> 83,3, elit kategori 89,2 -> 84,2). Ömer 2026-10-26: boss sonrası yaralı takım duvarı; tüm birimlerin güç çarpanı x0,9 (can aynı).",
     "name": "Cult of the Drake",
     "units": [
-      { "class": "grey_wolf", "slot": 1, "mods": { "hpMult": 1.948, "powerMult": 1.762 } },
-      { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.948, "powerMult": 1.762 } }
+      { "class": "grey_wolf", "slot": 1, "mods": { "hpMult": 1.948, "powerMult": 1.586 } },
+      { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.948, "powerMult": 1.586 } }
     ],
     "waves": [
       { "units": [
-        { "class": "drake_priest", "slot": 7, "tier": "elite", "mods": { "hpMult": 1.762, "powerMult": 1.101, "statMult": 1.15 } },
-        { "class": "grey_wolf", "slot": 0, "mods": { "hpMult": 1.212, "powerMult": 1.101 } },
-        { "class": "grey_wolf", "slot": 2, "mods": { "hpMult": 1.212, "powerMult": 1.101 } },
-        { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 1.212, "powerMult": 1.101 } }
+        { "class": "drake_priest", "slot": 7, "tier": "elite", "mods": { "hpMult": 1.762, "powerMult": 0.991, "statMult": 1.15 } },
+        { "class": "grey_wolf", "slot": 0, "mods": { "hpMult": 1.212, "powerMult": 0.991 } },
+        { "class": "grey_wolf", "slot": 2, "mods": { "hpMult": 1.212, "powerMult": 0.991 } },
+        { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 1.212, "powerMult": 0.991 } }
       ] }
     ]
   },
@@ -495,19 +495,19 @@
     ]
   },
   "burnt_hamlet": {
-    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Ashen Plain ile aynı (can 1,079, güç 1,025). Shepherd's Fold'a paralel kol. Denge balance-tester'ın.",
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Ashen Plain ile aynı (can 1,079, güç 1,025). Shepherd's Fold'a paralel kol. Denge balance-tester'ın. Ömer 2026-10-26: boss sonrası yaralı takım duvarı; tüm birimlerin güç çarpanı x0,9 (can aynı).",
     "name": "Ash Ghouls",
     "units": [
-      { "class": "ghoul", "slot": 0, "mods": { "hpMult": 1.192, "powerMult": 1.133 } },
-      { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 1.192, "powerMult": 1.133 } },
-      { "class": "ghoul", "slot": 2, "mods": { "hpMult": 1.192, "powerMult": 1.133 } },
-      { "class": "grave_chanter", "slot": 7, "mods": { "hpMult": 1.192, "powerMult": 1.133 } }
+      { "class": "ghoul", "slot": 0, "mods": { "hpMult": 1.192, "powerMult": 1.02 } },
+      { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 1.192, "powerMult": 1.02 } },
+      { "class": "ghoul", "slot": 2, "mods": { "hpMult": 1.192, "powerMult": 1.02 } },
+      { "class": "grave_chanter", "slot": 7, "mods": { "hpMult": 1.192, "powerMult": 1.02 } }
     ],
     "waves": [
       { "units": [
-        { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "hpMult": 1.192, "powerMult": 1.133 } },
-        { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "hpMult": 1.192, "powerMult": 1.133 } },
-        { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.192, "powerMult": 1.133 } }
+        { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "hpMult": 1.192, "powerMult": 1.02 } },
+        { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "hpMult": 1.192, "powerMult": 1.02 } },
+        { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.192, "powerMult": 1.02 } }
       ] }
     ]
   },

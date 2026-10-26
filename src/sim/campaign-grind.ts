@@ -15,6 +15,11 @@
 //   (innCycle): iyileşen Inn konukları geri alınır (elit / boss öncesi hepsi); simNeedsRest (normal öncesi ort. can `healAt` %50 altı YA DA 2+ yaralı;
 //   elit / boss öncesi %75 altı YA DA herhangi yara) doğruysa en kötü kahraman (4 kişilikte en çok 1) son temizlenen kasabanın Inn'ine bırakılır;
 //   normal öncesi takım eksik ilerler, elit / boss öncesi devriyeyle gün geçirip bekler (en çok 8 savaş, 2 yenilgi üst üste = vazgeç). Yürümek bedava.
+// - Level farmı (Ömer 2026-10-26; open-questions 425): sıradaki yeni düğümden önce fark = düğüm level - aktif takımın ort. level'ı (Inn'dekiler hariç)
+//   iyi oyuncuda 2'yi, ortalamada 3'ü aşarsa farm: (1) ulaşılabilir, hiç gidilmemiş, rotada olmayan savaşlı düğüm (yan dal; ilk zaferin XP / loot /
+//   altını): elit / savaşlı hazine / savaşlı olay fark <= 1 iken ve önce (getiri), normal savaş fark eşik içindeyse; aynı sınıfta en yüksek level'lı; kaybedilirse son kayda dönülür, o düğüm atlanır (duvar sayılmaz); (2) yan dal yoksa
+//   devriye: en az tekrarlanmış (XP çarpanı en yüksek), sonra level'ı en yüksek, farkı eşik içinde kalan düğüm. Fark eşiğe inince ya da hedef başına
+//   LEVEL_FARM_CAP (6) farm savaşında devam. Rota aynı kalır; duvar / kasma kuralları ayrı sayılır.
 // - Kamp (tek seçim, simCampChoice): yaralı varsa Tend, ort. can %60 altıysa Rest, yoksa Sharpen (takılı en değerli item), olmazsa Train (en düşük level).
 // - Demirci (demircili temizlenmiş kasaba varsa, her yola çıkışta): önce Combine (Ömer 2026-10-26: Common'lar girmez; torbada 3+ Uncommon+ item:
 //   aynı taban üçlüsü önce, yoksa en düşük değerli üç; para sıradaki Temper payını karşılamıyorsa ertelenir), sonra Temper: eldeki taş + altınla
@@ -77,6 +82,7 @@ import {
   revisitNode,
   townHasSmith,
   useCamp,
+  nodeLevel,
   travelRoutes,
   visitedNodes,
   type CampaignState,
@@ -268,6 +274,15 @@ export interface GrindEcon {
   stonesSpent: number;
   combines: number;
   goldCombine: number;
+  /** Level farmı (Ömer 2026-10-26): yeni düğümden önce takım geride kalınca; yan dal ilk zafer savaşı / devriye savaşı ayrı, temizlenen yan dal,
+   *  6 farm tavanına ulaşılan hedef düğüm, hedef düğüm başına farm savaşı. */
+  lfNew: number;
+  /** lfNew'in elit / savaşlı hazine / olay olanı. */
+  lfRich: number;
+  lfPatrol: number;
+  sideCleared: number;
+  lfCap: number;
+  lfNodes: Record<string, number>;
 }
 
 /** Toplanabilir düğüm sayaçları (paralel parçalar birleştirilir). */
@@ -366,7 +381,7 @@ const emptyEcon = (): GrindEcon => ({
   itemsLost: 0, rarity: Object.fromEntries(RARITY_IDS.map((r) => [r, 0])), itemsEquipped: 0, itemsSold: 0, itemsBought: 0, boughtEquipped: 0, merchantVisits: 0,
   wounds: 0, corpses: 0, valorEarned: 0, valorWasted: 0, valorGift: 0, valorSpentBattle: 0, valorSpentOut: 0, revivesBattle: 0, revivesOut: 0, woundsHealedValor: 0,
   dayStart: 0, dayEnd: 0, innLeaves: 0, innReturns: 0, innDays: 0, innBattles: 0, campRest: 0, campTend: 0, campSharpen: 0, campTrain: 0,
-  stonesGained: 0, stonesSpent: 0, combines: 0, goldCombine: 0,
+  stonesGained: 0, stonesSpent: 0, combines: 0, goldCombine: 0, lfNew: 0, lfRich: 0, lfPatrol: 0, sideCleared: 0, lfCap: 0, lfNodes: {},
 });
 const emptyGroup = (): GrindGroupAgg => ({ runs: 0, completed: 0, walls: 0, grind: 0, battles: 0 });
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -412,6 +427,63 @@ export function pickFarm(s: CampaignState, record?: Map<string, { w: number; n: 
     if (score > bestScore) {
       bestScore = score;
       best = id;
+    }
+  }
+  return best;
+}
+
+/** Level farmı eşiği (Ömer 2026-10-26): düğüm level - aktif takımın ort. level'ı bu farkı aşarsa farm; iyi 2, ortalama 3. Tavan: hedef başına 6 savaş. */
+export const LEVEL_FARM_GAP: Record<PlayerType, number> = { good: 2, average: 3 };
+export const LEVEL_FARM_CAP = 6;
+const teamLevel = (s: CampaignState): number => mean(activeHeroes(s).map((h) => h.level ?? 1));
+
+/** Getirisi yüksek yan dal (elit, savaşlı hazine / olay) yalnız fark bu kadar ya da azken (Ömer 2026-10-26: "lvl farkı azsa onları da yapabilir"). */
+export const LEVEL_FARM_RICH_GAP = 1;
+
+/**
+ * Level farmı (1): ulaşılabilir, hiç gidilmemiş, rotada olmayan savaşlı düğüm (yan dal). Normal savaş: fark <= gap; elit / savaşlı hazine / savaşlı
+ * olay: fark <= LEVEL_FARM_RICH_GAP. Getiri önce: uygun elit / hazine / olay varsa normalden önce; aynı sınıfta en yüksek level'lı.
+ */
+function pickSideNode(s: CampaignState, route: string[], skip: Set<string>, gap: number): string | null {
+  if (nextStep(s).kind !== 'move') return null;
+  const map = getMap(s.mapId);
+  const seen = new Set(visitedNodes(s));
+  const lv = teamLevel(s);
+  let best: string | null = null;
+  let bestKey = -Infinity;
+  for (const id of travelRoutes(s).keys()) {
+    const n = node(map, id);
+    if (seen.has(id) || route.includes(id) || skip.has(id) || !n.encounter) continue;
+    const rich = n.type === 'elite' || n.type === 'treasure' || n.type === 'event';
+    if (!rich && n.type !== 'battle') continue;
+    const l = nodeLevel(s.mapId, id);
+    if (l - lv > (rich ? Math.min(gap, LEVEL_FARM_RICH_GAP) : gap)) continue;
+    const key = (rich ? 1000 : 0) + l;
+    if (key <= bestKey) continue;
+    best = id;
+    bestKey = key;
+  }
+  return best;
+}
+
+/** Level farmı (2): devriye; en az tekrarlanmış (XP çarpanı en yüksek), sonra level'ı en yüksek, farkı eşik içinde kalan temizlenmiş düğüm. */
+function pickLevelPatrol(s: CampaignState, gap: number): string | null {
+  if (!roamOpen(s) || nextStep(s).kind !== 'move') return null;
+  const map = getMap(s.mapId);
+  const reach = travelRoutes(s);
+  const lv = teamLevel(s);
+  let best: string | null = null;
+  let bm = -1;
+  let bl = -Infinity;
+  for (const id of clearedNodes(s)) {
+    if (!canReplay(map, node(map, id)) || (id !== s.at && !reach.has(id))) continue;
+    const l = nodeLevel(s.mapId, id);
+    if (l - lv > gap) continue;
+    const m = replayMult(replayCount(s, id) + 1);
+    if (m > bm + 1e-9 || (Math.abs(m - bm) < 1e-9 && l > bl)) {
+      best = id;
+      bm = m;
+      bl = l;
     }
   }
   return best;
@@ -594,6 +666,9 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     let ctx = new Map<string, { tries: number; grinds: number }>();
     let farmRec = new Map<string, { w: number; n: number }>();
     let grindFor: string | null = null;
+    let sideFor: string | null = null;
+    let skipSide = new Set<string>();
+    let levelFarm = new Map<string, number>();
     let grindLeft = 0;
     let preLeft = 0;
     let wall = false;
@@ -711,9 +786,9 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     };
     const hist = (a: GrindNodeAgg, turns: number) => (a.turnHist[turns] = (a.turnHist[turns] ?? 0) + 1);
     /** Bir kasma savaşı (yola çıkılabilir durumda): kazanırsa durum ilerler, kaybederse son kayda dönülür (durum aynen). */
-    const grindOnce = (forNode: string | null, inn = false): boolean => {
+    const grindOnce = (forNode: string | null, inn = false, farmAt?: string): boolean => {
       s = heal(prepare(s));
-      const f = pickFarm(s, farmRec);
+      const f = farmAt ?? pickFarm(s, farmRec);
       if (!f) return false;
       let t = s.at === f ? s : moveTo(s, f);
       t = startPatrol(t);
@@ -730,6 +805,7 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
         R.grindBattles++;
         runGrind++;
       } else if (inn) E.innBattles++;
+      else if (farmAt) E.lfPatrol++;
       else R.preGrindBattles++;
       rec.n++;
       if (battle.winner === 'party') {
@@ -833,6 +909,9 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     ctx = new Map();
     farmRec = new Map();
     grindFor = null;
+    sideFor = null;
+    skipSide = new Set();
+    levelFarm = new Map();
     grindLeft = 0;
     preLeft = last ? (o.preGrind ?? 0) : 0;
     wall = false;
@@ -938,9 +1017,20 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
             a.hpEndSum += mean(out.units.map((u) => (u.alive ? u.hpRatio : 0)));
             a.deathsOnWin += out.units.filter((u) => !u.alive).length;
             s = reviveOut(win(s, out, a));
+            if (sideFor === id) {
+              E.sideCleared++;
+              sideFor = null;
+            }
             break;
           }
           R.defeats++;
+          if (sideFor === id) {
+            // yan dal farmı kaybedildi: son kayda dön (yan dala yürümeden önceki durum), bu düğüm atlanır; duvar / kasma sayılmaz
+            skipSide.add(id);
+            sideFor = null;
+            s = base!;
+            break;
+          }
           if (c.tries < 1 + retries) break; // aynı savaşı yeniden dene (son kayıt = aynı takım)
           const canFarm = !!base && !!pickFarm(base, farmRec);
           if (!canFarm) {
@@ -976,6 +1066,34 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
           const tt = node(map, target).type;
           s = heal(smith(s));
           innCycle(tt === 'elite' || tt === 'boss'); // elit / boss öncesi sıkı dinlenme eşiği (2026-10-26)
+          // Level farmı (Ömer 2026-10-26): takım hedefin gerisindeyse önce yan dal ilk zaferleri, sonra devriye; hedef başına en çok LEVEL_FARM_CAP
+          const lfGap = LEVEL_FARM_GAP[o.player];
+          const lfN = levelFarm.get(target) ?? 0;
+          if (nodeLevel(s.mapId, target) - teamLevel(s) > lfGap) {
+            if (lfN < LEVEL_FARM_CAP) {
+              const side = pickSideNode(s, route, skipSide, lfGap);
+              if (side) {
+                levelFarm.set(target, lfN + 1);
+                E.lfNew++;
+                if (node(map, side).type !== 'battle') E.lfRich++;
+                E.lfNodes[target] = (E.lfNodes[target] ?? 0) + 1;
+                base = s;
+                sideFor = side;
+                s = moveTo(s, side);
+                break;
+              }
+              const pf = pickLevelPatrol(s, lfGap);
+              if (pf) {
+                levelFarm.set(target, lfN + 1);
+                E.lfNodes[target] = (E.lfNodes[target] ?? 0) + 1;
+                grindOnce(null, false, pf);
+                break;
+              }
+            } else if (lfN === LEVEL_FARM_CAP) {
+              E.lfCap++;
+              levelFarm.set(target, lfN + 1); // bir kez say
+            }
+          }
           base = s;
           s = moveTo(s, target);
           break;

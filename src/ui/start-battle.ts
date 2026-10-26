@@ -32,6 +32,8 @@ export interface StartBattleOpts {
   /** Düğüm türü (rozet ikonu: assets/misc-icons/node). */
   nodeType: string;
   level: number;
+  /** Tehlike satırı (level farkı bandı; src/campaign/level-gap.ts): metin, bant adı (Dangerous / Deadly; normalde boş) ve rengi. */
+  threat?: { line: string; band: 'normal' | 'danger' | 'deadly'; name: string; color: string };
   /** Savaşsız düğümde (kasaba, kamp, tüccar, hazine, olay) boş / verilmez: portre satırı çizilmez. */
   foes?: FoeGroup[];
   /** Birincil düğme yazısı (varsayılan "Fight"; kasaba "Enter", kamp "Rest" ...). */
@@ -121,6 +123,11 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     const row = el('div', 'sbc-row');
     for (const f of foes) row.append(foeTile(f, o.level));
     card.append(row);
+  }
+  if (o.threat) {
+    const t = o.threat;
+    const mark = t.band === 'deadly' ? '☠' : t.band === 'danger' ? '!' : '';
+    card.append(el('p', `sbc-threat ${t.band}`, `<span class="ln">${esc(t.line)}</span>${t.name ? `<b style="color:${esc(t.color)}"><i class="mk" aria-hidden="true">${mark}</i>${esc(t.name)}</b>` : ''}`));
   }
   if (o.info) card.append(el('p', `sbc-info${o.info.quote ? ' quote' : ''}`, `${o.info.who ? `<b>${esc(o.info.who)}</b> ` : ''}${o.info.quote ? `“${esc(o.info.text)}”` : esc(o.info.text)}`));
   if (o.first?.length) card.append(el('p', 'sbc-then sbc-first', `<b>First</b> ${o.first.map((t) => esc(t)).join(' ')}`));

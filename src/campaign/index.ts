@@ -20,3 +20,4 @@ export * from './tree';
 export * from './smith';
 export * from './cinematics';
 export * from './arrival';
+export * from './level-gap';

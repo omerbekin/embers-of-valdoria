@@ -145,14 +145,14 @@ export function gapFactor(heroLevel: number, nodeLevel: number, r: LevelRules = 
 
 /**
  * Bir kahramanın XP çarpanı (level farkı + istisna + yakalama bonusu). `others` = aynı savaştaki diğer kahramanların level'ları.
- * İstisna (levels.md): bandın ALTINDAKİ kahraman, diğerlerinin ortalaması düğüme zeroAt'tan yakınsa ve kendisi onlardan daha gerideyse %100.
- * Takımın tamamı geride (kimse "daha geride" değil) ise ceza işler. Bandın üstündeki kahramana istisna yok (farm freni).
+ * Ceza yalnız düğümden YÜKSEK kahramana (farm freni; Ömer 2026-10-26 'sadece o takım üyesine uygulamalı'): düğümün altındaki kahraman,
+ * takımın tamamı geride olsa da, her zaman tam XP alır (eski 'geride kalan yeni kahraman' istisnası bunun içinde).
  * Yakalama bonusu: diğerlerinin ortalamasının altındaysa level farkı başına catchUp.perLevel (en çok catchUp.max).
  */
 export function heroXpMult(level: number, others: number[], nodeLevel: number, r: LevelRules = LEVELS): number {
   let gap = gapFactor(level, nodeLevel, r);
   const avg = others.length ? others.reduce((a, b) => a + b, 0) / others.length : undefined;
-  if (gap < 1 && avg !== undefined && level < nodeLevel - r.gap.fullBand && Math.abs(avg - nodeLevel) < r.gap.zeroAt && nodeLevel - level > Math.abs(nodeLevel - avg)) gap = 1;
+  if (level < nodeLevel) gap = 1;
   const behind = avg !== undefined ? Math.max(0, avg - level) : 0;
   const bonus = Math.min(r.catchUp.max, behind * r.catchUp.perLevel);
   return Math.round(gap * (1 + bonus) * 10000) / 10000;

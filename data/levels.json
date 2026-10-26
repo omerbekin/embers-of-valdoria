@@ -20,7 +20,7 @@
   "fixedEnemies": 3,
   "_split": "Düşman XP'si savaşa giren kahraman sayısına bölünür (düşen bölenden çıkmaz); düştükten sonraki öldürmelerin payı fallenShare (%50).",
   "fallenShare": 0.5,
-  "_gap": "Level farkı: kahraman düğüm seviyesinden fullBand'den fazla uzaksa XP doğrusal azalır, zeroAt farkta 0. İstisna (geride kalan / yeni katılan): bandın ALTINDAKİ kahraman, diğerlerinin ortalaması düğüme zeroAt'tan yakınsa ve kendisi onlardan daha gerideyse %100 alır.",
+  "_gap": "Level farkı: kahraman düğüm seviyesinden fullBand'den fazla YÜKSEKSE XP doğrusal azalır, zeroAt farkta 0 (farm freni). Ömer 2026-10-26: ceza yalnız o kahramana ve yalnız yukarı; düğümün altındaki kahraman (takımın tamamı geride olsa da) tam XP alır. İstisna (geride kalan / yeni katılan): bandın ALTINDAKİ kahraman, diğerlerinin ortalaması düğüme zeroAt'tan yakınsa ve kendisi onlardan daha gerideyse %100 alır.",
   "gap": { "fullBand": 2, "zeroAt": 8 },
   "_catchUp": "Yakalama bonusu (değer denge turunda): diğer kahramanların ortalamasının altındaki kahraman, level farkı başına perLevel kadar fazla XP alır (en çok max; 1 = +%100).",
   "catchUp": { "perLevel": 0.25, "max": 1 },

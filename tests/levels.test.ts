@@ -144,13 +144,13 @@ describe('XP paylaşımı, level farkı ve istisna', () => {
     expect(gapFactor(20, 10)).toBe(0);
   });
 
-  it('istisna: geride kalan yeni kahraman, takım düğüme yakınsa %100 (+ yakalama bonusu); tüm takım gerideyse ceza işler; öndekine istisna yok', () => {
-    // takım L8, düğüm L10, yeni gelen L1: istisna (ceza yok), üstüne yakalama bonusu (tavan)
+  it('ceza yalnız düğümden yüksek kahramana (Ömer 2026-10-26); geride kalan her zaman tam XP (+ yakalama bonusu)', () => {
+    // takım L8, düğüm L10, yeni gelen L1: ceza yok, üstüne yakalama bonusu (tavan)
     expect(heroXpMult(1, [8, 8, 8], 10)).toBeCloseTo(1 + LEVELS.catchUp.max);
-    // tüm takım L3, düğüm L10: herkes cezalı (kimse diğerlerinden geride değil)
-    expect(heroXpMult(3, [3, 3, 3], 10)).toBeCloseTo(gapFactor(3, 10));
-    // takımın ortalaması düğüme 8'den uzak: istisna yok
-    expect(heroXpMult(1, [1, 1, 1], 10)).toBe(0);
+    // tüm takım L3, düğüm L10: geride olan cezasız
+    expect(heroXpMult(3, [3, 3, 3], 10)).toBe(1);
+    // düğümden 8+ geride bile tam
+    expect(heroXpMult(1, [1, 1, 1], 10)).toBe(1);
     // önde olan (farm) kahramana istisna yok
     expect(heroXpMult(16, [10, 10, 10], 10)).toBeCloseTo(gapFactor(16, 10));
     expect(heroXpMult(18, [10, 10, 10], 10)).toBe(0);

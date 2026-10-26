@@ -296,6 +296,8 @@ export interface CampaignConfig {
   rest: { heal: number };
   /** Kampın diğer seçenekleri (Ömer 2026-10-26): Tend wounds `tendWounds` yara; Train = o düğümdeki normal savaşın (`trainEnemies` düşman) kahraman payının `trainShare` oranı. */
   camp: { tendWounds: number; trainShare: number; trainEnemies: number };
+  /** Düğüm tehlike bantları (src/campaign/level-gap.ts): fark >= warnAt Dangerous, >= deadlyAt Deadly; colors = bant renkleri (#rrggbb). */
+  levelGap: { warnAt: number; deadlyAt: number; colors: { danger: string; deadly: string } };
   /** Inn (Ömer 2026-10-26): bırakılan kahraman her gün maks canın `healPerDay` oranı ve `woundsPerDay` yara iyileşir. */
   inn: { healPerDay: number; woundsPerDay: number };
   /** Gün (Ömer 2026-10-26): `completionsPerDay` tamamlama (ilk zafer ya da devriye zaferi) = 1 gün. */

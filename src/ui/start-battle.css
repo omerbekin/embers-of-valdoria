@@ -93,3 +93,8 @@ html.short .sbc-acts .el-btn { padding-left: 16px; padding-right: 16px; letter-s
 html.short .sbc-card:not(.nofoes) .sbc-info, html.short .sbc-card:not(.nofoes) .sbc-then:not(.sbc-first) { display: none; }
 /* portresiz kart (savaşsız düğüm): lore satırı kısa ekranda da görünür, iki satırla sınırlı */
 html.short .sbc-card.nofoes .sbc-info { -webkit-line-clamp: 2; font-size: 12px; }
+
+/* Tehlike satırı (level farkı bandı; Ömer 2026-10-26): "Recommended level 9 · Your company 6.7" + renkli bant adı; italik yok */
+.sbc-threat { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2em 0.9em; font: 500 max(11px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); }
+.sbc-threat b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; }
+.sbc-threat .mk { font-style: normal; display: inline-block; margin-right: 0.45em; }
