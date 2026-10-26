@@ -6,7 +6,7 @@ import { miscImage } from '../game/icon-image-files';
  * Ad '<grup>:<ad>' (ör. 'status:slow', 'element:fire', 'class:warrior', 'node:boss'); `ensureIcon` / `iconUrl` art-registry üzerinden boyalı
  * görsele çözer (yumuşak ölçek, DOM `#smooth`). Görsel yoksa çağıran eski kodla çizilen ikonu kullanır: `paintedOr(grup, ad, eski)`.
  */
-export const MISC_GROUPS = ['status', 'fx', 'element', 'ground', 'relic', 'emblem', 'class', 'node', 'codex'] as const;
+export const MISC_GROUPS = ['status', 'fx', 'element', 'ground', 'relic', 'emblem', 'class', 'node', 'smith', 'town', 'codex'] as const;
 export type MiscGroup = (typeof MISC_GROUPS)[number];
 
 /** Beklenen tüm ikonlar (kesim aracının hücre haritasıyla aynı; test ve Codex listesi). */
@@ -19,6 +19,8 @@ export const MISC_ICONS: Record<MiscGroup, readonly string[]> = {
   emblem: ['heal', 'feast'],
   class: ['warrior', 'defender', 'paladin', 'archer', 'cutthroat', 'antimage', 'mage', 'druid', 'undead', 'hexer', 'gambler'],
   node: ['battle', 'elite', 'boss', 'event', 'town', 'treasure', 'rest', 'merchant', 'start'],
+  smith: ['temper_stone', 'combine', 'reroll'],
+  town: ['inn'],
   /** Codex (wiki) sol menüsü, Getting Started / Mechanics / Weakness table ikonları (docs/design/art/codex-icons.md; içe aktarma tools/make-misc-icon.py). */
   codex: ['nav_start', 'nav_lessons', 'nav_classes', 'nav_skills', 'nav_mechanics', 'nav_statuses', 'nav_elements', 'nav_assets', 'nav_sounds', 'nav_animations', 'nav_icons', 'nav_art', 'nav_poses', 'nav_palette', 'nav_versions', 'nav_legacy', 'gs_goal', 'gs_turns', 'gs_screen', 'el_weakness', 'mech_damage', 'mech_ground', 'mech_enemy_passives', 'mech_gamble', 'mech_area', 'mech_half_turn', 'mech_multiplayer', 'mech_campaign', 'mech_legendary', 'mech_affixes', 'mech_levels', 'mech_endless', 'mech_valor'],
 };

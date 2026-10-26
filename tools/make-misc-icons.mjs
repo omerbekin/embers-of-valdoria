@@ -78,6 +78,18 @@ const SHEETS = [
       [['element', 'arcane'], ['relic', 'ember_of_valdren']],
     ],
   },
+  // Demirci / Inn ikonları (Ömer 2026-10-26; gerçek saydam 2x2): Temper Stone, Combine (örs), Reroll affix (döngü taşı), Inn tabelası.
+  {
+    file: 'smith-town-sheet.png',
+    checker: false,
+    alphaBox: 40,
+    cols: 2,
+    rows: 2,
+    grid: [
+      [['smith', 'temper_stone'], ['smith', 'combine']],
+      [['smith', 'reroll'], ['town', 'inn']],
+    ],
+  },
 ];
 const COLS = 5;
 const ROWS = 4;

@@ -105,27 +105,6 @@ export function idleStartFrame(index: number, totalFrames: number): number {
   return n > 1 ? Math.abs(Math.floor(index)) % n : 0;
 }
 
-// ---------------------------------------------------------------- ESKİ kasaba dinlenmesi (ateş başı; Ömer 2026-10-26'da kalktı, yerine Inn)
-
-/**
- * ESKİ (ateş başı dinlenme kalktı, Ömer 2026-10-26 form econ/main; yerine Inn: state.ts > leaveAtInn). Kasaba ekranı / harita kartı (ui-dev)
- * güncellenene dek derlensin diye duruyor: eski kayıttaki sayacı okur, artık yazılmaz. @deprecated
- */
-export function townRestCount(s: Pick<CampaignState, 'townRests'>, nodeId: string): number {
-  const v = s.townRests?.[nodeId];
-  return typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
-}
-
-/** ESKİ (ateş başı dinlenme kalktı, 2026-10-26): fiyat yok, 0 döner. @deprecated */
-export function townRestPrice(_s: Pick<CampaignState, 'townRests' | 'roster' | 'active'>, _nodeId: string): number {
-  return 0;
-}
-
-/** ESKİ (ateş başı dinlenme kalktı, 2026-10-26): hiçbir şey yapmaz, durum aynen döner (iyileşme: Inn, kamp, Valor). @deprecated */
-export function restInTown(s: CampaignState, _nodeId: string = s.at): CampaignState {
-  return s;
-}
-
 // ---------------------------------------------------------------- demirci yeri (TUR 1 madde 7)
 
 /** Kasabada demirci var mı (Ömer 2026-10-26: 2. kasabadan itibaren; Ashford `smith: false`). */

@@ -282,9 +282,8 @@ describe('Codex boyalı ikonları (assets/misc-icons/codex, docs/design/art/code
 });
 
 describe('Codex: The Drowned Reach (Harita 2, bayrak arkasında)', () => {
-  it('bayrak kapalıyken sayfa yok; sayfa metni harita verisinden', () => {
-    expect(drownedReachShown()).toBe(false);
-    expect(wiki.mechanics.some((a) => a.id === 'drowned-reach')).toBe(false);
+  it('sayfa yalnız bayrak açıkken Codex menüsünde (Harita 2 açık: Ömer 2026-10-26); sayfa metni harita verisinden', () => {
+    expect(wiki.mechanics.some((a) => a.id === 'drowned-reach')).toBe(drownedReachShown());
     const a = drownedReachArticle();
     expect(a.title).toBe('The Drowned Reach');
     const text = a.blocks.flatMap(blockText).join(' ');
@@ -292,7 +291,7 @@ describe('Codex: The Drowned Reach (Harita 2, bayrak arkasında)', () => {
   });
 
   it('Battle rules sayfası (bayrak arkasında): koşul, üç hedef ve güverte veriden', () => {
-    expect(wiki.mechanics.some((a) => a.id === 'battle-rules')).toBe(false);
+    expect(wiki.mechanics.some((a) => a.id === 'battle-rules')).toBe(drownedReachShown());
     const text = battleRulesArticle().blocks.flatMap(blockText).join(' ');
     for (const w of ['Tide', 'Soaked', 'Flooded', 'Hold out for 6 turns', 'Break the Totem', 'every 2 turns', 'Hold the Bridge', "Ship's deck"]) expect(text, w).toContain(w);
     expect(text).not.toMatch(/\{n\}|\{every\}/);

@@ -4,7 +4,10 @@ import {
   CONFIG,
   SMITH,
   activeHeroes,
+  campaignPrice,
   combineItems,
+  rarityPrice,
+  reforgePrice,
   combinePreview,
   combineRng,
   debugTeleport,
@@ -169,5 +172,15 @@ describe('tüccar / düşüş tablosu (Ömer 2026-10-26)', () => {
     expect(CONFIG.merchant.priceBase).toMatchObject({ common: 20, uncommon: 40, rare: 90, epic: 200 });
     expect(CONFIG.merchant.pricePerIlvl).toBe(0.1);
     expect(ITEMS.loot.gold).toMatchObject({ battle: 3.4, elite: 6.8, boss: 13.6 });
+  });
+});
+
+describe('Reroll affix (Reforge) fiyatı (Ömer 2026-10-26)', () => {
+  it('= 0,5 x sefer tüccarı fiyatı (Epic: rarityPrice(epic, ilvl)), her tekrarda x1,5', () => {
+    const e = mk('r1', 'epic', 8);
+    expect(SMITH.reforge.valueRatio).toBe(0.5);
+    expect(reforgePrice(e)).toBe(Math.round(0.5 * campaignPrice(e)));
+    expect(campaignPrice(e)).toBe(Math.round(rarityPrice('epic', 8)));
+    expect(reforgePrice({ ...e, reforges: 2 })).toBe(Math.round(0.5 * campaignPrice(e) * 1.5 * 1.5));
   });
 });

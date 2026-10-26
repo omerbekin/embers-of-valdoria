@@ -7,7 +7,7 @@ import { itemGoldBonus, itemWoundSoft, itemXpBonus, loadout, partyGoldMult } fro
 import { applyWounds, woundHpFactor } from '../src/progression/wounds';
 import { waveXp } from '../src/endless/run';
 
-// 16 yeni affix (Ömer onayı 2026-10-26, form econ/main): veri eşlemesi (loadout) + motor kancaları. Sayılar provizyon; testler yalnızca
+// 17 yeni affix (c_res_light: Ömer 2026-10-26) (Ömer onayı 2026-10-26, form econ/main): veri eşlemesi (loadout) + motor kancaları. Sayılar provizyon; testler yalnızca
 // kuralı denetler (deterministik: debug iska kapalı, test modu).
 
 const cells = (u: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');
@@ -18,13 +18,13 @@ const make = (party: Record<number, string>, enemies: Record<number, string>, un
 const fx = (e: ItemEffects, extra: UnitSetup = {}): UnitSetup => ({ ...extra, itemEffects: e });
 const at = (b: Battle, side: 'party' | 'enemy', slot: number) => b.combatants.find((c) => c.side === side && c.slot === slot && !c.summoned)!;
 const warriorAttack = content.classes.warrior!.skills[0]!;
-const NEW = ['c_lightning', 'c_res_fire', 'c_res_ice', 'c_res_holy', 'c_res_dark', 'c_res_nature', 'c_gold', 'c_xp', 'b_front', 'b_back', 'b_thorns', 'b_tier_def', 'b_wound_soft', 'a_column', 'a_pierce', 'a_steady'];
+const NEW = ['c_lightning', 'c_res_fire', 'c_res_ice', 'c_res_holy', 'c_res_dark', 'c_res_nature', 'c_res_light', 'c_gold', 'c_xp', 'b_front', 'b_back', 'b_thorns', 'b_tier_def', 'b_wound_soft', 'a_column', 'a_pierce', 'a_steady'];
 /** Tek affix'li örnek (ilvl 10, orta zar). */
 const inst = (base: string, affix: string, uid = 'x'): ItemInstance => ({ uid, id: base, rolls: { rarity: 'common', ilvl: 10, affixes: [{ id: affix, q: 0.5 }] } });
 const v = (affix: string, i = 0) => affixValues(affix, 10, 0.5)[i]!;
 
 describe('yeni affix verisi', () => {
-  it('16 affix veride, kademe ve yuvalar doğru, doğrulayıcı temiz, yuva başına en çok 3 yuva', () => {
+  it('17 affix veride, kademe ve yuvalar doğru, doğrulayıcı temiz, yuva başına en çok 3 yuva', () => {
     for (const id of NEW) expect(affixDef(id), id).toBeDefined();
     expect(validateItems().filter((e) => /affix (c_lightning|c_res|c_gold|c_xp|b_front|b_back|b_thorns|b_tier_def|b_wound_soft|a_column|a_pierce|a_steady)/.test(e))).toEqual([]);
     expect(ITEMS.affixDefs.c_res_fire!.slots).toEqual(['helm', 'armor', 'offhand']);
@@ -92,6 +92,14 @@ describe('motor kancaları', () => {
     const foe = at(b, 'enemy', 0);
     expect(b.damageTakenMult(w, foe, 'magic', null, 'fire')).toBeCloseTo(0.8, 9);
     expect(b.damageTakenMult(w, foe, 'magic', null, 'ice')).toBe(1);
+    // Holy ve Lightning direnci ayrı (Ömer 2026-10-26)
+    const l = loadout({ class: 'warrior', equipment: { helm: inst('leather_coif', 'c_res_light', 'h') } }).itemEffects?.elemResist;
+    expect(l?.lightning).toBeCloseTo(v('c_res_light') / 100, 6);
+    expect(l?.holy).toBeUndefined();
+    expect(affixLines(inst('leather_coif', 'c_res_light'))[0]!.text).toBe(`+${v('c_res_light')}% Lightning resistance`);
+    const z = make({ 0: 'warrior' }, { 0: 'mage' }, { 0: fx({ elemResist: { lightning: 0.3 } }) });
+    expect(z.damageTakenMult(at(z, 'party', 0), at(z, 'enemy', 0), 'magic', null, 'lightning')).toBeCloseTo(0.7, 9);
+    expect(z.damageTakenMult(at(z, 'party', 0), at(z, 'enemy', 0), 'magic', null, 'holy')).toBe(1);
     const plain = make({ 0: 'warrior' }, { 0: 'mage' });
     const tick = (x: Battle) => x.tickDamage('fire', 'magic', 100, at(x, 'party', 0));
     expect(tick(b)).toBeLessThan(tick(plain));

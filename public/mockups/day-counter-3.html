@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Day Counter 3</title>
+<!-- GUN SAYACI taslagi v4 (ui-dev, 2026-10-26). N-W: minimal, mevcut sefer HUD'inin dogal parcasi. Oyun kodu DEGIL. Adres: #N ... #W (+ &phone). Tum olaylar ORNEK. Varliklar: kit-v2/ -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/valor.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="map-hud/mh.css" />
+<style>
+:root { --gold:#f3d999; --dim:#a8977a; --ember:#e0702a; --ember2:#ffb35a; --sc:.8333; --hk:1; --ex:0px; }
+html.mk-phone { --hk:1.45; --ex:209px; }
+html, body { background:#0b0806; }
+.pg { max-width:1700px; margin:0 auto; padding:14px 16px 40px; }
+h1 { margin:0 0 4px; font:600 22px var(--g-disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 8px; }
+.tabs button { width:44px; height:44px; font:700 16px var(--g-disp); color:#d9c8a2; background:rgba(8,6,4,.7); border:1px solid rgba(217,178,106,.3); cursor:pointer; transition:border-color .2s,color .2s; }
+.tabs button:hover { border-color:rgba(243,217,153,.85); color:var(--gold); }
+.tabs button.on { color:#1a0f05; background:linear-gradient(180deg,#f3d999,#d9b26a); border-color:#f3d999; }
+.vtag { margin:4px 0 2px; font:600 15px var(--g-disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.vnote { margin:0 0 8px; font:17px/1.35 var(--g-body); color:#cdb88d; max-width:1100px; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; padding:6px 8px; border:1px dashed var(--ember); width:fit-content; max-width:100%; }
+.ctl b { font:700 11px system-ui,sans-serif; letter-spacing:.06em; color:var(--ember); }
+.ctl button { min-height:44px; padding:0 14px; font:600 12px system-ui,sans-serif; letter-spacing:.04em; color:var(--gold); background:#1b120a; border:1px solid rgba(224,112,42,.55); cursor:pointer; }
+.ctl button:hover { background:#2a1a0e; }
+.ctl button.on { background:var(--ember); color:#1a0f06; }
+.ctl .ro { font:600 12px system-ui,sans-serif; color:#cdb88d; }
+[hidden] { display:none !important; }
+.zw { width:100%; overflow:hidden; }
+html, body { overflow-x:hidden; max-width:100%; }
+
+/* ---------- HUD katmani: cerceve kenarina kilitli (telefonda --ex kadar genis) ---------- */
+.dc-hud { position:absolute; left:calc(-1 * var(--ex)); top:0; width:calc(1920px + 2 * var(--ex)); height:1080px; pointer-events:none; }
+.dc-hud * { font-style:normal; }
+.dc-top { position:absolute; left:0; right:0; top:0; height:130px; background:linear-gradient(180deg,rgba(4,6,10,.55),rgba(4,6,10,0)); }
+.dc-leftg { position:absolute; left:0; top:0; bottom:0; width:560px; background:linear-gradient(90deg,rgba(4,6,10,.88),rgba(4,6,10,.55) 60%,rgba(4,6,10,0)); }
+.dc-l, .dc-r, .dc-c { position:absolute; top:0; width:0; height:1080px; }
+.dc-l { left:0; } .dc-r { right:0; } .dc-c { left:50%; }
+.dc-l, .dc-r { white-space:nowrap; }
+.dc-ttl { position:absolute; left:0; top:52px; transform:translate(-50%,-50%); white-space:nowrap; }
+.dc-ttl .t { position:relative; display:inline-block; font:600 31px var(--g-disp); letter-spacing:.2em; text-transform:uppercase; color:rgba(243,217,153,.78); text-shadow:0 2px 8px #000; }
+.dc-band { position:absolute; left:max(112px, calc(58px / var(--sc))); top:56px; transform:translateY(-50%); display:flex; align-items:center; gap:18px; padding:4px 14px 4px 8px; background:linear-gradient(90deg,rgba(12,9,6,.62),rgba(12,9,6,.38) 70%,rgba(12,9,6,0)); border-left:1px solid rgba(217,178,106,.3); pointer-events:auto; }
+.dc-band .vl-meter { --vl-h:44px; }
+.dc-band .vl-lbl { font-size:12px; }
+.dc-info { position:absolute; left:48px; top:812px; width:400px; color:var(--dim); }
+.dc-info .rg { font:600 18px var(--g-disp); letter-spacing:.06em; color:var(--gold); line-height:22px; white-space:nowrap; }
+.dc-info .pb { position:relative; height:5px; margin:8px 0 0; background:rgba(8,6,4,.85); border:1px solid rgba(217,178,106,.28); }
+.dc-info .pb i { position:absolute; left:1px; top:0; bottom:0; width:15%; background:#e8c47e; }
+.dc-info .cl, .dc-info .md { font:17px/1 var(--g-body); margin-top:14px; display:flex; justify-content:space-between; align-items:center; }
+.dc-info .gd { display:inline-flex; align-items:center; gap:6px; font:600 20px var(--g-disp); letter-spacing:.04em; color:var(--gold); }
+.dc-info .gd img { width:26px; height:26px; }
+.mh-row .ro, .mh-here .s { font-style:normal; }
+.mh-row .call { font-style:normal; }
+.mh-legend { pointer-events:auto; }
+
+/* ---------- ortak sayac parcalari ---------- */
+.anc { position:absolute; transform:var(--ty,none) scale(var(--hk)); transform-origin:var(--o,0 0); cursor:help; pointer-events:auto; outline:none; }
+.anc::before { content:''; position:absolute; inset:-8px -6px; }
+.anc:focus-visible { box-shadow:0 0 0 1px rgba(243,217,153,.8); }
+.P, .S, .V { transform:none; }
+.num { display:inline-block; }
+.num.roll { animation:dcroll .24s ease-out; }
+@keyframes dcroll { 0% { transform:translateY(-55%); opacity:0; } 100% { transform:none; opacity:1; } }
+.anc.glow { animation:dcglow .9s ease-out; }
+@keyframes dcglow { 0% { filter:drop-shadow(0 0 0 rgba(255,214,130,0)); } 28% { filter:drop-shadow(0 0 8px rgba(255,214,130,.95)); } 100% { filter:drop-shadow(0 0 0 rgba(255,214,130,0)); } }
+.evdot { width:8px; height:8px; border-radius:50%; background:var(--ember); box-shadow:0 0 8px rgba(224,112,42,.8); flex:none; }
+.evn { min-width:18px; height:18px; padding:0 4px; border-radius:9px; display:inline-grid; place-items:center; font:700 12px var(--g-disp); color:#1a120a; background:var(--ember); border:1px solid var(--ember2); line-height:1; flex:none; }
+.pr { color:var(--dim); }
+
+/* A Band ipucu kutusu */
+.dc-pop { position:absolute; z-index:40; display:none; pointer-events:none; width:max-content; text-transform:none; letter-spacing:0; white-space:normal; text-shadow:none; font-weight:400; cursor:default; }
+.dc-pop .bt { --bu:1.1px; }
+html.mk-phone .dc-pop .bt { --bu:1.4px; }
+.anc:hover > .dc-pop, .anc:focus-within > .dc-pop, .anc.tipon > .dc-pop { display:block; animation:dcpop .16s ease-out; }
+@keyframes dcpop { 0% { opacity:0; margin-top:4px; } 100% { opacity:1; } }
+.dc-pop.below-l { top:100%; left:0; margin-top:14px; } .dc-pop.below-c { top:100%; left:50%; translate:-50% 0; margin-top:14px; } .dc-pop.below-r { top:100%; right:0; margin-top:14px; }
+.dc-pop.above-l { bottom:100%; left:0; margin-bottom:14px; } .dc-pop.above-r { bottom:100%; right:0; margin-bottom:14px; }
+.dc-pop.right { left:100%; top:0; margin-left:14px; } .dc-pop.left { right:100%; top:50%; translate:0 -50%; margin-right:14px; }
+
+/* ---- N: harita adinin sagi, ayni satir, duz yazi ---- */
+.N { left:100%; top:50%; margin:-15px 0 0 38px; height:30px; display:flex; align-items:center; gap:11px; font:600 19px var(--g-disp); letter-spacing:.12em; text-transform:uppercase; color:rgba(243,217,153,.92); text-shadow:0 0 4px #000,0 2px 6px #000; white-space:nowrap; --o:0 50%; }
+.N .hl { width:1px; height:24px; background:rgba(217,178,106,.5); }
+
+/* ---- O: sag ust, Menu / tam ekran dugmelerinin solunda, kucuk plaka + iki cetele cizgisi ---- */
+.O { right:calc(112px / var(--sc)); top:calc(28px / var(--sc)); --ty:translateY(-50%); --o:100% 50%; height:42px; display:flex; align-items:center; gap:10px; padding:0 14px; background:rgba(8,6,4,.62); border:1px solid rgba(217,178,106,.42); text-shadow:0 1px 3px #000; }
+.O .lb { font:600 12px var(--g-disp); letter-spacing:.22em; color:var(--dim); text-transform:uppercase; }
+.O .num { font:600 23px var(--g-disp); color:var(--gold); }
+.O .tally { display:flex; gap:5px; margin-left:2px; }
+.O .tally i { width:3px; height:18px; background:rgba(217,178,106,.25); transition:background .22s, box-shadow .22s; }
+.O .tally i.on { background:var(--gold); box-shadow:0 0 7px rgba(243,217,153,.7); }
+.O .evn { position:absolute; right:-8px; top:-9px; }
+
+/* ---- P: Valor bandinin devami, ince cubuk ---- */
+.P { position:relative; display:flex; flex-direction:column; gap:6px; padding-left:18px; border-left:1px solid rgba(217,178,106,.3); --o:0 50%; }
+.P .pt { display:flex; align-items:center; gap:9px; font:600 21px var(--g-disp); letter-spacing:.14em; text-transform:uppercase; color:var(--gold); text-shadow:0 1px 3px #000; line-height:1; }
+.P .pb { position:relative; width:100%; height:4px; background:rgba(0,0,0,.6); border:1px solid rgba(217,178,106,.3); }
+.P .pb i { position:absolute; left:0; top:0; bottom:0; width:calc(var(--f) * 100%); background:linear-gradient(90deg,#a8742a,#e8c47e); transition:width .25s ease-out; }
+.P .pb u { position:absolute; left:50%; top:-3px; bottom:-3px; width:1px; background:rgba(217,178,106,.7); }
+.P .evdot { border-radius:0; transform:rotate(45deg); width:7px; height:7px; }
+
+/* ---- Q: sol alt bilgi blogunun yaninda kesik halka madalyonu ---- */
+.Q { left:468px; top:822px; width:64px; height:64px; --o:0 50%; }
+.Q svg { position:absolute; inset:0; overflow:visible; }
+.Q .arc { fill:none; stroke:rgba(217,178,106,.4); stroke-width:3; stroke-linecap:round; transition:stroke .22s, filter .22s; }
+.Q .arc.on { stroke:#f3d999; filter:drop-shadow(0 0 4px rgba(243,217,153,.7)); }
+.Q .bd { fill:rgba(12,9,6,.78); stroke:rgba(217,178,106,.4); stroke-width:1; }
+.Q .bead { fill:var(--ember); filter:drop-shadow(0 0 4px rgba(224,112,42,.9)); }
+.Q .qd { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+.Q .qd small { font:600 9px var(--g-disp); letter-spacing:.2em; color:var(--dim); text-transform:uppercase; }
+.Q .qd .num { font:600 23px/1 var(--g-disp); color:var(--gold); }
+
+/* ---- R: sag kenara yapisik yer imi, yari dolan disk ---- */
+.R { right:0; top:calc(60px / var(--sc) + 16px); height:46px; --o:100% 0; display:flex; align-items:center; gap:12px; padding:0 12px 0 14px; background:rgba(8,6,4,.72); border:1px solid rgba(217,178,106,.42); border-right:0; text-shadow:0 1px 3px #000; }
+.R .rt { display:flex; flex-direction:column; gap:2px; }
+.R .rt small { font:600 10px var(--g-disp); letter-spacing:.22em; color:var(--dim); text-transform:uppercase; line-height:1; }
+.R .rt .num { font:600 22px/1 var(--g-disp); color:var(--gold); }
+.R .disc { position:relative; width:18px; height:18px; border-radius:50%; border:1px solid rgba(243,217,153,.7); overflow:hidden; flex:none; }
+.R .disc i { position:absolute; top:0; bottom:0; width:50%; background:var(--gold); opacity:0; transition:opacity .22s; }
+.R .disc i:nth-child(1) { left:0; } .R .disc i:nth-child(2) { right:0; }
+.R .disc i.on { opacity:.9; }
+.R .rev { position:absolute; left:-1px; top:-1px; bottom:-1px; width:3px; background:var(--ember); box-shadow:0 0 8px rgba(224,112,42,.8); }
+
+/* ---- S: "Your party" baslik satirinin sagi, cizgi ilerleme olur ---- */
+.S { left:48px; top:140px; width:400px; height:40px; }
+.S .sd { position:absolute; right:0; top:0; font:600 16px var(--g-disp); letter-spacing:.24em; text-transform:uppercase; color:rgba(217,178,106,.85); line-height:20px; text-shadow:0 1px 3px #000; }
+.S .sd .num { font-size:18px; color:var(--gold); margin-left:4px; }
+.S .sl { position:absolute; left:0; right:0; top:28px; height:2px; background:rgba(217,178,106,.2); }
+.S .sl i { position:absolute; left:0; top:0; bottom:0; width:calc(var(--f) * 100%); background:linear-gradient(90deg,rgba(217,178,106,.4),#f3d999); box-shadow:0 0 6px rgba(243,217,153,.5); transition:width .25s ease-out; }
+.S .sl u { position:absolute; left:50%; top:-3px; height:8px; width:1px; background:rgba(217,178,106,.55); }
+.S .sev { position:absolute; right:-4px; top:25px; width:8px; height:8px; transform:rotate(45deg); background:var(--ember); border:1px solid var(--ember2); box-shadow:0 0 8px rgba(224,112,42,.8); }
+
+/* ---- T: sol ust, Back'in altinda romen rakamli baklava ---- */
+.T { left:calc(6px / var(--sc)); top:calc(56px / var(--sc) + 14px); width:56px; height:56px; --o:0 0; }
+.T svg { position:absolute; inset:0; }
+.T .oln { fill:rgba(12,9,6,.78); stroke:rgba(217,178,106,.55); stroke-width:1; }
+.T .h { fill:rgba(224,160,70,0); transition:fill .22s; }
+.T .h.on { fill:rgba(224,160,70,.55); }
+.T .num { position:absolute; inset:0; display:grid; place-items:center; font:600 15px var(--g-disp); letter-spacing:.04em; color:var(--gold); text-shadow:0 1px 2px #000; }
+.T .num.long { font-size:11px; letter-spacing:0; }
+.T .evn { position:absolute; right:-6px; bottom:-4px; min-width:17px; height:17px; font-size:11px; }
+
+/* ---- U: ust kenarda ortada yatay cetvel: iki yarisi iki zafer ---- */
+.U { left:0; top:6px; width:760px; height:30px; --ty:translateX(-50%); --o:50% 0; display:flex; align-items:center; gap:18px; }
+.U .rl { position:relative; flex:1; height:2px; background:linear-gradient(90deg,rgba(217,178,106,0),rgba(217,178,106,.5)); }
+.U .rl.r { background:linear-gradient(270deg,rgba(217,178,106,0),rgba(217,178,106,.5)); }
+.U .rl b { position:absolute; inset:0; opacity:0; transition:opacity .25s; background:linear-gradient(90deg,rgba(243,217,153,0),#f3d999); box-shadow:0 0 8px rgba(243,217,153,.55); }
+.U .rl.r b { background:linear-gradient(270deg,rgba(243,217,153,0),#f3d999); }
+.U .rl b.on { opacity:1; }
+.U .ul { font:600 17px var(--g-disp); letter-spacing:.24em; text-transform:uppercase; color:rgba(243,217,153,.9); text-shadow:0 0 4px #000,0 1px 4px #000; white-space:nowrap; }
+.U .ul .num { margin-left:4px; font-size:19px; }
+.U .uev { position:absolute; left:50%; top:27px; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:var(--ember); box-shadow:0 0 8px rgba(224,112,42,.8); }
+
+/* ---- V: Legend panelinin ust satiri, iki kucuk alev ---- */
+.V { position:relative; display:flex; align-items:center; justify-content:space-between; padding:0 0 12px; margin:0 0 14px; border-bottom:1px solid rgba(217,178,106,.2); }
+.V .vl { display:flex; align-items:center; gap:10px; font:600 14px var(--g-disp); letter-spacing:.24em; text-transform:uppercase; color:rgba(217,178,106,.85); }
+.V .vl .num { font-size:20px; letter-spacing:.06em; color:var(--gold); }
+.V .fls { display:flex; gap:8px; }
+.V .fl { width:15px; height:21px; overflow:visible; }
+.V .fl path { fill:rgba(217,178,106,0); stroke:rgba(217,178,106,.55); stroke-width:1.3; stroke-linejoin:round; transition:fill .22s, stroke .22s; }
+.V .fl.on path { fill:#e8782e; stroke:#ffb35a; filter:drop-shadow(0 0 5px rgba(255,140,50,.7)); }
+
+/* ---- W: Gear / Formation yaninda ucuncu kare ikon, seviye gibi dolan zemin ---- */
+.W { left:180px; bottom:34px; width:64px; height:64px; --o:0 100%; background:rgba(8,6,4,.6); border:1px solid rgba(217,178,106,.5); overflow:visible; transition:border-color .18s, transform .18s; }
+.W:hover { border-color:rgba(243,217,153,.85); }
+.W .fill { position:absolute; left:0; right:0; bottom:0; height:calc(var(--f) * 100%); background:linear-gradient(0deg,rgba(224,112,42,.42),rgba(224,160,70,.14)); transition:height .25s ease-out; }
+.W .wd { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+.W .wd small { font:600 10px var(--g-disp); letter-spacing:.22em; color:var(--dim); text-transform:uppercase; line-height:1; margin-right:-.22em; }
+.W .wd .num { font:600 28px/1 var(--g-disp); color:var(--gold); text-shadow:0 1px 3px #000; }
+.W .evdot { position:absolute; right:-4px; top:-4px; }
+
+@media (prefers-reduced-motion: reduce) { .num.roll, .anc.glow, .anc:hover > .dc-pop { animation:none; } }
+</style>
+</head>
+<body>
+<div class="pg">
+<h1>Day counter · N - W</h1>
+<div class="tabs" id="tabs"></div>
+<div class="vtag" id="vtag"></div>
+<p class="vnote" id="vnote"></p>
+<div class="ctl"><b>MOCKUP</b><button id="bSim" type="button">Simulate victory</button><button id="bRst" type="button">Reset</button><button id="bDesk" type="button" data-m="desk">1600x900</button><button id="bPhone" type="button" data-m="phone">844x390</button><span class="ro" id="ro"></span></div>
+<div class="zw" id="zw"><div class="mk-zoom" id="zoom"><div class="mk-frame" id="frame"><div class="mk-bg" id="bg"></div><div class="mk-ui" id="ui"></div></div></div></div>
+</div>
+<script src="kit-v2/mk.js"></script>
+<script>
+(function () {
+  const PARTY = [
+    { id: 'warrior', name: 'Warrior', role: 'Melee Bruiser', lv: 6, hp: 1 },
+    { id: 'archer', name: 'Archer', role: 'Marksman', lv: 6, hp: 0.7, pts: 2 },
+    { id: 'druid', name: 'Druid', role: 'Nature Summoner', lv: 5, hp: 0, fallen: true },
+    { id: 'mage', name: 'Mage', role: 'Elemental Mage', lv: 5, hp: 0.55 },
+  ];
+  const st = { day: 7, vic: 0, busy: false, tab: 'N', phone: false };
+  const roman = (n) => { const m = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]; let r = ''; for (const [v, s] of m) while (n >= v) { r += s; n -= v; } return r; };
+  const FLAME = '<svg class="fl" data-step="%s" viewBox="0 0 16 22"><path d="M8 1 C9 6 14 9 14 14 A6 6 0 0 1 2 14 C2 11 4 9.5 5 7 C6 8 6.5 8.5 7 9 C7.5 6 7.5 3.5 8 1 Z"/></svg>';
+  const pop = (pos) => `<div class="dc-pop ${pos}"></div>`;
+  const num = (f) => `<span class="num" data-f="${f || 'd'}"></span>`;
+  const anc = (cls, inner, extra) => `<div class="anc ${cls}" tabindex="0" ${extra || ''}>${inner}</div>`;
+
+  /* ---- ornek olaylar (gun sayisina gore turetilir; hepsi ORNEK) ---- */
+  function events() {
+    const d = st.day;
+    const cap = (((10 - d) % 12) + 12) % 12;
+    const sm = (4 - (d % 4)) % 4;
+    const plural = (n) => (n === 1 ? 'day' : 'days');
+    return {
+      count: (cap <= 3 ? 1 : 0) + (sm <= 1 ? 1 : 0),
+      lines: [
+        cap === 0 ? 'Rescue the captive: last day' : `Rescue the captive: ${cap} ${plural(cap)} left`,
+        sm === 0 ? 'Smith restocks today' : `Smith restocks in ${sm} ${plural(sm)}`,
+        'Inn: heroes heal at dawn',
+      ],
+    };
+  }
+  const tipHtml = () => MK.tip({ kind: 'Calendar', title: `Day ${st.day}`, value: `${st.vic}/2`, valueLabel: `to day ${st.day + 1}`, chips: [{ text: 'Example' }], lines: events().lines, foot: '2 victories = 1 day' });
+
+  /* ---- ortak HUD tabani: sefer haritasinin bugunku hali (CampaignMapScene.renderHud / renderColumn) ---- */
+  function base(h) {
+    h = h || {};
+    const rows = PARTY.map((p, i) => `<div class="mh-row${p.fallen ? ' fallen' : ''}" style="top:${194 + i * 112}px"><div class="pf"><img src="${MK.av(p.id)}" alt=""></div><span class="bd">${p.lv}</span>${p.pts ? `<span class="call">+${p.pts}</span>` : ''}<span class="nm">${p.name}</span><span class="ro">${p.fallen ? 'Fallen' : p.role}</span><div class="hp"><i style="width:${p.hp * 100}%"></i></div></div>`).join('');
+    const hereY = 194 + PARTY.length * 112 + 16;
+    const brs = ['4', '4', '2', '0'].map((n) => `<span class="vl-br"><img class="vl-img" src="${MK.brazier(`brazier-${n}`)}" alt=""></span>`).join('');
+    return `<div class="dc-hud">
+      <div class="dc-top"></div><div class="dc-leftg"></div>
+      <div class="dc-c"><div class="dc-ttl"><span class="t">Valdoria${h.titleAfter || ''}</span></div>${h.center || ''}</div>
+      <div class="dc-band"><span class="vl-meter"><span class="vl-brs">${brs}</span><span class="vl-lbl">Valor</span></span>${h.band || ''}</div>
+      <div class="dc-l">
+        <div class="mh-kick" style="left:48px;top:150px">Your party · ${PARTY.length}</div>${h.noKickline ? '' : '<div class="mh-kickline" style="left:48px;width:400px;top:168px"></div>'}${rows}
+        <div class="mh-kick" style="left:48px;top:${hereY}px">You are here</div><div class="mh-kickline" style="left:48px;width:400px;top:${hereY + 18}px"></div>
+        <div class="mh-here" style="top:${hereY}px"><div class="tile"><img src="${MK.node('battle')}" alt=""></div><span class="n">Ravenwood</span><span class="s">Battle · Outlaw Pack</span></div>
+        <div class="dc-info"><div class="rg">I · The Borderlands</div><div class="pb"><i></i></div><div class="cl"><span>Cleared 4/26 · Chapter 1</span></div><div class="md"><span>Normal · Medium</span><span class="gd"><img src="${MK.ui('gold')}" alt="">128</span></div></div>
+        <div class="mh-ibtn" style="left:24px;bottom:34px"><img src="${MK.ui('gear')}" alt=""></div><div class="mh-ibtn" style="left:102px;bottom:34px"><img src="${MK.ui('formation')}" alt=""></div>
+        ${h.left || ''}
+      </div>
+      <div class="dc-r">${h.right || ''}<div class="mh-legend">${h.legendTop || ''}<div class="h">Legend <span>hide</span></div><div class="g">${[['battle', 'Battle'], ['elite', 'Elite'], ['boss', 'Boss'], ['town', 'Town'], ['treasure', 'Treasure'], ['event', 'Event'], ['rest', 'Rest point'], ['merchant', 'Merchant']].map(([t, l]) => `<div><img src="${MK.node(t)}" alt="">${l}</div>`).join('')}</div></div></div>
+    </div>`;
+  }
+  const ev = (cls) => `<i class="evdot ${cls || ''}" data-ev></i>`;
+  const evn = () => '<span class="evn" data-ev></span>';
+
+  const V = {
+    N: { n: 'Day 7 · 1/2', note: 'Harita adının sağında, aynı satırda düz yazı: "Day 7 · 1/2" + ince çizgi; ilerleme yalnız sayı, olay = turuncu nokta.', build: () => base({ titleAfter: anc('N', `<i class="hl"></i><b>Day ${num()}</b><span>·</span><span class="pr"></span>${ev()}${pop('below-l')}`) }) },
+    O: { n: 'Plaka + çetele', note: 'Sağ üstte Menu / tam ekran düğmelerinin solunda aynı çerçeveli küçük plaka: "DAY 7" + iki çetele çizgisi (zafer başına bir çizgi yanar); olay = köşede sayı rozeti.', build: () => base({ right: anc('O', `<span class="lb">Day</span>${num()}<span class="tally"><i data-step="1"></i><i data-step="2"></i></span>${evn()}${pop('below-r')}`) }) },
+    P: { n: 'Valor bandı + çubuk', note: 'Sol üst Valor bandının devamı (ince dikey çizgiyle ayrık): "DAY 7" altında ortası çentikli ince çubuk; olay = küçük elmas. Valor yokken (Valdren Keep öncesi) bant yalnız bu olur.', build: () => base({ band: anc('P', `<div class="pt">Day ${num()}${ev()}</div><div class="pb"><i></i><u></u></div>${pop('below-l')}`) }) },
+    Q: { n: 'Kesik halka madalyonu', note: 'Sol alt bilgi bloğunun hemen yanında (altın / ilerleme satırlarıyla aynı hizada) küçük madalyon: kesik halkanın iki yayı iki zafer; olay = halkada turuncu boncuk.', build: () => base({ left: anc('Q', `<svg viewBox="0 0 64 64"><circle class="bd" cx="32" cy="32" r="24"/><path class="arc" data-step="1" d="M38.99 5.92 A27 27 0 0 1 38.99 58.08"/><path class="arc" data-step="2" d="M25.01 58.08 A27 27 0 0 1 25.01 5.92"/><circle class="bead" data-ev cx="12.9" cy="12.9" r="3.6"/></svg><div class="qd"><small>Day</small>${num()}</div>${pop('above-l')}`) }) },
+    R: { n: 'Sağ kenar yer imi', note: 'Ekranın sağ kenarına yapışık küçük yer imi (Menu düğmelerinin altı): "DAY 7" + yarı yarı dolan disk (iki yarım = iki zafer); olay = sol kenarda turuncu şerit.', build: () => base({ right: anc('R', `<i class="rev" data-ev></i><span class="rt"><small>Day</small>${num()}</span><span class="disc"><i data-step="1"></i><i data-step="2"></i></span>${pop('left')}`) }) },
+    S: { n: 'Party başlık çizgisi', note: 'Sol sütunun "Your party" başlık satırında: sağda "DAY 7", mevcut ince başlık çizgisi ilerleme çubuğuna dönüşür (ortada çentik); olay = çizgi ucunda turuncu elmas. Yeni öğe yok.', build: () => base({ noKickline: true, left: anc('S', `<span class="sd">Day ${num()}</span><div class="sl"><i></i><u></u></div><i class="sev" data-ev></i>${pop('below-l')}`) }) },
+    T: { n: 'Romen baklava', note: 'Sol üstte Back düğmesinin altında küçük baklava: içinde romen rakam (VII); baklavanın sol yarısı 1. zaferde, sağ yarısı 2. zaferde dolar; olay = köşede sayı.', build: () => base({ left: anc('T', `<svg viewBox="0 0 56 56"><polygon class="oln" points="28,2 54,28 28,54 2,28"/><polygon class="h" data-step="1" points="28,2 2,28 28,54"/><polygon class="h" data-step="2" points="28,2 54,28 28,54"/></svg>${num('r')}${evn()}${pop('right')}`) }) },
+    U: { n: 'Üst kenar cetveli', note: 'Üst kenarda ortada ince yatay cetvel: "—— DAY 7 ——"; sol yarı 1., sağ yarı 2. zaferde altınlaşır; olay = yazının altında turuncu nokta. Başka hiçbir kutu yok.', build: () => base({ center: anc('U', `<i class="rl"><b data-step="1"></b></i><span class="ul">Day ${num()}</span><i class="rl r"><b data-step="2"></b></i><i class="uev" data-ev></i>${pop('below-c')}`) }) },
+    V: { n: 'Legend üst satırı + alevler', note: 'Sağ alttaki Legend panelinin ilk satırı: "DAY 7" ve iki küçük alev (her zaferde bir alev tutuşur); olay = sayı rozeti. Yeni panel yok, mevcut panelin içinde.', build: () => base({ legendTop: anc('V', `<span class="vl">Day ${num()}${evn()}</span><span class="fls">${FLAME.replace('%s', '1')}${FLAME.replace('%s', '2')}</span>${pop('above-r')}`) }) },
+    W: { n: 'Üçüncü kare ikon', note: 'Gear / Formation ikonlarının yanında aynı boyda üçüncü kare: üstte küçük "DAY", ortada büyük rakam; kare içi zafer başına yarım dolar (kor rengi seviye); olay = köşede turuncu nokta (Gear parlaması gibi).', build: () => base({ left: anc('W', `<div class="fill"></div><div class="wd"><small>Day</small>${num()}</div>${ev()}${pop('above-l')}`) }) },
+  };
+
+  /* ---- iskele ---- */
+  const $ = (s) => document.querySelector(s);
+  const ui = $('#ui');
+  function chrome() {
+    return `${MK.navBtn('back', 'Back')}${MK.navBtn('fs', 'Fullscreen')}${MK.navBtn('menu', 'Menu')}`;
+  }
+  function render() {
+    const r = document.documentElement;
+    r.classList.toggle('mk-phone', st.phone); r.classList.toggle('short', st.phone); r.classList.toggle('compact', st.phone);
+    r.style.setProperty('--sc', String((st.phone ? 390 : 900) / 1080));
+    $('#bg').style.backgroundImage = `url(${MK.bg('valdoria')})`;
+    ui.innerHTML = `<div class="mk-stage dc-stage" id="stg">${V[st.tab].build()}</div>${chrome()}`;
+    document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.t === st.tab));
+    $('#bDesk').classList.toggle('on', !st.phone); $('#bPhone').classList.toggle('on', st.phone);
+    $('#vtag').textContent = `${st.tab} · ${V[st.tab].n}`; $('#vnote').textContent = V[st.tab].note;
+    fit(); sync(false);
+    location.hash = st.tab + (st.phone ? '&phone' : '');
+  }
+  function fit() {
+    const fw = st.phone ? 844 : 1600;
+    $('#zoom').style.zoom = String(Math.min(1, ($("#zw").clientWidth) / fw));
+  }
+  function sync(roll) {
+    const stg = $('#stg');
+    stg.style.setProperty('--f', String(st.vic / 2));
+    stg.querySelectorAll('.num').forEach((e) => {
+      const t = e.dataset.f === 'r' ? roman(st.day) : String(st.day);
+      e.classList.toggle('long', t.length > 3);
+      if (e.textContent !== t) { e.textContent = t; if (roll) { e.classList.remove('roll'); void e.offsetWidth; e.classList.add('roll'); } }
+    });
+    stg.querySelectorAll('.pr').forEach((e) => { e.textContent = `${st.vic}/2`; });
+    stg.querySelectorAll('[data-step]').forEach((e) => e.classList.toggle('on', st.vic >= +e.dataset.step));
+    const evs = events();
+    stg.querySelectorAll('[data-ev]').forEach((e) => { e.hidden = !evs.count; if (e.classList.contains('evn')) e.textContent = String(evs.count); });
+    const t = tipHtml();
+    stg.querySelectorAll('.dc-pop').forEach((p) => { p.innerHTML = t; });
+    if (roll) stg.querySelectorAll('.anc').forEach((a) => { a.classList.remove('glow'); void a.offsetWidth; a.classList.add('glow'); });
+    $('#ro').textContent = `Day ${st.day} · ${st.vic}/2`;
+  }
+  function victory() {
+    if (st.busy) return;
+    if (st.vic === 0) { st.vic = 1; sync(false); return; }
+    st.vic = 2; st.busy = true; sync(false);
+    st.timer = setTimeout(() => { st.day += 1; st.vic = 0; st.busy = false; sync(true); }, 360);
+  }
+  function reset() { clearTimeout(st.timer); st.day = 7; st.vic = 0; st.busy = false; sync(false); }
+
+  const tabs = $('#tabs');
+  Object.keys(V).forEach((k) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.t = k; b.textContent = k; b.title = V[k].n; b.addEventListener('click', () => { st.tab = k; render(); }); tabs.append(b); });
+  $('#bSim').addEventListener('click', victory); $('#bRst').addEventListener('click', reset);
+  $('#bDesk').addEventListener('click', () => { st.phone = false; render(); }); $('#bPhone').addEventListener('click', () => { st.phone = true; render(); });
+  /* dokunmatik: tek dokunus ipucunu sabitler */
+  $('#frame').addEventListener('click', (e) => {
+    const a = e.target.closest('.anc');
+    const was = a && a.classList.contains('tipon');
+    document.querySelectorAll('.anc.tipon').forEach((x) => x.classList.remove('tipon'));
+    if (a && !was) a.classList.add('tipon');
+  });
+  window.addEventListener('resize', fit);
+  function readHash() {
+    const p = location.hash.replace(/^#/, '').split('&');
+    if (V[p[0]]) st.tab = p[0];
+    st.phone = p.includes('phone');
+  }
+  window.addEventListener('hashchange', () => { const before = st.tab + st.phone; readHash(); if (before !== st.tab + st.phone) render(); });
+  readHash(); render();
+})();
+</script>
+</body>
+</html>

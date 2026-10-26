@@ -352,7 +352,7 @@ export function grindReport(
     L.push(...groupLines('SINIFLAR', r.classes, (k) => content.classes[k]?.name ?? k));
     L.push(
       `  EKONOMİ  (koşu başına) altın kazanç ${fmt(r.goldEarned / r.runs, 0)}, demirci ${fmt(r.goldSmith / r.runs, 0)} (${fmt(r.tempers / r.runs)} Temper), ` +
-        `dinlenme ${fmt(r.goldRest / r.runs, 0)} (${fmt(r.rests / r.runs)} kez); harcanan %${fmt(pct(r.goldSmith + r.goldRest, r.goldEarned), 0)}; toplam savaş ${fmt(r.battles / r.runs)}, kasma ${fmt(r.grindBattles / r.runs)}, yenilgi ${fmt(r.defeats / r.runs)}`,
+        `Combine ${fmt((r.econ.goldCombine ?? 0) / r.runs, 0)} (${fmt((r.econ.combines ?? 0) / r.runs)} kez), tüccar ${fmt(r.econ.goldMerchant / r.runs, 0)}; harcanan %${fmt(pct(r.goldSmith + (r.econ.goldCombine ?? 0) + r.econ.goldMerchant, r.goldEarned), 0)}; toplam savaş ${fmt(r.battles / r.runs)}, kasma ${fmt(r.grindBattles / r.runs)}, yenilgi ${fmt(r.defeats / r.runs)}`,
     );
   }
   return L.join('\n');
@@ -379,7 +379,7 @@ export function econLines(results: GrindSimResult[]): string[] {
   const pad = ''.padEnd(16);
   L.push('');
   L.push('EKONOMİ  (koşu başına ortalama)');
-  L.push('  Altın nereden: ilk zafer (normal / elit / boss), tekrar savaşı (devriye), hazine sandığı, item satışı; nereye: demirci, dinlenme, tüccar.');
+  L.push('  Altın nereden: ilk zafer (normal / elit / boss), tekrar savaşı (devriye), hazine sandığı, item satışı; nereye: demirci (Temper + Combine), tüccar. Ateş başı dinlenmesi 2026-10-26 itibarıyla kalktı (Inn ücretsiz).');
   for (const r of rows) {
     const e = r.econ;
     const k = (v: number, d = 0) => fmt(v / r.runs, d);
@@ -389,7 +389,16 @@ export function econLines(results: GrindSimResult[]): string[] {
       `  ${name(r)} altın ${k(total)}: savaş ${k(e.goldBattle)} + elit ${k(e.goldElite)} + boss ${k(e.goldBoss)} (ilk zafer %${fmt(pct(fights, total), 0)}), ` +
         `tekrar ${k(e.goldReplay)} (%${fmt(pct(e.goldReplay, total), 0)}), hazine ${k(e.goldTreasure)} (%${fmt(pct(e.goldTreasure, total), 0)}), satış ${k(e.goldSell)}`,
     );
-    L.push(`  ${pad} harcama: demirci ${k(r.goldSmith)}, dinlenme ${k(r.goldRest)}, tüccar ${k(e.goldMerchant)}; koşu sonunda kesede ${k(r.goldEarned + (r.goldBonus ?? 0) - r.goldSmith - r.goldRest - e.goldMerchant + (r.carry?.goldSum ?? 0))}${r.carry ? ` (haritaya ${k(r.carry.goldSum)} ile girdi)` : ''}${r.goldBonus ? ` (bonus altın ${k(r.goldBonus)} dahil)` : ''}`);
+    L.push(`  ${pad} harcama: demirci Temper ${k(r.goldSmith)}, Combine ${k(e.goldCombine ?? 0)}, tüccar ${k(e.goldMerchant)}; koşu sonunda kesede ${k(r.goldEarned + (r.goldBonus ?? 0) - r.goldSmith - (r.goldRest ?? 0) - (e.goldCombine ?? 0) - e.goldMerchant + (r.carry?.goldSum ?? 0))}${r.carry ? ` (haritaya ${k(r.carry.goldSum)} ile girdi)` : ''}${r.goldBonus ? ` (bonus altın ${k(r.goldBonus)} dahil)` : ''}`);
+    if (e.dayEnd !== undefined) {
+      const camps = (e.campRest ?? 0) + (e.campTend ?? 0) + (e.campSharpen ?? 0) + (e.campTrain ?? 0);
+      const cp = (n: number | undefined) => `%${fmt(pct(n ?? 0, camps), 0)}`;
+      L.push(
+        `  ${pad} gün: harita sonunda ${k(e.dayEnd, 1)} (bu haritada ${k(e.dayEnd - e.dayStart, 1)}); Inn: bırakma ${k(e.innLeaves, 2)}, geri alma ${k(e.innReturns, 2)}, ` +
+          `ort. kalış ${fmt(e.innReturns ? e.innDays / e.innReturns : 0, 1)} gün, beklerken devriye ${k(e.innBattles, 1)}; kamp ${k(camps, 1)}: Rest ${cp(e.campRest)}, Tend ${cp(e.campTend)}, ` +
+          `Sharpen ${cp(e.campSharpen)}, Train ${cp(e.campTrain)}; Temper taşı kazanılan ${k(e.stonesGained, 1)}, harcanan ${k(e.stonesSpent, 1)}; Combine ${k(e.combines, 1)} kez`,
+      );
+    }
     const items = e.itemsFirst + e.itemsReplay + e.itemsTreasure;
     const rar = Object.entries(e.rarity)
       .filter(([, n]) => n > 0)

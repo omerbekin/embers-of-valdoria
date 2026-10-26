@@ -573,12 +573,28 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Items',
     icon: 'muscle',
     label: 'Open Blacksmith',
-    hint: 'Open the Blacksmith screen for the current campaign: pick an item (bag or equipped), then Temper (+1 item level, up to the best item level of this chapter) or Reforge (Epic only). Use Give 100 gold / Give epic first. In a town it is the Blacksmith place on the town screen',
+    hint: 'Open the Blacksmith screen for the current campaign: pick an item (bag or equipped), then Temper (+1 item level, up to the best item level of this chapter) or Combine 3 items, or Reroll an Epic affix. Use Give 100 gold / Give epic first. In a town it is the Blacksmith place on the town screen',
     run: () => {
       const s = ensureState();
       const root = document.getElementById('ui-root');
       if (!root) return;
       void import('./blacksmith-screen').then((m) => m.openBlacksmith(root, () => current() ?? s, (x) => setState(x), { sub: 'Debug' }));
+    },
+  });
+  // Inn (Ömer 2026-10-26): kasaba adımında Inn ekranı (kasabaya ışınlanınca; kasaba ekranındaki Inn yeri ile aynı)
+  debug.register({
+    id: 'campaign.inn',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'heart',
+    label: 'Open Inn',
+    hint: 'Open the Inn screen for the current town (teleport to a town first). Leave a hurt hero, take them back. Blocked outside a town step',
+    run: () => {
+      const s = ensureState();
+      const root = document.getElementById('ui-root');
+      if (!root) return;
+      const town = getMap(s.mapId).nodes.find((n) => n.id === s.at);
+      void import('./inn-screen').then((m) => m.openInn(root, () => current() ?? s, (x) => setState(x), { town: town?.name ?? 'Debug', townId: s.at }));
     },
   });
   debug.register({

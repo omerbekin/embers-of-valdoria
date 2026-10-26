@@ -13,7 +13,7 @@ import {
   type CampaignState,
 } from '../src/campaign';
 import { content } from '../src/engine';
-import { SIM_HARD_HEAL_AT, simTownRest, simValorWoundHeal } from '../src/sim/campaign';
+import { SIM_HARD_HEAL_AT, SIM_INN_KEEP, simInnPicks, simNeedsRest, simValorWoundHeal } from '../src/sim/campaign';
 
 /** Savaş dışı Valor ile yara silme (Ömer 2026-10-26): woundHeal.outsideCost Valor = yaşayan kahramanın 1 yarası; ceset kuralı aynı. */
 const R = content.valorRules;
@@ -82,19 +82,31 @@ describe('sim oyuncu varsayımı (2026-10-26)', () => {
     expect(simValorWoundHeal({ ...s, valor: R.revive.outsideCost + COST - 1 }).healed).toBe(0);
   });
 
-  // Ömer 2026-10-26 (form econ/main): kasabada ücretli dinlenme kalktı (yerine Inn); vekil şimdilik kasabada dinlenmez (simTownRest hep null).
-  // Vekilin Inn kullanımı balance-tester'ın işi; o gelince eski eşik testi (2 yara / %50, zor öncesi herhangi yara / %75) Inn'e taşınır.
-  it.skip('kasaba dönüşü: normalde tek yara sebep değil, 2 yara ya da can %50 altı; elit / boss öncesi herhangi yara ya da can %75 altı', () => {
-    const b = { ...base(), gold: 9999 };
+  it('Inn kararı: normalde tek yara sebep değil, 2 yara ya da can %50 altı; elit / boss öncesi herhangi yara ya da can %75 altı', () => {
+    const b = base();
     const [a, c] = activeHeroes(b).map((h) => h.id);
     const full = { ...b, roster: b.roster.map((h) => ({ ...h, hpRatio: 1 })) };
     const one = withHero(full, a!, { wounds: 1 });
-    expect(simTownRest(one, 0.5)).toBeNull();
-    expect(simTownRest(one, 0.5, true)).not.toBeNull();
-    expect(simTownRest(withHero(one, c!, { wounds: 1 }), 0.5)).not.toBeNull();
+    expect(simNeedsRest(one, 0.5)).toBe(false);
+    expect(simNeedsRest(one, 0.5, true)).toBe(true);
+    const two = withHero(one, c!, { wounds: 2 });
+    expect(simNeedsRest(two, 0.5)).toBe(true);
     const mid = { ...full, roster: full.roster.map((h) => ({ ...h, hpRatio: 0.6 })) };
-    expect(simTownRest(mid, 0.5)).toBeNull();
+    expect(simNeedsRest(mid, 0.5)).toBe(false);
     expect(SIM_HARD_HEAL_AT).toBe(0.75);
-    expect(simTownRest(mid, 0.5, true)).not.toBeNull();
+    expect(simNeedsRest(mid, 0.5, true)).toBe(true);
+  });
+
+  it('Inn adayları: en kötü önce (yara, sonra can), yolda en az 2 ayakta kahraman kalır', () => {
+    const b = base();
+    const ids = activeHeroes(b).map((h) => h.id);
+    const n = ids.length;
+    let s: CampaignState = { ...b, roster: b.roster.map((h) => ({ ...h, hpRatio: 0.3, wounds: 1 })) };
+    s = withHero(s, ids[1]!, { wounds: 2 });
+    const picks = simInnPicks(s, 0.5);
+    expect(picks.length).toBe(Math.max(0, n - Math.min(SIM_INN_KEEP, Math.max(1, n - 1))));
+    expect(picks[0]).toBe(ids[1]);
+    const healthy = { ...b, roster: b.roster.map((h) => ({ ...h, hpRatio: 1 })) };
+    expect(simInnPicks(healthy, 0.5)).toEqual([]);
   });
 });

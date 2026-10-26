@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Day Counter</title>
+<!-- GUN SAYACI taslagi v2 (ui-dev, 2026-10-26). Oyun kodu DEGIL. Varliklar: day-counter/ -->
+<style>
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('day-counter/f/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: block; src: url('day-counter/f/EBGaramond-normal-latin.woff2') format('woff2'); }
+:root { --text:#d9c8a2; --dim:#a8977a; --gold:#f3d999; --line2:rgba(217,178,106,.3); --ember:#e0702a; --ember2:#ffb35a; --good:#9fd88a; --disp:Cinzel,Georgia,serif; --body:'EB Garamond',Georgia,serif; }
+* { box-sizing:border-box; }
+html,body { margin:0; background:#0b0806; color:var(--text); font-family:var(--body); font-style:normal; }
+body { font-size:18px; line-height:1.3; }
+img { display:block; }
+button { font-family:inherit; color:inherit; cursor:pointer; }
+.pg { max-width:900px; margin:0 auto; padding:16px 16px 90px; }
+h1 { margin:0 0 4px; font:600 24px var(--disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.lead { margin:0 0 6px; color:var(--dim); font-size:17px; }
+.var { margin-top:30px; }
+.vtag { display:flex; align-items:center; gap:12px; margin-bottom:10px; font:600 16px var(--disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.vtag b { display:inline-flex; width:36px; height:36px; align-items:center; justify-content:center; font:700 18px var(--disp); color:#1a0f05; background:linear-gradient(180deg,#f3d999,#d9b26a); }
+.map { position:relative; width:100%; height:250px; overflow:hidden; border:1px solid var(--line2); background:#120d09 url('day-counter/a/bg.webp') center 40%/cover; }
+.map::after { content:''; position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 60px rgba(0,0,0,.55); }
+.map .hint { position:absolute; left:0; right:0; bottom:10px; text-align:center; z-index:1; font:600 11px var(--disp); letter-spacing:.2em; text-transform:uppercase; color:rgba(217,200,162,.4); }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; align-items:center; }
+.ctl button { min-height:44px; padding:0 16px; font:600 13px var(--disp); letter-spacing:.12em; text-transform:uppercase; background:rgba(8,6,4,.7); border:1px solid var(--line2); transition:border-color .2s,color .2s,transform .15s; }
+.ctl button:hover { border-color:rgba(243,217,153,.85); color:var(--gold); transform:translateY(-1px); }
+.ctl label { display:flex; align-items:center; gap:6px; min-height:44px; font-size:16px; color:var(--dim); }
+.cap { margin:8px 0 0; padding:10px 14px; border-left:3px solid var(--ember); background:rgba(8,6,4,.55); font-size:17px; }
+.mockstrip { position:fixed; left:0; bottom:0; z-index:20; padding:6px 14px; font:600 11px var(--disp); letter-spacing:.22em; text-transform:uppercase; color:#1a0f05; background:#e0b24a; border-top-right-radius:4px; }
+
+/* shared: inn hint */
+.inn { display:flex; align-items:center; gap:6px; }
+.inn .ph { width:26px; height:26px; border:1px solid rgba(217,178,106,.6); background:#1a120c; overflow:hidden; position:relative; flex:none; }
+.inn .ph img { width:100%; height:100%; object-fit:cover; }
+.inn .tx { font:600 10px var(--disp); letter-spacing:.14em; text-transform:uppercase; color:var(--dim); white-space:nowrap; }
+.noinn .inn { display:none; }
+.heal .ph { animation:healPh 1.6s ease-out; }
+.heal .ph::after { content:'+50%'; position:absolute; inset:auto 0 0 0; text-align:center; font:700 9px var(--disp); color:#12200c; background:var(--good); animation:rise 1.6s ease-out forwards; }
+@keyframes healPh { 0%{box-shadow:0 0 0 0 rgba(159,216,138,0);} 25%{box-shadow:0 0 14px 3px rgba(159,216,138,.9); border-color:var(--good);} 100%{box-shadow:0 0 0 0 rgba(159,216,138,0);} }
+@keyframes rise { 0%{opacity:0; transform:translateY(8px);} 20%{opacity:1; transform:none;} 80%{opacity:1;} 100%{opacity:0; transform:translateY(-6px);} }
+
+/* ===== A: sky arc ===== */
+.skyA { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:280px; z-index:2; }
+.sky { position:relative; height:78px; overflow:hidden; border:1px solid var(--line2); border-radius:140px 140px 0 0; background:linear-gradient(180deg,#2a1c3a 0%,#7a3b30 70%,#c47a3a 100%); transition:background 1.2s; }
+.sky[data-p="1"] { background:linear-gradient(180deg,#3a5a78 0%,#7a9aa0 60%,#d9c07a 100%); }
+.sky[data-p="2"] { background:linear-gradient(180deg,#2a1633 0%,#8a2e30 65%,#e0702a 100%); }
+.sky .ring { position:absolute; left:50%; top:72px; width:132px; height:132px; margin-left:-66px; margin-top:-66px; transform-origin:50% 50%; transition:transform 1s cubic-bezier(.4,.1,.3,1); }
+.sky .sun { position:absolute; left:50%; top:-9px; width:18px; height:18px; margin-left:-9px; border-radius:50%; background:radial-gradient(circle,#fff3c0,#f3b44a 60%,#e0702a); box-shadow:0 0 14px 5px rgba(255,190,90,.7); }
+.sky .path { position:absolute; left:50%; top:72px; width:132px; height:132px; margin:-66px 0 0 -66px; border-radius:50%; border:1px dashed rgba(243,217,153,.3); }
+.sky .hill { position:absolute; left:0; right:0; bottom:0; height:26px; background:#0e0a08; clip-path:polygon(0 60%,15% 35%,30% 55%,50% 25%,70% 55%,85% 35%,100% 60%,100% 100%,0 100%); }
+.sky .glow { position:absolute; inset:0; background:radial-gradient(ellipse at 20% 100%,rgba(255,200,120,.85),transparent 60%); opacity:0; }
+.sky.dawn .glow { animation:dawn 2s ease-out; }
+@keyframes dawn { 0%{opacity:0;} 30%{opacity:1;} 100%{opacity:0;} }
+.sky .lbl { position:absolute; left:0; right:0; bottom:5px; text-align:center; z-index:2; }
+.sky .lbl b { display:block; font:700 20px var(--disp); letter-spacing:.14em; color:var(--gold); text-shadow:0 1px 2px #000; line-height:1; }
+.sky .lbl span { display:block; margin-top:2px; font-size:14px; color:#f0e0c0; text-shadow:0 1px 2px #000; }
+.sky .ticks { position:absolute; left:8px; right:8px; top:56px; display:flex; justify-content:space-between; z-index:2; }
+.sky .ticks i { width:7px; height:7px; border:1px solid var(--gold); transform:rotate(45deg); background:rgba(0,0,0,.4); }
+.sky .ticks i.on { background:var(--gold); }
+.skyA .inn { justify-content:center; margin-top:6px; padding:3px 8px; background:rgba(8,6,4,.78); border:1px solid var(--line2); width:max-content; margin-left:auto; margin-right:auto; }
+
+/* ===== B: candle ===== */
+.candleB { position:absolute; top:10px; left:12px; z-index:2; display:flex; align-items:flex-end; }
+.holder { position:relative; width:64px; height:96px; flex:none; }
+.holder .dish { position:absolute; left:6px; right:6px; bottom:0; height:10px; border-radius:50%/60%; background:linear-gradient(180deg,#c9a24a,#6b4f1c); box-shadow:0 3px 6px rgba(0,0,0,.6); }
+.holder .stick { position:absolute; left:50%; bottom:6px; width:34px; height:10px; margin-left:-17px; background:linear-gradient(90deg,#6b4f1c,#e0c068,#6b4f1c); border-radius:3px 3px 0 0; }
+.holder .wrapc { position:absolute; left:50%; bottom:15px; width:22px; margin-left:-11px; height:54px; }
+.holder.swapout .wrapc { animation:candleIn 1.1s cubic-bezier(.3,1.3,.5,1); }
+@keyframes candleIn { 0%{transform:translateY(-60px); opacity:0;} 100%{transform:none; opacity:1;} }
+.wax { position:absolute; left:0; right:0; bottom:0; height:54px; background:linear-gradient(90deg,#c9bda0,#f2e8cc 45%,#b5a888); border-radius:3px 3px 1px 1px; transition:height 1s ease; }
+.wax::before { content:''; position:absolute; left:2px; top:0; width:4px; height:14px; border-radius:0 0 3px 3px; background:#f2e8cc; box-shadow:0 2px 3px rgba(0,0,0,.3); }
+.notch { position:absolute; left:-2px; right:-2px; bottom:27px; height:2px; background:rgba(90,60,20,.85); z-index:1; }
+.wick { position:absolute; left:50%; margin-left:-1px; width:2px; height:6px; background:#1a0f05; z-index:2; transition:bottom 1s ease; }
+.flame { position:absolute; left:50%; width:11px; height:20px; margin-left:-5.5px; border-radius:50% 50% 50% 50%/65% 65% 35% 35%; background:radial-gradient(ellipse at 50% 75%,#fff6c8 0%,#ffb35a 45%,#e0702a 80%,transparent); box-shadow:0 0 18px 8px rgba(255,160,70,.45); transform-origin:50% 100%; animation:flick .5s infinite alternate ease-in-out; z-index:3; transition:bottom 1s ease; }
+@keyframes flick { 0%{transform:scale(1,1) rotate(-2deg);} 100%{transform:scale(.92,1.08) rotate(2deg);} }
+.holder.out .flame { animation:none; opacity:0; transition:opacity .3s; }
+.smoke { position:absolute; left:50%; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:rgba(200,200,200,.5); opacity:0; z-index:3; }
+.holder.out .smoke { animation:smoke 1s ease-out; }
+@keyframes smoke { 0%{opacity:.7; transform:translateY(0) scale(1);} 100%{opacity:0; transform:translateY(-30px) scale(4);} }
+.tagB { margin-left:2px; padding:8px 12px 7px; min-width:150px; background:linear-gradient(180deg,#d9c79a,#b9a273); color:#2a1a0a; border:1px solid #6b4f1c; box-shadow:0 3px 8px rgba(0,0,0,.6); position:relative; margin-bottom:14px; }
+.tagB::before { content:''; position:absolute; left:-5px; top:50%; width:8px; height:8px; margin-top:-4px; background:#7a5a22; border-radius:50%; }
+.tagB b { display:block; font:700 20px var(--disp); letter-spacing:.14em; line-height:1; }
+.tagB span.s { display:block; margin-top:3px; font-size:15px; font-weight:500; }
+.tagB .inn { margin-top:6px; padding-top:5px; border-top:1px solid rgba(60,40,10,.4); }
+.tagB .inn .tx { color:#4a3414; }
+.tagB .inn .ph { border-color:#4a3414; }
+.tagB.flip b { animation:tagflip .9s; }
+@keyframes tagflip { 0%{transform:scaleY(1);} 50%{transform:scaleY(0);} 100%{transform:scaleY(1);} }
+.warm { position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 60px 50px,rgba(255,170,80,.28),transparent 55%); }
+.warm.flare { animation:flare 1.4s ease-out; }
+@keyframes flare { 0%{opacity:1;} 40%{opacity:1; filter:brightness(2.2);} 100%{opacity:1;} }
+
+/* ===== C: logbook ===== */
+.logC { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:min(360px,calc(100% - 24px)); z-index:2; }
+.book { position:relative; padding:7px 14px 7px 38px; height:64px; overflow:hidden; background:linear-gradient(90deg,#b9a273,#d9c79a 14%,#e6d6ae 50%,#d9c79a 100%); color:#2a1a0a; border:1px solid #6b4f1c; box-shadow:0 4px 10px rgba(0,0,0,.6); }
+.book::before { content:''; position:absolute; left:0; top:0; bottom:0; width:26px; background:linear-gradient(90deg,#3a2410,#6b4a22 60%,#3a2410); border-right:1px solid #1a0f05; }
+.book::after { content:''; position:absolute; left:8px; top:22px; width:10px; height:10px; border:1px solid #c9a24a; transform:rotate(45deg); }
+.pagewrap { position:relative; height:100%; }
+.page { position:absolute; inset:0; display:flex; align-items:center; gap:12px; transition:transform .7s cubic-bezier(.5,0,.3,1),opacity .7s; }
+.page.old { transform:translateX(-40px); opacity:0; }
+.page.new { transform:translateX(60px); opacity:0; }
+.page .no small { display:block; font:600 10px var(--disp); letter-spacing:.2em; color:#6b4f1c; }
+.page .no b { font:700 24px var(--disp); letter-spacing:.06em; line-height:1; }
+.page .past { display:flex; gap:3px; align-items:flex-end; flex:none; }
+.page .past i { display:block; width:3px; height:22px; background:#6b4f1c; opacity:.5; transform:rotate(var(--r,0deg)); }
+.page .ink { display:flex; gap:8px; margin-left:auto; flex:none; }
+.page .ink svg { width:30px; height:30px; overflow:visible; }
+.page .ink circle { fill:none; stroke:#3a2410; stroke-width:1.6; opacity:.5; }
+.page .ink path { fill:none; stroke:#7a1f12; stroke-width:3.2; stroke-linecap:round; stroke-dasharray:44; stroke-dashoffset:44; }
+.page .ink .on path { stroke-dashoffset:0; transition:stroke-dashoffset .6s ease-out; }
+.page .ink .on circle { opacity:1; }
+.sub { margin-top:3px; padding:3px 10px; background:rgba(8,6,4,.8); border:1px solid var(--line2); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.sub .nx { font-size:15px; color:var(--text); }
+.sub .nx b { color:var(--gold); font-weight:600; }
+.logC.dawn .book { animation:bookglow 1.6s ease-out; }
+@keyframes bookglow { 0%,100%{box-shadow:0 4px 10px rgba(0,0,0,.6);} 35%{box-shadow:0 0 22px 6px rgba(255,190,90,.8);} }
+@media (max-width:480px) { .map{height:240px;} .holder{width:54px;} .tagB{min-width:132px;} .page .past{display:none;} }
+</style>
+</head>
+<body>
+<div class="mockstrip">Mockup - not in game</div>
+<div class="pg">
+<h1>Day Counter</h1>
+<p class="lead">Rule: 2 node victories = 1 day. Days advance only by battle victory. At dawn, heroes left at the Inn heal 50% HP and 1 wound. Try each concept with the buttons.</p>
+
+<section class="var" id="A">
+ <div class="vtag"><b>A</b>Sun on the Sky Arc</div>
+ <div class="map" id="mapA">
+  <div class="skyA">
+   <div class="sky" id="skyA" data-p="0">
+    <div class="path"></div><div class="glow"></div>
+    <div class="ring" id="ringA"><div class="sun"></div></div>
+    <div class="hill"></div>
+    <div class="ticks"><i class="on"></i><i id="tkA1"></i><i id="tkA2"></i></div>
+    <div class="lbl"><b id="dayA">DAY 1</b><span id="subA">2 victories to dawn</span></div>
+   </div>
+   <div class="inn" id="innA"><div class="ph"><img src="day-counter/a/hexer.webp" alt=""></div><div class="ph"><img src="day-counter/a/paladin.webp" alt=""></div><span class="tx">Heal at dawn</span></div>
+  </div>
+  <div class="hint">map</div>
+ </div>
+ <div class="ctl"><button data-sim="A">Simulate victory</button><button data-reset="A">Reset</button><label><input type="checkbox" checked data-inn="mapA"> Heroes at the Inn</label></div>
+ <p class="cap">Gökyüzünde yay çizen güneş: ufukta (2 zafer kaldı), tepede (1 kaldı), 2. zaferde batar ve ertesi gün şafakta yeniden doğar; şafakta Inn'deki kahramanların portreleri yeşil parlar.</p>
+</section>
+
+<section class="var" id="B">
+ <div class="vtag"><b>B</b>The Night Candle</div>
+ <div class="map" id="mapB">
+  <div class="warm"></div>
+  <div class="candleB">
+   <div class="holder" id="holderB">
+    <div class="dish"></div><div class="stick"></div>
+    <div class="wrapc" id="wrapB"><div class="wax" id="waxB"><div class="notch"></div></div><div class="wick" id="wickB"></div><div class="flame" id="flameB"></div><div class="smoke" id="smokeB"></div></div>
+   </div>
+   <div class="tagB" id="tagB"><b id="dayB">DAY 1</b><span class="s" id="subB">Burns 2 more victories</span>
+    <div class="inn" id="innB"><div class="ph"><img src="day-counter/a/hexer.webp" alt=""></div><div class="ph"><img src="day-counter/a/mage.webp" alt=""></div><span class="tx">Heal at dawn</span></div>
+   </div>
+  </div>
+  <div class="hint">map</div>
+ </div>
+ <div class="ctl"><button data-sim="B">Simulate victory</button><button data-reset="B">Reset</button><label><input type="checkbox" checked data-inn="mapB"> Heroes at the Inn</label></div>
+ <p class="cap">Her gün yeni bir mum: her zafer mumu bir çentik (yarı) eritir, ikinci zaferde mum söner, yenisi masaya iner ve etiket yeni günü yazar; şafak ışığı Inn kahramanlarını iyileştirir.</p>
+</section>
+
+<section class="var" id="C">
+ <div class="vtag"><b>C</b>Company Logbook</div>
+ <div class="map" id="mapC">
+  <div class="logC" id="logC">
+   <div class="book"><div class="pagewrap" id="pwC"></div></div>
+   <div class="sub"><span class="nx" id="subC"></span>
+    <div class="inn" id="innC"><div class="ph"><img src="day-counter/a/paladin.webp" alt=""></div><div class="ph"><img src="day-counter/a/mage.webp" alt=""></div><span class="tx">Heal at dawn</span></div>
+   </div>
+  </div>
+  <div class="hint">map</div>
+ </div>
+ <div class="ctl"><button data-sim="C">Simulate victory</button><button data-reset="C">Reset</button><label><input type="checkbox" checked data-inn="mapC"> Heroes at the Inn</label></div>
+ <p class="cap">Birliğin seyir defteri: sayfada iki mürekkep dairesi var, her zafer birine kırmızı bir çentik atar; ikinci çentikte sayfa çevrilir, geçmiş günler tally çizgisi olarak birikir ve yeni gün yazılır.</p>
+</section>
+</div>
+
+<script>
+const S = { A:{day:1,p:0}, B:{day:1,p:0}, C:{day:1,p:0} };
+const txt = p => p === 0 ? '2 victories to dawn' : '1 victory to dawn';
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const busy = {};
+function healFx(el){ el.classList.remove('heal'); void el.offsetWidth; el.classList.add('heal'); setTimeout(()=>el.classList.remove('heal'),1800); }
+
+/* A */
+const ringA = document.getElementById('ringA'), skyA = document.getElementById('skyA');
+const angA = [-72,0,72];
+function renderA(){ ringA.style.transform = 'rotate('+angA[S.A.p]+'deg)'; skyA.dataset.p = S.A.p; document.getElementById('tkA1').classList.toggle('on',S.A.p>=1); document.getElementById('tkA2').classList.toggle('on',S.A.p>=2); document.getElementById('subA').textContent = txt(S.A.p); document.getElementById('dayA').textContent = 'DAY '+S.A.day; }
+async function simA(){ const s=S.A; if(s.p===0){ s.p=1; renderA(); return; }
+  s.p=2; renderA(); document.getElementById('subA').textContent='Dusk falls...'; await wait(1100);
+  ringA.style.transition='none'; ringA.style.transform='rotate(-120deg)'; void ringA.offsetWidth; ringA.style.transition='';
+  s.p=0; s.day++; skyA.classList.remove('dawn'); void skyA.offsetWidth; skyA.classList.add('dawn'); renderA(); healFx(document.getElementById('innA')); }
+
+/* B */
+const holderB = document.getElementById('holderB'), waxB = document.getElementById('waxB');
+function renderB(){ const h = S.B.p===0 ? 54 : 27; waxB.style.height = h+'px'; document.getElementById('wickB').style.bottom = h+'px'; document.getElementById('flameB').style.bottom = (h+5)+'px'; document.getElementById('smokeB').style.bottom=(h+8)+'px'; document.getElementById('subB').textContent = S.B.p===0 ? 'Burns 2 more victories' : 'Burns 1 more victory'; document.getElementById('dayB').textContent='DAY '+S.B.day; }
+async function simB(){ const s=S.B; if(s.p===0){ s.p=1; renderB(); return; }
+  waxB.style.height='6px'; document.getElementById('wickB').style.bottom='6px'; document.getElementById('flameB').style.bottom='11px'; await wait(1000);
+  holderB.classList.add('out'); await wait(900);
+  s.p=0; s.day++; holderB.classList.remove('swapout'); void holderB.offsetWidth;
+  waxB.style.transition='none'; renderB(); void waxB.offsetWidth; waxB.style.transition='';
+  holderB.classList.add('swapout'); await wait(400);
+  holderB.classList.remove('out');
+  const tag=document.getElementById('tagB'); tag.classList.remove('flip'); void tag.offsetWidth; tag.classList.add('flip');
+  const w=document.querySelector('#mapB .warm'); w.classList.remove('flare'); void w.offsetWidth; w.classList.add('flare');
+  healFx(document.getElementById('innB')); }
+
+/* C */
+function mkPage(day,p,cls){
+  const past=Math.min(day-1,10); let t=''; for(let i=0;i<past;i++) t+='<i style="--r:'+((i*7)%5-2)+'deg"></i>';
+  const mk=()=>'<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="12"/><path d="M7 16 L13 22 L24 8"/></svg>';
+  const d=document.createElement('div'); d.className='page '+(cls||'');
+  d.innerHTML='<div class="no"><small>DAY</small><b>'+day+'</b></div><div class="past">'+t+'</div><div class="ink"><span class="'+(p>=1?'on':'')+'">'+mk()+'</span><span>'+mk()+'</span></div>';
+  return d; }
+const pwC=document.getElementById('pwC');
+function renderC(){ pwC.innerHTML=''; pwC.appendChild(mkPage(S.C.day,S.C.p)); document.getElementById('subC').innerHTML = S.C.p===0 ? '<b>2</b> victories to dawn' : '<b>1</b> victory to dawn'; }
+async function simC(){ const s=S.C; const cur=pwC.firstChild;
+  if(s.p===0){ s.p=1; cur.querySelectorAll('.ink > span')[0].className='on'; document.getElementById('subC').innerHTML='<b>1</b> victory to dawn'; return; }
+  cur.querySelectorAll('.ink > span')[1].className='on'; await wait(800);
+  const nxt=mkPage(s.day+1,0,'new'); pwC.appendChild(nxt); void nxt.offsetWidth; cur.classList.add('old'); nxt.classList.remove('new'); await wait(750);
+  s.p=0; s.day++; renderC(); const l=document.getElementById('logC'); l.classList.remove('dawn'); void l.offsetWidth; l.classList.add('dawn'); healFx(document.getElementById('innC')); }
+
+const R={A:renderA,B:renderB,C:renderC}, SIM={A:simA,B:simB,C:simC};
+document.querySelectorAll('[data-sim]').forEach(b=>b.onclick=async()=>{ const k=b.dataset.sim; if(busy[k]) return; busy[k]=true; await SIM[k](); busy[k]=false; });
+document.querySelectorAll('[data-reset]').forEach(b=>b.onclick=()=>{ const k=b.dataset.reset; S[k]={day:1,p:0}; R[k](); });
+document.querySelectorAll('[data-inn]').forEach(c=>c.onchange=()=>document.getElementById(c.dataset.inn).classList.toggle('noinn',!c.checked));
+renderA(); renderB(); renderC();
+</script>
+</body>
+</html>

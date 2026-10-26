@@ -12,8 +12,8 @@ import {
   completeStory,
   eventChoices,
   restHealOf,
-  townRestCount,
-  townRestPrice,
+  skipCamp,
+  campaignSellValue,
   storyLiked,
   type EventChoice,
   TREASURES,
@@ -83,7 +83,6 @@ import {
   isFallen,
   leaveMerchant,
   openCampaignShop,
-  restAtCamp,
   revisitKind,
   revisitNode,
   recruitInTown,
@@ -121,6 +120,8 @@ import { preloadCampaignArt } from '../campaign-art';
 import { campaignMapArt, campaignMapImage, edgeFillers } from '../map-art';
 import { artFrames } from '../wide-map';
 import { onStageResize, stageView } from '../stage';
+import { setItemValueSource } from '../../ui/item-tip';
+import { openCamp, type CampHandle } from '../../ui/camp-screen';
 import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
 import { openStoryDialog, type StoryDialogHandle } from '../../ui/story-dialog';
 import { playCinematic, type CinematicHandle } from '../../ui/cinematic';
@@ -379,6 +380,8 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   create(): void {
+    setItemValueSource(campaignSellValue); // ipucundaki "value" = tüccar satış fiyatı (2026-10-26)
+    this.events.once('shutdown', () => setItemValueSource(null));
     elScreenIn(this); // ortak ekran geçişi (data/ui-motion.json > screen; Reduced motion = anında)
     if (!current()) {
       // ?campaign=1 (geliştirme) ya da kayıtsız açılış: yeni Normal sefer
@@ -2116,7 +2119,7 @@ export class CampaignMapScene extends Phaser.Scene {
       foes = p.names.join(', ');
       faces = p.classes.filter((c) => !!content.classes[c]).slice(0, 6);
     } else if (vis !== 'goal')
-      blurb = n.type === 'town' ? `Rest, recruit and trade. ${townRestCount(s, id) === 0 ? 'Your first arrival is a free rest: the living recover.' : `Your free rest here is spent: resting again costs ${townRestPrice(s, id)} gold.`}` : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : n.type === 'rest' ? 'Make camp for free and recover. Resting heals the living only.' : n.type === 'merchant' ? 'Odo the Peddler sells gear and buys yours.' : '';
+      blurb = n.type === 'town' ? 'Leave tired heroes at the inn, recruit and trade. The town itself does not heal you.' : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : n.type === 'rest' ? (CONFIG.texts['camp'] ?? 'Make camp once: rest, tend a wound, sharpen a blade or train.') : n.type === 'merchant' ? 'Odo the Peddler sells gear and buys yours.' : '';
     const after = vis === 'goal' ? [] : outgoing(this.map, id).map((a) => node(this.map, a));
     const then = after.map((a) => `${a.name} (${TYPE_LABEL[a.type]})`).join(' or ');
     // Devriye: temizlenmiş savaş düğümüne dönülünce aynı düşmanlar, ödül azalan getiriyle (sıradaki oynanışın yüzdesi)
@@ -2979,30 +2982,37 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /**
-   * Dinlenme noktası (Ömer 2026-10-11): ücretsiz dinlenme (yaşayanlar maks canın %50'si); düşmüş kahramanı yalnızca Valor kaldırır.
-   * A levha (taslak map-events): sahne şeridi, çipler, düşmüş kahramanlar, Gear solda / Rest sağda.
+   * Kamp (Ömer 2026-10-26, taslak economy-ui A): dört kart (Rest / Tend wounds / Sharpen / Train), BİR seçim; DOM ekran src/ui/camp-screen.ts.
+   * Kullanılmış kampa yeniden girişte (`revisit`) "used" görünümü. Seçim zorunlu: onaylanana dek ekran kapanmaz (`advance` kamp adımında yeniden açar).
    */
   private restModal(nodeId: string, revisit = false): void {
-    const s = this.s;
+    const root = document.getElementById('ui-root');
+    if (!root) return;
+    this.closeModal();
     const n = node(this.map, nodeId);
-    const fallen = s.roster.filter((h) => isFallen(h) && !h.tutorial);
-    const heal = Math.round(restHealOf(s) * 100);
-    // Yeniden giriş: dinlenme bir kez (ikinci kez iyileştirmez); Gear açık, Leave pencereyi kapatır. Dinlenme DİRİLTMEZ (TUR 1 madde 10): yalnızca Valor
-    const paras = [revisit ? 'Your company has already rested here.' : 'Your company makes camp. Resting is free.'];
-    if (fallen.length) paras.push('Resting does not raise the fallen: only Valor can.');
-    this.worldWindow(nodeId, {
-      title: n.name,
-      art: windowArt('rest'),
-      paras,
-      ...(revisit ? {} : { chipsCap: 'Rest', chips: [{ tone: 'heal' as const, icon: 'rest' as const, text: `Every living hero recovers ${heal}% max HP` }, { tone: 'info' as const, icon: 'gold' as const, text: 'Free' }] }),
-      ...(fallen.length ? { body: { k: 'fallen' as const, rows: fallen.map((h) => ({ classId: h.class, spriteId: content.classes[h.class]?.spriteId ?? h.class, name: content.classes[h.class]?.name ?? h.class, note: 'Fallen. Only Valor can raise them.' })) } } : {}),
-      acts: [
-        { label: 'Gear', run: () => this.openGear() },
-        revisit ? { label: 'Leave', primary: true, run: () => this.closeModal() } : { label: 'Rest', primary: true, run: () => this.commit(restAtCamp(this.s)) },
-      ],
-      ...(revisit ? { onDismiss: () => this.closeModal() } : {}),
+    let handle: CampHandle | null = null;
+    let tearingDown = false;
+    const destroy = (): void => {
+      tearingDown = true;
+      handle?.destroy();
+      handle = null;
+      this.modal = null;
+    };
+    handle = openCamp(root, () => this.s, {
+      name: n.name,
+      onUse: (next) => this.commit(next),
+      onGear: () => this.openGear(undefined, false, () => handle?.refresh()),
+      onClose: (usedNow) => {
+        handle = null;
+        this.modal = null;
+        if (tearingDown) return;
+        // Seçim yapmadan çıkıldı: adım biter, kamp kullanılmamış kalır (geri gelince yeniden açılır; Ömer 2026-10-26)
+        if (!usedNow && nextStep(this.s).kind === 'rest') this.commit(skipCamp(this.s));
+        else if (!revisit) this.lessons('rest'); // Rest Camps dersi: kamp ekranı kapanınca (panelin üstüne binmesin)
+      },
     });
-    if (!revisit) this.lessons('rest'); // Rest Camps dersi (ilk dinlenme noktası)
+    this.events.once('shutdown', destroy); // sahne kapanırsa (Menu > Main menu) DOM ekran da kapanır
+    this.modal = { close: destroy, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
   }
 
   /** Kasabada Odo'nun tezgâhı (T1): ortak tüccar ekranı; ayrılınca kasaba penceresine dönülür (tezgâh kasabadan çıkınca kapanır). */
@@ -3346,19 +3356,17 @@ export class CampaignMapScene extends Phaser.Scene {
    * Eylem sözleri eski pencerelerdeki fiillerdir (Enter / Rest / Trade / Open / Continue). `go` kuralı değiştirmez: eskiden doğrudan
    * yapılan şeyi (yürü, ya da düğümü aç) yapar.
    */
-  private confirmPlace(id: string, go: () => void, firstTown = false): void {
+  private confirmPlace(id: string, go: () => void): void {
     const n = node(this.map, id);
     const t = PLACE_CARD[n.type] ?? { title: 'Continue?', action: 'Continue' };
-    // Kasaba kartı (karar 364): lore yerine dinlenme kuralı; ilk varışta bedava dinlenme verildi, sonraki varışlarda ateş başı ücretli
-    const info = n.type === 'town' ? { text: this.townArrivalNote(id, firstTown) } : undefined;
+    // Kasaba kartı (karar 364): lore yerine dinlenme kuralı (2026-10-26: kasaba iyileştirmez, Inn)
+    const info = n.type === 'town' ? { text: this.townArrivalNote() } : undefined;
     this.nodeCard(id, { title: t.title, actionLabel: t.action, fallback: { text: this.nodeFacts(id).blurb }, ...(info ? { info } : {}), onGo: go });
   }
 
-  /** Kasaba kartının dinlenme satırı (karar 364): ilk varış bedava dinlenmedir; sonrası ateş başında ücretli (campaign.json > rest.price). */
-  private townArrivalNote(id: string, firstTown: boolean): string {
-    if (firstTown) return 'Your free rest here: the living recover to full health on arrival.';
-    if (townRestCount(this.s, id) === 0) return 'Your first arrival is a free rest: the living recover to full health.';
-    return `No free rest this time. Resting by the fire costs ${townRestPrice(this.s, id)} gold.`;
+  /** Kasaba kartının dinlenme satırı (Ömer 2026-10-26): kasaba iyileştirmez; yorgun kahramanlar Inn'de dinlenir (campaign.json > texts.townRest). */
+  private townArrivalNote(): string {
+    return CONFIG.texts['townRest'] ?? 'Leave tired heroes at the inn: they heal a little each day.';
   }
 
   private nodeCard(id: string, o: { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; /** Lore'un yerine geçen bilgi satırı (devriye). */ info?: { text: string }; /** Düğme yerine düz not. */ note?: string; onGo: () => void }): void {
@@ -3671,7 +3679,6 @@ export class CampaignMapScene extends Phaser.Scene {
     const route = [from, ...(travelRoute(this.s, to) ?? [to])];
     this.directAt = null;
     this.pendingFight = null;
-    const firstTown = node(this.map, to).type === 'town' && townRestCount(this.s, to) === 0; // karar 364: ilk varış = bedava dinlenme
     this.update2(moveTo(this.s, to));
     this.tip?.destroy(true);
     this.tip = null;
@@ -3697,7 +3704,7 @@ export class CampaignMapScene extends Phaser.Scene {
     });
     if (this.fightsAt(to)) this.confirmBattle(to, () => this.arrive(to));
     else if (patrol) this.confirmPatrol(to, () => this.arrive(to, action));
-    else if (fresh || revisit) this.confirmPlace(to, () => this.arrive(to, action), firstTown);
+    else if (fresh || revisit) this.confirmPlace(to, () => this.arrive(to, action));
   }
 
   /** Kartın birincil düğmesi yürüme sürerken: yürüyüşü atlar, eylem varışta hemen çalışır; yürüyüş bittiyse doğrudan çalışır. */

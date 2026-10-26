@@ -6,6 +6,7 @@
  * Durum: mevcut `pendingLoot.left / leftRolls` alanları (kayıt şeması aynı): açılırken düşüş `stashLoot` ile ganimet alanına alınır.
  * Oyun içi metinler İngilizce.
  */
+import { TEMPER_STONE_ICON } from './temper-stone';
 import './gear.css';
 import { acknowledgeLoot, stashLoot, takeLeftover, type CampaignState } from '../campaign';
 import { BAG_SIZE, instanceColor, itemDef, xpToNext, type ItemInstance } from '../progression';
@@ -303,6 +304,18 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       const gain = el('div', 'gr-loot-gain');
       gain.append(g);
       side.append(gain);
+    }
+    if (drop?.stones) {
+      // Temper taşı (Ömer 2026-10-26): boss / elite zaferinde; kesede
+      const st = el('div', 'gr-loot-gold');
+      const im = el('img', 'gr-price-ico');
+      im.src = TEMPER_STONE_ICON;
+      im.alt = '';
+      im.draggable = false;
+      st.append(im, document.createTextNode(`+${drop.stones} Temper Stone${drop.stones === 1 ? '' : 's'}`));
+      const gain2 = el('div', 'gr-loot-gain');
+      gain2.append(st);
+      side.append(gain2);
     }
     if (xpBox) side.append(xpBox);
     const sec = el('div', 'gr-sec', `Items ${items.length}`);

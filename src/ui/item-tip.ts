@@ -60,6 +60,15 @@ export interface ItemTipState {
   sellFor?: number;
 }
 
+/**
+ * Item ipucunun "value" kaynağı: sefer, tüccarın satış fiyatını (campaignSellValue) yazar (Ömer 2026-10-26); null = ortak değer (progression > itemValue; Endless).
+ * Sefer sahnesi açılırken kurar, kapanırken null yapar.
+ */
+let valueSource: ((inst: Pick<ItemInstance, 'id'> & { rolls?: unknown }) => number) | null = null;
+export function setItemValueSource(fn: typeof valueSource): void {
+  valueSource = fn;
+}
+
 /** Tavan etiketi: "max 25%" (hız düz: "max 3"). */
 export const capLabel = (k: CapKey): string => `max ${capOf(k) ?? ''}${k === 'spd' ? '' : '%'}`;
 
@@ -224,7 +233,7 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
     c.alt = '';
     val.append(c);
   }
-  val.append(el('strong', '', String(state?.sellFor ?? itemValue(inst))), el('em', '', state?.sellFor !== undefined ? 'sells for' : 'value'));
+  val.append(el('strong', '', String(state?.sellFor ?? (valueSource ? valueSource(inst) : itemValue(inst)))), el('em', '', state?.sellFor !== undefined ? 'sells for' : 'value'));
   foot.append(val);
   card.append(foot);
 

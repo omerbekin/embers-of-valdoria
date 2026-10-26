@@ -176,8 +176,9 @@ describe('The Drowned Reach: harita verisi', () => {
 });
 
 describe('Harita geçişi (M-Q)', () => {
-  it('bayrak varsayılan kapalı: Morvane sonrası geçiş yok, Map 1 sonu aynı', () => {
-    expect(CONFIG.mapFlags?.[DROWNED_REACH]?.enabled).toBe(false);
+  it('bayrak açık (Ömer 2026-10-26); kapatılınca Morvane sonrası geçiş yok, Map 1 sonu aynı', () => {
+    expect(CONFIG.mapFlags?.[DROWNED_REACH]?.enabled).toBe(true);
+    setMapOverride(DROWNED_REACH, false);
     expect(mapEnabled(DROWNED_REACH)).toBe(false);
     const done = debugFinishMap1(newCampaign({ mode: 'normal', seed: 77 }));
     expect(nextStep(done).kind).toBe('complete');
@@ -313,6 +314,7 @@ describe('Maps 2-3 debug kısayolları ve bayrak', () => {
   });
 
   it('bayrak kapalıyken Jump hata verir', () => {
+    setMapOverride(DROWNED_REACH, false);
     expect(() => debugJumpDrownedReach(newCampaign({ mode: 'normal', seed: 9 }))).toThrow();
   });
 

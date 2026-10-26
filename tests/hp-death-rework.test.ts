@@ -17,7 +17,6 @@ import {
   normalizeState,
   SAVE_KEY,
   restAtCamp,
-  restInTown,
   reviveWithValor,
   victoryHealFor,
   type CampaignState,
@@ -181,7 +180,6 @@ describe('sefer: dinlenme', () => {
     const first = moveTo(p, '7');
     expect(hero(first, a!.id)).toMatchObject({ hpRatio: 0.3, wounds: 2 });
     expect(hero(first, b!.id)).toMatchObject({ alive: false, wounds: 3 });
-    expect(restInTown(first, '7')).toBe(first); // eski ateş başı etkisiz
     expect(CONFIG.texts.townRest).toContain('inn');
   });
 

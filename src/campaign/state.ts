@@ -725,13 +725,24 @@ export function campTrainXp(s: CampaignState, heroId: string): number {
 /** Sharpen önizlemesi: demircinin Temper önizlemesi altın aranmadan (fiyat bilgi için; kampta ödenmez). Item yoksa null. */
 export const campSharpenPreview = (s: CampaignState, uid: string) => freeTemperPreview(s, uid); // engine-dev 2026-10-26: altın + Temper taşı aranmaz
 
+/** Kamp kullanılabilir mi: kamp adımı bekliyor ya da (seçim yapmadan ayrılıp geri gelinen) kullanılmamış kamp (Ömer 2026-10-26). */
+export const campOpen = (s: CampaignState): boolean => nextStep(s).kind === 'rest' || (!campUsed(s) && revisitKind(s) === 'rest');
+
+/** Kampı seçim yapmadan bırak: adım biter, kamp kullanılmamış kalır (geri gelince kullanılabilir). Kamp adımında olmalı. */
+export function skipCamp(s: CampaignState): CampaignState {
+  expectStep(s, 'rest');
+  const t = clone(s);
+  complete(t, 'rest');
+  return t;
+}
+
 /**
  * Kamp seçimi yapılabilir mi (null = evet, yoksa nedeni; İngilizce, arayüzde aynen). Kamp adımında olmalı (kullanılmış kamp açılmaz).
  * Rest: her zaman. Tend wounds: aktif takımda yaşayan, yaralı kahraman. Train: aktif takımda yaşayan kahraman. Sharpen: torbadaki ya da kadrodaki
  * item, demirci kuralıyla Temper edilebilir (bölge tavanı, takanın level şartı; altın aranmaz).
  */
 export function campBlocked(s: CampaignState, c: CampChoice): string | null {
-  if (nextStep(s).kind !== 'rest') return 'There is no camp to use here';
+  if (!campOpen(s)) return 'There is no camp to use here';
   if (pausedLock(s)) return PAUSED_LOCK;
   switch (c.kind) {
     case 'rest':
@@ -1109,6 +1120,28 @@ export function takeFromInn(s: CampaignState, heroId: string): CampaignState {
   return t;
 }
 
+
+/** Yedekteki kahraman takıma boş yere alınabilir mi (null = evet)? Inn kullanılabilirken (kasaba adımı) ve takımda yer varsa (partyCap). */
+export function reserveTakeBlocked(s: CampaignState, heroId: string): string | null {
+  const closed = innClosed(s);
+  if (closed) return closed;
+  if (!(s.reserve ?? []).some((h) => h.id === heroId)) return 'This hero is not in the reserve';
+  if (s.roster.length >= Math.max(1, partyCap(s))) return 'Your company is full';
+  return null;
+}
+
+/** Yedekteki kahramanı takımda boş yere al (Inn'de biri bırakılınca yerine yedek girer; Ömer 2026-10-26). Yapılamıyorsa Error. */
+export function recruitFromReserve(s: CampaignState, heroId: string): CampaignState {
+  const why = reserveTakeBlocked(s, heroId);
+  if (why) throw new Error(why);
+  const t = clone(s);
+  const hero = t.reserve!.find((h) => h.id === heroId)!;
+  t.reserve = t.reserve!.filter((h) => h.id !== heroId);
+  if (!t.reserve.length) delete t.reserve;
+  t.roster.push(hero);
+  place(t, hero);
+  return t;
+}
 
 // ---------------------------------------------------------------- serbest dolaşım ve devriye (roadmap 2.1-2.4, 2.7)
 

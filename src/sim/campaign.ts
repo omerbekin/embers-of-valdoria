@@ -40,36 +40,79 @@ import {
   rngFor,
   shuffle,
   type CampaignMap,
+  campBlocked,
+  useCamp,
+  type CampChoice,
   type CampaignState,
+  type Hero,
   type Difficulty,
 } from '../campaign';
 import { MAX_TURNS } from './simulate';
 import { campaignWaveTeams } from '../campaign/suspend';
 import { autoTreeHeroes, withTreesInMemory } from './tree-sim';
 import type { TreeDir } from '../progression/skill-tree-data';
-import { RARITY_IDS, clampRarity, instanceIlvl, instanceRarity, itemDef } from '../progression/items';
+import { RARITY_IDS, clampRarity, instanceIlvl, instanceRarity, itemDef, itemValue } from '../progression/items';
 import { woundCount } from '../progression/wounds';
 
 /** Sim oyuncu varsayımı: elit / boss öncesi dinlenme eşiği (Ömer 2026-10-26: "zor çatışma öncesi dönme ihtimalini artır"). */
 export const SIM_HARD_HEAL_AT = 0.75;
 
 /**
- * Oyuncu vekilinin kasaba dinlenmesi (iki sefer simülatörü ortak; 2026-10-20, eşikler 2026-10-26). OYUN KURALI DEĞİL, oyuncu varsayımı:
- * - normal savaştan önce: yaşayanların ort. canı `healAt` (%50) altında YA DA 2+ yaralı yaşayan kahraman (tek yara artık sebep değil);
+ * Oyuncu vekili: takım dinlenmeli mi (OYUN KURALI DEĞİL, oyuncu varsayımı; eşikler Ömer 2026-10-26 "zor çatışma öncesi dönme ihtimalini artır"):
+ * - normal savaştan önce: yaşayanların ort. canı `healAt` (%50) altında YA DA 2+ yaralı yaşayan kahraman (tek yara sebep değil);
  * - elit / boss öncesi (`hard`): ort. can SIM_HARD_HEAL_AT (%75) altında YA DA herhangi bir yara.
- * Altın yetiyorsa temizlenmiş en ucuz kasabada dinlenir (yolculuk bedelsiz, serbest dolaşım). VARSAYIM (open-questions 371, 423). Dinlenmezse null.
- * Kasabadan önce simValorWoundHeal denenir (çağıran yapar).
+ * Kasaba ateş başı dinlenmesi kalktı (2026-10-26); karşılığı Inn (kasma sim: simInnPicks + devriye ile gün geçirme). VARSAYIM (open-questions 424).
  */
-export function simTownRest(s: CampaignState, healAt: number, hard = false): { state: CampaignState; price: number } | null {
-  if (!healAt) return null;
+export function simNeedsRest(s: CampaignState, healAt: number, hard = false): boolean {
+  if (!healAt) return false;
   const alive = activeHeroes(s).filter((h) => !isFallen(h));
-  const hp = alive.length ? alive.reduce((a, h) => a + h.hpRatio, 0) / alive.length : 0;
+  if (!alive.length) return false;
+  const hp = alive.reduce((a, h) => a + h.hpRatio, 0) / alive.length;
   const wounded = alive.filter((h) => woundCount(h) > 0).length;
-  const need = hard ? hp < Math.max(healAt, SIM_HARD_HEAL_AT) || wounded > 0 : hp < healAt || wounded >= 2;
-  if (!need) return null;
-  // Ömer 2026-10-26 (form econ/main): kasabada ücretli dinlenme (ateş başı) kalktı, yerine Inn (state.ts > leaveAtInn). Vekilin Inn kullanımı
-  // balance-tester'ın işi; o gelene dek vekil kasabada dinlenmez (campaign-dev, derlensin diye en küçük değişiklik).
-  return null;
+  return hard ? hp < Math.max(healAt, SIM_HARD_HEAL_AT) || wounded > 0 : hp < healAt || wounded >= 2;
+}
+
+/**
+ * Oyuncu vekili: Inn'e bırakılacak kahramanlar (simNeedsRest doğruyken). Aday = yaşayan aktif kahraman, yaralı YA DA canı eşik altında (normal
+ * `healAt`, zor SIM_HARD_HEAL_AT); en kötü önce (yara çok, sonra can az). Yolda en az SIM_INN_KEEP (3; küçük takımda takım - 1) ayakta kahraman
+ * kalır: 4 kişilik takım bir seferde EN ÇOK 1 kahraman bırakır (ilk denemede 2 kalınca devriyeler kaybedildi, gün geçmedi).
+ */
+export const SIM_INN_KEEP = 3;
+export function simInnPicks(s: CampaignState, healAt: number, hard = false): string[] {
+  const alive = activeHeroes(s).filter((h) => !isFallen(h));
+  const keep = Math.min(SIM_INN_KEEP, Math.max(1, alive.length - 1));
+  const lim = hard ? Math.max(healAt, SIM_HARD_HEAL_AT) : healAt;
+  return alive
+    .filter((h) => woundCount(h) > 0 || h.hpRatio < lim)
+    .sort((a, b) => woundCount(b) - woundCount(a) || a.hpRatio - b.hpRatio)
+    .slice(0, Math.max(0, alive.length - keep))
+    .map((h) => h.id);
+}
+
+/** Inn'deki kahraman yeterince iyileşti mi (sim): yarasız ve canı en az SIM_INN_READY (%80). */
+export const SIM_INN_READY = 0.8;
+export const simInnReady = (h: Hero): boolean => woundCount(h) === 0 && h.hpRatio >= SIM_INN_READY - 1e-9;
+
+/**
+ * Oyuncu vekilinin kamp seçimi (Ömer 2026-10-26: kamp bir kez, tek seçim; VARSAYIM open-questions 424): 1) yaralı yaşayan varsa Tend (en çok
+ * yaralı, eşitlikte canı az); 2) yaşayanların ort. canı SIM_CAMP_REST (%60) altındaysa Rest; 3) Sharpen: takılı en değerli item (bedava Temper
+ * yapılabiliyorsa); 4) Train: en düşük level'lı yaşayan kahraman; 5) Rest.
+ */
+export const SIM_CAMP_REST = 0.6;
+export function simCampChoice(s: CampaignState): CampChoice {
+  const ok = (c: CampChoice) => !campBlocked(s, c);
+  const alive = activeHeroes(s).filter((h) => !isFallen(h));
+  const hurt = [...alive].filter((h) => woundCount(h) > 0).sort((a, b) => woundCount(b) - woundCount(a) || a.hpRatio - b.hpRatio)[0];
+  if (hurt && ok({ kind: 'tend', heroId: hurt.id })) return { kind: 'tend', heroId: hurt.id };
+  const hp = alive.length ? alive.reduce((a, h) => a + h.hpRatio, 0) / alive.length : 1;
+  if (hp < SIM_CAMP_REST) return { kind: 'rest' };
+  const items = alive
+    .flatMap((h) => Object.values(h.equipment ?? {}).filter((x): x is NonNullable<typeof x> => !!x))
+    .sort((a, b) => itemValue(b) - itemValue(a));
+  for (const it of items) if (ok({ kind: 'sharpen', uid: it.uid })) return { kind: 'sharpen', uid: it.uid };
+  const low = [...alive].sort((a, b) => (a.level ?? 1) - (b.level ?? 1))[0];
+  if (low && ok({ kind: 'train', heroId: low.id })) return { kind: 'train', heroId: low.id };
+  return { kind: 'rest' };
 }
 
 /**
@@ -456,16 +499,18 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
           break;
         }
         case 'rest':
+          // Kamp (Ömer 2026-10-26: tek seçim): simCampChoice (Tend / Rest / Sharpen / Train)
+          s = useCamp(s, simCampChoice(s));
+          break;
         case 'merchant':
-          // Dinlenme: ücretsiz %50 (düşmüş yoksa diriltme yok); tüccar: vekil alışveriş yapmaz (Ömer 2026-10-11, madde 305)
+          // tüccar: vekil alışveriş yapmaz (Ömer 2026-10-11, madde 305)
           s = autoResolve(s, step);
           break;
         case 'move': {
           const next = route[s.path.length];
           const to = next && step.options.includes(next) ? next : step.options[0]!;
           if (valorOutside(o.valor)) s = simValorWoundHeal(s).state;
-          const tt = node(map, to).type;
-          s = simTownRest(s, o.healAt ?? 0.5, tt === 'elite' || tt === 'boss')?.state ?? s; // yaralı / düşük canlı takım kasabada dinlenir (eşikler 2026-10-26)
+          // düz sim Inn kullanmaz (ateş başı dinlenmesi kalktı 2026-10-26; Inn'de gün geçirmek devriye ister: yalnız kasma sim)
           s = moveTo(s, to);
           break;
         }

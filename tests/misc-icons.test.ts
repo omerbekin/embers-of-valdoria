@@ -7,10 +7,10 @@ import { elementIcon } from '../src/ui/skill-tags';
 import { content } from '../src/engine';
 
 // Boyalı oyun ikonları (Ömer 2026-10-10; 60 ikon, skill ikonları hariç): assets/misc-icons/<grup>/<ad>.png, ad '<grup>:<ad>' -> art-registry.
-describe('Oyun ikonları: 97 boyalı görsel, eski kodla çizilen yedek korunur', () => {
+describe('Oyun ikonları: 101 boyalı görsel, eski kodla çizilen yedek korunur', () => {
   it('beklenen her ikonun 128 ve 64 piksellik dosyası var; fazladan dosya yok', () => {
     const ids = MISC_GROUPS.flatMap((g) => MISC_ICONS[g].map((n) => miscIconName(g, n)));
-    expect(ids).toHaveLength(97);
+    expect(ids).toHaveLength(101);
     for (const id of ids) {
       expect(MISC_IMAGE_FILES[id], `${id} yok`).toBeTruthy();
       expect(MISC_IMAGE_FILES[id]!.small, `${id}: small/ yok`).not.toBe(MISC_IMAGE_FILES[id]!.url);

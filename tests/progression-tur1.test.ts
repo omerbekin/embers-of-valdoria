@@ -3,6 +3,7 @@ import { Rng } from '../src/engine/rng';
 import campaignJson from '../data/campaign/campaign.json';
 import {
   CONFIG,
+  campaignPrice,
   activeHeroes,
   applyBattle,
   autoResolve,
@@ -20,7 +21,6 @@ import {
   reforgeChoices,
   reforgeItem,
   reforgePrice,
-  restInTown,
   settleJoiners,
   smithCap,
   smithHotspot,
@@ -29,7 +29,6 @@ import {
   temperGain,
   temperPrice,
   townRecruitOffer,
-  townRestPrice,
   type CampaignState,
 } from '../src/campaign';
 import {
@@ -267,11 +266,11 @@ describe('madde 7: demirci (Temper / Reforge)', () => {
     expect(reforgeChoices(inst, idx)).toContain(roll.affixes[idx]!.id); // aynı affix havuzda kalır
     expect(affixDef(nr.affixes[idx]!.id)!.tier).toBe(tier);
     expect(roll.affixes.filter((_, i) => i !== idx).map((a) => a.id)).not.toContain(nr.affixes[idx]!.id);
-    expect(p0).toBe(Math.round(itemValue(inst) * CONFIG_SMITH().reforge.valueRatio));
+    expect(p0).toBe(Math.round(campaignPrice(inst) * CONFIG_SMITH().reforge.valueRatio));
     expect(nr.affixes.filter((_, i) => i !== idx)).toEqual(roll.affixes.filter((_, i) => i !== idx));
     expect(after.reforges).toBe(1);
     expect(t.gold).toBe(s.gold - p0);
-    expect(reforgePrice(after)).toBe(Math.round(itemValue(after) * CONFIG_SMITH().reforge.valueRatio * CONFIG_SMITH().reforge.growth));
+    expect(reforgePrice(after)).toBe(Math.round(campaignPrice(after) * CONFIG_SMITH().reforge.valueRatio * CONFIG_SMITH().reforge.growth));
     expect(CONFIG_SMITH().reforge.growth).toBe(1.5);
     expect(reforgeItem(s, inst.uid, idx)).toEqual(t); // aynı durumdan aynı sonuç (save-scum yok)
     expect(reforgeChoices(after, idx)).toContain(nr.affixes[idx]!.id);
@@ -298,8 +297,6 @@ describe('madde 10 (Ömer 2026-10-26 econ/main ile güncel): kasabada dinlenme y
     const first = moveTo(hurt, '7');
     expect(first.roster.every((h) => h.hpRatio === 0.3 && h.wounds === 1)).toBe(true);
     expect(first.townRests).toBeUndefined();
-    expect(townRestPrice(first, '7')).toBe(0);
-    expect(restInTown(first)).toBe(first);
   });
 
   it('veride diriltme / fiyat alanları yok, metinler diriltme demiyor', () => {

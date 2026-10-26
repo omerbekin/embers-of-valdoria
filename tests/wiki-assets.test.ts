@@ -341,14 +341,14 @@ describe('Arayüz ikonu görselleri (assets/ui-icons) bağlı; asılları assets
 describe('Oyun ikonu görselleri (assets/misc-icons) bağlı; asılları assets/source/misc-icons', () => {
   it('her dosya beklenen bir ikon ve Codex > Icons > Game icons ta; small/ eşleri var; asıl sayfalar ve kesim aracı duruyor', () => {
     const onDisk = readdirSync('assets/misc-icons').flatMap((g) => readdirSync(`assets/misc-icons/${g}`).filter((f) => f.endsWith('.png')).map((f) => `${g}:${f.replace(/\.png$/, '')}`)).sort();
-    expect(onDisk.length).toBe(97);
+    expect(onDisk.length).toBe(101);
     const small = readdirSync('assets/misc-icons').flatMap((g) => readdirSync(`assets/misc-icons/${g}/small`).filter((f) => f.endsWith('.png')).map((f) => `${g}:${f.replace(/\.png$/, '')}`)).sort();
     expect(small).toEqual(onDisk);
     const rows = catalog.miscArt;
     expect(rows.filter((r) => r.unlinked).map((r) => r.id), 'beklenmeyen dosya').toEqual([]);
     expect(rows.filter((r) => r.url).map((r) => r.id).sort()).toEqual(onDisk);
     expect(legacyItems.some((i) => /assets\/misc-icons\//.test(`${i.id} ${i.label}`))).toBe(false);
-    for (const f of ['status-sheet.png', 'world-sheet.png', 'class-node-sheet.png']) expect(existsSync(`assets/source/misc-icons/${f}`), f).toBe(true);
+    for (const f of ['status-sheet.png', 'world-sheet.png', 'class-node-sheet.png', 'smith-town-sheet.png']) expect(existsSync(`assets/source/misc-icons/${f}`), f).toBe(true);
     expect(existsSync('tools/make-misc-icons.mjs')).toBe(true);
   });
 });

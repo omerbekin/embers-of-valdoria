@@ -4,7 +4,7 @@
 // Her nadirlikte; Legendary fiyatı x legendaryMult. Seviye şartı (ilvl - 3) yükseltilmiş item'de de geçerli: takılıysa takan kahraman yeni şartı
 // karşılamalı. Reforge: yalnız Epic; ana affix (ilk) dışındaki bir affix aynı kademeden seed'li yeniden zarlanır (aynı affix yeni değerle de
 // gelebilir: karar 364 "Aynısı da olabilir"); her tekrarda fiyat x growth (sayaç item'in üstünde: ItemInstance.reforges). Reforge fiyatı item'in
-// değerine (itemValue), Temper fiyatı adımın değer artışına bağlı (Ömer 2026-10-23); PROVİZYON: data/campaign/campaign.json > blacksmith.
+// sefer tüccarı fiyatına (campaignPrice x 0,5; Ömer 2026-10-26), Temper fiyatı adımın değer artışına bağlı (Ömer 2026-10-23); PROVİZYON: data/campaign/campaign.json > blacksmith.
 // Ömer 2026-10-26 (form econ/main): Temper artık Temper taşı + altın (taş: boss / elit ilk zaferi, loot.ts; hedef ilvl 15'in üstündeyse 2 taş; altın
 // eskinin ~%30'u). Yeni mod Combine: torbadan 3 item -> 1 yeni item (nadirlik ortalama, kesir kadar bir üst ihtimali; ilvl ortalama aşağı; aynı
 // tabansa aynı taban yeni affix'lerle, değilse düşüş üretecinden rastgele taban). Reforge (arayüzde 'Reroll affix' olabilir) aynen.
@@ -20,7 +20,6 @@ import {
   instanceRarity,
   instanceRoll,
   itemDef,
-  itemValue,
   ITEMS,
   levelRequirement,
   makeItem,
@@ -34,7 +33,7 @@ import {
   type SlotId,
 } from '../progression';
 import { CONFIG } from './data';
-import { rarityPrice } from './merchant';
+import { campaignPrice, rarityPrice } from './merchant';
 import { chapterOf } from './power';
 import { rngFor } from './seed';
 import { activeHeroes } from './state';
@@ -60,7 +59,7 @@ export interface BlacksmithConfig {
     highStones?: number;
     highAbove?: number;
   };
-  /** Reforge fiyatı = valueRatio x item'in değeri (itemValue) x growth ^ (önceki reforge sayısı). */
+  /** Reforge fiyatı = valueRatio x item'in tüccar fiyatı (campaignPrice) x growth ^ (önceki reforge sayısı). */
   reforge: { valueRatio: number; growth: number };
   /** Combine bedeli = valueRatio x beklenen sonucun tüccar fiyatı (merchant.ts > rarityPrice), en az minPrice (Ömer 2026-10-26; PROVİZYON). */
   combine?: { valueRatio: number; minPrice: number };
@@ -181,10 +180,10 @@ export function temperItem(s: CampaignState, uid: string, cfg: BlacksmithConfig 
   return t;
 }
 
-/** Reforge fiyatı: valueRatio x item'in tüccar fiyatı (itemValue; karar 364: tam fiyat) x growth ^ önceki reforge sayısı (her tekrarda x1,5). */
+/** Reforge ('Reroll affix') fiyatı (Ömer 2026-10-26): valueRatio (0,5) x item'in sefer tüccarı fiyatı (merchant.ts > campaignPrice) x growth ^ önceki reforge sayısı (her tekrarda x1,5). */
 export function reforgePrice(inst: ItemInstance, cfg: BlacksmithConfig = SMITH): number {
   const n = Math.max(0, Math.floor(inst.reforges ?? 0));
-  return Math.max(1, Math.round(cfg.reforge.valueRatio * itemValue(inst) * Math.pow(cfg.reforge.growth, n)));
+  return Math.max(1, Math.round(cfg.reforge.valueRatio * campaignPrice(inst) * Math.pow(cfg.reforge.growth, n)));
 }
 
 /** Reforge edilebilecek affix sıraları (ana affix = 0 hariç); Epic değilse boş. */

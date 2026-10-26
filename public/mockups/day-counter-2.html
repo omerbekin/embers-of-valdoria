@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Day Counter 2</title>
+<!-- GUN SAYACI taslagi v3 (ui-dev, 2026-10-26). D-M: gun = genel zaman ekseni. Oyun kodu DEGIL. Tum olaylar ORNEK. Varliklar: day-counter/ -->
+<style>
+@font-face { font-family:'Cinzel'; font-weight:400 900; font-display:block; src:url('day-counter/f/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family:'EB Garamond'; font-weight:400 800; font-display:block; src:url('day-counter/f/EBGaramond-normal-latin.woff2') format('woff2'); }
+:root { --text:#d9c8a2; --dim:#a8977a; --gold:#f3d999; --line2:rgba(217,178,106,.3); --ember:#e0702a; --good:#9fd88a; --disp:Cinzel,Georgia,serif; --body:'EB Garamond',Georgia,serif;
+ --k-quest:#f3d999; --k-capture:#e0a35a; --k-gate:#7fb0e0; --k-threat:#e8705a; --k-market:#9fd88a; --k-visit:#6fd0c0; --k-fest:#c590e0; }
+* { box-sizing:border-box; }
+html,body { margin:0; background:#0b0806; color:var(--text); font-family:var(--body); font-style:normal; }
+body { font-size:18px; line-height:1.3; }
+img { display:block; }
+button { font-family:inherit; color:inherit; cursor:pointer; }
+.pg { max-width:940px; margin:0 auto; padding:16px 16px 90px; }
+h1 { margin:0 0 4px; font:600 24px var(--disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.lead { margin:0 0 10px; color:var(--dim); font-size:17px; }
+.lead a { color:var(--gold); }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+.tabs button { width:44px; height:44px; font:700 16px var(--disp); background:rgba(8,6,4,.7); border:1px solid var(--line2); transition:border-color .2s,color .2s; }
+.tabs button:hover { border-color:rgba(243,217,153,.85); color:var(--gold); }
+.tabs button.on { color:#1a0f05; background:linear-gradient(180deg,#f3d999,#d9b26a); border-color:#f3d999; }
+.vtag { margin:6px 0 10px; font:600 16px var(--disp); letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.map { position:relative; width:100%; height:270px; overflow:hidden; border:1px solid var(--line2); background:#120d09 url('day-counter/a/bg.webp') center 40%/cover; }
+.map::after { content:''; position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 60px rgba(0,0,0,.55); }
+.map .flashov { position:absolute; inset:0; z-index:9; pointer-events:none; background:radial-gradient(ellipse at 50% 0,rgba(255,200,120,.55),transparent 65%); animation:fl 1.4s ease-out forwards; }
+@keyframes fl { 0%{opacity:0;} 25%{opacity:1;} 100%{opacity:0;} }
+.mhint { position:absolute; left:0; right:0; bottom:8px; text-align:center; z-index:1; font:600 11px var(--disp); letter-spacing:.2em; text-transform:uppercase; color:rgba(217,200,162,.4); }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; align-items:center; }
+.ctl button { min-height:44px; padding:0 16px; font:600 13px var(--disp); letter-spacing:.12em; text-transform:uppercase; background:rgba(8,6,4,.7); border:1px solid var(--line2); transition:border-color .2s,color .2s,transform .15s; }
+.ctl button:hover { border-color:rgba(243,217,153,.85); color:var(--gold); transform:translateY(-1px); }
+.cap { margin:8px 0 0; padding:10px 14px; border-left:3px solid var(--ember); background:rgba(8,6,4,.55); font-size:17px; }
+.mockstrip { position:fixed; left:0; bottom:0; z-index:20; padding:6px 14px; font:600 11px var(--disp); letter-spacing:.22em; text-transform:uppercase; color:#1a0f05; background:#e0b24a; border-top-right-radius:4px; }
+
+/* shared bits */
+.pl { background:rgba(10,7,5,.86); border:1px solid var(--line2); box-shadow:0 4px 12px rgba(0,0,0,.6); }
+.dn { font:700 20px var(--disp); letter-spacing:.14em; color:var(--gold); line-height:1; }
+.pips { display:inline-flex; gap:4px; vertical-align:middle; }
+.pips i { width:8px; height:8px; border:1px solid var(--gold); transform:rotate(45deg); background:rgba(0,0,0,.4); }
+.pips i.on { background:var(--gold); }
+.exlab { font:600 9px var(--disp); letter-spacing:.18em; text-transform:uppercase; color:#1a0f05; background:#e0b24a; padding:1px 5px; flex:none; }
+.ic { width:16px; height:16px; flex:none; color:var(--c,var(--gold)); }
+.k-quest{--c:var(--k-quest);} .k-capture{--c:var(--k-capture);} .k-gate{--c:var(--k-gate);} .k-threat{--c:var(--k-threat);} .k-market{--c:var(--k-market);} .k-visit{--c:var(--k-visit);} .k-fest{--c:var(--k-fest);}
+.chip { font:700 11px var(--disp); letter-spacing:.08em; padding:1px 6px; border:1px solid var(--c,var(--gold)); color:var(--c,var(--gold)); white-space:nowrap; }
+.chip.today { background:var(--c,var(--gold)); color:#1a0f05; animation:pulse 1.2s infinite alternate; }
+@keyframes pulse { 0%{filter:brightness(1);} 100%{filter:brightness(1.4);} }
+.inn { display:flex; align-items:center; gap:5px; }
+.inn .ph { width:24px; height:24px; border:1px solid rgba(217,178,106,.6); background:#1a120c; overflow:hidden; position:relative; flex:none; }
+.inn .ph img { width:100%; height:100%; object-fit:cover; }
+.inn .tx { font:600 10px var(--disp); letter-spacing:.12em; text-transform:uppercase; color:var(--dim); }
+.heal .ph { animation:healPh 1.6s ease-out; }
+.heal .ph::after { content:'+50%'; position:absolute; inset:auto 0 0 0; text-align:center; font:700 9px var(--disp); color:#12200c; background:var(--good); animation:rise 1.6s ease-out forwards; }
+@keyframes healPh { 0%{box-shadow:0 0 0 0 rgba(159,216,138,0);} 25%{box-shadow:0 0 14px 3px rgba(159,216,138,.9); border-color:var(--good);} 100%{box-shadow:0 0 0 0 rgba(159,216,138,0);} }
+@keyframes rise { 0%{opacity:0; transform:translateY(8px);} 20%{opacity:1; transform:none;} 80%{opacity:1;} 100%{opacity:0; transform:translateY(-6px);} }
+.row { display:flex; align-items:center; gap:7px; }
+.ttl { font-size:16px; line-height:1.15; }
+.sm { font-size:14px; color:var(--dim); }
+
+/* D calendar strip */
+.D { position:absolute; top:8px; left:8px; right:8px; max-width:540px; margin:0 auto; z-index:2; padding:8px; }
+.D .hd { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.D .strip { display:flex; gap:2px; animation:slide .8s ease-out; }
+@keyframes slide { 0%{transform:translateX(34px); opacity:.3;} 100%{transform:none; opacity:1;} }
+.D .cell { flex:1; min-width:0; height:56px; border:1px solid var(--line2); background:rgba(40,28,16,.6); text-align:center; padding:3px 0; display:flex; flex-direction:column; align-items:center; justify-content:space-between; }
+.D .cell.now { border-color:var(--gold); background:rgba(120,80,30,.55); }
+.D .cell b { font:600 12px var(--disp); }
+.D .cell .ic { width:13px; height:13px; }
+.D .cell .st { display:flex; flex-direction:column; align-items:center; gap:1px; min-height:27px; }
+.D .nx { margin-top:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+/* E badge + panel */
+.E { position:absolute; top:10px; left:10px; z-index:3; }
+.E .bd { display:flex; align-items:center; gap:8px; padding:6px 12px 6px 8px; cursor:pointer; position:relative; }
+.E .bd:hover { border-color:rgba(243,217,153,.85); }
+.E .bd .al { position:absolute; top:-5px; right:-5px; min-width:18px; height:18px; border-radius:9px; background:var(--k-threat); color:#1a0f05; font:700 11px var(--disp); text-align:center; line-height:18px; animation:pulse 1s infinite alternate; }
+.E .pn { margin-top:4px; width:min(290px,calc(100vw - 52px)); padding:8px; animation:drop .25s ease-out; }
+@keyframes drop { 0%{opacity:0; transform:translateY(-8px);} 100%{opacity:1; transform:none;} }
+.E .pn .r { padding:5px 0; border-bottom:1px solid var(--line2); }
+.E .pn .r:last-child { border:0; }
+.E .carat { font-size:12px; color:var(--dim); }
+
+/* F queue */
+.F { position:absolute; top:8px; left:8px; width:min(215px,calc(100% - 16px)); z-index:2; padding:8px; }
+.F .hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+.F .q { display:flex; align-items:center; gap:6px; padding:4px 0; border-top:1px solid var(--line2); animation:slideq .5s ease-out both; }
+@keyframes slideq { 0%{transform:translateY(14px); opacity:0;} 100%{transform:none; opacity:1;} }
+.F .q.td { background:linear-gradient(90deg,rgba(243,217,153,.2),transparent); }
+.F .q .bar { height:3px; background:rgba(255,255,255,.12); margin-top:2px; }
+.F .q .bar i { display:block; height:100%; background:var(--c); }
+.F .q .tt { flex:1; min-width:0; }
+.F .q .ttl { font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* G moon */
+.G { position:absolute; top:10px; left:10px; z-index:2; display:flex; gap:10px; padding:8px 12px 8px 8px; align-items:center; max-width:calc(100% - 20px); }
+.G svg.moon { width:64px; height:64px; flex:none; filter:drop-shadow(0 0 8px rgba(240,230,190,.4)); animation:moonin .9s ease-out; }
+@keyframes moonin { 0%{opacity:.2; transform:scale(.8);} 100%{opacity:1; transform:none;} }
+.G .om { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.G .om .row { font-size:15px; }
+.G .mn { font:600 10px var(--disp); letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
+
+/* H hourglass */
+.H { position:absolute; top:10px; left:10px; z-index:2; display:flex; gap:12px; padding:8px 14px 8px 10px; align-items:center; max-width:calc(100% - 20px); }
+.H svg.hg { width:56px; height:84px; flex:none; }
+.H svg.hg.flip { animation:flipHg 1s ease-in-out; }
+@keyframes flipHg { 0%{transform:rotate(180deg);} 100%{transform:none;} }
+.H .stream { animation:strm .5s linear infinite; }
+@keyframes strm { 0%{stroke-dashoffset:0;} 100%{stroke-dashoffset:-6;} }
+.H .bx { min-width:0; display:flex; flex-direction:column; gap:4px; }
+.H .nxb { padding:5px 8px; border:1px solid var(--c); background:rgba(0,0,0,.35); }
+
+/* I map pins */
+.I .chipd { position:absolute; top:8px; left:8px; z-index:4; padding:6px 10px; display:flex; gap:8px; align-items:center; }
+.I .pin { position:absolute; z-index:3; transform:translate(-50%,-100%); display:flex; flex-direction:column; align-items:center; animation:pinin .6s ease-out both; }
+@keyframes pinin { 0%{transform:translate(-50%,-140%); opacity:0;} 100%{transform:translate(-50%,-100%); opacity:1;} }
+.I .pin .hd { width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:#171008; border:2px solid var(--c); display:flex; align-items:center; justify-content:center; }
+.I .pin .hd svg { transform:rotate(45deg); }
+.I .pin .tg { margin-top:2px; font:700 10px var(--disp); letter-spacing:.06em; padding:1px 5px; background:#0b0806; border:1px solid var(--c); color:var(--c); white-space:nowrap; }
+.I .pin.near .hd { animation:glowp 1s infinite alternate; }
+.I .pin.dim { opacity:.55; }
+@keyframes glowp { 0%{box-shadow:0 0 0 0 var(--c);} 100%{box-shadow:0 0 12px 3px var(--c);} }
+.I .pin .lbl { position:absolute; top:-18px; white-space:nowrap; font-size:13px; padding:0 5px; background:rgba(8,6,4,.88); border:1px solid var(--line2); display:none; }
+.I .pin:hover .lbl, .I .pin.near .lbl { display:block; }
+.I .pin:hover { z-index:6; }
+.I .innp { position:absolute; right:8px; bottom:26px; z-index:4; padding:4px 8px; }
+
+/* J letters */
+.J { position:absolute; top:8px; left:8px; right:8px; z-index:2; padding:8px; }
+.J .hd { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.J .ls { display:flex; gap:6px; }
+.J .lt { flex:1; min-width:0; position:relative; padding:20px 4px 5px; text-align:center; background:linear-gradient(180deg,#d9c79a,#b9a273); color:#2a1a0a; border:1px solid #6b4f1c; animation:letin .6s ease-out both; }
+@keyframes letin { 0%{transform:translateY(-20px); opacity:0;} 100%{transform:none; opacity:1;} }
+.J .lt::before { content:''; position:absolute; left:0; right:0; top:0; height:14px; background:linear-gradient(135deg,transparent 49%,rgba(90,60,20,.4) 50%) 0 0/50% 100%,linear-gradient(225deg,transparent 49%,rgba(90,60,20,.4) 50%) 100% 0/50% 100%; background-repeat:no-repeat; }
+.J .seal { position:absolute; left:50%; top:3px; width:20px; height:20px; margin-left:-10px; border-radius:50%; background:var(--c); border:2px solid rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:2; color:#1a0f05; }
+.J .seal .ic { width:11px; height:11px; color:#1a0f05; }
+.J .lt .d { font:700 12px var(--disp); letter-spacing:.08em; }
+.J .lt .t { font-size:13px; line-height:1.05; margin-top:1px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; font-weight:500; }
+.J .lt.open .seal { animation:crack .8s ease-out forwards; }
+.J .lt.open { background:linear-gradient(180deg,#f2e6c0,#dccb9c); box-shadow:0 0 14px rgba(255,200,100,.7); }
+@keyframes crack { 0%{transform:scale(1);} 40%{transform:scale(1.4) rotate(15deg);} 100%{transform:scale(.6) translateY(-6px); opacity:.35;} }
+
+/* K tower clock */
+.K { position:absolute; top:10px; left:10px; z-index:2; display:flex; gap:10px; align-items:center; padding:8px 14px 8px 8px; max-width:calc(100% - 20px); }
+.K svg.cl { width:96px; height:96px; flex:none; }
+.K .hand { transform-origin:48px 48px; animation:handm .9s cubic-bezier(.5,0,.3,1) both; }
+@keyframes handm { 0%{transform:rotate(var(--f));} 100%{transform:rotate(var(--t));} }
+.K .bell { animation:ring .8s ease-out; transform-origin:48px 6px; }
+@keyframes ring { 0%,100%{transform:rotate(0);} 20%{transform:rotate(14deg);} 40%{transform:rotate(-12deg);} 60%{transform:rotate(8deg);} 80%{transform:rotate(-4deg);} }
+.K .bx { min-width:0; display:flex; flex-direction:column; gap:4px; }
+
+/* L star chart */
+.L { position:absolute; top:8px; left:8px; right:8px; z-index:2; height:136px; overflow:hidden; background:linear-gradient(180deg,#0c1024,#1d1a3a 70%,#3a2a3a); }
+.L .hd { position:absolute; left:8px; top:6px; display:flex; gap:10px; align-items:center; z-index:3; }
+.L .sk { position:absolute; left:46px; right:8px; top:30px; bottom:6px; }
+.L .ln { position:absolute; left:0; right:0; top:50%; border-top:1px dashed rgba(243,217,153,.25); }
+.L .st { position:absolute; transform:translate(-50%,-50%); transition:left .8s ease; animation:twk 2s infinite alternate; }
+@keyframes twk { 0%{opacity:.8;} 100%{opacity:1;} }
+.L .st .ic { width:18px; height:18px; filter:drop-shadow(0 0 6px var(--c)); }
+.L .st .lb { position:absolute; left:50%; transform:translateX(-50%); font-size:13px; width:76px; white-space:normal; line-height:1.05; text-align:center; color:var(--text); text-shadow:0 1px 2px #000; }
+.L .st .lb b { display:block; font:700 10px var(--disp); color:var(--c); }
+.L .st.up .lb { bottom:20px; } .L .st.dn2 .lb { top:20px; }
+.L .moon0 { position:absolute; left:0; top:50%; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; background:radial-gradient(circle,#fff3c0,#f3b44a); box-shadow:0 0 12px 4px rgba(255,190,90,.7); z-index:2; }
+.L .innl { position:absolute; right:8px; top:6px; z-index:3; }
+.Lnote { position:absolute; left:8px; right:8px; top:152px; z-index:2; padding:6px 10px; }
+
+/* M ledger */
+.M { position:absolute; top:8px; left:50%; transform:translateX(-50%); width:min(400px,calc(100% - 16px)); z-index:2; background:linear-gradient(180deg,#d9c79a,#b9a273); color:#2a1a0a; border:1px solid #6b4f1c; box-shadow:0 4px 12px rgba(0,0,0,.6); }
+.M .hd { display:flex; align-items:center; gap:10px; padding:6px 10px; background:#3a2410; color:var(--gold); }
+.M .hd .pips i { border-color:var(--gold); }
+.M .tb { display:flex; border-bottom:1px solid #6b4f1c; }
+.M .tb button { flex:1; min-height:32px; font:700 11px var(--disp); letter-spacing:.08em; text-transform:uppercase; background:none; border:0; border-right:1px solid rgba(90,60,20,.4); color:#4a3414; position:relative; }
+.M .tb button.on { background:rgba(255,255,255,.35); color:#1a0f05; }
+.M .tb button em { font-style:normal; margin-left:3px; padding:0 4px; background:#7a1f12; color:#f2e8cc; font-size:10px; }
+.M .bd { padding:6px 10px 8px; min-height:150px; }
+.M .it { padding:4px 0; border-bottom:1px solid rgba(90,60,20,.3); animation:slideq .4s ease-out both; }
+.M .it .bar { height:4px; background:rgba(90,60,20,.25); margin-top:2px; }
+.M .it .bar i { display:block; height:100%; background:#7a1f12; }
+.M .it.td { background:rgba(255,200,100,.35); }
+.M .sm { color:#5a4220; }
+.M .ic { color:#4a3414; }
+.M .chip { color:#4a3414; border-color:#4a3414; }
+.M .chip.today { background:#7a1f12; color:#f2e8cc; border-color:#7a1f12; }
+.M .inn .tx { color:#4a3414; }
+#mapE.map{height:360px;} #mapM.map{height:300px;}
+@media (max-width:480px) { .map{height:290px;} #mapE.map{height:380px;} #mapM.map{height:320px;} .G svg.moon{width:52px;height:52px;} .D .cell b{font-size:10px;} .L .st .lb{font-size:11px;} }
+</style>
+</head>
+<body>
+<div class="mockstrip">Mockup - not in game</div>
+<div class="pg">
+<h1>Day Counter 2</h1>
+<p class="lead">The day is a general time axis: 2 victories = 1 day, advancing only by battle victory. Everything tied to it (quest deadlines, day locks, enemy escalation, timed events, Inn healing) is shown as an <span class="exlab">Example</span> only. <a href="day-counter.html">Earlier concepts A-C</a></p>
+<div class="tabs" id="tabs"></div>
+<div id="stage"></div>
+</div>
+
+<script>
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const IC = {
+ quest:'<path d="M3 2h8a2 2 0 0 1 2 2v9H5a2 2 0 0 1-2-2zM6 6h5M6 9h5" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+ capture:'<circle cx="5" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="11" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+ gate:'<path d="M3 14V7a5 5 0 0 1 10 0v7zM8 14V8" fill="none" stroke="currentColor" stroke-width="1.5"/>',
+ threat:'<path d="M8 2l7 12H1zM8 6v4M8 11.5v1" fill="none" stroke="currentColor" stroke-width="1.5"/>',
+ market:'<circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v8M5.5 6.5h3.5a1.5 1.5 0 0 1 0 3H5.5" fill="none" stroke="currentColor" stroke-width="1.2"/>',
+ visit:'<circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2.5v11M2.5 8h11M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1"/>',
+ fest:'<path d="M4 2v13M4 3h9l-2 3 2 3H4" fill="none" stroke="currentColor" stroke-width="1.5"/>'
+};
+const ic = k => '<svg class="ic k-'+k+'" viewBox="0 0 16 16">'+IC[k]+'</svg>';
+const SEED = () => ([
+ {k:'capture',t:'Rescue the captive',day:4,x:72,y:58},
+ {k:'gate',t:'Sunken Crypt unlocks',day:3,x:28,y:62},
+ {k:'market',t:'Smith restocks',day:3,rep:3,x:18,y:40},
+ {k:'visit',t:'Wandering trader arrives',day:5,x:84,y:40},
+ {k:'threat',t:'The Drowned grow bolder',day:6,x:48,y:78},
+ {k:'fest',t:'Harvest Festival',day:8,x:56,y:46},
+ {k:'gate',t:'Ashen Keep opens',day:9,x:66,y:34},
+ {k:'quest',t:'Escort the envoy',day:11,x:40,y:50},
+ {k:'threat',t:'Wolves gather at the pass',day:12,x:86,y:68}
+]);
+const plural = n => n+' day'+(n===1?'':'s');
+function fmt(e,day){ const l=e.day-day;
+ if(e.k==='capture'||e.k==='quest') return l>0 ? plural(l)+' left' : 'Due today';
+ if(e.k==='gate') return l>0 ? 'Unlocks on Day '+e.day : 'Unlocked today';
+ if(e.k==='threat') return l>0 ? 'Day '+e.day : 'Begins today';
+ if(e.k==='market') return l>0 ? 'Day '+e.day : 'Restocked today';
+ return l>0 ? 'Day '+e.day : 'Today'; }
+const short = (e,day) => { const l=e.day-day; return l>0 ? l+'d' : 'NOW'; };
+const chip = (e,day) => '<span class="chip k-'+e.k+(e.day<=day?' today':'')+'">'+short(e,day)+'</span>';
+const up = V => V.ev.filter(e=>e.day>=V.day).sort((a,b)=>a.day-b.day);
+const pips = p => '<span class="pips"><i class="'+(p>=1?'on':'')+'"></i><i></i></span>';
+const innHTML = (txt) => '<div class="inn"><div class="ph"><img src="day-counter/a/hexer.webp" alt=""></div><div class="ph"><img src="day-counter/a/paladin.webp" alt=""></div><span class="tx">'+(txt||'Inn: mend at dawn')+'</span></div>';
+const evOn = (V,d) => V.ev.filter(e => e.day===d || (e.rep && d>e.day && (d-e.day)%e.rep===0));
+
+/* ---- renderers: each returns HTML for the .map ---- */
+const R = {};
+R.D = V => { const cells=''; let c=''; for(let i=0;i<10;i++){ const d=V.day+i; const es=evOn(V,d); c+='<div class="cell'+(i===0?' now':'')+'"><b>'+d+'</b><div class="st">'+es.slice(0,2).map(e=>ic(e.k)).join('')+'</div></div>'; }
+ const n=up(V)[0]; return '<div class="D pl"><div class="hd"><span class="dn">DAY '+V.day+'</span>'+pips(V.p)+'<span class="exlab">Example</span></div><div class="strip" data-ani="'+V.ani+'">'+c+'</div><div class="nx">'+(n?ic(n.k)+'<span class="ttl">'+n.t+'</span>'+chip(n,V.day):'')+'<span style="margin-left:auto">'+innHTML('Inn heals at dawn')+'</span></div></div>'; };
+
+R.E = V => { const l=up(V); const soon=l.filter(e=>e.day-V.day<=1).length;
+ let h='<div class="E"><div class="bd pl" data-act="tog"><span class="dn">D'+V.day+'</span>'+pips(V.p)+'<span class="carat">'+(V.ui.open?'close':'open')+'</span>'+(soon?'<span class="al">'+soon+'</span>':'')+'</div>';
+ if(V.ui.open){ h+='<div class="pn pl"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="sm">Day '+V.day+' agenda</span><span class="exlab">Example</span></div>'+l.slice(0,5).map(e=>'<div class="r row">'+ic(e.k)+'<div style="flex:1"><div class="ttl">'+e.t+'</div><div class="sm">'+fmt(e,V.day)+'</div></div>'+chip(e,V.day)+'</div>').join('')+'<div class="r">'+innHTML('Inn: dawn heal')+'</div></div>'; }
+ return h+'</div>'; };
+
+R.F = V => { const l=up(V).slice(0,5); return '<div class="F pl"><div class="hd"><span class="dn">DAY '+V.day+'</span>'+pips(V.p)+'<span class="exlab">Example</span></div>'+l.map((e,i)=>{ const w=Math.max(8,100-(e.day-V.day)*12); return '<div class="q k-'+e.k+(e.day===V.day?' td':'')+'" style="animation-delay:'+i*60+'ms">'+ic(e.k)+'<div class="tt"><div class="ttl">'+e.t+'</div><div class="bar"><i style="width:'+w+'%"></i></div></div>'+chip(e,V.day)+'</div>'; }).join('')+'<div style="border-top:1px solid var(--line2);padding-top:5px">'+innHTML('Inn mends at dawn')+'</div></div>'; };
+
+const moonSVG = f => { const r=30,c=32; const g=f>.5?1-f:f; const k=Math.cos(2*Math.PI*g); const rx=Math.abs(k)*r; const sw=k>0?0:1;
+ const lit='M'+c+' 2 A30 30 0 0 1 '+c+' 62 A'+rx.toFixed(1)+' 30 0 0 '+sw+' '+c+' 2Z';
+ return '<svg class="moon" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#1c1a2a" stroke="rgba(243,217,153,.4)"/><path d="'+lit+'" fill="#f0e6be"'+(f>.5?' transform="translate(64 0) scale(-1 1)"':'')+'/></svg>'; };
+R.G = V => { const f=((V.day-1)%8)/8; const names=['New moon','Waxing crescent','First quarter','Waxing gibbous','Full moon','Waning gibbous','Last quarter','Waning crescent']; const l=up(V).slice(0,3);
+ return '<div class="G pl">'+moonSVG(f)+'<div class="om"><div class="row"><span class="dn">DAY '+V.day+'</span>'+pips(V.p)+'<span class="exlab">Example</span></div><div class="mn">'+names[(V.day-1)%8]+'</div>'+l.map(e=>'<div class="row k-'+e.k+'">'+ic(e.k)+'<span>'+e.t+'</span>'+chip(e,V.day)+'</div>').join('')+'</div></div>'; };
+
+R.H = V => { const top=(2-V.p)/2, from=V.prev!=null?V.prev:top; const n=up(V)[0]; const lt=up(V).slice(1,3);
+ const th=(t)=>Math.round(t*22);
+ const svg='<svg class="hg'+(V.ani==='dawn'?' flip':'')+'" viewBox="0 0 56 84"><path d="M6 4h44M6 80h44" stroke="#c9a24a" stroke-width="4"/><path d="M10 4c0 24 16 26 18 38C26 54 10 56 10 80M46 4c0 24-16 26-18 38 2 12 18 14 18 38" fill="rgba(255,255,255,.05)" stroke="rgba(243,217,153,.7)" stroke-width="2"/>'
+ +'<path d="M'+(28-th(top)*0.9)+' '+(40-th(top))+'L'+(28+th(top)*0.9)+' '+(40-th(top))+'L28 40Z" fill="#e0b24a"/><path d="M28 40V68" stroke="#e0b24a" stroke-width="1.5" stroke-dasharray="3 3" class="stream"/><path d="M'+(28-th(1-top)*1.1)+' 80L'+(28+th(1-top)*1.1)+' 80L28 '+(80-th(1-top))+'Z" fill="#e0b24a"/></svg>';
+ return '<div class="H pl">'+svg+'<div class="bx"><div class="row"><span class="dn">DAY '+V.day+'</span><span class="exlab">Example</span></div><div class="sm">'+(V.p===0?'2 victories until the sand runs out':'1 victory until dawn')+'</div>'+(n?'<div class="nxb k-'+n.k+'"><div class="row">'+ic(n.k)+'<span class="ttl">'+n.t+'</span></div><div class="sm">'+fmt(n,V.day)+'</div></div>':'')+'<div class="sm">'+lt.map(e=>e.t+' ('+short(e,V.day)+')').join(' / ')+'</div>'+innHTML('Inn: dawn')+'</div></div>'; };
+
+R.I = V => { const l=up(V).slice(0,8);
+ return '<div class="I"><div class="chipd pl"><span class="dn">DAY '+V.day+'</span>'+pips(V.p)+'<span class="exlab">Example</span></div>'+l.map((e,i)=>{ const left=e.day-V.day; return '<div class="pin k-'+e.k+(left<=2?' near':'')+(left>5?' dim':'')+'" style="left:'+e.x+'%;top:'+e.y+'%;animation-delay:'+i*40+'ms"><div class="lbl">'+e.t+'</div><div class="hd">'+ic(e.k)+'</div><div class="tg">'+(e.k==='gate'?(left>0?'Day '+e.day:'OPEN'):short(e,V.day))+'</div></div>'; }).join('')+'<div class="innp pl">'+innHTML('Inn: dawn heal')+'</div><div class="mhint">pins on the map: tag = days left</div></div>'; };
+
+R.J = V => { const l=up(V).slice(0,4);
+ return '<div class="J pl"><div class="hd"><span class="dn">DAY '+V.day+'</span>'+pips(V.p)+'<span class="exlab">Example</span><span style="margin-left:auto">'+innHTML('Inn: dawn')+'</span></div><div class="ls">'+l.map((e,i)=>'<div class="lt k-'+e.k+(e.day===V.day?' open':'')+'" style="animation-delay:'+i*70+'ms"><span class="seal">'+ic(e.k)+'</span><div class="d">'+(e.day===V.day?'TODAY':'Day '+e.day)+'</div><div class="t">'+e.t+'</div></div>').join('')+'</div><div class="sm" style="margin-top:5px">'+(l[0]?fmt(l[0],V.day)+' - '+l[0].t:'No letters')+'</div></div>'; };
+
+R.K = V => { const ang=d=>((d-1)%12)*30; const cur=ang(V.day)+V.p*15; const prev=V.prevA!=null?V.prevA:cur; const to=(cur<prev?cur+360:cur);
+ let t=''; for(let i=0;i<12;i++){ t+='<line x1="48" y1="9" x2="48" y2="'+(i%3===0?16:13)+'" stroke="#c9a24a" stroke-width="'+(i%3===0?2:1)+'" transform="rotate('+i*30+' 48 48)"/>'; }
+ const pp=V.ev.filter(e=>e.day>=V.day&&e.day<V.day+12).map(e=>'<circle cx="48" cy="21" r="3.2" fill="'+getComputedStyle(document.documentElement).getPropertyValue('--k-'+e.k)+'" transform="rotate('+ang(e.day)+' 48 48)"/>').join('');
+ const n=up(V)[0];
+ return '<div class="K pl"><svg class="cl" viewBox="0 0 96 96"><circle cx="48" cy="48" r="45" fill="#150e08" stroke="#c9a24a" stroke-width="3"/><circle cx="48" cy="48" r="40" fill="none" stroke="rgba(243,217,153,.2)"/>'+t+pp+'<g class="'+(V.ani==='dawn'?'bell':'')+'"><path d="M42 6a6 6 0 0 1 12 0z" fill="#e0b24a"/></g><g class="hand" style="--f:'+prev+'deg;--t:'+to+'deg"><path d="M48 52V14" stroke="#f3d999" stroke-width="3" stroke-linecap="round"/></g><circle cx="48" cy="48" r="4" fill="#e0b24a"/></svg><div class="bx"><div class="row"><span class="dn">DAY '+V.day+'</span>'+pips(V.p)+'</div><span class="exlab" style="width:max-content">Example</span>'+(n?'<div class="row k-'+n.k+'">'+ic(n.k)+'<span class="ttl">'+n.t+'</span></div><div class="sm">'+fmt(n,V.day)+'</div>':'')+innHTML('Inn: dawn')+'</div></div>'; };
+
+R.L = V => { const span=12; const l=V.ev.filter(e=>e.day>=V.day&&e.day<V.day+span).sort((a,b)=>a.day-b.day); const base=V.day+V.p*.5;
+ const lastR={up:-9,dn2:-9}; const st=l.map((e,i)=>{ const x=((e.day-base)/span*100).toFixed(1); let row=null; if(e.day-lastR.up>=2) row='up'; else if(e.day-lastR.dn2>=2) row='dn2'; if(row) lastR[row]=e.day; return '<div class="st k-'+e.k+' '+(row||'up')+'" style="left:'+x+'%;top:50%">'+ic(e.k)+(row?'<div class="lb"><b>'+(e.day===V.day?'TODAY':'DAY '+e.day)+'</b>'+e.t+'</div>':'')+'</div>'; }).join('');
+ const n=up(V)[0];
+ return '<div class="L pl"><div class="hd"><span class="dn">DAY '+V.day+'</span>'+pips(V.p)+'<span class="exlab">Example</span></div><div class="innl">'+innHTML('Inn')+'</div><div class="sk"><div class="ln"></div><div class="moon0"></div>'+st+'</div></div><div class="Lnote pl sm">The sky chart slides left as days pass. Each star is an event on the timeline; half a step per victory.</div>'; };
+
+R.M = V => { const tabs={quests:['quest','capture','gate'],threats:['threat'],markets:['market','visit','fest'],inn:[]}; const cur=V.ui.tab||'quests';
+ const cnt=k=>V.ev.filter(e=>tabs[k].includes(e.k)&&e.day>=V.day&&e.day-V.day<=2).length;
+ let body='';
+ if(cur==='inn'){ body='<div class="it"><div class="ttl">Heroes resting at the Inn</div><div class="sm">At every dawn: +50% HP and 1 wound mended.</div><div style="margin-top:5px">'+innHTML('Heals at dawn')+'</div></div><div class="it"><div class="sm">Next dawn: '+(V.p===0?'after 2 more victories':'after 1 more victory')+'</div></div>'; }
+ else body=V.ev.filter(e=>tabs[cur].includes(e.k)&&e.day>=V.day).sort((a,b)=>a.day-b.day).slice(0,4).map(e=>{ const w=Math.max(6,100-(e.day-V.day)*12); return '<div class="it row k-'+e.k+(e.day===V.day?' td':'')+'">'+ic(e.k)+'<div style="flex:1;min-width:0"><div class="ttl">'+e.t+'</div><div class="sm">'+fmt(e,V.day)+'</div><div class="bar"><i style="width:'+w+'%"></i></div></div>'+chip(e,V.day)+'</div>'; }).join('')||'<div class="sm">Nothing planned.</div>';
+ return '<div class="M"><div class="hd"><span class="dn">DAY '+V.day+'</span>'+pips(V.p)+'<span class="exlab" style="margin-left:auto">Example</span></div><div class="tb">'+Object.keys(tabs).map(k=>'<button data-act="tab" data-v="'+k+'" class="'+(k===cur?'on':'')+'">'+k+(cnt(k)?'<em>'+cnt(k)+'</em>':'')+'</button>').join('')+'</div><div class="bd">'+body+'</div></div>'; };
+
+const META = {
+ D:['Calendar Strip','Takvim şeridi: önümüzdeki 10 gün hücre hücre görünür, gün dönünce şerit bir hücre kayar; her hücrede o günün olay simgeleri, altında en yakın olay ve Inn notu (geniş).'],
+ E:['Corner Badge and Agenda','Köşe rozeti: yalnız gün ve iki zafer işareti, yaklaşan olay sayısı kırmızı balonla; tıklayınca açılan ajanda kutusu quest/kilit/tehdit satırlarını ve Inn\'i listeler (kompakt).'],
+ F:['Event Queue','Olay kuyruğu: sol panelde en yakın 5 olay geri sayıma göre sıralı, her satırda kalan gün çipi ve ilerleme çubuğu; gün dönünce satırlar yukarı kayar, bugünkü olay parlar (orta).'],
+ G:['Moon Phases','Ay evreleri: 8 günlük döngüde ay her gün evre değiştirir; yanında "yakın kehanetler" olarak üç olay satırı durur (kompakt).'],
+ H:['Hourglass','Kum saati: iki zaferde kum biter, saat ters döner = yeni gün; yanında "sıradaki olay" kartı ve sonraki ikisi tek satırda (kompakt).'],
+ I:['Map Pins','Harita işaretleri: olaylar doğrudan haritada konumunda iğne olarak durur (quest, kilitli kapı, tehdit, tüccar), etiketler gün sayar; yakın olanlar parlar, köşede yalnız küçük gün rozeti (geniş, harita üstü).'],
+ J:['Sealed Letters','Mühürlü mektuplar: her olay renkli mühürlü bir mektup, üstünde açılma günü; gün gelince mühür kırılıp mektup açılır, yeni mektup sağdan gelir (geniş şerit).'],
+ K:['Tower Clock','Kule saati: 12 günlük kadran, kol her zaferde yarım adım ilerler, olaylar kadran kenarında renkli noktalar; gün dönünce çan sallanır (kompakt, köşe).'],
+ L:['Star Chart','Yıldız haritası: olaylar gece gökyüzündeki zaman çizgisi üzerinde yıldızlar, her zafer çizgiyi yarım adım sola kaydırır; yıldız rengi tür belirtir (geniş şerit).'],
+ M:['Company Ledger','Defter sekmeleri: Quests / Threats / Markets / Inn sekmeleri, yaklaşan olay sayısı kırmızı rozette; Inn iyileşmesi yalnız bir sekme, merkez değil (orta panel).']
+};
+
+/* ---- engine ---- */
+const VS = {};
+function mk(id){ VS[id]={id,day:1,p:0,ev:SEED(),ui:{},ani:'',prev:null,prevA:null}; }
+function draw(id){ const V=VS[id]; const root=document.getElementById('map'+id); root.innerHTML=R[id](V)+'<div class="mhint">'+(id==='I'?'':'map')+'</div>';
+  const first=root.querySelector('.mhint'); if(id==='I'&&first) first.remove();
+  V.ani=''; }
+function dawn(V){ V.day++; V.p=0; V.ev.forEach(e=>{ if(e.rep) while(e.day<V.day) e.day+=e.rep; }); V.ev=V.ev.filter(e=>e.day>=V.day); }
+async function sim(id){ const V=VS[id]; if(V.busy) return; V.busy=true; const root=document.getElementById('map'+id);
+  V.prevA = id==='K' ? ((V.day-1)%12)*30+V.p*15 : null; V.prev = id==='H' ? (2-V.p)/2 : null;
+  if(V.p===0){ V.p=1; draw(id); }
+  else { V.p=2; dawn(V); V.p=0; V.ani='dawn'; draw(id);
+    const f=document.createElement('div'); f.className='flashov'; root.appendChild(f); setTimeout(()=>f.remove(),1500);
+    root.querySelectorAll('.inn').forEach(e=>{ e.classList.add('heal'); setTimeout(()=>e.classList.remove('heal'),1800); }); }
+  await wait(300); V.busy=false; }
+
+const stage=document.getElementById('stage'), tabs=document.getElementById('tabs');
+Object.keys(META).forEach(id=>{
+  mk(id);
+  const b=document.createElement('button'); b.textContent=id; b.title=META[id][0]; b.onclick=()=>show(id); tabs.appendChild(b);
+  const s=document.createElement('section'); s.id='sec'+id; s.hidden=true;
+  s.innerHTML='<div class="vtag">'+id+' - '+META[id][0]+'</div><div class="map" id="map'+id+'"></div><div class="ctl"><button data-s="'+id+'">Simulate victory</button><button data-r="'+id+'">Reset</button></div><p class="cap">'+META[id][1]+'</p>';
+  stage.appendChild(s);
+  draw(id);
+  s.querySelector('[data-s]').onclick=()=>sim(id);
+  s.querySelector('[data-r]').onclick=()=>{ mk(id); draw(id); };
+  s.querySelector('.map').onclick=ev=>{ const a=ev.target.closest('[data-act]'); if(!a) return; const V=VS[id]; if(a.dataset.act==='tog') V.ui.open=!V.ui.open; if(a.dataset.act==='tab') V.ui.tab=a.dataset.v; draw(id); };
+});
+function show(id){ Object.keys(META).forEach((k,i)=>{ document.getElementById('sec'+k).hidden=k!==id; tabs.children[i].classList.toggle('on',k===id); }); try{ history.replaceState(null,'','#'+id); }catch(e){} }
+show((location.hash||'#D').slice(1) in META ? location.hash.slice(1) : 'D');
+</script>
+</body>
+</html>

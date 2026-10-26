@@ -10,13 +10,18 @@
 // - Stat puanı: iyi oyuncu ana stata (autoAllocateAll, Medium YZ), ortalama oyuncu dört stata eşit (Easy YZ). İkisi de "Equip best".
 // - Valor: iyi oyuncu Medium YZ'nin değer tartan Valor kuralıyla, ortalama oyuncu sim'e özel geç kuralla (lateValorChoice: dost düşünce bir oyuncu turu
 //   gecikmeyle, bedel yetiyorsa diriltir; Ömer 2026-10-20). İkisi de zaferden sonra savaş dışı ceset diriltmeyi (autoValorRevive) kullanır.
-// - Can (oyuncu varsayımı, Ömer 2026-10-26 "zor çatışma öncesi dönme ihtimalini artır"): savaştan önce önce Valor ile yara siler (simValorWoundHeal:
-//   bir savaş dışı diriltme payının üstündeki Valor'la en çok yaralı kahramanın 1 yarası; iyi ve ortalama oyuncu aynı), sonra altın yetiyorsa
-//   temizlenmiş bir kasabada ücretli dinlenir (yolculuk bedelsiz): normal savaş öncesi ort. can `healAt` (%50) altı YA DA 2+ yaralı; elit / boss
-//   öncesi ort. can %75 altı YA DA herhangi bir yara (simTownRest). Kasma savaşları normal sayılır.
-// - Demirci: her yola çıkışta (temizlenmiş kasaba varsa) parası yettikçe takımın en değerli silahını Temper eder; bir dinlenme parası ayrılır.
-// - Tüccar (--merchant, varsayılan sell; Ömer 2026-10-20): tüccar adımında / tüccarlı kasabada, parası (sıradaki Temper + bir ücretli dinlenme) payından fazlaysa
-//   takılı item'dan IP olarak daha iyi bir mal alır ('sell' = önce torbadaki item'leri satar).
+// - Can (oyuncu varsayımı; ekonomi reworkü 2026-10-26, open-questions 424): ateş başı dinlenmesi yok. Savaştan önce önce Valor ile yara siler
+//   (simValorWoundHeal: bir savaş dışı diriltme payının üstündeki Valor'la en çok yaralı kahramanın 1 yarası; iyi ve ortalama oyuncu aynı). Sonra Inn
+//   (innCycle): iyileşen Inn konukları geri alınır (elit / boss öncesi hepsi); simNeedsRest (normal öncesi ort. can `healAt` %50 altı YA DA 2+ yaralı;
+//   elit / boss öncesi %75 altı YA DA herhangi yara) doğruysa en kötü kahraman (4 kişilikte en çok 1) son temizlenen kasabanın Inn'ine bırakılır;
+//   normal öncesi takım eksik ilerler, elit / boss öncesi devriyeyle gün geçirip bekler (en çok 8 savaş, 2 yenilgi üst üste = vazgeç). Yürümek bedava.
+// - Kamp (tek seçim, simCampChoice): yaralı varsa Tend, ort. can %60 altıysa Rest, yoksa Sharpen (takılı en değerli item), olmazsa Train (en düşük level).
+// - Demirci (demircili temizlenmiş kasaba varsa, her yola çıkışta): önce Combine (Ömer 2026-10-26: Common'lar girmez; torbada 3+ Uncommon+ item:
+//   aynı taban üçlüsü önce, yoksa en düşük değerli üç; para sıradaki Temper payını karşılamıyorsa ertelenir), sonra Temper: eldeki taş + altınla
+//   takılı en değerli item'den başlayarak. Reforge / Reroll kullanılmaz.
+// - Tüccar (--merchant, varsayılan sell; Ömer 2026-10-20): tüccar adımında / tüccarlı kasabada, parası sıradaki Temper payından fazlaysa takılı
+//   item'dan IP olarak daha iyi bir mal alır. 'sell' = önce torbayı satar: Common'lar ve Combine'a giremeyenler satılır, Combine'lık en değerli
+//   SIM_COMBINE_KEEP (6) item bekler; para Temper payını karşılamıyorsa hepsi satılır. --rest-price etkisiz (dinlenme kalktı).
 // - Seçenek bayrakları (--repeat, --valor-revive, --rest-price): YALNIZCA bu sim sürecinde bellekteki veriyi geçici değiştirir (simOverrides; koşu
 //   bitince eski değerler geri konur), veri dosyası ve oyun kodu değişmez.
 import { valorInBattle, valorOutside, type ValorSimMode } from './valor-mode';
@@ -59,6 +64,19 @@ import {
   startPatrol,
   temperItem,
   temperPreview,
+  temperStonesOf,
+  combineItemBlocked,
+  combineItems,
+  combinePreview,
+  dayOf,
+  innGuests,
+  innLeaveBlocked,
+  innTakeBlocked,
+  leaveAtInn,
+  takeFromInn,
+  revisitNode,
+  townHasSmith,
+  useCamp,
   travelRoutes,
   visitedNodes,
   type CampaignState,
@@ -69,7 +87,7 @@ import { woundCount } from '../progression/wounds';
 import { autoTreeHeroes, withTreesInMemory } from './tree-sim';
 import type { TreeDir } from '../progression/skill-tree-data';
 import { ATTRS, LEVELS, addXp, allocate, campaignMaxLevel, canAddPoint, xpToNext } from '../progression/levels';
-import { addCarry, allRoutes, emptyCarry, fightPlan, routeLabel, simMapChain, simTownRest, simValorWoundHeal, type SimCarry } from './campaign';
+import { addCarry, allRoutes, emptyCarry, fightPlan, routeLabel, simCampChoice, simInnPicks, simInnReady, simMapChain, simNeedsRest, simValorWoundHeal, type SimCarry } from './campaign';
 import { CAMPAIGN_TARGETS } from './campaign-targets';
 
 export type PlayerType = 'good' | 'average';
@@ -95,7 +113,7 @@ export interface GrindSimOptions {
   onWall?: 'stop' | 'force';
   /** Aşırı kasma koşusu: Ashford sonrası ilk iki tekrar oynanabilir düğüm temizlenince önceden yapılan kasma savaşı (varsayılan 0). */
   preGrind?: number;
-  /** Ücretli kasaba dinlenmesi eşiği (yaşayanların ort. can oranı; 0 = hiç dinlenmez). Varsayılan 0,5. */
+  /** Inn eşiği (simNeedsRest: normal savaş öncesi yaşayanların ort. can oranı; 0 = Inn kullanmaz). Varsayılan 0,5. */
   healAt?: number;
   valor?: ValorSimMode;
   /** Tekrar (devriye) loot kesintisi (items.json > loot.repeat), yalnızca simde: today = veri aynen (varsayılan), soft / nocap / off (repeatPreset). */
@@ -233,6 +251,23 @@ export interface GrindEcon {
   revivesOut: number;
   /** Savaş dışı Valor ile silinen yara (simValorWoundHeal; Ömer 2026-10-26). Harcanan Valor valorSpentOut'a da girer. */
   woundsHealedValor: number;
+  /** Ekonomi reworkü (2026-10-26): harita başı / sonu gün (dayOf; koşu başına toplam), Inn (bırakma, geri alma, kalış günü toplamı, beklerken devriye savaşı). */
+  dayStart: number;
+  dayEnd: number;
+  innLeaves: number;
+  innReturns: number;
+  innDays: number;
+  innBattles: number;
+  /** Kamp seçimleri (simCampChoice). */
+  campRest: number;
+  campTend: number;
+  campSharpen: number;
+  campTrain: number;
+  /** Temper taşı: kazanılan (düşüş) ve demircide harcanan; Combine sayısı ve altını. */
+  stonesGained: number;
+  stonesSpent: number;
+  combines: number;
+  goldCombine: number;
 }
 
 /** Toplanabilir düğüm sayaçları (paralel parçalar birleştirilir). */
@@ -330,6 +365,8 @@ const emptyEcon = (): GrindEcon => ({
   goldBattle: 0, goldElite: 0, goldBoss: 0, goldReplay: 0, goldTreasure: 0, goldSell: 0, goldMerchant: 0, itemsFirst: 0, itemsReplay: 0, itemsTreasure: 0,
   itemsLost: 0, rarity: Object.fromEntries(RARITY_IDS.map((r) => [r, 0])), itemsEquipped: 0, itemsSold: 0, itemsBought: 0, boughtEquipped: 0, merchantVisits: 0,
   wounds: 0, corpses: 0, valorEarned: 0, valorWasted: 0, valorGift: 0, valorSpentBattle: 0, valorSpentOut: 0, revivesBattle: 0, revivesOut: 0, woundsHealedValor: 0,
+  dayStart: 0, dayEnd: 0, innLeaves: 0, innReturns: 0, innDays: 0, innBattles: 0, campRest: 0, campTend: 0, campSharpen: 0, campTrain: 0,
+  stonesGained: 0, stonesSpent: 0, combines: 0, goldCombine: 0,
 });
 const emptyGroup = (): GrindGroupAgg => ({ runs: 0, completed: 0, walls: 0, grind: 0, battles: 0 });
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -385,9 +422,29 @@ const clearedTowns = (s: CampaignState): string[] => {
   return clearedNodes(s).filter((id) => node(map, id).type === 'town');
 };
 
-/** Ücretli bir kasaba dinlenmesinin fiyatı (tüccar payı; ilk bedava dinlenme sayılmaz). */
-// 2026-10-26 (form econ/main): ücretli kasaba dinlenmesi kalktı (yerine Inn, ücretsiz); pay 0 (campaign-dev, derlensin diye; balance-tester güncelleyecek)
-const paidRestPrice = (_s: CampaignState): number => 0;
+/** Demircili temizlenmiş kasabalar (Ömer 2026-10-26: demirci 2. kasabadan; serbest dolaşımda yürümek bedava). */
+const smithTowns = (s: CampaignState): string[] => clearedTowns(s).filter((id) => townHasSmith(node(getMap(s.mapId), id)));
+
+/** Sim Combine'a girebilir mi (Ömer 2026-10-26): oyunun kuralı (torbada, Legendary / set değil) + Common DEĞİL (Common'lar satılır). */
+const simCombinable = (s: CampaignState, uid: string): boolean => !combineItemBlocked(s, uid) && instanceRarity(s.inventory.find((i) => i.uid === uid)!) !== 'common';
+
+/** Sıradaki Temper payı: takılı en değerli, taşı yeten ve takanın level'ı uygun item'in Temper altını (yoksa 0). */
+function temperReserve(s: CampaignState): number {
+  const gear = activeHeroes(s)
+    .flatMap((h) => SLOT_IDS.map((k) => h.equipment?.[k]).filter((x): x is NonNullable<typeof x> => !!x))
+    .sort((a, b) => itemValue(b) - itemValue(a));
+  for (const w of gear) {
+    const p = temperPreview(s, w.uid);
+    if (p?.after && p.stonesHave >= p.stones && (!p.blocked || p.blocked.includes('gold'))) return p.price;
+  }
+  return 0;
+}
+
+/** Tüccarda satılmadan Combine için torbada bekleyen en çok item (iki üçlü). */
+export const SIM_COMBINE_KEEP = 6;
+
+/** Inn sim bekleme sınırı: Inn'deki kahraman iyileşene kadar en çok bu kadar devriye savaşı (kaybedilen dahil). */
+export const SIM_INN_MAX_BATTLES = 8;
 
 /** Takımın (yaşayan) bir kahramanına göre malın IP kazancı: uygun yuvadaki takılı item'den IP farkı (boş yuva = 0); en iyi kahraman. */
 function wareGain(s: CampaignState, w: { itemId: string; rolls?: unknown }): number {
@@ -546,10 +603,12 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     let spent = 0;
     let runBonusGold = 0;
     let goldStart = 0;
+    let stoneStart = 0;
+    let stonesRun = 0;
     const company = new Set<string>();
 
     /** Savaş öncesi: önce savaş dışı Valor yara silme (diriltme payı üstü), sonra gerekirse kasaba dinlenmesi (hard = sıradaki elit / boss). */
-    const heal = (t: CampaignState, hard = false): CampaignState => {
+    const heal = (t: CampaignState): CampaignState => {
       if (valorOutside(o.valor)) {
         const v = simValorWoundHeal(t);
         if (v.healed) {
@@ -558,29 +617,42 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
           t = v.state;
         }
       }
-      const r = simTownRest(t, healAt, hard);
-      if (!r) return t;
-      R.goldRest += r.price;
-      R.rests++;
-      spent += r.price;
-      return r.state;
+      return t;
     };
+    /**
+     * Demirci (demircili temizlenmiş kasaba varsa, her yola çıkışta): 1) Combine: torbada birleştirilebilir 3+ item varsa (aynı taban üçlüsü önce,
+     * yoksa en düşük değerli üç) parası yettikçe birleştirir, sonra Equip best; 2) Temper: eldeki taş + altınla takılı en değerli item'den başlayarak.
+     */
     const smith = (t: CampaignState): CampaignState => {
-      const towns = clearedTowns(t);
-      if (!towns.length) return t;
-      const reserve = 0; // ücretli kasaba dinlenmesi kalktı (2026-10-26): dinlenme payı ayrılmaz
+      if (!smithTowns(t).length) return t;
+      for (let guard = 0; guard < 10; guard++) {
+        const pool = t.inventory.filter((i) => simCombinable(t, i.uid)).sort((a, b) => itemValue(a) - itemValue(b));
+        if (pool.length < 3) break;
+        const byBase = new Map<string, typeof pool>();
+        for (const i of pool) byBase.set(i.id, [...(byBase.get(i.id) ?? []), i]);
+        const same = [...byBase.values()].find((g) => g.length >= 3);
+        const uids = (same ?? pool).slice(0, 3).map((i) => i.uid);
+        const p = combinePreview(t, uids);
+        if (p.blocked || t.gold - p.price < temperReserve(t)) break; // para darsa Combine ertelenir (önce Temper; tüccarda satılır)
+        t = combineItems(t, uids);
+        E.combines++;
+        E.goldCombine += p.price;
+        spent += p.price;
+        t = track(equipBest(t));
+      }
       for (let guard = 0; guard < 60; guard++) {
-        const weapons = activeHeroes(t)
-          .map((h) => h.equipment?.weapon)
-          .filter((w): w is NonNullable<typeof w> => !!w)
+        const gear = activeHeroes(t)
+          .flatMap((h) => SLOT_IDS.map((k) => h.equipment?.[k]).filter((x): x is NonNullable<typeof x> => !!x))
           .sort((a, b) => itemValue(b) - itemValue(a));
         let done = false;
-        for (const w of weapons) {
+        for (const w of gear) {
           const p = temperPreview(t, w.uid);
-          if (!p || p.blocked || !p.after || t.gold - p.price < reserve) continue;
+          if (!p || p.blocked || !p.after) continue;
           t = temperItem(t, w.uid);
           R.goldSmith += p.price;
           R.tempers++;
+          E.stonesSpent += p.stones;
+          stonesRun += p.stones;
           spent += p.price;
           done = true;
           break;
@@ -597,8 +669,16 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
       if (merchantMode === 'off') return t;
       t = openCampaignShop(t);
       E.merchantVisits++;
+      // 'sell': Common'lar ve Combine'a giremeyenler satılır; Combine'lık (Uncommon+) item'ler torbada bekler. Para sıradaki Temper payını
+      // karşılamıyorsa önce hepsi satılır (Ömer 2026-10-26).
+      // Torba dolmasın: en çok SIM_COMBINE_KEEP (6 = iki üçlü) Combine'lık item bekler, en değerliler.
+      const sellAll = t.gold < temperReserve(t);
+      const keep = new Set(
+        sellAll ? [] : t.inventory.filter((i) => simCombinable(t, i.uid)).sort((a, b) => itemValue(b) - itemValue(a)).slice(0, SIM_COMBINE_KEEP).map((i) => i.uid),
+      );
       if (merchantMode === 'sell')
         for (const inst of [...t.inventory]) {
+          if (keep.has(inst.uid)) continue;
           const g = t.gold;
           t = sellToMerchant(t, inst.uid);
           E.goldSell += t.gold - g;
@@ -610,7 +690,7 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
           .filter((w): w is NonNullable<typeof w> => !!w)
           .sort((a, b) => itemValue(b) - itemValue(a))[0];
         const tp = top ? temperPreview(t, top.uid) : null;
-        const reserve = (tp && !tp.blocked && tp.after ? tp.price : 0) + paidRestPrice(t);
+        const reserve = tp && !tp.blocked && tp.after ? tp.price : 0;
         if (t.inventory.length >= BAG_SIZE) break;
         const wares = t.shop!.wares;
         const pickIdx = wares
@@ -631,7 +711,7 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     };
     const hist = (a: GrindNodeAgg, turns: number) => (a.turnHist[turns] = (a.turnHist[turns] ?? 0) + 1);
     /** Bir kasma savaşı (yola çıkılabilir durumda): kazanırsa durum ilerler, kaybederse son kayda dönülür (durum aynen). */
-    const grindOnce = (forNode: string | null): boolean => {
+    const grindOnce = (forNode: string | null, inn = false): boolean => {
       s = heal(prepare(s));
       const f = pickFarm(s, farmRec);
       if (!f) return false;
@@ -649,7 +729,8 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
         ctx.get(forNode)!.grinds++;
         R.grindBattles++;
         runGrind++;
-      } else R.preGrindBattles++;
+      } else if (inn) E.innBattles++;
+      else R.preGrindBattles++;
       rec.n++;
       if (battle.winner === 'party') {
         rec.w++;
@@ -658,6 +739,61 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
       } else R.defeats++;
       farmRec.set(f, rec);
       return true;
+    };
+    /**
+     * Inn (Ömer 2026-10-26; oyuncu varsayımı, open-questions 424). Yürümek bedava ve gün harcamaz; gün yalnız zaferle (ilk zafer / devriye) döner.
+     * Yeni düğümden önce sırayla:
+     * 1) innFetch: Inn'de iyileşmiş (simInnReady) kahramanlar bırakıldıkları kasabadan geri alınır; elit / boss öncesi iyileşmemiş olanlar da.
+     * 2) simNeedsRest doğruysa simInnPicks (4 kişilik takımda en çok 1, en kötüsü) en son temizlenen kasabanın Inn'ine bırakılır.
+     *    Normal düğüm öncesi takım eksik İLERLER (gün ilerledikçe Inn iyileştirir, sonra 1. adım geri alır). Elit / boss öncesi bekler: devriye
+     *    yaparak gün geçirir (en çok SIM_INN_MAX_BATTLES savaş, üst üste 2 yenilgide vazgeçer), sonra geri alır.
+     * Yedekle doldurma yok (yedek yalnız Saltmere kışlasında; sim'de 0).
+     */
+    const atTown = (t: CampaignState, town: string): CampaignState | null => {
+      const u = revisitNode(t.at === town ? t : moveTo(t, town));
+      return nextStep(u).kind === 'town' ? u : null;
+    };
+    const innFetch = (all: boolean): void => {
+      const towns = [...new Set(innGuests(s).filter((g) => g.mapId === s.mapId && (all || simInnReady(g.hero))).map((g) => g.town))];
+      for (const town of towns) {
+        let u = atTown(s, town);
+        if (!u) continue;
+        for (const g of innGuests(u, town))
+          if ((all || simInnReady(g.hero)) && !innTakeBlocked(u, g.hero.id)) {
+            E.innDays += dayOf(u) - g.day;
+            E.innReturns++;
+            u = takeFromInn(u, g.hero.id);
+          }
+        s = prepare(completeSimple(u, 'town'));
+      }
+    };
+    const innCycle = (hard: boolean): void => {
+      innFetch(hard);
+      if (!simNeedsRest(s, healAt, hard)) return;
+      if (hard && !pickFarm(s, farmRec)) return; // bekleyecek devriye yok: tam takımla dene
+      const towns = clearedTowns(s);
+      const town = towns[towns.length - 1];
+      if (!town) return;
+      let t = atTown(s, town);
+      if (!t) return;
+      let left = 0;
+      for (const id of simInnPicks(t, healAt, hard))
+        if (!innLeaveBlocked(t, id)) {
+          t = leaveAtInn(t, id);
+          left++;
+        }
+      if (!left) return;
+      E.innLeaves += left;
+      s = completeSimple(t, 'town');
+      if (!hard) return;
+      // Gün geçir: devriye (yalnız zafer gün ilerletir); üst üste 2 yenilgide vazgeç (eksik takım devriyeyi kaldıramıyor)
+      const clock = (x: CampaignState) => dayOf(x) + (x.dayProgress ?? 0);
+      for (let k = 0, lost = 0; k < SIM_INN_MAX_BATTLES && lost < 2 && innGuests(s, town).some((g) => !simInnReady(g.hero)); k++) {
+        const c0 = clock(s);
+        if (!grindOnce(null, true)) break;
+        lost = clock(s) > c0 ? 0 : lost + 1;
+      }
+      innFetch(true);
     };
     const hitWall = (id: string, noFarm: boolean) => {
       const a = nodeAgg(id);
@@ -706,6 +842,9 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     spent = 0;
     if (phase > 0) runBonusGold = 0;
     goldStart = phase > 0 ? s.gold : 0;
+    stoneStart = temperStonesOf(s);
+    stonesRun = 0;
+    E.dayStart += dayOf(s);
     dropped = new Set();
     bought = new Set();
     worn = new Set();
@@ -755,9 +894,12 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
         case 'merchant':
           s = autoResolve(shop(s), step);
           break;
-        case 'rest':
-          s = autoResolve(s, step);
+        case 'rest': {
+          const c = simCampChoice(s);
+          s = useCamp(s, c);
+          E[c.kind === 'rest' ? 'campRest' : c.kind === 'tend' ? 'campTend' : c.kind === 'sharpen' ? 'campSharpen' : 'campTrain']++;
           break;
+        }
         case 'battle': {
           const id = step.node;
           const c = ctx.get(id) ?? { tries: 0, grinds: 0 };
@@ -832,7 +974,8 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
             break;
           }
           const tt = node(map, target).type;
-          s = heal(smith(s), tt === 'elite' || tt === 'boss'); // elit / boss öncesi sıkı dinlenme eşiği (2026-10-26)
+          s = heal(smith(s));
+          innCycle(tt === 'elite' || tt === 'boss'); // elit / boss öncesi sıkı dinlenme eşiği (2026-10-26)
           base = s;
           s = moveTo(s, target);
           break;
@@ -841,6 +984,8 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     }
     }
     if (!reachedTarget) continue;
+    E.dayEnd += dayOf(s);
+    E.stonesGained += temperStonesOf(s) + stonesRun - stoneStart;
     const done = !wall && nextStep(s).kind === 'complete';
     res.runs++;
     if (done) res.completed++;
