@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 2 elit önderi (Harbor Fort dr_32_vell, Guild tarafı; maps-2-3.md 3.2 M-L, content-designer 2026-10-27). Yer tutucu Oathsworn kiti yerine kendi kiti (belgede kit yok; var olan mekanikler): Scourge of Heresy + Writ of Silence (kutsal + Silenced) + Lead the Faithful (dostlara Blessed), pasif Heresy Remembered (Grudge). Stat / can / zırh Oathsworn Brother'la aynı. GÖRSEL: kendi çizimi YOK, Oathsworn Brother çizimini paylaşır (adlı lider kuralı). Sayılar PROVİZYON (open-questions 435).",
+  "_not": "Harita 2 elit önderi (Harbor Fort dr_32_vell, Guild tarafı; maps-2-3.md 3.2 M-L, content-designer 2026-10-27). Yer tutucu Oathsworn kiti yerine kendi kiti (belgede kit yok; var olan mekanikler): Scourge of Heresy + Writ of Silence (kutsal + Silenced) + Lead the Faithful (dostlara Blessed), pasif Heresy Remembered (Grudge). Stat / can / zırh Oathsworn Brother'la aynı. GÖRSEL: kendi çizimi (idle, avatar, 12 pozluk sayfa). Sayılar PROVİZYON (open-questions 435).",
   "id": "inquisitor_captain_vell",
   "name": "Inquisitor-Captain Vell",
   "family": "branns_order",
-  "spriteId": "oathsworn_brother",
+  "spriteId": "inquisitor_captain_vell",
   "spriteScale": 1.1,
   "color": "#d8c070",
   "logo": "bulwark",

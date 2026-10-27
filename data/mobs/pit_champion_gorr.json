@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 2 Fighting Pit şampiyonu (Saltmere arenası, 5. kademe dr_pit_5; content-designer 2026-10-27). Ödünç Bandit Chief kiti yerine kendi kiti (yalnız var olan mekanikler, yeni motor kuralı YOK): Iron Cestus (temel) + Skull Splitter (hasar + 1 tur Stun) + Play to the Crowd (taunt + Haste), pasif For the Crowd (Blood Scent: canı %35 altındaki hedefe x1,3). Stat / zırh Bandit Chief'le aynı (güç ödünç kite yakın). GÖRSEL: kendi çizimi YOK, Bandit Chief çizimi yer tutucu (spriteId bandit_chief; çizim sonra); skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON (open-questions 440).",
+  "_not": "Harita 2 Fighting Pit şampiyonu (Saltmere arenası, 5. kademe dr_pit_5; content-designer 2026-10-27). Ödünç Bandit Chief kiti yerine kendi kiti (yalnız var olan mekanikler, yeni motor kuralı YOK): Iron Cestus (temel) + Skull Splitter (hasar + 1 tur Stun) + Play to the Crowd (taunt + Haste), pasif For the Crowd (Blood Scent: canı %35 altındaki hedefe x1,3). Stat / zırh Bandit Chief'le aynı (güç ödünç kite yakın). GÖRSEL: kendi çizimi + 12 pozluk sayfa + skill ikon/efektleri (art-pipeline 2026-10-27). Sayılar PROVİZYON (open-questions 440).",
   "id": "pit_champion_gorr",
   "name": "Pit Champion \"Gorr\"",
   "family": "bandits",
-  "spriteId": "bandit_chief",
+  "spriteId": "pit_champion_gorr",
   "spriteScale": 1.15,
   "color": "#8a5a3a",
   "logo": "helm",

@@ -46,13 +46,6 @@
       },
       "hold_the_tower": {
         "act": 6
-      },
-      "skull_splitter": {
-        "windup": 4,
-        "act": 5
-      },
-      "play_to_the_crowd": {
-        "act": 6
       }
     }
   },
@@ -163,6 +156,68 @@
         "act": 5
       },
       "hold_the_tower": {
+        "act": 6
+      }
+    }
+  },
+  "pit_champion_gorr": {
+    "cols": 4,
+    "rows": 3,
+    "density": 0.5,
+    "idle": [
+      0,
+      1
+    ],
+    "idleMs": 900,
+    "windup": 2,
+    "release": 3,
+    "channel": 5,
+    "bless": 6,
+    "strike": 4,
+    "move": 7,
+    "hit": 8,
+    "defend": 9,
+    "dying": 10,
+    "dead": 11,
+    "skills": {
+      "skull_splitter": {
+        "windup": 2,
+        "act": 3
+      },
+      "play_to_the_crowd": {
+        "act": 6
+      }
+    }
+  },
+  "inquisitor_captain_vell": {
+    "cols": 4,
+    "rows": 3,
+    "density": 0.5,
+    "idle": [
+      0,
+      1
+    ],
+    "idleMs": 900,
+    "windup": 2,
+    "release": 3,
+    "channel": 5,
+    "bless": 6,
+    "strike": 4,
+    "move": 7,
+    "hit": 8,
+    "defend": 9,
+    "dying": 10,
+    "dead": 11,
+    "skills": {
+      "scourge_of_heresy": {
+        "windup": 2,
+        "act": 4
+      },
+      "writ_of_silence": {
+        "windup": 2,
+        "act": 3
+      },
+      "lead_the_faithful": {
         "act": 6
       }
     }
