@@ -85,7 +85,9 @@ export class CombatLog {
         this.close();
         const kind = this.names.globalKind(e.id);
         const verb = kind === 'rest' ? ' rested' : kind === 'skip' ? ' skipped the turn' : kind === 'move' ? ' moved' : kind === 'valor' ? ' spent Valor' : ` used ${e.id}`;
-        this.cur = { round: this.round, actor: e.actor, verb: [{ t: verb }], hits: [], notes: [] };
+        // Crown Surge: "called Ash Surge" (skill adı vurgulu)
+        const v = kind === 'surge' ? [{ t: ' called ' }, { t: this.names.skill(e.id), k: 'sk' as const }] : [{ t: verb }];
+        this.cur = { round: this.round, actor: e.actor, verb: v, hits: [], notes: [] };
         this.done.push(this.cur);
         return true;
       }

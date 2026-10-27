@@ -1,4 +1,5 @@
 import { applyWounds, valorRevivedCounts, woundCount } from '../progression/wounds';
+import { applyTaint, surgeIdsAt, surgedFromLog, taintOf } from './surge';
 import { battleSummary, type Battle } from '../engine';
 import { battleRulesData, CELL_COUNT, classes, encounterUnit, randomPool, resolveBattleRules, summons, type RulesSpec } from '../engine/content';
 import { encounterWaves, encounterWavesById, isInertUnit, objectiveType } from './encounter-waves';
@@ -83,6 +84,8 @@ export interface BattlePlan {
   background?: string;
   /** Savaş başı Valor'u (açıksa; motora teams.valor.party olarak gider). */
   valor?: number;
+  /** Bu savaşta kullanılabilecek Crown Surge id'leri (bölge hakkı; motora teams.surge.party olarak gider, src/campaign/surge.ts). Yoksa yazılmaz. */
+  surge?: string[];
   /** Düşmanların level'ı = düğüm seviyesi (levels.md > Düşman level'ı; ad plakasında "Lv N"). */
   enemyLevel: number;
   /** Düşman yapay zekasının terazi ayarı (bölgenin enemyAi'si, notlar hariç; chooseAction opts.value). Yoksa alan yazılmaz. */
@@ -179,6 +182,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     if (ult && trial?.ultLock) setup.startCooldowns = { ...(setup.startCooldowns ?? {}), [ult]: Math.floor(trial.ultLock) + 1 };
     // Yara (Ömer 2026-10-19, hp-death-rework.md): her yara maks canı rules.wounds.maxHpLoss düşürür (kurulumda hpMult / hpAdd; motor aynı)
     if (caps.unitMods && woundCount(h) > 0) applyWounds(setup, woundCount(h), CONFIG.rules.wounds, itemWoundSoft(h)); // b_wound_soft affix'i (Ömer 2026-10-26)
+    if (caps.unitMods && taintOf(h) > 0) applyTaint(setup, taintOf(h)); // Crown Surge: Ashen Taint (yığın başına maks can -%3; crown-surge.json)
     if (caps.unitMods) applyOath(setup, s, h.id); // A4 Hero Oath: yeminin artısı / eksisi (damageAdd / critAdd / hpMult)
     // Can taşıma: eksik canlı karakter o oranla başlar (motor en az 1 can verir)
     // Düşmüş kahraman (Ömer 2026-10-11, Endless gibi): savaşa CESET olarak girer (yuvasında; savaşta Resurrection ile kalkabilir)
@@ -235,6 +239,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     return { enemies: enemyCells({ units: list }), units };
   });
   const rules = encounterRules(enc.def, first!, enemySetups);
+  // Crown Surge (C3 a / C12 a): bulunulan bölgenin harcanmamış hakları; arena kademesinde de geçerli (aynı bölge)
+  const surgeIds = surgeIdsAt(s);
   return {
     nodeId: n.id,
     seed,
@@ -252,6 +258,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     // Arka plan önceliği: karşılaşma > düğüm > bölge (dosya yoksa sahne varsayılan arka plana düşer)
     background: enc.def.background ?? n.battleBackground ?? map.regions.find((r) => r.id === n.region)?.battleBackground,
     ...(s.valor !== undefined ? { valor: s.valor } : {}),
+    ...(surgeIds.length ? { surge: surgeIds } : {}),
     enemyLevel,
     ...regionEnemyAi(map.regions.find((r) => r.id === n.region)),
     ...(pitEnc ? { pitTier: pitIdx! + 1 } : {}),
@@ -288,7 +295,8 @@ export function outcomeFrom(plan: Pick<BattlePlan, 'heroOrder'>, victory: boolea
 export function battleOutcomeOf(plan: Pick<BattlePlan, 'heroOrder'>, battle: Battle, victory: boolean = battle.winner === 'party'): BattleOutcome {
   const out = outcomeFrom(plan, victory, battleSummary(battle));
   const rv = valorRevivedCounts(battle.log as ReadonlyArray<{ type: string; target?: string; cause?: string }>, plan.heroOrder);
-  return Object.keys(rv).length ? { ...out, valorRevived: rv } : out;
+  const surged = surgedFromLog(battle.log as ReadonlyArray<{ type: string; actor?: string; side?: string; id?: string }>, plan.heroOrder);
+  return { ...out, ...(Object.keys(rv).length ? { valorRevived: rv } : {}), ...(surged ? { surged } : {}) };
 }
 
 /** Karşılaşma verisinin doğrulaması: sınıflar rastgele havuzda (test class'ı yok), yuvalar 0..11 ve tekrarsız, yedek geçerli, kilitli skill'ler sınıfın skill'i. */

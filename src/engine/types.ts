@@ -1444,7 +1444,7 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound';
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1953,6 +1953,8 @@ type BattleEventBody =
   | { type: 'rage'; actor: string; delta: number; after: number; max: number; cause?: 'hurt' }
   /** Global skill kullanıldı (rest / skip_turn / move_tile); ayrıntı olayları (mpRegen, turnSkipped, moved) hemen arkasından gelir. */
   | { type: 'globalUsed'; actor: string; id: string }
+  /** Crown Surge çağrıldı (global 'surge'): çağıran, taraf, global id; takım etkileri (status / shield) hemen arkasından gelir. */
+  | { type: 'surge'; actor: string; side: Side; id: string }
   /** Birim kendi tarafındaki boş yuvaya geçti (Move Tile); yeni yuva Combatant.slot'ta da güncellenir. `cause`/`by`: zorla yer değiştirme (Chain Hook çekmesi: skill id, çeken). */
   | { type: 'moved'; actor: string; from: number; to: number; cause?: string; by?: string; /** true: kullanıcının kendi skill'i sonrası ön sıraya geçişi (SkillDef.advanceToFront, Warrior Charge); `cause` skill id. */ advance?: boolean }
   /**
@@ -2122,7 +2124,11 @@ export interface GlobalSkillDef {
   icon: string;
   /** valor: takımın Valor'unu (data/valor.json) harcayıp kendi tahtasında cesedi olan düşmüş dostu diriltir (yalnızca savaşta Valor'u olan taraf). */
   /** urn: savaşta Tidewater Urn varsa (BattleRules.urn) bitişik kahraman kendi tahtasının bir sırasını su basar (target 'row': sıradaki herhangi bir hücre). */
-  kind: 'rest' | 'skip' | 'move' | 'valor' | 'urn';
+  /**
+   * surge: Crown Surge (Harita 2-3, map2-quests-surge.md C1; yalnızca BattleSetup.surge'de o tarafa verilen id'ler görünür, savaş başına TEK Surge):
+   * tarafın yaşayan tüm birimlerine `status` (`turns`; Ash Surge) ve / veya maks canın `shieldRatio` oranı süreli kalkan (`shieldTurns`; Salt Surge).
+   */
+  kind: 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge';
   /** self: hedef yok; empty_tile: kendi tarafındaki boş (canlı olmayan) bir yuva seçilir; row: kendi tahtasında bir sıra (hücresiyle). */
   target: 'self' | 'empty_tile' | 'dead_ally' | 'row';
   /** rest: kazanılan MP (maks MP'yi aşmaz). */
@@ -2133,6 +2139,12 @@ export interface GlobalSkillDef {
   maxConsecutive?: number;
   /** true: yalnızca turns modunda anlamlı (test modunda devre dışı). */
   turnsOnly?: boolean;
+  /** surge: takıma verilen durum (statuses.json id) ve süresi (her taşıyanın kendi turları). */
+  status?: string;
+  turns?: number;
+  /** surge: maks canın bu oranı kadar kalkan (süreli, `shieldTurns` kendi tur başında azalır). */
+  shieldRatio?: number;
+  shieldTurns?: number;
   /** Oyuncuya gösterilen kısa açıklama (İngilizce); sayılar skill-info tarafından veriden eklenir. */
   text: string;
 }

@@ -52,6 +52,11 @@ export interface BattleSetup {
    */
   valor?: Partial<Record<Side, number>>;
   /**
+   * Crown Surge (map2-quests-surge.md C1, C10 c): taraf başına bu savaşta kullanılabilecek 'surge' türü global id'leri (ash_surge, salt_surge).
+   * Savaş başına bir tarafta EN ÇOK BİR Surge. Yalnızca sefer verir (Harita 2-3); verilmezse Surge görünmez, savaş birebir eskisi.
+   */
+  surge?: Partial<Record<Side, string[]>>;
+  /**
    * Debug (Setup > Mob battle > Ignore range): bu savaşta menzil / erişim sınırı YOK; her skill her düşman hücresini hedefleyebilir (YZ dahil).
    * Varsayılan false = hiçbir davranış değişmez. Backstab'ın "arkası boş" şartı ve taunt bundan etkilenmez.
    */
@@ -181,7 +186,7 @@ interface FreeCast {
 }
 
 /** Global skill'in oyun içi sonucu için birim başına son eylem türü (yapay zeka salınımı önlemek için okur). */
-export type LastActionKind = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'pass';
+export type LastActionKind = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge' | 'pass';
 
 export type ActionResult = { ok: true; events: BattleEvent[] } | { ok: false; reason: string };
 export type CanUse = { ok: true } | { ok: false; reason: string };
@@ -307,6 +312,9 @@ export class Battle {
   private snappingAnchors = false;
   /** Valor (taraf başına kalan; yalnızca setup.valor'da verilen taraflar). Ömer 2026-10-13, data/valor.json. */
   private readonly valorPool = new Map<Side, number>();
+  /** Crown Surge: taraf başına bu savaşta açık surge id'leri (setup.surge) ve Surge'ü bu savaşta kullanmış taraflar (savaş başına bir). */
+  private readonly surgeAvail = new Map<Side, string[]>();
+  private readonly surgeUsed = new Set<Side>();
   /** Bu savaşta düşen (çağrı olmayan, savaşa ceset olarak GİRMEMİŞ) birimler: kusursuz zafer (flawless Valor) bunlara bakar. */
   private readonly fellInBattle = new Set<string>();
   /** Dalgalı savaş: sonraki dalgalar (boş dalgalar atılır) ve şu anki dalganın dizini (0 = ilk dalga). */
@@ -368,6 +376,11 @@ export class Battle {
     if (setup.valorRules) for (const side of ['party', 'enemy'] as const) {
       const v = setup.valor?.[side];
       if (v !== undefined) this.valorPool.set(side, Math.max(0, Math.min(setup.valorRules.cap, Math.floor(v))));
+    }
+    // Crown Surge: yalnızca verilen tarafta, yalnızca tanımlı 'surge' türü id'ler
+    for (const side of ['party', 'enemy'] as const) {
+      const ids = (setup.surge?.[side] ?? []).filter((id) => setup.globalSkills?.[id]?.kind === 'surge');
+      if (ids.length) this.surgeAvail.set(side, [...new Set(ids)]);
     }
     // Başlangıç cooldown'u (initialCooldown): yalnızca turns modunda ve class birimlerinde; test modunda cooldown zaten yok
     if (this.mode === 'turns') for (const c of this.combatants) this.applyInitialCooldowns(c);
@@ -4265,8 +4278,50 @@ export class Battle {
     const ids = Object.keys(this.setup.globalSkills ?? {});
     // Tidewater Urn (M-N3) yalnızca savaşta Urn varken (ve yalnızca Urn'ün tarafında) listelenir
     const urnSide = this.setup.rules?.urn?.side;
-    const present = (id: string) => this.globalDef(id)?.kind !== 'urn' || (urnSide !== undefined && (side === undefined || side === urnSide));
+    const present = (id: string) => {
+      const kind = this.globalDef(id)?.kind;
+      if (kind === 'surge') return side === undefined ? [...this.surgeAvail.values()].some((l) => l.includes(id)) : !!this.surgeAvail.get(side)?.includes(id);
+      return kind !== 'urn' || (urnSide !== undefined && (side === undefined || side === urnSide));
+    };
     return (side ? ids.filter((id) => this.globalDef(id)?.kind !== 'valor' || this.valorOf(side) !== null) : ids).filter(present);
+  }
+
+  // ---------------------------------------------------------------- Crown Surge (map2-quests-surge.md C1)
+
+  /** Tarafın bu savaştaki Surge id'leri (yoksa boş: Surge yok). */
+  surgeIds(side: Side): string[] {
+    return [...(this.surgeAvail.get(side) ?? [])];
+  }
+
+  /** Taraf bu savaşta Surge çağırdı mı (C10 c: savaş başına bir Surge). */
+  surgeSpent(side: Side): boolean {
+    return this.surgeUsed.has(side);
+  }
+
+  /** Debug: tarafın Surge'lerini açar / yeniler (kullanılmamış sayılır). Boş liste Surge'ü kapatır. */
+  debugSetSurge(side: Side, ids: string[]): void {
+    const ok = ids.filter((id) => this.globalDef(id)?.kind === 'surge');
+    if (ok.length) this.surgeAvail.set(side, [...new Set(ok)]);
+    else this.surgeAvail.delete(side);
+    this.surgeUsed.delete(side);
+  }
+
+  /**
+   * Surge'ü çağırır (global 'surge'): tarafın yaşayan tüm birimlerine (çağrılar dahil; düşmüşler ve cansız nesneler hariç) `status` ve / veya
+   * maks canın `shieldRatio` oranı süreli kalkan. Durum `turns` = her taşıyanın KENDİ sonraki turları (C8 a): durum tur SONUNDA azalır
+   * (tickAtTurnEnd), çağıranın bu turu Surge'e harcandığı için çağırana 1 fazla verilir (sonraki 2 turu kapsasın). Rastgelelik yok.
+   */
+  private callSurge(actor: Combatant, def: GlobalSkillDef, emit: Emit): void {
+    this.surgeUsed.add(actor.side);
+    emit({ type: 'surge', actor: actor.uid, side: actor.side, id: def.id });
+    const team = this.combatants.filter((c) => c.side === actor.side && c.hp > 0 && !c.inert);
+    for (const c of team) {
+      if (def.status && this.statusDef(def.status) && (def.turns ?? 0) > 0) {
+        const own = c.uid === actor.uid && this.statusDef(def.status)?.tickAtTurnEnd && this.mode === 'turns' ? 1 : 0;
+        this.addStatus(c, { kind: def.status as Status['kind'], turns: (def.turns ?? 0) + own, source: actor.uid }, emit, def.id);
+      }
+      if ((def.shieldRatio ?? 0) > 0) this.treeShield(actor, c, def.id, Math.max(1, Math.round(c.maxHp * def.shieldRatio!)), def.shieldTurns, false, emit);
+    }
   }
 
   // ---------------------------------------------------------------- Valor (Ömer 2026-10-13)
@@ -4409,6 +4464,9 @@ export class Battle {
       if (urn.left <= 0) return { ok: false, reason: 'The urn is empty' };
       if (!this.nextToUrn(actor)) return { ok: false, reason: 'Stand next to the urn' };
       if (slot !== undefined && !this.urnRows().includes(this.rowOf(slot))) return { ok: false, reason: 'Pick a row of your side' };
+    } else if (def.kind === 'surge') {
+      if (!this.surgeAvail.get(actor.side)?.includes(id)) return { ok: false, reason: 'The Crown is not with you here' };
+      if (this.surgeUsed.has(actor.side)) return { ok: false, reason: 'The Crown was already called in this battle' };
     } else if (def.kind === 'valor') {
       const have = this.valorOf(actor.side);
       const rules = this.setup.valorRules;
@@ -4475,6 +4533,8 @@ export class Battle {
       if (bonus > 0) this.speedBoost.set(actor.uid, bonus);
       emit({ type: 'turnSkipped', actor: actor.uid, voluntary: true, ...(bonus > 0 ? { speedBoost: bonus } : {}) });
       if (this.trigOn) this.trig([actor], { on: 'skip' }, emit);
+    } else if (def!.kind === 'surge') {
+      this.callSurge(actor, def!, emit);
     } else if (def!.kind === 'valor') {
       this.valorRevive(actor, this.get(targetUid!)!, slot, emit);
     } else if (def!.kind === 'urn') {
@@ -4492,7 +4552,7 @@ export class Battle {
       this.addStatus(actor, { kind: stride.status as Status['kind'], turns: stride.turns, source: actor.uid }, emit);
     }
     this.flushFree(emit); // Faz 4c: Move'un tetiklediği bedava kullanım (Range Keeper)
-    this.noteAction(actor.uid, def!.kind === 'rest' ? 'rest' : def!.kind === 'skip' ? 'skip' : def!.kind === 'valor' ? 'valor' : def!.kind === 'urn' ? 'urn' : 'move');
+    this.noteAction(actor.uid, def!.kind === 'rest' ? 'rest' : def!.kind === 'skip' ? 'skip' : def!.kind === 'valor' ? 'valor' : def!.kind === 'urn' ? 'urn' : def!.kind === 'surge' ? 'surge' : 'move');
     this.finishAction(actor, emit, stride ? stride.turnCost : 1);
     return { ok: true, events };
   }

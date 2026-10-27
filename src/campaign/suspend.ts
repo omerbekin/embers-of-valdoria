@@ -43,16 +43,18 @@ export function withSuspended(s: CampaignState, x: CampaignSuspended | undefined
 /** Savaş kurulumunun parmak izi: seed + takımlar + birim kurulumları (ekipman, can, ceset) + Valor. */
 // Dalgalı savaşta sonraki dalgalar da girer (planKey; dalgasız planın anahtarı eskisiyle aynı). Dalgalar açılmadan önce duraklatılmış bir savaşın
 // düğümü artık dalgalıysa anahtar tutmaz ve savaş baştan başlar (PAUSED_BROKEN).
-export const resumeKey = (plan: Pick<BattlePlan, 'seed' | 'party' | 'enemies' | 'units' | 'valor' | 'waves' | 'rules'>): string =>
-  planKey({ seed: plan.seed, party: plan.party, enemies: plan.enemies, units: [plan.units, plan.valor ?? null, ...(plan.rules ? [plan.rules] : [])], ...(plan.waves?.length ? { waves: plan.waves } : {}) });
+export const resumeKey = (plan: Pick<BattlePlan, 'seed' | 'party' | 'enemies' | 'units' | 'valor' | 'waves' | 'rules' | 'surge'>): string =>
+  planKey({ seed: plan.seed, party: plan.party, enemies: plan.enemies, units: [plan.units, plan.valor ?? null, ...(plan.rules ? [plan.rules] : []), ...(plan.surge?.length ? [plan.surge] : [])], ...(plan.waves?.length ? { waves: plan.waves } : {}) });
 
 /**
  * Planın dalgalı savaş girişi (motor teams.waves; docs/design/waves.md) + karşılaşma kuralları (teams.rules; data/battle-rules.json). Dalgasız,
  * kuralsız planda boş.
  */
-export const campaignWaveTeams = (plan: Pick<BattlePlan, 'waves' | 'rules'>) => ({
+export const campaignWaveTeams = (plan: Pick<BattlePlan, 'waves' | 'rules' | 'surge'>) => ({
   ...(plan.waves?.length ? { waves: plan.waves.map((w) => ({ enemies: w.enemies, units: w.units })) } : {}),
   ...(plan.rules ? { rules: plan.rules } : {}),
+  // Crown Surge (bölge hakkı; yalnız oyuncu tarafı): HUD taç plakası, savaş başına bir
+  ...(plan.surge?.length ? { surge: { party: [...plan.surge] } } : {}),
 });
 
 /** Planın savaşı (BattleScene'in kurduğuyla aynı giriş: hücre listeleri, arrange=false, Valor). */

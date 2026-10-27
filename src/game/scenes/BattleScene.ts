@@ -129,6 +129,11 @@ export interface BattleSceneData {
    * party = uid ('party-0'...) -> kahraman level'ı. Verilmezse (Quick Battle / multiplayer) level yazılmaz. Çağrılara yazılmaz.
    */
   levels?: { enemy?: number; party?: Record<string, number> };
+  /**
+   * Crown Surge (yalnızca sefer, sunum): kahramanların Ashen Taint yığını (uid 'party-i' -> yığın), bir sonraki Surge'ün vereceği Taint ve yığın
+   * başına maks can kaybı (ipucu metni). Surge'ün kendisi motorda (teams.surge). Verilmezse Taint çipi / satırı yok.
+   */
+  crown?: { taint: Record<string, number>; nextTaint: number; hpLoss: number };
   /** Debug (Setup > Mob battle > Ignore range): bu savaşta menzil sınırı yok (BattleSetup.ignoreRange); yalnızca o başlatmada geçerli. */
   ignoreRange?: boolean;
 }
@@ -225,6 +230,7 @@ export class BattleScene extends Phaser.Scene {
   weapons: BattleSceneData['weapons'] = undefined;
   /** Birim level'ları (BattleSceneData.levels; yalnızca sunum). */
   private unitLevels: BattleSceneData['levels'] = undefined;
+  private crownInfo: BattleSceneData['crown'] = undefined;
   private ignoreRange = false;
   /** Bu ekranda oynayan insanın tarafı: tek oyunculuda daima 'party'; multiplayer'da katılan 'enemy' (sağ). */
   localSide: 'party' | 'enemy' = 'party';
@@ -351,6 +357,7 @@ export class BattleScene extends Phaser.Scene {
     this.mp = data.mp;
     this.weapons = data.weapons;
     this.unitLevels = data.levels;
+    this.crownInfo = data.crown;
     this.ignoreRange = !data.mp && !data.campaign && !!data.ignoreRange;
     this.localSide = data.mp?.localSide ?? 'party';
     for (const off of this.mpOff) off();
@@ -2339,6 +2346,26 @@ export class BattleScene extends Phaser.Scene {
     return this.textures.exists(key) ? key : ensureIcon(this, 'ankh', '#ffb35a', true);
   }
 
+  /**
+   * Crown Surge taç plakaları (HUD sağ alanı; mockup crown-surge.html#v1): oyuncu tarafının bu savaştaki Surge'leri. Sırası gelen kahraman
+   * (çağrı değil) basınca kendi eylemiyle çağırır; savaşta biri çağrıldıysa hepsi soluk "0 / 1". Surge yoksa gizli.
+   */
+  private refreshCrown(actor: Combatant | null | undefined): void {
+    if (!this.hud) return;
+    const ids = this.battle.surgeIds(this.localSide);
+    const spent = this.battle.surgeSpent(this.localSide);
+    const icon = this.texUrl(ensureIcon(this, uiIconName('crown'), '#e2b04a', false));
+    this.hud.setCrown(
+      ids.map((id) => {
+        const def = this.battle.globalDef(id)!;
+        const own = !!actor && actor.side === this.localSide && !actor.summoned;
+        const enabled = own && this.playerCanAct && this.battle.canUseGlobal(actor!.uid, id).ok;
+        const tip = own ? this.globalTip(actor!, id) : this.makeInfo(def.name, colors.text, ensureIcon(this, uiIconName('crown'), '#e2b04a', false), [[def.text, colors.text], [spent ? 'The Crown was already called in this battle' : 'Wait for one of your heroes', colors.muted]], 'Crown');
+        return { id, name: def.name, iconUrl: icon, enabled, used: spent, tip };
+      }),
+    );
+  }
+
   /** Valor mangalları (HUD): bu savaşta oyuncu tarafının Valor'u varsa gösterilir; `animate` harcamada korlar söner. */
   private refreshValor(animate = false): void {
     const v = this.battle.valorOf(this.localSide);
@@ -2413,7 +2440,7 @@ export class BattleScene extends Phaser.Scene {
   /** Global eylem (Rest / Skip / Move) açıklaması: sütundaki öğenin hemen üstünde açılır. */
   private globalTip(actor: Combatant, id: string): TipContent {
     const def = this.battle.globalDef(id)!;
-    const info = describeGlobalSkill(def, content.formulas, this.battle.valorRules, this.battle.urnState());
+    const info = describeGlobalSkill(def, content.formulas, this.battle.valorRules, this.battle.urnState(), content.statuses);
     const detail = info.lines.filter((l) => !(def.kind === 'skip' && l.includes('speed meter')) && !(def.kind === 'move' && l.startsWith('Move to an empty')));
     const rows: Array<[string, string?]> = [[info.summary, colors.text], ...(def.kind === 'skip' ? [['Next turn arrives in half the time', colors.heal] as [string, string]] : []), ...detail.map((l): [string, string?] => [l, colors.muted])];
     const can = this.battle.canUseGlobal(actor.uid, id);
@@ -2423,6 +2450,11 @@ export class BattleScene extends Phaser.Scene {
     else if (def.kind === 'valor') rows.push(['Click, then pick a fallen ally (Esc cancels)', colors.targetHighlight]);
     else if (def.kind === 'urn') rows.push(['Click, then pick a row of your side (Esc cancels)', colors.targetHighlight]);
     if (def.kind === 'valor') rows.splice(1, 0, [`Valor now: ${this.battle.valorOf(actor.side) ?? 0} of ${this.battle.valorRules?.cap ?? 0}`, '#ffb35a']);
+    // Crown Surge: çağıranın alacağı Taint (sefer verir; her kullanım bir öncekinden fazla)
+    if (def.kind === 'surge' && this.crownInfo) {
+      const n = this.crownInfo.nextTaint;
+      rows.splice(1, 0, [`The hero who calls it takes ${n} Ashen Taint (-${Math.round(this.crownInfo.hpLoss * 100)}% max HP each) until cleansed at a chapel. Each call gives more Taint than the last.`, '#c9b8f0']);
+    }
     const icon = def.kind === 'valor' ? this.valorIconKey() : ensureIcon(this, globalIconName(def), GLOBAL_ACCENT[def.kind === 'skip' ? 'skip' : def.kind] ?? '#e8c47e', true, SHARED_KEY);
     return this.makeInfo(info.name, colors.text, icon, rows, info.targetBadge, [{ text: info.cost, hex: colors.muted }]);
   }
@@ -3086,8 +3118,9 @@ export class BattleScene extends Phaser.Scene {
         const def = this.battle.globalDef(e.id);
         if (actor && def) {
           const who = `${actor.side !== this.localSide ? 'Enemy ' : ''}${unitName(actor)}`;
-          this.announce(def.kind === 'rest' ? `${who} uses Rest` : def.kind === 'skip' ? `${who} skips the turn` : def.kind === 'valor' ? `${who} spends Valor` : `${who} moves`);
+          this.announce(def.kind === 'rest' ? `${who} uses Rest` : def.kind === 'skip' ? `${who} skips the turn` : def.kind === 'valor' ? `${who} spends Valor` : def.kind === 'surge' ? `${who} calls ${def.name}` : `${who} moves`);
         }
+        if (def?.kind === 'surge' && actor) for (const c of this.battle.combatants) if (c.side === actor.side && c.hp > 0) this.views.get(c.uid)?.ring('#e2b04a', 0.9);
         if (def?.kind === 'rest') {
           playSfx(this, 'gasp', SHARED_KEY);
           view?.ring(colors.mpFill, 0.9);
@@ -4431,6 +4464,7 @@ export class BattleScene extends Phaser.Scene {
     const actor = this.activeActor;
     for (const v of this.views.values()) v.setActive(v.combatant.uid === actor?.uid && !this.battle.winner);
     this.hud?.setModel(this.buildHudModel(actor));
+    this.refreshCrown(actor);
     this.refreshValor();
     this.refreshReviveChips();
   }
@@ -4451,7 +4485,7 @@ export class BattleScene extends Phaser.Scene {
           const c = this.battle.get(uid);
           return c ? { name: unitName(c), side: c.side } : undefined;
         },
-        skill: (id) => content.skills[id]?.name ?? id,
+        skill: (id) => content.skills[id]?.name ?? content.globalSkills[id]?.name ?? id,
         status: (id) => content.statuses[id]?.name ?? id,
         ground: (id) => content.grounds[id]?.name ?? id,
         globalKind: (id) => this.battle.globalDef(id)?.kind ?? id,
@@ -4577,6 +4611,7 @@ export class BattleScene extends Phaser.Scene {
     const fed = empoweredLine(actor.empowered);
     if (fed) notes.push({ text: fed.text, color: fed.tone === 'empowered' ? '#c58bff' : colors.muted });
     const hudActor: HudActor = {
+      ...(this.crownInfo?.taint[actor.uid] && actor.side === 'party' && !actor.summoned ? { taint: this.crownInfo.taint[actor.uid] } : {}),
       uid: actor.uid,
       name: unitName(actor),
       sub,
@@ -4629,7 +4664,9 @@ export class BattleScene extends Phaser.Scene {
       });
     });
     // summons never use global actions; on the foe's turn Rest / Skip / Move are hidden placeholders too (N1: they were shown on the enemy panel)
-    const own = actor.summoned || (this.battle.mode !== 'test' && actor.side !== this.localSide) ? [] : this.battle.globalSkillIds(actor.side);
+    // Crown Surge taç plakası sağ alanda (refreshCrown): global sütunda değil
+    const notSurge = (id: string) => this.battle.globalDef(id)?.kind !== 'surge';
+    const own = actor.summoned || (this.battle.mode !== 'test' && actor.side !== this.localSide) ? [] : this.battle.globalSkillIds(actor.side).filter(notSurge);
     const globals: HudGlobal[] = own.map((id) => {
           const g = this.battle.globalDef(id)!;
           const accent = GLOBAL_ACCENT[g.kind === 'skip' ? 'skip' : g.kind] ?? '#e8c47e';
@@ -4648,7 +4685,7 @@ export class BattleScene extends Phaser.Scene {
     // Sabit HUD (Ömer 0.8.2.3): iki tarafın global eylemlerinden bu birimde olmayanlar görünmez yer tutucu (düşmanda Valor Revive, çağrıda
     // hepsi): Rest / Skip / Move ve sağdaki Combat log birimden birime kaymaz
     for (const id of new Set([...this.battle.globalSkillIds('party'), ...this.battle.globalSkillIds('enemy')])) {
-      if (own.includes(id)) continue;
+      if (own.includes(id) || !notSurge(id)) continue;
       const g = this.battle.globalDef(id);
       if (!g) continue;
       const iconUrl = g.kind === 'valor' ? brazierIconUrl(false) : this.texUrl(ensureIcon(this, globalIconName(g), GLOBAL_ACCENT[g.kind === 'skip' ? 'skip' : g.kind] ?? '#e8c47e', false, SHARED_KEY));

@@ -1,0 +1,11 @@
+{
+  "_not": "CROWN SURGE + ASHEN TAINT (Ömer 2026-10-27, docs/design/campaign/map2-quests-surge.md bölüm 2; form quests/surge). C1 = V1: savaş HUD'ında taç plakası, kullanan kahramanın eylemi harcanır (global eylem, data/global-skills.json > ash_surge / salt_surge). C2 a: sırası gelen herhangi bir kahraman (çağrılar kullanamaz), Taint ona. C3 a: BÖLGE başına bir hak (her Surge türü için ayrı; harcanan hak '<harita>:<bölge>:<id>' olarak kayda yazılır, kullanılmayan hak sonraki bölgeye taşınmaz). C10 c: Ash ve Salt ayrı haklar ama bir savaşta yalnız biri. C12 a: yalnız sefer, `maps` listesindeki haritalarda (Quick Battle / Endless / çevrimiçi yok; debug'dan test savaşında açılabilir). Sayılar PROVİZYON (sim C11, madde 427'den sonra).",
+  "maps": ["drowned-reach"],
+  "ash": "ash_surge",
+  "_salt": "C9 a: Salt Surge (takıma kalkan) Drowned Queen yenilince açılır (unlock: harita + düğüm, ilk zafer). Açılınca `maps` listesindeki haritalarda bölge başına ayrı bir hak.",
+  "salt": { "id": "salt_surge", "unlock": { "map": "drowned-reach", "node": "dr82" } },
+  "_taint": "C4 (Ömer: üst sınır yok ama her kullanım bir öncekinden pahalı): seferdeki n. Surge kullanımı çağırana firstGain + (n - 1) x gainStep yığın verir (1, 2, 3 ...; sayaç seferin tamamı için, temizleme sıfırlamaz: VARSAYIM). Yığın başına maks can -maxHpLoss (toplamsal, yaralarla çarpımsal; teknik taban minFactor, canın sıfıra inmemesi için, denge sınırı değil). C6 a: Taint harita geçişinde taşınır.",
+  "taint": { "maxHpLoss": 0.03, "firstGain": 1, "gainStep": 1, "minFactor": 0.05 },
+  "_chapels": "C5 b: adında Chapel olan dinlenme (kamp) düğümleri Taint'i bedava temizler: takım bu düğüme her VARIŞINDA kadrodaki herkesin Taint'i silinir (VARSAYIM: kamp seçimini harcamaz). Harita başına düğüm id'leri.",
+  "chapels": { "drowned-reach": ["dr49"] }
+}

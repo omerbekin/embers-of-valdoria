@@ -8,7 +8,7 @@ import { content } from '../src/engine';
 // Boyalı arayüz ikonları (Ömer 2026-10-10): assets/ui-icons/<ad>.png (+ small/), tek kaynak uiIconName -> art-registry 'ui:<ad>'.
 describe('Arayüz ikonları: her kavram boyalı görselle, kodla çizilen yedek korunur', () => {
   it('her UiIconKind için 128 ve 64 piksellik görsel var; fazladan dosya yok', () => {
-    expect(UI_ICON_KINDS).toHaveLength(17);
+    expect(UI_ICON_KINDS).toHaveLength(18);
     for (const k of UI_ICON_KINDS) {
       const f = uiImage(k);
       expect(f, `${k}: assets/ui-icons/${k}.png yok`).not.toBeNull();
@@ -28,7 +28,7 @@ describe('Arayüz ikonları: her kavram boyalı görselle, kodla çizilen yedek 
     expect(UI_ICON_FALLBACK.rage).toBe('flame');
     expect(UI_ICON_FALLBACK.cooldown).toBe('hourglass');
     // Tidewater Urn (M-N3): arayüz ikonu yok, kodla çizilen 'droplet' ikonu (data/global-skills.json > icon)
-    for (const g of Object.values(content.globalSkills).filter((x) => x.kind !== 'valor' && x.kind !== 'urn')) expect(uiIconFallback(g.kind === 'skip' ? 'skip' : g.kind), g.id).toBe(g.icon);
+    for (const g of Object.values(content.globalSkills).filter((x) => x.kind !== 'valor' && x.kind !== 'urn' && x.kind !== 'surge')) expect(uiIconFallback(g.kind === 'skip' ? 'skip' : g.kind), g.id).toBe(g.icon);
     // Valor diriltmesi (valor_revive): HUD'da boyalı mangal karesi (assets/valor, src/ui/valor-braziers.ts > brazierIconUrl), arayüz ikonu yok
     // bilinmeyen ad: görsel yok, yedek yok -> çökmez, yer tutucu
     expect(resolveSprite('ui:nope').image).toBeUndefined();

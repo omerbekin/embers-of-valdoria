@@ -7,7 +7,7 @@ import { uiImage } from '../game/icon-image-files';
  * false)` / `iconUrl(uiIconName(k))` adı art-registry > resolveSprite üzerinden görsele çözer (yumuşak ölçek, DOM `#smooth`). Dosya yoksa
  * UI_ICON_FALLBACK'teki kodla çizilen ikon (null = eskiden ikon yoktu: çağıran `hasUiImage` ile ikonsuz düzene döner).
  */
-export const UI_ICON_KINDS = ['rest', 'skip', 'move', 'cooldown', 'rage', 'luckyEscape', 'passive', 'combatLog', 'gold', 'bag', 'gear', 'formation', 'codex', 'settings', 'fullscreen', 'menu', 'range'] as const;
+export const UI_ICON_KINDS = ['rest', 'skip', 'move', 'cooldown', 'rage', 'luckyEscape', 'passive', 'combatLog', 'gold', 'bag', 'gear', 'formation', 'codex', 'settings', 'fullscreen', 'menu', 'range', 'crown'] as const;
 export type UiIconKind = (typeof UI_ICON_KINDS)[number];
 
 /** Görsel yoksa kodla çizilen yedek (eski ikon); null = eskiden bu yerde ikon yoktu. */
@@ -29,6 +29,7 @@ export const UI_ICON_FALLBACK: Record<UiIconKind, IconKind | null> = {
   fullscreen: null,
   menu: null,
   range: null,
+  crown: null,
 };
 
 /** Nerede kullanıldığı (Codex > Assets > Icons > UI icons satırı). */
@@ -50,6 +51,7 @@ export const UI_ICON_LABEL: Record<UiIconKind, string> = {
   fullscreen: 'Fullscreen (not used: top-right keeps the thin line icon)',
   menu: 'Main Menu (in-game Menu; the top-right Menu stays a text button)',
   range: 'Range (skill tip chip: horizontal double arrow between two end bars)',
+  crown: 'Crown Surge (battle HUD crown plate, campaign Maps 2-3)',
 };
 
 export const UI_ICON_PREFIX = 'ui:';

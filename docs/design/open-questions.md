@@ -1025,3 +1025,16 @@ Tüm sayılar geçici, sim koşulmadı. Veri: `data/campaign/pits.json`, `data/c
 5. **Urn eylemi = global eylem** (Rest / Move gibi düğme; "Tidewater Urn", damla ikonu, yalnızca Urn'lü savaşta görünür; bitişik değilse kapalı + "Stand next to the urn"). Eylem turu bitirir; bedeli yok; 3 kullanım. Görsel: kodla çizilmiş yer tutucu küp (kalan kullanım noktalarıyla); gerçek sanat yok.
 6. **YZ / sim kuralı:** bitişik kahraman, kendi tahtasındaki bir sıranın puanı (Burning Ground hücresi x1 + o sıradaki Burning kahraman x2) en az 2 ise class hamlesi yerine Urn'ü o sıraya döker. Düşman tarafı kullanmaz.
 7. **Urn karşılaşmaları:** dr_48 Boarders ve dr_63 Cove Corsairs (ikisinde de 2 Corsair Slinger: Pitch Pot oyuncu tahtasını yakar). Tasarımdaki asıl yeri Harita 3 / The Ember (düğüm 85); orada da aynı alan (`"device": "tidewater_urn"`) yeter. AÇIK: Harita 2'de Urn kalsın mı, yalnızca Harita 3'e mi? **KARAR (Ömer 2026-10-27): Urn temaya uyuyor ve Harita 3'te yeterince özgün içerik kaldığı için Harita 2'deki iki Urn savaşı (dr_48, dr_63) kalır.**
+
+## 431. Harita 2 Crown Surge + Ashen Taint: varsayımlar ve provizyon sayılar (campaign-dev 2026-10-27; `data/campaign/crown-surge.json`, `data/global-skills.json > ash_surge / salt_surge`, `data/statuses.json > ash_surge`, `src/campaign/surge.ts`, `src/engine/battle.ts > callSurge`; test `tests/crown-surge.test.ts`; sayılar PROVİZYON, sim YOK: C11 a, 427'den sonra)
+
+Seçimler: C1 V1 (HUD taç plakası, eylemi harcar), C2 a, C3 a, C4 (üst sınır yok, her kullanım bir öncekinden +1 fazla Taint), C5 b (Chapel temizler), C6 a, C7 a, C8 a, C9 a, C10 (savaş başına tek Surge), C11 a, C12 a.
+
+1. **Provizyon sayılar:** Ash Surge ×1.3 verilen hasar (ayrı çarpan), her kahramanın kendi sonraki 2 turu; Salt Surge maks canın %15'i kalkan, 2 tur; Taint yığın başına -%3 maks can (toplamsal, yaralarla çarpımsal); kazanım 1., 2., 3. kullanım = 1 / 2 / 3 ... Teknik taban: Taint maks canı en az x0.05'e indirir (can sıfır olmasın diye; denge sınırı değil).
+2. **Kullanım sayacı sefer boyu**, Chapel temizliği sayacı SIFIRLAMAZ (temizlik yalnız yığınları siler). AÇIK: temizlik sayacı da sıfırlasın mı?
+3. **Chapel:** takım düğüme her VARIŞINDA kadrodaki herkesin (takım + yedek + Inn) Taint'i silinir, kamp seçimi harcanmaz. Harita 2'de yalnız dr49 Cliff Chapel listede. AÇIK: başka Chapel düğümü eklensin mi / temizlik kamp seçeneği mi olsun?
+4. **Hak, savaşın sonucundan bağımsız harcanır** (zafer, yenilgi, geri çekilme, Dive / Pit yenilgisi): çağrıldıysa hak gider, Taint yazılır.
+5. **Ash çağrılara da gider** (yaşayan tüm müttefikler; cansız nesneler hariç). Çağıranın bu turu Surge'e gittiği için ona 3 tur yazılır (sonraki 2 turu kapsasın). Salt kalkanı mevcut süreli kalkan kuralıyla (tur başında azalır).
+6. **Salt'ın hakkı ayrı** (bölge başına Ash ve Salt ayrı), ama C10: bir savaşta yalnız biri.
+7. **YZ ve sim Surge kullanmaz** (C11 sonra). Mend/Quench bitiş metni yok; yalnızca toplam alınan Taint (`surge.taken`) kayda yazılıyor (C7 a).
+8. **Görünüm:** savaş HUD'ında taç plakası (sağ sütun başı), kahraman çipinde "Ashen Taint ×N", harita kahraman satırında "Taint ×N" ve Taint'li can yüzdesi. Karakter panelinin maks can satırı Taint'i henüz göstermiyor (ui-dev işi). Telefonda (dar ekran) taç plakası + Valor yan yana görünümü doğrulanmadı.

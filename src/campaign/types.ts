@@ -363,6 +363,11 @@ export interface Hero {
   treeReset?: boolean;
   /** Yara sayısı (Ömer 2026-10-19, hp-death-rework.md; kayıt sürümü 11, eski kayıtta yok = 0): her yara maks can -rules.wounds.maxHpLoss. */
   wounds?: number;
+  /**
+   * Ashen Taint yığını (Crown Surge, Ömer 2026-10-27; data/campaign/crown-surge.json > taint): her yığın maks can -taint.maxHpLoss. Chapel dinlenme
+   * düğümünde silinir; harita geçişinde taşınır. İsteğe bağlı alan (kayıt sürümü değişmez); eski kayıtta yok = 0.
+   */
+  taint?: number;
   /** Takılı item'ler: 6 yuva (weapon, helm, armor, gloves, boots, trinket), boş = null. Güce çevrimi: src/progression/loadout.ts. */
   equipment: Equipment;
   /**
@@ -517,6 +522,12 @@ export interface CampaignState {
    * bekliyor. Sandıklar yüzeye çıkınca verilir. İsteğe bağlı alan (kayıt sürümü değişmez; bozuksa / başka düğümünse atılır).
    */
   dive?: { node: string; depth: number; diving?: true };
+  /**
+   * Crown Surge (Ömer 2026-10-27, map2-quests-surge.md C1; src/campaign/surge.ts): `spent` = harcanan bölge hakları ('<harita>:<bölge>:<surge id>'),
+   * `uses` = seferdeki toplam Surge kullanımı (bir sonraki kullanımın Taint'ini artırır, C4), `taken` = seferde alınan toplam Taint (temizlenenler
+   * dahil; Mend/Quench bitiş metni için, C7 a), `salt` = Salt Surge açık (Drowned Queen yenildi, C9). İsteğe bağlı alan (kayıt sürümü değişmez).
+   */
+  surge?: { spent?: string[]; uses?: number; taken?: number; salt?: true };
 }
 
 /** Inn'de bekleyen kahraman (Ömer 2026-10-26). */
@@ -599,6 +610,8 @@ export interface BattleOutcome {
   kills?: KillRecord[];
   /** Savaş içi Valor diriltmeleri (kahraman başına sayı; Battle.log, battleOutcomeOf). Her biri valor.json > revive.clearWounds yara siler. */
   valorRevived?: Record<string, number>;
+  /** Bu savaşta çağrılan Crown Surge (savaş başına en çok bir; Battle.log 'surge' olayı): çağıran kahraman ve global id. */
+  surged?: { heroId: string; id: string };
 }
 
 export type NextStep =

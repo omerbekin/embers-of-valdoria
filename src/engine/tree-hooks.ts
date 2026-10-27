@@ -135,7 +135,7 @@ export function mergeFxValue(key: string, prev: unknown, next: unknown): unknown
 /* ------------------------------------------------------------------ C1 koşullar ------------------------------------------------------------------ */
 
 /** Son eylem türü (Battle.lastKind; LastActionKind ile aynı değerler). */
-export type ActionKindLite = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'pass';
+export type ActionKindLite = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge' | 'pass';
 
 /** Koşul değerlendiricilerinin savaştan okuduğu her şey (Battle uygular). Yeni koşul savaş verisi isterse buraya bir okuma eklenir. */
 export interface CondHost {

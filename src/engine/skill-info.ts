@@ -257,7 +257,7 @@ export interface GlobalSkillInfo {
   turnsOnly: boolean;
 }
 
-export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas, valor?: ValorRules, urn?: { rule: UrnRule; left: number } | null): GlobalSkillInfo {
+export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas, valor?: ValorRules, urn?: { rule: UrnRule; left: number } | null, statusDefs?: Record<string, StatusDef>): GlobalSkillInfo {
   const lines: string[] = [];
   if (def.kind === 'urn') {
     // M-N3 Tidewater Urn: sayılar savaşın Urn kuralından (battle-rules.json > devices)
@@ -269,6 +269,15 @@ export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas, v
       `${urn ? urn.left : (r?.uses ?? 3)} of ${r?.uses ?? 3} uses left`,
     );
     return { id: def.id, name: def.name, icon: def.icon, target: 'A row of your side', targetBadge: 'Row', cost: 'Free', summary: def.text, lines, turnsOnly: false };
+  }
+  if (def.kind === 'surge') {
+    // Crown Surge (map2-quests-surge.md C1): sayılar veriden (durum çarpanı statuses.json, kalkan oranı global-skills.json)
+    const st = def.status ? statusDefs?.[def.status] : undefined;
+    const mult = st?.damageDealtMult;
+    if (mult !== undefined && (def.turns ?? 0) > 0) lines.push(`Your whole party deals ×${Math.round(mult * 100) / 100} damage for each hero's next ${def.turns} turns`);
+    if ((def.shieldRatio ?? 0) > 0) lines.push(`Every ally gains a shield of ${pct(def.shieldRatio!)} of their max HP for ${def.shieldTurns ?? 1} turns`);
+    lines.push('Uses your turn', 'One Crown Surge per battle');
+    return { id: def.id, name: def.name, icon: def.icon, target: 'Your whole party', targetBadge: 'Party', cost: 'Ashen Taint', summary: def.text, lines, turnsOnly: false };
   }
   if (def.kind === 'valor') {
     const r = valor?.revive;

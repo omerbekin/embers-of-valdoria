@@ -154,6 +154,8 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `${L(e.by)} consumes the corpse of ${L(e.uid)} (cell ${e.slot}): it can no longer be revived`;
     case 'despawn':
       return `${L(e.target)} despawns`;
+    case 'surge':
+      return `${L(e.actor)} calls the Crown: ${battle.globalDef(e.id)?.name ?? e.id}`;
     case 'valor':
       return `${e.side} spends ${e.spent} Valor (now ${e.after})`;
     case 'revive':
