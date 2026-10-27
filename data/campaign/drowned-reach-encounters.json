@@ -1637,6 +1637,7 @@
   "dr_55": {
     "name": "Corsair Boarders",
     "blocked": "deck",
+    "background": "storm-deck",
     "units": [
       {
         "class": "corsair_cutlass",
@@ -1812,6 +1813,7 @@
   "dr_60": {
     "name": "Narrows Boarders",
     "blocked": "deck",
+    "background": "storm-deck",
     "units": [
       {
         "class": "siren",

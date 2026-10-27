@@ -38,12 +38,21 @@ const FLOOR_SRC_Y = {
   'duelling-ring-moon': 562,
   'duelling-ring-snow': 562,
   'duelling-ring-storm': 562,
+  // Harita 2 (The Drowned Reach) bölge arka planları: kaynak assets/source/backgrounds-drowned (2026-10-27, Ömer onayı bekliyor); zemin = kıyı / korkuluk / basamak dibi
+  'river-gorge': 595,
+  'saltmarsh': 585,
+  'saltmere-docks': 605, // rıhtım duvarının dibi
+  'wreck-cliffs': 595,
+  'siren-rocks': 610,
+  'storm-deck': 625, // güverte korkuluğunun dibi
+  'sunken-court': 600, // taht basamaklarının dibi
 };
+const DROWNED = new Set(['river-gorge', 'saltmarsh', 'saltmere-docks', 'wreck-cliffs', 'siren-rocks', 'storm-deck', 'sunken-court']);
 
 const floors = {};
 for (const [id, fy] of Object.entries(FLOOR_SRC_Y)) {
   const out = `${OUT_DIR}/${id}.webp`;
-  const src = sharp(`${SRC_DIR}/${id}.png`);
+  const src = sharp(`${DROWNED.has(id) ? 'assets/source/backgrounds-drowned' : SRC_DIR}/${id}.png`);
   const m = await src.metadata();
   if (m.height !== SRC_H) throw new Error(`${id}: kaynak yüksekliği ${m.height} (beklenen ${SRC_H}); FLOOR_SRC_Y yeniden ölçülmeli`);
   await src.webp({ nearLossless: true, quality: NEAR_LOSSLESS, effort: 6 }).toFile(out);
