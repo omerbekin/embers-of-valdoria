@@ -1,0 +1,92 @@
+{
+  "_not": "Admiral Vane of the Black Caravel: Harita 2 Bölge V bossu (Gallows Cove dr_66; maps-2-3.md 3.3, content-designer 2026-10-27). Ödünç Bridge Warden kiti yerine kendi kiti: Cutlass Flurry + Chain Shot (sütun, telgraflı) + Harpoon Line (Ballista ayaktayken) + Rally (faz 2+, dostlara Haste) + ult Broadside (faz 3, telgraflı sıra + Burning ground). Harpoon Ballista = iron_mooring (anchor kuralı Warden'la aynı: ayaktayken +10 zırh, kırılınca Stagger + bekleyen Harpoon Line yok). Belgedeki 'Ballista her tur telgraflı hücreye vurur' nesneye eylem ister: yok; en yakın sürüm Vane'in Harpoon Line'ı (open-questions 434). Boarding Party: eskort Corsair'lerin kendi Boarding pasifi (dalgayla girene Haste). Stat / can / fazlar Warden'la aynı. Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON.",
+  "id": "admiral_vane",
+  "name": "Admiral Vane",
+  "spriteId": "admiral_vane",
+  "color": "#2a2a3a",
+  "logo": "helm",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Boss · Corsair Admiral",
+  "attributes": {
+    "str": 50,
+    "int": 12,
+    "dex": 2,
+    "luck": 8
+  },
+  "armor": 24,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 432,
+    "hpRegen": 0
+  },
+  "ai": "bridge_warden",
+  "skills": [
+    "cutlass_flurry",
+    "chain_shot",
+    "harpoon_line",
+    "vane_rally",
+    "broadside"
+  ],
+  "boss": {
+    "where": "holds Gallows Cove with the crew of the Black Caravel",
+    "firstBanner": "Strike your colours.",
+    "phases": [
+      {
+        "at": 0.66,
+        "banner": "All hands!"
+      },
+      {
+        "at": 0.33,
+        "banner": "Run out the guns.",
+        "actionsPerTurn": 3,
+        "powerMult": 1.15,
+        "armorMult": 0.5,
+        "breakAnchors": true
+      }
+    ],
+    "anchor": {
+      "unit": "iron_mooring",
+      "armorAdd": 10,
+      "magicArmorAdd": 10,
+      "stagger": true,
+      "cancel": []
+    },
+    "unyielding": {
+      "stunToStagger": false,
+      "debuffDurationDelta": -1,
+      "immuneDisplacement": true
+    },
+    "notes": [
+      "Warnings: Chain Shot and Broadside do not hit at once. The marked cells are marked and the shot lands at the start of Vane's next turn, before he acts. Every hero gets at least one turn in between. These hits cannot miss.",
+      "Chain Shot marks a whole lane: step out of it (Move).",
+      "While the Harpoon Ballista stands, Vane can fire its Harpoon Line and drag a hero forward. Break the Ballista to stagger him."
+    ],
+    "passives": [
+      {
+        "id": "unyielding",
+        "name": "Unyielding",
+        "icon": "unyielding",
+        "text": "Immune to crowd control: Stun, Slow and Silence do not take hold, taunts do not force his attacks, and he cannot be pulled or pushed. Other ailments last 1 turn less."
+      },
+      {
+        "id": "boarding_party",
+        "name": "Boarding Party",
+        "icon": "boot",
+        "text": "Corsairs that board in a reinforcement wave arrive with Haste for 1 turn."
+      },
+      {
+        "id": "harpoon_ballista",
+        "name": "Harpoon Ballista",
+        "icon": "anchored",
+        "text": "The standing Ballista gives Vane +10 armor and +10 magic armor and lets him fire the Harpoon Line. Breaking it staggers him (he loses his next action)."
+      },
+      {
+        "id": "broadside_phase",
+        "name": "Run Out the Guns",
+        "icon": "emberheart",
+        "text": "At 66% HP he rallies his crew (Rally opens). At 33% the Ballista is cut loose: he acts 3 times a turn, hits 15% harder with half his armor, and the Broadside opens. A single attack can cross only one threshold."
+      }
+    ]
+  }
+}

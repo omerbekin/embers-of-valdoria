@@ -1,0 +1,40 @@
+{
+  "_not": "Harita 2 elit önderi (Siren Queen's Rock dr_65; maps-2-3.md 3.3, content-designer 2026-10-27). Ödünç Hedge Witch Morwen kiti yerine kendi kiti: Queen's Lament + Grand Chorus (tüm tahta + Soaked) + Siren's Call, pasif Lure güçlü sürüm (Spellbound 2 tur). Stat / can Morwen'le aynı. Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON (open-questions 434).",
+  "id": "siren_queen",
+  "name": "The Siren Queen",
+  "family": "hexes",
+  "spriteId": "siren_queen",
+  "color": "#3a7f9a",
+  "logo": "rune",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Hex · Elite",
+  "attributes": {
+    "str": 10,
+    "int": 8,
+    "dex": 6,
+    "luck": 28
+  },
+  "armor": 8,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 90
+  },
+  "ai": "hexer",
+  "skills": [
+    "queens_lament",
+    "grand_chorus",
+    "sirens_call"
+  ],
+  "passive": {
+    "id": "queens_lure",
+    "name": "Lure of the Queen",
+    "icon": "eye",
+    "text": "A hero (not a summon) who hits her with a skill is Spellbound for 2 turns.",
+    "effect": {
+      "type": "lure",
+      "status": "spellbound",
+      "turns": 2
+    }
+  }
+}

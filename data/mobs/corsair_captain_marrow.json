@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 2 gezici elit önderi (The Black Caravel dr_59, M-K; maps-2-3.md 3.3, content-designer 2026-10-27). Ödünç Bandit Chief kiti yerine kendi kiti: Black Cutlass + Captain's Rake + Powder Keg, pasif Boarding (belge: Boarding + Rake). Stat / zırh Bandit Chief'le aynı. Not: Marrow savaş başında tahtada olduğundan Boarding'i yalnız dalgayla girerse işler (open-questions 434). Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON.",
+  "id": "corsair_captain_marrow",
+  "name": "Corsair Captain \"Marrow\"",
+  "family": "corsairs",
+  "spriteId": "corsair_captain_marrow",
+  "spriteScale": 1.15,
+  "color": "#3a3a4a",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Corsair · Captain",
+  "attributes": {
+    "str": 30,
+    "int": 6,
+    "dex": 12,
+    "luck": 4
+  },
+  "armor": 20,
+  "magicArmor": 6,
+  "ai": "aggressive",
+  "skills": [
+    "black_cutlass",
+    "captains_rake",
+    "powder_keg"
+  ],
+  "passive": {
+    "id": "boarding",
+    "name": "Boarding",
+    "icon": "boot",
+    "text": "Arrives with Haste for 1 turn when it boards in a reinforcement wave.",
+    "effect": {
+      "type": "boarding",
+      "status": "haste",
+      "turns": 1
+    }
+  }
+}

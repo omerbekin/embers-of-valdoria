@@ -460,6 +460,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       // D11 (Holy Ground): şifa zemini; area_any'de yalnızca kendi tarafına atılınca kalır
       if (g?.heal) add(`Leaves ${g.name} on the area${skill.target === 'area_any' ? (e.side === 'enemies' ? ' (enemy side only)' : ' (your side only)') : ''} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) healing at the start of each ally turn there`);
       // area_any (Judgment 2026-10-24): hasar zemini yalnızca kendi `side` tarafına atılınca kalır
+      // gücü 0 olan zemin (Harita 2 Flooded suyu): hasarsız, yalnızca zemin
+      else if (e.power <= 0) add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns (no damage)`);
       else add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'}${skill.target === 'area_any' ? (e.side === 'allies' ? ' (your side only)' : ' (enemy side only)') : ''} for ${e.turns} turns (damage over time): ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
     } else if (e.type === 'selfDamage') {
       add(`Costs you ${pct(e.ratio)} of your max HP`);
@@ -500,11 +502,18 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     }
   }
   // Boss skill kuralları (The Bridge Warden): çekme, telgraf (gecikmeli saldırı), faz ve yardımcı şartları
-  if (skill.effects.some((e) => e.type === 'pull')) add('Drags the target to the front-most empty cell of its own lane');
+  for (const e of skill.effects) {
+    if (e.type !== 'pull') continue;
+    // M-N2 Boarding Hook (frontRow): yalnız ön sıra hücresine; doluysa çekme yok; elit / boss çekilmez
+    if (e.to === 'frontRow') add("Drags the target to the front row of its own lane; if that cell is taken, the target stays put. Elites and bosses cannot be pulled");
+    else if (e.to === 'stepForward') add('Drags the target one row forward if the cell in front of it is free');
+    else add('Drags the target to the front-most empty cell of its own lane');
+    break;
+  }
   const tg = skill.telegraph;
   if (tg) {
     if (tg.kind === 'brand') add(`Delayed: brands the target now; at the start of your next turn the brand bursts on the branded unit and everyone right next to it (${tg.area?.shape === 'plus' ? 'a cross around it' : 'around it'}). Dispel or death removes it`);
-    else if (tg.wholeBoard) add(`Delayed: cracks the whole enemy board except ${tg.keystones?.perLane ?? 1} Keystone cell per lane; it collapses at the start of your next turn`);
+    else if (tg.wholeBoard) add(tg.keystones ? `Delayed: cracks the whole enemy board except ${tg.keystones.perLane} Keystone cell per lane; it collapses at the start of your next turn` : 'Delayed: marks the whole enemy board, with no safe cell; it lands at the start of your next turn');
     else add('Delayed: marks the cells now; they collapse at the start of your next turn');
     add('Every enemy gets at least one turn before it lands; it cannot miss. One area warning and one brand at a time, at most one new warning per turn');
   }
@@ -585,7 +594,7 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
     else if (e.type === 'hot') num('Heal / turn', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
     else if (e.type === 'shield') num(e.shieldType === 'magic' ? 'Magic shield' : 'Shield', raw(e.scale, withMult(e.power, stats.shieldPowerMult)), e.shieldType === 'magic' ? 'magicShield' : 'shield');
     else if (e.type === 'manaBurn' && e.onEmpty?.damage) num('Damage at 0 MP', raw(e.onEmpty.damage.scale, withMult(e.onEmpty.damage.power, outgoingDamageMult(stats, e.onEmpty.damage.element))), e.onEmpty.damage.element ?? 'physical');
-    else if (e.type === 'ground') num(`${defs.grounds?.[e.ground]?.name ?? 'Ground'} / turn`, raw(e.scale, e.power), defs.grounds?.[e.ground]?.heal ? 'heal' : defs.grounds?.[e.ground]?.element);
+    else if (e.type === 'ground' && e.power > 0) num(`${defs.grounds?.[e.ground]?.name ?? 'Ground'} / turn`, raw(e.scale, e.power), defs.grounds?.[e.ground]?.heal ? 'heal' : defs.grounds?.[e.ground]?.element);
     else if (e.type === 'dot') {
       const def = defs.statuses?.[e.status];
       num(`${def?.name ?? e.status} / turn`, raw(e.scale, withMult(e.power, stats.dotPowerMult)), def?.dot?.element);

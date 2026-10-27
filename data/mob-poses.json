@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu / boss POZ SAYFALARI (Ömer 2026-10-16): assets/sprites/<id>/poses.png (cols x rows kare, sıra soldan sağa; üretim `node tools/import-mob-art.mjs poses`, asıl assets/source/mob-poses/<id>.png). Kayıt yoksa ya da dosya yoksa birim tek idle.png ile çizilir (bugünkü davranış). density = sayfanın idle.png'ye göre piksel yoğunluğu (araçtaki POSE_DENSITY). Kareler (0'dan): idle = boşta dönüşümlü, idleMs = kare başına süre; windup = büyü hazırlığı; release = büyü/atış bırakma (tek hedef); channel = alan büyüsü; bless = dosta büyü (şifa/kalkan/güç); strike = yakın dövüş vuruşu; move = koşu/süzülme; hit = darbe; defend = sendeleme/savunma; dying = yığılma; dead = yerde. Yeni mob/boss = bir kayıt (bosslar). skills = skill'e özel kareler (skill id -> windup + act), genel türün karesini ezer (Bandit Chief: Toll Sweep 5->6; Chief's Cleaver genel windup/strike 3->4, Hold the Tower kendine = bless 7). Harita 2 elit/boss çizimleri (campaign-dev 2026-10-26; kimlik = karşılaşma biriminin `sprite` alanı, kit Harita 1 sınıfından ödünç): ortak sıra 0-1 boşta, 2 hazırlık, 3 atış/vuruş, 4 ikinci saldırı/alan, 5 dosta/kendine büyü, 6 imza pozu (ödünç kitin ultisine ya da kendine büyüsüne bağlı), 7 koşu, 8 darbe, 9 savunma, 10 yığılma, 11 yerde; kendi kitleri gelince skills satırları yeni skill id lerine taşınır.",
+  "_not": "Sefer mobu / boss POZ SAYFALARI (Ömer 2026-10-16): assets/sprites/<id>/poses.png (cols x rows kare, sıra soldan sağa; üretim `node tools/import-mob-art.mjs poses`, asıl assets/source/mob-poses/<id>.png). Kayıt yoksa ya da dosya yoksa birim tek idle.png ile çizilir (bugünkü davranış). density = sayfanın idle.png'ye göre piksel yoğunluğu (araçtaki POSE_DENSITY). Kareler (0'dan): idle = boşta dönüşümlü, idleMs = kare başına süre; windup = büyü hazırlığı; release = büyü/atış bırakma (tek hedef); channel = alan büyüsü; bless = dosta büyü (şifa/kalkan/güç); strike = yakın dövüş vuruşu; move = koşu/süzülme; hit = darbe; defend = sendeleme/savunma; dying = yığılma; dead = yerde. Yeni mob/boss = bir kayıt (bosslar). skills = skill'e özel kareler (skill id -> windup + act), genel türün karesini ezer (Bandit Chief: Toll Sweep 5->6; Chief's Cleaver genel windup/strike 3->4, Hold the Tower kendine = bless 7). Harita 2 elit/boss çizimleri (campaign-dev 2026-10-26; kimlik = karşılaşma biriminin `sprite` alanı, kit Harita 1 sınıfından ödünç): ortak sıra 0-1 boşta, 2 hazırlık, 3 atış/vuruş, 4 ikinci saldırı/alan, 5 dosta/kendine büyü, 6 imza pozu (kendi kitinin imza skill ine bağlı), 7 koşu, 8 darbe, 9 savunma, 10 yığılma, 11 yerde; skills satırları kendi kitlerinin skill id lerinde (2026-10-27).",
   "high_priest_of_the_undying": {
     "cols": 4,
     "rows": 3,
@@ -180,11 +180,11 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "toll_sweep": {
+      "gutting_sweep": {
         "windup": 2,
         "act": 5
       },
-      "hold_the_tower": {
+      "boarding_hook": {
         "act": 6
       }
     }
@@ -209,7 +209,7 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "hags_mark": {
+      "salt_circle": {
         "windup": 2,
         "act": 6
       }
@@ -235,7 +235,7 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "oath_of_stone": {
+      "hold_the_pier": {
         "act": 6
       }
     }
@@ -260,11 +260,11 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "toll_sweep": {
+      "drag_to_the_rocks": {
         "windup": 2,
         "act": 4
       },
-      "hold_the_tower": {
+      "false_beacon": {
         "act": 6
       }
     }
@@ -289,11 +289,11 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "toll_sweep": {
+      "captains_rake": {
         "windup": 2,
         "act": 4
       },
-      "hold_the_tower": {
+      "powder_keg": {
         "act": 6
       }
     }
@@ -318,7 +318,7 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "hags_mark": {
+      "sirens_call": {
         "windup": 2,
         "act": 6
       }
@@ -344,7 +344,7 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "requiem": {
+      "requiem_of_salt": {
         "windup": 2,
         "act": 4
       }
@@ -370,7 +370,7 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "oath_of_stone": {
+      "champions_challenge": {
         "windup": 2,
         "act": 4
       }
@@ -396,7 +396,7 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "fall_of_kings_bridge": {
+      "wyrm_deluge": {
         "windup": 5,
         "act": 6
       }
@@ -422,7 +422,7 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "fall_of_kings_bridge": {
+      "broadside": {
         "windup": 2,
         "act": 6
       }
@@ -448,7 +448,7 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "pyre_of_morvane": {
+      "the_reach_drowns": {
         "windup": 4,
         "act": 6
       }

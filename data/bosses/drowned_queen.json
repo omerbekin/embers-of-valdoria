@@ -1,0 +1,77 @@
+{
+  "_not": "The Drowned Queen: Harita 2 final bossu (Throne of Brine dr_82; maps-2-3.md 3.3, content-designer 2026-10-27). Ödünç Lord Morvane kiti yerine kendi kiti: Brine Lash (tek, her sıra, Soaked) + High Tide (belgedeki Call the Tide: telgraflı 2x2, faz 2+ 2x3, Flooded) + Lament of the Deep (tüm kahramanlar Slow + Spellbound) + ult The Reach Drowns (faz 3, tüm tahta, güvenli hücre yok). Pasif Crown of Salt: belgedeki 'tahtadaki her Flooded hücre %2 hasar azaltma' motorda yok; en yakın var olan sürüm Crown of Ash'in aynası (dost ölünce maks canın %10'u kalkan; open-questions 434). Belgedeki 'Faz 3'te Drowned Champion yeniden kalkar' eklenmedi (soru). Stat / can / fazlar Morvane'le aynı. Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf Morvane skill'leri). Sayılar PROVİZYON.",
+  "id": "drowned_queen",
+  "name": "The Drowned Queen",
+  "spriteId": "drowned_queen",
+  "color": "#2f6f73",
+  "logo": "skull",
+  "frontPriority": 4,
+  "range": 5,
+  "role": "Boss · Queen of the Sunken Court",
+  "attributes": {
+    "str": 16,
+    "int": 40,
+    "dex": 8,
+    "luck": 8
+  },
+  "armor": 18,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 460,
+    "hpRegen": 0
+  },
+  "ai": "bridge_warden",
+  "skills": [
+    "brine_lash",
+    "high_tide",
+    "lament_of_the_deep",
+    "the_reach_drowns"
+  ],
+  "passive": {
+    "id": "crown_of_salt",
+    "name": "Crown of Salt",
+    "icon": "emberheart",
+    "text": "Whenever one of her allies dies (not a summon), the Queen gains a shield of 10% of her max HP for 3 turns. Shields stack.",
+    "effect": {
+      "type": "crownOfAsh",
+      "ratio": 0.1,
+      "turns": 3
+    }
+  },
+  "boss": {
+    "where": "sits the Throne of Brine at the end of the Drowned Reach",
+    "firstBanner": "Kneel, and drink the sea.",
+    "phases": [
+      {
+        "at": 0.6,
+        "banner": "The tide turns."
+      },
+      {
+        "at": 0.3,
+        "banner": "The Reach drowns with me.",
+        "actionsPerTurn": 2,
+        "powerMult": 1.15,
+        "telegraphOnEnter": "the_reach_drowns"
+      }
+    ],
+    "notes": [
+      "Warnings: High Tide and The Reach Drowns do not hit at once. The marked cells fill with water and the attack lands at the start of the Queen's next turn, before she acts. Every hero gets at least one turn in between. These hits cannot miss.",
+      "High Tide marks a block of cells: move out of it (Move). From phase 2 the block is wider.",
+      "The Reach Drowns marks your whole side and has no safe cell: shield, guard, fortify or heal your heroes before it lands."
+    ],
+    "passives": [
+      {
+        "id": "crown_of_salt",
+        "name": "Crown of Salt",
+        "icon": "emberheart",
+        "text": "Whenever one of her allies dies (not a summon), the Queen gains a shield of 10% of her max HP for 3 turns. Shields stack: killing her court first makes her harder to drown."
+      },
+      {
+        "id": "drowning_crown",
+        "name": "Drowning Crown",
+        "icon": "floodedplanks",
+        "text": "At 60% HP the tide turns: High Tide grows to 2x3. At 30% the Reach drowns with her: she acts twice a turn, her hits deal ×1.15 damage and at once she calls The Reach Drowns. A single attack can cross only one of these thresholds."
+      }
+    ]
+  }
+}

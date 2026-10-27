@@ -1,0 +1,39 @@
+{
+  "_not": "Harita 2 elit önderi (Tollhouse dr_7; maps-2-3.md 3.3, content-designer 2026-10-27). Ödünç Bandit Chief kiti yerine kendi kiti (Ömer onayı): Gaff Strike + Boarding Hook (M-N2 zorla hareket: kahramanı kendi şeridinin ön sıra hücresine çeker; hücre doluysa çekme yok; elit/boss çekilmez) + Gutting Sweep, pasif Undertow. Stat / zırh Bandit Chief'le aynı (güç ödünç kite yakın). Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON (open-questions 434).",
+  "id": "reaver_chief_hook",
+  "name": "Reaver Chief \"Hook\"",
+  "family": "bandits",
+  "spriteId": "reaver_chief_hook",
+  "spriteScale": 1.15,
+  "color": "#5a6f6a",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Bandit · Elite",
+  "attributes": {
+    "str": 30,
+    "int": 6,
+    "dex": 12,
+    "luck": 4
+  },
+  "armor": 20,
+  "magicArmor": 6,
+  "ai": "aggressive",
+  "skills": [
+    "gaff_strike",
+    "boarding_hook",
+    "gutting_sweep"
+  ],
+  "passive": {
+    "id": "undertow",
+    "name": "Undertow",
+    "icon": "boot",
+    "text": "Its skill hits on a hero standing in Flooded water also Slow them for 1 turn.",
+    "effect": {
+      "type": "undertow",
+      "ground": "flooded",
+      "status": "slow",
+      "turns": 1
+    }
+  }
+}

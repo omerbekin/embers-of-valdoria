@@ -1,0 +1,41 @@
+{
+  "_not": "Harita 2 elit önderi (Harbor Fort dr_32_vell, Guild tarafı; maps-2-3.md 3.2 M-L, content-designer 2026-10-27). Yer tutucu Oathsworn kiti yerine kendi kiti (belgede kit yok; var olan mekanikler): Scourge of Heresy + Writ of Silence (kutsal + Silenced) + Lead the Faithful (dostlara Blessed), pasif Heresy Remembered (Grudge). Stat / can / zırh Oathsworn Brother'la aynı. GÖRSEL: kendi çizimi YOK, Oathsworn Brother çizimini paylaşır (adlı lider kuralı). Sayılar PROVİZYON (open-questions 434).",
+  "id": "inquisitor_captain_vell",
+  "name": "Inquisitor-Captain Vell",
+  "family": "branns_order",
+  "spriteId": "oathsworn_brother",
+  "spriteScale": 1.1,
+  "color": "#d8c070",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Brann's Order · Inquisitor",
+  "attributes": {
+    "str": 26,
+    "int": 6,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 22,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 120
+  },
+  "ai": "aggressive",
+  "skills": [
+    "scourge_of_heresy",
+    "writ_of_silence",
+    "lead_the_faithful"
+  ],
+  "passive": {
+    "id": "heresy_remembered",
+    "name": "Heresy Remembered",
+    "icon": "rage",
+    "text": "Its basic attack (Scourge of Heresy) deals ×1.3 damage to the hero who last hit it with a skill. When another hero hits it with a skill, the grudge moves to them.",
+    "effect": {
+      "type": "grudge",
+      "skill": "scourge_of_heresy",
+      "bonus": 0.3
+    }
+  }
+}

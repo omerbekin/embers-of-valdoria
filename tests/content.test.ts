@@ -166,7 +166,9 @@ describe('skill verisi', () => {
             expect(content.grounds[e.ground], `${key} -> ground ${e.ground}`).toBeDefined();
             expect(e.turns).toBeGreaterThan(0);
             expect(ATTRIBUTES).toContain(e.scale);
-            expect(e.power).toBeGreaterThan(0);
+            // Gücü 0 yalnızca su zemininde (Flooded; Harita 2 Call the Tide / Surge: hasarsız su, maps-2-3.md)
+            if (content.grounds[e.ground]?.quenches) expect(e.power).toBeGreaterThanOrEqual(0);
+            else expect(e.power).toBeGreaterThan(0);
             break;
           case 'selfDamage':
             expect(e.ratio).toBeGreaterThan(0);
@@ -209,7 +211,8 @@ describe('skill verisi', () => {
             break;
           case 'pull':
             // Chain Hook: çekme yalnızca tek hedefe ve hasarla (isabet edene)
-            expect(e.to).toBe('laneFront');
+            // laneFront (Chain Hook), stepForward (ağaç), frontRow (M-N2 Boarding Hook, maps-2-3.md 5)
+            expect(['laneFront', 'stepForward', 'frontRow']).toContain(e.to);
             expect(s.effects.some((x) => x.type === 'damage'), key).toBe(true);
             break;
           default:

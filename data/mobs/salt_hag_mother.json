@@ -1,0 +1,40 @@
+{
+  "_not": "Harita 2 elit önderi (Hag's Island dr_18; maps-2-3.md 3.3, content-designer 2026-10-27). Ödünç Hedge Witch Morwen kiti yerine kendi kiti: Brine Curse + Call the Tide (2 sıra Flooded) + Salt Circle (geniş Saltbound), pasif Mire-Bound (aile). Stat / can Morwen'le aynı. Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON (open-questions 434).",
+  "id": "salt_hag_mother",
+  "name": "Salt Hag Mother",
+  "family": "hexes",
+  "spriteId": "salt_hag_mother",
+  "color": "#6a7f5a",
+  "logo": "rune",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Hex · Elite",
+  "attributes": {
+    "str": 10,
+    "int": 8,
+    "dex": 6,
+    "luck": 28
+  },
+  "armor": 8,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 90
+  },
+  "ai": "hexer",
+  "skills": [
+    "brine_curse",
+    "call_the_tide",
+    "salt_circle"
+  ],
+  "passive": {
+    "id": "mire_bound",
+    "name": "Mire-Bound",
+    "icon": "hourglass",
+    "text": "While this witch lives, Saltbound heroes have ×0.8 speed (several witches do not stack).",
+    "effect": {
+      "type": "mireBound",
+      "status": "saltbound",
+      "speedMult": 0.8
+    }
+  }
+}

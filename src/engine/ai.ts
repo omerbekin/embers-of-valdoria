@@ -130,6 +130,7 @@ export interface AiConfig {
  * - denyShare: kaçmak zorunda kalacak her hedefin kaybedeceği tur (tur değeri x (1 - hitShare) x denyShare).
  * - hookCombo: Chain Hook hedefi bekleyen bir çökmenin içine çekerse o çökmenin hedefe beklenen hasarı x hitShare x hookCombo (Easy 0: kombinasyon yok).
  * - dodgeOpportunityShare: telgraftan kaçmak için Move'un bedeli = şimdiki hamle değeri x bu (oyuncu tarafı vekili, M12).
+ * - pullFront: M-N2 Boarding Hook (pull frontRow) arka sıradaki hedefi ön sıraya çekebiliyorsa skill'in beklenen hasarı x bu (ek değer).
  * - anchorShare: bağlı yardımcıyı (Iron Mooring) kırmanın değeri çarpanı (boss'un kaybedeceği eylem + iptal olan çökme + düşen zırh).
  */
 export interface AiTelegraphConfig {
@@ -138,6 +139,8 @@ export interface AiTelegraphConfig {
   hookCombo: number;
   dodgeOpportunityShare: number;
   anchorShare: number;
+  /** M-N2 Boarding Hook: hedefi ön sıraya çekebilen skill'e hasar değerinin bu payı kadar ek (yoksa 0). */
+  pullFront?: number;
 }
 
 export const DEFAULT_TELEGRAPH: AiTelegraphConfig = { hitShare: 0.5, denyShare: 0.5, hookCombo: 1, dodgeOpportunityShare: 0.8, anchorShare: 1 };
@@ -964,6 +967,12 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
         if (o.notes.length < 6) o.notes.push(`hook ${unitLabel(first)} into ${t.skill} cell ${to}: +${r1(v)}`);
       }
     }
+  }
+  // M-N2 Boarding Hook (pull frontRow): arka sıradaki düşmanı ön sıraya çekebiliyorsa skill'in hasar değerine pay eklenir (yakın dövüşçüler ona ulaşır)
+  if (first && first.side !== actor.side && (activeTg.pullFront ?? 0) > 0 && skill.effects.some((e) => e.type === 'pull' && e.to === 'frontRow') && battle.pullSlotFor(first, 'frontRow') !== null) {
+    const v = o.damage * activeTg.pullFront!;
+    o.deny += v;
+    if (o.notes.length < 6) o.notes.push(`pull ${unitLabel(first)} to front: +${r1(v)}`);
   }
   // Rastgele hedefli skill: hedefler önceden bilinmez; beklenen hasar hedef sayısına oranlanır, öldürme garanti değildir
   if (skill.target === 'random_enemies' && targets.length > 0) {
