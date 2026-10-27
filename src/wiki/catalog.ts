@@ -17,7 +17,7 @@ import { QUEST_LIST, questBonusLine } from '../campaign/quests';
 import { maps23On } from '../ui/maps23-flag';
 import { PITS } from '../campaign/pit';
 import { OATHS, OATH_DATA, oathMinusText, oathPlusText } from '../campaign/oath';
-import { SURGE, taintHpLossPct } from '../campaign/surge';
+import { SURGE, surgeResetPrice, taintHpLossPct } from '../campaign/surge';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine, fillValues } from '../progression/item-text';
 import { ITEMS as ITEM_DATA, TIER_IDS, partBonusForm, type BonusForm, affixDef, gripOf, GRIP_NAME, implicitValues, levelRequirement, weaponPowerOf, type Grip } from '../progression/items';
@@ -968,13 +968,17 @@ export function crownSurgeArticle(): WikiArticle {
   const nodes = (drownedReachMap as unknown as { nodes: Array<{ id: string; name: string }> }).nodes;
   const chapels = (SURGE.chapels['drowned-reach'] ?? []).map((id) => nodes.find((n) => n.id === id)?.name ?? id);
   const boss = nodes.find((n) => n.id === SURGE.salt.unlock.node)?.name ?? 'the Drowned Queen';
+  const price = surgeResetPrice('drowned-reach');
   return article('crown-surge', 'Campaign', 'Crown Surge and Ashen Taint', cx('mech_crown_surge', 'flame'), [
-    p(`On The Drowned Reach the Crown answers your call. In a campaign battle the crown plate sits next to your other actions: the hero whose turn it is can call it, and that uses the hero's turn. Summons cannot call it. You can call the Crown once per battle, and each region gives one charge of each Surge: a charge you do not use stays in that region. A charge is spent once it is called, whether the battle is won or lost.`),
+    p(`On The Drowned Reach the Crown answers your call. In a campaign battle the crown plate sits next to your other actions: the hero whose turn it is can call it, and that uses the hero's turn. Summons cannot call it. You can call the Crown once per battle, and each region gives one charge of each Surge: a charge you do not use stays in that region. A charge is spent when the battle you called it in ends, unless you lose: after a defeat the charge stays and no Taint is taken, so you can call it again on your next try.`),
     list(
-      `${ash?.name ?? 'Ash Surge'}: your whole party deals ×${mult} damage for each hero's own next ${ash?.turns ?? 2} turns.`,
-      `${salt?.name ?? 'Salt Surge'}: every ally gets a shield of ${Math.round((salt?.shieldRatio ?? 0) * 100)}% of their max HP for ${salt?.shieldTurns ?? 2} turns. It opens after you defeat ${boss}, with its own charge in each region.`,
+      `${ash?.name ?? 'Ash Surge'}: your whole party deals ×${mult} damage for each hero's own next ${ash?.turns ?? 3} turns.`,
+      `${salt?.name ?? 'Salt Surge'}: every ally gets a shield of ${Math.round((salt?.shieldRatio ?? 0) * 100)}% of their max HP for ${salt?.shieldTurns ?? 3} turns. It opens after you defeat ${boss}, with its own charge in each region.`,
     ),
-    p(`The price is Ashen Taint. The hero who calls the Crown takes Taint, and every call costs more than the last: the first call gives ${t.firstGain}, the next ${t.firstGain + t.gainStep}, then ${t.firstGain + 2 * t.gainStep}, and so on. Each Taint lowers that hero's max HP by ${taintHpLossPct(1)}%. Taint stays with the hero, also on later maps, until the company arrives at a Chapel${chapels.length ? ` (${chapels.join(', ')})` : ''}: there all Taint is cleansed. The party row on the map shows a hero's Taint.`),
+    p(`The price is Ashen Taint. The hero who calls the Crown takes Taint, and every call costs more than the last: the first call gives ${t.firstGain}, the next ${t.firstGain + t.gainStep}, then ${t.firstGain + 2 * t.gainStep}, and so on. Each Taint lowers that hero's max HP by ${taintHpLossPct(1)}%. Taint stays with the hero, also on later maps, until the company arrives at a Chapel${chapels.length ? ` (${chapels.join(', ')})` : ''}: there all Taint is cleansed for free. The party row on the map shows a hero's Taint.`),
+    ...(price
+      ? [p(`Cleansing does not make the next call cheaper. For that, a Chapel's priest can ease the Crown for ${price} gold: the count of your calls starts over, so the next call gives ${t.firstGain} Taint again. This does not use the camp, and it does nothing if you have not called the Crown since the last time.`)]
+      : []),
   ]);
 }
 

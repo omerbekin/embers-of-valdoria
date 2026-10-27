@@ -3346,6 +3346,11 @@ export class CampaignMapScene extends Phaser.Scene {
     handle = openCamp(root, () => this.s, {
       name: n.name,
       onUse: (next) => this.commit(next),
+      // Chapel (open-questions 445): altınla Surge sayacı sıfırlandı; ekran açık kalır, HUD altını yenilenir
+      onSet: (next) => {
+        this.update2(next);
+        this.syncCampHud();
+      },
       onGear: () => this.openGear(undefined, false, () => handle?.refresh()),
       onClose: (usedNow) => {
         handle = null;
