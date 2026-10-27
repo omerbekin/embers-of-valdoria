@@ -72,8 +72,9 @@ export interface AiValueConfig {
    */
   tauntPull?: number;
   /** Düz skill debuff'larının değer çarpanları (1 = ham ölçü): silence = Silenced'ın engellenen MP'li hamlesi (Clutch, Hag's Mark), mire = Mire-Bound
-   * yavaşlatması (Saltbound). Ölçüm: Hag's Mark seçimi Omen'li eski davranışa yakın (content-designer 2026-10-25). */
-  debuffShare?: Partial<{ silence: number; mire: number }>;
+   * yavaşlatması (Saltbound). Ölçüm: Hag's Mark seçimi Omen'li eski davranışa yakın (content-designer 2026-10-25). noEvasion = Saltbound'un kaçınma 0'ının
+   * dostlara isabet kazancı, rooted = bekleyen telgraftan kaçamamanın değeri, weaken = Spellbound / damageDealtMult kaybı, pin = Saltbound hedefi kaçamaz: dostların ona beklenen hasarı x pay (engine-dev 2026-10-27, PROVİZYON). */
+  debuffShare?: Partial<{ silence: number; mire: number; noEvasion: number; rooted: number; weaken: number; pin: number }>;
 }
 
 /**

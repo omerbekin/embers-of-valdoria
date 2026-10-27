@@ -101,13 +101,15 @@
     "icon": "arrows"
   },
   "flooded": {
-    "_not": "Harita 2 (M-B): Tide suyu. Hasar vermez; üstündeki birim Soaked olur; Burning Ground bu hücrelerde söner (quenches). Bırakan birim yok: süre savaş turuyla (data/battle-rules.json > conditions.tide.flood).",
+    "_not": "Harita 2 (M-B): su. Hasar vermez; üstündeki birim soakTurns tur Soaked olur (çevre etkisi: direnç zarı yok); Burning Ground bu hücrelerde söner (quenches). Tide / Urn suyu süresini savaş turuyla sayar (data/battle-rules.json). Skill'in bıraktığı Flooded (Call the Tide, Surge, Deluge, High Tide, The Reach Drowns, Requiem of Salt) Ömer 2026-10-27 kararıyla AYNI davranır (soak / soakTurns buradan; open-questions 437).",
     "name": "Flooded",
     "color": "#3d7f9a",
     "element": "physical",
     "icon": "floodedplanks",
     "quenches": [
       "burning"
-    ]
+    ],
+    "soak": "soaked",
+    "soakTurns": 2
   }
 }

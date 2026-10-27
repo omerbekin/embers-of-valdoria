@@ -12,7 +12,7 @@ import { sortByPrimary } from '../game/class-order';
 import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import drownedReachMap from '../../data/campaign/drowned-reach.json';
-import { EVENTS, SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
+import { ENCOUNTERS, EVENTS, SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
 import { QUEST_LIST, questBonusLine } from '../campaign/quests';
 import { maps23On } from '../ui/maps23-flag';
 import { PITS } from '../campaign/pit';
@@ -1016,7 +1016,9 @@ export function battleRulesArticle(): WikiArticle {
     p('Some battles on The Drowned Reach have a rule of their own: a condition that changes the field, an objective other than defeating every enemy, closed cells, or an object your heroes can use. The rule line under the Round plate shows it during the battle with a counter; hover it for the full text. A turn here means a full turn of the battle: it passes once every fighter has acted.'),
     list(
       ...(tide ? [`${tide.name}: ${tide.text}${soak ? ` ${soak.name} lasts while you stand in the water and ${tide.flood!.soakTurns} turns after you leave it.` : ''}${flood ? ` ${flood.name} cells deal no damage.` : ''}`] : []),
-      ...(storm?.rangedAccuracy ? [`${storm.name}: ${storm.text} It counts for shots and throws (arrows, bolts, sling stones, thrown blades and the like)${stormSky.length ? `, and for volleys of arrows falling from the sky (${stormSky.join(', ')})` : ''}, not for melee strikes or spells (a spell falling from the sky is not slowed by the wind). Hit chance is lowered by ${Math.round(-storm.rangedAccuracy.delta * 100)} points, the same way Blinded lowers it.`] : []),
+      // Skill'in bıraktığı su (Ömer 2026-10-27): Tide suyuyla aynı davranış; süre bırakanın turlarıyla
+      ...(flood?.soak && content.statuses[flood.soak] ? [`${flood.name} water left by an enemy skill (Call the Tide, Surge, Deluge, High Tide and the like) works the same way in every battle, tide or not: anyone standing in it is ${content.statuses[flood.soak]!.name} for ${flood.soakTurns ?? 2} turns, Burning is put out and Burning Ground there goes out. It lasts for the turns the skill says.`] : []),
+      ...(storm?.rangedAccuracy ? [`${storm.name}:${storm.text} It counts for shots and throws (arrows, bolts, sling stones, thrown blades and the like)${stormSky.length ? `, and for volleys of arrows falling from the sky (${stormSky.join(', ')})` : ''}, not for melee strikes or spells (a spell falling from the sky is not slowed by the wind). Hit chance is lowered by ${Math.round(-storm.rangedAccuracy.delta * 100)} points, the same way Blinded lowers it.`] : []),
       ...(urn ? [`${urn.name}: ${urn.text} It stands on a cell of your side (row ${Math.floor(urn.slot / 3) + 1}, middle lane) that no one can enter, and it cannot be attacked. Only a hero in a cell right next to it (in front, behind, above or below) can use it, as an action like Move; it holds ${urn.uses} uses. The water is the same as the tide's: ${urn.rounds} turns, and it does not wash away the tide's water or the other way round.`] : []),
       `${o.survive.name}: ${fill(o.survive.text, o.survive.rounds)}`,
       `${o.totem.name}: ${fill(o.totem.text, o.totem.every)} At most ${o.totem.maxEnemies} enemies fight at once; the totem itself does not act.`,
@@ -1304,15 +1306,27 @@ function bossArticles(): WikiArticle[] {
       const when = sk.minPhase && sk.minPhase > 1 ? ` (from phase ${sk.minPhase})` : '';
       return [`${def.skills.indexOf(id) + 1}. ${sk.name} [${skillRange(sk)}]${when}:${info.lines.join('; ')}${sk.cooldown ? `; cooldown ${sk.cooldown}` : ''}`];
     });
+    // Kendi atan bağlı nesne (boss.anchor.strike; Harpoon Ballista): nesnenin skill satırı, nesnenin statlarıyla
+    const strike = b.anchor?.strike ? content.skills[b.anchor.strike] : undefined;
+    if (strike && anchor) {
+      const info = describeSkill(strike, anchor.stats, f, unitDefs(), effectDefs(), anchor.range);
+      skillLines.push(`${anchor.name}: ${strike.name} [${skillRange(strike)}] (fires on its own at the start of each of ${def.name}'s turns, at the cell of your weakest hero):${info.lines.join('; ')}`);
+    }
+    const anchorCount = Math.max(1, ...Object.values(ENCOUNTERS).filter((e) => e.units.some((u) => u.class === def.id)).map((e) => e.units.filter((u) => u.class === b.anchor?.unit).length));
+    const anchorText = !anchor
+      ? ''
+      : strike
+        ? ` ${anchorCount > 1 ? `${anchorCount} ${anchor.name}s` : `A ${anchor.name}`} (${anchor.stats.hp} HP, ${anchor.stats.armor} armor) ${anchorCount > 1 ? 'stand' : 'stands'} behind it: ${anchorCount > 1 ? 'they' : 'it'} cannot be healed, and every turn ${anchorCount > 1 ? 'each' : 'it'} marks a hero's cell and fires into it a turn later.`
+        : ` ${anchorCount > 1 ? `${['Two', 'Three', 'Four'][anchorCount - 2] ?? anchorCount} ${anchor.name}s` : `A ${anchor.name}`} (${anchor.stats.hp} HP, ${anchor.stats.armor} armor) ${anchorCount > 1 ? 'stand' : 'stands'} behind it: ${anchorCount > 1 ? 'they never act' : 'it never acts'} and cannot be healed.`;
     const over = b.afterResolve ? content.statuses[b.afterResolve.status] : undefined;
     const accCritNames = content.formulas.ccImmunity?.accuracyCrit ? Object.values(content.statuses).filter((d) => !d.cc && isAccuracyCritDebuff(d)).map((d) => d.name) : [];
     out.push({
       ...article(`boss-${def.id}`, 'Bosses', def.name, def.logo, [
-        p(`${def.name}${b.where ? ` ${b.where}` : ''}. It has ${def.stats.hp} HP (before difficulty), ${b.anchor ? 'acts more than once each turn' : `acts more than once each turn from phase ${(b.phases ?? []).findIndex((ph) => (ph.actionsPerTurn ?? 1) > 1) + 2}`} and fights in phases.${anchor ? ` Two ${anchor.name}s (${anchor.stats.hp} HP, ${anchor.stats.armor} armor) stand behind it: they never act and cannot be healed.` : ''}`),
+        p(`${def.name}${b.where ? ` ${b.where}` : ''}. It has ${def.stats.hp} HP (before difficulty), ${b.anchor ? 'acts more than once each turn' : `acts more than once each turn from phase ${(b.phases ?? []).findIndex((ph) => (ph.actionsPerTurn ?? 1) > 1) + 2}`} and fights in phases.${anchorText}`),
         list(
           // boss'a özel uyarılar (data/bosses > boss.notes: telgraflar ve kaçış yolu)
           ...(b.notes ?? []),
-          ...(b.phases ?? []).map((ph, i) => `Phase ${i + 2} at ${pctOf(ph.at)} HP: "${ph.banner}"${ph.actionsPerTurn ? `; ${ph.actionsPerTurn} actions per turn` : ''}${ph.powerMult ? `; hits ${pctOf(ph.powerMult - 1)} harder` : ''}${ph.armorMult ? `; armor x${ph.armorMult}` : ''}${ph.breakAnchors ? '; the Moorings snap' : ''}.`),
+          ...(b.phases ?? []).map((ph, i) => `Phase ${i + 2} at ${pctOf(ph.at)} HP: "${ph.banner}"${ph.actionsPerTurn ? `; ${ph.actionsPerTurn} actions per turn` : ''}${ph.powerMult ? `; hits ${pctOf(ph.powerMult - 1)} harder` : ''}${ph.armorMult ? `; armor x${ph.armorMult}` : ''}${ph.breakAnchors ? `; the ${anchor?.name ?? 'Mooring'}${anchorCount > 1 ? 's snap' : ' snaps'}` : ''}${Object.entries(ph.cooldowns ?? {}).map(([id, n]) => `; ${content.skills[id]?.name ?? id} ${(ph.cadence ?? []).includes(id) ? `every ${n} turns` : `cooldown ${n}`}`).join('')}${ph.riseAllies ? `; a fallen ${content.mobs[ph.riseAllies.unit]?.name ?? ph.riseAllies.unit} rises again with ${pctOf(ph.riseAllies.hpRatio)} HP` : ''}.`),
           'A single attack can cross only one phase threshold; extra damage stops just above the next one.',
           // Madde 271/272: CC + isabet/kritik cezaları (Blinded, Jinxed) + Omen'in Misfortune'u; adlar veriden
           `Bosses are immune to crowd control (Stun, Slow, Silence, Taunt, pulls and pushes)${accCritNames.length ? ` and to accuracy/crit penalties (${accCritNames.join(', ')})` : ''}: the hit still lands, the effect does not ("Immune").${content.formulas.ccImmunity?.omenCrit ? ' Omens still stack and Doom still strikes, but Misfortune does not lower a boss\'s crit chance.' : ''} Damage-over-time and curses (Wound, Omen, Withering, burning ground) still work.`,

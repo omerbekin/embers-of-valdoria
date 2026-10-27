@@ -5,7 +5,7 @@ import { betStakeParts } from './gamble';
 import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
 import { armorReduction, attributePower, hitChance } from './stats';
-import type { Combatant, CorpseChoice, Side, SkillDef, SkillModeSet } from './types';
+import type { Combatant, CorpseChoice, PassiveEffect, Side, SkillDef, SkillModeSet } from './types';
 import { DEFAULT_VALUE, ValueContext, pAtLeast, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
 
 export type { AiDifficulty, AiDifficultyConfig, AiValueConfig } from './ai-value';
@@ -175,7 +175,7 @@ export interface AiTrace {
   options: Option[];
   reserves: Reserve[];
   /** Öncelik sırası boyunca denenen seçiciler (ilk uyan seçimi verir; sonra durulur). */
-  steps: Array<{ priority: AiPriority | 'fallback'; option?: Option }>;
+  steps: Array<{ priority: AiPriority | 'fallback' | 'cadence'; option?: Option }>;
   /** Global skill'ler olmadan class seçimi (null: hiçbir şey seçilemedi). */
   classPick?: { option: Option; reason: AiChoice['reason'] } | null;
   global?: GlobalTrace;
@@ -470,6 +470,15 @@ function pickClassOption(actor: Combatant, profile: AiProfile, options: Option[]
       let i = 0;
       while (i < w.length - 1 && r >= w[i]!) r -= w[i++]!;
       pick = ranked[i] ?? pick;
+    }
+  }
+  // Boss faz kadansı (BossPhaseDef.cadence; Weir-Wyrm faz 2 Surge her 2 turda): listelenen skill hazırsa terazi yerine o (en iyi hedefiyle)
+  const cadence = battle.cadenceOf(actor);
+  if (cadence.length) {
+    const forced = best(options.filter((o) => cadence.includes(o.skill.id)), (o) => o.score);
+    if (forced) {
+      trace?.steps.push({ priority: 'cadence', option: forced });
+      return { option: forced, reason: reasonOf(forced) };
     }
   }
   trace?.steps.push({ priority: 'value', ...(pick ? { option: pick } : {}) });
@@ -937,6 +946,26 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
       o.damage += amount * e.turns * standing * 0.7;
     }
   }
+  // Crown of Salt (Drowned Queen): bırakılan YENİ su hücresi başına dostun alınan hasarı -perCell; değer = yeni hücre x perCell x o dostun bir turluk
+  // beklenen gelen hasarı x zeminin turu (ufukla sınırlı). Tüm tahtaya telgraf (The Reach Drowns) tahtanın bütün hücreleri. Pasif yoksa hesap yok.
+  if (activeCtx) {
+    const crowned = battle.living(actor.side).filter((a) => a.passive?.effect.type === 'crownOfSalt');
+    const wCells = groundCells ?? (skill.telegraph?.wholeBoard ? Array.from({ length: battle.formulas.formation.rows * battle.formulas.formation.lanes }, (_, i) => i) : undefined);
+    if (crowned.length && wCells) {
+      const board = foeSide(actor);
+      for (const e of skill.effects) {
+        if (e.type !== 'ground') continue;
+        const fresh = wCells.filter((s) => !battle.ground.some((g) => g.ground === e.ground && g.board === board && g.slots.includes(s))).length;
+        for (const a of crowned) {
+          const pe = a.passive!.effect as Extract<PassiveEffect, { type: 'crownOfSalt' }>;
+          if (pe.ground !== e.ground || fresh <= 0) continue;
+          const v = fresh * pe.perCell * (activeCtx.round.get(a.uid) ?? 0) * Math.min(e.turns, activeCtx.vc.horizon);
+          o.mitigation += v;
+          if (o.notes.length < 6) o.notes.push(`${pe.ground} x${fresh} cells: ${unitLabel(a)} Crown of Salt +${r1(v)}`);
+        }
+      }
+    }
+  }
   // Debuff silme (Mana Barrier, madde 240): silinecek her debuff'ın kalan turu x profil değeri (sıra kaybettiren durum x cleanseSkipTurnMult)
   const perTurn = profile.cleanseValuePerTurn ?? 0;
   if (perTurn > 0) {
@@ -1056,6 +1085,37 @@ function hitLoss(battle: Battle, attacker: Combatant, victim: Combatant, accDelt
   const v = hitLossRaw(battle, attacker, victim, accDelta, evaDelta);
   hitLossCache?.set(key, v);
   return v;
+}
+
+/** `attacker` -> `victim` en iyi saldırısının beklenen hasarı (isabet dahil; Saltbound pin değeri). */
+function bestAttackAvg(battle: Battle, attacker: Combatant, victim: Combatant): number {
+  let top = 0;
+  for (const id of attacker.skills) {
+    const sk = battle.skill(id, attacker);
+    if (!sk || !ATTACK_TARGETS.includes(sk.target)) continue;
+    if (sk.cost.resource === 'mp' && attacker.mp < sk.cost.amount) continue;
+    if (sk.cost.resource === 'rage' && (attacker.rage ?? 0) < sk.cost.amount) continue;
+    const d = previewForTargets(battle, attacker, id, [victim]).find((x) => x.uid === victim.uid)?.damage;
+    if (d) top = Math.max(top, d.avg * d.hitChance);
+  }
+  return top;
+}
+
+/** `attacker` -> `victim` en iyi saldırısının beklenen hasar KAZANCI, hedefin kaçınması `eva` kadar düşünce (Saltbound noEvasion). */
+function hitGain(battle: Battle, attacker: Combatant, victim: Combatant, eva: number): number {
+  const a = battle.effectiveStats(attacker);
+  const v = battle.effectiveStats(victim);
+  const after = hitChance({ accuracy: a.accuracy }, { evasion: Math.max(0, v.evasion - eva) }, battle.formulas);
+  let top = 0;
+  for (const id of attacker.skills) {
+    const sk = battle.skill(id, attacker);
+    if (!sk || !ATTACK_TARGETS.includes(sk.target)) continue;
+    if (sk.cost.resource === 'mp' && attacker.mp < sk.cost.amount) continue;
+    if (sk.cost.resource === 'rage' && (attacker.rage ?? 0) < sk.cost.amount) continue;
+    const d = previewForTargets(battle, attacker, id, [victim]).find((p) => p.uid === victim.uid)?.damage;
+    if (d) top = Math.max(top, d.avg * Math.max(0, after - d.hitChance));
+  }
+  return top;
 }
 
 function hitLossRaw(battle: Battle, attacker: Combatant, victim: Combatant, accDelta: number, evaDelta: number): number {
@@ -1444,6 +1504,31 @@ function controlValue(ctx: ValueContext, o: Option): number {
           if (pe?.type === 'mireBound' && pe.status === se.status) mire = Math.min(mire, pe.speedMult);
         }
         if (mire < 1 && battle.mireSpeedMult(t) === 1) v += p * (ctx.vc.debuffShare?.mire ?? 1) * (1 - mire) * own * tv;
+        const ds = ctx.vc.debuffShare;
+        // Saltbound noEvasion (engine-dev 2026-10-27): kaçınması 0 iken dostlarımızın ona isabet kazancı (her dostun en iyi saldırısı; dost başına bir hedef:
+        // canlı düşman sayısına bölünür). Kullanan hariç (durum hedefin tur sonunda biter, kullanan çoğu zaman ondan sonra oynar).
+        if (def.noEvasion) {
+          const eva = battle.effectiveStats(t).evasion;
+          if (eva > 0) {
+            const allies = battle.living(actor.side).filter((a) => !a.inert && a.uid !== actor.uid);
+            const foes = Math.max(1, battle.living(t.side).filter((f) => !f.inert).length);
+            v += (p * (ds?.noEvasion ?? 1) * sum(allies.map((a) => hitGain(battle, a, t, eva))) * Math.min(1, own)) / foes;
+          }
+        }
+        // Saltbound rooted: bekleyen telgraflarımızdan (Swallow, Ballista atışı) Move ile kaçamaz: onu vuracak telgrafların beklenen hasarının kaçış payı
+        if (def.rooted) {
+          const threat = sum(battle.telegraphThreat(t.uid).map((x) => Math.min(t.hp, x.avg)));
+          if (threat > 0) v += p * (ds?.rooted ?? 1) * threat * (1 - activeTg.hitShare);
+          // Saltbound pin: geri çekilemez / yer değiştiremez -> dostlarımızın (kullanan hariç) ona en iyi saldırılarının beklenen hasarı
+          // yerinde kalır; kaçış olasılığının payı ds.pin (PROVİZYON, open-questions 437)
+          const pin = ds?.pin ?? 0;
+          if (pin > 0) {
+            const allies = battle.living(actor.side).filter((a) => !a.inert && a.uid !== actor.uid);
+            v += p * pin * sum(allies.map((a) => bestAttackAvg(battle, a, t))) * Math.min(1, own);
+          }
+        }
+        // Spellbound / Weakened (damageDealtMult < 1): hedefin sıradaki skill'inin (endsOnOwnSkill) ya da süre boyunca turlarının kaybı
+        if (def.damageDealtMult !== undefined && def.damageDealtMult < 1) v += p * (ds?.weaken ?? 1) * (1 - def.damageDealtMult) * tv * (def.endsOnOwnSkill ? Math.min(1, own) : own);
       }
       if (def.healTakenMult !== undefined && def.healTakenMult < 1 && t.side !== actor.side) {
         // Wound: düşman takımının bu süre içinde hedefe yapacağı beklenen şifanın azalması (şifacıların tur başı ham şifası / düşman sayısı)
@@ -2266,7 +2351,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
 
   const steps: AiExplanation['steps'] = [
     pick
-      ? { priority: 'value', result: 'picked', detail: `${skillName(pick.option.skill.id)}${pick.option.targetUid ? ` -> ${labelOf(battle, pick.option.targetUid)}` : ''} score ${r1(pick.option.score)} (${pick.reason})` }
+      ? { priority: trace.steps.some((s) => s.priority === 'cadence') ? 'cadence (boss phase: used whenever ready)' : 'value', result: 'picked', detail: `${skillName(pick.option.skill.id)}${pick.option.targetUid ? ` -> ${labelOf(battle, pick.option.targetUid)}` : ''} score ${r1(pick.option.score)} (${pick.reason})` }
       : { priority: 'value', result: 'none', detail: 'no option has a positive value' },
   ];
   const candidates: AiCandidate[] = trace.options.map((o) => {

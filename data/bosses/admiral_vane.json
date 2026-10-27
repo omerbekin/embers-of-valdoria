@@ -1,5 +1,5 @@
 {
-  "_not": "Admiral Vane of the Black Caravel: Harita 2 Bölge V bossu (Gallows Cove dr_66; maps-2-3.md 3.3, content-designer 2026-10-27). Ödünç Bridge Warden kiti yerine kendi kiti: Cutlass Flurry + Chain Shot (sütun, telgraflı) + Harpoon Line (Ballista ayaktayken) + Rally (faz 2+, dostlara Haste) + ult Broadside (faz 3, telgraflı sıra + Burning ground). Harpoon Ballista = iron_mooring (anchor kuralı Warden'la aynı: ayaktayken +10 zırh, kırılınca Stagger + bekleyen Harpoon Line yok). Belgedeki 'Ballista her tur telgraflı hücreye vurur' nesneye eylem ister: yok; en yakın sürüm Vane'in Harpoon Line'ı (open-questions 435). Boarding Party: eskort Corsair'lerin kendi Boarding pasifi (dalgayla girene Haste). Stat / can / fazlar Warden'la aynı. Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON.",
+  "_not": "Admiral Vane of the Black Caravel: Harita 2 Bölge V bossu (Gallows Cove dr_66; maps-2-3.md 3.3, content-designer 2026-10-27). Kendi kiti: Cutlass Flurry + Chain Shot (sütun, telgraflı) + Rally (faz 2+, dostlara Haste) + ult Broadside (faz 3, telgraflı sıra + Burning ground). Harpoon Ballista (engine-dev 2026-10-27, Ömer onayı: belgedeki gibi nesne KENDİSİ atar): bağlı nesne harpoon_ballista (anchor kuralı Warden'la aynı: ayaktayken +10 zırh, kırılınca Stagger) + anchor.strike harpoon_line: Vane'in her turunun başında Ballista bekleyen atışını çözer ve en düşük canlı kahramanın hücresini telgraflar. Vane'in eski Harpoon Line'ı (çekme) kaldırıldı. Boarding Party: eskort Corsair'lerin kendi Boarding pasifi. Stat / can / fazlar Warden'la aynı. Sayılar PROVİZYON (open-questions 437).",
   "id": "admiral_vane",
   "name": "Admiral Vane",
   "spriteId": "admiral_vane",
@@ -24,7 +24,6 @@
   "skills": [
     "cutlass_flurry",
     "chain_shot",
-    "harpoon_line",
     "vane_rally",
     "broadside"
   ],
@@ -46,11 +45,12 @@
       }
     ],
     "anchor": {
-      "unit": "iron_mooring",
+      "unit": "harpoon_ballista",
       "armorAdd": 10,
       "magicArmorAdd": 10,
       "stagger": true,
-      "cancel": []
+      "cancel": [],
+      "strike": "harpoon_line"
     },
     "unyielding": {
       "stunToStagger": false,
@@ -58,9 +58,9 @@
       "immuneDisplacement": true
     },
     "notes": [
-      "Warnings: Chain Shot and Broadside do not hit at once. The marked cells are marked and the shot lands at the start of Vane's next turn, before he acts. Every hero gets at least one turn in between. These hits cannot miss.",
+      "Warnings: Chain Shot, Broadside and the Ballista's harpoon do not hit at once. The marked cells are marked and the shot lands at the start of Vane's next turn, before he acts. Every hero gets at least one turn in between. These hits cannot miss.",
       "Chain Shot marks a whole lane: step out of it (Move).",
-      "While the Harpoon Ballista stands, Vane can fire its Harpoon Line and drag a hero forward. Break the Ballista to stagger him."
+      "While the Harpoon Ballista stands it fires on its own: at the start of each of Vane's turns it marks the cell of your weakest hero and fires into it a turn later. Step out of the mark, or break the Ballista to silence it and stagger Vane."
     ],
     "passives": [
       {
@@ -79,7 +79,7 @@
         "id": "harpoon_ballista",
         "name": "Harpoon Ballista",
         "icon": "anchored",
-        "text": "The standing Ballista gives Vane +10 armor and +10 magic armor and lets him fire the Harpoon Line. Breaking it staggers him (he loses his next action)."
+        "text": "The standing Ballista gives Vane +10 armor and +10 magic armor and fires on its own every turn: it marks the cell of your weakest hero and the harpoon lands a turn later. Breaking it staggers Vane (he loses his next action)."
       },
       {
         "id": "broadside_phase",
