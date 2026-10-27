@@ -13,7 +13,6 @@ import {
   newCampaign,
   nextStep,
   partySpots,
-  smithHotspot,
   recruitInTown,
   recruitOffer,
   revisitNode,
@@ -74,27 +73,8 @@ describe('town scene data (valdoria.json > scene)', () => {
       expect(existsSync(`assets/source/backgrounds-v2/${bg}.png`), `${bg}.png aslı yok`).toBe(true);
     }
     // Bağlantısız dosya kalmasın: assets/towns altındaki her görsel bir kasabanın arka planı
-    const used = new Set([...towns, ...getMap('drowned-reach').nodes.filter((n) => n.type === 'town')].map((n) => `${townScene(n)!.background}.webp`));
+    const used = new Set(towns.map((n) => `${townScene(n)!.background}.webp`));
     for (const f of onDisk) expect(used.has(f), `${f} bağlantısız`).toBe(true);
-  });
-
-  it('Map 2 towns have their own painted scene (no borrowed Map 1 picture): one place per action + smith, inside the picture, not overlapping', () => {
-    const m2 = getMap('drowned-reach').nodes.filter((n) => n.type === 'town');
-    expect(m2.map((n) => townScene(n)!.background).sort()).toEqual(['town-eelwick', 'town-fishers-landing', 'town-reedgate', 'town-saltmere']);
-    for (const n of m2) {
-      const rs = [...townScene(n)!.hotspots, smithHotspot(n)!];
-      for (const h of rs) {
-        const [x0, y0, x1, y1] = h.rect;
-        expect(x0 >= 0 && y0 >= 0 && x1 <= 1 && y1 <= 1 && x0 < x1 && y0 < y1, `${n.name} ${h.id}: ${h.rect}`).toBe(true);
-      }
-      for (let i = 0; i < rs.length; i++)
-        for (let j = i + 1; j < rs.length; j++) {
-          const a = rs[i]!.rect;
-          const b = rs[j]!.rect;
-          const overlap = a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
-          expect(overlap, `${n.name}: ${rs[i]!.id} / ${rs[j]!.id} üst üste`).toBe(false);
-        }
-    }
   });
 
   it('Odo trades and the story NPC appear only in towns that have them; texts and layout are data', () => {

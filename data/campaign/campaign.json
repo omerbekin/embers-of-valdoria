@@ -21,11 +21,7 @@
     "stones": { "boss": [0, 0.6, 0.3, 0.1], "elite": [0.5, 0.5] },
     "hotspots": {
       "town-ashford": { "label": "Blacksmith", "rect": [0.385, 0.42, 0.57, 0.63] },
-      "town-valdren": { "label": "Blacksmith", "rect": [0.82, 0.38, 0.884, 0.58] },
-      "town-reedgate": { "label": "Blacksmith", "rect": [0.365, 0.297, 0.547, 0.547] },
-      "town-eelwick": { "label": "Blacksmith", "rect": [0.365, 0.357, 0.56, 0.625] },
-      "town-saltmere": { "label": "Blacksmith", "rect": [0.215, 0.539, 0.378, 0.762] },
-      "town-fishers-landing": { "label": "Blacksmith", "rect": [0.365, 0.424, 0.547, 0.674] }
+      "town-valdren": { "label": "Blacksmith", "rect": [0.82, 0.38, 0.884, 0.58] }
     }
   },
   "_townScreen": "Kasaba ekranı (Ömer 2026-10-12): tam ekran kasaba görseli, takım alttaki açık alanda durur (ayak çizgisi feetY x 1080), kahraman boyu ve aralığı 1920x1080 biriminde; yer etiketleri telefonda (html.short/compact) büyür. Yerler valdoria.json > nodes[].scene.",
