@@ -1460,6 +1460,7 @@
   },
   "dr_48": {
     "name": "Boarders",
+    "device": "tidewater_urn",
     "units": [
       {
         "class": "corsair_cutlass",
@@ -1679,6 +1680,7 @@
   },
   "dr_57": {
     "name": "Siren Song",
+    "condition": "storm",
     "units": [
       {
         "class": "siren",
@@ -1718,6 +1720,7 @@
   },
   "dr_58": {
     "name": "Isle Hounds",
+    "condition": "storm",
     "units": [
       {
         "class": "ash_hound",
@@ -1895,6 +1898,7 @@
   },
   "dr_63": {
     "name": "Cove Corsairs",
+    "device": "tidewater_urn",
     "units": [
       {
         "class": "corsair_cutlass",
@@ -1945,6 +1949,7 @@
   },
   "dr_64": {
     "name": "Storm Sirens",
+    "condition": "storm",
     "units": [
       {
         "class": "siren",

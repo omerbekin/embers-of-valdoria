@@ -266,6 +266,8 @@ export interface EncounterDef {
    * kullanılamaz (motor UnitSetup.startCooldowns). Sınavlı karşılaşmaya takviye dalgası eklenmez (tek dalga + `waves`).
    */
   trial?: { heroes?: number; ultLock?: number };
+  /** M-N3: oyuncu tarafındaki etkileşimli nesne (battle-rules.json > devices anahtarı, ör. 'tidewater_urn'; hücre veri varsayılanı). */
+  device?: string;
 }
 
 /** Karşılaşmanın hedefi (EncounterDef.objective): id ya da sayılarıyla nesne. Sayı verilmezse data/battle-rules.json varsayılanı. */

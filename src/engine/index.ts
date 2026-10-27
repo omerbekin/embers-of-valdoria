@@ -3,7 +3,7 @@ export { Rng } from './rng';
 export { Battle } from './battle';
 export type { ActionResult, BattleObserver, BattleSetup, ObservedAction, CanUse, ChoiceLike, DebugFlags, LastActionKind } from './battle';
 export { slotOfTileUid, tileUid } from './battle';
-export { chooseAction, explainChoice, unitLabel } from './ai';
+export { chooseAction, explainChoice, unitLabel, urnChoice } from './ai';
 export type { AiCandidate, AiChoice, AiConfig, AiDifficulty, AiDifficultyConfig, AiExplanation, AiOpts, AiPriority, AiProfile, AiTrace } from './ai';
 export { MatchLog, DEFAULT_MAX_CHARS as MATCH_LOG_MAX_CHARS } from './match-log';
 export type { MatchLogMeta, MatchLogOptions, MoveRecord, UnitSnap } from './match-log';

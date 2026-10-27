@@ -176,7 +176,7 @@ const SHIELD_LOCK_SFX: Record<string, string> = { spell_ward: 'wardLock', mana_b
  * (yalnızca Endless kampı), sefer haritası görselleri ve bulanık kopyaları, ana menü kartları / logo / katmanları / gölgesi.
  */
 const BATTLE_DROP = ['item-img:', 'campaign:', ...MENU_ONLY_TEXTURES];
-const GLOBAL_ACCENT: Record<string, string> ={ rest: '#9cc4ff', skip: '#e8dcc0', move: '#e8c47e' };
+const GLOBAL_ACCENT: Record<string, string> ={ rest: '#9cc4ff', skip: '#e8dcc0', move: '#e8c47e', urn: '#7fc4d8' };
 
 const { width: W, height: H, colors } = layout;
 
@@ -2199,11 +2199,12 @@ export class BattleScene extends Phaser.Scene {
     const def = this.battle.globalDef(id);
     if (!actor || !def || !this.playerCanAct || !this.battle.canUseGlobal(actor.uid, id).ok) return;
     if (this.tut && !this.tut.allowGlobal()) return this.tut.blocked(); // ilk savaşın zorunlu adımı
-    if (def.kind === 'move' || def.kind === 'valor') {
+    if (def.kind === 'move' || def.kind === 'valor' || def.kind === 'urn') {
       const same = this.moveMode?.id === id;
       if (this.moveMode) this.cancelMove();
       if (!same) {
         if (def.kind === 'move') this.startMove(actor);
+        else if (def.kind === 'urn') this.startUrn(actor, id);
         else this.startValor(actor, id);
       }
       return;
@@ -2275,6 +2276,52 @@ export class BattleScene extends Phaser.Scene {
       },
     });
     this.drawFlowStrip({ step: 'corpse', twoStep: false } as unknown as RaiseFlow, '', { step: 'Valor', text: 'Choose a fallen ally to raise (Esc cancels)' });
+  }
+
+  /**
+   * M-N3 Tidewater Urn: kendi tahtanın su basılabilecek her hücresi seçilebilir plaka; üstüne gelince o hücrenin TÜM sırası vurgulanır ve ipucu
+   * (kim ıslanır, kaç Burning Ground söner); dokununca o sıra su basar (tur harcanır). Tekrar basmak ya da Esc iptal.
+   */
+  private startUrn(actor: Combatant, id: string): void {
+    const st = this.battle.urnState();
+    if (!st) return;
+    this.clearSelection();
+    this.moveMode = { actor: actor.uid, id };
+    this.refreshCommands();
+    const own = st.rule.side;
+    const rows = this.battle.urnRows();
+    const cells = rows.flatMap((r) => this.battle.urnRowCells(r));
+    this.showBasePlates([{ board: own, specs: cells.map((slot) => ({ slot, state: 'selectable' as const, tone: 'ally' as const })) }]);
+    const rowOf = (slot: number | null) => (slot === null || !cells.includes(slot) ? null : this.battle.rowOf(slot));
+    this.bindCellZones([own], {
+      twoTap: false,
+      canPick: (_b, slot) => rowOf(slot) !== null,
+      sameArea: (_b, prev, next) => rowOf(prev) === rowOf(next),
+      onHover: (b, slot) => {
+        const row = rowOf(slot);
+        if (row === null) {
+          this.clearAreaMarker();
+          this.hideInfoTip();
+          return;
+        }
+        const rowCells = this.battle.urnRowCells(row);
+        this.showPlates(b, rowCells.map((s) => ({ slot: s, state: 'ally' as const })));
+        const wet = this.battle.combatants.filter((c) => c.hp > 0 && !c.inert && c.board === own && rowCells.includes(c.slot));
+        const fires = new Set(this.battle.ground.filter((g) => g.board === own && g.ground === st.rule.ai.burningGround).flatMap((g) => g.slots.filter((s) => rowCells.includes(s)))).size;
+        const out: Array<[string, string?]> = [
+          [`Floods row ${row + 1} of your side for ${st.rule.rounds} turns`, colors.heal],
+          [wet.length ? `Soaked: ${wet.map((c) => unitName(c)).join(', ')}` : 'No one stands there now', colors.text],
+          ...(fires ? [[`Puts out ${fires} Burning Ground cell${fires === 1 ? '' : 's'}`, colors.heal] as [string, string]] : []),
+          [`Uses your turn (${st.left - 1} of ${st.rule.uses} uses left after this)`, colors.muted],
+        ];
+        this.hideInfoTip();
+        this.placeInfoTip(this.makeInfo(st.rule.name, colors.text, ensureIcon(this, 'droplet', GLOBAL_ACCENT.urn!, true, SHARED_KEY), out, 'Row'));
+      },
+      onPick: (_b, slot) => {
+        if (rowOf(slot) !== null) this.performGlobal(actor.uid, id, slot);
+      },
+    });
+    this.drawFlowStrip({ step: 'corpse', twoStep: false } as unknown as RaiseFlow, '', { step: st.rule.name, text: 'Choose a row of your side to flood (Esc cancels)' });
   }
 
   /** Valor mangalı ikonunun Phaser dokusu (ipucu başlığı). */
@@ -2366,7 +2413,7 @@ export class BattleScene extends Phaser.Scene {
   /** Global eylem (Rest / Skip / Move) açıklaması: sütundaki öğenin hemen üstünde açılır. */
   private globalTip(actor: Combatant, id: string): TipContent {
     const def = this.battle.globalDef(id)!;
-    const info = describeGlobalSkill(def, content.formulas, this.battle.valorRules);
+    const info = describeGlobalSkill(def, content.formulas, this.battle.valorRules, this.battle.urnState());
     const detail = info.lines.filter((l) => !(def.kind === 'skip' && l.includes('speed meter')) && !(def.kind === 'move' && l.startsWith('Move to an empty')));
     const rows: Array<[string, string?]> = [[info.summary, colors.text], ...(def.kind === 'skip' ? [['Next turn arrives in half the time', colors.heal] as [string, string]] : []), ...detail.map((l): [string, string?] => [l, colors.muted])];
     const can = this.battle.canUseGlobal(actor.uid, id);
@@ -2374,6 +2421,7 @@ export class BattleScene extends Phaser.Scene {
     if (reason) rows.push([reason, colors.lethal]);
     else if (def.kind === 'move') rows.push(['Click, then pick an empty cell (Esc cancels)', colors.targetHighlight]);
     else if (def.kind === 'valor') rows.push(['Click, then pick a fallen ally (Esc cancels)', colors.targetHighlight]);
+    else if (def.kind === 'urn') rows.push(['Click, then pick a row of your side (Esc cancels)', colors.targetHighlight]);
     if (def.kind === 'valor') rows.splice(1, 0, [`Valor now: ${this.battle.valorOf(actor.side) ?? 0} of ${this.battle.valorRules?.cap ?? 0}`, '#ffb35a']);
     const icon = def.kind === 'valor' ? this.valorIconKey() : ensureIcon(this, globalIconName(def), GLOBAL_ACCENT[def.kind === 'skip' ? 'skip' : def.kind] ?? '#e8c47e', true, SHARED_KEY);
     return this.makeInfo(info.name, colors.text, icon, rows, info.targetBadge, [{ text: info.cost, hex: colors.muted }]);
@@ -3372,6 +3420,11 @@ export class BattleScene extends Phaser.Scene {
         await this.playReinforce(e);
         this.syncGoalLabel();
         return;
+      case 'urn':
+        this.announce(`Tidewater Urn: row ${e.row + 1} floods (${e.left} left)`);
+        this.drawUrn(e.left);
+        this.syncGoalLabel();
+        return;
       case 'battleStart':
         return;
     }
@@ -3404,10 +3457,18 @@ export class BattleScene extends Phaser.Scene {
       rows.push({ text: `${r.condition.name}: ${r.condition.text}` });
       title = r.condition.name;
       const f = r.condition.flood;
+      const ra = r.condition.rangedAccuracy;
+      if (ra) rows.push({ text: `Ranged hit chance ${ra.delta > 0 ? '+' : ''}${Math.round(ra.delta * 100)}% for both sides`, color: colors.muted });
       if (f && f.everyRounds > 0 && !r.objective) {
         const left = f.everyRounds - ((this.shownRound - 1) % f.everyRounds);
         counter = left === f.everyRounds ? 'Tide now' : `Tide in ${left}`;
       }
+    }
+    const urn = this.battle.urnState();
+    if (urn) {
+      if (!r.condition && !r.objective && !r.layout) parts.push(urn.rule.name);
+      rows.push({ text: `${urn.rule.name}: ${urn.rule.text} Uses left: ${urn.left} of ${urn.rule.uses}.` });
+      title ||= urn.rule.name;
     }
     const layout = r.layout ? content.battleRulesData.layouts[r.layout] : undefined;
     if (layout) {
@@ -3430,8 +3491,36 @@ export class BattleScene extends Phaser.Scene {
     this.hud.setGoal({ parts, ...(counter ? { counter } : {}), ...(this.goalState ? { state: this.goalState } : {}), tip: { title, kind: 'Battle rule', rows } });
   }
 
+  private urnMark?: Phaser.GameObjects.Container;
+
+  /**
+   * M-N3 Tidewater Urn (yer tutucu çizim; gerçek sanat yok): hücresinde koyu taş zemin üstünde mavi sırlı küp + kalan kullanım noktaları. `left`
+   * verilmezse motordaki kalan kullanım. Sanat gelince yalnızca bu çizim değişir.
+   */
+  private drawUrn(left?: number): void {
+    const st = this.battle.urnState();
+    this.urnMark?.destroy(true);
+    this.urnMark = undefined;
+    if (!st) return;
+    const n = left ?? st.left;
+    const q = this.cellPos(st.rule.side, st.rule.slot);
+    const g = this.add.graphics();
+    g.fillStyle(0x0b0806, 0.5).fillEllipse(0, -4, 118, 42);
+    g.lineStyle(2, 0x5f8fa0, 0.85).strokeEllipse(0, -4, 118, 42);
+    // Küp: gövde, boyun, ağız, iki kulp
+    g.fillStyle(n > 0 ? 0x2f6f86 : 0x3a4a52, 1).fillEllipse(0, -46, 54, 66);
+    g.fillStyle(n > 0 ? 0x245a6e : 0x2f3c42, 1).fillRect(-12, -92, 24, 18);
+    g.fillStyle(0x1d2f36, 1).fillEllipse(0, -92, 34, 10);
+    g.lineStyle(5, 0x24505f, 1).strokeEllipse(-28, -62, 14, 22).strokeEllipse(28, -62, 14, 22);
+    g.lineStyle(2, 0xc9a56a, 0.9).lineBetween(-24, -50, 24, -50);
+    if (n > 0) g.fillStyle(0x9fd8ea, 0.8).fillEllipse(0, -92, 24, 6);
+    for (let i = 0; i < st.rule.uses; i++) g.fillStyle(i < n ? 0x9fd8ea : 0x33414a, 1).fillCircle((i - (st.rule.uses - 1) / 2) * 14, 10, 4);
+    this.urnMark = this.add.container(q.x, q.y, [g]).setDepth(29);
+  }
+
   /** M-I kapalı hücreler (direk / küpeşte): iki tahtada da koyu, çapraz tahtalı işaret (zemin katmanının altında). */
   private drawBlockedCells(): void {
+    this.drawUrn();
     const blocked = this.battle.rules?.blocked;
     if (!blocked?.length) return;
     const g = this.add.graphics().setDepth(29);

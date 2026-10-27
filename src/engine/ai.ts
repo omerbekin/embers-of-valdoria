@@ -159,7 +159,7 @@ export interface AiChoice {
    * Kararın baskın değer terimi (etiket; seçim terazisi verir): kill (öldürme), heal (şifa/diriltme/kurtarma), summon, shield, taunt, guard, burn,
    * tactic (saf self-buff / kontrol), aoe (alan hasarı), damage (tek hedef hasar); 'fallback' kullanılmıyor; rest/skip/move: global skill kuralı.
    */
-  reason: AiPriority | 'fallback' | 'rest' | 'skip' | 'move';
+  reason: AiPriority | 'fallback' | 'rest' | 'skip' | 'move' | 'urn';
   /** Seçilen adayın terazi puanı (can-eşdeğer); global skill kararlarında tanımsız. */
   score?: number;
 }
@@ -343,6 +343,28 @@ export function difficultyRules(config: AiConfig, difficulty: AiDifficulty = 'me
   return config.difficulty?.[difficulty] ?? {};
 }
 
+/**
+ * M-N3 Tidewater Urn (oyuncu tarafı YZ'si / sim; open-questions 430): Urn'e bitişik birim, kendi tahtasının her sırası için puan hesaplar:
+ * o sıradaki Burning zemin hücresi x ai.burningCell + o sıradaki Burning dost x ai.burningHero. En yüksek puan >= ai.minScore ise Urn'ü o sıraya
+ * devirir (eşitlikte öndeki sıra). Saf, rastgele sayı yok.
+ */
+export function urnChoice(battle: Battle, actor: Combatant): { choice: AiChoice; note: string } | null {
+  const st = battle.urnState();
+  if (!st || actor.summoned || !battle.canUseGlobal(actor.uid, 'tidewater_urn').ok) return null;
+  const { ai, side } = st.rule;
+  let best: { row: number; score: number; slot: number } | null = null;
+  for (const row of battle.urnRows()) {
+    const cells = battle.urnRowCells(row);
+    const burningCells = new Set<number>();
+    for (const g of battle.ground) if (g.board === side && g.ground === ai.burningGround) for (const s of g.slots) if (cells.includes(s)) burningCells.add(s);
+    const burningHeroes = battle.combatants.filter((c) => c.hp > 0 && !c.inert && c.side === side && c.board === side && cells.includes(c.slot) && c.statuses.some((s) => s.kind === ai.burning)).length;
+    const score = burningCells.size * ai.burningCell + burningHeroes * ai.burningHero;
+    if (!best || score > best.score) best = { row, score, slot: cells[0]! };
+  }
+  if (!best || best.score < ai.minScore) return null;
+  return { choice: { skillId: 'tidewater_urn', slot: best.slot, reason: 'urn' }, note: `tidewater_urn: row ${best.row + 1} puts out fire (score ${best.score} >= ${ai.minScore})` };
+}
+
 function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, trace: AiTrace | undefined, difficulty: AiDifficulty, valueOverride?: Partial<AiValueConfig>): AiChoice | null {
   const actor = battle.get(actorUid);
   if (!actor || actor.hp <= 0) return null;
@@ -362,6 +384,12 @@ function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, t
     trace.options = options;
     trace.classPick = pick;
     trace.difficulty = difficulty;
+  }
+  // M-N3 Tidewater Urn: basit kural (en iyi sıranın Burning puanı eşiği geçerse class hamlesinin yerine Urn); Urn yoksa hiçbir şey hesaplanmaz
+  const urn = battle.urnState() ? urnChoice(battle, actor) : null;
+  if (urn) {
+    if (trace) trace.global = { enabled: true, outcome: urn.note };
+    return urn.choice;
   }
   const g = config.global;
   if (g?.enabled && !actor.summoned && battle.globalSkillIds().length > 0) {
@@ -2301,7 +2329,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
   const tag = (c: AiCandidate) => `${c.name}${c.target ? ` -> ${c.target}` : ''}${c.reviveSlot !== undefined ? ` @cell ${c.reviveSlot}` : ''}`;
   let why: string;
   if (!choice) why = 'No usable action: the turn is passed.';
-  else if (choice.reason === 'rest' || choice.reason === 'skip' || choice.reason === 'move') {
+  else if (choice.reason === 'rest' || choice.reason === 'skip' || choice.reason === 'move' || choice.reason === 'urn') {
     why = `Global skill "${skillName(choice.skillId)}": ${trace.global?.outcome ?? choice.reason}. ${chosen ? `The class move would have been ${tag(chosen)} (score ${chosen.score}).` : 'No class move was available.'}`;
   } else {
     why = `Highest value (${choice.reason}): ${chosen ? `${tag(chosen)} score ${chosen.score} = ${termText(chosen.terms ?? {})}` : skillName(choice.skillId)}${runnerUp ? `; next best ${tag(runnerUp)} score ${runnerUp.score} = ${termText(runnerUp.terms ?? {})}` : ''}.`;

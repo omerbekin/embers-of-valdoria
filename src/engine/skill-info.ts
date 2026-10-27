@@ -4,7 +4,7 @@ import { betMultipliers, betStake } from './gamble';
 import { bonusScaleRaw } from './spec';
 import { rangeEnabled, rangeLabel } from './range';
 import { applySummonerScale, applySummonVariant, attributePower, outgoingDamageMult } from './stats';
-import type { AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
+import type { UrnRule, AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
 
 /** Skill'in oyuncuya gösterilen genel bilgileri (tooltip). Metinler İngilizce (oyun içi arayüz). */
 export interface SkillInfo {
@@ -257,8 +257,19 @@ export interface GlobalSkillInfo {
   turnsOnly: boolean;
 }
 
-export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas, valor?: ValorRules): GlobalSkillInfo {
+export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas, valor?: ValorRules, urn?: { rule: UrnRule; left: number } | null): GlobalSkillInfo {
   const lines: string[] = [];
+  if (def.kind === 'urn') {
+    // M-N3 Tidewater Urn: sayılar savaşın Urn kuralından (battle-rules.json > devices)
+    const r = urn?.rule;
+    lines.push(
+      'Only a hero standing next to the urn (in front, behind, above or below it) can use it',
+      `Floods one row of your side for ${r?.rounds ?? 2} turns: everyone there is Soaked and Burning Ground there goes out`,
+      'Uses your turn',
+      `${urn ? urn.left : (r?.uses ?? 3)} of ${r?.uses ?? 3} uses left`,
+    );
+    return { id: def.id, name: def.name, icon: def.icon, target: 'A row of your side', targetBadge: 'Row', cost: 'Free', summary: def.text, lines, turnsOnly: false };
+  }
   if (def.kind === 'valor') {
     const r = valor?.revive;
     lines.push(

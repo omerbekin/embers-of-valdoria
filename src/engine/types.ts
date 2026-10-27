@@ -1603,6 +1603,11 @@ export interface GroundEffect {
    * turuyla (Battle.round) sayılır: `envUntilRound` turu başlayınca biter. Dalga geçişinde düşman zemini olarak silinmez.
    */
   envUntilRound?: number;
+  /** Ortam suyunun kaynağı: 'tide' (koşul) ya da Tidewater Urn id'si; Tide yalnızca kendi suyunu yeniler, Urn suyuna dokunmaz. */
+  envCause?: string;
+  /** Ortam suyundaki birime konan durum (Soaked) ve süresi (taşıyanın turu; suda kaldıkça tazelenir). */
+  soak?: string;
+  soakTurns?: number;
 }
 
 /** Karakter üzerindeki süreli durum. `turns`, taşıyıcının kendi turunun başında azalır. */
@@ -1998,6 +2003,8 @@ type BattleEventBody =
   | { type: 'round'; round: number }
   | { type: 'objective'; objective: BattleObjective['type']; state: 'progress' | 'done' | 'failed'; current?: number; goal?: number }
   | { type: 'reinforce'; combatants: Combatant[]; queue: string[] }
+  /** M-N3 Tidewater Urn devrildi: `actor` (bitişik kahraman) kendi tahtasının `row` sırasını (hücreleri `slots`) su bastı; `left` kalan kullanım. Ardından 'ground'. */
+  | { type: 'urn'; actor: string; row: number; slots: number[]; left: number }
   | { type: 'battleEnd'; winner: Side };
 
 /**
@@ -2019,6 +2026,8 @@ export interface BattleRules {
   condition?: BattleCondition;
   /** B3: savaşın hedefi; yoksa "herkesi öldür" (eski kural). */
   objective?: BattleObjective;
+  /** M-N3 Tidewater Urn: oyuncu tarafında duran etkileşimli nesne (hücresi o tahtada kapalı); bitişik kahraman eylemini harcayıp bir sırayı Flooded yapar. */
+  urn?: UrnRule;
   /** M-I: İKİ tahtada da kullanılamaz hücreler (güverte direği / küpeşte): kimse giremez, kimse orada başlamaz. */
   blocked?: number[];
   /** Hücre düzeninin adı (data/battle-rules.json > layouts; ör. 'deck'); yalnızca sunum. */
@@ -2032,6 +2041,28 @@ export interface BattleCondition {
   text: string;
   /** M-B Tide: ön sıraları su basar. */
   flood?: FloodRule;
+  /** M-C Storm: `motions` hareketli (menzilli) skill'lerin isabetine `delta` eklenir (iki taraf; -0,15 = isabet -%15 puan). */
+  rangedAccuracy?: { delta: number; motions: SkillMotion[] };
+}
+
+/**
+ * M-N3 Tidewater Urn (data/battle-rules.json > devices): `side` tahtasının `slot` hücresinde durur (o hücre o tahtada kapalı, kimse giremez, hedeflenmez).
+ * Hücreye artı şeklinde bitişik kahraman global eylem (global-skills.json > tidewater_urn) ile eylemini harcar: kendi tahtasının seçilen sırası
+ * `rounds` savaş turu `ground` (Flooded) olur; sudaki birim `soak` (Soaked) alır. `uses` kullanım. Yapay zeka: `ai` puan eşiği (ai.ts > urnChoice).
+ */
+export interface UrnRule {
+  id: string;
+  name: string;
+  text: string;
+  side: Side;
+  slot: number;
+  uses: number;
+  ground: string;
+  rounds: number;
+  soak: string;
+  soakTurns: number;
+  /** Yapay zeka: sıra puanı = kendi Burning zemin hücresi x burningCell + o sıradaki Burning kahraman x burningHero; puan >= minScore ise kullanır. */
+  ai: { minScore: number; burningCell: number; burningHero: number; burning: string; burningGround: string };
 }
 
 /** M-B Tide (maps-2-3.md 5): `onWave` her dalga başında, `everyRounds` her N savaş turunda bir, `boards` tahtalarının `rows` sıraları `rounds` tur Flooded. */
@@ -2088,9 +2119,10 @@ export interface GlobalSkillDef {
   /** İkon türü (src/ui/icon-kinds.ts). */
   icon: string;
   /** valor: takımın Valor'unu (data/valor.json) harcayıp kendi tahtasında cesedi olan düşmüş dostu diriltir (yalnızca savaşta Valor'u olan taraf). */
-  kind: 'rest' | 'skip' | 'move' | 'valor';
-  /** self: hedef yok; empty_tile: kendi tarafındaki boş (canlı olmayan) bir yuva seçilir. */
-  target: 'self' | 'empty_tile' | 'dead_ally';
+  /** urn: savaşta Tidewater Urn varsa (BattleRules.urn) bitişik kahraman kendi tahtasının bir sırasını su basar (target 'row': sıradaki herhangi bir hücre). */
+  kind: 'rest' | 'skip' | 'move' | 'valor' | 'urn';
+  /** self: hedef yok; empty_tile: kendi tarafındaki boş (canlı olmayan) bir yuva seçilir; row: kendi tahtasında bir sıra (hücresiyle). */
+  target: 'self' | 'empty_tile' | 'dead_ally' | 'row';
   /** rest: kazanılan MP (maks MP'yi aşmaz). */
   mp?: number;
   /** skip: bir sonraki tura kadar hız desteği (1 = +%100: sayaç iki kat hızlı dolar; Haste/Slow ile toplamsal). */
@@ -2129,7 +2161,7 @@ export interface ActionInfo {
   id: string;
   ok: boolean;
   reason?: string;
-  /** Yalnızca Move Tile: seçilebilecek boş yuvalar (küçükten büyüğe). */
+  /** Move Tile: seçilebilecek boş yuvalar (küçükten büyüğe). Tidewater Urn: su basılabilecek sıraların ilk açık hücresi (sıra başına bir). */
   slots?: number[];
   /** Yalnızca Valor diriltmesi: diriltilebilecek düşmüş dostların uid'leri. */
   targets?: string[];

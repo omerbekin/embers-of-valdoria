@@ -123,7 +123,7 @@ function encounterRules(
   first: EncounterUnit[],
   setups: (list: EncounterUnit[], out: Record<number, UnitSetup>) => void,
 ): BattlePlan['rules'] | undefined {
-  if (!def.condition && !def.objective && def.blocked === undefined) return undefined;
+  if (!def.condition && !def.objective && def.blocked === undefined && !def.device) return undefined;
   const o = def.objective;
   const objective: RulesSpec['objective'] | undefined =
     o === undefined ? undefined : typeof o === 'string' ? o : o.type === 'totem' ? { type: 'totem', every: o.every, maxEnemies: o.maxEnemies } : { ...o };
@@ -131,6 +131,7 @@ function encounterRules(
     ...(def.condition ? { condition: def.condition } : {}),
     ...(objective ? { objective } : {}),
     ...(def.blocked !== undefined ? { blocked: Array.isArray(def.blocked) ? [...def.blocked] : def.blocked } : {}),
+    ...(def.device ? { device: def.device } : {}),
   };
   if (objectiveType(o) === 'totem') {
     const own = typeof o === 'object' && o.type === 'totem' ? o.units : undefined;
@@ -314,7 +315,7 @@ export function validateEncounters(): string[] {
     }
     if (def.fallback && (!ENCOUNTERS[def.fallback] || ENCOUNTERS[def.fallback]!.fallback)) errors.push(`${id}: bad fallback ${def.fallback}`);
     // Karşılaşma kuralları (data/battle-rules.json): koşul / hedef / düzen id'leri, kapalı hücrede birim yok, totem'de hedef nesne var
-    if (def.condition || def.objective || def.blocked !== undefined) {
+    if (def.condition || def.objective || def.blocked !== undefined || def.device) {
       try {
         const r = resolveBattleRules(encounterRules(def, def.units, () => {}));
         const blocked = r?.blocked ?? [];
@@ -324,6 +325,7 @@ export function validateEncounters(): string[] {
         if (r?.objective?.type === 'totem' && !def.units.some((u) => u.objective)) errors.push(`${id}: totem objective without an objective unit`);
         if (r?.objective?.type === 'hold' && (r.objective.row < 0 || r.objective.row * 3 >= CELL_COUNT)) errors.push(`${id}: bad hold row`);
         if (typeof def.blocked === 'string' && !battleRulesData.layouts[def.blocked]) errors.push(`${id}: unknown layout ${def.blocked}`);
+        if (r?.urn && (r.urn.side !== 'party' || blocked.includes(r.urn.slot) || r.urn.slot < 0 || r.urn.slot >= CELL_COUNT)) errors.push(`${id}: bad device cell ${r.urn.slot}`);
       } catch (e) {
         errors.push(`${id}: ${(e as Error).message}`);
       }

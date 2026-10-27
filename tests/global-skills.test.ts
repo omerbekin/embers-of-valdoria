@@ -26,7 +26,7 @@ function until(b: Battle, uid: string): void {
 
 describe('global skill verisi', () => {
   it('rest, skip_turn, move_tile tanımlı; class skill tablosundan (content.skills) ayrı; her class hâlâ tam 4 skill', () => {
-    expect(Object.keys(G).sort()).toEqual(['move_tile', 'rest', 'skip_turn', 'valor_revive']);
+    expect(Object.keys(G).sort()).toEqual(['move_tile', 'rest', 'skip_turn', 'tidewater_urn', 'valor_revive']);
     for (const id of Object.keys(G)) expect(content.skills[id], id).toBeUndefined();
     for (const [id, def] of Object.entries(content.classes)) {
       expect(def.skills, id).toHaveLength(4);

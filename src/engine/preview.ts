@@ -193,7 +193,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     // İsabet: durum ekleri (Blinded/Shrouded) dahil geçerli stat'lar, gerçek vuruşla aynı
     // Blok (Ömer 2026-10-18): kalkanlı hedef fiziksel vuruşu bloklayabilir; bloklanan vuruş iska gibi (hasar ve ek etki yok)
     // Ağaç sureHit: isabet zarı yok (blok yine olabilir)
-    const hit = (tm?.sureHit ? 1 : hitChance(battle.effectiveStats(actor), stats, f)) * (1 - battle.blockChance(actor, target, effect, skill));
+    const hit = (tm?.sureHit ? 1 : hitChance(battle.hitStats(actor, skill), stats, f)) * (1 - battle.blockChance(actor, target, effect, skill));
     const p = pool(target);
     // Bu hasarı emebilecek havuz: büyü hasarını iki kalkan da, fizikseli yalnızca genel kalkan emer
     const soak = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
