@@ -979,6 +979,19 @@ Kasma simde sıradaki yeni düğümden önce fark = düğüm level'ı - aktif ta
 
 Düz sim (farm / Inn / kamp yok, kasabada bedava şifa kalktı) Medium'da elit %53, boss %42, bitirme %53 veriyor; bantlar (data/campaign/balance.json) eski oyuna göre: elit 62+, boss 48+, bitirme 79+. Ömer kasma simi v11 oranlarını kabul etti ("bu oranlar iyi gibi") ve 0.9.9 yayını istedi; alt sınırlar geçici muaf (uyarı yazılır). AÇIK: bantlar kasma simine göre yeniden belirlenecek mi, düz sim emekliye mi ayrılacak? Ömer'e sorulacak.
 
+## 428. Harita 2 yan içerik: A1 Wayshrines + B1 Salvage Dive (campaign-dev 2026-10-27; PROVİZYON sayılar, sim YOK; `data/campaign/side-content.json`, `src/campaign/side-content.ts`, `state.ts > winDive / diveDeeper / diveDefeat / diveState`, `encounters.ts > battlePlan`; test `tests/campaign-side-content.test.ts`)
+
+Varsayımlar (Ömer onayı bekleniyor):
+1. **Sunaklar:** bölge başına 1, isteğe bağlı cep düğümü (kesik yol), tür `event` ("Wayshrine · Trial"): önce sınav savaşı, kazanınca nimet penceresi. Yerler: I dr84 (dr8'den), II dr85 (dr20), III dr86 (dr40), IV dr87 (dr47), V dr88 (dr63), VI dr89 (dr79; dr78 yanında boş yer yoktu). Harita 83 → 89 durak.
+2. **Sınavlar (mevcut kural katmanı):** I "Only 2 heroes", II "No ultimates for the first 3 turns", III Narrow Ledge = savaşta 3-4. sıralar iki tarafta da kapalı (blocked), IV hold hedefi, V 5 tur hayatta kal, VI 3 kahraman + ilk 3 tur ultimate yok. Tek dalga (takviye yok), kazanınca tekrar oynanmaz.
+3. **Kahraman sınırı:** dizilimde en öndeki ilk N ayakta kahraman girer; düşmüşler giremez, girmeyenlerin canı değişmez. Seçim ekranı yok.
+4. **Ultimate kilidi = motor kancası:** `src/engine/battle.ts > applyInitialCooldowns` artık kurulumdan gelen daha uzun beklemeyi (UnitSetup.startCooldowns) ezmiyor. Başka modda davranış aynı (Endless taşımasında bu kod çalışmaz). Engine-dev bilgisine.
+5. **Nimetler (her kahramana, her savaşta, sefer sonuna kadar; harita geçişinde taşınır):** Stone +%3 maks can, Keen +%2 kritik, Mercy +%5 şifa gücü, Tide +%3 hasar, Gale +%2 kaçınma, Ward +%5 kalkan gücü. Gear'da altının yanında "N Blessings" listesi (ipucunda adlar + etkiler); kahraman stat sayılarına ayrı yazılmıyor.
+6. **Salvage Dive düğümleri:** dr19 Sunken Chapel, dr51 Sea Cave Hoard, dr72 Salt Garden (korunan hazineler). En fazla 3 derinlik: 1. derinlik = düğümün kendi sandığı; 2. = 1 Rare + 30 altın; 3. = Rare + Epic + 60 altın.
+7. **Derinlik savaşı:** tek dalga, arada ve sonrasında zafer şifası YOK; XP verilir; savaş loot'u / valor kazancı / gün YOK. Yüzeye çıkınca tüm kazanılan sandıklar birlikte açılır.
+8. **Yenilgi:** "Swim for the surface": son bulunan sandık batar, öncekiler gelir (2. derinlikte yenilgi = hiç sandık yok), canlar savaştaki gibi kalır, yenilgi sayılır, hazine biter. Diğer seçenek "Load Last Save". Dalış penceresi zorunlu (Surface / Dive deeper); kural tarafında yürümek dalışı siler.
+9. **Kayıt:** `boons` ve `dive` isteğe bağlı alanlar, SAVE_VERSION aynı (12); bozuk id / başka düğümün dalışı yüklemede atılır.
+
 ## 429. Harita 2 yan içerik: B5 The Fighting Pit (Saltmere) + A4 Hero Oath (Saltspray Shrine) varsayımları (2026-10-27; maps-2-3.md 9 / 9.3)
 
 Tüm sayılar geçici, sim koşulmadı. Veri: `data/campaign/pits.json`, `data/campaign/oaths.json`, `drowned-reach-encounters.json > dr_pit_1..5`; kural `src/campaign/pit.ts`, `oath.ts`, `state.ts`; test `tests/campaign-pit-oath.test.ts`.

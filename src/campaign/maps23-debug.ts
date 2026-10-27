@@ -1,7 +1,7 @@
 // Harita 2-3 test kısayolları (saf; maps-2-3.md 9.1-9.2, Adım 1): debug > Campaign > "Maps 2-3 (test)" ve testler kullanır.
 // Yeni kural yok: hepsi var olan debugTeleport / autoResolve / continueToMap / debugSetLevel / equipBest yollarının birleşimi.
 // Harita 2'ye geçiş `nextMapFor`'a bağlıdır: çağıran önce bayrağı açar (setMapOverride('drowned-reach', true)).
-import { getMap } from './data';
+import { getMap, WAYSHRINES } from './data';
 import { finalNode } from './graph';
 import { grantLoot } from './loot';
 import { nodeLevel } from './power';
@@ -100,6 +100,8 @@ export function debugJumpRegion(s: CampaignState, regionId: string): CampaignSta
 /**
  * Debug "Jump to stop" (B5 The Fighting Pit: Saltmere; A4 Hero Oath: Saltspray Shrine): Harita 2 başından düğüme kadar yürür (yoldakiler seed'li
  * ilk seçenekle çözülür), takımı düğümün seviyesine çıkarır ve iyileştirir. Hedef düğümün adımları baştan bekler.
+ * Aynı fonksiyon: Debug "Jump to Wayshrine / Salvage Dive" (A1 / B1, open-questions 428): bölge atlamasıyla aynı yürüyüş, hedef düğüme kadar (cep dahil);
+ * takım hedefin seviyesinde, iyileşmiş. Hedefin adımları baştan bekler (sınav / korunan hazine savaşı).
  */
 export function debugJumpNode(s: CampaignState, nodeId: string): CampaignState {
   const map = getMap(DROWNED_REACH);
@@ -112,4 +114,12 @@ export function debugJumpNode(s: CampaignState, nodeId: string): CampaignState {
     t = moveTo(t, route[i + 1]!);
   }
   return kitOut(t, nodeLevel(DROWNED_REACH, nodeId), 2);
+}
+
+/** Debug: tüm Wayshrine nimetleri (`on`) ya da hiçbiri. */
+export function debugSetBoons(s: CampaignState, on: boolean): CampaignState {
+  const t = clone(s);
+  if (on) t.boons = Object.keys(WAYSHRINES);
+  else delete t.boons;
+  return t;
 }

@@ -3,7 +3,7 @@
   "id": "drowned-reach",
   "title": "THE DROWNED REACH",
   "subtitle": "Campaign Map II",
-  "blurb": "From the Long Stair to the Throne of Brine: 83 stops, 6 regions, 48-53 stops per run.",
+  "blurb": "From the Long Stair to the Throne of Brine: 89 stops, 6 regions, 48-53 stops per run.",
   "intro": "The ash has settled over Valdoria, but the Crown of Ash would not burn and would not break. In the vault beneath Castle Morvane you found a river chart and a single line in Morvane's hand: 'If I fall, carry it to the sea. The Tide must never wear it.' The river runs east, down the Long Stair, to the Drowned Reach.",
   "complete": {
     "title": "Two Crowns",
@@ -465,7 +465,7 @@
       "id": "dr19",
       "type": "treasure",
       "name": "Sunken Chapel",
-      "subtitle": "Treasure · Guarded",
+      "subtitle": "Treasure · Salvage Dive",
       "lore": "Only the bell tower of the chapel stands above the water. Something in rusted armour still keeps its vigil.",
       "region": "II",
       "pos": [
@@ -473,7 +473,11 @@
         0.3422
       ],
       "encounter": "dr_19",
-      "treasure": "dr_sunken_chapel"
+      "treasure": "dr_sunken_chapel",
+      "dive": [
+        "dr_19_d2",
+        "dr_19_d3"
+      ]
     },
     {
       "id": "dr20",
@@ -978,7 +982,7 @@
       "id": "dr51",
       "type": "treasure",
       "name": "Sea Cave Hoard",
-      "subtitle": "Treasure · Guarded",
+      "subtitle": "Treasure · Salvage Dive",
       "lore": "A sea cave glitters with things the tide has carried in, and with the shells of what guards them.",
       "region": "IV",
       "pos": [
@@ -987,7 +991,11 @@
       ],
       "optional": true,
       "encounter": "dr_51",
-      "treasure": "dr_sea_cave"
+      "treasure": "dr_sea_cave",
+      "dive": [
+        "dr_51_d2",
+        "dr_51_d3"
+      ]
     },
     {
       "id": "dr52",
@@ -1322,7 +1330,7 @@
       "id": "dr72",
       "type": "treasure",
       "name": "The Salt Garden",
-      "subtitle": "Treasure · Guarded",
+      "subtitle": "Treasure · Salvage Dive",
       "lore": "A garden of salt flowers and coral, tended by pale maidens who do not breathe.",
       "region": "VI",
       "pos": [
@@ -1330,7 +1338,11 @@
         0.8289
       ],
       "encounter": "dr_72",
-      "treasure": "dr_salt_garden"
+      "treasure": "dr_salt_garden",
+      "dive": [
+        "dr_72_d2",
+        "dr_72_d3"
+      ]
     },
     {
       "id": "dr73",
@@ -1478,6 +1490,102 @@
       ],
       "event": "dr_two_crowns",
       "final": true
+    },
+    {
+      "id": "dr84",
+      "type": "event",
+      "name": "Wayshrine of Stone",
+      "subtitle": "Wayshrine · Trial",
+      "lore": "A weathered shrine on the gorge rim, where ferrymen once left a stone for every safe crossing.",
+      "region": "I",
+      "pos": [
+        0.2013,
+        0.0867
+      ],
+      "optional": true,
+      "encounter": "dr_84",
+      "event": "dr_wayshrine",
+      "shrine": "dr_shrine_stone"
+    },
+    {
+      "id": "dr85",
+      "type": "event",
+      "name": "Wayshrine of the Heron",
+      "subtitle": "Wayshrine · Trial",
+      "lore": "A reed-thatched shrine on a mud bank, its carved heron watching the flats with patient eyes.",
+      "region": "II",
+      "pos": [
+        0.5983,
+        0.2198
+      ],
+      "optional": true,
+      "encounter": "dr_85",
+      "event": "dr_wayshrine",
+      "shrine": "dr_shrine_keen"
+    },
+    {
+      "id": "dr86",
+      "type": "event",
+      "name": "Wayshrine of Mercy",
+      "subtitle": "Wayshrine · Trial",
+      "lore": "A shrine on a narrow ledge above the quarantine wall, kept by those who tended the sick.",
+      "region": "III",
+      "pos": [
+        0.5804,
+        0.4623
+      ],
+      "optional": true,
+      "encounter": "dr_86",
+      "event": "dr_wayshrine",
+      "shrine": "dr_shrine_mercy"
+    },
+    {
+      "id": "dr87",
+      "type": "event",
+      "name": "Wayshrine of the Line",
+      "subtitle": "Wayshrine · Trial",
+      "lore": "A shrine cut into the cliff where the coast guard once swore to hold the stair.",
+      "region": "IV",
+      "pos": [
+        0.5859,
+        0.8425
+      ],
+      "optional": true,
+      "encounter": "dr_87",
+      "event": "dr_wayshrine",
+      "shrine": "dr_shrine_tide"
+    },
+    {
+      "id": "dr88",
+      "type": "event",
+      "name": "Wayshrine of the Gale",
+      "subtitle": "Wayshrine · Trial",
+      "lore": "A storm-bitten shrine on a bare skerry. Sailors say it answers only those who outlast the weather.",
+      "region": "V",
+      "pos": [
+        0.8528,
+        0.154
+      ],
+      "optional": true,
+      "encounter": "dr_88",
+      "event": "dr_wayshrine",
+      "shrine": "dr_shrine_gale"
+    },
+    {
+      "id": "dr89",
+      "type": "event",
+      "name": "Wayshrine of the Ward",
+      "subtitle": "Wayshrine · Trial",
+      "lore": "A drowned shrine beneath the court, its lamp still burning in the green water.",
+      "region": "VI",
+      "pos": [
+        0.7854,
+        0.9579
+      ],
+      "optional": true,
+      "encounter": "dr_89",
+      "event": "dr_wayshrine",
+      "shrine": "dr_shrine_ward"
     }
   ],
   "edges": [
@@ -1923,6 +2031,36 @@
     {
       "from": "dr62",
       "to": "dr59",
+      "style": "dashed"
+    },
+    {
+      "from": "dr8",
+      "to": "dr84",
+      "style": "dashed"
+    },
+    {
+      "from": "dr20",
+      "to": "dr85",
+      "style": "dashed"
+    },
+    {
+      "from": "dr40",
+      "to": "dr86",
+      "style": "dashed"
+    },
+    {
+      "from": "dr47",
+      "to": "dr87",
+      "style": "dashed"
+    },
+    {
+      "from": "dr63",
+      "to": "dr88",
+      "style": "dashed"
+    },
+    {
+      "from": "dr79",
+      "to": "dr89",
       "style": "dashed"
     }
   ]

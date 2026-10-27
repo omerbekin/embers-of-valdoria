@@ -12,6 +12,7 @@ import { sortByPrimary } from '../game/class-order';
 import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import drownedReachMap from '../../data/campaign/drowned-reach.json';
+import { SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
 import { maps23On } from '../ui/maps23-flag';
 import { PITS } from '../campaign/pit';
 import { OATHS, OATH_DATA, oathMinusText, oathPlusText } from '../campaign/oath';
@@ -863,7 +864,7 @@ export function buildMechanics(): WikiArticle[] {
           `Difficulty: Easy, Medium or Hard, chosen when the journey starts; it cannot be changed later. ${difficultyText()}`,
         ),
       ]),
-      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle()] : []),
+      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle(), wayshrinesArticle(), salvageDiveArticle()] : []),
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
@@ -912,6 +913,32 @@ export function heroOathArticle(): WikiArticle {
   return article('hero-oath', 'Campaign', 'Hero oaths', cx('mech_hero_oath', 'rune'), [
     p(`At the Saltspray Shrine on the Wrecking Coast one hero may swear an oath to the Tide: a lasting gift and a lasting price. Only one hero in the company can be sworn at a time. The oath stays with the hero on later maps, and Gear shows it as a small Oath chip. It can be broken only at the shrine, for ${OATH_DATA.breakCost} gold.`),
     list(...OATHS.map((o) => `${o.name}: ${oathPlusText(o)}; ${oathMinusText(o)}.`)),
+  ]);
+}
+
+/** A1 Wayshrines (maps-2-3.md 9; open-questions 428): sunaklar haritadan, sınav ve nimetler data/campaign/side-content.json'dan. */
+export function wayshrinesArticle(): WikiArticle {
+  const m = drownedReachMap as unknown as { nodes: Array<{ name: string; region: string; shrine?: string }> };
+  const shrines = m.nodes.filter((n) => n.shrine && WAYSHRINES[n.shrine]);
+  return article('wayshrines', 'Campaign', 'Wayshrines', cx('mech_wayshrines', 'radiance'), [
+    p(`Each region of The Drowned Reach hides one Wayshrine at the end of a dashed road (${shrines.length} in all). Each shrine holds a short trial: a battle with a rule of its own, shown on the battle card before you start. Trials have no reinforcement waves and cannot be replayed. Win the trial and the shrine gives your company a small blessing: it works in every battle for every hero, for the rest of the campaign, and carries over to the next map. Your blessings are listed in Gear, next to your gold.`),
+    list(...shrines.map((n) => { const w = WAYSHRINES[n.shrine!]!; return `${n.name} (region ${n.region}): ${w.trial} Blessing: ${w.name}, ${w.effect}.`; })),
+    p('"Standing furthest forward" means by formation cell, front row first: arrange your formation before the battle to choose who goes in. Fallen heroes cannot enter a trial; the others wait at the shrine and are not touched.'),
+  ]);
+}
+
+/** B1 Salvage Dive (maps-2-3.md 9; open-questions 428): düğümler haritadan, derinlik ve sandıklar side-content.json'dan. */
+export function salvageDiveArticle(): WikiArticle {
+  const m = drownedReachMap as unknown as { nodes: Array<{ name: string; dive?: string[] }> };
+  const sites = m.nodes.filter((n) => n.dive?.length).map((n) => n.name);
+  const rarity = (r: string): string => `${r[0]!.toUpperCase()}${r.slice(1)}`;
+  return article('salvage-dive', 'Campaign', 'Salvage Dive', cx('mech_salvage_dive', 'floodedplanks'), [
+    p(`Some guarded treasures lie in sunken wrecks (${sites.join(', ')}). After you win the guard battle you may dive deeper, up to depth ${SALVAGE_DIVE.maxDepth}. Every depth is one more battle, a single wave, with no healing in between: your heroes keep the health they ended the last fight with. Every depth you clear adds its own, better chest.`),
+    list(
+      'Depth 1: the treasure\'s own chest.',
+      ...SALVAGE_DIVE.chests.map((c, i) => `Depth ${i + 2}: ${c.gifts.map((r) => `a ${rarity(r)} item`).join(' and ')}, ${c.gold} gold.`),
+    ),
+    p('Surface at any time between depths to take every chest you found. If you fall in a deeper battle, you swim back up: what happened in the fight stays (lost health stays lost, fallen heroes rise wounded), the last chest you found sinks and the earlier ones come up with you. Leaving the wreck without surfacing loses the extra chests. Deeper battles give experience but no battle spoils of their own.'),
   ]);
 }
 

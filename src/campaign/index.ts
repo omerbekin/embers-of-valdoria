@@ -23,3 +23,4 @@ export * from './arrival';
 export * from './level-gap';
 export * from './pit';
 export * from './oath';
+export * from './side-content';

@@ -51,8 +51,10 @@ import { itemTipNodes, type ItemTipAction, type ItemTipHero } from './item-tip';
 import type { DragSource, DropAction, DropTarget } from './gear-drop';
 import { attachItemInteractions } from './item-drag';
 import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, heroFallen, heroItemLine } from './gear-hover';
-import { respecHeroTree, respecTreeBlocked } from '../campaign';
 import { heroOath, oathMinusText, oathPlusText } from '../campaign/oath';
+import { boonList, respecHeroTree, respecTreeBlocked } from '../campaign';
+import { bandTipHtml } from './band-tip';
+import { tipOn, tipOff } from './tip-vis';
 import { createTreeTab } from './tree-tab';
 import { treeOf } from '../progression/skill-tree-data';
 import { treePool } from '../progression/skill-tree';
@@ -138,6 +140,8 @@ export interface GearSource {
   setTree?(heroId: string, alloc: TreeAlloc): void;
   /** Tree sekmesi > Respec: ağacın tamamı geri, bedel kaynağın altınından. Geçersizse Error. */
   respecTree?(heroId: string): void;
+  /** A1 Wayshrine nimetleri (takımın tek listesi; sefer). Yoksa / boşsa başlıkta görünmez. */
+  blessings?(): Array<{ name: string; effect: string }>;
 }
 
 /** Seferin kaynağı: CampaignState üzerinden (davranış eskisiyle birebir). */
@@ -170,6 +174,7 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
         if (why) throw new Error(why);
         return setHeroTree(x, heroId, alloc);
       }),
+    blessings: () => boonList(get()),
     respecTree: (heroId) =>
       apply((x) => {
         const why = respecTreeBlocked(x, heroId);
@@ -675,6 +680,30 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     return b;
   });
   const gold = el('div', 'gr-gold');
+  // A1 Wayshrine nimetleri (maps-2-3.md 9: Gear'da tek liste): başlıkta küçük yazı, üstüne gelince / dokununca A Band listesi
+  const boonsEl = el('button', 'gr-boons') as HTMLButtonElement;
+  boonsEl.type = 'button';
+  let boonTip: HTMLElement | null = null;
+  const hideBoons = (): void => {
+    if (boonTip) tipOff(boonTip);
+  };
+  const showBoons = (): void => {
+    const list = src.blessings?.() ?? [];
+    if (!list.length) return;
+    boonTip ??= el('div', 'el-tip gr-tip');
+    if (!boonTip.isConnected) overlay.append(boonTip);
+    boonTip.innerHTML = bandTipHtml({ kind: 'Wayshrines', title: 'Blessings', sub: 'Every hero, for the rest of the campaign', lines: list.map((b) => ({ text: `${b.name}: ${b.effect}` })) });
+    tipOn(boonTip);
+    const o = overlay.getBoundingClientRect();
+    const r = boonsEl.getBoundingClientRect();
+    boonTip.style.left = `${Math.max(6, Math.min(overlay.clientWidth - boonTip.offsetWidth - 6, r.right - o.left - boonTip.offsetWidth))}px`;
+    boonTip.style.top = `${r.bottom - o.top + 8}px`;
+  };
+  boonsEl.addEventListener('pointerenter', (e) => {
+    if (e.pointerType === 'mouse') showBoons();
+  });
+  boonsEl.addEventListener('pointerleave', hideBoons);
+  boonsEl.addEventListener('click', () => showBoons());
   if (bagOnly) tabsBox.hidden = true;
   // Tree sekmesi (Faz 3b; src/ui/tree-tab.ts): yalnızca ağaç şalteri açıkken, çift pencerede (tüccar / ganimet) yok
   const treeTab = createTreeTab({ overlay, hero: () => curHero(), gold: () => src.gold(), setTree: (id, a) => src.setTree?.(id, a), respec: (id) => src.respecTree?.(id), toast: (t, ok) => showToast(t, ok), ask: (t, ok, run, danger) => ask(t, ok, run, danger), rerender: () => renderAll() });
@@ -683,7 +712,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     tabsBox.append(treeTab.button);
     treeTab.button.addEventListener('click', () => setTab('tree'));
   }
-  head.append(title, tabsBox, el('span', 'gr-grow'), gold);
+  head.append(title, tabsBox, el('span', 'gr-grow'), boonsEl, gold);
   const body = el('div', 'gr-body gr-lbody');
   const marksBox = el('div', 'gr-marks-col');
   const pageL = el('div', 'gr-page');
@@ -737,6 +766,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     }
     if (treeOn) treeTab.syncButton(tab === 'tree', hero?.skillPoints ?? 0);
     else if ((hero?.skillPoints ?? 0) > 0) sheetBtn.append(badge(hero!.skillPoints!, 'sk', 'Skill points'));
+    const boons = ext ? [] : (src.blessings?.() ?? []);
+    boonsEl.hidden = !boons.length;
+    boonsEl.textContent = boons.length ? `${boons.length} ${boons.length === 1 ? 'Blessing' : 'Blessings'}` : '';
     gold.replaceChildren();
     gold.hidden = !!ext?.hideGold;
     if (!ext?.hideGold) {

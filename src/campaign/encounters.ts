@@ -9,9 +9,10 @@ import { mobLook } from './mob-looks';
 import { chapterEnemyMods, nodeLevel } from './power';
 import { withEnemyLevel } from '../progression/levels';
 import { itemWoundSoft, loadoutSetup } from '../progression/loadout';
-import { activeHeroes, heroById, replayCount } from './state';
 import { pitOf } from './pit';
 import { applyOath } from './oath';
+import { activeHeroes, heroById, isFallen, nextStep, replayCount } from './state';
+import { boonMods, mergeMods, trialHeroIds, ultSkillOf } from './side-content';
 import type { UnitSetup } from '../engine/types';
 import type { BattleOutcome, CampaignState, Difficulty, DifficultyEnemyMods, EncounterDef, EncounterUnit, UnitMods } from './types';
 
@@ -74,6 +75,8 @@ export interface BattlePlan {
    * takviye grubunun hücre listesi + kurulumları (dalga biçimi). Kuralsız karşılaşmada alan yazılmaz.
    */
   rules?: RulesSpec & { reinforce?: { enemies: string[]; units: Record<number, UnitSetup> } };
+  /** B1 Salvage Dive: bu savaşın derinliği (2+; yalnız derinlik savaşında). Yenilgide sonuç ekranı "Swim for the surface" sunar. */
+  dive?: number;
   /** Genel zorluğun yapay zeka değeri (campaign.json > difficulties[x].ai): savaş kurulumuna iletilir. */
   difficulty: Difficulty;
   /** Region battle background id (content-designer: border-road, valley-field, ashen-heights; yoksa varsayılan arka plan). */
@@ -147,16 +150,32 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   // Seçenekli olayın savaşı (N2) düğümün kendi karşılaşmasının yerine geçer; The Fighting Pit (B5) kademesi kasabanın karşılaşmasıdır
   const pitIdx = s.pit?.node === n.id && s.pit.fight ? s.pit.wins : undefined;
   const pitEnc = pitIdx !== undefined ? pitOf(n)?.tiers[pitIdx]?.encounter : undefined;
-  const encId = pitEnc ?? (s.eventChoice?.node === n.id && s.eventChoice.battle ? s.eventChoice.battle : n.encounter);
+  // B1 Salvage Dive: sıradaki derinliğin savaşı (state.ts > nextStep hazine adımı)
+  const step = nextStep(s);
+  const dive = step.kind === 'battle' && step.node === n.id && step.dive ? step.dive : undefined;
+  const encId = pitEnc ?? (dive && step.kind === 'battle' ? step.encounter : s.eventChoice?.node === n.id && s.eventChoice.battle ? s.eventChoice.battle : n.encounter);
   if (!encId) throw new Error(`No battle at ${n.id}`);
   const enc = resolveEncounter(encId, caps);
   const party: Record<number, UnitSetup> = {};
   const enemies: Record<number, UnitSetup> = {};
+  // A1 Wayshrine sınavı (EncounterDef.trial): yalnız en öndeki N ayakta kahraman girer; ultimate ilk N kendi turunda kilitli
+  const trial = enc.def.trial;
+  const entrants = trialHeroIds(s, trial?.heroes, isFallen);
+  // Wayshrine nimetleri: takımın her kahramanına (seferin geri kalanı; harita geçişinde taşınır)
+  const boons = caps.unitMods ? boonMods(s) : undefined;
   s.active.forEach((id, cell) => {
     const h = id ? heroById(s, id) : undefined;
-    if (!h) return;
+    if (!h || !entrants.has(h.id)) return;
     // Güç toplama katmanı (temel + item; ileride level/ağaç): hiçbir şey takılı değilse boş => birim bugünküyle aynı
     const setup: UnitSetup = caps.unitMods ? loadoutSetup(h, { mode: 'campaign' }) : {};
+    if (boons) {
+      const m = mergeMods(setup.modifiers, boons);
+      if (m) setup.modifiers = m;
+    }
+    // "No ultimates for the first N turns": taşınan bekleme N + 1 (tutulmayan sayaç ilk kendi turunda da azalır; motor kendi başlangıç
+    // bekleme süresinden uzunsa bunu korur: battle.ts > applyInitialCooldowns)
+    const ult = trial?.ultLock ? ultSkillOf(h.class) : undefined;
+    if (ult && trial?.ultLock) setup.startCooldowns = { ...(setup.startCooldowns ?? {}), [ult]: Math.floor(trial.ultLock) + 1 };
     // Yara (Ömer 2026-10-19, hp-death-rework.md): her yara maks canı rules.wounds.maxHpLoss düşürür (kurulumda hpMult / hpAdd; motor aynı)
     if (caps.unitMods && woundCount(h) > 0) applyWounds(setup, woundCount(h), CONFIG.rules.wounds, itemWoundSoft(h)); // b_wound_soft affix'i (Ömer 2026-10-26)
     if (caps.unitMods) applyOath(setup, s, h.id); // A4 Hero Oath: yeminin artısı / eksisi (damageAdd / critAdd / hpMult)
@@ -205,7 +224,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     }
   };
   // Dalgalar (Ömer 2026-10-19): Watchtower'dan itibaren; ilk dalga motorun `enemies`i, kalanlar teams.waves
-  const [first, ...more] = encounterWaves(enc.def, n.id, n.type, n.region);
+  // Dalış derinliği tek dalgalık savaş (+ karşılaşmanın kendi waves'i; takviye eklenmez)
+  const [first, ...more] = dive ? [enc.def.units, ...(enc.def.waves ?? []).map((w) => w.units).filter((u) => u.length)] : encounterWaves(enc.def, n.id, n.type, n.region);
   const rest = pitEnc ? [] : more; // arena kademesi tek dalga (open-questions 429)
   enemySetups(first!, enemies);
   const waves = rest.map((list, k) => {
@@ -220,9 +240,10 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     encounterId: enc.id,
     encounterName: enc.def.name,
     usedFallback: enc.fallback,
-    party: partyCells(s),
+    party: partyCells(s).map((c, cell) => (entrants.has(s.active[cell] ?? '') ? c : '')),
     enemies: enemyCells({ units: first! }),
-    heroOrder: partyHeroOrder(s),
+    heroOrder: partyHeroOrder(s).filter((id) => entrants.has(id)),
+    ...(dive ? { dive } : {}),
     units: { party, enemies },
     ...(waves.length ? { waves } : {}),
     ...(rules ? { rules } : {}),
@@ -316,7 +337,7 @@ export function validateEncounters(): string[] {
  * Karşılaşmanın TÜM dalgalarının birimleri, dalga sırasıyla (önizleme ve "Start battle?" kartı eklenen takviye dalgaları dahil tüm düşmanları
  * gösterir; düğüm bağlamı haritadan: encounter-waves.ts > encounterWavesById). Dalga içinde ön sıradan arkaya.
  */
-const allWaveUnits = (id: string, def: Pick<EncounterDef, 'units' | 'waves' | 'objective'>): EncounterUnit[] =>
+const allWaveUnits = (id: string, def: Pick<EncounterDef, 'units' | 'waves' | 'objective' | 'trial'>): EncounterUnit[] =>
   encounterWavesById(id, def).flatMap((w) => [...w].sort((a, b) => a.slot - b.slot));
 
 /** Birimin oyuncuya görünen adı: karşılaşmadaki özel ad > class adı > boss/mob adı > id. */

@@ -5,6 +5,7 @@ import { activeHeroes, canReplay, clearedProgress, nodeCleared, stopNumber } fro
 import { validCampaignSuspended } from './suspend';
 import { pitOf } from './pit';
 import { oathDef } from './oath';
+import { boonIds } from './side-content';
 import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, type ItemInstance } from '../progression/items';
 import { classes, valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
@@ -181,6 +182,16 @@ function upgradeState(s: CampaignState): void {
   s.day = typeof s.day === 'number' && Number.isInteger(s.day) && s.day >= 1 ? s.day : 1;
   s.dayProgress = typeof s.dayProgress === 'number' && s.dayProgress >= 0 && s.dayProgress < 1 ? s.dayProgress : 0;
   if (s.campsUsed !== undefined && !(s.campsUsed && typeof s.campsUsed === 'object' && !Array.isArray(s.campsUsed))) delete (s as { campsUsed?: unknown }).campsUsed;
+  // A1 Wayshrine nimetleri (isteğe bağlı alan, sürüm değişmez; open-questions 428): bilinmeyen / tekrar eden id atılır, boşsa alan silinir
+  if (s.boons !== undefined) {
+    const ok = boonIds(s);
+    if (ok.length) s.boons = ok;
+    else delete (s as { boons?: unknown }).boons;
+  }
+  // B1 Salvage Dive (isteğe bağlı alan): bozuksa ya da bulunulan düğümün değilse atılır (hazine adımı baştan, ek sandıklar yok)
+  const dv = s.dive as unknown as Record<string, unknown> | undefined;
+  if (dv !== undefined && !(dv && dv.node === s.at && typeof dv.depth === 'number' && Number.isInteger(dv.depth) && dv.depth >= 1 && (dv.diving === undefined || dv.diving === true)))
+    delete (s as { dive?: unknown }).dive;
   s.inventory = [...(Array.isArray(s.inventory) ? s.inventory.filter(isItem) : []), ...overflow.filter(isItem)];
   // Bekleyen teslim: bozuksa atılır (item'ler zaten torbada; yalnızca gösterilecek an kaybolur)
   const ho = s.pendingHandover as unknown as Record<string, unknown> | undefined;
