@@ -3,16 +3,19 @@
 import {
   DROWNED_REACH,
   OATHS,
+  QUEST_LIST,
   WAYSHRINES,
   debugFinishMap1,
   debugJumpDrownedReach,
   debugJumpNode,
+  debugJumpQuest,
   debugJumpRegion,
   debugSetBoons,
   debugSetOath,
   debugSetPitBest,
   diveMax,
   getMap,
+  questBonusLine,
   leaderOf,
   mapEnabled,
   oathDef,
@@ -152,6 +155,23 @@ export function registerMaps23Debug(debug: DebugMenu, reload: () => void, ensure
       run: () => {
         enable();
         apply(debugJumpNode(ensureState(), n.id));
+      },
+    });
+  }
+  // A5 Personal Quests (open-questions 431): görev düğümüne atla (sınıf takımda yoksa bir kahramanın yerine girer)
+  for (const q of QUEST_LIST) {
+    const n = map2.nodes.find((x) => x.id === q.node);
+    const cls = q.class.charAt(0).toUpperCase() + q.class.slice(1);
+    debug.register({
+      id: `maps23.quest.${q.id}`,
+      tab: TAB,
+      section: SIDE_SECTION,
+      icon: 'boot',
+      label: `Quest (${cls}): ${q.name}`,
+      hint: `Walk The Drowned Reach to ${n?.name ?? q.node} (team at its level, healed). If no ${cls} is in the company, one joins in place of the last hero (who goes to the reserve). Finish it: title "${q.title}", ${questBonusLine(q)}. Turns Map 2 on.`,
+      run: () => {
+        enable();
+        apply(debugJumpQuest(ensureState(), q.id));
       },
     });
   }

@@ -1126,7 +1126,8 @@
         0.8403,
         0.6004
       ],
-      "event": "dr_monks_isle"
+      "event": "dr_monks_isle",
+      "quest": "paladin_bell"
     },
     {
       "id": "dr57",
@@ -1586,6 +1587,67 @@
       "encounter": "dr_89",
       "event": "dr_wayshrine",
       "shrine": "dr_shrine_ward"
+    },
+    {
+      "id": "dr90",
+      "type": "event",
+      "name": "The Drowned Registry",
+      "subtitle": "Quest · Undead",
+      "lore": "A clerk's alcove off the library, where the court kept the names of everyone the Reach has drowned.",
+      "region": "VI",
+      "pos": [
+        0.976,
+        0.976
+      ],
+      "optional": true,
+      "event": "dr_quest_registry",
+      "quest": "undead_name"
+    },
+    {
+      "id": "dr91",
+      "type": "event",
+      "name": "The Gull Roost",
+      "subtitle": "Quest · Archer",
+      "lore": "The cliff-hunters shoot here for the Gull Feather, and the wreckers' crossbowmen shoot at whoever is winning.",
+      "region": "IV",
+      "pos": [
+        0.2632,
+        0.6621
+      ],
+      "optional": true,
+      "encounter": "dr_91",
+      "event": "dr_quest_roost",
+      "quest": "archer_shoot"
+    },
+    {
+      "id": "dr92",
+      "type": "event",
+      "name": "Rat's Nest",
+      "subtitle": "Quest · Cutthroat",
+      "lore": "A back court behind the rope-walks, where the Dock Rats count their takings.",
+      "region": "III",
+      "pos": [
+        0.7012,
+        0.2836
+      ],
+      "optional": true,
+      "event": "dr_quest_debt",
+      "quest": "cutthroat_debt"
+    },
+    {
+      "id": "dr93",
+      "type": "event",
+      "name": "The Dicing Hulk",
+      "subtitle": "Quest · Gambler",
+      "lore": "A beached hulk where the corsairs dice for their shares.",
+      "region": "V",
+      "pos": [
+        0.7817,
+        0.269
+      ],
+      "optional": true,
+      "event": "dr_quest_table",
+      "quest": "gambler_table"
     }
   ],
   "edges": [
@@ -2061,6 +2123,26 @@
     {
       "from": "dr79",
       "to": "dr89",
+      "style": "dashed"
+    },
+    {
+      "from": "dr75",
+      "to": "dr90",
+      "style": "dashed"
+    },
+    {
+      "from": "dr41",
+      "to": "dr91",
+      "style": "dashed"
+    },
+    {
+      "from": "dr30",
+      "to": "dr92",
+      "style": "dashed"
+    },
+    {
+      "from": "dr63",
+      "to": "dr93",
       "style": "dashed"
     }
   ]

@@ -5,7 +5,8 @@ import { getMap, WAYSHRINES } from './data';
 import { finalNode } from './graph';
 import { grantLoot } from './loot';
 import { nodeLevel } from './power';
-import { activeHeroes, autoResolve, clone, continueToMap, debugTeleport, moveTo, newCampaign, nextMapFor, nextStep, pathTo } from './state';
+import { activeHeroes, autoResolve, clone, continueToMap, debugEnsureClass, debugTeleport, moveTo, newCampaign, nextMapFor, nextStep, pathTo } from './state';
+import { questDef } from './quests';
 import { equipBest } from './gear';
 import { autoTreeAll } from './tree';
 import { autoAllocateAll, debugSetLevel } from './xp';
@@ -103,17 +104,28 @@ export function debugJumpRegion(s: CampaignState, regionId: string): CampaignSta
  * Aynı fonksiyon: Debug "Jump to Wayshrine / Salvage Dive" (A1 / B1, open-questions 428): bölge atlamasıyla aynı yürüyüş, hedef düğüme kadar (cep dahil);
  * takım hedefin seviyesinde, iyileşmiş. Hedefin adımları baştan bekler (sınav / korunan hazine savaşı).
  */
-export function debugJumpNode(s: CampaignState, nodeId: string): CampaignState {
+export function debugJumpNode(s: CampaignState, nodeId: string, classId?: string): CampaignState {
   const map = getMap(DROWNED_REACH);
   if (!map.nodes.some((n) => n.id === nodeId)) throw new Error(`No stop ${nodeId}`);
   let t = s.mapId === DROWNED_REACH ? s : debugJumpDrownedReach(s);
   if (t.at !== map.start || t.path.length > 1) t = debugJumpDrownedReach(t);
+  if (classId) t = debugEnsureClass(t, classId); // A5 görev atlaması: görevin sınıfı takımda olsun (düğüm / seçenek görünsün)
   const route = pathTo(map, nodeId);
   for (let i = 0; i < route.length - 1; i++) {
     t = settle(t);
     t = moveTo(t, route[i + 1]!);
   }
   return kitOut(t, nodeLevel(DROWNED_REACH, nodeId), 2);
+}
+
+/**
+ * Debug "Jump to quest" (A5 Personal Quests, open-questions 431): görevin sınıfı takımda yoksa bir kahramanın yerine girer (çıkan yedeğe), sonra
+ * görevin düğümüne kadar yürür (debugJumpNode). Hedefin adımları baştan bekler (cep: görev olayı / savaşı; Paladin: Monk's Isle olayı).
+ */
+export function debugJumpQuest(s: CampaignState, questId: string): CampaignState {
+  const q = questDef(questId);
+  if (!q) throw new Error(`No quest ${questId}`);
+  return debugJumpNode(s, q.node, q.class);
 }
 
 /** Debug: tüm Wayshrine nimetleri (`on`) ya da hiçbiri. */

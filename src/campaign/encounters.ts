@@ -11,6 +11,7 @@ import { withEnemyLevel } from '../progression/levels';
 import { itemWoundSoft, loadoutSetup } from '../progression/loadout';
 import { pitOf } from './pit';
 import { applyOath } from './oath';
+import { applyQuestBonus } from './quests';
 import { activeHeroes, heroById, isFallen, nextStep, replayCount } from './state';
 import { boonMods, mergeMods, trialHeroIds, ultSkillOf } from './side-content';
 import type { UnitSetup } from '../engine/types';
@@ -161,7 +162,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   const enemies: Record<number, UnitSetup> = {};
   // A1 Wayshrine sınavı (EncounterDef.trial): yalnız en öndeki N ayakta kahraman girer; ultimate ilk N kendi turunda kilitli
   const trial = enc.def.trial;
-  const entrants = trialHeroIds(s, trial?.heroes, isFallen);
+  const entrants = trialHeroIds(s, trial?.heroes, isFallen, trial?.requireClass);
   // Wayshrine nimetleri: takımın her kahramanına (seferin geri kalanı; harita geçişinde taşınır)
   const boons = caps.unitMods ? boonMods(s) : undefined;
   s.active.forEach((id, cell) => {
@@ -180,6 +181,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     // Yara (Ömer 2026-10-19, hp-death-rework.md): her yara maks canı rules.wounds.maxHpLoss düşürür (kurulumda hpMult / hpAdd; motor aynı)
     if (caps.unitMods && woundCount(h) > 0) applyWounds(setup, woundCount(h), CONFIG.rules.wounds, itemWoundSoft(h)); // b_wound_soft affix'i (Ömer 2026-10-26)
     if (caps.unitMods) applyOath(setup, s, h.id); // A4 Hero Oath: yeminin artısı / eksisi (damageAdd / critAdd / hpMult)
+    if (caps.unitMods) applyQuestBonus(setup, h); // A5 Personal Quests: görev bonusu sınıf pasifinin sayısına (UnitSetup.tree.passive)
     // Can taşıma: eksik canlı karakter o oranla başlar (motor en az 1 can verir)
     // Düşmüş kahraman (Ömer 2026-10-11, Endless gibi): savaşa CESET olarak girer (yuvasında; savaşta Resurrection ile kalkabilir)
     if (!h.alive || h.hpRatio <= 0) setup.startDead = 'revivable';

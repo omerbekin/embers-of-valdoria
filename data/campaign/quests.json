@@ -1,0 +1,45 @@
+{
+  "_not": "A5 Personal Quests, Harita 2 (Ömer seçimi 2026-10-27, form quests/surge; docs/design/campaign/map2-quests-surge.md 1; campaign-dev, open-questions 431). Harita 2'de 5 sınıf: Paladin, Undead, Archer, Cutthroat, Gambler (Hexer Harita 3'te). Görev o sınıftan bir kahraman kadroda (yedek dahil) varken görünür: cep düğümü (`node`, MapNode.quest) ya da var olan olayın seçeneği (`choice`, EventChoice.quest; Paladin dr56). Bitince o sınıftaki kahramana unvan + seferlik bonus (Hero.quests): bonus sınıf pasifinin var olan bir sayısına eklenir (`passive.field` += `passive.add`; savaş kurulumunda UnitSetup.tree.passive yaması, src/campaign/quests.ts). `unit` = bonus satırında yüzdenin neyi anlattığı (İngilizce). Sayılar PROVİZYON (balance-tester).",
+  "quests": {
+    "paladin_bell": {
+      "class": "paladin",
+      "name": "Brann's Bell",
+      "title": "Bellkeeper of St. Brann",
+      "node": "dr56",
+      "passive": { "field": "power", "add": 0.03 },
+      "unit": "of Intelligence healed"
+    },
+    "undead_name": {
+      "class": "undead",
+      "name": "The Name Beneath the Water",
+      "title": "The Unforgotten",
+      "node": "dr90",
+      "passive": { "field": "ratio", "add": 0.1 },
+      "unit": "of damage dealt healed"
+    },
+    "archer_shoot": {
+      "class": "archer",
+      "name": "The Gull Cliffs Shoot",
+      "title": "Feather of the Gull Cliffs",
+      "node": "dr91",
+      "passive": { "field": "perRow", "add": 0.01 },
+      "unit": "damage per row of distance"
+    },
+    "cutthroat_debt": {
+      "class": "cutthroat",
+      "name": "An Old Debt in Saltmere",
+      "title": "The Knife of Saltmere",
+      "node": "dr92",
+      "passive": { "field": "bonus", "add": 0.05 },
+      "unit": "damage to weakened targets"
+    },
+    "gambler_table": {
+      "class": "gambler",
+      "name": "The Corsairs' Table",
+      "title": "The House Breaker",
+      "node": "dr93",
+      "passive": { "field": "chance", "add": 0.03 },
+      "unit": "chance to be ready again"
+    }
+  }
+}

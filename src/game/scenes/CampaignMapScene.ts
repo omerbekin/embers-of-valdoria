@@ -11,6 +11,11 @@ import {
   choiceBlocked,
   completeStory,
   eventChoices,
+  eventChoicesFor,
+  heroQuests,
+  questBonusLine,
+  questDef,
+  shownMap,
   restHealOf,
   skipCamp,
   campaignSellValue,
@@ -229,6 +234,8 @@ const FORCED: ReadonlyArray<NextStep['kind']> = ['hero', 'recruit', 'volunteer',
 type Pt = { x: number; y: number };
 /** Zafer toparlanması notu için son görülen zafer sayısı (seferin seed'i ile; oturum belleği, kayda girmez). */
 let recoverySeen: { seed: number; wins: number } | null = null;
+/** A5 görev bildirimi için son görülen bitmiş görev sayısı (seferin seed'i ile; oturum belleği, kayda girmez). */
+let questSeen: { seed: number; ids: string[] } | null = null;
 /** Yürüyüşte seçilen düğüm; `action` = varışta yapılacak iş (devriye / kasabaya yeniden giriş), yoksa düğümün adımı. */
 type Arrival = { node: string; requested: boolean; action?: () => void };
 
@@ -278,7 +285,10 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Harita kamerasının baktığı nokta (kısılmadan önce). */
   private mid: Pt = { x: W / 2, y: H / 2 };
 
-  private map!: CampaignMap;
+  /** Oyuncunun gördüğü harita (A5: gizli görev cepleri çıkarılmış; src/campaign/quests.ts > shownMap). Kadro değişince kendiliğinden güncel. */
+  private get map(): CampaignMap {
+    return shownMap(this.s);
+  }
   private world!: Phaser.GameObjects.Container;
   private dyn!: Phaser.GameObjects.Container;
   private ui!: Phaser.GameObjects.Container;
@@ -410,7 +420,6 @@ export class CampaignMapScene extends Phaser.Scene {
       // ?campaign=1 (geliştirme) ya da kayıtsız açılış: yeni Normal sefer
       setState(newCampaign({ mode: 'normal', seed: Math.floor(Date.now() % 1_000_000_000) }));
     }
-    this.map = getMap(this.s.mapId);
     this.events.once('shutdown', () => closeAllLessons()); // mentor kutuları sahneyle kapanır (docs/design/tutorial.md)
     this.events.once('shutdown', () => { this.nodeTip?.close(); this.nodeTip = null; }); // hover kartı ana menüde asılı kalmasın
     this.cameras.main.setBackgroundColor('#0b0705');
@@ -2588,6 +2597,8 @@ export class CampaignMapScene extends Phaser.Scene {
     // Zafer toparlanması (playtest D6, Ömer 2026-10-23): zafer şifası (rules.victoryHeal / elit / boss) eskiden sessizdi; zafer sayısı arttıysa
     // haritaya dönüşte şeridin ikinci satırında yazar (oran veriden). Yeni yüklenen / başka seferde yazmaz.
     const recovery = this.takeRecoveryNote(s);
+    const quest = this.takeQuestNote(s);
+    if (quest) this.toast(quest); // A5: görev bitti (unvan + bonus)
     const ups = s.levelUps ?? [];
     if (ups.length || recovery) {
       // Tek birleşik şerit (playtest U3): "Company reached Lv 3 · 3 stat points each"; mentor ipuçları şerit sönünce sırayla gelir
@@ -2627,6 +2638,15 @@ export class CampaignMapScene extends Phaser.Scene {
    * Zafer toparlanması notu (playtest D6): son görülen zafer sayısından fazlaysa (aynı sefer) bulunulan düğümün zafer şifası oranıyla not
    * döner ve sayaç ilerler; ilk açılışta / başka seferde yalnızca sayacı kurar (kayıt yüklemesi not göstermez). Kayıt şeması değişmez.
    */
+  private takeQuestNote(s: CampaignState): string | null {
+    const ids = s.roster.concat(s.reserve ?? []).flatMap((h) => heroQuests(h).map((q) => q.id));
+    const seen = questSeen;
+    questSeen = { seed: s.seed, ids };
+    if (!seen || seen.seed !== s.seed) return null;
+    const q = questDef(ids.find((id) => !seen.ids.includes(id)));
+    return q ? `Quest complete: ${q.title}. ${questBonusLine(q)}.` : null;
+  }
+
   private takeRecoveryNote(s: CampaignState): string | null {
     const wins = s.stats.victories;
     const seen = recoverySeen;
@@ -2744,7 +2764,7 @@ export class CampaignMapScene extends Phaser.Scene {
       }
       case 'event': {
         const e = EVENTS[step.event] ?? { title: node(this.map, step.node).name, text: 'Nothing happens.' };
-        const choices = eventChoices(step.event);
+        const choices = eventChoicesFor(this.s, step.event); // A5: görev seçenekleri yalnız sınıfı kadrodayken
         if (choices.length) {
           this.directAt = null;
           return this.choiceEvent(step.event, step.node, choices);
@@ -2753,13 +2773,15 @@ export class CampaignMapScene extends Phaser.Scene {
           this.directAt = null;
           return this.commit(completeSimple(this.s, 'event'));
         }
-        // A1 Wayshrine: kazanılan nimet çip olarak (side-content.json > wayshrines)
+        // A1 Wayshrine: kazanılan nimet çip olarak (side-content.json > wayshrines); A5 görev cebi (Archer): unvan + bonus çipi
         const sh = shrineOf(node(this.map, step.node));
+        const qd = node(this.map, step.node).optional ? questDef(node(this.map, step.node).quest) : undefined;
         this.worldWindow(step.node, {
           title: e.title,
           art: windowArt(`event:${node(this.map, step.node).event ?? ''}`),
           paras: paragraphs(e.text),
           ...(sh ? { chipsCap: 'Blessing', chips: [{ tone: 'gain' as const, icon: 'check' as const, text: `${sh.name}: ${sh.effect}` }] } : {}),
+          ...(qd && !sh ? { chipsCap: 'Quest complete', chips: [{ tone: 'gain' as const, icon: 'check' as const, text: `Title: ${qd.title}` }, { tone: 'gain' as const, icon: 'check' as const, text: questBonusLine(qd) }] } : {}),
           acts: [{ label: 'Continue', primary: true, run: () => this.commit(completeSimple(this.s, 'event')) }],
         });
         return;
@@ -3333,11 +3355,17 @@ export class CampaignMapScene extends Phaser.Scene {
         plates: choices.map((c) => {
           const blocked = choiceBlocked(this.s, c);
           const st = choiceStyle(eventId, c);
-          return { id: c.id, label: c.label, desc: st.desc, tag: st.tag, acc: st.acc, chips: choiceChips(c), ...(blocked ? { dim: true, need: `Needs ${c.cost} gold (you have ${this.s.gold})` } : {}) };
+          return { id: c.id, label: c.label, desc: st.desc, tag: st.tag, acc: st.acc, chips: questChips(c), ...(blocked ? { dim: true, need: `Needs ${c.cost} gold (you have ${this.s.gold})` } : {}) };
         }),
         pick: (id) => {
           const c = choices.find((x) => x.id === id);
           if (!c) return;
+          // A5 "Walk away": olay açık kalır, pencere kapanır; kafile temizlenmiş komşulardan yola çıkabilir, düğüme dokununca olay yeniden açılır
+          if (c.walkAway) {
+            this.closeModal();
+            this.renderMap(false);
+            return void this.renderHud();
+          }
           const blocked = choiceBlocked(this.s, c);
           if (blocked) return this.toast(blocked);
           // A4 Hero Oath: yemin penceresi; yemin edilince olay biter, geri dönülürse seçenekler yeniden
@@ -3355,7 +3383,7 @@ export class CampaignMapScene extends Phaser.Scene {
             art: windowArt(`event:${eventId}`),
             paras: paragraphs(c.result ?? ''),
             chipsCap: 'What changed',
-            chips: resultChips(c),
+            chips: [...resultChips(c), ...(c.quest && questDef(c.quest) ? [{ tone: 'gain' as const, icon: 'check' as const, text: `Title: ${questDef(c.quest)!.title}` }] : [])],
             body: { k: 'chosen', plate: { id: c.id, label: c.label, desc: st.desc, tag: st.tag, acc: st.acc, chips: [] } },
             acts: [{ label: 'Continue', primary: true, run: () => this.commit(next) }],
           });
@@ -4261,4 +4289,16 @@ export class CampaignMapScene extends Phaser.Scene {
 /** "THE DROWNED REACH" -> "The Drowned Reach" (düğme yazısı; harita başlığı veride büyük harf). */
 function titleCase(t: string): string {
   return t.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (_m, a: string, b: string) => a + b.toUpperCase());
+}
+
+/**
+ * Olay seçeneğinin plaka çipleri (map-window-data.ts > choiceChips) + A5 görev ekleri: savaşlı seçeneğin bedeli (Gambler'ın bahsi), görevin unvanı
+ * ve bonusu, "Walk away" notu.
+ */
+function questChips(c: EventChoice): ReturnType<typeof choiceChips> {
+  if (c.walkAway) return [{ tone: 'dim', text: 'Come back any time' }];
+  const q = questDef(c.quest);
+  const cost = c.battle && c.cost ? [{ tone: 'loss' as const, icon: 'gold' as const, text: `${c.cost} gold` }] : [];
+  const quest = q ? [{ tone: 'gain' as const, icon: 'check' as const, text: `Title: ${q.title}` }, { tone: 'gain' as const, icon: 'check' as const, text: questBonusLine(q) }] : [];
+  return [...cost, ...choiceChips(c), ...quest];
 }

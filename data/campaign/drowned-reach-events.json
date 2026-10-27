@@ -1,6 +1,89 @@
 {
   "_not": "Harita 2 (The Drowned Reach) olayları, hazineleri ve kasaba hikâyeleri (campaign-dev 2026-10-25, maps-2-3.md 3.2 / 3.4; oyun içi metin İngilizce). Biçim data/campaign/events.json ile aynı (events{} choices[] şablonu, treasures{}, stories{}); src/campaign/data.ts iki dosyayı birleştirir, anahtarlar dr_ önekli (çakışmasın). Faction (M-L: Guild Hall / Inquisition House, Monk's Isle), Charter a ship (M-J: Ferry Office) ve Lighthouse (M-M: Lantern Rock) BU ADIMDA YOK: düz lore / küçük ödül olayı olarak duruyor (maps-2-3.md 9.3). Ödül sayıları PROVİZYON.",
   "events": {
+    "dr_quest_registry": {
+      "_not": "A5 Undead görevi (dr90). \"Let it drown\": görev ödülsüz kapanır (Ömer A5 = a).",
+      "title": "The Drowned Registry",
+      "text": "Maredh's clerks wrote down every soul that drowned in the Reach. Your Undead finds a page with a name it has not heard in a hundred years, and the ink is still wet. Something in the court does not want it read aloud.",
+      "choices": [
+        {
+          "id": "speak",
+          "label": "Speak the name",
+          "hint": "Your Undead's quest. Read the name aloud and face what guards the page.",
+          "battle": [
+            "dr_90"
+          ],
+          "quest": "undead_name",
+          "result": "The name rings off the drowned stone, and the guardians of the registry crumble to silt. Your Undead closes the book. It remembers now."
+        },
+        {
+          "id": "drown",
+          "label": "Let it drown",
+          "hint": "Close the book and leave the name to the water. The quest ends here, without its reward.",
+          "result": "Your Undead closes the book and lets the water have it. Some names are better left unspoken."
+        }
+      ]
+    },
+    "dr_quest_roost": {
+      "_not": "A5 Archer görevi (dr91): sınav savaşı kazanılınca açılan pencere (unvan ve bonus çipi sahnede quests.json'dan).",
+      "title": "The Gull Roost",
+      "text": "The last crossbowman tumbles from the ledge and the cliff-hunters cheer. They tie the Gull Feather to your Archer's bow: for one spring at least, the best eye on the Wreck Cliffs belongs to your company."
+    },
+    "dr_quest_debt": {
+      "_not": "A5 Cutthroat görevi (dr92). \"Pay what you owe\" da tam ödül (Ömer A5 = a).",
+      "title": "Rat's Nest",
+      "text": "A chalk mark on a door in Chandlers' Row: the sign your Cutthroat swore never to see again. The Dock Rats remember an unpaid debt, and they have hired corsair knives to collect it.",
+      "choices": [
+        {
+          "id": "pay",
+          "label": "Pay what you owe",
+          "hint": "Your Cutthroat's quest. Settle the old debt in coin, and walk away clean.",
+          "cost": 60,
+          "quest": "cutthroat_debt",
+          "result": "The Dock Rats count the coin twice and wipe the chalk from the door. Your Cutthroat walks out of Saltmere owing no one."
+        },
+        {
+          "id": "settle",
+          "label": "Settle it the old way",
+          "hint": "Your Cutthroat's quest. Fight the collectors; no ultimate in your first 3 turns.",
+          "battle": [
+            "dr_92"
+          ],
+          "win": {
+            "gold": 40
+          },
+          "quest": "cutthroat_debt",
+          "result": "The collectors will not be collecting again. Your Cutthroat takes back the purse they came for, and a little more."
+        }
+      ]
+    },
+    "dr_quest_table": {
+      "_not": "A5 Gambler görevi (dr93). \"Walk away\": görev açık kalır, sonra dönülür (kafile yola çıkabilir; state.ts > canWithdraw).",
+      "title": "The Dicing Hulk",
+      "text": "A beached hulk where the corsairs dice for shares. The house never loses, because the house cuts the throats of winners. Your Gambler pushes a purse onto the table: \"One throw. Mine.\"",
+      "choices": [
+        {
+          "id": "stake",
+          "label": "Lay the stake",
+          "hint": "Your Gambler's quest. Win the throw, then win the fight: the house keeps its back row empty. Win: double your stake.",
+          "cost": 40,
+          "battle": [
+            "dr_93"
+          ],
+          "win": {
+            "gold": 80
+          },
+          "quest": "gambler_table",
+          "result": "The house loses for the first time in living memory. Your Gambler sweeps the purse off the table and leaves the dice behind."
+        },
+        {
+          "id": "walk",
+          "label": "Walk away",
+          "hint": "Leave the table for now. You can come back later.",
+          "walkAway": true
+        }
+      ]
+    },
     "dr_wayshrine": {
       "_not": "A1 Wayshrine: sınav kazanılınca açılan pencere (nimetin adı ve etkisi sahnede çip olarak side-content.json > wayshrines'ten eklenir).",
       "title": "Wayshrine",
@@ -170,6 +253,16 @@
           "hint": "The living recover 20% health.",
           "heal": 0.2,
           "result": "The monks share their bread and their fire. They ask no questions, and they pray for you when you leave."
+        },
+        {
+          "id": "bell",
+          "label": "Keep the vigil",
+          "hint": "Your Paladin's quest. Tonight the bell rings on its own and the drowned walk up the shingle toward it. Hold them off for 4 rounds.",
+          "battle": [
+            "dr_56_bell"
+          ],
+          "quest": "paladin_bell",
+          "result": "Dawn comes grey over the water, and the drowned slip back beneath it. Brother Aldo takes the bell-rope from your Paladin's hands and bows: \"Brann kept this vigil once. Now you have kept it too.\""
         },
         {
           "id": "leave",

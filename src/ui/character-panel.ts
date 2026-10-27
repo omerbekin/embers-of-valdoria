@@ -496,7 +496,13 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     cell.append(txt);
     slots.append(cell);
   }
-  return [head, slots];
+  // A5 Personal Quests: unvanlar sınıf satırının altında küçük satır; bonus A Band ipucunda (sefer)
+  const titles = hero.titles?.length ? el('div', 'gr-title-line', hero.titles.map((t) => t.title).join(' · ')) : null;
+  if (titles && hero.titles) {
+    titles.dataset['band'] = JSON.stringify({ kind: hero.titles.length > 1 ? 'Titles' : 'Title', title: hero.titles.map((t) => t.title).join(' · '), accent: '#c9a24a', lines: hero.titles.map((t) => ({ text: t.bonus })), foot: 'Earned on a personal quest. Lasts for this campaign.', noKeywords: true });
+    titles.setAttribute('aria-label', hero.titles.map((t) => `${t.title}: ${t.bonus}`).join('; '));
+  }
+  return titles ? [head, titles, slots] : [head, slots];
 }
 
 /**

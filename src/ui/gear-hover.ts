@@ -46,6 +46,8 @@ export interface HoverHero {
   woundCfg?: WoundCfg;
   /** A4 Hero Oath (sefer): yemin adı + artı / eksi metni. */
   oath?: { name: string; plus: string; minus: string };
+  /** A5 Personal Quests (sefer): kazanılan unvanlar ve bonus satırları (karakter kartında adın altında küçük satır). */
+  titles?: Array<{ title: string; bonus: string }>;
 }
 
 /** Düşmüş mü? (sefer isFallen ile aynı kural: !alive ya da can 0.) */

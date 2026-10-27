@@ -43,6 +43,18 @@
   cursor: help;
 }
 
+/* A5 Personal Quests: unvan satırı (sınıf satırının altında, ipucu A Band) */
+.gr-title-line {
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  font-size: max(12px, calc(17 * var(--u)));
+  letter-spacing: 0.06em;
+  color: var(--g-gold);
+  opacity: 0.9;
+  margin: calc(-4 * var(--u)) 0 calc(8 * var(--u));
+  cursor: help;
+}
+
 .gr-slots {
   grid-auto-rows: minmax(max(48px, calc(92 * var(--u))), auto);
   gap: calc(12 * var(--u)) calc(16 * var(--u));
