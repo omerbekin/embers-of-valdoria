@@ -1,7 +1,7 @@
 // Skill ağacı motor kancaları (saf; docs/design/skill-tree-implementation.md 2.3 + 4.1 + 4.2, "Faz 2a notları"). Motor ağaç VERİSİNİ bilmez:
 // derleyici (src/progression/skill-tree-compile.ts) kahramanın dağılımını buradaki tiplere çevirir (UnitSetup.tree: fx / fxNodes / hooks,
 // yamalı skill tanımları ve SkillCost.cond). Bu dosya:
-//  1) (b) unitFx kanalı: ItemEffects biçimi, item'lerden AYRI kanal (Combatant.treeFx). Okuma birleşik: sayılar toplanır (çarpanlar 1 + Σ(v - 1)),
+//  1) (b) unitFx kanalı: ItemEffects biçimi, item'lerden AYRI kanal (Combatant.treeFx). Okuma birleşik: sayılar toplanır, "×" yazılanlar (STACK_FORM) çarpılır,
 //     bayraklar VEYA, nesne biçimli tetikler kaynak başına AYRI (her kaynağın kendi "savaşta bir kez" bayrağı); sayaçlı iki kanca
 //     (nthSpellFree, moveStride) tek kaynak: item önce.
 //  2) C1 koşul sözlüğü: TEK tablo COND (koşul anahtarı -> değerlendirici) + SCALE (ölçek anahtarı -> sayı). Yeni koşul = tabloya 1 satır
@@ -24,8 +24,45 @@ type MissingKey = Exclude<keyof ItemEffects, (typeof UNIT_FX_KEYS)[number]>;
 const _allKeys: [MissingKey] extends [never] ? true : MissingKey = true;
 void _allKeys;
 
-/** Çarpan biçimli sayılar (1 = etkisiz): birleşik değer 1 + Σ(v - 1). */
-const MULT_KEYS: ReadonlySet<string> = new Set(['tierDamageMult']);
+/**
+ * "×" yazılan etkilerin birleşme biçimi (bonus yazım kuralı, Ömer 2026-10-27: "×" yazan her şey GERÇEKTEN çarpılır; iki ×1.1 = ×1.21):
+ * 'mult' = ham çarpan (1 = etkisiz): a x b; 'more' = oran, yazıda ×(1 + v): (1 + a)(1 + b) - 1; 'less' = oran, yazıda ×(1 - v): 1 - (1 - a)(1 - b).
+ * Listede olmayan sayılar (şans, düz ek, "+%" yazılanlar) toplanır. Item affix'leri (loadout.ts), ağaç rank'ı (skill-tree-compile.ts > rankFx) ve
+ * item + ağaç kanalı (effNum / effMult) aynı tabloyu kullanır. Nesne alanı: '<anahtar>.<alan>' (lowHpReduce.reduce); elemResist her element için 'less'.
+ */
+export type StackForm = 'mult' | 'more' | 'less';
+export const STACK_FORM: Readonly<Record<string, StackForm>> = {
+  tierDamageMult: 'mult',
+  frontRowDamage: 'more',
+  backRowDamage: 'more',
+  auraDamage: 'more',
+  steadyDamage: 'more',
+  summonPower: 'more',
+  rageGain: 'more',
+  damageTakenReduce: 'less',
+  tierDamageTakenReduce: 'less',
+  adjacentGuard: 'less',
+  columnGuard: 'less',
+  mpCostReduce: 'less',
+  'lowHpReduce.reduce': 'less',
+  elemResist: 'less',
+};
+/** İki değeri biçimine göre birleştirir (biçimsizse toplar). */
+export function stackValues(form: StackForm | undefined, a: number, b: number): number {
+  if (form === 'mult') return a * b;
+  if (form === 'more') return (1 + a) * (1 + b) - 1;
+  if (form === 'less') return 1 - (1 - a) * (1 - b);
+  return a + b;
+}
+/** Aynı değerin `n` kez birleşmesi (rank): mult v^n, more (1 + v)^n - 1, less 1 - (1 - v)^n, biçimsiz v x n. */
+export function stackTimes(form: StackForm | undefined, v: number, n: number): number {
+  if (form === 'mult') return Math.pow(v, n);
+  if (form === 'more') return Math.pow(1 + v, n) - 1;
+  if (form === 'less') return 1 - Math.pow(1 - v, n);
+  return v * n;
+}
+/** Nesne biçimli etkinin sayısal alanının birleşme biçimi ('<anahtar>.<alan>' ya da tüm alanlar için '<anahtar>'). */
+export const fieldStackForm = (key: string, field: string): StackForm | undefined => STACK_FORM[`${key}.${field}`] ?? STACK_FORM[key];
 /** Eşik / süre / sıklık alanları: rank ile çarpılmaz, iki kaynağın nesnesi birleşirken toplanmaz (ilk kalır). */
 export const FX_THRESHOLD_FIELDS: ReadonlySet<string> = new Set(['below', 'above', 'cap', 'turns', 'every', 'max', 'turnCost']);
 
@@ -45,20 +82,20 @@ export function fxBags(c: FxHolder): Array<[ItemEffects, FxSource]> {
   return out;
 }
 
-/** Sayısal etki (kaynaklar toplanır; yoksa 0). Çarpan anahtarı (tierDamageMult) için effMult. */
+/** Sayısal etki (kaynaklar toplanır; "×" yazılan oranlar STACK_FORM'a göre çarpılarak birleşir; yoksa 0). Ham çarpan (tierDamageMult) için effMult. */
 export function effNum(c: FxHolder, key: NumKey): number {
   const a = (c.itemEffects?.[key] as number | undefined) ?? 0;
   const t = c.treeFx ? ((c.treeFx[key] as number | undefined) ?? 0) : 0;
-  return t ? a + t : a;
+  return t ? stackValues(STACK_FORM[key], a, t) : a;
 }
 
-/** Çarpan etkisi: 1 + Σ(v - 1); hiç kaynak yoksa undefined. */
+/** Ham çarpan etkisi: kaynakların çarpımı; hiç kaynak yoksa undefined. */
 export function effMult(c: FxHolder, key: NumKey): number | undefined {
   const a = c.itemEffects?.[key] as number | undefined;
   const t = c.treeFx?.[key] as number | undefined;
   if (t === undefined) return a;
   if (a === undefined) return t;
-  return 1 + (a - 1) + (t - 1);
+  return a * t;
 }
 
 /** Bayrak (kaynaklardan biri). */
@@ -88,11 +125,11 @@ export function effFirst<K extends FxKey>(c: FxHolder, key: K): ItemEffects[K] |
   return c.itemEffects?.[key] ?? c.treeFx?.[key];
 }
 
-/** Element direnci (elemResist; Ömer 2026-10-26, c_res_*): kanalların toplamı (yoksa 0). */
+/** Element direnci (elemResist; Ömer 2026-10-26, c_res_*; yazıda "×0.95"): kanallar çarpılarak birleşir, 1 - (1 - a)(1 - t) (yoksa 0). */
 export function elemResistOf(c: FxHolder, element: Element): number {
   const a = c.itemEffects?.elemResist?.[element] ?? 0;
   const t = c.treeFx?.elemResist?.[element] ?? 0;
-  return a + t;
+  return t ? stackValues('less', a, t) : a;
 }
 
 /** "Savaşta bir kez" tetiklerin item kanalındaki eski bayrakları (ağaç kanalı Combatant.treeOnce'ta tutulur). */
@@ -112,19 +149,19 @@ export function markOnce(c: Combatant, src: FxSource, key: FxKey): void {
 }
 
 /**
- * İki unitFx değerini birleştirir (derleyici: birden çok düğüm aynı anahtarı verirse). Sayı: toplam (çarpan anahtarında 1 + Σ(v - 1));
- * bayrak: VEYA; dizi: ard arda; nesne: sayısal alanlar toplanır, eşik / süre alanları (FX_THRESHOLD_FIELDS) ve metin ilk değerde kalır.
+ * İki unitFx değerini birleştirir (derleyici: birden çok düğüm aynı anahtarı verirse). Sayı: toplam ("×" yazılanlar STACK_FORM'a göre çarpılır);
+ * bayrak: VEYA; dizi: ard arda; nesne: sayısal alanlar toplanır (STACK_FORM alanı çarpılır), eşik / süre alanları (FX_THRESHOLD_FIELDS) ve metin ilk değerde kalır.
  */
 export function mergeFxValue(key: string, prev: unknown, next: unknown): unknown {
   if (prev === undefined) return next;
   if (Array.isArray(prev) && Array.isArray(next)) return [...prev, ...next];
   if (typeof prev === 'boolean' || typeof next === 'boolean') return !!prev || !!next;
-  if (typeof prev === 'number' && typeof next === 'number') return MULT_KEYS.has(key) ? 1 + (prev - 1) + (next - 1) : prev + next;
+  if (typeof prev === 'number' && typeof next === 'number') return stackValues(STACK_FORM[key], prev, next);
   if (prev && next && typeof prev === 'object' && typeof next === 'object') {
     const p = prev as Record<string, unknown>;
     const out: Record<string, unknown> = { ...p };
     for (const [k, v] of Object.entries(next as Record<string, unknown>)) {
-      if (typeof v === 'number' && typeof p[k] === 'number' && !FX_THRESHOLD_FIELDS.has(k)) out[k] = (p[k] as number) + v;
+      if (typeof v === 'number' && typeof p[k] === 'number' && !FX_THRESHOLD_FIELDS.has(k)) out[k] = stackValues(fieldStackForm(key, k), p[k] as number, v);
       else if (!(k in p)) out[k] = v;
     }
     return out;

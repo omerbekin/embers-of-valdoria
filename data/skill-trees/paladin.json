@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Battle Hymn",
-        "text": "On your first turn of each battle, Holy Strike deals +15% damage.",
+        "text": "On your first turn of each battle, Holy Strike deals ×1.15 damage.",
         "src": "A:V2:bar0",
         "fx": [
           {
@@ -65,7 +65,7 @@
       {
         "at": 10,
         "name": "Holy Soil",
-        "text": "Your skills deal +4% damage to enemies standing in holy fire.",
+        "text": "Your skills deal ×1.04 damage to enemies standing in holy fire.",
         "src": "A:V4:bar1",
         "fx": [
           {
@@ -759,7 +759,7 @@
     },
     "2.ma": {
       "name": "Risen in Glory",
-      "text": "A revived ally gains Blessed for 2 turns and their first skill deals +15%.",
+      "text": "A revived ally gains Blessed for 2 turns and their first skill deals ×1.15 damage.",
       "src": "B:V1:2.ma",
       "fx": [
         {

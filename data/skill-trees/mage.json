@@ -102,7 +102,7 @@
       {
         "at": 20,
         "name": "Momentum",
-        "text": "When you kill an enemy, your next spell +6% damage.",
+        "text": "When you kill an enemy, your next spell deals ×1.06 damage.",
         "src": "B:V5:bar2",
         "fx": [
           {

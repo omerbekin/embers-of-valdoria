@@ -74,7 +74,7 @@
       {
         "at": 15,
         "name": "Tight Weave",
-        "text": "Nature's Wrath deals +3% damage.",
+        "text": "Nature's Wrath deals ×1.03 damage.",
         "src": "B:V4:bar3",
         "fx": [
           {
@@ -90,7 +90,7 @@
       {
         "at": 20,
         "name": "Deep Spring",
-        "text": "Rejuvenate heals +15% more (both the first heal and its regeneration).",
+        "text": "Rejuvenate heals ×1.15 (both the first heal and its regeneration).",
         "src": "B:V3:bar4",
         "fx": [
           {
@@ -114,7 +114,7 @@
       {
         "at": 25,
         "name": "Barkskin",
-        "text": "Your Treant takes 15% less damage.",
+        "text": "Your Treant takes ×0.85 damage.",
         "src": "B:V2:bar2",
         "fx": [
           {

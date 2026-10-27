@@ -65,7 +65,7 @@
       {
         "at": 10,
         "name": "Grim Herald",
-        "text": "The first Doom you cause each battle deals +20% damage.",
+        "text": "The first Doom you cause each battle deals ×1.2 damage.",
         "src": "A:V1:bar0",
         "fx": [
           {
@@ -100,7 +100,7 @@
       {
         "at": 20,
         "name": "Carrion Feast",
-        "text": "Wither on an enemy below 30% HP deals +10% damage.",
+        "text": "Wither on an enemy below 30% HP deals ×1.1 damage.",
         "src": "A:V2:bar2",
         "fx": [
           {

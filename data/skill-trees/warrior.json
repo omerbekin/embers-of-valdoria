@@ -81,7 +81,7 @@
       {
         "at": 15,
         "name": "Crushing Weight",
-        "text": "Your skills deal +3% damage to Stunned, Slowed or Staggered enemies.",
+        "text": "Your skills deal ×1.03 damage to Stunned, Slowed or Staggered enemies.",
         "src": "B:V4:bar2",
         "fx": [
           {

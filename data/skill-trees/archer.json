@@ -1244,7 +1244,7 @@
     },
     "4.r3": {
       "name": "Next in Line",
-      "text": "If Aimed Shot kills, your next skill deals +35% and cannot miss.",
+      "text": "If Aimed Shot kills, your next skill deals ×1.35 damage and cannot miss.",
       "src": "B:V5:4.r3",
       "fx": [
         {

@@ -94,9 +94,9 @@ describe('birim skill katmanı (aynı id)', () => {
     expect(Object.keys(me.skillDefs!).sort()).toEqual(['headsmans_blow', 'melee_attack', 'whirlwind']);
     expect(foe.skillDefs).toBeUndefined();
     const NA = (W.nodes['1.f2']!.fx![0] as unknown as { v: number }).v; // Notched Axe rank başı (veriden)
-    const want = [0.4, 0.4 * (1 + 5 * NA)];
-    power(b, 'melee_attack', me.uid).forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 9));
-    power(b, 'melee_attack', me).forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 9)); // Combatant da kabul
+    const want = [0.4, 0.4 * (1 + NA) ** 5]; // "×1.04 per rank": rank'ta çarpılır (2026-10-27)
+    power(b, 'melee_attack', me.uid).forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 6));
+    power(b, 'melee_attack', me).forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 6)); // Combatant da kabul
     expect(power(b, 'melee_attack', foe.uid)).toEqual([0.4, 0.4]);
     expect(power(b, 'melee_attack')).toEqual([0.4, 0.4]);
     expect(content.skills.melee_attack!.effects.map((e) => (e as unknown as { power: number }).power)).toEqual([0.4, 0.4]);

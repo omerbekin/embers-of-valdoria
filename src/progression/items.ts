@@ -4,6 +4,7 @@ import itemsJson from '../../data/items.json';
 import { classes, randomPool, statuses as statusDefs } from '../engine/content';
 import { affixFit, classElements } from './affix-fit';
 import { Rng } from '../engine/rng';
+import { STACK_FORM } from '../engine/tree-hooks';
 import type { Element } from '../engine/types';
 
 /** 6 yuva (karar 1). Sıra veridekiyle aynı. */
@@ -57,7 +58,7 @@ export interface AffixPart {
   noRoll?: boolean;
   /** affixRules.power bu parçaya işlemez (adımı iri olanlar: ana stat, tüm statlar, hız, Immunity tur sayısı). */
   noPower?: boolean;
-  /** fx alanı çarpan biçiminde (1 + toplam; tierDamageMult). */
+  /** fx alanı ham çarpan biçiminde (Π(1 + değer); tierDamageMult). */
   form?: 'mult';
   /** lowHpReduce eşiği. */
   below?: number;
@@ -850,14 +851,14 @@ const TARGET_RE = /^(mod|mult|fx|elem|res|attr|prog):[\w*]+$/;
  * Kaynak: stats.ts (elemDamageMult, spdMult, hpMult, mpMult), battle.ts (dealtDamageMult, damageTakenMult, rage kazancı, çağrı gücü), cost.ts (MP bedeli).
  */
 export type BonusForm = 'add' | 'more' | 'less';
-const MORE_FX = new Set(['tierDamageMult', 'frontRowDamage', 'backRowDamage', 'auraDamage', 'steadyDamage', 'summonPower', 'rageGain']);
-const LESS_FX = new Set(['damageTakenReduce', 'tierDamageTakenReduce', 'adjacentGuard', 'columnGuard', 'lowHpReduce', 'mpCostReduce']);
+// Yazı biçimi ile motordaki birleşme TEK tablodan (tree-hooks.ts > STACK_FORM; 2026-10-27: "×" yazılanlar çarpılarak birleşir, loadout.ts)
 export function partBonusForm(to: string): BonusForm {
   const [kind, key = ''] = to.split(':');
   if (kind === 'elem' || kind === 'mult') return 'more';
   if (kind === 'res') return 'less';
-  if (kind === 'fx' && MORE_FX.has(key)) return 'more';
-  if (kind === 'fx' && LESS_FX.has(key)) return 'less';
+  const f = kind === 'fx' ? (STACK_FORM[key] ?? STACK_FORM[`${key}.reduce`]) : undefined;
+  if (f === 'mult' || f === 'more') return 'more';
+  if (f === 'less') return 'less';
   return 'add';
 }
 /** Parça `i`nin yazıdaki yer tutucusu biçime uyuyor mu ({i} / {mi} / {li}; {mi:3} gibi katlı biçim de sayılır). */

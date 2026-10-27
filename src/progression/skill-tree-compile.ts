@@ -5,7 +5,7 @@
 // `set` kendinden öncekileri ezer, sonrakiler onun üstüne biner; `base` (temel değeri değiştirir) TÜM yamalardan önce uygulanır. '+X% power' = op 'pct': anlamı _rules.json > percentRule (TEK yer; varsayılan 'mul').
 import { classes, formulas, grounds as GROUNDS, skills as SKILLS, statuses as STATUSES, summons as SUMMON_DEFS } from '../engine/content';
 import { areaDefProblem } from '../engine/area-shape';
-import { COND, COST_TARGET_CONDS, FX_THRESHOLD_FIELDS, HEAL_POINTS, mergeFxValue, MOD_SPEC, POTENCY_FIELDS, SCALE, SELF_CONDS, SELF_SCALES, SET_MODS, TRIGGER_BASES, TRIGGER_EVENTS, TRIGGER_TARGETS, UNIT_FX_KEYS, whenIsLate, type CondMod, type HealHook, type HookAt, type ModGroup, RULE_KINDS, type RuleHook, type RuleKind, type TreeHook, type TriggerAction, type TriggerEvent, type TriggerHook } from '../engine/tree-hooks';
+import { COND, COST_TARGET_CONDS, FX_THRESHOLD_FIELDS, HEAL_POINTS, mergeFxValue, fieldStackForm, STACK_FORM, stackTimes, MOD_SPEC, POTENCY_FIELDS, SCALE, SELF_CONDS, SELF_SCALES, SET_MODS, TRIGGER_BASES, TRIGGER_EVENTS, TRIGGER_TARGETS, UNIT_FX_KEYS, whenIsLate, type CondMod, type HealHook, type HookAt, type ModGroup, RULE_KINDS, type RuleHook, type RuleKind, type TreeHook, type TriggerAction, type TriggerEvent, type TriggerHook } from '../engine/tree-hooks';
 import type { ItemEffects, PassiveDef, RandomStatusOption, SkillDef, SkillEffect, SkillModeDef, SkillModeSet, TreeSetup } from '../engine/types';
 import { TREE_RULES, treeOf, type TreeData, type TreeFx, type TreeMode, type TreeRules } from './skill-tree-data';
 import { barReached, focusBuild, rankOf, spent, treeNodes, validate, type TreeAlloc } from './skill-tree';
@@ -151,20 +151,24 @@ function setPath(o: Bag, path: string, v: number): void {
   cur[parts[parts.length - 1]!] = v;
 }
 
-/** Tek değere op uygular. `rank`: düğümün rank'ı (fx.rank true ise v x rank). */
+/**
+ * Tek değere op uygular. `rank`: düğümün rank'ı (fx.rank true ise add'de v x rank). Çarpan op'ları (mul; percentRule 'mul' iken pct) "×1.04 per rank"
+ * yazılır ve rank'ta GERÇEKTEN çarpılır (bonus yazım kuralı, Ömer 2026-10-27): x (1 + v)^rank (3 rank ×1.04 = ×1.124864, ×1.12 değil).
+ */
 function applyOp(cur: unknown, fx: Extract<TreeFx, { k: 'skill' | 'passive' | 'stat' }>, rank: number, field: string, rules: TreeRules): number {
   if (fx.op === 'remove' || fx.op === 'on') throw new TreeFxError(`op "${fx.op}" is not allowed for "${field}"`);
   if (FLAG_FIELDS.has(field)) throw new TreeFxError(`"${field}" is a flag: use op "on"`);
   if (!Number.isFinite(fx.v)) throw new TreeFxError(`value of ${field} must be a number`);
   const n = fx.rank ? fx.v * rank : fx.v;
+  const times = fx.rank ? Math.pow(1 + fx.v, rank) : 1 + fx.v;
   let out: number;
   if (fx.op === 'set' || fx.op === 'base') out = fx.v;
   else {
     const base = typeof cur === 'number' ? cur : FX_DEFAULTS[field];
     if (base === undefined) throw new TreeFxError(`field "${field}" is missing and has no default`);
     if (fx.op === 'add') out = base + n;
-    else if (fx.op === 'mul') out = base * (1 + n);
-    else if (fx.op === 'pct') out = rules.percentRule === 'add' ? base + n : base * (1 + n);
+    else if (fx.op === 'mul') out = base * times;
+    else if (fx.op === 'pct') out = rules.percentRule === 'add' ? base + n : base * times;
     else throw new TreeFxError(`unknown op "${(fx as { op: string }).op}"`);
   }
   return INT_FIELDS.has(field) ? Math.max(0, Math.round(out)) : r6(out);
@@ -351,15 +355,21 @@ const HOOK_ATS: readonly HookAt[] = ['hit', 'doom', 'dot', 'ground', 'passiveHea
 /** Vuruş sonrası (hitIsCrit / killingBlow) kancalarda anlamlı değişiklikler (motor yalnızca bunları vuruştan sonra okur). */
 const LATE_MODS = new Set(['powerMul', 'ignoreDefense', 'flatDamage', 'critDmgMul', 'lifesteal', 'lifestealMul', 'drainMul', 'drainAdd', 'addStatus', 'removeStatus', 'extendStatus']);
 
-/** Tek değişikliğin biçim denetimi ve rank ölçeklemesi (sayılar x rank; Set biçimliler ve nesne içi süre / şans alanları ölçeklenmez). */
-function checkMod(k: string, t: 'num' | 'bool' | 'obj' | 'str', v: unknown, r: number): unknown {
+/**
+ * Çarpan biçimli değişikliğin (…Mul: x (1 + v), "×1.06 per rank" yazılır) rank ölçeklemesi: GERÇEKTEN çarpılır, (1 + v)^r - 1 (bonus yazım kuralı,
+ * Ömer 2026-10-27). `geo` false (kanca / tetik ölçekli: "×(1 + 2% per rank for each ...)" ya da yığılan buff "×1.02, ×1.04, ..."): yazıdaki gibi v x r.
+ */
+const rankMul = (v: number, r: number, geo: boolean): number => (geo ? (r === 1 ? v : stackTimes('more', v, r)) : r6(v * r));
+
+/** Tek değişikliğin biçim denetimi ve rank ölçeklemesi (sayılar x rank, …Mul çarpanları rankMul; Set biçimliler ve nesne içi süre / şans alanları ölçeklenmez). */
+function checkMod(k: string, t: 'num' | 'bool' | 'obj' | 'str', v: unknown, r: number, geo = true): unknown {
   if (t === 'bool') {
     if (typeof v !== 'boolean') throw new TreeFxError(`${k} must be true / false`);
     return v ? true : undefined;
   }
   if (t === 'num') {
     if (typeof v !== 'number' || !Number.isFinite(v)) throw new TreeFxError(`mod ${k} must be a number`);
-    return SET_MODS.has(k) ? v : r6(v * r);
+    return SET_MODS.has(k) ? v : k.endsWith('Mul') ? rankMul(v, r, geo) : r6(v * r);
   }
   if (t === 'str') {
     if (!knownStatus(v)) throw new TreeFxError(`${k}: unknown status "${String(v)}"`);
@@ -435,11 +445,14 @@ function treeEffectOf(fx: { effect?: SkillEffect; byRank?: SkillEffect[] }, rank
   return e as unknown as SkillEffect;
 }
 
-/** unitFx değeri: sayısal alanlar x rank (eşik / süre alanları hariç; çarpan anahtarı 1 + (v - 1) x rank). */
+/**
+ * unitFx değeri: sayısal alanlar x rank (eşik / süre alanları hariç). "×" yazılan anahtarlar (tree-hooks.ts > STACK_FORM) rank'ta çarpılır
+ * (Ömer 2026-10-27): ham çarpan v^rank, ×(1 - v) oranı 1 - (1 - v)^rank ("×0.96 per rank" 3 rank = ×0.884736).
+ */
 function rankFx(key: string, v: unknown, rank: number): unknown {
-  if (typeof v === 'number') return key === 'tierDamageMult' ? 1 + (v - 1) * rank : r6(v * rank);
+  if (typeof v === 'number') return r6(stackTimes(STACK_FORM[key], v, rank));
   if (Array.isArray(v) || typeof v !== 'object' || v === null) return v;
-  return Object.fromEntries(Object.entries(v as Bag).map(([k, x]) => [k, typeof x === 'number' && !FX_THRESHOLD_FIELDS.has(k) ? r6(x * rank) : x]));
+  return Object.fromEntries(Object.entries(v as Bag).map(([k, x]) => [k, typeof x === 'number' && !FX_THRESHOLD_FIELDS.has(k) ? r6(stackTimes(fieldStackForm(key, k), x, rank)) : x]));
 }
 /** unitFx değerinin kaba biçim denetimi (sayı sonlu; nesne / dizideki durum adları statuses.json'da). */
 function checkFxValue(key: string, v: unknown): void {
@@ -665,7 +678,7 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
           if (k === 'cost' || k === 'costMul') {
             if (typeof v !== 'number' || !Number.isFinite(v)) throw new TreeFxError(`mod ${k} must be a number`);
             if (k === 'cost') cost = Math.round(v * r);
-            else costMul = r6(v * r);
+            else costMul = rankMul(v, r, !fx.scale);
             continue;
           }
           const spec = MOD_SPEC[k as keyof CondMod];
@@ -673,7 +686,7 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
           if (spec.at ? !spec.at.includes(at) : at !== 'hit') throw new TreeFxError(`mod ${k} cannot be used at "${at}"`);
           if (late && !LATE_MODS.has(k)) throw new TreeFxError(`mod ${k} cannot be used with hitIsCrit / killingBlow`);
           groups.add(spec.g);
-          mod[k] = checkMod(k, spec.t, v, r);
+          mod[k] = checkMod(k, spec.t, v, r, !fx.scale);
           if (mod[k] === undefined) delete mod[k];
         }
         const keys = Object.keys(mod);
@@ -1346,7 +1359,7 @@ function compileAction(tree: TreeData, cls: (typeof classes)[string], a: Trigger
         if (!spec) throw new TreeFxError(`unknown mod "${k}"`);
         if (!['damage', 'status', 'proc', 'cast', 'bet'].includes(spec.g)) throw new TreeFxError(`mod ${k} cannot be a buff`);
         if (spec.at && !spec.at.includes('hit')) throw new TreeFxError(`mod ${k} cannot be a buff`);
-        mod[k] = checkMod(k, spec.t, v, r);
+        mod[k] = checkMod(k, spec.t, v, r, !a.stack);
         if (mod[k] === undefined) delete mod[k];
       }
       if (!Object.keys(mod).length) throw new TreeFxError('buff has no effect');
@@ -1478,7 +1491,8 @@ function compileHeal(fx: Extract<TreeFx, { h: 'heal' }>, node: string, r: number
     ...(fx.shield !== undefined ? { shield: fx.shield } : {}),
     ...(fx.marked ? { marked: true } : {}),
     ...(fx.min !== undefined ? { min: fx.min } : {}),
-    ...(fx.mul !== undefined ? { mul: r6(fx.mul * r) } : {}),
+    // mul: x (1 + mul), "×0.96 per rank" yazılır: rank'ta çarpılır (ölçekli kancada yazıdaki gibi doğrusal; rankMul)
+    ...(fx.mul !== undefined ? { mul: rankMul(fx.mul, r, !fx.scale) } : {}),
     ...(fx.into !== undefined ? { into: fx.into } : {}),
     ...(fx.ratio !== undefined ? { ratio: r6(fx.ratio * r) } : {}),
     ...(fx.turns !== undefined ? { turns: fx.turns } : {}),

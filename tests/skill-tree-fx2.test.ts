@@ -63,7 +63,7 @@ describe('derleyici: Faz 2a+ sözlüğü', () => {
     expect(checkTreeFx(syn(M, { '1.f2': SEARING_CRIT }))).toEqual([]);
     expect(checkTreeFx(syn(G, { '2.mb': SURE_THING, '2.r': LET_IT_RIDE }))).toEqual([]);
     const m = tree(syn(M, { '1.f2': SEARING_CRIT }), ['1.f1*3', '1.f2*5']);
-    expect(m.hooks).toContainEqual({ h: 'cond', node: 'mage:1.f2', skill: 'fire_bolt', mod: { critDmgMul: 0.3 } });
+    expect(m.hooks).toContainEqual({ h: 'cond', node: 'mage:1.f2', skill: 'fire_bolt', mod: { critDmgMul: 1.06 ** 5 - 1 } }); // "×1.06 per rank": rank'ta çarpılır (2026-10-27)
     const late = tree(syn(W, { '2.f1': [{ k: 'hook', h: 'cond', when: { hitIsCrit: true }, mod: { powerMul: 0.1 } }] }), ['2.f1']);
     expect(late.hooks![0]).toMatchObject({ late: true, mod: { powerMul: 0.1 } });
     const pc = tree(syn(W, { '2.f1': [{ k: 'hook', h: 'cond', procChance: 0.1, mod: { addStatus: { status: 'slow', turns: 1 } }, rank: true }] }), ['2.f1*3']);
@@ -114,7 +114,7 @@ describe('motor: Faz 2a+ değişiklikleri', () => {
     expect(procs(b, 'warrior:2.r')).toBe(1);
   });
 
-  it('Searing Crit: kritik çarpanı x1,30 (rank 5); önizleme critMult, YZ ve gerçek vuruş aynı yoldan', () => {
+  it('Searing Crit: kritik çarpanı x1,06^5 (rank 5); önizleme critMult, YZ ve gerçek vuruş aynı yoldan', () => {
     const run = (withTree: boolean) => {
       const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree ? { 0: { tree: tree(syn(M, { '1.f2': SEARING_CRIT }), ['1.f1*3', '1.f2*5']) } } : {});
       const def = b.skill('fire_bolt', P0(b))!;
@@ -122,7 +122,7 @@ describe('motor: Faz 2a+ değişiklikleri', () => {
     };
     const tr = run(true);
     const plain = run(false);
-    expect(tr.cm / plain.cm).toBeCloseTo(1.3, 9);
+    expect(tr.cm / plain.cm).toBeCloseTo(1.06 ** 5, 9);
     expect(tr.prev.critMult).toBeCloseTo(tr.cm, 9);
     expect(plain.prev.critMult).toBeUndefined();
     expect(tr.prev.critMax).toBeGreaterThan(plain.prev.critMax);

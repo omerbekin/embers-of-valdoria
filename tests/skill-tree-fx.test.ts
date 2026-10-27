@@ -98,8 +98,8 @@ describe('derleyici: (b) addEffect / replaceEffect / unitFx', () => {
     expect(s.skills).toBeUndefined(); // skill değişmedi
   });
 
-  it('kancalar: cond (Red Arc, rank x 3 = %9), bedel koşulu (Pain Into Iron), Rage (War Gallop / Roaring Charge / Into the Fire)', () => {
-    expect(tree(W, RED_ARC).hooks).toContainEqual({ h: 'cond', node: 'warrior:2.r', skill: 'whirlwind', when: { targetStatus: 'wound' }, mod: { powerMul: 3 * (W.nodes['2.r']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul } });
+  it('kancalar: cond (Red Arc, 3 rank = 1.02^3), bedel koşulu (Pain Into Iron), Rage (War Gallop / Roaring Charge / Into the Fire)', () => {
+    expect(tree(W, RED_ARC).hooks).toContainEqual({ h: 'cond', node: 'warrior:2.r', skill: 'whirlwind', when: { targetStatus: 'wound' }, mod: { powerMul: (1 + (W.nodes['2.r']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul) ** 3 - 1 } });
     expect(tree(D, ['4.l1', '4.l2']).skills!.fist_crush!.cost.cond).toEqual([{ node: 'defender:4.l2', add: -1, scale: { missingHp: 0.1 } }]);
     const c = tree(W, CHARGE_PATH);
     expect(c.hooks).toContainEqual({ h: 'rage', node: 'warrior:3.f3', skill: 'charge', on: 'hit', gain: 2 * (W.nodes['3.f3']!.fx![0] as unknown as { gain: number }).gain });
@@ -129,7 +129,7 @@ describe('derleyici: (b) addEffect / replaceEffect / unitFx', () => {
 });
 
 describe('motor: C1 koşul kancası (önizleme = gerçek vuruş)', () => {
-  it('Red Arc: Wounded hedefe Whirlwind hasar çarpanı tam x1,09 (rank 3), Wounded değilse x1; gerçek kullanımda ölçüm sayılır', () => {
+  it('Red Arc: Wounded hedefe Whirlwind hasar çarpanı tam x1,02^3 (rank 3), Wounded değilse x1; gerçek kullanımda ölçüm sayılır', () => {
     const noGore = syn(W, { '2.n0': null }); // Faz 2b: Gore Wheel (2.n0) artık Wound veriyor; "Wounded değil" durumu onsuz denenir
     const mult = (steps: string[], wounded: boolean) => {
       const b = make({ 0: 'warrior' }, { 0: 'defender' }, { 0: { tree: tree(noGore, steps) } });
@@ -139,7 +139,7 @@ describe('motor: C1 koşul kancası (önizleme = gerçek vuruş)', () => {
     };
     const base = mult(RED_ARC.slice(0, -1), true).m;
     const hit = mult(RED_ARC, true);
-    expect(hit.m / base).toBeCloseTo(1 + 3 * (W.nodes['2.r']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul, 9);
+    expect(hit.m / base).toBeCloseTo((1 + (W.nodes['2.r']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul) ** 3, 9); // "×1.02 per rank": rank'ta çarpılır (2026-10-27)
     expect(mult(RED_ARC, false).m).toBeCloseTo(mult(RED_ARC.slice(0, -1), false).m, 9);
     cast(hit.b, P0(hit.b).uid, 'whirlwind', E0(hit.b).uid);
     expect(procs(hit.b, 'warrior:2.r')).toBe(1);

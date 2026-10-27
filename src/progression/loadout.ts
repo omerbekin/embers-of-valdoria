@@ -6,6 +6,7 @@
 // Affix eşlemesi veride (items.json > affixDefs[].parts[].to; Ömer onayı 2026-10-11, items.md 1.3b).
 import { classes, formulas } from '../engine/content';
 import { applyUnitModifiers, speedRoll } from '../engine/stats';
+import { STACK_FORM, stackValues, type StackForm } from '../engine/tree-hooks';
 import type { Attribute, Attributes, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
 import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
 import { equippedWeaponPower, weaponMultFor } from './weapon';
@@ -119,17 +120,19 @@ function applyPart(to: string, v: number, scale: number, ctx: { mods: Bag; fx: B
   const [kind, key = ''] = to.split(':') as [string, string];
   const amt = v * scale;
   const add = (o: Bag, k: string, a: number) => (o[k] = ((o[k] as number | undefined) ?? 0) + a);
+  // "×" yazılan parçalar (bonus yazım kuralı, Ömer 2026-10-27; items.ts > partBonusForm) ÇARPILARAK birleşir: iki ×1.1 = ×1.21 (tree-hooks.ts > STACK_FORM)
+  const stack = (o: Bag, k: string, a: number, form: StackForm | undefined) => (o[k] = o[k] === undefined ? a : stackValues(form, o[k] as number, a));
   switch (kind) {
     case 'mod':
       add(ctx.mods, key, amt);
       break;
     case 'mult':
-      ctx.mods[key] = ((ctx.mods[key] as number | undefined) ?? 1) + amt;
+      ctx.mods[key] = ((ctx.mods[key] as number | undefined) ?? 1) * (1 + amt);
       break;
     case 'elem': {
       const els: readonly Element[] = key === '*' ? MAGIC_ELEMENTS : [key as Element];
       const rec = ((ctx.mods.elemDamageAdd as Bag | undefined) ??= {}) as Bag;
-      for (const el of els) add(rec, el, amt);
+      for (const el of els) stack(rec, el, amt, 'more');
       break;
     }
     case 'attr': {
@@ -141,7 +144,7 @@ function applyPart(to: string, v: number, scale: number, ctx: { mods: Bag; fx: B
     case 'res': {
       // Element direnci (Ömer 2026-10-26, c_res_*): ItemEffects.elemResist[element]
       const rec = ((ctx.fx.elemResist as Bag | undefined) ??= {}) as Bag;
-      add(rec, key, amt);
+      stack(rec, key, amt, 'less');
       break;
     }
     case 'prog':
@@ -156,8 +159,9 @@ function applyPart(to: string, v: number, scale: number, ctx: { mods: Bag; fx: B
         else list.push({ status: ctx.x, turns: Math.round(amt) });
       } else if (key === 'lowHpReduce') {
         const cur = ctx.fx.lowHpReduce as { below: number; reduce: number } | undefined;
-        ctx.fx.lowHpReduce = { below: ctx.below ?? cur?.below ?? 0.3, reduce: (cur?.reduce ?? 0) + amt };
-      } else if (ctx.form === 'mult') ctx.fx[key] = ((ctx.fx[key] as number | undefined) ?? 1) + amt;
+        ctx.fx.lowHpReduce = { below: ctx.below ?? cur?.below ?? 0.3, reduce: cur ? stackValues('less', cur.reduce, amt) : amt };
+      } else if (ctx.form === 'mult') ctx.fx[key] = ((ctx.fx[key] as number | undefined) ?? 1) * (1 + amt);
+      else if (STACK_FORM[key]) stack(ctx.fx, key, amt, STACK_FORM[key]);
       else add(ctx.fx, key, amt);
       break;
   }
@@ -172,7 +176,8 @@ function tidy(o: Bag): void {
 }
 
 /**
- * Kahramanın savaş gücü -> motor güçlendirmesi + kancaları. Her affix parçası veri eşlemesiyle toplanır (mod: toplamsal ek, mult: 1 + toplam,
+ * Kahramanın savaş gücü -> motor güçlendirmesi + kancaları. Her affix parçası veri eşlemesiyle birleşir (mod: toplamsal ek; "×" yazılanlar ÇARPILIR (2026-10-27): mult: Π(1 + v),
+ * elem / ×(1 + v) fx: (1 + a)(1 + b) - 1, res / ×(1 - v) fx: 1 - (1 - a)(1 - b);
  * elem: element hasarı, attr: ana stat / tüm statlar, fx: kanca, prog: savaş dışı). Tavanlar (kritik, isabet, kaçınma, hız; MP bedeli, debuff
  * direnci) toplamdan sonra. Legendary etkileri ayrıca birleşir (effectRules.stack). Primary bonusu NORMAL kurala göre işler (madde 278).
  */

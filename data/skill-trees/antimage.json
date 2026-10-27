@@ -99,7 +99,7 @@
       {
         "at": 20,
         "name": "Warded Steps",
-        "text": "Allies under your Spell Ward take 2% less physical damage.",
+        "text": "Allies under your Spell Ward take ×0.98 physical damage.",
         "src": "B:V4:bar1",
         "fx": [
           {

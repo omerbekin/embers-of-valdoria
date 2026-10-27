@@ -1,7 +1,7 @@
 // Bonus yazım kuralı (Ömer kararı 2026-10-27; docs/design/ui-design-language.md > Bonus yazımı). Saf; motor, arayüz ve Codex aynı yazıyı kullanır.
 // - TOPLAMSAL (aynı havuzda toplanan) bonus: "+12% damage" (item Global damage, Hero Oath, Wayshrine nimeti: hepsi UnitModifiers.damageAdd havuzunda).
 // - AYRI ÇARPAN (diğer bonuslarla çarpılan) bonus: "×1.2 damage"; 1'in altındaysa "×0.8" (durumlar, pasifler, element hasarı, kritik...).
-// Oyun kuralı / sayı DEĞİŞMEZ, yalnızca gösterim.
+// Hesap yazıya uyar (2026-10-27): "×" yazılanlar aynı türden kaynaklar arasında da ÇARPILIR (tree-hooks.ts > STACK_FORM), "+%" yazılanlar toplanır.
 
 /** Çarpanın sayısı: en çok 3 ondalık, sondaki sıfırlar atılır (1.25, 0.7, 1.875). */
 const trim = (v: number): string => String(Number(v.toFixed(3)));

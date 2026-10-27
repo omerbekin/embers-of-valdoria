@@ -83,7 +83,7 @@
       {
         "at": 15,
         "name": "Blood Debt",
-        "text": "After a Bust costs you HP, your next skill deals +10% damage.",
+        "text": "After a Bust costs you HP, your next skill deals ×1.1 damage.",
         "src": "A:V2:bar1",
         "fx": [
           {

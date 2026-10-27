@@ -51,7 +51,7 @@ describe('yeni affix verisi', () => {
 describe('loadout eşlemesi (yeni hedefler)', () => {
   it('res:<element> -> itemEffects.elemResist; prog:gold / xp / woundSoft -> sonuç alanları; fx kancaları', () => {
     const l = loadout({ class: 'warrior', equipment: { helm: inst('leather_coif', 'c_res_fire', 'h'), armor: inst('padded_gambeson', 'c_res_fire', 'a'), trinket: inst('copper_ring', 'c_gold', 't') } });
-    expect(l.itemEffects?.elemResist?.fire).toBeCloseTo((2 * v('c_res_fire')) / 100, 6); // iki kaynak toplanır
+    expect(l.itemEffects?.elemResist?.fire).toBeCloseTo(1 - (1 - v('c_res_fire') / 100) ** 2, 4); // "×0.87" iki kaynak ÇARPILIR (2026-10-27)
     expect(l.goldBonus).toBeCloseTo(v('c_gold') / 100, 6);
     expect(loadout({ class: 'warrior' }).goldBonus).toBeUndefined();
     const src = { class: 'warrior', equipment: { helm: inst('leather_coif', 'c_xp', 'h'), armor: inst('padded_gambeson', 'b_wound_soft', 'a'), gloves: inst('work_gloves', 'a_steady', 'g') } };

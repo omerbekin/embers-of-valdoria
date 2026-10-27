@@ -126,13 +126,13 @@ describe('Faz 4b: Mage', () => {
   it('Rimeguard / Numbing Touch: ön sıradaki dosta kalkan +%5 x rank; Mana Barrier sürerken Slowed saldıran %3 x rank az vurur', () => {
     const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, only('mage', { '3.f1': 5, '3.f3': 5 })));
     const me = P(b);
-    expect(b.treeShieldMult(me, me, content.skills.mana_barrier!)).toBeCloseTo(1 + 5 * num('mage', '3.f1', '0.mul'), 9);
+    expect(b.treeShieldMult(me, me, content.skills.mana_barrier!)).toBeCloseTo((1 + num('mage', '3.f1', '0.mul')) ** 5, 9);
     expect(b.treeShieldMult(me, me, content.skills.fire_bolt!)).toBe(1);
     expect(b.treeTakenMult(me, E(b))).toBe(1);
     cast(b, me, 'mana_barrier', me);
     expect(b.treeTakenMult(me, E(b))).toBe(1); // saldıran Slowed değil
     E(b).statuses.push({ kind: 'slow', turns: 2, source: me.uid });
-    expect(b.treeTakenMult(me, E(b))).toBeCloseTo(1 + 5 * num('mage', '3.f3', '0.mul'), 9); // değer veriden (D9 2026-10-23)
+    expect(b.treeTakenMult(me, E(b))).toBeCloseTo((1 + num('mage', '3.f3', '0.mul')) ** 5, 9); // değer veriden (D9 2026-10-23)
   });
 
   it('Cauterize: Mana Barrier\'ın sildiği her debuff dosta rank başına maks canın %2\'si şifa', () => {
@@ -445,7 +445,7 @@ describe('Faz 4b: Undead', () => {
     const ally = P(b, 1);
     expect(b.treeTakenMult(ally, E(b))).toBe(1);
     cast(b, P(b), 'dark_bond', ally);
-    expect(b.treeTakenMult(ally, E(b))).toBeCloseTo(1 + 3 * num('undead', '3.f3', '0.mul'), 9); // değer veriden (D9 2026-10-23)
+    expect(b.treeTakenMult(ally, E(b))).toBeCloseTo((1 + num('undead', '3.f3', '0.mul')) ** 3, 9); // değer veriden (D9 2026-10-23)
     expect(b.treeTakenMult(P(b), E(b))).toBe(1);
   });
 
