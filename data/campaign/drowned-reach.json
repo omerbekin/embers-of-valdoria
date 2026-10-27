@@ -15,8 +15,18 @@
   "backgroundExt": {
     "_not": "Kenar taşmalı harita görseli (Harita 2 playtest 2026-10-25, Ömer seçeneği (a); tools/make-map-ext.mjs ile üretilir): asıl görsel dört kenardan aynalanıp kademeli bulanıklaştırılmış, kenara doğru koyulaşan vinyetli taşma alanıyla genişletildi. Yalnız sefer haritası sahnesi kullanır: kamera bu alana da kayabilir, telefonda HUD yanındaki kenar durakları tam görünür, siyah alan yok. region = 16:9 sefer alanının (düğüm pos) bu görseldeki kesir dikdörtgeni, content = asıl (taşmasız) görselin dikdörtgeni (bölge yakınlaştırması bunu kaplar).",
     "image": "drowned-reach-bg-ext",
-    "region": [0.13841, 0.11717, 0.86159, 0.88283],
-    "content": [0.13841, 0.11717, 0.86159, 0.88283]
+    "region": [
+      0.13841,
+      0.11717,
+      0.86159,
+      0.88283
+    ],
+    "content": [
+      0.13841,
+      0.11717,
+      0.86159,
+      0.88283
+    ]
   },
   "start": "dr1",
   "stopsPerRun": 53,
@@ -255,8 +265,8 @@
       "merchantSize": 5,
       "story": "dr_the_ferryman",
       "scene": {
-        "background": "town-ashford",
-        "focusY": 0.58,
+        "background": "town-reedgate",
+        "focusY": 0.55,
         "hotspots": [
           {
             "id": "stall",
@@ -264,9 +274,9 @@
             "label": "Trading Post",
             "rect": [
               0,
-              0.3,
-              0.262,
-              0.62
+              0.16,
+              0.2,
+              0.5
             ]
           },
           {
@@ -274,10 +284,10 @@
             "action": "story",
             "label": "The Ferryman",
             "rect": [
-              0.29,
-              0.47,
-              0.385,
-              0.63
+              0.255,
+              0.27,
+              0.35,
+              0.45
             ]
           },
           {
@@ -285,10 +295,10 @@
             "action": "inn",
             "label": "Inn",
             "rect": [
-            0.68,
-            0.22,
-            0.88,
-            0.58
+              0.665,
+              0.03,
+              0.93,
+              0.4
             ]
           },
           {
@@ -296,10 +306,10 @@
             "action": "recruit",
             "label": "Notice Board",
             "rect": [
-              0.585,
-              0.405,
-              0.67,
-              0.58
+              0.553,
+              0.245,
+              0.655,
+              0.44
             ],
             "note": "Notices of flooded farms and missing boats. No one else here seeks to join a company."
           },
@@ -308,10 +318,10 @@
             "action": "leave",
             "label": "Road Out",
             "rect": [
-              0.9,
-              0.34,
+              0.93,
+              0.22,
               1,
-              0.6
+              0.5
             ]
           }
         ]
@@ -372,8 +382,8 @@
       "merchantSize": 5,
       "story": "dr_weir_warden",
       "scene": {
-        "background": "town-ashford",
-        "focusY": 0.58,
+        "background": "town-eelwick",
+        "focusY": 0.55,
         "hotspots": [
           {
             "id": "stall",
@@ -381,9 +391,9 @@
             "label": "Trading Post",
             "rect": [
               0,
-              0.3,
-              0.262,
-              0.62
+              0.08,
+              0.2,
+              0.57
             ]
           },
           {
@@ -391,10 +401,10 @@
             "action": "story",
             "label": "Weir-Warden Ysolt",
             "rect": [
-              0.29,
-              0.47,
-              0.385,
-              0.63
+              0.215,
+              0.08,
+              0.32,
+              0.42
             ]
           },
           {
@@ -402,10 +412,10 @@
             "action": "inn",
             "label": "Inn",
             "rect": [
-            0.68,
-            0.22,
-            0.88,
-            0.58
+              0.775,
+              0,
+              1,
+              0.37
             ]
           },
           {
@@ -413,10 +423,10 @@
             "action": "recruit",
             "label": "Notice Board",
             "rect": [
-              0.585,
-              0.405,
-              0.67,
-              0.58
+              0.635,
+              0.28,
+              0.765,
+              0.56
             ],
             "note": "Notices of flooded farms and missing boats. No one else here seeks to join a company."
           },
@@ -425,10 +435,10 @@
             "action": "leave",
             "label": "Road Out",
             "rect": [
-              0.9,
-              0.34,
+              0.88,
+              0.4,
               1,
-              0.6
+              0.64
             ]
           }
         ]
@@ -605,7 +615,7 @@
       "pit": "saltmere_pit",
       "story": "dr_harbor_master",
       "scene": {
-        "background": "town-valdren",
+        "background": "town-saltmere",
         "focusY": 0.5,
         "hotspots": [
           {
@@ -614,9 +624,9 @@
             "label": "Odo's Chandlery",
             "rect": [
               0,
-              0.26,
-              0.325,
-              0.6
+              0.2,
+              0.14,
+              0.58
             ]
           },
           {
@@ -624,10 +634,10 @@
             "action": "story",
             "label": "Harbor-Master Rook",
             "rect": [
-              0.465,
-              0.32,
-              0.545,
-              0.43
+              0.385,
+              0.18,
+              0.555,
+              0.52
             ]
           },
           {
@@ -635,10 +645,10 @@
             "action": "inn",
             "label": "Inn",
             "rect": [
-            0.415,
-            0.43,
-            0.545,
-            0.6
+              0.555,
+              0.2,
+              0.73,
+              0.53
             ]
           },
           {
@@ -646,10 +656,10 @@
             "action": "recruit",
             "label": "Barracks",
             "rect": [
-              0.55,
-              0.27,
-              0.815,
-              0.58
+              0.735,
+              0.25,
+              0.895,
+              0.55
             ],
             "note": "The barracks are quiet. Every sword here has already sworn to someone."
           },
@@ -658,10 +668,10 @@
             "action": "pit",
             "label": "The Fighting Pit",
             "rect": [
-              0.33,
-              0.37,
-              0.41,
-              0.6
+              0.14,
+              0.4,
+              0.385,
+              0.53
             ]
           },
           {
@@ -669,10 +679,10 @@
             "action": "leave",
             "label": "Harbor Gate",
             "rect": [
-              0.885,
-              0.2,
+              0.9,
+              0,
               1,
-              0.56
+              0.55
             ]
           }
         ]
@@ -1040,8 +1050,8 @@
       "merchantSize": 5,
       "story": "dr_keepers_daughter",
       "scene": {
-        "background": "town-ashford",
-        "focusY": 0.58,
+        "background": "town-fishers-landing",
+        "focusY": 0.55,
         "hotspots": [
           {
             "id": "stall",
@@ -1050,8 +1060,8 @@
             "rect": [
               0,
               0.3,
-              0.262,
-              0.62
+              0.24,
+              0.66
             ]
           },
           {
@@ -1060,9 +1070,9 @@
             "label": "Keeper's Daughter",
             "rect": [
               0.29,
-              0.47,
-              0.385,
-              0.63
+              0.2,
+              0.36,
+              0.54
             ]
           },
           {
@@ -1070,10 +1080,10 @@
             "action": "inn",
             "label": "Inn",
             "rect": [
-            0.68,
-            0.22,
-            0.88,
-            0.58
+              0.86,
+              0,
+              1,
+              0.58
             ]
           },
           {
@@ -1081,10 +1091,10 @@
             "action": "recruit",
             "label": "Notice Board",
             "rect": [
-              0.585,
-              0.405,
-              0.67,
-              0.58
+              0.675,
+              0.36,
+              0.8,
+              0.55
             ],
             "note": "Notices of flooded farms and missing boats. No one else here seeks to join a company."
           },
@@ -1094,9 +1104,9 @@
             "label": "Road Out",
             "rect": [
               0.9,
-              0.34,
+              0.6,
               1,
-              0.6
+              0.84
             ]
           }
         ]
