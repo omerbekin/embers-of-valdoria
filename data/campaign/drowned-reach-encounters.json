@@ -3291,7 +3291,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
@@ -3300,7 +3300,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 6,
         "name": "Cliff Crossbowman",
         "mods": {
