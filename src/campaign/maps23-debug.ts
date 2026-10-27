@@ -10,6 +10,7 @@ import { questDef } from './quests';
 import { equipBest } from './gear';
 import { autoTreeAll } from './tree';
 import { autoAllocateAll, debugSetLevel } from './xp';
+import { caravelDef, withReachForRoute, withReachOpen } from './reach';
 import type { CampaignState } from './types';
 
 export const DROWNED_REACH = 'drowned-reach';
@@ -91,6 +92,7 @@ export function debugJumpRegion(s: CampaignState, regionId: string): CampaignSta
   let t = s.mapId === DROWNED_REACH ? s : debugJumpDrownedReach(s);
   if (t.at !== map.start || t.path.length > 1) t = debugJumpDrownedReach(t);
   const route = pathTo(map, target.id);
+  t = withReachForRoute(map, t, route);
   for (let i = 0; i < route.length - 1; i++) {
     t = settle(t);
     t = moveTo(t, route[i + 1]!);
@@ -111,6 +113,7 @@ export function debugJumpNode(s: CampaignState, nodeId: string, classId?: string
   if (t.at !== map.start || t.path.length > 1) t = debugJumpDrownedReach(t);
   if (classId) t = debugEnsureClass(t, classId); // A5 görev atlaması: görevin sınıfı takımda olsun (düğüm / seçenek görünsün)
   const route = pathTo(map, nodeId);
+  t = withReachForRoute(map, t, route);
   for (let i = 0; i < route.length - 1; i++) {
     t = settle(t);
     t = moveTo(t, route[i + 1]!);
@@ -133,5 +136,48 @@ export function debugSetBoons(s: CampaignState, on: boolean): CampaignState {
   const t = clone(s);
   if (on) t.boons = Object.keys(WAYSHRINES);
   else delete t.boons;
+  return t;
+}
+
+/** Debug (M-L): tarafı ayarlar (null = seçilmemiş). Kural yok: yalnız `faction` alanı. */
+export function debugSetFaction(s: CampaignState, f: 'order' | 'guild' | null): CampaignState {
+  const t = clone(s);
+  if (f) t.faction = f;
+  else delete t.faction;
+  return t;
+}
+
+/** Debug (M-J): deniz yollarını açar (Charter a ship ile aynı; Caravel dolaşmaya başlar) ya da kapatır. */
+export function debugSetSea(s: CampaignState, on: boolean): CampaignState {
+  const t = clone(s);
+  if (on) {
+    t.sea = true;
+    if (caravelDef(getMap(t.mapId))) t.caravel ??= { i: 0 };
+  } else {
+    delete t.sea;
+    delete t.caravel;
+  }
+  return t;
+}
+
+/** Debug (M-K): Caravel'i rotasında bir durak ilerletir (karşılaşma bekliyorsa sıfırlar). */
+export function debugStepCaravel(s: CampaignState): CampaignState {
+  const d = caravelDef(getMap(s.mapId));
+  if (!d) return s;
+  const t = clone(s);
+  t.caravel = { i: ((t.caravel?.i ?? 0) + 1) % d.route.length };
+  return t;
+}
+
+/** Debug (M-K): Caravel'i yenilmiş say (Gallows Cove kapısı açılır). */
+export function debugBeatCaravel(s: CampaignState): CampaignState {
+  return withReachOpen(getMap(s.mapId), clone(s));
+}
+
+/** Debug (M-M): fener yakıldı / söndü. */
+export function debugSetLit(s: CampaignState, on: boolean): CampaignState {
+  const t = clone(s);
+  if (on) t.lit = true;
+  else delete t.lit;
   return t;
 }

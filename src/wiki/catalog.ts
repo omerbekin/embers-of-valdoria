@@ -12,7 +12,7 @@ import { sortByPrimary } from '../game/class-order';
 import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import drownedReachMap from '../../data/campaign/drowned-reach.json';
-import { SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
+import { EVENTS, SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
 import { QUEST_LIST, questBonusLine } from '../campaign/quests';
 import { maps23On } from '../ui/maps23-flag';
 import { PITS } from '../campaign/pit';
@@ -869,7 +869,7 @@ export function buildMechanics(): WikiArticle[] {
           `Difficulty: Easy, Medium or Hard, chosen when the journey starts; it cannot be changed later. ${difficultyText()}`,
         ),
       ]),
-      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle(), wayshrinesArticle(), salvageDiveArticle(), personalQuestsArticle(), crownSurgeArticle()] : []),
+      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle(), wayshrinesArticle(), salvageDiveArticle(), personalQuestsArticle(), crownSurgeArticle(), seaAndFactionsArticle()] : []),
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
@@ -975,6 +975,28 @@ export function crownSurgeArticle(): WikiArticle {
       `${salt?.name ?? 'Salt Surge'}: every ally gets a shield of ${Math.round((salt?.shieldRatio ?? 0) * 100)}% of their max HP for ${salt?.shieldTurns ?? 2} turns. It opens after you defeat ${boss}, with its own charge in each region.`,
     ),
     p(`The price is Ashen Taint. The hero who calls the Crown takes Taint, and every call costs more than the last: the first call gives ${t.firstGain}, the next ${t.firstGain + t.gainStep}, then ${t.firstGain + 2 * t.gainStep}, and so on. Each Taint lowers that hero's max HP by ${taintHpLossPct(1)}%. Taint stays with the hero, also on later maps, until the company arrives at a Chapel${chapels.length ? ` (${chapels.join(', ')})` : ''}: there all Taint is cleansed. The party row on the map shows a hero's Taint.`),
+  ]);
+}
+
+/** M-J / M-K / M-L / M-M (maps-2-3.md 5; open-questions 433): sayılar data/campaign/drowned-reach.json > reach ve drowned-reach-events.json'dan. */
+export function seaAndFactionsArticle(): WikiArticle {
+  const m = drownedReachMap as unknown as {
+    nodes: Array<{ id: string; name: string; crossing?: boolean }>;
+    reach?: { caravel?: { name: string; route: string[]; gate: string }; lighthouse?: { visibility: number } };
+  };
+  const name = (id: string): string => m.nodes.find((n) => n.id === id)?.name ?? id;
+  const crossings = m.nodes.filter((n) => n.crossing).map((n) => n.name);
+  const cv = m.reach?.caravel;
+  const ferry = (EVENTS['dr_ferry_office']?.choices ?? []).find((c) => c.charter && c.cost);
+  const sight = m.reach?.lighthouse?.visibility ?? 0;
+  return article('sea-and-factions', 'Campaign', 'Sea lanes and factions', cx('mech_sea_lanes', 'floodedplanks'), [
+    p(`The isles of The Drowned Reach lie across the water. Sea lanes are drawn as dashed blue roads, and an isle you cannot reach yet says "Needs a ship". Charter a ship at the Ferry Office in Saltmere${ferry?.cost ? ` (${ferry.cost} gold, or free as a friend of the Guild)` : ''} and the sea lanes stay open for the rest of the map. The crossings (${crossings.join(', ')}) are fights on a ship's deck: some cells are closed, and patrols come back to them like any cleared battlefield.`),
+    ...(cv
+      ? [p(`${cv.name} sails the sea lanes as soon as they open: ${cv.route.map(name).join(', then ')}, and round again. Each time you move, it moves one stop; the sail on the map shows where it is. Sail into its stop and you must fight it, an elite battle on its deck. ${name(cv.gate)} stays closed until it is sunk.`)]
+      : []),
+    p("In Saltmere, the Guild and the Order of St. Brann both ask whom you serve. The choice is final. Stand with the Order: the Guild's enforcer holds Harbor Fort, the monks of Monk's Isle give you rest and a relic, merchants stock more armour and relics, and a ship costs gold. Stand with the Guild: the Inquisitor-Captain holds Harbor Fort, the wardens of Monk's Isle fight you for their storehouse, merchants stock more weapons and trinkets, and the Ferry Office charters you a ship as a favour. You may also put the choice off and come back to the square later."),
+    ...(sight ? [p(`Light the lamp at Lantern Rock and you see ${sight} stop${sight === 1 ? '' : 's'} further along every road for the rest of the map.`)] : []),
+
   ]);
 }
 

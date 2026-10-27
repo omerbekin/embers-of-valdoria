@@ -158,7 +158,11 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   // B1 Salvage Dive: sıradaki derinliğin savaşı (state.ts > nextStep hazine adımı)
   const step = nextStep(s);
   const dive = step.kind === 'battle' && step.node === n.id && step.dive ? step.dive : undefined;
-  const encId = pitEnc ?? (dive && step.kind === 'battle' ? step.encounter : s.eventChoice?.node === n.id && s.eventChoice.battle ? s.eventChoice.battle : n.encounter);
+  // M-K The Black Caravel (crossing düğümünde elit savaşı) ve M-L Harbor Fort (tarafa göre elit): nextStep'in karşılaşması
+  const caravel = step.kind === 'battle' && step.node === n.id && !!step.caravel;
+  const stepEnc = step.kind === 'battle' && step.node === n.id ? step.encounter : undefined;
+  const encId = pitEnc ?? ((dive || caravel) && stepEnc ? stepEnc : s.eventChoice?.node === n.id && s.eventChoice.battle ? s.eventChoice.battle : (stepEnc ?? n.encounter));
+  const nodeType = caravel ? 'elite' : n.type; // Caravel: elit eşlikçi ölçeği ve elit dalga kuralı
   if (!encId) throw new Error(`No battle at ${n.id}`);
   const enc = resolveEncounter(encId, caps);
   const party: Record<number, UnitSetup> = {};
@@ -199,7 +203,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   const enemyLevel = nodeLevel(s.mapId, n.id);
   // Bir dalganın düşman kurulumları (ilk dalga ve dalgalı savaşın sonraki dalgaları aynı kuralla)
   // Devriye: seed oynama sayısını içerir (roadmap 2.2: hash(seed, harita, düğüm, oynama sayısı, deneme)); ilk oynayış eskisiyle aynı
-  const seed = pitEnc ? battleSeed(s.seed, s.mapId, n.id, attempt, 100 + pitIdx!) : battleSeed(s.seed, s.mapId, n.id, attempt, s.patrol === n.id ? replayCount(s, n.id) + 1 : 0);
+  const seed = pitEnc ? battleSeed(s.seed, s.mapId, n.id, attempt, 100 + pitIdx!) : caravel ? battleSeed(s.seed, s.mapId, n.id, attempt, 200) : battleSeed(s.seed, s.mapId, n.id, attempt, s.patrol === n.id ? replayCount(s, n.id) + 1 : 0);
   const enemySetups = (list: EncounterUnit[], enemies: Record<number, UnitSetup>, wave = 0): void => {
     // B3 Break the Totem: kırılacak nesne işareti güç katmanından bağımsız (kural mekaniği)
     if (objectiveType(enc.def.objective) === 'totem') for (const u of list) if (u.objective) enemies[u.slot] = { ...enemies[u.slot], objective: true };
@@ -209,12 +213,12 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
       // noTierMods: rütbe eki (enemyTier) bu birime uygulanmaz (The Bridge Warden: fazları/telgrafları zaten zor; sim ölçümü, open-questions)
       const es = CONFIG.enemyScale && !CONFIG.enemyScale.skipNodes?.includes(n.id) ? CONFIG.enemyScale : undefined;
       // seferin genel düşman ölçeği (eğitim bölgesi hariç): boss rütbeli -> boss; elit düğümün diğer birimleri -> elite; kalan -> all
-      const scale = u.tier === 'boss' ? (es?.boss ?? es?.all) : n.type === 'elite' ? (es?.elite ?? es?.all) : es?.all;
+      const scale = u.tier === 'boss' ? (es?.boss ?? es?.all) : nodeType === 'elite' ? (es?.elite ?? es?.all) : es?.all;
       const rk = s.mapId === (es?.regionsMap ?? CONFIG.maps[0]) ? es?.regions?.[n.region ?? ''] : undefined; // bölge id'leri haritalar arasında tekrar eder
       const regional = rk && rk !== 1 ? withDifficulty(scale, { hpMult: rk, powerMult: rk }) : scale; // bölge çarpanı (Ömer 2026-10-24)
       const own = withDifficulty(withDifficulty(u.mods, regional), u.tier ? n.enemyTierMods?.[u.tier] : undefined); // + düğüme özel rütbe ayarı (seferde)
       // eliteEscort (open-questions 365 seçenek 3): elit düğümde rütbesiz eşlikçilere zorluk eki (rütbeliler enemyTier'dan alır)
-      const rank = u.tier ? (u.noTierMods ? undefined : diff?.enemyTier?.[u.tier]) : n.type === 'elite' ? diff?.eliteEscort : undefined;
+      const rank = u.tier ? (u.noTierMods ? undefined : diff?.enemyTier?.[u.tier]) : nodeType === 'elite' ? diff?.eliteEscort : undefined;
       const mods = withEnemyLevel(withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), rank), u.class, enemyLevel);
       // Görünüş (yalnızca sunum): özel çizim (`sprite`; Harita 2 elit / boss, Hex Totem) ya da seed'li mob varyasyonu (src/campaign/mob-looks.ts)
       const look = u.sprite ?? mobLook(u, seed, wave);
@@ -232,7 +236,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   };
   // Dalgalar (Ömer 2026-10-19): Watchtower'dan itibaren; ilk dalga motorun `enemies`i, kalanlar teams.waves
   // Dalış derinliği tek dalgalık savaş (+ karşılaşmanın kendi waves'i; takviye eklenmez)
-  const [first, ...more] = dive ? [enc.def.units, ...(enc.def.waves ?? []).map((w) => w.units).filter((u) => u.length)] : encounterWaves(enc.def, n.id, n.type, n.region);
+  const [first, ...more] = dive ? [enc.def.units, ...(enc.def.waves ?? []).map((w) => w.units).filter((u) => u.length)] : encounterWaves(enc.def, n.id, nodeType, n.region);
   const rest = pitEnc ? [] : more; // arena kademesi tek dalga (open-questions 429)
   enemySetups(first!, enemies);
   const waves = rest.map((list, k) => {

@@ -130,6 +130,12 @@ import {
   diveChest,
   diveMax,
   shrineOf,
+  caravelAt,
+  caravelDef,
+  encounterAt,
+  nodeEncounter,
+  nodeLock,
+  passable,
 } from '../../campaign';
 import { instanceRarity } from '../../progression/items';
 import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
@@ -705,14 +711,16 @@ export class CampaignMapScene extends Phaser.Scene {
     const ghost = rv && rv.ghostRoads.length ? layer(REGION_VIEW.ghostRoadAlpha) : null;
     const ghostSet = new Set(rv?.ghostRoads ?? []);
     for (const e of this.map.edges) {
-      const ev = edgeVisibility(this.map, this.s, vis, e);
+      // M-J: kapalı deniz yolu gidilebilir görünmez (kor akışı yok)
+      const ev0 = edgeVisibility(this.map, this.s, vis, e);
+      const ev = ev0 === 'open' && !passable(this.map, this.s, e.from, e.to) ? 'visible' : ev0;
       const drawn = !!rv && (rv.roads.includes(e) || ghostSet.has(e));
       if (!drawn && ev !== 'open') continue;
       const pts = this.curve(e.from, e.to).getPoints(48).map((p) => ({ x: p.x, y: p.y }));
       if (ev === 'open') this.clearZones.push(...roadRects(pts)); // görünümden bağımsız
       if (!drawn) continue;
       const L = ghostSet.has(e) && ghost ? ghost : main;
-      const pocket = e.style === 'dashed';
+      const pocket = e.sea ? 'sea' : e.style === 'dashed';
       if (ev === 'open') {
         this.drawRoad(L.glow, pts, 'open', 0, 'base', pocket);
         this.drawRoad(L.lines, pts, 'open', 0, 'dash', pocket);
@@ -790,7 +798,7 @@ export class CampaignMapScene extends Phaser.Scene {
       const e = edgeEither(this.map, full[i - 1]!, full[i]!);
       if (!e) continue;
       const pts = this.curve(e.from, e.to).getPoints(48).map((p) => ({ x: p.x, y: p.y }));
-      this.drawRoad(g, pts, 'open', 0, 'all', e.style === 'dashed');
+      this.drawRoad(g, pts, 'open', 0, 'all', e.sea ? 'sea' : e.style === 'dashed');
     }
     this.world.add(g);
     this.routeG = g;
@@ -799,10 +807,12 @@ export class CampaignMapScene extends Phaser.Scene {
   /**
    * Yol (Footpath, Ömer 2026-10-19; çizgi dili Harita 1 yeniden çizim 2026-10-22): yürünmüş = parlak çizgi; gidilebilir = üç katman kor (parıltı
    * 'base', çekirdek 'dash'); görünür = ince çizgi; sis = soluk çizgi. Çatallar dahil TÜM yollar düz; yalnız cep yolu (pocket, kenar style
-   * 'dashed') her durumda uzun kesik çizgi.
+   * 'dashed') her durumda uzun kesik çizgi. Deniz yolu (M-J, kenar sea true; pocket 'sea') her durumda mavi kesik çizgi (gidilebilirken kor).
    */
-  private drawRoad(g: Phaser.GameObjects.Graphics, pts: Pt[], ev: EdgeVis, offset: number, part: 'all' | 'base' | 'dash' = 'all', pocket = false): void {
-    const stroke = (w: number, col: number, a: number, dashed: boolean) => {
+  private drawRoad(g: Phaser.GameObjects.Graphics, pts: Pt[], ev: EdgeVis, offset: number, part: 'all' | 'base' | 'dash' = 'all', pocket: boolean | 'sea' = false): void {
+    const sea = pocket === 'sea';
+    const stroke = (w: number, col0: number, a: number, dashed: boolean) => {
+      const col = sea && col0 === 0xeadcb4 ? 0x7fb2dc : sea && col0 === 0xe8d6a4 ? 0x9cc6ea : col0;
       g.lineStyle(w, col, a);
       if (!dashed) {
         g.beginPath();
@@ -810,22 +820,23 @@ export class CampaignMapScene extends Phaser.Scene {
         g.strokePath();
       } else this.dashed(g, pts, 9, 7, offset);
     };
+    const dashedLine = !!pocket;
     switch (ev) {
       case 'walked':
-        stroke(3, 0xe8d6a4, 0.6, pocket);
+        stroke(3, 0xe8d6a4, 0.6, dashedLine);
         break;
       case 'open':
         if (part !== 'dash') {
           stroke(10, EL.EMBER, 0.1, false);
           stroke(6, EL.EMBER, 0.16, false);
         }
-        if (part !== 'base') stroke(2.6, EL.EMBER2, 0.85, pocket);
+        if (part !== 'base') stroke(2.6, EL.EMBER2, 0.85, dashedLine);
         break;
       case 'visible':
-        stroke(2.4, 0xeadcb4, 0.42, pocket);
+        stroke(2.4, 0xeadcb4, sea ? 0.6 : 0.42, dashedLine);
         break;
       default:
-        stroke(2.4, 0xeadcb4, 0.12, pocket);
+        stroke(2.4, 0xeadcb4, sea ? 0.2 : 0.12, dashedLine);
     }
   }
 
@@ -876,6 +887,10 @@ export class CampaignMapScene extends Phaser.Scene {
     if (done && patrolAvailable(this.s, n.id)) parts.push(`Patrol ${Math.round(nextReplayMult(this.s, n.id) * 100)}% XP`);
     const guard = this.guardDefeated(n, v);
     if (guard) parts.push(`${guard} defeated`);
+    // M-J / M-K: deniz yolu kilidi, Caravel kapısı, Caravel'in şu anki yeri
+    const lock = nodeLock(this.map, this.s, n.id);
+    if (lock) parts.push(lock === 'ship' ? 'Needs a ship' : `Sink ${caravelDef(this.map)?.name ?? 'the ship'} first`);
+    if (caravelAt(this.map, this.s) === n.id) parts.push(`${caravelDef(this.map)!.name} is here`);
     return parts.filter(Boolean).join('  ·  ');
   }
 
@@ -1012,10 +1027,21 @@ export class CampaignMapScene extends Phaser.Scene {
       body.add(art);
     } else drawNodeGlyph(g, n.type, done ? 0x9a8c70 : goal ? 0x7d705a : 0xd9c8a2, fs.boss ? 1.25 : 1);
     const bx = R * 0.72;
-    if (goal) {
+    if (goal || nodeLock(this.map, this.s, n.id)) {
       const bg = this.add.graphics();
       drawBadge(bg, 'lock', bx, bx);
       body.add(bg);
+    }
+    // M-K: The Black Caravel'in bulunduğu düğümde üstte küçük yelken madalyonu
+    if (caravelAt(this.map, this.s) === n.id) {
+      const sg = this.add.graphics();
+      const sy = -R - 16;
+      sg.fillStyle(0x0d0906, 0.92).fillCircle(0, sy, 14).lineStyle(1.6, 0xb8402f, 0.95).strokeCircle(0, sy, 14);
+      sg.lineStyle(1.6, 0xe9d9b0, 0.95).lineBetween(-1, sy - 9, -1, sy + 7);
+      sg.fillStyle(0xe9d9b0, 0.95).fillTriangle(1, sy - 8, 1, sy + 3, 9, sy + 3);
+      sg.fillTriangle(-3, sy - 6, -3, sy + 3, -9, sy + 3);
+      sg.fillRect(-9, sy + 6, 18, 2.4);
+      c.add(sg);
     }
     // Tehlike bandı (Ömer 2026-10-26; level farkı, campaign.json > levelGap): ince renkli halka + sol üstte küçük işaret (renk körlüğü için ünlem / kafatası)
     const threat = nodeThreat(this.s, n.id);
@@ -2174,8 +2200,9 @@ export class CampaignMapScene extends Phaser.Scene {
     let leaderName = '';
     let faces: string[] = [];
     let blurb = '';
-    if (n.encounter && vis !== 'goal') {
-      const p = enemyPreview(n.encounter);
+    const enc = encounterAt(this.map, s, n);
+    if (enc && vis !== 'goal') {
+      const p = enemyPreview(enc);
       leaderName = p.leader && !p.names.includes(p.leader) ? p.leader : '';
       foes = p.names.join(', ');
       faces = p.classes.filter((c) => !!content.classes[c]).slice(0, 6);
@@ -2196,15 +2223,23 @@ export class CampaignMapScene extends Phaser.Scene {
     const n = node(this.map, id);
     const f = this.nodeFacts(id);
     const vis = nodeVisibility(this.map, this.s, session.revealFog)[id];
-    if (n.encounter && vis !== 'goal') {
-      const patrol = f.state === 'Patrol';
+    const enc = encounterAt(this.map, this.s, n);
+    const lock = nodeLock(this.map, this.s, id);
+    const lockInfo = lock === 'ship' ? 'Needs a ship. Charter one at the Ferry Office in Saltmere to cross the sea lanes.' : lock === 'caravel' ? `${caravelDef(this.map)?.name ?? 'The Black Caravel'} guards this water. Find it on the sea lanes and sink it first.` : '';
+    const caravelHere = !!enc && enc !== nodeEncounter(n, this.s);
+    if (enc && vis !== 'goal') {
+      const patrol = f.state === 'Patrol' && !caravelHere;
       // B1 Salvage Dive: derinlik savaşı bekliyorsa kart o derinliğin düşmanlarını gösterir
       const st = id === this.s.at ? nextStep(this.s) : null;
       const depth = st?.kind === 'battle' && st.dive ? st : null;
-      const g = foeGroups(depth ? depth.encounter : n.encounter);
+      const g = foeGroups(depth ? depth.encounter : enc);
       // A1 Wayshrine: sınav kuralı + nimet; dalış düğümü: kısa kural (oyun içi metin)
       const sh = shrineOf(n);
-      const side = depth
+      const side = lockInfo
+        ? lockInfo
+        : caravelHere
+          ? `${caravelDef(this.map)!.name} lies here. Sail in and you must fight it. It moves one stop each time you move.`
+          : depth
         ? `Depth ${depth.dive} of ${diveMax(n)}. No healing since the last fight. If you fall here, the last chest you found sinks.`
         : sh
           ? `${sh.trial} Win the trial: ${sh.name} (${sh.effect}) for the rest of the campaign.${(this.s.boons ?? []).includes(n.shrine!) ? ' Already earned.' : ''}`
@@ -2214,11 +2249,13 @@ export class CampaignMapScene extends Phaser.Scene {
       return { ...(patrol ? { title: 'Fight the patrol?', info: { text: f.blurb } } : side ? { info: { text: side } } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
     }
     const t = PLACE_CARD[n.type];
-    return { ...(t ? { title: t.title, actionLabel: t.action } : {}), ...(f.blurb ? { fallback: { text: f.blurb } } : {}) };
+    return { ...(t ? { title: t.title, actionLabel: t.action } : {}), ...(lockInfo ? { info: { text: lockInfo } } : {}), ...(f.blurb ? { fallback: { text: f.blurb } } : {}) };
   }
 
   /** Düğmenin yerine geçen düz not: ulaşılamayan düğümde "Not reachable yet", diğerlerinde durum. */
   private cardNote(id: string): string {
+    const lock = nodeLock(this.map, this.s, id);
+    if (lock) return lock === 'ship' ? 'Needs a ship' : `Sink ${caravelDef(this.map)?.name ?? 'the ship'} first`;
     const st = this.nodeFacts(id).state;
     return st === 'Ahead' || st === 'Your goal' ? 'Not reachable yet' : st;
   }
@@ -3602,7 +3639,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   /** Düğümde varışta savaş başlayacak mı (karşılaşması olan, henüz temizlenmemiş düğüm; korumalı hazine dahil). */
   private fightsAt(id: string): boolean {
-    return !!node(this.map, id).encounter && !isCleared(this.s, id);
+    return (!!node(this.map, id).encounter && !isCleared(this.s, id)) || caravelAt(this.map, this.s) === id;
   }
 
   /** Bulunulan (adımları bitmiş) kasaba / tüccar / kampa yeniden gir (kamp: yalnızca diriltme penceresi). */
@@ -3622,10 +3659,10 @@ export class CampaignMapScene extends Phaser.Scene {
 
   /** "Fight the patrol?" kartı: "Start battle?" kartının aynısı, bilgi satırı devriye ödülünü yazar (sıradaki oynanışın yüzdesi). */
   private confirmPatrol(id: string, go: () => void): void {
-    const n = node(this.map, id);
-    if (!n.encounter) return;
+    const enc = nodeEncounter(node(this.map, id), this.s);
+    if (!enc) return;
     const pct = Math.round(nextReplayMult(this.s, id) * 100);
-    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(n.encounter).groups, info: { text: `Patrols return to cleared battlefields. Full gold and items, ${pct}% of the first victory's XP, no Valor. ${patrolRetreatNote()}` }, onGo: go });
+    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(enc).groups, info: { text: `Patrols return to cleared battlefields. Full gold and items, ${pct}% of the first victory's XP, no Valor. ${patrolRetreatNote()}` }, onGo: go });
   }
 
   /**
@@ -3667,8 +3704,11 @@ export class CampaignMapScene extends Phaser.Scene {
    */
   private confirmBattle(id: string, fight: () => void): void {
     const n = node(this.map, id);
-    if (!n.encounter) return;
-    const foes = foeGroups(n.encounter);
+    // bulunulan düğümde bekleyen savaşın karşılaşması (Caravel / taraf eliti / dalış), yoksa varışta oynanacak olan
+    const st = id === this.s.at ? nextStep(this.s) : null;
+    const enc = st?.kind === 'battle' ? st.encounter : encounterAt(this.map, this.s, n);
+    if (!enc) return;
+    const foes = foeGroups(enc);
     this.nodeCard(id, { foes: foes.groups, fallback: foes.info, onGo: fight });
   }
 
@@ -3764,7 +3804,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const close = (): void => this.closeModal();
     const note = (t: string) => () => this.toast(t);
     const eventWindow = (eventId: string, nodeId: string): void => {
-      const choices = eventChoices(eventId);
+      const choices = eventChoices(eventId, this.s);
       const e = EVENTS[eventId];
       if (!e || !choices.length) return this.toast('No such event on this map.');
       const open = (): void =>

@@ -82,7 +82,6 @@ describe('Harita 2 elit / boss / totem çizimleri', () => {
     dr18: 'salt_hag_mother',
     dr32: 'guild_enforcer_bastion',
     dr50: 'wrecker_captain',
-    dr59: 'corsair_captain_marrow',
     dr65: 'siren_queen',
     dr74: 'salt_bishop',
     dr79: 'drowned_champion',
@@ -108,6 +107,11 @@ describe('Harita 2 elit / boss / totem çizimleri', () => {
       if (sprite !== 'hex_totem') expect(MOB_POSES[sprite], sprite).toBeDefined();
     }
     expect(inBattle).toBeGreaterThan(0); // motor UnitSetup.spriteId'yi birime yazar
+    // M-K: The Black Caravel (eski dr59 cebi) gezici elit; Open Water'da karşılaşınca Marrow kendi çiziminde
+    const met = { ...debugTeleport(debugJumpDrownedReach(newCampaign({ mode: 'normal', seed: 11 })), 'dr62'), sea: true as const, caravel: { i: 2, met: 'dr62' } };
+    const cplan = battlePlan(met);
+    expect(allUnits(cplan).some((u) => u.spriteId === 'corsair_captain_marrow')).toBe(true);
+    expect(existsSync('assets/sprites/corsair_captain_marrow/idle.png')).toBe(true);
     // Drowned Queen'in yanındaki Champion da kendi çiziminde
     expect(allUnits(planAt('dr82')).some((u) => u.spriteId === 'drowned_champion')).toBe(true);
   });

@@ -35,8 +35,12 @@ export const objectiveType = (o: EncounterDef['objective']): 'survive' | 'totem'
 /** Karşılaşmayı kullanan ilk sefer düğümü (önizleme bağlamı: düğüm id'si, türü, bölgesi). Yoksa undefined (ör. yalnızca Endless). */
 export function nodeForEncounter(encounterId: string): { id: string; type: string; region?: string } | undefined {
   for (const map of Object.values(MAPS)) {
-    const n = map.nodes.find((x) => x.encounter === encounterId);
+    const n = map.nodes.find((x) => x.encounter === encounterId || Object.values(x.factionEncounter ?? {}).includes(encounterId)); // M-L: tarafa göre elit
     if (n) return { id: n.id, type: n.type, region: n.region };
+    // M-K The Black Caravel: düğümü yok (gezici); rotanın ilk düğümünün bağlamı, elit kuralıyla
+    const cv = map.reach?.caravel;
+    const host = cv?.encounter === encounterId ? map.nodes.find((x) => x.id === cv.route[0]) : undefined;
+    if (host) return { id: host.id, type: 'elite', region: host.region };
   }
   return undefined;
 }

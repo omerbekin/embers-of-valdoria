@@ -38,6 +38,7 @@ import {
   activeHeroes,
   applyBattle,
   continueToMap,
+  withReachOpen,
   autoAllocateAll,
   autoResolve,
   autoValorRevive,
@@ -898,7 +899,8 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
         reachedTarget = false;
         break;
       }
-      s = continueToMap(s, chain[phase]!);
+      // M-J / M-K: sim olay seçmez (Charter a ship yok); Harita 2 deniz kilidi ve Caravel kapısı simde açık sayılır (eski davranış)
+      s = withReachOpen(getMap(chain[phase]!), continueToMap(s, chain[phase]!));
       if (last) {
         res.carry!.attempted++;
         addCarry(res.carry!, s);

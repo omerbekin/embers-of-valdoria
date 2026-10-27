@@ -14,6 +14,28 @@ export interface ChoiceFx {
   restHeal?: number;
   battle?: unknown;
   win?: { gold?: number; chest?: boolean };
+  /** M-L / M-J / M-M (src/campaign/reach.ts): taraf seçimi, gemi kiralama, fener, hediye item. */
+  faction?: string;
+  charter?: boolean;
+  light?: boolean;
+  gift?: { rarity?: string; slots?: string[] };
+}
+
+const FACTION_LABEL: Record<string, string> = { order: 'the Order', guild: 'the Guild' };
+const giftText = (g: { rarity?: string; slots?: string[] }): string => {
+  const kind = g.slots?.includes('offhand') ? 'relic' : 'item';
+  return `${g.rarity ? g.rarity.charAt(0).toUpperCase() + g.rarity.slice(1) + ' ' : ''}${kind}`;
+};
+
+/** Kalıcı kural çipleri (taraf, deniz yolu, fener, hediye). */
+function reachChips(c: ChoiceFx, done: boolean): MwChip[] {
+  const out: MwChip[] = [];
+  const side = c.faction ? (FACTION_LABEL[c.faction] ?? c.faction) : '';
+  if (c.faction) out.push({ tone: 'info', text: done ? `Sided with ${side}` : `Side with ${side} (final)` });
+  if (c.charter) out.push({ tone: 'gain', text: done ? 'Sea lanes open' : 'Opens the sea lanes' });
+  if (c.light) out.push({ tone: 'gain', text: 'Sight +1 on this map' });
+  if (c.gift) out.push({ tone: 'gain', icon: 'gear', text: giftText(c.gift) });
+  return out;
 }
 
 const pct = (v: number): number => Math.round(v * 100);
@@ -34,6 +56,7 @@ export function choiceChips(c: ChoiceFx): MwChip[] {
   if (c.chest) out.push({ tone: 'gain', icon: 'gear', text: c.chestItems !== undefined ? items(c.chestItems) : 'Chest' });
   if (c.gold) out.push({ tone: 'gain', icon: 'gold', text: `${c.gold} gold` });
   if (c.restHeal !== undefined) out.push({ tone: 'heal', icon: 'rest', text: `Rest heals ${pct(c.restHeal)}%` });
+  out.push(...reachChips(c, false));
   if (!out.length) out.push({ tone: 'dim', text: 'No change' });
   return out;
 }
@@ -47,6 +70,7 @@ export function resultChips(c: ChoiceFx): MwChip[] {
   if (c.chest) out.push({ tone: 'gain', icon: 'gear', text: c.chestItems !== undefined ? `${items(c.chestItems)} from the chest` : 'A chest to open' });
   if (c.gold) out.push({ tone: 'gain', icon: 'gold', text: `+${c.gold} gold` });
   if (c.restHeal !== undefined) out.push({ tone: 'heal', icon: 'rest', text: `Tonight's rest heals ${pct(c.restHeal)}%` });
+  out.push(...reachChips(c, true));
   if (!out.length) out.push({ tone: 'dim', text: 'Nothing gained, nothing lost' });
   return out;
 }

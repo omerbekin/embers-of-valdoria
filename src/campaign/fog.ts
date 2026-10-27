@@ -1,10 +1,11 @@
 import { undirectedDistances } from './graph';
+import { visionOf } from './reach';
 import type { CampaignMap, MapEdge } from './types';
 
 /**
  * Sis ve görünürlük (campaign.md 2.1; serbest dolaşım roadmap 2.4). Mesafe = bulunulan düğümden İKİ YÖNLÜ grafta kenar sayısı.
  *  - d = 1 ('near'): ad, alt başlık, tür ve (savaşsa) düşman önizlemesi.
- *  - 2 <= d <= visibility ('far'): yalnızca tür rozeti + ad.
+ *  - 2 <= d <= visibility ('far'; Lantern Rock yakılınca + reach.lighthouse.visibility, M-M): yalnızca tür rozeti + ad.
  *  - Keşfedilen kalır: ayak basılan herhangi bir düğümün görüş mesafesinde kalmış düğüm sise geri dönmez ('far').
  *  - daha uzak: sis ('fog'); `alwaysVisible` düğümleri (Castle Morvane) sis altında adıyla/silüetiyle ('goal').
  *  - temizlenmiş düğümler 'cleared', bulunulan 'current'. Kapanan dal YOK (eski 'closed' kalktı).
@@ -20,19 +21,22 @@ export interface FogInput {
   visited?: string[];
   /** Temizlenmiş düğümler (yoksa path'teki, bulunulan hariç). */
   cleared?: string[];
+  /** M-M: Lantern Rock yakıldı (görüş eki; reach.ts > visionOf). */
+  lit?: unknown;
 }
 
 /** Ayak basılan düğümlerin görüş mesafesindeki düğümler (keşfedilen; src/campaign/state.ts > discoveredNodes ile aynı kural). */
-function discovered(map: CampaignMap, visited: string[]): Set<string> {
+function discovered(map: CampaignMap, visited: string[], vision: number): Set<string> {
   const out = new Set<string>();
-  for (const v of visited) for (const [id, d] of undirectedDistances(map, v)) if (d <= map.visibility) out.add(id);
+  for (const v of visited) for (const [id, d] of undirectedDistances(map, v)) if (d <= vision) out.add(id);
   return out;
 }
 
 export function nodeVisibility(map: CampaignMap, s: FogInput, revealAll = false): Record<string, NodeVis> {
   const dist = undirectedDistances(map, s.at);
   const cleared = new Set(s.cleared ?? s.path.filter((id) => id !== s.at));
-  const seen = discovered(map, s.visited ?? s.path);
+  const vision = visionOf(map, s);
+  const seen = discovered(map, s.visited ?? s.path, vision);
   const out: Record<string, NodeVis> = {};
   for (const n of map.nodes) {
     if (n.id === s.at) out[n.id] = 'current';
@@ -40,7 +44,7 @@ export function nodeVisibility(map: CampaignMap, s: FogInput, revealAll = false)
     else {
       const d = dist.get(n.id) ?? Infinity;
       if (revealAll || d === 1) out[n.id] = 'near';
-      else if (d <= map.visibility || seen.has(n.id)) out[n.id] = 'far';
+      else if (d <= vision || seen.has(n.id)) out[n.id] = 'far';
       else out[n.id] = map.alwaysVisible.includes(n.id) ? 'goal' : 'fog';
     }
   }

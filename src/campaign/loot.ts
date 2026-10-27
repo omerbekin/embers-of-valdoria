@@ -181,10 +181,13 @@ export function treasureGiftRarity(t: Pick<CampaignState, 'seed' | 'mapId'>, nod
  * Hediye item'i (kasaba diyalog sahnesi; Ömer 2026-10-12): düğümün item seviyesine kadar bir taban, `rarity` nadirliğinde (Common), takımdan biri
  * için zarlanır (seed'li: aynı sefer + düğüm + etiket = aynı item). Torbaya; torba doluysa Spoils kartında "geride kalan". `t` klonlanmış olmalı.
  */
-export function grantGift(t: CampaignState, nodeId: string, party: Hero[], tag: string, rarity: RarityId = 'common'): LootDrop | null {
+export function grantGift(t: CampaignState, nodeId: string, party: Hero[], tag: string, rarity: RarityId = 'common', slots?: string[]): LootDrop | null {
   const ilvl = Math.max(1, nodeIlvl(t.mapId, nodeId));
   const rng = rngFor(t.seed, t.mapId, nodeId, 'gift', tag);
-  const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (!d.family || party.some((h) => canEquip(h.class, d))));
+  const all = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (!d.family || party.some((h) => canEquip(h.class, d))));
+  // Yuva süzgeci (Monk's Isle relic = offhand; M-L): takımın taşıyabildiği o yuvada item yoksa süzgeçsiz
+  const slotted = slots?.length ? all.filter((d) => slots.includes(d.slot) && party.some((h) => canEquip(h.class, d))) : [];
+  const bases = slotted.length ? slotted : all;
   if (!bases.length) return null;
   const d = bases[rng.int(0, bases.length - 1)]!;
   const fits = party.filter((h) => canEquip(h.class, d));

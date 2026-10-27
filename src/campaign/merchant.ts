@@ -9,6 +9,7 @@ import { nodeIlvl } from './power';
 import { rngFor } from './seed';
 import { activeHeroes, clone, closeShop, complete, expectStep, mapOf, nextStep } from './state';
 import { node } from './graph';
+import { shopSlotWeight } from './reach';
 import type { CampaignShop, CampaignState } from './types';
 
 /** Seferin günü (campaign-dev'in CampaignState.day alanı; Inn / kamp / dinlenme ilerletir). Alan yoksa (eski kayıt ya da henüz eklenmediyse) 0. */
@@ -42,7 +43,10 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
   const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (!d.family || team.some((h) => canEquip(h.class, d))));
   const out: CampaignShop['wares'] = [];
   const used = new Set<string>();
-  const size = node(mapOf(s), nodeId).merchantSize ?? CONFIG.merchant.size; // kasabalar (T1): Ashford küçük, Valdren Keep büyük stok
+  const map = mapOf(s);
+  const size = node(map, nodeId).merchantSize ?? CONFIG.merchant.size; // kasabalar (T1): Ashford küçük, Valdren Keep büyük stok
+  // M-L Faction: seçilen tarafa göre yuva ağırlıkları (Order zırh / relic, Guild silah / takı; drowned-reach.json > reach.faction). Taraf yoksa eski çekiliş birebir
+  const weighted = bases.some((d) => shopSlotWeight(map, s, d.slot) !== 1);
   const day = campaignDay(s);
   const sold = reroll ? undefined : s.merchantSold?.[`${s.mapId}:${nodeId}`]; // yalnız ilk (yenilenmemiş) stokta
   for (let i = 0; i < size; i++) {
@@ -50,7 +54,7 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
     const rarity = rollDropRarity(rng, ilvl, 'normal');
     const pool = bases.filter((d) => !used.has(d.id));
     if (!pool.length) break;
-    const d = pool[rng.int(0, pool.length - 1)]!;
+    const d = weighted ? pickWeighted(pool, (x) => shopSlotWeight(map, s, x.slot), rng) : pool[rng.int(0, pool.length - 1)]!;
     used.add(d.id);
     const fits = team.filter((h) => canEquip(h.class, d));
     const forClass = fits.length ? fits[rng.int(0, fits.length - 1)]!.class : undefined;
@@ -58,6 +62,17 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
     out.push({ itemId: d.id, rolls, price: campaignPrice({ id: d.id, rolls }), ...(sold?.[i] === day ? { sold: true } : {}) });
   }
   return out;
+}
+
+/** Ağırlıklı seed'li seçim (tek zar). */
+function pickWeighted<T>(pool: T[], weight: (x: T) => number, rng: { next(): number }): T {
+  const total = pool.reduce((n, x) => n + weight(x), 0);
+  let r = rng.next() * total;
+  for (const x of pool) {
+    r -= weight(x);
+    if (r < 0) return x;
+  }
+  return pool[pool.length - 1]!;
 }
 
 /** Burada tüccar açılabilir mi: tüccar adımı ya da tüccarlı kasabanın kasaba adımı (T1; kasaba Leave'i tezgâhı kapatır). */

@@ -289,7 +289,7 @@ describe('Codex: The Drowned Reach (Harita 2, bayrak arkasında)', () => {
     const a = drownedReachArticle();
     expect(a.title).toBe('The Drowned Reach');
     const text = a.blocks.flatMap(blockText).join(' ');
-    for (const w of ['89 stops', '6 regions', 'Saltmere', "Fisher's Landing", 'The Long Stair', 'Throne of Brine']) expect(text, w).toContain(w);
+    for (const w of ['88 stops', '6 regions', 'Saltmere', "Fisher's Landing", 'The Long Stair', 'Throne of Brine']) expect(text, w).toContain(w);
   });
 
   it('Battle rules sayfası (bayrak arkasında): koşul, üç hedef ve güverte veriden', () => {
