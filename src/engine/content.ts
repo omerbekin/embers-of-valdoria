@@ -91,6 +91,7 @@ import mobCorsairCaptainMarrow from '../../data/mobs/corsair_captain_marrow.json
 import mobSirenQueen from '../../data/mobs/siren_queen.json';
 import mobSaltBishop from '../../data/mobs/salt_bishop.json';
 import mobDrownedChampion from '../../data/mobs/drowned_champion.json';
+import mobPitChampionGorr from '../../data/mobs/pit_champion_gorr.json';
 import groundsJson from '../../data/grounds.json';
 import battleRulesJson from '../../data/battle-rules.json';
 import statusesJson from '../../data/statuses.json';
@@ -226,6 +227,7 @@ const mobData: CombatantData[] = [
   mobSirenQueen,
   mobSaltBishop,
   mobDrownedChampion,
+  mobPitChampionGorr,
 ] as unknown as CombatantData[];
 
 /**

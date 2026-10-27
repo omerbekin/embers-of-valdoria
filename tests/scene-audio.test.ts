@@ -230,7 +230,9 @@ describe('Boss müzikleri (data/audio-music-bosses.json + audio-music-boss-map.j
       const c = trackConfig(t);
       return `${c.tonic}/${c.mode}/${c.beatsPerBar}`;
     };
-    expect(new Set(['boss', 'boss_warden', 'boss_priest', 'boss_morvane'].map((t) => id(t as MusicTrackId))).size).toBe(4);
+    const own = ['boss', 'boss_warden', 'boss_priest', 'boss_morvane', 'boss_wyrm', 'boss_vane', 'boss_queen'] as MusicTrackId[]; // + Harita 2: Weir-Wyrm, Admiral Vane, Drowned Queen
+    expect(new Set(own.map(id)).size).toBe(own.length);
+    expect(id('boss_vane')).toMatch(/\/3$/);
     expect(id('boss_priest')).toMatch(/\/3$/);
   });
 
@@ -243,6 +245,19 @@ describe('Boss müzikleri (data/audio-music-bosses.json + audio-music-boss-map.j
     expect(p3.voices.drum.gain).toBeGreaterThan(p1.voices.drum.gain);
     expect(p2.sections.ash!.drum).not.toBe(p1.sections.ash!.drum);
     expect(p3.themes.crown).toEqual(p1.themes.crown);
+  });
+
+  it('Drowned Queen fazları aynı parçanın hızlanan hâli; Harita 2 bossları ödünç parça çalmaz', () => {
+    const [q1, q2, q3] = [trackConfig('boss_queen'), trackConfig('boss_queen2'), trackConfig('boss_queen3')];
+    expect(q2.bpm).toBeGreaterThan(q1.bpm);
+    expect(q3.bpm).toBeGreaterThan(q2.bpm);
+    expect([q2.tonic, q3.mode]).toEqual([q1.tonic, q1.mode]);
+    expect(q3.voices.drum.gain).toBeGreaterThan(q1.voices.drum.gain);
+    expect(q3.themes.crown).toEqual(q1.themes.crown);
+    expect(q1.themes.crown).not.toEqual(trackConfig('boss_morvane').themes.crown);
+    for (const b of ['weir_wyrm', 'admiral_vane', 'drowned_queen']) for (const phase of [1, 2, 3]) {
+      expect(['boss_warden', 'boss_morvane', 'boss_morvane2', 'boss_morvane3', 'boss'], b).not.toContain(battleTrack([{ defId: b, tier: 'boss', phase }]));
+    }
   });
 
   it('seçim: boss düşman -> kendi parçası, boss yoksa battle, tanımsız boss -> genel boss; faz değişince parça değişir', () => {
@@ -258,6 +273,11 @@ describe('Boss müzikleri (data/audio-music-bosses.json + audio-music-boss-map.j
     expect(battleTrack([{ defId: 'x', boss: {} }])).toBe('boss');
     expect(phaseTrack('lord_morvane', 2)).toBe('boss_morvane2');
     expect(phaseTrack('lord_morvane', 3)).toBe('boss_morvane3');
+    expect(battleTrack([{ defId: 'weir_wyrm', tier: 'boss' }])).toBe('boss_wyrm');
+    expect(battleTrack([{ defId: 'admiral_vane', tier: 'boss' }, { defId: 'iron_mooring' }])).toBe('boss_vane');
+    expect(battleTrack([{ defId: 'drowned_queen', tier: 'boss', phase: 3 }])).toBe('boss_queen3');
+    expect(phaseTrack('drowned_queen', 2)).toBe('boss_queen2');
+    expect(phaseTrack('weir_wyrm', 2)).toBeNull();
     expect(phaseTrack('bridge_warden', 2)).toBeNull();
     expect(phaseTrack('warrior', 2)).toBeNull();
     for (const t of [battleTrack([{ defId: 'bridge_warden', tier: 'boss' }]), battleTrack([{ defId: 'lord_morvane', tier: 'boss', phase: 3 }]), battleTrack([{ defId: 'q', tier: 'boss' }])]) expect(MUSIC_TRACK_IDS).toContain(t);

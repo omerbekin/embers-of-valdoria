@@ -7,7 +7,8 @@ import { AUDIO_V2 } from '../src/game/art-v2/audio-index';
 import { ownerOfSkill } from '../src/game/asset-versions';
 
 /** Tüm sefer moblarının skill'leri (data/mobs). Bölge I-II karşılaşmalarındaki diğer birimler oynanabilir class'lar (kendi sesleri) ya da Bridge Warden (kendi sesleri). */
-const mobSkills = [...new Set([...Object.values(content.mobs).flatMap((m) => m.skills), ...content.bosses['lord_morvane']!.skills])]; // + Lord Morvane (Bölge III final boss, kendi sesleri)
+// + Lord Morvane (Bölge III final boss) ve Harita 2 bossları (Weir-Wyrm, Admiral Vane, Drowned Queen): hepsinin kendi sesleri
+const mobSkills = [...new Set([...Object.values(content.mobs).flatMap((m) => m.skills), ...['lord_morvane', 'weir_wyrm', 'admiral_vane', 'drowned_queen'].flatMap((b) => content.bosses[b]!.skills)])];
 
 describe('sefer düşmanı skill sesleri (data/audio-mobs.json)', () => {
   it('her mob skill\'inin kendi ses kaydı var', () => {
