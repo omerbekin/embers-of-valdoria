@@ -361,6 +361,8 @@ export interface CampaignConfig {
   camp: { tendWounds: number; trainShare: number; trainEnemies: number };
   /** Düğüm tehlike bantları (src/campaign/level-gap.ts): fark >= warnAt Dangerous, >= deadlyAt Deadly; colors = bant renkleri (#rrggbb). */
   levelGap: { warnAt: number; deadlyAt: number; colors: { danger: string; deadly: string } };
+  /** Yan karşılaşma uyarısı (src/campaign/side-danger.ts): düşman gücü / çevredeki ana yol savaşlarının en güçlüsü >= ratio 'Stronger than the road ahead', >= strongRatio 'Far stronger'; window = başlangıçtan uzaklık farkı (adım). */
+  sideDanger: { ratio: number; strongRatio: number; window: number };
   /** Inn (Ömer 2026-10-26): bırakılan kahraman her gün maks canın `healPerDay` oranı ve `woundsPerDay` yara iyileşir. */
   inn: { healPerDay: number; woundsPerDay: number };
   /** Gün (Ömer 2026-10-26): `completionsPerDay` tamamlama (ilk zafer ya da devriye zaferi) = 1 gün. */

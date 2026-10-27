@@ -156,6 +156,7 @@ import { onStageResize, stageView } from '../stage';
 import { setItemValueSource } from '../../ui/item-tip';
 import { openCamp, type CampHandle } from '../../ui/camp-screen';
 import { BAND_NAME, nodeThreat, threatLine } from '../../campaign/level-gap';
+import { SIDE_DANGER_LINE, SIDE_DANGER_NAME, sideDanger } from '../../campaign/side-danger';
 import { DayCounter } from '../../ui/day-counter';
 import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
 import { openStoryDialog, type StoryDialogHandle } from '../../ui/story-dialog';
@@ -2345,10 +2346,13 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Kartın tehlike satırı (level farkı bandı); savaşmayan / tutorial / savaşılmayan düğümde boş. */
-  private threatOpt(id: string): { threat?: { line: string; band: 'normal' | 'danger' | 'deadly'; name: string; color: string } } {
+  private threatOpt(id: string): { threat?: { line: string; band: 'normal' | 'danger' | 'deadly'; name: string; color: string }; side?: { line: string; name: string; color: string } } {
     const t = nodeThreat(this.s, id);
-    if (!t) return {};
-    return { threat: { line: threatLine(t), band: t.band, name: BAND_NAME[t.band], color: t.band === 'normal' ? '' : CONFIG.levelGap.colors[t.band] } };
+    // Yan karşılaşma uyarısı (Ömer 2026-10-27): yol dışındaki savaş çevredeki ana yol savaşlarından belirgin güçlüyse (side-danger.ts)
+    const sd = sideDanger(this.s, id);
+    const side = sd ? { side: { line: SIDE_DANGER_LINE[sd.band], name: SIDE_DANGER_NAME, color: CONFIG.levelGap.colors[sd.band === 'much' ? 'deadly' : 'danger'] } } : {};
+    if (!t) return side;
+    return { threat: { line: threatLine(t), band: t.band, name: BAND_NAME[t.band], color: t.band === 'normal' ? '' : CONFIG.levelGap.colors[t.band] }, ...side };
   }
 
   /**

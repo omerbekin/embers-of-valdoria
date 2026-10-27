@@ -98,3 +98,5 @@ html.short .sbc-card.nofoes .sbc-info { -webkit-line-clamp: 2; font-size: 12px; 
 .sbc-threat { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2em 0.9em; font: 500 max(11px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); }
 .sbc-threat b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; }
 .sbc-threat .mk { font-style: normal; display: inline-block; margin-right: 0.45em; }
+/* Yan karşılaşma uyarısı (Ömer 2026-10-27, side-danger.ts): "Stronger than the road ahead" + amber / kızıl etiket; satır metni okunur renkte */
+.sbc-threat.side .ln { color: var(--g-text); }
