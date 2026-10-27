@@ -221,3 +221,20 @@ describe('Harita 2 müzikleri (kendi harita / kasaba / savaş parçaları + Weir
     expect(battleTrack([{ defId: 'weir_wyrm', tier: 'boss', phase: 2 }])).toBe('boss_wyrm2');
   });
 });
+
+describe('Harita 2 hikaye NPC portreleri (sanat turu 3)', () => {
+  it('4 konuşmacının kendi 256 px avatarı var; ad -> id çözümü', async () => {
+    const { speakerPortraitId } = await import('../src/ui/story-dialog');
+    const map: Record<string, string> = { 'The Ferryman': 'the_ferryman', 'Weir-Warden Ysolt': 'weir_warden_ysolt', 'Harbor-Master Rook': 'harbor_master_rook', "Keeper's Daughter": 'keeper_s_daughter' };
+    for (const [name, id] of Object.entries(map)) {
+      expect(speakerPortraitId(name), name).toBe(id);
+      expect(existsSync('assets/avatars/' + id + '.png'), id).toBe(true);
+      expect(existsSync('assets/avatars/' + id + '.webp'), id).toBe(true);
+    }
+  });
+  it('8 boss/elit pasifinin kendi ikonu var (ödünç ikon yok)', () => {
+    for (const id of ['slick_hide', 'crown_of_salt', 'deathless_champion', 'hired_steel', 'heresy_remembered', 'queens_lure', 'greater_salt_tears', 'for_the_crowd', 'undertow']) {
+      expect(existsSync('assets/mob-icons/' + id + '.png'), id).toBe(true);
+    }
+  });
+});

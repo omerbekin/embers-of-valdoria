@@ -24,7 +24,7 @@ const MORVANE = content.bosses['lord_morvane']!;
 // King's Bridge boss Bridge Warden (sanatı da ChatGPT: ikonlar + efektler; pasifleri boss.passives içinde)
 const WARDEN = content.bosses['bridge_warden']!;
 const wardenPassiveIds = (WARDEN.boss?.passives ?? []).map((p) => p.id);
-const mobPassiveIds = new Set([...Object.values(content.mobs).flatMap((m) => (m.passive ? [m.passive.id] : [])), MORVANE.passive!.id, ...wardenPassiveIds]);
+const mobPassiveIds = new Set([...Object.values(content.mobs).flatMap((m) => (m.passive ? [m.passive.id] : [])), MORVANE.passive!.id, ...wardenPassiveIds, ...Object.values(content.bosses).flatMap((b) => (b.passive ? [b.passive.id] : []))]);
 const mobSkillIds = new Set([...Object.values(content.mobs).flatMap((m) => m.skills), ...MORVANE.skills, ...WARDEN.skills, ...Object.values(content.bosses).flatMap((b) => b.skills), ...Object.values(content.summons).flatMap((s) => s.skills)]);
 
 describe('mob ikonları (assets/mob-icons)', () => {
