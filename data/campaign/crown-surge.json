@@ -6,8 +6,8 @@
   "salt": { "id": "salt_surge", "unlock": { "map": "drowned-reach", "node": "dr82" } },
   "_taint": "C4 (Ömer: üst sınır yok ama her kullanım bir öncekinden pahalı): seferdeki n. Surge kullanımı çağırana firstGain + (n - 1) x gainStep yığın verir (1, 2, 3 ...; sayaç seferin tamamı için; bedava temizlik sıfırlamaz, Chapel'de altınla sıfırlanır: _reset). Yığın başına maks can -maxHpLoss (toplamsal, yaralarla çarpımsal; teknik taban minFactor, canın sıfıra inmemesi için, denge sınırı değil). C6 a: Taint harita geçişinde taşınır.",
   "taint": { "maxHpLoss": 0.03, "firstGain": 1, "gainStep": 1, "minFactor": 0.05 },
-  "_chapels": "C5 b: adında Chapel olan dinlenme (kamp) düğümleri Taint'i bedava temizler: takım bu düğüme her VARIŞINDA kadrodaki herkesin Taint'i silinir (VARSAYIM: kamp seçimini harcamaz). Harita başına düğüm id'leri. Harita 2: dr39 Beacon Chapel (bölge III, Saltmere'nin yan yolu; Ömer 2026-10-27 ikinci Chapel) + dr49 Cliff Chapel (bölge IV).",
-  "chapels": { "drowned-reach": ["dr39", "dr49"] },
+  "_chapels": "C5 b: adında Chapel olan dinlenme (kamp) düğümleri Taint'i bedava temizler: takım bu düğüme her VARIŞINDA kadrodaki herkesin Taint'i silinir (VARSAYIM: kamp seçimini harcamaz). Harita başına düğüm id'leri. Harita 2: dr23 Tidewatch Chapel (bölge II, ana yol; Ömer 2026-10-28 ikinci Chapel, dr39 yerine) + dr49 Cliff Chapel (bölge IV).",
+  "chapels": { "drowned-reach": ["dr49", "dr23"] },
   "_reset": "Ömer 2026-10-27 (open-questions 449): Chapel'de Taint temizliği bedava kalır; AYRICA oyuncu altın ödeyip seferin Surge kullanım sayacını (uses) başa döndürebilir (bir sonraki Surge yine firstGain Taint verir). Kamp seçimini harcamaz, Chapel'deyken istendiği kadar (sayaç 0'ın üstündeyse). Fiyat harita başına; PROVİZYON 400 (Harita 2): bölge III-IV normal savaşı ~51-54 altın (3,4 x ilvl 15-16) = ~8 savaş; aynı ilvl'de Rare ~225, Epic ~500-520; farmsız, harcamasız oyuncunun bölüm sonu hedefi ~1620 altının (Legendary 1350 x 1,2) ~%25'i. Harita 3 kendi fiyatını alacak.",
   "reset": { "gold": { "drowned-reach": 400 } }
 }

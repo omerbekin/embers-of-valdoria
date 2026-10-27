@@ -544,9 +544,9 @@
     {
       "id": "dr23",
       "type": "rest",
-      "name": "Tidewatch Tower",
+      "name": "Tidewatch Chapel",
       "subtitle": "Rest · Camp",
-      "lore": "A tower built to watch the tides, abandoned now, with a dry floor and a sound roof.",
+      "lore": "The old tide tower became a chapel when the waters rose, and its keeper still washes the ash from all who stop.",
       "region": "II",
       "pos": [
         0.4904,
@@ -849,9 +849,9 @@
     {
       "id": "dr39",
       "type": "rest",
-      "name": "Beacon Chapel",
+      "name": "Beacon Quay",
       "subtitle": "Rest · Camp",
-      "lore": "A seamen's chapel at the end of the quay, its beacon lit for ships lost at sea, its priest still washing ash from pilgrims.",
+      "lore": "A beacon fire burns at the end of the quay, and the harbour watch lets travellers rest beside it.",
       "region": "III",
       "pos": [
         0.9091,

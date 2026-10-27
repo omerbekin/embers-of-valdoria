@@ -236,9 +236,9 @@ describe('Crown Surge: sefer (bölge hakkı, Taint, Chapel, Salt)', () => {
     expect(t.roster.some((h) => h.taint)).toBe(false);
   });
 
-  it('Harita 2de iki Chapel: dr39 Beacon Chapel (bölge III) + dr49 Cliff Chapel (bölge IV), ikisi de kamp düğümü', () => {
+  it('Harita 2de iki Chapel: dr23 Tidewatch Chapel (bölge II, ana yol) + dr49 Cliff Chapel (bölge IV), ikisi de kamp düğümü; dr39 Beacon Quay değil', () => {
     const m = getMap(DROWNED_REACH);
-    expect([...SURGE.chapels[DROWNED_REACH]!].sort()).toEqual(['dr39', 'dr49']);
+    expect([...SURGE.chapels[DROWNED_REACH]!].sort()).toEqual(['dr23', 'dr49']);
     const regions = new Set<string>();
     for (const id of SURGE.chapels[DROWNED_REACH]!) {
       const n = m.nodes.find((x) => x.id === id)!;
@@ -248,6 +248,9 @@ describe('Crown Surge: sefer (bölge hakkı, Taint, Chapel, Salt)', () => {
       regions.add(n.region!);
     }
     expect(regions.size).toBe(2);
+    const quay = m.nodes.find((x) => x.id === 'dr39')!;
+    expect(quay.name).toBe('Beacon Quay'); // Ömer 2026-10-28: ikinci Chapel dr23, dr39 eski adına döndü
+    expect(isChapel(DROWNED_REACH, 'dr39')).toBe(false);
   });
 
   it('yenilgide hak gitmez, Taint ve sayaç yazılmaz; tekrar denemede Surge yine var (Ömer 2026-10-27)', () => {

@@ -45,12 +45,12 @@
     { "id": "5B", "type": "battle", "name": "Iron Pass", "subtitle": "Battle · Ambush", "lore": "A narrow dwarven pass carved through the hills, its old stone guardians still standing watch in the cold.", "region": "I", "pos": [0.2093, 0.1383], "encounter": "iron_pass_ambush", "battleBackground": "iron-pass" },
     { "id": "charcoal", "type": "battle", "name": "Charcoal Camp", "subtitle": "Battle · Charcoal Burners", "lore": "Smoke never clears over the charcoal camp, where the burners now feed their fires to the Ash Lord's glory.", "region": "I", "pos": [0.2512, 0.2553], "encounter": "charcoal_camp", "battleBackground": "windy-moor" },
     { "id": "7", "type": "town", "name": "Valdren Keep", "subtitle": "City · Inn, Smith, Recruits, Trade", "lore": "Valdren Keep still flies the king's banner, though its soldiers stopped waiting for his return long ago.", "region": "II", "label": "above", "pos": [0.2781, 0.367], "recruit": {"offer": 3, "pick": 1, "when": "leave"}, "partyCap": 4, "city": true, "merchant": true, "merchantSize": 9, "story": "the_wardens_oath",
-      "scene": { "background": "town-valdren", "focusY": 0.5, "hotspots": [
-        { "id": "stall", "action": "trade", "label": "Odo's Stall", "rect": [0, 0.26, 0.325, 0.6] },
-        { "id": "commander", "action": "story", "label": "Keep Commander", "rect": [0.465, 0.32, 0.545, 0.43] },
-        { "id": "inn", "action": "inn", "label": "Inn", "rect": [0.415, 0.43, 0.545, 0.6] },
-        { "id": "barracks", "action": "recruit", "label": "Barracks", "rect": [0.55, 0.27, 0.815, 0.58], "note": "The barracks are quiet. Every sword here has already sworn to someone." },
-        { "id": "gate", "action": "leave", "label": "Castle Gate", "rect": [0.885, 0.27, 1, 0.56] }
+      "scene": { "background": "town-valdren", "focusY": 0.3, "hotspots": [
+        { "id": "stall", "action": "trade", "label": "Odo's Stall", "rect": [0.81, 0.45, 1, 0.67] },
+        { "id": "commander", "action": "story", "label": "Keep Commander", "rect": [0.25, 0.29, 0.405, 0.63] },
+        { "id": "inn", "action": "inn", "label": "Inn", "rect": [0.6, 0.2, 0.81, 0.65] },
+        { "id": "barracks", "action": "recruit", "label": "Barracks", "rect": [0.405, 0.37, 0.6, 0.62], "note": "The barracks are quiet. Every sword here has already sworn to someone." },
+        { "id": "gate", "action": "leave", "label": "Castle Gate", "rect": [0.86, 0.2, 0.965, 0.45] }
       ] } },
     { "id": "6B", "type": "treasure", "name": "Dwarven Mine", "subtitle": "Treasure · Guarded", "lore": "The dwarves left their mine long ago, but its wardens never stopped guarding what lies in the dark.", "region": "II", "label": "above", "pos": [0.3589, 0.2128], "encounter": "mine_wardens", "treasure": "dwarven_mine", "battleBackground": "iron-pass" },
     { "id": "6A", "type": "event", "name": "Witch's Hut", "subtitle": "Event · Guarded", "lore": "Deep in the reeds a crooked hut steams with strange brews, and the hedge witch always names a price.", "region": "II", "pos": [0.3529, 0.4043], "encounter": "witchs_hut_guard", "event": "witchs_hut", "battleBackground": "misty-marsh" },

@@ -92,7 +92,7 @@ Tür: B savaş, E elit, S boss, T kasaba, Tr hazine (g = korunan), Ev olay, R di
 | 20 | Heron Flats | B | Salt Crab + Weir Eel + Salt Hag + Marsh Light | |
 | 21 | The Drowned Causeway | B | 3 Drowned + Tide Caller | |
 | 22 | Smugglers' Reeds | Ev | öde / savaş (2 Reaver + 2 Reaver Archer) | |
-| 23 | Tidewatch Tower | R | | |
+| 23 | Tidewatch Chapel (eski Tidewatch Tower; 2026-10-28 ikinci Chapel, Crown Surge) | R | | |
 | 24 | Brine Pools | B | 2 Salt Hag + 2 Salt Crab | |
 | 25 | Eel-Mother's Lair | Tr-g | 3 Weir Eel | opt |
 | 26 | The Weir Mouth | **S** | **The Weir-Wyrm** + 2 Weir Eel | bölge bossu |
@@ -113,7 +113,7 @@ Tür: B savaş, E elit, S boss, T kasaba, Tr hazine (g = korunan), Ev olay, R di
 | 36 | Chainwalk | B | 2 Corsair Cutlass + Corsair Slinger + Dock Rat | Corsair girişi |
 | 37 | The Old Mole | B | 2 Reef Wrecker + Cliff Crossbowman + Reef Hound | |
 | 38 | Ferry Office | Ev | **Charter a ship** (M-J): altın ya da faction iyiliği → deniz yolları açılır | |
-| 39 | Beacon Chapel (eski Beacon Quay; 2026-10-27 ikinci Chapel, Crown Surge) | R | | |
+| 39 | Beacon Quay | R | | |
 | 40 | Quarantine Yard | B | 2 Wreck Ghoul + Tide Caller + Salt Hag | |
 
 **IV · The Wrecking Coast (L15-17)**

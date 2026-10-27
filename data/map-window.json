@@ -14,7 +14,7 @@
     "town:town-fishers-landing": { "file": "fishers-landing", "pos": [0.5, 0.5] },
     "hotspot:campfire": { "file": "ashford", "pos": [0.48, 0.52] },
     "hotspot:board": { "file": "ashford", "pos": [0.63, 0.5] },
-    "hotspot:barracks": { "file": "valdren", "pos": [0.68, 0.45] }
+    "hotspot:barracks": { "file": "valdren", "pos": [0.5, 0.5] }
   },
   "choices": {
     "shepherds_fold.search": { "tag": "Fight", "acc": "ember", "desc": "Fight the ash-hounds that scattered the flock." },
