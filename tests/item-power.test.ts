@@ -296,8 +296,8 @@ describe('başlangıç ikinci eli (Ömer 2026-10-23)', () => {
   });
 
   it('yeni sefer kahramanı ve yeni Endless koşusu ikinci eliyle başlar; silah çarpanı kalkanla 1, ikinci hançerle biraz üstünde', () => {
-    // sefer: Ravenwood'da (archer liderine) Cutthroat katılır; lider okçunun ikinci eli boş (yay iki eli kapatır)
-    let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 1 }), 'archer'), '2');
+    // sefer: Mill Road zaferinden sonra (archer liderine) Cutthroat katılır; lider okçunun ikinci eli boş (yay iki eli kapatır)
+    let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 1 }), 'archer'), '1');
     for (let i = 0; i < 20 && nextStep(s).kind !== 'recruit'; i++) s = autoResolve(s);
     s = recruit(s, 'cutthroat');
     expect(s.roster[0]!.equipment.offhand ?? null).toBeNull();

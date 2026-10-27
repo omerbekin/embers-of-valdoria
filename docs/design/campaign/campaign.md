@@ -79,7 +79,7 @@ Oyun açılışı -> **Main Menu** (yeni `MainMenuScene`):
 ### 1.2 Sefer akışı
 ```
 Main Menu -> New Campaign -> Normal / Ironman -> "Choose your hero" (1 tutorial karakteri)
-  -> Map: Mill Road (1) savaş -> Ravenwood (2): ikinci karakter katılır, savaş
+  -> Map: Mill Road (1) savaş, zaferden sonra ikinci karakter katılır (Ömer 2026-10-27) -> Ravenwood (2): önce zorunlu Formation, savaş
   -> Ruined Watchtower (3) elit savaş -> ilk seçim açılır
   -> Ashford Village (4): tutorial biter, tutorial takımı veda eder, 3 kişilik yeni takım kurulur (ilk seçilen = lider) -> rota seçimi
   -> ... Valdren Keep (7): şehirden ayrılırken 4. karakter katılır
@@ -300,7 +300,7 @@ Sonuç (v5): **alt yol (5A-6A) 9 savaş, üst yol (5B-6B) 10 savaş.** Alt yolda
 - Bir düğüm "savaşlı"dır: `encounter` alanı varsa (battle/elite/boss ve guarded treasure). K1/K2 testleri buna bakar.
 - Seçim ve birleşme noktası veride işaretlenmez, graftan çıkar (çıkış > 1 / giriş > 1); testler sayıları (3 ve 3) doğrular.
 - Kenara isteğe bağlı `"path": [[x,y], ...]` ara noktaları; yoksa hafif kavisli eğri.
-- `partyCap` düğümde verilir ve o düğümden itibaren geçerlidir (bir sonraki `partyCap`'e kadar): Mill Road 1, Ravenwood 2, Ashford 3, Valdren Keep 4 (ayrılırken; `recruit.when`: `before` = düğüme varınca savaştan önce, `leave` = düğümden çıkarken). 5. karakterin yeri açık (Ömer); geldiğinde ilgili düğüme `recruit` + `partyCap: 5` eklenir.
+- `partyCap` düğümde verilir ve o düğümden itibaren geçerlidir (bir sonraki `partyCap`'e kadar): Mill Road 1, Ravenwood 2, Ashford 3, Valdren Keep 4 (ayrılırken; `recruit.when`: `before` = düğüme varınca savaştan önce, `after` = düğümün savaşı kazanılınca (Mill Road), `leave` = düğümden çıkarken). 5. karakterin yeri açık (Ömer); geldiğinde ilgili düğüme `recruit` + `partyCap: 5` eklenir.
 - `data/campaign/campaign.json` (provizyon): `{ "maps": ["valdoria"], "rules": { "carryHp": true, "victoryHeal": 0.2, "reviveRatio": 0.2, "bossVictoryHeal": 1.0, "maxSaves": { "normal": 5, "ironman": 1 } }, "starterPool": ["warrior", "archer"] (Ömer 2026-10-14), "companyPool": [11 sınıf], "recruitPool": [11 sınıf] }` (11 = rastgele havuzdaki oynanabilir sınıflar, Hexer dahil, Geometer hariç). `victoryHeal` ileride zorluk seviyesine göre değişebilir (`rules` zorluk başına ayrı blok olabilir).
 - `data/campaign/encounters.json` (bkz. 4), ileride `events.json`, `treasures.json`.
 
@@ -325,7 +325,7 @@ Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e ta
 | Durak | Takım | Öğrettiği şey (oyun içi ipucu, İngilizce) |
 |---|---|---|
 | 1 Mill Road | 1 (tutorial kahramanı) | İlk savaş; **hıza dayalı sıra sistemi**. İpucu: *"Faster fighters act more often. Watch the turn bar at the top."* |
-| 2 Ravenwood | 2 | Önce **ikinci karakter katılır** (3 adaydan 1). Kalabalık düşman; **alan saldırıları**. İpucu: *"Enemies packed together? Area attacks hit every one of them."* |
+| 2 Ravenwood | 2 | İkinci karakter artık **Mill Road zaferinden sonra** katılır (3 adaydan 1; Ömer 2026-10-27); Ravenwood'a dokununca önce zorunlu Formation. Kalabalık düşman; **alan saldırıları**. İpucu: *"Enemies packed together? Area attacks hit every one of them."* |
 | 3 Ruined Watchtower | 2 | **Elit**: haydut reisi. **Yenilince ilk seçim açılır.** İpucu: *"Elites are tougher than common foes. Beat the chief to open the roads beyond Ashford."* |
 | 4 Ashford Village | 2 -> 3 (yeni takım) | Tutorial biter: **tutorial takımı veda eder, 3 kişilik yeni takım kurulur** (bkz. 4.2), ilk rota seçimi + sis anlatımı. İpucu: *"You can see two stops ahead. Choose your road: the others will close."* (İleride: ilk ekipman.) |
 
@@ -335,7 +335,7 @@ Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e ta
 ### 4.2 İki takım: tutorial takımı ve asıl takım (Ömer kararı v3: "Ashford'da tutorial takımı gidecek")
 **Tutorial takımı (Mill Road -> Ashford, 1-2 kişi):**
 - **Başlangıç:** "Choose your hero": yalnızca **Warrior** ya da **Archer** (Ömer 2026-10-14; `campaign.json > starterPool`; open-questions 326). Haritada bu bölümde önde o yürür.
-- **Ravenwood (2):** 3 aday kart -> 1 seç. Takım 2. Adaylar ilk kahramana göre SABİT (çekiliş yok; Ömer 2026-10-14, `recruit.byFirstHero`): Warrior -> Druid / Undead / Gambler, Archer -> Anti-Mage / Cutthroat / Undead (iki listede de alan saldırılı sınıf var; bu durak alan saldırılarını öğretir). Ashford "Form your company" ve Valdren Keep adayı 11 sınıflık havuzdan (değişmedi).
+- **Mill Road zaferinden sonra (Ömer 2026-10-27; eskiden Ravenwood'da savaştan önce):** 3 aday kart -> 1 seç (`recruit.when: "after"` Mill Road düğümünde). Takım 2. Adaylar ilk kahramana göre SABİT (çekiliş yok; Ömer 2026-10-14, `recruit.byFirstHero`): Warrior -> Druid / Undead / Gambler, Archer -> Anti-Mage / Cutthroat / Undead (iki listede de alan saldırılı sınıf var; bu durak alan saldırılarını öğretir). Ashford "Form your company" ve Valdren Keep adayı 11 sınıflık havuzdan (değişmedi).
 - Tutorial'da takım değiştirme yok (2 kişi, yedek yok).
 
 **Ashford Village'da veda ve yeni takım:**

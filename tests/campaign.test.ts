@@ -138,6 +138,9 @@ describe('ilerleme: seçim noktası, serbest dolaşım, birleşme', () => {
     expect(nextStep(s)).toEqual({ kind: 'battle', node: '1', encounter: 'mill_road_thugs' });
     expect(() => moveTo(s, '2')).toThrow(); // savaş bitmeden yola çıkılmaz
     s = autoResolve(s);
+    expect(nextStep(s).kind).toBe('recruit'); // Mill Road zaferinden sonra yeni yoldaş (Ömer 2026-10-27)
+    expect(() => moveTo(s, '2')).toThrow();
+    s = autoResolve(s);
     expect(nextStep(s)).toEqual({ kind: 'move', options: ['2'] });
     s = moveTo(s, '2');
     expect(s.at).toBe('2');
@@ -240,27 +243,28 @@ describe('sis ve görünürlük', () => {
 });
 
 describe('tutorial takım akışı', () => {
-  it('1 karakter -> Ravenwood: 3 adaydan 1 (en az biri alan saldırılı) -> Ashford: veda + serbest 3 kişilik takım (ilk seçilen lider) -> Valdren Keep çıkışı: 3 adaydan 1', () => {
+  it('1 karakter -> Mill Road zaferi: 3 adaydan 1 (en az biri alan saldırılı) -> Ashford: veda + serbest 3 kişilik takım (ilk seçilen lider) -> Valdren Keep çıkışı: 3 adaydan 1', () => {
     let s = pickHero(fresh(77), 'warrior');
     expect(s.roster).toHaveLength(1);
     expect(leaderOf(s)!.class).toBe('warrior');
     expect(partyCap(s)).toBe(1);
-    s = autoResolve(s);
-    s = moveTo(s, '2');
+    s = autoResolve(s); // Mill Road savaşı
     const step = nextStep(s);
-    expect(step.kind).toBe('recruit');
+    expect(step).toMatchObject({ kind: 'recruit', node: '1' }); // katılım zaferden sonra, haritaya dönüşte (Ömer 2026-10-27)
     const offer = (step as { offer: string[] }).offer;
     expect(offer).toHaveLength(3);
     expect(offer).not.toContain('warrior');
     expect(offer.some(isAreaClass)).toBe(true);
     const beforeRecruit = s;
     s = recruit(s, offer[1]!);
-    // Ravenwood: katılımdan sonra savaş kendiliğinden başlamaz (önce Formation; Ömer 2026-10-16)
-    expect(recruitHoldsBattle(beforeRecruit, s)).toBe(true);
+    expect(recruitHoldsBattle(beforeRecruit, s)).toBe(false); // savaş bu düğümde değil: sıradaki savaş Ravenwood
+    expect(s.formationDue).toBe('2'); // Zorunlu Formation kapısı Ravenwood'da
     expect(s.roster).toHaveLength(2);
     expect(s.roster.every((h) => h.tutorial)).toBe(true);
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['2'] });
+    s = moveTo(s, '2');
     expect(partyCap(s)).toBe(2);
-    expect(nextStep(s).kind).toBe('battle');
+    expect(nextStep(s).kind).toBe('battle'); // Ravenwood'da katılım adımı yok
     s = playTo(s, '4');
     expect(nextStep(s)).toEqual({ kind: 'farewell', node: '4' });
     s = farewell(s);
@@ -329,12 +333,12 @@ describe('tutorial takım akışı', () => {
     expect(leaderOf(pickHero(fresh(), 'archer'))!.class).toBe('archer');
   });
 
-  it('Ravenwood adayları ilk kahramana göre sabit (seed fark etmez): Warrior -> Druid/Undead/Gambler, Archer -> Anti-Mage/Cutthroat/Undead', () => {
+  it('Mill Road zaferinden sonraki adaylar ilk kahramana göre sabit (seed fark etmez): Warrior -> Druid/Undead/Gambler, Archer -> Anti-Mage/Cutthroat/Undead', () => {
     const want: Record<string, string[]> = { warrior: ['druid', 'undead', 'gambler'], archer: ['antimage', 'cutthroat', 'undead'] };
     for (const [hero, list] of Object.entries(want)) {
       for (const seed of [1, 2, 3, 42, 777]) {
-        const s = moveTo(autoResolve(pickHero(fresh(seed), hero)), '2');
-        expect(recruitOffer(s, '2'), `${hero} ${seed}`).toEqual(list);
+        const s = autoResolve(pickHero(fresh(seed), hero));
+        expect(recruitOffer(s, '1'), `${hero} ${seed}`).toEqual(list);
         expect((nextStep(s) as { offer: string[] }).offer).toEqual(list);
         expect(list.some(isAreaClass)).toBe(true); // Ravenwood alan saldırısını öğretir
       }

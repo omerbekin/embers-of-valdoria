@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { CINEMATIC_IDS, CONFIG, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, skipTutorial, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { CINEMATIC_IDS, CONFIG, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, debugRequireFormation, skipTutorial, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -721,17 +721,19 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     hint: 'Forget every seen lesson and turn tutorials on: lessons show again (Mill Road is step by step again). Codex > Lessons empties.',
     run: () => resetTutorials(),
   });
-  // Zorunlu Formation kapısı (Ravenwood; Ömer 2026-10-17): bulunulan savaş düğümünde Formation açılana kadar savaş başlamaz
+  // Zorunlu Formation kapısı (Ömer 2026-10-17, 2026-10-27): Mill Road katılımından sonra Ravenwood'a dokunmak spot ışıklı Formation dersini açar
   debug.register({
     id: 'campaign.formation-gate',
     tab: CAMPAIGN_TAB,
     section: 'Tutorial',
     icon: 'shield',
     label: () => (current()?.formationDue ? 'Formation gate: on (open Formation to clear)' : 'Formation gate: require here'),
-    hint: 'Like Ravenwood after the recruit: the tip "Arrange your formation" shows and the Formation button (bottom left) glows until the tip closes or Formation is opened; the battle here waits (needs a battle at this stop and tutorials on)',
+    hint: 'Like Mill Road after the new hero joins: tapping the next battle (or the battle here) dims the screen, only Formation stays lit and nothing else works until Formation is opened (needs a battle here or on a road ahead, and tutorials on)',
     run: () => {
       const s = ensureState();
-      setState({ ...s, formationDue: s.at });
+      const t = debugRequireFormation(s);
+      if (t === s) return; // savaş yok: değişmez
+      setState(t);
       reload();
     },
   });

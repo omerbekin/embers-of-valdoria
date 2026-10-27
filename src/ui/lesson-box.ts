@@ -261,6 +261,29 @@ export function showLesson(id: string, o: { force?: boolean; onClose?: () => voi
   return true;
 }
 
+/**
+ * Zorunlu ekran dersi (kapı; ör. Zorunlu Formation, trigger.gate): ayar açıksa görülmüş olsa da gösterilir (kapı bir kez kurulur), Codex için
+ * görüldü sayılır. Düğme yerine dersin `awaitText` yazısı; kutu çağıran `done()` deyince kapanır. Ayar kapalıysa null.
+ */
+export function showGateLesson(id: string): LessonHandle | null {
+  const l = lessonById(id);
+  if (!l || !tutorialsOn()) return null;
+  markLessonSeen(id);
+  const pg = lessonPages(l)[0];
+  return showCard(
+    {
+      title: pg?.title ?? l.title,
+      text: pg?.text ?? '',
+      ...(l.focus ? { focus: l.focus } : {}),
+      ...(l.place === 'bottom' ? { bottom: true } : {}),
+      ...(l.spotlight ? { spotlight: true } : {}),
+      ...(l.awaitText ? { awaitText: l.awaitText } : {}),
+    },
+    undefined,
+    id,
+  );
+}
+
 /** Odak seçicisindeki {skill}: durumun skill'i (yoksa skill çubuğunun tamamı; debug "Trigger a lesson"). */
 export function focusFor(focus: string, skill?: string): string {
   if (!focus.includes('{skill}')) return focus;

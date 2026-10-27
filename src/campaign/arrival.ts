@@ -16,7 +16,8 @@ export function arrivalPreSteps(s: CampaignState, nodeId: string): PreStep[] {
   const map = mapOf(s);
   const n = map.nodes.find((x) => x.id === nodeId);
   if (!n) return [];
-  return nodeSteps(map, n).filter((k): k is PreStep => (PRE as readonly string[]).includes(k) && !isDone(s, nodeId, k));
+  // zaferden sonraki katılım (recruit.when 'after', Mill Road) varışta değil: kartın "First" satırına girmez
+  return nodeSteps(map, n).filter((k): k is PreStep => (PRE as readonly string[]).includes(k) && !isDone(s, nodeId, k) && !(k === 'recruit' && n.recruit?.when !== 'before'));
 }
 
 const STEP_TEXT: Record<PreStep, string> = { recruit: 'stepRecruit', farewell: 'stepFarewell', company: 'stepCompany' };

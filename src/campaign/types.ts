@@ -36,8 +36,11 @@ export type DifficultyEnemyMods = Pick<UnitModifiers, 'hpMult' | 'statMult' | 'p
 export interface RecruitDef {
   offer: number;
   pick: number;
-  /** before = düğüme varınca (savaştan önce); leave = düğümden ayrılırken. */
-  when: 'before' | 'leave';
+  /**
+   * before = düğüme varınca (savaştan önce); after = düğümün savaşı kazanılınca (haritaya dönüşte; Mill Road, Ömer 2026-10-27);
+   * leave = düğümden ayrılırken.
+   */
+  when: 'before' | 'after' | 'leave';
   /** Adaylardan en az biri alan saldırılı sınıf olsun (Ravenwood: alan saldırılarını öğretir). */
   requireArea?: boolean;
   /**
@@ -529,9 +532,10 @@ export interface CampaignState {
    */
   suspended?: CampaignSuspended;
   /**
-   * Zorunlu Formation (tutorial; Ömer 2026-10-17): savaştan önce katılım olan düğümde (Ravenwood) yeni kahraman katılınca düğüm id'si yazılır;
-   * oyuncu Formation'ı açıp kapatana kadar o düğümün savaşı başlamaz, Formation düğmesi parlar (src/campaign/state.ts > formationGate).
-   * İsteğe bağlı alan (kayıt sürümü değişmez): eski kayıtta yok = kapı yok (takılma olmaz); başka düğümünse okunurken atılır.
+   * Zorunlu Formation (tutorial; Ömer 2026-10-17, 2026-10-27): yeni kahraman katılınca SIRADAKİ savaşın düğüm id'si yazılır (Mill Road zaferinden
+   * sonraki katılımda Ravenwood; eski kayıtta savaştan önceki katılımda bulunulan düğüm). Oyuncu Formation'ı açana kadar o düğüme dokunmak savaş
+   * yerine spot ışıklı Formation dersini açar (src/campaign/state.ts > formationGate / formationTapGated).
+   * İsteğe bağlı alan (kayıt sürümü değişmez): eski kayıtta yok = kapı yok (takılma olmaz); kapı geçerli değilse okunurken atılır.
    */
   formationDue?: string;
   /** Gösterilmemiş level atlamaları (Ömer 2026-10-17): haritada "Level Up" kartı gösterilip onaylanınca silinir (`acknowledgeLevelUps`). */

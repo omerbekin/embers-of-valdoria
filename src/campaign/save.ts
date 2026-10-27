@@ -2,7 +2,7 @@ import { woundCount } from '../progression/wounds';
 import { normalizeSurge, taintOf } from './surge';
 import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
-import { activeHeroes, canReplay, clearedProgress, nodeCleared, stopNumber } from './state';
+import { activeHeroes, canReplay, clearedProgress, formationGate, nodeCleared, stopNumber } from './state';
 import { validCampaignSuspended } from './suspend';
 import { pitOf } from './pit';
 import { oathDef } from './oath';
@@ -213,8 +213,8 @@ function upgradeState(s: CampaignState): void {
   s.gold = typeof s.gold === 'number' && Number.isFinite(s.gold) && s.gold >= 0 ? s.gold : 0;
   // Duraklatılmış savaş (Ömer 2026-10-14; isteğe bağlı alan, sürüm değişmez): bozuksa ya da başka düğümünse atılır (savaş baştan başlar)
   if (s.suspended !== undefined && !(validCampaignSuspended(s.suspended) && s.suspended.node === s.at)) delete (s as { suspended?: unknown }).suspended;
-  // Zorunlu Formation kapısı (Ömer 2026-10-17; isteğe bağlı alan): bozuksa ya da başka düğümünse atılır (eski kayıt takılmaz)
-  if (s.formationDue !== undefined && s.formationDue !== s.at) delete (s as { formationDue?: unknown }).formationDue;
+  // Zorunlu Formation kapısı (Ömer 2026-10-17; isteğe bağlı alan): bozuksa atılır; geçerliliği upgradeRecruitTiming'de (eski kayıt takılmaz)
+  if (s.formationDue !== undefined && typeof s.formationDue !== 'string') delete (s as { formationDue?: unknown }).formationDue;
   // Valor (sürüm 7): bozuk değer kırpılır; alanı olmayan eski kayıt Valdren Keep'in hikâyesini / kasabasını bitirmişse hediye ile açılır
   const intro = valorRules.campaign.introNode;
   if (s.valor !== undefined) s.valor = clampValor(valorRules, Number(s.valor));
@@ -261,7 +261,28 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   // A5 Personal Quests (isteğe bağlı Hero.quests; kayıt sürümü değişmez): bilinmeyen / başka sınıfın / tekrar eden görev id'si atılır
   for (const h of [...s.roster, ...(s.reserve ?? []), ...(s.inn ?? []).map((x) => x.hero)]) if (h && typeof h === 'object') sanitizeHeroQuests(h);
   upgradeRoam(s);
+  upgradeRecruitTiming(s);
   return s;
+}
+
+/**
+ * Katılım zamanı (Ömer 2026-10-27; kayıt sürümü 12 kalır, her okumada çalışır, idempotent): tutorial katılımı Ravenwood'un savaşından önceden
+ * Mill Road zaferinin sonrasına taşındı (recruit.when 'after'). Eski kayıtta katılım bitmişse ('2:recruit') adım yeni düğüme yazılır (ikinci
+ * kahraman gelmez); bitmemişse state.ts > carriedRecruit kahramanı bulunulan yerde verir. Zorunlu Formation alanı kapı geçerli değilse atılır.
+ */
+function upgradeRecruitTiming(s: CampaignState): void {
+  const map = MAPS[s.mapId];
+  const after = map?.nodes.find((n) => n.recruit?.when === 'after');
+  if (after && !s.done.includes(`${after.id}:recruit`)) {
+    const old = s.done.find((d) => {
+      const [id, kind] = d.split(':');
+      if (kind !== 'recruit' || id === after.id) return false;
+      const w = map!.nodes.find((n) => n.id === id)?.recruit?.when;
+      return w !== 'before' && w !== 'after';
+    });
+    if (old) s.done = s.done.map((d) => (d === old ? `${after.id}:recruit` : d));
+  }
+  if (s.formationDue !== undefined && !formationGate(s)) delete (s as { formationDue?: unknown }).formationDue;
 }
 
 /**

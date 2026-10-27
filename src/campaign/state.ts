@@ -78,6 +78,7 @@ export function nodeSteps(map: CampaignMap, n: MapNode): StepKind[] {
   if (n.endsTutorial) steps.push('farewell');
   if (n.newCompany) steps.push('company');
   if (n.encounter) steps.push('battle');
+  if (n.recruit?.when === 'after') steps.push('recruit'); // zaferden sonra katılım (Mill Road; Ömer 2026-10-27): haritaya dönüşte
   if (n.treasure) steps.push('treasure');
   if (n.event) steps.push('event');
   if (n.story) steps.push('story'); // kasaba hikâye sahnesi (T5): kasaba eylemlerinden önce, bir kez
@@ -109,6 +110,10 @@ export function nextStep(s: CampaignState): NextStep {
   // The Fighting Pit (B5): başlatılmış kademe savaşı (kasaba adımının içinde; kazanınca / yenilince kasabaya dönülür)
   const pitTier = s.pit?.node === n.id && s.pit.fight ? pitOf(n)?.tiers[s.pit.wins] : undefined;
   if (pitTier) return { kind: 'battle', node: n.id, encounter: pitTier.encounter, pit: true };
+  // Taşınan katılım (eski kayıt, Ömer 2026-10-27): katılım Ravenwood'dan Mill Road zaferinin sonrasına taşındı; Mill Road'u kazanıp katılımı
+  // görmeden ilerlemiş kayıt kahramanını bulunduğu yerde alır (çift kahraman yok: katılım bir kez, '<düğüm>:recruit')
+  const carried = carriedRecruit(s);
+  if (carried) return { kind: 'recruit', node: carried, offer: recruitOffer(s, carried) };
   for (const kind of nodeSteps(map, n)) {
     if (isDone(s, n.id, kind)) continue;
     switch (kind) {
@@ -150,6 +155,21 @@ export function nextStep(s: CampaignState): NextStep {
   const { forward, back } = moveOptions(s);
   if (!forward.length && !back.length) return { kind: 'complete' };
   return back.length ? { kind: 'move', options: forward, back } : { kind: 'move', options: forward };
+}
+
+/**
+ * Bekleyen "zaferden sonra" katılımı, takım o düğümden ayrıldıysa (yalnızca eski kayıtlar; tutorial sürerken). Yoksa null.
+ * Bulunulan düğümün katılımı normal adım sırasıyla gelir (savaştan sonra).
+ */
+export function carriedRecruit(s: CampaignState): string | null {
+  const map = mapOf(s);
+  for (const n of map.nodes) {
+    if (n.recruit?.when !== 'after' || n.id === s.at) continue;
+    if (!s.path.includes(n.id) || !isDone(s, n.id, 'battle') || isDone(s, n.id, 'recruit')) continue;
+    if (!tutorialActive(s)) continue;
+    return n.id;
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------- kadro
@@ -259,10 +279,10 @@ export function moveHero(s: CampaignState, heroId: string, cell: number): Campai
 
 const tutorialActive = (s: CampaignState): boolean => !mapOf(s).nodes.some((n) => n.endsTutorial && isDone(s, n.id, 'farewell'));
 
-export function complete(s: CampaignState, kind: StepKind): void {
-  const k = key(s.at, kind);
+export function complete(s: CampaignState, kind: StepKind, at: string = s.at): void {
+  const k = key(at, kind);
   if (!s.done.includes(k)) s.done.push(k);
-  markCleared(s, s.at);
+  markCleared(s, at);
   // Valor (Ömer 2026-10-13): Valdren Keep'in hikâyesi (komutan Valor'u anlatır) ya da kasabası bitince açılır, hediye ile başlar
   if ((kind === 'story' || kind === 'town') && s.at === valorRules.campaign.introNode && s.valor === undefined) s.valor = addValor(valorRules, 0, valorRules.campaign.gift);
 }
@@ -401,18 +421,55 @@ export function recruit(s: CampaignState, classId: string): CampaignState {
   if (!step.offer.includes(classId)) throw new Error(`${classId} is not on offer`);
   const t = clone(s);
   addHero(t, classId, { tutorial: tutorialActive(t), join: true });
-  complete(t, step.kind);
-  // Zorunlu Formation (tutorial): katılım savaştan önceyse savaş, Formation açılıp kapanana kadar bekler
-  if (tutorialActive(t) && recruitHoldsBattle(s, t)) t.formationDue = t.at;
+  complete(t, step.kind, step.node); // taşınan katılımda (eski kayıt) adım katılımın düğümüne yazılır
+  // Zorunlu Formation (tutorial): katılımdan sonraki ilk savaş, Formation açılana kadar başlamaz
+  if (step.kind === 'recruit' && tutorialActive(t)) {
+    const due = nextBattleNode(t);
+    if (due) t.formationDue = due;
+  }
   return t;
 }
 
 /**
- * Zorunlu Formation kapısı (tutorial; Ömer 2026-10-17): bulunulan düğümün savaşı, Formation açılıp kapanana kadar başlamaz.
- * `lessonsOn` = Settings > Tutorials açık (kapalıysa kapı yok). Eski kayıtta alan yoksa kapı yok.
+ * Katılımdan sonraki savaşın düğümü (Zorunlu Formation kapısı için): bulunulan düğümde savaş sıradaysa orası (eski kayıt / savaştan önce
+ * katılım), yol seçimindeyse ileri yolların TEK savaşlı düğümü (Mill Road -> Ravenwood). Belirsizse ya da yoksa null.
+ */
+function nextBattleNode(s: CampaignState): string | null {
+  const step = nextStep(s);
+  if (step.kind === 'battle') return s.at;
+  if (step.kind !== 'move') return null;
+  const map = mapOf(s);
+  const fights = step.options.filter((id) => !!node(map, id).encounter && !isCleared(s, id));
+  return fights.length === 1 ? fights[0]! : null;
+}
+
+/**
+ * Zorunlu Formation kapısı (tutorial; Ömer 2026-10-17, 2026-10-27): yeni kahraman katıldı, sıradaki savaşın düğümüne (`formationDue`) dokunmak
+ * Formation açılana kadar savaş yerine spot ışıklı Formation dersini açar. Kapı bekliyor mu: düğüm bulunulan yerse savaş sırada, değilse yol
+ * seçiminde o düğüm ileri yollardan biri. `lessonsOn` = Settings > Tutorials açık (kapalıysa kapı yok). Eski kayıtta alan yoksa kapı yok.
  */
 export function formationGate(s: CampaignState, lessonsOn = true): boolean {
-  return lessonsOn && s.formationDue !== undefined && s.formationDue === s.at && nextStep(s).kind === 'battle';
+  const due = s.formationDue;
+  if (!lessonsOn || due === undefined) return false;
+  const step = nextStep(s);
+  if (due === s.at) return step.kind === 'battle';
+  return step.kind === 'move' && step.options.includes(due);
+}
+
+/**
+ * Debug (Tutorial > Formation gate): kapıyı burada kurar: bulunulan düğümde savaş sıradaysa orası, yol seçimindeyse karşılaşmalı ilk ileri yol.
+ * Kurulamazsa aynı durum döner.
+ */
+export function debugRequireFormation(s: CampaignState): CampaignState {
+  const step = nextStep(s);
+  const map = mapOf(s);
+  const due = step.kind === 'battle' ? s.at : step.kind === 'move' ? step.options.find((id) => !!node(map, id).encounter) : undefined;
+  return due ? { ...s, formationDue: due } : s;
+}
+
+/** Bu düğüme dokunmak kapıya takılır mı (kapı bekliyor ve düğüm kapının düğümü)? */
+export function formationTapGated(s: CampaignState, nodeId: string, lessonsOn = true): boolean {
+  return s.formationDue === nodeId && formationGate(s, lessonsOn);
 }
 
 /** Formation açıldı ve kapandı: kapı kalkar (yoksa aynı durum döner). */

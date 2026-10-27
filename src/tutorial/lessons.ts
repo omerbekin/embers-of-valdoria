@@ -66,7 +66,10 @@ export interface Lesson {
   done?: LessonAction;
   /** Kutunun yeri: üst orta (varsayılan) ya da alt (Gear: torbayı kapatmasın). */
   place?: 'top' | 'bottom';
-  trigger: { battle?: BattleTrigger } & Partial<ScreenTrigger>;
+  /** Zorunlu ekran dersi (kapı): düğme yerine bu bekleme yazısı; kutu beklenen eylem yapılınca dışarıdan kapanır. */
+  awaitText?: string;
+  /** gate: oyunun kendisi açar (ör. 'formation' = Zorunlu Formation kapısı, CampaignMapScene); ekran / savaş tetiği yok. */
+  trigger: { battle?: BattleTrigger; gate?: 'formation' } & Partial<ScreenTrigger>;
 }
 
 export interface TutorialData {

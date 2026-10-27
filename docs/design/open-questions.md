@@ -1068,3 +1068,9 @@ Seçimler: C1 V1 (HUD taç plakası, eylemi harcar), C2 a, C3 a, C4 (üst sını
 9. **Sim:** sefer simleri olay seçmez; Harita 2'ye geçişte deniz açık + Caravel batmış sayılır (`withReachOpen`), yani sim eski davranışla (kilitsiz) oynar. Charter bedeli / Caravel savaşı simde ölçülmüyor. Debug ışınlama / atlama yolu deniz ya da kapıdan geçiyorsa aynı şekilde açar.
 10. AÇIK: **Yelken rozeti** tasarımda "harita HUD'ında"; şimdilik Caravel'in bulunduğu düğümün üstünde küçük yelken madalyonu + şeritte "The Black Caravel is here" (sisteyse görünmez). HUD'da (sol sütun) ayrı satır istenir mi?
 11. AÇIK: **M-N2 Boarding Hook** (zorla yer değiştirme) yapılmadı: yeni skill (`data/skills.json`) gerektiriyor, content-designer / engine-dev işi. M-N1 Harpoon Ballista (`iron_mooring`, dr_admiral_vane) ve M-N3 Tidewater Urn (dr_48, dr_63) zaten vardı.
+
+## 434. Mill Road sonrası katılım + zorunlu Formation spot ışığı: varsayımlar (campaign-dev 2026-10-27; `docs/design/tutorial.md` > Katılım zamanı / Zorunlu Formation)
+1. Kapı yalnızca Ravenwood'a DOKUNULUNCA kurulur; katılımdan hemen sonra harita serbest (Formation düğmesi parlar). Oyuncu kapıdan önce Formation'ı kendisi açarsa kapı kalkar, spot ışığı hiç çıkmaz.
+2. Kilitliyken harita kaydırma / yakınlaştırma serbest (yalnızca bakma); düğümler, Gear, Menu, Back, Esc ve diğer DOM düğmeleri kilitli. "Don't show again" kutuda açık kalır ve kapıyı kaldırır.
+3. Spot ışığı açılırken o an açık başka bir mentor kutusu (ör. "Wounds Carry Over") kapanır (görüldü sayılır, Codex'te kalır).
+4. Mill Road'un takım sınırı (`partyCap` 1) değişmedi; ikinci kahraman Mill Road'da katıldığı halde sınır Ravenwood'a varınca 2 olur (yalnızca Inn ekranı kullanır, tutorial'da Inn yok).

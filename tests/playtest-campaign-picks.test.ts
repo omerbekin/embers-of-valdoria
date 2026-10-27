@@ -32,9 +32,10 @@ function finish(s: CampaignState): CampaignState {
 }
 
 describe('H3 / H2: düğüm kartının "First" satırı', () => {
-  it('Ravenwood (yoldaş önce), Ashford (veda + bölük); adım bitince boş', () => {
+  it('Ravenwood (yoldaş artık Mill Road zaferinden sonra: varışta yok), Ashford (veda + bölük); adım bitince boş', () => {
     const s = finish(fresh());
-    expect(arrivalPreSteps(s, '2')).toEqual(['recruit']);
+    expect(arrivalPreSteps(s, '1')).toEqual([]); // zaferden sonraki katılım varış kartına yazılmaz
+    expect(arrivalPreSteps(s, '2')).toEqual([]);
     expect(arrivalPreSteps(s, '4')).toEqual(['farewell', 'company']);
     expect(arrivalPreSteps(s, 'cairn')).toEqual([]);
     expect(arrivalStepLines(s, '4')).toEqual([CONFIG.texts['stepFarewell'], CONFIG.texts['stepCompany']]);

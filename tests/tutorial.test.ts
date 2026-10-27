@@ -58,7 +58,7 @@ describe('tutorial verisi', () => {
     for (const l of LESSONS) {
       const b = l.trigger.battle;
       for (const n of [...(b?.node ?? []), ...(l.trigger.node ?? []), ...(l.trigger.after ? [l.trigger.after] : [])]) expect(nodes.has(n), `${l.id} -> ${n}`).toBe(true);
-      expect(!!b !== !!l.trigger.screen, `${l.id}: tek tür tetik`).toBe(true);
+      expect([!!b, !!l.trigger.screen, !!l.trigger.gate].filter(Boolean), `${l.id}: tek tür tetik`).toHaveLength(1);
       if (l.forced) expect(b, l.id).toEqual({ node: [map.start], when: 'start' });
       else if (b) {
         expect(b.node, `${l.id}: durum dersi düğüme bağlı değil`).toBeUndefined();

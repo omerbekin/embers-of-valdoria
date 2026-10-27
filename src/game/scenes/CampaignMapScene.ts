@@ -62,6 +62,7 @@ import {
   recruit,
   recruitHoldsBattle,
   formationGate,
+  formationTapGated,
   markFormationOpened,
   saveCount,
   chapterOf,
@@ -140,7 +141,7 @@ import {
 import { instanceRarity } from '../../progression/items';
 import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
 import { markLessonSeen, seenLessons, tutorialsOn } from '../../tutorial/store';
-import { closeAllLessons, dismissLesson, showLesson } from '../../ui/lesson-box';
+import { closeAllLessons, dismissLesson, nudgeLesson, onLessonsTurnedOff, showGateLesson, showLesson, type LessonHandle } from '../../ui/lesson-box';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
 import { isInputLocked } from '../../ui/input-lock';
 import { avatarUrl } from '../../ui/character-panel';
@@ -342,6 +343,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private directAt: string | null = null;
   /** Katılımdan sonra savaş bekliyor (Ravenwood): bu düğümde "Formation'ı düzenle, sonra savaşı başlat" kartı (sahne kapanınca söner). */
   private arrangeNotice: string | null = null;
+  /** Zorunlu Formation kilidi (Ömer 2026-10-27): kapının düğümüne dokunuldu, spot ışıklı ders açık; Formation açılana kadar başka girdi yok. */
+  private formationLock: LessonHandle | null = null;
   /** Global Gear + Formation ikonları (DOM, sol alt; src/ui/camp-hud.ts). */
   private campHud: CampHud | null = null;
   /** Açık ipucu kartı "Formation'ı düzenle" ipucu mu (Formation düğmesi o sürece parlar). */
@@ -403,6 +406,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.cardPlace = null;
     this.arrival = null;
     this.arrangeNotice = null;
+    this.formationLock = null;
     this.campHud = null;
     this.tipIsArrange = false;
     this.routeG = null;
@@ -428,6 +432,9 @@ export class CampaignMapScene extends Phaser.Scene {
       setState(newCampaign({ mode: 'normal', seed: Math.floor(Date.now() % 1_000_000_000) }));
     }
     this.events.once('shutdown', () => closeAllLessons()); // mentor kutuları sahneyle kapanır (docs/design/tutorial.md)
+    this.events.once('shutdown', () => this.releaseFormationLock());
+    const offLessons = onLessonsTurnedOff(() => this.releaseFormationLock()); // "Don't show again": kapı kalkar
+    this.events.once('shutdown', offLessons);
     this.events.once('shutdown', () => { this.nodeTip?.close(); this.nodeTip = null; }); // hover kartı ana menüde asılı kalmasın
     this.cameras.main.setBackgroundColor('#0b0705');
     this.world = this.add.container(0, 0);
@@ -545,6 +552,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   private openMenu(): void {
     if (this.walking || this.slotBrowser) return;
+    if (this.formationLocked()) return this.nudgeFormationLock();
     setGameMenuOpen(true);
   }
 
@@ -569,6 +577,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private onEscape(): void {
     if (debugState.uiPaused) return; // wiki açık: Esc wiki'nindir
     if (isSettingsOpen()) return setSettingsOpen(false);
+    if (!this.formationOpen && this.formationLocked()) return this.nudgeFormationLock(); // Zorunlu Formation: önce Formation
     if (this.slotBrowser) return this.slotBrowser.back();
     if (this.menuOpen) return this.closeMenu();
     if (this.cardPlace && this.modal) return this.closeModal(); // yürürken açık düğüm kartı: Esc önce kartı kapatır (yürüyüş sürer)
@@ -614,6 +623,10 @@ export class CampaignMapScene extends Phaser.Scene {
     }
     if (this.modal || isInputLocked() || otherDialogOpen() || document.querySelector('#ui-root .gr-overlay')) return false;
     if (!activeHeroes(this.s).length || !this.canOpenSide()) return false;
+    if (k === 'c' && this.formationLocked()) {
+      this.nudgeFormationLock();
+      return true;
+    }
     if (k === 'c') this.openGear();
     else this.openFormation();
     return true;
@@ -2164,12 +2177,42 @@ export class CampaignMapScene extends Phaser.Scene {
     return formationGate(this.s, tutorialsOn());
   }
 
-  /** Kapı açıkken savaşa dokunuldu: kısa not + ipucu kartı yeniden + Formation parıltısı bir kez güçlü çakar. */
-  private nudgeFormation(): void {
-    this.toast('Open Formation first.');
-    this.arrangeNotice = this.s.at;
-    this.showTip();
+  /**
+   * Kapının düğümüne dokunuldu (Ömer 2026-10-27): savaş yerine ekran kararır, yalnızca Formation düğmesi aydınlık ve parlar, mentor kutusu
+   * (ders formation_new_hero, düğmesiz) açıklar. Formation açılana kadar harita düğümleri, Gear, Menu ve diğer düğmeler çalışmaz
+   * (formationLocked; DOM düğmeleri lesson-box.css > html[data-tut-lock='formation']). Kilit zaten açıksa kutu sallanır, düğme bir kez çakar.
+   */
+  private formationSpotlight(): void {
+    if (this.formationLock) return this.nudgeFormationLock();
+    this.closeModal();
+    this.tip?.destroy(true); // ipucu kartı gizlenir (görüldü sayılmaz; kapı geçince yeniden gelir)
+    this.tip = null;
+    this.tipIsArrange = false;
+    closeAllLessons(); // açık başka ders kutusu kapıyı bekletmesin
+    const h = showGateLesson('formation_new_hero');
+    if (!h) return; // ayar kapalı: kapı yok
+    this.formationLock = h;
+    document.documentElement.dataset.tutLock = 'formation';
+    this.syncCampHud();
     this.campHud?.pulse('formation');
+  }
+
+  /** Kilit açık mı (kapı geçtiyse ya da ayar kapandıysa kendiliğinden kalkar). */
+  private formationLocked(): boolean {
+    if (this.formationLock && !this.formationDue()) this.releaseFormationLock();
+    return !!this.formationLock;
+  }
+
+  private nudgeFormationLock(): void {
+    nudgeLesson();
+    this.campHud?.pulse('formation');
+  }
+
+  private releaseFormationLock(): void {
+    const h = this.formationLock;
+    this.formationLock = null;
+    h?.done();
+    if (document.documentElement.dataset.tutLock === 'formation') delete document.documentElement.dataset.tutLock;
   }
 
   /** Kısa / dar ekran (telefon yatay): dokunma hedefleri büyür, kart DOM simgelerinin altına iner. */
@@ -2442,6 +2485,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!root) return;
     const hud = mountCampHud(root, {
       gear: () => {
+        if (this.formationLocked()) return this.nudgeFormationLock();
         if (this.canOpenSide()) this.openGear();
       },
       formation: () => this.openFormationFromHud(),
@@ -3616,12 +3660,14 @@ export class CampaignMapScene extends Phaser.Scene {
    * eylem bekleyen mevcut düğüm açılır (savaşta onay). Başka bir düğüme dokunmak (telefonda) bilgi kartını kısa süre gösterir.
    */
   private onNodeTap(id: string, v: NodeVis): void {
+    if (this.formationLocked()) return this.nudgeFormationLock(); // Zorunlu Formation: harita kilitli
     if (v === 'fog') return;
     const step = nextStep(this.s);
+    // Zorunlu Formation kapısı (yeni kahraman katıldı): sıradaki savaşa dokunmak savaş yerine spot ışıklı Formation dersini açar
+    if (formationTapGated(this.s, id, tutorialsOn()) && !this.s.suspended) return this.formationSpotlight();
     // Komşu (tek hamle) ya da temizlenmiş düğümler üzerinden uzak hedef (yolculuk): tek dokunuşla yürür
     // (savaş düğümünde Fight'a basılmadıysa da: kafile temizlenmiş komşular üzerinden ayrılabilir; src/campaign/state.ts > canWithdraw)
     if (id !== this.s.at && this.travelTargets().has(id)) return this.chooseRoad(id);
-    if (id === this.s.at && step.kind === 'battle' && !this.s.suspended && this.formationDue()) return this.nudgeFormation();
     if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, () => this.launchBattle());
     if (id === this.s.at && this.actionHere()) return CONFIRM_STEPS.includes(step.kind) ? this.confirmPlace(id, () => this.openHere(id)) : this.advance();
     // Adımları bitmiş kasaba / tüccar / kampa yeniden gir (Ömer 2026-10-13, "Ashford'a giremiyorum"): Leave sonrası da tekrar açılır
@@ -3671,6 +3717,8 @@ export class CampaignMapScene extends Phaser.Scene {
    * Eski "Take this road?" (Yes/No) penceresi kalktı; "diğer yollar kapanır" notu da yok (Ömer).
    */
   private chooseRoad(id: string): void {
+    if (this.formationLocked()) return this.nudgeFormationLock();
+    if (formationTapGated(this.s, id, tutorialsOn())) return this.formationSpotlight();
     if (this.pausedBlocks()) return;
     if (!this.travelTargets().has(id)) return;
     this.march(id);
@@ -4122,6 +4170,7 @@ export class CampaignMapScene extends Phaser.Scene {
    * sorar; Ironman her adımda kendiliğinden kaydettiği için sormaz.
    */
   private leaveMap(): void {
+    if (this.formationLocked()) return this.nudgeFormationLock();
     if (this.inputBusy()) return;
     const go = () => elGo(this, MENU_SCENE);
     if (!hasUnsavedProgress(storage(), this.s)) return go();
@@ -4202,6 +4251,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (this.pausedBlocks()) return;
     // Zorunlu Formation (tutorial): açıldı = kapı kalkar (Done / zemin / Esc hangisiyle kapanırsa kapansın); kapanınca HUD yenilenir, parıltı söner
     if (this.s.formationDue !== undefined) setState(markFormationOpened(this.s));
+    this.releaseFormationLock(); // spot ışığı ve kilit kalkar
     this.tipIsArrange = false; // dizilim ipucunun parlaması Formation açılınca söner
     this.syncCampHud();
     this.closeModal();

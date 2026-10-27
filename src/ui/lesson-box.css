@@ -217,6 +217,16 @@ html[data-tut-lock] .bh-globs [data-global]:not(.tut-focus) {
   transition: opacity 0.2s, filter 0.2s;
 }
 
+/* Zorunlu Formation kapısı (Ömer 2026-10-27; CampaignMapScene > formationSpotlight): yalnızca Formation düğmesi ve mentor kutusu çalışır,
+   diğer DOM düğmeleri (Gear, Menu, Codex...) basılmaz; harita düğümleri sahnede kilitli */
+html[data-tut-lock='formation'] #ui-root button:not(.camp-formation) {
+  pointer-events: none;
+}
+
+html[data-tut-lock='formation'] #ui-root .tut-wrap button {
+  pointer-events: auto;
+}
+
 /* Spot ışığı (Ömer 2026-10-14, b_spotlight): Mill Road zorunlu adımları ve Boss dersinde ekran yumuşakça kararır, vurgulanan öğenin çevresi
    (delik) ve mentor kutusu (z-index 26) aydınlık kalır. Karartma tek öğenin dev gölgesidir: pointer-events yok, beklenen girdi (düğme,
    düşman) engellenmez. Konum lesson-box.ts > placeSpot (döndürülmüş sahnede sahne yereline çevrilir). */
