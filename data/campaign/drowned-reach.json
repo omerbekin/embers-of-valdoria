@@ -324,7 +324,7 @@
               0.355,
               0.625
             ],
-            "note": "Notices of flooded farms and missing boats. No one else here seeks to join a company."
+            "note": "A ferryman begs for oarsmen, and a widow offers silver for word of her husband at the ford. No one else here seeks to join a company."
           },
           {
             "id": "road",
@@ -441,7 +441,7 @@
               0.712,
               0.53
             ],
-            "note": "Notices of flooded farms and missing boats. No one else here seeks to join a company."
+            "note": "Tallies of eel-traps cut loose in the night, and a warning to keep off the Heron Flats after dark. No one else here seeks to join a company."
           },
           {
             "id": "road",
@@ -674,7 +674,7 @@
                 0.33,
                 0.37
               ],
-              "note": "The barracks are quiet. Every sword here has already sworn to someone."
+              "note": "The harbour garrison sleeps in empty bunks. Every sword in Saltmere already answers to the Guild or the Inquisition."
             },
             {
               "id": "pit",
@@ -1112,7 +1112,7 @@
               0.96,
               0.67
             ],
-            "note": "Notices of flooded farms and missing boats. No one else here seeks to join a company."
+            "note": "Names of boats overdue from the islands, and a bounty nailed up for the cutthroats of Gallows Point. No one else here seeks to join a company."
           },
           {
             "id": "road",
