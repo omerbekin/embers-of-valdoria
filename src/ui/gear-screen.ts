@@ -52,6 +52,7 @@ import type { DragSource, DropAction, DropTarget } from './gear-drop';
 import { attachItemInteractions } from './item-drag';
 import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, heroFallen, heroItemLine } from './gear-hover';
 import { heroOath, oathMinusText, oathPlusText } from '../campaign/oath';
+import { heroQuests, questBonusLine } from '../campaign/quests';
 import { boonList, respecHeroTree, respecTreeBlocked } from '../campaign';
 import { bandTipHtml } from './band-tip';
 import { tipOn, tipOff } from './tip-vis';
@@ -112,6 +113,8 @@ export interface GearHero {
   spdRoll?: number;
   /** A4 Hero Oath (sefer): yemin adı + artı / eksi metni (Gear sınıf satırında küçük çip, ipucu A Band). */
   oath?: { name: string; plus: string; minus: string };
+  /** A5 Personal Quests (sefer): unvanlar + bonus satırları (karakter kartında adın altında). */
+  titles?: Array<{ title: string; bonus: string }>;
 }
 
 /**
@@ -154,7 +157,8 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
       const cfg: WoundCfg = { rules: woundRules(), town: true };
       return [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))].map((h) => {
         const o = heroOath(s, h.id); // A4 Hero Oath: Gear'da küçük çip
-        const oath = o ? { oath: { name: o.name, plus: oathPlusText(o), minus: oathMinusText(o) } } : {};
+        const qs = heroQuests(h); // A5: unvanlar
+        const oath = { ...(o ? { oath: { name: o.name, plus: oathPlusText(o), minus: oathMinusText(o) } } : {}), ...(qs.length ? { titles: qs.map((q) => ({ title: q.title, bonus: questBonusLine(q) })) } : {}) };
         return woundCount(h) > 0 ? { ...h, wounds: woundCount(h), woundCfg: cfg, ...oath } : { ...h, ...oath };
       });
     },

@@ -58,10 +58,14 @@ export const ultSkillOf = (classId: string): string | undefined => classes[class
  * "Only N heroes" (A1 sınavı): dizilimde en öndeki (yuva sırası: ön sıradan arkaya) N ayakta kahraman. Düşmüş kahraman sayılmaz; ayakta
  * kahraman azsa olanlar. `heroes` yoksa herkes (ceset dahil, normal kural).
  */
-export function trialHeroIds(s: Pick<CampaignState, 'active' | 'roster'>, heroes: number | undefined, fallen: (h: Hero) => boolean): Set<string> {
+export function trialHeroIds(s: Pick<CampaignState, 'active' | 'roster'>, heroes: number | undefined, fallen: (h: Hero) => boolean, requireClass?: string): Set<string> {
   const ids = s.active.filter((id): id is string => !!id && s.roster.some((h) => h.id === id));
   if (!heroes || heroes <= 0) return new Set(ids);
-  return new Set(ids.filter((id) => !fallen(s.roster.find((h) => h.id === id)!)).slice(0, Math.floor(heroes)));
+  const standing = ids.filter((id) => !fallen(s.roster.find((h) => h.id === id)!));
+  // A5 Archer görevi (requireClass): o sınıftan en öndeki ayakta kahraman önce girer, kalan yerler en öndekilere (dizilim sırası korunur)
+  const must = requireClass ? standing.find((id) => s.roster.find((h) => h.id === id)!.class === requireClass) : undefined;
+  const rest = standing.filter((id) => id !== must).slice(0, Math.max(0, Math.floor(heroes) - (must ? 1 : 0)));
+  return new Set(standing.filter((id) => id === must || rest.includes(id)));
 }
 
 /** Düğümün dalış karşılaşmaları (2. derinlikten; var olanlar, en çok maxDepth - 1). */

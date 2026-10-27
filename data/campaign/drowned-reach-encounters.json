@@ -3170,5 +3170,244 @@
         }
       }
     ]
+  },
+  "dr_56_bell": {
+    "name": "Brann's Bell",
+    "trial": {},
+    "objective": {
+      "type": "survive",
+      "rounds": 4
+    },
+    "units": [
+      {
+        "class": "drowned",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1.5,
+          "powerMult": 1.5
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1.5,
+          "powerMult": 1.5
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1.5,
+          "powerMult": 1.5
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1.5,
+          "powerMult": 1.5
+        }
+      },
+      {
+        "class": "brine_maiden",
+        "slot": 6,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1.5,
+          "powerMult": 1.5
+        }
+      }
+    ]
+  },
+  "dr_90": {
+    "name": "Keepers of the Registry",
+    "trial": {},
+    "units": [
+      {
+        "class": "drowned_knight",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1.4,
+          "powerMult": 1.4
+        }
+      },
+      {
+        "class": "brine_maiden",
+        "slot": 7,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1.4,
+          "powerMult": 1.4
+        }
+      },
+      {
+        "class": "brine_maiden",
+        "slot": 6,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1.4,
+          "powerMult": 1.4
+        }
+      },
+      {
+        "class": "siren",
+        "slot": 8,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1.4,
+          "powerMult": 1.4
+        }
+      }
+    ]
+  },
+  "dr_91": {
+    "name": "The Gull Cliffs Shoot",
+    "trial": {
+      "heroes": 2,
+      "requireClass": "archer"
+    },
+    "units": [
+      {
+        "class": "ash_hound",
+        "slot": 1,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 0,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 6,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_92": {
+    "name": "The Debt Collectors",
+    "trial": {
+      "ultLock": 3
+    },
+    "units": [
+      {
+        "class": "road_thug",
+        "slot": 1,
+        "name": "Dock Rat",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      },
+      {
+        "class": "road_thug",
+        "slot": 0,
+        "name": "Dock Rat",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      },
+      {
+        "class": "corsair_cutlass",
+        "slot": 2,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      },
+      {
+        "class": "corsair_cutlass",
+        "slot": 4,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      }
+    ]
+  },
+  "dr_93": {
+    "name": "The House's Knives",
+    "trial": {},
+    "blocked": [
+      9,
+      10,
+      11
+    ],
+    "units": [
+      {
+        "class": "corsair_cutlass",
+        "slot": 1,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1.15,
+          "powerMult": 1.15
+        }
+      },
+      {
+        "class": "corsair_cutlass",
+        "slot": 0,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1.15,
+          "powerMult": 1.15
+        }
+      },
+      {
+        "class": "corsair_cutlass",
+        "slot": 2,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1.15,
+          "powerMult": 1.15
+        }
+      },
+      {
+        "class": "corsair_slinger",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1.15,
+          "powerMult": 1.15
+        }
+      },
+      {
+        "class": "corsair_slinger",
+        "slot": 6,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1.15,
+          "powerMult": 1.15
+        }
+      }
+    ]
   }
 }

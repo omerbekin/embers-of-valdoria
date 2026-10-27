@@ -52,6 +52,10 @@ export interface EventChoice {
   win?: { gold?: number; chest?: boolean };
   /** A4 Hero Oath: seçenek yemin penceresini açar (yemin edilince ya da yemin varken pencere kapanınca olay biter; src/campaign/oath.ts). */
   oath?: boolean;
+  /** A5 Personal Quests: seçenek bu görevindir (sınıfı kadroda yoksa gizli); kazanılan savaş ya da savaşsız seçenek görevi bitirir. */
+  quest?: string;
+  /** A5: "Walk away": olay bitmez, pencere kapanır, kafile yola çıkabilir; sonra dönülür (state.ts > canWithdraw). */
+  walkAway?: boolean;
 }
 
 export interface EventDef extends EventText {

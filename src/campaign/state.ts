@@ -18,6 +18,7 @@ import { freeTemperItem, freeTemperPreview } from './smith';
 import { pitBest, pitOf, pitTierPays } from './pit';
 import { OATH_DATA, oathDef, oathHealMult } from './oath';
 import { diveChest, diveEncounters, diveMax } from './side-content';
+import { grantQuest, questOpen, shownMap } from './quests';
 import type { BattleOutcome, CampChoice, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, InnStay, MapNode, NextStep, StepKind } from './types';
 
 /**
@@ -655,6 +656,19 @@ export function eventChoices(eventId: string): EventChoice[] {
   return (EVENTS[eventId]?.choices ?? []).filter((c) => !c.battle || !!choiceBattle(c));
 }
 
+/**
+ * Olayın bu durumda sunulan seçenekleri: eventChoices + A5 görev seçenekleri yalnız görevin sınıfı kadrodayken (aktif + yedek; quests.ts > questOpen).
+ */
+export function eventChoicesFor(s: CampaignState, eventId: string): EventChoice[] {
+  return eventChoices(eventId).filter((c) => !c.quest || questOpen(s, c.quest));
+}
+
+/** Bulunulan olayda "Walk away" (A5) seçeneği var mı: olay bitmeden kafile yola çıkabilir. */
+export function walkAwayHere(s: CampaignState): boolean {
+  const step = nextStep(s);
+  return step.kind === 'event' && !s.eventChoice && eventChoicesFor(s, step.event).some((c) => c.walkAway);
+}
+
 /** Seçenek seçilebilir mi (altın yetiyor mu)? null = evet, yoksa sebep. */
 export function choiceBlocked(s: CampaignState, c: EventChoice): string | null {
   return c.cost && s.gold < c.cost ? 'Not enough gold' : null;
@@ -666,8 +680,9 @@ export function choiceBlocked(s: CampaignState, c: EventChoice): string | null {
  */
 export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
   const step = expectStep(s, 'event') as Extract<NextStep, { kind: 'event' }>;
-  const c = eventChoices(step.event).find((x) => x.id === choiceId);
+  const c = eventChoicesFor(s, step.event).find((x) => x.id === choiceId);
   if (!c) throw new Error(`No such choice: ${choiceId}`);
+  if (c.walkAway) throw new Error('Walk away leaves the event open: travel on instead'); // A5: pencere kapanır, durum değişmez
   const blocked = choiceBlocked(s, c);
   if (blocked) throw new Error(blocked);
   const t = clone(s);
@@ -683,6 +698,7 @@ export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
   const battle = choiceBattle(c);
   t.eventChoice = { node: t.at, choice: c.id, ...(battle ? { battle } : {}), ...(c.restHeal !== undefined ? { restHeal: c.restHeal } : {}) };
   if (!battle) {
+    if (c.quest) grantQuest(t, c.quest); // A5: savaşsız görev seçeneği (Cutthroat "Pay what you owe") görevi bitirir
     if (fixedXpNode(t)) applyXp(t, fixedXp(t, activeHeroes(t))); // savaşsız olay: sabit XP (savaşlı seçenekte XP savaştan)
     complete(t, 'event');
   }
@@ -696,6 +712,7 @@ function winEventBattle(t: CampaignState): void {
   const c = EVENTS[n.event ?? '']?.choices?.find((x) => x.id === ec.choice);
   if (c?.win?.gold) t.gold += c.win.gold;
   if (c?.win?.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t));
+  if (c?.quest) grantQuest(t, c.quest); // A5: görev savaşı kazanıldı (unvan + bonus)
   delete ec.battle;
   complete(t, 'event');
 }
@@ -948,6 +965,9 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   // A1 Wayshrine: sınav kazanıldı, nimet seferin geri kalanı için (sunak başına bir kez)
   const shrine = node(mapOf(t), t.at).shrine;
   if (shrine && !(t.boons ?? []).includes(shrine)) t.boons = [...(t.boons ?? []), shrine];
+  // A5 Personal Quests: görev cebinin kendi savaşı (Archer, The Gull Roost) kazanıldı
+  const quest = node(mapOf(t), t.at).quest;
+  if (quest && node(mapOf(t), t.at).optional) grantQuest(t, quest);
   advanceDay(t); // düğümün ilk zaferi bir tamamlama (gün)
   return t;
 }
@@ -1300,7 +1320,7 @@ export function roamOpen(s: CampaignState): boolean {
 
 /** Tek hamlede gidilebilen komşular: ileri (çıkışlar) ve serbest dolaşımda geri (girişler); tutorial düğümlerine geri dönülmez. */
 export function moveOptions(s: CampaignState): { forward: string[]; back: string[] } {
-  const map = mapOf(s);
+  const map = shownMap(s); // A5: gizli görev cepleri yol vermez
   const forward = outgoing(map, s.at);
   if (!roamOpen(s)) return { forward, back: [] };
   const locked = tutorialNodes(map);
@@ -1320,7 +1340,7 @@ export function travelRoutes(s: CampaignState): Map<string, string[]> {
   // Savaşa girmeden ayrılırken yalnızca temizlenmiş komşulara (ve onların üzerinden) gidilir: savaş düğümü atlanıp ileri geçilmez
   for (const id of [...forward, ...back]) if (!withdraw || cleared.has(id)) out.set(id, [id]);
   if (!roamOpen(s)) return out;
-  const map = mapOf(s);
+  const map = shownMap(s); // A5: gizli görev cepleri yol vermez
   const locked = tutorialNodes(map);
   const queue = [...out.keys()].filter((id) => cleared.has(id));
   while (queue.length) {
@@ -1341,7 +1361,8 @@ export function travelRoutes(s: CampaignState): Map<string, string[]> {
  */
 export function canWithdraw(s: CampaignState): boolean {
   const step = nextStep(s);
-  return step.kind === 'battle' && !s.suspended && !s.eventChoice && roamOpen(s);
+  if (s.suspended || !roamOpen(s)) return false;
+  return (step.kind === 'battle' && !s.eventChoice) || walkAwayHere(s); // A5: "Walk away" seçenekli olaydan da ayrılınır
 }
 
 /** Hedefe giden yol (bulunulan hariç, hedef dahil) ya da gidilemiyorsa null. */
@@ -1452,7 +1473,7 @@ export function discoveredNodes(map: CampaignMap, visited: string[]): Set<string
 }
 
 /** İlerleme yazısı: temizlenmiş / toplam düğüm (haritada "Cleared 9/26 · Chapter 1"). */
-export const clearedProgress = (s: CampaignState): { cleared: number; total: number } => ({ cleared: clearedNodes(s).length, total: mapOf(s).nodes.length });
+export const clearedProgress = (s: CampaignState): { cleared: number; total: number } => ({ cleared: clearedNodes(s).length, total: shownMap(s).nodes.length }); // A5: gizli görev cepleri sayılmaz
 
 /** Takım sınırı: geçilen düğümlerin en büyük `partyCap`'i (ayrılırken katılım olan düğümde katılım bitince geçerli). */
 export function partyCap(s: CampaignState): number {
@@ -1602,6 +1623,30 @@ export function autoResolve(s: CampaignState, step: NextStep = nextStep(s)): Cam
     default:
       return s;
   }
+}
+
+/**
+ * Debug (A5 görev atlaması): takımda bu sınıftan kahraman yoksa aktif takımın en arkadaki lider olmayan kahramanı yedeğe çıkar, yerine bu sınıftan
+ * yeni bir kahraman (katılım seviyesinde) aynı hücreye girer. Varsa durum aynen döner. Yalnız debug.
+ */
+export function debugEnsureClass(s: CampaignState, classId: string): CampaignState {
+  if (s.roster.some((h) => h.class === classId)) return s;
+  const t = clone(s);
+  const out = [...activeHeroes(t)].reverse().find((h) => !h.leader);
+  let cell = -1;
+  if (out && t.roster.length >= 4) {
+    cell = t.active.indexOf(out.id);
+    t.roster = t.roster.filter((h) => h.id !== out.id);
+    if (cell >= 0) t.active[cell] = '';
+    t.reserve = [...(t.reserve ?? []), out];
+  }
+  const hero = addHero(t, classId, { join: true });
+  if (cell >= 0) {
+    const at = t.active.indexOf(hero.id);
+    if (at >= 0) t.active[at] = '';
+    t.active[cell] = hero.id;
+  }
+  return t;
 }
 
 /** Debug: bulunulan düğümün savaşını kazanılmış say (can değişmeden). */

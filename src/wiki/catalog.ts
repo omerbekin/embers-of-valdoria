@@ -13,6 +13,7 @@ import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import drownedReachMap from '../../data/campaign/drowned-reach.json';
 import { SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
+import { QUEST_LIST, questBonusLine } from '../campaign/quests';
 import { maps23On } from '../ui/maps23-flag';
 import { PITS } from '../campaign/pit';
 import { OATHS, OATH_DATA, oathMinusText, oathPlusText } from '../campaign/oath';
@@ -864,7 +865,7 @@ export function buildMechanics(): WikiArticle[] {
           `Difficulty: Easy, Medium or Hard, chosen when the journey starts; it cannot be changed later. ${difficultyText()}`,
         ),
       ]),
-      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle(), wayshrinesArticle(), salvageDiveArticle()] : []),
+      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle(), wayshrinesArticle(), salvageDiveArticle(), personalQuestsArticle()] : []),
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
@@ -883,15 +884,15 @@ export function drownedReachShown(): boolean {
 
 /** Harita 2 (maps-2-3.md 3; Adım 1 iskeleti): sayılar harita verisinden. */
 export function drownedReachArticle(): WikiArticle {
-  const m = drownedReachMap as unknown as { title: string; nodes: Array<{ type: string; optional?: boolean; spoke?: boolean; name: string }>; regions: Array<{ id: string; title: string; tagline?: string }>; stopsPerRun: number };
+  const m = drownedReachMap as unknown as { title: string; nodes: Array<{ type: string; optional?: boolean; spoke?: boolean; name: string; quest?: string }>; regions: Array<{ id: string; title: string; tagline?: string }>; stopsPerRun: number };
   const name = m.title.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
   const first = m.nodes[0]?.name ?? 'the start';
   const boss = m.nodes.find((n) => n.type === 'boss' && /final/i.test((n as { subtitle?: string }).subtitle ?? ''))?.name ?? 'the last throne';
   const towns = m.nodes.filter((n) => n.type === 'town').map((n) => n.name);
-  const pockets = m.nodes.filter((n) => n.optional).length;
+  const pockets = m.nodes.filter((n) => n.optional && !n.quest).length;
   const spokes = m.nodes.filter((n) => n.spoke).length;
   return article('drowned-reach', 'Campaign', name, cx('mech_campaign', 'boot'), [
-    p(`${name} is the second map of the campaign. When Lord Morvane falls, the company can go on down the Valdren to the sea instead of ending the journey: the heroes, their levels, gear, bag and gold all come along. ${m.nodes.length} stops in ${m.regions.length} regions; a run from ${first} to ${boss} passes about ${m.stopsPerRun} of them.`),
+    p(`${name} is the second map of the campaign. When Lord Morvane falls, the company can go on down the Valdren to the sea instead of ending the journey: the heroes, their levels, gear, bag and gold all come along. ${m.nodes.filter((n) => !(n.optional && n.quest)).length} stops in ${m.regions.length} regions (plus the personal quests of some heroes); a run from ${first} to ${boss} passes about ${m.stopsPerRun} of them.`),
     list(...m.regions.map((r) => `${r.title}${r.tagline ? `: ${r.tagline}` : ''}`)),
     p(`Towns: ${towns.join(', ')}. Saltmere is the hub: ${spokes} side streets branch off it; each is a single stop, and you walk back to the square to go on. ${pockets} dashed roads lead to optional pockets, as on the first map.`),
   ]);
@@ -924,6 +925,17 @@ export function wayshrinesArticle(): WikiArticle {
     p(`Each region of The Drowned Reach hides one Wayshrine at the end of a dashed road (${shrines.length} in all). Each shrine holds a short trial: a battle with a rule of its own, shown on the battle card before you start. Trials have no reinforcement waves and cannot be replayed. Win the trial and the shrine gives your company a small blessing: it works in every battle for every hero, for the rest of the campaign, and carries over to the next map. Your blessings are listed in Gear, next to your gold.`),
     list(...shrines.map((n) => { const w = WAYSHRINES[n.shrine!]!; return `${n.name} (region ${n.region}): ${w.trial} Blessing: ${w.name}, ${w.effect}.`; })),
     p('"Standing furthest forward" means by formation cell, front row first: arrange your formation before the battle to choose who goes in. Fallen heroes cannot enter a trial; the others wait at the shrine and are not touched.'),
+  ]);
+}
+
+/** A5 Personal Quests (map2-quests-surge.md 1; open-questions 431): görevler data/campaign/quests.json'dan, yerler haritadan. */
+export function personalQuestsArticle(): WikiArticle {
+  const m = drownedReachMap as unknown as { nodes: Array<{ id: string; name: string; region: string }> };
+  const cls = (id: string): string => content.classes[id]?.name ?? id;
+  return article('personal-quests', 'Campaign', 'Personal quests', cx('mech_personal_quests', 'rune'), [
+    p(`Some heroes have unfinished business in The Drowned Reach. A personal quest appears only while a hero of its class is in your company (the reserve counts too): most wait at the end of a dashed road, and the Paladin's is an extra choice at Monk's Isle. Finish it and that hero earns a title and a small, lasting boost to their class passive for the rest of the campaign; it carries over to the next map. Titles show under the hero's class in Gear (hover for the boost). A quest boost and a Hero Oath can be on the same hero.`),
+    list(...QUEST_LIST.map((q) => { const n = m.nodes.find((x) => x.id === q.node); return `${cls(q.class)}: ${q.name}${n ? ` (${n.name}, region ${n.region})` : ''}. Title: ${q.title}. ${questBonusLine(q)}.`; })),
+    p('Some quests can end without a fight. The Cutthroat can pay the old debt in gold and still earn the full reward. The Undead can let the name drown, which ends the quest with no reward. The Gambler can walk away from the table and come back later.'),
   ]);
 }
 

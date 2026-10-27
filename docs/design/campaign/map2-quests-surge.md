@@ -2,6 +2,8 @@
 
 Durum: **TASLAK, Ömer seçimi bekliyor** (content-designer, 2026-10-27). Kaynak: `maps-2-3.md` bölüm 9 (A5 ve C1 onaylı, form 4Z6Qr7WCm3gVKKJDLLi4cE). Bu belge yalnızca plan; veri ve kod yazılmadı. Sayılar PROVİZYON (denge balance-tester'ın işi, sim ile). Oyun içi metinler İngilizce taslak.
 
+**A5 Harita 2 kısmı UYGULANDI (campaign-dev 2026-10-27, Ömer seçimleri aşağıda 1.6'da KARAR olarak; varsayımlar open-questions 431).** Veri `data/campaign/quests.json` + düğümler dr90-dr93 + dr56 seçeneği; kural `src/campaign/quests.ts`; test `tests/campaign-quests.test.ts`. C1 Crown Surge hâlâ karar bekliyor (bölüm 2).
+
 **Kural:** Belgede (maps-2-3.md) olmayan her şey aşağıda **SORU** olarak yazıldı, karar değil. Görev şekilleri yalnızca onaylı kalıpları kullanır: tek savaş, var olan olay seçimi (`choices[]`: `cost`, `battle`, `win`, `heal`), A1 sınav kuralları ("yalnız 2 kahramanla", "ilk 3 tur ultimate yok", "arka sıra boş") ve B3 hedefleri (Survive N Rounds, Break the Totem, Hold the Bridge). Hero signature kuralı korunur: Omen (Hexer) ve Dark Bond (Undead) yalnız kahraman mekaniği; aşağıdaki hiçbir düşmana verilmez, bonuslar yalnız o kahramanı güçlendirir.
 
 ---
@@ -22,6 +24,8 @@ Belgedeki örnekler: Paladin = Monk's Isle (Harita 2), Undead = Sunken Court (Ha
 | 3 · The Hollow Crown (5) | **Druid** (belgede) + **Warrior, Defender, Mage, Anti-Mage** | Hillclans (Warrior), cüce kapısı ve yemin (Defender), Ember ve ocak (Mage), Kharduin runeleri (Anti-Mage) |
 
 Harita 3'ün yükü zaten ağır (D4 Frozen Echoes, D5 Ember Shards), bu yüzden 6/5 bölünmede 6'yı Harita 2'ye koydum.
+
+**KARAR (Ömer 2026-10-27, Q-A1 = b): 5 / 6.** Harita 2: Paladin, Undead, Archer, Cutthroat, Gambler. Hexer Harita 3'e gider (aşağıdaki Hexer bölümü yalnız fikir olarak kaldı; 1.4 listesinde).
 
 ### 1.2 Ortak kurallar (belgeden)
 - Her görev, o sınıf kadrodaysa görünen bir yan düğüm (ya da var olan düğümde sınıfa bağlı ek seçim). Kadroda olmayan sınıfın düğümü görünmez.
@@ -74,7 +78,7 @@ Her bonus için iki alternatif var: **(a)** sınıfın var olan pasifinin sayıs
   - **(a)** Double or Nothing şansı %25 → %28 (`spellEcho.chance` 0,25 → 0,28).
   - **(b)** All In'in savaş başı bekleme süresi 1 tur kısa (`initialCooldown` -1).
 
-#### Hexer — "The Hag's Stolen Eye" (Hag's Island, dr18, Bölge II)
+#### Hexer — "The Hag's Stolen Eye" (HARİTA 3'E TAŞINDI, Q-A1 = b; aşağısı yalnız fikir, Harita 2'de YAPILMADI)
 - **Düğüm:** yeni opt cep **"The Cauldron Pool"**, dr18 Hag's Island'dan çıkmaz dal (dr18 zaten opt; cep onun arkasında, yani önce Salt Hag Mother yenilir).
 - **Hikâye (EN taslak):** *"The Salt Hag Mother kept a jar of eyes, and one of them is looking at your Hexer. It was a teacher's, once. Her daughters have bound it to a salt-totem in the pool, and as long as it stands, the marsh keeps sending them back."*
 - **Şekil:** kurallı savaş, B3 hedefi **Break the Totem** (Hex Totem birimi var; kırılana kadar Fen Witchling / Salt Hag takviyesi gelir).
@@ -90,6 +94,7 @@ Her bonus için iki alternatif var: **(a)** sınıfın var olan pasifinin sayıs
 | Defender | dr28 The Stone Gate / dr31 Hall of Oaths (cüce yemini) |
 | Mage | dr75 Crown Gallery ya da dr60 Kiln Chapel (Ember) |
 | Anti-Mage | dr42 Rune Vault (Kharduin runeleri) |
+| Hexer | (Q-A1 = b ile Harita 2'den geldi) Rime Witch'lere karşı; yer Harita 3 adımında. Harita 2 fikri "The Hag's Stolen Eye" (Break the Totem) uyarlanabilir |
 
 ### 1.5 Uygulama notları (karar değil, engine/campaign-dev için)
 - **Görünürlük** için düğüme ya da olay seçimine "bu sınıf kadrodaysa" koşulu gerekir (`choices[]` ve düğüm verisinde bugün sınıf koşulu yok). Bu A5'in onaylı kuralının uygulamasıdır, yeni oyun kuralı değildir.
@@ -102,6 +107,14 @@ Her bonus için iki alternatif var: **(a)** sınıfın var olan pasifinin sayıs
 - a) Yukarıdaki 6 / 5 (Harita 2: Paladin, Undead, Archer, Cutthroat, Gambler, Hexer). **Önerim.**
 - b) 5 / 6: Hexer Harita 3'e (Rime Witch'lere karşı), Harita 2 beşte kalır.
 - c) Başka bir dağılım (Ömer söyler).
+
+**Ömer seçimleri (2026-10-27, form quests/surge):** A1 = b, A2 = a (hepsinde), A3 = a, A4 = c, A5 = a, A6 = a, A7 = a, A8 = a. Uygulama özeti:
+- **Yerler:** Paladin dr56 Monk's Isle'da "Keep the vigil" seçeneği; Undead dr90 The Drowned Registry (dr75'ten), Archer dr91 The Gull Roost (dr41'den), Cutthroat dr92 Rat's Nest (dr30 Chandlers' Row'dan), Gambler dr93 The Dicing Hulk (dr63'ten). Cepler kesik yol, ana rota / K1 / `stopsPerRun` sayımına girmez.
+- **Görünürlük (A4 = c):** görevin sınıfından bir kahraman takımda ya da yedekte varsa cep / seçenek görünür; yoksa cep haritada hiç çizilmez. Ayak basılmış cep kalır.
+- **Bonus (A2 = a):** pasif sayısı (Divine Light 0,27 → 0,30; Vampiric Bite 0,5 → 0,6; Sharpshooter 0,05 → 0,06; Opportunist 0,25 → 0,30; Double or Nothing 0,25 → 0,28), yalnız o kahraman, yalnız bu sefer (A7 = a), haritalar arası taşınır; Hero Oath ile birlikte olabilir (A8 = a).
+- **Barışçıl yollar (A5 = a):** Cutthroat "Pay what you owe" (60 altın) tam ödül; Undead "Let it drown" ödülsüz kapanır. Gambler "Walk away" görevi açık bırakır.
+- **Unvan (A6 = a):** Gear karakter kartında sınıf satırının altında (üstüne gelince bonus), Codex > Mechanics > Personal quests listesi.
+- **Debug:** Debug > Campaign > "Map 2 side content" > "Quest (Sınıf): ..." (sınıf takımda yoksa bir kahramanın yerine girer).
 
 **Q-A2. Her görevin bonusu?** Her sınıfta (a) ya da (b) (yukarıdaki satırlar). Önerim: hepsinde **(a)** (pasif sayısı; imzayı en net hissettirir, yeni kural yok).
 

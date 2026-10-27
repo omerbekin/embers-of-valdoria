@@ -122,6 +122,11 @@ export interface MapNode {
    * side-content.json > salvageDive.maxDepth - 1). Sandıklar side-content.json > salvageDive.chests.
    */
   dive?: string[];
+  /**
+   * A5 Personal Quests (data/campaign/quests.json; src/campaign/quests.ts): görevin id'si. İsteğe bağlı cepte (optional) görevin sınıfı kadroda
+   * (aktif + yedek) yoksa ve oraya hiç ayak basılmadıysa düğüm gizlidir (quests.ts > shownMap). Var olan olay düğümünde (dr56) yalnızca bilgi.
+   */
+  quest?: string;
 }
 
 /** Kasaba ekranında bir yerin eylemi: tezgâh (Trade), ilan panosu / kışla (aday), hikâye NPC'si (sahne yeniden), ateş (dinlenme notu), çıkış. */
@@ -265,7 +270,7 @@ export interface EncounterDef {
    * ayakta kahraman girer (diğerleri dokunulmadan kenarda bekler); `ultLock` = kahramanların ultimate'ı (4. skill) ilk bu kadar kendi turunda
    * kullanılamaz (motor UnitSetup.startCooldowns). Sınavlı karşılaşmaya takviye dalgası eklenmez (tek dalga + `waves`).
    */
-  trial?: { heroes?: number; ultLock?: number };
+  trial?: { heroes?: number; ultLock?: number; /** A5 Archer görevi: "yalnız N kahraman" sayımında bu sınıftan ayakta kahraman önce girer, kalan yer en öndekilere. */ requireClass?: string };
   /** M-N3: oyuncu tarafındaki etkileşimli nesne (battle-rules.json > devices anahtarı, ör. 'tidewater_urn'; hücre veri varsayılanı). */
   device?: string;
 }
@@ -370,6 +375,11 @@ export interface Hero {
    * Eski kayıtta yok: okunurken aynı fonksiyonla tamamlanır (sürüm artmaz).
    */
   spdRoll?: number;
+  /**
+   * A5 Personal Quests: bitirdiği görevlerin id'leri (data/campaign/quests.json): unvan + seferlik pasif eki (quests.ts). İsteğe bağlı alan (kayıt
+   * sürümü değişmez; bilinmeyen / başka sınıfın id'si okunurken atılır). Haritalar arası kahramanla taşınır.
+   */
+  quests?: string[];
 }
 
 /**

@@ -5,6 +5,7 @@ import { activeHeroes, canReplay, clearedProgress, nodeCleared, stopNumber } fro
 import { validCampaignSuspended } from './suspend';
 import { pitOf } from './pit';
 import { oathDef } from './oath';
+import { sanitizeHeroQuests } from './quests';
 import { boonIds } from './side-content';
 import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, type ItemInstance } from '../progression/items';
 import { classes, valorRules } from '../engine/content';
@@ -249,6 +250,8 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   // Geçilen haritalar (harita geçişi M-Q; isteğe bağlı alan, sürüm değişmez): bozuksa / bilinmeyen haritaysa atılır
   if (s.mapsDone !== undefined && !(Array.isArray(s.mapsDone) && s.mapsDone.every((m) => typeof m === 'string' && !!MAPS[m]))) delete (s as { mapsDone?: unknown }).mapsDone;
   upgradePitOath(s);
+  // A5 Personal Quests (isteğe bağlı Hero.quests; kayıt sürümü değişmez): bilinmeyen / başka sınıfın / tekrar eden görev id'si atılır
+  for (const h of [...s.roster, ...(s.reserve ?? []), ...(s.inn ?? []).map((x) => x.hero)]) if (h && typeof h === 'object') sanitizeHeroQuests(h);
   upgradeRoam(s);
   return s;
 }
