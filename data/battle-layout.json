@@ -35,7 +35,14 @@
       "pilgrim-road": 0.596,
       "ashen-plain": 0.605,
       "thornwood-hollow": 0.586,
-      "ember-road": 0.596
+      "ember-road": 0.596,
+      "river-gorge": 0.581,
+      "saltmarsh": 0.571,
+      "saltmere-docks": 0.591,
+      "wreck-cliffs": 0.581,
+      "siren-rocks": 0.596,
+      "storm-deck": 0.61,
+      "sunken-court": 0.586
     },
     "cardFocus": {
       "_not": "Play kartı görsellerinin odak noktası [x, y] (görselin kesri): kartın tam ortasına gelir, kart boşluksuz dolar (gerekirse yakınlaşır; src/game/wide-map.ts > focusCrop). Ölçüm 2026-10-09: Quick Battle kalenin parmaklıklı kapısı, Multiplayer büyük taş kemerin açıklığı. 2026-10-09 (Ömer: hafif zoom out): Multiplayer odağı dikeyde ortada (y 0,5 = yakınlaşma yok, kart tam yükseklikte kaplar; eskiden ~1,7x) ve yatayda kemerli kalıntı ile ay arasında: kalıntı kartın ortasında-solunda, ay sağ üstte görünür.",

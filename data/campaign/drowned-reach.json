@@ -33,7 +33,7 @@
         0.0359,
         0.1116
       ],
-      "battleBackground": "kings-bridge"
+      "battleBackground": "river-gorge"
     },
     {
       "id": "II",
@@ -43,7 +43,7 @@
         0.2811,
         0.4995
       ],
-      "battleBackground": "misty-marsh"
+      "battleBackground": "saltmarsh"
     },
     {
       "id": "III",
@@ -53,7 +53,7 @@
         0.7476,
         0.2179
       ],
-      "battleBackground": "pilgrim-road"
+      "battleBackground": "saltmere-docks"
     },
     {
       "id": "IV",
@@ -63,7 +63,7 @@
         0.3828,
         0.9352
       ],
-      "battleBackground": "iron-pass"
+      "battleBackground": "wreck-cliffs"
     },
     {
       "id": "V",
@@ -73,7 +73,7 @@
         0.8553,
         0.0425
       ],
-      "battleBackground": "windy-moor"
+      "battleBackground": "siren-rocks"
     },
     {
       "id": "VI",
@@ -83,7 +83,7 @@
         0.8373,
         0.983
       ],
-      "battleBackground": "castle-hall"
+      "battleBackground": "sunken-court"
     }
   ],
   "nodes": [
