@@ -26,7 +26,7 @@
     "id": "flock_shield",
     "name": "Flock Shield",
     "icon": "shield",
-    "text": "Once per battle, the first enemy skill that hits it deals 50% less damage: the ravens take the blow.",
+    "text": "Once per battle, the first enemy skill that hits it deals ×0.5 damage: the ravens take the blow.",
     "effect": {
       "type": "flockShield",
       "reduce": 0.5

@@ -84,10 +84,11 @@ const TIER_ORDER: Record<string, number> = { A: 0, B: 1, C: 2 };
 
 /** Zar göstergesi için değerin aralıktaki yeri (0-1); aralık ya da sayı yoksa null. */
 function rollPos(text: string, range: string): number | null {
-  const [lo, hi] = range.split('–').map(Number);
-  const m = text.match(/\d+(\.\d+)?/);
-  if (!m || lo === undefined || hi === undefined || !(hi > lo)) return null;
-  return Math.max(0, Math.min(1, (Number(m[0]) - lo) / (hi - lo)));
+  // Ayrı çarpan aralığı "×1.03–1.05" (azalışta zar sırasıyla "×0.97–0.95"): sayı yazıdaki "×" değerinden
+  const [lo, hi] = range.replace(/×/g, '').split('–').map(Number);
+  const m = range.startsWith('×') ? text.match(/×(\d+(\.\d+)?)/) : text.match(/\d+(\.\d+)?/);
+  if (!m || lo === undefined || hi === undefined || !Number.isFinite(lo) || !Number.isFinite(hi) || hi === lo) return null;
+  return Math.max(0, Math.min(1, (Number(m[1] !== undefined && range.startsWith('×') ? m[1] : m[0]) - lo) / (hi - lo)));
 }
 
 /** Gövde: (Legendary etkisi) + örtük stat + kademeye göre YÜKSEKTEN düşüğe (A, B, C) sıralı affix satırları. Ortak ipucu ve tüccar karşılama kartı kullanır. */

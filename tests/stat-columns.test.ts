@@ -24,16 +24,16 @@ describe('alt bar stat sütunları', () => {
 
   it('satır yazıları: crit damage çarpanı ve tur başı yenilenmeler', () => {
     const s = { ...stats, critMult: 1.5, hpRegen: 3.3, mpRegen: 5 };
-    expect(statRowText('critMult', s, STAT_LABEL)).toBe('CDMG x1.5');
+    expect(statRowText('critMult', s, STAT_LABEL)).toBe('CDMG ×1.5');
     expect(statRowText('hpRegen', s, STAT_LABEL)).toBe('HP+3/t');
     expect(statRowText('mpRegen', s, STAT_LABEL)).toBe('MP+5/t');
     expect(statRowText('critChance', { ...s, critChance: 0.05 }, STAT_LABEL)).toBe('CRIT 5%');
-    expect(statRowText('critMult', { ...s, critMult: 2 }, STAT_LABEL)).toBe('CDMG x2');
+    expect(statRowText('critMult', { ...s, critMult: 2 }, STAT_LABEL)).toBe('CDMG ×2');
   });
 
   it('tooltip: crit damage x çarpanı ve regen açıklaması', () => {
     const s = { ...stats, critMult: 1.5, hpRegen: 3, mpRegen: 5 };
-    expect(describeStat('critMult', s, content.formulas).lines[0]).toBe('Critical hits deal x1.5 damage');
+    expect(describeStat('critMult', s, content.formulas).lines[0]).toBe('Critical hits deal ×1.5 damage');
     expect(describeStat('hpRegen', s, content.formulas).lines[0]).toBe('Restores 3 HP at the start of each of its own turns');
     expect(describeStat('mpRegen', s, content.formulas).lines[0]).toBe('Restores 5 MP at the start of each of its own turns');
   });

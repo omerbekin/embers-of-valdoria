@@ -63,7 +63,7 @@ export function statRowText(k: StatKind, s: Stats, label: Record<StatKind, strin
     case 'str': case 'int': case 'dex': case 'luck': return `${label[k]} ${s[k]}`;
     case 'spd': return `SPD ${s.spd}`;
     case 'critChance': return `CRIT ${trim(s.critChance * 100, 1)}%`;
-    case 'critMult': return `CDMG x${trim(s.critMult, 2)}`;
+    case 'critMult': return `CDMG ×${trim(s.critMult, 2)}`;
     case 'accuracy': return `ACC ${Math.round(s.accuracy * 100)}%`;
     case 'evasion': return `EVA ${Math.round(s.evasion * 100)}%`;
     case 'armor': return `ARM ${Math.round(s.armor)}`;

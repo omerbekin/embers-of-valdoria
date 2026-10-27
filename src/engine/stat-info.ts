@@ -24,6 +24,8 @@ export interface PrimaryBonusInfo {
   active: boolean;
 }
 
+import { moreText, multText } from './bonus-text';
+
 const pct = (v: number, digits = 0) => `${(v * 100).toFixed(digits)}%`;
 // 3 basamağa kadar (x2 stat ölçeği: puan başı 0,125 / 0,165 gibi katsayılar tam görünsün), sondaki sıfırlar atılır
 const num = (v: number) => (Number.isInteger(v) ? String(v) : String(Number(v.toFixed(3))));
@@ -50,7 +52,7 @@ export function primaryBonusInfo(kind: 'str' | 'int' | 'dex' | 'luck', f: Formul
   const b = f.primaryBonus;
   switch (kind) {
     case 'str': return { name: 'Resilience', detail: `${pct(b.str.resilienceChance)} debuff -1 turn`, active };
-    case 'dex': return { name: "Hunter's Mark", detail: `+${pct(b.dex.hunterMarkMult)} dmg vs slower`, active };
+    case 'dex': return { name: "Hunter's Mark", detail: `${moreText(b.dex.hunterMarkMult)} dmg vs slower`, active };
     case 'int': return { name: 'Mana Echo', detail: `${pct(b.int.manaEchoChance)} refund half MP`, active };
     case 'luck': return { name: 'Lucky Escape', detail: `${pct(b.luck.surviveChance)} ignore killing blow`, active };
   }
@@ -61,7 +63,7 @@ export function primaryBonusShort(kind: 'str' | 'int' | 'dex' | 'luck', f: Formu
   const b = f.primaryBonus;
   switch (kind) {
     case 'str': return `${pct(b.str.resilienceChance)} chance for debuffs on you to last 1 turn less`;
-    case 'dex': return `${pct(b.dex.hunterMarkMult)} more damage when you are faster than your target`;
+    case 'dex': return `${moreText(b.dex.hunterMarkMult)} damage when you are faster than your target`;
     case 'int': return `${pct(b.int.manaEchoChance)} chance to get back half of a skill's MP cost`;
     case 'luck': return `${pct(b.luck.surviveChance)} chance to ignore a lethal hit once per battle`;
   }
@@ -72,7 +74,7 @@ export function primaryBonusLines(kind: 'str' | 'int' | 'dex' | 'luck', f: Formu
   const b = f.primaryBonus;
   switch (kind) {
     case 'str': return [`Primary bonus: Resilience - every debuff applied to you has a ${pct(b.str.resilienceChance)} chance to last 1 turn less (never below 1 turn)`];
-    case 'dex': return [`Primary bonus: Hunter's Mark - when you are faster than your target, your damaging hits deal ${pct(b.dex.hunterMarkMult)} more damage`];
+    case 'dex': return [`Primary bonus: Hunter's Mark - when you are faster than your target, your damaging hits deal ${moreText(b.dex.hunterMarkMult)} damage`];
     case 'int': return [`Primary bonus: Mana Echo - after each skill, ${pct(b.int.manaEchoChance)} chance to get back half of its MP cost (rounded up, at least 1)`];
     case 'luck': return [`Primary bonus: Lucky Escape - once per battle, a lethal hit has a ${pct(b.luck.surviveChance)} chance to be ignored completely: you take no damage from it, your HP and shields stay as they were, and it has no side effects (no lifesteal, no on-hit effects)`];
   }
@@ -114,7 +116,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         lines: [
           `Crit chance: +${pct(a.critChancePerLuck, 1)} per point (now ${pct(stats.critChance, 1)})`,
           `Accuracy: +${pct(a.accuracyPerLuck, 1)} per point (base ${pct(a.accuracyBase)}, now ${pct(stats.accuracy)}); your attacks miss less often`,
-          `Crit damage is fixed at x${num(a.critMult)} and does not depend on Luck`,
+          `Crit damage is fixed at ${multText(a.critMult)} and does not depend on Luck`,
           'Crits are the final multiplier of damage and healing, never of shields',
         ],
       };
@@ -128,17 +130,17 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         lines: [
           `Comes from Dexterity (+${num(a.spdPerDex)} per point)`,
           // Kişisel hız zarı (Ömer 2026-10-24): birimin sapması; zar yoksa (sınıf kartı, wiki örneği) satır yok
-          ...(stats.spdRoll !== undefined ? [`Natural pace: ${paceText(stats.spdRoll)}`] : []),
+          ...(stats.spdRoll !== undefined ? [`Natural pace: ${multText(Math.round(stats.spdRoll * 100) / 100)} speed`] : []),
           'Decides how soon the unit acts: higher speed means more turns',
         ],
       };
     case 'critChance':
-      return { title: `Crit chance ${pct(stats.critChance, 1)}`, lines: [`Base ${pct(a.critChanceBase)}, +${pct(a.critChancePerLuck, 1)} per Luck`, `A crit multiplies the final damage or healing by a fixed x${num(a.critMult)}`, 'Applies to damage and healing, not shields'] };
+      return { title: `Crit chance ${pct(stats.critChance, 1)}`, lines: [`Base ${pct(a.critChanceBase)}, +${pct(a.critChancePerLuck, 1)} per Luck`, `A crit multiplies the final damage or healing by a fixed ${multText(a.critMult)}`, 'Applies to damage and healing, not shields'] };
     case 'critMult':
       return {
-        title: `Crit damage x${num(stats.critMult ?? a.critMult)}`,
+        title: `Crit damage ${multText(stats.critMult ?? a.critMult)}`,
         lines: [
-          `Critical hits deal x${num(stats.critMult ?? a.critMult)} damage`,
+          `Critical hits deal ${multText(stats.critMult ?? a.critMult)} damage`,
           'Fixed for every unit: Luck only raises the crit chance, never the multiplier',
           'Applies to the final damage and healing of a crit, never to shields',
         ],

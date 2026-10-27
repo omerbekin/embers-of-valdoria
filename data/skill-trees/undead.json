@@ -169,7 +169,7 @@
     },
     "0.f2": {
       "name": "Tithe Collector",
-      "text": "After you pay HP for a skill, that skill drains +6% more per rank through Vampiric Bite.",
+      "text": "After you pay HP for a skill, that skill drains ×1.06 per rank through Vampiric Bite.",
       "src": "A:V1:0.f2",
       "fx": [
         {
@@ -187,7 +187,7 @@
     },
     "0.f3": {
       "name": "Open Veins",
-      "text": "Your skills deal +2% damage per rank for every 10% of HP you are missing.",
+      "text": "Your skills deal ×(1 + 2% per rank for every 10% of HP you are missing) damage.",
       "src": "A:V1:0.f3",
       "fx": [
         {
@@ -308,7 +308,7 @@
     },
     "0.fa": {
       "name": "Gaunt Frame",
-      "text": "Vampiric Bite heals 70% of damage dealt instead of 50%, but your maximum HP is 20% lower.",
+      "text": "Vampiric Bite heals 70% of damage dealt instead of 50%, but your maximum HP is ×0.8.",
       "src": "A:V1:0.fa",
       "fx": [
         {
@@ -327,7 +327,7 @@
     },
     "0.fb": {
       "name": "Rancid Blood",
-      "text": "Wound you inflict lasts 2 turns longer, but Vampiric Bite heals 20% less.",
+      "text": "Wound you inflict lasts 2 turns longer, but Vampiric Bite heals ×0.8.",
       "src": "A:V3:0.fb",
       "fx": [
         {
@@ -392,7 +392,7 @@
     },
     "1.f1": {
       "name": "Knee Breaker",
-      "text": "Bone Throw +6% damage per rank against Slowed targets.",
+      "text": "Bone Throw ×1.06 damage per rank against Slowed targets.",
       "src": "A:V5:1.f1",
       "fx": [
         {
@@ -410,7 +410,7 @@
     },
     "1.f2": {
       "name": "Marrow Leech",
-      "text": "Vampiric Bite heals +6% more per rank from Bone Throw hits on Slowed targets.",
+      "text": "Vampiric Bite heals ×1.06 per rank from Bone Throw hits on Slowed targets.",
       "src": "A:V1:1.f2",
       "fx": [
         {
@@ -485,7 +485,7 @@
     },
     "1.r": {
       "name": "Numb Joints",
-      "text": "Bone Throw +4% damage per rank against Staggered, Stunned or Silenced targets.",
+      "text": "Bone Throw ×1.04 damage per rank against Staggered, Stunned or Silenced targets.",
       "src": "A:V5:1.r",
       "fx": [
         {
@@ -567,7 +567,7 @@
     },
     "1.fa": {
       "name": "Brutal Hurl",
-      "text": "Shattered Shin's chance 12% → 40%, but Bone Throw deals 20% less damage.",
+      "text": "Shattered Shin's chance 12% → 40%, but Bone Throw deals ×0.8 damage.",
       "src": "A:V5:1.fa",
       "fx": [
         {
@@ -656,7 +656,7 @@
     },
     "2.f1": {
       "name": "Bloody Breath",
-      "text": "Wail of the Dead +2% damage per rank for every 10 HP it costs.",
+      "text": "Wail of the Dead ×(1 + 2% per rank for every 10 HP it costs) damage.",
       "src": "A:V1:2.f2",
       "fx": [
         {
@@ -674,7 +674,7 @@
     },
     "2.f2": {
       "name": "Lingering Moan",
-      "text": "Vampiric Bite heals +4% more per rank from Wail of the Dead's hits.",
+      "text": "Vampiric Bite heals ×1.04 per rank from Wail of the Dead's hits.",
       "src": "A:V1:2.f3",
       "fx": [
         {
@@ -732,7 +732,7 @@
     },
     "2.n0": {
       "name": "Scream of Need",
-      "text": "While you are below 50% HP, Wail of the Dead deals +15% damage.",
+      "text": "While you are below 50% HP, Wail of the Dead deals ×1.15 damage.",
       "src": "A:V1:2.n0",
       "fx": [
         {
@@ -768,7 +768,7 @@
     },
     "2.ea": {
       "name": "Deeper Cut",
-      "text": "Wail of the Dead costs 30% of your current HP instead of 20% and deals +30% damage.",
+      "text": "Wail of the Dead costs 30% of your current HP instead of 20% and deals ×1.3 damage.",
       "src": "A:V1:2.ea",
       "fx": [
         {
@@ -847,7 +847,7 @@
     },
     "2.fb": {
       "name": "Bitter Gift",
-      "text": "Blood Hymn heals double, but Wail of the Dead deals 25% less damage.",
+      "text": "Blood Hymn heals double, but Wail of the Dead deals ×0.75 damage.",
       "src": "A:V4:2.fa",
       "syn": "Dark Bond",
       "fx": [
@@ -957,7 +957,7 @@
     },
     "3.f3": {
       "name": "Kindred Guard",
-      "text": "Your bonded ally takes 4% less damage per rank.",
+      "text": "Your bonded ally takes ×0.96 damage per rank.",
       "src": "A:V4:3.f3",
       "fx": [
         {
@@ -1102,7 +1102,7 @@
     },
     "3.fb": {
       "name": "Iron Oath",
-      "text": "Blood Oath takes 60% instead of 30%, but Vampiric Bite heals you 20% less.",
+      "text": "Blood Oath takes 60% instead of 30%, but Vampiric Bite heals you ×0.8.",
       "src": "A:V4:3.fb",
       "fx": [
         {
@@ -1172,7 +1172,7 @@
     },
     "4.u2": {
       "name": "Cold Grip",
-      "text": "Your Skeleton deals +15% damage to Slowed targets.",
+      "text": "Your Skeleton deals ×1.15 damage to Slowed targets.",
       "src": "B:V5:4.u2",
       "fx": [
         {
@@ -1276,7 +1276,7 @@
     },
     "4.d1": {
       "name": "Fresh Meat",
-      "text": "A fed Skeleton gains +15% damage and +15% max HP.",
+      "text": "A fed Skeleton gains ×1.15 damage and ×1.15 max HP.",
       "src": "B:V2:4.d1",
       "fx": [
         {
@@ -1330,7 +1330,7 @@
     },
     "4.l1": {
       "name": "Hulking Frame",
-      "text": "Your Skeleton has +20% max HP and lives 1 turn longer.",
+      "text": "Your Skeleton has ×1.2 max HP and lives 1 turn longer.",
       "src": "B:V2:4.u1",
       "fx": [
         {

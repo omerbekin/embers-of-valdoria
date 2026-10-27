@@ -234,7 +234,7 @@ describe('Sharpshooter perRow ve açıklama', () => {
     const p = content.classes.archer!.passive!;
     const per = (p.effect as { perRow: number }).perRow;
     expect(per).toBeGreaterThan(0);
-    expect(describePassive(p, content.classes.archer!.stats, content.formulas)).toContain(`+${Math.round(per * 100)}% damage for every row`);
+    expect(describePassive(p, content.classes.archer!.stats, content.formulas)).toContain(`×${Number((1 + per).toFixed(3))} at 1 row of distance`);
   });
 });
 

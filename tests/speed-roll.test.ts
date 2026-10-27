@@ -77,9 +77,9 @@ describe('kişisel hız zarı', () => {
     for (const seed of [1, 2, 3]) expect(make(seed, teams).get('party-0')!.stats.spd).toBe(sheet.spd);
     const tip = describeStat('spd', { ...sheet, spdRoll: 1.0634 }, f);
     expect(tip.title).toBe(`Speed ${sheet.spd}`);
-    expect(tip.lines).toContain('Natural pace: +6%');
-    expect(describeStat('spd', { ...sheet, spdRoll: 0.96 }, f).lines).toContain('Natural pace: -4%');
-    expect(describeStat('spd', { ...sheet, spdRoll: 1.002 }, f).lines).toContain('Natural pace: ±0%');
+    expect(tip.lines).toContain('Natural pace: ×1.06 speed');
+    expect(describeStat('spd', { ...sheet, spdRoll: 0.96 }, f).lines).toContain('Natural pace: ×0.96 speed');
+    expect(describeStat('spd', { ...sheet, spdRoll: 1.002 }, f).lines).toContain('Natural pace: ×1 speed');
     expect(describeStat('spd', { ...sheet, spdRoll: undefined }, f).lines.some((l) => l.startsWith('Natural pace'))).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import { isShapeArea, RECT_CENTER_MIN, shapeBadge } from './area-shape';
 import { isRatioCost, skillCostLabel } from './cost';
 import { betMultipliers, betStake } from './gamble';
+import { lessText, moreText, multText } from './bonus-text';
 import { bonusScaleRaw } from './spec';
 import { rangeEnabled, rangeLabel } from './range';
 import { applySummonerScale, applySummonVariant, attributePower, outgoingDamageMult } from './stats';
@@ -146,7 +147,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
   const val = (scale: Attribute, power: number) => scaled(stats, scale, power, formulas);
   switch (e.type) {
     case 'rage':
-      return `The lower your HP, the harder you hit: up to +${pct(e.maxBonus)} damage at the brink of death.${e.rageOnHurt ? ` Losing HP gives Rage: ${Math.round(e.rageOnHurt.perHpPercent * 100) / 100} per 1% of your max HP lost${e.rageOnHurt.perHitCap !== undefined ? ` (at most ${e.rageOnHurt.perHitCap} per hit; shields absorbing the hit give none)` : ''}.` : ''}`;
+      return `The lower your HP, the harder you hit: up to ${moreText(e.maxBonus)} damage at the brink of death.${e.rageOnHurt ? ` Losing HP gives Rage: ${Math.round(e.rageOnHurt.perHpPercent * 100) / 100} per 1% of your max HP lost${e.rageOnHurt.perHitCap !== undefined ? ` (at most ${e.rageOnHurt.perHitCap} per hit; shields absorbing the hit give none)` : ''}.` : ''}`;
     case 'divineLight': {
       // Crusader's Dawn (smite.dual): şifa dual kat; aynı miktar her tur en zayıf düşmana smite
       const p = e.power * (e.smite?.dual ?? 1);
@@ -157,7 +158,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'spellEcho':
       return `Damaging spells with a cooldown have a ${pct(e.chance)} chance to be ready again immediately.`;
     case 'longshot':
-      return `Deal +${pct(e.perRow)} damage for every row of distance between you and your target (your row + their row${e.extraRows ? ` + ${e.extraRows}` : ''}).`;
+      return `Deal more damage the farther your target is: ${moreText(e.perRow)} at 1 row of distance, ${moreText(e.perRow * 2)} at 2, ${moreText(e.perRow * 3)} at 3 (distance = your row + their row${e.extraRows ? ` + ${e.extraRows}` : ''}).`;
     case 'naturesGrudge':
       return `When an ally hero falls (you included; summons do not count), the enemy that killed it is gripped by roots: ${e.status ? `${cap(e.status)} for ${turnsText(e.turns)} and ` : ''}${cap(e.dot)} for ${turnsText(e.dotTurns ?? e.turns)} (${val(e.scale, e.power)} damage per tick, ${pct(e.power)} of ${ATTRIBUTE_NAME[e.scale]}). A kill by damage over time or ground counts for its source. Each Druid on the team applies it.`;
     case 'soulDrain':
@@ -169,7 +170,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'bonusVsStatus': {
       const names = e.statuses.map((s) => s.charAt(0).toUpperCase() + s.slice(1));
       const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}` : (names[0] ?? '');
-      return `Deal +${pct(e.bonus)} damage to targets suffering from ${list} (every hit, crits included).`;
+      return `Deal ${moreText(e.bonus)} damage to targets suffering from ${list} (every hit, crits included).`;
     }
     case 'omenTransfer':
       return `Your curses leave Bad Omens on enemies; enough Omens, or running out of time, make Doom strike (see Curses in the Codex). When an enemy carrying your Omens dies, its Omens pass to the nearest enemy (at most ${e.maxOnArrival} arrive; ${e.onDoomKill > 0 ? `if Doom killed it, ${e.onDoomKill} passes; a kill by a skill that detonates Omens passes none` : "if Doom or a skill that detonates Omens killed it, it passes none"}). Passed Omens keep the time they had left and never trigger Doom. Works only while you live.`;
@@ -187,13 +188,13 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'wardEtcher':
       return `After each skill that costs MP, the ally with the lowest armor (yourself only if alone) gains a magic shield of ${e.perMp}x the MP spent for ${turnsText(e.turns)}.`;
     case 'mireBound':
-      return `While you live, ${cap(e.status)} enemies are ${pct(1 - e.speedMult)} slower (it does not stack with other such witches).`;
+      return `While you live, ${cap(e.status)} enemies have ${multText(e.speedMult)} speed (it does not stack with other such witches).`;
     case 'flicker':
       return `When an enemy skill hits you, gain ${cap(e.status)} for ${turnsText(e.turns)}; at most once between your turns.`;
     case 'corpseHunger':
       return `Whenever any unit dies (not a summon), heal ${pct(e.ratio)} of your max HP (Wound reduces it).`;
     case 'boneWard':
-      return `While a summoned ally stands on your side, you take ${pct(e.reduce)} less damage from every source.`;
+      return `While a summoned ally stands on your side, you take ${lessText(e.reduce)} damage from every source.`;
     case 'martyrsVow':
       return 'Once per battle, take a killing skill hit meant for an adjacent ally (front, back, left or right) yourself; the damage is recalculated against your own armor.';
     case 'censerSmoke':
@@ -202,22 +203,22 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `+${e.mpAdd} max MP. Every time an ally takes damage from an enemy skill, you gain ${e.mpPerHit} MP.`;
     // Bölge I (tutorial) mob pasifleri (YM14-YM19; mob-plan.md 9.3)
     case 'grudge':
-      return `Your basic attack deals +${pct(e.bonus)} damage to the enemy who last hit you with a skill. When another enemy hits you with a skill, the grudge moves to them.`;
+      return `Your basic attack deals ${moreText(e.bonus)} damage to the enemy who last hit you with a skill. When another enemy hits you with a skill, the grudge moves to them.`;
     case 'headStart':
       return 'At the start of battle you gain a speed boost until your first turn (like Skip Turn), so you usually act first.';
     case 'packTactics':
-      return `Deal +${pct(e.perAlly)} damage for every other living pack member of your kind in the same row.`;
+      return `Deal ${moreText(e.perAlly)} damage with one other living pack member of your kind in the same row, ${moreText(e.perAlly * 2)} with two.`;
     case 'hideInBrush':
       return `While a living ally stands in front of you in your lane, your evasion is +${pct(e.evasion)}.`;
     case 'flockShield':
-      return `Once per battle, the first enemy skill that hits you deals ${pct(e.reduce)} less damage: the ravens take the blow.`;
+      return `Once per battle, the first enemy skill that hits you deals ${lessText(e.reduce)} damage: the ravens take the blow.`;
     case 'sharesOfDead':
-      return `Whenever an ally dies (not a summon), gain ${cap(e.status === 'fortify' ? 'fortified' : e.status)} for ${turnsText(e.turns)} and +${pct(e.perDeath)} damage until the end of battle (stacks).`;
+      return `Whenever an ally dies (not a summon), gain ${cap(e.status === 'fortify' ? 'fortified' : e.status)} for ${turnsText(e.turns)}, and your damage grows until the end of battle (${moreText(e.perDeath)} after one death, ${moreText(e.perDeath * 2)} after two, and so on).`;
     // Bölge III mob / boss pasifleri (YM20-YM23; mob-plan.md 10.5)
     case 'closeRanks':
-      return `You take ${pct(e.perAlly)} less damage from every source for each other living ally in your row (${pct(e.perAlly * 2)} with a full row).`;
+      return `You take ${lessText(e.perAlly)} damage from every source with one other living ally in your row (${lessText(e.perAlly * 2)} with a full row).`;
     case 'bloodScent':
-      return `Deal +${pct(e.bonus)} damage to targets below ${pct(e.below)} HP.`;
+      return `Deal ${moreText(e.bonus)} damage to targets below ${pct(e.below)} HP.`;
     case 'moltenShed':
       return `Once per battle, the first time an enemy skill drops your HP below ${pct(e.below)}, you shed your burning skin: every enemy takes ${val(e.scale, e.power)} ${e.element} damage (it cannot miss or crit; armor applies) and you gain ${cap(e.status === 'fortify' ? 'fortified' : e.status)} for ${turnsText(e.turns)}.`;
     case 'crownOfAsh':
@@ -226,7 +227,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'boarding':
       return `When you join the battle with a later wave or as reinforcements, you gain ${cap(e.status)} for ${turnsText(e.turns)}.`;
     case 'shell':
-      return `Your armor is x${e.armorMult} until the first critical hit you take; that crit cracks the shell for the rest of the battle.`;
+      return `Your armor is ${multText(e.armorMult)} until the first critical hit you take; that crit cracks the shell for the rest of the battle.`;
     case 'slick':
       return `While you stand on ${groundName(e.ground)} ground, your evasion is +${pct(e.evasion)}.`;
     case 'lure':
@@ -355,9 +356,9 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       } else add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${damageAmount(e, stats, formulas)})${times > 1 ? ` x${times}` : ''}${who}`, element);
       if (e.ignoreDefense) add(`Ignores ${pct(e.ignoreDefense)} of armor`);
       if (e.lifesteal) add(`Heals you for ${pct(e.lifesteal)} of damage dealt`);
-      if (e.bonusVsTag) add(`x${e.bonusVsTag.multiplier} vs ${e.bonusVsTag.tag}`);
-      if (e.bonusVsStatus) add(`x${e.bonusVsStatus.multiplier} damage against ${cap(e.bonusVsStatus.status)} targets`);
-      if (e.falloff) add(`Each target hit takes ${pct(1 - e.falloff)} less damage than the previous one`);
+      if (e.bonusVsTag) add(`${multText(e.bonusVsTag.multiplier)} damage vs ${e.bonusVsTag.tag}`);
+      if (e.bonusVsStatus) add(`${multText(e.bonusVsStatus.multiplier)} damage against ${cap(e.bonusVsStatus.status)} targets`);
+      if (e.falloff) add(`Each target hit takes ${multText(e.falloff)} the damage of the previous one`);
       // Headsman's Blow: harcanan Rage ve hedefin eksik canı (spec.ts > damageSpecFor ile aynı formül)
       if (e.powerPerRage) {
         const lo = skill.cost.resource === 'rage' ? skill.cost.amount : 0;
@@ -365,7 +366,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const at = (r: number) => damageAmount({ ...e, power: e.power + e.powerPerRage! * r }, stats, formulas);
         add(`+${pct(e.powerPerRage)} ${ATTRIBUTE_NAME[e.scale]} per Rage spent${hi > lo ? ` (${at(lo)} at ${lo} Rage, ${at(hi)} at ${hi} Rage)` : ''}`, element);
       }
-      if (e.executeBonus) add(`Hits harder the more HP the target is missing: up to +${pct(e.executeBonus)} against a nearly dead target`, element);
+      if (e.executeBonus) add(`Hits harder the more HP the target is missing: up to ${moreText(e.executeBonus)} damage against a nearly dead target`, element);
       if (e.bonusPerMissingMana) add(`+${e.bonusPerMissingMana} per missing mana of the target`, element);
       if (e.repeatChance) add(`${pct(e.repeatChance)} chance to hit twice`, element);
       if (e.critBonus && !e.guaranteedCrit) add(`+${pct(e.critBonus)} crit chance`, element);
@@ -376,14 +377,14 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const what0 = b.resource === 'hp' ? `${pct(b.ratio)} of your max HP (${stake})` : b.ratio >= 1 ? 'all your remaining MP' : `${pct(b.ratio)} of your remaining MP`;
         // Mortgage (skill ağacı, bet.hpStake): ek can bahsi, kazançta MP sayılır
         const what = b.resource === 'mp' && (b.hpStake ?? 0) > 0 ? `${what0} plus ${pct(b.hpStake!)} of your max HP (counts as MP)` : what0;
-        const win = b.perStake ? `x${(b.winMult).toFixed(1).replace(/.0$/, '')} damage, +${b.perStake} per ${b.resource.toUpperCase()} bet` : `x${m.win.toFixed(1).replace(/.0$/, '')} damage`;
-        const lose = m.lose <= 0 ? 'you miss' : `x${m.lose.toFixed(1).replace(/.0$/, '')} damage`;
+        const win = b.perStake ? `${multText(Number(b.winMult.toFixed(1)))} damage, +${b.perStake} per ${b.resource.toUpperCase()} bet` : `${multText(Number(m.win.toFixed(1)))} damage`;
+        const lose = m.lose <= 0 ? 'you miss' : `${multText(Number(m.lose.toFixed(1)))} damage`;
         add(`Bet ${what}: ${pct(b.winChance)} chance for ${win}; otherwise ${lose} and you lose the bet`, element);
       }
       if (e.bonusFromShield) add(`+${pct(e.bonusFromShield.ratio)} of your shield${e.bonusFromShield.consume ? ' (consumed)' : ''}`, element);
     } else if (e.type === 'heal') {
       add(`Heal ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.healPowerMult))})${who}`);
-      if (e.missingHpBonus) add(`Heals more the lower the ally's health: up to +${pct(e.missingHpBonus)}`);
+      if (e.missingHpBonus) add(`Heals more the lower the ally's health: up to ${moreText(e.missingHpBonus)}`);
     } else if (e.type === 'revive') {
       add(`Choose a fallen ally, then choose an empty cell on your side: it rises there with ${pct(e.hpRatio)} HP and ${pct(e.mpRatio)} MP (even if something now stands on its corpse)`);
       add('Needs at least one empty cell on your side; the revived ally starts with an empty turn bar');
@@ -436,7 +437,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       add(`Taunt ${e.turns} turns: enemies must target you${e.breakRatio ? ` (ends after losing ${pct(e.breakRatio)} HP)` : ''}`);
       const cc = Object.values(defs.statuses ?? {}).filter((d) => d.breaksTaunt).map((d) => d.name);
       if (cc.length > 0) add(`Ends at once if you get ${cc.join(' or ')}`);
-      if (e.allyDamageMult !== undefined) add(`Your allies take ${pct(1 - e.allyDamageMult)} less damage while it lasts`);
+      if (e.allyDamageMult !== undefined) add(`Your allies take ${multText(e.allyDamageMult)} damage while it lasts`);
     } else if (e.type === 'status') {
       const def = defs.statuses?.[e.status];
       const how = e.cause === 'vines' ? ' (rooted by vines)' : '';
@@ -475,8 +476,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     } else if (e.type === 'detonate') {
       const def = defs.statuses?.[e.status];
       const doom = def?.doom;
-      if (doom) add(`Then Doom strikes at once with every Omen on the target, x${e.mult}: ${pct(doom.powerPerStack * e.mult)} ${ATTRIBUTE_NAME[doom.scale]} (${raw(doom.scale, doom.powerPerStack * e.mult)}) ${doom.element} damage per Omen; it cannot miss but can crit`, doom.element);
-      else add(`Detonates ${e.status} x${e.mult}`);
+      if (doom) add(`Then Doom strikes at once with every Omen on the target, ${multText(e.mult)}: ${pct(doom.powerPerStack * e.mult)} ${ATTRIBUTE_NAME[doom.scale]} (${raw(doom.scale, doom.powerPerStack * e.mult)}) ${doom.element} damage per Omen; it cannot miss but can crit`, doom.element);
+      else add(`Detonates ${e.status} ${multText(e.mult)}`);
       add('On a miss nothing happens: the Omens stay');
       if (e.noTransferOnKill) add('Every Omen on the target is spent; if this kills it, nothing passes on (Ill Omen does not trigger)');
     } else if (e.type === 'dot') {
@@ -514,7 +515,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   // Ömer 2026-10-24 (open-questions 416/9): area_any + emptyOwn (Judgment): kendi tarafında boş hücreye de atılabilir
   if (skill.target === 'area_any' && skill.area?.emptyOwn) add('Can also be cast on an empty cell on your side: it then only leaves the ground there');
   if (skill.area?.shape === 'x' && (skill.area.hitsAtCenter ?? 1) > 1) add(`The blade crosses the center twice: the unit on the anchor cell is hit ${skill.area.hitsAtCenter} times, each hit rolls on its own`);
-  if (skill.effects.some((e) => e.type === 'damage' && e.guaranteedCrit)) add(`Always a critical hit (x${formulas.attributes.critMult}); it can still miss`, 'physical');
+  if (skill.effects.some((e) => e.type === 'damage' && e.guaranteedCrit)) add(`Always a critical hit (${multText(formulas.attributes.critMult)}); it can still miss`, 'physical');
   if (skill.requiresOpenBehind) add('Only targets with an empty cell right behind them (a living unit there blocks it; a corpse does not); never a unit in the back row');
   if (rangeEnabled(formulas)) {
     // Menzil (range.md, range.ts): kart satırı; menzil kapalıyken eski melee satırı
@@ -617,15 +618,15 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     case 'armorAura':
       return num('Armor aura', Math.round(stats.armor * e.pct), 'shield');
     case 'rage':
-      return e.rageOnHurt ? [...fixed('Max bonus', `+${pct(e.maxBonus)}`), ...fixed('Rage per 1% HP lost', String(Math.round(e.rageOnHurt.perHpPercent * 100) / 100))] : fixed('Max bonus', `+${pct(e.maxBonus)}`);
+      return e.rageOnHurt ? [...fixed('Max bonus', moreText(e.maxBonus)), ...fixed('Rage per 1% HP lost', String(Math.round(e.rageOnHurt.perHpPercent * 100) / 100))] : fixed('Max bonus', moreText(e.maxBonus));
     case 'spellEcho':
       return fixed('Chance', pct(e.chance));
     case 'longshot':
-      return fixed('Per row', `+${pct(e.perRow)}`);
+      return fixed('Per row', moreText(e.perRow));
     case 'soulDrain':
       return fixed('Life steal', pct(e.ratio));
     case 'bonusVsStatus':
-      return fixed('Bonus', `+${pct(e.bonus)}`);
+      return fixed('Bonus', moreText(e.bonus));
     case 'manaOverflow':
       return fixed(`Team MP per ${e.threshold} blocked`, `+${e.mana}`);
     case 'omenTransfer':
@@ -641,17 +642,17 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     case 'wardEtcher':
       return fixed('Shield per MP', `x${e.perMp}`);
     case 'mireBound':
-      return fixed('Slow', pct(1 - e.speedMult));
+      return fixed('Speed', multText(e.speedMult));
     case 'corpseHunger':
       return fixed('Heal', pct(e.ratio));
     case 'boneWard':
-      return fixed('Less damage', pct(e.reduce));
+      return fixed('Damage taken', lessText(e.reduce));
     case 'censerSmoke':
       return fixed('Heal per turn', pct(e.ratio));
     case 'choirVessel':
       return fixed('MP per hit', `+${e.mpPerHit}`);
     case 'shell':
-      return fixed('Armor', `x${e.armorMult}`);
+      return fixed('Armor', multText(e.armorMult));
     case 'slick':
       return fixed('Evasion', `+${pct(e.evasion)}`);
     case 'lure':

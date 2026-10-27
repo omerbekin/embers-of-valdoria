@@ -1,6 +1,7 @@
 // A4 Hero Oaths (Ömer seçimi 2026-10-25, maps-2-3.md 9; Ömer notu: TEK tapınak, TEK kahraman; campaign-dev 2026-10-27, open-questions 429):
 // saf veri, etki ve metin. Durum geçişleri (swearOath / breakOath) state.ts'te; bu modül state.ts'i içe aktarmaz.
 import oathsJson from '../../data/campaign/oaths.json';
+import { addPctText, multText } from '../engine/bonus-text';
 import type { UnitModifiers, UnitSetup } from '../engine/types';
 import type { CampaignState } from './types';
 
@@ -40,16 +41,17 @@ export const oathBreakCost = (): number => OATH_DATA.breakCost;
 /** Kahramanın yemini (yeminli değilse undefined). */
 export const heroOath = (s: Pick<CampaignState, 'oath'>, heroId: string): OathDef | undefined => (s.oath?.hero === heroId ? oathDef(s.oath.id) : undefined);
 
-const pct = (v: number): string => `${Math.round(Math.abs(v) * 100)}%`;
-
-/** Etkinin oyuncu metni (İngilizce; her alan bir satır). */
+/**
+ * Etkinin oyuncu metni (İngilizce; her alan bir satır). Bonus yazım kuralı (Ömer 2026-10-27): damageAdd / critAdd item'lerle aynı havuza
+ * toplanır ("+12% damage dealt"); hpMult ve şifa çarpanları ayrı çarpandır ("×1.15 max health", "×0.5 camp and inn rest healing").
+ */
 export function oathEffectLines(e: OathEffect): string[] {
   const out: string[] = [];
-  if (e.damageAdd) out.push(`${e.damageAdd > 0 ? '+' : '-'}${pct(e.damageAdd)} damage dealt`);
-  if (e.critAdd) out.push(`${e.critAdd > 0 ? '+' : '-'}${pct(e.critAdd)} critical chance`);
-  if (e.hpMult && e.hpMult !== 1) out.push(`${e.hpMult > 1 ? '+' : '-'}${pct(e.hpMult - 1)} max health`);
-  if (e.restHealMult !== undefined && e.restHealMult !== 1) out.push(e.restHealMult === 0.5 ? 'Camp and inn rest heal half as much' : `Camp and inn rest heal ${pct(e.restHealMult)} as much`);
-  if (e.victoryHealMult !== undefined && e.victoryHealMult !== 1) out.push(e.victoryHealMult === 0.5 ? 'Healing after victories is halved' : `Healing after victories is ${pct(e.victoryHealMult)}`);
+  if (e.damageAdd) out.push(`${addPctText(e.damageAdd)} damage dealt`);
+  if (e.critAdd) out.push(`${addPctText(e.critAdd)} critical chance`);
+  if (e.hpMult && e.hpMult !== 1) out.push(`${multText(e.hpMult)} max health`);
+  if (e.restHealMult !== undefined && e.restHealMult !== 1) out.push(`${multText(e.restHealMult)} camp and inn rest healing`);
+  if (e.victoryHealMult !== undefined && e.victoryHealMult !== 1) out.push(`${multText(e.victoryHealMult)} healing after victories`);
   return out;
 }
 

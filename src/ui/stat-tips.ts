@@ -3,6 +3,7 @@
 // Ömer 2026-10-11) burada anlatılır; ikonu eski Might ikonu.
 import { content, describeStat, UNBLOCKABLE_LABEL } from '../engine';
 import type { StatKind, Stats } from '../engine';
+import { multText } from '../engine/bonus-text';
 import { iconUrl } from './dom-icons';
 import { splitStatTitle } from './band-rich';
 import type { BandTipSpec } from './band-tip';
@@ -122,14 +123,15 @@ function statTipBase(id: string, stats: Stats): StatTip | null {
   const kind = KIND[id];
   if (!kind) return null;
   if (kind === 'might') {
-    const pct = Math.round(((stats.damageMult ?? 1) * (stats.weaponMult ?? 1) - 1) * 1000) / 10;
-    const sign = pct < 0 ? '' : '+';
+    // Bonus yazım kuralı (Ömer 2026-10-27): toplam hasar çarpanı = Global damage havuzu (toplamsal) x silah gücü (ayrı çarpan)
+    const pool = stats.damageMult ?? 1;
+    const weapon = stats.weaponMult ?? 1;
     return {
-      title: `Damage ${sign}${pct}%`,
+      title: `Damage ${multText(Math.round(pool * weapon * 1000) / 1000)}`,
       lines: [
-        `All damage of your skills ${sign}${pct}% (weapon power and Global damage affixes).`,
-        "Weapon power multiplies skill damage: x(1 + power/100), measured against your class's starter weapon. No weapon = less damage.",
-        'Global damage stacks additively across items. Element damage affixes add on top for their element.',
+        `All damage of your skills ${multText(Math.round(pool * weapon * 1000) / 1000)}: weapon power (${multText(Math.round(weapon * 1000) / 1000)}) times damage bonuses (${multText(pool)}).`,
+        "Weapon power multiplies skill damage: ×(1 + power/100), measured against your class's starter weapon. No weapon = less damage.",
+        'Damage bonuses (+% damage on items, oaths and blessings) add up first, then multiply once. Element damage (×) multiplies on top for its element.',
       ],
     };
   }

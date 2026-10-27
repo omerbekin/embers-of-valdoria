@@ -197,7 +197,7 @@
     },
     "0.r": {
       "name": "Killing Distance",
-      "text": "Critical hits against targets 5+ rows away deal +5% damage per rank.",
+      "text": "Critical hits against targets 5+ rows away deal ×1.05 damage per rank.",
       "src": "A:V1:0.r",
       "fx": [
         {
@@ -274,7 +274,7 @@
     },
     "0.fa": {
       "name": "Tunnel Vision",
-      "text": "Sharpshooter +4% per row of distance, but targets 2 or fewer rows away take 25% less damage from you.",
+      "text": "Sharpshooter +4% per row of distance, but targets 2 or fewer rows away take ×0.75 damage from you.",
       "src": "A:V1:0.fa",
       "fx": [
         {
@@ -299,7 +299,7 @@
     },
     "0.fb": {
       "name": "Exposed Perch",
-      "text": "Your skills count 2 extra rows of distance for their bonuses, but you take 12% more damage from enemy ranged skills.",
+      "text": "Your skills count 2 extra rows of distance for their bonuses, but you take ×1.12 damage from enemy ranged skills.",
       "src": "A:V1:0.fb*",
       "fx": [
         {
@@ -680,7 +680,7 @@
     },
     "2.f2": {
       "name": "Weighted Head",
-      "text": "Piercing Arrow +6% damage per rank against enemies with more Armor than you.",
+      "text": "Piercing Arrow ×1.06 damage per rank against enemies with more Armor than you.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -740,7 +740,7 @@
     },
     "2.r": {
       "name": "Rivet Breaker",
-      "text": "Piercing Arrow +3% damage per rank against Fortified or Blessed enemies.",
+      "text": "Piercing Arrow ×1.03 damage per rank against Fortified or Blessed enemies.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -761,7 +761,7 @@
     },
     "2.ea": {
       "name": "Sunder",
-      "text": "Piercing Arrow Sunders every enemy it hits for 2 turns: their Armor is 20% lower.",
+      "text": "Piercing Arrow Sunders every enemy it hits for 2 turns: their Armor is ×0.8.",
       "src": "D:new row proposal",
       "new": true,
       "approved": true,
@@ -813,7 +813,7 @@
     },
     "2.fa": {
       "name": "Brittle Point",
-      "text": "Sunder is 40% instead of 20%, but Piercing Arrow stops after the second enemy.",
+      "text": "Sunder makes Armor ×0.6 instead of ×0.8, but Piercing Arrow stops after the second enemy.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -897,7 +897,7 @@
     },
     "3.f1": {
       "name": "Thick Volley",
-      "text": "Arrow Rain +4% damage per rank.",
+      "text": "Arrow Rain ×1.04 damage per rank.",
       "src": "A:V4:3.f1",
       "fx": [
         {
@@ -954,7 +954,7 @@
     },
     "3.f3": {
       "name": "Rear Volley",
-      "text": "Arrow Rain +6% damage per rank to enemies in their back row.",
+      "text": "Arrow Rain ×1.06 damage per rank to enemies in their back row.",
       "src": "A:V1:3.f3",
       "fx": [
         {
@@ -992,7 +992,7 @@
     },
     "3.r": {
       "name": "Stinging Shower",
-      "text": "Arrow Rain +2% damage per rank for each Slowed enemy in its area.",
+      "text": "Arrow Rain ×(1 + 2% per rank for each Slowed enemy in its area) damage.",
       "src": "A:V3:3.r",
       "fx": [
         {
@@ -1066,7 +1066,7 @@
     },
     "3.fa": {
       "name": "Choking Rain",
-      "text": "Your field of shafts lasts 4 turns, but Arrow Rain deals 40% less damage on impact.",
+      "text": "Your field of shafts lasts 4 turns, but Arrow Rain deals ×0.6 damage on impact.",
       "src": "A:V3:3.fa",
       "fx": [
         {
@@ -1161,7 +1161,7 @@
     },
     "4.u1": {
       "name": "Killing Shot",
-      "text": "Aimed Shot +25% damage against enemies below 50% HP.",
+      "text": "Aimed Shot ×1.25 damage against enemies below 50% HP.",
       "src": "B:V5:4.u1",
       "fx": [
         {

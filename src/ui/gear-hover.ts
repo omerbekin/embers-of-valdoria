@@ -20,7 +20,7 @@ import {
   meetsLevel,
   offhandBlocker,
   planEquip,
-  signedText,
+  affixDeltaText,
   SLOT_IDS,
   type Equipment,
   type ItemInstance,
@@ -116,7 +116,7 @@ export function heroItemLine(h: HoverHero, inst: ItemInstance | null | undefined
   } else {
     // Panelde görünmeyen affix'ler (element hasarı %, delme, auralar...): takılıyla affix farkı
     const ad = affixDiff(inst, h.equipment[slot], h.class).filter((a) => !a.stat && a.diff !== 0).slice(0, MAX_PARTS);
-    parts = ad.map((a) => ({ text: `${signedText(a.diff, a.pct)} ${a.name}`, dir: a.diff > 0 ? 'up' : 'down' }));
+    parts = ad.map((a) => ({ text: affixDeltaText(a), dir: a.diff > 0 ? 'up' : 'down' }));
   }
   // Seviye şartı (Item Güçlendirme x6): takılamaz ama karşılaştırma yine gösterilir (kırmızı "Requires Level X" önde)
   if (!meetsLevel(h.level, inst)) {

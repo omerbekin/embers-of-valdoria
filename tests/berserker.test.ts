@@ -130,7 +130,7 @@ describe("Headsman's Blow", () => {
     const info = describeSkill(HB, W.stats, content.formulas);
     const text = info.lines.join(' ');
     expect(text).toContain('per Rage spent');
-    expect(text).toContain(`up to +${Math.round(HBD.executeBonus! * 100)}%`);
+    expect(text).toContain(`up to ×${1 + HBD.executeBonus!} damage`);
     expect(describePassive(W.passive!, W.stats, content.formulas)).toContain('Losing HP gives Rage');
   });
 

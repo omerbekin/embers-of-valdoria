@@ -17,8 +17,8 @@ import { maps23On } from '../ui/maps23-flag';
 import { PITS } from '../campaign/pit';
 import { OATHS, OATH_DATA, oathMinusText, oathPlusText } from '../campaign/oath';
 import itemsJson from '../../data/items.json';
-import { affixMidText, effectLine } from '../progression/item-text';
-import { ITEMS as ITEM_DATA, TIER_IDS, affixDef, gripOf, GRIP_NAME, implicitValues, levelRequirement, weaponPowerOf, type Grip } from '../progression/items';
+import { affixMidText, effectLine, fillValues } from '../progression/item-text';
+import { ITEMS as ITEM_DATA, TIER_IDS, partBonusForm, type BonusForm, affixDef, gripOf, GRIP_NAME, implicitValues, levelRequirement, weaponPowerOf, type Grip } from '../progression/items';
 import { dropChances } from '../progression/drop';
 import { RARE } from '../progression/rare';
 import endlessJson from '../../data/endless.json';
@@ -32,6 +32,8 @@ import { isAccuracyCritDebuff } from '../engine/cc-immunity';
 import { statusStackMode } from '../engine/status-stack';
 import type { Attribute, CombatantDef, Element, Formulas, SkillDef, StatKind, Stats } from '../engine';
 import { primaryBonusInfo, primaryBonusLines } from '../engine/stat-info';
+import { ADDITIVE_LABEL, MULT_PASSIVES, moreText, multText } from '../engine/bonus-text';
+import { ADDITIVE, AFFIX_ADD } from '../engine/stats';
 import { buildGrounds, buildStatuses, isTestSkill, skillOwner, searchText, avatarMap, groupByDir } from '../gallery/catalog';
 import type { GroundEntry, Owner, StatusEntry } from '../gallery/catalog';
 import { STAT_COLOR, STAT_LABEL, statIconName } from '../ui/stat-icons';
@@ -572,7 +574,7 @@ function rageHurtLines(): WikiBlock[] {
 /** Rage makalesi: Rage'in tamamını harcayan, harcanan Rage ve hedefin eksik canıyla büyüyen skill'ler (Headsman's Blow; veriden). */
 function rageSpendLines(): WikiBlock[] {
   return allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'damage' }> => e.type === 'damage' && (!!e.powerPerRage || !!e.executeBonus)).map((e) =>
-    p(`${s.name}: ${s.cost.spendAll ? `spends ALL your Rage (at least ${s.cost.amount}); ` : ''}${e.powerPerRage ? `deals ${pct(e.power)} ${e.scale.toUpperCase()} plus ${pct(e.powerPerRage)} ${e.scale.toUpperCase()} for every Rage spent` : `deals ${pct(e.power)} ${e.scale.toUpperCase()}`}${e.executeBonus ? `, and up to +${pct(e.executeBonus)} more the more HP the target is missing (counted before the hit)` : ''}. Waiting for more Rage, or for a wounded target, makes it hit harder.`)));
+    p(`${s.name}: ${s.cost.spendAll ? `spends ALL your Rage (at least ${s.cost.amount}); ` : ''}${e.powerPerRage ? `deals ${pct(e.power)} ${e.scale.toUpperCase()} plus ${pct(e.powerPerRage)} ${e.scale.toUpperCase()} for every Rage spent` : `deals ${pct(e.power)} ${e.scale.toUpperCase()}`}${e.executeBonus ? `, and up to ${moreText(e.executeBonus)} damage the more HP the target is missing (counted before the hit)` : ''}. Waiting for more Rage, or for a wounded target, makes it hit harder.`)));
 }
 
 function debuffStackingText(): string {
@@ -601,7 +603,7 @@ function curseArticles(): WikiArticle[] {
   const max = om.maxStacks!;
   const dur = om.duration ?? 3;
   const crit = allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'omen' }> => e.type === 'omen' && (e.status ?? 'omen') === omenId)).find((e) => e.critStacks !== undefined && e.critStacks > e.stacks);
-  const detonators = allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'detonate' }> => e.type === 'detonate' && e.status === omenId).map((e) => `${s.name} (x${num(e.mult)})`));
+  const detonators = allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'detonate' }> => e.type === 'detonate' && e.status === omenId).map((e) => `${s.name} (${multText(e.mult)})`));
   const noTransfer = allSkills().filter((s) => s.effects.some((e) => e.type === 'detonate' && e.status === omenId && e.noTransferOnKill)).map((s) => s.name);
   const critDoomers = allSkills().filter((s) => s.effects.some((e) => e.type === 'omen' && (e.status ?? 'omen') === omenId && e.critDoomOnCrit)).map((s) => s.name);
   // Yalnızca skill'lerin uyguladığı lanet DoT'ları (Withering); item kaynaklı Burning bu makaleye girmez
@@ -617,7 +619,7 @@ function curseArticles(): WikiArticle[] {
           ? `Timer: the first Omen starts a ${dur}-turn timer (counted on the cursed unit's own turns). Every new Omen from a curse resets it to ${dur} turns; Omens passed on by Ill Omen do not.`
           : `Timer: the first Omen starts a ${dur}-turn timer (counted on the cursed unit's own turns). New Omens never renew or extend it.`,
         `Doom: when the ${max === 3 ? 'third' : `${max}th`} Omen lands, Doom strikes at once: ${pct(doom.powerPerStack)} of the curser's ${STAT_LABEL[doom.scale]} as ${doom.element} ${doom.damageType} damage for every Omen, then the Omens are spent. Doom cannot miss or be dodged, but it can crit (the curser's crit chance); armor of its kind, shields and Lucky Escape work as usual.`,
-        `Timer runs out: the Omens do not fade quietly. At the start of the cursed unit's turn (after ground and Withering damage, before regeneration) they burst into Doom, one share per Omen${doom.expireMult !== 1 ? ` (x${num(doom.expireMult)})` : ''}, using the curser's Luck and crit chance from when the last Omen was added. If the unit dies earlier that turn, no Doom happens.`,
+        `Timer runs out: the Omens do not fade quietly. At the start of the cursed unit's turn (after ground and Withering damage, before regeneration) they burst into Doom, one share per Omen${doom.expireMult !== 1 ? ` (${multText(doom.expireMult)})` : ''}, using the curser's Luck and crit chance from when the last Omen was added. If the unit dies earlier that turn, no Doom happens.`,
         'Guard: a Doom set off by a skill is part of that hit, so a guarding ally shares it. A Doom from a timer running out is a curse, not a skill hit: guard never takes any of it.',
         critDoomers.length > 0 ? `Critical Doom: a critical ${critDoomers.join(' or ')} that completes ${max} Omens makes the Doom a critical hit (no separate roll). Other curses roll Doom's crit as usual.` : '',
         `Misfortune: each Omen lowers the cursed unit's crit chance by ${pct(Math.abs(om.critDeltaPerStack ?? 0))} (never below 0%).${content.formulas.ccImmunity?.omenCrit ? ' Bosses ignore Misfortune (Omens and Doom still work on them).' : ''}`,
@@ -656,7 +658,7 @@ export function buildMechanics(): WikiArticle[] {
   // Primary bonuslar
   for (const kind of ['str', 'dex', 'int', 'luck'] as const) out.push(bonusArticle(kind));
   // Hasar ve isabet
-  const wk = Object.entries(f.weaknesses).flatMap(([tag, m]) => Object.entries(m).map(([el, mult]) => `${cap(tag)} units take x${num(mult)} ${el} damage.`));
+  const wk = Object.entries(f.weaknesses).flatMap(([tag, m]) => Object.entries(m).map(([el, mult]) => `${cap(tag)} units take ${multText(mult)} ${el} damage.`));
   out.push(
     article('damage-formula', 'Damage', 'Damage formula', cx('mech_damage', 'sword'), [
       p('Damage = skill power x attribute x scaling, plus any extra the skill adds, then reduced by armor, then multiplied by weakness, then by the crit.'),
@@ -667,18 +669,19 @@ export function buildMechanics(): WikiArticle[] {
         // Faz 2c: zırhı düşüren / alınan hasarı artıran durumlar (statuses.json armorMult / damageTakenMult; Sunder, Exposed...)
         `Armor and damage-taken effects: ${Object.values(content.statuses)
           .filter((s) => s.armorMult !== undefined || s.damageTakenMult !== undefined)
-          .map((s) => `${s.name} (${s.armorMult !== undefined ? `Armor x${num(s.armorMult)}` : `damage taken x${num(s.damageTakenMult!)}`})`)
+          .map((s) => `${s.name} (${s.armorMult !== undefined ? `Armor ${multText(s.armorMult)}` : `damage taken ${multText(s.damageTakenMult!)}`})`)
           .join(', ')}. They multiply the target's current armor or the damage it takes; several stack by multiplying.`,
         // Altıncı tur: verilen hasarı azaltan durumlar (statuses.json damageDealtMult / magicDealtMult; Weakened)
         `Damage-dealt effects: ${Object.values(content.statuses)
           .filter((s) => s.damageDealtMult !== undefined || s.magicDealtMult !== undefined)
-          .map((s) => `${s.name} (damage dealt x${num(s.damageDealtMult ?? s.magicDealtMult!)} unless its source says otherwise; some sources weaken only magic damage)`)
+          .map((s) => `${s.name} (damage dealt ${multText(s.damageDealtMult ?? s.magicDealtMult!)} unless its source says otherwise; some sources weaken only magic damage)`)
           .join(', ')}. They multiply the damage the affected unit deals, in the battle preview too.`,
         `Weaknesses: ${wk.join(' ')} See the Elements section.`,
-        `Crit: a crit multiplies the final damage by x${num(a.critMult)} (chance ${pct(a.critChanceBase)} + ${pct(a.critChancePerLuck, 1)} per Luck). The multiplier never changes; Luck only adds chance. Crits also apply to healing, never to shields.`,
-        `Summoned units take x${num(f.summon.damageTakenMultiplier)} damage.`,
+        `Crit: a crit multiplies the final damage by ${multText(a.critMult)} (chance ${pct(a.critChanceBase)} + ${pct(a.critChancePerLuck, 1)} per Luck). The multiplier never changes; Luck only adds chance. Crits also apply to healing, never to shields.`,
+        `Summoned units take ${multText(f.summon.damageTakenMultiplier)} damage.`,
       ),
     ]),
+    bonusRulesArticle(),
     article('hit-chance', 'Damage', 'Accuracy, evasion and hit chance', statIconName('accuracy'), [
       p(`Every damaging hit (physical and magic) first rolls to hit: hit chance = attacker accuracy - target evasion, never above ${pct(f.hit.max)}. It can drop to 0%. One roll decides the outcome: a hit, a Dodge or a Miss.`),
       list(
@@ -746,7 +749,7 @@ export function buildMechanics(): WikiArticle[] {
     levelsArticle(),
     article('backstab', 'Special rules', 'Strikes from behind and sure crits', 'backstab', [
       p(`Some assassin skills slip behind the target, stab it in the back and return. ${f.range?.enabled ? 'They still need range like any skill' : 'They ignore the melee row rules (any row can be targeted)'}, but only a target with an empty cell right behind it can be chosen: the next row back, same lane, must hold no living unit. A corpse or a cell kept for a fallen ally does not block it; a target in the back row can never be chosen ("No room behind the target"), and one with a living unit behind it is "shielded from behind". Moving units (or a unit falling) can open the way. The caster is drawn there only for the strike: the formation does not change.`),
-      p(`Some hits are always critical: no crit roll is made and the crit multiplier (x${num(a.critMult)}) always applies. The hit roll still happens, so they can still miss or be dodged.`),
+      p(`Some hits are always critical: no crit roll is made and the crit multiplier (${multText(a.critMult)}) always applies. The hit roll still happens, so they can still miss or be dodged.`),
       p(`Skills that strike from behind: ${allSkills().filter((s) => s.requiresOpenBehind).map((s) => s.name).join(', ') || 'none yet'}. Always critical: ${allSkills().filter((s) => s.effects.some((e) => e.type === 'damage' && e.guaranteedCrit)).map((s) => s.name).join(', ') || 'none yet'}.`),
       p(`Some skills carry extra crit chance of their own: it is added to the caster's crit chance (statuses included) for that skill's hits only. ${allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'damage' }> => e.type === 'damage' && !!e.critBonus && !e.guaranteedCrit).slice(0, 1).map((e) => `${s.name} +${pct(e.critBonus!)}`)).join(', ') || 'None yet'}.`),
     ], '#c0203a'),
@@ -769,7 +772,7 @@ export function buildMechanics(): WikiArticle[] {
       p('On the battlefield a revivable corpse shows as a small ankh and skull on its cell (hover it to read who fell). When the corpse is consumed the mark fades and the cell looks empty again.'),
     ], '#b36bff'),
     article('summons', 'Special rules', 'Summons', 'treant', [
-      p(`Summoned units fight on your side and stand on your own side of the board, but are not part of the chosen team. They take x${num(f.summon.damageTakenMultiplier)} damage, may only exist for a number of turns, and fall as soon as their summoner falls.`),
+      p(`Summoned units fight on your side and stand on your own side of the board, but are not part of the chosen team. They take ${multText(f.summon.damageTakenMultiplier)} damage, may only exist for a number of turns, and fall as soon as their summoner falls.`),
       p(`Skills that summon: ${skillsWith((e) => e.type === 'summon').join(', ') || 'none yet'}. Damage dealt by a summon still counts for its owner's passives.`),
       p(`Summons grow with their summoner: they have the summoner's level, and their power and HP come from one of the summoner's attributes (${Object.values(content.summons).filter((d) => d.summonerScale).map((d) => `${d.name}: ${d.summonerScale!.from.toUpperCase()}`).join(', ')}). Only the summoner's own attributes count (class base and level points): attributes from items do not pass to the summon. The numbers in a summon's article are what a level 1 summoner calls.`),
     ]),
@@ -821,7 +824,7 @@ export function buildMechanics(): WikiArticle[] {
     ], '#b9c8dc'),
     article('low-hp-heal', 'Special rules', 'Heals that favour the wounded', 'radiance', [
       p('Some heals grow with how much health the ally is missing. The bonus is worked out for each ally on its own, just before the heal lands: an ally at full health gets no bonus, an ally with half its health gets half of the bonus, and an ally close to death gets nearly all of it. The heal is rolled and can crit as usual; the bonus is applied on top.'),
-      list(...allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'heal' }> => e.type === 'heal' && !!e.missingHpBonus).map((e) => `${s.name}: up to +${pct(e.missingHpBonus!)} healing on a nearly dead ally.`))),
+      list(...allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'heal' }> => e.type === 'heal' && !!e.missingHpBonus).map((e) => `${s.name}: up to ${moreText(e.missingHpBonus!)} healing on a nearly dead ally.`))),
     ], '#fff0a0'),
     article('half-turn', 'Special rules', 'Half-turn skills', cx('mech_half_turn', 'hourglass'), [
       p(`Using a skill normally takes a whole turn: the unit's action counter drops by ${f.turn.threshold}. A half-turn skill only takes half of that, so the unit's next turn comes in half the usual time (Haste, Slow and the Skip Turn boost still change how fast the counter fills). The turn bar shows this as soon as the skill is used.`),
@@ -996,6 +999,53 @@ function legendaryArticle(): WikiArticle {
   return { ...art, legendaries: leg.map((d) => ({ id: d.id, name: d.name, slot: d.slot, color: legColor })) };
 }
 
+/**
+ * Bonus yazım kuralı (Ömer 2026-10-27): "How bonuses combine". Listeler koddan / veriden türer: toplamsal havuzlar stats.ts > ADDITIVE / AFFIX_ADD,
+ * item affix'leri items.ts > partBonusForm, durumlar statuses.json *Mult alanları, pasifler bonus-text.ts > MULT_PASSIVES, yemin ve nimet verisi.
+ */
+function bonusRulesArticle(): WikiArticle {
+  const pools = [...ADDITIVE, ...AFFIX_ADD].map((k) => ADDITIVE_LABEL[k]);
+  const affixBy = (form: BonusForm) =>
+    [...new Set(Object.values(ITEM_DATA.affixDefs).filter((a) => a.parts?.some((x) => !x.fixed && partBonusForm(x.to) === form && (form !== 'add' || x.to.startsWith('mod:')))).map((a) => a.name))];
+  const oathAdd = OATHS.filter((o) => [o.plus, o.minus].some((e) => e.damageAdd || e.critAdd)).map((o) => o.name);
+  const oathMult = OATHS.filter((o) => [o.plus, o.minus].some((e) => (e.hpMult ?? 1) !== 1 || (e.restHealMult ?? 1) !== 1 || (e.victoryHealMult ?? 1) !== 1)).map((o) => o.name);
+  const shrineBy = (mult: boolean) => Object.values(WAYSHRINES).filter((w) => Object.keys(w.mods ?? {}).some((k) => k.endsWith('Mult') === mult)).map((w) => `${w.name} (${w.effect})`);
+  const MULT_KEYS = ['speedMult', 'damageTakenMult', 'healTakenMult', 'armorMult', 'damageDealtMult', 'magicDealtMult', 'healDealtMult'] as const;
+  const statusMults = Object.values(content.statuses)
+    .filter((s) => MULT_KEYS.some((k) => s[k] !== undefined) || s.elementTakenMult)
+    .map((s) => s.name);
+  const multPassive = new Set<string>(MULT_PASSIVES);
+  const passiveNames = [...new Set([...Object.values(content.classes).filter((c) => !c.testOnly), ...Object.values(content.mobs), ...Object.values(content.bosses)].flatMap((u) => (u.passive && multPassive.has(u.passive.effect.type) ? [u.passive.name] : [])))].sort();
+  const a = content.formulas.attributes;
+  const pool = 0.12 + 0.03 + 0.1;
+  return article('bonus-rules', 'Damage', 'How bonuses combine', cx('mech_damage', 'sword'), [
+    p('Bonuses are written in two ways, and the way they are written tells you how they combine.'),
+    list(
+      `"+12% damage" (a plus and a percent): an additive bonus. Every source of the same kind goes into one pool and the pool is added up first, then applied once.`,
+      `"×1.2 damage" (a times sign): a separate multiplier. It multiplies the result of everything else. Below 1 it lowers the value: "×0.8 damage taken" means 20% less.`,
+    ),
+    p(`Additive pools (items, Hero oaths, Wayshrine blessings and levels all add into the same pool): ${pools.join(', ')}.`),
+    list(
+      `Item affixes: ${affixBy('add').join(', ')}.`,
+      ...(oathAdd.length ? [`Hero oaths: the damage and crit chance parts of ${oathAdd.join(', ')}.`] : []),
+      ...(shrineBy(false).length ? [`Wayshrine blessings: ${shrineBy(false).join(', ')}.`] : []),
+    ),
+    p('Separate multipliers (each one multiplies on its own):'),
+    list(
+      `Critical hits: ${multText(a.critMult)} (Crit damage affixes raise this multiplier itself).`,
+      "Weapon power: ×(1 + power / 100), against your class's starter weapon.",
+      `Item affixes: ${affixBy('more').concat(affixBy('less')).join(', ')}.`,
+      `Statuses: ${statusMults.join(', ')}.`,
+      `Passives: ${passiveNames.join(', ')}, and the Hunter's Mark primary bonus.`,
+      ...(oathMult.length ? [`Hero oaths: the max health and healing parts of ${oathMult.join(', ')}.`] : []),
+      ...(shrineBy(true).length ? [`Wayshrine blessings: ${shrineBy(true).join(', ')}.`] : []),
+      'Element weaknesses, damage taken by summons, hero level growth of max HP and MP, and skill tree nodes written with ×.',
+    ),
+    p(`Example: +12% damage from an oath, +3% from a blessing and +10% from an item add up to +25%, which is ${multText(1 + pool)}. A critical hit (${multText(a.critMult)}) then multiplies that: ${multText(1 + pool)} × ${multText(a.critMult).slice(1)} = ${multText((1 + pool) * a.critMult)}.`),
+    p('Within one kind, gear and ranks add up first: two items with ×1.1 Fire damage give ×1.2 Fire damage, and three ranks of a ×1.06 skill tree node give ×1.18. That total then multiplies with everything else.'),
+  ]);
+}
+
 /** Affix havuzları (Ömer onayı 2026-10-11; veriden): kademe, ad, item seviyesi 10'daki orta değer, yuva sınırı. */
 function affixArticle(): WikiArticle {
   const tierName: Record<string, string> = { C: 'C (every item)', B: 'B (Rare and better)', A: 'A (Epic and better)' };
@@ -1050,10 +1100,10 @@ function levelsArticle(): WikiArticle {
     p(`Heroes grow from Level 1 to Level ${L.campaignMaxLevel} in the campaign and up to Level ${L.maxLevel} in Endless. Each chapter of the campaign spans about ${L.levelsPerChapter} levels; a hero who plays every stop once ends a chapter a level or two below its cap, and the cap is reached by fighting again or in Endless.`),
     list(
       `XP comes from every enemy you defeat and is shared by every hero who entered the battle (a hero who falls still counts). Kills made after a hero has fallen give that hero ${pct(L.fallenShare)} of their share.`,
-      `Stops: a battle gives ${num(m.battle)}x, an elite ${num(m.elite)}x and a boss ${num(m.boss)}x XP; an event or treasure without a fight gives a fixed ${num(m.event)}x share.`,
+      `Stops: a battle gives ${multText(m.battle)}, an elite ${multText(m.elite)} and a boss ${multText(m.boss)} XP; an event or treasure without a fight gives a fixed ${multText(m.event)} share.`,
       `Every stop has a level. A hero more than ${L.gap.fullBand} levels above or below it gains less XP, and nothing at ${L.gap.zeroAt} levels apart. A hero who is far behind the rest of a company that fits the stop still gains full XP, and heroes below the company's average gain a catch-up bonus (up to +${pct(L.catchUp.max)}). ${L.joinBelow ? `A new companion joins ${L.joinBelow} levels below the company's average (at least Level 1)` : "A new companion joins at the company's average level"}, with its stat points still to spend.`,
       `Each level gives ${L.statPoints.perLevel} stat point to place yourself, and every ${L.statPoints.atMultiplesOf}th level (${L.statPoints.atMultiplesOf}, ${L.statPoints.atMultiplesOf * 2}, ${L.statPoints.atMultiplesOf * 3}...) gives ${L.statPoints.bonusLevelPoints} (each point adds ${L.statPerPoint} to STR, DEX, INT or LUCK) and ${L.skillPointsPerLevel} skill point saved for the skill trees, and fully heals the hero (a fallen hero stays down). Spend points in Gear > Character: drag the point stone onto a stat or tap +, then Confirm. Points can wait.`,
-      `Every level past the first also raises a hero's max HP by ${pct(L.heroGrowth.hpPerLevel)} and max MP by ${pct(L.heroGrowth.mpPerLevel)} of what stats and items give (Level 10: +${pct(L.heroGrowth.hpPerLevel * 9)} HP, +${pct(L.heroGrowth.mpPerLevel * 9)} MP), on top of the stat points.`,
+      `Every level past the first also raises a hero's max HP by ${pct(L.heroGrowth.hpPerLevel)} and max MP by ${pct(L.heroGrowth.mpPerLevel)} of what stats and items give: a separate multiplier (Level 10: ${moreText(L.heroGrowth.hpPerLevel * 9)} HP, ${moreText(L.heroGrowth.mpPerLevel * 9)} MP), on top of the stat points.`,
       'A base stat can never be higher than the other three base stats together. Bonuses from items do not count for this rule.',
       `Items need a level: an item of item level N needs Level N - ${req} or higher.`,
       `Enemies have levels too: every enemy is the level of its stop (in Endless, of its wave; shown as "Lv N" above its name) and grows like a hero, with the same stat points a hero of its level has, spread to match its own build, under the same base stat rule, but without the hero's extra HP and MP. Its HP and other stats follow from its stats.`,
@@ -1074,7 +1124,7 @@ function endlessArticle(): WikiArticle {
     list(
       `One long fight: what you have carries into the next wave. After a victory every survivor regains ${pct(c.victoryHeal)} of their maximum HP (${pct(c.eliteHeal ?? c.victoryHeal)} after an elite wave; a boss victory heals them ${c.bossHeal >= 1 ? 'fully' : `for ${pct(c.bossHeal)}`}). ${c.mp === 'full' ? 'Mana starts full in every wave.' : 'Mana carries over by the same share.'} Buffs, Rage, shields, summons and positions carry over; every debuff is removed. Cooldowns ${c.cooldowns === 'carry' ? 'keep running from where they were (they do not reset, and skills do not start on cooldown again)' : 'reset between waves'}. Once-per-battle effects (such as Lucky Escape) are ready again.`,
       `Wounds work as in the campaign: a hero still down when a wave is won gets back up with ${pct(c.wounds.riseRatio)} of their HP and one wound (each wound: -${pct(c.wounds.maxHpLoss)} maximum HP). With ${c.wounds.lethal} wounds a hero who falls again dies and stays on the field as a corpse in the next wave: Valor or a revive skill can bring it back as usual (not if its corpse was consumed). ${c.clearWounds.includes('feast') ? "Hero's Feast, the boss reward, heals wounds; " : ''}${c.clearWounds.includes('heal') ? 'healing cards heal wounds; ' : 'healing cards do not heal wounds; '}healing never raises the dead.`,
-      `Rewards: after each wave pick one of three cards: an item card (open it and keep one of ${E.rewards.itemOptions.normal} items; ${E.rewards.itemOptions.elite} after an elite, ${E.rewards.itemOptions.boss} after a boss), gold (${E.rewards.goldBase} + ${E.rewards.goldPerWave} per wave cleared) or healing (${pct(E.rewards.healRatio)} HP to the living). After an elite ${sp.elite.itemCards === 1 ? 'the item card offers a higher item level' : `you get ${sp.elite.itemCards} item cards of a higher item level`}, ${num(sp.elite.goldMult)}x gold and Veteran's Lesson (every standing hero gains ${pct(sp.elite.xpRatio)} of the experience needed for their next level; the fallen get none); after a boss ${sp.boss.itemCards === 1 ? 'an even higher item level' : `${sp.boss.itemCards} item cards`}, ${num(sp.boss.goldMult)}x gold and a Hero's Feast (full HP and +${pct(sp.boss.feastHpMult - 1)} max HP for ${sp.boss.feastWaves} waves). Item rarity uses the same drop table as the campaign.`,
+      `Rewards: after each wave pick one of three cards: an item card (open it and keep one of ${E.rewards.itemOptions.normal} items; ${E.rewards.itemOptions.elite} after an elite, ${E.rewards.itemOptions.boss} after a boss), gold (${E.rewards.goldBase} + ${E.rewards.goldPerWave} per wave cleared) or healing (${pct(E.rewards.healRatio)} HP to the living). After an elite ${sp.elite.itemCards === 1 ? 'the item card offers a higher item level' : `you get ${sp.elite.itemCards} item cards of a higher item level`}, ${multText(sp.elite.goldMult)} gold and Veteran's Lesson (every standing hero gains ${pct(sp.elite.xpRatio)} of the experience needed for their next level; the fallen get none); after a boss ${sp.boss.itemCards === 1 ? 'an even higher item level' : `${sp.boss.itemCards} item cards`}, ${multText(sp.boss.goldMult)} gold and a Hero's Feast (full HP and ${multText(sp.boss.feastHpMult)} max HP for ${sp.boss.feastWaves} waves). Item rarity uses the same drop table as the campaign.`,
       `Relics: after every boss, choose one of ${E.relics.offer} relics; it helps the whole party for the rest of the run (${relics}).`,
       `Merchant: every ${E.shop.every} waves Odo the Peddler sets up his cart after the reward. He offers ${E.shop.size} wares for your party, buys items from your bag for half their value and lets you buy back the last ${E.shop.buybackSize} items you sold on this visit at the same price (the list is gone once you leave). Reroll wares costs ${E.shop.rerollCost} gold and brings a new set.`,
       `Bag: items you win or buy go to a bag of ${E.bagSize}; equip them between waves in Gear. With a full bag you cannot take an item card or buy until you discard or sell something; a rare drop waits on its card until you make room, or is left behind.`,
@@ -1138,7 +1188,7 @@ function weaponPowerText(): string[] {
     .join(', ');
   const imp = (k: string, L: number) => {
     const d = ITEM_DATA.implicits[k];
-    return d ? d.text.replace('{0}', String(implicitValues(d, L)[0] ?? 0)) : '';
+    return d ? fillValues(d.text, implicitValues(d, L)) : '';
   };
   const R = ITEM_DATA.levelReq;
   // Başlangıç ikinci eli (Ömer 2026-10-23; items.json > starterOffhands)
@@ -1328,7 +1378,7 @@ export function buildElements(): WikiElement[] {
 export function buildElementTable(): { head: string[]; rows: string[][] } {
   const tags = Object.keys(f.weaknesses);
   const els = Object.keys(ELEMENT_COLOR);
-  return { head: ['Target type', ...els.map(cap)], rows: tags.map((t) => [cap(t), ...els.map((e) => `x${num((f.weaknesses[t] as Record<string, number> | undefined)?.[e] ?? 1)}`)]) };
+  return { head: ['Target type', ...els.map(cap)], rows: tags.map((t) => [cap(t), ...els.map((e) => multText((f.weaknesses[t] as Record<string, number> | undefined)?.[e] ?? 1))]) };
 }
 
 // ---------------------------------------------------------------- hepsi

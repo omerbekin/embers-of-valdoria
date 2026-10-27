@@ -26,7 +26,7 @@
     "id": "grudge",
     "name": "Grudge",
     "icon": "rage",
-    "text": "Its basic attack (Cudgel) deals +25% damage to the hero who last hit it with a skill. When another hero hits it with a skill, the grudge moves to them.",
+    "text": "Its basic attack (Cudgel) deals ×1.25 damage to the hero who last hit it with a skill. When another hero hits it with a skill, the grudge moves to them.",
     "effect": {
       "type": "grudge",
       "skill": "cudgel",

@@ -150,7 +150,7 @@
     },
     "0.f2": {
       "name": "Soaking Robes",
-      "text": "Magic damage you block counts 4% more per rank toward Mana Overflow.",
+      "text": "Magic damage you block counts ×1.04 per rank toward Mana Overflow.",
       "src": "B:V3:0.f2",
       "fx": [
         {
@@ -416,7 +416,7 @@
     },
     "1.r": {
       "name": "Bare Steel",
-      "text": "Mana Steal +2% damage per rank against enemies with no buffs.",
+      "text": "Mana Steal ×1.02 damage per rank against enemies with no buffs.",
       "src": "B:V5:1.r",
       "fx": [
         {
@@ -544,7 +544,7 @@
     },
     "1.v": {
       "name": "Spellsplitter",
-      "text": "Mana Steal becomes Spellsplitter: it removes every buff from its target and deals +8% damage per buff removed.",
+      "text": "Mana Steal becomes Spellsplitter: it removes every buff from its target and deals ×(1 + 8% per buff removed) damage.",
       "src": "B:V5:1.v",
       "fx": [
         {
@@ -652,7 +652,7 @@
     },
     "2.ea": {
       "name": "Focused Siphon",
-      "text": "Drain Field burns 25% more MP from the enemy in its centre cell.",
+      "text": "Drain Field burns ×1.25 MP from the enemy in its centre cell.",
       "src": "A:V1:2.ea",
       "fx": [
         {
@@ -782,7 +782,7 @@
     },
     "3.f1": {
       "name": "Layered Ward",
-      "text": "Spell Ward shield +4% per rank.",
+      "text": "Spell Ward shield ×1.04 per rank.",
       "src": "B:V4:3.f1",
       "fx": [
         {
@@ -961,7 +961,7 @@
     },
     "3.fb": {
       "name": "Cloistered Ward",
-      "text": "Spell Ward on yourself is 30% larger, but it can no longer target allies.",
+      "text": "Spell Ward on yourself is ×1.3 as large, but it can no longer target allies.",
       "src": "B:V4:3.fa",
       "fx": [
         {
@@ -980,7 +980,7 @@
     },
     "3.mb": {
       "name": "Bastion of Null",
-      "text": "While you hold Spell Ward and a taunt, you take 30% less physical damage.",
+      "text": "While you hold Spell Ward and a taunt, you take ×0.7 physical damage.",
       "src": "B:V4:3.ma",
       "fx": [
         {
@@ -1039,7 +1039,7 @@
     },
     "4.u2": {
       "name": "Spell Shatter",
-      "text": "Void Strike's target deals 20% less magic damage for 2 turns.",
+      "text": "Void Strike's target deals ×0.8 magic damage for 2 turns.",
       "src": "B:V4:4.u2",
       "fx": [
         {

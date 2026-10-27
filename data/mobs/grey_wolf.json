@@ -27,7 +27,7 @@
     "id": "pack_tactics",
     "name": "Pack Tactics",
     "icon": "roar",
-    "text": "Deals +15% damage for every other living Grey Wolf in the same row. Kill one and the rest grow weaker.",
+    "text": "Deals ×1.15 damage with one other living Grey Wolf in the same row, ×1.3 with two. Kill one and the rest grow weaker.",
     "effect": {
       "type": "packTactics",
       "perAlly": 0.15

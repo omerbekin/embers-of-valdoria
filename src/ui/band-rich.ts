@@ -54,7 +54,7 @@ export function richSegs(line: string, keyword = true): RichSeg[] {
 export function splitStatTitle(title: string): { name: string; value?: string; bonus?: string } {
   const [main = title, ...rest] = title.split(' · ');
   const bonus = rest.length ? rest.join(' · ') : undefined;
-  const m = /^(.*?)\s+((?:[x+\-−]?\d[\d.,]*%?)(?:\s*→\s*[x+\-−]?\d[\d.,]*%?)?)$/.exec(main);
+  const m = /^(.*?)\s+((?:[x×+\-−]?\d[\d.,]*%?)(?:\s*→\s*[x×+\-−]?\d[\d.,]*%?)?)$/.exec(main);
   return m ? { name: m[1]!, value: m[2]!, ...(bonus ? { bonus } : {}) } : { name: main, ...(bonus ? { bonus } : {}) };
 }
 

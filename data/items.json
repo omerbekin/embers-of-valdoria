@@ -162,7 +162,7 @@
     "c_phys": {
       "tier": "C",
       "name": "Physical damage",
-      "text": "+{0}% Physical damage",
+      "text": "{m0} Physical damage",
       "slots": [
         "weapon"
       ],
@@ -183,7 +183,7 @@
     "c_fire": {
       "tier": "C",
       "name": "Fire damage",
-      "text": "+{0}% Fire damage",
+      "text": "{m0} Fire damage",
       "slots": [
         "weapon"
       ],
@@ -204,7 +204,7 @@
     "c_ice": {
       "tier": "C",
       "name": "Ice damage",
-      "text": "+{0}% Ice damage",
+      "text": "{m0} Ice damage",
       "slots": [
         "weapon"
       ],
@@ -225,7 +225,7 @@
     "c_holy": {
       "tier": "C",
       "name": "Holy damage",
-      "text": "+{0}% Holy damage",
+      "text": "{m0} Holy damage",
       "slots": [
         "weapon"
       ],
@@ -246,7 +246,7 @@
     "c_arcane": {
       "tier": "C",
       "name": "Arcane damage",
-      "text": "+{0}% Arcane damage",
+      "text": "{m0} Arcane damage",
       "slots": [
         "weapon"
       ],
@@ -267,7 +267,7 @@
     "c_nature": {
       "tier": "C",
       "name": "Nature damage",
-      "text": "+{0}% Nature damage",
+      "text": "{m0} Nature damage",
       "slots": [
         "weapon"
       ],
@@ -288,7 +288,7 @@
     "c_dark": {
       "tier": "C",
       "name": "Dark damage",
-      "text": "+{0}% Dark damage",
+      "text": "{m0} Dark damage",
       "slots": [
         "weapon"
       ],
@@ -474,7 +474,7 @@
     "c_lightning": {
       "tier": "C",
       "name": "Lightning damage",
-      "text": "+{0}% Lightning damage",
+      "text": "{m0} Lightning damage",
       "slots": [
         "weapon"
       ],
@@ -495,7 +495,7 @@
     "c_res_fire": {
       "tier": "C",
       "name": "Fire resistance",
-      "text": "+{0}% Fire resistance",
+      "text": "{l0} Fire damage taken",
       "slots": [
         "helm",
         "armor",
@@ -517,7 +517,7 @@
     "c_res_ice": {
       "tier": "C",
       "name": "Ice resistance",
-      "text": "+{0}% Ice resistance",
+      "text": "{l0} Ice damage taken",
       "slots": [
         "helm",
         "armor",
@@ -539,7 +539,7 @@
     "c_res_holy": {
       "tier": "C",
       "name": "Holy resistance",
-      "text": "+{0}% Holy resistance",
+      "text": "{l0} Holy damage taken",
       "slots": [
         "helm",
         "armor",
@@ -561,7 +561,7 @@
     "c_res_dark": {
       "tier": "C",
       "name": "Dark resistance",
-      "text": "+{0}% Dark resistance",
+      "text": "{l0} Dark damage taken",
       "slots": [
         "helm",
         "armor",
@@ -583,7 +583,7 @@
     "c_res_nature": {
       "tier": "C",
       "name": "Nature resistance",
-      "text": "+{0}% Nature resistance",
+      "text": "{l0} Nature damage taken",
       "slots": [
         "helm",
         "armor",
@@ -605,7 +605,7 @@
     "c_res_light": {
       "tier": "C",
       "name": "Lightning resistance",
-      "text": "+{0}% Lightning resistance",
+      "text": "{l0} Lightning damage taken",
       "slots": [
         "helm",
         "armor",
@@ -746,7 +746,7 @@
     "b_tier": {
       "tier": "B",
       "name": "Damage vs elites",
-      "text": "+{0}% damage to elites and bosses",
+      "text": "{m0} damage to elites and bosses",
       "slots": [
         "weapon"
       ],
@@ -806,7 +806,7 @@
     "b_mpcost": {
       "tier": "B",
       "name": "MP cost",
-      "text": "-{0}% MP cost",
+      "text": "{l0} MP cost",
       "slots": [
         "helm",
         "trinket"
@@ -910,7 +910,7 @@
     "b_front": {
       "tier": "B",
       "name": "Vanguard bane",
-      "text": "+{0}% damage to enemies in the front row",
+      "text": "{m0} damage to enemies in the front row",
       "slots": [
         "weapon"
       ],
@@ -930,7 +930,7 @@
     "b_back": {
       "tier": "B",
       "name": "Rearguard bane",
-      "text": "+{0}% damage to enemies in the back row",
+      "text": "{m0} damage to enemies in the back row",
       "slots": [
         "weapon"
       ],
@@ -973,7 +973,7 @@
     "b_tier_def": {
       "tier": "B",
       "name": "Giantward",
-      "text": "-{0}% damage taken from elites and bosses",
+      "text": "{l0} damage taken from elites and bosses",
       "slots": [
         "armor",
         "helm"
@@ -1069,7 +1069,7 @@
     "a_gdef": {
       "tier": "A",
       "name": "Global defense",
-      "text": "-{0}% damage taken",
+      "text": "{l0} damage taken",
       "slots": [
         "armor",
         "offhand",
@@ -1090,7 +1090,7 @@
     "a_speedpct": {
       "tier": "A",
       "name": "Speed %",
-      "text": "+{0}% Speed",
+      "text": "{m0} Speed",
       "slots": [
         "boots",
         "gloves",
@@ -1111,7 +1111,7 @@
     "a_hppct": {
       "tier": "A",
       "name": "Max HP %",
-      "text": "+{0}% Max HP",
+      "text": "{m0} Max HP",
       "slots": [
         "armor",
         "helm",
@@ -1132,7 +1132,7 @@
     "a_auradmg": {
       "tier": "A",
       "name": "Battle aura",
-      "text": "Allies beside you deal +{0}% damage",
+      "text": "Allies beside you deal {m0} damage",
       "slots": [
         "armor",
         "offhand"
@@ -1152,7 +1152,7 @@
     "a_auradef": {
       "tier": "A",
       "name": "Guard aura",
-      "text": "Allies beside you take -{0}% damage",
+      "text": "Allies beside you take {l0} damage",
       "slots": [
         "armor",
         "offhand"
@@ -1206,7 +1206,7 @@
     "a_allelem": {
       "tier": "A",
       "name": "Elemental damage",
-      "text": "+{0}% elemental damage",
+      "text": "{m0} elemental damage",
       "slots": [
         "weapon",
         "trinket"
@@ -1314,7 +1314,7 @@
     "a_mana": {
       "tier": "A",
       "name": "Mana mastery",
-      "text": "+{0}% Max MP, +{1} MP per turn",
+      "text": "{m0} Max MP, +{1} MP per turn",
       "slots": [
         "helm",
         "trinket"
@@ -1371,7 +1371,7 @@
     "a_summon": {
       "tier": "A",
       "name": "Summon mastery",
-      "text": "Your summons get +{0}% HP and power",
+      "text": "Your summons get {m0} HP and power",
       "slots": [
         "trinket",
         "weapon"
@@ -1392,7 +1392,7 @@
     "a_resource": {
       "tier": "A",
       "name": "Resource mastery",
-      "text": "+{0}% Rage gained, +{1} MP per turn",
+      "text": "{m0} Rage gained, +{1} MP per turn",
       "slots": [
         "helm",
         "trinket"
@@ -1419,7 +1419,7 @@
     "a_endure": {
       "tier": "A",
       "name": "Endurance",
-      "text": "+{0}% Lucky Escape chance, -{1}% damage taken below 30% HP",
+      "text": "+{0}% Lucky Escape chance, {l1} damage taken below 30% HP",
       "desc": "Lucky Escape: once per battle, a lethal hit may miss you entirely.",
       "icon": "luck",
       "parts": [
@@ -1445,7 +1445,7 @@
     "a_column": {
       "tier": "A",
       "name": "Column ward",
-      "text": "Allies in your column take -{0}% damage",
+      "text": "Allies in your column take {l0} damage",
       "slots": [
         "armor",
         "offhand"
@@ -1486,7 +1486,7 @@
     "a_steady": {
       "tier": "A",
       "name": "Steady stance",
-      "text": "Each turn you don't move: +{0}% damage (stacks 3)",
+      "text": "Each turn you don't move: {m0} damage, up to {m0:3} after 3 turns",
       "slots": [
         "gloves",
         "boots"
@@ -1639,7 +1639,7 @@
     },
     "charms": {
       "name": "Quick hands",
-      "text": "+{0}% Speed",
+      "text": "{m0} Speed",
       "icon": "spd",
       "desc": "Charms carry a little extra speed.",
       "parts": [
@@ -2596,7 +2596,7 @@
     },
     "last_ember": {
       "name": "The Last Ember",
-      "text": "Every {every}rd spell costs no MP and is {power} stronger.",
+      "text": "Every {every}rd spell costs no MP and deals {x:power} damage.",
       "ip": 3,
       "hook": "nthSpellFree",
       "value": {

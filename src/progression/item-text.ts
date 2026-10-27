@@ -1,6 +1,7 @@
 // Item metinleri ve karşılaştırma (saf; kuşanma ekranı, loot kartı, tüccar, wiki aynı fonksiyonu kullanır). Oyun içi metinler İngilizce.
 // Affix satırları kademesiyle (C / B / A) gelir (Ömer onayı 2026-10-11, items.md 1.3b).
 import { classes, formulas, statuses as statusDefs } from '../engine/content';
+import { lessText, moreText, multText } from '../engine/bonus-text';
 import { applyUnitModifiers } from '../engine/stats';
 import type { Stats } from '../engine/types';
 import {
@@ -55,18 +56,35 @@ const ICON_STAT: Record<string, string> = {
   luck: 'luck',
 };
 
+/**
+ * Affix / örtük yazısının sayıları (bonus yazım kuralı, Ömer 2026-10-27): "{0}" ham değer (toplamsal "+5%"), "{m0}" ayrı çarpan x(1 + değer/100)
+ * ("×1.05"), "{l0}" ayrı çarpan x(1 - değer/100) ("×0.95"); ":3" katı ("{m0:3}" = 3 yığın). Değerler affix biriminde (yüzde).
+ */
+export function fillValues(text: string, values: readonly number[]): string {
+  return text.replace(/\{([ml]?)(\d)(?::(\d+))?\}/g, (_, f: string, i: string, k?: string) => {
+    const v = (values[Number(i)] ?? 0) * (k ? Number(k) : 1);
+    return f === 'm' ? moreText(v / 100) : f === 'l' ? lessText(v / 100) : fmt(v);
+  });
+}
+
 /** Affix'in oyun içi yazısı ("+4 Armor", "+5% Crit chance, +25% Crit damage", "Immune to Stun for your first 2 turns"). */
 export function affixText(a: Pick<RolledAffix, 'def' | 'values' | 'x'>, classId?: string): string {
   const primary = classId ? classes[classId]?.primary : undefined;
-  return a.def.text
-    .replace(/\{(\d)\}/g, (_, i: string) => fmt(a.values[Number(i)] ?? 0))
+  return fillValues(a.def.text, a.values)
     .replace('{x}', a.x ? (statusDefs[a.x]?.name ?? a.x) : 'a debuff')
     .replace('{primary}', primary ? (ATTR_NAME[primary] ?? primary.toUpperCase()) : 'primary attribute');
 }
 
 /** Affix'in görünür aralığı ("3–5"; çok parçalıda "4.5–5.5 / 20–30"); zarsızsa ''. */
-export function affixRangeText(a: Pick<RolledAffix, 'ranges'>): string {
-  const parts = a.ranges.filter(([lo, hi]) => lo !== hi).map(([lo, hi]) => `${fmt(lo)}–${fmt(hi)}`);
+export function affixRangeText(a: Pick<RolledAffix, 'ranges'> & { def?: Pick<RolledAffix['def'], 'text'> }): string {
+  // Ayrı çarpan biçimli parça ({m0} / {l0}): aralık da çarpan olarak ("×1.03–1.05"; azalışta zar sırasıyla "×0.97–0.95")
+  const form = (i: number) => (a.def?.text.includes(`{m${i}`) ? 'm' : a.def?.text.includes(`{l${i}`) ? 'l' : '');
+  const parts = a.ranges
+    .map((r, i) => ({ r, f: form(i) }))
+    .filter(({ r: [lo, hi] }) => lo !== hi)
+    .map(({ r: [lo, hi], f }) =>
+      f === 'm' ? `${moreText(lo / 100)}–${moreText(hi / 100).slice(1)}` : f === 'l' ? `${lessText(lo / 100)}–${lessText(hi / 100).slice(1)}` : `${fmt(lo)}–${fmt(hi)}`,
+    );
   return parts.join(' / ');
 }
 
@@ -129,7 +147,7 @@ export function baseLinesOf(d: ItemDef, ilvl: number): BaseLines {
   else if (imp) {
     const values = implicitValues(imp, ilvl, d);
     out.implicit = {
-      text: imp.text.replace(/\{(\d)\}/g, (_, i: string) => fmt(values[Number(i)] ?? 0)),
+      text: fillValues(imp.text, values),
       name: imp.name,
       ...(imp.desc ? { desc: imp.desc } : {}),
       ...(imp.icon && ICON_STAT[imp.icon] ? { stat: ICON_STAT[imp.icon] } : {}),
@@ -197,7 +215,12 @@ export function effectLine(d: Pick<ItemDef, 'effect'>): string | null {
     if (x === undefined) return `{${key}}`;
     return typeof x === 'string' || RAW.has(key) ? String(x) : typeof x === 'number' ? pct(x) : String(x);
   };
-  return `${e.name}: ${e.text.replace(/\{(\w+)\}/g, (_, k: string) => fill(k))}`;
+  // "{x:power}" = ayrı çarpan (bonus yazım kuralı 2026-10-27): ham çarpan "×1.25" (Last Ember: büyünün hasarı empowerMult ile çarpılır)
+  const mult = (key: string): string => {
+    const x = obj && typeof obj === 'object' ? obj[key] : undefined;
+    return typeof x === 'number' ? multText(x) : `{x:${key}}`;
+  };
+  return `${e.name}: ${e.text.replace(/\{(x:)?(\w+)\}/g, (_, x: string | undefined, k: string) => (x ? mult(k) : fill(k)))}`;
 }
 
 /**
@@ -344,6 +367,8 @@ export interface AffixDelta {
   icon?: string;
   /** Değer yüzde mi (yazıda %). */
   pct: boolean;
+  /** İlk parçanın yazım biçimi (bonus yazım kuralı): 'more' / 'less' = ayrı çarpan ("×1.05"), 'add' = ham değer. */
+  form: 'add' | 'more' | 'less';
 }
 
 export function affixDiff(
@@ -371,11 +396,21 @@ export function affixDiff(
       ...(line.stat ? { stat: line.stat } : {}),
       ...(line.icon ? { icon: line.icon } : {}),
       pct: ref.def.text.includes('{0}%'),
+      form: ref.def.text.includes('{m0') ? 'more' : ref.def.text.includes('{l0') ? 'less' : 'add',
     };
   };
   for (const n of a) out.push(row(n, b.find((o) => key(o) === key(n))));
   for (const o of b) if (!a.some((n) => key(n) === key(o))) out.push(row(undefined, o));
   return out;
+}
+
+/**
+ * Affix farkının kısa yazısı (Gear hover çipi): toplamsal "+2% Crit chance"; ayrı çarpanda yeni değer ve eskisi ("×1.07 Fire damage (was ×1.05)").
+ */
+export function affixDeltaText(a: Pick<AffixDelta, 'diff' | 'pct' | 'form' | 'now' | 'after' | 'name'>): string {
+  if (a.form === 'add') return `${signedText(a.diff, a.pct)} ${a.name}`;
+  const f = (v: number) => (a.form === 'more' ? moreText(v / 100) : lessText(v / 100));
+  return `${f(a.after)} ${a.name}${a.now ? ` (was ${f(a.now)})` : ''}`;
 }
 
 /** Bir sayının imzalı yazısı (affix biriminde): "+3", "-1.5%". */

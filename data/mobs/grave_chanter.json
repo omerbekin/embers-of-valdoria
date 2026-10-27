@@ -26,7 +26,7 @@
     "id": "bone_ward",
     "name": "Bone Ward",
     "icon": "bone",
-    "text": "While a summoned ally stands on its side, it takes 30% less damage from every source.",
+    "text": "While a summoned ally stands on its side, it takes ×0.7 damage from every source.",
     "effect": {
       "type": "boneWard",
       "reduce": 0.3

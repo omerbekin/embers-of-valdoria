@@ -150,9 +150,9 @@ export function buildDef(data: CombatantData, formulas: Formulas): CombatantDef 
 
 const ATTRS: Attribute[] = ['str', 'int', 'dex', 'luck'];
 /** UnitModifiers'ın toplamsal ekleri (madde 280). */
-const ADDITIVE = ['hpAdd', 'mpAdd', 'spdAdd', 'critAdd', 'critMultAdd', 'accuracyAdd', 'evasionAdd', 'hpRegenAdd', 'mpRegenAdd'] as const;
+export const ADDITIVE = ['hpAdd', 'mpAdd', 'spdAdd', 'critAdd', 'critMultAdd', 'accuracyAdd', 'evasionAdd', 'hpRegenAdd', 'mpRegenAdd'] as const;
 /** Affix ekleri (Ömer 2026-10-11): Stats'taki çarpanlara (1 + ek) ya da Lucky Escape şansına eklenir. */
-const AFFIX_ADD = ['surviveAdd', 'damageAdd', 'healPowerAdd', 'shieldPowerAdd', 'dotPowerAdd'] as const;
+export const AFFIX_ADD = ['surviveAdd', 'damageAdd', 'healPowerAdd', 'shieldPowerAdd', 'dotPowerAdd'] as const;
 
 /** Güçlendirmenin statları/görseli değiştiren bir alanı var mı (yoksa tanım aynen kullanılır). */
 export function hasUnitModifiers(mods: UnitModifiers | undefined): boolean {

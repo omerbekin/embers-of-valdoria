@@ -141,7 +141,7 @@
   "nodes": {
     "0.f1": {
       "name": "Fresh Host",
-      "text": "Doom on a host of passed Omens deals +6% damage per rank.",
+      "text": "Doom on a host of passed Omens deals ×1.06 damage per rank.",
       "src": "A:V4:0.f2",
       "fx": [
         {
@@ -160,7 +160,7 @@
     },
     "0.f2": {
       "name": "Grim Arithmetic",
-      "text": "Doom +6% damage per rank against targets below 50% HP.",
+      "text": "Doom ×1.06 damage per rank against targets below 50% HP.",
       "src": "A:V1:0.f2",
       "fx": [
         {
@@ -261,7 +261,7 @@
     },
     "0.ma": {
       "name": "Ruinous Crit",
-      "text": "A critical Doom deals x2 damage instead of x1.5.",
+      "text": "A critical Doom deals ×2 damage instead of ×1.5.",
       "src": "A:V1:0.ma",
       "fx": [
         {
@@ -276,7 +276,7 @@
     },
     "0.fa": {
       "name": "Overcharged Doom",
-      "text": "Doom deals +15% damage, but you take 10% of that damage yourself.",
+      "text": "Doom deals ×1.15 damage, but you take 10% of that damage yourself.",
       "src": "A:V1:0.fa",
       "fx": [
         {
@@ -303,7 +303,7 @@
     },
     "0.fb": {
       "name": "Final Toll",
-      "text": "Doom deals +20% to targets below 30% HP, but -20% to targets above it.",
+      "text": "Doom deals ×1.2 damage to targets below 30% HP, but ×0.8 to targets above it.",
       "src": "A:V1:0.fb",
       "fx": [
         {
@@ -375,7 +375,7 @@
     },
     "1.f1": {
       "name": "Prying Eye",
-      "text": "Evil Eye +6% power per rank against enemies with no Omens.",
+      "text": "Evil Eye ×1.06 power per rank against enemies with no Omens.",
       "src": "A:V4:1.f3",
       "fx": [
         {
@@ -411,7 +411,7 @@
     },
     "1.f3": {
       "name": "Envy's Edge",
-      "text": "Evil Eye +6% power per rank against targets with 2 Omens.",
+      "text": "Evil Eye ×1.06 power per rank against targets with 2 Omens.",
       "src": "A:V1:1.f3",
       "fx": [
         {
@@ -491,7 +491,7 @@
     },
     "1.eb": {
       "name": "Fixed Stare",
-      "text": "Evil Eye +4% power if it hits the same target as your last skill.",
+      "text": "Evil Eye ×1.04 power if it hits the same target as your last skill.",
       "src": "A:V1:1.eb",
       "fx": [
         {
@@ -522,7 +522,7 @@
     },
     "1.fa": {
       "name": "Strained Eyes",
-      "text": "Evil Eye +20% critical chance, but its power drops by 5%.",
+      "text": "Evil Eye +20% critical chance, but its power is ×0.95.",
       "src": "A:V1:1.fa",
       "fx": [
         {
@@ -543,7 +543,7 @@
     },
     "1.fb": {
       "name": "Burning Stare",
-      "text": "Evil Eye +8% power, but it costs 4 MP.",
+      "text": "Evil Eye ×1.08 power, but it costs 4 MP.",
       "src": "A:V1:1.fb",
       "fx": [
         {
@@ -564,7 +564,7 @@
     },
     "1.mb": {
       "name": "Doom Gaze",
-      "text": "When Evil Eye brings Doom, that Doom deals +10% damage.",
+      "text": "When Evil Eye brings Doom, that Doom deals ×1.1 damage.",
       "src": "A:V1:1.mb",
       "fx": [
         {
@@ -607,7 +607,7 @@
     },
     "2.f1": {
       "name": "Plague Breath",
-      "text": "Withering Curse +2% power per rank for each enemy it hits.",
+      "text": "Withering Curse ×(1 + 2% per rank for each enemy it hits) power.",
       "src": "B:V4:2.f2",
       "fx": [
         {
@@ -790,7 +790,7 @@
     },
     "2.fb": {
       "name": "Swift Blight",
-      "text": "Withering Curse's Wither deals +25%, but lasts 2 turns.",
+      "text": "Withering Curse's Wither deals ×1.25 damage, but lasts 2 turns.",
       "src": "B:V2:2.fa",
       "fx": [
         {
@@ -891,7 +891,7 @@
     },
     "3.f3": {
       "name": "Hex Ward",
-      "text": "While any enemy is Jinxed, you take 4% less damage per rank.",
+      "text": "While any enemy is Jinxed, you take ×0.96 damage per rank.",
       "src": "B:V5:3.r",
       "fx": [
         {
@@ -1180,7 +1180,7 @@
     },
     "4.r2": {
       "name": "Overflowing Fate",
-      "text": "Each pulled Omen past 3 adds +10% to Doom Mark's Doom.",
+      "text": "Each pulled Omen past 3 adds 10% to Doom Mark's Doom (×1.1, ×1.2, ...).",
       "src": "B:V4:4.l2",
       "fx": [
         {

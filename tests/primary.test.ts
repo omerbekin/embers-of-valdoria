@@ -493,7 +493,7 @@ describe('primary satırı (V1): sayılar formulas.json verisinden', () => {
   it('her statın kısa satırı veriden gelir; primary olmayanda yok', () => {
     const b = f.primaryBonus;
     const st = classes[0]!.stats;
-    const want = { str: `${Math.round(b.str.resilienceChance * 100)}%`, dex: `${Math.round(b.dex.hunterMarkMult * 100)}%`, int: `${Math.round(b.int.manaEchoChance * 100)}%`, luck: `${Math.round(b.luck.surviveChance * 100)}%` } as const;
+    const want = { str: `${Math.round(b.str.resilienceChance * 100)}%`, dex: `×${Number((1 + b.dex.hunterMarkMult).toFixed(3))}`, int: `${Math.round(b.int.manaEchoChance * 100)}%`, luck: `${Math.round(b.luck.surviveChance * 100)}%` } as const;
     for (const k of ATTRS) {
       const on = describeStat(k, { ...st, primary: k, primaryActive: true }, f);
       expect(on.primaryLine).toContain(want[k]);
@@ -508,7 +508,7 @@ describe('arayüz açıklaması: primary stat altın, bonus tooltip\'te', () => 
     for (const def of classes) {
       const info = describeStat(def.primary!, def.stats, f);
       expect(info.primary, def.id).toBe(true);
-      expect(info.primaryLine, def.id).toMatch(/^Primary: [A-Za-z0-9+]/);
+      expect(info.primaryLine, def.id).toMatch(/^Primary: [A-Za-z0-9+×]/);
       expect(info.lines.join(' '), def.id).not.toContain('Primary bonus');
       for (const a of ATTRS.filter((x) => x !== def.primary)) expect(describeStat(a, def.stats, f).primary).toBeUndefined();
     }

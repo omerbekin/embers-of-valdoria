@@ -27,7 +27,7 @@
     "id": "close_ranks",
     "name": "Close Ranks",
     "icon": "shield",
-    "text": "Takes 12% less damage for every other living ally in its row. Break the line and the rest lose their cover.",
+    "text": "Takes ×0.88 damage with one other living ally in its row, ×0.76 with two. Break the line and the rest lose their cover.",
     "effect": {
       "type": "closeRanks",
       "perAlly": 0.12

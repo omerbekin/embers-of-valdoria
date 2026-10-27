@@ -237,7 +237,7 @@
     },
     "0.ea": {
       "name": "Killer's Eye",
-      "text": "Your critical hits on Opportunist targets deal +15% damage.",
+      "text": "Your critical hits on Opportunist targets deal ×1.15 damage.",
       "src": "B:V3:0.ea",
       "fx": [
         {
@@ -299,7 +299,7 @@
     },
     "0.fa": {
       "name": "Glass Knife",
-      "text": "Your critical hits on Opportunist targets deal +30%, but non-critical hits on them deal 15% less.",
+      "text": "Your critical hits on Opportunist targets deal ×1.3 damage, but non-critical hits on them deal ×0.85 damage.",
       "src": "B:V3:0.fa",
       "fx": [
         {
@@ -503,7 +503,7 @@
     },
     "1.f1": {
       "name": "Balanced Blade",
-      "text": "Venom Edge +6% power per rank against Wounded targets.",
+      "text": "Venom Edge ×1.06 power per rank against Wounded targets.",
       "src": "B:V4:1.f1",
       "fx": [
         {
@@ -536,7 +536,7 @@
     },
     "1.f3": {
       "name": "Twist the Knife",
-      "text": "Venom Edge's critical hits deal +6% damage per rank.",
+      "text": "Venom Edge's critical hits deal ×1.06 damage per rank.",
       "src": "B:V3:1.f3",
       "fx": [
         {
@@ -568,7 +568,7 @@
     },
     "1.r": {
       "name": "Honed Point",
-      "text": "Venom Edge +3% power per rank against targets below 50% HP.",
+      "text": "Venom Edge ×1.03 power per rank against targets below 50% HP.",
       "src": "B:V3:1.f1",
       "fx": [
         {
@@ -586,7 +586,7 @@
     },
     "1.ea": {
       "name": "Finishing Cut",
-      "text": "Venom Edge +40% damage against targets below 30% HP.",
+      "text": "Venom Edge ×1.4 damage against targets below 30% HP.",
       "src": "B:V3:1.ea",
       "fx": [
         {
@@ -650,7 +650,7 @@
     },
     "1.fa": {
       "name": "Butcher's Haste",
-      "text": "Venom Edge +35% against targets below 50% HP, but -25% against targets above it.",
+      "text": "Venom Edge ×1.35 damage against targets below 50% HP, but ×0.75 against targets above it.",
       "src": "B:V3:1.fa",
       "fx": [
         {
@@ -774,7 +774,7 @@
     },
     "2.f2": {
       "name": "Scissor Bite",
-      "text": "Saltire Cut's second center hit +6% power per rank.",
+      "text": "Saltire Cut's second center hit ×1.06 power per rank.",
       "src": "B:V3:2.f3",
       "fx": [
         {
@@ -792,7 +792,7 @@
     },
     "2.f3": {
       "name": "Keen Pair",
-      "text": "Saltire Cut +6% power per rank against targets below 50% HP.",
+      "text": "Saltire Cut ×1.06 power per rank against targets below 50% HP.",
       "src": "B:V3:2.f1",
       "fx": [
         {
@@ -849,7 +849,7 @@
     },
     "2.ea": {
       "name": "Double Lunge",
-      "text": "Saltire Cut's center hits +20% power against targets below 50% HP.",
+      "text": "Saltire Cut's center hits ×1.2 power against targets below 50% HP.",
       "src": "B:V3:2.ea",
       "fx": [
         {
@@ -904,7 +904,7 @@
     },
     "2.fa": {
       "name": "Heavy Cross",
-      "text": "Saltire Cut's center hits +30%, but its diagonal hits deal 50% less.",
+      "text": "Saltire Cut's center hits ×1.3 damage, but its diagonal hits deal ×0.5 damage.",
       "src": "B:V3:2.fa",
       "fx": [
         {
@@ -1112,7 +1112,7 @@
     },
     "3.eb": {
       "name": "Exposed in Smoke",
-      "text": "Smoke Bomb leaves the lowest-HP enemy in it Overextended: +25% damage taken until its next turn.",
+      "text": "Smoke Bomb leaves the lowest-HP enemy in it Overextended: ×1.25 damage taken until its next turn.",
       "src": "A:V3:3.ea",
       "fx": [
         {
@@ -1319,7 +1319,7 @@
     },
     "4.r2": {
       "name": "First Blood",
-      "text": "Backstab +20% power against targets at full HP.",
+      "text": "Backstab ×1.2 power against targets at full HP.",
       "src": "B:V3:4.l2",
       "fx": [
         {
@@ -1398,7 +1398,7 @@
     },
     "4.l1": {
       "name": "Thrown Stiletto",
-      "text": "Backstab can hit a target with no open cell behind it; such hits deal 30% less.",
+      "text": "Backstab can hit a target with no open cell behind it; such hits deal ×0.7 damage.",
       "src": "B:V4:4.u1",
       "fx": [
         {

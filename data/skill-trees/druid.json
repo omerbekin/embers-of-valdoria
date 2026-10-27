@@ -131,7 +131,7 @@
   "nodes": {
     "0.f1": {
       "name": "Bitter Sap",
-      "text": "Nature's Grudge Withering deals +10% damage per rank.",
+      "text": "Nature's Grudge Withering deals ×1.1 damage per rank.",
       "src": "B:V1:0.f1",
       "fx": [
         {
@@ -174,7 +174,7 @@
     },
     "0.f3": {
       "name": "Choking Grip",
-      "text": "Withering deals +6% damage per rank on a Slowed enemy.",
+      "text": "Withering deals ×1.06 damage per rank on a Slowed enemy.",
       "src": "B:V1:0.r",
       "fx": [
         {
@@ -257,7 +257,7 @@
     },
     "0.eb": {
       "name": "Gnawing Rot",
-      "text": "Nature's Grudge Withering grows each turn it ticks: +5%, then +10%, then +15% and so on.",
+      "text": "Nature's Grudge Withering grows each turn it ticks: ×1.05, then ×1.1, then ×1.15 and so on.",
       "src": "B:V1:0.eb",
       "fx": [
         {
@@ -303,7 +303,7 @@
     },
     "0.fa": {
       "name": "Black Mold",
-      "text": "Withering you apply deals +30% damage, but Nature's Grudge no longer Slows.",
+      "text": "Withering you apply deals ×1.3 damage, but Nature's Grudge no longer Slows.",
       "src": "B:V1:0.fa",
       "fx": [
         {
@@ -389,7 +389,7 @@
     },
     "1.f1": {
       "name": "Hooked Barbs",
-      "text": "Thorn Whip deals +4% damage per rank.",
+      "text": "Thorn Whip deals ×1.04 damage per rank.",
       "src": "B:V5:1.f1",
       "fx": [
         {
@@ -419,7 +419,7 @@
     },
     "1.f3": {
       "name": "Charged Lash",
-      "text": "After you cast an MP skill, your next Thorn Whip deals +6% damage per rank.",
+      "text": "After you cast an MP skill, your next Thorn Whip deals ×1.06 damage per rank.",
       "src": "B:V5:1.f3",
       "fx": [
         {
@@ -437,7 +437,7 @@
     },
     "1.n0": {
       "name": "Whip Crack",
-      "text": "Thorn Whip deals +25% damage to a target below 30% HP.",
+      "text": "Thorn Whip deals ×1.25 damage to a target below 30% HP.",
       "src": "B:V5:1.n0",
       "fx": [
         {
@@ -454,7 +454,7 @@
     },
     "1.r": {
       "name": "Keen Thorns",
-      "text": "Thorn Whip's critical hits deal +3% damage per rank.",
+      "text": "Thorn Whip's critical hits deal ×1.03 damage per rank.",
       "src": "B:V5:1.r",
       "fx": [
         {
@@ -529,7 +529,7 @@
     },
     "1.fa": {
       "name": "Wild Thorns",
-      "text": "Thorn Whip deals +15% damage, but it can no longer crit.",
+      "text": "Thorn Whip deals ×1.15 damage, but it can no longer crit.",
       "src": "B:V5:1.fa",
       "fx": [
         {
@@ -550,7 +550,7 @@
     },
     "1.fb": {
       "name": "Cutting Haste",
-      "text": "Thorn Whip kills restore 8 MP, but it deals 15% less damage to targets above 50% HP.",
+      "text": "Thorn Whip kills restore 8 MP, but it deals ×0.85 damage to targets above 50% HP.",
       "src": "B:V5:1.fb",
       "fx": [
         {
@@ -929,7 +929,7 @@
     },
     "3.f1": {
       "name": "Tender Sap",
-      "text": "Rejuvenate heals +4% per rank.",
+      "text": "Rejuvenate heals ×1.04 per rank.",
       "src": "B:V3:3.f1",
       "fx": [
         {
@@ -944,7 +944,7 @@
     },
     "3.f2": {
       "name": "Long Bloom",
-      "text": "Rejuvenate's regeneration +4% per rank.",
+      "text": "Rejuvenate's regeneration ×1.04 per rank.",
       "src": "B:V3:3.f2",
       "fx": [
         {
@@ -959,7 +959,7 @@
     },
     "3.f3": {
       "name": "Soft Hands",
-      "text": "Rejuvenate heals +6% more per rank on an ally below 50% HP.",
+      "text": "Rejuvenate heals ×1.06 per rank on an ally below 50% HP.",
       "src": "B:V3:3.f3",
       "fx": [
         {
@@ -1025,7 +1025,7 @@
     },
     "3.eb": {
       "name": "Emergency Bloom",
-      "text": "Rejuvenate heals +25% on an ally below 30% HP.",
+      "text": "Rejuvenate heals ×1.25 on an ally below 30% HP.",
       "src": "B:V3:3.eb",
       "fx": [
         {
@@ -1060,7 +1060,7 @@
     },
     "3.fa": {
       "name": "Thin Sap",
-      "text": "Rejuvenate heals every ally, but each heal is 50% weaker and its cooldown is 4.",
+      "text": "Rejuvenate heals every ally, but each heal is ×0.5 and its cooldown is 4.",
       "src": "B:V3:3.fa",
       "fx": [
         {
@@ -1233,7 +1233,7 @@
     },
     "4.r1": {
       "name": "Heavy Boughs",
-      "text": "Root Smash deals +10% damage.",
+      "text": "Root Smash deals ×1.1 damage.",
       "src": "A:V2:4.l1",
       "fx": [
         {
@@ -1249,7 +1249,7 @@
     },
     "4.r2": {
       "name": "Heavy Smash",
-      "text": "Root Smash deals +12% damage to Slowed or Stunned enemies.",
+      "text": "Root Smash deals ×1.12 damage to Slowed or Stunned enemies.",
       "src": "A:V4:4.l2",
       "fx": [
         {
@@ -1319,7 +1319,7 @@
     },
     "4.d2": {
       "name": "Brittle Bark",
-      "text": "The Treant's burst +50%, but the Treant has 20% less HP.",
+      "text": "The Treant's burst +50%, but the Treant has ×0.8 HP.",
       "src": "A:V5:4.r2",
       "fx": [
         {

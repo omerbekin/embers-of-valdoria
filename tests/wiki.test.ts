@@ -187,7 +187,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(mech).toContain(`${f.attributes.dexPerEvasionStep} Dexterity`);
     const head = wiki.elementTable.head.map((x) => x.toLowerCase());
     for (const [tag, m] of Object.entries(f.weaknesses))
-      for (const [el, mult] of Object.entries(m)) expect(wiki.elementTable.rows.find((r) => r[0]!.toLowerCase() === tag)?.[head.indexOf(el)]).toBe(`x${mult}`);
+      for (const [el, mult] of Object.entries(m)) expect(wiki.elementTable.rows.find((r) => r[0]!.toLowerCase() === tag)?.[head.indexOf(el)]).toBe(`×${mult}`);
   });
 
   it('Getting Started: tur sırası, takım, dizilim, MP ve cooldown başlıkları var; test modundan söz edilmez', () => {

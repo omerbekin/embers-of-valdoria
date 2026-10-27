@@ -843,6 +843,29 @@ export function migrateOffhand(equipment: EquipMap | null | undefined, overflow?
 
 const TARGET_RE = /^(mod|mult|fx|elem|res|attr|prog):[\w*]+$/;
 
+/**
+ * Bonus yazım kuralı (Ömer 2026-10-27; src/engine/bonus-text.ts): affix parçasının hedefi motorda nasıl birleşir?
+ * 'add' = toplamsal havuz (UnitModifiers *Add) ya da çarpan olmayan değer (şans, oran, düz sayı): yazıda "{0}" ("+5% Crit chance").
+ * 'more' = ayrı çarpan x(1 + değer): yazıda "{m0}" ("×1.05 Fire damage"). 'less' = ayrı çarpan x(1 - değer): yazıda "{l0}" ("×0.95 damage taken").
+ * Kaynak: stats.ts (elemDamageMult, spdMult, hpMult, mpMult), battle.ts (dealtDamageMult, damageTakenMult, rage kazancı, çağrı gücü), cost.ts (MP bedeli).
+ */
+export type BonusForm = 'add' | 'more' | 'less';
+const MORE_FX = new Set(['tierDamageMult', 'frontRowDamage', 'backRowDamage', 'auraDamage', 'steadyDamage', 'summonPower', 'rageGain']);
+const LESS_FX = new Set(['damageTakenReduce', 'tierDamageTakenReduce', 'adjacentGuard', 'columnGuard', 'lowHpReduce', 'mpCostReduce']);
+export function partBonusForm(to: string): BonusForm {
+  const [kind, key = ''] = to.split(':');
+  if (kind === 'elem' || kind === 'mult') return 'more';
+  if (kind === 'res') return 'less';
+  if (kind === 'fx' && MORE_FX.has(key)) return 'more';
+  if (kind === 'fx' && LESS_FX.has(key)) return 'less';
+  return 'add';
+}
+/** Parça `i`nin yazıdaki yer tutucusu biçime uyuyor mu ({i} / {mi} / {li}; {mi:3} gibi katlı biçim de sayılır). */
+export function templateShowsPart(text: string, i: number, form: BonusForm): boolean {
+  const tag = form === 'more' ? 'm' : form === 'less' ? 'l' : '';
+  return new RegExp(`\\{${tag}${i}(:\\d+)?\\}`).test(text);
+}
+
 /** items.json doğrulaması (boş liste = geçerli). Test: tests/items-data.test.ts. */
 export function validateItems(data: ItemsData = ITEMS): string[] {
   const errors: string[] = [];
@@ -872,7 +895,13 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     if (a.slots) for (const s of a.slots) if (!slotIds.includes(s)) errors.push(`${at}: unknown slot ${s}`);
     if (a.choices) for (const c of a.choices) if (!statusDefs[c]) errors.push(`${at}: unknown status ${c}`);
     if (a.text.includes('{x}') && !a.choices?.length) errors.push(`${at}: {x} needs choices`);
-    if (a.parts?.length && !a.parts[0]!.fixed && !a.text.includes('{0}')) errors.push(`${at}: text must show its value ({0})`);
+    if (a.parts?.length && !a.parts[0]!.fixed && !/\{[ml]?0(:\d+)?\}/.test(a.text)) errors.push(`${at}: text must show its value ({0})`);
+    // Bonus yazım kuralı (2026-10-27): ayrı çarpan "×" ({m0} / {l0}), toplamsal "+%" ({0})
+    a.parts?.forEach((p, i) => {
+      if (p.fixed) return;
+      const form = partBonusForm(p.to);
+      if (new RegExp(`\\{[ml]?${i}(:\\d+)?\\}`).test(a.text) && !templateShowsPart(a.text, i, form)) errors.push(`${at}: part ${i} (${p.to}) must be written as ${form === 'add' ? `{${i}}` : `{${form === 'more' ? 'm' : 'l'}${i}}`} (bonus wording rule)`);
+    });
   }
   for (const t of TIER_IDS) for (const s of SLOT_IDS) if (!tierPool(t, s).length) errors.push(`tier ${t}: no affix allowed on ${s}`);
   // Zar hiç boş kalmasın (itemfix): her taban, ana affix'i dışında en az bir C daha çekebilmeli (Uncommon+; taban nadirlikten bağımsız Epic olabilir)
@@ -946,7 +975,10 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
   for (const f of Object.keys(wp?.family ?? {})) if (!famIds.includes(f)) errors.push(`weaponPower.family: unknown family ${f}`);
   for (const [k, imp] of Object.entries(data.implicits ?? {})) {
     if (k !== 'shield' && !famIds.includes(k)) errors.push(`implicit ${k}: must be a weapon family or shield`);
-    if (!imp.name || !imp.text?.includes('{0}') || !imp.parts?.length) errors.push(`implicit ${k}: needs name, text with {0} and parts`);
+    if (!imp.name || !/\{[ml]?0\}/.test(imp.text ?? '') || !imp.parts?.length) errors.push(`implicit ${k}: needs name, text with {0} and parts`);
+    imp.parts?.forEach((p, i) => {
+      if (!templateShowsPart(imp.text ?? '', i, partBonusForm(p.to))) errors.push(`implicit ${k}: part ${i} (${p.to}) breaks the bonus wording rule`);
+    });
     for (const p of imp.parts ?? []) if (!TARGET_RE.test(p.to) || !(p.step > 0) || !p.noRoll || !p.noPower) errors.push(`implicit ${k}: parts need a target, step, noRoll and noPower`);
   }
   if (!(Number.isInteger(data.levelReq?.offset) && data.levelReq.offset >= 0 && Number.isInteger(data.levelReq.min) && data.levelReq.min >= 1)) errors.push('levelReq: needs integer offset >= 0 and min >= 1');
