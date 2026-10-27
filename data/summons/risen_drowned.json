@@ -1,8 +1,8 @@
 {
-  "_not": "Çağrı, HARİTA 2 (content-designer 2026-10-27, open-questions 446): Tide Caller'ın Rise from the Deep çağrısı (Harita 2; maps-2-3.md 3.2 dr_8 'ilk çağırıcı: Drowned sudan kalkar'): eskiden Harita 1 Skeleton'ı çağırıyordu. Statlar / çağıran ölçeği / fed-unfed / YZ Skeleton ile birebir (güç değişmesin); yalnız ad, kit ve ses kendi. Yeni kural YOK: Flooded hücreye çağırma istenirse yeni kural gerekir (open-questions 446). Çizim YER TUTUCU: spriteId 'skeleton'.",
+  "_not": "Çağrı, HARİTA 2 (content-designer 2026-10-27, open-questions 446): Tide Caller'ın Rise from the Deep çağrısı (Harita 2; maps-2-3.md 3.2 dr_8 'ilk çağırıcı: Drowned sudan kalkar'): eskiden Harita 1 Skeleton'ı çağırıyordu. Statlar / çağıran ölçeği / fed-unfed / YZ Skeleton ile birebir (güç değişmesin); yalnız ad, kit ve ses kendi. Yeni kural YOK: Flooded hücreye çağırma istenirse yeni kural gerekir (open-questions 446). Çizim: kendi sprite, avatar ve VFX'i (sanat turu, open-questions 447).",
   "id": "risen_drowned",
   "name": "Risen Drowned",
-  "spriteId": "skeleton",
+  "spriteId": "risen_drowned",
   "color": "#9ab8b0",
   "logo": "skull",
   "frontPriority": 8,

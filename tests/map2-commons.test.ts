@@ -30,9 +30,9 @@ const OWN: Record<string, [string, string, string[]]> = {
   salt_chaplain: ['censer_monk', 'Salt Chaplain', ['blessed_salt', 'salted_ground']],
 };
 
-const OWN_ART = ['dock_rat', 'reef_hound', 'salt_hag', 'tide_caller', 'marsh_light', 'wreck_ghoul'];
+const OWN_ART = ['dock_rat', 'reef_hound', 'salt_hag', 'tide_caller', 'marsh_light', 'wreck_ghoul', 'cinder_exile', 'pitch_boiler', 'sunken_dead', 'mire_ghoul', 'reed_witch', 'mudlark', 'inquisition_brother', 'salt_chaplain'];
 // river_reaver / cliff_crossbowman yalnız skill sanatı alır (kendi sprite'ları sonraki turda)
-const OWN_ART_SKILLS = [...OWN_ART.flatMap((id) => OWN[id]![2]), 'raid_cut', 'boat_hook', 'cliff_bolt', 'plunging_volley'];
+const OWN_ART_SKILLS = [...OWN_ART.flatMap((id) => OWN[id]![2]), 'raid_cut', 'boat_hook', 'cliff_bolt', 'plunging_volley', 'sodden_strike', 'riptide_slash'];
 
 type Unit = { class: string; name?: string };
 type Enc = { units: Unit[]; waves?: Array<{ units: Unit[] }>; objective?: string | { units?: Unit[] } };
@@ -131,6 +131,7 @@ describe('Harita 2 sıradan mobları kendi id / kit / sesleriyle', () => {
     expect([r.attributes, r.stats, r.range, r.ai, r.tags, ...scale(r)], 'risen_drowned').toEqual([s.attributes, s.stats, s.range, s.ai, s.tags, ...scale(s)]);
     expect(scale(r)[0], 'çağıran ölçeği').toBeTruthy();
     expect(r.skills).toEqual(['sodden_strike', 'riptide_slash']);
+    expect(r.spriteId, 'kendi sprite').toBe('risen_drowned');
     // Grave Chanter (Harita 1) hâlâ Skeleton çağırır
     expect(content.skills.call_the_buried!.effects).toContainEqual(expect.objectContaining({ type: 'summon', unit: 'skeleton' }));
     const t = content.bosses.hex_totem!;
@@ -165,8 +166,8 @@ describe('Harita 2 sıradan mob sanatı: kendi sprite / avatar / ikon / VFX (öd
     }
   });
 
-  it('16 skill: kendi VFX sayfası (8 kare) + kaynak + ikon, kendi mob satırı, v2 seçilir, artOf yok', () => {
-    expect(OWN_ART_SKILLS).toHaveLength(16);
+  it('34 skill: kendi VFX sayfası (8 kare) + kaynak + ikon, kendi mob satırı, v2 seçilir, artOf yok', () => {
+    expect(OWN_ART_SKILLS).toHaveLength(34);
     for (const s of OWN_ART_SKILLS) {
       const spec = MOB_VFX_SPECS[s];
       expect(spec, `${s} MOB_VFX_SPECS`).toBeDefined();

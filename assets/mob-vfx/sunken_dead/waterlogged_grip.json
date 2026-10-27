@@ -1,0 +1,31 @@
+{
+  "slug": "waterlogged_grip",
+  "title": "sunken dead waterlogged grip",
+  "frames": 8,
+  "fps": 12,
+  "duration_ms": 667,
+  "frame_size": [
+    256,
+    256
+  ],
+  "sheet_size": [
+    1024,
+    512
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 6,
+  "anchor": "bottom",
+  "pivot": [
+    128,
+    250
+  ],
+  "content_px": [
+    186,
+    244
+  ],
+  "source": "assets/source/mob-vfx/sunken_dead-waterlogged_grip.png"
+}

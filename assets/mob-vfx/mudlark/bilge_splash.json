@@ -1,0 +1,31 @@
+{
+  "slug": "bilge_splash",
+  "title": "mudlark bilge splash",
+  "frames": 8,
+  "fps": 12,
+  "duration_ms": 667,
+  "frame_size": [
+    256,
+    256
+  ],
+  "sheet_size": [
+    1024,
+    512
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 6,
+  "anchor": "center",
+  "pivot": [
+    128,
+    128
+  ],
+  "content_px": [
+    201,
+    244
+  ],
+  "source": "assets/source/mob-vfx/mudlark-bilge_splash.png"
+}

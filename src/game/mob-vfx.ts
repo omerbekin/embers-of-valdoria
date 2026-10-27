@@ -171,6 +171,25 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   tidal_mend: { mob: 'brine_maiden', mode: 'ally', at: 'ground', impact: 3, size: 240, hex: '#5fd8c0' },
   hook: { mob: 'reef_wrecker', mode: 'bolt', at: 'hit', impact: 3, size: 230, hex: '#e0b04a' }, // kanca zinciriyle fırlatılır (tune.fly + throw)
   lantern_flash: { mob: 'reef_wrecker', mode: 'cells', at: 'ground', impact: 3, size: 220, hex: '#fff0b0' }, // sıranın her hücresinde göz alan parlama
+  // Harita 2 son 8 birim + Risen Drowned skilleri: KENDI efektleri (2026-10-27, art-pipeline; her skill kendi ikonuna uyan sheet; ödünç artOf yok, tests/map2-leaders.test.ts, map2-commons.test.ts)
+  pitch_brand: { mob: 'cinder_exile', mode: 'bolt', at: 'hit', impact: 2, size: 240, hex: '#ff7a1a' },
+  tar_blaze: { mob: 'cinder_exile', mode: 'center', at: 'ground', impact: 3, size: 340, hex: '#ff4d1a' },
+  hot_pitch: { mob: 'pitch_boiler', mode: 'bolt', at: 'hit', impact: 2, size: 240, hex: '#ff7a1a' },
+  caulkers_smoke: { mob: 'pitch_boiler', mode: 'cells', at: 'ground', impact: 2, size: 220, hex: '#ff7a1a' },
+  waterlogged_grip: { mob: 'sunken_dead', mode: 'melee', at: 'ground', impact: 3, size: 220 },
+  pull_beneath: { mob: 'sunken_dead', mode: 'melee', at: 'ground', impact: 3, size: 230 },
+  silt_rake: { mob: 'mire_ghoul', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  mire_gorge: { mob: 'mire_ghoul', mode: 'melee', at: 'hit', impact: 3, size: 240 },
+  reed_hex: { mob: 'reed_witch', mode: 'bolt', at: 'hit', impact: 2, size: 230, hex: '#b04fa8' },
+  fen_rot: { mob: 'reed_witch', mode: 'cells', at: 'ground', impact: 2, size: 220, hex: '#9cab3c' },
+  gutting_knife: { mob: 'mudlark', mode: 'melee', at: 'hit', impact: 3, size: 220 },
+  bilge_splash: { mob: 'mudlark', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  salt_scourge: { mob: 'inquisition_brother', mode: 'melee', at: 'ground', impact: 3, size: 240 },
+  brann_vigil: { mob: 'inquisition_brother', mode: 'ally', at: 'ground', impact: 3, size: 240, hex: '#ffcf5a' },
+  blessed_salt: { mob: 'salt_chaplain', mode: 'bolt', at: 'hit', impact: 2, size: 240, hex: '#ffcf5a' },
+  salted_ground: { mob: 'salt_chaplain', mode: 'center', at: 'ground', impact: 3, size: 330, hex: '#fff4c8' },
+  sodden_strike: { mob: 'risen_drowned', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  riptide_slash: { mob: 'risen_drowned', mode: 'melee', at: 'hit', impact: 3, size: 230 },
   // Harita 2 yaygin mob skilleri: KENDI efektleri (2026-10-27, art-pipeline; her skill kendi ikonuna uyan sheet; ödünç artOf yok, tests/map2-leaders.test.ts, map2-commons.test.ts)
   belaying_pin: { mob: 'dock_rat', mode: 'melee', at: 'hit', impact: 3, size: 230 },
   cargo_net: { mob: 'dock_rat', mode: 'melee', at: 'hit', impact: 3, size: 240, hex: '#d8d0b0' },

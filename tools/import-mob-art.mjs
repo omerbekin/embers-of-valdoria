@@ -30,7 +30,7 @@ const ICON_SRC = 'assets/source/mob-icons';
 const ICON_OUT = 'assets/mob-icons';
 /** Mob ikonu olmayan sayfalarin cikti klasoru (durum ikonlari oyunda misc-icons/status adiyla bulunur). */
 /** Zemini de saf siyah olan sayfalar: karanlik bant bulma hucre ile ayirgaci ayiramaz; sabit 2x2 izgara (kenar 12, ayirac 20 px). */
-const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet', 'map2_commons_a-sheet', 'map2_commons_b-sheet', 'map2_commons_c-sheet', 'map2_commons_d-sheet']);
+const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet', 'map2_commons_a-sheet', 'map2_commons_b-sheet', 'map2_commons_c-sheet', 'map2_commons_d-sheet', 'map2_wave2_a-sheet', 'map2_wave2_b-sheet', 'map2_wave2_c-sheet', 'map2_wave2_d-sheet', 'map2_wave2_e-sheet', 'map2_passives_a-sheet', 'map2_passives_b-sheet']);
 const ICON_SHEET_OUT = { 'status2-sheet': 'assets/misc-icons/status' };
 const VFX_SRC = 'assets/source/mob-vfx';
 const VFX_OUT = 'assets/mob-vfx';
@@ -99,6 +99,13 @@ const ICON_SHEETS = {
   'map2_commons_b-sheet': ['salt_hex', 'brackish_tide', 'tide_dirge', 'rise_from_the_deep'],
   'map2_commons_c-sheet': ['bog_spark', 'fen_glimmer', 'barnacle_claw', 'wreck_feast'],
   'map2_commons_d-sheet': ['raid_cut', 'boat_hook', 'cliff_bolt', 'plunging_volley'],
+  'map2_wave2_a-sheet': ['pitch_brand', 'tar_blaze', 'hot_pitch', 'caulkers_smoke'],
+  'map2_wave2_b-sheet': ['waterlogged_grip', 'pull_beneath', 'silt_rake', 'mire_gorge'],
+  'map2_wave2_c-sheet': ['reed_hex', 'fen_rot', 'gutting_knife', 'bilge_splash'],
+  'map2_wave2_d-sheet': ['salt_scourge', 'brann_vigil', 'blessed_salt', 'salted_ground'],
+  'map2_wave2_e-sheet': ['sodden_strike', 'riptide_slash', null, null],
+  'map2_passives_a-sheet': ['slick_hide', 'crown_of_salt', 'deathless_champion', 'hired_steel'],
+  'map2_passives_b-sheet': ['heresy_remembered', 'queens_lure', 'greater_salt_tears', 'for_the_crowd'],
   'map2_harbor-sheet':['chain_shot', 'harpoon_line', 'vane_rally', 'high_tide'],
 };
 
@@ -178,6 +185,15 @@ const GROUND = new Set([
   'tide_caller-rise_from_the_deep',
   'marsh_light-fen_glimmer',
   'cliff_crossbowman-plunging_volley',
+  // wave2 efektleri (zemin / alan; 2026-10-27)
+  'cinder_exile-tar_blaze',
+  'pitch_boiler-caulkers_smoke',
+  'sunken_dead-waterlogged_grip',
+  'sunken_dead-pull_beneath',
+  'reed_witch-fen_rot',
+  'inquisition_brother-salt_scourge',
+  'inquisition_brother-brann_vigil',
+  'salt_chaplain-salted_ground',
 ]);
 
 /** Hücrenin tamamına yayılmış düşük alfalı sis taşıyan sheet'ler: bu eşiğin altındaki alfa silinir (yoksa içerik kutusu tüm hücre olur). */
