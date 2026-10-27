@@ -1,0 +1,38 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach: Cliff Crossbowman (maps-2-3.md 3.3 / 9.3). Kendi çizimi (ChatGPT, 2026-10-27; önceden bandit_crossbowman çizimini kullanıyordu): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). Kit, statlar ve pasif bandit_crossbowman ile AYNI (yalnız görünüm ve id ayrıldı); Harita 2 karşılaşmalarındaki Cliff Crossbowman birimleri bu id'ye bağlı. Sayılar PROVİZYON.",
+  "id": "cliff_crossbowman",
+  "name": "Cliff Crossbowman",
+  "family": "bandits",
+  "spriteId": "cliff_crossbowman",
+  "color": "#7a6a4a",
+  "logo": "bow",
+  "frontPriority": 8,
+  "range": 6,
+  "role": "Bandit · Ranged",
+  "attributes": {
+    "str": 10,
+    "int": 6,
+    "dex": 26,
+    "luck": 6
+  },
+  "armor": 10,
+  "magicArmor": 0,
+  "ai": "sniper",
+  "skills": [
+    "crossbow_bolt",
+    "scatter_quarrels"
+  ],
+  "passive": {
+    "id": "cut_and_run",
+    "name": "Cut and Run",
+    "icon": "shrouded",
+    "text": "Once per battle, the first time HP drops below 50%: Shrouded for 1 turn and a speed boost until the next turn (like Skip Turn).",
+    "effect": {
+      "type": "cutAndRun",
+      "below": 0.5,
+      "status": "shrouded",
+      "turns": 1,
+      "speedBoost": 1
+    }
+  }
+}

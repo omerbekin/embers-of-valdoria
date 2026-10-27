@@ -76,6 +76,8 @@ import mobDrownedKnight from '../../data/mobs/drowned_knight.json';
 import mobBrineMaiden from '../../data/mobs/brine_maiden.json';
 import mobReaverArcher from '../../data/mobs/reaver_archer.json';
 import mobReefWrecker from '../../data/mobs/reef_wrecker.json';
+import mobRiverReaver from '../../data/mobs/river_reaver.json';
+import mobCliffCrossbowman from '../../data/mobs/cliff_crossbowman.json';
 import groundsJson from '../../data/grounds.json';
 import battleRulesJson from '../../data/battle-rules.json';
 import statusesJson from '../../data/statuses.json';
@@ -196,6 +198,8 @@ const mobData: CombatantData[] = [
   mobBrineMaiden,
   mobReaverArcher,
   mobReefWrecker,
+  mobRiverReaver,
+  mobCliffCrossbowman,
 ] as unknown as CombatantData[];
 
 /**

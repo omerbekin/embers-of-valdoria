@@ -52,3 +52,6 @@ Görseli tarayıcı açmadan `node tools/codex/imagegen.mjs --out <hedef.png> --
 Üretilen / içe aktarılan dosyalar, önizleme yolları, yeniden üretilmesi gerekenler, kalan liste.
 
 **Tarayıcı testinde SES KAPALI (Ömer 2026-10-24, ZORUNLU):** oyunu tarayıcıda açan herkes (ana oturum + her agent) her yeni porta/sekmeye ilk iş olarak `localStorage.setItem('eov.settings.v1', JSON.stringify({volume:0, steps:20})); location.reload()` çalıştırır (Master 0 = müzik + efekt + arayüz sesi kapalı). Eski `proto.settings.v1` anahtarı İŞE YARAMAZ (taşıma bir kez çalışır).
+
+## Arka plan prompt kuralı (Ömer 2026-10-27, KALICI)
+Savaş arka planı = temiz pixel art; üst ~%58 ufuk/orta plan ayrıntısı, alt ~%42 savaş zemini TEK sade düz yüzey (2-3 yakın ton, düşük kontrast; çakıl, ot, su birikintisi, enkaz, çatlak, nesne gölgesi YOK), zemin/ufuk arasında net kenar, karakter/yazı/filigran yok, 1536x1024. Foto-gerçekçi boyalı doku reddedilir. Tam kural + prompt şablonu: `docs/arch/assets.md` > "Savaş arka planı prompt kuralı". Görsel başına en çok 3 deneme; zemin gürültülüyse yeniden üret.

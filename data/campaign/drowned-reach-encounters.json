@@ -150,7 +150,7 @@
     "name": "River Reavers",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 1,
         "name": "River Reaver",
         "mods": {
@@ -159,7 +159,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 0,
         "name": "River Reaver",
         "mods": {
@@ -182,7 +182,7 @@
     "name": "Smugglers",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 1,
         "name": "River Reaver",
         "mods": {
@@ -191,7 +191,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 0,
         "name": "River Reaver",
         "mods": {
@@ -250,7 +250,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
@@ -293,7 +293,7 @@
     "name": "River Reavers",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 1,
         "name": "River Reaver",
         "mods": {
@@ -302,7 +302,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 0,
         "name": "River Reaver",
         "mods": {
@@ -406,7 +406,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 0,
         "name": "River Reaver",
         "mods": {
@@ -415,7 +415,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 2,
         "name": "River Reaver",
         "mods": {
@@ -470,7 +470,7 @@
     "name": "Weir Road Ambush",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 1,
         "name": "River Reaver",
         "mods": {
@@ -479,7 +479,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 0,
         "name": "River Reaver",
         "mods": {
@@ -1186,7 +1186,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
@@ -1268,7 +1268,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
@@ -1277,7 +1277,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 6,
         "name": "Cliff Crossbowman",
         "mods": {
@@ -1309,7 +1309,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
@@ -1439,7 +1439,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
@@ -1534,7 +1534,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
@@ -2638,7 +2638,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {
@@ -2707,7 +2707,7 @@
     },
     "units": [
       {
-        "class": "moor_raider",
+        "class": "river_reaver",
         "slot": 1,
         "name": "River Reaver",
         "mods": {
@@ -2853,7 +2853,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "cliff_crossbowman",
         "slot": 7,
         "name": "Cliff Crossbowman",
         "mods": {

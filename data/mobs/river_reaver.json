@@ -1,0 +1,38 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach: River Reaver (maps-2-3.md 3.3 / 9.3). Kendi çizimi (ChatGPT, 2026-10-27; önceden moor_raider çizimini kullanıyordu): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). Kit, statlar ve pasif moor_raider ile AYNI (yalnız görünüm ve id ayrıldı); Harita 2 karşılaşmalarındaki River Reaver birimleri bu id'ye bağlı. Sayılar PROVİZYON.",
+  "id": "river_reaver",
+  "name": "River Reaver",
+  "family": "bandits",
+  "spriteId": "river_reaver",
+  "color": "#5f6f8f",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Bandit · Brute",
+  "attributes": {
+    "str": 26,
+    "int": 4,
+    "dex": 14,
+    "luck": 4
+  },
+  "armor": 12,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "billhook",
+    "peat_smoke"
+  ],
+  "passive": {
+    "id": "cut_and_run",
+    "name": "Cut and Run",
+    "icon": "shrouded",
+    "text": "Once per battle, the first time HP drops below 50%: Shrouded for 1 turn and a speed boost until the next turn (like Skip Turn).",
+    "effect": {
+      "type": "cutAndRun",
+      "below": 0.5,
+      "status": "shrouded",
+      "turns": 1,
+      "speedBoost": 1
+    }
+  }
+}
