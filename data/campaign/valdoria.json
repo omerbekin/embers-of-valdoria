@@ -50,7 +50,7 @@
         { "id": "commander", "action": "story", "label": "Keep Commander", "rect": [0.465, 0.32, 0.545, 0.43] },
         { "id": "inn", "action": "inn", "label": "Inn", "rect": [0.415, 0.43, 0.545, 0.6] },
         { "id": "barracks", "action": "recruit", "label": "Barracks", "rect": [0.55, 0.27, 0.815, 0.58], "note": "The barracks are quiet. Every sword here has already sworn to someone." },
-        { "id": "gate", "action": "leave", "label": "Castle Gate", "rect": [0.885, 0.2, 1, 0.56] }
+        { "id": "gate", "action": "leave", "label": "Castle Gate", "rect": [0.885, 0.27, 1, 0.56] }
       ] } },
     { "id": "6B", "type": "treasure", "name": "Dwarven Mine", "subtitle": "Treasure · Guarded", "lore": "The dwarves left their mine long ago, but its wardens never stopped guarding what lies in the dark.", "region": "II", "label": "above", "pos": [0.3589, 0.2128], "encounter": "mine_wardens", "treasure": "dwarven_mine", "battleBackground": "iron-pass" },
     { "id": "6A", "type": "event", "name": "Witch's Hut", "subtitle": "Event · Guarded", "lore": "Deep in the reeds a crooked hut steams with strange brews, and the hedge witch always names a price.", "region": "II", "pos": [0.3529, 0.4043], "encounter": "witchs_hut_guard", "event": "witchs_hut", "battleBackground": "misty-marsh" },

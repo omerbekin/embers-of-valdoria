@@ -16,6 +16,7 @@ import {
   recruitInTown,
   recruitOffer,
   revisitNode,
+  smithHotspot,
   storyHeard,
   townCover,
   townRecruitOffer,
@@ -162,6 +163,54 @@ describe('town screen geometry (cover + percentage hotspots)', () => {
         }
       }
       expect(hotspotAt(def, townCover(img, { x: 0, y: 0, w: 1920, h: 1080 }), 960, 1070)).toBeNull(); // alttaki açık alan: takımın yeri
+    }
+  });
+
+  it('21:9 safety: every place of every town (both maps, blacksmith too) is fully on screen at the widest stage and not under the Menu buttons or the party', () => {
+    // Ömer 21:9 oynuyor. Görsel 3:2, "cover" ile sığar: en geniş sahnede (2580x1080) görsel 2580x1720 olur ve yalnızca
+    // [0.372*focusY, 0.372*focusY + 0.628] dikey bandı görünür; 16:9'da bant daha geniştir (21:9 bandını kapsar). Telefon da 1920-2580 aralığında.
+    // Sağ üst: Menu + tam ekran (DOM, CSS pikseli; telefonda 44 px ~ 120 birim) -> sağ kenardan 330 x üstten 140 birimlik kutu.
+    // Takım: 4 kahramanın dokunma alanları (masaüstü ve telefon ayak çizgisi). Yerin merkezi ve etiketi takımın altında kalmaz, alanının en çok %22'si.
+    const cfg = CONFIG.townScreen;
+    const all = [...towns, ...getMap('drowned-reach').nodes.filter((n) => n.type === 'town')];
+    expect(all.length).toBeGreaterThanOrEqual(6);
+    const hit = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }): number =>
+      Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+    const party = [cfg.feetY, cfg.feetYPhone].flatMap((f) =>
+      partySpots(4, { cx: 960, feetY: 1080 * f, gap: cfg.gap }).map((p) => ({ x: p.x - cfg.gap * 0.42, y: p.y - cfg.heroHeight, w: cfg.gap * 0.84, h: cfg.heroHeight + 10 + 28 * 1.4 })),
+    );
+    for (const n of all) {
+      const def = townScene(n)!;
+      const smith = smithHotspot(n);
+      const spots = [...def.hotspots.filter((h) => !h.hidden && h.action !== 'rest'), ...(smith && smith.rect[2] > smith.rect[0] ? [smith] : [])];
+      for (const view of [
+        { x: -330, y: 0, w: 2580, h: 1080 },
+        { x: -208, y: 0, w: 2337, h: 1080 },
+        { x: 0, y: 0, w: 1920, h: 1080 },
+      ]) {
+        const c = townCover(img, view, def.focusY);
+        const nav = { x: view.x + view.w - 330, y: 0, w: 330, h: 140 };
+        for (const h of spots) {
+          const r = hotspotRect(h, c);
+          const tag = `${n.name} ${h.id} @${view.w}: ${JSON.stringify(r)}`;
+          expect(r.x >= view.x - 0.5 && r.x + r.w <= view.x + view.w + 0.5 && r.y >= -0.5 && r.y + r.h <= view.h + 0.5, `${tag} kırpılıyor`).toBe(true);
+          expect(hit(r, nav), `${tag} Menu düğmelerinin altında`).toBe(0);
+          for (const size of [cfg.labelSize, cfg.labelSizePhone]) {
+            const ph = size * 1.9;
+            const ly = Math.max(150 + ph / 2, r.y + ph / 2 + 4);
+            expect(ly + ph / 2, `${tag} etiket ekran dışında`).toBeLessThanOrEqual(view.h);
+            const label = { x: r.x + r.w / 2 - 40, y: ly - ph / 2, w: 80, h: ph };
+            for (const z of party) expect(hit(label, z), `${tag} etiketi takımın altında`).toBe(0);
+          }
+          const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+          let covered = 0;
+          for (const z of party) {
+            expect(cx >= z.x && cx <= z.x + z.w && cy >= z.y && cy <= z.y + z.h, `${tag} merkezi takımın altında`).toBe(false);
+            covered = Math.max(covered, hit(r, z));
+          }
+          expect(covered / (r.w * r.h), `${tag} takımın altında kalan pay`).toBeLessThanOrEqual(0.22);
+        }
+      }
     }
   });
 

@@ -1,0 +1,36 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: 'Harita 2'de ödünç hiçbir şey kalmasın'): Road Thug'ın Harita 2 sürümü (maps-2-3.md 3.3 'Road Thug (\"Dock Rat\")', şehir paleti): aynı statlar ve Grudge pasifi (skill'i Belaying Pin), kendi kiti Belaying Pin + Cargo Net. Önceden karşılaşmalarda road_thug id'siyle (Harita 1 kiti ve sesleri) yalnız adı değişik geçiyordu; artık kendi id'si, skill'leri ve sesleri. Çizim YER TUTUCU: spriteId 'road_thug' (Harita 1 karşılığının çizimi; kendi sprite / avatar / ikon / VFX'i sanat turunda, open-questions 442). Statlar road_thug ile aynı (karşılaşma gücü değişmesin). Sayılar PROVİZYON (sim YOK).",
+  "id": "dock_rat",
+  "name": "Dock Rat",
+  "family": "bandits",
+  "spriteId": "road_thug",
+  "color": "#6a5a4c",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Bandit · Brute",
+  "attributes": {
+    "str": 28,
+    "int": 4,
+    "dex": 10,
+    "luck": 4
+  },
+  "armor": 14,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "belaying_pin",
+    "cargo_net"
+  ],
+  "passive": {
+    "id": "grudge",
+    "name": "Grudge",
+    "icon": "rage",
+    "text": "Its basic attack (Belaying Pin) deals ×1.25 damage to the hero who last hit it with a skill. When another hero hits it with a skill, the grudge moves to them.",
+    "effect": {
+      "type": "grudge",
+      "skill": "belaying_pin",
+      "bonus": 0.25
+    }
+  }
+}

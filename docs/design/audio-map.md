@@ -76,6 +76,8 @@ ses / koro ~0,62, yumuşak ~0,44, ulti ~0,8; tarayıcıda kulak kontrolü öneri
 Warden kaynaklı listelerde (wyrm_*, chain_shot) yalnızca biri vuruşa bağlı, diğerleri sessiz (`skills.<id>.roles`); Powder Keg / Brine Lash'in uçuş isteği
 sessiz (uçuş sesi vuruşla üst üste binmesin).
 
+Harita 2 sıradan mobları (dock_rat, reef_hound, salt_hag, tide_caller, marsh_light, wreck_ghoul) + River Reaver / Cliff Crossbowman yeni skill'leri kendi tariflerinde (16 skill, 32 ses: ıslak halat / ağ, tuzlu dalga, bataklık kıvılcımı, midye kabuğu tırmığı, kanca, uçurumdan yaylım; open-questions 442); tepe tarayıcıda Harita 1 karşılığına eşitlendi.
+
 ## Müzik (`data/audio-music.json` + `data/audio-music-tracks.json`, motor `src/game/music.ts`, denetim `src/ui/music.ts > sceneMusic`)
 
 | Parça | Ad | Nerede | Karakter |
@@ -85,9 +87,12 @@ sessiz (uçuş sesi vuruşla üst üste binmesin).
 | town | Hearth and Ale | kasaba ekranı | Fa majör 3/4 jig, parlak lavta, flüt teması, bodhrán |
 | battle | Steel at Dawn | savaş (hızlı savaş, sefer, Endless dalgası, MP) | La minör 4/4, bir oktav alçak lavta ostinatosu, savaş davulu, kısık |
 | boss | The Warden's Wrath | boss savaşı | Re frigyen 4/4, daha ağır davul ve rulolar, kalın drone |
-| boss_wyrm | Jaws of the Weir | The Weir-Wyrm (Harita 2) | Do frigyen 4/4 134, akıntı gibi kıvrılan alçak lavta, "maw" teması, kabaran davul |
-| boss_vane | Run Out the Guns | Admiral Vane (Harita 2) | La dorian 3/4 152, hızlı denizci jigi, güverte tepen davul, "broadside" teması |
+| boss_wyrm (+2, +3) | Jaws of the Weir | The Weir-Wyrm (Harita 2; faz 2 / 3: 146 / 158 bpm) | Do frigyen 4/4 134, akıntı gibi kıvrılan alçak lavta, "maw" teması, kabaran davul |
+| boss_vane (+2, +3) | Run Out the Guns | Admiral Vane (Harita 2; faz 2 / 3: 164 / 176 bpm, faz 3 reel arpeji) | La dorian 3/4 152, hızlı denizci jigi, güverte tepen davul, "broadside" teması |
 | boss_queen (+2, +3) | The Drowned Crown | The Drowned Queen (Harita 2; faz 2 / 3: 138 / 150 bpm) | Fa dorian 4/4 126, yuvarlanan "tide" lavta, siren ağıdı "crown" teması, geniş yankı |
+| map_reach | The Grey Delta | Harita 2 sefer haritası | Mi dorian 4/4 76, sisli delta, alçak lavta + martı gibi flüt |
+| town_reach | Salt and Tar | Harita 2 kasabaları | Re miksolidyen 3/4 96, iskele meyhanesi denizci havası |
+| battle_reach | Brine and Steel | Harita 2 sıradan savaşları | Re dorian 4/4 108, bir oktav alçak lavta, savaş davulu, kısık |
 | camp | Embers at Night | Endless başlığı ve kampı (ara verme) | Mi dorian yavaş 3/4, seyrek lavta, alçak flüt |
 
 Sahne değişince eski parça `crossfadeMs` (2,4 sn) içinde söner, yenisi yükselir; her parça kaldığı ölçüden devam eder. Savaş bitince müzik

@@ -5,7 +5,7 @@ import { elapsedTicks, startCounter, waitMs, type CounterSnap } from '../turn-wa
 import { battleSpeed } from '../../ui/battle-speed';
 import { reducedMotion } from '../../ui/motion-pref';
 import { uiSound, worldSound } from '../../ui/ui-sound';
-import { battleTrack, phaseTrack, sceneMusic } from '../../ui/music';
+import { battleTrack, phaseTrack, sceneMusic, type MusicTrack } from '../../ui/music';
 import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-layout';
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
@@ -155,6 +155,8 @@ export interface CampaignBattleHooks {
   retreatLabel?: string;
   /** Geri çekilme onay sorusu (yoksa session-flow RETREAT_CONFIRM); endless: savaş duraklar, sayılmaz değil. */
   retreatConfirm?: string;
+  /** Boss olmayan savaşın müziği (sefer: haritanın kendi savaş parçası, data/campaign/<harita>.json > music.battle); yoksa 'battle'. */
+  music?: MusicTrack;
   /** Koşu boyu etkiler (HUD > Battle info > Effects): Endless kalıntıları, sefer zorluk / bölüm ölçeği; ileride başka sistemler (src/game/battle-effects.ts). */
   battleEffects?(): BattleEffect[];
   /*
@@ -4822,7 +4824,7 @@ export class BattleScene extends Phaser.Scene {
   private startBattleAudio(): void {
     if (this.campaign?.intermission) return;
     const boss = this.isBossBattle();
-    sceneMusic(battleTrack(this.battle.combatants.filter((c) => c.side !== this.localSide)));
+    sceneMusic(battleTrack(this.battle.combatants.filter((c) => c.side !== this.localSide), this.campaign?.music));
     worldSound(boss ? 'boss_horn' : 'battle_horn');
   }
 

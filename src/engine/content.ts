@@ -81,6 +81,13 @@ import mobReaverArcher from '../../data/mobs/reaver_archer.json';
 import mobReefWrecker from '../../data/mobs/reef_wrecker.json';
 import mobRiverReaver from '../../data/mobs/river_reaver.json';
 import mobCliffCrossbowman from '../../data/mobs/cliff_crossbowman.json';
+// Harita 2 sıradan mobları: eskiden Harita 1 id'siyle ad değiştirip geçiyordu, artık kendi id'leri ve kitleri (content-designer 2026-10-27)
+import mobDockRat from '../../data/mobs/dock_rat.json';
+import mobReefHound from '../../data/mobs/reef_hound.json';
+import mobSaltHag from '../../data/mobs/salt_hag.json';
+import mobTideCaller from '../../data/mobs/tide_caller.json';
+import mobMarshLight from '../../data/mobs/marsh_light.json';
+import mobWreckGhoul from '../../data/mobs/wreck_ghoul.json';
 // Harita 2 elit önderleri (kendi kitleri, content-designer 2026-10-27)
 import mobReaverChiefHook from '../../data/mobs/reaver_chief_hook.json';
 import mobSaltHagMother from '../../data/mobs/salt_hag_mother.json';
@@ -218,6 +225,12 @@ const mobData: CombatantData[] = [
   mobReefWrecker,
   mobRiverReaver,
   mobCliffCrossbowman,
+  mobDockRat,
+  mobReefHound,
+  mobSaltHag,
+  mobTideCaller,
+  mobMarshLight,
+  mobWreckGhoul,
   mobReaverChiefHook,
   mobSaltHagMother,
   mobGuildEnforcerBastion,

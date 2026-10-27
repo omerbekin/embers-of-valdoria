@@ -1,5 +1,5 @@
 {
-  "_not": "SAHNE MÜZİKLERİ (2026-10-13; YUMUŞAK + ÇEŞİTLİ SÜRÜM 2026-10-17, Ömer: 'ana menüdeki gibi kulak tırmalamasın, tekrar etmesin'). Ana menü müziğiyle (data/audio-music.json) AYNI motor ve dil (src/game/music.ts): her parça tabanın ÜSTÜNE yazılan bir fark kaydıdır (trackConfig: önce aşağıdaki 'soft' ortak yumuşatma, sonra parçanın kendi farkları; üst düzey anahtar değişir; voices / harpPatterns / drumPatterns / themes ad ad birleşir; sectionPatch bölüm bölüm). Boss parçaları ayrı dosyada: data/audio-music-bosses.json. Ortaçağ rengi: drone (açık beşli) + lavta/arp (Karplus-Strong) + çerçeve davul + yer yer blok flüt. Yumuşatma ('soft'): tüm karışıma alçak geçiren (softLowpass), lavtada az parlaklık, flütte yavaş atak + az nefes/chiff/harmonik, ped üçgen dalga, daha koyu yankı; ayrıca her parçada davul kısık ve kalıplar seyrek. Çeşitlilik: her parça 4-5 bölümlü (~65-100 sn) ve 'cycles' ile 4-5 döngülük dönüş (ezgi türü, arp kalıbı, ped/bas/davul açık-kapalı, süsleme) + döngü numarasıyla tohumlanan üretilmiş ezgiler: aynı döngü kısa sürede birebir tekrar etmez. Ölçü 4/4 olan parçalarda arp kalıbı 16, davul kalıbı 8 sekizlik; 3/4'te 12 ve 6. voices.harp.shift = arp/bas transpozu (yarım ses; -12 = bir oktav alçak). Sahne geçişleri crossfadeMs ile yumuşak (src/ui/music.ts > sceneMusic); seviye = Settings > Music x Master Volume x parçanın master'ı. CPU hafif: kısa yankı, az nota; aynı anda en çok iki motor (geçiş sırasında).",
+  "_not": "SAHNE MÜZİKLERİ (2026-10-13; YUMUŞAK + ÇEŞİTLİ SÜRÜM 2026-10-17, Ömer: 'ana menüdeki gibi kulak tırmalamasın, tekrar etmesin'). Ana menü müziğiyle (data/audio-music.json) AYNI motor ve dil (src/game/music.ts): her parça tabanın ÜSTÜNE yazılan bir fark kaydıdır (trackConfig: önce aşağıdaki 'soft' ortak yumuşatma, sonra parçanın kendi farkları; üst düzey anahtar değişir; voices / harpPatterns / drumPatterns / themes ad ad birleşir; sectionPatch bölüm bölüm). Boss parçaları ayrı dosyada: data/audio-music-bosses.json. Ortaçağ rengi: drone (açık beşli) + lavta/arp (Karplus-Strong) + çerçeve davul + yer yer blok flüt. Yumuşatma ('soft'): tüm karışıma alçak geçiren (softLowpass), lavtada az parlaklık, flütte yavaş atak + az nefes/chiff/harmonik, ped üçgen dalga, daha koyu yankı; ayrıca her parçada davul kısık ve kalıplar seyrek. Çeşitlilik: her parça 4-5 bölümlü (~65-100 sn) ve 'cycles' ile 4-5 döngülük dönüş (ezgi türü, arp kalıbı, ped/bas/davul açık-kapalı, süsleme) + döngü numarasıyla tohumlanan üretilmiş ezgiler: aynı döngü kısa sürede birebir tekrar etmez. Ölçü 4/4 olan parçalarda arp kalıbı 16, davul kalıbı 8 sekizlik; 3/4'te 12 ve 6. voices.harp.shift = arp/bas transpozu (yarım ses; -12 = bir oktav alçak). Sahne geçişleri crossfadeMs ile yumuşak (src/ui/music.ts > sceneMusic); seviye = Settings > Music x Master Volume x parçanın master'ı. CPU hafif: kısa yankı, az nota; aynı anda en çok iki motor (geçiş sırasında). HARİTA 2 (The Drowned Reach, content-designer 2026-10-27; Ömer: Harita 2'de ödünç hiçbir şey kalmasın): kendi harita / kasaba / savaş parçaları map_reach (The Grey Delta, Mi dorian 4/4 76, gelgit gibi yuvarlanan lavta, kürek davulu), town_reach (Salt and Tar, Re miksolidyen 3/4 96, liman meyhanesi), battle_reach (Brine and Steel, Re dorian 4/4 108, kabaran alçak ostinato). Hangi haritanın hangi parçayı çaldığı haritanın kendi verisinde (data/campaign/<harita>.json > music; yoksa map / town / battle).",
   "crossfadeMs": 2400,
   "soft": {
     "softLowpass": 3800,
@@ -1233,6 +1233,999 @@
           "dawn": {
             "harp": "climb",
             "drum": "heart"
+          }
+        }
+      ]
+    },
+    "map_reach": {
+      "label": "The Grey Delta",
+      "desc": "Campaign map II (The Drowned Reach): drifting down the river to the sea. E dorian 4/4, rolling tide-like lute over a swelling E-B drone, soft oar-stroke frame drum, low recorder; four sections and five loop variants.",
+      "bpm": 76,
+      "beatsPerBar": 4,
+      "tonic": "E",
+      "mode": "dorian",
+      "master": 0.8,
+      "fadeInMs": 3000,
+      "fadeInFrom": 0,
+      "reverb": {
+        "seconds": 2.8,
+        "decay": 3.1,
+        "damp": 0.74,
+        "wet": 0.34,
+        "dry": 0.78
+      },
+      "voices": {
+        "harp": {
+          "gain": 0.42,
+          "decay": 2.1,
+          "bassDecay": 3.2,
+          "bassGain": 0.36,
+          "pan": -0.2
+        },
+        "flute": {
+          "gain": 0.15
+        },
+        "pad": {
+          "gain": 0.02,
+          "cutoff": 620
+        },
+        "drone": {
+          "gain": 0.022,
+          "notes": [
+            "E2",
+            "B2"
+          ],
+          "cutoff": 320,
+          "lfoHz": 0.05,
+          "lfoDepth": 120
+        },
+        "drum": {
+          "gain": 0.24
+        }
+      },
+      "harpPatterns": {
+        "tide": [
+          0,
+          2,
+          4,
+          2,
+          1,
+          3,
+          5,
+          3,
+          0,
+          2,
+          4,
+          2,
+          1,
+          3,
+          4,
+          2
+        ],
+        "reed": [
+          0,
+          null,
+          2,
+          null,
+          4,
+          null,
+          3,
+          null,
+          0,
+          null,
+          2,
+          4,
+          null,
+          3,
+          null,
+          null
+        ],
+        "swell": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          3,
+          2,
+          1,
+          0,
+          1,
+          2,
+          4,
+          5,
+          4,
+          2,
+          1
+        ],
+        "ebb": [
+          0,
+          null,
+          null,
+          2,
+          null,
+          null,
+          4,
+          null,
+          null,
+          3,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null
+        ]
+      },
+      "drumPatterns": {
+        "oar": [
+          0.5,
+          0,
+          0,
+          0.2,
+          0.42,
+          0,
+          0,
+          0.18
+        ],
+        "oarEnd": [
+          0.56,
+          0,
+          0.2,
+          0.24,
+          0.46,
+          0.2,
+          0.3,
+          0.24
+        ],
+        "pulse": [
+          0.46,
+          0,
+          0,
+          0,
+          0.28,
+          0,
+          0,
+          0
+        ]
+      },
+      "themes": {
+        "delta": [
+          "E4:1.5 G4:0.5 B4:2",
+          "A4:1 F#4:1 D4:2",
+          "E4:1 G4:1 B4:1 D5:1",
+          "C#5:2 B4:1 A4:1",
+          "B4:1 D5:1 G4:2",
+          "F#4:1 A4:1 D5:1.5 C#5:0.5",
+          "B4:1 A4:1 E4:2",
+          "E4:4"
+        ],
+        "gull": [
+          "B4:1 E5:1 G5:2",
+          "F#5:1 E5:1 C#5:2",
+          "D5:1 E5:1 B4:2",
+          "A4:1.5 B4:0.5 C#5:2",
+          "D5:1 B4:1 G4:2",
+          "E5:2 C#5:1 A4:1",
+          "D5:1 F#5:1 B4:2",
+          "E5:4"
+        ]
+      },
+      "melodyRange": {
+        "high": [
+          "E4",
+          "E5"
+        ],
+        "low": [
+          "B3",
+          "B4"
+        ]
+      },
+      "rhythms": {
+        "high": [
+          [
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            2,
+            1,
+            1
+          ],
+          [
+            1.5,
+            0.5,
+            2
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            1,
+            1,
+            2
+          ]
+        ],
+        "low": [
+          [
+            4
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            1
+          ]
+        ],
+        "cadence": [
+          [
+            4
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      "sections": {
+        "river": {
+          "chords": [
+            "Em",
+            "D",
+            "Em",
+            "A",
+            "G",
+            "D",
+            "A",
+            "Em"
+          ],
+          "harp": "tide",
+          "bass": true,
+          "pad": 1,
+          "drum": "oar",
+          "drumLast": "oarEnd",
+          "melody": "theme:delta"
+        },
+        "reeds": {
+          "chords": [
+            "G",
+            "D",
+            "Em",
+            "Bm",
+            "A",
+            "Em",
+            "D",
+            "A"
+          ],
+          "harp": "reed",
+          "bass": true,
+          "pad": 1,
+          "drum": null,
+          "melody": "gen:low"
+        },
+        "tide": {
+          "chords": [
+            "Em",
+            "A",
+            "Em",
+            "A",
+            "G",
+            "A",
+            "Bm",
+            "Em"
+          ],
+          "harp": "swell",
+          "bass": true,
+          "pad": 1.05,
+          "drum": "pulse",
+          "melody": "theme:gull",
+          "ornament": 0.15
+        },
+        "mist": {
+          "chords": [
+            "Bm",
+            "A",
+            "G",
+            "Em",
+            "A",
+            "D",
+            "A",
+            "Em"
+          ],
+          "harp": "ebb",
+          "bass": true,
+          "pad": 0.9,
+          "drum": null,
+          "melody": null
+        }
+      },
+      "form": [
+        "river",
+        "reeds",
+        "tide",
+        "mist"
+      ],
+      "cycles": [
+        {},
+        {
+          "river": {
+            "ornament": 0.35
+          },
+          "reeds": {
+            "harp": "ebb"
+          },
+          "mist": {
+            "melody": "gen:high"
+          }
+        },
+        {
+          "river": {
+            "harp": "swell",
+            "drum": "pulse"
+          },
+          "reeds": {
+            "drum": "oar",
+            "melody": "gen:high"
+          },
+          "tide": {
+            "ornament": 0.4,
+            "drum": null
+          },
+          "mist": {
+            "harp": "reed"
+          }
+        },
+        {
+          "river": {
+            "melody": "gen:low",
+            "drum": null
+          },
+          "tide": {
+            "melody": "gen:high",
+            "harp": "tide"
+          },
+          "mist": {
+            "drum": "pulse",
+            "melody": "gen:low"
+          }
+        },
+        {
+          "river": {
+            "ornament": 0.5,
+            "harp": "reed"
+          },
+          "reeds": {
+            "harp": "tide",
+            "melody": "theme:gull",
+            "ornament": 0.3
+          },
+          "tide": {
+            "harp": "ebb"
+          },
+          "mist": {
+            "melody": "theme:delta",
+            "ornament": 0.25
+          }
+        }
+      ]
+    },
+    "town_reach": {
+      "label": "Salt and Tar",
+      "desc": "Town screen II (The Drowned Reach): a harbour alehouse. D mixolydian 3/4 capstan lilt, mellow lute, recorder shanty tune, deck-stamp bodhran over a D-A drone; four sections and four loop variants.",
+      "bpm": 96,
+      "beatsPerBar": 3,
+      "tonic": "D",
+      "mode": "mixolydian",
+      "master": 0.8,
+      "fadeInMs": 2500,
+      "fadeInFrom": 0,
+      "reverb": {
+        "seconds": 2.1,
+        "decay": 3.5,
+        "damp": 0.7,
+        "wet": 0.29,
+        "dry": 0.84
+      },
+      "voices": {
+        "harp": {
+          "gain": 0.44,
+          "decay": 1.8,
+          "bassDecay": 2.6,
+          "bassGain": 0.34,
+          "bright": 0.36,
+          "pan": -0.18
+        },
+        "flute": {
+          "gain": 0.16
+        },
+        "pad": {
+          "gain": 0.016,
+          "cutoff": 680
+        },
+        "drone": {
+          "gain": 0.018,
+          "notes": [
+            "D2",
+            "A2"
+          ],
+          "cutoff": 320
+        },
+        "drum": {
+          "gain": 0.26
+        }
+      },
+      "harpPatterns": {
+        "capstan": [
+          0,
+          null,
+          2,
+          4,
+          null,
+          2,
+          0,
+          null,
+          3,
+          5,
+          null,
+          3
+        ],
+        "haul": [
+          0,
+          2,
+          4,
+          2,
+          0,
+          2,
+          1,
+          3,
+          5,
+          3,
+          1,
+          3
+        ],
+        "lap": [
+          0,
+          null,
+          null,
+          2,
+          null,
+          4,
+          0,
+          null,
+          null,
+          3,
+          null,
+          null
+        ]
+      },
+      "drumPatterns": {
+        "stamp": [
+          0.62,
+          0,
+          0.2,
+          0.44,
+          0,
+          0.2
+        ],
+        "stampEnd": [
+          0.68,
+          0.22,
+          0.3,
+          0.5,
+          0.3,
+          0.38
+        ],
+        "lap": [
+          0.48,
+          0,
+          0,
+          0.24,
+          0,
+          0
+        ]
+      },
+      "themes": {
+        "shanty": [
+          "D4:1 F#4:1 A4:1",
+          "G4:1.5 E4:0.5 C4:1",
+          "D4:1 G4:1 B4:1",
+          "A4:2 F#4:1",
+          "F#4:1 A4:1 D5:1",
+          "C5:1 B4:1 A4:1",
+          "G4:1 E4:1 C5:1",
+          "D5:3"
+        ],
+        "lantern": [
+          "A4:1 F#4:1 D4:1",
+          "E4:1 G4:1 C5:1",
+          "B4:2 F#4:1",
+          "G4:1 B4:1 D5:1",
+          "E5:1.5 D5:0.5 C5:1",
+          "A4:1 C5:1 E5:1",
+          "D5:1 B4:1 G4:1",
+          "D5:3"
+        ]
+      },
+      "melodyRange": {
+        "high": [
+          "D4",
+          "D5"
+        ],
+        "low": [
+          "A3",
+          "A4"
+        ]
+      },
+      "sections": {
+        "quay": {
+          "chords": [
+            "D",
+            "C",
+            "G",
+            "D",
+            "D",
+            "Am",
+            "C",
+            "D"
+          ],
+          "harp": "capstan",
+          "bass": true,
+          "pad": 1,
+          "drum": "stamp",
+          "drumLast": "stampEnd",
+          "melody": "theme:shanty"
+        },
+        "tavern": {
+          "chords": [
+            "G",
+            "D",
+            "C",
+            "D",
+            "Em",
+            "Am",
+            "C",
+            "D"
+          ],
+          "harp": "haul",
+          "bass": true,
+          "pad": 1,
+          "drum": "stamp",
+          "melody": "gen:high"
+        },
+        "nets": {
+          "chords": [
+            "Bm",
+            "G",
+            "D",
+            "Am",
+            "C",
+            "G",
+            "Am",
+            "D"
+          ],
+          "harp": "lap",
+          "bass": true,
+          "pad": 1,
+          "drum": "lap",
+          "melody": "gen:low",
+          "ornament": 0.2
+        },
+        "lantern": {
+          "chords": [
+            "D",
+            "C",
+            "Bm",
+            "G",
+            "C",
+            "Am",
+            "G",
+            "D"
+          ],
+          "harp": "capstan",
+          "bass": true,
+          "pad": 0.9,
+          "drum": "lap",
+          "melody": "theme:lantern",
+          "ornament": 0.3
+        }
+      },
+      "form": [
+        "quay",
+        "tavern",
+        "nets",
+        "lantern"
+      ],
+      "cycles": [
+        {},
+        {
+          "tavern": {
+            "melody": "gen:low",
+            "harp": "capstan"
+          },
+          "nets": {
+            "melody": "gen:high",
+            "drum": "stamp"
+          },
+          "lantern": {
+            "ornament": 0.55
+          }
+        },
+        {
+          "quay": {
+            "ornament": 0.3,
+            "harp": "lap"
+          },
+          "tavern": {
+            "drum": "lap"
+          },
+          "nets": {
+            "harp": "haul"
+          },
+          "lantern": {
+            "melody": "theme:shanty",
+            "ornament": 0.25
+          }
+        },
+        {
+          "quay": {
+            "melody": "theme:lantern",
+            "drum": "lap"
+          },
+          "tavern": {
+            "harp": "lap",
+            "melody": "gen:low"
+          },
+          "nets": {
+            "ornament": 0.5
+          },
+          "lantern": {
+            "harp": "haul",
+            "drum": "stamp"
+          }
+        }
+      ]
+    },
+    "battle_reach": {
+      "label": "Brine and Steel",
+      "desc": "Battle II (The Drowned Reach): tense, salt-soaked. D dorian 4/4, low surging lute ostinato an octave down, D-A drone that swells like the tide, softer war drum; four sections (clash, squall, swell, breakers) and four loop variants; kept under the skill sounds.",
+      "bpm": 108,
+      "beatsPerBar": 4,
+      "tonic": "D",
+      "mode": "dorian",
+      "master": 0.62,
+      "fadeInMs": 2000,
+      "fadeInFrom": 0,
+      "softLowpass": 3400,
+      "reverb": {
+        "seconds": 1.9,
+        "decay": 3.7,
+        "damp": 0.74,
+        "wet": 0.23,
+        "dry": 0.88
+      },
+      "voices": {
+        "harp": {
+          "gain": 0.48,
+          "decay": 1.3,
+          "bassDecay": 2.2,
+          "bassGain": 0.46,
+          "bright": 0.3,
+          "pick": 0.24,
+          "pan": -0.12,
+          "shift": -12
+        },
+        "flute": {
+          "gain": 0.11,
+          "lowGain": 0.9
+        },
+        "pad": {
+          "gain": 0.02,
+          "cutoff": 520,
+          "octave": 3
+        },
+        "drone": {
+          "gain": 0.03,
+          "notes": [
+            "D2",
+            "A2"
+          ],
+          "cutoff": 300,
+          "lfoHz": 0.08,
+          "lfoDepth": 120
+        },
+        "drum": {
+          "gain": 0.4
+        }
+      },
+      "harpPatterns": {
+        "surge": [
+          0,
+          0,
+          2,
+          0,
+          1,
+          0,
+          3,
+          1,
+          0,
+          0,
+          2,
+          0,
+          1,
+          3,
+          2,
+          1
+        ],
+        "rip": [
+          0,
+          1,
+          0,
+          2,
+          0,
+          1,
+          0,
+          3,
+          0,
+          1,
+          0,
+          2,
+          3,
+          2,
+          1,
+          null
+        ],
+        "lull": [
+          0,
+          null,
+          null,
+          2,
+          null,
+          null,
+          1,
+          null,
+          0,
+          null,
+          null,
+          3,
+          null,
+          2,
+          null,
+          null
+        ],
+        "breaker": [
+          0,
+          null,
+          0,
+          2,
+          1,
+          null,
+          0,
+          3,
+          0,
+          null,
+          0,
+          2,
+          1,
+          3,
+          2,
+          null
+        ]
+      },
+      "drumPatterns": {
+        "squall": [
+          0.9,
+          0,
+          0.3,
+          0,
+          0.66,
+          0.3,
+          0.36,
+          0.2
+        ],
+        "squallRoll": [
+          0.9,
+          0.26,
+          0.36,
+          0.3,
+          0.7,
+          0.42,
+          0.52,
+          0.6
+        ],
+        "heave": [
+          0.82,
+          0,
+          0,
+          0.3,
+          0.5,
+          0,
+          0,
+          0
+        ]
+      },
+      "melodyRange": {
+        "high": [
+          "D4",
+          "D5"
+        ],
+        "low": [
+          "A3",
+          "A4"
+        ]
+      },
+      "rhythms": {
+        "high": [
+          [
+            2,
+            1,
+            1
+          ],
+          [
+            1.5,
+            0.5,
+            2
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            1,
+            1,
+            2
+          ]
+        ],
+        "low": [
+          [
+            4
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            1
+          ]
+        ],
+        "cadence": [
+          [
+            4
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      "sections": {
+        "clash": {
+          "chords": [
+            "Dm",
+            "Dm",
+            "C",
+            "Dm",
+            "Dm",
+            "F",
+            "G",
+            "Am"
+          ],
+          "harp": "surge",
+          "bass": true,
+          "pad": 1,
+          "drum": "squall",
+          "drumLast": "squallRoll",
+          "melody": null
+        },
+        "squall": {
+          "chords": [
+            "F",
+            "G",
+            "Dm",
+            "Dm",
+            "F",
+            "C",
+            "G",
+            "G"
+          ],
+          "harp": "rip",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "squall",
+          "drumLast": "squallRoll",
+          "melody": "gen:low"
+        },
+        "swell": {
+          "chords": [
+            "Dm",
+            "Am",
+            "F",
+            "C",
+            "Dm",
+            "G",
+            "C",
+            "Am"
+          ],
+          "harp": "lull",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "heave",
+          "melody": "gen:low"
+        },
+        "breakers": {
+          "chords": [
+            "Dm",
+            "C",
+            "F",
+            "G",
+            "Dm",
+            "C",
+            "G",
+            "Am"
+          ],
+          "harp": "breaker",
+          "bass": true,
+          "pad": 1,
+          "drum": "squall",
+          "drumLast": "squallRoll",
+          "melody": "gen:high"
+        }
+      },
+      "form": [
+        "clash",
+        "squall",
+        "swell",
+        "breakers"
+      ],
+      "cycles": [
+        {},
+        {
+          "clash": {
+            "harp": "rip"
+          },
+          "squall": {
+            "harp": "surge",
+            "melody": null
+          },
+          "swell": {
+            "melody": "gen:high"
+          },
+          "breakers": {
+            "harp": "surge"
+          }
+        },
+        {
+          "squall": {
+            "melody": "gen:high"
+          },
+          "swell": {
+            "harp": "rip",
+            "drum": null
+          },
+          "breakers": {
+            "melody": "gen:low",
+            "harp": "rip"
+          }
+        },
+        {
+          "clash": {
+            "harp": "breaker",
+            "drum": "heave"
+          },
+          "squall": {
+            "harp": "lull"
+          },
+          "swell": {
+            "melody": null
+          },
+          "breakers": {
+            "melody": null,
+            "drum": "squall"
           }
         }
       ]

@@ -1,6 +1,7 @@
 // Kasaba ekranı arka planları (Ömer 2026-10-12, future-ideas "SIRADA" (1)): assets/source/backgrounds-v2/town-<id>.png (ChatGPT, 1536x1024)
-// -> assets/towns/town-<id>.webp. Asıl boyut korunur (1536x1024; büyütmek ayrıntı katmaz, yalnızca dosyayı şişirir); sahnede "cover" ile
-// görünür alanı doldurur (src/campaign/town.ts > townCover). Diğer tam ekran görseller gibi 200-350 KB bandında kalır.
+// -> assets/towns/town-<id>.webp. Kaynak 1536x1024; lanczos3 ile 1.5 kat 2304x1536'ya BÜYÜTÜLÜR (ayrıntı katmaz; ekranda ikinci bir
+// doğrusal büyütmeyi azaltır). 2026-10-27 denendi: 2 kat en yakın komşu (3072, pixel-art büyütme) 21:9'da gözle aynı (ChatGPT/Codex çıktısı
+// temiz piksel ızgarası değil) ama dosya +%10-50; lanczos3 kaldı. Sahnede "cover" ile görünür alanı doldurur (src/campaign/town.ts > townCover).
 //
 // Yeniden üretmek için: node tools/make-town-art.mjs
 import { mkdirSync, readdirSync, statSync } from 'node:fs';

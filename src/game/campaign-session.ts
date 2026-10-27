@@ -67,6 +67,7 @@ import { partyWeapons } from './pose-weapons';
 import { logEvent } from '../diag/diag';
 import { totalXpFor, trackKills, type KillRecord } from '../progression/levels';
 import { maps23On } from '../ui/maps23-flag';
+import { mapSceneTrack } from '../ui/music';
 
 // Harita 2 test bayrağı (maps-2-3.md 9.1): debug anahtarı ya da ?maps=1 açıksa bu oturumda Drowned Reach geçişi görünür
 if (maps23On()) setMapOverride(DROWNED_REACH, true);
@@ -319,6 +320,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
       resultActions: (victory, battle) => resultActions(game, plan, victory, battle),
       resultSubtitle: (victory, battle) => fallenNote(plan, victory, battle),
       battleEffects: () => campaignEffects(st),
+      music: mapSceneTrack(getMap(st.mapId).music, 'battle'), // haritanın kendi savaş müziği (Harita 2: battle_reach)
       retreatConfirm: pitRetreat ? PIT_YIELD_CONFIRM : patrolRetreat ? patrolRetreatConfirm() : PAUSED_CONFIRM,
       // Savaş kurulur kurulmaz (çizimden önce): sürdürülüyorsa günlük oynatılır, sonra kayıt başlar
       prepareBattle: (battle) => {
