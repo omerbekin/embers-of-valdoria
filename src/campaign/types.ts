@@ -229,6 +229,8 @@ export interface CampaignMap {
   continues?: string;
   /** Haritaya geçişte gösterilen giriş metni (oyun içi, İngilizce). */
   intro?: string;
+  /** Haritanın kendi sahne müzikleri (parça id'leri, data/audio-music-tracks.json; src/ui/music.ts > mapSceneTrack); yoksa ortak map / town / battle. */
+  music?: { map?: string; town?: string; battle?: string };
   /** Harita bitince gösterilen pencere (yoksa Harita 1'in "Valdoria Conquered" penceresi ve texts.complete). */
   complete?: { title: string; subtitle: string; text: string };
   /** Harita 2 deniz kuralları (M-J / M-K / M-L / M-M; src/campaign/reach.ts). */

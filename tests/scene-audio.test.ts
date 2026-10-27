@@ -277,7 +277,10 @@ describe('Boss müzikleri (data/audio-music-bosses.json + audio-music-boss-map.j
     expect(battleTrack([{ defId: 'admiral_vane', tier: 'boss' }, { defId: 'iron_mooring' }])).toBe('boss_vane');
     expect(battleTrack([{ defId: 'drowned_queen', tier: 'boss', phase: 3 }])).toBe('boss_queen3');
     expect(phaseTrack('drowned_queen', 2)).toBe('boss_queen2');
-    expect(phaseTrack('weir_wyrm', 2)).toBeNull();
+    expect(phaseTrack('weir_wyrm', 2)).toBe('boss_wyrm2'); // Weir-Wyrm ve Vane fazları (content-designer 2026-10-27)
+    expect(phaseTrack('weir_wyrm', 3)).toBe('boss_wyrm3');
+    expect(phaseTrack('admiral_vane', 2)).toBe('boss_vane2');
+    expect(phaseTrack('admiral_vane', 3)).toBe('boss_vane3');
     expect(phaseTrack('bridge_warden', 2)).toBeNull();
     expect(phaseTrack('warrior', 2)).toBeNull();
     for (const t of [battleTrack([{ defId: 'bridge_warden', tier: 'boss' }]), battleTrack([{ defId: 'lord_morvane', tier: 'boss', phase: 3 }]), battleTrack([{ defId: 'q', tier: 'boss' }])]) expect(MUSIC_TRACK_IDS).toContain(t);

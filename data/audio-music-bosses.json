@@ -1,5 +1,5 @@
 {
-  "_not": "BOSS MÜZİKLERİ (Ömer 2026-10-17: 'her boss savaşının kendine özel, yüksek tempolu müziği olsun; yine ortaçağ, saf sinüs çan yok, kulak tırmalamasın'). Aynı motor ve dil (src/game/music.ts); data/audio-music-tracks.json'daki gibi tabanın + 'soft' ortak yumuşatmanın ÜSTÜNE yazılan farklar, ama önce bu dosyanın 'base'i (ortak boss sesi) uygulanır: hızlı tempo (124-150 bpm), alçak lavta ostinatosu (arp -1 oktav), kalın drone, YÜRÜYEN çerçeve davul ('dum' gövde + hafif kenar 'tek'; kalıplar drive / gallop / roll / half), üçgen dalga ped, flüt ezgisi alçak/yumuşak, alçak geçiren ile tiz kısık. Her boss kendi anahtarı / kipi / ölçüsü / ezgisi ile ayrı parça: boss_warden (D frig, 4/4, 'anvil' teması), boss_priest (G eol, 3/4 vals gibi hızlı, flüt ağırlıklı ağıt), boss_morvane (E frig, 4/4, 'crown' teması; 2. ve 3. faz aynı parçanın daha hızlı / yoğun hâli: 'extends'), Harita 2 (content-designer 2026-10-27, deniz / boğulmuş teması): boss_wyrm (C frig, 4/4, kıvrılan 'coil' lavta + 'maw' teması), boss_vane (A dorian, 3/4 hızlı denizci jigi, 'broadside' teması), boss_queen (F dorian, 4/4, yuvarlanan 'tide' lavta + siren ağıdı 'crown' teması, geniş yankı; 2. ve 3. faz boss_queen2 / boss_queen3 'extends'), 'boss' = tanımsız her boss için genel yedek. Hangi boss hangi parçayı çalar ve faz geçişleri: data/audio-music-boss-map.json (src/ui/music.ts > battleTrack / phaseTrack). Her parça 4-5 bölümlü, 4 döngülük 'cycles' ile tekrarda değişir. Davul kalıpları ölçü başına 8 sekizlik (4/4) ya da 6 (3/4), arp 16 / 12.",
+  "_not": "BOSS MÜZİKLERİ (Ömer 2026-10-17: 'her boss savaşının kendine özel, yüksek tempolu müziği olsun; yine ortaçağ, saf sinüs çan yok, kulak tırmalamasın'). Aynı motor ve dil (src/game/music.ts); data/audio-music-tracks.json'daki gibi tabanın + 'soft' ortak yumuşatmanın ÜSTÜNE yazılan farklar, ama önce bu dosyanın 'base'i (ortak boss sesi) uygulanır: hızlı tempo (124-150 bpm), alçak lavta ostinatosu (arp -1 oktav), kalın drone, YÜRÜYEN çerçeve davul ('dum' gövde + hafif kenar 'tek'; kalıplar drive / gallop / roll / half), üçgen dalga ped, flüt ezgisi alçak/yumuşak, alçak geçiren ile tiz kısık. Her boss kendi anahtarı / kipi / ölçüsü / ezgisi ile ayrı parça: boss_warden (D frig, 4/4, 'anvil' teması), boss_priest (G eol, 3/4 vals gibi hızlı, flüt ağırlıklı ağıt), boss_morvane (E frig, 4/4, 'crown' teması; 2. ve 3. faz aynı parçanın daha hızlı / yoğun hâli: 'extends'), Harita 2 (content-designer 2026-10-27, deniz / boğulmuş teması): boss_wyrm (C frig, 4/4, kıvrılan 'coil' lavta + 'maw' teması), boss_vane (A dorian, 3/4 hızlı denizci jigi, 'broadside' teması), Weir-Wyrm ve Vane'in 2. ve 3. fazı boss_wyrm2 / boss_wyrm3 ve boss_vane2 / boss_vane3 'extends' (content-designer 2026-10-27; Queen / Morvane gibi aynı tema, daha hızlı ve yoğun), boss_queen (F dorian, 4/4, yuvarlanan 'tide' lavta + siren ağıdı 'crown' teması, geniş yankı; 2. ve 3. faz boss_queen2 / boss_queen3 'extends'), 'boss' = tanımsız her boss için genel yedek. Hangi boss hangi parçayı çalar ve faz geçişleri: data/audio-music-boss-map.json (src/ui/music.ts > battleTrack / phaseTrack). Her parça 4-5 bölümlü, 4 döngülük 'cycles' ile tekrarda değişir. Davul kalıpları ölçü başına 8 sekizlik (4/4) ya da 6 (3/4), arp 16 / 12.",
   "base": {
     "beatsPerBar": 4,
     "bpm": 132,
@@ -1426,6 +1426,189 @@
         }
       ]
     },
+    "boss_wyrm2": {
+      "label": "Jaws of the Weir II",
+      "desc": "The Weir-Wyrm, phase II (the weir breaks). Same theme, faster (146) and heavier: churning lute, galloping drum, louder pad.",
+      "extends": "boss_wyrm",
+      "bpm": 146,
+      "voices": {
+        "pad": {
+          "gain": 0.038
+        },
+        "drone": {
+          "gain": 0.054
+        },
+        "drum": {
+          "gain": 0.6
+        }
+      },
+      "sectionPatch": {
+        "weir": {
+          "harp": "coil",
+          "drum": "drive",
+          "pad": 1.15,
+          "melody": "gen:low"
+        },
+        "maw": {
+          "drum": "gallop",
+          "pad": 1.2
+        },
+        "deep": {
+          "harp": "undertow",
+          "drum": "gallop"
+        },
+        "burst": {
+          "drum": "roll",
+          "pad": 1.15
+        }
+      },
+      "cycles": [
+        {},
+        {
+          "weir": {
+            "melody": "gen:high"
+          },
+          "maw": {
+            "ornament": 0.35
+          },
+          "deep": {
+            "melody": "gen:high"
+          },
+          "burst": {
+            "melody": "gen:low"
+          }
+        },
+        {
+          "weir": {
+            "melody": null
+          },
+          "maw": {
+            "melody": "gen:high"
+          },
+          "deep": {
+            "melody": "gen:high",
+            "ornament": 0.2
+          },
+          "burst": {
+            "harp": "grind"
+          }
+        },
+        {
+          "weir": {
+            "melody": "gen:high"
+          },
+          "maw": {
+            "ornament": 0.2
+          },
+          "deep": {
+            "melody": "gen:low"
+          },
+          "burst": {
+            "melody": "gen:high"
+          }
+        }
+      ]
+    },
+    "boss_wyrm3": {
+      "label": "Jaws of the Weir III",
+      "desc": "The Weir-Wyrm, final phase (the Deluge). Fastest (158): relentless coiling lute, thundering rolls, the widest reverb, the maw theme crying over everything.",
+      "extends": "boss_wyrm",
+      "bpm": 158,
+      "softLowpass": 4400,
+      "reverb": {
+        "seconds": 2.7,
+        "decay": 2.9,
+        "damp": 0.7,
+        "wet": 0.31,
+        "dry": 0.83
+      },
+      "voices": {
+        "flute": {
+          "gain": 0.17
+        },
+        "pad": {
+          "gain": 0.044
+        },
+        "drone": {
+          "gain": 0.058
+        },
+        "drum": {
+          "gain": 0.64
+        }
+      },
+      "sectionPatch": {
+        "weir": {
+          "harp": "grind",
+          "drum": "roll",
+          "pad": 1.2,
+          "melody": "gen:high"
+        },
+        "maw": {
+          "harp": "coil",
+          "drum": "roll",
+          "pad": 1.25,
+          "melody": "theme:maw",
+          "ornament": 0.3
+        },
+        "deep": {
+          "harp": "hammer",
+          "drum": "gallop",
+          "melody": "gen:high"
+        },
+        "burst": {
+          "harp": "grind",
+          "drum": "roll",
+          "pad": 1.3
+        }
+      },
+      "cycles": [
+        {},
+        {
+          "weir": {
+            "melody": "gen:low"
+          },
+          "maw": {
+            "ornament": 0.5
+          },
+          "deep": {
+            "melody": "gen:low",
+            "ornament": 0.2
+          },
+          "burst": {
+            "melody": "gen:high"
+          }
+        },
+        {
+          "weir": {
+            "melody": "gen:low",
+            "ornament": 0.2
+          },
+          "maw": {
+            "melody": "gen:high"
+          },
+          "deep": {
+            "melody": "gen:low"
+          },
+          "burst": {
+            "harp": "coil"
+          }
+        },
+        {
+          "weir": {
+            "harp": "chug"
+          },
+          "maw": {
+            "ornament": 0.15
+          },
+          "deep": {
+            "harp": "undertow"
+          },
+          "burst": {
+            "harp": "hammer"
+          }
+        }
+      ]
+    },
     "boss_vane": {
       "label": "Run Out the Guns",
       "desc": "Admiral Vane. A dorian 3/4 at 152: a fast sea-shanty jig for a pirate admiral, bouncing lute, deck-stamping frame drum, the 'broadside' recorder tune over an A-E drone. Four sections, four loop variants.",
@@ -1702,6 +1885,208 @@
           },
           "boarding": {
             "melody": "gen:low"
+          }
+        }
+      ]
+    },
+    "boss_vane2": {
+      "label": "Run Out the Guns II",
+      "desc": "Admiral Vane, phase II (boarders away). Same jig, faster (164) and heavier: driving deck-stamp drum, busier hornpipe lute, louder pad.",
+      "extends": "boss_vane",
+      "bpm": 164,
+      "voices": {
+        "pad": {
+          "gain": 0.036
+        },
+        "drone": {
+          "gain": 0.05
+        },
+        "drum": {
+          "gain": 0.59
+        }
+      },
+      "sectionPatch": {
+        "muster": {
+          "harp": "hornpipe",
+          "drum": "jig",
+          "pad": 1.15,
+          "melody": "gen:low"
+        },
+        "broadside": {
+          "drum": "deck",
+          "pad": 1.2
+        },
+        "rigging": {
+          "harp": "jig",
+          "drum": "deck"
+        },
+        "boarding": {
+          "harp": "hornpipe",
+          "drum": "jig",
+          "pad": 1.2
+        }
+      },
+      "cycles": [
+        {},
+        {
+          "muster": {
+            "melody": "gen:high"
+          },
+          "broadside": {
+            "ornament": 0.35
+          },
+          "rigging": {
+            "melody": "gen:low"
+          },
+          "boarding": {
+            "melody": "gen:high"
+          }
+        },
+        {
+          "muster": {
+            "melody": null
+          },
+          "broadside": {
+            "melody": "gen:high"
+          },
+          "rigging": {
+            "melody": "gen:high",
+            "ornament": 0.2
+          },
+          "boarding": {
+            "harp": "jig"
+          }
+        },
+        {
+          "muster": {
+            "melody": "gen:high"
+          },
+          "broadside": {
+            "ornament": 0.2
+          },
+          "rigging": {
+            "melody": "gen:high"
+          },
+          "boarding": {
+            "melody": "gen:low"
+          }
+        }
+      ]
+    },
+    "boss_vane3": {
+      "label": "Run Out the Guns III",
+      "desc": "Admiral Vane, final phase (broadside). Fastest (176): a breakneck reel, thundering deck drums and rolls, the broadside tune shrieking over the cannon smoke.",
+      "extends": "boss_vane",
+      "bpm": 176,
+      "softLowpass": 4400,
+      "reverb": {
+        "seconds": 2.4,
+        "decay": 3,
+        "damp": 0.72,
+        "wet": 0.29,
+        "dry": 0.84
+      },
+      "voices": {
+        "flute": {
+          "gain": 0.17
+        },
+        "pad": {
+          "gain": 0.042
+        },
+        "drone": {
+          "gain": 0.056
+        },
+        "drum": {
+          "gain": 0.63
+        }
+      },
+      "harpPatterns": {
+        "reel": [
+          0,
+          2,
+          4,
+          2,
+          5,
+          2,
+          0,
+          3,
+          5,
+          3,
+          4,
+          1
+        ]
+      },
+      "sectionPatch": {
+        "muster": {
+          "harp": "reel",
+          "drum": "deck",
+          "drumLast": "waltzRoll",
+          "pad": 1.2,
+          "melody": "gen:high"
+        },
+        "broadside": {
+          "harp": "reel",
+          "drum": "jig",
+          "pad": 1.25,
+          "melody": "theme:broadside",
+          "ornament": 0.3
+        },
+        "rigging": {
+          "harp": "hornpipe",
+          "drum": "deck",
+          "melody": "gen:high"
+        },
+        "boarding": {
+          "harp": "reel",
+          "drum": "jig",
+          "pad": 1.3,
+          "melody": "gen:high"
+        }
+      },
+      "cycles": [
+        {},
+        {
+          "muster": {
+            "melody": "gen:low"
+          },
+          "broadside": {
+            "ornament": 0.5
+          },
+          "rigging": {
+            "melody": "gen:low",
+            "ornament": 0.2
+          },
+          "boarding": {
+            "melody": "gen:low"
+          }
+        },
+        {
+          "muster": {
+            "melody": "gen:high",
+            "ornament": 0.25
+          },
+          "broadside": {
+            "melody": "gen:high"
+          },
+          "rigging": {
+            "harp": "reel"
+          },
+          "boarding": {
+            "harp": "hornpipe"
+          }
+        },
+        {
+          "muster": {
+            "harp": "jig"
+          },
+          "broadside": {
+            "ornament": 0.15
+          },
+          "rigging": {
+            "melody": "gen:low"
+          },
+          "boarding": {
+            "harp": "jig"
           }
         }
       ]

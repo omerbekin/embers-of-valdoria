@@ -196,7 +196,7 @@ import { ensureIcon } from '../icons';
 import { hasUiImage, uiIconName } from '../../ui/ui-icons';
 import { hasMiscImage } from '../../ui/misc-icons';
 import { WORLD_AUDIO, worldSound } from '../../ui/ui-sound';
-import { sceneMusic } from '../../ui/music';
+import { mapSceneTrack, sceneMusic } from '../../ui/music';
 import { MIN_TOUCH_PX, touchUnits } from '../touch-hit';
 
 /**
@@ -2999,7 +2999,7 @@ export class CampaignMapScene extends Phaser.Scene {
     } else this.town?.render();
     this.cameras.main.setVisible(!this.town);
     this.hud.setVisible(!this.town);
-    sceneMusic(this.town ? 'town' : 'map'); // kasaba ekranı: sıcak kasaba müziği; haritaya dönünce yolculuk müziği (yumuşak geçiş)
+    sceneMusic(mapSceneTrack(getMap(this.s.mapId).music, this.town ? 'town' : 'map')); // kasaba ekranı: sıcak kasaba müziği; haritaya dönünce yolculuk müziği (yumuşak geçiş)
   }
 
   /** Kasaba ekranı açıkken otomatik kayıt (playtest B1; campaign-session > checkpoint). */

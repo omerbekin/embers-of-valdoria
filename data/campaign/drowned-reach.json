@@ -11,6 +11,8 @@
     "text": "The Drowned Queen is fallen and both halves of the Hearthcrown are in your hands. They pull north, toward the mountain. What was split must be mended, or ended."
   },
   "continues": "valdoria",
+  "_music": "Harita 2nin kendi sahne müzikleri (content-designer 2026-10-27; Ömer: ödünç hiçbir şey kalmasın): harita map_reach (The Grey Delta), kasaba town_reach (Salt and Tar), boss olmayan savaş battle_reach (Brine and Steel); parçalar data/audio-music-tracks.json, seçim src/ui/music.ts > mapSceneTrack. Boss müzikleri data/audio-music-boss-map.json.",
+  "music": { "map": "map_reach", "town": "town_reach", "battle": "battle_reach" },
   "background": "drowned-reach-bg",
   "backgroundExt": {
     "_not": "Kenar taşmalı harita görseli (Harita 2 playtest 2026-10-25, Ömer seçeneği (a); tools/make-map-ext.mjs ile üretilir): asıl görsel dört kenardan aynalanıp kademeli bulanıklaştırılmış, kenara doğru koyulaşan vinyetli taşma alanıyla genişletildi. Yalnız sefer haritası sahnesi kullanır: kamera bu alana da kayabilir, telefonda HUD yanındaki kenar durakları tam görünür, siyah alan yok. region = 16:9 sefer alanının (düğüm pos) bu görseldeki kesir dikdörtgeni, content = asıl (taşmasız) görselin dikdörtgeni (bölge yakınlaştırması bunu kaplar).",

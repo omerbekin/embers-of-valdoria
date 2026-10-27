@@ -21,7 +21,7 @@ export const DEFAULT_MUSIC_LEVEL: number = musicData.defaultLevel;
 const FADE_OUT = musicData.fadeOutMs / 1000;
 const XFADE = crossfadeMs / 1000;
 
-export type MusicTrack = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp' | 'boss_warden' | 'boss_priest' | 'boss_morvane' | 'boss_morvane2' | 'boss_morvane3' | 'boss_wyrm' | 'boss_vane' | 'boss_queen' | 'boss_queen2' | 'boss_queen3';
+export type MusicTrack = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp' | 'boss_warden' | 'boss_priest' | 'boss_morvane' | 'boss_morvane2' | 'boss_morvane3' | 'boss_wyrm' | 'boss_vane' | 'boss_queen' | 'boss_queen2' | 'boss_queen3' | 'map_reach' | 'town_reach' | 'battle_reach' | 'boss_wyrm2' | 'boss_wyrm3' | 'boss_vane2' | 'boss_vane3';
 
 interface BossMapEntry {
   track: MusicTrack;
@@ -30,8 +30,14 @@ interface BossMapEntry {
 }
 const BOSS_BY_DEF = bossMap.byDef as unknown as Record<string, BossMapEntry>;
 
-/** Savaş müziği seçimi (saf): sahadaki düşmanlardan boss varsa onun parçası, yoksa 'battle'. Boss = rütbesi boss / boss tanımlı / haritada anyTier. */
-export function battleTrack(enemies: ReadonlyArray<{ defId: string; tier?: string; boss?: unknown; phase?: number }>): MusicTrack {
+/** Haritanın kendi sahne parçaları (data/campaign/<harita>.json > music; Harita 2 = map_reach / town_reach / battle_reach, content-designer 2026-10-27); tanımsızsa ortak map / town / battle. */
+export type SceneMusicKind = 'map' | 'town' | 'battle';
+export function mapSceneTrack(music: Partial<Record<SceneMusicKind, string>> | undefined, kind: SceneMusicKind): MusicTrack {
+  return (music?.[kind] as MusicTrack | undefined) ?? kind;
+}
+
+/** Savaş müziği seçimi (saf): sahadaki düşmanlardan boss varsa onun parçası, yoksa `normal` (varsayılan 'battle'; sefer haritanın kendi savaş parçasını verir). Boss = rütbesi boss / boss tanımlı / haritada anyTier. */
+export function battleTrack(enemies: ReadonlyArray<{ defId: string; tier?: string; boss?: unknown; phase?: number }>, normal: MusicTrack = 'battle'): MusicTrack {
   let generic = false;
   for (const e of enemies) {
     const m = BOSS_BY_DEF[e.defId];
@@ -39,7 +45,7 @@ export function battleTrack(enemies: ReadonlyArray<{ defId: string; tier?: strin
     if (m && (isBoss || m.anyTier)) return (m.phases?.[String(e.phase ?? 1)] ?? m.track);
     if (isBoss) generic = true;
   }
-  return generic ? (bossMap.fallback as MusicTrack) : 'battle';
+  return generic ? (bossMap.fallback as MusicTrack) : normal;
 }
 
 /** Boss yeni faza girdi: o fazın parçası (haritada tanımlıysa), yoksa null (müzik değişmez). */

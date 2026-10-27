@@ -109,8 +109,8 @@ export const MUSIC: MusicConfig = mergeConfig(BASE, (() => {
  * Çalınabilir parçalar: ana menü + sahne müzikleri (src/ui/music.ts > sceneMusic). Boss parçaları (2026-10-17): 'boss' = genel boss,
  * boss_warden / boss_priest / boss_morvane (+ Lord Morvane'ın 2. ve 3. fazı) ve Harita 2'nin boss_wyrm / boss_vane / boss_queen (+ 2. ve 3. faz) = o boss'a özel (hangi boss hangi parça: data/audio-music-boss-map.json).
  */
-export type MusicTrackId = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp' | 'boss_warden' | 'boss_priest' | 'boss_morvane' | 'boss_morvane2' | 'boss_morvane3' | 'boss_wyrm' | 'boss_vane' | 'boss_queen' | 'boss_queen2' | 'boss_queen3';
-export const MUSIC_TRACK_IDS: readonly MusicTrackId[] = ['menu', 'map', 'town', 'battle', 'boss', 'camp', 'boss_warden', 'boss_priest', 'boss_morvane', 'boss_morvane2', 'boss_morvane3', 'boss_wyrm', 'boss_vane', 'boss_queen', 'boss_queen2', 'boss_queen3'];
+export type MusicTrackId = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp' | 'boss_warden' | 'boss_priest' | 'boss_morvane' | 'boss_morvane2' | 'boss_morvane3' | 'boss_wyrm' | 'boss_vane' | 'boss_queen' | 'boss_queen2' | 'boss_queen3' | 'map_reach' | 'town_reach' | 'battle_reach' | 'boss_wyrm2' | 'boss_wyrm3' | 'boss_vane2' | 'boss_vane3';
+export const MUSIC_TRACK_IDS: readonly MusicTrackId[] = ['menu', 'map', 'town', 'battle', 'boss', 'camp', 'boss_warden', 'boss_priest', 'boss_morvane', 'boss_morvane2', 'boss_morvane3', 'boss_wyrm', 'boss_vane', 'boss_queen', 'boss_queen2', 'boss_queen3', 'map_reach', 'town_reach', 'battle_reach', 'boss_wyrm2', 'boss_wyrm3', 'boss_vane2', 'boss_vane3'];
 type TrackOverride = Override & { label: string; desc: string; /** Başka bir parçanın ayarını miras alır (ör. boss fazları). */ extends?: MusicTrackId };
 const SCENE_FILE = tracksData as unknown as { soft: Override; tracks: Record<string, TrackOverride> };
 const BOSS_FILE = bossesData as unknown as { base: Override; tracks: Record<string, TrackOverride> };
