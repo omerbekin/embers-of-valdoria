@@ -3103,3 +3103,92 @@ html.short .bh-pv .bh-ico {
   width: calc(14 * var(--rp));
   height: calc(14 * var(--rp));
 }
+
+/* --- Crown Surge (Ömer 2026-10-27, mockup crown-surge.html#v1): sağ alanda Combat log'un solunda taç plakası (skill plakası dili) --- */
+.bh-right.has-crown {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.bh-right.has-crown .bh-binfo {
+  flex: 1;
+  min-width: 0;
+  align-self: center;
+}
+
+.bh-crown {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+.bh-crown[hidden] {
+  display: none;
+}
+
+.bp.crown {
+  --ac: #e2b04a;
+}
+
+.bp.crown:not(.used):not(.off) {
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 22px rgba(226, 176, 74, 0.45), inset 0 0 22px rgba(226, 176, 74, 0.16);
+  animation: bh-crown-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes bh-crown-glow {
+  50% {
+    box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 34px rgba(226, 176, 74, 0.7), inset 0 0 26px rgba(226, 176, 74, 0.26);
+  }
+}
+
+.bp.crown.used {
+  --ac: #6b5a3a;
+  cursor: default;
+  filter: saturate(0.35) brightness(0.7);
+}
+
+.bp.crown.off:not(.used) {
+  cursor: default;
+  filter: saturate(0.7) brightness(0.85);
+}
+
+.bp.crown .bp-chip b {
+  color: #f3d999;
+}
+
+.bp.crown .bp-chip.none b {
+  color: #e8806a;
+}
+
+/* sağ kenardaki plakanın açıklaması ekrandan taşmasın: sağa yaslı */
+.bh-crown .bp .bh-sktip {
+  left: auto;
+  right: 0;
+  transform: translate(0, 6px);
+}
+
+@media (hover: hover) {
+  .bh-crown .bp:hover .bh-sktip {
+    transform: translate(0, 0);
+  }
+}
+
+.bh-crown .bp.tip .bh-sktip {
+  transform: translate(0, 0);
+}
+
+/* Ashen Taint çipi (alt çubuk karakter bloğu) */
+.bh-chip.taint {
+  color: #c9b8f0;
+  border-color: rgba(150, 110, 220, 0.7);
+  background: rgba(100, 60, 170, 0.18);
+}
+
+.bh-chip.taint b {
+  color: #e1d3ff;
+}
+
+html.short .bh-right.has-crown .bh-pl-t {
+  display: none;
+}

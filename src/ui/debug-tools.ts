@@ -31,7 +31,7 @@ import { copyMatchData } from './match-copy';
 import { isFullscreen, toggleFullscreen } from './fullscreen';
 import { registerCampaignDebug } from './debug-campaign';
 import { registerCampaignRoamDebug } from './debug-campaign-roam';
-import { debugSetValor as campaignSetValor } from '../campaign';
+import { debugAddTaint, debugRefillSurge, debugSetSalt, debugSetValor as campaignSetValor } from '../campaign';
 import { current as campaignState, setState as setCampaignState, MAP_SCENE } from '../game/campaign-session';
 import { ENDLESS_SCENE, commit as commitRun, endless } from '../game/endless-session';
 import { registerMultiplayerDebug } from './debug-mp';
@@ -591,6 +591,63 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     label: 'Clear Valor',
     hint: 'Set Valor to 0 (the campaign keeps it unlocked)',
     run: () => setValor(() => 0),
+  });
+  // Crown Surge + Ashen Taint (map2-quests-surge.md C12 a): savaşta (test savaşı dahil) taç plakasını açar / yeniler; savaş dışında sefer kaydı
+  const campaignEdit = (fn: (cs: NonNullable<ReturnType<typeof campaignState>>) => NonNullable<ReturnType<typeof campaignState>>): void => {
+    const cs = campaignState();
+    if (!cs) return;
+    setCampaignState(fn(cs));
+    if (game.scene.isActive(MAP_SCENE)) (game.scene.getScene(MAP_SCENE) as Phaser.Scene).scene.restart();
+  };
+  debug.register({
+    id: 'surge.battle',
+    tab: 'Battle',
+    section: 'Team',
+    icon: 'flame',
+    label: 'Enable Crown Surge',
+    hint: 'In any battle (test battle too): give your side Ash Surge and Salt Surge and refill the one-per-battle charge',
+    run: () => {
+      const s = battle();
+      if (!s) return;
+      s.battle.debugSetSurge('party', ['ash_surge', 'salt_surge']);
+      s.debugAfterChange();
+    },
+  });
+  debug.register({
+    id: 'surge.refill',
+    tab: 'Battle',
+    section: 'Team',
+    icon: 'restart',
+    label: 'Refill Crown Surge (campaign)',
+    hint: 'Give back every spent Crown Surge charge in the loaded campaign (all regions)',
+    run: () => campaignEdit((cs) => debugRefillSurge(cs, true)),
+  });
+  debug.register({
+    id: 'surge.salt',
+    tab: 'Battle',
+    section: 'Team',
+    icon: 'shield',
+    label: 'Unlock Salt Surge (campaign)',
+    hint: 'Unlock Salt Surge in the loaded campaign (normally after the Drowned Queen)',
+    run: () => campaignEdit((cs) => debugSetSalt(cs, true)),
+  });
+  debug.register({
+    id: 'taint.add',
+    tab: 'Battle',
+    section: 'Team',
+    icon: 'skull',
+    label: 'Add Ashen Taint +1',
+    hint: 'Give each active hero in the loaded campaign 1 Ashen Taint (-3% max HP each)',
+    run: () => campaignEdit((cs) => debugAddTaint(cs, 1)),
+  });
+  debug.register({
+    id: 'taint.clear',
+    tab: 'Battle',
+    section: 'Team',
+    icon: 'restart',
+    label: 'Clear Ashen Taint',
+    hint: 'Remove all Ashen Taint in the loaded campaign (as a Chapel does)',
+    run: () => campaignEdit((cs) => debugAddTaint(cs, -1)),
   });
   debug.register({
     id: 'unit.kill-enemies',

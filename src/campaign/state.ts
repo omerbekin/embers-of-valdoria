@@ -19,6 +19,7 @@ import { pitBest, pitOf, pitTierPays } from './pit';
 import { OATH_DATA, oathDef, oathHealMult } from './oath';
 import { diveChest, diveEncounters, diveMax } from './side-content';
 import { grantQuest, questOpen, shownMap } from './quests';
+import { applySurgeOutcome, cleanseTaint, isChapel, unlocksSalt } from './surge';
 import type { BattleOutcome, CampChoice, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, InnStay, MapNode, NextStep, StepKind } from './types';
 
 /**
@@ -908,6 +909,7 @@ export function clearWounds(t: CampaignState): void {
 export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: CampaignRules = rulesFor(s)): CampaignState {
   const t = clone(s);
   delete t.suspended; // savaş bitti (zafer ya da yenilgi): duraklatma kaydı geçersiz
+  applySurgeOutcome(t, outcome.surged); // Crown Surge: çağrıldıysa bölge hakkı gider, çağıran Taint alır (sonuç fark etmez)
   if (!outcome.victory) {
     t.stats.defeats++;
     return t;
@@ -962,6 +964,8 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
     return t;
   }
   complete(t, 'battle');
+  // Crown Surge C9: Drowned Queen'in ilk yenilgisi Salt Surge'ü açar
+  if (unlocksSalt(t.mapId, t.at)) t.surge = { ...(t.surge ?? {}), salt: true };
   // A1 Wayshrine: sınav kazanıldı, nimet seferin geri kalanı için (sunak başına bir kez)
   const shrine = node(mapOf(t), t.at).shrine;
   if (shrine && !(t.boons ?? []).includes(shrine)) t.boons = [...(t.boons ?? []), shrine];
@@ -1045,11 +1049,12 @@ function winDive(t: CampaignState, outcome: BattleOutcome, encounterId: string):
  * Derinlikte yenilgi ("Swim for the surface"): savaşta ne olduysa kalır (devriyeden geri çekilmeyle aynı can / yara kuralı), son bulunan
  * derinliğin sandığı batar, öncekiler alınır (1. derinliğin sandığı = düğümün hazinesi), hazine adımı biter.
  */
-export function diveDefeat(s: CampaignState, battle: Pick<BattleOutcome, 'units' | 'valorLeft' | 'valorRevived'>): CampaignState {
+export function diveDefeat(s: CampaignState, battle: Pick<BattleOutcome, 'units' | 'valorLeft' | 'valorRevived' | 'surged'>): CampaignState {
   const step = nextStep(s);
   if (step.kind !== 'battle' || !step.dive) throw new Error('No dive battle here');
   const t = clone(s);
   delete t.suspended;
+  applySurgeOutcome(t, battle.surged);
   t.stats.defeats++;
   keepBattleHp(t, battle);
   if (t.valor !== undefined && battle.valorLeft !== undefined) t.valor = addValor(valorRules, battle.valorLeft, 0);
@@ -1091,6 +1096,7 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
   delete t.pit; // arena koşusu kasabada biter (güvenlik ağı)
   delete t.dive; // yüzeye çıkmadan ayrılan dalış: ek sandıklar kalır, hazine adımı baştan bekler (VARSAYIM, open-questions 428)
   markCleared(t, to); // adımı olmayan düğüm varınca temizlenmiş sayılır
+  if (isChapel(t.mapId, to)) cleanseTaint(t); // Crown Surge C5 b: Chapel dinlenme düğümüne her varış Taint'i siler
   return t;
 }
 
@@ -1431,13 +1437,14 @@ export const patrolRetreatConfirm = (): string => {
  * olanlar zaferdeki gibi yaralı kalkar (lethal yaralıysa ceset), harcanan Valor harcanmış kalır. Zafer şifası / XP / loot / Valor kazancı yok.
  * `battle` yoksa (savaş kaydı yok) yalnızca devriye bırakılır. Dönen: yeni durum + kahraman başına kaybedilen yüzde / yara / ölüm (gösterim).
  */
-export function retreatPatrol(s: CampaignState, battle?: Pick<BattleOutcome, 'units' | 'valorLeft' | 'valorRevived'>): { state: CampaignState; losses: RetreatLoss[] } {
+export function retreatPatrol(s: CampaignState, battle?: Pick<BattleOutcome, 'units' | 'valorLeft' | 'valorRevived' | 'surged'>): { state: CampaignState; losses: RetreatLoss[] } {
   if (s.patrol !== s.at) return { state: s, losses: [] };
   const t = clone(s);
   delete t.patrol;
   delete t.suspended;
   const losses: RetreatLoss[] = [];
   if (!battle) return { state: t, losses };
+  applySurgeOutcome(t, battle.surged);
   const before = new Map(t.roster.map((h) => [h.id, { hp: isFallen(h) ? 0 : h.hpRatio, fallen: isFallen(h) }]));
   valorHealWounds(t, battle.valorRevived);
   const risen = settleFallen(t, battle.units, woundRules());
@@ -1746,13 +1753,14 @@ function settlePitFight(t: CampaignState, battle: Pick<BattleOutcome, 'units' | 
  * ne olduysa kalır, savaşa ayakta girip düşen kahraman yaralı kalkar (ölümcül yarada ceset), harcanan Valor harcanmış kalır. Daha önce
  * kazanılan kademelerin ödülü ve rekor kalır. `battle` yoksa yalnızca koşu kapanır.
  */
-export function losePit(s: CampaignState, battle?: Pick<BattleOutcome, 'units' | 'valorLeft' | 'valorRevived'>): CampaignState {
+export function losePit(s: CampaignState, battle?: Pick<BattleOutcome, 'units' | 'valorLeft' | 'valorRevived' | 'surged'>): CampaignState {
   if (!s.pit) return s;
   const t = clone(s);
   const won = t.pit!.wins > 0;
   delete t.pit;
   delete t.suspended;
   t.stats.defeats++;
+  if (battle) applySurgeOutcome(t, battle.surged);
   if (battle) {
     settlePitFight(t, battle, woundRules());
     if (t.valor !== undefined && battle.valorLeft !== undefined) t.valor = addValor(valorRules, battle.valorLeft, 0);

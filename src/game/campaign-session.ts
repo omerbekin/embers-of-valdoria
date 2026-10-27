@@ -40,6 +40,9 @@ import {
   type Difficulty,
   type SaveEntry,
   type SaveKind,
+  SURGE,
+  nextTaintGain,
+  taintOf,
 } from '../campaign';
 import type { LootXp } from '../ui/loot-screen';
 import { healWounds, valorClearWounds, woundCount } from '../progression/wounds';
@@ -304,6 +307,10 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     weapons: { items: partyWeapons(plan.heroOrder, (id) => st.roster.find((h) => h.id === id)?.equipment.weapon, (id) => st.roster.find((h) => h.id === id)?.equipment.offhand) },
     // Level'lar (ad plakasında "Lv N"): düşmanlar düğüm seviyesinde, kahramanlar kendi level'ında
     levels: { enemy: plan.enemyLevel, party: Object.fromEntries(plan.heroOrder.map((id, i) => [`party-${i}`, st.roster.find((h) => h.id === id)?.level ?? 1])) },
+    // Crown Surge (sunum): Ashen Taint çipleri ve ipucundaki bir sonraki Taint (Surge'ün kendisi teams.surge, campaignWaveTeams)
+    ...(plan.surge?.length || st.roster.some((h) => taintOf(h) > 0)
+      ? { crown: { taint: Object.fromEntries(plan.heroOrder.map((id, i) => [`party-${i}`, taintOf(st.roster.find((h) => h.id === id))])), nextTaint: nextTaintGain(st), hpLoss: SURGE.taint.maxHpLoss } }
+      : {}),
     // Savaş arka planı (karşılaşma > düğüm > bölge; dosya yoksa savaşın varsayılanı): King's Bridge = kings-bridge
     ...(plan.background ? { background: plan.background } : {}),
     // Tutorial bağlamı (docs/design/tutorial.md): düğüm / bölge dersleri, Bölüm III yenilgi ipucu (bu düğümdeki yenilgi sayısı)

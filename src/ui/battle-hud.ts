@@ -102,6 +102,18 @@ export interface HudGlobal {
   placeholder?: boolean;
   tip: TipContent;
 }
+/**
+ * Crown Surge taç plakası (Ömer 2026-10-27, mockup public/mockups/crown-surge.html#v1): sağ alt alanda, Combat log'un solunda; skill plakası
+ * dili ("Crown" şeridi, ikon, ad, hak çipi). Basınca onGlobal(id) (kahramanın eylemi harcanır). `used` = bu savaşta / bölgede harcandı (soluk).
+ */
+export interface HudCrown {
+  id: string;
+  name: string;
+  iconUrl: string;
+  enabled: boolean;
+  used: boolean;
+  tip: TipContent;
+}
 export interface HudBar {
   value: number;
   max: number;
@@ -122,6 +134,8 @@ export interface HudActor {
   main: HudStat[];
   groups: Array<{ title: string; stats: HudStat[] }>;
   passive: { name: string; text: string; iconUrl: string } | null;
+  /** Ashen Taint yığını (Crown Surge; sefer kahramanı). 0 / yok = çip yok. */
+  taint?: number;
   /** Kahraman sayfası başlığı (A-Band): rol, primary stat çipi, level (yoksa gizli), alt çubuktaki primary bonusu. */
   role?: string;
   primary?: { name: string; iconUrl: string } | null;
@@ -358,6 +372,8 @@ export class BattleHud {
   /** Valor mangalları (sefer / Endless; global sütunun hemen sağında, alt çubukta). Yoksa gizli. */
   private readonly valorBox: HTMLElement;
   private valorMeter: ValorMeter | null = null;
+  /** Crown Surge taç plakaları (sağ alanın başında; yoksa gizli). */
+  private readonly crownBox: HTMLElement;
 
   constructor(parent: HTMLElement, private readonly cb: HudCallbacks) {
     const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string): HTMLElementTagNameMap[K] => {
@@ -385,7 +401,9 @@ export class BattleHud {
     this.valorBox.hidden = true;
     this.infoBox = el('div', 'bh-binfo');
     this.logPanel = el('div', 'bh-logp bh-panel bh-corners');
-    this.rightSlot.append(this.infoBox, this.logPanel);
+    this.crownBox = el('div', 'bh-crown');
+    this.crownBox.hidden = true;
+    this.rightSlot.append(this.crownBox, this.infoBox, this.logPanel);
     this.ftip = el('div', 'bh-ftip bh-panel');
     this.ctip = el('div', 'bh-ctip bh-panel bh-corners');
     this.cards = { party: el('div', 'bh-card party'), enemy: el('div', 'bh-card enemy') };
@@ -583,9 +601,10 @@ export class BattleHud {
     if (a.role) chips.push({ text: a.role });
     if (a.primary) chips.push({ text: `${a.primary.name} primary`, ...(a.primary.iconUrl ? { icon: a.primary.iconUrl } : {}), tone: 'ac', color: '#ffb98a' });
     // Alt çubuk karakter bloğu (B · Icon first): rol + primary çipleri
+    if (a.taint) chips.push({ text: `Ashen Taint ×${a.taint}`, color: '#c9b8f0' });
     const rowChips =
       (a.role ? `<span class="bh-chip">${esc(a.role)}</span>` : '') +
-      (a.primary ? `<span class="bh-chip hot">${img(a.primary.iconUrl)}${primaryLabelHtml(a.primary.name)} primary</span>` : '');
+      (a.taint ? `<span class="bh-chip taint"><b>Ashen Taint ×${a.taint}</b></span>` : a.primary ? `<span class="bh-chip hot">${img(a.primary.iconUrl)}${primaryLabelHtml(a.primary.name)} primary</span>` : '');
     const sheet = bandTipHtml({
       kind: 'Character',
       title: a.name,
@@ -658,6 +677,26 @@ export class BattleHud {
       this.valorBox.hidden = false;
       this.place();
     }
+  }
+
+  /** Crown Surge taç plakaları (boş liste = bu savaşta Surge yok: gizli). */
+  setCrown(list: HudCrown[]): void {
+    const html = list
+      .map((c) => {
+        const chips = c.used ? '<span class="bp-chip none"><b>0 / 1</b></span>' : '<span class="bp-chip act"><b>1 / 1</b></span><span class="bp-chip">Action</span>';
+        return `<div class="bp crown ${c.used ? 'used' : ''} ${c.enabled ? '' : 'off'}" data-global="${esc(c.id)}">
+          <span class="bp-tag"><span class="full">Crown</span><span class="short">Crown</span></span>
+          <div class="bp-ico">${img(c.iconUrl)}</div>
+          <span class="bp-nm">${esc(c.name)}</span>
+          <div class="bp-chips">${chips}</div>
+          <div class="bh-sktip bh-panel bh-corners">${tipHtml(c.tip)}</div>
+        </div>`;
+      })
+      .join('');
+    const on = list.length > 0;
+    if (this.crownBox.hidden === on) this.crownBox.hidden = !on;
+    this.rightSlot.classList.toggle('has-crown', on);
+    this.put(this.crownBox, html);
   }
 
   private renderGlobals(): void {

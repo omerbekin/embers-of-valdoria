@@ -25,3 +25,4 @@ export * from './pit';
 export * from './oath';
 export * from './side-content';
 export * from './quests';
+export * from './surge';

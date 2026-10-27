@@ -150,6 +150,9 @@ Her bonus için iki alternatif var: **(a)** sınıfın var olan pasifinin sayıs
 
 ## 2. C1 Crown Surge
 
+### 2.0 Durum (campaign-dev 2026-10-27): YAPILDI, sayılar provizyon
+Ömer'in seçimleri: C1 V1 (HUD taç plakası, eylemi harcar; V2 ulti barı YOK), C2 a, C3 a, C4 (üst sınır yok, her kullanım bir öncekinden pahalı: 1, 2, 3 ... Taint), C5 b (Chapel temizler), C6 a, C7 a, C8 a, C9 a, C10 (savaş başına tek Surge), C11 a (sim 427'den sonra), C12 a. Kurallar `data/campaign/crown-surge.json`, eylemler `data/global-skills.json > ash_surge / salt_surge`, kod `src/campaign/surge.ts` + motor global `surge` (`battle.ts > callSurge`). Varsayımlar ve açık sorular: open-questions 431. Codex: Mechanics > Campaign > Crown Surge and Ashen Taint. Debug: Battle > Team > Enable Crown Surge (her savaş, test savaşı dahil), Refill Crown Surge / Unlock Salt Surge / Add Ashen Taint / Clear Ashen Taint (sefer).
+
 ### 2.1 Belgede yazanlar (onaylı)
 - Bölük Crown of Ash'i taşır. **Bölge başına 1 kez**, savaşta takım yeteneği **Crown Surge** kullanılır (örnek: takıma 2 tur +%30 hasar).
 - Kullanan kahraman **1 Ashen Taint** yığını alır: yığın başına **-%3 maks can**. Taint **kilisede temizlenir**.

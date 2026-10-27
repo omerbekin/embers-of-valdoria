@@ -322,6 +322,8 @@ export interface Teams {
   units?: TeamUnits;
   /** Valor (taraf başına, savaş başı miktarı; yoksa o tarafta Valor yok ve valor_revive görünmez). Sefer/Endless yalnızca party verir. */
   valor?: Partial<Record<Side, number>>;
+  /** Crown Surge (taraf başına 'surge' global id'leri; yalnızca sefer, map2-quests-surge.md C12 a). Yoksa Surge görünmez. */
+  surge?: Partial<Record<Side, string[]>>;
   /**
    * Dalgalı savaş (docs/design/waves.md): `enemies` İLK dalgadır; burası SONRAKİ dalgalar. Her dalga `enemies` ile aynı biçimde (arrange false: hücre
    * listesi, dizin = yuva, '' = boş; arrange true: sınıf listesi, otomatik dizilir) + isteğe bağlı birim kurulumları (anahtar `units.enemies` ile aynı
@@ -676,6 +678,7 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     ...(partyUnits ? { partyUnits } : {}),
     ...(enemyUnits ? { enemyUnits } : {}),
     ...(teams?.valor ? { valor: { ...teams.valor } } : {}),
+    ...(teams?.surge ? { surge: Object.fromEntries(Object.entries(teams.surge).map(([k, v]) => [k, [...(v ?? [])]])) } : {}),
     ...(waves.length ? { waves, waveRules: { ...waveRules } } : {}),
     ...(rules ? { rules } : {}),
     skills,

@@ -17,6 +17,7 @@ import { QUEST_LIST, questBonusLine } from '../campaign/quests';
 import { maps23On } from '../ui/maps23-flag';
 import { PITS } from '../campaign/pit';
 import { OATHS, OATH_DATA, oathMinusText, oathPlusText } from '../campaign/oath';
+import { SURGE, taintHpLossPct } from '../campaign/surge';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine, fillValues } from '../progression/item-text';
 import { ITEMS as ITEM_DATA, TIER_IDS, partBonusForm, type BonusForm, affixDef, gripOf, GRIP_NAME, implicitValues, levelRequirement, weaponPowerOf, type Grip } from '../progression/items';
@@ -740,7 +741,7 @@ export function buildMechanics(): WikiArticle[] {
     ], '#c9a0ff', shapeExamples()),
     article('actions', 'Special rules', 'Actions: Rest, Skip Turn and Move', 'ui:move', [
       p('Besides its four skills, every unit can use three global actions. They cost nothing and each ends the turn. In the campaign and in Endless your heroes have a fourth, Revive, paid with Valor (see Valor).'),
-      list(...Object.values(content.globalSkills).filter((d) => d.kind !== 'valor' && d.kind !== 'urn').map((d) => {
+      list(...Object.values(content.globalSkills).filter((d) => d.kind !== 'valor' && d.kind !== 'urn' && d.kind !== 'surge').map((d) => {
         const info = describeGlobalSkill(d, f);
         return `${info.name}: ${[info.summary, ...info.lines].map((s) => s.replace(/\.$/, '')).join('. ')}.`;
       })),
@@ -868,7 +869,7 @@ export function buildMechanics(): WikiArticle[] {
           `Difficulty: Easy, Medium or Hard, chosen when the journey starts; it cannot be changed later. ${difficultyText()}`,
         ),
       ]),
-      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle(), wayshrinesArticle(), salvageDiveArticle(), personalQuestsArticle()] : []),
+      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle(), wayshrinesArticle(), salvageDiveArticle(), personalQuestsArticle(), crownSurgeArticle()] : []),
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
@@ -954,6 +955,26 @@ export function salvageDiveArticle(): WikiArticle {
       ...SALVAGE_DIVE.chests.map((c, i) => `Depth ${i + 2}: ${c.gifts.map((r) => `a ${rarity(r)} item`).join(' and ')}, ${c.gold} gold.`),
     ),
     p('Surface at any time between depths to take every chest you found. If you fall in a deeper battle, you swim back up: what happened in the fight stays (lost health stays lost, fallen heroes rise wounded), the last chest you found sinks and the earlier ones come up with you. Leaving the wreck without surfacing loses the extra chests. Deeper battles give experience but no battle spoils of their own.'),
+  ]);
+}
+
+/** Crown Surge + Ashen Taint (map2-quests-surge.md bölüm 2): sayılar data/campaign/crown-surge.json, global-skills.json ve statuses.json'dan. */
+export function crownSurgeArticle(): WikiArticle {
+  const ash = content.globalSkills[SURGE.ash];
+  const salt = content.globalSkills[SURGE.salt.id];
+  const st = ash?.status ? content.statuses[ash.status] : undefined;
+  const mult = st?.damageDealtMult ?? 1;
+  const t = SURGE.taint;
+  const nodes = (drownedReachMap as unknown as { nodes: Array<{ id: string; name: string }> }).nodes;
+  const chapels = (SURGE.chapels['drowned-reach'] ?? []).map((id) => nodes.find((n) => n.id === id)?.name ?? id);
+  const boss = nodes.find((n) => n.id === SURGE.salt.unlock.node)?.name ?? 'the Drowned Queen';
+  return article('crown-surge', 'Campaign', 'Crown Surge and Ashen Taint', cx('mech_crown_surge', 'flame'), [
+    p(`On The Drowned Reach the Crown answers your call. In a campaign battle the crown plate sits next to your other actions: the hero whose turn it is can call it, and that uses the hero's turn. Summons cannot call it. You can call the Crown once per battle, and each region gives one charge of each Surge: a charge you do not use stays in that region. A charge is spent once it is called, whether the battle is won or lost.`),
+    list(
+      `${ash?.name ?? 'Ash Surge'}: your whole party deals ×${mult} damage for each hero's own next ${ash?.turns ?? 2} turns.`,
+      `${salt?.name ?? 'Salt Surge'}: every ally gets a shield of ${Math.round((salt?.shieldRatio ?? 0) * 100)}% of their max HP for ${salt?.shieldTurns ?? 2} turns. It opens after you defeat ${boss}, with its own charge in each region.`,
+    ),
+    p(`The price is Ashen Taint. The hero who calls the Crown takes Taint, and every call costs more than the last: the first call gives ${t.firstGain}, the next ${t.firstGain + t.gainStep}, then ${t.firstGain + 2 * t.gainStep}, and so on. Each Taint lowers that hero's max HP by ${taintHpLossPct(1)}%. Taint stays with the hero, also on later maps, until the company arrives at a Chapel${chapels.length ? ` (${chapels.join(', ')})` : ''}: there all Taint is cleansed. The party row on the map shows a hero's Taint.`),
   ]);
 }
 

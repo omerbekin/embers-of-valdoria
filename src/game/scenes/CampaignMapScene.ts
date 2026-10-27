@@ -159,6 +159,7 @@ import { choiceChips, nodeTags, paragraphs, resultChips } from '../../ui/map-win
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { H, W, crown, hpBar, openModal, woundPips, woundScar, type Modal } from '../campaign-ui';
 import { woundCount, woundHpFactor, woundTipData } from '../../progression/wounds';
+import { taintHpFactor, taintOf } from '../../campaign/surge';
 import { heroPanel } from '../../progression/item-text';
 import { motion } from '../../ui/motion';
 import { MAP_SCENE, MENU_SCENE, checkPaused, checkpoint, current, loadEntry, markJourneyStart, save, session, setState, startCampaignBattle, storage } from '../campaign-session';
@@ -2023,9 +2024,12 @@ export class CampaignMapScene extends Phaser.Scene {
       const wr = woundRules();
       const wf = wn ? woundHpFactor(wn, wr) : 1;
       const barW = w - tx;
-      const bar = hpBar(this, tx, 30, barW, 8, h.hpRatio * wf);
-      const hpTxt = session.showHp && !fallen ? ` · ${Math.round(h.hpRatio * wf * 100)}%` : '';
-      const meta = fallen ? (s.valor !== undefined ? 'Fallen · revive: Valor' : 'Fallen') : `${def.role ?? ''}${hpTxt}`;
+      // Crown Surge Ashen Taint: maks canı düşürür (yaralarla çarpımsal); rol satırında "Taint ×N"
+      const tn = fallen ? 0 : taintOf(h);
+      const tf = taintHpFactor(tn);
+      const bar = hpBar(this, tx, 30, barW, 8, h.hpRatio * wf * tf);
+      const hpTxt = session.showHp && !fallen ? ` · ${Math.round(h.hpRatio * wf * tf * 100)}%` : '';
+      const meta = fallen ? (s.valor !== undefined ? 'Fallen · revive: Valor' : 'Fallen') : `${def.role ?? ''}${hpTxt}${tn ? ` · Taint ×${tn}` : ''}`;
       const pipsW = wn ? (wr.lethal - 1) * 17 + 12 + 6 : 0;
       const role = fitW(elBody(this, tx, 55, meta, 16, fallen ? '#d88a7e' : EL.MUTED, false).setOrigin(0, 0.5), w - tx - pipsW);
       row.add([pic, face, frame, name, lv, bar, role]);

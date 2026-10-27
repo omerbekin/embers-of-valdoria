@@ -326,7 +326,7 @@ describe('Stat ikonu görselleri (assets/stat-icons) bağlı; asılları assets/
 describe('Arayüz ikonu görselleri (assets/ui-icons) bağlı; asılları assets/source/ui-icons', () => {
   it('her dosya bir arayüz ikonuna ait ve Codex > Icons > UI icons ta; small/ eşleri var; asıl sayfa ve kesim aracı duruyor', () => {
     const onDisk = readdirSync('assets/ui-icons').filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')).sort();
-    expect(onDisk.length).toBe(17);
+    expect(onDisk.length).toBe(18);
     const small = readdirSync('assets/ui-icons/small').filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')).sort();
     expect(small).toEqual(onDisk);
     const rows = catalog.uiArt;

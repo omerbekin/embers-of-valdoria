@@ -1,4 +1,5 @@
 import { woundCount } from '../progression/wounds';
+import { normalizeSurge, taintOf } from './surge';
 import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
 import { activeHeroes, canReplay, clearedProgress, nodeCleared, stopNumber } from './state';
@@ -240,9 +241,14 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
     s.roster = s.roster.map((h) => {
       if (!h || typeof h !== 'object') return h;
       const n = woundCount(h);
-      const { wounds: _w, ...rest } = h;
-      return n > 0 ? { ...rest, wounds: n } : rest;
+      const tn = taintOf(h); // Crown Surge Ashen Taint (isteğe bağlı alan, sürüm değişmez): yok / bozuk = 0
+      const { wounds: _w, taint: _t, ...rest } = h;
+      return { ...rest, ...(n > 0 ? { wounds: n } : {}), ...(tn > 0 ? { taint: tn } : {}) };
     });
+  // Crown Surge sayaçları (isteğe bağlı alan, sürüm değişmez): bozuk parçalar atılır
+  const sg = normalizeSurge(s.surge);
+  if (sg) s.surge = sg;
+  else delete (s as { surge?: unknown }).surge;
   if (!DIFFS.includes(s.difficulty)) s.difficulty = CONFIG.defaultDifficulty;
   if (slot !== undefined) s.slot = slot;
   else if (typeof s.slot !== 'number' || s.slot < 0 || s.slot >= SLOT_COUNT) s.slot = 0;
