@@ -44,6 +44,8 @@ export interface HoverHero {
   /** Yara sayısı ve kuralı (Ömer 2026-10-23, V1 "Scar + dots": src/ui/wound-ui.ts); yoksa yarasız. */
   wounds?: number;
   woundCfg?: WoundCfg;
+  /** A4 Hero Oath (sefer): yemin adı + artı / eksi metni. */
+  oath?: { name: string; plus: string; minus: string };
 }
 
 /** Düşmüş mü? (sefer isFallen ile aynı kural: !alive ya da can 0.) */

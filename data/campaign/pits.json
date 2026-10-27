@@ -1,0 +1,14 @@
+{
+  "_note": "B5 The Fighting Pit (Ömer seçimi 2026-10-25, maps-2-3.md 9; campaign-dev 2026-10-27, open-questions 429). Kasabadaki arena: art arda kademeler (savaşlar), arada şifa yok, her kademede ödül; istenen kademede çıkılır (kazanılanlar kalır), yenilince o kademenin ödülü gelmez, düşen kahramanlar sefer kuralıyla (yaralı kalkar / ölümcül yarada ceset). Tekrar girilebilir; ödül (altın, sandık, savaş XP'si) yalnız YENİ REKOR kademesinde. Kademe düşmanı tek dalga (waves.json > campaign.count.pit). Sayılar PROVİZYON (balance-tester). Harita 3'te Kharduin 'Proving Grounds' aynı yapıyla eklenecek.",
+  "saltmere_pit": {
+    "name": "The Fighting Pit",
+    "text": "Below the fishmarket the dock gangs keep a pit of wet sand and old ship-timber. Crews come to bet, and fighters come to bleed. Five bouts, one after another, and no one tends your wounds between them. Walk out whenever you like and keep what you have won. Fall, and the crowd keeps the purse.",
+    "tiers": [
+      { "encounter": "dr_pit_1", "gold": 40 },
+      { "encounter": "dr_pit_2", "gold": 60 },
+      { "encounter": "dr_pit_3", "gold": 90, "chest": true },
+      { "encounter": "dr_pit_4", "gold": 120 },
+      { "encounter": "dr_pit_5", "gold": 180, "chest": true }
+    ]
+  }
+}

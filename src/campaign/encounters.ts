@@ -10,6 +10,8 @@ import { chapterEnemyMods, nodeLevel } from './power';
 import { withEnemyLevel } from '../progression/levels';
 import { itemWoundSoft, loadoutSetup } from '../progression/loadout';
 import { activeHeroes, heroById, replayCount } from './state';
+import { pitOf } from './pit';
+import { applyOath } from './oath';
 import type { UnitSetup } from '../engine/types';
 import type { BattleOutcome, CampaignState, Difficulty, DifficultyEnemyMods, EncounterDef, EncounterUnit, UnitMods } from './types';
 
@@ -82,6 +84,8 @@ export interface BattlePlan {
   enemyLevel: number;
   /** Düşman yapay zekasının terazi ayarı (bölgenin enemyAi'si, notlar hariç; chooseAction opts.value). Yoksa alan yazılmaz. */
   enemyAi?: Record<string, number>;
+  /** The Fighting Pit (B5) kademe savaşı: 1 tabanlı kademe (sonuç ekranı / geri çekilme arena kuralıyla). Arena dışında yazılmaz. */
+  pitTier?: number;
 }
 
 /**
@@ -140,8 +144,10 @@ function encounterRules(
 export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): BattlePlan {
   const map = getMap(s.mapId);
   const n = node(map, s.at);
-  // Seçenekli olayın savaşı (N2) düğümün kendi karşılaşmasının yerine geçer
-  const encId = s.eventChoice?.node === n.id && s.eventChoice.battle ? s.eventChoice.battle : n.encounter;
+  // Seçenekli olayın savaşı (N2) düğümün kendi karşılaşmasının yerine geçer; The Fighting Pit (B5) kademesi kasabanın karşılaşmasıdır
+  const pitIdx = s.pit?.node === n.id && s.pit.fight ? s.pit.wins : undefined;
+  const pitEnc = pitIdx !== undefined ? pitOf(n)?.tiers[pitIdx]?.encounter : undefined;
+  const encId = pitEnc ?? (s.eventChoice?.node === n.id && s.eventChoice.battle ? s.eventChoice.battle : n.encounter);
   if (!encId) throw new Error(`No battle at ${n.id}`);
   const enc = resolveEncounter(encId, caps);
   const party: Record<number, UnitSetup> = {};
@@ -153,6 +159,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     const setup: UnitSetup = caps.unitMods ? loadoutSetup(h, { mode: 'campaign' }) : {};
     // Yara (Ömer 2026-10-19, hp-death-rework.md): her yara maks canı rules.wounds.maxHpLoss düşürür (kurulumda hpMult / hpAdd; motor aynı)
     if (caps.unitMods && woundCount(h) > 0) applyWounds(setup, woundCount(h), CONFIG.rules.wounds, itemWoundSoft(h)); // b_wound_soft affix'i (Ömer 2026-10-26)
+    if (caps.unitMods) applyOath(setup, s, h.id); // A4 Hero Oath: yeminin artısı / eksisi (damageAdd / critAdd / hpMult)
     // Can taşıma: eksik canlı karakter o oranla başlar (motor en az 1 can verir)
     // Düşmüş kahraman (Ömer 2026-10-11, Endless gibi): savaşa CESET olarak girer (yuvasında; savaşta Resurrection ile kalkabilir)
     if (!h.alive || h.hpRatio <= 0) setup.startDead = 'revivable';
@@ -166,7 +173,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   const enemyLevel = nodeLevel(s.mapId, n.id);
   // Bir dalganın düşman kurulumları (ilk dalga ve dalgalı savaşın sonraki dalgaları aynı kuralla)
   // Devriye: seed oynama sayısını içerir (roadmap 2.2: hash(seed, harita, düğüm, oynama sayısı, deneme)); ilk oynayış eskisiyle aynı
-  const seed = battleSeed(s.seed, s.mapId, n.id, attempt, s.patrol === n.id ? replayCount(s, n.id) + 1 : 0);
+  const seed = pitEnc ? battleSeed(s.seed, s.mapId, n.id, attempt, 100 + pitIdx!) : battleSeed(s.seed, s.mapId, n.id, attempt, s.patrol === n.id ? replayCount(s, n.id) + 1 : 0);
   const enemySetups = (list: EncounterUnit[], enemies: Record<number, UnitSetup>, wave = 0): void => {
     // B3 Break the Totem: kırılacak nesne işareti güç katmanından bağımsız (kural mekaniği)
     if (objectiveType(enc.def.objective) === 'totem') for (const u of list) if (u.objective) enemies[u.slot] = { ...enemies[u.slot], objective: true };
@@ -198,7 +205,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     }
   };
   // Dalgalar (Ömer 2026-10-19): Watchtower'dan itibaren; ilk dalga motorun `enemies`i, kalanlar teams.waves
-  const [first, ...rest] = encounterWaves(enc.def, n.id, n.type, n.region);
+  const [first, ...more] = encounterWaves(enc.def, n.id, n.type, n.region);
+  const rest = pitEnc ? [] : more; // arena kademesi tek dalga (open-questions 429)
   enemySetups(first!, enemies);
   const waves = rest.map((list, k) => {
     const units: Record<number, UnitSetup> = {};
@@ -224,6 +232,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     ...(s.valor !== undefined ? { valor: s.valor } : {}),
     enemyLevel,
     ...regionEnemyAi(map.regions.find((r) => r.id === n.region)),
+    ...(pitEnc ? { pitTier: pitIdx! + 1 } : {}),
   };
 }
 

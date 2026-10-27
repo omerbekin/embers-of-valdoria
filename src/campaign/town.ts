@@ -85,6 +85,7 @@ export function hotspotOffered(n: MapNode, h: TownHotspot, s?: Pick<CampaignStat
   if (h.action === 'trade') return !!n.merchant;
   if (h.action === 'story') return !!n.story && !(s && storyHeard(s, n));
   if (h.action === 'rest') return false; // ESKİ ateş başı (2026-10-26 kalktı; yerine Inn)
+  if (h.action === 'pit') return !!n.pit; // The Fighting Pit (B5): yalnız arenası olan kasabada
   return true;
 }
 

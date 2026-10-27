@@ -598,6 +598,7 @@
       },
       "merchant": true,
       "merchantSize": 9,
+      "pit": "saltmere_pit",
       "story": "dr_harbor_master",
       "scene": {
         "background": "town-valdren",
@@ -647,6 +648,17 @@
               0.58
             ],
             "note": "The barracks are quiet. Every sword here has already sworn to someone."
+          },
+          {
+            "id": "pit",
+            "action": "pit",
+            "label": "The Fighting Pit",
+            "rect": [
+              0.33,
+              0.37,
+              0.41,
+              0.6
+            ]
           },
           {
             "id": "gate",
@@ -988,7 +1000,8 @@
         0.7057,
         0.5579
       ],
-      "event": "dr_saltspray_shrine"
+      "event": "dr_saltspray_shrine",
+      "oathShrine": true
     },
     {
       "id": "dr53",

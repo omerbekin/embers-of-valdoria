@@ -1,6 +1,23 @@
 // Debug > Campaign > "Maps 2-3 (test)" (maps-2-3.md 9.1-9.2, Adım 1): Harita 2'yi bayrak kapalıyken denemek için.
 // Kısayolların kural tarafı saf: src/campaign/maps23-debug.ts. Bayrak: src/ui/maps23-flag.ts (eov.debug.maps23 ya da ?maps=1).
-import { DROWNED_REACH, debugFinishMap1, debugJumpDrownedReach, debugJumpRegion, getMap, mapEnabled, setMapOverride, type CampaignState } from '../campaign';
+import {
+  DROWNED_REACH,
+  OATHS,
+  debugFinishMap1,
+  debugJumpDrownedReach,
+  debugJumpNode,
+  debugJumpRegion,
+  debugSetOath,
+  debugSetPitBest,
+  getMap,
+  leaderOf,
+  mapEnabled,
+  oathDef,
+  pitBest,
+  pitOf,
+  setMapOverride,
+  type CampaignState,
+} from '../campaign';
 import { save, setState } from '../game/campaign-session';
 import type { DebugMenu } from './debug-menu';
 import { setMaps23 } from './maps23-flag';
@@ -60,6 +77,61 @@ export function registerMaps23Debug(debug: DebugMenu, reload: () => void, ensure
       },
     });
   }
+  // B5 The Fighting Pit + A4 Hero Oath (open-questions 429)
+  debug.register({
+    id: 'maps23.pit.jump',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'boot',
+    label: 'Jump to Saltmere (Fighting Pit)',
+    hint: 'Walk The Drowned Reach to Saltmere (stops on the way count as done), team at its level and healed. In the town, tap "The Fighting Pit". Turns Map 2 on.',
+    run: () => {
+      enable();
+      apply(debugJumpNode(ensureState(), 'dr28'));
+    },
+  });
+  debug.register({
+    id: 'maps23.pit.record',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'swap',
+    label: () => `Pit record: ${pitBest(ensureState(), 'dr28')} (tap to cycle)`,
+    hint: 'Set the Saltmere pit record 0 → 1 → ... → 5 → 0 (only bouts above the record pay). Closes an open pit run.',
+    run: () => {
+      const s = ensureState();
+      const max = pitOf(getMap(DROWNED_REACH).nodes.find((n) => n.id === 'dr28')!)?.tiers.length ?? 5;
+      apply(debugSetPitBest(s, 'dr28', (pitBest(s, 'dr28') + 1) % (max + 1)));
+    },
+  });
+  debug.register({
+    id: 'maps23.oath.jump',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'boot',
+    label: 'Jump to Saltspray Shrine (Hero Oath)',
+    hint: 'Walk The Drowned Reach to the Saltspray Shrine (stops on the way count as done), team at its level and healed. Choose "Swear an oath"; later tap the shrine again to break it. Turns Map 2 on.',
+    run: () => {
+      enable();
+      apply(debugJumpNode(ensureState(), 'dr52'));
+    },
+  });
+  debug.register({
+    id: 'maps23.oath.cycle',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'swap',
+    label: () => {
+      const o = ensureState().oath;
+      return `Oath: ${o ? (oathDef(o.id)?.name ?? o.id) : 'none'} (tap to cycle)`;
+    },
+    hint: 'Give the company leader the next oath (Undertow → Breakwater → Gale → none), no shrine or gold needed. Shown in Gear as a small Oath chip.',
+    run: () => {
+      const s = ensureState();
+      const i = s.oath ? OATHS.findIndex((x) => x.id === s.oath!.id) + 1 : 0;
+      const lead = leaderOf(s);
+      apply(i < OATHS.length && lead ? debugSetOath(s, lead.id, OATHS[i]!.id) : debugSetOath(s, null));
+    },
+  });
   debug.register({
     id: 'maps23.finish1',
     tab: TAB,

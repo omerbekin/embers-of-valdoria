@@ -36,11 +36,11 @@ export function rollTemperStones(rng: { next(): number }, kind: LootKind, table:
  * Düğümün loot'unu verir: item'ler torbaya (doluysa sığmayanlar kartta `left`: oyuncu yer açıp alabilir), altın kesesine; `pendingLoot` haritada gösterilecek
  * "Spoils" kartıdır (arayüz onaylayınca `acknowledgeLoot`). Aynı düğümün kaçıncı zaferi olduğu `lootState.clears`'ta sayılır.
  */
-export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, party: Hero[], opts?: { maxItems?: number; itemsDelta?: number; gold?: number }): LootDrop {
-  const key = `${nodeId}:${kind === 'treasure' ? 'treasure' : 'battle'}`;
+export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, party: Hero[], opts?: { maxItems?: number; itemsDelta?: number; gold?: number; /** Aynı düğümde ayrı sayılan ödül (The Fighting Pit kademe sandığı: 'pit3'): kendi sayaç anahtarı ve zarı. */ tag?: string }): LootDrop {
+  const key = `${nodeId}:${opts?.tag ?? (kind === 'treasure' ? 'treasure' : 'battle')}`;
   const replay = t.lootState.clears[key] ?? 0;
   const res = rollLoot({
-    rng: rngFor(t.seed, t.mapId, nodeId, 'loot', kind, replay),
+    rng: opts?.tag ? rngFor(t.seed, t.mapId, nodeId, 'loot', kind, replay, opts.tag) : rngFor(t.seed, t.mapId, nodeId, 'loot', kind, replay),
     kind,
     chapter: chapterOf(t.mapId).chapter,
     ilvl: nodeIlvl(t.mapId, nodeId),
@@ -86,7 +86,7 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     const cls = res.forClass[i];
     // Nadir düşüş (Legendary) TABAN SEVİYESİZ: düştüğü düğümün item seviyesinde zarlanır, Endless'taki dalga seviyesi gibi (Ömer 2026-10-12)
     const ilvl = i === rareIndex && itemDef(id) ? nodeIlvl(t.mapId, nodeId) : undefined;
-    const rolled = makeItem(id, '', rngFor(t.seed, t.mapId, nodeId, 'roll', kind, replay, i), { ...(rarity ? { rarity } : {}), ...(cls ? { forClass: cls } : {}), ...(ilvl !== undefined ? { ilvl } : {}) });
+    const rolled = makeItem(id, '', opts?.tag ? rngFor(t.seed, t.mapId, nodeId, 'roll', kind, replay, i, opts.tag) : rngFor(t.seed, t.mapId, nodeId, 'roll', kind, replay, i), { ...(rarity ? { rarity } : {}), ...(cls ? { forClass: cls } : {}), ...(ilvl !== undefined ? { ilvl } : {}) });
     if (t.inventory.length < BAG_SIZE) {
       const inst: ItemInstance = { ...rolled, uid: `i${t.nextItemId++}` };
       t.inventory.push(inst);

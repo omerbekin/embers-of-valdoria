@@ -145,6 +145,13 @@
           "label": "Read the inscription",
           "hint": "Read what is carved on the shrine.",
           "result": "The words are worn almost smooth. \"To the Tide that gives and takes. Keep your half, as we keep ours.\" Someone has scratched a crown beneath it, split down the middle."
+        },
+        {
+          "id": "oath",
+          "label": "Swear an oath",
+          "hint": "One hero swears an oath to the Tide: a lasting gift and a lasting price.",
+          "oath": true,
+          "result": "The spray falls on the oath-taker's brow, and the Tide takes the words."
         }
       ]
     },

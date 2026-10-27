@@ -108,10 +108,17 @@ export interface MapNode {
   spoke?: boolean;
   /** Düğüm seviyesi elle (power.ts > nodeLevel; Harita 2'nin ilk 3 düğümü L10, maps-2-3.md 8). Yoksa bölüm rampası. */
   level?: number;
+  /**
+   * B5 The Fighting Pit (maps-2-3.md 9; Saltmere): kasabadaki arenanın id'si (data/campaign/pits.json). Kasaba ekranında `pit` eylemli yerden
+   * girilir; art arda kademeler, arada şifa yok (src/campaign/pit.ts).
+   */
+  pit?: string;
+  /** A4 Hero Oath (maps-2-3.md 9; Saltspray Shrine): yemin tapınağı (data/campaign/oaths.json; src/campaign/oath.ts). */
+  oathShrine?: boolean;
 }
 
 /** Kasaba ekranında bir yerin eylemi: tezgâh (Trade), ilan panosu / kışla (aday), hikâye NPC'si (sahne yeniden), ateş (dinlenme notu), çıkış. */
-export type TownAction = 'trade' | 'recruit' | 'story' | 'rest' | 'leave' | 'smith' | 'inn'; // smith: demirci (TUR 1 madde 7; kasaba ekranı kendisi açar); inn: Inn (2026-10-26; rest = ESKİ ateş başı, veride artık yok)
+export type TownAction = 'trade' | 'recruit' | 'story' | 'rest' | 'leave' | 'smith' | 'inn' | 'pit'; // pit: The Fighting Pit (B5) // smith: demirci (TUR 1 madde 7; kasaba ekranı kendisi açar); inn: Inn (2026-10-26; rest = ESKİ ateş başı, veride artık yok)
 
 /** Kasaba ekranında tıklanabilir yer. `rect` = arka plan görselinin oranı [x0, y0, x1, y1] (0-1); görsel ölçeklenince birlikte ölçeklenir. */
 export interface TownHotspot {
@@ -476,6 +483,15 @@ export interface CampaignState {
    * değişim kışlasında geri alınabilir. Savaşa girmez, XP almaz. İsteğe bağlı alan (kayıt sürümü değişmez); eski kayıtta yok = boş.
    */
   reserve?: Hero[];
+  /**
+   * The Fighting Pit (B5) açık koşusu: arenanın düğümü, bu koşuda kazanılan kademe sayısı ve sıradaki savaş başladı mı (`fight`; kayıttan
+   * okunurken atılır: savaş baştan, kademe arası pencere yeniden açılır). İsteğe bağlı alan (kayıt sürümü değişmez).
+   */
+  pit?: { node: string; wins: number; fight?: true };
+  /** Arena rekorları (düğüm id'si -> en yüksek kazanılan kademe); ödül yalnız yeni rekor kademesinde. Haritalar arası taşınır. */
+  pitBest?: Record<string, number>;
+  /** A4 Hero Oath: yeminli TEK kahraman ve yemini (data/campaign/oaths.json). Haritalar arası taşınır; altınla bozulur. */
+  oath?: { hero: string; id: string };
 }
 
 /** Inn'de bekleyen kahraman (Ömer 2026-10-26). */
@@ -566,7 +582,7 @@ export type NextStep =
   | { kind: 'volunteer'; node: string; offer: string[] }
   | { kind: 'farewell'; node: string }
   | { kind: 'company'; node: string; size: number }
-  | { kind: 'battle'; node: string; encounter: string; /** Devriye (temizlenmiş düğümün yeniden oynanışı). */ patrol?: true }
+  | { kind: 'battle'; node: string; encounter: string; /** Devriye (temizlenmiş düğümün yeniden oynanışı). */ patrol?: true; /** The Fighting Pit kademesi (B5). */ pit?: true }
   | { kind: 'treasure'; node: string; treasure: string }
   | { kind: 'event'; node: string; event: string }
   | { kind: 'story'; node: string; story: string }

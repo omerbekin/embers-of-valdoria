@@ -416,6 +416,13 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     const wc = woundChipEl(hero.wounds, hero.woundCfg, heroPanel(hero).find((x) => x.id === 'hp')?.value);
     if (wc) head.append(wc);
   }
+  // A4 Hero Oath: küçük çip, artı / eksi A Band ipucunda (sefer)
+  if (hero.oath) {
+    const oc = el('span', 'gp-chip oath', 'Oath');
+    oc.dataset['band'] = JSON.stringify({ kind: 'Oath', title: hero.oath.name, accent: '#9a7ac8', lines: [{ text: hero.oath.plus }, { text: hero.oath.minus }], foot: 'Broken only at the Saltspray Shrine, for gold.', noKeywords: true });
+    oc.setAttribute('aria-label', `${hero.oath.name}: ${hero.oath.plus}; ${hero.oath.minus}`);
+    head.append(oc);
+  }
   for (const fid of classWeaponFamilies(hero.class)) {
     const f = ITEMS.weaponFamilies.find((x) => x.id === fid);
     if (!f) continue;

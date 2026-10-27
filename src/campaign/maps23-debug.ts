@@ -96,3 +96,20 @@ export function debugJumpRegion(s: CampaignState, regionId: string): CampaignSta
   }
   return kitOut(t, nodeLevel(DROWNED_REACH, target.id), 2);
 }
+
+/**
+ * Debug "Jump to stop" (B5 The Fighting Pit: Saltmere; A4 Hero Oath: Saltspray Shrine): Harita 2 başından düğüme kadar yürür (yoldakiler seed'li
+ * ilk seçenekle çözülür), takımı düğümün seviyesine çıkarır ve iyileştirir. Hedef düğümün adımları baştan bekler.
+ */
+export function debugJumpNode(s: CampaignState, nodeId: string): CampaignState {
+  const map = getMap(DROWNED_REACH);
+  if (!map.nodes.some((n) => n.id === nodeId)) throw new Error(`No stop ${nodeId}`);
+  let t = s.mapId === DROWNED_REACH ? s : debugJumpDrownedReach(s);
+  if (t.at !== map.start || t.path.length > 1) t = debugJumpDrownedReach(t);
+  const route = pathTo(map, nodeId);
+  for (let i = 0; i < route.length - 1; i++) {
+    t = settle(t);
+    t = moveTo(t, route[i + 1]!);
+  }
+  return kitOut(t, nodeLevel(DROWNED_REACH, nodeId), 2);
+}

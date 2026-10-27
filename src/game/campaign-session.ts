@@ -29,6 +29,7 @@ import {
   saveAgo,
   retreatPatrol,
   patrolRetreatConfirm,
+  losePit,
   woundRules,
   setMapOverride,
   DROWNED_REACH,
@@ -197,6 +198,26 @@ export function retreatPatrolToMap(): CampaignState | null {
   return session.state;
 }
 
+/** The Fighting Pit (B5) pes / yenilgi onay metni (savaş menüsü > Retreat). */
+export const PIT_YIELD_CONFIRM = 'Yield the pit? The run ends here and this bout pays nothing. Health lost stays lost; fallen heroes rise wounded, and a hero who already has the most wounds dies.';
+
+/**
+ * The Fighting Pit (B5): kademe savaşından pes ya da yenilgi (Continue). Savaş duraklatılmaz; koşu biter, savaşta ne olduysa kalır
+ * (src/campaign/state.ts > losePit). Otomatik kayıt alınır (kayıp kayıttan dönülerek silinmesin). Takım kasabaya döner.
+ */
+export function endPitRun(victory = false): CampaignState | null {
+  const s = session.state;
+  if (!s?.pit) return s ?? null;
+  const rec = recording;
+  const now = rec && !rec.battle.winner ? battleOutcomeOf(rec.plan, rec.battle, false) : undefined;
+  stopRecording();
+  session.state = losePit(s, now);
+  save('auto');
+  session.notice = victory ? 'You walk out of the pit' : 'The crowd keeps the purse · you leave the pit';
+  logEvent('campaign', `pit lost at ${s.at} tier ${s.pit.wins + 1}`);
+  return session.state;
+}
+
 // ------------------------------------------------------------ duraklatılmış savaş (eylem günlüğü; src/campaign/suspend.ts)
 
 /** Kayıt tutulan savaş: eylemler bellekte birikir, geri çekilmede duruma yazılır. */
@@ -264,6 +285,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
   const replay = susp?.actions ?? [];
   // Devriye (duraklatılmış eski kayıt değilse): Retreat duraklatmaz, devriyeyi can bedeliyle iptal eder (retreatPatrolToMap)
   const patrolRetreat = !susp && st.patrol === st.at;
+  const pitRetreat = !susp && !!plan.pitTier; // The Fighting Pit (B5): Retreat = pes (koşu biter)
   logEvent('battle', `campaign enc ${plan.encounterId} node ${plan.nodeId}${susp ? `, resume ${replay.length} actions` : ''}`); // hata raporu izi
   const game = scene.game;
   const data: Partial<BattleSceneData> = {
@@ -289,7 +311,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
       resultActions: (victory, battle) => resultActions(game, plan, victory, battle),
       resultSubtitle: (victory, battle) => fallenNote(plan, victory, battle),
       battleEffects: () => campaignEffects(st),
-      retreatConfirm: patrolRetreat ? patrolRetreatConfirm() : PAUSED_CONFIRM,
+      retreatConfirm: pitRetreat ? PIT_YIELD_CONFIRM : patrolRetreat ? patrolRetreatConfirm() : PAUSED_CONFIRM,
       // Savaş kurulur kurulmaz (çizimden önce): sürdürülüyorsa günlük oynatılır, sonra kayıt başlar
       prepareBattle: (battle) => {
         startKillTrack(battle, plan.heroOrder); // XP payı (levels.md): günlük oynatılmadan önce (sürdürülen savaşın öldürmeleri de sayılır)
@@ -297,7 +319,8 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
         startRecording(battle, plan, replay);
       },
       retreat: () => {
-        if (patrolRetreat) retreatPatrolToMap();
+        if (pitRetreat) endPitRun();
+        else if (patrolRetreat) retreatPatrolToMap();
         else retreatToMap();
         screenGo(game.scene.getScene(BATTLE_SCENE) as Phaser.Scene, MAP_SCENE); // kit ekran geçişi (kararıp açılma), Menu > Retreat
       },
@@ -391,6 +414,24 @@ export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: bool
             save('auto');
           }
           openLootThenMap(game, xp);
+        },
+      },
+    ];
+  // The Fighting Pit (B5): yenilgi koşuyu bitirir, sefer kuralıyla (yara / ceset) kasabaya dönülür; kayıttan dönüş yok
+  if (plan.pitTier && session.state?.pit?.node === plan.nodeId)
+    return [
+      {
+        label: 'Leave the pit',
+        primary: true,
+        run: () => {
+          const cur2 = session.state;
+          if (cur2?.pit) {
+            const out = battleOutcomeOf(plan, battle, false);
+            session.state = losePit(cur2, out);
+            save('auto');
+            session.notice = 'The crowd keeps the purse · you leave the pit';
+          }
+          goTo(game, MAP_SCENE);
         },
       },
     ];
