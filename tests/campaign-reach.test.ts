@@ -191,7 +191,7 @@ describe('M-L Faction', () => {
     expect(eventChoices('dr_monks_isle', { faction: 'order' }).map((c) => c.id)).toEqual(['order_rest', 'bell', 'leave']);
     expect(eventChoices('dr_monks_isle', { faction: 'guild' }).map((c) => c.id)).toEqual(['guild_fight', 'bell', 'leave']);
     const guard = ENCOUNTERS['dr_monks_guard']!;
-    expect(guard.units.map((u) => u.class).sort()).toEqual(['censer_monk', 'censer_monk', 'oathsworn_brother', 'oathsworn_brother']);
+    expect(guard.units.map((u) => u.class).sort()).toEqual(['inquisition_brother', 'inquisition_brother', 'salt_chaplain', 'salt_chaplain']); // Harita 2 Order sürümleri (open-questions 444)
     const isle = debugSetFaction(jumpTo('dr56'), 'order');
     expect(nextStep(isle)).toMatchObject({ kind: 'event', event: 'dr_monks_isle' });
     const hurt = { ...isle, roster: isle.roster.map((h) => ({ ...h, hpRatio: 0.4 })) };

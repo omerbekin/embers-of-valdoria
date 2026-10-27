@@ -8138,7 +8138,7 @@
     "artOf": "dirge"
   },
   "rise_from_the_deep": {
-    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Grave Chanter imza skill'i: Risen Skeleton çağırır (ceset varsa tüketir: beslenmiş), ömür 3 tur. YER TUTUCU sanat: ikon/vfx/ses artOf 'raise_dead' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Grave Chanter imza skill'i: Risen Skeleton çağırır (ceset varsa tüketir: beslenmiş), ömür 3 tur. HARİTA 2 (Tide Caller; open-questions 444): artık Harita 1 Skeleton'ı değil kendi çağrısı Risen Drowned'ı çağırır (data/summons/risen_drowned.json; statlar Skeleton ile birebir, yeni kural yok). YER TUTUCU sanat: ikon/vfx/ses artOf 'raise_dead' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
     "id": "rise_from_the_deep",
     "name": "Rise from the Deep",
     "target": "self",
@@ -8152,7 +8152,7 @@
     "effects": [
       {
         "type": "summon",
-        "unit": "skeleton",
+        "unit": "risen_drowned",
         "lifespan": 3,
         "consumeCorpse": true
       }
@@ -8430,5 +8430,606 @@
       "arrowThunk"
     ],
     "artOf": "scatter_quarrels"
+  },
+  "pitch_brand": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Cinder Exile temel saldırısı: zifte batırılmış yanan çıra fırlatır (Ember Toss ile aynı sayı: ateş INT 0,9). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "pitch_brand",
+    "name": "Pitch Brand",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ff8a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.9,
+        "element": "fire"
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "ember_toss"
+  },
+  "tar_blaze": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Cinder Exile imza skill'i: 2x2 alana katran dökülüp tutuşturulur (Burn the Ground ile aynı sayı: ateş 0,3 + 2 tur Burning zemin). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "tar_blaze",
+    "name": "Tar Blaze",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "meteor",
+    "skyCenter": true,
+    "fx": "#ff5a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.3,
+        "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.35
+      }
+    ],
+    "icon": "meteor",
+    "vfx": "meteor",
+    "sfx": [
+      "meteorWhistle",
+      "bigBoom",
+      "fireCrackle"
+    ],
+    "artOf": "burn_the_ground"
+  },
+  "hot_pitch": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Pitch Boiler temel saldırısı: kepçeyle kaynar zift atar (Shovel of Embers ile aynı: ateş INT 0,7 + 1 tur Blinded). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "hot_pitch",
+    "name": "Hot Pitch",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ff9a4a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "fire"
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 1
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "shovel_of_embers"
+  },
+  "caulkers_smoke": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Pitch Boiler imza skill'i: kazandan yükselen kara zift dumanı bir sırayı kaplar (Kiln Smoke ile aynı: ateş 0,35 + 2 tur Burning DoT 0,15). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "caulkers_smoke",
+    "name": "Caulker's Smoke",
+    "target": "area_enemies",
+    "area": {
+      "shape": "column",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#4a3a30",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.35,
+        "element": "fire"
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "int",
+        "power": 0.15,
+        "turns": 2
+      }
+    ],
+    "icon": "ashbrand",
+    "vfx": "ashbrand",
+    "sfx": [
+      "emberHiss"
+    ],
+    "artOf": "kiln_smoke"
+  },
+  "waterlogged_grip": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Sunken Dead temel saldırısı: suyla şişmiş eller boğazı sıkar (Clutch ile aynı: STR 0,75 + 1 tur Silence). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "waterlogged_grip",
+    "name": "Waterlogged Grip",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#466e66",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      },
+      {
+        "type": "status",
+        "status": "silence",
+        "turns": 1
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "clutch"
+  },
+  "pull_beneath": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Sunken Dead imza skill'i: hedefi sırasının önüne, suya doğru çeker (Drag Under ile aynı: menzil 2, STR 0,7 + çekme). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "pull_beneath",
+    "name": "Pull Beneath",
+    "target": "single_enemy",
+    "range": 2,
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 3,
+    "motion": "whip",
+    "fx": "#3e6a64",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      },
+      {
+        "type": "pull",
+        "to": "laneFront"
+      }
+    ],
+    "icon": "chainhook",
+    "vfx": "chainhook",
+    "sfx": [
+      "chainDrag",
+      "ironCreak"
+    ],
+    "artOf": "drag_under"
+  },
+  "silt_rake": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Mire Ghoul temel saldırısı: çamurlu pençeyle tırmık, hedefi ağırlaştırır (Gnaw'daki 2 tur Wound yerine 1 tur Slow; STR 0,75). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "silt_rake",
+    "name": "Silt Rake",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#7a7a4a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "gnaw"
+  },
+  "mire_gorge": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Mire Ghoul imza skill'i: yavaşlamış avın üstüne çöker (Feast 1,3 yerine 1,1, Slow hedefe x1,3; ortalama aynı bant). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "mire_gorge",
+    "name": "Mire Gorge",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#b8b49a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.1,
+        "bonusVsStatus": {
+          "status": "slow",
+          "multiplier": 1.3
+        }
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "feast"
+  },
+  "reed_hex": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Reed Witch temel saldırısı: sazdan örülmüş muskayla lanet (Hex Bolt ile aynı: karanlık LUCK 0,6 + 1 tur Saltbound). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "reed_hex",
+    "name": "Reed Hex",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#a04f98",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.6
+      },
+      {
+        "type": "status",
+        "status": "saltbound",
+        "turns": 1
+      }
+    ],
+    "icon": "eye",
+    "vfx": "voidstrike",
+    "sfx": [
+      "darkChant",
+      "boneImpact"
+    ],
+    "artOf": "hex_bolt"
+  },
+  "fen_rot": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Reed Witch imza skill'i: 2x3 alana bataklık çürüğü (Bog Curse ile aynı: karanlık 0,2 + 3 tur Wither DoT 0,1). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "fen_rot",
+    "name": "Fen Rot",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3,
+      "anchor": "bottom_left",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#8c9b3c",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.2
+      },
+      {
+        "type": "dot",
+        "status": "wither",
+        "scale": "luck",
+        "power": 0.1,
+        "turns": 3
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "bog_curse"
+  },
+  "gutting_knife": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Mudlark temel saldırısı: balık temizleme bıçağı (Shiv ile aynı: DEX 0,9). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "gutting_knife",
+    "name": "Gutting Knife",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#c0c8c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.9
+      }
+    ],
+    "icon": "backstab",
+    "vfx": "backstab",
+    "sfx": [
+      "shadowStep",
+      "backstabThud",
+      "bloodSplat"
+    ],
+    "artOf": "shiv"
+  },
+  "bilge_splash": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Mudlark imza skill'i: kova dolusu sintine suyu gözlere (Sand in the Eyes ile aynı: DEX 0,3 + 1 tur Blinded). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "bilge_splash",
+    "name": "Bilge Splash",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#8a9a70",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.3
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 1
+      }
+    ],
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "sand_in_the_eyes"
+  },
+  "salt_scourge": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Inquisition Brother temel saldırısı: tuz kristali işlenmiş kamçılı gürz, kendine can bedeli (Penance Flail ile aynı: mevcut canın %8'i, STR 1,05). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "salt_scourge",
+    "name": "Salt Scourge",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "hp",
+      "amount": 0,
+      "ofCurrent": 0.08
+    },
+    "motion": "melee",
+    "fx": "#e8dca0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.05
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "penance_flail"
+  },
+  "brann_vigil": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Inquisition Brother imza skill'i: bir dosta nöbet duası (Sanctuary ile aynı: 2 tur Blessed, kendisi hariç). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "brann_vigil",
+    "name": "Brann's Vigil",
+    "target": "single_ally",
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "excludeSelf": true,
+    "fx": "#f0e4b0",
+    "effects": [
+      {
+        "type": "status",
+        "status": "blessed",
+        "turns": 2
+      }
+    ],
+    "icon": "spellward",
+    "vfx": "spellward",
+    "sfx": [
+      "wardHum"
+    ],
+    "artOf": "sanctuary"
+  },
+  "blessed_salt": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Salt Chaplain temel saldırısı: kutsanmış tuz serpilir, gökten ışık iner (Holy Ember ile aynı: kutsal INT 0,7). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "blessed_salt",
+    "name": "Blessed Salt",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#fff0a0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "holy"
+      }
+    ],
+    "icon": "judgehammer",
+    "vfx": "hammerfall",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam"
+    ],
+    "artOf": "holy_ember"
+  },
+  "salted_ground": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Salt Chaplain imza skill'i: 2x2 alana tuz halkası çizilip kutsanır (Consecrate ile aynı: kutsal 0,25 + 2 tur Holy Fire zemin 0,2). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "salted_ground",
+    "name": "Salted Ground",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#fff4c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.25,
+        "element": "holy"
+      },
+      {
+        "type": "ground",
+        "ground": "holy_fire",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.2
+      }
+    ],
+    "icon": "judgebeam",
+    "vfx": "judgment",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam",
+      "fireCrackle"
+    ],
+    "artOf": "consecrate"
+  },
+  "sodden_strike": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Risen Drowned temel saldırısı (Bone Strike ile aynı: STR 0,828). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "sodden_strike",
+    "name": "Sodden Strike",
+    "icon": "bone",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9ab8b0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.828
+      }
+    ],
+    "vfx": "bonestrike",
+    "sfx": [
+      "rustySlash"
+    ],
+    "artOf": "skeleton_strike"
+  },
+  "riptide_slash": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Risen Drowned ikinci skill'i (Bone Slash ile aynı: STR 0,648, dik sıçrama x1, bekleme 3). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 444). Sayılar PROVİZYON (sim YOK).",
+    "id": "riptide_slash",
+    "name": "Riptide Slash",
+    "icon": "boneslash",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9ab8b0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.648
+      }
+    ],
+    "splash": {
+      "pattern": "perpendicular",
+      "mult": 1
+    },
+    "cooldown": 3,
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "skeleton_slash"
   }
 }

@@ -16,26 +16,60 @@ const OWN: Record<string, [string, string, string[]]> = {
   tide_caller: ['grave_chanter', 'Tide Caller', ['tide_dirge', 'rise_from_the_deep']],
   marsh_light: ['will_o_wisp', 'Marsh Light', ['bog_spark', 'fen_glimmer']],
   wreck_ghoul: ['ghoul', 'Wreck Ghoul', ['barnacle_claw', 'wreck_feast']],
+  // Harita 2'de kalan son Harita 1 birimleri de kendi sürümünde (content-designer 2026-10-27; Ömer: "evet lütfen hepsini yap artık"; open-questions 444)
+  cinder_exile: ['ember_acolyte', 'Cinder Exile', ['pitch_brand', 'tar_blaze']],
+  pitch_boiler: ['charcoal_burner', 'Pitch Boiler', ['hot_pitch', 'caulkers_smoke']],
+  sunken_dead: ['drowned', 'Sunken Dead', ['waterlogged_grip', 'pull_beneath']],
+  mire_ghoul: ['ghoul', 'Mire Ghoul', ['silt_rake', 'mire_gorge']],
+  reed_witch: ['fen_witchling', 'Reed Witch', ['reed_hex', 'fen_rot']],
+  mudlark: ['cutpurse', 'Mudlark', ['gutting_knife', 'bilge_splash']],
+  inquisition_brother: ['oathsworn_brother', 'Inquisition Brother', ['salt_scourge', 'brann_vigil']],
+  salt_chaplain: ['censer_monk', 'Salt Chaplain', ['blessed_salt', 'salted_ground']],
 };
-/** Belgede (maps-2-3.md 3.2 / 3.3) düz Harita 1 birimi olarak yazılanlar: Harita 2'de kalabilir. */
-const CARRY_OVER = ['ember_acolyte', 'charcoal_burner', 'drowned', 'ghoul', 'fen_witchling', 'cutpurse', 'oathsworn_brother', 'censer_monk'];
 
 type Unit = { class: string; name?: string };
-type Enc = { units: Unit[]; waves?: Array<{ units: Unit[] }> };
+type Enc = { units: Unit[]; waves?: Array<{ units: Unit[] }>; objective?: string | { units?: Unit[] } };
 const unitsOf = (all: Record<string, unknown>): Array<[string, Unit]> =>
   Object.entries(all)
     .filter(([k]) => !k.startsWith('_'))
-    .flatMap(([k, e]) => [...(e as Enc).units, ...((e as Enc).waves ?? []).flatMap((w) => w.units)].map((u) => [k, u] as [string, Unit]));
+    .flatMap(([k, e]) => {
+      const enc = e as Enc;
+      const reinforce = typeof enc.objective === 'object' ? (enc.objective.units ?? []) : []; // Break the Totem takviyesi
+      return [...enc.units, ...(enc.waves ?? []).flatMap((w) => w.units), ...reinforce].map((u) => [k, u] as [string, Unit]);
+    });
 const map2Units = unitsOf(encounters as Record<string, unknown>);
 const map1Classes = new Set(unitsOf(valdoriaEncounters as Record<string, unknown>).map(([, u]) => u.class));
 const map1Skills = new Set([...map1Classes].flatMap((c) => content.mobs[c]?.skills ?? []));
+const unitDef = (id: string) => content.mobs[id] ?? content.bosses[id] ?? content.summons[id];
+/** Bir birimin savaşta tahtaya getirebildiği başka birimler: skill çağrıları + boss kuralları (bağlı nesne, faz dirilişi...). */
+const spawnsOf = (id: string): string[] => {
+  const def = unitDef(id);
+  if (!def) return [];
+  const fromSkills = def.skills.flatMap((s) => content.skills[s]!.effects.flatMap((e) => (e.type === 'summon' ? [e.unit] : [])));
+  const fromRules = [...JSON.stringify((def as { boss?: unknown }).boss ?? {}).matchAll(/"unit":"([a-z_]+)"/g)].map((m) => m[1]!);
+  return [...fromSkills, ...fromRules];
+};
 
 describe('Harita 2 sıradan mobları kendi id / kit / sesleriyle', () => {
-  it('Harita 2 adlı her birim kendi id\'sinde; eski Harita 1 sınıfı yalnızca belgedeki düz birimler için kalır', () => {
+  it('Harita 2\'nin HİÇBİR doğumunda (birim, dalga, totem takviyesi, çağrı, boss kuralı) Harita 1 birim id\'si yok', () => {
+    const seen = new Set<string>();
+    const queue = map2Units.map(([, u]) => u.class);
+    while (queue.length) {
+      const id = queue.pop()!;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      queue.push(...spawnsOf(id));
+    }
+    const map1 = [...map1Classes, 'skeleton'];
+    for (const id of seen) expect(map1, `Harita 2'de Harita 1 birimi: ${id}`).not.toContain(id);
+    expect(seen).toContain('risen_drowned');
+    expect(seen).toContain('hex_totem');
+  });
+
+  it('Harita 2 adlı her birim kendi id\'sinde', () => {
     for (const [k, u] of map2Units) {
       const own = Object.entries(OWN).find(([, [, name]]) => name === u.name);
       if (own) expect(u.class, `${k} ${u.name}`).toBe(own[0]);
-      if (map1Classes.has(u.class) && content.mobs[u.class]) expect(CARRY_OVER, `${k} ${u.class}`).toContain(u.class);
     }
     for (const id of Object.keys(OWN)) expect(map2Units.some(([, u]) => u.class === id), id).toBe(true);
     // Chandlers' Row (dr_30): belgede "Dock Rats"
@@ -60,6 +94,39 @@ describe('Harita 2 sıradan mobları kendi id / kit / sesleriyle', () => {
     }
     // Grudge kendi temel saldırısına bağlı
     expect(content.mobs.dock_rat!.passive?.effect).toMatchObject({ type: 'grudge', skill: 'belaying_pin' });
+    // Zırh / büyü zırhı (stats içinde) ve pasifin tamamı da birebir (open-questions 444 birimleri)
+    for (const id of ['cinder_exile', 'pitch_boiler', 'sunken_dead', 'mire_ghoul', 'reed_witch', 'mudlark', 'inquisition_brother', 'salt_chaplain']) {
+      const [src] = OWN[id]!;
+      expect([content.mobs[id]!.stats.armor, content.mobs[id]!.stats.magicArmor, content.mobs[id]!.passive], id).toEqual([content.mobs[src]!.stats.armor, content.mobs[src]!.stats.magicArmor, content.mobs[src]!.passive]);
+      expect(content.mobs[id]!.stats.armor, id).toBeGreaterThan(0);
+    }
+  });
+
+  it('Order birimleri Brann\'s Order ailesinde; Order karşılaşmaları (dr_27, Vell, Monk\'s Isle) yeni id\'lerle', () => {
+    for (const id of ['inquisition_brother', 'salt_chaplain']) expect(content.mobs[id]!.family, id).toBe('branns_order');
+    const enc = encounters as unknown as Record<string, Enc>;
+    for (const k of ['dr_27', 'dr_32_vell', 'dr_monks_guard']) {
+      const classes = enc[k]!.units.map((u) => u.class);
+      expect(classes, k).toContain('inquisition_brother');
+      expect(classes, k).toContain('salt_chaplain');
+    }
+  });
+
+  it('Tide Caller Rise from the Deep kendi çağrısını (Risen Drowned) çağırır: Skeleton ile aynı statlar, kendi kit; Hex Totem kendi nesnesi', () => {
+    expect(content.skills.rise_from_the_deep!.effects).toContainEqual(expect.objectContaining({ type: 'summon', unit: 'risen_drowned', lifespan: 3, consumeCorpse: true }));
+    const r = content.summons.risen_drowned!;
+    const s = content.summons.skeleton!;
+    expect(r.name).toBe('Risen Drowned');
+    const scale = (d: object) => [(d as { summonerScale?: unknown }).summonerScale, (d as { variants?: unknown }).variants];
+    expect([r.attributes, r.stats, r.range, r.ai, r.tags, ...scale(r)], 'risen_drowned').toEqual([s.attributes, s.stats, s.range, s.ai, s.tags, ...scale(s)]);
+    expect(scale(r)[0], 'çağıran ölçeği').toBeTruthy();
+    expect(r.skills).toEqual(['sodden_strike', 'riptide_slash']);
+    // Grave Chanter (Harita 1) hâlâ Skeleton çağırır
+    expect(content.skills.call_the_buried!.effects).toContainEqual(expect.objectContaining({ type: 'summon', unit: 'skeleton' }));
+    const t = content.bosses.hex_totem!;
+    const m = content.bosses.iron_mooring!;
+    expect([t.name, t.inert, t.stats, t.skills]).toEqual(['Hex Totem', true, m.stats, []]);
+    expect((encounters as unknown as Record<string, Enc>).dr_13!.units.find((u) => (u as { objective?: boolean }).objective)?.class).toBe('hex_totem');
   });
 
   it('River Reaver ve Cliff Crossbowman ödünç Harita 1 skill\'i kullanmaz; River Reaver Undertow alır (maps-2-3.md 3.3)', () => {
@@ -70,8 +137,9 @@ describe('Harita 2 sıradan mobları kendi id / kit / sesleriyle', () => {
   });
 
   it('her yeni skill\'in kendi sesi var (Harita 1 sesi paylaşılmaz); hero-only Omen / Dark Bond yok', () => {
-    const skills = [...Object.values(OWN).flatMap(([, , k]) => k), ...content.mobs.river_reaver!.skills, ...content.mobs.cliff_crossbowman!.skills];
-    expect(skills).toHaveLength(16);
+    const skills = [...Object.values(OWN).flatMap(([, , k]) => k), ...content.mobs.river_reaver!.skills, ...content.mobs.cliff_crossbowman!.skills, ...content.summons.risen_drowned!.skills];
+    expect(skills).toHaveLength(34);
+    expect(new Set(skills.flatMap((sk) => mobSoundsOf(sk))).size, 'her ses tarifi tek skill\'e ait').toBe(skills.flatMap((sk) => mobSoundsOf(sk)).length);
     for (const sk of skills) {
       expect(MOB_SKILL_SOUNDS[sk], sk).toBeDefined();
       expect(mobSoundsOf(sk).length, sk).toBeGreaterThan(0);
