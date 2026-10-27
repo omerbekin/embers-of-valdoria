@@ -75,6 +75,9 @@ HEADS = {
     'brine_maiden': (690, 15, 300),
     'reaver_archer': (540, 225, 300),
     'reef_wrecker': (642, 0, 290),
+    # 2026-10-27: Harita 2'nin son iki kendi çizimi (önceden moor_raider / bandit_crossbowman çizimini kullanıyorlardı)
+    'river_reaver': (455, 0, 290),
+    'cliff_crossbowman': (350, 40, 300),
     # Kadın varyasyonları (V1-V5, 2026-10-26)
     'corsair_cutlass_f': (620, 0, 260),
     'corsair_slinger_f': (608, 0, 280),

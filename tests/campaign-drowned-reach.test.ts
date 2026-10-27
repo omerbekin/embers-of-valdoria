@@ -130,6 +130,8 @@ describe('The Drowned Reach: harita verisi', () => {
       'Brine Maiden': ['brine_maiden', 'sunken_court', ['lament_of_salt', 'tidal_mend']],
       'Reaver Archer': ['reaver_archer', 'bandits', ['pitch_arrow', 'fire_volley']],
       'Reef Wrecker': ['reef_wrecker', 'bandits', ['hook', 'lantern_flash']],
+      'River Reaver': ['river_reaver', 'bandits', ['billhook', 'peat_smoke']],
+      'Cliff Crossbowman': ['cliff_crossbowman', 'bandits', ['crossbow_bolt', 'scatter_quarrels']],
     };
     const seen = new Set<string>();
     for (const [key, enc] of Object.entries(ENCOUNTERS))
