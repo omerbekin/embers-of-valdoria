@@ -96,6 +96,8 @@ HEADS = {
     'weir_wyrm': (1270, 100, 400),
     'admiral_vane': (770, 20, 300),
     'drowned_queen': (700, 0, 330),
+    'pit_champion_gorr': (410, 0, 290),  # 2026-10-27 kendi çizimi (önceden Bandit Chief)
+    'inquisitor_captain_vell': (400, 52, 250),  # 2026-10-27 kendi çizimi (önceden Oathsworn Brother)
     'hex_totem': (313, 290, 240),
     'harpoon_ballista': (760, 60, 640),  # Harita 2 yardımcı nesnesi (Admiral Vane'in Harpoon Ballista'sı)
 }

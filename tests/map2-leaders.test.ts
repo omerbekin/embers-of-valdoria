@@ -3,6 +3,12 @@ import { Battle, chooseAction, content } from '../src/engine';
 import type { BattleEvent, Teams } from '../src/engine';
 import { ENCOUNTERS, validateEncounters } from '../src/campaign';
 import { rangeOff } from './range-helpers';
+import { existsSync } from 'node:fs';
+import { MOB_VFX_SPECS } from '../src/game/mob-vfx';
+import { MOB_IMAGE_FILES } from '../src/game/icon-image-files';
+import { mobSheetId, vfxSheetFile } from '../src/game/vfx-sheet-files';
+import { selectSkillVfx } from '../src/game/vfx-select';
+import { MOB_POSES } from '../src/game/mob-poses';
 
 // Harita 2 elit ve boss önderlerinin KENDİ kitleri (maps-2-3.md 3.3, Ömer onayı 2026-10-27; sayılar provizyon: open-questions 435)
 // + M-N2 zorla hareket (Boarding Hook: kahramanı kendi şeridinin ön sıra hücresine çeker; hücre doluysa çekme yok; elit/boss çekilmez).
@@ -47,10 +53,36 @@ describe('Harita 2 önderleri: veri', () => {
       for (const s of kit) {
         const sk = content.skills[s];
         expect(sk, `${id} -> ${s}`).toBeDefined();
-        // yer tutucu sanat: başka bir skill'in ikon / efektini kopyalar (artOf)
-        expect(sk!.artOf, `${s} artOf`).toBeTruthy();
+        // KENDİ sanatı: ödünç yok (artOf yok); ikon ve efekt aşağıdaki testte denetlenir
+        expect(sk!.artOf, `${s} artOf (ödünç sanat yasak)`).toBeUndefined();
         expect(sk!.effects.some((e) => e.type === 'omen' || e.type === 'detonate' || (e.type as string) === 'darkBond'), `${s}: kahraman mekaniği`).toBe(false);
       }
+    }
+  });
+
+  it('her önder skill ikonu ve efekti KENDİ sanatı: ödünç efekte düşemez (Ömer 2026-10-27, Harita 2 de ödünç sanat yok)', () => {
+    for (const [id, kit] of Object.entries(KITS)) {
+      for (const s of kit) {
+        const spec = MOB_VFX_SPECS[s];
+        expect(spec, `${s} efekt satırı`).toBeDefined();
+        expect(spec!.mob, `${s} sheet sahibi`).toBe(id);
+        const sheet = vfxSheetFile(mobSheetId(id, s));
+        expect(sheet, `${s} efekt sheet'i`).toBeTruthy();
+        expect(sheet!.meta.frames, s).toBe(8);
+        expect(existsSync(`assets/source/mob-vfx/${id}-${s}.png`), `${s} aslı`).toBe(true);
+        expect(MOB_IMAGE_FILES[s], `${s} boyalı ikon`).toBeDefined();
+        const pick = selectSkillVfx(content.skills[s]!);
+        expect(pick.version, s).toBe('v2');
+        expect(pick.v2, s).toBeDefined();
+      }
+    }
+  });
+
+  it('Pit Champion Gorr ve Inquisitor-Captain Vell kendi çizimini kullanır (ödünç Bandit Chief / Oathsworn yok)', () => {
+    for (const id of ['pit_champion_gorr', 'inquisitor_captain_vell']) {
+      expect(content.mobs[id]!.spriteId, id).toBe(id);
+      for (const f of [`assets/sprites/${id}/idle.png`, `assets/avatars/${id}.png`, `assets/sprites/${id}/poses.png`, `assets/source/mobs/${id}.png`, `assets/source/mob-poses/${id}.png`]) expect(existsSync(f), f).toBe(true);
+      expect(MOB_POSES[id], `${id} poz kaydı`).toBeDefined();
     }
   });
 

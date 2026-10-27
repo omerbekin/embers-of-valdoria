@@ -54,7 +54,8 @@ describe('data/mobs yükleyicisi', () => {
     for (const id of own) {
       if (classSkills.has(id)) continue; // var olan skill'i doğrudan kullanan mob
       const s = content.skills[id]!;
-      const src = content.skills[s.artOf ?? '']!;
+      if (!s.artOf) continue; // kendi sanatı olan skill (Harita 2 önderleri: kendi ikon + efekt; tests/map2-leaders.test.ts denetler)
+      const src = content.skills[s.artOf]!;
       expect(src, `${id} artOf ${s.artOf}`).toBeDefined();
       expect(s.icon, id).toBe(src.icon);
       expect(s.vfx, id).toBe(src.vfx);
