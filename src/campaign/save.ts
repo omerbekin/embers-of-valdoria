@@ -3,6 +3,8 @@ import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
 import { activeHeroes, canReplay, clearedProgress, nodeCleared, stopNumber } from './state';
 import { validCampaignSuspended } from './suspend';
+import { pitOf } from './pit';
+import { oathDef } from './oath';
 import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, type ItemInstance } from '../progression/items';
 import { classes, valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
@@ -235,8 +237,39 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   if (!isValidState(s)) return null;
   // Geçilen haritalar (harita geçişi M-Q; isteğe bağlı alan, sürüm değişmez): bozuksa / bilinmeyen haritaysa atılır
   if (s.mapsDone !== undefined && !(Array.isArray(s.mapsDone) && s.mapsDone.every((m) => typeof m === 'string' && !!MAPS[m]))) delete (s as { mapsDone?: unknown }).mapsDone;
+  upgradePitOath(s);
   upgradeRoam(s);
   return s;
+}
+
+/**
+ * The Fighting Pit (B5) ve Hero Oath (A4) alanları (open-questions 429; isteğe bağlı, kayıt sürümü değişmez; eski kayıtta yok = arena rekoru yok,
+ * yemin yok). Açık arena koşusu yalnız bulunulan arenalı kasabada ve geçerli kademe sayısıyla kalır; başlamış kademe savaşı (`fight`) atılır
+ * (savaş yarıdan sürdürülmez: kademe arası pencere yeniden açılır). Rekor: pozitif tam sayılar. Yemin: bilinen yemin + kadroda / yedekte / Inn'de
+ * olan kahraman; değilse atılır. Yerinde değiştirir.
+ */
+function upgradePitOath(s: CampaignState): void {
+  const map = MAPS[s.mapId]!;
+  const p = s.pit as unknown as { node?: unknown; wins?: unknown } | undefined;
+  if (p !== undefined) {
+    const n = typeof p?.node === 'string' && p.node === s.at ? findNode(map, p.node) : undefined;
+    const def = n ? pitOf(n) : null;
+    const wins = p?.wins;
+    if (def && typeof wins === 'number' && Number.isInteger(wins) && wins >= 0 && wins <= def.tiers.length) s.pit = { node: s.at, wins };
+    else delete (s as { pit?: unknown }).pit;
+  }
+  const b = s.pitBest as unknown;
+  if (b !== undefined) {
+    const ok = b && typeof b === 'object' && !Array.isArray(b) ? Object.entries(b as Record<string, unknown>).filter(([, v]) => typeof v === 'number' && Number.isInteger(v) && v > 0) : [];
+    if (ok.length) s.pitBest = Object.fromEntries(ok) as Record<string, number>;
+    else delete (s as { pitBest?: unknown }).pitBest;
+  }
+  const o = s.oath as unknown as { hero?: unknown; id?: unknown } | undefined;
+  if (o !== undefined) {
+    const heroes = [...(Array.isArray(s.roster) ? s.roster : []), ...(s.reserve ?? []), ...(s.inn ?? []).map((x) => x.hero)];
+    if (o && typeof o.hero === 'string' && typeof o.id === 'string' && oathDef(o.id) && heroes.some((h) => h?.id === o.hero)) s.oath = { hero: o.hero, id: o.id };
+    else delete (s as { oath?: unknown }).oath;
+  }
 }
 
 /**

@@ -48,6 +48,8 @@ export interface EventChoice {
   restHeal?: number;
   battle?: string[];
   win?: { gold?: number; chest?: boolean };
+  /** A4 Hero Oath: seçenek yemin penceresini açar (yemin edilince ya da yemin varken pencere kapanınca olay biter; src/campaign/oath.ts). */
+  oath?: boolean;
 }
 
 export interface EventDef extends EventText {

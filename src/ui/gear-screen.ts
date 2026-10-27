@@ -52,6 +52,7 @@ import type { DragSource, DropAction, DropTarget } from './gear-drop';
 import { attachItemInteractions } from './item-drag';
 import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, heroFallen, heroItemLine } from './gear-hover';
 import { respecHeroTree, respecTreeBlocked } from '../campaign';
+import { heroOath, oathMinusText, oathPlusText } from '../campaign/oath';
 import { createTreeTab } from './tree-tab';
 import { treeOf } from '../progression/skill-tree-data';
 import { treePool } from '../progression/skill-tree';
@@ -107,6 +108,8 @@ export interface GearHero {
   alive?: boolean;
   /** Kişisel hız zarı (Ömer 2026-10-24): Sheet'teki Speed savaştakiyle aynı olsun diye (LoadoutSource.spdRoll). */
   spdRoll?: number;
+  /** A4 Hero Oath (sefer): yemin adı + artı / eksi metni (Gear sınıf satırında küçük çip, ipucu A Band). */
+  oath?: { name: string; plus: string; minus: string };
 }
 
 /**
@@ -145,7 +148,11 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
       const s = get();
       // Yara (Ömer 2026-10-23, V1 "Scar + dots"): Sheet HP çubuğunda yara bölümü + noktalar, yer imlerinde küçük noktalar
       const cfg: WoundCfg = { rules: woundRules(), town: true };
-      return [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))].map((h) => (woundCount(h) > 0 ? { ...h, wounds: woundCount(h), woundCfg: cfg } : h));
+      return [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))].map((h) => {
+        const o = heroOath(s, h.id); // A4 Hero Oath: Gear'da küçük çip
+        const oath = o ? { oath: { name: o.name, plus: oathPlusText(o), minus: oathMinusText(o) } } : {};
+        return woundCount(h) > 0 ? { ...h, wounds: woundCount(h), woundCfg: cfg, ...oath } : { ...h, ...oath };
+      });
     },
     bag: () => get().inventory,
     bagSize: BAG_SIZE,

@@ -1,0 +1,29 @@
+{
+  "_note": "A4 Hero Oaths (Ömer seçimi 2026-10-25, maps-2-3.md 9; Ömer notu: TEK tapınak, TEK kahraman). Tapınak: Saltspray Shrine (dr52, oathShrine). Aynı anda yalnız bir kahraman yeminli; yemin kalıcı bir artı + kalıcı bir eksi. Bozmak breakCost altın (yalnız tapınakta). Kayıtta CampaignState.oath, haritalar arası taşınır. Etki alanları: damageAdd / critAdd (savaş kurulumu, UnitModifiers ile toplanır), hpMult (çarpılır), restHealMult (kamp Rest + Inn günlük şifası), victoryHealMult (zafer şifası). Sayılar PROVİZYON (open-questions 429).",
+  "breakCost": 80,
+  "text": "The spray never stops at the Saltspray Shrine. Sailors kneel here before a long voyage and swear an oath to the Tide: a gift taken, a price paid, for as long as the oath holds. Only one of your company may be bound at a time.",
+  "swornText": "The salt on the stones remembers your oath. The Tide will loosen it, for a price.",
+  "oaths": [
+    {
+      "id": "undertow",
+      "name": "Oath of the Undertow",
+      "vow": "Strike like the sea, and rest like the drowned.",
+      "plus": { "damageAdd": 0.12 },
+      "minus": { "restHealMult": 0.5 }
+    },
+    {
+      "id": "breakwater",
+      "name": "Oath of the Breakwater",
+      "vow": "Stand like the harbour wall, and strike as slowly.",
+      "plus": { "hpMult": 1.15 },
+      "minus": { "damageAdd": -0.08 }
+    },
+    {
+      "id": "gale",
+      "name": "Oath of the Gale",
+      "vow": "Find the gap in every hull, and never mend your own.",
+      "plus": { "critAdd": 0.06 },
+      "minus": { "victoryHealMult": 0.5 }
+    }
+  ]
+}

@@ -15,6 +15,8 @@ import { applyXp, battleXp, fixedXp, fixedXpNode, joinLevel } from './xp';
 import { LEVELS, campaignMaxLevel, nodeXpMult, setLevel, splitXp } from '../progression/levels';
 import { nodeLevel } from './power';
 import { freeTemperItem, freeTemperPreview } from './smith';
+import { pitBest, pitOf, pitTierPays } from './pit';
+import { OATH_DATA, oathDef, oathHealMult } from './oath';
 import type { BattleOutcome, CampChoice, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, InnStay, MapNode, NextStep, StepKind } from './types';
 
 /**
@@ -98,6 +100,9 @@ export function nextStep(s: CampaignState): NextStep {
   const n = node(map, s.at);
   // Başlatılmış devriye (temizlenmiş düğümün yeniden oynanışı): düğümün kendi karşılaşması
   if (s.patrol === n.id && n.encounter && canReplay(map, n)) return { kind: 'battle', node: n.id, encounter: n.encounter, patrol: true };
+  // The Fighting Pit (B5): başlatılmış kademe savaşı (kasaba adımının içinde; kazanınca / yenilince kasabaya dönülür)
+  const pitTier = s.pit?.node === n.id && s.pit.fight ? pitOf(n)?.tiers[s.pit.wins] : undefined;
+  if (pitTier) return { kind: 'battle', node: n.id, encounter: pitTier.encounter, pit: true };
   for (const kind of nodeSteps(map, n)) {
     if (isDone(s, n.id, kind)) continue;
     switch (kind) {
@@ -778,7 +783,7 @@ export function useCamp(s: CampaignState, c: CampChoice): CampaignState {
   switch (c.kind) {
     case 'rest': {
       const heal = restHealOf(t);
-      for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(clamp01(h.hpRatio + heal) * 1000) / 1000;
+      for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(clamp01(h.hpRatio + heal * oathHealMult(t, h.id, 'rest')) * 1000) / 1000; // A4 yemin eksisi
       break;
     }
     case 'tend': {
@@ -877,7 +882,8 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
     t.stats.defeats++;
     return t;
   }
-  expectStep(t, 'battle');
+  const step = expectStep(t, 'battle') as Extract<NextStep, { kind: 'battle' }>;
+  if (step.pit) return winPit(t, outcome, rules); // The Fighting Pit (B5): arada şifa yok, ödül yalnız yeni rekorda
   const heal = victoryHealFor(rules, node(mapOf(t), t.at).type);
   // Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): yaşayanlar düğüm türünün zafer şifasını alır; savaş SONUNDA hâlâ düşmüş
   // olan kahraman %10 canla yaralı kalkar (lethal yaralıysa ceset). Savaşa ceset girip kalkmayan ceset kalır.
@@ -886,7 +892,7 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   for (const u of outcome.units) {
     const h = heroById(t, u.heroId);
     if (!h || risen.has(h.id) || !u.alive || u.hpRatio <= 0) continue;
-    h.hpRatio = Math.round(clamp01(u.hpRatio + heal + itemRecovery(h)) * 1000) / 1000; // Recovery affix'i: yalnızca takan (Ömer 2026-10-11)
+    h.hpRatio = Math.round(clamp01(u.hpRatio + (heal + itemRecovery(h)) * oathHealMult(t, h.id, 'victory')) * 1000) / 1000; // Recovery affix'i: yalnızca takan (Ömer 2026-10-11); A4 yemin eksisi
     h.alive = true;
   }
   t.stats.victories++;
@@ -954,6 +960,7 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
   delete t.closedShop;
   delete t.formationDue;
   delete t.patrol;
+  delete t.pit; // arena koşusu kasabada biter (güvenlik ağı)
   markCleared(t, to); // adımı olmayan düğüm varınca temizlenmiş sayılır
   return t;
 }
@@ -998,7 +1005,7 @@ export function continueToMap(s: CampaignState, mapId: string = nextMapFor(s) ??
   t.visited = [map.start];
   t.cleared = [];
   t.replays = {};
-  for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover'] as const) delete t[k];
+  for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover', 'pit'] as const) delete t[k];
   clearWounds(t); // D1 b: yeni haritaya yarasız girilir (cesetler aynen; yedekte bekleyenlere dokunulmaz)
   return t;
 }
@@ -1051,7 +1058,7 @@ function innNewDay(t: CampaignState): void {
   for (const stay of t.inn ?? []) {
     const h = stay.hero;
     if (isFallen(h)) continue; // ceset Inn'e giremez; bozuk kayıtta kalkmaz
-    h.hpRatio = Math.round(clamp01(h.hpRatio + r.healPerDay) * 1000) / 1000;
+    h.hpRatio = Math.round(clamp01(h.hpRatio + r.healPerDay * oathHealMult(t, h.id, 'rest')) * 1000) / 1000; // A4 yemin eksisi
     const w = healWounds(woundCount(h), r.woundsPerDay);
     if (w > 0) h.wounds = w;
     else delete h.wounds;
@@ -1521,3 +1528,202 @@ export function debugRoamTeleport(s: CampaignState, target: string): CampaignSta
 
 /** Birleşme noktası mı (rozet işareti için)? */
 export const isMerge = (map: CampaignMap, id: string): boolean => incoming(map, id).length > 1;
+
+// ---------------------------------------------------------------- The Fighting Pit (B5; maps-2-3.md 9, open-questions 429)
+
+/** Arenaya girilebilir mi: kasaba adımındayken, düğümde arena varsa, açık koşu yoksa ve duraklatılmış savaş yoksa. null = evet, yoksa sebep. */
+export function pitBlocked(s: CampaignState): string | null {
+  if (pausedLock(s)) return PAUSED_LOCK;
+  const n = node(mapOf(s), s.at);
+  if (!pitOf(n)) return 'There is no pit here';
+  if (s.pit) return 'You are already in the pit';
+  if (nextStep(s).kind !== 'town') return 'Not now';
+  if (!activeHeroes(s).some((h) => !isFallen(h))) return 'No one can fight';
+  return null;
+}
+
+/** Arenaya gir: koşu açılır ve 1. kademe savaşı bekler (nextStep 'battle', pit). Değilse Error. */
+export function enterPit(s: CampaignState): CampaignState {
+  const why = pitBlocked(s);
+  if (why) throw new Error(why);
+  const t = clone(s);
+  t.pit = { node: t.at, wins: 0, fight: true };
+  return t;
+}
+
+/** Kademe arasında "Fight on": sıradaki kademe savaşı (son kademe kazanıldıysa ya da koşu yoksa Error). */
+export function fightPit(s: CampaignState): CampaignState {
+  const p = s.pit;
+  const def = p ? pitOf(node(mapOf(s), p.node)) : null;
+  if (!p || !def || p.node !== s.at || p.fight) throw new Error('No pit run');
+  if (p.wins >= def.tiers.length) throw new Error('The pit is done');
+  if (pausedLock(s)) throw new Error(PAUSED_LOCK);
+  if (!activeHeroes(s).some((h) => !isFallen(h))) throw new Error('No one can fight');
+  const t = clone(s);
+  t.pit = { node: p.node, wins: p.wins, fight: true };
+  return t;
+}
+
+/** Arenadan çık (kademe arasında ya da koşu bitince): kazanılanlar zaten verildi; en az bir kademe kazanıldıysa bir tamamlama (gün). */
+export function leavePit(s: CampaignState): CampaignState {
+  if (!s.pit) return s;
+  const t = clone(s);
+  const won = t.pit!.wins > 0;
+  delete t.pit;
+  if (won) advanceDay(t);
+  return t;
+}
+
+/** Arena savaşı sonucu kahramanlara (YERİNDE): şifa yok, canlar savaştaki gibi; savaş sonunda düşmüş olan sefer kuralıyla yaralı kalkar / ceset. */
+function settlePitFight(t: CampaignState, battle: Pick<BattleOutcome, 'units' | 'valorRevived'>, rules: WoundRules): Set<string> {
+  valorHealWounds(t, battle.valorRevived);
+  const risen = settleFallen(t, battle.units, rules);
+  for (const u of battle.units) {
+    const h = heroById(t, u.heroId);
+    if (!h || risen.has(h.id) || !u.alive || u.hpRatio <= 0) continue;
+    h.hpRatio = Math.round(clamp01(u.hpRatio) * 1000) / 1000;
+    h.alive = true;
+  }
+  return risen;
+}
+
+/**
+ * Arenada yenilgi ya da pes (savaş menüsü > Retreat): koşu biter, o kademenin ödülü yok. Sefer kuralı (devriyeden geri çekilmeyle aynı): savaşta
+ * ne olduysa kalır, savaşa ayakta girip düşen kahraman yaralı kalkar (ölümcül yarada ceset), harcanan Valor harcanmış kalır. Daha önce
+ * kazanılan kademelerin ödülü ve rekor kalır. `battle` yoksa yalnızca koşu kapanır.
+ */
+export function losePit(s: CampaignState, battle?: Pick<BattleOutcome, 'units' | 'valorLeft' | 'valorRevived'>): CampaignState {
+  if (!s.pit) return s;
+  const t = clone(s);
+  const won = t.pit!.wins > 0;
+  delete t.pit;
+  delete t.suspended;
+  t.stats.defeats++;
+  if (battle) {
+    settlePitFight(t, battle, woundRules());
+    if (t.valor !== undefined && battle.valorLeft !== undefined) t.valor = addValor(valorRules, battle.valorLeft, 0);
+  }
+  if (won) advanceDay(t);
+  return t;
+}
+
+/**
+ * Kademe zaferi (applyBattle'dan; `t` klonlanmış): zafer şifası YOK (canlar savaştaki gibi kalır); düşen kahraman sefer kuralıyla yaralı kalkar.
+ * Yeni rekor kademesinde: savaş XP'si + kademe altını (+ `chest` ise hazine sandığı) ve rekor yazılır; rekor değilse ödül yok. Valor kazanılmaz
+ * (harcanan düşülür). Koşu kademe arasına geçer (fight kalkar); son kademeden sonra yalnızca çıkış kalır.
+ */
+function winPit(t: CampaignState, outcome: BattleOutcome, rules: CampaignRules): CampaignState {
+  const p = t.pit!;
+  const def = pitOf(node(mapOf(t), p.node))!;
+  const index = p.wins;
+  const tier = def.tiers[index]!;
+  const wr = rules.wounds ?? woundRules();
+  const risen = settlePitFight(t, outcome, wr);
+  t.stats.victories++;
+  if (pitTierPays(t, p.node, index)) {
+    applyXp(t, battleXp(t, outcome, tier.encounter));
+    for (const id of risen) {
+      const h = heroById(t, id);
+      if (h) h.hpRatio = Math.round(clamp01(wr.riseRatio) * 1000) / 1000; // yaralı kalkan level atlasa da riseRatio (applyBattle ile aynı)
+    }
+    const fought = outcome.units.map((u) => heroById(t, u.heroId)).filter((h): h is Hero => !!h);
+    if (tier.chest) grantLoot(t, p.node, 'treasure', fought.length ? fought : activeHeroes(t), { gold: tier.gold, tag: `pit${index + 1}` });
+    else t.gold += tier.gold;
+    t.pitBest = { ...(t.pitBest ?? {}), [p.node]: index + 1 };
+  }
+  if (t.valor !== undefined) t.valor = addValor(valorRules, outcome.valorLeft ?? t.valor, 0);
+  t.pit = { node: p.node, wins: index + 1 };
+  return t;
+}
+
+/** Arena özeti (pencere): ad, metin, kademeler (ödül + rekor mu), rekor, açık koşudaki kazanç, sıradaki kademe. Arena yoksa null. */
+export function pitView(s: CampaignState): {
+  name: string;
+  text: string;
+  tiers: Array<{ gold: number; chest: boolean; won: boolean }>;
+  best: number;
+  wins: number | null;
+  next: number | null;
+  nextPays: boolean;
+} | null {
+  const n = node(mapOf(s), s.pit?.node ?? s.at);
+  const def = pitOf(n);
+  if (!def) return null;
+  const best = pitBest(s, n.id);
+  const wins = s.pit ? s.pit.wins : null;
+  const nextIdx = wins ?? 0;
+  const next = nextIdx < def.tiers.length ? nextIdx + 1 : null;
+  return {
+    name: def.name,
+    text: def.text,
+    tiers: def.tiers.map((x, i) => ({ gold: x.gold, chest: !!x.chest, won: i < best })),
+    best,
+    wins,
+    next,
+    nextPays: next !== null && pitTierPays(s, n.id, nextIdx),
+  };
+}
+
+/** Debug: arena rekorunu ayarla (0 = sıfırla); açık koşu kapanır. */
+export function debugSetPitBest(s: CampaignState, nodeId: string, best: number): CampaignState {
+  const t = clone(s);
+  const rest = { ...(t.pitBest ?? {}) };
+  if (best > 0) rest[nodeId] = best;
+  else delete rest[nodeId];
+  if (Object.keys(rest).length) t.pitBest = rest;
+  else delete t.pitBest;
+  delete t.pit;
+  return t;
+}
+
+// ---------------------------------------------------------------- A4 Hero Oath (maps-2-3.md 9, open-questions 429)
+
+/** Bulunulan düğüm yemin tapınağı mı. */
+export const oathShrineHere = (s: CampaignState): boolean => !!node(mapOf(s), s.at).oathShrine;
+
+/** Yemin edilebilir mi (tapınaktayken, kimse yeminli değilken, kahraman takımda ve ayakta). null = evet. */
+export function swearBlocked(s: CampaignState, heroId: string, oathId: string): string | null {
+  if (!oathShrineHere(s)) return 'Only at the shrine';
+  if (pausedLock(s)) return PAUSED_LOCK;
+  if (s.oath) return 'Someone is already sworn';
+  if (!oathDef(oathId)) return 'No such oath';
+  const h = heroById(s, heroId);
+  if (!h) return 'Not in your company';
+  if (isFallen(h)) return 'The fallen cannot swear';
+  return null;
+}
+
+/** Kahraman yemin eder (kalıcı artı + kalıcı eksi; aynı anda tek yeminli). Değilse Error. */
+export function swearOath(s: CampaignState, heroId: string, oathId: string): CampaignState {
+  const why = swearBlocked(s, heroId, oathId);
+  if (why) throw new Error(why);
+  const t = clone(s);
+  t.oath = { hero: heroId, id: oathId };
+  return t;
+}
+
+/** Yemin bozulabilir mi (tapınakta, altın yetiyorsa). null = evet. */
+export function breakOathBlocked(s: CampaignState): string | null {
+  if (!s.oath) return 'No one is sworn';
+  if (!oathShrineHere(s)) return 'Only at the shrine';
+  if (s.gold < OATH_DATA.breakCost) return 'Not enough gold';
+  return null;
+}
+
+/** Yemini boz (altın bedeli). Değilse Error. */
+export function breakOath(s: CampaignState): CampaignState {
+  const why = breakOathBlocked(s);
+  if (why) throw new Error(why);
+  const t = clone(s);
+  t.gold -= OATH_DATA.breakCost;
+  delete t.oath;
+  return t;
+}
+
+/** Debug: yemin ver / kaldır (tapınak ve altın aranmaz). */
+export function debugSetOath(s: CampaignState, heroId: string | null, oathId?: string): CampaignState {
+  const t = clone(s);
+  if (heroId && oathDef(oathId)) t.oath = { hero: heroId, id: oathId! };
+  else delete t.oath;
+  return t;
+}

@@ -2504,5 +2504,193 @@
         }
       }
     ]
+  },
+  "dr_pit_1": {
+    "name": "Pit Brawlers",
+    "units": [
+      {
+        "class": "road_thug",
+        "slot": 1,
+        "name": "Dock Rat",
+        "mods": {
+          "hpMult": 1.1,
+          "powerMult": 1.1
+        }
+      },
+      {
+        "class": "road_thug",
+        "slot": 0,
+        "name": "Dock Rat",
+        "mods": {
+          "hpMult": 1.1,
+          "powerMult": 1.1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1.1,
+          "powerMult": 1.1
+        }
+      }
+    ]
+  },
+  "dr_pit_2": {
+    "name": "Corsair Pair",
+    "units": [
+      {
+        "class": "corsair_cutlass",
+        "slot": 1,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1.2,
+          "powerMult": 1.2
+        }
+      },
+      {
+        "class": "corsair_cutlass",
+        "slot": 0,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1.2,
+          "powerMult": 1.2
+        }
+      },
+      {
+        "class": "corsair_slinger",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1.2,
+          "powerMult": 1.2
+        }
+      }
+    ]
+  },
+  "dr_pit_3": {
+    "name": "Beasts of the Pit",
+    "units": [
+      {
+        "class": "salt_crab",
+        "slot": 1,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      },
+      {
+        "class": "weir_eel",
+        "slot": 0,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 2,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 4,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      }
+    ]
+  },
+  "dr_pit_4": {
+    "name": "The Wreckers' Crew",
+    "units": [
+      {
+        "class": "reef_wrecker",
+        "slot": 1,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1.4,
+          "powerMult": 1.4
+        }
+      },
+      {
+        "class": "reef_wrecker",
+        "slot": 0,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1.4,
+          "powerMult": 1.4
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1.4,
+          "powerMult": 1.4
+        }
+      },
+      {
+        "class": "corsair_slinger",
+        "slot": 6,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1.4,
+          "powerMult": 1.4
+        }
+      }
+    ]
+  },
+  "dr_pit_5": {
+    "name": "The Pit Champion",
+    "units": [
+      {
+        "class": "bandit_chief",
+        "slot": 1,
+        "name": "Pit Champion \"Gorr\"",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.8,
+          "powerMult": 1.15,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "drowned_knight",
+        "slot": 0,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      },
+      {
+        "class": "corsair_cutlass",
+        "slot": 2,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      },
+      {
+        "class": "siren",
+        "slot": 7,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1.3,
+          "powerMult": 1.3
+        }
+      }
+    ]
   }
 }

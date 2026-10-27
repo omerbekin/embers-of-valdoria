@@ -978,3 +978,27 @@ Kasma simde sıradaki yeni düğümden önce fark = düğüm level'ı - aktif ta
 ## 427. Düz sefer simi bantları ekonomi reworküyle tutmuyor (2026-10-27; `tests/campaign-balance.test.ts > PENDING_LOW`)
 
 Düz sim (farm / Inn / kamp yok, kasabada bedava şifa kalktı) Medium'da elit %53, boss %42, bitirme %53 veriyor; bantlar (data/campaign/balance.json) eski oyuna göre: elit 62+, boss 48+, bitirme 79+. Ömer kasma simi v11 oranlarını kabul etti ("bu oranlar iyi gibi") ve 0.9.9 yayını istedi; alt sınırlar geçici muaf (uyarı yazılır). AÇIK: bantlar kasma simine göre yeniden belirlenecek mi, düz sim emekliye mi ayrılacak? Ömer'e sorulacak.
+
+## 429. Harita 2 yan içerik: B5 The Fighting Pit (Saltmere) + A4 Hero Oath (Saltspray Shrine) varsayımları (2026-10-27; maps-2-3.md 9 / 9.3)
+
+Tüm sayılar geçici, sim koşulmadı. Veri: `data/campaign/pits.json`, `data/campaign/oaths.json`, `drowned-reach-encounters.json > dr_pit_1..5`; kural `src/campaign/pit.ts`, `oath.ts`, `state.ts`; test `tests/campaign-pit-oath.test.ts`.
+
+**Arena (dr28 Saltmere):**
+- Giriş: kasaba resminde silah rafı / merdiven bölgesine yeni yer "The Fighting Pit" (rect 0.33,0.37,0.41,0.60). Yer resme göre kaydırılabilir.
+- 5 kademe, her biri TEK dalga (dalga sistemi arenada kapalı), düşman level'ı Saltmere'nin düğüm level'ı, kademe başına ayrı seed. Mevcut Harita 2 mobları: 1 Dock Rat x2 + cutpurse, 2 korsan x3, 3 yengeç + yılan balığı + Reef Hound x2, 4 Reef Wrecker x2 + iki atıcı, 5 elit "Pit Champion Gorr" + drowned knight, korsan, siren. Güç çarpanı 1.1 -> 1.4.
+- Ödül: 40 / 60 / 90 + sandık / 120 / 180 + sandık altın, artı normal savaş XP'si. Valor arenada kazanılmaz.
+- Kademeler arasında şifa YOK, zafer şifası da yok (can savaştaki gibi kalır). Level atlayan kahraman kuralı gereği iyileşir.
+- Kademe arası pencere zorunlu (kapanmaz): "Leave the pit" (kazanılanlar kalır) ya da "Fight bout N".
+- Yenilgi ya da savaşta pes = koşu biter, o kademenin ödülü yok; düşenler sefer kuralıyla yaralı kalkar ya da ceset olur. Yenilgi sayacı +1, otomatik kayıt; arenada "Load Last Save" seçeneği yok (tek düğme "Leave the pit").
+- Tekrar giriş serbest; ödül (altın, sandık, XP) yalnız rekoru aşan kademede. Rekor düğüm başına kayıtta (`pitBest`).
+- En az bir kademe kazanıldıysa çıkış ya da yenilgide gün bir kez ilerler.
+- Savaş ortasında sayfa yenilenirse başlamış kademe atılır, kademe arası pencere yeniden gelir (kayıtta `fight` tutulmaz).
+
+**Yemin (dr52 Saltspray Shrine):**
+- Üç yemin (her biri bir kalıcı artı, bir kalıcı eksi): Undertow (+%12 hasar / Rest ve Inn şifası yarım), Breakwater (+%15 can / -%8 hasar), Gale (+%6 kritik / zafer şifası yarım; Recovery affix'i de yarıya iner).
+- Yemin ilk ziyarette olaya eklenen "Swear an oath" seçeneğiyle, sonra temizlenmiş tapınağa dokunarak edilir. Aynı anda tek yeminli kahraman.
+- Bozma YALNIZ tapınakta, 80 altın. Yemin kayıtta ve haritalar arası taşınır; ama Harita 3'te tapınak olmadığından orada bozulamaz. SORU: Harita 3'te bozma yolu olsun mu (ör. kasabada)?
+- Yemin kahramana bağlı (yedek / Inn'e geçse de kalır); kahraman kayıttan silinirse yemin düşer.
+- Gösterim yalnız Gear'da: yuva bloğunda küçük "Oath" çipi, üzerine gelince A Band (artı / eksi). Haritadaki takım kartında gösterilmiyor.
+
+**Kayıt:** şema sürümü değişmedi (12); yeni alanlar isteğe bağlı (`pit`, `pitBest`, `oath`), bozuk değerler okunurken atılır.

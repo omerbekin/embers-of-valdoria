@@ -84,6 +84,22 @@ import {
   leaveMerchant,
   openCampaignShop,
   revisitKind,
+  enterPit,
+  fightPit,
+  leavePit,
+  pitBlocked,
+  pitView,
+  swearOath,
+  swearBlocked,
+  breakOath,
+  breakOathBlocked,
+  oathShrineHere,
+  heroById,
+  oathDef,
+  oathPlusText,
+  oathMinusText,
+  OATHS,
+  OATH_DATA,
   revisitNode,
   recruitInTown,
   swapHero,
@@ -2679,6 +2695,7 @@ export class CampaignMapScene extends Phaser.Scene {
         // Kasaba ekranı (Ömer 2026-10-12): syncTown tam ekran kasabayı kurdu; eylemler resimdeki yerlerden (onTownHotspot). Verisi olmayan
         // kasaba (scene yok) için yedek pencere: Gear / Trade / Leave (ücretsiz şifa varışta).
         this.lessons('town');
+        if (this.s.pit) return void (this.renderHud(), this.pitBetween()); // The Fighting Pit (B5): kademe arası (zorunlu seçim)
         if (this.town) return this.renderHud();
         const tn = node(this.map, step.node);
         this.modal = openModal(this, this.ui, {
@@ -2774,6 +2791,7 @@ export class CampaignMapScene extends Phaser.Scene {
       default:
         // battle / move: sol alttaki düğüm bilgisi (ipucu satırı) ve nabız atan düğüm
         this.renderHud();
+        if (step.kind === 'battle' && step.pit) return this.pitBetween(); // başlamamış arena kademesi (güvenlik ağı)
         if (step.kind === 'battle' && this.pendingFight?.node === s.at) this.startPendingFight();
         // Katılımdan sonra bekleyen savaş (Ravenwood): "Formation'ı düzenle, sonra savaşa dokun" kartı (yukarıdaki dal kartı kaldırır)
         // Zorunlu Formation kapısı kayıtta (yeniden yüklemede de kart gelir)
@@ -2840,6 +2858,8 @@ export class CampaignMapScene extends Phaser.Scene {
         return this.townNote(h, CONFIG.texts.townRested ?? CONFIG.texts.townRest ?? '');
       case 'leave':
         return this.commit(completeSimple(this.s, 'town'));
+      case 'pit':
+        return this.pitModal(h);
     }
   }
 
@@ -2911,7 +2931,7 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** C kartı: kasaba ekranındaki yerin yanında küçük pencere (ateş, ilan panosu, kışla). Close, X, Esc ve zemine dokunma kapatır. */
-  private townWindow(h: TownHotspot, o: Pick<MwSpec, 'paras' | 'body' | 'acts'>): void {
+  private townWindow(h: TownHotspot, o: Pick<MwSpec, 'paras' | 'body' | 'acts' | 'chips' | 'chipsCap'> & { mandatory?: boolean }): void {
     const n = node(this.map, this.s.at);
     const bg = n.scene?.background ?? '';
     const kind = nodeTags(n.subtitle, 'Town').kind;
@@ -2926,9 +2946,187 @@ export class CampaignMapScene extends Phaser.Scene {
       art: windowArt(`hotspot:${h.id}`, `town:${bg}`),
       paras: o.paras,
       ...(o.body ? { body: o.body } : {}),
+      ...(o.chips ? { chips: o.chips, ...(o.chipsCap ? { chipsCap: o.chipsCap } : {}) } : {}),
       acts: o.acts,
-      onDismiss: () => this.closeModal(),
+      ...(o.mandatory ? {} : { onDismiss: () => this.closeModal() }),
       anchor: this.townAnchor(h),
+    });
+  }
+
+  // ---------------------------------------------------------------- The Fighting Pit (B5; maps-2-3.md 9, open-questions 429)
+
+  /** Arenanın kasaba yeri (veride action 'pit'); yoksa ekran ortasına açılan yer tutucu. */
+  private pitHotspot(): TownHotspot {
+    const n = node(this.map, this.s.pit?.node ?? this.s.at);
+    return n.scene?.hotspots.find((x) => x.action === 'pit') ?? { id: 'pit', action: 'pit', label: pitView(this.s)?.name ?? 'The Fighting Pit', rect: [0, 0, 0, 0] };
+  }
+
+  /** Kademe çipleri: kazanılmış (rekor) kademe soluk + tik, ödüllü kademe altın (+ sandık). */
+  private pitChips(v: NonNullable<ReturnType<typeof pitView>>): MwSpec['chips'] {
+    return v.tiers.map((t, i) =>
+      t.won ? { tone: 'dim' as const, icon: 'check' as const, text: `Bout ${i + 1}` } : { tone: 'gain' as const, icon: 'gold' as const, text: `Bout ${i + 1} · ${t.gold}${t.chest ? ' + chest' : ''}` },
+    );
+  }
+
+  /** Arena girişi (kasaba yerinden): kural metni, kademe ödülleri, rekor; Enter the pit = 1. kademe savaşı hemen başlar. */
+  private pitModal(h: TownHotspot): void {
+    const v = pitView(this.s);
+    if (!v) return;
+    const record = v.best ? `Your record: ${v.best} of ${v.tiers.length} bouts. Only a new record pays.` : `${v.tiers.length} bouts. Each bout you win for the first time pays its purse.`;
+    this.townWindow(h, {
+      paras: [...paragraphs(v.text), record],
+      chipsCap: 'Purses',
+      chips: this.pitChips(v),
+      acts: [
+        { label: 'Not now', run: () => this.closeModal() },
+        {
+          label: 'Enter the pit',
+          primary: true,
+          run: () => {
+            const why = pitBlocked(this.s);
+            if (why) return this.toast(why);
+            this.closeModal();
+            this.update2(enterPit(this.s));
+            this.launchBattle();
+          },
+        },
+      ],
+    });
+  }
+
+  /** Kademe arası (zorunlu; zemin kapatmaz): kazanılanlar, sıradaki kademenin ödülü; Leave the pit ya da sıradaki kademe. Şifa yok. */
+  private pitBetween(): void {
+    const v = pitView(this.s);
+    if (!v || !this.s.pit) return;
+    const h = this.pitHotspot();
+    const wins = v.wins ?? 0;
+    const lines = [wins >= v.tiers.length ? `Champion of the pit. You have won all ${v.tiers.length} bouts.` : `You have won ${wins} of ${v.tiers.length} bouts. No one tends your wounds between bouts.`];
+    if (v.next !== null) lines.push(v.nextPays ? `Bout ${v.next} pays ${v.tiers[v.next - 1]!.gold} gold${v.tiers[v.next - 1]!.chest ? ' and a chest' : ''}.` : `Bout ${v.next} pays nothing: you have won it before.`);
+    const leave = { label: 'Leave the pit', primary: v.next === null, run: () => this.commit(leavePit(this.s), true) };
+    this.townWindow(h, {
+      mandatory: true,
+      paras: lines,
+      chipsCap: 'Purses',
+      chips: this.pitChips(v),
+      acts:
+        v.next === null
+          ? [leave]
+          : [
+              leave,
+              {
+                label: `Fight bout ${v.next}`,
+                primary: true,
+                run: () => {
+                  try {
+                    if (!this.s.pit?.fight) this.update2(fightPit(this.s));
+                  } catch (e) {
+                    return this.toast((e as Error).message);
+                  }
+                  this.closeModal();
+                  this.launchBattle();
+                },
+              },
+            ],
+    });
+  }
+
+  // ---------------------------------------------------------------- A4 Hero Oath (maps-2-3.md 9, open-questions 429)
+
+  /** Temizlenmiş yemin tapınağının kartı (düğüme dokununca / varınca): Kneel = yemin penceresi. */
+  private shrineCard(id: string, go: () => void): void {
+    const sworn = this.s.oath ? oathDef(this.s.oath.id) : undefined;
+    this.nodeCard(id, { title: 'Visit the shrine?', actionLabel: 'Kneel', info: { text: sworn ? `${sworn.name} binds one of your company.` : 'One hero may swear an oath to the Tide here.' }, onGo: go });
+  }
+
+  /** Temizlenmiş tapınakta yemin penceresi (yemin edilince kaydedilir). */
+  private openShrine(id: string): void {
+    if (this.s.at !== id || !oathShrineHere(this.s) || this.pausedBlocks()) return;
+    this.oathWindow(id, { onSworn: (t) => this.commit(t, true), onBack: () => this.closeModal() });
+  }
+
+  /**
+   * Yemin penceresi (A levha): yeminli biri varsa yemini ve bozma bedeli (Break the oath); yoksa 1) yemin seçimi (plakalar: artı / eksi), 2) kahraman
+   * (kartlar). `onSworn` yeni durumu alır (olaydan: olay biter; yeniden girişte: kayıt), `onBack` vazgeçme.
+   */
+  private oathWindow(nodeId: string, o: { onSworn: (t: CampaignState) => void; onBack: () => void }): void {
+    const title = 'The Saltspray Shrine';
+    const art = windowArt(`event:${node(this.map, nodeId).event ?? ''}`);
+    const nameOf = (heroId: string): string => content.classes[[...this.s.roster, ...(this.s.reserve ?? [])].find((x) => x.id === heroId)?.class ?? '']?.name ?? 'A hero';
+    if (this.s.oath) {
+      const od = oathDef(this.s.oath.id)!;
+      const cost = OATH_DATA.breakCost;
+      this.worldWindow(nodeId, {
+        title,
+        art,
+        paras: [...paragraphs(OATH_DATA.swornText), `${nameOf(this.s.oath.hero)} is bound by the ${od.name}.`],
+        chips: [
+          { tone: 'gain', text: oathPlusText(od) },
+          { tone: 'loss', text: oathMinusText(od) },
+        ],
+        acts: [
+          { label: 'Leave', run: () => o.onBack() },
+          {
+            label: `Break the oath · ${cost} gold`,
+            primary: true,
+            run: () => {
+              const why = breakOathBlocked(this.s);
+              if (why) return this.toast(why === 'Not enough gold' ? `Needs ${cost} gold (you have ${this.s.gold})` : why);
+              worldSound('seal');
+              this.update2(breakOath(this.s));
+              checkpoint();
+              this.renderHud();
+              this.toast(`The ${od.name} is broken`);
+              this.oathWindow(nodeId, o);
+            },
+          },
+        ],
+      });
+      return;
+    }
+    this.worldWindow(nodeId, {
+      title,
+      art,
+      paras: paragraphs(OATH_DATA.text),
+      body: {
+        k: 'plates',
+        plates: OATHS.map((x) => ({ id: x.id, label: x.name, desc: x.vow, tag: 'Oath', acc: 'violet' as const, chips: [{ tone: 'gain' as const, text: oathPlusText(x) }, { tone: 'loss' as const, text: oathMinusText(x) }] })),
+        pick: (oathId) => this.oathHeroPick(nodeId, oathId, o),
+      },
+      acts: [{ label: 'Not now', run: () => o.onBack() }],
+    });
+  }
+
+  /** Yeminin 2. adımı: yemin edecek kahraman (takımdaki ayaktakiler). */
+  private oathHeroPick(nodeId: string, oathId: string, o: { onSworn: (t: CampaignState) => void; onBack: () => void }): void {
+    const od = oathDef(oathId);
+    if (!od) return;
+    const heroes = activeHeroes(this.s).filter((x) => !swearBlocked(this.s, x.id, oathId));
+    this.worldWindow(nodeId, {
+      title: od.name,
+      art: windowArt(`event:${node(this.map, nodeId).event ?? ''}`),
+      paras: [od.vow, 'Who swears it?'],
+      chips: [
+        { tone: 'gain', text: oathPlusText(od) },
+        { tone: 'loss', text: oathMinusText(od) },
+      ],
+      body: { k: 'cards', cards: heroes.map((x) => ({ ...this.mwCard(x.class, `Lv ${x.level}`), id: x.id })) },
+      acts: [
+        { label: 'Back', run: () => this.oathWindow(nodeId, o) },
+        {
+          label: 'Swear',
+          primary: true,
+          needPick: 'Pick who swears first.',
+          run: (heroId) => {
+            if (!heroId) return this.toast('Pick who swears first.');
+            const why = swearBlocked(this.s, heroId, oathId);
+            if (why) return this.toast(why);
+            worldSound('seal');
+            const name = content.classes[heroById(this.s, heroId)?.class ?? '']?.name ?? 'A hero';
+            o.onSworn(swearOath(this.s, heroId, oathId));
+            this.toast(`${name} swears the ${od.name}`);
+          },
+        },
+      ],
     });
   }
 
@@ -3094,6 +3292,12 @@ export class CampaignMapScene extends Phaser.Scene {
           if (!c) return;
           const blocked = choiceBlocked(this.s, c);
           if (blocked) return this.toast(blocked);
+          // A4 Hero Oath: yemin penceresi; yemin edilince olay biter, geri dönülürse seçenekler yeniden
+          if (c.oath)
+            return this.oathWindow(nodeId, {
+              onSworn: (t) => this.commit(chooseEvent(t, c.id)),
+              onBack: () => this.choiceEvent(eventId, nodeId, choices),
+            });
           worldSound('seal'); // seçim mühürlenir
           const next = chooseEvent(this.s, c.id);
           if (next.eventChoice?.battle) return this.commit(next); // olay savaşı: harita savaş adımına geçer
@@ -3310,6 +3514,7 @@ export class CampaignMapScene extends Phaser.Scene {
       // Temizlenmiş savaş düğümü: devriye (yeniden oynama, azalan getiri)
       if (patrolAvailable(this.s)) return this.confirmPatrol(id, () => this.startPatrolBattle());
       if (k) return this.confirmPlace(id, () => this.reenter(id));
+      if (oathShrineHere(this.s)) return this.shrineCard(id, () => this.openShrine(id)); // A4: yemin tapınağı (yemin / bozma)
     }
     // Ulaşılamayan / eylemsiz düğüm (Ömer 2026-10-23, tek kart): aynı kart sabitlenir, düğme yerine düz not; bilgi görünür kalır
     this.nodeCard(id, { ...this.cardInfoFor(id), note: this.cardNote(id), onGo: () => undefined });
@@ -3742,7 +3947,8 @@ export class CampaignMapScene extends Phaser.Scene {
     const fresh = !isCleared(this.s, to);
     const patrol = !fresh && patrolAvailable(this.s, to);
     const revisit = !fresh && !patrol && !!revisitKind(this.s);
-    const action = patrol ? () => this.startPatrolBattle() : revisit ? () => this.reenter(to) : undefined;
+    const shrine = !fresh && !patrol && !revisit && oathShrineHere(this.s); // A4: temizlenmiş yemin tapınağı
+    const action = patrol ? () => this.startPatrolBattle() : revisit ? () => this.reenter(to) : shrine ? () => this.openShrine(to) : undefined;
     const arrival: Arrival = { node: to, requested: false, ...(action ? { action } : {}) };
     this.arrival = arrival;
     if (route.length > 2) this.routeHint(to, route); // yolculuk: rota vurgusu yürüyüş boyunca
@@ -3762,6 +3968,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (this.fightsAt(to)) this.confirmBattle(to, () => this.arrive(to));
     else if (patrol) this.confirmPatrol(to, () => this.arrive(to, action));
     else if (fresh || revisit) this.confirmPlace(to, () => this.arrive(to, action));
+    else if (shrine) this.shrineCard(to, () => this.arrive(to, action));
   }
 
   /** Kartın birincil düğmesi yürüme sürerken: yürüyüşü atlar, eylem varışta hemen çalışır; yürüyüş bittiyse doğrudan çalışır. */

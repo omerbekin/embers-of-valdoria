@@ -13,6 +13,8 @@ import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import drownedReachMap from '../../data/campaign/drowned-reach.json';
 import { maps23On } from '../ui/maps23-flag';
+import { PITS } from '../campaign/pit';
+import { OATHS, OATH_DATA, oathMinusText, oathPlusText } from '../campaign/oath';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine } from '../progression/item-text';
 import { ITEMS as ITEM_DATA, TIER_IDS, affixDef, gripOf, GRIP_NAME, implicitValues, levelRequirement, weaponPowerOf, type Grip } from '../progression/items';
@@ -861,7 +863,7 @@ export function buildMechanics(): WikiArticle[] {
           `Difficulty: Easy, Medium or Hard, chosen when the journey starts; it cannot be changed later. ${difficultyText()}`,
         ),
       ]),
-      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle()] : []),
+      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle()] : []),
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
@@ -891,6 +893,25 @@ export function drownedReachArticle(): WikiArticle {
     p(`${name} is the second map of the campaign. When Lord Morvane falls, the company can go on down the Valdren to the sea instead of ending the journey: the heroes, their levels, gear, bag and gold all come along. ${m.nodes.length} stops in ${m.regions.length} regions; a run from ${first} to ${boss} passes about ${m.stopsPerRun} of them.`),
     list(...m.regions.map((r) => `${r.title}${r.tagline ? `: ${r.tagline}` : ''}`)),
     p(`Towns: ${towns.join(', ')}. Saltmere is the hub: ${spokes} side streets branch off it; each is a single stop, and you walk back to the square to go on. ${pockets} dashed roads lead to optional pockets, as on the first map.`),
+  ]);
+}
+
+/** B5 The Fighting Pit (maps-2-3.md 9; open-questions 429): sayılar data/campaign/pits.json'dan. */
+export function fightingPitArticle(): WikiArticle {
+  const pit = PITS['saltmere_pit'];
+  const tiers = pit?.tiers ?? [];
+  return article('fighting-pit', 'Campaign', 'The Fighting Pit', cx('mech_fighting_pit', 'burst'), [
+    p(`Saltmere has a fighting pit in the town square. Enter it and fight ${tiers.length} bouts in a row, each harder than the last. No one heals you between bouts: health lost stays lost, and a hero who falls rises wounded after a won bout, as after any campaign battle.`),
+    p('After every won bout you choose: leave with what you have won, or fight the next bout. Lose a bout and the run ends; that bout pays nothing, but earlier purses are yours. Retreating from a bout counts as losing it. You can enter the pit again whenever you are in Saltmere, but only a bout above your record pays (gold, a chest on some bouts, and the battle\'s experience). The pit gives no Valor.'),
+    list(...tiers.map((t, i) => `Bout ${i + 1}: ${t.gold} gold${t.chest ? ' and a chest' : ''}`)),
+  ]);
+}
+
+/** A4 Hero Oath (maps-2-3.md 9; open-questions 429): yeminler data/campaign/oaths.json'dan. */
+export function heroOathArticle(): WikiArticle {
+  return article('hero-oath', 'Campaign', 'Hero oaths', cx('mech_hero_oath', 'rune'), [
+    p(`At the Saltspray Shrine on the Wrecking Coast one hero may swear an oath to the Tide: a lasting gift and a lasting price. Only one hero in the company can be sworn at a time. The oath stays with the hero on later maps, and Gear shows it as a small Oath chip. It can be broken only at the shrine, for ${OATH_DATA.breakCost} gold.`),
+    list(...OATHS.map((o) => `${o.name}: ${oathPlusText(o)}; ${oathMinusText(o)}.`)),
   ]);
 }
 

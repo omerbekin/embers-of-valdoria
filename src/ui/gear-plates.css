@@ -36,6 +36,13 @@
   padding-left: 0.8em;
 }
 
+/* A4 Hero Oath: yeminli kahramanın küçük çipi (ipucu A Band) */
+.gp-chip.oath {
+  border-color: #9a7ac8;
+  color: #c9b3ea;
+  cursor: help;
+}
+
 .gr-slots {
   grid-auto-rows: minmax(max(48px, calc(92 * var(--u))), auto);
   gap: calc(12 * var(--u)) calc(16 * var(--u));
