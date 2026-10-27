@@ -25,7 +25,7 @@ const MORVANE = content.bosses['lord_morvane']!;
 const WARDEN = content.bosses['bridge_warden']!;
 const wardenPassiveIds = (WARDEN.boss?.passives ?? []).map((p) => p.id);
 const mobPassiveIds = new Set([...Object.values(content.mobs).flatMap((m) => (m.passive ? [m.passive.id] : [])), MORVANE.passive!.id, ...wardenPassiveIds]);
-const mobSkillIds = new Set([...Object.values(content.mobs).flatMap((m) => m.skills), ...MORVANE.skills, ...WARDEN.skills]);
+const mobSkillIds = new Set([...Object.values(content.mobs).flatMap((m) => m.skills), ...MORVANE.skills, ...WARDEN.skills, ...Object.values(content.bosses).flatMap((b) => b.skills)]);
 
 describe('mob ikonları (assets/mob-icons)', () => {
   it('Bölge II\'nin 23 skill ve 13 pasifinin 128 + 64 px boyalı ikonu var; ikon adı görsele çözülür', () => {

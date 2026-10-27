@@ -30,7 +30,7 @@ const ICON_SRC = 'assets/source/mob-icons';
 const ICON_OUT = 'assets/mob-icons';
 /** Mob ikonu olmayan sayfalarin cikti klasoru (durum ikonlari oyunda misc-icons/status adiyla bulunur). */
 /** Zemini de saf siyah olan sayfalar: karanlik bant bulma hucre ile ayirgaci ayiramaz; sabit 2x2 izgara (kenar 12, ayirac 20 px). */
-const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet']);
+const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet']);
 const ICON_SHEET_OUT = { 'status2-sheet': 'assets/misc-icons/status' };
 const VFX_SRC = 'assets/source/mob-vfx';
 const VFX_OUT = 'assets/mob-vfx';
@@ -84,6 +84,18 @@ const ICON_SHEETS = {
   'drowned_knight-sheet': ['rusted_blade', 'shield_of_brine', 'deathless_tide', null],
   'brine_maiden-sheet': ['lament_of_salt', 'tidal_mend', 'salt_tears', null],
   'reaver_reef-sheet': ['pitch_arrow', 'hook', 'lantern_flash', 'undertow'],
+  // Harita 2 elit/boss kitleri (2026-10-27): kendi skill ikonlari (artOf odunc ikonunun yerine)
+  'map2_reaver_hook-sheet': ['gaff_strike', 'boarding_hook', 'gutting_sweep', 'debtors_chain'],
+  'map2_sea_hex-sheet': ['brine_curse', 'call_the_tide', 'salt_circle', 'brine_lash'],
+  'map2_pier-sheet': ['iron_maul', 'hold_the_pier', 'champions_challenge', 'wall_of_brine'],
+  'map2_faith-sheet': ['scourge_of_heresy', 'writ_of_silence', 'lead_the_faithful', 'tide_of_mercy'],
+  'map2_wrecker-sheet': ['wreckers_gaff', 'false_beacon', 'drag_to_the_rocks', 'powder_keg'],
+  'map2_captain-sheet': ['black_cutlass', 'captains_rake', 'cutlass_flurry', 'broadside'],
+  'map2_siren-sheet': ['queens_lament', 'grand_chorus', 'sirens_call', 'lament_of_the_deep'],
+  'map2_drowned-sheet': ['brine_rite', 'requiem_of_salt', 'drowned_greatsword', 'the_reach_drowns'],
+  'map2_wyrm-sheet': ['wyrm_lash', 'wyrm_swallow', 'wyrm_surge', 'wyrm_deluge'],
+  'map2_pit-sheet': ['pit_cestus', 'skull_splitter', 'play_to_the_crowd', null],
+  'map2_harbor-sheet':['chain_shot', 'harpoon_line', 'vane_rally', 'high_tide'],
 };
 
 /** Zemine oturan (alt hizalı) vfx sheet'leri: '<mob>-<skill>'. Geri kalanı ortalanır (vuruş/mermi). */
