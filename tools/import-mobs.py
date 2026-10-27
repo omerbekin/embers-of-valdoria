@@ -33,6 +33,12 @@ CHECKER = {'fen_witchling', 'ghoul', 'shieldwarden'}
 # id: (cx, top, size) temizlenmiş içerik kutusunun sol-üstüne göre kaynak px (kare kafa+boyun kutusu)
 HEADS = {
     'road_thug': (545, 0, 260),
+    'dock_rat': (650, 0, 290),
+    'salt_hag': (600, 60, 340),
+    'tide_caller': (570, 80, 280),
+    'marsh_light': (267, 60, 480),
+    'wreck_ghoul': (770, 40, 320),
+    'reef_hound': (1357, 30, 460),
     'bandit_crossbowman': (495, 0, 250),
     'ember_acolyte': (560, 10, 270),
     'fen_witchling': (625, 90, 290),
@@ -103,7 +109,7 @@ HEADS = {
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
-FLOAT = {'will_o_wisp': 0.74}
+FLOAT = {'will_o_wisp': 0.74, 'marsh_light': 0.74}
 
 
 # ------------------------------------------------------------------ renk yardımcıları

@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: 'Harita 2'de ödünç hiçbir şey kalmasın'): gelişmiş Fen Witchling (maps-2-3.md 3.3: Saltbound + Call the Tide 1 sıra Flooded 2 tur; pasif Mire-Bound): aynı statlar, kendi kiti Salt Hex + Brackish Tide. Önceden karşılaşmalarda fen_witchling id'siyle (Harita 1 kiti ve sesleri) yalnız adı değişik geçiyordu; artık kendi id'si, skill'leri ve sesleri. Çizim YER TUTUCU: spriteId 'fen_witchling' (Harita 1 karşılığının çizimi; kendi sprite / avatar / ikon / VFX'i sanat turunda, open-questions 442). Statlar fen_witchling ile aynı (karşılaşma gücü değişmesin). Sayılar PROVİZYON (sim YOK).",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: 'Harita 2'de ödünç hiçbir şey kalmasın'): gelişmiş Fen Witchling (maps-2-3.md 3.3: Saltbound + Call the Tide 1 sıra Flooded 2 tur; pasif Mire-Bound): aynı statlar, kendi kiti Salt Hex + Brackish Tide. Önceden karşılaşmalarda fen_witchling id'siyle (Harita 1 kiti ve sesleri) yalnız adı değişik geçiyordu; artık kendi id'si, skill'leri ve sesleri. Çizim: kendi sprite, avatar, ikon ve VFX'i (sanat turu, open-questions 447). Statlar fen_witchling ile aynı (karşılaşma gücü değişmesin). Sayılar PROVİZYON (sim YOK).",
   "id": "salt_hag",
   "name": "Salt Hag",
   "family": "hexes",
-  "spriteId": "fen_witchling",
+  "spriteId": "salt_hag",
   "color": "#7a8a6a",
   "logo": "rune",
   "frontPriority": 7,

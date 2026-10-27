@@ -1,0 +1,31 @@
+{
+  "slug": "black_cutlass",
+  "title": "corsair captain marrow black cutlass",
+  "frames": 8,
+  "fps": 12,
+  "duration_ms": 667,
+  "frame_size": [
+    256,
+    256
+  ],
+  "sheet_size": [
+    1024,
+    512
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 6,
+  "anchor": "center",
+  "pivot": [
+    128,
+    128
+  ],
+  "content_px": [
+    203,
+    244
+  ],
+  "source": "assets/source/mob-vfx/corsair_captain_marrow-black_cutlass.png"
+}

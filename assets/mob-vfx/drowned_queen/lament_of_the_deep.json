@@ -1,0 +1,31 @@
+{
+  "slug": "lament_of_the_deep",
+  "title": "drowned queen lament of the deep",
+  "frames": 8,
+  "fps": 12,
+  "duration_ms": 667,
+  "frame_size": [
+    256,
+    256
+  ],
+  "sheet_size": [
+    1024,
+    512
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 6,
+  "anchor": "bottom",
+  "pivot": [
+    128,
+    250
+  ],
+  "content_px": [
+    185,
+    244
+  ],
+  "source": "assets/source/mob-vfx/drowned_queen-lament_of_the_deep.png"
+}

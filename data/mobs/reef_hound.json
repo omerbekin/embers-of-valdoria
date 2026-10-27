@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: 'Harita 2'de ödünç hiçbir şey kalmasın'): gelişmiş Ash Hound (maps-2-3.md 3.3: Scorch Bite -> Brine Bite (Soaked) + Run Down): aynı statlar ve Blood Scent, kendi kiti Brine Bite + Breaker Rush. Önceden karşılaşmalarda ash_hound id'siyle (Harita 1 kiti ve sesleri) yalnız adı değişik geçiyordu; artık kendi id'si, skill'leri ve sesleri. Çizim YER TUTUCU: spriteId 'ash_hound' (Harita 1 karşılığının çizimi; kendi sprite / avatar / ikon / VFX'i sanat turunda, open-questions 442). Statlar ash_hound ile aynı (karşılaşma gücü değişmesin). Sayılar PROVİZYON (sim YOK).",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: 'Harita 2'de ödünç hiçbir şey kalmasın'): gelişmiş Ash Hound (maps-2-3.md 3.3: Scorch Bite -> Brine Bite (Soaked) + Run Down): aynı statlar ve Blood Scent, kendi kiti Brine Bite + Breaker Rush. Önceden karşılaşmalarda ash_hound id'siyle (Harita 1 kiti ve sesleri) yalnız adı değişik geçiyordu; artık kendi id'si, skill'leri ve sesleri. Çizim: kendi sprite, avatar, ikon ve VFX'i (sanat turu, open-questions 447). Statlar ash_hound ile aynı (karşılaşma gücü değişmesin). Sayılar PROVİZYON (sim YOK).",
   "id": "reef_hound",
   "name": "Reef Hound",
   "family": "beasts",
-  "spriteId": "ash_hound",
+  "spriteId": "reef_hound",
   "spriteScale": 1.3,
   "color": "#4a5a64",
   "logo": "roar",

@@ -41,6 +41,8 @@ const MIGRATED: Record<string, { owner: string; area: Record<string, unknown> }>
 };
 
 /** Madde 220'den sonra doğrudan şekil modeliyle eklenen alan skill'leri (migrasyon değil): Cutthroat Saltire Cut (x) ve Smoke Bomb (area_any), Druid Vine Snare. */
+const ownedByMob = (id: string) => Object.values(content.mobs).some((m) => m.skills.includes(id)) || Object.values(content.summons).some((m) => m.skills.includes(id));
+const ownedByBoss = (id: string) => Object.values(content.bosses).some((b) => b.skills.includes(id));
 const ADDED_LATER = ['x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind']; // withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376)
 
 describe('rect: tüm boyutlar 1x1 .. 4x3 (rows = sıra, cols = şerit), iki tahta, her anchor', () => {
@@ -255,7 +257,7 @@ describe('migre edilen alan skill\'leri', () => {
     }
     // tüm alan skill'leri ya tabloda ya Geometer (test class'ı) skill'i ya da madde 220'den SONRA şekil modeliyle eklenen skill (ADDED_LATER)
     const area = Object.values(content.skills).filter((s) => s.target === 'area_enemies' || s.target === 'area_any').map((s) => s.id);
-    for (const id of area) expect(id in MIGRATED || content.classes.aoe_tester!.skills.includes(id) || ADDED_LATER.includes(id) || !!content.skills[id]!.artOf, id).toBe(true); // artOf: Pose Tester kopyası
+    for (const id of area) expect(id in MIGRATED || content.classes.aoe_tester!.skills.includes(id) || ADDED_LATER.includes(id) || !!content.skills[id]!.artOf || ownedByMob(id) || ownedByBoss(id), id).toBe(true); // artOf: Pose Tester kopyası; mob / boss skill'leri (kendi sanatı, Harita 2) wiki'de Enemies makalelerinde
   });
 
   it('dokunulmayan hedef-seçim türleri: Radiance (everyone; D11 2026-10-24 geri alındı), Fist Crush / Card Trick (random_enemies); Whirlwind 2026-10-20 rect 2x3 oldu', () => {
@@ -283,7 +285,7 @@ describe('migre edilen alan skill\'leri', () => {
     const art = buildWiki({ sprites: {}, avatars: {} }).mechanics.find((x) => x.id === 'area-shapes')!;
     const tbl = art.blocks.find((x) => x.kind === 'table') as { head: string[]; rows: string[][] };
     expect(tbl.head).toEqual(['Skill', 'Class', 'Shape', 'Waves']);
-    const listed = Object.values(content.skills).filter((s) => (s.target === 'area_enemies' || s.target === 'area_any') && !content.classes.aoe_tester!.skills.includes(s.id) && (!s.artOf || Object.values(content.bosses).some((b) => b.skills.includes(s.id)))); // Pose Tester kopyaları (gizli) tabloda yok; boss skill'i (Ashfall: sanatı ödünç, mob-plan.md 10.6) var
+    const listed = Object.values(content.skills).filter((s) => (s.target === 'area_enemies' || s.target === 'area_any') && !content.classes.aoe_tester!.skills.includes(s.id) && (!s.artOf || ownedByBoss(s.id)) && (ownedByBoss(s.id) || !ownedByMob(s.id))); // mob (sıradan) skill'leri Enemies makalelerinde; Pose Tester kopyaları (gizli) tabloda yok; boss skill'i (Ashfall: sanatı ödünç, mob-plan.md 10.6) var
     expect(tbl.rows.map((r) => r[0]).sort()).toEqual(listed.map((s) => s.name).sort());
     for (const id of Object.keys(MIGRATED)) expect(tbl.rows.map((r) => r[0])).toContain(content.skills[id]!.name);
     expect(tbl.rows.find((r) => r[0] === "Nature's Wrath")).toEqual(["Nature's Wrath", 'Druid', 'Block 2x3', 'row by row']);

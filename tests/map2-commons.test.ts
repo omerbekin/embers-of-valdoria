@@ -1,4 +1,7 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { MOB_VFX_SPECS } from '../src/game/mob-vfx';
+import { MOB_IMAGE_FILES } from '../src/game/icon-image-files';
 import { content } from '../src/engine';
 import encounters from '../data/campaign/drowned-reach-encounters.json';
 import valdoriaEncounters from '../data/campaign/encounters.json';
@@ -26,6 +29,10 @@ const OWN: Record<string, [string, string, string[]]> = {
   inquisition_brother: ['oathsworn_brother', 'Inquisition Brother', ['salt_scourge', 'brann_vigil']],
   salt_chaplain: ['censer_monk', 'Salt Chaplain', ['blessed_salt', 'salted_ground']],
 };
+
+const OWN_ART = ['dock_rat', 'reef_hound', 'salt_hag', 'tide_caller', 'marsh_light', 'wreck_ghoul'];
+// river_reaver / cliff_crossbowman yalnız skill sanatı alır (kendi sprite'ları sonraki turda)
+const OWN_ART_SKILLS = [...OWN_ART.flatMap((id) => OWN[id]![2]), 'raid_cut', 'boat_hook', 'cliff_bolt', 'plunging_volley'];
 
 type Unit = { class: string; name?: string };
 type Enc = { units: Unit[]; waves?: Array<{ units: Unit[] }>; objective?: string | { units?: Unit[] } };
@@ -86,10 +93,13 @@ describe('Harita 2 sıradan mobları kendi id / kit / sesleriyle', () => {
       expect(m.stats, id).toEqual(s.stats);
       expect([m.range, m.ai, m.family], id).toEqual([s.range, s.ai, s.family]);
       expect(m.passive?.effect.type, id).toBe(s.passive?.effect.type);
-      expect(m.spriteId, `${id} yer tutucu çizim`).toBe(s.spriteId);
+      // art turu (2026-10-28): OWN_ART birimleri ve OWN_ART_SKILLS skill'leri kendi sanatında; kalanı hâlâ yer tutucu
+      if (OWN_ART.includes(id)) expect(m.spriteId, `${id} kendi çizimi`).toBe(id);
+      else expect(m.spriteId, `${id} yer tutucu çizim`).toBe(s.spriteId);
       for (const sk of kit) {
         expect(map1Skills.has(sk), `${sk} Harita 1 skill'i olmamalı`).toBe(false);
-        expect(content.skills[sk]!.artOf, sk).toBeTruthy();
+        if (OWN_ART_SKILLS.includes(sk)) expect(content.skills[sk]!.artOf, `${sk} ödünç sanat yasak`).toBeUndefined();
+        else expect(content.skills[sk]!.artOf, sk).toBeTruthy();
       }
     }
     // Grudge kendi temel saldırısına bağlı
@@ -148,6 +158,26 @@ describe('Harita 2 sıradan mobları kendi id / kit / sesleriyle', () => {
   });
 });
 
+describe('Harita 2 sıradan mob sanatı: kendi sprite / avatar / ikon / VFX (ödünç yok)', () => {
+  it('6 mobun kendi idle + avatar dosyası ve kaynağı var', () => {
+    for (const id of OWN_ART) {
+      for (const f of [`assets/sprites/${id}/idle.png`, `assets/avatars/${id}.png`, `assets/source/mobs/${id}.png`]) expect(existsSync(f), f).toBe(true);
+    }
+  });
+
+  it('16 skill: kendi VFX sayfası (8 kare) + kaynak + ikon, kendi mob satırı, v2 seçilir, artOf yok', () => {
+    expect(OWN_ART_SKILLS).toHaveLength(16);
+    for (const s of OWN_ART_SKILLS) {
+      const spec = MOB_VFX_SPECS[s];
+      expect(spec, `${s} MOB_VFX_SPECS`).toBeDefined();
+      expect(content.skills[s]!.artOf, `${s} artOf`).toBeUndefined();
+      expect(existsSync(`assets/source/mob-vfx/${spec!.mob}-${s}.png`), `${s} kaynak sayfa`).toBe(true);
+      expect(existsSync(`assets/mob-vfx/${spec!.mob}/${s}.png`), `${s} sayfa`).toBe(true);
+      expect(MOB_IMAGE_FILES[s], `${s} ikon`).toBeDefined();
+      expect(existsSync(`assets/mob-icons/${s}.png`), `${s} ikon dosyası`).toBe(true);
+    }
+  });
+});
 describe('Harita 2 müzikleri (kendi harita / kasaba / savaş parçaları + Weir-Wyrm / Vane fazları)', () => {
   const own: MusicTrackId[] = ['map_reach', 'town_reach', 'battle_reach'];
 

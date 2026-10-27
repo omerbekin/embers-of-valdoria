@@ -30,7 +30,7 @@ const ICON_SRC = 'assets/source/mob-icons';
 const ICON_OUT = 'assets/mob-icons';
 /** Mob ikonu olmayan sayfalarin cikti klasoru (durum ikonlari oyunda misc-icons/status adiyla bulunur). */
 /** Zemini de saf siyah olan sayfalar: karanlik bant bulma hucre ile ayirgaci ayiramaz; sabit 2x2 izgara (kenar 12, ayirac 20 px). */
-const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet']);
+const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet', 'map2_commons_a-sheet', 'map2_commons_b-sheet', 'map2_commons_c-sheet', 'map2_commons_d-sheet']);
 const ICON_SHEET_OUT = { 'status2-sheet': 'assets/misc-icons/status' };
 const VFX_SRC = 'assets/source/mob-vfx';
 const VFX_OUT = 'assets/mob-vfx';
@@ -95,6 +95,10 @@ const ICON_SHEETS = {
   'map2_drowned-sheet': ['brine_rite', 'requiem_of_salt', 'drowned_greatsword', 'the_reach_drowns'],
   'map2_wyrm-sheet': ['wyrm_lash', 'wyrm_swallow', 'wyrm_surge', 'wyrm_deluge'],
   'map2_pit-sheet': ['pit_cestus', 'skull_splitter', 'play_to_the_crowd', null],
+  'map2_commons_a-sheet': ['belaying_pin', 'cargo_net', 'brine_bite', 'breaker_rush'],
+  'map2_commons_b-sheet': ['salt_hex', 'brackish_tide', 'tide_dirge', 'rise_from_the_deep'],
+  'map2_commons_c-sheet': ['bog_spark', 'fen_glimmer', 'barnacle_claw', 'wreck_feast'],
+  'map2_commons_d-sheet': ['raid_cut', 'boat_hook', 'cliff_bolt', 'plunging_volley'],
   'map2_harbor-sheet':['chain_shot', 'harpoon_line', 'vane_rally', 'high_tide'],
 };
 
@@ -147,6 +151,33 @@ const GROUND = new Set([
   // Harita 2 paket 2: kalkan kubbesi ve iyilestirme dalgasi zeminden yukselir (kareler ayni taban cizgisine hizalandi)
   'drowned_knight-shield_of_brine',
   'brine_maiden-tidal_mend',
+  // leaders efektleri (zemin / alan; 2026-10-27)
+  'salt_hag_mother-call_the_tide',
+  'salt_hag_mother-salt_circle',
+  'guild_enforcer_bastion-hold_the_pier',
+  'inquisitor_captain_vell-lead_the_faithful',
+  'wrecker_captain-false_beacon',
+  'corsair_captain_marrow-powder_keg',
+  'siren_queen-grand_chorus',
+  'salt_bishop-requiem_of_salt',
+  'salt_bishop-tide_of_mercy',
+  'drowned_champion-champions_challenge',
+  'drowned_champion-wall_of_brine',
+  'pit_champion_gorr-play_to_the_crowd',
+  'weir_wyrm-wyrm_swallow',
+  'weir_wyrm-wyrm_surge',
+  'weir_wyrm-wyrm_deluge',
+  'admiral_vane-chain_shot',
+  'admiral_vane-vane_rally',
+  'admiral_vane-broadside',
+  'drowned_queen-high_tide',
+  'drowned_queen-lament_of_the_deep',
+  'drowned_queen-the_reach_drowns',
+  // commons efektleri (zemin / alan; 2026-10-27)
+  'salt_hag-brackish_tide',
+  'tide_caller-rise_from_the_deep',
+  'marsh_light-fen_glimmer',
+  'cliff_crossbowman-plunging_volley',
 ]);
 
 /** Hücrenin tamamına yayılmış düşük alfalı sis taşıyan sheet'ler: bu eşiğin altındaki alfa silinir (yoksa içerik kutusu tüm hücre olur). */
@@ -185,7 +216,7 @@ function dropEdgeSlivers(data, W, H, CW, CH) {
             const ny = py + dy;
             if (nx < 0 || ny < 0 || nx >= CW || ny >= CH) continue;
             const j = (oy + ny) * W + ox + nx;
-            if (!seen[j] && data[j * 4 + 3] > 8 && !(cuts && (cuts[j] || cuts[i]))) {
+            if (!seen[j] && data[j * 4 + 3] > 8) {
               seen[j] = 1;
               stack.push(j);
             }
