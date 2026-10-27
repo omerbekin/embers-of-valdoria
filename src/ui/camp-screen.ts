@@ -7,6 +7,12 @@
 import {
   CONFIG,
   activeHeroes,
+  atChapel,
+  nextTaintGain,
+  resetSurgeUses,
+  surgeResetBlocked,
+  surgeResetPrice,
+  SURGE,
   campBlocked,
   campSharpenPreview,
   campTrainXp,
@@ -24,7 +30,7 @@ import { SLOT_IDS } from '../progression';
 import { className, itemPlate } from './character-panel';
 import { woundPipsEl } from './wound-ui';
 import { itemTipNodes } from './item-tip';
-import { el, button, heroFace, hpBar, openShell } from './econ-shell';
+import { el, button, goldImg, heroFace, hpBar, openShell } from './econ-shell';
 import { CAMP_CARDS, fillText, type CampCardKind } from './econ-model';
 import { TEMPER_STONE_ICON } from './temper-stone';
 import { miscImage } from '../game/icon-image-files';
@@ -56,7 +62,11 @@ export interface CampHandle {
  * Kampi acar. `name` = dugum adi. Kullanilmamissa: secim onaylaninca `onUse(yeniDurum)` (sahne kaydeder ve ilerler); ekran kendini kapatir.
  * Kullanilmissa (yeniden giris): "used" gorunumu, Leave kapatir. `onGear` Gear'i acar.
  */
-export function openCamp(root: HTMLElement, get: () => CampaignState, o: { name: string; onUse: (next: CampaignState) => void; onGear: () => void; onClose?: (usedNow: boolean) => void }): CampHandle {
+export function openCamp(
+  root: HTMLElement,
+  get: () => CampaignState,
+  o: { name: string; onUse: (next: CampaignState) => void; onGear: () => void; onClose?: (usedNow: boolean) => void; /** Ekran açık kalırken durum değişti (Chapel sayaç sıfırlaması); sahne kaydeder. */ onSet?: (next: CampaignState) => void },
+): CampHandle {
   let kind: CampCardKind | null = null;
   let target = '';
   let done = false;
@@ -104,6 +114,46 @@ export function openCamp(root: HTMLElement, get: () => CampaignState, o: { name:
       render();
     }
   };
+
+  /**
+   * Chapel satırı (Ömer 2026-10-27, open-questions 445): varışta Taint bedava silindi; altınla Surge kullanım sayacı başa döner (kamp seçimi değil,
+   * ekran açık kalır). Yalnızca Chapel düğümünde ve haritada fiyat varsa.
+   */
+  function chapelRow(s: CampaignState): HTMLElement | null {
+    const price = surgeResetPrice(s.mapId);
+    if (!atChapel(s) || price === null) return null;
+    const uses = Math.max(0, Math.floor(s.surge?.uses ?? 0));
+    const box = el('div', 'ec-chapel');
+    const t = el('div');
+    t.append(
+      el('b', '', 'Chapel'),
+      el('span', '', 'The priest washed away all Ashen Taint when you arrived.'),
+      el(
+        'span',
+        'ec-note',
+        uses > 0
+          ? `You have called the Crown ${uses} time${uses === 1 ? '' : 's'}, so your next call gives ${nextTaintGain(s)} Taint. Ease the Crown and the count starts over: the next call gives ${SURGE.taint.firstGain} again.`
+          : `The Crown asks little of you now: your next call gives ${nextTaintGain(s)} Taint.`,
+      ),
+    );
+    const why = surgeResetBlocked(s);
+    const b = button('', `Ease the Crown · ${price}`, () => {
+      try {
+        const next = resetSurgeUses(get());
+        uiSound('buy');
+        o.onSet?.(next);
+        render();
+      } catch {
+        uiSound('error');
+        render();
+      }
+    }, why);
+    const gi = goldImg();
+    if (gi) b.append(gi);
+    box.append(t, b);
+    if (why && uses > 0) box.append(el('span', 'ec-why', why));
+    return box;
+  }
 
   function renderUsed(s: CampaignState, k: CampChoice['kind']): void {
     const box = el('div', 'ec-used');
@@ -187,6 +237,8 @@ export function openCamp(root: HTMLElement, get: () => CampaignState, o: { name:
     }
     fire.append(el('p', 'ec-rule', CONFIG.texts['camp'] ?? 'Make camp once. Choose one.'));
     body.append(fire);
+    const chapel = chapelRow(s);
+    if (chapel) body.append(chapel);
     if (used) return renderUsed(s, used);
 
     const cards = el('div', 'ec-cards4');

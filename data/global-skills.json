@@ -45,25 +45,25 @@
     "text": "Tip the urn beside you: flood one row of your side and end your turn."
   },
   "ash_surge": {
-    "_not": "Crown Surge (Ömer 2026-10-27, map2-quests-surge.md C1 V1: savaş HUD'ında taç plakası, kahramanın eylemini harcar). Yalnızca sefer savaşında, BattleSetup.surge o tarafa bu id'yi verirse görünür (bölge hakkı: data/campaign/crown-surge.json). Savaş başına tek Surge (C10 c). status = takıma verilen durum (statuses.json > ash_surge), turns = her taşıyanın kendi sonraki turları (C8 a). Sayılar PROVİZYON.",
+    "_not": "Crown Surge (Ömer 2026-10-27, map2-quests-surge.md C1 V1: savaş HUD'ında taç plakası, kahramanın eylemini harcar). Yalnızca sefer savaşında, BattleSetup.surge o tarafa bu id'yi verirse görünür (bölge hakkı: data/campaign/crown-surge.json). Savaş başına tek Surge (C10 c). status = takıma verilen durum (statuses.json > ash_surge), turns = her taşıyanın kendi sonraki turları (C8 a; Ömer 2026-10-27: 3 tur, eski 2). Sayılar PROVİZYON.",
     "id": "ash_surge",
     "name": "Ash Surge",
     "icon": "flame",
     "kind": "surge",
     "target": "self",
     "status": "ash_surge",
-    "turns": 2,
+    "turns": 3,
     "text": "Call on the Crown of Ash: your whole party deals more damage for a while, and you end your turn."
   },
   "salt_surge": {
-    "_not": "Salt Surge (C9 a): Drowned Queen yenilince açılır (crown-surge.json > salt.unlock). Takımın her yaşayan birimine maks canın shieldRatio oranı kalkan, shieldTurns tur (var olan süreli kalkan dili: kendi tur başında azalır). Taint Ash ile aynı. Sayılar PROVİZYON.",
+    "_not": "Salt Surge (C9 a): Drowned Queen yenilince açılır (crown-surge.json > salt.unlock). Takımın her yaşayan birimine maks canın shieldRatio oranı kalkan, shieldTurns tur (Ömer 2026-10-27: 3, eski 2; var olan süreli kalkan dili: kendi tur başında azalır). Taint Ash ile aynı. Sayılar PROVİZYON.",
     "id": "salt_surge",
     "name": "Salt Surge",
     "icon": "shield",
     "kind": "surge",
     "target": "self",
     "shieldRatio": 0.15,
-    "shieldTurns": 2,
+    "shieldTurns": 3,
     "text": "Call on the Crown's salt half: every ally gains a shield for a while, and you end your turn."
   }
 }

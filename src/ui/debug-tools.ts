@@ -31,7 +31,7 @@ import { copyMatchData } from './match-copy';
 import { isFullscreen, toggleFullscreen } from './fullscreen';
 import { registerCampaignDebug } from './debug-campaign';
 import { registerCampaignRoamDebug } from './debug-campaign-roam';
-import { debugAddTaint, debugRefillSurge, debugSetSalt, debugSetValor as campaignSetValor } from '../campaign';
+import { debugAddSurgeUses, debugAddTaint, debugRefillSurge, debugSetSalt, debugSetValor as campaignSetValor } from '../campaign';
 import { current as campaignState, setState as setCampaignState, MAP_SCENE } from '../game/campaign-session';
 import { ENDLESS_SCENE, commit as commitRun, endless } from '../game/endless-session';
 import { registerMultiplayerDebug } from './debug-mp';
@@ -670,6 +670,15 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     label: 'Clear Ashen Taint',
     hint: 'Remove all Ashen Taint in the loaded campaign (as a Chapel does)',
     run: () => campaignEdit((cs) => debugAddTaint(cs, -1)),
+  });
+  debug.register({
+    id: 'surge.uses',
+    tab: 'Battle',
+    section: 'Team',
+    icon: 'flame',
+    label: 'Add Crown Surge calls +2',
+    hint: 'Count 2 more Crown Surge calls in the loaded campaign (the next call gives more Taint; a Chapel can reset it for gold)',
+    run: () => campaignEdit((cs) => debugAddSurgeUses(cs, 2)),
   });
   debug.register({
     id: 'unit.kill-enemies',

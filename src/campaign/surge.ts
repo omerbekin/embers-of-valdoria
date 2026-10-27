@@ -16,6 +16,8 @@ export interface CrownSurgeConfig {
   taint: { maxHpLoss: number; firstGain: number; gainStep: number; minFactor: number };
   /** Harita başına Chapel dinlenme düğümleri (C5 b: Taint'i temizler). */
   chapels: Record<string, string[]>;
+  /** Chapel'de altınla kullanım sayacını sıfırlama (Ömer 2026-10-27, open-questions 445): harita başına altın fiyatı (haritada yoksa teklif yok). */
+  reset?: { gold: Record<string, number> };
 }
 
 export const SURGE: CrownSurgeConfig = surgeJson as unknown as CrownSurgeConfig;
@@ -92,7 +94,8 @@ export function surgedFromLog(log: ReadonlyArray<{ type: string; actor?: string;
 
 /**
  * Savaşta çağrılan Surge'ü sefere işler (YERİNDE): bulunulan bölgenin o türdeki hakkı harcanır, kullanım sayacı artar, çağıran kahraman nextTaintGain
- * kadar Taint alır (alınan toplam `taken`'a eklenir). Savaşın sonucu (zafer / yenilgi / geri çekilme) fark etmez: çağrı yapıldıysa hak gitmiştir.
+ * kadar Taint alır (alınan toplam `taken`'a eklenir). YENİLGİDE ÇAĞRILMAZ (Ömer 2026-10-27, open-questions 445: hak yenilgide gitmez; Taint ve sayaç
+ * da yazılmaz): zafer ve devriyeden geri çekilme işler; yenilgi (applyBattle), Dive ve Pit yenilgisi işlemez.
  */
 export function applySurgeOutcome(t: CampaignState, surged: BattleOutcome['surged']): void {
   if (!surged) return;
@@ -119,6 +122,45 @@ export function cleanseTaint(t: CampaignState): number {
     delete h.taint;
   }
   return n;
+}
+
+/** Chapel'de kullanım sayacını sıfırlamanın altın fiyatı (crown-surge.json > reset.gold; bu haritada yoksa null). */
+export function surgeResetPrice(mapId: string): number | null {
+  const g = SURGE.reset?.gold?.[mapId];
+  return typeof g === 'number' && Number.isFinite(g) && g > 0 ? Math.round(g) : null;
+}
+
+/** Bulunulan düğüm bir Chapel mi (Taint temizliği + sayaç sıfırlama teklifi). */
+export const atChapel = (s: Pick<CampaignState, 'mapId' | 'at'>): boolean => isChapel(s.mapId, s.at);
+
+/**
+ * Chapel'de sayaç sıfırlanabilir mi (null = evet, yoksa nedeni; İngilizce, arayüzde aynen). Chapel'de olmalı, haritada fiyat olmalı, duraklatılmış
+ * savaş olmamalı, sayaç sıfırın üstünde olmalı ve altın yetmeli.
+ */
+export function surgeResetBlocked(s: CampaignState): string | null {
+  if (!atChapel(s)) return 'Only a chapel can ease the Crown';
+  const price = surgeResetPrice(s.mapId);
+  if (price === null) return 'This chapel cannot ease the Crown';
+  if (s.suspended) return 'Finish the paused battle first';
+  if (Math.max(0, Math.floor(s.surge?.uses ?? 0)) <= 0) return 'The Crown asks nothing more of you yet';
+  if ((s.gold ?? 0) < price) return `You need ${price} gold`;
+  return null;
+}
+
+/**
+ * Chapel'de altınla kullanım sayacını sıfırlar (Ömer 2026-10-27): fiyat düşer, `uses` silinir (bir sonraki Surge yine firstGain Taint verir).
+ * Harcanan bölge hakları, `taken` ve Salt açıklığı değişmez; Taint yığınlarına dokunmaz (onları varış temizliği siler). Yapılamıyorsa Error.
+ */
+export function resetSurgeUses(s: CampaignState): CampaignState {
+  const why = surgeResetBlocked(s);
+  if (why) throw new Error(why);
+  const t = JSON.parse(JSON.stringify(s)) as CampaignState;
+  t.gold -= surgeResetPrice(t.mapId)!;
+  const sv = { ...(t.surge ?? {}) };
+  delete sv.uses;
+  if (Object.keys(sv).length) t.surge = sv;
+  else delete t.surge;
+  return t;
 }
 
 /** Bu zafer Salt Surge'ü açar mı (unlock haritası + düğümü). */
@@ -161,6 +203,18 @@ export function debugAddTaint(s: CampaignState, n: number): CampaignState {
   }
   const active = new Set(t.active.filter(Boolean));
   for (const h of t.roster) if (active.has(h.id)) h.taint = taintOf(h) + Math.floor(n);
+  return t;
+}
+
+/** Debug: Surge kullanım sayacına `n` ekler (Chapel sıfırlamasını denemek için; Taint vermez). */
+export function debugAddSurgeUses(s: CampaignState, n: number): CampaignState {
+  const t = JSON.parse(JSON.stringify(s)) as CampaignState;
+  const uses = Math.max(0, Math.floor(t.surge?.uses ?? 0)) + Math.max(0, Math.floor(n));
+  const sv = { ...(t.surge ?? {}) };
+  if (uses > 0) sv.uses = uses;
+  else delete sv.uses;
+  if (Object.keys(sv).length) t.surge = sv;
+  else delete t.surge;
   return t;
 }
 

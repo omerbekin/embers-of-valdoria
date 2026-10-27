@@ -113,7 +113,7 @@ Tür: B savaş, E elit, S boss, T kasaba, Tr hazine (g = korunan), Ev olay, R di
 | 36 | Chainwalk | B | 2 Corsair Cutlass + Corsair Slinger + Dock Rat | Corsair girişi |
 | 37 | The Old Mole | B | 2 Reef Wrecker + Cliff Crossbowman + Reef Hound | |
 | 38 | Ferry Office | Ev | **Charter a ship** (M-J): altın ya da faction iyiliği → deniz yolları açılır | |
-| 39 | Beacon Quay | R | | |
+| 39 | Beacon Chapel (eski Beacon Quay; 2026-10-27 ikinci Chapel, Crown Surge) | R | | |
 | 40 | Quarantine Yard | B | 2 Wreck Ghoul + Tide Caller + Salt Hag | |
 
 **IV · The Wrecking Coast (L15-17)**

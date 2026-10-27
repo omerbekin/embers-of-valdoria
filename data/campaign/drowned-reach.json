@@ -849,9 +849,9 @@
     {
       "id": "dr39",
       "type": "rest",
-      "name": "Beacon Quay",
+      "name": "Beacon Chapel",
       "subtitle": "Rest · Camp",
-      "lore": "A beacon fire burns at the end of the quay, and the harbour watch lets travellers rest beside it.",
+      "lore": "A seamen's chapel at the end of the quay, its beacon lit for ships lost at sea, its priest still washing ash from pilgrims.",
       "region": "III",
       "pos": [
         0.9091,
