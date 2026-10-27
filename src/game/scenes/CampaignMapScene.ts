@@ -7,6 +7,7 @@ import {
   nextMapFor,
   EVENTS,
   STORIES,
+  storyGiftNote,
   chooseEvent,
   choiceBlocked,
   completeStory,
@@ -3489,7 +3490,7 @@ export class CampaignMapScene extends Phaser.Scene {
         finale = true;
         const liked = storyLiked(storyId, answers);
         const raw = liked ? (def.liked ?? '') : (def.disliked ?? '');
-        const note = liked && def.gift && !replay ? 'He presses a small bundle into your hands.' : '';
+        const note = liked && def.gift && !replay ? storyGiftNote(def) : '';
         sd!.update({ said: raw, ...(note ? { note } : {}), choices: ['Continue'], step: dialogue.length, total: dialogue.length, done: true });
         return;
       }
