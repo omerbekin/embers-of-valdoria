@@ -1,0 +1,36 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: 'Harita 2'de ödünç hiçbir şey kalmasın'): Will-o'-Wisp'in Harita 2 sürümü (maps-2-3.md 3.3 'Will-o'-Wisp (\"Marsh Light\")'; pasif Flicker): aynı statlar, kendi kiti Bog Spark (ıslak hedefe şimşek) + Fen Glimmer. Önceden karşılaşmalarda will_o_wisp id'siyle (Harita 1 kiti ve sesleri) yalnız adı değişik geçiyordu; artık kendi id'si, skill'leri ve sesleri. Çizim YER TUTUCU: spriteId 'will_o_wisp' (Harita 1 karşılığının çizimi; kendi sprite / avatar / ikon / VFX'i sanat turunda, open-questions 442). Statlar will_o_wisp ile aynı (karşılaşma gücü değişmesin). Sayılar PROVİZYON (sim YOK).",
+  "id": "marsh_light",
+  "name": "Marsh Light",
+  "family": "hexes",
+  "spriteId": "will_o_wisp",
+  "color": "#8ad0d8",
+  "logo": "leaf",
+  "frontPriority": 8,
+  "range": 5,
+  "role": "Hex · Support",
+  "attributes": {
+    "str": 6,
+    "int": 22,
+    "dex": 12,
+    "luck": 18
+  },
+  "armor": 4,
+  "magicArmor": 0,
+  "ai": "healer",
+  "skills": [
+    "bog_spark",
+    "fen_glimmer"
+  ],
+  "passive": {
+    "id": "flicker",
+    "name": "Flicker",
+    "icon": "feather",
+    "text": "When a hero's skill hits it: Shrouded for 1 turn, at most once between its turns.",
+    "effect": {
+      "type": "flicker",
+      "status": "shrouded",
+      "turns": 1
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: 'Harita 2'de ödünç hiçbir şey kalmasın'): gelişmiş Grave Chanter (maps-2-3.md 3.3: Call the Buried -> Rise from the Deep; pasif Bone Ward): aynı statlar, kendi kiti Tide Dirge + Rise from the Deep. Önceden karşılaşmalarda grave_chanter id'siyle (Harita 1 kiti ve sesleri) yalnız adı değişik geçiyordu; artık kendi id'si, skill'leri ve sesleri. Çizim YER TUTUCU: spriteId 'grave_chanter' (Harita 1 karşılığının çizimi; kendi sprite / avatar / ikon / VFX'i sanat turunda, open-questions 442). Statlar grave_chanter ile aynı (karşılaşma gücü değişmesin). Sayılar PROVİZYON (sim YOK).",
+  "id": "tide_caller",
+  "name": "Tide Caller",
+  "family": "undead",
+  "spriteId": "grave_chanter",
+  "color": "#4f6f8a",
+  "logo": "skull",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Undead · Summoner",
+  "attributes": {
+    "str": 6,
+    "int": 28,
+    "dex": 8,
+    "luck": 4
+  },
+  "armor": 6,
+  "magicArmor": 6,
+  "ai": "darkmage",
+  "skills": [
+    "tide_dirge",
+    "rise_from_the_deep"
+  ],
+  "passive": {
+    "id": "bone_ward",
+    "name": "Bone Ward",
+    "icon": "bone",
+    "text": "While a summoned ally stands on its side, it takes ×0.7 damage from every source.",
+    "effect": {
+      "type": "boneWard",
+      "reduce": 0.3
+    }
+  }
+}

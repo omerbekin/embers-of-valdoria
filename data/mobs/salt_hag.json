@@ -1,0 +1,36 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: 'Harita 2'de ödünç hiçbir şey kalmasın'): gelişmiş Fen Witchling (maps-2-3.md 3.3: Saltbound + Call the Tide 1 sıra Flooded 2 tur; pasif Mire-Bound): aynı statlar, kendi kiti Salt Hex + Brackish Tide. Önceden karşılaşmalarda fen_witchling id'siyle (Harita 1 kiti ve sesleri) yalnız adı değişik geçiyordu; artık kendi id'si, skill'leri ve sesleri. Çizim YER TUTUCU: spriteId 'fen_witchling' (Harita 1 karşılığının çizimi; kendi sprite / avatar / ikon / VFX'i sanat turunda, open-questions 442). Statlar fen_witchling ile aynı (karşılaşma gücü değişmesin). Sayılar PROVİZYON (sim YOK).",
+  "id": "salt_hag",
+  "name": "Salt Hag",
+  "family": "hexes",
+  "spriteId": "fen_witchling",
+  "color": "#7a8a6a",
+  "logo": "rune",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Hex · Caster",
+  "attributes": {
+    "str": 10,
+    "int": 8,
+    "dex": 6,
+    "luck": 26
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "ai": "hexer",
+  "skills": [
+    "salt_hex",
+    "brackish_tide"
+  ],
+  "passive": {
+    "id": "mire_bound",
+    "name": "Mire-Bound",
+    "icon": "hourglass",
+    "text": "While this witch lives, Saltbound heroes have ×0.8 speed (several witches do not stack).",
+    "effect": {
+      "type": "mireBound",
+      "status": "saltbound",
+      "speedMult": 0.8
+    }
+  }
+}

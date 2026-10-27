@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach: Cliff Crossbowman (maps-2-3.md 3.3 / 9.3). Kendi çizimi (ChatGPT, 2026-10-27; önceden bandit_crossbowman çizimini kullanıyordu): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). Kit, statlar ve pasif bandit_crossbowman ile AYNI (yalnız görünüm ve id ayrıldı); Harita 2 karşılaşmalarındaki Cliff Crossbowman birimleri bu id'ye bağlı. Sayılar PROVİZYON.",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach: Cliff Crossbowman (maps-2-3.md 3.3 / 9.3). Kendi çizimi (ChatGPT, 2026-10-27; önceden bandit_crossbowman çizimini kullanıyordu): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). Statlar, pasif (Cut and Run, maps-2-3.md 3.3 'aynen') ve sayılar bandit_crossbowman ile AYNI; skill'ler kendi id'si, adı ve sesiyle (content-designer 2026-10-27, Ömer: 'Harita 2'de ödünç hiçbir şey kalmasın'): Cliff Bolt + Plunging Volley, open-questions 442; Harita 2 karşılaşmalarındaki Cliff Crossbowman birimleri bu id'ye bağlı. Sayılar PROVİZYON.",
   "id": "cliff_crossbowman",
   "name": "Cliff Crossbowman",
   "family": "bandits",
@@ -19,8 +19,8 @@
   "magicArmor": 0,
   "ai": "sniper",
   "skills": [
-    "crossbow_bolt",
-    "scatter_quarrels"
+    "cliff_bolt",
+    "plunging_volley"
   ],
   "passive": {
     "id": "cut_and_run",
