@@ -7,7 +7,8 @@ import { compileTree } from '../src/progression/skill-tree-compile';
 import type { TreeAlloc } from '../src/progression/skill-tree';
 import { treeOf } from '../src/progression/skill-tree-data';
 
-// Bonus birleşme kuralı (Ömer 2026-10-27): "×" yazılan her şey GERÇEKTEN çarpılır (iki ×1.1 = ×1.21; "×1.06 per rank" 3 rank = 1.06^3),
+// Bonus birleşme kuralı (Ömer 2026-10-27): FARKLI kaynakların "×" bonusları çarpılır (iki ×1.1 item = ×1.21; item ×1.1 + düğüm ×1.18 = 1.1 x 1.18),
+// bir düğümün RANK'ları ise birbirini çarpmaz, tek çarpanda toplanır ("×1.06 per rank" 3 rank = ×1.18, 5 rank = ×1.30; "×0.96 per rank" 3 rank = ×0.88).
 // "+X%" / düz "+45" yazılanlar toplanmaya devam eder. Yazı ile hesap aynı olmalı.
 
 /** Tek affix'li örnek (ilvl 10, orta zar). */
@@ -20,9 +21,17 @@ describe('birleşme yardımcıları', () => {
     expect(stackValues('mult', 1.1, 1.1)).toBeCloseTo(1.21, 12);
     expect(1 - stackValues('less', 0.1, 0.1)).toBeCloseTo(0.81, 12); // iki ×0.9 = ×0.81
     expect(stackValues(undefined, 0.1, 0.1)).toBeCloseTo(0.2, 12); // "+10%" + "+10%" = "+20%"
-    expect(1 + stackTimes('more', 0.06, 3)).toBeCloseTo(1.06 ** 3, 12);
-    expect(1 - stackTimes('less', 0.04, 3)).toBeCloseTo(0.96 ** 3, 12);
+    expect(1 + stackTimes('more', 0.06, 3)).toBeCloseTo(1.18, 12); // rank'lar doğrusal
+    expect(1 + stackTimes('more', 0.06, 5)).toBeCloseTo(1.3, 12);
+    expect(1 - stackTimes('less', 0.04, 3)).toBeCloseTo(0.88, 12);
+    expect(stackTimes('mult', 1.06, 3)).toBeCloseTo(1.18, 12);
     expect(stackTimes(undefined, 0.03, 3)).toBeCloseTo(0.09, 12);
+  });
+
+  it('item ×1.1 + 3 rank "×1.06 per rank" düğüm = 1.1 x 1.18; iki farklı düğüm de çarpılır', () => {
+    const h = { itemEffects: { frontRowDamage: 0.1 }, treeFx: { frontRowDamage: stackTimes('more', 0.06, 3) } };
+    expect(1 + effNum(h, 'frontRowDamage')).toBeCloseTo(1.1 * 1.18, 12);
+    expect(1 + (mergeFxValue('frontRowDamage', 0.18, 0.1) as number)).toBeCloseTo(1.18 * 1.1, 12);
   });
 
   it('item + ağaç kanalı: "×" anahtarlar çarpılır, diğerleri toplanır', () => {
@@ -57,19 +66,20 @@ describe('skill ağacı rank\'ı', () => {
   const W = treeOf('warrior')!;
   /** Ağacın önündeki düğümleri doldurup `key`e `rank` verir (kilit kuralı derlemeyi etkilemez: compileTree dağılımı olduğu gibi derler). */
   const only = (key: string, rank: number): TreeAlloc => ({ v: W.version, r: { [key]: rank } });
-  it('"×1.06 power per rank" cond kancası: 3 rank = 1.06^3 (doğrusal 1.18 değil)', () => {
+  it('"×1.06 power per rank" cond kancası: 3 rank = ×1.18 (rankler doğrusal, 1.06^3 değil)', () => {
     const node = Object.entries(W.nodes).find(([, n]) => n.text?.includes('×1.06 power per rank') && JSON.stringify(n.fx).includes('powerMul'))!;
     const per = (node[1].fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul;
     const hook = compileTree(W, only(node[0], 3))!.hooks!.find((h) => h.node === `warrior:${node[0]}`) as { mod: { powerMul: number } };
-    expect(1 + hook.mod.powerMul).toBeCloseTo((1 + per) ** 3, 12);
+    expect(1 + hook.mod.powerMul).toBeCloseTo(1 + 3 * per, 12);
+    expect(1 + hook.mod.powerMul).not.toBeCloseTo((1 + per) ** 3, 6);
     const one = compileTree(W, only(node[0], 1))!.hooks!.find((h) => h.node === `warrior:${node[0]}`) as { mod: { powerMul: number } };
     expect(one.mod.powerMul).toBe(per); // rank 1: değer aynen
   });
 
-  it('"×0.96 per rank" unitFx (lowHpReduce): 3 rank = 0.96^3', () => {
+  it('"×0.96 per rank" unitFx (lowHpReduce): 3 rank = ×0.88', () => {
     const node = Object.entries(W.nodes).find(([, n]) => JSON.stringify(n.fx ?? []).includes('lowHpReduce'))!;
     const per = (node[1].fx![0] as unknown as { fx: { lowHpReduce: { reduce: number } } }).fx.lowHpReduce.reduce;
     const s = compileTree(W, only(node[0], 3))!;
-    expect(1 - s.fx!.lowHpReduce!.reduce).toBeCloseTo((1 - per) ** 3, 6);
+    expect(1 - s.fx!.lowHpReduce!.reduce).toBeCloseTo(1 - 3 * per, 6);
   });
 });

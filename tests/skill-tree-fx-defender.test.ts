@@ -41,14 +41,14 @@ describe('Defender ağacı fx (Faz 2b)', () => {
     expect(checkTreeFx(D)).toEqual([]);
   });
 
-  it('Shockwave: Tremor Slam zaten Slowed düşmana x1,06^5 (rank 5), Slow yoksa çarpan yok', () => {
+  it('Shockwave: Tremor Slam zaten Slowed düşmana x1,25 (rank 5), Slow yoksa çarpan yok', () => {
     const run = (withTree: boolean, slowed: boolean) => {
       const b = make({ 0: 'defender' }, { 0: 'warrior' }, withTree ? { 0: { tree: tree(['1.f1*3', '1.f2*5']) } } : {});
       if (slowed) E0(b).statuses.push({ kind: 'slow', turns: 2, source: 'x' });
       const def = b.skill('tremor_slam', P0(b))!;
       return b.dealtDamageMult(P0(b), E0(b), def, def.effects[0] as DamageEffect);
     };
-    expect(run(true, true) / run(false, true)).toBeCloseTo((1 + (D.nodes['1.f2']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul) ** 5, 9); // rank'ta çarpılır (2026-10-27)
+    expect(run(true, true) / run(false, true)).toBeCloseTo(1 + 5 * (D.nodes['1.f2']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul, 9);
     expect(run(true, false)).toBeCloseTo(run(false, false), 9);
   });
 

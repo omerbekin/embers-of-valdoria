@@ -76,12 +76,12 @@ describe('Faz 4a: veri ve derleyici', () => {
     for (const c of CLASSES) expect(checkTreeFx(treeOf(c)!), c).toEqual([]);
   });
 
-  it('rank: eylem sayıları ve C4 çarpanı rankta üstel çarpılır ((1 + v)^r); süre / eşik çarpılmaz', () => {
+  it('rank: eylem sayıları ve C4 çarpanı rank ile çarpılır; süre / eşik çarpılmaz', () => {
     expect(trigOf(only('warrior', { '0.r': 3 }), 'warrior:0.r').do[0]!.heal).toBeCloseTo(3 * num('warrior', '0.r', '0.do.0.heal'), 9);
     expect(trigOf(only('defender', { '2.f3': 4 }), 'defender:2.f3').do[0]!.shield).toBeCloseTo(4 * num('defender', '2.f3', '0.do.0.shield'), 9);
     expect(trigOf(only('mage', { '0.f3': 5 }), 'mage:0.f3').do[0]!.sooner).toBeCloseTo(0.2, 9);
-    expect(healOf(only('warrior', { '0.f2': 3 }), 'warrior:0.f2').mul).toBeCloseTo((1 + num('warrior', '0.f2', '0.mul')) ** 3 - 1, 9);
-    expect(healOf(only('defender', { '3.f3': 5 }), 'defender:3.f3').mul).toBeCloseTo((1 + num('defender', '3.f3', '0.mul')) ** 5 - 1, 9);
+    expect(healOf(only('warrior', { '0.f2': 3 }), 'warrior:0.f2').mul).toBeCloseTo(3 * num('warrior', '0.f2', '0.mul'), 9);
+    expect(healOf(only('defender', { '3.f3': 5 }), 'defender:3.f3').mul).toBeCloseTo(5 * num('defender', '3.f3', '0.mul'), 9);
     const t = trigOf(only('warrior', { '0.n0': 1 }), 'warrior:0.n0');
     expect(t).toMatchObject({ on: 'hpBelow', below: 0.5, once: true, do: [{ status: 'stun', turns: 1, to: 'target' }] });
   });
@@ -191,7 +191,7 @@ describe('Faz 4a: Warrior', () => {
     const b = make({ 0: 'warrior' }, { 0: 'mage' }, withTree(0, only('warrior', { '0.f2': 3, '0.ea': 1 })));
     const me = P(b);
     me.hp = Math.floor(me.maxHp * 0.2);
-    const grit = (1 + num('warrior', '0.f2', '0.mul')) ** 3;
+    const grit = 1 + 3 * num('warrior', '0.f2', '0.mul');
     const mend = 1 + num('warrior', '0.ea', '0.mul');
     expect(b.treeHealMult(me, me, null)).toBeCloseTo(grit * mend, 9);
     me.hp = Math.floor(me.maxHp * 0.4);
@@ -298,7 +298,7 @@ describe('Faz 4a: Defender', () => {
 
   it('Linked Plates: Close Ranks aktarımı rank başına %3 azalır', () => {
     const b = make({ 0: 'defender' }, { 0: 'mage' }, withTree(0, only('defender', { '3.f3': 4 })));
-    expect(X(b).guardShareCut(P(b), 100, E(b))).toBe(Math.round(100 * (1 + num('defender', '3.f3', '0.mul')) ** 4)); // değer veriden (D9 2026-10-23)
+    expect(X(b).guardShareCut(P(b), 100, E(b))).toBe(Math.round(100 * (1 + 4 * num('defender', '3.f3', '0.mul')))); // değer veriden (D9 2026-10-23)
   });
 
   it('Forge Again: Fist Crush öldürürse cooldown\'u sıfırlanır (turns modu)', () => {
@@ -461,7 +461,7 @@ describe('Faz 4a: öbür sınıflar', () => {
     const b = make({ 0: 'hexer' }, { 0: 'warrior' }, withTree(0, only('hexer', { '3.f3': 3 })));
     expect(b.treeTakenMult(P(b), E(b))).toBe(1);
     E(b).statuses.push({ kind: 'jinxed', turns: 2, source: P(b).uid });
-    expect(b.treeTakenMult(P(b), E(b))).toBeCloseTo((1 + num('hexer', '3.f3', '0.mul')) ** 3, 9); // değer veriden (D9 2026-10-23)
+    expect(b.treeTakenMult(P(b), E(b))).toBeCloseTo(1 + 3 * num('hexer', '3.f3', '0.mul'), 9); // değer veriden (D9 2026-10-23)
   });
 
   it('Woeful Turn: ıskalayan Jinxed düşman sıradaki eylemini kaybeder', () => {
@@ -484,7 +484,7 @@ describe('Faz 4a: öbür sınıflar', () => {
     const ally = P(b, 1);
     const rj = content.skills.rejuvenate!;
     ally.hp = Math.floor(ally.maxHp * 0.4);
-    const soft = (1 + num('druid', '3.f3', '0.mul')) ** 2;
+    const soft = 1 + 2 * num('druid', '3.f3', '0.mul');
     expect(b.treeHealMult(P(b), ally, rj)).toBeCloseTo(soft, 9);
     ally.hp = Math.floor(ally.maxHp * 0.2);
     expect(b.treeHealMult(P(b), ally, rj)).toBeCloseTo(soft * (1 + num('druid', '3.eb', '0.mul')), 9);

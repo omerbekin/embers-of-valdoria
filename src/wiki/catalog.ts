@@ -1097,7 +1097,7 @@ function bonusRulesArticle(): WikiArticle {
       'Element weaknesses, damage taken by summons, hero level growth of max HP and MP, and skill tree nodes written with ×.',
     ),
     p(`Example: +12% damage from an oath, +3% from a blessing and +10% from an item add up to +25%, which is ${multText(1 + pool)}. A critical hit (${multText(a.critMult)}) then multiplies that: ${multText(1 + pool)} × ${multText(a.critMult).slice(1)} = ${multText((1 + pool) * a.critMult)}.`),
-    p(`Every × multiplies, even within one kind: two items with ×1.1 Fire damage give ${multText(1.1 * 1.1)} Fire damage (not ×1.2), and three ranks of a ×1.06 skill tree node give ${multText(1.06 ** 3)} (1.06 × 1.06 × 1.06). Only bonuses written with + add up.`),
+    p(`A skill tree node's ranks add up into one multiplier: a node with ×1.06 per rank gives ${multText(1 + 0.06 * 3)} at rank 3 and ${multText(1 + 0.06 * 5)} at rank 5 (raising the rank replaces the old bonus). Separate × sources multiply each other: two items with ×1.1 Fire damage give ${multText(1.1 * 1.1)}, and an item with ×1.1 plus a node at ${multText(1.18)} give ${multText(1.1 * 1.18)}. Bonuses written with + add up.`),
   ]);
 }
 

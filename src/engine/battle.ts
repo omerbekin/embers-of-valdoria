@@ -6419,10 +6419,12 @@ export class Battle {
     const own = healer.statuses.find((s) => s.kind === 'dark_bond' && s.source === healer.uid);
     const copy = own ? this.bondCopy(healer.uid, own.partner) : undefined;
     if (!own || !copy || copy.unit.hp <= 0 || copy.unit.hp >= copy.unit.maxHp) return;
-    // Skill ağacı (bond grubu): kopya oranı x (1 + v); kancasızda aynı
-    const bm = healer.treeHooks ? this.sumHooks(healer, copy.unit, null, 'bond') : null;
+    // Skill ağacı (bond grubu; Blood Kin "passes +3% more of your healing per rank"): kopya payına düz ek, pay + v (Thick Blood'un ratio +0.04'ü gibi
+    // yüzde puan; Ömer 2026-10-27 hata düzeltmesi: eskiden pay x v idi, şifa ~%91 düşüyordu); kancasızda aynı. Ağaç kancası Dark Bond dalının skill'ine
+    // bağlı derlenir (skill: 'dark_bond'): kopya o skill adına sorulur (eskiden skill null verildiği için kanca hiç tutmuyordu)
+    const bm = healer.treeHooks ? this.sumHooks(healer, copy.unit, this.skill('dark_bond', healer) ?? null, 'bond') : null;
     if (bm?.nodes.length) this.treeProcAll(healer.uid, bm.nodes);
-    this.applyHeal(healer, copy.unit, Math.round(amount * (own.ratio ?? 1) * (bm?.sum.bondRatio ?? 1)), false, emit, 'dark_bond');
+    this.applyHeal(healer, copy.unit, Math.round(amount * ((own.ratio ?? 1) + (bm?.sum.bondRatio ?? 0))), false, emit, 'dark_bond');
   }
 
   /**
