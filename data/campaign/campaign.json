@@ -22,7 +22,10 @@
     "hotspots": {
       "town-ashford": { "label": "Blacksmith", "rect": [0.385, 0.42, 0.57, 0.63] },
       "town-valdren": { "label": "Blacksmith", "rect": [0.82, 0.38, 0.884, 0.58] },
-      "town-saltmere": { "label": "Blacksmith", "rect": [0.25, 0.4, 0.42, 0.57] }
+      "town-saltmere": { "label": "Blacksmith", "rect": [0.25, 0.4, 0.42, 0.57] },
+      "town-reedgate": { "label": "Blacksmith", "rect": [0, 0.4, 0.21, 0.72] },
+      "town-eelwick": { "label": "Blacksmith", "rect": [0.8, 0.36, 1, 0.68] },
+      "town-fishers-landing": { "label": "Blacksmith", "rect": [0.37, 0.3, 0.53, 0.44] }
     }
   },
   "_townScreen": "Kasaba ekranı (Ömer 2026-10-12): tam ekran kasaba görseli, takım alttaki açık alanda durur (ayak çizgisi feetY x 1080), kahraman boyu ve aralığı 1920x1080 biriminde; yer etiketleri telefonda (html.short/compact) büyür. Yerler valdoria.json > nodes[].scene.",
