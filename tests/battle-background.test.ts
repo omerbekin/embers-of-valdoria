@@ -8,7 +8,9 @@ const ZONES = ['border-road', 'windy-moor', 'iron-pass', 'misty-marsh', 'grave-f
 /** Quick Battle / multiplayer arenaları (v3, 2026-10-13): bölgelerle aynı yerleşim (zemin hedefte, birimler çite / duvara yakın). */
 const ARENAS = ['proving-grounds-sunny-afternoon', 'proving-grounds-sunset', 'proving-grounds-rain', 'duelling-ring-moon', 'duelling-ring-snow', 'duelling-ring-storm'];
 /** Uzun 1536x1024 görseller (2026-10-13 v3: bölgeler + kings-bridge + castle-hall + arenalar). */
-const TALL = [...ZONES, 'kings-bridge', 'castle-hall', ...ARENAS];
+/** Harita 2 (Drowned Reach) savaş arka planları (2026-10-27). */
+const DROWNED = ['river-gorge', 'saltmarsh', 'saltmere-docks', 'wreck-cliffs', 'siren-rocks', 'storm-deck', 'sunken-court'];
+const TALL = [...ZONES, 'kings-bridge', 'castle-hall', ...ARENAS, ...DROWNED];
 
 const has = (id: string) => ['webp', 'png', 'jpg'].some((e) => existsSync(`assets/backgrounds/${id}.${e}`));
 
