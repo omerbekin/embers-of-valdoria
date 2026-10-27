@@ -32,7 +32,7 @@ describe('Harita 2 karşılaşma kuralları (sefer)', () => {
     expect(encounterWaves(ENCOUNTERS.dr_13!, 'dr13', 'battle', 'II')).toHaveLength(1);
     expect(plan.waves).toBeUndefined();
     expect(plan.rules?.objective).toMatchObject({ type: 'totem' });
-    expect(plan.rules?.reinforce?.enemies.filter(Boolean)).toEqual(['sunken_dead', 'sunken_dead']); // Harita 2 sürümü (open-questions 444)
+    expect(plan.rules?.reinforce?.enemies.filter(Boolean)).toEqual(['sunken_dead', 'sunken_dead']); // Harita 2 sürümü (open-questions 446)
     const b = battleOf(plan);
     expect(b.objectiveUnits().map((c) => c.defId)).toEqual(['hex_totem']);
     expect(b.objectiveProgress()).toEqual({ type: 'totem', current: 0, target: 1 });

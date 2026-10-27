@@ -33,7 +33,7 @@ import undead from '../../data/classes/undead.json';
 import warrior from '../../data/classes/warrior.json';
 import skeleton from '../../data/summons/skeleton.json';
 import treant from '../../data/summons/treant.json';
-// Harita 2 Tide Caller'ın Rise from the Deep çağrısı (Skeleton ile aynı statlar, kendi kit; content-designer 2026-10-27, open-questions 444)
+// Harita 2 Tide Caller'ın Rise from the Deep çağrısı (Skeleton ile aynı statlar, kendi kit; content-designer 2026-10-27, open-questions 446)
 import risenDrowned from '../../data/summons/risen_drowned.json';
 import bridgeWarden from '../../data/bosses/bridge_warden.json';
 import ironMooring from '../../data/bosses/iron_mooring.json';
@@ -92,7 +92,7 @@ import mobSaltHag from '../../data/mobs/salt_hag.json';
 import mobTideCaller from '../../data/mobs/tide_caller.json';
 import mobMarshLight from '../../data/mobs/marsh_light.json';
 import mobWreckGhoul from '../../data/mobs/wreck_ghoul.json';
-// Harita 2'de kalan son Harita 1 birimlerinin kendi sürümleri (aynı statlar, kendi kit / ses; content-designer 2026-10-27, open-questions 444)
+// Harita 2'de kalan son Harita 1 birimlerinin kendi sürümleri (aynı statlar, kendi kit / ses; content-designer 2026-10-27, open-questions 446)
 import mobCinderExile from '../../data/mobs/cinder_exile.json';
 import mobPitchBoiler from '../../data/mobs/pitch_boiler.json';
 import mobSunkenDead from '../../data/mobs/sunken_dead.json';

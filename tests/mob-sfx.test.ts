@@ -108,7 +108,7 @@ describe('sefer düşmanı skill sesleri (data/audio-mobs.json)', () => {
     for (const s of list) {
       expect(s.group).toBe(MOB_SOUND_GROUP);
       expect(s.usedBy.length, s.id).toBe(1);
-      // Bölge III: Lord Morvane'ın skill sesleri de bu grupta (data/bosses); Harita 2 çağrısı Risen Drowned'ın skill'leri de (data/summons, open-questions 444)
+      // Bölge III: Lord Morvane'ın skill sesleri de bu grupta (data/bosses); Harita 2 çağrısı Risen Drowned'ın skill'leri de (data/summons, open-questions 446)
       expect(['mob', 'boss', 'summon'], s.id).toContain(s.usedBy[0]!.owner.kind);
     }
   });

@@ -16,7 +16,7 @@ const OWN: Record<string, [string, string, string[]]> = {
   tide_caller: ['grave_chanter', 'Tide Caller', ['tide_dirge', 'rise_from_the_deep']],
   marsh_light: ['will_o_wisp', 'Marsh Light', ['bog_spark', 'fen_glimmer']],
   wreck_ghoul: ['ghoul', 'Wreck Ghoul', ['barnacle_claw', 'wreck_feast']],
-  // Harita 2'de kalan son Harita 1 birimleri de kendi sürümünde (content-designer 2026-10-27; Ömer: "evet lütfen hepsini yap artık"; open-questions 444)
+  // Harita 2'de kalan son Harita 1 birimleri de kendi sürümünde (content-designer 2026-10-27; Ömer: "evet lütfen hepsini yap artık"; open-questions 446)
   cinder_exile: ['ember_acolyte', 'Cinder Exile', ['pitch_brand', 'tar_blaze']],
   pitch_boiler: ['charcoal_burner', 'Pitch Boiler', ['hot_pitch', 'caulkers_smoke']],
   sunken_dead: ['drowned', 'Sunken Dead', ['waterlogged_grip', 'pull_beneath']],
@@ -94,7 +94,7 @@ describe('Harita 2 sıradan mobları kendi id / kit / sesleriyle', () => {
     }
     // Grudge kendi temel saldırısına bağlı
     expect(content.mobs.dock_rat!.passive?.effect).toMatchObject({ type: 'grudge', skill: 'belaying_pin' });
-    // Zırh / büyü zırhı (stats içinde) ve pasifin tamamı da birebir (open-questions 444 birimleri)
+    // Zırh / büyü zırhı (stats içinde) ve pasifin tamamı da birebir (open-questions 446 birimleri)
     for (const id of ['cinder_exile', 'pitch_boiler', 'sunken_dead', 'mire_ghoul', 'reed_witch', 'mudlark', 'inquisition_brother', 'salt_chaplain']) {
       const [src] = OWN[id]!;
       expect([content.mobs[id]!.stats.armor, content.mobs[id]!.stats.magicArmor, content.mobs[id]!.passive], id).toEqual([content.mobs[src]!.stats.armor, content.mobs[src]!.stats.magicArmor, content.mobs[src]!.passive]);

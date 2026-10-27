@@ -78,7 +78,7 @@ sessiz (uçuş sesi vuruşla üst üste binmesin).
 
 Harita 2 sıradan mobları (dock_rat, reef_hound, salt_hag, tide_caller, marsh_light, wreck_ghoul) + River Reaver / Cliff Crossbowman yeni skill'leri kendi tariflerinde (16 skill, 32 ses: ıslak halat / ağ, tuzlu dalga, bataklık kıvılcımı, midye kabuğu tırmığı, kanca, uçurumdan yaylım; open-questions 442); tepe tarayıcıda Harita 1 karşılığına eşitlendi.
 
-Harita 2'de kalan son Harita 1 birimlerinin sürümleri (cinder_exile, pitch_boiler, sunken_dead, mire_ghoul, reed_witch, mudlark, inquisition_brother, salt_chaplain) + Tide Caller çağrısı risen_drowned kendi tariflerinde (18 skill, 33 ses: zift / katran, su sıçraması, çamur, saz hışırtısı, tuz kristali; open-questions 444); tepe tarayıcıda Harita 1 karşılığına (Risen Drowned: Skeleton class seslerine) eşitlendi.
+Harita 2'de kalan son Harita 1 birimlerinin sürümleri (cinder_exile, pitch_boiler, sunken_dead, mire_ghoul, reed_witch, mudlark, inquisition_brother, salt_chaplain) + Tide Caller çağrısı risen_drowned kendi tariflerinde (18 skill, 33 ses: zift / katran, su sıçraması, çamur, saz hışırtısı, tuz kristali; open-questions 446); tepe tarayıcıda Harita 1 karşılığına (Risen Drowned: Skeleton class seslerine) eşitlendi.
 
 ## Müzik (`data/audio-music.json` + `data/audio-music-tracks.json`, motor `src/game/music.ts`, denetim `src/ui/music.ts > sceneMusic`)
 

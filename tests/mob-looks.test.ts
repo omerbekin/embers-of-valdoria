@@ -99,7 +99,7 @@ describe('Harita 2 elit / boss / totem çizimleri', () => {
       expect(allUnits(plan).some((u) => u.spriteId === sprite), `${node} ${sprite}`).toBe(true);
       const unit = new Battle(setupOf(plan)).combatants.find((c) => c.spriteId === sprite);
       if (unit) {
-        // Hex Totem artık kendi id'sinde (hex_totem, open-questions 444): id ile çizim aynı ad
+        // Hex Totem artık kendi id'sinde (hex_totem, open-questions 446): id ile çizim aynı ad
         if (sprite !== 'hex_totem') expect(unit.defId).not.toBe(sprite);
         inBattle++;
       }

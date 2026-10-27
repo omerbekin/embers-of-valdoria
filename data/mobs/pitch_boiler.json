@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\", open-questions 444): Charcoal Burner'ın Harita 2 sürümü: Long Stair iskelelerinde tekne kalafatı için zift kaynatan, tarikata katılmış işçi (dr_1). Önceden karşılaşmalarda charcoal_burner id'siyle (Harita 1 kiti ve sesleri) geçiyordu; artık kendi id'si, skill'leri ve sesleri. Statlar / zırh / YZ / pasif charcoal_burner ile birebir (karşılaşma gücü değişmesin). Çizim YER TUTUCU: spriteId 'charcoal_burner' (kendi sprite / avatar / ikon / VFX'i sanat turunda). Sayılar PROVİZYON (sim YOK).",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\", open-questions 446): Charcoal Burner'ın Harita 2 sürümü: Long Stair iskelelerinde tekne kalafatı için zift kaynatan, tarikata katılmış işçi (dr_1). Önceden karşılaşmalarda charcoal_burner id'siyle (Harita 1 kiti ve sesleri) geçiyordu; artık kendi id'si, skill'leri ve sesleri. Statlar / zırh / YZ / pasif charcoal_burner ile birebir (karşılaşma gücü değişmesin). Çizim YER TUTUCU: spriteId 'charcoal_burner' (kendi sprite / avatar / ikon / VFX'i sanat turunda). Sayılar PROVİZYON (sim YOK).",
   "id": "pitch_boiler",
   "name": "Pitch Boiler",
   "family": "ember_cult",

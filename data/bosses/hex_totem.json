@@ -1,5 +1,5 @@
 {
-  "_not": "Hex Totem (Harita 2, dr_13 Marsh Hexes, Break the Totem hedef nesnesi; content-designer 2026-10-27, open-questions 444): eskiden Bridge Warden'ın Iron Mooring nesnesi 'Hex Totem' adıyla kullanılıyordu; artık kendi id'si. Statlar Iron Mooring ile birebir (inert: sıra almaz, eylemi yok, şifa / kalkan almaz, ceset bırakmaz, savaş bitişinde sayılmaz). Çizim kendi: assets/sprites/hex_totem. Canı PROVİZYON.",
+  "_not": "Hex Totem (Harita 2, dr_13 Marsh Hexes, Break the Totem hedef nesnesi; content-designer 2026-10-27, open-questions 446): eskiden Bridge Warden'ın Iron Mooring nesnesi 'Hex Totem' adıyla kullanılıyordu; artık kendi id'si. Statlar Iron Mooring ile birebir (inert: sıra almaz, eylemi yok, şifa / kalkan almaz, ceset bırakmaz, savaş bitişinde sayılmaz). Çizim kendi: assets/sprites/hex_totem. Canı PROVİZYON.",
   "id": "hex_totem",
   "name": "Hex Totem",
   "spriteId": "hex_totem",
