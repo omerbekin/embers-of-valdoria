@@ -1,10 +1,10 @@
 {
-  "_not": "Harita 2 karşılaşmaları (YER TUTUCU, campaign-dev 2026-10-25; maps-2-3.md 3.2 / 3.3). Yeni mob YOK: belgedeki yeni moblar en yakın var olan class ile, görünen ad (name) belgedeki: River Reaver / Reef Wrecker = moor_raider, Reaver Archer / Cliff Crossbowman = bandit_crossbowman, Corsair Cutlass = cutpurse, Corsair Slinger = ravenwood_poacher, Salt Crab = shieldwarden, Weir Eel = grey_wolf, Reef Hound = ash_hound, Salt Hag = fen_witchling, Siren = raven_seer, Tide Caller = grave_chanter, Drowned Knight = sworn_guard, Brine Maiden = censer_monk, Wreck Ghoul = ghoul, Marsh Light = will_o_wisp, Dock Rat = road_thug. Elit önderler: Hook / Wrecker-Captain / Marrow = bandit_chief, Salt Hag Mother / Siren Queen = hedge_witch_morwen, Bastion / Drowned Champion = thane_of_the_deep, Salt Bishop = high_priest_of_the_undying. Bosslar: The Weir-Wyrm ve Admiral Vane = The Bridge Warden kiti (Vane'in Harpoon Ballista'sı = Iron Mooring), The Drowned Queen = Lord Morvane kiti. Çarpanlar: sıradan 1,0 (düşman level'ı bölüm 2 rampasından gelir), elit önder can 1,7 / güç 1,1 / stat 1,15, bosslar Harita 1 karşılaşmalarıyla aynı. Dalgalar var olan ekleme kuralıyla (waves.json; normal 2, elit 2, boss 3). Sim ölçümü YOK (balance-tester). KENDİ ÇİZİMLİ MOBLAR (content-designer 2026-10-25): Corsair Cutlass, Corsair Slinger, Salt Crab, Weir Eel, Siren, Drowned Knight, Brine Maiden, Reaver Archer, Reef Wrecker artık kendi id'leriyle (data/mobs/<id>.json; kitleri maps-2-3.md 3.3, pasifleri motor gelene kadar yer tutucu: open-questions 419). River Reaver ve Cliff Crossbowman hâlâ moor_raider / bandit_crossbowman.",
+  "_not": "Harita 2 karşılaşmaları (YER TUTUCU, campaign-dev 2026-10-25; maps-2-3.md 3.2 / 3.3). Yeni mob YOK: belgedeki yeni moblar en yakın var olan class ile, görünen ad (name) belgedeki: River Reaver / Reef Wrecker = moor_raider, Reaver Archer / Cliff Crossbowman = bandit_crossbowman, Corsair Cutlass = cutpurse, Corsair Slinger = ravenwood_poacher, Salt Crab = shieldwarden, Weir Eel = grey_wolf, Reef Hound = ash_hound, Salt Hag = fen_witchling, Siren = raven_seer, Tide Caller = grave_chanter, Drowned Knight = sworn_guard, Brine Maiden = censer_monk, Wreck Ghoul = ghoul, Marsh Light = will_o_wisp, Dock Rat = road_thug. Elit önderler: Hook / Wrecker-Captain / Marrow = bandit_chief, Salt Hag Mother / Siren Queen = hedge_witch_morwen, Bastion / Drowned Champion = thane_of_the_deep, Salt Bishop = high_priest_of_the_undying. Bosslar: The Weir-Wyrm ve Admiral Vane = The Bridge Warden kiti (Vane'in Harpoon Ballista'sı = Iron Mooring), The Drowned Queen = Lord Morvane kiti. Çarpanlar: sıradan 1,0 (düşman level'ı bölüm 2 rampasından gelir), elit önder can 1,7 / güç 1,1 / stat 1,15, bosslar Harita 1 karşılaşmalarıyla aynı. Dalgalar var olan ekleme kuralıyla (waves.json; normal 2, elit 2, boss 3). Sim ölçümü YOK (balance-tester). KENDİ ÇİZİMLİ MOBLAR (content-designer 2026-10-25): Corsair Cutlass, Corsair Slinger, Salt Crab, Weir Eel, Siren, Drowned Knight, Brine Maiden, Reaver Archer, Reef Wrecker artık kendi id'leriyle (data/mobs/<id>.json; kitleri maps-2-3.md 3.3, pasifleri motor gelene kadar yer tutucu: open-questions 419). River Reaver ve Cliff Crossbowman hâlâ moor_raider / bandit_crossbowman. KENDİ KİTLİ ELİT VE BOSSLAR (content-designer 2026-10-27, Ömer onayı): yukarıdaki ödünç kitler (bandit_chief, hedge_witch_morwen, thane_of_the_deep, high_priest_of_the_undying, oathsworn_brother (Vell), bridge_warden, lord_morvane) yerine her önder kendi id'siyle: reaver_chief_hook, salt_hag_mother, guild_enforcer_bastion, inquisitor_captain_vell, wrecker_captain, corsair_captain_marrow, siren_queen, salt_bishop, drowned_champion (data/mobs) ve weir_wyrm, admiral_vane, drowned_queen (data/bosses); karşılaşma çarpanları aynı. Pit Champion Gorr (dr_pit_5, kendi çizimi yok) bandit_chief kalır. Sayılar PROVİZYON (open-questions 435).",
   "dr_weir_wyrm": {
     "name": "The Weir-Wyrm",
     "units": [
       {
-        "class": "bridge_warden",
+        "class": "weir_wyrm",
         "slot": 1,
         "name": "The Weir-Wyrm",
         "sprite": "weir_wyrm",
@@ -41,7 +41,7 @@
     "name": "Admiral Vane",
     "units": [
       {
-        "class": "bridge_warden",
+        "class": "admiral_vane",
         "slot": 4,
         "name": "Admiral Vane",
         "sprite": "admiral_vane",
@@ -106,7 +106,7 @@
     "name": "The Drowned Queen",
     "units": [
       {
-        "class": "lord_morvane",
+        "class": "drowned_queen",
         "slot": 4,
         "name": "The Drowned Queen",
         "sprite": "drowned_queen",
@@ -118,7 +118,7 @@
         }
       },
       {
-        "class": "thane_of_the_deep",
+        "class": "drowned_champion",
         "slot": 1,
         "name": "The Drowned Champion",
         "sprite": "drowned_champion",
@@ -395,7 +395,7 @@
     "name": "Reaver Chief",
     "units": [
       {
-        "class": "bandit_chief",
+        "class": "reaver_chief_hook",
         "slot": 1,
         "name": "Reaver Chief \"Hook\"",
         "sprite": "reaver_chief_hook",
@@ -663,7 +663,7 @@
     "name": "Salt Hag Mother",
     "units": [
       {
-        "class": "hedge_witch_morwen",
+        "class": "salt_hag_mother",
         "slot": 7,
         "name": "Salt Hag Mother",
         "sprite": "salt_hag_mother",
@@ -956,7 +956,7 @@
     "name": "Guild Enforcer",
     "units": [
       {
-        "class": "thane_of_the_deep",
+        "class": "guild_enforcer_bastion",
         "slot": 1,
         "name": "Guild Enforcer \"Bastion\"",
         "sprite": "guild_enforcer_bastion",
@@ -997,11 +997,11 @@
     ]
   },
   "dr_32_vell": {
-    "_not": "M-L (maps-2-3.md 3.2 #32): Guild tarafını seçen oyuncunun Harbor Fort eliti. Inquisitor-Captain Vell YER TUTUCU kit: oathsworn_brother elit önder (kendi çizimi / kiti yok; Bastion ile aynı elit çarpanları 1,7 / 1,1 / 1,15). PROVİZYON, open-questions 433.",
+    "_not": "M-L (maps-2-3.md 3.2 #32): Guild tarafını seçen oyuncunun Harbor Fort eliti. Inquisitor-Captain Vell kendi kiti (inquisitor_captain_vell, content-designer 2026-10-27; kendi çizimi yok: Oathsworn çizimini paylaşır; Bastion ile aynı elit çarpanları 1,7 / 1,1 / 1,15). PROVİZYON, open-questions 433 / 434.",
     "name": "Inquisitor-Captain",
     "units": [
       {
-        "class": "oathsworn_brother",
+        "class": "inquisitor_captain_vell",
         "slot": 1,
         "name": "Inquisitor-Captain Vell",
         "tier": "elite",
@@ -1591,7 +1591,7 @@
     "name": "The Wrecker-Captain",
     "units": [
       {
-        "class": "bandit_chief",
+        "class": "wrecker_captain",
         "slot": 1,
         "name": "The Wrecker-Captain",
         "sprite": "wrecker_captain",
@@ -1853,7 +1853,7 @@
     "background": "storm-deck",
     "units": [
       {
-        "class": "bandit_chief",
+        "class": "corsair_captain_marrow",
         "slot": 1,
         "name": "Corsair Captain \"Marrow\"",
         "sprite": "corsair_captain_marrow",
@@ -2086,7 +2086,7 @@
     "name": "The Siren Queen",
     "units": [
       {
-        "class": "hedge_witch_morwen",
+        "class": "siren_queen",
         "slot": 7,
         "name": "The Siren Queen",
         "sprite": "siren_queen",
@@ -2339,7 +2339,7 @@
     "name": "The Salt Bishop",
     "units": [
       {
-        "class": "high_priest_of_the_undying",
+        "class": "salt_bishop",
         "slot": 7,
         "name": "The Salt Bishop",
         "sprite": "salt_bishop",
@@ -2515,7 +2515,7 @@
     "name": "The Drowned Champion",
     "units": [
       {
-        "class": "thane_of_the_deep",
+        "class": "drowned_champion",
         "slot": 1,
         "name": "The Drowned Champion",
         "sprite": "drowned_champion",

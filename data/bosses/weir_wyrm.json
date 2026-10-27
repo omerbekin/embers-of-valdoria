@@ -1,0 +1,89 @@
+{
+  "_not": "The Weir-Wyrm: Harita 2 Bölge II bossu (The Weir Mouth dr_26; maps-2-3.md 3.3, content-designer 2026-10-27). Ödünç Bridge Warden kiti yerine kendi kiti: Lash (bir sıra) + Swallow (tek hücre telgrafı, ağır) + Surge (2 sıra Flooded) + ult Deluge (faz 3, tüm tahta Flooded, güvenli hücre yok). Pasif Slick Hide: belgedeki 'Flooded hücrede fiziksel -%30' motorda yok; en yakın var olan sürüm Slick (Flooded hücrede kaçınma +%25; open-questions 435). Faz 2'de 'Surge her 2 turda' faz başına bekleme süresi ister: yok (open-questions 435). Stat / can / zırh Bridge Warden'la aynı; tur başı 2 eylem karşılaşmadan (encounter mods). Gizli boss tanımı (data/bosses). Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf Warden skill'leri). Sayılar PROVİZYON.",
+  "id": "weir_wyrm",
+  "name": "The Weir-Wyrm",
+  "spriteId": "weir_wyrm",
+  "color": "#3f6a5a",
+  "logo": "floodedplanks",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Boss · Giant Eel",
+  "attributes": {
+    "str": 50,
+    "int": 12,
+    "dex": 2,
+    "luck": 8
+  },
+  "armor": 24,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 432,
+    "hpRegen": 0
+  },
+  "ai": "bridge_warden",
+  "skills": [
+    "wyrm_lash",
+    "wyrm_swallow",
+    "wyrm_surge",
+    "wyrm_deluge"
+  ],
+  "passive": {
+    "id": "slick_hide",
+    "name": "Slick Hide",
+    "icon": "boot",
+    "text": "While it lies in Flooded water it is hard to pin down: +25% evasion.",
+    "effect": {
+      "type": "slick",
+      "ground": "flooded",
+      "evasion": 0.25
+    }
+  },
+  "boss": {
+    "where": "lurks in the Weir Mouth",
+    "firstBanner": "The weir is mine.",
+    "phases": [
+      {
+        "at": 0.6,
+        "banner": "The weir breaks."
+      },
+      {
+        "at": 0.3,
+        "banner": "The Reach rises.",
+        "actionsPerTurn": 2,
+        "powerMult": 1.15,
+        "telegraphOnEnter": "wyrm_deluge"
+      }
+    ],
+    "unyielding": {
+      "stunToStagger": false,
+      "debuffDurationDelta": -1,
+      "immuneDisplacement": true
+    },
+    "notes": [
+      "Warnings: Swallow and Deluge do not hit at once. The marked cells ripple and the attack lands at the start of the Wyrm's next turn, before it acts. Every hero gets at least one turn in between. These hits cannot miss.",
+      "Swallow marks a single cell: step out of it (Move) or take a crushing bite.",
+      "Surge floods two rows: heroes there are Soaked (fire damage taken ×0.5, Speed ×0.9).",
+      "Deluge marks your whole side and has no safe cell: shield, guard, fortify or heal your heroes before it lands."
+    ],
+    "passives": [
+      {
+        "id": "unyielding",
+        "name": "Unyielding",
+        "icon": "unyielding",
+        "text": "Immune to crowd control: Stun, Slow and Silence do not take hold, taunts do not force its attacks, and it cannot be pulled or pushed. Other ailments last 1 turn less."
+      },
+      {
+        "id": "slick_hide",
+        "name": "Slick Hide",
+        "icon": "boot",
+        "text": "While it lies in Flooded water it gains +25% evasion."
+      },
+      {
+        "id": "rising_water",
+        "name": "Rising Water",
+        "icon": "floodedplanks",
+        "text": "At 30% HP the Reach rises: its hits deal ×1.15 damage and at once it calls the Deluge. A single attack can cross only one threshold."
+      }
+    ]
+  }
+}

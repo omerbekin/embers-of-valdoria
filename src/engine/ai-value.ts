@@ -100,7 +100,7 @@ export interface AiDifficultyConfig {
   /** Uygun anı bekleme: yığın patlatan (detonate) skill'i, öldürmeden ve yığın dolmaya 1 kala değilken kullanmanın değer payı. */
   patience?: number;
   /** Telgraf terazisi ayarlarının bu seviyedeki üzerine yazılanları (ai.ts > AiTelegraphConfig; Easy: hookCombo 0). */
-  telegraph?: Partial<{ hitShare: number; denyShare: number; hookCombo: number; dodgeOpportunityShare: number; anchorShare: number }>;
+  telegraph?: Partial<{ hitShare: number; denyShare: number; hookCombo: number; dodgeOpportunityShare: number; anchorShare: number; pullFront: number }>;
   note?: string;
 }
 

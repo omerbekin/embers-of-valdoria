@@ -1074,3 +1074,22 @@ Seçimler: C1 V1 (HUD taç plakası, eylemi harcar), C2 a, C3 a, C4 (üst sını
 2. Kilitliyken harita kaydırma / yakınlaştırma serbest (yalnızca bakma); düğümler, Gear, Menu, Back, Esc ve diğer DOM düğmeleri kilitli. "Don't show again" kutuda açık kalır ve kapıyı kaldırır.
 3. Spot ışığı açılırken o an açık başka bir mentor kutusu (ör. "Wounds Carry Over") kapanır (görüldü sayılır, Codex'te kalır).
 4. Mill Road'un takım sınırı (`partyCap` 1) değişmedi; ikinci kahraman Mill Road'da katıldığı halde sınır Ravenwood'a varınca 2 olur (yalnızca Inn ekranı kullanır, tutorial'da Inn yok).
+
+11. ~~AÇIK: **M-N2 Boarding Hook** (zorla yer değiştirme) yapılmadı~~ → yapıldı (content-designer 2026-10-27, madde 434: Hook'un kendi kiti, `pull to: frontRow`). M-N1 Harpoon Ballista (`iron_mooring`, dr_admiral_vane) ve M-N3 Tidewater Urn (dr_48, dr_63) zaten vardı.
+
+## 435. Harita 2 elit / boss önderlerinin kendi kitleri: yakın mekanikler ve provizyon sayılar (content-designer 2026-10-27; `data/skills.json`, `data/mobs/*`, `data/bosses/{weir_wyrm,admiral_vane,drowned_queen}.json`, `data/campaign/drowned-reach-encounters.json`, `tests/map2-leaders.test.ts`)
+
+Ömer onayı: 8 elit + Vell + 3 boss ödünç Harita 1 kiti yerine KENDİ skill'lerini aldı (maps-2-3.md 3.3). Sim YOK; güç ödünç kite yakın tutuldu (stat / zırh ödünç sınıftan kopya). Tüm yeni skill sayıları PROVİZYON.
+
+1. **M-N2 Boarding Hook** (`pull to: frontRow`): kahraman kendi şeridinin ön sıra hücresine çekilir; hücre doluysa / kapalıysa çekme yok (arada boş hücre olsa da öne kaymaz); zaten ön sıradaysa, elit / boss rütbeliyse, yardımcı nesneyse, çekme bağışıklığı varsa çekilmez. Hasar her durumda gelir. YZ değeri `ai.json > telegraph.pullFront` 0,5 (hasar değerinin payı) PROVİZYON.
+2. **Skill ile bırakılan Flooded** (Call the Tide, Wyrm Surge / Deluge, Requiem of Salt, High Tide, The Reach Drowns): gücü 0 olan zemin = hasarsız (motor: zemin verisinde `power <= 0` -> `noDamage`). Ortam suyu (Tide) değil: kendiliğinden Soaked vermez, Burning söndürmez; bu yüzden Soaked ayrı durum etkisi olarak eklendi. Ortam suyu gibi davranması istenir mi?
+3. **Weir-Wyrm Slick Hide:** belge "Flooded hücredeyken fiziksel hasar -%30" diyor; böyle bir kural yok -> en yakın: `slick` pasifi +%25 kaçınma. Faz 2 "her 2 turda Surge" (faza özel bekleme) yok: Surge normal bekleme süresiyle.
+4. **Admiral Vane:** Harpoon Ballista'nın her tur bir hücreye telgraflı atışı yerine Vane'in kendi Harpoon Line'ı (canlı Iron Mooring şartı, çekme laneFront). Boarding Party yalnız gösterim; Haste eşlikçilerin kendi Boarding pasifinden. Vane Rally faz 2, Broadside faz 3.
+5. **Drowned Queen Crown of Salt:** belge "Flooded hücre başına %2 hasar azaltma"; yok -> en yakın Morvane'in Crown of Ash mekaniği (0,1 / 3 tur). Belgedeki "Call the Tide" adı elitle çakıştığı için Queen'inki **High Tide**.
+6. **Drowned Champion:** "Deathless Tide x2" -> bir kez %50; faz 3'te yeniden kalkma eklenmedi.
+7. **Salt Bishop:** "geniş Salt Tears" -> saltTears 0,08 + Tide of Mercy (tüm dostlara şifa).
+8. **Bastion / Champion zırhı** Deep Hoard yerine yükseltildi (26/14, 26/16) PROVİZYON. Bastion YZ profili `mob_tank` (guard skill'i yok).
+9. **Boss statları** Warden / Morvane'den kopya; boss müziği eski ödünç parçalarda (Wyrm + Vane = boss_warden, Queen = boss_morvane).
+10. **Pit Champion "Gorr"** (dr_pit_5) bandit_chief kitinde kaldı (kendi çizimi / tasarımı yok).
+11. **YZ az kullanıyor (ölçüm: 4 seed, önder canı yüksek):** yalnız Saltbound / Spellbound veren skill'ler (Salt Circle, Siren's Call), Debtor's Chain (Iron Maul daha güçlü) ve Harpoon Line neredeyse hiç seçilmiyor: YZ Saltbound'a yalnız Mire-Bound üzerinden değer veriyor. Güç artırılsın mı, yoksa böyle mi kalsın?
+12. **Sanat / ses:** 40 yeni skill'in ikon / efekti yer tutucu (`artOf`); sesler artOf sahibinin tarifinden kopya (`data/audio-mobs.json > mob<Id><Rol>`); Warden kaynaklı 6 boss skill'i (wyrm_*, chain_shot, harpoon_line) Warden'ın sesini kullanıyor. Poz sayfası skill satırları yeni id'lere taşındı (`data/mob-poses.json`).

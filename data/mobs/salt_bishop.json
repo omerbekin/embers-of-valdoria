@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 2 elit önderi (The Bishop's Chapel dr_74; maps-2-3.md 3.3 'High Priest gelişmiş: Vessel of the Choir yerine Salt Tears geniş', content-designer 2026-10-27). Ödünç High Priest kiti yerine kendi kiti: Brine Rite + Requiem of Salt + Tide of Mercy (tüm dostlara şifa), pasif Greater Salt Tears (Salt Tears %8). Stat / zırh High Priest'le aynı (Vessel'in +30 MP'si yok). Karşılaşmada Tide yoksa Salt Tears yalnız Flooded hücrede işler; geniş şifa bu yüzden ayrıca Tide of Mercy'de (open-questions 435). Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON.",
+  "id": "salt_bishop",
+  "name": "The Salt Bishop",
+  "family": "sunken_court",
+  "spriteId": "salt_bishop",
+  "spriteScale": 1.15,
+  "color": "#7fa8b0",
+  "logo": "skull",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Sunken Court · Elite",
+  "attributes": {
+    "str": 8,
+    "int": 32,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 12,
+  "magicArmor": 16,
+  "ai": "healer",
+  "skills": [
+    "brine_rite",
+    "requiem_of_salt",
+    "tide_of_mercy"
+  ],
+  "passive": {
+    "id": "greater_salt_tears",
+    "name": "Greater Salt Tears",
+    "icon": "wail",
+    "text": "At the start of its turn, every wounded ally standing in Flooded water (itself included) heals 8% of max HP.",
+    "effect": {
+      "type": "saltTears",
+      "ground": "flooded",
+      "ratio": 0.08
+    }
+  }
+}

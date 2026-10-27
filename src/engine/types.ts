@@ -1073,8 +1073,12 @@ export type SkillEffectKind =
    */
   | {
       type: 'pull';
-      /** laneFront: şeridin en öndeki boş hücresi; Faz 5a stepForward: bir sıra öne (önü boşsa; Grasp and Drag). */
-      to: 'laneFront' | 'stepForward';
+      /**
+       * laneFront: şeridin en öndeki boş hücresi; Faz 5a stepForward: bir sıra öne (önü boşsa; Grasp and Drag).
+       * frontRow (M-N2 Boarding Hook, maps-2-3.md 5): kendi şeridinin ÖN SIRA hücresine; o hücre doluysa / kapalıysa çekme YOK (arada boş
+       * hücre olsa da), elit ve boss rütbeliler çekilemez (Battle.frontRowPullSlot).
+       */
+      to: 'laneFront' | 'stepForward' | 'frontRow';
       /** Faz 5a: yalnızca alanın arka sırasındaki hedefler. */
       areaBack?: boolean;
     };

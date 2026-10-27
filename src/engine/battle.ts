@@ -3431,6 +3431,24 @@ export class Battle {
     return null;
   }
 
+  /**
+   * M-N2 zorla hareket (Boarding Hook; maps-2-3.md 5, Ömer onayı 2026-10-20): birim kendi şeridinin ÖN SIRA hücresine çekilir. Zaten ön
+   * sıradaysa, o hücre doluysa (canlı birim) ya da kapalıysa çekme yok (arada boş hücre olsa da öne kaymaz); elit / boss rütbeli, yardımcı
+   * nesne, sızmış birim ve çekme bağışıklığı olan (immuneToDisplacement) çekilemez. Saf.
+   */
+  frontRowPullSlot(c: Combatant): number | null {
+    if (c.inert || c.board !== c.side || c.tier !== undefined || c.boss !== undefined || this.immuneToDisplacement(c) || this.rowOf(c.slot) === 0) return null;
+    const to = this.laneOf(c.slot);
+    if (this.isBlocked(to, c.board) || this.combatants.some((o) => o.hp > 0 && o.board === c.board && o.slot === to)) return null;
+    return to;
+  }
+
+  /** Çekme etkisinin bu birimi götüreceği hücre (skill'in `to` türüne göre); çekilmezse null. YZ ve önizleme için. Saf. */
+  pullSlotFor(c: Combatant, to: 'laneFront' | 'stepForward' | 'frontRow'): number | null {
+    if (c.hp <= 0) return null;
+    return to === 'stepForward' ? this.stepForwardSlot(c) : to === 'frontRow' ? this.frontRowPullSlot(c) : this.pullDestination(c);
+  }
+
   /** Yuvanın sırası (0 = en önde) ve şeridi. */
   rowOf(slot: number): number {
     return Math.floor(slot / this.setup.formulas.formation.lanes);
@@ -5169,7 +5187,7 @@ export class Battle {
             pulled = pulled.filter((c) => this.rowOf(c.slot) === back);
           }
           for (const r of pulled) {
-            const to = r.hp <= 0 ? null : effect.to === 'stepForward' ? this.stepForwardSlot(r) : this.pullDestination(r);
+            const to = r.hp <= 0 ? null : effect.to === 'stepForward' ? this.stepForwardSlot(r) : effect.to === 'frontRow' ? this.frontRowPullSlot(r) : this.pullDestination(r);
             if (to === null) continue;
             const from = r.slot;
             r.slot = to;
@@ -5205,6 +5223,8 @@ export class Battle {
             ...(this.treeUnits ? { age: 0 } : {}),
           };
           // Faz 4c (ağaç): gücü 0 olan zemin hasar vermez (yalnızca durum), tur başı ek durumlar, hücre başına güç (merkez / üst üste)
+          // Verisinde gücü 0 olan zemin hasar vermez (yalnızca zemin: Harita 2 Flooded suyu, Call the Tide / Surge). Statı 0 olan bırakanın zemini yine en az minDamage vurur.
+          if (effect.power <= 0) g.noDamage = true;
           if (this.treeUnits) {
             if (g.amount <= 0) g.noDamage = true;
             if (effect.statuses?.length) g.statuses = effect.statuses.map((x) => ({ ...x }));

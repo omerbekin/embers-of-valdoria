@@ -6396,5 +6396,1432 @@
       "smokePuff"
     ],
     "artOf": "sand_in_the_eyes"
+  },
+  "gaff_strike": {
+    "_not": "Harita 2 Reaver Chief \"Hook\" kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). temel saldırı: STR fiziksel (Chief's Cleaver gücü). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "gaff_strike",
+    "name": "Gaff Strike",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#8a7a5a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1
+      }
+    ],
+    "icon": "clover",
+    "vfx": "bonethrow",
+    "sfx": [
+      "chainTether",
+      "boneImpact"
+    ],
+    "artOf": "billhook"
+  },
+  "boarding_hook": {
+    "_not": "Harita 2 Reaver Chief \"Hook\" kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). M-N2 zorla hareket (maps-2-3.md 5): hasar + hedef kendi şeridinin ön sıra hücresine çekilir; o hücre doluysa çekme yok; elit/boss çekilmez. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "boarding_hook",
+    "name": "Boarding Hook",
+    "target": "single_enemy",
+    "range": 4,
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 2,
+    "motion": "whip",
+    "fx": "#6b7682",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.55
+      },
+      {
+        "type": "pull",
+        "to": "frontRow"
+      }
+    ],
+    "icon": "chainhook",
+    "vfx": "chainhook",
+    "sfx": [
+      "chainDrag",
+      "ironCreak"
+    ],
+    "artOf": "hook"
+  },
+  "gutting_sweep": {
+    "_not": "Harita 2 Reaver Chief \"Hook\" kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). bir sıraya STR fiziksel (Toll Sweep gücü). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "gutting_sweep",
+    "name": "Gutting Sweep",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#b8a070",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      }
+    ],
+    "icon": "whirlwind",
+    "vfx": "whirlwind",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "rake"
+  },
+  "brine_curse": {
+    "_not": "Harita 2 Salt Hag Mother kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). temel saldırı: LUCK buz büyüsü. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "brine_curse",
+    "name": "Brine Curse",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7fbfa8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "ice",
+        "scale": "luck",
+        "power": 0.6
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "cauldron_splash"
+  },
+  "call_the_tide": {
+    "_not": "Harita 2 Salt Hag Mother kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide 2 sıra (maps-2-3.md 3.3): 2x3 alan hafif buz hasarı + 2 tur Flooded zemin (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "call_the_tide",
+    "name": "Call the Tide",
+    "target": "area_enemies",
+    "range": 5,
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#3d7f9a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "ice",
+        "scale": "luck",
+        "power": 0.25
+      },
+      {
+        "type": "ground",
+        "ground": "flooded",
+        "turns": 2,
+        "scale": "luck",
+        "power": 0
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 2
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "chorus"
+  },
+  "salt_circle": {
+    "_not": "Harita 2 Salt Hag Mother kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). geniş Saltbound (maps-2-3.md 3.3): bir sıraya 1 tur Saltbound (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "salt_circle",
+    "name": "Salt Circle",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#d8d0b0",
+    "effects": [
+      {
+        "type": "status",
+        "status": "saltbound",
+        "turns": 1
+      }
+    ],
+    "icon": "voidstrike",
+    "vfx": "voidstrike",
+    "sfx": [
+      "voidPulse",
+      "implode"
+    ],
+    "artOf": "hags_mark"
+  },
+  "iron_maul": {
+    "_not": "Harita 2 Guild Enforcer \"Bastion\" kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). temel saldırı: STR fiziksel + zırhın %10'u. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "iron_maul",
+    "name": "Iron Maul",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9a8a6a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.6,
+        "bonusScale": [
+          {
+            "stat": "armor",
+            "pct": 0.1
+          }
+        ]
+      }
+    ],
+    "icon": "anchorsmash",
+    "vfx": "anchorsmash",
+    "sfx": [
+      "chainDrag",
+      "anchorImpact"
+    ],
+    "artOf": "pick_of_the_deep"
+  },
+  "hold_the_pier": {
+    "_not": "Harita 2 Guild Enforcer \"Bastion\" kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). kendine 2 tur taunt + 1 tur Fortified. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "hold_the_pier",
+    "name": "Hold the Pier",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#a08a6a",
+    "effects": [
+      {
+        "type": "taunt",
+        "turns": 2
+      },
+      {
+        "type": "status",
+        "status": "fortify",
+        "turns": 1,
+        "self": true
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "oath_of_stone"
+  },
+  "debtors_chain": {
+    "_not": "Harita 2 Guild Enforcer \"Bastion\" kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). hafif STR fiziksel + 1 tur Saltbound (borçlu kaçamaz). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "debtors_chain",
+    "name": "Debtor's Chain",
+    "target": "single_enemy",
+    "range": 2,
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#6b7682",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.4
+      },
+      {
+        "type": "status",
+        "status": "saltbound",
+        "turns": 1
+      }
+    ],
+    "icon": "chainhook",
+    "vfx": "chainhook",
+    "sfx": [
+      "chainDrag",
+      "ironCreak"
+    ],
+    "artOf": "hook"
+  },
+  "scourge_of_heresy": {
+    "_not": "Harita 2 Inquisitor-Captain Vell kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). temel saldırı: STR fiziksel (pasif Heresy Remembered bununla). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "scourge_of_heresy",
+    "name": "Scourge of Heresy",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#e8d48a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "penance_flail"
+  },
+  "writ_of_silence": {
+    "_not": "Harita 2 Inquisitor-Captain Vell kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). STR kutsal büyü + 1 tur Silenced. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "writ_of_silence",
+    "name": "Writ of Silence",
+    "target": "single_enemy",
+    "range": 5,
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#f3e2a0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "holy",
+        "scale": "str",
+        "power": 0.45
+      },
+      {
+        "type": "status",
+        "status": "silence",
+        "turns": 1
+      }
+    ],
+    "icon": "judgehammer",
+    "vfx": "hammerfall",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam"
+    ],
+    "artOf": "holy_ember"
+  },
+  "lead_the_faithful": {
+    "_not": "Harita 2 Inquisitor-Captain Vell kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). tüm dostlara 2 tur Blessed. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "lead_the_faithful",
+    "name": "Lead the Faithful",
+    "target": "all_allies",
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#f3e2a0",
+    "effects": [
+      {
+        "type": "status",
+        "status": "blessed",
+        "turns": 2
+      }
+    ],
+    "icon": "spellward",
+    "vfx": "spellward",
+    "sfx": [
+      "wardHum"
+    ],
+    "artOf": "sanctuary"
+  },
+  "wreckers_gaff": {
+    "_not": "Harita 2 The Wrecker-Captain kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). temel saldırı: STR fiziksel. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "wreckers_gaff",
+    "name": "Wrecker's Gaff",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#6b7682",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1
+      }
+    ],
+    "icon": "chainhook",
+    "vfx": "chainhook",
+    "sfx": [
+      "chainDrag",
+      "ironCreak"
+    ],
+    "artOf": "hook"
+  },
+  "false_beacon": {
+    "_not": "Harita 2 The Wrecker-Captain kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Lantern Flash geniş (maps-2-3.md 3.3): 2x3 alan Shrouded siler + 1 tur Blinded. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "false_beacon",
+    "name": "False Beacon",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#ffd27a",
+    "effects": [
+      {
+        "type": "dispel",
+        "status": "buff",
+        "kinds": [
+          "shrouded"
+        ]
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 1
+      }
+    ],
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "lantern_flash"
+  },
+  "drag_to_the_rocks": {
+    "_not": "Harita 2 The Wrecker-Captain kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). bir sıraya STR fiziksel + 1 tur Slow. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "drag_to_the_rocks",
+    "name": "Drag to the Rocks",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#c9a070",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.6
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "whirlwind",
+    "vfx": "whirlwind",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "toll_sweep"
+  },
+  "black_cutlass": {
+    "_not": "Harita 2 Corsair Captain \"Marrow\" kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). temel saldırı: STR fiziksel. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "black_cutlass",
+    "name": "Black Cutlass",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#c9c9c9",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "cutlass"
+  },
+  "captains_rake": {
+    "_not": "Harita 2 Corsair Captain \"Marrow\" kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Rake (maps-2-3.md 3.3): bir sıraya STR fiziksel. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "captains_rake",
+    "name": "Captain's Rake",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#b8a070",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      }
+    ],
+    "icon": "whirlwind",
+    "vfx": "whirlwind",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "rake"
+  },
+  "powder_keg": {
+    "_not": "Harita 2 Corsair Captain \"Marrow\" kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). 2x2 alan ateş + 2 tur Burning ground (Tide suyu söndürür). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "powder_keg",
+    "name": "Powder Keg",
+    "target": "area_enemies",
+    "range": 5,
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "ranged",
+    "fx": "#ff7a1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "element": "fire",
+        "scale": "str",
+        "power": 0.4
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "str",
+        "power": 0.15
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "pitch_pot"
+  },
+  "queens_lament": {
+    "_not": "Harita 2 The Siren Queen kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). temel saldırı: LUCK karanlık büyü + 1 tur Slow. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "queens_lament",
+    "name": "Queen's Lament",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7fb8c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.6
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "eye",
+    "vfx": "voidstrike",
+    "sfx": [
+      "darkChant",
+      "boneImpact"
+    ],
+    "artOf": "lament"
+  },
+  "grand_chorus": {
+    "_not": "Harita 2 The Siren Queen kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Chorus tüm tahta + Soaked (maps-2-3.md 3.3): tüm kahramanlara hafif karanlık + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "grand_chorus",
+    "name": "Grand Chorus",
+    "target": "all_enemies",
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#5fa8c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.22
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 2
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "chorus"
+  },
+  "sirens_call": {
+    "_not": "Harita 2 The Siren Queen kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). tek düşmana 1 tur Saltbound + 1 tur Spellbound (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "sirens_call",
+    "name": "Siren's Call",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#e0b04a",
+    "effects": [
+      {
+        "type": "status",
+        "status": "saltbound",
+        "turns": 1
+      },
+      {
+        "type": "status",
+        "status": "spellbound",
+        "turns": 1
+      }
+    ],
+    "icon": "clover",
+    "vfx": "bonethrow",
+    "sfx": [
+      "chainTether",
+      "boneImpact"
+    ],
+    "artOf": "lure_light"
+  },
+  "brine_rite": {
+    "_not": "Harita 2 The Salt Bishop kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). temel saldırı: INT buz büyüsü + 2 tur Wound. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "brine_rite",
+    "name": "Brine Rite",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#9fd4e0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "ice",
+        "scale": "int",
+        "power": 0.7
+      },
+      {
+        "type": "status",
+        "status": "wound",
+        "turns": 2
+      }
+    ],
+    "icon": "eye",
+    "vfx": "voidstrike",
+    "sfx": [
+      "darkChant",
+      "boneImpact"
+    ],
+    "artOf": "bone_rite"
+  },
+  "requiem_of_salt": {
+    "_not": "Harita 2 The Salt Bishop kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). sütun boyunca sıra sıra INT buz (x0,75) + 2 tur Flooded zemin (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "requiem_of_salt",
+    "name": "Requiem of Salt",
+    "target": "area_enemies",
+    "area": {
+      "shape": "column",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 14
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#7fd0d8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "ice",
+        "scale": "int",
+        "power": 0.55,
+        "falloff": 0.75
+      },
+      {
+        "type": "ground",
+        "ground": "flooded",
+        "turns": 2,
+        "scale": "int",
+        "power": 0
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 2
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "requiem"
+  },
+  "tide_of_mercy": {
+    "_not": "Harita 2 The Salt Bishop kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). tüm dostlara INT şifa (Salt Tears geniş; Flooded olmayan savaşta da işler). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "tide_of_mercy",
+    "name": "Tide of Mercy",
+    "target": "all_allies",
+    "cost": {
+      "resource": "mp",
+      "amount": 14
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#7fd0d8",
+    "effects": [
+      {
+        "type": "heal",
+        "scale": "int",
+        "power": 0.25
+      }
+    ],
+    "icon": "rejuvenate",
+    "vfx": "rejuvenate",
+    "sfx": [
+      "chimeHeal",
+      "leafRustle"
+    ],
+    "artOf": "tidal_mend"
+  },
+  "drowned_greatsword": {
+    "_not": "Harita 2 The Drowned Champion kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). temel saldırı: STR fiziksel + zırhın %10'u. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "drowned_greatsword",
+    "name": "Drowned Greatsword",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#5f8a8a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.6,
+        "bonusScale": [
+          {
+            "stat": "armor",
+            "pct": 0.1
+          }
+        ]
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "rusted_blade"
+  },
+  "champions_challenge": {
+    "_not": "Harita 2 The Drowned Champion kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). kendine 2 tur taunt + 1 tur Fortified. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "champions_challenge",
+    "name": "Champion's Challenge",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#9fb0c4",
+    "effects": [
+      {
+        "type": "taunt",
+        "turns": 2
+      },
+      {
+        "type": "status",
+        "status": "fortify",
+        "turns": 1,
+        "self": true
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "burrow"
+  },
+  "wall_of_brine": {
+    "_not": "Harita 2 The Drowned Champion kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). dosta 3 tur Guard (%60). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "wall_of_brine",
+    "name": "Wall of Brine",
+    "target": "single_ally",
+    "excludeSelf": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 2
+    },
+    "cooldown": 4,
+    "turnCost": 0.5,
+    "motion": "cast",
+    "fx": "#5fa8c8",
+    "effects": [
+      {
+        "type": "guard",
+        "turns": 3,
+        "share": 0.6
+      }
+    ],
+    "icon": "closeranks2",
+    "vfx": "guard2",
+    "sfx": [
+      "shieldBrace",
+      "chainTether"
+    ],
+    "artOf": "shield_of_brine"
+  },
+  "wyrm_lash": {
+    "_not": "Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Lash (maps-2-3.md 3.3): temel saldırı, bir sıraya STR fiziksel. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "wyrm_lash",
+    "name": "Lash",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "range": 2,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#4f7f6a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.45
+      }
+    ],
+    "icon": "anchorsmash",
+    "vfx": "anchorsmash",
+    "sfx": [
+      "chainDrag",
+      "anchorImpact"
+    ],
+    "artOf": "anchor_smash"
+  },
+  "wyrm_swallow": {
+    "_not": "Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Swallow (tek, ağır, telgraflı): tek hücre telgrafı, sonraki turunda ağır STR fiziksel (Move ile kaçılır). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "wyrm_swallow",
+    "name": "Swallow",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "rect",
+      "rows": 1,
+      "cols": 1,
+      "anchor": "bottom_left"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#2f6f73",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.6
+      }
+    ],
+    "icon": "breakingspan",
+    "vfx": "breakingspan",
+    "sfx": [
+      "chainDrag",
+      "stoneCrack",
+      "timberSplinter",
+      "riverBurst"
+    ],
+    "artOf": "breaking_span"
+  },
+  "wyrm_surge": {
+    "_not": "Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Surge (2 sıra Flooded): 2x3 alan STR fiziksel + 2 tur Flooded zemin (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "wyrm_surge",
+    "name": "Surge",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#3d7f9a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.5
+      },
+      {
+        "type": "ground",
+        "ground": "flooded",
+        "turns": 2,
+        "scale": "str",
+        "power": 0
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 2
+      }
+    ],
+    "icon": "breakingspan",
+    "vfx": "breakingspan",
+    "sfx": [
+      "chainDrag",
+      "stoneCrack",
+      "timberSplinter",
+      "riverBurst"
+    ],
+    "artOf": "breaking_span"
+  },
+  "wyrm_deluge": {
+    "_not": "Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE Deluge (faz 3; girişte telgraflanır): tüm kahraman tahtası, güvenli hücre YOK, STR fiziksel + 3 tur Flooded (hasarsız) + 3 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "wyrm_deluge",
+    "name": "Deluge",
+    "target": "all_enemies",
+    "global": true,
+    "telegraph": {
+      "kind": "area",
+      "wholeBoard": true
+    },
+    "minPhase": 3,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#2f6f73",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1
+      },
+      {
+        "type": "ground",
+        "ground": "flooded",
+        "turns": 3,
+        "scale": "str",
+        "power": 0
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 3
+      }
+    ],
+    "icon": "fallofthebridge",
+    "vfx": "fallofthebridge",
+    "sfx": [
+      "bridgeGroan",
+      "wardenGrowl",
+      "stoneCrack",
+      "timberSplinter",
+      "riverBurst"
+    ],
+    "artOf": "fall_of_kings_bridge"
+  },
+  "cutlass_flurry": {
+    "_not": "Harita 2 Admiral Vane (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Cutlass Flurry: temel saldırı, iki STR fiziksel vuruş (Anchor Smash gücü bölündü). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "cutlass_flurry",
+    "name": "Cutlass Flurry",
+    "target": "single_enemy",
+    "range": 2,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#c9c9c9",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.38
+      },
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.38
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "cutlass"
+  },
+  "chain_shot": {
+    "_not": "Harita 2 Admiral Vane (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Chain Shot (sütun): telgraflı şerit, sonraki turunda STR fiziksel + 1 tur Slow. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "chain_shot",
+    "name": "Chain Shot",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "column"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 2,
+    "motion": "cast",
+    "fx": "#6a6a6a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.2
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "breakingspan",
+    "vfx": "breakingspan",
+    "sfx": [
+      "chainDrag",
+      "stoneCrack",
+      "timberSplinter",
+      "riverBurst"
+    ],
+    "artOf": "breaking_span"
+  },
+  "harpoon_line": {
+    "_not": "Harita 2 Admiral Vane (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Harpoon Ballista ayaktayken (requiresAlly iron_mooring): STR fiziksel + hedef şeridinin en öndeki boş hücresine çekilir (Chain Hook kuralı). Belgedeki \"her tur telgraflı hücre\" atışının en yakın var olan sürümü (open-questions 435). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "harpoon_line",
+    "name": "Harpoon Line",
+    "target": "single_enemy",
+    "range": 6,
+    "requiresAlly": "iron_mooring",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 2,
+    "motion": "whip",
+    "fx": "#8a4a25",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.55
+      },
+      {
+        "type": "pull",
+        "to": "laneFront"
+      }
+    ],
+    "icon": "chainhook",
+    "vfx": "chainhook",
+    "sfx": [
+      "chainDrag",
+      "ironCreak"
+    ],
+    "artOf": "chain_hook"
+  },
+  "vane_rally": {
+    "_not": "Harita 2 Admiral Vane (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Rally (faz 2+): tüm dostlara 2 tur Haste. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "vane_rally",
+    "name": "Rally",
+    "target": "all_allies",
+    "minPhase": 2,
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#c0392b",
+    "effects": [
+      {
+        "type": "status",
+        "status": "haste",
+        "turns": 2
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "iron_decree"
+  },
+  "broadside": {
+    "_not": "Harita 2 Admiral Vane (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE Broadside (faz 3): telgraflı bir sıra, sonraki turunda STR fiziksel (ateş) + 2 tur Burning ground. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "broadside",
+    "name": "Broadside",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "row"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "minPhase": 3,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#ff5a1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "element": "fire",
+        "scale": "str",
+        "power": 1.3
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "str",
+        "power": 0.12
+      }
+    ],
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "ashfall"
+  },
+  "brine_lash": {
+    "_not": "Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Brine Lash (tek, her sıra): INT buz + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "brine_lash",
+    "name": "Brine Lash",
+    "target": "single_enemy",
+    "range": 5,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#3d9aa8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "ice",
+        "scale": "int",
+        "power": 0.85
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 2
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "cinder_lash"
+  },
+  "high_tide": {
+    "_not": "Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide (2 sıra, telgraflı; maps-2-3.md 3.3): telgraflı 2x2 (faz 2+: 2x3), sonraki turunda INT buz + 2 tur Flooded (hasarsız) + 2 tur Soaked. Ad High Tide (Salt Hag Mother'ın Call the Tide'ından ayrılsın). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "high_tide",
+    "name": "High Tide",
+    "target": "area_enemies",
+    "range": 6,
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "areaByPhase": {
+      "2": {
+        "shape": "rect",
+        "rows": 2,
+        "cols": 3,
+        "anchor": "bottom_left"
+      }
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 2,
+    "motion": "cast",
+    "fx": "#3d7f9a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "ice",
+        "scale": "int",
+        "power": 1
+      },
+      {
+        "type": "ground",
+        "ground": "flooded",
+        "turns": 2,
+        "scale": "int",
+        "power": 0
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 2
+      }
+    ],
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "ashfall"
+  },
+  "lament_of_the_deep": {
+    "_not": "Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Lament (maps-2-3.md 3.3): tüm kahramanlara hafif karanlık + 1 tur Slow + 1 tur Spellbound. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "lament_of_the_deep",
+    "name": "Lament of the Deep",
+    "target": "all_enemies",
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#5fa8c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "int",
+        "power": 0.2
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      },
+      {
+        "type": "status",
+        "status": "spellbound",
+        "turns": 1
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "chorus"
+  },
+  "the_reach_drowns": {
+    "_not": "Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE The Reach Drowns (faz 3; girişte telgraflanır; Pyre'ın su aynası): tüm kahraman tahtası, güvenli hücre YOK, INT buz + 2 tur Flooded (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "id": "the_reach_drowns",
+    "name": "The Reach Drowns",
+    "target": "all_enemies",
+    "global": true,
+    "telegraph": {
+      "kind": "area",
+      "wholeBoard": true
+    },
+    "minPhase": 3,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#2f6f73",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "ice",
+        "scale": "int",
+        "power": 0.95
+      },
+      {
+        "type": "ground",
+        "ground": "flooded",
+        "turns": 2,
+        "scale": "int",
+        "power": 0
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 2
+      }
+    ],
+    "icon": "judgebeam",
+    "vfx": "judgment",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam",
+      "fireCrackle"
+    ],
+    "artOf": "pyre_of_morvane"
   }
 }

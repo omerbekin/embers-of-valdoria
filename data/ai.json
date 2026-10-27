@@ -341,13 +341,14 @@
       "minNetShare": 0.3
     }
   },
-  "_telegraph": "TELGRAF (boss: The Bridge Warden, docs/design/bosses/bridge-warden.md 5 ve M11/M12; src/engine/ai.ts > telegraphOptions / telegraphDodge / anchorValue): hitShare = telgrafı atanın beklenen isabet payı (oyuncu kaçar), denyShare = kaçmak zorunda kalan her hedefin kaybedeceği turun değer payı, hookCombo = Chain Hook hedefi bekleyen çökmeye çekerse eklenen değer çarpanı (Easy 0), dodgeOpportunityShare = oyuncu vekilinin telgraftan kaçmak için Move bedeli (şimdiki hamle x pay), anchorShare = Iron Mooring kırmanın değer çarpanı. Sayılar PROVİZYON (sim:campaign ile).",
+  "_telegraph": "TELGRAF (boss: The Bridge Warden, docs/design/bosses/bridge-warden.md 5 ve M11/M12; src/engine/ai.ts > telegraphOptions / telegraphDodge / anchorValue): hitShare = telgrafı atanın beklenen isabet payı (oyuncu kaçar), denyShare = kaçmak zorunda kalan her hedefin kaybedeceği turun değer payı, hookCombo = Chain Hook hedefi bekleyen çökmeye çekerse eklenen değer çarpanı (Easy 0), pullFront = M-N2 Boarding Hook arka sıradaki hedefi ön sıraya çekebiliyorsa skill'in beklenen hasarının bu payı kadar ek değer (PROVİZYON, open-questions 435), dodgeOpportunityShare = oyuncu vekilinin telgraftan kaçmak için Move bedeli (şimdiki hamle x pay), anchorShare = Iron Mooring kırmanın değer çarpanı. Sayılar PROVİZYON (sim:campaign ile).",
   "telegraph": {
     "hitShare": 0.5,
     "denyShare": 0.5,
     "hookCombo": 1,
     "dodgeOpportunityShare": 1,
-    "anchorShare": 1
+    "anchorShare": 1,
+    "pullFront": 0.5
   },
   "_formation": "YZ DİZİLİMİ (menzil açıkken; src/engine/formation-ai.ts, Ömer 2026-10-17): Quick Battle Randomize, otomatik dizilim (Auto arrange), sim ve Endless dalgaları. Her yerleşim puanlanır, en yüksek puanlı dizilim seçilir (yerel arama). reachValue[d] = birimin ana menzili düşmanın d. derinliğine (ön 0 ... arka 3) kadar ulaşıyorsa kazanç (birikimli değil, ulaşılan en derin satırın değeri); hiç ulaşamıyorsa -unreachable. safetyValue[r] = kendi en öndeki dolu sıradan r sıra geride durmanın değeri x (safetyBase + safetyFrag x kırılganlık; kırılganlık takım içinde 0 = en dayanıklı, 1 = en kırılgan; can x zırh). Taunt skill i olan her geri sıra için -tauntDepth. Guard (dost menzili) sahibinden menzil dışında kalan her dost için -guardReach x kırılganlık. aoe: düşmanın alan şekilleri (bilinmiyorsa Quick Battle havuzunun şekilleri) aynı vuruşa iki kırılganı birlikte alabiliyorsa -aoe x kırılganlık x kırılganlık x ortak vurulma oranı (kırılganlığı aoeFragFrom altındakiler sayılmaz; tahtanın aoeMaxCover oranından büyük şekiller, ör. 3x3, sayılmaz: dağılmak işe yaramaz). jitter: rastgele dizilimde (Randomize, Endless) her birim-hücre puanına eklenen seedli gürültünün genişliği. maxPasses: yerel arama tur sınırı. Menzil kapalıyken kullanılmaz (eski dizilim birebir).",
   "formation": {

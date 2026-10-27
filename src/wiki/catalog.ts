@@ -1316,8 +1316,8 @@ function bossArticles(): WikiArticle[] {
           'A single attack can cross only one phase threshold; extra damage stops just above the next one.',
           // Madde 271/272: CC + isabet/kritik cezaları (Blinded, Jinxed) + Omen'in Misfortune'u; adlar veriden
           `Bosses are immune to crowd control (Stun, Slow, Silence, Taunt, pulls and pushes)${accCritNames.length ? ` and to accuracy/crit penalties (${accCritNames.join(', ')})` : ''}: the hit still lands, the effect does not ("Immune").${content.formulas.ccImmunity?.omenCrit ? ' Omens still stack and Doom still strikes, but Misfortune does not lower a boss\'s crit chance.' : ''} Damage-over-time and curses (Wound, Omen, Withering, burning ground) still work.`,
-          ...(b.anchor ? [`Each standing ${anchor?.name ?? b.anchor.unit} gives +${b.anchor.armorAdd} armor and +${b.anchor.magicArmorAdd} magic armor. Breaking one staggers the Warden (it loses its next action) and cancels a pending Breaking Span.`] : []),
-          ...(over ? [`${over.name}: after a collapse the Warden ${over.text.charAt(0).toLowerCase()}${over.text.slice(1)}.`] : []),
+          ...(b.anchor ? [`Each standing ${anchor?.name ?? b.anchor.unit} gives +${b.anchor.armorAdd} armor and +${b.anchor.magicArmorAdd} magic armor.${b.anchor.stagger ? ` Breaking one staggers ${def.name} (it loses its next action)` : ''}${b.anchor.cancel.length ? `${b.anchor.stagger ? ' and' : ' Breaking one'} cancels a pending ${b.anchor.cancel.map((s) => content.skills[s]?.name ?? s).join(' / ')}` : ''}${b.anchor.stagger || b.anchor.cancel.length ? '.' : ''}`] : []),
+          ...(over ? [`${over.name}: after a collapse ${def.name} ${over.text.charAt(0).toLowerCase()}${over.text.slice(1)}.`] : []),
           ...(b.passives ?? []).map((x) => `${x.name}: ${x.text}`),
         ),
         list(...skillLines),

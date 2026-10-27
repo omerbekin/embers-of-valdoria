@@ -1,0 +1,40 @@
+{
+  "_not": "Harita 2 elit önderi (Harbor Fort dr_32, Order tarafı / taraf yok; maps-2-3.md 3.2, content-designer 2026-10-27). Belgede kit yok: var olan mekaniklerle kuruldu (Iron Maul + Hold the Pier taunt + Debtor's Chain Saltbound, pasif Hired Steel = Rebuke). Ödünç Thane of the Deep'in Deep Hoard'u (MP'den ~+35 zırh) yerine taban zırh 26 / 14 (PROVİZYON). Can ve statlar Thane'le aynı. Sanat: kendi çizimi; skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON (open-questions 435).",
+  "id": "guild_enforcer_bastion",
+  "name": "Guild Enforcer \"Bastion\"",
+  "family": "bandits",
+  "spriteId": "guild_enforcer_bastion",
+  "spriteScale": 1.12,
+  "color": "#7a6a4a",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Guild · Enforcer",
+  "attributes": {
+    "str": 28,
+    "int": 14,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 26,
+  "magicArmor": 14,
+  "overrides": {
+    "hp": 125
+  },
+  "ai": "mob_tank",
+  "skills": [
+    "iron_maul",
+    "hold_the_pier",
+    "debtors_chain"
+  ],
+  "passive": {
+    "id": "hired_steel",
+    "name": "Hired Steel",
+    "icon": "bash",
+    "text": "When a melee skill hits this unit with physical damage, 30% of the damage its armor blocked is dealt back to the attacker as physical damage.",
+    "effect": {
+      "type": "rebuke",
+      "ratio": 0.3
+    }
+  }
+}

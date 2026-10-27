@@ -36,6 +36,9 @@ import treant from '../../data/summons/treant.json';
 import bridgeWarden from '../../data/bosses/bridge_warden.json';
 import ironMooring from '../../data/bosses/iron_mooring.json';
 import lordMorvane from '../../data/bosses/lord_morvane.json';
+import weirWyrm from '../../data/bosses/weir_wyrm.json';
+import admiralVane from '../../data/bosses/admiral_vane.json';
+import drownedQueen from '../../data/bosses/drowned_queen.json';
 import mobRoadThug from '../../data/mobs/road_thug.json';
 import mobMoorRaider from '../../data/mobs/moor_raider.json';
 import mobBanditCrossbowman from '../../data/mobs/bandit_crossbowman.json';
@@ -78,6 +81,16 @@ import mobReaverArcher from '../../data/mobs/reaver_archer.json';
 import mobReefWrecker from '../../data/mobs/reef_wrecker.json';
 import mobRiverReaver from '../../data/mobs/river_reaver.json';
 import mobCliffCrossbowman from '../../data/mobs/cliff_crossbowman.json';
+// Harita 2 elit önderleri (kendi kitleri, content-designer 2026-10-27)
+import mobReaverChiefHook from '../../data/mobs/reaver_chief_hook.json';
+import mobSaltHagMother from '../../data/mobs/salt_hag_mother.json';
+import mobGuildEnforcerBastion from '../../data/mobs/guild_enforcer_bastion.json';
+import mobInquisitorCaptainVell from '../../data/mobs/inquisitor_captain_vell.json';
+import mobWreckerCaptain from '../../data/mobs/wrecker_captain.json';
+import mobCorsairCaptainMarrow from '../../data/mobs/corsair_captain_marrow.json';
+import mobSirenQueen from '../../data/mobs/siren_queen.json';
+import mobSaltBishop from '../../data/mobs/salt_bishop.json';
+import mobDrownedChampion from '../../data/mobs/drowned_champion.json';
 import groundsJson from '../../data/grounds.json';
 import battleRulesJson from '../../data/battle-rules.json';
 import statusesJson from '../../data/statuses.json';
@@ -157,6 +170,10 @@ export const bosses: Record<string, CombatantDef> = {
   bridge_warden: buildDef(bridgeWarden as unknown as CombatantData, formulas),
   iron_mooring: buildDef(ironMooring as unknown as CombatantData, formulas),
   lord_morvane: buildDef(lordMorvane as unknown as CombatantData, formulas),
+  // Harita 2 bossları (kendi kitleri, content-designer 2026-10-27; maps-2-3.md 3.3)
+  weir_wyrm: buildDef(weirWyrm as unknown as CombatantData, formulas),
+  admiral_vane: buildDef(admiralVane as unknown as CombatantData, formulas),
+  drowned_queen: buildDef(drownedQueen as unknown as CombatantData, formulas),
 };
 
 const mobData: CombatantData[] = [
@@ -200,6 +217,15 @@ const mobData: CombatantData[] = [
   mobReefWrecker,
   mobRiverReaver,
   mobCliffCrossbowman,
+  mobReaverChiefHook,
+  mobSaltHagMother,
+  mobGuildEnforcerBastion,
+  mobInquisitorCaptainVell,
+  mobWreckerCaptain,
+  mobCorsairCaptainMarrow,
+  mobSirenQueen,
+  mobSaltBishop,
+  mobDrownedChampion,
 ] as unknown as CombatantData[];
 
 /**
