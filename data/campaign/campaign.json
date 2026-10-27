@@ -21,7 +21,8 @@
     "stones": { "boss": [0, 0.6, 0.3, 0.1], "elite": [0.5, 0.5] },
     "hotspots": {
       "town-ashford": { "label": "Blacksmith", "rect": [0.385, 0.42, 0.57, 0.63] },
-      "town-valdren": { "label": "Blacksmith", "rect": [0.82, 0.38, 0.884, 0.58] }
+      "town-valdren": { "label": "Blacksmith", "rect": [0.82, 0.38, 0.884, 0.58] },
+      "town-saltmere": { "label": "Blacksmith", "rect": [0.25, 0.4, 0.42, 0.57] }
     }
   },
   "_townScreen": "Kasaba ekranı (Ömer 2026-10-12): tam ekran kasaba görseli, takım alttaki açık alanda durur (ayak çizgisi feetY x 1080), kahraman boyu ve aralığı 1920x1080 biriminde; yer etiketleri telefonda (html.short/compact) büyür. Yerler valdoria.json > nodes[].scene.",
