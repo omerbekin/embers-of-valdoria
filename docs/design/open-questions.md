@@ -1093,3 +1093,15 @@ Seçimler: C1 V1 (HUD taç plakası, eylemi harcar), C2 a, C3 a, C4 (üst sını
 10. **Pit Champion "Gorr"** (dr_pit_5) bandit_chief kitinde kaldı (kendi çizimi / tasarımı yok).
 11. **YZ az kullanıyor (ölçüm: 4 seed, önder canı yüksek):** yalnız Saltbound / Spellbound veren skill'ler (Salt Circle, Siren's Call), Debtor's Chain (Iron Maul daha güçlü) ve Harpoon Line neredeyse hiç seçilmiyor: YZ Saltbound'a yalnız Mire-Bound üzerinden değer veriyor. Güç artırılsın mı, yoksa böyle mi kalsın?
 12. **Sanat / ses:** 40 yeni skill'in ikon / efekti yer tutucu (`artOf`); sesler artOf sahibinin tarifinden kopya (`data/audio-mobs.json > mob<Id><Rol>`); Warden kaynaklı 6 boss skill'i (wyrm_*, chain_shot, harpoon_line) Warden'ın sesini kullanıyor. Poz sayfası skill satırları yeni id'lere taşındı (`data/mob-poses.json`).
+
+## 436. Erken düğüm rampası (Inn softlock'u): provizyon sayılar (balance-tester 2026-10-27; Ömer onayı, `data/campaign/encounters.json`)
+Sorun (Ömer playtest): tutorial sonrası Mage düştü, Inn'e bırakıldı; 2 kahramanla hiçbir düğüm kazanılamadı, gün geçmedi, Inn iyileştirmedi.
+Değişiklik (yalnız karşılaşma çarpanı / düşman sayısı; yeni mekanik yok, Mill Road'un kaybedilemez kuralı aynı):
+- Ravenwood: güç kurtlar 0,45 -> 0,40, poacher/seer 0,43 -> 0,38.
+- Ruined Watchtower: şef can 1,1 -> 1,0, güç 0,62 -> 0,56; eşlikçi güç 0,43 -> 0,39.
+- Windy Moor: can/güç 0,782 -> 0,6; 2. dalga 0,622 -> 0,5 ve 4 -> 3 düşman.
+- Brackenridge: can/güç 0,782 -> 0,62 (iki dalga).
+- Cairn Hill (Valdren Keep'ten 2 düğüm önce, rampanın son adımı): x~0,9 (0,863 -> 0,78; 2. dalga 1,066/1,043 -> 0,963/0,942).
+- Iron Pass, Charcoal Camp (Keep'ten 1 önce) ve sonrası DEĞİŞMEDİ.
+Ölçüm: düz sefer sim'i Keep'e kadar, Medium zorluk, 300 sefer x 2 savaş, iyi (Medium YZ) ve ortalama (Easy YZ) oyuncu; 2 kişilik = en düşük canlı kahraman Inn'de. Ortalama oyuncu 2 kişilik önce -> sonra: Windy Moor %40 -> %91, Brackenridge %55 -> %87, Cairn Hill %58 -> %74, Windy Moor devriyesi (Cairn'den) %53 -> %95; tutorial Watchtower %89 -> %92, Ravenwood %95 -> %97.
+Açık soru: Raiders' Hoard (cep, korunan hazine) bilinçli olarak zor bırakıldı (madde 417): ilk varışta tam takım %37-61, 2 kişi ~%1. Devriye olarak 2 kişiyle kurtarıcı değil; Windy Moor / Brackenridge devriyesi kurtarıcı.

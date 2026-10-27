@@ -19,14 +19,14 @@
     ]
   },
   "ravenwood_pack": {
-    "_not": "Bölge I mobları (mob-plan.md 9.5-9.6, Ömer onayı 2026-10-16): kümeli 3 Grey Wolf (Pack Tactics; alan dersi) + siperdeki Ravenwood Poacher (Hide in the Brush) + Raven Seer (Flock Shield, caster). Hepsi initialCooldownBonus 1: ilk turda yalnız temel saldırılar. Çarpanlar sim:campaign ile (balance.json > _regionI). KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): güç x0,725 (kurtlar 0,62 -> 0,45, poacher/seer 0,6 -> 0,43): ortalama oyuncunun Anti-Mage'i burada %68 düşüp Watchtower'a %10 canla yaralı giriyordu, Archer+Anti-Mage takımlarının %56'sı Watchtower'da duvara vuruyordu (Medium/ortalama Watchtower duvarı %10 -> ~%0).",
+    "_not": "Bölge I mobları (mob-plan.md 9.5-9.6, Ömer onayı 2026-10-16): kümeli 3 Grey Wolf (Pack Tactics; alan dersi) + siperdeki Ravenwood Poacher (Hide in the Brush) + Raven Seer (Flock Shield, caster). Hepsi initialCooldownBonus 1: ilk turda yalnız temel saldırılar. Çarpanlar sim:campaign ile (balance.json > _regionI). KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): güç x0,725 (kurtlar 0,62 -> 0,45, poacher/seer 0,6 -> 0,43): ortalama oyuncunun Anti-Mage'i burada %68 düşüp Watchtower'a %10 canla yaralı giriyordu, Archer+Anti-Mage takımlarının %56'sı Watchtower'da duvara vuruyordu (Medium/ortalama Watchtower duvarı %10 -> ~%0). ERKEN RAMPA (Ömer 2026-10-27, balance-tester; open-questions 436, PROVİZYON): Inn softlock'u (2 kahramanla hiçbir düğüm kazanılamıyordu) için güç kurtlar 0,45 -> 0,40, poacher/seer 0,43 -> 0,38.",
     "name": "Ravenwood Outlaws",
     "units": [
-      { "class": "grey_wolf", "slot": 0, "mods": { "spdAdd": -3, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.45 }, "initialCooldownBonus": 1 },
-      { "class": "grey_wolf", "slot": 1, "mods": { "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.45 }, "initialCooldownBonus": 1 },
-      { "class": "grey_wolf", "slot": 2, "mods": { "spdAdd": -3, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.45 }, "initialCooldownBonus": 1 },
-      { "class": "ravenwood_poacher", "slot": 7, "mods": { "spdAdd": -5, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.43 }, "initialCooldownBonus": 1 },
-      { "class": "raven_seer", "slot": 8, "mods": { "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.43 }, "initialCooldownBonus": 1 }
+      { "class": "grey_wolf", "slot": 0, "mods": { "spdAdd": -3, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.40 }, "initialCooldownBonus": 1 },
+      { "class": "grey_wolf", "slot": 1, "mods": { "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.40 }, "initialCooldownBonus": 1 },
+      { "class": "grey_wolf", "slot": 2, "mods": { "spdAdd": -3, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.40 }, "initialCooldownBonus": 1 },
+      { "class": "ravenwood_poacher", "slot": 7, "mods": { "spdAdd": -5, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.38 }, "initialCooldownBonus": 1 },
+      { "class": "raven_seer", "slot": 8, "mods": { "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.38 }, "initialCooldownBonus": 1 }
     ],
     "fallback": "ravenwood_pack_lite"
   },
@@ -49,12 +49,12 @@
     "fallback": "watchtower_chief_lite"
   },
   "watchtower_tutorial": {
-    "_not": "Sefer düğüm 3 (Ruined Watchtower, tutorial bölgesi). Bölge I mobları (mob-plan.md 9.5-9.6, Ömer onayı 2026-10-16): elit Bandit Chief (Shares of the Dead, initialCooldownBonus 1) + Ravenwood Poacher + Ember Acolyte (Last Ember; bölge I enemyScale dışı, D8). watchtower_chief Endless elit dalgası olarak AYNEN kalır. Çarpanlar sim:campaign ile (balance.json > _regionI).",
+    "_not": "Sefer düğüm 3 (Ruined Watchtower, tutorial bölgesi). Bölge I mobları (mob-plan.md 9.5-9.6, Ömer onayı 2026-10-16): elit Bandit Chief (Shares of the Dead, initialCooldownBonus 1) + Ravenwood Poacher + Ember Acolyte (Last Ember; bölge I enemyScale dışı, D8). watchtower_chief Endless elit dalgası olarak AYNEN kalır. Çarpanlar sim:campaign ile (balance.json > _regionI). ERKEN RAMPA (Ömer 2026-10-27, balance-tester; open-questions 436, PROVİZYON): Inn softlock'u (2 kahramanla hiçbir düğüm kazanılamıyordu) için şef can 1,1 -> 1,0, güç 0,62 -> 0,56; eşlikçi güç 0,43 -> 0,39.",
     "name": "The Bandit Chief",
     "units": [
-      { "class": "bandit_chief", "slot": 1, "name": "Bandit Chief", "tier": "elite", "noTierMods": true, "mods": { "hpMult": 1.1, "statMult": 0.95, "powerMult": 0.62 }, "initialCooldownBonus": 1 },
-      { "class": "ravenwood_poacher", "slot": 6, "mods": { "spdAdd": -4, "hpMult": 0.45, "statMult": 0.68, "powerMult": 0.43 } },
-      { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 0.45, "statMult": 0.68, "powerMult": 0.43 } }
+      { "class": "bandit_chief", "slot": 1, "name": "Bandit Chief", "tier": "elite", "noTierMods": true, "mods": { "hpMult": 1.0, "statMult": 0.95, "powerMult": 0.56 }, "initialCooldownBonus": 1 },
+      { "class": "ravenwood_poacher", "slot": 6, "mods": { "spdAdd": -4, "hpMult": 0.45, "statMult": 0.68, "powerMult": 0.39 } },
+      { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 0.45, "statMult": 0.68, "powerMult": 0.39 } }
     ],
     "fallback": "watchtower_chief_lite"
   },
@@ -231,34 +231,33 @@
     "_not": "YALNIZCA ENDLESS (data/endless.json > bosses): eski Lord Morvane (Undead class kopyası). Sefer düğümü 12 artık castle_morvane (gerçek boss tanımı data/bosses/lord_morvane.json) kullanır (mob-plan.md 10.3)."
   },
   "windy_moor": {
-    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,85 (düğümler aynı zorluğa çekildi).",
+    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,85 (düğümler aynı zorluğa çekildi). ERKEN RAMPA (Ömer 2026-10-27, balance-tester; open-questions 436, PROVİZYON): Inn softlock'u (2 kahramanla hiçbir düğüm kazanılamıyordu) için can/güç 0,782 -> 0,6, 2. dalga 0,622 -> 0,5 ve 4 -> 3 düşman (orta Moor Raider gitti).",
     "name": "Moor Raiders",
     "units": [
-      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 0.782, "powerMult": 0.782 } },
-      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 0.782, "powerMult": 0.782 } },
-      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.782, "powerMult": 0.782 } }
+      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 0.6, "powerMult": 0.6 } },
+      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 0.6, "powerMult": 0.6 } },
+      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.6, "powerMult": 0.6 } }
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 0.622, "powerMult": 0.622 } },
-        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 0.622, "powerMult": 0.622 } },
-        { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 0.622, "powerMult": 0.622 } },
-        { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.622, "powerMult": 0.622 } }
+        { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 0.5, "powerMult": 0.5 } },
+        { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 0.5, "powerMult": 0.5 } },
+        { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.5, "powerMult": 0.5 } }
       ] }
     ]
   },
   "cairn_hill": {
-    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,015 (düğümler aynı zorluğa çekildi).",
+    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,015 (düğümler aynı zorluğa çekildi). ERKEN RAMPA (Ömer 2026-10-27, balance-tester; open-questions 436, PROVİZYON): Inn softlock'u (2 kahramanla hiçbir düğüm kazanılamıyordu) için rampanın son adımı, can/güç x~0,9 (0,863 -> 0,78; 2. dalga 1,066/1,043 -> 0,963/0,942). Iron Pass, Charcoal Camp ve sonrası değişmedi.",
     "name": "Cairn Raiders",
     "units": [
-      { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 0.863, "powerMult": 0.863 } },
-      { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.863, "powerMult": 0.863 } },
-      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.863, "powerMult": 0.863 } }
+      { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 0.78, "powerMult": 0.78 } },
+      { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.78, "powerMult": 0.78 } },
+      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.78, "powerMult": 0.78 } }
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 1.066, "powerMult": 1.043 } },
-        { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.066, "powerMult": 1.043 } }
+        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 0.963, "powerMult": 0.942 } },
+        { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 0.963, "powerMult": 0.942 } }
       ] }
     ]
   },
@@ -428,18 +427,18 @@
     "background": "castle-hall"
   },
   "brackenridge": {
-    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Windy Moor ile aynı (0,782). Denge balance-tester'ın.",
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Windy Moor ile aynı (0,782). Denge balance-tester'ın. ERKEN RAMPA (Ömer 2026-10-27, balance-tester; open-questions 436, PROVİZYON): Inn softlock'u (2 kahramanla hiçbir düğüm kazanılamıyordu) için can/güç 0,782 -> 0,62 (iki dalga).",
     "name": "Hill Bandits",
     "units": [
-      { "class": "road_thug", "slot": 0, "mods": { "spdAdd": -2, "hpMult": 0.782, "powerMult": 0.782 } },
-      { "class": "road_thug", "slot": 2, "mods": { "spdAdd": -2, "hpMult": 0.782, "powerMult": 0.782 } },
-      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -8, "hpMult": 0.782, "powerMult": 0.782 } }
+      { "class": "road_thug", "slot": 0, "mods": { "spdAdd": -2, "hpMult": 0.62, "powerMult": 0.62 } },
+      { "class": "road_thug", "slot": 2, "mods": { "spdAdd": -2, "hpMult": 0.62, "powerMult": 0.62 } },
+      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -8, "hpMult": 0.62, "powerMult": 0.62 } }
     ],
     "waves": [
       { "units": [
-        { "class": "cutpurse", "slot": 0, "mods": { "spdAdd": -7, "hpMult": 0.782, "powerMult": 0.782 } },
-        { "class": "cutpurse", "slot": 2, "mods": { "spdAdd": -7, "hpMult": 0.782, "powerMult": 0.782 } },
-        { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.782, "powerMult": 0.782 } }
+        { "class": "cutpurse", "slot": 0, "mods": { "spdAdd": -7, "hpMult": 0.62, "powerMult": 0.62 } },
+        { "class": "cutpurse", "slot": 2, "mods": { "spdAdd": -7, "hpMult": 0.62, "powerMult": 0.62 } },
+        { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.62, "powerMult": 0.62 } }
       ] }
     ]
   },
