@@ -1198,6 +1198,8 @@ export interface SkillDef {
   motion: SkillMotion;
   /** motion 'sky' ise düşen şeyin türü. */
   skyFx?: SkyFx;
+  /** Ok / atış niteliğinde fiziksel saldırı, yukarıdan düşse de (motion 'sky'; Arrow Rain). M-C Storm `rangedAccuracy.shots` açıksa menzilli sayılır. Büyülerde yok. */
+  shot?: boolean;
   /** Placeholder ikon türü (src/ui/icon-kinds.ts). */
   icon: string;
   fx: string;
@@ -2041,8 +2043,8 @@ export interface BattleCondition {
   text: string;
   /** M-B Tide: ön sıraları su basar. */
   flood?: FloodRule;
-  /** M-C Storm: `motions` hareketli (menzilli) skill'lerin isabetine `delta` eklenir (iki taraf; -0,15 = isabet -%15 puan). */
-  rangedAccuracy?: { delta: number; motions: SkillMotion[] };
+  /** M-C Storm: `motions` hareketli (menzilli) skill'lerin isabetine `delta` eklenir (iki taraf; -0,15 = isabet -%15 puan); `shots` açıksa `SkillDef.shot` işaretli düşen ok skill'leri de (Arrow Rain; büyüler değil). */
+  rangedAccuracy?: { delta: number; motions: SkillMotion[]; shots?: boolean };
 }
 
 /**

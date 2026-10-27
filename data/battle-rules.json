@@ -1,5 +1,5 @@
 {
-  "_not": "Karşılaşma kuralları (Harita 2-3 savaş katmanı; docs/design/campaign/maps-2-3.md M-A koşul, B3 hedef, M-B Tide/Flooded/Soaked, M-I kapalı hücre, M-J crossing). Karşılaşma verisinde (data/campaign/*-encounters.json) alanlar: condition (koşul id'si), objective (hedef id'si ya da { type, ...sayılar }; yoksa herkesi öldür), blocked (hücre listesi ya da layouts anahtarı; İKİ tahtada da kapalı). 'Tur' (rounds/every) = savaş turu: her savaşan bir kez oynayınca yeni tur (Battle.round); dalga (Round 2/3) ayrı sayaç. Metinler oyun içi (İngilizce): {n} = hedef sayısı, {every} = takviye aralığı. Sayılar PROVİZYON (sim YOK; open-questions 418). M-C storm: rangedAccuracy.delta = motions listesindeki (menzilli: ranged) skill'lerin isabetine eklenen miktar, iki taraf (-0.15 = -%15 puan; Jinxed gibi düz ek). device (karşılaşma alanı): devices anahtarı (M-N3 Tidewater Urn; open-questions 430).",
+  "_not": "Karşılaşma kuralları (Harita 2-3 savaş katmanı; docs/design/campaign/maps-2-3.md M-A koşul, B3 hedef, M-B Tide/Flooded/Soaked, M-I kapalı hücre, M-J crossing). Karşılaşma verisinde (data/campaign/*-encounters.json) alanlar: condition (koşul id'si), objective (hedef id'si ya da { type, ...sayılar }; yoksa herkesi öldür), blocked (hücre listesi ya da layouts anahtarı; İKİ tahtada da kapalı). 'Tur' (rounds/every) = savaş turu: her savaşan bir kez oynayınca yeni tur (Battle.round); dalga (Round 2/3) ayrı sayaç. Metinler oyun içi (İngilizce): {n} = hedef sayısı, {every} = takviye aralığı. Sayılar PROVİZYON (sim YOK; open-questions 418). M-C storm: rangedAccuracy.delta = motions listesindeki (menzilli: ranged) skill'lerin isabetine eklenen miktar, iki taraf (-0.15 = -%15 puan; Jinxed gibi düz ek); shots: true ise yukarıdan düşen ama ok/atış niteliğindeki skill'ler (skills.json > shot: true; Arrow Rain) de etkilenir, büyüler (Meteor, Murder of Crows...) etkilenmez (Ömer 2026-10-27, open-questions 430). device (karşılaşma alanı): devices anahtarı (M-N3 Tidewater Urn; open-questions 430).",
   "conditions": {
     "tide": {
       "name": "Tide",
@@ -8,8 +8,8 @@
     },
     "storm": {
       "name": "Storm",
-      "text": "Wind and rain lash the battle: every ranged attack, on both sides, has 15% less chance to hit.",
-      "rangedAccuracy": { "delta": -0.15, "motions": ["ranged"] }
+      "text": "Wind and rain lash the battle: every ranged attack, on both sides, has 15% less chance to hit, arrows falling from the sky included.",
+      "rangedAccuracy": { "delta": -0.15, "motions": ["ranged"], "shots": true }
     }
   },
   "devices": {

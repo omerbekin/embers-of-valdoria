@@ -7248,10 +7248,10 @@ export class Battle {
     emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
   }
 
-  /** M-C Storm: skill'in isabet eki (koşulun `motions` hareketlerinden biriyse delta; yoksa 0). */
+  /** M-C Storm: skill'in isabet eki (koşulun `motions` hareketlerinden biriyse ya da `shots` açıkken skill `shot` işaretliyse delta; yoksa 0). */
   conditionAccuracy(skill: SkillDef | null | undefined): number {
     const ra = this.setup.rules?.condition?.rangedAccuracy;
-    return ra && skill && ra.motions.includes(skill.motion) ? ra.delta : 0;
+    return ra && skill && (ra.motions.includes(skill.motion) || (ra.shots === true && skill.shot === true)) ? ra.delta : 0;
   }
 
   /** Vuruşun isabet zarında saldıranın stat'ları: effectiveStats + koşulun skill'e göre isabet eki (Storm). Koşul yoksa effectiveStats aynen. */

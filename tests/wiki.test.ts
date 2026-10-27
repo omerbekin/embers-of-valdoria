@@ -297,5 +297,9 @@ describe('Codex: The Drowned Reach (Harita 2, bayrak arkasında)', () => {
     const text = battleRulesArticle().blocks.flatMap(blockText).join(' ');
     for (const w of ['Tide', 'Soaked', 'Flooded', 'Hold out for 6 turns', 'Break the Totem', 'every 2 turns', 'Hold the Bridge', "Ship's deck"]) expect(text, w).toContain(w);
     expect(text).not.toMatch(/\{n\}|\{every\}/);
+    // Storm (Ömer 2026-10-27, open-questions 430/1): düşen ok skill'leri (shot) adıyla listelenir, sayı veriden
+    const storm = content.battleRulesData.conditions.storm!;
+    expect(text).toContain(`lowered by ${Math.round(-storm.rangedAccuracy!.delta * 100)} points`);
+    for (const s of Object.values(content.skills).filter((x) => x.shot && !x.id.startsWith('pt_'))) expect(text).toContain(s.name);
   });
 });

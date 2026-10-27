@@ -98,6 +98,64 @@ describe('M-C Storm', () => {
     expect(flipped).toBeGreaterThan(0);
   });
 
+  // Ömer 2026-10-27 (open-questions 430/1): yukarıdan düşen OK skill'leri (skills.json > shot: true) de etkilenir; büyüler etkilenmez
+  const shotSkills = Object.values(content.skills).filter((s) => s.shot);
+  const skySpells = Object.values(content.skills).filter((s) => s.motion === 'sky' && !s.shot);
+
+  it('veri: shot işaretli skill\'ler yukarıdan düşen fiziksel ok skill\'leri; düşen büyüler işaretsiz', () => {
+    expect(STORM.shots).toBe(true);
+    expect(shotSkills.map((s) => s.id)).toContain('arrow_rain');
+    for (const s of shotSkills) {
+      expect(s.motion).toBe('sky');
+      expect(s.effects.filter((e) => e.type === 'damage').every((e) => (e as { damageType?: string }).damageType === 'physical')).toBe(true);
+    }
+    expect(skySpells.map((s) => s.id)).toEqual(expect.arrayContaining(['meteor', 'murder_of_crows']));
+  });
+
+  it('isabet eki: shot skill\'lerinde delta, düşen büyülerde 0; shots kapalı koşulda shot skill\'i de 0', () => {
+    const b = make(1, 'test', storm);
+    for (const s of shotSkills) expect(b.conditionAccuracy(s)).toBe(STORM.delta);
+    for (const s of skySpells) expect(b.conditionAccuracy(s)).toBe(0);
+    const setup = content.battleSetup(BATTLE, 1, 'test', storm, false);
+    const cond = setup.rules!.condition!;
+    const off = new Battle({ ...setup, rules: { ...setup.rules, condition: { ...cond, rangedAccuracy: { delta: cond.rangedAccuracy!.delta, motions: cond.rangedAccuracy!.motions } } } });
+    expect(off.conditionAccuracy(content.skills['quick_shot'] ?? null)).toBe(content.skills['quick_shot']?.motion === 'ranged' ? STORM.delta : 0);
+    expect(off.conditionAccuracy(content.skills['arrow_rain'])).toBe(0);
+  });
+
+  it('Arrow Rain: önizleme (YZ de bunu okur) Storm ekli isabeti gösterir, koşulsuz savaştan düşük', () => {
+    const b = make(3, 'test', storm);
+    const n = make(3, 'test', plain);
+    const archer = b.combatants.find((c) => c.side === 'party' && c.defId === 'archer')!;
+    const sk = b.skill('arrow_rain', archer)!;
+    const dmg = sk.effects.find((e) => e.type === 'damage') as never;
+    const pv = previewSkill(b, archer.uid, 'arrow_rain', undefined, 0).filter((x) => x.damage);
+    const pn = previewSkill(n, archer.uid, 'arrow_rain', undefined, 0).filter((x) => x.damage);
+    expect(pv.length).toBeGreaterThan(0);
+    for (const x of pv) {
+      const t = b.get(x.uid)!;
+      expect(x.damage!.hitChance).toBeCloseTo(hitChance(b.hitStats(archer, sk), b.effectiveStats(t), content.formulas) * (1 - b.blockChance(archer, t, dmg, sk)), 6);
+      const y = pn.find((z) => z.uid === x.uid)!;
+      expect(x.damage!.hitChance).toBeLessThanOrEqual(y.damage!.hitChance);
+    }
+    expect(pv.some((x) => x.damage!.hitChance < pn.find((z) => z.uid === x.uid)!.damage!.hitChance)).toBe(true);
+  });
+
+  it('Arrow Rain gerçek zar: Storm\'da toplam isabet koşulsuz savaştan az (aynı seed\'ler)', () => {
+    const hits = (teams: Teams) => {
+      let h = 0;
+      for (let seed = 1; seed <= 80; seed++) {
+        const b = make(seed, 'test', teams);
+        const archer = b.combatants.find((c) => c.side === 'party' && c.defId === 'archer')!;
+        const r = b.useSkill(archer.uid, 'arrow_rain', undefined, 0);
+        expect(r.ok).toBe(true);
+        h += (r as { events: BattleEvent[] }).events.filter((e) => e.type === 'damage' && e.source === archer.uid).length;
+      }
+      return h;
+    };
+    expect(hits(storm)).toBeLessThan(hits(plain));
+  });
+
   for (const mode of MODES)
     it(`${mode}: tam savaş belirleyici ve biter`, () => {
       const a = playOut(make(7, mode, storm));
