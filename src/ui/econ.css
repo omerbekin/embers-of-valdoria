@@ -61,7 +61,7 @@
 .ec-prev .to { color: #9fd88a; }
 .ec-used { display: flex; align-items: center; gap: calc(16 * var(--u)); padding: calc(18 * var(--u)); border: 1px dashed var(--g-line2); background: rgba(8,6,4,.4); font: max(15px, calc(23 * var(--u))) var(--g-body); color: var(--g-dim); }
 .ec-used b { font: 600 max(13px, calc(19 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); display: block; }
-/* Chapel satiri (kamp ekrani, Chapel dugumunde; open-questions 445): bedava Taint temizligi bilgisi + altinla Surge sayacini sifirlama dugmesi */
+/* Chapel satiri (kamp ekrani, Chapel dugumunde; open-questions 449): bedava Taint temizligi bilgisi + altinla Surge sayacini sifirlama dugmesi */
 .ec-chapel { display: flex; align-items: center; gap: calc(16 * var(--u)); flex-wrap: wrap; padding: calc(14 * var(--u)) calc(18 * var(--u)); border: 1px solid var(--g-line2); background: rgba(8,6,4,.45); }
 .ec-chapel > div { flex: 1 1 calc(600 * var(--u)); min-width: 0; display: flex; flex-direction: column; gap: calc(4 * var(--u)); font: max(14px, calc(22 * var(--u))) var(--g-body); color: var(--g-text); }
 .ec-chapel b { font: 600 max(13px, calc(19 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); }

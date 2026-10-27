@@ -16,7 +16,7 @@ export interface CrownSurgeConfig {
   taint: { maxHpLoss: number; firstGain: number; gainStep: number; minFactor: number };
   /** Harita başına Chapel dinlenme düğümleri (C5 b: Taint'i temizler). */
   chapels: Record<string, string[]>;
-  /** Chapel'de altınla kullanım sayacını sıfırlama (Ömer 2026-10-27, open-questions 445): harita başına altın fiyatı (haritada yoksa teklif yok). */
+  /** Chapel'de altınla kullanım sayacını sıfırlama (Ömer 2026-10-27, open-questions 449): harita başına altın fiyatı (haritada yoksa teklif yok). */
   reset?: { gold: Record<string, number> };
 }
 
@@ -94,7 +94,7 @@ export function surgedFromLog(log: ReadonlyArray<{ type: string; actor?: string;
 
 /**
  * Savaşta çağrılan Surge'ü sefere işler (YERİNDE): bulunulan bölgenin o türdeki hakkı harcanır, kullanım sayacı artar, çağıran kahraman nextTaintGain
- * kadar Taint alır (alınan toplam `taken`'a eklenir). YENİLGİDE ÇAĞRILMAZ (Ömer 2026-10-27, open-questions 445: hak yenilgide gitmez; Taint ve sayaç
+ * kadar Taint alır (alınan toplam `taken`'a eklenir). YENİLGİDE ÇAĞRILMAZ (Ömer 2026-10-27, open-questions 449: hak yenilgide gitmez; Taint ve sayaç
  * da yazılmaz): zafer ve devriyeden geri çekilme işler; yenilgi (applyBattle), Dive ve Pit yenilgisi işlemez.
  */
 export function applySurgeOutcome(t: CampaignState, surged: BattleOutcome['surged']): void {

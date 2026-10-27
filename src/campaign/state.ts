@@ -979,7 +979,7 @@ export function clearWounds(t: CampaignState): void {
 export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: CampaignRules = rulesFor(s)): CampaignState {
   const t = clone(s);
   delete t.suspended; // savaş bitti (zafer ya da yenilgi): duraklatma kaydı geçersiz
-  // Crown Surge: yenilgide hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 445); zaferde aşağıda işlenir
+  // Crown Surge: yenilgide hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 449); zaferde aşağıda işlenir
   if (!outcome.victory) {
     t.stats.defeats++;
     return t;
@@ -1134,7 +1134,7 @@ export function diveDefeat(s: CampaignState, battle: Pick<BattleOutcome, 'units'
   if (step.kind !== 'battle' || !step.dive) throw new Error('No dive battle here');
   const t = clone(s);
   delete t.suspended;
-  // Crown Surge: yenilgide hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 445)
+  // Crown Surge: yenilgide hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 449)
   t.stats.defeats++;
   keepBattleHp(t, battle);
   if (t.valor !== undefined && battle.valorLeft !== undefined) t.valor = addValor(valorRules, battle.valorLeft, 0);
@@ -1847,7 +1847,7 @@ export function losePit(s: CampaignState, battle?: Pick<BattleOutcome, 'units' |
   delete t.pit;
   delete t.suspended;
   t.stats.defeats++;
-  // Crown Surge: yenilgide / peste hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 445)
+  // Crown Surge: yenilgide / peste hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 449)
   if (battle) {
     settlePitFight(t, battle, woundRules());
     if (t.valor !== undefined && battle.valorLeft !== undefined) t.valor = addValor(valorRules, battle.valorLeft, 0);

@@ -116,7 +116,7 @@ export function openCamp(
   };
 
   /**
-   * Chapel satırı (Ömer 2026-10-27, open-questions 445): varışta Taint bedava silindi; altınla Surge kullanım sayacı başa döner (kamp seçimi değil,
+   * Chapel satırı (Ömer 2026-10-27, open-questions 449): varışta Taint bedava silindi; altınla Surge kullanım sayacı başa döner (kamp seçimi değil,
    * ekran açık kalır). Yalnızca Chapel düğümünde ve haritada fiyat varsa.
    */
   function chapelRow(s: CampaignState): HTMLElement | null {

@@ -229,7 +229,7 @@ Ad önerisi (oyun içi): **Ash Surge** (Harita 2 boyunca tek) ve **Salt Surge** 
 - Debug: "Refill Crown Surge", "Add/Clear Ashen Taint".
 - Yeni ikon: taç düğmesi (Ash: kor rengi, Salt: deniz yeşili); VFX: tüm takımda kısa kor dalgası / su perdesi; ses: alçak kor gümlemesi / dalga. Ayrıntı sanat adımında.
 
-### 2.4 Ömer kararları 2026-10-27 (ikinci tur; campaign-dev, open-questions 445)
+### 2.4 Ömer kararları 2026-10-27 (ikinci tur; campaign-dev, open-questions 449)
 1. **Chapel sayacı altınla sıfırlar, pahalı:** bedava Taint temizliği (varışta) kalır; Chapel'deyken oyuncu ayrıca altın ödeyip seferin Surge kullanım sayacını başa döndürebilir (sonraki Surge yine 1 Taint). Kamp seçimini harcamaz. Fiyat `crown-surge.json > reset.gold` (Harita 2: 400, PROVİZYON; gerekçe 445). Arayüz: kamp ekranında, ateş satırının altında "Chapel" satırı + "Ease the Crown · 400" düğmesi (`src/ui/camp-screen.ts > chapelRow`). Kod `src/campaign/surge.ts > surgeResetPrice / surgeResetBlocked / resetSurgeUses`.
 2. **Hak yenilgide gitmez:** yenilgide (normal savaş, Dive, Pit) hak harcanmaz, Taint ve sayaç yazılmaz; tekrar denemede Surge yine var. Zafer ve devriyeden geri çekilme eskisi gibi harcar.
 3. **Harita 2'de iki Chapel:** dr39 Beacon Quay -> **Beacon Chapel** (bölge III, Saltmere'nin yan yolu) + dr49 Cliff Chapel (bölge IV).
