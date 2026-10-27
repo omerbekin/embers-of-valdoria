@@ -96,6 +96,7 @@ import mobWreckGhoul from '../../data/mobs/wreck_ghoul.json';
 import mobCinderExile from '../../data/mobs/cinder_exile.json';
 import mobPitchBoiler from '../../data/mobs/pitch_boiler.json';
 import mobSunkenDead from '../../data/mobs/sunken_dead.json';
+import mobRisenSkeleton from '../../data/mobs/risen_skeleton.json';
 import mobMireGhoul from '../../data/mobs/mire_ghoul.json';
 import mobReedWitch from '../../data/mobs/reed_witch.json';
 import mobMudlark from '../../data/mobs/mudlark.json';
@@ -252,6 +253,7 @@ const mobData: CombatantData[] = [
   mobCinderExile,
   mobPitchBoiler,
   mobSunkenDead,
+  mobRisenSkeleton,
   mobMireGhoul,
   mobReedWitch,
   mobMudlark,

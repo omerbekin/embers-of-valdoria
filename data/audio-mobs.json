@@ -160,7 +160,9 @@
     "blessed_salt": { "cast": "mobBlessedSaltCast", "hit": "mobBlessedSaltFlare" },
     "salted_ground": { "cast": "mobSaltedGroundSweep", "hit": "mobSaltedGroundRing" },
     "sodden_strike": { "hit": "mobSoddenStrikeHit" },
-    "riptide_slash": { "cast": "mobRiptideSlashWhoosh", "hit": "mobRiptideSlashHit" }
+    "riptide_slash": { "cast": "mobRiptideSlashWhoosh", "hit": "mobRiptideSlashHit" },
+    "grave_strike": { "hit": "mobGraveStrikeHit" },
+    "grave_sweep": { "cast": "mobGraveSweepWhoosh", "hit": "mobGraveSweepHit" }
   },
   "sfx": {
     "mobShivSlip": {
@@ -23789,6 +23791,246 @@
           "decay": 0.06,
           "gain": 0.25,
           "at": 0.365
+        }
+      ]
+    },
+    "mobGraveStrikeHit": {
+      "label": "Grave Strike: hit",
+      "desc": "A rusted grave blade chops in, bone rattling behind it",
+      "gain": 1.429,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1800,
+          "f1": 900,
+          "q": 1.5,
+          "attack": 0.005,
+          "decay": 0.15,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 700,
+          "f1": 500,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.3,
+          "at": 0.08
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3000,
+          "f1": 3000,
+          "q": 0.7,
+          "attack": 0.005,
+          "decay": 0.08,
+          "gain": 0.2
+        }
+      ]
+    },
+    "mobGraveSweepWhoosh": {
+      "label": "Grave Sweep: whoosh",
+      "desc": "A bony arm swings the old blade wide",
+      "gain": 2,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 280,
+          "f1": 1500,
+          "q": 1,
+          "attack": 0.075,
+          "decay": 0.22,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1000,
+          "f1": 420,
+          "q": 1.4,
+          "attack": 0.02,
+          "decay": 0.13,
+          "gain": 0.3,
+          "at": 0.11
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 240,
+          "f1": 130,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.24,
+          "gain": 0.55
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 4200,
+          "f1": 3000,
+          "q": 0.7,
+          "attack": 0.04,
+          "decay": 0.16,
+          "gain": 0.12,
+          "at": 0.06,
+          "tremHz": 28,
+          "tremDepth": 0.8
+        }
+      ]
+    },
+    "mobGraveSweepHit": {
+      "label": "Grave Sweep: hit",
+      "desc": "The rusted edge bites in and scrapes across",
+      "gain": 1.28,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 160,
+          "f1": 62,
+          "attack": 0.002,
+          "decay": 0.075,
+          "gain": 0.55
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1750,
+          "f1": 1150,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.035,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2700,
+          "f1": 1300,
+          "q": 2.2,
+          "attack": 0.003,
+          "decay": 0.12,
+          "gain": 0.33,
+          "at": 0.006
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3600,
+          "f1": 3600,
+          "q": 0.7,
+          "attack": 0.004,
+          "decay": 0.09,
+          "gain": 0.14,
+          "at": 0.01,
+          "tremHz": 52,
+          "tremDepth": 0.85
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 146,
+          "f1": 62,
+          "attack": 0.002,
+          "decay": 0.075,
+          "gain": 0.48000000000000004,
+          "at": 0.085
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1620,
+          "f1": 1150,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.035,
+          "gain": 0.52,
+          "at": 0.085
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2450,
+          "f1": 1300,
+          "q": 2.2,
+          "attack": 0.003,
+          "decay": 0.105,
+          "gain": 0.33,
+          "at": 0.09100000000000001
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3600,
+          "f1": 3600,
+          "q": 0.7,
+          "attack": 0.004,
+          "decay": 0.09,
+          "gain": 0.14,
+          "at": 0.095,
+          "tremHz": 52,
+          "tremDepth": 0.85
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 132,
+          "f1": 62,
+          "attack": 0.002,
+          "decay": 0.075,
+          "gain": 0.41000000000000003,
+          "at": 0.175
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1490,
+          "f1": 1150,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.035,
+          "gain": 0.43999999999999995,
+          "at": 0.175
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2200,
+          "f1": 1300,
+          "q": 2.2,
+          "attack": 0.003,
+          "decay": 0.09,
+          "gain": 0.33,
+          "at": 0.181
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3600,
+          "f1": 3600,
+          "q": 0.7,
+          "attack": 0.004,
+          "decay": 0.09,
+          "gain": 0.14,
+          "at": 0.185,
+          "tremHz": 52,
+          "tremDepth": 0.85
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 520,
+          "f1": 380,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.35,
+          "at": 0.02
         }
       ]
     }
