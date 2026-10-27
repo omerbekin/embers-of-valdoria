@@ -1168,6 +1168,7 @@
     "cooldown": 4,
     "initialCooldown": 3,
     "motion": "sky",
+    "shot": true,
     "skyFx": "fist",
     "fx": "#86a8d4",
     "effects": [
@@ -2258,6 +2259,7 @@
       "amount": 0
     },
     "motion": "sky",
+    "shot": true,
     "skyFx": "fist",
     "fx": "#86a8d4",
     "effects": [
@@ -4413,6 +4415,7 @@
     },
     "cooldown": 4,
     "motion": "sky",
+    "shot": true,
     "skyFx": "fist",
     "fx": "#9a9488",
     "effects": [
