@@ -140,8 +140,8 @@
   "black_cathedral": {
     "name": "The Undying Choir",
     "units": [
-      { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.177, "powerMult": 1.177 } },
-      { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.177, "powerMult": 1.177 } },
+      { "class": "risen_skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.177, "powerMult": 1.177 } },
+      { "class": "risen_skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.177, "powerMult": 1.177 } },
       { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -2, "hpMult": 1.177, "powerMult": 1.177 } },
       { "class": "grave_chanter", "slot": 8, "mods": { "spdAdd": -2, "hpMult": 1.177, "powerMult": 1.177 } }
     ],
@@ -314,15 +314,15 @@
     "name": "Restless Dead",
     "units": [
       { "class": "ghoul", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.14, "powerMult": 1.091 } },
-      { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.14, "powerMult": 1.091 } },
-      { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.14, "powerMult": 1.091 } },
+      { "class": "risen_skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.85, "powerMult": 1.091 } },
+      { "class": "risen_skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.85, "powerMult": 1.091 } },
       { "class": "grave_chanter", "slot": 7, "mods": { "spdAdd": -2, "hpMult": 1.14, "powerMult": 1.091 } }
     ],
     "waves": [
       { "units": [
-        { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.018, "powerMult": 1.018 } },
-        { "class": "skeleton", "slot": 1, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.018, "powerMult": 1.018 } },
-        { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.018, "powerMult": 1.018 } },
+        { "class": "risen_skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.8, "powerMult": 1.018 } },
+        { "class": "risen_skeleton", "slot": 1, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.8, "powerMult": 1.018 } },
+        { "class": "risen_skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.8, "powerMult": 1.018 } },
         { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -2, "hpMult": 1.018, "powerMult": 1.018 } },
         { "class": "grave_chanter", "slot": 8, "mods": { "spdAdd": -2, "hpMult": 1.018, "powerMult": 1.018 } }
       ] }
@@ -504,8 +504,8 @@
     ],
     "waves": [
       { "units": [
-        { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "hpMult": 1.192, "powerMult": 1.02 } },
-        { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "hpMult": 1.192, "powerMult": 1.02 } },
+        { "class": "risen_skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "hpMult": 0.9, "powerMult": 1.02 } },
+        { "class": "risen_skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "hpMult": 0.9, "powerMult": 1.02 } },
         { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.192, "powerMult": 1.02 } }
       ] }
     ]

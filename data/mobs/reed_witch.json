@@ -1,0 +1,36 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\", open-questions 446): Adsız Fen Witchling'in Harita 2 sürümü (dr_4 / 9 / 13 / 18; Salt Hag'den ayrı, belgede ayrı satır): sazlıkta yaşayan cadı. Önceden karşılaşmalarda fen_witchling id'siyle (Harita 1 kiti ve sesleri) geçiyordu; artık kendi id'si, skill'leri ve sesleri. Statlar / zırh / YZ / pasif fen_witchling ile birebir (karşılaşma gücü değişmesin). Çizim YER TUTUCU: spriteId 'fen_witchling' (kendi sprite / avatar / ikon / VFX'i sanat turunda). Sayılar PROVİZYON (sim YOK).",
+  "id": "reed_witch",
+  "name": "Reed Witch",
+  "family": "hexes",
+  "spriteId": "fen_witchling",
+  "color": "#56723a",
+  "logo": "rune",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Hex · Caster",
+  "attributes": {
+    "str": 10,
+    "int": 8,
+    "dex": 6,
+    "luck": 26
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "ai": "hexer",
+  "skills": [
+    "reed_hex",
+    "fen_rot"
+  ],
+  "passive": {
+    "id": "mire_bound",
+    "name": "Mire-Bound",
+    "icon": "hourglass",
+    "text": "While this witch lives, Saltbound heroes have ×0.8 speed (several witches do not stack).",
+    "effect": {
+      "type": "mireBound",
+      "status": "saltbound",
+      "speedMult": 0.8
+    }
+  }
+}

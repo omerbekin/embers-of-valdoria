@@ -12,12 +12,12 @@ import { sortByPrimary } from '../game/class-order';
 import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import drownedReachMap from '../../data/campaign/drowned-reach.json';
-import { EVENTS, SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
+import { ENCOUNTERS, EVENTS, SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
 import { QUEST_LIST, questBonusLine } from '../campaign/quests';
 import { maps23On } from '../ui/maps23-flag';
 import { PITS } from '../campaign/pit';
 import { OATHS, OATH_DATA, oathMinusText, oathPlusText } from '../campaign/oath';
-import { SURGE, taintHpLossPct } from '../campaign/surge';
+import { SURGE, surgeResetPrice, taintHpLossPct } from '../campaign/surge';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine, fillValues } from '../progression/item-text';
 import { ITEMS as ITEM_DATA, TIER_IDS, partBonusForm, type BonusForm, affixDef, gripOf, GRIP_NAME, implicitValues, levelRequirement, weaponPowerOf, type Grip } from '../progression/items';
@@ -855,6 +855,7 @@ export function buildMechanics(): WikiArticle[] {
           `Fog: you see the next stop in full (name, type, enemies) and the stop after it by type and name only; anything further is under fog. The final castle is always visible as your goal.`,
           // Yan karşılaşma uyarısı (Ömer 2026-10-27; src/campaign/side-danger.ts, eşikler campaign.json > sideDanger)
           `Hard fights off the road: a side stop (an optional pocket, a Guarded treasure, a guarded event or a quest) whose foes are clearly stronger than the main-road battles around it says so on its card: "Stronger than the road ahead" or "Far stronger than the road ahead", with a Hard fight tag. It is only a warning; the fight and its reward are the same.`,
+          `Back-to-back fights: the Fighting Pit and a deep Salvage Dive give no healing between fights. Their windows and cards say so in one quiet line, such as "5 fights in a row · no rest between" or "Depth 3 · no rest since the surface". Information only; nothing changes.`,
           // Serbest dolaşım ve devriye (campaign-dev, roadmap 2.1-2.3 A; sayılar data/campaign/campaign.json > replay)
           `Free roaming: after you form your company in the first village, roads no longer close. Walk back along any road, or tap a far stop to travel there in one go through stops you have cleared (nothing happens on the way). A stop you have seen stays on the map. Patrols return to cleared battlefields: a cleared Battle, Elite or Guarded treasure can be fought again (same foes, new dice). Each repeat pays full gold and loot but less XP: ${REPLAY_PCTS.join(', ')} of the first victory's XP, then ${REPLAY_PCTS.at(-1) ?? '100%'} from then on. A patrol never lights Valor: each stop gives Valor only for its first victory. The chest of a Guarded treasure and an Elite's first-victory item come only once. Bosses, events, plain treasures and the tutorial road are not repeated. The Patrol badge on a stop shows the XP its next fight pays. Retreating from a patrol calls it off and you may move on, but what happened in the fight stays: lost health stays lost and heroes who fell rise wounded (see Health and wounds).`,
           `Stops: Battle, Elite (a stronger leader), Boss, Guarded treasure (a battle, then a chest), Event (a short story stop; a guarded one is a battle first), Town (the Inn, recruits and, from Valdren Keep on, the Blacksmith), Rest (a camp you can use once: rest, tend a wound, sharpen an item or train) and Merchant (Odo sells gear for the region's item level, with new wares every day; the price depends on rarity and item level; he buys your spare items for half that price and lets you buy them back).`,
@@ -970,13 +971,17 @@ export function crownSurgeArticle(): WikiArticle {
   const nodes = (drownedReachMap as unknown as { nodes: Array<{ id: string; name: string }> }).nodes;
   const chapels = (SURGE.chapels['drowned-reach'] ?? []).map((id) => nodes.find((n) => n.id === id)?.name ?? id);
   const boss = nodes.find((n) => n.id === SURGE.salt.unlock.node)?.name ?? 'the Drowned Queen';
+  const price = surgeResetPrice('drowned-reach');
   return article('crown-surge', 'Campaign', 'Crown Surge and Ashen Taint', cx('mech_crown_surge', 'flame'), [
-    p(`On The Drowned Reach the Crown answers your call. In a campaign battle the crown plate sits next to your other actions: the hero whose turn it is can call it, and that uses the hero's turn. Summons cannot call it. You can call the Crown once per battle, and each region gives one charge of each Surge: a charge you do not use stays in that region. A charge is spent once it is called, whether the battle is won or lost.`),
+    p(`On The Drowned Reach the Crown answers your call. In a campaign battle the crown plate sits next to your other actions: the hero whose turn it is can call it, and that uses the hero's turn. Summons cannot call it. You can call the Crown once per battle, and each region gives one charge of each Surge: a charge you do not use stays in that region. A charge is spent when the battle you called it in ends, unless you lose: after a defeat the charge stays and no Taint is taken, so you can call it again on your next try.`),
     list(
-      `${ash?.name ?? 'Ash Surge'}: your whole party deals ×${mult} damage for each hero's own next ${ash?.turns ?? 2} turns.`,
-      `${salt?.name ?? 'Salt Surge'}: every ally gets a shield of ${Math.round((salt?.shieldRatio ?? 0) * 100)}% of their max HP for ${salt?.shieldTurns ?? 2} turns. It opens after you defeat ${boss}, with its own charge in each region.`,
+      `${ash?.name ?? 'Ash Surge'}: your whole party deals ×${mult} damage for each hero's own next ${ash?.turns ?? 3} turns.`,
+      `${salt?.name ?? 'Salt Surge'}: every ally gets a shield of ${Math.round((salt?.shieldRatio ?? 0) * 100)}% of their max HP for ${salt?.shieldTurns ?? 3} turns. It opens after you defeat ${boss}, with its own charge in each region.`,
     ),
-    p(`The price is Ashen Taint. The hero who calls the Crown takes Taint, and every call costs more than the last: the first call gives ${t.firstGain}, the next ${t.firstGain + t.gainStep}, then ${t.firstGain + 2 * t.gainStep}, and so on. Each Taint lowers that hero's max HP by ${taintHpLossPct(1)}%. Taint stays with the hero, also on later maps, until the company arrives at a Chapel${chapels.length ? ` (${chapels.join(', ')})` : ''}: there all Taint is cleansed. The party row on the map shows a hero's Taint.`),
+    p(`The price is Ashen Taint. The hero who calls the Crown takes Taint, and every call costs more than the last: the first call gives ${t.firstGain}, the next ${t.firstGain + t.gainStep}, then ${t.firstGain + 2 * t.gainStep}, and so on. Each Taint lowers that hero's max HP by ${taintHpLossPct(1)}%. Taint stays with the hero, also on later maps, until the company arrives at a Chapel${chapels.length ? ` (${chapels.join(', ')})` : ''}: there all Taint is cleansed for free. The party row on the map shows a hero's Taint.`),
+    ...(price
+      ? [p(`Cleansing does not make the next call cheaper. For that, a Chapel's priest can ease the Crown for ${price} gold: the count of your calls starts over, so the next call gives ${t.firstGain} Taint again. This does not use the camp, and it does nothing if you have not called the Crown since the last time.`)]
+      : []),
   ]);
 }
 
@@ -1018,7 +1023,9 @@ export function battleRulesArticle(): WikiArticle {
     p('Some battles on The Drowned Reach have a rule of their own: a condition that changes the field, an objective other than defeating every enemy, closed cells, or an object your heroes can use. The rule line under the Round plate shows it during the battle with a counter; hover it for the full text. A turn here means a full turn of the battle: it passes once every fighter has acted.'),
     list(
       ...(tide ? [`${tide.name}: ${tide.text}${soak ? ` ${soak.name} lasts while you stand in the water and ${tide.flood!.soakTurns} turns after you leave it.` : ''}${flood ? ` ${flood.name} cells deal no damage.` : ''}`] : []),
-      ...(storm?.rangedAccuracy ? [`${storm.name}: ${storm.text} It counts for shots and throws (arrows, bolts, sling stones, thrown blades and the like)${stormSky.length ? `, and for volleys of arrows falling from the sky (${stormSky.join(', ')})` : ''}, not for melee strikes or spells (a spell falling from the sky is not slowed by the wind). Hit chance is lowered by ${Math.round(-storm.rangedAccuracy.delta * 100)} points, the same way Blinded lowers it.`] : []),
+      // Skill'in bıraktığı su (Ömer 2026-10-27): Tide suyuyla aynı davranış; süre bırakanın turlarıyla
+      ...(flood?.soak && content.statuses[flood.soak] ? [`${flood.name} water left by an enemy skill (Call the Tide, Surge, Deluge, High Tide and the like) works the same way in every battle, tide or not: anyone standing in it is ${content.statuses[flood.soak]!.name} for ${flood.soakTurns ?? 2} turns, Burning is put out and Burning Ground there goes out. It lasts for the turns the skill says.`] : []),
+      ...(storm?.rangedAccuracy ? [`${storm.name}:${storm.text} It counts for shots and throws (arrows, bolts, sling stones, thrown blades and the like)${stormSky.length ? `, and for volleys of arrows falling from the sky (${stormSky.join(', ')})` : ''}, not for melee strikes or spells (a spell falling from the sky is not slowed by the wind). Hit chance is lowered by ${Math.round(-storm.rangedAccuracy.delta * 100)} points, the same way Blinded lowers it.`] : []),
       ...(urn ? [`${urn.name}: ${urn.text} It stands on a cell of your side (row ${Math.floor(urn.slot / 3) + 1}, middle lane) that no one can enter, and it cannot be attacked. Only a hero in a cell right next to it (in front, behind, above or below) can use it, as an action like Move; it holds ${urn.uses} uses. The water is the same as the tide's: ${urn.rounds} turns, and it does not wash away the tide's water or the other way round.`] : []),
       `${o.survive.name}: ${fill(o.survive.text, o.survive.rounds)}`,
       `${o.totem.name}: ${fill(o.totem.text, o.totem.every)} At most ${o.totem.maxEnemies} enemies fight at once; the totem itself does not act.`,
@@ -1306,15 +1313,27 @@ function bossArticles(): WikiArticle[] {
       const when = sk.minPhase && sk.minPhase > 1 ? ` (from phase ${sk.minPhase})` : '';
       return [`${def.skills.indexOf(id) + 1}. ${sk.name} [${skillRange(sk)}]${when}:${info.lines.join('; ')}${sk.cooldown ? `; cooldown ${sk.cooldown}` : ''}`];
     });
+    // Kendi atan bağlı nesne (boss.anchor.strike; Harpoon Ballista): nesnenin skill satırı, nesnenin statlarıyla
+    const strike = b.anchor?.strike ? content.skills[b.anchor.strike] : undefined;
+    if (strike && anchor) {
+      const info = describeSkill(strike, anchor.stats, f, unitDefs(), effectDefs(), anchor.range);
+      skillLines.push(`${anchor.name}: ${strike.name} [${skillRange(strike)}] (fires on its own at the start of each of ${def.name}'s turns, at the cell of your weakest hero):${info.lines.join('; ')}`);
+    }
+    const anchorCount = Math.max(1, ...Object.values(ENCOUNTERS).filter((e) => e.units.some((u) => u.class === def.id)).map((e) => e.units.filter((u) => u.class === b.anchor?.unit).length));
+    const anchorText = !anchor
+      ? ''
+      : strike
+        ? ` ${anchorCount > 1 ? `${anchorCount} ${anchor.name}s` : `A ${anchor.name}`} (${anchor.stats.hp} HP, ${anchor.stats.armor} armor) ${anchorCount > 1 ? 'stand' : 'stands'} behind it: ${anchorCount > 1 ? 'they' : 'it'} cannot be healed, and every turn ${anchorCount > 1 ? 'each' : 'it'} marks a hero's cell and fires into it a turn later.`
+        : ` ${anchorCount > 1 ? `${['Two', 'Three', 'Four'][anchorCount - 2] ?? anchorCount} ${anchor.name}s` : `A ${anchor.name}`} (${anchor.stats.hp} HP, ${anchor.stats.armor} armor) ${anchorCount > 1 ? 'stand' : 'stands'} behind it: ${anchorCount > 1 ? 'they never act' : 'it never acts'} and cannot be healed.`;
     const over = b.afterResolve ? content.statuses[b.afterResolve.status] : undefined;
     const accCritNames = content.formulas.ccImmunity?.accuracyCrit ? Object.values(content.statuses).filter((d) => !d.cc && isAccuracyCritDebuff(d)).map((d) => d.name) : [];
     out.push({
       ...article(`boss-${def.id}`, 'Bosses', def.name, def.logo, [
-        p(`${def.name}${b.where ? ` ${b.where}` : ''}. It has ${def.stats.hp} HP (before difficulty), ${b.anchor ? 'acts more than once each turn' : `acts more than once each turn from phase ${(b.phases ?? []).findIndex((ph) => (ph.actionsPerTurn ?? 1) > 1) + 2}`} and fights in phases.${anchor ? ` Two ${anchor.name}s (${anchor.stats.hp} HP, ${anchor.stats.armor} armor) stand behind it: they never act and cannot be healed.` : ''}`),
+        p(`${def.name}${b.where ? ` ${b.where}` : ''}. It has ${def.stats.hp} HP (before difficulty), ${b.anchor ? 'acts more than once each turn' : `acts more than once each turn from phase ${(b.phases ?? []).findIndex((ph) => (ph.actionsPerTurn ?? 1) > 1) + 2}`} and fights in phases.${anchorText}`),
         list(
           // boss'a özel uyarılar (data/bosses > boss.notes: telgraflar ve kaçış yolu)
           ...(b.notes ?? []),
-          ...(b.phases ?? []).map((ph, i) => `Phase ${i + 2} at ${pctOf(ph.at)} HP: "${ph.banner}"${ph.actionsPerTurn ? `; ${ph.actionsPerTurn} actions per turn` : ''}${ph.powerMult ? `; hits ${pctOf(ph.powerMult - 1)} harder` : ''}${ph.armorMult ? `; armor x${ph.armorMult}` : ''}${ph.breakAnchors ? '; the Moorings snap' : ''}.`),
+          ...(b.phases ?? []).map((ph, i) => `Phase ${i + 2} at ${pctOf(ph.at)} HP: "${ph.banner}"${ph.actionsPerTurn ? `; ${ph.actionsPerTurn} actions per turn` : ''}${ph.powerMult ? `; hits ${pctOf(ph.powerMult - 1)} harder` : ''}${ph.armorMult ? `; armor x${ph.armorMult}` : ''}${ph.breakAnchors ? `; the ${anchor?.name ?? 'Mooring'}${anchorCount > 1 ? 's snap' : ' snaps'}` : ''}${Object.entries(ph.cooldowns ?? {}).map(([id, n]) => `; ${content.skills[id]?.name ?? id} ${(ph.cadence ?? []).includes(id) ? `every ${n} turns` : `cooldown ${n}`}`).join('')}${ph.riseAllies ? `; a fallen ${content.mobs[ph.riseAllies.unit]?.name ?? ph.riseAllies.unit} rises again with ${pctOf(ph.riseAllies.hpRatio)} HP` : ''}.`),
           'A single attack can cross only one phase threshold; extra damage stops just above the next one.',
           // Madde 271/272: CC + isabet/kritik cezaları (Blinded, Jinxed) + Omen'in Misfortune'u; adlar veriden
           `Bosses are immune to crowd control (Stun, Slow, Silence, Taunt, pulls and pushes)${accCritNames.length ? ` and to accuracy/crit penalties (${accCritNames.join(', ')})` : ''}: the hit still lands, the effect does not ("Immune").${content.formulas.ccImmunity?.omenCrit ? ' Omens still stack and Doom still strikes, but Misfortune does not lower a boss\'s crit chance.' : ''} Damage-over-time and curses (Wound, Omen, Withering, burning ground) still work.`,

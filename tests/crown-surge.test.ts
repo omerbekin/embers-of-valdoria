@@ -8,8 +8,14 @@ import {
   battleOutcomeOf,
   battlePlan,
   campaignWaveTeams,
+  debugAddSurgeUses,
   debugAddTaint,
   debugJumpNode,
+  isChapel,
+  nextTaintGain,
+  resetSurgeUses,
+  surgeResetBlocked,
+  surgeResetPrice,
   debugRefillSurge,
   debugSetSalt,
   getMap,
@@ -68,9 +74,10 @@ describe('Crown Surge: motor (global surge eylemi)', () => {
     expect(ofType(ev, 'surge')).toEqual([{ type: 'surge', actor: uid, side: 'party', id: 'ash_surge' }]);
     const party = b.combatants.filter((c) => c.side === 'party' && c.hp > 0);
     for (const c of party) expect(c.statuses.some((s) => s.kind === 'ash_surge'), c.uid).toBe(true);
-    // çağıranın bu turu sayıldı: kalan 2 kendi turu; diğerleri 2
-    expect(b.get(uid)!.statuses.find((s) => s.kind === 'ash_surge')!.turns).toBe(2);
-    for (const c of party.filter((x) => x.uid !== uid)) expect(c.statuses.find((s) => s.kind === 'ash_surge')!.turns).toBe(2);
+    // çağıranın bu turu sayıldı: kalan 3 kendi turu; diğerleri 3 (Ömer 2026-10-27: 3 tur)
+    expect(content.globalSkills.ash_surge!.turns).toBe(3);
+    expect(b.get(uid)!.statuses.find((s) => s.kind === 'ash_surge')!.turns).toBe(3);
+    for (const c of party.filter((x) => x.uid !== uid)) expect(c.statuses.find((s) => s.kind === 'ash_surge')!.turns).toBe(3);
     expect(b.currentUid).not.toBe(uid); // eylem harcandı
     expect(b.surgeSpent('party')).toBe(true);
     const next = toPartyTurn(b);
@@ -108,6 +115,44 @@ describe('Crown Surge: motor (global surge eylemi)', () => {
       return JSON.stringify(x.log);
     };
     expect(run()).toBe(run());
+  });
+
+  it('Surge etkisi 3 savaş turu sürer (turns modu): Ash her kahramanın sonraki 3 kendi turunda, Salt kalkanı 3 tur', () => {
+    for (const id of ['ash_surge', 'salt_surge'] as const) {
+      const b = mk({ surge: [id] });
+      const caster = toPartyTurn(b);
+      expect(b.useGlobal(caster, id).ok).toBe(true);
+      const party = b.combatants.filter((c) => c.side === 'party' && c.hp > 0).map((c) => c.uid);
+      const has = (uid: string) => (id === 'ash_surge' ? b.get(uid)!.statuses.some((s) => s.kind === 'ash_surge') : (b.get(uid)!.shieldHooks ?? []).some((h) => h.skill === 'salt_surge'));
+      // her birimin kendi tur BAŞINDA etkinin hâlâ olup olmadığı
+      const covered: Record<string, number> = Object.fromEntries(party.map((u) => [u, 0]));
+      const seen: Record<string, number> = Object.fromEntries(party.map((u) => [u, 0]));
+      for (let i = 0; i < 80 && !b.winner && party.some((u) => seen[u]! < 5); i++) {
+        const uid = b.currentUid!;
+        if (uid in seen) {
+          seen[uid]!++;
+          if (has(uid)) covered[uid]!++;
+        }
+        if (!b.useGlobal(uid, 'skip_turn').ok) b.useGlobal(uid, 'rest').ok || b.useGlobal(uid, 'move_tile', b.freeTiles(uid)[0]);
+      }
+      for (const u of party) {
+        // Ash: tur sonunda azalır = sonraki 3 kendi turunun tamamı; Salt: tur başında azalır = 3. kendi turunun başında biter (arada 3 düşman aralığı)
+        expect(covered[u], `${id} ${u}`).toBe(id === 'ash_surge' ? 3 : 2);
+        expect(has(u), `${id} ${u} bitti`).toBe(false);
+      }
+    }
+    expect(content.globalSkills.salt_surge!.shieldTurns).toBe(3);
+  });
+
+  it('test modunda da süre 3 yazılır (test modunda süreler işlemez; çağırana ek tur yok)', () => {
+    const a = mk({ mode: 'test', surge: ['ash_surge'] });
+    const u1 = a.combatants.find((c) => c.side === 'party')!.uid;
+    expect(a.useGlobal(u1, 'ash_surge').ok).toBe(true);
+    for (const c of a.combatants.filter((x) => x.side === 'party' && x.hp > 0)) expect(c.statuses.find((s) => s.kind === 'ash_surge')!.turns, c.uid).toBe(3);
+    const s = mk({ mode: 'test', surge: ['salt_surge'] });
+    const u2 = s.combatants.find((c) => c.side === 'party')!.uid;
+    expect(s.useGlobal(u2, 'salt_surge').ok).toBe(true);
+    for (const c of s.combatants.filter((x) => x.side === 'party' && x.hp > 0)) expect(c.shieldHooks?.find((h) => h.skill === 'salt_surge')?.turns, c.uid).toBe(3);
   });
 
   it('debugSetSurge Surge açar ve yeniler; tanım metni veriden', () => {
@@ -180,7 +225,8 @@ describe('Crown Surge: sefer (bölge hakkı, Taint, Chapel, Salt)', () => {
 
   it('Chapel dinlenme düğümüne varış Taint siler (C5 b); (harita geçişi kahraman verisini aynen taşır, C6 a)', () => {
     setMapOverride(DROWNED_REACH, true);
-    const chapel = SURGE.chapels[DROWNED_REACH]![0]!;
+    const chapel = 'dr49';
+    expect(SURGE.chapels[DROWNED_REACH]).toContain(chapel);
     expect(getMap(DROWNED_REACH).nodes.find((n) => n.id === chapel)!.type).toBe('rest');
     let t = debugJumpNode(newCampaign({ mode: 'normal', seed: 5 }), 'dr48');
     t = debugAddTaint(t, 2);
@@ -188,6 +234,64 @@ describe('Crown Surge: sefer (bölge hakkı, Taint, Chapel, Salt)', () => {
     while (nextStep(t).kind !== 'move') t = applyBattle(t, win(t));
     t = moveTo(t, chapel);
     expect(t.roster.some((h) => h.taint)).toBe(false);
+  });
+
+  it('Harita 2de iki Chapel: dr23 Tidewatch Chapel (bölge II, ana yol) + dr49 Cliff Chapel (bölge IV), ikisi de kamp düğümü; dr39 Beacon Quay değil', () => {
+    const m = getMap(DROWNED_REACH);
+    expect([...SURGE.chapels[DROWNED_REACH]!].sort()).toEqual(['dr23', 'dr49']);
+    const regions = new Set<string>();
+    for (const id of SURGE.chapels[DROWNED_REACH]!) {
+      const n = m.nodes.find((x) => x.id === id)!;
+      expect(n.type, id).toBe('rest');
+      expect(n.name, id).toContain('Chapel');
+      expect(isChapel(DROWNED_REACH, id)).toBe(true);
+      regions.add(n.region!);
+    }
+    expect(regions.size).toBe(2);
+    const quay = m.nodes.find((x) => x.id === 'dr39')!;
+    expect(quay.name).toBe('Beacon Quay'); // Ömer 2026-10-28: ikinci Chapel dr23, dr39 eski adına döndü
+    expect(isChapel(DROWNED_REACH, 'dr39')).toBe(false);
+  });
+
+  it('yenilgide hak gitmez, Taint ve sayaç yazılmaz; tekrar denemede Surge yine var (Ömer 2026-10-27)', () => {
+    const s = atBattle();
+    const hero = activeHeroes(s)[0]!.id;
+    const lost: BattleOutcome = { victory: false, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: 0, alive: false })), flawless: false, surged: { heroId: hero, id: SURGE.ash } };
+    const t = applyBattle(s, lost);
+    expect(t.stats.defeats).toBe(s.stats.defeats + 1);
+    expect(t.surge).toEqual(s.surge);
+    expect(t.roster.find((h) => h.id === hero)!.taint).toBeUndefined();
+    expect(nextStep(t).kind).toBe('battle');
+    expect(battlePlan(t).surge).toEqual([SURGE.ash]);
+    // tekrar denemede kazanılırsa hak o zaman gider
+    const w = applyBattle(t, win(t, { heroId: hero, id: SURGE.ash }));
+    expect(w.surge).toMatchObject({ uses: 1, taken: 1 });
+    expect(surgeIdsAt(w)).toEqual([]);
+  });
+
+  it('Chapel: altınla Surge sayacı başa döner (bedava Taint temizliği ayrı); fiyat veriden, koşullar', () => {
+    setMapOverride(DROWNED_REACH, true);
+    const price = surgeResetPrice(DROWNED_REACH)!;
+    expect(price).toBe(400);
+    let t = debugJumpNode(newCampaign({ mode: 'normal', seed: 5 }), 'dr48');
+    while (nextStep(t).kind !== 'move') t = applyBattle(t, win(t));
+    // Chapel dışında: yok
+    t = debugAddSurgeUses({ ...t, gold: price + 50 }, 3);
+    expect(surgeResetBlocked(t)).toBe('Only a chapel can ease the Crown');
+    t = moveTo(t, 'dr49');
+    expect(nextTaintGain(t)).toBe(SURGE.taint.firstGain + 3 * SURGE.taint.gainStep);
+    expect(surgeResetBlocked({ ...t, gold: price - 1 })).toBe(`You need ${price} gold`);
+    expect(() => resetSurgeUses({ ...t, gold: price - 1 })).toThrow();
+    expect(surgeResetBlocked(t)).toBeNull();
+    const spent = [`${DROWNED_REACH}:I:${SURGE.ash}`];
+    const r = resetSurgeUses({ ...t, surge: { ...t.surge, spent, taken: 6 } });
+    expect(r.gold).toBe(50);
+    expect(r.surge).toEqual({ spent, taken: 6 });
+    expect(nextTaintGain(r)).toBe(SURGE.taint.firstGain);
+    expect(nextStep(r).kind).toBe(nextStep(t).kind); // kamp seçimini harcamaz
+    expect(surgeResetBlocked(r)).toBe('The Crown asks nothing more of you yet');
+    // kayıt: sayaçsız Surge alanı aynen döner
+    expect(normalizeState(JSON.parse(JSON.stringify(r)))?.surge).toEqual({ spent, taken: 6 });
   });
 
   it('Drowned Queen zaferi Salt Surgeü açar; açıkken plana iki ayrı hak gider', () => {

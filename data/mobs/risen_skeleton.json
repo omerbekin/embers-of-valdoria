@@ -1,0 +1,28 @@
+{
+  "_not": "Sefer mobu (Harita 1 Bölge II-III; campaign-dev 2026-10-28, Ömer onayı 2026-10-28, open-questions 448): karşılaşmalara hazır konan Risen Skeleton. Eskiden kahramanın çağrısı data/summons/skeleton doğrudan konuyordu; 2026-10-18 çağrı yeniden tasarımından beri o birim L1 Undead STR'sinden (x1,86) STR 48 taşıdığı için vuruşu ~40'a çıkmıştı (Ghoul ~19). Bu ayrı DÜŞMAN birimi Bölge II sıradan mob seviyesinde: STR 26 (Ghoul / Drowned ile aynı), zırh 10 (Ghoul 12, eski iskelet 6), can formülden (Ghoul gibi, override yok). Kendi 2 skill'i Grave Strike (STR 0,828) / Grave Sweep (STR 0,648, dik sıçrama, bekleme 3): kahraman iskeletinin Bone Strike / Bone Slash'inin aynı mekanik ve güçteki kopyaları (yeni kural yok; sayılar STR ile ölçeklenir), çizim / ikon / VFX artOf ile onlardan, sesler kendi kaydı (audio-mobs.json, Skeleton class seslerinin kopyası). Kahraman iskeletinin skill'lerine dokunulmadı. Pasif YOK (çağrının da yoktu). Çağrı DEĞİL: ceset bırakır, Corpse Hunger'ı tetikler, Grave Chanter'ın Bone Ward'ını açmaz. Görünüş aynı: spriteId 'skeleton'. Grave Chanter'ın Call the Buried'ı hâlâ kahraman tarzı data/summons/skeleton çağırır. Sayılar PROVİZYON (sim: balance.json > _skeleton).",
+  "id": "risen_skeleton",
+  "name": "Risen Skeleton",
+  "family": "undead",
+  "spriteId": "skeleton",
+  "color": "#d9d4c0",
+  "logo": "skull",
+  "frontPriority": 2,
+  "range": 1,
+  "role": "Undead · Brute",
+  "tags": [
+    "undead"
+  ],
+  "attributes": {
+    "str": 26,
+    "int": 0,
+    "dex": 8,
+    "luck": 4
+  },
+  "armor": 10,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "grave_strike",
+    "grave_sweep"
+  ]
+}

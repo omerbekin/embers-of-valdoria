@@ -25,7 +25,7 @@ const KITS: Record<string, string[]> = {
   drowned_champion: ['drowned_greatsword', 'champions_challenge', 'wall_of_brine'],
   pit_champion_gorr: ['pit_cestus', 'skull_splitter', 'play_to_the_crowd'], // Fighting Pit dr_pit_5 (open-questions 440)
   weir_wyrm: ['wyrm_lash', 'wyrm_swallow', 'wyrm_surge', 'wyrm_deluge'],
-  admiral_vane: ['cutlass_flurry', 'chain_shot', 'harpoon_line', 'vane_rally', 'broadside'],
+  admiral_vane: ['cutlass_flurry', 'chain_shot', 'vane_rally', 'broadside'],
   drowned_queen: ['brine_lash', 'high_tide', 'lament_of_the_deep', 'the_reach_drowns'],
 };
 const BOSSES = new Set(['weir_wyrm', 'admiral_vane', 'drowned_queen']);
@@ -38,7 +38,7 @@ const DENSE = cells({ 0: 'warrior', 1: 'defender', 3: 'mage', 4: 'archer' });
 function teamsFor(id: string, party = PARTY): Teams {
   const boss = BOSSES.has(id);
   const enemies: Record<number, string> = { 1: id };
-  if (id === 'admiral_vane') Object.assign(enemies, { 3: 'iron_mooring', 5: 'iron_mooring' });
+  if (id === 'admiral_vane') Object.assign(enemies, { 3: 'harpoon_ballista' });
   enemies[4] = 'drowned'; // eşlikçi: Wall of Brine (guard) başka bir dost ister; taunt / dost buff'ı anlam kazanır
   return { party, enemies: cells(enemies), units: { enemies: { 1: { tier: boss ? 'boss' : 'elite', displayName: def(id)!.name } } } };
 }
@@ -178,7 +178,7 @@ describe('Harita 2 önderleri: her skill kullanılabilir', () => {
     });
   }
 
-  it('skill ile bırakılan Flooded hasar vermez; Soaked uygulanır (Call the Tide)', () => {
+  it('skill ile bırakılan Flooded hasar vermez; Tide suyu gibi Soaked verir (Call the Tide; ayrı Soaked etkisi yok)', () => {
     const b = new Battle(rangeOff(content.battleSetup(content.DEFAULT_BATTLE, 5, 'test', teamsFor('salt_hag_mother'), false)));
     b.debug.dodge = 'never';
     const u = leader(b, 'salt_hag_mother');
@@ -187,6 +187,7 @@ describe('Harita 2 önderleri: her skill kullanılabilir', () => {
     const water = b.ground.filter((g) => g.ground === 'flooded' && g.board === 'party');
     expect(water.length).toBeGreaterThan(0);
     expect(water.every((g) => g.noDamage)).toBe(true);
+    expect(content.skills.call_the_tide!.effects.some((e) => e.type === 'status' && (e.status as string) === 'soaked')).toBe(false);
     expect(b.combatants.some((c) => c.side === 'party' && c.statuses.some((s) => (s.kind as string) === 'soaked'))).toBe(true);
   });
 

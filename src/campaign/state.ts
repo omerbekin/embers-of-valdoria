@@ -979,11 +979,12 @@ export function clearWounds(t: CampaignState): void {
 export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: CampaignRules = rulesFor(s)): CampaignState {
   const t = clone(s);
   delete t.suspended; // savaş bitti (zafer ya da yenilgi): duraklatma kaydı geçersiz
-  applySurgeOutcome(t, outcome.surged); // Crown Surge: çağrıldıysa bölge hakkı gider, çağıran Taint alır (sonuç fark etmez)
+  // Crown Surge: yenilgide hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 449); zaferde aşağıda işlenir
   if (!outcome.victory) {
     t.stats.defeats++;
     return t;
   }
+  applySurgeOutcome(t, outcome.surged); // zafer: çağrıldıysa bölge hakkı gider, çağıran Taint alır
   const step = expectStep(t, 'battle') as Extract<NextStep, { kind: 'battle' }>;
   if (step.pit) return winPit(t, outcome, rules); // The Fighting Pit (B5): arada şifa yok, ödül yalnız yeni rekorda
   if (step.dive) return winDive(t, outcome, step.encounter);
@@ -1133,7 +1134,7 @@ export function diveDefeat(s: CampaignState, battle: Pick<BattleOutcome, 'units'
   if (step.kind !== 'battle' || !step.dive) throw new Error('No dive battle here');
   const t = clone(s);
   delete t.suspended;
-  applySurgeOutcome(t, battle.surged);
+  // Crown Surge: yenilgide hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 449)
   t.stats.defeats++;
   keepBattleHp(t, battle);
   if (t.valor !== undefined && battle.valorLeft !== undefined) t.valor = addValor(valorRules, battle.valorLeft, 0);
@@ -1846,7 +1847,7 @@ export function losePit(s: CampaignState, battle?: Pick<BattleOutcome, 'units' |
   delete t.pit;
   delete t.suspended;
   t.stats.defeats++;
-  if (battle) applySurgeOutcome(t, battle.surged);
+  // Crown Surge: yenilgide / peste hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 449)
   if (battle) {
     settlePitFight(t, battle, woundRules());
     if (t.valor !== undefined && battle.valorLeft !== undefined) t.valor = addValor(valorRules, battle.valorLeft, 0);

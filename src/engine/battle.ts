@@ -541,8 +541,12 @@ export class Battle {
   }
 
   /** Bone Ward (YM10, mob pasifi boneWard): kendi tarafında canlı bir çağrı varken alınan TÜM hasar çarpanı (1 - reduce); yoksa 1. */
-  passiveTakenMult(target: Combatant): number {
+  passiveTakenMult(target: Combatant, type?: 'physical' | 'magic'): number {
     const e = target.passive?.effect;
+    // Slick Hide (Weir-Wyrm): Flooded hücredeyken alınan fiziksel hasar x physicalTakenMult
+    if (e?.type === 'slickHide') return type === 'physical' && target.hp > 0 && this.onGround(target, e.ground) ? e.physicalTakenMult : 1;
+    // Crown of Salt (Drowned Queen): iki tahtadaki her Flooded hücre başına -perCell (toplamsal, en az 0)
+    if (e?.type === 'crownOfSalt') return Math.max(0, 1 - e.perCell * this.groundCellCount(e.ground));
     // Close Ranks (YM20): aynı sıradaki her diğer canlı sıra alan dost için -perAlly (toplamsal; en az 0)
     if (e?.type === 'closeRanks') return Math.max(0, 1 - e.perAlly * this.rowMatesOf(target));
     if (e?.type !== 'boneWard') return 1;
@@ -621,7 +625,7 @@ export class Battle {
     const col = this.columnGuardOf(target);
     if (col > 0) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, col);
     // Bone Ward (mob pasifi): yoksa çarpılmaz
-    const bw = this.passiveTakenMult(target);
+    const bw = this.passiveTakenMult(target, type);
     if (bw !== 1) m *= bw;
     // Faz 4a C4 (damageTaken): hasarı alanın tarafındaki C4 kancaları (yalnızca ağaçlı savaş; önizleme ve gerçek vuruş aynı)
     if (this.healOn) {
@@ -698,7 +702,7 @@ export class Battle {
     const weak = target.tags.reduce((m, tag) => m * (f.weaknesses?.[tag]?.[element] ?? 1), 1);
     const st = this.effectiveStats(target);
     const red = armorReduction(damageType === 'magic' ? st.magicArmor : st.armor, f);
-    const bw = this.passiveTakenMult(target); // Bone Ward: tik hasarı da azalır (yoksa 1, ifade aynı)
+    const bw = this.passiveTakenMult(target, damageType); // Bone Ward: tik hasarı da azalır (yoksa 1, ifade aynı)
     let em = this.statusElementMult(target, element); // M-B Soaked: zemin / DoT tikinde de (yoksa 1, ifade aynı)
     const er = elemResistOf(target, element); // element direnci (c_res_*; Ömer 2026-10-26): tik hasarı da azalır (yoksa 0, ifade aynı)
     if (er) em *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, er);
@@ -3074,9 +3078,113 @@ export class Battle {
         for (const t of this.telegraphs.filter((x) => x.source === c.uid && x.kind === 'area')) this.cancelTelegraph(t, 'phase', emit);
         const foes = this.livingByDepth(opposite(c.side)).filter((u) => !u.inert && u.board === opposite(c.side));
         this.createTelegraph(c, sk, foes, undefined, emit, false);
-        if (this.mode === 'turns' && !this.noCooldowns && (sk.cooldown ?? 0) > 0) c.cooldowns[sk.id] = sk.cooldown!;
+        if (this.mode === 'turns' && !this.noCooldowns && this.cooldownFor(c, sk) > 0) c.cooldowns[sk.id] = this.cooldownFor(c, sk);
       }
     }
+    if (def.riseAllies) this.riseAllies(c, def.riseAllies, emit);
+  }
+
+  /**
+   * Skill'in bu kullanıcı için bekleme süresi: boss fazının `cooldowns` değeri (girilmiş fazların en sonuncusundaki), yoksa skill.cooldown (0 = yok).
+   * Weir-Wyrm faz 2: Surge 2 (her 2 turda bir). Saf.
+   */
+  cooldownFor(actor: Combatant, skill: SkillDef): number {
+    const ph = actor.boss?.phases;
+    if (ph?.length) {
+      for (let p = (actor.phase ?? 1) - 2; p >= 0; p--) {
+        const v = ph[p]?.cooldowns?.[skill.id];
+        if (v !== undefined) return Math.max(0, Math.floor(v));
+      }
+    }
+    return skill.cooldown ?? 0;
+  }
+
+  /** Bu fazda yapay zekanın hazır olunca her zaman kullandığı skill'ler (girilmiş fazların en sonuncusundaki `cadence`; yoksa boş). Saf. */
+  cadenceOf(actor: Combatant): string[] {
+    const ph = actor.boss?.phases;
+    if (!ph?.length) return [];
+    for (let p = (actor.phase ?? 1) - 2; p >= 0; p--) if (ph[p]?.cadence) return ph[p]!.cadence!;
+    return [];
+  }
+
+  /**
+   * Faz girişinde ölü dost yeniden kalkar (Drowned Queen faz 3: Drowned Champion). Canlı `unit` varsa hiçbir şey olmaz. Cesedi tahtadaysa yerinde
+   * (doluysa en yakın boş hücre) diriliş (olay revive, cause 'rise'); önceki dalgada düşüp savaştan çıktıysa (removed) aynı kurulumla takviye olarak
+   * yeniden girer (olay reinforce). Maks canın hpRatio'su; durumlar / kalkan / sayaç sıfır. Rastgele sayı tüketmez.
+   */
+  private riseAllies(owner: Combatant, rule: { unit: string; hpRatio: number }, emit: Emit): void {
+    const kin = this.combatants.filter((c) => c.side === owner.side && c.defId === rule.unit && c.uid !== owner.uid && !c.summoned);
+    if (!kin.length || kin.some((c) => c.hp > 0)) return;
+    const free = this.freeSlots(owner.side);
+    if (!free.length) return;
+    const dead = kin.find((c) => !c.removed);
+    if (dead) {
+      const from = dead.slot;
+      const dist = (s: number) => Math.abs(this.rowOf(s) - this.rowOf(dead.slot)) + Math.abs(this.laneOf(s) - this.laneOf(dead.slot));
+      const to = dead.board === dead.side && free.includes(dead.slot) ? dead.slot : [...free].sort((a, b) => dist(a) - dist(b) || a - b)[0]!;
+      dead.board = dead.side;
+      dead.slot = to;
+      dead.hp = Math.max(1, Math.round(dead.maxHp * rule.hpRatio));
+      dead.mp = dead.maxMp;
+      dead.shield = 0;
+      dead.magicShield = 0;
+      delete dead.shieldHooks;
+      dead.statuses = [];
+      dead.turnCounter = 0;
+      if (dead.maxRage !== undefined) dead.rage = 0;
+      this.announcedDead.delete(dead.uid);
+      this.clearCorpse(dead.uid);
+      emit({ type: 'revive', source: owner.uid, target: dead.uid, hpAfter: dead.hp, mpAfter: dead.mp, slot: to, from, cause: 'rise' });
+      return;
+    }
+    // Önceki dalgada düşmüş (savaştan çıkmış): kurulumdaki tanımıyla yeniden (takviye yolu)
+    const src = this.enemySetupOf(rule.unit);
+    if (!src || owner.side !== 'enemy') return;
+    const old = kin[0]!;
+    const n = ++this.reinforceCount;
+    const { added } = this.enlistEnemies(
+      { enemies: [src.def], enemySlots: [old.slot], enemyUnits: [{ ...(src.unit ?? {}), startHpRatio: rule.hpRatio }] },
+      (i) => `enemy-r${n}-${i}`,
+      this.waveCount > 1 ? this.waveIdx : undefined,
+      1,
+    );
+    if (!added.length) return;
+    emit({ type: 'reinforce', combatants: added.map(cloneCombatant), queue: this.mode === 'turns' ? this.turnQueue() : [] });
+    this.settleWater(emit);
+  }
+
+  /**
+   * Bağlı nesnenin kendi eylemi (boss.anchor.strike; Harpoon Ballista): sahibinin her turunun başında (turns; test modunda sahibin her eyleminden önce)
+   * her canlı nesne önce bekleyen atışını çözer (adalet kuralı telgraflarla aynı), bekleyen atışı kalmadıysa `strike` skill'iyle en düşük canlı kahramanın
+   * hücresini telgraflar (eşitlikte küçük yuva). Hasar nesnenin statlarıyla. Kırılınca bekleyen atış iptal (bossDeathRules). Rastgele sayı tüketmez.
+   */
+  private anchorStrikes(owner: Combatant, emit: Emit): void {
+    const id = owner.boss?.anchor?.strike;
+    if (!id || owner.hp <= 0 || this.winner) return;
+    for (const a of this.anchorsOf(owner)) {
+      if (this.winner) return;
+      this.resolveTelegraphsOf(a, emit);
+      if (a.hp <= 0 || this.winner || this.telegraphs.some((t) => t.source === a.uid)) continue;
+      const sk = this.skill(id, a);
+      if (!sk?.telegraph) continue;
+      const foe = this.fighting(opposite(owner.side))
+        .filter((c) => c.board === opposite(owner.side))
+        .sort((x, y) => x.hp + x.shield - (y.hp + y.shield) || x.slot - y.slot)[0];
+      if (!foe) continue;
+      this.createTelegraph(a, sk, [foe], [foe.slot], emit, false);
+    }
+  }
+
+  /** Kurulumdaki (ilk dalga ya da sonraki dalgalar) `defId` düşmanının tanımı ve birim ayarı (riseAllies). */
+  private enemySetupOf(defId: string): { def: CombatantDef; unit?: UnitSetup } | null {
+    const s = this.setup;
+    const i = s.enemies.findIndex((d) => d.id === defId);
+    if (i >= 0) return { def: s.enemies[i]!, unit: s.enemyUnits?.[i] };
+    for (const w of this.laterWaves) {
+      const j = w.enemies.findIndex((d) => d.id === defId);
+      if (j >= 0) return { def: w.enemies[j]!, unit: w.enemyUnits?.[j] };
+    }
+    return null;
   }
 
   /** Bir birim öldü: boss bağları (yardımcı kırıldı / boss öldü) ve telgraf iptalleri. announceIfDead çağırır. */
@@ -3274,9 +3382,11 @@ export class Battle {
       scale: effect.scale,
       sourceStat: actor.stats[effect.scale],
       power: effect.power,
+      ...(effect.power <= 0 ? { noDamage: true } : {}),
     };
     this.ground.push(g);
     emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+    if (this.isWater(g)) this.applyEnvironment(emit); // telgraf suyu (Deluge, High Tide): içindekiler hemen ıslanır
   }
 
   /**
@@ -4528,7 +4638,10 @@ export class Battle {
       this.record(e);
     };
     this.phaseCrossed.clear();
-    if (this.mode === 'test') this.resolveTelegraphsOf(actor, emit);
+    if (this.mode === 'test') {
+      this.resolveTelegraphsOf(actor, emit);
+      this.anchorStrikes(actor, emit);
+    }
     this.observer?.before?.({ kind: 'global', actorUid, id, ...(slot !== undefined ? { center: slot } : {}), ...(targetUid !== undefined ? { targetUids: [targetUid] } : {}) });
     emit({ type: 'globalUsed', actor: actor.uid, id });
     if (def!.kind === 'rest') {
@@ -4778,7 +4891,10 @@ export class Battle {
     };
 
     // Test modu: kaynağın bekleyen telgrafları bir sonraki eyleminden ÖNCE çözülür (turns modunda tur başında)
-    if (!debug && !fc && this.mode === 'test') this.resolveTelegraphsOf(actor, emit);
+    if (!debug && !fc && this.mode === 'test') {
+      this.resolveTelegraphsOf(actor, emit);
+      this.anchorStrikes(actor, emit);
+    }
     if (!debug && !fc) this.observer?.before?.({ kind: 'skill', actorUid, id: skillId, targetUids: targets.map((t) => t.uid), ...(centerSlot !== undefined ? { center: centerSlot, cells: centerCells } : {}), ...(areaBoard && skill.target === 'area_any' ? { board: areaBoard } : {}) });
     // Backstab (requiresOpenBehind): görsel ışınlanma hücresi (hedefin arkası) ve dönüş hücresi; gerçek yer değiştirme yok
     const backTarget = skill.requiresOpenBehind ? targets[0] : undefined;
@@ -4801,7 +4917,7 @@ export class Battle {
       this.turnedJinx.add(turned.st); // "sıradaki saldırı": aynı Jinxed ikinci kez çevirmez (ağaç Jinxed'i birden çok saldırı tutsa da)
       this.treeProc(turned.owner, turned.node);
     }
-    if (!debug && !fc && this.mode === 'turns' && !this.noCooldowns && (skill.cooldown ?? 0) > 0) actor.cooldowns[skill.id] = skill.cooldown!;
+    if (!debug && !fc && this.mode === 'turns' && !this.noCooldowns && this.cooldownFor(actor, skill) > 0) actor.cooldowns[skill.id] = this.cooldownFor(actor, skill);
 
     const resource = skill.cost.resource;
     // Thrifty (item etkisi firstSkillFree): savaştaki ilk skill'in MP bedeli 0; ilk skill kullanıldıktan sonra normal
@@ -5233,6 +5349,7 @@ export class Battle {
           }
           this.ground.push(g);
           emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+          if (this.isWater(g)) this.applyEnvironment(emit); // skill suyu: içindekiler hemen ıslanır, alttaki Burning ground söner
           break;
         }
         case 'omen': {
@@ -5663,7 +5780,7 @@ export class Battle {
     if (this.setup.rules) {
       if (this.mode === 'test') this.noteRound(actor, emit);
       this.applyEnvironment(emit);
-    }
+    } else this.settleWater(emit); // kuralsız savaşta da skill suyu (Surge, High Tide...): suya giren ıslanır, suya düşen ateş söner
     // Savaşın bitişi ya da sıradaki dalga (dalgalı savaş); sıra almayan yardımcı nesneler (inert) sayılmaz
     const wave = this.resolveEnd(emit);
     this.observer?.after?.(actor.uid);
@@ -5990,6 +6107,12 @@ export class Battle {
     if (actor.hp > 0 && this.telegraphs.length > 0) {
       this.resolveTelegraphsOf(actor, emit);
       this.resolveEnd(emit)?.(); // dalgalı savaş: yeni dalga dizilir, bu birimin turu sürer
+      if (this.winner) return;
+    }
+    // Bağlı nesnenin kendi atışı (Harpoon Ballista): sahibinin tur başında, eylemlerinden ÖNCE
+    if (actor.hp > 0 && actor.boss?.anchor?.strike) {
+      this.anchorStrikes(actor, emit);
+      this.resolveEnd(emit)?.();
       if (this.winner) return;
     }
     // Faz 4a: süreli tetik buff'ları azalır, tur başına bir kez bayrakları silinir, tur başı tetiği (yalnızca ağaçlı savaş)
@@ -6973,7 +7096,9 @@ export class Battle {
     const tide = !saved && dt?.type === 'deathlessTide' && !target.passiveUsed && target.hp > 0 && rest >= target.hp && this.onGround(target, dt.ground) ? dt : null;
     if (tide) {
       rest = Math.max(0, target.hp - 1);
-      target.passiveUsed = true;
+      // Deathless Tide x2 (Drowned Champion): `uses` kullanım; sonuncusunda passiveUsed
+      target.passiveUses = (target.passiveUses ?? 0) + 1;
+      if (target.passiveUses >= (tide.uses ?? 1)) target.passiveUsed = true;
     }
     target.hp = Math.max(0, target.hp - rest);
     if (this.treeUnits && rest > 0 && actor.side !== target.side) {
@@ -7481,8 +7606,28 @@ export class Battle {
   }
 
   /** Ortam zeminleri (Tide suyu) varken: su hücresindeki listelenen zeminler söner (grounds.json > quenches), sudaki her birim Soaked. */
+  /**
+   * Suyun ıslatma kuralı: ortam suyu (Tide / Urn) kendi soak / soakTurns'ü; skill'in bıraktığı zemin, verisinde `soak` varsa (grounds.json > flooded)
+   * onunla (Ömer 2026-10-27: skill suyu da Tide suyu gibi). Islatmayan zeminde null.
+   */
+  private soakOf(g: GroundEffect): { soak: string; soakTurns: number } | null {
+    if (g.envUntilRound !== undefined) return g.soak ? { soak: g.soak, soakTurns: g.soakTurns ?? 1 } : null;
+    const def = this.setup.grounds?.[g.ground];
+    return def?.soak ? { soak: def.soak, soakTurns: def.soakTurns ?? g.turns } : null;
+  }
+
+  /** Su zemini mi (ortam suyu ya da ıslatan skill zemini): söndürme ve ıslatma bunlarda işler. */
+  private isWater(g: GroundEffect): boolean {
+    return g.envUntilRound !== undefined || !!this.setup.grounds?.[g.ground]?.soak;
+  }
+
+  /** Tahtada su varsa çevre etkisi (söndürme + ıslatma); kurallı savaşta zaten her eylem sonunda çalışır. */
+  private settleWater(emit: Emit): void {
+    if (this.ground.some((g) => this.isWater(g))) this.applyEnvironment(emit);
+  }
+
   private applyEnvironment(emit: Emit): void {
-    const env = this.ground.filter((g) => g.envUntilRound !== undefined);
+    const env = this.ground.filter((g) => this.isWater(g));
     if (!env.length) return;
     for (const w of env) {
       const quench = this.setup.grounds?.[w.ground]?.quenches;
@@ -7510,11 +7655,19 @@ export class Battle {
    */
   private soakIfFlooded(c: Combatant, emit: Emit): void {
     if (c.inert) return;
-    // Ortam suyu (Tide / Urn): suyun kendi durumu ve süresi (GroundEffect.soak / soakTurns)
-    const w = this.ground.find((g) => g.envUntilRound !== undefined && g.soak && g.board === c.board && g.slots.includes(c.slot));
-    if (!w) return;
-    const flood = { soak: w.soak!, soakTurns: w.soakTurns ?? 1 };
-    const cause = w.envCause ?? this.setup.rules?.condition?.id ?? 'env';
+    // Ortam suyu (Tide / Urn): suyun kendi durumu ve süresi (GroundEffect.soak / soakTurns); skill'in bıraktığı su: zemin verisinin soak / soakTurns'ü
+    let w: GroundEffect | undefined;
+    let flood: { soak: string; soakTurns: number } | null = null;
+    for (const g of this.ground) {
+      if (g.board !== c.board || !g.slots.includes(c.slot)) continue;
+      flood = this.soakOf(g);
+      if (flood) {
+        w = g;
+        break;
+      }
+    }
+    if (!w || !flood) return;
+    const cause = w.envUntilRound !== undefined ? (w.envCause ?? this.setup.rules?.condition?.id ?? 'env') : w.ground;
     const cur = c.statuses.find((s) => s.kind === flood.soak);
     if (cur) {
       if (cur.turns >= flood.soakTurns) return;
@@ -7535,6 +7688,13 @@ export class Battle {
   /** Birimin hücresinde bu türden zemin (Flooded) var mı (Harita 2 pasifleri: Slick, Deathless Tide, Salt Tears, Undertow). */
   onGround(c: Combatant, ground: string): boolean {
     return this.ground.some((g) => g.ground === ground && g.board === c.board && g.slots.includes(c.slot));
+  }
+
+  /** İki tahtada bu türden zeminli farklı hücre sayısı (Crown of Salt: Flooded hücreler; üst üste binen zemin bir sayılır). Saf. */
+  groundCellCount(ground: string): number {
+    const cells = new Set<string>();
+    for (const g of this.ground) if (g.ground === ground) for (const s of g.slots) cells.add(`${g.board}:${s}`);
+    return cells.size;
   }
 
   /** Boarding (Harita 2 Corsairs): dalga ya da takviyeyle giren birim kısa süreli durum (Haste) alır. */

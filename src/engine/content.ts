@@ -33,12 +33,16 @@ import undead from '../../data/classes/undead.json';
 import warrior from '../../data/classes/warrior.json';
 import skeleton from '../../data/summons/skeleton.json';
 import treant from '../../data/summons/treant.json';
+// Harita 2 Tide Caller'ın Rise from the Deep çağrısı (Skeleton ile aynı statlar, kendi kit; content-designer 2026-10-27, open-questions 446)
+import risenDrowned from '../../data/summons/risen_drowned.json';
 import bridgeWarden from '../../data/bosses/bridge_warden.json';
 import ironMooring from '../../data/bosses/iron_mooring.json';
 import lordMorvane from '../../data/bosses/lord_morvane.json';
 import weirWyrm from '../../data/bosses/weir_wyrm.json';
 import admiralVane from '../../data/bosses/admiral_vane.json';
+import harpoonBallista from '../../data/bosses/harpoon_ballista.json';
 import drownedQueen from '../../data/bosses/drowned_queen.json';
+import hexTotem from '../../data/bosses/hex_totem.json';
 import mobRoadThug from '../../data/mobs/road_thug.json';
 import mobMoorRaider from '../../data/mobs/moor_raider.json';
 import mobBanditCrossbowman from '../../data/mobs/bandit_crossbowman.json';
@@ -88,6 +92,16 @@ import mobSaltHag from '../../data/mobs/salt_hag.json';
 import mobTideCaller from '../../data/mobs/tide_caller.json';
 import mobMarshLight from '../../data/mobs/marsh_light.json';
 import mobWreckGhoul from '../../data/mobs/wreck_ghoul.json';
+// Harita 2'de kalan son Harita 1 birimlerinin kendi sürümleri (aynı statlar, kendi kit / ses; content-designer 2026-10-27, open-questions 446)
+import mobCinderExile from '../../data/mobs/cinder_exile.json';
+import mobPitchBoiler from '../../data/mobs/pitch_boiler.json';
+import mobSunkenDead from '../../data/mobs/sunken_dead.json';
+import mobRisenSkeleton from '../../data/mobs/risen_skeleton.json';
+import mobMireGhoul from '../../data/mobs/mire_ghoul.json';
+import mobReedWitch from '../../data/mobs/reed_witch.json';
+import mobMudlark from '../../data/mobs/mudlark.json';
+import mobInquisitionBrother from '../../data/mobs/inquisition_brother.json';
+import mobSaltChaplain from '../../data/mobs/salt_chaplain.json';
 // Harita 2 elit önderleri (kendi kitleri, content-designer 2026-10-27)
 import mobReaverChiefHook from '../../data/mobs/reaver_chief_hook.json';
 import mobSaltHagMother from '../../data/mobs/salt_hag_mother.json';
@@ -168,6 +182,7 @@ export const selectableClasses: string[] = Object.keys(classes).filter((id) => !
 export const summons: Record<string, CombatantDef> = {
   treant: buildDef(treant as unknown as CombatantData, formulas),
   skeleton: buildDef(skeleton as unknown as CombatantData, formulas),
+  risen_drowned: buildDef(risenDrowned as unknown as CombatantData, formulas),
 };
 
 /**
@@ -181,7 +196,11 @@ export const bosses: Record<string, CombatantDef> = {
   // Harita 2 bossları (kendi kitleri, content-designer 2026-10-27; maps-2-3.md 3.3)
   weir_wyrm: buildDef(weirWyrm as unknown as CombatantData, formulas),
   admiral_vane: buildDef(admiralVane as unknown as CombatantData, formulas),
+  // Vane'in kendi atan bağlı nesnesi (boss.anchor.strike; engine-dev 2026-10-27)
+  harpoon_ballista: buildDef(harpoonBallista as unknown as CombatantData, formulas),
   drowned_queen: buildDef(drownedQueen as unknown as CombatantData, formulas),
+  // Harita 2 Break the Totem nesnesi (eskiden Iron Mooring "Hex Totem" adıyla; Iron Mooring ile aynı statlar, inert)
+  hex_totem: buildDef(hexTotem as unknown as CombatantData, formulas),
 };
 
 const mobData: CombatantData[] = [
@@ -231,6 +250,15 @@ const mobData: CombatantData[] = [
   mobTideCaller,
   mobMarshLight,
   mobWreckGhoul,
+  mobCinderExile,
+  mobPitchBoiler,
+  mobSunkenDead,
+  mobRisenSkeleton,
+  mobMireGhoul,
+  mobReedWitch,
+  mobMudlark,
+  mobInquisitionBrother,
+  mobSaltChaplain,
   mobReaverChiefHook,
   mobSaltHagMother,
   mobGuildEnforcerBastion,

@@ -103,7 +103,12 @@ export interface StoryDef extends EventText {
    * Valor'un açılması ve hediyesi kural tarafında (state.ts > complete, data/valor.json > campaign).
    */
   epilogue?: { title?: string; text: string };
+  /** Hediye satırındaki özne (yoksa 'he'): "She presses a small bundle into your hands." (Ysolt, Keeper's Daughter; open-questions 450). */
+  pronoun?: 'he' | 'she';
 }
+
+/** Hikâye sonunda hediye verilince replik altındaki not (NPC'nin `pronoun` alanıyla; varsayılan "He"). */
+export const storyGiftNote = (def: Pick<StoryDef, 'pronoun'>): string => `${def.pronoun === 'she' ? 'She' : 'He'} presses a small bundle into your hands.`;
 
 /** Kasaba hikâye sahneleri (T5; sis açma YOK; düğümün `story` alanı). */
 export const STORIES: Record<string, StoryDef> = Object.assign({}, ...EVENT_FILES.map((f) => f.stories ?? {}));

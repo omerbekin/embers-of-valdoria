@@ -6518,7 +6518,7 @@
     "artOf": "cauldron_splash"
   },
   "call_the_tide": {
-    "_not": "Harita 2 Salt Hag Mother kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide 2 sıra (maps-2-3.md 3.3): 2x3 alan hafif buz hasarı + 2 tur Flooded zemin (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 Salt Hag Mother kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide 2 sıra (maps-2-3.md 3.3): 2x3 alan hafif buz hasarı + 2 tur Flooded zemin (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "call_the_tide",
     "name": "Call the Tide",
     "target": "area_enemies",
@@ -6550,11 +6550,6 @@
         "turns": 2,
         "scale": "luck",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "drainfield",
@@ -7059,7 +7054,7 @@
     "artOf": "chorus"
   },
   "sirens_call": {
-    "_not": "Harita 2 The Siren Queen kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). tek düşmana 1 tur Saltbound + 1 tur Spellbound (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Harita 2 The Siren Queen kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). tek düşmana küçük buz hasarı (LUCK 0,5) + 2 tur Saltbound + 2 tur Spellbound (Ömer 2026-10-27: 'Siren's Call güçlensin'; önce YZ hiç seçmiyordu, şimdi Queen'in eylemlerinin ~%29'u, open-questions 437.9). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "sirens_call",
     "name": "Siren's Call",
     "target": "single_enemy",
@@ -7072,14 +7067,21 @@
     "fx": "#e0b04a",
     "effects": [
       {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "ice",
+        "scale": "luck",
+        "power": 0.5
+      },
+      {
         "type": "status",
         "status": "saltbound",
-        "turns": 1
+        "turns": 2
       },
       {
         "type": "status",
         "status": "spellbound",
-        "turns": 1
+        "turns": 2
       }
     ],
     "icon": "clover",
@@ -7124,7 +7126,7 @@
     "artOf": "bone_rite"
   },
   "requiem_of_salt": {
-    "_not": "Harita 2 The Salt Bishop kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). sütun boyunca sıra sıra INT buz (x0,75) + 2 tur Flooded zemin (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Salt Bishop kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). sütun boyunca sıra sıra INT buz (x0,75) + 2 tur Flooded zemin (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "requiem_of_salt",
     "name": "Requiem of Salt",
     "target": "area_enemies",
@@ -7154,11 +7156,6 @@
         "turns": 2,
         "scale": "int",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "drainfield",
@@ -7363,7 +7360,7 @@
     "artOf": "breaking_span"
   },
   "wyrm_surge": {
-    "_not": "Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Surge (2 sıra Flooded): 2x3 alan STR fiziksel + 2 tur Flooded zemin (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Surge (2 sıra Flooded): 2x3 alan STR fiziksel + 2 tur Flooded zemin (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "wyrm_surge",
     "name": "Surge",
     "target": "area_enemies",
@@ -7394,11 +7391,6 @@
         "turns": 2,
         "scale": "str",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "breakingspan",
@@ -7412,7 +7404,7 @@
     "artOf": "breaking_span"
   },
   "wyrm_deluge": {
-    "_not": "Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE Deluge (faz 3; girişte telgraflanır): tüm kahraman tahtası, güvenli hücre YOK, STR fiziksel + 3 tur Flooded (hasarsız) + 3 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE Deluge (faz 3; girişte telgraflanır): tüm kahraman tahtası, güvenli hücre YOK, STR fiziksel + 3 tur Flooded (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "wyrm_deluge",
     "name": "Deluge",
     "target": "all_enemies",
@@ -7442,11 +7434,6 @@
         "turns": 3,
         "scale": "str",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 3
       }
     ],
     "icon": "fallofthebridge",
@@ -7538,29 +7525,32 @@
     "artOf": "breaking_span"
   },
   "harpoon_line": {
-    "_not": "Harita 2 Admiral Vane (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Harpoon Ballista ayaktayken (requiresAlly iron_mooring): STR fiziksel + hedef şeridinin en öndeki boş hücresine çekilir (Chain Hook kuralı). Belgedeki \"her tur telgraflı hücre\" atışının en yakın var olan sürümü (open-questions 435). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Harita 2 Admiral Vane'in Harpoon Ballista'sının kendi atışı (engine-dev 2026-10-27, Ömer onayı; maps-2-3.md 3.3 'Ballista her tur telgraflı hücreye vurur'): boss.anchor.strike. Vane'in her turunun başında Ballista en düşük canlı kahramanın hücresini telgraflar, sonraki Vane turunun başında o hücreye STR (Ballista'nın) fiziksel vurur (zarsız, bloklanamaz; Move ile kaçılır). Vane'in eski çeken Harpoon Line'ı kaldırıldı. YER TUTUCU sanat (artOf chain_hook). Sayılar PROVİZYON (open-questions 437; sim YOK).",
     "id": "harpoon_line",
     "name": "Harpoon Line",
-    "target": "single_enemy",
-    "range": 6,
-    "requiresAlly": "iron_mooring",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "rect",
+      "rows": 1,
+      "cols": 1,
+      "anchor": "bottom_left"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
     "cost": {
       "resource": "mp",
       "amount": 0
     },
-    "cooldown": 2,
-    "motion": "whip",
+    "motion": "cast",
     "fx": "#8a4a25",
     "effects": [
       {
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.55
-      },
-      {
-        "type": "pull",
-        "to": "laneFront"
+        "power": 1
       }
     ],
     "icon": "chainhook",
@@ -7679,7 +7669,7 @@
     "artOf": "cinder_lash"
   },
   "high_tide": {
-    "_not": "Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide (2 sıra, telgraflı; maps-2-3.md 3.3): telgraflı 2x2 (faz 2+: 2x3), sonraki turunda INT buz + 2 tur Flooded (hasarsız) + 2 tur Soaked. Ad High Tide (Salt Hag Mother'ın Call the Tide'ından ayrılsın). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide (2 sıra, telgraflı; maps-2-3.md 3.3): telgraflı 2x2 (faz 2+: 2x3), sonraki turunda INT buz + 2 tur Flooded (hasarsız). Ad High Tide (Salt Hag Mother'ın Call the Tide'ından ayrılsın). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "high_tide",
     "name": "High Tide",
     "target": "area_enemies",
@@ -7722,11 +7712,6 @@
         "turns": 2,
         "scale": "int",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "smokebomb",
@@ -7777,7 +7762,7 @@
     "artOf": "chorus"
   },
   "the_reach_drowns": {
-    "_not": "Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE The Reach Drowns (faz 3; girişte telgraflanır; Pyre'ın su aynası): tüm kahraman tahtası, güvenli hücre YOK, INT buz + 2 tur Flooded (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE The Reach Drowns (faz 3; girişte telgraflanır; Pyre'ın su aynası): tüm kahraman tahtası, güvenli hücre YOK, INT buz + 2 tur Flooded (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "the_reach_drowns",
     "name": "The Reach Drowns",
     "target": "all_enemies",
@@ -7808,11 +7793,6 @@
         "turns": 2,
         "scale": "int",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "judgebeam",
@@ -8085,7 +8065,7 @@
     "artOf": "hex_bolt"
   },
   "brackish_tide": {
-    "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Hexes imza skill'i (Fen Witchling): 2x3 alana küçük hasar + 3 tur Wither (Withering Curse, Omen'siz). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
+    "_not": "Harita 2 Salt Hag kendi skill'i (content-designer 2026-10-27, open-questions 442): sıraya küçük buz hasarı + 2 tur Flooded zemin; Soaked'ı zemin kendisi verir (grounds.json > flooded.soak, open-questions 437.1). Sayılar PROVİZYON.",
     "id": "brackish_tide",
     "name": "Brackish Tide",
     "target": "area_enemies",
@@ -8114,11 +8094,6 @@
         "turns": 2,
         "scale": "luck",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "drainfield",
@@ -8163,7 +8138,7 @@
     "artOf": "dirge"
   },
   "rise_from_the_deep": {
-    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Grave Chanter imza skill'i: Risen Skeleton çağırır (ceset varsa tüketir: beslenmiş), ömür 3 tur. YER TUTUCU sanat: ikon/vfx/ses artOf 'raise_dead' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Grave Chanter imza skill'i: Risen Skeleton çağırır (ceset varsa tüketir: beslenmiş), ömür 3 tur. HARİTA 2 (Tide Caller; open-questions 446): artık Harita 1 Skeleton'ı değil kendi çağrısı Risen Drowned'ı çağırır (data/summons/risen_drowned.json; statlar Skeleton ile birebir, yeni kural yok). YER TUTUCU sanat: ikon/vfx/ses artOf 'raise_dead' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
     "id": "rise_from_the_deep",
     "name": "Rise from the Deep",
     "target": "self",
@@ -8177,7 +8152,7 @@
     "effects": [
       {
         "type": "summon",
-        "unit": "skeleton",
+        "unit": "risen_drowned",
         "lifespan": 3,
         "consumeCorpse": true
       }
@@ -8455,5 +8430,665 @@
       "arrowThunk"
     ],
     "artOf": "scatter_quarrels"
+  },
+  "pitch_brand": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Cinder Exile temel saldırısı: zifte batırılmış yanan çıra fırlatır (Ember Toss ile aynı sayı: ateş INT 0,9). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "pitch_brand",
+    "name": "Pitch Brand",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ff8a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.9,
+        "element": "fire"
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "ember_toss"
+  },
+  "tar_blaze": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Cinder Exile imza skill'i: 2x2 alana katran dökülüp tutuşturulur (Burn the Ground ile aynı sayı: ateş 0,3 + 2 tur Burning zemin). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "tar_blaze",
+    "name": "Tar Blaze",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "meteor",
+    "skyCenter": true,
+    "fx": "#ff5a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.3,
+        "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.35
+      }
+    ],
+    "icon": "meteor",
+    "vfx": "meteor",
+    "sfx": [
+      "meteorWhistle",
+      "bigBoom",
+      "fireCrackle"
+    ],
+    "artOf": "burn_the_ground"
+  },
+  "hot_pitch": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Pitch Boiler temel saldırısı: kepçeyle kaynar zift atar (Shovel of Embers ile aynı: ateş INT 0,7 + 1 tur Blinded). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "hot_pitch",
+    "name": "Hot Pitch",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ff9a4a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "fire"
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 1
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "shovel_of_embers"
+  },
+  "caulkers_smoke": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Pitch Boiler imza skill'i: kazandan yükselen kara zift dumanı bir sırayı kaplar (Kiln Smoke ile aynı: ateş 0,35 + 2 tur Burning DoT 0,15). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "caulkers_smoke",
+    "name": "Caulker's Smoke",
+    "target": "area_enemies",
+    "area": {
+      "shape": "column",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#4a3a30",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.35,
+        "element": "fire"
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "int",
+        "power": 0.15,
+        "turns": 2
+      }
+    ],
+    "icon": "ashbrand",
+    "vfx": "ashbrand",
+    "sfx": [
+      "emberHiss"
+    ],
+    "artOf": "kiln_smoke"
+  },
+  "waterlogged_grip": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Sunken Dead temel saldırısı: suyla şişmiş eller boğazı sıkar (Clutch ile aynı: STR 0,75 + 1 tur Silence). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "waterlogged_grip",
+    "name": "Waterlogged Grip",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#466e66",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      },
+      {
+        "type": "status",
+        "status": "silence",
+        "turns": 1
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "clutch"
+  },
+  "pull_beneath": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Sunken Dead imza skill'i: hedefi sırasının önüne, suya doğru çeker (Drag Under ile aynı: menzil 2, STR 0,7 + çekme). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "pull_beneath",
+    "name": "Pull Beneath",
+    "target": "single_enemy",
+    "range": 2,
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 3,
+    "motion": "whip",
+    "fx": "#3e6a64",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      },
+      {
+        "type": "pull",
+        "to": "laneFront"
+      }
+    ],
+    "icon": "chainhook",
+    "vfx": "chainhook",
+    "sfx": [
+      "chainDrag",
+      "ironCreak"
+    ],
+    "artOf": "drag_under"
+  },
+  "silt_rake": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Mire Ghoul temel saldırısı: çamurlu pençeyle tırmık, hedefi ağırlaştırır (Gnaw'daki 2 tur Wound yerine 1 tur Slow; STR 0,75). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "silt_rake",
+    "name": "Silt Rake",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#7a7a4a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "gnaw"
+  },
+  "mire_gorge": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Mire Ghoul imza skill'i: yavaşlamış avın üstüne çöker (Feast 1,3 yerine 1,1, Slow hedefe x1,3; ortalama aynı bant). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "mire_gorge",
+    "name": "Mire Gorge",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#b8b49a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.1,
+        "bonusVsStatus": {
+          "status": "slow",
+          "multiplier": 1.3
+        }
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "feast"
+  },
+  "reed_hex": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Reed Witch temel saldırısı: sazdan örülmüş muskayla lanet (Hex Bolt ile aynı: karanlık LUCK 0,6 + 1 tur Saltbound). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "reed_hex",
+    "name": "Reed Hex",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#a04f98",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.6
+      },
+      {
+        "type": "status",
+        "status": "saltbound",
+        "turns": 1
+      }
+    ],
+    "icon": "eye",
+    "vfx": "voidstrike",
+    "sfx": [
+      "darkChant",
+      "boneImpact"
+    ],
+    "artOf": "hex_bolt"
+  },
+  "fen_rot": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Reed Witch imza skill'i: 2x3 alana bataklık çürüğü (Bog Curse ile aynı: karanlık 0,2 + 3 tur Wither DoT 0,1). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "fen_rot",
+    "name": "Fen Rot",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3,
+      "anchor": "bottom_left",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#8c9b3c",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.2
+      },
+      {
+        "type": "dot",
+        "status": "wither",
+        "scale": "luck",
+        "power": 0.1,
+        "turns": 3
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "bog_curse"
+  },
+  "gutting_knife": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Mudlark temel saldırısı: balık temizleme bıçağı (Shiv ile aynı: DEX 0,9). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "gutting_knife",
+    "name": "Gutting Knife",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#c0c8c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.9
+      }
+    ],
+    "icon": "backstab",
+    "vfx": "backstab",
+    "sfx": [
+      "shadowStep",
+      "backstabThud",
+      "bloodSplat"
+    ],
+    "artOf": "shiv"
+  },
+  "bilge_splash": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Mudlark imza skill'i: kova dolusu sintine suyu gözlere (Sand in the Eyes ile aynı: DEX 0,3 + 1 tur Blinded). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "bilge_splash",
+    "name": "Bilge Splash",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#8a9a70",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.3
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 1
+      }
+    ],
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "sand_in_the_eyes"
+  },
+  "salt_scourge": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Inquisition Brother temel saldırısı: tuz kristali işlenmiş kamçılı gürz, kendine can bedeli (Penance Flail ile aynı: mevcut canın %8'i, STR 1,05). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "salt_scourge",
+    "name": "Salt Scourge",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "hp",
+      "amount": 0,
+      "ofCurrent": 0.08
+    },
+    "motion": "melee",
+    "fx": "#e8dca0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.05
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "penance_flail"
+  },
+  "brann_vigil": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Inquisition Brother imza skill'i: bir dosta nöbet duası (Sanctuary ile aynı: 2 tur Blessed, kendisi hariç). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "brann_vigil",
+    "name": "Brann's Vigil",
+    "target": "single_ally",
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "excludeSelf": true,
+    "fx": "#f0e4b0",
+    "effects": [
+      {
+        "type": "status",
+        "status": "blessed",
+        "turns": 2
+      }
+    ],
+    "icon": "spellward",
+    "vfx": "spellward",
+    "sfx": [
+      "wardHum"
+    ],
+    "artOf": "sanctuary"
+  },
+  "blessed_salt": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Salt Chaplain temel saldırısı: kutsanmış tuz serpilir, gökten ışık iner (Holy Ember ile aynı: kutsal INT 0,7). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "blessed_salt",
+    "name": "Blessed Salt",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#fff0a0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "holy"
+      }
+    ],
+    "icon": "judgehammer",
+    "vfx": "hammerfall",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam"
+    ],
+    "artOf": "holy_ember"
+  },
+  "salted_ground": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Salt Chaplain imza skill'i: 2x2 alana tuz halkası çizilip kutsanır (Consecrate ile aynı: kutsal 0,25 + 2 tur Holy Fire zemin 0,2). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "salted_ground",
+    "name": "Salted Ground",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#fff4c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.25,
+        "element": "holy"
+      },
+      {
+        "type": "ground",
+        "ground": "holy_fire",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.2
+      }
+    ],
+    "icon": "judgebeam",
+    "vfx": "judgment",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam",
+      "fireCrackle"
+    ],
+    "artOf": "consecrate"
+  },
+  "sodden_strike": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Risen Drowned temel saldırısı (Bone Strike ile aynı: STR 0,828). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "sodden_strike",
+    "name": "Sodden Strike",
+    "icon": "bone",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9ab8b0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.828
+      }
+    ],
+    "vfx": "bonestrike",
+    "sfx": [
+      "rustySlash"
+    ],
+    "artOf": "skeleton_strike"
+  },
+  "riptide_slash": {
+    "_not": "Sefer mobu skill'i, HARİTA 2 (content-designer 2026-10-27; Ömer: \"Harita 2'de Harita 1 birimi kalmasın\"): Risen Drowned ikinci skill'i (Bone Slash ile aynı: STR 0,648, dik sıçrama x1, bekleme 3). Çizim / ikon / VFX YER TUTUCU (artOf Harita 1 karşılığı; kendi sanatı sanat turunda, open-questions 446). Sayılar PROVİZYON (sim YOK).",
+    "id": "riptide_slash",
+    "name": "Riptide Slash",
+    "icon": "boneslash",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9ab8b0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.648
+      }
+    ],
+    "splash": {
+      "pattern": "perpendicular",
+      "mult": 1
+    },
+    "cooldown": 3,
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "skeleton_slash"
+  },
+  "grave_strike": {
+    "_not": "Sefer mobu skill'i (campaign-dev 2026-10-28, Ömer onayı, open-questions 448): Risen Skeleton temel saldırısı (Bone Strike ile aynı: STR 0,828). Çizim / ikon / VFX artOf ile kahraman iskeletinden; sesler mobun kendi kaydı (audio-mobs.json, Skeleton class seslerinin kopyası). Sayılar PROVİZYON (balance.json > _skeleton).",
+    "id": "grave_strike",
+    "name": "Grave Strike",
+    "icon": "bone",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#d9d4c0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.828
+      }
+    ],
+    "vfx": "bonestrike",
+    "sfx": [
+      "rustySlash"
+    ],
+    "artOf": "skeleton_strike"
+  },
+  "grave_sweep": {
+    "_not": "Sefer mobu skill'i (campaign-dev 2026-10-28, Ömer onayı, open-questions 448): Risen Skeleton ikinci skill'i (Bone Slash ile aynı: STR 0,648, dik sıçrama x1, bekleme 3). Çizim / ikon / VFX artOf ile kahraman iskeletinden; sesler mobun kendi kaydı (audio-mobs.json, Skeleton class seslerinin kopyası). Sayılar PROVİZYON (balance.json > _skeleton).",
+    "id": "grave_sweep",
+    "name": "Grave Sweep",
+    "icon": "boneslash",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#d9d4c0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.648
+      }
+    ],
+    "splash": {
+      "pattern": "perpendicular",
+      "mult": 1
+    },
+    "cooldown": 3,
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "skeleton_slash"
   }
 }

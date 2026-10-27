@@ -212,8 +212,15 @@ export type PassiveEffect =
   | { type: 'slick'; ground: string; evasion: number }
   /** Lure (Siren): onu bir SKILL vuruşuyla vuran düşman (çağrı değil) `turns` tur `status` (Spellbound; Ömer O1 c 2026-10-25, Omen yerine) alır. */
   | { type: 'lure'; status: StatusKind; turns: number }
-  /** Deathless Tide (Drowned Knight): savaşta bir kez, `ground` (Flooded) hücredeyken ölümcül hasar alınca ölmez; maks canın `hpRatio` kadarıyla kalkar (kullanılınca `passiveUsed`). */
-  | { type: 'deathlessTide'; ground: string; hpRatio: number }
+  /**
+   * Deathless Tide (Drowned Knight; Drowned Champion x2): savaşta `uses` kez (yoksa 1), `ground` (Flooded) hücredeyken ölümcül hasar alınca ölmez; maks canın
+   * `hpRatio` kadarıyla kalkar (sayaç `Combatant.passiveUses`; son kullanımda `passiveUsed`).
+   */
+  | { type: 'deathlessTide'; ground: string; hpRatio: number; uses?: number }
+  /** Slick Hide (Weir-Wyrm, maps-2-3.md 3.3): `ground` (Flooded) hücredeyken alınan FİZİKSEL hasar x`physicalTakenMult` (vuruş, önizleme, fiziksel zemin tiki). */
+  | { type: 'slickHide'; ground: string; physicalTakenMult: number }
+  /** Crown of Salt (Drowned Queen, maps-2-3.md 3.3): iki tahtadaki her `ground` (Flooded) hücre başına alınan TÜM hasar -`perCell` (toplamsal, en az 0). */
+  | { type: 'crownOfSalt'; ground: string; perCell: number }
   /** Salt Tears (Brine Maiden): kendi turunun başında `ground` (Flooded) hücredeki her canlı yaralı dostu (kendisi dahil) maks canının `ratio` kadarı iyileştirir (Wound uygulanır). */
   | { type: 'saltTears'; ground: string; ratio: number }
   /** Undertow (Reef Wrecker): SKILL vuruşu `ground` (Flooded) hücredeki düşmana isabet edince `turns` tur `status` (Slow). */
@@ -303,6 +310,15 @@ export interface BossPhaseDef {
   breakAnchors?: boolean;
   /** Girişte eylem harcamadan telgraflanan skill (Fall of King's Bridge); sonra skill'in normal cooldown'u başlar. Bekleyen alan telgrafı bunun yerine iptal olur. */
   telegraphOnEnter?: string;
+  /** Bu fazdan itibaren skill'lerin bekleme süresi (skill id -> tur; skill.cooldown yerine). Weir-Wyrm faz 2: Surge 2. */
+  cooldowns?: Record<string, number>;
+  /** Bu fazdan itibaren yapay zekanın hazır olunca HER ZAMAN kullandığı skill'ler (cooldowns ile "her N turda bir"). */
+  cadence?: string[];
+  /**
+   * Girişte ölü dost yeniden kalkar (Drowned Queen faz 3: Drowned Champion): `unit` id'li ölü dost (cesedi duruyorsa yerinde, önceki dalgada düştüyse
+   * takviye olarak yeniden) maks canın `hpRatio` kadarıyla. Canlı olan varsa ya da hiç yoksa hiçbir şey olmaz.
+   */
+  riseAllies?: { unit: string; hpRatio: number };
 }
 
 /** Boss kuralları (CombatantData.boss). */
@@ -319,7 +335,18 @@ export interface BossDef {
    * Bağlı yardımcı nesne (Anchored): `unit` id'li canlı her dost birim bu boss'a armorAdd / magicArmorAdd verir. Biri ölünce (kırılınca) boss
    * `stagger` (sıradaki eylemini kaybeder) ve bekleyen `cancel` telgrafları iptal olur.
    */
-  anchor?: { unit: string; armorAdd: number; magicArmorAdd: number; stagger: boolean; cancel: string[] };
+  anchor?: {
+    unit: string;
+    armorAdd: number;
+    magicArmorAdd: number;
+    stagger: boolean;
+    cancel: string[];
+    /**
+     * Nesnenin kendi eylemi (Harpoon Ballista): boss'un her turunun başında her canlı nesne önce bekleyen atışını çözer, sonra `strike` skill'iyle
+     * (nesnenin statları) bir kahramanın hücresini telgraflar (en düşük canlı; eşitlikte küçük yuva). Kırılınca bekleyen atış iptal.
+     */
+    strike?: string;
+  };
   /**
    * Unyielding: diğer debuff'lar 1 tur kısa (en az 1; yığılan durumlar hariç), çekme/itme yok. stunToStagger: Stun yerine Stagger (bir eylem kaybı); madde 271'den
    * beri boss rütbesi CC'ye tamamen bağışık (formulas.json > ccImmunity) olduğundan Warden verisinde false (kural yalnızca bağışık olmayan bir birimde işlerdi).
@@ -1567,6 +1594,12 @@ export interface GroundDef {
   heal?: boolean;
   /** Harita 2 (M-B Flooded): bu zeminin hücrelerindeki listelenen zeminler söner (Flooded -> Burning ground); sönen hücreye yenisi de tutmaz. */
   quenches?: string[];
+  /**
+   * Harita 2 (M-B, Ömer 2026-10-27): bu zeminin hücresindeki birim `soak` durumunu (Soaked) `soakTurns` tur alır; çevre etkisi (direnç zarı yok).
+   * Skill'in bıraktığı Flooded da Tide suyu gibi davranır (ıslatır, söndürür). Ortam suyunda (Tide / Urn) suyun kendi değerleri önce gelir.
+   */
+  soak?: string;
+  soakTurns?: number;
 }
 
 /** Faz 4c: zeminin tur başı durumu (`mpZero`: yalnızca MP'si 0 olan düşmana). */
@@ -1808,6 +1841,8 @@ export interface Combatant {
    * "son turundan beri hasar aldı" bayrağı, Flicker'ın bu tur kullanılıp kullanılmadığı.
    */
   passiveUsed?: boolean;
+  /** Çok kullanımlı pasiflerin sayacı (Deathless Tide `uses`). */
+  passiveUses?: number;
   patience?: number;
   patienceHurt?: boolean;
   flickered?: boolean;
@@ -1948,7 +1983,7 @@ type BattleEventBody =
    * Düşmüş bir birim dirildi. `slot`: dirildiği hücre (madde 257: Resurrection'da oyuncunun seçtiği BOŞ hücre; cesedin hücresi dolu olabilir), `from`:
    * cesedin hücresi (aynıysa yerinde dirildi). Combatant.slot da güncellenir. Eski kayıtlarda ikisi de yok (yerinde).
    */
-  | { type: 'revive'; source: string; target: string; hpAfter: number; mpAfter: number; slot?: number; from?: number; /** 'valor': global Valor diriltmesi (skill değil). */ cause?: 'valor' }
+  | { type: 'revive'; source: string; target: string; hpAfter: number; mpAfter: number; slot?: number; from?: number; /** 'valor': global Valor diriltmesi (skill değil); 'rise': boss faz girişinde dostun kalkışı (BossPhaseDef.riseAllies). */ cause?: 'valor' | 'rise' }
   /** Valor harcandı (global valor_revive): taraf, harcanan, kalan. */
   | { type: 'valor'; side: Side; spent: number; after: number }
   /** `cause`: kalkan kancası (ör. 'mana_barrier') verdiyse skill id'si; yoksa tur başı yenilenme / Rest / pasif. */

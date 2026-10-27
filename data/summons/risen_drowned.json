@@ -1,0 +1,49 @@
+{
+  "_not": "Çağrı, HARİTA 2 (content-designer 2026-10-27, open-questions 446): Tide Caller'ın Rise from the Deep çağrısı (Harita 2; maps-2-3.md 3.2 dr_8 'ilk çağırıcı: Drowned sudan kalkar'): eskiden Harita 1 Skeleton'ı çağırıyordu. Statlar / çağıran ölçeği / fed-unfed / YZ Skeleton ile birebir (güç değişmesin); yalnız ad, kit ve ses kendi. Yeni kural YOK: Flooded hücreye çağırma istenirse yeni kural gerekir (open-questions 446). Çizim YER TUTUCU: spriteId 'skeleton'.",
+  "id": "risen_drowned",
+  "name": "Risen Drowned",
+  "spriteId": "skeleton",
+  "color": "#9ab8b0",
+  "logo": "skull",
+  "frontPriority": 8,
+  "range": 1,
+  "tags": [
+    "undead"
+  ],
+  "attributes": {
+    "str": 48,
+    "int": 0,
+    "dex": 0,
+    "luck": 0
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 78,
+    "mp": 0,
+    "spd": 17,
+    "hpRegen": 3.75
+  },
+  "summonerScale": {
+    "from": "str",
+    "attributes": {
+      "str": 1.86
+    },
+    "hp": 3,
+    "hpRegen": 0.1442
+  },
+  "variants": {
+    "_not": "Raise Dead ceset tüketirse fed (beslenmiş = bu dosyadaki taban can/STR), tüketemezse unfed (can ve STR x0,67, ~-%33). Çarpan maks cana, str/int ve Str düz can yenilenmesine uygulanır (stats.ts > applySummonVariant).",
+    "fed": {
+      "mult": 1
+    },
+    "unfed": {
+      "mult": 0.67
+    }
+  },
+  "ai": "aggressive",
+  "skills": [
+    "sodden_strike",
+    "riptide_slash"
+  ]
+}

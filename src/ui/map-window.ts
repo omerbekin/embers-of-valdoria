@@ -74,6 +74,8 @@ export interface MwSpec {
   /** Sahne şeridi (data/map-window.json > art). */
   art?: { file: string; pos: [number, number] } | null;
   paras: string[];
+  /** Arka arkaya savaş bilgisi (src/campaign/chain-info.ts): paragrafların altında sakin tek satır. */
+  chain?: string;
   chipsCap?: string;
   chips?: MwChip[];
   body?: MwBody;
@@ -178,7 +180,7 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   const bd = body ? `bd-${body.k === 'plates' ? 'plates' : body.k}` : 'bd-none';
   const tags = `<div class="mw-tags"><span class="mw-chip type" style="--ac:${COL[o.type] ?? COL['battle']}">${esc(o.kind)}</span>${o.place ? `<span class="mw-chip dim">${esc(o.place)}</span>` : ''}${o.region ? `<span class="mw-chip dim reg">${esc(o.region)}</span>` : ''}</div>`;
   const art = o.art ? `<div class="mw-art" data-art="${esc(o.art.file)}" style="background-position:${Math.round(o.art.pos[0] * 100)}% ${Math.round(o.art.pos[1] * 100)}%"></div>` : '';
-  const paras = `<div class="mw-txt">${o.paras.map((p) => `<p>${esc(p)}</p>`).join('')}</div>`;
+  const paras = `<div class="mw-txt">${o.paras.map((p) => `<p>${esc(p)}</p>`).join('')}${o.chain ? `<p class="mw-chain">${esc(o.chain)}</p>` : ''}</div>`;
   const chipBlock = o.chips?.length ? `${o.chipsCap ? `<h3 class="mw-cap">${esc(o.chipsCap)}</h3>` : ''}${chipsHtml(o.chips, body?.k !== 'plates')}` : '';
   const acts = o.acts.length
     ? `<div class="mw-acts">${o.acts.map((a, i) => `<button type="button" class="el-btn${a.primary ? ' primary ready' : ''}" data-act="${i}"${a.needPick ? ` disabled title="${esc(a.needPick)}"` : ''}>${esc(a.label)}</button>`).join('')}</div>`

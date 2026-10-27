@@ -418,82 +418,108 @@
     "dr_the_ferryman": {
       "title": "The Ferryman",
       "speaker": "The Ferryman",
-      "text": "An old ferryman sits on an upturned boat at the water's edge, mending a rope. He looks at the crown wrapped in your pack before he looks at you.",
+      "text": "An old ferryman sits on an upturned boat at the water's edge, splicing a rope with fingers like knotted roots. He looks a long while at the bundle in your pack before he looks at you.",
       "dialogue": [
         {
-          "text": "\"Another lot coming down from the north. You're carrying something heavy, I can see it in your shoulders. Where are you taking it?\"",
+          "text": "\"Another lot come down the Long Stair. You walk like men with a coffin on your backs. Whatever is wrapped in that cloth, it's warm; I can feel it from here. Where are you taking it?\"",
           "choices": [
-            { "label": "\"To the sea. Morvane asked it of us.\"", "likes": true },
+            { "label": "\"To the sea. Lord Morvane's last words asked it of us.\"", "likes": true },
             { "label": "\"That's our business, old man.\"" }
           ]
         },
         {
-          "text": "\"The sea. Aye. Then mind the Order. The monks of St. Brann have shut the road to Saltmere. Quarantine, they call it. Nobody passes their gate without a reason they like.\"",
+          "text": "\"Morvane. So the ash lord is dead, and his crown comes down my river. Then mind the Order. The monks of St. Brann have shut the road at Saltmere Gate. Quarantine, they call it. Nobody passes without a reason they like, and they like very few.\"",
           "choices": [
             { "label": "\"What are they afraid of?\"", "likes": true },
-            { "label": "\"We'll give them a reason.\"" }
+            { "label": "\"Who else crosses this river, besides us?\"", "likes": true },
+            { "label": "\"We'll give them a reason. Steel is a good one.\"" }
+          ]
+        },
+        {
+          "text": "\"The water, same as the rest of us. Thirty years I've poled this ferry, and the river never ran backwards till this spring. Now the tide comes up as far as Reedgate, and some nights it brings the drowned with it. They climb the bank and stand there in the reeds, looking east. Will you still go on?\"",
+          "choices": [
+            { "label": "\"We go on. Someone has to finish what Morvane began.\"", "likes": true },
+            { "label": "\"For the right price, we'd go anywhere.\"" }
           ]
         }
       ],
       "likeThreshold": 2,
       "gift": { "rarity": "common" },
-      "liked": "\"The water. Same as the rest of us. Here, take this. Someone left it on my boat and never came back for it.\"",
-      "disliked": "\"Suit yourselves. The river doesn't care either way.\" He goes back to his rope."
+      "liked": "He knots off the rope and sets it down. \"Then hear one thing more. That crown burns whoever calls on it, a little more each time. The keeper of the Cliff Chapel can wash the burn away; the monks taught her that much before they shut their gates.\"\n\n\"And take this. Someone left it on my boat and never came back for it. The river doesn't give much back, so see you keep it.\"",
+      "disliked": "\"Suit yourselves. The river doesn't care either way, and nor do I.\" He spits into the reeds and goes back to his rope."
     },
     "dr_weir_warden": {
       "title": "The Weir-Warden",
       "speaker": "Weir-Warden Ysolt",
-      "text": "Weir-Warden Ysolt keeps the sluice gates of Eelwick. She is soaked to the knees and has been for as long as anyone remembers.",
+      "pronoun": "she",
+      "text": "Weir-Warden Ysolt keeps the sluice gates of Eelwick. She is soaked to the knees and has been for as long as anyone remembers, and she does not stop working while she talks.",
       "dialogue": [
         {
-          "text": "\"You're going to the weir mouth? Then listen. The wyrm is strong in the water and slow on the mud. When the flood comes in, it is twice the beast it was.\"",
+          "text": "\"You're bound for the Weir Mouth? Then listen, for I'll say it once. The wyrm is strong in the water and slow on the mud. On flooded ground its hide turns blades like oiled leather, and when it calls the flood in, it is twice the beast it was.\"",
           "choices": [
-            { "label": "\"Then we fight it before the flood.\"", "likes": true },
-            { "label": "\"We've killed bigger.\"" }
+            { "label": "\"Then we strike it on dry ground, before the flood.\"", "likes": true },
+            { "label": "\"We've killed bigger things than an eel.\"" }
           ]
         },
         {
-          "text": "\"Good. You think. Most who go down there only swing. Do you know why the water's rising?\"",
+          "text": "\"Good. You think. Most who go down there only swing. Six of my wardens went to mend the broken weir last spring, and I pulled two of them out of the water. The wyrm holds the gap now, and every tide it grows fatter. Do you know why the water's rising?\"",
           "choices": [
-            { "label": "\"Tell us.\"", "likes": true },
+            { "label": "\"Tell us. We'd rather know than guess.\"", "likes": true },
+            { "label": "\"What became of the two you pulled out?\"", "likes": true },
             { "label": "\"Water rises. That's what it does.\"" }
+          ]
+        },
+        {
+          "text": "\"Because something under the sea is reaching for what you carry. My gates have held the marsh for twenty years, and this spring they groan every night. If the weir goes, Eelwick goes under with it. Will you clear the gap, or only pass through it?\"",
+          "choices": [
+            { "label": "\"We'll clear it. Your gates will hold again.\"", "likes": true },
+            { "label": "\"We pass through. Your gates are your own affair.\"" }
           ]
         }
       ],
       "likeThreshold": 2,
       "gift": { "rarity": "common" },
-      "liked": "\"Because something under the sea wants what you're carrying. Take this eel-oil and whatever else is in the bundle. It keeps the damp out of steel.\"",
-      "disliked": "\"Hm. Then the weir will teach you.\" She turns back to her gates."
+      "liked": "For the first time she stops working. \"Then go when the water's low, and hit it hard whenever it leaves the wet stone. When it calls the flood, don't waste your blows on it; wait for the mud.\"\n\n\"Take this. Eel-oil, and whatever else is in the bundle. It keeps the damp out of steel, and out of your bones, a little.\"",
+      "disliked": "\"Hm. Then the weir will teach you, the way it teaches everyone.\" She turns back to her gates."
     },
     "dr_harbor_master": {
       "title": "The Harbor-Master",
       "speaker": "Harbor-Master Rook",
-      "text": "Harbor-Master Rook meets you at the gate with two clerks and a ledger. He has heard of the company that killed Lord Morvane, and he has already worked out what you are worth.",
+      "text": "Harbor-Master Rook meets you at the gate with two clerks and a ledger. He has heard of the company that brought down Lord Morvane, and by the look of him he has already worked out what you are worth, to the copper.",
       "dialogue": [
         {
-          "text": "\"Welcome to Saltmere. You'll find everything here: Odo's chandlery for supplies, the smithies by the quay, swords for hire at the barracks. Everything has a price. What brings you to the sea?\"",
+          "text": "\"Welcome to Saltmere. You'll find everything here: Odo's Chandlery for supplies, the smithies by the quay, swords for hire at the barracks, a ship to the isles at the Ferry Office. Everything has a price. What brings you to the sea?\"",
           "choices": [
             { "label": "\"The Tide. We mean to stop it.\"", "likes": true },
             { "label": "\"Whatever pays.\"" }
           ]
         },
         {
-          "text": "\"The Tide. Hah. The Order says it's a judgement. The Guild says it's bad for trade. I say the cathedral sank a little further this week. Will you hear what the city has to offer, before you choose a side?\"",
+          "text": "\"The Tide. Hah. The Brother-Provost calls it a judgement, and he'd burn half the docks to prove it. The Guild calls it bad for trade, and we'd sooner drain the harbour than drown in it. Meanwhile the cathedral sinks a little further every week. Will you hear what the city has to offer, before you choose a side?\"",
           "choices": [
-            { "label": "\"We'll hear everyone out.\"", "likes": true },
-            { "label": "\"We don't take sides.\"" }
+            { "label": "\"We'll hear everyone out, the Provost too.\"", "likes": true },
+            { "label": "\"What would the Guild want with a company like ours?\"", "likes": true },
+            { "label": "\"We don't take sides. We take coin.\"" }
+          ]
+        },
+        {
+          "text": "\"Harbor Fort, for a start. It has changed hands twice this year, and whoever holds it holds the harbour mouth. Beyond that, the Black Caravel sinks one ship in three, and Admiral Vane takes a cut of every cargo that lives. The Order prays about it. The Guild would sooner see it ended. Can this city count on you?\"",
+          "choices": [
+            { "label": "\"If the Caravel burns, the whole city gains. Count on that.\"", "likes": true },
+            { "label": "\"Only for as long as it pays.\"" }
           ]
         }
       ],
       "likeThreshold": 2,
       "gift": { "rarity": "common" },
-      "liked": "\"A sensible company. Rare. Take this as a welcome from the Guild. We remember our friends.\"",
-      "disliked": "\"Everyone takes a side in Saltmere, sooner or later.\" He closes his ledger."
+      "liked": "Rook shuts the ledger with a soft clap. \"A sensible company. Rare, in this town. Choose your side at the square when you're ready; I won't pretend I don't hope it's mine.\"\n\n\"Meanwhile, take this as a welcome from the Guild. We remember our friends, and we remember the ones who weren't.\"",
+      "disliked": "\"Everyone takes a side in Saltmere, sooner or later.\" He closes his ledger. \"Mind you don't take the wrong one.\""
     },
     "dr_keepers_daughter": {
       "title": "The Keeper's Daughter",
       "speaker": "Keeper's Daughter",
-      "text": "The lighthouse keeper's daughter sits at the end of the jetty with a spyglass that is too big for her. She has been watching the isles since her father's light went out.",
+      "pronoun": "she",
+      "text": "The lighthouse keeper's daughter sits at the end of the jetty with a spyglass that is too big for her. She has watched the isles every day since her father's light went out, and she does not lower the glass when you come near.",
       "dialogue": [
         {
           "text": "\"You're crossing to the isles? Then watch for the black ship. Black sails, black hull. The Caravel. It sails a circle: the Sound, then the Narrows, then Open Water, then Storm Strait, and back to the Sound. Every time you move, it moves one stop.\"",
@@ -503,17 +529,25 @@
           ]
         },
         {
-          "text": "\"Captain Marrow. And behind him, in Gallows Cove, the Admiral. My father said the Admiral would never leave the cove while the Caravel still sails.\"",
+          "text": "\"Captain Marrow. He laughs when he boards a ship, my father said, and he leaves nobody to tell of it. And behind him, in Gallows Cove, the Admiral. Admiral Vane. My father said the Admiral would never leave the cove while the Caravel still sails.\"",
           "choices": [
             { "label": "\"Then we'll find the Caravel first.\"", "likes": true },
+            { "label": "\"Where is your father now?\"", "likes": true },
             { "label": "\"Your father talked a lot.\"" }
+          ]
+        },
+        {
+          "text": "\"He rowed out to Lantern Rock in the storm, the night the bells rang under the sea, to keep the lamp burning for the boats still out. The lamp went dark before morning, and he never came back. Mother says the sea keeps what it takes. Will you still cross?\"",
+          "choices": [
+            { "label": "\"We'll cross. His watch is ours now.\"", "likes": true },
+            { "label": "\"The isles won't wait on a dead man's lamp.\"" }
           ]
         }
       ],
       "likeThreshold": 2,
       "gift": { "rarity": "common" },
-      "liked": "\"Take this. It was his. He'd want it to go to the isles, even if he can't.\"",
-      "disliked": "\"He did. He was right, too.\" She lifts the spyglass again."
+      "liked": "She lowers the spyglass at last. \"Then keep a light with you, the way he did, and keep your eyes on the black sails. Sink the Caravel and the Admiral will have to come out of his cove.\"\n\n\"Take this. It was his. He'd want it to go to the isles, even if he can't.\"",
+      "disliked": "\"My father was right about the sea, whatever you think of him.\" She lifts the spyglass again and says nothing more."
     }
   }
 }

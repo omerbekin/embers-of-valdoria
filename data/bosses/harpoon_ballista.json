@@ -1,0 +1,30 @@
+{
+  "_not": "Harpoon Ballista: Admiral Vane'in bağlı yardımcı nesnesi (Iron Mooring emsali, inert: sıra almaz, şifa/kalkan almaz, ceset bırakmaz, savaş bitişinde sayılmaz). Kendi eylemi boss.anchor.strike (harpoon_line): Vane'in her turunun başında telgraflı tek hücre atışı, hasar bu nesnenin STR'siyle. Can / STR PROVİZYON (open-questions 437; engine-dev 2026-10-27).",
+  "id": "harpoon_ballista",
+  "name": "Harpoon Ballista",
+  "spriteId": "harpoon_ballista",
+  "color": "#8a4a25",
+  "logo": "ironmooring",
+  "frontPriority": 9,
+  "range": 1,
+  "role": "Boss · Siege Engine",
+  "attributes": {
+    "str": 40,
+    "int": 0,
+    "dex": 0,
+    "luck": 0
+  },
+  "armor": 20,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 55,
+    "mp": 0,
+    "spd": 2,
+    "hpRegen": 0,
+    "mpRegen": 0
+  },
+  "inert": true,
+  "skills": [
+    "harpoon_line"
+  ]
+}
