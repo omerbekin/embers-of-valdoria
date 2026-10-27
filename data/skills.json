@@ -8058,7 +8058,7 @@
     "artOf": "hex_bolt"
   },
   "brackish_tide": {
-    "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Hexes imza skill'i (Fen Witchling): 2x3 alana küçük hasar + 3 tur Wither (Withering Curse, Omen'siz). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
+    "_not": "Harita 2 Salt Hag kendi skill'i (content-designer 2026-10-27, open-questions 442): sıraya küçük buz hasarı + 2 tur Flooded zemin; Soaked'ı zemin kendisi verir (grounds.json > flooded.soak, open-questions 437.1). Sayılar PROVİZYON.",
     "id": "brackish_tide",
     "name": "Brackish Tide",
     "target": "area_enemies",
@@ -8087,11 +8087,6 @@
         "turns": 2,
         "scale": "luck",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "drainfield",
