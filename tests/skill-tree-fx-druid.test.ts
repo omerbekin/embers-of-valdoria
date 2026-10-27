@@ -51,18 +51,18 @@ describe('Druid ağacı fx (Faz 2b)', () => {
         for (const ult of ['u', 'r', 'd', 'l'] as const) expect(() => compileTree(T, focusBuild(T, rows, 50, { dir, ult }))).not.toThrow();
   });
 
-  it('Hooked Barbs: Thorn Whip gücü rank başına ×1.04 (rankta çarpılır); Deep Spring barı Rejuvenate şifası ve HoT gücünü oransal artırır (süre 3 kalır)', () => {
+  it('Hooked Barbs: Thorn Whip gücü rank başına ×1.04, rankler doğrusal toplanır (1 + v x rank); Deep Spring barı Rejuvenate şifası ve HoT gücünü oransal artırır (süre 3 kalır)', () => {
     const b = make({ 0: 'druid' }, { 0: 'warrior' }, { 0: { tree: tree(['1.f1*3', '1.f2*2', '3.f1*3', '3.f2*5', '3.f3*5', '1.f3*2']) } });
     const v = (fx: unknown): number => (fx as { v: number }).v;
-    expect((b.skill('thorn_whip', P(b))!.effects[0] as { power: number }).power).toBeCloseTo(0.903 * (1 + v(T.nodes['1.f1']!.fx![0])) ** 3, 6);
+    expect((b.skill('thorn_whip', P(b))!.effects[0] as { power: number }).power).toBeCloseTo(0.903 * (1 + 3 * v(T.nodes['1.f1']!.fx![0])), 6);
     const bar = T.mastery.bar[3]!;
     expect(bar.name).toBe('Deep Spring');
     const rj = b.skill('rejuvenate', P(b))!.effects;
     const heal = rj.find((e) => e.type === 'heal') as { power: number };
     const hot = rj.find((e) => e.type === 'hot') as { power: number; turns: number };
     expect(hot.turns).toBe(3);
-    expect(heal.power).toBeCloseTo(0.675 * (1 + v(T.nodes['3.f1']!.fx![0])) ** 3 * (1 + v(bar.fx![0])), 5);
-    expect(hot.power).toBeCloseTo(0.225 * (1 + v(T.nodes['3.f2']!.fx![0])) ** 5 * (1 + v(bar.fx![1])), 6);
+    expect(heal.power).toBeCloseTo(0.675 * (1 + 3 * v(T.nodes['3.f1']!.fx![0])) * (1 + v(bar.fx![0])), 6);
+    expect(hot.power).toBeCloseTo(0.225 * (1 + 5 * v(T.nodes['3.f2']!.fx![0])) * (1 + v(bar.fx![1])), 6);
     expect(bar.text).toContain(`×${Number((1 + v(bar.fx![0])).toFixed(3))}`); // ayrı çarpan "×" yazılır (2026-10-27)
   });
 

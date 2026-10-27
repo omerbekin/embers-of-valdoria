@@ -336,12 +336,12 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
     expect(ns!.passive).toBeUndefined();
   });
 
-  it('Warrior: Notched Axe (×1.04 power / rank, yalnızca 2. vuruş) rank\'ta çarpılır (1.04^5); percentRule add\'e çevrilince düz ek; Steady Spin, Headsman\'s Feast', () => {
+  it('Warrior: Notched Axe (+4% power / rank, yalnızca 2. vuruş) oransal; percentRule add\'e çevrilince düz ek; Steady Spin, Headsman\'s Feast', () => {
     const a = build(W, L, ['1.f1*3', '1.f2*5']);
     const hits = (s: SkillDef) => s.effects.filter((e) => e.type === 'damage').map((e) => (e as unknown as { power: number }).power); // Knee Cutter (1.f1) durum etkisi ekler
     const NA = (W.nodes['1.f2']!.fx![0] as unknown as { v: number }).v; // veriden
-    const close = (got: number[], want: number[]) => { expect(got.length).toBe(want.length); got.forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 6)); };
-    close(hits(skillOf(compileTree(W, a), 'melee_attack')), [0.4, 0.4 * (1 + NA) ** 5]);
+    const close = (got: number[], want: number[]) => { expect(got.length).toBe(want.length); got.forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 9)); };
+    close(hits(skillOf(compileTree(W, a), 'melee_attack')), [0.4, 0.4 * (1 + 5 * NA)]);
     const add: TreeRules = { ...TREE_RULES, percentRule: 'add' };
     close(hits(skillOf(compileTree(W, a, add), 'melee_attack')), [0.4, 0.4 + 5 * NA]);
     const spin = skillOf(compileTree(W, build(W, L, ['2.f1*3'])), 'whirlwind');

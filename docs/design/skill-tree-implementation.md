@@ -688,7 +688,7 @@ Her grup için hangi değişikliklerin olduğu ve nerede çalıştıkları.
 - **Bahis:** `winChance`, `winSet`, `stakeMul`. Sure Thing: `{ "when": { "betChanceAtLeast": 0.7 }, "mod": { "stakeMul": -1 } }`
 - **Mana yakma** (hedef başına): `manaBurnAdd`, `manaBurnMul`, `emptyChance`, `emptySet`.
 - **Omen ekleme** (hedef başına): `omenStacks`, `omenSet`.
-- **Dark Bond kopyası:** `bondRatio` (x (1 + v)).
+- **Dark Bond kopyası:** `bondRatio` (kopya payına düz ek, pay + v; "+3% more of your healing" = 3 puan; 2026-10-27 düzeltmesi, eskiden yanlışlıkla pay x v).
 - **Mana Overflow sayacı** (sahibi vurulunca): `blockedMul`. Soaking Robes: `{ "mod": { "blockedMul": 0.04 }, "rank": true }`
 - **Bedel:** `cost`, `costMul`.
 

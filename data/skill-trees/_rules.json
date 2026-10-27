@@ -3,7 +3,7 @@
   "_enabled": "enabled = ANA ŞALTER (false: hiçbir modda ağaç savaşa girmez; oyun bugünküyle birebir aynı). Arayüz gelene kadar false (Faz 1a). modes = şalter açıkken mod başına bayrak (plan bölüm 7: sefer + Endless açık; Quick Battle + multiplayer kapalı). Debug menüsündeki 'Skill tree: focus build' bu şalteri yalnızca o oturumda, bellekte aşar (kayda yazmaz).",
   "enabled": true,
   "modes": { "campaign": true, "endless": true, "quick": false, "multiplayer": false },
-  "_percentRule": "'+X% power' metinli düğümler fx'te op 'pct' ile yazılır; anlamı TEK yerden: 'mul' = oransal (güç x (1 + X)^rank, 2026-10-27: '×1.04 per rank' rank'ta çarpılır; 0,40 -> 0,416), 'add' = düz ek (güç + X x rank; 0,40 -> 0,44). Açık soru (plan 10.1); öneri oransal. Çevirmek için yalnızca bu değer değişir.",
+  "_percentRule": "'+X% power' metinli düğümler fx'te op 'pct' ile yazılır; anlamı TEK yerden: 'mul' = oransal (güç x (1 + X x rank), 2026-10-27: '×1.04 per rank' rank'lar toplanır, başka kaynaklarla çarpılır; 0,40 -> 0,416), 'add' = düz ek (güç + X x rank; 0,40 -> 0,44). Açık soru (plan 10.1); öneri oransal. Çevirmek için yalnızca bu değer değişir.",
   "percentRule": "mul",
   "_rowShape": "Satır şekli (pasif + 3 aktif skill satırı; core.js ROW_DEF): id, kind (filler | notable | edge | blood | evolve), max rank, tier (I-IV ya da E = evolve), col (sütun = uygulama sırası), lane (şerit, arayüz), req (önceki düğüm; 'a|b' = biri yeter), dir (ea/eb yönü: a ya da b; exclusiveEdges açıkken karşı yön kilitlenir).",
   "rowShape": [

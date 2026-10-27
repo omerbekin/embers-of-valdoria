@@ -27,8 +27,8 @@ void _allKeys;
 /**
  * "×" yazılan etkilerin birleşme biçimi (bonus yazım kuralı, Ömer 2026-10-27: "×" yazan her şey GERÇEKTEN çarpılır; iki ×1.1 = ×1.21):
  * 'mult' = ham çarpan (1 = etkisiz): a x b; 'more' = oran, yazıda ×(1 + v): (1 + a)(1 + b) - 1; 'less' = oran, yazıda ×(1 - v): 1 - (1 - a)(1 - b).
- * Listede olmayan sayılar (şans, düz ek, "+%" yazılanlar) toplanır. Item affix'leri (loadout.ts), ağaç rank'ı (skill-tree-compile.ts > rankFx) ve
- * item + ağaç kanalı (effNum / effMult) aynı tabloyu kullanır. Nesne alanı: '<anahtar>.<alan>' (lowHpReduce.reduce); elemResist her element için 'less'.
+ * Listede olmayan sayılar (şans, düz ek, "+%" yazılanlar) toplanır. Item affix'leri (loadout.ts), FARKLI ağaç düğümleri ve
+ * item + ağaç kanalı (effNum / effMult) aynı tabloyu kullanır; bir düğümün rank'ları ise doğrusal toplanır (stackTimes). Nesne alanı: '<anahtar>.<alan>' (lowHpReduce.reduce); elemResist her element için 'less'.
  */
 export type StackForm = 'mult' | 'more' | 'less';
 export const STACK_FORM: Readonly<Record<string, StackForm>> = {
@@ -54,11 +54,12 @@ export function stackValues(form: StackForm | undefined, a: number, b: number): 
   if (form === 'less') return 1 - (1 - a) * (1 - b);
   return a + b;
 }
-/** Aynı değerin `n` kez birleşmesi (rank): mult v^n, more (1 + v)^n - 1, less 1 - (1 - v)^n, biçimsiz v x n. */
+/**
+ * Aynı kaynağın `n` rank'ı (Ömer 2026-10-27 düzeltmesi: rank'lar BİRBİRİNİ ÇARPMAZ, rank yükselince eski bonusun yerine büyüğü gelir):
+ * doğrusal; mult 1 + (v - 1) x n, more / less / biçimsiz v x n ("×1.06 per rank" 5 rank = ×1.30, "×0.96 per rank" 3 rank = ×0.88).
+ */
 export function stackTimes(form: StackForm | undefined, v: number, n: number): number {
-  if (form === 'mult') return Math.pow(v, n);
-  if (form === 'more') return Math.pow(1 + v, n) - 1;
-  if (form === 'less') return 1 - Math.pow(1 - v, n);
+  if (form === 'mult') return 1 + (v - 1) * n;
   return v * n;
 }
 /** Nesne biçimli etkinin sayısal alanının birleşme biçimi ('<anahtar>.<alan>' ya da tüm alanlar için '<anahtar>'). */
@@ -747,6 +748,7 @@ export interface CondMod {
   omenStacks?: number;
   omenSet?: number;
   // Dark Bond kopyası
+  /** Dark Bond kopya payına düz ek (pay + v, yüzde puan; Blood Kin). */
   bondRatio?: number;
   // Mana Overflow sayacı (sahibi vurulunca)
   blockedMul?: number;

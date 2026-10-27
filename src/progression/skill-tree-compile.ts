@@ -152,23 +152,22 @@ function setPath(o: Bag, path: string, v: number): void {
 }
 
 /**
- * Tek değere op uygular. `rank`: düğümün rank'ı (fx.rank true ise add'de v x rank). Çarpan op'ları (mul; percentRule 'mul' iken pct) "×1.04 per rank"
- * yazılır ve rank'ta GERÇEKTEN çarpılır (bonus yazım kuralı, Ömer 2026-10-27): x (1 + v)^rank (3 rank ×1.04 = ×1.124864, ×1.12 değil).
+ * Tek değere op uygular. `rank`: düğümün rank'ı (fx.rank true ise v x rank). Çarpan op'ları (mul; percentRule 'mul' iken pct) "×1.04 per rank"
+ * yazılır; rank'lar birbirini ÇARPMAZ (Ömer 2026-10-27): x (1 + v x rank) (3 rank ×1.04 = ×1.12). Başka kaynaklarla ise çarpılarak birleşir.
  */
 function applyOp(cur: unknown, fx: Extract<TreeFx, { k: 'skill' | 'passive' | 'stat' }>, rank: number, field: string, rules: TreeRules): number {
   if (fx.op === 'remove' || fx.op === 'on') throw new TreeFxError(`op "${fx.op}" is not allowed for "${field}"`);
   if (FLAG_FIELDS.has(field)) throw new TreeFxError(`"${field}" is a flag: use op "on"`);
   if (!Number.isFinite(fx.v)) throw new TreeFxError(`value of ${field} must be a number`);
   const n = fx.rank ? fx.v * rank : fx.v;
-  const times = fx.rank ? Math.pow(1 + fx.v, rank) : 1 + fx.v;
   let out: number;
   if (fx.op === 'set' || fx.op === 'base') out = fx.v;
   else {
     const base = typeof cur === 'number' ? cur : FX_DEFAULTS[field];
     if (base === undefined) throw new TreeFxError(`field "${field}" is missing and has no default`);
     if (fx.op === 'add') out = base + n;
-    else if (fx.op === 'mul') out = base * times;
-    else if (fx.op === 'pct') out = rules.percentRule === 'add' ? base + n : base * times;
+    else if (fx.op === 'mul') out = base * (1 + n);
+    else if (fx.op === 'pct') out = rules.percentRule === 'add' ? base + n : base * (1 + n);
     else throw new TreeFxError(`unknown op "${(fx as { op: string }).op}"`);
   }
   return INT_FIELDS.has(field) ? Math.max(0, Math.round(out)) : r6(out);
@@ -356,10 +355,10 @@ const HOOK_ATS: readonly HookAt[] = ['hit', 'doom', 'dot', 'ground', 'passiveHea
 const LATE_MODS = new Set(['powerMul', 'ignoreDefense', 'flatDamage', 'critDmgMul', 'lifesteal', 'lifestealMul', 'drainMul', 'drainAdd', 'addStatus', 'removeStatus', 'extendStatus']);
 
 /**
- * Çarpan biçimli değişikliğin (…Mul: x (1 + v), "×1.06 per rank" yazılır) rank ölçeklemesi: GERÇEKTEN çarpılır, (1 + v)^r - 1 (bonus yazım kuralı,
- * Ömer 2026-10-27). `geo` false (kanca / tetik ölçekli: "×(1 + 2% per rank for each ...)" ya da yığılan buff "×1.02, ×1.04, ..."): yazıdaki gibi v x r.
+ * Çarpan biçimli değişikliğin (…Mul: x (1 + v), "×1.06 per rank" yazılır) rank ölçeklemesi: doğrusal, v x r (Ömer 2026-10-27: bir düğümün rank'ları
+ * birbirini çarpmaz, 3 rank ×1.06 = ×1.18). `geo` eski imza için durur; ölçekli / yığılan kancalar da aynı (yazıdaki gibi v x r).
  */
-const rankMul = (v: number, r: number, geo: boolean): number => (geo ? (r === 1 ? v : stackTimes('more', v, r)) : r6(v * r));
+const rankMul = (v: number, r: number, _geo: boolean): number => r6(v * r);
 
 /** Tek değişikliğin biçim denetimi ve rank ölçeklemesi (sayılar x rank, …Mul çarpanları rankMul; Set biçimliler ve nesne içi süre / şans alanları ölçeklenmez). */
 function checkMod(k: string, t: 'num' | 'bool' | 'obj' | 'str', v: unknown, r: number, geo = true): unknown {
@@ -446,8 +445,8 @@ function treeEffectOf(fx: { effect?: SkillEffect; byRank?: SkillEffect[] }, rank
 }
 
 /**
- * unitFx değeri: sayısal alanlar x rank (eşik / süre alanları hariç). "×" yazılan anahtarlar (tree-hooks.ts > STACK_FORM) rank'ta çarpılır
- * (Ömer 2026-10-27): ham çarpan v^rank, ×(1 - v) oranı 1 - (1 - v)^rank ("×0.96 per rank" 3 rank = ×0.884736).
+ * unitFx değeri: sayısal alanlar x rank (eşik / süre alanları hariç). Rank'lar doğrusal (Ömer 2026-10-27; tree-hooks.ts > stackTimes): ham çarpan
+ * 1 + (v - 1) x rank, oranlar v x rank ("×0.96 per rank" 3 rank = ×0.88). Farklı kaynaklarla birleşme ise STACK_FORM'a göre çarpılır.
  */
 function rankFx(key: string, v: unknown, rank: number): unknown {
   if (typeof v === 'number') return r6(stackTimes(STACK_FORM[key], v, rank));
@@ -1491,7 +1490,7 @@ function compileHeal(fx: Extract<TreeFx, { h: 'heal' }>, node: string, r: number
     ...(fx.shield !== undefined ? { shield: fx.shield } : {}),
     ...(fx.marked ? { marked: true } : {}),
     ...(fx.min !== undefined ? { min: fx.min } : {}),
-    // mul: x (1 + mul), "×0.96 per rank" yazılır: rank'ta çarpılır (ölçekli kancada yazıdaki gibi doğrusal; rankMul)
+    // mul: x (1 + mul), "×0.96 per rank" yazılır: rank'lar doğrusal (rankMul)
     ...(fx.mul !== undefined ? { mul: rankMul(fx.mul, r, !fx.scale) } : {}),
     ...(fx.into !== undefined ? { into: fx.into } : {}),
     ...(fx.ratio !== undefined ? { ratio: r6(fx.ratio * r) } : {}),

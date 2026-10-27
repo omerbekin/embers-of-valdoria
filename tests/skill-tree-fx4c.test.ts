@@ -668,7 +668,7 @@ describe('Faz 4c: tek tek boşluklar', () => {
     ally.hp = 0;
     cast(b, me, 'resurrection', ally);
     expect(ally.hp).toBeGreaterThan(0);
-    expect(b.treeTakenMult(ally, E(b))).toBeCloseTo(0.9 ** 3, 9); // "×0.9 per rank": rankta çarpılır (2026-10-27)
+    expect(b.treeTakenMult(ally, E(b))).toBeCloseTo(0.7, 9);
     expect(b.treeTakenMult(me, E(b))).toBe(1);
     let landed = false;
     for (let i = 0; i < 10 && !landed; i++) landed = cast(b, E(b), 'fire_bolt', ally).some((e) => e.type === 'damage' && e.target === ally.uid);
@@ -782,7 +782,7 @@ describe('Faz 4c: tek tek boşluklar', () => {
 
   it('Bedside Watch: Divine Light %50 altındaki dostları rank başına %4 fazla iyileştirir', () => {
     const h = only('paladin', { '0.f3': 3 })!.hooks!.find((x) => x.node === 'paladin:0.f3')!;
-    expect(h).toMatchObject({ h: 'cond', at: 'passiveHeal', when: { targetHpBelow: 0.5 }, mod: { powerMul: (1 + num('paladin', '0.f3', '0.mod.powerMul')) ** 3 - 1 } });
+    expect(h).toMatchObject({ h: 'cond', at: 'passiveHeal', when: { targetHpBelow: 0.5 }, mod: { powerMul: 3 * num('paladin', '0.f3', '0.mod.powerMul') } });
   });
 });
 

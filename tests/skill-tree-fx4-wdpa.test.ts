@@ -269,7 +269,7 @@ describe('Faz 4b: Paladin', () => {
     untilTurn(b, me);
     expect(ally.treeBuffs?.find((x) => x.node === 'paladin:0.eb')?.mod?.powerMul).toBeCloseTo(0.15, 9);
     const kr = ally.treeBuffs?.find((x) => x.node === 'paladin:0.f2');
-    expect((kr?.mod?.powerMul ?? 0) * (kr?.s ?? 0)).toBeCloseTo((1 + num('paladin', '0.f2', '0.do.0.buff.powerMul')) ** 3 - 1, 9);
+    expect((kr?.mod?.powerMul ?? 0) * (kr?.s ?? 0)).toBeCloseTo(3 * num('paladin', '0.f2', '0.do.0.buff.powerMul'), 9);
   });
 
   it('Kindled Path: holy fire içinde ölen düşman Judgment cooldown\'unu 1 düşürür', () => {

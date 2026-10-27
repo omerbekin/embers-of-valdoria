@@ -54,6 +54,7 @@ interface Priv {
   record(e: BattleEvent): void;
   hpCrossTrig(t: Combatant, hp0: number, a: Combatant, emit: (e: BattleEvent) => void): void;
   trig(owners: Combatant[], ev: Record<string, unknown>, emit: (e: BattleEvent) => void): void;
+  bondEcho(healer: Combatant, amount: number, emit: (e: BattleEvent) => void): void;
 }
 const X = (b: Battle): Priv => b as unknown as Priv;
 const emitOf = (b: Battle) => (e: BattleEvent) => X(b).record(e);
@@ -126,13 +127,13 @@ describe('Faz 4b: Mage', () => {
   it('Rimeguard / Numbing Touch: ön sıradaki dosta kalkan +%5 x rank; Mana Barrier sürerken Slowed saldıran %3 x rank az vurur', () => {
     const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, only('mage', { '3.f1': 5, '3.f3': 5 })));
     const me = P(b);
-    expect(b.treeShieldMult(me, me, content.skills.mana_barrier!)).toBeCloseTo((1 + num('mage', '3.f1', '0.mul')) ** 5, 9);
+    expect(b.treeShieldMult(me, me, content.skills.mana_barrier!)).toBeCloseTo(1 + 5 * num('mage', '3.f1', '0.mul'), 9);
     expect(b.treeShieldMult(me, me, content.skills.fire_bolt!)).toBe(1);
     expect(b.treeTakenMult(me, E(b))).toBe(1);
     cast(b, me, 'mana_barrier', me);
     expect(b.treeTakenMult(me, E(b))).toBe(1); // saldıran Slowed değil
     E(b).statuses.push({ kind: 'slow', turns: 2, source: me.uid });
-    expect(b.treeTakenMult(me, E(b))).toBeCloseTo((1 + num('mage', '3.f3', '0.mul')) ** 5, 9); // değer veriden (D9 2026-10-23)
+    expect(b.treeTakenMult(me, E(b))).toBeCloseTo(1 + 5 * num('mage', '3.f3', '0.mul'), 9); // değer veriden (D9 2026-10-23)
   });
 
   it('Cauterize: Mana Barrier\'ın sildiği her debuff dosta rank başına maks canın %2\'si şifa', () => {
@@ -445,8 +446,29 @@ describe('Faz 4b: Undead', () => {
     const ally = P(b, 1);
     expect(b.treeTakenMult(ally, E(b))).toBe(1);
     cast(b, P(b), 'dark_bond', ally);
-    expect(b.treeTakenMult(ally, E(b))).toBeCloseTo((1 + num('undead', '3.f3', '0.mul')) ** 3, 9); // değer veriden (D9 2026-10-23)
+    expect(b.treeTakenMult(ally, E(b))).toBeCloseTo(1 + 3 * num('undead', '3.f3', '0.mul'), 9); // değer veriden (D9 2026-10-23)
     expect(b.treeTakenMult(P(b), E(b))).toBe(1);
+  });
+
+  it('Blood Kin: %50 altındayken Dark Bond payı rank başına +3 puan (pay + v; eskiden pay x v ile şifa ~%91 düşüyordu)', () => {
+    const b = bonded({ '3.r': 3 });
+    const me = P(b);
+    const ally = P(b, 1);
+    cast(b, me, 'dark_bond', ally);
+    const ratio = me.statuses.find((s) => s.kind === 'dark_bond')!.ratio!;
+    const per = num('undead', '3.r', '0.mod.bondRatio');
+    const echo = (): number => {
+      ally.maxHp = 99999;
+      ally.hp = 1;
+      const from = b.log.length;
+      X(b).bondEcho(me, 1000, emitOf(b));
+      return healBy(b.log.slice(from), 'dark_bond', ally.uid);
+    };
+    me.hp = me.maxHp;
+    expect(echo()).toBe(Math.round(1000 * ratio)); // %50 üstünde: temel pay
+    me.hp = Math.floor(me.maxHp * 0.4);
+    expect(echo()).toBe(Math.round(1000 * (ratio + 3 * per))); // 3 rank: 0.96 -> 1.05
+    expect(echo()).toBeGreaterThan(Math.round(1000 * ratio));
   });
 
   it('Brink Walker (bar 25): %25 altına ilk inişte Wail cooldown\'u sıfır', () => {
