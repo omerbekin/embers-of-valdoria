@@ -30,6 +30,6 @@ describe('sprite-needs', () => {
     const ids = classSpriteIds();
     for (const c of Object.values(content.classes)) expect(ids).toContain(c.spriteId);
     expect(ids).toContain('merchant');
-    for (const m of Object.values(content.mobs)) if (!Object.values(content.classes).some((c) => c.spriteId === m.spriteId)) expect(ids).not.toContain(m.spriteId);
+    for (const m of Object.values(content.mobs)) if (![...Object.values(content.classes), ...Object.values(content.summons)].some((c) => c.spriteId === m.spriteId)) expect(ids).not.toContain(m.spriteId);
   });
 });

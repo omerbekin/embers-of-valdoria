@@ -9031,5 +9031,64 @@
       "boneSlashCrack"
     ],
     "artOf": "skeleton_slash"
+  },
+  "grave_strike": {
+    "_not": "Sefer mobu skill'i (campaign-dev 2026-10-28, Ömer onayı, open-questions 448): Risen Skeleton temel saldırısı (Bone Strike ile aynı: STR 0,828). Çizim / ikon / VFX artOf ile kahraman iskeletinden; sesler mobun kendi kaydı (audio-mobs.json, Skeleton class seslerinin kopyası). Sayılar PROVİZYON (balance.json > _skeleton).",
+    "id": "grave_strike",
+    "name": "Grave Strike",
+    "icon": "bone",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#d9d4c0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.828
+      }
+    ],
+    "vfx": "bonestrike",
+    "sfx": [
+      "rustySlash"
+    ],
+    "artOf": "skeleton_strike"
+  },
+  "grave_sweep": {
+    "_not": "Sefer mobu skill'i (campaign-dev 2026-10-28, Ömer onayı, open-questions 448): Risen Skeleton ikinci skill'i (Bone Slash ile aynı: STR 0,648, dik sıçrama x1, bekleme 3). Çizim / ikon / VFX artOf ile kahraman iskeletinden; sesler mobun kendi kaydı (audio-mobs.json, Skeleton class seslerinin kopyası). Sayılar PROVİZYON (balance.json > _skeleton).",
+    "id": "grave_sweep",
+    "name": "Grave Sweep",
+    "icon": "boneslash",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#d9d4c0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.648
+      }
+    ],
+    "splash": {
+      "pattern": "perpendicular",
+      "mult": 1
+    },
+    "cooldown": 3,
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "skeleton_slash"
   }
 }

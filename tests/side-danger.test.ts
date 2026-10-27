@@ -34,7 +34,9 @@ describe('side-danger', () => {
   it("Harita 1: Raiders' Hoard yoldan güçlü (ilk korunan hazine), Supply Wagons değil", () => {
     const s = map1();
     expect(sideDanger(s, 'hoard')).not.toBeNull();
-    expect(sideDanger(s, 'shrine')).not.toBeNull();
+    // Sunken Shrine: komşu ana yol savaşı Grave Field'ın Risen Skeleton'ları artık mob (2026-10-28, open-questions 448) ve güce sayılıyor;
+    // eskiden çağrı oldukları için ölçüye girmiyordu. Shrine Grave Field'la aynı güçte (oran ~1,04), uyarı almaz.
+    expect(sideDanger(s, 'shrine')).toBeNull();
     expect(sideDanger(s, 'wagons')).toBeNull();
   });
 
