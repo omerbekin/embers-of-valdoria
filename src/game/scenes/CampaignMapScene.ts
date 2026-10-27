@@ -746,9 +746,11 @@ export class CampaignMapScene extends Phaser.Scene {
     // 2) düğümler
     // Üst üste binen etiketlerde bulunulan ve gidilebilir düğüm en üstte kalsın: önce uzaklar, sonra gidilebilirler, en son bulunulan
     const rank = (id: string) => (vis[id] === 'current' ? 2 : options.includes(id) ? 1 : 0);
+    this.labelObjs = [];
     this.planLabels(vis, options);
     this.fogClearZones(vis, options);
     if (!far) for (const n of [...this.map.nodes].sort((a, b) => rank(a.id) - rank(b.id))) this.drawNode(n, drawVis[n.id]!, options.includes(n.id), rv);
+    this.syncLabels();
     // 3) sis bulutları: her zaman bütün haritanın sis durumu (görünümden bağımsız)
     this.updateClouds(vis, animateFog);
     // 4) uzak görünüm: bölge işaretleri + ana yol (bulutların üstünde)
@@ -875,6 +877,8 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   private labelPlan = new Map<string, LabelSlot>();
+  /** Haritadaki bütün ad etiketleri (şerit + sakin ad); düğüm kartı / önizleme açıkken gizlenir (Ömer: iki etiket çıkmasın). */
+  private labelObjs: Phaser.GameObjects.GameObject[] = [];
 
   /** Koruma savaşı kazanılmış korumalı hazine / olay düğümünde yenilen karşılaşmanın adı (kafatası işareti); yoksa null. */
   /**
@@ -1118,11 +1122,13 @@ export class CampaignMapScene extends Phaser.Scene {
       bandC = this.add.container(0, 0, sub ? [band, name, sub] : [band, name]);
       bandC.setAlpha(slot.hot ? 1 : 0);
       c.add(bandC);
+      this.labelObjs.push(bandC);
       if (slot.q) {
         const q = slot.q;
         quiet = elText(this, q.x0 + q.w / 2, q.y0 + q.h / 2, n.name.toUpperCase(), 14, goal ? EL.DIM : '#e6d8b4', { em: 0.08 }).setOrigin(0.5, 0.5);
         quiet.setStroke('#060402', 5).setAlpha(done || goal ? 0.82 : 1);
         c.add(quiet);
+        this.labelObjs.push(quiet);
       }
     }
     // (sisin açık alanı renderMap > fogClearZones: bütün haritadan, görünümden bağımsız)
@@ -2335,6 +2341,7 @@ export class CampaignMapScene extends Phaser.Scene {
       onCancel: () => undefined,
     });
     this.previewId = id;
+    this.syncLabels();
   }
 
   /** Kartın tehlike satırı (level farkı bandı); savaşmayan / tutorial / savaşılmayan düğümde boş. */
@@ -2344,10 +2351,20 @@ export class CampaignMapScene extends Phaser.Scene {
     return { threat: { line: threatLine(t), band: t.band, name: BAND_NAME[t.band], color: t.band === 'normal' ? '' : CONFIG.levelGap.colors[t.band] } };
   }
 
+  /**
+   * Düğüm kartı (sabit ya da fare önizlemesi) açıkken haritadaki BÜTÜN ad etiketleri gizlenir: kartın kendi adı var, düğümün şeridi altında
+   * kalmasın, komşu etiketler kartın çevresinde görünmesin (Ömer: iki etiket çıkmasın). Kapanınca geri gelir. Her düğüm türü aynı yoldan geçer.
+   */
+  private syncLabels(): void {
+    const hide = !!this.nodeTip || !!this.cardPlace;
+    for (const o of this.labelObjs) if (o.scene) (o as Phaser.GameObjects.Text).setVisible(!hide);
+  }
+
   private hideNodeTip(): void {
     if (!this.nodeTip) return;
     this.nodeTip.close();
     this.nodeTip = null;
+    this.syncLabels();
     this.previewClosedFor = this.previewId;
     this.time.delayedCall(80, () => (this.previewClosedFor = null));
   }
@@ -3793,6 +3810,7 @@ export class CampaignMapScene extends Phaser.Scene {
       card = null;
       this.modal = null;
       this.cardPlace = null;
+      this.syncLabels();
     };
     card = openStartBattle(root, {
       ...(o.title ? { title: o.title } : {}),
@@ -3835,6 +3853,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const handle = card;
     this.cardPlace = () => handle.place();
     this.cardCam = '';
+    this.syncLabels();
     onStageResize(this, () => {
       frozen = undefined;
       handle.place();
