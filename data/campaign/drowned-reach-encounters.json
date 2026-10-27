@@ -265,7 +265,7 @@
     "name": "Ash Pilgrims",
     "units": [
       {
-        "class": "ember_acolyte",
+        "class": "cinder_exile",
         "slot": 7,
         "mods": {
           "hpMult": 1.1,
@@ -273,7 +273,7 @@
         }
       },
       {
-        "class": "ember_acolyte",
+        "class": "cinder_exile",
         "slot": 6,
         "mods": {
           "hpMult": 1.1,
@@ -281,7 +281,7 @@
         }
       },
       {
-        "class": "charcoal_burner",
+        "class": "pitch_boiler",
         "slot": 8,
         "mods": {
           "hpMult": 1.1,
@@ -327,7 +327,7 @@
     "condition": "tide",
     "units": [
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 1,
         "mods": {
           "hpMult": 1.1,
@@ -335,7 +335,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 0,
         "mods": {
           "hpMult": 1.1,
@@ -343,7 +343,7 @@
         }
       },
       {
-        "class": "ghoul",
+        "class": "mire_ghoul",
         "slot": 2,
         "mods": {
           "hpMult": 1.1,
@@ -351,7 +351,7 @@
         }
       },
       {
-        "class": "fen_witchling",
+        "class": "reed_witch",
         "slot": 7,
         "mods": {
           "hpMult": 1.1,
@@ -382,7 +382,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 2,
         "mods": {
           "hpMult": 1.1,
@@ -489,7 +489,7 @@
         }
       },
       {
-        "class": "fen_witchling",
+        "class": "reed_witch",
         "slot": 7,
         "mods": {
           "hpMult": 1.1,
@@ -529,7 +529,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 2,
         "mods": {
           "hpMult": 1.1,
@@ -537,7 +537,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 4,
         "mods": {
           "hpMult": 1.1,
@@ -548,11 +548,11 @@
   },
   "dr_13": {
     "name": "Marsh Hexes",
-    "objective": { "type": "totem", "units": [{ "class": "drowned", "slot": 0 }, { "class": "drowned", "slot": 2 }] },
+    "objective": { "type": "totem", "units": [{ "class": "sunken_dead", "slot": 0 }, { "class": "sunken_dead", "slot": 2 }] },
     "units": [
-      { "class": "iron_mooring", "slot": 4, "name": "Hex Totem", "sprite": "hex_totem", "objective": true, "mods": { "hpMult": 1.9, "powerMult": 1.9 } },
+      { "class": "hex_totem", "slot": 4, "name": "Hex Totem", "sprite": "hex_totem", "objective": true, "mods": { "hpMult": 1.9, "powerMult": 1.9 } },
       {
-        "class": "fen_witchling",
+        "class": "reed_witch",
         "slot": 7,
         "mods": {
           "hpMult": 1.9,
@@ -560,7 +560,7 @@
         }
       },
       {
-        "class": "fen_witchling",
+        "class": "reed_witch",
         "slot": 6,
         "mods": {
           "hpMult": 1.9,
@@ -577,7 +577,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 1,
         "mods": {
           "hpMult": 1.9,
@@ -650,7 +650,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 2,
         "mods": {
           "hpMult": 1.9,
@@ -675,7 +675,7 @@
         }
       },
       {
-        "class": "fen_witchling",
+        "class": "reed_witch",
         "slot": 6,
         "mods": {
           "hpMult": 1,
@@ -683,7 +683,7 @@
         }
       },
       {
-        "class": "fen_witchling",
+        "class": "reed_witch",
         "slot": 8,
         "mods": {
           "hpMult": 1,
@@ -779,7 +779,7 @@
     "objective": "survive",
     "units": [
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 1,
         "mods": {
           "hpMult": 1.9,
@@ -787,7 +787,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 0,
         "mods": {
           "hpMult": 1.9,
@@ -795,7 +795,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 2,
         "mods": {
           "hpMult": 1.9,
@@ -890,7 +890,7 @@
     "name": "Order Quarantine",
     "units": [
       {
-        "class": "oathsworn_brother",
+        "class": "inquisition_brother",
         "slot": 1,
         "mods": {
           "hpMult": 1.9,
@@ -898,7 +898,7 @@
         }
       },
       {
-        "class": "oathsworn_brother",
+        "class": "inquisition_brother",
         "slot": 0,
         "mods": {
           "hpMult": 1.9,
@@ -906,7 +906,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "salt_chaplain",
         "slot": 7,
         "mods": {
           "hpMult": 1.9,
@@ -919,7 +919,7 @@
     "name": "Dock Rats",
     "units": [
       {
-        "class": "cutpurse",
+        "class": "mudlark",
         "slot": 1,
         "mods": {
           "hpMult": 1.4,
@@ -927,7 +927,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "mudlark",
         "slot": 0,
         "mods": {
           "hpMult": 1.4,
@@ -1012,27 +1012,27 @@
         }
       },
       {
-        "class": "oathsworn_brother",
+        "class": "inquisition_brother",
         "slot": 0,
-        "name": "Oathsworn Brother",
+        "name": "Inquisition Brother",
         "mods": {
           "hpMult": 1,
           "powerMult": 1
         }
       },
       {
-        "class": "oathsworn_brother",
+        "class": "inquisition_brother",
         "slot": 2,
-        "name": "Oathsworn Brother",
+        "name": "Inquisition Brother",
         "mods": {
           "hpMult": 1,
           "powerMult": 1
         }
       },
       {
-        "class": "censer_monk",
+        "class": "salt_chaplain",
         "slot": 7,
-        "name": "Censer Monk",
+        "name": "Salt Chaplain",
         "mods": {
           "hpMult": 1,
           "powerMult": 1
@@ -1045,36 +1045,36 @@
     "name": "The Isle's Wardens",
     "units": [
       {
-        "class": "oathsworn_brother",
+        "class": "inquisition_brother",
         "slot": 1,
-        "name": "Oathsworn Brother",
+        "name": "Inquisition Brother",
         "mods": {
           "hpMult": 1.15,
           "powerMult": 1.15
         }
       },
       {
-        "class": "oathsworn_brother",
+        "class": "inquisition_brother",
         "slot": 0,
-        "name": "Oathsworn Brother",
+        "name": "Inquisition Brother",
         "mods": {
           "hpMult": 1.15,
           "powerMult": 1.15
         }
       },
       {
-        "class": "censer_monk",
+        "class": "salt_chaplain",
         "slot": 7,
-        "name": "Censer Monk",
+        "name": "Salt Chaplain",
         "mods": {
           "hpMult": 1.15,
           "powerMult": 1.15
         }
       },
       {
-        "class": "censer_monk",
+        "class": "salt_chaplain",
         "slot": 6,
-        "name": "Censer Monk",
+        "name": "Salt Chaplain",
         "mods": {
           "hpMult": 1.15,
           "powerMult": 1.15
@@ -1104,7 +1104,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 2,
         "mods": {
           "hpMult": 1.4,
@@ -1112,7 +1112,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 4,
         "mods": {
           "hpMult": 1.4,
@@ -1143,7 +1143,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 0,
         "mods": {
           "hpMult": 1.4,
@@ -1151,7 +1151,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 2,
         "mods": {
           "hpMult": 1.4,
@@ -1460,7 +1460,7 @@
     "name": "Bone Beach Dead",
     "units": [
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 1,
         "mods": {
           "hpMult": 1.15,
@@ -1468,7 +1468,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 0,
         "mods": {
           "hpMult": 1.15,
@@ -1788,7 +1788,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 1,
         "mods": {
           "hpMult": 1.15,
@@ -1796,7 +1796,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 0,
         "mods": {
           "hpMult": 1.15,
@@ -1978,7 +1978,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 2,
         "mods": {
           "hpMult": 1.15,
@@ -2116,7 +2116,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 1,
         "mods": {
           "hpMult": 1,
@@ -2124,7 +2124,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 0,
         "mods": {
           "hpMult": 1,
@@ -2205,7 +2205,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 2,
         "mods": {
           "hpMult": 1.4,
@@ -2236,7 +2236,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 1,
         "mods": {
           "hpMult": 1.4,
@@ -2244,7 +2244,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 0,
         "mods": {
           "hpMult": 1.4,
@@ -2627,7 +2627,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "mudlark",
         "slot": 2,
         "mods": {
           "hpMult": 1.1,
@@ -3051,7 +3051,7 @@
     "name": "Flooded Nave",
     "units": [
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 1,
         "mods": {
           "hpMult": 1.9,
@@ -3059,7 +3059,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 0,
         "mods": {
           "hpMult": 1.9,
@@ -3273,7 +3273,7 @@
     },
     "units": [
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 1,
         "mods": {
           "hpMult": 1.5,
@@ -3281,7 +3281,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 0,
         "mods": {
           "hpMult": 1.5,
@@ -3289,7 +3289,7 @@
         }
       },
       {
-        "class": "drowned",
+        "class": "sunken_dead",
         "slot": 2,
         "mods": {
           "hpMult": 1.5,
