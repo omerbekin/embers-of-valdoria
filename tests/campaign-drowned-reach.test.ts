@@ -123,7 +123,7 @@ describe('The Drowned Reach: harita verisi', () => {
   });
 
   it('kendi çizimli Harita 2 mobları: adı geçen her birim kendi id\'siyle; 3.3 kiti, ailesi ve rolü', () => {
-    // ad -> [id, aile, skill'ler] (maps-2-3.md 3.3; pasifler motor gelene kadar yer tutucu)
+    // ad -> [id, aile, skill'ler] (maps-2-3.md 3.3; pasifler motorda gerçek: Shell, Slick, Lure, Deathless Tide... battle.ts)
     const own: Record<string, [string, string, string[]]> = {
       'Corsair Cutlass': ['corsair_cutlass', 'corsairs', ['cutlass', 'rake']],
       'Corsair Slinger': ['corsair_slinger', 'corsairs', ['sling_stone', 'pitch_pot']],
