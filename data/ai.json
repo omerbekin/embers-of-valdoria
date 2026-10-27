@@ -4,7 +4,7 @@
   "value": {
     "horizon": 3,
     "contributionShare": 0.6,
-    "debuffShare": { "_not": "content-designer 2026-10-25: Silenced (Clutch, Hag's Mark) ve Mire-Bound (Saltbound) değer çarpanı; ölçüm: Hag's Mark seçimi Omen'li eski %27,8 -> %27,5 (5 Harita 1 karşılaşması x 3 takım x 12 seed), Clutch %99,7 -> %99,9", "silence": 1.6, "mire": 1 },
+    "debuffShare": { "_not": "content-designer 2026-10-25: Silenced (Clutch, Hag's Mark) ve Mire-Bound (Saltbound) değer çarpanı; ölçüm: Hag's Mark seçimi Omen'li eski %27,8 -> %27,5 (5 Harita 1 karşılaşması x 3 takım x 12 seed), Clutch %99,7 -> %99,9", "silence": 1.6, "mire": 1, "_not2": "engine-dev 2026-10-27 (open-questions 437, PROVİZYON, sim YOK): noEvasion = Saltbound kaçınma 0 -> dostların isabet kazancı, rooted = bekleyen telgraftan kaçamama, weaken = Spellbound sıradaki skill kaybı", "noEvasion": 1, "rooted": 1, "weaken": 1, "_not3": "engine-dev 2026-10-27 (open-questions 437, PROVİZYON, sim YOK): pin = Saltbound hedefi geri çekilemez, dostların ona beklenen hasarının bu payı değer sayılır; 0,6 ile 6 seedlik ölçümde Salt Circle ~%5, Debtor's Chain ~%4 seçildi", "pin": 0.6 },
     "killWeight": 1,
     "pressureShare": 0.25,
     "saveWeight": 1,

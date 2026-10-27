@@ -233,7 +233,11 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'lure':
       return `An enemy that hits you with a skill becomes ${cap(e.status)} for ${turnsText(e.turns)} (summons do not).`;
     case 'deathlessTide':
-      return `Once per battle, a killing blow taken while you stand on ${groundName(e.ground)} ground does not kill you: you rise again with ${pct(e.hpRatio)} of your max HP.`;
+      return `${(e.uses ?? 1) > 1 ? (e.uses === 2 ? 'Twice' : `${e.uses} times`) : 'Once'} per battle, a killing blow taken while you stand on ${groundName(e.ground)} ground does not kill you: you rise again with ${pct(e.hpRatio)} of your max HP.`;
+    case 'slickHide':
+      return `While you stand on ${groundName(e.ground)} ground, you take ${lessText(1 - e.physicalTakenMult)} physical damage.`;
+    case 'crownOfSalt':
+      return `Every ${groundName(e.ground)} cell on the battlefield (both sides) makes you take ${pct(e.perCell)} less damage.`;
     case 'saltTears':
       return `At the start of your turn, every wounded ally standing on ${groundName(e.ground)} ground (you included) heals ${pct(e.ratio)} of their max HP (Wound reduces it).`;
     case 'undertow':
@@ -676,7 +680,11 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     case 'lure':
       return fixed('Attacker', cap(e.status));
     case 'deathlessTide':
-      return fixed('Rises with', pct(e.hpRatio));
+      return fixed('Rises with', pct(e.hpRatio) + ((e.uses ?? 1) > 1 ? ` (x${e.uses})` : ''));
+    case 'slickHide':
+      return fixed('Physical damage taken', lessText(1 - e.physicalTakenMult));
+    case 'crownOfSalt':
+      return fixed('Damage taken per cell', lessText(e.perCell));
     case 'saltTears':
       return fixed('Heal per turn', pct(e.ratio));
     default:

@@ -46,7 +46,7 @@ import { VERSIONS_TAB, registerVersionsPanel } from './debug-versions';
 import { POSE_TESTER_GEAR, registerPosesPanel } from './debug-poses';
 import { weaponFor, type WeaponPick } from '../game/poses';
 import { waveTestBattleData } from '../game/wave-test-battle';
-import { RULES_TESTS, rulesTestBattleData } from '../game/rules-test-battle';
+import { BOSS_TESTS, RULES_TESTS, bossTestBattleData, rulesTestBattleData } from '../game/rules-test-battle';
 import { offhandItem, weaponItem } from '../game/pose-weapons';
 
 /** Sekme sırası (menü bu sırayla gösterir). */
@@ -204,6 +204,28 @@ export function registerDebugTools({ game, debug }: Ctx): void {
           grid.append(
             debugButton(mode === 'turns' ? t.label : `${t.label} (test)`, () => {
               const data = rulesTestBattleData(newSeed(), mode, t.kind);
+              const b = battle();
+              if (b) b.scene.restart(data);
+              else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
+            }, { icon: mode === 'turns' ? 'skull' : 'flask', title: t.hint }),
+          );
+        el.append(grid);
+      }
+    },
+  });
+  // Map 2 boss test (engine-dev 2026-10-27): Weir-Wyrm / Admiral Vane / Drowned Queen kuralları, turns ve test modu
+  debug.registerPanel({
+    id: 'panel.boss-test-map2',
+    tab: 'Setup',
+    render: (el) => {
+      el.append(heading('Map 2 boss test'), noteLineText('Map 2 bosses with their escorts against a random party. Your campaign save is not touched. Use Set HP to reach the phases.'));
+      for (const mode of ['turns', 'test'] as const) {
+        const grid = document.createElement('div');
+        grid.className = 'debug-grid';
+        for (const t of BOSS_TESTS)
+          grid.append(
+            debugButton(mode === 'turns' ? t.label : `${t.label} (test)`, () => {
+              const data = bossTestBattleData(newSeed(), mode, t.kind);
               const b = battle();
               if (b) b.scene.restart(data);
               else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);

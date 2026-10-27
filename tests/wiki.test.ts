@@ -78,7 +78,9 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
       bySlot.set(s.owner.id, s.slot);
     }
     const bossText = JSON.stringify(wiki.mechanics.filter((a) => a.id.startsWith('boss-')));
-    for (const b of Object.values(content.bosses)) b.skills.forEach((id, i) => expect(bossText).toContain(`${i + 1}. ${content.skills[id]!.name} [`));
+    for (const b of Object.values(content.bosses)) if (b.boss) b.skills.forEach((id, i) => expect(bossText).toContain(`${i + 1}. ${content.skills[id]!.name} [`));
+    // kendi atan bağlı nesne (Harpoon Ballista): skill'i sahibinin makalesinde nesnenin adıyla
+    for (const b of Object.values(content.bosses)) if (b.boss?.anchor?.strike) expect(bossText).toContain(`${content.bosses[b.boss.anchor.unit]!.name}: ${content.skills[b.boss.anchor.strike]!.name} [`);
   });
 
   it('tüm skill listelenir; ad, hedef rozeti, bedel, cooldown ve açıklaması boş değildir', () => {

@@ -52,3 +52,29 @@ export function rulesTestBattleData(seed: number, mode: BattleMode, kind: RulesT
     enemySize: enemies.filter(Boolean).length,
   };
 }
+
+/** Debug "Map 2 boss test" (engine-dev 2026-10-27; open-questions 437): Harita 2 bosslarının kuralları (Slick Hide, Surge kadansı, Ballista atışı, Crown of Salt, Champion'ın dirilişi). */
+export type BossTestKind = 'wyrm' | 'vane' | 'queen';
+export const BOSS_TESTS: ReadonlyArray<{ kind: BossTestKind; label: string; hint: string }> = [
+  { kind: 'wyrm', label: 'Weir-Wyrm (Tide)', hint: 'The Weir-Wyrm with 2 Weir Eels on a Tide field: in Flooded water it takes 30% less physical damage; from 60% HP it calls a Surge every 2 turns' },
+  { kind: 'vane', label: 'Admiral Vane', hint: 'Admiral Vane with his Harpoon Ballista: the Ballista marks your weakest hero every turn and fires a turn later until it is broken' },
+  { kind: 'queen', label: 'Drowned Queen', hint: 'The Drowned Queen with the Drowned Champion: every Flooded cell lowers her damage taken by 2%; the Champion rises twice in water, and again at her 30% HP' },
+];
+
+/** BattleScene başlangıç verisi: rastgele 4 kahraman + boss ve eşlikçileri (sefer kaydına dokunmaz). */
+export function bossTestBattleData(seed: number, mode: BattleMode, kind: BossTestKind) {
+  const party = content.randomCells(content.arrangeTeam(content.randomTeam(seed, 4)), seed);
+  const boss = (id: string, scale: number) => ({ tier: 'boss' as const, displayName: content.bosses[id]!.name, modifiers: { spriteScale: scale } });
+  const at: Record<number, string> =
+    kind === 'wyrm' ? { 1: 'weir_wyrm', 0: 'weir_eel', 2: 'weir_eel' } : kind === 'vane' ? { 4: 'admiral_vane', 3: 'harpoon_ballista', 0: 'corsair_cutlass', 2: 'corsair_cutlass' } : { 4: 'drowned_queen', 1: 'drowned_champion', 6: 'brine_maiden' };
+  const units: NonNullable<Teams['units']>['enemies'] =
+    kind === 'wyrm' ? { 1: boss('weir_wyrm', 3) } : kind === 'vane' ? { 4: boss('admiral_vane', 2.2), 3: { displayName: 'Harpoon Ballista' } } : { 4: boss('drowned_queen', 1.65), 1: { tier: 'elite', displayName: content.mobs.drowned_champion!.name } };
+  const enemies = cells(at);
+  return {
+    seed,
+    mode,
+    teams: { party, enemies, units: { enemies: units }, ...(kind === 'wyrm' ? { rules: { condition: 'tide' } } : {}) },
+    partySize: 4,
+    enemySize: enemies.filter(Boolean).length,
+  };
+}

@@ -6518,7 +6518,7 @@
     "artOf": "cauldron_splash"
   },
   "call_the_tide": {
-    "_not": "Harita 2 Salt Hag Mother kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide 2 sıra (maps-2-3.md 3.3): 2x3 alan hafif buz hasarı + 2 tur Flooded zemin (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 Salt Hag Mother kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide 2 sıra (maps-2-3.md 3.3): 2x3 alan hafif buz hasarı + 2 tur Flooded zemin (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "call_the_tide",
     "name": "Call the Tide",
     "target": "area_enemies",
@@ -6550,11 +6550,6 @@
         "turns": 2,
         "scale": "luck",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "drainfield",
@@ -7124,7 +7119,7 @@
     "artOf": "bone_rite"
   },
   "requiem_of_salt": {
-    "_not": "Harita 2 The Salt Bishop kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). sütun boyunca sıra sıra INT buz (x0,75) + 2 tur Flooded zemin (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Salt Bishop kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). sütun boyunca sıra sıra INT buz (x0,75) + 2 tur Flooded zemin (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "requiem_of_salt",
     "name": "Requiem of Salt",
     "target": "area_enemies",
@@ -7154,11 +7149,6 @@
         "turns": 2,
         "scale": "int",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "drainfield",
@@ -7363,7 +7353,7 @@
     "artOf": "breaking_span"
   },
   "wyrm_surge": {
-    "_not": "Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Surge (2 sıra Flooded): 2x3 alan STR fiziksel + 2 tur Flooded zemin (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Surge (2 sıra Flooded): 2x3 alan STR fiziksel + 2 tur Flooded zemin (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "wyrm_surge",
     "name": "Surge",
     "target": "area_enemies",
@@ -7394,11 +7384,6 @@
         "turns": 2,
         "scale": "str",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "breakingspan",
@@ -7412,7 +7397,7 @@
     "artOf": "breaking_span"
   },
   "wyrm_deluge": {
-    "_not": "Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE Deluge (faz 3; girişte telgraflanır): tüm kahraman tahtası, güvenli hücre YOK, STR fiziksel + 3 tur Flooded (hasarsız) + 3 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Weir-Wyrm (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE Deluge (faz 3; girişte telgraflanır): tüm kahraman tahtası, güvenli hücre YOK, STR fiziksel + 3 tur Flooded (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "wyrm_deluge",
     "name": "Deluge",
     "target": "all_enemies",
@@ -7442,11 +7427,6 @@
         "turns": 3,
         "scale": "str",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 3
       }
     ],
     "icon": "fallofthebridge",
@@ -7538,29 +7518,32 @@
     "artOf": "breaking_span"
   },
   "harpoon_line": {
-    "_not": "Harita 2 Admiral Vane (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Harpoon Ballista ayaktayken (requiresAlly iron_mooring): STR fiziksel + hedef şeridinin en öndeki boş hücresine çekilir (Chain Hook kuralı). Belgedeki \"her tur telgraflı hücre\" atışının en yakın var olan sürümü (open-questions 435). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Harita 2 Admiral Vane'in Harpoon Ballista'sının kendi atışı (engine-dev 2026-10-27, Ömer onayı; maps-2-3.md 3.3 'Ballista her tur telgraflı hücreye vurur'): boss.anchor.strike. Vane'in her turunun başında Ballista en düşük canlı kahramanın hücresini telgraflar, sonraki Vane turunun başında o hücreye STR (Ballista'nın) fiziksel vurur (zarsız, bloklanamaz; Move ile kaçılır). Vane'in eski çeken Harpoon Line'ı kaldırıldı. YER TUTUCU sanat (artOf chain_hook). Sayılar PROVİZYON (open-questions 437; sim YOK).",
     "id": "harpoon_line",
     "name": "Harpoon Line",
-    "target": "single_enemy",
-    "range": 6,
-    "requiresAlly": "iron_mooring",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "rect",
+      "rows": 1,
+      "cols": 1,
+      "anchor": "bottom_left"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
     "cost": {
       "resource": "mp",
       "amount": 0
     },
-    "cooldown": 2,
-    "motion": "whip",
+    "motion": "cast",
     "fx": "#8a4a25",
     "effects": [
       {
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.55
-      },
-      {
-        "type": "pull",
-        "to": "laneFront"
+        "power": 1
       }
     ],
     "icon": "chainhook",
@@ -7679,7 +7662,7 @@
     "artOf": "cinder_lash"
   },
   "high_tide": {
-    "_not": "Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide (2 sıra, telgraflı; maps-2-3.md 3.3): telgraflı 2x2 (faz 2+: 2x3), sonraki turunda INT buz + 2 tur Flooded (hasarsız) + 2 tur Soaked. Ad High Tide (Salt Hag Mother'ın Call the Tide'ından ayrılsın). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). Call the Tide (2 sıra, telgraflı; maps-2-3.md 3.3): telgraflı 2x2 (faz 2+: 2x3), sonraki turunda INT buz + 2 tur Flooded (hasarsız). Ad High Tide (Salt Hag Mother'ın Call the Tide'ından ayrılsın). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "high_tide",
     "name": "High Tide",
     "target": "area_enemies",
@@ -7722,11 +7705,6 @@
         "turns": 2,
         "scale": "int",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "smokebomb",
@@ -7777,7 +7755,7 @@
     "artOf": "chorus"
   },
   "the_reach_drowns": {
-    "_not": "Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE The Reach Drowns (faz 3; girişte telgraflanır; Pyre'ın su aynası): tüm kahraman tahtası, güvenli hücre YOK, INT buz + 2 tur Flooded (hasarsız) + 2 tur Soaked. YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; skill'e özel tarif, content-designer 2026-10-27). Sayılar PROVİZYON (open-questions 435; sim YOK).",
+    "_not": "Skill suyu Tide suyu gibi ıslatır (grounds.json > flooded.soak, Ömer 2026-10-27; ayrı Soaked etkisi kaldırıldı). Harita 2 The Drowned Queen (boss) kendi kiti (content-designer 2026-10-27; maps-2-3.md 3.3, Ömer onayı: ödünç Harita 1 kiti yerine kendi skill'leri). ULTIMATE The Reach Drowns (faz 3; girişte telgraflanır; Pyre'ın su aynası): tüm kahraman tahtası, güvenli hücre YOK, INT buz + 2 tur Flooded (hasarsız). YER TUTUCU sanat: ikon/efekt artOf sahibinden (sanat turu sonra), ses kendi tarifi (data/audio-mobs.json; artOf sahibinin tarifinden türetildi) ya da artOf sahibinin sesi. Sayılar PROVİZYON (open-questions 435; sim YOK).",
     "id": "the_reach_drowns",
     "name": "The Reach Drowns",
     "target": "all_enemies",
@@ -7808,11 +7786,6 @@
         "turns": 2,
         "scale": "int",
         "power": 0
-      },
-      {
-        "type": "status",
-        "status": "soaked",
-        "turns": 2
       }
     ],
     "icon": "judgebeam",

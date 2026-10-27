@@ -38,6 +38,7 @@ import ironMooring from '../../data/bosses/iron_mooring.json';
 import lordMorvane from '../../data/bosses/lord_morvane.json';
 import weirWyrm from '../../data/bosses/weir_wyrm.json';
 import admiralVane from '../../data/bosses/admiral_vane.json';
+import harpoonBallista from '../../data/bosses/harpoon_ballista.json';
 import drownedQueen from '../../data/bosses/drowned_queen.json';
 import mobRoadThug from '../../data/mobs/road_thug.json';
 import mobMoorRaider from '../../data/mobs/moor_raider.json';
@@ -181,6 +182,8 @@ export const bosses: Record<string, CombatantDef> = {
   // Harita 2 bossları (kendi kitleri, content-designer 2026-10-27; maps-2-3.md 3.3)
   weir_wyrm: buildDef(weirWyrm as unknown as CombatantData, formulas),
   admiral_vane: buildDef(admiralVane as unknown as CombatantData, formulas),
+  // Vane'in kendi atan bağlı nesnesi (boss.anchor.strike; engine-dev 2026-10-27)
+  harpoon_ballista: buildDef(harpoonBallista as unknown as CombatantData, formulas),
   drowned_queen: buildDef(drownedQueen as unknown as CombatantData, formulas),
 };
 

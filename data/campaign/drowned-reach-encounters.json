@@ -56,7 +56,7 @@
         }
       },
       {
-        "class": "iron_mooring",
+        "class": "harpoon_ballista",
         "slot": 3,
         "name": "Harpoon Ballista",
         "sprite": "harpoon_ballista",
