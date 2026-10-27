@@ -164,6 +164,8 @@ export interface TownHotspot {
   note?: string;
   /** true = kasaba ekranında gösterilmez (geri açmak için alanı sil; Notice Board 2026-10-24: görev sistemi gelene dek gizli). */
   hidden?: boolean;
+  /** 'arch' = vurgu kemerli kapı çerçevesi çizer, etiket yerin ÜSTÜNDE durur (Ömer 2026-10-27: Ashford Inn kapısı). Yoksa yuvarlak köşeli dikdörtgen. */
+  shape?: 'arch';
 }
 
 /** Kasaba ekranı: arka plan (assets/towns/<background>.webp), dikey odak (kırpılırken korunacak satır, 0-1) ve yerler. */

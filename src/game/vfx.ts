@@ -3220,9 +3220,13 @@ const VOIDPURPLE = ['#b872ff', '#9b59d0', '#7d3fb0', '#e3ccff'];
 const manasteal = async (c: VfxCtx) => {
   // yerinden atış (skills.json > viewMotion 'ranged'): koşarak gitmez; küçük gümüş hançer hedefe uçar, sonra eski mana çalma efekti
   await Promise.all(c.targets.map((t) => throwDagger(c, t)));
+  // Iskalanan / kaçınılan / bloklanan hedeften mana çekilmez (Ömer 2026-10-27): yalnız hançer atılır
+  const avoided = new Set((c.usage?.events ?? []).flatMap((e) => (e.type === 'miss' || e.type === 'dodge' || e.type === 'block' ? [e.target] : [])));
+  const hit = c.targets.filter((t) => !avoided.has(t.combatant.uid));
+  if (!hit.length) return;
   c.sfx('manaSizzle');
   c.sfx('energySlurp');
-  for (const t of c.targets) {
+  for (const t of hit) {
     const p = spot(t);
     const dir = dirTo(c.actor, p);
     void arcSlash(c.scene, p.x, p.y, { dir, colors: [...VOIDPURPLE, '#ffffff'], from: -0.9, to: 0.9, r: 92, dur: 150, size: 16 });

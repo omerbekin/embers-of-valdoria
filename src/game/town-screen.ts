@@ -206,9 +206,24 @@ export class TownScreen {
     const id = `spot:${h.id}`;
     const glow = s.add.graphics().setAlpha(0);
     const pad = 6;
-    glow.fillStyle(EL.EMBER2, 0.08).fillRoundedRect(r.x - pad, r.y - pad, r.w + pad * 2, r.h + pad * 2, 14);
-    glow.lineStyle(6, EL.EMBER, 0.18).strokeRoundedRect(r.x - pad, r.y - pad, r.w + pad * 2, r.h + pad * 2, 14);
-    glow.lineStyle(2, EL.ON_N, 0.75).strokeRoundedRect(r.x - pad, r.y - pad, r.w + pad * 2, r.h + pad * 2, 14);
+    if (h.shape === 'arch') {
+      // Kemerli kapı çerçevesi: yarım daire tepe + dik kenarlar, alt kenar düz
+      const x0 = r.x - pad, x1 = r.x + r.w + pad, y0 = r.y - pad, y1 = r.y + r.h + pad;
+      const rad = (x1 - x0) / 2, cy = y0 + rad;
+      const pts: Phaser.Math.Vector2[] = [new Phaser.Math.Vector2(x0, y1)];
+      for (let i = 0; i <= 24; i++) {
+        const a = Math.PI + (Math.PI * i) / 24;
+        pts.push(new Phaser.Math.Vector2(x0 + rad + Math.cos(a) * rad, cy + Math.sin(a) * rad));
+      }
+      pts.push(new Phaser.Math.Vector2(x1, y1));
+      glow.fillStyle(EL.EMBER2, 0.08).fillPoints(pts, true);
+      glow.lineStyle(6, EL.EMBER, 0.18).strokePoints(pts, true);
+      glow.lineStyle(2, EL.ON_N, 0.75).strokePoints(pts, true);
+    } else {
+      glow.fillStyle(EL.EMBER2, 0.08).fillRoundedRect(r.x - pad, r.y - pad, r.w + pad * 2, r.h + pad * 2, 14);
+      glow.lineStyle(6, EL.EMBER, 0.18).strokeRoundedRect(r.x - pad, r.y - pad, r.w + pad * 2, r.h + pad * 2, 14);
+      glow.lineStyle(2, EL.ON_N, 0.75).strokeRoundedRect(r.x - pad, r.y - pad, r.w + pad * 2, r.h + pad * 2, 14);
+    }
     this.root.add(glow);
     // Etiket: yerin üst ortasında (başlığın altına taşmaz), ekranın kenarından içeride
     const size = this.compactLabel();
@@ -221,7 +236,7 @@ export class TownScreen {
     const minX = stageView.left + pw / 2 + 12;
     const maxX = stageView.right - pw / 2 - 12;
     const lx = Phaser.Math.Clamp(r.x + r.w / 2, minX, maxX);
-    const ly = Math.max(150 + ph / 2, r.y + ph / 2 + 4);
+    const ly = Math.max(150 + ph / 2, h.shape === 'arch' ? r.y - pad - ph / 2 - 10 : r.y + ph / 2 + 4); // kemerde etiket kapının üstünde
     const plate = s.add.graphics();
     const drawPlate = (on: boolean): void => {
       plate.clear();

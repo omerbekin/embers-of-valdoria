@@ -33,7 +33,7 @@
       "scene": { "background": "town-ashford", "focusY": 0.58, "hotspots": [
         { "id": "stall", "action": "trade", "label": "Odo's Stall", "rect": [0, 0.3, 0.262, 0.62] },
         { "id": "burner", "action": "story", "label": "Charcoal Burner", "rect": [0.29, 0.47, 0.385, 0.63] },
-        { "id": "inn", "action": "inn", "label": "Inn", "rect": [0.68, 0.22, 0.88, 0.58] },
+        { "id": "inn", "action": "inn", "label": "Inn", "shape": "arch", "rect": [0.705, 0.37, 0.772, 0.545] },
         { "id": "board", "action": "recruit", "label": "Notice Board", "hidden": true, "rect": [0.585, 0.405, 0.67, 0.58], "note": "Notices of burned farms and missing travellers. No one here seeks to join a company. Recruits gather in the cities." },
         { "id": "road", "action": "leave", "label": "Road Out", "rect": [0.9, 0.34, 1, 0.6] }
       ] } },

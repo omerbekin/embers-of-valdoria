@@ -130,14 +130,14 @@
   "nodes": {
     "0.f1": {
       "name": "Long Sight",
-      "text": "Sharpshooter +2% damage per row of distance per rank.",
+      "text": "Sharpshooter +1% damage per row of distance per rank.",
       "src": "A:V1:0.f1",
       "fx": [
         {
           "k": "passive",
           "f": "perRow",
           "op": "add",
-          "v": 0.02,
+          "v": 0.01,
           "rank": true
         }
       ]
