@@ -995,6 +995,92 @@
       }
     ]
   },
+  "dr_32_vell": {
+    "_not": "M-L (maps-2-3.md 3.2 #32): Guild tarafını seçen oyuncunun Harbor Fort eliti. Inquisitor-Captain Vell YER TUTUCU kit: oathsworn_brother elit önder (kendi çizimi / kiti yok; Bastion ile aynı elit çarpanları 1,7 / 1,1 / 1,15). PROVİZYON, open-questions 431.",
+    "name": "Inquisitor-Captain",
+    "units": [
+      {
+        "class": "oathsworn_brother",
+        "slot": 1,
+        "name": "Inquisitor-Captain Vell",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "oathsworn_brother",
+        "slot": 0,
+        "name": "Oathsworn Brother",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "oathsworn_brother",
+        "slot": 2,
+        "name": "Oathsworn Brother",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 7,
+        "name": "Censer Monk",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_monks_guard": {
+    "_not": "M-L (maps-2-3.md 3.2 #56): Guild tarafındaki Monk's Isle savaşı (2 Oathsworn + 2 Censer Monk), kazanınca sandık. Çarpanlar bölge V sıradan savaşlarıyla aynı (1,15). PROVİZYON.",
+    "name": "The Isle's Wardens",
+    "units": [
+      {
+        "class": "oathsworn_brother",
+        "slot": 1,
+        "name": "Oathsworn Brother",
+        "mods": {
+          "hpMult": 1.15,
+          "powerMult": 1.15
+        }
+      },
+      {
+        "class": "oathsworn_brother",
+        "slot": 0,
+        "name": "Oathsworn Brother",
+        "mods": {
+          "hpMult": 1.15,
+          "powerMult": 1.15
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 7,
+        "name": "Censer Monk",
+        "mods": {
+          "hpMult": 1.15,
+          "powerMult": 1.15
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 6,
+        "name": "Censer Monk",
+        "mods": {
+          "hpMult": 1.15,
+          "powerMult": 1.15
+        }
+      }
+    ]
+  },
   "dr_33": {
     "name": "Sewer Dead",
     "units": [
@@ -1762,6 +1848,8 @@
   },
   "dr_59": {
     "name": "Corsair Captain",
+    "blocked": "deck",
+    "background": "storm-deck",
     "units": [
       {
         "class": "bandit_chief",
@@ -1804,7 +1892,7 @@
       },
       {
         "class": "corsair_slinger",
-        "slot": 7,
+        "slot": 8,
         "name": "Corsair Slinger",
         "mods": {
           "hpMult": 1,
@@ -1858,6 +1946,8 @@
   },
   "dr_62": {
     "name": "Deep Water",
+    "blocked": "deck",
+    "background": "storm-deck",
     "units": [
       {
         "class": "weir_eel",
@@ -1879,7 +1969,7 @@
       },
       {
         "class": "grave_chanter",
-        "slot": 7,
+        "slot": 8,
         "name": "Tide Caller",
         "mods": {
           "hpMult": 1.15,
@@ -1949,11 +2039,13 @@
   },
   "dr_64": {
     "name": "Storm Sirens",
+    "blocked": "deck",
+    "background": "storm-deck",
     "condition": "storm",
     "units": [
       {
         "class": "siren",
-        "slot": 7,
+        "slot": 10,
         "name": "Siren",
         "mods": {
           "hpMult": 1.15,

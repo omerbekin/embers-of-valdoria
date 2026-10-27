@@ -245,12 +245,55 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   if (!DIFFS.includes(s.difficulty)) s.difficulty = CONFIG.defaultDifficulty;
   if (slot !== undefined) s.slot = slot;
   else if (typeof s.slot !== 'number' || s.slot < 0 || s.slot >= SLOT_COUNT) s.slot = 0;
+  upgradeRemovedNodes(s);
   if (!isValidState(s)) return null;
+  upgradeReach(s);
   // Geçilen haritalar (harita geçişi M-Q; isteğe bağlı alan, sürüm değişmez): bozuksa / bilinmeyen haritaysa atılır
   if (s.mapsDone !== undefined && !(Array.isArray(s.mapsDone) && s.mapsDone.every((m) => typeof m === 'string' && !!MAPS[m]))) delete (s as { mapsDone?: unknown }).mapsDone;
   upgradePitOath(s);
   upgradeRoam(s);
   return s;
+}
+
+/**
+ * Haritadan kaldırılan düğümler (CampaignMap.removedNodes; Harita 2 dr59 Black Caravel cebi gezici elite dönüştü, M-K). Kayıt sürümü değişmez,
+ * her okumada çalışır (idempotent): kaldırılan düğümde duran takım yerine konan düğüme taşınır (yolu yürüyüşe eklenir), yürüyüş / ziyaret /
+ * temizlenme / devriye listelerinden atılır. Eski cebin savaşı kazanılmışsa (`done` içinde) Caravel yenilmiş sayılır. Yerinde değiştirir.
+ */
+function upgradeRemovedNodes(s: CampaignState): void {
+  const map = typeof s.mapId === 'string' ? MAPS[s.mapId] : undefined;
+  const removed = map?.removedNodes;
+  if (!removed || !Array.isArray(s.path)) return;
+  const gone = (id: unknown) => typeof id === 'string' && id in removed;
+  if (Array.isArray(s.done) && s.done.some((d) => typeof d === 'string' && gone(d.split(':')[0]) && d.endsWith(':battle')) && map.reach?.caravel) s.caravel = { i: 0, beaten: true };
+  if (gone(s.at)) {
+    const to = removed[s.at]!;
+    s.at = to;
+    s.path = [...s.path, to];
+    for (const k of ['suspended', 'patrol', 'eventChoice', 'formationDue', 'dive', 'pit'] as const) delete (s as unknown as Record<string, unknown>)[k];
+  }
+  s.path = s.path.filter((id) => !gone(id));
+  if (!s.path.length) s.path = [s.at];
+  if (Array.isArray(s.visited)) s.visited = s.visited.filter((id) => !gone(id));
+  if (Array.isArray(s.cleared)) s.cleared = s.cleared.filter((id) => !gone(id));
+  if (s.replays && typeof s.replays === 'object') for (const k of Object.keys(s.replays)) if (gone(k)) delete s.replays[k];
+}
+
+/**
+ * Harita 2 deniz alanları (M-J / M-K / M-L / M-M; isteğe bağlı, kayıt sürümü 12 kalır; eski kayıtta yok = taraf yok, deniz kapalı, fener sönük,
+ * Caravel rotanın başında). Bozuk değer atılır. Yerinde değiştirir.
+ */
+function upgradeReach(s: CampaignState): void {
+  if (s.faction !== undefined && s.faction !== 'order' && s.faction !== 'guild') delete (s as { faction?: unknown }).faction;
+  if (s.sea !== undefined && s.sea !== true) delete (s as { sea?: unknown }).sea;
+  if (s.lit !== undefined && s.lit !== true) delete (s as { lit?: unknown }).lit;
+  const c = s.caravel as unknown as { i?: unknown; met?: unknown; beaten?: unknown } | undefined;
+  if (c !== undefined) {
+    const route = MAPS[s.mapId]?.reach?.caravel?.route ?? [];
+    const i = typeof c?.i === 'number' && Number.isInteger(c.i) && c.i >= 0 && c.i < route.length ? c.i : null;
+    if (i === null) delete (s as { caravel?: unknown }).caravel;
+    else s.caravel = { i, ...(c!.met === s.at && typeof c!.met === 'string' ? { met: c!.met } : {}), ...(c!.beaten === true ? { beaten: true as const } : {}) };
+  }
 }
 
 /**

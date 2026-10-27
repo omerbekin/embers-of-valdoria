@@ -18,6 +18,7 @@ import { freeTemperItem, freeTemperPreview } from './smith';
 import { pitBest, pitOf, pitTierPays } from './pit';
 import { OATH_DATA, oathDef, oathHealMult } from './oath';
 import { diveChest, diveEncounters, diveMax } from './side-content';
+import { beatCaravel, caravelAfterMove, caravelDef, caravelPending, choiceVisible, eventAgain, nodeEncounter, passable, withReachForRoute } from './reach';
 import type { BattleOutcome, CampChoice, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, InnStay, MapNode, NextStep, StepKind } from './types';
 
 /**
@@ -99,8 +100,10 @@ export function nodeCleared(s: CampaignState, nodeId: string): boolean {
 export function nextStep(s: CampaignState): NextStep {
   const map = mapOf(s);
   const n = node(map, s.at);
-  // Başlatılmış devriye (temizlenmiş düğümün yeniden oynanışı): düğümün kendi karşılaşması
-  if (s.patrol === n.id && n.encounter && canReplay(map, n)) return { kind: 'battle', node: n.id, encounter: n.encounter, patrol: true };
+  // M-K The Black Caravel: oyuncu onun düğümüne girdi (crossing): elit savaşı düğümün kendi adımlarından önce
+  if (caravelPending(map, s)) return { kind: 'battle', node: n.id, encounter: caravelDef(map)!.encounter, caravel: true };
+  // Başlatılmış devriye (temizlenmiş düğümün yeniden oynanışı): düğümün kendi karşılaşması (M-L: seçilen tarafa göre)
+  if (s.patrol === n.id && n.encounter && canReplay(map, n)) return { kind: 'battle', node: n.id, encounter: nodeEncounter(n, s)!, patrol: true };
   // The Fighting Pit (B5): başlatılmış kademe savaşı (kasaba adımının içinde; kazanınca / yenilince kasabaya dönülür)
   const pitTier = s.pit?.node === n.id && s.pit.fight ? pitOf(n)?.tiers[s.pit.wins] : undefined;
   if (pitTier) return { kind: 'battle', node: n.id, encounter: pitTier.encounter, pit: true };
@@ -118,7 +121,7 @@ export function nextStep(s: CampaignState): NextStep {
       case 'company':
         return { kind: 'company', node: n.id, size: n.newCompany!.size };
       case 'battle':
-        return { kind: 'battle', node: n.id, encounter: n.encounter! };
+        return { kind: 'battle', node: n.id, encounter: nodeEncounter(n, s)! }; // M-L Harbor Fort: tarafa göre elit
       case 'treasure':
         // B1 Salvage Dive: sıradaki derinliğin savaşı bekliyorsa hazine adımı o savaştır (kazanılınca yeniden "Dive deeper?")
         if (s.dive?.node === n.id && s.dive.diving) {
@@ -650,9 +653,12 @@ export function completeStory(s: CampaignState, answers?: number[]): CampaignSta
 /** Seçeneğin oynanacak karşılaşması: listedeki ilk VAR OLAN (yoksa undefined). */
 export const choiceBattle = (c: EventChoice): string | undefined => c.battle?.find((id) => !!ENCOUNTERS[id]);
 
-/** Olayın şu an sunulabilen seçenekleri (savaşı olup karşılaşması henüz olmayanlar gizli). Seçenek yoksa boş. */
-export function eventChoices(eventId: string): EventChoice[] {
-  return (EVENTS[eventId]?.choices ?? []).filter((c) => !c.battle || !!choiceBattle(c));
+/**
+ * Olayın şu an sunulabilen seçenekleri (savaşı olup karşılaşması henüz olmayanlar gizli; M-L `needFaction` seçenekleri yalnız o tarafta,
+ * durum verilmezse yalnız tarafsız olanlar). Seçenek yoksa boş.
+ */
+export function eventChoices(eventId: string, s?: Pick<CampaignState, 'faction'>): EventChoice[] {
+  return (EVENTS[eventId]?.choices ?? []).filter((c) => (!c.battle || !!choiceBattle(c)) && choiceVisible(c, s));
 }
 
 /** Seçenek seçilebilir mi (altın yetiyor mu)? null = evet, yoksa sebep. */
@@ -666,7 +672,7 @@ export function choiceBlocked(s: CampaignState, c: EventChoice): string | null {
  */
 export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
   const step = expectStep(s, 'event') as Extract<NextStep, { kind: 'event' }>;
-  const c = eventChoices(step.event).find((x) => x.id === choiceId);
+  const c = eventChoices(step.event, s).find((x) => x.id === choiceId);
   if (!c) throw new Error(`No such choice: ${choiceId}`);
   const blocked = choiceBlocked(s, c);
   if (blocked) throw new Error(blocked);
@@ -680,6 +686,13 @@ export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
   const small = !!c.chest && c.chestItems !== undefined; // küçük sandık: altın sandığın kartında
   if (!small) t.gold += c.gold ?? 0;
   if (c.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t), small ? { maxItems: c.chestItems!, gold: c.gold ?? 0 } : undefined);
+  if (c.gift) grantGift(t, t.at, activeHeroes(t), `choice-${c.id}`, c.gift.rarity ?? 'common', c.gift.slots); // Monk's Isle relic (M-L)
+  if (c.faction && !t.faction) t.faction = c.faction; // M-L: bir kez, geri alınmaz
+  if (c.charter && !t.sea) {
+    t.sea = true; // M-J: deniz yolları açılır; Caravel rotasının başından dolaşmaya başlar (M-K)
+    if (caravelDef(mapOf(t)) && !t.caravel) t.caravel = { i: 0 };
+  }
+  if (c.light) t.lit = true; // M-M: bu haritada görüş eki
   const battle = choiceBattle(c);
   t.eventChoice = { node: t.at, choice: c.id, ...(battle ? { battle } : {}), ...(c.restHeal !== undefined ? { restHeal: c.restHeal } : {}) };
   if (!battle) {
@@ -898,7 +911,9 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   const step = expectStep(t, 'battle') as Extract<NextStep, { kind: 'battle' }>;
   if (step.pit) return winPit(t, outcome, rules); // The Fighting Pit (B5): arada şifa yok, ödül yalnız yeni rekorda
   if (step.dive) return winDive(t, outcome, step.encounter);
-  const heal = victoryHealFor(rules, node(mapOf(t), t.at).type);
+  // M-K The Black Caravel: crossing düğümünde ama elit savaşı (şifa, Valor, loot elit gibi)
+  const nodeType: MapNode['type'] = step.caravel ? 'elite' : node(mapOf(t), t.at).type;
+  const heal = victoryHealFor(rules, nodeType);
   // Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): yaşayanlar düğüm türünün zafer şifasını alır; savaş SONUNDA hâlâ düşmüş
   // olan kahraman %10 canla yaralı kalkar (lethal yaralıysa ceset). Savaşa ceset girip kalkmayan ceset kalır.
   valorHealWounds(t, outcome.valorRevived);
@@ -911,9 +926,9 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   }
   t.stats.victories++;
   // XP (levels.md): düşman başına, düğüm çarpanı, savaşa girenlere bölünür; level atlayan (ayaktaki) kahraman tam iyileşir
-  const encounterId = t.eventChoice?.node === t.at && t.eventChoice.battle ? t.eventChoice.battle : (node(mapOf(t), t.at).encounter ?? '');
+  const encounterId = step.encounter; // olay savaşı, düğümün (tarafa göre) karşılaşması ya da Caravel'in elit savaşı
+  const patrol = t.patrol === t.at && !step.caravel;
   // Devriye (yeniden oynama): XP azalan getiriyle (roadmap 2.3 A; campaign.json > replay.xp); altın / item loot.ts'te (items.json > loot.repeat)
-  const patrol = t.patrol === t.at;
   const gains = battleXp(t, outcome, encounterId);
   applyXp(t, patrol ? scaleGains(gains, replayMult(replayCount(t, t.at) + 1)) : gains);
   // Yaralı kalkan kahraman level atlasa da riseRatio canla kalır (level şifası yalnızca savaşı ayakta bitirene; VARSAYIM open-questions 369)
@@ -924,7 +939,7 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   // Valor: yalnızca açıksa birikir (savaşta harcanan düşülür); elit +2, boss +3 (win yerine), kusursuzsa +1. Düğüm başına bir kez
   // (Ömer 2026-10-18, karar 364: "Valorü node başına 1 kere al"): devriye zaferi Valor KAZANDIRMAZ (savaşta harcanan yine düşülür).
   if (t.valor !== undefined) {
-    const type = node(mapOf(t), t.at).type;
+    const type = nodeType;
     const flawless = outcome.flawless ?? outcome.units.every((u) => u.alive && u.hpRatio > 0);
     const earned = patrol ? 0 : valorEarned(valorRules, type === 'boss' ? 'boss' : type === 'elite' ? 'elite' : 'normal', flawless);
     t.valor = addValor(valorRules, outcome.valorLeft ?? t.valor, earned);
@@ -935,9 +950,16 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   }
   // Zafer loot'u (items.md 3.1; zorluktan bağımsız, karar 6). Savaşa giren takım = bu sonuçtaki kahramanlar
   const fought = outcome.units.map((u) => heroById(t, u.heroId)).filter((h): h is Hero => !!h);
-  const type = node(mapOf(t), t.at).type;
+  const type = nodeType;
   // Devriyede de aynı çağrı: loot.ts düğümün kaçıncı zaferi olduğunu lootState.clears'tan sayar (item / altın çarpanı, sandık yok)
-  grantLoot(t, t.at, type === 'boss' ? 'boss' : type === 'elite' ? 'elite' : 'battle', fought.length ? fought : activeHeroes(t));
+  grantLoot(t, t.at, type === 'boss' ? 'boss' : type === 'elite' ? 'elite' : 'battle', fought.length ? fought : activeHeroes(t), step.caravel ? { tag: 'caravel' } : undefined); // Caravel: kendi loot sayacı
+  if (step.caravel) {
+    // Caravel yenildi: gezmez, Gallows Cove açılır. Savaş düğümün kendi savaşının yerine geçer (VARSAYIM, open-questions): crossing temizlenir.
+    beatCaravel(t);
+    if (nodeSteps(mapOf(t), node(mapOf(t), t.at)).includes('battle')) complete(t, 'battle');
+    advanceDay(t);
+    return t;
+  }
   if (patrol) {
     t.replays = { ...(t.replays ?? {}), [t.at]: replayCount(t, t.at) + 1 };
     delete t.patrol;
@@ -1070,6 +1092,11 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
   delete t.patrol;
   delete t.pit; // arena koşusu kasabada biter (güvenlik ağı)
   delete t.dive; // yüzeye çıkmadan ayrılan dalış: ek sandıklar kalır, hazine adımı baştan bekler (VARSAYIM, open-questions 428)
+  const map = mapOf(t);
+  // EventDef.again (M-J Ferry Office, M-L Guild Hall): şart sağlanmadıysa bitmiş olay yeniden açılır ("Not yet" kalıcı kayıp değil)
+  const ev = node(map, to).event;
+  if (ev && eventAgain(map, t, EVENTS[ev])) t.done = t.done.filter((d) => d !== key(to, 'event'));
+  caravelAfterMove(map, t, to); // M-K: Caravel'in düğümüne girildiyse karşılaşma, yoksa Caravel bir düğüm ilerler
   markCleared(t, to); // adımı olmayan düğüm varınca temizlenmiş sayılır
   return t;
 }
@@ -1114,7 +1141,7 @@ export function continueToMap(s: CampaignState, mapId: string = nextMapFor(s) ??
   t.visited = [map.start];
   t.cleared = [];
   t.replays = {};
-  for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover', 'pit', 'dive'] as const) delete t[k];
+  for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover', 'pit', 'dive', 'sea', 'lit', 'caravel'] as const) delete t[k]; // deniz / fener / Caravel yalnız o harita (faction taşınır)
   clearWounds(t); // D1 b: yeni haritaya yarasız girilir (cesetler aynen; yedekte bekleyenlere dokunulmaz)
   return t;
 }
@@ -1301,10 +1328,11 @@ export function roamOpen(s: CampaignState): boolean {
 /** Tek hamlede gidilebilen komşular: ileri (çıkışlar) ve serbest dolaşımda geri (girişler); tutorial düğümlerine geri dönülmez. */
 export function moveOptions(s: CampaignState): { forward: string[]; back: string[] } {
   const map = mapOf(s);
-  const forward = outgoing(map, s.at);
+  // M-J / M-K: deniz yolu kapalıysa adaya, Caravel yenilmeden Gallows Cove'a gidilmez (reach.ts > passable)
+  const forward = outgoing(map, s.at).filter((id) => passable(map, s, s.at, id));
   if (!roamOpen(s)) return { forward, back: [] };
   const locked = tutorialNodes(map);
-  return { forward: forward.filter((id) => !locked.has(id)), back: incoming(map, s.at).filter((id) => !locked.has(id) && !forward.includes(id)) };
+  return { forward: forward.filter((id) => !locked.has(id)), back: incoming(map, s.at).filter((id) => !locked.has(id) && !forward.includes(id) && passable(map, s, s.at, id)) };
 }
 
 /**
@@ -1326,7 +1354,7 @@ export function travelRoutes(s: CampaignState): Map<string, string[]> {
   while (queue.length) {
     const id = queue.shift()!;
     for (const nb of neighbors(map, id)) {
-      if (nb === s.at || out.has(nb) || locked.has(nb)) continue;
+      if (nb === s.at || out.has(nb) || locked.has(nb) || !passable(map, s, id, nb)) continue;
       out.set(nb, [...out.get(id)!, nb]);
       if (cleared.has(nb)) queue.push(nb);
     }
@@ -1445,9 +1473,9 @@ export interface RetreatLoss {
 }
 
 /** Keşfedilen düğümler (roadmap 2.4): ayak basılan her düğümün görüş mesafesi (visibility) içindekiler; bir kez görülen sise dönmez. */
-export function discoveredNodes(map: CampaignMap, visited: string[]): Set<string> {
+export function discoveredNodes(map: CampaignMap, visited: string[], vision: number = map.visibility): Set<string> {
   const out = new Set<string>();
-  for (const v of visited) for (const [id, d] of undirectedDistances(map, v)) if (d <= map.visibility) out.add(id);
+  for (const v of visited) for (const [id, d] of undirectedDistances(map, v)) if (d <= vision) out.add(id);
   return out;
 }
 
@@ -1518,6 +1546,7 @@ export function debugTeleport(s: CampaignState, target: string): CampaignState {
   t.stats = { ...s.stats };
   t.tipsSeen = [...s.tipsSeen];
   const route = pathTo(map, target);
+  t = withReachForRoute(map, t, route); // M-J / M-K: deniz yolu / Caravel kapısı ışınlamada açık
   for (let i = 0; i < route.length; i++) {
     const last = i === route.length - 1;
     // Hedef düğümde yalnızca oyuncunun kendisinin yapacağı adımlar kalır; kahraman yoksa otomatik seçilir

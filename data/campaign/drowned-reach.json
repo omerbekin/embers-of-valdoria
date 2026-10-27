@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 2: The Drowned Reach (docs/design/campaign/maps-2-3.md 3; yapım sırası 9.2 adım 1: iskelet, campaign-dev 2026-10-25). 83 düğüm, 6 bölge; konumlar ve kenarlar onaylı mockup public/mockups/maps-2-3/data.js > m2 (görsel 1672x941, assets/source/maps-2-3/drowned-reach-map-v2.png -> assets/campaign/drowned-reach-bg.webp). Düğüm id = \"dr\" + belgedeki numara (Harita 1 id'leriyle ve dalga / ölçek skipNodes listeleriyle çakışmasın). optional = cep (tek girişli çıkmaz dal, kesik yol); spoke = hub kolu (Saltmere'den çıkan yan durak: ileri yolu yok, rota / seçim noktası / K1 sayılmaz, yolu düz). level = düğüm seviyesi elle (ilk 3 düğüm L10, belge 8; diğerleri bölüm 2 rampası L11-20). Crossing (X) düğümleri şimdilik normal savaş (type battle, alt başlık Crossing); deniz yolu kilidi yok. Black Caravel (59) sabit elit cep (Open Water'dan); gezici kural M-K sonraki adım. continues = bu harita hangi haritanın devamı (başlangıçta kahraman seçimi yok; takım taşınır). Karşılaşmalar data/campaign/drowned-reach-encounters.json (yer tutucu: var olan moblar yeni adlarla), olaylar / hikâyeler / hazineler drowned-reach-events.json. Sayılar PROVİZYON.",
+  "_not": "Harita 2: The Drowned Reach (docs/design/campaign/maps-2-3.md 3; yapım sırası 9.2 adım 1: iskelet, campaign-dev 2026-10-25). 83 düğüm, 6 bölge; konumlar ve kenarlar onaylı mockup public/mockups/maps-2-3/data.js > m2 (görsel 1672x941, assets/source/maps-2-3/drowned-reach-map-v2.png -> assets/campaign/drowned-reach-bg.webp). Düğüm id = \"dr\" + belgedeki numara (Harita 1 id'leriyle ve dalga / ölçek skipNodes listeleriyle çakışmasın). optional = cep (tek girişli çıkmaz dal, kesik yol); spoke = hub kolu (Saltmere'den çıkan yan durak: ileri yolu yok, rota / seçim noktası / K1 sayılmaz, yolu düz). level = düğüm seviyesi elle (ilk 3 düğüm L10, belge 8; diğerleri bölüm 2 rampası L11-20). Crossing (X) düğümleri type battle + crossing true (güverte savaşı, M-J); deniz yolları ve Black Caravel (M-K, gezici; eski dr59 cebi kaldırıldı) _reach notunda. continues = bu harita hangi haritanın devamı (başlangıçta kahraman seçimi yok; takım taşınır). Karşılaşmalar data/campaign/drowned-reach-encounters.json (yer tutucu: var olan moblar yeni adlarla), olaylar / hikâyeler / hazineler drowned-reach-events.json. Sayılar PROVİZYON.",
   "id": "drowned-reach",
   "title": "THE DROWNED REACH",
   "subtitle": "Campaign Map II",
@@ -24,6 +24,27 @@
   "alwaysVisible": [
     "dr82"
   ],
+  "_reach": "Harita 2 deniz kuralları (maps-2-3.md 5; campaign-dev 2026-10-27, src/campaign/reach.ts). M-J: kenarda sea true = deniz yolu (Ferry Office'te 'Charter a ship' seçilmeden geçilmez; haritada kesik mavi çizgi, adadaki düğümde 'Needs a ship'); crossing true = deniz geçişi düğümü (güverte savaşı: karşılaşmasında blocked deck; devriye açık). M-K: caravel.route = The Black Caravel'in sırayla dolaştığı crossing düğümleri (deniz yolları açılınca, oyuncunun her hamlesinde bir düğüm; oyuncu onun düğümüne girince encounter elit savaşı), gate = Caravel yenilmeden girilmeyen düğüm (Gallows Cove). M-L: faction.shopWeights = taraf seçilince tüccar stoğunda yuva ağırlıkları (Order zırh + relic, Guild silah + takı; relic = offhand VARSAYIM, open-questions 431). M-M: lighthouse.visibility = Lantern Rock yakılınca bu haritada görüş eki. removedNodes: dr59 (eski sabit Black Caravel cebi) kaldırıldı; eski kayıtta orada duran takım dr62'ye taşınır (save.ts > upgradeRemovedNodes). Sayılar PROVİZYON.",
+  "reach": {
+    "caravel": {
+      "name": "The Black Caravel",
+      "route": ["dr55", "dr60", "dr62", "dr64"],
+      "encounter": "dr_59",
+      "gate": "dr66"
+    },
+    "lighthouse": {
+      "visibility": 1
+    },
+    "faction": {
+      "shopWeights": {
+        "order": { "armor": 3, "offhand": 3 },
+        "guild": { "weapon": 3, "trinket": 3 }
+      }
+    }
+  },
+  "removedNodes": {
+    "dr59": "dr62"
+  },
   "regions": [
     {
       "id": "I",
@@ -733,7 +754,10 @@
         0.3082
       ],
       "spoke": true,
-      "encounter": "dr_32"
+      "encounter": "dr_32",
+      "factionEncounter": {
+        "guild": "dr_32_vell"
+      }
     },
     {
       "id": "dr33",
@@ -1113,7 +1137,8 @@
         0.7685,
         0.6908
       ],
-      "encounter": "dr_55"
+      "encounter": "dr_55",
+      "crossing": true
     },
     {
       "id": "dr56",
@@ -1155,20 +1180,6 @@
       "encounter": "dr_58"
     },
     {
-      "id": "dr59",
-      "type": "elite",
-      "name": "The Black Caravel",
-      "subtitle": "Elite · Corsair Captain",
-      "lore": "A black ship with black sails, and a captain who has never lost a boarding.",
-      "region": "V",
-      "pos": [
-        0.9629,
-        0.5101
-      ],
-      "optional": true,
-      "encounter": "dr_59"
-    },
-    {
       "id": "dr60",
       "type": "battle",
       "name": "The Narrows",
@@ -1179,7 +1190,8 @@
         0.8242,
         0.5313
       ],
-      "encounter": "dr_60"
+      "encounter": "dr_60",
+      "crossing": true
     },
     {
       "id": "dr61",
@@ -1205,7 +1217,8 @@
         0.936,
         0.4198
       ],
-      "encounter": "dr_62"
+      "encounter": "dr_62",
+      "crossing": true
     },
     {
       "id": "dr63",
@@ -1231,7 +1244,8 @@
         0.7955,
         0.2019
       ],
-      "encounter": "dr_64"
+      "encounter": "dr_64",
+      "crossing": true
     },
     {
       "id": "dr65",
@@ -1881,17 +1895,20 @@
     {
       "from": "dr54",
       "to": "dr55",
-      "style": "solid"
+      "style": "solid",
+      "sea": true
     },
     {
       "from": "dr54",
       "to": "dr60",
-      "style": "solid"
+      "style": "solid",
+      "sea": true
     },
     {
       "from": "dr55",
       "to": "dr56",
-      "style": "solid"
+      "style": "solid",
+      "sea": true
     },
     {
       "from": "dr56",
@@ -1911,17 +1928,20 @@
     {
       "from": "dr60",
       "to": "dr61",
-      "style": "solid"
+      "style": "solid",
+      "sea": true
     },
     {
       "from": "dr61",
       "to": "dr62",
-      "style": "solid"
+      "style": "solid",
+      "sea": true
     },
     {
       "from": "dr62",
       "to": "dr63",
-      "style": "solid"
+      "style": "solid",
+      "sea": true
     },
     {
       "from": "dr56",
@@ -1931,17 +1951,20 @@
     {
       "from": "dr63",
       "to": "dr64",
-      "style": "solid"
+      "style": "solid",
+      "sea": true
     },
     {
       "from": "dr64",
       "to": "dr66",
-      "style": "solid"
+      "style": "solid",
+      "sea": true
     },
     {
       "from": "dr64",
       "to": "dr65",
-      "style": "dashed"
+      "style": "dashed",
+      "sea": true
     },
     {
       "from": "dr66",
@@ -2027,11 +2050,6 @@
       "from": "dr82",
       "to": "dr83",
       "style": "solid"
-    },
-    {
-      "from": "dr62",
-      "to": "dr59",
-      "style": "dashed"
     },
     {
       "from": "dr8",

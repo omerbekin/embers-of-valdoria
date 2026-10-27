@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 2 (The Drowned Reach) olayları, hazineleri ve kasaba hikâyeleri (campaign-dev 2026-10-25, maps-2-3.md 3.2 / 3.4; oyun içi metin İngilizce). Biçim data/campaign/events.json ile aynı (events{} choices[] şablonu, treasures{}, stories{}); src/campaign/data.ts iki dosyayı birleştirir, anahtarlar dr_ önekli (çakışmasın). Faction (M-L: Guild Hall / Inquisition House, Monk's Isle), Charter a ship (M-J: Ferry Office) ve Lighthouse (M-M: Lantern Rock) BU ADIMDA YOK: düz lore / küçük ödül olayı olarak duruyor (maps-2-3.md 9.3). Ödül sayıları PROVİZYON.",
+  "_not": "Harita 2 (The Drowned Reach) olayları, hazineleri ve kasaba hikâyeleri (campaign-dev 2026-10-25, maps-2-3.md 3.2 / 3.4; oyun içi metin İngilizce). Biçim data/campaign/events.json ile aynı (events{} choices[] şablonu, treasures{}, stories{}); src/campaign/data.ts iki dosyayı birleştirir, anahtarlar dr_ önekli (çakışmasın). Faction (M-L: dr_guild_hall, dr_monks_isle), Charter a ship (M-J: dr_ferry_office) ve Lighthouse (M-M: dr_lantern_rock) kurallı (campaign-dev 2026-10-27, src/campaign/reach.ts): seçenek alanları faction / needFaction / charter / light / gift, olay alanı again. Ödül sayıları PROVİZYON.",
   "events": {
     "dr_wayshrine": {
       "_not": "A1 Wayshrine: sınav kazanılınca açılan pencere (nimetin adı ve etkisi sahnede çip olarak side-content.json > wayshrines'ten eklenir).",
@@ -102,16 +102,77 @@
       ]
     },
     "dr_guild_hall": {
+      "_not": "M-L Faction (maps-2-3.md 3.4): tek seçim, geri alınmaz (CampaignState.faction). Sonuçları: Harbor Fort eliti (Order -> Guild Enforcer Bastion, Guild -> Inquisitor-Captain Vell), Monk's Isle içeriği, tüccar stoğu ağırlığı, Ferry Office bedeli. again faction: 'Not yet' seçilirse meydana dönünce yeniden sorulur.",
       "title": "Guild Hall and Inquisition House",
-      "text": "On one side of the square stands the Guild Hall, its doors open, its clerks busy with the harbour's trade. On the other stands the Inquisition House of the Order of St. Brann, its doors shut, its windows barred.\n\nThe Harbor-Master's people watch you from one door, the Brother-Provost's from the other. Neither side speaks to you yet. Saltmere is a city of two masters, and sooner or later every newcomer is asked which one they serve."
+      "text": "On one side of the square stands the Guild Hall, its doors open, its clerks busy with the harbour's trade. On the other stands the Inquisition House of the Order of St. Brann, its doors shut, its windows barred.\n\nThe Harbor-Master's people watch you from one door, the Brother-Provost's from the other. Saltmere is a city of two masters, and every newcomer is asked which one they serve. Whatever you answer, the city will remember it.",
+      "again": "faction",
+      "choices": [
+        {
+          "id": "order",
+          "label": "Stand with the Order",
+          "hint": "Final. The Guild's enforcer holds Harbor Fort against you. The monks of Monk's Isle open their doors to you. Merchants favour armour and relics. A ship to the isles costs gold.",
+          "faction": "order",
+          "result": "The Brother-Provost unbars the door himself and presses the Order's seal into your hand. Across the square, the Guild Hall's doors swing shut."
+        },
+        {
+          "id": "guild",
+          "label": "Stand with the Guild",
+          "hint": "Final. The Inquisitor-Captain holds Harbor Fort against you. The monks of Monk's Isle will bar their gate. Merchants favour weapons and trinkets. The Ferry Office charters you a ship as a favour.",
+          "faction": "guild",
+          "result": "Harbor-Master Rook shakes your hand in front of the whole square and writes your name in the Guild's ledger. Behind you, the Inquisition House stays shut."
+        },
+        {
+          "id": "later",
+          "label": "Not yet",
+          "hint": "Answer another day. You can come back to the square.",
+          "result": "You leave both doors behind you. Neither side looks pleased, but Saltmere can wait."
+        }
+      ]
     },
     "dr_ferry_office": {
+      "_not": "M-J Charter a ship (maps-2-3.md 3.2 #38): deniz yollarını açar (CampaignState.sea), Black Caravel dolaşmaya başlar. Bedel faction'a göre (M-L): Guild = iyilik (bedava), Order ya da taraf yok = altın (cost PROVİZYON, open-questions 431). again charter: 'Not now' seçilirse ofise dönünce yeniden sorulur.",
       "title": "The Ferry Office",
-      "text": "The ferry clerk turns the pages of a ledger thick with the names of ships that never came back. \"No charters to the isles this season,\" he says without looking up. \"If you must cross, go down the coast to Fisher's Landing. The fishing boats still sail from there, if the weather lets them.\""
+      "text": "The ferry clerk turns the pages of a ledger thick with the names of ships that never came back. \"No one sails to the isles for nothing,\" he says without looking up. \"The Black Caravel takes one ship in three. Pay the Guild's price, or bring me the Guild's word, and a fishing boat will be waiting for you at Fisher's Landing.\"",
+      "again": "charter",
+      "choices": [
+        {
+          "id": "charter_gold",
+          "label": "Charter a ship",
+          "hint": "Pay 60 gold. The sea lanes from Fisher's Landing to the isles open for the rest of this map.",
+          "needFaction": ["none", "order"],
+          "cost": 60,
+          "charter": true,
+          "result": "The clerk counts your coins twice and writes a name in the ledger. \"Fisher's Landing. Look for the boat with the red sail.\""
+        },
+        {
+          "id": "charter_favor",
+          "label": "Call in the Guild's favour",
+          "hint": "Free, for friends of the Guild. The sea lanes from Fisher's Landing to the isles open for the rest of this map.",
+          "needFaction": "guild",
+          "charter": true,
+          "result": "The clerk sees the Guild's mark and closes his ledger. \"Friends of the Harbor-Master sail free. Fisher's Landing, the boat with the red sail.\""
+        },
+        {
+          "id": "later",
+          "label": "Not now",
+          "hint": "Leave the office. You can come back to charter a ship later.",
+          "result": "The clerk does not look up as you leave. Ships come and go; so do travellers."
+        }
+      ]
     },
     "dr_lantern_rock": {
+      "_not": "M-M Lighthouse (maps-2-3.md 3.2 #45): feneri yakmak bu haritada görüşü artırır (reach.lighthouse.visibility; CampaignState.lit).",
       "title": "Lantern Rock",
-      "text": "The old lighthouse is dark, its great lamp cracked and dry. Gulls nest in the lamp room. From the gallery you can see the whole coast: the cliffs, the wrecks, and far out in the grey, the drowned isles.\n\nSomeone could light this lamp again, with oil and a little work. Not today."
+      "text": "The old lighthouse is dark, its great lamp cracked and dry. Gulls nest in the lamp room. From the gallery you can see the whole coast: the cliffs, the wrecks, and far out in the grey, the drowned isles.\n\nThere is still oil in the cellar, and the wick can be trimmed. With a little work, the light could burn again.",
+      "choices": [
+        {
+          "id": "light",
+          "label": "Light the lamp",
+          "hint": "For the rest of this map you see one stop further along every road.",
+          "light": true,
+          "result": "The lamp catches, sputters, and then burns steady. Its beam sweeps the cliffs and the water, and the coast ahead comes out of the dark."
+        }
+      ]
     },
     "dr_widows_watch": {
       "title": "The Ship on the Rocks",
@@ -161,6 +222,7 @@
       ]
     },
     "dr_monks_isle": {
+      "_not": "M-L (maps-2-3.md 3.2 #56): Order tarafı = bedava dinlenme (heal = rest.heal 0,5) + relic (offhand hediye, VARSAYIM open-questions 431); Guild tarafı = savaş (2 Oathsworn + 2 Censer Monk) -> sandık; taraf yoksa eski ekmek seçeneği.",
       "title": "Monk's Isle",
       "text": "The monks of St. Brann keep a small house on the isle. Their bell rings for every ship that passes, and for every ship that does not come back.",
       "choices": [
@@ -168,8 +230,27 @@
           "id": "bread",
           "label": "Accept the monks' bread",
           "hint": "The living recover 20% health.",
+          "needFaction": "none",
           "heal": 0.2,
           "result": "The monks share their bread and their fire. They ask no questions, and they pray for you when you leave."
+        },
+        {
+          "id": "order_rest",
+          "label": "Rest with the brothers",
+          "hint": "As friends of the Order: the living recover 50% health, and the abbot gives you a relic.",
+          "needFaction": "order",
+          "heal": 0.5,
+          "gift": { "rarity": "uncommon", "slots": ["offhand"] },
+          "result": "The brothers wash the salt from your wounds and give you their beds. At dawn the abbot brings out a relic from the vault and puts it in your hands."
+        },
+        {
+          "id": "guild_fight",
+          "label": "Face the wardens",
+          "hint": "The monks know the Guild's mark. Fight 2 Oathsworn Brothers and 2 Censer Monks. Win: a chest.",
+          "needFaction": "guild",
+          "battle": ["dr_monks_guard"],
+          "win": { "chest": true },
+          "result": "The wardens fall back behind their bell. You take what the Guild's enemies kept in their storehouse."
         },
         {
           "id": "leave",
@@ -322,7 +403,7 @@
       "text": "The lighthouse keeper's daughter sits at the end of the jetty with a spyglass that is too big for her. She has been watching the isles since her father's light went out.",
       "dialogue": [
         {
-          "text": "\"You're crossing to the isles? Then watch for the black ship. Black sails, black hull. The Caravel. It sails the sound and the narrows and the strait, round and round.\"",
+          "text": "\"You're crossing to the isles? Then watch for the black ship. Black sails, black hull. The Caravel. It sails a circle: the Sound, then the Narrows, then Open Water, then Storm Strait, and back to the Sound. Every time you move, it moves one stop.\"",
           "choices": [
             { "label": "\"Thank you. Who sails her?\"", "likes": true },
             { "label": "\"We're not afraid of pirates.\"" }

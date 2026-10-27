@@ -27,6 +27,7 @@ import {
   formCompany,
   getMap,
   continueToMap,
+  withReachOpen,
   newCampaign,
   nextStep,
   node,
@@ -414,7 +415,8 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
         skip = true;
         break;
       }
-      s = continueToMap(s, chain[phase]!);
+      // M-J / M-K: sim olay seçmez (Charter a ship yok); Harita 2 deniz kilidi ve Caravel kapısı simde açık sayılır (eski davranış)
+      s = withReachOpen(getMap(chain[phase]!), continueToMap(s, chain[phase]!));
       defeats = 0;
       stuck = false;
       if (last) {

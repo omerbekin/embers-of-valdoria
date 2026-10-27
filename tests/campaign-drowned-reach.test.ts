@@ -46,12 +46,12 @@ const ids = (pred: (n: (typeof map.nodes)[number]) => boolean) => map.nodes.filt
 afterEach(() => setMapOverride(DROWNED_REACH, null));
 
 describe('The Drowned Reach: harita verisi', () => {
-  it('89 durak (83 + 6 Wayshrine cebi), 6 bölge (13/16/14/15/16/15), doğrulama temiz, hepsi bağlı', () => {
-    expect(map.nodes).toHaveLength(89);
+  it('88 durak (82 + 6 Wayshrine cebi; dr59 Black Caravel cebi M-K ile kalktı), 6 bölge (13/16/14/15/15/15), doğrulama temiz, hepsi bağlı', () => {
+    expect(map.nodes).toHaveLength(88);
     expect(map.regions.map((r) => r.id)).toEqual(['I', 'II', 'III', 'IV', 'V', 'VI']);
-    expect(map.regions.map((r) => map.nodes.filter((n) => n.region === r.id).length)).toEqual([13, 16, 14, 15, 16, 15]);
+    expect(map.regions.map((r) => map.nodes.filter((n) => n.region === r.id).length)).toEqual([13, 16, 14, 15, 15, 15]);
     expect(validateMap(map)).toEqual([]);
-    expect(undirectedDistances(map, map.start).size).toBe(89);
+    expect(undirectedDistances(map, map.start).size).toBe(88);
     expect(map.start).toBe('dr1');
     expect(finalNode(map)).toBe('dr83');
     expect(map.continues).toBe('valdoria');
@@ -62,7 +62,7 @@ describe('The Drowned Reach: harita verisi', () => {
 
   it('cepler: tek giriş, ileri yol yok, kesik yol; Saltmere kolları (spoke): tek giriş Saltmere, ileri yol yok', () => {
     const pockets = ids((n) => !!n.optional);
-    expect(pockets.sort()).toEqual(['dr11', 'dr18', 'dr25', 'dr35', 'dr51', 'dr59', 'dr65', 'dr67', 'dr77', 'dr84', 'dr85', 'dr86', 'dr87', 'dr88', 'dr89'].sort());
+    expect(pockets.sort()).toEqual(['dr11', 'dr18', 'dr25', 'dr35', 'dr51', 'dr65', 'dr67', 'dr77', 'dr84', 'dr85', 'dr86', 'dr87', 'dr88', 'dr89'].sort());
     for (const id of pockets) {
       expect(incoming(map, id), id).toHaveLength(1);
       expect(mainOutgoing(map, id), id).toEqual([]);
@@ -113,9 +113,13 @@ describe('The Drowned Reach: harita verisi', () => {
       if (n.treasure) expect(TREASURES[n.treasure], n.id).toBeDefined();
       if (n.story) expect(STORIES[n.story], n.id).toBeDefined();
     }
-    // Crossing durakları düz savaş (deniz kilidi yok), Black Caravel sabit elit cep
-    for (const id of ['dr55', 'dr60', 'dr62', 'dr64']) expect(map.nodes.find((n) => n.id === id)?.subtitle, id).toMatch(/^Crossing/);
-    expect(map.nodes.find((n) => n.name === 'The Black Caravel')).toMatchObject({ type: 'elite', optional: true });
+    // Crossing durakları güverte savaşı (M-J, crossing true); Black Caravel artık gezici (M-K, reach.caravel), sabit düğüm yok
+    for (const id of ['dr55', 'dr60', 'dr62', 'dr64']) {
+      expect(map.nodes.find((n) => n.id === id)?.subtitle, id).toMatch(/^Crossing/);
+      expect(map.nodes.find((n) => n.id === id)?.crossing, id).toBe(true);
+    }
+    expect(map.nodes.find((n) => n.name === 'The Black Caravel')).toBeUndefined();
+    expect(ENCOUNTERS[map.reach!.caravel!.encounter]).toBeDefined();
   });
 
   it('kendi çizimli Harita 2 mobları: adı geçen her birim kendi id\'siyle; 3.3 kiti, ailesi ve rolü', () => {

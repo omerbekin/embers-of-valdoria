@@ -122,6 +122,28 @@ export interface MapNode {
    * side-content.json > salvageDive.maxDepth - 1). Sandıklar side-content.json > salvageDive.chests.
    */
   dive?: string[];
+  /**
+   * M-J Crossing (maps-2-3.md 5): deniz geçişi düğümü (türü battle kalır; güverte savaşı = karşılaşmasında `blocked: "deck"`, devriye açık).
+   * Black Caravel (M-K) yalnız bu düğümler arasında dolaşır (CampaignMap.reach.caravel.route).
+   */
+  crossing?: boolean;
+  /** M-L Faction: seçilen tarafa göre bu düğümün karşılaşması (yoksa / taraf seçilmediyse `encounter`; Harbor Fort). */
+  factionEncounter?: Partial<Record<Faction, string>>;
+}
+
+/** M-L Faction (maps-2-3.md 3.4): Saltmere'de bir kez seçilen taraf. */
+export type Faction = 'order' | 'guild';
+
+/**
+ * Harita 2 deniz kuralları (maps-2-3.md 5: M-J sea lanes, M-K Black Caravel, M-L faction, M-M lighthouse; src/campaign/reach.ts). Sayılar veride.
+ */
+export interface ReachDef {
+  /** M-K: gezici elit. route = sırayla dolaştığı crossing düğümleri; encounter = elit savaşı; gate = yenilmeden girilmeyen düğüm (boss). */
+  caravel?: { name: string; route: string[]; encounter: string; gate: string };
+  /** M-M: Lantern Rock yakılınca bu haritada görüş (visibility) eki. */
+  lighthouse?: { visibility: number };
+  /** M-L: tarafa göre tüccar stoğu yuva ağırlıkları (yuva id'si -> çarpan; yazılmayan yuva 1). */
+  faction?: { shopWeights: Partial<Record<Faction, Record<string, number>>> };
 }
 
 /** Kasaba ekranında bir yerin eylemi: tezgâh (Trade), ilan panosu / kışla (aday), hikâye NPC'si (sahne yeniden), ateş (dinlenme notu), çıkış. */
@@ -153,6 +175,8 @@ export interface MapEdge {
   path?: Array<[number, number]>;
   /** Elle kavis (map-1-rework.md 4.2b): ikinci derece eğrinin kontrol noktası (görsel oranı x, y); yoksa kimlikten otomatik hafif kavis. */
   ctrl?: [number, number];
+  /** M-J deniz yolu: "Charter a ship" olayından önce geçilmez; haritada kesik mavi çizgi. */
+  sea?: boolean;
 }
 
 export interface MapRegion {
@@ -197,6 +221,13 @@ export interface CampaignMap {
   intro?: string;
   /** Harita bitince gösterilen pencere (yoksa Harita 1'in "Valdoria Conquered" penceresi ve texts.complete). */
   complete?: { title: string; subtitle: string; text: string };
+  /** Harita 2 deniz kuralları (M-J / M-K / M-L / M-M; src/campaign/reach.ts). */
+  reach?: ReachDef;
+  /**
+   * Haritadan kaldırılan düğümler -> eski kayıtta yerine konan düğüm (save.ts > upgradeRemovedNodes; ör. dr59 Black Caravel cebi gezici elite
+   * dönüştü). Eski kayıt bu düğümde duruyorsa yerine konana taşınır, yürüyüş / ziyaret / temizlenme listelerinden atılır.
+   */
+  removedNodes?: Record<string, string>;
 }
 
 import type { UnitModifiers, UnitTier } from '../engine/types';
@@ -517,6 +548,17 @@ export interface CampaignState {
    * bekliyor. Sandıklar yüzeye çıkınca verilir. İsteğe bağlı alan (kayıt sürümü değişmez; bozuksa / başka düğümünse atılır).
    */
   dive?: { node: string; depth: number; diving?: true };
+  /** M-L Faction (Harita 2 Saltmere; bir kez seçilir, geri alınmaz). Haritalar arası taşınır. İsteğe bağlı alan (kayıt sürümü değişmez). */
+  faction?: Faction;
+  /** M-J: deniz yolları açık ("Charter a ship"). Yalnız bu harita (geçişte silinir). */
+  sea?: true;
+  /** M-M: Lantern Rock feneri yakıldı (bu haritada görüş eki). Yalnız bu harita. */
+  lit?: true;
+  /**
+   * M-K Black Caravel: `i` = rotadaki sırası (CampaignMap.reach.caravel.route), `met` = oyuncunun girdiği ve Caravel'le karşılaştığı düğüm
+   * (elit savaşı bekliyor), `beaten` = yenildi (gezmez; Gallows Cove açık). Yalnız bu harita.
+   */
+  caravel?: { i: number; met?: string; beaten?: true };
 }
 
 /** Inn'de bekleyen kahraman (Ömer 2026-10-26). */
@@ -607,7 +649,7 @@ export type NextStep =
   | { kind: 'volunteer'; node: string; offer: string[] }
   | { kind: 'farewell'; node: string }
   | { kind: 'company'; node: string; size: number }
-  | { kind: 'battle'; node: string; encounter: string; /** Devriye (temizlenmiş düğümün yeniden oynanışı). */ patrol?: true; /** The Fighting Pit kademesi (B5). */ pit?: true; /** Salvage Dive: bu savaşın derinliği (2+). */ dive?: number }
+  | { kind: 'battle'; node: string; encounter: string; /** Devriye (temizlenmiş düğümün yeniden oynanışı). */ patrol?: true; /** The Fighting Pit kademesi (B5). */ pit?: true; /** Salvage Dive: bu savaşın derinliği (2+). */ dive?: number; /** M-K Black Caravel'in elit savaşı (bulunulan crossing düğümünde). */ caravel?: true }
   | { kind: 'treasure'; node: string; treasure: string }
   | { kind: 'event'; node: string; event: string }
   | { kind: 'story'; node: string; story: string }

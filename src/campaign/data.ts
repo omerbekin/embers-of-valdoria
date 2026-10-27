@@ -9,7 +9,7 @@ import drEncountersJson from '../../data/campaign/drowned-reach-encounters.json'
 import drEventsJson from '../../data/campaign/drowned-reach-events.json';
 // Harita 2 yan içerik (A1 Wayshrines, B1 Salvage Dive; maps-2-3.md 9)
 import sideJson from '../../data/campaign/side-content.json';
-import type { CampaignConfig, CampaignMap, EncounterDef, UnitMods } from './types';
+import type { CampaignConfig, CampaignMap, EncounterDef, Faction, UnitMods } from './types';
 import { RARITY_IDS, type RarityId } from '../progression/items';
 
 const strip = <T>(o: unknown): Record<string, T> =>
@@ -52,10 +52,25 @@ export interface EventChoice {
   win?: { gold?: number; chest?: boolean };
   /** A4 Hero Oath: seçenek yemin penceresini açar (yemin edilince ya da yemin varken pencere kapanınca olay biter; src/campaign/oath.ts). */
   oath?: boolean;
+  /** M-L: seçenek tarafı seçer (bir kez, geri alınmaz; src/campaign/reach.ts). */
+  faction?: Faction;
+  /** M-L: seçenek yalnız bu tarafta (ya da listedeki taraflarda) görünür ('none' = taraf seçilmemişken). Yoksa herkese. */
+  needFaction?: Faction | 'none' | Array<Faction | 'none'>;
+  /** M-J "Charter a ship": deniz yollarını açar (Black Caravel dolaşmaya başlar). */
+  charter?: boolean;
+  /** M-M: Lantern Rock feneri yakılır (bu haritada görüş eki, reach.lighthouse). */
+  light?: boolean;
+  /** Tek hediye item (var olan hediye yolu, loot.ts > grantGift): nadirlik + isteğe bağlı yuva süzgeci (ör. relic = offhand). */
+  gift?: { rarity?: RarityId; slots?: string[] };
 }
 
 export interface EventDef extends EventText {
   choices?: EventChoice[];
+  /**
+   * Olay bitmiş olsa da düğüme yeniden varınca yeniden açılır, şart sağlanana kadar ('charter' = deniz yolları kapalıyken, 'faction' = taraf
+   * seçilmemişken; state.ts > moveTo). "Not yet" seçeneği böylece kalıcı kayıp yaratmaz.
+   */
+  again?: 'charter' | 'faction';
 }
 
 type EventsFile = { events: Record<string, EventDef>; stories?: Record<string, StoryDef>; treasures: Record<string, TreasureDef> };
