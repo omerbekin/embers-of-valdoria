@@ -59,8 +59,9 @@
         "class": "iron_mooring",
         "slot": 3,
         "name": "Harpoon Ballista",
+        "sprite": "harpoon_ballista",
         "mods": {
-          "spriteScale": 1.5
+          "spriteScale": 1.1
         }
       },
       {

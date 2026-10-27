@@ -97,6 +97,7 @@ HEADS = {
     'admiral_vane': (770, 20, 300),
     'drowned_queen': (700, 0, 330),
     'hex_totem': (313, 290, 240),
+    'harpoon_ballista': (760, 60, 640),  # Harita 2 yardımcı nesnesi (Admiral Vane'in Harpoon Ballista'sı)
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).

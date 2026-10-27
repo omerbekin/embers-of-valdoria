@@ -90,6 +90,15 @@ const SHEETS = [
       [['smith', 'reroll'], ['town', 'inn']],
     ],
   },
+  // Harita 2 (Ömer 2026-10-27 "yer tutucu kalmasın"): Soaked durumu + Flooded zemini (gerçek saydam 2x1; tools/key-chroma.mjs ile zeminden temizlenir)
+  {
+    file: 'soaked-flooded-sheet.png',
+    checker: false,
+    alphaBox: 40,
+    cols: 2,
+    rows: 1,
+    grid: [[['status', 'soaked'], ['ground', 'flooded']]],
+  },
 ];
 const COLS = 5;
 const ROWS = 4;

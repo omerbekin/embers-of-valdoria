@@ -20,6 +20,7 @@ import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBa
 import { battleSpriteIds } from '../sprite-needs';
 import { CombatantView, color, slow, textStyle } from '../combatant-view';
 import { preloadVfxSheets } from '../vfx-sheets';
+import { loadObjectArt, objectArtKey } from '../object-art';
 import { VFX_SHEET_FILES, mobSheetsOf } from '../vfx-sheet-files';
 import { viewMotion } from '../pose-timing';
 import { preloadPoses, releaseForBattle, releasePoseSources } from '../pose-rig';
@@ -3527,7 +3528,7 @@ export class BattleScene extends Phaser.Scene {
   private urnMark?: Phaser.GameObjects.Container;
 
   /**
-   * M-N3 Tidewater Urn (yer tutucu çizim; gerçek sanat yok): hücresinde koyu taş zemin üstünde mavi sırlı küp + kalan kullanım noktaları. `left`
+   * M-N3 Tidewater Urn (boyalı görsel assets/objects/tidewater_urn.webp, yoksa kodla çizilen yedek): hücresinde koyu taş zemin üstünde mavi sırlı küp + kalan kullanım noktaları. `left`
    * verilmezse motordaki kalan kullanım. Sanat gelince yalnızca bu çizim değişir.
    */
   private drawUrn(left?: number): void {
@@ -3540,6 +3541,15 @@ export class BattleScene extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(0x0b0806, 0.5).fillEllipse(0, -4, 118, 42);
     g.lineStyle(2, 0x5f8fa0, 0.85).strokeEllipse(0, -4, 118, 42);
+    // Boyalı küp görseli (assets/objects/tidewater_urn.webp); yoksa ya da yüklenene kadar kodla çizilen yedek
+    if (loadObjectArt(this, 'tidewater_urn', () => { if (this.sys.isActive()) this.drawUrn(); })) {
+      const img = this.add.image(0, -2, objectArtKey('tidewater_urn')).setOrigin(0.5, 1);
+      img.setScale(110 / img.height);
+      if (n <= 0) img.setTint(0x8a9aa2);
+      for (let i = 0; i < st.rule.uses; i++) g.fillStyle(i < n ? 0x9fd8ea : 0x33414a, 1).fillCircle((i - (st.rule.uses - 1) / 2) * 14, 10, 4);
+      this.urnMark = this.add.container(q.x, q.y, [g, img]).setDepth(29);
+      return;
+    }
     // Küp: gövde, boyun, ağız, iki kulp
     g.fillStyle(n > 0 ? 0x2f6f86 : 0x3a4a52, 1).fillEllipse(0, -46, 54, 66);
     g.fillStyle(n > 0 ? 0x245a6e : 0x2f3c42, 1).fillRect(-12, -92, 24, 18);

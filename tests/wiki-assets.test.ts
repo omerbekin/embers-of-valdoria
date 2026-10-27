@@ -341,7 +341,7 @@ describe('Arayüz ikonu görselleri (assets/ui-icons) bağlı; asılları assets
 describe('Oyun ikonu görselleri (assets/misc-icons) bağlı; asılları assets/source/misc-icons', () => {
   it('her dosya beklenen bir ikon ve Codex > Icons > Game icons ta; small/ eşleri var; asıl sayfalar ve kesim aracı duruyor', () => {
     const onDisk = readdirSync('assets/misc-icons').flatMap((g) => readdirSync(`assets/misc-icons/${g}`).filter((f) => f.endsWith('.png')).map((f) => `${g}:${f.replace(/\.png$/, '')}`)).sort();
-    expect(onDisk.length).toBe(101);
+    expect(onDisk.length).toBe(103);
     const small = readdirSync('assets/misc-icons').flatMap((g) => readdirSync(`assets/misc-icons/${g}/small`).filter((f) => f.endsWith('.png')).map((f) => `${g}:${f.replace(/\.png$/, '')}`)).sort();
     expect(small).toEqual(onDisk);
     const rows = catalog.miscArt;
