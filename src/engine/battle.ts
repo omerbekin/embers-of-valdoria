@@ -15,7 +15,7 @@ import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduct
 import type { Attribute, Attributes, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
 import { advanceTurn, predictQueue, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
 import { condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
-import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BattleObjective, BattleRules, BetSpec, Combatant, CombatantDef, FloodRule, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
+import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BattleObjective, BattleRules, BetSpec, Combatant, CombatantDef, FloodRule, Formulas, GlobalSkillDef, UrnRule, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleSetup {
   seed: number;
@@ -181,7 +181,7 @@ interface FreeCast {
 }
 
 /** Global skill'in oyun içi sonucu için birim başına son eylem türü (yapay zeka salınımı önlemek için okur). */
-export type LastActionKind = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'pass';
+export type LastActionKind = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'pass';
 
 export type ActionResult = { ok: true; events: BattleEvent[] } | { ok: false; reason: string };
 export type CanUse = { ok: true } | { ok: false; reason: string };
@@ -2250,7 +2250,7 @@ export class Battle {
     const lanes = this.setup.formulas.formation.lanes;
     if (this.rowOf(c.slot) === 0) return null;
     const to = c.slot - lanes;
-    return this.isBlocked(to) || this.combatants.some((o) => o.hp > 0 && o.side === c.side && o.board === c.board && o.slot === to) ? null : to;
+    return this.isBlocked(to, c.board) || this.combatants.some((o) => o.hp > 0 && o.side === c.side && o.board === c.board && o.slot === to) ? null : to;
   }
 
   /** Hücre kümesi + dört yönden değen hücreler (sıralı). */
@@ -3398,7 +3398,7 @@ export class Battle {
     if (c.hp <= 0 || c.inert || c.board !== c.side || this.rowOf(slot) === 0) return null;
     const lanes = this.setup.formulas.formation.lanes;
     const lane = this.laneOf(slot);
-    const free = (s: number) => !this.isBlocked(s) && !this.combatants.some((o) => o.hp > 0 && o.uid !== c.uid && o.board === c.board && o.slot === s);
+    const free = (s: number) => !this.isBlocked(s, c.board) && !this.combatants.some((o) => o.hp > 0 && o.uid !== c.uid && o.board === c.board && o.slot === s);
     const order = Array.from({ length: lanes }, (_, l) => l).sort((a, b) => Math.abs(a - lane) - Math.abs(b - lane) || a - b);
     for (const l of order) if (free(l)) return l;
     return null;
@@ -3410,7 +3410,7 @@ export class Battle {
     const lanes = this.setup.formulas.formation.lanes;
     for (let row = 0; row < this.rowOf(c.slot); row++) {
       const to = row * lanes + this.laneOf(c.slot);
-      if (!this.isBlocked(to) && !this.combatants.some((o) => o.hp > 0 && o.board === c.board && o.slot === to)) return to;
+      if (!this.isBlocked(to, c.board) && !this.combatants.some((o) => o.hp > 0 && o.board === c.board && o.slot === to)) return to;
     }
     return null;
   }
@@ -3961,7 +3961,7 @@ export class Battle {
   freeSlots(side: Side): number[] {
     const out: number[] = [];
     for (let slot = 0; slot < this.setup.maxSlots[side]; slot++) {
-      if (this.isBlocked(slot)) continue; // M-I: kapalı hücre (direk / küpeşte) hiç kimseye açık değil
+      if (this.isBlocked(slot, side)) continue; // M-I: kapalı hücre (direk / küpeşte) hiç kimseye açık değil
       if (!this.combatants.some((c) => c.board === side && c.slot === slot && c.hp > 0)) out.push(slot);
     }
     return out;
@@ -4260,7 +4260,10 @@ export class Battle {
    */
   globalSkillIds(side?: Side): string[] {
     const ids = Object.keys(this.setup.globalSkills ?? {});
-    return side ? ids.filter((id) => this.globalDef(id)?.kind !== 'valor' || this.valorOf(side) !== null) : ids;
+    // Tidewater Urn (M-N3) yalnızca savaşta Urn varken (ve yalnızca Urn'ün tarafında) listelenir
+    const urnSide = this.setup.rules?.urn?.side;
+    const present = (id: string) => this.globalDef(id)?.kind !== 'urn' || (urnSide !== undefined && (side === undefined || side === urnSide));
+    return (side ? ids.filter((id) => this.globalDef(id)?.kind !== 'valor' || this.valorOf(side) !== null) : ids).filter(present);
   }
 
   // ---------------------------------------------------------------- Valor (Ömer 2026-10-13)
@@ -4397,6 +4400,12 @@ export class Battle {
       if (actor.mp >= actor.maxMp) return { ok: false, reason: 'MP is full' };
     } else if (def.kind === 'skip') {
       if (this.skipStreakOf(actorUid) >= (def.maxConsecutive ?? 1)) return { ok: false, reason: 'Cannot skip again' };
+    } else if (def.kind === 'urn') {
+      const urn = this.urnState();
+      if (!urn || urn.rule.side !== actor.side) return { ok: false, reason: 'No urn in this battle' };
+      if (urn.left <= 0) return { ok: false, reason: 'The urn is empty' };
+      if (!this.nextToUrn(actor)) return { ok: false, reason: 'Stand next to the urn' };
+      if (slot !== undefined && !this.urnRows().includes(this.rowOf(slot))) return { ok: false, reason: 'Pick a row of your side' };
     } else if (def.kind === 'valor') {
       const have = this.valorOf(actor.side);
       const rules = this.setup.valorRules;
@@ -4432,6 +4441,7 @@ export class Battle {
     if (!can.ok) return can;
     if (def!.kind === 'move' && slot === undefined) return { ok: false, reason: 'Pick an empty cell' };
     if (def!.kind === 'valor' && targetUid === undefined) return { ok: false, reason: 'Pick a fallen ally' };
+    if (def!.kind === 'urn' && slot === undefined) return { ok: false, reason: 'Pick a row' };
     const actor = this.get(actorUid)!;
     const events: BattleEvent[] = [];
     const emit: Emit = (e) => {
@@ -4464,6 +4474,8 @@ export class Battle {
       if (this.trigOn) this.trig([actor], { on: 'skip' }, emit);
     } else if (def!.kind === 'valor') {
       this.valorRevive(actor, this.get(targetUid!)!, slot, emit);
+    } else if (def!.kind === 'urn') {
+      this.tipUrn(actor, this.rowOf(slot!), emit);
     } else {
       const from = actor.slot;
       actor.slot = slot!;
@@ -4477,7 +4489,7 @@ export class Battle {
       this.addStatus(actor, { kind: stride.status as Status['kind'], turns: stride.turns, source: actor.uid }, emit);
     }
     this.flushFree(emit); // Faz 4c: Move'un tetiklediği bedava kullanım (Range Keeper)
-    this.noteAction(actor.uid, def!.kind === 'rest' ? 'rest' : def!.kind === 'skip' ? 'skip' : def!.kind === 'valor' ? 'valor' : 'move');
+    this.noteAction(actor.uid, def!.kind === 'rest' ? 'rest' : def!.kind === 'skip' ? 'skip' : def!.kind === 'valor' ? 'valor' : def!.kind === 'urn' ? 'urn' : 'move');
     this.finishAction(actor, emit, stride ? stride.turnCost : 1);
     return { ok: true, events };
   }
@@ -4520,7 +4532,7 @@ export class Battle {
     });
     for (const id of this.globalSkillIds(actor.side)) {
       const c = this.canUseGlobal(actorUid, id);
-      out.push({ kind: 'global', id, ok: c.ok, ...(c.ok ? {} : { reason: c.reason }), ...(this.globalDef(id)?.kind === 'move' && c.ok ? { slots: this.freeTiles(actorUid) } : {}), ...(this.globalDef(id)?.kind === 'valor' && c.ok ? { targets: this.valorTargets(actorUid).map((t) => t.uid) } : {}) });
+      out.push({ kind: 'global', id, ok: c.ok, ...(c.ok ? {} : { reason: c.reason }), ...(this.globalDef(id)?.kind === 'move' && c.ok ? { slots: this.freeTiles(actorUid) } : {}), ...(this.globalDef(id)?.kind === 'valor' && c.ok ? { targets: this.valorTargets(actorUid).map((t) => t.uid) } : {}), ...(this.globalDef(id)?.kind === 'urn' && c.ok ? { slots: this.urnRows().map((r) => this.urnRowCells(r)[0]!) } : {}) });
     }
     return out;
   }
@@ -4760,7 +4772,7 @@ export class Battle {
     if (preRolled && !skill.telegraph) {
       for (const t of targets) {
         if (t.side === actor.side || t.hp <= 0) continue;
-        const o = hitOutcome(this.effectiveStats(actor), this.effectiveStats(t), f, this.rng.next());
+        const o = hitOutcome(this.hitStats(actor, skill), this.effectiveStats(t), f, this.rng.next());
         if (o === 'hit') {
           hit.add(t.uid);
           this.castInfo?.landed.add(t.uid);
@@ -6399,7 +6411,7 @@ export class Battle {
     // İsabet/kaçınma: durum ekleri (Blinded/Shrouded) dahil geçerli stat'lar (effectiveStats); hit şansı [0, hit.max]
     // `sure`: isabet zarı YOK (Drain Field onEmpty hasarı; zar da tüketilmez, debug iska zorlaması uygulanmaz). Ağaç sureHit aynı (blok yine olabilir)
     const noRoll = sure || !!treeMods?.sureHit;
-    let outcome: ReturnType<typeof hitOutcome> = noRoll ? 'hit' : hitOutcome(this.effectiveStats(actor), this.effectiveStats(target), f, this.rng.next());
+    let outcome: ReturnType<typeof hitOutcome> = noRoll ? 'hit' : hitOutcome(this.hitStats(actor, this.castingSkill), this.effectiveStats(target), f, this.rng.next());
     if (noRoll) outcome = 'hit';
     else if (this.debug.dodge === 'always') outcome = 'dodge';
     else if (this.debug.miss === 'always') outcome = 'miss';
@@ -6408,7 +6420,7 @@ export class Battle {
     if (outcome !== 'hit' && !noRoll && effFlag(actor, 'rerollMiss') && !actor.rerollUsed && this.debug.dodge === 'auto' && this.debug.miss === 'auto') {
       actor.rerollUsed = true;
       emit({ type: 'passive', actor: actor.uid, passive: 'last_coin', name: 'The Last Coin' });
-      outcome = hitOutcome(this.effectiveStats(actor), this.effectiveStats(target), f, this.rng.next());
+      outcome = hitOutcome(this.hitStats(actor, this.castingSkill), this.effectiveStats(target), f, this.rng.next());
     }
     if (outcome !== 'hit') {
       emit({ type: outcome, source: actor.uid, target: target.uid });
@@ -7165,9 +7177,85 @@ export class Battle {
     return this.setup.rules;
   }
 
-  /** M-I: hücre kapalı mı (iki tahtada da aynı yuva; direk / küpeşte)? */
-  isBlocked(slot: number): boolean {
-    return !!this.setup.rules?.blocked?.includes(slot);
+  /** M-I: hücre kapalı mı (iki tahtada aynı yuva; direk / küpeşte)? `board` verilirse o tahtadaki Tidewater Urn hücresi de kapalı (M-N3). */
+  isBlocked(slot: number, board?: Side): boolean {
+    const r = this.setup.rules;
+    if (!r) return false;
+    return !!r.blocked?.includes(slot) || (board !== undefined && r.urn?.side === board && r.urn.slot === slot);
+  }
+
+  // --- M-N3 Tidewater Urn ---
+
+  private urnUsed = 0;
+
+  /** Savaştaki Tidewater Urn (yoksa null): kural, kalan kullanım. */
+  urnState(): { rule: UrnRule; left: number } | null {
+    const u = this.setup.rules?.urn;
+    return u ? { rule: u, left: Math.max(0, u.uses - this.urnUsed) } : null;
+  }
+
+  /** Birim Urn'e artı şeklinde bitişik mi (aynı tahtada, Urn'ün tarafında; sızmış birim değil)? */
+  nextToUrn(c: Combatant): boolean {
+    const u = this.setup.rules?.urn;
+    if (!u || c.side !== u.side || c.board !== u.side) return false;
+    return Math.abs(this.rowOf(c.slot) - this.rowOf(u.slot)) + Math.abs(this.laneOf(c.slot) - this.laneOf(u.slot)) === 1;
+  }
+
+  /** Urn'ün su basabileceği sıralar (kendi tahtası; yalnızca açık hücresi olan sıralar). */
+  urnRows(): number[] {
+    const u = this.setup.rules?.urn;
+    if (!u) return [];
+    const lanes = this.setup.formulas.formation.lanes;
+    const rows: number[] = [];
+    for (let row = 0; row * lanes < this.setup.maxSlots[u.side]; row++) if (this.urnRowCells(row).length) rows.push(row);
+    return rows;
+  }
+
+  /** Urn suyunun bu sırada kapladığı hücreler (kapalı hücreler ve Urn'ün kendi hücresi hariç). */
+  urnRowCells(row: number): number[] {
+    const u = this.setup.rules?.urn;
+    if (!u) return [];
+    const lanes = this.setup.formulas.formation.lanes;
+    return Array.from({ length: lanes }, (_, l) => row * lanes + l).filter((s) => s < this.setup.maxSlots[u.side] && !this.isBlocked(s, u.side));
+  }
+
+  /** Urn'ü devirir: sıra `row` (kendi tahtası) Flooded; aynı hücrelerdeki eski Urn suyu yenisiyle değişir; sudaki birim Soaked (applyEnvironment). */
+  private tipUrn(actor: Combatant, row: number, emit: Emit): void {
+    const u = this.setup.rules!.urn!;
+    this.urnUsed++;
+    const slots = this.urnRowCells(row);
+    emit({ type: 'urn', actor: actor.uid, row, slots, left: Math.max(0, u.uses - this.urnUsed) });
+    this.envWater(u.side, slots, u.ground, u.rounds, u.id, u.soak, u.soakTurns, emit, true);
+    this.applyEnvironment(emit);
+  }
+
+  /**
+   * Ortam suyu (Tide / Urn): `board` tahtasının `slots` hücreleri `rounds` savaş turu `ground`. Aynı kaynağın (`cause`) bu tahtadaki eski suyu kalkar
+   * (`sameCellsOnly`: yalnızca hücreleri çakışan; Urn); Tide Urn suyuna, Urn Tide suyuna dokunmaz.
+   */
+  private envWater(board: Side, slots: number[], ground: string, rounds: number, cause: string, soak: string, soakTurns: number, emit: Emit, sameCellsOnly = false): void {
+    for (const old of [...this.ground]) {
+      if (old.envUntilRound === undefined || old.ground !== ground || old.board !== board || (old.envCause ?? cause) !== cause) continue;
+      if (sameCellsOnly && !old.slots.some((x) => slots.includes(x))) continue;
+      this.ground.splice(this.ground.indexOf(old), 1);
+      emit({ type: 'groundEnd', id: old.id });
+    }
+    const g: GroundEffect = { id: `g${this.groundCount++}`, ground, board, slots, turns: rounds, source: 'env', sourceSide: opposite(board), amount: 0, noDamage: true, envUntilRound: this.round + rounds, envCause: cause, soak, soakTurns };
+    this.ground.push(g);
+    emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+  }
+
+  /** M-C Storm: skill'in isabet eki (koşulun `motions` hareketlerinden biriyse delta; yoksa 0). */
+  conditionAccuracy(skill: SkillDef | null | undefined): number {
+    const ra = this.setup.rules?.condition?.rangedAccuracy;
+    return ra && skill && ra.motions.includes(skill.motion) ? ra.delta : 0;
+  }
+
+  /** Vuruşun isabet zarında saldıranın stat'ları: effectiveStats + koşulun skill'e göre isabet eki (Storm). Koşul yoksa effectiveStats aynen. */
+  hitStats(actor: Combatant, skill: SkillDef | null | undefined): Combatant['stats'] {
+    const st = this.effectiveStats(actor);
+    const d = this.conditionAccuracy(skill);
+    return d === 0 ? st : { ...st, accuracy: Math.max(0, Math.round((st.accuracy + d) * 10000) / 10000) };
   }
 
   /** B3 Break the Totem: hedef nesneler (UnitSetup.objective), canlı ya da kırık. */
@@ -7231,9 +7319,9 @@ export class Battle {
    */
   private arrangeForRules(): void {
     const r = this.setup.rules!;
-    if (r.blocked?.length)
+    if (r.blocked?.length || r.urn)
       for (const c of [...this.combatants].sort((a, b) => b.hp - a.hp || a.slot - b.slot)) {
-        if (!this.isBlocked(c.slot)) continue;
+        if (!this.isBlocked(c.slot, c.board)) continue;
         const to = this.nearestFreeSlot(c.board, c.slot);
         if (to !== null) c.slot = to;
       }
@@ -7300,16 +7388,9 @@ export class Battle {
   private flood(rule: FloodRule, emit: Emit): void {
     const lanes = this.setup.formulas.formation.lanes;
     for (const board of rule.boards) {
-      const slots = rule.rows.flatMap((row) => Array.from({ length: lanes }, (_, l) => row * lanes + l)).filter((s) => s < this.setup.maxSlots[board] && !this.isBlocked(s));
+      const slots = rule.rows.flatMap((row) => Array.from({ length: lanes }, (_, l) => row * lanes + l)).filter((s) => s < this.setup.maxSlots[board] && !this.isBlocked(s, board));
       if (!slots.length) continue;
-      for (const old of [...this.ground]) {
-        if (old.envUntilRound === undefined || old.ground !== rule.ground || old.board !== board) continue;
-        this.ground.splice(this.ground.indexOf(old), 1);
-        emit({ type: 'groundEnd', id: old.id });
-      }
-      const g: GroundEffect = { id: `g${this.groundCount++}`, ground: rule.ground, board, slots, turns: rule.rounds, source: 'env', sourceSide: opposite(board), amount: 0, noDamage: true, envUntilRound: this.round + rule.rounds };
-      this.ground.push(g);
-      emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+      this.envWater(board, slots, rule.ground, rule.rounds, this.setup.rules!.condition!.id, rule.soak, rule.soakTurns, emit);
     }
     this.applyEnvironment(emit);
   }
@@ -7343,10 +7424,12 @@ export class Battle {
    * durumları (Burning) söner. Çevre etkisidir: Resilience / direnç zarı yok (rastgele sayı tüketmez), boss da ıslanır.
    */
   private soakIfFlooded(c: Combatant, emit: Emit): void {
-    const flood = this.setup.rules?.condition?.flood;
-    if (!flood || c.inert) return;
-    if (!this.ground.some((g) => g.envUntilRound !== undefined && g.ground === flood.ground && g.board === c.board && g.slots.includes(c.slot))) return;
-    const cause = this.setup.rules!.condition!.id;
+    if (c.inert) return;
+    // Ortam suyu (Tide / Urn): suyun kendi durumu ve süresi (GroundEffect.soak / soakTurns)
+    const w = this.ground.find((g) => g.envUntilRound !== undefined && g.soak && g.board === c.board && g.slots.includes(c.slot));
+    if (!w) return;
+    const flood = { soak: w.soak!, soakTurns: w.soakTurns ?? 1 };
+    const cause = w.envCause ?? this.setup.rules?.condition?.id ?? 'env';
     const cur = c.statuses.find((s) => s.kind === flood.soak);
     if (cur) {
       if (cur.turns >= flood.soakTurns) return;

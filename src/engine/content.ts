@@ -87,7 +87,7 @@ import { placementHints, type HintRules, type PlacementHint } from './formation-
 import { AREA_TARGETS } from './area-shape';
 import { FOE_TARGETS, skillRangeFor } from './range';
 import { buildDef } from './stats';
-import type { AreaDef, BattleCondition, BattleMode, BattleObjective, BattleRules, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
+import type { UrnRule, AreaDef, BattleCondition, BattleMode, BattleObjective, BattleRules, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleDef {
   id: string;
@@ -239,6 +239,8 @@ export interface BattleRulesData {
     hold: { name: string; goal: string; text: string; row: number };
   };
   layouts: Record<string, { name: string; text: string; blocked: number[] }>;
+  /** M-N3 etkileşimli nesneler (Tidewater Urn). */
+  devices: Record<string, Omit<UrnRule, 'id'>>;
 }
 export const battleRulesData = battleRulesJson as unknown as BattleRulesData;
 
@@ -250,6 +252,8 @@ export interface RulesSpec {
   condition?: string;
   objective?: BattleObjective['type'] | { type: BattleObjective['type']; rounds?: number; every?: number; maxEnemies?: number; row?: number };
   blocked?: number[] | string;
+  /** M-N3: etkileşimli nesne (devices anahtarı; `slot` verilirse veri varsayılanı yerine o hücre). */
+  device?: string | { id: string; slot?: number };
 }
 
 /** Kural girdisinden motorun BattleRules'u (sayılar verilmezse battle-rules.json varsayılanı). Bilinmeyen koşul / düzen / hedef hata verir. Boş girdi = undefined. */
@@ -259,7 +263,19 @@ export function resolveBattleRules(spec: RulesSpec | undefined): BattleRules | u
   if (spec.condition) {
     const c = battleRulesData.conditions[spec.condition];
     if (!c || spec.condition.startsWith('_')) throw new Error(`Koşul bulunamadı: ${spec.condition}`);
-    out.condition = { id: spec.condition, ...c, ...(c.flood ? { flood: { ...c.flood, rows: [...c.flood.rows], boards: [...c.flood.boards] } } : {}) };
+    out.condition = {
+      id: spec.condition,
+      ...c,
+      ...(c.flood ? { flood: { ...c.flood, rows: [...c.flood.rows], boards: [...c.flood.boards] } } : {}),
+      ...(c.rangedAccuracy ? { rangedAccuracy: { ...c.rangedAccuracy, motions: [...c.rangedAccuracy.motions] } } : {}),
+    };
+  }
+  if (spec.device) {
+    const d = typeof spec.device === 'string' ? { id: spec.device } : spec.device;
+    const def = battleRulesData.devices[d.id];
+    if (!def || d.id.startsWith('_')) throw new Error(`Nesne bulunamadı: ${d.id}`);
+    const { _not: _n, ...rest } = def as typeof def & { _not?: string };
+    out.urn = { id: d.id, ...rest, ai: { ...def.ai }, ...(d.slot !== undefined ? { slot: d.slot } : {}) };
   }
   if (spec.objective) {
     const o = typeof spec.objective === 'string' ? { type: spec.objective } : spec.objective;

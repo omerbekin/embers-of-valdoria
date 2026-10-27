@@ -246,6 +246,8 @@ export interface EncounterDef {
   condition?: string;
   objective?: EncounterObjective;
   blocked?: number[] | string;
+  /** M-N3: oyuncu tarafındaki etkileşimli nesne (battle-rules.json > devices anahtarı, ör. 'tidewater_urn'; hücre veri varsayılanı). */
+  device?: string;
 }
 
 /** Karşılaşmanın hedefi (EncounterDef.objective): id ya da sayılarıyla nesne. Sayı verilmezse data/battle-rules.json varsayılanı. */

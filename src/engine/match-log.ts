@@ -205,6 +205,8 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `OBJECTIVE ${e.objective.toUpperCase()} ${e.state.toUpperCase()}${e.current !== undefined ? ` ${e.current}${e.goal !== undefined ? `/${e.goal}` : ''}` : ''}`;
     case 'reinforce':
       return `REINFORCEMENTS: ${e.combatants.map((c) => unitLabel(c)).join(', ')}`;
+    case 'urn':
+      return `TIDEWATER URN: ${L(e.actor)} floods row ${e.row + 1} (cells ${e.slots.join(', ')}), ${e.left} use(s) left`;
     case 'battleEnd':
       return `BATTLE END: ${e.winner} wins`;
   }

@@ -733,7 +733,7 @@ export function buildMechanics(): WikiArticle[] {
     ], '#c9a0ff', shapeExamples()),
     article('actions', 'Special rules', 'Actions: Rest, Skip Turn and Move', 'ui:move', [
       p('Besides its four skills, every unit can use three global actions. They cost nothing and each ends the turn. In the campaign and in Endless your heroes have a fourth, Revive, paid with Valor (see Valor).'),
-      list(...Object.values(content.globalSkills).filter((d) => d.kind !== 'valor').map((d) => {
+      list(...Object.values(content.globalSkills).filter((d) => d.kind !== 'valor' && d.kind !== 'urn').map((d) => {
         const info = describeGlobalSkill(d, f);
         return `${info.name}: ${[info.summary, ...info.lines].map((s) => s.replace(/\.$/, '')).join('. ')}.`;
       })),
@@ -903,10 +903,14 @@ export function battleRulesArticle(): WikiArticle {
   const o = d.objectives;
   const fill = (s: string, n: number | string) => s.replace(/\{n\}/g, String(n)).replace(/\{every\}/g, String(n));
   const deck = d.layouts['deck'];
+  const storm = d.conditions['storm'];
+  const urn = d.devices['tidewater_urn'];
   return article('battle-rules', 'Campaign', 'Battle rules', cx('mech_battle_rules', 'floodedplanks'), [
-    p('Some battles on The Drowned Reach have a rule of their own: a condition that changes the field, an objective other than defeating every enemy, or closed cells. The rule line under the Round plate shows it during the battle with a counter; hover it for the full text. A turn here means a full turn of the battle: it passes once every fighter has acted.'),
+    p('Some battles on The Drowned Reach have a rule of their own: a condition that changes the field, an objective other than defeating every enemy, closed cells, or an object your heroes can use. The rule line under the Round plate shows it during the battle with a counter; hover it for the full text. A turn here means a full turn of the battle: it passes once every fighter has acted.'),
     list(
       ...(tide ? [`${tide.name}: ${tide.text}${soak ? ` ${soak.name} lasts while you stand in the water and ${tide.flood!.soakTurns} turns after you leave it.` : ''}${flood ? ` ${flood.name} cells deal no damage.` : ''}`] : []),
+      ...(storm?.rangedAccuracy ? [`${storm.name}: ${storm.text} It counts for shots and throws (arrows, bolts, sling stones, thrown blades and the like), not for melee strikes, spells or attacks falling from the sky. Hit chance is lowered by ${Math.round(-storm.rangedAccuracy.delta * 100)} points, the same way Blinded lowers it.`] : []),
+      ...(urn ? [`${urn.name}: ${urn.text} It stands on a cell of your side (row ${Math.floor(urn.slot / 3) + 1}, middle lane) that no one can enter, and it cannot be attacked. Only a hero in a cell right next to it (in front, behind, above or below) can use it, as an action like Move; it holds ${urn.uses} uses. The water is the same as the tide's: ${urn.rounds} turns, and it does not wash away the tide's water or the other way round.`] : []),
       `${o.survive.name}: ${fill(o.survive.text, o.survive.rounds)}`,
       `${o.totem.name}: ${fill(o.totem.text, o.totem.every)} At most ${o.totem.maxEnemies} enemies fight at once; the totem itself does not act.`,
       `${o.hold.name}: ${o.hold.text}`,

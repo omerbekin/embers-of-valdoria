@@ -135,7 +135,9 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     const berserker = content.classes.warrior!.passive!.effect as { rageOnHurt?: { perHpPercent: number; perHitCap?: number } };
     expect(text('rage')).toContain(`${berserker.rageOnHurt!.perHpPercent} per 1% of max HP lost`);
     expect(text('rage')).toContain(`spends ALL your Rage (at least ${content.skills.headsmans_blow!.cost.amount})`);
-    for (const d of Object.values(content.globalSkills)) expect(text('actions'), d.id).toContain(d.name);
+    // Tidewater Urn (M-N3) yalnızca Urn'lü savaşta: Battle rules maddesinde anlatılır
+    for (const d of Object.values(content.globalSkills).filter((x) => x.kind !== 'urn')) expect(text('actions'), d.id).toContain(d.name);
+    expect(text('battle-rules')).toContain(content.globalSkills.tidewater_urn!.name);
     expect(text('actions')).toContain(`${content.globalSkills.rest!.mp} MP`);
     expect(text('actions')).toContain('next turn arrives in half the time');
     const hit = text('hit-chance');
