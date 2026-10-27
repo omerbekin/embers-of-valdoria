@@ -12,6 +12,7 @@ import { sortByPrimary } from '../game/class-order';
 import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import drownedReachMap from '../../data/campaign/drowned-reach.json';
+import { SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
 import { maps23On } from '../ui/maps23-flag';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine } from '../progression/item-text';
@@ -861,7 +862,7 @@ export function buildMechanics(): WikiArticle[] {
           `Difficulty: Easy, Medium or Hard, chosen when the journey starts; it cannot be changed later. ${difficultyText()}`,
         ),
       ]),
-      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle()] : []),
+      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), wayshrinesArticle(), salvageDiveArticle()] : []),
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
@@ -891,6 +892,32 @@ export function drownedReachArticle(): WikiArticle {
     p(`${name} is the second map of the campaign. When Lord Morvane falls, the company can go on down the Valdren to the sea instead of ending the journey: the heroes, their levels, gear, bag and gold all come along. ${m.nodes.length} stops in ${m.regions.length} regions; a run from ${first} to ${boss} passes about ${m.stopsPerRun} of them.`),
     list(...m.regions.map((r) => `${r.title}${r.tagline ? `: ${r.tagline}` : ''}`)),
     p(`Towns: ${towns.join(', ')}. Saltmere is the hub: ${spokes} side streets branch off it; each is a single stop, and you walk back to the square to go on. ${pockets} dashed roads lead to optional pockets, as on the first map.`),
+  ]);
+}
+
+/** A1 Wayshrines (maps-2-3.md 9; open-questions 428): sunaklar haritadan, sınav ve nimetler data/campaign/side-content.json'dan. */
+export function wayshrinesArticle(): WikiArticle {
+  const m = drownedReachMap as unknown as { nodes: Array<{ name: string; region: string; shrine?: string }> };
+  const shrines = m.nodes.filter((n) => n.shrine && WAYSHRINES[n.shrine]);
+  return article('wayshrines', 'Campaign', 'Wayshrines', cx('mech_wayshrines', 'radiance'), [
+    p(`Each region of The Drowned Reach hides one Wayshrine at the end of a dashed road (${shrines.length} in all). Each shrine holds a short trial: a battle with a rule of its own, shown on the battle card before you start. Trials have no reinforcement waves and cannot be replayed. Win the trial and the shrine gives your company a small blessing: it works in every battle for every hero, for the rest of the campaign, and carries over to the next map. Your blessings are listed in Gear, next to your gold.`),
+    list(...shrines.map((n) => { const w = WAYSHRINES[n.shrine!]!; return `${n.name} (region ${n.region}): ${w.trial} Blessing: ${w.name}, ${w.effect}.`; })),
+    p('"Standing furthest forward" means by formation cell, front row first: arrange your formation before the battle to choose who goes in. Fallen heroes cannot enter a trial; the others wait at the shrine and are not touched.'),
+  ]);
+}
+
+/** B1 Salvage Dive (maps-2-3.md 9; open-questions 428): düğümler haritadan, derinlik ve sandıklar side-content.json'dan. */
+export function salvageDiveArticle(): WikiArticle {
+  const m = drownedReachMap as unknown as { nodes: Array<{ name: string; dive?: string[] }> };
+  const sites = m.nodes.filter((n) => n.dive?.length).map((n) => n.name);
+  const rarity = (r: string): string => `${r[0]!.toUpperCase()}${r.slice(1)}`;
+  return article('salvage-dive', 'Campaign', 'Salvage Dive', cx('mech_salvage_dive', 'floodedplanks'), [
+    p(`Some guarded treasures lie in sunken wrecks (${sites.join(', ')}). After you win the guard battle you may dive deeper, up to depth ${SALVAGE_DIVE.maxDepth}. Every depth is one more battle, a single wave, with no healing in between: your heroes keep the health they ended the last fight with. Every depth you clear adds its own, better chest.`),
+    list(
+      'Depth 1: the treasure\'s own chest.',
+      ...SALVAGE_DIVE.chests.map((c, i) => `Depth ${i + 2}: ${c.gifts.map((r) => `a ${rarity(r)} item`).join(' and ')}, ${c.gold} gold.`),
+    ),
+    p('Surface at any time between depths to take every chest you found. If you fall in a deeper battle, you swim back up: what happened in the fight stays (lost health stays lost, fallen heroes rise wounded), the last chest you found sinks and the earlier ones come up with you. Leaving the wreck without surfacing loses the extra chests. Deeper battles give experience but no battle spoils of their own.'),
   ]);
 }
 

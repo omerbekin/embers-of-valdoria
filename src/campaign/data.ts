@@ -7,7 +7,9 @@ import eventsJson from '../../data/campaign/events.json';
 import drownedReachJson from '../../data/campaign/drowned-reach.json';
 import drEncountersJson from '../../data/campaign/drowned-reach-encounters.json';
 import drEventsJson from '../../data/campaign/drowned-reach-events.json';
-import type { CampaignConfig, CampaignMap, EncounterDef } from './types';
+// Harita 2 yan içerik (A1 Wayshrines, B1 Salvage Dive; maps-2-3.md 9)
+import sideJson from '../../data/campaign/side-content.json';
+import type { CampaignConfig, CampaignMap, EncounterDef, UnitMods } from './types';
 import { RARITY_IDS, type RarityId } from '../progression/items';
 
 const strip = <T>(o: unknown): Record<string, T> =>
@@ -135,3 +137,23 @@ export function getMap(id: string): CampaignMap {
   if (!m) throw new Error(`Campaign map not found: ${id}`);
   return m;
 }
+
+/** A1 Wayshrine nimeti (data/campaign/side-content.json > wayshrines; metinler İngilizce). */
+export interface WayshrineDef {
+  name: string;
+  /** Kısa etki satırı ("+3% max HP"). */
+  effect: string;
+  /** Sınavın gösterilen kuralı (kural karşılaşmada). */
+  trial: string;
+  /** Her savaşta her kahramana eklenen güçlendirme: *Mult çarpılır, *Add toplanır (side-content.ts > boonMods). */
+  mods: UnitMods;
+}
+
+/** B1 Salvage Dive kuralı: en çok derinlik ve 2. derinlikten itibaren sandıklar (chests[0] = 2. derinlik). */
+export interface SalvageDiveDef {
+  maxDepth: number;
+  chests: Array<{ gifts: RarityId[]; gold: number }>;
+}
+
+export const WAYSHRINES: Record<string, WayshrineDef> = strip<WayshrineDef>(sideJson.wayshrines);
+export const SALVAGE_DIVE: SalvageDiveDef = sideJson.salvageDive as unknown as SalvageDiveDef;

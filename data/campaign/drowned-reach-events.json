@@ -1,6 +1,11 @@
 {
   "_not": "Harita 2 (The Drowned Reach) olayları, hazineleri ve kasaba hikâyeleri (campaign-dev 2026-10-25, maps-2-3.md 3.2 / 3.4; oyun içi metin İngilizce). Biçim data/campaign/events.json ile aynı (events{} choices[] şablonu, treasures{}, stories{}); src/campaign/data.ts iki dosyayı birleştirir, anahtarlar dr_ önekli (çakışmasın). Faction (M-L: Guild Hall / Inquisition House, Monk's Isle), Charter a ship (M-J: Ferry Office) ve Lighthouse (M-M: Lantern Rock) BU ADIMDA YOK: düz lore / küçük ödül olayı olarak duruyor (maps-2-3.md 9.3). Ödül sayıları PROVİZYON.",
   "events": {
+    "dr_wayshrine": {
+      "_not": "A1 Wayshrine: sınav kazanılınca açılan pencere (nimetin adı ve etkisi sahnede çip olarak side-content.json > wayshrines'ten eklenir).",
+      "title": "Wayshrine",
+      "text": "The trial is done. The old flame on the altar steadies and burns clear, and something of it stays with your company: a small blessing that will travel with you for the rest of the journey."
+    },
     "dr_floodplain_farms": {
       "title": "The Flooded Fields",
       "text": "Farmers wade through their drowned fields, carrying what they can to the high ground. \"Reavers came up the river last night,\" one of them calls. \"They took our boats, and they'll be back for the rest.\"",

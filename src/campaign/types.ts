@@ -108,6 +108,13 @@ export interface MapNode {
   spoke?: boolean;
   /** Düğüm seviyesi elle (power.ts > nodeLevel; Harita 2'nin ilk 3 düğümü L10, maps-2-3.md 8). Yoksa bölüm rampası. */
   level?: number;
+  /** A1 Wayshrine (data/campaign/side-content.json > wayshrines anahtarı): düğümün sınav savaşı kazanılınca takıma seferlik nimet. */
+  shrine?: string;
+  /**
+   * B1 Salvage Dive: korunan hazinede savaştan sonra "Dive deeper?"; liste = 2., 3. ... derinliğin karşılaşma id'leri (en çok
+   * side-content.json > salvageDive.maxDepth - 1). Sandıklar side-content.json > salvageDive.chests.
+   */
+  dive?: string[];
 }
 
 /** Kasaba ekranında bir yerin eylemi: tezgâh (Trade), ilan panosu / kışla (aday), hikâye NPC'si (sahne yeniden), ateş (dinlenme notu), çıkış. */
@@ -246,6 +253,12 @@ export interface EncounterDef {
   condition?: string;
   objective?: EncounterObjective;
   blocked?: number[] | string;
+  /**
+   * A1 Wayshrine sınavı (maps-2-3.md 9; open-questions 428): sefer tarafı kuralları. `heroes` = savaşa yalnız dizilimde en öndeki bu kadar
+   * ayakta kahraman girer (diğerleri dokunulmadan kenarda bekler); `ultLock` = kahramanların ultimate'ı (4. skill) ilk bu kadar kendi turunda
+   * kullanılamaz (motor UnitSetup.startCooldowns). Sınavlı karşılaşmaya takviye dalgası eklenmez (tek dalga + `waves`).
+   */
+  trial?: { heroes?: number; ultLock?: number };
 }
 
 /** Karşılaşmanın hedefi (EncounterDef.objective): id ya da sayılarıyla nesne. Sayı verilmezse data/battle-rules.json varsayılanı. */
@@ -476,6 +489,16 @@ export interface CampaignState {
    * değişim kışlasında geri alınabilir. Savaşa girmez, XP almaz. İsteğe bağlı alan (kayıt sürümü değişmez); eski kayıtta yok = boş.
    */
   reserve?: Hero[];
+  /**
+   * A1 Wayshrine nimetleri (kazanılan sunakların id'leri, kazanma sırasıyla; side-content.json > wayshrines): seferin geri kalanında her
+   * savaşta takımın her kahramanına (encounters.ts > battlePlan). Harita geçişinde taşınır. İsteğe bağlı alan (kayıt sürümü değişmez).
+   */
+  boons?: string[];
+  /**
+   * B1 Salvage Dive (sürüyorsa): `depth` = kazanılan derinlik sayısı (1 = korunan hazinenin kendi savaşı), `diving` = sıradaki derinliğin savaşı
+   * bekliyor. Sandıklar yüzeye çıkınca verilir. İsteğe bağlı alan (kayıt sürümü değişmez; bozuksa / başka düğümünse atılır).
+   */
+  dive?: { node: string; depth: number; diving?: true };
 }
 
 /** Inn'de bekleyen kahraman (Ömer 2026-10-26). */
@@ -566,7 +589,7 @@ export type NextStep =
   | { kind: 'volunteer'; node: string; offer: string[] }
   | { kind: 'farewell'; node: string }
   | { kind: 'company'; node: string; size: number }
-  | { kind: 'battle'; node: string; encounter: string; /** Devriye (temizlenmiş düğümün yeniden oynanışı). */ patrol?: true }
+  | { kind: 'battle'; node: string; encounter: string; /** Devriye (temizlenmiş düğümün yeniden oynanışı). */ patrol?: true; /** Salvage Dive: bu savaşın derinliği (2+). */ dive?: number }
   | { kind: 'treasure'; node: string; treasure: string }
   | { kind: 'event'; node: string; event: string }
   | { kind: 'story'; node: string; story: string }

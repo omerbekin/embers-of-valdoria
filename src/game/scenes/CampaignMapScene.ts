@@ -104,6 +104,11 @@ import {
   temporaryCompany,
   victoryRecovery,
   victoryRecoveryNote,
+  diveState,
+  diveDeeper,
+  diveChest,
+  diveMax,
+  shrineOf,
 } from '../../campaign';
 import { instanceRarity } from '../../progression/items';
 import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
@@ -2163,9 +2168,21 @@ export class CampaignMapScene extends Phaser.Scene {
     const f = this.nodeFacts(id);
     const vis = nodeVisibility(this.map, this.s, session.revealFog)[id];
     if (n.encounter && vis !== 'goal') {
-      const g = foeGroups(n.encounter);
       const patrol = f.state === 'Patrol';
-      return { ...(patrol ? { title: 'Fight the patrol?', info: { text: f.blurb } } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
+      // B1 Salvage Dive: derinlik savaşı bekliyorsa kart o derinliğin düşmanlarını gösterir
+      const st = id === this.s.at ? nextStep(this.s) : null;
+      const depth = st?.kind === 'battle' && st.dive ? st : null;
+      const g = foeGroups(depth ? depth.encounter : n.encounter);
+      // A1 Wayshrine: sınav kuralı + nimet; dalış düğümü: kısa kural (oyun içi metin)
+      const sh = shrineOf(n);
+      const side = depth
+        ? `Depth ${depth.dive} of ${diveMax(n)}. No healing since the last fight. If you fall here, the last chest you found sinks.`
+        : sh
+          ? `${sh.trial} Win the trial: ${sh.name} (${sh.effect}) for the rest of the campaign.${(this.s.boons ?? []).includes(n.shrine!) ? ' Already earned.' : ''}`
+          : diveMax(n) > 1 && !patrol
+            ? `Salvage Dive: after this fight you may dive up to ${diveMax(n) - 1} ${diveMax(n) - 1 === 1 ? 'depth' : 'depths'} deeper, one more fight each with no healing between, for better chests.`
+            : '';
+      return { ...(patrol ? { title: 'Fight the patrol?', info: { text: f.blurb } } : side ? { info: { text: side } } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
     }
     const t = PLACE_CARD[n.type];
     return { ...(t ? { title: t.title, actionLabel: t.action } : {}), ...(f.blurb ? { fallback: { text: f.blurb } } : {}) };
@@ -2719,15 +2736,46 @@ export class CampaignMapScene extends Phaser.Scene {
           this.directAt = null;
           return this.commit(completeSimple(this.s, 'event'));
         }
+        // A1 Wayshrine: kazanılan nimet çip olarak (side-content.json > wayshrines)
+        const sh = shrineOf(node(this.map, step.node));
         this.worldWindow(step.node, {
           title: e.title,
           art: windowArt(`event:${node(this.map, step.node).event ?? ''}`),
           paras: paragraphs(e.text),
+          ...(sh ? { chipsCap: 'Blessing', chips: [{ tone: 'gain' as const, icon: 'check' as const, text: `${sh.name}: ${sh.effect}` }] } : {}),
           acts: [{ label: 'Continue', primary: true, run: () => this.commit(completeSimple(this.s, 'event')) }],
         });
         return;
       }
       case 'treasure': {
+        // B1 Salvage Dive (maps-2-3.md 9): korunan hazinenin savaşından / bir derinlikten sonra "Dive deeper?" penceresi
+        const dv = diveState(s);
+        if (dv) {
+          this.directAt = null;
+          const chests = dv.won;
+          const nextChest = diveChest(dv.won + 1);
+          const reward = nextChest ? [...nextChest.gifts.map((r) => `${r[0]!.toUpperCase()}${r.slice(1)} item`), `${nextChest.gold} gold`].join(', ') : '';
+          this.worldWindow(step.node, {
+            title: dv.next ? 'Dive deeper?' : 'The bottom of the wreck',
+            art: windowArt(`treasure:${node(this.map, step.node).treasure ?? ''}`),
+            paras: dv.next
+              ? [
+                  `You have found ${chests === 1 ? 'a chest' : `${chests} chests`} (depth ${dv.won} of ${dv.max}). Deeper down, something guards a better one: ${reward}.`,
+                  'Diving deeper is one more fight, with no healing in between. Surface now and you keep every chest. Fall down there and the last chest you found sinks.',
+                ]
+              : [`You have reached the deepest point (depth ${dv.max}). Take everything you found back up.`],
+            chipsCap: 'Found',
+            chips: [
+              { tone: 'gain', icon: 'bag', text: `${chests} ${chests === 1 ? 'chest' : 'chests'}` },
+              { tone: 'info', icon: 'hp', text: 'No healing between depths' },
+            ],
+            acts: [
+              { label: 'Surface', primary: !dv.next, run: () => this.commit(completeSimple(this.s, 'treasure')) },
+              ...(dv.next ? [{ label: 'Dive deeper', primary: true, run: () => this.commit(diveDeeper(this.s)) }] : []),
+            ],
+          });
+          return;
+        }
         if (this.directAt === step.node) {
           this.directAt = null;
           return this.commit(completeSimple(this.s, 'treasure')); // sandık: ganimet torbaya, LOOT ekranı advance'ta açılır

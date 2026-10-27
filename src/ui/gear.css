@@ -66,6 +66,25 @@
   text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
 }
 
+/* A1 Wayshrine nimetleri: başlıkta altının solunda kutusuz küçük yazı düğmesi (liste A Band ipucunda) */
+.gr-boons {
+  font: 600 max(13px, calc(19 * var(--u))) var(--g-disp);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--g-gold);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(230, 194, 122, 0.45);
+  padding: calc(6 * var(--u)) calc(4 * var(--u));
+  margin-right: calc(22 * var(--u));
+  min-height: 44px;
+  cursor: pointer;
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+}
+.gr-boons[hidden] {
+  display: none;
+}
+
 .gr-hint {
   font: max(14px, calc(23 * var(--u))) var(--g-body);
   color: var(--g-gold);

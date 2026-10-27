@@ -1,7 +1,7 @@
 // Harita 2-3 test kısayolları (saf; maps-2-3.md 9.1-9.2, Adım 1): debug > Campaign > "Maps 2-3 (test)" ve testler kullanır.
 // Yeni kural yok: hepsi var olan debugTeleport / autoResolve / continueToMap / debugSetLevel / equipBest yollarının birleşimi.
 // Harita 2'ye geçiş `nextMapFor`'a bağlıdır: çağıran önce bayrağı açar (setMapOverride('drowned-reach', true)).
-import { getMap } from './data';
+import { getMap, WAYSHRINES } from './data';
 import { finalNode } from './graph';
 import { grantLoot } from './loot';
 import { nodeLevel } from './power';
@@ -95,4 +95,29 @@ export function debugJumpRegion(s: CampaignState, regionId: string): CampaignSta
     t = moveTo(t, route[i + 1]!);
   }
   return kitOut(t, nodeLevel(DROWNED_REACH, target.id), 2);
+}
+
+/**
+ * Debug "Jump to Wayshrine / Salvage Dive" (A1 / B1, open-questions 428): bölge atlamasıyla aynı yürüyüş, hedef düğüme kadar (cep dahil);
+ * takım hedefin seviyesinde, iyileşmiş. Hedefin adımları baştan bekler (sınav / korunan hazine savaşı).
+ */
+export function debugJumpNode(s: CampaignState, nodeId: string): CampaignState {
+  const map = getMap(DROWNED_REACH);
+  if (!map.nodes.some((n) => n.id === nodeId)) throw new Error(`No stop ${nodeId}`);
+  let t = s.mapId === DROWNED_REACH ? s : debugJumpDrownedReach(s);
+  if (t.at !== map.start || t.path.length > 1) t = debugJumpDrownedReach(t);
+  const route = pathTo(map, nodeId);
+  for (let i = 0; i < route.length - 1; i++) {
+    t = settle(t);
+    t = moveTo(t, route[i + 1]!);
+  }
+  return kitOut(t, nodeLevel(DROWNED_REACH, nodeId), 2);
+}
+
+/** Debug: tüm Wayshrine nimetleri (`on`) ya da hiçbiri. */
+export function debugSetBoons(s: CampaignState, on: boolean): CampaignState {
+  const t = clone(s);
+  if (on) t.boons = Object.keys(WAYSHRINES);
+  else delete t.boons;
+  return t;
 }

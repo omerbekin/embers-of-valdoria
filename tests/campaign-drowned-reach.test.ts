@@ -46,12 +46,12 @@ const ids = (pred: (n: (typeof map.nodes)[number]) => boolean) => map.nodes.filt
 afterEach(() => setMapOverride(DROWNED_REACH, null));
 
 describe('The Drowned Reach: harita verisi', () => {
-  it('83 durak, 6 bölge (12/15/13/14/15/14), doğrulama temiz, hepsi bağlı', () => {
-    expect(map.nodes).toHaveLength(83);
+  it('89 durak (83 + 6 Wayshrine cebi), 6 bölge (13/16/14/15/16/15), doğrulama temiz, hepsi bağlı', () => {
+    expect(map.nodes).toHaveLength(89);
     expect(map.regions.map((r) => r.id)).toEqual(['I', 'II', 'III', 'IV', 'V', 'VI']);
-    expect(map.regions.map((r) => map.nodes.filter((n) => n.region === r.id).length)).toEqual([12, 15, 13, 14, 15, 14]);
+    expect(map.regions.map((r) => map.nodes.filter((n) => n.region === r.id).length)).toEqual([13, 16, 14, 15, 16, 15]);
     expect(validateMap(map)).toEqual([]);
-    expect(undirectedDistances(map, map.start).size).toBe(83);
+    expect(undirectedDistances(map, map.start).size).toBe(89);
     expect(map.start).toBe('dr1');
     expect(finalNode(map)).toBe('dr83');
     expect(map.continues).toBe('valdoria');
@@ -62,7 +62,7 @@ describe('The Drowned Reach: harita verisi', () => {
 
   it('cepler: tek giriş, ileri yol yok, kesik yol; Saltmere kolları (spoke): tek giriş Saltmere, ileri yol yok', () => {
     const pockets = ids((n) => !!n.optional);
-    expect(pockets.sort()).toEqual(['dr11', 'dr18', 'dr25', 'dr35', 'dr51', 'dr59', 'dr65', 'dr67', 'dr77'].sort());
+    expect(pockets.sort()).toEqual(['dr11', 'dr18', 'dr25', 'dr35', 'dr51', 'dr59', 'dr65', 'dr67', 'dr77', 'dr84', 'dr85', 'dr86', 'dr87', 'dr88', 'dr89'].sort());
     for (const id of pockets) {
       expect(incoming(map, id), id).toHaveLength(1);
       expect(mainOutgoing(map, id), id).toEqual([]);

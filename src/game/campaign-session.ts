@@ -4,6 +4,7 @@ import type { Battle } from '../engine';
 import { attachRecorder, replayActions, type ReplayAction } from '../endless/replay';
 import {
   applyBattle,
+  diveDefeat,
   battlePlan,
   campaignWaveTeams,
   carryCinematics,
@@ -394,10 +395,33 @@ export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: bool
         },
       },
     ];
+  // B1 Salvage Dive: derinlikte yenilgi = yüzeye yüz (son bulunan sandık batar, öncekiler alınır); kayıt yükleme ikincil
+  const cur2 = session.state;
+  const diveOut: ResultAction[] =
+    plan.dive && cur2 && cur2.at === plan.nodeId
+      ? [
+          {
+            label: 'Swim for the surface',
+            primary: true,
+            note: 'The last chest you found sinks. Earlier chests come up with you.',
+            run: () => {
+              const s = session.state;
+              if (s && s.at === plan.nodeId) {
+                session.state = diveDefeat(s, battleOutcomeOf(plan, battle, false));
+                killTrack?.stop();
+                killTrack = null;
+                save('auto');
+              }
+              openLootThenMap(game, []);
+            },
+          },
+        ]
+      : [];
   const out: ResultAction[] = [
+    ...diveOut,
     {
       label: 'Load Last Save',
-      primary: true,
+      primary: !diveOut.length,
       note: lastSaveNote(), // H4: kaydın yeri ve zamanı düğmenin altında
       run: () => {
         loadLastSave();

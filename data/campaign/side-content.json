@@ -1,0 +1,50 @@
+{
+  "_not": "Harita 2 yan içerik (maps-2-3.md 9: A1 Wayshrines, B1 Salvage Dive; campaign-dev 2026-10-27, open-questions 428). Oyun içi metinler İngilizce. Sayılar PROVİZYON (sim yok; balance-tester).",
+  "wayshrines": {
+    "_not": "Sunak id'si -> nimet + sınav metni. `mods` her savaşta takımın her kahramanına UnitModifiers olarak eklenir: *Mult anahtarları çarpılır, *Add anahtarları toplanır (src/campaign/side-content.ts > boonMods). Sınavın kuralı karşılaşmada (drowned-reach-encounters.json > trial / objective / blocked); `trial` yalnızca gösterilen metin.",
+    "dr_shrine_stone": {
+      "name": "Blessing of Stone",
+      "effect": "+3% max HP",
+      "trial": "Trial of the Two: only the two heroes standing furthest forward may fight.",
+      "mods": { "hpMult": 1.03 }
+    },
+    "dr_shrine_keen": {
+      "name": "Blessing of the Keen Eye",
+      "effect": "+2% critical chance",
+      "trial": "Trial of Patience: no hero can use an ultimate in their first 3 turns.",
+      "mods": { "critAdd": 0.02 }
+    },
+    "dr_shrine_mercy": {
+      "name": "Blessing of Mercy",
+      "effect": "+5% healing",
+      "trial": "Trial of the Narrow Ledge: only the two front rows are open, on both sides.",
+      "mods": { "healPowerAdd": 0.05 }
+    },
+    "dr_shrine_tide": {
+      "name": "Blessing of the Tide",
+      "effect": "+3% damage",
+      "trial": "Trial of the Line: keep a hero in your front row, or the trial is lost.",
+      "mods": { "damageAdd": 0.03 }
+    },
+    "dr_shrine_gale": {
+      "name": "Blessing of the Gale",
+      "effect": "+2% evasion",
+      "trial": "Trial of the Storm: hold out for 5 turns against a crew too strong to beat.",
+      "mods": { "evasionAdd": 0.02 }
+    },
+    "dr_shrine_ward": {
+      "name": "Blessing of the Ward",
+      "effect": "+5% shield strength",
+      "trial": "Trial of the Last Vigil: only the three heroes standing furthest forward may fight, and no ultimate in their first 3 turns.",
+      "mods": { "shieldPowerAdd": 0.05 }
+    }
+  },
+  "salvageDive": {
+    "_not": "B1: korunan hazinenin savaşı = 1. derinlik (sandığı düğümün kendi hazinesi). Her ek derinlik tek dalgalık bir savaş (arada şifa yok) + kendi sandığı: `chests[i]` = (i + 2). derinliğin sandığı, hediye item'leri düğümün item seviyesinde bu nadirliklerde (loot.ts > grantGift) + altın. Yüzeye çıkınca hepsi alınır; daha derinde yenilen takım son bulduğu sandığı kaybeder (öncekiler alınır).",
+    "maxDepth": 3,
+    "chests": [
+      { "gifts": ["rare"], "gold": 30 },
+      { "gifts": ["rare", "epic"], "gold": 60 }
+    ]
+  }
+}

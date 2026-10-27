@@ -15,6 +15,7 @@ import { applyXp, battleXp, fixedXp, fixedXpNode, joinLevel } from './xp';
 import { LEVELS, campaignMaxLevel, nodeXpMult, setLevel, splitXp } from '../progression/levels';
 import { nodeLevel } from './power';
 import { freeTemperItem, freeTemperPreview } from './smith';
+import { diveChest, diveEncounters, diveMax } from './side-content';
 import type { BattleOutcome, CampChoice, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, InnStay, MapNode, NextStep, StepKind } from './types';
 
 /**
@@ -114,6 +115,11 @@ export function nextStep(s: CampaignState): NextStep {
       case 'battle':
         return { kind: 'battle', node: n.id, encounter: n.encounter! };
       case 'treasure':
+        // B1 Salvage Dive: sıradaki derinliğin savaşı bekliyorsa hazine adımı o savaştır (kazanılınca yeniden "Dive deeper?")
+        if (s.dive?.node === n.id && s.dive.diving) {
+          const enc = diveEncounters(n)[s.dive.depth - 1];
+          if (enc) return { kind: 'battle', node: n.id, encounter: enc, dive: s.dive.depth + 1 };
+        }
         return { kind: 'treasure', node: n.id, treasure: n.treasure! };
       case 'event':
         // Seçenekli olayda savaş seçildiyse olay adımı o savaştır (kazanılınca olay biter)
@@ -580,16 +586,23 @@ export function formCompany(s: CampaignState, picks: string[], leaderIndex = 0):
 }
 
 /** Tek tıkla biten adımlar: olay (seçenekli olayda "hiçbir şey yapmadan geç"), hazine, kasaba sahnesi, kasaba (Leave). */
+/** Bulunulan düğümün hazine sandığı (YERİNDE). Hazinenin kendi içeriği varsa (events.json > treasures[x].loot; Harita 1 cepleri) ona göre, yoksa standart sandık. */
+function grantTreasureChest(t: CampaignState): void {
+  const tl = TREASURES[node(mapOf(t), t.at).treasure ?? '']?.loot;
+  grantLoot(t, t.at, 'treasure', activeHeroes(t), tl && (tl.maxItems !== undefined || tl.itemsDelta !== undefined || tl.gold !== undefined) ? { ...(tl.maxItems !== undefined ? { maxItems: tl.maxItems } : {}), ...(tl.itemsDelta !== undefined ? { itemsDelta: tl.itemsDelta } : {}), ...(tl.gold !== undefined ? { gold: tl.gold } : {}) } : undefined);
+  // Hediye nadirliği: giftUpgrade varsa seed'li tek zarla yükselebilir (Mine / Abbey %35 Rare; Ömer 2026-10-25)
+  if (tl?.gift) grantGift(t, t.at, activeHeroes(t), 'treasure', treasureGiftRarity(t, t.at, tl.gift, tl.giftUpgrade));
+}
+
 export function completeSimple(s: CampaignState, kind: 'event' | 'treasure' | 'story' | 'town'): CampaignState {
   expectStep(s, kind);
   const t = clone(s);
   // Hazine sandığı (saf hazine ya da korunan hazine): loot torbaya (items.md 3.1)
   if (kind === 'treasure') {
-    // Hazinenin kendi içeriği varsa (events.json > treasures[x].loot; Harita 1 cepleri) sandık ona göre, yoksa standart sandık
-    const tl = TREASURES[node(mapOf(t), t.at).treasure ?? '']?.loot;
-    grantLoot(t, t.at, 'treasure', activeHeroes(t), tl && (tl.maxItems !== undefined || tl.itemsDelta !== undefined || tl.gold !== undefined) ? { ...(tl.maxItems !== undefined ? { maxItems: tl.maxItems } : {}), ...(tl.itemsDelta !== undefined ? { itemsDelta: tl.itemsDelta } : {}), ...(tl.gold !== undefined ? { gold: tl.gold } : {}) } : undefined);
-    // Hediye nadirliği: giftUpgrade varsa seed'li tek zarla yükselebilir (Mine / Abbey %35 Rare; Ömer 2026-10-25)
-    if (tl?.gift) grantGift(t, t.at, activeHeroes(t), 'treasure', treasureGiftRarity(t, t.at, tl.gift, tl.giftUpgrade));
+    grantTreasureChest(t);
+    // B1 Salvage Dive: yüzeye çıkış = kazanılan her ek derinliğin sandığı da
+    grantDiveChests(t, 2, diveWon(t));
+    delete t.dive;
   }
   if (kind === 'town') closeShop(t); // kasaba tüccarının tezgâhı kasabadan ayrılınca kapanır (T1); yeniden girilirse aynı tezgâh döner
   // Savaşsız olay / hazine düğümü: sabit XP (levels.md, 0,5x)
@@ -877,7 +890,8 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
     t.stats.defeats++;
     return t;
   }
-  expectStep(t, 'battle');
+  const step = expectStep(t, 'battle');
+  if (step.kind === 'battle' && step.dive) return winDive(t, outcome, step.encounter);
   const heal = victoryHealFor(rules, node(mapOf(t), t.at).type);
   // Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): yaşayanlar düğüm türünün zafer şifasını alır; savaş SONUNDA hâlâ düşmüş
   // olan kahraman %10 canla yaralı kalkar (lethal yaralıysa ceset). Savaşa ceset girip kalkmayan ceset kalır.
@@ -925,7 +939,101 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
     return t;
   }
   complete(t, 'battle');
+  // A1 Wayshrine: sınav kazanıldı, nimet seferin geri kalanı için (sunak başına bir kez)
+  const shrine = node(mapOf(t), t.at).shrine;
+  if (shrine && !(t.boons ?? []).includes(shrine)) t.boons = [...(t.boons ?? []), shrine];
   advanceDay(t); // düğümün ilk zaferi bir tamamlama (gün)
+  return t;
+}
+
+// ---------------------------------------------------------------- B1 Salvage Dive (maps-2-3.md 9, open-questions 428)
+
+/** Bulunulan dalış düğümünde kazanılan derinlik (dalış başlamadıysa 1: korunan hazinenin kendi savaşı). */
+const diveWon = (s: CampaignState): number => (s.dive?.node === s.at ? s.dive.depth : 1);
+
+/** `from`..`to` derinliklerin sandıkları (2+; YERİNDE): hediye item'leri düğümün item seviyesinde + altın; Spoils kartında birleşir. */
+function grantDiveChests(t: CampaignState, from: number, to: number): void {
+  for (let d = Math.max(2, from); d <= to; d++) {
+    const c = diveChest(d);
+    if (!c) continue;
+    c.gifts.forEach((r, i) => grantGift(t, t.at, activeHeroes(t), `dive-${d}-${i}`, r));
+    if (c.gold > 0) {
+      t.gold += c.gold;
+      if (t.pendingLoot?.node === t.at) t.pendingLoot = { ...t.pendingLoot, gold: t.pendingLoot.gold + c.gold };
+      else t.pendingLoot = { node: t.at, kind: 'treasure', items: [], gold: c.gold };
+    }
+  }
+}
+
+/** Dalış penceresinin verisi (hazine adımındaki dalış düğümünde; değilse null): kazanılan derinlik, en derin nokta, sıradaki karşılaşma. */
+export function diveState(s: CampaignState): { node: string; won: number; max: number; next: string | null } | null {
+  const step = nextStep(s);
+  if (step.kind !== 'treasure') return null;
+  const n = node(mapOf(s), s.at);
+  if (!diveEncounters(n).length) return null;
+  const won = diveWon(s);
+  const max = diveMax(n);
+  return { node: n.id, won, max, next: won < max ? (diveEncounters(n)[won - 1] ?? null) : null };
+}
+
+/** "Dive deeper": sıradaki derinliğin savaşı başlar (arada şifa yok; adım: battle, `dive` = derinlik). */
+export function diveDeeper(s: CampaignState): CampaignState {
+  const d = diveState(s);
+  if (!d?.next) throw new Error('Cannot dive deeper here');
+  const t = clone(s);
+  t.dive = { node: d.node, depth: d.won, diving: true };
+  return t;
+}
+
+/** Savaştaki canları kahramanlara yazar (YERİNDE; zafer şifası yok): düşenler zaferdeki gibi yaralı kalkar (lethal yaralıysa ceset). */
+function keepBattleHp(t: CampaignState, battle: Pick<BattleOutcome, 'units' | 'valorRevived'>): Set<string> {
+  valorHealWounds(t, battle.valorRevived);
+  const risen = settleFallen(t, battle.units, woundRules());
+  for (const u of battle.units) {
+    const h = heroById(t, u.heroId);
+    if (!h || risen.has(h.id) || !u.alive || u.hpRatio <= 0) continue;
+    h.hpRatio = Math.round(clamp01(u.hpRatio) * 1000) / 1000;
+    h.alive = true;
+  }
+  return risen;
+}
+
+/**
+ * Derinlik savaşı kazanıldı (YERİNDE, applyBattle içinden): savaştaki canlar aynen kalır (zafer şifası YOK), XP verilir; savaş loot'u, Valor
+ * kazancı ve gün yok (harcanan Valor düşülür). Sandıklar yüzeye çıkınca.
+ */
+function winDive(t: CampaignState, outcome: BattleOutcome, encounterId: string): CampaignState {
+  const risen = keepBattleHp(t, outcome);
+  t.stats.victories++;
+  applyXp(t, battleXp(t, outcome, encounterId));
+  for (const id of risen) {
+    const h = heroById(t, id);
+    if (h) h.hpRatio = Math.round(clamp01(woundRules().riseRatio) * 1000) / 1000;
+  }
+  if (t.valor !== undefined) t.valor = addValor(valorRules, outcome.valorLeft ?? t.valor, 0);
+  t.dive = { node: t.at, depth: diveWon(t) + 1 };
+  return t;
+}
+
+/**
+ * Derinlikte yenilgi ("Swim for the surface"): savaşta ne olduysa kalır (devriyeden geri çekilmeyle aynı can / yara kuralı), son bulunan
+ * derinliğin sandığı batar, öncekiler alınır (1. derinliğin sandığı = düğümün hazinesi), hazine adımı biter.
+ */
+export function diveDefeat(s: CampaignState, battle: Pick<BattleOutcome, 'units' | 'valorLeft' | 'valorRevived'>): CampaignState {
+  const step = nextStep(s);
+  if (step.kind !== 'battle' || !step.dive) throw new Error('No dive battle here');
+  const t = clone(s);
+  delete t.suspended;
+  t.stats.defeats++;
+  keepBattleHp(t, battle);
+  if (t.valor !== undefined && battle.valorLeft !== undefined) t.valor = addValor(valorRules, battle.valorLeft, 0);
+  const won = diveWon(t);
+  delete t.dive;
+  if (won >= 2) {
+    grantTreasureChest(t);
+    grantDiveChests(t, 2, won - 1);
+  }
+  complete(t, 'treasure');
   return t;
 }
 
@@ -954,6 +1062,7 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
   delete t.closedShop;
   delete t.formationDue;
   delete t.patrol;
+  delete t.dive; // yüzeye çıkmadan ayrılan dalış: ek sandıklar kalır, hazine adımı baştan bekler (VARSAYIM, open-questions 428)
   markCleared(t, to); // adımı olmayan düğüm varınca temizlenmiş sayılır
   return t;
 }
@@ -998,7 +1107,7 @@ export function continueToMap(s: CampaignState, mapId: string = nextMapFor(s) ??
   t.visited = [map.start];
   t.cleared = [];
   t.replays = {};
-  for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover'] as const) delete t[k];
+  for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover', 'dive'] as const) delete t[k];
   clearWounds(t); // D1 b: yeni haritaya yarasız girilir (cesetler aynen; yedekte bekleyenlere dokunulmaz)
   return t;
 }

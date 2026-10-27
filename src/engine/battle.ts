@@ -416,6 +416,9 @@ export class Battle {
       const ult = effNum(c, 'ultCdReduce');
       if (ult > 0 && (sk?.initialCooldown ?? 0) > 0) n = Math.max(0, n - Math.floor(ult));
       if (n <= 0) continue;
+      // Kurulumdan gelen daha uzun bekleme (UnitSetup.startCooldowns; sefer Wayshrine sınavı "ilk N tur ultimate yok") kalır: tutulan n,
+      // tutulmayan n + 1'e eşittir. Endless taşımasında skipInitialCooldown zaten açık (buraya gelmez); başka yerde ikisi birlikte verilmez.
+      if ((c.cooldowns[id] ?? 0) >= n + 1) continue;
       c.cooldowns[id] = n;
       let held = this.initialHold.get(c.uid);
       if (!held) this.initialHold.set(c.uid, (held = new Set()));

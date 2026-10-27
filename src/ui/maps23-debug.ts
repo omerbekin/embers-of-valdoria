@@ -1,11 +1,12 @@
 // Debug > Campaign > "Maps 2-3 (test)" (maps-2-3.md 9.1-9.2, Adım 1): Harita 2'yi bayrak kapalıyken denemek için.
 // Kısayolların kural tarafı saf: src/campaign/maps23-debug.ts. Bayrak: src/ui/maps23-flag.ts (eov.debug.maps23 ya da ?maps=1).
-import { DROWNED_REACH, debugFinishMap1, debugJumpDrownedReach, debugJumpRegion, getMap, mapEnabled, setMapOverride, type CampaignState } from '../campaign';
+import { DROWNED_REACH, WAYSHRINES, debugFinishMap1, debugJumpDrownedReach, debugJumpNode, debugJumpRegion, debugSetBoons, diveMax, getMap, mapEnabled, setMapOverride, type CampaignState } from '../campaign';
 import { save, setState } from '../game/campaign-session';
 import type { DebugMenu } from './debug-menu';
 import { setMaps23 } from './maps23-flag';
 
 export const MAPS23_SECTION = 'Maps 2-3 (test)';
+export const SIDE_SECTION = 'Map 2 side content';
 const TAB = 'Campaign';
 
 /** Kısayollar bayrağı da açar (yoksa geçiş görünmez). */
@@ -60,6 +61,43 @@ export function registerMaps23Debug(debug: DebugMenu, reload: () => void, ensure
       },
     });
   }
+  // A1 Wayshrines / B1 Salvage Dive (open-questions 428): düğüme atla, nimetleri ver / sil
+  const map2 = getMap(DROWNED_REACH);
+  for (const n of map2.nodes.filter((x) => x.shrine || (x.dive?.length ?? 0) > 0)) {
+    const sh = n.shrine ? WAYSHRINES[n.shrine] : undefined;
+    debug.register({
+      id: `maps23.side.${n.id}`,
+      tab: TAB,
+      section: SIDE_SECTION,
+      icon: 'boot',
+      label: `${sh ? 'Wayshrine' : 'Salvage Dive'} ${n.region}: ${n.name}`,
+      hint: sh
+        ? `Walk The Drowned Reach to this optional shrine (team at its level, healed); its trial battle waits. ${sh.trial} Win: ${sh.name} (${sh.effect}). Turns Map 2 on.`
+        : `Walk The Drowned Reach to this guarded treasure (team at its level, healed). Win the fight, then the "Dive deeper?" window offers up to ${diveMax(n) - 1} more depths. Turns Map 2 on.`,
+      run: () => {
+        enable();
+        apply(debugJumpNode(ensureState(), n.id));
+      },
+    });
+  }
+  debug.register({
+    id: 'maps23.boons.all',
+    tab: TAB,
+    section: SIDE_SECTION,
+    icon: 'eye',
+    label: 'Grant all Wayshrine blessings',
+    hint: 'Give the company every Wayshrine blessing (they show in Gear, next to the gold, and apply in every battle).',
+    run: () => apply(debugSetBoons(ensureState(), true)),
+  });
+  debug.register({
+    id: 'maps23.boons.none',
+    tab: TAB,
+    section: SIDE_SECTION,
+    icon: 'swap',
+    label: 'Clear Wayshrine blessings',
+    hint: 'Remove every Wayshrine blessing from the company.',
+    run: () => apply(debugSetBoons(ensureState(), false)),
+  });
   debug.register({
     id: 'maps23.finish1',
     tab: TAB,

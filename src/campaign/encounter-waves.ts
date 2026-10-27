@@ -17,11 +17,13 @@ export const regionReinforcement = (region: string | undefined): EncounterUnit[]
  * Yoksa dalgalar açıkken (data/waves.json > campaign) ve düğüm tutorial'ın dalgasız düğümlerinden değilse karşılaşmaya takviye dalgaları
  * EKLENİR (wave-split.ts > buildWaves; normal 2, elit 2, boss 3 dalga; olay / hazine savaşı normal sayılır). Kapalıyken tek dalga.
  */
-export function encounterWaves(def: Pick<EncounterDef, 'units' | 'waves' | 'objective'>, nodeId: string, nodeType: string, region?: string): EncounterUnit[][] {
+export function encounterWaves(def: Pick<EncounterDef, 'units' | 'waves' | 'objective' | 'trial'>, nodeId: string, nodeType: string, region?: string): EncounterUnit[][] {
   // Break the Totem (B3): takviye totemden gelir, dalga eklenmez (tek dalga; VARSAYIM, open-questions 418)
   if (objectiveType(def.objective) === 'totem') return [def.units];
   const later = (def.waves ?? []).filter((w) => w.units.length > 0).map((w) => w.units);
   if (later.length) return [def.units, ...later];
+  // A1 Wayshrine sınavı: takviye dalgası eklenmez (tek dalga; VARSAYIM, open-questions 428)
+  if (def.trial) return [def.units];
   const o = waveOpening.campaign;
   if (!o.enabled || o.skipNodes.includes(nodeId)) return [def.units];
   return buildWaves(def.units, o.count[nodeType] ?? o.count.battle ?? 1, isInertUnit, regionReinforcement(region));
@@ -40,7 +42,7 @@ export function nodeForEncounter(encounterId: string): { id: string; type: strin
 }
 
 /** Karşılaşmanın seferdeki dalgaları, düğüm bağlamı haritadan bulunarak (önizleme / XP yedeği). Düğümü olmayan karşılaşma: units + `waves`. */
-export function encounterWavesById(encounterId: string, def: Pick<EncounterDef, 'units' | 'waves' | 'objective'> | undefined = ENCOUNTERS[encounterId]): EncounterUnit[][] {
+export function encounterWavesById(encounterId: string, def: Pick<EncounterDef, 'units' | 'waves' | 'objective' | 'trial'> | undefined = ENCOUNTERS[encounterId]): EncounterUnit[][] {
   if (!def) return [];
   const n = nodeForEncounter(encounterId);
   if (!n) return objectiveType(def.objective) === 'totem' ? [def.units] : [def.units, ...(def.waves ?? []).map((w) => w.units).filter((u) => u.length)];
