@@ -1089,7 +1089,29 @@ Seçimler: C1 V1 (HUD taç plakası, eylemi harcar), C2 a, C3 a, C4 (üst sını
 6. **Drowned Champion:** "Deathless Tide x2" -> bir kez %50; faz 3'te yeniden kalkma eklenmedi.
 7. **Salt Bishop:** "geniş Salt Tears" -> saltTears 0,08 + Tide of Mercy (tüm dostlara şifa).
 8. **Bastion / Champion zırhı** Deep Hoard yerine yükseltildi (26/14, 26/16) PROVİZYON. Bastion YZ profili `mob_tank` (guard skill'i yok).
-9. **Boss statları** Warden / Morvane'den kopya; boss müziği eski ödünç parçalarda (Wyrm + Vane = boss_warden, Queen = boss_morvane).
-10. **Pit Champion "Gorr"** (dr_pit_5) bandit_chief kitinde kaldı (kendi çizimi / tasarımı yok).
+9. **Boss statları** Warden / Morvane'den kopya. Boss müziği artık kendi parçaları (2026-10-27, madde 436): Wyrm = boss_wyrm, Vane = boss_vane, Queen = boss_queen (+ faz 2 / 3).
+10. **Pit Champion "Gorr"** (dr_pit_5): kendi kiti geldi (madde 436); kendi çizimi hâlâ yok.
 11. **YZ az kullanıyor (ölçüm: 4 seed, önder canı yüksek):** yalnız Saltbound / Spellbound veren skill'ler (Salt Circle, Siren's Call), Debtor's Chain (Iron Maul daha güçlü) ve Harpoon Line neredeyse hiç seçilmiyor: YZ Saltbound'a yalnız Mire-Bound üzerinden değer veriyor. Güç artırılsın mı, yoksa böyle mi kalsın?
 12. **Sanat / ses:** 40 yeni skill'in ikon / efekti yer tutucu (`artOf`); sesler artOf sahibinin tarifinden kopya (`data/audio-mobs.json > mob<Id><Rol>`); Warden kaynaklı 6 boss skill'i (wyrm_*, chain_shot, harpoon_line) Warden'ın sesini kullanıyor. Poz sayfası skill satırları yeni id'lere taşındı (`data/mob-poses.json`).
+
+## 436. Erken düğüm rampası (Inn softlock'u): provizyon sayılar (balance-tester 2026-10-27; Ömer onayı, `data/campaign/encounters.json`)
+Sorun (Ömer playtest): tutorial sonrası Mage düştü, Inn'e bırakıldı; 2 kahramanla hiçbir düğüm kazanılamadı, gün geçmedi, Inn iyileştirmedi.
+Değişiklik (yalnız karşılaşma çarpanı / düşman sayısı; yeni mekanik yok, Mill Road'un kaybedilemez kuralı aynı):
+- Ravenwood: güç kurtlar 0,45 -> 0,40, poacher/seer 0,43 -> 0,38.
+- Ruined Watchtower: şef can 1,1 -> 1,0, güç 0,62 -> 0,56; eşlikçi güç 0,43 -> 0,39.
+- Windy Moor: can/güç 0,782 -> 0,6; 2. dalga 0,622 -> 0,5 ve 4 -> 3 düşman.
+- Brackenridge: can/güç 0,782 -> 0,62 (iki dalga).
+- Cairn Hill (Valdren Keep'ten 2 düğüm önce, rampanın son adımı): x~0,9 (0,863 -> 0,78; 2. dalga 1,066/1,043 -> 0,963/0,942).
+- Iron Pass, Charcoal Camp (Keep'ten 1 önce) ve sonrası DEĞİŞMEDİ.
+Ölçüm: düz sefer sim'i Keep'e kadar, Medium zorluk, 300 sefer x 2 savaş, iyi (Medium YZ) ve ortalama (Easy YZ) oyuncu; 2 kişilik = en düşük canlı kahraman Inn'de. Ortalama oyuncu 2 kişilik önce -> sonra: Windy Moor %40 -> %91, Brackenridge %55 -> %87, Cairn Hill %58 -> %74, Windy Moor devriyesi (Cairn'den) %53 -> %95; tutorial Watchtower %89 -> %92, Ravenwood %95 -> %97.
+Açık soru: Raiders' Hoard (cep, korunan hazine) bilinçli olarak zor bırakıldı (madde 417): ilk varışta tam takım %37-61, 2 kişi ~%1. Devriye olarak 2 kişiyle kurtarıcı değil; Windy Moor / Brackenridge devriyesi kurtarıcı.
+
+12. **Sanat / ses:** 40 yeni skill'in ikon / efekti yer tutucu (`artOf`); sesler 2026-10-27'de her skill'e özel yeni tariflerle değişti (madde 436; Warden'ın ödünç sesleri de kalktı). Poz sayfası skill satırları yeni id'lere taşındı (`data/mob-poses.json`).
+
+## 440. Harita 2 ödünçsüz ses / müzik + Pit Champion "Gorr" kiti (content-designer 2026-10-27; `data/audio-mobs.json`, `data/audio-music-bosses.json`, `data/audio-music-boss-map.json`, `data/mobs/pit_champion_gorr.json`, `data/skills.json`, `tests/mob-sfx.test.ts`, `tests/scene-audio.test.ts`, `tests/map2-leaders.test.ts`)
+
+1. **Sesler:** Harita 2'nin 40 elit / boss skill'i + Gorr'un 3 skill'i kendi WebAudio tarifinde (83 ses; liste `docs/design/audio-map.md`). Tepe ölçümü tarayıcıda değil çevrimdışı JS taklidiyle yapıldı: Ömer kulakla dinlemeli (Codex > Assets > Sounds > Campaign enemies).
+2. **Boss müzikleri:** Weir-Wyrm "Jaws of the Weir" (Do frigyen 4/4 134), Admiral Vane "Run Out the Guns" (La dorian 3/4 152, denizci jigi), Drowned Queen "The Drowned Crown" (Fa dorian 4/4 126; faz 2 / 3 = 138 / 150, Morvane gibi aynı parçanın hızlanan hâli). Wyrm ve Vane'in 3 fazı var ama tek parça çalıyor (Bridge Warden gibi); faz parçası istenir mi?
+3. **Gorr kiti (yalnız var olan mekanikler, PROVİZYON, sim YOK):** Iron Cestus (temel, STR fiziksel güç 1,0) + Skull Splitter (güç 0,8 + 1 tur Stun; 8 MP, bekleme 4) + Play to the Crowd (kendine 2 tur taunt + 1 tur Haste; 8 MP, bekleme 4) + pasif For the Crowd (Blood Scent: canı %35 altındaki hedefe x1,3). Stat / zırh / YZ (`mob_tank`) Bandit Chief'ten kopya; karşılaşma çarpanları aynı (can 1,8 / güç 1,15 / stat 1,15). Elitin Stun vermesi Harita 2'de ilk; sert gelirse güç 0,8 -> 0,6 ya da Stun yerine Staggered önerilir.
+4. **Sanat eksikleri (görsel üretilmedi):** Gorr'un kendi çizimi yok (Bandit Chief çizimi + pozu yer tutucu; `data/mob-poses.json > bandit_chief.skills` Gorr'un iki skill satırını da taşır). Inquisitor-Captain Vell'in de kendi çizimi yok (Oathsworn Brother çizimi). Gorr'un 3 skill'inin ikon / efekti yer tutucu (`artOf`: cudgel, pick_of_the_deep, hold_the_tower).
+5. **Hâlâ ödünç olan Harita 2 parçaları (bu işin kapsamı dışında, karar Ömer'in):** (a) Harita 2 karşılaşmalarında Harita 1 mobları kendi kitleriyle duruyor (yalnız adları değişik): Dock Rat = road_thug, Reef Hound = ash_hound, Salt Hag = fen_witchling, Tide Caller = grave_chanter, Marsh Light = will_o_wisp, Wreck Ghoul = ghoul, ayrıca drowned, oathsworn_brother, censer_monk, cutpurse, ember_acolyte, charcoal_burner; sesleri o mobların kendi sesleri (ses değil, birimin tamamı ödünç: yeni mob tasarımı + çizim ister). (b) Harita 2'nin sefer haritası / kasaba / sıradan savaş müziği Harita 1 ile ortak (map / town / battle parçaları); Harita 2'ye özel parça istenir mi?

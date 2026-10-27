@@ -73,7 +73,13 @@ describe('town scene data (valdoria.json > scene)', () => {
       expect(existsSync(`assets/source/backgrounds-v2/${bg}.png`), `${bg}.png aslı yok`).toBe(true);
     }
     // Bağlantısız dosya kalmasın: assets/towns altındaki her görsel bir kasabanın arka planı
-    const used = new Set(towns.map((n) => `${townScene(n)!.background}.webp`));
+    const reachTowns = getMap('drowned-reach').nodes.filter((n) => n.type === 'town');
+    const used = new Set([...towns, ...reachTowns].map((n) => `${townScene(n)!.background}.webp`));
+    for (const n of reachTowns) {
+      const bg = townScene(n)!.background;
+      expect(onDisk, `${bg}.webp yok`).toContain(`${bg}.webp`);
+      expect(existsSync(`assets/source/backgrounds-v2/${bg}.png`), `${bg}.png aslı yok`).toBe(true);
+    }
     for (const f of onDisk) expect(used.has(f), `${f} bağlantısız`).toBe(true);
   });
 

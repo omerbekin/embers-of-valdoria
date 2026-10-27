@@ -1,13 +1,13 @@
 {
-  "_not": "Hangi düşman hangi boss müziğini çalar (Ömer 2026-10-17). byDef anahtarı = düşmanın defId'si (savaştaki sınıf / mob id'si). track = 1. faz parçası; phases = faz numarası -> parça (boss'un 'phase' olayında müzik yumuşak geçişle değişir). anyTier: true = boss rütbeli olmasa da bu düşman sahadaysa boss müziği çalar (Ömer: elitler boss müziği ÇALMAZ; High Priest elit, normal savaş müziği). Boss rütbeli (tier boss ya da boss tanımlı) ama burada olmayan her düşman 'fallback' parçasını çalar. 'undead': Endless'ın eski Lord Morvane'ı (Undead sınıfı kopyası, rütbesi boss); sıradan Undead boss rütbeli değilse etkilemez. Harita 2 bossları (Weir-Wyrm, Admiral Vane, Drowned Queen; kendi kitleri 2026-10-27) eski ödünç kitlerinin parçasını çalmayı sürdürür (Warden / Morvane; kendi parçaları gelene kadar). Parça tanımları data/audio-music-bosses.json.",
+  "_not": "Hangi düşman hangi boss müziğini çalar (Ömer 2026-10-17). byDef anahtarı = düşmanın defId'si (savaştaki sınıf / mob id'si). track = 1. faz parçası; phases = faz numarası -> parça (boss'un 'phase' olayında müzik yumuşak geçişle değişir). anyTier: true = boss rütbeli olmasa da bu düşman sahadaysa boss müziği çalar (Ömer: elitler boss müziği ÇALMAZ; High Priest elit, normal savaş müziği). Boss rütbeli (tier boss ya da boss tanımlı) ama burada olmayan her düşman 'fallback' parçasını çalar. 'undead': Endless'ın eski Lord Morvane'ı (Undead sınıfı kopyası, rütbesi boss); sıradan Undead boss rütbeli değilse etkilemez. Harita 2 bossları kendi parçalarını çalar (content-designer 2026-10-27): Weir-Wyrm = boss_wyrm, Admiral Vane = boss_vane, Drowned Queen = boss_queen (+ faz 2 / 3: boss_queen2 / boss_queen3). Parça tanımları data/audio-music-bosses.json.",
   "fallback": "boss",
   "byDef": {
     "bridge_warden": { "track": "boss_warden" },
     "high_priest_of_the_undying": { "track": "boss_priest" },
     "lord_morvane": { "track": "boss_morvane", "phases": { "2": "boss_morvane2", "3": "boss_morvane3" } },
     "undead": { "track": "boss_morvane" },
-    "weir_wyrm": { "track": "boss_warden" },
-    "admiral_vane": { "track": "boss_warden" },
-    "drowned_queen": { "track": "boss_morvane", "phases": { "2": "boss_morvane2", "3": "boss_morvane3" } }
+    "weir_wyrm": { "track": "boss_wyrm" },
+    "admiral_vane": { "track": "boss_vane" },
+    "drowned_queen": { "track": "boss_queen", "phases": { "2": "boss_queen2", "3": "boss_queen3" } }
   }
 }

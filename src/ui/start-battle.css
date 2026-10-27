@@ -64,7 +64,7 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 .sbc-foe.boss .sbc-nm { color: var(--g-gold); }
 
 /* tek bilgi satırı (var olan oyun metni) */
-.sbc-info { margin: 0; font: italic max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); /* lore satırı: hafif italik (Ömer 2026-10-23) */ line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.sbc-info { margin: 0; font: 400 max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); /* düz yazı: arayüzde italik yok (Ömer 2026-10-23, devriye satırı 2026-10-27) */ line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .sbc-info b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); font-style: normal; margin-right: 0.5em; }
 .sbc-info.quote { color: #cdb88d; }
 

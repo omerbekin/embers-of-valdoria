@@ -46,6 +46,13 @@
       },
       "hold_the_tower": {
         "act": 6
+      },
+      "skull_splitter": {
+        "windup": 4,
+        "act": 5
+      },
+      "play_to_the_crowd": {
+        "act": 6
       }
     }
   },

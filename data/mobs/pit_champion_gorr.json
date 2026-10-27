@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 2 Fighting Pit şampiyonu (Saltmere arenası, 5. kademe dr_pit_5; content-designer 2026-10-27). Ödünç Bandit Chief kiti yerine kendi kiti (yalnız var olan mekanikler, yeni motor kuralı YOK): Iron Cestus (temel) + Skull Splitter (hasar + 1 tur Stun) + Play to the Crowd (taunt + Haste), pasif For the Crowd (Blood Scent: canı %35 altındaki hedefe x1,3). Stat / zırh Bandit Chief'le aynı (güç ödünç kite yakın). GÖRSEL: kendi çizimi YOK, Bandit Chief çizimi yer tutucu (spriteId bandit_chief; çizim sonra); skill ikon/efekt YER TUTUCU (artOf). Sayılar PROVİZYON (open-questions 440).",
+  "id": "pit_champion_gorr",
+  "name": "Pit Champion \"Gorr\"",
+  "family": "bandits",
+  "spriteId": "bandit_chief",
+  "spriteScale": 1.15,
+  "color": "#8a5a3a",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Pit Fighter · Elite",
+  "attributes": {
+    "str": 30,
+    "int": 6,
+    "dex": 12,
+    "luck": 4
+  },
+  "armor": 20,
+  "magicArmor": 6,
+  "ai": "mob_tank",
+  "skills": [
+    "pit_cestus",
+    "skull_splitter",
+    "play_to_the_crowd"
+  ],
+  "passive": {
+    "id": "for_the_crowd",
+    "name": "For the Crowd",
+    "icon": "muscle",
+    "text": "The crowd bays for a finish: its hits on a target below 35% HP deal ×1.3 damage.",
+    "effect": {
+      "type": "bloodScent",
+      "below": 0.35,
+      "bonus": 0.3
+    }
+  }
+}

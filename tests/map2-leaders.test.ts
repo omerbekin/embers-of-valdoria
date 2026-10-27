@@ -17,6 +17,7 @@ const KITS: Record<string, string[]> = {
   siren_queen: ['queens_lament', 'grand_chorus', 'sirens_call'],
   salt_bishop: ['brine_rite', 'requiem_of_salt', 'tide_of_mercy'],
   drowned_champion: ['drowned_greatsword', 'champions_challenge', 'wall_of_brine'],
+  pit_champion_gorr: ['pit_cestus', 'skull_splitter', 'play_to_the_crowd'], // Fighting Pit dr_pit_5 (open-questions 440)
   weir_wyrm: ['wyrm_lash', 'wyrm_swallow', 'wyrm_surge', 'wyrm_deluge'],
   admiral_vane: ['cutlass_flurry', 'chain_shot', 'harpoon_line', 'vane_rally', 'broadside'],
   drowned_queen: ['brine_lash', 'high_tide', 'lament_of_the_deep', 'the_reach_drowns'],
