@@ -99,7 +99,7 @@
     ]
   },
   "mine_wardens": {
-    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,875 (düğümler aynı zorluğa çekildi). PLAYTEST 2026-10-23 D2 (Ömer seçti; 4 kahraman 73 turda ölüm): 2. dalganın iki Pass Crossbowman'i silindi (dalga 2 = yalnız Stonebound Warden; düşman 6 -> 4). 'Elite işaretle + Lv4 hedefle' seçeneği yerine bu: düğüm seviyesi kodda haritadan türüyor (veride düğüm başına level alanı yok) ve düğümü elite türüne çevirmek haritada zorluk işareti olurdu (U6 reddedildi). SİM ÖLÇÜMÜ BEKLİYOR (Ömer onayı). KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
+    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,875 (düğümler aynı zorluğa çekildi). PLAYTEST 2026-10-23 D2 (Ömer seçti; 4 kahraman 73 turda ölüm): 2. dalganın iki Pass Crossbowman'i silindi (dalga 2 = yalnız Stonebound Warden; düşman 6 -> 4). 'Elite işaretle + Lv4 hedefle' seçeneği yerine bu: düğüm seviyesi kodda haritadan türüyor (veride düğüm başına level alanı yok) ve düğümü elite türüne çevirmek haritada zorluk işareti olurdu (U6 reddedildi). SİM ÖLÇÜMÜ BEKLİYOR (Ömer onayı). KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25). İLK HAZİNE BİRAZ KOLAYLADI (Ömer 2026-10-27, open-questions 441): çarpan 1,063 -> 1,02 (can x güç ~ -%8); sim 300 sefer: ilk varışta tam takım Medium YZ %61 -> %70, Easy YZ %37 -> %48; 2 kahraman ~%1 -> ~%2; yol düğümleri tam takımla %100.",
     "name": "Mine Wardens",
     "units": [
       { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.413, "powerMult": 1.413 } },
@@ -446,16 +446,16 @@
     "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Cairn Hill + %10 (0,863 x 1,1 = 0,949). Raiders' Hoard korunan hazinesi (cep). Denge balance-tester'ın. KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
     "name": "Hoard Guards",
     "units": [
-      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 1.063, "powerMult": 1.063 } },
-      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 1.063, "powerMult": 1.063 } },
-      { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 1.063, "powerMult": 1.063 } },
-      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -8, "hpMult": 1.063, "powerMult": 1.063 } }
+      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 1.02, "powerMult": 1.02 } },
+      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 1.02, "powerMult": 1.02 } },
+      { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 1.02, "powerMult": 1.02 } },
+      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -8, "hpMult": 1.02, "powerMult": 1.02 } }
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 1.063, "powerMult": 1.063 } },
-        { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 1.063, "powerMult": 1.063 } },
-        { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 1.063, "powerMult": 1.063 } }
+        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 1.02, "powerMult": 1.02 } },
+        { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 1.02, "powerMult": 1.02 } },
+        { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 1.02, "powerMult": 1.02 } }
       ] }
     ]
   },
