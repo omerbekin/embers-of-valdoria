@@ -30,7 +30,7 @@ const ICON_SRC = 'assets/source/mob-icons';
 const ICON_OUT = 'assets/mob-icons';
 /** Mob ikonu olmayan sayfalarin cikti klasoru (durum ikonlari oyunda misc-icons/status adiyla bulunur). */
 /** Zemini de saf siyah olan sayfalar: karanlik bant bulma hucre ile ayirgaci ayiramaz; sabit 2x2 izgara (kenar 12, ayirac 20 px). */
-const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet']);
+const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet']);
 const ICON_SHEET_OUT = { 'status2-sheet': 'assets/misc-icons/status' };
 const VFX_SRC = 'assets/source/mob-vfx';
 const VFX_OUT = 'assets/mob-vfx';
@@ -94,7 +94,8 @@ const ICON_SHEETS = {
   'map2_siren-sheet': ['queens_lament', 'grand_chorus', 'sirens_call', 'lament_of_the_deep'],
   'map2_drowned-sheet': ['brine_rite', 'requiem_of_salt', 'drowned_greatsword', 'the_reach_drowns'],
   'map2_wyrm-sheet': ['wyrm_lash', 'wyrm_swallow', 'wyrm_surge', 'wyrm_deluge'],
-  'map2_harbor-sheet': ['chain_shot', 'harpoon_line', 'vane_rally', 'high_tide'],
+  'map2_pit-sheet': ['pit_cestus', 'skull_splitter', 'play_to_the_crowd', null],
+  'map2_harbor-sheet':['chain_shot', 'harpoon_line', 'vane_rally', 'high_tide'],
 };
 
 /** Zemine oturan (alt hizalı) vfx sheet'leri: '<mob>-<skill>'. Geri kalanı ortalanır (vuruş/mermi). */
