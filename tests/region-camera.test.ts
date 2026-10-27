@@ -5,6 +5,7 @@
 //  - Telefonda kenar durakları (Harita 1 hoard, Harita 2 dr1-3, dr75-77) takım orada değilken HUD altında kalıyordu -> Ömer seçeneği (a):
 //    görsel kenarlardan taşmalı (map.backgroundExt, tools/make-map-ext.mjs); kamera taşma alanına da kayar, her durak her ekranda HUD'un
 //    yanına getirilebilir, görsel dışı (siyah) yine hiç görünmez.
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { getMap } from '../src/campaign';
 import { MAP_ZOOM, clampMid } from '../src/game/map-view';
@@ -140,11 +141,18 @@ describe('bölge kamerası: harita dışı görünmez, duraklar HUD altında kal
     }
   });
 
-  it('taşmalı görsel: asıl görsel eski yerinde (düğüm konumları değişmez), her kenarda taşma var, dosya boyutları doğru', async () => {
-    const sharp = (await import('sharp')).default;
+  it('taşmalı görsel: asıl görsel eski yerinde (düğüm konumları değişmez), her kenarda taşma var, dosya boyutları doğru', () => {
+    // sharp'sız (CI'da sharp kurulu değil; 0.9.9 Pages yayını bu yüzden düştü): WebP başlığından boyut, tests/valor-art.test.ts ile aynı
+    const webpSize = (file: string) => {
+      const b = readFileSync(file);
+      const kind = b.toString('ascii', 12, 16);
+      if (kind === 'VP8X') return { width: 1 + b.readUIntLE(24, 3), height: 1 + b.readUIntLE(27, 3) };
+      if (kind === 'VP8L') { const v = b.readUInt32LE(21); return { width: 1 + (v & 0x3fff), height: 1 + ((v >> 14) & 0x3fff) }; }
+      return { width: b.readUInt16LE(26) & 0x3fff, height: b.readUInt16LE(28) & 0x3fff };
+    };
     for (const mapId of ['valdoria', 'drowned-reach']) {
       const e = getMap(mapId).backgroundExt!;
-      const meta = await sharp(`assets/campaign/${e.image}.webp`).metadata();
+      const meta = webpSize(`assets/campaign/${e.image}.webp`);
       expect([meta.width, meta.height], e.image).toEqual(ART[e.image]);
       const old = frameOf(mapId);
       const f = extOf(mapId);
