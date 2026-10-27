@@ -21,7 +21,7 @@ export const DEFAULT_MUSIC_LEVEL: number = musicData.defaultLevel;
 const FADE_OUT = musicData.fadeOutMs / 1000;
 const XFADE = crossfadeMs / 1000;
 
-export type MusicTrack = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp' | 'boss_warden' | 'boss_priest' | 'boss_morvane' | 'boss_morvane2' | 'boss_morvane3';
+export type MusicTrack = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp' | 'boss_warden' | 'boss_priest' | 'boss_morvane' | 'boss_morvane2' | 'boss_morvane3' | 'boss_wyrm' | 'boss_vane' | 'boss_queen' | 'boss_queen2' | 'boss_queen3';
 
 interface BossMapEntry {
   track: MusicTrack;

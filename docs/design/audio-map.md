@@ -61,6 +61,21 @@ Hold the Gate = demir bantlı kalkan taşa vurulur + kalın "None pass the gate!
 Iron Decree = kızgın mühür basılması + Morvane'nin derin tek komutu; Pyre of Morvane = yer gürlemesi, sonra tüm alanı saran alev. Lord Morvane'ın
 sesleri de "Campaign enemies" grubunda (sahibi boss).
 
+**Harita 2 önderleri (content-designer 2026-10-27):** 9 elit (Hook, Salt Hag Mother, Bastion, Vell, Wrecker-Captain, Marrow, Siren Queen, Salt Bishop,
+Drowned Champion), Pit Champion "Gorr" ve 3 boss (Weir-Wyrm, Admiral Vane, Drowned Queen): 43 skill, 83 ses; her skill KENDİ tarifiyle (eski kopya /
+yer tutucu tarifler ve Bridge Warden'ın ödünç sesleri kalktı). Aileler aynı malzemeden ama her biri ayırt edilir: kanca ailesi (Gaff Strike = kısa demir
+kanca + yırtılma, Boarding Hook = ip ucunda dönen çatal kanca + ip gerilir, Debtor's Chain = zincir sarılır + asma kilit kapanır, Wrecker's Gaff = ıslak
+sırık + kaldıraç gıcırtısı, Harpoon Line = zıpkın + gerilen halat); pala ailesi (Black Cutlass = kınından çekme + tek kesik, Captain's Rake = ileri-geri iki
+savuruş, Cutlass Flurry = hızlı çift kesik, Drowned Greatsword = ağır ıslak savuruş + sıçrama); deniz büyüsü (Brine Curse = gargaralı lanet, Call the Tide /
+High Tide / Surge = yükselen dalga ve kırılış, Salt Circle = dökülen tuz + kristal çıtırtısı, Requiem of Salt / Lament of the Deep = alçak koro); siren
+sesleri formantlı kadın sesi (Queen's Lament = tiz ağıt, Grand Chorus = dört sesli akor, Siren's Call = nefesli iki notalık çağrı); Weir-Wyrm = kuyruk
+şaklaması, ağız açılırken gargaralı hırıltı + ısırma ve yutkunma, kükreme + bent yıkılışı; Admiral Vane = top atışı + zincir gülle vınlaması, "Fire!" +
+üç topluk yaylım, "All hands!" + tayfa tezahüratı; Gorr = demir yumruk, kalabalığın "Ohh!"u, göğüs yumruklama + adını haykıran kalabalık. Tepe ölçümü
+çevrimdışı JS taklidiyle, Bölge I-II seslerine göre ayarlı (aynı ölçekte Billhook 0,56 / 0,74): savuruş ~0,55, vuruş ~0,72, ağır vuruş ~0,78,
+ses / koro ~0,62, yumuşak ~0,44, ulti ~0,8; tarayıcıda kulak kontrolü önerilir. Mob sheet'i istek listesinin ilkini başta, kalanlarını vuruşta çalar:
+Warden kaynaklı listelerde (wyrm_*, chain_shot) yalnızca biri vuruşa bağlı, diğerleri sessiz (`skills.<id>.roles`); Powder Keg / Brine Lash'in uçuş isteği
+sessiz (uçuş sesi vuruşla üst üste binmesin).
+
 ## Müzik (`data/audio-music.json` + `data/audio-music-tracks.json`, motor `src/game/music.ts`, denetim `src/ui/music.ts > sceneMusic`)
 
 | Parça | Ad | Nerede | Karakter |
@@ -70,6 +85,9 @@ sesleri de "Campaign enemies" grubunda (sahibi boss).
 | town | Hearth and Ale | kasaba ekranı | Fa majör 3/4 jig, parlak lavta, flüt teması, bodhrán |
 | battle | Steel at Dawn | savaş (hızlı savaş, sefer, Endless dalgası, MP) | La minör 4/4, bir oktav alçak lavta ostinatosu, savaş davulu, kısık |
 | boss | The Warden's Wrath | boss savaşı | Re frigyen 4/4, daha ağır davul ve rulolar, kalın drone |
+| boss_wyrm | Jaws of the Weir | The Weir-Wyrm (Harita 2) | Do frigyen 4/4 134, akıntı gibi kıvrılan alçak lavta, "maw" teması, kabaran davul |
+| boss_vane | Run Out the Guns | Admiral Vane (Harita 2) | La dorian 3/4 152, hızlı denizci jigi, güverte tepen davul, "broadside" teması |
+| boss_queen (+2, +3) | The Drowned Crown | The Drowned Queen (Harita 2; faz 2 / 3: 138 / 150 bpm) | Fa dorian 4/4 126, yuvarlanan "tide" lavta, siren ağıdı "crown" teması, geniş yankı |
 | camp | Embers at Night | Endless başlığı ve kampı (ara verme) | Mi dorian yavaş 3/4, seyrek lavta, alçak flüt |
 
 Sahne değişince eski parça `crossfadeMs` (2,4 sn) içinde söner, yenisi yükselir; her parça kaldığı ölçüden devam eder. Savaş bitince müzik

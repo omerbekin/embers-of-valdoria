@@ -1,5 +1,5 @@
 {
-  "_not": "BOSS MÜZİKLERİ (Ömer 2026-10-17: 'her boss savaşının kendine özel, yüksek tempolu müziği olsun; yine ortaçağ, saf sinüs çan yok, kulak tırmalamasın'). Aynı motor ve dil (src/game/music.ts); data/audio-music-tracks.json'daki gibi tabanın + 'soft' ortak yumuşatmanın ÜSTÜNE yazılan farklar, ama önce bu dosyanın 'base'i (ortak boss sesi) uygulanır: hızlı tempo (124-150 bpm), alçak lavta ostinatosu (arp -1 oktav), kalın drone, YÜRÜYEN çerçeve davul ('dum' gövde + hafif kenar 'tek'; kalıplar drive / gallop / roll / half), üçgen dalga ped, flüt ezgisi alçak/yumuşak, alçak geçiren ile tiz kısık. Her boss kendi anahtarı / kipi / ölçüsü / ezgisi ile ayrı parça: boss_warden (D frig, 4/4, 'anvil' teması), boss_priest (G eol, 3/4 vals gibi hızlı, flüt ağırlıklı ağıt), boss_morvane (E frig, 4/4, 'crown' teması; 2. ve 3. faz aynı parçanın daha hızlı / yoğun hâli: 'extends'), 'boss' = tanımsız her boss için genel yedek. Hangi boss hangi parçayı çalar ve faz geçişleri: data/audio-music-boss-map.json (src/ui/music.ts > battleTrack / phaseTrack). Her parça 4-5 bölümlü, 4 döngülük 'cycles' ile tekrarda değişir. Davul kalıpları ölçü başına 8 sekizlik (4/4) ya da 6 (3/4), arp 16 / 12.",
+  "_not": "BOSS MÜZİKLERİ (Ömer 2026-10-17: 'her boss savaşının kendine özel, yüksek tempolu müziği olsun; yine ortaçağ, saf sinüs çan yok, kulak tırmalamasın'). Aynı motor ve dil (src/game/music.ts); data/audio-music-tracks.json'daki gibi tabanın + 'soft' ortak yumuşatmanın ÜSTÜNE yazılan farklar, ama önce bu dosyanın 'base'i (ortak boss sesi) uygulanır: hızlı tempo (124-150 bpm), alçak lavta ostinatosu (arp -1 oktav), kalın drone, YÜRÜYEN çerçeve davul ('dum' gövde + hafif kenar 'tek'; kalıplar drive / gallop / roll / half), üçgen dalga ped, flüt ezgisi alçak/yumuşak, alçak geçiren ile tiz kısık. Her boss kendi anahtarı / kipi / ölçüsü / ezgisi ile ayrı parça: boss_warden (D frig, 4/4, 'anvil' teması), boss_priest (G eol, 3/4 vals gibi hızlı, flüt ağırlıklı ağıt), boss_morvane (E frig, 4/4, 'crown' teması; 2. ve 3. faz aynı parçanın daha hızlı / yoğun hâli: 'extends'), Harita 2 (content-designer 2026-10-27, deniz / boğulmuş teması): boss_wyrm (C frig, 4/4, kıvrılan 'coil' lavta + 'maw' teması), boss_vane (A dorian, 3/4 hızlı denizci jigi, 'broadside' teması), boss_queen (F dorian, 4/4, yuvarlanan 'tide' lavta + siren ağıdı 'crown' teması, geniş yankı; 2. ve 3. faz boss_queen2 / boss_queen3 'extends'), 'boss' = tanımsız her boss için genel yedek. Hangi boss hangi parçayı çalar ve faz geçişleri: data/audio-music-boss-map.json (src/ui/music.ts > battleTrack / phaseTrack). Her parça 4-5 bölümlü, 4 döngülük 'cycles' ile tekrarda değişir. Davul kalıpları ölçü başına 8 sekizlik (4/4) ya da 6 (3/4), arp 16 / 12.",
   "base": {
     "beatsPerBar": 4,
     "bpm": 132,
@@ -1184,6 +1184,983 @@
           },
           "fall": {
             "harp": "grind"
+          }
+        }
+      ]
+    },
+    "boss_wyrm": {
+      "label": "Jaws of the Weir",
+      "desc": "The Weir-Wyrm. C phrygian 4/4 at 134: a coiling low lute figure that rolls like a current, a deep C-G drone, surging frame drum, the 'maw' recorder theme sinking through the sea-cave. Four sections, four loop variants.",
+      "bpm": 134,
+      "tonic": "C",
+      "mode": "phrygian",
+      "master": 0.67,
+      "voices": {
+        "harp": {
+          "gain": 0.5,
+          "bassGain": 0.54
+        },
+        "flute": {
+          "gain": 0.13
+        },
+        "pad": {
+          "gain": 0.03,
+          "cutoff": 480
+        },
+        "drone": {
+          "notes": [
+            "C2",
+            "G2"
+          ],
+          "gain": 0.048,
+          "lfoHz": 0.07,
+          "lfoDepth": 160
+        },
+        "drum": {
+          "gain": 0.56
+        }
+      },
+      "harpPatterns": {
+        "coil": [
+          0,
+          2,
+          1,
+          2,
+          0,
+          2,
+          1,
+          3,
+          0,
+          2,
+          1,
+          2,
+          3,
+          1,
+          2,
+          0
+        ],
+        "undertow": [
+          0,
+          null,
+          0,
+          1,
+          0,
+          null,
+          2,
+          1,
+          0,
+          null,
+          0,
+          1,
+          3,
+          2,
+          1,
+          null
+        ]
+      },
+      "drumPatterns": {
+        "surge": [
+          1,
+          0.3,
+          0.25,
+          0.6,
+          0.85,
+          0.3,
+          0.6,
+          0.7
+        ]
+      },
+      "melodyRange": {
+        "high": [
+          "C4",
+          "C5"
+        ],
+        "low": [
+          "G3",
+          "G4"
+        ]
+      },
+      "themes": {
+        "maw": [
+          "C4:1 Eb4:1 G4:1 C5:1",
+          "Db5:1.5 C5:0.5 G4:1 Eb4:1",
+          "F4:1 Ab4:1 Db5:2",
+          "C5:1 Bb4:1 Ab4:2",
+          "Bb4:1 Db5:1 F5:1 Db5:1",
+          "Eb5:1 C5:1 Ab4:2",
+          "G4:1 B4:1 D5:1 F5:1",
+          "Eb5:1 D5:1 B4:2"
+        ]
+      },
+      "sections": {
+        "weir": {
+          "chords": [
+            "Cm",
+            "Db",
+            "Cm",
+            "Db",
+            "Bbm",
+            "Ab",
+            "Fm",
+            "G"
+          ],
+          "harp": "undertow",
+          "bass": true,
+          "pad": 1,
+          "drum": "surge",
+          "drumLast": "roll",
+          "melody": null
+        },
+        "maw": {
+          "chords": [
+            "Cm",
+            "Cm",
+            "Db",
+            "Db",
+            "Bbm",
+            "Ab",
+            "G",
+            "G"
+          ],
+          "harp": "coil",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "drive",
+          "drumLast": "roll",
+          "melody": "theme:maw",
+          "ornament": 0.12
+        },
+        "deep": {
+          "chords": [
+            "Fm",
+            "Db",
+            "Cm",
+            "Cm",
+            "Fm",
+            "Ab",
+            "Bbm",
+            "G"
+          ],
+          "harp": "grind",
+          "bass": true,
+          "pad": 1.15,
+          "drum": "surge",
+          "drumLast": "roll",
+          "melody": "gen:low"
+        },
+        "burst": {
+          "chords": [
+            "Ab",
+            "Bbm",
+            "Cm",
+            "Db",
+            "Ab",
+            "Fm",
+            "G",
+            "G"
+          ],
+          "harp": "coil",
+          "bass": true,
+          "pad": 1,
+          "drum": "gallop",
+          "drumLast": "roll",
+          "melody": "gen:high"
+        }
+      },
+      "form": [
+        "weir",
+        "maw",
+        "deep",
+        "burst"
+      ],
+      "cycles": [
+        {},
+        {
+          "weir": {
+            "harp": "coil"
+          },
+          "maw": {
+            "ornament": 0.35
+          },
+          "deep": {
+            "melody": "gen:high"
+          },
+          "burst": {
+            "harp": "undertow",
+            "melody": "gen:low"
+          }
+        },
+        {
+          "weir": {
+            "melody": "gen:low",
+            "drum": "drive"
+          },
+          "maw": {
+            "harp": "undertow",
+            "melody": "gen:high"
+          },
+          "deep": {
+            "harp": "coil",
+            "drum": "gallop"
+          },
+          "burst": {
+            "drum": "surge"
+          }
+        },
+        {
+          "weir": {
+            "drum": "half"
+          },
+          "maw": {
+            "drum": "surge",
+            "ornament": 0.25
+          },
+          "deep": {
+            "melody": "gen:high",
+            "ornament": 0.2
+          },
+          "burst": {
+            "melody": "gen:low",
+            "harp": "grind"
+          }
+        }
+      ]
+    },
+    "boss_vane": {
+      "label": "Run Out the Guns",
+      "desc": "Admiral Vane. A dorian 3/4 at 152: a fast sea-shanty jig for a pirate admiral, bouncing lute, deck-stamping frame drum, the 'broadside' recorder tune over an A-E drone. Four sections, four loop variants.",
+      "bpm": 152,
+      "beatsPerBar": 3,
+      "tonic": "A",
+      "mode": "dorian",
+      "master": 0.66,
+      "voices": {
+        "harp": {
+          "gain": 0.5,
+          "pick": 0.3
+        },
+        "flute": {
+          "gain": 0.15,
+          "lowGain": 0.95
+        },
+        "pad": {
+          "gain": 0.026
+        },
+        "drone": {
+          "notes": [
+            "A1",
+            "E2"
+          ],
+          "gain": 0.042
+        },
+        "drum": {
+          "gain": 0.55
+        }
+      },
+      "harpPatterns": {
+        "jig": [
+          0,
+          1,
+          2,
+          0,
+          1,
+          2,
+          0,
+          1,
+          3,
+          2,
+          1,
+          0
+        ],
+        "hornpipe": [
+          0,
+          null,
+          2,
+          1,
+          null,
+          2,
+          0,
+          null,
+          3,
+          1,
+          2,
+          null
+        ]
+      },
+      "drumPatterns": {
+        "jig": [
+          1,
+          0.3,
+          0.55,
+          0.85,
+          0.3,
+          0.6
+        ],
+        "deck": [
+          1,
+          0,
+          0.6,
+          1,
+          0,
+          0.6
+        ]
+      },
+      "rhythms": {
+        "high": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1.5,
+            0.5,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            0.5,
+            0.5,
+            1
+          ]
+        ],
+        "low": [
+          [
+            3
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        "cadence": [
+          [
+            3
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      },
+      "melodyRange": {
+        "high": [
+          "A4",
+          "A5"
+        ],
+        "low": [
+          "E4",
+          "E5"
+        ]
+      },
+      "themes": {
+        "broadside": [
+          "A4:1 C5:1 E5:1",
+          "D5:1.5 B4:0.5 G4:1",
+          "A4:1 E5:1 A5:1",
+          "G5:1 E5:1 B4:1",
+          "C5:1 E5:1 G5:1",
+          "F#5:1 D5:1 B4:1",
+          "A4:1 D5:1 F#5:1",
+          "E5:2 G#4:1"
+        ]
+      },
+      "sections": {
+        "muster": {
+          "chords": [
+            "Am",
+            "G",
+            "Am",
+            "Em",
+            "Am",
+            "G",
+            "D",
+            "E"
+          ],
+          "harp": "jig",
+          "bass": true,
+          "pad": 1,
+          "drum": "deck",
+          "drumLast": "waltzRoll",
+          "melody": null
+        },
+        "broadside": {
+          "chords": [
+            "Am",
+            "G",
+            "Am",
+            "Em",
+            "C",
+            "G",
+            "D",
+            "E"
+          ],
+          "harp": "jig",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "jig",
+          "drumLast": "waltzRoll",
+          "melody": "theme:broadside",
+          "ornament": 0.15
+        },
+        "rigging": {
+          "chords": [
+            "C",
+            "G",
+            "Am",
+            "Am",
+            "F",
+            "C",
+            "D",
+            "E"
+          ],
+          "harp": "hornpipe",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "jig",
+          "drumLast": "waltzRoll",
+          "melody": "gen:high"
+        },
+        "boarding": {
+          "chords": [
+            "Em",
+            "Am",
+            "D",
+            "Am",
+            "Em",
+            "G",
+            "D",
+            "E"
+          ],
+          "harp": "jig",
+          "bass": true,
+          "pad": 1.15,
+          "drum": "deck",
+          "drumLast": "waltzRoll",
+          "melody": "gen:low"
+        }
+      },
+      "form": [
+        "muster",
+        "broadside",
+        "rigging",
+        "boarding"
+      ],
+      "cycles": [
+        {},
+        {
+          "muster": {
+            "harp": "hornpipe"
+          },
+          "broadside": {
+            "ornament": 0.4
+          },
+          "rigging": {
+            "melody": "gen:low"
+          },
+          "boarding": {
+            "melody": "gen:high",
+            "drum": "jig"
+          }
+        },
+        {
+          "muster": {
+            "melody": "gen:low",
+            "drum": "jig"
+          },
+          "broadside": {
+            "harp": "hornpipe",
+            "melody": "gen:high"
+          },
+          "rigging": {
+            "harp": "jig",
+            "drum": "deck"
+          },
+          "boarding": {
+            "harp": "hornpipe"
+          }
+        },
+        {
+          "muster": {
+            "melody": "gen:high"
+          },
+          "broadside": {
+            "drum": "deck",
+            "ornament": 0.25
+          },
+          "rigging": {
+            "melody": "gen:high",
+            "ornament": 0.2
+          },
+          "boarding": {
+            "melody": "gen:low"
+          }
+        }
+      ]
+    },
+    "boss_queen": {
+      "label": "The Drowned Crown",
+      "desc": "The Drowned Queen, phase I. F dorian 4/4 at 126: a stately, rolling 'tide' lute figure, a low F-C drone, slow swelling drum, the 'crown of salt' recorder lament sung like a siren, wide sea-cave reverb. Phases II and III replay it faster and heavier.",
+      "bpm": 126,
+      "tonic": "F",
+      "mode": "dorian",
+      "master": 0.67,
+      "reverb": {
+        "seconds": 2.4,
+        "decay": 3,
+        "damp": 0.72,
+        "wet": 0.28,
+        "dry": 0.86
+      },
+      "voices": {
+        "flute": {
+          "gain": 0.16,
+          "lowGain": 0.95,
+          "vibratoCents": 14
+        },
+        "pad": {
+          "gain": 0.032
+        },
+        "drone": {
+          "notes": [
+            "F2",
+            "C3"
+          ],
+          "gain": 0.046,
+          "lfoHz": 0.08,
+          "lfoDepth": 140
+        },
+        "drum": {
+          "gain": 0.54
+        }
+      },
+      "harpPatterns": {
+        "tide": [
+          0,
+          null,
+          1,
+          2,
+          3,
+          2,
+          1,
+          null,
+          0,
+          null,
+          1,
+          2,
+          3,
+          2,
+          1,
+          0
+        ]
+      },
+      "drumPatterns": {
+        "swell": [
+          1,
+          0,
+          0.3,
+          0,
+          0.8,
+          0.2,
+          0.4,
+          0.5
+        ]
+      },
+      "melodyRange": {
+        "high": [
+          "F4",
+          "F5"
+        ],
+        "low": [
+          "C4",
+          "C5"
+        ]
+      },
+      "themes": {
+        "crown": [
+          "F4:1 Ab4:1 C5:1 F5:1",
+          "Eb5:1.5 C5:0.5 Ab4:2",
+          "Db5:1 F5:1 Ab5:2",
+          "G5:1 F5:1 Eb5:2",
+          "C5:1 F5:1 Ab5:1 G5:1",
+          "F5:1 D5:1 Bb4:2",
+          "E5:1 G5:1 C5:1 E5:1",
+          "D5:1 C5:1 G4:2"
+        ]
+      },
+      "sections": {
+        "throne": {
+          "chords": [
+            "Fm",
+            "Eb",
+            "Fm",
+            "Db",
+            "Fm",
+            "Eb",
+            "Db",
+            "C"
+          ],
+          "harp": "tide",
+          "bass": true,
+          "pad": 1,
+          "drum": "swell",
+          "drumLast": "roll",
+          "melody": null
+        },
+        "crown": {
+          "chords": [
+            "Fm",
+            "Fm",
+            "Db",
+            "Eb",
+            "Fm",
+            "Bb",
+            "C",
+            "C"
+          ],
+          "harp": "tide",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "swell",
+          "drumLast": "roll",
+          "melody": "theme:crown",
+          "ornament": 0.12
+        },
+        "undertow": {
+          "chords": [
+            "Bb",
+            "Fm",
+            "Ab",
+            "Eb",
+            "Bb",
+            "Cm",
+            "Db",
+            "C"
+          ],
+          "harp": "chug",
+          "bass": true,
+          "pad": 1.15,
+          "drum": "drive",
+          "drumLast": "roll",
+          "melody": "gen:low"
+        },
+        "siren": {
+          "chords": [
+            "Ab",
+            "Eb",
+            "Fm",
+            "Fm",
+            "Db",
+            "Ab",
+            "Bb",
+            "C"
+          ],
+          "harp": "tide",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "swell",
+          "drumLast": "roll",
+          "melody": "gen:high"
+        },
+        "drowning": {
+          "chords": [
+            "Fm",
+            "Fm",
+            "Db",
+            "Eb",
+            "Fm",
+            "Bb",
+            "C",
+            "C"
+          ],
+          "harp": "grind",
+          "bass": true,
+          "pad": 1.2,
+          "drum": "gallop",
+          "drumLast": "roll",
+          "melody": "theme:crown",
+          "ornament": 0.3
+        }
+      },
+      "form": [
+        "throne",
+        "crown",
+        "undertow",
+        "siren",
+        "drowning"
+      ],
+      "cycles": [
+        {},
+        {
+          "throne": {
+            "harp": "chug"
+          },
+          "crown": {
+            "ornament": 0.35
+          },
+          "undertow": {
+            "melody": "gen:high"
+          },
+          "siren": {
+            "melody": "gen:low"
+          },
+          "drowning": {
+            "harp": "tide"
+          }
+        },
+        {
+          "throne": {
+            "melody": "gen:low"
+          },
+          "crown": {
+            "harp": "chug",
+            "melody": "gen:high"
+          },
+          "undertow": {
+            "harp": "tide",
+            "drum": "swell"
+          },
+          "siren": {
+            "harp": "chug",
+            "drum": "drive"
+          },
+          "drowning": {
+            "melody": "gen:high"
+          }
+        },
+        {
+          "throne": {
+            "drum": "half"
+          },
+          "crown": {
+            "drum": "drive"
+          },
+          "undertow": {
+            "melody": "gen:high",
+            "ornament": 0.2
+          },
+          "siren": {
+            "melody": "gen:low"
+          },
+          "drowning": {
+            "ornament": 0.15
+          }
+        }
+      ]
+    },
+    "boss_queen2": {
+      "label": "The Drowned Crown II",
+      "desc": "The Drowned Queen, phase II (the tide turns). Same theme, faster (138) and heavier: driving drum, churning lute, louder pad.",
+      "extends": "boss_queen",
+      "bpm": 138,
+      "voices": {
+        "pad": {
+          "gain": 0.038
+        },
+        "drone": {
+          "gain": 0.05
+        },
+        "drum": {
+          "gain": 0.58
+        }
+      },
+      "sectionPatch": {
+        "throne": {
+          "harp": "chug",
+          "drum": "drive",
+          "pad": 1.15,
+          "melody": "gen:low"
+        },
+        "crown": {
+          "drum": "drive",
+          "pad": 1.2
+        },
+        "undertow": {
+          "harp": "grind",
+          "drum": "gallop"
+        },
+        "siren": {
+          "drum": "drive"
+        },
+        "drowning": {
+          "drum": "roll",
+          "pad": 1.25
+        }
+      },
+      "cycles": [
+        {},
+        {
+          "throne": {
+            "melody": "gen:high"
+          },
+          "crown": {
+            "ornament": 0.35
+          },
+          "undertow": {
+            "melody": "gen:high"
+          },
+          "siren": {
+            "melody": "gen:low"
+          },
+          "drowning": {
+            "harp": "tide"
+          }
+        },
+        {
+          "throne": {
+            "melody": null
+          },
+          "crown": {
+            "melody": "gen:high"
+          },
+          "undertow": {
+            "melody": "gen:high",
+            "ornament": 0.2
+          },
+          "siren": {
+            "melody": "gen:low"
+          },
+          "drowning": {
+            "melody": "gen:high"
+          }
+        },
+        {
+          "throne": {
+            "melody": "gen:high"
+          },
+          "crown": {
+            "ornament": 0.2
+          },
+          "undertow": {
+            "melody": "gen:low"
+          },
+          "siren": {
+            "melody": "gen:high"
+          },
+          "drowning": {
+            "ornament": 0.4
+          }
+        }
+      ]
+    },
+    "boss_queen3": {
+      "label": "The Drowned Crown III",
+      "desc": "The Drowned Queen, final phase (the Reach drowns). Fastest (150): relentless rolling lute, thundering drums, the widest reverb, the siren lament crying over everything.",
+      "extends": "boss_queen",
+      "bpm": 150,
+      "softLowpass": 4400,
+      "reverb": {
+        "seconds": 2.8,
+        "decay": 2.9,
+        "damp": 0.7,
+        "wet": 0.32,
+        "dry": 0.82
+      },
+      "voices": {
+        "flute": {
+          "gain": 0.18
+        },
+        "pad": {
+          "gain": 0.044
+        },
+        "drone": {
+          "gain": 0.056
+        },
+        "drum": {
+          "gain": 0.62
+        }
+      },
+      "sectionPatch": {
+        "throne": {
+          "harp": "grind",
+          "drum": "roll",
+          "pad": 1.2,
+          "melody": "gen:high"
+        },
+        "crown": {
+          "harp": "tide",
+          "drum": "gallop",
+          "pad": 1.25,
+          "ornament": 0.3
+        },
+        "undertow": {
+          "harp": "grind",
+          "drum": "roll",
+          "melody": "gen:high"
+        },
+        "siren": {
+          "harp": "hammer",
+          "drum": "gallop",
+          "melody": "gen:high",
+          "ornament": 0.25
+        },
+        "drowning": {
+          "harp": "grind",
+          "drum": "roll",
+          "pad": 1.3
+        }
+      },
+      "cycles": [
+        {},
+        {
+          "throne": {
+            "melody": "gen:low"
+          },
+          "crown": {
+            "ornament": 0.5
+          },
+          "undertow": {
+            "melody": "gen:high",
+            "ornament": 0.2
+          },
+          "siren": {
+            "melody": "gen:high"
+          },
+          "drowning": {
+            "melody": "gen:high"
+          }
+        },
+        {
+          "throne": {
+            "melody": "gen:low",
+            "ornament": 0.2
+          },
+          "crown": {
+            "melody": "gen:high"
+          },
+          "undertow": {
+            "melody": "gen:low"
+          },
+          "siren": {
+            "harp": "tide"
+          },
+          "drowning": {
+            "ornament": 0.45
+          }
+        },
+        {
+          "throne": {
+            "harp": "chug"
+          },
+          "crown": {
+            "ornament": 0.15
+          },
+          "undertow": {
+            "harp": "chug"
+          },
+          "siren": {
+            "harp": "grind"
+          },
+          "drowning": {
+            "harp": "tide"
           }
         }
       ]
