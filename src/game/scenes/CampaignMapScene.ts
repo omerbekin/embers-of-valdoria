@@ -156,6 +156,7 @@ import { onStageResize, stageView } from '../stage';
 import { setItemValueSource } from '../../ui/item-tip';
 import { openCamp, type CampHandle } from '../../ui/camp-screen';
 import { BAND_NAME, nodeThreat, threatLine } from '../../campaign/level-gap';
+import { diveChainLine, pitChainLine } from '../../campaign/chain-info';
 import { SIDE_DANGER_LINE, SIDE_DANGER_NAME, sideDanger } from '../../campaign/side-danger';
 import { DayCounter } from '../../ui/day-counter';
 import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
@@ -251,6 +252,7 @@ type Arrival = { node: string; requested: boolean; action?: () => void };
 /** Düğüme göre göreli etiket dikdörtgeni. */
 type Side = 'below' | 'above' | 'right' | 'left' | 'belowR' | 'belowL' | 'aboveR' | 'aboveL';
 type Box = { x0: number; y0: number; x1: number; y1: number };
+const chainOpt = (c: string | null): { chain?: string } => (c ? { chain: c } : {});
 type LabelPlace = { x0: number; y0: number; w: number; h: number; sub: boolean; side: Side };
 /** Düğüm etiketi: `q` = kalıcı küçük ad (yalnızca masaüstü, bulunulan / gidilebilir olmayanlarda), `b` = ad + alt yazı şeridi (bulunulan / gidilebilir hep açık; diğerlerinde üstüne gelince / dokununca). */
 type LabelSlot = { q: LabelPlace | null; b: LabelPlace; hot: boolean };
@@ -2269,7 +2271,7 @@ export class CampaignMapScene extends Phaser.Scene {
    * Düğüm kartı içeriği (önizleme ve ulaşılamayan düğüm): savaş düğümünde düşman portreleri + lore, diğerlerinde düğümün kendi bilgisi
    * (eski hover kartının blurb'ü); devriyede mevcut devriye metni.
    */
-  private cardInfoFor(id: string): { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { text: string }; info?: { text: string } } {
+  private cardInfoFor(id: string): { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { text: string }; info?: { text: string }; chain?: string } {
     const n = node(this.map, id);
     const f = this.nodeFacts(id);
     const vis = nodeVisibility(this.map, this.s, session.revealFog)[id];
@@ -2290,13 +2292,14 @@ export class CampaignMapScene extends Phaser.Scene {
         : caravelHere
           ? `${caravelDef(this.map)!.name} lies here. Sail in and you must fight it. It moves one stop each time you move.`
           : depth
-        ? `Depth ${depth.dive} of ${diveMax(n)}. No healing since the last fight. If you fall here, the last chest you found sinks.`
+        ? `Depth ${depth.dive} of ${diveMax(n)}. If you fall here, the last chest you found sinks.`
         : sh
           ? `${sh.trial} Win the trial: ${sh.name} (${sh.effect}) for the rest of the campaign.${(this.s.boons ?? []).includes(n.shrine!) ? ' Already earned.' : ''}`
           : diveMax(n) > 1 && !patrol
             ? `Salvage Dive: after this fight you may dive up to ${diveMax(n) - 1} ${diveMax(n) - 1 === 1 ? 'depth' : 'depths'} deeper, one more fight each with no healing between, for better chests.`
             : '';
-      return { ...(patrol ? { title: 'Fight the patrol?', info: { text: f.blurb } } : side ? { info: { text: side } } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
+      const chain = depth ? diveChainLine(depth.dive ?? 0) : null;
+      return { ...(patrol ? { title: 'Fight the patrol?', info: { text: f.blurb } } : side ? { info: { text: side } } : {}), ...(chain ? { chain } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
     }
     const t = PLACE_CARD[n.type];
     return { ...(t ? { title: t.title, actionLabel: t.action } : {}), ...(lockInfo ? { info: { text: lockInfo } } : {}), ...(f.blurb ? { fallback: { text: f.blurb } } : {}) };
@@ -2331,6 +2334,7 @@ export class CampaignMapScene extends Phaser.Scene {
       nodeType: n.type,
       level: nodeLevel(this.s.mapId, id),
       ...this.threatOpt(id),
+      ...(o.chain ? { chain: o.chain } : {}),
       ...(o.foes ? { foes: o.foes } : {}),
       ...(info ? { info } : {}),
       then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
@@ -2909,6 +2913,7 @@ export class CampaignMapScene extends Phaser.Scene {
                   'Diving deeper is one more fight, with no healing in between. Surface now and you keep every chest. Fall down there and the last chest you found sinks.',
                 ]
               : [`You have reached the deepest point (depth ${dv.max}). Take everything you found back up.`],
+            ...chainOpt(dv.next ? diveChainLine(dv.won + 1) : null),
             chipsCap: 'Found',
             chips: [
               { tone: 'gain', icon: 'bag', text: `${chests} ${chests === 1 ? 'chest' : 'chests'}` },
@@ -3107,7 +3112,7 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** C kartı: kasaba ekranındaki yerin yanında küçük pencere (ateş, ilan panosu, kışla). Close, X, Esc ve zemine dokunma kapatır. */
-  private townWindow(h: TownHotspot, o: Pick<MwSpec, 'paras' | 'body' | 'acts' | 'chips' | 'chipsCap'> & { mandatory?: boolean }): void {
+  private townWindow(h: TownHotspot, o: Pick<MwSpec, 'paras' | 'body' | 'acts' | 'chips' | 'chipsCap' | 'chain'> & { mandatory?: boolean }): void {
     const n = node(this.map, this.s.at);
     const bg = n.scene?.background ?? '';
     const kind = nodeTags(n.subtitle, 'Town').kind;
@@ -3121,6 +3126,7 @@ export class CampaignMapScene extends Phaser.Scene {
       title: h.label,
       art: windowArt(`hotspot:${h.id}`, `town:${bg}`),
       paras: o.paras,
+      ...(o.chain ? { chain: o.chain } : {}),
       ...(o.body ? { body: o.body } : {}),
       ...(o.chips ? { chips: o.chips, ...(o.chipsCap ? { chipsCap: o.chipsCap } : {}) } : {}),
       acts: o.acts,
@@ -3153,6 +3159,7 @@ export class CampaignMapScene extends Phaser.Scene {
       paras: [...paragraphs(v.text), record],
       chipsCap: 'Purses',
       chips: this.pitChips(v),
+      ...chainOpt(pitChainLine(v)),
       acts: [
         { label: 'Not now', run: () => this.closeModal() },
         {
@@ -3184,6 +3191,7 @@ export class CampaignMapScene extends Phaser.Scene {
       paras: lines,
       chipsCap: 'Purses',
       chips: this.pitChips(v),
+      ...chainOpt(pitChainLine(v)),
       acts:
         v.next === null
           ? [leave]

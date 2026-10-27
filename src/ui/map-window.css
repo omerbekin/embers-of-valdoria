@@ -27,6 +27,7 @@ html.reduced-motion .mw-in .mw-panel, html.reduced-motion .mw-in .mw-scrim { ani
   background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
 .mw-txt { font: 400 max(13px, calc(26 * var(--u))) / 1.34 var(--g-body); color: #d9c8a2; }
 .mw-txt p { margin: 0 0 .55em; } .mw-txt p:last-child { margin-bottom: 0; }
+.mw-txt p.mw-chain { font-size: .86em; color: #b5a173; letter-spacing: .02em; }
 .mw-txt .q { color: #cdb88d; }
 .mw-lore { font: max(12px, calc(22 * var(--u))) var(--g-body); color: var(--g-dim); margin: 0; }
 .mw-cap { display: flex; align-items: center; gap: 10px; font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: rgba(217,178,106,.85); margin: 0; }
@@ -158,6 +159,7 @@ html.short .mw-body { padding: 8px 14px 8px; gap: 6px; }
 html.short .mw-hd { padding: 6px 12px; }
 html.short .mw-txt { font-size: 12.5px; line-height: 1.25; }
 html.short .mw-txt p { margin-bottom: .3em; }
+html.short .mw-txt p.mw-chain { font-size: 11.5px; }
 html.short .mw-plate { padding: 12px 8px 6px; gap: 2px; }
 html.short .mw-pds { font-size: 11.5px; line-height: 1.2; }
 html.short .mw-pdv { display: none; }

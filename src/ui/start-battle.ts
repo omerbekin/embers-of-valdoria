@@ -36,6 +36,8 @@ export interface StartBattleOpts {
   threat?: { line: string; band: 'normal' | 'danger' | 'deadly'; name: string; color: string };
   /** Yan karşılaşma uyarısı (src/campaign/side-danger.ts): "Stronger than the road ahead" satırı + etiket ve rengi. */
   side?: { line: string; name: string; color: string };
+  /** Arka arkaya savaş bilgisi (src/campaign/chain-info.ts): sakin tek satır, "Depth 3 · no rest since the surface". */
+  chain?: string;
   /** Savaşsız düğümde (kasaba, kamp, tüccar, hazine, olay) boş / verilmez: portre satırı çizilmez. */
   foes?: FoeGroup[];
   /** Birincil düğme yazısı (varsayılan "Fight"; kasaba "Enter", kamp "Rest" ...). */
@@ -132,6 +134,7 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     card.append(el('p', `sbc-threat ${t.band}`, `<span class="ln">${esc(t.line)}</span>${t.name ? `<b style="color:${esc(t.color)}"><i class="mk" aria-hidden="true">${mark}</i>${esc(t.name)}</b>` : ''}`));
   }
   if (o.side) card.append(el('p', 'sbc-threat danger side', `<span class="ln">${esc(o.side.line)}</span><b style="color:${esc(o.side.color)}"><i class="mk" aria-hidden="true">!</i>${esc(o.side.name)}</b>`));
+  if (o.chain) card.append(el('p', 'sbc-chain', esc(o.chain)));
   if (o.info) card.append(el('p', `sbc-info${o.info.quote ? ' quote' : ''}`, `${o.info.who ? `<b>${esc(o.info.who)}</b> ` : ''}${o.info.quote ? `“${esc(o.info.text)}”` : esc(o.info.text)}`));
   if (o.first?.length) card.append(el('p', 'sbc-then sbc-first', `<b>First</b> ${o.first.map((t) => esc(t)).join(' ')}`));
   if (o.then?.length) card.append(el('p', 'sbc-then', `<b>Then</b> ${o.then.map((t) => `${esc(t.name)} <span class="k">${esc(t.kind)}</span>`).join(' <i>or</i> ')}`));

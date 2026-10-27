@@ -64,6 +64,10 @@
   "companyPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer"],
   "recruitPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer"],
   "texts": {
+    "chainPit": "{n} fights in a row · no rest between",
+    "chainPitLeft": "{n} fights left · no rest between",
+    "chainPitLast": "Last fight · no rest since the first",
+    "chainDive": "Depth {n} · no rest since the surface",
     "intro": "The Ash Curse spreading from Castle Morvane in the north swallows a little more of Valdoria each day. Your journey begins on Mill Road, on the western coast, and ends at Morvane's gate. Each stop is an encounter. Until Ashford the road runs one way. After that, you can walk back along any road you have opened.",
     "introRules": "Each stop is an encounter. Until Ashford the road runs one way. After that, you can walk back along any road you have opened.",
     "farewell": "Your escort has brought word of the Ash Curse to Ashford. They stay behind to hold the village. A new company must carry the fight north.",
