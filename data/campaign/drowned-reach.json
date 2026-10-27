@@ -626,78 +626,78 @@
       "pit": "saltmere_pit",
       "story": "dr_harbor_master",
       "scene": {
-        "background": "town-valdren",
-        "focusY": 0.5,
-        "hotspots": [
-          {
-            "id": "stall",
-            "action": "trade",
-            "label": "Odo's Chandlery",
-            "rect": [
-              0,
-              0.26,
-              0.325,
-              0.6
-            ]
-          },
-          {
-            "id": "commander",
-            "action": "story",
-            "label": "Harbor-Master Rook",
-            "rect": [
-              0.465,
-              0.32,
-              0.545,
-              0.43
-            ]
-          },
-          {
-            "id": "inn",
-            "action": "inn",
-            "label": "Inn",
-            "rect": [
-            0.415,
-            0.43,
-            0.545,
-            0.6
-            ]
-          },
-          {
-            "id": "barracks",
-            "action": "recruit",
-            "label": "Barracks",
-            "rect": [
-              0.55,
-              0.27,
-              0.815,
-              0.58
-            ],
-            "note": "The barracks are quiet. Every sword here has already sworn to someone."
-          },
-          {
-            "id": "pit",
-            "action": "pit",
-            "label": "The Fighting Pit",
-            "rect": [
-              0.33,
-              0.37,
-              0.41,
-              0.6
-            ]
-          },
-          {
-            "id": "gate",
-            "action": "leave",
-            "label": "Harbor Gate",
-            "rect": [
-              0.885,
-              0.2,
-              1,
-              0.56
-            ]
-          }
-        ]
-      },
+          "background": "town-saltmere",
+          "focusY": 0.5,
+          "hotspots": [
+            {
+              "id": "stall",
+              "action": "trade",
+              "label": "Odo's Chandlery",
+              "rect": [
+                0.79,
+                0.66,
+                1,
+                0.95
+              ]
+            },
+            {
+              "id": "commander",
+              "action": "story",
+              "label": "Harbor-Master Rook",
+              "rect": [
+                0.69,
+                0.46,
+                0.75,
+                0.58
+              ]
+            },
+            {
+              "id": "inn",
+              "action": "inn",
+              "label": "Inn",
+              "rect": [
+                0.78,
+                0.17,
+                1,
+                0.6
+              ]
+            },
+            {
+              "id": "barracks",
+              "action": "recruit",
+              "label": "Barracks",
+              "rect": [
+                0.21,
+                0.08,
+                0.33,
+                0.37
+              ],
+              "note": "The barracks are quiet. Every sword here has already sworn to someone."
+            },
+            {
+              "id": "pit",
+              "action": "pit",
+              "label": "The Fighting Pit",
+              "rect": [
+                0,
+                0.28,
+                0.2,
+                0.52
+              ]
+            },
+            {
+              "id": "gate",
+              "action": "leave",
+              "label": "Harbor Gate",
+              "rect": [
+                0.55,
+                0.1,
+                0.77,
+                0.43
+              ]
+            }
+          ]
+        },
       "city": true
     },
     {
