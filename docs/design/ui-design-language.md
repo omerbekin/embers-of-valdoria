@@ -9,6 +9,7 @@ Bu belge, 2026-10-18 günü onaylanan mockup turlarından çıkan ANA MANTIKTIR.
 ## 1. Temel ilkeler
 
 1. **Önce mevcut parça.** Aynı işi gören ortak parça varsa onu kullan (bölüm 2). Yeni bir görünüm uydurma. Yeni parça gerekiyorsa onu ORTAK (global) kur ki başka ekran da kullanabilsin. Örnek: Formation ızgarası seferde, Quick Battle'da ve Multiplayer'da aynı.
+1b. **Üç ekran boyutu (Ömer 2026-10-27).** Her arayüz, mockup ve sahne görseli 16:9 (1920x1080), 21:9 (2580x1080) ve telefon (yatay ~844x390, `html.short` / `html.compact`) için birlikte tasarlanır. Kenara yaslanan öğeler `stageView.left/right` ile yerleşir; kasaba/sahne görsellerinde kırpılan şeritte (21:9'da üst/alt, telefonda yanlar) tıklanacak yer olmaz; dokunma hedefleri telefonda da en az 44px. Mockup'lar ve doğrulama ekran görüntüleri üç boyutta da çıkarılır.
 2. **Sınırları koru.** Mevcut bir ekranı yenilerken pencerenin boyutu, yeri ve çerçevesi aynı kalır. Yalnızca içerik iyileşir.
 3. **Sade ve ferah.**
    - Boş, ölü alan bırakma. Ama her şeyi birbirinin içine de sıkıştırma: bloklar arasında nefes payı olsun.

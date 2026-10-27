@@ -40,6 +40,7 @@ Web tabanlı (TypeScript + Phaser 3 + Vite), mobil tarayıcıda da oynanır.
 - **Zemine dokununca kapanma:** pencereler kararan zemine dokununca kapanır (Close/Done/Resume ile aynı; sürükleme kapatmaz); DOM `src/ui/backdrop.ts > dismissOnBackdrop`, Phaser `elBackdropTap`, `openModal({ onDismiss, dismissOnBackdrop })`. Zorunlu seçimler ve kayıp yaratacak kartlar kapanmaz; onay pencerelerinde zemin = No.
 - **Sürükle-bırak (Ömer 2026-10-10):** yuva doldurulan HER arayüzde sürükle-bırak (fare + dokunma, bırakma hedefi vurgusu, gölge); dokunarak seçme de çalışır. **Yuvalar arası taşıma (Ömer 2026-10-23):** dolu bir yuvadaki öğe, onu kabul eden başka bir yuvaya sürüklenebilir (ör. main hand ↔ off hand); hedef doluysa ikisi yer değiştirir, hedefteki öğe kaynağa uymuyorsa çantaya döner.
 - Dokunmatik öncelikli girdi; fare ve klavye de çalışır. Dokunma hedefleri en az 44px (gerçek piksel).
+- **Üç ekran boyutu (Ömer 2026-10-27):** HER arayüz, mockup ve sahne/kasaba görseli 16:9 (1920x1080), 21:9 (2580x1080) ve telefon (yatay ~844x390, `html.short`) düşünülerek üretilir: kenara yaslanan öğeler, kırpılan görsel alanları ve hotspot'lar üçünde de görünür ve tıklanır kalır. Ajan brief'leri bunu yazar; doğrulama üç boyutta da ekran görüntüsüyle yapılır.
 - **Kısa ekran:** CSS `html.short` (<=520px) / `html.compact` (<=720px) sınıflarını kullanır (@media döndürülmüş sahnede yanlış ölçer).
 - Yuva/hedef seçimi tek ortak hücre plakası dili (`shape-draw.ts` CellTile). Ana ekran dışı her sahne `lazy-scenes.ts` ile yüklenir (ayrıntı `docs/arch/sims-and-deploy.md` > Build).
 
