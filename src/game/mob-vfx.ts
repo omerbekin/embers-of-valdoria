@@ -322,6 +322,10 @@ export interface MobTune {
   bury?: number;
   /** Son kare bitince birden kaybolmasın: son karede durur ve bu kadar ms'de yumuşakça solar (Fire Volley: saplanan oklar). */
   fadeOut?: number;
+  /** Efektin genel saydamlığı (0-1; varsayılan 1): hedefi fazla örten duman / sis (Kiln Smoke; anim-review 2026-10-28). */
+  alpha?: number;
+  /** Vuruş parlaması (flash) boyut çarpanı (varsayılan 1; Pick of the Deep 0.78: kuklayı kaplamasın). */
+  flashScale?: number;
 }
 const TUNE = layout.animation.mobVfx as unknown as { sizeMult?: number; speedMult?: number; stabilize: { minMass: number; maxShift: number }; skills: Record<string, MobTune> };
 const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
@@ -488,7 +492,7 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
     const frameCount = meta?.frames ?? 8;
     const flashAt = (p: Pt, depth: number): void => {
       if (tune.flash === false) return;
-      const f = c.scene.add.circle(p.x, p.y, FLASH_SIZE / 2, flashColor, FLASH_ALPHA).setBlendMode(ADD_BLEND).setDepth(depth + 3);
+      const f = c.scene.add.circle(p.x, p.y, (FLASH_SIZE * (tune.flashScale ?? 1)) / 2, flashColor, FLASH_ALPHA).setBlendMode(ADD_BLEND).setDepth(depth + 3);
       c.scene.tweens.add({ targets: f, scale: FLASH_GROW, alpha: 0, duration: k.slow(FLASH_MS), onComplete: () => f.destroy() });
     };
     // DERİNLİK (Ömer 2026-10-19: "önündeki karakterlerin de önüne çıkacak, araya sıkışmaz"): efekt TÜM birimlerin üstünde (k.DEPTH, oyuncu
@@ -512,8 +516,9 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
       };
       const pair = (o: { delay?: number; frame?: number; keep?: boolean; from?: number }, at: Pt): Array<NonNullable<ReturnType<VfxKit['sheet']>>> => {
         const fade = !o.keep && !!tune.fadeOut;
-        const main = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 1 });
-        const glow = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 2, alpha: BOOST_ALPHA, blend: ADD_BLEND });
+        const a = tune.alpha ?? 1;
+        const main = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 1, ...(a < 1 ? { alpha: a } : {}) });
+        const glow = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 2, alpha: BOOST_ALPHA * a, blend: ADD_BLEND });
         const out = [main, glow].filter((x): x is NonNullable<typeof x> => !!x);
         // tune.fadeOut: son karede kalır, sonra solup yok olur (efekt bitince birden kaybolmaz)
         if (fade)

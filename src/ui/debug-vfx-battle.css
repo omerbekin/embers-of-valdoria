@@ -144,6 +144,20 @@ html.short .vb-info {
   background: #140f0b;
 }
 
+/* animasyon incelemesi (docs/anim-review/board.md): düzeltilen skill'ler yeşil, incelemedekiler soluk altın */
+.vb-select option.vb-fixed,
+.vb-select.vb-fixed {
+  color: #8fd48a;
+}
+
+.vb-select.vb-fixed {
+  border-color: #5f9a5a;
+}
+
+.vb-select option.vb-review {
+  color: #d9b45a;
+}
+
 .vb-btn.vb-arrow {
   min-width: 44px;
   padding: 0;

@@ -22,6 +22,7 @@ import { mobSheetId, mobTweenSheetId, registerExtraVfxSheet, vfxSheetFile, type 
 import { content } from '../engine';
 import layout from '../../data/battle-layout.json';
 import './debug-vfx-battle.css';
+import reviewBoard from '../../docs/anim-review/board.md?raw';
 
 const BT = IB_CFG.battleTest as typeof IB_CFG.battleTest & { allyMob: string; allySlot: number }; // allyMob / allySlot: dost hedefli skill testi (data/vfx-inbetween.json)
 const FPS_SCALE = layout.animation.mobVfx.fpsScale;
@@ -43,6 +44,15 @@ async function registerTween(mob: string, skill: string): Promise<boolean> {
   return true;
 }
 
+/** Codex + Claude animasyon incelemesi (docs/anim-review/board.md): skill id -> durum + tarih. Düzeltilenler listede ayrı görünür (Ömer 2026-10-28). */
+const REVIEW: Record<string, { status: string; date: string }> = {};
+for (const m of reviewBoard.matchAll(/^\| [^|]*?`([a-z0-9_]+)` \| [^|]+\| ([a-z-]+) \| (\d{4}-\d{2}-\d{2})/gm)) REVIEW[m[1]!] = { status: m[2]!, date: m[3]! };
+const reviewTag = (skill: string): string => {
+  const r = REVIEW[skill];
+  if (!r) return '';
+  return r.status === 'tamam' ? ` · FIXED ${r.date.slice(5)}` : ' · in review';
+};
+
 const tweenExists = (mob: string, skill: string): boolean => Object.keys(tweenMetas).some((k) => k.replace(/\\/g, '/').endsWith(`/${mob}/${skill}.json`));
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -56,7 +66,16 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
 
 type Version = 'real' | 'orig' | 'tween' | 'code' | 'hand';
 const HAND_FPS = 60; // el yapımı efekt her karede çizilir: Step ≈ 1 ekran karesi
-let openPanel: { close: () => void } | null = null;
+interface PanelHandle {
+  close: () => void;
+  /** tools/anim-capture.mjs (Playwright) için: skill'i id ile seç, sürümü değiştir, atış sürüyor mu. */
+  pick: (skill: string) => boolean;
+  version: (v: Version) => void;
+  busy: () => boolean;
+}
+let openPanel: PanelHandle | null = null;
+/** Açık VFX test panelinin otomasyon tutamacı (tools/anim-capture.mjs). */
+export const vfxBattleTestHandle = (): PanelHandle | null => openPanel;
 
 interface TestSkill {
   skill: string;
@@ -146,7 +165,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
         grp.label = sk.mobName;
         skillSel.append(grp);
       }
-      const o = el('option', '', sk.label);
+      const o = el('option', REVIEW[sk.skill]?.status === 'tamam' ? 'vb-fixed' : REVIEW[sk.skill] ? 'vb-review' : '', sk.label + reviewTag(sk.skill));
       o.value = String(i);
       grp.append(o);
     });
@@ -285,6 +304,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
           : state.version === 'code'
             ? `Code (${IB_CFG.methods[state.method]!.label}, ${state.sub}x) · ${(f?.meta.frames ?? 8) * ibSub} frames @ ${((f?.meta.fps ?? 12) * FPS_SCALE * ibSub).toFixed(1)} fps`
             : `Original · ${f?.meta.frames ?? 8} frames @ ${((f?.meta.fps ?? 12) * FPS_SCALE).toFixed(1)} fps`;
+    skillSel.classList.toggle('vb-fixed', REVIEW[sk.skill]?.status === 'tamam');
     info.textContent = `${sk.label} · ${sk.mobName} (${state.skill + 1}/${SK.length}) ${sk.ally ? 'on its ally' : 'on the dummy'} · ${label}`;
   }
 
@@ -413,7 +433,20 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     openPanel = null;
   }
 
-  openPanel = { close };
+  openPanel = {
+    close,
+    pick: (skill) => {
+      const i = SK.findIndex((s) => s.skill === skill);
+      if (i >= 0) pickSkill(i);
+      return i >= 0;
+    },
+    version: (v) => {
+      state.version = v;
+      last.version = v;
+      sync();
+    },
+    busy: () => casting || !sceneNow(),
+  };
   root.append(panel);
   sync();
   // 16 karelik sheet'leri (yalnızca var olanlar) önceden kaydet: bilgi satırı doğru kare sayısını göstersin; indirme yalnızca atışta olur
