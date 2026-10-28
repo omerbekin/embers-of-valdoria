@@ -99,15 +99,23 @@ export interface StoryDef extends EventText {
   liked?: string;
   disliked?: string;
   /**
-   * Sonsöz sayfası (beğenilse de beğenilmese de, son sayfadan sonra; tekrar okumada da). Valdren Keep'te komutan Valor'u anlatır (Ömer 2026-10-13);
-   * Valor'un açılması ve hediyesi kural tarafında (state.ts > complete, data/valor.json > campaign).
+   * Sonsöz sayfası (beğenilse de beğenilmese de, son sayfadan sonra; tekrar okumada da): yalnız kapanış metni, kendi başına hiçbir şey açmaz
+   * (Ömer 2026-10-28, open-questions 450: Harita 2 zincirlerine de sonsöz). Valdren Keep'te komutan Valor'u anlatır (Ömer 2026-10-13).
    */
   epilogue?: { title?: string; text: string };
+  /**
+   * Sonsöz Continue'su Valor dersini açar (Codex > Lessons + mangal gösterimi 0'dan; yalnız Valdren Keep, the_wardens_oath). Sonsözden ayrı bayrak
+   * (open-questions 450). Valor'un açılması ve hediyesi kural tarafında (state.ts > complete, data/valor.json > campaign).
+   */
+  valorLesson?: boolean;
   /** Hediye satırındaki özne (yoksa 'he'): "She presses a small bundle into your hands." (Ysolt, Keeper's Daughter; open-questions 450). */
   pronoun?: 'he' | 'she';
 }
 
 /** Hikâye sonunda hediye verilince replik altındaki not (NPC'nin `pronoun` alanıyla; varsayılan "He"). */
+/** Sonsöz Continue'su Valor dersini açar mı (yalnız `valorLesson` bayrağıyla; sonsöz tek başına açmaz, open-questions 450). */
+export const epilogueUnlocksValor = (def: Pick<StoryDef, 'valorLesson'>): boolean => def.valorLesson === true;
+
 export const storyGiftNote = (def: Pick<StoryDef, 'pronoun'>): string => `${def.pronoun === 'she' ? 'She' : 'He'} presses a small bundle into your hands.`;
 
 /** Kasaba hikâye sahneleri (T5; sis açma YOK; düğümün `story` alanı). */

@@ -7,6 +7,7 @@ import {
   nextMapFor,
   EVENTS,
   STORIES,
+  epilogueUnlocksValor,
   storyGiftNote,
   chooseEvent,
   choiceBlocked,
@@ -3520,7 +3521,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const dialogue = def.dialogue ?? [];
     // Kasaba ekranındaki NPC (Ömer 2026-10-12): sahne yeniden okunabilir; ödül (hediye) yalnızca ilk girişte, tekrar ilerlemeyi değiştirmez
     const done = (answers?: number[]) => (replay ? this.closeModal() : this.commit(completeStory(this.s, answers)));
-    // Sonsöz sayfası (Valdren Keep: komutan Valor'u anlatır; Ömer 2026-10-13): hikâyenin son sayfasından sonra; ilk girişte korlar 0'dan tutuşur
+    // Sonsöz sayfası (Valdren Keep: komutan Valor'u anlatır, Ömer 2026-10-13; Harita 2 zincirleri, open-questions 450): hikâyenin son sayfasından sonra; ilk girişte korlar 0'dan tutuşur
     const finish = (answers?: number[]): void => {
       const ep = def.epilogue;
       if (!ep) return done(answers);
@@ -3535,8 +3536,11 @@ export class CampaignMapScene extends Phaser.Scene {
             label: 'Continue',
             primary: true,
             run: () => {
-              if (!replay && this.s.valor === undefined) rememberShown('valor', 0);
-              markLessonSeen('valor'); // Valor dersi (komutanın anlatımı; ayrı kutu yok): Codex > Lessons'a girer
+              // Valor dersi (komutanın anlatımı; ayrı kutu yok): Codex > Lessons'a girer. Yalnız valorLesson bayrağıyla (open-questions 450)
+              if (epilogueUnlocksValor(def)) {
+                if (!replay && this.s.valor === undefined) rememberShown('valor', 0);
+                markLessonSeen('valor');
+              }
               done(answers);
             },
           },

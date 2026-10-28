@@ -446,7 +446,11 @@
       "likeThreshold": 2,
       "gift": { "rarity": "common" },
       "liked": "He knots off the rope and sets it down. \"Then hear one thing more. That crown burns whoever calls on it, a little more each time. The keeper of the Cliff Chapel can wash the burn away; the monks taught her that much before they shut their gates.\"\n\n\"And take this. Someone left it on my boat and never came back for it. The river doesn't give much back, so see you keep it.\"",
-      "disliked": "\"Suit yourselves. The river doesn't care either way, and nor do I.\" He spits into the reeds and goes back to his rope."
+      "disliked": "\"Suit yourselves. The river doesn't care either way, and nor do I.\" He spits into the reeds and goes back to his rope.",
+      "epilogue": {
+        "title": "The Ferryman's Warning",
+        "text": "He walks you down to the water and holds the boat steady against the reeds while you climb in. The crown's warmth bleeds through the cloth between you, and he watches it the way a man watches a fire he doesn't trust. \"That burn it leaves. Ash in the blood; the monks call it the Ashen Taint. It doesn't fade when you sleep. It settles in, and it waits.\"\n\n\"So when it sits heavy on you, climb to the Cliff Chapel before you climb anywhere else. The keeper there washes it out and asks nothing for it. Tell her the ferryman sent you.\" He pushes off into the grey water. \"And don't let the river keep you.\""
+      }
     },
     "dr_weir_warden": {
       "title": "The Weir-Warden",
@@ -480,7 +484,11 @@
       "likeThreshold": 2,
       "gift": { "rarity": "common" },
       "liked": "For the first time she stops working. \"Then go when the water's low, and hit it hard whenever it leaves the wet stone. When it calls the flood, don't waste your blows on it; wait for the mud.\"\n\n\"Take this. Eel-oil, and whatever else is in the bundle. It keeps the damp out of steel, and out of your bones, a little.\"",
-      "disliked": "\"Hm. Then the weir will teach you, the way it teaches everyone.\" She turns back to her gates."
+      "disliked": "\"Hm. Then the weir will teach you, the way it teaches everyone.\" She turns back to her gates.",
+      "epilogue": {
+        "title": "The Weir-Warden's Gates",
+        "text": "She walks you as far as the last sluice, where the water slaps the stone and the marsh smells of rot and iron. \"Remember what I told you. That Slick Hide is the flood's gift, not its own. On wet stone your blades will slide off it. Out of the water it is only an eel with too many teeth, and an eel can be cut.\"\n\n\"If you clear the gap, I'll know it. The gates will stop groaning, and I'll sleep a night through for the first time since spring.\" She hauls the wheel round, and the sluice closes behind you with a long iron sigh. \"Go on, then. The tide won't wait, and nor will I.\""
+      }
     },
     "dr_harbor_master": {
       "title": "The Harbor-Master",
@@ -513,7 +521,11 @@
       "likeThreshold": 2,
       "gift": { "rarity": "common" },
       "liked": "Rook shuts the ledger with a soft clap. \"A sensible company. Rare, in this town. Choose your side at the square when you're ready; I won't pretend I don't hope it's mine.\"\n\n\"Meanwhile, take this as a welcome from the Guild. We remember our friends, and we remember the ones who weren't.\"",
-      "disliked": "\"Everyone takes a side in Saltmere, sooner or later.\" He closes his ledger. \"Mind you don't take the wrong one.\""
+      "disliked": "\"Everyone takes a side in Saltmere, sooner or later.\" He closes his ledger. \"Mind you don't take the wrong one.\"",
+      "epilogue": {
+        "title": "The Guild's Ledger",
+        "text": "Rook walks you down to the quay himself, his clerks trailing behind. Out past the harbour mouth the walls of Harbor Fort squat on their rock, grey and patient. \"Whoever holds that fort holds Saltmere by the throat. The Guild would very much like it held by friends.\"\n\n\"And somewhere beyond it the Black Caravel is turning on its circle, while Admiral Vane counts our cargo from his cove. The Order would pray him into the sea. The Guild would rather see him hanged and his debts settled, in that order.\" He taps the ledger under his arm. \"Every name in here owes someone something. Mind yours stays on the right page.\""
+      }
     },
     "dr_keepers_daughter": {
       "title": "The Keeper's Daughter",
@@ -547,7 +559,11 @@
       "likeThreshold": 2,
       "gift": { "rarity": "common" },
       "liked": "She lowers the spyglass at last. \"Then keep a light with you, the way he did, and keep your eyes on the black sails. Sink the Caravel and the Admiral will have to come out of his cove.\"\n\n\"Take this. It was his. He'd want it to go to the isles, even if he can't.\"",
-      "disliked": "\"My father was right about the sea, whatever you think of him.\" She lifts the spyglass again and says nothing more."
+      "disliked": "\"My father was right about the sea, whatever you think of him.\" She lifts the spyglass again and says nothing more.",
+      "epilogue": {
+        "title": "The Dark Lamp",
+        "text": "She walks with you to the very end of the jetty and points the spyglass at a black stub of stone far out in the grey. \"That's Lantern Rock. The lamp used to sweep the whole Sound, every night of my life. Then the storm came, and the bells rang under the water, and it went out. He went out with it.\"\n\n\"Mother says not to look for him. I don't, not really. I only look for the light.\" She folds the spyglass and holds it against her chest. \"If you pass the Rock, look up at the lamp for me. Just once. Then come back and tell me what you saw.\""
+      }
     }
   }
 }
