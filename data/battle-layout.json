@@ -472,6 +472,7 @@
     "hpFill": "#5cc46b",
     "hpFillEnemy": "#e0574a",
     "mpFill": "#4f8cff",
+    "taintedMp": "#8a5ab8",
     "speedFill": "#e8a317",
     "speedFull": "#fff0a0",
     "shield": "#8fe3ff",

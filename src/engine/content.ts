@@ -27,6 +27,8 @@ import defender from '../../data/classes/defender.json';
 import druid from '../../data/classes/druid.json';
 import gambler from '../../data/classes/gambler.json';
 import hexer from '../../data/classes/hexer.json';
+// Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md): her zaman açık 12. class
+import vesper from '../../data/classes/vesper.json';
 import mage from '../../data/classes/mage.json';
 import paladin from '../../data/classes/paladin.json';
 import undead from '../../data/classes/undead.json';
@@ -124,7 +126,7 @@ import { placementHints, type HintRules, type PlacementHint } from './formation-
 import { AREA_TARGETS } from './area-shape';
 import { FOE_TARGETS, skillRangeFor } from './range';
 import { buildDef } from './stats';
-import type { UrnRule, AreaDef, BattleCondition, BattleMode, BattleObjective, BattleRules, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
+import type { UrnRule, AreaDef, BattleCondition, BattleMode, BattleObjective, BattleRules, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleDef {
   id: string;
@@ -151,6 +153,7 @@ const classData: Record<string, CombatantData> = {
   gambler,
   cutthroat,
   hexer,
+  vesper,
   aoe_tester: aoeTester,
   pose_tester_1: poseTester1,
   pose_tester_2: poseTester2,
@@ -294,7 +297,9 @@ export const statuses = stripNotes<StatusDef>(statusesJson);
 /** Global skill'ler (data/global-skills.json): rest, skip_turn, move_tile. Class'ların 4 skill'inden ve `skills` tablosundan AYRIDIR. */
 export const globalSkills = stripNotes<GlobalSkillDef>(globalSkillsJson);
 /** Yerde kalan etki tanımları (data/grounds.json). */
-export const grounds = stripNotes<GroundDef>(groundsJson);
+export const grounds = Object.fromEntries(Object.entries(stripNotes<GroundDef>(groundsJson)).filter(([key]) => key !== 'reactions')) as Record<string, GroundDef>;
+/** Zemin tepkimeleri (data/grounds.json > reactions; Ömer 2026-10-27, open-questions 445): kurulum zemini + tetik zemini -> tek sonuç. */
+export const groundReactions = stripNotes<GroundReactionDef>((groundsJson as unknown as { reactions: unknown }).reactions);
 
 /** Valor kuralları (data/valor.json; src/engine/valor.ts). */
 export const valorRules = valorJson as unknown as ValorRules;
@@ -755,6 +760,7 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     valorRules,
     statuses,
     grounds,
+    groundReactions,
     formulas,
     units: { ...classes, ...summons, ...bosses, ...mobs },
     maxSlots: def.slots,

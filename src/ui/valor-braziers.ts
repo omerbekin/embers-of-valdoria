@@ -289,6 +289,14 @@ export interface ValorWoundedHero {
 }
 
 /** Saf: Wounds satırı düğmesi (etiket, pasif mi, ipucu). Bedel yoksa (kural kapalı) null. */
+/**
+ * Heal wound tıklamasının sonucu: null = başarı (pencere yenilenir), metin = hata. `heal` null döndürünce başarıdır; eski `heal?.(id) ?? '...'`
+ * null'ı hataya çeviriyordu: Valor harcanıp yara silindiği hâlde pencere "Cannot heal here" gösterip yenilenmiyordu (Ömer 2026-10-28).
+ */
+export function woundHealOutcome(heal: ((heroId: string) => string | null) | undefined, heroId: string): string | null {
+  return heal ? heal(heroId) : 'Cannot heal here';
+}
+
 export function woundHealButton(h: Pick<ValorWoundedHero, 'name' | 'blocked'>, cost: number | null): { label: string; disabled: boolean; tip: string } | null {
   if (cost === null) return null;
   return { label: `Heal wound · ${cost}`, disabled: h.blocked !== null, tip: h.blocked ?? `Spend ${cost} embers to heal one wound of ${h.name}.` };
@@ -395,7 +403,7 @@ export function openValorRevive(o: ValorReviveOptions): void {
   };
 
   const doHeal = (h: ValorWoundedHero): void => {
-    const why = o.heal?.(h.id) ?? 'Cannot heal here';
+    const why = woundHealOutcome(o.heal, h.id);
     if (why) {
       msg.textContent = why;
       uiSound('error');

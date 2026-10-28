@@ -10,9 +10,19 @@ export function isPrimaryActive(attrs: Attributes, primary: Attribute | undefine
  * Hız yuvarlaması (Ömer 2026-10-17, gizli x2 stat ölçeği kaldırıldı): hız değerleri `formulas.json > attributes.spdStep` katına yuvarlanır
  * (yoksa 1 = tam sayı). Oyuncunun gördüğü hız motorun kullandığı hızdır; adım yalnızca sıra çizelgesini bugünkü hâliyle korumak için veride.
  */
+/**
+ * Değeri adımın katına yuvarlar, kayan nokta artığı olmadan (87 x 0,1 = 8,700000000000001 değil 8,7; Ömer 2026-10-28: ekranda uzun ondalık
+ * görünmesin). Adımlı her yuvarlama bunu kullanır.
+ */
+export function snapToStep(v: number, step: number): number {
+  const n = Math.round(v / step) * step;
+  const dec = (String(step).split('.')[1] ?? '').length;
+  return Number(n.toFixed(Math.min(dec + 2, 10)));
+}
+
 export function roundSpeed(v: number, formulas: Pick<Formulas, 'attributes'>): number {
   const s = formulas.attributes.spdStep ?? 1;
-  return Math.round(v / s) * s;
+  return snapToStep(v, s);
 }
 
 /** Hızın alt sınırı: bir hız adımı. */
@@ -170,6 +180,7 @@ export function hasUnitModifiers(mods: UnitModifiers | undefined): boolean {
     ATTRS.some((k) => nonOne(mods.attrMult?.[k]) || nonZero(mods.attrAdd?.[k])) ||
     nonOne(mods.mpMult) ||
     nonOne(mods.spdMult) ||
+    nonOne(mods.accuracyMult) ||
     nonOne(mods.spdRoll) ||
     nonOne(mods.weaponMult) ||
     AFFIX_ADD.some((k) => nonZero(mods[k])) ||
@@ -230,6 +241,8 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
   };
   // Affix ekleri (Ömer 2026-10-11): alan verilmezse stat hiç yazılmaz (bugünkü birimler birebir aynı)
   if (mods.mpMult !== undefined && mods.mpMult !== 1) stats.mp = Math.max(0, Math.round(stats.mp * mods.mpMult));
+  // İsabet çarpanı (Ömer 2026-10-27, topuz örtüğü): toplam isabete (taban + accuracyAdd) oransal
+  if (mods.accuracyMult !== undefined && mods.accuracyMult !== 1) stats.accuracy = Math.max(0, r4(stats.accuracy * mods.accuracyMult));
   if (mods.spdMult !== undefined && mods.spdMult !== 1) stats.spd = Math.max(speedMin(formulas), r4(stats.spd * mods.spdMult));
   // Kişisel hız zarı (Ömer 2026-10-24): SON hıza, en sonda (kahraman sayfası, item önizlemesi ve savaş aynı değeri görür)
   if (mods.spdRoll !== undefined && mods.spdRoll !== 1) {
@@ -300,7 +313,7 @@ export function applySummonVariant(def: CombatantDef, variant: keyof SummonVaria
   if (mult === 1) return def;
   // STR/INT summon.variantStatStep katına yuvarlanır (formulas.json; yoksa 0,1)
   const S = formulas.summon?.variantStatStep ?? 0.1;
-  const r1 = (v: number) => Math.round((v * mult) / S) * S;
+  const r1 = (v: number) => snapToStep(v * mult, S);
   const stats: Stats = { ...def.stats, hp: Math.max(1, Math.round(def.stats.hp * mult)), str: r1(def.stats.str), int: r1(def.stats.int), hpRegen: def.stats.hpRegen * mult };
   return { ...def, attributes: { ...def.attributes, str: stats.str, int: stats.int }, stats };
 }

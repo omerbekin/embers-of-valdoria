@@ -8,7 +8,7 @@ import { pitOf } from './pit';
 import { oathDef } from './oath';
 import { sanitizeHeroQuests } from './quests';
 import { boonIds } from './side-content';
-import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, type ItemInstance } from '../progression/items';
+import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, stripUnusable, type ItemInstance } from '../progression/items';
 import { classes, valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
@@ -140,6 +140,7 @@ function upgradeState(s: CampaignState): void {
   const raw = s as unknown as Record<string, unknown>;
   if (raw.version === 1) raw.version = 2;
   const overflow: ItemInstance[] = []; // ikinci el taşıması: ikinci el doluysa oradaki item torbaya
+  let stripped = false; // sınıfın takamadığı item yuvadan çıktı mı (kurulum değişti: yarım savaş atılır)
   const upgradeHero = (h: Hero): Hero => {
       if (!h || typeof h !== 'object') return h;
       const eq = emptyEquipment();
@@ -152,6 +153,8 @@ function upgradeState(s: CampaignState): void {
       }
       // 2026-10-12 ikinci el yuvası: silah yuvasındaki kalkan ikinci ele geçer (sürüm artmaz; her okumada çalışır, idempotent)
       migrateOffhand(eq, overflow);
+      // 2026-10-28 (Ömer): sınıfın artık takamadığı item (örn. war_maul hammers ailesine geçti, Warrior kullanamaz) torbaya döner; yarım savaş atılır
+      if (stripUnusable(h.class, eq, overflow).length) stripped = true;
       promoteOffhand(eq); // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
       const out = { ...h, equipment: eq };
       normalizeLevelFields(out); // level / XP / puanlar (sürüm 9; bozuk değer varsayılana, hiçbir şey geri alınmaz)
@@ -195,6 +198,7 @@ function upgradeState(s: CampaignState): void {
   if (dv !== undefined && !(dv && dv.node === s.at && typeof dv.depth === 'number' && Number.isInteger(dv.depth) && dv.depth >= 1 && (dv.diving === undefined || dv.diving === true)))
     delete (s as { dive?: unknown }).dive;
   s.inventory = [...(Array.isArray(s.inventory) ? s.inventory.filter(isItem) : []), ...overflow.filter(isItem)];
+  if (stripped) delete (s as { suspended?: unknown }).suspended;
   // Bekleyen teslim: bozuksa atılır (item'ler zaten torbada; yalnızca gösterilecek an kaybolur)
   const ho = s.pendingHandover as unknown as Record<string, unknown> | undefined;
   if (ho !== undefined && !(ho && typeof ho.node === 'string' && Array.isArray(ho.items) && ho.items.every((u) => typeof u === 'string') && Array.isArray(ho.from)))

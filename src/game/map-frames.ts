@@ -35,16 +35,22 @@ export interface FrameSpec {
 const BASE: Record<FrameKind, { R: number; glowR: number }> = {
   battle: { R: 33, glowR: 40 },
   tab: { R: 36, glowR: 46 },
-  town: { R: 48, glowR: 56 },
+  town: { R: 62, glowR: 86 },
   elite: { R: 50, glowR: 60 },
   boss: { R: 64, glowR: 84 },
 };
+
+/** Kasaba kalkanı (merkezden): yarı genişlik, üst kenar, omuz, uç. */
+export const TOWN_SHIELD = { hw: 32, top: -37, shoulder: 17, tip: 44 };
+const TOWN_ICON = 48;
 
 export function frameSpec(type: NodeType | string): FrameSpec {
   const k = frameKind(type);
   const f = k === 'boss' ? BOSS_K : FRAME_K;
   const b = BASE[k];
   // Battle çerçevesi bugünkü yarıçapla (24) başlar: R en az ikon yarısı + pay
+  // Kasaba (Ömer 2026-10-27, mockup town-nodes A Heraldic Shield): savaş düğümünün ~1.35 katı kalkan plakası; FRAME_K ile küçülmez
+  if (k === 'town') return { R: b.R, glowR: b.glowR, icon: TOWN_ICON, boss: false };
   return { R: Math.round(b.R * f), glowR: Math.round(b.glowR * f), icon: k === 'boss' ? 55 : 44, boss: k === 'boss' };
 }
 
@@ -108,13 +114,21 @@ export function drawFrame(g: Phaser.GameObjects.Graphics, type: NodeType | strin
     return;
   }
   if (kind === 'town') {
-    for (const s of [-1, 1]) {
-      g.lineStyle(2, c, 1).lineBetween(S(s * 40), S(-12), S(s * 40), S(16));
-      shape(g, `M${s * 40} -12 L${s * 58} -6 L${s * 40} 0`, k, 0x8c2b1c, 1, c, 1.6);
-    }
-    shape(g, 'M-14 -44 L-14 -52 L-8 -52 L-8 -47 L-3 -47 L-3 -52 L3 -52 L3 -47 L8 -47 L8 -52 L14 -52 L14 -44', k, c, 1, 0x000000, 1, 0.5);
-    disc(g, S(34), c, 2.6);
-    g.lineStyle(1.2, c, 0.6).strokeCircle(0, 0, S(39));
+    // Armalı kalkan: altın kenar, koyu iç, tepede küçük kızıl sancak
+    const { hw, top, shoulder, tip } = TOWN_SHIELD;
+    const outer = [{ x: -hw, y: top }, { x: hw, y: top }, { x: hw, y: shoulder }, { x: 0, y: tip }, { x: -hw, y: shoulder }];
+    const ins = 0.07 * hw * 2;
+    const inner = [{ x: -hw + ins, y: top + ins }, { x: hw - ins, y: top + ins }, { x: hw - ins, y: shoulder - ins * 0.2 }, { x: 0, y: tip - ins * 1.5 }, { x: -hw + ins, y: shoulder - ins * 0.2 }];
+    g.fillStyle(0xf0cf78, 1).fillPoints(outer, true, true);
+    g.fillStyle(0xa8802e, 1).fillPoints([{ x: -hw, y: shoulder }, { x: 0, y: tip }, { x: hw, y: shoulder }, { x: hw, y: top + (shoulder - top) * 0.5 }, { x: -hw, y: top + (shoulder - top) * 0.5 }], true, true);
+    g.fillStyle(0xf6dc8c, 1).fillRect(-hw, top, hw * 2, 3);
+    g.lineStyle(1.5, 0x3a2a12, 0.9).strokePoints(outer, true, true);
+    g.fillStyle(0x17100a, 1).fillPoints(inner, true, true);
+    g.fillStyle(0x4a3418, 0.9).fillEllipse(0, -6, hw * 1.45, 50);
+    g.lineStyle(1, c, 0.5).strokePoints(inner, true, true);
+    const py = top - 17;
+    g.fillStyle(0xb02a22, 1).fillPoints([{ x: -8, y: py }, { x: 8, y: py }, { x: 8, y: top + 2 }, { x: 0, y: top - 3 }, { x: -8, y: top + 2 }], true, true);
+    g.lineStyle(2, c, 1).lineBetween(-8, py, 8, py);
     return;
   }
   if (kind === 'elite') {

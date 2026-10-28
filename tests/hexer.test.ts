@@ -528,7 +528,7 @@ describe('Önizleme (preview) = gerçek', () => {
     expect(ee).toContain(`Doom at ${MAX} Omens`); // yalnızca sayı satırı; Doom kuralı Codex Curses'ta
     expect(ee).not.toContain('resets the');
     const dm = describeSkill(S.doom_mark!, hx.stats, content.formulas, {}, defs).lines.join(' | ');
-    expect(dm).toContain('×1.65');
+    expect(dm).toContain('65% more power');
     expect(dm).not.toContain(`Doom at ${MAX} Omens`);
     const wc = describeSkill(S.withering_curse!, hx.stats, content.formulas, {}, defs).lines.join(' | ');
     expect(wc).toContain('Withering for 3 turns');

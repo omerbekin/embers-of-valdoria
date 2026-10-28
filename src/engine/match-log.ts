@@ -134,6 +134,8 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `${L(e.source)} -> ${L(e.target)}: MISSED`;
     case 'block':
       return `${L(e.source)} -> ${L(e.target)}: BLOCKED${e.guard ? ' (guard share)' : ''} (shield)`;
+    case 'daze':
+      return `${L(e.source)} -> ${L(e.target)}: DAZED (turn counter -${e.push})`;
     case 'heal':
       return `${L(e.source)} heals ${L(e.target)} ${e.amount}${e.crit ? ' CRIT' : ''}${e.cause === 'dark_bond' ? ' (Dark Bond copy of life steal)' : ''}, hp ${e.hpAfter}`;
     case 'shieldTrigger':
@@ -142,6 +144,8 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `${L(e.source)} -> ${L(e.target)}: ${e.amount >= 0 ? '+' : ''}${e.amount} ${e.magic ? 'magic ' : ''}shield (now ${e.magic ? e.magicShieldAfter : e.shieldAfter})`;
     case 'manaBurn':
       return `${L(e.source)} burns ${e.amount} MP of ${L(e.target)} (now ${e.mpAfter})${e.cause ? ` [${e.cause}]` : ''}`;
+    case 'taint':
+      return e.ended ? `${L(e.target)} loses its tainted mana pool (${e.pool})${e.cause === 'expired' ? ' [Ley Brand ran out]' : ' [Ley Brand removed]'}` : `${L(e.target)} gains a tainted mana pool: ${e.mp}/${e.maxMp} MP (Ley Brand)`;
     case 'emptyProc':
       return `${L(e.target)} is out of mana: ${Math.round(e.chance * 100)}% roll for ${e.status} + damage (${battle.skill(e.skill)?.name ?? e.skill}) -> ${e.success ? 'HIT' : 'no effect'}`;
     case 'status':
@@ -195,6 +199,8 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `ground ${e.ground} on ${e.board} cells [${e.slots.join(',')}] for ${e.turns}t`;
     case 'groundEnd':
       return `ground effect ${e.id} ended`;
+    case 'groundReaction':
+      return `GROUND REACTION ${e.label.toUpperCase()} on ${e.board} cell ${e.slot}: ${e.setup} + ${e.trigger} (by ${L(e.source)})`;
     case 'death':
       return `${L(e.target)} DIED${e.corpse ? ' (leaves a revivable corpse)' : ''}`;
     case 'waveCleared':

@@ -94,10 +94,20 @@ describe('bölge I mob hızları (veri)', () => {
     expect(b.turnQueue(8).findIndex((u) => u.startsWith('party'))).toBeLessThanOrEqual(1);
   });
 
+  /**
+   * BİLİNEN EKSİK (geçici muafiyet; normalde BOŞ; campaign-balance.test.ts > PENDING_LOW kalıbı): silah tipleri reworkünden (open-questions 443;
+   * ör. mace -%9 hız) sonra bu düğümlerde düşman ilk kahraman turundan önce 1'den fazla oynuyor. Ömer 2026-10-28: denge değeri değişmez, element
+   * reworkü sonrası sim'e kadar (open-questions 427) beklesin. Listedeki düğüm hâlâ eksik olmalı: düzelirse test KIRMIZI olur, listeden çıkar.
+   */
+  const PENDING_EARLY_ENEMY: ReadonlySet<string> = new Set<string>([]);
   it('Defender/Mage/Paladin karşısında düşman en çok 1 tur önce oynar (Windy Moor, Brackenridge, Charcoal Camp)', () => {
     for (const node of ['moor', 'hills', 'hoard', 'cairn', 'charcoal']) {
       const q = battleForPlan(plan(node)).turnQueue(8);
-      expect(q.findIndex((u) => u.startsWith('party')), node).toBeLessThanOrEqual(1);
+      const first = q.findIndex((u) => u.startsWith('party'));
+      if (PENDING_EARLY_ENEMY.has(node)) {
+        console.warn(`[turn-order] BİLİNEN EKSİK: ${node} ilk kahraman turu ${first}. sırada (> 1; muaf: PENDING_EARLY_ENEMY, open-questions 443)`);
+        expect(first, `${node} düzeldi: PENDING_EARLY_ENEMY listesinden çıkar`).toBeGreaterThan(1);
+      } else expect(first, node).toBeLessThanOrEqual(1);
     }
   });
 });

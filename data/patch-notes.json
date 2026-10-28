@@ -2,6 +2,35 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.9.10.1",
+      "date": "2026-10-29",
+      "groups": [
+        {
+          "heading": "New",
+          "items": [
+            "Weapon types: swords, axes, maces, hammers, daggers, bows, staves and charms each have their own base stat, power and speed.",
+            "New hammers for Defender and Paladin can Daze on hit; two-handed melee weapons hit harder but are a little slower.",
+            "Anti-Mage now uses only daggers, and Drain Field is now Ley Brand: manaless enemies get tainted mana to steal and burn.",
+            "Ground effects now react: poison explodes in fire, holy fire purifies poison, fire and holy fire merge, water spreads and freezes."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Bonuses read in plain words (20% more, takes 10% less); speed rolls are now ±5%; Ley Brand burns mana on every cast and marks its target."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "The Silver Stag's battle card says who they are; stat numbers drop long decimals; healing a wound with Valor updates at once.",
+            "The Valor window is no longer covered by the party figure or tutorial tips; recruit tags wrap; skill badges are smaller.",
+            "Raven's Peck, Kiln Smoke and Pick of the Deep effects now line up with their casters and targets."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.10",
       "date": "2026-10-28",
       "groups": [

@@ -24,8 +24,9 @@ const avatars = import.meta.glob('../../assets/avatars/*.webp', { eager: true, q
 const avatarUrl = (id: string): string | undefined => avatars[`../../assets/avatars/${id}.webp`];
 
 export interface StartBattleOpts {
+  /** Artık gösterilmez (Ömer 2026-10-27: başlıkta "Start battle?" / "Enter town?" sorusu yok, başlık düğüm adı); çağıranlar için duruyor. */
   title?: string;
-  /** Düğüm adı. */
+  /** Düğüm adı (kartın başlığı). */
   name: string;
   /** Tür satırı ("Battle · Outlaw Pack"). */
   subtitle: string;
@@ -43,7 +44,11 @@ export interface StartBattleOpts {
   /** Birincil düğme yazısı (varsayılan "Fight"; kasaba "Enter", kamp "Rest" ...). */
   actionLabel?: string;
   /** who yoksa (düğüm lore'u) yalnızca italik cümle. */
-  info?: { who?: string; text: string; quote?: boolean };
+  info?: { who?: string; text: string; quote?: boolean; plain?: boolean };
+  /** Bilgi satırının üstünde etiketler (Ömer 2026-10-27: devriye PATROL · 60% XP · FULL LOOT · NO VALOR); gold = vurgulu, dim = sönük. Telefonda da görünür. */
+  tags?: Array<{ text: string; tone?: 'gold' | 'dim' | 'silver' }>;
+  /** Rakip bölük (Silver Stag, Ömer 2026-10-28, taslak rival-company C): başlığın altında bölük şeridi, düşmanlar bölük üyesi, gümüş "Rival Company" etiketi, "Their cause" bilgi satırı. */
+  company?: { name: string; line: string; cause: string; waves?: number };
   /** Düğümün #ui-root içindeki CSS piksel konumu (harita kayarsa / boyut değişirse yeniden sorulur); null = ortala. */
   /** Alttaki "Then" satırı: sonraki duraklar. */
   then?: Array<{ name: string; kind: string }>;
@@ -84,9 +89,12 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html?: stri
 };
 const esc = (t: string): string => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] ?? c);
 
-function foeTile(f: FoeGroup, level: number): HTMLElement {
+/** Geyik armasi (taslak rival-company, #stag): gümüş. */
+const STAG_SVG = '<svg class="bdg" viewBox="0 0 52 60" aria-hidden="true"><path d="M4 4 L26 1 L48 4 L48 34 Q48 50 26 59 Q4 50 4 34 Z" fill="#17222e" stroke="#cfe0ee" stroke-width="2.5"/><g stroke="#e8f2fa" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 30 L16 20 L12 10 M16 20 L9 17 M14 14 L8 8 M31 30 L36 20 L40 10 M36 20 L43 17 M38 14 L44 8"/></g><path d="M20 29 L32 29 L29 43 L26 47 L23 43 Z" fill="#e8f2fa"/><circle cx="23" cy="34" r="1.4" fill="#17222e"/><circle cx="29" cy="34" r="1.4" fill="#17222e"/></svg>';
+
+function foeTile(f: FoeGroup, level: number, member = false): HTMLElement {
   const tag = f.tier === 'boss' ? 'BOSS' : f.tier === 'elite' ? 'ELITE' : '';
-  const tile = el('div', `sbc-foe ${f.tier ?? ''}`.trim());
+  const tile = el('div', `sbc-foe ${f.tier ?? ''}${member ? ' mem' : ''}`.trim());
   tile.tabIndex = 0;
   tile.dataset['tip'] = `${f.name}${f.n > 1 ? ` ×${f.n}` : ''}${tag ? ` · ${tag === 'BOSS' ? 'Boss' : 'Elite'}` : ''} · Lv ${level}`;
   const face = el('div', 'sbc-face');
@@ -107,6 +115,7 @@ function foeTile(f: FoeGroup, level: number): HTMLElement {
   face.append(img);
   if (f.n > 1) face.append(el('i', 'cnt', `${f.n}×`));
   if (tag) face.append(el('i', 'tg', tag));
+  if (member) face.append(el('div', 'cr', STAG_SVG));
   tile.append(face, el('span', 'sbc-nm', esc(f.name)), el('span', 'sbc-lv', `Lv ${level}`));
   return tile;
 }
@@ -119,13 +128,15 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
   const nl = el('i', 'sbc-notch l');
   const nr = el('i', 'sbc-notch r');
   const badge = miscImage(miscIconName('node', o.nodeType))?.url;
-  const head = el('div', 'sbc-head', `<div class="sbc-ntile">${badge ? `<img src="${badge}" alt="" draggable="false">` : ''}</div><div class="tx"><h2 class="sbc-t">${esc(o.title ?? 'Start battle?')}</h2><p class="sbc-sub">${esc(o.name)} · <b>${esc(o.subtitle)}</b></p></div>`);
+  const head = el('div', 'sbc-head', `<div class="sbc-ntile">${badge ? `<img src="${badge}" alt="" draggable="false">` : ''}</div><div class="tx"><h2 class="sbc-t">${esc(o.name)}</h2><p class="sbc-sub"><b>${esc(o.subtitle)}</b></p></div>`);
   const foes = o.foes ?? [];
   if (!foes.length) card.classList.add('nofoes');
   card.append(nl, nr, head, el('hr', 'sbc-rule'));
+  const co = o.company;
+  if (co) card.append(el('div', 'sbc-co', `${STAG_SVG}<div><b>${esc(co.name)}</b><span>${esc(co.line)}</span></div>`));
   if (foes.length) {
     const row = el('div', 'sbc-row');
-    for (const f of foes) row.append(foeTile(f, o.level));
+    for (const f of foes) row.append(foeTile(f, o.level, !!co));
     card.append(row);
   }
   if (o.threat) {
@@ -135,7 +146,10 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
   }
   if (o.side) card.append(el('p', 'sbc-threat danger side', `<span class="ln">${esc(o.side.line)}</span><b style="color:${esc(o.side.color)}"><i class="mk" aria-hidden="true">!</i>${esc(o.side.name)}</b>`));
   if (o.chain) card.append(el('p', 'sbc-chain', esc(o.chain)));
-  if (o.info) card.append(el('p', `sbc-info${o.info.quote ? ' quote' : ''}`, `${o.info.who ? `<b>${esc(o.info.who)}</b> ` : ''}${o.info.quote ? `“${esc(o.info.text)}”` : esc(o.info.text)}`));
+  const tags = [...(co ? [{ text: 'Rival Company', tone: 'silver' as const }, ...(co.waves ? [{ text: `${co.waves} Waves`, tone: 'gold' as const }] : [])] : []), ...(o.tags ?? [])];
+  if (tags.length) card.append(el('div', 'sbc-tags', tags.map((t) => `<span class="sbc-tag${t.tone ? ` ${t.tone}` : ''}">${esc(t.text)}</span>`).join('')));
+  const info = co ? { who: 'Their cause', text: co.cause, quote: false, plain: false } : o.info;
+  if (info) card.append(el('p', `sbc-info${info.quote ? ' quote' : ''}${info.plain ? ' plain' : ''}`, `${info.who ? `<b>${esc(info.who)}</b> ` : ''}${info.quote ? `“${esc(info.text)}”` : esc(info.text)}`));
   if (o.first?.length) card.append(el('p', 'sbc-then sbc-first', `<b>First</b> ${o.first.map((t) => esc(t)).join(' ')}`));
   if (o.then?.length) card.append(el('p', 'sbc-then', `<b>Then</b> ${o.then.map((t) => `${esc(t.name)} <span class="k">${esc(t.kind)}</span>`).join(' <i>or</i> ')}`));
   const preview = !!o.preview;

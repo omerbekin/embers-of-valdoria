@@ -61,8 +61,8 @@
     }
   },
   "starterPool": ["warrior", "archer"],
-  "companyPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer"],
-  "recruitPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer"],
+  "companyPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer", "vesper"],
+  "recruitPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer", "vesper"],
   "texts": {
     "chainPit": "{n} fights in a row · no rest between",
     "chainPitLeft": "{n} fights left · no rest between",

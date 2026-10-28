@@ -67,7 +67,7 @@ describe('skill ağacı rank\'ı', () => {
   /** Ağacın önündeki düğümleri doldurup `key`e `rank` verir (kilit kuralı derlemeyi etkilemez: compileTree dağılımı olduğu gibi derler). */
   const only = (key: string, rank: number): TreeAlloc => ({ v: W.version, r: { [key]: rank } });
   it('"×1.06 power per rank" cond kancası: 3 rank = ×1.18 (rankler doğrusal, 1.06^3 değil)', () => {
-    const node = Object.entries(W.nodes).find(([, n]) => n.text?.includes('×1.06 power per rank') && JSON.stringify(n.fx).includes('powerMul'))!;
+    const node = Object.entries(W.nodes).find(([, n]) => n.text?.includes('6% more power per rank') && JSON.stringify(n.fx).includes('powerMul'))!;
     const per = (node[1].fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul;
     const hook = compileTree(W, only(node[0], 3))!.hooks!.find((h) => h.node === `warrior:${node[0]}`) as { mod: { powerMul: number } };
     expect(1 + hook.mod.powerMul).toBeCloseTo(1 + 3 * per, 12);

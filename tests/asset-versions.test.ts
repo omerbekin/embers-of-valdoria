@@ -105,7 +105,7 @@ const VFX_FN = async (): Promise<void> => undefined;
 
 describe('sürüm kaydı: her class için dosyalar ve tek satırlık kayıt', () => {
   it('sürüm anahtarları = kapsamdaki tüm class lar (Cutthroat hariç) + shared', () => {
-    const expected = [...Object.keys(content.classes).filter((id) => id !== 'cutthroat' && !borrowsArt(id)), SHARED_KEY].sort(); // Pose Tester I/II: sanatı ödünç (sürüm seçicide yok)
+    const expected = [...Object.keys(content.classes).filter((id) => !VERSION_EXCLUDED.includes(id) && !borrowsArt(id)), SHARED_KEY].sort(); // Pose Tester I/II: sanatı ödünç (sürüm seçicide yok)
     expect(versionKeys().sort()).toEqual(expected);
     expect(VERSION_EXCLUDED).toContain('cutthroat');
   });

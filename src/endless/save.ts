@@ -6,7 +6,7 @@ import { clampValor } from '../engine/valor';
 import type { EndlessRun, ScoreEntry } from './data';
 import { validSuspended } from './replay';
 import { cleanCarry } from './carry';
-import { migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand } from '../progression/items';
+import { migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, stripUnusable } from '../progression/items';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
@@ -140,6 +140,14 @@ export function parseRun(raw: string | null): EndlessRun | null {
     // İkinci el yuvası (2026-10-12): silah yuvasındaki kalkan ikinci ele geçer (sürüm artmaz; idempotent); ikinci el doluysa oradaki torbaya
     const overflow: NonNullable<EndlessRun['bag']> = [];
     for (const h of r.heroes) if (migrateOffhand(h.equipment, overflow) && !h.equipment.weapon) delete h.equipment.weapon;
+    // 2026-10-28 (Ömer): sınıfın artık takamadığı item (örn. war_maul hammers ailesine geçti, Warrior kullanamaz) torbaya döner; boşalan yuva
+    // silinir (Endless'ta boş yuva = alan yok); kurulum değiştiği için yarım savaş atılır (dalga baştan)
+    let stripped = 0;
+    for (const h of r.heroes) for (const k of stripUnusable(h.class, h.equipment, overflow)) {
+      delete h.equipment[k];
+      stripped++;
+    }
+    if (stripped) delete r.suspended;
     // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
     for (const h of r.heroes) if (promoteOffhand(h.equipment)) delete h.equipment.offhand;
     if (overflow.length) r.bag = [...(r.bag ?? []), ...overflow];

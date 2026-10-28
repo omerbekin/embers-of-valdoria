@@ -224,7 +224,12 @@ export type PassiveEffect =
   /** Salt Tears (Brine Maiden): kendi turunun başında `ground` (Flooded) hücredeki her canlı yaralı dostu (kendisi dahil) maks canının `ratio` kadarı iyileştirir (Wound uygulanır). */
   | { type: 'saltTears'; ground: string; ratio: number }
   /** Undertow (Reef Wrecker): SKILL vuruşu `ground` (Flooded) hücredeki düşmana isabet edince `turns` tur `status` (Slow). */
-  | { type: 'undertow'; ground: string; status: StatusKind; turns: number };
+  | { type: 'undertow'; ground: string; status: StatusKind; turns: number }
+  /**
+   * Pealing Bells (Vesper, docs/design/classes/vesper.md): `ringsBell` skill'i her kullanıldığında sahibin çan sayacı (`Combatant.bells`) 1 artar;
+   * `bell` işaretli hasar etkileri x(1 + perBell x çalınan çan). Üst sınır yok (Ömer kuralı: yeni stat tavanı yok).
+   */
+  | { type: 'pealingBells'; perBell: number };
 
 export interface PassiveDef {
   id: string;
@@ -509,6 +514,8 @@ export interface UnitModifiers {
   mpMult?: number;
   /** Hız çarpanı (Speed %; spdAdd'den sonra). */
   spdMult?: number;
+  /** İsabet çarpanı (Ömer 2026-10-27, topuz örtüğü "6% more Accuracy"): toplam isabet (taban + accuracyAdd) x bu çarpan (%80 -> %84,8). Durum etkileri (Blinded) sonra eklenir. */
+  accuracyMult?: number;
   /**
    * Kişisel hız zarı (Ömer 2026-10-24): kahramanın kalıcı çarpanı (Hero.spdRoll, güç katmanı verir); SON hıza (spdMult'tan sonra) uygulanır,
    * roundSpeed ile yuvarlanır. Verilmezse savaş birime hash(seed, uid) zarını kendisi atar (stats.ts > speedRoll).
@@ -589,6 +596,11 @@ export interface ItemEffects {
    * Büyü, DoT, zemin tiki, Doom, isabet zarsız (sure) vuruşlar ve `unblockable` (Backstab) bloklanmaz. Guard payı korumacının kendi bloğuyla.
    */
   blockChance?: number;
+  /**
+   * Daze şansı (Ömer 2026-10-27, çekiç örtüğü; 0-1): hasar veren her skill isabetinde (alan skill'inde hedef başına ayrı zar, seed'li Rng) hedefin sıra
+   * sayacı formulas.daze.push x eşik geri itilir (boss yarım: daze.bossMult). CC değil (bağışıklık yok). Yalnızca turns modunda. Olay `daze`.
+   */
+  dazeChance?: number;
   /** Zırh delme: fiziksel vuruşta hedefin zırhının bu oranı yok sayılır (skill'in kendi ignoreDefense'iyle çarpımsal birleşir). */
   armorPen?: number;
   /** Büyü zırhı delme: büyü vuruşunda hedefin büyü zırhının bu oranı yok sayılır. */
@@ -990,6 +1002,10 @@ export type SkillEffectKind =
        * aynı çarpanları alır (skill gücü, etiket/element bonusu, alan falloff'u, pasif çarpanı); zırhtan önce eklenir. Ör. Tremor Slam [{stat:'armor', pct:0.25}].
        */
       bonusScale?: BonusScale[];
+      /** Çan vuruşu (Vesper): sahibin `pealingBells` pasifi varsa hasar x(1 + perBell x bu savaşta çalınan çan). */
+      bell?: boolean;
+      /** Great Bell of Valdoria: bu savaşta çalınan her çan için güce eklenen pay (güç = power + powerPerBell x çan; powerPerRage kalıbı). */
+      powerPerBell?: number;
     }
   /**
    * Anlık şifa. `missingHpBonus` (isteğe bağlı, generic; Radiance 0,5): şifa HEDEF BAŞINA x (1 + missingHpBonus x hedefin eksik can oranı) çarpılır;
@@ -1042,6 +1058,15 @@ export type SkillEffectKind =
    * sınırlı (miktar: src/engine/mana-burn.ts > burnAmountFor). `onEmpty`: bkz. ManaEmptySpec (Drain Field).
    */
   | { type: 'manaBurn'; amount?: number; pctMax?: number; /** Yakılan mananın bu oranı kullanıcıya geri verilir. */ gainRatio?: number; onEmpty?: ManaEmptySpec }
+  /**
+   * Ley Brand (Anti-Mage, Ömer 2026-10-27, open-questions 444): hedefe `turns` tur Branded (statuses.json > branded). MP havuzu OLMAYAN (maxMp 0) hedef
+   * maks canının `taintPct` oranı (round) kadar DOLU "tainted mana" havuzu alır (harcayamaz; Brand bitince havuz silinir). MP havuzu olan hedefin MP bedelli
+   * skill'leri `costMult` katı (yukarı yuvarlanır). Branded hedefin yakılan / çalınan her MP'si yakana `burnDamagePct` x kaybedilen MP büyü hasarı
+   * (isabet / kritik yok, büyü zırhı işler: tickDamage). Süre doğal bitince kalan tainted mana `explodePct` x kalan büyü hasarıyla patlar (kaynak: damgalayan).
+   * Ağaç alanları (yoksa kapalı): `silenceOnEmpty` (MP'si 0'a inen Branded düşman o kadar tur Silenced), `centerTaintMul` (merkez hücredeki hedefin havuzu
+   * x (1 + bu)), `spread` (doğal bitişte Brand bitişikteki Brand'siz düşmana bir kez sıçrar). Sayılar data/skills.json > drain_field (PROVİZYON).
+   */
+  | { type: 'brand'; turns: number; taintPct: number; costMult: number; burnDamagePct: number; explodePct: number; element?: Element; silenceOnEmpty?: number; centerTaintMul?: number; spread?: boolean; /** Ömer 2026-10-29: Branded birim MP bedelli skill kullanınca ödediği bedelin bu oranı kadar EK MP yanar (yakım sayılır: burnDamagePct hasar). */ castBurnPct?: number; /** Ömer 2026-10-29: `markSkills` Branded hedefe x(1 + bu) hasar ('X% more'). */ markDamagePct?: number; markSkills?: string[] }
   /** Kullanıcı `turns` tur boyunca düşmanların tek hedefli skill'lerinin hedefi olmak zorunda. */
   | { type: 'taunt'; turns: number; /** Taunt'lı karakter maks canının bu oranı kadar can kaybederse taunt biter. */ breakRatio?: number; /** Taunt sürerken taunt'lı olmayan dostların aldığı hasar bu çarpanla çarpılır (ör. 0.5 = yarı hasar). */ allyDamageMult?: number }
   /** Hedef dost `turns` tur boyunca aldığı hasarın `share` kadarını kullanıcıya aktarır. */
@@ -1277,6 +1302,8 @@ export interface SkillDef {
    * yerinde kalır. Canlı birim olmayan hücre boştur (ceset hücresi de: Move kuralı). Olay `moved { cause: skill id, by, advance: true }`. battle.advanceDestination.
    */
   advanceToFront?: boolean;
+  /** Pealing Bells: bu skill kullanılınca kullanıcının çan sayacı (`Combatant.bells`) 1 artar (Toll, Thunderpeal). */
+  ringsBell?: boolean;
   /** Animasyonun çaldığı ses efektleri (data/audio.json adları); vfx yalnızca bu listedekileri çalar. */
   sfx?: string[];
   /** Skill efekti (animasyon) adı: src/ui/vfx-kinds.ts; yoksa `motion`/`skyFx` genel animasyonu oynar. */
@@ -1449,6 +1476,8 @@ export interface Formulas {
     screenGrid?: { party: ScreenCell[]; enemy: ScreenCell[] };
   };
   turn: { threshold: number; queueLength: number };
+  /** Daze (Ömer 2026-10-27, open-questions 443; çekiç örtüğü ItemEffects.dazeChance): tutan vuruş hedefin sıra sayacını push x turn.threshold geri iter; boss rütbesi bossMult kadar. Yoksa Daze yok. */
+  daze?: { push: number; bossMult: number };
   /** Cooldown kuralları: `maxInitial` = bir skill'in savaş başı başlangıç cooldown'unun (initialCooldown) üst sınırı. */
   cooldown: { maxInitial: number };
   /**
@@ -1475,7 +1504,7 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge';
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1609,6 +1638,39 @@ export interface GroundStatus {
   mpZero?: boolean;
 }
 
+/**
+ * data/grounds.json > reactions girişi (Ömer 2026-10-27, open-questions 445): hücrede zaten olan zemin (kurulum) + yeni bırakılan zemin (tetik)
+ * -> bir kez tepkime, hücrede tek sonuç. Tepkimenin hasarı / durumu tetiği bırakanındır (yalnızca ona düşman birimlere). Sayılar provizyon.
+ */
+export interface GroundReactionDef {
+  /** Oyun içi kısa ad (yüzen yazı, hedefleme önizlemesi): "Explosion". */
+  label: string;
+  /** Codex / ipucu cümlesi (İngilizce). */
+  text: string;
+  setup: string[];
+  trigger: string[];
+  /** true: sıra fark etmez (trigger listesindeki zemin kurulum, setup listesindeki tetik olsa da aynı tepkime). */
+  either?: boolean;
+  /** Bu hücreden kalkan zemin türleri (çiftten hangisi listedeyse). */
+  remove?: string[];
+  /** Anlık büyü hasarı (kritiksiz, isabet zarsız; tik kuralı): tutar = `of` listesindeki zeminlerin hücredeki tik tutarı (sum: toplamı, yoksa en büyüğü; `of` yoksa ikisinin güçlüsü) x mult; adjacent: 4 yönden komşu hücrelere çarpan. */
+  damage?: { element: Element; of?: string[]; sum?: boolean; mult: number; adjacent?: number };
+  /** Hücredeki (tetiği bırakana düşman) birimlere durum. */
+  status?: { status: string; turns: number };
+  /** Kurulumun sahibinin tarafındaki, hücrede duran birimlerden silinen durumlar. */
+  cleanse?: string[];
+  /** Süresi baştan başlayan (bırakıldığı süre) zemin türleri; yalnızca bu hücrede (hücre ayrı zemine bölünür). */
+  refresh?: string[];
+  /** Kalan zeminin bu hücredeki gücü çarpanı (süresince). */
+  cellMult?: { ground: string[]; mult: number };
+  /** İkisi de hücreden kalkar, yerine yeni zemin: power = güç çarpanı (`of` zeminlerinin, yoksa güçlüsünün hücre tutarı), turns = sayı ya da 'longer'. */
+  becomes?: { ground: string; power: number; of?: string[]; turns: number | 'longer' };
+  /** Listelenen zemin, hücredeki su zeminine 4 yönden bağlı tüm su hücrelerine yayılır (su kalır). */
+  spread?: string[];
+  /** Tahta koşulu: 'own' = yalnız tetiği bırakanın kendi tahtasında, 'foe' = yalnız karşı tahtada (Holy Water / Evaporates; Ömer 2026-10-28). */
+  board?: 'own' | 'foe';
+}
+
 /** Yerde bırakılmış, süreli bir etki. */
 export interface GroundEffect {
   id: string;
@@ -1647,6 +1709,10 @@ export interface GroundEffect {
   /** Ortam suyundaki birime konan durum (Soaked) ve süresi (taşıyanın turu; suda kaldıkça tazelenir). */
   soak?: string;
   soakTurns?: number;
+  /** Zemin tepkimesi: bırakıldığı andaki süre (Purified süreyi buna tazeler). */
+  fullTurns?: number;
+  /** Zemin tepkimesinin doğurduğu zemin (reactions anahtarı): tur başı durumları ağaçsız savaşta da işler (Ice). */
+  reaction?: string;
 }
 
 /** Karakter üzerindeki süreli durum. `turns`, taşıyıcının kendi turunun başında azalır. */
@@ -1703,6 +1769,29 @@ export interface Status {
   dealt?: number;
   first?: number;
   leap?: boolean;
+  /** Ley Brand (branded): damgalayanın bu uygulamadaki çözülmüş değerleri (ağaç yamaları dahil). Yalnızca 'branded' örneğinde. */
+  brand?: BrandSpec;
+}
+
+/** Branded örneğinin taşıdığı değerler (SkillEffect 'brand' + ağaç; `pool` = bu uygulamada MP'siz hedefe açılacak havuz). */
+export interface BrandSpec {
+  turns: number;
+  pool: number;
+  /** Havuz oranı (maks can x pct; merkez eki dahil): Spreading Brand sıçradığı birimin havuzunu bununla açar. */
+  pct: number;
+  costMult: number;
+  burnPct: number;
+  explodePct: number;
+  element: Element;
+  silence?: number;
+  spread?: boolean;
+  /** Bedel yakımı (castBurnPct): taşıyan MP bedelli skill kullanınca ödediği MP'nin bu oranı kadar ek MP yanar. */
+  castBurnPct?: number;
+  /** İşaret (markDamagePct): `markSkills` bu taşıyana x(1 + markPct) hasar verir. */
+  markPct?: number;
+  markSkills?: string[];
+  /** Spreading Brand: bu Brand sıçrayarak geldi (bir daha sıçramaz). */
+  leapt?: boolean;
 }
 
 export interface Combatant {
@@ -1723,6 +1812,11 @@ export interface Combatant {
   maxHp: number;
   mp: number;
   maxMp: number;
+  /**
+   * Ley Brand tainted mana (open-questions 444): MP havuzu olmayan Branded birime açılan GEÇİCİ havuzun boyu (mp / maxMp bu havuzdur). Varsa birim MP
+   * harcayamaz ve MP kazanamaz (Battle.mpRoom 0); Brand bitince (süre, dispel, ölüm) silinir, maxMp 0'a döner. Yoksa tanımsız.
+   */
+  taint?: number;
   /** İlk eylem hasar çarpanı (UnitSetup.openingDamageMult; ilk eylemden sonra silinir). */
   openingDamageMult?: number;
   /** Düşünce dostlara şifa oranı (UnitSetup.fallAllyHealRatio). */
@@ -1809,6 +1903,8 @@ export interface Combatant {
   echoUsed?: boolean;
   extraTurnGranted?: boolean;
   spellCount?: number;
+  /** Vesper: bu savaşta çalınan çan sayısı (`SkillDef.ringsBell`; yoksa 0). */
+  bells?: number;
   empowerMult?: number;
   rerollUsed?: boolean;
   debuffIgnored?: boolean;
@@ -1922,6 +2018,8 @@ type BattleEventBody =
       /** origin 'ground': yer etkisi türü (data/grounds.json anahtarı: poison | burning | holy_fire) ve örnek kimliği (ground olayındaki id). */
       ground?: string;
       groundId?: string;
+      /** Zemin tepkimesinin anlık hasarı (reactions anahtarı; origin 'ground'). */
+      reaction?: string;
       /** Durum kaynaklı hasar: 'wither' (DoT tiki, origin 'status') ya da 'omen' (Doom patlaması; süre bitiminde origin 'status', skill içinde origin 'skill'). */
       status?: StatusKind;
       /**
@@ -1941,12 +2039,19 @@ type BattleEventBody =
    * üstünde "Block"). `guard`: Guard payını korumacı blokladı (asıl hedef payını aldı, ek etkiler asıl hedefte normal).
    */
   | { type: 'block'; source: string; target: string; guard?: true }
+  /** Daze (çekiç örtüğü, Ömer 2026-10-27): hedefin sıra sayacı `push` kadar geri itildi (eşik birimi; boss yarım). Arayüz hedefin üstünde "Dazed". */
+  | { type: 'daze'; source: string; target: string; push: number }
   /** `cause`: 'dark_bond' = Dark Bond kopyası (kaynak bağı kuran, hedef bağlı dost); yoksa sıradan şifa. */
   | { type: 'heal'; source: string; target: string; amount: number; hpAfter: number; crit: boolean; cause?: string }
   /** amount negatifse kalkan tüketildi (ör. Shield Crush). */
   | { type: 'shield'; source: string; target: string; amount: number; shieldAfter: number; magicShieldAfter: number; magic: boolean }
   /** `cause`: kalkan kancasıyla yakıldıysa kalkanın skill id'si (ör. 'spell_ward'; kaynak = kalkanı taşıyan, hedef = saldıran). */
   | { type: 'manaBurn'; source: string; target: string; amount: number; mpAfter: number; cause?: string }
+  /**
+   * Ley Brand tainted mana havuzu açıldı (`ended` yok: mp = maxMp = pool) ya da silindi (`ended`: maxMp 0, mp 0; `cause` 'expired' doğal bitiş, 'removed'
+   * dispel / ölüm / başka silme). Arayüz MP çubuğunu bu olayla gösterir / gizler.
+   */
+  | { type: 'taint'; target: string; pool: number; mp: number; maxMp: number; ended?: true; cause?: 'expired' | 'removed' }
   /**
    * Mana boşalma zarı (manaBurn `onEmpty`, Drain Field): bu yakımla MP'si 0'a inen (ya da zaten 0 olan) hedef için `chance` zarı atıldı. `success` ise
    * ARKASINDAN `status` (ör. silence) ve hasar olayı (origin 'skill') gelir; başarısızsa başka olay yok. `skill`: yakan skill.
@@ -2027,6 +2132,11 @@ type BattleEventBody =
   /** Yerde kalan bir etki bırakıldı / bitti. */
   | { type: 'ground'; id: string; ground: string; board: Side; slots: number[]; turns: number }
   | { type: 'groundEnd'; id: string }
+  /**
+   * Zemin tepkimesi (grounds.json > reactions): `board` tahtasının `slot` hücresinde kurulum zemini `setup` ile yeni bırakılan `trigger` tepkidi;
+   * `source` = tetiği bırakan. Arayüz hücrede kısa yazı (`label`) gösterir. Ardından zemin / hasar / durum olayları gelir.
+   */
+  | { type: 'groundReaction'; reaction: string; label: string; board: Side; slot: number; setup: string; trigger: string; source: string }
   /** `corpse`: true = ölen birim ceset bıraktı (çağrı değil; `battle.corpseOf(uid)` durumu 'revivable'); çağrının ölümünde false. */
   | { type: 'death'; target: string; corpse?: boolean }
   /**

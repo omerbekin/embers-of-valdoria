@@ -121,6 +121,10 @@ export class CombatLog {
         this.hit(e.target).miss = 'block';
         return true;
       }
+      case 'daze':
+        // Daze (çekiç örtüğü, Ömer 2026-10-27): hedefin sırası geri itildi
+        this.line([this.who(e.target), { t: ' is Dazed (turn delayed)' }]);
+        return true;
       case 'heal': {
         if (e.amount <= 0) return false;
         if (this.cur && e.cause !== 'dark_bond') this.hit(e.target).heal += e.amount;

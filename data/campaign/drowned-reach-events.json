@@ -364,6 +364,27 @@
     "dr_two_crowns": {
       "title": "Two Crowns",
       "text": "The Drowned Queen is gone. The Crown of Salt lies on the wet stones beside the Crown of Ash, and the two halves stir when you lift them, pulling at each other, pulling at your hands.\n\nThey pull north. Past Valdoria, past Morvane's burnt keep, toward the mountain where the fire was first dug out of the earth.\n\nWhat was split must be mended, or ended."
+    },
+    "dr_vesper": {
+      "_not": "Vesper buluşması (görünüş A: Bronze Abbess) (Ömer onayı 2026-10-28, docs/design/classes/vesper.md): dr19 Sunken Chapel'de sandıktan (treasure) sonra. Kabul: Vesper katılır, bölük doluysa kışlada yedek bekler (state.ts > joinHero). Ret: Clapper of the Sunken Bell (eventOnly Legendary takı). Bölükte / yedekte / Inn'de Vesper varsa kabul seçeneği gizli.",
+      "title": "The Bell of the Sunken Chapel",
+      "text": "The chest is barely open when the bell above you speaks. High in the drowned tower, a tall old abbess in white and gold hauls on the rope, and the toll rolls out over the flooded nave like thunder over the sea.\n\nShe comes down when the last note fades: a great bronze bell, green with age, chained to her back, and its iron clapper in her hand for a staff. \"I am Vesper, the last of the sisters who rang for the drowned. The water is still rising. You march toward the Crown. Take me with you, and let the bell ring where it is needed.\"",
+      "choices": [
+        {
+          "id": "accept",
+          "label": "Take Vesper into the company",
+          "hint": "Vesper joins you. If your company is already four strong, she waits in the barracks until you swap her in.",
+          "join": "vesper",
+          "result": "Vesper ties off the tower rope and shoulders her bell. \"Let the chapel keep its own vigil now.\" Behind you, the tower hums with the last of its toll."
+        },
+        {
+          "id": "refuse",
+          "label": "Leave her to her vigil",
+          "hint": "Vesper stays with the chapel and gives you the tower bell's old iron clapper: a Legendary trinket any hero can wear (holy and lightning damage).",
+          "relic": "clapper_of_the_sunken_bell",
+          "result": "She bows her white head, unsurprised, and climbs the tower one last time. She returns with the chapel bell's old iron clapper, cracked along its length. \"This one has rung enough for the drowned. Let it ring for the living.\" As you push off, her own bell tolls behind you."
+        }
+      ]
     }
   },
   "treasures": {

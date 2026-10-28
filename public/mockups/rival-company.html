@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rival Company Mockups</title>
+<!-- TASLAK (ui-dev, 2026-10-28): Pilgrim Road "Silver Stag Company" 3 yol. Oyun kodu DEGIL, ses YOK.
+     Adres: #a-desk | #b-wide | #c-phone  (a/b/c + desk/wide/phone) -->
+<style>
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; src: url('rival-company/fonts/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; src: url('rival-company/fonts/EBGaramond-normal-latin.woff2') format('woff2'); }
+:root {
+  --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217,178,106,.42); --g-line: rgba(217,178,106,.16); --g-line2: rgba(217,178,106,.3);
+  --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: Cinzel, Georgia, serif; --g-body: 'EB Garamond', Georgia, serif;
+  --silver: #cfe0ee; --silver2: #8fa8bd; --stagblue: #1d2a38;
+}
+* { box-sizing: border-box; font-style: normal; }
+html, body { margin: 0; background: #0a0705; color: var(--g-text); font-family: var(--g-body); }
+#bar { position: sticky; top: 0; z-index: 100; background: #120d09; border-bottom: 1px solid var(--g-edge); padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+.grp { display: flex; gap: 8px; align-items: center; }
+#bar button { font: 600 16px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-text); background: rgba(30,22,14,.9); border: 1px solid var(--g-line2); min-height: 44px; padding: 0 16px; cursor: pointer; transition: color .2s, border-color .2s, transform .2s; }
+#bar button:hover { color: var(--g-gold); border-color: rgba(243,217,153,.9); transform: translateY(-2px); }
+#bar button.on { color: #1a0f06; background: linear-gradient(180deg, var(--g-ember2), var(--g-ember)); border-color: var(--g-gold); }
+#bar .big button { font-size: 24px; min-width: 64px; min-height: 52px; }
+#note { flex: 1 1 320px; font: 400 18px var(--g-body); color: var(--g-dim); }
+#tools { padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-height: 52px; background: #0e0a07; border-bottom: 1px solid var(--g-line); }
+#tools .lbl { font: 600 13px var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: rgba(217,178,106,.85); margin-right: 6px; }
+#tools button { font: 500 17px var(--g-body); color: var(--g-text); background: rgba(8,6,4,.6); border: 1px solid var(--g-line2); min-height: 44px; padding: 4px 12px; cursor: pointer; max-width: 100%; text-align: left; }
+#tools button.on { color: var(--g-gold); border-color: rgba(217,178,106,.7); background: rgba(217,178,106,.12); }
+#tools button:hover { border-color: rgba(243,217,153,.9); }
+#holder { margin: 12px auto; position: relative; overflow: hidden; border: 1px solid var(--g-line2); }
+#stage { position: absolute; left: 0; top: 0; height: 1080px; transform-origin: 0 0; overflow: hidden; background: #000; --u: 1px; }
+#stage.phone { --u: 1.35px; }
+#bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#area { position: absolute; top: 0; width: 1920px; height: 1080px; }
+
+/* ---- savas sahnesi ---- */
+.unit { position: absolute; width: 0; height: 0; }
+.unit .spr { position: absolute; left: -131px; bottom: 0; height: 340px; width: auto; transform-origin: 50% 100%; pointer-events: none; }
+.unit.hero .spr { transform: scaleX(-1); }
+.unit .shadow { position: absolute; left: -120px; top: -22px; width: 240px; height: 44px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.55), transparent); }
+.plate { position: absolute; left: -130px; top: 26px; width: 260px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: calc(3 * var(--u)); }
+.plate .tier { font: 600 calc(15 * var(--u)) var(--g-disp); letter-spacing: .18em; color: var(--silver); text-shadow: 0 0 6px #000, 0 0 12px rgba(150,190,230,.7); display: none; align-items: center; gap: calc(6 * var(--u)); }
+.plate .nm { font: 600 calc(24 * var(--u)) var(--g-disp); letter-spacing: .05em; color: #efe2c4; text-shadow: 0 0 5px #000, 0 2px 3px #000, 0 0 12px #000; display: flex; align-items: center; gap: calc(6 * var(--u)); white-space: nowrap; }
+.plate .lv { font: 600 calc(16 * var(--u)) var(--g-disp); letter-spacing: .1em; color: #d8c79e; text-shadow: 0 0 4px #000, 0 0 8px #000; }
+.plate .hp { width: calc(150 * var(--u)); height: calc(12 * var(--u)); background: rgba(10,6,4,.85); border: 1px solid rgba(217,178,106,.4); position: relative; }
+.plate .hp i { position: absolute; inset: 1px; background: linear-gradient(180deg, #d24a3a, #8f2418); }
+.hero .plate .hp i { background: linear-gradient(180deg, #7fbf5a, #3f7d2c); }
+.bdg { width: calc(26 * var(--u)); height: calc(30 * var(--u)); display: none; flex: none; filter: drop-shadow(0 0 3px #000); }
+
+/* B: gorunum */
+#stage.look .rival .spr { filter: drop-shadow(0 0 2px rgba(220,236,250,.95)) drop-shadow(0 0 14px rgba(140,185,230,.7)) saturate(.88) brightness(1.04); }
+#stage.look .rival .ring { display: block; }
+#stage.look .rival .tier { display: flex; }
+#stage.look .rival .bdg { display: block; }
+#stage.look .rival .plate .nm { color: #eaf3fb; }
+#stage.look .banner { display: block; }
+.ring { display: none; position: absolute; left: -120px; top: -24px; width: 240px; height: 48px; border-radius: 50%; border: 2px solid rgba(207,224,238,.8); box-shadow: 0 0 22px rgba(140,185,230,.65), inset 0 0 14px rgba(140,185,230,.4); }
+.banner { display: none; position: absolute; width: 150px; height: 520px; }
+.banner .pole { position: absolute; left: 70px; top: 0; width: 10px; height: 520px; background: linear-gradient(90deg, #3a2a1a, #7a5a36, #3a2a1a); }
+.banner svg { position: absolute; left: 80px; top: 24px; width: 120px; height: 300px; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); transform-origin: 0 0; animation: wave 4s ease-in-out infinite alternate; }
+@keyframes wave { from { transform: skewY(-1.5deg); } to { transform: skewY(1.5deg); } }
+.rmo .banner svg { animation: none; }
+
+/* A: bark */
+.bubble { position: absolute; width: calc(520 * var(--u)); padding: calc(16 * var(--u)) calc(22 * var(--u)) calc(18 * var(--u)); background: linear-gradient(180deg, rgba(30,22,14,.97), rgba(12,9,6,.97)); border: 1px solid var(--g-edge); box-shadow: 0 0 0 3px rgba(8,6,4,.7), 0 14px 30px rgba(0,0,0,.6); animation: rise .35s ease-out both; z-index: 5; }
+.bubble::after { content: ''; position: absolute; left: 50%; bottom: calc(-12 * var(--u)); width: calc(20 * var(--u)); height: calc(20 * var(--u)); transform: translateX(-50%) rotate(45deg); background: rgb(14,10,7); border: 1px solid rgba(217,178,106,.75); border-top: 0; border-left: 0; }
+.bubble .who { font: 600 calc(15 * var(--u)) var(--g-disp); letter-spacing: .16em; text-transform: uppercase; color: var(--silver); margin-bottom: calc(6 * var(--u)); display: flex; align-items: center; gap: calc(8 * var(--u)); }
+.bubble .who .bdg { display: block; width: calc(20 * var(--u)); height: calc(23 * var(--u)); }
+.bubble .tx { font: 500 calc(30 * var(--u)) var(--g-body); line-height: 1.2; color: #efe2c4; }
+.bubble.reply .who { color: var(--g-gold); }
+.bubble.reply::after { left: 28%; }
+.bubble.reply .tx { color: #d9c8a2; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.rmo .bubble, .rmo .tcard { animation: none; }
+.tcard { position: absolute; left: 50%; top: calc(70 * var(--u)); transform: translateX(-50%); text-align: center; animation: rise .5s ease-out both; z-index: 4; padding: calc(10 * var(--u)) calc(60 * var(--u)); background: linear-gradient(90deg, transparent, rgba(8,6,4,.78) 20%, rgba(8,6,4,.78) 80%, transparent); }
+.tcard .t { font: 600 calc(34 * var(--u)) var(--g-disp); letter-spacing: .16em; text-transform: uppercase; background: linear-gradient(180deg, #fbe7b0, #e6c27a 55%, #b88a42); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px #000); }
+.tcard .s { font: 600 calc(16 * var(--u)) var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: var(--g-dim); margin-top: calc(4 * var(--u)); }
+
+/* C: kart (src/ui/start-battle.css kopyasi) */
+#stage.cardv #bg { filter: blur(3px) brightness(.55) saturate(.8); }
+.sbc { position: absolute; inset: 0; color: var(--g-text); }
+.sbc-scrim { position: absolute; inset: 0; background: radial-gradient(circle at var(--ax) var(--ay), rgba(5,3,2,.08) 0, rgba(5,3,2,.08) 60px, rgba(5,3,2,.5) 190px); }
+.sbc-ring { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--g-ember2); box-shadow: 0 0 calc(26 * var(--u)) rgba(240,140,40,.85), inset 0 0 calc(10 * var(--u)) rgba(240,140,40,.5); width: calc(58 * var(--u)); height: calc(58 * var(--u)); }
+.sbc-card { position: absolute; width: calc(560 * var(--u)); padding: calc(20 * var(--u)) calc(26 * var(--u)) calc(22 * var(--u)); display: flex; flex-direction: column; gap: calc(14 * var(--u)); background: linear-gradient(180deg, rgba(30,22,14,.97), rgba(12,9,6,.97)); border: 1px solid var(--g-edge); box-shadow: 0 0 0 3px rgba(8,6,4,.7), 0 calc(18 * var(--u)) calc(40 * var(--u)) rgba(0,0,0,.6); animation: rise .25s ease-out both; }
+.sbc-notch { position: absolute; left: calc(-10 * var(--u) - 1px); top: calc(40 * var(--u)); width: calc(20 * var(--u)); height: calc(20 * var(--u)); background: rgb(26,19,12); border: 1px solid rgba(217,178,106,.75); border-right: 0; border-top: 0; transform: rotate(45deg); }
+.sbc-head { display: flex; align-items: center; gap: calc(16 * var(--u)); }
+.sbc-head .tx { flex: 1; min-width: 0; }
+.sbc-t { font: 600 calc(26 * var(--u)) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; margin: 0; background: linear-gradient(180deg, #fbe7b0, #e6c27a 55%, #b88a42); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.sbc-sub { font: calc(20 * var(--u)) var(--g-body); color: #cdb88d; margin: 0; }
+.sbc-sub b { font-weight: 400; color: var(--g-ember2); }
+.sbc-rule { height: 1px; border: 0; margin: 0; background: linear-gradient(90deg, transparent, rgba(217,178,106,.55), transparent); }
+.sbc-ntile { flex: none; display: grid; place-items: center; width: calc(64 * var(--u)); height: calc(64 * var(--u)); background: #120c08; border: 1px solid var(--g-line2); position: relative; }
+.sbc-ntile::before { content: ''; position: absolute; inset: 14%; border-radius: 50%; background: #140e09; border: 1px solid rgba(217,178,106,.7); }
+.sbc-ntile img { position: relative; width: 66%; height: 66%; object-fit: contain; }
+.sbc-row { display: flex; gap: calc(10 * var(--u)); }
+.sbc-foe { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: calc(96 * var(--u)); }
+.sbc-face { position: relative; width: calc(84 * var(--u)); height: calc(84 * var(--u)); background: #120c08; border: 1px solid var(--g-line2); box-shadow: 0 0 0 2px rgba(8,6,4,.7); }
+.sbc-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sbc-nm { font: 600 calc(15 * var(--u)) var(--g-disp); letter-spacing: .06em; text-align: center; color: var(--g-text); line-height: 1.15; }
+.sbc-lv { font: 600 calc(14 * var(--u)) var(--g-disp); letter-spacing: .12em; color: var(--g-dim); }
+.sbc-info { margin: 0; font: 400 calc(20 * var(--u)) var(--g-body); color: var(--g-dim); line-height: 1.25; }
+.sbc-info b { font: 600 calc(14 * var(--u)) var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: rgba(217,178,106,.85); margin-right: .5em; }
+.sbc-tags { display: flex; flex-wrap: wrap; gap: calc(8 * var(--u)); }
+.sbc-tag { font: 600 calc(14 * var(--u)) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-text); padding: calc(4 * var(--u)) calc(10 * var(--u)); border: 1px solid var(--g-line2); background: rgba(8,6,4,.55); white-space: nowrap; display: inline-flex; align-items: center; gap: calc(8 * var(--u)); }
+.sbc-tag.gold { color: var(--g-gold); border-color: rgba(217,178,106,.6); background: rgba(217,178,106,.1); }
+.sbc-tag.dim { color: var(--g-dim); border-style: dashed; }
+.sbc-tag.silver { color: var(--silver); border-color: rgba(207,224,238,.6); background: rgba(140,185,230,.12); }
+.sbc-tag .bdg { display: block; width: calc(16 * var(--u)); height: calc(18 * var(--u)); }
+.sbc-then { margin: 0; font: calc(19 * var(--u)) var(--g-body); color: var(--g-dim); }
+.sbc-then b { font: 600 calc(14 * var(--u)) var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: rgba(217,178,106,.85); margin-right: .6em; }
+.sbc-then .k { font: 600 calc(13 * var(--u)) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-ember2); }
+.sbc-acts { display: flex; justify-content: flex-end; }
+.el-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 calc(46 * var(--u)); font: 600 calc(22 * var(--u)) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); border: 2px solid var(--g-gold); background: linear-gradient(180deg, rgba(38,27,17,.9), rgba(12,9,6,.94)); box-shadow: 0 0 0 3px rgba(12,8,5,.8), 0 14px 30px rgba(0,0,0,.55); }
+.el-btn::before, .el-btn::after { content: ''; position: absolute; top: 50%; width: 12px; height: 12px; margin-top: -6px; transform: rotate(45deg); background: var(--g-ember); box-shadow: 0 0 0 1px var(--g-ember2), 0 0 12px rgba(240,140,40,.8); }
+.el-btn::before { left: -8px; } .el-btn::after { right: -8px; }
+/* C: bolugun satiri (YENI parca) */
+.co { display: flex; align-items: center; gap: calc(12 * var(--u)); padding: calc(10 * var(--u)) calc(14 * var(--u)); border: 1px solid rgba(207,224,238,.35); background: linear-gradient(90deg, rgba(140,185,230,.12), rgba(8,6,4,.4)); }
+.co .bdg { display: block; width: calc(34 * var(--u)); height: calc(39 * var(--u)); }
+.co b { display: block; font: 600 calc(17 * var(--u)) var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: var(--silver); }
+.co span { font: calc(18 * var(--u)) var(--g-body); color: var(--g-text); }
+.sbc-foe.mem .sbc-face { border-color: rgba(207,224,238,.6); box-shadow: 0 0 0 2px rgba(8,6,4,.7), 0 0 calc(10 * var(--u)) rgba(140,185,230,.35); }
+.sbc-foe.mem .sbc-face .cr { position: absolute; left: -1px; top: -1px; width: calc(22 * var(--u)); height: calc(25 * var(--u)); background: rgba(10,14,20,.9); display: grid; place-items: center; border: 1px solid rgba(207,224,238,.6); }
+.sbc-foe.mem .sbc-face .cr svg { width: 80%; height: 80%; }
+.sbc-foe.mem .sbc-face .rl { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font: 600 calc(11 * var(--u)) var(--g-disp); letter-spacing: .12em; color: var(--silver); background: rgba(8,10,14,.8); }
+.sbc-foe[data-tip]::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); padding: 5px 10px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s; background: linear-gradient(180deg, rgba(30,22,14,.98), rgba(12,9,6,.98)); border: 1px solid var(--g-edge); font: 600 calc(15 * var(--u)) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-gold); z-index: 40; }
+.sbc-foe[data-tip]:hover::after { opacity: 1; }
+#legend { max-width: 1100px; margin: 0 auto 24px; padding: 0 14px; font: 18px var(--g-body); color: var(--g-dim); }
+#legend b { font: 600 13px var(--g-disp); letter-spacing: .14em; color: rgba(217,178,106,.85); text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="grp big"><button data-v="a">A</button><button data-v="b">B</button><button data-v="c">C</button></div>
+  <div class="grp"><button data-s="desk">16:9</button><button data-s="wide">21:9</button><button data-s="phone">Phone</button></div>
+  <div id="note"></div>
+</div>
+<div id="tools"></div>
+<div id="holder"><div id="stage"><img id="bg" src="rival-company/bg.webp" alt="" /><div id="area"></div></div></div>
+<div id="legend"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="stag" viewBox="0 0 52 60">
+      <path d="M4 4 L26 1 L48 4 L48 34 Q48 50 26 59 Q4 50 4 34 Z" fill="#17222e" stroke="#cfe0ee" stroke-width="2.5"/>
+      <g stroke="#e8f2fa" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 30 L16 20 L12 10 M16 20 L9 17 M14 14 L8 8 M31 30 L36 20 L40 10 M36 20 L43 17 M38 14 L44 8"/>
+      </g>
+      <path d="M20 29 L32 29 L29 43 L26 47 L23 43 Z" fill="#e8f2fa"/>
+      <circle cx="23" cy="34" r="1.4" fill="#17222e"/><circle cx="29" cy="34" r="1.4" fill="#17222e"/>
+    </symbol>
+  </defs>
+</svg>
+
+<script>
+(() => {
+  const SIZES = { desk: [1920, 1080], wide: [2580, 1080], phone: [2338, 1080] };
+  const NOTES = {
+    a: 'A: Savasin basinda Stag Sellsword konusuyor, ustte bolugun adi belirir. Alttan satir sec.',
+    b: 'B: Stag birimleri gumus rim + Silver Stag armasi + ortak bayrak ile tek bolukmus gibi gorunur; Once/Sonra dugmesi.',
+    c: 'C: Savasa baslama karti: Rival Company etiketi, tek satir hikaye, dusmanlar bolugun uyeleri olarak.'
+  };
+  const LINES = [
+    ['The relic is ours, rivals. Turn back.', 'Brann\'s bones belong to the Stag. Walk away.'],
+    ['This road is the Stag\'s now. Pay or bleed.', ''],
+    ['Another company on our road? Not for long.', '']
+  ].map((l) => l[0]);
+  const REPLIES = ['We walk this road for the abbey, not for you.', 'Then you will have to stop us.'];
+  const $ = (s, r = document) => r.querySelector(s);
+  const st = { v: 'a', s: 'desk', line: 0, reply: true, look: true };
+  const stage = $('#stage'), area = $('#area'), holder = $('#holder'), tools = $('#tools');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) document.documentElement.classList.add('rmo');
+  const bdg = (c = 'bdg') => `<svg class="${c}" viewBox="0 0 52 60"><use href="#stag"/></svg>`;
+
+  const ENEMY = [
+    { nm: 'Stag Sellsword', cls: 'warrior', x: 1130, y: 640 },
+    { nm: 'Stag Knife', cls: 'cutthroat', x: 1090, y: 900 },
+    { nm: 'Stag Bowman', cls: 'archer', x: 1530, y: 600 },
+    { nm: 'Stag Magus', cls: 'mage', x: 1560, y: 860 }
+  ];
+  const HEROES = [
+    { nm: 'Anti-Mage', cls: 'antimage', x: 520, y: 640 },
+    { nm: 'Defender', cls: 'defender', x: 330, y: 900 }
+  ];
+  const unit = (u, rival) => `<div class="unit ${rival ? 'rival' : 'hero'}" style="left:${u.x}px;top:${u.y}px" data-cls="${u.cls}">
+    ${rival ? '<div class="ring"></div>' : ''}<div class="shadow"></div>
+    <img class="spr" src="rival-company/spr/${u.cls}.webp" alt="" draggable="false" />
+    <div class="plate"><div class="tier">SILVER STAG</div><div class="nm">${rival ? bdg() : ''}${u.nm}</div><div class="lv">Lv 6</div><div class="hp"><i></i></div></div></div>`;
+  const bannerSvg = `<svg viewBox="0 0 120 300"><path d="M0 0 H120 V250 L60 290 L0 250 Z" fill="#1d2a38" stroke="#cfe0ee" stroke-width="4"/><path d="M10 10 H110 V242 L60 276 L10 242 Z" fill="none" stroke="rgba(207,224,238,.4)" stroke-width="1.5"/><g transform="translate(24,40) scale(1.5)"><use href="#stag" width="52" height="60" /></g><text x="60" y="190" text-anchor="middle" font-family="Cinzel" font-weight="700" font-size="15" letter-spacing="2" fill="#cfe0ee">SILVER</text><text x="60" y="212" text-anchor="middle" font-family="Cinzel" font-weight="700" font-size="15" letter-spacing="2" fill="#cfe0ee">STAG</text></svg>`;
+
+  function battle(withLook) {
+    return HEROES.map((u) => unit(u, false)).join('') + ENEMY.map((u) => unit(u, true)).join('') +
+      (withLook ? `<div class="banner" style="left:1730px;top:70px"><div class="pole"></div>${bannerSvg}</div>` : '');
+  }
+
+  function renderA() {
+    stage.classList.remove('look', 'cardv');
+    const sell = ENEMY[0];
+    const u = parseFloat(getComputedStyle(stage).getPropertyValue('--u')) || 1;
+    area.innerHTML = battle(false) +
+      `<div class="tcard"><div class="t">The Silver Stag Company</div><div class="s">Rival Company</div></div>` +
+      `<div class="bubble" style="left:${sell.x - 130 * u}px;top:${sell.y - 340 - 120 * u}px"><div class="who">${bdg()}Stag Sellsword</div><div class="tx">${LINES[st.line]}</div></div>` +
+      (st.reply ? `<div class="bubble reply" style="left:${HEROES[0].x - 200 * u}px;top:${HEROES[0].y - 340 - 120 * u}px"><div class="who">Anti-Mage</div><div class="tx">${REPLIES[0]}</div></div>` : '');
+    tools.innerHTML = '<span class="lbl">Bark line</span>' + LINES.map((l, i) => `<button class="${i === st.line ? 'on' : ''}" data-line="${i}">${l}</button>`).join('') +
+      `<span class="lbl" style="margin-left:14px">Reply</span><button class="${st.reply ? 'on' : ''}" data-reply="1">${st.reply ? 'Shown' : 'Hidden'}</button>`;
+    legend('<b>Real:</b> background, class sprites, plate layout, bubble uses the game panel look. <b>Placeholder:</b> all three lines, the reply, the title banner, bubble position (the Stag Captain says it in wave 2 in the real data), hero names and levels.');
+  }
+  function renderB() {
+    stage.classList.add('look'); stage.classList.remove('cardv');
+    area.innerHTML = battle(true);
+    stage.classList.toggle('look', st.look);
+    tools.innerHTML = '<span class="lbl">View</span><button class="' + (!st.look ? 'on' : '') + '" data-look="0">Before</button><button class="' + (st.look ? 'on' : '') + '" data-look="1">After</button>';
+    legend('<b>Real:</b> background, class sprites, plates (name, level, red HP bar). <b>Placeholder:</b> the stag heraldry badge, silver rim and ring (CSS filter on the sprites; final would be a tinted sprite pass), the SILVER STAG tier label (uses the elite label slot), the banner, Lv 6.');
+  }
+  function renderC() {
+    stage.classList.remove('look'); stage.classList.add('cardv');
+    const u = parseFloat(getComputedStyle(stage).getPropertyValue('--u')) || 1;
+    const W = SIZES[st.s][0], phone = st.s === 'phone';
+    const ax = W * 0.36, ay = 540;
+    const mem = [['Stag Sellsword', 'warrior', 'Front'], ['Stag Knife', 'cutthroat', 'Front'], ['Stag Bowman', 'archer', 'Back'], ['Stag Magus', 'mage', 'Back']];
+    const foes = mem.map(([n, c, r]) => `<div class="sbc-foe mem" tabindex="0" data-tip="${n} · Rival · Lv 6"><div class="sbc-face"><img src="rival-company/spr/av-${c}.webp" alt="" /><div class="cr">${bdg("x")}</div></div><span class="sbc-nm">${n.replace('Stag ', '')}</span><span class="sbc-lv">Lv 6</span></div>`).join('');
+    const cardL = ax + 100 * u;
+    area.style.width = '100%';
+    area.innerHTML = `<div class="sbc"><div class="sbc-scrim" style="--ax:${ax}px;--ay:${ay}px"></div><i class="sbc-ring" style="left:${ax}px;top:${ay}px"></i>
+      <div class="sbc-card" style="left:${cardL}px;top:50%;transform:translateY(-50%)"><i class="sbc-notch"></i>
+        <div class="sbc-head"><div class="sbc-ntile"><img src="rival-company/spr/node-battle.webp" alt="" /></div><div class="tx"><h2 class="sbc-t">Pilgrim Road</h2><p class="sbc-sub"><b>Battle · Rival Company</b></p></div></div>
+        <hr class="sbc-rule" />
+        <div class="co">${bdg()}<div><b>The Silver Stag Company</b><span>Sellswords hunting St. Brann's relic</span></div></div>
+        <div class="sbc-row">${foes}</div>
+        <div class="sbc-tags"><span class="sbc-tag silver">${bdg()}Rival Company</span><span class="sbc-tag gold">2 Waves</span></div>
+        ${phone ? '' : `<p class="sbc-info"><b>Their cause</b>They want the abbey's relic first, and they see your company as a rival. They will not let you pass.</p>`}
+        <div class="sbc-acts"><span class="el-btn">Fight</span></div>
+      </div></div>`;
+    tools.innerHTML = '<span class="lbl">Card</span><span style="color:var(--g-dim);font:18px var(--g-body)">Hover a member for the tip.' + (phone ? ' On phone the info line is hidden (real html.short rule), so the company strip and tag carry the story.' : '') + '</span>';
+    legend('<b>Real:</b> card styling copied from start-battle.css, avatars, node badge, foe tile layout, tags row, Fight button look, sbc-info line. <b>Placeholder:</b> the company strip (new part), silver tag, crest on tiles, wording of the story, Lv 6, the dimmed background (stands in for the world map), 2 Waves tag (real: encounter has 2 waves).');
+  }
+  function legend(h) { $('#legend').innerHTML = h; }
+
+  function render() {
+    const [W, H] = SIZES[st.s];
+    stage.className = (st.s === 'phone' ? 'phone ' : '') + (st.v === 'b' && st.look ? 'look ' : '') + (st.v === 'c' ? 'cardv' : '');
+    stage.style.width = W + 'px';
+    area.style.width = '1920px'; area.style.left = ((W - 1920) / 2) + 'px';
+    (st.v === 'c' ? (area.style.left = '0', area.style.width = W + 'px') : 0);
+    ({ a: renderA, b: renderB, c: renderC })[st.v]();
+    stage.className = (st.s === 'phone' ? 'phone ' : '') + (st.v === 'b' && st.look ? 'look ' : '') + (st.v === 'c' ? 'cardv' : '');
+    $('#note').textContent = NOTES[st.v];
+    document.querySelectorAll('[data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === st.v));
+    document.querySelectorAll('[data-s]').forEach((b) => b.classList.toggle('on', b.dataset.s === st.s));
+    fit();
+  }
+  function fit() {
+    const [W, H] = SIZES[st.s];
+    const avail = Math.min(window.innerWidth - 24, 1900);
+    const sc = Math.min(avail / W, (window.innerHeight - 190) / H);
+    const s = Math.max(sc, 0.2);
+    holder.style.width = W * s + 'px'; holder.style.height = H * s + 'px';
+    stage.style.transform = `scale(${s})`;
+  }
+  function parse() {
+    const m = /^#([abc])-(desk|wide|phone)$/.exec(location.hash);
+    if (m) { st.v = m[1]; st.s = m[2]; }
+    render();
+  }
+  function go(v, s) { const h = `#${v}-${s}`; if (location.hash === h) parse(); else location.hash = h; }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.v) go(b.dataset.v, st.s);
+    else if (b.dataset.s) go(st.v, b.dataset.s);
+    else if (b.dataset.line) { st.line = +b.dataset.line; render(); }
+    else if (b.dataset.reply) { st.reply = !st.reply; render(); }
+    else if (b.dataset.look) { st.look = b.dataset.look === '1'; render(); }
+  });
+  addEventListener('hashchange', parse);
+  addEventListener('resize', fit);
+  parse();
+})();
+</script>
+</body>
+</html>

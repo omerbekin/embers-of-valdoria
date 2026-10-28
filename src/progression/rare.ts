@@ -61,7 +61,7 @@ export function rareChance(kind: RareBattleKind, misses: number, wave?: number, 
 
 /** Uygun Legendary havuzu: sefer = minChapter <= bölüm; Endless = dalga kapısından sonra hepsi. */
 export function legendaryPool(o: { chapter?: number; wave?: number }, catalog: ItemDef[] = ITEMS.items, cfg: RareDropConfig = RARE): ItemDef[] {
-  const leg = catalog.filter((d) => d.rarity === 'legendary');
+  const leg = catalog.filter((d) => d.rarity === 'legendary' && !d.eventOnly); // olay item'i (eventOnly) zarla düşmez
   if (o.wave !== undefined) return o.wave >= cfg.endless.legendaryFromWave ? leg : [];
   return leg.filter((d) => (d.minChapter ?? 1) <= (o.chapter ?? 1));
 }

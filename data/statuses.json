@@ -7,7 +7,7 @@
     "color": "#7fb2ff",
     "speedMult": 0.7,
     "cc": true,
-    "text": "Speed ×0.7"
+    "text": "30% less Speed"
   },
   "haste": {
     "name": "Haste",
@@ -15,7 +15,7 @@
     "icon": "boot",
     "color": "#7dff9b",
     "speedMult": 1.3,
-    "text": "Speed ×1.3"
+    "text": "30% more Speed"
   },
   "wound": {
     "name": "Wound",
@@ -23,7 +23,7 @@
     "icon": "drop",
     "color": "#c0203a",
     "healTakenMult": 0.75,
-    "text": "Healing received ×0.75"
+    "text": "Receives 25% less healing"
   },
   "stun": {
     "name": "Stun",
@@ -41,7 +41,7 @@
     "icon": "guardian",
     "color": "#c58bff",
     "damageTakenMult": 0.5,
-    "text": "Damage taken ×0.5"
+    "text": "Takes 50% less damage"
   },
   "blessed": {
     "name": "Blessed",
@@ -49,7 +49,7 @@
     "icon": "holy",
     "color": "#fff0a0",
     "damageTakenMult": 0.7,
-    "text": "Damage taken ×0.7"
+    "text": "Takes 30% less damage"
   },
   "blinded": {
     "name": "Blinded",
@@ -127,6 +127,15 @@
     "cc": true,
     "text": "Cannot use skills that cost MP (free skills, Rest, Skip Turn and Move still work)"
   },
+  "branded": {
+    "_not": "Ley Brand (Anti-Mage, Ömer 2026-10-27, open-questions 444). Sayılar skill'de (skills.json > drain_field > effects brand) ve örnekte (Status.brand). stack replace: yeniden atış süreyi tazeler ve son damgalayanın değerlerini alır, tainted mana havuzunu DOLDURMAZ. CC değil (boss da yer). Debuff: Mana Barrier dispel siler (havuz da silinir, patlamaz). İkon YER TUTUCU: manaburn (sonra gerçek sanat).",
+    "name": "Branded",
+    "type": "debuff",
+    "icon": "manaburn",
+    "color": "#7a3fb8",
+    "stack": "replace",
+    "text": "Ley Brand: MP costs are higher and each MP skill burns extra mana; a unit with no mana holds tainted mana it cannot spend. Mana burned or stolen from it hurts, Mana Steal and Void Strike hit it harder, and leftover tainted mana bursts when the Brand runs out"
+  },
   "overextended": {
     "_not": "Bridge Warden: Breaking Span / Fall çözüldükten sonra çapa köprüye saplı kalır (Warden'ın sonraki turunun başına kadar). Sayı PROVİZYON.",
     "name": "Overextended",
@@ -135,7 +144,7 @@
     "color": "#c0392b",
     "damageTakenMult": 1.25,
     "dispellable": false,
-    "text": "Takes ×1.25 damage until its next turn (anchor stuck in the bridge)"
+    "text": "Takes 25% more damage until its next turn (anchor stuck in the bridge)"
   },
   "staggered": {
     "_not": "Unyielding / Mooring kırılması: sıradaki tek eylemi kaybeder (üst üste binmez). untilResolved: süre turla azalmaz, eylem kaybedilince düşer.",
@@ -196,7 +205,7 @@
     "icon": "overextended",
     "color": "#d0603a",
     "damageTakenMult": 1.15,
-    "text": "Takes ×1.15 damage"
+    "text": "Takes 15% more damage"
   },
   "sunder": {
     "_not": "Faz 2c (skill ağacı): Archer Sunder (Piercing Arrow). Silinebilir. İkon yer tutucu (guardian).",
@@ -205,7 +214,7 @@
     "icon": "guardian",
     "color": "#8a5a3c",
     "armorMult": 0.8,
-    "text": "Armor ×0.8"
+    "text": "20% less Armor"
   },
   "weakened": {
     "_not": "Altıncı tur (Ömer 2026-10-22, skill ağacı): verdiği hasar azalır. damageDealtMult = verdiği tüm hasar çarpanı, magicDealtMult = yalnızca büyü hasarı çarpanı (Battle.dealtDamageMult: gerçek vuruş, önizleme ve YZ aynı yol). Güç düğüme göre: ağaç statusPotency bu alanlara DÜZ eklenir (Druid Pollen Drift: rank başına -%2, sıradaki turu; Gambler Distracting Fan: -%15, sıradaki saldırısı (potency oneAttack); Anti-Mage Spell Shatter: büyü hasarı -%20, 2 tur). Buradaki -%15 kaynaksız (debug) varsayılan. tickAtTurnEnd: 1 tur = taşıyanın sıradaki turunun tamamı. Silinebilir. İkon yer tutucu (overextended).",
@@ -231,7 +240,7 @@
       "burning"
     ],
     "dispellable": false,
-    "text": "Fire damage taken ×0.5, Speed ×0.9; Burning is put out"
+    "text": "Takes 50% less Fire damage and has 10% less Speed; Burning is put out"
   },
   "spellbound": {
     "_not": "Harita 2 (Ömer onayı 2026-10-25, Omen formu): mobların Omen yerine verdiği durum (Siren Lure; Drowned Queen Lament). Taşıyan kahramanın bir sonraki skill'i %25 zayıf (hasar ya da şifa); skill'i kullanınca düşer (endsOnOwnSkill), kullanmazsa sıradaki turunun sonunda biter (tickAtTurnEnd). YALNIZ MOBLAR VERİR (kahraman sınıfları değil: tests/mob-passives-map2.test.ts). Sayı PROVİZYON.",
@@ -243,7 +252,7 @@
     "healDealtMult": 0.75,
     "endsOnOwnSkill": true,
     "tickAtTurnEnd": true,
-    "text": "Next skill deals ×0.75 damage or healing; wears off once used"
+    "text": "Next skill deals 25% less damage or healing; wears off once used"
   },
   "saltbound": {
     "_not": "Ömer onayı 2026-10-25 (Saltbound formu H1 b / H2 c): mobların (Harita 1 cadıları Fen Witchling, Hedge Witch Morwen, Will-o'-Wisp; Harita 2 Salt Hag) Omen yerine verdiği durum. 1 tur: taşıyan yer değiştiremez / geri çekilemez (Move), kendini taşıyan skill'leri kullanamaz (advanceToFront: Charge; requiresOpenBehind: Backstab) ve kaçınması 0. Mire-Bound: cadı yaşarken Saltbound kahramanlar %20 yavaş. Zorla taşınma (Chain Hook, Undertow) engellenmez. YALNIZ MOBLAR VERİR. Sayı PROVİZYON.",
@@ -264,6 +273,6 @@
     "color": "#e2b04a",
     "damageDealtMult": 1.3,
     "tickAtTurnEnd": true,
-    "text": "Deals ×1.3 damage (the Crown's ash)"
+    "text": "Deals 30% more damage (the Crown's ash)"
   }
 }

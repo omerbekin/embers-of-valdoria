@@ -281,6 +281,8 @@ export interface EncounterWave {
 
 export interface EncounterDef {
   name: string;
+  /** Rakip bölük (Silver Stag, Ömer 2026-10-28): başlatma kartında bölük şeridi + "Rival Company" etiketi + "Their cause" satırı. */
+  company?: { name: string; line: string; cause: string };
   /** İlk dalga (dalgasız karşılaşmada tüm düşmanlar). */
   units: EncounterUnit[];
   /**

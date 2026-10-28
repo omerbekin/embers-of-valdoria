@@ -60,10 +60,10 @@ const trim = (v: number, digits: number) => v.toFixed(digits).replace(/\.0+$/, '
 /** Bir stat satırının kısa yazısı (alt bar ve hover kutusu). */
 export function statRowText(k: StatKind, s: Stats, label: Record<StatKind, string>): string {
   switch (k) {
-    case 'str': case 'int': case 'dex': case 'luck': return `${label[k]} ${s[k]}`;
-    case 'spd': return `SPD ${s.spd}`;
+    case 'str': case 'int': case 'dex': case 'luck': return `${label[k]} ${trim(s[k], 1)}`; // çağrı statı 0,1 adımlı: kayan nokta artığı yazılmasın
+    case 'spd': return `SPD ${trim(s.spd, 1)}`;
     case 'critChance': return `CRIT ${trim(s.critChance * 100, 1)}%`;
-    case 'critMult': return `CDMG ×${trim(s.critMult, 2)}`;
+    case 'critMult': return `CDMG ${trim(s.critMult * 100, 1)}%`;
     case 'accuracy': return `ACC ${Math.round(s.accuracy * 100)}%`;
     case 'evasion': return `EVA ${Math.round(s.evasion * 100)}%`;
     case 'armor': return `ARM ${Math.round(s.armor)}`;

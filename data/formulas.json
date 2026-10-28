@@ -8,7 +8,7 @@
     "spdBase": 14,
     "spdPerDex": 0.4,
     "spdStep": 1,
-    "spdVariance": 0.1,
+    "spdVariance": 0.05,
     "critChanceBase": 0.05,
     "critChancePerLuck": 0.0025,
     "critMult": 1.5,
@@ -382,6 +382,11 @@
   "turn": {
     "threshold": 200,
     "queueLength": 8
+  },
+  "daze": {
+    "_not": "Daze (Ömer 2026-10-27, open-questions 443): çekiç örtüğü (items.json > implicits.hammer, fx:dazeChance). Hasar veren her isabette (alan skill'inde hedef başına ayrı zar, savaşın seed'li Rng'si) şans tutarsa hedefin sıra sayacı push x turn.threshold geri itilir; boss rütbesi (tier boss / boss tanımlı) bossMult kadar (yarım). CC DEĞİL: bağışıklık yok, elitler tam etki. Yalnızca turns modunda.",
+    "push": 0.25,
+    "bossMult": 0.5
   },
   "weaknesses": {
     "undead": {

@@ -495,7 +495,7 @@
     "c_res_fire": {
       "tier": "C",
       "name": "Fire resistance",
-      "text": "{l0} Fire damage taken",
+      "text": "Takes {l0} Fire damage",
       "slots": [
         "helm",
         "armor",
@@ -517,7 +517,7 @@
     "c_res_ice": {
       "tier": "C",
       "name": "Ice resistance",
-      "text": "{l0} Ice damage taken",
+      "text": "Takes {l0} Ice damage",
       "slots": [
         "helm",
         "armor",
@@ -539,7 +539,7 @@
     "c_res_holy": {
       "tier": "C",
       "name": "Holy resistance",
-      "text": "{l0} Holy damage taken",
+      "text": "Takes {l0} Holy damage",
       "slots": [
         "helm",
         "armor",
@@ -561,7 +561,7 @@
     "c_res_dark": {
       "tier": "C",
       "name": "Dark resistance",
-      "text": "{l0} Dark damage taken",
+      "text": "Takes {l0} Dark damage",
       "slots": [
         "helm",
         "armor",
@@ -583,7 +583,7 @@
     "c_res_nature": {
       "tier": "C",
       "name": "Nature resistance",
-      "text": "{l0} Nature damage taken",
+      "text": "Takes {l0} Nature damage",
       "slots": [
         "helm",
         "armor",
@@ -605,7 +605,7 @@
     "c_res_light": {
       "tier": "C",
       "name": "Lightning resistance",
-      "text": "{l0} Lightning damage taken",
+      "text": "Takes {l0} Lightning damage",
       "slots": [
         "helm",
         "armor",
@@ -973,7 +973,7 @@
     "b_tier_def": {
       "tier": "B",
       "name": "Giantward",
-      "text": "{l0} damage taken from elites and bosses",
+      "text": "Takes {l0} damage from elites and bosses",
       "slots": [
         "armor",
         "helm"
@@ -1069,7 +1069,7 @@
     "a_gdef": {
       "tier": "A",
       "name": "Global defense",
-      "text": "{l0} damage taken",
+      "text": "Takes {l0} damage",
       "slots": [
         "armor",
         "offhand",
@@ -1419,7 +1419,7 @@
     "a_endure": {
       "tier": "A",
       "name": "Endurance",
-      "text": "+{0}% Lucky Escape chance, {l1} damage taken below 30% HP",
+      "text": "+{0}% Lucky Escape chance; takes {l1} damage below 30% HP",
       "desc": "Lucky Escape: once per battle, a lethal hit may miss you entirely.",
       "icon": "luck",
       "parts": [
@@ -1524,10 +1524,10 @@
   "weaponFamilies": [
     {
       "id": "axes",
+      "type": "axe",
       "name": "Axes & Swords",
       "classes": [
-        "warrior",
-        "antimage"
+        "warrior"
       ],
       "mains": [
         "c_phys",
@@ -1536,6 +1536,7 @@
     },
     {
       "id": "maces",
+      "type": "mace",
       "name": "Maces & Shields",
       "classes": [
         "defender",
@@ -1548,7 +1549,21 @@
       ]
     },
     {
+      "id": "hammers",
+      "type": "hammer",
+      "name": "Hammers",
+      "classes": [
+        "defender",
+        "paladin"
+      ],
+      "mains": [
+        "c_phys",
+        "c_holy"
+      ]
+    },
+    {
       "id": "bows",
+      "type": "bow",
       "name": "Bows",
       "classes": [
         "archer"
@@ -1559,6 +1574,7 @@
     },
     {
       "id": "daggers",
+      "type": "dagger",
       "name": "Daggers",
       "offhand": true,
       "classes": [
@@ -1572,11 +1588,13 @@
     },
     {
       "id": "staves",
+      "type": "staff",
       "name": "Staves",
       "classes": [
         "mage",
         "druid",
-        "undead"
+        "undead",
+        "vesper"
       ],
       "mains": [
         "c_fire",
@@ -1587,6 +1605,7 @@
     },
     {
       "id": "charms",
+      "type": "charm",
       "name": "Charms",
       "classes": [
         "gambler",
@@ -1612,21 +1631,64 @@
       "bow": 1.35,
       "charm": 1.15
     },
-    "family": {
-      "daggers": 0.85
-    },
     "offhandShare": 0.4,
-    "ip": 0.45
+    "ip": 0.45,
+    "spdIp": 0.5
+  },
+  "_weaponTypes": "Silah tipleri (Ömer 2026-10-27, open-questions 443; items.md 1.12): her silahın TİPİ (sword | axe | mace | hammer | dagger | bow | staff | charm) item tabanının `type` alanından, yoksa ailesinin `type`ından. Tip örtük statı (implicits[tip]) ve güç / hız profilini seçer: power = silah gücü çarpanı (yoksa 1), spdLess = hız cezası yüzdesi (×(1 - spdLess/100), mult:spdMult gibi item'lerle çarpılır, kişisel hız zarından ÖNCE). twoHandMelee: çift el YAKIN DÖVÜŞ (grip two + types listesi; asa ve yay değil): güç × power (1,45 × 1,15 ≈ 1,6675), örtük değer aynı tipin tek el değeri × (grip.two × power), ek spdLess hız cezası (adı name). weaponPower.spdIp = 1 % hız cezasının IP değeri (eksi yazılır: ceza IP / fiyat / Equip best düşürür). Değerler İLK DEĞER, sim yapılmadı; düşmanlar etkilenmez (item'leri yok).",
+  "weaponTypes": {
+    "sword": {
+      "name": "Sword"
+    },
+    "axe": {
+      "name": "Axe",
+      "power": 1.1,
+      "spdLess": 5
+    },
+    "mace": {
+      "name": "Mace",
+      "power": 1.18,
+      "spdLess": 9
+    },
+    "hammer": {
+      "name": "Hammer",
+      "power": 1.05,
+      "spdLess": 2
+    },
+    "dagger": {
+      "name": "Dagger",
+      "power": 0.85
+    },
+    "bow": {
+      "name": "Bow"
+    },
+    "staff": {
+      "name": "Staff"
+    },
+    "charm": {
+      "name": "Charm"
+    }
+  },
+  "twoHandMelee": {
+    "name": "Heavy grip",
+    "types": [
+      "axe",
+      "sword",
+      "hammer",
+      "mace"
+    ],
+    "power": 1.15,
+    "spdLess": 5
   },
   "implicits": {
-    "daggers": {
+    "sword": {
       "name": "Keen edge",
       "text": "+{0}% Crit chance",
       "icon": "crit",
-      "desc": "Daggers carry a little extra crit chance.",
+      "desc": "Swords carry a little extra crit chance.",
       "parts": [
         {
-          "base": 2,
+          "base": 1.5,
           "perIlvl": 0.1,
           "step": 0.5,
           "ip": 0.3,
@@ -1637,11 +1699,11 @@
         }
       ]
     },
-    "charms": {
+    "dagger": {
       "name": "Quick hands",
       "text": "{m0} Speed",
       "icon": "spd",
-      "desc": "Charms carry a little extra speed.",
+      "desc": "Daggers carry a little extra speed.",
       "parts": [
         {
           "base": 2,
@@ -1650,6 +1712,113 @@
           "ip": 0.5,
           "to": "mult:spdMult",
           "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "axe": {
+      "name": "Biting edge",
+      "text": "+{0}% Armor penetration",
+      "icon": "armor",
+      "desc": "Axes bite through armor: your physical hits ignore part of the target's armor.",
+      "parts": [
+        {
+          "base": 8,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.12,
+          "to": "fx:armorPen",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "mace": {
+      "name": "True strike",
+      "text": "{m0} Accuracy",
+      "icon": "accuracy",
+      "desc": "Maces land true: your accuracy is multiplied (80% accuracy becomes 84.8%).",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.5,
+          "to": "mult:accuracyMult",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "hammer": {
+      "name": "Daze",
+      "text": "{0}% chance to Daze",
+      "icon": "spd",
+      "desc": "Each damaging hit may Daze the target: its turn comes later (its turn counter loses a quarter of a turn). Bosses are dazed half as much. Not a control effect: nothing is immune.",
+      "parts": [
+        {
+          "base": 15,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.2,
+          "to": "fx:dazeChance",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "bow": {
+      "name": "Deadly draw",
+      "text": "+{0}% Crit damage",
+      "icon": "critMult",
+      "desc": "Bows carry a little extra crit damage.",
+      "parts": [
+        {
+          "base": 10,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.06,
+          "to": "mod:critMultAdd",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "staff": {
+      "name": "Deep well",
+      "text": "{m0} Max MP",
+      "icon": "mp",
+      "desc": "Staves deepen your mana: your max MP is multiplied.",
+      "parts": [
+        {
+          "base": 8,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.06,
+          "to": "mult:mpMult",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "charm": {
+      "name": "Wellspring",
+      "text": "+{0} MP per turn",
+      "icon": "mpRegen",
+      "desc": "Charms carry a little extra MP regeneration.",
+      "parts": [
+        {
+          "base": 0.5,
+          "perIlvl": 0.05,
+          "step": 0.25,
+          "ip": 2,
+          "to": "mod:mpRegenAdd",
           "noRoll": true,
           "noPower": true
         }
@@ -1691,7 +1860,8 @@
       "druid": "ash_staff",
       "undead": "ash_staff",
       "gambler": "worn_deck",
-      "hexer": "worn_deck"
+      "hexer": "worn_deck",
+      "vesper": "ash_staff"
     }
   },
   "_starterOffhands": "Başlangıç ikinci el item'i (Ömer 2026-10-23): ikinci el yuvası boş başlayan ve başlangıç silahı tek el olan sınıflara sınıfına uygun Common ikinci el (Defender / Paladin kalkan, Cutthroat / Anti-Mage ikinci hançer). Yeni item yok, katalogdaki Common'lar; örnek seviyesi starterWeapons.ilvl. Silah katlaması (sıfır noktası) yalnızca ana el başlangıç silahıdır: ikinci hançerin güç payı küçük bir ek hasar verir. Warrior ikinci el almaz: başlangıç silahı çift el Greataxe oldu (Ömer 2026-10-23, open-questions 401; önceden tek el Woodcutter's Axe; katlama Greataxe'a göre: başlangıçla hasar aynı, eski kayıttaki Woodcutter's Axe artık ~x0,957). Yalnızca yeni sefer kahramanı / yeni Endless koşusu alır (eski kayıtlara göç yok, Ömer 2026-10-23).",
@@ -1725,6 +1895,7 @@
     },
     {
       "id": "arming_sword",
+      "type": "sword",
       "name": "Arming Sword",
       "icon": "sword",
       "slot": "weapon",
@@ -1753,6 +1924,7 @@
     },
     {
       "id": "greatsword",
+      "type": "sword",
       "name": "Greatsword",
       "icon": "sword",
       "slot": "weapon",
@@ -1832,10 +2004,40 @@
       "ilvl": 10
     },
     {
+      "id": "war_hammer",
+      "name": "War Hammer",
+      "icon": "mace",
+      "slot": "weapon",
+      "family": "hammers",
+      "grip": "one",
+      "rarity": "common",
+      "ilvl": 2
+    },
+    {
+      "id": "horsemans_hammer",
+      "name": "Horseman's Hammer",
+      "icon": "mace",
+      "slot": "weapon",
+      "family": "hammers",
+      "grip": "one",
+      "rarity": "uncommon",
+      "ilvl": 6
+    },
+    {
+      "id": "templars_hammer",
+      "name": "Templar's Hammer",
+      "icon": "mace",
+      "slot": "weapon",
+      "family": "hammers",
+      "grip": "one",
+      "rarity": "rare",
+      "ilvl": 10
+    },
+    {
       "id": "war_maul",
       "name": "War Maul",
       "slot": "weapon",
-      "family": "maces",
+      "family": "hammers",
       "grip": "two",
       "rarity": "common",
       "ilvl": 4
@@ -2216,6 +2418,7 @@
     },
     {
       "id": "emberbrand",
+      "type": "sword",
       "name": "Emberbrand",
       "slot": "weapon",
       "family": "axes",
@@ -2558,6 +2761,23 @@
       },
       "effect": "huntersmark",
       "flavor": "Cast them at the strongest foe, and they always land on its name."
+    },
+    {
+      "id": "clapper_of_the_sunken_bell",
+      "name": "Clapper of the Sunken Bell",
+      "slot": "trinket",
+      "rarity": "legendary",
+      "ilvl": 14,
+      "minChapter": 2,
+      "eventOnly": true,
+      "affixes": [
+        "c_holy",
+        "c_lightning",
+        "b_mpen",
+        "a_allelem"
+      ],
+      "effect": "sunken_clapper",
+      "flavor": "Forty years it rang for the drowned. It has not forgotten how."
     }
   ],
   "_effects": "Legendary etkileri (madde 296 + Ömer onayı 2026-10-11: 8 yeni). Eski 11 Epic etkisi kaldırıldı (Epic gücünü A affix'inden alır). hook = motor kancası (src/engine/types.ts > ItemEffects), value = sayılar (metindeki {turns}/{below}... bunlardan), ip = etkinin Item Points değeri. effectRules: stack = aynı etki iki item'den toplanmaz; endless = etkiler Endless'ta da aynı.",
@@ -2740,6 +2960,18 @@
         "status": "jinxed",
         "turns": 1
       }
+    },
+    "sunken_clapper": {
+      "name": "Toll of the Deep",
+      "text": "Your critical hits leave the target Blinded for {turns} turn: the toll still rings in its ears.",
+      "ip": 2.5,
+      "hook": "critStatuses",
+      "value": [
+        {
+          "status": "blinded",
+          "turns": 1
+        }
+      ]
     }
   },
   "effectRules": {

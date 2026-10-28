@@ -20,9 +20,9 @@ const unit = (b: Battle, uid: string) => b.combatants.find((c) => c.uid === uid)
 type Priv = { addStatus: (t: unknown, s: unknown, emit: (e: BattleEvent) => void) => void; applyHit: (a: unknown, t: unknown, n: number, ty: string, crit: boolean, emit: (e: BattleEvent) => void, red: boolean, meta: unknown) => number };
 
 describe('veri: Epic etkileri kaldırıldı, Legendary etkileri kalır (Ömer 2026-10-11)', () => {
-  it('etki kaydı yalnızca Legendary etkileri (10 eski + 8 yeni); Epic item etki taşımaz', () => {
+  it('etki kaydı yalnızca Legendary etkileri (10 eski + 8 yeni + Vesper olay emaneti sunken_clapper); Epic item etki taşımaz', () => {
     expect(validateItems()).toEqual([]);
-    expect(Object.keys(ITEMS.effects)).toHaveLength(18);
+    expect(Object.keys(ITEMS.effects)).toHaveLength(19); // +1: sunken_clapper (Clapper of the Sunken Bell, dr19 olayı, 2026-10-28)
     for (const k of ['opening_ward', 'mana_spring', 'second_wind', 'quick_start', 'steadfast', 'iron_will', 'giantslayer', 'wardens_oath', 'ember_heart', 'thrifty', 'bloodletter']) expect(ITEMS.effects[k], k).toBeUndefined();
     expect(ITEMS.items.filter((d) => d.rarity !== 'legendary').every((d) => !d.effect)).toBe(true);
     expect(ITEMS.effectRules).toEqual({ stack: false, endless: true });

@@ -83,24 +83,23 @@ describe('CC bağışıklığı: motor', () => {
     expect(e.statuses.find((s) => s.kind === 'omen')?.stacks).toBe(1);
   });
 
-  it('Drain Field: MP\'si biten boss susturulmaz ama zarın hasarını yer; önizleme Immune gösterir; YZ susturma değeri 0', () => {
-    const sure: Record<string, SkillDef> = { drain_field: { ...content.skills.drain_field!, effects: content.skills.drain_field!.effects.map((x) => (x.type === 'manaBurn' && x.onEmpty ? { ...x, onEmpty: { ...x.onEmpty, chance: 1 } } : x)) } };
+  it('Ley Brand (2026-10-27): boss da Branded olur (CC değil); Hush of the Brand susturması boss\'ta Immune, normal düşmanda işler', () => {
+    // Hush of the Brand ağaç düğümünün etkisi (silenceOnEmpty 1) doğrudan skill kopyasında
+    const hush: Record<string, SkillDef> = { drain_field: { ...content.skills.drain_field!, effects: content.skills.drain_field!.effects.map((x) => (x.type === 'brand' ? { ...x, silenceOnEmpty: 1 } : x)) } };
     for (const units of [BOSS, undefined]) {
       const base = content.battleSetup('random-battle', 1, 'test', { party: cells({ 4: 'antimage' }), enemies: cells({ 1: 'mage' }), ...(units ? { units } : {}) }, false);
-      const b = new Battle({ ...base, skills: { ...base.skills, ...sure } });
-      for (const c of b.combatants) c.hp = c.maxHp = 5000;
+      const b = new Battle({ ...base, skills: { ...base.skills, ...hush } });
+      b.debugClearCooldowns();
+      for (const c of b.combatants) { Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0, surviveChance: 0, resilience: 0 }); c.hp = c.maxHp = 5000; }
       const am = at(b, 'party', 4);
       const m = at(b, 'enemy', 1);
-      m.mp = 0;
-      const pv = previewSkill(b, am.uid, 'drain_field', m.uid).find((p) => p.uid === m.uid)!;
-      expect(!!pv.immune?.length).toBe(!!units);
-      const ex = explainChoice(b, am.uid, content.aiConfig)!;
-      const cand = ex.candidates.find((c) => c.skill === 'drain_field'); // tek düşman
-      if (cand && units) expect(cand.terms?.silence ?? 0).toBe(0); // boss: susturma değeri yok (MP'siz normal hedefte de engellenen hamle 0 olabilir)
-      const hp = m.hp;
-      const ev = act(b, am.uid, 'drain_field', m.uid);
+      act(b, am.uid, 'drain_field', m.uid);
+      expect(has(b, m.uid, 'branded')).toBe(true); // boss dahil
+      m.mp = 2; // Mana Steal bunu 0'a indirir
+      b.debugClearCooldowns();
+      const ev = act(b, am.uid, 'mana_burn', m.uid);
+      expect(m.mp).toBe(0);
       expect(has(b, m.uid, 'silence')).toBe(!units);
-      expect(m.hp).toBeLessThan(hp);
       expect(ofType(ev, 'immune').length).toBe(units ? 1 : 0);
     }
   });

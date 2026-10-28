@@ -102,7 +102,7 @@
       {
         "at": 20,
         "name": "Momentum",
-        "text": "When you kill an enemy, your next spell deals ×1.06 damage.",
+        "text": "When you kill an enemy, your next spell deals 6% more damage.",
         "src": "B:V5:bar2",
         "fx": [
           {
@@ -293,7 +293,7 @@
     },
     "0.fa": {
       "name": "Unstable Weave",
-      "text": "Recast spells deal ×1.3 damage, but a cooldown spell that fails to echo gets +1 turn of cooldown.",
+      "text": "Recast spells deal 30% more damage, but a cooldown spell that fails to echo gets +1 turn of cooldown.",
       "src": "B:V3:0.fa",
       "fx": [
         {
@@ -370,7 +370,7 @@
     },
     "0.v": {
       "name": "Arcane Overload",
-      "text": "Spell Echo evolves: an echo resets all your cooldowns, not just the spell's, and the recast deals ×1.15 damage.",
+      "text": "Spell Echo evolves: an echo resets all your cooldowns, not just the spell's, and the recast deals 15% more damage.",
       "src": "B:V5:0.v",
       "fx": [
         {
@@ -409,7 +409,7 @@
     },
     "1.f2": {
       "name": "Searing Crit",
-      "text": "Fire Bolt critical damage ×1.06 per rank.",
+      "text": "Fire Bolt's critical hits deal 6% more damage per rank.",
       "src": "B:V5:1.f2",
       "fx": [
         {
@@ -424,7 +424,7 @@
     },
     "1.f3": {
       "name": "Clean Shot",
-      "text": "Fire Bolt ×1.06 damage per rank against targets at full HP.",
+      "text": "Fire Bolt deals 6% more damage per rank against targets at full HP.",
       "src": "B:V5:1.f3",
       "fx": [
         {
@@ -459,7 +459,7 @@
     },
     "1.r": {
       "name": "Finisher",
-      "text": "Fire Bolt ×1.03 damage per rank against targets below 30% HP.",
+      "text": "Fire Bolt deals 3% more damage per rank against targets below 30% HP.",
       "src": "B:V5:1.r",
       "fx": [
         {
@@ -498,7 +498,7 @@
     },
     "1.eb": {
       "name": "Execution Bolt",
-      "text": "Fire Bolt deals ×1.25 damage to targets below 25% HP.",
+      "text": "Fire Bolt deals 25% more damage to targets below 25% HP.",
       "src": "B:V5:1.eb",
       "fx": [
         {
@@ -535,7 +535,7 @@
     },
     "1.fa": {
       "name": "Unstable Focus",
-      "text": "Fire Bolt critical hits deal ×1.35 damage, but its non-critical hits deal ×0.8 damage.",
+      "text": "Fire Bolt critical hits deal 35% more damage, but its non-critical hits deal 20% less damage.",
       "src": "B:V5:1.fa",
       "fx": [
         {
@@ -562,7 +562,7 @@
     },
     "1.fb": {
       "name": "Reckless Bolt",
-      "text": "Fire Bolt ×1.2 damage against targets below 50% HP, but ×0.8 against healthier ones.",
+      "text": "Fire Bolt deals 20% more damage against targets below 50% HP, but 20% less against healthier ones.",
       "src": "B:V5:1.fb",
       "fx": [
         {
@@ -612,7 +612,7 @@
     },
     "1.v": {
       "name": "Sunfire",
-      "text": "Fire Bolt evolves into Sunfire: it deals ×1.3 damage, and a critical Sunfire splashes its full damage to the enemies beside the target.",
+      "text": "Fire Bolt evolves into Sunfire: it deals 30% more damage, and a critical Sunfire splashes its full damage to the enemies beside the target.",
       "src": "B:V5:1.v",
       "fx": [
         {
@@ -668,7 +668,7 @@
     },
     "2.f2": {
       "name": "Numbing Cold",
-      "text": "Blizzard ×1.06 damage per rank against Slowed enemies.",
+      "text": "Blizzard deals 6% more damage per rank against Slowed enemies.",
       "src": "A:V2:2.f2",
       "fx": [
         {
@@ -748,7 +748,7 @@
     },
     "2.r": {
       "name": "Snow Blindness",
-      "text": "Blizzard ×1.03 damage per rank against Blinded enemies.",
+      "text": "Blizzard deals 3% more damage per rank against Blinded enemies.",
       "src": "A:V2:2.r",
       "fx": [
         {
@@ -827,7 +827,7 @@
     },
     "2.fa": {
       "name": "Black Ice",
-      "text": "Flash Freeze always Stuns, but Blizzard deals ×0.6 damage.",
+      "text": "Flash Freeze always Stuns, but Blizzard deals 40% less damage.",
       "src": "A:V2:2.fa",
       "fx": [
         {
@@ -916,7 +916,7 @@
     },
     "3.f1": {
       "name": "Rimeguard",
-      "text": "Mana Barrier shield ×1.06 per rank when cast on an ally in the front row.",
+      "text": "Mana Barrier's shield is 6% larger per rank when cast on an ally in the front row.",
       "src": "A:V2:3.f1",
       "fx": [
         {
@@ -952,7 +952,7 @@
     },
     "3.f3": {
       "name": "Numbing Touch",
-      "text": "While Mana Barrier holds, Slowed attackers deal ×0.94 damage per rank to the holder.",
+      "text": "While Mana Barrier holds, Slowed attackers deal 6% less damage per rank to the holder.",
       "src": "A:V2:3.f3",
       "fx": [
         {
@@ -1071,7 +1071,7 @@
     },
     "3.fa": {
       "name": "Brittle Shell",
-      "text": "Frost Armor Slows for 2 turns, but Mana Barrier's shield is ×0.65.",
+      "text": "Frost Armor Slows for 2 turns, but Mana Barrier's shield is 35% lower.",
       "src": "A:V2:3.fa",
       "fx": [
         {
@@ -1176,7 +1176,7 @@
     },
     "4.u2": {
       "name": "White Heat",
-      "text": "Meteor's Burning ground deals ×1.2 damage.",
+      "text": "Meteor's Burning ground deals 20% more damage.",
       "src": "A:V1:4.u2",
       "fx": [
         {
@@ -1340,7 +1340,7 @@
     },
     "4.l1": {
       "name": "Crater's Heart",
-      "text": "Meteor deals ×1.3 damage to the enemy at its center.",
+      "text": "Meteor deals 30% more damage to the enemy at its center.",
       "src": "A:V1:4.l1",
       "fx": [
         {
@@ -1371,7 +1371,7 @@
     },
     "4.l3": {
       "name": "Extinction",
-      "text": "Meteor's center target takes ×(1 + 15% for each other enemy the Meteor hits) damage.",
+      "text": "Meteor's center target takes 15% more damage for each other enemy the Meteor hits.",
       "src": "A:V1:4.l3",
       "fx": [
         {

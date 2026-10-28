@@ -36,6 +36,12 @@
 .ec-hp i.ghost { background: linear-gradient(180deg, rgba(159,216,138,.55), rgba(159,216,138,.25)); }
 .ec-hp.low i { background: linear-gradient(180deg, #c9694a, #8a3a24); }
 .ec-hp.low i.ghost { background: linear-gradient(180deg, rgba(201,105,74,.5), rgba(201,105,74,.25)); }
+/* Inn: iyileşecek dilim nefes alır, üstünden soldan sağa ışık süzülür (Ömer 2026-10-27) */
+.ec-hp i.ghost { overflow: hidden; animation: ec-heal-breathe 2.4s ease-in-out infinite; }
+.ec-hp i.ghost::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 60%; background: linear-gradient(90deg, transparent, rgba(255,240,200,.55), transparent); transform: translateX(-100%); animation: ec-heal-sweep 2.4s ease-in-out infinite; }
+@keyframes ec-heal-breathe { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+@keyframes ec-heal-sweep { 0% { transform: translateX(-100%); } 70%, 100% { transform: translateX(170%); } }
+html.reduced-motion .ec-hp i.ghost, html.reduced-motion .ec-hp i.ghost::after { animation: none; }
 .ec-empty { display: flex; align-items: center; justify-content: center; min-height: max(56px, calc(96 * var(--u))); padding: calc(8 * var(--u)); text-align: center; font: max(13px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); border: 1px dashed var(--g-line2); background: rgba(8,6,4,.35); }
 .ec-hero .wd-pips { display: inline-flex; gap: 3px; }
 

@@ -144,7 +144,7 @@ describe('YM5 Deep Hoard (Thane of the Deep)', () => {
     expect(b.effectiveStats(th).magicArmor).toBe(th.stats.magicArmor);
   });
 
-  it('YZ: MP yakmanın değeri MP bağlı zırhı da sayar (Drain Field / Mana Steal burn terimi pasifle büyür; MP ve zırh geri alınır)', () => {
+  it('YZ: MP yakmanın değeri MP bağlı zırhı da sayar (Mana Steal burn terimi pasifle büyür; MP ve zırh geri alınır; 2026-10-27: Ley Brand yakmaz)', () => {
     const burnOf = (hoard: boolean) => {
       const b = arena([['antimage', 0], ['warrior', 1], ['archer', 6]], [['thane_of_the_deep', 1]]);
       const th = unit(b, 'enemy-0');
@@ -156,11 +156,10 @@ describe('YM5 Deep Hoard (Thane of the Deep)', () => {
       expect(th.mp).toBe(mp); // değerlendirme durumu değiştirmez
       expect(b.effectiveStats(th).armor).toBe(armor);
       const best = (skill: string) => Math.max(0, ...ex.candidates.filter((c) => c.skill === skill).map((c) => c.terms?.burn ?? 0));
-      return { drain: best('drain_field'), steal: best('mana_burn') };
+      return { steal: best('mana_burn') };
     };
     const withHoard = burnOf(true);
     const without = burnOf(false);
-    expect(withHoard.drain).toBeGreaterThan(without.drain);
     expect(withHoard.steal).toBeGreaterThan(without.steal);
   });
 });

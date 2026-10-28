@@ -317,19 +317,35 @@ describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
     expect(chooseAction(b, d, ai)?.reason).not.toBe('guard');
   });
 
-  it('Anti-Mage: Drain Field adayının değeri yakılan manayı içerir (burn terimi); en değerli seçenek seçilir', () => {
+  it('Anti-Mage: Ley Brand adayının değeri brand teriminde (2026-10-27, Drain Field yerine); en değerli seçenek seçilir', () => {
     const b = make(['antimage', 'warrior', 'archer', 'mage'], ['warrior', 'mage', 'druid', 'archer']);
     const ex = explainChoice(b, uid(b, 'party', 'antimage'), ai)!;
-    const drain = ex.candidates.filter((c) => c.skill === 'drain_field');
-    expect(Math.max(...drain.map((c) => c.terms?.burn ?? 0))).toBeGreaterThan(0);
+    const brand = ex.candidates.filter((c) => c.skill === 'drain_field');
+    expect(Math.max(...brand.map((c) => c.terms?.brand ?? 0))).toBeGreaterThan(0);
     const top = Math.max(...ex.candidates.map((c) => c.score ?? -Infinity));
     expect(ex.candidates.find((c) => c.verdict === 'chosen')!.score).toBe(top);
   });
 
-  it('düşmanların manası yoksa Drain Field seçmez; hasar skill\'ine geçer', () => {
+  it('Ley Brand: hedeflerin hepsi daha birkaç tur Branded ise brand terimi 0 (yeniden basmaya değer vermez)', () => {
     const b = make(['antimage', 'warrior', 'archer', 'mage'], ['warrior', 'mage', 'druid', 'archer']);
-    for (const c of b.living('enemy')) { c.maxMp = 0; c.mp = 0; } // yakılacak mana yok (ve eksik mana bonusu da yok)
-    const choice = chooseAction(b, uid(b, 'party', 'antimage'), ai);
+    const am = uid(b, 'party', 'antimage');
+    for (const e of b.living('enemy')) e.statuses.push({ kind: 'branded', turns: 3, source: am, brand: { turns: 3, pool: 0, pct: 0.2, costMult: 1.5, burnPct: 0.5, explodePct: 0.5, element: 'arcane' } });
+    const ex = explainChoice(b, am, ai)!;
+    const brand = ex.candidates.filter((c) => c.skill === 'drain_field');
+    expect(brand.length).toBeGreaterThan(0);
+    expect(Math.max(...brand.map((c) => c.terms?.brand ?? 0))).toBe(0);
+  });
+
+  it('düşmanların manası yoksa ve hepsi zaten taze Branded ise Ley Brand seçmez; hasar skill\'ine geçer', () => {
+    // 2026-10-29: Ley Brand MP'siz düşmana tainted mana açar ve işaret (markDamagePct) verir; taze Brand'li düşmana yeniden basmanın değeri 0 olmalı
+    const b = make(['antimage', 'warrior', 'archer', 'mage'], ['warrior', 'mage', 'druid', 'archer']);
+    const am = uid(b, 'party', 'antimage');
+    for (const c of b.living('enemy')) {
+      c.maxMp = 0;
+      c.mp = 0; // yakılacak mana yok (ve eksik mana bonusu da yok)
+      c.statuses.push({ kind: 'branded', turns: 3, source: am, brand: { turns: 3, pool: 0, pct: 0.2, costMult: 1.5, burnPct: 0.5, explodePct: 0.5, element: 'arcane' } });
+    }
+    const choice = chooseAction(b, am, ai);
     expect(choice?.skillId).not.toBe('drain_field');
     expect(choice?.reason).toBe('damage');
   });

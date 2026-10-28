@@ -166,7 +166,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(items).not.toMatch(/Might/);
     // Item Güçlendirme (2026-10-17): silah gücü, başlangıç silahı, seviye şartı; sayılar veriden
     for (const w of ['Weapon power', '(1 + power / 100)', 'Starter weapons', 'Greataxe', 'Requires Level X', `item level - ${ITEMS.levelReq.offset}`, "A shield's base value is its block chance"]) expect(items, w).toContain(w);
-    expect(items).toContain(`${weaponPowerOf(itemDef('woodcutters_axe')!, 30)} at 30`);
+    expect(items).toContain(`${weaponPowerOf(itemDef('arming_sword')!, 30)} at 30`);
     expect(text('turns')).toContain('Battle speed');
     expect(text('mana')).toContain('"+2 MP"');
     const st = (id: string) => wiki.statuses.find((s) => s.id === id)!;
@@ -189,7 +189,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(mech).toContain(`${f.attributes.dexPerEvasionStep} Dexterity`);
     const head = wiki.elementTable.head.map((x) => x.toLowerCase());
     for (const [tag, m] of Object.entries(f.weaknesses))
-      for (const [el, mult] of Object.entries(m)) expect(wiki.elementTable.rows.find((r) => r[0]!.toLowerCase() === tag)?.[head.indexOf(el)]).toBe(`×${mult}`);
+      for (const [el, mult] of Object.entries(m)) expect(wiki.elementTable.rows.find((r) => r[0]!.toLowerCase() === tag)?.[head.indexOf(el)]).toBe(mult === 1 ? '—' : `${Number((Math.abs(mult - 1) * 100).toFixed(2))}% ${mult >= 1 ? 'more' : 'less'}`);
   });
 
   it('Getting Started: tur sırası, takım, dizilim, MP ve cooldown başlıkları var; test modundan söz edilmez', () => {
@@ -303,5 +303,22 @@ describe('Codex: The Drowned Reach (Harita 2, bayrak arkasında)', () => {
     const storm = content.battleRulesData.conditions.storm!;
     expect(text).toContain(`lowered by ${Math.round(-storm.rangedAccuracy!.delta * 100)} points`);
     for (const s of Object.values(content.skills).filter((x) => x.shot && !x.id.startsWith('pt_'))) expect(text).toContain(s.name);
+  });
+});
+
+describe('Codex: Ground reactions (Ömer 2026-10-27)', () => {
+  it('Mechanics > Ground reactions tablosu her tepkimeyi veriden listeler (kurulum, tetik, sonuç)', () => {
+    const art = wiki.mechanics.find((a) => a.id === 'ground-reactions');
+    expect(art).toBeDefined();
+    const table = art!.blocks.find((b): b is Extract<WikiBlock, { kind: 'table' }> => b.kind === 'table')!;
+    expect(table.rows).toHaveLength(Object.keys(content.groundReactions).length);
+    for (const r of Object.values(content.groundReactions)) {
+      // iki tepkime aynı etiketi taşıyabilir (Holy water: Holy Fire + su / Holy Ground + su); satır metinden bulunur
+      const row = table.rows.find((x) => x[3] === r.text);
+      expect(row, r.label).toBeDefined();
+      expect(row![0]).toContain(content.grounds[r.setup[0]!]!.name);
+      expect(row![1]).toContain(content.grounds[r.trigger[0]!]!.name);
+      expect(row![2]).toBe(r.label);
+    }
   });
 });

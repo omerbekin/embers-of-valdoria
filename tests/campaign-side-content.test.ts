@@ -208,6 +208,7 @@ describe('B1 Salvage Dive', () => {
     expect(diveState(s)).toMatchObject({ won: 3, next: null });
     expect(() => diveDeeper(s)).toThrow();
     // yüzey: düğümün sandığı + 2. (1 Rare + 30 altın) + 3. derinlik (Rare + Epic + 60 altın)
+    s = { ...s, inventory: [] }; // çanta dolup Epic geride kalmasın (2026-10-27: yeni çekiç tabanları loot havuzunu kaydırdı, çanta dolabiliyordu)
     const bag0 = s.inventory.length;
     const g0 = s.gold;
     const t = completeSimple(s, 'treasure');
@@ -215,7 +216,9 @@ describe('B1 Salvage Dive', () => {
     expect(t.inventory.length - bag0).toBeGreaterThanOrEqual(3);
     expect(t.gold - g0).toBeGreaterThanOrEqual(90);
     expect(t.inventory.slice(bag0).map((i) => i.rolls?.rarity)).toEqual(expect.arrayContaining(['rare', 'epic']));
-    expect(nextStep(t).kind).toBe('move');
+    // 2026-10-28: dr19'da sandıktan sonra Vesper buluşması (olay adımı) gelir; sandık bitince yol ondan sonra açılır
+    expect(nextStep(t)).toMatchObject({ kind: 'event', event: 'dr_vesper' });
+    expect(nextStep(completeSimple(t, 'event')).kind).toBe('move');
   });
 
   it('derinlikte yenilgi: son bulunan sandık batar, öncekiler alınır, savaştaki canlar kalır', () => {

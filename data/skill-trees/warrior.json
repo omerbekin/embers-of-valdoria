@@ -81,7 +81,7 @@
       {
         "at": 15,
         "name": "Crushing Weight",
-        "text": "Your skills deal ×1.03 damage to Stunned, Slowed or Staggered enemies.",
+        "text": "Your skills deal 3% more damage to Stunned, Slowed or Staggered enemies.",
         "src": "B:V4:bar2",
         "fx": [
           {
@@ -146,7 +146,7 @@
   "nodes": {
     "0.f1": {
       "name": "Thick Hide",
-      "text": "While below 50% HP, you take ×0.96 damage per rank.",
+      "text": "While below 50% HP, you take 4% less damage per rank.",
       "src": "B:V3:0.f1",
       "fx": [
         {
@@ -163,7 +163,7 @@
     },
     "0.f2": {
       "name": "Grit",
-      "text": "While below 25% HP, healing you receive is ×1.06 per rank.",
+      "text": "While below 25% HP, healing you receive is 6% higher per rank.",
       "src": "B:V3:0.f2",
       "fx": [
         {
@@ -238,7 +238,7 @@
     },
     "0.ea": {
       "name": "Measured Mending",
-      "text": "Healing you receive is ×1.12 below 50% HP, but halved above it.",
+      "text": "Healing you receive is 12% higher below 50% HP, but halved above it.",
       "src": "B:V3:0.ea",
       "fx": [
         {
@@ -265,7 +265,7 @@
     },
     "0.eb": {
       "name": "Stand Firm",
-      "text": "A single hit that would take 30%+ of your max HP deals ×0.75 damage.",
+      "text": "A single hit that would take 30%+ of your max HP deals 25% less damage.",
       "src": "B:V3:0.eb",
       "fx": [
         {
@@ -295,7 +295,7 @@
     },
     "0.fa": {
       "name": "Grave Pact",
-      "text": "While below 25% HP, your skills lifesteal 15%, but above 50% HP they deal ×0.85 damage.",
+      "text": "While below 25% HP, your skills lifesteal 15%, but above 50% HP they deal 15% less damage.",
       "src": "B:V3:0.fa",
       "fx": [
         {
@@ -322,7 +322,7 @@
     },
     "0.fb": {
       "name": "Iron Will",
-      "text": "Stun and Slow on you last 1 turn shorter, but healing you receive is ×0.8.",
+      "text": "Stun and Slow on you last 1 turn shorter, but healing you receive is 20% lower.",
       "src": "B:V3:0.fb",
       "fx": [
         {
@@ -413,7 +413,7 @@
     },
     "1.f2": {
       "name": "Notched Axe",
-      "text": "Double Strike's second hit ×1.04 power per rank.",
+      "text": "Double Strike's second hit has 4% more power per rank.",
       "src": "B:V1:1.f1",
       "fx": [
         {
@@ -447,7 +447,7 @@
     },
     "1.n0": {
       "name": "Gut Strike",
-      "text": "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for ×1.08 damage.",
+      "text": "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for 8% more damage.",
       "src": "B:V1:1.n0",
       "fx": [
         {
@@ -523,7 +523,7 @@
     },
     "1.ma": {
       "name": "Hobble",
-      "text": "Double Strike on a Slowed target extends the Slow by 1 turn and deals ×1.05 damage.",
+      "text": "Double Strike on a Slowed target extends the Slow by 1 turn and deals 5% more damage.",
       "src": "B:V4:1.mb",
       "fx": [
         {
@@ -554,7 +554,7 @@
     },
     "1.fa": {
       "name": "Crippling Pair",
-      "text": "Double Strike's Slow lasts 2 turns, but Double Strike deals ×0.85 damage.",
+      "text": "Double Strike's Slow lasts 2 turns, but Double Strike deals 15% less damage.",
       "src": "B:V4:1.fb",
       "fx": [
         {
@@ -607,7 +607,7 @@
     },
     "1.mb": {
       "name": "Butcher's Carve",
-      "text": "Each Double Strike hit deals ×(1 + 2% for every turn of Wound left on the target) damage.",
+      "text": "Each Double Strike hit deals 2% more damage for every turn of Wound left on the target.",
       "src": "B:V1:1.ma",
       "fx": [
         {
@@ -694,7 +694,7 @@
     },
     "2.f3": {
       "name": "Hungry Arc",
-      "text": "Whirlwind ×1.06 power per rank while you are below 50% HP.",
+      "text": "Whirlwind has 6% more power per rank while you are below 50% HP.",
       "src": "A:V3:2.f3",
       "fx": [
         {
@@ -729,7 +729,7 @@
     },
     "2.r": {
       "name": "Red Arc",
-      "text": "Whirlwind ×1.02 power per rank against Wounded enemies.",
+      "text": "Whirlwind has 2% more power per rank against Wounded enemies.",
       "src": "A:V1:2.f2",
       "fx": [
         {
@@ -790,7 +790,7 @@
     },
     "2.fa": {
       "name": "Glass Cyclone",
-      "text": "Whirlwind lifesteal +12%, but you take ×1.15 damage until your next turn.",
+      "text": "Whirlwind lifesteal +12%, but you take 15% more damage until your next turn.",
       "src": "A:V3:2.fa",
       "fx": [
         {
@@ -813,7 +813,7 @@
     },
     "2.fb": {
       "name": "Reaper's Spin",
-      "text": "Whirlwind deals ×1.15 damage to Wounded enemies, but no damage at all to enemies that are not Wounded.",
+      "text": "Whirlwind deals 15% more damage to Wounded enemies, but no damage at all to enemies that are not Wounded.",
       "src": "A:V1:2.fa",
       "fx": [
         {
@@ -842,7 +842,7 @@
     },
     "2.mb": {
       "name": "Crimson Wheel",
-      "text": "Whirlwind deals ×(1 + 4% for each Wounded enemy among its targets) damage to all enemies it hits.",
+      "text": "Whirlwind deals 4% more damage to all enemies it hits for each Wounded enemy among its targets.",
       "src": "A:V1:2.ma",
       "fx": [
         {
@@ -859,7 +859,7 @@
     },
     "2.v": {
       "name": "Exsanguinate",
-      "text": "Whirlwind evolves: it tears open the Wound on each enemy hit, ending it for ×1.2 damage and double lifesteal on that hit.",
+      "text": "Whirlwind evolves: it tears open the Wound on each enemy hit, ending it for 20% more damage and double lifesteal on that hit.",
       "src": "A:V1:2.v",
       "fx": [
         {
@@ -878,7 +878,7 @@
     },
     "3.f1": {
       "name": "Rolling Start",
-      "text": "Charge ×1.06 power per rank against a target that has not acted yet this battle.",
+      "text": "Charge has 6% more power per rank against a target that has not acted yet this battle.",
       "src": "A:V2:3.f2",
       "fx": [
         {
@@ -896,7 +896,7 @@
     },
     "3.f2": {
       "name": "Vengeful Run",
-      "text": "Charge ×1.06 power per rank against the enemy that hit you last.",
+      "text": "Charge has 6% more power per rank against the enemy that hit you last.",
       "src": "A:V3:3.r",
       "fx": [
         {
@@ -992,7 +992,7 @@
     },
     "3.ma": {
       "name": "Payback",
-      "text": "Charge on the enemy that hit you last deals ×1.2 damage and heals you for half of it.",
+      "text": "Charge on the enemy that hit you last deals 20% more damage and heals you for half of it.",
       "src": "A:V3:3.ma",
       "fx": [
         {
@@ -1010,7 +1010,7 @@
     },
     "3.fa": {
       "name": "Martyr's Rush",
-      "text": "Charge Taunts every enemy for 1 turn, but you take ×1.15 damage until your next turn.",
+      "text": "Charge Taunts every enemy for 1 turn, but you take 15% more damage until your next turn.",
       "src": "A:V3:3.fb",
       "fx": [
         {
@@ -1067,7 +1067,7 @@
     },
     "3.v": {
       "name": "Herald of Ruin",
-      "text": "Charge evolves: it gains ×(1 + 1% per Rage you hold) power, without spending it, and refunds 10 Rage when its Stun ends.",
+      "text": "Charge evolves: it gains 1% more power per Rage you hold, without spending it, and refunds 10 Rage when its Stun ends.",
       "src": "A:V2:3.v",
       "fx": [
         {

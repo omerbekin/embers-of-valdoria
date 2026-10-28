@@ -34,6 +34,7 @@ import {
   edgeVisibility,
   enemyPreview,
   foeGroups,
+  companyCard,
   startCardInfo,
   type FoeGroup,
   nodeLevel,
@@ -243,6 +244,8 @@ const COL_K = 1.45;
 /** Zorunlu seçim pencereleri (Esc ile kapanmaz; Party / Formation bunların üstünde açılmaz). */
 const FORCED: ReadonlyArray<NextStep['kind']> = ['hero', 'recruit', 'volunteer', 'farewell', 'company'];
 
+type CompanyCard = NonNullable<ReturnType<typeof companyCard>>;
+type PatrolTags = Array<{ text: string; tone?: 'gold' | 'dim' }>;
 type Pt = { x: number; y: number };
 /** Zafer toparlanması notu için son görülen zafer sayısı (seferin seed'i ile; oturum belleği, kayda girmez). */
 let recoverySeen: { seed: number; wins: number } | null = null;
@@ -1018,9 +1021,17 @@ export class CampaignMapScene extends Phaser.Scene {
     const r = fs.icon / 1.84; // ikon yarıçapı eşdeğeri (bugünkü NODE_R: 24, boss 30)
     const R = fs.R;
     const here = v === 'current';
-    const done = this.doneLook(n.id, v);
+    const doneRaw = this.doneLook(n.id, v);
+    // Kasaba ziyaret edilince de solmaz (Ömer 2026-10-27); devriye gibi diğer "geçildi" davranışları doneRaw ile sürer
+    const done = doneRaw && n.type !== 'town';
     const goal = v === 'goal';
     const actionable = option || (here && this.actionHere());
+    if (n.type === 'town' && !goal) {
+      // Fener parıltısı: sıcak, yavaşça nabız atar (azaltılmış harekette sabit)
+      const lamp = this.add.image(0, 0, ensureGlow(this)).setTint(0xffb44a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(fs.glowR * 2.4, fs.glowR * 2.4).setAlpha(0.5);
+      c.add(lamp);
+      if (!reducedMotion()) this.tweens.add({ targets: lamp, alpha: { from: 0.38, to: 0.62 }, scale: { from: lamp.scale, to: lamp.scale * 1.06 }, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
     if (actionable || (fs.boss && !goal)) {
       const glow = this.add.image(0, 0, ensureGlow(this)).setTint(fs.boss ? 0xff6a1c : EL.EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(fs.glowR * 2.6, fs.glowR * 2.6).setAlpha(0.5);
       c.add(glow);
@@ -1036,7 +1047,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const body = this.add.container(0, 0);
     c.add(body);
     const shadow = this.add.graphics();
-    shadow.fillStyle(0x000000, 0.4).fillCircle(2, 4, R - 6);
+    shadow.fillStyle(0x000000, 0.4).fillCircle(2, 4, n.type === 'town' ? R - 22 : R - 6);
     body.add(shadow);
     const g = this.add.graphics();
     body.add(g);
@@ -1045,9 +1056,9 @@ export class CampaignMapScene extends Phaser.Scene {
     const art = nodeGlyphImage(this, n.id === this.map.start && hasMiscImage('node', 'start') ? 'start' : n.type, 0, 0, fs.icon);
     if (art) {
       if (goal) art.setTint(0x6a5e4c).setAlpha(0.6);
-      else if (done) art.setTint(0xb4a890);
+      else if (done) art.setTint(0x8a8272);
       body.add(art);
-    } else drawNodeGlyph(g, n.type, done ? 0x9a8c70 : goal ? 0x7d705a : 0xd9c8a2, fs.boss ? 1.25 : 1);
+    } else drawNodeGlyph(g, n.type, done ? 0x7a705e : goal ? 0x7d705a : 0xd9c8a2, fs.boss ? 1.25 : 1);
     const bx = R * 0.72;
     if (goal || nodeLock(this.map, this.s, n.id)) {
       const bg = this.add.graphics();
@@ -1077,10 +1088,10 @@ export class CampaignMapScene extends Phaser.Scene {
       if (threat.band === 'deadly') body.add(this.add.image(-R * 0.78, -R * 0.78, ensureIcon(this, 'skull', hex, false)).setDisplaySize(15, 15));
       else body.add(elText(this, -R * 0.78, -R * 0.77, '!', 16, hex).setOrigin(0.5));
     }
-    // Geçilen düğüm soluk (tik yok)
-    if (done) body.setAlpha(0.74);
+    // Geçilen düğüm belirgin soluk (tik yok; Ömer 2026-10-28: yapılan / yapılmayan farkı net olsun)
+    if (done) body.setAlpha(0.5);
     // Devriye (serbest dolaşım, roadmap 2.10): temizlenmiş savaş düğümünde küçük döngü simgesi (yüzde şeritte: "Patrol 60%")
-    const patrol = done && patrolAvailable(this.s, n.id);
+    const patrol = doneRaw && patrolAvailable(this.s, n.id);
     if (patrol) {
       const lg = this.add.graphics();
       drawLoopIcon(lg, R * 0.74, -R * 0.74);
@@ -1121,6 +1132,7 @@ export class CampaignMapScene extends Phaser.Scene {
       band.fillStyle(0x0d0906, goal ? 0.6 : 0.88).fillRect(plan.x0, plan.y0, plan.w, plan.h);
       band.lineStyle(1, 0xd9b26a, 0.28).strokeRect(plan.x0, plan.y0, plan.w, plan.h);
       band.fillStyle(frameColor(n.type), goal ? 0.5 : 1).fillRect(plan.x0, plan.y0, 4, plan.h);
+      if (n.type === 'town') band.lineStyle(1, 0xd9b26a, goal ? 0.4 : 0.85).strokeRect(plan.x0 - 3, plan.y0 - 3, plan.w + 6, plan.h + 6); // çift altın çizgi (kasaba)
       const cx = plan.x0 + plan.w / 2 + 2;
       name.setPosition(cx, plan.y0 + (sub ? 13 : plan.h / 2));
       sub?.setPosition(cx, plan.y0 + 29);
@@ -1131,7 +1143,7 @@ export class CampaignMapScene extends Phaser.Scene {
       if (slot.q) {
         const q = slot.q;
         quiet = elText(this, q.x0 + q.w / 2, q.y0 + q.h / 2, n.name.toUpperCase(), 14, goal ? EL.DIM : '#e6d8b4', { em: 0.08 }).setOrigin(0.5, 0.5);
-        quiet.setStroke('#060402', 5).setAlpha(done || goal ? 0.82 : 1);
+        quiet.setStroke('#060402', 5).setAlpha(done ? 0.55 : goal ? 0.82 : 1);
         c.add(quiet);
         this.labelObjs.push(quiet);
       }
@@ -2273,7 +2285,7 @@ export class CampaignMapScene extends Phaser.Scene {
    * Düğüm kartı içeriği (önizleme ve ulaşılamayan düğüm): savaş düğümünde düşman portreleri + lore, diğerlerinde düğümün kendi bilgisi
    * (eski hover kartının blurb'ü); devriyede mevcut devriye metni.
    */
-  private cardInfoFor(id: string): { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { text: string }; info?: { text: string }; chain?: string } {
+  private cardInfoFor(id: string): { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { text: string }; info?: { text: string; plain?: boolean }; tags?: PatrolTags; chain?: string; company?: CompanyCard } {
     const n = node(this.map, id);
     const f = this.nodeFacts(id);
     const vis = nodeVisibility(this.map, this.s, session.revealFog)[id];
@@ -2301,7 +2313,8 @@ export class CampaignMapScene extends Phaser.Scene {
             ? `Salvage Dive: after this fight you may dive up to ${diveMax(n) - 1} ${diveMax(n) - 1 === 1 ? 'depth' : 'depths'} deeper, one more fight each with no healing between, for better chests.`
             : '';
       const chain = depth ? diveChainLine(depth.dive ?? 0) : null;
-      return { ...(patrol ? { title: 'Fight the patrol?', info: { text: f.blurb } } : side ? { info: { text: side } } : {}), ...(chain ? { chain } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
+      const company = patrol || depth ? undefined : companyCard(enc);
+      return { ...(company ? { company } : {}), ...(patrol ? { title: 'Fight the patrol?', ...this.patrolCard(id) } : side ? { info: { text: side } } : {}), ...(chain ? { chain } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
     }
     const t = PLACE_CARD[n.type];
     return { ...(t ? { title: t.title, actionLabel: t.action } : {}), ...(lockInfo ? { info: { text: lockInfo } } : {}), ...(f.blurb ? { fallback: { text: f.blurb } } : {}) };
@@ -2339,6 +2352,8 @@ export class CampaignMapScene extends Phaser.Scene {
       ...(o.chain ? { chain: o.chain } : {}),
       ...(o.foes ? { foes: o.foes } : {}),
       ...(info ? { info } : {}),
+      ...(o.tags ? { tags: o.tags } : {}),
+      ...(o.company ? { company: o.company } : {}),
       then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
       ...this.firstSteps(id),
       preview: true,
@@ -2590,6 +2605,9 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Savaş dışı Valor diriltmesi penceresi (DOM, kit Diyalog): düşmüş kahramanlar, "Revive · 4". */
   openValor(): void {
     if (this.s.valor === undefined) return;
+    // Nöbet penceresinin paneli yok: haritadaki takım figürü başlığın arkasından görünmesin (Ömer 2026-10-28)
+    const showCaravan = (on: boolean): void => this.caravan.forEach((t) => t.root.setVisible(on));
+    showCaravan(false);
     openValorRevive({
       where: 'map',
       valor: () => this.s.valor ?? 0,
@@ -2617,7 +2635,10 @@ export class CampaignMapScene extends Phaser.Scene {
         this.townSave();
         return null;
       },
-      onClose: () => this.refresh(false),
+      onClose: () => {
+        showCaravan(true);
+        this.refresh(false);
+      },
     });
   }
 
@@ -3377,29 +3398,41 @@ export class CampaignMapScene extends Phaser.Scene {
    * Kışla / ilan panosundan aday (Ömer 2026-10-12): ayrılırken gelecek gönüllü kasabadayken seçilebilir (zorunlu değil: Not now, Esc, zemin).
    * Seçilmezse kasabadan ayrılırken eskisi gibi sorulur. Görünüm: C kartı + kahraman kartları (büst + blurb).
    */
+  /** Kışla adayları (Ömer 2026-10-27): Ashford'daki "Form your company" penceresinin aynısı, tek seçim, lider yok; Not now / zemin kapatır. */
   private townRecruitModal(h: TownHotspot, offer: string[]): void {
-    this.townWindow(h, {
-      paras: paragraphs(CONFIG.texts.townRecruit ?? CONFIG.texts.volunteer ?? ''),
-      body: { k: 'cards', cards: offer.map((id) => this.mwCard(id, this.joinTag())) }, // D12: katılacağı level kartta
-      acts: [
-        { label: 'Not now', run: () => this.closeModal() },
-        {
-          label: 'Join us',
-          primary: true,
-          needPick: 'Pick one companion first.',
-          run: (chosen) => {
-            if (!chosen) return this.toast('Pick one companion first.');
-            setState(recruitInTown(this.s, chosen));
-            this.townSave(); // katılan kahraman kayda girsin (B1)
-            this.closeModal();
-            this.town?.render();
-            this.renderHud();
-            this.toast(`${content.classes[chosen]?.name ?? chosen} joins your company`);
-          },
-        },
-      ],
+    const root = document.getElementById('ui-root');
+    if (!root) return;
+    this.closeModal();
+    let w: CompanyHandle | null = null;
+    const close = (): void => {
+      w?.close();
+      w = null;
+      this.modal = null;
+    };
+    w = openCompanyWindow(root, {
+      size: 1,
+      cards: offer.map((id) => this.mwCard(id, this.joinTag())),
+      tutorial: new Set(),
+      title: h.label,
+      sub: CONFIG.texts.townRecruit ?? CONFIG.texts.volunteer ?? '',
+      goLabel: 'Join us',
+      noLeader: true,
+      toast: (m) => this.toast(m),
+      onCancel: close,
+      onSetOut: ([chosen]) => {
+        if (!chosen) return;
+        setState(recruitInTown(this.s, chosen));
+        this.townSave(); // katılan kahraman kayda girsin (B1)
+        close();
+        this.town?.render();
+        this.renderHud();
+        this.toast(`${content.classes[chosen]?.name ?? chosen} joins your company`);
+      },
     });
+    this.events.once('shutdown', close);
+    this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
   }
+
 
   /**
    * Kamp (Ömer 2026-10-26, taslak economy-ui A): dört kart (Rest / Tend wounds / Sharpen / Train), BİR seçim; DOM ekran src/ui/camp-screen.ts.
@@ -3742,12 +3775,17 @@ export class CampaignMapScene extends Phaser.Scene {
     this.launchBattle();
   }
 
+  /** Devriye kartı içeriği (Ömer 2026-10-27: italik cümle yerine etiketler): PATROL · <sıradaki oynanışın XP yüzdesi> · FULL LOOT · NO VALOR + düz geri çekilme notu. */
+  private patrolCard(id: string): { tags: PatrolTags; info: { text: string; plain: true } } {
+    const pct = Math.round(nextReplayMult(this.s, id) * 100);
+    return { tags: [{ text: 'Patrol' }, { text: `${pct}% XP`, tone: 'gold' }, { text: 'Full loot' }, { text: 'No Valor', tone: 'dim' }], info: { text: patrolRetreatNote(), plain: true } };
+  }
+
   /** "Fight the patrol?" kartı: "Start battle?" kartının aynısı, bilgi satırı devriye ödülünü yazar (sıradaki oynanışın yüzdesi). */
   private confirmPatrol(id: string, go: () => void): void {
     const enc = nodeEncounter(node(this.map, id), this.s);
     if (!enc) return;
-    const pct = Math.round(nextReplayMult(this.s, id) * 100);
-    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(enc).groups, info: { text: `Patrols return to cleared battlefields. Full gold and items, ${pct}% of the first victory's XP, no Valor. ${patrolRetreatNote()}` }, onGo: go });
+    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(enc).groups, ...this.patrolCard(id), onGo: go });
   }
 
   /**
@@ -3817,7 +3855,7 @@ export class CampaignMapScene extends Phaser.Scene {
     return CONFIG.texts['townRest'] ?? 'Leave tired heroes at the inn: they heal a little each day.';
   }
 
-  private nodeCard(id: string, o: { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; /** Lore'un yerine geçen bilgi satırı (devriye). */ info?: { text: string }; /** Düğme yerine düz not. */ note?: string; onGo: () => void }): void {
+  private nodeCard(id: string, o: { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; /** Lore'un yerine geçen bilgi satırı (devriye). */ info?: { text: string; plain?: boolean }; tags?: PatrolTags; company?: CompanyCard; /** Düğme yerine düz not. */ note?: string; onGo: () => void }): void {
     const root = document.getElementById('ui-root');
     const n = node(this.map, id);
     if (!root) return;
@@ -3844,6 +3882,8 @@ export class CampaignMapScene extends Phaser.Scene {
       ...this.threatOpt(id),
       ...(o.foes ? { foes: o.foes } : {}),
       ...(info ? { info } : {}),
+      ...(o.tags ? { tags: o.tags } : {}),
+      ...(o.company ? { company: o.company } : {}),
       then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
       ...this.firstSteps(id),
       ...(o.note ? { note: o.note } : {}),

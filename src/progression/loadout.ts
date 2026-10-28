@@ -8,7 +8,7 @@ import { classes, formulas } from '../engine/content';
 import { applyUnitModifiers, speedRoll } from '../engine/stats';
 import { STACK_FORM, stackValues, type StackForm } from '../engine/tree-hooks';
 import type { Attribute, Attributes, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
-import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
+import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, weaponSpeedPenalties, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
 import { equippedWeaponPower, weaponMultFor } from './weapon';
 import { LEVELS, heroGrowthMult, type StatAlloc } from './levels';
 import type { TreeAlloc } from './skill-tree';
@@ -213,6 +213,12 @@ export function loadout(src: LoadoutSource): LoadoutResult {
       applyPart(p.to, v, p.scale ?? 1, { mods, fx, ...(primary ? { primary } : {}), acc, ...(p.form ? { form: p.form } : {}) });
     });
   }
+  // Silah tipinin hız cezası + çift el yakın dövüşün Heavy grip cezası (Ömer 2026-10-27): ×(1 - %), diğer hız çarpanlarıyla çarpılır; kişisel zar sonra
+  for (const slot of ['weapon', 'offhand'] as const) {
+    const inst = src.equipment?.[slot];
+    const d = inst ? itemDef(inst.id) : undefined;
+    if (d) for (const s of weaponSpeedPenalties(d)) mods.spdMult = ((mods.spdMult as number | undefined) ?? 1) * (1 - s.pct / 100);
+  }
   // Level puanları (levels.md): temel stata düz ek (item'lerin attr ekleriyle aynı kapı: UnitModifiers.attrAdd)
   for (const a of ATTRS) {
     const pts = Math.max(0, Math.floor(src.alloc?.[a] ?? 0));
@@ -268,7 +274,7 @@ export function loadout(src: LoadoutSource): LoadoutResult {
  * İpucu bağlamı (Ömer 2026-10-13, itemcaps): örnek kahramanın `slot`una takılıyken (takılı değilse takılmış varsayılır; verilmezse varsayılan
  * yuva) hangi affix'leri etkisiz (sıra numarası) ve kahramanın hangi tavanlı statları dolu. Kahraman takamıyorsa null.
  */
-export function affixContext(src: LoadoutSource, inst: ItemInstance, slot?: SlotId): { inactive: Set<number>; capped: Set<CapKey> } | null {
+export function affixContext(src: LoadoutSource, inst: ItemInstance, slot?: SlotId): { inactive: Set<number>; capped: Set<CapKey>; implicitHint?: string } | null {
   const d = itemDef(inst.id);
   if (!d || !canEquip(src.class, d)) return null;
   const eq = (src.equipment ?? {}) as Equipment;
@@ -276,7 +282,32 @@ export function affixContext(src: LoadoutSource, inst: ItemInstance, slot?: Slot
   const equipment = eq[at]?.uid !== undefined && eq[at]?.uid === inst.uid ? eq : (equipInto(eq, inst, at).equipment as Equipment);
   const l = loadout({ ...src, equipment });
   const inactive = new Set(l.inactive.filter((k) => k.startsWith(`${at}:`)).map((k) => Number(k.slice(at.length + 1))));
-  return { inactive, capped: new Set(l.capped) };
+  const implicitHint = implicitResultHint(src.class, l.modifiers, d, instanceIlvl(inst));
+  return { inactive, capped: new Set(l.capped), ...(implicitHint ? { implicitHint } : {}) };
+}
+
+/** Oransal örtüğün (mult:) gösterdiği stat ve biçimi (Ömer 2026-10-27: ipucunda gerçek sonuç "(120 → 130)"). */
+const HINT_STAT: Record<string, { stat: 'mp' | 'accuracy' | 'spd'; pct?: true }> = { mpMult: { stat: 'mp' }, accuracyMult: { stat: 'accuracy', pct: true }, spdMult: { stat: 'spd' } };
+
+/**
+ * Oransal örtüğün kahramandaki gerçek sonucu (Ömer 2026-10-27): "(120 → 130)" / isabette "(80% → 84.8%)". Kahramanın item takılıyken kurulumu
+ * (`mods`) ile o örtüğün çarpanı çıkarılmış hali karşılaştırılır. Örtük oransal değilse ya da sınıf yoksa undefined. Saf.
+ */
+export function implicitResultHint(classId: string, mods: UnitModifiers | undefined, d: ReturnType<typeof itemDef>, ilvl: number): string | undefined {
+  const def = classes[classId];
+  const imp = d ? implicitDefOf(d) : undefined;
+  const p = imp?.parts[0];
+  if (!def || !d || !imp || !p || !p.to.startsWith('mult:')) return undefined;
+  const key = p.to.slice(5);
+  const h = HINT_STAT[key];
+  if (!h) return undefined;
+  const factor = 1 + (implicitValues(imp, ilvl, d)[0] ?? 0) * (p.scale ?? 1);
+  const m = (mods ?? {}) as Record<string, unknown>;
+  const cur = typeof m[key] === 'number' ? (m[key] as number) : 1;
+  const after = applyUnitModifiers(def, { ...mods, [key]: cur } as UnitModifiers, formulas).stats[h.stat];
+  const before = applyUnitModifiers(def, { ...mods, [key]: cur / factor } as UnitModifiers, formulas).stats[h.stat];
+  const f = (v: number) => (h.pct ? `${Math.round(v * 1000) / 10}%` : String(Math.round(v * 10) / 10));
+  return `(${f(before)} → ${f(after)})`;
 }
 
 /**

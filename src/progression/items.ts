@@ -102,6 +102,32 @@ export interface WeaponFamilyDef {
   mains: string[];
   /** Ailenin TEK EL silahları ikinci el yuvasına da takılabilir (hançer; Ömer 2026-10-12). */
   offhand?: boolean;
+  /** Ailenin varsayılan silah tipi (Ömer 2026-10-27; taban `type` alanı ezer: Axes & Swords ailesinde kılıçlar `type: sword`). */
+  type?: WeaponType;
+}
+
+/** Silah tipi (Ömer 2026-10-27, open-questions 443): örtük stat ve güç / hız profili tipe göre. */
+export const WEAPON_TYPES = ['sword', 'axe', 'mace', 'hammer', 'dagger', 'bow', 'staff', 'charm'] as const;
+export type WeaponType = (typeof WEAPON_TYPES)[number];
+
+/** Tipin güç / hız profili (items.json > weaponTypes). */
+export interface WeaponTypeDef {
+  name: string;
+  /** Silah gücü çarpanı (yoksa 1). */
+  power?: number;
+  /** Hız cezası, yüzde (5 = "5% less Speed" = ×0,95; mult:spdMult gibi çarpılır, kişisel hız zarından ÖNCE). */
+  spdLess?: number;
+}
+
+/** Çift el YAKIN DÖVÜŞ (items.json > twoHandMelee): grip two + types listesindeki tip (asa / yay değil). */
+export interface TwoHandMeleeDef {
+  /** Ek hız cezası satırının adı ("Heavy grip"). */
+  name: string;
+  types: WeaponType[];
+  /** Güç çarpanı (grip.two ile çarpılır: 1,45 x 1,15). */
+  power: number;
+  /** Ek hız cezası, yüzde. */
+  spdLess: number;
 }
 
 /** Silah taban gücü kuralları (items.json > weaponPower). */
@@ -111,12 +137,12 @@ export interface WeaponPowerRules {
   step: number;
   /** Tutuş çarpanı (tek el 1; çift el / yay ~1,35; tılsım arada). */
   grip: Record<Grip, number>;
-  /** Aile çarpanı (hançer < 1); yoksa 1. */
-  family?: Record<string, number>;
   /** İkinci eldeki silahın (hançer) gücünün sayılan oranı. */
   offhandShare: number;
   /** 1 güç puanının Item Points değeri. */
   ip: number;
+  /** 1 % hız cezasının Item Points değeri (tip / Heavy grip cezası IP'den düşülür). */
+  spdIp?: number;
 }
 
 /** Taban örtük statı (zarsız; affix gibi parçalı, kademesiz). */
@@ -141,6 +167,8 @@ export interface ItemDef {
   family?: string;
   /** Silah tutuşu (yalnızca silahta, zorunlu): one | two | bow | charm. two / bow / charm ikinci eli kapatır. */
   grip?: Grip;
+  /** Silah tipi (Ömer 2026-10-27); yoksa ailesinin `type`ı. Yalnızca ailenin tipinden farklıysa yazılır (Arming Sword: sword). */
+  type?: WeaponType;
   /** Varsayılan nadirlik (örnek kendi nadirliğini taşır: ItemRoll.rarity). Legendary taban yalnızca Legendary olur. */
   rarity: RarityId;
   ilvl: number;
@@ -158,6 +186,8 @@ export interface ItemDef {
   usableBy?: string[];
   /** Bu bölümden önce ortaya çıkmaz (Legendary; Valdoria = 1). */
   minChapter?: number;
+  /** Yalnızca olaydan gelir (Clapper of the Sunken Bell, dr19): nadir düşüş ve Endless Legendary havuzunda yok (rare.ts > legendaryPool). */
+  eventOnly?: boolean;
   /** Legendary hikâye satırı (İngilizce, italik). */
   flavor?: string;
   /**
@@ -185,7 +215,11 @@ export interface ItemsData {
   weaponFamilies: WeaponFamilyDef[];
   /** Silah taban gücü (Item Güçlendirme x1-x3, Ömer 2026-10-17; items.md 1.12). */
   weaponPower: WeaponPowerRules;
-  /** Taban örtük statları: silah ailesi id'si ya da 'shield' (ikinci el kalkanı) -> zarsız stat (x3, x4). */
+  /** Silah tiplerinin güç / hız profili (Ömer 2026-10-27). */
+  weaponTypes: Record<WeaponType, WeaponTypeDef>;
+  /** Çift el yakın dövüş kuralı (Ömer 2026-10-27). */
+  twoHandMelee?: TwoHandMeleeDef;
+  /** Taban örtük statları: silah TİPİ (sword, axe...; Ömer 2026-10-27) ya da 'shield' (ikinci el kalkanı) -> zarsız stat (x3, x4). */
   implicits: Record<string, ImplicitDef>;
   /** Takma seviye şartı = max(min, ilvl - offset) (x6). */
   levelReq: { offset: number; min: number };
@@ -625,12 +659,45 @@ export const sellValue = (x: ValueSource): number => Math.max(1, Math.round(item
 
 // ------------------------------------------------------------ taban gücü, örtük stat, seviye şartı (Item Güçlendirme, Ömer 2026-10-17)
 
-/** Silahın taban gücü (x1-x3): (base + perIlvl x ilvl) x tutuş x aile, adıma yuvarlanır. Silah değilse 0. */
-export function weaponPowerOf(d: Pick<ItemDef, 'slot' | 'grip' | 'family'>, ilvl: number): number {
+/** Tipi çözmek için gereken taban alanları. */
+type TypeSrc = Pick<ItemDef, 'slot' | 'grip' | 'family' | 'type'>;
+
+/** Silahın tipi (Ömer 2026-10-27): tabanın `type`ı, yoksa ailesinin `type`ı. Silah değilse undefined. */
+export function weaponTypeOf(d: Partial<TypeSrc>): WeaponType | undefined {
+  if (d.slot !== 'weapon') return undefined;
+  return d.type ?? ITEMS.weaponFamilies.find((f) => f.id === d.family)?.type;
+}
+
+/** Tipin güç / hız profili (yoksa undefined). */
+export const weaponTypeDef = (t: WeaponType | undefined): WeaponTypeDef | undefined => (t ? ITEMS.weaponTypes?.[t] : undefined);
+
+/** Çift el YAKIN DÖVÜŞ silahı mı (grip two + twoHandMelee.types; asa ve yay değil)? */
+export function isTwoHandMelee(d: Partial<TypeSrc>): boolean {
+  const t = weaponTypeOf(d);
+  return d.slot === 'weapon' && (d.grip ?? 'one') === 'two' && !!t && !!ITEMS.twoHandMelee?.types.includes(t);
+}
+
+/** Çift el yakın dövüşün örtük çarpanı: grip.two x twoHandMelee.power (1,45 x 1,15 = 1,6675); değilse 1. */
+export function implicitGripMult(d: Partial<TypeSrc>): number {
+  return isTwoHandMelee(d) ? (ITEMS.weaponPower?.grip.two ?? 1) * (ITEMS.twoHandMelee?.power ?? 1) : 1;
+}
+
+/** Silahın hız cezaları, sırayla (tip profili, sonra Heavy grip): yüzde değerler (5 = "5% less Speed"). Yoksa boş. */
+export function weaponSpeedPenalties(d: Partial<TypeSrc>): Array<{ name: string; pct: number; heavy?: true }> {
+  const out: Array<{ name: string; pct: number; heavy?: true }> = [];
+  const td = weaponTypeDef(weaponTypeOf(d));
+  if (td?.spdLess) out.push({ name: td.name, pct: td.spdLess });
+  if (isTwoHandMelee(d) && ITEMS.twoHandMelee?.spdLess) out.push({ name: ITEMS.twoHandMelee.name, pct: ITEMS.twoHandMelee.spdLess, heavy: true });
+  return out;
+}
+
+/** Silahın taban gücü (x1-x3): (base + perIlvl x ilvl) x tutuş x tip (x çift el yakın dövüş), adıma yuvarlanır. Silah değilse 0. */
+export function weaponPowerOf(d: TypeSrc, ilvl: number): number {
   if (d.slot !== 'weapon') return 0;
   const w = ITEMS.weaponPower;
   if (!w) return 0;
-  const raw = (w.base + w.perIlvl * Math.max(1, ilvl)) * (w.grip[gripOf(d) ?? 'one'] ?? 1) * (w.family?.[d.family ?? ''] ?? 1);
+  const melee2 = isTwoHandMelee(d) ? (ITEMS.twoHandMelee?.power ?? 1) : 1;
+  const raw = (w.base + w.perIlvl * Math.max(1, ilvl)) * (w.grip[gripOf(d) ?? 'one'] ?? 1) * (weaponTypeDef(weaponTypeOf(d))?.power ?? 1) * melee2;
   return Math.max(0, snap(raw, w.step || 1));
 }
 
@@ -640,24 +707,29 @@ export const instanceWeaponPower = (inst: Pick<ItemInstance, 'id'> & { rolls?: u
   return d ? weaponPowerOf(d, instanceIlvl(inst)) : 0;
 };
 
-/** Tabanın örtük statı (x3, x4): kalkan (ikinci el yuvası) -> 'shield', silah -> ailesinin örtüğü. Yoksa undefined. */
-export function implicitDefOf(d: Pick<ItemDef, 'slot' | 'family'>): ImplicitDef | undefined {
-  const key = d.slot === 'offhand' ? 'shield' : d.slot === 'weapon' ? d.family : undefined;
+/** Tabanın örtük statı (x3, x4): kalkan (ikinci el yuvası) -> 'shield', silah -> TİPİNİN örtüğü (Ömer 2026-10-27). Yoksa undefined. */
+export function implicitDefOf(d: Partial<TypeSrc>): ImplicitDef | undefined {
+  const key = d.slot === 'offhand' ? 'shield' : weaponTypeOf(d);
   return key ? ITEMS.implicits?.[key] : undefined;
 }
 
-/** Örtük statın seviyedeki değerleri (parça sırasıyla; zarsız). `d`: tabanın sabit örtük değeri (`implicitBase`) varsa o kullanılır. */
-export const implicitValues = (imp: ImplicitDef, ilvl: number, d?: Pick<ItemDef, 'implicitBase'>): number[] =>
-  imp.parts.map((p, i) => {
+/**
+ * Örtük statın seviyedeki değerleri (parça sırasıyla; zarsız). `d`: tabanın sabit örtük değeri (`implicitBase`) varsa o; çift el yakın dövüşte
+ * değer aynı tipin tek el değeri x implicitGripMult (Ömer 2026-10-27; yuvarlama çarpımdan sonra).
+ */
+export const implicitValues = (imp: ImplicitDef, ilvl: number, d?: Partial<TypeSrc & Pick<ItemDef, 'implicitBase'>>): number[] => {
+  const mult = d ? implicitGripMult(d) : 1;
+  return imp.parts.map((p, i) => {
     const fixed = d?.implicitBase?.[i];
-    return typeof fixed === 'number' ? Math.max(p.step, snap(fixed, p.step)) : partValue(p, ilvl, 0.5);
+    return typeof fixed === 'number' ? Math.max(p.step, snap(fixed, p.step)) : partValue(p, ilvl, 0.5, mult);
   });
+};
 
 /**
  * Kalkanın TABAN blok şansı, yüzde (Ömer 2026-10-18; ör. 18 = %18): örtük parçası `fx:blockChance` olan tabanda (kalkan) `implicitBase` ya da
  * parçanın değeri; item seviyesiyle değişmez. Kalkan değilse 0. Affix (c_block) HARİÇ; toplam blok `loadout().itemEffects.blockChance` (oran).
  */
-export function baseBlockChance(d: Pick<ItemDef, 'slot' | 'family' | 'implicitBase'>, ilvl = 1): number {
+export function baseBlockChance(d: Partial<TypeSrc> & Pick<ItemDef, 'implicitBase'>, ilvl = 1): number {
   const imp = implicitDefOf(d);
   const i = imp ? imp.parts.findIndex((p) => p.to === 'fx:blockChance') : -1;
   return imp && i >= 0 ? (implicitValues(imp, ilvl, d)[i] ?? 0) : 0;
@@ -669,11 +741,12 @@ export const instanceBaseBlockChance = (inst: Pick<ItemInstance, 'id'> & { rolls
   return d ? baseBlockChance(d, instanceIlvl(inst)) : 0;
 };
 
-/** Taban değerinin Item Points'i: silah gücü x ip (+ örtük stat). `share`: ikinci eldeki silahın sayılan oranı (Equip best). */
-export function baseIP(d: Pick<ItemDef, 'slot' | 'grip' | 'family' | 'implicitBase'>, ilvl: number, share = 1): number {
+/** Taban değerinin Item Points'i: silah gücü x ip (+ örtük stat, - hız cezaları). `share`: ikinci eldeki silahın sayılan oranı (Equip best). */
+export function baseIP(d: TypeSrc & Pick<ItemDef, 'implicitBase'>, ilvl: number, share = 1): number {
   let ip = weaponPowerOf(d, ilvl) * (ITEMS.weaponPower?.ip ?? 0) * share;
   const imp = implicitDefOf(d);
   if (imp) implicitValues(imp, ilvl, d).forEach((v, i) => (ip += v * (imp.parts[i]?.ip ?? 0)));
+  for (const s of weaponSpeedPenalties(d)) ip -= s.pct * (ITEMS.weaponPower?.spdIp ?? 0);
   return Math.round(ip * 1000) / 1000;
 }
 
@@ -840,6 +913,26 @@ export function migrateOffhand(equipment: EquipMap | null | undefined, overflow?
   return 1;
 }
 
+/**
+ * Kayıt taşıma (Ömer 2026-10-28, silah aileleri değişince; örn. war_maul maces -> hammers, Warrior artık kullanamaz): kahramanın sınıfının
+ * artık takamadığı her item (ikinci el dahil; canEquip) yuvadan çıkar ve `overflow`a eklenir, çağıran torbaya koyar (torba sınırı aşılabilir,
+ * migrateOffhand ile aynı kural: kayıt okunurken item kaybolmaz). Tanımı olmayan item'e dokunmaz. Yuva null olur; boşalan yuvalar döner.
+ * Başlangıç silahı verilmez (silahsız kalan kahraman normal "silahsız" kurallarıyla savaşır). Her okumada çalışabilir (idempotent).
+ */
+export function stripUnusable(classId: string, equipment: EquipMap | null | undefined, overflow: ItemInstance[]): SlotId[] {
+  const out: SlotId[] = [];
+  if (!equipment || typeof equipment !== 'object' || typeof classId !== 'string') return out;
+  for (const k of SLOT_IDS) {
+    const inst = equipment[k];
+    const d = inst && typeof inst === 'object' && typeof inst.id === 'string' ? itemDef(inst.id) : undefined;
+    if (!inst || !d || canEquip(classId, d)) continue;
+    overflow.push(inst);
+    equipment[k] = null;
+    out.push(k);
+  }
+  return out;
+}
+
 // ------------------------------------------------------------ doğrulama
 
 const TARGET_RE = /^(mod|mult|fx|elem|res|attr|prog):[\w*]+$/;
@@ -963,7 +1056,7 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     if (d.usableBy) for (const c of d.usableBy) if (!classes[c]) errors.push(`${at}: usableBy has unknown class ${c}`);
     if (d.minChapter !== undefined && (!Number.isInteger(d.minChapter) || d.minChapter < 1)) errors.push(`${at}: bad minChapter`);
     if (d.implicitBase !== undefined) {
-      const key = d.slot === 'offhand' ? 'shield' : d.slot === 'weapon' ? d.family : undefined;
+      const key = d.slot === 'offhand' ? 'shield' : d.slot === 'weapon' ? (d.type ?? data.weaponFamilies.find((fd) => fd.id === d.family)?.type) : undefined;
       const imp = key ? data.implicits?.[key] : undefined;
       if (!imp || !Array.isArray(d.implicitBase) || d.implicitBase.length > imp.parts.length || d.implicitBase.some((v) => !(typeof v === 'number' && v > 0))) errors.push(`${at}: implicitBase needs positive numbers for its base's implicit parts`);
     }
@@ -973,9 +1066,22 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
   if (!wp || !(wp.base >= 0) || !(wp.perIlvl > 0) || !(wp.step > 0) || !(wp.ip >= 0) || !(wp.offhandShare >= 0 && wp.offhandShare <= 1)) errors.push('weaponPower: needs base, perIlvl, step, ip and offhandShare (0-1)');
   for (const g of GRIP_IDS) if (!(wp?.grip?.[g] > 0)) errors.push(`weaponPower.grip: needs a positive ${g}`);
   if (wp && wp.grip.two <= wp.grip.one) errors.push('weaponPower.grip: two-handed must be stronger than one-handed');
-  for (const f of Object.keys(wp?.family ?? {})) if (!famIds.includes(f)) errors.push(`weaponPower.family: unknown family ${f}`);
+  // Silah tipleri (Ömer 2026-10-27): her tipin profili ve örtüğü, çift el yakın dövüş kuralı, her silahın bir tipi
+  const isType = (t: unknown): t is WeaponType => (WEAPON_TYPES as readonly unknown[]).includes(t);
+  for (const t of WEAPON_TYPES) {
+    const td = data.weaponTypes?.[t];
+    if (!td?.name || (td.power !== undefined && !(td.power > 0)) || (td.spdLess !== undefined && !(td.spdLess > 0 && td.spdLess < 100))) errors.push(`weaponTypes.${t}: needs a name, power > 0, spdLess 0-100`);
+    if (!data.implicits?.[t]) errors.push(`weapon type ${t}: needs an implicit`);
+  }
+  const thm = data.twoHandMelee;
+  if (thm && (!thm.name || !(thm.power > 0) || !(thm.spdLess > 0 && thm.spdLess < 100) || !thm.types?.length || thm.types.some((t) => !isType(t)))) errors.push('twoHandMelee: needs name, power > 0, spdLess 0-100 and known types');
+  for (const fd of data.weaponFamilies) if (fd.type !== undefined && !isType(fd.type)) errors.push(`family ${fd.id}: unknown type ${String(fd.type)}`);
+  for (const d of data.items) {
+    if (d.type !== undefined && (d.slot !== 'weapon' || !isType(d.type))) errors.push(`item ${d.id}: type must be a known weapon type, weapons only`);
+    if (d.slot === 'weapon' && !isType(d.type ?? data.weaponFamilies.find((fd) => fd.id === d.family)?.type)) errors.push(`item ${d.id}: weapon needs a type (its own or its family's)`);
+  }
   for (const [k, imp] of Object.entries(data.implicits ?? {})) {
-    if (k !== 'shield' && !famIds.includes(k)) errors.push(`implicit ${k}: must be a weapon family or shield`);
+    if (k !== 'shield' && !isType(k)) errors.push(`implicit ${k}: must be a weapon type or shield`);
     if (!imp.name || !/\{[ml]?0\}/.test(imp.text ?? '') || !imp.parts?.length) errors.push(`implicit ${k}: needs name, text with {0} and parts`);
     imp.parts?.forEach((p, i) => {
       if (!templateShowsPart(imp.text ?? '', i, partBonusForm(p.to))) errors.push(`implicit ${k}: part ${i} (${p.to}) breaks the bonus wording rule`);

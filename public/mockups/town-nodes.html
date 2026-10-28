@@ -1,0 +1,88 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Town nodes mockup</title>
+<style>
+@font-face{font-family:Cinzel;src:url(town-nodes/Cinzel-normal-latin.woff2);font-weight:400 900}
+@font-face{font-family:'EB Garamond';src:url(town-nodes/EBGaramond-normal-latin.woff2);font-weight:400 800}
+:root{--gold:#e0b862;--gold2:#a8802e;--parch:#d9c8a2}
+*{box-sizing:border-box}
+body{margin:0;background:#0c0906;color:var(--parch);font-family:'EB Garamond',serif;padding:16px 16px 70px}
+h2{font-family:Cinzel;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:28px auto 4px;font-size:22px;max-width:1500px}
+.note{margin:0 auto 10px;max-width:1500px;font-size:19px;opacity:.9}
+.bar{position:sticky;top:0;z-index:50;background:#0c0906ee;padding:8px 0;display:flex;gap:8px;max-width:1500px;margin:0 auto;font-family:Cinzel;font-size:12px;letter-spacing:.12em}
+.bar button{background:none;border:1px solid var(--gold2);color:var(--gold);padding:10px 14px;min-height:44px;cursor:pointer;font:inherit;text-transform:uppercase}
+.bar button.on{background:#3a2a10}
+.wrap{max-width:1500px;margin:0 auto}
+.stage{position:relative;container-type:inline-size;width:100%;aspect-ratio:16/9;margin:0 auto;overflow:hidden;border:1px solid var(--gold2);background:#222 url(town-nodes/map.webp) center/cover}
+body[data-size="21"] .stage{aspect-ratio:21/9}
+body[data-size="phone"] .stage{aspect-ratio:844/390;width:844px;max-width:100%}
+.stage:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,#0008);pointer-events:none}
+.n{position:absolute;transform:translate(-50%,-50%);width:0;height:0}
+.ic{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.bn .disc{position:absolute;left:50%;top:50%;width:4.6cqw;height:4.6cqw;min-width:34px;min-height:34px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(#2a2118,#120e0a);border:2px solid #7a6a4a;box-shadow:0 3px 8px #000a}
+.bn .ic{width:70%;height:70%}
+.bn.done .disc{opacity:.5;filter:saturate(.5)}
+.bn.boss .disc{border-color:#a33;box-shadow:0 0 14px #f5521c88}
+.bn .cap{position:absolute;top:calc(2.6cqw + 12px);left:50%;transform:translateX(-50%);white-space:nowrap;font:600 max(10px,.95cqw) Cinzel;letter-spacing:.1em;text-transform:uppercase;text-shadow:0 1px 3px #000,0 0 6px #000}
+.bn.done .cap{opacity:.55}
+.flag{position:absolute;left:3cqw;top:-4.6cqw;width:.3cqw;min-width:2px;height:4.4cqw;background:#3a2a18}
+.flag:after{content:"";position:absolute;left:100%;top:0;width:2.2cqw;height:1.4cqw;background:#b02a22;clip-path:polygon(0 0,100% 0,80% 50%,100% 100%,0 100%)}
+.plate{position:absolute;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap}
+.plate b{display:block;font:600 max(11px,1.25cqw) Cinzel;letter-spacing:.12em;text-transform:uppercase;color:#f1dba0;text-shadow:0 1px 3px #000}
+.plate i{display:block;font:normal max(10px,.95cqw) 'EB Garamond';color:var(--parch);opacity:.9}
+/* A shield */
+.A .sh{position:absolute;left:50%;top:50%;width:6.2cqw;height:7.4cqw;min-width:46px;min-height:55px;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 6px #000c)}
+.A .sh .o,.A .sh .m{position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 62%,50% 100%,0 62%)}
+.A .sh .o{background:linear-gradient(160deg,#f6dc8c,#a8802e 50%,#f0cf78)}
+.A .sh .m{inset:7%;background:radial-gradient(circle at 50% 38%,#4a3418,#17100a 75%)}
+.A .sh .ic{width:68%;top:42%}
+.A .glow{position:absolute;left:50%;top:50%;width:14cqw;height:14cqw;transform:translate(-50%,-50%);background:radial-gradient(circle,#ffb44a66,#ff8a2a22 45%,transparent 70%);animation:fl 3s ease-in-out infinite}
+@keyframes fl{50%{opacity:.7;transform:translate(-50%,-50%) scale(1.06)}}
+.A .pen{position:absolute;left:50%;top:-5.2cqw;width:1.6cqw;height:2.4cqw;min-width:12px;transform:translateX(-50%);background:#b02a22;clip-path:polygon(0 0,100% 0,100% 100%,50% 75%,0 100%);border-top:2px solid var(--gold)}
+.A .plate{top:4.6cqw;padding:.5cqw 1.4cqw;background:linear-gradient(#241a0f,#120e0a);border:1px solid var(--gold);box-shadow:0 0 0 3px #120e0a,0 0 0 4px var(--gold2),0 4px 10px #000a}
+/* B medallion */
+.B .md{position:absolute;left:50%;top:50%;width:6.2cqw;height:6.2cqw;min-width:46px;min-height:46px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(#3a2a18,#120e0a 75%);border:3px solid var(--gold);box-shadow:0 0 0 4px #120e0a,0 0 0 6px var(--gold2),0 5px 10px #000b}
+.B .md .ic{width:72%}
+.B .halo{position:absolute;left:50%;top:50%;width:12cqw;height:12cqw;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#ffd27a77 30%,#ffb44a33 52%,transparent 70%);animation:pu 2.8s ease-in-out infinite}
+@keyframes pu{0%,100%{opacity:.45;transform:translate(-50%,-50%) scale(.85)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}}
+.B .dia{position:absolute;left:50%;top:-4.4cqw;width:1.1cqw;height:1.1cqw;min-width:9px;min-height:9px;background:#ff8a3a;transform:translateX(-50%) rotate(45deg);box-shadow:0 0 8px #ff8a3a}
+.B .plate{top:4.5cqw;min-width:17cqw;padding:.55cqw 3cqw;background:linear-gradient(90deg,#2a1c0e,#4a3318 50%,#2a1c0e);border-top:2px solid var(--gold);border-bottom:2px solid var(--gold);clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%)}
+/* C silhouette */
+.C .gr{position:absolute;left:50%;top:1.6cqw;width:11cqw;height:3.4cqw;transform:translate(-50%,-50%);background:radial-gradient(ellipse,#ffc866aa,#ff9a3a44 50%,transparent 72%);animation:fl 3.4s ease-in-out infinite}
+.C svg{position:absolute;left:50%;bottom:-1.2cqw;width:9.5cqw;min-width:70px;transform:translateX(-50%);filter:drop-shadow(0 3px 4px #000c);overflow:visible}
+.C .plate{top:2.4cqw}
+.C .plate b{font-size:max(12px,1.5cqw)}
+.svc{display:flex;gap:.8cqw;justify-content:center;margin-top:.3cqw}
+.svc span{display:flex;align-items:center;gap:.3cqw;font:600 max(9px,.8cqw) Cinzel;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);background:#120e0acc;border:1px solid var(--gold2);padding:.2cqw .7cqw}
+.svc img{width:max(14px,1.5cqw);height:max(14px,1.5cqw)}
+.mk{position:fixed;left:0;bottom:0;background:#000c;color:#e0b862;font:600 11px Cinzel;letter-spacing:.2em;padding:6px 12px;z-index:99}
+</style></head><body data-size="16">
+<div class="bar"><button data-s="16" class="on">16:9</button><button data-s="21">21:9</button><button data-s="phone">Phone 844x390</button></div>
+<div class="wrap" id="w"></div>
+<div class="mk">MOCKUP - NOT IN GAME</div>
+<script>
+const P='town-nodes/';
+const ico=n=>`<img class="ic" src="${P}${n}.webp">`;
+const bat=(x,y,t,o={})=>`<div class="n bn ${o.done?'done':''} ${o.boss?'boss':''}" style="left:${x}%;top:${y}%"><div class="disc">${ico(o.boss?'boss':'battle')}</div><div class="cap">${t}</div>${o.flag?'<div class="flag"></div>':''}</div>`;
+const SVG=`<svg viewBox="0 0 120 80"><g fill="#1b130c" stroke="#e0b862" stroke-width="1.4" stroke-linejoin="round"><path d="M38 78V30h8v-6h5v6h6v-6h5v6h6v-6h5v6h8v48z"/><path d="M50 30V12l9-9 9 9v18z"/><path d="M6 78V54l10-9 10 9v24z"/><path d="M92 78V50l11-10 11 10v28z"/><path d="M28 78V62h10v16z"/></g><g fill="#ffb84a"><rect x="56" y="40" width="5" height="9"/><rect x="66" y="40" width="5" height="9"/><rect x="14" y="58" width="5" height="7"/><rect x="100" y="56" width="5" height="8"/><rect x="58" y="16" width="3" height="6"/></g><path d="M59 3V-8" stroke="#e0b862" stroke-width="1.5"/><path d="M59 -8h10l-3 3 3 3H59z" fill="#b02a22"/></svg>`;
+const town=(v,x,y,name,sub)=>{
+ const plate=`<div class="plate"><b>${name}</b><i>${sub}</i></div>`;
+ let h='';
+ if(v=='A')h=`<div class="glow"></div><div class="pen"></div><div class="sh"><div class="o"></div><div class="m"></div>${ico('town')}</div>${plate}`;
+ if(v=='B')h=`<div class="halo"></div><div class="dia"></div><div class="md">${ico('town')}</div>${plate}`;
+ if(v=='C')h=`<div class="gr"></div>${SVG}<div class="plate"><b>${name}</b><div class="svc"><span><img src="${P}rest.webp">Inn</span><span><img src="${P}start.webp">Recruits</span><span><img src="${P}merchant.webp">Trade</span></div></div>`;
+ return `<div class="n ${v}" style="left:${x}%;top:${y}%">${h}</div>`};
+const notes={A:'A: Büyük kalkan/sancak plakası, altın kenar, fener parıltısı; ziyaret edince de solmaz, 1.35x büyük.',
+B:'B: Çift altın halkalı madalyon, yavaş nabız atan sıcak hale ve geniş altın çerçeveli isim sancağı.',
+C:'C: Haritada ayakta duran kale + ev silueti, zemin parıltısı; adın altında Inn / Recruits / Trade simgeleri.'};
+const names={A:'A - Heraldic Shield',B:'B - Pulsing Medallion',C:'C - Standing Town'};
+let out='';
+for(const v of ['A','B','C']){
+ out+=`<h2>${names[v]}</h2><p class="note">${notes[v]}</p><div class="stage">`+
+ bat(10,72,'Wolf Pass',{done:1})+bat(52,34,'Bandit Ford',{flag:1})+bat(60,76,'Old Mill')+bat(94,80,'Warlord',{boss:1})+
+ town(v,28,46,'Ashford Village','Town · Inn, Recruits, Trade')+
+ town(v,80,26,'Valdren Keep','Town · Inn, Recruits, Trade')+`</div>`;
+}
+document.getElementById('w').innerHTML=out;
+document.querySelectorAll('.bar button').forEach(b=>b.onclick=()=>{document.body.dataset.size=b.dataset.s;document.querySelectorAll('.bar button').forEach(x=>x.classList.toggle('on',x==b))});
+if(location.hash=='#phone')document.querySelector('[data-s=phone]').click();
+</script></body></html>

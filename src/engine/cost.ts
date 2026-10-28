@@ -28,7 +28,16 @@ export function skillCostAmount(cost: SkillCost, user?: Pick<Combatant, 'hp' | '
   const cut = cost.resource === 'mp' && user ? effNum(user, 'mpCostReduce') : 0; // item + ağaç kanalı (tree-hooks.ts)
   if (cut > 0 && amount > 0) amount = Math.max(1, Math.round(amount * (1 - Math.min(1, cut))));
   if (cc && cc.mul !== 1) amount = Math.max(0, Math.round(amount * cc.mul));
+  // Ley Brand (open-questions 444): Branded birimin MP bedeli costMult katı, yukarı yuvarlanır (en son; durum yoksa bedel aynen)
+  const bm = cost.resource === 'mp' && amount > 0 ? brandCostMult(user) : 1;
+  if (bm !== 1) amount = Math.ceil(amount * bm - 1e-9);
   return amount;
+}
+
+/** Ley Brand: birimin üstündeki Branded'ın MP bedel çarpanı (yoksa 1). Saf. */
+export function brandCostMult(user?: Partial<Pick<Combatant, 'statuses'>>): number {
+  const st = user?.statuses?.find((s) => s.kind === 'branded');
+  return st?.brand?.costMult ?? 1;
 }
 
 /** Soul Exchange (SkillCost.hpFallback): yedek can bedelinin miktarı = round(mevcut can x oran), en az 1. Yedek yoksa 0. */

@@ -127,11 +127,11 @@ function statTipBase(id: string, stats: Stats): StatTip | null {
     const pool = stats.damageMult ?? 1;
     const weapon = stats.weaponMult ?? 1;
     return {
-      title: `Damage ${multText(Math.round(pool * weapon * 1000) / 1000)}`,
+      title: `Damage ${Math.round(pool * weapon * 1000) / 10}%`,
       lines: [
-        `All damage of your skills ${multText(Math.round(pool * weapon * 1000) / 1000)}: weapon power (${multText(Math.round(weapon * 1000) / 1000)}) times damage bonuses (${multText(pool)}).`,
-        "Weapon power multiplies skill damage: ×(1 + power/100), measured against your class's starter weapon. No weapon = less damage.",
-        'Damage bonuses (+% damage on items, oaths and blessings) add up first, then multiply once. Element damage (×) multiplies on top for its element.',
+        `Your skills deal ${multText(Math.round(pool * weapon * 1000) / 1000)} damage: weapon power (${multText(Math.round(weapon * 1000) / 1000)}) and damage bonuses (${multText(pool)}) multiply.`,
+        "Weapon power raises skill damage by power% (power 30 = 30% more damage), measured against your class's starter weapon. No weapon = less damage.",
+        'Damage bonuses (+% damage on items, oaths and blessings) add up first, then multiply once. Element damage ("% more Fire damage") multiplies on top for its element.',
       ],
     };
   }

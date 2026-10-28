@@ -23,7 +23,7 @@ export const SHARED_KEY = 'shared';
 export type ArtKind = 'icon' | 'vfx' | 'sfx';
 
 /** Yeniden tasarım kapsamı dışındaki class'lar (Ömer: Cutthroat tamamen kapsam dışı). Sürüm seçicide görünmez, hep v1. */
-export const VERSION_EXCLUDED: readonly string[] = ['cutthroat'];
+export const VERSION_EXCLUDED: readonly string[] = ['cutthroat', 'vesper']; // Vesper (2026-10-28): yer tutucu sanat (Mage gövdesi + ödünç ikon/vfx/ses), kendi v2 dosyası yok; hep v1
 
 /** Sürüm seçicide görünmeyen ama İKONLARI her zaman v2 (boyalı) olan anahtarlar: Cutthroat (2026-10-18; animasyon/ses v1'de kalır). */
 export const ICONS_ALWAYS_V2: readonly string[] = ['cutthroat'];

@@ -63,7 +63,7 @@ describe('Druid ağacı fx (Faz 2b)', () => {
     expect(hot.turns).toBe(3);
     expect(heal.power).toBeCloseTo(0.675 * (1 + 3 * v(T.nodes['3.f1']!.fx![0])) * (1 + v(bar.fx![0])), 6);
     expect(hot.power).toBeCloseTo(0.225 * (1 + 5 * v(T.nodes['3.f2']!.fx![0])) * (1 + v(bar.fx![1])), 6);
-    expect(bar.text).toContain(`×${Number((1 + v(bar.fx![0])).toFixed(3))}`); // ayrı çarpan "×" yazılır (2026-10-27)
+    expect(bar.text).toContain(`${Number((v(bar.fx![0]) * 100).toFixed(2))}% more`); // ayrı çarpan cümle biçiminde yazılır (2026-10-27)
   });
 
   it('Third Lash (1.ma): her 3. Thorn Whip başka bir düşmana %20 kırbaç atar; Wild Thorns (1.fa, kritik yok) ile de çalışır', () => {

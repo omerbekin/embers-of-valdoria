@@ -307,6 +307,7 @@
             "id": "inn",
             "action": "inn",
             "label": "Inn",
+            "shape": "arch",
             "rect": [
               0.475,
               0.17,
@@ -424,6 +425,7 @@
             "id": "inn",
             "action": "inn",
             "label": "Inn",
+            "shape": "arch",
             "rect": [
               0.53,
               0.1,
@@ -497,6 +499,7 @@
       ],
       "encounter": "dr_19",
       "treasure": "dr_sunken_chapel",
+      "event": "dr_vesper",
       "dive": [
         "dr_19_d2",
         "dr_19_d3"
@@ -1095,6 +1098,7 @@
             "id": "inn",
             "action": "inn",
             "label": "Inn",
+            "shape": "arch",
             "rect": [
               0.64,
               0.16,

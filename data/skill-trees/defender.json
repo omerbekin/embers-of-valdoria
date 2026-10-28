@@ -298,7 +298,7 @@
     },
     "0.fa": {
       "name": "Anchored Stone",
-      "text": "Bulwark Aura on you is ×1.5 as strong, but you can never Move.",
+      "text": "Bulwark Aura on you is 50% stronger, but you can never Move.",
       "src": "A:V1:0.fa",
       "fx": [
         {
@@ -316,7 +316,7 @@
     },
     "0.fb": {
       "name": "Pledged Plate",
-      "text": "Allies in Bulwark Aura get 100% of your armor, but your own armor is ×0.7.",
+      "text": "Allies in Bulwark Aura get 100% of your armor, but your own armor is 30% lower.",
       "src": "A:V3:0.fb",
       "fx": [
         {
@@ -394,7 +394,7 @@
     },
     "1.f2": {
       "name": "Shockwave",
-      "text": "Tremor Slam ×1.06 power per rank against enemies already Slowed.",
+      "text": "Tremor Slam has 6% more power per rank against enemies already Slowed.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -570,7 +570,7 @@
     },
     "1.fb": {
       "name": "Endless Tremor",
-      "text": "Quaking ground lasts 4 turns, but Tremor Slam deals ×0.6 damage.",
+      "text": "Quaking ground lasts 4 turns, but Tremor Slam deals 40% less damage.",
       "src": "A:V2:1.fb",
       "fx": [
         {
@@ -701,7 +701,7 @@
     },
     "2.r": {
       "name": "Rally Cry",
-      "text": "While you Taunt, allies take 1% less damage per rank (×0.9 → ×0.87).",
+      "text": "While you Taunt, allies take 1% less damage per rank (10% less → 13% less).",
       "src": "A:V3:2.f1",
       "fx": [
         {
@@ -904,7 +904,7 @@
     },
     "3.f3": {
       "name": "Linked Plates",
-      "text": "Damage Close Ranks shares to you is ×0.96 per rank.",
+      "text": "Damage Close Ranks shares to you is 4% lower per rank.",
       "src": "A:V1:3.f1",
       "fx": [
         {
@@ -1099,7 +1099,7 @@
     },
     "4.u2": {
       "name": "Bitter Knuckles",
-      "text": "Fist Crush ×1.12 damage against enemies that hit you since your last turn.",
+      "text": "Fist Crush deals 12% more damage against enemies that hit you since your last turn.",
       "src": "B:V4:4.u2",
       "fx": [
         {
@@ -1153,7 +1153,7 @@
     },
     "4.r2": {
       "name": "Heavier Fall",
-      "text": "Fist Crush ×(1 + 1% for each 2 points of your armor above 40) damage.",
+      "text": "Fist Crush deals 1% more damage for each 2 points of your armor above 40.",
       "src": "B:V5:4.u2",
       "fx": [
         {
@@ -1206,7 +1206,7 @@
     },
     "4.d2": {
       "name": "Can Opener",
-      "text": "Fist Crush ×(1 + 1% per point of the target's armor) damage.",
+      "text": "Fist Crush deals 1% more damage per point of the target's armor.",
       "src": "B:V5:4.d2",
       "fx": [
         {

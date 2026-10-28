@@ -296,7 +296,7 @@ describe('skill açıklaması (tooltip)', () => {
   it('özel kurallar: zırh yok sayma, arkaya sıçrama, can emme, undead bonusu, eksik mana, tüketilen kalkan', () => {
     expect(text('aimed_shot')).toContain('Ignores 50% of armor');
     expect(text('piercing_arrow')).not.toContain('Ignores');
-    expect(text('piercing_arrow')).toContain('×0.7 the damage of the previous one');
+    expect(text('piercing_arrow')).toContain('30% less damage than the previous one');
     expect(text('judgment')).toContain('Leaves');
     expect(text('void_strike')).toContain('missing mana of the target');
   });
@@ -392,7 +392,7 @@ describe('stat açıklaması (tooltip)', () => {
   it('Luck: kritik şansı ve accuracy; kritik hasar SABİT (luck artırmaz); kritik hasar/şifada, kalkanda değil', () => {
     expect(text('luck')).toContain('Crit chance');
     expect(text('luck')).toContain('Accuracy');
-    expect(text('luck')).toContain(`fixed at ×${f.attributes.critMult}`);
+    expect(text('luck')).toContain(`always deals ${Math.round((f.attributes.critMult - 1) * 100)}% more damage`);
     expect(text('luck')).not.toMatch(/Crit damage: +/);
     expect(text('luck')).toContain('never of shields');
   });

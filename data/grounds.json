@@ -111,5 +111,139 @@
     ],
     "soak": "soaked",
     "soakTurns": 2
+  },
+  "sanctified_flame": {
+    "_not": "Zemin tepkimesi (Ömer 2026-10-27): Burning Ground ile Holy Fire aynı hücrede birleşince doğar (reactions.sanctified). Kutsal hasar zemini; gücü ve süresi tepkimeden gelir.",
+    "name": "Sanctified Flame",
+    "color": "#ffe9a8",
+    "element": "holy",
+    "icon": "holy"
+  },
+  "holy_water": {
+    "_not": "Zemin tepkimesi (Ömer 2026-10-27): su + Holy Fire. Şifa zemini (heal): hasar vermez; içinde tur başlatan, tepkimeyi tetikleyenin tarafındaki birim tik kadar iyileşir. Islatmaz.",
+    "name": "Holy Water",
+    "color": "#bfe3ff",
+    "element": "holy",
+    "icon": "radiance",
+    "heal": true
+  },
+  "ice_ground": {
+    "_not": "Zemin tepkimesi (Ömer 2026-10-27): su + Storm donar. Hasar vermez; içinde tur başlatan (tetikleyenin düşmanı) birim 1 tur Slow alır. Su bu hücreden kalkar.",
+    "name": "Ice",
+    "color": "#d6f1ff",
+    "element": "ice",
+    "icon": "blizzard",
+    "statuses": [
+      {
+        "status": "slow",
+        "turns": 1
+      }
+    ]
+  },
+  "reactions": {
+    "_not": "ZEMİN TEPKİMELERİ (Ömer 2026-10-27 'uygula'; sayılar PROVİZYON, sim yok; open-questions 445). Hücrede zaten olan zemin = KURULUM (setup), yeni bırakılan zemin = TETİK (trigger). Bırakılırken her ortak hücrede tepkime BİR KEZ olur ve hücrede TEK sonuç kalır; sıra önemlidir (either: true = iki sıra da aynı tepkime). Her iki tarafın zeminleri tepkir. Tepkimenin hasarı/etkisi tetiği bırakanındır; hasar ve durum yalnızca ona düşman birimlere, şifa yalnızca onun tarafına. Aynı türden zemin bugünkü gibi (üst üste / Fire on Fire). Alanlar: remove = hücreden kalkan zemin türleri; damage = anlık büyü hasarı (of: tutarı veren zemin türleri, yoksa ikisinin güçlüsü; mult; adjacent = 4 yönden komşu hücrelere çarpan; element); status = hücredeki düşmanlara durum; cleanse = kurulumun sahibinin tarafındaki birimlerden silinen durumlar; refresh = süresi baştan başlayan zemin türleri; cellMult = tutulan zeminin bu hücredeki gücü çarpanı (süresince); becomes = ikisi de kalkar, yerine yeni zemin (power: güç çarpanı, of: gücün geldiği zemin türleri / yoksa güçlüsü; turns: sayı ya da 'longer'); spread = listelenen zemin, hücredeki suya bağlı (4 yönden komşu) tüm su hücrelerine yayılır; board = tahta koşulu ('own': yalnız tetiği bırakanın kendi tahtasında, 'foe': yalnız karşı tahtada; Holy Water / Evaporates, Ömer 2026-10-28).",
+    "explosion": {
+      "label": "Explosion",
+      "text": "Fire on poison explodes: instant fire damage on the cell and around it; the poison burns away, the fire stays.",
+      "setup": ["poison"],
+      "trigger": ["burning"],
+      "remove": ["poison"],
+      "damage": { "element": "fire", "of": ["poison", "burning"], "sum": true, "mult": 1, "adjacent": 0.5 }
+    },
+    "toxic_smoke": {
+      "label": "Toxic smoke",
+      "text": "Poison on fire turns to toxic smoke: whoever stands there is Blinded for 1 turn and takes one poison tick; the poison evaporates, the fire stays.",
+      "setup": ["burning"],
+      "trigger": ["poison"],
+      "remove": ["poison"],
+      "damage": { "element": "nature", "of": ["poison"], "mult": 1 },
+      "status": { "status": "blinded", "turns": 1 }
+    },
+    "purge": {
+      "label": "Purified",
+      "text": "Poison cast on holy fire does not take: the holy fire burns it away, starts its duration over and lifts Withering from the holy fire caster's allies standing there.",
+      "setup": ["holy_fire", "sanctified_flame"],
+      "trigger": ["poison"],
+      "remove": ["poison"],
+      "refresh": ["holy_fire", "sanctified_flame"],
+      "cleanse": ["wither"]
+    },
+    "feed": {
+      "label": "Fed",
+      "text": "Holy fire cast on poison consumes it: the holy fire deals 50% more damage on that cell.",
+      "setup": ["poison"],
+      "trigger": ["holy_fire", "sanctified_flame"],
+      "remove": ["poison"],
+      "cellMult": { "ground": ["holy_fire", "sanctified_flame"], "mult": 1.5 }
+    },
+    "sanctified": {
+      "label": "Sanctified",
+      "text": "Burning ground and holy fire merge into Sanctified Flame: 30% more damage than the stronger of the two, lasting as long as the longer.",
+      "setup": ["burning"],
+      "trigger": ["holy_fire"],
+      "either": true,
+      "becomes": { "ground": "sanctified_flame", "power": 1.3, "turns": "longer" }
+    },
+    "roots_burn": {
+      "label": "Roots burn",
+      "text": "Fire and roots meet: the roots burn away (no more Slow) and whoever stands there takes instant fire damage; the fire stays.",
+      "setup": ["root_field"],
+      "trigger": ["burning"],
+      "either": true,
+      "remove": ["root_field"],
+      "damage": { "element": "fire", "of": ["burning"], "mult": 1 }
+    },
+    "quenched": {
+      "label": "Quenched",
+      "text": "Storm and fire put each other out: the cell turns to water (Flooded).",
+      "setup": ["storm"],
+      "trigger": ["burning"],
+      "either": true,
+      "becomes": { "ground": "flooded", "power": 0, "turns": 2 }
+    },
+    "spread": {
+      "label": "Spreads",
+      "text": "Poison meets water: the poison flows into every water cell connected to it; the water stays.",
+      "setup": ["flooded"],
+      "trigger": ["poison"],
+      "either": true,
+      "spread": ["poison"]
+    },
+    "holy_water": {
+      "label": "Holy water",
+      "text": "Holy fire and water on the caster's own side become Holy Water: it heals the caster's allies who start their turn there and harms no one.",
+      "setup": ["flooded"],
+      "trigger": ["holy_fire", "sanctified_flame"],
+      "either": true,
+      "board": "own",
+      "becomes": { "ground": "holy_water", "power": 1, "of": ["holy_fire", "sanctified_flame"], "turns": 2 }
+    },
+    "holy_water_ground": {
+      "_not": "Ömer 2026-10-28 (445): Judgment düşmana yalnız Holy Fire bıraktığı için Holy Water pratikte doğmuyordu; Holy Ground (Judgment kendi tarafına) + su da Holy Water olur. Şifa tutarı Holy Ground'un tutarı (power 1), süre 2 (holy_water ile aynı). Yalnız kendi tahtada (Holy Ground zaten oraya düşer); karşı tahtada tepkime yok, üst üste durur.",
+      "label": "Holy water",
+      "text": "Holy ground and water on the caster's own side become Holy Water: it heals the caster's allies who start their turn there and harms no one.",
+      "setup": ["flooded"],
+      "trigger": ["holy_ground"],
+      "either": true,
+      "board": "own",
+      "becomes": { "ground": "holy_water", "power": 1, "of": ["holy_ground"], "turns": 2 }
+    },
+    "evaporate": {
+      "label": "Evaporates",
+      "text": "Holy fire and water on the enemy's side: the holy fire boils the water away and burns there as usual.",
+      "setup": ["flooded"],
+      "trigger": ["holy_fire", "sanctified_flame"],
+      "either": true,
+      "board": "foe",
+      "remove": ["flooded"]
+    },
+    "frozen": {
+      "label": "Frozen",
+      "text": "Storm freezes water into Ice: enemies who start their turn on it are Slowed for 1 turn; the water is gone.",
+      "setup": ["flooded"],
+      "trigger": ["storm"],
+      "either": true,
+      "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 }
+    }
   }
 }

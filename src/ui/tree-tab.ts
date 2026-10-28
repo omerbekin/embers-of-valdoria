@@ -459,15 +459,18 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const r = (el.classList.contains('gt-mk') ? el.querySelector('i') ?? el : el).getBoundingClientRect();
     const w = tip.offsetWidth;
     const h = tip.offsetHeight;
-    const vw = sr.width;
     const vh = sr.height;
     const rl = r.left - sr.left;
     const rr = r.right - sr.left;
     const rt = r.top - sr.top;
     const rb = r.bottom - sr.top;
+    // Yatay sınır pencerenin kendisi (Ömer 2026-10-27: ipucu Gear penceresinin dışına, haritanın üstüne taşıyordu)
+    const pn = (host2.querySelector('.gr-panel') ?? host2).getBoundingClientRect();
+    const L = pn.left - sr.left + 8;
+    const R = pn.right - sr.left - 8;
     let x = rr + 12;
-    if (x + w > vw - 8) x = rl - w - 12;
-    if (x < 8) x = Math.max(8, Math.min(vw - w - 8, rl + r.width / 2 - w / 2));
+    if (x + w > R) x = rl - w - 12;
+    if (x < L) x = Math.max(L, Math.min(R - w, rl + r.width / 2 - w / 2));
     let y = rt + r.height / 2 - h / 2;
     if (x < rr && x + w > rl) y = rt - h - 8 < 8 ? rb + 8 : rt - h - 8;
     // düğüm ipucu ağacın kendisini örtmesin (playtest B4): ağaç alanının sağına, sığmazsa altına kayar; ikisi de sığmazsa düğümün yanında kalır.
@@ -477,11 +480,11 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       const hr = treeHost.getBoundingClientRect();
       const hrr = hr.right - sr.left;
       const hb = hr.bottom - sr.top;
-      if (hrr + 10 + w <= vw - 8) {
+      if (hrr + 10 + w <= R) {
         x = hrr + 10;
         y = rt + r.height / 2 - h / 2;
       } else if (hb + 8 + h <= vh - 8) {
-        x = Math.max(8, Math.min(vw - w - 8, rl + r.width / 2 - w / 2));
+        x = Math.max(L, Math.min(R - w, rl + r.width / 2 - w / 2));
         y = hb + 8;
       }
     }

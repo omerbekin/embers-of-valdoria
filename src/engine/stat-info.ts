@@ -116,7 +116,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         lines: [
           `Crit chance: +${pct(a.critChancePerLuck, 1)} per point (now ${pct(stats.critChance, 1)})`,
           `Accuracy: +${pct(a.accuracyPerLuck, 1)} per point (base ${pct(a.accuracyBase)}, now ${pct(stats.accuracy)}); your attacks miss less often`,
-          `Crit damage is fixed at ${multText(a.critMult)} and does not depend on Luck`,
+          `A crit always deals ${multText(a.critMult)} damage; this does not depend on Luck`,
           'Crits are the final multiplier of damage and healing, never of shields',
         ],
       };
@@ -130,15 +130,15 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         lines: [
           `Comes from Dexterity (+${num(a.spdPerDex)} per point)`,
           // Kişisel hız zarı (Ömer 2026-10-24): birimin sapması; zar yoksa (sınıf kartı, wiki örneği) satır yok
-          ...(stats.spdRoll !== undefined ? [`Natural pace: ${multText(Math.round(stats.spdRoll * 100) / 100)} speed`] : []),
+          ...(stats.spdRoll !== undefined ? [`Natural pace: ${Math.round(stats.spdRoll * 100) === 100 ? 'normal' : multText(Math.round(stats.spdRoll * 100) / 100)} Speed`] : []),
           'Decides how soon the unit acts: higher speed means more turns',
         ],
       };
     case 'critChance':
-      return { title: `Crit chance ${pct(stats.critChance, 1)}`, lines: [`Base ${pct(a.critChanceBase)}, +${pct(a.critChancePerLuck, 1)} per Luck`, `A crit multiplies the final damage or healing by a fixed ${multText(a.critMult)}`, 'Applies to damage and healing, not shields'] };
+      return { title: `Crit chance ${pct(stats.critChance, 1)}`, lines: [`Base ${pct(a.critChanceBase)}, +${pct(a.critChancePerLuck, 1)} per Luck`, `A crit always deals ${multText(a.critMult)} damage or healing (fixed)`, 'Applies to damage and healing, not shields'] };
     case 'critMult':
       return {
-        title: `Crit damage ${multText(stats.critMult ?? a.critMult)}`,
+        title: `Crit damage ${Math.round((stats.critMult ?? a.critMult) * 1000) / 10}%`,
         lines: [
           `Critical hits deal ${multText(stats.critMult ?? a.critMult)} damage`,
           'Fixed for every unit: Luck only raises the crit chance, never the multiplier',

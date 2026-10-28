@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blacksmith Reroll Mockup</title>
+<style>
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('blacksmith-reroll/fonts/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: block; src: url('blacksmith-reroll/fonts/EBGaramond-normal-latin.woff2') format('woff2'); }
+:root {
+  color-scheme: dark;
+  --gold: 217, 178, 106; --on: #f6dea0; --txt: #efe3c6; --sub: #d6c49c; --muted: #b8a682; --dim: #8f8068;
+  --ember: #e0702a; --ember2: #ffb35a; --up: #9be37a; --down: #e0907a;
+  --cin: Cinzel, Georgia, serif; --gar: 'EB Garamond', Georgia, serif;
+  --rc: #7a3f9a; --rl: color-mix(in srgb, #7a3f9a 52%, #fff);
+  --tA: #f0b04a; --tB: #8fb8e8; --tC: #b9a98a;
+}
+* { box-sizing: border-box; font-style: normal; }
+html, body { margin: 0; height: 100%; background: #050403; color: var(--txt); font-family: var(--gar); overflow: hidden; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* mockup bar (not in game) */
+#bar { position: fixed; left: 0; right: 0; top: 0; height: 64px; z-index: 50; display: flex; align-items: center; gap: 18px; padding: 0 12px; background: #0d0a07; border-bottom: 1px solid rgba(var(--gold), .3); font: 600 14px var(--cin); letter-spacing: .06em; overflow-x: auto; }
+#bar .grp { display: flex; gap: 4px; align-items: center; flex: none; }
+#bar button { background: transparent; border: 1px solid rgba(var(--gold), .25); padding: 8px 12px; text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+#bar button.on { border-color: var(--on); color: var(--on); background: rgba(224,112,42,.14); }
+#bar .vb button { font-size: 22px; padding: 6px 22px; }
+#note { font: 16px var(--gar); color: var(--sub); letter-spacing: 0; white-space: nowrap; }
+#wrap { position: fixed; left: 0; right: 0; top: 64px; bottom: 0; overflow: hidden; }
+#stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: radial-gradient(ellipse at 20% 0%, rgba(60,40,22,.5), transparent 60%), #0a0705; }
+#stage.desk { width: 1920px; height: 1080px; --t0: 17px; --t1: 20px; --t2: 23px; --t3: 27px; --th: 44px; --g: 16px; --pad: 28px; --ico: 26px; --btnh: 54px; --tile: 112px; --panelw: 980px; }
+#stage.wide { width: 2580px; height: 1080px; --t0: 17px; --t1: 20px; --t2: 23px; --t3: 27px; --th: 44px; --g: 16px; --pad: 28px; --ico: 26px; --btnh: 54px; --tile: 112px; --panelw: 980px; }
+#stage.phone { width: 844px; height: 390px; --t0: 11.5px; --t1: 13px; --t2: 14.5px; --t3: 16px; --th: 20px; --g: 6px; --pad: 8px; --ico: 17px; --btnh: 44px; --tile: 56px; --panelw: 844px; }
+#stage.wide.vB, #stage.desk.vB { --panelw: 1500px; }
+#stage.vB.wide { --panelw: 1500px; }
+
+.panel { position: absolute; left: 0; top: 0; bottom: 0; width: var(--panelw); display: flex; flex-direction: column; padding: var(--pad); gap: var(--g);
+  background: linear-gradient(180deg, #1c140d, #0c0906); border-right: 1px solid rgba(var(--gold), .35); box-shadow: 0 0 40px #000; font-size: var(--t1); }
+#stage.phone .panel { border-right: 0; }
+.head { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(var(--gold), .25); padding-bottom: 6px; flex: none; }
+.title { font: 600 var(--th) var(--cin); letter-spacing: .12em; text-transform: uppercase; background: linear-gradient(180deg, #fff0c4, #e8c47e 55%, #c0924a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ctxr { display: flex; align-items: center; gap: 18px; font: 600 var(--t3) var(--cin); color: var(--on); letter-spacing: .06em; }
+.ctxr span { display: inline-flex; align-items: center; gap: 8px; }
+.ctxr img { width: calc(var(--ico) * 1.2); height: calc(var(--ico) * 1.2); }
+.stone { width: calc(var(--ico) * .6); height: calc(var(--ico) * .6); transform: rotate(45deg); background: radial-gradient(circle at 35% 35%, #d8f0ff, #5a8ab8 55%, #1d3350); border: 1px solid #0a1420; box-shadow: 0 0 8px rgba(120,190,255,.6); }
+.town { font: var(--t1) var(--gar); color: var(--muted); flex: none; }
+.quote { flex: none; padding: 6px 14px; border-left: 2px solid rgba(var(--gold), .5); background: linear-gradient(90deg, rgba(var(--gold), .08), transparent); color: var(--sub); font-size: var(--t1); }
+#stage.phone .quote, #stage.phone .town { display: none; }
+.tabs { display: flex; gap: 6px; flex: none; }
+.tab { flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(8,6,4,.45); border: 1px solid rgba(var(--gold), .25); font: 600 var(--t1) var(--cin); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.tab.on { border-color: var(--on); color: var(--on); box-shadow: inset 0 0 18px rgba(240,140,40,.2); }
+.tab small { font: 600 .7em var(--cin); color: #b98ad4; border: 1px solid #7a3f9a; padding: 0 5px; letter-spacing: .1em; }
+.body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: var(--g); padding: 2px 4px 2px 0; }
+.body::-webkit-scrollbar { width: 8px; } .body::-webkit-scrollbar-thumb { background: rgba(var(--gold), .35); }
+.note { color: var(--dim); font-size: var(--t0); flex: none; }
+.foot { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 22px; padding-top: var(--g); border-top: 1px solid rgba(var(--gold), .25); }
+.price { display: inline-flex; align-items: center; gap: 8px; font: 600 var(--t3) var(--cin); color: var(--on); }
+.price img { width: var(--ico); height: var(--ico); }
+.btn { position: relative; min-height: var(--btnh); padding: 0 34px; background: linear-gradient(180deg, rgba(38,27,17,.9), rgba(12,9,6,.94)); border: 2px solid #d9b26a; border-radius: 0; box-shadow: 0 0 0 3px rgba(12,8,5,.8); font: 600 var(--t2) var(--cin); letter-spacing: .1em; text-transform: uppercase; color: var(--on); }
+.btn::before, .btn::after { content: ''; position: absolute; top: 50%; width: 8px; height: 8px; margin-top: -4px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 0 1px var(--ember2), 0 0 10px rgba(240,140,40,.7); }
+.btn::before { left: -6px; } .btn::after { right: -6px; }
+.btn:hover { color: #fff; text-shadow: 0 0 14px rgba(240,140,40,.85); }
+.btn:disabled { opacity: .4; cursor: default; }
+
+/* shared affix pieces (it-* look from gear.css) */
+.tier { flex: none; display: grid; place-items: center; width: 1.5em; height: 1.5em; border: 1px solid var(--tc); color: var(--tc); background: color-mix(in srgb, var(--tc) 12%, transparent); font: 700 .74em var(--cin); }
+.tier.A { --tc: var(--tA); } .tier.B { --tc: var(--tB); } .tier.C { --tc: var(--tC); }
+.ico { flex: none; width: var(--ico); height: var(--ico); object-fit: contain; }
+.dia { flex: none; position: relative; width: var(--ico); height: var(--ico); }
+.dia::after { content: ''; position: absolute; left: 50%; top: 50%; width: 36%; height: 36%; transform: translate(-50%,-50%) rotate(45deg); background: rgba(217,178,106,.55); }
+.lock { flex: none; width: 1.1em; height: 1.1em; color: var(--dim); }
+.rail { flex: none; position: relative; width: 96px; height: 16px; margin-left: auto; }
+#stage.phone .rail { width: 48px; }
+.rail::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 2px; transform: translateY(-50%); background: linear-gradient(90deg, rgba(217,178,106,.8), rgba(217,178,106,.35)); box-shadow: 0 1px 0 #000; }
+.rail i { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(217,178,106,.85) 0 1px, transparent 1px) left/1px 100% no-repeat, linear-gradient(90deg, rgba(217,178,106,.85) 0 1px, transparent 1px) right/1px 100% no-repeat; }
+.rail b { position: absolute; top: 50%; left: calc(var(--p) * 100%); width: 12px; height: 12px; transform: translate(-50%,-50%) rotate(45deg); background: radial-gradient(circle at 35% 35%, #fff6d8, var(--rl) 45%, #4a2560); border: 1px solid #1a1007; box-shadow: 0 0 0 1px rgba(217,178,106,.8); }
+
+/* item plate (gear plate look) */
+.plate { position: relative; display: flex; align-items: center; gap: calc(var(--g) * 1.2); padding: var(--g); background: linear-gradient(180deg, rgba(30,22,14,.9), rgba(11,8,5,.92)); border: 1px solid color-mix(in srgb, var(--rc) 55%, rgba(217,178,106,.3)); box-shadow: 0 0 0 3px rgba(8,6,4,.75), inset 0 0 26px color-mix(in srgb, var(--rc) 16%, transparent); }
+.plate::before, .plate::after { content: ''; position: absolute; width: 9px; height: 9px; transform: rotate(45deg); background: #130d07; border: 1px solid var(--rl); top: -5px; }
+.plate::before { left: -5px; } .plate::after { right: -5px; }
+.tilebox { flex: none; width: var(--tile); height: var(--tile); padding: 5px; background: radial-gradient(circle, rgba(0,0,0,.45), rgba(0,0,0,.2)); border: 2px solid var(--rl); box-shadow: 0 0 0 3px rgba(8,6,4,.9), 0 0 0 4px color-mix(in srgb, var(--rc) 70%, transparent), 0 0 18px color-mix(in srgb, var(--rc) 50%, transparent); }
+.tilebox img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; display: block; }
+.pname { font: 600 var(--t3) var(--cin); letter-spacing: .05em; text-transform: uppercase; color: var(--rl); text-shadow: 0 0 14px color-mix(in srgb, var(--rc) 45%, transparent); }
+.psub { color: var(--sub); font-size: var(--t1); margin-top: 2px; }
+.psub b { font: 600 .85em var(--cin); letter-spacing: .12em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 40%, #fff); font-weight: 600; }
+
+/* selectable affix line */
+.al { display: flex; align-items: center; gap: .6em; width: 100%; min-height: 44px; padding: 4px 12px; text-align: left; background: rgba(8,6,4,.4); border: 1px solid rgba(var(--gold), .18); color: #d6efc4; font: var(--t2) var(--gar); position: relative; }
+.al:hover:not(:disabled) { border-color: rgba(var(--gold), .6); }
+.al .tx { flex: 1; min-width: 0; }
+.al.on { border-color: var(--on); background: linear-gradient(90deg, rgba(240,140,40,.16), rgba(8,6,4,.4)); box-shadow: inset 0 0 18px rgba(240,140,40,.22); }
+.al.on::before { content: ''; position: absolute; left: -6px; top: 50%; width: 9px; height: 9px; margin-top: -5px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 8px rgba(240,140,40,.8); }
+.al:disabled { opacity: .55; cursor: default; }
+.al .tg { font: 600 .62em var(--cin); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.alist { display: flex; flex-direction: column; gap: 6px; }
+.lbl { font: 600 var(--t1) var(--cin); letter-spacing: .2em; text-transform: uppercase; color: rgba(236,200,130,.95); padding-bottom: 4px; border-bottom: 1px solid rgba(var(--gold), .25); display: flex; align-items: center; gap: 10px; flex: none; }
+.lbl .cnt { margin-left: auto; letter-spacing: .06em; color: var(--sub); font-size: .85em; }
+
+/* chips */
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--t2) * 9), 1fr)); gap: 6px; }
+.chip { display: flex; align-items: center; gap: .5em; min-height: 40px; padding: 3px 10px 3px 6px; background: color-mix(in srgb, var(--tc) 9%, rgba(8,6,4,.55)); border: 1px solid color-mix(in srgb, var(--tc) 45%, transparent); font: var(--t1) var(--gar); color: var(--txt); position: relative; }
+.chip .ico { width: calc(var(--ico) * .85); height: calc(var(--ico) * .85); }
+.chip .dia { width: calc(var(--ico) * .85); height: calc(var(--ico) * .85); }
+.chip.A { --tc: var(--tA); } .chip.B { --tc: var(--tB); } .chip.C { --tc: var(--tC); }
+.chip em { margin-left: auto; font: 600 .66em var(--cin); letter-spacing: .1em; text-transform: uppercase; color: var(--tc); }
+.chip.cur { border-style: dashed; }
+.chip.cur::after { content: 'CURRENT'; position: absolute; right: 6px; top: -7px; font: 600 9px var(--cin); letter-spacing: .12em; background: #130d07; color: var(--dim); padding: 0 4px; }
+.chip.hot { box-shadow: inset 0 0 14px color-mix(in srgb, var(--tc) 35%, transparent), 0 0 0 1px color-mix(in srgb, var(--tc) 50%, transparent); background: color-mix(in srgb, var(--tc) 18%, rgba(8,6,4,.55)); }
+
+/* tooltip v3 card */
+.it-card { position: relative; background: linear-gradient(180deg, rgba(30,22,14,.985), rgba(11,8,5,.985)); border: 1px solid color-mix(in srgb, var(--rc) 55%, rgba(217,178,106,.3)); box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 8px color-mix(in srgb, var(--rc) 28%, transparent), inset 0 0 30px color-mix(in srgb, var(--rc) 16%, transparent); }
+.it-head { text-align: center; padding: var(--g) 10px 8px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 34%, transparent), transparent); border-bottom: 2px solid color-mix(in srgb, var(--rc) 70%, transparent); }
+.it-medal { display: block; width: var(--tile); aspect-ratio: 1; margin: 0 auto; padding: 5px; border-radius: 50%; background: radial-gradient(circle, rgba(0,0,0,.55), rgba(0,0,0,.25)); border: 2px solid var(--rl); box-shadow: 0 0 0 3px rgba(8,6,4,.9), 0 0 0 4px color-mix(in srgb, var(--rc) 70%, transparent), 0 0 22px color-mix(in srgb, var(--rc) 50%, transparent); overflow: hidden; }
+.it-medal img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.it-rule { position: relative; height: 1px; margin: 9px 14% 8px; background: linear-gradient(90deg, transparent, rgba(var(--gold), .4) 12%, rgba(var(--gold), .4) 88%, transparent); }
+.it-rule::after { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; transform: translate(-50%,-50%) rotate(45deg); background: #130d07; border: 1px solid var(--rl); }
+.it-kind { margin: 0 -10px; padding: 4px 10px; font: 600 var(--t1) var(--cin); letter-spacing: .14em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 40%, #fff); background: linear-gradient(90deg, transparent, rgba(0,0,0,.34) 20%, rgba(0,0,0,.34) 80%, transparent); border-top: 1px solid color-mix(in srgb, var(--rc) 35%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--rc) 35%, transparent); }
+.it-sub { margin-top: 5px; color: #cdbd9c; font-size: var(--t1); }
+.it-main { padding: var(--g) 14px; display: flex; flex-direction: column; gap: 6px; }
+.it-reqrow { display: flex; justify-content: space-between; padding: 8px 14px; border-top: 1px solid rgba(var(--gold), .2); color: var(--dim); font-size: var(--t0); }
+
+/* B: two columns */
+.cols { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: calc(var(--g) * 1.4); flex: 1; min-height: 0; }
+#stage.phone .cols { grid-template-columns: 1fr 1.2fr; }
+.col { display: flex; flex-direction: column; gap: var(--g); min-height: 0; min-width: 0; }
+.res { display: flex; flex-direction: column; gap: 5px; overflow: auto; min-height: 0; }
+.rr { display: flex; align-items: center; gap: .6em; min-height: 48px; padding: 4px 12px; background: rgba(8,6,4,.4); border: 1px solid rgba(var(--gold), .16); font: var(--t2) var(--gar); position: relative; }
+.rr .nm { flex: 1; min-width: 0; }
+.rr .nm small { display: block; font: var(--t0) var(--gar); color: var(--dim); }
+.rr .rg { font: 600 var(--t1) var(--cin); color: var(--on); letter-spacing: .04em; white-space: nowrap; }
+.rr .ch { width: 4.2em; text-align: right; color: var(--sub); font-size: var(--t1); }
+.rr.cur { border-style: dashed; }
+.rr.cur .nm::after { content: ' (current)'; color: var(--dim); font-size: .8em; }
+.srcbox { display: flex; align-items: center; gap: 12px; padding: 6px 12px; border: 1px solid var(--on); background: rgba(240,140,40,.1); font: var(--t2) var(--gar); color: #d6efc4; flex: none; }
+.arrow { text-align: center; color: var(--ember2); font: 600 var(--t3) var(--cin); line-height: 1; flex: none; letter-spacing: .3em; }
+
+/* C: before / after */
+.strip { display: flex; align-items: center; gap: var(--g); flex: none; }
+.strip .plate { flex: none; padding: 6px 14px 6px 8px; }
+.sel { display: flex; gap: 6px; flex: 1; min-width: 0; }
+.sel .al { min-height: 52px; flex: 1 1 0; padding: 4px 8px; font-size: var(--t1); flex-wrap: wrap; }
+.ba { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; gap: var(--g); flex: none; }
+.bacard { padding: calc(var(--g) * 1.2); background: linear-gradient(180deg, rgba(30,22,14,.9), rgba(11,8,5,.92)); border: 1px solid rgba(var(--gold), .35); display: flex; flex-direction: column; gap: 6px; justify-content: center; min-width: 0; }
+.bacard .k { font: 600 var(--t0) var(--cin); letter-spacing: .24em; text-transform: uppercase; color: var(--dim); }
+.bacard .big { display: flex; align-items: center; gap: .6em; font: 600 calc(var(--t3) * 1.15) var(--gar); color: #d6efc4; }
+.bacard.q { border-color: var(--on); box-shadow: inset 0 0 24px rgba(240,140,40,.15); }
+.bacard.q .big { color: var(--on); font-family: var(--cin); font-size: calc(var(--th) * .9); line-height: 1; }
+.bacard.q .big small { font: var(--t2) var(--gar); color: var(--sub); }
+.ba .mid { align-self: center; font: 600 calc(var(--th) * 1.1) var(--cin); color: var(--ember2); }
+.cloud { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: var(--g); padding: 4px 6px 4px 2px; border: 1px solid rgba(var(--gold), .18); background: rgba(8,6,4,.3); }
+.grp { display: flex; flex-direction: column; gap: 6px; }
+.gh { font: 600 var(--t0) var(--cin); letter-spacing: .24em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+.gh::after { content: ''; flex: 1; height: 1px; background: rgba(var(--gold), .25); }
+.cloud .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.cloud .chip { min-height: 38px; }
+.lk { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-size: var(--t0); }
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="grp vb" id="vb"><button data-v="A">A</button><button data-v="B">B</button><button data-v="C">C</button></div>
+  <div class="grp" id="sb"><button data-s="desk">16:9 1920x1080</button><button data-s="wide">21:9 2580x1080</button><button data-s="phone">Phone 844x390</button></div>
+  <span id="note"></span>
+</div>
+<div id="wrap"><div id="stage"></div></div>
+
+<script>
+// ---- DATA ----
+// REAL (data/items.json > affixDefs, helm pool): names, tiers, text templates, icons. Item = Leather Coif, Epic Helm, ilvl 2 (from the screen).
+// PLACEHOLDER: value ranges (computed from base+perIlvl*2 +-15%), chances (uniform 1/N), category grouping (mine).
+const ST = 'blacksmith-reroll/stats/';
+const ICON = { hp: ST + 'hp.png', mp: ST + 'mp.png', armor: ST + 'armor.png', magicArmor: ST + 'magicArmor.png', primary: ST + 'str.png', allattr: ST + 'int.png', recovery: ST + 'hpRegen.png', luck: ST + 'luck.png', rage: ST + 'mpRegen.png', mpCost: ST + 'mp.png', ultimate: 'blacksmith-reroll/ui/cooldown.png', resist: ST + 'magicArmor.png', defense: ST + 'armor.png' };
+// id, tier, name, short result text, icon, category, base, perIlvl, step, kind (add | pct | less | txt)
+const POOL = [
+  ['c_armor','C','Armor','+{} Armor','armor','Defense',1.5,.25,1,'add'],
+  ['c_hp','C','Max HP','+{} Max HP','hp','Defense',1.5,.25,1,'add'],
+  ['c_mp','C','Max MP','+{} Max MP','mp','Resource',6,1,2,'add'],
+  ['c_res_fire','C','Fire resistance','Takes {} Fire damage','','Defense',3,.5,1,'less'],
+  ['c_res_ice','C','Ice resistance','Takes {} Ice damage','','Defense',3,.5,1,'less'],
+  ['c_res_holy','C','Holy resistance','Takes {} Holy damage','','Defense',3,.5,1,'less'],
+  ['c_res_dark','C','Dark resistance','Takes {} Dark damage','','Defense',3,.5,1,'less'],
+  ['c_res_nature','C','Nature resistance','Takes {} Nature damage','','Defense',3,.5,1,'less'],
+  ['c_res_light','C','Lightning resistance','Takes {} Lightning damage','','Defense',3,.5,1,'less'],
+  ['c_xp','C','Experience','+{}% experience gained','','Utility',3,.5,1,'pct'],
+  ['b_marmor','B','Magic armor','+{} Magic armor','magicArmor','Defense',2.9,.48,1,'add'],
+  ['b_mpcost','B','MP cost','{} MP cost','mpCost','Resource',3,.5,1,'less'],
+  ['b_resil','B','Debuff resistance','{}% chance to resist a debuff','resist','Defense',2.4,.4,1,'pct'],
+  ['b_tier_def','B','Giantward','Takes {} damage from elites and bosses','defense','Defense',2.9,.48,1,'less'],
+  ['b_wound_soft','B','Scarred hide','Wounds lower Max HP {}% less','','Defense',6,1,1,'pct'],
+  ['a_primary','A','Primary attribute','+{} Primary attribute','primary','Attributes',2.2,.1,1,'add'],
+  ['a_allattr','A','All attributes','+{} STR, DEX, INT, LUCK','allattr','Attributes',1.6,.04,.5,'add'],
+  ['a_gdef','A','Global defense','Takes {} damage','defense','Defense',1.92,.32,.5,'less'],
+  ['a_hppct','A','Max HP %','{} Max HP','hp','Defense',2.4,.4,1,'pctx'],
+  ['a_recovery','A','Recovery','Recover {}% HP and MP after battle','recovery','Resource',1.6,.27,1,'pct'],
+  ['a_ultcd','A','Swift ultimate','Ultimate ready 1 turn sooner','ultimate','Utility',0,0,1,'txt'],
+  ['a_immunity','A','Immunity','Immune to a debuff for first {} turns','','Defense',2,.08,1,'turn'],
+  ['a_mana','A','Mana mastery','{} Max MP, +MP per turn','mp','Resource',6,.8,1,'pctx'],
+  ['a_resource','A','Resource mastery','{} Rage gained, +MP per turn','rage','Resource',6,1,1,'pctx'],
+  ['a_endure','A','Endurance','+{}% Lucky Escape chance','luck','Defense',2,.2,1,'pct'],
+];
+const rng = (p) => {
+  const v = p[6] + p[7] * 2, st = p[8];
+  const lo = Math.max(st, Math.round(v * .85 / st) * st), hi = Math.max(lo + st, Math.round(v * 1.15 / st) * st);
+  const f = (n) => String(+n.toFixed(1));
+  return [lo, hi, f];
+};
+const rangeText = (p) => {
+  if (p[9] === 'txt') return 'fixed';
+  const [lo, hi, f] = rng(p);
+  const s = lo + '' === hi + '' ? f(lo) : f(lo) + '-' + f(hi);
+  return p[9] === 'pct' ? s + '%' : p[9] === 'pctx' ? '+' + s + '%' : p[9] === 'less' ? s + '% less' : p[9] === 'turn' ? s + ' turns' : '+' + s;
+};
+const pool = (tier) => POOL.filter((p) => p[1] === tier);
+// the item on the screen: [tier, icon, text, poolId of its current affix, main?]
+const ITEM = [
+  { tier: 'C', icon: 'hp', text: '+3 Max HP', cur: 'c_hp', main: true, pos: .45 },
+  { tier: 'C', icon: '', text: '×0.93 Ice damage taken', cur: 'c_res_ice', pos: .6 },
+  { tier: 'B', icon: 'mpCost', text: '×0.93 MP cost', cur: 'b_mpcost', pos: .35 },
+  { tier: 'A', icon: 'mp', text: '×1.14 Max MP, +2 MP per turn', cur: 'a_mana', pos: .7 },
+];
+const ORDER = { A: 0, B: 1, C: 2 };
+const LOCK = '<svg class="lock" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>';
+const GOLD = '<img src="blacksmith-reroll/ui/gold.png" alt="">';
+const ic = (k) => (k && ICON[k] ? `<img class="ico" src="${ICON[k]}" alt="">` : '<i class="dia"></i>');
+const rail = (pos) => `<span class="rail" style="--p:${pos}"><i></i><b></b></span>`;
+const COIF = 'blacksmith-reroll/items/leather_coif.webp';
+let sel = 3; // selected affix index (A row)
+let V = 'A', S = 'desk';
+
+const chrome = (inner, priceTxt) => `<div class="panel">
+  <div class="head"><div class="title">Blacksmith</div><div class="ctxr"><span><i class="stone"></i>14</span><span>${GOLD}1,284</span></div></div>
+  <div class="town">Town of Ashvale &middot; Smith Odo</div>
+  <div class="quote">"Fortune favours the patient hammer. Pick the flaw and I will recast it."</div>
+  <div class="tabs"><div class="tab">Temper</div><div class="tab">Combine</div><div class="tab on">Reroll affix <small>Epic</small></div></div>
+  <div class="body">${inner}</div>
+  <div class="foot"><span class="price">${GOLD}120 gold</span><button class="btn">Reroll affix</button></div>
+</div>`;
+
+const alRow = (a, i, extra = '') => `<button class="al${sel === i ? ' on' : ''}" data-i="${i}" ${a.main ? 'disabled' : ''}><span class="tier ${a.tier}">${a.tier}</span>${ic(a.icon)}<span class="tx">${a.text}</span>${a.main ? `<span class="tg">Main</span>${LOCK}` : extra}</button>`;
+const sortedIdx = () => ITEM.map((_, i) => i).sort((x, y) => ORDER[ITEM[x].tier] - ORDER[ITEM[y].tier] || x - y);
+const chip = (p, cur, hot) => `<div class="chip ${p[1]}${cur ? ' cur' : ''}${hot ? ' hot' : ''}" title="${p[2]}: ${rangeText(p)}">${ic(p[4])}<span>${p[2]}</span><em>${p[1]}</em></div>`;
+const kindLine = '<b>Epic Helm</b>';
+
+// ---- VARIANT A ----
+function viewA() {
+  const a = ITEM[sel], pl = pool(a.tier);
+  const rows = sortedIdx().map((i) => alRow(ITEM[i], i, rail(ITEM[i].pos))).join('');
+  return `<div class="plate"><div class="tilebox"><img src="${COIF}" alt=""></div>
+      <div style="flex:1;min-width:0"><div class="pname">Leather Coif</div><div class="psub">${kindLine} &middot; Item level 2</div>
+      <div class="note" style="margin-top:4px">Pick a property below. The first one stays.</div></div></div>
+    <div class="alist">${rows}</div>
+    <div class="lbl"><span class="tier ${a.tier}">${a.tier}</span> Can become <span class="cnt">${pl.length} possible &middot; same tier</span></div>
+    <div class="chips">${pl.map((p) => chip(p, p[0] === a.cur, true)).join('')}</div>
+    <div class="note">It is rerolled into a property of the same tier, which may be the same one with a new value. Each reroll of this item costs more.</div>`;
+}
+
+// ---- VARIANT B ----
+function viewB() {
+  const a = ITEM[sel], pl = pool(a.tier), pc = (100 / pl.length).toFixed(0);
+  const rows = sortedIdx().map((i) => alRow(ITEM[i], i, rail(ITEM[i].pos))).join('');
+  const left = `<div class="it-card"><div class="it-head"><span class="it-medal"><img src="${COIF}" alt=""></span>
+      <div class="pname" style="margin-top:10px">Leather Coif</div><div class="it-rule"></div><div class="it-kind">Epic &middot; Helm</div><div class="it-sub">Item level 2</div></div>
+      <div class="it-main">${rows}</div><div class="it-reqrow"><span>Requires Level 1</span><span>value 36 gold</span></div></div>`;
+  const right = `<div class="lbl">Possible results <span class="cnt">${a.tier}-tier &middot; ${pl.length} outcomes</span></div>
+    <div class="srcbox"><span class="tier ${a.tier}">${a.tier}</span>${ic(a.icon)}<span>${a.text}</span></div>
+    <div class="arrow">&#9660;</div>
+    <div class="res">${pl.map((p) => `<div class="rr${p[0] === a.cur ? ' cur' : ''}"><span class="tier ${p[1]}">${p[1]}</span>${ic(p[4])}<span class="nm">${p[2]}<small>${p[3].replace('{}', rangeText(p).replace('+', ''))}</small></span><span class="rg">${rangeText(p)}</span><span class="ch">${pc}%</span></div>`).join('')}</div>
+    <div class="note">Ranges at item level 2 (mockup values). Chance is per roll.</div>`;
+  return `<div class="cols"><div class="col" style="overflow:auto">${left}</div><div class="col">${right}</div></div>`;
+}
+
+// ---- VARIANT C ----
+const GROUPS = ['Attributes', 'Defense', 'Resource', 'Utility'];
+function viewC() {
+  const a = ITEM[sel], pl = pool(a.tier);
+  const tabs = sortedIdx().map((i) => alRow(ITEM[i], i)).join('');
+  const strip = `<div class="strip"><div class="plate"><div class="tilebox"><img src="${COIF}" alt=""></div><div><div class="pname">Leather Coif</div><div class="psub">${kindLine} &middot; iL 2</div></div></div><div class="sel">${tabs}</div></div>`;
+  const ba = `<div class="ba"><div class="bacard"><div class="k">Current</div><div class="big"><span class="tier ${a.tier}">${a.tier}</span>${ic(a.icon)}<span>${a.text}</span></div></div>
+    <div class="mid">&rarr;</div>
+    <div class="bacard q"><div class="k">After reroll</div><div class="big">? <small>one of ${pl.length} ${a.tier}-tier properties</small></div></div></div>`;
+  const cloud = GROUPS.map((g) => { const ps = pl.filter((p) => p[5] === g); return ps.length ? `<div class="grp"><div class="gh">${g} (${ps.length})</div><div class="row">${ps.map((p) => chip(p, p[0] === a.cur, false)).join('')}</div></div>` : ''; }).join('');
+  return `${strip}${ba}<div class="lbl">Can become <span class="lk">${LOCK} first property is locked</span></div><div class="cloud">${cloud}</div>`;
+}
+
+const NOTES = {
+  A: 'A: gercek Gear plakasi, affix satirlari plakada secilir; "Can become" rozet izgarasi (tier renkli, ikonlu)',
+  B: 'B: iki sutun: solda item karti (tooltip v3), sagda "Possible results" listesi, aralik + sans',
+  C: 'C: onceki -> sonraki on izleme, kilitli ana affix, tipe gore gruplanmis kaydirilabilir rozet bulutu',
+};
+function render() {
+  const st = document.getElementById('stage');
+  st.className = S + ' v' + V;
+  st.innerHTML = chrome(V === 'A' ? viewA() : V === 'B' ? viewB() : viewC());
+  st.querySelectorAll('[data-i]').forEach((b) => b.addEventListener('click', () => { sel = +b.dataset.i; render(); }));
+  document.querySelectorAll('#vb button').forEach((b) => b.classList.toggle('on', b.dataset.v === V));
+  document.querySelectorAll('#sb button').forEach((b) => b.classList.toggle('on', b.dataset.s === S));
+  document.getElementById('note').textContent = NOTES[V];
+  fit();
+  location.hash = V.toLowerCase() + '-' + S;
+}
+function fit() {
+  const st = document.getElementById('stage'), w = innerWidth, h = innerHeight - 64;
+  const sw = st.offsetWidth, sh = st.offsetHeight, k = Math.min(w / sw, h / sh);
+  st.style.transform = `scale(${k})`;
+  st.style.left = (w - sw * k) / 2 + 'px'; st.style.top = (h - sh * k) / 2 + 'px';
+}
+document.getElementById('vb').addEventListener('click', (e) => { if (e.target.dataset.v) { V = e.target.dataset.v; render(); } });
+document.getElementById('sb').addEventListener('click', (e) => { if (e.target.dataset.s) { S = e.target.dataset.s; render(); } });
+addEventListener('resize', fit);
+const m = /^#([abc])(?:-(desk|wide|phone))?/.exec(location.hash);
+if (m) { V = m[1].toUpperCase(); if (m[2]) S = m[2]; }
+render();
+</script>
+</body>
+</html>

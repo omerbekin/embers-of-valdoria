@@ -26,7 +26,7 @@
     "id": "mire_bound",
     "name": "Mire-Bound",
     "icon": "hourglass",
-    "text": "While this witch lives, Saltbound heroes have ×0.8 speed (several witches do not stack).",
+    "text": "While this witch lives, Saltbound heroes have 20% less speed (several witches do not stack).",
     "effect": {
       "type": "mireBound",
       "status": "saltbound",

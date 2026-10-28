@@ -163,7 +163,7 @@ describe('Crown Surge: motor (global surge eylemi)', () => {
     b.debugSetSurge('party', ['ash_surge']);
     expect(b.surgeSpent('party')).toBe(false);
     const info = describeGlobalSkill(content.globalSkills.ash_surge!, content.formulas, undefined, null, content.statuses);
-    expect(info.lines.join(' ')).toContain('×1.3');
+    expect(info.lines.join(' ')).toContain('30% more damage');
   });
 });
 

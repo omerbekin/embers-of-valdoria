@@ -154,9 +154,11 @@ Terazide beklenen sonuç: öldürme > **Raise Dead** yalnızca Skeleton'ın vura
 | Skill | Amaç | Mevcut YZ | Pay | Sorun |
 |---|---|---|---|---|
 | Mana Steal | bedava yakın dövüş + mana çalma | kill/damage | %36 | %7 MP'si 0 olana; 12v12'de arka sıradan hiç vuramıyor |
-| Drain Field | 3x3 mana yakma | burn: 2+ düşmanın manası varsa | %31,5 | %21'inde Mana Steal çok daha iyiydi |
+| Drain Field | 3x3 mana yakma | burn: 2+ düşmanın manası varsa | %31,5 | %21'inde Mana Steal çok daha iyiydi (2026-10-27: skill Ley Brand oldu, aşağıdaki not) |
 | Spell Ward | dosta/kendine büyü kalkanı + MP yakma | shield: hedef <= %45 | %12 | %32'si kendine (uygun) |
 | Void Strike | eksik manaya göre büyük vuruş | tactic/kill (finisher) | %20 | %94'ü öldürme: tasarıma uygun |
+
+**Ley Brand (2026-10-27, madde 444; Drain Field'ın yerine, id `drain_field`):** aday değeri `brand` terimi (`ai.ts > brandValue`, ağırlıklar `ai.json > value.brand`): MP'siz düşmanda doğacak havuzun tahmini yakım / patlama hasarı x poolShare, MP'li düşmanda bedel artışının engellediği hamle (manaDenial) + yakım hasarı x costShare. Tazelik: Brand'siz hedef tam değer, Brand'i freshTurns (1) tur ya da daha az kalan hedef refreshShare (0,4), daha uzun kalan 0 (yeniden basmaz). Mana Steal / Spell Ward yakımının Branded hedefte vereceği hasar `damage` terimine girer.
 
 Terazide beklenen sonuç: öldürme > **Void Strike** (ultimate, genelde hemen; K5) > **Spell Ward** (değer = dosta gelecek büyü hasarının emilen kısmı + yakılan MP'nin düşmana maliyeti + buff silme; dost tehlikedeyse kurtarma değeri) > **Drain Field** (yakılan mananın değeri: düşmanın o mana ile yapamayacağı hamleler) > **Mana Steal** (MP'si 0 olan hedefte mana değeri 0). Ayar: K (`shield` ve `burn` öncelikleri kalkar; mana yakma değeri "engellenen skill" olarak, bugünkü sabit 0,6 yerine). J: Spell Ward ipucu (`maxTargetHpRatio 0.45`) terazi gelince kaldırılabilir.
 

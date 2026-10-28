@@ -100,3 +100,6 @@ html.short .cw-pc { width: calc(140 * var(--u)); height: calc(100 * var(--u)); o
 html.short .cw-pc img { object-position: 50% 18%; }
 html.short .cw-pc .nm { left: -4px; right: -4px; bottom: auto; top: calc(100% + 5px); font-size: 8px; line-height: 11px; letter-spacing: .02em; color: #cdb88d; }
 html.short .cw-pc::after { overflow: hidden; }
+/* Barracks modu (Ömer 2026-10-27): Not now (solda) + birincil (sağda) */
+.cw-acts { display: flex; align-items: center; gap: max(10px, calc(18 * var(--u))); }
+.cw-acts .el-btn:not(.primary) { min-height: max(40px, calc(54 * var(--u))); font-size: max(13px, calc(20 * var(--u))); }

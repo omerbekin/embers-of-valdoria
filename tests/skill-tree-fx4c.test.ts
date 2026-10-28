@@ -259,25 +259,7 @@ describe('Faz 4c: ağaç zeminleri', () => {
     expect(has(w, 'slow')).toBe(true);
   });
 
-  it('Hall of Silence: 2 tur kalan alan, tur başında maks MP %15 yakar; MP 0 olanı susturur', () => {
-    const b = make({ 0: 'antimage' }, { 0: 'mage', 1: 'mage' }, withTree(0, only('antimage', { '2.v': 1 })), 11, 'turns');
-    const me = P(b);
-    const a = E(b, 0);
-    const z = E(b, 1);
-    cast(b, me, 'drain_field', a, 0);
-    expect(grounds(b, 'hall_of_silence')[0]!.turns).toBe(2);
-    grounds(b, 'hall_of_silence')[0]!.turns = 9;
-    a.mp = a.maxMp;
-    a.statuses = a.statuses.filter((s) => s.kind !== 'silence');
-    const t = nextTurn(b, a);
-    const burn = t.find((e) => e.type === 'resource' && e.actor === a.uid && e.resource === 'mp');
-    expect(burn && burn.type === 'resource' && burn.amount).toBe(Math.max(1, Math.round(a.maxMp * 0.15)));
-    expect(has(a, 'silence')).toBe(false);
-    z.mp = 0;
-    z.statuses = z.statuses.filter((s) => s.kind !== 'silence');
-    untilTurn(b, z);
-    expect(has(z, 'silence')).toBe(true);
-  });
+  // 2026-10-27: eski Drain Field ağaç testi kaldırıldı (Ley Brand; yeni düğüm testleri tests/skill-tree-fx-leybrand.test.ts)
 
   it('Molten Core: Meteor\'un yanan zemini merkez hücrede iki kat', () => {
     const b = make({ 0: 'mage' }, { 4: 'warrior' }, withTree(0, only('mage', { '4.l2': 1 })));

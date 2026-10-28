@@ -9,7 +9,7 @@ import { battleTrack, phaseTrack, sceneMusic, type MusicTrack } from '../../ui/m
 import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-layout';
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
-import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
+import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, groundReactionHint, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
 import type { AreaStage, BattleEvent, BattleMode, Combatant, SkillDef, SkillModeSet, StatKind, Teams, TargetPreview } from '../../engine';
 import { type DamageTags } from '../float-text';
 import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-columns';
@@ -1248,7 +1248,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** Does the skill hurt what it touches (damage, mana burn, a debuff on others)? Decides red vs green. */
   private isHarmful(skill: SkillDef): boolean {
-    return skill.effects.some((e) => e.type === 'damage' || e.type === 'manaBurn' || (e.type === 'status' && !e.self && content.statuses[e.status]?.type === 'debuff'));
+    return skill.effects.some((e) => e.type === 'damage' || e.type === 'manaBurn' || e.type === 'brand' || (e.type === 'status' && !e.self && content.statuses[e.status]?.type === 'debuff'));
   }
 
   /**
@@ -1931,6 +1931,7 @@ export class BattleScene extends Phaser.Scene {
       const stages = staged.length > 1 ? stageMap(staged) : new Map<number, number>(); // numbers only for staged shapes
       const specs = areaHoverSpecs(info, slot, areaTone(this.battle, actorUid, skillId, board), stages);
       this.showPlates(board, specs, !ok && info.reason ? { slot, text: info.reason } : undefined);
+      if (ok) this.showReactionMarks(this.battle.groundReactionPreview(actorUid, skillId, anchor, board)); // zemin tepkimesi önizlemesi (Explosion, Sanctified...)
       return;
     }
     const t = targetAt(board, slot);
@@ -2020,6 +2021,34 @@ export class BattleScene extends Phaser.Scene {
     if (!first) return;
     const row = this.battle.rowOf(first.slot);
     this.showBasePlates([{ board: this.targetSide(actorUid), specs: Array.from({ length: content.GRID.lanes }, (_, l) => ({ slot: row * content.GRID.lanes + l, state: 'affected' as const, tone: 'enemy' as const })) }]);
+  }
+
+  /**
+   * Zemin tepkimesi önizlemesi (Ömer 2026-10-27): skill'in bırakacağı zemin bu hücrede tepkiyecekse plakanın altında sonucun adı (tasarım kiti
+   * etiketi, sonucun zemin rengiyle çerçeveli). Alan plakalarıyla birlikte silinir (areaTop).
+   */
+  private showReactionMarks(list: Array<{ board: 'party' | 'enemy'; slot: number; reaction: string; label: string }>): void {
+    if (!list.length) return;
+    const top = this.areaTop ?? this.add.container(0, 0, []).setDepth(3550);
+    this.areaTop = top;
+    for (const r of list) {
+      const c = cellCenter(this.slotsOf(r.board), r.slot);
+      top.add(this.shapeLabel(c.x, c.y + 38, r.label, color(reactionColor(r.reaction))));
+    }
+  }
+
+  /** Zemin tepkimesi oldu: hücrenin üstünde kısa, yükselip sönen ad (yüzen yazı). */
+  private reactionFloat(board: 'party' | 'enemy', slot: number, label: string, hex: string): void {
+    const q = this.cellPos(board, slot);
+    const t = elText(this, q.x, q.y - 40, label, 30, hex, { em: 0.06, upper: false }).setOrigin(0.5).setDepth(3500).setAlpha(0);
+    this.tweens.add({
+      targets: t,
+      alpha: 1,
+      y: q.y - 72,
+      duration: slow(260),
+      ease: 'Sine.easeOut',
+      onComplete: () => this.tweens.add({ targets: t, alpha: 0, y: q.y - 96, delay: slow(700), duration: slow(420), onComplete: () => t.destroy() }),
+    });
   }
 
   private clearAreaMarker(): void {
@@ -2620,10 +2649,15 @@ export class BattleScene extends Phaser.Scene {
 
   /** Skill açıklaması (yalnızca skill düğmesinin üstünde gösterilir). */
   private skillTip(actor: Combatant, skill: SkillDef): TipContent {
-    const info = describeSkill(skill, actor.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds }, this.battle.unitRange(actor));
+    const info = describeSkill(skill, actor.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds, skills: content.skills }, this.battle.unitRange(actor));
     const kindColor = (k: (typeof info.kinds)[number]): string | undefined =>
       k === 'shield' ? colors.shield : k === 'magicShield' ? colors.magicShield : k ? colors.element[k] : undefined;
     const rows: Array<[string, string?]> = info.lines.map((l, i): [string, string?] => [l, kindColor(info.kinds[i])]);
+    // Zemin tepkimeleri (Ömer 2026-10-27): zemin bırakan skill'in ipucunda kısa liste
+    for (const e of skill.effects) {
+      const hint = e.type === 'ground' ? groundReactionHint(e.ground, content.groundReactions, content.grounds) : null;
+      if (hint && !rows.some((r) => r[0] === hint)) rows.push([hint, colors.muted]);
+    }
     const meta: InfoMeta[] = [];
     const costNow = skillCostAmount(skill.cost, actor); // proportional costs (Wail of the Dead: 20% of current HP) show the real amount right now
     const ratio = isRatioCost(skill.cost);
@@ -3093,6 +3127,11 @@ export class BattleScene extends Phaser.Scene {
         this.views.get(e.target)?.dodge();
         await this.wait(slow(90));
         return;
+      case 'daze':
+        // Daze (hammer implicit, Ömer 2026-10-27): small "Dazed" text above the TARGET; its turn comes later (turn bar refreshes on the next turn)
+        this.views.get(e.target)?.floatText('Dazed', colors.targetHighlight, 34);
+        await this.wait(slow(60));
+        return;
       case 'block':
         // Shield block (Ömer 2026-10-18): the TARGET blocks the physical hit ("Block" above the target, shield sound); no damage, no effects
         await this.passHitGate();
@@ -3329,6 +3368,11 @@ export class BattleScene extends Phaser.Scene {
         this.addGroundView(e);
         return;
       }
+      case 'groundReaction': {
+        this.reactionFloat(e.board, e.slot, e.label, reactionColor(e.reaction));
+        await this.wait(slow(260));
+        return;
+      }
       case 'groundEnd': {
         this.removeGroundView(e.id);
         return;
@@ -3339,6 +3383,13 @@ export class BattleScene extends Phaser.Scene {
         view?.floatText(e.name, colors.targetHighlight, 34);
         view?.ring(colors.targetHighlight, 0.9);
         await this.wait(120);
+        return;
+      }
+      case 'taint': {
+        // Ley Brand: tainted mana havuzu açıldı (MP çubuğu soluk morla görünür) ya da bitti (çubuk gizlenir)
+        const view = this.views.get(e.target);
+        view?.setMpPool(e.maxMp, e.mp, !e.ended);
+        if (!e.ended) view?.floatText(`+${e.pool} tainted MP`, colors.taintedMp, 40, false, { kind: 'resource' });
         return;
       }
       case 'mpRegen': {
@@ -3704,7 +3755,7 @@ export class BattleScene extends Phaser.Scene {
     const targets = targetUids.flatMap((uid) => this.views.get(uid) ?? []);
     if (!skill || !actor) return;
     const board = areaBoard ?? this.targetSide(actorUid);
-    const offensive = skill.effects.some((ef) => ef.type === 'damage' || ef.type === 'manaBurn' || ef.type === 'ground');
+    const offensive = skill.effects.some((ef) => ef.type === 'damage' || ef.type === 'manaBurn' || ef.type === 'brand' || ef.type === 'ground');
     // Area skills can be cast on empty cells: they still play (the effect lands on the chosen cell)
     if (targets.length === 0 && !(center !== undefined && offensive)) return;
 
@@ -4605,6 +4656,15 @@ export class BattleScene extends Phaser.Scene {
     const sub = [def?.role ?? (actor.summoned ? 'Summon' : ''), primaryName ? `${primaryName} primary` : ''].filter(Boolean).join(' · ');
     const statIcon = (k: 'hp' | 'mp') => this.texUrl(ensureIcon(this, statIconName(k), STAT_COLOR[k], false));
     const barTip = (k: 'hp' | 'mp'): TipContent => {
+      // Ley Brand: MP havuzu olmayan Branded birimin çubuğu tainted mana'dır
+      if (k === 'mp' && actor.taint !== undefined) {
+        const t = this.makeInfo('Tainted mana', EL.ON, ensureIcon(this, statIconName('mp'), STAT_COLOR.mp, false), [
+          ['Ley Brand gave this unit tainted mana. It cannot spend it, and it is gone when the Brand ends.'],
+          ['Mana burned or stolen from it hurts it; whatever is left bursts when the Brand runs out.'],
+        ]);
+        t.value = `${actor.mp} / ${actor.maxMp}`;
+        return t;
+      }
       const info = describeStat(k, actor.stats, f);
       const t = this.makeInfo(info.title, EL.ON, ensureIcon(this, statIconName(k), STAT_COLOR[k], false), info.lines.map((l): [string] => [l]));
       t.value = k === 'hp' ? `${actor.hp} / ${actor.maxHp}` : `${actor.mp} / ${actor.maxMp}`;
@@ -4620,6 +4680,7 @@ export class BattleScene extends Phaser.Scene {
     }
     if (actor.shield > 0) notes.push({ text: `Shield ${actor.shield}`, color: colors.shield });
     if (actor.magicShield > 0) notes.push({ text: `Magic shield ${actor.magicShield}`, color: colors.magicShield });
+    if (actor.taint !== undefined) notes.push({ text: `Tainted mana ${actor.mp} / ${actor.maxMp}`, color: colors.taintedMp });
     const fed = empoweredLine(actor.empowered);
     if (fed) notes.push({ text: fed.text, color: fed.tone === 'empowered' ? '#c58bff' : colors.muted });
     const hudActor: HudActor = {
@@ -4959,4 +5020,12 @@ export class BattleScene extends Phaser.Scene {
       ...(!mp && this.campaign && !preview && this.campaign.resultSubtitle?.(victory, this.battle) ? { subtitle: this.campaign.resultSubtitle(victory, this.battle) } : {}),
     });
   }
+}
+
+/** Zemin tepkimesinin rengi: doğan zemin, yoksa hücrede kalan zemin (grounds.json renkleri). */
+function reactionColor(id: string): string {
+  const d = content.groundReactions[id];
+  if (!d) return '#e8c47e';
+  const stays = [...d.trigger, ...d.setup].find((g) => !d.remove?.includes(g));
+  return content.grounds[d.becomes?.ground ?? stays ?? '']?.color ?? '#e8c47e';
 }

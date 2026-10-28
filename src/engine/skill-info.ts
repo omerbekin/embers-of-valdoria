@@ -5,7 +5,7 @@ import { lessText, moreText, multText } from './bonus-text';
 import { bonusScaleRaw } from './spec';
 import { rangeEnabled, rangeLabel } from './range';
 import { applySummonerScale, applySummonVariant, attributePower, outgoingDamageMult } from './stats';
-import type { UrnRule, AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
+import type { UrnRule, AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
 
 /** Skill'in oyuncuya gösterilen genel bilgileri (tooltip). Metinler İngilizce (oyun içi arayüz). */
 export interface SkillInfo {
@@ -139,6 +139,8 @@ function groupEffects(skill: SkillDef): Array<{ e: SkillEffect; times: number }>
 export interface EffectDefs {
   statuses?: Record<string, StatusDef>;
   grounds?: Record<string, GroundDef>;
+  /** Skill adları (Ley Brand işareti: markSkills adla yazılır); yoksa genel ifade. */
+  skills?: Record<string, { name: string }>;
 }
 
 /** Pasifin oyuncuya gösterilen açıklaması; değerler sahibinin stat'larından hesaplanır. */
@@ -157,6 +159,8 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     }
     case 'spellEcho':
       return `Damaging spells with a cooldown have a ${pct(e.chance)} chance to be ready again immediately.`;
+    case 'pealingBells':
+      return `Every Toll or Thunderpeal you ring makes your bells ${moreText(e.perBell)} stronger for the rest of the battle (it stacks with no limit; the bell that rings counts only for the next ones).`;
     case 'longshot':
       return `Deal more damage the farther your target is: ${moreText(e.perRow)} at 1 row of distance, ${moreText(e.perRow * 2)} at 2, ${moreText(e.perRow * 3)} at 3 (distance = your row + their row${e.extraRows ? ` + ${e.extraRows}` : ''}).`;
     case 'naturesGrudge':
@@ -227,7 +231,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'boarding':
       return `When you join the battle with a later wave or as reinforcements, you gain ${cap(e.status)} for ${turnsText(e.turns)}.`;
     case 'shell':
-      return `Your armor is ${multText(e.armorMult)} until the first critical hit you take; that crit cracks the shell for the rest of the battle.`;
+      return `You have ${multText(e.armorMult)} armor until the first critical hit you take; that crit cracks the shell for the rest of the battle.`;
     case 'slick':
       return `While you stand on ${groundName(e.ground)} ground, your evasion is +${pct(e.evasion)}.`;
     case 'lure':
@@ -279,7 +283,7 @@ export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas, v
     // Crown Surge (map2-quests-surge.md C1): sayılar veriden (durum çarpanı statuses.json, kalkan oranı global-skills.json)
     const st = def.status ? statusDefs?.[def.status] : undefined;
     const mult = st?.damageDealtMult;
-    if (mult !== undefined && (def.turns ?? 0) > 0) lines.push(`Your whole party deals ×${Math.round(mult * 100) / 100} damage for each hero's next ${def.turns} turns`);
+    if (mult !== undefined && (def.turns ?? 0) > 0) lines.push(`Your whole party deals ${multText(Math.round(mult * 100) / 100)} damage for each hero's next ${def.turns} turns`);
     if ((def.shieldRatio ?? 0) > 0) lines.push(`Every ally gains a shield of ${pct(def.shieldRatio!)} of their max HP for ${def.shieldTurns ?? 1} turns`);
     lines.push('Uses your turn', 'One Crown Surge per battle');
     return { id: def.id, name: def.name, icon: def.icon, target: 'Your whole party', targetBadge: 'Party', cost: 'Ashen Taint', summary: def.text, lines, turnsOnly: false };
@@ -371,7 +375,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.lifesteal) add(`Heals you for ${pct(e.lifesteal)} of damage dealt`);
       if (e.bonusVsTag) add(`${multText(e.bonusVsTag.multiplier)} damage vs ${e.bonusVsTag.tag}`);
       if (e.bonusVsStatus) add(`${multText(e.bonusVsStatus.multiplier)} damage against ${cap(e.bonusVsStatus.status)} targets`);
-      if (e.falloff) add(`Each target hit takes ${multText(e.falloff)} the damage of the previous one`);
+      if (e.falloff) add(`Each target hit takes ${multText(e.falloff)} damage than the previous one`);
       // Headsman's Blow: harcanan Rage ve hedefin eksik canı (spec.ts > damageSpecFor ile aynı formül)
       if (e.powerPerRage) {
         const lo = skill.cost.resource === 'rage' ? skill.cost.amount : 0;
@@ -379,6 +383,9 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const at = (r: number) => damageAmount({ ...e, power: e.power + e.powerPerRage! * r }, stats, formulas);
         add(`+${pct(e.powerPerRage)} ${ATTRIBUTE_NAME[e.scale]} per Rage spent${hi > lo ? ` (${at(lo)} at ${lo} Rage, ${at(hi)} at ${hi} Rage)` : ''}`, element);
       }
+      // Vesper: çan vuruşu (Pealing Bells) ve Great Bell'in çan başı gücü (spec.ts > damageSpecFor ile aynı formül)
+      if (e.bell) add('A bell: grows stronger with Pealing Bells', element);
+      if (e.powerPerBell) add(`+${pct(e.powerPerBell)} ${ATTRIBUTE_NAME[e.scale]} for every bell rung this battle (${damageAmount({ ...e, power: e.power + e.powerPerBell * 5 }, stats, formulas)} after 5 bells)`, element);
       if (e.executeBonus) add(`Hits harder the more HP the target is missing: up to ${moreText(e.executeBonus)} damage against a nearly dead target`, element);
       if (e.bonusPerMissingMana) add(`+${e.bonusPerMissingMana} per missing mana of the target`, element);
       if (e.repeatChance) add(`${pct(e.repeatChance)} chance to hit twice`, element);
@@ -446,6 +453,24 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const el = d?.element ?? 'physical';
         add(`Each target left with 0 MP (or already at 0) has a ${pct(em.chance)} chance (rolled separately) to be ${def?.name ?? em.status} for ${em.turns} turn${em.turns > 1 ? 's' : ''}${def ? ` (${def.text})` : ''}${d ? ` and take ${pct(d.power)} ${ATTRIBUTE_NAME[d.scale]} (${raw(d.scale, withMult(d.power, outgoingDamageMult(stats, d.element)))}) ${el} damage; it cannot miss but can crit` : ''}`, el);
       }
+    } else if (e.type === 'brand') {
+      // Ley Brand (open-questions 444): yeni kural metni; sayılar veriden
+      const def = defs.statuses?.['branded'];
+      const el = e.element ?? 'arcane';
+      add(`Brands every enemy in the area for ${e.turns} turn${e.turns > 1 ? 's' : ''}${def ? ` (${def.name})` : ''}; it cannot miss`);
+      add(`An enemy with no mana gains tainted mana equal to ${pct(e.taintPct)} of its max HP${e.centerTaintMul ? ` (${pct(e.centerTaintMul)} more on the centre enemy)` : ''}, starting full; it cannot spend it, and it is gone when the Brand ends`);
+      add(`An enemy with mana pays ${pct(e.costMult - 1)} more MP for its skills (rounded up)`);
+      add(`Mana burned or stolen from a Branded enemy also deals ${el} damage equal to ${pct(e.burnDamagePct)} of the mana lost (cannot miss or crit; magic armor applies)`, el);
+      add(`When the Brand runs out, leftover tainted mana bursts for ${el} damage equal to ${pct(e.explodePct)} of it`, el);
+      // Ömer 2026-10-29: bedel yakımı + işaret (sade ifade: 'X% more')
+      if (e.castBurnPct) add(`When a Branded enemy uses a skill that costs MP, it also loses extra MP equal to ${pct(e.castBurnPct)} of the MP it paid (or all it has left); this counts as burned mana and hurts it too`, el);
+      if (e.markDamagePct && e.markSkills?.length) {
+        const names = e.markSkills.map((id) => defs.skills?.[id]?.name).filter((n): n is string => !!n);
+        add(`${names.length === e.markSkills.length ? names.join(' and ') : 'Your marked skills'} deal${names.length === 1 ? 's' : ''} ${pct(e.markDamagePct)} more damage to Branded enemies`);
+      }
+      if (e.silenceOnEmpty) add(`A Branded enemy whose mana reaches 0 is ${defs.statuses?.silence?.name ?? 'Silenced'} for ${e.silenceOnEmpty} turn${e.silenceOnEmpty > 1 ? 's' : ''}`);
+      if (e.spread) add('When a Brand runs out, it leaps once to an unbranded enemy next to its bearer with a fresh Brand');
+      add('Casting it again refreshes the Brand but does not refill tainted mana');
     } else if (e.type === 'taunt') {
       add(`Taunt ${e.turns} turns: enemies must target you${e.breakRatio ? ` (ends after losing ${pct(e.breakRatio)} HP)` : ''}`);
       const cc = Object.values(defs.statuses ?? {}).filter((d) => d.breaksTaunt).map((d) => d.name);
@@ -491,8 +516,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     } else if (e.type === 'detonate') {
       const def = defs.statuses?.[e.status];
       const doom = def?.doom;
-      if (doom) add(`Then Doom strikes at once with every Omen on the target, ${multText(e.mult)}: ${pct(doom.powerPerStack * e.mult)} ${ATTRIBUTE_NAME[doom.scale]} (${raw(doom.scale, doom.powerPerStack * e.mult)}) ${doom.element} damage per Omen; it cannot miss but can crit`, doom.element);
-      else add(`Detonates ${e.status} ${multText(e.mult)}`);
+      if (doom) add(`Then Doom strikes at once with every Omen on the target, with ${multText(e.mult)} power: ${pct(doom.powerPerStack * e.mult)} ${ATTRIBUTE_NAME[doom.scale]} (${raw(doom.scale, doom.powerPerStack * e.mult)}) ${doom.element} damage per Omen; it cannot miss but can crit`, doom.element);
+      else add(`Detonates ${e.status} with ${multText(e.mult)} power`);
       add('On a miss nothing happens: the Omens stay');
       if (e.noTransferOnKill) add('Every Omen on the target is spent; if this kills it, nothing passes on (Ill Omen does not trigger)');
     } else if (e.type === 'dot') {
@@ -537,11 +562,12 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   // Ömer 2026-10-24 (open-questions 416/9): area_any + emptyOwn (Judgment): kendi tarafında boş hücreye de atılabilir
   if (skill.target === 'area_any' && skill.area?.emptyOwn) add('Can also be cast on an empty cell on your side: it then only leaves the ground there');
   if (skill.area?.shape === 'x' && (skill.area.hitsAtCenter ?? 1) > 1) add(`The blade crosses the center twice: the unit on the anchor cell is hit ${skill.area.hitsAtCenter} times, each hit rolls on its own`);
-  if (skill.effects.some((e) => e.type === 'damage' && e.guaranteedCrit)) add(`Always a critical hit (${multText(formulas.attributes.critMult)}); it can still miss`, 'physical');
+  if (skill.effects.some((e) => e.type === 'damage' && e.guaranteedCrit)) add(`Always a critical hit (${multText(formulas.attributes.critMult)} damage); it can still miss`, 'physical');
   if (skill.requiresOpenBehind) add('Only targets with an empty cell right behind them (a living unit there blocks it; a corpse does not); never a unit in the back row');
   if (rangeEnabled(formulas)) {
     // Menzil (range.md, range.ts): kart satırı; menzil kapalıyken eski melee satırı
   } else if (skill.motion === 'melee' && skill.target !== 'self') add(skill.requiresOpenBehind ? 'Slips behind any enemy, strikes, and returns' : skill.ignoreReach ? 'Charges at any enemy' : skill.reach ? `Melee: front ${skill.reach + 1} rows only (reach +${skill.reach})` : 'Melee: front row only');
+  if (skill.ringsBell) add('Rings a bell: counts for Pealing Bells and for the Great Bell of Valdoria');
   if (skill.advanceToFront) add('If you are not in the front row, you then step into the front row: the front cell of your own lane, or the nearest empty front cell if that one is taken (you stay put if the front row is full)');
   // Oranlı bedel (Wail of the Dead: mevcut canın %20'si): açıklama satırı; başlık skillCostLabel
   // Bedelin kendisi başlıkta (skillCostLabel: "All RAGE (min 30)" / "20% of current HP"); satırda yalnızca başlıkta olmayan kural
@@ -643,6 +669,8 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       return e.rageOnHurt ? [...fixed('Max bonus', moreText(e.maxBonus)), ...fixed('Rage per 1% HP lost', String(Math.round(e.rageOnHurt.perHpPercent * 100) / 100))] : fixed('Max bonus', moreText(e.maxBonus));
     case 'spellEcho':
       return fixed('Chance', pct(e.chance));
+    case 'pealingBells':
+      return fixed('Per bell rung', moreText(e.perBell));
     case 'longshot':
       return fixed('Per row', moreText(e.perRow));
     case 'soulDrain':
@@ -690,4 +718,18 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     default:
       return [];
   }
+}
+
+/**
+ * Zemin tepkimesi ipucu satırı (grounds.json > reactions; skill ipucu, Codex): bu zeminin hangi zeminlerle neye dönüştüğü, kısa.
+ * Ör. "Ground reactions: Explosion (with Poison), Sanctified (with Holy Fire)". Tepkimesi yoksa null.
+ */
+export function groundReactionHint(groundId: string, reactions: Record<string, GroundReactionDef>, grounds: Record<string, GroundDef>): string | null {
+  const parts: string[] = [];
+  for (const d of Object.values(reactions)) {
+    const others = [...new Set([...(d.setup.includes(groundId) ? d.trigger : []), ...(d.trigger.includes(groundId) ? d.setup : [])])].filter((g) => g !== groundId);
+    if (!others.length) continue;
+    parts.push(`${d.label} (with ${others.map((g) => grounds[g]?.name ?? g).join(' or ')})`);
+  }
+  return parts.length ? `Ground reactions: ${parts.join(', ')}` : null;
 }

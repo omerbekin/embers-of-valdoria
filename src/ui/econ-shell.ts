@@ -64,8 +64,11 @@ export function heroFace(classId: string, cls = 'ec-face'): HTMLElement {
 export function hpBar(now: number, ghost?: number): HTMLElement {
   const bar = el('div', `ec-hp${now < 0.4 ? ' low' : ''}`);
   if (ghost !== undefined && ghost > now) {
+    // Yalnız iyileşecek dilim (şimdiki candan yarınki cana); üstünde ışık süzülür (econ.css .ec-hp i.ghost)
     const g = el('i', 'ghost');
-    g.style.width = `${Math.round(ghost * 100)}%`;
+    const n0 = Math.max(0, Math.min(1, now));
+    g.style.left = `${Math.round(n0 * 100)}%`;
+    g.style.width = `${Math.round((Math.min(1, ghost) - n0) * 100)}%`;
     bar.append(g);
   }
   const f = el('i');

@@ -15,7 +15,7 @@ const BAGS: Record<string, string[][]> = {
   warrior: [['woodcutters_axe'], ['arming_sword', 'bearded_axe'], ['flanged_mace', 'oak_shield'], ['dane_axe', 'oak_shield']],
   hexer: [['worn_deck'], ['worn_deck', 'loaded_bones']],
   mage: [['ash_staff'], ['ash_staff', 'oak_staff']],
-  antimage: [['rondel_dagger'], ['misericorde'], ['serrated_edge'], ['rondel_dagger', 'misericorde'], ['woodcutters_axe', 'rondel_dagger'], ['twin_stilettos', 'arming_sword']],
+  antimage: [['rondel_dagger'], ['misericorde'], ['serrated_edge'], ['rondel_dagger', 'misericorde'], ['serrated_edge', 'rondel_dagger'], ['twin_stilettos', 'misericorde']], // Anti-Mage yalnızca hançer (Ömer 2026-10-28)
   cutthroat: [['rondel_dagger'], ['misericorde', 'rondel_dagger']],
 };
 
@@ -58,8 +58,10 @@ describe('empty hands: a weapon fills the main hand first', () => {
   it('explicit off-hand drop with an empty main hand goes to the main hand; with a main weapon it dual-wields', () => {
     const p = planEquip('antimage', emptyEquipment(), { uid: 'x', id: 'rondel_dagger' }, 'offhand');
     expect(!isPlanError(p) && p.slot).toBe('weapon');
-    const q = planEquip('antimage', { ...emptyEquipment(), weapon: { uid: 'a', id: 'woodcutters_axe' } }, { uid: 'x', id: 'rondel_dagger' }, 'offhand');
+    const q = planEquip('antimage', { ...emptyEquipment(), weapon: { uid: 'a', id: 'misericorde' } }, { uid: 'x', id: 'rondel_dagger' }, 'offhand');
     expect(!isPlanError(q) && q.slot).toBe('offhand');
+    // Anti-Mage balta / kılıç takamaz (Ömer 2026-10-28: yalnızca hançer)
+    for (const id of ['woodcutters_axe', 'arming_sword']) expect(isPlanError(planEquip('antimage', emptyEquipment(), { uid: 'x', id })), id).toBe(true);
     // kalkan ikinci elde kalır (silah değil)
     const s = planEquip('warrior', emptyEquipment(), { uid: 'x', id: 'oak_shield' }, 'offhand');
     expect(!isPlanError(s) && s.slot).toBe('offhand');
@@ -87,7 +89,7 @@ describe('campaign + Endless paths', () => {
   });
 
   it('removing the main weapon moves the off-hand dagger into the main hand; old saves are repaired', () => {
-    const { s, id } = camp('antimage', ['woodcutters_axe', 'rondel_dagger']);
+    const { s, id } = camp('antimage', ['misericorde', 'rondel_dagger']);
     let t = equipItem(s, id, 'b0');
     t = equipItem(t, id, 'b1');
     expect(t.roster[0]!.equipment.offhand?.id).toBe('rondel_dagger');
@@ -105,6 +107,14 @@ describe('campaign + Endless paths', () => {
     const back = normalizeState(raw)!;
     expect(back.roster[0]!.equipment.weapon?.id).toBe('misericorde');
     expect(back.roster[0]!.equipment.offhand).toBeNull();
+    // eski kayıt (Ömer 2026-10-28): Anti-Mage'in ana elindeki balta torbaya döner, ikinci eldeki hançer ana ele geçer
+    const raw2 = JSON.parse(JSON.stringify(camp('antimage', []).s)) as { roster: Array<{ equipment: Record<string, unknown> }>; inventory: unknown[] };
+    raw2.roster[0]!.equipment.weapon = { uid: 'i91', id: 'woodcutters_axe' };
+    raw2.roster[0]!.equipment.offhand = { uid: 'i92', id: 'rondel_dagger' };
+    const back2 = normalizeState(raw2)!;
+    expect(back2.roster[0]!.equipment.weapon?.id).toBe('rondel_dagger');
+    expect(back2.roster[0]!.equipment.offhand).toBeNull();
+    expect(back2.inventory.map((i) => i.id)).toContain('woodcutters_axe');
   });
 
   it('Endless: Equip best / equip / unequip / old save', () => {
@@ -119,17 +129,25 @@ describe('campaign + Endless paths', () => {
     let { r, id } = prep(['rondel_dagger']);
     expect(hero(equipBestRun(r, [id]), id).equipment.weapon?.id).toBe('rondel_dagger');
     expect(hero(equipFromBag(r, id, 'b0', 'offhand'), id).equipment.weapon?.id).toBe('rondel_dagger');
-    ({ r, id } = prep(['woodcutters_axe', 'rondel_dagger']));
+    ({ r, id } = prep(['misericorde', 'rondel_dagger']));
     r = equipFromBag(equipFromBag(r, id, 'b0'), id, 'b1');
     r = unequipToBag(r, id, 'weapon');
     expect(hero(r, id).equipment.weapon?.id).toBe('rondel_dagger');
     expect(hero(r, id).equipment.offhand).toBeUndefined();
-    expect(bagOf(r).map((i) => i.id)).toEqual(['woodcutters_axe']);
+    expect(bagOf(r).map((i) => i.id)).toEqual(['misericorde']);
     const old = fresh();
     const h = old.heroes.find((x) => x.class === 'antimage')!;
     h.equipment = { offhand: { uid: 'o', id: 'misericorde' } };
     const back = hero(parseRun(JSON.stringify({ version: 4, run: old }))!, h.id);
     expect(back.equipment.weapon?.id).toBe('misericorde');
     expect(back.equipment.offhand).toBeUndefined();
+    // eski kayıt (Ömer 2026-10-28): Anti-Mage'in ana elindeki kılıç torbaya, ikinci eldeki hançer ana ele
+    const old2 = fresh();
+    const h2 = old2.heroes.find((x) => x.class === 'antimage')!;
+    h2.equipment = { weapon: { uid: 'w', id: 'arming_sword' }, offhand: { uid: 'o2', id: 'rondel_dagger' } };
+    const run2 = parseRun(JSON.stringify({ version: 4, run: old2 }))!;
+    expect(hero(run2, h2.id).equipment.weapon?.id).toBe('rondel_dagger');
+    expect(hero(run2, h2.id).equipment.offhand).toBeUndefined();
+    expect(bagOf(run2).map((i) => i.id)).toContain('arming_sword');
   });
 });

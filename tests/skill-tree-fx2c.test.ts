@@ -59,7 +59,6 @@ describe('Faz 2c: veri', () => {
     const cases: [string, string, number][] = [
       ['druid', '2.r', 3],
       ['cutthroat', '3.f1', 2],
-      ['antimage', '2.f3', 5],
       ['gambler', '3.r', 4],
     ];
     for (const [cls, key, rank] of cases) {
@@ -168,17 +167,7 @@ describe('Faz 2c: durum kancası (DoT, rastgele durum, boşalma durumu)', () => 
     }, 10);
   });
 
-  it('Long Quiet: Drain Field\'ın boşalma Silence\'ı kancadan geçer (zar 1 iken 2 tur)', () => {
-    const t = only('antimage', { '2.f3': 17 }); // 0.06 x 17 > 1
-    seeds('Silence', (s) => {
-      const b = make({ 0: 'antimage' }, { 0: 'mage' }, withTree(0, t), s);
-      E(b).mp = 0;
-      const ev = statusEv(cast(b, P(b), 'drain_field', E(b)), E(b).uid, 'silence');
-      if (!ev) return false;
-      expect(ev.turns).toBe(2);
-      return true;
-    });
-  });
+  // 2026-10-27: eski Drain Field ağaç testi kaldırıldı (Ley Brand; yeni düğüm testleri tests/skill-tree-fx-leybrand.test.ts)
 
   it('Deep Tangle: eklenen Stun da (Strangling Grove) kancadan geçer', () => {
     const t = only('druid', { '2.mb': 1, '2.r': Math.ceil(1 / fxOf('druid', '2.r').procChance - 1e-9) });
@@ -195,21 +184,7 @@ describe('Faz 2c: durum kancası (DoT, rastgele durum, boşalma durumu)', () => 
 });
 
 describe('Faz 2c: Anti-Mage', () => {
-  it('Focused Siphon / Heart of Quiet: merkez hücredeki düşman %25 fazla yanar, MP 0 ise kesin Silence', () => {
-    const burn = (units: Record<number, UnitSetup>) => {
-      const b = make({ 0: 'antimage' }, { 0: 'mage' }, units, 4);
-      E(b).mp = E(b).maxMp;
-      const ev = cast(b, P(b), 'drain_field', E(b)).find((e) => e.type === 'manaBurn' && e.target === E(b).uid) as { amount: number };
-      return ev.amount;
-    };
-    const plain = burn({});
-    expect(burn(withTree(0, only('antimage', { '2.ea': 1 })))).toBe(Math.round(plain * 1.25));
-    const b = make({ 0: 'antimage' }, { 0: 'mage' }, withTree(0, only('antimage', { '2.ma': 1 })), 4);
-    E(b).mp = 0;
-    const p = cast(b, P(b), 'drain_field', E(b)).find((e) => e.type === 'emptyProc') as { chance: number; success: boolean };
-    expect(p.chance).toBe(1);
-    expect(p.success).toBe(true);
-  });
+  // 2026-10-27: eski Drain Field ağaç testi kaldırıldı (Ley Brand; yeni düğüm testleri tests/skill-tree-fx-leybrand.test.ts)
 
   it('Deep Cut: Mana Steal düz 10 + maks MP\'nin %3 x rank\'ı yakar', () => {
     seeds('Mana Steal isabet', (s) => {
@@ -241,17 +216,7 @@ describe('Faz 2c: Anti-Mage', () => {
     expect(kinds.size).toBe(2);
   });
 
-  it('Shallow Net: Silence şansı %80, boşalma hasarı yok', () => {
-    seeds('boşalma', (s) => {
-      const b = make({ 0: 'antimage' }, { 0: 'mage' }, withTree(0, only('antimage', { '2.fb': 1 })), s);
-      E(b).mp = 0;
-      const evs = cast(b, P(b), 'drain_field', E(b));
-      const p = evs.find((e) => e.type === 'emptyProc') as { chance: number; success: boolean };
-      expect(p.chance).toBeCloseTo(0.8, 9);
-      expect(hitDamage(evs, E(b).uid)).toBe(0);
-      return p.success;
-    });
-  });
+  // 2026-10-27: eski Drain Field ağaç testi kaldırıldı (Ley Brand; yeni düğüm testleri tests/skill-tree-fx-leybrand.test.ts)
 
   it('Spellsplitter: önce tüm buff\'lar silinir, silinen buff başına +%15 hasar', () => {
     seeds('Spellsplitter isabet', (s) => {

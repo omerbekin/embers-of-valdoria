@@ -43,8 +43,6 @@ function cast(b: Battle, actor: Combatant, skill: string, target?: Combatant, re
 const procs = (b: Battle, node: string): number => b.treeProcs().find((p) => p.node === node)?.count ?? 0;
 const has = (c: Combatant, kind: string): boolean => c.statuses.some((s) => s.kind === kind);
 const healBy = (evs: BattleEvent[], node: string): number => evs.reduce((s, e) => s + (e.type === 'heal' && e.cause === node ? e.amount : 0), 0);
-const mpBy = (evs: BattleEvent[], node: string, uid?: string): number =>
-  evs.reduce((s, e) => s + (e.type === 'mpRegen' && e.cause === node && (!uid || e.actor === uid) ? e.amount : 0), 0);
 function seeds(what: string, fn: (seed: number) => boolean, n = 120): void {
   for (let s = 1; s <= n; s++) if (fn(s)) return;
   throw new Error(`${what}: hiçbir seed'de olmadı`);
@@ -210,15 +208,7 @@ describe('Faz 4b: Anti-Mage', () => {
     });
   });
 
-  it('Wide Basin (bar 15): Drain Field MP yaktığı her düşman için takıma 1 MP', () => {
-    const b = make({ 0: 'antimage', 1: 'mage' }, { 0: 'mage', 1: 'mage' }, withTree(0, only('antimage', {}, 2)), 3);
-    const ally = P(b, 1);
-    ally.mp = 0;
-    const evs = cast(b, P(b), 'drain_field', E(b));
-    const burnedFoes = new Set(evs.filter((e) => e.type === 'manaBurn' && e.amount > 0).map((e) => (e as { target: string }).target)).size;
-    expect(burnedFoes).toBeGreaterThan(0);
-    expect(mpBy(evs, 'antimage:bar[2]', ally.uid)).toBe(burnedFoes);
-  });
+  // 2026-10-27: eski Drain Field ağaç testi kaldırıldı (Ley Brand; yeni düğüm testleri tests/skill-tree-fx-leybrand.test.ts)
 
   it('Ward Mending: Spell Ward atılınca dost maks canının rank x %2\'si kadar iyileşir', () => {
     const b = make({ 0: 'antimage', 1: 'warrior' }, { 0: 'mage' }, withTree(0, only('antimage', { '3.f2': 3 })));

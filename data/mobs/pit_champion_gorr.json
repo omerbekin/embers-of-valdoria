@@ -28,7 +28,7 @@
     "id": "for_the_crowd",
     "name": "For the Crowd",
     "icon": "muscle",
-    "text": "The crowd bays for a finish: its hits on a target below 35% HP deal ×1.3 damage.",
+    "text": "The crowd bays for a finish: its hits on a target below 35% HP deal 30% more damage.",
     "effect": {
       "type": "bloodScent",
       "below": 0.35,

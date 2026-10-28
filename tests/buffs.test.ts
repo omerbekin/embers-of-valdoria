@@ -39,12 +39,14 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
       }
       // Boss durumları (Bridge Warden): etkisi motor kuralıyla (untilResolved: Ash Brand telgrafı, Staggered eylem kaybı, Anchored zırh eki)
       if (def.untilResolved) continue;
+      // Ley Brand (open-questions 444): etkisi motorda özel kodlu (tainted mana havuzu, MP bedel çarpanı, yakım / patlama hasarı; Status.brand)
+      if (id === 'branded') continue;
       expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.armorMult !== undefined || def.damageDealtMult !== undefined || def.magicDealtMult !== undefined || def.rooted === true || def.noEvasion === true, id).toBe(true);
     }
   });
 
   it('yer etkileri (zehir, yanan zemin) tanımlı', () => {
-    expect(Object.keys(content.grounds).sort()).toEqual(['burning', 'field_of_shafts', 'flooded', 'flooded_planks', 'hall_of_silence', 'holy_fire', 'holy_ground', 'lingering_rain', 'poison', 'quaking_ground', 'root_field', 'storm']);
+    expect(Object.keys(content.grounds).sort()).toEqual(['burning', 'field_of_shafts', 'flooded', 'flooded_planks', 'hall_of_silence', 'holy_fire', 'holy_ground', 'holy_water', 'ice_ground', 'lingering_rain', 'poison', 'quaking_ground', 'root_field', 'sanctified_flame', 'storm']);
   });
 });
 

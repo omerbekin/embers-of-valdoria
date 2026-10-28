@@ -214,7 +214,16 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
 
   const selectedBlock = (inst: ItemInstance): HTMLElement => {
     const sel = el('div', 'bs-sel');
-    sel.append(itemCell(inst, { tip: `smith:${inst.uid}` }));
+    const cell = itemCell(inst, { tip: `smith:${inst.uid}` });
+    // sağ tık: item demirciden çıkar (Ömer 2026-10-27)
+    cell.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      pick = '';
+      reforgeAt = -1;
+      uiSound('select');
+      renderSide();
+    });
+    sel.append(cell);
     const t = el('div', 'bs-sel-t');
     const n = el('div', 'bs-name', itemDef(inst.id)?.name ?? '');
     n.style.color = instanceColor(inst);
@@ -260,6 +269,10 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
       if (inst) {
         const c = itemCell(inst, { tip: `smith:${inst.uid}` });
         c.addEventListener('click', () => toggleCombine(inst.uid));
+        c.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          toggleCombine(inst.uid);
+        });
         row.append(c);
       } else row.append(el('div', 'bs-slot', String(i + 1)));
     }

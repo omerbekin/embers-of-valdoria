@@ -70,7 +70,7 @@
         "id": "burning_crown",
         "name": "Burning Crown",
         "icon": "ashbrand",
-        "text": "At 60% HP the crown burns: Ashfall grows to 2x3. At 30% Valdoria burns with him: he acts twice a turn, his hits deal ×1.15 damage and at once calls the Pyre of Morvane. A single attack can cross only one of these thresholds."
+        "text": "At 60% HP the crown burns: Ashfall grows to 2x3. At 30% Valdoria burns with him: he acts twice a turn, his hits deal 15% more damage and at once calls the Pyre of Morvane. A single attack can cross only one of these thresholds."
       }
     ]
   }

@@ -15,7 +15,7 @@ import type { Combatant, Element, ItemEffects, SkillCost, SkillDef, SkillEffect 
 export const UNIT_FX_KEYS = [
   'startShieldRatio', 'critMp', 'secondWind', 'startCharge', 'steadfast', 'debuffShorten', 'tierDamageMult', 'adjacentGuard', 'turnMp',
   'firstSkillFree', 'executeLifesteal', 'onHitDot', 'interceptLethal', 'firstAttackEcho', 'killExtraTurn', 'nthSpellFree', 'rerollMiss',
-  'ignoreFirstDebuff', 'shieldRefresh', 'moveStride', 'critHealAlly', 'blockChance', 'armorPen', 'magicPen', 'mpCostReduce', 'leech', 'manaLeech',
+  'ignoreFirstDebuff', 'shieldRefresh', 'moveStride', 'critHealAlly', 'blockChance', 'dazeChance', 'armorPen', 'magicPen', 'mpCostReduce', 'leech', 'manaLeech',
   'debuffAvoid', 'potencyTurns', 'auraDamage', 'damageTakenReduce', 'lowHpReduce', 'ultCdReduce', 'earlyImmunity', 'summonPower', 'rageGain',
   'retortStatus', 'critStatuses', 'killRush', 'lastStand', 'openerStatus', 'restBlessing', 'vengeance', 'tierStatus',
   'elemResist', 'thorns', 'frontRowDamage', 'backRowDamage', 'tierDamageTakenReduce', 'columnGuard', 'pierceBehind', 'steadyDamage',

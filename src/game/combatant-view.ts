@@ -129,6 +129,9 @@ export class CombatantView {
   private readonly hpFill: Phaser.GameObjects.Rectangle;
   private readonly hpGhost: Phaser.GameObjects.Rectangle;
   private readonly mpFill: Phaser.GameObjects.Rectangle;
+  private readonly mpBack: Phaser.GameObjects.Rectangle;
+  /** Ley Brand: MP çubuğunun gösterdiği maks (taint olayıyla değişir; motorun canlı durumu oynatmadan önde olabilir). */
+  private mpMax: number;
   /** SPEED (sıra sayacı) çubuğu: mana çubuğunun altında, yalnızca turns modunda görünür. */
   private readonly speedBox: Phaser.GameObjects.Container;
   private readonly speedFill: Phaser.GameObjects.Rectangle;
@@ -254,10 +257,11 @@ export class CombatantView {
       .rectangle(-hpBar.width / 2, this.hpY, hpBar.width, hpBar.height, color(combatant.side === 'party' ? colors.hpFill : colors.hpFillEnemy))
       .setOrigin(0, 0.5);
     this.hpBox = scene.add.container(0, 0, [hpOuter, hpBack, this.hpGhost, this.hpFill]);
-    const mpBack = scene.add
+    this.mpMax = combatant.maxMp;
+    const mpBack = (this.mpBack = scene.add
       .rectangle(0, mpY, hpBar.width, hpBar.mpHeight, KIT.back, 0.92)
       .setStrokeStyle(1, KIT.gold, 0.4)
-      .setVisible(combatant.maxMp > 0);
+      .setVisible(combatant.maxMp > 0));
     this.mpFill = scene.add
       .rectangle(-hpBar.width / 2, mpY, hpBar.width, hpBar.mpHeight, color(colors.mpFill))
       .setOrigin(0, 0.5)
@@ -502,8 +506,18 @@ export class CombatantView {
   }
 
   setMp(mp: number, animate = true): void {
-    if (this.combatant.maxMp <= 0) return;
-    this.tweenWidth(this.mpFill, hpBar.width * Math.max(0, mp / this.combatant.maxMp), animate);
+    if (this.mpMax <= 0) return;
+    this.tweenWidth(this.mpFill, hpBar.width * Math.max(0, mp / this.mpMax), animate);
+  }
+
+  /** Ley Brand tainted mana: MP çubuğu havuzla görünür (soluk mor dolgu) ya da havuz bitince gizlenir (maxMp 0). */
+  setMpPool(maxMp: number, mp: number, tainted: boolean): void {
+    this.mpMax = maxMp;
+    const show = maxMp > 0;
+    this.mpBack.setVisible(show);
+    this.mpFill.setVisible(show);
+    this.mpFill.setFillStyle(color(tainted ? colors.taintedMp : colors.mpFill));
+    if (show) this.tweenWidth(this.mpFill, hpBar.width * Math.max(0, mp / maxMp), false);
   }
 
   /**

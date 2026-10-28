@@ -66,6 +66,10 @@ export interface EventChoice {
   light?: boolean;
   /** Tek hediye item (var olan hediye yolu, loot.ts > grantGift): nadirlik + isteğe bağlı yuva süzgeci (ör. relic = offhand). */
   gift?: { rarity?: RarityId; slots?: string[] };
+  /** Olay katılımı (Vesper, Sunken Chapel): bu sınıftan kahraman katılır; bölük doluysa yedeğe (kışla-yedek kuralı, state.ts > joinHero). Sınıf zaten varsa seçenek gizli. */
+  join?: string;
+  /** Belirli bir item (items.json id; ör. eventOnly Legendary) torbaya, düğümün item seviyesinde (loot.ts > grantItem). */
+  relic?: string;
 }
 
 export interface EventDef extends EventText {

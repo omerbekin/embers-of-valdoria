@@ -24,7 +24,7 @@ export { burnAmountFor, emptyProcApplies, nominalBurn } from './mana-burn';
 export { previewForTargets, previewSkill } from './preview';
 export { UNBLOCKABLE_LABEL, isUnblockableHit, isUnblockableSkill } from './unblockable';
 export type { DoomPreview, TargetPreview } from './preview';
-export { ATTRIBUTE_NAME, describeGlobalSkill, describePassive, describeRage, describeSkill, TARGET_TEXT } from './skill-info';
+export { ATTRIBUTE_NAME, describeGlobalSkill, describePassive, describeRage, describeSkill, groundReactionHint, TARGET_TEXT } from './skill-info';
 export { rangeEnabled, rangeLabel, rangeLine, skillRangeFor, cellDistance } from './range';
 export { placementHintText, placementHintTitle, type PlacementHint } from './formation-hints';
 export type { EffectDefs, GlobalSkillInfo } from './skill-info';

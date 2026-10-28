@@ -32,11 +32,11 @@ function cast(b: Battle, uid: string, skill: string, target?: string, slot?: num
 }
 
 describe('statuses.json > stack (veri)', () => {
-  it('debuff varsayılanı refresh-strongest; Omen stack, Ash Brand replace; buff replace; stack yalnızca yığınlı (maxStacks) durumda', () => {
+  it('debuff varsayılanı refresh-strongest; Omen stack, Ash Brand / Branded replace; buff replace; stack yalnızca yığınlı (maxStacks) durumda', () => {
     for (const [id, d] of Object.entries(content.statuses)) {
       const mode = statusStackMode(d);
       if (id === 'omen') expect(mode, id).toBe('stack');
-      else if (id === 'ash_brand') expect(mode, id).toBe('replace');
+      else if (id === 'ash_brand' || id === 'branded') expect(mode, id).toBe('replace'); // Ley Brand: son damgalayanın değerleri, süre tazelenir
       else expect(mode, id).toBe(d.type === 'debuff' ? 'refresh-strongest' : 'replace');
       expect(mode === 'stack', `${id}: stack <=> maxStacks`).toBe(!!d.maxStacks);
     }

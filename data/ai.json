@@ -23,7 +23,9 @@
     "stallTurns": 150,
     "stallRamp": 50,
     "stallFocus": 3,
-    "tauntPull": 0.7
+    "tauntPull": 0.7,
+    "_brand": "engine-dev 2026-10-27 (open-questions 444, PROVİZYON, sim YOK): Ley Brand değeri. poolShare = tainted mana'nın hasar potansiyelinin sayılan payı, costShare = MP'li hedefin elindeki MP'nin yakım hasarı payı; hedefte freshTurns ya da daha az tur kalmışsa yeniden atış refreshShare kadar değerli, fazlası 0 (havuz dolmaz).",
+    "brand": { "poolShare": 0.6, "costShare": 0.5, "freshTurns": 1, "refreshShare": 0.4, "castShare": 0.6, "markShare": 0.5 }
   },
   "difficulty": {
     "easy": {
@@ -143,6 +145,23 @@
       "cleanseValuePerTurn": 4,
       "cleanseSkipTurnMult": 3,
       "cleanseMinValue": 12
+    },
+    "vesper": {
+      "_not": "Vesper (2026-10-28): caster kalıbı, kalkan / şifa yok; öncelikler yalnızca etiket (madde 257: değer terazisi), alan önce. Çanların gelecekteki büyümesine YZ ayrı değer vermez (yalnızca önizlemedeki anlık hasar).",
+      "priorities": [
+        "kill",
+        "aoe",
+        "tactic",
+        "damage"
+      ],
+      "focus": "lowest_ratio",
+      "aoeMinTargets": 2,
+      "healBelowRatio": 0,
+      "shieldBelowRatio": 0,
+      "maxSummons": 0,
+      "mpCostWeight": 0.4,
+      "hpCostWeight": 1,
+      "minHpRatioForHpCost": 0.5
     },
     "healer": {
       "priorities": [

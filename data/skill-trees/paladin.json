@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Battle Hymn",
-        "text": "On your first turn of each battle, Holy Strike deals ×1.15 damage.",
+        "text": "On your first turn of each battle, Holy Strike deals 15% more damage.",
         "src": "A:V2:bar0",
         "fx": [
           {
@@ -65,7 +65,7 @@
       {
         "at": 10,
         "name": "Holy Soil",
-        "text": "Your skills deal ×1.04 damage to enemies standing in holy fire.",
+        "text": "Your skills deal 4% more damage to enemies standing in holy fire.",
         "src": "A:V4:bar1",
         "fx": [
           {
@@ -160,7 +160,7 @@
     },
     "0.f2": {
       "name": "Kindled Resolve",
-      "text": "Allies healed by Divine Light deal ×1.06 damage per rank on their next skill.",
+      "text": "Allies healed by Divine Light deal 6% more damage per rank on their next skill.",
       "src": "A:V2:0.f2",
       "fx": [
         {
@@ -181,7 +181,7 @@
     },
     "0.f3": {
       "name": "Bedside Watch",
-      "text": "Divine Light heals ×1.06 per rank on allies below 50% HP.",
+      "text": "Divine Light heals 6% more per rank on allies below 50% HP.",
       "src": "A:V1:0.f3",
       "fx": [
         {
@@ -214,7 +214,7 @@
     },
     "0.r": {
       "name": "Sun-Forged Will",
-      "text": "Divine Light's smite ×1.03 per rank against enemies below 50% HP.",
+      "text": "Divine Light's smite deals 3% more damage per rank against enemies below 50% HP.",
       "src": "A:V2:0.r",
       "fx": [
         {
@@ -247,7 +247,7 @@
     },
     "0.eb": {
       "name": "Anointed Arms",
-      "text": "The ally healed by Divine Light deals ×1.15 damage on their next skill.",
+      "text": "The ally healed by Divine Light deals 15% more damage on their next skill.",
       "src": "A:V2:0.eb",
       "fx": [
         {
@@ -286,7 +286,7 @@
     },
     "0.fa": {
       "name": "Vengeful Light",
-      "text": "Divine Light's smite deals double, but its heal is ×0.6.",
+      "text": "Divine Light's smite deals double, but its heal is 40% lower.",
       "src": "A:V2:0.fa",
       "fx": [
         {
@@ -306,7 +306,7 @@
     },
     "0.fb": {
       "name": "Fervent Oath",
-      "text": "Anointed Arms' bonus doubles to ×1.3, but Divine Light heals ×0.75.",
+      "text": "Anointed Arms' bonus doubles to 30% more, but Divine Light heals 25% less.",
       "src": "A:V2:0.fb",
       "fx": [
         {
@@ -354,7 +354,7 @@
     },
     "0.v": {
       "name": "Crusader's Dawn",
-      "text": "Divine Light heals the most wounded ally and smites the weakest enemy every turn, both ×1.25; a kill refunds 5 MP.",
+      "text": "Divine Light heals the most wounded ally and smites the weakest enemy every turn, both 25% more; a kill refunds 5 MP.",
       "src": "A:V2:0.v",
       "fx": [
         {
@@ -379,7 +379,7 @@
     },
     "1.f1": {
       "name": "Relentless Hammer",
-      "text": "Holy Strike ×1.06 power per rank on the enemy you hit last turn.",
+      "text": "Holy Strike has 6% more power per rank on the enemy you hit last turn.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -460,7 +460,7 @@
     },
     "1.r": {
       "name": "Unyielding Swing",
-      "text": "Holy Strike ×1.03 power per rank against front-row enemies.",
+      "text": "Holy Strike has 3% more power per rank against front-row enemies.",
       "src": "A:V2:1.r",
       "fx": [
         {
@@ -478,7 +478,7 @@
     },
     "1.ea": {
       "name": "Rising Fervor",
-      "text": "Each Holy Strike in a row deals 5% more than the last (×1.05, ×1.1, ...); using another skill resets it.",
+      "text": "Each Holy Strike in a row deals 5% more than the last (5% more, 10% more, ...); using another skill resets it.",
       "src": "A:V2:1.ea",
       "fx": [
         {
@@ -534,7 +534,7 @@
     },
     "1.fa": {
       "name": "Blind Zeal",
-      "text": "Rising Fervor grows 10% per strike (×1.1, ×1.2, ...), but Divine Light is ×0.7 while it is built up.",
+      "text": "Rising Fervor grows 10% per strike (10% more, 20% more, ...), but Divine Light heals 30% less while it is built up.",
       "src": "A:V2:1.fa",
       "fx": [
         {
@@ -567,7 +567,7 @@
     },
     "1.fb": {
       "name": "Heavy Hammer",
-      "text": "Holy Strike ×1.15 damage, but it now costs 6 MP.",
+      "text": "Holy Strike deals 15% more damage, but it now costs 6 MP.",
       "src": "A:V2:1.fb",
       "fx": [
         {
@@ -702,7 +702,7 @@
     },
     "2.r": {
       "name": "Iron Return",
-      "text": "The first hit a revived ally takes is ×0.9 per rank.",
+      "text": "The first hit a revived ally takes deals 10% less damage per rank.",
       "src": "B:V3:2.r",
       "fx": [
         {
@@ -759,7 +759,7 @@
     },
     "2.ma": {
       "name": "Risen in Glory",
-      "text": "A revived ally gains Blessed for 2 turns and their first skill deals ×1.15 damage.",
+      "text": "A revived ally gains Blessed for 2 turns and their first skill deals 15% more damage.",
       "src": "B:V1:2.ma",
       "fx": [
         {
@@ -864,7 +864,7 @@
     },
     "3.f1": {
       "name": "Deep Coals",
-      "text": "Holy fire deals ×1.06 per rank on its second turn and later.",
+      "text": "Holy fire deals 6% more per rank on its second turn and later.",
       "src": "A:V4:3.f1",
       "fx": [
         {
@@ -883,7 +883,7 @@
     },
     "3.f2": {
       "name": "Kindling",
-      "text": "Enemies in holy fire take ×1.06 damage per rank from Holy Strike.",
+      "text": "Enemies in holy fire take 6% more damage per rank from Holy Strike.",
       "src": "A:V2:3.f2",
       "syn": "Holy Strike",
       "fx": [
@@ -964,7 +964,7 @@
     },
     "3.r": {
       "name": "Ash Upon Ash",
-      "text": "Holy fire ×1.03 damage per rank against Burning enemies.",
+      "text": "Holy fire deals 3% more damage per rank against Burning enemies.",
       "src": "A:V2:3.r",
       "fx": [
         {
@@ -1005,7 +1005,7 @@
     },
     "3.eb": {
       "name": "Wildfire Verdict",
-      "text": "Enemies standing in holy fire take ×1.15 damage from all sources.",
+      "text": "Enemies standing in holy fire take 15% more damage from all sources.",
       "src": "A:V4:3.mb",
       "fx": [
         {
@@ -1055,7 +1055,7 @@
     },
     "3.fb": {
       "name": "Scattered Flame",
-      "text": "Judgment also reaches the cells above and below its target, but all its damage and healing is ×0.7.",
+      "text": "Judgment also reaches the cells above and below its target, but all its damage and healing is 30% lower.",
       "src": "A:V2:3.fb",
       "fx": [
         {
@@ -1126,7 +1126,7 @@
     },
     "4.u1": {
       "name": "Searing Dawn",
-      "text": "Radiance damage ×1.1.",
+      "text": "Radiance deals 10% more damage.",
       "src": "A:V2:4.u1",
       "fx": [
         {
@@ -1171,7 +1171,7 @@
     },
     "4.r1": {
       "name": "Final Light",
-      "text": "Radiance deals ×1.2 damage to enemies below 30% HP.",
+      "text": "Radiance deals 20% more damage to enemies below 30% HP.",
       "src": "A:V2:4.r1",
       "fx": [
         {

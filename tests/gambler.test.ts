@@ -314,7 +314,7 @@ describe('önizleme ve açıklama', () => {
     expect(info('loaded_dice').lines.join('\n')).toMatch(/chance to hit twice/);
     expect(info('high_stakes').lines.join('\n')).toMatch(/Bet .*max HP/);
     expect(info('all_in').lines.join('\n')).toMatch(/Bet all your remaining MP/);
-    expect(info('all_in').lines.join('\n')).toMatch((allInBet.loseMult ?? 1) <= 0 ? /you miss/ : new RegExp(`otherwise ×${allInBet.loseMult} damage`));
+    expect(info('all_in').lines.join('\n')).toMatch((allInBet.loseMult ?? 1) <= 0 ? /you miss/ : new RegExp(`otherwise ${Math.round(Math.abs(1 - allInBet.loseMult!) * 100)}% ${allInBet.loseMult! >= 1 ? 'more' : 'less'} damage`));
     expect(info('card_trick').lines.join('\n')).toMatch(/Random effect/);
     expect(info('card_trick').targetBadge).toMatch(/Random/);
     for (const id of content.classes.gambler!.skills) {

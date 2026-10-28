@@ -27,4 +27,15 @@
 - **Judgment:** TEK hücre, iki tahtaya da atılabilir (Ömer 2026-10-24, madde 416/8). Düşman hücresine: anlık kutsal hasar (INT 0,35) + 2 tur Holy Fire (INT 0,45/tur). Dost hücresine: anlık şifa (INT 0,35) + 2 tur Holy Ground şifa zemini (INT 0,45/tur). Sayılar provizyon.
 - **Divine Light:** şifa %35 INT. Evolve **Crusader's Dawn:** her tur hem en yaralı dosta şifa hem en zayıf düşmana smite, ikisi de %25 güçlü (smite gerçekleşen şifadan bağımsız); öldürünce 5 MP.
 
+## Anti-Mage: Ley Brand (Ömer 2026-10-27; open-questions madde 444)
+- **Ley Brand (2. skill, Drain Field'ın yerine; skill id `drain_field` AYNI kaldı):** aynı 3x3 alan, menzil 4, 14 MP, 3 tur bekleme; hasar ve isabet zarı yok. Alandaki her düşman 3 tur **Branded** olur.
+  - MP havuzu OLMAYAN düşman (maks MP 0) maks canının %20'si kadar **tainted mana** alır, dolu başlar. Bu manayı harcayamaz, MP yenilenmesi almaz. Mana Steal çalar, Spell Ward yakar, Void Strike eksik manayı sayar. Brand bitince (süre, dispel, ölüm) havuz silinir.
+  - MP havuzu OLAN düşmanın MP bedelleri %50 daha yüksek (yukarı yuvarlanır); mana eklenmez. MP'si 0'da duran MP'li düşman da tainted mana ALMAZ.
+  - Branded birimin yakılan / çalınan her MP'si, kaybedilen MP'nin %50'si kadar büyü hasarı verir (kaynak yakan; kritik ve isabet zarı yok, büyü zırhı işler).
+  - Süre doğal bitince kalan tainted mana'nın %50'si damgalayandan patlar (damgalayan ölmüş olsa da).
+  - Boss'lar da Branded olur (CC değil). Yeniden atış süreyi tazeler, havuzu doldurmaz.
+- **Silence** artık skill'de yok; ağaçta **Hush of the Brand** düğümüyle geri gelir (manası yakımla 0'a inen Branded düşman 1 tur Silence).
+- **Ağaç satırı (sürüm 2, bedava respec):** Deep Taint (havuz rank başına +maks canın %2'si), Searing Brand (yakım hasarı +%5 / rank), Heavy Toll (bedel +%5 / rank), Hush of the Brand, Bitter Burst (patlama +%10 / rank), Focused Brand (merkez hücredeki düşmanın havuzu %50 büyük), Wider Brand (alan 3x4), Lasting Brand (+1 tur), Narrow Brand (yalnızca merkez hücre; havuz %40, bedel 2 katı), Thin Brand (6 MP ucuz, 1 tur kısa), Searing Grasp (Brand maks MP'nin %15'ini de yakar), kapanış **Spreading Brand** (doğal bitişte Brand bitişikteki Brand'siz düşmana bir kez sıçrar). Bar: Wide Basin (damgalanan düşman başına takıma 1 MP).
+- Tüm sayılar `data/skills.json > drain_field` ve `data/skill-trees/antimage.json` içinde, PROVİZYON, sim yapılmadı. Görsel / ses Drain Field'ınki; durum ikonu yer tutucu.
+
 Bu dosyadaki tüm sayılar ve rol önerileri Ömer onaylayana kadar **geçicidir**.

@@ -446,6 +446,19 @@ async function shipClean(version, groups, files, dry) {
       log(`!! GitHub'a gitti ama yerel main bu sırada değişmiş; elle: git merge --ff-only ${sha}`);
     }
     log(`> Commit ${sha.slice(0, 7)}`);
+    // Canlı site (Ömer 2026-10-28: "githuba atarken canlıya da at"): sürümlü her gönderimden sonra aynı temiz kopyadan
+    // embersofvaldoria.com'a yayın; Cloudflare zaman aşımına sık düştüğü için bir kez yeniden denenir, olmazsa push geri alınmaz, not bırakılır
+    if (version) {
+      const cfMods = join(GAME, 'cloudflare', 'node_modules');
+      if (existsSync(cfMods)) ps(`New-Item -ItemType Junction -Path '${join(scratch, 'cloudflare', 'node_modules')}' -Target '${cfMods}' | Out-Null`);
+      let live = false;
+      for (let i = 1; i <= 2 && !live; i++) {
+        log(`> Canlı site yayını (deneme ${i}): npm run deploy:cf`);
+        try { inScratch('npm run deploy:cf'); live = true; } catch (e) { log(`!! Canlı yayın denemesi ${i} başarısız: ${e.message.split('\n')[0]}`); }
+      }
+      if (live) log(`> ${version} canlıda: https://embersofvaldoria.com/`);
+      else notice(`${version} GitHub'a gitti ama canlı siteye (embersofvaldoria.com) yayın iki denemede de başarısız oldu; elle npm run deploy:cf gerekiyor.`);
+    }
     return { sha };
   } catch (err) {
     if (pushed) throw err;
@@ -456,8 +469,9 @@ async function shipClean(version, groups, files, dry) {
     rmSync(tmpIndex, { force: true });
     if (made) {
       // Önce node_modules bağlantısı silinir, yoksa worktree silinirken gerçek node_modules boşalır (2026-10-18 olayı)
+      try { ps(`$j='${join(scratch, 'cloudflare', 'node_modules')}'; if (Test-Path -LiteralPath $j) { (Get-Item -LiteralPath $j).Delete() }`); } catch {}
       try { ps(`$j='${join(scratch, 'node_modules')}'; if (Test-Path -LiteralPath $j) { (Get-Item -LiteralPath $j).Delete() }`); } catch {}
-      if (existsSync(join(scratch, 'node_modules'))) log(`!! Bağlantı silinemedi, worktree yerinde bırakıldı: ${scratch}`);
+      if (existsSync(join(scratch, 'node_modules')) || existsSync(join(scratch, 'cloudflare', 'node_modules'))) log(`!! Bağlantı silinemedi, worktree yerinde bırakıldı: ${scratch}`);
       else { try { git(`worktree remove --force ${q_(scratch)}`); } catch {} git('worktree prune'); }
       if (!existsSync(join(GAME, 'node_modules', '.bin', 'vitest'))) log('!! UYARI: game/node_modules eksik görünüyor, npm install gerekebilir');
     }

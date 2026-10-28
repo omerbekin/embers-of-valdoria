@@ -68,7 +68,7 @@
     "notes": [
       "Warnings: Swallow and Deluge do not hit at once. The marked cells ripple and the attack lands at the start of the Wyrm's next turn, before it acts. Every hero gets at least one turn in between. These hits cannot miss.",
       "Swallow marks a single cell: step out of it (Move) or take a crushing bite.",
-      "Surge floods two rows: heroes there are Soaked (fire damage taken ×0.5, Speed ×0.9). From 60% HP it calls a Surge every 2 turns.",
+      "Surge floods two rows: heroes there are Soaked (50% less fire damage taken, 10% less Speed). From 60% HP it calls a Surge every 2 turns.",
       "Deluge marks your whole side and has no safe cell: shield, guard, fortify or heal your heroes before it lands."
     ],
     "passives": [
@@ -94,7 +94,7 @@
         "id": "rising_water",
         "name": "Rising Water",
         "icon": "floodedplanks",
-        "text": "At 30% HP the Reach rises: its hits deal ×1.15 damage and at once it calls the Deluge. A single attack can cross only one threshold."
+        "text": "At 30% HP the Reach rises: its hits deal 15% more damage and at once it calls the Deluge. A single attack can cross only one threshold."
       }
     ]
   }

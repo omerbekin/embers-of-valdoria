@@ -31,7 +31,7 @@
     "id": "heresy_remembered",
     "name": "Heresy Remembered",
     "icon": "rage",
-    "text": "Its basic attack (Scourge of Heresy) deals ×1.3 damage to the hero who last hit it with a skill. When another hero hits it with a skill, the grudge moves to them.",
+    "text": "Its basic attack (Scourge of Heresy) deals 30% more damage to the hero who last hit it with a skill. When another hero hits it with a skill, the grudge moves to them.",
     "effect": {
       "type": "grudge",
       "skill": "scourge_of_heresy",

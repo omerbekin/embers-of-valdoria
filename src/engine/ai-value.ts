@@ -75,6 +75,11 @@ export interface AiValueConfig {
    * yavaşlatması (Saltbound). Ölçüm: Hag's Mark seçimi Omen'li eski davranışa yakın (content-designer 2026-10-25). noEvasion = Saltbound'un kaçınma 0'ının
    * dostlara isabet kazancı, rooted = bekleyen telgraftan kaçamamanın değeri, weaken = Spellbound / damageDealtMult kaybı, pin = Saltbound hedefi kaçamaz: dostların ona beklenen hasarı x pay (engine-dev 2026-10-27, PROVİZYON). */
   debuffShare?: Partial<{ silence: number; mire: number; noEvasion: number; rooted: number; weaken: number; pin: number }>;
+  /**
+   * Ley Brand değer ayarları (open-questions 444, PROVİZYON): poolShare = tainted mana hasar potansiyelinin sayılan payı, costShare = MP'li hedefin
+   * elindeki MP'nin yakım hasarı payı, freshTurns = hedefte bu kadar ya da daha az tur kalmışsa yeniden atış refreshShare kadar değerli (fazlası 0).
+   */
+  brand?: { poolShare: number; costShare: number; freshTurns: number; refreshShare: number; /** Ömer 2026-10-29: MP'li düşmanın Brand süresince MP skill'i kullanma payı (bedel yakımı) ve işaretin (Mana Steal / Void Strike fazla hasarı) sayılan payı. */ castShare?: number; markShare?: number };
 }
 
 /**
@@ -400,7 +405,7 @@ export class ValueContext {
    * kullanım sayısı turla ve cooldown'la sınırlı; sürekli (kesirli) sayım. MP'li skill'leri arasında en çok değer kaybettireni alınır. MP'siz birimde 0.
    */
   manaDenial(f: Combatant, amount: number): number {
-    if (amount <= 0 || f.hp <= 0 || f.maxMp <= 0) return 0;
+    if (amount <= 0 || f.hp <= 0 || f.maxMp <= 0 || f.taint !== undefined) return 0; // Ley Brand: tainted mana ile hamle yapılmaz
     // Skill'in tek kullanımlık değeri: ham değer + zemin etkisi (güç x tur x 0,7), alan skill'inde x vurabileceği hedef (en çok 3; karşı tarafın canlı sayısı)
     const opp = Math.min(3, this.battle.living(f.side === 'party' ? 'enemy' : 'party').length);
     const raw = (sk: SkillDef) => {
@@ -445,7 +450,7 @@ export class ValueContext {
    * sonraki turda hâlâ cooldown'da olmayan) MP'li skill'lerin en iyisinin bedelsiz en iyiye göre fazlası x contributionShare. MP'siz birimde 0.
    */
   silenceDenial(f: Combatant, mpAfter: number, turns: number): number {
-    if (f.hp <= 0 || f.maxMp <= 0 || turns <= 0) return 0;
+    if (f.hp <= 0 || f.maxMp <= 0 || f.taint !== undefined || turns <= 0) return 0;
     const opp = Math.min(3, this.battle.living(f.side === 'party' ? 'enemy' : 'party').length);
     const raw = (sk: SkillDef) => {
       let v = skillRawValue(this.battle, f.stats, sk);

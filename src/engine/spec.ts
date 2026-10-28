@@ -47,6 +47,9 @@ export function damageSpecFor(
   if (pe?.type === 'bonusVsStatus' && target.statuses.some((s) => pe.statuses.includes(s.kind))) passiveMult *= 1 + pe.bonus;
   // executeBonus (Headsman's Blow): hedefin eksik can oranıyla x(1 + executeBonus x eksik oran); alan yoksa çarpan yok (determinizm)
   if (effect.executeBonus && target.maxHp > 0) passiveMult *= 1 + effect.executeBonus * Math.max(0, 1 - target.hp / target.maxHp);
+  // Pealing Bells (Vesper): çan vuruşu, bu savaşta çalınan her çan için x(1 + perBell); sayaç yoksa çarpan yok (determinizm)
+  const bells = actor.bells ?? 0;
+  if (effect.bell && pe?.type === 'pealingBells' && bells > 0) passiveMult *= 1 + pe.perBell * bells;
   // Item affix'leri (Ömer 2026-10-11): Global damage x element hasarı; yoksa çarpılmaz (bugünkü savaşlar birebir aynı)
   const out = outgoingDamageMult(actor.stats, element);
   const mult = out !== 1 ? tagBonus * weak * powerMult * passiveMult * out : tagBonus * weak * powerMult * passiveMult;
@@ -59,7 +62,7 @@ export function damageSpecFor(
   return {
     damageType: effect.damageType,
     scale: effect.scale,
-    power: (effect.powerPerRage ? effect.power + effect.powerPerRage * Math.max(0, rageSpent ?? actor.rage ?? 0) : effect.power) * mult,
+    power: ((effect.powerPerRage ? effect.power + effect.powerPerRage * Math.max(0, rageSpent ?? actor.rage ?? 0) : effect.power) + (effect.powerPerBell && bells > 0 ? effect.powerPerBell * bells : 0)) * mult,
     ...(bonus ? { bonus } : {}),
     ...(ignore ? { ignoreDefense: ignore } : {}),
     extra,

@@ -41,7 +41,7 @@ describe('veri ve kurallar', () => {
     expect(validateItems()).toEqual([]);
     const leg = ITEMS.items.filter((d) => d.rarity === 'legendary');
     expect(leg.slice(0, 10).map((d) => d.name)).toEqual(['Emberbrand', 'Mantle of Valdren', "Oathkeeper's Bulwark", 'Windrunner Longbow', 'Whisper of Morvane', 'Staff of the Last Ember', "The Gambler's Last Coin", 'Crown of the Ashen King', "Pilgrim's Road Boots", 'Heart of the Forge']);
-    expect(leg.slice(10).map((d) => d.effect)).toEqual(['retort', 'serrated', 'rhythm', 'laststand', 'opener', 'vigil', 'vengeance', 'huntersmark']);
+    expect(leg.slice(10).map((d) => d.effect)).toEqual(['retort', 'serrated', 'rhythm', 'laststand', 'opener', 'vigil', 'vengeance', 'huntersmark', 'sunken_clapper']); // 2026-10-28: dr19 olay Legendary'si (eventOnly)
     expect(ITEMS.rarities.find((r) => r.id === 'legendary')).toMatchObject({ tiers: ['C', 'C', 'B', 'A'], effect: true });
     expect(ITEMS.rarities.find((r) => r.id === 'legendary')!.color).not.toBe(ITEMS.rarities.find((r) => r.id === 'epic')!.color);
     for (const d of leg) {

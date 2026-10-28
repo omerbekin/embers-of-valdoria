@@ -237,7 +237,7 @@ describe('Paladin 2026-10-24: Judgment ağaç düğümleri', () => {
 describe('Paladin 2026-10-24: Wildfire Verdict (3.eb)', () => {
   it('veri: eski sıçrama etkisi tamamen gitti, yerine damageTaken who foe holy_fire 0,15', () => {
     const n = treeOf('paladin')!.nodes['3.eb']!;
-    expect(n.text).toBe('Enemies standing in holy fire take ×1.15 damage from all sources.');
+    expect(n.text).toBe('Enemies standing in holy fire take 15% more damage from all sources.');
     expect(n.fx).toEqual([{ k: 'hook', h: 'heal', on: 'damageTaken', who: 'foe', ground: 'holy_fire', mul: 0.15 }]);
   });
 

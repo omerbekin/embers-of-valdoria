@@ -26,6 +26,7 @@ import {
   levelRequirement,
   levelReqMsg,
   weaponPowerOf,
+  weaponSpeedPenalties,
   type AffixTier,
   type Equipment,
   type ItemDef,
@@ -58,7 +59,7 @@ const ICON_STAT: Record<string, string> = {
 
 /**
  * Affix / örtük yazısının sayıları (bonus yazım kuralı, Ömer 2026-10-27): "{0}" ham değer (toplamsal "+5%"), "{m0}" ayrı çarpan x(1 + değer/100)
- * ("×1.05"), "{l0}" ayrı çarpan x(1 - değer/100) ("×0.95"); ":3" katı ("{m0:3}" = 3 yığın). Değerler affix biriminde (yüzde).
+ * ("5% more"), "{l0}" ayrı çarpan x(1 - değer/100) ("5% less"; cümle biçimi, "×" yok); ":3" katı ("{m0:3}" = 3 yığın). Değerler affix biriminde (yüzde).
  */
 export function fillValues(text: string, values: readonly number[]): string {
   return text.replace(/\{([ml]?)(\d)(?::(\d+))?\}/g, (_, f: string, i: string, k?: string) => {
@@ -77,14 +78,8 @@ export function affixText(a: Pick<RolledAffix, 'def' | 'values' | 'x'>, classId?
 
 /** Affix'in görünür aralığı ("3–5"; çok parçalıda "4.5–5.5 / 20–30"); zarsızsa ''. */
 export function affixRangeText(a: Pick<RolledAffix, 'ranges'> & { def?: Pick<RolledAffix['def'], 'text'> }): string {
-  // Ayrı çarpan biçimli parça ({m0} / {l0}): aralık da çarpan olarak ("×1.03–1.05"; azalışta zar sırasıyla "×0.97–0.95")
-  const form = (i: number) => (a.def?.text.includes(`{m${i}`) ? 'm' : a.def?.text.includes(`{l${i}`) ? 'l' : '');
-  const parts = a.ranges
-    .map((r, i) => ({ r, f: form(i) }))
-    .filter(({ r: [lo, hi] }) => lo !== hi)
-    .map(({ r: [lo, hi], f }) =>
-      f === 'm' ? `${moreText(lo / 100)}–${moreText(hi / 100).slice(1)}` : f === 'l' ? `${lessText(lo / 100)}–${lessText(hi / 100).slice(1)}` : `${fmt(lo)}–${fmt(hi)}`,
-    );
+  // Ayrı çarpan biçimli parça ({m0} / {l0}; Ömer 2026-10-27 cümle biçimi "5% more"): aralık yüzde farkıyla, toplamsal gibi ("3–5")
+  const parts = a.ranges.filter(([lo, hi]) => lo !== hi).map(([lo, hi]) => `${fmt(lo)}–${fmt(hi)}`);
   return parts.join(' / ');
 }
 
@@ -132,8 +127,10 @@ export interface BaseLines {
   power?: number;
   /** Kalkanın taban blok şansı, yüzde (Ömer 2026-10-18: silah gücü gibi büyük taban satırı "Block chance 18%"; kalkan değilse undefined). */
   block?: number;
-  /** Örtük stat satırı. */
+  /** Örtük stat satırı (silah tipinin hız cezası aynı satırda: "+8% Armor penetration, 5% less Speed"; Ömer 2026-10-27). */
   implicit?: { text: string; name: string; desc?: string; stat?: string; icon?: string };
+  /** Çift el yakın dövüşün ek hız cezası satırı ("Heavy grip": "5% less Speed"; Ömer 2026-10-27). */
+  heavy?: { text: string; name: string; desc?: string; stat?: string; icon?: string };
   /** Takma seviye şartı (en az 1). */
   req: number;
 }
@@ -146,13 +143,24 @@ export function baseLinesOf(d: ItemDef, ilvl: number): BaseLines {
   if (imp && imp.parts.length === 1 && imp.parts[0]!.to === BLOCK_TARGET) out.block = baseBlockChance(d, ilvl);
   else if (imp) {
     const values = implicitValues(imp, ilvl, d);
+    const pens = weaponSpeedPenalties(d);
+    const typePen = pens.find((p) => !p.heavy);
+    const heavy = pens.find((p) => p.heavy);
     out.implicit = {
-      text: fillValues(imp.text, values),
+      text: fillValues(imp.text, values) + (typePen ? `, ${lessText(typePen.pct / 100)} Speed` : ''),
       name: imp.name,
       ...(imp.desc ? { desc: imp.desc } : {}),
       ...(imp.icon && ICON_STAT[imp.icon] ? { stat: ICON_STAT[imp.icon] } : {}),
       ...(imp.icon ? { icon: imp.icon } : {}),
     };
+    if (heavy)
+      out.heavy = {
+        text: `${lessText(heavy.pct / 100)} Speed`,
+        name: heavy.name,
+        desc: 'Two-handed melee weapons hit harder but swing slower.',
+        stat: 'spd',
+        icon: 'spd',
+      };
   }
   return out;
 }
@@ -168,6 +176,7 @@ export const baseLineTexts = (b: BaseLines): string[] => [
   ...(b.power !== undefined ? [`Weapon power ${fmt(b.power)}`] : []),
   ...(b.block !== undefined ? [blockLineText(b.block)] : []),
   ...(b.implicit ? [b.implicit.text] : []),
+  ...(b.heavy ? [`${b.heavy.name}: ${b.heavy.text}`] : []),
 ];
 
 /** Blok şansının motor hedefi (kalkan örtüğü + c_block affix'i). */
@@ -215,7 +224,7 @@ export function effectLine(d: Pick<ItemDef, 'effect'>): string | null {
     if (x === undefined) return `{${key}}`;
     return typeof x === 'string' || RAW.has(key) ? String(x) : typeof x === 'number' ? pct(x) : String(x);
   };
-  // "{x:power}" = ayrı çarpan (bonus yazım kuralı 2026-10-27): ham çarpan "×1.25" (Last Ember: büyünün hasarı empowerMult ile çarpılır)
+  // "{x:power}" = ayrı çarpan (bonus yazım kuralı 2026-10-27): ham çarpan cümle biçiminde "25% more" (Last Ember: büyünün hasarı empowerMult ile çarpılır)
   const mult = (key: string): string => {
     const x = obj && typeof obj === 'object' ? obj[key] : undefined;
     return typeof x === 'number' ? multText(x) : `{x:${key}}`;
@@ -367,7 +376,7 @@ export interface AffixDelta {
   icon?: string;
   /** Değer yüzde mi (yazıda %). */
   pct: boolean;
-  /** İlk parçanın yazım biçimi (bonus yazım kuralı): 'more' / 'less' = ayrı çarpan ("×1.05"), 'add' = ham değer. */
+  /** İlk parçanın yazım biçimi (bonus yazım kuralı): 'more' / 'less' = ayrı çarpan ("5% more"), 'add' = ham değer. */
   form: 'add' | 'more' | 'less';
 }
 
@@ -405,12 +414,13 @@ export function affixDiff(
 }
 
 /**
- * Affix farkının kısa yazısı (Gear hover çipi): toplamsal "+2% Crit chance"; ayrı çarpanda yeni değer ve eskisi ("×1.07 Fire damage (was ×1.05)").
+ * Affix farkının kısa yazısı (Gear hover çipi): toplamsal "+2% Crit chance"; ayrı çarpanda yeni satır ve eskisi ("7% more Fire damage (was 5% more)";
+ * "Takes 4% less Fire damage (was 3% less)"). Yeni yanda yoksa "Fire resistance: none (was 3% less)".
  */
-export function affixDeltaText(a: Pick<AffixDelta, 'diff' | 'pct' | 'form' | 'now' | 'after' | 'name'>): string {
+export function affixDeltaText(a: Pick<AffixDelta, 'diff' | 'pct' | 'form' | 'now' | 'after' | 'name' | 'text'>): string {
   if (a.form === 'add') return `${signedText(a.diff, a.pct)} ${a.name}`;
   const f = (v: number) => (a.form === 'more' ? moreText(v / 100) : lessText(v / 100));
-  return `${f(a.after)} ${a.name}${a.now ? ` (was ${f(a.now)})` : ''}`;
+  return `${a.after ? a.text : `${a.name}: none`}${a.now ? ` (was ${f(a.now)})` : ''}`;
 }
 
 /** Bir sayının imzalı yazısı (affix biriminde): "+3", "-1.5%". */

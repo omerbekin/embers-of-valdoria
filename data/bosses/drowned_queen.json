@@ -75,7 +75,7 @@
         "id": "drowning_crown",
         "name": "Drowning Crown",
         "icon": "floodedplanks",
-        "text": "At 60% HP the tide turns: High Tide grows to 2x3. At 30% the Reach drowns with her: she acts twice a turn, her hits deal ×1.15 damage, at once she calls The Reach Drowns and her fallen Champion rises again with half its HP. A single attack can cross only one of these thresholds."
+        "text": "At 60% HP the tide turns: High Tide grows to 2x3. At 30% the Reach drowns with her: she acts twice a turn, her hits deal 15% more damage, at once she calls The Reach Drowns and her fallen Champion rises again with half its HP. A single attack can cross only one of these thresholds."
       }
     ]
   }

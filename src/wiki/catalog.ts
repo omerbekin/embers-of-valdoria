@@ -20,7 +20,7 @@ import { OATHS, OATH_DATA, oathMinusText, oathPlusText } from '../campaign/oath'
 import { SURGE, surgeResetPrice, taintHpLossPct } from '../campaign/surge';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine, fillValues } from '../progression/item-text';
-import { ITEMS as ITEM_DATA, TIER_IDS, partBonusForm, type BonusForm, affixDef, gripOf, GRIP_NAME, implicitValues, levelRequirement, weaponPowerOf, type Grip } from '../progression/items';
+import { ITEMS as ITEM_DATA, TIER_IDS, partBonusForm, type BonusForm, affixDef, gripOf, GRIP_NAME, implicitValues, isTwoHandMelee, levelRequirement, weaponPowerOf, WEAPON_TYPES, type Grip } from '../progression/items';
 import { dropChances } from '../progression/drop';
 import { RARE } from '../progression/rare';
 import endlessJson from '../../data/endless.json';
@@ -219,7 +219,7 @@ export interface WikiFiles {
 // test skill'leri (Geometer shape_*, Pose Tester pt_*) Codex'te yok: yalnızca debug menüsünde (src/gallery/catalog.ts > isTestSkill)
 const allSkills = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id })).filter((s) => !isTestSkill(s.id));
 const unitDefs = (): Record<string, CombatantDef> => ({ ...content.classes, ...content.summons, ...content.bosses, ...content.mobs });
-const effectDefs = () => ({ statuses: content.statuses, grounds: content.grounds });
+const effectDefs = () => ({ statuses: content.statuses, grounds: content.grounds, skills: content.skills });
 
 /** Skill'in sahibine ait stat (açıklamadaki "(123)" gibi hesaplanmış sayılar için); sahibi yoksa ilk class. */
 function statsFor(skill: SkillDef): Stats {
@@ -528,11 +528,12 @@ function skillsWith(pred: (e: SkillDef['effects'][number]) => boolean): string[]
 }
 
 /**
- * "Silence and Drain Field" makalesi (madde 260): yüzdeyle mana yakma, mana boşalma zarı (onEmpty) ve Silence durumu (blocksMpSkills). Sayılar veriden;
- * susturan durum yoksa makale yine yazılır (genel kural), skill listesi boş kalır.
+ * "Silence" makalesi (madde 260; 2026-10-27 Ley Brand ile Drain Field'ın susturması ağaca taşındı): Silence durumu (blocksMpSkills) ve onu veren
+ * skill'ler (durum etkisi + eski tür onEmpty zarı, hâlâ veride varsa). Sayılar veriden.
  */
 function silenceArticle(): WikiArticle {
   const sil = Object.values(content.statuses).find((d) => d.blocksMpSkills);
+  const silId = Object.keys(content.statuses).find((k) => content.statuses[k]?.blocksMpSkills) ?? 'silence';
   const name = sil?.name ?? 'Silenced';
   const lines = allSkills().flatMap((s) =>
     s.effects
@@ -544,12 +545,56 @@ function silenceArticle(): WikiArticle {
         return `${s.name}: burns ${burn}. Every enemy left with 0 MP (or already at 0) rolls on its own: ${pct(em.chance)} chance to be ${st} for ${em.turns} turn${em.turns > 1 ? 's' : ''}${em.damage ? ` and take ${pct(em.damage.power)} ${em.damage.scale.toUpperCase()} ${em.damage.element ?? 'physical'} damage (it cannot miss, but it can crit)` : ''}.`;
       }),
   );
-  return article('silence', 'Special rules', 'Silence and Drain Field', sil?.icon ?? 'manaburn', [
+  const direct = skillsWith((e) => e.type === 'status' && e.status === silId);
+  if (direct.length) lines.push(`${name} straight from a skill: ${direct.join(', ')}.`);
+  const brand = allSkills().find((s) => s.effects.some((e) => e.type === 'brand'));
+  if (brand) lines.push(`${brand.name} itself no longer silences; an Anti-Mage skill tree node can make a Branded enemy whose mana reaches 0 ${name} (see Ley Brand).`);
+  return article('silence', 'Special rules', 'Silence', sil?.icon ?? 'manaburn', [
     p(`${name}: the unit cannot use any skill that costs MP. Skills that cost nothing (a basic attack), skills paid with Rage or HP, and the actions Rest, Skip Turn and Move still work. A silenced unit with nothing else to do simply attacks for free or uses an action.`),
     p(`It lasts through the unit's next turn: the timer counts down when the silenced unit's turn ENDS (not when it starts), so a 1-turn ${name} covers the whole of its next turn. It is a debuff: a cleanse (such as Mana Barrier) removes it, and Resilience cannot shorten a 1-turn debuff. The badge next to the HP bar shows it.`),
     list(...(lines.length ? lines : ['No skill silences yet.'])),
     p(`The AI values a silence by the move it takes away: the best MP skill the enemy could have paid for on that turn, compared with its best free move, times the chance; the extra damage counts as damage.`),
   ], sil?.color ?? '#9b59d0');
+}
+
+/** "Ley Brand" makalesi (Anti-Mage, Ömer 2026-10-27, open-questions 444): tainted mana, bedel artışı, yakım hasarı, patlama. Sayılar veriden. */
+function brandArticle(): WikiArticle | null {
+  const sk = allSkills().find((s) => s.effects.some((e) => e.type === 'brand'));
+  const e = sk?.effects.find((x) => x.type === 'brand');
+  if (!sk || !e || e.type !== 'brand') return null;
+  const st = content.statuses.branded;
+  const name = st?.name ?? 'Branded';
+  const el = e.element ?? 'arcane';
+  return article('ley_brand', 'Special rules', 'Ley Brand and tainted mana', st?.icon ?? 'manaburn', [
+    p(`${sk.name} (Anti-Mage) marks every enemy in its area as ${name} for ${e.turns} turns. It cannot miss, and bosses are Branded too: it is not a control effect.`),
+    list(
+      `An enemy with no mana of its own gains tainted mana equal to ${pct(e.taintPct)} of its max HP, starting full. It cannot spend it and gains no MP while it lasts; the pool vanishes when the Brand ends, is cleansed, or the unit dies. Its MP bar shows the pool in a faded purple.`,
+      `An enemy that has mana pays ${pct(e.costMult - 1)} more MP for its skills while Branded (rounded up). It gets no tainted mana, even at 0 MP.`,
+      `Mana burned or stolen from a ${name} enemy (Mana Steal, Spell Ward, other burns) also deals ${el} damage equal to ${pct(e.burnDamagePct)} of the mana lost. It cannot miss or crit; magic armor applies.`,
+      ...(e.castBurnPct ? [`When a ${name} enemy uses a skill that costs MP, it loses extra MP equal to ${pct(e.castBurnPct)} of the (already higher) MP it paid, or all it has left. That mana counts as burned, so it also deals ${el} damage equal to ${pct(e.burnDamagePct)} of it, from the Anti-Mage who branded it.`] : []),
+      ...(e.markDamagePct && e.markSkills?.length ? [`${e.markSkills.map((id) => content.skills[id]?.name ?? id).join(' and ')} deal ${pct(e.markDamagePct)} more damage to ${name} enemies.`] : []),
+      `When the Brand runs out on its own, leftover tainted mana bursts: ${el} damage equal to ${pct(e.explodePct)} of it, from the Anti-Mage who branded it (even if that Anti-Mage has fallen). A cleansed Brand does not burst.`,
+      `Casting it again on a ${name} enemy refreshes the Brand but does not refill tainted mana. Void Strike counts missing tainted mana like missing mana.`,
+    ),
+  ], st?.color ?? '#7a3fb8');
+}
+
+/** "Bells" makalesi (Vesper, 2026-10-28; docs/design/classes/vesper.md): çan sayacı, Pealing Bells, Great Bell. Sayılar veriden. */
+function bellsArticle(): WikiArticle | null {
+  const owner = Object.values(content.classes).find((c) => !c.testOnly && c.passive?.effect.type === 'pealingBells');
+  const pe = owner?.passive?.effect;
+  if (!owner || pe?.type !== 'pealingBells') return null;
+  const ringers = owner.skills.map((id) => content.skills[id]).filter((s): s is SkillDef => !!s?.ringsBell).map((s) => s.name);
+  const bells = owner.skills.map((id) => content.skills[id]).filter((s): s is SkillDef => !!s?.effects.some((e) => e.type === 'damage' && e.bell)).map((s) => s.name);
+  const great = owner.skills.map((id) => content.skills[id]).filter((s): s is SkillDef => !!s).flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'damage' }> => e.type === 'damage' && !!e.powerPerBell).map((e) => `${s.name}: ${pct(e.power)} ${e.scale.toUpperCase()} ${e.element ?? 'physical'} plus ${pct(e.powerPerBell!)} ${e.scale.toUpperCase()} for every bell rung this battle.`));
+  return article('bells', 'Special rules', 'Bells', 'divine', [
+    p(`${owner.name}: ${owner.passive!.name}. Every time the ${owner.name} uses ${ringers.join(' or ')}, a bell rings and the count goes up by one for the rest of the battle (waves included). There is no limit.`),
+    list(
+      `Each bell rung makes the ${owner.name}'s bells (${bells.join(', ')}) deal ${moreText(pe.perBell)} damage: ${moreText(pe.perBell * 5)} after 5 bells, ${moreText(pe.perBell * 10)} after 10.`,
+      'The bell that rings counts only for the next ones: its own hit uses the count from before.',
+      ...great,
+    ),
+  ], owner.color);
 }
 
 /** "Multiplayer" makalesi (multiplayer-dev; docs/design/multiplayer.md): lobi, takım seçimi, sıra, kopma kuralı (60 sn). */
@@ -605,7 +650,7 @@ function curseArticles(): WikiArticle[] {
   const max = om.maxStacks!;
   const dur = om.duration ?? 3;
   const crit = allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'omen' }> => e.type === 'omen' && (e.status ?? 'omen') === omenId)).find((e) => e.critStacks !== undefined && e.critStacks > e.stacks);
-  const detonators = allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'detonate' }> => e.type === 'detonate' && e.status === omenId).map((e) => `${s.name} (${multText(e.mult)})`));
+  const detonators = allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'detonate' }> => e.type === 'detonate' && e.status === omenId).map((e) => `${s.name} (${multText(e.mult)} power)`));
   const noTransfer = allSkills().filter((s) => s.effects.some((e) => e.type === 'detonate' && e.status === omenId && e.noTransferOnKill)).map((s) => s.name);
   const critDoomers = allSkills().filter((s) => s.effects.some((e) => e.type === 'omen' && (e.status ?? 'omen') === omenId && e.critDoomOnCrit)).map((s) => s.name);
   // Yalnızca skill'lerin uyguladığı lanet DoT'ları (Withering); item kaynaklı Burning bu makaleye girmez
@@ -621,7 +666,7 @@ function curseArticles(): WikiArticle[] {
           ? `Timer: the first Omen starts a ${dur}-turn timer (counted on the cursed unit's own turns). Every new Omen from a curse resets it to ${dur} turns; Omens passed on by Ill Omen do not.`
           : `Timer: the first Omen starts a ${dur}-turn timer (counted on the cursed unit's own turns). New Omens never renew or extend it.`,
         `Doom: when the ${max === 3 ? 'third' : `${max}th`} Omen lands, Doom strikes at once: ${pct(doom.powerPerStack)} of the curser's ${STAT_LABEL[doom.scale]} as ${doom.element} ${doom.damageType} damage for every Omen, then the Omens are spent. Doom cannot miss or be dodged, but it can crit (the curser's crit chance); armor of its kind, shields and Lucky Escape work as usual.`,
-        `Timer runs out: the Omens do not fade quietly. At the start of the cursed unit's turn (after ground and Withering damage, before regeneration) they burst into Doom, one share per Omen${doom.expireMult !== 1 ? ` (${multText(doom.expireMult)})` : ''}, using the curser's Luck and crit chance from when the last Omen was added. If the unit dies earlier that turn, no Doom happens.`,
+        `Timer runs out: the Omens do not fade quietly. At the start of the cursed unit's turn (after ground and Withering damage, before regeneration) they burst into Doom, one share per Omen${doom.expireMult !== 1 ? ` (with ${multText(doom.expireMult)} power)` : ''}, using the curser's Luck and crit chance from when the last Omen was added. If the unit dies earlier that turn, no Doom happens.`,
         'Guard: a Doom set off by a skill is part of that hit, so a guarding ally shares it. A Doom from a timer running out is a curse, not a skill hit: guard never takes any of it.',
         critDoomers.length > 0 ? `Critical Doom: a critical ${critDoomers.join(' or ')} that completes ${max} Omens makes the Doom a critical hit (no separate roll). Other curses roll Doom's crit as usual.` : '',
         `Misfortune: each Omen lowers the cursed unit's crit chance by ${pct(Math.abs(om.critDeltaPerStack ?? 0))} (never below 0%).${content.formulas.ccImmunity?.omenCrit ? ' Bosses ignore Misfortune (Omens and Doom still work on them).' : ''}`,
@@ -637,6 +682,18 @@ function curseArticles(): WikiArticle[] {
       ...(passives.length > 0 ? [list(...passives.map((c) => `${c.name}, ${c.passive!.name}: ${describePassive(c.passive!, c.stats, f)}`))] : []),
     ], om.color),
   ];
+}
+
+/** Şifa zemini olan ve skill'le bırakılan zeminler (tepkimenin doğurduğu Holy Water hariç; o kendi makalesinde). */
+function skillHealGrounds(): Array<{ name: string }> {
+  const born = new Set(Object.values(content.groundReactions).map((r) => r.becomes?.ground));
+  return Object.entries(content.grounds).filter(([id, g]) => g.heal && !born.has(id)).map(([, g]) => g);
+}
+
+/** Ground reactions tablosu: kurulum, tetik, sonuç, açıklama (either: iki sıra da yazılır). */
+function groundReactionRows(): string[][] {
+  const name = (ids: string[]) => ids.map((g) => content.grounds[g]?.name ?? g).join(' or ');
+  return Object.values(content.groundReactions).map((r) => [r.either ? `${name(r.setup)} (or the other way round)` : name(r.setup), name(r.trigger), r.label, r.text]);
 }
 
 export function buildMechanics(): WikiArticle[] {
@@ -671,15 +728,15 @@ export function buildMechanics(): WikiArticle[] {
         // Faz 2c: zırhı düşüren / alınan hasarı artıran durumlar (statuses.json armorMult / damageTakenMult; Sunder, Exposed...)
         `Armor and damage-taken effects: ${Object.values(content.statuses)
           .filter((s) => s.armorMult !== undefined || s.damageTakenMult !== undefined)
-          .map((s) => `${s.name} (${s.armorMult !== undefined ? `Armor ${multText(s.armorMult)}` : `damage taken ${multText(s.damageTakenMult!)}`})`)
+          .map((s) => `${s.name} (${s.armorMult !== undefined ? `${multText(s.armorMult)} Armor` : `takes ${multText(s.damageTakenMult!)} damage`})`)
           .join(', ')}. They multiply the target's current armor or the damage it takes; several stack by multiplying.`,
         // Altıncı tur: verilen hasarı azaltan durumlar (statuses.json damageDealtMult / magicDealtMult; Weakened)
         `Damage-dealt effects: ${Object.values(content.statuses)
           .filter((s) => s.damageDealtMult !== undefined || s.magicDealtMult !== undefined)
-          .map((s) => `${s.name} (damage dealt ${multText(s.damageDealtMult ?? s.magicDealtMult!)} unless its source says otherwise; some sources weaken only magic damage)`)
+          .map((s) => `${s.name} (deals ${multText(s.damageDealtMult ?? s.magicDealtMult!)} damage unless its source says otherwise; some sources weaken only magic damage)`)
           .join(', ')}. They multiply the damage the affected unit deals, in the battle preview too.`,
         `Weaknesses: ${wk.join(' ')} See the Elements section.`,
-        `Crit: a crit multiplies the final damage by ${multText(a.critMult)} (chance ${pct(a.critChanceBase)} + ${pct(a.critChancePerLuck, 1)} per Luck). The multiplier never changes; Luck only adds chance. Crits also apply to healing, never to shields.`,
+        `Crit: a crit deals ${multText(a.critMult)} damage (chance ${pct(a.critChanceBase)} + ${pct(a.critChancePerLuck, 1)} per Luck). This bonus never changes; Luck only adds chance. Crits also apply to healing, never to shields.`,
         `Summoned units take ${multText(f.summon.damageTakenMultiplier)} damage.`,
       ),
     ]),
@@ -703,8 +760,15 @@ export function buildMechanics(): WikiArticle[] {
       p('The damage is fixed when the effect is created, cannot crit and cannot be dodged. The duration counts the caster\'s turns, and the effect ends if the caster falls.'),
       p("Exception: the ember a dying enemy leaves behind (Last Ember) burns under the hero who killed it; its duration counts that hero's turns and it ends if that hero falls."),
       // şifa zemini (grounds.json > heal): yalnızca veride varsa yazılır (Holy Ground: Judgment kendi tarafına, 2026-10-24 open-questions 416/8)
-      ...(Object.values(content.grounds).some((g) => g.heal) ? [p(`Healing ground: ${Object.values(content.grounds).filter((g) => g.heal).map((g) => g.name).join(', ')} hurts no one. Instead, allies of the caster standing there heal a fixed amount at the start of each of their own turns (it cannot crit; Wound and other healing cuts still apply). It only lands on your own side.`)] : []),
+      ...(skillHealGrounds().length ? [p(`Healing ground: ${skillHealGrounds().map((g) => g.name).join(', ')} hurts no one. Instead, allies of the caster standing there heal a fixed amount at the start of each of their own turns (it cannot crit; Wound and other healing cuts still apply). It only lands on your own side.`)] : []),
     ], '#ff7a1a'),
+    // Zemin tepkimeleri (Ömer 2026-10-27, open-questions 445): tablo veriden (grounds.json > reactions)
+    article('ground-reactions', 'Damage', 'Ground reactions', cx('mech_ground', 'flame'), [
+      p("When a skill leaves a ground effect on a cell that already holds a different one, the two react once on that cell and leave a single result. Order matters: the ground already there is the setup, the new one is the trigger. Grounds from both sides react. The reaction belongs to whoever cast the new ground: its damage and statuses hit only that caster's enemies, its healing only that caster's allies. The same ground twice does not react."),
+      p('While you aim a skill that leaves a ground, cells where a reaction would happen show its name under the plate.'),
+      { kind: 'table', head: ['Already there', 'Cast on it', 'Result', 'What happens'], rows: groundReactionRows() },
+      p(`Water means Flooded (tide, urn and skill water alike). Explosion: the cell takes ${pct(content.groundReactions.explosion?.damage?.mult ?? 1)} of both grounds' damage per tick at once, each cell around it (four directions) ${pct((content.groundReactions.explosion?.damage?.mult ?? 1) * (content.groundReactions.explosion?.damage?.adjacent ?? 0))}.`),
+    ], '#ffb347'),
   );
   // Özel mekanikler
   const bets = betLines();
@@ -751,7 +815,7 @@ export function buildMechanics(): WikiArticle[] {
     levelsArticle(),
     article('backstab', 'Special rules', 'Strikes from behind and sure crits', 'backstab', [
       p(`Some assassin skills slip behind the target, stab it in the back and return. ${f.range?.enabled ? 'They still need range like any skill' : 'They ignore the melee row rules (any row can be targeted)'}, but only a target with an empty cell right behind it can be chosen: the next row back, same lane, must hold no living unit. A corpse or a cell kept for a fallen ally does not block it; a target in the back row can never be chosen ("No room behind the target"), and one with a living unit behind it is "shielded from behind". Moving units (or a unit falling) can open the way. The caster is drawn there only for the strike: the formation does not change.`),
-      p(`Some hits are always critical: no crit roll is made and the crit multiplier (${multText(a.critMult)}) always applies. The hit roll still happens, so they can still miss or be dodged.`),
+      p(`Some hits are always critical: no crit roll is made and the crit bonus (${multText(a.critMult)} damage) always applies. The hit roll still happens, so they can still miss or be dodged.`),
       p(`Skills that strike from behind: ${allSkills().filter((s) => s.requiresOpenBehind).map((s) => s.name).join(', ') || 'none yet'}. Always critical: ${allSkills().filter((s) => s.effects.some((e) => e.type === 'damage' && e.guaranteedCrit)).map((s) => s.name).join(', ') || 'none yet'}.`),
       p(`Some skills carry extra crit chance of their own: it is added to the caster's crit chance (statuses included) for that skill's hits only. ${allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'damage' }> => e.type === 'damage' && !!e.critBonus && !e.guaranteedCrit).slice(0, 1).map((e) => `${s.name} +${pct(e.critBonus!)}`)).join(', ') || 'None yet'}.`),
     ], '#c0203a'),
@@ -833,6 +897,11 @@ export function buildMechanics(): WikiArticle[] {
       p('Cooldown and MP work as usual, and a half-turn skill always has a cooldown, so it cannot be chained. In test mode there is no turn order, so this has no effect there.'),
       p(`Half-turn skills: ${allSkills().filter((s) => s.turnCost !== undefined && s.turnCost < 1).map((s) => s.name).join(', ') || 'none yet'}.`),
     ], '#c9a227'),
+    // Daze (Ömer 2026-10-27, open-questions 443): çekiç örtüğü; sayılar formulas.json > daze + items.json > implicits.hammer
+    article('daze', 'Special rules', 'Daze (hammers)', cx('mech_half_turn', 'hourglass'), [
+      p(`Hammers carry Daze: every damaging hit a hammer wielder lands on an enemy has a chance (${ITEM_DATA.implicits?.hammer?.parts[0]?.base ?? 15}% on a one-handed hammer, more on a two-handed one) to push the target's turn back by ${pct(f.daze?.push ?? 0.25)} of a turn (the action counter loses ${Math.round(f.turn.threshold * (f.daze?.push ?? 0.25))}). Bosses are pushed only ${pct((f.daze?.push ?? 0.25) * (f.daze?.bossMult ?? 0.5))} of a turn.`),
+      p('Daze is not a control effect: it cannot be resisted and does not stop the target from acting, it only makes its next turn come later. The battle shows "Dazed" over the target. In test mode there is no turn order, so Daze does nothing there.'),
+    ], '#c9a227'),
     article('control', 'Special rules', 'Taunt, guard and mana burn', 'taunt2', [
       p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit is hit by a control status: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself); a guard that covers a row (Close Ranks) protects every ally in the chosen ally's row (the user excluded). A unit holds one guard at a time (a new one replaces the old), the share passes on as it is (the protector's armor does not cut it again) and it stops while the protector is down. Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
       p(`Taunt: ${skillsWith((e) => e.type === 'taunt').join(', ') || 'none'}. Guard: ${skillsWith((e) => e.type === 'guard').join(', ') || 'none'}. Mana burn: ${skillsWith((e) => e.type === 'manaBurn').join(', ') || 'none'}.`),
@@ -840,6 +909,8 @@ export function buildMechanics(): WikiArticle[] {
       p(`A mana burn that is part of an attack only works if the attack hits: on a miss or a dodge no MP is burned or stolen${allSkills().some((s) => s.name === 'Mana Steal') ? ' (Mana Steal gains nothing)' : ''}.`),
     ]),
     silenceArticle(),
+    ...[brandArticle()].filter((a): a is WikiArticle => a !== null),
+    ...[bellsArticle()].filter((a): a is WikiArticle => a !== null),
     multiplayerArticle(),
   );
   // Sefer (campaign-dev): sayılar data/campaign/campaign.json ve harita verisinden
@@ -975,7 +1046,7 @@ export function crownSurgeArticle(): WikiArticle {
   return article('crown-surge', 'Campaign', 'Crown Surge and Ashen Taint', cx('mech_crown_surge', 'flame'), [
     p(`On The Drowned Reach the Crown answers your call. In a campaign battle the crown plate sits next to your other actions: the hero whose turn it is can call it, and that uses the hero's turn. Summons cannot call it. You can call the Crown once per battle, and each region gives one charge of each Surge: a charge you do not use stays in that region. A charge is spent when the battle you called it in ends, unless you lose: after a defeat the charge stays and no Taint is taken, so you can call it again on your next try.`),
     list(
-      `${ash?.name ?? 'Ash Surge'}: your whole party deals ×${mult} damage for each hero's own next ${ash?.turns ?? 3} turns.`,
+      `${ash?.name ?? 'Ash Surge'}: your whole party deals ${multText(Number(mult))} damage for each hero's own next ${ash?.turns ?? 3} turns.`,
       `${salt?.name ?? 'Salt Surge'}: every ally gets a shield of ${Math.round((salt?.shieldRatio ?? 0) * 100)}% of their max HP for ${salt?.shieldTurns ?? 3} turns. It opens after you defeat ${boss}, with its own charge in each region.`,
     ),
     p(`The price is Ashen Taint. The hero who calls the Crown takes Taint, and every call costs more than the last: the first call gives ${t.firstGain}, the next ${t.firstGain + t.gainStep}, then ${t.firstGain + 2 * t.gainStep}, and so on. Each Taint lowers that hero's max HP by ${taintHpLossPct(1)}%. Taint stays with the hero, also on later maps, until the company arrives at a Chapel${chapels.length ? ` (${chapels.join(', ')})` : ''}: there all Taint is cleansed for free. The party row on the map shows a hero's Taint.`),
@@ -1086,7 +1157,7 @@ function bonusRulesArticle(): WikiArticle {
     p('Bonuses are written in two ways, and the way they are written tells you how they combine.'),
     list(
       `"+12% damage" (a plus and a percent): an additive bonus. Every source of the same kind goes into one pool and the pool is added up first, then applied once.`,
-      `"×1.2 damage" (a times sign): a separate multiplier. It multiplies the result of everything else. Below 1 it lowers the value: "×0.8 damage taken" means 20% less.`,
+      `"20% more damage" (more or less): a separate multiplier. It multiplies the result of everything else. "Takes 20% less damage" lowers the value the same way.`,
     ),
     p(`Additive pools (items, Hero oaths, Wayshrine blessings and levels all add into the same pool): ${pools.join(', ')}.`),
     list(
@@ -1096,17 +1167,17 @@ function bonusRulesArticle(): WikiArticle {
     ),
     p('Separate multipliers (each one multiplies on its own):'),
     list(
-      `Critical hits: ${multText(a.critMult)} (Crit damage affixes raise this multiplier itself).`,
-      "Weapon power: ×(1 + power / 100), against your class's starter weapon.",
+      `Critical hits: ${multText(a.critMult)} damage (Crit damage affixes raise this bonus itself).`,
+      "Weapon power: power% more damage (power 30 = 30% more), against your class's starter weapon.",
       `Item affixes: ${affixBy('more').concat(affixBy('less')).join(', ')}.`,
       `Statuses: ${statusMults.join(', ')}.`,
       `Passives: ${passiveNames.join(', ')}, and the Hunter's Mark primary bonus.`,
       ...(oathMult.length ? [`Hero oaths: the max health and healing parts of ${oathMult.join(', ')}.`] : []),
       ...(shrineBy(true).length ? [`Wayshrine blessings: ${shrineBy(true).join(', ')}.`] : []),
-      'Element weaknesses, damage taken by summons, hero level growth of max HP and MP, and skill tree nodes written with ×.',
+      'Element weaknesses, damage taken by summons, hero level growth of max HP and MP, and skill tree nodes written with more or less.',
     ),
-    p(`Example: +12% damage from an oath, +3% from a blessing and +10% from an item add up to +25%, which is ${multText(1 + pool)}. A critical hit (${multText(a.critMult)}) then multiplies that: ${multText(1 + pool)} × ${multText(a.critMult).slice(1)} = ${multText((1 + pool) * a.critMult)}.`),
-    p(`A skill tree node's ranks add up into one multiplier: a node with ×1.06 per rank gives ${multText(1 + 0.06 * 3)} at rank 3 and ${multText(1 + 0.06 * 5)} at rank 5 (raising the rank replaces the old bonus). Separate × sources multiply each other: two items with ×1.1 Fire damage give ${multText(1.1 * 1.1)}, and an item with ×1.1 plus a node at ${multText(1.18)} give ${multText(1.1 * 1.18)}. Bonuses written with + add up.`),
+    p(`Example: +12% damage from an oath, +3% from a blessing and +10% from an item add up to +25%, which is ${multText(1 + pool)} damage. A critical hit (${multText(a.critMult)}) then multiplies that: ${1 + pool} × ${a.critMult} = ${Math.round((1 + pool) * a.critMult * 1000) / 1000}, so ${multText((1 + pool) * a.critMult)} damage in total.`),
+    p(`A skill tree node's ranks add up into one multiplier: a node with 6% more per rank gives ${multText(1 + 0.06 * 3)} at rank 3 and ${multText(1 + 0.06 * 5)} at rank 5 (raising the rank replaces the old bonus). Separate more/less sources multiply each other: two items with 10% more Fire damage give ${multText(1.1 * 1.1)}, and an item with 10% more plus a node at ${multText(1.18)} give ${multText(1.1 * 1.18)}. Bonuses written with + add up.`),
   ]);
 }
 
@@ -1164,7 +1235,7 @@ function levelsArticle(): WikiArticle {
     p(`Heroes grow from Level 1 to Level ${L.campaignMaxLevel} in the campaign and up to Level ${L.maxLevel} in Endless. Each chapter of the campaign spans about ${L.levelsPerChapter} levels; a hero who plays every stop once ends a chapter a level or two below its cap, and the cap is reached by fighting again or in Endless.`),
     list(
       `XP comes from every enemy you defeat and is shared by every hero who entered the battle (a hero who falls still counts). Kills made after a hero has fallen give that hero ${pct(L.fallenShare)} of their share.`,
-      `Stops: a battle gives ${multText(m.battle)}, an elite ${multText(m.elite)} and a boss ${multText(m.boss)} XP; an event or treasure without a fight gives a fixed ${multText(m.event)} share.`,
+      `Stops: a battle gives ${pct(m.battle)}, an elite ${pct(m.elite)} and a boss ${pct(m.boss)} of the base XP; an event or treasure without a fight gives a fixed ${pct(m.event)} share.`,
       `Every stop has a level. A hero more than ${L.gap.fullBand} levels above or below it gains less XP, and nothing at ${L.gap.zeroAt} levels apart. A hero who is far behind the rest of a company that fits the stop still gains full XP, and heroes below the company's average gain a catch-up bonus (up to +${pct(L.catchUp.max)}). ${L.joinBelow ? `A new companion joins ${L.joinBelow} levels below the company's average (at least Level 1)` : "A new companion joins at the company's average level"}, with its stat points still to spend.`,
       `Each level gives ${L.statPoints.perLevel} stat point to place yourself, and every ${L.statPoints.atMultiplesOf}th level (${L.statPoints.atMultiplesOf}, ${L.statPoints.atMultiplesOf * 2}, ${L.statPoints.atMultiplesOf * 3}...) gives ${L.statPoints.bonusLevelPoints} (each point adds ${L.statPerPoint} to STR, DEX, INT or LUCK) and ${L.skillPointsPerLevel} skill point saved for the skill trees, and fully heals the hero (a fallen hero stays down). Spend points in Gear > Character: drag the point stone onto a stat or tap +, then Confirm. Points can wait.`,
       `Every level past the first also raises a hero's max HP by ${pct(L.heroGrowth.hpPerLevel)} and max MP by ${pct(L.heroGrowth.mpPerLevel)} of what stats and items give: a separate multiplier (Level 10: ${moreText(L.heroGrowth.hpPerLevel * 9)} HP, ${moreText(L.heroGrowth.mpPerLevel * 9)} MP), on top of the stat points.`,
@@ -1241,6 +1312,28 @@ function unblockableText(): string {
   return `${UNBLOCKABLE_LABEL}: a skill with the ${UNBLOCKABLE_LABEL} tag (shown in its tooltip) can never be blocked by a shield. Every boss warning (a strike marked on the board a turn in advance) is ${UNBLOCKABLE_LABEL}: the marked cells show a broken shield and "${UNBLOCKABLE_LABEL}", so stepping out of the area is the only way to avoid it.${boss.length ? ` Boss warnings: ${boss.join(', ')}.` : ''}${other.length ? ` Other ${UNBLOCKABLE_LABEL} skills: ${other.join(', ')}.` : ''}`;
 }
 
+/** Silah tiplerinin güç / hız profili (Ömer 2026-10-27; sayılar veriden). */
+function typeProfileText(): string {
+  const parts = WEAPON_TYPES.flatMap((t) => {
+    const d = ITEM_DATA.weaponTypes[t];
+    if (!d || (d.power === undefined && d.spdLess === undefined)) return [];
+    const p = d.power !== undefined && d.power !== 1 ? `${Math.round(Math.abs(d.power - 1) * 100)}% ${d.power > 1 ? 'more' : 'less'} power` : '';
+    const sp = d.spdLess ? `${d.spdLess}% less Speed` : '';
+    return [`${d.name.toLowerCase()}s ${[p, sp].filter(Boolean).join(' and ')}`];
+  });
+  const plain = WEAPON_TYPES.filter((t) => !ITEM_DATA.weaponTypes[t]?.power && !ITEM_DATA.weaponTypes[t]?.spdLess).map((t) => `${ITEM_DATA.weaponTypes[t]?.name.toLowerCase()}s`);
+  return `Weapon types change power and speed: ${parts.join(', ')}; ${plain.join(', ')} are plain. Speed penalties multiply with other speed bonuses and apply before a hero's natural pace.`;
+}
+
+/** Çift el yakın dövüş kuralı (Ömer 2026-10-27; sayılar veriden). */
+function twoHandMeleeText(): string {
+  const m = ITEM_DATA.twoHandMelee;
+  if (!m) return '';
+  const gm = ITEM_DATA.weaponPower.grip.two * m.power;
+  const names = ITEM_DATA.items.filter((d) => isTwoHandMelee(d)).map((d) => d.name);
+  return `Two-handed melee weapons (${names.join(', ')}; not staves or bows) hit ${Math.round((m.power - 1) * 100)}% harder on top of the two-handed bonus, carry ${Math.round((gm - 1) * 100)}% more of their type's base stat than a one-handed weapon of the same item level, and have ${m.name}: ${m.spdLess}% less Speed (on top of their type's speed penalty).`;
+}
+
 /** Silah gücü, örtük statlar, başlangıç silahı ve seviye şartı (Item Güçlendirme, Ömer 2026-10-17; sayılar veriden). */
 function weaponPowerText(): string[] {
   const w = ITEM_DATA.weaponPower;
@@ -1260,8 +1353,8 @@ function weaponPowerText(): string[] {
     .map(([c, id]) => `${content.classes[c]?.name ?? c}: ${item(id).name}`)
     .join(', ');
   return [
-    `Weapon power: every weapon has a base power that grows with its item level (${w.base} + ${w.perIlvl} per item level for a one-handed weapon: ${pw('woodcutters_axe', 1)} at item level 1, ${pw('woodcutters_axe', 10)} at 10, ${pw('woodcutters_axe', 30)} at 30). Skill damage is multiplied by (1 + power / 100), staffs and charms included; healing and shields are not. Two-handed weapons and bows have ${Math.round((w.grip.two - 1) * 100)}% more power than one-handed ones because they block the off-hand; charms ${Math.round((w.grip.charm - 1) * 100)}% more; daggers ${Math.round((1 - (w.family?.['daggers'] ?? 1)) * 100)}% less. A dagger in the off-hand adds ${Math.round(w.offhandShare * 100)}% of its power. Rarity does not change power: it only adds affixes.`,
-    `Base stats: daggers also carry ${imp('daggers', 10)}, charms ${imp('charms', 10)} (at item level 10, growing with item level). A shield's base value is its block chance, shown like weapon power (${ITEM_DATA.items.filter((d) => d.slot === 'offhand' && d.implicitBase?.length).map((d) => `${d.name} ${d.implicitBase![0]}%`).join(', ')}; fixed, it does not grow with item level), on top of its affixes (its main affix is Armor). Base stats count toward the gear limits.`,
+    `Weapon power: every weapon has a base power that grows with its item level (${w.base} + ${w.perIlvl} per item level for a one-handed sword: ${pw('arming_sword', 1)} at item level 1, ${pw('arming_sword', 10)} at 10, ${pw('arming_sword', 30)} at 30). Skill damage is multiplied by (1 + power / 100), staffs and charms included; healing and shields are not. Two-handed weapons and bows have ${Math.round((w.grip.two - 1) * 100)}% more power than one-handed ones because they block the off-hand; charms ${Math.round((w.grip.charm - 1) * 100)}% more. ${typeProfileText()} A dagger in the off-hand adds ${Math.round(w.offhandShare * 100)}% of its power. Rarity does not change power: it only adds affixes.`,
+    `Base stats by weapon type (at item level 10; values with a per-level part grow with item level): ${WEAPON_TYPES.map((t) => `${ITEM_DATA.weaponTypes[t]?.name ?? t}: ${ITEM_DATA.implicits[t]?.name ?? ''}, ${imp(t, 10)}`).join('; ')}. ${twoHandMeleeText()} A shield's base value is its block chance, shown like weapon power (${ITEM_DATA.items.filter((d) => d.slot === 'offhand' && d.implicitBase?.length).map((d) => `${d.name} ${d.implicitBase![0]}%`).join(', ')}; fixed, it does not grow with item level), on top of its affixes (its main affix is Armor). Base stats count toward the gear limits.`,
     `Starter weapons: every hero starts with a Common item level ${st.ilvl} weapon of their class (${starters}). Damage is measured against it: with the starter weapon a hero deals exactly the damage of Quick Battle, a stronger weapon deals more, and a hero with no weapon deals less. Starter weapons are normal items: you can sell or replace them.`,
     ...(offStarters ? [`Starter off-hands: heroes whose class fights with a one-handed weapon and an off-hand also start with a Common off-hand (${offStarters}). A second dagger adds its off-hand share of power; a shield adds its block chance.`] : []),
     `Level requirement: an item needs hero level item level - ${R.offset} (at least ${R.min}; item level 12 needs level ${levelRequirement(12)}). Below that it cannot be equipped: its card shows "Requires Level X" in red, the comparison is still shown, and Equip best skips it.`,
@@ -1333,7 +1426,7 @@ function bossArticles(): WikiArticle[] {
         list(
           // boss'a özel uyarılar (data/bosses > boss.notes: telgraflar ve kaçış yolu)
           ...(b.notes ?? []),
-          ...(b.phases ?? []).map((ph, i) => `Phase ${i + 2} at ${pctOf(ph.at)} HP: "${ph.banner}"${ph.actionsPerTurn ? `; ${ph.actionsPerTurn} actions per turn` : ''}${ph.powerMult ? `; hits ${pctOf(ph.powerMult - 1)} harder` : ''}${ph.armorMult ? `; armor x${ph.armorMult}` : ''}${ph.breakAnchors ? `; the ${anchor?.name ?? 'Mooring'}${anchorCount > 1 ? 's snap' : ' snaps'}` : ''}${Object.entries(ph.cooldowns ?? {}).map(([id, n]) => `; ${content.skills[id]?.name ?? id} ${(ph.cadence ?? []).includes(id) ? `every ${n} turns` : `cooldown ${n}`}`).join('')}${ph.riseAllies ? `; a fallen ${content.mobs[ph.riseAllies.unit]?.name ?? ph.riseAllies.unit} rises again with ${pctOf(ph.riseAllies.hpRatio)} HP` : ''}.`),
+          ...(b.phases ?? []).map((ph, i) => `Phase ${i + 2} at ${pctOf(ph.at)} HP: "${ph.banner}"${ph.actionsPerTurn ? `; ${ph.actionsPerTurn} actions per turn` : ''}${ph.powerMult ? `; hits ${pctOf(ph.powerMult - 1)} harder` : ''}${ph.armorMult ? `; ${multText(ph.armorMult)} armor` : ''}${ph.breakAnchors ? `; the ${anchor?.name ?? 'Mooring'}${anchorCount > 1 ? 's snap' : ' snaps'}` : ''}${Object.entries(ph.cooldowns ?? {}).map(([id, n]) => `; ${content.skills[id]?.name ?? id} ${(ph.cadence ?? []).includes(id) ? `every ${n} turns` : `cooldown ${n}`}`).join('')}${ph.riseAllies ? `; a fallen ${content.mobs[ph.riseAllies.unit]?.name ?? ph.riseAllies.unit} rises again with ${pctOf(ph.riseAllies.hpRatio)} HP` : ''}.`),
           'A single attack can cross only one phase threshold; extra damage stops just above the next one.',
           // Madde 271/272: CC + isabet/kritik cezaları (Blinded, Jinxed) + Omen'in Misfortune'u; adlar veriden
           `Bosses are immune to crowd control (Stun, Slow, Silence, Taunt, pulls and pushes)${accCritNames.length ? ` and to accuracy/crit penalties (${accCritNames.join(', ')})` : ''}: the hit still lands, the effect does not ("Immune").${content.formulas.ccImmunity?.omenCrit ? ' Omens still stack and Doom still strikes, but Misfortune does not lower a boss\'s crit chance.' : ''} Damage-over-time and curses (Wound, Omen, Withering, burning ground) still work.`,
@@ -1395,7 +1488,7 @@ function mobArticles(): WikiArticle[] {
 /** Sefer zorluk satırı (campaign.json > difficulties): her zorluğun metni + düşman güçlendirmesi yüzde olarak. */
 function difficultyText(): string {
   type Mods = { hpMult?: number; powerMult?: number; statMult?: number };
-  const pct = (m: number | undefined, label: string) => (m && m !== 1 ? `${m > 1 ? '+' : ''}${Math.round((m - 1) * 100)}% ${label}` : '');
+  const pct = (m: number | undefined, label: string) => (m && m !== 1 ? `${multText(m)} ${label}` : '');
   const mods = (m?: Mods) => [pct(m?.hpMult, 'HP'), pct(m?.statMult, 'stats'), pct(m?.powerMult, 'power')].filter(Boolean).join(', ');
   return Object.values(campaignConfig.difficulties as Record<string, { name: string; text: string; enemy?: Mods; enemyTier?: Record<string, Mods> }>)
     .map((d) => {
@@ -1454,7 +1547,7 @@ export function buildElements(): WikiElement[] {
 export function buildElementTable(): { head: string[]; rows: string[][] } {
   const tags = Object.keys(f.weaknesses);
   const els = Object.keys(ELEMENT_COLOR);
-  return { head: ['Target type', ...els.map(cap)], rows: tags.map((t) => [cap(t), ...els.map((e) => multText((f.weaknesses[t] as Record<string, number> | undefined)?.[e] ?? 1))]) };
+  return { head: ['Target type', ...els.map(cap)], rows: tags.map((t) => [cap(t), ...els.map((e) => { const m = (f.weaknesses[t] as Record<string, number> | undefined)?.[e] ?? 1; return m === 1 ? '—' : multText(m); })]) };
 }
 
 // ---------------------------------------------------------------- hepsi

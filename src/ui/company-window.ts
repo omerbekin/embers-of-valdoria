@@ -8,6 +8,7 @@ import './map-window.css';
 import './company-window.css';
 import { addBustWeapons, avatarUrlOf, bustHtml } from './hero-bust';
 import { bandTipHtml } from './band-tip';
+import { dismissOnBackdrop } from './backdrop';
 import { lockInput, unlockInput } from './input-lock';
 import { miscImage, statImage } from '../game/icon-image-files';
 import type { MwCard } from './map-window';
@@ -19,6 +20,12 @@ export interface CompanySpec {
   tutorial: Set<string>;
   onSetOut: (picks: string[], leaderIndex: number) => void;
   toast: (msg: string) => void;
+  /** Kışla (Ömer 2026-10-27: Barracks da bu pencereyi kullanır): başlık, alt yazı, düğme yazısı; lider yok; Not now + zemin = onCancel. */
+  title?: string;
+  sub?: string;
+  goLabel?: string;
+  noLeader?: boolean;
+  onCancel?: () => void;
 }
 export interface CompanyHandle {
   close(): void;
@@ -48,10 +55,10 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
     .join('');
   wrap.innerHTML = `<div class="mw-scrim"></div>
     <div class="cw-win"><i class="cw-cn tl"></i><i class="cw-cn tr"></i><i class="cw-cn bl"></i><i class="cw-cn br"></i>
-      <h1 class="cw-ttl"><i></i><span>Form your company</span><i></i></h1>
-      <p class="cw-sub">Choose ${SIZE} heroes. The first one you pick leads the company (tap a chosen hero again to make them the leader).</p>
+      <h1 class="cw-ttl"><i></i><span>${esc(o.title ?? 'Form your company')}</span><i></i></h1>
+      <p class="cw-sub">${esc(o.sub ?? `Choose ${SIZE} heroes. The first one you pick leads the company (tap a chosen hero again to make them the leader).`)}</p>
       <div class="cw-body"><div class="cw-slots">${slotHtml}</div><div class="cw-strip" data-drop="pool">${strip}</div></div>
-      <div class="cw-foot"><div class="cw-count"></div><button type="button" class="el-btn primary" data-go>Set out</button></div>
+      <div class="cw-foot"><div class="cw-count"></div><div class="cw-acts">${o.onCancel ? '<button type="button" class="el-btn" data-no>Not now</button>' : ''}<button type="button" class="el-btn primary" data-go>${esc(o.goLabel ?? 'Set out')}</button></div></div>
     </div>`;
   root.append(wrap);
   lockInput('company-window');
@@ -115,7 +122,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
     const logo = miscImage(`class:${c.classId}`)?.url;
     const stat = c.stat ? statImage(c.stat as 'str')?.url : null;
     const chips = `<div class="cw-chips">${c.role ? `<span class="cw-chip role" title="${esc(c.role)}">${esc(c.role)}</span>` : ''}${c.stat ? `<span class="cw-chip stat">${stat ? `<img src="${stat}" alt="" draggable="false">` : ''}${esc(c.stat.toUpperCase())}</span>` : ''}</div>`;
-    const tut = o.tutorial.has(c.id) ? '<span class="tut"><i></i>Played in the tutorial</span>' : '<span class="tut"></span>';
+    const tut = o.tutorial.has(c.id) ? '<span class="tut"><i></i>Played in the tutorial</span>' : c.tag ? `<span class="tut"><i></i>${esc(c.tag)}</span>` : '<span class="tut"></span>'; // kışlada: katılacağı level (D12)
     return `<button type="button" class="mw-card cw-card" data-id="${esc(c.id)}" style="--i:0;--ac:${c.color};--acl:${lighten(c.color)}"><div class="pt">${bustHtml(c.classId, c.spriteId)}${logo ? `<img class="em" src="${logo}" alt="" draggable="false">` : ''}</div><span class="nm">${esc(c.name)}</span>${chips}${tut}</button>`;
   }
 
@@ -142,7 +149,10 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
         }
       }
       const ord = s.querySelector<HTMLElement>('.cw-ord')!;
-      if (id) {
+      if (id && o.noLeader) {
+        ord.className = 'cw-ord on';
+        ord.innerHTML = `<b>${i + 1}</b>`;
+      } else if (id) {
         const lead = leader === id;
         ord.className = `cw-ord on${lead ? ' lead' : ''}`;
         ord.innerHTML = `${CROWN}<b>${i + 1}</b><span class="lt">Leader</span>`;
@@ -163,10 +173,11 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
   function tap(id: string): void {
     const p = picks();
     if (!p.includes(id)) {
-      if (p.length >= SIZE) return toast(`You already have ${SIZE} heroes. Tap one to remove it.`);
+      if (p.length >= SIZE && o.noLeader && SIZE === 1) slots[0] = null; // tek seçim: yeni dokunuş öncekinin yerine geçer
+      else if (p.length >= SIZE) return toast(`You already have ${SIZE} heroes. Tap one to remove it.`);
       slots[slots.indexOf(null)] = id;
       if (!leader) leader = id;
-    } else if (leader !== id) leader = id;
+    } else if (leader !== id && !o.noLeader) leader = id;
     else {
       slots[slots.indexOf(id)] = null;
       leader = null;
@@ -252,9 +263,15 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
   goBtn.addEventListener('click', () => {
     if (done) return;
     const p = picks();
-    if (p.length !== SIZE) return toast(`Pick ${SIZE} heroes.`);
+    if (p.length !== SIZE) return toast(SIZE === 1 ? 'Pick one companion first.' : `Pick ${SIZE} heroes.`);
     o.onSetOut(p, Math.max(0, p.indexOf(leader ?? p[0]!)));
   });
+
+  if (o.onCancel) {
+    const cancel = o.onCancel;
+    wrap.querySelector<HTMLElement>('[data-no]')?.addEventListener('click', () => !done && cancel());
+    dismissOnBackdrop(wrap, win, () => !done && cancel());
+  }
 
   sync();
   return {

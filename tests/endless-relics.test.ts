@@ -121,7 +121,8 @@ describe('kalıntı etkileri', () => {
     // kalıntısız: kahramanın kurulumu yalnızca kendi ekipmanından (başlangıç silahı; silah çarpanı katlanmış = yok)
     const plan = wavePlan(fresh());
     for (const u of Object.values(plan.units.party)) {
-      expect(Object.keys(u)).toEqual(['modifiers']);
+      // örtük fx (balta zırh delme, çekiç Daze; Ömer 2026-10-27) itemEffects'e gider; kalıntı alanı yok
+      expect(Object.keys(u).filter((k) => k !== 'itemEffects')).toEqual(['modifiers']);
       expect(u.modifiers?.weaponMult).toBeUndefined();
     }
   });

@@ -16,7 +16,9 @@ import { balance, simulate, skillCategory, skillShare, ultReadyRate, winRate } f
 // 2026-10-17 (levels.md başlangıç statları, en yüksek temel stat <= diğer üçünün %80'i): Warrior %43-44,6 (STR 30 -> 26), Paladin ~%56 (statı aynı,
 // diğerleri zayıfladı); level / item sonrası balance-tester turunda çıkarılacak (open-questions 335)
 // 2026-10-18 genel denge turu (open-questions 350): Warrior 2 x 10.000'de %50,5-51,4 -> çıkarıldı; Paladin %46 civarında, Holy Strike 0,482 -> 0,51 sonrası ölçülecek.
-export const PENDING_BALANCE: readonly string[] = ['paladin'];
+// 2026-10-28 silah tipleri + Fire Bolt 1,07->1,02, Blizzard 0,81->0,77, asa +%8->+%5 sonrası Mage %57,3-57,7 (bant 56): Mage pasif/kit reworkü (Overflow seçildi) ve element reworkü sonrası sim'e kadar muaf.
+// 2026-10-28: vesper = yeni class (Ömer onayı), değerler PROVİZYON (Mage'den türetildi); sim Ömer onayıyla sonra (docs/design/classes/vesper.md).
+export const PENDING_BALANCE: readonly string[] = ['paladin', 'mage', 'vesper'];
 
 /**
  * BANDI BEKLEYEN SKILL'LER (kullanım payı / ultimate oranı): Ömer onayı bekleyen yeniden tasarım önerisi olanlar; ölçülür, uyarı yazılır.
@@ -28,6 +30,13 @@ export const PENDING_SKILLS: Readonly<Record<string, string>> = {
   // 2026-10-20 (open-questions 376): Whirlwind güç 0,65 sonrası pay %11 -> listeye alındı; Ömer kararıyla ilk 2 sıraya vuran rect 2x3 oldu (güç 0,5), pay %22 -> çıkarıldı.
   // 2026-10-24: Quick Shot güç 0,42 (Ömer isteği) sonrası Piercing Arrow payı %12,6-13 (bant %15) -> listeye alındı.
   piercing_arrow: 'Quick Shot buff sonrası pay %13 (2026-10-24), Ömer kararı bekliyor',
+  // 2026-10-29: Vesper yeni, değerler PROVİZYON; Toll payı %19,8 (bant %20). Vesper sim'inde bakılacak.
+  // 2026-10-29: Ley Brand bedel yakımı + işaret (castBurnPct 0,75, markDamagePct 0,4) sonrası AM hamlelerinin ~%39'u; YZ değeri yüksek, sim turunda bakılacak.
+  drain_field: 'Ley Brand yeni kurallar sonrası pay ~%39 (2026-10-29), YZ değeri ayarı bekliyor',
+  spell_ward: 'Ley Brand payı arttı, Spell Ward %6,7 (bant %8) (2026-10-29), Ley Brand YZ ayarıyla bakılacak',
+  toll: 'Vesper PROVİZYON değerler (2026-10-29), sim bekliyor',
+  // 2026-10-29: Vesper havuza girince Resurrection payı %7,98 (bant %8, gürültü sınırı); Paladin zaten dengesi bekleyenlerde.
+  resurrection: 'Vesper sonrası pay %7,98 (2026-10-29), Paladin turunda bakılacak',
 };
 
 export function balanceSuite(label: string, firstSeed: number): void {

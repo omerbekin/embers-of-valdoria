@@ -1264,7 +1264,7 @@ export class TeamSelectScene extends Phaser.Scene {
   private skillTip(def: CombatantDef, skillId: string): TipSpec {
     const skill = content.skills[skillId];
     if (!skill) return { title: skillId, lines: [] };
-    const info = describeSkill(skill, def.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds }, def.range);
+    const info = describeSkill(skill, def.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds, skills: content.skills }, def.range);
     const kc = (k: (typeof info.kinds)[number]): string => (k === 'shield' ? colors.shield : k === 'magicShield' ? colors.magicShield : k ? (colors.element as Record<string, string>)[k] ?? TXT : TXT);
     const lines: PhLine[] = info.lines.map((l, i) => {
       const hex = kc(info.kinds[i]);

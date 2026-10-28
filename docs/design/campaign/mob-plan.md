@@ -224,6 +224,8 @@ Statlar mevcut moblara göre (Road Thug STR 28 / zırh 14; Acolyte INT 30 / zır
 
 **Pilgrim Road hikâyesi (öneri, oyun içi İngilizce):** karşılaşma adı *"The Silver Stag Company"*, alt başlık *"Battle · Rival Company"*. Gerekçe: St. Brann'ın emanetinin peşindeki paralı bir maceracı bölüğü, aynı yolda giden oyuncu takımını rakip görüp yolu keser. Birimlere `name`: "Stag Sellsword", "Stag Knife", "Stag Bowman", "Stag Magus". Sınıf kitleri aynen (bunlar gerçekten maceracı).
 
+**Haritalar arası yay (TASLAK, 2026-10-28):** Stag'lerin Harita 2-3 ve 4/5 devamı ve örüntüsü: [silver-stag-arc.md](silver-stag-arc.md).
+
 ## 4. Elit ve boss kitleri
 
 ### 4.1 Black Cathedral: High Priest of the Undying (elit = pasif + 3 aktif)

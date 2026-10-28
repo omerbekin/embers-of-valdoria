@@ -5,7 +5,7 @@ import { emptyAlloc, take, type TreeAlloc } from '../src/progression/skill-tree'
 import type { TreeData } from '../src/progression/skill-tree-data';
 
 // Skill ağacı Faz 2b (Anti-Mage): data/skill-trees/antimage.json fx'leri temiz derlenir ve savaşta gerçekten etki eder
-// (ağaçlı / ağaçsız aynı seed). Örnekler: Generous Cut (1.f1), Sure Hush (2.n0), Void Shackle (4.u3).
+// (ağaçlı / ağaçsız aynı seed). Örnekler: Generous Cut (1.f1), Void Shackle (4.u3) (Ley Brand düğümleri: skill-tree-fx-leybrand.test.ts).
 
 const A = treeOf('antimage')!;
 const cells = (u: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');
@@ -58,17 +58,7 @@ describe('Anti-Mage ağacı (Faz 2b)', () => {
     throw new Error('Mana Steal isabet etmedi');
   });
 
-  it('Sure Hush: dökümden önce MP\'si 0 olan düşman Drain Field\'da kesin Silence alır (ağaçsız %50 zar)', () => {
-    const proc = (units: Record<number, UnitSetup>) => {
-      const b = make('mage', units, 3);
-      E0(b).mp = 0;
-      return cast(b, 'drain_field').find((e) => e.type === 'emptyProc' && e.target === E0(b).uid) as Extract<BattleEvent, { type: 'emptyProc' }> | undefined;
-    };
-    expect(proc({})?.chance).toBe(0.5);
-    const t = proc(unit(['2.f1*3', '2.f2*5', '2.f3*2', '2.n0']));
-    expect(t?.chance).toBe(1);
-    expect(t?.success).toBe(true);
-  });
+  // 2026-10-27: eski Drain Field ağaç testi kaldırıldı (Ley Brand; yeni düğüm testleri tests/skill-tree-fx-leybrand.test.ts)
 
   it('Void Shackle: MP\'si 0 olan hedefe isabet eden Void Strike Stun verir (ağaçsız vermez)', () => {
     const steps = ['4.u1', '4.u2', '4.u3'];

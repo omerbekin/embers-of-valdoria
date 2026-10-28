@@ -70,12 +70,13 @@ describe('veri ve formül', () => {
     expect(errs).toMatch(/implicit nope/);
   });
 
-  it('silah gücü = (base + perIlvl x ilvl) x tutuş x aile; çift el / yay tek elden güçlü, hançer zayıf, tılsım arada', () => {
-    const axe = itemDef('woodcutters_axe')!;
-    for (const L of [1, 10, 30, 50]) expect(weaponPowerOf(axe, L)).toBe(snap(W.base + W.perIlvl * L));
+  it('silah gücü = (base + perIlvl x ilvl) x tutuş x tip; çift el / yay tek elden güçlü, hançer zayıf, tılsım arada', () => {
+    // Ömer 2026-10-27: kılıç düz (tip çarpanı 1); asa düz çift el (1,45), çift el yakın dövüş ayrıca x twoHandMelee.power (tests/weapon-types.test.ts)
+    const sword = itemDef('arming_sword')!;
+    for (const L of [1, 10, 30, 50]) expect(weaponPowerOf(sword, L)).toBe(snap(W.base + W.perIlvl * L));
     const L = 20;
-    const one = weaponPowerOf(axe, L);
-    const two = weaponPowerOf(itemDef('dane_axe')!, L);
+    const one = weaponPowerOf(sword, L);
+    const two = weaponPowerOf(itemDef('ash_staff')!, L);
     const bow = weaponPowerOf(itemDef('short_bow')!, L);
     const dagger = weaponPowerOf(itemDef('rondel_dagger')!, L);
     const charm = weaponPowerOf(itemDef('worn_deck')!, L);
@@ -84,20 +85,21 @@ describe('veri ve formül', () => {
     expect(two / one).toBeGreaterThan(1.3);
     expect(bow).toBe(snap((W.base + W.perIlvl * L) * W.grip.bow)); // yay kendi tutuş çarpanıyla (Ömer 2026-10-19: yalnızca çift el 1,45)
     expect(bow).toBeGreaterThan(one);
-    expect(staff).toBe(two); // x2: asa da güç taşır (çift el)
+    expect(staff).toBe(two); // x2: asa da güç taşır (çift el 1,45; yakın dövüş çarpanı YOK)
     expect(dagger).toBeLessThan(one);
     expect(charm).toBeGreaterThan(one);
     expect(charm).toBeLessThan(two);
     // nadirlik taban gücünü değiştirmez; kalkan / zırh güç taşımaz (x4)
-    expect(weaponPowerOf(itemDef('emberbrand')!, L)).toBe(one);
+    expect(weaponPowerOf(itemDef('emberbrand')!, L)).toBe(one); // Emberbrand kılıç tipinde
     expect(weaponPowerOf(itemDef('oak_shield')!, L)).toBe(0);
   });
 
-  it('örtük statlar: hançer kritik, tılsım hız % (seviyeyle büyür); kalkan blok şansı (taban başına sabit %15-20, seviyeyle büyümez); IP ve fiyata girer', () => {
-    expect(implicitDefOf(itemDef('rondel_dagger')!)!.parts[0]!.to).toBe('mod:critAdd');
-    expect(implicitDefOf(itemDef('worn_deck')!)!.parts[0]!.to).toBe('mult:spdMult');
+  it('örtük statlar: hançer hız %, tılsım MP yenilenmesi (seviyeyle büyür); kalkan blok şansı (taban başına sabit %15-20, seviyeyle büyümez); IP ve fiyata girer', () => {
+    // Ömer 2026-10-27: örtük TİPE göre (hançer hız, tılsım MP / tur, balta zırh delme)
+    expect(implicitDefOf(itemDef('rondel_dagger')!)!.parts[0]!.to).toBe('mult:spdMult');
+    expect(implicitDefOf(itemDef('worn_deck')!)!.parts[0]!.to).toBe('mod:mpRegenAdd');
     expect(implicitDefOf(itemDef('oak_shield')!)!.parts[0]!.to).toBe('fx:blockChance');
-    expect(implicitDefOf(itemDef('woodcutters_axe')!)).toBeUndefined();
+    expect(implicitDefOf(itemDef('woodcutters_axe')!)!.parts[0]!.to).toBe('fx:armorPen');
     const dg = implicitDefOf(itemDef('rondel_dagger')!)!;
     expect(implicitValues(dg, 30)[0]!).toBeGreaterThan(implicitValues(dg, 1)[0]!);
     // Kalkan (Ömer 2026-10-18): taban blok şansı her kalkanda %15-20, item seviyesiyle DEĞİŞMEZ (items[].implicitBase)
@@ -114,9 +116,11 @@ describe('veri ve formül', () => {
       expect(instanceBaseBlockChance(inst(d.id, 5)), d.id).toBe(v);
       expect(instanceBaseLines(inst(d.id, 30)).implicit, d.id).toBeUndefined();
     }
-    // IP: taban değeri örneğin IP'sine eklenir
+    // IP: taban değeri (güç + örtük - hız cezası) örneğin IP'sine eklenir
     const a = inst('woodcutters_axe', 30);
-    expect(baseIP(itemDef('woodcutters_axe')!, 30)).toBeCloseTo(weaponPowerOf(itemDef('woodcutters_axe')!, 30) * W.ip, 3);
+    const axeImp = implicitDefOf(itemDef('woodcutters_axe')!)!;
+    const axeIP = weaponPowerOf(itemDef('woodcutters_axe')!, 30) * W.ip + implicitValues(axeImp, 30)[0]! * axeImp.parts[0]!.ip - ITEMS.weaponTypes.axe.spdLess! * W.spdIp!;
+    expect(baseIP(itemDef('woodcutters_axe')!, 30)).toBeCloseTo(axeIP, 3);
     expect(instanceIP(a)).toBeGreaterThan(instanceIP(inst('woodcutters_axe', 1)));
     // ipucu satırları
     expect(instanceBaseLines(a).power).toBe(weaponPowerOf(itemDef('woodcutters_axe')!, 30));
@@ -188,7 +192,7 @@ describe('güç katmanı: katlama, tutuş, ikinci el, kalkan', () => {
     expect(equippedWeaponPower({ weapon: inst('arming_sword', L), offhand: inst('oak_shield', L) })).toBe(weaponPowerOf(itemDef('arming_sword')!, L));
   });
 
-  it('kalkanın tabanı blok şansı (x4, Ömer 2026-10-18): takan blok kazanır, zırhı yalnızca ana Armor affixinden; hasar değil; hançer örtüğü kritik verir', () => {
+  it('kalkanın tabanı blok şansı (x4, Ömer 2026-10-18): takan blok kazanır, zırhı yalnızca ana Armor affixinden; hasar değil; hançer örtüğü hız verir', () => {
     const L = 10;
     const noShield = loadout({ class: 'warrior', equipment: eq({ weapon: inst('arming_sword', L) }) });
     const shield = loadout({ class: 'warrior', equipment: eq({ weapon: inst('arming_sword', L), offhand: { uid: 's', id: 'oak_shield', rolls: { rarity: 'common', ilvl: L, affixes: [{ id: 'c_armor', q: 0.5 }] } } }) });
@@ -205,7 +209,7 @@ describe('güç katmanı: katlama, tutuş, ikinci el, kalkan', () => {
     expect(big.itemEffects!.blockChance).toBeCloseTo(ITEMS.caps.block! / 100, 6);
     expect(big.capped).toContain('block');
     const cut = loadout({ class: 'cutthroat', equipment: eq({ weapon: inst('rondel_dagger', L) }) });
-    expect(cut.modifiers!.critAdd).toBeCloseTo(implicitValues(implicitDefOf(itemDef('rondel_dagger')!)!, L)[0]! / 100, 6);
+    expect(cut.modifiers!.spdMult).toBeCloseTo(1 + implicitValues(implicitDefOf(itemDef('rondel_dagger')!)!, L)[0]! / 100, 6);
   });
 
   it('Equip best güçlü silahı seçer (aynı affix); çift eli silah + kalkana karşı tartar', () => {
@@ -336,7 +340,7 @@ describe('kayıt göçü: başlangıç silahı', () => {
     const armed = s.roster[0]!;
     const old = JSON.parse(JSON.stringify(s)) as CampaignState;
     // v7 kaydında başlangıç ikinci eli yoktu (Ömer 2026-10-23'te geldi): silahsız kahramanın ikinci eli de boş
-    old.roster = old.roster.map((h, i) => (i === 0 ? { ...h, equipment: { ...h.equipment, weapon: { uid: 'i50', id: 'bearded_axe' } } } : { ...h, equipment: { ...h.equipment, weapon: null, offhand: null } }));
+    old.roster = old.roster.map((h, i) => (i === 0 ? { ...h, equipment: { ...h.equipment, weapon: { uid: 'i50', id: 'hunting_bow' } } } : { ...h, equipment: { ...h.equipment, weapon: null, offhand: null } })); // roster[0] okçu: sınıfının taşıyabildiği silah (2026-10-28: takılamayan item okunurken torbaya döner)
     (old as unknown as Record<string, unknown>).suspended = { node: old.at, seed: 1, turn: 0, hash: 'x', setup: 'y', actions: [] };
     const file = (version: number, st: CampaignState) => JSON.stringify({ version, counter: 1, lastSlot: 0, slots: [{ campaignId: st.campaignId, mode: 'normal', difficulty: st.difficulty, startedAt: 't', lastPlayed: 't', saves: [{ id: 's1', kind: 'auto', savedAt: 't', mode: 'normal', campaignId: st.campaignId, summary: {}, state: st }] }, null, null] });
     const kv = memoryKV();
@@ -344,7 +348,7 @@ describe('kayıt göçü: başlangıç silahı', () => {
     const r = readSaves(kv);
     expect(r.migrated).toBe(true);
     const back = r.file.slots[0]!.saves[0]!.state;
-    expect(back.roster[0]!.equipment.weapon?.id).toBe('bearded_axe');
+    expect(back.roster[0]!.equipment.weapon?.id).toBe('hunting_bow');
     for (const h of back.roster.slice(1)) expect(h.equipment.weapon?.id).toBe(starterWeaponId(h.class));
     expect(back.suspended).toBeUndefined();
     expect(armed.id).toBe(back.roster[0]!.id);
@@ -367,10 +371,10 @@ describe('kayıt göçü: başlangıç silahı', () => {
   });
 });
 
-describe('çift el yakın dövüş tabanları: Greataxe, Greatsword, War Maul (Ömer 2026-10-17)', () => {
+describe('çift el yakın dövüş tabanları: Greataxe, Greatsword, War Maul (Ömer 2026-10-17; tipler 2026-10-27)', () => {
   const NEW = ['greataxe', 'greatsword', 'war_maul'] as const;
 
-  it('çift el silah, Axes & Swords / Maces & Shields ailesi kuralı; ikinci eli kapatır; güç = çift el x1,35', () => {
+  it('çift el silah, Axes & Swords / Hammers ailesi kuralı; ikinci eli kapatır; güç = çift el x yakın dövüş x tip', () => {
     for (const id of NEW) {
       const d = itemDef(id)!;
       expect(d, id).toBeDefined();
@@ -378,19 +382,21 @@ describe('çift el yakın dövüş tabanları: Greataxe, Greatsword, War Maul (�
       expect(d.grip).toBe('two');
       expect(blocksOffhand(d)).toBe(true);
       expect(d.rarity).not.toBe('legendary');
-      expect(weaponPowerOf(d, 10)).toBe(weaponPowerOf(itemDef('dane_axe')!, 10));
+      expect(weaponPowerOf(d, 10)).toBeGreaterThan(weaponPowerOf(itemDef('ash_staff')!, 10)); // asa düz çift el
     }
+    expect(weaponPowerOf(itemDef('greataxe')!, 10)).toBe(weaponPowerOf(itemDef('dane_axe')!, 10));
     for (const id of ['greataxe', 'greatsword']) {
       expect(itemDef(id)!.family).toBe('axes');
       expect(canEquip('warrior', itemDef(id)!)).toBe(true);
-      expect(canEquip('antimage', itemDef(id)!)).toBe(true);
+      expect(canEquip('antimage', itemDef(id)!)).toBe(false); // Anti-Mage yalnızca hançer (Ömer 2026-10-28)
       expect(canEquip('defender', itemDef(id)!)).toBe(false);
       expect(canEquip('mage', itemDef(id)!)).toBe(false);
     }
+    // War Maul çift el ÇEKİÇ (Ömer 2026-10-27): yalnızca Defender + Paladin
     const maul = itemDef('war_maul')!;
-    expect(maul.family).toBe('maces');
-    for (const c of ['warrior', 'defender', 'paladin']) expect(canEquip(c, maul), c).toBe(true);
-    expect(canEquip('archer', maul)).toBe(false);
+    expect(maul.family).toBe('hammers');
+    for (const c of ['defender', 'paladin']) expect(canEquip(c, maul), c).toBe(true);
+    for (const c of ['warrior', 'archer']) expect(canEquip(c, maul), c).toBe(false);
   });
 
   it('her Legendary dışı nadirlikte zarlanır (Common..Epic) ve sefer loot\'unda düşer', () => {

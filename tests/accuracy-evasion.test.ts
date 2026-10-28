@@ -277,7 +277,7 @@ describe('arayüz bilgisi: skill ve stat tooltip', () => {
     const eva = describeStat('evasion', s, f);
     expect(eva.lines.join('\n')).toContain(`${f.attributes.dexPerEvasionStep} Dex = +${Math.round(f.attributes.evasionPerStep * 100)}% evasion`);
     expect(eva.lines.join('\n')).toContain(`${Math.round(f.attributes.evasionMax * 100)}%`);
-    expect(describeStat('critChance', s, f).lines.join('\n')).toContain(`fixed ×${f.attributes.critMult}`);
+    expect(describeStat('critChance', s, f).lines.join('\n')).toContain(`always deals ${Math.round((f.attributes.critMult - 1) * 100)}% more damage`);
   });
 });
 

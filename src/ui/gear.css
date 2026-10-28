@@ -4888,13 +4888,13 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 3;
-  font: 700 max(10px, calc(13 * var(--u))) var(--g-disp);
-  letter-spacing: 0.2em;
+  font: 700 max(9px, calc(11 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #fff4d6;
   background: color-mix(in srgb, var(--ac) 55%, #0c0905);
   border: 1px solid var(--acl);
-  padding: 0.15em 1.1em;
+  padding: 0.1em 0.6em;
   white-space: nowrap;
   line-height: 1.5;
 }

@@ -317,10 +317,10 @@ describe('tutorial takım akışı', () => {
     expect(s.active[before]).toBe('');
   });
 
-  it('takım ve aday havuzu 11 oynanabilir sınıf (Geometer yok); başlangıç havuzu yalnızca Warrior + Archer (Ömer 2026-10-14)', () => {
+  it('takım ve aday havuzu 12 oynanabilir sınıf (Geometer yok; 2026-10-28 Vesper eklendi); başlangıç havuzu yalnızca Warrior + Archer (Ömer 2026-10-14)', () => {
     expect(CONFIG.starterPool).toEqual(['warrior', 'archer']);
     for (const pool of [CONFIG.companyPool, CONFIG.recruitPool]) {
-      expect(pool).toHaveLength(11);
+      expect(pool).toHaveLength(12);
       expect(pool).not.toContain('aoe_tester');
       for (const c of pool) expect(randomPool).toContain(c);
     }

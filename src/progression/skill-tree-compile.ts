@@ -15,7 +15,7 @@ export const FX_FIELDS: Record<string, readonly string[]> = {
   /** Skill'in kendisi. */
   self: ['cost.amount', 'cost.ofCurrent', 'cost.hpFallback', 'cooldown', 'initialCooldown', 'count', 'turnCost'],
   /** Tüm hasar etkileri ('damage') ya da N. hasar etkisi ('damage:1', 0 tabanlı). */
-  damage: ['power', 'lifesteal', 'ignoreDefense', 'critBonus', 'powerPerRage', 'executeBonus', 'falloff', 'repeatChance'],
+  damage: ['power', 'lifesteal', 'ignoreDefense', 'critBonus', 'powerPerRage', 'executeBonus', 'falloff', 'repeatChance', 'powerPerBell'],
   /** 'status:<durum>' (ör. status:slow). */
   status: ['turns', 'chance'],
   taunt: ['turns', 'breakRatio', 'allyDamageMult'],
@@ -30,6 +30,8 @@ export const FX_FIELDS: Record<string, readonly string[]> = {
   shield: ['power', 'bonusPerMana'],
   revive: ['hpRatio', 'mpRatio'],
   manaBurn: ['amount', 'pctMax', 'gainRatio', 'onEmpty.chance', 'onEmpty.turns', 'onEmpty.damage.power', 'onEmpty.damage'],
+  /** Ley Brand (open-questions 444): süre, havuz oranı, bedel çarpanı, yakım / patlama hasar payı; ağaç alanları silenceOnEmpty, centerTaintMul, spread (bayrak). */
+  brand: ['turns', 'taintPct', 'costMult', 'burnDamagePct', 'explodePct', 'silenceOnEmpty', 'centerTaintMul', 'spread'],
   /** Hasar etkilerinin bahsi (damage.bet). */
   bet: ['ratio', 'winMult', 'loseMult', 'perStake', 'winChance', 'hpStake'],
   omen: ['stacks', 'critStacks'],
@@ -43,7 +45,7 @@ export const FX_FIELDS: Record<string, readonly string[]> = {
 /** op 'remove' ile silinebilen alanlar (motorun "yok" anlamı: lifespan yok = süresiz çağrı, count yok = hepsi, chance yok = kesin). */
 const REMOVABLE = new Set(['lifespan', 'count', 'chance', 'falloff', 'cost.ofCurrent', 'initialCooldown', 'onEmpty.damage']);
 /** Faz 2c: op 'on' ile açılan bayrak alanları (Crimson Covenant: bond permanent). Sayı op'u bunlara uygulanmaz. */
-const FLAG_FIELDS = new Set(['permanent']);
+const FLAG_FIELDS = new Set(['permanent', 'spread']);
 /** Faz 2c: pasif alanı tanımda yoksa başlangıç değerini aldığı alan (Deep Rot: dotTurns <- turns; Anchored Stone: selfPct <- pct). */
 const PASSIVE_ALIAS: Record<string, string> = { dotTurns: 'turns', selfPct: 'pct' };
 /** Faz 2c: op 'remove' ile silinebilen pasif alanları (Black Mold: Nature's Grudge'ın Slow'u). */
@@ -57,6 +59,7 @@ const FX_DEFAULTS: Record<string, number> = {
   ignoreDefense: 0,
   critBonus: 0,
   powerPerRage: 0,
+  powerPerBell: 0,
   executeBonus: 0,
   repeatChance: 0,
   falloff: 1,
@@ -79,10 +82,13 @@ const FX_DEFAULTS: Record<string, number> = {
   hpStake: 0,
   stackMult: 1,
   centerMult: 1,
+  // Ley Brand ağaç alanları (yoksa kapalı)
+  silenceOnEmpty: 0,
+  centerTaintMul: 0,
 };
 
 /** Tam sayı alanlar (sonuç yuvarlanır, en az 0). */
-const INT_FIELDS = new Set(['cost.amount', 'cooldown', 'initialCooldown', 'count', 'turns', 'stacks', 'critStacks', 'lifespan', 'onEmpty.turns', 'amount']);
+const INT_FIELDS = new Set(['cost.amount', 'cooldown', 'initialCooldown', 'count', 'turns', 'stacks', 'critStacks', 'lifespan', 'onEmpty.turns', 'amount', 'silenceOnEmpty']);
 
 export class TreeFxError extends Error {}
 
@@ -117,6 +123,7 @@ function resolve(def: SkillDef, sel: string): { kind: string; targets: Bag[] } {
     case 'shield':
     case 'revive':
     case 'manaBurn':
+    case 'brand':
     case 'omen':
     case 'dot':
     case 'bond':
@@ -331,6 +338,8 @@ const EFFECT_FIELDS: Record<string, readonly string[]> = {
   dot: ['status', 'scale', 'power', 'turns'],
   selfDamage: ['ratio'],
   pull: ['to'],
+  // Ley Brand ağacı (Searing Grasp): ek mana yakımı (amount ya da pctMax gerekir; aşağıda)
+  manaBurn: [],
 };
 /** addEffect / replaceEffect: ağaç bayrakları ve izinli olduğu etki türleri (preHit: durum hasardan önce; permanent: süresiz; kinds / self: dispel). */
 const EFFECT_FLAGS: Record<string, readonly string[]> = {
@@ -438,6 +447,7 @@ function treeEffectOf(fx: { effect?: SkillEffect; byRank?: SkillEffect[] }, rank
   if (e.type === 'randomStatus' && (!Array.isArray(e.options) || !e.options.length || !(e.options as Bag[]).every((o) => knownStatus(o.status) && typeof o.turns === 'number' && typeof o.weight === 'number')))
     throw new TreeFxError('randomStatus options need known status, turns and weight');
   if (e.type === 'ground' && !GROUNDS[e.ground as string]) throw new TreeFxError(`unknown ground "${String(e.ground)}"`);
+  if (e.type === 'manaBurn' && typeof e.amount !== 'number' && typeof e.pctMax !== 'number') throw new TreeFxError('manaBurn effect needs "amount" or "pctMax"');
   if (e.type === 'dispel' && e.status !== 'debuff' && e.status !== 'buff') throw new TreeFxError('dispel status must be debuff or buff');
   if (e.chance !== undefined && (typeof e.chance !== 'number' || e.chance < 0 || e.chance > 1)) throw new TreeFxError('chance must be 0-1');
   e.treeNode = node;

@@ -307,7 +307,7 @@ describe('Altıncı tur: düğüm cevapları', () => {
 
   it('Paladin Fervent Oath: Anointed Arms +%30 (yerine geçer), Divine Light şifası %25 az', () => {
     const n = treeOf('paladin')!.nodes['0.fb']!;
-    expect(n.text).toBe("Anointed Arms' bonus doubles to ×1.3, but Divine Light heals ×0.75.");
+    expect(n.text).toBe("Anointed Arms' bonus doubles to 30% more, but Divine Light heals 25% less.");
     const tree = only('paladin', { '0.eb': 1, '0.fb': 1 })!;
     expect(tree.hooks!.some((h) => h.node === 'paladin:0.eb')).toBe(false);
     expect((tree.passive!.effect as { power: number }).power).toBeCloseTo((content.classes.paladin!.passive!.effect as { power: number }).power * 0.75, 9);

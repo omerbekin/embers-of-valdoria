@@ -4,7 +4,7 @@
     "_not": "Sunak id'si -> nimet + sınav metni. `mods` her savaşta takımın her kahramanına UnitModifiers olarak eklenir: *Mult anahtarları çarpılır, *Add anahtarları toplanır (src/campaign/side-content.ts > boonMods). Sınavın kuralı karşılaşmada (drowned-reach-encounters.json > trial / objective / blocked); `trial` yalnızca gösterilen metin.",
     "dr_shrine_stone": {
       "name": "Blessing of Stone",
-      "effect": "×1.03 max HP",
+      "effect": "3% more max HP",
       "trial": "Trial of the Two: only the two heroes standing furthest forward may fight.",
       "mods": { "hpMult": 1.03 }
     },

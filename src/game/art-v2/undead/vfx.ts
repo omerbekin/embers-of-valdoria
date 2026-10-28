@@ -17,6 +17,7 @@
  */
 import { FULL_W } from '../../../ui/viewport'; // geniş ekran: karartma görünen alanın tamamını kaplar
 import type Phaser from 'phaser';
+import { reducedMotion } from '../../../ui/motion-pref';
 import type { CombatantView } from '../../combatant-view';
 import type { VfxCtx } from '../../vfx';
 import type { VfxKit } from '../../vfx-versions';
@@ -277,109 +278,191 @@ const bonethrow: V2Vfx = async (c, k) => {
 
 // ---------------------------------------------------------------------------------------------------------------- WAIL OF THE DEAD
 
-/** Çığlığın bir hücreye çarpması: zeminde ses dalgası halkaları, ölü pusu (zehir zemini doğar), hayalet kafatasları yükselir, hedef titrer. */
-function wailCell(c: VfxCtx, k: VfxKit, slot: number, victims: CombatantView[], power: number): void {
-  const m = k.cellMid(c.board, slot);
-  const q = k.quadOf(c.board, slot, 1);
-  const cw = Math.abs(q[1]!.x - q[0]!.x) + Math.abs(q[3]!.x - q[0]!.x);
-  // hücre plakası: mor ses-dalgası lekesi
-  const g = c.scene.add.graphics().setDepth(k.FLOOR_FX + 1);
-  k.fillCells(g, c.board, [slot], { fill: 0x3a1858, fillA: 0.45, edge: 0xb872ff, edgeA: 0.85, edgeW: 3, k: 0.94 });
-  g.setAlpha(0);
-  c.scene.tweens.add({ targets: g, alpha: 1, duration: k.slow(100), yoyo: true, hold: k.slow(300), onComplete: () => g.destroy() });
-  for (let i = 0; i < 3; i++) void k.wait(c.scene, k.slow(i * 80)).then(() => k.ring(c.scene, m.x, m.y, { r: cw * 0.42 * power * (1 + i * 0.18), flat: 0.34, n: 22, colors: ['#e3ccff', '#b872ff', '#8a52c9'], dur: 460, size: 9, startR: 10 }));
-  // zehir pusu (zemin doğar): yeşil-mor yassı bulut + kabarcıklar
-  const mist = c.scene.add.image(m.x, m.y, miasmaTex(c, k)).setDisplaySize(cw * 0.9, cw * 0.32).setDepth(k.FLOOR_FX + 3).setAlpha(0);
-  c.scene.tweens.add({ targets: mist, alpha: 0.85, displayWidth: cw * 1.05, displayHeight: cw * 0.38, duration: k.slow(260), ease: 'Quad.easeOut' });
-  c.scene.tweens.add({ targets: mist, alpha: 0, delay: k.slow(900), duration: k.slow(500), onComplete: () => mist.destroy() });
-  for (let i = 0; i < 6; i++) {
-    const p = k.inQuad(q, 0.75);
-    k.burst(c.scene, p.x, p.y, { colors: MIASMA, n: 1, speed: [20, 70], angle: [-Math.PI * 0.8, -Math.PI * 0.2], gravity: -120, life: [500, 900], size: [6, 10] });
+/** Çığlık renkleri: mezar moru -> soluk kemik beyazı -> hasta turkuaz (saf beyaz/neon yok). */
+const WAIL_RING = ['#e8dcff', '#c79bff', '#8a52c9'];
+const WAIL_SICK = ['#d9d4c0', '#8ff5dc', '#3fd6b4', '#8a52c9'];
+
+/** Lich'in ağzı (başını geriye atıp çığlık attığı nokta). */
+const mouthOf = (v: CombatantView): Pt => ({ x: v.container.x + facing(v) * spriteW(v) * 0.1, y: v.container.y - v.h * 0.84 });
+
+/**
+ * Bükük (titreyen) ses halkası: aynı merkezde 2 hafif kaymış, farklı yassılıkta halka = "bozuk" dalga (temiz çan halkası değil).
+ * `arc` verilirse yalnızca o yön yayı (koni dalga cephesi).
+ */
+function warpRing(c: VfxCtx, k: VfxKit, x: number, y: number, r: number, o: { flat?: number; dur?: number; arc?: [number, number]; colors?: string[]; size?: number; startR?: number } = {}): void {
+  const flat = o.flat ?? 0.34;
+  const dur = o.dur ?? 300;
+  void k.ring(c.scene, x, y, { r, flat, n: o.arc ? 14 : 30, colors: o.colors ?? WAIL_RING, dur, size: o.size ?? 9, startR: o.startR ?? r * 0.25, arc: o.arc });
+  void k.wait(c.scene, k.slow(40)).then(() =>
+    k.ring(c.scene, x + k.rnd(-4, 4), y + k.rnd(-3, 3), { r: r * 0.86, flat: flat * 1.18, n: o.arc ? 10 : 22, colors: ['#8a52c9', '#5a2a9c', '#3fd6b4'], dur: dur * 0.9, size: (o.size ?? 9) * 0.8, startR: (o.startR ?? r * 0.25) * 0.8, arc: o.arc }),
+  );
+}
+
+/** Kurbanın tepkisi: çığlıkla başını tutup geri sarsılır (sprite yerel titreme + geriye eğilme) + mor ruh parıltısı. Ölmüş/silinmiş hedefte sessiz. */
+function wailRecoil(c: VfxCtx, k: VfxKit, t: CombatantView, from: Pt, calm: boolean): void {
+  if (!t.sprite?.active) return;
+  const away = t.container.x >= from.x ? 1 : -1;
+  if (!calm) {
+    const sx = t.sprite.x;
+    const sa = t.sprite.angle;
+    c.scene.tweens.add({ targets: t.sprite, x: sx + 4, duration: k.slow(26), yoyo: true, repeat: 5, onComplete: () => t.sprite.active && t.sprite.setX(sx) });
+    c.scene.tweens.add({ targets: t.sprite, angle: sa + away * 7, duration: k.slow(90), yoyo: true, hold: k.slow(140), ease: 'Quad.easeOut', onComplete: () => t.sprite.active && t.sprite.setAngle(sa) });
   }
-  // yükselen hayalet kafatası buharları
-  for (let i = 0; i < 2; i++) {
-    const s = k.v2Sprite(c, 'banshee', '#b36bff', m.x + k.rnd(-cw * 0.25, cw * 0.25), m.y - 20, 48, k.DEPTH + 38).setAlpha(0.7);
-    c.scene.tweens.add({ targets: s, y: s.y - k.rnd(120, 180), alpha: 0, displayWidth: 30, displayHeight: 30, delay: k.slow(i * 110), duration: k.slow(900), ease: 'Sine.easeOut', onComplete: () => s.destroy() });
-  }
-  for (const t of victims) {
-    c.scene.tweens.add({ targets: t.container, x: t.container.x + 6, duration: k.slow(28), yoyo: true, repeat: 4 });
-    const p = k.spot(t);
-    void k.ring(c.scene, p.x, p.y, { r: 70, flat: 0.95, n: 18, colors: ['#e3ccff', '#b872ff'], dur: 320, size: 7 });
-    const fx = t.sprite.postFX?.addGlow(k.color('#9fe36a'), 6, 0, false, 0.1, 12);
-    if (fx) c.scene.tweens.add({ targets: fx, outerStrength: 0, duration: k.slow(900), ease: 'Quad.easeIn', onComplete: () => t.sprite.postFX?.remove(fx) });
-  }
+  // mor ruh yansıması (sprite'ın önünde değil, ardında; birimin kendi parıltısıyla çakışmaz)
+  t.afterimage(0x9a6cff, 0.55, 380);
+  const fx = t.sprite.postFX?.addGlow(k.color('#b872ff'), 6, 0, false, 0.1, 12);
+  if (fx) c.scene.tweens.add({ targets: fx, outerStrength: 0, duration: k.slow(620), ease: 'Quad.easeIn', onComplete: () => t.sprite.postFX?.remove(fx) });
+  const p = k.spot(t);
+  k.burst(c.scene, p.x, p.y - t.h * 0.25, { colors: WAIL_SICK, n: 4, speed: [30, 110], angle: [-Math.PI * 0.85, -Math.PI * 0.15], gravity: -90, life: [300, 520], size: [6, 9] });
 }
 
 /**
- * Wail of the Dead (plus, aşamalı distance; büyü hasarı + 2 tur zehir zemini; bedel: mevcut canın %20'si):
- * 1) Bedel: lich göğsünü pençeler, göğsünden kan-ruh damlaları kopup avucundaki ateşe akar (can bedeli), ateş mor-turkuaz kabarır.
- * 2) Ateş bir banshee'ye dönüşür, kavis çizerek MERKEZ hücrenin üstüne uçar, çığlık atar (yüzü titrer, ekran morarır).
- * 3) 1. aşama: merkez hücre (ses dalgası halkaları, ölü pusu = zehir zemini, yükselen hayalet kafatasları). 2. aşama: zeminde dalga
- *    dışa yayılır, artının dört koluna çarpar; ölülerin inlemesi. Vampiric Bite: çalınan can tüm vurulanlardan lich'e akar.
+ * Çığlığın bir hücreye çarpması: hücre plakası morarır, zeminde bükük ses halkaları açılır, mezar pusu (2 tur zehir zemini) çöker ve kalır,
+ * pustan küçük hayalet yüzleri yükselir, hedefler sarsılır. Pus `linger` ms sonra söner (efekt bitmeden temizlenir).
+ */
+function wailCell(c: VfxCtx, k: VfxKit, slot: number, victims: CombatantView[], from: Pt, o: { power: number; linger: number; calm: boolean }): void {
+  const m = k.cellMid(c.board, slot);
+  const q = k.quadOf(c.board, slot, 1);
+  const cw = Math.abs(q[1]!.x - q[0]!.x) + Math.abs(q[3]!.x - q[0]!.x);
+  // hücre plakası: mor çığlık lekesi (çarpışta parlar, sonra pusun altında söner)
+  const g = c.scene.add.graphics().setDepth(k.FLOOR_FX + 1);
+  k.fillCells(g, c.board, [slot], { fill: 0x2e1446, fillA: 0.5, edge: 0xc79bff, edgeA: 0.9, edgeW: 3, k: 0.94 });
+  g.setAlpha(0);
+  c.scene.tweens.add({ targets: g, alpha: 1, duration: k.slow(70), ease: 'Quad.easeOut' });
+  c.scene.tweens.add({ targets: g, alpha: 0, delay: k.slow(260), duration: k.slow(o.linger - 260), ease: 'Quad.easeIn', onComplete: () => g.destroy() });
+  // bükük ses halkaları zeminde (iki dalga)
+  warpRing(c, k, m.x, m.y, cw * 0.45 * o.power, { dur: 360, startR: 8 });
+  void k.wait(c.scene, k.slow(110)).then(() => warpRing(c, k, m.x, m.y, cw * 0.55 * o.power, { dur: 380, startR: 14, size: 7 }));
+  // mezar pusu çöker ve hücrede kalır (zehir zemini)
+  const mist = c.scene.add.image(m.x, m.y - 4, miasmaTex(c, k)).setDisplaySize(cw * 0.6, cw * 0.2).setDepth(k.FLOOR_FX + 3).setAlpha(0);
+  c.scene.tweens.add({ targets: mist, alpha: 0.8, displayWidth: cw * 1.02, displayHeight: cw * 0.36, duration: k.slow(240), ease: 'Quad.easeOut' });
+  c.scene.tweens.add({ targets: mist, alpha: 0, delay: k.slow(o.linger * 0.6), duration: k.slow(o.linger * 0.4), onComplete: () => mist.destroy() });
+  for (let i = 0; i < 5; i++) {
+    const p = k.inQuad(q, 0.75);
+    k.burst(c.scene, p.x, p.y, { colors: MIASMA, n: 1, speed: [15, 50], angle: [-Math.PI * 0.75, -Math.PI * 0.25], gravity: -90, life: [500, 900], size: [6, 10] });
+  }
+  // pustan yükselen ölü yüzleri (koro): küçük, solgun, sallanarak çıkar
+  const faces = o.power > 1 ? 2 : 1;
+  for (let i = 0; i < faces; i++) {
+    const s = k.v2Sprite(c, 'banshee', '#b36bff', m.x + k.rnd(-cw * 0.22, cw * 0.22), m.y - 10, 40, k.DEPTH + 38).setAlpha(0);
+    const drift = k.rnd(-18, 18);
+    c.scene.tweens.add({ targets: s, alpha: { from: 0.75, to: 0 }, y: s.y - k.rnd(110, 150), x: s.x + drift, displayWidth: 26, displayHeight: 26, delay: k.slow(80 + i * 120), duration: k.slow(760), ease: 'Sine.easeOut', onComplete: () => s.destroy() });
+  }
+  for (const t of victims) wailRecoil(c, k, t, from, o.calm);
+}
+
+/**
+ * Wail of the Dead (plus, aşamalı distance; büyü hasarı + 2 tur zehir zemini; bedel: mevcut canın %20'si). 2026-10-28 yeniden tasarım,
+ * toplam ~1,35 sn (normal hız):
+ * 1) Bedel + nefes (0-0,2 sn): lich göğsünden kan-ruh damlaları kopar ve ağzına akar; başını GERİYE atar (gövde geriye eğilir).
+ * 2) Çığlık (0,2-0,55 sn): baş öne savrulur, ağızdan hedefe doğru koni şeklinde bükük ses cepheleri (yay halkalar) ilerler; içinde
+ *    ağzı açık bir banshee (dalgalı kuyruklu: arkasında solan kopyalar bırakır) ve iki küçük ölü yüzü koroyla MERKEZ hücrenin üstüne uçar.
+ * 3) Merkez çarpış (~0,55 sn): banshee merkezin üstünde çığlıkla şişip dağılır, aşağı bükük halkalar iner; merkez hücre morarır,
+ *    zemin halkaları açılır, mezar pusu çöker; hedef sarsılıp geri eğilir (mor yansıma). releaseStage(0) + hit(): hasar rakamları.
+ * 4) Kollar (~0,8 sn): ses dalgası zeminde merkezden artının dört koluna doğru gözle görülür şekilde yol alır (her kolda küçük halkalar),
+ *    kol hücrelerine çarpar (aynı tepki, ölülerin inlemesi). releaseStage(1).
+ * 5) Kalan (~0,5 sn): pus hücrelerde biraz kalır, ölü yüzleri pustan yükselip söner. Vampiric Bite: çalınan can lich'e akar.
+ * Kenar hücrede eksik kol(lar) atlanır; hedef arada ölse de efekt sürer (ölü birimin sprite'ı yoksa tepki atlanır). Azaltılmış hareket:
+ * ekran sarsıntısı ve kurban titremesi yok, parlama hafif.
  */
 const wail: V2Vfx = (c, k) =>
   k.playUntilHit(async (hit) => {
     const a = c.actor;
-    const dir = facing(a);
-    // 1) can bedeli
+    const calm = reducedMotion();
+    const stages = c.stages?.length ? c.stages : [{ slots: c.slots ?? [], cells: c.cells, targets: c.targets }];
+    const midSlot = stages[0]?.slots[0] ?? c.center;
+    const cell = midSlot !== undefined ? k.cellMid(c.board, midSlot) : (c.centerPos ?? stages[0]?.cells[0] ?? k.feet(a));
+    const ang0 = a.container.angle;
+    const sy0 = a.container.scaleY;
+    const mouth = mouthOf(a);
+    const dirX = cell.x >= mouth.x ? 1 : -1;
+    // 1) can bedeli + başını geriye atma
     c.sfx('lifeTithe');
     a.play('cast');
     const chest = chestOf(a);
-    const hand = handOf(a);
-    c.scene.tweens.add({ targets: a.container, scaleX: 0.95, scaleY: 1.03, duration: k.slow(80), yoyo: true, repeat: 1 });
-    for (let i = 0; i < 6; i++) {
-      const d = k.v2Sprite(c, 'soulmote', '#e5463b', chest.x + k.rnd(-14, 14), chest.y + k.rnd(-10, 14), k.rnd(20, 30), k.DEPTH + 36).setTint(0xff5a5a);
-      void k.travel(c.scene, d, { x: hand.x, y: hand.y - 14 }, 230 + i * 25, { arc: 40, ease: 'in' }).then(() => d.destroy());
+    for (let i = 0; i < 5; i++) {
+      const d = k.v2Sprite(c, 'soulmote', '#e5463b', chest.x + k.rnd(-12, 12), chest.y + k.rnd(-8, 12), k.rnd(18, 26), k.DEPTH + 36).setTint(0xff5a5a);
+      void k.travel(c.scene, d, { x: mouth.x, y: mouth.y + 6 }, 150 + i * 20, { arc: 26, ease: 'in' }).then(() => d.destroy());
     }
-    k.burst(c.scene, chest.x, chest.y, { colors: BLOODSOUL, n: 6, speed: [40, 140], gravity: 300, life: [300, 520], size: [6, 10] });
-    await k.wait(c.scene, k.slow(130));
-    const fl = handFlare(c, k, 64, 200);
-    fl.setTint(0xd0a8ff);
-    await k.wait(c.scene, k.slow(70));
-    // 2) banshee uçar
-    const stages = c.stages?.length ? c.stages : [{ slots: c.slots ?? [], cells: c.cells, targets: c.targets }];
-    const midSlot = stages[0]?.slots[0] ?? c.center;
-    const cell = midSlot !== undefined ? k.cellMid(c.board, midSlot) : (c.centerPos ?? k.feet(a));
-    const ghost = k.v2Sprite(c, 'banshee', '#b36bff', hand.x, hand.y - 20, 150, k.DEPTH + 40);
-    if (dir < 0) ghost.setFlipX(true);
-    fl.destroy();
+    k.burst(c.scene, chest.x, chest.y, { colors: BLOODSOUL, n: 5, speed: [40, 130], gravity: 300, life: [260, 460], size: [6, 10] });
+    c.scene.tweens.add({ targets: a.container, angle: ang0 - dirX * 8, scaleY: sy0 * 1.04, duration: k.slow(180), ease: 'Quad.easeOut' });
+    glowAt(c, k, mouth.x, mouth.y, 70, 260, k.DEPTH + 31, 0xb872ff);
+    await k.wait(c.scene, k.slow(190));
+    // 2) çığlık: baş öne savrulur, koni şeklinde ses cepheleri + banshee korosu
     c.sfx('ghostWail');
-    await k.travel(c.scene, ghost, { x: cell.x, y: cell.y - 250 }, 340, {
-      arc: 110,
+    c.scene.tweens.add({ targets: a.container, angle: ang0 + dirX * 4, scaleY: sy0, duration: k.slow(70), ease: 'Back.easeOut' });
+    c.scene.tweens.add({ targets: a.container, angle: ang0, delay: k.slow(420), duration: k.slow(200), ease: 'Sine.easeInOut' });
+    const top = { x: cell.x, y: cell.y - 170 };
+    const aim = Math.atan2(top.y - mouth.y, top.x - mouth.x);
+    const coneLen = Math.hypot(top.x - mouth.x, top.y - mouth.y);
+    for (let i = 0; i < 5; i++) {
+      void k.wait(c.scene, k.slow(i * 55)).then(() => {
+        const u = i / 5;
+        const px = mouth.x + Math.cos(aim) * coneLen * u * 0.85;
+        const py = mouth.y + Math.sin(aim) * coneLen * u * 0.85;
+        const r = 50 + i * 26;
+        warpRing(c, k, px, py, r, { flat: 1, dur: 260, arc: [aim - 0.55, aim + 0.55], startR: r * 0.45, size: 8 });
+      });
+    }
+    glowAt(c, k, mouth.x, mouth.y, 110, 360, k.DEPTH + 31, 0xc79bff);
+    if (!calm) k.shake(c.scene, 120, 0.003);
+    // koro: iki küçük ölü yüzü banshee'nin yanında, koni içinde
+    for (const off of [-46, 46]) {
+      const f = k.v2Sprite(c, 'banshee', '#8ff5dc', mouth.x, mouth.y, 54, k.DEPTH + 39).setAlpha(0.7);
+      if (dirX < 0) f.setFlipX(true);
+      void k.travel(c.scene, f, { x: top.x - dirX * 30, y: top.y + off + 40 }, 300, { arc: off < 0 ? 50 : -10 }).then(() => {
+        c.scene.tweens.add({ targets: f, alpha: 0, displayWidth: 90, displayHeight: 90, duration: k.slow(200), onComplete: () => f.destroy() });
+      });
+    }
+    // baş banshee: ağzı açık, arkasında dalgalı kuyruk (solan kopyalar)
+    const ghost = k.v2Sprite(c, 'banshee', '#b36bff', mouth.x, mouth.y, 132, k.DEPTH + 40);
+    if (dirX < 0) ghost.setFlipX(true);
+    await k.travel(c.scene, ghost, top, 320, {
+      arc: 70,
+      ease: 'out',
       trail: (x, y) => {
-        k.burst(c.scene, x, y, { colors: GRAVE, n: 2, speed: [10, 70], gravity: -40, life: [300, 560], size: [8, 14] });
-        const pf = c.scene.add.image(x, y, soulGlowTex(c, k)).setDisplaySize(50, 50).setTint(0x8a52c9).setAlpha(0.45).setDepth(k.DEPTH + 30);
-        c.scene.tweens.add({ targets: pf, alpha: 0, displayWidth: 90, displayHeight: 90, duration: k.slow(420), onComplete: () => pf.destroy() });
+        const tail = k.v2Sprite(c, 'banshee', '#8a52c9', x, y, 110, k.DEPTH + 37).setAlpha(0.32).setFlipX(ghost.flipX);
+        c.scene.tweens.add({ targets: tail, alpha: 0, displayWidth: 60, displayHeight: 150, y: y + 10, duration: k.slow(300), ease: 'Quad.easeIn', onComplete: () => tail.destroy() });
+        k.burst(c.scene, x, y + 20, { colors: GRAVE, n: 1, speed: [10, 50], gravity: -40, life: [260, 460], size: [6, 10] });
       },
-      trailEvery: 30,
+      trailEvery: 40,
     });
-    // çığlık: banshee şişer, titrer, dağılır
-    c.scene.tweens.add({ targets: ghost, x: ghost.x + 6, duration: k.slow(26), yoyo: true, repeat: 7 });
-    c.scene.tweens.add({ targets: ghost, displayWidth: 240, displayHeight: 240, alpha: 0, delay: k.slow(240), duration: k.slow(480), onComplete: () => ghost.destroy() });
-    k.flash(c.scene, '#3a1858', 0.32, 460);
-    k.shake(c.scene, 240, 0.005);
-    // ağızdan aşağı inen çığlık konisi (ses dalgası halkaları gökten yere)
-    for (let i = 0; i < 4; i++) void k.wait(c.scene, k.slow(i * 50)).then(() => k.ring(c.scene, cell.x, cell.y - 200 + i * 48, { r: 40 + i * 24, flat: 0.4, n: 18, colors: ['#e3ccff', '#b872ff'], dur: 260, size: 7 }));
-    await k.wait(c.scene, k.slow(90));
-    const R = Math.abs(k.cellMid(c.board, 3).x - k.cellMid(c.board, 0).x) || 140;
+    // 3) merkez: banshee çığlıkla şişer, aşağı bükük halkalar iner
+    c.scene.tweens.add({ targets: ghost, x: ghost.x + 5, duration: k.slow(24), yoyo: true, repeat: 5 });
+    c.scene.tweens.add({ targets: ghost, displayWidth: 210, displayHeight: 230, alpha: 0, delay: k.slow(140), duration: k.slow(340), ease: 'Quad.easeOut', onComplete: () => ghost.destroy() });
+    for (let i = 0; i < 3; i++) void k.wait(c.scene, k.slow(i * 40)).then(() => warpRing(c, k, cell.x, top.y + 40 + i * 44, 34 + i * 18, { flat: 0.4, dur: 220, size: 7, startR: 10 }));
+    k.flash(c.scene, '#2e1446', calm ? 0.14 : 0.3, 380);
+    await k.wait(c.scene, k.slow(110));
+    if (!calm) k.shake(c.scene, 200, 0.005);
+    const linger = 620;
     for (const [si, st] of stages.entries()) {
       if (si > 0) {
-        const reach = Math.max(...st.slots.map((s) => Math.hypot(k.cellMid(c.board, s).x - cell.x, k.cellMid(c.board, s).y - cell.y)), R);
-        const dur = 280;
-        void k.ring(c.scene, cell.x, cell.y, { r: reach * 1.08, flat: 0.34, n: 46, colors: ['#e3ccff', '#b872ff', '#8a52c9'], dur, size: 11, startR: R * 0.4 });
-        void k.ring(c.scene, cell.x, cell.y - 26, { r: reach, flat: 0.45, n: 30, colors: MIASMA, dur: dur + 60, size: 7, startR: R * 0.3 });
+        // dalga zeminde merkezden kollara yol alır (her kola ayrı, görünür ilerleyen halkalar)
         if (si === 1) c.sfx('graveMoan');
-        await k.wait(c.scene, k.slow(dur * 0.8));
+        const travelMs = 200;
+        for (const s of st.slots) {
+          const to = k.cellMid(c.board, s);
+          for (let j = 1; j <= 3; j++)
+            void k.wait(c.scene, k.slow((travelMs * j) / 4)).then(() => {
+              const u = j / 4;
+              const px = cell.x + (to.x - cell.x) * u;
+              const py = cell.y + (to.y - cell.y) * u;
+              void k.ring(c.scene, px, py, { r: 26 + j * 6, flat: 0.34, n: 12, colors: WAIL_RING, dur: 200, size: 8, startR: 6 });
+              k.burst(c.scene, px, py - 4, { colors: MIASMA, n: 1, speed: [10, 40], angle: [-Math.PI * 0.8, -Math.PI * 0.2], gravity: -60, life: [300, 500], size: [6, 9] });
+            });
+        }
+        await k.wait(c.scene, k.slow(travelMs));
       }
-      for (const s of st.slots) wailCell(c, k, s, st.targets.filter((t) => t.combatant.slot === s), si === 0 ? 1.2 : 1);
-      await k.wait(c.scene, k.slow(60));
+      for (const s of st.slots)
+        wailCell(c, k, s, st.targets.filter((t) => t.combatant.slot === s), cell, { power: si === 0 ? 1.25 : 1, linger: si === 0 ? linger + 200 : linger, calm });
       c.releaseStage(si);
       if (si === 0) hit();
-      if (si < stages.length - 1) await k.wait(c.scene, k.slow(180));
     }
     a.play('idle');
     vampiricEcho(c, k, stages.flatMap((s) => s.targets));
-    await k.wait(c.scene, k.slow(400));
+    // 5) kalan: pus söner (wailCell temizler); efekt ömrü pusu kapsar, artık nesne kalmaz
+    await k.wait(c.scene, k.slow(linger + 40));
+    a.container.setAngle(ang0);
   }, c.actor);
 
 // ---------------------------------------------------------------------------------------------------------------- DARK BOND

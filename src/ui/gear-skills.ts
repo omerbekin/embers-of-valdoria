@@ -31,7 +31,7 @@ export interface GearSkillRow {
   numbers: GearSkillNumber[];
 }
 
-const effectDefs = () => ({ statuses: content.statuses, grounds: content.grounds });
+const effectDefs = () => ({ statuses: content.statuses, grounds: content.grounds, skills: content.skills });
 
 /** Fark yazısı ve yönü (stat açıklamalarıyla aynı biçim: aynı birim ve hassasiyet, artış '+', azalış '-'); fark yoksa null. */
 export function skillDiff(now: string, after: string): { text: string; dir: 'up' | 'down' } | null {

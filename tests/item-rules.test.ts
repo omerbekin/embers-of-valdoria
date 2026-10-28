@@ -3,6 +3,7 @@ import { Rng } from '../src/engine';
 import { activeHeroes, applyBattle, debugTeleport, latestSave, memoryKV, newCampaign, normalizeState, pickHero, writeSave, type CampaignState } from '../src/campaign';
 import {
   ITEMS,
+  canEquip,
   affixAllowed,
   affixLines,
   affixValues,
@@ -280,5 +281,14 @@ describe('nadirliğe göre zar tabanı (Ömer 2026-10-11)', () => {
     const old = rolledAffixes({ id: d.id, rolls: { rarity: 'epic', affixes: [{ id: 'c_hp', q: 0 }] } })[0]!;
     expect(old.values[0]).toBe(partRange(p, d.ilvl)[0]);
     expect(old.ranges[0]![0]).toBe(old.values[0]);
+  });
+});
+
+describe('Anti-Mage yalnız hançer (Ömer 2026-10-27)', () => {
+  it('Axes & Swords ailesinden hiçbir silahı takamaz, hançer takar; Warrior balta / kılıç takar', () => {
+    const axes = ITEMS.items.filter((d) => d.family === 'axes');
+    expect(axes.some((d) => canEquip('antimage', d))).toBe(false);
+    expect(canEquip('antimage', ITEMS.items.find((d) => d.family === 'daggers')!)).toBe(true);
+    expect(axes.every((d) => canEquip('warrior', d))).toBe(true);
   });
 });

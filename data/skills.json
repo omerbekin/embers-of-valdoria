@@ -749,9 +749,9 @@
     ]
   },
   "drain_field": {
-    "_not": "Madde 260 (Ömer): yakım hedefin MAKSİMUM MP'sinin yüzdesi (pctMax). Bu yakımla MP'si 0'a inen YA DA zaten 0 olan her düşmana bağımsız %50 zar: tutarsa Silenced 1 tur + INT ölçekli büyü hasarı (isabet zarı yok, kritik olabilir). Sayılar PROVİZYON (balance-tester): pctMax, onEmpty.chance/turns/damage.power.",
+    "_not": "Ley Brand (Ömer 2026-10-27, open-questions 444; eski Drain Field'ın yerine, id kayıt / ağaç / YZ uyumu için AYNI kaldı). 3x3 alandaki her düşmana Branded (turns). MP havuzu olmayan düşman maks canının taintPct'i kadar DOLU tainted mana alır (harcayamaz; Brand bitince silinir); MP'si olan düşmanın MP bedelleri costMult katı (yukarı yuvarlanır). Branded düşmanın yakılan/çalınan her MP'si yakana burnDamagePct x MP büyü hasarı (isabet/kritik yok, büyü zırhı işler); süre doğal bitince kalan tainted mana explodePct x kalan büyü hasarıyla patlar. Silence artık skill'de değil, ağaçta (Hush of the Brand). Ömer 2026-10-29 (open-questions 444): castBurnPct = Branded birim MP bedelli skill kullanınca ödediği (costMult'lu) bedelin bu oranı kadar EK MP yanar (yetmezse olanı), yanan MP yakım sayılır (burnDamagePct hasar, damgalayan AM'den); markDamagePct = markSkills (Mana Steal, Void Strike) Branded hedefe bu oranda fazla (çarpımsal, 'X% more') hasar. Sayılar PROVİZYON.",
     "id": "drain_field",
-    "name": "Drain Field",
+    "name": "Ley Brand",
     "icon": "drainfield",
     "target": "area_enemies",
     "range": 4,
@@ -770,19 +770,19 @@
     "fx": "#9b59d0",
     "effects": [
       {
-        "type": "manaBurn",
-        "pctMax": 0.55,
-        "onEmpty": {
-          "chance": 0.5,
-          "status": "silence",
-          "turns": 1,
-          "damage": {
-            "damageType": "magic",
-            "element": "arcane",
-            "scale": "int",
-            "power": 0.725
-          }
-        }
+        "type": "brand",
+        "turns": 3,
+        "taintPct": 0.2,
+        "costMult": 1.5,
+        "burnDamagePct": 0.5,
+        "explodePct": 0.5,
+        "castBurnPct": 0.75,
+        "markDamagePct": 0.4,
+        "markSkills": [
+          "mana_burn",
+          "void_strike"
+        ],
+        "element": "arcane"
       }
     ],
     "skyFx": "void",
@@ -3222,9 +3222,9 @@
     "note": "Pose test: plays the Throw pose."
   },
   "pt_drain_field": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Drain Field kopyası; gerçek efekt/ses/hedef (artOf drain_field), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Ley Brand (eski Drain Field) kopyası; gerçek efekt/ses/hedef (artOf drain_field), v2 poz takımında 'raise'. Bedel 0, cooldown yok.",
     "id": "pt_drain_field",
-    "name": "Drain Field",
+    "name": "Ley Brand",
     "icon": "drainfield",
     "target": "area_enemies",
     "range": 4,
@@ -3242,19 +3242,19 @@
     "fx": "#9b59d0",
     "effects": [
       {
-        "type": "manaBurn",
-        "pctMax": 0.55,
-        "onEmpty": {
-          "chance": 0.5,
-          "status": "silence",
-          "turns": 1,
-          "damage": {
-            "damageType": "magic",
-            "element": "arcane",
-            "scale": "int",
-            "power": 0.725
-          }
-        }
+        "type": "brand",
+        "turns": 3,
+        "taintPct": 0.2,
+        "costMult": 1.5,
+        "burnDamagePct": 0.5,
+        "explodePct": 0.5,
+        "castBurnPct": 0.75,
+        "markDamagePct": 0.4,
+        "markSkills": [
+          "mana_burn",
+          "void_strike"
+        ],
+        "element": "arcane"
       }
     ],
     "skyFx": "void",
@@ -9013,5 +9013,159 @@
       "boneSlashCrack"
     ],
     "artOf": "skeleton_slash"
+  },
+  "toll": {
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon / vfx / ses YER TUTUCU (var olanlardan ödünç; yeni sanat yok). Toll: tüm düşmanlara küçük kutsal hasar, çan çalar (ringsBell).",
+    "id": "toll",
+    "name": "Toll",
+    "icon": "radiance",
+    "target": "all_enemies",
+    "global": true,
+    "ringsBell": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "motion": "sky",
+    "skyFx": "light",
+    "skyStagger": 90,
+    "fx": "#f2d48a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.28,
+        "element": "holy",
+        "bell": true
+      }
+    ],
+    "vfx": "judgment",
+    "sfx": [
+      "lightSwell",
+      "hammerSlam"
+    ]
+  },
+  "thunderpeal": {
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon / vfx / ses YER TUTUCU (var olanlardan ödünç; yeni sanat yok). Thunderpeal: tek düşman sırası (row) şimşek hasarı + 1 tur Blinded, bekleme 2, çan çalar.",
+    "id": "thunderpeal",
+    "name": "Thunderpeal",
+    "icon": "bolt",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "ringsBell": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "cooldown": 2,
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#bfe3ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.6,
+        "element": "lightning",
+        "bell": true
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 1
+      }
+    ],
+    "vfx": "judgment",
+    "sfx": [
+      "bigBoom",
+      "earthCrack"
+    ]
+  },
+  "cracked_bell": {
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon / vfx / ses YER TUTUCU (var olanlardan ödünç; yeni sanat yok). Cracked Bell: tek hedef kutsal hasar + %30 şansla 1 tur Stun, bekleme 3; çan sayacını ARTIRMAZ ama Pealing Bells ile güçlenir.",
+    "id": "cracked_bell",
+    "name": "Cracked Bell",
+    "icon": "judgehammer",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#e8c56a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.8,
+        "element": "holy",
+        "bell": true
+      },
+      {
+        "type": "status",
+        "status": "stun",
+        "turns": 1,
+        "chance": 0.3
+      }
+    ],
+    "vfx": "hammerfall",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam"
+    ]
+  },
+  "great_bell_of_valdoria": {
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon / vfx / ses YER TUTUCU (var olanlardan ödünç; yeni sanat yok). Ultimate: tüm düşmanlara kutsal + şimşek; her iki hasar bu savaşta çalınan her çan için +powerPerBell güç alır (ve Pealing Bells çarpanı). Bekleme 4, ilk bekleme 2. Kendisi çan sayacını artırmaz.",
+    "id": "great_bell_of_valdoria",
+    "name": "Great Bell of Valdoria",
+    "icon": "divine",
+    "target": "all_enemies",
+    "global": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 22
+    },
+    "cooldown": 4,
+    "initialCooldown": 2,
+    "motion": "sky",
+    "skyFx": "light",
+    "skyStagger": 130,
+    "fx": "#ffe7a0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.3,
+        "element": "holy",
+        "bell": true,
+        "powerPerBell": 0.025
+      },
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.2,
+        "element": "lightning",
+        "bell": true,
+        "powerPerBell": 0.025
+      }
+    ],
+    "vfx": "judgment",
+    "sfx": [
+      "lightSwell",
+      "bigBoom",
+      "choirAh"
+    ],
+    "ai": {
+      "reserveMp": 2
+    }
   }
 }

@@ -331,6 +331,7 @@
   "pilgrim_road": {
     "_not": "Rakip bölük (mob-plan.md 3, Ömer 2026-10-16): St. Brann'ın emanetinin peşindeki paralı maceracılar; Bölge II'de class kopyası kalan TEK savaş (Gambler yerine Mage). KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,028 (düğümler aynı zorluğa çekildi).",
     "name": "The Silver Stag Company",
+    "company": { "name": "The Silver Stag Company", "line": "Sellswords hunting St. Brann's relic", "cause": "They want the abbey's relic first, and they see your company as a rival. They will not let you pass." },
     "units": [
       { "class": "warrior", "slot": 0, "name": "Stag Sellsword", "mods": { "spdAdd": -1, "hpMult": 0.59, "powerMult": 0.752 } },
       { "class": "cutthroat", "slot": 2, "name": "Stag Knife", "mods": { "spdAdd": -8, "hpMult": 0.59, "powerMult": 0.752 } },

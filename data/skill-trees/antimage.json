@@ -1,6 +1,6 @@
 {
   "class": "antimage",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "b",
@@ -25,7 +25,7 @@
     },
     {
       "skill": "drain_field",
-      "name": "Drain Field",
+      "name": "Ley Brand",
       "karma": "A"
     },
     {
@@ -79,14 +79,15 @@
       {
         "at": 15,
         "name": "Wide Basin",
-        "text": "Drain Field gives your team 1 MP for each enemy it hits.",
+        "text": "Ley Brand gives your team 1 MP for each enemy it Brands.",
         "src": "B:V3:bar2",
         "fx": [
           {
             "k": "hook",
             "h": "trigger",
-            "on": "manaBurned",
+            "on": "statusApplied",
             "skill": "drain_field",
+            "status": "branded",
             "do": [
               {
                 "mp": 1,
@@ -99,7 +100,7 @@
       {
         "at": 20,
         "name": "Warded Steps",
-        "text": "Allies under your Spell Ward take ×0.98 physical damage.",
+        "text": "Allies under your Spell Ward take 2% less physical damage.",
         "src": "B:V4:bar1",
         "fx": [
           {
@@ -150,7 +151,7 @@
     },
     "0.f2": {
       "name": "Soaking Robes",
-      "text": "Magic damage you block counts ×1.04 per rank toward Mana Overflow.",
+      "text": "Magic damage you block counts 4% more per rank toward Mana Overflow.",
       "src": "B:V3:0.f2",
       "fx": [
         {
@@ -367,7 +368,7 @@
     },
     "1.f2": {
       "name": "Deep Pockets",
-      "text": "Mana Steal burns +3 MP per rank from enemies above half MP.",
+      "text": "Mana Steal +8% damage per rank against enemies above half MP.",
       "src": "B:V3:1.f3",
       "fx": [
         {
@@ -377,7 +378,7 @@
             "targetMpAbove": 0.5
           },
           "mod": {
-            "manaBurnAdd": 3
+            "powerMul": 0.08
           },
           "rank": true
         }
@@ -416,7 +417,7 @@
     },
     "1.r": {
       "name": "Bare Steel",
-      "text": "Mana Steal ×1.02 damage per rank against enemies with no buffs.",
+      "text": "Mana Steal deals 2% more damage per rank against enemies with no buffs.",
       "src": "B:V5:1.r",
       "fx": [
         {
@@ -544,7 +545,7 @@
     },
     "1.v": {
       "name": "Spellsplitter",
-      "text": "Mana Steal becomes Spellsplitter: it removes every buff from its target and deals ×(1 + 8% per buff removed) damage.",
+      "text": "Mana Steal becomes Spellsplitter: it removes every buff from its target and deals 8% more damage per buff removed.",
       "src": "B:V5:1.v",
       "fx": [
         {
@@ -568,14 +569,14 @@
       ]
     },
     "2.f1": {
-      "name": "Wide Siphon",
-      "text": "Drain Field burns +2% of max MP per rank.",
+      "name": "Deep Taint",
+      "text": "Ley Brand's tainted mana pool grows by 2% of max HP per rank.",
       "src": "A:V1:2.f1",
       "fx": [
         {
           "k": "skill",
-          "sel": "manaBurn",
-          "f": "pctMax",
+          "sel": "brand",
+          "f": "taintPct",
           "op": "add",
           "v": 0.02,
           "rank": true
@@ -583,14 +584,14 @@
       ]
     },
     "2.f2": {
-      "name": "Hushing Mist",
-      "text": "Drain Field Silence chance +5% per rank.",
+      "name": "Searing Brand",
+      "text": "Mana lost by a Branded enemy deals damage equal to a further 5% of that mana per rank.",
       "src": "A:V1:2.f2",
       "fx": [
         {
           "k": "skill",
-          "sel": "manaBurn",
-          "f": "onEmpty.chance",
+          "sel": "brand",
+          "f": "burnDamagePct",
           "op": "add",
           "v": 0.05,
           "rank": true
@@ -598,78 +599,66 @@
       ]
     },
     "2.f3": {
-      "name": "Long Quiet",
-      "text": "Drain Field's Silence has a 5% chance per rank to last 1 more turn.",
+      "name": "Heavy Toll",
+      "text": "Branded enemies' MP costs rise by a further 5% per rank.",
       "src": "A:V1:2.f3",
       "fx": [
         {
-          "k": "hook",
-          "h": "cond",
-          "sel": "status:silence",
-          "procChance": 0.05,
-          "mod": {
-            "turns": 1
-          },
-          "rank": "chance"
+          "k": "skill",
+          "sel": "brand",
+          "f": "costMult",
+          "op": "add",
+          "v": 0.05,
+          "rank": true
         }
       ]
     },
     "2.n0": {
-      "name": "Sure Hush",
-      "text": "Drain Field always Silences enemies that were already at 0 MP before the cast.",
+      "name": "Hush of the Brand",
+      "text": "A Branded enemy whose mana reaches 0 is Silenced for 1 turn.",
       "src": "A:V1:2.n0",
       "fx": [
         {
-          "k": "hook",
-          "h": "cond",
-          "when": {
-            "targetMpZero": true
-          },
-          "mod": {
-            "emptySet": 1
-          }
+          "k": "skill",
+          "sel": "brand",
+          "f": "silenceOnEmpty",
+          "op": "set",
+          "v": 1
         }
       ]
     },
     "2.r": {
-      "name": "Settling Dust",
-      "text": "If Drain Field Silences anyone, 5% chance per rank that its cooldown is 1 turn shorter.",
+      "name": "Bitter Burst",
+      "text": "When Ley Brand runs out, leftover tainted mana deals damage equal to a further 10% of itself per rank.",
       "src": "A:V1:2.r",
       "fx": [
         {
-          "k": "hook",
-          "h": "cond",
-          "when": {
-            "silencedAny": true
-          },
-          "procChance": 0.05,
-          "mod": {
-            "cooldownSet": 2
-          },
+          "k": "skill",
+          "sel": "brand",
+          "f": "explodePct",
+          "op": "add",
+          "v": 0.1,
           "rank": true
         }
       ]
     },
     "2.ea": {
-      "name": "Focused Siphon",
-      "text": "Drain Field burns ×1.25 MP from the enemy in its centre cell.",
+      "name": "Focused Brand",
+      "text": "The enemy in Ley Brand's centre cell gets a 50% larger tainted mana pool.",
       "src": "A:V1:2.ea",
       "fx": [
         {
-          "k": "hook",
-          "h": "cond",
-          "when": {
-            "targetIsCenter": true
-          },
-          "mod": {
-            "manaBurnMul": 0.25
-          }
+          "k": "skill",
+          "sel": "brand",
+          "f": "centerTaintMul",
+          "op": "set",
+          "v": 0.5
         }
       ]
     },
     "2.eb": {
-      "name": "Wider Grasp",
-      "text": "Drain Field covers one more column (3x3 → 3x4).",
+      "name": "Wider Brand",
+      "text": "Ley Brand covers one more column (3x3 → 3x4).",
       "src": "A:V1:2.eb",
       "fx": [
         {
@@ -682,25 +671,22 @@
       ]
     },
     "2.ma": {
-      "name": "Heart of Quiet",
-      "text": "Drain Field's centre enemy is always Silenced for 1 turn if it ends at 0 MP.",
+      "name": "Lasting Brand",
+      "text": "Ley Brand lasts 1 more turn.",
       "src": "A:V1:2.ma",
       "fx": [
         {
-          "k": "hook",
-          "h": "cond",
-          "when": {
-            "targetIsCenter": true
-          },
-          "mod": {
-            "emptySet": 1
-          }
+          "k": "skill",
+          "sel": "brand",
+          "f": "turns",
+          "op": "add",
+          "v": 1
         }
       ]
     },
     "2.fa": {
-      "name": "Narrow Siphon",
-      "text": "Drain Field hits only its centre cell, but burns 100% of that enemy's max MP.",
+      "name": "Narrow Brand",
+      "text": "Ley Brand hits only its centre cell, but that enemy's tainted mana pool is 40% of its max HP and its MP costs are doubled.",
       "src": "A:V1:2.fa",
       "fx": [
         {
@@ -713,76 +699,71 @@
         },
         {
           "k": "skill",
-          "sel": "manaBurn",
-          "f": "pctMax",
-          "op": "set",
-          "v": 1
+          "sel": "brand",
+          "f": "taintPct",
+          "op": "base",
+          "v": 0.4
+        },
+        {
+          "k": "skill",
+          "sel": "brand",
+          "f": "costMult",
+          "op": "base",
+          "v": 2
         }
       ]
     },
     "2.fb": {
-      "name": "Shallow Net",
-      "text": "Drain Field Silence chance 50% → 80%, but it no longer deals damage.",
+      "name": "Thin Brand",
+      "text": "Ley Brand costs 6 less MP, but lasts 1 turn less.",
       "src": "A:V1:2.fb",
       "fx": [
         {
           "k": "skill",
-          "sel": "manaBurn",
-          "f": "onEmpty.chance",
-          "op": "base",
-          "v": 0.8
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "add",
+          "v": -6
         },
         {
           "k": "skill",
-          "sel": "manaBurn",
-          "f": "onEmpty.damage",
-          "op": "remove"
+          "sel": "brand",
+          "f": "turns",
+          "op": "add",
+          "v": -1
         }
       ]
     },
     "2.mb": {
-      "name": "Mass Hush",
-      "text": "If Drain Field empties 3 or more enemies, all of them are Silenced, no roll.",
+      "name": "Searing Grasp",
+      "text": "Ley Brand also burns 15% of each Branded enemy's max MP, tainted mana included.",
       "src": "A:V1:2.mb",
-      "fx": [
-        {
-          "k": "hook",
-          "h": "trigger",
-          "on": "skillUse",
-          "when": {
-            "castMpZeroAtLeast": 3
-          },
-          "do": [
-            {
-              "status": "silence",
-              "turns": 1,
-              "to": "castTargets",
-              "ifMpZero": true
-            }
-          ]
-        }
-      ]
-    },
-    "2.v": {
-      "name": "Hall of Silence",
-      "text": "Drain Field becomes Hall of Silence: the area stays 2 turns, burns 15% max MP each turn and Silences enemies at 0 MP inside.",
-      "src": "A:V1:2.v",
       "fx": [
         {
           "k": "addEffect",
           "effect": {
-            "type": "ground",
-            "ground": "hall_of_silence",
-            "turns": 2,
-            "scale": "int",
-            "power": 0
+            "type": "manaBurn",
+            "pctMax": 0.15
           }
+        }
+      ]
+    },
+    "2.v": {
+      "name": "Spreading Brand",
+      "text": "Ley Brand becomes Spreading Brand: when a Brand runs out, it leaps once to an unbranded enemy next to its bearer with a fresh Brand.",
+      "src": "A:V1:2.v",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "brand",
+          "f": "spread",
+          "op": "on"
         }
       ]
     },
     "3.f1": {
       "name": "Layered Ward",
-      "text": "Spell Ward shield ×1.04 per rank.",
+      "text": "Spell Ward's shield is 4% larger per rank.",
       "src": "B:V4:3.f1",
       "fx": [
         {
@@ -961,7 +942,7 @@
     },
     "3.fb": {
       "name": "Cloistered Ward",
-      "text": "Spell Ward on yourself is ×1.3 as large, but it can no longer target allies.",
+      "text": "Spell Ward on yourself is 30% larger, but it can no longer target allies.",
       "src": "B:V4:3.fa",
       "fx": [
         {
@@ -980,7 +961,7 @@
     },
     "3.mb": {
       "name": "Bastion of Null",
-      "text": "While you hold Spell Ward and a taunt, you take ×0.7 physical damage.",
+      "text": "While you hold Spell Ward and a taunt, you take 30% less physical damage.",
       "src": "B:V4:3.ma",
       "fx": [
         {
@@ -1039,7 +1020,7 @@
     },
     "4.u2": {
       "name": "Spell Shatter",
-      "text": "Void Strike's target deals ×0.8 magic damage for 2 turns.",
+      "text": "Void Strike's target deals 20% less magic damage for 2 turns.",
       "src": "B:V4:4.u2",
       "fx": [
         {

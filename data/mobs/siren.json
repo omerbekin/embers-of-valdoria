@@ -26,7 +26,7 @@
     "id": "lure",
     "name": "Lure",
     "icon": "eye",
-    "text": "A hero that hits it with a skill becomes Spellbound for 1 turn (summons do not): their next skill deals ×0.75 damage or healing.",
+    "text": "A hero that hits it with a skill becomes Spellbound for 1 turn (summons do not): their next skill deals 25% less damage or healing.",
     "effect": {
       "type": "lure",
       "status": "spellbound",

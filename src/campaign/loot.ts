@@ -206,3 +206,26 @@ export function grantGift(t: CampaignState, nodeId: string, party: Hero[], tag: 
       : drop;
   return drop;
 }
+
+/**
+ * Belirli bir item'i (olay ödülü: Clapper of the Sunken Bell) düğümün item seviyesinde zarlayıp torbaya koyar; torba doluysa Spoils kartında
+ * bırakılan olarak görünür (grantGift ile aynı yol). Nadirlik tanımdan (Legendary). Bilinmeyen id: null.
+ */
+export function grantItem(t: CampaignState, nodeId: string, itemId: string, tag: string): LootDrop | null {
+  const d = ITEMS.items.find((x) => x.id === itemId);
+  if (!d) return null;
+  const ilvl = Math.max(1, nodeIlvl(t.mapId, nodeId));
+  const rolled = makeItem(d.id, '', rngFor(t.seed, t.mapId, nodeId, 'item-roll', tag), { rarity: d.rarity, ilvl });
+  let drop: LootDrop;
+  if (t.inventory.length < BAG_SIZE) {
+    const inst: ItemInstance = { ...rolled, uid: `i${t.nextItemId++}` };
+    t.inventory.push(inst);
+    drop = { node: nodeId, kind: 'treasure', items: [inst.uid], gold: 0, gift: true };
+  } else drop = { node: nodeId, kind: 'treasure', items: [], gold: 0, gift: true, left: [d.id], leftRolls: [rolled.rolls] };
+  const prev = t.pendingLoot;
+  t.pendingLoot =
+    prev && prev.node === nodeId
+      ? { ...prev, items: [...prev.items, ...drop.items], ...(drop.left ? { left: [...(prev.left ?? []), ...drop.left], leftRolls: [...(prev.left ?? []).map((_, i) => prev.leftRolls?.[i]), ...drop.leftRolls!] } : {}) }
+      : drop;
+  return drop;
+}

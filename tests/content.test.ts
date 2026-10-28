@@ -18,7 +18,7 @@ const ATTRIBUTES = ['str', 'int', 'dex', 'luck'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const PLACEHOLDER_SPRITE_CLASSES: string[] = [];
 /** Kendi görseli henüz çizilmemiş, başka bir class'ın sprite'ını GEÇİCİ kullanan class'lar (class id -> ödünç spriteId). Görsel gelince listeden çıkar. */
-const BORROWED_SPRITE_CLASSES: Record<string, string> = {}; // başka class'ın görselini ödünç alan class'lar (şu an yok: Cutthroat'ın kendi görseli var)
+const BORROWED_SPRITE_CLASSES: Record<string, string> = { vesper: 'mage' }; // başka class'ın görselini ödünç alan class'lar (Vesper 2026-10-28: yer tutucu Mage görseli, yeni sanat yok)
 const everyone = { ...content.classes, ...content.summons, ...content.bosses, ...content.mobs }; // boss (data/bosses) ve mob (data/mobs) tanımları da şemaya tabi
 
 describe('skill verisi', () => {
@@ -153,6 +153,15 @@ describe('skill verisi', () => {
             break;
           case 'taunt':
             expect(e.turns).toBeGreaterThan(0);
+            break;
+          case 'brand':
+            // Ley Brand (open-questions 444): süre, havuz oranı, bedel çarpanı, yakım / patlama payı
+            expect(e.turns).toBeGreaterThan(0);
+            expect(e.taintPct).toBeGreaterThan(0);
+            expect(e.costMult).toBeGreaterThanOrEqual(1);
+            expect(e.burnDamagePct).toBeGreaterThanOrEqual(0);
+            expect(e.explodePct).toBeGreaterThanOrEqual(0);
+            expect(content.statuses.branded, key).toBeDefined();
             break;
           case 'status':
             expect(content.statuses[e.status], `${key} -> status ${e.status}`).toBeDefined();
@@ -559,7 +568,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground'];
+    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground', 'toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria'];
     // Pose Tester kopyaları (pt_<id>, gizli debug): sınıf skill'lerinin kopyası, aynı hareket
     const copies = base.filter((id) => content.skills[`pt_${id}`]).map((id) => `pt_${id}`);
     expect(copies.length).toBeGreaterThan(0);

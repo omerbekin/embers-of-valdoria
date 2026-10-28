@@ -5,8 +5,12 @@
  */
 import Phaser from 'phaser';
 import layout from '../../data/battle-layout.json';
+import { audioSettings } from '../game/audio';
 import { debugState } from '../game/debug-state';
 import { BattleScene } from '../game/scenes/BattleScene';
+import { loadVolume } from '../ui/settings';
+import { sfxLevel } from '../ui/sfx-volume';
+import { stepFraction } from '../ui/volume-steps';
 import { skillOwner } from './catalog';
 import { stageTeams } from './stage-teams';
 
@@ -30,6 +34,10 @@ export class Preview {
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
       scene: [],
     });
+    // Kayıtlı ses ayarı galeride de geçerli (oyundaki gibi; volume 0 = sessiz, Ömer 2026-10-28)
+    audioSettings.volume = stepFraction(loadVolume());
+    audioSettings.sfx = stepFraction(sfxLevel());
+    this.game.sound.mute = loadVolume() === 0;
     // Debug menüsündeki gibi: ayar dışarıdan değişebilsin
     (window as unknown as { __game?: Phaser.Game }).__game = this.game;
     this.ready = new Promise((resolve) => {

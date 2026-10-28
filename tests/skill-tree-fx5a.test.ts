@@ -525,17 +525,7 @@ describe('Faz 5a: ek sözlük (hitsEach, merkez kritikleri, tekrar sırası, ta�
     expect(b.effectiveStats(P(b, 1)).armor - P(b, 1).stats.armor).toBeCloseTo(P(b).stats.armor, 0);
   });
 
-  it("Mass Hush: Drain Field 3+ hedefi 0 MP'ye indirirse onları Silence'lar", () => {
-    const foes = { 0: 'mage', 1: 'mage', 2: 'mage' };
-    const b = make({ 0: 'antimage' }, foes, withTree(0, only('antimage', { '2.mb': 1 })));
-    tank(b);
-    for (const s of [0, 1, 2]) E(b, s).mp = 1;
-    cast(b, P(b), 'drain_field', undefined, 0);
-    for (const s of [0, 1, 2]) {
-      expect(E(b, s).mp).toBe(0);
-      expect(has(E(b, s), 'silence'), `slot ${s}`).toBe(true);
-    }
-  });
+  // 2026-10-27: eski Drain Field ağaç testi kaldırıldı (Ley Brand; yeni düğüm testleri tests/skill-tree-fx-leybrand.test.ts)
 
   it('Mark of Many: Doom Mark diğer her düşmandan 1 Omen çeker', () => {
     const b = make({ 0: 'hexer' }, { 0: 'warrior', 1: 'warrior', 2: 'warrior', 3: 'warrior' }, withTree(0, only('hexer', { '4.r3': 1 })));

@@ -28,7 +28,7 @@
     "id": "shares_of_the_dead",
     "name": "Shares of the Dead",
     "icon": "muscle",
-    "text": "Whenever an ally dies, gains Fortified for 1 turn and its damage grows until the end of battle (×1.15 after one death, ×1.3 after two, and so on).",
+    "text": "Whenever an ally dies, gains Fortified for 1 turn and its damage grows until the end of battle (15% more after one death, 30% more after two, and so on).",
     "effect": {
       "type": "sharesOfDead",
       "status": "fortify",

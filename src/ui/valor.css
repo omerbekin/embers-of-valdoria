@@ -702,3 +702,8 @@ html.short .bh-valor .vl-meter .vl-lbl {
 html.reduced-motion .vg-wd {
   transition: none;
 }
+
+/* Valor penceresi (Nöbet) açıkken mentor kutusu üstüne binmesin (Ömer 2026-10-28; telefonda başlığa biniyordu) */
+body:has(.vl-overlay) .tut-wrap {
+  visibility: hidden;
+}

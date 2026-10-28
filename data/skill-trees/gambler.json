@@ -83,7 +83,7 @@
       {
         "at": 15,
         "name": "Blood Debt",
-        "text": "After a Bust costs you HP, your next skill deals ×1.1 damage.",
+        "text": "After a Bust costs you HP, your next skill deals 10% more damage.",
         "src": "A:V2:bar1",
         "fx": [
           {
@@ -431,7 +431,7 @@
     },
     "1.f1": {
       "name": "Steady Wrist",
-      "text": "Each repeat throw of Loaded Dice deals ×1.06 damage per rank.",
+      "text": "Each repeat throw of Loaded Dice deals 6% more damage per rank.",
       "src": "A:V1:1.r*",
       "fx": [
         {
@@ -467,7 +467,7 @@
     },
     "1.f3": {
       "name": "Rolling Dice",
-      "text": "Each Loaded Dice Double Hit adds 2% power per rank to Loaded Dice (×1.02, ×1.04, ...) until one fails to Double Hit.",
+      "text": "Each Loaded Dice Double Hit adds 2% power per rank to Loaded Dice (2% more, 4% more, ...) until one fails to Double Hit.",
       "src": "A:V3:1.f2",
       "fx": [
         {
@@ -530,7 +530,7 @@
     },
     "1.ea": {
       "name": "Hot Dice",
-      "text": "Loaded Dice Double Hit chance 25% → 30%; each repeat throw deals 5% more than the last (×1.05, ×1.1, ...).",
+      "text": "Loaded Dice Double Hit chance 25% → 30%; each repeat throw deals 5% more than the last (5% more, 10% more, ...).",
       "src": "A:V3:1.ea",
       "fx": [
         {
@@ -594,7 +594,7 @@
     },
     "1.fa": {
       "name": "Fever Dice",
-      "text": "Loaded Dice Double Hit chance +20%, but each throw deals ×0.85 damage.",
+      "text": "Loaded Dice Double Hit chance +20%, but each throw deals 15% less damage.",
       "src": "A:V3:1.fa",
       "fx": [
         {
@@ -615,7 +615,7 @@
     },
     "1.fb": {
       "name": "Spendthrift",
-      "text": "Loaded Dice costs 6 MP and deals ×1.4 power, but Rest restores half as much MP.",
+      "text": "Loaded Dice costs 6 MP and has 40% more power, but Rest restores half as much MP.",
       "src": "A:V5:1.fb",
       "fx": [
         {
@@ -969,7 +969,7 @@
     },
     "3.f1": {
       "name": "Sharp Corners",
-      "text": "Card Trick ×1.06 power per rank against Stunned targets.",
+      "text": "Card Trick has 6% more power per rank against Stunned targets.",
       "src": "B:V4:3.f3",
       "fx": [
         {
@@ -987,7 +987,7 @@
     },
     "3.f2": {
       "name": "Jack of Clubs",
-      "text": "Card Trick ×1.06 power per rank against targets with a status.",
+      "text": "Card Trick has 6% more power per rank against targets with a status.",
       "src": "B:V4:3.f2",
       "fx": [
         {
@@ -1171,7 +1171,7 @@
     },
     "3.eb": {
       "name": "Distracting Fan",
-      "text": "Enemies hit by Card Trick deal ×0.85 damage on their next attack.",
+      "text": "Enemies hit by Card Trick deal 15% less damage on their next attack.",
       "src": "B:V4:3.eb",
       "fx": [
         {
@@ -1429,7 +1429,7 @@
     },
     "4.l1": {
       "name": "Grudge Ledger",
-      "text": "All In ×(1 + 1% for each hit you took since its last use) damage.",
+      "text": "All In deals 1% more damage for each hit you took since its last use.",
       "src": "A:V2:4.l1",
       "fx": [
         {
@@ -1446,7 +1446,7 @@
     },
     "4.l2": {
       "name": "Heartbeat",
-      "text": "All In deals ×(1 + 1% for every 1% of HP you are missing) damage.",
+      "text": "All In deals 1% more damage for every 1% of HP you are missing.",
       "src": "A:V2:4.u2",
       "fx": [
         {

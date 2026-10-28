@@ -2,6 +2,7 @@ import type { Battle } from './battle';
 import { damageRange, healRange, missingHpHealMult } from './formulas';
 import { betMultipliers, betStakeParts } from './gamble';
 import { burnAmountFor, emptyProcApplies } from './mana-burn';
+import { skillCostPay } from './cost';
 import { damageSpecFor, type DamageEffect } from './spec';
 import { slotOfTileUid } from './battle';
 import { attributePower, hitChance } from './stats';
@@ -59,6 +60,15 @@ export interface TargetPreview {
   ground?: { perTick: number; turns: number; total: number };
   /** Yakılacak mana. */
   burn?: number;
+  /** Ley Brand: hedef Branded ise yakılacak MP'nin yakana vereceği büyü hasarı (zırh dahil; isabet / kritik yok). */
+  brandBurn?: number;
+  /**
+   * Ley Brand (open-questions 444): uygulanacak Brand: süre, açılacak tainted mana havuzu (MP havuzu olmayan ve henüz havuzu olmayan hedefte; yoksa 0),
+   * MP bedel çarpanı (MP havuzu olan hedefte anlamlı) ve hedefteki mevcut Brand'in kalan süresi (yoksa 0).
+   */
+  brand?: { turns: number; pool: number; costMult: number; current: number; /** Ömer 2026-10-29: MP bedelli kullanımda ek yakım oranı ve işaretli skill'lere fazla hasar oranı (yoksa 0). */ castBurnPct: number; markPct: number };
+  /** Ley Brand bedel yakımı (kullanıcının girdisinde): kullanıcı Branded ve bu skill'e MP ödeyecekse kullanım sonunda yanacak ek MP ve kendine vereceği büyü hasarı. */
+  castBurn?: { mp: number; damage: number };
   /**
    * Mana boşalma zarı (manaBurn onEmpty, Drain Field; madde 260): bu yakımla MP'si 0'a inecek (ya da zaten 0 olan) hedefte `chance` ihtimalle
    * `status` (`turns` tur) + hasar (kritik hariç aralık; isabet zarı yok, kalkan düşülmemiş). Zar tutmazsa hiçbiri olmaz.
@@ -331,9 +341,23 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const perTick = battle.groundTickDamage(effect.ground, Math.round(attributePower(actor.stats, effect.scale, f) * effect.power), target);
         const e = entry(target.uid);
         e.ground = { perTick: (e.ground?.perTick ?? 0) + perTick, turns: effect.turns, total: (e.ground?.total ?? 0) + perTick * effect.turns };
+      } else if (effect.type === 'brand') {
+        // Ley Brand: süre, tainted mana havuzu (yalnızca MP havuzu olmayan ve havuzu açık olmayan hedef; yeniden atış doldurmaz), bedel çarpanı
+        const e = entry(target.uid);
+        const center = centerUid !== undefined && target.uid === centerUid;
+        const pct = effect.taintPct * (center && effect.centerTaintMul ? 1 + effect.centerTaintMul : 1);
+        const pool = target.maxMp <= 0 && target.taint === undefined ? Math.max(1, Math.round(target.maxHp * pct)) : 0;
+        const current = target.statuses.find((x) => x.kind === 'branded')?.turns ?? 0;
+        e.brand = { turns: effect.turns, pool, costMult: effect.costMult, current, castBurnPct: effect.castBurnPct ?? 0, markPct: effect.markDamagePct ?? 0 };
+        const name = battle.statusDef('branded')?.name ?? 'Branded';
+        e.statuses = [...(e.statuses ?? []), `${name} ${effect.turns} turns`, pool > 0 ? `Tainted mana ${pool}` : target.maxMp > 0 && target.taint === undefined ? `MP costs ${Math.round((effect.costMult - 1) * 100)}% higher` : 'Tainted mana kept', ...(effect.castBurnPct && target.maxMp > 0 && target.taint === undefined ? [`MP skills burn ${Math.round(effect.castBurnPct * 100)}% extra`] : [])];
       } else if (effect.type === 'manaBurn') {
         const e = entry(target.uid);
         e.burn = (e.burn ?? 0) + burnAmountFor(effect, target);
+        // Ley Brand: Branded hedefin yanan MP'si yakana hasar (gerçek vuruşla aynı: tickDamage)
+        const bs = target.statuses.find((x) => x.kind === 'branded')?.brand;
+        const lost = burnAmountFor(effect, target);
+        if (bs && lost > 0 && Math.round(lost * bs.burnPct) > 0) e.brandBurn = (e.brandBurn ?? 0) + battle.tickDamage(bs.element, 'magic', Math.round(lost * bs.burnPct), target);
         // Madde 260 (Drain Field): MP'si bu yakımla 0'a inecek (ya da zaten 0) hedefte onEmpty zarı: ihtimal, durum ve hasar aralığı (isabet zarı yok)
         const spec = effect.onEmpty;
         if (spec && emptyProcApplies(effect, target)) {
@@ -377,6 +401,16 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     }
   }
 
+  // Ley Brand bedel yakımı (Ömer 2026-10-29): Branded kullanıcı MP öderse ödediği x castBurnPct ek MP yanar (ödemeden sonra kalanla sınırlı), yanan MP x burnPct kendine hasar
+  const cb = actor.statuses.find((x) => x.kind === 'branded')?.brand;
+  if (cb?.castBurnPct) {
+    const pay = skillCostPay(skill.cost, actor);
+    if (pay.resource === 'mp' && pay.amount > 0) {
+      const mp = Math.min(Math.max(0, actor.mp - pay.amount), Math.round(pay.amount * cb.castBurnPct));
+      const raw = Math.round(mp * cb.burnPct);
+      if (mp > 0) entry(actor.uid).castBurn = { mp, damage: raw > 0 ? battle.tickDamage(cb.element, 'magic', raw, actor) : 0 };
+    }
+  }
   for (const e of out.values()) {
     if (!e.damage) continue;
     const target = battle.get(e.uid);

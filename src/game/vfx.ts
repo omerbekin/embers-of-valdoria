@@ -880,6 +880,11 @@ const GROUND_LOOK: Record<string, GroundLook> = {
   burning: { base: [0x2a140e, 0.5], mid: [0xff6a32, 0.66], rim: [0xff9a50, 0.42], edge: [0xf08a46, 0.9], shadow: [0x0e0605, 0.32] },
   // Flooded Planks (Bridge Warden, Breaking Span): bulanık nehir suyu basmış ıslak köprü kalasları (deniz yeşili, soğuk parıltı)
   flooded_planks: { base: [0x1f3f42, 0.52], mid: [0x6fb0b0, 0.4], rim: [0xbfe6e6, 0.3], edge: [0x8fcaca, 0.75], shadow: [0x061012, 0.3] },
+  // Zemin tepkimeleri (Ömer 2026-10-27; yer tutucu görünüm, mevcut dillerden): Sanctified Flame = daha parlak kutsal ateş, Holy Water = soluk mavi
+  // şifa ışığı (Holy Ground ayrıntısı), Ice = buz mavisi soğuk yüzey (Flooded Planks parıltısı)
+  sanctified_flame: { base: [0xd8a848, 0.4], mid: [0xfff2c0, 0.64], rim: [0xfff0b8, 0.36], edge: [0xffe08a, 0.86], shadow: [0x24180a, 0.28] },
+  holy_water: { base: [0x6f93b0, 0.3], mid: [0xe6f4ff, 0.5], rim: [0xc8e6ff, 0.32], edge: [0xa8d4f2, 0.78], shadow: [0x0a1218, 0.22] },
+  ice_ground: { base: [0x7fa8c0, 0.42], mid: [0xe8f8ff, 0.5], rim: [0xf2fbff, 0.36], edge: [0xc4e8f8, 0.85], shadow: [0x081018, 0.28] },
 };
 
 const rgba = (rgb: number, a: number) => `rgba(${(rgb >> 16) & 255},${(rgb >> 8) & 255},${rgb & 255},${Math.max(0, Math.min(1, a))})`;
@@ -919,11 +924,11 @@ function outerSides(slot: number, union: Set<number>): boolean[] {
 export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party' | 'enemy', slots: number[], delay = 0): Phaser.GameObjects.Container | null {
   const look = GROUND_LOOK[groundId];
   if (!look || slots.length === 0) return null;
-  const holy = groundId === 'holy_fire';
+  const holy = groundId === 'holy_fire' || groundId === 'sanctified_flame';
   const burning = groundId === 'burning';
   const poison = groundId === 'poison';
-  const flooded = groundId === 'flooded_planks';
-  const healing = groundId === 'holy_ground';
+  const flooded = groundId === 'flooded_planks' || groundId === 'ice_ground';
+  const healing = groundId === 'holy_ground' || groundId === 'holy_water';
   const cells = slots.map((s, i) => ({ s, q: quadOf(board, s, 1), m: cellMid(board, s), ph: i * 1.7 + rnd(0, 6) }));
   const first = cells[0]!.m;
   const order = cells.map((k) => Math.hypot(k.m.x - first.x, k.m.y - first.y));

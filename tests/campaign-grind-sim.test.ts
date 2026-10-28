@@ -66,7 +66,8 @@ describe('sefer kasma simülatörü', () => {
     const r = simulateGrind({ difficulty: 'hard', player: 'average', runs: 1, firstSeed: 11, wallCap, retries: 0, preGrind: 2, merchant: 'off' });
     const nodes = Object.values(r.nodes);
     expect(r.runs).toBe(1);
-    expect(nodes.reduce((a, n) => a + n.farmBattles, 0)).toBe(r.grindBattles + r.preGrindBattles);
+    // farmBattles Inn bekleme devriyelerini (econ.innBattles) ve yan düğüm devriyelerini (econ.lfPatrol) de sayar (grindOnce)
+    expect(nodes.reduce((a, n) => a + n.farmBattles, 0)).toBe(r.grindBattles + r.preGrindBattles + r.econ.innBattles + r.econ.lfPatrol);
     expect(nodes.reduce((a, n) => a + n.grindSum + n.grindWall, 0)).toBe(r.grindBattles);
     expect(r.battles).toBe(nodes.reduce((a, n) => a + n.battles + n.farmBattles, 0));
     for (const n of nodes) expect(n.grindSum + n.grindWall).toBeLessThanOrEqual(wallCap * Math.max(1, n.reached));

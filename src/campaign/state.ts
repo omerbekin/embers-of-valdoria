@@ -7,7 +7,7 @@ import { SLOT_IDS, canEquip, itemDef } from '../progression/items';
 import { starterEquipment } from '../progression/weapon';
 import { heroSpeedRoll, itemRecovery } from '../progression/loadout';
 import { fallAfterVictory, healWounds, valorClearWounds, woundCount, woundsLine, type WoundRules } from '../progression/wounds';
-import { emptyLootState, grantGift, grantLoot, treasureGiftRarity } from './loot';
+import { emptyLootState, grantGift, grantItem, grantLoot, treasureGiftRarity } from './loot';
 import { leaveMerchant } from './merchant';
 import { valorRules } from '../engine/content';
 import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
@@ -191,7 +191,7 @@ export function recruitOffer(s: CampaignState, nodeId: string): string[] {
   const map = mapOf(s);
   const def = node(map, nodeId).recruit;
   if (!def) return [];
-  const owned = new Set([...s.roster, ...innHeroes(s)].map((h) => h.class)); // Inn'deki kahramanın sınıfı da sahipli (dönünce iki aynı sınıf olmasın)
+  const owned = new Set([...s.roster, ...(s.reserve ?? []), ...innHeroes(s)].map((h) => h.class)); // yedekteki (kışla) ve Inn'deki kahramanın sınıfı da sahipli (dönünce iki aynı sınıf olmasın)
   const fixed = s.roster[0] ? def.byFirstHero?.[s.roster[0].class] : undefined;
   if (fixed) return fixed.filter((c) => !owned.has(c) && classes[c]).slice(0, def.offer);
   const pool = shuffle(CONFIG.recruitPool.filter((c) => !owned.has(c) && classes[c]), rngFor(s.seed, s.mapId, nodeId, 'recruit'));
@@ -224,7 +224,20 @@ function place(s: CampaignState, hero: Hero): void {
  * ortalamasının `levels.json > joinBelow` altında, en az L1, XP 0, stat puanları DAĞITILMAMIŞ (xp.ts > joinLevel). Ashford'daki ilk bölük
  * (formCompany) ve tutorial kahramanı L1 başlar (karar 364: "Karakterler l1 gelsin").
  */
-function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutorial?: boolean; join?: boolean } = {}): Hero {
+/** Bölüğün en büyük boyu (dizilimde en fazla 4 kahraman; kışla değişimi de bu sayıyı korur). */
+export const COMPANY_MAX = 4;
+
+/**
+ * Kışla-yedek kuralı (Ömer 2026-10-28, Vesper): bölük doluyken (COMPANY_MAX) katılan YENİ kahraman takıma değil yedeğe (`reserve`, kışlada
+ * bekler) girer; kışla değişimiyle (swapHero) ya da takımda yer açılınca (recruitFromReserve) alınır. Bölükte yer varsa bugünkü gibi katılır.
+ * Tüm katılım yolları (aday kartı, kasaba gönüllüsü, olay katılımı) bunu kullanır. Dönüş: kahraman + yedeğe mi gitti.
+ */
+function joinHero(t: CampaignState, classId: string, o: { tutorial?: boolean } = {}): { hero: Hero; reserve: boolean } {
+  const reserve = t.roster.length >= COMPANY_MAX;
+  return { hero: addHero(t, classId, { ...o, join: true, ...(reserve ? { reserve: true } : {}) }), reserve };
+}
+
+function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutorial?: boolean; join?: boolean; reserve?: boolean } = {}): Hero {
   if (!classes[classId]) throw new Error(`Unknown class: ${classId}`);
   const id = `h${s.nextHeroId++}`;
   const hero: Hero = {
@@ -243,8 +256,11 @@ function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutor
     equipment: starterEquipment(classId, id),
     spdRoll: heroSpeedRoll(s.seed, id), // kişisel hız zarı (Ömer 2026-10-24): kalıcı
   };
-  s.roster.push(hero);
-  place(s, hero);
+  if (o.reserve) s.reserve = [...(s.reserve ?? []), hero]; // kışla-yedek kuralı (joinHero): dizilime girmez
+  else {
+    s.roster.push(hero);
+    place(s, hero);
+  }
   if (o.join) {
     const level = joinLevel(s, [id]);
     if (level > 1) setLevel(hero, level, LEVELS, campaignMaxLevel());
@@ -420,7 +436,7 @@ export function recruit(s: CampaignState, classId: string): CampaignState {
   if (step.kind !== 'recruit' && step.kind !== 'volunteer') throw new Error(`No recruit here (step: ${step.kind})`);
   if (!step.offer.includes(classId)) throw new Error(`${classId} is not on offer`);
   const t = clone(s);
-  addHero(t, classId, { tutorial: tutorialActive(t), join: true });
+  joinHero(t, classId, { tutorial: tutorialActive(t) }); // bölük doluysa yedeğe (kışla-yedek kuralı)
   complete(t, step.kind, step.node); // taşınan katılımda (eski kayıt) adım katılımın düğümüne yazılır
   // Zorunlu Formation (tutorial): katılımdan sonraki ilk savaş, Formation açılana kadar başlamaz
   if (step.kind === 'recruit' && tutorialActive(t)) {
@@ -509,7 +525,7 @@ export function recruitInTown(s: CampaignState, classId: string): CampaignState 
   if (!offer.length) throw new Error('No recruits in this town');
   if (!offer.includes(classId)) throw new Error(`${classId} is not on offer`);
   const t = clone(s);
-  addHero(t, classId, { tutorial: tutorialActive(t), join: true });
+  joinHero(t, classId, { tutorial: tutorialActive(t) }); // bölük doluysa yedeğe (kışla-yedek kuralı)
   complete(t, 'volunteer');
   return t;
 }
@@ -724,7 +740,12 @@ export function eventChoices(eventId: string, s?: Pick<CampaignState, 'faction'>
  * Olayın bu durumda sunulan seçenekleri: eventChoices + A5 görev seçenekleri yalnız görevin sınıfı kadrodayken (aktif + yedek; quests.ts > questOpen).
  */
 export function eventChoicesFor(s: CampaignState, eventId: string): EventChoice[] {
-  return eventChoices(eventId, s).filter((c) => !c.quest || questOpen(s, c.quest));
+  return eventChoices(eventId, s).filter((c) => (!c.quest || questOpen(s, c.quest)) && (!c.join || !ownsClass(s, c.join)));
+}
+
+/** Bu sınıftan kahraman bölükte, yedekte (kışla) ya da Inn'de var mı (aynı sınıftan ikinci kahraman yok; olay katılımı `join` gizlenir). */
+export function ownsClass(s: CampaignState, classId: string): boolean {
+  return [...s.roster, ...(s.reserve ?? []), ...innHeroes(s)].some((h) => h.class === classId);
 }
 
 /** Bulunulan olayda "Walk away" (A5) seçeneği var mı: olay bitmeden kafile yola çıkabilir. */
@@ -766,6 +787,9 @@ export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
     if (caravelDef(mapOf(t)) && !t.caravel) t.caravel = { i: 0 };
   }
   if (c.light) t.lit = true; // M-M: bu haritada görüş eki
+  // Olay katılımı (Vesper, Sunken Chapel): bölük doluysa kışla-yedek kuralıyla yedeğe; olay item'i (relic) torbaya
+  if (c.join) joinHero(t, c.join);
+  if (c.relic) grantItem(t, t.at, c.relic, `choice-${c.id}`);
   const battle = choiceBattle(c);
   t.eventChoice = { node: t.at, choice: c.id, ...(battle ? { battle } : {}), ...(c.restHeal !== undefined ? { restHeal: c.restHeal } : {}) };
   if (!battle) {
@@ -1509,7 +1533,7 @@ export function cancelPatrol(s: CampaignState): CampaignState {
 export const patrolRetreatMaxLoss = (): number => 0;
 
 /** Devriye kartının geri çekilme notu (haritadaki "Fight the patrol?" kartı; İngilizce). */
-export const patrolRetreatNote = (): string => 'Retreating keeps what happened in the fight: lost health stays lost and fallen heroes rise wounded.';
+export const patrolRetreatNote = (): string => 'Retreating keeps lost health; fallen heroes rise wounded.';
 
 /** Devriyeden geri çekilme onayı (savaş menüsü > Retreat): oyuncuya bedeli açıkça yazar. */
 export const patrolRetreatConfirm = (): string => {

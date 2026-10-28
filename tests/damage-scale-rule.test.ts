@@ -8,12 +8,12 @@ import type { Attribute } from '../src/engine';
 const SCALE_EXCEPTIONS: { skill: string; effect: string; reason: string }[] = [
   { skill: 'mana_burn', effect: 'manaBurn', reason: 'Sabit MP yakma/çalma; can hasarı değil, kaynak etkisi.' },
   { skill: 'glyph_of_breaking', effect: 'manaBurn', reason: 'Deep Runecaller (mob-plan.md 2.3): hücre başına sabit 6 MP yakma; can hasarı değil, kaynak etkisi.' },
-  { skill: 'drain_field', effect: 'manaBurn', reason: 'Maks MP yüzdesi yakma; can hasarı değil, kaynak etkisi. İç onEmpty.damage ise INT ölçeklidir (tests/drain-silence.test.ts denetler).' },
+  { skill: 'drain_field', effect: 'brand', reason: 'Ley Brand (Ömer 2026-10-27, open-questions 444): hasarı kaybedilen / kalan MP ile orantılı (burnDamagePct, explodePct); stat ölçeği yok, kaynak etkisi.' },
 ];
 
 // Ölçek alanı taşıması gereken hasar türü etkiler; ölçeksiz hasar benzerleri istisna listesinde olmalı.
 // Hexer: 'dot' (Wither, kendi scale'i), 'omen' ve 'detonate' (Doom: ölçeği durum tanımındaki doom.scale) de ölçekli hasar sayılır.
-const DAMAGE_LIKE = new Set(['damage', 'ground', 'selfDamage', 'manaBurn', 'dot', 'omen', 'detonate']);
+const DAMAGE_LIKE = new Set(['damage', 'ground', 'selfDamage', 'manaBurn', 'dot', 'omen', 'detonate', 'brand']);
 // Pose Tester kopyası (pt_<id>) gerçek skill'in istisnasını paylaşır
 const isException = (skill: string, type: string) => SCALE_EXCEPTIONS.some((x) => (x.skill === skill || `pt_${x.skill}` === skill) && x.effect === type);
 const scaleOf = (e: unknown): Attribute | undefined => {

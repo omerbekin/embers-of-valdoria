@@ -1,0 +1,829 @@
+{
+  "_not": "TASLAK (draft, 2026-10-28; Ömer onayı bekliyor): Vesper ağacı mevcut ağaçların yapısında (_rules.json rowShape). fx yazılanlar var olan yamalarla çalışır (güç / bedel / bekleme / durum / pasif perBell / Great Bell powerPerBell); fx null olanlar \"Not active yet\" (yeni mekanik ister: çan sayacı tetikleri, alan değişimleri). Sayılar PROVİZYON, sim yok. docs/design/classes/vesper.md.",
+  "class": "vesper",
+  "version": 1,
+  "picked": {
+    "rows": [
+      "D",
+      "D",
+      "D",
+      "D",
+      "D"
+    ],
+    "at": "2026-10-28"
+  },
+  "rows": [
+    {
+      "skill": "pealing_bells",
+      "name": "Pealing Bells",
+      "passive": true,
+      "karma": "D"
+    },
+    {
+      "skill": "toll",
+      "name": "Toll",
+      "karma": "D"
+    },
+    {
+      "skill": "thunderpeal",
+      "name": "Thunderpeal",
+      "karma": "D"
+    },
+    {
+      "skill": "cracked_bell",
+      "name": "Cracked Bell",
+      "karma": "D"
+    }
+  ],
+  "ult": {
+    "skill": "great_bell_of_valdoria",
+    "name": "Great Bell of Valdoria",
+    "karma": "D"
+  },
+  "mastery": {
+    "name": "Belltower Mastery",
+    "karma": "D",
+    "bar": [
+      {
+        "at": 5,
+        "name": "First Toll",
+        "text": "Your skills deal 4% more damage.",
+        "src": "D:draft 2026-10-28",
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "skill": "*",
+            "mod": {
+              "powerMul": 0.04
+            }
+          }
+        ]
+      },
+      {
+        "at": 10,
+        "name": "Ringer's Breath",
+        "text": "Toll costs 1 less MP.",
+        "src": "D:draft 2026-10-28",
+        "fx": [
+          {
+            "k": "skill",
+            "skill": "toll",
+            "sel": "self",
+            "f": "cost.amount",
+            "op": "add",
+            "v": -1
+          }
+        ]
+      },
+      {
+        "at": 15,
+        "name": "Tower Stance",
+        "text": "You start each battle with one bell already rung.",
+        "src": "D:draft 2026-10-28",
+        "fx": null
+      },
+      {
+        "at": 20,
+        "name": "Iron Rope",
+        "text": "Pealing Bells +1% per bell.",
+        "src": "D:draft 2026-10-28",
+        "fx": [
+          {
+            "k": "passive",
+            "f": "perBell",
+            "op": "add",
+            "v": 0.01
+          }
+        ]
+      },
+      {
+        "at": 25,
+        "name": "Bell of Ages",
+        "text": "Your skills deal 6% more damage.",
+        "src": "D:draft 2026-10-28",
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "skill": "*",
+            "mod": {
+              "powerMul": 0.06
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "nodes": {
+    "0.f1": {
+      "name": "Bronze Throat",
+      "text": "Pealing Bells +0.5% per bell per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "passive",
+          "f": "perBell",
+          "op": "add",
+          "v": 0.005,
+          "rank": true
+        }
+      ]
+    },
+    "0.f2": {
+      "name": "Rope-Hardened",
+      "text": "Your skills deal +2% damage per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "*",
+          "mod": {
+            "powerMul": 0.02
+          },
+          "rank": true
+        }
+      ]
+    },
+    "0.f3": {
+      "name": "Long Echo",
+      "text": "Your first bell each battle counts as two bells.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "0.n0": {
+      "name": "Matins",
+      "text": "You start every battle with one bell already rung.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "0.r": {
+      "name": "Steady Peal",
+      "text": "Pealing Bells +0.5% per bell per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "passive",
+          "f": "perBell",
+          "op": "add",
+          "v": 0.005,
+          "rank": true
+        }
+      ]
+    },
+    "0.ea": {
+      "name": "Quickening Peal",
+      "text": "Every third bell you ring makes your next turn come 10% sooner.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "0.eb": {
+      "name": "Deep Peal",
+      "text": "Pealing Bells +1% per bell, but only Toll rings a bell.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "0.ma": {
+      "name": "Angelus",
+      "text": "At five bells or more, your bell skills cost 2 less MP.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "0.fa": {
+      "name": "Fraying Rope",
+      "text": "Pealing Bells +2% per bell, but you take 10% more damage.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "0.fb": {
+      "name": "Heavy Bronze",
+      "text": "Pealing Bells +2% per bell, but you are 10% slower.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "0.mb": {
+      "name": "Compline",
+      "text": "When an ally falls, ring a bell.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "0.v": {
+      "name": "Cathedral Choir",
+      "text": "Pealing Bells evolves: each bell also adds 1% critical chance to your bell skills.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "1.f1": {
+      "name": "Clear Toll",
+      "text": "Toll +3% power per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "1.f2": {
+      "name": "Ringing Bronze",
+      "text": "Toll +3% power per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "1.f3": {
+      "name": "Tolling Hour",
+      "text": "Toll +3% power per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "1.n0": {
+      "name": "Funeral Toll",
+      "text": "Toll deals 25% more damage to enemies below half health.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "1.r": {
+      "name": "Thrifty Rope",
+      "text": "Toll costs 1 less MP per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "add",
+          "v": -1,
+          "rank": true
+        }
+      ]
+    },
+    "1.ea": {
+      "name": "Knell",
+      "text": "Toll deals 15% more damage to the enemy with the lowest health.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "1.eb": {
+      "name": "Wide Toll",
+      "text": "Toll also slows the enemy front row for 1 turn.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "1.ma": {
+      "name": "Passing Bell",
+      "text": "When Toll kills an enemy, ring one more bell.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "1.fa": {
+      "name": "Cracked Rim",
+      "text": "Toll +20% power, but it costs 3 more MP.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.2
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "add",
+          "v": 3
+        }
+      ]
+    },
+    "1.fb": {
+      "name": "Muffled Toll",
+      "text": "Toll costs nothing, but deals 25% less damage.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "set",
+          "v": 0
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.25
+        }
+      ]
+    },
+    "1.mb": {
+      "name": "Shaken Ranks",
+      "text": "Toll lowers the accuracy of enemies it hits by 10% for 1 turn.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "1.v": {
+      "name": "Death Knell",
+      "text": "Toll evolves into Death Knell: 30% more damage, and it never misses.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.3
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "mod": {
+            "sureHit": true
+          }
+        }
+      ]
+    },
+    "2.f1": {
+      "name": "Rolling Thunder",
+      "text": "Thunderpeal +3% power per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "2.f2": {
+      "name": "Static Bronze",
+      "text": "Thunderpeal +2% critical chance per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "critBonus",
+          "op": "add",
+          "v": 0.02,
+          "rank": true
+        }
+      ]
+    },
+    "2.f3": {
+      "name": "Storm Rope",
+      "text": "Thunderpeal +3% power per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "2.n0": {
+      "name": "Lingering Flash",
+      "text": "Thunderpeal Blinds for 1 turn longer.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "status:blinded",
+          "f": "turns",
+          "op": "add",
+          "v": 1
+        }
+      ]
+    },
+    "2.r": {
+      "name": "Thunderhead",
+      "text": "Thunderpeal +3% power per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "2.ea": {
+      "name": "Forked Peal",
+      "text": "Thunderpeal also strikes the row behind for half damage.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "2.eb": {
+      "name": "Single Bolt",
+      "text": "Thunderpeal hits only the centre cell, but deals 60% more damage.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "2.ma": {
+      "name": "Stormbell",
+      "text": "Thunderpeal cooldown -1.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "add",
+          "v": -1
+        }
+      ]
+    },
+    "2.fa": {
+      "name": "Overcharged",
+      "text": "Thunderpeal +25% power, but its cooldown is 1 longer.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.25
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "add",
+          "v": 1
+        }
+      ]
+    },
+    "2.fb": {
+      "name": "Dull Flash",
+      "text": "Thunderpeal costs 4 less MP, but no longer Blinds.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "add",
+          "v": -4
+        },
+        {
+          "k": "removeEffect",
+          "sel": "status:blinded"
+        }
+      ]
+    },
+    "2.mb": {
+      "name": "Thunderstruck",
+      "text": "Thunderpeal has a 15% chance to Stun for 1 turn.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "stun",
+            "turns": 1,
+            "chance": 0.15
+          }
+        }
+      ]
+    },
+    "2.v": {
+      "name": "Storm Tower",
+      "text": "Thunderpeal evolves into Storm Tower: 30% more damage and it rings two bells.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "3.f1": {
+      "name": "Iron Clapper",
+      "text": "Cracked Bell +3% power per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "3.f2": {
+      "name": "Jarring Note",
+      "text": "Cracked Bell Stun chance +3% per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "status:stun",
+          "f": "chance",
+          "op": "add",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "3.f3": {
+      "name": "Split Bronze",
+      "text": "Cracked Bell +3% power per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "3.n0": {
+      "name": "Ringing Skull",
+      "text": "Cracked Bell rings a bell when it Stuns.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "3.r": {
+      "name": "Heavy Strike",
+      "text": "Cracked Bell +3% power per rank.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "3.ea": {
+      "name": "Shatter",
+      "text": "Cracked Bell ignores 20% of magic armor.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "ignoreDefense",
+          "op": "add",
+          "v": 0.2
+        }
+      ]
+    },
+    "3.eb": {
+      "name": "Shards",
+      "text": "Cracked Bell splashes half its damage to the enemies beside the target.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "3.ma": {
+      "name": "Toll for One",
+      "text": "Cracked Bell deals 30% more damage to elites and bosses.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "3.fa": {
+      "name": "Brittle Bell",
+      "text": "Cracked Bell +25% power, but loses its Stun.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.25
+        },
+        {
+          "k": "removeEffect",
+          "sel": "status:stun"
+        }
+      ]
+    },
+    "3.fb": {
+      "name": "Gentle Ring",
+      "text": "Cracked Bell cooldown -1, but 20% less damage.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "add",
+          "v": -1
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.2
+        }
+      ]
+    },
+    "3.mb": {
+      "name": "Deafened",
+      "text": "Cracked Bell also Blinds the target for 1 turn.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "blinded",
+            "turns": 1
+          }
+        }
+      ]
+    },
+    "3.v": {
+      "name": "Sundered Bell",
+      "text": "Cracked Bell evolves into Sundered Bell: 30% more damage and its Stun chance doubles.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "4.u1": {
+      "name": "Gilded Bronze",
+      "text": "Great Bell +8% power.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.08
+        }
+      ]
+    },
+    "4.u2": {
+      "name": "Royal Peal",
+      "text": "Great Bell gains +0.5% INT more per bell rung.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "powerPerBell",
+          "op": "add",
+          "v": 0.005
+        }
+      ]
+    },
+    "4.u3": {
+      "name": "Crown of Bells",
+      "text": "Great Bell Blinds every enemy it hits for 1 turn.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "blinded",
+            "turns": 1
+          }
+        }
+      ]
+    },
+    "4.r1": {
+      "name": "Swift Rope",
+      "text": "Great Bell costs 3 less MP.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "add",
+          "v": -3
+        }
+      ]
+    },
+    "4.r2": {
+      "name": "Tower Watch",
+      "text": "Great Bell is ready 1 turn sooner at the start of battle.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "initialCooldown",
+          "op": "add",
+          "v": -1
+        }
+      ]
+    },
+    "4.r3": {
+      "name": "Ever-Ringing",
+      "text": "Great Bell cooldown -1.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "add",
+          "v": -1
+        }
+      ]
+    },
+    "4.d1": {
+      "name": "Deep Bronze",
+      "text": "Great Bell +8% power.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.08
+        }
+      ]
+    },
+    "4.d2": {
+      "name": "Storm Choir",
+      "text": "Great Bell critical chance +10%.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "critBonus",
+          "op": "add",
+          "v": 0.1
+        }
+      ]
+    },
+    "4.d3": {
+      "name": "Last Peal",
+      "text": "Great Bell deals 30% more damage to enemies below half health.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "4.l1": {
+      "name": "Echoing Hall",
+      "text": "Great Bell rings a bell for Pealing Bells.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    },
+    "4.l2": {
+      "name": "Resounding",
+      "text": "Great Bell +8% power.",
+      "src": "D:draft 2026-10-28",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.08
+        }
+      ]
+    },
+    "4.l3": {
+      "name": "Bell of Kings",
+      "text": "After Great Bell, your next Toll costs no MP.",
+      "src": "D:draft 2026-10-28",
+      "fx": null
+    }
+  }
+}

@@ -237,6 +237,8 @@ export interface Option {
   burnBy: Record<string, number>;
   /** Mana boşalma zarı (Drain Field onEmpty, madde 260): hedef başına ihtimal, yakımdan sonra kalan MP ve durumun süresi ('silence' terimi). */
   emptyBy?: Record<string, { chance: number; mpAfter: number; turns: number; status: string }>;
+  /** Ley Brand (open-questions 444): hedef başına önizlemenin Brand'i (süre, açılacak tainted mana havuzu, bedel çarpanı, mevcut Brand'in kalan süresi). */
+  brandBy?: Record<string, { turns: number; pool: number; costMult: number; current: number; castBurnPct: number; markPct: number }>;
   wardBurn?: { amount: number; magic: boolean };
   /** Ana hedef (tek hedefli skill'lerde seçilen düşman, alan skill'lerinde merkez/ilk hedef) ve ona beklenen ortalama hasar. */
   primary?: Combatant;
@@ -933,6 +935,18 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
       (o.emptyBy ??= {})[target.uid] = { chance: ep.chance, mpAfter: target.mp - (p.burn ?? 0), turns: ep.turns, status: ep.status };
       if (o.notes.length < 6) o.notes.push(`${unitLabel(target)}: mana empty -> ${Math.round(ep.chance * 100)}% ${ep.statusName} ${ep.turns}t + ${ep.damage?.avg ?? 0} dmg`);
     }
+    // Ley Brand: Branded hedefin yanacak MP'sinin yakana hasarı (Mana Steal gibi vuruşa bağlı yakımda isabet şansıyla); Brand uygulaması 'brand' teriminde
+    if (p.brandBurn && target.side !== actor.side) {
+      const bb = p.brandBurn * (p.damage ? p.damage.hitChance : 1);
+      o.damage += bb;
+      if (o.notes.length < 6) o.notes.push(`${unitLabel(target)}: Branded, burn hurts +${r1(bb)}`);
+    }
+    if (p.brand && target.side !== actor.side) (o.brandBy ??= {})[target.uid] = p.brand;
+    // Ley Brand bedel yakımı (Ömer 2026-10-29): Branded kullanıcının MP skill'i ek MP yakar ve kendine hasar verir: bedele eklenir (MP + can ağırlığı)
+    if (p.castBurn && target.uid === actor.uid) {
+      o.cost += p.castBurn.mp * profile.mpCostWeight + p.castBurn.damage * profile.hpCostWeight;
+      if (o.notes.length < 6) o.notes.push(`Branded: cast burns ${p.castBurn.mp} MP, ${p.castBurn.damage} dmg to self`);
+    }
   }
   // Yerde kalan etki (zehir, yanan zemin, holy fire): alandaki (şeklin TÜM hücreleri; boş anchor dahil) düşmanların turlar boyunca alacağı beklenen hasar.
   // Tek hedefli skill'de (D7, Tainted Bait) zemin hedefin hücresine konur
@@ -1151,7 +1165,7 @@ function hitCritLoss(battle: Battle, attacker: Combatant, victim: Combatant, acc
   for (const id of attacker.skills) {
     const sk = battle.skill(id, attacker);
     if (!sk || !ATTACK_TARGETS.includes(sk.target)) continue;
-    if (sk.cost.resource === 'mp' && attacker.mp < skillCostAmount(sk.cost, attacker)) continue;
+    if (sk.cost.resource === 'mp' && (attacker.mp < skillCostAmount(sk.cost, attacker) || (attacker.taint !== undefined && skillCostAmount(sk.cost, attacker) > 0))) continue; // Ley Brand: tainted mana harcanamaz
     if (sk.cost.resource === 'rage' && (attacker.rage ?? 0) < sk.cost.amount) continue;
     const d = previewForTargets(battle, attacker, id, [victim]).find((p) => p.uid === victim.uid)?.damage;
     if (!d) continue;
@@ -1379,6 +1393,7 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
     add('cleanse', cleanseValue(ctx, profile, o));
     add('burn', burnValue(ctx, o));
     add('silence', silenceValue(ctx, o));
+    add('brand', brandValue(ctx, o));
     add('tempo', o.tempo);
     add('deny', o.deny);
     add('anchor', anchorValue(ctx, o));
@@ -1651,6 +1666,64 @@ function silenceValue(ctx: ValueContext, o: Option): number {
     if (!f || f.side === ctx.actor.side || !ctx.battle.statusDef(x.status)?.blocksMpSkills || ctx.battle.statusBlocked(f, x.status)) continue; // boss Silence yemez (madde 271)
     v += x.chance * (1 - (o.killP[uid] ?? 0)) * ctx.silenceDenial(f, x.mpAfter, x.turns);
   }
+  return v;
+}
+
+/**
+ * Ley Brand'in değeri (open-questions 444; ağırlık ai.json > value.brand, PROVİZYON): her Branded olacak düşman için, öldürülmeyecekse:
+ * - MP havuzu olmayan: açılacak tainted mana x max(yakım payı, patlama payı) büyü hasarı (zırh dahil: tickDamage) x poolShare (Anti-Mage'in yakıp
+ *   çalacağı ya da Brand bitince patlayacağı pay);
+ * - MP havuzu olan: Brand süresince (ufukla sınırlı) castShare payında MP skill'i kullanır (kullanım sıklığı 1/(cooldown+1) ağırlıklı ortalama bedel);
+ *   bedel artışı + bedel yakımıyla (castBurnPct, Ömer 2026-10-29) kaybedeceği ek MP (elindeki MP + yenilenmeyle sınırlı) "engellenen hamle" (manaDenial)
+ *   + yanan MP'nin hasarı + elindeki MP'nin yakılırsa vereceği hasarın costShare'i;
+ * - işaret (markDamagePct): kullanıcının işaretli skill'lerinden (Mana Steal, Void Strike) birinin o düşmana beklenen hasarı x markPct; Anti-Mage turda
+ *   tek düşmana vurduğu için düşmanlar arasında EN YÜKSEĞİ x sonraki en çok 2 vuruş (Brand süresi / ufukla sınırlı) x markShare (toplanmaz);
+ * - hedefte zaten süresi `freshTurns`'ten uzun Brand varsa 0 (yeniden atış yalnızca süreyi tazeler, havuzu doldurmaz); son turundaysa refreshShare.
+ */
+function brandValue(ctx: ValueContext, o: Option): number {
+  const battle = ctx.battle;
+  const w = { poolShare: 0.6, costShare: 0.5, freshTurns: 1, refreshShare: 0.4, castShare: 0.6, markShare: 0.5, ...ctx.vc.brand };
+  const eff = o.skill.effects.find((e) => e.type === 'brand');
+  if (!o.brandBy || !eff || eff.type !== 'brand') return 0;
+  const el = eff.element ?? 'arcane';
+  const markIds = eff.markDamagePct && eff.markSkills?.length ? eff.markSkills.filter((id) => ctx.actor.skills.includes(id)) : [];
+  let v = 0;
+  let mark = 0;
+  for (const [uid, x] of Object.entries(o.brandBy)) {
+    const f = battle.get(uid);
+    if (!f || f.hp <= 0 || f.side === ctx.actor.side) continue;
+    const fresh = x.current <= 0 ? 1 : x.current <= w.freshTurns ? w.refreshShare : 0;
+    if (fresh <= 0) continue;
+    const alive = 1 - (o.killP[uid] ?? 0);
+    const span = Math.min(x.turns, ctx.vc.horizon);
+    let t = 0;
+    if (x.pool > 0) t += battle.tickDamage(el, 'magic', Math.round(x.pool * Math.max(eff.burnDamagePct, eff.explodePct)), f) * w.poolShare;
+    else if (f.maxMp > 0 && f.taint === undefined) {
+      const mpSkills = f.skills.map((id) => battle.skill(id, f)).filter((sk): sk is SkillDef => !!sk && sk.cost.resource === 'mp' && sk.cost.amount > 0);
+      // Gerçekçi beklenti (2026-10-29): düşman Brand süresince (ufukla sınırlı) castShare payında MP skill'i kullanır; kullanım başına tipik bedel = MP
+      // skill'lerinin kullanım sıklığıyla ağırlıklı ORTALAMA bedeli (en pahalısı değil); kaybedilen ek MP (bedel artışı + bedel yakımı) elindeki MP (+ süre boyunca yenilenme) ile sınırlı
+      // kullanım sıklığı ağırlığı 1 / (cooldown + 1): cooldown'suz temel büyü (Fire Bolt) ultimate'ten (Meteor) sık atılır
+      const wsum = mpSkills.reduce((a, sk) => a + 1 / ((sk.cooldown ?? 0) + 1), 0);
+      const avg = wsum > 0 ? mpSkills.reduce((a, sk) => a + sk.cost.amount / ((sk.cooldown ?? 0) + 1), 0) / wsum : 0;
+      const paid = avg > 0 ? Math.ceil(avg * x.costMult - 1e-9) : 0;
+      const casts = span * w.castShare;
+      const burnPer = paid > 0 && x.castBurnPct > 0 ? Math.round(paid * x.castBurnPct) : 0;
+      const room = f.mp + (battle.mode === 'turns' ? f.stats.mpRegen * span : 0);
+      const extra = Math.min(room, (Math.max(0, paid - avg) + burnPer) * casts);
+      if (extra > 0) t += ctx.manaDenial(f, extra);
+      const burnTotal = Math.min(room, burnPer * casts);
+      if (burnTotal > 0 && eff.burnDamagePct > 0) t += battle.tickDamage(el, 'magic', Math.round(burnTotal * eff.burnDamagePct), f);
+      if (f.mp > 0 && eff.burnDamagePct > 0) t += battle.tickDamage(el, 'magic', Math.round(f.mp * eff.burnDamagePct), f) * w.costShare;
+    }
+    v += t * fresh * alive;
+    if (markIds.length && x.markPct > 0) {
+      let best = 0;
+      for (const id of markIds) for (const p of previewForTargets(battle, ctx.actor, id, [f])) if (p.uid === uid && p.damage) best = Math.max(best, p.damage.expected);
+      mark = Math.max(mark, best * x.markPct * Math.min(span, 2) * fresh * alive); // AM'nin Brand süresindeki sonraki en çok 2 vuruşu
+    }
+  }
+  v += mark * w.markShare;
+  if (v > 0 && o.notes.length < 6) o.notes.push(`Ley Brand on ${Object.keys(o.brandBy).length} foe(s): +${r1(v)}`);
   return v;
 }
 
@@ -2443,7 +2516,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
     final,
     why,
     steps,
-    winnerRule: `value scale (difficulty ${difficulty}, horizon ${vc.horizon} turns): score = damage + pressure + kill + save + heal + shield + revive + control + protect + summon + bond + curse + mitigation + cleanse + burn + silence + tempo + deny + anchor + position (+ buff for self-buffs) + stall - overkill - futile - patience - cost - cooldown; ${rules.pickTop && rules.pickTop > 1 ? `picks among the best ${rules.pickTop} (deterministic, seed + turn + unit)` : 'highest wins'}`,
+    winnerRule: `value scale (difficulty ${difficulty}, horizon ${vc.horizon} turns): score = damage + pressure + kill + save + heal + shield + revive + control + protect + summon + bond + curse + mitigation + cleanse + burn + silence + brand + tempo + deny + anchor + position (+ buff for self-buffs) + stall - overkill - futile - patience - cost - cooldown; ${rules.pickTop && rules.pickTop > 1 ? `picks among the best ${rules.pickTop} (deterministic, seed + turn + unit)` : 'highest wins'}`,
     candidates,
     rejected,
     reserves: trace.reserves.map((r) => ({ skill: r.skill, needMp: r.need, inTurns: r.turns })),

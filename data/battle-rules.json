@@ -3,7 +3,7 @@
   "conditions": {
     "tide": {
       "name": "Tide",
-      "text": "The tide floods both front rows at the start of every Round and again every 4 turns; the water stays for 2 turns. Anyone standing in it is Soaked: fire damage taken ×0.5, Speed ×0.9, and Burning is put out. Flooded cells also put out Burning Ground.",
+      "text": "The tide floods both front rows at the start of every Round and again every 4 turns; the water stays for 2 turns. Anyone standing in it is Soaked: they take 50% less fire damage, have 10% less Speed, and Burning is put out. Flooded cells also put out Burning Ground.",
       "flood": { "ground": "flooded", "onWave": true, "everyRounds": 4, "rows": [0], "boards": ["party", "enemy"], "rounds": 2, "soak": "soaked", "soakTurns": 2 }
     },
     "storm": {
@@ -16,7 +16,7 @@
     "tidewater_urn": {
       "_not": "M-N3 (maps-2-3.md 5): oyuncu tarafında duran etkileşimli nesne. side tahtasının slot hücresi o tahtada kapalı (kimse giremez, hedeflenmez). Artı şeklinde bitişik kahraman global eylem 'tidewater_urn' ile eylemini harcar: kendi tahtasında seçilen sıra rounds savaş turu Flooded (Tide suyuyla aynı süre), sudaki birim Soaked. uses kullanım. ai: sıra puanı = Burning zemin hücresi x burningCell + o sıradaki Burning kahraman x burningHero; puan >= minScore ise YZ kullanır. Sayılar PROVİZYON (open-questions 430).",
       "name": "Tidewater Urn",
-      "text": "A great urn of seawater. A hero standing next to it can spend their turn to tip it: one row of your side is Flooded for 2 turns (Soaked: fire damage taken ×0.5, Speed ×0.9, Burning put out; Burning Ground there goes out).",
+      "text": "A great urn of seawater. A hero standing next to it can spend their turn to tip it: one row of your side is Flooded for 2 turns (Soaked: 50% less fire damage taken, 10% less Speed, Burning put out; Burning Ground there goes out).",
       "side": "party",
       "slot": 4,
       "uses": 3,

@@ -5,12 +5,20 @@ import { describeEvent } from '../src/engine/match-log';
 import { buildWiki } from '../src/wiki/catalog';
 
 // Madde 260 (Ömer 2026-10-08): Anti-Mage Drain Field maks MP yüzdesiyle yakar; manası biten düşmana %50 Silence + hasar.
+// 2026-10-27 (open-questions 444): Anti-Mage'in 2. skill'i Ley Brand oldu; Drain Field verisi oyundan çıktı ama motorun manaBurn.pctMax +
+// onEmpty yolu genel kalır. Bu dosya o yolu, eski veriyle kurulmuş SENTETİK bir test skill'iyle (LEGACY, yalnızca bu testte) korur.
 // Hexer Jinx: yerleşik kritik şansı eki (critBonus). Sayılar veriden okunur.
 
 const S = content.skills;
+/** Eski Drain Field verisi (2026-10-26 hâli); yalnızca test, savaşa `drain_field` id'siyle enjekte edilir (arena varsayılanı). */
+const LEGACY: SkillDef = {
+  id: 'drain_field', name: 'Drain Field', icon: 'drainfield', target: 'area_enemies', range: 4,
+  area: { shape: 'rect', rows: 3, cols: 3, anchor: 'bottom_left' }, cost: { resource: 'mp', amount: 14 }, cooldown: 3,
+  effects: [{ type: 'manaBurn', pctMax: 0.55, onEmpty: { chance: 0.5, status: 'silence', turns: 1, damage: { damageType: 'magic', element: 'arcane', scale: 'int', power: 0.725 } } }],
+} as SkillDef;
 type ManaBurn = Extract<SkillDef['effects'][number], { type: 'manaBurn' }>;
 type Dmg = Extract<SkillDef['effects'][number], { type: 'damage' }>;
-const DF = S.drain_field!.effects.find((e) => e.type === 'manaBurn') as ManaBurn;
+const DF = LEGACY.effects.find((e) => e.type === 'manaBurn') as ManaBurn;
 const EMPTY = DF.onEmpty!;
 const SIL = content.statuses[EMPTY.status]!;
 const JINX = S.jinx!.effects.find((e) => e.type === 'damage') as Dmg;
@@ -20,7 +28,7 @@ const unitDef = (id: string): CombatantDef => (content.summons[id] ?? content.cl
 
 function arena(party: [string, number][], enemies: [string, number][], mode: 'test' | 'turns' = 'test', seed = 1, skills: Record<string, SkillDef> = {}): Battle {
   const base = content.battleSetup('random-battle', seed, mode, { party: [], enemies: [] }, false);
-  return new Battle({ ...base, skills: { ...base.skills, ...skills }, party: party.map(([id]) => unitDef(id)), partySlots: party.map(([, s]) => s), enemies: enemies.map(([id]) => unitDef(id)), enemySlots: enemies.map(([, s]) => s) });
+  return new Battle({ ...base, skills: { ...base.skills, drain_field: LEGACY, ...skills }, party: party.map(([id]) => unitDef(id)), partySlots: party.map(([, s]) => s), enemies: enemies.map(([id]) => unitDef(id)), enemySlots: enemies.map(([, s]) => s) });
 }
 /** Kimse ölmez, Lucky Escape / Resilience yok. */
 function tough(b: Battle, hp = 50000): Battle {
@@ -43,7 +51,7 @@ function nextTurnOf(b: Battle, uid: string): void {
   expect(b.currentUid).toBe(uid);
 }
 /** Zarı her zaman tutan Drain Field kopyası (chance 1). */
-const sureDrain = (): Record<string, SkillDef> => ({ drain_field: { ...S.drain_field!, effects: [{ ...DF, onEmpty: { ...EMPTY, chance: 1 } }] } });
+const sureDrain = (): Record<string, SkillDef> => ({ drain_field: { ...LEGACY, effects: [{ ...DF, onEmpty: { ...EMPTY, chance: 1 } }] } });
 
 describe('Drain Field verisi (madde 260)', () => {
   it('yakım maks MP yüzdesi; onEmpty: zar, susturan durum, Anti-Mage statıyla (INT) ölçekli büyü hasarı', () => {
@@ -238,7 +246,7 @@ describe('Drain Field: önizleme, YZ, açıklama, kayıt, wiki', () => {
   });
 
   it('skill-info: yüzde yakım ve zar satırı veriden', () => {
-    const info = describeSkill(S.drain_field!, content.classes.antimage!.stats, content.formulas, {}, { statuses: content.statuses });
+    const info = describeSkill(LEGACY, content.classes.antimage!.stats, content.formulas, {}, { statuses: content.statuses });
     const text = info.lines.join(' | ');
     expect(text).toContain(`${Math.round(DF.pctMax! * 100)}% of each target's max MP`);
     expect(text).toContain(`${Math.round(EMPTY.chance * 100)}% chance`);
@@ -257,7 +265,7 @@ describe('Drain Field: önizleme, YZ, açıklama, kayıt, wiki', () => {
     const art = wiki.mechanics.find((a) => a.id === 'silence');
     expect(art).toBeDefined();
     const text = art!.blocks.flatMap((x) => (x.kind === 'p' ? [x.text] : x.kind === 'list' ? x.items : [])).join(' ');
-    expect(text).toContain(S.drain_field!.name);
+    expect(text).toContain(S.drain_field!.name); // Ley Brand (Hush of the Brand düğümü Silence'ı geri getirir)
     expect(text).toContain(SIL.name);
   });
 });

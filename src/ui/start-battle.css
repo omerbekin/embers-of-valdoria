@@ -67,6 +67,21 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 .sbc-info { margin: 0; font: 400 max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); /* düz yazı: arayüzde italik yok (Ömer 2026-10-23, devriye satırı 2026-10-27) */ line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .sbc-info b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); font-style: normal; margin-right: 0.5em; }
 .sbc-info.quote { color: #cdb88d; }
+.sbc-info.plain { font-style: normal; font-size: max(11px, calc(17 * var(--u))); }
+/* etiket satırı (devriye): ince altın çerçeveli küçük büyük harf etiketler */
+.sbc-tags { display: flex; flex-wrap: wrap; gap: max(4px, calc(8 * var(--u))); }
+.sbc-tag { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; color: var(--g-text); padding: max(2px, calc(4 * var(--u))) max(6px, calc(10 * var(--u))); border: 1px solid var(--g-line2); background: rgba(8, 6, 4, 0.55); white-space: nowrap; }
+.sbc-tag.gold { color: var(--g-gold); border-color: rgba(217, 178, 106, 0.6); background: rgba(217, 178, 106, 0.1); }
+.sbc-tag.dim { color: var(--g-dim); border-style: dashed; }
+.sbc-tag.silver { color: #cfe0ee; border-color: rgba(207, 224, 238, 0.6); background: rgba(140, 185, 230, 0.12); }
+/* Rakip bölük şeridi (Silver Stag; taslak rival-company C): arma + ad + tek satır */
+.sbc-co { display: flex; align-items: center; gap: max(8px, calc(12 * var(--u))); padding: max(5px, calc(10 * var(--u))) max(8px, calc(14 * var(--u))); border: 1px solid rgba(207, 224, 238, 0.35); background: linear-gradient(90deg, rgba(140, 185, 230, 0.12), rgba(8, 6, 4, 0.4)); }
+.sbc-co .bdg { flex: none; display: block; width: max(18px, calc(34 * var(--u))); height: max(21px, calc(39 * var(--u))); }
+.sbc-co b { display: block; font: 600 max(11px, calc(17 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: #cfe0ee; }
+.sbc-co span { font: max(11px, calc(18 * var(--u))) var(--g-body); color: var(--g-text); }
+.sbc-foe.mem .sbc-face { border-color: rgba(207, 224, 238, 0.6); box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.7), 0 0 calc(10 * var(--u)) rgba(140, 185, 230, 0.35); }
+.sbc-foe.mem .sbc-face .cr { position: absolute; left: -1px; top: -1px; width: max(12px, calc(22 * var(--u))); height: max(14px, calc(25 * var(--u))); background: rgba(10, 14, 20, 0.9); display: grid; place-items: center; border: 1px solid rgba(207, 224, 238, 0.6); }
+.sbc-foe.mem .sbc-face .cr svg { width: 80%; height: 80%; }
 
 .sbc-acts { display: flex; justify-content: flex-end; align-items: center; }
 .sbc-acts .el-btn { min-height: 44px; font-size: max(14px, calc(22 * var(--u))); padding-left: max(18px, calc(36 * var(--u))); padding-right: max(18px, calc(36 * var(--u))); }

@@ -245,7 +245,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
 describe('veri doğrulama (3.2 madde 11)', () => {
   it('her class dosyası: 48 satır + 12 ult anahtarı, ad / metin sınırı, satır skill\'leri class sırasıyla, NEW approved taşır', () => {
     expect(treeKeys()).toHaveLength(60);
-    expect(Object.keys(TREES).sort()).toEqual(['antimage', 'archer', 'cutthroat', 'defender', 'druid', 'gambler', 'hexer', 'mage', 'paladin', 'undead', 'warrior']);
+    expect(Object.keys(TREES).sort()).toEqual(['antimage', 'archer', 'cutthroat', 'defender', 'druid', 'gambler', 'hexer', 'mage', 'paladin', 'undead', 'vesper', 'warrior']); // vesper: taslak (2026-10-28)
     for (const t of Object.values(TREES)) expect(validateTreeData(t), t.class).toEqual([]);
   });
 

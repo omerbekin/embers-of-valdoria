@@ -15,13 +15,13 @@ const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i)
 const make = (seed: number, teams: Teams) => new Battle(content.battleSetup('random-battle', seed, 'turns', teams, false));
 
 describe('kişisel hız zarı', () => {
-  it('veri: spdVariance 0,1; zar aralıkta, deterministik ve çeşitli', () => {
-    expect(V).toBe(0.1);
+  it('veri: spdVariance 0,05 (silah tipleri reworkü, Ömer 2026-10-27); zar aralıkta, deterministik ve çeşitli', () => {
+    expect(V).toBe(0.05);
     const rolls = Array.from({ length: 200 }, (_, i) => speedRoll(7, `enemy-${i}`, f));
     for (const r of rolls) expect(r).toBeGreaterThanOrEqual(1 - V), expect(r).toBeLessThanOrEqual(1 + V);
     expect(speedRoll(7, 'enemy-3', f)).toBe(rolls[3]);
     expect(new Set(rolls).size).toBeGreaterThan(150);
-    expect(rolls.some((r) => r < 0.95) && rolls.some((r) => r > 1.05)).toBe(true);
+    expect(rolls.some((r) => r < 0.975) && rolls.some((r) => r > 1.025)).toBe(true);
     // zarsız formül (spdVariance yok / 0) = 1, hız aynen
     expect(speedRoll(7, 'x', { attributes: { ...f.attributes, spdVariance: 0 } })).toBe(1);
     expect(rolledSpeed(17, 1, f)).toBe(17);
@@ -77,9 +77,9 @@ describe('kişisel hız zarı', () => {
     for (const seed of [1, 2, 3]) expect(make(seed, teams).get('party-0')!.stats.spd).toBe(sheet.spd);
     const tip = describeStat('spd', { ...sheet, spdRoll: 1.0634 }, f);
     expect(tip.title).toBe(`Speed ${sheet.spd}`);
-    expect(tip.lines).toContain('Natural pace: ×1.06 speed');
-    expect(describeStat('spd', { ...sheet, spdRoll: 0.96 }, f).lines).toContain('Natural pace: ×0.96 speed');
-    expect(describeStat('spd', { ...sheet, spdRoll: 1.002 }, f).lines).toContain('Natural pace: ×1 speed');
+    expect(tip.lines).toContain('Natural pace: 6% more Speed');
+    expect(describeStat('spd', { ...sheet, spdRoll: 0.96 }, f).lines).toContain('Natural pace: 4% less Speed');
+    expect(describeStat('spd', { ...sheet, spdRoll: 1.002 }, f).lines).toContain('Natural pace: normal Speed');
     expect(describeStat('spd', { ...sheet, spdRoll: undefined }, f).lines.some((l) => l.startsWith('Natural pace'))).toBe(false);
   });
 });

@@ -1,0 +1,38 @@
+{
+  "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md): batık katedral çan kulesinin bekçisi; arka sıra ALAN hasarcısı, savaş uzadıkça güçlenir; şifa YOK. Görünüş yönü A (Bronze Abbess: beyaz-altın cüppeli yaşlı başrahibe, sırtında zincirli yeşil bronz çan, çanın demir tokmağı asası); şimdilik görünüş yer tutucu (Mage sprite / avatar / v2 poz gövdesi; poses.json > classAliases); renk ve logo kendisinin. Statlar PROVİZYON (Mage'den türetildi, sim yok).",
+  "id": "vesper",
+  "name": "Vesper",
+  "spriteId": "mage",
+  "color": "#b8873a",
+  "logo": "divine",
+  "role": "Bell Caster",
+  "blurb": "Bronze abbess of a drowned bell tower whose tolls grow louder the longer the battle lasts.",
+  "frontPriority": 7,
+  "range": 6,
+  "attributes": {
+    "str": 21,
+    "int": 26,
+    "dex": 5,
+    "luck": 8
+  },
+  "primary": "int",
+  "armor": 14,
+  "magicArmor": 0,
+  "ai": "vesper",
+  "skills": [
+    "toll",
+    "thunderpeal",
+    "cracked_bell",
+    "great_bell_of_valdoria"
+  ],
+  "passive": {
+    "id": "pealing_bells",
+    "name": "Pealing Bells",
+    "icon": "divine",
+    "text": "Every Toll or Thunderpeal you ring makes your bells 5% stronger for the rest of the battle (no limit).",
+    "effect": {
+      "type": "pealingBells",
+      "perBell": 0.05
+    }
+  }
+}

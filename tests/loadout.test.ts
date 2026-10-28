@@ -19,7 +19,7 @@ import {
   unequipItem,
   type CampaignState,
 } from '../src/campaign';
-import { emptyEquipment, ITEMS, loadout, starterPower, starterWeapon } from '../src/progression';
+import { emptyEquipment, implicitDefOf, implicitValues, ITEMS, itemDef, loadout, starterPower, starterWeapon, weaponSpeedPenalties } from '../src/progression';
 import { fightPlan } from '../src/sim/campaign';
 
 // Güç toplama katmanı (roadmap.md 1.1, madde 278): temel + item -> UnitSetup.modifiers. Boş yükleme = bugünkü savaş birebir.
@@ -35,7 +35,6 @@ const atBattle = (node = '5A', seed = 42): CampaignState => {
   return { ...rest, roster: rest.roster.map((h) => ({ ...h, level: 50 })), inventory: [], nextItemId: 1 };
 };
 
-const implicitClass = (c: string) => ['cutthroat', 'antimage', 'gambler', 'hexer'].includes(c);
 
 describe('güç katmanı: boş yükleme', () => {
   it('hiçbir şey takılı değilse: başlangıç silahı olmayan (test) sınıfta modifiers yok; oynanabilir sınıf silahsızken silah çarpanı < 1', () => {
@@ -54,7 +53,12 @@ describe('güç katmanı: boş yükleme', () => {
       expect(l.weaponMult).toBe(1);
       expect(l.modifiers?.weaponMult).toBeUndefined();
       const keys = Object.keys(l.modifiers ?? {}).sort();
-      expect(keys).toEqual(['elemDamageAdd', ...(implicitClass(c) ? [c === 'gambler' || c === 'hexer' ? 'spdMult' : 'critAdd'] : [])].sort());
+      // Ömer 2026-10-27: her tipin örtüğü (mod: / mult: hedefi modifiers'a, fx: itemEffects'e) + tipin hız cezası (spdMult)
+        const d = itemDef(w.id)!;
+        const to = implicitDefOf(d)?.parts[0]?.to ?? '';
+        const impKey = /^(mod|mult):/.test(to) ? to.split(':')[1]! : undefined;
+        const spd = weaponSpeedPenalties(d).length ? ['spdMult'] : [];
+        expect(keys, c).toEqual([...new Set(['elemDamageAdd', ...(impKey ? [impKey] : []), ...spd])].sort());
     }
   });
 
@@ -89,7 +93,9 @@ describe('güç katmanı: item -> modifiers', () => {
     expect(m.elemDamageAdd!.physical).toBeGreaterThan(0);
     expect(m.attrAdd).toEqual({ str: 3 }); // a_primary: warrior STR (item seviyesi 9, adım 1: 3)
     expect(m.hpAdd).toBe(r.affixes.filter((a) => a.id === 'c_hp').reduce((x, a) => x + a.values[0]!, 0)); // iki item'den toplanır
-    expect(m.critAdd).toBe(r.affixes.find((a) => a.id === 'b_crit')!.values[0]! / 100);
+    // b_crit + kılıç örtüğü Keen edge (Ömer 2026-10-27: kritik örtüğü artık kılıçta)
+    const keen = implicitValues(implicitDefOf(itemDef('arming_sword')!)!, itemDef('arming_sword')!.ilvl)[0]!;
+    expect(m.critAdd).toBeCloseTo((r.affixes.find((a) => a.id === 'b_crit')!.values[0]! + keen) / 100, 6);
     expect(m.magicArmorAdd).toBe(r.affixes.find((a) => a.id === 'b_marmor')!.values[0]!);
     // tavan: 4 eldivende kritik (test için aynı yuvaya değil, farklı yuvalara zorlanmış affix'ler) items.json > caps.crit'i (%25, Ömer 2026-10-12) aşmaz
     const crit = loadout({ class: 'warrior', equipment: { ...emptyEquipment(), weapon: { uid: 'a', id: 'arming_sword', rolls: { ...roll('epic', ['b_crit', 1], ['a_keen', 1]), ilvl: 30 } }, gloves: { uid: 'b', id: 'keen_gauntlets', rolls: { ...roll('epic', ['b_crit', 1], ['a_keen', 1]), ilvl: 30 } } } });
@@ -127,7 +133,8 @@ describe('sefer ekipmanı: torba, kuşanma, altın', () => {
     let s = atBattle();
     const team = activeHeroes(s);
     const mage = team.find((h) => h.class === 'mage');
-    const warriorish = team.find((h) => ['warrior', 'antimage'].includes(h.class));
+    const warriorish = team.find((h) => h.class === 'warrior');
+    const antimage = team.find((h) => h.class === 'antimage'); // Anti-Mage yalnızca hançer (Ömer 2026-10-28)
     let r = addItem(s, 'turnshoes');
     const h = team[0]!;
     s = equipItem(r.state, h.id, r.item.uid);
@@ -141,6 +148,7 @@ describe('sefer ekipmanı: torba, kuşanma, altın', () => {
     expect(s.roster.find((x) => x.id === h.id)!.equipment.boots).toBeNull();
     r = addItem(s, 'woodcutters_axe');
     if (mage) expect(() => equipItem(r.state, mage.id, r.item.uid)).toThrow(/cannot use axes/);
+    if (antimage) expect(() => equipItem(r.state, antimage.id, r.item.uid)).toThrow(/cannot use axes/);
     if (warriorish) expect(equipItem(r.state, warriorish.id, r.item.uid).roster.find((x) => x.id === warriorish.id)!.equipment.weapon?.id).toBe('woodcutters_axe');
     expect(() => addItem(s, 'nope')).toThrow();
     expect(addGold(addGold({ ...s, gold: 0 }, 50), -80).gold).toBe(0);

@@ -59,7 +59,7 @@ export interface SessionOptions {
 let fingerprint: string | null = null;
 /** Savaşı etkileyen içerik verisinin özeti (class, skill, formül, durum, zemin, çağrı, global eylem). */
 export function contentFingerprint(): string {
-  fingerprint ??= `p${PROTOCOL_VERSION}-${fnv1a(JSON.stringify([content.classes, content.skills, content.formulas, content.statuses, content.grounds, content.summons, content.globalSkills, content.battles[content.DEFAULT_BATTLE]]))}`;
+  fingerprint ??= `p${PROTOCOL_VERSION}-${fnv1a(JSON.stringify([content.classes, content.skills, content.formulas, content.statuses, content.grounds, content.groundReactions, content.summons, content.globalSkills, content.battles[content.DEFAULT_BATTLE]]))}`;
   return fingerprint;
 }
 

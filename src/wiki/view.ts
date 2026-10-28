@@ -36,6 +36,7 @@ import './wiki.css';
 import { seenLessons } from '../tutorial/store';
 import { lessonEntryId } from './catalog';
 import { navSvg } from '../ui/nav-icons';
+import { multText } from '../engine/bonus-text';
 
 export interface WikiHooks {
   /** Codex açıldı: oyun duraklatılır. */
@@ -609,7 +610,7 @@ export class WikiPanel {
       articleHead(elementPic(e.id, 'cx-ico head'), e.name, h('span', { style: { color: e.color }, text: 'Element' })),
       heading('Weaknesses'),
       e.weakTo.length
-        ? h('ul', { class: 'cx-ul' }, ...e.weakTo.map((w) => h('li', { text: `${w.tag.charAt(0).toUpperCase() + w.tag.slice(1)} units take x${w.mult} damage (${w.units.join(', ') || 'no unit yet'})` })))
+        ? h('ul', { class: 'cx-ul' }, ...e.weakTo.map((w) => h('li', { text: `${w.tag.charAt(0).toUpperCase() + w.tag.slice(1)} units take ${multText(w.mult)} damage (${w.units.join(', ') || 'no unit yet'})` })))
         : h('p', { class: 'cx-dim', text: 'No unit type is weak to it.' }),
       heading('Skills'),
       e.skillRefs.length ? h('div', { class: 'cx-refs' }, ...e.skillRefs.map((r) => this.skillRef(r))) : h('p', { class: 'cx-dim', text: 'No skill uses it yet.' }));

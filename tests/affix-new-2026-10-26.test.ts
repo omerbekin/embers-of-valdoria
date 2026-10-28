@@ -32,10 +32,10 @@ describe('yeni affix verisi', () => {
     expect(ITEMS.affixDefs.c_gold!.slots).toEqual(['trinket']);
   });
 
-  it('ipucu metni şablondan (bonus yazım kuralı: direnç ayrı çarpan): "×0.87 Fire damage taken", "Your wounds lower your Max HP X% less"', () => {
-    expect(affixLines(inst('leather_coif', 'c_res_fire'))[0]!.text).toBe(`×${Number((1 - v('c_res_fire') / 100).toFixed(3))} Fire damage taken`);
+  it('ipucu metni şablondan (bonus yazım kuralı: direnç ayrı çarpan): "Takes 13% less Fire damage", "Your wounds lower your Max HP X% less"', () => {
+    expect(affixLines(inst('leather_coif', 'c_res_fire'))[0]!.text).toBe(`Takes ${v('c_res_fire')}% less Fire damage`);
     expect(affixLines(inst('leather_coif', 'b_wound_soft'))[0]!.text).toBe(`Your wounds lower your Max HP ${v('b_wound_soft')}% less`);
-    expect(affixLines(inst('work_gloves', 'a_steady'))[0]!.text).toBe(`Each turn you don't move: ×${Number((1 + v('a_steady') / 100).toFixed(3))} damage, up to ×${Number((1 + (3 * v('a_steady')) / 100).toFixed(3))} after 3 turns`);
+    expect(affixLines(inst('work_gloves', 'a_steady'))[0]!.text).toBe(`Each turn you don't move: ${v('a_steady')}% more damage, up to ${Number((3 * v('a_steady')).toFixed(2))}% more after 3 turns`);
   });
 
   it('Equip best uyumu: Thorns yakın dövüşçüye, Rearguard bane menzilliye tam; diğer yeni affix\'ler herkese', () => {
@@ -96,7 +96,7 @@ describe('motor kancaları', () => {
     const l = loadout({ class: 'warrior', equipment: { helm: inst('leather_coif', 'c_res_light', 'h') } }).itemEffects?.elemResist;
     expect(l?.lightning).toBeCloseTo(v('c_res_light') / 100, 6);
     expect(l?.holy).toBeUndefined();
-    expect(affixLines(inst('leather_coif', 'c_res_light'))[0]!.text).toBe(`×${Number((1 - v('c_res_light') / 100).toFixed(3))} Lightning damage taken`);
+    expect(affixLines(inst('leather_coif', 'c_res_light'))[0]!.text).toBe(`Takes ${v('c_res_light')}% less Lightning damage`);
     const z = make({ 0: 'warrior' }, { 0: 'mage' }, { 0: fx({ elemResist: { lightning: 0.3 } }) });
     expect(z.damageTakenMult(at(z, 'party', 0), at(z, 'enemy', 0), 'magic', null, 'lightning')).toBeCloseTo(0.7, 9);
     expect(z.damageTakenMult(at(z, 'party', 0), at(z, 'enemy', 0), 'magic', null, 'holy')).toBe(1);

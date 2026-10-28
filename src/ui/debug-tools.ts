@@ -549,6 +549,16 @@ export function registerDebugTools({ game, debug }: Ctx): void {
         debugButton(def.name, act((u) => b.debugAddStatus(u.uid, kind, STATUS_TURNS)), { icon: def.type === 'debuff' ? 'poison' : 'shield', title: `${def.text} (${STATUS_TURNS} turns)`, className: def.type === 'debuff' ? 'bad' : 'good' }),
       );
       el.append(...debugSection('Add status', ...statusButtons));
+      // Zemin tepkimeleri (Ömer 2026-10-27): seçili birimin hücresine önce kurulum, sonra tetik zemini (karşı taraftan bırakılmış gibi)
+      // Aynı etiketli tepkimeler (Holy water: Holy Fire / Holy Ground) düğmede tetik zeminin adıyla ayrılır
+      const reactionDefs = Object.values(content.groundReactions);
+      const reactionButtons = Object.entries(content.groundReactions).map(([id, d]) =>
+        debugButton(reactionDefs.filter((x) => x.label === d.label).length > 1 ? `${d.label} (${content.grounds[d.trigger[0]!]?.name ?? d.trigger[0]})` : d.label, act((u) => b.debugGroundReaction(u.uid, id)), {
+          icon: 'flame',
+          title: `${content.grounds[d.setup[0]!]?.name ?? d.setup[0]} first, then ${content.grounds[d.trigger[0]!]?.name ?? d.trigger[0]} on this unit's cell (placed by the other side). ${d.text}`,
+        }),
+      );
+      el.append(...debugSection('Ground reactions', ...reactionButtons));
 
     },
   });

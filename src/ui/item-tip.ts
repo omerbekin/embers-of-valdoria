@@ -58,6 +58,8 @@ export interface ItemTipState {
   level?: number;
   /** Tüccar: torba item'inin satış fiyatı (verilirse altta "sells for"; yoksa "value"). */
   sellFor?: number;
+  /** Oransal örtüğün seçili kahramandaki gerçek sonucu, soluk ("(120 → 130)"; Ömer 2026-10-27; loadout.ts > implicitResultHint). */
+  implicitHint?: string;
 }
 
 /**
@@ -105,16 +107,23 @@ function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unkn
     out.push(box);
   }
   const base = instanceBaseLines(inst);
-  if (base.implicit) {
+  // örtük satır(lar): tipin örtüğü (+ hız cezası) ve çift el yakın dövüşte Heavy grip (Ömer 2026-10-27)
+  for (const [line, hint] of [[base.implicit, state?.implicitHint], [base.heavy, undefined]] as const) {
+    if (!line) continue;
     const row = el('div', 'it-implicit');
-    const url = base.implicit.stat ? statIconUrl(base.implicit.stat) : '';
+    const url = line.stat ? statIconUrl(line.stat) : '';
     if (url) {
       const i = el('img', 'it-ico');
       i.src = url;
       i.alt = '';
       row.append(i);
     }
-    row.append(el('span', 'it-text', base.implicit.text));
+    row.append(el('span', 'it-text', line === base.heavy ? `${line.name}: ${line.text}` : line.text));
+    if (hint) {
+      const h = el('span', 'it-text', ` ${hint}`);
+      h.style.opacity = '0.55';
+      row.append(h);
+    }
     out.push(row);
   }
   const lines = el('div', 'it-lines');

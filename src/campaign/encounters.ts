@@ -399,6 +399,14 @@ export function startCardInfo(lore: string | undefined, fallback?: CardInfo): Ca
   return t ? { text: t } : fallback;
 }
 
+/** Rakip bölük bilgisi (başlatma kartı): karşılaşmada `company` varsa ad/satır/neden + elle yazılmış dalga sayısı (>1 ise). */
+export function companyCard(encounterId: string): { name: string; line: string; cause: string; waves?: number } | undefined {
+  const def = ENCOUNTERS[encounterId];
+  if (!def?.company) return undefined;
+  const waves = 1 + (def.waves?.length ?? 0);
+  return { ...def.company, ...(waves > 1 ? { waves } : {}) };
+}
+
 export function foeGroups(encounterId: string, caps = ENGINE_CAPS): { groups: FoeGroup[]; info?: { who: string; text: string; quote?: boolean } } {
   const enc = resolveEncounter(encounterId, caps);
   const units = allWaveUnits(enc.id, enc.def);

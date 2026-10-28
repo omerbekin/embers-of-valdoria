@@ -112,8 +112,8 @@ html.reduced-motion .mw-in .mw-card { animation: none; }
 .mw-card .ds { margin: 0; padding: 0 max(8px, calc(16 * var(--u))); font: 400 max(11px, calc(20 * var(--u))) / 1.26 var(--g-body); color: #cdb88d; }
 .mw-card .pt { flex: none; }
 /* etiketler HER ZAMAN tek satır (Form Your Company ile aynı kural); sığmazsa rol çipi üç noktayla kısalır */
-.mw-card .mw-chips { justify-content: center; flex-wrap: nowrap; padding: 0 6px; max-width: 100%; box-sizing: border-box; gap: max(3px, calc(6 * var(--u))); }
-.mw-card .mw-chip { white-space: nowrap; max-width: 100%; box-sizing: border-box; min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.mw-card .mw-chips { justify-content: center; flex-wrap: wrap; padding: 0 6px; max-width: 100%; box-sizing: border-box; gap: max(3px, calc(6 * var(--u))); }
+.mw-card .mw-chip { white-space: nowrap; max-width: 100%; box-sizing: border-box; flex: none; }
 .mw-card .mw-chip.gain { flex: none; }
 
 /* ---------- dusmus kahraman satiri (Rest) ---------- */

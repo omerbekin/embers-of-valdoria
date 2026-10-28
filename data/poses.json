@@ -7969,7 +7969,8 @@
     "staves": "staves",
     "bows": "bows",
     "charms": "charms",
-    "shield": "shields"
+    "shield": "shields",
+    "hammers": "maces"
   },
   "rarityLook": {
     "common": 0,
@@ -8010,13 +8011,15 @@
     "pose_tester_8": "undead_v2",
     "pose_tester_9": "antimage_v2",
     "pose_tester_10": "gambler_v2",
-    "pose_tester_11": "hexer_v2"
+    "pose_tester_11": "hexer_v2",
+    "vesper": "mage_v2"
   },
   "braceSkills": [],
   "gripArt": {
     "two": {
       "axes": "greataxes",
-      "maces": "mauls"
+      "maces": "mauls",
+      "hammers": "mauls"
     }
   },
   "itemLook": {

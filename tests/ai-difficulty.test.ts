@@ -118,10 +118,12 @@ describe('madde 258 Faz 2: mana yakmanın "engellenen hamle" değeri', () => {
     };
     const b = ownTurn(mk({ 0: 'antimage' }, { 0: 'mage', 1: 'paladin', 3: 'druid' }, 'turns'));
     for (const e of b.combatants.filter((c) => c.side === 'enemy')) e.mp = content.skills.radiance!.cost.amount - 4; // az MP (eskiden 16 = Radiance 20 - 4; bedel veriden, 2026-10-24 mana turu)
-    const df = Math.max(...cand(b, 'party-0', 'drain_field').map((c) => c.terms?.burn ?? 0));
+    const df = Math.max(...cand(b, 'party-0', 'mana_burn').map((c) => c.terms?.burn ?? 0));
     expect(df).toBeGreaterThan(0);
+    // 2026-10-27: Ley Brand yakmaz; adayının değeri 'brand' terimindedir (taze hedefte pozitif). Mana Steal tek hedef ve az MP'de
+    // daha az yakar; "bol MP'de daha az" karşılaştırması yukarıdaki manaDenial testinde kalır
     const full = ownTurn(mk({ 0: 'antimage' }, { 0: 'mage', 1: 'paladin', 3: 'druid' }, 'turns'));
-    expect(Math.max(...cand(full, 'party-0', 'drain_field').map((c) => c.terms?.burn ?? 0))).toBeLessThan(df);
+    expect(Math.max(...cand(full, 'party-0', 'drain_field').map((c) => c.terms?.brand ?? 0))).toBeGreaterThan(0);
   });
 });
 
