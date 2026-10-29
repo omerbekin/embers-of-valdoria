@@ -137,10 +137,30 @@ export interface MapNode {
   crossing?: boolean;
   /** M-L Faction: seçilen tarafa göre bu düğümün karşılaşması (yoksa / taraf seçilmediyse `encounter`; Harbor Fort). */
   factionEncounter?: Partial<Record<Faction, string>>;
+  /**
+   * Düğümün kendi tüccarı (Ömer 2026-10-29: The Deep Market'ta Odo yok). Yoksa olağan tüccar (Odo). `portrait` = assets/avatars/<portrait>.png
+   * (yüz) ve varsa <portrait>_figure.png (karşılama panelinin boy figürü); `name` ekranın başlığı, `greeting` karşılama satırı.
+   */
+  trader?: { name: string; portrait: string; greeting: string; /** Karşılama kartının üst satırı (yoksa "A travelling merchant"). */ kicker?: string };
+  /**
+   * Harita 3 The Deep Market (Ömer 2026-10-29, open-questions 454 b): YALNIZ bu düğümün tüccarına özel ayar (derin cüce tüccarı, Odo yok).
+   * `priceMult` = alış fiyatı çarpanı (fiyatlar yüksek), `rarityFloor` = stoğun en düşük nadirliği (stok iyi; zar bunun altına düşerse bu
+   * nadirliğe çıkar), `oathDiscount` = Hall of Oaths'ta yemin edildiyse (CampaignState.stoneOath 'sworn') fiyat çarpanından düşülen oran.
+   * Satış değeri ve yenileme bedeli değişmez. Yoksa düğümün tüccarı olağan kurallarla (src/campaign/hollow-crown.ts).
+   */
+  marketRules?: { priceMult?: number; rerollMult?: number; rarityFloor?: 'common' | 'uncommon' | 'rare' | 'epic'; oathDiscount?: number };
+  /**
+   * Harita 3 cüce mezarı / hazinesi (Ömer 2026-10-29, open-questions 454 a, seçenek A): Hall of Oaths'ta yemin EDİLDİYSE (stoneOath 'sworn')
+   * bu düğümün hazine adımı ganimet vermez (adım yine biter, rota bozulmaz; koruma savaşı aynen). Ret ya da kararsız = olağan sandık.
+   */
+  oathSealed?: boolean;
 }
 
 /** M-L Faction (maps-2-3.md 3.4): Saltmere'de bir kez seçilen taraf. */
 export type Faction = 'order' | 'guild';
+
+/** Harita 3 Hall of Oaths seçimi (Stone Oath). */
+export type StoneOath = 'sworn' | 'refused';
 
 /**
  * Harita 2 deniz kuralları (maps-2-3.md 5: M-J sea lanes, M-K Black Caravel, M-L faction, M-M lighthouse; src/campaign/reach.ts). Sayılar veride.
@@ -242,7 +262,7 @@ export interface CampaignMap {
   removedNodes?: Record<string, string>;
 }
 
-import type { UnitModifiers, UnitTier } from '../engine/types';
+import type { StatusKind, UnitModifiers, UnitTier } from '../engine/types';
 import type { Equipment, ItemInstance, ItemRoll } from '../progression/items';
 import type { KillRecord, LevelUp, StatAlloc } from '../progression/levels';
 import type { TreeAlloc } from '../progression/skill-tree';
@@ -583,6 +603,16 @@ export interface CampaignState {
   surge?: { spent?: string[]; uses?: number; taken?: number; salt?: true };
   /** M-L Faction (Harita 2 Saltmere; bir kez seçilir, geri alınmaz). Haritalar arası taşınır. İsteğe bağlı alan (kayıt sürümü değişmez). */
   faction?: Faction;
+  /**
+   * Harita 3 Hall of Oaths (Ömer 2026-10-29, open-questions 454 a): Stone Oath'a yemin edildi ('sworn': Deep Market indirimi) ya da reddedildi
+   * ('refused': Gatehouse devriyesi güçlenir). Bir kez, geri alınmaz. İsteğe bağlı alan (kayıt sürümü değişmez).
+   */
+  stoneOath?: StoneOath;
+  /**
+   * Bir sonraki savaşın başında takımın her (ayaktaki) kahramanına konan durum (The White Dark "Wait it out": Chilled 2 tur; Ömer 2026-10-29,
+   * open-questions 454 d). Savaş bitince (zafer, yenilgi, geri çekilme) silinir. İsteğe bağlı alan (kayıt sürümü değişmez).
+   */
+  pendingStatus?: { status: StatusKind; turns: number };
   /** M-J: deniz yolları açık ("Charter a ship"). Yalnız bu harita (geçişte silinir). */
   sea?: true;
   /** M-M: Lantern Rock feneri yakıldı (bu haritada görüş eki). Yalnız bu harita. */

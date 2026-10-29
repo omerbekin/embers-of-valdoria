@@ -18,6 +18,8 @@ export interface VfxSheetMeta {
   order?: string;
   padding_px?: number;
   pivot?: [number, number];
+  /** Sarma (vfx-sheets.ts > SheetWrap): bölme çizgisi, kare yüksekliğinin kesri (üstü birimin arkasında, altı önünde). Yalnızca `wrap` istenince okunur. */
+  wrap?: { split?: number };
 }
 
 export interface VfxSheetFile {

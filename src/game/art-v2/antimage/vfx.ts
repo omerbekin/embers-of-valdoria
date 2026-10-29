@@ -439,4 +439,109 @@ const voidstrike: V2Vfx = async (c, k) => {
   );
 };
 
-export const VFX: Record<string, V2Vfx> = { manasteal, drainfield, spellward, voidstrike };
+// =====================================================================================================================
+// LEY THREAD (durum olay efektleri; Ömer 2026-10-29: Mana Steal isabet ettiği hedefe iplik bırakır, Ley Brand onu tüketir)
+
+/**
+ * İnce ley ipliği: `from` -> `to` arasında hafif dalgalı, iki katlı (dışta soluk mor, içte beyaz-mor) ışık çizgisi. Uçtan uca `draw` ms'de
+ * uzar, `hold` ms durur, sonra `from` ucundan `to`ya doğru çekilerek söner (iplik hedefe bağlanmış kalır gibi). `taut`: gergin ve parlak
+ * (tüketim anı), dalga yok denecek kadar az.
+ */
+function leyLine(c: VfxCtx, k: VfxKit, from: () => Pt, to: () => Pt, o: { draw: number; hold: number; out: number; taut?: boolean }): Promise<void> {
+  const g = c.scene.add.graphics().setDepth(k.DEPTH + 38).setBlendMode(k.Phaser.BlendModes.ADD);
+  const N = 22;
+  const amp = o.taut ? 2 : 7;
+  const ph = k.rnd(0, 6);
+  const draw = (a: number, b: number, alpha: number, time: number): void => {
+    g.clear();
+    if (b <= a || alpha <= 0) return;
+    const p0 = from();
+    const p1 = to();
+    const len = Math.hypot(p1.x - p0.x, p1.y - p0.y) || 1;
+    const nx = -(p1.y - p0.y) / len;
+    const ny = (p1.x - p0.x) / len;
+    const pts: Pt[] = [];
+    for (let i = 0; i <= N; i++) {
+      const u = a + ((b - a) * i) / N;
+      const w = Math.sin(u * Math.PI) * amp * Math.sin(u * 9 + time * 0.012 + ph);
+      pts.push({ x: p0.x + (p1.x - p0.x) * u + nx * w, y: p0.y + (p1.y - p0.y) * u + ny * w - Math.sin(u * Math.PI) * (o.taut ? 4 : 18) });
+    }
+    g.lineStyle(o.taut ? 7 : 5, 0x7d3fb0, 0.35 * alpha).strokePoints(pts);
+    g.lineStyle(o.taut ? 3 : 2, 0xe3ccff, 0.9 * alpha).strokePoints(pts);
+  };
+  return k
+    .counter(c.scene, k.slow(o.draw), (u) => draw(0, u, 1, c.scene.time.now), 'Quad.easeOut')
+    .then(() => k.counter(c.scene, k.slow(o.hold), () => draw(0, 1, 1, c.scene.time.now)))
+    .then(() => k.counter(c.scene, k.slow(o.out), (u) => draw(u, 1, 1 - u * 0.6, c.scene.time.now), 'Sine.easeIn'))
+    .then(() => g.destroy());
+}
+
+/** İpliğin hedefteki düğümü: küçük rün tableti göğüste belirip yavaşça söner. */
+function threadKnot(c: VfxCtx, k: VfxKit, t: CombatantView, life: number, bright = false): void {
+  const p = k.spot(t);
+  const rn = k.v2Sprite(c, 'tablet', ACCENT, p.x, p.y, bright ? 30 : 22, k.DEPTH + 42).setAlpha(0).setBlendMode(k.Phaser.BlendModes.ADD);
+  c.scene.tweens.add({ targets: rn, alpha: 0.9, duration: k.slow(120) });
+  fade(c, k, rn, life, 260, { y: p.y - 10 });
+  const g = glow(c, k, p.x, p.y, bright ? 90 : 56, 0xb872ff, bright ? 0.7 : 0.45, k.DEPTH + 30);
+  fade(c, k, g, life * 0.5, 300);
+}
+
+/**
+ * Ley Thread uygulandı (`status_ley_thread`; Mana Steal isabeti): Anti-Mage'in eldiveninden hedefin göğsüne ince mor ley ipliği uzanır, kısa
+ * durur, AM ucundan çözülüp hedefe sarılarak söner; göğüste küçük rün düğümü kalır. Olay kuyruğunu ~0,1 sn bekletir.
+ */
+const threadApply: V2Vfx = async (c, k) => {
+  const t = c.targets[0];
+  if (!t || t === c.actor) return;
+  void leyLine(c, k, () => handOf(c.actor), () => k.spot(t), { draw: 180, hold: 220, out: 280 });
+  threadKnot(c, k, t, 520);
+  await k.wait(c.scene, k.slow(100));
+};
+
+/**
+ * Ley Thread tüketildi (`statususe_ley_thread`; Ley Brand iplikli hedefe değdi): iplik bu kez GERGİN ve parlak, Brand'i atan AM'den hedefe bir
+ * anda gerilir, düğüm parlar ve iplik mor kıvılcımlarla kopar (Brand uzadı / güçlendi). ~0,35 sn.
+ */
+const threadUse: V2Vfx = async (c, k) => {
+  const t = c.targets[0];
+  if (!t) return;
+  const from = c.actor !== t ? () => handOf(c.actor) : () => ({ x: t.container.x, y: t.container.y - 4 });
+  void leyLine(c, k, from, () => k.spot(t), { draw: 90, hold: 140, out: 160, taut: true });
+  threadKnot(c, k, t, 260, true);
+  await k.wait(c.scene, k.slow(200));
+  const p = k.spot(t);
+  k.burst(c.scene, p.x, p.y, { colors: [...VIOLET, '#ffffff'], n: 10, speed: [90, 260], gravity: 120, life: [240, 440], size: [4, 8] });
+  await k.wait(c.scene, k.slow(120));
+};
+
+// =====================================================================================================================
+// SPELLBREAKER'S INSTINCT (pasif olay efekti `passive_spellbreaker_instinct`)
+
+/**
+ * Düşman MP'li skill attı, AM'in sırası öne kaydı: eldivenin rün tabletleri bir anda parlar, gövdeden ileri (baktığı yöne) mor bir hız izi ve
+ * kısa art görüntü (sıra öne çekildi). ~0,3 sn; kuyruğu ~0,15 sn bekletir.
+ */
+const spellbreakerInstinct: V2Vfx = async (c, k) => {
+  const v = c.actor;
+  const f = face(v);
+  const hand = handOf(v);
+  const hg = glow(c, k, hand.x, hand.y, 30, 0xe3ccff, 0.9, k.DEPTH + 40);
+  c.scene.tweens.add({ targets: hg, displayWidth: 110, displayHeight: 110, alpha: 0, duration: k.slow(260), ease: 'Quad.easeOut', onComplete: () => hg.destroy() });
+  shatter(c, k, hand.x, hand.y, 4);
+  v.afterimage(0xb872ff, 0.45, 280);
+  const g = c.scene.add.graphics().setDepth(k.DEPTH + 36).setBlendMode(k.Phaser.BlendModes.ADD);
+  const y0 = v.container.y - v.h * 0.62;
+  void k.counter(c.scene, k.slow(300), (u) => {
+    g.clear();
+    const a = Math.sin(u * Math.PI);
+    for (let i = 0; i < 3; i++) {
+      const y = y0 + i * v.h * 0.16;
+      const x0 = v.container.x - f * v.w * 0.3 + f * u * v.w * 0.5;
+      g.lineStyle(i === 1 ? 3 : 2, i === 1 ? 0xe3ccff : 0xb872ff, 0.7 * a).lineBetween(x0, y, x0 + f * v.w * (0.35 + 0.2 * i), y);
+    }
+    if (u >= 1) g.destroy();
+  });
+  await k.wait(c.scene, k.slow(150));
+};
+
+export const VFX: Record<string, V2Vfx> = { manasteal, drainfield, spellward, voidstrike, status_ley_thread: threadApply, statususe_ley_thread: threadUse, passive_spellbreaker_instinct: spellbreakerInstinct };

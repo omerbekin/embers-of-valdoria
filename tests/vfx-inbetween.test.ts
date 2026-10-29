@@ -77,3 +77,21 @@ describe('mob VFX gerçek savaş kararları (data/battle-layout.json > animation
     expect(flightRotation({ x: 0, y: 0 }, { x: 100, y: 100 }, 45, false)).toBeCloseTo(0, 5);
   });
 });
+
+// Sheet sarması (src/game/vfx-sheets.ts > SheetWrap, 2026-10-29): ayar varsayılanda kapalı; verilen değer true, 0-1 arası bölme kesri ya da { split, ghost }.
+describe('mob efekti sarma ayarı (animation.mobVfx.skills.<id>.wrap)', () => {
+  it('wrap yalnızca bilinen skill\'lerde ve geçerli değerle', () => {
+    const skills = (layout.animation.mobVfx as unknown as { skills: Record<string, MobTune> }).skills;
+    for (const [id, t] of Object.entries(skills)) {
+      if (t.wrap === undefined) continue;
+      expect(MOB_VFX_SPECS[id], id).toBeTruthy();
+      const frac = (n: unknown): boolean => typeof n === 'number' && n > 0 && n < 1;
+      if (typeof t.wrap === 'number') expect(frac(t.wrap), id).toBe(true);
+      else if (typeof t.wrap === 'object') {
+        expect(Object.keys(t.wrap).every((k) => k === 'split' || k === 'ghost'), id).toBe(true);
+        if (t.wrap.split !== undefined) expect(frac(t.wrap.split), id).toBe(true);
+        if (t.wrap.ghost !== undefined) expect(t.wrap.ghost > 0 && t.wrap.ghost <= 1, id).toBe(true);
+      } else expect(typeof t.wrap, id).toBe('boolean');
+    }
+  });
+});

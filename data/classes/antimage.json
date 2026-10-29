@@ -5,7 +5,7 @@
   "color": "#9b59d0",
   "logo": "nullsphere",
   "role": "Mana Hunter",
-  "blurb": "Mana hunter who burns enemy spellpower and turns blocked magic into team mana.",
+  "blurb": "Mana hunter who burns enemy spellpower and strikes faster when enemies cast on her team.",
   "frontPriority": 3.5,
   "range": 4,
   "attributes": {
@@ -25,14 +25,14 @@
     "void_strike"
   ],
   "passive": {
-    "id": "mana_overflow",
-    "name": "Mana Overflow",
-    "icon": "overflow",
-    "text": "Magic damage blocked by your magic armor builds up; every 30 blocked, your whole team gains 5 MP.",
+    "id": "spellbreaker_instinct",
+    "name": "Spellbreaker's Instinct",
+    "icon": "spellbreaker",
+    "_not": "Ömer 2026-10-29: Mana Overflow'un yerine (manaOverflow efekt kodu motorda duruyor, AM kitinden çıktı; ağaçtaki Mana Overflow düğümleri inactive). Bir düşman AM'in takımından birine MP ödediği bir skill atınca AM'in sıra sayacı eşiğin advance oranı kadar öne kayar; AM'in iki turu arasında en çok bir kez. İkon YER TUTUCU (overflow, eski pasifin ikonu; ödünç). Sayı PROVİZYON.",
+    "text": "When an enemy uses a skill that costs MP on your team, your next turn comes 10% sooner (once per round).",
     "effect": {
-      "type": "manaOverflow",
-      "threshold": 30,
-      "mana": 5
+      "type": "spellbreakerInstinct",
+      "advance": 0.1
     }
   }
 }

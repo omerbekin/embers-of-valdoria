@@ -25,7 +25,25 @@
     "stallFocus": 3,
     "tauntPull": 0.7,
     "_brand": "engine-dev 2026-10-27 (open-questions 444, PROVİZYON, sim YOK): Ley Brand değeri. poolShare = tainted mana'nın hasar potansiyelinin sayılan payı, costShare = MP'li hedefin elindeki MP'nin yakım hasarı payı; hedefte freshTurns ya da daha az tur kalmışsa yeniden atış refreshShare kadar değerli, fazlası 0 (havuz dolmaz).",
-    "brand": { "poolShare": 0.6, "costShare": 0.5, "freshTurns": 1, "refreshShare": 0.4, "castShare": 0.6, "markShare": 0.5 }
+    "brand": { "poolShare": 0.6, "costShare": 0.5, "freshTurns": 1, "refreshShare": 0.4, "castShare": 0.6, "markShare": 0.5, "threadShare": 0.5 },
+    "_instinctShare": "engine-dev 2026-10-29 (open-questions 456, PROVİZYON, sim YOK): Spellbreaker's Instinct bedeli. MP bedelli skill rakip Anti-Mage'in takımından birini kapsıyorsa ve o AM'in bu turki tetiklenme hakkı duruyorsa terim instinct = -(advance x AM'in tur değeri x instinctShare). Simetrik: iki taraf da aynı YZ.",
+    "instinctShare": 1,
+    "aiCov": {
+      "_note": "engine-dev 2026-10-29 YZ kapsamı (open-questions 458, PROVİZYON, sim YOK). groundStayShare: zeminde ilk tikten sonraki her tikin sayılan payı (genel zemin kuralı: çıkan o an kurtulur; Move / itme / çekme / öne atılma / zemin bırakma hepsi bu ölçüyle). mirageShare: Heat Mirage (Mage'e yakın dövüş) zemin bedeli çarpanı. rageShare: Berserker'e vurunca kazandığı Rage'in (rageOnHurt) değer payı. divineLightShare: Divine Light'ın tur değerine katılan payı ve Paladin şifasının boşa düşürdüğü bedava şifa payı. wardShare: Spell Ward kancasının saldırana bedeli (MP yakımı + buff silme zarı + taşıyana MP). bell: Vesper çan büyümesi, ufuk (kendi turu) ve tur başı iskonto. opportunistShare: dostun Opportunist bonusunu açan durumun payı. push: itme kaymasının erişim / kalabalık payları (eski PUSH_REACH_SHARE / PUSH_CROWD_SHARE). tree: ağaç tetikleri (kendi / rakibin karşılık tetikleri; cooldownShare = cooldown turu başına tur değeri payı). reactionShare: zemin tepkimesi. omenTransferShare: Ill Omen geçişi. grudgeShare: Nature's Grudge bedeli. dispelBuffShare: düşman buff'ı silme.",
+      "groundStayShare": 0.5,
+      "mirageShare": 1,
+      "rageShare": 0.5,
+      "divineLightShare": 0.6,
+      "wardShare": 1,
+      "bell": { "horizon": 2, "discount": 0.7 },
+      "opportunistShare": 0.5,
+      "push": { "reachShare": 0.5, "crowdShare": 0.1 },
+      "tree": { "triggerShare": 1, "retaliationShare": 1, "cooldownShare": 0.25 },
+      "reactionShare": 1,
+      "omenTransferShare": 1,
+      "grudgeShare": 1,
+      "dispelBuffShare": 1
+    }
   },
   "difficulty": {
     "easy": {
@@ -146,7 +164,7 @@
       "cleanseMinValue": 12
     },
     "vesper": {
-      "_not": "Vesper (2026-10-28): caster kalıbı, kalkan / şifa yok; öncelikler yalnızca etiket (madde 257: değer terazisi), alan önce. Çanların gelecekteki büyümesine YZ ayrı değer vermez (yalnızca önizlemedeki anlık hasar).",
+      "_not": "Vesper (2026-10-28): caster kalıbı, kalkan / şifa yok; öncelikler yalnızca etiket (madde 257: değer terazisi), alan önce. Çan büyümesi (ringsBell) 2026-10-29dan beri değerli: value.aiCov.bell (2 kendi turu, tur başı x0,7 iskonto; open-questions 458, PROVİZYON).",
       "priorities": [
         "kill",
         "aoe",

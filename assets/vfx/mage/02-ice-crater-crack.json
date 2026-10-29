@@ -1,0 +1,25 @@
+{
+  "slug": "02-ice-crater-crack",
+  "title": "Ice Crater crash crack",
+  "frames": 8,
+  "fps": 18,
+  "frame_size": [
+    256,
+    256
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 0,
+  "pivot": [
+    128,
+    128
+  ],
+  "duration_ms": 444,
+  "sheet_size": [
+    1024,
+    512
+  ]
+}

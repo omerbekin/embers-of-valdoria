@@ -11,6 +11,10 @@
  *   summonvanish_<çağrıId> çağrının süresi doldu (despawn)
  *   doomburst / omentransfer / withertick   Hexer motor olayları (hexer)
  *   guardshare             Guard payı korumacıya geçti (damage.redirected; defender): actor = korumacı, targets[0] = korunan dost (bulunursa)
+ *   passive_<pasifId>      pasif tetiklendi ('passive' olayı; Heat Mirage, Spellbreaker's Instinct): actor = pasifin sahibi; yazı + halka yine çıkar
+ *   status_<durumId>       durum uygulandı ('status' olayı; Ley Thread): actor = uygulayan, targets[0] = alan; sahibi durumu veren skill'in sınıfı
+ *   statususe_<durumId>    durum tüketildi ('statusEnd', consumed; Ley Thread Brand'e harcandı): actor = o an skill atan, targets[0] = taşıyan
+ *   crash_<skillId>        itilen birim çarptı ('crash' olayı; Ice Crater): actor = atan, targets = çarpan (+ çarpılan dost)
  */
 import { content, type SkillDef } from '../engine';
 import type { V2Vfx } from './art-v2/types';
@@ -28,6 +32,10 @@ export const EVENT_FX = {
   omenTransfer: 'omentransfer',
   witherTick: 'withertick',
   guardShare: 'guardshare',
+  passive: (passiveId: string): string => `passive_${passiveId}`,
+  status: (statusId: string): string => `status_${statusId}`,
+  statusUse: (statusId: string): string => `statususe_${statusId}`,
+  crash: (skillId: string): string => `crash_${skillId}`,
 } as const;
 
 /** Sahibin v2 dosyasındaki olay efekti (seçimden bağımsız; wiki/test için). */

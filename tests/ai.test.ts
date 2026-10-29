@@ -58,7 +58,10 @@ describe('yapay zeka: öncelik 1 - öldürebiliyorsa öldür', () => {
     b.get(E_ARCHER)!.mp = 0; // AoE kullanamasın, tek hedefe zorla
     b.get(WARRIOR)!.hp = 3;
     b.get(MAGE)!.hp = 3;
-    // Mage (MAG 20 + SPD 9 = 29) > Warrior (ATK 18 + SPD 10 = 28) -> Mage
+    // 3 HP'deki Warrior'ın Berserker pasifi (+%80 hasar) artık turnValue'da sayılıyor -> Warrior
+    expect(chooseAction(b, E_ARCHER, ai)).toMatchObject({ targetUid: WARRIOR, reason: 'kill' });
+    // Pasif yoksa: Mage (MAG 20 + SPD 9 = 29) > Warrior (ATK 18 + SPD 10 = 28) -> Mage
+    b.get(WARRIOR)!.passive = undefined;
     expect(chooseAction(b, E_ARCHER, ai)).toMatchObject({ targetUid: MAGE, reason: 'kill' });
   });
 

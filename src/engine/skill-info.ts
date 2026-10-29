@@ -176,6 +176,8 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `Heal for ${pct(e.ratio)} of all damage you deal (damage dealt by your summons counts too).`;
     case 'manaOverflow':
       return `Magic damage blocked by your magic armor builds up; every ${e.threshold} blocked, your whole team gains ${e.mana} MP.`;
+    case 'spellbreakerInstinct':
+      return `When an enemy uses a skill that costs MP on your team (you included), your turn bar jumps ${pct(e.advance)} of a turn ahead, so your next turn comes sooner. At most once between your turns.`;
     case 'armorAura':
       return `You and the allies right next to you (front, back, left, right) gain bonus armor equal to ${pct(e.pct)} of your own armor (+${Math.round(stats.armor * e.pct)} now). A unit benefits from at most ${e.maxStacks} such auras.`;
     case 'bonusVsStatus': {
@@ -475,6 +477,12 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const names = e.markSkills.map((id) => defs.skills?.[id]?.name).filter((n): n is string => !!n);
         add(`${names.length === e.markSkills.length ? names.join(' and ') : 'Your marked skills'} deal${names.length === 1 ? 's' : ''} ${pct(e.markDamagePct)} more damage to Branded enemies`);
       }
+      // Ley Thread (Ömer 2026-10-29): Mana Steal'in ipliği bu Brand'de tüketilir
+      if (e.threadTurns || (e.threadBurnMult && e.threadBurnMult !== 1)) {
+        const th = defs.statuses?.['ley_thread']?.name ?? 'Ley Thread';
+        const parts = [...(e.threadTurns ? [`lasts ${e.threadTurns} turn${e.threadTurns > 1 ? 's' : ''} longer`] : []), ...(e.castBurnPct && e.threadBurnMult && e.threadBurnMult !== 1 ? [`burns ${e.threadBurnMult === 2 ? 'twice as much' : e.threadBurnMult > 1 ? `${pct(e.threadBurnMult - 1)} more` : `${pct(e.threadBurnMult)} as much`} extra MP per cast`] : [])];
+        if (parts.length) add(`On an enemy with ${th}, the Brand ${parts.join(' and ')}; the ${th} is used up`);
+      }
       if (e.silenceOnEmpty) add(`A Branded enemy whose mana reaches 0 is ${defs.statuses?.silence?.name ?? 'Silenced'} for ${e.silenceOnEmpty} turn${e.silenceOnEmpty > 1 ? 's' : ''}`);
       if (e.spread) add('When a Brand runs out, it leaps once to an unbranded enemy next to its bearer with a fresh Brand');
       add('Casting it again refreshes the Brand but does not refill tainted mana');
@@ -702,6 +710,8 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       return fixed('Bonus', moreText(e.bonus));
     case 'manaOverflow':
       return fixed(`Team MP per ${e.threshold} blocked`, `+${e.mana}`);
+    case 'spellbreakerInstinct':
+      return fixed('Turn bar ahead', pct(e.advance));
     case 'omenTransfer':
       return fixed('Omens passed', `up to ${e.maxOnArrival}`);
     case 'cutAndRun':

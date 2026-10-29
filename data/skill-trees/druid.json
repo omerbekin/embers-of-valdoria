@@ -1,6 +1,6 @@
 {
   "class": "druid",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "b",
@@ -826,15 +826,17 @@
     },
     "2.fa": {
       "name": "Mire",
-      "text": "The root field Slows on impact and lasts 4 turns, but Nature's Wrath cooldown 3 → 5.",
+      "text": "The root field lasts 4 turns and Nature's Wrath deals 15% more damage to enemies standing in it, but its cooldown is 3 → 5.",
       "src": "B:V4:2.fb",
       "fx": [
         {
-          "k": "addEffect",
-          "effect": {
-            "type": "status",
-            "status": "slow",
-            "turns": 1
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetOnGround": "root_field"
+          },
+          "mod": {
+            "powerMul": 0.15
           },
           "needs": "2.n0"
         },
@@ -853,7 +855,8 @@
           "op": "set",
           "v": 5
         }
-      ]
+      ],
+      "_not": "content-designer 2026-10-29: 'Slows on impact' kalktı (genel zemin kuralı: kök tarlası içindekine o an Slow veriyor, çift oldu); yerine tarladakilere +%15 Nature's Wrath (open-questions 457)."
     },
     "2.fb": {
       "name": "Briar Prison",

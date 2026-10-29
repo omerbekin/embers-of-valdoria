@@ -1,0 +1,30 @@
+{
+  "slug": "07-raise-dead",
+  "title": "Raise Dead: grave eruption",
+  "source": "assets/source/undead-vfx/07-raise-dead.png",
+  "frames": 8,
+  "fps": 11,
+  "duration_ms": 727,
+  "frame_size": [
+    320,
+    320
+  ],
+  "sheet_size": [
+    1280,
+    640
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 0,
+  "pivot": [
+    160,
+    301
+  ],
+  "align": "ground",
+  "wrap": {
+    "split": 0.86
+  }
+}

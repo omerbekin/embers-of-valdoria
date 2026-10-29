@@ -27,12 +27,16 @@ const MAPS = [
   // [kaynak görsel (assets/campaign), 16:9 bölgesi bu görselde (kesir; geniş görselde backgroundWide.region)]
   { src: 'valdoria-bg-wide', region: [0.11891, 0, 0.88064, 1] },
   { src: 'drowned-reach-bg', region: [0, 0, 1, 1] },
+  { src: 'hollow-crown-bg', region: [0, 0, 1, 1] }, // Harita 3 (2026-10-29)
 ];
+/** Yalnız seçilen haritaları üret: node tools/make-map-ext.mjs hollow-crown-bg */
+const ONLY = process.argv.slice(2);
 
 const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 const r5 = (v) => Math.round(v * 100000) / 100000;
 
 for (const m of MAPS) {
+  if (ONLY.length && !ONLY.includes(m.src)) continue;
   const inPath = `assets/campaign/${m.src}.webp`;
   const meta = await sharp(inPath).metadata();
   const w = meta.width;

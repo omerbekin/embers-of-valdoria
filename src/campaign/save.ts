@@ -9,7 +9,7 @@ import { oathDef } from './oath';
 import { sanitizeHeroQuests } from './quests';
 import { boonIds } from './side-content';
 import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, stripUnusable, type ItemInstance } from '../progression/items';
-import { classes, valorRules } from '../engine/content';
+import { classes, statuses, valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
@@ -259,6 +259,7 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   upgradeRemovedNodes(s);
   if (!isValidState(s)) return null;
   upgradeReach(s);
+  upgradeHollowCrown(s);
   // Geçilen haritalar (harita geçişi M-Q; isteğe bağlı alan, sürüm değişmez): bozuksa / bilinmeyen haritaysa atılır
   if (s.mapsDone !== undefined && !(Array.isArray(s.mapsDone) && s.mapsDone.every((m) => typeof m === 'string' && !!MAPS[m]))) delete (s as { mapsDone?: unknown }).mapsDone;
   upgradePitOath(s);
@@ -317,6 +318,16 @@ function upgradeRemovedNodes(s: CampaignState): void {
  * Harita 2 deniz alanları (M-J / M-K / M-L / M-M; isteğe bağlı, kayıt sürümü 12 kalır; eski kayıtta yok = taraf yok, deniz kapalı, fener sönük,
  * Caravel rotanın başında). Bozuk değer atılır. Yerinde değiştirir.
  */
+function upgradeHollowCrown(s: CampaignState): void {
+  // Harita 3 (open-questions 454): Stone Oath ve bekleyen savaş başı durumu (isteğe bağlı; bozuksa atılır)
+  if (s.stoneOath !== undefined && s.stoneOath !== 'sworn' && s.stoneOath !== 'refused') delete (s as { stoneOath?: unknown }).stoneOath;
+  const p = s.pendingStatus as unknown as { status?: unknown; turns?: unknown } | undefined;
+  if (p !== undefined) {
+    const ok = !!p && typeof p.status === 'string' && !!statuses[p.status] && typeof p.turns === 'number' && Number.isInteger(p.turns) && p.turns > 0;
+    if (!ok) delete (s as { pendingStatus?: unknown }).pendingStatus;
+  }
+}
+
 function upgradeReach(s: CampaignState): void {
   if (s.faction !== undefined && s.faction !== 'order' && s.faction !== 'guild') delete (s as { faction?: unknown }).faction;
   if (s.sea !== undefined && s.sea !== true) delete (s as { sea?: unknown }).sea;

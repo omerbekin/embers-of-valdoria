@@ -1646,4 +1646,9 @@ export const PIXEL_ICONS: Record<string, Draw> = {
 };
 // Close Ranks (v2 ikonu closeranks2.png); v1 yedek çizimi Guard ile ortak
 PIXEL_ICONS.closeranks2 = PIXEL_ICONS.guard2!;
+// Mage / Anti-Mage yeni boyalı ikonların (icons-v2) v1 yedek çizimi: eski ikonla ortak
+PIXEL_ICONS.icecrater = PIXEL_ICONS.blizzard!;
+PIXEL_ICONS.heatmirage = PIXEL_ICONS.flame!;
+PIXEL_ICONS.frostskin = PIXEL_ICONS.blizzard!;
+PIXEL_ICONS.spellbreaker = PIXEL_ICONS.overflow!;
 

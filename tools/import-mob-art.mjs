@@ -6,7 +6,7 @@
  *   node tools/import-mob-art.mjs            hepsi (ikonlar + vfx)
  *   node tools/import-mob-art.mjs icons      yalnızca ikon sayfaları
  *   node tools/import-mob-art.mjs vfx        yalnızca vfx sheet'leri
- *   node tools/import-mob-art.mjs poses      yalnızca poz sayfaları
+ *   node tools/import-mob-art.mjs poses      yalnızca poz sayfaları (`poses <mob> ...` = yalnız o mobların)
  *
  * İKONLAR: assets/source/mob-icons/<sayfa>.png (1254x1254, 2x2 ızgara, ince siyah boşluklu; sıra TL, TR, BL, BR). Siyah boşluklar ölçülüp
  *   kırpılır, hücre kare kesilir -> assets/mob-icons/<ad>.png (128) + assets/mob-icons/small/<ad>.png (64). <ad> = skill id ya da pasif id
@@ -571,7 +571,8 @@ function cellLayers(data, W, H, cols, rows, cuts = null) {
 
 async function importPoses() {
   if (!existsSync(POSE_SRC)) return;
-  for (const file of readdirSync(POSE_SRC).filter((f) => f.endsWith('.png')).sort()) {
+  const only = process.argv.slice(3); // `poses <mob> ...`: yalnız bu mobların sayfası (boşsa hepsi)
+  for (const file of readdirSync(POSE_SRC).filter((f) => f.endsWith('.png') && (!only.length || only.includes(f.replace(/\.png$/, '')))).sort()) {
     const mob = file.replace(/\.png$/, '');
     const idle = join('assets', 'sprites', mob, 'idle.png');
     if (!existsSync(idle)) {

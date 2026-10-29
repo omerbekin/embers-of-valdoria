@@ -46,8 +46,8 @@ Seçilenler (yapılacak; "Yeni kural" olanlar seçimle onaylandı, rakamlar örn
 - B **Hazır kalkan**: savaşa Max HP'nin %8'i kalkanla başla (offhand, armor).
 - B **Ruh hasadı**: skill ile öldürünce +4 MP (gloves, trinket).
 - B **Zafer nefesi**: skill ile öldürünce Max HP'nin %4'ü şifa (armor, trinket).
-- B **Zırh yırtan**: vuruş hedefin Armor'unu 2 tur 5 düşürür, 3 kez yığılır (weapon). Yeni kural (yeni debuff).
-- A **Mana kalkanı**: alınan hasarın %15'i HP yerine MP'den (armor, helm; needs mp). Yeni kural.
+- B **Zırh yırtan**: vuruş hedefin Armor'unu 2 tur 5 düşürür, 3 kez yığılır (weapon). Yeni kural (yeni debuff). Her isabet eden vuruş bir yığın (iki darbeli saldırı 2 yığın; Ömer 2026-10-29).
+- A **Mana kalkanı**: alınan hasarın %15'i HP yerine MP'den (armor, helm; needs mp). Yeni kural. Önizleme ve yapay zeka öldürme tahmini bunu hesaba katar (Ömer 2026-10-29).
 - A **Akıcı**: kullanılan skill'in cooldown'u %12 ihtimalle 1 tur kısa başlar (helm, gloves, trinket). Yeni kural.
 - A **Taşan hasar**: overkill hasarının %40'ı en yakın düşmana (weapon). Yeni kural.
 

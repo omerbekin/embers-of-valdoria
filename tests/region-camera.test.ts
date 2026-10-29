@@ -39,6 +39,8 @@ const ART: Record<string, [number, number]> = {
   'drowned-reach-bg': [1672, 941],
   'valdoria-bg-ext': [2835, 1229],
   'drowned-reach-bg-ext': [2312, 1229],
+  'hollow-crown-bg': [1672, 941],
+  'hollow-crown-bg-ext': [2312, 1229],
 };
 const SEA = { x: 0, y: 0, w: W, h: H };
 /** Taşmasız görselin kapsamı (geniş görsel varsa onunla): uzak görünüm ve kaplama ölçeği bununla. */

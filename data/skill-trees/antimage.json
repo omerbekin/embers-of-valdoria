@@ -1,6 +1,6 @@
 {
   "class": "antimage",
-  "version": 2,
+  "version": 5,
   "picked": {
     "rows": [
       "b",
@@ -13,8 +13,8 @@
   },
   "rows": [
     {
-      "skill": "mana_overflow",
-      "name": "Mana Overflow",
+      "skill": "spellbreaker_instinct",
+      "name": "Spellbreaker's Instinct",
       "passive": true,
       "karma": "B"
     },
@@ -45,15 +45,16 @@
     "bar": [
       {
         "at": 5,
-        "name": "Shared Cup",
-        "text": "Mana Overflow threshold 30 → 28.",
+        "name": "Ready Stance",
+        "text": "Spellbreaker's Instinct moves your turn a further 3% sooner.",
         "src": "B:V3:bar0",
+        "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
         "fx": [
           {
             "k": "passive",
-            "f": "threshold",
+            "f": "advance",
             "op": "add",
-            "v": -2
+            "v": 0.03
           }
         ]
       },
@@ -136,218 +137,246 @@
   },
   "nodes": {
     "0.f1": {
-      "name": "Wide Channels",
-      "text": "Mana Overflow gives your team +2 MP per rank.",
+      "name": "Keen Senses",
+      "text": "Spellbreaker's Instinct moves your turn a further 2% sooner per rank.",
       "src": "B:V3:0.f1",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "passive",
-          "f": "mana",
+          "f": "advance",
           "op": "add",
-          "v": 2,
+          "v": 0.02,
           "rank": true
         }
       ]
     },
     "0.f2": {
-      "name": "Soaking Robes",
-      "text": "Magic damage you block counts 4% more per rank toward Mana Overflow.",
+      "name": "Taut Thread",
+      "text": "Your skills deal 3% more damage per rank to enemies with a Ley Thread.",
       "src": "B:V3:0.f2",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
+          "when": {
+            "targetStatus": "ley_thread"
+          },
           "mod": {
-            "blockedMul": 0.04
+            "powerMul": 0.03
           },
           "rank": true
         }
       ]
     },
     "0.f3": {
-      "name": "Overflow Spill",
-      "text": "Each Mana Overflow trigger gives the ally with the least MP 2 extra MP per rank.",
+      "name": "Thread Sense",
+      "text": "Enemies with a Ley Thread deal 2% less damage to you per rank.",
       "src": "B:V3:0.f3",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
-          "h": "trigger",
-          "on": "manaOverflow",
-          "rank": true,
-          "do": [
-            {
-              "mp": 2,
-              "to": "lowestMpAlly"
-            }
-          ]
+          "h": "heal",
+          "on": "damageTaken",
+          "who": "self",
+          "when": {
+            "incomingStatus": "ley_thread"
+          },
+          "mul": -0.02,
+          "rank": true
         }
       ]
     },
     "0.n0": {
-      "name": "Tidal Surge",
-      "text": "Every third Mana Overflow trigger gives your team 15 MP instead of 5.",
+      "name": "Long Thread",
+      "text": "Ley Thread lasts 1 turn longer.",
       "src": "B:V3:0.mb",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "trigger",
-          "on": "manaOverflow",
-          "every": 3,
-          "do": [
-            {
-              "mp": 10,
-              "to": "allAllies"
-            }
-          ]
+          "k": "skill",
+          "skill": "mana_burn",
+          "sel": "status:ley_thread",
+          "f": "turns",
+          "op": "add",
+          "v": 1
         }
       ]
     },
     "0.r": {
-      "name": "Hunter's Read",
-      "text": "Mana Overflow gains 3 blocked damage per rank whenever an enemy gains a buff.",
+      "name": "Pull Taut",
+      "text": "Mana Steal burns 1 more MP per rank from enemies with a Ley Thread.",
       "src": "B:V5:0.f3",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "mana_burn",
+          "when": {
+            "targetStatus": "ley_thread"
+          },
+          "mod": {
+            "manaBurnAdd": 1
+          },
+          "rank": true
+        }
+      ]
+    },
+    "0.ea": {
+      "name": "Quickened Instinct",
+      "text": "Spellbreaker's Instinct moves your turn a further 10% sooner.",
+      "src": "B:V3:0.ea",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
+      "fx": [
+        {
+          "k": "passive",
+          "f": "advance",
+          "op": "add",
+          "v": 0.1
+        }
+      ]
+    },
+    "0.eb": {
+      "name": "Twin Thread",
+      "text": "Mana Steal also leaves a Ley Thread on one enemy beside its target.",
+      "src": "B:V3:0.eb",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "enemyBuffed",
-          "rank": true,
+          "on": "hit",
+          "skill": "mana_burn",
           "do": [
             {
-              "charge": 3
+              "status": "ley_thread",
+              "turns": 2,
+              "to": "beside",
+              "count": 1
             }
           ]
         }
       ]
     },
-    "0.ea": {
-      "name": "Conduit",
-      "text": "Mana Overflow pours all its MP into the ally with the least MP instead of spreading it.",
-      "src": "B:V3:0.ea",
-      "fx": [
-        {
-          "k": "hook",
-          "h": "target",
-          "overflow": {
-            "to": "lowestMp"
-          }
-        }
-      ]
-    },
-    "0.eb": {
-      "name": "Spillover",
-      "text": "MP an ally would gain above its max goes to the ally with the least MP.",
-      "src": "B:V3:0.eb",
-      "fx": [
-        {
-          "k": "hook",
-          "h": "target",
-          "overflow": {
-            "spill": true
-          }
-        }
-      ]
-    },
     "0.ma": {
-      "name": "Brimming Ally",
-      "text": "An ally that Mana Overflow fills to full MP gains Haste for 1 turn.",
+      "name": "Ready Reflexes",
+      "text": "When Spellbreaker's Instinct triggers, you gain Fleet (+10% Evasion) until your next turn.",
       "src": "B:V3:0.ma",
+      "_not": "engine-dev 2026-10-29 (Ömer formu, open-questions 457): yeni tetik olayı; sayılar PROVİZYON. Answering Blade (0.ma) yerine: Instinct tetiklenince AM 1 tur Fleet (var olan buff; süre AM'in tur başında düşer).",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "allyFilled",
+          "on": "instinct",
           "do": [
             {
-              "status": "haste",
-              "turns": 1,
-              "to": "target"
+              "status": "fleet",
+              "turns": 1
             }
           ]
         }
       ]
     },
     "0.fa": {
-      "name": "Lifeline Pact",
-      "text": "Conduit gives that ally double MP, but Mana Overflow needs 45 blocked damage.",
+      "name": "Hair Trigger",
+      "text": "Spellbreaker's Instinct moves your turn a further 15% sooner, but you take 10% more magic damage.",
       "src": "B:V3:0.fa",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "target",
-          "overflow": {
-            "mult": 2
-          }
+          "k": "passive",
+          "f": "advance",
+          "op": "add",
+          "v": 0.15
         },
         {
-          "k": "passive",
-          "f": "threshold",
-          "op": "set",
-          "v": 45
+          "k": "hook",
+          "h": "heal",
+          "on": "damageTaken",
+          "who": "self",
+          "when": {
+            "incomingType": "magic"
+          },
+          "mul": 0.1
         }
       ]
     },
     "0.fb": {
-      "name": "Martyr's Overflow",
-      "text": "Mana Overflow gives allies 8 MP, but you get none and lose 5% max HP on each trigger.",
+      "name": "Thin Thread",
+      "text": "Ley Thread lasts 2 turns longer, but Mana Steal deals 20% less damage.",
       "src": "B:V4:0.fb",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "passive",
-          "f": "mana",
-          "op": "set",
-          "v": 8
+          "k": "skill",
+          "skill": "mana_burn",
+          "sel": "status:ley_thread",
+          "f": "turns",
+          "op": "add",
+          "v": 2
         },
         {
-          "k": "hook",
-          "h": "target",
-          "overflow": {
-            "noSelf": true
-          }
-        },
-        {
-          "k": "hook",
-          "h": "trigger",
-          "on": "manaOverflow",
-          "do": [
-            {
-              "hpLoss": 0.05
-            }
-          ]
+          "k": "skill",
+          "skill": "mana_burn",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.2
         }
       ]
     },
     "0.mb": {
-      "name": "Spell Sink",
-      "text": "When Mana Overflow triggers, you Guard the ally with the lowest HP until your next turn, taking 15% of its damage.",
-      "src": "B:V4:0.n0",
+      "name": "Snapping Thread",
+      "text": "When Ley Brand consumes a Ley Thread, the target takes 25% INT arcane damage.",
+      "src": "B:V4:0.mb",
+      "_not": "engine-dev 2026-10-29 (Ömer formu, open-questions 457): yeni tetik olayı; sayılar PROVİZYON. Unravel (0.mb, iplikliye vurunca sıra erken) yerine: Brand ipliği tüketince (Brand konduktan sonra) hedefe 0,25 INT büyü (arcane) hasarı; zırh / alınan hasar işler, isabet zarı yok.",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "manaOverflow",
+          "on": "threadConsumed",
           "do": [
             {
-              "guard": 0.15,
-              "to": "lowestHpOtherAlly"
+              "damage": 0.25,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "arcane",
+              "to": "target"
             }
           ]
         }
       ]
     },
     "0.v": {
-      "name": "Endless Spring",
-      "text": "Mana Overflow becomes Endless Spring: magic damage blocked by your allies' magic armor also counts, not only yours.",
+      "name": "Spellbreaker's Fury",
+      "text": "Spellbreaker's Instinct evolves: it moves your turn 5% further, and a magic hit on you makes your next skill deal 20% more damage (once per round).",
       "src": "B:V3:0.v",
-      "new": true,
-      "approved": true,
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
+          "k": "passive",
+          "f": "advance",
+          "op": "add",
+          "v": 0.05
+        },
+        {
           "k": "hook",
-          "h": "target",
-          "overflow": {
-            "allies": true
-          }
+          "h": "trigger",
+          "on": "hitTaken",
+          "when": {
+            "incomingType": "magic"
+          },
+          "once": "perTurn",
+          "do": [
+            {
+              "buff": {
+                "powerMul": 0.2
+              }
+            }
+          ]
         }
       ]
     },
@@ -1172,19 +1201,27 @@
       ]
     },
     "4.d3": {
-      "name": "Overflow Strike",
-      "text": "Casting Void Strike triggers Mana Overflow at once.",
+      "name": "Threaded Void",
+      "text": "Void Strike leaves a Ley Thread on its target for 2 turns, and your next turn comes 10% sooner.",
       "src": "B:V3:4.d3",
-      "syn": "Mana Overflow",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "effect": {
+            "type": "status",
+            "status": "ley_thread",
+            "turns": 2
+          }
+        },
         {
           "k": "hook",
           "h": "trigger",
           "on": "skillUse",
-          "skill": "void_strike",
           "do": [
             {
-              "overflow": true
+              "sooner": 0.1
             }
           ]
         }

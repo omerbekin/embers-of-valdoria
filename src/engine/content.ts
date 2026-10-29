@@ -45,6 +45,8 @@ import admiralVane from '../../data/bosses/admiral_vane.json';
 import harpoonBallista from '../../data/bosses/harpoon_ballista.json';
 import drownedQueen from '../../data/bosses/drowned_queen.json';
 import hexTotem from '../../data/bosses/hex_totem.json';
+import hollowKing from '../../data/bosses/hollow_king.json';
+import hollowCrownLooks from '../../data/bosses/hollow-crown-looks.json';
 import mobRoadThug from '../../data/mobs/road_thug.json';
 import mobMoorRaider from '../../data/mobs/moor_raider.json';
 import mobBanditCrossbowman from '../../data/mobs/bandit_crossbowman.json';
@@ -204,6 +206,10 @@ export const bosses: Record<string, CombatantDef> = {
   drowned_queen: buildDef(drownedQueen as unknown as CombatantData, formulas),
   // Harita 2 Break the Totem nesnesi (eskiden Iron Mooring "Hex Totem" adıyla; Iron Mooring ile aynı statlar, inert)
   hex_totem: buildDef(hexTotem as unknown as CombatantData, formulas),
+  // Harita 3 son bossu: GEÇİCİ görünüm kaydı (kit yok, inert; /vfx idle sprite denemesi 2026-10-29)
+  hollow_king: buildDef(hollowKing as unknown as CombatantData, formulas),
+  // Harita 3 kadrosu + yıldırım konseptleri: GEÇİCİ görünüm kayıtları (kit yok, inert, karşılaşmaya bağlı değil; /vfx idle sprite turu 2026-10-29)
+  ...Object.fromEntries(hollowCrownLooks.units.map((u) => [u.id, buildDef(u as unknown as CombatantData, formulas)])),
 };
 
 const mobData: CombatantData[] = [

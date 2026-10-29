@@ -552,6 +552,8 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
       'fistcrush',
       'bloodrite', // yedek: kaldırılan Blood Rite'ın ikonu (yerine Dark Bond; Wiki > Legacy)
       'abyssalfury', // yedek: kaldırılan Abyssal Fury rozeti (2026-10-17 Headsman's Blow; Wiki > Legacy)
+      'frostskin', // yedek: Frost Skin, Heat Mirage pasifinin parçası (kendi pasif yuvası yok; ikon hazır, sonra kullanılacak)
+      'overflow', // yedek: kaldırılan Mana Overflow pasifinin ikonu (AM 2026-10-29 Spellbreaker's Instinct; v1 spellbreaker yedeği)
       ...UI_ICONS, // debug dock ve ayarlar (DOM)
     ]);
     for (const kind of ICON_KINDS) expect(used.has(kind), kind).toBe(true);

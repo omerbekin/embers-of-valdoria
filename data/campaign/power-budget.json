@@ -10,7 +10,7 @@
   "chapters": [
     { "chapter": 1, "name": "Valdoria", "map": "valdoria", "ilvl": [1, 10], "end": { "item": 0.15, "level": 0.1, "tree": 0.05 }, "measured": { "item": 0.08 } },
     { "chapter": 2, "name": "The Drowned Reach", "map": "drowned-reach", "ilvl": [11, 20], "end": { "item": 0.5, "level": 0.2, "tree": 0.15 } },
-    { "chapter": 3, "name": "The Ember Throne", "map": null, "ilvl": [21, 30], "end": { "item": 0.65, "level": 0.3, "tree": 0.25 } }
+    { "chapter": 3, "name": "The Hollow Crown", "map": "hollow-crown", "ilvl": [21, 30], "end": { "item": 0.65, "level": 0.3, "tree": 0.25 } }
   ],
   "_ch2item": "Ömer 2026-10-26 denge formu D2 a (balance-tester): Harita 2 düşmanları toptan güçlensin; bölüm 2 item sonu 0,3 -> 0,5 (düşman çarpanı Harita 2 sonunda x1,24 -> x1,40). 0,6 / 0,8 / 1,0 da denendi (8x2-3 sefer, medium/iyi): normal savaşlar neredeyse değişmedi (%95-89 ilk), boss/elitler çöktü (0,6: Gallows Cove %12-17, duvar 8/24). Bölüm 3 (harita yok, bugün etkisiz) 0,45 -> 0,65: bölümden bölüme artış kuralı korunsun diye, PROVİZYON.",
   "_farmMax": "Farm ile beklenen eğrinin en fazla bu kadar üstüne çıkılır (roadmap 1.3 son satır; ölçüm hedefi, kod kuralı değil).",

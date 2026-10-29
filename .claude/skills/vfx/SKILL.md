@@ -30,6 +30,8 @@ Geliştirme sunucusu 5173 açık olmalı. Oyun hep sessiz (araç sessiz açar). 
 3. Oyuna kur: mob efekti `assets/source/mob-vfx/<mob>-<id>.png` → `node tools/import-mob-art.mjs vfx`, `src/game/mob-vfx.ts > MOB_VFX_SPECS` satırı, ayar `data/battle-layout.json > animation.mobVfx.skills.<id>`. Sınıf efekti `docs/arch/assets.md` > sanat sürümleri. Siyah çerçeve yok, kareler akmalı (VFX kuralları).
 4. Yakala, tabloyu `kontrol` yap, Codex'e kontrol ettir. `tamam` olana kadar düzelt ya da yeniden çizdir.
 
+Mekanik ölçümler (boş/siyah kare, kare boyutu, fps, kesim) Codex'ten önce `frame-check` (Haiku) agent'ına verilebilir; yalnız scratchpad'e ölçüm yazar, karar vermez. "Güzel mi, doğru yerde mi" kararı Codex'te ve ana sohbette kalır.
+
 ## B. Bozuk efekti düzeltme
 1. Tabloya satır: durum `incele`, Not: Ömer'in gördüğü sorun.
 2. Yakala → Codex inceler (`duzelt` yapar).

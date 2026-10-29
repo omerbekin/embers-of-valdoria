@@ -18,6 +18,7 @@ import { freeTemperItem, freeTemperPreview } from './smith';
 import { pitBest, pitOf, pitTierPays } from './pit';
 import { OATH_DATA, oathDef, oathHealMult } from './oath';
 import { diveChest, diveEncounters, diveMax } from './side-content';
+import { oathSealedFor } from './hollow-crown';
 import { grantQuest, questOpen, shownMap } from './quests';
 import { applySurgeOutcome, cleanseTaint, isChapel, unlocksSalt } from './surge';
 import { beatCaravel, caravelAfterMove, caravelDef, caravelPending, choiceVisible, eventAgain, nodeEncounter, passable, withReachForRoute } from './reach';
@@ -682,7 +683,8 @@ export function completeSimple(s: CampaignState, kind: 'event' | 'treasure' | 's
   const t = clone(s);
   // Hazine sandığı (saf hazine ya da korunan hazine): loot torbaya (items.md 3.1)
   if (kind === 'treasure') {
-    grantTreasureChest(t);
+    // Harita 3 cüce mezarı (open-questions 454 a, A): Stone Oath yeminliyken sandık yok (adım yine biter; rota bozulmaz)
+    if (!oathSealedFor(node(mapOf(t), t.at), t)) grantTreasureChest(t);
     // B1 Salvage Dive: yüzeye çıkış = kazanılan her ek derinliğin sandığı da
     grantDiveChests(t, 2, diveWon(t));
     delete t.dive;
@@ -782,6 +784,8 @@ export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
   if (c.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t), small ? { maxItems: c.chestItems!, gold: c.gold ?? 0 } : undefined);
   if (c.gift) grantGift(t, t.at, activeHeroes(t), `choice-${c.id}`, c.gift.rarity ?? 'common', c.gift.slots); // Monk's Isle relic (M-L)
   if (c.faction && !t.faction) t.faction = c.faction; // M-L: bir kez, geri alınmaz
+  if (c.stoneOath && !t.stoneOath) t.stoneOath = c.stoneOath; // Harita 3 Hall of Oaths (open-questions 454 a): bir kez, geri alınmaz
+  if (c.nextBattleStatus && c.nextBattleStatus.turns > 0) t.pendingStatus = { status: c.nextBattleStatus.status, turns: Math.floor(c.nextBattleStatus.turns) }; // The White Dark "Wait it out"
   if (c.charter && !t.sea) {
     t.sea = true; // M-J: deniz yolları açılır; Caravel rotasının başından dolaşmaya başlar (M-K)
     if (caravelDef(mapOf(t)) && !t.caravel) t.caravel = { i: 0 };
@@ -1003,6 +1007,7 @@ export function clearWounds(t: CampaignState): void {
 export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: CampaignRules = rulesFor(s)): CampaignState {
   const t = clone(s);
   delete t.suspended; // savaş bitti (zafer ya da yenilgi): duraklatma kaydı geçersiz
+  delete t.pendingStatus; // savaş başı durumu (The White Dark) bu savaşta uygulandı
   // Crown Surge: yenilgide hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 449); zaferde aşağıda işlenir
   if (!outcome.victory) {
     t.stats.defeats++;
@@ -1158,6 +1163,7 @@ export function diveDefeat(s: CampaignState, battle: Pick<BattleOutcome, 'units'
   if (step.kind !== 'battle' || !step.dive) throw new Error('No dive battle here');
   const t = clone(s);
   delete t.suspended;
+  delete t.pendingStatus; // savaş başı durumu bu savaşta uygulandı
   // Crown Surge: yenilgide hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 449)
   t.stats.defeats++;
   keepBattleHp(t, battle);
@@ -1554,6 +1560,7 @@ export function retreatPatrol(s: CampaignState, battle?: Pick<BattleOutcome, 'un
   delete t.suspended;
   const losses: RetreatLoss[] = [];
   if (!battle) return { state: t, losses };
+  delete t.pendingStatus; // savaşıldı: savaş başı durumu uygulandı
   applySurgeOutcome(t, battle.surged);
   const before = new Map(t.roster.map((h) => [h.id, { hp: isFallen(h) ? 0 : h.hpRatio, fallen: isFallen(h) }]));
   valorHealWounds(t, battle.valorRevived);
@@ -1870,6 +1877,7 @@ export function losePit(s: CampaignState, battle?: Pick<BattleOutcome, 'units' |
   const won = t.pit!.wins > 0;
   delete t.pit;
   delete t.suspended;
+  if (battle) delete t.pendingStatus; // savaşıldı: savaş başı durumu uygulandı
   t.stats.defeats++;
   // Crown Surge: yenilgide / peste hak gitmez, Taint ve sayaç yazılmaz (Ömer 2026-10-27, open-questions 449)
   if (battle) {

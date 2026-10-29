@@ -19,9 +19,36 @@ export interface ChoiceFx {
   charter?: boolean;
   light?: boolean;
   gift?: { rarity?: string; slots?: string[] };
+  /** Harita 3 (open-questions 454): Stone Oath seçimi ve sonraki savaşın başındaki durum (The White Dark). */
+  stoneOath?: string;
+  nextBattleStatus?: { status: string; turns: number };
 }
 
 const FACTION_LABEL: Record<string, string> = { order: 'the Order', guild: 'the Guild' };
+
+/** Stone Oath seçiminin iki yüzü (seçenek plakası ve sonuç penceresi ortak). */
+export const STONE_OATH_CHIPS: Record<'sworn' | 'refused', MwChip[]> = {
+  sworn: [
+    { tone: 'gain', icon: 'gold', text: 'Deep Market: kin prices' },
+    { tone: 'loss', icon: 'gear', text: 'Tomb treasures sealed to you' },
+  ],
+  refused: [
+    { tone: 'loss', icon: 'gold', text: 'Deep Market: outsider prices' },
+    { tone: 'gain', icon: 'gear', text: 'Tombs open to plunder' },
+  ],
+};
+const FINAL_CHIP: MwChip = { tone: 'info', text: 'Final: an oath cannot be uncut' };
+
+/** Mühürlü cüce mezarının düğüm kartı satırı (Stone Oath yeminliyken; değilse kart olağan). */
+export const OATH_SEALED_CARD = 'Sealed by your Stone Oath. This is a tomb of the dwarf dead: its guardians still stand, but you take nothing from it.';
+/** Mühürlü mezarın hazine penceresi (metin veride yoksa yedek) ve çipleri. */
+export const OATH_SEALED_TEXT = 'The rune seal holds. You swore the Stone Oath, so the company bows its heads and walks on, empty-handed.';
+export const OATH_SEALED_CHIPS: MwChip[] = [
+  { tone: 'dim', text: 'Sealed by your Stone Oath' },
+  { tone: 'dim', text: 'Nothing taken' },
+];
+/** Yemin reddedilmişken ilk yağmalanan mezar (metin veride yoksa yedek). */
+export const OATH_PLUNDER_TEXT = 'The dead of Kharduin watch you take it.';
 const giftText = (g: { rarity?: string; slots?: string[] }): string => {
   const kind = g.slots?.includes('offhand') ? 'relic' : 'item';
   return `${g.rarity ? g.rarity.charAt(0).toUpperCase() + g.rarity.slice(1) + ' ' : ''}${kind}`;
@@ -35,6 +62,13 @@ function reachChips(c: ChoiceFx, done: boolean): MwChip[] {
   if (c.charter) out.push({ tone: 'gain', text: done ? 'Sea lanes open' : 'Opens the sea lanes' });
   if (c.light) out.push({ tone: 'gain', text: 'Sight +1 on this map' });
   if (c.gift) out.push({ tone: 'gain', icon: 'gear', text: giftText(c.gift) });
+  // Stone Oath (open-questions 454 a, A; Ömer 2026-10-29): iki taraf da açık (kazanç + bedel), seçim kesin
+  if (c.stoneOath === 'sworn') out.push(...STONE_OATH_CHIPS.sworn, ...(done ? [] : [FINAL_CHIP]));
+  if (c.stoneOath === 'refused') out.push(...STONE_OATH_CHIPS.refused, ...(done ? [] : [FINAL_CHIP]));
+  if (c.nextBattleStatus) {
+    const n = c.nextBattleStatus.status.charAt(0).toUpperCase() + c.nextBattleStatus.status.slice(1);
+    out.push({ tone: 'loss', text: `Next battle: ${n}, ${c.nextBattleStatus.turns} turns` });
+  }
   return out;
 }
 

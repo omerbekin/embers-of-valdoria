@@ -5,6 +5,7 @@ import { Battle, armorReduction, attributePower, chooseAction, content, describe
 import type { BattleEvent, BattleMode, Combatant } from '../src/engine';
 import { installLegacySkills } from './legacy-skills';
 import { rangeOff, withOldLayout } from './range-helpers';
+import { giveManaOverflow } from './am-legacy-helpers';
 import { shapeCells } from '../src/engine/area-shape';
 
 installLegacySkills();
@@ -972,7 +973,7 @@ describe('Pasif skill\'ler', () => {
       expect(def.passive, id).toBeDefined();
       expect(def.passive!.name.length, id).toBeGreaterThan(0);
       expect(describePassive(def.passive!, def.stats, content.formulas).length, id).toBeGreaterThan(20); // açıklama değerleri de yazar
-      expect(['rage', 'divineLight', 'spellEcho', 'heatMirage', 'longshot', 'naturesGrudge', 'soulDrain', 'manaOverflow', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells'], id).toContain(def.passive!.effect.type);
+      expect(['rage', 'divineLight', 'spellEcho', 'heatMirage', 'longshot', 'naturesGrudge', 'soulDrain', 'spellbreakerInstinct', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells'], id).toContain(def.passive!.effect.type);
     }
   });
 
@@ -1076,7 +1077,7 @@ describe('Pasif skill\'ler', () => {
   it('Anti-Mage - Mana Overflow: büyü zırhının engellediği hasar eşiğe ulaşınca tüm takıma mana', () => {
     const b = calm(grid(cells({ 0: 'antimage', 3: 'warrior', 1: 'mage' }), cells({ 0: 'mage' })));
     const am = b.get('party-0')!;
-    if (am.passive?.effect.type === 'manaOverflow') am.passive.effect = { ...am.passive.effect, threshold: 5 };
+    giveManaOverflow(b, am.uid, 5); // Ömer 2026-10-29: Mana Overflow AM kitinden çıktı, motor kuralı duruyor
     for (const c of b.living('party')) c.mp = 0;
     const events = act(b, 'enemy-0', 'fire_bolt', am.uid);
     expect(ofType(events, 'passive').some((e) => e.passive === 'mana_overflow')).toBe(true);
@@ -1086,7 +1087,7 @@ describe('Pasif skill\'ler', () => {
   it('Mana Overflow fiziksel hasarda tetiklenmez', () => {
     const b = calm(grid(cells({ 0: 'antimage' }), cells({ 0: 'warrior' })));
     const am = b.get('party-0')!;
-    if (am.passive?.effect.type === 'manaOverflow') am.passive.effect = { ...am.passive.effect, threshold: 1 };
+    giveManaOverflow(b, am.uid, 1);
     const events = act(b, 'enemy-0', 'melee_attack', am.uid);
     expect(ofType(events, 'passive')).toHaveLength(0);
   });

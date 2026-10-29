@@ -112,6 +112,12 @@ export type PassiveEffect =
    * x(1 - oran) (item / ağaç element direnciyle 'less' birleşir; tree-hooks.elemResistOf).
    */
   | { type: 'heatMirage'; ground: string; turns: number; scale: Attribute; power: number; elemResist?: Partial<Record<Element, number>> }
+  /**
+   * Spellbreaker's Instinct (Anti-Mage, Ömer 2026-10-29; Mana Overflow'un yerine, sayı geçici): bir düşman taşıyanın takımından birine (taşıyan dahil)
+   * MP ödediği bir skill atınca taşıyanın sıra sayacı eşiğin `advance` oranı kadar öne kayar (Daze'in tersi). Taşıyanın iki turu arasında en çok bir kez
+   * (Combatant.instinctUsed, taşıyanın eylemi bitince sıfırlanır). Yalnızca turns modunda. Rastgele sayı tüketmez.
+   */
+  | { type: 'spellbreakerInstinct'; advance: number }
   /** Kullanıcı ile hedef arasındaki her sıra mesafesi için hasar +perRow (mesafe = kullanıcının sırası + hedefin sırası). */
   | { type: 'longshot'; perRow: number; /** Faz 4c (Exposed Perch): bonus için sayılan ek sıra mesafesi. */ extraRows?: number }
   /**
@@ -675,6 +681,26 @@ export interface ItemEffects {
   pierceBehind?: number;
   /** Sabit duruş (a_steady): üst üste Move yapılmayan eylem başına (en çok 3) verilen skill hasarı bu oran fazla. */
   steadyDamage?: number;
+  /*
+   * Yeni affix turu 2 (Ömer 2026-10-24, item-effects.md "Yeni affix turu 2"). Oranlar 0-1; hepsi genel, verilmezse birim aynı.
+   * Hazır kalkan (b_startshield) mevcut startShieldRatio'yu kullanır.
+   */
+  /** Gelen şifa (c_healrecv): bu birime yapılan şifa (applyHeal; leech dahil) bu oran fazla. Tur başı düz can yenilenmesi (hpRegen) etkilenmez. */
+  healReceived?: number;
+  /** Bitirici (b_execute): canı (vuruştan ÖNCE) `below` oranının altındaki düşmana verilen skill hasarı x(1 + bonus). */
+  executeDamage?: { below: number; bonus: number };
+  /** Ruh hasadı (b_killmp): skill vuruşuyla düşman öldürünce bu kadar MP (maks MP'de durur; yalnızca MP havuzu olan). */
+  killMp?: number;
+  /** Zafer nefesi (b_killheal): skill vuruşuyla düşman öldürünce maks canın bu oranı şifa. */
+  killHeal?: number;
+  /** Zırh yırtan (b_shred): hasar veren skill isabeti düşmana Shredded verir; yığın başına bu kadar Armor eksiği (süre / yığın sınırı statuses.json > shredded). */
+  armorShred?: number;
+  /** Mana kalkanı (a_manashield): alınan hasarın (zırh ve kalkanlardan sonra) bu oranı HP yerine MP'den ödenir (MP yettiğince; kalanı cana). */
+  manaShield?: number;
+  /** Akıcı (a_cdchance): cooldown'u >= 1 olan (ultimate olmayan) skill kullanılınca bu ihtimalle cooldown 1 tur kısa başlar (seed'li Rng). */
+  cdChance?: number;
+  /** Taşan hasar (a_overkill): öldüren skill vuruşunun hedefin kalan canını aşan kısmının bu oranı en yakın canlı düşmana (zincirlenmez, vuruş kancası yok). */
+  overkillSpill?: number;
 }
 
 /** Birimin sefer rütbesi (arayüz çerçeve/rozet için; kural değiştirmez). */
@@ -1073,7 +1099,7 @@ export type SkillEffectKind =
    * Ağaç alanları (yoksa kapalı): `silenceOnEmpty` (MP'si 0'a inen Branded düşman o kadar tur Silenced), `centerTaintMul` (merkez hücredeki hedefin havuzu
    * x (1 + bu)), `spread` (doğal bitişte Brand bitişikteki Brand'siz düşmana bir kez sıçrar). Sayılar data/skills.json > drain_field (PROVİZYON).
    */
-  | { type: 'brand'; turns: number; taintPct: number; costMult: number; burnDamagePct: number; explodePct: number; element?: Element; silenceOnEmpty?: number; centerTaintMul?: number; spread?: boolean; /** Ömer 2026-10-29: Branded birim MP bedelli skill kullanınca ödediği bedelin bu oranı kadar EK MP yanar (yakım sayılır: burnDamagePct hasar). */ castBurnPct?: number; /** Ömer 2026-10-29: `markSkills` Branded hedefe x(1 + bu) hasar ('X% more'). */ markDamagePct?: number; markSkills?: string[] }
+  | { type: 'brand'; turns: number; taintPct: number; costMult: number; burnDamagePct: number; explodePct: number; element?: Element; silenceOnEmpty?: number; centerTaintMul?: number; spread?: boolean; /** Ömer 2026-10-29: Branded birim MP bedelli skill kullanınca ödediği bedelin bu oranı kadar EK MP yanar (yakım sayılır: burnDamagePct hasar). */ castBurnPct?: number; /** Ömer 2026-10-29: `markSkills` Branded hedefe x(1 + bu) hasar ('X% more'). */ markDamagePct?: number; markSkills?: string[]; /** Ley Thread (Ömer 2026-10-29): hedefte 'ley_thread' varsa bu Brand o hedefte +threadTurns tur sürer ve castBurnPct x threadBurnMult olur; iplik o anda tüketilir. */ threadTurns?: number; threadBurnMult?: number }
   /** Kullanıcı `turns` tur boyunca düşmanların tek hedefli skill'lerinin hedefi olmak zorunda. */
   | { type: 'taunt'; turns: number; /** Taunt'lı karakter maks canının bu oranı kadar can kaybederse taunt biter. */ breakRatio?: number; /** Taunt sürerken taunt'lı olmayan dostların aldığı hasar bu çarpanla çarpılır (ör. 0.5 = yarı hasar). */ allyDamageMult?: number }
   /** Hedef dost `turns` tur boyunca aldığı hasarın `share` kadarını kullanıcıya aktarır. */
@@ -1526,7 +1552,7 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed';
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1574,6 +1600,10 @@ export interface StatusDef {
   critDelta?: number;
   /** Yığın başına kritik şansı eki (Omen Misfortune -0,03 x yığın). */
   critDeltaPerStack?: number;
+  /** true: örneğin `amount`'u x yığın (`stacks`, en az 1) kadar Armor eksiği (en az 0; Shredded, b_shred). */
+  armorLossFromAmount?: boolean;
+  /** Omen kurallarından BAĞIMSIZ yığın sınırı (Shredded 3; maxStacks'ten farklı: Doom / Ill Omen / yığın süresi yok, süre normal durum gibi işler). */
+  stackLimit?: number;
   /** true: taşıyanın bir sonraki HASAR VEREN skill'inin tüm vuruşlarından sonra düşer (statusEnd consumed). Jinxed. */
   endsOnOwnAttack?: boolean;
   /** true: taşıyanın bir sonraki SKILL'inden (hasar, şifa ya da başka) sonra düşer (statusEnd consumed). Spellbound (Harita 2, yalnız moblar verir). */
@@ -1830,6 +1860,8 @@ export interface BrandSpec {
   /** İşaret (markDamagePct): `markSkills` bu taşıyana x(1 + markPct) hasar verir. */
   markPct?: number;
   markSkills?: string[];
+  /** Ley Thread (Ömer 2026-10-29): bu Brand iplikli hedefe atıldı; iplik öncesi (taban) süre ve castBurnPct (Spreading Brand sıçrayışı tabanla gider). */
+  threaded?: { turns: number; castBurnPct: number };
   /** Spreading Brand: bu Brand sıçrayarak geldi (bir daha sıçramaz). */
   leapt?: boolean;
 }
@@ -1984,6 +2016,8 @@ export interface Combatant {
   flickered?: boolean;
   /** Heat Mirage: bu tur (Mage'in son eyleminden beri) zemin bırakıldı mı. */
   mirageUsed?: boolean;
+  /** Spellbreaker's Instinct: bu tur (Anti-Mage'in son eyleminden beri) sıra öne kaydı mı. */
+  instinctUsed?: boolean;
   /** YM14 Grudge: ona en son skill ile vuran düşmanın uid'si. */
   grudgeOn?: string;
   /** YM19 Shares of the Dead: bu savaşta ölen dost sayısı (hasar eki yığını). */

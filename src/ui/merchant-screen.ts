@@ -67,6 +67,10 @@ export interface MerchantSource extends GearSource {
   lines: Record<MerchantLine, string>;
   name: string;
   sub: string;
+  /** Düğümün kendi tüccarı (MapNode.trader): avatar kimliği (assets/avatars/<id>.png, varsa <id>_figure.png karşılama figürü) ve karşılama satırı. Yoksa Odo. */
+  portrait?: string;
+  greeting?: string;
+  kicker?: string;
   /** Üstte uyarı (önizleme koşusu) ya da ''. */
   note?: string;
 }
@@ -230,7 +234,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     // konuşma satırı (kafa portresi + balon)
     const talk = el('div', 'gr-odo');
     const face = el('div', 'gr-face');
-    const url = avatarUrl('merchant');
+    const url = avatarUrl(src.portrait ?? 'merchant');
     if (url) face.style.backgroundImage = `url("${url}")`;
     talk.append(face, el('div', 'gr-odo-line', src.lines[line]));
     kids.push(talk);
@@ -363,11 +367,11 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     const w = el('div', 'mw-welcome');
     const half = el('div', 'mw-half');
     const fig = el('img', 'mw-odo');
-    fig.src = odoFull;
+    fig.src = (src.portrait && avatarUrl(`${src.portrait}_figure`)) || (src.portrait && avatarUrl(src.portrait)) || odoFull;
     fig.alt = '';
     fig.draggable = false;
     const card = el('div', 'mw-wcard');
-    card.append(el('div', 'mw-kick', 'A travelling merchant'), el('div', 'mw-name', src.name), el('div', 'mw-greet', `"${GREETING}"`));
+    card.append(el('div', 'mw-kick', src.kicker ?? 'A travelling merchant'), el('div', 'mw-name', src.name), el('div', 'mw-greet', `"${src.greeting ?? GREETING}"`));
     if (best) {
       card.append(el('div', 'mw-notice', rare ? 'Rare ware in stock today' : "Today's pick"));
       const hl = el('div', 'mw-hl');

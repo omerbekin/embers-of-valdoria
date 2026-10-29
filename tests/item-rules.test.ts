@@ -42,9 +42,9 @@ describe('nadirlik = affix sayısı', () => {
 
   it("havuzlar Ömer'in seçimi: C 26 (c_block: Ömer 2026-10-18, yalnızca kalkan; +9 Ömer 2026-10-26), B 17 (+5), A 22 (+3) affix (id'ler aynen)", () => {
     const ids = (t: string) => Object.keys(ITEMS.affixDefs).filter((k) => ITEMS.affixDefs[k]!.tier === t);
-    expect(ids('C')).toEqual(['c_armor', 'c_hp', 'c_phys', 'c_fire', 'c_ice', 'c_holy', 'c_arcane', 'c_nature', 'c_dark', 'c_acc', 'c_eva', 'c_mp', 'c_hpregen', 'c_mpregen', 'c_shield', 'c_dot', 'c_block', 'c_lightning', 'c_res_fire', 'c_res_ice', 'c_res_holy', 'c_res_dark', 'c_res_nature', 'c_res_light', 'c_gold', 'c_xp']);
-    expect(ids('B')).toEqual(['b_crit', 'b_critdmg', 'b_speed', 'b_marmor', 'b_tier', 'b_pen', 'b_mpen', 'b_mpcost', 'b_leech', 'b_manaleech', 'b_initiative', 'b_resil', 'b_front', 'b_back', 'b_thorns', 'b_tier_def', 'b_wound_soft']);
-    expect(ids('A')).toEqual(['a_primary', 'a_allattr', 'a_gdmg', 'a_gdef', 'a_speedpct', 'a_hppct', 'a_auradmg', 'a_auradef', 'a_recovery', 'a_ultcd', 'a_allelem', 'a_keen', 'a_potency', 'a_immunity', 'a_mana', 'a_support', 'a_summon', 'a_resource', 'a_endure', 'a_column', 'a_pierce', 'a_steady']);
+    expect(ids('C')).toEqual(['c_armor', 'c_hp', 'c_phys', 'c_fire', 'c_ice', 'c_holy', 'c_arcane', 'c_nature', 'c_dark', 'c_acc', 'c_eva', 'c_mp', 'c_hpregen', 'c_mpregen', 'c_shield', 'c_dot', 'c_block', 'c_lightning', 'c_res_fire', 'c_res_ice', 'c_res_holy', 'c_res_dark', 'c_res_nature', 'c_res_light', 'c_gold', 'c_xp', 'c_healrecv']);
+    expect(ids('B')).toEqual(['b_crit', 'b_critdmg', 'b_speed', 'b_marmor', 'b_tier', 'b_pen', 'b_mpen', 'b_mpcost', 'b_leech', 'b_manaleech', 'b_initiative', 'b_resil', 'b_front', 'b_back', 'b_thorns', 'b_tier_def', 'b_wound_soft', 'b_execute', 'b_startshield', 'b_killmp', 'b_killheal', 'b_shred']);
+    expect(ids('A')).toEqual(['a_primary', 'a_allattr', 'a_gdmg', 'a_gdef', 'a_speedpct', 'a_hppct', 'a_auradmg', 'a_auradef', 'a_recovery', 'a_ultcd', 'a_allelem', 'a_keen', 'a_potency', 'a_immunity', 'a_mana', 'a_support', 'a_summon', 'a_resource', 'a_endure', 'a_column', 'a_pierce', 'a_steady', 'a_manashield', 'a_cdchance', 'a_overkill']);
     expect(Object.keys(ITEMS.affixDefs).some((k) => k === 'might' || k.includes('might'))).toBe(false); // Might kalktı
   });
 

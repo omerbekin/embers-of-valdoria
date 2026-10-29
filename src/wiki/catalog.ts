@@ -12,6 +12,7 @@ import { sortByPrimary } from '../game/class-order';
 import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import drownedReachMap from '../../data/campaign/drowned-reach.json';
+import hollowCrownMap from '../../data/campaign/hollow-crown.json';
 import { ENCOUNTERS, EVENTS, SALVAGE_DIVE, WAYSHRINES } from '../campaign/data';
 import { QUEST_LIST, questBonusLine } from '../campaign/quests';
 import { maps23On } from '../ui/maps23-flag';
@@ -557,6 +558,17 @@ function silenceArticle(): WikiArticle {
   ], sil?.color ?? '#9b59d0');
 }
 
+/** Ley Thread (Ömer 2026-10-29) satırı: Mana Steal'in bıraktığı iplik bir sonraki Ley Brand'i o birimde uzatır ve bedel yakımını katlar. Sayılar veriden. */
+function threadLines(e: Extract<SkillDef['effects'][number], { type: 'brand' }>, name: string): string[] {
+  if (!e.threadTurns && !(e.threadBurnMult && e.threadBurnMult !== 1)) return [];
+  const steal = allSkills().find((s) => s.effects.some((x) => x.type === 'status' && x.status === 'ley_thread'));
+  const st = steal?.effects.find((x) => x.type === 'status' && x.status === 'ley_thread');
+  const th = content.statuses.ley_thread?.name ?? 'Ley Thread';
+  const parts = [...(e.threadTurns ? [`lasts ${num(e.threadTurns)} turn${e.threadTurns > 1 ? 's' : ''} longer on it`] : []), ...(e.castBurnPct && e.threadBurnMult && e.threadBurnMult !== 1 ? [`its extra MP burn per cast is ${e.threadBurnMult === 2 ? 'doubled' : `x${num(e.threadBurnMult)}`}`] : [])];
+  const from = steal && st && st.type === 'status' ? `${steal.name} leaves ${th} on the enemy it hits for ${num(st.turns)} turn${st.turns > 1 ? 's' : ''}. ` : '';
+  return [`${from}If the next Brand lands on an enemy with ${th}, the ${name} Brand ${parts.join(' and ')}; the ${th} is used up. A Brand that leaps from it starts fresh.`];
+}
+
 /** "Ley Brand" makalesi (Anti-Mage, Ömer 2026-10-27, open-questions 444): tainted mana, bedel artışı, yakım hasarı, patlama. Sayılar veriden. */
 function brandArticle(): WikiArticle | null {
   const sk = allSkills().find((s) => s.effects.some((e) => e.type === 'brand'));
@@ -573,6 +585,8 @@ function brandArticle(): WikiArticle | null {
       `Mana burned or stolen from a ${name} enemy (Mana Steal, Spell Ward, other burns) also deals ${el} damage equal to ${pct(e.burnDamagePct)} of the mana lost. It cannot miss or crit; magic armor applies.`,
       ...(e.castBurnPct ? [`When a ${name} enemy uses a skill that costs MP, it loses extra MP equal to ${pct(e.castBurnPct)} of the (already higher) MP it paid, or all it has left. That mana counts as burned, so it also deals ${el} damage equal to ${pct(e.burnDamagePct)} of it, from the Anti-Mage who branded it.`] : []),
       ...(e.markDamagePct && e.markSkills?.length ? [`${e.markSkills.map((id) => content.skills[id]?.name ?? id).join(' and ')} deal ${pct(e.markDamagePct)} more damage to ${name} enemies.`] : []),
+      // Ley Thread (Ömer 2026-10-29): Mana Steal'in ipliği; sayılar veriden
+      ...threadLines(e, name),
       `When the Brand runs out on its own, leftover tainted mana bursts: ${el} damage equal to ${pct(e.explodePct)} of it, from the Anti-Mage who branded it (even if that Anti-Mage has fallen). A cleansed Brand does not burst.`,
       `Casting it again on a ${name} enemy refreshes the Brand but does not refill tainted mana. Void Strike counts missing tainted mana like missing mana.`,
     ),
@@ -830,6 +844,7 @@ export function buildMechanics(): WikiArticle[] {
       p(`Units that cannot be moved (bosses, steadfast units) are never pushed and never crash: they only take the hit and its status. Skills that push: ${allSkills().filter((s) => s.effects.some((e) => e.type === 'push')).map((s) => s.name).join(', ') || 'none yet'}.`),
     ], '#8fd8ff'),
     ...curseArticles(),
+    affixRulesArticle(),
     article('echo', 'Special rules', 'Ready again immediately', 'echo', [
       p('Some passives let a damaging skill with a cooldown be ready again right after it is cast, with a set chance. Classes with such a passive: ' + Object.values(content.classes).filter((c) => c.passive?.effect.type === 'spellEcho').map((c) => `${c.name} (${c.passive!.name})`).join(', ') + '.'),
     ]),
@@ -950,6 +965,7 @@ export function buildMechanics(): WikiArticle[] {
         ),
       ]),
       ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle(), fightingPitArticle(), heroOathArticle(), wayshrinesArticle(), salvageDiveArticle(), personalQuestsArticle(), crownSurgeArticle(), seaAndFactionsArticle()] : []),
+      ...(hollowCrownShown() ? [hollowCrownArticle()] : []),
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
@@ -964,6 +980,25 @@ export function buildMechanics(): WikiArticle[] {
 export function drownedReachShown(): boolean {
   const flags = (campaignConfig as unknown as { mapFlags?: Record<string, { enabled: boolean }> }).mapFlags;
   return flags?.['drowned-reach']?.enabled !== false || maps23On();
+}
+
+/** Harita 3 bayrağı (campaign.json > mapFlags['hollow-crown']; debug anahtarı / ?maps=1): kapalıyken Codex'te Hollow Crown sayfası yok. */
+export function hollowCrownShown(): boolean {
+  const flags = (campaignConfig as unknown as { mapFlags?: Record<string, { enabled: boolean }> }).mapFlags;
+  return flags?.['hollow-crown']?.enabled !== false || maps23On();
+}
+
+/** Harita 3 (maps-2-3.md 4; iskelet): sayılar harita verisinden. */
+export function hollowCrownArticle(): WikiArticle {
+  const m = hollowCrownMap as unknown as { title: string; nodes: Array<{ type: string; optional?: boolean; spoke?: boolean; name: string }>; regions: Array<{ id: string; title: string; tagline?: string }>; stopsPerRun: number };
+  const name = m.title.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  const towns = m.nodes.filter((n) => n.type === 'town').map((n) => n.name);
+  const bosses = m.nodes.filter((n) => n.type === 'boss').length;
+  return article('hollow-crown', 'Campaign', name, cx('mech_campaign', 'boot'), [
+    p(`${name} is the third map of the campaign. When the Drowned Queen falls, the company carries both halves of the crown north, up the Frostpeak and down into the mountain: the heroes, their levels, gear, bag and gold all come along. ${m.nodes.length} stops in ${m.regions.length} regions and ${bosses} bosses; the last two are fought one after the other, with no rest between them. A run passes about ${m.stopsPerRun} stops.`),
+    list(...m.regions.map((r) => `${r.title}${r.tagline ? `: ${r.tagline}` : ''}`)),
+    p(`Towns: ${towns.join(', ')}. Kharduin is the hub: ${m.nodes.filter((n) => n.spoke).length} side halls branch off it; each is a single stop, and you walk back to the hall to go on. ${m.nodes.filter((n) => n.optional).length} dashed roads lead to optional pockets.`),
+  ]);
 }
 
 /** Harita 2 (maps-2-3.md 3; Adım 1 iskeleti): sayılar harita verisinden. */
@@ -1187,6 +1222,28 @@ function bonusRulesArticle(): WikiArticle {
   ]);
 }
 
+/** Yeni affix turu 2 (Ömer 2026-10-24; item-effects.md): wiki'de yuvalarıyla anılır. */
+const ROUND2_AFFIXES = ['c_healrecv', 'b_execute', 'b_startshield', 'b_killmp', 'b_killheal', 'b_shred', 'a_manashield', 'a_cdchance', 'a_overkill'];
+
+/** Savaşta işleyen affix kuralları (Ömer 2026-10-24, yeni affix turu 2): Shredded, Mana shield, Overflow ve öldürme / şifa / cooldown affix'leri. Sayılar veriden. */
+function affixRulesArticle(): WikiArticle {
+  const sh = content.statuses.shredded;
+  const name = (id: string, fb: string) => ITEM_DATA.affixDefs[id]?.name ?? fb;
+  const below = ITEM_DATA.affixDefs.b_execute?.parts[0]?.below ?? 0.3;
+  return article('item-affix-rules', 'Special rules', 'Item effects in battle', sh?.icon ?? 'guardian', [
+    p('Some item affixes change how a battle plays out, not just your numbers.'),
+    list(
+      `${sh?.name ?? 'Shredded'} (${name('b_shred', 'Armor shred')}): each damaging skill hit lowers the enemy's Armor by the affix's amount, for ${sh?.duration ?? 2} turns. Every hit counts, so a two-hit attack adds two stacks at once. It stacks up to ${sh?.stackLimit ?? 3} times; every new stack refreshes the ${sh?.duration ?? 2} turns. Armor never goes below 0. It is a debuff: debuff resistance and immunities stop it, and cleansing removes it.`,
+      `${name('a_manashield', 'Mana shield')}: a share of the damage you take is paid with MP instead of HP. It is taken after armor and shields; when your MP runs out, the rest hits your HP. The damage preview and enemy kill estimates count it too.`,
+      `${name('a_overkill', 'Overflow')}: when one of your skill hits kills an enemy, a share of the damage beyond that enemy's remaining HP hits the nearest living enemy on the same side. Armor does not reduce it, it never chains, and it does not trigger life leech or other on-hit effects.`,
+      `${name('b_execute', 'Executioner')}: more damage to an enemy below ${Math.round(below * 100)}% HP; the HP is checked before your hit lands.`,
+      `${name('b_killmp', 'Soul harvest')} and ${name('b_killheal', "Victor's breath")}: when one of your skill hits kills an enemy you gain MP (never above your Max MP) or heal a share of your Max HP.`,
+      `${name('c_healrecv', 'Healing received')}: every heal on you is stronger, life leech included; your HP per turn is not. ${name('b_startshield', 'Ready shield')}: you start each battle with a shield of a share of your Max HP (Shield power does not change it).`,
+      `${name('a_cdchance', 'Fluid')}: when you use a skill with a cooldown, there is a chance the cooldown starts 1 turn shorter (never below 0). Ultimates are not affected.`,
+    ),
+  ]);
+}
+
 /** Affix havuzları (Ömer onayı 2026-10-11; veriden): kademe, ad, item seviyesi 10'daki orta değer, yuva sınırı. */
 function affixArticle(): WikiArticle {
   const tierName: Record<string, string> = { C: 'C (every item)', B: 'B (Rare and better)', A: 'A (Epic and better)' };
@@ -1207,6 +1264,7 @@ function affixArticle(): WikiArticle {
       'Debuff resistance is a small chance that a debuff does not land at all. Immunity names one debuff that cannot land in your first turns of each battle (resistance is not rolled then).',
       'Elemental resistance lowers the damage you take from that element: hits, damage over time and burning ground alike. Gold find adds to the gold of every battle you win (each hero who fought adds their bonus; chests are not changed). Experience only helps the hero who wears it.',
       'The front row is the foremost row that still has a living enemy; every enemy behind it is in the back row. Your column is the line of cells in front of and behind you. Your basic attack is your first skill. Thorns hurts an enemy who hits you with a melee skill.',
+      `More slot affixes: ${ROUND2_AFFIXES.filter((id) => ITEM_DATA.affixDefs[id]).map((id) => `${ITEM_DATA.affixDefs[id]!.name.toLowerCase()} (${(ITEM_DATA.affixDefs[id]!.slots ?? []).map((x) => itemsJson.slots.find((sl) => sl.id === x)?.name ?? x).join(', ')})`).join(', ')}. Armor shred, Mana shield and Overflow are explained under Item effects in battle.`,
     ),
     { kind: 'table', head: ['Tier', 'Affix', 'At item level 10', 'Slots'], rows },
   ]);

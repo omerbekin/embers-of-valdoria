@@ -127,7 +127,7 @@ describe('en kötü 5 karar (ai-priorities.md 3. bölüm) düzeldi', () => {
     expect(chooseAction(three, 'party-0', ai)!.skillId).toBe('whirlwind');
   });
 
-  it('#3 Headsman\'s Blow (Ömer 2026-10-17): adayın hasarı harcanacak Rage ve hedefin eksik canıyla büyür (önizlemeden); maç kaydı notu yazar', () => {
+  it('#3 Headsman\'s Blow (Ömer 2026-10-17): adayın hasarı harcanacak Rage ile büyür (eksik can bonusu 2026-10-30 kalktı) (önizlemeden); maç kaydı notu yazar', () => {
     const b = mk({ 0: 'warrior' }, { 0: 'defender' });
     const w = b.get('party-0')!;
     const foe = b.get('enemy-0')!;
@@ -139,7 +139,7 @@ describe('en kötü 5 karar (ai-priorities.md 3. bölüm) düzeldi', () => {
       return cand(b, 'party-0', 'headsmans_blow')[0]!.dmg;
     };
     expect(dmg(w.maxRage!, 1)).toBeGreaterThan(dmg(min, 1)); // daha çok Rage = daha büyük darbe
-    expect(dmg(min, 0.3)).toBeGreaterThan(dmg(min, 1)); // yaralı hedef = daha büyük darbe
+    expect(dmg(min, 0.3)).toBeCloseTo(dmg(min, 1), 0); // 2026-10-30: eksik can bonusu kalktı, yaralı hedef aynı darbe
     w.rage = w.maxRage!;
     expect(cand(b, 'party-0', 'headsmans_blow')[0]!.notes?.join(' ')).toContain(`spends ${w.maxRage} Rage`);
   });
@@ -166,10 +166,22 @@ describe('en kötü 5 karar (ai-priorities.md 3. bölüm) düzeldi', () => {
     const two = mk({ 0: 'defender', 4: 'mage' }, { 0: 'warrior', 1: 'archer', 2: 'cutthroat' });
     two.get('party-0')!.hp = Math.round(two.get('party-0')!.maxHp * 0.3);
     two.get('party-1')!.hp = Math.round(two.get('party-1')!.maxHp * 0.25);
-    const choice = chooseAction(two, 'party-0', ai)!;
-    expect(choice.skillId).toBe('taunt');
     const t = cand(two, 'party-0', 'taunt')[0]!;
     expect(t.terms!.protect).toBeGreaterThan(0);
+    // YZ kapsamı (2026-10-29, open-questions 458): Taunt'ın breakRatio'su (maks canın %25'i kaybedilince biter) artık değerde: yük bunu ilk turda
+    // aşıyorsa yönlendirme tek tur sayılır. Feda kuralı (K6, sabit can kapısı yok) kırılma eşiği olmayan Taunt'la aynen geçerli.
+    const two2 = mk({ 0: 'defender', 4: 'mage' }, { 0: 'warrior', 1: 'archer', 2: 'cutthroat' });
+    two2.get('party-0')!.hp = Math.round(two2.get('party-0')!.maxHp * 0.3);
+    two2.get('party-1')!.hp = Math.round(two2.get('party-1')!.maxHp * 0.25);
+    const tauntDef = content.skills.taunt!;
+    const eff = tauntDef.effects.find((e) => e.type === 'taunt') as { breakRatio?: number };
+    const saved = eff.breakRatio;
+    delete eff.breakRatio;
+    try {
+      expect(chooseAction(two2, 'party-0', ai)!.skillId).toBe('taunt');
+    } finally {
+      eff.breakRatio = saved;
+    }
   });
 });
 

@@ -7,6 +7,7 @@ import { damageSpecFor, type DamageEffect } from './spec';
 import { slotOfTileUid } from './battle';
 import { attributePower, hitChance } from './stats';
 import type { Combatant, GroundEffect, OnAbsorbSpec, PushDir, Side, SkillDef, SkillEffect } from './types';
+import { manaShieldPay } from './tree-hooks';
 import type { HitInfo, TreeQuery } from './tree-hooks';
 
 /** Item affix çarpanlı güç (motorla aynı ifade): çarpan yoksa güç aynen. */
@@ -66,7 +67,7 @@ export interface TargetPreview {
    * Ley Brand (open-questions 444): uygulanacak Brand: süre, açılacak tainted mana havuzu (MP havuzu olmayan ve henüz havuzu olmayan hedefte; yoksa 0),
    * MP bedel çarpanı (MP havuzu olan hedefte anlamlı) ve hedefteki mevcut Brand'in kalan süresi (yoksa 0).
    */
-  brand?: { turns: number; pool: number; costMult: number; current: number; /** Ömer 2026-10-29: MP bedelli kullanımda ek yakım oranı ve işaretli skill'lere fazla hasar oranı (yoksa 0). */ castBurnPct: number; markPct: number };
+  brand?: { turns: number; pool: number; costMult: number; current: number; /** Ömer 2026-10-29: MP bedelli kullanımda ek yakım oranı ve işaretli skill'lere fazla hasar oranı (yoksa 0). */ castBurnPct: number; markPct: number; /** Ley Thread (Ömer 2026-10-29): hedefin ipliği bu Brand'de tüketilecek (süre ve castBurnPct ekli). */ threaded?: boolean };
   /** Ley Brand bedel yakımı (kullanıcının girdisinde): kullanıcı Branded ve bu skill'e MP ödeyecekse kullanım sonunda yanacak ek MP ve kendine vereceği büyü hasarı. */
   castBurn?: { mp: number; damage: number };
   /**
@@ -167,10 +168,11 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
   };
 
   // Her hedef için sıralı etkiler (kalkan ve hasar birbirini etkiler)
-  const pools = new Map<string, { hp: number; shield: number; magicShield: number }>();
+  // mp: Mana kalkanı (a_manashield) için hedefin kalan MP'si (motorla aynı manaShieldPay; sıralı vuruşlarda azalır)
+  const pools = new Map<string, { hp: number; shield: number; magicShield: number; mp: number }>();
   const pool = (c: Combatant) => {
     let p = pools.get(c.uid);
-    if (!p) pools.set(c.uid, (p = { hp: c.hp, shield: c.shield, magicShield: c.magicShield }));
+    if (!p) pools.set(c.uid, (p = { hp: c.hp, shield: c.shield, magicShield: c.magicShield, mp: c.mp }));
     return p;
   };
 
@@ -226,7 +228,11 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     const p = pool(target);
     // Bu hasarı emebilecek havuz: büyü hasarını iki kalkan da, fizikseli yalnızca genel kalkan emer
     const soak = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
-    const loss = (v: number) => Math.min(p.hp, Math.max(0, v - soak));
+    // Mana kalkanı: kalkanlardan sonra kalanın oranı MP'den (MP yettiğince), gerçek vuruşla aynı yardımcı
+    const loss = (v: number) => {
+      const rest = Math.max(0, v - soak);
+      return Math.min(p.hp, rest - manaShieldPay(target, rest, p.mp));
+    };
     const hpLoss = loss(r.avg);
     const absorbed = Math.min(soak, r.avg);
     const e = entry(target.uid);
@@ -257,6 +263,9 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     const b = Math.min(p.shield, rest);
     p.shield -= b;
     rest -= b;
+    const paid = manaShieldPay(target, rest, p.mp);
+    p.mp -= paid;
+    rest -= paid;
     p.hp = Math.max(0, p.hp - rest);
   };
 
@@ -308,7 +317,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         // missingHpBonus (Radiance): motorla aynı çarpan (hedefin şu anki eksik can oranı)
         const low0 = missingHpHealMult(effect.missingHpBonus, target.hp, target.maxHp);
         // Faz 4a C4: ağaç şifa çarpanı (healTaken / healDealt; gerçek şifayla aynı); kancasızda 1
-        const low = low0 * battle.treeHealMult(actor, target, skill);
+        const low = low0 * battle.treeHealMult(actor, target, skill) * battle.healRecvMult(target); // + Gelen şifa (c_healrecv)
         const k = (v: number) => (low === 1 ? v : Math.round(v * low));
         entry(target.uid).heal = {
           min: Math.min(k(r.min), missing),
@@ -369,9 +378,13 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const pct = effect.taintPct * (center && effect.centerTaintMul ? 1 + effect.centerTaintMul : 1);
         const pool = target.maxMp <= 0 && target.taint === undefined ? Math.max(1, Math.round(target.maxHp * pct)) : 0;
         const current = target.statuses.find((x) => x.kind === 'branded')?.turns ?? 0;
-        e.brand = { turns: effect.turns, pool, costMult: effect.costMult, current, castBurnPct: effect.castBurnPct ?? 0, markPct: effect.markDamagePct ?? 0 };
+        // Ley Thread (Ömer 2026-10-29): iplikli hedefte Brand +threadTurns tur, bedel yakımı x threadBurnMult (gerçek atışla aynı; iplik tüketilir)
+        const thread = (effect.threadTurns || effect.threadBurnMult) && target.statuses.some((x) => x.kind === 'ley_thread');
+        const turns = effect.turns + (thread ? (effect.threadTurns ?? 0) : 0);
+        const castBurnPct = (effect.castBurnPct ?? 0) * (thread ? (effect.threadBurnMult ?? 1) : 1);
+        e.brand = { turns, pool, costMult: effect.costMult, current, castBurnPct, markPct: effect.markDamagePct ?? 0, ...(thread ? { threaded: true } : {}) };
         const name = battle.statusDef('branded')?.name ?? 'Branded';
-        e.statuses = [...(e.statuses ?? []), `${name} ${effect.turns} turns`, pool > 0 ? `Tainted mana ${pool}` : target.maxMp > 0 && target.taint === undefined ? `MP costs ${Math.round((effect.costMult - 1) * 100)}% higher` : 'Tainted mana kept', ...(effect.castBurnPct && target.maxMp > 0 && target.taint === undefined ? [`MP skills burn ${Math.round(effect.castBurnPct * 100)}% extra`] : [])];
+        e.statuses = [...(e.statuses ?? []), `${name} ${turns} turns${thread ? ` (${battle.statusDef('ley_thread')?.name ?? 'Ley Thread'} used up)` : ''}`, pool > 0 ? `Tainted mana ${pool}` : target.maxMp > 0 && target.taint === undefined ? `MP costs ${Math.round((effect.costMult - 1) * 100)}% higher` : 'Tainted mana kept', ...(castBurnPct && target.maxMp > 0 && target.taint === undefined ? [`MP skills burn ${Math.round(castBurnPct * 100)}% extra`] : [])];
       } else if (effect.type === 'manaBurn') {
         const e = entry(target.uid);
         e.burn = (e.burn ?? 0) + burnAmountFor(effect, target);
@@ -453,7 +466,16 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       }
       else {
         const other = o.with ? battle.get(o.with) : undefined;
-        entry(t.uid).push = { dir: d, kind: 'crash', to: o.to, ...(other ? { with: other.uid, withDamage: raw > 0 ? battle.tickDamage(push.element, 'magic', raw, other) : 0 } : {}), damage: raw > 0 ? battle.tickDamage(push.element, 'magic', raw, t) : 0 };
+        const e = entry(t.uid);
+        e.push = { dir: d, kind: 'crash', to: o.to, ...(other ? { with: other.uid, withDamage: raw > 0 ? battle.tickDamage(push.element, 'magic', raw, other) : 0 } : {}), damage: raw > 0 ? battle.tickDamage(push.element, 'magic', raw, t) : 0 };
+        // YZ kapsamı (2026-10-29): ağacın 'crash' tetiğinin hedefe verdiği durum (Mage 3.fa: Stun) önizlemede
+        for (const tr of battle.aiTriggers(actor, { on: 'crash', target: t, skill: skill.id })) {
+          for (const a of tr.hook.do) {
+            if (!a.status || (a.to && a.to !== 'target')) continue;
+            const line = `Crash: ${battle.statusDef(a.status)?.name ?? a.status} ${a.turns ?? 1} turn${(a.turns ?? 1) === 1 ? '' : 's'}`;
+            if (!(e.statuses ?? []).includes(line)) e.statuses = [...(e.statuses ?? []), line];
+          }
+        }
       }
     }
   }
@@ -491,7 +513,7 @@ export interface DoomPreview {
  * Omen etkisinin hedefteki önizlemesi (isabet ederse): yığın önce/sonra, sayaç ve tetiklenecekse Doom aralığı (Hexer'in o anki ölçek statı ve kritik şansı;
  * gerçek patlamayla aynı battle.doomRange). `p`: skill'in hasar etkilerinden sonra hedefte kalan can/kalkan (önizleme havuzu).
  */
-function omenPreview(battle: Battle, actor: Combatant, skill: SkillDef, target: Combatant, kind: string, stacks: number, critStacks: number, p: { hp: number; shield: number; magicShield: number }, critDoomOnCrit = false): TargetPreview['omen'] {
+function omenPreview(battle: Battle, actor: Combatant, skill: SkillDef, target: Combatant, kind: string, stacks: number, critStacks: number, p: { hp: number; shield: number; magicShield: number; mp: number }, critDoomOnCrit = false): TargetPreview['omen'] {
   const def = battle.statusDef(kind);
   if (!def?.maxStacks) return undefined;
   const max = def.maxStacks;
@@ -517,7 +539,7 @@ function omenPreview(battle: Battle, actor: Combatant, skill: SkillDef, target: 
       omens,
       mult,
       cause: det ? 'detonate' : 'complete',
-      hpLoss: Math.min(p.hp, Math.max(0, avg - soak)),
+      hpLoss: Math.min(p.hp, Math.max(0, avg - soak) - manaShieldPay(target, Math.max(0, avg - soak), p.mp)), // mana kalkanı: gerçek vuruşla aynı
       ...(sureCrit ? { sureCrit: true } : {}),
     };
   };

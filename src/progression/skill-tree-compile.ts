@@ -39,6 +39,8 @@ export const FX_FIELDS: Record<string, readonly string[]> = {
   bond: ['ratio', 'turns', 'permanent'],
   summon: ['lifespan'],
   dispel: ['count'],
+  /** Ice Crater itmesi (Mage reworkü 2026-10-29): çarpma hasarı oranı. */
+  push: ['crashPower'],
   /** 'randomStatus:<durum>' (randomStatus seçeneği). */
   randomStatus: ['turns', 'weight'],
 };
@@ -129,6 +131,7 @@ function resolve(def: SkillDef, sel: string): { kind: string; targets: Bag[] } {
     case 'bond':
     case 'summon':
     case 'dispel':
+    case 'push':
       if (arg !== undefined) break;
       return { kind: head, targets: effects.filter((e) => e.type === head) };
     case 'bet':
@@ -1178,7 +1181,7 @@ function applyTarget(fx: Extract<TreeFx, { h: 'target' }>, acc: Acc, def: SkillD
 /* ------------------------------------------------------------------ Faz 4a: C3 tetik + C4 şifa kancaları ------------------------------------------------------------------ */
 
 /** Skill süzgeci anlamlı olan olaylar (satırın skill'i varsayılan kapsam); diğerlerinde `skill` verilemez. */
-const SKILL_EVENTS: ReadonlySet<TriggerEvent> = new Set(['kill', 'skillUse', 'echo', 'echoFail', 'jackpot', 'bust', 'crit', 'hit', 'statusApplied', 'shieldAbsorb', 'shieldBreak', 'doom', 'payHp', 'dispel', 'mpEmptied', 'manaBurned', 'revived', 'repeat', 'repeatFail']);
+const SKILL_EVENTS: ReadonlySet<TriggerEvent> = new Set(['kill', 'skillUse', 'echo', 'echoFail', 'jackpot', 'bust', 'crit', 'hit', 'statusApplied', 'shieldAbsorb', 'shieldBreak', 'doom', 'payHp', 'dispel', 'mpEmptied', 'manaBurned', 'revived', 'repeat', 'repeatFail', 'crash']);
 /** Olay süzgeçlerinin izinli olduğu olaylar. */
 const TRIGGER_FILTERS: Record<string, readonly TriggerEvent[]> = {
   status: ['statusGained', 'statusApplied', 'statusEnd', 'enemyDied', 'dotTick', 'dispel', 'enemyBuffed', 'enemyHealed'],

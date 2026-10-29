@@ -1,0 +1,18 @@
+{
+  "frames": 12,
+  "fps": 16,
+  "frame_size": [
+    256,
+    256
+  ],
+  "grid": [
+    4,
+    3
+  ],
+  "order": "row-major",
+  "padding_px": 0,
+  "pivot": [
+    128,
+    214
+  ]
+}

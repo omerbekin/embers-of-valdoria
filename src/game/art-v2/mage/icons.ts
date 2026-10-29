@@ -22,6 +22,9 @@ export const ICONS: Record<string, V2SpriteEntry> = {
   manabarrier: { image: 'mage/manabarrier' },
   meteor: { image: 'mage/meteor' },
   echo: { image: 'mage/echo' },
+  icecrater: { image: 'mage/icecrater' },
+  heatmirage: { image: 'mage/heatmirage' },
+  frostskin: { image: 'mage/frostskin' },
   /** Fire Bolt: avuçtaki mavi çekirdekten doğan ateş oku; sağ üste fırlayan kuyruklu alev, mavi-beyaz en sıcak çekirdek. */
 
   /** Blizzard: koyu fırtına bulutu, rüzgârla eğik düşen buz sarkıtları ve önde büyük kar kristali. */

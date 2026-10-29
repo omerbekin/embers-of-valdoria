@@ -1,4 +1,4 @@
-import { campaignRerollCost, campaignSellValue, markMerchantIntroSeen, merchantIntroSeen, buyBackItem, buyWare, rerollCampaignShop, sellToMerchant, type CampaignState } from '../campaign';
+import { campaignRerollCost, mapOf, node, campaignSellValue, markMerchantIntroSeen, merchantIntroSeen, buyBackItem, buyWare, rerollCampaignShop, sellToMerchant, type CampaignState } from '../campaign';
 import { UI_TEXT as T } from '../endless/ui-text';
 import { campaignGearSource } from '../ui/gear-screen';
 import { openMerchant, type MerchantSource } from '../ui/merchant-screen';
@@ -10,6 +10,8 @@ import { openMerchant, type MerchantSource } from '../ui/merchant-screen';
  */
 export function campaignMerchantSource(get: () => CampaignState, set: (s: CampaignState) => void, sub = 'Travelling merchant · Forward Camp'): MerchantSource {
   const gear = campaignGearSource(get, set);
+  const s0 = get();
+  const trader = s0.at ? node(mapOf(s0), s0.at).trader : undefined; // düğümün kendi tüccarı (yoksa Odo)
   const apply = (fn: (s: CampaignState) => CampaignState): void => set(fn(get()));
   return {
     ...gear,
@@ -22,8 +24,9 @@ export function campaignMerchantSource(get: () => CampaignState, set: (s: Campai
     buyBack: (i) => apply((s) => buyBackItem(s, i)),
     reroll: () => apply((s) => rerollCampaignShop(s)),
     lines: T.merchantLines,
-    name: T.merchantName,
+    name: trader?.name ?? T.merchantName,
     sub,
+    ...(trader ? { portrait: trader.portrait, greeting: trader.greeting, kicker: trader.kicker } : {}),
   };
 }
 

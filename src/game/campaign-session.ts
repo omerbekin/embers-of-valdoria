@@ -34,6 +34,7 @@ import {
   woundRules,
   setMapOverride,
   DROWNED_REACH,
+  HOLLOW_CROWN,
   type BattlePlan,
   type CampaignMode,
   type CampaignState,
@@ -70,7 +71,11 @@ import { maps23On } from '../ui/maps23-flag';
 import { mapSceneTrack } from '../ui/music';
 
 // Harita 2 test bayrağı (maps-2-3.md 9.1): debug anahtarı ya da ?maps=1 açıksa bu oturumda Drowned Reach geçişi görünür
-if (maps23On()) setMapOverride(DROWNED_REACH, true);
+// Harita 3 (The Hollow Crown, iskelet) aynı bayrakla açılır: Harita 2 sonunda "Continue to The Hollow Crown"
+if (maps23On()) {
+  setMapOverride(DROWNED_REACH, true);
+  setMapOverride(HOLLOW_CROWN, true);
+}
 
 export const session = {
   state: null as CampaignState | null,

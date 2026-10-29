@@ -10,6 +10,7 @@ import { rngFor } from './seed';
 import { activeHeroes, clone, closeShop, complete, expectStep, mapOf, nextStep } from './state';
 import { node } from './graph';
 import { shopSlotWeight } from './reach';
+import { marketPriceMult, marketRerollMult, withRarityFloor } from './hollow-crown';
 import type { CampaignShop, CampaignState } from './types';
 
 /** Seferin günü (campaign-dev'in CampaignState.day alanı; Inn / kamp / dinlenme ilerletir). Alan yoksa (eski kayıt ya da henüz eklenmediyse) 0. */
@@ -44,14 +45,18 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
   const out: CampaignShop['wares'] = [];
   const used = new Set<string>();
   const map = mapOf(s);
-  const size = node(map, nodeId).merchantSize ?? CONFIG.merchant.size; // kasabalar (T1): Ashford küçük, Valdren Keep büyük stok
+  const nd = node(map, nodeId);
+  const size = nd.merchantSize ?? CONFIG.merchant.size; // kasabalar (T1): Ashford küçük, Valdren Keep büyük stok
+  // Harita 3 The Deep Market (open-questions 454 b): yalnız marketRules'lı düğüm; yoksa çarpan 1, taban yok (eski stok birebir)
+  const priceMult = marketPriceMult(nd, s);
+  const floor = nd.marketRules?.rarityFloor;
   // M-L Faction: seçilen tarafa göre yuva ağırlıkları (Order zırh / relic, Guild silah / takı; drowned-reach.json > reach.faction). Taraf yoksa eski çekiliş birebir
   const weighted = bases.some((d) => shopSlotWeight(map, s, d.slot) !== 1);
   const day = campaignDay(s);
   const sold = reroll ? undefined : s.merchantSold?.[`${s.mapId}:${nodeId}`]; // yalnız ilk (yenilenmemiş) stokta
   for (let i = 0; i < size; i++) {
     const rng = rngFor(s.seed, s.mapId, nodeId, 'shop', reroll, 'day', day, 'slot', i);
-    const rarity = rollDropRarity(rng, ilvl, 'normal');
+    const rarity = withRarityFloor(rollDropRarity(rng, ilvl, 'normal'), floor);
     const pool = bases.filter((d) => !used.has(d.id));
     if (!pool.length) break;
     const d = weighted ? pickWeighted(pool, (x) => shopSlotWeight(map, s, x.slot), rng) : pool[rng.int(0, pool.length - 1)]!;
@@ -59,7 +64,7 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
     const fits = team.filter((h) => canEquip(h.class, d));
     const forClass = fits.length ? fits[rng.int(0, fits.length - 1)]!.class : undefined;
     const rolls = rollItem(d, rngFor(s.seed, s.mapId, nodeId, 'ware', reroll, 'day', day, i), { rarity, ...(forClass ? { forClass } : {}) });
-    out.push({ itemId: d.id, rolls, price: campaignPrice({ id: d.id, rolls }), ...(sold?.[i] === day ? { sold: true } : {}) });
+    out.push({ itemId: d.id, rolls, price: priceMult === 1 ? campaignPrice({ id: d.id, rolls }) : Math.max(1, Math.round(campaignPrice({ id: d.id, rolls }) * priceMult)), ...(sold?.[i] === day ? { sold: true } : {}) });
   }
   return out;
 }
@@ -160,7 +165,9 @@ export function buyBackItem(s: CampaignState, index: number): CampaignState {
 export function campaignRerollCost(s: CampaignState): number {
   const team = activeHeroes(s).length ? activeHeroes(s) : s.roster;
   const lvl = team.length ? team.reduce((a, h) => a + (h.level ?? 1), 0) / team.length : 1;
-  return Math.round(CONFIG.merchant.rerollCost + (CONFIG.merchant.rerollPerLevel ?? 0) * lvl);
+  // Harita 3 The Deep Market: yalnız marketRules'lı düğümde çarpan (yoksa 1, eski bedel birebir)
+  const mult = s.at ? marketRerollMult(node(mapOf(s), s.at), s) : 1;
+  return Math.round((CONFIG.merchant.rerollCost + (CONFIG.merchant.rerollPerLevel ?? 0) * lvl) * mult);
 }
 
 /** Malları yenile (campaignRerollCost altın; her yenileme farklı stok). */

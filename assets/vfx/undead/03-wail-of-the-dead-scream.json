@@ -1,0 +1,27 @@
+{
+  "slug": "03-wail-of-the-dead-scream",
+  "title": "Wail of the Dead: spectral scream",
+  "source": "assets/source/undead-vfx/03-wail-scream.png",
+  "frames": 8,
+  "fps": 14,
+  "duration_ms": 571,
+  "frame_size": [
+    320,
+    320
+  ],
+  "sheet_size": [
+    1280,
+    640
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 0,
+  "pivot": [
+    160,
+    160
+  ],
+  "align": "keep"
+}

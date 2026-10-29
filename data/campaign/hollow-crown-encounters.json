@@ -1,0 +1,1566 @@
+{
+  "_not": "Harita 3 karşılaşmaları (campaign-dev 2026-10-29; maps-2-3.md 4.2, iskelet adımı). YER TUTUCU: Harita 3 mobları henüz yok; belgedeki her birim var olan bir mobla, belgedeki adıyla (name) oynanır: Snow Wolf = grey_wolf, Rime Hound / Molten Hound = ash_hound, Cave Crawler = salt_crab, Clan Axeman = moor_raider, Clan Slinger / Frozen Crossbowman = bandit_crossbowman, Clan Skald = censer_monk, Rime Witch = fen_witchling, Frost-light / Deep-light = will_o_wisp, Wight = ghoul, Frozen Halberdier = morvane_halberdier, Hollow Warden = stonebound_warden, Hollow Runecaller = deep_runecaller, Blind Eel = weir_eel, Ashborn (Acolyte) = ember_acolyte, Pyre Witch = pitch_boiler, Cinder Knight = sworn_guard, Forge Golem = shieldwarden. Elitler (tier elite, can 1,7 / güç 1,1 / stat 1,15; Harita 2 iskeleti kalıbı): Pack-Mother = grey_wolf, Brannoc = bandit_chief, Frozen Standard-Bearer = morvane_halberdier, Oathkeeper = thane_of_the_deep, Pyre Matriarch = hedge_witch_morwen, Forge-Master Golem = guild_enforcer_bastion, Ashborn Hierarch = ember_hierophant, Cinder Warden = cinder_gatewarden. Bosslar: Snowfather = bridge_warden (dev, mooring yok), Hollow King = lord_morvane, Hearthwarden = drowned_queen, Ember = weir_wyrm (dev, tek). Kendi kitler, Harita 3 kuralları (Chill, Blizzard, Darkness, Cave-in, Heat, Tidewater Urn) bu adımda YOK. Düşman level'ı bölüm 3 rampasından (L21-30, ilk 3 durak L20). Dalgalar var olan ekleme kuralıyla. Sayılar PROVİZYON, sim ölçümü YOK.",
+  "hc_1": {
+    "name": "Hearthstead Road",
+    "units": [
+      {
+        "class": "grey_wolf",
+        "name": "Snow Wolf",
+        "slot": 1
+      },
+      {
+        "class": "grey_wolf",
+        "name": "Snow Wolf",
+        "slot": 0
+      },
+      {
+        "class": "grey_wolf",
+        "name": "Snow Wolf",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_3": {
+    "name": "Frozen Falls",
+    "units": [
+      {
+        "class": "fen_witchling",
+        "name": "Rime Witch",
+        "slot": 7
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Frost-light",
+        "slot": 6
+      },
+      {
+        "class": "grey_wolf",
+        "name": "Snow Wolf",
+        "slot": 1
+      },
+      {
+        "class": "grey_wolf",
+        "name": "Snow Wolf",
+        "slot": 0
+      }
+    ]
+  },
+  "hc_4": {
+    "name": "Trapper's Line",
+    "units": [
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 1
+      },
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 0
+      },
+      {
+        "class": "bandit_crossbowman",
+        "name": "Clan Slinger",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_6": {
+    "name": "The Pinewall",
+    "units": [
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 1
+      },
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 0
+      },
+      {
+        "class": "censer_monk",
+        "name": "Clan Skald",
+        "slot": 7
+      },
+      {
+        "class": "bandit_crossbowman",
+        "name": "Clan Slinger",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_7": {
+    "name": "The Pack-Mother",
+    "units": [
+      {
+        "class": "grey_wolf",
+        "name": "The Pack-Mother",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15,
+          "spriteScale": 1.3
+        },
+        "slot": 1
+      },
+      {
+        "class": "grey_wolf",
+        "name": "Snow Wolf",
+        "slot": 0
+      },
+      {
+        "class": "grey_wolf",
+        "name": "Snow Wolf",
+        "slot": 2
+      },
+      {
+        "class": "grey_wolf",
+        "name": "Snow Wolf",
+        "slot": 4
+      }
+    ]
+  },
+  "hc_9": {
+    "name": "Avalanche Pass",
+    "units": [
+      {
+        "class": "ash_hound",
+        "name": "Rime Hound",
+        "slot": 1
+      },
+      {
+        "class": "ash_hound",
+        "name": "Rime Hound",
+        "slot": 0
+      },
+      {
+        "class": "fen_witchling",
+        "name": "Rime Witch",
+        "slot": 7
+      },
+      {
+        "class": "bandit_crossbowman",
+        "name": "Clan Slinger",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_10": {
+    "name": "Ice Cave",
+    "units": [
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 1
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 0
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Frost-light",
+        "slot": 7
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Frost-light",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_12": {
+    "name": "Clan Chief Brannoc",
+    "units": [
+      {
+        "class": "bandit_chief",
+        "name": "Clan Chief Brannoc",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        },
+        "slot": 1
+      },
+      {
+        "class": "censer_monk",
+        "name": "Clan Skald",
+        "slot": 7
+      },
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 0
+      },
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_13": {
+    "name": "The Cairns",
+    "units": [
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 1
+      },
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 0
+      },
+      {
+        "class": "fen_witchling",
+        "name": "Rime Witch",
+        "slot": 7
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Frost-light",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_15": {
+    "name": "Glacier Foot",
+    "units": [
+      {
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
+        "slot": 1
+      },
+      {
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
+        "slot": 0
+      },
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 2
+      },
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 4
+      }
+    ]
+  },
+  "hc_16": {
+    "name": "Crevasse Field",
+    "units": [
+      {
+        "class": "ash_hound",
+        "name": "Rime Hound",
+        "slot": 1
+      },
+      {
+        "class": "ash_hound",
+        "name": "Rime Hound",
+        "slot": 0
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Frost-light",
+        "slot": 7
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Frost-light",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_17": {
+    "name": "The Frozen Legion",
+    "units": [
+      {
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
+        "slot": 1
+      },
+      {
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
+        "slot": 0
+      },
+      {
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
+        "slot": 2
+      },
+      {
+        "class": "bandit_crossbowman",
+        "name": "Frozen Crossbowman",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_18": {
+    "name": "The Frozen Standard-Bearer",
+    "units": [
+      {
+        "class": "morvane_halberdier",
+        "name": "The Frozen Standard-Bearer",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15,
+          "spriteScale": 1.15
+        },
+        "slot": 1
+      },
+      {
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
+        "slot": 0
+      },
+      {
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
+        "slot": 2
+      },
+      {
+        "class": "bandit_crossbowman",
+        "name": "Frozen Crossbowman",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_19": {
+    "name": "Ice Chapel",
+    "units": [
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 1
+      },
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 0
+      },
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 2
+      },
+      {
+        "class": "fen_witchling",
+        "name": "Rime Witch",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_22": {
+    "name": "Serac Maze",
+    "units": [
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 1
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 0
+      },
+      {
+        "class": "ash_hound",
+        "name": "Rime Hound",
+        "slot": 2
+      },
+      {
+        "class": "ash_hound",
+        "name": "Rime Hound",
+        "slot": 4
+      }
+    ]
+  },
+  "hc_26": {
+    "name": "Frostbite Ridge",
+    "units": [
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 1
+      },
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 0
+      },
+      {
+        "class": "fen_witchling",
+        "name": "Rime Witch",
+        "slot": 7
+      },
+      {
+        "class": "fen_witchling",
+        "name": "Rime Witch",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_27": {
+    "name": "The Gate Road",
+    "units": [
+      {
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
+        "slot": 1
+      },
+      {
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
+        "slot": 0
+      },
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 2
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Frost-light",
+        "slot": 7
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Frost-light",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_29": {
+    "name": "Gatehouse of Kharduin",
+    "units": [
+      {
+        "class": "stonebound_warden",
+        "slot": 1
+      },
+      {
+        "class": "stonebound_warden",
+        "slot": 0
+      },
+      {
+        "class": "deep_runecaller",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_32": {
+    "name": "The Deep Stair",
+    "units": [
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 1
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 0
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_34": {
+    "name": "Old Mine",
+    "units": [
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 1
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 0
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 2
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 4
+      }
+    ]
+  },
+  "hc_35": {
+    "name": "The Oathkeeper",
+    "units": [
+      {
+        "class": "thane_of_the_deep",
+        "name": "The Oathkeeper",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        },
+        "slot": 1
+      },
+      {
+        "class": "stonebound_warden",
+        "slot": 0
+      },
+      {
+        "class": "stonebound_warden",
+        "slot": 2
+      },
+      {
+        "class": "deep_runecaller",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_36": {
+    "name": "Collapsed Hall",
+    "units": [
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 1
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 0
+      },
+      {
+        "class": "deep_runecaller",
+        "name": "Hollow Runecaller",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_37": {
+    "name": "The Undercroft",
+    "units": [
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 1
+      },
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 0
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 2
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 4
+      }
+    ]
+  },
+  "hc_39": {
+    "name": "Fungus Cavern",
+    "units": [
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 1
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 0
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 2
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Deep-light",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_41": {
+    "name": "Shaft Head",
+    "units": [
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn Acolyte",
+        "slot": 7
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn Acolyte",
+        "slot": 6
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 1
+      }
+    ]
+  },
+  "hc_42": {
+    "name": "Rune Vault",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 1
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 0
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_43": {
+    "name": "Hall of Kings",
+    "units": [
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 1
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 0
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 2
+      },
+      {
+        "class": "deep_runecaller",
+        "name": "Hollow Runecaller",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_44": {
+    "name": "Treasury Vault",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 1
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 0
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_45": {
+    "name": "The Sunless Lake",
+    "units": [
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 1
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 0
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Deep-light",
+        "slot": 7
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Deep-light",
+        "slot": 6
+      },
+      {
+        "class": "weir_eel",
+        "name": "Blind Eel",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_46": {
+    "name": "Boat Crossing",
+    "units": [
+      {
+        "class": "weir_eel",
+        "name": "Blind Eel",
+        "slot": 1
+      },
+      {
+        "class": "weir_eel",
+        "name": "Blind Eel",
+        "slot": 0
+      },
+      {
+        "class": "weir_eel",
+        "name": "Blind Eel",
+        "slot": 2
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Deep-light",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_47": {
+    "name": "Drowned Dwarf Quarter",
+    "units": [
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 1
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 0
+      },
+      {
+        "class": "weir_eel",
+        "name": "Blind Eel",
+        "slot": 2
+      },
+      {
+        "class": "weir_eel",
+        "name": "Blind Eel",
+        "slot": 4
+      }
+    ]
+  },
+  "hc_49": {
+    "name": "Ashborn Shrine",
+    "units": [
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn Acolyte",
+        "slot": 7
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn Acolyte",
+        "slot": 6
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 8
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 1
+      }
+    ]
+  },
+  "hc_50": {
+    "name": "The Pyre Matriarch",
+    "units": [
+      {
+        "class": "hedge_witch_morwen",
+        "name": "The Pyre Matriarch",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        },
+        "slot": 7
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 6
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 8
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 1
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 0
+      }
+    ]
+  },
+  "hc_52": {
+    "name": "Kings' Armory",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 1
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 0
+      }
+    ]
+  },
+  "hc_53": {
+    "name": "Cave-in Gallery",
+    "units": [
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 1
+      },
+      {
+        "class": "salt_crab",
+        "name": "Cave Crawler",
+        "slot": 0
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 2
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 4
+      }
+    ]
+  },
+  "hc_55": {
+    "name": "The Roots",
+    "units": [
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 1
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 0
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 2
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_56": {
+    "name": "Chain Stair",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 1
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 0
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 7
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_58": {
+    "name": "Lava Tube",
+    "units": [
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 1
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 0
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 2
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_59": {
+    "name": "Cinder Gate",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 1
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 0
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 7
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_60": {
+    "name": "Kiln Chapel",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 1
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 0
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_61": {
+    "name": "The Ashborn Hierarch",
+    "units": [
+      {
+        "class": "ember_hierophant",
+        "name": "The Ashborn Hierarch",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        },
+        "slot": 7
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 6
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 8
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 1
+      }
+    ]
+  },
+  "hc_63": {
+    "name": "Bridge of Chains",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 1
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 0
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 2
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_64": {
+    "name": "Ash Catacombs",
+    "units": [
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 1
+      },
+      {
+        "class": "ghoul",
+        "name": "Wight",
+        "slot": 0
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 7
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 6
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_65": {
+    "name": "Forge-Master Golem",
+    "units": [
+      {
+        "class": "guild_enforcer_bastion",
+        "name": "Forge-Master Golem",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15,
+          "spriteScale": 1.2
+        },
+        "slot": 1
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 0
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 2
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 4
+      }
+    ]
+  },
+  "hc_66": {
+    "name": "Warren Hoard",
+    "units": [
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 1
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 0
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_68": {
+    "name": "Slag Fields",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 1
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 0
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 7
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_69": {
+    "name": "Pilgrims' Stair",
+    "units": [
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 7
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 6
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 8
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 4
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 1
+      }
+    ]
+  },
+  "hc_70": {
+    "name": "Vault of the First Kings",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 1
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 0
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_72": {
+    "name": "Ember Stair",
+    "units": [
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 1
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 0
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 2
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_73": {
+    "name": "Furnace Hall",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 1
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 0
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 7
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_74": {
+    "name": "The Anvil Road",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 1
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 0
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 2
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_76": {
+    "name": "Magma Bridge",
+    "units": [
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 1
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 0
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 2
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 4
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_77": {
+    "name": "Chamber of Embers",
+    "units": [
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 7
+      },
+      {
+        "class": "ember_acolyte",
+        "name": "Ashborn",
+        "slot": 6
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 8
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 4
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 1
+      }
+    ]
+  },
+  "hc_78": {
+    "name": "Forgemaster's Vault",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 1
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 0
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_79": {
+    "name": "The Cinder Warden",
+    "units": [
+      {
+        "class": "cinder_gatewarden",
+        "name": "The Cinder Warden",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        },
+        "slot": 1
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 0
+      },
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 2
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 7
+      }
+    ]
+  },
+  "hc_81": {
+    "name": "Hall of Bearers",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "name": "Cinder Knight",
+        "slot": 1
+      },
+      {
+        "class": "pitch_boiler",
+        "name": "Pyre Witch",
+        "slot": 7
+      },
+      {
+        "class": "shieldwarden",
+        "name": "Forge Golem",
+        "slot": 0
+      },
+      {
+        "class": "ash_hound",
+        "name": "Molten Hound",
+        "slot": 2
+      }
+    ]
+  },
+  "hc_clan_steading": {
+    "name": "Clan Steading",
+    "units": [
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 1
+      },
+      {
+        "class": "moor_raider",
+        "name": "Clan Axeman",
+        "slot": 0
+      },
+      {
+        "class": "censer_monk",
+        "name": "Clan Skald",
+        "slot": 7
+      },
+      {
+        "class": "bandit_crossbowman",
+        "name": "Clan Slinger",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_lift_descent": {
+    "name": "The Broken Lift",
+    "units": [
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 1
+      },
+      {
+        "class": "stonebound_warden",
+        "name": "Hollow Warden",
+        "slot": 0
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Deep-light",
+        "slot": 7
+      },
+      {
+        "class": "will_o_wisp",
+        "name": "Deep-light",
+        "slot": 6
+      }
+    ]
+  },
+  "hc_snowfather": {
+    "name": "The Snowfather",
+    "units": [
+      {
+        "class": "bridge_warden",
+        "slot": 1,
+        "name": "The Snowfather",
+        "tier": "boss",
+        "boss": "giant",
+        "noTierMods": true,
+        "mods": {
+          "spriteScale": 2.2,
+          "actionsPerTurn": 2,
+          "hpMult": 0.88
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 0,
+        "name": "Rime Hound"
+      },
+      {
+        "class": "ash_hound",
+        "slot": 2,
+        "name": "Rime Hound"
+      }
+    ]
+  },
+  "hc_hollow_king": {
+    "name": "The Hollow King",
+    "units": [
+      {
+        "class": "lord_morvane",
+        "slot": 4,
+        "name": "The Hollow King",
+        "tier": "boss",
+        "mods": {
+          "hpMult": 1.022,
+          "powerMult": 0.565,
+          "spriteScale": 2.4
+        }
+      },
+      {
+        "class": "stonebound_warden",
+        "slot": 0,
+        "name": "Hollow Warden"
+      },
+      {
+        "class": "stonebound_warden",
+        "slot": 2,
+        "name": "Hollow Warden"
+      },
+      {
+        "class": "deep_runecaller",
+        "slot": 7,
+        "name": "Hollow Runecaller"
+      }
+    ]
+  },
+  "hc_hearthwarden": {
+    "name": "The Hearthwarden",
+    "units": [
+      {
+        "class": "drowned_queen",
+        "slot": 4,
+        "name": "The Hearthwarden",
+        "tier": "boss",
+        "mods": {
+          "hpMult": 1.226,
+          "powerMult": 0.678,
+          "spriteScale": 1.65
+        }
+      },
+      {
+        "class": "shieldwarden",
+        "slot": 0,
+        "name": "Forge Golem"
+      },
+      {
+        "class": "shieldwarden",
+        "slot": 2,
+        "name": "Forge Golem"
+      }
+    ]
+  },
+  "hc_ember": {
+    "name": "The Ember of the First Hearth",
+    "units": [
+      {
+        "class": "weir_wyrm",
+        "slot": 1,
+        "name": "The Ember of the First Hearth",
+        "tier": "boss",
+        "boss": "giant",
+        "noTierMods": true,
+        "mods": {
+          "spriteScale": 3,
+          "actionsPerTurn": 2,
+          "hpMult": 0.81
+        }
+      }
+    ]
+  }
+}

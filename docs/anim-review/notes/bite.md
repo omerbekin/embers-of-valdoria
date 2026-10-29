@@ -5,3 +5,8 @@ Düşman tarafı aynalama hatası düzeltildi (src/game/mob-vfx.ts `fx()`): Phas
 
 ## Tur 2 · Claude · düzeltme · 2026-10-29
 Görünen ölçüm (dayanak farkı + parlaklık merkezi): eski dx 75 aynalama düzeltmesinden sonra fazla kaldı, görünen +71 px (kuklanın sağına). data/battle-layout.json > animation.mobVfx.skills.bite.dx 75 → 0. Beklenen görünen ≈ -4 px.
+
+## Tur 3 · Codex · kontrol · 2026-10-29
+Vuruş sonrası görünen fark -4 px (dayanak dx 0, parlaklık merkezi -4 px); hedef kukla merkezi x=725 ile uyumlu. Yarım gövdeyi aşan kayma yok.
+Vuruş anı: verilen ~180 ms karesinde efekt kukla üzerinde ortalı; aynalama düzeltmesi sonrası yeni kayma yok.
+Karar: tamam; düzeltme gerekmiyor.

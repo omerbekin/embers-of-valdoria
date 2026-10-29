@@ -1,0 +1,328 @@
+{
+  "_not": "Harita 3 (The Hollow Crown) olayları, hazineleri ve kasaba hikâyeleri (campaign-dev 2026-10-29, maps-2-3.md 4.2 / 4.4; iskelet adımı; oyun içi metin İngilizce). Biçim data/campaign/events.json ile aynı. Yalnız var olan yapı taşları (altın, can, sandık, savaş, sonuç metni). Hall of Oaths sonuçları (Ömer 2026-10-29, open-questions 454 a: `stoneOath` seçenek alanı -> CampaignState.stoneOath; yemin = The Deep Market (hc54) marketRules.oathDiscount, ret = indirim yok ama cüce mezarları (düğüm bayrağı oathSealed) açık; yeminliyken o düğümlerin hazinesi mühürlü, metni treasures > oathSealedText / oathPlunderText; sayılar hollow-crown.json'da; Ömer 2026-10-29: devriye cezası kaldırıldı) ve The White Dark 'Wait it out' (454 d: `nextBattleStatus` = sonraki savaşın başında takıma Chilled 2 tur, PROVİZYON) eklendi. Lantern nesnesi, Mend / Quench unvanları ve Taint metni sonraki adım (open-questions 454).",
+  "events": {
+    "hc_shrine_of_the_hearth": {
+      "title": "Shrine of the Hearth",
+      "text": "The stones of the shrine are black with old fire. Someone has carved the founders here, seven figures climbing a mountain with a burning bowl held between them. At the top of the carving the bowl is cracked in two."
+    },
+    "hc_clan_steading": {
+      "title": "Clan Steading",
+      "text": "The hill clans block the road with their shields. \"This is our mountain,\" their spokesman says. \"Strangers pay to walk it, in silver or in blood. Choose.\"",
+      "choices": [
+        {
+          "id": "pay",
+          "label": "Pay the toll",
+          "hint": "Give the clans 40 gold and pass in peace.",
+          "cost": 40,
+          "result": "The spokesman weighs the coins in his hand and stands aside. \"Walk soft on our mountain.\""
+        },
+        {
+          "id": "fight",
+          "label": "Refuse",
+          "hint": "Fight the clansmen. Win: some gold.",
+          "battle": [
+            "hc_clan_steading"
+          ],
+          "win": {
+            "gold": 30
+          },
+          "result": "The clansmen break and scatter up the slope. Their toll box is heavier than you expected."
+        }
+      ]
+    },
+    "hc_white_dark": {
+      "title": "The White Dark",
+      "text": "The storm closes in until you cannot see the hand in front of your face. The wind screams over the glacier, and the cold finds every gap in your cloaks.",
+      "choices": [
+        {
+          "id": "press",
+          "label": "Press on",
+          "hint": "March through the storm. Everyone loses some health.",
+          "hpLoss": 0.15,
+          "result": "You lean into the wind and walk until the white thins to grey. The company is frostbitten, but you are through."
+        },
+        {
+          "id": "wait",
+          "label": "Wait it out",
+          "hint": "Dig in and wait for the storm to pass. No one is hurt, but the cold stays in your bones: your company starts the next battle Chilled for 2 turns.",
+          "nextBattleStatus": {
+            "status": "chilled",
+            "turns": 2
+          },
+          "result": "You dig into the snow and wait. By morning the storm has blown itself out, and the glacier lies quiet and blue."
+        },
+        {
+          "id": "wood",
+          "label": "Gather wood",
+          "hint": "Search the buried camp for firewood and whatever else was left.",
+          "gold": 25,
+          "result": "Under the snow you find the frozen camp of some earlier company, with dry wood and a purse no one came back for."
+        }
+      ]
+    },
+    "hc_morvanes_bivouac": {
+      "title": "Morvane's Bivouac",
+      "text": "The tent is frozen stiff, and the journal on the cot is open to its last page, in Morvane's own hand: \"The legion is lost. The crown would not let me turn back, and it would not let me go down. I will carry it home and let it burn there instead of here.\""
+    },
+    "hc_stone_gate": {
+      "title": "The Stone Gate",
+      "text": "The gate of Kharduin rises out of the ice, carved with kings and anvils. A small door opens in it, and a dwarf in stone-grey armour looks you over. \"You carry fire,\" he says. \"Come in, then. The Thanes will want to see it.\""
+    },
+    "hc_hall_of_oaths": {
+      "title": "Hall of Oaths",
+      "text": "The names of every dwarf of Kharduin are cut into the walls of this hall. Loremaster Dunwe waits beside the oldest of them.\n\n\"Swear the Stone Oath and Kharduin counts you as its own blood. Our traders give kin their price. But the sworn take nothing from the halls of our dead. Not one stone.\"\n\n\"An oath cut here is never uncut. Choose once.\"",
+      "choices": [
+        {
+          "id": "swear",
+          "label": "Swear the oath",
+          "hint": "Become kin of Kharduin. The Deep Market gives you kin prices, but the tombs of the dwarf dead are sealed to you. There is no going back.",
+          "stoneOath": "sworn",
+          "result": "You lay your hands on the cold stone and swear. Dunwe cuts a new line into the wall, under the names of the dead."
+        },
+        {
+          "id": "refuse",
+          "label": "Refuse",
+          "hint": "Stay outsiders. The Deep Market charges you outsider prices, but the tombs of the dwarf dead stay open to plunder. There is no going back.",
+          "stoneOath": "refused",
+          "result": "Dunwe says nothing and cuts no line. The halls of the dead lie open to you, and Kharduin will remember it."
+        }
+      ]
+    },
+    "hc_lantern_gallery": {
+      "title": "Lantern Gallery",
+      "text": "An old dwarf trims the wick of an iron lantern. \"Below here the dark is not just dark,\" he says. \"It eats the light and it eats the eyes. Keep a flame near you, and keep it lit, or you will be fighting shadows.\""
+    },
+    "hc_broken_lift": {
+      "title": "The Broken Lift",
+      "text": "The great ore lift hangs crooked in its shaft, one chain snapped. A dwarf engineer says he can mend it for a price. Or you can climb down the old ladders, through the dark, and meet whatever lives there.",
+      "choices": [
+        {
+          "id": "repair",
+          "label": "Pay for the repair",
+          "hint": "Give the engineer 50 gold.",
+          "cost": 50,
+          "result": "The engineer and his sons haul the chain into place. The lift groans, but it holds."
+        },
+        {
+          "id": "climb",
+          "label": "Climb down",
+          "hint": "Fight your way down through the dark. Win: some gold.",
+          "battle": [
+            "hc_lift_descent"
+          ],
+          "win": {
+            "gold": 30
+          },
+          "result": "At the bottom of the shaft the hollow dead lie still at last, and the old miners' purses with them."
+        }
+      ]
+    },
+    "hc_sermon_hall": {
+      "title": "Sermon Hall",
+      "text": "The cult's last sermon is cut into the pulpit: \"The fire was here before the kings. The kings put it in a cage and called the cage a crown. Morvane wore the cage and felt the fire burn through it. He was the last to understand. We will open the cage.\""
+    },
+    "hc_crown_gallery": {
+      "title": "Crown Gallery",
+      "text": "The carvings show the founders splitting the crown: the ash half carried up the mountain, the salt half carried down to the sea. Under the last carving someone has scratched a newer line: \"Only the sea can put it out.\""
+    },
+    "hc_mend_or_quench": {
+      "title": "Mend or Quench",
+      "text": "The Ember is gone. In the silence of the hearth the two halves of the crown lie at your feet, warm, pulling at each other. One of you could take them up and make them whole. Or you could give them to the hearth and drown it with what you carried from the sea.",
+      "choices": [
+        {
+          "id": "mend",
+          "label": "Mend the crown",
+          "hint": "One of you takes up the crown and becomes Valdoria's new Crownbearer.",
+          "result": "The halves close with a sound like a bell. Your leader lifts the crown and sets it on their brow, and the fire inside it settles, for now. Valdoria has a Crownbearer again."
+        },
+        {
+          "id": "quench",
+          "label": "Quench the fire",
+          "hint": "Throw both halves into the hearth and put it out.",
+          "result": "The halves fall into the hearth and you pour the Tidewater after them. Steam fills the hall, and when it clears the First Hearth is dark for the first time since the founding. Valdoria is without a crown."
+        }
+      ]
+    }
+  },
+  "treasures": {
+    "hc_trappers_line": {
+      "title": "Trapper's Line",
+      "text": "The clansmen are gone. In the trapper's caches you find furs, dried meat and a locked box.",
+      "reward": "Open the box to claim its gear and gold."
+    },
+    "hc_ice_cave": {
+      "title": "Ice Cave",
+      "text": "The crawlers are dead. At the back of the cave something frozen in the ice still holds a pack.",
+      "reward": "Break it free to claim its gear and gold."
+    },
+    "hc_ice_chapel": {
+      "title": "Ice Chapel",
+      "text": "The dead are still. On the chapel altar the offerings of the lost legion wait for someone to claim them.",
+      "reward": "Take the offerings: gear and gold."
+    },
+    "hc_wyrm_bones": {
+      "title": "Wyrm Bones",
+      "text": "Between the ribs of the old wyrm lies a dwarf satchel, frozen shut but whole.",
+      "reward": "Open the satchel to claim its gear and gold."
+    },
+    "hc_old_mine": {
+      "title": "Old Mine",
+      "text": "The crawlers are dead. In the last ore cart, under the stones, the miners hid their wages.",
+      "reward": "Take the hidden wages: gear and gold."
+    },
+    "hc_rune_vault": {
+      "title": "Rune Vault",
+      "text": "The golem falls silent. Behind it the runes on the vault door fade, and the door swings open.",
+      "reward": "Open the vault to claim its gear and gold.",
+      "oathSealedText": "The golem falls silent, but the runes on the vault door burn on. They know the Stone Oath you swore, and they hold. The company bows its heads and leaves the vault as it found it.",
+      "oathPlunderText": "The dead of Kharduin watch you take it."
+    },
+    "hc_treasury_vault": {
+      "title": "Treasury Vault",
+      "text": "The guards are down. Most of the treasury was taken long ago, but one chest was too heavy to carry.",
+      "reward": "Open the chest to claim its gear and gold.",
+      "oathSealedText": "The guards are down. The last chest lies under a rune of Kharduin, and your oath stays your hand. You bow to the dead kings and take nothing.",
+      "oathPlunderText": "The dead of Kharduin watch you take it."
+    },
+    "hc_kings_armory": {
+      "title": "Kings' Armory",
+      "text": "The golems are still. Racks of dwarf steel line the walls of the armory.",
+      "reward": "Take what you can carry: gear and gold.",
+      "oathSealedText": "The golems are still. A rune seal glows across the racks of dwarf steel, and your Stone Oath holds you back. The company salutes the dead kings and walks on.",
+      "oathPlunderText": "The dead of Kharduin watch you take it."
+    },
+    "hc_kiln_chapel": {
+      "title": "Kiln Chapel",
+      "text": "The kiln cools. Among the cult's fired relics is a strongbox of their offerings.",
+      "reward": "Open the strongbox to claim its gear and gold."
+    },
+    "hc_warren_hoard": {
+      "title": "Warren Hoard",
+      "text": "The hounds are dead. Their masters heaped the hoard of the warrens in this side cave.",
+      "reward": "Take from the hoard: gear and gold."
+    },
+    "hc_first_kings_vault": {
+      "title": "Vault of the First Kings",
+      "text": "The golems fall. In the vault lie the gifts the first kings meant for the fire.",
+      "reward": "Take the kings' gifts: gear and gold."
+    },
+    "hc_forgemasters_vault": {
+      "title": "Forgemaster's Vault",
+      "text": "The guardians are broken. The forgemaster's last work waits on its anvil.",
+      "reward": "Take the forgemaster's work: gear and gold."
+    },
+    "hc_bearers_crypt": {
+      "title": "Bearers' Crypt",
+      "text": "Each crownbearer was laid to rest with a gift for the next. One gift is still sealed.",
+      "reward": "Open the gift to claim its gear and gold."
+    }
+  },
+  "stories": {
+    "hc_old_ketil": {
+      "title": "Old Ketil",
+      "speaker": "Old Ketil",
+      "text": "An old hunter sits by the fire with a wolf pelt over his knees, mending a snare. He sniffs the air when you come in, and his eyes go to the bundle in your pack.",
+      "dialogue": [
+        {
+          "text": "\"That thing you carry is warm. I can smell the smoke on it. You are going up the mountain with it, I suppose?\"",
+          "choices": [
+            {
+              "label": "\"Up, and then down into it.\"",
+              "likes": true
+            },
+            {
+              "label": "\"Mind your own snares, old man.\""
+            }
+          ]
+        },
+        {
+          "text": "\"Then listen. Up on the ice the cold is a thief. It takes your speed first, then your grip, then your nerve. Keep a fire close, and the cold keeps its distance.\"",
+          "choices": [
+            {
+              "label": "\"What else is up there?\"",
+              "likes": true
+            },
+            {
+              "label": "\"Tell us about the hill clans.\"",
+              "likes": true
+            },
+            {
+              "label": "\"We have walked through worse.\""
+            }
+          ]
+        },
+        {
+          "text": "\"The clans, the wolves, and Morvane's lost legion in the ice. And under it all the dwarves, if they still live. Will you still go?\"",
+          "choices": [
+            {
+              "label": "\"We go on.\"",
+              "likes": true
+            },
+            {
+              "label": "\"If the pay is good.\""
+            }
+          ]
+        }
+      ],
+      "likeThreshold": 2,
+      "gift": {
+        "rarity": "common"
+      },
+      "liked": "\"Good. Then take this. It kept me alive on the ice for forty winters.\" He presses something into your hands and turns back to his snare.",
+      "disliked": "\"Suit yourselves. The mountain will teach you.\" He goes back to his snare."
+    },
+    "hc_loremaster_dunwe": {
+      "title": "Loremaster Dunwe",
+      "speaker": "Loremaster Dunwe",
+      "text": "The loremaster of Kharduin is the son of the Thane of the Deep, and he wears his father's ring on a chain. He studies the two halves of the crown for a long time before he speaks.",
+      "dialogue": [
+        {
+          "text": "\"So. The halves come home together. My father went down to the Deep Halls to guard this road, and he never came back up. Did you meet him?\"",
+          "choices": [
+            {
+              "label": "\"We met the Thane. He fought well.\"",
+              "likes": true
+            },
+            {
+              "label": "\"We met many dwarves.\""
+            }
+          ]
+        },
+        {
+          "text": "\"Below us the halls are hollow now. The dead keep them, and the Ashborn dig toward the hearth. The Stone Oath bound us to keep the fire down there. Will you carry it down for us?\"",
+          "choices": [
+            {
+              "label": "\"That is why we came.\"",
+              "likes": true
+            },
+            {
+              "label": "\"Tell us of the Stone Oath.\"",
+              "likes": true
+            },
+            {
+              "label": "\"For a price.\""
+            }
+          ]
+        },
+        {
+          "text": "\"At the bottom is the First Hearth, and the first king who would not leave it. Whatever you do there, do it once. Will you?\"",
+          "choices": [
+            {
+              "label": "\"We will finish it.\"",
+              "likes": true
+            },
+            {
+              "label": "\"We will see.\""
+            }
+          ]
+        }
+      ],
+      "likeThreshold": 2,
+      "gift": {
+        "rarity": "uncommon"
+      },
+      "liked": "\"Then take this from the Last Hall. It was made for this road.\" He bows, as dwarves bow to kings.",
+      "disliked": "\"The stone remembers what you say. Go carefully.\" He turns back to his books."
+    }
+  }
+}

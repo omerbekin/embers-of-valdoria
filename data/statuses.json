@@ -147,6 +147,14 @@
     "stack": "replace",
     "text": "Ley Brand: MP costs are higher and each MP skill burns extra mana; a unit with no mana holds tainted mana it cannot spend. Mana burned or stolen from it hurts, Mana Steal and Void Strike hit it harder, and leftover tainted mana bursts when the Brand runs out"
   },
+  "ley_thread": {
+    "_not": "Ley Thread (Anti-Mage, Ömer 2026-10-29): Mana Steal isabet ettiği hedefe bırakır (skills.json > mana_burn, 2 tur). Ley Brand iplikli hedefi kapsarsa o hedefte Brand threadTurns tur daha uzun sürer ve bedel yakımı (castBurnPct) threadBurnMult kat olur; iplik o anda tüketilir (sayılar skills.json > drain_field > brand). Yığın: debuff varsayılanı (refresh-strongest): yeniden çekilen iplik süreyi tazeler. CC değil (boss da yer). Debuff: Mana Barrier dispel siler. İkon YER TUTUCU: manaburn (ödünç; sonra gerçek sanat).",
+    "name": "Ley Thread",
+    "type": "debuff",
+    "icon": "manaburn",
+    "color": "#b48ae0",
+    "text": "The next Ley Brand on this unit lasts 2 turns longer and burns twice as much mana per cast"
+  },
   "overextended": {
     "_not": "Bridge Warden: Breaking Span / Fall çözüldükten sonra çapa köprüye saplı kalır (Warden'ın sonraki turunun başına kadar). Sayı PROVİZYON.",
     "name": "Overextended",
@@ -330,5 +338,17 @@
     "icon": "radiance",
     "color": "#fff0a0",
     "text": "Heals at the start of each of its turns"
+  },
+  "shredded": {
+    "_not": "Yeni affix turu 2 (Ömer 2026-10-24, b_shred Armor shred): hasar veren skill isabeti verir. Yığın başına Armor eksiği = affix değeri (örnekte amount; birden çok kaynakta en büyüğü), en çok stackLimit yığın; her yeni yığın süreyi duration'a yeniler. Omen yığını DEĞİL (maxStacks yok: Doom / Ill Omen yok). Silinebilir debuff; Debuff resistance / Immunity / Ashen Crown normal işler. İkon YER TUTUCU: guardian (Sunder'ın çizimi).",
+    "name": "Shredded",
+    "type": "debuff",
+    "icon": "guardian",
+    "color": "#8a6a4c",
+    "stack": "replace",
+    "stackLimit": 3,
+    "duration": 2,
+    "armorLossFromAmount": true,
+    "text": "Armor lowered per stack (up to 3 stacks); each new stack refreshes the 2 turns"
   }
 }

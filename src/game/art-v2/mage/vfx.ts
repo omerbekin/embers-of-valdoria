@@ -1145,4 +1145,147 @@ const meteor: V2Vfx = async (c, k) => {
   await k.hitsAt(c, (t) => arrive.get(t.combatant.slot)?.p ?? Promise.resolve(), k.wait(c.scene, k.slow(90)));
 };
 
-export const VFX: Record<string, V2Vfx> = { fireball: fireBolt, blizzard, barrier, meteor };
+// =====================================================================================================================
+// ICE CRATER (Ömer 2026-10-29 Mage reworkü; sheet'ler Codex çizimi, docs/anim-review/notes/ice_crater.md)
+
+const SH_CRATER = 'mage/01-ice-crater';
+const SH_CRACK = 'mage/02-ice-crater-crack';
+/** Krater sheet'inin dayanağı (karede hedefin ayak noktası: 128, 214) ve zemin halkasının çapı (256'lık kare pikseli). */
+const CRATER_ORIGIN: [number, number] = [0.5, 214 / 256];
+const CRATER_RING = 200;
+const CRATER_FPS = 16;
+/** Vuruş karesi (0'dan): buz dikenleri en yüksek (s6). */
+const CRATER_HIT = 5;
+/** Kodla ara kare (16 -> 32 fps; süre aynı). */
+const CRATER_IB = { method: 'crossfade', sub: 2 };
+const ICE_GLOW = 0xbfeaff;
+
+/**
+ * Ice Crater: asanın kristali buz mavisi parlar, hedefin ayağı altında yatık buz mührü açılır; ardından kraterden buz dikenleri fışkırır
+ * (sheet: halka belirir, çöker, dikenler s6'da en yüksek, çatlayıp çöker, kırağı + sis kalır). Dikenler birimin ARKASINDA yükselir, halkanın
+ * ön kenarı ayağının önünde (kırpılmış ikinci kopya). Vuruşta kısa buz ışığı, yukarı saçılan kıymıklar, ince soğuk sis. İtme / çarpma motor
+ * olayıdır: birimin kayması `moved`, çarpma buz çatlağı `crash_ice_crater` (aşağıda). Promise vuruş anında çözülür.
+ */
+const iceCrater: V2Vfx = async (c, k) => {
+  await k.sheetsReady(c.scene, [SH_CRATER, SH_CRACK]);
+  c.actor.play('cast');
+  c.sfx('iceCrack');
+  const crystal = staffFlare(c, k, 260, 0x8fd8ff);
+  particles(c, k, k.DEPTH + 42, 700, Array.from({ length: 5 }, () => ({ x: crystal.x + k.rnd(-8, 8), y: crystal.y + k.rnd(-8, 8), vx: k.rnd(-30, 30), vy: k.rnd(-60, -24), g: -20, drag: 1, life: k.rnd(420, 700), age: 0, size: 2, kind: 'ice' as const, a: 0.8 })));
+  for (const t of c.targets) runeSigil(c, k, t.container.x, t.container.y - 2, t.w * 1.45, 0.3, { open: 200, hold: 220, tint: 0x8fd8ff, alpha: 0.55, depth: k.FLOOR_FX + 4 });
+  await k.wait(c.scene, k.slow(230));
+  c.actor.play('idle');
+  const hitMs = (CRATER_HIT / CRATER_FPS) * 1000;
+  const arrive = new Map<CombatantView, Promise<void>>();
+  for (const t of c.targets) {
+    const size = (256 * t.w * 1.8) / CRATER_RING;
+    const x = t.container.x;
+    const y = t.container.y;
+    const o = { size, origin: CRATER_ORIGIN, fps: CRATER_FPS, inbetween: CRATER_IB };
+    k.sheet(c.scene, SH_CRATER, x, y, { ...o, depth: t.container.depth - 1 });
+    // halkanın ön kenarı: aynı dizi, yalnız ayak çizgisinin altı (birimin önünde)
+    const front = k.sheet(c.scene, SH_CRATER, x, y, { ...o, depth: t.container.depth + 1 });
+    front?.setCrop(0, 206, front.frame.width, front.frame.height - 206);
+    arrive.set(
+      t,
+      k.wait(c.scene, k.slow(hitMs)).then(() => {
+        c.sfx('hailPatter');
+        k.shake(c.scene, 80, 0.003);
+        const core = glow(c, k, x, y - t.h * 0.3, t.w * 0.7, 0xffffff, 0.85, k.DEPTH + 46);
+        c.scene.tweens.add({ targets: core, displayWidth: t.w * 1.6, displayHeight: t.w * 1.6, alpha: 0, duration: k.slow(220), ease: 'Quad.easeOut', onComplete: () => core.destroy() });
+        const halo = glow(c, k, x, y - t.h * 0.25, t.w * 1.5, ICE_GLOW, 0.25, k.DEPTH + 20);
+        fade(c, k, halo, 80, 420);
+        particles(c, k, k.DEPTH + 44, 900, Array.from({ length: 10 }, () => {
+          const a = k.rnd(-Math.PI * 0.85, -Math.PI * 0.15);
+          const sp = k.rnd(160, 360);
+          return { x: x + k.rnd(-t.w * 0.4, t.w * 0.4), y: y - k.rnd(10, t.h * 0.5), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 900, drag: 1, life: k.rnd(380, 700), age: 0, size: Math.random() < 0.4 ? 4 : 3, kind: 'ice' as const, floor: y + k.rnd(-6, 8), a: 0.95 };
+        }));
+        smoke(c, k, x, y - 14, { n: 4, spread: t.w * 0.4, size: [60, 96], rise: [40, 90], life: [900, 1300], alpha: 0.28, tint: [0xd8eef8, 0xc0dcec], jitter: 12, delay: [120, 320], depth: t.container.depth + 2 });
+      }),
+    );
+  }
+  await k.hitsAt(c, (t) => arrive.get(t) ?? Promise.resolve(), k.wait(c.scene, k.slow(hitMs)));
+};
+
+/**
+ * Ice Crater ÇARPMASI (olay efekti `crash_ice_crater`): itilen birim dolu hücreye / tahta kenarına çarptı. Gövdenin itme yönündeki kenarında
+ * küçük buz çatlağı (sheet) + kısa beyaz-mavi parlama; dosta çarptıysa onun gövdesinde de küçük çatlak. Hasar rakamı ardından motor olayıyla gelir.
+ */
+const crashIceCrater: V2Vfx = async (c, k) => {
+  await k.sheetsReady(c.scene, [SH_CRACK]);
+  const e = c.event as { dir?: string; with?: string } | undefined;
+  const hitAt = (v: CombatantView, toward: number, dy: number, scale: number): void => {
+    const x = v.container.x + toward * v.w * 0.42;
+    const y = v.container.y - v.h * 0.45 + dy;
+    // s3-s4 çatlağı s5'ten belirgin küçük: atlanır, büyüme kodla (ölçek 0,7 -> 1)
+    const spr = k.sheet(c.scene, SH_CRACK, x, y, { size: 200 * scale, fps: 18, frames: [0, 1, 4, 5, 6, 7], depth: v.container.depth + 2 });
+    if (spr) {
+      const s0 = spr.scaleX;
+      spr.setScale(s0 * 0.7);
+      c.scene.tweens.add({ targets: spr, scaleX: s0, scaleY: s0, duration: k.slow(170), ease: 'Quad.easeOut' });
+    }
+    const g = glow(c, k, x, y, 40 * scale, 0xffffff, 0.9, k.DEPTH + 46);
+    c.scene.tweens.add({ targets: g, displayWidth: 130 * scale, displayHeight: 130 * scale, alpha: 0, duration: k.slow(200), ease: 'Quad.easeOut', onComplete: () => g.destroy() });
+  };
+  const t = c.targets[0];
+  if (!t) return;
+  // itme yönü: back = kendi tahtasının arkası (oyuncu tarafı solda, düşman sağda), forward tersi; şerit itmesi gövdenin alt / üst kenarı
+  const back = t.combatant.side === 'party' ? -1 : 1;
+  const dir = e?.dir ?? 'back';
+  const toward = dir === 'back' ? back : dir === 'forward' ? -back : 0;
+  const dy = dir === 'lanePrev' ? -t.h * 0.2 : dir === 'laneNext' ? t.h * 0.3 : 0;
+  c.sfx('iceCrack');
+  k.shake(c.scene, 70, 0.003);
+  hitAt(t, toward, dy, 1);
+  const other = e?.with ? c.viewOf?.(e.with) : undefined;
+  if (other) hitAt(other, -toward, -dy, 0.7);
+  await k.wait(c.scene, k.slow(120));
+};
+
+// =====================================================================================================================
+// HEAT MIRAGE (pasif olay efekti `passive_heat_mirage`)
+
+/**
+ * Heat Mirage tetiklendi (yakın dövüşte vuran düşmanın altında Burning Ground açılır; zeminin kendi görünümü var): Mage'in gövdesinde kısa
+ * ısı serabı. Sprite'ın iki sıcak, yarı saydam kopyası iki yana titreşip yükselerek söner (serap), ayağından ince sıcak hava dalgaları kalkar,
+ * göğsünde kısa turuncu ışık. ~0,55 sn; olay kuyruğunu yalnız ~0,15 sn bekletir.
+ */
+const heatMirage: V2Vfx = async (c, k) => {
+  const v = c.actor;
+  const spr = v.sprite;
+  const m = spr.getWorldTransformMatrix();
+  const ghosts = [-1, 1].map((side) =>
+    c.scene.add
+      .image(m.tx, m.ty, spr.texture.key, spr.frame.name)
+      .setOrigin(spr.originX, spr.originY)
+      .setScale(Math.abs(m.scaleX), Math.abs(m.scaleY))
+      .setFlipX(spr.flipX)
+      .setTint(side < 0 ? 0xffa860 : 0xffd090)
+      .setAlpha(0)
+      .setBlendMode(k.Phaser.BlendModes.ADD)
+      .setDepth(v.container.depth + 1),
+  );
+  void k.counter(c.scene, k.slow(560), (u) => {
+    const a = u < 0.2 ? u / 0.2 : (1 - u) / 0.8;
+    ghosts.forEach((g, i) => {
+      const side = i === 0 ? -1 : 1;
+      const wob = Math.sin(u * Math.PI * 7 + i * 1.7) * 3;
+      g.setPosition(k.snap(m.tx + side * (4 + 10 * u) + wob), k.snap(m.ty - 8 * u)).setAlpha(0.32 * a);
+    });
+    if (u >= 1) ghosts.forEach((g) => g.destroy());
+  });
+  const chest = glow(c, k, v.container.x, v.container.y - v.h * 0.5, v.w * 0.6, 0xff8a3a, 0, k.DEPTH + 30);
+  c.scene.tweens.add({ targets: chest, alpha: 0.45, displayWidth: v.w * 1.4, displayHeight: v.w * 1.4, duration: k.slow(160), ease: 'Quad.easeOut' });
+  fade(c, k, chest, 160, 380);
+  // sıcak hava dalgaları: ayaktan yükselen ince, soluk sıcak sis şeritleri
+  for (let i = 0; i < 4; i++) {
+    const x = v.container.x + (i - 1.5) * v.w * 0.22 + k.rnd(-6, 6);
+    const p = c.scene.add.image(x, v.container.y - 10, smokeTex(k, c.scene, i % 3)).setDisplaySize(26, 70).setTint(0xffb070).setAlpha(0).setBlendMode(k.Phaser.BlendModes.ADD).setDepth(v.container.depth + 1);
+    c.scene.tweens.add({ targets: p, alpha: 0.22, duration: k.slow(140), delay: k.slow(i * 40) });
+    c.scene.tweens.add({ targets: p, y: v.container.y - v.h * 0.7, displayHeight: 120, x: x + k.rnd(-8, 8), duration: k.slow(560), delay: k.slow(i * 40), ease: 'Sine.easeOut' });
+    fade(c, k, p, 260 + i * 40, 300);
+  }
+  await k.wait(c.scene, k.slow(150));
+};
+
+export const VFX: Record<string, V2Vfx> = { fireball: fireBolt, blizzard, barrier, meteor, ice_crater: iceCrater, crash_ice_crater: crashIceCrater, passive_heat_mirage: heatMirage };

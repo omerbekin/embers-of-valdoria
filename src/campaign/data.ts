@@ -7,9 +7,14 @@ import eventsJson from '../../data/campaign/events.json';
 import drownedReachJson from '../../data/campaign/drowned-reach.json';
 import drEncountersJson from '../../data/campaign/drowned-reach-encounters.json';
 import drEventsJson from '../../data/campaign/drowned-reach-events.json';
+// Harita 3 (The Hollow Crown; maps-2-3.md 4; iskelet, bayrakla kapalı): anahtarlar hc önekli
+import hollowCrownJson from '../../data/campaign/hollow-crown.json';
+import hcEncountersJson from '../../data/campaign/hollow-crown-encounters.json';
+import hcEventsJson from '../../data/campaign/hollow-crown-events.json';
 // Harita 2 yan içerik (A1 Wayshrines, B1 Salvage Dive; maps-2-3.md 9)
 import sideJson from '../../data/campaign/side-content.json';
-import type { CampaignConfig, CampaignMap, EncounterDef, Faction, UnitMods } from './types';
+import type { CampaignConfig, CampaignMap, EncounterDef, Faction, StoneOath, UnitMods } from './types';
+import type { StatusKind } from '../engine/types';
 import { RARITY_IDS, type RarityId } from '../progression/items';
 
 const strip = <T>(o: unknown): Record<string, T> =>
@@ -18,11 +23,12 @@ const strip = <T>(o: unknown): Record<string, T> =>
 export const MAPS: Record<string, CampaignMap> = {
   valdoria: valdoriaJson as unknown as CampaignMap,
   'drowned-reach': drownedReachJson as unknown as CampaignMap,
+  'hollow-crown': hollowCrownJson as unknown as CampaignMap,
 };
 
 export const CONFIG: CampaignConfig = campaignJson as unknown as CampaignConfig;
 
-export const ENCOUNTERS: Record<string, EncounterDef> = { ...strip<EncounterDef>(encountersJson), ...strip<EncounterDef>(drEncountersJson) };
+export const ENCOUNTERS: Record<string, EncounterDef> = { ...strip<EncounterDef>(encountersJson), ...strip<EncounterDef>(drEncountersJson), ...strip<EncounterDef>(hcEncountersJson) };
 
 export interface EventText {
   title: string;
@@ -64,6 +70,10 @@ export interface EventChoice {
   charter?: boolean;
   /** M-M: Lantern Rock feneri yakılır (bu haritada görüş eki, reach.lighthouse). */
   light?: boolean;
+  /** Harita 3 Hall of Oaths: Stone Oath seçimi (bir kez, geri alınmaz; CampaignState.stoneOath; src/campaign/hollow-crown.ts). */
+  stoneOath?: StoneOath;
+  /** Bir sonraki savaşın başında takıma konan durum (The White Dark "Wait it out": Chilled 2 tur; CampaignState.pendingStatus). */
+  nextBattleStatus?: { status: StatusKind; turns: number };
   /** Tek hediye item (var olan hediye yolu, loot.ts > grantGift): nadirlik + isteğe bağlı yuva süzgeci (ör. relic = offhand). */
   gift?: { rarity?: RarityId; slots?: string[] };
   /** Olay katılımı (Vesper, Sunken Chapel): bu sınıftan kahraman katılır; bölük doluysa yedeğe (kışla-yedek kuralı, state.ts > joinHero). Sınıf zaten varsa seçenek gizli. */
@@ -82,7 +92,7 @@ export interface EventDef extends EventText {
 }
 
 type EventsFile = { events: Record<string, EventDef>; stories?: Record<string, StoryDef>; treasures: Record<string, TreasureDef> };
-const EVENT_FILES = [eventsJson, drEventsJson] as unknown as EventsFile[];
+const EVENT_FILES = [eventsJson, drEventsJson, hcEventsJson] as unknown as EventsFile[];
 
 export const EVENTS: Record<string, EventDef> = Object.assign({}, ...EVENT_FILES.map((f) => f.events));
 /** Diyalog sahnesinde bir soru: NPC'nin repliği + 2-3 cevap; `likes` cevaplar NPC'nin hoşuna gider (gizli sayaç). */
@@ -143,6 +153,10 @@ export interface TreasureLoot {
 
 export interface TreasureDef extends EventText {
   loot?: TreasureLoot;
+  /** Harita 3 cüce mezarı (düğüm `oathSealed`; open-questions 454 a, A): Stone Oath yeminliyken sandık yerine gösterilen kısa anlatı. */
+  oathSealedText?: string;
+  /** Yemin reddedilmişken İLK yağmalanan cüce mezarında hazine metnine eklenen tek satır (yalnız metin, mekanik yok). */
+  oathPlunderText?: string;
 }
 
 export const TREASURES: Record<string, TreasureDef> = Object.assign({}, ...EVENT_FILES.map((f) => strip<TreasureDef>(f.treasures)));

@@ -220,7 +220,7 @@ describe('Rage: harcama (Headsman\x27s Blow)', () => {
     expect(b.canUse('party-0', 'headsmans_blow').ok).toBe(true);
   });
 
-  it('YZ yetmeyen Rage ile Headsman\x27s Blow seçmez; Rage dolu ve hedef yaralıyken seçer', () => {
+  it('YZ yetmeyen Rage ile Headsman\x27s Blow seçmez; Rage dolu ve hedef yaralıyken seçer (Charge yokken)', () => {
     const setup = () => {
       const b = mk({ 0: 'warrior', 1: 'paladin' }, { 0: 'defender', 1: 'archer' }, 'test', 400);
       b.debugClearCooldowns();
@@ -233,6 +233,9 @@ describe('Rage: harcama (Headsman\x27s Blow)', () => {
     const rich = setup();
     rich.get('party-0')!.rage = R.max;
     for (const c of rich.combatants) if (c.side === 'enemy') c.hp = Math.round(c.maxHp * 0.3);
+    // 2026-10-30: eksik can bonusu (executeBonus) kalktı; yaralı hedefte Charge (bitirici + Rage) Headsman'ı geçebiliyor, bu yüzden Charge dışarıda
+    const wr = rich.get('party-0')!;
+    wr.skills = wr.skills.filter((s) => s !== 'charge');
     expect(chooseAction(rich, 'party-0', classOnly)?.skillId).toBe('headsmans_blow');
   });
 

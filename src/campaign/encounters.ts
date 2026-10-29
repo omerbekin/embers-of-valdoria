@@ -16,6 +16,7 @@ import { applyQuestBonus } from './quests';
 import { activeHeroes, heroById, isFallen, nextStep, replayCount } from './state';
 import { boonMods, mergeMods, trialHeroIds, ultSkillOf } from './side-content';
 import type { UnitSetup } from '../engine/types';
+import { pendingStartStatuses } from './hollow-crown';
 import type { BattleOutcome, CampaignState, Difficulty, DifficultyEnemyMods, EncounterDef, EncounterUnit, UnitMods } from './types';
 
 /**
@@ -172,6 +173,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   const entrants = trialHeroIds(s, trial?.heroes, isFallen, trial?.requireClass);
   // Wayshrine nimetleri: takımın her kahramanına (seferin geri kalanı; harita geçişinde taşınır)
   const boons = caps.unitMods ? boonMods(s) : undefined;
+  // Harita 3 The White Dark "Wait it out" (open-questions 454 d): bekleyen savaş başı durumu (Chilled); uid = motorun party-i'si (heroOrder sırası)
+  const order = partyHeroOrder(s).filter((id) => entrants.has(id));
   s.active.forEach((id, cell) => {
     const h = id ? heroById(s, id) : undefined;
     if (!h || !entrants.has(h.id)) return;
@@ -195,6 +198,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     if (!h.alive || h.hpRatio <= 0) setup.startDead = 'revivable';
     else if (CONFIG.rules.carryHp && caps.startHp && h.hpRatio < 1) setup.startHpRatio = h.hpRatio;
     if (enc.def.partyUndying && caps.unitMods) setup.undying = true; // açılış savaşı kaybedilemez (tutorial)
+    const pend = caps.unitMods && !setup.startDead ? pendingStartStatuses(s, `party-${order.indexOf(h.id)}`) : undefined;
+    if (pend) setup.startStatuses = [...(setup.startStatuses ?? []), ...pend];
     if (Object.keys(setup).length) party[cell] = setup;
   });
   // Bölüm ölçeği (data/campaign/power-budget.json): açık ilerleme sistemi yokken 1 => düşmanlar bugünküyle aynı

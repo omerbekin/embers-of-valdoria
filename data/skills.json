@@ -337,7 +337,7 @@
     "id": "ice_crater",
     "name": "Ice Crater",
     "_not": "Ömer 2026-10-29 Mage reworkü: Mana Barrier'ın yerine Mage'in 3. skill'i. Tek düşman; hedefin altında buz krateri: buz büyü hasarı + Chilled, sonra hedef oyuncunun SEÇTİĞİ yönde (eylem dir: forward / back / lanePrev / laneNext; çapraz yok) 1 hücre itilir. Hücre doluysa / tahta dışıysa itme yok, çarpma: hedef ve hücredeki birim crashPower hasarı alır. Yer değiştirme bağışıkları itilmez ve çarpmaz. Zemin bırakmaz. İkon / vfx YER TUTUCU (blizzard). Sayılar PROVİZYON.",
-    "icon": "blizzard",
+    "icon": "icecrater",
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
@@ -589,7 +589,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.903,
+        "power": 0.88,
         "element": "nature"
       },
       {
@@ -687,7 +687,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.662,
+        "power": 0.64,
         "element": "nature"
       }
     ],
@@ -775,13 +775,18 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.775,
+        "power": 0.7,
         "element": "arcane"
       },
       {
         "type": "manaBurn",
         "amount": 10,
         "gainRatio": 0.5
+      },
+      {
+        "type": "status",
+        "status": "ley_thread",
+        "turns": 2
       }
     ],
     "vfx": "manasteal",
@@ -791,7 +796,7 @@
     ]
   },
   "drain_field": {
-    "_not": "Ley Brand (Ömer 2026-10-27, open-questions 444; eski Drain Field'ın yerine, id kayıt / ağaç / YZ uyumu için AYNI kaldı). 3x3 alandaki her düşmana Branded (turns). MP havuzu olmayan düşman maks canının taintPct'i kadar DOLU tainted mana alır (harcayamaz; Brand bitince silinir); MP'si olan düşmanın MP bedelleri costMult katı (yukarı yuvarlanır). Branded düşmanın yakılan/çalınan her MP'si yakana burnDamagePct x MP büyü hasarı (isabet/kritik yok, büyü zırhı işler); süre doğal bitince kalan tainted mana explodePct x kalan büyü hasarıyla patlar. Silence artık skill'de değil, ağaçta (Hush of the Brand). Ömer 2026-10-29 (open-questions 444): castBurnPct = Branded birim MP bedelli skill kullanınca ödediği (costMult'lu) bedelin bu oranı kadar EK MP yanar (yetmezse olanı), yanan MP yakım sayılır (burnDamagePct hasar, damgalayan AM'den); markDamagePct = markSkills (Mana Steal, Void Strike) Branded hedefe bu oranda fazla (çarpımsal, 'X% more') hasar. Sayılar PROVİZYON.",
+    "_not": "Ley Brand (Ömer 2026-10-27, open-questions 444; eski Drain Field'ın yerine, id kayıt / ağaç / YZ uyumu için AYNI kaldı). 3x3 alandaki her düşmana Branded (turns). MP havuzu olmayan düşman maks canının taintPct'i kadar DOLU tainted mana alır (harcayamaz; Brand bitince silinir); MP'si olan düşmanın MP bedelleri costMult katı (yukarı yuvarlanır). Branded düşmanın yakılan/çalınan her MP'si yakana burnDamagePct x MP büyü hasarı (isabet/kritik yok, büyü zırhı işler); süre doğal bitince kalan tainted mana explodePct x kalan büyü hasarıyla patlar. Silence artık skill'de değil, ağaçta (Hush of the Brand). Ömer 2026-10-29 (open-questions 444): castBurnPct = Branded birim MP bedelli skill kullanınca ödediği (costMult'lu) bedelin bu oranı kadar EK MP yanar (yetmezse olanı), yanan MP yakım sayılır (burnDamagePct hasar, damgalayan AM'den); markDamagePct = markSkills (Mana Steal, Void Strike) Branded hedefe bu oranda fazla (çarpımsal, 'X% more') hasar. Sayılar PROVİZYON. Ley Thread (Ömer 2026-10-29): Mana Steal isabet ettiği hedefe 2 tur ley_thread bırakır; Brand iplikli hedefte threadTurns tur daha uzun sürer ve castBurnPct x threadBurnMult olur, iplik o anda tüketilir (sayılar PROVİZYON).",
     "id": "drain_field",
     "name": "Ley Brand",
     "icon": "drainfield",
@@ -816,14 +821,16 @@
         "turns": 3,
         "taintPct": 0.2,
         "costMult": 1.5,
-        "burnDamagePct": 0.5,
-        "explodePct": 0.5,
+        "burnDamagePct": 0.49,
+        "explodePct": 0.49,
         "castBurnPct": 0.75,
         "markDamagePct": 0.4,
         "markSkills": [
           "mana_burn",
           "void_strike"
         ],
+        "threadTurns": 2,
+        "threadBurnMult": 2,
         "element": "arcane"
       }
     ],
@@ -853,7 +860,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 1.339,
+        "power": 0.95,
         "bonusPerMissingMana": 1,
         "element": "arcane"
       }
@@ -1110,8 +1117,7 @@
         "damageType": "physical",
         "scale": "str",
         "power": 0.5,
-        "powerPerRage": 0.02,
-        "executeBonus": 0.6
+        "powerPerRage": 0.025
       }
     ],
     "vfx": "headsman",
@@ -1284,7 +1290,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "luck",
-        "power": 0.721,
+        "power": 0.7,
         "repeatChance": 0.25
       }
     ],
@@ -3260,6 +3266,11 @@
         "type": "manaBurn",
         "amount": 10,
         "gainRatio": 0.5
+      },
+      {
+        "type": "status",
+        "status": "ley_thread",
+        "turns": 2
       }
     ],
     "vfx": "manasteal",
@@ -3296,14 +3307,16 @@
         "turns": 3,
         "taintPct": 0.2,
         "costMult": 1.5,
-        "burnDamagePct": 0.5,
-        "explodePct": 0.5,
+        "burnDamagePct": 0.49,
+        "explodePct": 0.49,
         "castBurnPct": 0.75,
         "markDamagePct": 0.4,
         "markSkills": [
           "mana_burn",
           "void_strike"
         ],
+        "threadTurns": 2,
+        "threadBurnMult": 2,
         "element": "arcane"
       }
     ],

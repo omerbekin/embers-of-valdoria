@@ -10,7 +10,9 @@ const ARENAS = ['proving-grounds-sunny-afternoon', 'proving-grounds-sunset', 'pr
 /** Uzun 1536x1024 görseller (2026-10-13 v3: bölgeler + kings-bridge + castle-hall + arenalar). */
 /** Harita 2 (Drowned Reach) savaş arka planları (2026-10-27). */
 const DROWNED = ['river-gorge', 'saltmarsh', 'saltmere-docks', 'wreck-cliffs', 'siren-rocks', 'storm-deck', 'sunken-court'];
-const TALL = [...ZONES, 'kings-bridge', 'castle-hall', ...ARENAS, ...DROWNED];
+/** Harita 3 (Hollow Crown) savaş arka planları (2026-10-29). */
+const HOLLOW = ['snowline', 'glacier', 'kharduin', 'deep-halls', 'warrens', 'forge-heart'];
+const TALL = [...ZONES, 'kings-bridge', 'castle-hall', ...ARENAS, ...DROWNED, ...HOLLOW];
 
 const has = (id: string) => ['webp', 'png', 'jpg'].some((e) => existsSync(`assets/backgrounds/${id}.${e}`));
 

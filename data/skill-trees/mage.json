@@ -1,6 +1,6 @@
 {
   "class": "mage",
-  "version": 2,
+  "version": 4,
   "picked": {
     "rows": [
       "b",
@@ -45,21 +45,20 @@
     "bar": [
       {
         "at": 5,
-        "name": "First Refrain",
-        "text": "Your first cooldown spell each battle is sure to echo.",
+        "name": "Opening Spark",
+        "text": "Your first spell each battle costs no MP.",
         "src": "B:V3:bar0",
-        "inactive": true,
-        "_not": "Ömer 2026-10-29 Mage reworkü: Spell Echo Mage kitinden çıktı; bu Mastery bonusu pasif (motor yok sayar). Ömer karar verecek.",
+        "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
         "fx": [
           {
             "k": "hook",
-            "h": "cond",
-            "when": {
-              "firstCooldownSkill": true
-            },
-            "mod": {
-              "echoSet": 1
-            }
+            "h": "trigger",
+            "on": "battleStart",
+            "do": [
+              {
+                "free": true
+              }
+            ]
           }
         ]
       },
@@ -146,273 +145,256 @@
   },
   "nodes": {
     "0.f1": {
-      "name": "Resonance",
-      "text": "Spell Echo chance +3% per rank.",
+      "name": "Heat Haze",
+      "text": "Burning enemies deal 3% less damage to you per rank.",
       "src": "B:V3:0.f1",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "passive",
-          "f": "chance",
-          "op": "add",
-          "v": 0.03,
+          "k": "hook",
+          "h": "heal",
+          "on": "damageTaken",
+          "who": "self",
+          "when": {
+            "incomingStatus": "burning"
+          },
+          "mul": -0.03,
           "rank": true
         }
       ]
     },
     "0.f2": {
-      "name": "Killing Echo",
-      "text": "Spell Echo +4% chance per rank when the spell kills.",
+      "name": "Searing Mirage",
+      "text": "Heat Mirage's Burning Ground deals 6% more damage per rank.",
       "src": "B:V5:0.f2",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "cond",
-          "when": {
-            "killedThisCast": true
-          },
-          "mod": {
-            "echoChance": 0.04
-          },
+          "k": "passive",
+          "f": "power",
+          "op": "pct",
+          "v": 0.06,
           "rank": true
         }
       ]
     },
     "0.f3": {
-      "name": "Rapid Recall",
-      "text": "After Spell Echo triggers, your next turn comes 4% sooner per rank.",
+      "name": "Rime Touch",
+      "text": "Enemies that hit you in melee have a 6% chance per rank to be Chilled for 1 turn.",
       "src": "B:V3:0.f3",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echo",
-          "rank": true,
+          "on": "hitTaken",
+          "when": {
+            "incomingRanged": false
+          },
+          "procChance": 0.06,
+          "rank": "chance",
           "do": [
             {
-              "sooner": 0.04
+              "status": "chilled",
+              "turns": 1,
+              "to": "target"
             }
           ]
         }
       ]
     },
     "0.n0": {
-      "name": "Overload",
-      "text": "The spell you recast after a Spell Echo is a sure critical.",
+      "name": "Lingering Mirage",
+      "text": "Heat Mirage's Burning Ground lasts 2 turns instead of 1.",
       "src": "B:V5:0.n0",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "trigger",
-          "on": "echo",
-          "do": [
-            {
-              "buff": {
-                "guaranteedCrit": true
-              },
-              "skill": "event"
-            }
-          ]
+          "k": "passive",
+          "f": "turns",
+          "op": "set",
+          "v": 2
         }
       ]
     },
     "0.r": {
-      "name": "Overtone",
-      "text": "Spell Echo +1% chance per rank for each enemy the spell hits beyond the first.",
+      "name": "Cold Comfort",
+      "text": "Chilled enemies deal 3% less damage to you per rank.",
       "src": "B:V3:0.r",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
-          "h": "cond",
-          "scale": {
-            "hitCount": 1
+          "h": "heal",
+          "on": "damageTaken",
+          "who": "self",
+          "when": {
+            "incomingStatus": "chilled"
           },
-          "mod": {
-            "echoChance": 0.01
-          },
+          "mul": -0.03,
           "rank": true
         }
       ]
     },
     "0.ea": {
-      "name": "Echo Chamber",
-      "text": "Each echo in a battle adds +2% to your Spell Echo chance for the rest of that battle.",
+      "name": "Backdraft",
+      "text": "When an enemy hits you in melee, it takes 20% INT fire damage (once per round).",
       "src": "B:V3:0.ea",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echo",
+          "on": "hitTaken",
+          "when": {
+            "incomingRanged": false
+          },
+          "once": "perTurn",
           "do": [
             {
-              "buff": {
-                "echoChance": 0.02
-              },
-              "uses": 0,
-              "stack": true
+              "damage": 0.2,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "fire",
+              "to": "target"
             }
           ]
         }
       ]
     },
     "0.eb": {
-      "name": "Sympathy",
-      "text": "When Spell Echo triggers, your other cooldown spells drop by 1.",
+      "name": "Rime Skin",
+      "text": "When an enemy hits you in melee, it is Chilled for 1 turn (once per round).",
       "src": "B:V3:0.eb",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echo",
+          "on": "hitTaken",
+          "when": {
+            "incomingRanged": false
+          },
+          "once": "perTurn",
           "do": [
             {
-              "cooldown": -1,
-              "cd": "others"
+              "status": "chilled",
+              "turns": 1,
+              "to": "target"
             }
           ]
         }
       ]
     },
     "0.ma": {
-      "name": "Endless Refrain",
-      "text": "A spell recast after an echo has double Spell Echo chance.",
+      "name": "Stoked Flames",
+      "text": "Your skills deal 10% more damage to Burning enemies.",
       "src": "B:V3:0.ma",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
-          "h": "trigger",
-          "on": "echo",
-          "do": [
-            {
-              "buff": {
-                "echoMul": 1
-              },
-              "skill": "event",
-              "uses": 1
-            }
-          ]
+          "h": "cond",
+          "when": {
+            "targetStatus": "burning"
+          },
+          "mod": {
+            "powerMul": 0.1
+          }
         }
       ]
     },
     "0.fa": {
-      "name": "Unstable Weave",
-      "text": "Recast spells deal 30% more damage, but a cooldown spell that fails to echo gets +1 turn of cooldown.",
+      "name": "Pyre Heart",
+      "text": "Heat Mirage's Burning Ground deals 40% more damage, but Frost Skin no longer reduces Ice damage.",
       "src": "B:V3:0.fa",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "trigger",
-          "on": "echo",
-          "do": [
-            {
-              "buff": {
-                "powerMul": 0.3
-              },
-              "skill": "event"
-            }
-          ]
+          "k": "passive",
+          "f": "power",
+          "op": "pct",
+          "v": 0.4
         },
         {
-          "k": "hook",
-          "h": "trigger",
-          "on": "echoFail",
-          "do": [
-            {
-              "cooldown": 1,
-              "cd": "event"
-            }
-          ]
+          "k": "passive",
+          "f": "elemResist.ice",
+          "op": "set",
+          "v": 0
         }
       ]
     },
     "0.fb": {
-      "name": "Frayed Threads",
-      "text": "Sympathy cuts 2 turns instead of 1, but Spell Echo chance drops 25% → 18%.",
+      "name": "Hoarfrost",
+      "text": "Frost Skin reduces Fire and Ice damage by 25% instead of 10%, but Heat Mirage's Burning Ground deals 50% less damage.",
       "src": "B:V3:0.fb",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "trigger",
-          "drop": "0.eb",
-          "on": "echo",
-          "do": [
-            {
-              "cooldown": -2,
-              "cd": "others"
-            }
-          ]
+          "k": "passive",
+          "f": "elemResist.fire",
+          "op": "base",
+          "v": 0.25
         },
         {
           "k": "passive",
-          "f": "chance",
+          "f": "elemResist.ice",
           "op": "base",
-          "v": 0.18
+          "v": 0.25
+        },
+        {
+          "k": "passive",
+          "f": "power",
+          "op": "pct",
+          "v": -0.5
         }
       ]
     },
     "0.mb": {
-      "name": "Time Fold",
-      "text": "When Spell Echo triggers, that spell's recast costs only half a turn.",
+      "name": "Brittle Cold",
+      "text": "Your skills deal 10% more damage to Chilled enemies.",
       "src": "B:V3:0.mb",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
-          "h": "trigger",
-          "on": "echo",
-          "do": [
-            {
-              "buff": {
-                "turnCost": 0.5
-              },
-              "skill": "event",
-              "uses": 1
-            }
-          ]
+          "h": "cond",
+          "when": {
+            "targetStatus": "chilled"
+          },
+          "mod": {
+            "powerMul": 0.1
+          }
         }
       ]
     },
     "0.v": {
-      "name": "Arcane Overload",
-      "text": "Spell Echo evolves: an echo resets all your cooldowns, not just the spell's, and the recast deals 15% more damage.",
+      "name": "Mirage Veil",
+      "text": "Heat Mirage evolves: Burning Ground also appears under the enemies beside the attacker, and the attacker is Chilled for 1 turn.",
       "src": "B:V5:0.v",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echo",
+          "on": "hitTaken",
+          "when": {
+            "incomingRanged": false
+          },
+          "once": "perTurn",
           "do": [
             {
-              "cooldown": "reset",
-              "cd": "all"
+              "ground": "burning",
+              "stat": "int",
+              "power": 0.361,
+              "turns": 1,
+              "wide": "beside",
+              "to": "target"
             },
             {
-              "buff": {
-                "powerMul": 0.15
-              },
-              "skill": "event"
+              "status": "chilled",
+              "turns": 1,
+              "to": "target"
             }
           ]
         }
@@ -694,21 +676,25 @@
     },
     "2.f2": {
       "name": "Numbing Cold",
-      "text": "Blizzard deals 6% more damage per rank against Slowed enemies.",
+      "text": "Blizzard deals 6% more damage per rank against Slowed or Chilled enemies.",
       "src": "A:V2:2.f2",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "when": {
-            "targetStatus": "slow"
+            "targetStatus": [
+              "slow",
+              "chilled"
+            ]
           },
           "mod": {
             "powerMul": 0.06
           },
           "rank": true
         }
-      ]
+      ],
+      "_not": "content-designer 2026-10-29: Chill Ground artık Slow değil Chilled veriyor; koşul Slowed ya da Chilled (open-questions 457)."
     },
     "2.f3": {
       "name": "Driving Snow",
@@ -792,14 +778,17 @@
     },
     "2.ea": {
       "name": "Flash Freeze",
-      "text": "Each enemy already Slowed when Blizzard hits has a 35% chance to be Stunned for 1 turn.",
+      "text": "Each enemy already Slowed or Chilled when Blizzard hits has a 35% chance to be Stunned for 1 turn.",
       "src": "A:V2:2.ea",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "when": {
-            "targetStatus": "slow"
+            "targetStatus": [
+              "slow",
+              "chilled"
+            ]
           },
           "mod": {
             "addStatus": {
@@ -809,7 +798,8 @@
             }
           }
         }
-      ]
+      ],
+      "_not": "content-designer 2026-10-29: Chill Ground artık Slow değil Chilled veriyor; koşul Slowed ya da Chilled (open-questions 457)."
     },
     "2.eb": {
       "name": "Whiteout",
@@ -860,7 +850,10 @@
           "k": "hook",
           "h": "cond",
           "when": {
-            "targetStatus": "slow"
+            "targetStatus": [
+              "slow",
+              "chilled"
+            ]
           },
           "mod": {
             "addStatus": {
@@ -876,7 +869,8 @@
           "op": "pct",
           "v": -0.4
         }
-      ]
+      ],
+      "_not": "content-designer 2026-10-29: Chill Ground artık Slow değil Chilled veriyor; koşul Slowed ya da Chilled (open-questions 457)."
     },
     "2.fb": {
       "name": "Howling Squall",
@@ -941,166 +935,168 @@
       ]
     },
     "3.f1": {
-      "name": "Rimeguard",
-      "text": "Mana Barrier's shield is 6% larger per rank when cast on an ally in the front row.",
+      "name": "Deep Crater",
+      "text": "Ice Crater deals 4% more damage per rank.",
       "src": "A:V2:3.f1",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "heal",
-          "on": "shieldDealt",
-          "when": {
-            "targetRow": "front"
-          },
-          "mul": 0.06,
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.04,
           "rank": true
         }
       ]
     },
     "3.f2": {
-      "name": "Cauterize",
-      "text": "Each debuff Mana Barrier dispels heals the ally for 4% of max HP per rank.",
+      "name": "Hard Landing",
+      "text": "Ice Crater's crash deals 10% more damage per rank.",
       "src": "A:V1:3.f2",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "trigger",
-          "on": "dispel",
-          "rank": true,
-          "do": [
-            {
-              "heal": 0.04,
-              "to": "target"
-            }
-          ]
+          "k": "skill",
+          "sel": "push",
+          "f": "crashPower",
+          "op": "pct",
+          "v": 0.1,
+          "rank": true
         }
       ]
     },
     "3.f3": {
-      "name": "Numbing Touch",
-      "text": "While Mana Barrier holds, Slowed attackers deal 6% less damage per rank to the holder.",
+      "name": "Bitter Frost",
+      "text": "Ice Crater deals 5% more damage per rank to enemies already Chilled.",
       "src": "A:V2:3.f3",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "hook",
-          "h": "heal",
-          "on": "damageTaken",
-          "who": "team",
-          "shield": "mana_barrier",
+          "h": "cond",
           "when": {
-            "incomingStatus": "slow"
+            "targetStatus": "chilled"
           },
-          "mul": -0.06,
+          "mod": {
+            "powerMul": 0.05
+          },
           "rank": true
         }
       ]
     },
     "3.n0": {
-      "name": "Ice Mirror",
-      "text": "The first hit Mana Barrier absorbs Slows the attacker for 2 turns.",
+      "name": "Frozen Crater",
+      "text": "Ice Crater leaves Chill Ground for 2 turns where its target ends up.",
       "src": "A:V2:3.n0",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
-      "fx": [
-        {
-          "k": "hook",
-          "h": "trigger",
-          "on": "shieldAbsorb",
-          "once": "perShield",
-          "do": [
-            {
-              "status": "slow",
-              "turns": 2,
-              "to": "target"
-            }
-          ]
-        }
-      ]
-    },
-    "3.r": {
-      "name": "Frozen Reserve",
-      "text": "Mana Barrier gives +1 MP per rank for each hit it absorbs from a Slowed enemy.",
-      "src": "A:V2:3.r",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
-      "fx": [
-        {
-          "k": "hook",
-          "h": "trigger",
-          "on": "shieldAbsorb",
-          "when": {
-            "targetStatus": "slow"
-          },
-          "rank": true,
-          "do": [
-            {
-              "mp": 1
-            }
-          ]
-        }
-      ]
-    },
-    "3.ea": {
-      "name": "Frost Armor",
-      "text": "Every hit Mana Barrier absorbs Slows the attacker for 1 turn.",
-      "src": "A:V2:3.ea",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
-      "fx": [
-        {
-          "k": "hook",
-          "h": "trigger",
-          "on": "shieldAbsorb",
-          "do": [
-            {
-              "status": "slow",
-              "turns": 1,
-              "to": "target"
-            }
-          ]
-        }
-      ]
-    },
-    "3.eb": {
-      "name": "Ice Block",
-      "text": "Mana Barrier also makes the holder Fortified for 1 turn.",
-      "src": "A:V2:3.eb",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
           "k": "addEffect",
           "effect": {
-            "type": "status",
-            "status": "fortify",
-            "turns": 1
+            "type": "ground",
+            "ground": "storm",
+            "turns": 2,
+            "scale": "int",
+            "power": 0
           }
         }
       ]
     },
+    "3.r": {
+      "name": "Long Chill",
+      "text": "Ice Crater's Chill has a 15% chance per rank to last 1 turn longer.",
+      "src": "A:V2:3.r",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:chilled",
+          "procChance": 0.15,
+          "mod": {
+            "turns": 1
+          },
+          "rank": "chance"
+        }
+      ]
+    },
+    "3.ea": {
+      "name": "Frostbitten Mark",
+      "text": "Ice Crater deals 25% more damage to enemies standing on Chill Ground or Ice.",
+      "src": "A:V2:3.ea",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "any": [
+              {
+                "targetOnGround": "storm"
+              },
+              {
+                "targetOnGround": "ice_ground"
+              }
+            ]
+          },
+          "mod": {
+            "powerMul": 0.25
+          }
+        }
+      ]
+    },
+    "3.eb": {
+      "name": "Deep Freeze",
+      "text": "Ice Crater Chills for 3 turns instead of 2, and its Chill Ground lasts 1 turn longer.",
+      "src": "A:V2:3.eb",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "status:chilled",
+          "f": "turns",
+          "op": "set",
+          "v": 3
+        },
+        {
+          "k": "skill",
+          "sel": "ground:storm",
+          "f": "turns",
+          "op": "add",
+          "v": 1,
+          "needs": "3.n0"
+        }
+      ]
+    },
     "3.ma": {
-      "name": "Frozen Rebuke",
-      "text": "A Slowed enemy that hits Mana Barrier is Stunned for 1 turn (once per barrier).",
+      "name": "Glacial Spike",
+      "text": "Ice Crater is a sure critical hit against Chilled enemies.",
       "src": "A:V2:3.ma",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "chilled"
+          },
+          "mod": {
+            "guaranteedCrit": true
+          }
+        }
+      ]
+    },
+    "3.fa": {
+      "name": "Battering Frost",
+      "text": "Ice Crater's crash Stuns its target for 1 turn, but Ice Crater costs 10 → 16 MP.",
+      "src": "A:V2:3.fa",
+      "_not": "engine-dev 2026-10-29 (Ömer formu, open-questions 457): yeni tetik olayı; sayılar PROVİZYON. Eski hâli (çarpma x2) Hard Landing (3.f2) ile çakışıyordu; çarpma x2 kalktı, yerine çarpma tetiği: itilemeyen hedef 1 tur Stun (çarpılan birim değil).",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "shieldAbsorb",
-          "once": "perShield",
-          "when": {
-            "before": {
-              "targetStatus": "slow"
-            }
-          },
+          "on": "crash",
           "do": [
             {
               "status": "stun",
@@ -1108,103 +1104,81 @@
               "to": "target"
             }
           ]
-        }
-      ]
-    },
-    "3.fa": {
-      "name": "Brittle Shell",
-      "text": "Frost Armor Slows for 2 turns, but Mana Barrier's shield is 35% lower.",
-      "src": "A:V2:3.fa",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
-      "fx": [
-        {
-          "k": "hook",
-          "h": "trigger",
-          "drop": "3.ea",
-          "on": "shieldAbsorb",
-          "do": [
-            {
-              "status": "slow",
-              "turns": 2,
-              "to": "target"
-            }
-          ]
         },
         {
           "k": "skill",
-          "sel": "shield",
-          "f": "power",
-          "op": "pct",
-          "v": -0.35
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "set",
+          "v": 16
         }
       ]
     },
     "3.fb": {
-      "name": "Frozen Solid",
-      "text": "Ice Block lasts 2 turns, but the holder is Slowed while it lasts.",
+      "name": "Permafrost",
+      "text": "Ice Crater's Chill Ground lasts 4 turns, but Ice Crater's cooldown is 3 → 5.",
       "src": "A:V2:3.fb",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "cond",
-          "sel": "status:fortify",
-          "mod": {
-            "turns": 1
-          }
+          "k": "skill",
+          "sel": "ground:storm",
+          "f": "turns",
+          "op": "set",
+          "v": 4,
+          "needs": "3.n0"
         },
         {
-          "k": "addEffect",
-          "effect": {
-            "type": "status",
-            "status": "slow",
-            "turns": 2
-          }
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 5
         }
       ]
     },
     "3.mb": {
-      "name": "Twin Ward",
-      "text": "Mana Barrier also shields the ally with the lowest HP for 35% of its value.",
+      "name": "Black Frost",
+      "text": "Enemies on Ice Crater's Chill Ground take 15% INT ice damage at the start of their turns.",
       "src": "A:V3:3.ma",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
         {
-          "k": "hook",
-          "h": "trigger",
-          "on": "skillUse",
-          "do": [
-            {
-              "cast": "event",
-              "power": 0.35,
-              "to": "lowestHpAlly",
-              "noChain": true
-            }
-          ]
+          "k": "skill",
+          "sel": "ground:storm",
+          "f": "power",
+          "op": "add",
+          "v": 0.15,
+          "needs": "3.n0"
         }
       ]
     },
     "3.v": {
-      "name": "Shatter Aegis",
-      "text": "Mana Barrier evolves: when it breaks, it fires a free Fire Bolt at the attacker that is a sure critical.",
+      "name": "Glacier Crater",
+      "text": "Ice Crater evolves into Glacier Crater: it deals 30% more damage, and the enemies beside its target take half its damage and are Chilled for 2 turns.",
       "src": "A:V5:3.v",
-      "inactive": true,
-      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
-      "syn": "Fire Bolt",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.3
+        },
         {
           "k": "hook",
           "h": "trigger",
-          "on": "shieldBreak",
-          "skill": "mana_barrier",
+          "on": "hit",
           "do": [
             {
-              "cast": "fire_bolt",
-              "to": "target",
-              "crit": true
+              "strike": 0.5,
+              "to": "beside"
+            },
+            {
+              "status": "chilled",
+              "turns": 2,
+              "to": "beside"
             }
           ]
         }

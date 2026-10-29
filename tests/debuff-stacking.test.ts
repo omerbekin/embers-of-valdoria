@@ -37,6 +37,7 @@ describe('statuses.json > stack (veri)', () => {
       const mode = statusStackMode(d);
       if (id === 'omen') expect(mode, id).toBe('stack');
       else if (id === 'ash_brand' || id === 'branded') expect(mode, id).toBe('replace'); // Ley Brand: son damgalayanın değerleri, süre tazelenir
+      else if (id === 'shredded') expect(mode, id).toBe('replace'); // Zırh yırtan (b_shred): yığını motor sayar (stackLimit), her yeni yığın süreyi tazeler
       else expect(mode, id).toBe(d.type === 'debuff' ? 'refresh-strongest' : 'replace');
       expect(mode === 'stack', `${id}: stack <=> maxStacks`).toBe(!!d.maxStacks);
     }

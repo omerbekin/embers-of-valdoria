@@ -1,0 +1,14 @@
+{
+ "frames": 4,
+ "fps": 2,
+ "frame_size": [
+  768,
+  512
+ ],
+ "grid": [
+  2,
+  2
+ ],
+ "order": "row-major",
+ "padding_px": 0
+}

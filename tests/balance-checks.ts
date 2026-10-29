@@ -18,7 +18,8 @@ import { balance, simulate, skillCategory, skillShare, ultReadyRate, winRate } f
 // 2026-10-18 genel denge turu (open-questions 350): Warrior 2 x 10.000'de %50,5-51,4 -> çıkarıldı; Paladin %46 civarında, Holy Strike 0,482 -> 0,51 sonrası ölçülecek.
 // 2026-10-28 silah tipleri + Fire Bolt 1,07->1,02, Blizzard 0,81->0,77, asa +%8->+%5 sonrası Mage %57,3-57,7 (bant 56): Mage pasif/kit reworkü (Overflow seçildi) ve element reworkü sonrası sim'e kadar muaf.
 // 2026-10-28: vesper = yeni class (Ömer onayı), değerler PROVİZYON (Mage'den türetildi); sim Ömer onayıyla sonra (docs/design/classes/vesper.md).
-export const PENDING_BALANCE: readonly string[] = ['paladin', 'mage', 'vesper'];
+// 2026-10-30: AM reworkü (Instinct + Ley Thread) ve Void Strike / Mana Steal / Ley Brand kısmaları sonrası 2 x 1000'de %54,1-54,4, 5000'de %56,2-56,3 (sınırda): Ömer kararı bekliyor.
+export const PENDING_BALANCE: readonly string[] = ['paladin', 'mage', 'vesper', 'antimage'];
 
 /**
  * BANDI BEKLEYEN SKILL'LER (kullanım payı / ultimate oranı): Ömer onayı bekleyen yeniden tasarım önerisi olanlar; ölçülür, uyarı yazılır.
@@ -37,6 +38,12 @@ export const PENDING_SKILLS: Readonly<Record<string, string>> = {
   toll: 'Vesper PROVİZYON değerler (2026-10-29), sim bekliyor',
   // 2026-10-29: Vesper havuza girince Resurrection payı %7,98 (bant %8, gürültü sınırı); Paladin zaten dengesi bekleyenlerde.
   resurrection: 'Vesper sonrası pay %7,98 (2026-10-29), Paladin turunda bakılacak',
+  // 2026-10-30: YZ kapsam turu (open-questions 458) sonrası Dark Bond payı %7,8-8,0 (bant %8, gürültü sınırı).
+  dark_bond: 'YZ kapsam turu sonrası pay %7,8-8,0 (2026-10-30), Undead turunda bakılacak',
+  // 2026-10-30: YZ kapsam turu sonrası Taunt'un kırılma eşiği değerlendi: Taunt %14-15 (bant %15), Tremor Slam %46-47 ve Quick Shot %46 (bant %45).
+  taunt: 'YZ kapsam turu sonrası pay %14-15 (2026-10-30), Defender turunda bakılacak',
+  tremor_slam: 'Taunt payı düşünce %46-47 (2026-10-30), Defender turunda bakılacak',
+  quick_shot: 'YZ kapsam turu sonrası pay %46 (2026-10-30), Archer turunda bakılacak (Piercing Arrow ile birlikte)',
 };
 
 export function balanceSuite(label: string, firstSeed: number): void {

@@ -311,7 +311,8 @@ async function push(trigger, args) {
         trigger = sid;
       }
       return Object.entries(q.sessions)
-        .filter(([sid, e]) => e.ready && (trigger === 'eod' || sid === trigger || e.mode === 'eşlik'))
+        // Hazır işaretlenmiş başka kritik sohbet de beraber gider (2026-10-30: 839e43ba hazır ama dışarıda kalıp dosyaları yarım gidiyordu)
+        .filter(([sid, e]) => e.ready && (trigger === 'eod' || sid === trigger || e.mode === 'eşlik' || e.mode === 'kritik'))
         .map(([sid, e]) => ({ sid, ...e }));
     });
     const q = readQueue();
@@ -401,7 +402,10 @@ async function shipClean(version, groups, files, dry) {
   let pushed = false;
   try {
     git('read-tree HEAD', env);
-    git(`add -A -- ${all.map(q_).join(' ')}`, env);
+    // Çok dosyada Windows komut satırı sınırı (~32k) aşılıyordu (2026-10-30, 384 dosya): yollar dosyadan okunur
+    const specFile = join(GAME, '.git', 'push-queue.pathspec');
+    writeFileSync(specFile, all.join('\n') + '\n');
+    git(`add -A --pathspec-from-file=${q_(specFile)}`, env);
     const tree = git('write-tree', env);
     const summary = version ? `${version}: ${Object.values(groups).flat()[0]}` : `Internal: docs/tools update (${files.length} files)`;
     writeFileSync(join(GAME, '.git', 'RELEASE_MSG'), `${summary}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n`);

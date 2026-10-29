@@ -18,6 +18,7 @@
  *   'ground' (cells, self, ally, zemine inen melee/mermi): içeriğin ALT BANDININ merkezi (zemin diski) hücre zeminine / ayağa (k.feet) oturur;
  *   center + 'hit' (Glyph of Breaking): sheet pivotundan (kare ortası), `squashY` ve -40 ayarıyla zemine yatar.
  * DERİNLİK: efekt TÜM birimlerin üstünde çizilir (k.DEPTH); yalnızca zemine yatan desen (groundPlane) birim sırasına göre kalır.
+ *   Sarma (tune.wrap, varsayılan kapalı): sheet bölme çizgisinden ikiye ayrılır, üstü hedefin arkasında, altı önünde (vfx-sheets.ts > SheetWrap).
  *
  * GERÇEK SAVAŞTA NE OYNAR (Ömer 2026-10-20, her skill için karar; veri data/battle-layout.json > animation.mobVfx.skills):
  *   `hand: true`  el yapımı efekt (src/game/mob-vfx-hand.ts > MOB_HAND_VFX, tamamen kodla çizilir; sheet yalnızca vuruş anı için okunur)
@@ -326,6 +327,13 @@ export interface MobTune {
   alpha?: number;
   /** Vuruş parlaması (flash) boyut çarpanı (varsayılan 1; Pick of the Deep 0.78: kuklayı kaplamasın). */
   flashScale?: number;
+  /**
+   * Karakteri sarma (vfx-sheets.ts > SheetWrap; varsayılan kapalı): sheet bölme çizgisinin üstü hedef birimin arkasında, altı önünde çizilir
+   * (ayaktaki girdabın uzak yarısı arkada, yakın yarısı önde). true = bölme sheet json'ındaki `wrap.split` (yoksa WRAP_SPLIT), sayı = bölme
+   * (kare yüksekliğinin kesri, 0 üst 1 alt), nesne = `{ split?, ghost? }` (ghost 0-1: arkada kalan üst kısım hedefin önünde bu saydamlıkla bir
+   * daha çizilir, yükselen sütun önde sisli görünür). Açıkken efekt TÜM birimlerin üstünde değil, hedefin derinliğine göre çizilir (öndeki birimler örter).
+   */
+  wrap?: boolean | number | { split?: number; ghost?: number };
 }
 const TUNE = layout.animation.mobVfx as unknown as { sizeMult?: number; speedMult?: number; stabilize: { minMass: number; maxShift: number }; skills: Record<string, MobTune> };
 const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
@@ -502,8 +510,11 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
     // DERİNLİK (Ömer 2026-10-19: "önündeki karakterlerin de önüne çıkacak, araya sıkışmaz"): efekt TÜM birimlerin üstünde (k.DEPTH, oyuncu
     // skill efektleriyle aynı katman). Yalnızca zemine yatan desen (groundPlane: Glyph of Breaking) birim sırasına göre kalır: hedefin hemen
     // üstü, öndeki birimlerin altı (birim derinliği = ayak y'si), yoksa öndekinin ayaklarına biner.
-    const play = (p0: Pt, delay = 0, unitDepth = k.DEPTH, from0?: Pt): void => {
+    const play = (p0: Pt, delay = 0, unitDepth = k.DEPTH, from0?: Pt, unit?: CombatantView): void => {
       const depth = s.groundPlane ? unitDepth : k.DEPTH;
+      // sarma (tune.wrap): kopyalar hedef birimin derinliğinin iki yanında; birimsiz hücrede (cells/center) hücrenin zemin y'si = oradaki birimin derinliği
+      const wrapUnit = tune.wrap ? (unit ? (): number => unit.container.depth : unitDepth === k.DEPTH ? k.DEPTH : unitDepth - CELL_DEPTH) : null;
+      const wrapCfg = typeof tune.wrap === 'number' ? { split: tune.wrap } : typeof tune.wrap === 'object' ? tune.wrap : {};
       const p = { x: p0.x + off.x, y: p0.y + off.y };
       const flying = !!from0 && (travelF > 0 || fall > 0);
       const from = flying ? { x: from0!.x + off.x, y: from0!.y + off.y } : null;
@@ -521,8 +532,9 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
       const pair = (o: { delay?: number; frame?: number; keep?: boolean; from?: number }, at: Pt): Array<NonNullable<ReturnType<VfxKit['sheet']>>> => {
         const fade = !o.keep && !!tune.fadeOut;
         const a = tune.alpha ?? 1;
-        const main = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 1, ...(a < 1 ? { alpha: a } : {}) });
-        const glow = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 2, alpha: BOOST_ALPHA * a, blend: ADD_BLEND });
+        const wrap = (layer: number) => (wrapUnit !== null ? { wrap: { unit: wrapUnit, layer, ...wrapCfg } } : {});
+        const main = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 1, ...(a < 1 ? { alpha: a } : {}), ...wrap(0) });
+        const glow = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 2, alpha: BOOST_ALPHA * a, blend: ADD_BLEND, ...wrap(0.1) });
         const out = [main, glow].filter((x): x is NonNullable<typeof x> => !!x);
         // tune.fadeOut: son karede kalır, sonra solup yok olur (efekt bitince birden kaybolmaz)
         if (fade)
@@ -690,18 +702,18 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
       await c.lunge(t ? t.container.x : c.actor.container.x, tune.standOff);
       // atılma bitti: iz ısırmanın altında oynamaya devam etmesin, kısa sürede söner (ısırmayla üst üste binme; anim-review run_down Tur 1)
       if (trail?.active) c.scene.tweens.add({ targets: trail, alpha: 0, duration: k.slow(TRAIL_FADE_MS), onComplete: () => trail?.active && trail.destroy() });
-      for (const v of c.targets) play(pos(v), 0, v.container.depth);
+      for (const v of c.targets) play(pos(v), 0, v.container.depth, undefined, v);
       c.scene.time.delayedCall(k.slow(lag + hitT), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
       return land();
     }
     if (tune.throw) await throwMotion();
     else await c.windUp(s.hex ?? c.skill.fx ?? '#ffffff', tune.anim ?? 'cast');
     if (s.mode === 'bolt' || s.mode === 'ally') {
-      for (const v of c.targets) play(pos(v), 0, v.container.depth, s.mode === 'bolt' ? src() : undefined);
+      for (const v of c.targets) play(pos(v), 0, v.container.depth, s.mode === 'bolt' ? src() : undefined, v);
       return land();
     }
     if (s.mode === 'self') {
-      play(k.feet(c.actor), 0, c.actor.container.depth);
+      play(k.feet(c.actor), 0, c.actor.container.depth, undefined, c.actor);
       // gömülme (Burrow): kum patlamasının vuruşunda batar; sonra Fortified rozeti görünür kaldıkça gömülü durur (BattleScene.refreshBadges)
       if (tune.bury) {
         const actor = c.actor;

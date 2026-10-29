@@ -1,0 +1,18 @@
+{
+  "_not": "GEÇİCİ GÖRÜNÜM KAYDI (content-designer 2026-10-29, /vfx idle sprite denemesi): Harita 3 son bossu The Hollow King'in (maps-2-3.md 4.3) yalnız savaştaki görünüşü için. Kit YOK (inert: savaşta durur, hiçbir şey yapmaz), sayılar Iron Mooring kopyası; hiçbir karşılaşmada kullanılmıyor. Asıl boss tanımını (pasif Hollow Crown, Kingsmaul, Call the Vault, Decree of Stone, ult Bring Down the Hall) Harita 3 kampanya işi yazınca bu dosya onunla değişir. Görsel: assets/sprites/hollow_king (idle.png + poses.png boşta nefes döngüsü, data/mob-poses.json), kaynak assets/source/mobs + assets/source/mob-poses.",
+  "id": "hollow_king",
+  "name": "The Hollow King",
+  "spriteId": "hollow_king",
+  "spriteScale": 1.12,
+  "color": "#5d6b7a",
+  "logo": "skull",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Boss · Hollow King",
+  "attributes": { "str": 0, "int": 0, "dex": 0, "luck": 0 },
+  "armor": 20,
+  "magicArmor": 0,
+  "overrides": { "hp": 55, "mp": 0, "spd": 2, "hpRegen": 0, "mpRegen": 0 },
+  "inert": true,
+  "skills": []
+}

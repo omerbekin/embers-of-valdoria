@@ -65,3 +65,8 @@ Düşman tarafı aynalama hatası düzeltildi (src/game/mob-vfx.ts `fx()`): Phas
 
 ## Tur 5 · Claude · düzeltme · 2026-10-29
 Görünen ölçüm: ısırma (scorch_bite sheet'i) eski dx 45 ile görünen +43 px. İz dx kullanmıyor (yalnız ısırma kayar). run_down.dx 45 → 0 (açıkça 0: scorch_bite'ın kendi dx 45'i run_down'a miras geliyor; scorch_bite kapsam dışı, dokunulmadı). Beklenen görünen ≈ -2 px.
+
+## Tur 3 · Codex · kontrol · 2026-10-29
+Vuruş sonrası görünen fark -2 px (dayanak dx 0, parlaklık merkezi -2 px); hedef kukla merkezi x=725 ile uyumlu. Yarım gövdeyi aşan kayma yok.
+Vuruş anı: verilen ~180 ms karesinde efekt kukla üzerinde ortalı; aynalama düzeltmesi sonrası yeni kayma yok.
+Karar: tamam; düzeltme gerekmiyor.

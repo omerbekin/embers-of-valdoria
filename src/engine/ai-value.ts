@@ -1,6 +1,7 @@
 import type { Battle } from './battle';
 import { previewForTargets } from './preview';
 import { bonusScaleRaw } from './spec';
+import { manaShieldNeed } from './tree-hooks';
 import { attributePower } from './stats';
 import type { Combatant, SkillDef } from './types';
 
@@ -50,6 +51,8 @@ export interface AiValueConfig {
   manaHorizonMult: number;
   /** advanceToFront (Charge) sonrası ön sıraya geçiş: melee yeteneği kazanılırsa birimin tur değeri x bu pay (madde 271; yoksa 0,5). */
   advanceMeleeShare?: number;
+  /** Spellbreaker's Instinct (open-questions 456): MP bedelli skill rakip AM'in takımını kapsıyorsa bedel = advance x AM'in tur değeri x bu pay (yoksa 1). */
+  instinctShare?: number;
   /**
    * Boşuna çağrı öldürme (Undead aynası tıkanması, 2026-10-10): çağrının tarafında onu ufuk içinde YENİDEN çağırabilecek canlı bir çağırıcı varsa
    * (skill'i cooldown'dan çıkıyor, MP'si yetiyor) o çağrıyı öldürmenin/ona baskının değeri bu payla çarpılır; hedef seçimi çağırıcıya kayar. Yoksa 1 (eski davranış).
@@ -79,7 +82,60 @@ export interface AiValueConfig {
    * Ley Brand değer ayarları (open-questions 444, PROVİZYON): poolShare = tainted mana hasar potansiyelinin sayılan payı, costShare = MP'li hedefin
    * elindeki MP'nin yakım hasarı payı, freshTurns = hedefte bu kadar ya da daha az tur kalmışsa yeniden atış refreshShare kadar değerli (fazlası 0).
    */
-  brand?: { poolShare: number; costShare: number; freshTurns: number; refreshShare: number; /** Ömer 2026-10-29: MP'li düşmanın Brand süresince MP skill'i kullanma payı (bedel yakımı) ve işaretin (Mana Steal / Void Strike fazla hasarı) sayılan payı. */ castShare?: number; markShare?: number };
+  brand?: { poolShare: number; costShare: number; freshTurns: number; refreshShare: number; /** Ömer 2026-10-29: MP'li düşmanın Brand süresince MP skill'i kullanma payı (bedel yakımı) ve işaretin (Mana Steal / Void Strike fazla hasarı) sayılan payı. */ castShare?: number; markShare?: number; /** Ömer 2026-10-29: Mana Steal'in Ley Thread ekinin (iplikli - ipliksiz Brand değeri) sayılan payı. */ threadShare?: number };
+  /** YZ kapsamı ağırlıkları (engine-dev 2026-10-29, open-questions 458, PROVİZYON, sim YOK); yoksa DEFAULT_COVERAGE. */
+  aiCov?: Partial<AiCoverageConfig>;
+}
+
+/**
+ * YZ KAPSAMI (ai-coverage, 2026-10-29). groundStayShare: zeminde ilk tikten sonraki her tikin sayılan payı (zemin kuralı: çıkan o an kurtulur).
+ * mirageShare: Heat Mirage bedeli çarpanı. rageShare: yaralanınca kazanılan Rage'in değer payı. divineLightShare: Divine Light şifasının tur değerine payı.
+ * wardShare: Spell Ward kancasının saldırana bedeli. bell: Vesper çan büyümesi ufku (kendi turu) + tur iskontosu. opportunistShare: Opportunist kurulumu.
+ * push: itme erişim / kalabalık payları. tree: ağaç tetikleri (kendi / karşılık). reactionShare: zemin tepkimesi. omenTransferShare: Ill Omen geçişi.
+ * grudgeShare: Nature's Grudge bedeli. dispelBuffShare: düşman buff'ı silme.
+ */
+export interface AiCoverageConfig {
+  groundStayShare: number;
+  mirageShare: number;
+  rageShare: number;
+  divineLightShare: number;
+  wardShare: number;
+  bell: { horizon: number; discount: number };
+  opportunistShare: number;
+  push: { reachShare: number; crowdShare: number };
+  tree: { triggerShare: number; retaliationShare: number; cooldownShare: number };
+  reactionShare: number;
+  omenTransferShare: number;
+  grudgeShare: number;
+  dispelBuffShare: number;
+}
+
+export const DEFAULT_COVERAGE: AiCoverageConfig = {
+  groundStayShare: 0.5,
+  mirageShare: 1,
+  rageShare: 0.5,
+  divineLightShare: 0.6,
+  wardShare: 1,
+  bell: { horizon: 2, discount: 0.7 },
+  opportunistShare: 0.5,
+  push: { reachShare: 0.5, crowdShare: 0.1 },
+  tree: { triggerShare: 1, retaliationShare: 1, cooldownShare: 0.25 },
+  reactionShare: 1,
+  omenTransferShare: 1,
+  grudgeShare: 1,
+  dispelBuffShare: 1,
+};
+
+const covCache = new WeakMap<AiValueConfig, AiCoverageConfig>();
+/** Kapsam ağırlıkları (iç içe nesneler alan alan birleşir; config başına önbellekli). */
+export function coverageOf(vc: AiValueConfig): AiCoverageConfig {
+  let r = covCache.get(vc);
+  if (!r) {
+    const c = vc.aiCov ?? {};
+    r = { ...DEFAULT_COVERAGE, ...c, bell: { ...DEFAULT_COVERAGE.bell, ...(c.bell ?? {}) }, push: { ...DEFAULT_COVERAGE.push, ...(c.push ?? {}) }, tree: { ...DEFAULT_COVERAGE.tree, ...(c.tree ?? {}) } };
+    covCache.set(vc, r);
+  }
+  return r;
 }
 
 /**
@@ -133,15 +189,32 @@ const ratio = (c: Combatant) => (c.maxHp > 0 ? c.hp / c.maxHp : 0);
 const foeSideOf = (c: Combatant) => (c.side === 'party' ? 'enemy' : 'party');
 const ATTACK_TARGETS = ['single_enemy', 'area_enemies', 'all_enemies', 'random_enemies', 'everyone'];
 
-/** Skill'in tek kullanımlık HAM değeri (zırhsız, kritiksiz): hasar/şifa stat x güç toplamı, tur şifası x tur, kalkan x 0,5. */
-export function skillRawValue(battle: Battle, stats: Combatant['stats'], skill: SkillDef): number {
+/**
+ * Skill'in tek kullanımlık HAM değeri (zırhsız, kritiksiz): hasar/şifa stat x güç toplamı, tur şifası x tur, kalkan x 0,5.
+ * `u` verilirse (YZ kapsamı 2026-10-29) hasar etkileri birimin sınıf pasifi çarpanıyla (Berserker eksik can, Sharpshooter sıra, Pealing Bells çan + powerPerBell).
+ */
+export function skillRawValue(battle: Battle, stats: Combatant['stats'], skill: SkillDef, u?: Combatant): number {
   let v = 0;
   for (const e of skill.effects) {
-    if (e.type === 'damage' || e.type === 'heal') v += attributePower(stats, e.scale, battle.formulas) * e.power + (e.type === 'damage' ? bonusScaleRaw(e.bonusScale, stats) * (stats.spellPowerMult ?? 1) : 0);
+    if (e.type === 'damage') {
+      const m = u ? passiveDamageMult(battle, u, e) : 1;
+      const bellPow = u && e.powerPerBell && (u.bells ?? 0) > 0 ? e.powerPerBell * (u.bells ?? 0) : 0;
+      v += (attributePower(stats, e.scale, battle.formulas) * (e.power + bellPow) + bonusScaleRaw(e.bonusScale, stats) * (stats.spellPowerMult ?? 1)) * m;
+    } else if (e.type === 'heal') v += attributePower(stats, e.scale, battle.formulas) * e.power;
     else if (e.type === 'hot') v += attributePower(stats, e.scale, battle.formulas) * e.power * e.turns;
     else if (e.type === 'shield') v += attributePower(stats, e.scale, battle.formulas) * e.power * 0.5;
   }
   return v;
+}
+
+/** Sınıf pasifinin hasar çarpanı (spec.ts damageSpecFor ile aynı formül; hedefe bağlı kısım: hedef ön sıra sayılır, Opportunist koşullu: 1). */
+export function passiveDamageMult(battle: Battle, u: Combatant, e: { bell?: boolean }): number {
+  const pe = u.passive?.effect;
+  if (!pe) return 1;
+  if (pe.type === 'rage') return 1 + pe.maxBonus * (u.maxHp > 0 ? 1 - u.hp / u.maxHp : 0);
+  if (pe.type === 'longshot') return 1 + pe.perRow * (Math.floor(u.slot / battle.formulas.formation.lanes) + (pe.extraRows ?? 0));
+  if (pe.type === 'pealingBells' && e.bell && (u.bells ?? 0) > 0) return 1 + pe.perBell * (u.bells ?? 0);
+  return 1;
 }
 
 /** Bir düşmanın tahmini hamlesi: kime vuracağı (kendi YZ odak kuralıyla) ve beklenen hasarı. */
@@ -204,6 +277,23 @@ export class ValueContext {
       for (const u of i.reach) addTo(u, (i.hit * 0.5) / Math.max(1, i.reach.length));
     }
     for (const h of this.hits) if (h.before) this.before.set(h.target, (this.before.get(h.target) ?? 0) + h.hit);
+    // YZ kapsamı: kendi birimlerimizin bir sonraki turumuzdan önce (kendi tur başlarında) yiyeceği DoT / zemin tikleri de tehlikeye girer
+    if (battle.ground.length > 0 || battle.combatants.some((c) => c.side === actor.side && c.statuses.some((st) => st.fromGround || battle.statusDef(st.kind)?.dot))) {
+      let first: Set<string> | null = null;
+      if (battle.mode === 'turns') {
+        const q = battle.turnQueue();
+        const start = q[0] === actor.uid ? 1 : 0;
+        const next = q.indexOf(actor.uid, start);
+        first = new Set(q.slice(start, next < 0 ? q.length : next));
+      }
+      for (const u of battle.living(actor.side)) {
+        if (u.inert || (first && u.uid !== actor.uid && !first.has(u.uid))) continue;
+        let t = 0;
+        for (const st of u.statuses) t += battle.statusTickDamage(u, st);
+        for (const g of battle.ground) if (g.board === u.board && g.slots.includes(u.slot) && g.sourceSide !== u.side && !g.noDamage && battle.groundDirectTick(g.ground)) t += battle.groundTickDamage(g.ground, g.amount, u);
+        if (t > 0) this.before.set(u.uid, (this.before.get(u.uid) ?? 0) + t);
+      }
+    }
   }
 
   /** Birimin tur başına değeri (en iyi skill'inin ham değeri x contributionShare). */
@@ -218,8 +308,11 @@ export class ValueContext {
         // (ölü birim: diriltme sonrası MP'si belirsiz; süzgeç yok)
         if (u.hp > 0 && sk.cost.resource === 'mp' && !this.battle.freeMp && sk.cost.amount > mpSoon) return 0;
         if (u.hp > 0 && sk.cost.resource === 'rage' && !this.battle.freeRage && (u.rage ?? 0) < sk.cost.amount) return 0;
-        return skillRawValue(this.battle, u.stats, sk);
+        return skillRawValue(this.battle, u.stats, sk, u);
       })) * this.vc.contributionShare;
+      // Divine Light (YZ kapsamı): tur başında eylemden AYRI bedava şifa; payı divineLightShare (boşa gidebilir)
+      const dl = u.passive?.effect;
+      if (dl?.type === 'divineLight') v += attributePower(u.stats, dl.scale, this.battle.formulas) * dl.power * (dl.smite?.dual ?? 1) * coverageOf(this.vc).divineLightShare;
       this.tv.set(u.uid, v);
     }
     return v;
@@ -357,7 +450,7 @@ export class ValueContext {
   /** Dostun bir sonraki turumuzdan önce gelecek beklenen hasarı canını + kalkanını geçiyor mu (tehlike, K2)? */
   inDanger(a: Combatant): boolean {
     const t = this.before.get(a.uid) ?? 0;
-    return t > 0 && t >= a.hp + a.shield + a.magicShield;
+    return t > 0 && t >= manaShieldNeed(a, a.hp, a.mp) + a.shield + a.magicShield; // mana kalkanı dahil
   }
 
   /** Kurtarma değeri: dostun kalan katkısı + canı (x saveWeight), dostun ölüm ihtimaliyle (Lucky Escape hakkı varsa x (1 - şans); madde 258). */
@@ -444,6 +537,35 @@ export class ValueContext {
     return Math.max(0, worth(pool) - worth(pool - amount));
   }
 
+  /** MP KAZANCININ değeri (manaDenial'ın tersi: Mana Steal gainRatio, Spell Ward giveMana, ağaç tetiği mp); maks MP ile sınırlı, MP'siz birimde 0. */
+  manaGain(f: Combatant, amount: number): number {
+    const a = Math.min(Math.max(0, f.maxMp - f.mp), amount);
+    if (a <= 0 || f.hp <= 0) return 0;
+    // manaDenial(MP + a'lı birim, a) = a kazanmanın değeri (geçici okuma; hemen geri alınır)
+    const mp = f.mp;
+    f.mp = mp + a;
+    try {
+      return this.manaDenial(f, a);
+    } finally {
+      f.mp = mp;
+    }
+  }
+
+  /** Bir Rage puanının değeri (Berserker rageOnHurt): Rage bedelli skill'lerin (ham değer - bedelsiz en iyi) / bedel'inin en büyüğü x contributionShare. */
+  rageWorth(f: Combatant): number {
+    if (f.maxRage === undefined) return 0;
+    const skills = f.skills.map((id) => this.battle.skill(id, f)).filter((sk): sk is SkillDef => !!sk);
+    const free = Math.max(0, ...skills.filter((sk) => sk.cost.resource !== 'rage').map((sk) => skillRawValue(this.battle, f.stats, sk, f)));
+    let best = 0;
+    for (const sk of skills) {
+      if (sk.cost.resource !== 'rage' || sk.cost.amount <= 0) continue;
+      best = Math.max(best, (skillRawValue(this.battle, f.stats, sk, f) - free) / sk.cost.amount);
+      // Headsman's Blow (powerPerRage, spendAll): harcanan her Rage puanı güç ekler: puan başına marjinal değer
+      for (const e of sk.effects) if (e.type === 'damage' && e.powerPerRage) best = Math.max(best, attributePower(f.stats, e.scale, this.battle.formulas) * e.powerPerRage);
+    }
+    return best * this.vc.contributionShare;
+  }
+
   /**
    * Susturmanın "engellenen hamle" değeri (madde 260, Silence: MP bedelli skill kullanılamaz): düşman `f` susturulduğu turlarda (`turns`, ufuktaki turuyla
    * sınırlı) MP'li en iyi hamlesi yerine bedelsiz en iyisini yapar. Her tur için: o tur ödenebilecek (MP = `mpAfter` + tur başı yenilenmeler; bir
@@ -492,7 +614,7 @@ export class ValueContext {
       const first = new Set(q.slice(start, at < 0 ? q.length : at).filter((u) => u !== this.actor.uid));
       for (const i of this.ownIntents()) if (first.has(i.foe) && i.focus.includes(f.uid)) dmg += i.hit / i.focus.length;
     }
-    v = dmg >= f.hp + f.shield + f.magicShield;
+    v = dmg >= manaShieldNeed(f, f.hp, f.mp) + f.shield + f.magicShield;
     this.dying.set(f.uid, v);
     return v;
   }
@@ -515,7 +637,7 @@ export class ValueContext {
   /** `extra` ek can/kalkanla (ya da `less` kadar az tehditle) dost tehlikeden çıkıyor mu? */
   rescued(a: Combatant, extra: number, less = 0): boolean {
     if (!this.inDanger(a)) return false;
-    return (this.before.get(a.uid) ?? 0) - less < a.hp + a.shield + a.magicShield + extra;
+    return (this.before.get(a.uid) ?? 0) - less < manaShieldNeed(a, a.hp, a.mp) + a.shield + a.magicShield + extra;
   }
 
   /** Birimin hücreden vurabilecek durumda olup olmadığı (menzil: range.md; skill'lerinin kaçı oradan bir düşmana ulaşır). Varsayımsal hücre (dirilme/çağrı). */

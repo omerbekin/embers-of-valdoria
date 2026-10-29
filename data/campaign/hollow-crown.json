@@ -1,0 +1,1800 @@
+{
+  "_not": "Harita 3: The Hollow Crown (docs/design/campaign/maps-2-3.md 4; iskelet adımı, campaign-dev 2026-10-29). 86 düğüm, 6 bölge (14/14/14/15/14/15), 4 boss (Snowfather hc24, Hollow King hc51, Hearthwarden hc84, Ember hc85; son iki boss arasında dinlenme yok). Konumlar ve kenarlar onaylı mockup public/mockups/maps-2-3/data.js > m3 (görsel 1672x941 = assets/source/maps-2-3/hollow-crown-map-v2.png -> assets/campaign/hollow-crown-bg.webp, yer tutucu: kesit konsept görseli, taşmalı / geniş sürüm yok). Düğüm id = \"hc\" + belgedeki numara. optional = cep (9: hc7, 23, 42, 44, 50, 66, 70, 78, 82); spoke = Kharduin (hc30) kolu (hc31-40; Shaft Head hc41 ana yol, mockup'taki 'lift' kenarı hc41 -> hc43 düz yol). Crossing hc46 (Boat Crossing) = type battle + crossing true (güverte kuralı M-I sonra). level: ilk 3 durak L20 (belge 2: ilk bölgenin ilk 3 düğümü bir alt level), gerisi bölüm 3 rampası L21-30. continues = drowned-reach (takım taşınır, kahraman seçimi yok). Bayrak: campaign.json > mapFlags['hollow-crown'].enabled false. Karşılaşmalar hollow-crown-encounters.json (yer tutucu: var olan moblar belgedeki adlarla), olaylar / hazineler / hikâyeler hollow-crown-events.json. Kasaba sahneleri kendi çizimleri (Hearthstead = town-hearthstead, Kharduin = town-kharduin; 2026-10-29). Battle conditions (Chill, Blizzard, Darkness, Cave-in, Heat), Lantern, Tidewater Urn, Mend/Quench unvanları bu adımda YOK. Hall of Oaths sonuçları (hc54 marketRules.oathDiscount + cüce mezarı bayrağı oathSealed: hc42 / hc44 / hc52; Ömer 2026-10-29 devriye cezasını kaldırdı, A seçildi) ve Deep Market kuralı (hc54 marketRules) Ömer 2026-10-29 (open-questions 454) eklendi, kod src/campaign/hollow-crown.ts. Sayılar PROVİZYON.",
+  "id": "hollow-crown",
+  "title": "THE HOLLOW CROWN",
+  "subtitle": "Campaign Map III",
+  "blurb": "Up the Frostpeak, down to the First Hearth: 86 stops, 6 regions, 51-59 stops per run.",
+  "intro": "Two halves of one crown pull at your hands, and they pull north. Past Morvane's burnt keep the land climbs into the Frostpeak, and under the ice the dwarves of Kharduin still guard the road down: to the Deep Halls, to the First Hearth, to the fire that was never put out.",
+  "complete": {
+    "title": "The First Fire",
+    "subtitle": "Campaign Complete",
+    "text": "The fire beneath the mountain has had its answer. The long road from Mill Road to the First Hearth is walked to its end."
+  },
+  "continues": "drowned-reach",
+  "background": "hollow-crown-bg",
+  "backgroundExt": {
+    "_not": "Kenar taşmalı harita görseli (Harita 2 ile aynı yöntem, tools/make-map-ext.mjs hollow-crown-bg; 2026-10-29): asıl görsel dört kenardan aynalanıp kademeli bulanıklaştırılmış, kenara doğru koyulaşan vinyetli taşma alanıyla genişletildi; iç dikdörtgen asıl görselle piksel piksel aynı.",
+    "image": "hollow-crown-bg-ext",
+    "region": [0.13841, 0.11717, 0.86159, 0.88283],
+    "content": [0.13841, 0.11717, 0.86159, 0.88283]
+  },
+  "start": "hc1",
+  "stopsPerRun": 59,
+  "visibility": 2,
+  "alwaysVisible": [
+    "hc85"
+  ],
+  "regions": [
+    {
+      "id": "I",
+      "title": "I · The Snowline",
+      "tagline": "Up through the snow pines and the hill clans to the ice",
+      "label": [
+        0.0239,
+        0.0744
+      ],
+      "battleBackground": "snowline"
+    },
+    {
+      "id": "II",
+      "title": "II · The Windwall",
+      "tagline": "Across the glacier where Morvane's lost army froze",
+      "label": [
+        0.5981,
+        0.0744
+      ],
+      "battleBackground": "glacier"
+    },
+    {
+      "id": "III",
+      "title": "III · The Dwarf Road",
+      "tagline": "Through the great gate into the last hall of the dwarves",
+      "label": [
+        0.1196,
+        0.4995
+      ],
+      "battleBackground": "kharduin"
+    },
+    {
+      "id": "IV",
+      "title": "IV · The Deep Halls",
+      "tagline": "Down into the dark halls and across the sunless lake",
+      "label": [
+        0.8852,
+        0.3507
+      ],
+      "battleBackground": "deep-halls"
+    },
+    {
+      "id": "V",
+      "title": "V · The Ashborn Warrens",
+      "tagline": "Through the lava tubes where the Ashborn keep their faith",
+      "label": [
+        0.0478,
+        0.5739
+      ],
+      "battleBackground": "warrens"
+    },
+    {
+      "id": "VI",
+      "title": "VI · The Forge-Heart",
+      "tagline": "Down to the anvil, the hearth and the fire that never went out",
+      "label": [
+        0.0598,
+        0.9617
+      ],
+      "battleBackground": "forge-heart"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "hc1",
+      "type": "battle",
+      "name": "Hearthstead Road",
+      "subtitle": "Battle · Snow Wolves",
+      "lore": "The road to Hearthstead climbs through deep snow, and grey shapes pace the treeline beside it.",
+      "region": "I",
+      "pos": [
+        0.0239,
+        0.356
+      ],
+      "level": 20,
+      "partyCap": 4,
+      "encounter": "hc_1"
+    },
+    {
+      "id": "hc2",
+      "type": "rest",
+      "name": "Hunter's Lodge",
+      "subtitle": "Rest · Camp",
+      "lore": "A hunter's lodge of black logs, its hearth still warm and its door barred against the wolves.",
+      "region": "I",
+      "pos": [
+        0.0598,
+        0.3082
+      ],
+      "level": 20,
+      "rest": true
+    },
+    {
+      "id": "hc3",
+      "type": "battle",
+      "name": "Frozen Falls",
+      "subtitle": "Battle · Rime Witch",
+      "lore": "The falls hang frozen in mid-plunge, and a witch sings to the ice behind them.",
+      "region": "I",
+      "pos": [
+        0.0987,
+        0.2604
+      ],
+      "level": 20,
+      "encounter": "hc_3"
+    },
+    {
+      "id": "hc4",
+      "type": "treasure",
+      "name": "Trapper's Line",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A trapper's line of snares and caches, now watched by clansmen who took it for their own.",
+      "region": "I",
+      "pos": [
+        0.1286,
+        0.3241
+      ],
+      "encounter": "hc_4",
+      "treasure": "hc_trappers_line"
+    },
+    {
+      "id": "hc5",
+      "type": "town",
+      "name": "Hearthstead",
+      "subtitle": "Town · Inn, Smith, Recruits, Trade",
+      "lore": "A mountain village of stone and smoke, the last place on the road where strangers are still let in.",
+      "region": "I",
+      "pos": [
+        0.1734,
+        0.2869
+      ],
+      "partyCap": 4,
+      "merchant": true,
+      "merchantSize": 5,
+      "story": "hc_old_ketil",
+      "scene": {
+        "background": "town-hearthstead",
+        "focusY": 0.3,
+        "hotspots": [
+          {
+            "id": "stall",
+            "action": "trade",
+            "label": "Trading Post",
+            "rect": [0.14, 0.62, 0.36, 0.89]
+          },
+          {
+            "id": "hearth",
+            "action": "inn",
+            "label": "Hearth Inn",
+            "rect": [0.295, 0.3, 0.435, 0.41]
+          },
+          {
+            "id": "ketil",
+            "action": "story",
+            "label": "Old Ketil",
+            "rect": [0.72, 0.0, 0.92, 0.18]
+          },
+          {
+            "id": "barracks",
+            "action": "recruit",
+            "label": "Barracks",
+            "rect": [0.54, 0.19, 0.885, 0.385],
+            "note": "The longhouse bunks hold hillclan wardens, not volunteers. No one here seeks to join a company."
+          },
+          {
+            "id": "road",
+            "action": "leave",
+            "label": "Road Out",
+            "rect": [0.035, 0.6, 0.14, 0.72]
+          }
+        ]
+      }
+    },
+    {
+      "id": "hc6",
+      "type": "battle",
+      "name": "The Pinewall",
+      "subtitle": "Battle · Hillclans",
+      "lore": "A wall of old pines where the hill clans wait with axes for anyone who climbs without leave.",
+      "region": "I",
+      "pos": [
+        0.1346,
+        0.2072
+      ],
+      "encounter": "hc_6"
+    },
+    {
+      "id": "hc7",
+      "type": "elite",
+      "name": "Wolf Den",
+      "subtitle": "Elite · The Pack-Mother",
+      "lore": "Bones litter the mouth of the den, and the great she-wolf inside has grown fat on travellers.",
+      "region": "I",
+      "pos": [
+        0.0598,
+        0.2125
+      ],
+      "optional": true,
+      "encounter": "hc_7"
+    },
+    {
+      "id": "hc8",
+      "type": "event",
+      "name": "Shrine of the Hearth",
+      "subtitle": "Event",
+      "lore": "A small shrine of fire-blackened stones, built where the founders first rested on their way up.",
+      "region": "I",
+      "pos": [
+        0.1824,
+        0.1753
+      ],
+      "event": "hc_shrine_of_the_hearth"
+    },
+    {
+      "id": "hc9",
+      "type": "battle",
+      "name": "Avalanche Pass",
+      "subtitle": "Battle · Avalanche Pass",
+      "lore": "The pass runs under a hanging field of snow that a single shout could bring down.",
+      "region": "I",
+      "pos": [
+        0.2183,
+        0.2285
+      ],
+      "encounter": "hc_9"
+    },
+    {
+      "id": "hc10",
+      "type": "treasure",
+      "name": "Ice Cave",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A cave of blue ice where something has dragged its prey, and the will-o-lights drift above it.",
+      "region": "I",
+      "pos": [
+        0.2602,
+        0.1753
+      ],
+      "encounter": "hc_10",
+      "treasure": "hc_ice_cave"
+    },
+    {
+      "id": "hc11",
+      "type": "event",
+      "name": "Clan Steading",
+      "subtitle": "Event",
+      "lore": "The hill clans keep their steading here, and every road through their land has a price.",
+      "region": "I",
+      "pos": [
+        0.2931,
+        0.2391
+      ],
+      "event": "hc_clan_steading"
+    },
+    {
+      "id": "hc12",
+      "type": "elite",
+      "name": "Chief's Hall",
+      "subtitle": "Elite · Clan Chief Brannoc",
+      "lore": "In the long hall of the hill clans, Chief Brannoc drinks to the strangers he means to bury.",
+      "region": "I",
+      "pos": [
+        0.302,
+        0.1594
+      ],
+      "encounter": "hc_12"
+    },
+    {
+      "id": "hc13",
+      "type": "battle",
+      "name": "The Cairns",
+      "subtitle": "Battle · The Cairns",
+      "lore": "Stone cairns mark the old dead of the clans, and some of the dead have climbed out of them.",
+      "region": "I",
+      "pos": [
+        0.3379,
+        0.2072
+      ],
+      "encounter": "hc_13"
+    },
+    {
+      "id": "hc14",
+      "type": "rest",
+      "name": "Snowline Camp",
+      "subtitle": "Rest · Camp",
+      "lore": "The last camp below the ice, sheltered by a ring of boulders and a fire that never quite warms.",
+      "region": "I",
+      "pos": [
+        0.3529,
+        0.1382
+      ],
+      "rest": true
+    },
+    {
+      "id": "hc15",
+      "type": "battle",
+      "name": "Glacier Foot",
+      "subtitle": "Battle · Frozen Legion",
+      "lore": "At the glacier's foot the ice gives back the halberds of men who froze here long ago.",
+      "region": "II",
+      "pos": [
+        0.4067,
+        0.2072
+      ],
+      "encounter": "hc_15"
+    },
+    {
+      "id": "hc16",
+      "type": "battle",
+      "name": "Crevasse Field",
+      "subtitle": "Battle · Rime Hounds",
+      "lore": "A field of hidden crevasses where the hounds of the rime hunt by sound alone.",
+      "region": "II",
+      "pos": [
+        0.4605,
+        0.1807
+      ],
+      "encounter": "hc_16"
+    },
+    {
+      "id": "hc17",
+      "type": "battle",
+      "name": "The Frozen Legion",
+      "subtitle": "Battle · Frozen Legion",
+      "lore": "Morvane's lost army stands in ranks inside the ice, and some of the ranks still march.",
+      "region": "II",
+      "pos": [
+        0.3917,
+        0.1275
+      ],
+      "encounter": "hc_17"
+    },
+    {
+      "id": "hc18",
+      "type": "elite",
+      "name": "Standard Hill",
+      "subtitle": "Elite · The Frozen Standard-Bearer",
+      "lore": "On the hill the standard of the lost legion still flies, held by a dead man who will not let it fall.",
+      "region": "II",
+      "pos": [
+        0.4187,
+        0.0744
+      ],
+      "encounter": "hc_18"
+    },
+    {
+      "id": "hc19",
+      "type": "treasure",
+      "name": "Ice Chapel",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A chapel cut into the ice, its altar heaped with the offerings of soldiers who never came home.",
+      "region": "II",
+      "pos": [
+        0.4665,
+        0.1063
+      ],
+      "encounter": "hc_19",
+      "treasure": "hc_ice_chapel"
+    },
+    {
+      "id": "hc20",
+      "type": "event",
+      "name": "The White Dark",
+      "subtitle": "Event",
+      "lore": "The storm closes in until there is no up or down, only white and the howl of the wind.",
+      "region": "II",
+      "pos": [
+        0.5203,
+        0.1063
+      ],
+      "event": "hc_white_dark"
+    },
+    {
+      "id": "hc21",
+      "type": "rest",
+      "name": "Windwall Camp",
+      "subtitle": "Rest · Camp",
+      "lore": "A windbreak of stacked ice blocks, raised by some earlier company that did not stay to use it.",
+      "region": "II",
+      "pos": [
+        0.5742,
+        0.1435
+      ],
+      "rest": true
+    },
+    {
+      "id": "hc22",
+      "type": "battle",
+      "name": "Serac Maze",
+      "subtitle": "Battle · Serac Maze",
+      "lore": "Towers of broken ice lean over a maze of narrow ways, and crawling things nest in the cracks.",
+      "region": "II",
+      "pos": [
+        0.5532,
+        0.2179
+      ],
+      "encounter": "hc_22"
+    },
+    {
+      "id": "hc23",
+      "type": "treasure",
+      "name": "Wyrm Bones",
+      "subtitle": "Treasure",
+      "lore": "The bones of some great wyrm lie half buried in the glacier, and something glints between its ribs.",
+      "region": "II",
+      "pos": [
+        0.616,
+        0.1913
+      ],
+      "optional": true,
+      "treasure": "hc_wyrm_bones"
+    },
+    {
+      "id": "hc24",
+      "type": "boss",
+      "name": "The Snowfather's Hollow",
+      "subtitle": "Boss · The Snowfather",
+      "lore": "In a hollow scooped from the glacier sleeps the Snowfather, and the cold here is his breath.",
+      "region": "II",
+      "pos": [
+        0.5024,
+        0.255
+      ],
+      "encounter": "hc_snowfather"
+    },
+    {
+      "id": "hc25",
+      "type": "event",
+      "name": "Morvane's Bivouac",
+      "subtitle": "Event",
+      "lore": "A soldier's tent, frozen stiff, with a journal still open on the cot in Morvane's own hand.",
+      "region": "II",
+      "pos": [
+        0.5831,
+        0.2784
+      ],
+      "event": "hc_morvanes_bivouac"
+    },
+    {
+      "id": "hc26",
+      "type": "battle",
+      "name": "Frostbite Ridge",
+      "subtitle": "Battle · Clan Runaways",
+      "lore": "Clansmen who fled their chief have turned to raiding the ridge, and they are hungry.",
+      "region": "II",
+      "pos": [
+        0.634,
+        0.3029
+      ],
+      "encounter": "hc_26"
+    },
+    {
+      "id": "hc27",
+      "type": "battle",
+      "name": "The Gate Road",
+      "subtitle": "Battle · The Gate Road",
+      "lore": "The road down to the dwarf gate is paved, and the frozen dead still stand guard along it.",
+      "region": "II",
+      "pos": [
+        0.5413,
+        0.3294
+      ],
+      "encounter": "hc_27"
+    },
+    {
+      "id": "hc28",
+      "type": "event",
+      "name": "The Stone Gate",
+      "subtitle": "Event",
+      "lore": "A gate of carved stone taller than any keep, sealed by the dwarves and by an oath older than Valdoria.",
+      "region": "II",
+      "pos": [
+        0.3995,
+        0.2869
+      ],
+      "event": "hc_stone_gate"
+    },
+    {
+      "id": "hc29",
+      "type": "battle",
+      "name": "Gatehouse of Kharduin",
+      "subtitle": "Battle · Guardians",
+      "lore": "The gatehouse of Kharduin, where living dwarves in stone armour ask hard questions with hammers.",
+      "region": "III",
+      "pos": [
+        0.3995,
+        0.3454
+      ],
+      "encounter": "hc_29"
+    },
+    {
+      "id": "hc30",
+      "type": "town",
+      "name": "Kharduin, the Last Hall",
+      "subtitle": "City · Inn, Smith, Barracks, Trade",
+      "lore": "The Last Hall of the dwarves, lit by forges that have burned without pause since the founding.",
+      "region": "III",
+      "pos": [
+        0.3995,
+        0.4304
+      ],
+      "partyCap": 4,
+      "city": true,
+      "merchant": true,
+      "merchantSize": 9,
+      "barracksSwap": {
+        "offer": 3
+      },
+      "story": "hc_loremaster_dunwe",
+      "scene": {
+        "background": "town-kharduin",
+        "focusY": 0.4,
+        "hotspots": [
+          {
+            "id": "stall",
+            "action": "trade",
+            "label": "Odo's Stall",
+            "rect": [0.69, 0.34, 0.945, 0.585]
+          },
+          {
+            "id": "commander",
+            "action": "story",
+            "label": "Loremaster Dunwe",
+            "rect": [0.67, 0.0, 0.84, 0.26]
+          },
+          {
+            "id": "inn",
+            "action": "inn",
+            "label": "Inn",
+            "rect": [0.9, 0.12, 1.0, 0.3]
+          },
+          {
+            "id": "barracks",
+            "action": "recruit",
+            "label": "Barracks",
+            "rect": [0.0, 0.04, 0.29, 0.26]
+          },
+          {
+            "id": "gate",
+            "action": "leave",
+            "label": "Deep Gate",
+            "rect": [0.7, 0.62, 0.93, 0.82]
+          }
+        ]
+      }
+    },
+    {
+      "id": "hc31",
+      "type": "event",
+      "name": "Hall of Oaths",
+      "subtitle": "Event",
+      "lore": "The hall where every dwarf of Kharduin swore the Stone Oath, its walls cut with their names.",
+      "region": "III",
+      "pos": [
+        0.3188,
+        0.2497
+      ],
+      "spoke": true,
+      "event": "hc_hall_of_oaths"
+    },
+    {
+      "id": "hc32",
+      "type": "battle",
+      "name": "The Deep Stair",
+      "subtitle": "Battle · The Hollow",
+      "lore": "A stair winds down into a dark so deep that the torches seem to shrink in it.",
+      "region": "III",
+      "pos": [
+        0.2333,
+        0.2901
+      ],
+      "spoke": true,
+      "encounter": "hc_32"
+    },
+    {
+      "id": "hc33",
+      "type": "event",
+      "name": "Lantern Gallery",
+      "subtitle": "Event",
+      "lore": "A gallery of iron lanterns, each tended by an old dwarf who never lets the flame go out.",
+      "region": "III",
+      "pos": [
+        0.1944,
+        0.3262
+      ],
+      "spoke": true,
+      "event": "hc_lantern_gallery"
+    },
+    {
+      "id": "hc34",
+      "type": "treasure",
+      "name": "Old Mine",
+      "subtitle": "Treasure · Guarded",
+      "lore": "An abandoned mine, its carts still loaded with ore and its tunnels full of skittering sounds.",
+      "region": "III",
+      "pos": [
+        0.1627,
+        0.3804
+      ],
+      "spoke": true,
+      "encounter": "hc_34",
+      "treasure": "hc_old_mine"
+    },
+    {
+      "id": "hc35",
+      "type": "elite",
+      "name": "Oathkeeper's Court",
+      "subtitle": "Elite · The Oathkeeper",
+      "lore": "The court where the Oathkeeper judges all who would pass deeper, and few leave it judged well.",
+      "region": "III",
+      "pos": [
+        0.2757,
+        0.2657
+      ],
+      "spoke": true,
+      "encounter": "hc_35"
+    },
+    {
+      "id": "hc36",
+      "type": "battle",
+      "name": "Collapsed Hall",
+      "subtitle": "Battle · The Hollow",
+      "lore": "A hall whose roof has fallen in, and the dead dwarves under the stones are rising to clear it.",
+      "region": "III",
+      "pos": [
+        0.4803,
+        0.2497
+      ],
+      "spoke": true,
+      "encounter": "hc_36"
+    },
+    {
+      "id": "hc37",
+      "type": "battle",
+      "name": "The Undercroft",
+      "subtitle": "Battle · The Hollow",
+      "lore": "Crypts lie beneath the halls, and the oldest of the dwarf dead do not rest there easily.",
+      "region": "III",
+      "pos": [
+        0.5239,
+        0.2657
+      ],
+      "spoke": true,
+      "encounter": "hc_37"
+    },
+    {
+      "id": "hc38",
+      "type": "rest",
+      "name": "Cistern",
+      "subtitle": "Rest · Camp",
+      "lore": "A cistern of clear black water, cold and still, where travellers may drink and sleep a while.",
+      "region": "III",
+      "pos": [
+        0.5664,
+        0.2901
+      ],
+      "spoke": true,
+      "rest": true
+    },
+    {
+      "id": "hc39",
+      "type": "battle",
+      "name": "Fungus Cavern",
+      "subtitle": "Battle · Cave Crawlers",
+      "lore": "A cavern of pale fungus that glows in the dark, and the crawlers that feed on it.",
+      "region": "III",
+      "pos": [
+        0.6053,
+        0.3262
+      ],
+      "spoke": true,
+      "encounter": "hc_39"
+    },
+    {
+      "id": "hc40",
+      "type": "event",
+      "name": "The Broken Lift",
+      "subtitle": "Event",
+      "lore": "The great lift that once carried ore up from the deep hangs broken on its chains.",
+      "region": "III",
+      "pos": [
+        0.6364,
+        0.3804
+      ],
+      "spoke": true,
+      "event": "hc_broken_lift"
+    },
+    {
+      "id": "hc41",
+      "type": "battle",
+      "name": "Shaft Head",
+      "subtitle": "Battle · Ashborn",
+      "lore": "At the head of the shaft fresh ash lies on old stone, and the cult has left its marks here.",
+      "region": "III",
+      "pos": [
+        0.5981,
+        0.4548
+      ],
+      "encounter": "hc_41"
+    },
+    {
+      "id": "hc42",
+      "type": "treasure",
+      "name": "Rune Vault",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A vault sealed with runes, guarded by a golem of iron and the dead who once kept its keys.",
+      "region": "III",
+      "pos": [
+        0.4456,
+        0.4835
+      ],
+      "optional": true,
+      "encounter": "hc_42",
+      "treasure": "hc_rune_vault",
+      "_oathSealed": "Ömer 2026-10-29 (open-questions 454 a, A): cüce ölülerinin salonu; Stone Oath yeminliyken hazine adımı ganimet vermez (koruma savaşı aynen), ret / kararsız = olağan sandık.",
+      "oathSealed": true
+    },
+    {
+      "id": "hc43",
+      "type": "battle",
+      "name": "Hall of Kings",
+      "subtitle": "Battle · The Hollow",
+      "lore": "The hall of the dwarf kings, where hollow wardens still stand watch over empty thrones.",
+      "region": "IV",
+      "pos": [
+        0.6459,
+        0.4304
+      ],
+      "encounter": "hc_43"
+    },
+    {
+      "id": "hc44",
+      "type": "treasure",
+      "name": "Treasury Vault",
+      "subtitle": "Treasure · Guarded",
+      "lore": "The treasury of the old kings, its door forced long ago and its guards still at their posts.",
+      "region": "IV",
+      "pos": [
+        0.6579,
+        0.356
+      ],
+      "optional": true,
+      "encounter": "hc_44",
+      "treasure": "hc_treasury_vault",
+      "_oathSealed": "Ömer 2026-10-29 (open-questions 454 a, A): cüce ölülerinin salonu; Stone Oath yeminliyken hazine adımı ganimet vermez (koruma savaşı aynen), ret / kararsız = olağan sandık.",
+      "oathSealed": true
+    },
+    {
+      "id": "hc45",
+      "type": "battle",
+      "name": "The Sunless Lake",
+      "subtitle": "Battle · The Sunless Lake",
+      "lore": "A lake that has never seen the sun, black and still, with blind things moving underneath.",
+      "region": "IV",
+      "pos": [
+        0.7117,
+        0.4676
+      ],
+      "encounter": "hc_45"
+    },
+    {
+      "id": "hc46",
+      "type": "battle",
+      "name": "Boat Crossing",
+      "subtitle": "Crossing · Boat",
+      "lore": "A dwarf barge waits at the jetty, and the only way across the sunless lake is on its deck.",
+      "region": "IV",
+      "pos": [
+        0.7476,
+        0.5207
+      ],
+      "crossing": true,
+      "encounter": "hc_46"
+    },
+    {
+      "id": "hc47",
+      "type": "battle",
+      "name": "Drowned Dwarf Quarter",
+      "subtitle": "Battle · The Hollow",
+      "lore": "A quarter of dwarf homes flooded to the lintels, where eels swim through the drowned doorways.",
+      "region": "IV",
+      "pos": [
+        0.7955,
+        0.4835
+      ],
+      "encounter": "hc_47"
+    },
+    {
+      "id": "hc48",
+      "type": "rest",
+      "name": "Lantern Camp",
+      "subtitle": "Rest · Camp",
+      "lore": "A ring of lanterns on the lakeshore, the last light that the dwarves set out on this side.",
+      "region": "IV",
+      "pos": [
+        0.8403,
+        0.5207
+      ],
+      "rest": true
+    },
+    {
+      "id": "hc49",
+      "type": "battle",
+      "name": "Ashborn Shrine",
+      "subtitle": "Battle · Ashborn",
+      "lore": "A shrine of the Ashborn cut into the rock, its altar heaped with ash and smouldering bones.",
+      "region": "IV",
+      "pos": [
+        0.7057,
+        0.3879
+      ],
+      "encounter": "hc_49"
+    },
+    {
+      "id": "hc50",
+      "type": "elite",
+      "name": "Pyre Witch's Cell",
+      "subtitle": "Elite · The Pyre Matriarch",
+      "lore": "In a cell behind the shrine the eldest of the pyre witches tends a fire fed on the living.",
+      "region": "IV",
+      "pos": [
+        0.7536,
+        0.3507
+      ],
+      "optional": true,
+      "encounter": "hc_50"
+    },
+    {
+      "id": "hc51",
+      "type": "boss",
+      "name": "The Hollow Throne",
+      "subtitle": "Boss · The Hollow King",
+      "lore": "On a throne of cracked stone sits the Hollow King, and the hall itself answers to his voice.",
+      "region": "IV",
+      "pos": [
+        0.8493,
+        0.4091
+      ],
+      "encounter": "hc_hollow_king"
+    },
+    {
+      "id": "hc52",
+      "type": "treasure",
+      "name": "Kings' Armory",
+      "subtitle": "Treasure · Guarded",
+      "lore": "The armory of the dwarf kings, guarded by golems that were forged to outlast their makers.",
+      "region": "IV",
+      "pos": [
+        0.8971,
+        0.4676
+      ],
+      "encounter": "hc_52",
+      "treasure": "hc_kings_armory",
+      "_oathSealed": "Ömer 2026-10-29 (open-questions 454 a, A): cüce ölülerinin salonu; Stone Oath yeminliyken hazine adımı ganimet vermez (koruma savaşı aynen), ret / kararsız = olağan sandık.",
+      "oathSealed": true
+    },
+    {
+      "id": "hc53",
+      "type": "battle",
+      "name": "Cave-in Gallery",
+      "subtitle": "Battle · Cave-in",
+      "lore": "A gallery where the roof groans and dust falls like snow, and something digs on the other side.",
+      "region": "IV",
+      "pos": [
+        0.933,
+        0.5313
+      ],
+      "encounter": "hc_53"
+    },
+    {
+      "id": "hc54",
+      "type": "merchant",
+      "name": "The Deep Market",
+      "subtitle": "Merchant · Deep Traders",
+      "lore": "The last of the deep dwarves still trade here, by lantern light, at prices only the desperate pay.",
+      "region": "IV",
+      "pos": [
+        0.9091,
+        0.6111
+      ],
+      "merchant": true,
+      "_trader": "Ömer 2026-10-29: Deep Market'in kendi tüccarı (Odo yok). Ad ŞİMDİLİK öneri (değişebilir; yalnız burada). portrait = assets/avatars/deep_merchant(.png / _figure.png).",
+      "trader": {
+        "name": "Orvik Deepcoin",
+        "portrait": "deep_merchant",
+        "kicker": "The last deep dwarf trader",
+        "greeting": "Weighed twice and priced once, surface-dweller. Good iron is never cheap this deep."
+      },
+      "_marketRules": "Ömer 2026-10-29 (open-questions 454 b): YALNIZ bu tüccar (derin cüce tüccarı, Odo yok; başka tüccara uygulanmaz). priceMult = alış fiyatı çarpanı, rarityFloor = stoğun en düşük nadirliği (zar altına düşerse buna çıkar), oathDiscount = Hall of Oaths'ta yemin edildiyse fiyat çarpanından düşülen oran (1,5 x 0,8 = 1,2). rerollMult = yenileme bedeli çarpanı (Ömer 2026-10-29: yenileme bedeli de değişsin; yemin indirimi buna da işler). Satış değeri ve raf boyu olağan (Ömer: raf aynı kalsın). PROVİZYON (sim).",
+      "marketRules": {
+        "priceMult": 1.5,
+        "rerollMult": 1.5,
+        "rarityFloor": "uncommon",
+        "oathDiscount": 0.2
+      }
+    },
+    {
+      "id": "hc55",
+      "type": "battle",
+      "name": "The Roots",
+      "subtitle": "Battle · Ashborn",
+      "lore": "Roots of the mountain twist through hot rock, and the cult has set its beasts to guard them.",
+      "region": "IV",
+      "pos": [
+        0.8612,
+        0.5951
+      ],
+      "encounter": "hc_55"
+    },
+    {
+      "id": "hc56",
+      "type": "battle",
+      "name": "Chain Stair",
+      "subtitle": "Battle · Ashborn",
+      "lore": "A stair of iron chains hangs down into the heat, watched over by knights in cindered plate.",
+      "region": "IV",
+      "pos": [
+        0.8254,
+        0.6376
+      ],
+      "encounter": "hc_56"
+    },
+    {
+      "id": "hc57",
+      "type": "rest",
+      "name": "Lantern's End",
+      "subtitle": "Rest · Camp",
+      "lore": "The last lantern the dwarves ever lit, burning alone where the cold stone turns warm.",
+      "region": "IV",
+      "pos": [
+        0.7955,
+        0.6908
+      ],
+      "rest": true
+    },
+    {
+      "id": "hc58",
+      "type": "battle",
+      "name": "Lava Tube",
+      "subtitle": "Battle · Ashborn",
+      "lore": "A tube of black glass left by old lava, hot underfoot and loud with the breathing of hounds.",
+      "region": "V",
+      "pos": [
+        0.7476,
+        0.7014
+      ],
+      "encounter": "hc_58"
+    },
+    {
+      "id": "hc59",
+      "type": "battle",
+      "name": "Cinder Gate",
+      "subtitle": "Battle · Ashborn",
+      "lore": "A gate of fused cinders where the Ashborn knights turn back everyone who is not of the faith.",
+      "region": "V",
+      "pos": [
+        0.7057,
+        0.6536
+      ],
+      "encounter": "hc_59"
+    },
+    {
+      "id": "hc60",
+      "type": "treasure",
+      "name": "Kiln Chapel",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A chapel built inside a kiln, where the cult fires its relics and its golems keep the heat.",
+      "region": "V",
+      "pos": [
+        0.6639,
+        0.6482
+      ],
+      "encounter": "hc_60",
+      "treasure": "hc_kiln_chapel"
+    },
+    {
+      "id": "hc61",
+      "type": "elite",
+      "name": "Hierarch's Pulpit",
+      "subtitle": "Elite · The Ashborn Hierarch",
+      "lore": "From a pulpit of black glass the Hierarch preaches the coming of the fire to his faithful.",
+      "region": "V",
+      "pos": [
+        0.616,
+        0.6504
+      ],
+      "encounter": "hc_61"
+    },
+    {
+      "id": "hc62",
+      "type": "rest",
+      "name": "Cooling Pools",
+      "subtitle": "Rest · Camp",
+      "lore": "Pools of water cool enough to touch, the only mercy the warrens offer to those who pass.",
+      "region": "V",
+      "pos": [
+        0.5682,
+        0.6504
+      ],
+      "rest": true
+    },
+    {
+      "id": "hc63",
+      "type": "battle",
+      "name": "Bridge of Chains",
+      "subtitle": "Battle · Ashborn",
+      "lore": "A bridge of hanging chains over a pit of slow fire, held at both ends by the cult.",
+      "region": "V",
+      "pos": [
+        0.6699,
+        0.7439
+      ],
+      "encounter": "hc_63"
+    },
+    {
+      "id": "hc64",
+      "type": "battle",
+      "name": "Ash Catacombs",
+      "subtitle": "Battle · Ashborn",
+      "lore": "The cult buries its dead in the warm ash here, and does not always wait for them to die.",
+      "region": "V",
+      "pos": [
+        0.5891,
+        0.7386
+      ],
+      "encounter": "hc_64"
+    },
+    {
+      "id": "hc65",
+      "type": "elite",
+      "name": "The Forge Gate",
+      "subtitle": "Elite · Forge-Master Golem",
+      "lore": "The forge gate is held by a golem greater than the rest, and its core burns white with heat.",
+      "region": "V",
+      "pos": [
+        0.5203,
+        0.6961
+      ],
+      "encounter": "hc_65"
+    },
+    {
+      "id": "hc66",
+      "type": "treasure",
+      "name": "Warren Hoard",
+      "subtitle": "Treasure · Guarded",
+      "lore": "The hoard of the warrens, heaped in a side cave and guarded by hounds with molten jaws.",
+      "region": "V",
+      "pos": [
+        0.5502,
+        0.7811
+      ],
+      "optional": true,
+      "encounter": "hc_66",
+      "treasure": "hc_warren_hoard"
+    },
+    {
+      "id": "hc67",
+      "type": "event",
+      "name": "Sermon Hall",
+      "subtitle": "Event",
+      "lore": "A hall of benches facing a pulpit, where the cult gathers to hear the last of its sermons.",
+      "region": "V",
+      "pos": [
+        0.4725,
+        0.6536
+      ],
+      "event": "hc_sermon_hall"
+    },
+    {
+      "id": "hc68",
+      "type": "battle",
+      "name": "Slag Fields",
+      "subtitle": "Battle · Ashborn",
+      "lore": "Fields of cooling slag stretch away in the dark, and the witches of the pyre walk them.",
+      "region": "V",
+      "pos": [
+        0.4246,
+        0.6642
+      ],
+      "encounter": "hc_68"
+    },
+    {
+      "id": "hc69",
+      "type": "battle",
+      "name": "Pilgrims' Stair",
+      "subtitle": "Battle · Ashborn",
+      "lore": "The pilgrims of the cult climb down this stair to the fire, and they do not welcome company.",
+      "region": "V",
+      "pos": [
+        0.3798,
+        0.627
+      ],
+      "encounter": "hc_69"
+    },
+    {
+      "id": "hc70",
+      "type": "treasure",
+      "name": "Vault of the First Kings",
+      "subtitle": "Treasure · Guarded",
+      "lore": "The vault where the first kings of Valdoria hid their gifts to the fire, guarded by its golems.",
+      "region": "V",
+      "pos": [
+        0.3708,
+        0.712
+      ],
+      "optional": true,
+      "encounter": "hc_70",
+      "treasure": "hc_first_kings_vault"
+    },
+    {
+      "id": "hc71",
+      "type": "rest",
+      "name": "Last Lantern",
+      "subtitle": "Rest · Camp",
+      "lore": "The cult leaves one lantern burning above the deep, for the faithful who come back up.",
+      "region": "V",
+      "pos": [
+        0.3349,
+        0.5951
+      ],
+      "rest": true
+    },
+    {
+      "id": "hc72",
+      "type": "battle",
+      "name": "Ember Stair",
+      "subtitle": "Battle · The Hearth",
+      "lore": "A stair of glowing stone leads down to the heart of the mountain, and the heat grows with it.",
+      "region": "VI",
+      "pos": [
+        0.1974,
+        0.8183
+      ],
+      "encounter": "hc_72"
+    },
+    {
+      "id": "hc73",
+      "type": "battle",
+      "name": "Furnace Hall",
+      "subtitle": "Battle · The Hearth",
+      "lore": "A hall of furnaces that no hand has fed in centuries, yet every one of them still burns.",
+      "region": "VI",
+      "pos": [
+        0.2362,
+        0.8874
+      ],
+      "encounter": "hc_73"
+    },
+    {
+      "id": "hc74",
+      "type": "battle",
+      "name": "The Anvil Road",
+      "subtitle": "Battle · The Hearth",
+      "lore": "The road of anvils, where the golems still beat out work for masters long gone to ash.",
+      "region": "VI",
+      "pos": [
+        0.2751,
+        0.9405
+      ],
+      "encounter": "hc_74"
+    },
+    {
+      "id": "hc75",
+      "type": "event",
+      "name": "Crown Gallery",
+      "subtitle": "Event",
+      "lore": "A gallery of carvings that tells how the founders split a crown in two and why they had to.",
+      "region": "VI",
+      "pos": [
+        0.326,
+        0.9245
+      ],
+      "event": "hc_crown_gallery"
+    },
+    {
+      "id": "hc76",
+      "type": "battle",
+      "name": "Magma Bridge",
+      "subtitle": "Battle · The Hearth",
+      "lore": "A bridge of cooled magma crosses a river of fire, thin enough to feel the heat through it.",
+      "region": "VI",
+      "pos": [
+        0.2452,
+        0.8183
+      ],
+      "encounter": "hc_76"
+    },
+    {
+      "id": "hc77",
+      "type": "battle",
+      "name": "Chamber of Embers",
+      "subtitle": "Battle · The Hearth",
+      "lore": "A chamber where embers drift in the air like snow, and the cult keeps its last watch.",
+      "region": "VI",
+      "pos": [
+        0.302,
+        0.8342
+      ],
+      "encounter": "hc_77"
+    },
+    {
+      "id": "hc78",
+      "type": "treasure",
+      "name": "Forgemaster's Vault",
+      "subtitle": "Treasure · Guarded",
+      "lore": "The forgemaster's own vault, sealed with iron and still guarded by the work of his hands.",
+      "region": "VI",
+      "pos": [
+        0.2811,
+        0.7598
+      ],
+      "optional": true,
+      "encounter": "hc_78",
+      "treasure": "hc_forgemasters_vault"
+    },
+    {
+      "id": "hc79",
+      "type": "elite",
+      "name": "Warden's Gate",
+      "subtitle": "Elite · The Cinder Warden",
+      "lore": "The last gate before the hearth, held by a warden who has not left his post since the founding.",
+      "region": "VI",
+      "pos": [
+        0.3648,
+        0.898
+      ],
+      "encounter": "hc_79"
+    },
+    {
+      "id": "hc80",
+      "type": "rest",
+      "name": "Quench Well",
+      "subtitle": "Rest · Camp",
+      "lore": "A well of cold water at the bottom of the world, dug by the founders to quench their tools.",
+      "region": "VI",
+      "pos": [
+        0.4067,
+        0.8395
+      ],
+      "rest": true
+    },
+    {
+      "id": "hc81",
+      "type": "battle",
+      "name": "Hall of Bearers",
+      "subtitle": "Battle · The Hearth",
+      "lore": "A hall lined with the statues of every crownbearer, and the guardians who serve them still.",
+      "region": "VI",
+      "pos": [
+        0.4545,
+        0.8236
+      ],
+      "encounter": "hc_81"
+    },
+    {
+      "id": "hc82",
+      "type": "treasure",
+      "name": "Bearers' Crypt",
+      "subtitle": "Treasure",
+      "lore": "The crypt of the crownbearers, where each of them was laid to rest with a gift for the next.",
+      "region": "VI",
+      "pos": [
+        0.4187,
+        0.7598
+      ],
+      "optional": true,
+      "treasure": "hc_bearers_crypt"
+    },
+    {
+      "id": "hc83",
+      "type": "rest",
+      "name": "The Hearth Door",
+      "subtitle": "Rest · Camp",
+      "lore": "Before the great door to the hearth there is room for one last fire, and one last night.",
+      "region": "VI",
+      "pos": [
+        0.4994,
+        0.8289
+      ],
+      "rest": true
+    },
+    {
+      "id": "hc84",
+      "type": "boss",
+      "name": "The First Hearth",
+      "subtitle": "Boss · The Hearthwarden",
+      "lore": "The first king of Valdoria stands at the hearth, grown into the stone, and he will not step aside.",
+      "region": "VI",
+      "pos": [
+        0.4605,
+        0.9139
+      ],
+      "encounter": "hc_hearthwarden"
+    },
+    {
+      "id": "hc85",
+      "type": "boss",
+      "name": "The Ember",
+      "subtitle": "Final Boss · The Ember of the First Hearth",
+      "lore": "The Ember of the First Hearth burns at the bottom of the mountain, and it has never once gone out.",
+      "region": "VI",
+      "pos": [
+        0.5532,
+        0.882
+      ],
+      "encounter": "hc_ember"
+    },
+    {
+      "id": "hc86",
+      "type": "event",
+      "name": "Mend or Quench",
+      "subtitle": "Event",
+      "lore": "Two halves of one crown, and a fire that waits to see what you will do with them.",
+      "region": "VI",
+      "pos": [
+        0.622,
+        0.9033
+      ],
+      "event": "hc_mend_or_quench",
+      "final": true
+    }
+  ],
+  "edges": [
+    {
+      "from": "hc1",
+      "to": "hc2",
+      "style": "solid"
+    },
+    {
+      "from": "hc2",
+      "to": "hc3",
+      "style": "solid"
+    },
+    {
+      "from": "hc3",
+      "to": "hc4",
+      "style": "solid"
+    },
+    {
+      "from": "hc4",
+      "to": "hc5",
+      "style": "solid"
+    },
+    {
+      "from": "hc5",
+      "to": "hc9",
+      "style": "solid"
+    },
+    {
+      "from": "hc3",
+      "to": "hc6",
+      "style": "solid"
+    },
+    {
+      "from": "hc6",
+      "to": "hc8",
+      "style": "solid"
+    },
+    {
+      "from": "hc8",
+      "to": "hc9",
+      "style": "solid"
+    },
+    {
+      "from": "hc6",
+      "to": "hc7",
+      "style": "dashed"
+    },
+    {
+      "from": "hc9",
+      "to": "hc10",
+      "style": "solid"
+    },
+    {
+      "from": "hc10",
+      "to": "hc11",
+      "style": "solid"
+    },
+    {
+      "from": "hc11",
+      "to": "hc12",
+      "style": "solid"
+    },
+    {
+      "from": "hc12",
+      "to": "hc13",
+      "style": "solid"
+    },
+    {
+      "from": "hc13",
+      "to": "hc14",
+      "style": "solid"
+    },
+    {
+      "from": "hc14",
+      "to": "hc15",
+      "style": "solid"
+    },
+    {
+      "from": "hc15",
+      "to": "hc16",
+      "style": "solid"
+    },
+    {
+      "from": "hc16",
+      "to": "hc20",
+      "style": "solid"
+    },
+    {
+      "from": "hc15",
+      "to": "hc17",
+      "style": "solid"
+    },
+    {
+      "from": "hc17",
+      "to": "hc18",
+      "style": "solid"
+    },
+    {
+      "from": "hc18",
+      "to": "hc19",
+      "style": "solid"
+    },
+    {
+      "from": "hc19",
+      "to": "hc20",
+      "style": "solid"
+    },
+    {
+      "from": "hc20",
+      "to": "hc21",
+      "style": "solid"
+    },
+    {
+      "from": "hc21",
+      "to": "hc22",
+      "style": "solid"
+    },
+    {
+      "from": "hc22",
+      "to": "hc24",
+      "style": "solid"
+    },
+    {
+      "from": "hc24",
+      "to": "hc25",
+      "style": "solid"
+    },
+    {
+      "from": "hc25",
+      "to": "hc26",
+      "style": "solid"
+    },
+    {
+      "from": "hc26",
+      "to": "hc27",
+      "style": "solid"
+    },
+    {
+      "from": "hc27",
+      "to": "hc28",
+      "style": "solid"
+    },
+    {
+      "from": "hc22",
+      "to": "hc23",
+      "style": "dashed"
+    },
+    {
+      "from": "hc28",
+      "to": "hc29",
+      "style": "solid"
+    },
+    {
+      "from": "hc29",
+      "to": "hc30",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc31",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc32",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc33",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc34",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc35",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc36",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc37",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc38",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc39",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc40",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc41",
+      "style": "solid"
+    },
+    {
+      "from": "hc30",
+      "to": "hc42",
+      "style": "dashed"
+    },
+    {
+      "from": "hc41",
+      "to": "hc43",
+      "style": "solid"
+    },
+    {
+      "from": "hc43",
+      "to": "hc45",
+      "style": "solid"
+    },
+    {
+      "from": "hc45",
+      "to": "hc46",
+      "style": "solid"
+    },
+    {
+      "from": "hc46",
+      "to": "hc47",
+      "style": "solid"
+    },
+    {
+      "from": "hc47",
+      "to": "hc48",
+      "style": "solid"
+    },
+    {
+      "from": "hc48",
+      "to": "hc51",
+      "style": "solid"
+    },
+    {
+      "from": "hc43",
+      "to": "hc49",
+      "style": "solid"
+    },
+    {
+      "from": "hc49",
+      "to": "hc51",
+      "style": "solid"
+    },
+    {
+      "from": "hc43",
+      "to": "hc44",
+      "style": "dashed"
+    },
+    {
+      "from": "hc49",
+      "to": "hc50",
+      "style": "dashed"
+    },
+    {
+      "from": "hc51",
+      "to": "hc52",
+      "style": "solid"
+    },
+    {
+      "from": "hc52",
+      "to": "hc53",
+      "style": "solid"
+    },
+    {
+      "from": "hc53",
+      "to": "hc54",
+      "style": "solid"
+    },
+    {
+      "from": "hc54",
+      "to": "hc55",
+      "style": "solid"
+    },
+    {
+      "from": "hc55",
+      "to": "hc56",
+      "style": "solid"
+    },
+    {
+      "from": "hc56",
+      "to": "hc57",
+      "style": "solid"
+    },
+    {
+      "from": "hc57",
+      "to": "hc58",
+      "style": "solid"
+    },
+    {
+      "from": "hc58",
+      "to": "hc59",
+      "style": "solid"
+    },
+    {
+      "from": "hc59",
+      "to": "hc60",
+      "style": "solid"
+    },
+    {
+      "from": "hc60",
+      "to": "hc61",
+      "style": "solid"
+    },
+    {
+      "from": "hc61",
+      "to": "hc62",
+      "style": "solid"
+    },
+    {
+      "from": "hc62",
+      "to": "hc65",
+      "style": "solid"
+    },
+    {
+      "from": "hc58",
+      "to": "hc63",
+      "style": "solid"
+    },
+    {
+      "from": "hc63",
+      "to": "hc64",
+      "style": "solid"
+    },
+    {
+      "from": "hc64",
+      "to": "hc65",
+      "style": "solid"
+    },
+    {
+      "from": "hc65",
+      "to": "hc66",
+      "style": "dashed"
+    },
+    {
+      "from": "hc65",
+      "to": "hc67",
+      "style": "solid"
+    },
+    {
+      "from": "hc67",
+      "to": "hc68",
+      "style": "solid"
+    },
+    {
+      "from": "hc68",
+      "to": "hc69",
+      "style": "solid"
+    },
+    {
+      "from": "hc69",
+      "to": "hc71",
+      "style": "solid"
+    },
+    {
+      "from": "hc69",
+      "to": "hc70",
+      "style": "dashed"
+    },
+    {
+      "from": "hc71",
+      "to": "hc72",
+      "style": "solid"
+    },
+    {
+      "from": "hc72",
+      "to": "hc73",
+      "style": "solid"
+    },
+    {
+      "from": "hc73",
+      "to": "hc74",
+      "style": "solid"
+    },
+    {
+      "from": "hc74",
+      "to": "hc75",
+      "style": "solid"
+    },
+    {
+      "from": "hc75",
+      "to": "hc79",
+      "style": "solid"
+    },
+    {
+      "from": "hc72",
+      "to": "hc76",
+      "style": "solid"
+    },
+    {
+      "from": "hc76",
+      "to": "hc77",
+      "style": "solid"
+    },
+    {
+      "from": "hc77",
+      "to": "hc79",
+      "style": "solid"
+    },
+    {
+      "from": "hc77",
+      "to": "hc78",
+      "style": "dashed"
+    },
+    {
+      "from": "hc79",
+      "to": "hc80",
+      "style": "solid"
+    },
+    {
+      "from": "hc80",
+      "to": "hc81",
+      "style": "solid"
+    },
+    {
+      "from": "hc81",
+      "to": "hc83",
+      "style": "solid"
+    },
+    {
+      "from": "hc83",
+      "to": "hc84",
+      "style": "solid"
+    },
+    {
+      "from": "hc84",
+      "to": "hc85",
+      "style": "solid"
+    },
+    {
+      "from": "hc85",
+      "to": "hc86",
+      "style": "solid"
+    },
+    {
+      "from": "hc81",
+      "to": "hc82",
+      "style": "dashed"
+    }
+  ]
+}

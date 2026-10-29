@@ -949,7 +949,7 @@ export function partBonusForm(to: string): BonusForm {
   const [kind, key = ''] = to.split(':');
   if (kind === 'elem' || kind === 'mult') return 'more';
   if (kind === 'res') return 'less';
-  const f = kind === 'fx' ? (STACK_FORM[key] ?? STACK_FORM[`${key}.reduce`]) : undefined;
+  const f = kind === 'fx' ? (STACK_FORM[key] ?? STACK_FORM[`${key}.reduce`] ?? STACK_FORM[`${key}.bonus`]) : undefined;
   if (f === 'mult' || f === 'more') return 'more';
   if (f === 'less') return 'less';
   return 'add';

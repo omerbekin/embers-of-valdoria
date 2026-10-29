@@ -8,6 +8,10 @@
  *  - Hız: sheet'in fps'i `slow()` ile skillSlowdown'a uyar (efektin geri kalanıyla aynı yavaşlık); `fps` seçeneği bunu ezer.
  *  - Kare alt kümesi: `frames: [1, 2, 3]` yalnızca o kareleri sırayla oynar; `frame: 3` animasyonsuz tek kare.
  *  - Sprite animasyon bitince kendini yok eder (`keep: true` değilse); `loop: true` döngü (çağıran yok eder).
+ *  - SARMA (`wrap`, varsayılan kapalı): tek düz katman sheet karakteri saramaz (ya tamamen önünde ya arkasında kalır). `wrap` verilince aynı
+ *    sheet iki kopya çizilir: karenin bölme çizgisinin ÜSTÜ birimin hemen arkasında, ALTI hemen önünde (ayaktaki halkanın uzak yarısı arkada,
+ *    yakın yarısı önde). Dönen sprite arka kopyadır; ön kopya her karede ondan kopyalanır (kare, konum, ölçek, aynalama, saydamlık...), yani
+ *    çağıranın tween'i / animasyonu / yok etmesi ikisine de işler (wrapSheet).
  */
 import Phaser from 'phaser';
 import { slow } from './combatant-view';
@@ -104,6 +108,81 @@ export interface SheetOpts {
   from?: number;
   /** Her karenin kenarından bu kadar piksel silinir (256'lık kare pikseli): sheet'e çizili dikdörtgen çerçeve (Ember Toss). Yoksa kare aynen. */
   trim?: number;
+  /** Karakteri sarma (yukarıdaki başlık; yoksa tek katman, `depth` geçerli). Verilince `depth` yok sayılır: kopyalar birimin derinliğine göre. */
+  wrap?: SheetWrap;
+}
+
+/** Sheet'in hedef birimi sarması: bölme çizgisinin üstü birimin arkasında, altı önünde. */
+export interface SheetWrap {
+  /** Sarılan birimin derinliği; işlev ise her karede okunur (birim sarsılıp derinliği değişse de iz sürer). */
+  unit: number | (() => number);
+  /** Bölme çizgisi, kare yüksekliğinin kesri (0 üst, 1 alt). Yoksa sheet json'ındaki `wrap.split`, o da yoksa WRAP_SPLIT. */
+  split?: number;
+  /** Aynı birimi saran kopyalar arasında sıra (0-0,4; ör. ADD parlama kopyası 0,1 ile asıl kopyanın üstünde). */
+  layer?: number;
+  /**
+   * Hayalet (0-1, varsayılan 0 = yok; Ömer 2026-10-29): arkada kalan üst kısım birimin ÖNÜNDE bu saydamlıkla bir kez daha çizilir. Yükselen
+   * sütun karakterin arkasında tam, önünde sisli görünür (yatay bölmenin sütunu tamamen gövdenin arkasına atması). Saydamlık çağıranın
+   * alfasıyla çarpılır: ADD parlama kopyasında da aynı oran (parlama katlanmaz).
+   */
+  ghost?: number;
+}
+
+/** Bölme çizgisi varsayılanı (kare yüksekliğinin kesri): zemine oturan sheet'lerde halka / disk genelde karenin alt üçte birinde. */
+export const WRAP_SPLIT = 0.75;
+/** Kopyaların birim derinliğine uzaklığı: komşu birimler (ayak y'si) en az birkaç px uzakta, bu yüzden araya başka birim girmez. */
+const WRAP_GAP = 0.5;
+
+/** Bölme çizgisi (kesir): çağrı > sheet json > varsayılan; uçlar kırpılır (boş kopya olmasın). */
+export function wrapSplit(opt: number | undefined, meta: number | undefined): number {
+  return Math.min(0.95, Math.max(0.05, opt ?? meta ?? WRAP_SPLIT));
+}
+
+/**
+ * Sarma: `back` (çağıranın tuttuğu sprite) bölme çizgisinin üstünü birimin arkasında çizer; ön kopya altını birimin önünde. Ön kopya her
+ * güncellemeden sonra (POST_UPDATE: tween ve animasyon o karede ilerledikten sonra) arka kopyanın durumunu alır; arka kopya yok olunca o da gider.
+ * Kırpma (setCrop) kare pikselindedir ve kare değişse de kalır (Phaser setFrame kırpmayı yeniler); aynalama kırpmayı bozmaz (yatay tam boy).
+ */
+function wrapSheet(scene: Phaser.Scene, back: Phaser.GameObjects.Sprite, w: SheetWrap, metaSplit: number | undefined): void {
+  const fw = back.frame.width;
+  const fh = back.frame.height;
+  const cut = Math.round(fh * wrapSplit(w.split, metaSplit));
+  const unit = typeof w.unit === 'function' ? w.unit : (): number => w.unit as number;
+  const layer = w.layer ?? 0;
+  const ghost = Math.min(1, Math.max(0, w.ghost ?? 0));
+  // kopyalar: ön (bölmenin altı, tam saydamlık) + isteğe bağlı hayalet (bölmenin ÜSTÜ birimin önünde, ghost saydamlığıyla: sütun önde sisli)
+  const copies: Array<{ spr: Phaser.GameObjects.Sprite; crop: [number, number]; alpha: number; dz: number }> = [
+    { spr: scene.add.sprite(back.x, back.y, back.texture.key, back.frame.name), crop: [cut, fh - cut], alpha: 1, dz: WRAP_GAP },
+  ];
+  if (ghost > 0) copies.push({ spr: scene.add.sprite(back.x, back.y, back.texture.key, back.frame.name), crop: [0, cut], alpha: ghost, dz: WRAP_GAP - 0.05 });
+  back.setCrop(0, 0, fw, cut);
+  let lastFrame: Phaser.Textures.Frame | null = null;
+  const sync = (): void => {
+    if (!back.active) return;
+    const newFrame = back.frame !== lastFrame;
+    lastFrame = back.frame;
+    const d = unit();
+    if (back.depth !== d - WRAP_GAP + layer) back.setDepth(d - WRAP_GAP + layer);
+    for (const c of copies) {
+      const o = c.spr;
+      if (!o.active) continue;
+      if (newFrame) o.setFrame(back.frame);
+      if (o.flipX !== back.flipX) o.setFlipX(back.flipX);
+      if (o.originX !== back.originX || o.originY !== back.originY) o.setOrigin(back.originX, back.originY);
+      o.setPosition(back.x, back.y).setScale(back.scaleX, back.scaleY).setRotation(back.rotation).setAlpha(back.alpha * c.alpha).setVisible(back.visible);
+      if (o.blendMode !== back.blendMode) o.setBlendMode(back.blendMode);
+      if (back.isTinted) o.setTint(back.tintTopLeft, back.tintTopRight, back.tintBottomLeft, back.tintBottomRight);
+      else if (o.isTinted) o.clearTint();
+      if (o.depth !== d + c.dz + layer) o.setDepth(d + c.dz + layer);
+    }
+  };
+  sync();
+  for (const c of copies) c.spr.setCrop(0, c.crop[0], fw, c.crop[1]); // aynalama sync'te ayarlandı (kırpma aynalamadan sonra)
+  scene.events.on(Phaser.Scenes.Events.POST_UPDATE, sync);
+  back.once(Phaser.GameObjects.Events.DESTROY, () => {
+    scene.events.off(Phaser.Scenes.Events.POST_UPDATE, sync);
+    for (const c of copies) if (c.spr.active) c.spr.destroy();
+  });
 }
 
 /** Türev dokunun en geniş kenarı (px): kareler bu genişliği aşınca alt satıra geçer. */
@@ -204,6 +283,7 @@ export function vfxSheet(scene: Phaser.Scene, id: string, x: number, y: number, 
     spr.setVisible(false);
     scene.time.delayedCall(slow(o.delay), start);
   } else start();
+  if (o.wrap) wrapSheet(scene, spr, o.wrap, f.meta.wrap?.split);
   return spr;
 }
 

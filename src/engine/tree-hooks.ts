@@ -19,6 +19,7 @@ export const UNIT_FX_KEYS = [
   'debuffAvoid', 'potencyTurns', 'auraDamage', 'damageTakenReduce', 'lowHpReduce', 'ultCdReduce', 'earlyImmunity', 'summonPower', 'rageGain',
   'retortStatus', 'critStatuses', 'killRush', 'lastStand', 'openerStatus', 'restBlessing', 'vengeance', 'tierStatus',
   'elemResist', 'thorns', 'frontRowDamage', 'backRowDamage', 'tierDamageTakenReduce', 'columnGuard', 'pierceBehind', 'steadyDamage',
+  'healReceived', 'executeDamage', 'killMp', 'killHeal', 'armorShred', 'manaShield', 'cdChance', 'overkillSpill',
 ] as const satisfies readonly (keyof ItemEffects)[];
 type MissingKey = Exclude<keyof ItemEffects, (typeof UNIT_FX_KEYS)[number]>;
 const _allKeys: [MissingKey] extends [never] ? true : MissingKey = true;
@@ -45,6 +46,7 @@ export const STACK_FORM: Readonly<Record<string, StackForm>> = {
   columnGuard: 'less',
   mpCostReduce: 'less',
   'lowHpReduce.reduce': 'less',
+  'executeDamage.bonus': 'more',
   elemResist: 'less',
 };
 /** İki değeri biçimine göre birleştirir (biçimsizse toplar). */
@@ -88,6 +90,30 @@ export function effNum(c: FxHolder, key: NumKey): number {
   const a = (c.itemEffects?.[key] as number | undefined) ?? 0;
   const t = c.treeFx ? ((c.treeFx[key] as number | undefined) ?? 0) : 0;
   return t ? stackValues(STACK_FORM[key], a, t) : a;
+}
+
+/**
+ * Mana kalkanı (a_manashield, Ömer 2026-10-24/29): zırh ve kalkanlardan sonra kalan `rest` hasarın MP'den ödenecek kısmı (en çok `mp`); etki yoksa 0.
+ * Motor (applyHit / Lucky Escape) ve tahmin (preview -> AI ölümcül tahmini) AYNI fonksiyonu kullanır.
+ */
+export function manaShieldPay(c: FxHolder, rest: number, mp: number): number {
+  if (rest <= 0 || mp <= 0 || (!c.itemEffects && !c.treeFx)) return 0;
+  const m = effNum(c, 'manaShield');
+  return m > 0 ? Math.min(mp, Math.round(rest * Math.min(1, m))) : 0;
+}
+
+/**
+ * Mana kalkanının tersi (AI ölümcül tahmini): kalkanlardan sonra `hp` canı bitirmek için gereken en küçük hasar (manaShieldPay ile birebir; MP sınırı dahil).
+ * Etki yoksa `hp` aynen.
+ */
+export function manaShieldNeed(c: FxHolder, hp: number, mp: number): number {
+  if (hp <= 0 || mp <= 0 || (!c.itemEffects && !c.treeFx)) return hp;
+  const m = Math.min(1, effNum(c, 'manaShield'));
+  if (m <= 0) return hp;
+  // kaba tahmin: MP yetiyorsa hp / (1 - m), bitiyorsa hp + mp; yuvarlama için birkaç adım geri gidip ileri sayılır
+  let r = Math.max(hp, Math.floor(Math.min(m < 1 ? hp / (1 - m) : Infinity, hp + mp)) - 3);
+  while (r - manaShieldPay(c, r, mp) < hp) r++;
+  return r;
 }
 
 /** Ham çarpan etkisi: kaynakların çarpımı; hiç kaynak yoksa undefined. */
@@ -921,6 +947,9 @@ export const TRIGGER_EVENTS = [
   // Faz 4c: zemin bitişi (sahip = zemini bırakan), çağrı öldü / süresi doldu (sahip = çağıran), çağrı sahaya indi (sahip = çağrının kendisi),
   // Double Hit zarı tutmadı, Mana Overflow bir dostu MP'ye doldurdu (sahip = Anti-Mage, hedef = dost)
   'groundEnd', 'summonDeath', 'arrive', 'repeatFail', 'allyFilled',
+  // Ömer 2026-10-29 (open-q 457): itmenin çarpması (sahip = iten, hedef = itilemeyen birim, skill = itmenin skill'i), Spellbreaker's Instinct işledi
+  // (sahip = Anti-Mage, hedef / kaynak = MP ödeyen düşman), Ley Brand bir Ley Thread'i tüketti (sahip = Brand'i atan, hedef = iplikli düşman)
+  'crash', 'instinct', 'threadConsumed',
 ] as const;
 export type TriggerEvent = (typeof TRIGGER_EVENTS)[number];
 

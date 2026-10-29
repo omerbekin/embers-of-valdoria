@@ -74,7 +74,7 @@ describe('town scene data (valdoria.json > scene)', () => {
       expect(existsSync(`assets/source/backgrounds-v2/${bg}.png`), `${bg}.png aslı yok`).toBe(true);
     }
     // Bağlantısız dosya kalmasın: assets/towns altındaki her görsel bir kasabanın arka planı
-    const reachTowns = getMap('drowned-reach').nodes.filter((n) => n.type === 'town');
+    const reachTowns = [...getMap('drowned-reach').nodes, ...getMap('hollow-crown').nodes].filter((n) => n.type === 'town'); // Harita 2 + 3 (Hearthstead / Kharduin kendi sahneleri, 2026-10-29)
     const used = new Set([...towns, ...reachTowns].map((n) => `${townScene(n)!.background}.webp`));
     for (const n of reachTowns) {
       const bg = townScene(n)!.background;

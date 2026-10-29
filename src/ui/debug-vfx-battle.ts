@@ -78,13 +78,45 @@ let openPanel: PanelHandle | null = null;
 export const vfxBattleTestHandle = (): PanelHandle | null => openPanel;
 
 interface TestSkill {
+  /** Listedeki kimlik (pick / board satırı); mob skill'lerinde skill id'si. */
+  key: string;
+  /** Atılan skill. */
   skill: string;
   label: string;
   mob: string;
   mobName: string;
   /** Dost hedefli (atanın yanına bir dost konur). */
   ally: boolean;
+  /** Kukla yerine oyuncu tarafına konan birim (sınıf pasifi denemesi: Heat Mirage = kuklada Mage). */
+  dummy?: string;
+  /** Kuklanın hücresi (varsayılan battleTest.dummySlot; Ice Crater çarpması: arka sıra, itme tahta kenarına çarpar). */
+  dummySlot?: number;
+  /** Ana skill'den önce aynı atışta atılan skill'ler (durumlar silinmeden: Ley Thread -> Ley Brand). */
+  pre?: string[];
+  /** Atanın canı atıştan önce bu orana iner (can çalma pasifi yalnız gerçek iyileşmede oynar: Vampiric Bite). */
+  casterHp?: number;
+  /** Atıştan sonra savaş sıfırlanmaz (atan bir çağrı: sıfırlama çağrıları kaldırır, ikinci atış olmazdı; Skeleton). */
+  keepAfter?: boolean;
 }
+/**
+ * SINIF efektleri (mob değil; Ömer 2026-10-29 Mage / AM reworkü, v2 sınıf efektleri art-v2/<sınıf>/vfx.ts). Atan sınıf birimi düşman tarafında;
+ * pasif / durum olay efektleri (passive_<id>, status_<id> ...) bir skill'in yan sonucu olarak oynar.
+ */
+const CLASS_TESTS: ReadonlyArray<{ key: string; skill: string; caster: string; label?: string; dummy?: string; dummySlot?: number; pre?: string[]; casterHp?: number; keepAfter?: boolean }> = [
+  { key: 'ice_crater', skill: 'ice_crater', caster: 'mage' },
+  { key: 'ice_crater_crash', skill: 'ice_crater', caster: 'mage', dummySlot: 10, label: 'Ice Crater crash (dummy on the back row: pushed into the edge)' },
+  { key: 'heat_mirage', skill: 'rend', caster: 'grey_wolf', dummy: 'mage', label: 'Heat Mirage (Grey Wolf bites the Mage)' },
+  { key: 'ley_thread', skill: 'mana_burn', caster: 'antimage', label: 'Ley Thread (Mana Steal)' },
+  { key: 'ley_thread_brand', skill: 'drain_field', caster: 'antimage', pre: ['mana_burn'], label: 'Ley Thread used up (Mana Steal, then Ley Brand)' },
+  { key: 'storm', skill: 'blizzard', caster: 'mage', label: 'Chill Ground (Blizzard)' },
+  // Undead sheet seti (2026-10-29, docs/anim-review/new-art/undead/brief.md): anahtar sheet adında geçer (assets/vfx/undead/NN-<anahtar>-..), yakalama aracı onu izler
+  { key: 'bone_throw', skill: 'bone_throw', caster: 'undead' },
+  { key: 'wail_of_the_dead', skill: 'wail_of_the_dead', caster: 'undead' },
+  { key: 'dark_bond', skill: 'dark_bond', caster: 'undead' },
+  { key: 'raise_dead', skill: 'raise_dead', caster: 'undead', label: 'Raise Dead (no corpse: unfed skeleton)' },
+  { key: 'vampiric_bite', skill: 'wail_of_the_dead', caster: 'undead', label: 'Vampiric Bite (Undead at half HP drains life with Wail)', casterHp: 0.5 },
+  { key: 'bone_slash', skill: 'skeleton_slash', caster: 'skeleton', label: 'Bone Slash (Skeleton)', keepAfter: true },
+];
 /** Tüm mob skill'leri, sahibine göre gruplu (MOB_VFX_SPECS sırası; aynı mob'un skill'leri yan yana). */
 function testSkills(): TestSkill[] {
   const byMob = new Map<string, TestSkill[]>();
@@ -92,12 +124,18 @@ function testSkills(): TestSkill[] {
     const def = content.skills[skill];
     const unit = content.bosses[s.mob] ?? content.mobs[s.mob];
     const t = def?.target;
-    const item: TestSkill = { skill, label: def?.name ?? skill, mob: s.mob, mobName: unit?.name ?? s.mob, ally: t === 'single_ally' || t === 'all_allies' };
+    const item: TestSkill = { key: skill, skill, label: def?.name ?? skill, mob: s.mob, mobName: unit?.name ?? s.mob, ally: t === 'single_ally' || t === 'all_allies' };
     const list = byMob.get(s.mob) ?? [];
     list.push(item);
     byMob.set(s.mob, list);
   }
-  return [...byMob.values()].flat();
+  const cls: TestSkill[] = CLASS_TESTS.filter((t) => content.skills[t.skill]).map((t) => {
+    const unit = content.classes[t.caster] ?? content.summons[t.caster] ?? content.bosses[t.caster] ?? content.mobs[t.caster];
+    const tgt = content.skills[t.skill]?.target;
+    const ally = tgt === 'single_ally' || tgt === 'all_allies';
+    return { key: t.key, skill: t.skill, label: t.label ?? content.skills[t.skill]?.name ?? t.skill, mob: t.caster, mobName: `${unit?.name ?? t.caster} (class effects)`, ally, ...(t.dummy ? { dummy: t.dummy } : {}), ...(t.dummySlot !== undefined ? { dummySlot: t.dummySlot } : {}), ...(t.pre ? { pre: t.pre } : {}), ...(t.casterHp !== undefined ? { casterHp: t.casterHp } : {}), ...(t.keepAfter ? { keepAfter: true } : {}) };
+  });
+  return [...byMob.values()].flat().concat(cls);
 }
 /** Son seçim (panel yeniden açılınca aynı skill / sürüm). */
 const last = { skill: 'rend', version: 'real' as Version };
@@ -111,7 +149,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
 
   const SK = testSkills();
   const state = {
-    skill: Math.max(0, SK.findIndex((s) => s.skill === last.skill)),
+    skill: Math.max(0, SK.findIndex((s) => s.key === last.skill)),
     version: last.version,
     method: IB_CFG.player.method in IB_CFG.methods ? IB_CFG.player.method : IB_METHODS[0]!,
     sub: IB_CFG.subOptions[0] ?? 2,
@@ -126,7 +164,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   let seed = 0;
   const tweenOk = SK.map((s) => tweenExists(s.mob, s.skill));
   let builtFor = ''; // savaşın kurulduğu düzen (atan mob + dost): aynıysa skill değişince yalnızca atılır
-  const layoutKey = (i: number): string => `${SK[i]!.mob}|${SK[i]!.ally ? 1 : 0}`;
+  const layoutKey = (i: number): string => `${SK[i]!.mob}|${SK[i]!.ally ? 1 : 0}|${SK[i]!.dummy ?? ''}|${SK[i]!.dummySlot ?? ''}`;
 
   const mk = (txt: string, title: string, fn: () => void, cls = ''): HTMLButtonElement => {
     const b = el('button', `el-icon-btn vb-btn ${cls}`, txt);
@@ -148,7 +186,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     const n = (i + SK.length) % SK.length;
     const sameLayout = layoutKey(n) === builtFor;
     state.skill = n;
-    last.skill = SK[n]!.skill;
+    last.skill = SK[n]!.key;
     if (sameLayout) {
       sync();
       void cast();
@@ -165,7 +203,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
         grp.label = sk.mobName;
         skillSel.append(grp);
       }
-      const o = el('option', REVIEW[sk.skill]?.status === 'tamam' ? 'vb-fixed' : REVIEW[sk.skill] ? 'vb-review' : '', sk.label + reviewTag(sk.skill));
+      const o = el('option', REVIEW[sk.key]?.status === 'tamam' ? 'vb-fixed' : REVIEW[sk.key] ? 'vb-review' : '', sk.label + reviewTag(sk.key));
       o.value = String(i);
       grp.append(o);
     });
@@ -304,7 +342,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
           : state.version === 'code'
             ? `Code (${IB_CFG.methods[state.method]!.label}, ${state.sub}x) · ${(f?.meta.frames ?? 8) * ibSub} frames @ ${((f?.meta.fps ?? 12) * FPS_SCALE * ibSub).toFixed(1)} fps`
             : `Original · ${f?.meta.frames ?? 8} frames @ ${((f?.meta.fps ?? 12) * FPS_SCALE).toFixed(1)} fps`;
-    skillSel.classList.toggle('vb-fixed', REVIEW[sk.skill]?.status === 'tamam');
+    skillSel.classList.toggle('vb-fixed', REVIEW[sk.key]?.status === 'tamam');
     info.textContent = `${sk.label} · ${sk.mobName} (${state.skill + 1}/${SK.length}) ${sk.ally ? 'on its ally' : 'on the dummy'} · ${label}`;
   }
 
@@ -345,7 +383,15 @@ export function openVfxBattleTest(game: Phaser.Game): void {
         sync();
         const sc = sceneNow();
         if (!sc || myGen !== gen) return;
-        const err = await sc.vfxTestCast(sk.skill, CASTER, DUMMY);
+        let err = '';
+        // atan: düşman tarafında casterSlot'taki birim (dost hedefli testte dost daha küçük yuvada olduğundan uid'i enemy-0 olabilir)
+        const caster = sc.battle.combatants.find((u) => u.side === 'enemy' && u.slot === BT.casterSlot && !u.summoned)?.uid ?? CASTER;
+        for (const pre of sk.pre ?? []) if (!err) err = await sc.vfxTestCast(pre, caster, DUMMY, { keepAfter: true });
+        if (!err && sk.casterHp !== undefined) {
+          const c = sc.battle.get(caster);
+          if (c) sc.battle.debugSetResource(caster, 'hp', Math.max(1, Math.round(c.maxHp * sk.casterHp)));
+        }
+        if (!err) err = await sc.vfxTestCast(sk.skill, caster, DUMMY, { ...(sk.pre?.length ? { keepBefore: true } : {}), ...(sk.keepAfter ? { keepAfter: true } : {}) });
         if (myGen !== gen || !alive) return;
         if (err) {
           info.textContent = `Cast failed: ${err}`;
@@ -377,7 +423,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     const data = {
       seed,
       mode: 'test' as const,
-      teams: { party: cells([[BT.dummySlot, BT.dummy]]), enemies: cells(enemies) },
+      teams: { party: cells([[sk.dummySlot ?? BT.dummySlot, sk.dummy ?? BT.dummy]]), enemies: cells(enemies) },
       partySize: 1,
       enemySize: enemies.length,
       background: BT.background,
@@ -385,11 +431,13 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     const cur = game.scene.isActive(BattleScene.KEY) ? game.scene.getScene(BattleScene.KEY) : null;
     if (cur && !('isLoading' in cur)) (cur as BattleScene).scene.restart(data);
     else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
-    // yeni savaşın kurulmasını bekle (en çok ~15 sn; sprite'lar iner)
-    for (let i = 0; i < 150 && alive; i++) {
+    // yeni savaşın kurulmasını bekle (en çok ~60 sn; sprite'lar iner: sınıf birimi ilk kez gelince yükleme uzun sürebilir)
+    building = true;
+    for (let i = 0; i < 600 && alive; i++) {
       if (sceneNow()) break;
       await sleep(100);
     }
+    building = false;
     const sc = sceneNow();
     if (!sc || !alive) {
       info.textContent = 'Could not start the test battle';
@@ -404,13 +452,15 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   // savaştan çıkılırsa (Menu > Main Menu, başka savaş) panel kendiliğinden kapanır
   const watch = window.setInterval(() => {
     if (!alive || !seed) return;
-    if (!sceneNow() && !casting && gen > 0) {
+    if (!sceneNow() && !casting && !building && gen > 0) {
       // geçiş sırasında kısa süre sahne yok olabilir: iki kez üst üste yoksa kapat
       watchMiss++;
       if (watchMiss >= 4) close();
     } else watchMiss = 0;
   }, 500);
   let watchMiss = 0;
+  /** Savaş yeniden kuruluyor (yükleme sürerken panel kapanmasın). */
+  let building = false;
 
   function close(): void {
     if (!alive) return;
@@ -436,7 +486,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   openPanel = {
     close,
     pick: (skill) => {
-      const i = SK.findIndex((s) => s.skill === skill);
+      const i = SK.findIndex((s) => s.key === skill);
       if (i >= 0) pickSkill(i);
       return i >= 0;
     },

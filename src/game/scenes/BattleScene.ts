@@ -1154,13 +1154,18 @@ export class BattleScene extends Phaser.Scene {
   /**
    * Debug > VFX frame test (in battle; src/ui/debug-vfx-battle.ts): `casterUid` skill'i kukla `dummyUid` üstünde gerçek savaş hattıyla (hazırlık, efekt,
    * vuruş, hasar rakamı) oynatır; kukla ölmesin diye önce ve sonra canı doldurulur (debugResetAll). Oynama bitince çözülür; hata varsa kısa mesaj, yoksa ''.
+   * Zincir (sınıf efekti denemesi, ör. Mana Steal -> Ley Brand): `keepAfter` atıştan sonra sıfırlamaz (durumlar kalır, yalnız can/MP dolar),
+   * `keepBefore` atıştan önce kuklanın durumlarını silmez.
    */
-  async vfxTestCast(skillId: string, casterUid: string, dummyUid: string): Promise<string> {
+  async vfxTestCast(skillId: string, casterUid: string, dummyUid: string, o: { keepBefore?: boolean; keepAfter?: boolean } = {}): Promise<string> {
     const b = this.battle;
     if (b.winner) return 'Battle is over';
     if (!b.get(casterUid) || !b.get(dummyUid)) return 'Unit missing';
     if (b.get(dummyUid)!.hp <= 0 || b.get(casterUid)!.hp <= 0) b.debugResetAll();
-    b.debugClearStatuses(dummyUid);
+    if (!o.keepBefore) b.debugClearStatuses(dummyUid);
+    // Test atışı: tur arası bir kez çalışan pasifler (Heat Mirage, Spellbreaker's Instinct) kukla hiç tur oynamadığı için her atışta yeniden açılır
+    for (const c of b.combatants) { c.mirageUsed = false; c.instinctUsed = false; }
+    b.debugSetResource(casterUid, 'mp', b.get(casterUid)!.maxMp);
     b.debugSetResource(dummyUid, 'hp', b.get(dummyUid)!.maxHp);
     this.galleryCaster = casterUid;
     this.galleryCell = null;
@@ -1173,7 +1178,8 @@ export class BattleScene extends Phaser.Scene {
     debugState.galleryReset = keep;
     if (err) return err;
     await this.eventQueue;
-    if (b === this.battle && !b.winner) b.debugResetAll();
+    if (b === this.battle && !b.winner && !o.keepAfter) b.debugResetAll();
+    else if (b === this.battle && !b.winner && b.get(dummyUid)!.hp > 0) b.debugSetResource(dummyUid, 'hp', b.get(dummyUid)!.maxHp);
     await this.eventQueue;
     return '';
   }
@@ -3346,6 +3352,13 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'status':
       case 'statusEnd': {
+        {
+          // v2 durum efekti: uygulanınca status_<id> (Ley Thread ipliği), tüketilince statususe_<id> (iplik Brand'e harcandı); sahibi durumu veren sınıf
+          const tv = this.views.get(e.target);
+          const key = e.type === 'status' ? EVENT_FX.status(e.status) : e.consumed ? EVENT_FX.statusUse(e.status) : null;
+          const by = e.type === 'status' ? this.views.get(e.source) : this.views.get(e.source ?? this.currentUsage?.used.actor ?? this.uiActor ?? '');
+          if (tv && key) await this.runEventFx(statusOwner(e.status) ?? this.ownerOfView(by), key, { actor: by ?? tv, targets: [tv], event: e });
+        }
         if (e.type === 'statusEnd' && e.broken) {
           this.views.get(e.target)?.floatText('Taunt broken', colors.targetHighlight, 40);
           this.views.get(e.target)?.ring(colors.targetHighlight, 0.8);
@@ -3499,11 +3512,19 @@ export class BattleScene extends Phaser.Scene {
         this.removeGroundView(e.id);
         return;
       }
+      case 'crash': {
+        // itilen birim dolu hücreye / tahta kenarına çarptı (Ice Crater): v2 'crash_<skill>' (sahibin dosyasında varsa); hasar ardından gelir
+        const t = this.views.get(e.target);
+        const other = e.with ? this.views.get(e.with) : undefined;
+        if (t) await this.runEventFx(ownerOfSkill(e.cause), EVENT_FX.crash(e.cause), { actor: this.views.get(e.source) ?? t, targets: other ? [t, other] : [t], event: e, skillId: e.cause });
+        return;
+      }
       case 'passive': {
         const view = this.views.get(e.actor);
         if (e.passive === 'primary_luck') return; // Lucky Escape: its own moment already named it (lucky-escape-fx.ts)
         view?.floatText(e.name, colors.targetHighlight, 34);
-        view?.ring(colors.targetHighlight, 0.9);
+        // v2 pasif efekti (passive_<id>, sahibin dosyasında varsa; Heat Mirage, Spellbreaker's Instinct) halkanın yerine oynar
+        if (!(view && (await this.runEventFx(this.ownerOfView(view), EVENT_FX.passive(e.passive), { actor: view, targets: [view], event: e })))) view?.ring(colors.targetHighlight, 0.9);
         await this.wait(120);
         return;
       }

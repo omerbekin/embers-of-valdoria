@@ -7,7 +7,7 @@ import type { BattleEvent, BattleMode } from '../src/engine';
  *  - Pasif Berserker: eksik cana göre hasar (eskisi) + CAN kaybedince Rage (rageOnHurt: maks canın %1'i başına perHpPercent, vuruş başına perHitCap).
  *  - Whirlwind: verdiği hasarın bir kısmı can olarak döner (lifesteal).
  *  - Ultimate Headsman's Blow (Abyssal Cry'ın yerine): tek hedef yakın dövüş, TÜM Rage'i harcar (en az cost.amount);
- *    güç = power + powerPerRage x harcanan Rage, x(1 + executeBonus x hedefin eksik can oranı).
+ *    güç = power + powerPerRage x harcanan Rage (Ömer 2026-10-30: hedefin eksik canından gelen bonus kalktı).
  * Sayılar veriden okunur; iki savaş modunda da çalışır.
  */
 const R = content.formulas.rage;
@@ -42,7 +42,7 @@ describe('Berserker: hasar alınca Rage (veri)', () => {
     expect(HB.motion).toBe('melee');
     expect(HB.target).toBe('single_enemy');
     expect(HBD.powerPerRage).toBeGreaterThan(0);
-    expect(HBD.executeBonus).toBeGreaterThan(0);
+    expect(HBD.executeBonus).toBeUndefined();
     expect(content.skills.abyssal_cry).toBeUndefined();
     expect(content.statuses.abyssal_fury).toBeUndefined();
   });
@@ -130,7 +130,7 @@ describe("Headsman's Blow", () => {
     const info = describeSkill(HB, W.stats, content.formulas);
     const text = info.lines.join(' ');
     expect(text).toContain('per Rage spent');
-    expect(text).toContain(`up to ${Math.round(HBD.executeBonus! * 100)}% more damage`);
+    expect(text).not.toContain('HP the target is missing');
     expect(describePassive(W.passive!, W.stats, content.formulas)).toContain('Losing HP gives Rage');
   });
 
@@ -145,13 +145,13 @@ describe("Headsman's Blow", () => {
     expect(high / low).toBeCloseTo(want, 1);
   });
 
-  it('hasar hedefin eksik canıyla büyür: x(1 + executeBonus x eksik oran)', () => {
+  it('hasar hedefin eksik canıyla BÜYÜMEZ (executeBonus kalktı)', () => {
     const b = arena();
     b.get('party-0')!.rage = R.max;
     const full = avg(b);
     const foe = b.get('enemy-0')!;
     foe.hp = foe.maxHp / 2;
-    expect(avg(b) / full).toBeCloseTo(1 + HBD.executeBonus! * 0.5, 1);
+    expect(avg(b) / full).toBeCloseTo(1, 1);
   });
 
   for (const mode of ['test', 'turns'] as const) {

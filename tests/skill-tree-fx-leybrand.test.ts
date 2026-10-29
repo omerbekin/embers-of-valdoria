@@ -71,10 +71,10 @@ function toNextTurnOf(b: Battle, c: Combatant): void {
 }
 
 describe('Anti-Mage ağacı: Ley Brand satırı verisi', () => {
-  it('fx temiz derlenir; ağaç sürümü 2 (bedava respec); satır adı Ley Brand', () => {
+  it('fx temiz derlenir; ağaç sürümü 4 (bedava respec; 2026-10-29 Mana Overflow -> Spellbreaker Instinct, yeni 0. satır düğümleri); satır adı Ley Brand', () => {
     const t = treeOf('antimage')!;
     expect(checkTreeFx(t)).toEqual([]);
-    expect(t.version).toBe(2);
+    expect(t.version).toBe(5);
     for (const k of ['2.f1', '2.f2', '2.f3', '2.n0', '2.r', '2.ea', '2.eb', '2.ma', '2.fa', '2.fb', '2.mb', '2.v']) expect(t.nodes[k]?.fx?.length, k).toBeGreaterThan(0);
   });
 });

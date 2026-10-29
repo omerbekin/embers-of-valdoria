@@ -78,7 +78,7 @@ async function openPage() {
     localStorage.setItem('eov.settings.v1', JSON.stringify({ volume: 0, steps: 20 }));
     localStorage.setItem('eov.diag.v1', JSON.stringify({ consent: false, noticed: true }));
   });
-  await page.goto(`${url}/?debug=1`);
+  await page.goto(`${url}/?debug=1`, { timeout: 120000 }); // sunucu yoğunken (başka sohbetler) ilk yükleme 30 sn'yi aşabiliyor
   await page.waitForFunction(() => window.__game?.scene?.getScenes(true).length > 0, null, { timeout: 60000 });
   await page.waitForTimeout(1500);
   await page.evaluate(async () => {
@@ -148,7 +148,9 @@ async function captureSkill(page, skill) {
         for (const o of objs) {
           if (o.list) walk(o.list);
           const key = o.texture?.key ?? '';
-          if (!ks.some((s) => key.includes(`/${s}`))) continue;
+          // sınıf sheet'i (assets/vfx/<sınıf>/NN-ad, ör. vfxsheet:mage/01-ice-crater) de skill id ile eşleşir (tire = alt çizgi)
+          const cls = /^vfxsheet:[a-z_]+\/\d\d-/.test(key) ? key.replace(/-/g, '_') : '';
+          if (!ks.some((s) => key.includes(`/${s}`) || (cls && cls.includes(`_${s}`)))) continue;
           const m = o.getWorldTransformMatrix?.();
           list.push({
             key,
@@ -197,17 +199,19 @@ async function captureSkill(page, skill) {
     }
   }
   // kim atıyor, kime: test panelinde atan = enemy-0 (mob, sağ taraf), hedef = party-0 (kukla, sol taraf); dost hedefli skill'de dost da düşman tarafında
-  const units = await page.evaluate(() => {
+  // atan = düşman tarafında casterSlot'taki birim (dost hedefli testte dost küçük yuvada, uid'i enemy-0 olur: debug-vfx-battle.ts)
+  const casterSlot = JSON.parse(readFileSync(join(ROOT, 'data/vfx-inbetween.json'), 'utf8')).battleTest?.casterSlot ?? 1;
+  const units = await page.evaluate((cs) => {
     const sc = window.__game.scene.getScenes(true).find((x) => x.sys.settings.key.toLowerCase().includes('battle'));
     const out = [];
     for (const [uid, v] of sc?.views ?? []) {
       const u = sc.battle.get(uid);
       const m = v.sprite.getWorldTransformMatrix();
-      const role = uid === 'enemy-0' ? 'caster' : uid === 'party-0' ? 'target (dummy)' : 'ally of caster';
+      const role = u?.side === 'enemy' && u.slot === cs && !u.summoned ? 'caster' : uid === 'party-0' ? 'target (dummy)' : 'ally of caster';
       out.push({ uid, role, name: u?.name ?? uid, side: uid.startsWith('party') ? 'left (player side)' : 'right (enemy side)', x: Math.round(m.tx), y: Math.round(m.ty), w: Math.round(v.sprite.displayWidth), h: Math.round(v.sprite.displayHeight) });
     }
     return out;
-  });
+ }, casterSlot);
   writeFileSync(join(out, 'frames.json'), JSON.stringify({ skill, version, view: VIEW, stepMs: DT, units, frames }, null, 1));
   await contactSheet(out, frames, canvas);
   const vfxN = frames.filter((f) => f.vfx.length).length;

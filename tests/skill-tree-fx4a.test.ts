@@ -530,7 +530,8 @@ describe('Faz 4a: öbür sınıflar', () => {
     expect(trigOf(only('archer', { '4.r1': 1 }), 'archer:4.r1')).toMatchObject({ on: 'kill', skill: 'aimed_shot', do: [{ cooldown: 'reset' }] });
   });
 
-  it('Overflow Spill: her Mana Overflow en az MP\'li dosta rank başına 1 MP', () => {
+  // Ömer 2026-10-29 AM değişikliği: bu düğüm(ler) pasif (inactive; Mana Overflow AM kitinden çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Overflow Spill: her Mana Overflow en az MP\'li dosta rank başına 1 MP', () => {
     const b = make({ 0: 'antimage', 1: 'mage', 2: 'warrior' }, { 0: 'mage' }, withTree(0, only('antimage', { '0.f3': 3 })));
     P(b, 1).mp = 2;
     const before = P(b, 1).mp;

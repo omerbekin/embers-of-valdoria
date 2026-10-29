@@ -43,7 +43,9 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
       if (id === 'branded') continue;
       // Hallowed (genel zemin kuralı 2026-10-29): şifası zeminden (Holy Ground / Holy Water gücü), motorda groundStatusTicks
       if (id === 'hallowed') continue;
-      expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.armorMult !== undefined || def.damageDealtMult !== undefined || def.magicDealtMult !== undefined || def.rooted === true || def.noEvasion === true, id).toBe(true);
+      // Ley Thread (Ömer 2026-10-29): etkisi Ley Brand'de motor kuralı (threadTurns / threadBurnMult; skills.json > drain_field)
+      if (id === 'ley_thread') continue;
+      expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.armorMult !== undefined || def.damageDealtMult !== undefined || def.magicDealtMult !== undefined || def.rooted === true || def.noEvasion === true || def.armorLossFromAmount === true, id).toBe(true);
     }
   });
 

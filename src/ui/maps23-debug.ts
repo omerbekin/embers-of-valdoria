@@ -2,10 +2,17 @@
 // Kısayolların kural tarafı saf: src/campaign/maps23-debug.ts. Bayrak: src/ui/maps23-flag.ts (eov.debug.maps23 ya da ?maps=1).
 import {
   DROWNED_REACH,
+  HOLLOW_CROWN,
   OATHS,
   QUEST_LIST,
   WAYSHRINES,
   debugFinishMap1,
+  debugFinishMap2,
+  debugJumpHollowCrown,
+  debugJumpHollowNode,
+  debugSealedTomb,
+  debugSetStoneOath,
+  debugSetWhiteDarkChill,
   debugJumpDrownedReach,
   debugJumpNode,
   debugJumpQuest,
@@ -46,6 +53,12 @@ const TAB = 'Campaign';
 function enable(): void {
   setMapOverride(DROWNED_REACH, true);
   setMaps23(true);
+}
+
+/** Harita 3 kısayolları bayrağı açar. */
+function enable3(): void {
+  enable();
+  setMapOverride(HOLLOW_CROWN, true);
 }
 
 export function registerMaps23Debug(debug: DebugMenu, reload: () => void, ensureState: () => CampaignState): void {
@@ -297,6 +310,104 @@ export function registerMaps23Debug(debug: DebugMenu, reload: () => void, ensure
     run: () => {
       const s = ensureState();
       apply(debugSetLit(s, !s.lit));
+    },
+  });
+  // Harita 3 (The Hollow Crown) iskeleti: bayrak campaign.json > mapFlags['hollow-crown'] (kapalı)
+  debug.register({
+    id: 'maps23.enable3',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'eye',
+    on: () => mapEnabled(HOLLOW_CROWN),
+    label: () => `Enable Map 3: ${mapEnabled(HOLLOW_CROWN) ? 'on' : 'off'}`,
+    hint: 'Show "Continue to The Hollow Crown" after the Two Crowns ending of Map 2 (remembered in this browser, same switch as ?maps=1). Off = Map 2 ends with "To Be Continued", as players see it.',
+    run: () => {
+      const on = !mapEnabled(HOLLOW_CROWN);
+      setMapOverride(HOLLOW_CROWN, on);
+      setMaps23(on);
+    },
+  });
+  debug.register({
+    id: 'maps23.finish2',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'burst',
+    label: 'Finish Map 2 → transition',
+    hint: 'Walk The Drowned Reach to its end (every stop on the way counts as won, same seed) and stop at the Two Crowns ending: the "Map Complete" window with "Continue to The Hollow Crown". Turns Map 3 on.',
+    run: () => {
+      enable3();
+      apply(debugFinishMap2(ensureState()));
+    },
+  });
+  debug.register({
+    id: 'maps23.jump3',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'boot',
+    label: 'Jump to The Hollow Crown',
+    hint: 'Finish Maps 1 and 2 automatically (same seed), cross to the start of The Hollow Crown at Lv 20 with a few elite drops equipped, everyone healed. Placeholder enemies and town art. Replaces the current campaign in its slot. Turns Map 3 on.',
+    run: () => {
+      enable3();
+      apply(debugJumpHollowCrown(ensureState()));
+    },
+  });
+  // Harita 3 düğüm kuralları (open-questions 454 a / b / d; src/campaign/hollow-crown.ts)
+  const hcStops: Array<[string, string, string]> = [
+    ['hc20', 'The White Dark (Map 3)', '"Wait it out" costs no health, but the company starts the next battle Chilled for 2 turns.'],
+    ['hc31', 'Hall of Oaths (Map 3)', 'Swear: kin prices at the Deep Market, but the dwarf tombs are sealed. Refuse: outsider prices, tombs open to plunder.'],
+    ['hc54', 'The Deep Market (Map 3)', 'Only this merchant: higher prices, no Common wares. Cheaper if the Stone Oath was sworn.'],
+  ];
+  for (const [id, label, hint] of hcStops)
+    debug.register({
+      id: `maps23.hc.${id}`,
+      tab: TAB,
+      section: MAPS23_SECTION,
+      icon: 'boot',
+      label: `Jump to ${label}`,
+      hint: `${hint} Walks Map 3 from its start (slow the first time), team at the stop's level, healed, oath and chill cleared. Turns Map 3 on.`,
+      run: () => {
+        enable3();
+        apply(debugJumpHollowNode(ensureState(), id));
+      },
+    });
+  debug.register({
+    id: 'maps23.hc.oath',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'swap',
+    label: () => `Stone Oath: ${ensureState().stoneOath ?? 'none'} (tap to cycle)`,
+    hint: 'Cycle the Hall of Oaths choice none → sworn → refused → none. Sworn: Deep Market discount, dwarf tombs (Rune Vault, Treasury Vault, Kings\' Armory) give nothing. Refused or none: no discount, tombs give their chest. Reopen the Deep Market on a new day to see new prices.',
+    run: () => {
+      const s = ensureState();
+      apply(debugSetStoneOath(s, !s.stoneOath ? 'sworn' : s.stoneOath === 'sworn' ? 'refused' : null));
+    },
+  });
+  debug.register({
+    id: 'maps23.hc.chill',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'eye',
+    on: () => !!ensureState().pendingStatus,
+    label: () => {
+      const p = ensureState().pendingStatus;
+      return `Next battle starts ${p ? `${p.status} (${p.turns} turns)` : 'normal'}`;
+    },
+    hint: 'Toggle the White Dark cost: the next battle (any battle) starts with every hero Chilled for 2 turns, then it is gone.',
+    run: () => {
+      const s = ensureState();
+      apply(debugSetWhiteDarkChill(s, !s.pendingStatus));
+    },
+  });
+  debug.register({
+    id: 'maps23.hc.sealedtomb',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'boot',
+    label: 'Jump to a sealed dwarf tomb (oath sworn)',
+    hint: 'Walk Map 3 to the first dwarf tomb, win its guardians and set the Stone Oath to sworn: the treasure window says the rune seal holds and nothing is taken. Cycle the oath above before opening it to see the normal chest.',
+    run: () => {
+      enable3();
+      apply(debugSealedTomb(ensureState()));
     },
   });
   debug.register({

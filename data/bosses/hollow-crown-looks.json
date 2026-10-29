@@ -1,0 +1,621 @@
+{
+  "_not": "GEÇİCİ GÖRÜNÜM KAYITLARI (content-designer 2026-10-29, /vfx idle sprite turu; hollow_king.json kalıbı): Harita 3 kadrosunun (maps-2-3.md 4.3: 7 yeni mob + 8 elit + 3 boss) ve 4 yıldırım konseptinin (Hollow Crown mekanik seçimi D1-D4) yalnız savaştaki görünüşü. Kit YOK (inert), sayılar Iron Mooring kopyası; hiçbir karşılaşmaya bağlı değil (hollow-crown-encounters.json hâlâ yer tutucu mobları kullanır). Asıl tanımlar Harita 3 kampanya işi yazınca data/mobs / data/bosses altına kendi dosyalarıyla taşınır, bu dosyadaki kayıt silinir. Görsel: assets/sprites/<id> (idle.png + poses.png boşta nefes döngüsü, data/mob-poses.json), kaynak assets/source/mobs + assets/source/mob-poses, çizim docs/anim-review/new-art/<id>.",
+  "units": [
+    {
+      "id": "snow_wolf",
+      "name": "Snow Wolf",
+      "spriteId": "snow_wolf",
+      "spriteScale": 1.2,
+      "color": "#c9d6e2",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "clan_axeman",
+      "name": "Clan Axeman",
+      "spriteId": "clan_axeman",
+      "spriteScale": 1.0,
+      "color": "#5f6b4a",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "cave_crawler",
+      "name": "Cave Crawler",
+      "spriteId": "cave_crawler",
+      "spriteScale": 1.2,
+      "color": "#b8b4a2",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "clan_skald",
+      "name": "Clan Skald",
+      "spriteId": "clan_skald",
+      "spriteScale": 1.0,
+      "color": "#6b5a43",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "pyre_witch",
+      "name": "Pyre Witch",
+      "spriteId": "pyre_witch",
+      "spriteScale": 0.97,
+      "color": "#e0702a",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "cinder_knight",
+      "name": "Cinder Knight",
+      "spriteId": "cinder_knight",
+      "spriteScale": 1.0,
+      "color": "#3a3532",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "forge_golem",
+      "name": "Forge Golem",
+      "spriteId": "forge_golem",
+      "spriteScale": 0.97,
+      "color": "#4a4440",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "thunderwright",
+      "name": "Thunderwright",
+      "spriteId": "thunderwright",
+      "spriteScale": 0.88,
+      "color": "#9cc8ff",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "clan_stormcaller",
+      "name": "Clan Stormcaller",
+      "spriteId": "clan_stormcaller",
+      "spriteScale": 1.0,
+      "color": "#7f9ec4",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "gloam_eel",
+      "name": "Gloam Eel",
+      "spriteId": "gloam_eel",
+      "spriteScale": 1.2,
+      "color": "#dfe9f2",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "stormhorn_ram",
+      "name": "Stormhorn Ram",
+      "spriteId": "stormhorn_ram",
+      "spriteScale": 1.25,
+      "color": "#a9a69c",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Mob · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "pack_mother",
+      "name": "The Pack-Mother",
+      "spriteId": "pack_mother",
+      "spriteScale": 1.4,
+      "color": "#3b3d42",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Elite · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "clan_chief_brannoc",
+      "name": "Clan Chief Brannoc",
+      "spriteId": "clan_chief_brannoc",
+      "spriteScale": 1.15,
+      "color": "#5a4632",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Elite · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "frozen_standard_bearer",
+      "name": "The Frozen Standard-Bearer",
+      "spriteId": "frozen_standard_bearer",
+      "spriteScale": 1.15,
+      "color": "#8fb0c8",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Elite · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "oathkeeper",
+      "name": "The Oathkeeper",
+      "spriteId": "oathkeeper",
+      "spriteScale": 1.12,
+      "color": "#8a8a80",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Elite · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "pyre_matriarch",
+      "name": "The Pyre Matriarch",
+      "spriteId": "pyre_matriarch",
+      "spriteScale": 1.15,
+      "color": "#c8541e",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Elite · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "forge_master_golem",
+      "name": "Forge-Master Golem",
+      "spriteId": "forge_master_golem",
+      "spriteScale": 1.2,
+      "color": "#7a5a34",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Elite · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "ashborn_hierarch",
+      "name": "The Ashborn Hierarch",
+      "spriteId": "ashborn_hierarch",
+      "spriteScale": 1.15,
+      "color": "#d8cfc0",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Elite · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "cinder_warden",
+      "name": "The Cinder Warden",
+      "spriteId": "cinder_warden",
+      "spriteScale": 1.15,
+      "color": "#6b4a2e",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Elite · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "snowfather",
+      "name": "The Snowfather",
+      "spriteId": "snowfather",
+      "spriteScale": 1.35,
+      "color": "#cfe0ee",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Boss · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "hearthwarden",
+      "name": "The Hearthwarden",
+      "spriteId": "hearthwarden",
+      "spriteScale": 1.2,
+      "color": "#b0501c",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Boss · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    },
+    {
+      "id": "ember_of_the_first_hearth",
+      "name": "The Ember of the First Hearth",
+      "spriteId": "ember_of_the_first_hearth",
+      "spriteScale": 1.35,
+      "color": "#ff9a3a",
+      "logo": "skull",
+      "frontPriority": 0,
+      "range": 1,
+      "role": "Boss · Hollow Crown look",
+      "attributes": {
+        "str": 0,
+        "int": 0,
+        "dex": 0,
+        "luck": 0
+      },
+      "armor": 20,
+      "magicArmor": 0,
+      "overrides": {
+        "hp": 55,
+        "mp": 0,
+        "spd": 2,
+        "hpRegen": 0,
+        "mpRegen": 0
+      },
+      "inert": true,
+      "skills": []
+    }
+  ]
+}

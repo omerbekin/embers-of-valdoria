@@ -665,6 +665,27 @@
         }
       ]
     },
+    "c_healrecv": {
+      "tier": "C",
+      "name": "Healing received",
+      "text": "+{0}% healing received",
+      "slots": [
+        "helm",
+        "armor"
+      ],
+      "desc": "Heals you receive are stronger, life leech included. Your HP per turn is not.",
+      "icon": "healReceived",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0.3,
+          "step": 0.5,
+          "ip": 0.2,
+          "to": "fx:healReceived",
+          "scale": 0.01
+        }
+      ]
+    },
     "b_crit": {
       "tier": "B",
       "name": "Crit chance",
@@ -1008,6 +1029,109 @@
           "ip": 0.1,
           "to": "prog:woundSoft",
           "scale": 0.01
+        }
+      ]
+    },
+    "b_execute": {
+      "tier": "B",
+      "name": "Executioner",
+      "text": "{m0} damage to enemies below 30% HP",
+      "slots": [
+        "weapon",
+        "gloves"
+      ],
+      "desc": "The enemy's HP is checked before your hit lands.",
+      "icon": "execute",
+      "parts": [
+        {
+          "base": 2.9,
+          "perIlvl": 0.48,
+          "step": 1,
+          "ip": 0.25,
+          "to": "fx:executeDamage",
+          "scale": 0.01,
+          "below": 0.3
+        }
+      ]
+    },
+    "b_startshield": {
+      "tier": "B",
+      "name": "Ready shield",
+      "text": "Start battles with a shield of {0}% Max HP",
+      "slots": [
+        "offhand",
+        "armor"
+      ],
+      "desc": "Shield power does not change it.",
+      "icon": "shield",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0.3,
+          "step": 0.5,
+          "ip": 0.3,
+          "to": "fx:startShieldRatio",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_killmp": {
+      "tier": "B",
+      "name": "Soul harvest",
+      "text": "+{0} MP when your skill kills an enemy",
+      "slots": [
+        "gloves",
+        "trinket"
+      ],
+      "needs": "mp",
+      "desc": "Never above your Max MP.",
+      "icon": "killMp",
+      "parts": [
+        {
+          "base": 1,
+          "perIlvl": 0.15,
+          "step": 1,
+          "ip": 0.4,
+          "to": "fx:killMp"
+        }
+      ]
+    },
+    "b_killheal": {
+      "tier": "B",
+      "name": "Victor's breath",
+      "text": "Heal {0}% of Max HP when your skill kills an enemy",
+      "slots": [
+        "armor",
+        "trinket"
+      ],
+      "icon": "killHeal",
+      "parts": [
+        {
+          "base": 1,
+          "perIlvl": 0.15,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "fx:killHeal",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_shred": {
+      "tier": "B",
+      "name": "Armor shred",
+      "text": "Your hits lower enemy Armor by {0} for 2 turns, up to 3 stacks",
+      "slots": [
+        "weapon"
+      ],
+      "desc": "Damaging skill hits apply Shredded. Each new stack refreshes the 2 turns.",
+      "icon": "shred",
+      "parts": [
+        {
+          "base": 1.1,
+          "perIlvl": 0.2,
+          "step": 1,
+          "ip": 0.4,
+          "to": "fx:armorShred"
         }
       ]
     },
@@ -1500,6 +1624,70 @@
           "step": 0.5,
           "ip": 1,
           "to": "fx:steadyDamage",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_manashield": {
+      "tier": "A",
+      "name": "Mana shield",
+      "text": "{0}% of damage taken is paid with MP",
+      "slots": [
+        "armor",
+        "helm"
+      ],
+      "needs": "mp",
+      "desc": "Paid after armor and shields, while you have MP; the rest hits your HP.",
+      "icon": "manaShield",
+      "parts": [
+        {
+          "base": 3.5,
+          "perIlvl": 0.6,
+          "step": 1,
+          "ip": 0.25,
+          "to": "fx:manaShield",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_cdchance": {
+      "tier": "A",
+      "name": "Fluid",
+      "text": "{0}% chance a skill's cooldown starts 1 turn shorter",
+      "slots": [
+        "helm",
+        "gloves",
+        "trinket"
+      ],
+      "desc": "Only skills with a cooldown; ultimates are not affected.",
+      "icon": "cooldown",
+      "parts": [
+        {
+          "base": 2.9,
+          "perIlvl": 0.48,
+          "step": 1,
+          "ip": 0.25,
+          "to": "fx:cdChance",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_overkill": {
+      "tier": "A",
+      "name": "Overflow",
+      "text": "{0}% of overkill damage hits the nearest enemy",
+      "slots": [
+        "weapon"
+      ],
+      "desc": "When your skill hit kills, damage beyond the target's remaining HP spills to the closest living enemy. Armor does not reduce it and it does not chain.",
+      "icon": "overkill",
+      "parts": [
+        {
+          "base": 15,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.1,
+          "to": "fx:overkillSpill",
           "scale": 0.01
         }
       ]

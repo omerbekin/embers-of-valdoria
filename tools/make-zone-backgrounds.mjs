@@ -46,13 +46,21 @@ const FLOOR_SRC_Y = {
   'siren-rocks': 574, // deniz kenarı (yeniden çizim)
   'storm-deck': 625, // güverte korkuluğunun dibi
   'sunken-court': 600, // taht basamaklarının dibi
+  // Harita 3 (The Hollow Crown) bölge arka planları: kaynak assets/source/backgrounds-hollow (2026-10-29, ChatGPT temiz pixel art); zemin = çit / kerb / korkuluk dibi (ölçülen kenar)
+  snowline: 583, // çit dibi
+  glacier: 582, // buz kenarı
+  kharduin: 582, // korkuluk dibi
+  'deep-halls': 585, // göl kenarı kerb dibi
+  warrens: 577, // lav kenarı kaya dudağı
+  'forge-heart': 578, // erimiş kanal kerb dibi
 };
+const HOLLOW = new Set(['snowline', 'glacier', 'kharduin', 'deep-halls', 'warrens', 'forge-heart']);
 const DROWNED = new Set(['river-gorge', 'saltmarsh', 'saltmere-docks', 'wreck-cliffs', 'siren-rocks', 'storm-deck', 'sunken-court']);
 
 const floors = {};
 for (const [id, fy] of Object.entries(FLOOR_SRC_Y)) {
   const out = `${OUT_DIR}/${id}.webp`;
-  const src = sharp(`${DROWNED.has(id) ? 'assets/source/backgrounds-drowned' : SRC_DIR}/${id}.png`);
+  const src = sharp(`${DROWNED.has(id) ? 'assets/source/backgrounds-drowned' : HOLLOW.has(id) ? 'assets/source/backgrounds-hollow' : SRC_DIR}/${id}.png`);
   const m = await src.metadata();
   if (m.height !== SRC_H) throw new Error(`${id}: kaynak yüksekliği ${m.height} (beklenen ${SRC_H}); FLOOR_SRC_Y yeniden ölçülmeli`);
   await src.webp({ nearLossless: true, quality: NEAR_LOSSLESS, effort: 6 }).toFile(out);

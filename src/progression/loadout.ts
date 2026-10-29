@@ -160,6 +160,10 @@ function applyPart(to: string, v: number, scale: number, ctx: { mods: Bag; fx: B
       } else if (key === 'lowHpReduce') {
         const cur = ctx.fx.lowHpReduce as { below: number; reduce: number } | undefined;
         ctx.fx.lowHpReduce = { below: ctx.below ?? cur?.below ?? 0.3, reduce: cur ? stackValues('less', cur.reduce, amt) : amt };
+      } else if (key === 'executeDamage') {
+        // Bitirici (b_execute, Ömer 2026-10-24): eşik parçadan (below), bonus "×" yazılır, kaynaklar çarpılır
+        const cur = ctx.fx.executeDamage as { below: number; bonus: number } | undefined;
+        ctx.fx.executeDamage = { below: ctx.below ?? cur?.below ?? 0.3, bonus: cur ? stackValues('more', cur.bonus, amt) : amt };
       } else if (ctx.form === 'mult') ctx.fx[key] = ((ctx.fx[key] as number | undefined) ?? 1) * (1 + amt);
       else if (STACK_FORM[key]) stack(ctx.fx, key, amt, STACK_FORM[key]);
       else add(ctx.fx, key, amt);

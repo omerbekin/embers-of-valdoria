@@ -884,7 +884,11 @@ const GROUND_LOOK: Record<string, GroundLook> = {
   // şifa ışığı (Holy Ground ayrıntısı), Ice = buz mavisi soğuk yüzey (Flooded Planks parıltısı)
   sanctified_flame: { base: [0xd8a848, 0.4], mid: [0xfff2c0, 0.64], rim: [0xfff0b8, 0.36], edge: [0xffe08a, 0.86], shadow: [0x24180a, 0.28] },
   holy_water: { base: [0x6f93b0, 0.3], mid: [0xe6f4ff, 0.5], rim: [0xc8e6ff, 0.32], edge: [0xa8d4f2, 0.78], shadow: [0x0a1218, 0.22] },
-  ice_ground: { base: [0x7fa8c0, 0.42], mid: [0xe8f8ff, 0.5], rim: [0xf2fbff, 0.36], edge: [0xc4e8f8, 0.85], shadow: [0x081018, 0.28] },
+  // Ice (Ömer 2026-10-29: Chill Ground'dan açıkça daha katı): koyu-parlak buz levhası, güçlü kenar ışığı
+  ice_ground: { base: [0x5f93b6, 0.56], mid: [0xeaf8ff, 0.5], rim: [0xffffff, 0.5], edge: [0xe2f6ff, 0.95], shadow: [0x061018, 0.34] },
+  // Chill Ground (iç id storm; Ömer 2026-10-29 Mage reworkü): soğuk HAVA, donmuş yüzey değil: saydam soluk camgöbeği, yumuşak kenar; yerde yatan
+  // kayan sis + ince kırağı tozu + yükselen soğuk nefes tülleri (Ice'tan açıkça daha hafif)
+  storm: { base: [0x9fd6e4, 0.18], mid: [0xd8f4fa, 0.2], rim: [0xd6f2fa, 0.08], edge: [0xbfe8f4, 0.16], shadow: [0x0a1420, 0.06] },
 };
 
 const rgba = (rgb: number, a: number) => `rgba(${(rgb >> 16) & 255},${(rgb >> 8) & 255},${rgb & 255},${Math.max(0, Math.min(1, a))})`;
@@ -927,8 +931,9 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
   const holy = groundId === 'holy_fire' || groundId === 'sanctified_flame';
   const burning = groundId === 'burning';
   const poison = groundId === 'poison';
-  const flooded = groundId === 'flooded_planks' || groundId === 'ice_ground';
+  const flooded = groundId === 'flooded_planks';
   const healing = groundId === 'holy_ground' || groundId === 'holy_water';
+  const chill = groundId === 'storm'; // Chill Ground
   const cells = slots.map((s, i) => ({ s, q: quadOf(board, s, 1), m: cellMid(board, s), ph: i * 1.7 + rnd(0, 6) }));
   const first = cells[0]!.m;
   const order = cells.map((k) => Math.hypot(k.m.x - first.x, k.m.y - first.y));
@@ -953,6 +958,114 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
   let grow = 0; // 0..1 dolma ilerlemesi
   let edgeK = 0;
   let live = false;
+  // Statik doku katmanları (hücre başına bir kez kurulur; yeniden boyamada aynı kalır, titremez). Hiyerarşi (Ömer 2026-10-29): Ice = katı donmuş
+  // yüzey (parlak buz levhası, çatlak, parıltı şeritleri); Chill Ground = soğuk hava (yerde yatan soluk camgöbeği sis, ince kırağı tozu), kabuk yok.
+  const iceSheet = groundId === 'ice_ground';
+  const frost = chill
+    ? cells.map(() => ({
+        // soğuk sis lekeleri (yumuşak, büyük) + ince kırağı tozu (çok küçük, soluk benekler)
+        patches: Array.from({ length: 4 }, () => ({ u: rnd(0.15, 0.85), v: rnd(0.25, 0.75), r: rnd(0.28, 0.42), a: rnd(0.6, 1) })),
+        specks: Array.from({ length: 26 }, () => ({ u: rnd(0.08, 0.92), v: rnd(0.12, 0.88), a: rnd(0.25, 0.6), big: Math.random() < 0.2 })),
+      }))
+    : [];
+  const ice = iceSheet
+    ? cells.map(() => ({
+        // çatlak: bir çıkış noktasından 3 kollu kırık çizgi (her kolda 3-4 kırılma)
+        cracks: Array.from({ length: 2 }, () => {
+          const o: [number, number] = [rnd(0.25, 0.75), rnd(0.3, 0.7)];
+          return Array.from({ length: 3 }, (_, b) => {
+            let [u, v] = o;
+            let a = (b / 3) * Math.PI * 2 + rnd(-0.5, 0.5);
+            const pts: Array<[number, number]> = [[u, v]];
+            for (let j = 0; j < 3 + Math.floor(rnd(0, 1.99)); j++) {
+              a += rnd(-0.5, 0.5);
+              u = Math.max(0.05, Math.min(0.95, u + Math.cos(a) * 0.07));
+              v = Math.max(0.08, Math.min(0.92, v + Math.sin(a) * 0.17));
+              pts.push([u, v]);
+            }
+            return pts;
+          });
+        }),
+      }))
+    : [];
+  /** Statik buz / soğuk sis katmanı (paintTexture içinde, hücre dolma oranına göre). */
+  const paintFrost = (qs: Quad[], vs: number[]) => {
+    const P = (q: Quad, u: number, v: number) => {
+      const p = quadAt(q, u, v);
+      return { x: p.x - ox, y: p.y - oy };
+    };
+    cells.forEach((_k, i) => {
+      if (vs[i]! <= 0) return;
+      const q = qs[i]!;
+      const g = Math.min(1, vs[i]! * 1.2);
+      if (chill) {
+        const f = frost[i]!;
+        ctx.save();
+        ctx.setTransform(q[1]!.x - q[0]!.x, q[1]!.y - q[0]!.y, q[3]!.x - q[0]!.x, q[3]!.y - q[0]!.y, q[0]!.x - ox, q[0]!.y - oy);
+        for (const p of f.patches) {
+          const gr = ctx.createRadialGradient(p.u, p.v, 0, p.u, p.v, p.r);
+          gr.addColorStop(0, rgba(0xd6f4fa, 0.22 * p.a * g));
+          gr.addColorStop(0.6, rgba(0xc4ecf6, 0.1 * p.a * g));
+          gr.addColorStop(1, rgba(0xc4ecf6, 0));
+          ctx.fillStyle = gr;
+          ctx.fillRect(0, 0, 1, 1);
+        }
+        ctx.restore();
+        for (const s of f.specks) {
+          const p = P(q, s.u, s.v);
+          ctx.fillStyle = rgba(0xf2fcff, s.a * g);
+          ctx.fillRect(Math.round(p.x), Math.round(p.y), s.big ? 2 : 1, s.big ? 2 : 1);
+        }
+        return;
+      }
+      // Ice: parlak buz levhası: iki çapraz parıltı şeridi + çatlaklar (koyu mavi gölge, beyaz kenar ışığı)
+      ctx.save();
+      ctx.beginPath();
+      const c0 = P(q, 0, 0);
+      ctx.moveTo(c0.x, c0.y);
+      for (const [u, v] of [[1, 0], [1, 1], [0, 1]] as const) {
+        const c = P(q, u, v);
+        ctx.lineTo(c.x, c.y);
+      }
+      ctx.closePath();
+      ctx.clip();
+      for (const [u0, w, a] of [[0.18, 0.12, 0.3], [0.42, 0.05, 0.22], [0.66, 0.09, 0.18]] as const) {
+        const A = P(q, u0, 0);
+        const B = P(q, u0 + w, 0);
+        const C = P(q, u0 + w - 0.22, 1);
+        const D = P(q, u0 - 0.22, 1);
+        const gr = ctx.createLinearGradient(A.x, A.y, D.x, D.y);
+        gr.addColorStop(0, rgba(0xffffff, a * g));
+        gr.addColorStop(1, rgba(0xffffff, a * 0.25 * g));
+        ctx.fillStyle = gr;
+        ctx.beginPath();
+        ctx.moveTo(A.x, A.y);
+        ctx.lineTo(B.x, B.y);
+        ctx.lineTo(C.x, C.y);
+        ctx.lineTo(D.x, D.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (const crack of ice[i]!.cracks) {
+        for (const [w, col, al, dy] of [[2.6, 0x1c3a52, 0.5, 1], [1.2, 0xf4fbff, 0.75, 0]] as const) {
+          ctx.strokeStyle = rgba(col, al * g);
+          ctx.lineWidth = w;
+          ctx.beginPath();
+          for (const arm of crack) {
+            arm.forEach(([u, v], j) => {
+              const p = P(q, u, v);
+              if (j === 0) ctx.moveTo(p.x, p.y + dy);
+              else ctx.lineTo(p.x, p.y + dy);
+            });
+          }
+          ctx.stroke();
+        }
+      }
+    });
+  };
 
   /** Dokuyu boyar: `v(i)` hücre i'nin dolma oranı (0..1). */
   const paintTexture = () => {
@@ -1025,6 +1138,7 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
       if (side[1]) strip(1, 0, 1 - du, 0, 1 - du, 0, du, 1);
       ctx.restore();
     });
+    if (chill || iceSheet) paintFrost(qs, vs);
     tex.refresh();
   };
   const paintEdge = () => {
@@ -1105,6 +1219,31 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
           const a = Math.sin(life * Math.PI) * 0.75;
           const sz = j % 2 ? 3 : 4;
           fx.fillStyle(j % 3 === 0 ? 0xc8efa8 : 0xfff0c0, a).fillRect(snap(base.x - sz / 2 + Math.sin(t * 2 + j) * 2), snap(base.y - life * 46 - sz / 2), sz, sz);
+        }
+      } else if (chill) {
+        // Chill Ground: zemine yakın yavaş sürüklenen iki soğuk sis tülü (yassı, yumuşak katmanlı elips) + yerde ince kırağı benekleri
+        // yerde yatan soğuk sis: hücre boyunca yavaş kayan 3 yassı, yumuşak katmanlı camgöbeği tül (hücreden az taşar, yere yakın)
+        for (let w = 0; w < 3; w++) {
+          const u = (t * 0.04 + k.ph * 0.07 + w / 3) % 1;
+          const env = Math.sin(u * Math.PI);
+          const m = quadAt(q, 0.08 + u * 0.84, 0.22 + w * 0.28 + 0.05 * Math.sin(t * 0.6 + k.ph + w));
+          const lift = 3 + 2 * Math.sin(t * 0.8 + w + k.ph);
+          for (let s = 0; s < 4; s++) fx.fillStyle(s < 2 ? 0xbfe8f2 : 0xe4f8fc, (0.07 + s * 0.035) * env).fillEllipse(m.x, m.y - lift, 150 - s * 30, 26 - s * 5);
+        }
+        // kırağı tozu pırıltısı: birkaç küçük benek yavaşça parlayıp söner
+        for (let j = 0; j < 4; j++) {
+          const p = quadAt(q, 0.18 + ((j * 0.31 + k.ph * 0.13) % 0.64), 0.25 + ((j * 0.23 + k.ph * 0.09) % 0.55));
+          const a = Math.max(0, Math.sin(t * 1.1 + j * 1.7 + k.ph));
+          fx.fillStyle(0xffffff, 0.55 * a * a).fillRect(snap(p.x), snap(p.y), 2, 2);
+        }
+      } else if (iceSheet) {
+        // buz parıltısı: levha boyunca yavaşça kayan tek ince çapraz ışık bandı (sert, parlak yüzey)
+        const u = (t * 0.18 + k.ph * 0.1) % 1.6 - 0.3;
+        const env = Math.max(0, Math.sin(Math.min(1, Math.max(0, (u + 0.3) / 1.6)) * Math.PI));
+        for (let s = 0; s < 2; s++) {
+          const w = 0.06 - s * 0.03;
+          const pts = [quadAt(q, Math.max(0, Math.min(1, u)), 0.04), quadAt(q, Math.max(0, Math.min(1, u + w)), 0.04), quadAt(q, Math.max(0, Math.min(1, u + w - 0.2)), 0.96), quadAt(q, Math.max(0, Math.min(1, u - 0.2)), 0.96)];
+          fx.fillStyle(0xffffff, (0.12 + s * 0.12) * env).fillPoints(pts, true);
         }
       } else if (poison) {
         // sıvı yüzeyi: yavaş kayan yumuşak parlama (küçük, karenin içinde)
@@ -1200,6 +1339,37 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
           // ince is dumanı
           const m = sprite(scene, 'smoke', '#5b6579', p.x, p.y - 6, 16, 31).setTint(0x2a2226).setAlpha(0.26);
           scene.tweens.add({ targets: m, y: m.y - rnd(22, 32), displayWidth: 34, displayHeight: 28, alpha: 0, duration: slow(rnd(1100, 1400)), ease: 'Quad.easeOut', onComplete: () => m.destroy() });
+        }
+      } else if (chill || iceSheet) {
+        // kırağı pırıltısı: zeminde kısa yanıp sönen küçük buz yıldızı (+ biçimi) ve yavaş yükselip sönen tek kar zerresi
+        const g = scene.add.graphics().setDepth(32);
+        const bx = snap(p.x);
+        const by = snap(p.y);
+        void counter(scene, slow(rnd(700, 1000)), (u) => {
+          g.clear();
+          if (!alive()) return;
+          const a = Math.sin(u * Math.PI);
+          const r = 2 + Math.round(a * 3);
+          g.fillStyle(0xffffff, 0.85 * a).fillRect(bx - 1, by - 1, 2, 2);
+          g.fillStyle(0xd8f0ff, 0.6 * a).fillRect(bx - r, by - 1, r * 2, 2).fillRect(bx - 1, by - r, 2, r * 2);
+          g.fillStyle(0xeef8ff, 0.55 * (1 - u)).fillRect(snap(bx + 6 + Math.sin(u * 6) * 3), snap(by - 4 - u * 22), 2, 2);
+        }).then(() => g.destroy());
+        if (chill) {
+          // soğuk nefes tülü: yerden yavaşça yükselip hafif yana kıvrılan, incelerek sönen soluk camgöbeği buhar (Burning'in is dumanının soğuk karşılığı)
+          const w = scene.add.graphics().setDepth(32);
+          const dir = Math.random() < 0.5 ? -1 : 1;
+          const x0 = p.x;
+          const y0 = p.y - 2;
+          const rise = rnd(26, 38);
+          void counter(scene, slow(rnd(1700, 2100)), (u) => {
+            w.clear();
+            if (!alive()) return;
+            const a = Math.sin(u * Math.PI) * 0.22;
+            const x = x0 + dir * Math.sin(u * 2.4) * 10;
+            const y = y0 - u * rise;
+            const rx = 10 + u * 14;
+            for (let s2 = 0; s2 < 3; s2++) w.fillStyle(0xdcf6fb, a * (0.35 + s2 * 0.3)).fillEllipse(x, y, (rx - s2 * 4) * 2, (rx * 0.55 - s2 * 2) * 2);
+          }).then(() => w.destroy());
         }
       } else if (flooded) {
         // su halkası: damla düşer, yassı halka yayılır (yerinde kalır)

@@ -111,6 +111,32 @@ HEADS = {
     'weir_wyrm': (1270, 100, 400),
     'admiral_vane': (770, 20, 300),
     'drowned_queen': (700, 0, 330),
+    # Harita 3 son bossu (Codex imagegen 2026-10-29, /vfx idle denemesi; kaynak 512x768 hücre, sağa bakar)
+    'hollow_king': (265, 0, 205),
+    # Harita 3 kadrosu idle sprite'ları (content-designer 2026-10-29, Codex imagegen 2x2 nefes sheet'i; kare 1, sağa bakar)
+    'snow_wolf': (495, 0, 235),
+    'clan_axeman': (182, 0, 206),
+    'cave_crawler': (555, 24, 212),
+    'clan_skald': (295, 0, 216),
+    'pyre_witch': (266, 0, 216),
+    'cinder_knight': (138, 0, 212),
+    'forge_golem': (191, 0, 200),
+    'thunderwright': (152, 0, 207),
+    'clan_stormcaller': (270, 0, 215),
+    'gloam_eel': (504, 0, 217),
+    'stormhorn_ram': (385, 0, 230),
+    'pack_mother': (547, 0, 292),
+    'clan_chief_brannoc': (224, 0, 218),
+    'frozen_standard_bearer': (214, 0, 219),
+    'oathkeeper': (261, 0, 201),
+    'pyre_matriarch': (299, 0, 216),
+    'forge_master_golem': (180, 0, 210),
+    'ashborn_hierarch': (158, 0, 209),
+    'cinder_warden': (358, 0, 223),
+    'hearthwarden': (153, 0, 212),
+    'ember_of_the_first_hearth': (249, 0, 219),
+    'snowfather': (150, 0, 217),
+    # /Harita 3 kadrosu
     'pit_champion_gorr': (412, 0, 300),  # 2026-10-27 kendi çizimi (önceden Bandit Chief)
     'inquisitor_captain_vell': (400, 40, 275),  # 2026-10-27 kendi çizimi (önceden Oathsworn Brother)
     'hex_totem': (313, 290, 240),

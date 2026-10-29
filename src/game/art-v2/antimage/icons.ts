@@ -55,6 +55,7 @@ export const ICONS: Record<string, V2SpriteEntry> = {
   spellward: { image: 'antimage/spellward' },
   voidstrike: { image: 'antimage/voidstrike' },
   overflow: { image: 'antimage/overflow' },
+  spellbreaker: { image: 'antimage/spellbreaker' },
 
 
 

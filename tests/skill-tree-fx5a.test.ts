@@ -431,7 +431,8 @@ describe('Faz 5a: ek sözlük (hitsEach, merkez kritikleri, tekrar sırası, ta�
     expect(big).toBeGreaterThan(0);
   });
 
-  it("Conduit: Mana Overflow tüm havuzu en az MP'li dosta döker; Spillover taşanı en az MP'liye aktarır", () => {
+  // Ömer 2026-10-29 AM değişikliği: bu düğüm(ler) pasif (inactive; Mana Overflow AM kitinden çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip("Conduit: Mana Overflow tüm havuzu en az MP'li dosta döker; Spillover taşanı en az MP'liye aktarır", () => {
     const party = { 0: 'antimage', 1: 'mage', 2: 'druid' };
     const run = (ranks: Record<string, number> | null): { mage: number; druid: number; mana: number } => {
       const b = make(party, { 0: 'warrior' }, ranks ? withTree(0, only('antimage', ranks)) : {});

@@ -599,7 +599,8 @@ describe('Faz 4c: tek tek boşluklar', () => {
     });
   });
 
-  it('Overflow Strike + Brimming Ally + Spell Sink: Void Strike Mana Overflow tetikler; dolan dosta Haste; en düşük canlı dosta Guard', () => {
+  // Ömer 2026-10-29 AM değişikliği: bu düğüm(ler) pasif (inactive; Mana Overflow AM kitinden çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Overflow Strike + Brimming Ally + Spell Sink: Void Strike Mana Overflow tetikler; dolan dosta Haste; en düşük canlı dosta Guard', () => {
     const b = make({ 0: 'antimage', 1: 'mage', 2: 'warrior' }, { 0: 'defender' }, withTree(0, only('antimage', { '4.d3': 1, '0.ma': 1, '0.mb': 1 })));
     const me = P(b);
     const m = P(b, 1);

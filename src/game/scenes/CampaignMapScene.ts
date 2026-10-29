@@ -24,6 +24,8 @@ import {
   storyLiked,
   type EventChoice,
   TREASURES,
+  oathFirstPlunder,
+  oathSealedFor,
   acknowledgeHandover,
   grantAllLegendaries,
   acknowledgeLevelUps,
@@ -167,7 +169,8 @@ import { openStoryDialog, type StoryDialogHandle } from '../../ui/story-dialog';
 import { playCinematic, type CinematicHandle } from '../../ui/cinematic';
 import { openCompanyWindow, type CompanyHandle } from '../../ui/company-window';
 import { choiceStyle, openMapWindow, windowArt, type MwCard, type MwHandle, type MwSpec } from '../../ui/map-window';
-import { choiceChips, nodeTags, paragraphs, resultChips } from '../../ui/map-window-data';
+import { drawOathSeal } from '../seal-badge';
+import { OATH_PLUNDER_TEXT, OATH_SEALED_CARD, OATH_SEALED_CHIPS, OATH_SEALED_TEXT, choiceChips, nodeTags, paragraphs, resultChips } from '../../ui/map-window-data';
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { H, W, crown, hpBar, openModal, woundPips, woundScar, type Modal } from '../campaign-ui';
 import { woundCount, woundHpFactor, woundTipData } from '../../progression/wounds';
@@ -1076,6 +1079,8 @@ export class CampaignMapScene extends Phaser.Scene {
       sg.fillRect(-9, sy + 6, 18, 2.4);
       c.add(sg);
     }
+    // Taş Yemini: yeminliyken cüce mezarının üstünde rün mührü madalyonu (Ömer 2026-10-29, seçenek A)
+    if (oathSealedFor(n, this.s)) drawOathSeal(this, c, R);
     // Tehlike bandı (Ömer 2026-10-26; level farkı, campaign.json > levelGap): ince renkli halka + sol üstte küçük işaret (renk körlüğü için ünlem / kafatası)
     const threat = nodeThreat(this.s, n.id);
     if (threat && threat.band !== 'normal') {
@@ -2303,6 +2308,8 @@ export class CampaignMapScene extends Phaser.Scene {
       const sh = shrineOf(n);
       const side = lockInfo
         ? lockInfo
+        : oathSealedFor(n, this.s)
+          ? OATH_SEALED_CARD
         : caravelHere
           ? `${caravelDef(this.map)!.name} lies here. Sail in and you must fight it. It moves one stop each time you move.`
           : depth
@@ -2949,16 +2956,33 @@ export class CampaignMapScene extends Phaser.Scene {
           });
           return;
         }
-        if (this.directAt === step.node) {
+        // Harita 3 cüce mezarı (open-questions 454 a, A): yeminliyken sandık yerine mühür anlatısı; reddedilmişken ilk mezarda tek satır.
+        // İkisinde de pencere her zaman açılır (kartın doğrudan eylemi bu metni atlamaz).
+        const tn = node(this.map, step.node);
+        const sealed = oathSealedFor(tn, s);
+        const plunder = !sealed && oathFirstPlunder(this.map.nodes, s, step.node);
+        if (this.directAt === step.node && !sealed && !plunder) {
           this.directAt = null;
           return this.commit(completeSimple(this.s, 'treasure')); // sandık: ganimet torbaya, LOOT ekranı advance'ta açılır
         }
+        this.directAt = null;
         const t = TREASURES[step.treasure] ?? { title: 'Treasure', text: 'You find a chest.', reward: 'Open the chest to claim its gear and gold.' };
+        if (sealed) {
+          this.worldWindow(step.node, {
+            title: t.title,
+            art: windowArt(`treasure:${tn.treasure ?? ''}`),
+            paras: paragraphs(t.oathSealedText ?? OATH_SEALED_TEXT),
+            chipsCap: 'Sealed',
+            chips: OATH_SEALED_CHIPS,
+            acts: [{ label: 'Walk on', primary: true, run: () => this.commit(completeSimple(this.s, 'treasure')) }],
+          });
+          return;
+        }
         // Hazine penceresi (Ömer 2026-10-19, taslak map-events A): "... defeated" çipi yok; temizlenen korumalı düğümün damgası haritada
         this.worldWindow(step.node, {
           title: t.title,
           art: windowArt(`treasure:${node(this.map, step.node).treasure ?? ''}`),
-          paras: paragraphs(t.text),
+          paras: [...paragraphs(t.text), ...(plunder ? [t.oathPlunderText ?? OATH_PLUNDER_TEXT] : [])],
           chipsCap: 'Inside',
           chips: [
             { tone: 'gain', icon: 'gear', text: 'Gear' },

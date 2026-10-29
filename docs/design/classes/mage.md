@@ -41,10 +41,10 @@ Kit: **Fire Bolt, Blizzard, Ice Crater, Meteor** + pasif **Heat Mirage**. Fire B
 
 ### Emekli / pasif kalanlar
 - Mana Barrier `skills.json`'da duruyor (`retired: true`): hiçbir karakterin kitinde değil, Codex listelemez, motor kuralı ve eski testler (`tests/mage-legacy-helpers.ts`) korunuyor. Spell Echo etkisi (`spellEcho`) Gambler ve test sınıflarında sürüyor.
-- Mage skill ağacı v2 (`data/skill-trees/mage.json`; sürüm artışı = bedava sıfırlama): 0. satır Heat Mirage, 3. satır Ice Crater. Eski Spell Echo (0.*) ve Mana Barrier (3.*) düğümleri silinmedi, `inactive: true` (alınamaz, "Inactive: being reworked"; motor yok sayar). Ömer yeni düğümleri seçene kadar böyle kalır:
-  - 0. satır (Spell Echo): Resonance, Killing Echo, Rapid Recall, Overload, Overtone, Echo Chamber, Sympathy, Endless Refrain, Unstable Weave, Frayed Threads, Time Fold, Arcane Overload.
-  - 3. satır (Mana Barrier): Rimeguard, Cauterize, Numbing Touch, Ice Mirror, Frozen Reserve, Frost Armor, Ice Block, Frozen Rebuke, Brittle Shell, Frozen Solid, Twin Ward, Shatter Aegis.
-  - Mastery bar 5: First Refrain.
-- Eternal Winter (2.v) metni: "...and Chills every enemy that starts its turn there."
+- Mage skill ağacı v3 (`data/skill-trees/mage.json`; content-designer 2026-10-29, sürüm artışı = bedava sıfırlama): eski Spell Echo (0.*) ve Mana Barrier (3.*) düğümleri ve First Refrain yerine yeni düğümler geldi (yalnızca var olan fx sözlüğü, Ömer onayı bekliyor):
+  - 0. satır (Heat Mirage / Frost Skin): Heat Haze, Searing Mirage, Rime Touch, Lingering Mirage, Cold Comfort, Backdraft, Rime Skin, Stoked Flames, Pyre Heart, Hoarfrost, Brittle Cold, evolve Mirage Veil.
+  - 3. satır (Ice Crater): Deep Crater, Hard Landing, Bitter Frost, Frozen Crater, Long Chill, Frostbitten Mark, Deep Freeze, Glacial Spike, Battering Frost, Permafrost, Black Frost, evolve Glacier Crater.
+  - Mastery bar 5: Opening Spark. Blizzard'ın Slow koşullu düğümleri (Numbing Cold, Flash Freeze, Black Ice) Chilled'ı da sayar.
+- Eternal Winter (2.v) metni: "...and Chills every enemy standing in it."
 
-Karar günlüğü: `docs/design/open-questions.md` madde 452.
+Karar günlüğü: `docs/design/open-questions.md` madde 452, ağaç: madde 457.
