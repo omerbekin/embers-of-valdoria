@@ -1,0 +1,25 @@
+{
+  "slug": "01-ice-crater",
+  "title": "Ice Crater burst",
+  "frames": 12,
+  "fps": 16,
+  "frame_size": [
+    256,
+    256
+  ],
+  "grid": [
+    4,
+    3
+  ],
+  "order": "row-major",
+  "padding_px": 0,
+  "pivot": [
+    128,
+    214
+  ],
+  "duration_ms": 750,
+  "sheet_size": [
+    1024,
+    768
+  ]
+}
