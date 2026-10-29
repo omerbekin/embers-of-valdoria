@@ -94,12 +94,13 @@ describe('birim skill katmanı (aynı id)', () => {
     expect(Object.keys(me.skillDefs!).sort()).toEqual(['headsmans_blow', 'melee_attack', 'whirlwind']);
     expect(foe.skillDefs).toBeUndefined();
     const NA = (W.nodes['1.f2']!.fx![0] as unknown as { v: number }).v; // Notched Axe rank başı (veriden)
-    const want = [0.4, 0.4 * (1 + 5 * NA)];
+    const DS = (content.skills.melee_attack!.effects[0] as unknown as { power: number }).power; // Double Strike temel power (veriden; 2026-10-29 0.40 -> 0.38)
+    const want = [DS, DS * (1 + 5 * NA)];
     power(b, 'melee_attack', me.uid).forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 9));
     power(b, 'melee_attack', me).forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 9)); // Combatant da kabul
-    expect(power(b, 'melee_attack', foe.uid)).toEqual([0.4, 0.4]);
-    expect(power(b, 'melee_attack')).toEqual([0.4, 0.4]);
-    expect(content.skills.melee_attack!.effects.map((e) => (e as unknown as { power: number }).power)).toEqual([0.4, 0.4]);
+    expect(power(b, 'melee_attack', foe.uid)).toEqual([DS, DS]);
+    expect(power(b, 'melee_attack')).toEqual([DS, DS]);
+    expect(content.skills.melee_attack!.effects.map((e) => (e as unknown as { power: number }).power)).toEqual([DS, DS]);
     // önizleme (YZ ve arayüz aynı yol): ağaçlı birimin vuruşu daha güçlü, karşıdakininki temel
     const mine = previewSkill(b, me.uid, 'melee_attack', foe.uid).find((x) => x.uid === foe.uid)!.damage!;
     const plain = make({ 0: 'warrior' }, { 0: 'warrior' });

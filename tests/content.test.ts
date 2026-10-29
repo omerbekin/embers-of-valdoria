@@ -224,6 +224,13 @@ describe('skill verisi', () => {
             expect(['laneFront', 'stepForward', 'frontRow']).toContain(e.to);
             expect(s.effects.some((x) => x.type === 'damage'), key).toBe(true);
             break;
+          case 'push':
+            // Ice Crater (Ömer 2026-10-29): itme yalnızca tek düşmana ve hasarla; çarpma hasarı oranı + ölçek + element
+            expect(s.target, key).toBe('single_enemy');
+            expect(s.effects.some((x) => x.type === 'damage'), key).toBe(true);
+            expect(e.crashPower).toBeGreaterThanOrEqual(0);
+            expect(ATTRIBUTES).toContain(e.scale);
+            break;
           default:
             throw new Error(`${key}: bilinmeyen etki türü ${(e as { type: string }).type}`);
         }
@@ -305,7 +312,7 @@ describe('class ve çağrı verisi', () => {
 
   it('her skill en az bir karakter tarafından kullanılıyor', () => {
     const used = new Set(Object.values(everyone).flatMap((d) => d.skills));
-    for (const id of Object.keys(content.skills)) expect(used.has(id), id).toBe(true);
+    for (const id of Object.keys(content.skills)) if (!content.skills[id]!.retired) expect(used.has(id), id).toBe(true); // emekli: Mana Barrier (2026-10-29)
   });
 
   it('zırh "normal seviyelerde": hiçbir class\'ta fiziksel zırh k\'nin yarısını aşmaz (Defender hariç) ve yalnızca Defender yüksek', () => {
@@ -538,6 +545,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
       'leaf', // regen rozeti
       'roar', // varsayılan durum ikonu
       'finger', // yedek
+      'echo', // yedek: Spell Echo pasifinin ikonu (Mage reworkü 2026-10-29; Gambler/Geometer etkiyi taşır ama ikon kullanmaz)
       'holystrike', // yedek: Holy Strike'ın eski ikonu
       'guard', // yedek: Defender'ın eski ikonları (rework: guard2, tremor2, fistcrush2, taunt2)
       'tremor',
@@ -568,7 +576,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground', 'toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria'];
+    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground', 'toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria', 'ice_crater'];
     // Pose Tester kopyaları (pt_<id>, gizli debug): sınıf skill'lerinin kopyası, aynı hareket
     const copies = base.filter((id) => content.skills[`pt_${id}`]).map((id) => `pt_${id}`);
     expect(copies.length).toBeGreaterThan(0);

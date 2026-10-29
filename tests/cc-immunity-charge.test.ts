@@ -37,7 +37,7 @@ const ELITE: Teams['units'] = { enemies: { 1: { tier: 'elite' } } };
 describe('CC bağışıklığı: veri', () => {
   it('CC listesi statuses.json > cc: Stun, Slow, Silence; Wound/Omen/Wither/Blinded/Jinxed/Overextended/Staggered CC değil', () => {
     const cc = Object.entries(content.statuses).filter(([, d]) => d.cc).map(([id]) => id).sort();
-    expect(cc).toEqual(['silence', 'slow', 'stun']);
+    expect(cc).toEqual(['chilled', 'silence', 'slow', 'stun']); // Chilled (Ömer 2026-10-29) Slow gibi CC
     for (const id of ['wound', 'omen', 'wither', 'blinded', 'jinxed', 'overextended', 'staggered', 'ash_brand']) expect(content.statuses[id]!.cc).toBeUndefined();
     expect(IMM.tiers).toEqual(['boss']); // elitler bağışık değil
     expect(IMM.taunt).toBe(true);

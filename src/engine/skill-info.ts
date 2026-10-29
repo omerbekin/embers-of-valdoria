@@ -159,6 +159,13 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     }
     case 'spellEcho':
       return `Damaging spells with a cooldown have a ${pct(e.chance)} chance to be ready again immediately.`;
+    case 'heatMirage': {
+      // Ömer 2026-10-29: pasifin genel küçük etkisi (Frost Skin) aynı metinde
+      const res = Object.entries(e.elemResist ?? {}).filter(([, v]) => (v ?? 0) > 0);
+      const same = res.length > 0 && res.every(([, v]) => v === res[0]![1]);
+      const resText = !res.length ? '' : same ? ` You take ${pct(res[0]![1]!)} less ${res.map(([k]) => cap(k)).join(' and ')} damage.` : ` You take less damage from ${res.map(([k, v]) => `${cap(k)} (${pct(v!)})`).join(' and ')}.`;
+      return `When an enemy hits you with a melee skill, the cell it stands on becomes ${groundName(e.ground)} for ${turnsText(e.turns)} of its turns: it Burns while it stands there (${val(e.scale, e.power)} damage at the start of its turn); at most once between your turns.${resText}`;
+    }
     case 'pealingBells':
       return `Every Toll or Thunderpeal you ring makes your bells ${moreText(e.perBell)} stronger for the rest of the battle (it stacks with no limit; the bell that rings counts only for the next ones).`;
     case 'longshot':
@@ -182,7 +189,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'cutAndRun':
       return `Once per battle, the first time your HP drops below ${pct(e.below)}, you gain ${cap(e.status)} for ${turnsText(e.turns)} and a speed boost until your next turn (like Skip Turn).`;
     case 'lastEmber':
-      return `If an enemy kills you with a skill, the cell it stands on becomes ${groundName(e.ground)} for ${turnsText(e.turns)} of its turns (${val(e.scale, e.power)} damage per tick). A death from ground or damage over time leaves no ember.`;
+      return `If an enemy kills you with a skill, the cell it stands on becomes ${groundName(e.ground)} for ${turnsText(e.turns)} of its turns: it Burns while it stands there (${val(e.scale, e.power)} damage per tick). A death from ground or damage over time leaves no ember.`;
     case 'rebuke':
       return `When a melee skill hits you with physical damage, ${pct(e.ratio)} of the damage your armor blocked is dealt back to the attacker as physical damage.`;
     case 'stonePatience':
@@ -486,12 +493,17 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       add(`Random effect on each target hit: ${e.options.map((o) => `${defs.statuses?.[o.status]?.name ?? o.status} ${o.turns} turn${o.turns > 1 ? 's' : ''} (${pct(o.weight / total)})`).join(', ')}`);
     } else if (e.type === 'ground') {
       const g = defs.grounds?.[e.ground];
+      // Genel zemin kuralı (Ömer 2026-10-29): zemin kendi durumunu içindekine verir (içindeyken sürer); hasar / şifa o durumdan, tur başında bir kez
+      const stId = g?.status ?? g?.soak;
+      const st = stId ? defs.statuses?.[stId]?.name ?? stId : undefined;
+      const who = g?.heal ? 'allies' : g?.soak ? 'everyone' : 'enemies';
+      const inside = st ? `${who} standing there are ${st} while inside` : '';
       // D11 (Holy Ground): şifa zemini; area_any'de yalnızca kendi tarafına atılınca kalır
-      if (g?.heal) add(`Leaves ${g.name} on the area${skill.target === 'area_any' ? (e.side === 'enemies' ? ' (enemy side only)' : ' (your side only)') : ''} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) healing at the start of each ally turn there`);
+      if (g?.heal) add(`Leaves ${g.name} on the area${skill.target === 'area_any' ? (e.side === 'enemies' ? ' (enemy side only)' : ' (your side only)') : ''} for ${e.turns} turns: ${inside ? `${inside}, ` : ''}${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) healing at the start of each of their turns`);
       // area_any (Judgment 2026-10-24): hasar zemini yalnızca kendi `side` tarafına atılınca kalır
-      // gücü 0 olan zemin (Harita 2 Flooded suyu): hasarsız, yalnızca zemin
-      else if (e.power <= 0) add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns (no damage)`);
-      else add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'}${skill.target === 'area_any' ? (e.side === 'allies' ? ' (your side only)' : ' (enemy side only)') : ''} for ${e.turns} turns (damage over time): ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
+      // gücü 0 olan zemin (Harita 2 Flooded suyu): hasarsız, yalnızca durum
+      else if (e.power <= 0) add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns (no damage)${inside ? `: ${inside}` : ''}`);
+      else add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'}${skill.target === 'area_any' ? (e.side === 'allies' ? ' (your side only)' : ' (enemy side only)') : ''} for ${e.turns} turns: ${inside ? `${inside}, taking` : 'enemies there take'} ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each of their turns${g?.directTick ? ' from the ground itself' : ''}`, g?.element);
     } else if (e.type === 'selfDamage') {
       add(`Costs you ${pct(e.ratio)} of your max HP`);
     } else if (e.type === 'guard') {
@@ -531,6 +543,12 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     }
   }
   // Boss skill kuralları (The Bridge Warden): çekme, telgraf (gecikmeli saldırı), faz ve yardımcı şartları
+  // Ice Crater (Ömer 2026-10-29): seçilen yönde itme / çarpma
+  for (const e of skill.effects) {
+    if (e.type !== 'push') continue;
+    add(`Then pushes the target 1 cell in the direction you choose (along its row or lane, never diagonally). If that cell is taken or off the board, it crashes instead: it takes ${pct(e.crashPower)} ${ATTRIBUTE_NAME[e.scale]} (${scaled(stats, e.scale, e.crashPower, formulas)}) ${e.element} damage, and so does the unit it crashes into. Units that cannot be moved are neither pushed nor crash`, e.element);
+    break;
+  }
   for (const e of skill.effects) {
     if (e.type !== 'pull') continue;
     // M-N2 Boarding Hook (frontRow): yalnız ön sıra hücresine; doluysa çekme yok; elit / boss çekilmez
@@ -635,7 +653,8 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
     } else if (e.type === 'detonate') {
       const doom = defs.statuses?.[e.status]?.doom;
       if (doom) num('Doom / Omen', raw(doom.scale, doom.powerPerStack * e.mult), doom.element);
-    } else if (e.type === 'status') {
+    } else if (e.type === 'push') num('Crash', raw(e.scale, e.crashPower), e.element);
+    else if (e.type === 'status') {
       const def = defs.statuses?.[e.status];
       const name = def?.name ?? e.status;
       fixed(name, e.chance !== undefined && e.chance < 1 ? `${pct(e.chance)}, ${turnsText(e.turns)}` : turnsText(e.turns));
@@ -669,6 +688,10 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       return e.rageOnHurt ? [...fixed('Max bonus', moreText(e.maxBonus)), ...fixed('Rage per 1% HP lost', String(Math.round(e.rageOnHurt.perHpPercent * 100) / 100))] : fixed('Max bonus', moreText(e.maxBonus));
     case 'spellEcho':
       return fixed('Chance', pct(e.chance));
+    case 'heatMirage': {
+      const res = Object.entries(e.elemResist ?? {}).filter(([, v]) => (v ?? 0) > 0);
+      return [...num('Burning Ground / turn', scaled(stats, e.scale, e.power, formulas), 'fire'), ...res.flatMap(([k, v]) => fixed(`${cap(k)} damage taken`, `-${pct(v!)}`))];
+    }
     case 'pealingBells':
       return fixed('Per bell rung', moreText(e.perBell));
     case 'longshot':
@@ -728,6 +751,7 @@ export function groundReactionHint(groundId: string, reactions: Record<string, G
   const parts: string[] = [];
   for (const d of Object.values(reactions)) {
     const others = [...new Set([...(d.setup.includes(groundId) ? d.trigger : []), ...(d.trigger.includes(groundId) ? d.setup : [])])].filter((g) => g !== groundId);
+    if (d.setup.includes(groundId) && d.trigger.includes(groundId)) others.push(groundId); // aynı türle tepkime (Chill on chill)
     if (!others.length) continue;
     parts.push(`${d.label} (with ${others.map((g) => grounds[g]?.name ?? g).join(' or ')})`);
   }

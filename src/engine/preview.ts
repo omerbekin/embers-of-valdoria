@@ -6,7 +6,7 @@ import { skillCostPay } from './cost';
 import { damageSpecFor, type DamageEffect } from './spec';
 import { slotOfTileUid } from './battle';
 import { attributePower, hitChance } from './stats';
-import type { Combatant, OnAbsorbSpec, Side, SkillDef, SkillEffect } from './types';
+import type { Combatant, GroundEffect, OnAbsorbSpec, PushDir, Side, SkillDef, SkillEffect } from './types';
 import type { HitInfo, TreeQuery } from './tree-hooks';
 
 /** Item affix çarpanlı güç (motorla aynı ifade): çarpan yoksa güç aynen. */
@@ -98,13 +98,18 @@ export interface TargetPreview {
   immune?: string[];
   /** advanceToFront (Warrior Charge; kullanıcının girdisinde): skill sonrası geçeceği ön sıra hücresi (`from` -> `to`); ön sıradaysa ya da yer yoksa tanımsız. */
   advance?: { from: number; to: number };
+  /**
+   * İtme (Ice Crater; hedefin girdisinde, vuruş isabet ederse ve hedef sağ kalırsa): seçilen yön, sonuç (move: `to` hücresine kayar; crash: gidemez,
+   * `to` null = tahta dışı, `with` = çarptığı birim; immune: itilmez, çarpmaz), çarpma hasarı (hedefe; `withDamage` çarptığı birime; tickDamage kuralı).
+   */
+  push?: { dir: PushDir; kind: 'move' | 'crash' | 'immune'; to: number | null; with?: string; damage?: number; withDamage?: number };
 }
 
 /**
  * Hedef(ler) için etki önizlemesi. Tek hedefli skill'de `targetUid` verilmelidir.
  * Ceset tüketen çağrıda (Raise Dead) `corpseUid` seçilen ceset (yoksa YZ önerisi = en tehlikeli), `slot` seçilen çağrı yuvası.
  */
-export function previewSkill(battle: Battle, actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string): TargetPreview[] {
+export function previewSkill(battle: Battle, actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string, dir?: PushDir): TargetPreview[] {
   const actor = battle.get(actorUid);
   if (!actor || !battle.skill(skillId, actor)) return [];
   let targets = battle.validTargets(actorUid, skillId);
@@ -127,7 +132,7 @@ export function previewSkill(battle: Battle, actorUid: string, skillId: string, 
     // Yan vuruşlu skill: seçilen hedefin yanındaki hücreler de vurulur (ilk giriş seçilen hedef)
     if (targets[0]) targets = [targets[0], ...battle.splashTargets(skillId, targets[0], actorUid)];
   }
-  return previewForTargets(battle, actor, skillId, targets, centerUid, battle.needsSlotChoice(skillId) ? { corpseUid, slot } : undefined);
+  return previewForTargets(battle, actor, skillId, targets, centerUid, battle.needsSlotChoice(skillId) ? { corpseUid, slot } : undefined, dir);
 }
 
 const foe = (side: Side): Side => (side === 'party' ? 'enemy' : 'party');
@@ -136,7 +141,7 @@ const foe = (side: Side): Side => (side === 'party' ? 'enemy' : 'party');
  * Verilen hedef listesi için etkiyi hesaplar; arkaya sıçrayan hasar ayrı bir giriş olarak döner.
  * `centerUid`: alan skill'inde anchor hücredeki birim (area.hitsAtCenter > 1 ise hasar etkileri ona o kadar kez uygulanır: X şekli).
  */
-export function previewForTargets(battle: Battle, actor: Combatant, skillId: string, targets: Combatant[], centerUid?: string, summonPick?: { corpseUid?: string; slot?: number }): TargetPreview[] {
+export function previewForTargets(battle: Battle, actor: Combatant, skillId: string, targets: Combatant[], centerUid?: string, summonPick?: { corpseUid?: string; slot?: number }, dir?: PushDir): TargetPreview[] {
   const skill = battle.skill(skillId, actor);
   if (!skill) return [];
   const f = battle.formulas;
@@ -145,6 +150,20 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     let e = out.get(uid);
     if (!e) out.set(uid, (e = { uid }));
     return e;
+  };
+  // GENEL ZEMİN KURALI (Ömer 2026-10-29): zemin kendi durumunu içindekine verir (içindeyken sürer); önizleme satırı "Burning while inside",
+  // tutmayacaksa (boss CC bağışıklığı...) immune listesine. Gerçek kuralla aynı yol: battle.groundGrants / groundAffects / groundStatusRefused.
+  const groundStatusLines = (e: TargetPreview, target: Combatant, effect: Extract<SkillEffect, { type: 'ground' }>) => {
+    const probe = { ground: effect.ground, ...(effect.statuses?.length && actor.treeHooks ? { statuses: effect.statuses } : {}) } as GroundEffect;
+    for (const gr of battle.groundGrants(probe)) {
+      const name = battle.statusDef(gr.kind)?.name ?? gr.kind;
+      if (battle.groundStatusRefused(target, gr.kind)) {
+        if (!(e.immune ?? []).includes(name)) e.immune = [...(e.immune ?? []), name];
+        continue;
+      }
+      const line = `${name} while inside${gr.mpZero ? ' (once out of MP)' : ''}`;
+      if (!(e.statuses ?? []).includes(line)) e.statuses = [...(e.statuses ?? []), line];
+    }
   };
 
   // Her hedef için sıralı etkiler (kalkan ve hasar birbirini etkiler)
@@ -337,10 +356,12 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const perTurn = battle.groundTickHeal(Math.round(attributePower(actor.stats, effect.scale, f) * effect.power), target);
         const room = Math.max(0, target.maxHp - target.hp - (e.heal?.avg ?? 0));
         e.hot = { perTurn, turns: effect.turns, total: Math.min(perTurn * effect.turns, room) };
+        groundStatusLines(e, target, effect);
       } else if (effect.type === 'ground') {
         const perTick = battle.groundTickDamage(effect.ground, Math.round(attributePower(actor.stats, effect.scale, f) * effect.power), target);
         const e = entry(target.uid);
         e.ground = { perTick: (e.ground?.perTick ?? 0) + perTick, turns: effect.turns, total: (e.ground?.total ?? 0) + perTick * effect.turns };
+        groundStatusLines(e, target, effect);
       } else if (effect.type === 'brand') {
         // Ley Brand: süre, tainted mana havuzu (yalnızca MP havuzu olmayan ve havuzu açık olmayan hedef; yeniden atış doldurmaz), bedel çarpanı
         const e = entry(target.uid);
@@ -409,6 +430,31 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       const mp = Math.min(Math.max(0, actor.mp - pay.amount), Math.round(pay.amount * cb.castBurnPct));
       const raw = Math.round(mp * cb.burnPct);
       if (mp > 0) entry(actor.uid).castBurn = { mp, damage: raw > 0 ? battle.tickDamage(cb.element, 'magic', raw, actor) : 0 };
+    }
+  }
+  // Ice Crater (Ömer 2026-10-29): itme / çarpma önizlemesi (yön verilmezse motorun varsayılanı 'back'); gerçek vuruşla aynı pushOutcome + tickDamage
+  const push = skill.effects.find((x): x is Extract<SkillEffect, { type: 'push' }> => x.type === 'push');
+  if (push) {
+    const d: PushDir = dir ?? 'back';
+    for (const t of targets.slice(0, 1)) {
+      if (t.hp <= 0) continue;
+      const o = battle.pushOutcome(t, d);
+      const raw = Math.round(attributePower(actor.stats, push.scale, f) * push.crashPower);
+      if (o.kind === 'immune') entry(t.uid).push = { dir: d, kind: 'immune', to: null };
+      else if (o.kind === 'move') {
+        const e = entry(t.uid);
+        e.push = { dir: d, kind: 'move', to: o.to };
+        // Genel zemin kuralı: itildiği hücrenin zemin durumlarını o an alır
+        for (const [kind, w] of battle.groundStatusesAt(t, { board: t.board, slot: o.to })) {
+          if (t.statuses.some((x) => x.kind === kind) || battle.groundStatusRefused(t, kind) || (w.mpZero && !(t.maxMp > 0 && t.mp <= 0))) continue;
+          const line = `Pushed into ${battle.groundName(w.g.ground)}: ${battle.statusDef(kind)?.name ?? kind}`;
+          e.statuses = [...(e.statuses ?? []), line];
+        }
+      }
+      else {
+        const other = o.with ? battle.get(o.with) : undefined;
+        entry(t.uid).push = { dir: d, kind: 'crash', to: o.to, ...(other ? { with: other.uid, withDamage: raw > 0 ? battle.tickDamage(push.element, 'magic', raw, other) : 0 } : {}), damage: raw > 0 ? battle.tickDamage(push.element, 'magic', raw, t) : 0 };
+      }
     }
   }
   for (const e of out.values()) {

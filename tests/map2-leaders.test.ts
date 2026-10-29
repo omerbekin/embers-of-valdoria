@@ -198,6 +198,8 @@ describe('Harita 2 önderleri: her skill kullanılabilir', () => {
         const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, seed, 'turns', teamsFor(id, DENSE), false));
         const u = leader(b, id);
         u.maxHp = u.hp = 5000; // kit kullanımı ölçülür, savaşın sonucu değil: önder erken düşmesin
+        // Madde 452: Mage'in Ice Crater'ı yakın dövüşçü önderi her fırsatta menzil dışına geri itebiliyor (gerçek taktik); kit ölçümü bozulmasın diye çıkarılır
+        for (const c of b.combatants) if (c.side === 'party') c.skills = c.skills.filter((s) => s !== 'ice_crater');
         for (let n = 0; n < 500 && !b.winner; n++) {
           const uid = b.currentActor?.uid;
           if (!uid || !b.applyChoice(uid, chooseAction(b, uid, content.aiConfig)).ok) break;

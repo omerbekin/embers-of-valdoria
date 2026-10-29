@@ -86,7 +86,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
   it('tüm skill listelenir; ad, hedef rozeti, bedel, cooldown ve açıklaması boş değildir', () => {
     // test class'larının (Geometer, Pose Tester'lar) skill'leri Codex'te yok: yalnızca debug menüsünde
     const testOf = new Set(Object.values(content.classes).filter((c) => c.testOnly).flatMap((c) => c.skills));
-    expect(wiki.skills.map((s) => s.id).sort()).toEqual(Object.keys(content.skills).filter((id) => !testOf.has(id)).sort());
+    expect(wiki.skills.map((s) => s.id).sort()).toEqual(Object.keys(content.skills).filter((id) => !testOf.has(id) && !content.skills[id]!.retired).sort()); // emekli skill (Mana Barrier, 2026-10-29) Codex'te yok
     for (const s of wiki.skills) {
       expect(s.name, s.id).not.toBe('');
       expect(s.targetBadge, s.id).not.toBe('');

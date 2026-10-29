@@ -143,6 +143,38 @@ export function rectAxisStart(a: number, size: number, max: number, smallAt: 'lo
  * distance: anchor hücreye uzaklık (sıra farkı + şerit farkı) halkaları, anchor önce. `reverse` sırayı ters çevirir.
  */
 export function shapeStages(area: AreaDef, anchorSlot: number, board: Side, formation: ShapeFormation): number[][] {
+  // Çağıran diziyi değiştirebileceği için önbellekteki sonucun kopyası döner
+  return shapeStagesShared(area, anchorSlot, board, formation).map((st) => st.slice());
+}
+
+/**
+ * shapeStages'in önbellekli, PAYLAŞILAN (salt okunur) sonucu: motorun sıcak yolu (areaWindowAt) için. Saf hesap: aynı AreaDef nesnesi + anchor + tahta +
+ * dizilim = aynı aşamalar (AreaDef'ler içerik verisidir, yerinde değiştirilmez). YZ her adayda aynı alanı tekrar tekrar sorduğu için tutulur; geçici
+ * nesneler (ör. `{ shape: 'row' }`) yalnızca kaçırır. Dönen diziler DEĞİŞTİRİLMEZ.
+ */
+export function shapeStagesShared(area: AreaDef, anchorSlot: number, board: Side, formation: ShapeFormation): readonly (readonly number[])[] {
+  let byFormation = stageMemo.get(area);
+  if (!byFormation) {
+    byFormation = new WeakMap();
+    stageMemo.set(area, byFormation);
+  }
+  let byCell = byFormation.get(formation);
+  if (!byCell) {
+    byCell = new Map();
+    byFormation.set(formation, byCell);
+  }
+  const key = board === 'enemy' ? anchorSlot * 2 + 1 : anchorSlot * 2;
+  let hit = byCell.get(key);
+  if (!hit) {
+    hit = computeShapeStages(area, anchorSlot, board, formation);
+    byCell.set(key, hit);
+  }
+  return hit;
+}
+
+const stageMemo = new WeakMap<AreaDef, WeakMap<ShapeFormation, Map<number, number[][]>>>();
+
+function computeShapeStages(area: AreaDef, anchorSlot: number, board: Side, formation: ShapeFormation): number[][] {
   const cells = shapeCells(area, anchorSlot, board, formation);
   if (!area.stages || cells.length === 0) return cells.length ? [cells] : [];
   const key = stageKey(area.stages, anchorSlot, board, formation);

@@ -32,7 +32,7 @@ export interface TreeNode {
   ultLevel?: number;
 }
 
-export type TreeBlockCode = 'unknown' | 'unapproved' | 'max' | 'direction' | 'needs' | 'tier' | 'evo' | 'evoCap' | 'ultArm' | 'ultCap' | 'ultLevel' | 'points';
+export type TreeBlockCode = 'unknown' | 'unapproved' | 'inactive' | 'max' | 'direction' | 'needs' | 'tier' | 'evo' | 'evoCap' | 'ultArm' | 'ultCap' | 'ultLevel' | 'points';
 
 /** Neden alınamaz (arayüz metni İngilizce, aynen gösterilir). */
 export interface TreeBlock {
@@ -129,8 +129,10 @@ const nameOf = (tree: TreeData, key: string): string => tree.nodes[key]?.name ??
 
 /** NEW düğüm onay bekliyor mu (alınamaz). */
 export const isUnapproved = (tree: TreeData, key: string): boolean => !!tree.nodes[key]?.new && !tree.nodes[key]?.approved;
+/** Pasif düğüm (Mage reworkü 2026-10-29): alınamaz, motor yok sayar. */
+export const isInactive = (tree: TreeData, key: string): boolean => !!tree.nodes[key]?.inactive;
 /** Etkisi yazılmamış düğüm (fx null): puan alınabilir, motor yok sayar ("Not active yet"). */
-export const isInert = (tree: TreeData, key: string): boolean => !tree.nodes[key]?.fx;
+export const isInert = (tree: TreeData, key: string): boolean => !tree.nodes[key]?.fx || !!tree.nodes[key]?.inactive;
 
 /**
  * Düğüme +1 rank konabilir mi? null = evet; değilse neden. `noPoints`: puan sınırına bakma (doğrulama). Sıra: bilinmeyen -> onay -> tavan ->
@@ -142,6 +144,7 @@ export function check(tree: TreeData, level: number, a: TreeAlloc, key: string, 
   const nd = treeNodes(rules).by.get(key);
   if (!nd || !tree.nodes[key]) return { code: 'unknown', text: 'Unknown node' };
   if (isUnapproved(tree, key)) return { code: 'unapproved', text: 'Awaiting approval' };
+  if (isInactive(tree, key)) return { code: 'inactive', text: 'Inactive: being reworked' };
   if (rankOf(a, key) >= nd.max) return { code: 'max', text: 'Max rank' };
   if (rules.exclusiveEdges && nd.dir) {
     const other = nd.dir === 'a' ? 'b' : 'a';
@@ -204,6 +207,7 @@ export function validate(tree: TreeData, level: number, a: TreeAlloc, rules: Tre
     if (!nd || !tree.nodes[k]) return { key: k, code: 'unknown', text: 'Unknown node' };
     if (!Number.isInteger(v) || v < 0 || v > nd.max) return { key: k, code: 'max', text: `Invalid rank ${v}` };
     if (v > 0 && isUnapproved(tree, k)) return { key: k, code: 'unapproved', text: 'Awaiting approval' };
+    if (v > 0 && isInactive(tree, k)) return { key: k, code: 'inactive', text: 'Inactive: being reworked' };
   }
   if (spent(a) > treePool(level)) return { key: keys[0] ?? null, code: 'points', text: 'Too many points for this level' };
   let t: TreeAlloc = { v: a.v, r: {} };
@@ -256,7 +260,7 @@ export function status(tree: TreeData, level: number, a: TreeAlloc, key: string,
   const block = check(tree, level, a, key, {}, rules);
   const max = nd?.max ?? 0;
   let st: TreeNodeState;
-  if (block?.code === 'unapproved') st = 'new';
+  if (block?.code === 'unapproved' || block?.code === 'inactive') st = 'new';
   else if (r >= max) st = 'max';
   else if (r > 0) st = 'part';
   else if (!block || block.code === 'points') st = 'av';

@@ -1,18 +1,18 @@
 import { isAccuracyCritDebuff } from './cc-immunity';
 import { hpFallbackAmount, skillCostAmount } from './cost';
 import { damageRange, missingHpHealMult, rollCrit, rollDamage, rollHeal, shieldAmount, type DamageSpec, type Range } from './formulas';
-import { cursorAnchorSlot, isShapeArea, screenCellOf, shapeCells, shapeStages } from './area-shape';
+import { cursorAnchorSlot, isShapeArea, screenCellOf, shapeCells, shapeStages, shapeStagesShared } from './area-shape';
 import { pickSideNeighbors } from './formation';
 import { betMultipliers, betStakeParts } from './gamble';
 import { burnAmountFor, emptyProcApplies } from './mana-burn';
 import { Rng } from './rng';
 import { ITEM_HOOK_CAPS } from './item-caps';
 import { isUnblockableHit } from './unblockable';
-import { mergeRefreshStrongest, statusStackMode } from './status-stack';
+import { mergeRefreshStrongest, statusStackMode, statusStrength } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
 import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
-import type { Attribute, Attributes, BrandSpec, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
+import type { Attribute, Attributes, BrandSpec, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect, PushDir } from './types';
 import { advanceTurn, predictQueue, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
 import { condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
 import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BattleObjective, BattleRules, BetSpec, Combatant, CombatantDef, FloodRule, Formulas, GlobalSkillDef, UrnRule, GroundDef, GroundEffect, GroundReactionDef, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
@@ -93,6 +93,9 @@ export interface DebugFlags {
   block?: boolean;
 }
 
+/** İtme yönleri (Ice Crater; motor dili, types.ts > PushDir). */
+export const PUSH_DIRS: readonly PushDir[] = ['forward', 'back', 'lanePrev', 'laneNext'];
+
 /** Yapay zeka (ya da arayüz) seçimini motora çevirmek için yapısal giriş: skillId bir class skill'i ya da global skill id'si olabilir. */
 export interface ChoiceLike {
   skillId: string;
@@ -105,6 +108,8 @@ export interface ChoiceLike {
   corpseUid?: string;
   /** Faz 8: skill ağacı biçimi (Focused Beam, Stacked Deck kartı); yoksa skill'in kendi biçimi. */
   mode?: string;
+  /** İtme yönü (push etkili skill: Ice Crater); yoksa 'back'. */
+  dir?: PushDir;
 }
 
 /** Faz 8: etkin skill biçimi (kullanım ya da arayüz hedef seçimi süresince Battle.skill(id, uid) bu tanımı döndürür). */
@@ -685,6 +690,16 @@ export class Battle {
    */
   groundTickDamage(groundId: string, amount: number, target: Combatant): number {
     return this.tickDamage(this.setup.grounds?.[groundId]?.element ?? 'physical', 'magic', amount, target);
+  }
+
+  /** Flooded Planks istisnası: zemin kendi hasarını doğrudan vurur mu (grounds.json > directTick). Saf. */
+  groundDirectTick(groundId: string): boolean {
+    return this.setup.grounds?.[groundId]?.directTick === true;
+  }
+
+  /** Zeminin oyun içi adı (grounds.json > name; yoksa id). Saf. */
+  groundName(groundId: string): string {
+    return this.setup.grounds?.[groundId]?.name ?? groundId;
   }
 
   /** D11 (Holy Ground): şifa zemini mi (grounds.json > heal)? Şifa zemini hasar vermez, bırakanın tarafını iyileştirir. */
@@ -2138,7 +2153,8 @@ export class Battle {
       this.ground.push(g);
       (ev.placed ??= []).push(g);
       emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
-      if (this.reactGrounds(g, emit)) this.applyEnvironment(emit); // zemin tepkimeleri (grounds.json > reactions)
+      this.reactGrounds(g, emit); // zemin tepkimeleri (grounds.json > reactions)
+      this.applyEnvironment(emit); // genel zemin kuralı: içindekiler durumu o an alır (su: söndürme)
     }
   }
 
@@ -2379,7 +2395,7 @@ export class Battle {
    */
   groundReactionFor(setup: string, trigger: string, ownBoard?: boolean): { id: string; def: GroundReactionDef } | null {
     const table = this.setup.groundReactions;
-    if (!table || setup === trigger) return null;
+    if (!table) return null; // setup === trigger yalnız tanım açıkça ikisini de listeliyorsa eşleşir (Chill on chill)
     for (const [id, def] of Object.entries(table)) {
       if (def.board && ownBoard !== undefined && (def.board === 'own') !== ownBoard) continue;
       if (def.setup.includes(setup) && def.trigger.includes(trigger)) return { id, def };
@@ -2578,26 +2594,219 @@ export class Battle {
     return madeWater;
   }
 
-  /** Ağaç zeminlerinin tur başı etkisi (grounds.json statuses / manaBurnPct + zemine eklenen durumlar): içinde tur başlatan düşmana. */
+  /** Hall of Silence (grounds.json > manaBurnPct): içinde tur başlatan düşmanın maks MP oranı yanar (tur başı ek etki; durumlar genel zemin kuralıyla). */
   private groundTurnStart(actor: Combatant, emit: Emit): void {
     for (const g of [...this.ground]) {
       if (g.board !== actor.board || !g.slots.includes(actor.slot) || g.sourceSide === actor.side || actor.hp <= 0) continue;
-      if (!this.treeUnits && !g.reaction) continue; // ağaçsız savaşta yalnızca zemin tepkimesinin doğurduğu zemin (Ice)
       const def = this.setup.grounds?.[g.ground];
-      const list = [...(def?.statuses ?? []), ...(g.statuses ?? [])];
-      if (!list.length && !def?.manaBurnPct) continue;
+      if (!def?.manaBurnPct || !(actor.maxMp > 0 && actor.mp > 0)) continue;
       const src = this.get(g.source) ?? actor;
-      if (def?.manaBurnPct && actor.maxMp > 0 && actor.mp > 0) {
-        const burn = Math.min(actor.mp, Math.max(1, Math.round(actor.maxMp * def.manaBurnPct)));
-        actor.mp -= burn;
-        emit({ type: 'resource', actor: actor.uid, resource: 'mp', amount: burn, after: actor.mp });
-        this.brandBurn(src, actor, burn, actor.mp + burn, emit); // Ley Brand
-      }
-      for (const st of list) {
-        if (!this.statusDef(st.status) || (st.mpZero && !(actor.maxMp > 0 && actor.mp <= 0))) continue;
-        this.addStatus(actor, { kind: st.status as Status['kind'], turns: st.turns ?? 1, source: src.uid }, emit, g.ground);
+      const burn = Math.min(actor.mp, Math.max(1, Math.round(actor.maxMp * def.manaBurnPct)));
+      actor.mp -= burn;
+      emit({ type: 'resource', actor: actor.uid, resource: 'mp', amount: burn, after: actor.mp });
+      this.brandBurn(src, actor, burn, actor.mp + burn, emit); // Ley Brand
+    }
+  }
+
+  // --- GENEL ZEMİN KURALI (Ömer 2026-10-29, open-questions 453) ---
+  // Zemin kendi durumunu (grounds.json > status; su: soak; ek: statuses) İÇİNDE DURAN birime verir: giren o an alır, içindeyken süresi işlemez,
+  // çıkınca / zemin bitince o an kalkar. Hasar / şifa DURUMDAN gelir (tur başında bir tik; güç zeminin hücredeki gücü). Aynı türden skill örneğiyle
+  // çakışınca güçlü olan geçer; zayıf skill örneği zemin örneğinin altında (held) bekler, süresi işler, zeminden çıkınca kalan süresiyle döner.
+
+  /** Zemin bu birimi etkiler mi (taraf kuralı bugünkü gibi): şifa zemini bırakanın tarafını, su herkesi (yardımcı nesne hariç), diğerleri bırakanın düşmanını. Saf. */
+  groundAffects(g: GroundEffect, c: Pick<Combatant, 'side' | 'inert'>): boolean {
+    if (this.isHealGround(g.ground)) return c.side === g.sourceSide;
+    if (this.isWater(g)) return !c.inert;
+    return c.side !== g.sourceSide;
+  }
+
+  /** Zeminin verdiği durumlar: ana durum (status; su zemininde soak; gücü taşır) + ek durumlar (veri statuses + ağacın eklediği, `mpZero` koşullu). Saf. */
+  groundGrants(g: GroundEffect): Array<{ kind: string; primary: boolean; mpZero?: boolean }> {
+    const def = this.setup.grounds?.[g.ground];
+    const out: Array<{ kind: string; primary: boolean; mpZero?: boolean }> = [];
+    const main = g.envUntilRound !== undefined ? g.soak : (def?.status ?? def?.soak);
+    if (main && this.statusDef(main)) out.push({ kind: main, primary: true });
+    for (const st of [...(def?.statuses ?? []), ...(g.statuses ?? [])]) if (this.statusDef(st.status) && !out.some((o) => o.kind === st.status)) out.push({ kind: st.status, primary: false, ...(st.mpZero ? { mpZero: true } : {}) });
+    return out;
+  }
+
+  /** Ana durumun bu hücredeki tik gücü (hücre çarpanı dahil; hasar zemininde en az 1): hasarsız ya da kendi vuran (directTick) zeminde 0. Saf. */
+  groundStatusAmount(g: GroundEffect, slot: number): number {
+    if (g.noDamage || this.setup.grounds?.[g.ground]?.directTick) return 0;
+    const a = g.cellMult?.[slot] ? Math.round(g.amount * g.cellMult[slot]!) : g.amount;
+    // Hasar zemini: statı 0 olan bırakanınki de en az minDamage vurur (eski zemin tiki kuralı); şifa zemini 0'da iyileştirmez
+    return this.isHealGround(g.ground) ? Math.max(0, a) : Math.max(1, a);
+  }
+
+  /**
+   * Birimin (`at` verilirse o hücrede durursa) zeminlerden alacağı durumlar: tür -> en güçlü zemin (eşitlikte önce konan). `mpZero` koşulu burada
+   * işlenmez (çağıran). Saf (önizleme, YZ).
+   */
+  groundStatusesAt(c: Pick<Combatant, 'side' | 'inert' | 'board' | 'slot'>, at?: { board: Side; slot: number }): Map<string, { g: GroundEffect; amount: number; primary: boolean; mpZero?: boolean }> {
+    const board = at?.board ?? c.board;
+    const slot = at?.slot ?? c.slot;
+    const want = new Map<string, { g: GroundEffect; amount: number; primary: boolean; mpZero?: boolean }>();
+    for (const g of this.ground) {
+      if (g.board !== board || !g.slots.includes(slot) || !this.groundAffects(g, c)) continue;
+      for (const gr of this.groundGrants(g)) {
+        const amount = gr.primary ? this.groundStatusAmount(g, slot) : 0;
+        const cur = want.get(gr.kind);
+        if (!cur || amount > cur.amount) want.set(gr.kind, { g, amount, primary: gr.primary, ...(gr.mpZero ? { mpZero: true } : {}) });
       }
     }
+    return want;
+  }
+
+  /** Zemin durumunun girişte tutmadığı hâller: CC bağışıklığı (boss), item Immunity'si, ağaç bağışıklığı / ward. Rastgele sayı tüketmez. Saf. */
+  groundStatusRefused(c: Combatant, kind: string): boolean {
+    if (this.statusBlocked(c, kind)) return true;
+    const imm = effArr(c, 'earlyImmunity')?.find((e) => e.status === kind);
+    if (imm && (c.ownTurns ?? 0) <= imm.turns) return true;
+    if (c.treeHooks && this.treeUnits) {
+      if (this.rulesOf(c, 'immune').some((h) => h.statuses?.includes(kind))) return true;
+      if (this.wardUntil.has(c.uid) && this.statusDef(kind)?.type === 'debuff') return true;
+    }
+    return false;
+  }
+
+  private groundSyncing = false;
+  /** Bağışıklık yüzen yazısı girişte bir kez (birim:tür; birim o türü veren zeminden çıkınca silinir). */
+  private readonly groundRefusedSeen = new Set<string>();
+
+  /**
+   * Bütün canlı birimlerin zemin durumlarını hücrelerine göre eşitler (giriş: o an alır; çıkış / zemin bitişi: o an kalkar; tik ATMAZ). Zemin konunca,
+   * birim yer değiştirince (Move, itme, çekme, öne atılma), eylem sonunda ve tur başında çağrılır. Rastgele sayı tüketmez.
+   */
+  syncGroundStatuses(emit: Emit): void {
+    if (this.groundSyncing) return;
+    if (!this.ground.length && !this.combatants.some((c) => c.statuses.some((s) => s.fromGround))) return;
+    this.groundSyncing = true;
+    try {
+      for (const c of this.combatants) {
+        if (c.hp <= 0) continue;
+        const want = this.groundStatusesAt(c);
+        for (const st of [...c.statuses]) if (st.fromGround && !want.has(st.kind) && c.statuses.includes(st)) this.dropGroundStatus(c, st, emit);
+        for (const key of [...this.groundRefusedSeen]) if (key.startsWith(`${c.uid}:`) && !want.has(key.slice(c.uid.length + 1))) this.groundRefusedSeen.delete(key);
+        // Temizleyen durum (Soaked: Burning söner) önce
+        const order = [...want.entries()].sort(([a], [b]) => (this.statusDef(b)?.cleanses?.length ? 1 : 0) - (this.statusDef(a)?.cleanses?.length ? 1 : 0));
+        for (const [kind, w] of order) if (c.hp > 0) this.grantGroundStatus(c, kind, w, emit);
+      }
+    } finally {
+      this.groundSyncing = false;
+    }
+  }
+
+  private grantGroundStatus(c: Combatant, kind: string, w: { g: GroundEffect; amount: number; mpZero?: boolean }, emit: Emit): void {
+    const g = w.g;
+    const source = g.source === 'env' ? c.uid : g.source;
+    const cause = g.envUntilRound !== undefined ? (g.envCause ?? this.setup.rules?.condition?.id ?? 'env') : g.ground;
+    const cur = c.statuses.find((s) => s.kind === kind);
+    if (cur?.fromGround) {
+      // Zaten zeminden: güç / kaynak en güçlü zemine göre güncel (olay yok; yeniden kazanmak tik atmaz)
+      cur.fromGround = g.id;
+      cur.groundKind = g.ground;
+      cur.source = source;
+      cur.turns = Math.max(1, g.turns);
+      if (w.amount > 0) cur.amount = w.amount;
+      else delete cur.amount;
+      return;
+    }
+    if (cur && statusStrength(cur) >= w.amount) return; // aynı türden skill örneği güçlü (ya da eşit): o geçerli; bitince zemin yeniden verir
+    if (w.mpZero && !(c.maxMp > 0 && c.mp <= 0)) return;
+    if (c.statuses.some((s) => this.statusDef(s.kind)?.cleanses?.includes(kind))) return; // Soaked'taki birime Burning tutmaz
+    const key = `${c.uid}:${kind}`;
+    if (this.groundStatusRefused(c, kind)) {
+      if (!this.groundRefusedSeen.has(key)) {
+        this.groundRefusedSeen.add(key);
+        emit({ type: 'immune', target: c.uid, status: kind as Status['kind'], source, cause });
+      }
+      return;
+    }
+    for (const k of this.statusDef(kind)?.cleanses ?? []) {
+      if (!c.statuses.some((s) => s.kind === k)) continue;
+      c.statuses = c.statuses.filter((s) => s.kind !== k);
+      emit({ type: 'statusEnd', target: c.uid, status: k as Status['kind'] });
+    }
+    const st: Status = { kind: kind as Status['kind'], turns: Math.max(1, g.turns), source, ...(w.amount > 0 ? { amount: w.amount } : {}), fromGround: g.id, groundKind: g.ground, cause, ...(cur ? { held: cur } : {}) };
+    c.statuses = c.statuses.filter((s) => s !== cur);
+    c.statuses.push(st);
+    emit({ type: 'status', target: c.uid, status: st.kind, turns: st.turns, source, cause });
+    if (this.trigOn && g.source !== 'env') {
+      const src = this.get(g.source);
+      this.trig([c], { on: 'statusGained', target: src ?? c, subject: c, ...(src ? { source: src } : {}), status: st.kind, statusSource: source }, emit);
+      if (src) this.trig([src], { on: 'statusApplied', target: c, subject: c, source: src, status: st.kind, statusSource: source }, emit);
+      if (this.statusDef(kind)?.type === 'buff') this.trigAll({ on: 'enemyBuffed', target: c, subject: c, status: st.kind }, emit, (u) => u.side !== c.side);
+    }
+  }
+
+  /** Zemin kaynaklı durum kalkar (çıkış / zemin bitişi); altında bekleyen skill örneği kalan süresiyle döner. */
+  private dropGroundStatus(c: Combatant, st: Status, emit: Emit): void {
+    c.statuses = c.statuses.filter((s) => s !== st);
+    emit({ type: 'statusEnd', target: c.uid, status: st.kind });
+    if (this.trigOn) this.statusEndTrig(c, st, 'expired', emit);
+    const h = st.held;
+    if (h && (h.turns > 0 || h.permanent) && c.hp > 0 && !c.statuses.some((s) => s.kind === h.kind)) {
+      c.statuses.push(h);
+      emit({ type: 'status', target: c.uid, status: h.kind, turns: h.turns, source: h.source, ...(h.cause ? { cause: h.cause } : {}) });
+    }
+  }
+
+  /**
+   * Tur başı zemin tikleri: zemin kaynaklı her durum BİR kez (hasar: zeminin elementi, büyü, kritiksiz; ağaç 'ground' kancaları; Hallowed: şifa).
+   * Ardından directTick zeminleri (Flooded Planks) eskisi gibi kendi hasarını vurur.
+   */
+  private groundStatusTicks(actor: Combatant, emit: Emit): void {
+    for (const st of [...actor.statuses]) {
+      if (!st.fromGround || !(st.amount && st.amount > 0) || actor.hp <= 0 || !actor.statuses.includes(st)) continue;
+      const g = this.ground.find((x) => x.id === st.fromGround);
+      if (!g) continue;
+      const src = this.get(g.source) ?? actor;
+      if (this.isHealGround(g.ground)) {
+        this.applyHeal(src, actor, st.amount, false, emit, g.ground);
+        continue;
+      }
+      this.groundHit(g, src, actor, st.amount, emit);
+    }
+    for (const g of [...this.ground]) {
+      if (!this.setup.grounds?.[g.ground]?.directTick || actor.hp <= 0) continue;
+      if (g.board !== actor.board || !g.slots.includes(actor.slot) || g.sourceSide === actor.side) continue;
+      if (g.noDamage || (g.yields && this.groundOutranked(g, actor.slot))) continue;
+      this.groundHit(g, this.get(g.source) ?? actor, actor, g.cellMult?.[actor.slot] ? Math.round(g.amount * g.cellMult[actor.slot]!) : g.amount, emit);
+    }
+  }
+
+  /** Bir zemin tikinin vuruşu (eski tur başı zemin hasarı yolu): bırakanın 'ground' kancaları (güç; groundAgeAtLeast), kritiksiz büyü, zeminin elementi. */
+  private groundHit(g: GroundEffect, src: Combatant, actor: Combatant, amount: number, emit: Emit): void {
+    const gm = src.treeHooks ? this.treeMods(src, actor, null, undefined, { at: 'ground', tick: { age: g.age ?? 0 }, roll: true }) : null;
+    const gd = this.groundTickDamage(g.ground, amount, actor);
+    if (gm) this.treeProcAll(src.uid, gm.nodes);
+    this.applyHit(src, actor, gm && gm.power !== 1 ? Math.max(this.setup.formulas.damage.minDamage, Math.round(gd * gm.power)) : gd, 'magic', false, emit, false, { origin: 'ground', element: this.setup.grounds?.[g.ground]?.element ?? 'physical', damageType: 'magic', ground: g.ground, groundId: g.id });
+    this.announceIfDead(actor, emit);
+  }
+
+  /**
+   * YZ / önizleme: birim `board`/`slot` hücresine girerse zemin durumlarından tur başı bekleyen tik hasarı (birimde aynı türden güçlü skill durumu
+   * yoksa; şifa zemini sayılmaz; `side` verilirse yalnızca o tarafın bıraktığı zeminler). Saf.
+   */
+  groundHazardAt(c: Combatant, board: Side, slot: number, side?: Side): number {
+    let dmg = 0;
+    for (const [kind, w] of this.groundStatusesAt(c, { board, slot })) {
+      if (w.amount <= 0 || this.isHealGround(w.g.ground) || (side && w.g.sourceSide !== side)) continue;
+      const cur = c.statuses.find((s) => s.kind === kind);
+      if (cur && !cur.fromGround && statusStrength(cur) >= w.amount) continue;
+      if (this.groundStatusRefused(c, kind)) continue;
+      dmg += this.groundTickDamage(w.g.ground, w.amount, c);
+    }
+    return dmg;
+  }
+
+  /** Durumun bir sonraki tur başı tik hasarı (zemin kaynaklıysa zemin yolu, değilse DoT; şifa zemini 0). Saf (YZ dyingAnyway). */
+  statusTickDamage(c: Combatant, st: Status): number {
+    if (st.fromGround) {
+      const g = this.ground.find((x) => x.id === st.fromGround);
+      return g && !this.isHealGround(g.ground) && (st.amount ?? 0) > 0 ? this.groundTickDamage(g.ground, st.amount!, c) : 0;
+    }
+    return this.statusDef(st.kind)?.dot ? this.dotTickDamage(st.kind, st.amount ?? 0, c) : 0;
   }
 
   /** Mana Overflow'un bir tetiklenişi (pasif sayacı eşiği geçince ya da Overflow Strike): tüm takıma MP; dolan dost tetiği (allyFilled). */
@@ -3100,24 +3309,27 @@ export class Battle {
     if (pe?.type === 'slick' && c.hp > 0 && this.onGround(c, pe.ground)) eva += pe.evasion;
     // extraCrit: vuruşun kendi kritik eki (skill hasarının critBonus'u, Jinx); durum ekleriyle birlikte toplanıp [0, 1]'e kırpılır
     let crit = extraCrit;
+    // Chilled (Ömer 2026-10-29): kaçınma ÇARPANI (evasionMult), ekler toplandıktan sonra; yoksa 1
+    let evaMult = 1;
     const noMisfortune = this.ignoresMisfortune(c); // boss: Omen'in kritik düşüşü işlemez (madde 272)
     for (const s of c.statuses) {
       const d = this.statusDef(s.kind);
       acc += (d?.accuracyDelta ?? 0) + (s.potency?.accuracyDelta ?? 0);
       eva += (d?.evasionDelta ?? 0) + (s.potency?.evasionDelta ?? 0);
+      if (d?.evasionMult !== undefined) evaMult *= d.evasionMult;
       // Kritik eki (Jinxed: kritik yok) ve yığın başına kritik eki (Omen Misfortune); sonuç [0, 1]. Ağaç statusPotency düz ek
       crit += (d?.critDelta ?? 0) + (s.potency?.critDelta ?? 0) + (noMisfortune ? 0 : (d?.critDeltaPerStack ?? 0) * (s.stacks ?? 0));
       if (d?.armorMult !== undefined || s.potency?.armorMult !== undefined) armorMult *= Math.max(0, (d?.armorMult ?? 1) + (s.potency?.armorMult ?? 0));
     }
     // Saltbound (noEvasion): kaçınma 0 (tüm ekler dahil)
     const noEva = c.statuses.length > 0 && c.statuses.some((s) => this.statusDef(s.kind)?.noEvasion);
-    if (bonus <= 0 && magicBonus <= 0 && acc === 0 && eva === 0 && crit === 0 && armorMult === 1 && !noEva) return c.stats;
+    if (bonus <= 0 && magicBonus <= 0 && acc === 0 && eva === 0 && crit === 0 && armorMult === 1 && evaMult === 1 && !noEva) return c.stats;
     return {
       ...c.stats,
       armor: armorMult === 1 ? c.stats.armor + bonus : Math.round((c.stats.armor + bonus) * armorMult * 10000) / 10000,
       magicArmor: c.stats.magicArmor + magicBonus,
       accuracy: Math.max(0, Math.round((c.stats.accuracy + acc) * 10000) / 10000),
-      evasion: noEva ? 0 : Math.max(0, Math.round((c.stats.evasion + eva) * 10000) / 10000),
+      evasion: noEva ? 0 : Math.max(0, Math.round((c.stats.evasion + eva) * evaMult * 10000) / 10000),
       critChance: Math.min(1, Math.max(0, Math.round((c.stats.critChance + crit) * 10000) / 10000)),
     };
   }
@@ -3612,8 +3824,8 @@ export class Battle {
     };
     this.ground.push(g);
     emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
-    const madeWater = this.reactGrounds(g, emit); // zemin tepkimeleri (grounds.json > reactions)
-    if (this.isWater(g) || madeWater) this.applyEnvironment(emit); // telgraf suyu (Deluge, High Tide): içindekiler hemen ıslanır
+    this.reactGrounds(g, emit); // zemin tepkimeleri (grounds.json > reactions)
+    this.applyEnvironment(emit); // genel zemin kuralı: içindekiler durumu o an alır (telgraf suyu: ıslanır, alttaki Burning ground söner)
   }
 
   /**
@@ -3736,10 +3948,61 @@ export class Battle {
     }
   }
 
+  /**
+   * Heat Mirage (Mage pasifi): `owner`'a yakın dövüşle vuran `attacker`ın hücresine `turns` tur zemin (Last Ember kalıbı: süre ve ömür saldıranın,
+   * tik bırakanın statından). Kendi turları arasında bir kez (mirageUsed). Tepkime çalıştırmaz (Last Ember gibi). Rastgele sayı tüketmez.
+   */
+  private heatMirage(owner: Combatant, attacker: Combatant, emit: Emit): void {
+    const e = owner.passive?.effect;
+    if (e?.type !== 'heatMirage' || owner.mirageUsed || attacker.inert) return;
+    owner.mirageUsed = true;
+    const g: GroundEffect = {
+      id: `g${this.groundCount++}`,
+      ground: e.ground,
+      board: attacker.board,
+      slots: [attacker.slot],
+      turns: e.turns,
+      source: owner.uid,
+      sourceSide: owner.side,
+      amount: Math.round(attributePower(owner.stats, e.scale, this.setup.formulas) * e.power),
+      scale: e.scale,
+      sourceStat: owner.stats[e.scale],
+      power: e.power,
+      tickOn: attacker.uid,
+    };
+    this.ground.push(g);
+    emit({ type: 'passive', actor: owner.uid, passive: owner.passive!.id, name: owner.passive!.name });
+    emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+    this.syncGroundStatuses(emit); // genel zemin kuralı: saldıran o an Burning (zemin saldıranın sıradaki turunda biter)
+  }
+
   /** Birim çekilemez/itilemez mi (boss bağışıklığı ya da Unyielding)? Saf. */
   immuneToDisplacement(c: Combatant): boolean {
     // Faz 5a (Unyielding): ağaç kuralı immune pull
     return !!c.boss?.unyielding?.immuneDisplacement || (!!this.setup.formulas.ccImmunity?.displacement && this.ccImmune(c)) || effFlag(c, 'steadfast') || (!!c.treeHooks && this.rulesOf(c, 'immune').some((h) => h.pull));
+  }
+
+  /** İtme yönünün hücresi (aynı tahta; çapraz yok) ya da tahta dışıysa null. Saf. */
+  pushCell(slot: number, dir: PushDir): number | null {
+    const { rows, lanes } = this.setup.formulas.formation;
+    const row = this.rowOf(slot) + (dir === 'forward' ? -1 : dir === 'back' ? 1 : 0);
+    const lane = this.laneOf(slot) + (dir === 'lanePrev' ? -1 : dir === 'laneNext' ? 1 : 0);
+    if (row < 0 || row >= rows || lane < 0 || lane >= lanes) return null;
+    return row * lanes + lane;
+  }
+
+  /**
+   * İtmenin sonucu (Ice Crater; saf, önizleme / YZ / vuruş aynı): 'immune' = itilemez (yer değiştirme bağışıklığı, nesne, sızmış birim; çarpma da yok),
+   * 'move' = hedef `to` hücresine kayar, 'crash' = gidemez: `to` null (tahta dışı) / kapalı hücre ya da `with` canlı birimle dolu.
+   */
+  pushOutcome(c: Combatant, dir: PushDir): { kind: 'immune' } | { kind: 'move'; to: number } | { kind: 'crash'; to: number | null; with?: string } {
+    if (c.inert || c.board !== c.side || this.immuneToDisplacement(c)) return { kind: 'immune' };
+    const to = this.pushCell(c.slot, dir);
+    if (to === null) return { kind: 'crash', to: null };
+    const occ = this.combatants.find((o) => o.hp > 0 && o.uid !== c.uid && o.board === c.board && o.slot === to);
+    if (occ) return { kind: 'crash', to, with: occ.uid };
+    if (this.isBlocked(to, c.board)) return { kind: 'crash', to };
+    return { kind: 'move', to };
   }
 
   /**
@@ -4025,7 +4288,8 @@ export class Battle {
     if (!skill || !this.isShapeSkill(skillId, actorUid)) return [];
     const actor = this.get(actorUid);
     const b = this.areaBoard(actor, skillId, board);
-    const stages = this.areaStageCells(skillId, centerSlot, b, actorUid);
+    // Önbellekli paylaşılan aşamalar (salt okunur; areaStageCells ile aynı içerik)
+    const stages = shapeStagesShared(this.areaOf(skillId, actorUid)!, centerSlot, b, this.setup.formulas.formation);
     const cells = new Set(stages.flat());
     // Menzil açık: menzil yalnızca anchor hücreye bakar (shapeAnchors / cast); alandaki her canlı birim vurulur (kenar menzil dışına taşabilir).
     // Kapalı (eski kural): yakın dövüşte erişilemeyen hücreler validTargets ile elenir.
@@ -4404,11 +4668,22 @@ export class Battle {
   private areaReachable(actor: Combatant, skill: SkillDef): Combatant[] {
     const seen = new Set<string>();
     const out: Combatant[] = [];
-    for (const { board, slot } of this.shapeAnchorCells(actor.uid, skill.id)) {
-      for (const c of this.areaWindowAt(actor.uid, skill.id, slot, board)) {
-        if (seen.has(c.uid)) continue;
-        seen.add(c.uid);
-        out.push(c);
+    // shapeAnchorCells ile aynı anchor'lar (menzildeki hücreler); boş pencereli anchor birleşime bir şey katmadığı için shapeAnchors'ın
+    // "pencere boş değil" süzgeci burada gereksiz: her anchor'ın penceresi bir kez hesaplanır (eskiden iki kez; performans, sonuç birebir aynı)
+    if (this.isAreaSkill(skill.id, actor)) {
+      const boards: Side[] = this.isAnyBoardArea(skill.id, actor) ? [opposite(actor.side), actor.side] : [opposite(actor.side)];
+      const total = this.setup.formulas.formation.rows * this.setup.formulas.formation.lanes;
+      const sk = this.skill(skill.id, actor.uid)!;
+      for (const board of boards) {
+        const b = this.areaBoard(actor, skill.id, board);
+        for (let slot = 0; slot < total; slot++) {
+          if (!this.inRange(actor, sk, b, slot)) continue;
+          for (const c of this.areaWindowAt(actor.uid, skill.id, slot, b)) {
+            if (seen.has(c.uid)) continue;
+            seen.add(c.uid);
+            out.push(c);
+          }
+        }
       }
     }
     const foe = opposite(actor.side);
@@ -4547,12 +4822,12 @@ export class Battle {
    * `corpseUid`: ceset tüketen çağrıda (Raise Dead) tüketilecek düşman cesedi (corpseChoices'tan); ceset varken ZORUNLU ('Choose a corpse to consume'),
    * hiç ceset yokken verilirse yok sayılır. Çağrıda `slot` summonSlots'tan biri olmalı (verilmezse varsayılan yuva).
    */
-  useSkill(actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string, mode?: string): ActionResult {
+  useSkill(actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string, mode?: string, dir?: PushDir): ActionResult {
     if (this.globalDef(skillId)) {
       this.viewMode = null;
       return this.useGlobal(actorUid, skillId, slot ?? slotOfTileUid(targetUid), slotOfTileUid(targetUid) === undefined ? targetUid : undefined);
     }
-    return this.withModeCast(actorUid, skillId, mode, () => this.cast(actorUid, skillId, targetUid, slot, false, board, corpseUid));
+    return this.withModeCast(actorUid, skillId, mode, () => this.cast(actorUid, skillId, targetUid, slot, false, board, corpseUid, undefined, dir));
   }
 
   /** Tek giriş noktası: class skill'i ya da global skill ({kind:'global', id, slot?}). */
@@ -4561,12 +4836,13 @@ export class Battle {
       this.viewMode = null;
       return this.useGlobal(actorUid, action.id, action.slot ?? slotOfTileUid(action.targetUid), slotOfTileUid(action.targetUid) === undefined ? action.targetUid : undefined);
     }
-    return this.withModeCast(actorUid, action.skillId, action.mode, () => this.cast(actorUid, action.skillId, action.targetUid, action.slot, false, action.board, action.corpseUid));
+    return this.withModeCast(actorUid, action.skillId, action.mode, () => this.cast(actorUid, action.skillId, action.targetUid, action.slot, false, action.board, action.corpseUid, undefined, action.dir));
   }
 
   /** Yapay zeka seçimini uygular; seçim yoksa (null) turu pas geçer (skipTurn). */
   applyChoice(actorUid: string, choice: ChoiceLike | null): ActionResult {
     if (!choice) return this.skipTurn();
+    if (choice.dir !== undefined) return this.useSkill(actorUid, choice.skillId, choice.targetUid, choice.slot, choice.board, choice.corpseUid, choice.mode, choice.dir);
     return choice.mode !== undefined ? this.useSkill(actorUid, choice.skillId, choice.targetUid, choice.slot, choice.board, choice.corpseUid, choice.mode) : this.useSkill(actorUid, choice.skillId, choice.targetUid, choice.slot, choice.board, choice.corpseUid);
   }
 
@@ -4903,6 +5179,7 @@ export class Battle {
       const from = actor.slot;
       actor.slot = slot!;
       emit({ type: 'moved', actor: actor.uid, from, to: actor.slot });
+      this.syncGroundStatuses(emit); // genel zemin kuralı: giren o an alır, çıkan o an bırakır
       if (this.trigOn) this.trigAll({ on: 'enemyMoved', target: actor, subject: actor, source: actor }, emit, (u) => u.side !== actor.side);
     }
     // Pilgrim's Road Boots (moveStride): Move yarım tur harcar ve kaçınma buff'ı verir
@@ -4970,18 +5247,18 @@ export class Battle {
    * Debug: skill'i bedel, bekleme, menzil, sıra ve kullanıcının skill listesi kurallarını yok sayarak oynatır (animasyon/ses galerisi).
    * Hedef geçersizse ilk uygun hedefe/hücreye gider. Sıra ilerlemez, MP/bekleme harcanmaz, savaş bitmez.
    */
-  debugCast(actorUid: string, skillId: string, targetUid?: string, slot?: number, corpseUid?: string): ActionResult {
+  debugCast(actorUid: string, skillId: string, targetUid?: string, slot?: number, corpseUid?: string, dir?: PushDir): ActionResult {
     if (!this.get(actorUid)) return { ok: false, reason: 'No such unit' };
     if (!this.skill(skillId, actorUid)) return { ok: false, reason: 'Unknown skill' };
     this.debugCasting = true;
     try {
-      return this.cast(actorUid, skillId, targetUid, slot, true, undefined, corpseUid);
+      return this.cast(actorUid, skillId, targetUid, slot, true, undefined, corpseUid, undefined, dir);
     } finally {
       this.debugCasting = false;
     }
   }
 
-  private cast(actorUid: string, skillId: string, targetUid: string | undefined, slot: number | undefined, debug: boolean, boardArg?: Side, corpseArg?: string, fc?: { power: number }): ActionResult {
+  private cast(actorUid: string, skillId: string, targetUid: string | undefined, slot: number | undefined, debug: boolean, boardArg?: Side, corpseArg?: string, fc?: { power: number }, dirArg?: PushDir): ActionResult {
     // Faz 4c: `fc` = bedava kullanım (tetik): bedel / cooldown / tur / menzil denetimi yok, eylem sayılmaz; olaylar üst eyleme gider
     if (!fc) this.phaseCrossed.clear(); // faz kilidi eylem başına
     if (this.treeUnits) {
@@ -5562,6 +5839,33 @@ export class Battle {
             const from = r.slot;
             r.slot = to;
             emit({ type: 'moved', actor: r.uid, from, to, cause: skill.id, by: actor.uid });
+            this.syncGroundStatuses(emit); // çekilen birim zemine girerse o an alır
+          }
+          break;
+        }
+        case 'push': {
+          // Ice Crater (Ömer 2026-10-29): isabet eden, hayatta kalan hedef seçilen yönde 1 hücre; dolu / tahta dışı hücrede çarpma (iki birime küçük hasar)
+          const dir: PushDir = dirArg && PUSH_DIRS.includes(dirArg) ? dirArg : 'back';
+          const hasDamage = skill.effects.some((e) => e.type === 'damage');
+          for (const r of hasDamage ? ts.filter((c) => hit.has(c.uid)) : ts) {
+            if (r.hp <= 0) continue;
+            const out = this.pushOutcome(r, dir);
+            if (out.kind === 'immune') continue;
+            if (out.kind === 'move') {
+              const from = r.slot;
+              r.slot = out.to;
+              emit({ type: 'moved', actor: r.uid, from, to: out.to, cause: skill.id, by: actor.uid });
+              this.syncGroundStatuses(emit); // itilen birim zemine girerse o an alır (Ice Crater)
+              continue;
+            }
+            const other = out.with ? this.get(out.with) : undefined;
+            emit({ type: 'crash', source: actor.uid, target: r.uid, dir, to: out.to, wall: !other, ...(other ? { with: other.uid } : {}), cause: skill.id });
+            const raw = Math.round(attributePower(actor.stats, effect.scale, f) * effect.crashPower * (fc?.power ?? 1));
+            for (const u of other ? [r, other] : [r]) {
+              if (u.hp <= 0 || raw <= 0) continue;
+              this.applyHit(actor, u, this.tickDamage(effect.element, 'magic', raw, u), 'magic', false, emit, false, { origin: 'skill', element: effect.element, damageType: 'magic' });
+              this.announceIfDead(u, emit);
+            }
           }
           break;
         }
@@ -5604,8 +5908,8 @@ export class Battle {
           g.fullTurns = g.turns;
           this.ground.push(g);
           emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
-          const madeWater = this.reactGrounds(g, emit); // zemin tepkimeleri (grounds.json > reactions)
-          if (this.isWater(g) || madeWater) this.applyEnvironment(emit); // skill suyu: içindekiler hemen ıslanır, alttaki Burning ground söner
+          this.reactGrounds(g, emit); // zemin tepkimeleri (grounds.json > reactions)
+          this.applyEnvironment(emit); // genel zemin kuralı: içindekiler durumu o an alır (skill suyu: ıslanır, alttaki Burning ground söner)
           break;
         }
         case 'omen': {
@@ -5744,6 +6048,7 @@ export class Battle {
         const from = actor.slot;
         actor.slot = to;
         emit({ type: 'moved', actor: actor.uid, from, to, cause: skill.id, by: actor.uid, advance: true });
+        this.syncGroundStatuses(emit);
       }
     }
 
@@ -6031,6 +6336,7 @@ export class Battle {
   private finishAction(actor: Combatant, emit: Emit, turnCost = 1): void {
     this.turnsTaken++;
     if (actor.flickered) actor.flickered = false; // Flicker (YM8): kendi turu başına bir kez
+    if (actor.mirageUsed) actor.mirageUsed = false; // Heat Mirage: Mage'in turları arasında bir kez
     if (actor.openingDamageMult !== undefined) delete actor.openingDamageMult; // ilk eylem bitti
     // Telgraf adalet kuralı: bu birim oynadı (eylem, pas ya da sersemlik)
     for (const t of this.telegraphs) if (t.waitFor.includes(actor.uid)) t.waitFor = t.waitFor.filter((u) => u !== actor.uid);
@@ -6124,6 +6430,7 @@ export class Battle {
         this.ground.splice(this.ground.indexOf(g), 1);
         emit({ type: 'groundEnd', id: g.id });
       }
+    this.syncGroundStatuses(emit); // silinen zeminin durumu o an kalkar
     // Dalga arası yenilenme (varsayılan 0): canlı oyuncu birimleri (yardımcı nesne hariç)
     for (const c of this.fighting('party')) {
       if (rules.healRatio > 0 && c.hp < c.maxHp) this.applyHeal(c, c, Math.max(1, Math.round(c.maxHp * rules.healRatio)), false, emit, 'wave');
@@ -6183,7 +6490,7 @@ export class Battle {
   /** tickAtTurnEnd durumlarının süresi (Silence): turu biten birimde 1 azalır, 0'da statusEnd. */
   private tickTurnEnd(actor: Combatant, emit: Emit): void {
     for (const status of [...actor.statuses]) {
-      if (!this.statusDef(status.kind)?.tickAtTurnEnd || !actor.statuses.includes(status) || status.permanent) continue;
+      if (!this.statusDef(status.kind)?.tickAtTurnEnd || !actor.statuses.includes(status) || status.permanent || status.fromGround) continue;
       status.turns--;
       if (status.turns > 0) continue;
       actor.statuses = actor.statuses.filter((s) => s !== status);
@@ -6230,24 +6537,10 @@ export class Battle {
     }
     // Sersemlemiş (skipTurn) birim bu turu oynayamaz; durum süresi aşağıda azalmadan önce okunur
     let skipThisTurn = actor.statuses.some((st) => this.statusDef(st.kind)?.skipTurn);
-    // Yerdeki etkiler: bu birimin hücresinde duran (düşman) etkiler hasar verir
-    for (const g of [...this.ground]) {
-      // D11 (Holy Ground): şifa zemini yalnızca bırakanın tarafındaki birimi iyileştirir (kritiksiz sabit tik), kimseye hasar vermez
-      if (this.isHealGround(g.ground)) {
-        if (g.board === actor.board && g.slots.includes(actor.slot) && g.sourceSide === actor.side && actor.hp > 0 && g.amount > 0) this.applyHeal(this.get(g.source) ?? actor, actor, g.amount, false, emit, g.ground);
-        continue;
-      }
-      if (g.board !== actor.board || !g.slots.includes(actor.slot) || g.sourceSide === actor.side || actor.hp <= 0) continue;
-      // Faz 4c (ağaç zemini): hasarsız zemin tiklemez; ağacın doğurduğu zemin aynı türden daha güçlü zemin hücredeyse tiklemez (üst üste kuralı)
-      if (g.noDamage || (g.yields && this.groundOutranked(g, actor.slot))) continue;
-      const src = this.get(g.source) ?? actor;
-      // Skill ağacı (at 'ground'): bırakanın kancaları (güç çarpanı; koşul groundAgeAtLeast); kancasızda aynı
-      const gm = src.treeHooks ? this.treeMods(src, actor, null, undefined, { at: 'ground', tick: { age: g.age ?? 0 }, roll: true }) : null;
-      const gd = this.groundTickDamage(g.ground, g.cellMult?.[actor.slot] ? Math.round(g.amount * g.cellMult[actor.slot]!) : g.amount, actor);
-      if (gm) this.treeProcAll(src.uid, gm.nodes);
-      this.applyHit(src, actor, gm && gm.power !== 1 ? Math.max(this.setup.formulas.damage.minDamage, Math.round(gd * gm.power)) : gd, 'magic', false, emit, false, { origin: 'ground', element: this.setup.grounds?.[g.ground]?.element ?? 'physical', damageType: 'magic', ground: g.ground, groundId: g.id });
-      this.announceIfDead(actor, emit);
-    }
+    // GENEL ZEMİN KURALI (Ömer 2026-10-29): önce zemin durumları güncel (giriş/çıkış), sonra zemin kaynaklı durumlar BİR kez tikler (hasar: zeminin
+    // gücü ve elementi; Hallowed: şifa). Flooded Planks (directTick) kendi küçük hasarını doğrudan vurur (istisna).
+    this.syncGroundStatuses(emit);
+    if (actor.hp > 0) this.groundStatusTicks(actor, emit);
     // Bu birimin bıraktığı yer etkilerinin süresi azalır (bırakan ölmüşse etki biter). tickOn (Last Ember): sayaç ve ömür o birimin
     for (const g of [...this.ground]) {
       if (g.envUntilRound !== undefined) continue; // ortam zemini (Tide): süresi savaş turuyla (startRound)
@@ -6263,10 +6556,11 @@ export class Battle {
         if (this.trigOn && g.turns <= 0) this.trig([this.get(g.source)], { on: 'groundEnd', groundFx: g }, emit);
       }
     }
+    this.syncGroundStatuses(emit); // biten zeminin durumu o an kalkar
     // Karakter üstü DoT tikleri (Wither): zemin tiklerinden HEMEN sonra; isabet/kritik yok, Guard'a aktarılmaz, kalkan ve Lucky Escape normal
     for (const st of [...actor.statuses]) {
       const dot = this.statusDef(st.kind)?.dot;
-      if (!dot || actor.hp <= 0 || !actor.statuses.includes(st)) continue;
+      if (!dot || st.fromGround || actor.hp <= 0 || !actor.statuses.includes(st)) continue; // zemin kaynaklı durum yukarıda (groundStatusTicks) tikledi
       const src: Combatant = this.get(st.source) ?? actor;
       // Skill ağacı (at 'dot'): kaynağın kancaları (güç / lifesteal; ölçek dotTickIndex); kancasızda aynı
       const tm = src.treeHooks ? this.treeMods(src, actor, null, undefined, { at: 'dot', tick: { index: st.ticks ?? 0 }, roll: true }) : null;
@@ -6283,7 +6577,7 @@ export class Battle {
     // DoT tikinden SONRA, yenilenmeden ÖNCE; taşıyan zemin/DoT tikinde öldüyse patlamaz (Ill Omen ölümde yığını zaten geçirdi)
     for (const st of [...actor.statuses]) {
       const def = this.statusDef(st.kind);
-      if (!def?.maxStacks || actor.hp <= 0 || !actor.statuses.includes(st) || st.permanent) continue;
+      if (!def?.maxStacks || actor.hp <= 0 || !actor.statuses.includes(st) || st.permanent || st.fromGround) continue;
       st.turns--;
       if (st.turns > 0) continue;
       if (def.burstOnExpire && def.doom && (st.stacks ?? 0) > 0) this.triggerDoom(actor, st, def.doom.expireMult ?? 1, 'expire', undefined, emit);
@@ -6299,8 +6593,6 @@ export class Battle {
       if (st.turns <= 0) this.brandExpire(actor, st, emit);
     }
     if (actor.hp <= 0) skipThisTurn = true;
-    // M-B: suda tur başlatan Soaked'ı tazeler (süre aşağıda azalır; sudan çıkınca bir sonraki kendi turunda biter)
-    if (this.setup.rules && actor.hp > 0) this.soakIfFlooded(actor, emit);
     // Süreli durumlar: tur bazlı şifa işler, süreler azalır, biten durumlar kalkar
     for (const status of [...actor.statuses]) {
       if (!actor.statuses.includes(status)) continue;
@@ -6310,6 +6602,11 @@ export class Battle {
       if (status.kind === 'branded') continue; // Ley Brand: süre yukarıda (patlama) işlendi
       // Dark Bond: süre yalnızca bağı KURANIN turlarında azalır; bağlı dosttaki kopya kendi turunda azalmaz (sahibininkiyle eşitlenir)
       if (status.kind === 'dark_bond' && status.source !== actor.uid) continue;
+      // Genel zemin kuralı: zemin kaynaklı durumun süresi işlemez; altında bekleyen skill örneğinin süresi işler (biterse sessizce düşer)
+      if (status.fromGround) {
+        if (status.held && !status.held.permanent && --status.held.turns <= 0) delete status.held;
+        continue;
+      }
       if (status.kind === 'regen' && actor.hp > 0) {
         const { crit, mult } = rollCrit({ critChance: status.critChance ?? 0, critMult: status.critMult ?? 1 }, this.rng);
         this.applyHeal(this.get(status.source) ?? actor, actor, Math.round((status.amount ?? 0) * mult), crit, emit);
@@ -6330,8 +6627,9 @@ export class Battle {
       }
     }
     if (this.combatants.some((u) => u.taint !== undefined)) this.syncTaint(emit); // Ley Brand: süresi biten / silinen Brand'in havuzu
-    // Faz 4c (ağaç zeminleri): içinde tur başlatan düşmana MP yakma ve durumlar (süre durumlarından SONRA: 1 turluk Slow bu turu kapsar)
-    if ((this.treeUnits || this.ground.some((g) => g.reaction)) && actor.hp > 0 && this.ground.length) this.groundTurnStart(actor, emit);
+    // Faz 4c (Hall of Silence): içinde tur başlatan düşmana MP yakma (süre durumlarından SONRA); ardından zemin durumları (MP'si biten Silence alır)
+    if (actor.hp > 0 && this.ground.length) this.groundTurnStart(actor, emit);
+    this.syncGroundStatuses(emit);
     // Süreli kalkan katmanları (Ward-Etcher, YM6): taşıyanın tur başında 1 azalır; biten katmanın kalanı havuzdan silinir
     if (actor.shieldHooks?.some((h) => h.turns !== undefined)) this.tickTimedShields(actor, emit);
     // Str: tur başı düz can yenilenmesi (Str x hpRegenPerStr, yuvarlanır)
@@ -6741,29 +7039,44 @@ export class Battle {
     }
     // Debuff yığılmaz (Ömer 2026-10-10; statuses.json > stack 'refresh-strongest'): birimde TEK örnek; süre max(kalan, yeni), güç (DoT miktarı) ve
     // kaynak en güçlü uygulamanın. Resilience / Unyielding kısaltması yeni uygulamaya yukarıda işlendi (zar her uygulamada atılır, akış aynı).
-    if (statusStackMode(this.statusDef(status.kind)) === 'refresh-strongest') {
+    // Genel zemin kuralı (Ömer 2026-10-29): birimde aynı türden ZEMİN kaynaklı örnek varsa üst üste binmez, güçlü olan geçer. Skill örneği daha
+    // güçlüyse zemin örneğinin yerine geçer (bitince birim hâlâ zemindeyse zemin yeniden verir); değilse zemin örneğinin altında bekler (held: süresi
+    // işler, birim zeminden çıkınca kalan süresiyle döner).
+    const perSource = status.kind === 'regen' || status.kind === 'dark_bond';
+    const grounded = perSource ? undefined : target.statuses.find((s) => s.kind === status.kind && s.fromGround);
+    let heldUnder = false;
+    if (grounded) {
+      if (statusStrength(status) > statusStrength(grounded)) {
+        if (grounded.held) status = { ...status, turns: Math.max(status.turns, grounded.held.turns) };
+        target.statuses = target.statuses.filter((s) => s !== grounded);
+      } else {
+        grounded.held = grounded.held ? mergeRefreshStrongest(grounded.held, status) : status;
+        heldUnder = true;
+      }
+    } else if (statusStackMode(this.statusDef(status.kind)) === 'refresh-strongest') {
       const old = target.statuses.find((s) => s.kind === status.kind);
       if (old) status = mergeRefreshStrongest(old, status);
     }
-    // Aynı türden durum yenisiyle değişir; tur bazlı şifa (regen) ve Dark Bond kopyası kaynağa göre ayrı tutulur (iki farklı Undead aynı dostu bağlayabilir)
-    const perSource = status.kind === 'regen' || status.kind === 'dark_bond';
-    target.statuses = target.statuses.filter((s) => !(s.kind === status.kind && (!perSource || s.source === status.source)));
-    target.statuses.push(status);
-    emit({ type: 'status', target: target.uid, status: status.kind, turns: status.turns, source: status.source, ...(cause ? { cause } : {}), ...(status.partner ? { partner: status.partner } : {}), ...(status.stacks !== undefined ? { stacks: status.stacks } : {}) });
-    // Ley Brand: MP havuzu olmayan birime DOLU tainted mana havuzu (zaten havuzu varsa yeniden atış süreyi tazeler, havuzu doldurmaz; MP'si olan birime havuz yok)
-    if (status.kind === 'branded' && status.brand && target.maxMp <= 0 && target.taint === undefined && target.hp > 0) {
-      const pool = status.brand.pool;
-      target.taint = pool;
-      target.maxMp = pool;
-      target.mp = pool;
-      emit({ type: 'taint', target: target.uid, pool, mp: pool, maxMp: pool });
-    }
-    // Kontrol (CC) durumu (data/statuses.json > breaksTaunt, şu an Stun): taunt'ı olan birim bunu yerse taunt uygulandığı AN silinir (süre kısalsa da, 1 tur olsa da)
-    if (this.statusDef(status.kind)?.breaksTaunt && target.statuses.some((s) => s.kind === 'taunt')) {
-      const broken = target.statuses.find((s) => s.kind === 'taunt')!;
-      target.statuses = target.statuses.filter((s) => s.kind !== 'taunt');
-      emit({ type: 'statusEnd', target: target.uid, status: 'taunt', broken: true });
-      if (this.trigOn) this.statusEndTrig(target, broken, 'broken', emit);
+    if (!heldUnder) {
+      // Aynı türden durum yenisiyle değişir; tur bazlı şifa (regen) ve Dark Bond kopyası kaynağa göre ayrı tutulur (iki farklı Undead aynı dostu bağlayabilir)
+      target.statuses = target.statuses.filter((s) => !(s.kind === status.kind && (!perSource || s.source === status.source)));
+      target.statuses.push(status);
+      emit({ type: 'status', target: target.uid, status: status.kind, turns: status.turns, source: status.source, ...(cause ? { cause } : {}), ...(status.partner ? { partner: status.partner } : {}), ...(status.stacks !== undefined ? { stacks: status.stacks } : {}) });
+      // Ley Brand: MP havuzu olmayan birime DOLU tainted mana havuzu (zaten havuzu varsa yeniden atış süreyi tazeler, havuzu doldurmaz; MP'si olan birime havuz yok)
+      if (status.kind === 'branded' && status.brand && target.maxMp <= 0 && target.taint === undefined && target.hp > 0) {
+        const pool = status.brand.pool;
+        target.taint = pool;
+        target.maxMp = pool;
+        target.mp = pool;
+        emit({ type: 'taint', target: target.uid, pool, mp: pool, maxMp: pool });
+      }
+      // Kontrol (CC) durumu (data/statuses.json > breaksTaunt, şu an Stun): taunt'ı olan birim bunu yerse taunt uygulandığı AN silinir (süre kısalsa da, 1 tur olsa da)
+      if (this.statusDef(status.kind)?.breaksTaunt && target.statuses.some((s) => s.kind === 'taunt')) {
+        const broken = target.statuses.find((s) => s.kind === 'taunt')!;
+        target.statuses = target.statuses.filter((s) => s.kind !== 'taunt');
+        emit({ type: 'statusEnd', target: target.uid, status: 'taunt', broken: true });
+        if (this.trigOn) this.statusEndTrig(target, broken, 'broken', emit);
+      }
     }
     // Faz 4a: durum tetikleri (kazanan: statusGained, uygulayan: statusApplied, düşmana buff: enemyBuffed)
     if (this.trigOn) {
@@ -6784,7 +7097,7 @@ export class Battle {
   dispelCandidates(c: Combatant, kind: 'buff' | 'debuff'): Status[] {
     return c.statuses
       .map((s, i) => ({ s, i, d: this.statusDef(s.kind) }))
-      .filter((x) => x.d?.type === kind && x.d.dispellable !== false)
+      .filter((x) => x.d?.type === kind && x.d.dispellable !== false && !x.s.fromGround) // genel zemin kuralı: zemin kaynaklı durum zeminde kaldıkça silinmez
       .sort((a, b) => b.s.turns - a.s.turns || a.i - b.i)
       .map((x) => x.s);
   }
@@ -7307,6 +7620,8 @@ export class Battle {
         this.announceIfDead(actor, emit);
       }
     }
+    // Heat Mirage (Mage, Ömer 2026-10-29): düşmanın yakın dövüş skill vuruşu isabet edince saldıranın hücresine Burning Ground (Mage'in turları arasında bir kez)
+    if (this.castingSkill?.motion === 'melee' && actor === this.castingActor && actor.hp > 0 && target.hp > 0 && actor.side !== target.side) this.heatMirage(target, actor, emit);
     // Thorns (b_thorns, Ömer 2026-10-26): düşmanın yakın dövüş skill vuruşunda hedefe düşen hasarın (kalkan dahil; Guard payı hariç) bu oranı saldırana döner (zırhsız)
     const thorns = target.itemEffects || target.treeFx ? effNum(target, 'thorns') : 0;
     if (thorns && this.castingSkill?.motion === 'melee' && actor.hp > 0 && actor.side !== target.side) {
@@ -7723,6 +8038,7 @@ export class Battle {
         this.ground.push(g);
         emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
         emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+        this.syncGroundStatuses(emit);
       }
     }
     // Shares of the Dead (YM19, mob pasifi): çağrı olmayan bir dost ölünce Fortified + kalıcı hasar eki (yığılır)
@@ -7840,7 +8156,7 @@ export class Battle {
     this.urnUsed++;
     const slots = this.urnRowCells(row);
     emit({ type: 'urn', actor: actor.uid, row, slots, left: Math.max(0, u.uses - this.urnUsed) });
-    this.envWater(u.side, slots, u.ground, u.rounds, u.id, u.soak, u.soakTurns, emit, true);
+    this.envWater(u.side, slots, u.ground, u.rounds, u.id, u.soak, emit, true);
     this.applyEnvironment(emit);
   }
 
@@ -7848,14 +8164,14 @@ export class Battle {
    * Ortam suyu (Tide / Urn): `board` tahtasının `slots` hücreleri `rounds` savaş turu `ground`. Aynı kaynağın (`cause`) bu tahtadaki eski suyu kalkar
    * (`sameCellsOnly`: yalnızca hücreleri çakışan; Urn); Tide Urn suyuna, Urn Tide suyuna dokunmaz.
    */
-  private envWater(board: Side, slots: number[], ground: string, rounds: number, cause: string, soak: string, soakTurns: number, emit: Emit, sameCellsOnly = false): void {
+  private envWater(board: Side, slots: number[], ground: string, rounds: number, cause: string, soak: string, emit: Emit, sameCellsOnly = false): void {
     for (const old of [...this.ground]) {
       if (old.envUntilRound === undefined || old.ground !== ground || old.board !== board || (old.envCause ?? cause) !== cause) continue;
       if (sameCellsOnly && !old.slots.some((x) => slots.includes(x))) continue;
       this.ground.splice(this.ground.indexOf(old), 1);
       emit({ type: 'groundEnd', id: old.id });
     }
-    const g: GroundEffect = { id: `g${this.groundCount++}`, ground, board, slots, turns: rounds, source: 'env', sourceSide: opposite(board), amount: 0, noDamage: true, envUntilRound: this.round + rounds, envCause: cause, soak, soakTurns };
+    const g: GroundEffect = { id: `g${this.groundCount++}`, ground, board, slots, turns: rounds, source: 'env', sourceSide: opposite(board), amount: 0, noDamage: true, envUntilRound: this.round + rounds, envCause: cause, soak };
     this.ground.push(g);
     emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
   }
@@ -8005,36 +8321,27 @@ export class Battle {
     for (const board of rule.boards) {
       const slots = rule.rows.flatMap((row) => Array.from({ length: lanes }, (_, l) => row * lanes + l)).filter((s) => s < this.setup.maxSlots[board] && !this.isBlocked(s, board));
       if (!slots.length) continue;
-      this.envWater(board, slots, rule.ground, rule.rounds, this.setup.rules!.condition!.id, rule.soak, rule.soakTurns, emit);
+      this.envWater(board, slots, rule.ground, rule.rounds, this.setup.rules!.condition!.id, rule.soak, emit);
     }
     this.applyEnvironment(emit);
   }
 
-  /** Ortam zeminleri (Tide suyu) varken: su hücresindeki listelenen zeminler söner (grounds.json > quenches), sudaki her birim Soaked. */
   /**
-   * Suyun ıslatma kuralı: ortam suyu (Tide / Urn) kendi soak / soakTurns'ü; skill'in bıraktığı zemin, verisinde `soak` varsa (grounds.json > flooded)
-   * onunla (Ömer 2026-10-27: skill suyu da Tide suyu gibi). Islatmayan zeminde null.
+   * Su zemini mi (ortam suyu ya da ıslatan skill zemini; grounds.json > soak): söndürme ve ıslatma bunlarda işler. Islatma genel zemin kuralıyla
+   * (Ömer 2026-10-29): sudaki her birim (yardımcı nesne hariç) Soaked, suda kaldıkça sürer, çıkınca o an kalkar (eski soakTurns kalktı).
    */
-  private soakOf(g: GroundEffect): { soak: string; soakTurns: number } | null {
-    if (g.envUntilRound !== undefined) return g.soak ? { soak: g.soak, soakTurns: g.soakTurns ?? 1 } : null;
-    const def = this.setup.grounds?.[g.ground];
-    return def?.soak ? { soak: def.soak, soakTurns: def.soakTurns ?? g.turns } : null;
-  }
-
-  /** Su zemini mi (ortam suyu ya da ıslatan skill zemini): söndürme ve ıslatma bunlarda işler. */
   private isWater(g: GroundEffect): boolean {
     return g.envUntilRound !== undefined || !!this.setup.grounds?.[g.ground]?.soak;
   }
 
-  /** Tahtada su varsa çevre etkisi (söndürme + ıslatma); kurallı savaşta zaten her eylem sonunda çalışır. */
+  /** Çevre etkisi (söndürme) + zemin durumlarının eşitlenmesi; kurallı savaşta her eylem sonunda, kuralsızda da eylem sonunda çalışır. */
   private settleWater(emit: Emit): void {
-    if (this.ground.some((g) => this.isWater(g))) this.applyEnvironment(emit);
+    this.applyEnvironment(emit);
   }
 
+  /** Su hücresindeki listelenen zeminler söner (grounds.json > quenches); ardından zemin durumları (Soaked dahil) hücrelere göre eşitlenir. */
   private applyEnvironment(emit: Emit): void {
-    const env = this.ground.filter((g) => this.isWater(g));
-    if (!env.length) return;
-    for (const w of env) {
+    for (const w of this.ground.filter((g) => this.isWater(g))) {
       const quench = this.setup.grounds?.[w.ground]?.quenches;
       if (!quench?.length) continue;
       for (const g of [...this.ground]) {
@@ -8051,43 +8358,7 @@ export class Battle {
         emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
       }
     }
-    for (const c of this.combatants) if (c.hp > 0) this.soakIfFlooded(c, emit);
-  }
-
-  /**
-   * M-B Soaked: Tide suyundaki birime (yardımcı nesne hariç) Soaked, süre suda kaldıkça tazelenir (FloodRule.soakTurns). Uygulandığı an `cleanses`
-   * durumları (Burning) söner. Çevre etkisidir: Resilience / direnç zarı yok (rastgele sayı tüketmez), boss da ıslanır.
-   */
-  private soakIfFlooded(c: Combatant, emit: Emit): void {
-    if (c.inert) return;
-    // Ortam suyu (Tide / Urn): suyun kendi durumu ve süresi (GroundEffect.soak / soakTurns); skill'in bıraktığı su: zemin verisinin soak / soakTurns'ü
-    let w: GroundEffect | undefined;
-    let flood: { soak: string; soakTurns: number } | null = null;
-    for (const g of this.ground) {
-      if (g.board !== c.board || !g.slots.includes(c.slot)) continue;
-      flood = this.soakOf(g);
-      if (flood) {
-        w = g;
-        break;
-      }
-    }
-    if (!w || !flood) return;
-    const cause = w.envUntilRound !== undefined ? (w.envCause ?? this.setup.rules?.condition?.id ?? 'env') : w.ground;
-    const cur = c.statuses.find((s) => s.kind === flood.soak);
-    if (cur) {
-      if (cur.turns >= flood.soakTurns) return;
-      cur.turns = flood.soakTurns;
-      emit({ type: 'status', target: c.uid, status: cur.kind, turns: cur.turns, source: cur.source, cause });
-      return;
-    }
-    for (const k of this.statusDef(flood.soak)?.cleanses ?? []) {
-      if (!c.statuses.some((s) => s.kind === k)) continue;
-      c.statuses = c.statuses.filter((s) => s.kind !== k);
-      emit({ type: 'statusEnd', target: c.uid, status: k as Status['kind'] });
-    }
-    const st: Status = { kind: flood.soak as Status['kind'], turns: flood.soakTurns, source: c.uid };
-    c.statuses.push(st);
-    emit({ type: 'status', target: c.uid, status: st.kind, turns: st.turns, source: st.source, cause });
+    this.syncGroundStatuses(emit);
   }
 
   /** Birimin hücresinde bu türden zemin (Flooded) var mı (Harita 2 pasifleri: Slick, Deathless Tide, Salt Tears, Undertow). */
@@ -8235,7 +8506,8 @@ export class Battle {
     if (!src || src.hp <= 0) return { ok: false, reason: 'Unit is not alive' };
     const def = this.setup.grounds?.[groundId];
     if (!def) return { ok: false, reason: 'Unknown ground' };
-    const p = def.soak || (def.statuses?.length && !def.heal) ? 0 : power;
+    // Yalnızca durum veren zemin (Slow / Chilled / Silence; su) hasarsız konur; hasar durumu (DoT'lu) ve şifa zemini gücüyle
+    const p = def.soak || (!def.heal && (def.statuses?.length || (def.status && !def.directTick && !this.statusDef(def.status)?.dot))) ? 0 : power;
     this.placeGround(src, { type: 'ground', ground: groundId, turns, scale, power: p }, board, slots, this.debugEmit);
     return { ok: true, events: [] };
   }
@@ -8474,7 +8746,7 @@ function cloneCombatant(c: Combatant): Combatant {
     skills: [...c.skills],
     ...(c.lockedSkills ? { lockedSkills: [...c.lockedSkills] } : {}),
     cooldowns: { ...c.cooldowns },
-    statuses: c.statuses.map((s) => ({ ...s })),
+    statuses: c.statuses.map((s) => ({ ...s, ...(s.held ? { held: { ...s.held } } : {}) })),
     ...(c.shieldHooks ? { shieldHooks: c.shieldHooks.map((h) => ({ ...h, onAbsorb: { ...h.onAbsorb } })) } : {}),
   };
 }

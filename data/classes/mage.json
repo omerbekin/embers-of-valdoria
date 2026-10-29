@@ -21,17 +21,25 @@
   "skills": [
     "fire_bolt",
     "blizzard",
-    "mana_barrier",
+    "ice_crater",
     "meteor"
   ],
   "passive": {
-    "id": "spell_echo",
-    "name": "Spell Echo",
-    "icon": "echo",
-    "text": "Damaging spells with a cooldown have a 25% chance to be ready again immediately.",
+    "id": "heat_mirage",
+    "name": "Heat Mirage",
+    "icon": "flame",
+    "_not": "Ömer 2026-10-29 Mage reworkü: Spell Echo'nun yerine. Yakın dövüş vuruşunda saldıranın altına 1 tur Burning Ground (güç Meteor zemini 0,361 INT), Mage'in turları arasında bir kez; Frost Skin (Ömer seçti): ateş ve buz hasarından %10 daha az. İkon YER TUTUCU (flame). Sayılar PROVİZYON.",
+    "text": "When an enemy hits the Mage in melee, Burning Ground appears under it for 1 turn (once per round). The Mage takes 10% less Fire and Ice damage.",
     "effect": {
-      "type": "spellEcho",
-      "chance": 0.25
+      "type": "heatMirage",
+      "ground": "burning",
+      "turns": 1,
+      "scale": "int",
+      "power": 0.361,
+      "elemResist": {
+        "fire": 0.1,
+        "ice": 0.1
+      }
     }
   }
 }

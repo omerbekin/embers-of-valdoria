@@ -9,6 +9,17 @@
     "cc": true,
     "text": "30% less Speed"
   },
+  "chilled": {
+    "_not": "Ömer 2026-10-29 Mage reworkü (Ice Crater): Slow'dan AYRI buz durumu (ikisi aynı anda olabilir, çarpanlar çarpılır). Ayrım geçici: hız x0,8 ve kaçınma x0,9 (evasionMult, ekler toplandıktan sonra çarpılır). cc: true = Slow gibi boss bağışıklığına girer (madde 271). İkon YER TUTUCU: blizzard (boyalı status:chilled yok). Sayılar PROVİZYON.",
+    "name": "Chilled",
+    "type": "debuff",
+    "icon": "blizzard",
+    "color": "#9fe3ff",
+    "speedMult": 0.8,
+    "evasionMult": 0.9,
+    "cc": true,
+    "text": "20% less Speed and 10% less Evasion"
+  },
   "haste": {
     "name": "Haste",
     "type": "buff",
@@ -227,7 +238,7 @@
     "text": "Deals less damage (strength depends on the source)"
   },
   "soaked": {
-    "_not": "Harita 2 (M-B, maps-2-3.md 5): Tide suyunda (Flooded hücre) duran birim Soaked olur; suda kaldıkça tazelenir, sudan çıkınca bir sonraki kendi turunda biter. Alınan ateş hasarı -%50, Burning söner, hız -%10. Çevre etkisi (direnç zarı yok, boss da ıslanır). Sayılar PROVİZYON.",
+    "_not": "Harita 2 (M-B, maps-2-3.md 5): Tide suyunda (Flooded hücre) duran birim Soaked olur; genel zemin kuralı (Ömer 2026-10-29): suda kaldıkça sürer, sudan çıkınca o an kalkar (Flooded Planks de verir). Alınan ateş hasarı -%50, Burning söner, hız -%10. Çevre etkisi (direnç zarı yok, boss da ıslanır). Sayılar PROVİZYON.",
     "name": "Soaked",
     "type": "debuff",
     "icon": "droplet",
@@ -240,7 +251,7 @@
       "burning"
     ],
     "dispellable": false,
-    "text": "Takes 50% less Fire damage and has 10% less Speed; Burning is put out"
+    "text": "Takes 50% less Fire damage and has 10% less Speed; Burning is put out. Lasts while standing in water"
   },
   "spellbound": {
     "_not": "Harita 2 (Ömer onayı 2026-10-25, Omen formu): mobların Omen yerine verdiği durum (Siren Lure; Drowned Queen Lament). Taşıyan kahramanın bir sonraki skill'i %25 zayıf (hasar ya da şifa); skill'i kullanınca düşer (endsOnOwnSkill), kullanmazsa sıradaki turunun sonunda biter (tickAtTurnEnd). YALNIZ MOBLAR VERİR (kahraman sınıfları değil: tests/mob-passives-map2.test.ts). Sayı PROVİZYON.",
@@ -274,5 +285,50 @@
     "damageDealtMult": 1.3,
     "tickAtTurnEnd": true,
     "text": "Deals 30% more damage (the Crown's ash)"
+  },
+  "poisoned": {
+    "_not": "GENEL ZEMİN KURALI (Ömer 2026-10-29): Poison zemininin verdiği durum. İçindeyken sürer; tur başında zeminin gücüyle nature hasarı (tek tik), alınan şifa -%15. Skill ile verilirse DoT kuralı (miktar uygulayandan). İkon YER TUTUCU: poison (Withering'in çizimi). Sayı PROVİZYON.",
+    "name": "Poisoned",
+    "type": "debuff",
+    "icon": "poison",
+    "color": "#6fcf4b",
+    "healTakenMult": 0.85,
+    "dot": {
+      "damageType": "magic",
+      "element": "nature"
+    },
+    "text": "Takes nature damage at the start of each of its turns and receives 15% less healing"
+  },
+  "searing": {
+    "_not": "GENEL ZEMİN KURALI (Ömer 2026-10-29): Holy Fire ve Sanctified Flame zemininin verdiği durum (Sanctified'ın gücü tepkimeden, daha güçlü). İçindeyken sürer; tur başında holy hasarı (tek tik). İkon YER TUTUCU: holy (Blessed'ın çizimi).",
+    "name": "Searing",
+    "type": "debuff",
+    "icon": "holy",
+    "color": "#ffd23f",
+    "dot": {
+      "damageType": "magic",
+      "element": "holy"
+    },
+    "text": "Takes holy damage at the start of each of its turns"
+  },
+  "bleeding": {
+    "_not": "GENEL ZEMİN KURALI (Ömer 2026-10-29): Lingering Rain zemininin verdiği durum. İçindeyken sürer; tur başında physical hasarı (tek tik). İkon YER TUTUCU: drop (Wound'un çizimi).",
+    "name": "Bleeding",
+    "type": "debuff",
+    "icon": "drop",
+    "color": "#b02a2a",
+    "dot": {
+      "damageType": "physical",
+      "element": "physical"
+    },
+    "text": "Takes physical damage at the start of each of its turns"
+  },
+  "hallowed": {
+    "_not": "GENEL ZEMİN KURALI (Ömer 2026-10-29): Holy Ground ve Holy Water zemininin DOSTA verdiği buff. İçindeyken sürer; tur başında zeminin şifa miktarı kadar iyileşir (kritiksiz, sabit; bugünkü şifa). Buff: dispel ile silinmez (zemin kaynaklı). İkon YER TUTUCU: radiance (Holy Ground zemin rozetinin çizimi).",
+    "name": "Hallowed",
+    "type": "buff",
+    "icon": "radiance",
+    "color": "#fff0a0",
+    "text": "Heals at the start of each of its turns"
   }
 }

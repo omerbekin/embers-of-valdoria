@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { giveManaBarrier } from './mage-legacy-helpers';
 import { MISC_IMAGE_FILES } from '../src/game/icon-image-files';
 import { Battle, content } from '../src/engine';
 import type { BattleEvent, Combatant } from '../src/engine';
@@ -62,7 +63,7 @@ function useAndSummarize(b: Battle, uid: string, skill: string, target?: string)
 
 describe('skill kullanım özeti (VfxCtx.usage)', () => {
   it('Mana Barrier: arınma bilgisi yalnızca debuff GERÇEKTEN silindiyse dolu', () => {
-    const b = mk({ 0: 'warrior', 1: 'mage' }, { 0: 'hexer' });
+    const b = giveManaBarrier(mk({ 0: 'warrior', 1: 'mage' }, { 0: 'hexer' }));
     const w = at(b, 'party', 0);
     const m = at(b, 'party', 1);
     const foe = at(b, 'enemy', 0);

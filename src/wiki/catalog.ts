@@ -217,7 +217,7 @@ export interface WikiFiles {
 // ---------------------------------------------------------------- skill'ler
 
 // test skill'leri (Geometer shape_*, Pose Tester pt_*) Codex'te yok: yalnızca debug menüsünde (src/gallery/catalog.ts > isTestSkill)
-const allSkills = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id })).filter((s) => !isTestSkill(s.id));
+const allSkills = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id })).filter((s) => !isTestSkill(s.id) && !s.retired); // emekli skill (Mana Barrier, 2026-10-29) Codex'te yok
 const unitDefs = (): Record<string, CombatantDef> => ({ ...content.classes, ...content.summons, ...content.bosses, ...content.mobs });
 const effectDefs = () => ({ statuses: content.statuses, grounds: content.grounds, skills: content.skills });
 
@@ -551,7 +551,7 @@ function silenceArticle(): WikiArticle {
   if (brand) lines.push(`${brand.name} itself no longer silences; an Anti-Mage skill tree node can make a Branded enemy whose mana reaches 0 ${name} (see Ley Brand).`);
   return article('silence', 'Special rules', 'Silence', sil?.icon ?? 'manaburn', [
     p(`${name}: the unit cannot use any skill that costs MP. Skills that cost nothing (a basic attack), skills paid with Rage or HP, and the actions Rest, Skip Turn and Move still work. A silenced unit with nothing else to do simply attacks for free or uses an action.`),
-    p(`It lasts through the unit's next turn: the timer counts down when the silenced unit's turn ENDS (not when it starts), so a 1-turn ${name} covers the whole of its next turn. It is a debuff: a cleanse (such as Mana Barrier) removes it, and Resilience cannot shorten a 1-turn debuff. The badge next to the HP bar shows it.`),
+    p(`It lasts through the unit's next turn: the timer counts down when the silenced unit's turn ENDS (not when it starts), so a 1-turn ${name} covers the whole of its next turn. It is a debuff: a cleanse removes it, and Resilience cannot shorten a 1-turn debuff. The badge next to the HP bar shows it.`),
     list(...(lines.length ? lines : ['No skill silences yet.'])),
     p(`The AI values a silence by the move it takes away: the best MP skill the enemy could have paid for on that turn, compared with its best free move, times the chance; the extra damage counts as damage.`),
   ], sil?.color ?? '#9b59d0');
@@ -756,11 +756,12 @@ export function buildMechanics(): WikiArticle[] {
       ),
     ]),
     article('ground', 'Damage', 'Ground effects', cx('mech_ground', 'flame'), [
-      p('Some skills leave an effect on the ground of the target area (see Statuses & Grounds). Enemy units standing there take magic damage at the start of each of their own turns.'),
-      p('The damage is fixed when the effect is created, cannot crit and cannot be dodged. The duration counts the caster\'s turns, and the effect ends if the caster falls.'),
+      p('Some skills leave an effect on the ground of the target area (see Statuses & Grounds). Each ground gives its own status to the units it affects while they stand in it: Burning Ground gives Burning, Poison gives Poisoned, Chill Ground gives Chilled and so on. A unit that steps, is moved, pushed or pulled into the ground gets the status at once; it lasts as long as the unit stays inside and ends the moment it leaves or the ground runs out.'),
+      p('The damage comes from the status, not the ground: the status deals its damage once at the start of the unit\'s own turn, with the strength of the ground (magic damage of the ground\'s element, fixed when the effect is created, it cannot crit or be dodged). Getting the status again does not add a tick: walking from one Burning Ground into another still burns once per turn. If the unit already has the same status from a skill, the stronger one counts; leaving the ground, the skill\'s status goes on for the turns it has left.'),
+      p('The duration counts the caster\'s turns, and the effect ends if the caster falls.'),
       p("Exception: the ember a dying enemy leaves behind (Last Ember) burns under the hero who killed it; its duration counts that hero's turns and it ends if that hero falls."),
       // şifa zemini (grounds.json > heal): yalnızca veride varsa yazılır (Holy Ground: Judgment kendi tarafına, 2026-10-24 open-questions 416/8)
-      ...(skillHealGrounds().length ? [p(`Healing ground: ${skillHealGrounds().map((g) => g.name).join(', ')} hurts no one. Instead, allies of the caster standing there heal a fixed amount at the start of each of their own turns (it cannot crit; Wound and other healing cuts still apply). It only lands on your own side.`)] : []),
+      ...(skillHealGrounds().length ? [p(`Healing ground: ${skillHealGrounds().map((g) => g.name).join(', ')} hurts no one. Instead, allies of the caster standing there are ${content.statuses['hallowed']?.name ?? 'Hallowed'} and heal a fixed amount at the start of each of their own turns (it cannot crit; Wound and other healing cuts still apply). It only lands on your own side.`)] : []),
     ], '#ff7a1a'),
     // Zemin tepkimeleri (Ömer 2026-10-27, open-questions 445): tablo veriden (grounds.json > reactions)
     article('ground-reactions', 'Damage', 'Ground reactions', cx('mech_ground', 'flame'), [
@@ -823,6 +824,11 @@ export function buildMechanics(): WikiArticle[] {
       p('Some passives deal extra damage to a target that already suffers from certain statuses. The bonus multiplies every hit (a crit multiplies on top of it) and shows in the damage preview.'),
       list(...Object.values(content.classes).filter((c) => c.passive?.effect.type === 'bonusVsStatus').map((c) => `${c.name}, ${c.passive!.name}: ${describePassive(c.passive!, c.stats, f)}`)),
     ], '#c9a227'),
+    article('push', 'Special rules', 'Pushes and crashes', 'blizzard', [
+      p('Some skills push the enemy they hit one cell in a direction you choose: forward, back or along the row (never diagonally). After picking the target, pick the direction on the arrows around it.'),
+      p('If that cell is free, the target moves there (it may land in ground effects). If the cell is off the board or taken, there is no push: the target crashes and takes a little extra damage of the same element, and a unit standing in that cell takes the same. The preview marks a crash direction in red.'),
+      p(`Units that cannot be moved (bosses, steadfast units) are never pushed and never crash: they only take the hit and its status. Skills that push: ${allSkills().filter((s) => s.effects.some((e) => e.type === 'push')).map((s) => s.name).join(', ') || 'none yet'}.`),
+    ], '#8fd8ff'),
     ...curseArticles(),
     article('echo', 'Special rules', 'Ready again immediately', 'echo', [
       p('Some passives let a damaging skill with a cooldown be ready again right after it is cast, with a set chance. Classes with such a passive: ' + Object.values(content.classes).filter((c) => c.passive?.effect.type === 'spellEcho').map((c) => `${c.name} (${c.passive!.name})`).join(', ') + '.'),
@@ -1093,9 +1099,9 @@ export function battleRulesArticle(): WikiArticle {
   return article('battle-rules', 'Campaign', 'Battle rules', cx('mech_battle_rules', 'floodedplanks'), [
     p('Some battles on The Drowned Reach have a rule of their own: a condition that changes the field, an objective other than defeating every enemy, closed cells, or an object your heroes can use. The rule line under the Round plate shows it during the battle with a counter; hover it for the full text. A turn here means a full turn of the battle: it passes once every fighter has acted.'),
     list(
-      ...(tide ? [`${tide.name}: ${tide.text}${soak ? ` ${soak.name} lasts while you stand in the water and ${tide.flood!.soakTurns} turns after you leave it.` : ''}${flood ? ` ${flood.name} cells deal no damage.` : ''}`] : []),
+      ...(tide ? [`${tide.name}: ${tide.text}${soak ? ` ${soak.name} lasts while you stand in the water and ends the moment you leave it.` : ''}${flood ? ` ${flood.name} cells deal no damage.` : ''}`] : []),
       // Skill'in bıraktığı su (Ömer 2026-10-27): Tide suyuyla aynı davranış; süre bırakanın turlarıyla
-      ...(flood?.soak && content.statuses[flood.soak] ? [`${flood.name} water left by an enemy skill (Call the Tide, Surge, Deluge, High Tide and the like) works the same way in every battle, tide or not: anyone standing in it is ${content.statuses[flood.soak]!.name} for ${flood.soakTurns ?? 2} turns, Burning is put out and Burning Ground there goes out. It lasts for the turns the skill says.`] : []),
+      ...(flood?.soak && content.statuses[flood.soak] ? [`${flood.name} water left by an enemy skill (Call the Tide, Surge, Deluge, High Tide and the like) works the same way in every battle, tide or not: anyone standing in it is ${content.statuses[flood.soak]!.name} while they stay in the water, Burning is put out and Burning Ground there goes out. It lasts for the turns the skill says.`] : []),
       ...(storm?.rangedAccuracy ? [`${storm.name}:${storm.text} It counts for shots and throws (arrows, bolts, sling stones, thrown blades and the like)${stormSky.length ? `, and for volleys of arrows falling from the sky (${stormSky.join(', ')})` : ''}, not for melee strikes or spells (a spell falling from the sky is not slowed by the wind). Hit chance is lowered by ${Math.round(-storm.rangedAccuracy.delta * 100)} points, the same way Blinded lowers it.`] : []),
       ...(urn ? [`${urn.name}: ${urn.text} It stands on a cell of your side (row ${Math.floor(urn.slot / 3) + 1}, middle lane) that no one can enter, and it cannot be attacked. Only a hero in a cell right next to it (in front, behind, above or below) can use it, as an action like Move; it holds ${urn.uses} uses. The water is the same as the tide's: ${urn.rounds} turns, and it does not wash away the tide's water or the other way round.`] : []),
       `${o.survive.name}: ${fill(o.survive.text, o.survive.rounds)}`,
@@ -1429,7 +1435,7 @@ function bossArticles(): WikiArticle[] {
           ...(b.phases ?? []).map((ph, i) => `Phase ${i + 2} at ${pctOf(ph.at)} HP: "${ph.banner}"${ph.actionsPerTurn ? `; ${ph.actionsPerTurn} actions per turn` : ''}${ph.powerMult ? `; hits ${pctOf(ph.powerMult - 1)} harder` : ''}${ph.armorMult ? `; ${multText(ph.armorMult)} armor` : ''}${ph.breakAnchors ? `; the ${anchor?.name ?? 'Mooring'}${anchorCount > 1 ? 's snap' : ' snaps'}` : ''}${Object.entries(ph.cooldowns ?? {}).map(([id, n]) => `; ${content.skills[id]?.name ?? id} ${(ph.cadence ?? []).includes(id) ? `every ${n} turns` : `cooldown ${n}`}`).join('')}${ph.riseAllies ? `; a fallen ${content.mobs[ph.riseAllies.unit]?.name ?? ph.riseAllies.unit} rises again with ${pctOf(ph.riseAllies.hpRatio)} HP` : ''}.`),
           'A single attack can cross only one phase threshold; extra damage stops just above the next one.',
           // Madde 271/272: CC + isabet/kritik cezaları (Blinded, Jinxed) + Omen'in Misfortune'u; adlar veriden
-          `Bosses are immune to crowd control (Stun, Slow, Silence, Taunt, pulls and pushes)${accCritNames.length ? ` and to accuracy/crit penalties (${accCritNames.join(', ')})` : ''}: the hit still lands, the effect does not ("Immune").${content.formulas.ccImmunity?.omenCrit ? ' Omens still stack and Doom still strikes, but Misfortune does not lower a boss\'s crit chance.' : ''} Damage-over-time and curses (Wound, Omen, Withering, burning ground) still work.`,
+          `Bosses are immune to crowd control (Stun, Slow, Chilled, Silence, Taunt, pulls and pushes)${accCritNames.length ? ` and to accuracy/crit penalties (${accCritNames.join(', ')})` : ''}: the hit still lands, the effect does not ("Immune").${content.formulas.ccImmunity?.omenCrit ? ' Omens still stack and Doom still strikes, but Misfortune does not lower a boss\'s crit chance.' : ''} Damage-over-time and curses (Wound, Omen, Withering, burning ground) still work.`,
           ...(b.anchor ? [`Each standing ${anchor?.name ?? b.anchor.unit} gives +${b.anchor.armorAdd} armor and +${b.anchor.magicArmorAdd} magic armor.${b.anchor.stagger ? ` Breaking one staggers ${def.name} (it loses its next action)` : ''}${b.anchor.cancel.length ? `${b.anchor.stagger ? ' and' : ' Breaking one'} cancels a pending ${b.anchor.cancel.map((s) => content.skills[s]?.name ?? s).join(' / ')}` : ''}${b.anchor.stagger || b.anchor.cancel.length ? '.' : ''}`] : []),
           ...(over ? [`${over.name}: after a collapse ${def.name} ${over.text.charAt(0).toLowerCase()}${over.text.slice(1)}.`] : []),
           ...(b.passives ?? []).map((x) => `${x.name}: ${x.text}`),
@@ -1524,7 +1530,16 @@ export function buildWikiGrounds(): WikiGround[] {
   const skills = allSkills();
   return buildGrounds().map((g) => {
     const heal = content.grounds[g.id]?.heal === true; // D11: şifa zemini (Holy Ground)
-    const text = heal ? `Leaves ${g.name} on the area. Allies standing there heal at the start of each of their turns; enemies are not affected.` : `Leaves ${g.name} on the area. Enemies standing there take ${g.element} (magic) damage at the start of each of their turns.`;
+    // Genel zemin kuralı (Ömer 2026-10-29): zemin kendi durumunu içindekine verir; hasar / şifa o durumdan (tur başında bir tik)
+    const def = content.grounds[g.id];
+    const stId = def?.status ?? def?.soak;
+    const st = stId ? content.statuses[stId] : undefined;
+    const water = !!def?.soak;
+    const who = heal ? 'Allies' : water ? 'Everyone' : 'Enemies';
+    const what = heal ? 'heal at the start of each of their turns' : st?.dot || (!water && !def?.directTick && !st) ? `take ${g.element} (magic) damage at the start of each of their turns` : '';
+    const text = st
+      ? `Leaves ${g.name} on the area. ${who} standing there are ${st.name} while they stay inside (${st.text.charAt(0).toLowerCase()}${st.text.slice(1)})${what && !st.dot && !heal ? `; ${what}` : ''}${def?.directTick ? `; the ground itself also deals ${g.element} damage at the start of each of their turns` : ''}.${heal ? '' : ' A damaging ground deals its damage through the status, once per turn.'}`
+      : `Leaves ${g.name} on the area. Enemies standing there take ${g.element} (magic) damage at the start of each of their turns.`;
     const usedBySkills = skills.filter((k) => skillGroundIds(k).includes(g.id)).map(skillRefOf);
     return { ...g, usedBy: g.usedBy.map((u) => u.name), usedBySkills, text, search: searchText(g.name, g.element, text, ...g.usedBy.map((u) => u.name)) };
   });

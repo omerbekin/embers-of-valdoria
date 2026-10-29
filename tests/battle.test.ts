@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { giveManaBarrier } from './mage-legacy-helpers';
 import { oldLayoutSetup } from './range-helpers';
 import { Battle, attributePower, content } from '../src/engine';
 import type { BattleEvent, CombatantDef } from '../src/engine';
@@ -262,7 +263,7 @@ describe('kalkan', () => {
   });
 
   it('Mana Barrier başka bir dosta kalkan verir (INT ile ölçeklenir, kritik uygulanmaz)', () => {
-    const b = newBattle(1, false); // kritik açık: kalkan yine de sabit olmalı
+    const b = giveManaBarrier(newBattle(1, false)); // kritik açık: kalkan yine de sabit olmalı
     b.get(E_MAGE)!.stats.critChance = 1; // her vuruş kritik olurdu
     const shield = ofType(act(b, E_MAGE, 'mana_barrier', E_DRUID), 'shield')[0]!;
     const effect = content.skills.mana_barrier!.effects.find((e) => e.type === 'shield')!; // madde 240: önce dispel, sonra kalkan
@@ -273,7 +274,7 @@ describe('kalkan', () => {
   });
 
   it('kalkan büyük hasarda tükenir, kalan hasar cana geçer', () => {
-    const b = newBattle();
+    const b = giveManaBarrier(newBattle());
     act(b, E_MAGE, 'mana_barrier', E_DRUID);
     act(b, MAGE, 'meteor', E_DRUID);
     act(b, MAGE, 'meteor', E_DRUID);

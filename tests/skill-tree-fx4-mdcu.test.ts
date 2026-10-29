@@ -82,13 +82,11 @@ describe('Faz 4b (M/D/Cu/U): veri ve derleyici', () => {
       expect((t?.hooks ?? []).some((h) => h.node === `${cls}:${gone}`), `${cls}:${gone}`).toBe(false);
       return trigOf(t, `${cls}:${node}`);
     };
-    expect(one('mage', { '0.eb': 1, '0.fb': 1 }, '0.eb', '0.fb').do).toEqual([{ cooldown: -2, cd: 'others' }]);
-    expect(one('mage', { '3.ea': 1, '3.fa': 1 }, '3.ea', '3.fa').do).toEqual([{ status: 'slow', turns: 2, to: 'target' }]);
+    // Mage Frayed Threads (0.fb) / Brittle Shell (3.fa): pasif (Mage reworkü 2026-10-29), satırları kaldırıldı
     expect(one('druid', { '1.eb': 1, '1.fb': 1 }, '1.eb', '1.fb').do).toEqual([{ mp: num('druid', '1.fb', '0.do.0.mp') }]);
     expect(one('undead', { '2.eb': 1, '2.fb': 1 }, '2.eb', '2.fb').do[0]).toMatchObject({ heal: 2, of: 'hpPaid', to: 'bonded' });
     expect(one('undead', { '3.ea': 1, '3.fa': 1 }, '3.ea', '3.fa').do[0]).toMatchObject({ heal: 0.3 });
     // pasif / skill yamaları
-    expect((only('mage', { '0.f1': 3, '0.fb': 1 })!.passive!.effect as { chance: number }).chance).toBeCloseTo(0.18 + 3 * num('mage', '0.f1', '0.v'), 9); // base 0,18 + Resonance 3 x rank değeri (veriden, D9 2026-10-23)
     expect(only('undead', { '3.fa': 1 })!.skills!.dark_bond!.cooldown).toBe(3);
   });
 });
@@ -107,7 +105,8 @@ describe('Faz 4b: Mage', () => {
     expect(me.cooldowns).toEqual({ meteor: 4 });
   });
 
-  it('Frost Armor + Frozen Reserve: emilen her vuruş saldıranı 1 tur Slow\'lar; Slowed saldırandan emilen her vuruş rank başına 1 MP', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Frost Armor + Frozen Reserve: emilen her vuruş saldıranı 1 tur Slow\'lar; Slowed saldırandan emilen her vuruş rank başına 1 MP', () => {
     seeds('two absorbed hits', (s) => {
       const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, only('mage', { '3.r': 3, '3.ea': 1 })), s);
       const me = P(b);
@@ -124,7 +123,8 @@ describe('Faz 4b: Mage', () => {
     });
   });
 
-  it('Rimeguard / Numbing Touch: ön sıradaki dosta kalkan +%5 x rank; Mana Barrier sürerken Slowed saldıran %3 x rank az vurur', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Rimeguard / Numbing Touch: ön sıradaki dosta kalkan +%5 x rank; Mana Barrier sürerken Slowed saldıran %3 x rank az vurur', () => {
     const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, only('mage', { '3.f1': 5, '3.f3': 5 })));
     const me = P(b);
     expect(b.treeShieldMult(me, me, content.skills.mana_barrier!)).toBeCloseTo(1 + 5 * num('mage', '3.f1', '0.mul'), 9);
@@ -136,7 +136,8 @@ describe('Faz 4b: Mage', () => {
     expect(b.treeTakenMult(me, E(b))).toBeCloseTo(1 + 5 * num('mage', '3.f3', '0.mul'), 9); // değer veriden (D9 2026-10-23)
   });
 
-  it('Cauterize: Mana Barrier\'ın sildiği her debuff dosta rank başına maks canın %2\'si şifa', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Cauterize: Mana Barrier\'ın sildiği her debuff dosta rank başına maks canın %2\'si şifa', () => {
     const b = make({ 0: 'mage', 1: 'warrior' }, { 0: 'warrior' }, withTree(0, only('mage', { '3.f2': 2 })));
     const ally = P(b, 1);
     ally.hp = Math.floor(ally.maxHp / 2);
@@ -147,7 +148,8 @@ describe('Faz 4b: Mage', () => {
     expect(procs(b, 'mage:3.f2')).toBe(2);
   });
 
-  it('Overload / Echo Chamber / Arcane Overload / Unstable Weave: yankı ve yankı ıskası (turns modu)', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Overload / Echo Chamber / Arcane Overload / Unstable Weave: yankı ve yankı ıskası (turns modu)', () => {
     let echoed = false;
     let failed = false;
     for (let s = 1; s <= 150 && !(echoed && failed); s++) {

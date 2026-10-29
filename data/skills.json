@@ -16,13 +16,13 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.4
+        "power": 0.38
       },
       {
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.4
+        "power": 0.38
       }
     ],
     "vfx": "doublestrike",
@@ -209,7 +209,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 1.07,
+        "power": 1.0,
         "element": "fire"
       }
     ],
@@ -302,6 +302,8 @@
   "mana_barrier": {
     "id": "mana_barrier",
     "name": "Mana Barrier",
+    "retired": true,
+    "_retired": "Ömer 2026-10-29 Mage reworkü: Mage kitinden çıktı (yerine Ice Crater). Silinmedi: motor kuralı + eski testler (tests/mage-legacy-helpers.ts) duruyor; Codex listelemez.",
     "icon": "manabarrier",
     "target": "single_ally",
     "cost": {
@@ -329,6 +331,46 @@
     "vfx": "barrier",
     "sfx": [
       "magicHum"
+    ]
+  },
+  "ice_crater": {
+    "id": "ice_crater",
+    "name": "Ice Crater",
+    "_not": "Ömer 2026-10-29 Mage reworkü: Mana Barrier'ın yerine Mage'in 3. skill'i. Tek düşman; hedefin altında buz krateri: buz büyü hasarı + Chilled, sonra hedef oyuncunun SEÇTİĞİ yönde (eylem dir: forward / back / lanePrev / laneNext; çapraz yok) 1 hücre itilir. Hücre doluysa / tahta dışıysa itme yok, çarpma: hedef ve hücredeki birim crashPower hasarı alır. Yer değiştirme bağışıkları itilmez ve çarpmaz. Zemin bırakmaz. İkon / vfx YER TUTUCU (blizzard). Sayılar PROVİZYON.",
+    "icon": "blizzard",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "shards",
+    "fx": "#8fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.85,
+        "element": "ice"
+      },
+      {
+        "type": "status",
+        "status": "chilled",
+        "turns": 2
+      },
+      {
+        "type": "push",
+        "crashPower": 0.2,
+        "scale": "int",
+        "element": "ice"
+      }
+    ],
+    "vfx": "blizzard",
+    "sfx": [
+      "iceCrack",
+      "hailPatter"
     ]
   },
   "dark_bond": {
@@ -2826,39 +2868,47 @@
     "artOf": "blizzard",
     "note": "Pose test: plays the Raise Hand pose."
   },
-  "pt_mana_barrier": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mana Barrier kopyası; gerçek efekt/ses/hedef (artOf mana_barrier), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
-    "id": "pt_mana_barrier",
-    "name": "Mana Barrier",
-    "icon": "manabarrier",
-    "target": "single_ally",
+  "pt_ice_crater": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Ice Crater kopyası; gerçek efekt/ses/hedef (artOf ice_crater), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_ice_crater",
+    "name": "Ice Crater",
+    "icon": "blizzard",
+    "target": "single_enemy",
     "cost": {
       "resource": "mp",
       "amount": 0
     },
-    "motion": "cast",
-    "fx": "#6ec1ff",
+    "motion": "sky",
+    "skyFx": "shards",
+    "fx": "#8fd8ff",
     "effects": [
       {
-        "type": "dispel",
-        "status": "debuff"
-      },
-      {
-        "type": "shield",
+        "type": "damage",
+        "damageType": "magic",
         "scale": "int",
         "power": 0.02,
-        "onAbsorb": {
-          "giveMana": 3
-        }
+        "element": "ice"
+      },
+      {
+        "type": "status",
+        "status": "chilled",
+        "turns": 2
+      },
+      {
+        "type": "push",
+        "crashPower": 0.2,
+        "scale": "int",
+        "element": "ice"
       }
     ],
-    "vfx": "barrier",
+    "vfx": "blizzard",
     "sfx": [
-      "magicHum"
+      "iceCrack",
+      "hailPatter"
     ],
-    "pose": "channel",
-    "artOf": "mana_barrier",
-    "note": "Pose test: plays the Channel pose."
+    "pose": "raise",
+    "artOf": "ice_crater",
+    "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_meteor": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Meteor kopyası; gerçek efekt/ses/hedef (artOf meteor), v2 poz takımında 'channel -> raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",

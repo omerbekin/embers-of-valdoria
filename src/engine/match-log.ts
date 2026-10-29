@@ -168,7 +168,10 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `${L(e.actor)} +${e.amount} MP (now ${e.after})${e.cause ? ` [${e.cause}]` : ''}`;
     case 'immune':
       return `${L(e.target)} is IMMUNE to ${e.status} (crowd control; from ${L(e.source)})${e.cause ? ` [${e.cause}]` : ''}`;
+    case 'crash':
+      return `${L(e.target)} crashes ${e.dir} into ${e.with ? L(e.with) : 'the edge'} (${battle.skill(e.cause)?.name ?? e.cause} by ${L(e.source)})`;
     case 'moved':
+      if (e.cause && battle.skill(e.cause)?.effects.some((x) => x.type === 'push')) return `${L(e.actor)} is pushed cell ${e.from} -> ${e.to} (${battle.skill(e.cause)?.name ?? e.cause}${e.by ? ` by ${L(e.by)}` : ''})`;
       if (e.advance) return `${L(e.actor)} steps into the front row cell ${e.from} -> ${e.to} (after ${battle.skill(e.cause ?? '')?.name ?? e.cause})`;
       return e.cause ? `${L(e.actor)} is dragged cell ${e.from} -> ${e.to} (${battle.skill(e.cause)?.name ?? e.cause}${e.by ? ` by ${L(e.by)}` : ''})` : `${L(e.actor)} moves cell ${e.from} -> ${e.to}`;
     // Boss (The Bridge Warden; docs/design/bosses/bridge-warden.md 5): telgraf / çözülme / iptal / faz / Mooring kayıt anahtarları

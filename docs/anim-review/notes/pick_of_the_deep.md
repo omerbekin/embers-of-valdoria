@@ -69,3 +69,16 @@ bütün diziyi kaydırdı; savuruştan sonraki patlama kareleri de hedefin 45 px
 ## Tur 4 · Claude · düzeltme · 2026-10-28
 dx +45 geri alındı (dy +20 ve flashScale 0.78 kaldı): vuruş ve patlama yine kuklanın üstünde. Kontrolde bak:
 patlama/sönüş kareleri kuklada sabit mi, savuruş yayı vuruş açısını koruyor mu.
+
+## Tur 4 · Codex · kontrol · 2026-10-29
+Yakalama: captures/pick_of_the_deep (2026-10-29, yeni yakalama)
+Genel: Tur 4'te dx geri alındıktan sonra darbe, patlama ve sönüş kuklanın üst gövdesinde sabit kalıyor; savuruş yayı hedefe doğru aynı açıda ilerliyor.
+
+| Kare (#yakalama · sheet) | Ne görünüyor | Sorun | Öneri |
+|---|---|---|---|
+| #5–#17 · s0→s8 | Mavi hilal kazma tarafına yakın başlayıp hedefe doğru savruluyor; merkez (725,727) sabit. | - | - |
+| #18–#30 · s9→s14 | Beyaz-mavi patlama kuklanın üst gövdesinde açılıp yıldız biçiminde küçülüyor; 12 hasar kuklanın üstünde. | - | - |
+| #31–#45 · s15→s23 | Küçük mavi çekirdek kukla hizasında sönüyor; Thane geri çekilmiş olsa da efekt hedef tarafında kalıyor. | - | - |
+
+Konum doğrulaması: Yakın dövüş saldırısının hedefi soldaki kukla (725,802), Thane sağdan yaklaşır. Efekt merkezi bütün aktif karelerde (725,727), sabit 245×245; önceki Tur 3'teki x=770 kayması yok. Yatay kayma geri alınmış ve hedefteki vuruş açısı korunmuş. Vuruş anı: #18 (383 ms, s9) beyaz darbe belirginleşiyor, 12 hasar #19 (400 ms) civarında çıkar; ikisi de kukla üstünde. Doğru.
+Karar: tamam. Tur 4 düzeltmesi sorunu gidermiş; belirgin yeni sorun yok.

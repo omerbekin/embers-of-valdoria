@@ -341,9 +341,10 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
     const hits = (s: SkillDef) => s.effects.filter((e) => e.type === 'damage').map((e) => (e as unknown as { power: number }).power); // Knee Cutter (1.f1) durum etkisi ekler
     const NA = (W.nodes['1.f2']!.fx![0] as unknown as { v: number }).v; // veriden
     const close = (got: number[], want: number[]) => { expect(got.length).toBe(want.length); got.forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 9)); };
-    close(hits(skillOf(compileTree(W, a), 'melee_attack')), [0.4, 0.4 * (1 + 5 * NA)]);
+    const DS = hits(skills.melee_attack!)[0]!; // Double Strike vuruş başı temel power (veriden; 2026-10-29 0.40 -> 0.38)
+    close(hits(skillOf(compileTree(W, a), 'melee_attack')), [DS, DS * (1 + 5 * NA)]);
     const add: TreeRules = { ...TREE_RULES, percentRule: 'add' };
-    close(hits(skillOf(compileTree(W, a, add), 'melee_attack')), [0.4, 0.4 + 5 * NA]);
+    close(hits(skillOf(compileTree(W, a, add), 'melee_attack')), [DS, DS + 5 * NA]);
     const spin = skillOf(compileTree(W, build(W, L, ['2.f1*3'])), 'whirlwind');
     expect((spin.effects[0] as unknown as { lifesteal: number }).lifesteal).toBeCloseTo(0.2 + 3 * (W.nodes['2.f1']!.fx![0] as unknown as { v: number }).v, 9);
     const feast = skillOf(compileTree(W, build(W, 5, ['4.u1'])), 'headsmans_blow');

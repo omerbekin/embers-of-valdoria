@@ -4,7 +4,7 @@
     "tide": {
       "name": "Tide",
       "text": "The tide floods both front rows at the start of every Round and again every 4 turns; the water stays for 2 turns. Anyone standing in it is Soaked: they take 50% less fire damage, have 10% less Speed, and Burning is put out. Flooded cells also put out Burning Ground.",
-      "flood": { "ground": "flooded", "onWave": true, "everyRounds": 4, "rows": [0], "boards": ["party", "enemy"], "rounds": 2, "soak": "soaked", "soakTurns": 2 }
+      "flood": { "ground": "flooded", "onWave": true, "everyRounds": 4, "rows": [0], "boards": ["party", "enemy"], "rounds": 2, "soak": "soaked" }
     },
     "storm": {
       "name": "Storm",
@@ -23,7 +23,6 @@
       "ground": "flooded",
       "rounds": 2,
       "soak": "soaked",
-      "soakTurns": 2,
       "ai": { "minScore": 2, "burningCell": 1, "burningHero": 2, "burning": "burning", "burningGround": "burning" }
     }
   },

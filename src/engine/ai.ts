@@ -1,11 +1,11 @@
-import { tileUid, type Battle } from './battle';
+import { PUSH_DIRS, tileUid, type Battle } from './battle';
 import { shapeLabel } from './area-shape';
 import { skillCostAmount, skillCostPay } from './cost';
 import { betStakeParts } from './gamble';
 import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
 import { armorReduction, attributePower, hitChance } from './stats';
-import type { Combatant, CorpseChoice, PassiveEffect, Side, SkillDef, SkillModeSet } from './types';
+import type { Combatant, CorpseChoice, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet } from './types';
 import { DEFAULT_VALUE, ValueContext, pAtLeast, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
 
 export type { AiDifficulty, AiDifficultyConfig, AiValueConfig } from './ai-value';
@@ -158,6 +158,8 @@ export interface AiChoice {
   corpseUid?: string;
   /** Faz 8: skill ağacı biçimi (Focused Beam / Stacked Deck kartı); yoksa skill'in kendi biçimi. */
   mode?: string;
+  /** İtme yönü (Ice Crater; YZ pushDirChoice ile seçer); itmesiz skill'de tanımsız. */
+  dir?: PushDir;
   /**
    * Kararın baskın değer terimi (etiket; seçim terazisi verir): kill (öldürme), heal (şifa/diriltme/kurtarma), summon, shield, taunt, guard, burn,
    * tactic (saf self-buff / kontrol), aoe (alan hasarı), damage (tek hedef hasar); 'fallback' kullanılmıyor; rest/skip/move: global skill kuralı.
@@ -207,6 +209,8 @@ export interface GlobalTrace {
 export interface Option {
   skill: SkillDef;
   targetUid?: string;
+  /** İtme yönü (push etkili skill; pushDirChoice). */
+  pushDir?: PushDir;
   /** Faz 8: skill ağacı biçimi (Battle.skillModes); `skill` o biçimin tanımı. */
   mode?: string;
   /** Şekil skill'inde seçilen anchor hücre (boş hücre de olabilir) ve şeklin kapsadığı tüm hücreler. */
@@ -325,11 +329,14 @@ export function chooseAction(battle: Battle, actorUid: string, config: AiConfig,
   // hitLoss önbelleği yalnızca bu karar boyunca yaşar (durum değişmez); iç içe çağrıda dıştaki korunur
   const outer = hitLossCache;
   hitLossCache = outer ?? new Map();
+  const outerReach = reachCache;
+  reachCache = new Map();
   const outerCtx = activeCtx;
   try {
     return chooseActionInner(battle, actorUid, config, trace, opts?.difficulty ?? 'medium', opts?.value);
   } finally {
     hitLossCache = outer;
+    reachCache = outerReach;
     activeCtx = outerCtx;
   }
 }
@@ -342,6 +349,13 @@ let activeCtx: ValueContext | null = null;
 
 /** statusMitigation hesabında tekrar eden (saldıran, kurban, ek) sonuçları: tek bir chooseAction çağrısı süresince (saf; seçimi değiştirmez). */
 let hitLossCache: Map<string, number> | null = null;
+
+/**
+ * reachableHit önbelleği (pushMoveValue): tek bir chooseAction çağrısı süresince. Karar boyunca savaş durumu değişmez; pushMoveValue yalnızca itilen
+ * hedefi geçici olarak başka hücreye koyar ve o birim her ölçümde saldıran ya da kurbandır, bu yüzden anahtar itilen birimin o anki hücresini içerir.
+ * Saf; seçimi değiştirmez (aynı yön/hedef her skillOptions çağrısında ve before ölçümünde yeniden hesaplanıyordu).
+ */
+let reachCache: Map<string, number> | null = null;
 
 /** Zorluk kuralları (ai.json > difficulty.<seviye>); Medium ya da tanımsız = boş (tam terazi). */
 export function difficultyRules(config: AiConfig, difficulty: AiDifficulty = 'medium'): AiDifficultyConfig {
@@ -515,6 +529,7 @@ function toChoice(option: Option, reason: AiChoice['reason']): AiChoice {
     ...(option.board ? { board: option.board } : {}),
     ...(option.corpseUid ? { corpseUid: option.corpseUid } : {}),
     ...(option.mode !== undefined ? { mode: option.mode } : {}),
+    ...(option.pushDir ? { dir: option.pushDir } : {}),
     reason,
     score: r1(option.score),
   };
@@ -680,6 +695,27 @@ function skillOptions(battle: Battle, actor: Combatant, skillId: string, profile
   }
   // Yan vuruşlu (splash) tek hedef skill'inde grup = seçilen hedef + yanındakiler (ilk eleman seçilen hedeftir)
   const groups = battle.needsTargetChoice(skillId, actor) ? candidates.map((t) => [t, ...battle.splashTargets(skillId, t, actor.uid)]) : [candidates];
+  // İtmeli skill (Ice Crater, madde 452): düşman hedefte her geçerli yön ayrı aday (yön değeri tüm terazide puanlanır); aynı sonucu veren yönler
+  // (ör. iki yönde de kenara çarpma) tek aday (PUSH_DIRS sırasındaki ilki). Bağışık hedefte yönsüz tek aday.
+  if (battle.needsTargetChoice(skillId, actor) && skill.effects.some((e) => e.type === 'push')) {
+    const out: Option[] = [];
+    for (const targets of groups) {
+      const t = targets[0]!;
+      if (t.side === actor.side || battle.pushOutcome(t, 'back').kind === 'immune') {
+        out.push(evaluate(battle, actor, skill, targets, t.uid, profile));
+        continue;
+      }
+      const seen = new Set<string>();
+      for (const dir of PUSH_DIRS) {
+        const po = battle.pushOutcome(t, dir);
+        const key = po.kind === 'move' ? `m${po.to}` : po.kind === 'crash' ? `c${po.with ?? 'edge'}` : 'i';
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(evaluate(battle, actor, skill, targets, t.uid, profile, undefined, undefined, dir));
+      }
+    }
+    return out;
+  }
   return groups.map((targets) => evaluate(battle, actor, skill, targets, battle.needsTargetChoice(skillId, actor) ? targets[0]!.uid : undefined, profile));
 }
 
@@ -783,6 +819,102 @@ function bondValue(battle: Battle, actor: Combatant, o: Option, bestHit: number,
   return Math.max(0, Math.min(Math.min(steal, selfCap) * e.ratio, cap));
 }
 
+/**
+ * İtme yönü seçimi (Ice Crater; Ömer 2026-10-29 "basit bir puan, abartma"), can-eşdeğer: çarpma = hedefin (ve çarptığı birimin) çarpma hasarı
+ * (karşı taraftan bir birime çarparsa iki kat değer; kendi dostumuza çarpmak eksi); kayma = gittiği hücrede bizim taraftan bıraktığımız hasar zemininin
+ * bir tiki + erişim değişimi + komşu kalabalığı (pushMoveValue; ai.json'a taşınmadı: geçici sabitler). Eşitlikte PUSH_DIRS sırası.
+ * Madde 452: YZ kararı bunu KULLANMAZ (skillOptions her yönü ayrı aday yapıp tüm terazide puanlar); kaba yön özeti / test yardımcısı.
+ */
+const PUSH_CROWD_SHARE = 0.1;
+export function pushDirChoice(battle: Battle, actor: Combatant, skill: SkillDef, target: Combatant): { dir: PushDir; value: number; why: string } {
+  const push = skill.effects.find((e) => e.type === 'push');
+  let best: { dir: PushDir; value: number; why: string } = { dir: 'back', value: 0, why: 'no effect' };
+  if (!push || push.type !== 'push') return best;
+  const raw = Math.round(attributePower(actor.stats, push.scale, battle.formulas) * push.crashPower);
+  const crashOn = (c: Combatant) => (raw > 0 && c.hp > 0 ? Math.min(c.hp, battle.tickDamage(push.element, 'magic', raw, c)) : 0);
+  for (const dir of PUSH_DIRS) {
+    const o = battle.pushOutcome(target, dir);
+    if (o.kind === 'immune') return { dir: 'back', value: 0, why: 'immune' };
+    let value = 0;
+    let why = '';
+    if (o.kind === 'crash') {
+      const other = o.with ? battle.get(o.with) : undefined;
+      value = crashOn(target) + (other ? (other.side === actor.side ? -crashOn(other) : crashOn(other)) : 0);
+      why = other ? `crash into ${unitLabel(other)}` : 'crash into the edge';
+    } else {
+      const m = pushMoveValue(battle, actor, raw, target, o.to, dir);
+      value = m.value;
+      why = m.why;
+    }
+    if (value > best.value) best = { dir, value, why };
+  }
+  return best;
+}
+
+/**
+ * Boş hücreye kaymanın konumsal değeri (can-eşdeğer, abartısız; madde 452):
+ * - zemin: genel zemin kuralı (Ömer 2026-10-29) ile itildiği hücrede bizim zeminimizin vereceği durumun bir tiki (zaten aynı durum güçlüyse sayılmaz);
+ * - erişim (ön safı bozma): yeni hücrede dostlarımızın ona en iyi saldırısının (menzil dahil) beklenen hasar değişimi, eksi hedefin bize en iyi
+ *   saldırısının değişimi; ikisi de tek saldırılık ve x PUSH_REACH_SHARE (hedef sonra yer değiştirebilir, dostlar başka hedef seçebilir); eksi olabilir
+ *   (menzilden çıkarmak);
+ * - komşu kalabalığı (sonraki alan vuruşları): çarpma hamının küçük payı.
+ */
+const PUSH_REACH_SHARE = 0.5;
+function pushMoveValue(battle: Battle, actor: Combatant, raw: number, target: Combatant, to: number, _dir: PushDir): { value: number; why: string } {
+  const hazard = Math.min(target.hp, battle.groundHazardAt(target, target.board, to, actor.side));
+  const crowd = battle.combatants.filter((c) => c.hp > 0 && c.uid !== target.uid && c.board === target.board && c.side !== actor.side && Math.abs(battle.rowOf(c.slot) - battle.rowOf(to)) + Math.abs(battle.laneOf(c.slot) - battle.laneOf(to)) === 1).length;
+  // Erişim: hedef geçici olarak yeni hücreye konup ölçülür (aynı senkron çağrıda geri alınır; RNG / olay yok)
+  const allies = battle.living(actor.side).filter((a) => !a.inert);
+  const ours = battle.living(actor.side);
+  // Bir ölçüm (before / after) boyunca durum sabit: saldıranın skill başına geçerli hedefleri bir kez hesaplanır (threat'te hedef her dost için soruyordu)
+  let vt = new Map<string, Set<string>>();
+  const hit = (a: Combatant, v: Combatant): number => {
+    if (!reachCache) return reachableHit(battle, a, v, vt);
+    const key = `${a.uid}>${v.uid}|${target.uid}@${target.board}:${target.slot}|${a.mp}|${a.rage ?? 0}`;
+    let r = reachCache.get(key);
+    if (r === undefined) {
+      r = reachableHit(battle, a, v, vt);
+      reachCache.set(key, r);
+    }
+    return r;
+  };
+  const measure = () => ({ gain: sum(allies.map((a) => hit(a, target))), threat: Math.max(0, ...ours.map((u) => hit(target, u))) });
+  const before = measure();
+  const from = target.slot;
+  target.slot = to;
+  vt = new Map();
+  let after: { gain: number; threat: number };
+  try {
+    after = measure();
+  } finally {
+    target.slot = from;
+  }
+  const reach = PUSH_REACH_SHARE * (Math.min(target.hp, after.gain) - Math.min(target.hp, before.gain) - (after.threat - before.threat));
+  const value = hazard + reach + crowd * raw * PUSH_CROWD_SHARE;
+  return { value, why: hazard > 0 ? 'into our ground' : reach > 0.5 ? 'opens reach' : reach < -0.5 ? 'out of reach' : crowd > 0 ? 'into the crowd' : 'slide' };
+}
+
+/** `attacker`ın `victim`a şu an ulaşabilen (menzil / hedef kuralı: validTargets) en iyi saldırısının beklenen hasarı (isabet dahil); bedel yetmeyen sayılmaz. */
+function reachableHit(battle: Battle, attacker: Combatant, victim: Combatant, vt?: Map<string, Set<string>>): number {
+  let top = 0;
+  for (const id of attacker.skills) {
+    const sk = battle.skill(id, attacker);
+    if (!sk || !ATTACK_TARGETS.includes(sk.target)) continue;
+    if (sk.cost.resource === 'mp' && attacker.mp < sk.cost.amount) continue;
+    if (sk.cost.resource === 'rage' && (attacker.rage ?? 0) < sk.cost.amount) continue;
+    // vt: çağıranın (durum sabitken) skill başına geçerli hedef önbelleği
+    let valid = vt?.get(`${attacker.uid}|${id}`);
+    if (!valid) {
+      valid = new Set(battle.validTargets(attacker.uid, id).map((c) => c.uid));
+      vt?.set(`${attacker.uid}|${id}`, valid);
+    }
+    if (!valid.has(victim.uid)) continue;
+    const d = previewForTargets(battle, attacker, id, [victim]).find((x) => x.uid === victim.uid)?.damage;
+    if (d) top = Math.max(top, d.avg * d.hitChance);
+  }
+  return top;
+}
+
 /** Birimin büyü hasarı veren bir skill'i var mı (Spell Ward'ın emebileceği saldırgan)? */
 function hasMagicAttack(battle: Battle, c: Combatant): boolean {
   return c.skills.some((id) => battle.skill(id, c)?.effects.some((e) => e.type === 'damage' && e.damageType === 'magic'));
@@ -793,8 +925,13 @@ function hasAttack(battle: Battle, c: Combatant): boolean {
   return c.skills.some((id) => battle.skill(id, c)?.effects.some((e) => e.type === 'damage'));
 }
 
-function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Combatant[], targetUid: string | undefined, profile: AiProfile, areaCells?: number[], centerUid?: string): Option {
-  const previews = previewForTargets(battle, actor, skill.id, targets, centerUid);
+function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Combatant[], targetUid: string | undefined, profile: AiProfile, areaCells?: number[], centerUid?: string, pushDir?: PushDir): Option {
+  const previews = previewForTargets(battle, actor, skill.id, targets, centerUid, undefined, pushDir);
+  // İtme (Ice Crater): hedefe çarpma hasarı vuruş isabet edip hedef sağ kalırsa gelir; öldürme ihtimali vuruş + çarpma toplamıyla, sağ kalma
+  // ihtimali (pushLive) çarpma / kayma değerleri için
+  const pushPv = pushDir ? previews.find((p) => p.uid === targets[0]?.uid)?.push : undefined;
+  const crashSelf = pushPv?.kind === 'crash' ? (pushPv.damage ?? 0) : 0;
+  let pushLive = 0;
   const o: Option = {
     skill,
     ...(targetUid ? { targetUid } : {}),
@@ -896,9 +1033,18 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
         const d = p.damage;
         const cm = d.critMult ?? actor.stats.critMult; // skill ağacı critDmgMul (kancasızda tanımsız)
         const c = Math.max(0, Math.min(1, d.critChance));
-        const pk = d.critChance >= 1 ? pAtLeast(d.min, d.max, need) : (1 - c) * pAtLeast(d.min, d.max, need) + c * pAtLeast(d.min * cm, d.critMax, need);
+        const pkAt = (n: number) => (d.critChance >= 1 ? pAtLeast(d.min, d.max, n) : (1 - c) * pAtLeast(d.min, d.max, n) + c * pAtLeast(d.min * cm, d.critMax, n));
+        const pk = pkAt(need);
         // Madde 258: hedefin kullanılmamış Lucky Escape hakkı ölümcül vuruşu o şansla tamamen yok sayar
         o.killP[target.uid] = Math.max(o.killP[target.uid] ?? 0, d.hitChance * pk * (1 - battle.luckyEscapeChance(target.uid)));
+        // Ice Crater çarpması (madde 452): vuruşu sağ atlatan hedef çarpma hasarını da yer: beklenen hasar + vuruş ve çarpmanın birlikte öldürme ihtimali
+        if (crashSelf > 0 && target === targets[0]) {
+          pushLive = d.hitChance * (1 - pk);
+          const ce = pushLive * Math.min(crashSelf, target.hp);
+          o.damage += ce;
+          o.dmgBy[target.uid] = (o.dmgBy[target.uid] ?? 0) + ce;
+          o.killP[target.uid] = Math.max(o.killP[target.uid]!, d.hitChance * pkAt(need - crashSelf) * (1 - battle.luckyEscapeChance(target.uid)));
+        } else if (pushDir && target === targets[0]) pushLive = d.hitChance * (1 - pk);
         if (o.killP[target.uid]! >= 0.5) o.kills.push(target);
       }
       if (lifesteal > 0 && !p.damage.splash) o.selfHeal += p.damage.hpLoss * p.damage.hitChance * lifesteal;
@@ -1016,6 +1162,33 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
     const v = o.damage * activeTg.pullFront!;
     o.deny += v;
     if (o.notes.length < 6) o.notes.push(`pull ${unitLabel(first)} to front: +${r1(v)}`);
+  }
+  // Ice Crater (Ömer 2026-10-29; madde 452): aday yönü (skillOptions her geçerli yönü ayrı puanlar). Değer vuruş isabet edip hedef sağ kalırsa
+  // (pushLive): çarpmada çarpılan birimin hasarı (düşmansa damage/dmgBy/killP: baskı ve öldürme değeri gerçek hasar gibi; dostsa eksi deny),
+  // kaymada konumsal değer (pushMoveValue) deny'a. Hedefin kendi çarpma hasarı yukarıda (önizleme döngüsü).
+  if (pushDir && first && first.side !== actor.side && pushPv) {
+    o.pushDir = pushDir;
+    const pe = skill.effects.find((e) => e.type === 'push');
+    const raw = pe && pe.type === 'push' ? Math.round(attributePower(actor.stats, pe.scale, battle.formulas) * pe.crashPower) : 0;
+    if (pushPv.kind === 'crash') {
+      const other = pushPv.with ? battle.get(pushPv.with) : undefined;
+      const wd = pushPv.withDamage ?? 0;
+      if (other && other.hp > 0 && wd > 0) {
+        const need = other.hp + other.shield + other.magicShield;
+        const ce = pushLive * Math.min(wd, need);
+        if (other.side !== actor.side) {
+          o.damage += ce;
+          o.dmgBy[other.uid] = (o.dmgBy[other.uid] ?? 0) + ce;
+          if (wd >= need) o.killP[other.uid] = Math.max(o.killP[other.uid] ?? 0, pushLive * (1 - battle.luckyEscapeChance(other.uid)));
+        } else o.deny -= ce;
+      }
+      if (o.notes.length < 6) o.notes.push(`push ${unitLabel(first)} ${pushDir}: crash ${crashSelf}${other ? ` + ${wd} to ${unitLabel(other)}` : ' (edge)'} x${r2(pushLive)}`);
+    } else if (pushPv.kind === 'move' && pushPv.to !== null) {
+      const m = pushMoveValue(battle, actor, raw, first, pushPv.to, pushDir);
+      const v = m.value * pushLive;
+      o.deny += v;
+      if (o.notes.length < 6) o.notes.push(`push ${unitLabel(first)} ${pushDir}: ${v >= 0 ? '+' : ''}${r1(v)} (${m.why})`);
+    }
   }
   // Rastgele hedefli skill: hedefler önceden bilinmez; beklenen hasar hedef sayısına oranlanır, öldürme garanti değildir
   if (skill.target === 'random_enemies' && targets.length > 0) {
@@ -1508,6 +1681,16 @@ function controlValue(ctx: ValueContext, o: Option): number {
       if (def.speedMult !== undefined && def.speedMult !== 1) {
         const delta = Math.abs(def.speedMult - 1) * own * tv;
         if ((def.speedMult < 1) === (t.side !== actor.side)) v += p * delta; // düşmanı yavaşlatmak / dostu hızlandırmak
+      }
+      // Chilled kaçınma çarpanı (evasionMult < 1; madde 452): süre boyunca dostlarımızın (kullanan dahil: durum hedefin turlarıyla süre sayar) ona
+      // isabet kazancı (noEvasion ile aynı ölçü: dost başına bir hedef, canlı düşman sayısına bölünür) x hedefin süre içindeki turları
+      if (def.evasionMult !== undefined && def.evasionMult < 1 && t.side !== actor.side) {
+        const eva = battle.effectiveStats(t).evasion;
+        if (eva > 0) {
+          const allies = battle.living(actor.side).filter((a) => !a.inert);
+          const foes = Math.max(1, battle.living(t.side).filter((f) => !f.inert).length);
+          v += (p * sum(allies.map((a) => hitGain(battle, a, t, eva * (1 - def.evasionMult!)))) * own) / foes;
+        }
       }
       // Silenced (düz skill etkisiyle; Clutch, Hag's Mark): engellenen MP'li hamle (Drain Field onEmpty ile aynı ölçü, ValueContext.silenceDenial)
       if (def.blocksMpSkills && t.side !== actor.side) v += p * (ctx.vc.debuffShare?.silence ?? 1) * ctx.silenceDenial(t, t.mp, turns);
@@ -2319,6 +2502,8 @@ export interface AiCandidate {
   name: string;
   /** Hedef birim (tek hedefli skill) ya da alan skill'inin merkez birimi; kendine/herkese skill'lerde tanımsız. */
   target?: string;
+  /** İtme yönü (Ice Crater adayı; madde 452). */
+  dir?: PushDir;
   /** Alan/şerit skill'inde merkez hücre (yuva numarası, 0 tabanlı). */
   center?: number;
   /** Şekil skill'inde: şekil adı ('rect 2x3', 'row', 'column', 'plus') ve kapsadığı tüm hücreler (match-log). */
@@ -2429,7 +2614,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
   ];
   const candidates: AiCandidate[] = trace.options.map((o) => {
     const centerUid = o.anchorSlot !== undefined ? o.targets.find((t) => t.board === (o.board ?? foeSide(actor)) && t.slot === o.anchorSlot)?.uid : undefined;
-    const previews = previewForTargets(battle, actor, o.skill.id, o.targets, centerUid);
+    const previews = previewForTargets(battle, actor, o.skill.id, o.targets, centerUid, undefined, o.pushDir);
     const perTarget = previews
       .filter((p) => p.damage)
       .slice(0, 8)
@@ -2439,6 +2624,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
       skill: o.skill.id,
       name: o.skill.name,
       ...(o.targetUid ? { target: labelOf(battle, o.targetUid) } : {}),
+      ...(o.pushDir ? { dir: o.pushDir } : {}),
       ...(o.anchorSlot !== undefined ? { center: o.anchorSlot, shape: shapeLabel(o.skill.area!), cells: o.cells ?? [] } : {}),
       hits: o.targets.map((t) => unitLabel(t)),
       enemyHits: o.targets.filter((t) => t.side !== actor.side).length,

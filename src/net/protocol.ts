@@ -20,6 +20,8 @@ export interface WireChoice {
   slot?: number;
   board?: NetSide;
   corpseUid?: string;
+  /** İtme yönü (Ice Crater). */
+  dir?: 'forward' | 'back' | 'lanePrev' | 'laneNext';
 }
 
 /** Bir hamle: aktör + seçim (null = pas: birimin hiçbir eylemi yok) + hamle öncesi durum özeti. */
@@ -76,7 +78,8 @@ export function isCells(v: unknown): v is string[] {
 }
 
 export function isChoice(v: unknown): v is WireChoice {
-  if (!isObj(v) || !onlyKeys(v, ['skillId', 'targetUid', 'slot', 'board', 'corpseUid'])) return false;
+  if (!isObj(v) || !onlyKeys(v, ['skillId', 'targetUid', 'slot', 'board', 'corpseUid', 'dir'])) return false;
+  if (v.dir !== undefined && !['forward', 'back', 'lanePrev', 'laneNext'].includes(v.dir as string)) return false;
   if (!matches(v.skillId, ID_RE)) return false;
   if (v.targetUid !== undefined && !matches(v.targetUid, UID_RE)) return false;
   if (v.slot !== undefined && !isInt(v.slot, 0, CELLS - 1)) return false;
@@ -152,13 +155,14 @@ export function sanitizeName(raw: string): string {
 }
 
 /** Motorun ChoiceLike'ını ağ biçimine çevirir (tanımsız alanlar atılır). */
-export function toWireChoice(c: { skillId: string; targetUid?: string; slot?: number; board?: NetSide; corpseUid?: string } | null): WireChoice | null {
+export function toWireChoice(c: { skillId: string; targetUid?: string; slot?: number; board?: NetSide; corpseUid?: string; dir?: WireChoice['dir'] } | null): WireChoice | null {
   if (!c) return null;
   const out: WireChoice = { skillId: c.skillId };
   if (c.targetUid !== undefined) out.targetUid = c.targetUid;
   if (c.slot !== undefined) out.slot = c.slot;
   if (c.board !== undefined) out.board = c.board;
   if (c.corpseUid !== undefined) out.corpseUid = c.corpseUid;
+  if (c.dir !== undefined) out.dir = c.dir;
   return out;
 }
 

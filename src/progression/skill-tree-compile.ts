@@ -274,13 +274,13 @@ function patchesOf(tree: TreeData, alloc: TreeAlloc, rules: TreeRules): Patch[] 
   for (const n of treeNodes(rules).list) {
     const rank = rankOf(alloc, n.key);
     const fx = tree.nodes[n.key]?.fx;
-    if (rank <= 0 || !fx) continue;
+    if (rank <= 0 || !fx || tree.nodes[n.key]?.inactive) continue; // pasif düğüm (Mage reworkü 2026-10-29) motor yok sayar
     const skill = rowSkill(tree, n.row, rules);
     for (const f of fx) if (comboOk(f, alloc)) out.push({ fx: f, rank, ...(skill ? { skill } : {}), label: n.key });
   }
   barReached(alloc, rules).forEach((on, i) => {
     const fx = tree.mastery.bar[i]?.fx;
-    if (on && fx) for (const f of fx) out.push({ fx: f, rank: 1, label: `bar[${i}]` });
+    if (on && fx && !tree.mastery.bar[i]?.inactive) for (const f of fx) out.push({ fx: f, rank: 1, label: `bar[${i}]` });
   });
   // `base` önce (temel değer), sonra kalanlar sütun sırasıyla (sıralama kararlı)
   const list = [...out.filter(isBase), ...out.filter((p) => !isBase(p))];
@@ -1593,8 +1593,9 @@ export function checkTreeFx(tree: TreeData, rules: TreeRules = TREE_RULES): stri
       }
     }
   };
-  for (const n of list) one(n.key, tree.nodes[n.key]?.fx, n.max, rowSkill(tree, n.row, rules));
-  tree.mastery.bar.forEach((b, i) => one(`bar[${i}]`, b.fx, 1, undefined));
+  // Pasif düğümler (inactive) denetlenmez: fx'leri artık kitte olmayan skill'e / pasife bakar (Ömer karar verene kadar veride durur)
+  for (const n of list) if (!tree.nodes[n.key]?.inactive) one(n.key, tree.nodes[n.key]?.fx, n.max, rowSkill(tree, n.row, rules));
+  tree.mastery.bar.forEach((b, i) => !b.inactive && one(`bar[${i}]`, b.fx, 1, undefined));
   return out;
 }
 

@@ -129,7 +129,6 @@
     "caster": {
       "priorities": [
         "kill",
-        "shield",
         "tactic",
         "aoe",
         "damage"

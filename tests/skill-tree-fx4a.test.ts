@@ -79,7 +79,6 @@ describe('Faz 4a: veri ve derleyici', () => {
   it('rank: eylem sayıları ve C4 çarpanı rank ile çarpılır; süre / eşik çarpılmaz', () => {
     expect(trigOf(only('warrior', { '0.r': 3 }), 'warrior:0.r').do[0]!.heal).toBeCloseTo(3 * num('warrior', '0.r', '0.do.0.heal'), 9);
     expect(trigOf(only('defender', { '2.f3': 4 }), 'defender:2.f3').do[0]!.shield).toBeCloseTo(4 * num('defender', '2.f3', '0.do.0.shield'), 9);
-    expect(trigOf(only('mage', { '0.f3': 5 }), 'mage:0.f3').do[0]!.sooner).toBeCloseTo(0.2, 9);
     expect(healOf(only('warrior', { '0.f2': 3 }), 'warrior:0.f2').mul).toBeCloseTo(3 * num('warrior', '0.f2', '0.mul'), 9);
     expect(healOf(only('defender', { '3.f3': 5 }), 'defender:3.f3').mul).toBeCloseTo(5 * num('defender', '3.f3', '0.mul'), 9);
     const t = trigOf(only('warrior', { '0.n0': 1 }), 'warrior:0.n0');
@@ -92,12 +91,12 @@ describe('Faz 4a: veri ve derleyici', () => {
     expect(healOf(only('druid', { '3.f3': 1 }), 'druid:3.f3').skill).toBe('rejuvenate');
     expect(healOf(only('warrior', { '2.ma': 1 }), 'warrior:2.ma').skill).toBe('whirlwind');
     expect(trigOf(only('mage', {}, 1), 'mage:bar[1]').skill).toBeUndefined();
-    expect(trigOf(only('mage', { '0.f3': 1 }), 'mage:0.f3').skill).toBeUndefined();
   });
 
   it('hatalı fx açık hata verir', () => {
     const bad = (cls: string, fx: unknown): string[] => {
       const t = JSON.parse(JSON.stringify(treeOf(cls)!)) as TreeData;
+      delete t.nodes['0.n0']!.inactive; // Mage 0.n0 pasif (2026-10-29); denetim pasif düğümü atlar
       t.nodes['0.n0']!.fx = [fx as TreeFx];
       return checkTreeFx(t).map((e) => String(e));
     };
@@ -325,7 +324,8 @@ describe('Faz 4a: Defender', () => {
 });
 
 describe('Faz 4a: Mage', () => {
-  it('Ice Mirror: Mana Barrier\'ın emdiği İLK vuruş saldıranı 2 tur Slow\'lar (kalkan başına bir kez)', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Ice Mirror: Mana Barrier\'ın emdiği İLK vuruş saldıranı 2 tur Slow\'lar (kalkan başına bir kez)', () => {
     seeds('Ice Mirror', (s) => {
       const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, only('mage', { '3.n0': 1 })), s);
       const me = P(b);
@@ -423,7 +423,8 @@ describe('Faz 4a: Mage', () => {
     });
   });
 
-  it('Sympathy: Spell Echo tetiklenince öbür cooldown\'lu büyüler 1 düşer', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Sympathy: Spell Echo tetiklenince öbür cooldown\'lu büyüler 1 düşer', () => {
     seeds('echo', (s) => {
       const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, only('mage', { '0.eb': 1 })), s, 'turns');
       E(b).hp = E(b).maxHp = 99999;

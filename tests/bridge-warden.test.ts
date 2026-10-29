@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { giveManaBarrier } from './mage-legacy-helpers';
 import { Battle, chooseAction, content } from '../src/engine';
 import type { BattleEvent, BattleMode, Combatant, Teams } from '../src/engine';
 import { ENCOUNTERS, validateEncounters } from '../src/campaign';
@@ -257,7 +258,7 @@ describe('Chain Hook çekmesi (M6) ve Ash Brand (M4)', () => {
     expect(r.hit.sort()).toEqual(['party-0', 'party-1']);
     expect(mage.statuses.some((s) => s.kind === 'ash_brand')).toBe(false);
     // dispel
-    const b2 = new Battle(rangeOff(content.battleSetup(content.DEFAULT_BATTLE, 3, 'turns', TEAMS, false)));
+    const b2 = giveManaBarrier(new Battle(rangeOff(content.battleSetup(content.DEFAULT_BATTLE, 3, 'turns', TEAMS, false))));
     const w2 = warden(b2);
     w2.phase = 2;
     toWarden(b2);

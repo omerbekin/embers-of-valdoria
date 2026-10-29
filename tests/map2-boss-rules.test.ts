@@ -47,7 +47,7 @@ function hitSomeone(b: Battle, uid: string, avoid: string[] = []): void {
 describe('Skill suyu = Tide suyu (M-B, birleşik Flooded)', () => {
   it('grounds.json flooded kendi ıslatma kuralını taşır; skill suyu bırakan skill\'lerde ayrı Soaked etkisi yok', () => {
     expect(flooded.soak).toBe('soaked');
-    expect(flooded.soakTurns).toBeGreaterThan(0);
+    expect((flooded as { soakTurns?: number }).soakTurns).toBeUndefined(); // genel zemin kuralı (2026-10-29): suda kaldıkça sürer
     for (const s of Object.values(content.skills)) {
       if (!s.effects.some((e) => e.type === 'ground' && e.ground === 'flooded')) continue;
       expect(s.effects.some((e) => e.type === 'status' && (e.status as string) === flooded.soak), s.id).toBe(false);
@@ -69,7 +69,7 @@ describe('Skill suyu = Tide suyu (M-B, birleşik Flooded)', () => {
       expect(w).toBeDefined();
       for (const c of b.combatants.filter((x) => x.side === 'party' && x.hp > 0)) {
         const st = c.statuses.find((s) => (s.kind as string) === flooded.soak);
-        if (w.slots.includes(c.slot)) expect(st?.turns, c.defId).toBe(flooded.soakTurns);
+        if (w.slots.includes(c.slot)) expect(st?.fromGround, c.defId).toBe(w.id);
         else expect(st, c.defId).toBeUndefined();
       }
       // söndürme: suyla çakışan Burning hücreleri kalkar

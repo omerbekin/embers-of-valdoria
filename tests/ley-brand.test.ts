@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { giveManaBarrier } from './mage-legacy-helpers';
 import { Battle, content, describeSkill, previewForTargets, skillCostAmount, type BattleEvent, type BattleMode, type Combatant, type SkillEffect, type Teams } from '../src/engine';
 
 // Ley Brand (Anti-Mage, Ömer 2026-10-27, open-questions 444): eski Drain Field'ın yerine (skill id drain_field AYNI). Sayılar veriden okunur.
@@ -93,7 +94,7 @@ describe('Ley Brand: MP havuzu olmayan düşman', () => {
   });
 
   it('Brand silinince (dispel) havuz eylem sonunda silinir, patlamaz', () => {
-    const b = make({ 0: 'warrior', 1: 'mage' });
+    const b = giveManaBarrier(make({ 0: 'warrior', 1: 'mage' }));
     const foe = noMp(E(b, 0));
     const healer = E(b, 1);
     brand(b);

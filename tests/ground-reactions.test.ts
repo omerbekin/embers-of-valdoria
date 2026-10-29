@@ -26,7 +26,7 @@ const hpOf = (b: Battle, uid: string) => b.get(uid)!.hp;
 describe('zemin tepkimeleri: veri', () => {
   it('reactions bloğu zemin değil; her tepkimenin zeminleri ve yeni zeminleri tanımlı, etiketi ve metni var', () => {
     expect(content.grounds.reactions).toBeUndefined();
-    expect(Object.keys(R).sort()).toEqual(['evaporate', 'explosion', 'feed', 'frozen', 'holy_water', 'holy_water_ground', 'purge', 'quenched', 'roots_burn', 'sanctified', 'spread', 'toxic_smoke']);
+    expect(Object.keys(R).sort()).toEqual(['evaporate', 'explosion', 'feed', 'frozen', 'frozen_chill', 'holy_water', 'holy_water_ground', 'purge', 'quenched', 'roots_burn', 'sanctified', 'spread', 'toxic_smoke']);
     for (const [id, d] of Object.entries(R)) {
       expect(d.label, id).toBeTruthy();
       expect(d.text, id).toBeTruthy();
@@ -280,6 +280,19 @@ describe('zemin tepkimeleri: motor', () => {
     for (let i = 0; i < 20 && b.currentUid !== 'enemy-0'; i++) b.skipTurn();
     b.skipTurn();
     expect(b.log.some((e) => e.type === 'status' && e.target === 'enemy-0' && e.status === 'slow')).toBe(true);
+  });
+
+  it('11 Frozen solid (Chill Ground üstüne Chill Ground): Ice olur, Chill kalkar; tek tepkime', () => {
+    const { b, me } = mk();
+    expect(content.grounds.storm!.name).toBe('Chill Ground');
+    place(b, me.uid, 'storm', 'enemy', [0]);
+    place(b, me.uid, 'storm', 'enemy', [0]);
+    expect(reactions(b).map((e) => e.reaction)).toEqual(['frozen_chill']);
+    expect(typesAt(b, 'enemy', 0)).toEqual(['ice_ground']);
+    // başka hücrede tek Chill tepkimez
+    place(b, me.uid, 'storm', 'enemy', [1]);
+    expect(reactions(b)).toHaveLength(1);
+    expect(typesAt(b, 'enemy', 1)).toEqual(['storm']);
   });
 
   it('her iki tarafın zemini tepkir: düşmanın bıraktığı zehir + oyuncunun ateşi patlar; hasar tetiği bırakanın düşmanına', () => {

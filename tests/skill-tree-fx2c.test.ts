@@ -117,9 +117,9 @@ describe('Faz 2c: veri', () => {
     expect(hs.find((h) => h.at === 'passiveHeal')?.mod.powerMul).toBe(-0.3);
   });
 
-  it('İlk cooldown\'lu skill koşulu (Warm Hands, First Refrain): ilk kullanımdan sonra tutmaz', () => {
-    const t = only('mage', {}, 0);
-    expect(cond(t, 'mage:bar[0]').mod.echoSet).toBe(1);
+  // Ömer 2026-10-29 Mage reworkü: First Refrain (bar[0]) pasif; koşulu kuran tek Mage düğümü buydu. Düğüm yeniden tasarlanınca test açılır.
+  it.skip('İlk cooldown\'lu skill koşulu (Warm Hands, First Refrain): ilk kullanımdan sonra tutmaz', () => {
+    const t = only('mage', {}, 0); // First Refrain (bar[0]) pasif (Mage reworkü 2026-10-29); koşul motorda aynı
     const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, t));
     const sk = content.skills.blizzard!;
     expect(condHolds({ firstCooldownSkill: true }, { self: P(b), skill: sk })).toBe(true);
@@ -130,7 +130,8 @@ describe('Faz 2c: veri', () => {
     expect(condHolds({ firstCooldownSkill: true }, { self: P(b), skill: sk })).toBe(false);
   });
 
-  it('First Refrain: savaşın ilk cooldown\'lu büyüsü kesin yankılanır (turns modu)', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('First Refrain: savaşın ilk cooldown\'lu büyüsü kesin yankılanır (turns modu)', () => {
     const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, only('mage', {}, 0)), 5, 'turns');
     for (let i = 0; i < 6 && b.currentActor?.side !== 'party'; i++) b.skipTurn();
     const me = b.currentActor!;

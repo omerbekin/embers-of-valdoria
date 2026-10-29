@@ -78,6 +78,7 @@ describe('Faz 4c: veri ve derleyici', () => {
     const bad = (cls: string, fx: unknown) => {
       const t = JSON.parse(JSON.stringify(treeOf(cls)!)) as TreeData;
       const k = Object.keys(t.nodes)[0]!;
+      delete t.nodes[k]!.inactive; // Mage 0.* pasif (2026-10-29); denetim pasif düğümü atlar
       t.nodes[k]!.fx = fx as TreeData['nodes'][string]['fx'];
       return checkTreeFx(t).length > 0;
     };
@@ -119,7 +120,8 @@ describe('Faz 4c: bedava kullanım (freeCast) ve gecikmeli vuruş', () => {
     });
   });
 
-  it('Shatter Aegis: Mana Barrier kırılınca saldırana kesin kritik bedava Fire Bolt', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Shatter Aegis: Mana Barrier kırılınca saldırana kesin kritik bedava Fire Bolt', () => {
     seeds('Shatter Aegis', (seed) => {
       const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, only('mage', { '3.v': 1 })), seed);
       const me = P(b);
@@ -248,15 +250,18 @@ describe('Faz 4c: ağaç zeminleri', () => {
     expect(m.hp).toBeLessThan(hp0);
   });
 
-  it('Eternal Winter: Blizzard alanında 2 tur fırtına, tur başında Slow', () => {
+  it('Eternal Winter: Blizzard alanında 2 tur Chill Ground, tur başında Chilled (Ömer 2026-10-29; eskiden Slow)', () => {
     const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree(0, only('mage', { '2.v': 1 })), 11, 'turns');
     const w = E(b);
     w.hp = w.maxHp = 9999;
     cast(b, P(b), 'blizzard', w, 0);
-    expect(grounds(b, 'storm')[0]!.turns).toBe(2);
+    // Genel zemin kuralı (Ömer 2026-10-29): içindeki düşman Chilled'ı zemin konunca o an alır (yavaşladığı için Mage bir tur daha oynayabilir: süre 1-2)
+    expect(has(w, 'chilled')).toBe(true);
+    expect(grounds(b, 'storm')[0]!.turns).toBeGreaterThanOrEqual(1);
     grounds(b, 'storm')[0]!.turns = 9;
     nextTurn(b, w);
-    expect(has(w, 'slow')).toBe(true);
+    expect(has(w, 'chilled')).toBe(true);
+    expect(has(w, 'slow')).toBe(false);
   });
 
   // 2026-10-27: eski Drain Field ağaç testi kaldırıldı (Ley Brand; yeni düğüm testleri tests/skill-tree-fx-leybrand.test.ts)
@@ -357,7 +362,8 @@ describe('Faz 4c: hata düzeltmeleri', () => {
     expect(f!.permanent).toBeFalsy();
   });
 
-  it('Frozen Rebuke: koşul vuruştan ÖNCEKİ hedefe bakar (before); yavaşlamış saldıran sersemler', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Frozen Rebuke: koşul vuruştan ÖNCEKİ hedefe bakar (before); yavaşlamış saldıran sersemler', () => {
     const t = only('mage', { '3.ma': 1 })!;
     const h = t.hooks!.find((x) => x.node === 'mage:3.ma')!;
     expect(h.h === 'trigger' && h.when).toEqual({ before: { targetStatus: 'slow' } });
@@ -541,7 +547,8 @@ describe('Faz 4c: tek tek boşluklar', () => {
     expect(bloom[0]!.type === 'heal' && bloom[0]!.amount).toBe(reg!.first);
   });
 
-  it('Time Fold + Endless Refrain: Spell Echo sonrası o skill\'in sonraki kullanımı yarım tur ve iki kat yankı şansı', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Time Fold + Endless Refrain: Spell Echo sonrası o skill\'in sonraki kullanımı yarım tur ve iki kat yankı şansı', () => {
     seeds('Spell Echo', (seed) => {
       const b = make({ 0: 'mage' }, { 0: 'defender' }, withTree(0, only('mage', { '0.ma': 1, '0.mb': 1 })), seed, 'turns');
       const me = P(b);

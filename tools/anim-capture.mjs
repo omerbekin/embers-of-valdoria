@@ -5,12 +5,14 @@
 //
 //   node tools/anim-capture.mjs <skill-id> [<skill-id> ...] [--version real|orig|tween|code|hand] [--url http://localhost:5173]
 //
+//   node tools/anim-capture.mjs --idle <birim-id> [--ms 4000]   boşta duruş (idle sprite / nefes döngüsü): birim düşman tarafında, kukla karşısında;
+//                                     çıktı captures/idle-<birim-id>/, frames.json'daki "vfx" = birimin kendi sprite'ı (frame = poz sayfası karesi)
 // Çıktı: docs/anim-review/captures/<skill-id>/
 //   frame_NNN.png  tam ekran kare (1600x900)       sheet.png  kırpılmış kareler, numaralı, 50 px ızgaralı
 //   frames.json    units: atan (caster) / hedef (target) konumu ve adı; her karenin zamanı + VFX sprite'larının sheet karesi / konum / boyut / saydamlık
 // Geliştirme sunucusu açık olmalı (npm run dev, 5173): panel kaynak koddan içe aktarılır.
 import { createHash } from 'node:crypto';
-import { mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -28,8 +30,13 @@ const opt = (name, def) => {
   return i >= 0 ? args.splice(i, 2)[1] : def;
 };
 const version = opt('version', 'real');
+const idleUnit = opt('idle', null);
+const idleMs = Number(opt('ms', '4000'));
+// bite (Run Down): vuruşu başka skill'in sheet'i yapar (data/battle-layout.json > animation.mobVfx.skills.<id>.bite); onun sprite'ları da kaydedilir
+const MOB_TUNE = JSON.parse(readFileSync(join(ROOT, 'data/battle-layout.json'), 'utf8')).animation?.mobVfx?.skills ?? {};
+const vfxKeys = (skill) => [skill, ...(MOB_TUNE[skill]?.bite ? [MOB_TUNE[skill].bite] : [])];
 const url = opt('url', 'http://localhost:5173');
-const skills = args.filter((a) => !a.startsWith('--'));
+const skills = idleUnit ? [`idle:${idleUnit}`] : args.filter((a) => !a.startsWith('--'));
 if (!skills.length) {
   console.error('kullanım: node tools/anim-capture.mjs <skill-id> [...] [--version real] [--url http://localhost:5173]');
   process.exit(1);
@@ -44,7 +51,8 @@ try {
       let page = null;
       try {
         page = await openPage();
-        await captureSkill(page, skill);
+        if (idleUnit) await captureIdle(page, idleUnit);
+        else await captureSkill(page, skill);
         break;
       } catch (e) {
         if (attempt >= 3) {
@@ -130,7 +138,7 @@ async function captureSkill(page, skill) {
   let seen = false;
   let quiet = 0;
   for (let step = 1; step <= MAX_STEPS; step++) {
-    const info = await page.evaluate(([s, dt]) => {
+    const info = await page.evaluate(([ks, dt]) => {
       const g = window.__game;
       window.__capT += dt;
       g.step(window.__capT, dt);
@@ -140,7 +148,7 @@ async function captureSkill(page, skill) {
         for (const o of objs) {
           if (o.list) walk(o.list);
           const key = o.texture?.key ?? '';
-          if (!key.includes(`/${s}`)) continue;
+          if (!ks.some((s) => key.includes(`/${s}`))) continue;
           const m = o.getWorldTransformMatrix?.();
           list.push({
             key,
@@ -158,7 +166,7 @@ async function captureSkill(page, skill) {
       };
       if (sc) walk(sc.children.list);
       return { vfx: list.filter((v) => v.visible && v.alpha > 0), busy: window.__vbh().busy() };
-    }, [skill, DT]);
+    }, [vfxKeys(skill), DT]);
     const buf = await page.screenshot({ clip: canvas });
     const hash = createHash('md5').update(buf).digest('hex');
     if (info.vfx.length) {
@@ -204,6 +212,88 @@ async function captureSkill(page, skill) {
   await contactSheet(out, frames, canvas);
   const vfxN = frames.filter((f) => f.vfx.length).length;
   console.log(`${skill}: ${frames.length} kare (${vfxN} karede VFX sprite'ı) -> ${out}`);
+}
+
+/**
+ * Boşta duruş yakalama (idle sprite denemesi, docs/anim-review/notes/hollow_king.md): birim düşman tarafında (VFX test savaşının yuvası),
+ * kukla oyuncu tarafında; savaş kurulunca döngü durur, idleMs boyunca 1/60 sn adımla ilerler, görüntüsü değişen kareler kaydedilir.
+ * frames.json "vfx" listesinde birimin kendi sprite'ı durur (frame = poz sayfası karesi); sheet.png birimin çevresine kırpılır.
+ */
+async function captureIdle(page, unit) {
+  const out = join(ROOT, 'docs', 'anim-review', 'captures', `idle-${unit}`);
+  rmSync(out, { recursive: true, force: true });
+  mkdirSync(out, { recursive: true });
+  await page.evaluate(() => window.__game.loop.wake());
+  await waitIdle(page);
+  const started = await page.evaluate(async (u) => {
+    const content = await import('/src/engine/content.ts');
+    const { BattleScene } = await import('/src/game/scenes/BattleScene.ts');
+    const cfg = (await import('/data/vfx-inbetween.json')).default.battleTest;
+    if (!content.bosses[u] && !content.mobs[u]) return false;
+    const cells = (units) => Array.from({ length: content.CELL_COUNT }, (_, i) => units.find(([s]) => s === i)?.[1] ?? '');
+    window.__idleSeed = 1000 + Math.floor(Math.random() * 1e6);
+    const data = { seed: window.__idleSeed, mode: 'test', teams: { party: cells([[cfg.dummySlot, cfg.dummy]]), enemies: cells([[cfg.casterSlot, u]]) }, partySize: 1, enemySize: 1, background: cfg.background };
+    const g = window.__game;
+    const cur = g.scene.isActive(BattleScene.KEY) ? g.scene.getScene(BattleScene.KEY) : null;
+    if (cur && !('isLoading' in cur)) cur.scene.restart(data);
+    else g.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
+    return true;
+  }, unit);
+  if (!started) throw new Error(`"${unit}" content.bosses / content.mobs içinde yok`);
+  await page.waitForFunction(() => {
+    const sc = window.__game.scene.getScene('BattleScene');
+    return !!sc && window.__game.scene.isActive('BattleScene') && sc.battle?.seed === window.__idleSeed && sc.views?.get('enemy-0');
+  }, null, { timeout: 30000 });
+  await page.waitForTimeout(3000); // giriş geçişi + sprite yüklemesi
+  const canvas = await page.evaluate(() => {
+    const r = window.__game.canvas.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
+  });
+  await page.evaluate(() => {
+    document.querySelector('.vb-panel')?.remove();
+    window.__game.loop.sleep();
+    window.__capT = performance.now();
+  });
+  const frames = [];
+  let lastHash = '';
+  const steps = Math.round(idleMs / DT);
+  for (let step = 1; step <= steps; step++) {
+    const info = await page.evaluate((dt) => {
+      const g = window.__game;
+      window.__capT += dt;
+      g.step(window.__capT, dt);
+      const sc = g.scene.getScene('BattleScene');
+      const v = sc.views.get('enemy-0');
+      const o = v.sprite;
+      const m = o.getWorldTransformMatrix();
+      return [{ key: o.texture?.key ?? '', frame: o.frame?.name ?? null, x: Math.round(m.tx), y: Math.round(m.ty), w: Math.round(o.displayWidth), h: Math.round(o.displayHeight), angle: Math.round(o.angle ?? 0), flipX: !!o.flipX, alpha: Math.round((o.alpha ?? 1) * 100) / 100, visible: o.visible !== false }];
+    }, DT);
+    // arka plan (ateş, toz) her karede değişir: yalnız birimin karesi / konumu / boyutu değişince kaydet
+    const sig = JSON.stringify([info[0].frame, info[0].x, info[0].y, info[0].w, info[0].h, info[0].alpha]);
+    if (sig !== lastHash) {
+      lastHash = sig;
+      const buf = await page.screenshot({ clip: canvas });
+      const n = frames.length + 1;
+      const file = `frame_${String(n).padStart(3, '0')}.png`;
+      writeFileSync(join(out, file), buf);
+      frames.push({ n, file, ms: Math.round(step * DT), vfx: info });
+    }
+  }
+  await page.evaluate(() => window.__game.loop.wake());
+  const units = await page.evaluate(() => {
+    const sc = window.__game.scene.getScene('BattleScene');
+    const res = [];
+    for (const [uid, v] of sc?.views ?? []) {
+      const u = sc.battle.get(uid);
+      const m = v.sprite.getWorldTransformMatrix();
+      const role = uid === 'enemy-0' ? 'subject (idle)' : uid === 'party-0' ? 'dummy' : 'other';
+      res.push({ uid, role, name: u?.name ?? uid, side: uid.startsWith('party') ? 'left (player side)' : 'right (enemy side)', x: Math.round(m.tx), y: Math.round(m.ty), w: Math.round(v.sprite.displayWidth), h: Math.round(v.sprite.displayHeight) });
+    }
+    return res;
+  });
+  writeFileSync(join(out, 'frames.json'), JSON.stringify({ idle: unit, view: VIEW, stepMs: DT, units, frames }, null, 1));
+  await contactSheet(out, frames, canvas);
+  console.log(`idle ${unit}: ${frames.length} kare -> ${out}`);
 }
 
 /** Kırpılmış kareler ızgarada: VFX'in hepsini + çevresini kapsayan bölge; 50 px ızgara, kare numarası ve zamanı. */

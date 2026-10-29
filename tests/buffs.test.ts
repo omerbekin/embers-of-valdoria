@@ -41,6 +41,8 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
       if (def.untilResolved) continue;
       // Ley Brand (open-questions 444): etkisi motorda özel kodlu (tainted mana havuzu, MP bedel çarpanı, yakım / patlama hasarı; Status.brand)
       if (id === 'branded') continue;
+      // Hallowed (genel zemin kuralı 2026-10-29): şifası zeminden (Holy Ground / Holy Water gücü), motorda groundStatusTicks
+      if (id === 'hallowed') continue;
       expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.armorMult !== undefined || def.damageDealtMult !== undefined || def.magicDealtMult !== undefined || def.rooted === true || def.noEvasion === true, id).toBe(true);
     }
   });

@@ -223,6 +223,7 @@ describe('YZ Move Tile: kırılgan birimi geri çek, yakın dövüşçüyü öne
   it('menzilli (kırılgan) birim ön sıradayken düşman yakın dövüşçüsü büyük tehdit ise arkadaki BOŞ yuvaya çekilir (erişim dışı)', () => {
     const b = until(mk({ 0: 'archer', 3: 'paladin' }, { 0: 'warrior' }), 'party-0');
     b.get('enemy-0')!.cooldowns = { charge: 3 }; // Charge menzil/ön sıra tanımaz: geri çekilmek onu engellemez, bu yüzden bekletilir
+    Object.assign(b.get('enemy-0')!.stats, { str: 60 }); // "büyük tehdit" açıkça (Double Strike 0.38 ile varsayılan Warrior eşiğin hemen altında kalıyordu: 16 < 16.65)
     b.get('party-0')!.hp = Math.round(b.get('party-0')!.maxHp * 0.5); // O3 (madde 254): tam canla geri çekilme yok
     const choice = pick(b, 'party-0');
     expect(choice).toMatchObject({ skillId: 'move_tile', reason: 'move' });
@@ -237,6 +238,7 @@ describe('YZ Move Tile: kırılgan birimi geri çek, yakın dövüşçüyü öne
   it('hareket sonrası üst üste Move seçilmez (salınım yok); birim arkadayken tekrar çekilmez', () => {
     const b = until(mk({ 0: 'archer', 3: 'paladin' }, { 0: 'warrior' }), 'party-0');
     b.get('enemy-0')!.cooldowns = { charge: 3 };
+    Object.assign(b.get('enemy-0')!.stats, { str: 60 }); // büyük tehdit (yukarıdaki gibi)
     b.get('party-0')!.hp = Math.round(b.get('party-0')!.maxHp * 0.5);
     b.applyChoice('party-0', pick(b, 'party-0'));
     until(b, 'party-0');
@@ -324,6 +326,7 @@ describe('YZ Move Tile: kırılgan birimi geri çek, yakın dövüşçüyü öne
   it('madde 258: ölü dostun ceset hücresi de Move adayıdır; seçilen hücre her zaman geçerli', () => {
     const b = until(mk({ 0: 'archer', 3: 'paladin', 6: 'warrior' }, { 0: 'warrior' }), 'party-0');
     b.get('enemy-0')!.cooldowns = { charge: 3 };
+    Object.assign(b.get('enemy-0')!.stats, { str: 60 }); // büyük tehdit (yukarıdaki gibi)
     b.debugKill('party-2', false); // arka sıradaki Warrior düştü: yuvası (6) ceset hücresi
     b.get('party-0')!.hp = Math.round(b.get('party-0')!.maxHp * 0.5);
     expect(b.freeTiles('party-0')).toContain(6);

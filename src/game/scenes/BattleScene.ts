@@ -10,7 +10,7 @@ import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
 import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, groundReactionHint, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
-import type { AreaStage, BattleEvent, BattleMode, Combatant, SkillDef, SkillModeSet, StatKind, Teams, TargetPreview } from '../../engine';
+import type { AreaStage, BattleEvent, BattleMode, Combatant, PushDir, SkillDef, SkillModeSet, StatKind, Teams, TargetPreview } from '../../engine';
 import { type DamageTags } from '../float-text';
 import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-columns';
 import { PRIMARY_GOLD, RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
@@ -82,6 +82,7 @@ import type { CorpseState } from '../corpse-marks';
 import { createCorpseMarker } from '../corpse-marker';
 import { backRaiseFlow, corpseHoverTip, pickCorpse, pickSlot, raiseFlowHint, reconcileRaiseFlow, reviveCorpseTip, reviveFlowHint, reviveSlotTip, slotHoverTip, startRaiseFlow, summonReach } from '../raise-dead-flow';
 import type { RaiseFlow, RaiseInputs } from '../raise-dead-flow';
+import { crashLabel, pushArrowVector, pushOptions, type PushOption } from '../push-pick';
 import { brazierIconUrl, rememberShown, valorTip } from '../../ui/valor-braziers';
 import type { CorpseMarker } from '../corpse-marker';
 import { isDeltaStat, previewStatusText, statDir, statSources } from '../stat-delta';
@@ -854,6 +855,10 @@ export class BattleScene extends Phaser.Scene {
       if (this.endlessPaused) return; // endless ara verme: klavye üstteki panellere ait
       if (e.key === 'Escape' && this.moveMode) {
         this.cancelMove();
+        return;
+      }
+      if (e.key === 'Escape' && this.pushPick) {
+        this.pushBack();
         return;
       }
       if (e.key === 'Escape' && this.raiseFlow && this.selected) {
@@ -1830,7 +1835,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** The hint strip under the turn bar: 'Step 1/2  Choose a corpse to consume' (step 2 also has a 'Back' chip for touch). */
-  private drawFlowStrip(flow: RaiseFlow, unitName: string, given?: { step: string; text: string }): void {
+  private drawFlowStrip(flow: RaiseFlow, unitName: string, given?: { step: string; text: string }, onBack?: () => void): void {
     this.flowStrip?.destroy(true);
     const hint = given ?? raiseFlowHint(flow, unitName);
     const items: Phaser.GameObjects.GameObject[] = [];
@@ -1854,7 +1859,7 @@ export class BattleScene extends Phaser.Scene {
     }
     if (back) {
       back.setInteractive({ useHandCursor: true });
-      back.on('pointerdown', (p: Phaser.Input.Pointer) => p.button !== 2 && this.raiseBack());
+      back.on('pointerdown', (p: Phaser.Input.Pointer) => p.button !== 2 && (onBack ? onBack() : this.raiseBack()));
     }
     this.flowStrip = this.add.container(W / 2, 205, items).setDepth(3700);
   }
@@ -2077,6 +2082,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private clearSelection(): void {
+    this.clearPushPick();
     this.closeModeUi();
     this.raiseFlow = null;
     this.raiseCtx = undefined;
@@ -2206,12 +2212,127 @@ export class BattleScene extends Phaser.Scene {
     window.addEventListener('pointerup', off, true);
   }
 
+  // --- Ice Crater (Ömer 2026-10-29): itme yönü adımı. Hedef plakaları yerinde kalır (başka hedefe tıklamak adımı o hedefle yeniden açar). ---
+  private pushPick: { actor: string; skill: string; target: string; mode?: string } | null = null;
+  private pushObjs: Phaser.GameObjects.GameObject[] = [];
+
+  private isPushSkill(actor: string, skillId: string): boolean {
+    return !!this.battle.skill(skillId, actor)?.effects.some((e) => e.type === 'push');
+  }
+
+  /** Hedefin çevresine 4 ok (ileri / geri / şerit boyunca; çapraz yok): taşınabilir yön buz mavisi, çarpma yönü kırmızı "Crash". Dokunma alanı >= 104 px. */
+  private startPushPick(actor: string, skill: string, target: string, mode?: string): void {
+    const preview = (dir: PushDir) => previewSkill(this.battle, actor, skill, target, undefined, undefined, undefined, dir);
+    const opts = pushOptions(preview, target);
+    const t = this.battle.get(target);
+    if (!opts || !t) return this.perform(actor, skill, target, undefined, undefined, undefined, mode, 'back'); // itilemez (boss / steadfast): yön yok
+    this.clearPushPick();
+    this.pushPick = { actor, skill, target, ...(mode ? { mode } : {}) };
+    const slots = this.slotsOf(t.board);
+    const c = cellCenter(slots, t.slot);
+    const ice = 0x8fd8ff;
+    const red = Phaser.Display.Color.HexStringToColor(colors.lethal).color;
+    const pts: Array<{ o: PushOption; x: number; y: number }> = [];
+    for (const o of opts) {
+      const v = pushArrowVector(slots, content.GRID.lanes, o.dir);
+      const len = Math.hypot(v.x, v.y) || 1;
+      const [ux, uy] = [v.x / len, v.y / len];
+      const d = Math.max(112, Math.min(len * 0.62, 150)); // yan görünümde şerit adımı kısa: oklar birbirine ve gövdeye binmesin
+      const x = Phaser.Math.Clamp(c.x + ux * d, 60, W - 60);
+      const y = Phaser.Math.Clamp(c.y - 40 + uy * d, 60, layout.commandPanel.y - 60);
+      pts.push({ o, x, y });
+      const col = o.kind === 'crash' ? red : ice;
+      const g = this.add.graphics().setDepth(3650);
+      g.fillStyle(0x0c0906, 0.92).fillCircle(x, y, 34);
+      g.lineStyle(2, col, 0.95).strokeCircle(x, y, 34);
+      const [px, py] = [-uy, ux];
+      g.fillStyle(col, 1).fillTriangle(x + ux * 20, y + uy * 20, x - ux * 12 + px * 15, y - uy * 12 + py * 15, x - ux * 12 - px * 15, y - uy * 12 - py * 15);
+      this.pushObjs.push(g);
+      // "Crash" etiketi okun dış yanında (yön boyunca), komşu oka binmez
+      if (o.kind === 'crash') this.pushObjs.push(this.shapeLabel(x + ux * 80, y + uy * 62, crashLabel(o), red).setDepth(3650));
+    }
+    // Tek dokunma alanı, en yakın ok seçilir (oklar 104 px'ten yakın olabildiği için ayrı kutular çakışırdı); dokunma yarıçapı 64 px (telefonda >= 44 px)
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const [x0, x1, y0, y1] = [Math.min(...xs) - 70, Math.max(...xs) + 70, Math.min(...ys) - 70, Math.max(...ys) + 70];
+    const nearest = (ptr: Phaser.Input.Pointer) => {
+      const q = worldXY(this, ptr);
+      let best: (typeof pts)[number] | null = null;
+      let bd = 64;
+      for (const p of pts) {
+        const dd = Math.hypot(p.x - q.x, p.y - q.y);
+        if (dd <= bd) [best, bd] = [p, dd];
+      }
+      return best?.o ?? null;
+    };
+    let hovered: PushOption | null = null;
+    const zone = this.add.zone(x0, y0, x1 - x0, y1 - y0).setOrigin(0, 0).setDepth(3660).setInteractive();
+    const hover = (ptr: Phaser.Input.Pointer) => {
+      const o = nearest(ptr);
+      this.input.setDefaultCursor(o ? 'pointer' : 'default');
+      if (o === hovered) return;
+      hovered = o;
+      this.pushHover(o);
+    };
+    zone.on('pointermove', hover);
+    zone.on('pointerdown', hover);
+    zone.on('pointerout', () => {
+      hovered = null;
+      this.input.setDefaultCursor('default');
+      this.pushHover(null);
+    });
+    zone.on('pointerup', (ptr: Phaser.Input.Pointer) => {
+      if (ptr.button === 2) return;
+      const o = nearest(ptr);
+      const pick = this.pushPick;
+      if (!pick) return;
+      if (!o) return this.pushBack(); // okların arasına / dışına dokunma: yön adımı kapanır, hedef seçimi sürer
+      this.input.setDefaultCursor('default');
+      this.perform(pick.actor, pick.skill, pick.target, undefined, undefined, undefined, pick.mode, o.dir);
+    });
+    this.pushObjs.push(zone);
+    this.drawFlowStrip({ step: 'slot', twoStep: true }, '', { step: 'Step 2/2', text: 'Choose where to push' }, () => this.pushBack());
+  }
+
+  /** Okun üstünde: o yönün önizlemesi (birimlerin üstünde hasar + Chilled), hedef + varış / çarpma hücresi plakası. */
+  private pushHover(o: PushOption | null): void {
+    const pick = this.pushPick;
+    const t = pick ? this.battle.get(pick.target) : undefined;
+    if (!pick || !t || !o) {
+      this.clearPreviewsOnly();
+      this.clearAreaMarker();
+      this.hideInfoTip();
+      return;
+    }
+    this.showPreviews(previewSkill(this.battle, pick.actor, pick.skill, pick.target, undefined, undefined, undefined, o.dir));
+    this.showPlates(t.board, [{ slot: t.slot, state: 'enemy' }, ...(o.to !== null ? [{ slot: o.to, state: o.kind === 'move' ? ('move' as const) : ('invalid' as const) }] : [])]);
+  }
+
+  /** Esc / sağ tık / 'Back': yön adımı kapanır, hedef seçimi sürer. */
+  private pushBack(): void {
+    this.clearPushPick();
+    this.clearPreviewsOnly();
+    this.clearAreaMarker();
+    this.hideInfoTip();
+  }
+
+  private clearPushPick(): void {
+    if (!this.pushPick && this.pushObjs.length === 0) return;
+    for (const o of this.pushObjs) o.destroy();
+    this.pushObjs = [];
+    this.pushPick = null;
+    this.flowStrip?.destroy(true);
+    this.flowStrip = undefined;
+  }
+
   /** Test modu: her karakterin son kullandığı/seçtiği skill (kullanınca seçim sıfırlanmasın). */
   private lastSkill = new Map<string, string>();
 
-  private perform(actor: string, skill: string, target: string, slot?: number, board?: 'party' | 'enemy', corpseUid?: string, mode?: string): void {
+  private perform(actor: string, skill: string, target: string, slot?: number, board?: 'party' | 'enemy', corpseUid?: string, mode?: string, dir?: PushDir): void {
     if (this.modeGuard) return;
     if (this.tut && !this.tut.allowPerform(skill)) return this.tut.blocked(); // ilk savaşın zorunlu adımı
+    // Ice Crater (Ömer 2026-10-29): hedef seçildi, yön henüz yok -> yön adımı (4 ok); hedef itilemiyorsa doğrudan atılır
+    if (!dir && target && this.isPushSkill(actor, skill)) return this.startPushPick(actor, skill, target, mode);
     // Faz 8: Focused Beam seçildiyse hedef tıklaması o biçimle kullanır
     const useMode = mode ?? (this.selectedMode && this.selectedMode.actor === actor && this.selectedMode.skill === skill ? this.selectedMode.mode : undefined);
     this.suppressAutoSelect = null;
@@ -2222,8 +2343,8 @@ export class BattleScene extends Phaser.Scene {
     this.hideUnitTip();
     if (this.mp) {
       // Multiplayer: hamle lockstep'ten geçer (sınanır, uygulanır, rakibe gider)
-      if (!this.mp.submit({ skillId: skill, ...(target ? { targetUid: target } : {}), ...(slot !== undefined ? { slot } : {}), ...(board ? { board } : {}), ...(corpseUid ? { corpseUid } : {}) })) return;
-    } else if (!this.battle.useSkill(actor, skill, target || undefined, slot, board, corpseUid, useMode).ok) return;
+      if (!this.mp.submit({ skillId: skill, ...(target ? { targetUid: target } : {}), ...(slot !== undefined ? { slot } : {}), ...(board ? { board } : {}), ...(corpseUid ? { corpseUid } : {}), ...(dir ? { dir } : {}) })) return;
+    } else if (!this.battle.useSkill(actor, skill, target || undefined, slot, board, corpseUid, useMode, dir).ok) return;
     this.tut?.onPerformed(skill);
     this.busy = true;
     this.refreshCommands();
@@ -2573,13 +2694,14 @@ export class BattleScene extends Phaser.Scene {
    * iptal edilecek bir şey yoksa sabit birim kartları kapanır.
    */
   private rightClickCancel(): void {
-    const hasSelection = !!this.moveMode || !!(this.raiseFlow && this.selected) || !!(this.modePanel || this.modePrompt) || !!(this.selected && this.playerCanAct);
+    const hasSelection = !!this.moveMode || !!this.pushPick || !!(this.raiseFlow && this.selected) || !!(this.modePanel || this.modePrompt) || !!(this.selected && this.playerCanAct);
     // Seçim varsa bu tık yalnızca onu iptal eder; kart (sabit) ancak sonraki sağ tıkta kapanır
     if (rightClickAction(hasSelection) === 'close-cards') {
       this.hud?.unpinAll();
       return;
     }
     if (this.moveMode) return this.cancelMove();
+    if (this.pushPick) return this.pushBack();
     if (this.raiseFlow && this.selected) return this.raiseBack();
     if (this.modePanel || this.modePrompt) return this.cancelModeChoice();
     const actor = this.selected!.actor;

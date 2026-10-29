@@ -1,84 +1,71 @@
 {
-  "_not": "Yerde kalan etkiler (hücrelere bırakılır). Üstünde duran düşman birimler kendi turlarının başında hasar alır. Süre, etkiyi bırakanın kendi turlarıyla sayılır (o ölürse etki biter). Hasar, bırakıldığı andaki güce göre sabittir; büyü hasarıdır (kritik/dodge yok). Faz 4c (skill ağacı zeminleri): statuses = içinde tur başlatan düşmana durum (süre durumlarından sonra), manaBurnPct = tur başı maks MP yakma; gücü 0 olan zemin hasar vermez. heal: true = şifa zemini: düşmana değil, bırakanın tarafındaki birime tur başı şifa (Holy Ground: Judgment kendi tarafına atılınca, open-questions 416/8).",
+  "_not": "Yerde kalan etkiler (hücrelere bırakılır). GENEL ZEMİN KURALI (Ömer 2026-10-29, open-questions 453): zemin kendi durumunu (status; su zemininde soak) İÇİNDE DURAN birime verir: giren (yürüyerek, Move, itilerek/çekilerek) o an alır, içindeyken durumun süresi işlemez, çıkınca ya da zemin bitince o an kalkar. Hasar/şifa zeminden değil DURUMDAN gelir: durum birimin tur başında BİR kez tikler (güç = zeminin hücredeki gücü, element = zeminin elementi, büyü; yeniden kazanmak tik atmaz). Aynı türden skill durumu ile çakışınca güçlü olan geçer, zayıf skill örneği altta bekler ve zeminden çıkınca kalan süresiyle döner. directTick (Flooded Planks) = istisna: zemin kendi küçük hasarını doğrudan vurur. Eski metin: üstünde duran düşman birimler kendi turlarının başında hasar alır. Süre, etkiyi bırakanın kendi turlarıyla sayılır (o ölürse etki biter). Hasar, bırakıldığı andaki güce göre sabittir; büyü hasarıdır (kritik/dodge yok). Faz 4c (skill ağacı zeminleri): statuses = içinde tur başlatan düşmana durum (süre durumlarından sonra), manaBurnPct = tur başı maks MP yakma; gücü 0 olan zemin hasar vermez. heal: true = şifa zemini: düşmana değil, bırakanın tarafındaki birime tur başı şifa (Holy Ground: Judgment kendi tarafına atılınca, open-questions 416/8).",
   "poison": {
     "name": "Poison",
     "color": "#6fcf4b",
     "element": "nature",
-    "icon": "poison"
+    "icon": "poison",
+    "status": "poisoned"
   },
   "burning": {
     "name": "Burning Ground",
     "color": "#ff7a1a",
     "element": "fire",
-    "icon": "flame"
+    "icon": "flame",
+    "status": "burning"
   },
   "holy_fire": {
     "name": "Holy Fire",
     "color": "#ffd23f",
     "element": "holy",
-    "icon": "holy"
+    "icon": "holy",
+    "status": "searing"
   },
   "holy_ground": {
-    "_not": "Judgment kendi tarafına atılınca (Ömer 2026-10-24, open-questions 416/8; tanım D11 Radiance'tan geri geldi): ŞİFA zemini (heal: true). Hasar vermez; içinde tur başlatan DOST (bırakanın tarafı) tik miktarı kadar iyileşir (sabit, kritiksiz). Süre bırakanın turlarıyla.",
+    "_not": "Judgment kendi tarafına atılınca (Ömer 2026-10-24, open-questions 416/8; tanım D11 Radiance'tan geri geldi): ŞİFA zemini (heal: true). Hasar vermez; içindeki DOST (bırakanın tarafı) Hallowed alır ve tur başında tik miktarı kadar iyileşir (sabit, kritiksiz; genel zemin kuralı 2026-10-29). Süre bırakanın turlarıyla.",
     "name": "Holy Ground",
     "color": "#fff0a0",
     "element": "holy",
     "icon": "radiance",
+    "status": "hallowed",
     "heal": true
   },
   "flooded_planks": {
     "name": "Flooded Planks",
     "color": "#2f6f73",
     "element": "physical",
-    "icon": "floodedplanks"
+    "icon": "floodedplanks",
+    "status": "soaked",
+    "directTick": true
   },
   "quaking_ground": {
     "name": "Quaking Ground",
     "color": "#a0805a",
     "element": "physical",
     "icon": "tremor2",
-    "statuses": [
-      {
-        "status": "slow",
-        "turns": 1
-      }
-    ]
+    "status": "slow"
   },
   "field_of_shafts": {
     "name": "Field of Shafts",
     "color": "#b9a27a",
     "element": "physical",
     "icon": "arrows",
-    "statuses": [
-      {
-        "status": "slow",
-        "turns": 1
-      }
-    ]
+    "status": "slow"
   },
   "root_field": {
     "name": "Root Field",
     "color": "#5f8f3a",
     "element": "nature",
     "icon": "roots",
-    "statuses": [
-      {
-        "status": "slow",
-        "turns": 1
-      }
-    ]
+    "status": "slow"
   },
   "storm": {
-    "name": "Storm",
+    "_not": "Oyuncuya görünen ad Chill Ground (Ömer 2026-10-29); iç id storm kaldı (skill ağacı + testler). Hava koşulu Storm (battle-rules) ayrı şeydir. Ömer 2026-10-29 (Mage reworkü): içindeki Slow değil Chilled alır (genel zemin kuralı: içindeyken sürer); Ice (ice_ground) Slow vermeye devam eder.",
+    "name": "Chill Ground",
     "color": "#9fd8ff",
     "element": "ice",
     "icon": "blizzard",
-    "statuses": [
-      {
-        "status": "slow",
-        "turns": 1
-      }
-    ]
+    "status": "chilled"
   },
   "hall_of_silence": {
     "name": "Hall of Silence",
@@ -98,10 +85,11 @@
     "name": "Lingering Rain",
     "color": "#c9b48a",
     "element": "physical",
-    "icon": "arrows"
+    "icon": "arrows",
+    "status": "bleeding"
   },
   "flooded": {
-    "_not": "Harita 2 (M-B): su. Hasar vermez; üstündeki birim soakTurns tur Soaked olur (çevre etkisi: direnç zarı yok); Burning Ground bu hücrelerde söner (quenches). Tide / Urn suyu süresini savaş turuyla sayar (data/battle-rules.json). Skill'in bıraktığı Flooded (Call the Tide, Surge, Deluge, High Tide, The Reach Drowns, Requiem of Salt) Ömer 2026-10-27 kararıyla AYNI davranır (soak / soakTurns buradan; open-questions 437).",
+    "_not": "Harita 2 (M-B): su. Hasar vermez; içindeki HER birim Soaked olur (çevre etkisi: direnç zarı yok; genel zemin kuralı 2026-10-29: suda kaldıkça sürer, çıkınca o an kalkar, eski soakTurns kalktı); Burning Ground bu hücrelerde söner (quenches). Tide / Urn suyu süresini savaş turuyla sayar (data/battle-rules.json). Skill'in bıraktığı Flooded (Call the Tide, Surge, Deluge, High Tide, The Reach Drowns, Requiem of Salt) Ömer 2026-10-27 kararıyla AYNI davranır (soak buradan; open-questions 437).",
     "name": "Flooded",
     "color": "#3d7f9a",
     "element": "physical",
@@ -109,36 +97,32 @@
     "quenches": [
       "burning"
     ],
-    "soak": "soaked",
-    "soakTurns": 2
+    "soak": "soaked"
   },
   "sanctified_flame": {
     "_not": "Zemin tepkimesi (Ömer 2026-10-27): Burning Ground ile Holy Fire aynı hücrede birleşince doğar (reactions.sanctified). Kutsal hasar zemini; gücü ve süresi tepkimeden gelir.",
     "name": "Sanctified Flame",
     "color": "#ffe9a8",
     "element": "holy",
-    "icon": "holy"
+    "icon": "holy",
+    "status": "searing"
   },
   "holy_water": {
-    "_not": "Zemin tepkimesi (Ömer 2026-10-27): su + Holy Fire. Şifa zemini (heal): hasar vermez; içinde tur başlatan, tepkimeyi tetikleyenin tarafındaki birim tik kadar iyileşir. Islatmaz.",
+    "_not": "Zemin tepkimesi (Ömer 2026-10-27): su + Holy Fire. Şifa zemini (heal): hasar vermez; içindeki, tepkimeyi tetikleyenin tarafındaki birim Hallowed alır ve tur başında tik kadar iyileşir. Islatmaz.",
     "name": "Holy Water",
     "color": "#bfe3ff",
     "element": "holy",
     "icon": "radiance",
+    "status": "hallowed",
     "heal": true
   },
   "ice_ground": {
-    "_not": "Zemin tepkimesi (Ömer 2026-10-27): su + Storm donar. Hasar vermez; içinde tur başlatan (tetikleyenin düşmanı) birim 1 tur Slow alır. Su bu hücreden kalkar.",
+    "_not": "Zemin tepkimesi (Ömer 2026-10-27): su + Chill Ground donar (chill + chill de Ice olur: reactions.frozen_chill). Hasar vermez; içindeki (tetikleyenin düşmanı) birim Slow alır (genel zemin kuralı: içindeyken sürer). Su bu hücreden kalkar.",
     "name": "Ice",
     "color": "#d6f1ff",
     "element": "ice",
     "icon": "blizzard",
-    "statuses": [
-      {
-        "status": "slow",
-        "turns": 1
-      }
-    ]
+    "status": "slow"
   },
   "reactions": {
     "_not": "ZEMİN TEPKİMELERİ (Ömer 2026-10-27 'uygula'; sayılar PROVİZYON, sim yok; open-questions 445). Hücrede zaten olan zemin = KURULUM (setup), yeni bırakılan zemin = TETİK (trigger). Bırakılırken her ortak hücrede tepkime BİR KEZ olur ve hücrede TEK sonuç kalır; sıra önemlidir (either: true = iki sıra da aynı tepkime). Her iki tarafın zeminleri tepkir. Tepkimenin hasarı/etkisi tetiği bırakanındır; hasar ve durum yalnızca ona düşman birimlere, şifa yalnızca onun tarafına. Aynı türden zemin bugünkü gibi (üst üste / Fire on Fire). Alanlar: remove = hücreden kalkan zemin türleri; damage = anlık büyü hasarı (of: tutarı veren zemin türleri, yoksa ikisinin güçlüsü; mult; adjacent = 4 yönden komşu hücrelere çarpan; element); status = hücredeki düşmanlara durum; cleanse = kurulumun sahibinin tarafındaki birimlerden silinen durumlar; refresh = süresi baştan başlayan zemin türleri; cellMult = tutulan zeminin bu hücredeki gücü çarpanı (süresince); becomes = ikisi de kalkar, yerine yeni zemin (power: güç çarpanı, of: gücün geldiği zemin türleri / yoksa güçlüsü; turns: sayı ya da 'longer'); spread = listelenen zemin, hücredeki suya bağlı (4 yönden komşu) tüm su hücrelerine yayılır; board = tahta koşulu ('own': yalnız tetiği bırakanın kendi tahtasında, 'foe': yalnız karşı tahtada; Holy Water / Evaporates, Ömer 2026-10-28).",
@@ -195,7 +179,7 @@
     },
     "quenched": {
       "label": "Quenched",
-      "text": "Storm and fire put each other out: the cell turns to water (Flooded).",
+      "text": "Chill and fire put each other out: the cell turns to water (Flooded).",
       "setup": ["storm"],
       "trigger": ["burning"],
       "either": true,
@@ -211,7 +195,7 @@
     },
     "holy_water": {
       "label": "Holy water",
-      "text": "Holy fire and water on the caster's own side become Holy Water: it heals the caster's allies who start their turn there and harms no one.",
+      "text": "Holy fire and water on the caster's own side become Holy Water: it heals the caster's allies standing in it at the start of each of their turns and harms no one.",
       "setup": ["flooded"],
       "trigger": ["holy_fire", "sanctified_flame"],
       "either": true,
@@ -221,7 +205,7 @@
     "holy_water_ground": {
       "_not": "Ömer 2026-10-28 (445): Judgment düşmana yalnız Holy Fire bıraktığı için Holy Water pratikte doğmuyordu; Holy Ground (Judgment kendi tarafına) + su da Holy Water olur. Şifa tutarı Holy Ground'un tutarı (power 1), süre 2 (holy_water ile aynı). Yalnız kendi tahtada (Holy Ground zaten oraya düşer); karşı tahtada tepkime yok, üst üste durur.",
       "label": "Holy water",
-      "text": "Holy ground and water on the caster's own side become Holy Water: it heals the caster's allies who start their turn there and harms no one.",
+      "text": "Holy ground and water on the caster's own side become Holy Water: it heals the caster's allies standing in it at the start of each of their turns and harms no one.",
       "setup": ["flooded"],
       "trigger": ["holy_ground"],
       "either": true,
@@ -239,10 +223,18 @@
     },
     "frozen": {
       "label": "Frozen",
-      "text": "Storm freezes water into Ice: enemies who start their turn on it are Slowed for 1 turn; the water is gone.",
+      "text": "Chill freezes water into Ice: enemies standing on it are Slowed until they leave it; the water is gone.",
       "setup": ["flooded"],
       "trigger": ["storm"],
       "either": true,
+      "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 }
+    },
+    "frozen_chill": {
+      "_not": "Ömer 2026-10-29 (445): zaten Chill Ground olan hücreye yeniden Chill Ground bırakılınca Ice olur (aynı türden tepkime; setup = trigger). Güç / süre frozen ile aynı.",
+      "label": "Frozen solid",
+      "text": "Chill on chill freezes into Ice: enemies standing on it are Slowed until they leave it.",
+      "setup": ["storm"],
+      "trigger": ["storm"],
       "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 }
     }
   }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { giveManaBarrier } from './mage-legacy-helpers';
 import { oldLayoutSetup } from './range-helpers';
 import { Battle, chooseAction, content, explainChoice } from '../src/engine';
 import type { AiConfig } from '../src/engine';
@@ -142,7 +143,7 @@ describe('yapay zeka: şifa, kalkan, çağrı', () => {
   });
 
   it('Mage, sıradaki vuruşla ölecek ve kalkanla kurtulacak dostuna Mana Barrier verir', () => {
-    const b = sturdy(new Battle(oldLayoutSetup('first-battle', 1, 'test', { party: ['archer'], enemies: ['mage', 'archer'] })));
+    const b = giveManaBarrier(sturdy(new Battle(oldLayoutSetup('first-battle', 1, 'test', { party: ['archer'], enemies: ['mage', 'archer'] }))));
     const ally = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'archer')!;
     ally.hp = 8;
     const mage = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'mage')!;

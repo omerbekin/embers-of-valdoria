@@ -740,7 +740,7 @@
     },
     "2.n0": {
       "name": "Root Field",
-      "text": "Nature's Wrath leaves a root field for 2 turns: enemies that start a turn there are Slowed for 1 turn.",
+      "text": "Nature's Wrath leaves a root field for 2 turns: enemies standing in it are Slowed while inside.",
       "src": "B:V4:2.n0",
       "fx": [
         {
@@ -774,7 +774,7 @@
     },
     "2.ea": {
       "name": "Hushing Moss",
-      "text": "The root field also Silences enemies that start a turn there.",
+      "text": "The root field also Silences enemies standing in it.",
       "src": "B:V4:2.eb",
       "fx": [
         {

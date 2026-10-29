@@ -512,7 +512,7 @@
     },
     "1.eb": {
       "name": "Aftershock Ground",
-      "text": "Tremor Slam leaves quaking ground where it hits for 2 turns: enemies there are Slowed at turn start.",
+      "text": "Tremor Slam leaves quaking ground where it hits for 2 turns: enemies there are Slowed while inside.",
       "src": "A:V2:1.eb*",
       "fx": [
         {

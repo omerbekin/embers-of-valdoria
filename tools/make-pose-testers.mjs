@@ -47,6 +47,7 @@ const POSE = {
   fire_bolt: 'thrust',
   blizzard: 'raise',
   mana_barrier: 'channel',
+  ice_crater: 'raise', // Ömer 2026-10-29 Mage reworkü (Mana Barrier yerine; Blizzard gibi yukarıdan düşen)
   meteor: ['channel', 'raise'],
   // Druid (asa)
   thorn_whip: 'thrust',

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { giveManaBarrier, giveSpellEcho } from './mage-legacy-helpers';
 import { Battle, armorReduction, attributePower, chooseAction, content, describePassive, describeSkill, previewSkill } from '../src/engine';
 import type { BattleEvent, BattleMode, Combatant } from '../src/engine';
 import { installLegacySkills } from './legacy-skills';
@@ -75,7 +76,7 @@ describe('kritik vuruş', () => {
   });
 
   it('kritik kalkana uygulanmaz', () => {
-    const b = make(T1, { calm: false });
+    const b = giveManaBarrier(make(T1, { calm: false }));
     const mage = unit(b, 'party', 'mage');
     Object.assign(mage.stats, { critChance: 1, critMult: 3 });
     const sh = ofType(act(b, mage.uid, 'mana_barrier', unit(b, 'party', 'warrior').uid), 'shield')[0]!;
@@ -971,7 +972,7 @@ describe('Pasif skill\'ler', () => {
       expect(def.passive, id).toBeDefined();
       expect(def.passive!.name.length, id).toBeGreaterThan(0);
       expect(describePassive(def.passive!, def.stats, content.formulas).length, id).toBeGreaterThan(20); // açıklama değerleri de yazar
-      expect(['rage', 'divineLight', 'spellEcho', 'longshot', 'naturesGrudge', 'soulDrain', 'manaOverflow', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells'], id).toContain(def.passive!.effect.type);
+      expect(['rage', 'divineLight', 'spellEcho', 'heatMirage', 'longshot', 'naturesGrudge', 'soulDrain', 'manaOverflow', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells'], id).toContain(def.passive!.effect.type);
     }
   });
 
@@ -1177,7 +1178,7 @@ describe('Pasif skill\'ler', () => {
     const b = new Battle(content.battleSetup('random-battle', 3, 'turns', { party: cells({ 0: 'mage' }), enemies: cells({ 0: 'warrior', 2: 'mage' }) }, false));
     const mage = b.combatants.find((c) => c.defId === 'mage')!;
     b.debugClearCooldowns(); // başlangıç cooldown'u bu testin konusu değil
-    if (mage.passive?.effect.type === 'spellEcho') mage.passive.effect = { ...mage.passive.effect, chance: 1 };
+    giveSpellEcho(b, mage.uid, 1); // Spell Echo Mage kitinden çıktı (Ömer 2026-10-29); motor kuralı aynı
     mage.mp = 100;
     for (let i = 0; i < 40 && b.currentUid !== mage.uid; i++) b.skipTurn();
     expect(b.currentUid).toBe(mage.uid);

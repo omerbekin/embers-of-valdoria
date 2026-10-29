@@ -42,14 +42,16 @@ describe('Mage ağacı fx (Faz 2b)', () => {
         for (const ult of ['u', 'r', 'd', 'l'] as const) expect(() => compileTree(T, focusBuild(T, rows, 50, { dir, ult }))).not.toThrow();
   });
 
-  it('Resonance: Spell Echo şansı rank başına + düğüm değeri (pasif yaması; değer veriden, D9 2026-10-23)', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Resonance: Spell Echo şansı rank başına + düğüm değeri (pasif yaması; değer veriden, D9 2026-10-23)', () => {
     const t = tree(['0.f1*3']);
     const v = (T.nodes['0.f1']!.fx![0] as unknown as { v: number }).v;
     expect(t.passive!.effect).toMatchObject({ type: 'spellEcho' });
     expect((t.passive!.effect as { chance: number }).chance).toBeCloseTo(0.25 + 3 * v, 9);
   });
 
-  it('First Refrain (bar 5): cooldown\'lu büyünün savaştaki ilk kullanımı kesin yankılanır (cooldown 0 kalır)', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('First Refrain (bar 5): cooldown\'lu büyünün savaştaki ilk kullanımı kesin yankılanır (cooldown 0 kalır)', () => {
     const b = make({ 0: 'mage' }, { 0: 'warrior', 1: 'warrior' }, { 0: { tree: tree(['1.f1*3', '1.f2*2']) } });
     const me = P(b);
     cast(b, me.uid, 'blizzard', E0(b).uid);
@@ -59,7 +61,7 @@ describe('Mage ağacı fx (Faz 2b)', () => {
 
   it('Execution Bolt + Finisher: düşük canlı hedefe Fire Bolt daha sert (önizleme)', () => {
     const prev = (withTree: boolean): number => {
-      const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree ? { 0: { tree: tree(['0.f1*3', '0.f2*2', '1.f1*3', '1.f2', '1.f3', '1.n0', '1.r*3', '1.eb']) } } : {});
+      const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree ? { 0: { tree: tree(['2.f1*3', '2.f2*2', '1.f1*3', '1.f2', '1.f3', '1.n0', '1.r*3', '1.eb']) } } : {});
       const e = E0(b);
       e.hp = Math.floor(e.maxHp * 0.2);
       return previewSkill(b, P(b).uid, 'fire_bolt', e.uid).find((x) => x.uid === e.uid)!.damage!.max;
@@ -73,7 +75,8 @@ describe('Mage ağacı fx (Faz 2b)', () => {
     expect(boosted / plain).toBeLessThan(m + 0.1);
   });
 
-  it('Ice Block + Frozen Solid: Mana Barrier dostu 2 tur Fortified ve süre boyunca Slowed yapar', () => {
+  // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.
+  it.skip('Ice Block + Frozen Solid: Mana Barrier dostu 2 tur Fortified ve süre boyunca Slowed yapar', () => {
     const run = (steps: string[] | null) => {
       const b = make({ 0: 'mage', 1: 'warrior' }, { 0: 'warrior' }, steps ? { 0: { tree: tree(steps) } } : {});
       cast(b, P(b).uid, 'mana_barrier', P(b, 1).uid);

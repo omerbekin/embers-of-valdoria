@@ -1027,7 +1027,7 @@
     },
     "3.eb": {
       "name": "Lingering Hail",
-      "text": "Arrow Rain keeps raining for 1 turn: 15% damage to enemies in its area at the start of their turns.",
+      "text": "Arrow Rain keeps raining for 1 turn: enemies in its area are Bleeding while inside (15% damage at the start of their turns).",
       "src": "A:V4:3.ea",
       "fx": [
         {
@@ -1044,7 +1044,7 @@
     },
     "3.ma": {
       "name": "Killing Field",
-      "text": "Enemies in your field of shafts take 20% DEX at the start of their turns and are Blinded.",
+      "text": "Enemies in your field of shafts are Blinded while inside and take 20% DEX at the start of their turns.",
       "src": "A:V3:3.ma",
       "fx": [
         {
@@ -1137,7 +1137,7 @@
     },
     "3.v": {
       "name": "Arrow Storm",
-      "text": "Arrow Rain evolves: it covers 4 rows instead of 3 and leaves a 2-turn rain on the area (20% per turn).",
+      "text": "Arrow Rain evolves: it covers 4 rows instead of 3 and leaves a 2-turn rain on the area: enemies there are Bleeding while inside (20% per turn).",
       "src": "A:V4:3.v",
       "fx": [
         {

@@ -127,10 +127,14 @@ export function effFirst<K extends FxKey>(c: FxHolder, key: K): ItemEffects[K] |
 }
 
 /** Element direnci (elemResist; Ömer 2026-10-26, c_res_*; yazıda "×0.95"): kanallar çarpılarak birleşir, 1 - (1 - a)(1 - t) (yoksa 0). */
-export function elemResistOf(c: FxHolder, element: Element): number {
+export function elemResistOf(c: FxHolder & { passive?: Combatant['passive'] }, element: Element): number {
   const a = c.itemEffects?.elemResist?.[element] ?? 0;
   const t = c.treeFx?.elemResist?.[element] ?? 0;
-  return t ? stackValues('less', a, t) : a;
+  const ia = t ? stackValues('less', a, t) : a;
+  // Heat Mirage / Frost Skin (Mage pasifi, Ömer 2026-10-29): pasifin element direnci de 'less' birleşir (yoksa ifade aynı)
+  const pe = c.passive?.effect;
+  const p = pe?.type === 'heatMirage' ? (pe.elemResist?.[element] ?? 0) : 0;
+  return p ? stackValues('less', ia, p) : ia;
 }
 
 /** "Savaşta bir kez" tetiklerin item kanalındaki eski bayrakları (ağaç kanalı Combatant.treeOnce'ta tutulur). */

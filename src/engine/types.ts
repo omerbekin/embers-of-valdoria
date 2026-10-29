@@ -105,6 +105,13 @@ export type PassiveEffect =
   | { type: 'divineLight'; power: number; scale: Attribute; /** Faz 5a (C5 smite): tur başı kutsal hasar. */ smite?: SmiteSpec; /** Faz 5a (Fervent Oath): şifa sahibini seçemez. */ noSelf?: boolean }
   /** Cooldown'lu bir hasar skill'i kullanınca `chance` ihtimalle o skill'in cooldown'u sıfırlanır. */
   | { type: 'spellEcho'; chance: number }
+  /**
+   * Heat Mirage (Mage, Ömer 2026-10-29; sayılar geçici): bir düşman Mage'e YAKIN DÖVÜŞ skill'iyle (motion 'melee') vurunca saldıranın hücresinde
+   * `turns` tur `ground` (tik = Mage'in scale gücü x power; süre saldıranın turlarıyla, Last Ember kalıbı). Mage'in kendi turları arasında en çok bir kez
+   * (Combatant.mirageUsed, Mage'in eylemi bitince sıfırlanır). `elemResist`: pasifin genel küçük etkisi (Frost Skin): bu elementlerden alınan hasar
+   * x(1 - oran) (item / ağaç element direnciyle 'less' birleşir; tree-hooks.elemResistOf).
+   */
+  | { type: 'heatMirage'; ground: string; turns: number; scale: Attribute; power: number; elemResist?: Partial<Record<Element, number>> }
   /** Kullanıcı ile hedef arasındaki her sıra mesafesi için hasar +perRow (mesafe = kullanıcının sırası + hedefin sırası). */
   | { type: 'longshot'; perRow: number; /** Faz 4c (Exposed Perch): bonus için sayılan ek sıra mesafesi. */ extraRows?: number }
   /**
@@ -1133,7 +1140,17 @@ export type SkillEffectKind =
       to: 'laneFront' | 'stepForward' | 'frontRow';
       /** Faz 5a: yalnızca alanın arka sırasındaki hedefler. */
       areaBack?: boolean;
-    };
+    }
+  /**
+   * İtme (Ice Crater, Ömer 2026-10-29): İSABET EDEN ve hayatta kalan hedef, kullanıcının SEÇTİĞİ yönde (PushDir; eylemin `dir` alanı, yoksa 'back')
+   * kendi tahtasında 1 hücre kayar (yalnız sıra ya da şerit boyunca, çapraz yok). Gideceği hücre tahta dışı / kapalı / canlı birimle doluysa itme YOK,
+   * ÇARPMA: hedef (ve hücredeki birim) `crashPower` x `scale` `element` büyü hasarı alır (tickDamage kuralı: zırh + zayıflık, isabet/kritik yok).
+   * Yer değiştirme bağışıklığı (Battle.immuneToDisplacement), nesne ve sızmış birim itilmez, çarpmaz. Olaylar `moved` ya da `crash`.
+   */
+  | { type: 'push'; crashPower: number; scale: Attribute; element: Element };
+
+/** İtme yönü (motor dili): forward = bir sıra öne (sıra - 1), back = bir sıra arkaya, lanePrev / laneNext = şerit - 1 / + 1. */
+export type PushDir = 'forward' | 'back' | 'lanePrev' | 'laneNext';
 
 /**
  * Kalkan emilim kancaları (generic; her kalkan türünde çalışır: physical / magic). Kalkan ayaktayken bir SKILL vuruşunun hasarını emdiğinde tetiklenir
@@ -1235,6 +1252,11 @@ export interface SkillAiHint {
 export interface SkillDef {
   id: string;
   name: string;
+  /**
+   * Emekli skill (Ömer 2026-10-29 Mage reworkü: Mana Barrier): hiçbir karakterin kitinde değil, veride ve motorda duruyor (eski testler,
+   * ileride geri dönebilir). Codex / Wiki listelemez; "her skill bir karakterde" denetiminden muaf.
+   */
+  retired?: boolean;
   /**
    * Skill ağacı (Faz 2a+, katalog 14.10 cevabı): ağaç bu skill'in hasarını kaldırdıysa (removeEffect) durum / Omen / yakım gibi etkiler yine
    * İSABET ZARI ister: düşman hedeflere kullanım başında hasarsız isabet zarı atılır, yalnızca isabet edenler etkilenir. skills.json'da YOK.
@@ -1504,7 +1526,7 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded';
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1546,6 +1568,8 @@ export interface StatusDef {
   accuracyDelta?: number;
   /** Kaçınmaya (evasion) eklenen miktar (ör. Shrouded +0,20; Dex'in evasionMax sınırı bu eke uygulanmaz). */
   evasionDelta?: number;
+  /** Kaçınma ÇARPANI (Chilled 0,9 = %10 daha az kaçınma; ekler toplandıktan sonra çarpılır; Battle.effectiveStats). */
+  evasionMult?: number;
   /** Kritik şansına eklenen miktar (Jinxed -1 = kritik yok); sonuç [0, 1] arasına kırpılır. guaranteedCrit (Backstab) bunu okumaz. */
   critDelta?: number;
   /** Yığın başına kritik şansı eki (Omen Misfortune -0,03 x yığın). */
@@ -1612,7 +1636,15 @@ export interface GroundDef {
   /** Birimin can çubuğu yanındaki rozetin ikon türü. */
   icon: string;
   element: Element;
-  /** Faz 4c (ağaç zeminleri): içinde tur başlatan düşmana verilen durumlar (süre durumlarından SONRA uygulanır: 1 turluk Slow o turu kapsar). */
+  /**
+   * GENEL ZEMİN KURALI (Ömer 2026-10-29): zeminin içinde duran (etkilediği taraftaki) birime verdiği ANA durum. Birim içinde kaldıkça durum
+   * üstündedir (süresi işlemez), girdiği an alır, çıkınca / zemin bitince o an kalkar. Zeminin gücü (hücre çarpanı dahil) bu durumun tur başı
+   * tikine gider: hasar (zeminin elementi, büyü; tek tik) ya da şifa zemininde (heal) iyileşme. Su zemininde `soak` aynı işi görür.
+   */
+  status?: string;
+  /** true (Flooded Planks istisnası): zemin kendi tik hasarını doğrudan vurmaya devam eder; ana durum ise gücü taşımaz. */
+  directTick?: boolean;
+  /** Ek durumlar (Hall of Silence Silence'ı; `mpZero`: yalnızca MP'si 0 olan birim girer). Genel kuralla: içindeyken sürer, süre (`turns`) yok sayılır. */
   statuses?: GroundStatus[];
   /** Faz 4c (Hall of Silence): içinde tur başlatan düşmanın maks MP'sinin bu oranı yanar (durumlardan önce). */
   manaBurnPct?: number;
@@ -1624,11 +1656,11 @@ export interface GroundDef {
   /** Harita 2 (M-B Flooded): bu zeminin hücrelerindeki listelenen zeminler söner (Flooded -> Burning ground); sönen hücreye yenisi de tutmaz. */
   quenches?: string[];
   /**
-   * Harita 2 (M-B, Ömer 2026-10-27): bu zeminin hücresindeki birim `soak` durumunu (Soaked) `soakTurns` tur alır; çevre etkisi (direnç zarı yok).
-   * Skill'in bıraktığı Flooded da Tide suyu gibi davranır (ıslatır, söndürür). Ortam suyunda (Tide / Urn) suyun kendi değerleri önce gelir.
+   * Harita 2 (M-B, Ömer 2026-10-27): su zemini; hücresindeki HER birim (yardımcı nesne hariç) `soak` durumunu (Soaked) alır; çevre etkisi (direnç
+   * zarı yok). Genel zemin kuralı (2026-10-29): Soaked suda kaldıkça sürer, sudan çıkınca o an kalkar (eski soakTurns kalktı).
+   * Skill'in bıraktığı Flooded da Tide suyu gibi davranır (ıslatır, söndürür). Ortam suyunda (Tide / Urn) suyun kendi `soak`'u önce gelir.
    */
   soak?: string;
-  soakTurns?: number;
 }
 
 /** Faz 4c: zeminin tur başı durumu (`mpZero`: yalnızca MP'si 0 olan düşmana). */
@@ -1706,9 +1738,8 @@ export interface GroundEffect {
   envUntilRound?: number;
   /** Ortam suyunun kaynağı: 'tide' (koşul) ya da Tidewater Urn id'si; Tide yalnızca kendi suyunu yeniler, Urn suyuna dokunmaz. */
   envCause?: string;
-  /** Ortam suyundaki birime konan durum (Soaked) ve süresi (taşıyanın turu; suda kaldıkça tazelenir). */
+  /** Ortam suyundaki birime konan durum (Soaked; genel zemin kuralı: suda kaldıkça sürer). */
   soak?: string;
-  soakTurns?: number;
   /** Zemin tepkimesi: bırakıldığı andaki süre (Purified süreyi buna tazeler). */
   fullTurns?: number;
   /** Zemin tepkimesinin doğurduğu zemin (reactions anahtarı): tur başı durumları ağaçsız savaşta da işler (Ice). */
@@ -1771,6 +1802,15 @@ export interface Status {
   leap?: boolean;
   /** Ley Brand (branded): damgalayanın bu uygulamadaki çözülmüş değerleri (ağaç yamaları dahil). Yalnızca 'branded' örneğinde. */
   brand?: BrandSpec;
+  /**
+   * GENEL ZEMİN KURALI (Ömer 2026-10-29): bu örneği veren zemin (GroundEffect.id). Varsa durum zemin kaynaklıdır: süresi işlemez (`turns` yalnızca
+   * gösterim: zeminin kalan süresi), birim zeminden çıkınca / zemin bitince kalkar, dispel silemez. `amount` = zeminin bu hücredeki tik gücü.
+   */
+  fromGround?: string;
+  /** Zemin kaynaklı örnekte zeminin türü (grounds.json anahtarı; olay `cause`, şifa etiketi). */
+  groundKind?: string;
+  /** Zemin kaynaklı örneğin altında bekleyen, AYNI türden skill kaynaklı örnek (zayıf olan): süresi işler; birim zeminden çıkınca kalan süresiyle döner. */
+  held?: Status;
 }
 
 /** Branded örneğinin taşıdığı değerler (SkillEffect 'brand' + ağaç; `pool` = bu uygulamada MP'siz hedefe açılacak havuz). */
@@ -1942,6 +1982,8 @@ export interface Combatant {
   patience?: number;
   patienceHurt?: boolean;
   flickered?: boolean;
+  /** Heat Mirage: bu tur (Mage'in son eyleminden beri) zemin bırakıldı mı. */
+  mirageUsed?: boolean;
   /** YM14 Grudge: ona en son skill ile vuran düşmanın uid'si. */
   grudgeOn?: string;
   /** YM19 Shares of the Dead: bu savaşta ölen dost sayısı (hasar eki yığını). */
@@ -2100,6 +2142,8 @@ type BattleEventBody =
   /** Crown Surge çağrıldı (global 'surge'): çağıran, taraf, global id; takım etkileri (status / shield) hemen arkasından gelir. */
   | { type: 'surge'; actor: string; side: Side; id: string }
   /** Birim kendi tarafındaki boş yuvaya geçti (Move Tile); yeni yuva Combatant.slot'ta da güncellenir. `cause`/`by`: zorla yer değiştirme (Chain Hook çekmesi: skill id, çeken). */
+  /** İtme çarptı (Ice Crater): `target` gideceği hücreye geçemedi; `wall` = tahta dışı / kapalı hücre, `with` = hücredeki birim (o da hasar alır). */
+  | { type: 'crash'; source: string; target: string; dir: PushDir; to: number | null; wall: boolean; with?: string; cause: string }
   | { type: 'moved'; actor: string; from: number; to: number; cause?: string; by?: string; /** true: kullanıcının kendi skill'i sonrası ön sıraya geçişi (SkillDef.advanceToFront, Warrior Charge); `cause` skill id. */ advance?: boolean }
   /**
    * Kontrol bağışıklığı (madde 271): `target` (boss rütbesi, formulas.json > ccImmunity) bu CC durumunu (statuses.json > cc: Stun, Slow, Silence) YEMEDİ;
@@ -2213,7 +2257,6 @@ export interface UrnRule {
   ground: string;
   rounds: number;
   soak: string;
-  soakTurns: number;
   /** Yapay zeka: sıra puanı = kendi Burning zemin hücresi x burningCell + o sıradaki Burning kahraman x burningHero; puan >= minScore ise kullanır. */
   ai: { minScore: number; burningCell: number; burningHero: number; burning: string; burningGround: string };
 }
@@ -2229,9 +2272,8 @@ export interface FloodRule {
   boards: Side[];
   /** Su kaç savaş turu kalır. */
   rounds: number;
-  /** Su hücresindeki birime konan durum (data/statuses.json; 'soaked') ve süresi (taşıyanın turu; suda kaldıkça tazelenir). */
+  /** Su hücresindeki birime konan durum (data/statuses.json; 'soaked'; genel zemin kuralı: suda kaldıkça sürer, çıkınca kalkar). */
   soak: string;
-  soakTurns: number;
 }
 
 /** B3 hedefleri (data/battle-rules.json > objectives). */
@@ -2315,7 +2357,7 @@ export interface ValorRules {
 
 /** Bir birimin yapabileceği tek bir eylem (battle.act girdisi; yapay zeka seçimi de bu şekle çevrilir). */
 export type BattleAction =
-  | { kind: 'skill'; skillId: string; targetUid?: string; slot?: number; /** Faz 8: skill ağacı biçimi (Combatant.skillModes; yoksa skill'in kendi biçimi). */ mode?: string; /** area_any: anchor hücrenin tahtası (yoksa karşı taraf; `targetUid` canlı birimse onun tahtası, `tile:<yuva>` ise kendi tahtası). */ board?: Side; /** Ceset tüketen çağrı (Raise Dead): tüketilecek düşman cesedi (ceset varken zorunlu). */ corpseUid?: string }
+  | { kind: 'skill'; skillId: string; targetUid?: string; slot?: number; /** Faz 8: skill ağacı biçimi (Combatant.skillModes; yoksa skill'in kendi biçimi). */ mode?: string; /** area_any: anchor hücrenin tahtası (yoksa karşı taraf; `targetUid` canlı birimse onun tahtası, `tile:<yuva>` ise kendi tahtası). */ board?: Side; /** Ceset tüketen çağrı (Raise Dead): tüketilecek düşman cesedi (ceset varken zorunlu). */ corpseUid?: string; /** İtme yönü (push etkili skill: Ice Crater); yoksa 'back'. */ dir?: PushDir }
   | { kind: 'global'; id: string; slot?: number; /** Move Tile: slot yerine `tile:<yuva>` kimliği de kabul edilir. */ targetUid?: string };
 
 /** battle.listActions satırı: bir eylem ve şu an kullanılabilir olup olmadığı. */

@@ -72,7 +72,7 @@ describe('Faz 5b: veri', () => {
     for (const cls of CLASSES) {
       const T = treeOf(cls)!;
       for (const [k, n] of Object.entries(T.nodes)) {
-        if (n.fx === null) continue;
+        if (n.fx === null || n.inactive) continue; // pasif düğüm (Mage reworkü 2026-10-29) derlemeye katılmaz
         // onlyWith: birleşim düğümü yalnızca ön koşullarıyla birlikte işler (Counter Cut ailesi)
         const deps = n.fx.flatMap((f) => ((f as { onlyWith?: string[] }).onlyWith ?? []));
         expect(only(cls, Object.fromEntries([k, ...deps].map((d) => [d, 1]))), `${cls} ${k}`).toBeDefined();

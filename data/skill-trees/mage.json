@@ -1,6 +1,6 @@
 {
   "class": "mage",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "b",
@@ -13,8 +13,8 @@
   },
   "rows": [
     {
-      "skill": "spell_echo",
-      "name": "Spell Echo",
+      "skill": "heat_mirage",
+      "name": "Heat Mirage",
       "passive": true,
       "karma": "B"
     },
@@ -29,8 +29,8 @@
       "karma": "A"
     },
     {
-      "skill": "mana_barrier",
-      "name": "Mana Barrier",
+      "skill": "ice_crater",
+      "name": "Ice Crater",
       "karma": "A"
     }
   ],
@@ -48,6 +48,8 @@
         "name": "First Refrain",
         "text": "Your first cooldown spell each battle is sure to echo.",
         "src": "B:V3:bar0",
+        "inactive": true,
+        "_not": "Ömer 2026-10-29 Mage reworkü: Spell Echo Mage kitinden çıktı; bu Mastery bonusu pasif (motor yok sayar). Ömer karar verecek.",
         "fx": [
           {
             "k": "hook",
@@ -147,6 +149,8 @@
       "name": "Resonance",
       "text": "Spell Echo chance +3% per rank.",
       "src": "B:V3:0.f1",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "passive",
@@ -161,6 +165,8 @@
       "name": "Killing Echo",
       "text": "Spell Echo +4% chance per rank when the spell kills.",
       "src": "B:V5:0.f2",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -179,6 +185,8 @@
       "name": "Rapid Recall",
       "text": "After Spell Echo triggers, your next turn comes 4% sooner per rank.",
       "src": "B:V3:0.f3",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -197,6 +205,8 @@
       "name": "Overload",
       "text": "The spell you recast after a Spell Echo is a sure critical.",
       "src": "B:V5:0.n0",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -217,6 +227,8 @@
       "name": "Overtone",
       "text": "Spell Echo +1% chance per rank for each enemy the spell hits beyond the first.",
       "src": "B:V3:0.r",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -235,6 +247,8 @@
       "name": "Echo Chamber",
       "text": "Each echo in a battle adds +2% to your Spell Echo chance for the rest of that battle.",
       "src": "B:V3:0.ea",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -256,6 +270,8 @@
       "name": "Sympathy",
       "text": "When Spell Echo triggers, your other cooldown spells drop by 1.",
       "src": "B:V3:0.eb",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -274,6 +290,8 @@
       "name": "Endless Refrain",
       "text": "A spell recast after an echo has double Spell Echo chance.",
       "src": "B:V3:0.ma",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -295,6 +313,8 @@
       "name": "Unstable Weave",
       "text": "Recast spells deal 30% more damage, but a cooldown spell that fails to echo gets +1 turn of cooldown.",
       "src": "B:V3:0.fa",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -326,6 +346,8 @@
       "name": "Frayed Threads",
       "text": "Sympathy cuts 2 turns instead of 1, but Spell Echo chance drops 25% → 18%.",
       "src": "B:V3:0.fb",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -351,6 +373,8 @@
       "name": "Time Fold",
       "text": "When Spell Echo triggers, that spell's recast costs only half a turn.",
       "src": "B:V3:0.mb",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -372,6 +396,8 @@
       "name": "Arcane Overload",
       "text": "Spell Echo evolves: an echo resets all your cooldowns, not just the spell's, and the recast deals 15% more damage.",
       "src": "B:V5:0.v",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -897,7 +923,7 @@
     },
     "2.v": {
       "name": "Eternal Winter",
-      "text": "Blizzard evolves: the storm stays on its area for 2 turns and Slows every enemy that starts its turn there.",
+      "text": "Blizzard evolves: the chill stays on its area for 2 turns and Chills every enemy standing in it.",
       "src": "A:V2:2.v",
       "new": true,
       "approved": true,
@@ -918,6 +944,8 @@
       "name": "Rimeguard",
       "text": "Mana Barrier's shield is 6% larger per rank when cast on an ally in the front row.",
       "src": "A:V2:3.f1",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -935,6 +963,8 @@
       "name": "Cauterize",
       "text": "Each debuff Mana Barrier dispels heals the ally for 4% of max HP per rank.",
       "src": "A:V1:3.f2",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -954,6 +984,8 @@
       "name": "Numbing Touch",
       "text": "While Mana Barrier holds, Slowed attackers deal 6% less damage per rank to the holder.",
       "src": "A:V2:3.f3",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -973,6 +1005,8 @@
       "name": "Ice Mirror",
       "text": "The first hit Mana Barrier absorbs Slows the attacker for 2 turns.",
       "src": "A:V2:3.n0",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -993,6 +1027,8 @@
       "name": "Frozen Reserve",
       "text": "Mana Barrier gives +1 MP per rank for each hit it absorbs from a Slowed enemy.",
       "src": "A:V2:3.r",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -1014,6 +1050,8 @@
       "name": "Frost Armor",
       "text": "Every hit Mana Barrier absorbs Slows the attacker for 1 turn.",
       "src": "A:V2:3.ea",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -1033,6 +1071,8 @@
       "name": "Ice Block",
       "text": "Mana Barrier also makes the holder Fortified for 1 turn.",
       "src": "A:V2:3.eb",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "addEffect",
@@ -1048,6 +1088,8 @@
       "name": "Frozen Rebuke",
       "text": "A Slowed enemy that hits Mana Barrier is Stunned for 1 turn (once per barrier).",
       "src": "A:V2:3.ma",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -1073,6 +1115,8 @@
       "name": "Brittle Shell",
       "text": "Frost Armor Slows for 2 turns, but Mana Barrier's shield is 35% lower.",
       "src": "A:V2:3.fa",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -1100,6 +1144,8 @@
       "name": "Frozen Solid",
       "text": "Ice Block lasts 2 turns, but the holder is Slowed while it lasts.",
       "src": "A:V2:3.fb",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -1123,6 +1169,8 @@
       "name": "Twin Ward",
       "text": "Mana Barrier also shields the ally with the lowest HP for 35% of its value.",
       "src": "A:V3:3.ma",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "fx": [
         {
           "k": "hook",
@@ -1143,6 +1191,8 @@
       "name": "Shatter Aegis",
       "text": "Mana Barrier evolves: when it breaks, it fires a free Fire Bolt at the attacker that is a sure critical.",
       "src": "A:V5:3.v",
+      "inactive": true,
+      "_not": "Ömer 2026-10-29 Mage reworkü: bağlı olduğu skill/pasif Mage kitinden çıktı; düğüm pasif (alınamaz, motor yok sayar). Ömer karar verecek.",
       "syn": "Fire Bolt",
       "fx": [
         {

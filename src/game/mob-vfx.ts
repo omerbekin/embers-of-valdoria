@@ -341,7 +341,8 @@ const SHAKE_MAG = 0.004;
 const STEP = 180; // aşamalı alan skill'inde aşamalar arası (ms)
 const TRAIL_MS = 300; // iz (trail) sheet'inin toplam oynama süresi (ms, yavaşlatılmadan)
 const TRAIL_SIZE = 300; // iz sheet'inin ekran boyu (px)
-const TRAIL_ORIGIN: [number, number] = [0.84, 0.5]; // iz sheet'inin başı (alev ucu) sağda: aynalanınca saldıranın önünde
+const TRAIL_FADE_MS = 70; // atılma bitince izin sönme süresi (ms)
+const TRAIL_HEAD_X = 0.85; // iz sheet'inin başı (alev ucu) karenin sağında (ölçüldü); dikeyde kare 0'ın ağırlık merkezi kullanılır
 const CAST_PEAK_MS = 130; // büyü ucunun okunduğu an (windUp'ın tepe noktası; bu anda cast pozu oturmuş)
 const FAST_RAIN_X = 0.55; // yağan okun yatay eğimi (dikey px başına)
 const BURY_HOLD_MS = 1500; // gömülen birim durum rozeti görünmeden en az bu kadar gömülü kalır (ms, k.slow ile)
@@ -484,11 +485,14 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
     const meta = vfxSheetFile(id)?.meta;
     const [fw, fh] = meta?.frame_size ?? [256, 256];
     const anchors = s.at === 'ground' || s.mode === 'melee' || s.mode === 'bolt' ? k.sheetAnchors(c.scene, id, impactF) : null;
+    // Phaser flipX dokuyu karenin İÇİNDE aynalar, origin'i aynalamaz: aynalı (düşman) sheet'te dayanak x'i 1 - ox olmalı, yoksa içerik
+    // hedeften (1 - 2·ox)·boy px kayar (2026-10-29 ölçüm: 10 efektte 31-55 px; anim-review run_down Tur 3)
+    const fx = (x: number): number => (flip ? 1 - x : x);
     const origin: [number, number] | null = !anchors
       ? null
       : s.at === 'ground'
-        ? [anchors.baseX / fw, anchors.baseY / fh]
-        : [anchors.core[0] / fw, anchors.core[1] / fh];
+        ? [fx(anchors.baseX / fw), anchors.baseY / fh]
+        : [fx(anchors.core[0] / fw), anchors.core[1] / fh];
     const frameCount = meta?.frames ?? 8;
     const flashAt = (p: Pt, depth: number): void => {
       if (tune.flash === false) return;
@@ -569,7 +573,7 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
     function flyShot(from: Pt, to: Pt, delay: number): void {
       const fr = Math.round((tune.flyFrame ?? 0) * mult);
       const an = k.sheetAnchors(c.scene, id, fr);
-      const o: [number, number] | undefined = an ? [an.core[0] / fw, an.core[1] / fh] : undefined;
+      const o: [number, number] | undefined = an ? [fx(an.core[0] / fw), an.core[1] / fh] : undefined;
       const echoes = tune.echo ?? 0;
       const opts = { size, flipX: flip, frame: fr, keep: true, delay, ...(o ? { origin: o } : {}) };
       const parts: Array<{ spr: Phaser.GameObjects.Sprite; lagU: number; alpha: number }> = [];
@@ -657,9 +661,18 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
         await new Promise<void>((r) => c.scene.time.delayedCall(k.slow(s.windMs! * WIND_MULT), r));
       }
       const t = c.targets[0];
+      let trail: ReturnType<VfxKit['sheet']> = null;
       if (bs) {
-        // iz (trail): skill'in kendi sheet'i atılma boyunca saldıranın arkasında akar; ısırma (bs) hedefte vurur
-        const spr = k.sheet(c.scene, ownId, c.actor.container.x, c.actor.container.y, { size: TRAIL_SIZE, flipX: flip, fps: ((vfxSheetFile(ownId)?.meta.frames ?? 8) * 1000) / TRAIL_MS, origin: TRAIL_ORIGIN, depth: k.DEPTH + 1 });
+        // iz (trail): skill'in kendi sheet'i atılma boyunca saldıranın arkasında akar; ısırma (bs) hedefte vurur.
+        // İlk karede de göğüs hizasında doğar (ayakta doğup bir kare sonra yukarı zıplamasın; anim-review run_down Tur 1)
+        const q0 = k.spot(c.actor);
+        // Phaser flipX dokuyu karenin içinde aynalar, origin'i aynalamaz: aynalı izde baş 1 - TRAIL_HEAD_X'te kalır (yoksa baş saldıranın önüne,
+        // kuyruk altına düşer). Çizimde alev satırdan satıra farklı yükseklikte: kareler kare 0'ın merkezine sabitlenir (stabilize).
+        const tFh = vfxSheetFile(ownId)?.meta.frame_size?.[1] ?? 256;
+        const tAn = k.sheetAnchors(c.scene, ownId, 0);
+        const tOrigin: [number, number] = [flip ? 1 - TRAIL_HEAD_X : TRAIL_HEAD_X, tAn ? tAn.core[1] / tFh : 0.5];
+        const tStab: StabilizeOpts = { ref: 0, anchor: 'core', pre: true, travel: 0, minMass: TUNE.stabilize.minMass, maxShift: TUNE.stabilize.maxShift };
+        const spr = k.sheet(c.scene, ownId, q0.x - fwd * c.actor.w * 0.1, q0.y, { size: TRAIL_SIZE, flipX: flip, fps: ((vfxSheetFile(ownId)?.meta.frames ?? 8) * 1000) / TRAIL_MS, origin: tOrigin, stabilize: tStab, depth: k.DEPTH + 1 });
         if (spr)
           c.scene.tweens.addCounter({
             from: 0,
@@ -672,8 +685,11 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
             },
             onComplete: () => spr.active && spr.destroy(),
           });
+        trail = spr;
       }
       await c.lunge(t ? t.container.x : c.actor.container.x, tune.standOff);
+      // atılma bitti: iz ısırmanın altında oynamaya devam etmesin, kısa sürede söner (ısırmayla üst üste binme; anim-review run_down Tur 1)
+      if (trail?.active) c.scene.tweens.add({ targets: trail, alpha: 0, duration: k.slow(TRAIL_FADE_MS), onComplete: () => trail?.active && trail.destroy() });
       for (const v of c.targets) play(pos(v), 0, v.container.depth);
       c.scene.time.delayedCall(k.slow(lag + hitT), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
       return land();

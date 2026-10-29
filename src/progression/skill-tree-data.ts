@@ -316,6 +316,11 @@ export interface TreeNodeData {
   /** NEW mekanik (Ömer onayı gerekir); approved: false iken alınamaz ("Awaiting approval"). */
   new?: boolean;
   approved?: boolean;
+  /**
+   * Pasif düğüm (Ömer 2026-10-29 Mage reworkü): bağlı skill / pasif sınıf kitinden çıktı; alınamaz ("Inactive"), motor fx'ini yok sayar, fx veride
+   * Ömer karar verene kadar durur (denetim de atlar). Alınmış rank'ı olan kayıt geçersiz sayılır (ağaç bedava iade).
+   */
+  inactive?: boolean;
   /** null = etkisi henüz yazılmadı (puan alınabilir, motor yok sayar; "Not active yet"). */
   fx: TreeFx[] | null;
 }
@@ -325,6 +330,8 @@ export interface TreeBarData {
   name: string;
   text: string;
   src: string;
+  /** Pasif Mastery bonusu (TreeNodeData.inactive ile aynı): motor fx'ini yok sayar. */
+  inactive?: boolean;
   fx: TreeFx[] | null;
 }
 

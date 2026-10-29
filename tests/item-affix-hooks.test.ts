@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { giveManaBarrier } from './mage-legacy-helpers';
 import { Battle, content, previewSkill, rolledSpeed, skillCostAmount, type BattleEvent, type BattleMode, type ItemEffects, type Teams, type UnitModifiers, type UnitSetup } from '../src/engine';
 import { skillNumbers } from '../src/engine/skill-info';
 import { damageSpecFor } from '../src/engine/spec';
@@ -43,9 +44,9 @@ describe('affix statları: skill sayıları (motor = skill-info = önizleme)', (
   it('Şifa / kalkan / DoT gücü: skill miktarları çarpanla büyür (Support, Shield power, DoT damage)', () => {
     const heal = (m: UnitModifiers) => skillNumbers(content.skills.rejuvenate!, make({ 0: 'druid' }, { 0: 'mage' }, { 0: mod(m) }).combatants[0]!.stats, f)[0]!.value!;
     expect(heal({ healPowerAdd: 0.5 })).toBeGreaterThan(heal({}));
-    const shieldSkill = content.classes.mage!.skills.find((id) => content.skills[id]!.effects.some((e) => e.type === 'shield'))!;
+    const shieldSkill = 'mana_barrier'; // Mage kitinden çıktı (Ömer 2026-10-29); kalkan kuralı aynı, test eski kalkanı geri verir
     const shield = (m: UnitModifiers) => {
-      const b = make({ 0: 'mage' }, { 0: 'warrior' }, { 0: mod(m) });
+      const b = giveManaBarrier(make({ 0: 'mage' }, { 0: 'warrior' }, { 0: mod(m) }));
       return previewSkill(b, 'party-0', shieldSkill, b.validTargets('party-0', shieldSkill)[0]!.uid)[0]!.shield!.amount;
     };
     expect(shield({ shieldPowerAdd: 0.5 })).toBeGreaterThan(shield({}));

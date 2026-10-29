@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { giveManaBarrier } from './mage-legacy-helpers';
 import { oldLayoutSetup } from './range-helpers';
 import { Battle, attributePower, content, describeClass, describeSkill, describeStat, nominalBurn, previewSkill } from '../src/engine';
 import type { BattleEvent, SkillDef, StatKind } from '../src/engine';
@@ -206,7 +207,7 @@ describe('önizleme: şifa, kalkan, tur bazlı şifa, mana yakma, durumlar', () 
   });
 
   it('kalkan önizlemesi gerçek kalkanla birebir aynı (kritik uygulanmaz); büyü kalkanı işaretlenir', () => {
-    const b = testBattle();
+    const b = giveManaBarrier(testBattle());
     const p = previewSkill(b, E_MAGE, 'mana_barrier', E_ARCHER)[0]!.shield!;
     expect(p.magic).toBe(false);
     b.useSkill(E_MAGE, 'mana_barrier', E_ARCHER);

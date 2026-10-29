@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { giveManaBarrier } from './mage-legacy-helpers';
 import { Battle, chooseAction, content, describeSkill, explainChoice, predictQueue, previewSkill, skillCostAmount } from '../src/engine';
 import type { AiConfig, BattleEvent, BattleMode, Combatant, SkillDef } from '../src/engine';
 
@@ -185,7 +186,7 @@ describe('Mana Barrier (Mage): debuff siler, emdikçe MP verir', () => {
   it('atıldığı dostun TÜM debuff\'larını siler (statusEnd dispelled), buff\'lara dokunmaz; kalkan aynı (Int x 1,7)', () => {
     expect(S.mana_barrier!.effects[0]).toEqual({ type: 'dispel', status: 'debuff' });
     expect(barrier).toMatchObject({ scale: 'int', power: 0.85, onAbsorb: { giveMana: 3 } }); // x2 stat ölçeği: eski Int x 1,7
-    const b = mk({ 0: 'warrior', 1: 'mage' }, { 0: 'warrior' });
+    const b = giveManaBarrier(mk({ 0: 'warrior', 1: 'mage' }, { 0: 'warrior' }));
     const w = at(b, 'party', 0);
     const mage = at(b, 'party', 1);
     for (const [k, t] of [['slow', 2], ['wound', 3], ['stun', 1], ['blinded', 2], ['haste', 2]] as const) b.debugAddStatus(w.uid, k, t);
@@ -200,7 +201,7 @@ describe('Mana Barrier (Mage): debuff siler, emdikçe MP verir', () => {
   });
 
   it('madde 241: kalkan emdiği HER vuruşta taşıyana SABİT giveMana MP verir (mpRegen cause mana_barrier); MP maksimumu aşmaz', () => {
-    const b = mk({ 0: 'warrior', 1: 'mage' }, { 0: 'warrior' });
+    const b = giveManaBarrier(mk({ 0: 'warrior', 1: 'mage' }, { 0: 'warrior' }));
     const w = at(b, 'party', 0);
     act(b, at(b, 'party', 1).uid, 'mana_barrier', w.uid);
     w.mp = 0;
@@ -212,7 +213,7 @@ describe('Mana Barrier (Mage): debuff siler, emdikçe MP verir', () => {
     expect(gains.every((g) => g.actor === w.uid)).toBe(true);
     expect(w.mp).toBe(gains.reduce((s, g) => s + g.amount, 0));
     // MP maks sınırı
-    const b2 = mk({ 0: 'warrior', 1: 'mage' }, { 0: 'warrior' });
+    const b2 = giveManaBarrier(mk({ 0: 'warrior', 1: 'mage' }, { 0: 'warrior' }));
     const w2 = at(b2, 'party', 0);
     act(b2, at(b2, 'party', 1).uid, 'mana_barrier', w2.uid);
     w2.mp = w2.maxMp - 1;
@@ -340,7 +341,7 @@ describe('Undead: lifesteal (veriden), Dark Bond', () => {
   });
 
   it('aynı anda tek bağ: yenisi eskisini koparır (statusEnd cause bond_broken); dispel/temizlik bağa dokunmaz', () => {
-    const b = mk({ 0: 'warrior', 1: 'undead', 2: 'mage' }, { 0: 'defender' });
+    const b = giveManaBarrier(mk({ 0: 'warrior', 1: 'undead', 2: 'mage' }, { 0: 'defender' }));
     const [w, u, m] = [at(b, 'party', 0), at(b, 'party', 1), at(b, 'party', 2)];
     act(b, u.uid, 'dark_bond', w.uid);
     const ev = act(b, u.uid, 'dark_bond', m.uid);
@@ -526,7 +527,9 @@ describe('yapay zeka (madde 240)', () => {
       at(b, 'enemy', 0).maxHp = at(b, 'enemy', 0).hp = 500;
       return { pick: chooseAction(b, at(b, 'party', 1).uid, ai), w };
     };
-    const low = run(limit - 0.2); // madde 261: can tabanı 30 ve Mage zırhı 6 ile tehlike eşiği aşağı kaydı
+    // madde 261: can tabanı 30 ve Mage zırhı 6 ile tehlike eşiği aşağı kaydı; 2026-10-29 Fire Bolt 1.07 -> 1.00: %25 (27 can) artık Fire Bolt'un
+    // öldürme menzili dışında (kurtarma değeri yok), %20 (22 can) yeniden ölümcül tehlike
+    const low = run(limit - 0.25);
     expect(low.pick).toMatchObject({ skillId: 'spell_ward', targetUid: low.w.uid, reason: 'shield' });
     // 2026-10-17 (levels.md başlangıç statları: Anti-Mage INT 30 -> 26, Warrior can 120 -> 108): Mana Burn değeri düştü, %60-90 candaki dosta da Ward atıyor;
     // tam candaki dosta atmaz (engine-dev'e not: Ward terazisi / eşik, open-questions 335)
@@ -535,7 +538,7 @@ describe('yapay zeka (madde 240)', () => {
 
   it('Mage: yaralı olmasa da sersemlemiş dostunu Mana Barrier ile temizler (cleanse değeri >= cleanseMinValue)', () => {
     // madde 261: sersemleyen dost Archer (Double Strike 0,9'a inince sersem Warrior'ın kaybedeceği tur Fire Bolt'la başa baş kalıyordu)
-    const b = mk({ 0: 'archer', 1: 'mage' }, { 0: 'defender' });
+    const b = giveManaBarrier(mk({ 0: 'archer', 1: 'mage' }, { 0: 'defender' }));
     const w = at(b, 'party', 0);
     at(b, 'enemy', 0).maxHp = at(b, 'enemy', 0).hp = 500;
     b.debugAddStatus(w.uid, 'stun', 1);
@@ -610,8 +613,9 @@ describe('wiki ve Legacy (madde 240)', () => {
     const arts = buildMechanics();
     const text = (id: string) => JSON.stringify(arts.find((a) => a.id === id)?.blocks ?? null);
     expect(text('shields')).toContain(`Spell Ward (magic shield): when it absorbs a hit, it burns ${wardHook.burnMana} MP`);
-    expect(text('shields')).toContain(`Mana Barrier (shield): when it absorbs a hit, it gives the shielded unit ${barrier.onAbsorb!.giveMana} MP`);
-    expect(text('dispel')).toContain('Mana Barrier');
+    // Mana Barrier emekli (Mage reworkü 2026-10-29): Codex onu artık listelemez
+    expect(text('shields')).not.toContain('Mana Barrier');
+    expect(text('dispel')).not.toContain('Mana Barrier');
     expect(text('dark-bond')).toContain(`Dark Bond: bond for ${bondEffect.turns} turns`);
     expect(text('dark-bond')).toContain(`Vampiric Bite, ${Math.round(LIFESTEAL * 100)}%`);
     expect(text('half-turn')).toContain('Half-turn skills: Dark Bond');
