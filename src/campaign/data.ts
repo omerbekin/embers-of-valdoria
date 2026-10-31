@@ -98,7 +98,8 @@ export const EVENTS: Record<string, EventDef> = Object.assign({}, ...EVENT_FILES
 /** Diyalog sahnesinde bir soru: NPC'nin repliği + 2-3 cevap; `likes` cevaplar NPC'nin hoşuna gider (gizli sayaç). */
 export interface DialogueStep {
   text: string;
-  choices: Array<{ label: string; likes?: boolean }>;
+  /** `reply` (isteğe bağlı): NPC'nin bu cevaba kendi kısa karşılığı; sonraki adımdan önce ayrı sayfa (dialogue-flow.ts). Yoksa doğrudan sonraki adım. */
+  choices: Array<{ label: string; likes?: boolean; reply?: string }>;
 }
 
 /**
@@ -107,6 +108,8 @@ export interface DialogueStep {
  */
 export interface StoryDef extends EventText {
   speaker?: string;
+  /** Portre dosya adı (assets/avatars); yoksa konuşmacı adından türetilir. Aynı adlı düşmanın resmi konuşmacıya uymadığında verilir. */
+  portrait?: string;
   dialogue?: DialogueStep[];
   likeThreshold?: number;
   gift?: { rarity: RarityId };

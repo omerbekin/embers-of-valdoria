@@ -32,6 +32,8 @@
       "duelling-ring-snow": 0.549,
       "_zones": "2026-10-13 v3 arka planlar (tools/make-zone-backgrounds.mjs, kaynak assets/source/backgrounds-v3): 9 sefer bölgesi + kings-bridge + castle-hall, ön kırpma yok, asıl 1536x1024 görsel; kesir = kaynakta ölçülen çit / mezar taşı / kaya / köprü korkuluğu / sütun kaidesi dibi / 1024 (castle-hall ve kings-bridge yukarıdaki değerler de v3). Savaş görünür sahneyi cover ile kaplar ve zemini floorLineMaxY'ye (1080 yükseklikte ekran y 715) oturtur; 16:9'da yalnızca ~%16 dikey kırpılır, geniş ekranda daha çok (backgroundPlacement).",
       "border-road": 0.586,
+      "ravenwood": 0.602,
+      "ruined-watchtower": 0.586,
       "windy-moor": 0.591,
       "iron-pass": 0.605,
       "misty-marsh": 0.625,

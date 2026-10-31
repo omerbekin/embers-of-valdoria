@@ -1964,6 +1964,7 @@ export class BattleScene extends Phaser.Scene {
     const here = this.battle.combatants.find((u) => u.board === board && u.slot === slot && u.hp > 0);
     if (here) {
       const reason = skill.target === 'single_enemy' && here.side !== this.battle.get(actorUid)?.side ? this.battle.targetProblem(actorUid, skillId, here.uid) : null;
+      if (reason) this.hideUnitTip(); // the unit card (DOM, above the canvas) would cover the reason plaque; the reason is what the player needs now
       this.showPlates(board, [{ slot, state: 'invalid' }], reason ? { slot, text: reason } : undefined);
     } else if (skill.target === 'dead_ally' && this.corpseAt(board, slot, true)) this.showPlates(board, [{ slot, state: 'invalid' }]); // a consumed corpse: pale plate, the tooltip says why
     else this.clearAreaMarker();

@@ -985,7 +985,8 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
     // Rage bedeli skora yansımaz (Rage yalnızca harcanmak için birikir; bedel koşulu canUse + skill'in ai bağlamıyla sağlanır).
     // Oranlı bedel (Wail: mevcut canın %20'si) şu anki kaynaktan hesaplanır (skillCostAmount).
     // Soul Exchange (cost.hpFallback): MP yetmezse gerçekten ödenecek can bedeli can ağırlığıyla (skillCostPay)
-    cost: ((p) => p.amount * (p.resource === 'mp' ? profile.mpCostWeight : p.resource === 'hp' ? profile.hpCostWeight : 0))(skillCostPay(skill.cost, actor, undefined, battle.freeMp)),
+    // ai.scoreCost (mob mana zammı): skordaki MP bedeli en fazla bu kadar sayılır; ödeme ve mana yeterliliği gerçek bedelle kalır
+    cost: ((p) => (p.resource === 'mp' ? Math.min(p.amount, skill.ai?.scoreCost ?? p.amount) * profile.mpCostWeight : p.resource === 'hp' ? p.amount * profile.hpCostWeight : 0))(skillCostPay(skill.cost, actor, undefined, battle.freeMp)),
     // Düşük can kuralı (minHpRatioForHpCost) yalnızca SABİT can bedeline ve can bahsine uygulanır. Oranlı can bedeli
     // (cost.ofCurrent; Wail of the Dead: mevcut canın %20'si) muaf: bedel can azaldıkça kendiliğinden küçülür (Ömer kararı, madde 247).
     hpCost: (skill.cost.resource === 'hp' && !(skill.cost.ofCurrent ?? 0) && skillCostAmount(skill.cost, actor) > 0) || skill.effects.some((e) => e.type === 'damage' && e.bet?.resource === 'hp'),

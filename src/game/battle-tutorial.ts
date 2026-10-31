@@ -6,7 +6,7 @@ import { closeAllLessons, dismissLesson, nudgeLesson, onLessonsTurnedOff, showCa
 
 /**
  * Savaş içi tutorial yöneticisi (sefer savaşı; BattleScene çağırır, kurallar saf src/tutorial/lessons.ts, docs/design/tutorial.md).
- * - İlk savaş (Mill Road): açılış sözü + zorunlu adımlar. 1. karar: sıra çubuğu -> saldırı düğmesi -> hedef; 2. karar (f_mp_skill): kahramanın
+ * - İlk savaş (Mill Road): açılış sözü + zorunlu adımlar. 1. karar: sıra çubuğu -> saldırı düğmesi -> Hit Chance -> hedef; 2. karar (f_mp_skill): kahramanın
  *   en güçlü MP skill'i parlar, oyuncu onu bir hedefe kullanır, ardından "Skills and MP" dersi burada gösterilir (kullanılabilir MP skill'i
  *   yoksa adım sessizce atlanır). Adım bitmeden başka girdi kabul edilmez (`allowSkill` / `allowGlobal` / `allowPerform`); ayar kapalıysa ya
  *   da "Don't show again" basılırsa serbest kalır.
@@ -20,6 +20,8 @@ const AWAIT_TEXT: Record<Exclude<ForcedAwait, 'next'>, string> = {
   skill: 'Press the glowing skill',
   target: 'Tap a glowing enemy',
 };
+
+const HIT_CHANCE = 'hit_preview';
 
 /** Yenilgi ipucu bu oturumda bu düğüm + yenilgi sayısı için gösterildi mi (her yeni denemede bir kez). */
 const hintShown = new Set<string>();
@@ -202,6 +204,18 @@ export class BattleTutorial {
 
   /** Sıradaki zorunlu adımı açar; kalmadıysa serbest kalır. */
   private nextStep(): void {
+    // Hit Chance (Ömer 2026-10-31): ilk saldırı seçilince, hedef adımından önce. Mill Road'da durum dersi çıkmadığı için aksi halde ikinci savaşa
+    // kalıyordu. Kart kapanana kadar vuruş kilitli (phase 'next'); hedefin üstündeki sayılar bu sırada görülebilir.
+    if (this.steps[0]?.forced === 'target' && !seenLessons().has(HIT_CHANCE)) {
+      this.setPhase('next');
+      const shown = showLesson(HIT_CHANCE, {
+        force: true,
+        onClose: () => {
+          if (this.phase === 'next') this.nextStep();
+        },
+      });
+      if (shown) return;
+    }
     const l = this.steps.shift();
     if (!l || !l.forced) {
       this.setPhase(null);

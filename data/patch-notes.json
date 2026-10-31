@@ -2,6 +2,29 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.9.10.8",
+      "date": "2026-10-31",
+      "groups": [
+        {
+          "heading": "Fixes",
+          "items": [
+            "Ravenwood and Ruined Watchtower now have their own battle backgrounds.",
+            "Asking a question in dialogue now gets a direct answer before the conversation moves on.",
+            "The Charcoal Burner in Ashford has his own unmasked portrait.",
+            "The first battle now explains Hit Chance before you choose a target.",
+            "Clicking near Got it on a tutorial card no longer turns off all tutorials.",
+            "The reason you can't target an enemy is no longer hidden behind its info card."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Enemy skills now cost much more mana, so enemies can run out of mana in long fights."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.10.7",
       "date": "2026-10-31",
       "groups": [

@@ -128,6 +128,7 @@
     "ash_on_the_wind": {
       "title": "Ash on the Wind",
       "speaker": "Charcoal Burner",
+      "portrait": "charcoal_burner_villager",
       "text": "In the village square a charcoal burner sits wrapped in a blanket, his hands still black with soot. He flinches as your company approaches.",
       "dialogue": [
         {
@@ -138,7 +139,8 @@
               "likes": true
             },
             {
-              "label": "\"Spare us the sob story. What do you want?\""
+              "label": "\"Spare us the sob story. What do you want?\"",
+              "reply": "\"Nothing you'd miss. Only for someone to hear it.\""
             }
           ]
         },
@@ -151,7 +153,8 @@
             },
             {
               "label": "\"Did anyone else get out?\"",
-              "likes": true
+              "likes": true,
+              "reply": "\"Not that I saw. I ran, and all I could hear behind me was the singing.\""
             },
             {
               "label": "\"Forests burn. You of all people should know.\""
@@ -194,7 +197,7 @@
           "text": "\"Whatever stands there now does not tire and does not bleed. Why should I send you to it?\"",
           "choices": [
             { "label": "\"Because the Ash Lord's men will cross it if we don't.\"", "likes": true },
-            { "label": "\"Every guardian has a weakness. Tell us what you've seen.\"", "likes": true },
+            { "label": "\"Every guardian has a weakness. Tell us what you've seen.\"", "likes": true, "reply": "\"What I have seen, I will tell to those who mean to come back.\"" },
             { "label": "\"For the gold, mostly.\"" }
           ]
         },

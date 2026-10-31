@@ -137,6 +137,9 @@
 
 /* Kit secondary düğmesi (el-btn), diğer pencerelerle aynı dil; yalnızca dar */
 .tut-ok.el-btn {
+  /* "Don't show again" dokunma alanı düğmenin altına biniyor: çakışan yerde tıklama düğmeye gider */
+  position: relative;
+  z-index: 1;
   min-width: max(84px, calc(150 * var(--u)));
   min-height: 44px;
   height: 44px;

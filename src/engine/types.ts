@@ -1280,6 +1280,11 @@ export interface SkillAiHint {
   reserveMp?: number;
   /** MP ayırmada (ve Rest/Skip hesabında) skill için gereken en az MP oranı (All In: MP bahsi büyük olsun diye maks MP'nin bu payı). Yoksa yalnızca bedel. */
   reserveMinMpRatio?: number;
+  /**
+   * Mob mana zammı (Ömer 2026-10-31): YZ skorunda MP bedeli en fazla bu miktar sayılır (gerçek ödenecekle küçük olanı). Yalnızca skordaki bedel cezası:
+   * ödeme, canUse, Rest ve MP ayırma gerçek bedeli kullanır. Böylece mob bol manada eski kararlarını verir, tek fark mananın bitebilmesi. Yoksa gerçek bedel.
+   */
+  scoreCost?: number;
 }
 
 /** data/skills.json girdisi. */

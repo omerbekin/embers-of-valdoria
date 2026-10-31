@@ -1969,7 +1969,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 15
+    },
+    "ai": {
+      "scoreCost": 12
     },
     "cooldown": 3,
     "minPhase": 2,
@@ -3761,7 +3764,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 2,
     "motion": "melee",
@@ -3858,7 +3864,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "sky",
@@ -3932,7 +3941,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 14
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 4,
     "motion": "cast",
@@ -3961,7 +3973,10 @@
     "excludeSelf": true,
     "cost": {
       "resource": "mp",
-      "amount": 2
+      "amount": 4
+    },
+    "ai": {
+      "scoreCost": 2
     },
     "cooldown": 4,
     "turnCost": 0.5,
@@ -4029,7 +4044,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 11
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -4065,7 +4083,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 2
+      "amount": 3
+    },
+    "ai": {
+      "scoreCost": 2
     },
     "cooldown": 2,
     "motion": "cast",
@@ -4132,7 +4153,10 @@
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 19
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -4197,7 +4221,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 3,
     "motion": "melee",
@@ -4227,7 +4254,10 @@
     "range": 2,
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 3,
     "motion": "whip",
@@ -4298,7 +4328,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "ranged",
@@ -4334,7 +4367,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "ranged",
@@ -4401,7 +4437,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -4474,7 +4513,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 13
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 4,
     "motion": "sky",
@@ -4544,7 +4586,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 19
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 4,
     "motion": "cast",
@@ -4607,7 +4652,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 3,
     "motion": "sky",
@@ -4677,7 +4725,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 16
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 4,
     "motion": "cast",
@@ -4774,7 +4825,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 30
+    },
+    "ai": {
+      "scoreCost": 12
     },
     "cooldown": 5,
     "motion": "cast",
@@ -4834,7 +4888,10 @@
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 13
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 4,
     "motion": "cast",
@@ -4896,7 +4953,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 3,
     "motion": "sky",
@@ -4971,7 +5031,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 14
     },
     "cooldown": 3,
     "motion": "cast",
@@ -5008,7 +5071,10 @@
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 19
+    },
+    "ai": {
+      "scoreCost": 12
     },
     "cooldown": 4,
     "motion": "cast",
@@ -5068,7 +5134,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 3,
     "motion": "melee",
@@ -5129,7 +5198,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 5
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 3,
     "motion": "melee",
@@ -5190,7 +5262,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "ranged",
@@ -5260,7 +5335,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "sky",
@@ -5351,7 +5429,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 4,
     "motion": "cast",
@@ -5412,7 +5493,10 @@
     "range": 2,
     "cost": {
       "resource": "mp",
-      "amount": 5
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 5
     },
     "cooldown": 3,
     "motion": "melee",
@@ -5546,7 +5630,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 13
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 4,
     "motion": "cast",
@@ -5586,7 +5673,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 25
+    },
+    "ai": {
+      "scoreCost": 12
     },
     "cooldown": 3,
     "motion": "sky",
@@ -5664,7 +5754,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 17
+    },
+    "ai": {
+      "scoreCost": 12
     },
     "cooldown": 3,
     "motion": "cast",
@@ -5700,7 +5793,10 @@
     "excludeSelf": true,
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 15
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 4,
     "motion": "cast",
@@ -5786,7 +5882,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 17
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 2,
     "motion": "cast",
@@ -5822,7 +5921,10 @@
     "target": "all_allies",
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 20
+    },
+    "ai": {
+      "scoreCost": 12
     },
     "cooldown": 4,
     "motion": "cast",
@@ -5923,7 +6025,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "melee",
@@ -5979,7 +6084,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "ranged",
@@ -6050,7 +6158,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 4,
     "motion": "cast",
@@ -6177,7 +6288,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 12
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -6240,7 +6354,10 @@
     "excludeSelf": true,
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 10
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 4,
     "motion": "cast",
@@ -6295,7 +6412,10 @@
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -6360,7 +6480,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 7
+      "amount": 12
+    },
+    "ai": {
+      "scoreCost": 7
     },
     "cooldown": 3,
     "motion": "ranged",
@@ -6433,7 +6556,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "cast",
@@ -6494,7 +6620,10 @@
     "range": 4,
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 7
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 2,
     "motion": "whip",
@@ -6528,7 +6657,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 10
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "melee",
@@ -6628,7 +6760,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 11
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 4,
     "motion": "cast",
@@ -6686,7 +6821,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 20
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 4,
     "motion": "cast",
@@ -6718,7 +6856,10 @@
     "range": 2,
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 3,
     "motion": "melee",
@@ -6778,7 +6919,10 @@
     "range": 5,
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "cast",
@@ -6811,7 +6955,10 @@
     "target": "all_allies",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 11
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 4,
     "motion": "cast",
@@ -6868,7 +7015,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 10
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -6904,7 +7054,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 7
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "melee",
@@ -6967,7 +7120,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 7
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "melee",
@@ -7002,7 +7158,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 10
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "ranged",
@@ -7177,7 +7336,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 19
+    },
+    "ai": {
+      "scoreCost": 14
     },
     "cooldown": 3,
     "motion": "cast",
@@ -7213,7 +7375,10 @@
     "target": "all_allies",
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 19
+    },
+    "ai": {
+      "scoreCost": 14
     },
     "cooldown": 4,
     "motion": "cast",
@@ -7272,7 +7437,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 23
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 4,
     "motion": "cast",
@@ -7304,7 +7472,10 @@
     "excludeSelf": true,
     "cost": {
       "resource": "mp",
-      "amount": 2
+      "amount": 5
+    },
+    "ai": {
+      "scoreCost": 2
     },
     "cooldown": 4,
     "turnCost": 0.5,
@@ -7598,7 +7769,10 @@
     "minPhase": 2,
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 18
+    },
+    "ai": {
+      "scoreCost": 12
     },
     "cooldown": 4,
     "motion": "cast",
@@ -7719,7 +7893,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 19
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 2,
     "motion": "cast",
@@ -7754,7 +7931,10 @@
     "target": "all_enemies",
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 12
     },
     "cooldown": 4,
     "motion": "cast",
@@ -7859,7 +8039,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 10
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 4,
     "motion": "melee",
@@ -7891,7 +8074,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 10
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 4,
     "motion": "cast",
@@ -7951,7 +8137,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 2,
     "motion": "melee",
@@ -8090,7 +8279,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 12
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -8157,7 +8349,10 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 35
+    },
+    "ai": {
+      "scoreCost": 12
     },
     "cooldown": 5,
     "motion": "cast",
@@ -8223,7 +8418,10 @@
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -8286,7 +8484,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 3,
     "motion": "melee",
@@ -8350,7 +8551,10 @@
     "range": 2,
     "cost": {
       "resource": "mp",
-      "amount": 5
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 5
     },
     "cooldown": 3,
     "motion": "melee",
@@ -8414,7 +8618,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 11
+    },
+    "ai": {
+      "scoreCost": 6
     },
     "cooldown": 3,
     "motion": "ranged",
@@ -8475,7 +8682,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 25
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "sky",
@@ -8550,7 +8760,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 25
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -8616,7 +8829,10 @@
     "range": 2,
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 3,
     "motion": "whip",
@@ -8678,7 +8894,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 3,
     "motion": "melee",
@@ -8749,7 +8968,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 12
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 3,
     "motion": "cast",
@@ -8811,7 +9033,10 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 4
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 4
     },
     "cooldown": 3,
     "motion": "melee",
@@ -8871,7 +9096,10 @@
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 13
+    },
+    "ai": {
+      "scoreCost": 8
     },
     "cooldown": 4,
     "motion": "cast",
@@ -8931,7 +9159,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 25
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 3,
     "motion": "sky",

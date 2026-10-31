@@ -244,7 +244,8 @@
             },
             {
               "label": "\"Tell us about the hill clans.\"",
-              "likes": true
+              "likes": true,
+              "reply": "\"Their mountain, they call it. Strangers pay to walk it, in silver or in blood.\""
             },
             {
               "label": "\"We have walked through worse.\""
@@ -297,7 +298,8 @@
             },
             {
               "label": "\"Tell us of the Stone Oath.\"",
-              "likes": true
+              "likes": true,
+              "reply": "\"Every dwarf of Kharduin swore it, and their names are cut into the hall walls. An oath cut there is never uncut.\""
             },
             {
               "label": "\"For a price.\""

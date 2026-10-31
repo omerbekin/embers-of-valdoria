@@ -12,7 +12,7 @@
 ## Akış
 | Yer | Ders | Ne zaman |
 |---|---|---|
-| I · Mill Road | Açılış sözü, The Turn Bar, Attacking, Choosing a Target | İlk karar: ZORUNLU adımlar (Next -> saldırı düğmesi -> düşmana dokun). Savaş kaybedilemez (takımın tamamı, 2 kahramanla da). |
+| I · Mill Road | Açılış sözü, The Turn Bar, Attacking, Hit Chance, Choosing a Target | İlk karar: ZORUNLU adımlar (Next -> saldırı düğmesi -> Hit Chance "Got it" -> düşmana dokun; Ömer 2026-10-31: Hit Chance ilk vuruş çözülmeden önce). Savaş kaybedilemez (takımın tamamı, 2 kahramanla da). Ölçülen sıra: `tutorial-order.md`. |
 | I · Mill Road | Stronger Skills (`f_mp_skill`) + Skills and MP | İkinci karar: ZORUNLU; kahramanın şu an kullanılabilen en güçlü MP skill'i parlar, oyuncu onu kullanır; ardından Skills and MP burada gösterilir. Kullanılabilir MP skill'i yoksa adım sessizce atlanır. |
 | Her savaş (Mill Road hariç) | Durum dersleri (aşağıdaki tablo) | Durum ilk kez oluşunca |
 | I · Ravenwood (katılımdan sonra) | Zorunlu Formation (ipucu kartı "Arrange your formation...") | Yeni kahraman katılınca savaş beklemede; Formation düğmesi kor rengiyle parlar; Formation açılana kadar savaşa dokunmak savaşı BAŞLATMAZ ("Open Formation first." notu + ipucu kartı yeniden + parıltı çakar). Açılıp kapanınca parıltı söner, savaş normal (aşağıda Kurallar). |
@@ -39,7 +39,7 @@
 | The Ultimate | 4. skill ilk kez hazır | O skill | Ultimate kullanılınca |
 | Fallen Heroes | Oyuncunun bir kahramanı düşmüş (`fallen`); Valor açıksa metin Valor'u da sayar | - | Bir kez |
 | Skills and MP | Kullandığı skill beklemede ya da MP harcandı (Mill Road MP adımında zaten gösterilir) | O skill | Bir kez gösterilince |
-| Hit Chance | Düşmana hasar veren skill seçildi (`preview`; hedefin üstünde "-22 / 81% hit") | - | Bir kez |
+| Hit Chance | Normalde Mill Road 1. kararda gösterilir (yukarıda). Görmemiş eski kayıtta: düşmana hasar veren skill seçildi (`preview`; hedefin üstünde "-22 / 81% hit") | - | Bir kez |
 | Helping Allies | Dost seçen skill seçildi (`ally`, `single_ally`) | - | Bir kez |
 | Rows and Reach | Seçilen yakın dövüş skill'i arka sıradaki düşmana ulaşamıyor | - | Bir kez |
 | Area Shapes | Alan skill'i seçildi | - | Bir kez |

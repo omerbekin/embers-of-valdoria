@@ -276,12 +276,12 @@ describe('YZ bağlam: MP ayırma ve genel özellikler', () => {
     expect(JSON.stringify(b.combatants)).toBe(before);
   });
 
-  it('madde 258: skill ai ipuçlarında yalnızca MP ayırma alanları kalır (reserveMp, reserveMinMpRatio); bağlam koşulu yok; yuva ağırlığı kalmadı', () => {
-    const allowed = new Set(['reserveMp', 'reserveMinMpRatio']);
+  it('madde 258: skill ai ipuçlarında yalnızca MP ayırma alanları (reserveMp, reserveMinMpRatio) ve mob mana zammının scoreCost alanı kalır; bağlam koşulu yok; yuva ağırlığı kalmadı', () => {
+    const allowed = new Set(['reserveMp', 'reserveMinMpRatio', 'scoreCost']);
     for (const sk of Object.values(content.skills)) {
       if (!sk.ai) continue;
       for (const k of Object.keys(sk.ai)) expect(allowed.has(k), `${sk.id}.ai.${k}`).toBe(true);
-      expect(sk.ai.reserveMp, sk.id).toBeGreaterThan(0);
+      if (sk.ai.scoreCost === undefined) expect(sk.ai.reserveMp, sk.id).toBeGreaterThan(0);
     }
     for (const id of ['meteor', 'aimed_shot', 'void_strike', 'all_in', 'doom_mark']) expect(content.skills[id]!.ai?.reserveMp, id).toBeDefined();
     expect(content.skills.judgment!.ai).toBeUndefined();

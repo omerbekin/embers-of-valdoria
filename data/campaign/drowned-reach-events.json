@@ -452,7 +452,7 @@
           "text": "\"Morvane. So the ash lord is dead, and his crown comes down my river. Then mind the Order. The monks of St. Brann have shut the road at Saltmere Gate. Quarantine, they call it. Nobody passes without a reason they like, and they like very few.\"",
           "choices": [
             { "label": "\"What are they afraid of?\"", "likes": true },
-            { "label": "\"Who else crosses this river, besides us?\"", "likes": true },
+            { "label": "\"Who else crosses this river, besides us?\"", "likes": true, "reply": "\"Few enough, since the monks shut the road. You'd do better to ask what they're afraid of.\"" },
             { "label": "\"We'll give them a reason. Steel is a good one.\"" }
           ]
         },
@@ -490,7 +490,7 @@
           "text": "\"Good. You think. Most who go down there only swing. Six of my wardens went to mend the broken weir last spring, and I pulled two of them out of the water. The wyrm holds the gap now, and every tide it grows fatter. Do you know why the water's rising?\"",
           "choices": [
             { "label": "\"Tell us. We'd rather know than guess.\"", "likes": true },
-            { "label": "\"What became of the two you pulled out?\"", "likes": true },
+            { "label": "\"What became of the two you pulled out?\"", "likes": true, "reply": "\"They are not your concern. Why the water's rising is.\"" },
             { "label": "\"Water rises. That's what it does.\"" }
           ]
         },

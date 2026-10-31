@@ -1363,6 +1363,9 @@ Denetimdeki (ai-coverage) B / C satırlarının hepsi değer alıyor. Ağırlık
 11. **Test değişikliği:** `ai-value.test.ts` #5 (Defender ölmek üzere olan dost için Taunt) Taunt'ın breakRatio'su (0,25) değerlenince o senaryoda Tremor Slam seçiyor (Taunt ilk turda kırılıyor). Feda kuralı (K6) kırılma eşiği olmayan Taunt'la aynen geçiyor; test buna göre güncellendi. **Soru:** bu senaryoda Defender'in Taunt'u seçmesi mi istenir (breakRatio değerini yumuşatmak gerekir), yoksa yeni davranış doğru mu?
 Açık: denge simi (Ömer çalıştıracak); ağırlıkların ölçümü.
 
+## 466. Mob mana bedelleri hedefli artırıldı (Ömer 2026-10-31, seçenek 1)
+
+Ömer "mobların mana bedeli çok az" dedi ve hedefli zammı seçti. Kural: skill'lerini sürekli kullanan birim 5-6 kullanımda ilk kez "mana yetmedi"ye düşer; hesap birimin çıktığı canlı haritanın üst level'ında (Map 1 L10, Map 2 L20; yalnız Map 3 yer tutucularındaki moblar L30) yapıldı, birimin skill'leri aynı oranda arttı, zaten hedefte olanlar değişmedi, bedelsiz skill'ler bedelsiz kaldı. Değişiklik yalnızca `data/skills.json` bedelleri. YZ kuralı: bedeli değişen her skill'e `ai.scoreCost` = eski miktar yazıldı; YZ skorundaki MP cezası gerçek bedel ile `scoreCost`un küçüğünü sayar, ödeme ve mana yeterliliği gerçek bedelle kalır, yani mob bol manada eski kararlarını verir ve tek fark mananın bitebilmesidir. VARSAYIM: Map 3 açılınca oradaki bedeller yeniden bakılmalı; birim haritanın alt level'ında 1-2 kullanım daha erken tükenebilir. AÇIK: moblar zayıfladığı için sefer simi henüz koşulmadı (Ömer'in kararı bekleniyor); hasar/can telafisi gerekip gerekmediği buna bağlı. `docs/design/campaign/mob-plan.md` tablolarındaki eski bedeller tarihsel plan olarak kaldı.
 ## 464. Vesper ağacı: 25 düğümün varsayımları ve savaş içi dalgada çan sayacı
 
 Ömer 2026-10-31 ağacı onayladı, sayılar provizyon (sim yok). Metni tek anlama gelmeyen düğümlerde en dar yorum alındı:
@@ -1395,6 +1398,7 @@ Varsayımlar:
 5. **Eşitlikler seyrekleşti:** eskiden aynı tam sayıya düşen birimler artık genelde farklı hızda. Karışık sıra (D4) yalnız gerçek eşitlikte çalışır; "hedeften hızlıysan" kuralları (Hunter's Mark, ağaç `fasterThanTarget`) küçük farkta da tetiklenir. Etkisi sim'le ölçülmedi.
 6. **Match log:** hız ve sayaç ham (3 ondalık) yazılır, oyuncu ekranı değil.
 ## 459. Kasaba level'ı ve dükkân tavanı
+## 467. Kasaba level'ı ve dükkân tavanı
 
 Ömer 2026-10-31 (#23, yeni kural, onaylı): her kasabanın level'ı var; dükkân bu level'ın çok üstünde item satamaz. Kasaba level'ı otomatik (yanındaki düğümlerin düşman level'ından). Tavan için notu: "level farkı bir sonraki towna kadar olan moblara göre belirlensin". Kod: `src/campaign/power.ts > townLevel, shopCeiling`; `merchant.ts > campaignStock`.
 
@@ -1419,6 +1423,14 @@ Açık: denge simi çalıştırılmadı (Valdren Keep'te daha güçlü mal, yük
 **Karar (Ömer 2026-10-31):** Ley Brand'in alanı aynı, mana yakması azalır; oyunda tek mana yakma kuralı olur. **Değer önerisi (engine-dev, PROVİZYON, sim bekliyor):** `castBurnPct` 0,75 -> 0,5; `threadBurnMult` 2 -> 1,5. **Ömer teyit etti:** azalan, Ley Brand'in Branded yakması; Mana Steal'in 10 MP yakması değişmedi. Ağaç tetikleri (Drink Deep, Tempo Thief) yalnız skill yakımında kaldı.
 
 ## 462. Block Break varsayımları
+## 468. Kullanılmayan mana kuralı ve Ley Brand
+**Karar (Ömer 2026-10-31):** Birime özel istisna yok. Mana kullanmayan birimin manası olmaz; AM yine bu birimlere Ley Brand ile tainted mana açabilir (madde 444 aynen, Risen Skeleton ve The Weir-Wyrm dahil).
+**Karar (Ömer 2026-10-31):** kitinde MP harcayan bir şey olmayan birimde mana tamamen yoktur. Verisinde MP olup kuraldan etkilenen birimler: Risen Skeleton, The Weir-Wyrm (Skeleton, Treant, Risen Drowned'ın verisinde MP zaten 0'dı). **Varsayım (engine-dev):** madde 444 aynen kaldı: Ley Brand MP havuzu olmayan hedefe tainted mana açar, bu birimler de artık bu kapsamda (yeni bir istisna yazılmadı). **Açık soru:** Risen Skeleton ve Weir-Wyrm Ley Brand yiyince tainted havuz alsın mı, yoksa hiç almasın mı?
+
+## 469. Ley Brand yakımı azaldı, tek mana yakma kuralı
+**Karar (Ömer 2026-10-31):** Ley Brand'in alanı aynı, mana yakması azalır; oyunda tek mana yakma kuralı olur. **Değer önerisi (engine-dev, PROVİZYON, sim bekliyor):** `castBurnPct` 0,75 -> 0,5; `threadBurnMult` 2 -> 1,5. **Ömer teyit etti:** azalan, Ley Brand'in Branded yakması; Mana Steal'in 10 MP yakması değişmedi. Ağaç tetikleri (Drink Deep, Tempo Thief) yalnız skill yakımında kaldı.
+
+## 470. Block Break varsayımları
 
 Ömer'in kararı (#17, 2026-10-31): "block kırma şansı gibi karşı bufflar olsun. düşmanlarda kalkanı olanların da block şansı olsun. oyundaki itemlara da block kırma şansı gelsin." Block üst sınırı kalktı. Aşağıdakiler uygulayıcının varsayımı, sayılar PROVİZYON (sim çalıştırılmadı):
 
@@ -1431,6 +1443,7 @@ Açık: denge simi çalıştırılmadı (Valdren Keep'te daha güçlü mal, yük
 7. **Duraklatılmış sefer savaşı:** kalkanlı mob olan yarım savaş yeni sürümde tutmaz, baştan başlar (mevcut güvenli kural).
 
 ## 463. Dükkân rafları varsayımları
+## 471. Dükkân rafları varsayımları
 
 Ömer'in kararı (2026-10-31): ilk gelişte raflar kasaba level'ında; geçen her gün 2 raf aktif takımın ortalama level'ında (en çok raf sayısı); parayla Reroll hepsini takım level'ında yeniler, fiyatı artar; tavan (`shopCeiling`) aşılmaz; raflar kayda yazılır. Kural: `docs/design/progression/items.md` 2.2. Aşağıdakiler uygulayıcının varsayımı, sayılar PROVİZYON (sim çalıştırılmadı):
 

@@ -169,6 +169,7 @@ import { SIDE_DANGER_LINE, SIDE_DANGER_NAME, sideDanger } from '../../campaign/s
 import { DayCounter } from '../../ui/day-counter';
 import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
 import { openStoryDialog, type StoryDialogHandle } from '../../ui/story-dialog';
+import { dialogueAdvance, dialogueStart, type DialoguePage } from '../../campaign/dialogue-flow';
 import { playCinematic, type CinematicHandle } from '../../ui/cinematic';
 import { openCompanyWindow, type CompanyHandle } from '../../ui/company-window';
 import { choiceStyle, openMapWindow, windowArt, type MwCard, type MwHandle, type MwSpec } from '../../ui/map-window';
@@ -3636,45 +3637,48 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!root) return;
     this.closeModal();
     let sd: StoryDialogHandle | null = null;
-    let at = 0;
-    let finale = false;
+    let page = dialogueStart(dialogue);
     const close = (): void => {
       sd?.close();
       sd = null;
       this.modal = null;
     };
-    const show = (i: number): void => {
-      at = i;
-      if (i >= dialogue.length) {
-        finale = true;
+    const show = (p: DialoguePage): void => {
+      page = p;
+      if (p.kind === 'reply') {
+        // Cevabın kendi kısa karşılığı (varsa); Continue sonraki adıma geçer, cevap saymaz
+        sd!.update({ said: p.text, choices: ['Continue'], step: p.at, total: dialogue.length });
+        return;
+      }
+      if (p.kind === 'end') {
         const liked = storyLiked(storyId, answers);
         const raw = liked ? (def.liked ?? '') : (def.disliked ?? '');
         const note = liked && def.gift && !replay ? storyGiftNote(def) : '';
         sd!.update({ said: raw, ...(note ? { note } : {}), choices: ['Continue'], step: dialogue.length, total: dialogue.length, done: true });
         return;
       }
-      const st = dialogue[i]!;
-      sd!.update({ ...(i === 0 && def.text ? { narr: def.text } : {}), said: st.text, choices: st.choices.map((c) => c.label), step: i, total: dialogue.length });
+      const st = dialogue[p.at]!;
+      sd!.update({ ...(p.at === 0 && def.text ? { narr: def.text } : {}), said: st.text, choices: st.choices.map((c) => c.label), step: p.at, total: dialogue.length });
     };
     sd = openStoryDialog(root, {
       title: def.title,
       speaker: def.speaker ?? n.name,
+      portrait: def.portrait,
       place: n.name,
       onPick: (k) => {
-        if (finale) {
+        if (page.kind === 'end') {
           close();
           return finish(answers);
         }
-        answers.push(k);
-        worldSound('seal'); // seçim mühürlenir
-        show(at + 1);
+        if (page.kind === 'step') worldSound('seal'); // seçim mühürlenir
+        show(dialogueAdvance(dialogue, page, k, answers));
       },
       ...(replay ? { onDismiss: () => this.closeModal() } : {}),
     });
     worldSound('quill'); // olay / diyalog: tüy kalem parşömende
     this.events.once('shutdown', close); // sahne kapanırsa (Menu > Main menu) DOM şerit de kapanır
     this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
-    show(0);
+    show(page);
   }
 
   /**

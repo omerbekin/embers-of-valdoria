@@ -72,7 +72,7 @@ describe('sefer karşılaşmaları', () => {
     // Arka plan önceliği: karşılaşma > düğüm > bölge; King's Bridge kendi arka planını kullanır, dosyası diskte var
     expect(at('9').plan.background).toBe('kings-bridge');
     expect(existsSync(join(__dirname, '..', 'assets', 'backgrounds', 'kings-bridge.webp'))).toBe(true);
-    expect(at('3').plan.background).toBe(map.regions.find((r) => r.id === map.nodes.find((n) => n.id === '3')!.region)?.battleBackground);
+    expect(at('3').plan.background).toBe('ruined-watchtower');
     const b = at('9');
     const warden = toLastWave(b.battle).combatants.find((c) => c.side === 'enemy' && c.defId === 'bridge_warden')!;
     expect(warden.tier).toBe('boss');
