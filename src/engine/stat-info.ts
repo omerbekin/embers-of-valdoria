@@ -169,7 +169,6 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         lines: [
           `Base ${pct(a.accuracyBase)}, +${pct(a.accuracyPerLuck, 1)} per Luck`,
           'Chance to hit = your accuracy - the target evasion',
-          `Can drop to 0% but never above ${pct(f.hit.max)}; applies to every damaging skill, not to heals, shields or buffs`,
         ],
       };
     case 'evasion':

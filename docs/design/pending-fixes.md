@@ -1,7 +1,27 @@
 # Bekleyen düzeltmeler (Minor Fixes kanalı)
-
 Ömer 2026-10-30: güncelleme geçici olarak durdu; bu kanala gelenler düzeltilmez, buraya not alınır. Güncellemeler dönünce sırayla ele alınır.
-
 | # | Tarih | Konu | Not / yön |
 |---|---|---|---|
 | 1 | 2026-10-30 | AM: Ley Thread çok güçlü | Karşı takıma oyun oynatmıyor, mana bırakmıyor. Yön: mana yakmayı azalt **ya da** alanını küçült (Ömer seçecek). Denge değişikliği: sim ile doğrulanır. |
+| 2 | 2026-10-31 | Leader tacı kafanın üstünde değil | Warrior'da tac başın üstünde değil, sola kaymış duruyor (kadro/formation ekranı, karakter adı altta). Tacı başın üstüne ortala; diğer tüm karakterlerde de kontrol et. |
+| 3 | 2026-10-31 | Valdren Keep: Castle Gate saçma yerde | Kapı en sağda, yüksekte, Odo's Stall ve Inn'in arkasında kalıyor; meydandan ona giden yol yok. Öneri: görseli yeniden üret (mevcut görsel referans, gerisi aynı kalsın), kapı sokak seviyesinde ve meydandan yolu görünsün; sonra Castle Gate etiketini yeni yerine taşı. Yalnız etiketi taşımak yetmez, kapı görselin içinde çizili. Üç ekran boyutunda kontrol; Ömer görmeden içe aktarılmaz. Ömer'in onayı bekleniyor. |
+| 4 | 2026-10-31 | 2. kasabada Barracks'taki 4. üye gözden kaçıyor | Barracks'ta katılmayı bekleyen 4. üye var ama oyuncu Barracks'a tıklamazsa bunu görmüyor; kasabadan haberi olmadan çıkabilir. Yön: Barracks'ta bekleyen üye olduğunu kasaba ekranında belli et (biçimi Ömer seçecek). |
+| 5 | 2026-10-31 | Gear: giyilecek silah etiketleri çirkin | **Ömer seçti: D.** 'Axes & Swords', 'Maces & Shields' kutuları kalkar; kimin ne giydiği eşyanın hover'ında zaten görünüyor. Sınıf satırında çerçevesiz 'Level 3 Warrior' yazar (seviye o karakterinki). |
+| 6 | 2026-10-31 | Gear çantası: filtre düğmeleri çirkin | Bag başlığının sağında 'Best: Warrior', altındaki satırda 'Best: All' ve 'All Items'; düğmeler dağınık ve iki satıra bölünmüş. Yerleşim yeniden düşünülecek (biçimi Ömer seçecek). |
+| 7 | 2026-10-31 | Mage 3. skill: itilen karakter yürüyor | Mage'in 3. skill'i birini attığında (yer değiştirince) karakter yürüme animasyonuyla gidiyor. Yön: hafifçe zıplayarak gitsin. Not: Mage reworkü skill 3'ü değiştiriyor olabilir (mage-rework formu), yapmadan önce bak. |
+| 8 | 2026-10-31 | Accuracy ipucu: 3. satırı sil | Stat ipucundaki 'Can drop to 0% but never above 100%; applies to every damaging skill, not to heals, shields or buffs' satırı kalkacak. |
+| 9 | 2026-10-31 | Crit Damage ipucu: 'never to shields' kalksın | 2. satır 'Applies to the final damage and healing of a crit' olarak kısalacak. |
+| 10 | 2026-10-31 | Gear > Sheet: stat görünümü çirkin | Main/Attack/Defense sütunlarında adlar kesiliyor ('S..', 'C...', 'A...'), iki C ve iki M ayırt edilmiyor; altta boş alan kalırken satırlar sıkışık. Görünüm yeniden düşünülecek (mockup, Ömer seçer). |
+| 11 | 2026-10-31 | Stat ipuçları: formül ve 'diminishing returns' yazmasın | Armor, Magic Armor ve benzerlerinde 'Diminishing returns armor / (armor + 60)...' satırı kalkacak; kafa karıştırıyor. 'Reduces physical damage taken by 33.3%' gibi sonuç satırı kalır. Azalan getirili diğer statları da tara. |
+| 12 | 2026-10-31 | Stat ipuçları: 'now STR 29' kutusu çirkin | Kutulu görünüm birkaç ipucunda ortak olabilir; hepsinde birlikte değiştirilecek (yeni biçim Ömer'e sorulur). |
+| 13 | 2026-10-31 | Stat ipuçları: 'hiçbir şey olmaz' satırları kalksın | Ömer: bir şey olmuyorsa yazma, olursa yaz. Örn. HP Regen 'Nothing happens at full HP'. Benzer satırları da tara. |
+| 14 | 2026-10-31 | HP Regen sayısı tutmuyor (gözlem, Ömer sormadı) | İpucu 4 yazıyor, Sheet listesi 3.6. Yuvarlama mı gerçek fark mı bakılacak. |
+| 15 | 2026-10-31 | MP Regen ipucu: 'Never goes above max MP' kalksın | #13 ile aynı kural. Ayrıca buradaki 'now INT 12 ; 0 INT = none' kutusu da #12'nin kapsamında. |
+| 16 | 2026-10-31 | Block ipucu: 2. satır kalksın | 'Spells, damage over time... cannot be blocked...' satırı gereksiz: neyin bloklandığı zaten yazıyor. |
+| 17 | 2026-10-31 | Block tavanı %30: Ömer hatırlamıyor | Kural oyunda gerçek (items.json caps.block, src/engine/item-caps.ts). Ömer karar verecek: kalsın mı kalksın mı. |
+| 18 | 2026-10-31 | Luck ipucu: 'never of shields' kalksın | Son satır 'Crits are the final multiplier of damage and healing' olur. #9 ile aynı; shield geçen diğer crit metinlerini de tara. |
+| 19 | 2026-10-31 | Sheet > Skill Tree: Active Nodes ikon + hover | Listedeki düğümlerin (Thick Hide, Grit, Shared Scars...) yanına ikon gelsin; hover'da ne işe yaradığı ve o anki level'a göre kaç bonus verdiği yazsın. |
+| 20 | 2026-10-31 | Kasaba düğüm kartı: uzun açıklama kalksın | 'Towns do not heal you...' metni yerine kasabada neler yapılabileceği kısaca yazılsın (Blacksmith'te eşyanı dövebilirsin, Inn'de dinlenirsin vb.; o kasabada ne varsa). |
+| 21 | 2026-10-31 | Tüm düğüm kartları: 'Then ...' satırı kalksın | 'THEN Dwarven Mine or Witch's Hut or Misty Marsh' gibi sonraki düğüm yazısı genel olarak kaldırılacak. |
+| 22 | 2026-10-31 | Savaş: Branded uçan yazısı kalabalık | Karakter üstünde yalnız 'Branded 3 turns' yazsın; 'MP costs 50% higher' ve 'MP skills burn 75% extra' satırları uçan yazıdan kalksın. Aynı çok satırlı yazıyı kullanan diğer durumlara bak. |
+| 23 | 2026-10-31 | Kasabaların level'ı olsun (yeni kural, Ömer istedi) | Her kasabanın belirli bir level'ı olacak; dükkânı bu level'ın çok üstünde item satamayacak. Açık: 'çok üstü' kaç level, kasaba level'ları kaç. Ömer'e sorulacak. |

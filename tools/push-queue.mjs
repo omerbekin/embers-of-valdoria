@@ -1071,7 +1071,8 @@ async function wtClose(sidArg) {
 }
 
 function wtAutocommit(rec, msg) {
-  gx(rec.path, ['add', '-A', '--', '.', ':(exclude)assets/source', ':(exclude).claude/worktrees', ':(exclude)node_modules', ':(exclude)dist']);
+  // node_modules ve dist .gitignore'da: burada dışlamak "ignored" hatasıyla add'i düşürüyordu (2026-10-31)
+  gx(rec.path, ['add', '-A', '--', '.', ':(exclude)assets/source', ':(exclude).claude/worktrees']);
   if (gxOk(rec.path, ['diff', '--cached', '--quiet'])) return false;
   gx(rec.path, ['commit', '-q', '--no-verify', '-m', `chat: ${String(msg ?? 'hazır').slice(0, 72)}`], { env: WHO });
   return true;
