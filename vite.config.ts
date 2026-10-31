@@ -37,6 +37,8 @@ export default defineConfig({
   // Hesap / bulut kaydı (accounts-plan.md): geliştirme sunucusunda /auth, /save, /account yerel Worker'a (`wrangler dev`, 8787) gider;
   // Host başlığı korunur (changeOrigin yok): çerez ve OAuth dönüş adresi 5173 kökeninde kalır.
   server: {
+    // Sohbet kopyaları (Ömer 2026-10-31) 5173'ü yeniden yüklemesin; vitest zaten yalnız kökteki tests/ altını tarar
+    watch: { ignored: ['**/.claude/worktrees/**'] },
     proxy: {
       '/auth': { target: 'http://127.0.0.1:8787' },
       '/save': { target: 'http://127.0.0.1:8787' },
