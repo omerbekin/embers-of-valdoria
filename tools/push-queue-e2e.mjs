@@ -14,6 +14,8 @@ const OLD = 'aaaaaaaa-legacy-session';
 const A = 'bbbbbbbb-new-chat-a';
 const B = 'cccccccc-new-chat-b';
 const C = 'dddddddd-new-chat-c';
+const D = 'eeeeeeee-new-chat-d';
+const E = 'ffffffff-new-chat-e';
 const CRLF = (s) => s.replace(/\r?\n/g, '\r\n');
 const SHARED = Array.from({ length: 14 }, (_, i) => `line ${i + 1}`).join('\n') + '\n';
 
@@ -25,8 +27,8 @@ appendFileSync(W + '/count-test', 'x');
 const hook = W + '/on-test.mjs';
 if (existsSync(hook)) { const u = W + '/on-test-run.mjs'; writeFileSync(u, readFileSync(hook)); rmSync(hook); spawnSync(process.execPath, [u], { stdio: 'inherit' }); }
 let red = null;
-for (const f of readdirSync('tests')) if (readFileSync('tests/' + f, 'utf8').includes('RED')) red = 'tests/' + f;
-for (const f of readdirSync('src')) if (readFileSync('src/' + f, 'utf8').includes('REDSRC')) red = 'tests/t.test.ts';
+for (const f of readdirSync('tests', { withFileTypes: true })) if (f.isFile() && readFileSync('tests/' + f.name, 'utf8').includes('RED')) red = 'tests/' + f.name;
+for (const f of readdirSync('src', { withFileTypes: true })) if (f.isFile() && readFileSync('src/' + f.name, 'utf8').includes('REDSRC')) red = 'tests/t.test.ts';
 if (red) { console.log(' FAIL  |fast| ' + red + ' > boom'); process.exit(1); }
 console.log('yesil');
 `;
@@ -122,6 +124,36 @@ const read = (p) => readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 const deny = (r) => ok(r.out.includes('"permissionDecision":"deny"'), `deny bekleniyordu: ${r.out}`);
 const allow = (r) => ok(r.code === 0 && !r.out.trim(), `izin bekleniyordu: ${r.code} ${r.out}`);
 const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+const until = async (fn, what, ms = 90000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (fn()) return; await sleepMs(300); } throw new Error('zaman aşımı: ' + what); };
+const ent = (W, sid) => W.q().sessions[sid] ?? W.q().sessions[sid.slice(0, 8)];
+const setQ = (W, fn) => { const q = W.q(); fn(q); writeFileSync(join(W.game, '.git', 'push-queue.json'), JSON.stringify(q)); };
+const pre = (W, sid, p) => W.hook('hook-edit-pre', { session_id: sid, tool_input: { file_path: p } });
+// Golden üretecinin taklidi: kayıt birleşmiş koddan türer, çalıştığı sayılır
+const fakeGolden = (W, ...names) => {
+  const f = join(W.w, 'fake-golden.mjs');
+  writeFileSync(f, `import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+appendFileSync(process.env.EOV_W + '/count-golden', 'x');
+mkdirSync('tests/fixtures/golden', { recursive: true });
+for (const n of ${JSON.stringify(names)}) writeFileSync('tests/fixtures/golden/' + n, 'regen ' + readFileSync('src/a.ts', 'utf8').trim() + ' ' + readFileSync('src/b.ts', 'utf8').trim() + '\\n');`);
+  W.env.EOV_CMD_GOLDEN = `node "${f}"`;
+};
+const goldenRuns = (W) => { try { return readFileSync(join(W.w, 'count-golden'), 'utf8').length; } catch { return 0; } };
+// Sim raporunun taklidi: src/sim/cli.ts SINIF DENGESİ biçimi
+const fakeSim = (W, rows) => {
+  const f = join(W.w, 'fake-sim.mjs');
+  writeFileSync(f, `const rows = ${JSON.stringify(rows)};
+console.log('GENEL');
+console.log('');
+console.log('SINIF DENGESİ (hedef kazanma oranı %44-56; sınıfın tek tarafta olduğu savaşlar)');
+console.log('  sınıf      savaş  kazanma  ölüm  hamle  hasar  şifa  kalkan   (birim başına)');
+for (const [n, w] of rows) console.log('  ' + n.padEnd(9) + ' ' + '   300' + '  %' + w.padStart(5) + '  % 40    9,0    100     0      0');
+console.log('  UYARI: hedef aralığın dışında: Mage %60,1');
+console.log('');
+console.log('SKILL KULLANIMI');
+console.log('  Mage 300  %99,0');`);
+  W.env.EOV_CMD_SIM = `node "${f}"`;
+};
+const BALANCE = '{\n  "bands": { "classWin": { "low": 44, "high": 56 } }\n}\n';
 
 const S = {
   'cutover oncesi degismez': (W) => {
@@ -539,8 +571,10 @@ execFileSync('git', ['push','-q','origin','main'], { cwd: c });`);
     W.hook('hook-prompt', { session_id: B, prompt: 'x' });
     ok(W.wg(b, 'rev-parse', 'HEAD') === sha, 'temiz kopya yetişti');
     has(read(join(b.path, 'src/a.ts')), 'a = 3');
+    // Otomatik eşitleme (Ömer 2026-10-31): çakışmayan kirli kopya da yetişir, yarım işi durur
     W.hook('hook-prompt', { session_id: C, prompt: 'x' });
-    ok(W.wg(c, 'rev-parse', 'HEAD') !== sha, 'kirli kopya yerinde');
+    ok(W.wg(c, 'rev-parse', 'HEAD') === sha, 'kirli kopya da yetişti');
+    has(W.wg(c, 'status', '--porcelain', '-uall'), 'u.txt', 'yarım iş durur');
   },
 };
 
@@ -580,6 +614,7 @@ setTimeout(() => {}, 60000);`);
     hasNot(W.origin('src/a.ts'), 'a = 7');
     const n = W.run(['notes', A.slice(0, 8), '--fixes', 'short note line']);
     ok(!n.code, n.out);
+    ok(!ent(W, A).lastError && W.q().autoShipAt, 'sürüm notu düzelince yeniden uygun');
     W.push(A);
     has(W.origin('src/a.ts'), 'a = 7');
     has(W.origin('data/patch-notes.json'), 'short note line');
@@ -609,6 +644,465 @@ setTimeout(() => {}, 60000);`);
     W.push(A, { EOV_CMD_RELATED: `node -e "console.log(' FAIL  |fast| tests/t.test.ts > boom'); process.exit(1)"` });
     hasNot(W.origin('src/a.ts'), 'a = 6');
     ok(W.tests() === 0, 'tam teste geçmedi');
+  },
+});
+
+// Koordinasyon özellikleri (Ömer 2026-10-31)
+Object.assign(S, {
+  'muhur: sonraki commit gitmez, kalir, sonraki gonderimde gider': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 3;\n');
+    W.ready(A, 'line one');
+    const pin = W.wg(a, 'rev-parse', 'HEAD');
+    ok(ent(W, A).readySha === pin, 'mühür ready ucu');
+    W.wput(a, 'src/later.ts', 'later\n');
+    W.wg(a, 'add', '-A'); W.wg(a, 'commit', '-q', '-m', 'later');
+    W.wput(a, 'u.txt', 'yarim\n');
+    W.wput(b, 'src/b.ts', 'export const b = 3;\n');
+    W.ready(B, 'line b');
+    W.push(B);
+    const sha = W.originSha();
+    has(W.origin('src/a.ts'), 'a = 3', 'mühürlü iş gider');
+    ok(W.origin('src/later.ts') === null, 'sonraki commit gitmez');
+    ok(W.origin('u.txt') === null, 'yarım iş gitmez');
+    ok(W.wg(a, 'rev-parse', 'HEAD~1') === sha, 'sonraki commit yeni tabanın üstünde');
+    has(read(join(a.path, 'src/later.ts')), 'later');
+    has(read(join(a.path, 'u.txt')), 'yarim');
+    has(W.wg(a, 'status', '--porcelain', '-uall'), 'u.txt');
+    ok(ent(W, A).ready === false && !ent(W, A).readySha, 'mühür temizlendi');
+    W.ready(A, 'line two');
+    ok(ent(W, A).readySha === W.wg(a, 'rev-parse', 'HEAD'), 'yeniden ready mührü günceller');
+    W.push(B);
+    has(W.origin('src/later.ts'), 'later', 'sonraki gönderimde gider');
+    has(W.origin('u.txt'), 'yarim', 'ready ağacı commitledi');
+    has(W.origin('data/patch-notes.json'), 'line two');
+  },
+  'muhur: kendisi gonderen sohbet o anki hali mühürler': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: '[kritik] x' });
+    W.wput(a, 'src/a.ts', 'export const a = 4;\n');
+    W.run(['push', 'bbbbbbbb', '--bg', '--fixes', 'kritik line']);
+    has(W.origin('src/a.ts'), 'a = 4', 'kritik gönderim çalışır');
+    ok(W.wg(a, 'rev-parse', 'HEAD') === W.originSha(), 'dal taşındı');
+  },
+  'muhur: gonderim surerken yeniden ready sonraki gonderime kalir': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 3;\n');
+    W.ready(A, 'line one');
+    writeFileSync(join(W.w, 'on-test.mjs'), `import { writeFileSync } from 'node:fs'; import { execFileSync } from 'node:child_process';
+writeFileSync(${JSON.stringify(a.path)} + '/again.ts', 'again\\n');
+execFileSync(process.execPath, [${JSON.stringify(TOOL)}, 'ready', 'bbbbbbbb', '--fixes', 'line two'], { stdio: 'inherit' });
+writeFileSync(${JSON.stringify(a.path)} + '/after.ts', 'after\\n');
+execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','add','after.ts'], { cwd: ${JSON.stringify(a.path)} });
+execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m','after'], { cwd: ${JSON.stringify(a.path)} });`);
+    W.run(['eod', '--bg']);
+    ok(W.origin('again.ts') === null, 'ilk gönderime girmez');
+    const e = ent(W, A);
+    ok(e.ready === true, 'hazır kalır');
+    ok(!JSON.stringify(e.notes).includes('line one') && JSON.stringify(e.notes).includes('line two'), 'gönderilen satır çıkar: ' + JSON.stringify(e.notes));
+    ok(W.q().autoShipAt, 'sıradaki otomatik gönderim planlandı');
+    ok(W.wg(a, 'rev-parse', 'HEAD~1') === e.readySha, 'mühür taşınan dalda: ' + W.wg(a, 'log', '--oneline', '-4'));
+    ok(existsSync(join(a.path, 'after.ts')), 'sonraki commit durur');
+    W.run(['eod', '--bg']);
+    has(W.origin('again.ts'), 'again');
+    ok(W.origin('after.ts') === null, 'mühürden sonraki commit hâlâ gitmez');
+    has(read(join(a.path, 'after.ts')), 'after');
+  },
+  'muhur + esitleme: birlesen dal mührünü korur, sonraki is kaybolmaz': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    W.hook('hook-prompt', { session_id: A, prompt: '[gün sonu] x' });
+    W.hook('hook-prompt', { session_id: B, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 3;\n');
+    W.ready(A, 'line A');
+    const pin = ent(W, A).readySha;
+    W.wput(b, 'src/b.ts', 'export const b = 3;\n');
+    W.ready(B, 'line B');
+    W.push(B);
+    hasNot(W.origin('src/a.ts'), 'a = 3', 'gün sonu beklemeli');
+    has(W.hook('hook-prompt', { session_id: A, prompt: 'y' }).out, 'birleştirildi');
+    ok(W.wg(a, 'merge-base', '--is-ancestor', pin, 'HEAD') === '', 'mühür atada');
+    ok(ent(W, A).readySha === pin, 'eşitleme mührü değiştirmez');
+    W.wput(a, 'src/later.ts', 'later\n');
+    W.wg(a, 'add', '-A'); W.wg(a, 'commit', '-q', '-m', 'later');
+    W.wput(a, 'u.txt', 'yarim\n');
+    W.run(['eod', '--bg']);
+    has(W.origin('src/a.ts'), 'a = 3'); has(W.origin('src/b.ts'), 'b = 3');
+    ok(W.origin('src/later.ts') === null, 'sonraki commit gitmez');
+    ok(W.wg(a, 'rev-parse', 'HEAD~1') === W.originSha(), 'dal taşındı');
+    has(read(join(a.path, 'src/later.ts')), 'later'); has(read(join(a.path, 'u.txt')), 'yarim');
+  },
+  'esitleme: temiz + kirli + ortusen kirli birlesir, cakisma ve kilit dokunulmaz': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b'); const c = W.open(C, 'c'); const d = W.open(D, 'd'); const e = W.open(E, 'e');
+    for (const s of [A, B, C, D, E]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 3;\n');
+    W.wput(a, 'src/shared.ts', SHARED.replace('line 1\n', 'line 1 A\n'));
+    W.ready(A);
+    W.push(A);
+    const sha = W.originSha();
+    // Temiz
+    has(W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out, '1 gönderim birleştirildi');
+    ok(W.wg(b, 'rev-parse', 'HEAD') === sha, 'temiz kopya');
+    hasNot(W.hook('hook-prompt', { session_id: B, prompt: 'z' }).out, 'birleştirildi', 'tek sefer');
+    // Kirli, örtüşmeyen
+    W.wput(c, 'u.txt', 'kirli\n');
+    W.wput(c, 'src/b.ts', 'export const b = 9;\n');
+    let p = W.hook('hook-prompt', { session_id: C, prompt: 'y' }).out;
+    has(p, 'birleştirildi'); hasNot(p, 'commit');
+    ok(W.wg(c, 'rev-parse', 'HEAD') === sha, 'kirli kopya');
+    has(read(join(c.path, 'src/a.ts')), 'a = 3');
+    has(read(join(c.path, 'src/b.ts')), 'b = 9', 'yarım iş');
+    const stc = W.wg(c, 'status', '--porcelain', '-uall');
+    has(stc, 'u.txt'); has(stc, 'src/b.ts');
+    // Kirli, örtüşen ama çakışmayan: önce kendi dalına kayıt
+    W.wput(d, 'src/shared.ts', SHARED.replace('line 12', 'line 12 D wip'));
+    W.wput(d, 'd.txt', 'ayri\n');
+    p = W.hook('hook-prompt', { session_id: D, prompt: 'y' }).out;
+    has(p, 'birleştirildi'); has(p, "commit'lendi");
+    const sh = read(join(d.path, 'src/shared.ts'));
+    has(sh, 'line 1 A', 'upstream geldi'); has(sh, 'line 12 D wip', 'yarım iş durur');
+    ok(W.wg(d, 'merge-base', '--is-ancestor', sha, 'HEAD') === '', 'upstream atada');
+    has(W.wg(d, 'log', '-3', '--format=%s'), 'otomatik eşitleme öncesi kayıt');
+    has(W.wg(d, 'status', '--porcelain', '-uall'), 'd.txt', 'örtüşmeyen kirli dosya commitlenmez');
+    hasNot(W.wg(d, 'status', '--porcelain', '-uall'), 'src/shared.ts');
+    // Çakışma: dokunulmaz, uyarı
+    W.wput(e, 'src/shared.ts', SHARED.replace('line 1\n', 'line 1 E\n'));
+    const he = W.wg(e, 'rev-parse', 'HEAD');
+    p = W.hook('hook-prompt', { session_id: E, prompt: 'y' }).out;
+    has(p, 'geride'); has(p, 'çakışacak: src/shared.ts');
+    ok(W.wg(e, 'rev-parse', 'HEAD') === he, 'çakışan kopya yerinde');
+    has(read(join(e.path, 'src/shared.ts')), 'line 1 E', 'iş durur');
+    ok(!existsSync(join(e.path, '.git', 'MERGE_HEAD')) && !W.wg(e, 'status', '--porcelain').includes('UU'), 'yarım birleştirme yok');
+    // index.lock: dokunulmaz, uyarı
+    W.wg(e, 'checkout', '--', 'src/shared.ts');
+    const lock = W.wg(e, 'rev-parse', '--git-path', 'index.lock');
+    const lockAbs = /^[A-Za-z]:|^\//.test(lock) ? lock : join(e.path, lock);
+    writeFileSync(lockAbs, '');
+    p = W.hook('hook-prompt', { session_id: E, prompt: 'y' }).out;
+    has(p, 'geride');
+    ok(W.wg(e, 'rev-parse', 'HEAD') === he, 'kilitli kopya yerinde');
+    rmSync(lockAbs);
+    has(W.hook('hook-prompt', { session_id: E, prompt: 'y' }).out, 'birleştirildi', 'kilit kalkınca eşitlenir');
+  },
+  'esitleme: yalniz golden cakismasi soylenir, kopyaya dokunulmaz': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    W.wput(a, 'tests/fixtures/golden/campaign.json', 'A\n');
+    W.ready(A);
+    W.push(A);
+    W.wput(b, 'tests/fixtures/golden/campaign.json', 'B\n');
+    W.wg(b, 'add', '-A'); W.wg(b, 'commit', '-q', '-m', 'g');
+    const h = W.wg(b, 'rev-parse', 'HEAD');
+    const p = W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out;
+    has(p, 'yalnız üretilmiş golden'); has(p, 'Elle çözme'); has(p, 'campaign.json');
+    ok(W.wg(b, 'rev-parse', 'HEAD') === h, 'kopya yerinde');
+  },
+  'otomatik gonderim pencereden sonra gider': async (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.env.EOV_AUTO_SHIP_MIN = '0.03';
+    W.wput(a, 'src/a.ts', 'export const a = 3;\n');
+    const r = W.ready(A);
+    has(r.out, 'Otomatik gönderim');
+    ok(W.q().autoShipAt, 'plan yazıldı');
+    has(W.notices(), 'planlandı');
+    await until(() => (W.origin('src/a.ts') ?? '').includes('a = 3'), 'gönderim');
+    await until(() => !existsSync(join(W.game, '.git', 'push-queue.push.lock')), 'kilit');
+    ok(!W.q().autoShipAt, 'plan kalktı');
+    has(W.notices(), 'başladı'); has(W.notices(), 'Otomatik gönderim tamam');
+  },
+  'otomatik gonderim gecikmisi hook-prompt ile baslar': async (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 3;\n');
+    W.ready(A); // e2e'de süre verilmediği için zamanlayıcı yok: ölü zamanlayıcı ya da yeniden başlama gibi
+    ok(W.q().autoShipAt, 'plan var');
+    setQ(W, (q) => { q.autoShipAt = Date.now() - 1000; });
+    W.env.EOV_AUTO_SHIP_MIN = '20';
+    W.hook('hook-prompt', { session_id: B, prompt: 'y' });
+    await until(() => (W.origin('src/a.ts') ?? '').includes('a = 3'), 'gecikmiş gönderim');
+    // Doctor da başlatır
+    await until(() => !existsSync(join(W.game, '.git', 'push-queue.push.lock')), 'kilit');
+    W.wput(b, 'src/b.ts', 'export const b = 3;\n');
+    delete W.env.EOV_AUTO_SHIP_MIN;
+    W.ready(B);
+    setQ(W, (q) => { q.autoShipAt = Date.now() - 1000; });
+    W.env.EOV_AUTO_SHIP_MIN = '20';
+    ok(W.run(['doctor']).code === 0, 'doctor');
+    await until(() => (W.origin('src/b.ts') ?? '').includes('b = 3'), 'doctor gecikmiş gönderim');
+  },
+  'otomatik gonderim hatali girdiyi yeniden denemez': async (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.env.EOV_AUTO_SHIP_MIN = '0.02';
+    W.wput(a, 'src/b.ts', '// REDSRC\n');
+    W.ready(A);
+    await until(() => ent(W, A)?.lastError, 'hata');
+    await until(() => !existsSync(join(W.game, '.git', 'push-queue.push.lock')), 'kilit');
+    ok(W.tests() === 1, 'bir test');
+    ok(ent(W, A).ready, 'hazır kalır');
+    ok(!W.q().autoShipAt, 'plan yok');
+    has(W.notices(), 'Otomatik gönderim DURDU');
+    W.hook('hook-prompt', { session_id: A, prompt: 'y' });
+    ok(!W.q().autoShipAt, 'istem yeniden planlamaz');
+    await sleepMs(3000);
+    ok(W.tests() === 1, 'yeniden denenmedi: ' + W.tests());
+    W.wput(a, 'src/b.ts', 'export const b = 5;\n');
+    W.ready(A); // yeni mühür
+    ok(!ent(W, A).lastError, 'hata silindi');
+    await until(() => (W.origin('src/b.ts') ?? '').includes('b = 5'), 'yeniden ready gider');
+  },
+  'otomatik gonderim gun sonunu almaz': async (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    W.hook('hook-prompt', { session_id: A, prompt: '[gün sonu] x' });
+    W.hook('hook-prompt', { session_id: B, prompt: 'x' });
+    W.env.EOV_AUTO_SHIP_MIN = '0.02';
+    W.wput(a, 'src/a.ts', 'export const a = 3;\n');
+    has(W.ready(A).out, '03:00');
+    ok(!W.q().autoShipAt, 'gün sonu planlamaz');
+    W.wput(b, 'src/b.ts', 'export const b = 3;\n');
+    W.ready(B);
+    await until(() => (W.origin('src/b.ts') ?? '').includes('b = 3'), 'eşlik gider');
+    await until(() => !existsSync(join(W.game, '.git', 'push-queue.push.lock')), 'kilit');
+    hasNot(W.origin('src/a.ts'), 'a = 3', 'gün sonu beklemeli');
+    ok(ent(W, A).ready, 'gün sonu hazır kalır');
+    ok(!W.q().autoShipAt, 'yeni plan yok');
+    W.run(['eod', '--bg']);
+    has(W.origin('src/a.ts'), 'a = 3', 'gece görevi alır');
+  },
+  'otomatik plan hazir is kalmayinca durur': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 3;\n');
+    W.ready(A);
+    ok(W.q().autoShipAt, 'plan');
+    W.run(['drop', 'bbbbbbbb']);
+    ok(!W.q().autoShipAt, 'plan kalktı');
+    has(W.notices(), 'durduruldu');
+  },
+  'erken uyari bir kez, engellemez, onbellek': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    W.put('docs/arch/chat-owners.md', '| Sohbet | Kopya | Alan |\n|---|---|---|\n| Bizim Sohbet | b | her sey |\n');
+    W.wput(b, 'src/a.ts', 'export const a = 3;\n');
+    const cacheF = join(W.game, '.git', 'push-queue.wtfiles.json');
+    const r = pre(W, A, join(a.path, 'src/a.ts'));
+    ok(r.code === 0, 'çıkış 0');
+    has(r.out, 'ERKEN UYARI'); has(r.out, 'Bizim Sohbet'); has(r.out, 'chat-owners.md'); has(r.out, 'devret');
+    hasNot(r.out, 'deny', 'engellememeli');
+    has(r.out, '"hookEventName":"PreToolUse"');
+    allow(pre(W, A, join(a.path, 'src/a.ts'))); // ikinci kez sessiz
+    allow(pre(W, A, join(a.path, 'src/shared.ts'))); // başka dosya
+    allow(pre(W, B, join(b.path, 'src/shared.ts'))); // sahibi uyarılmaz
+    // 60 sn'lik önbellek: yeni değişiklik hemen görünmez, tazelenince görünür
+    W.wput(b, 'src/b.ts', 'export const b = 3;\n');
+    allow(pre(W, A, join(a.path, 'src/b.ts')));
+    const c = JSON.parse(readFileSync(cacheF, 'utf8')); c.at = 0; writeFileSync(cacheF, JSON.stringify(c));
+    has(pre(W, A, join(a.path, 'src/b.ts')).out, 'src/b.ts');
+    // Dalında commit'li dosya da sayılır
+    W.wput(b, 'src/c.ts', 'c\n');
+    W.wg(b, 'add', '-A'); W.wg(b, 'commit', '-q', '-m', 'c');
+    const c2 = JSON.parse(readFileSync(cacheF, 'utf8')); c2.at = 0; writeFileSync(cacheF, JSON.stringify(c2));
+    has(pre(W, A, join(a.path, 'src/c.ts')).out, 'ERKEN UYARI');
+    // Agent kopyasından da; bozuk önbellek engel olmaz, golden uyarmaz
+    W.wput(b, 'tests/fixtures/golden/x.json', 'x\n');
+    const c3 = JSON.parse(readFileSync(cacheF, 'utf8')); c3.at = 0; writeFileSync(cacheF, JSON.stringify(c3));
+    allow(pre(W, A, join(a.path, 'tests/fixtures/golden/x.json')));
+    writeFileSync(cacheF, '{bozuk');
+    ok(pre(W, A, join(a.path, 'src/yeni.ts')).code === 0, 'açık kalır');
+    has(pre(W, C, join(W.game, 'src/a.ts')).out, 'deny'); // koruma aynı
+  },
+  'golden yalniz cakisma: dal dusmez, yeniden uretilir, raporda': (W) => {
+    W.upstream('tests/fixtures/golden/campaign.json', 'base\n');
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    fakeGolden(W, 'campaign.json');
+    W.wput(a, 'tests/fixtures/golden/campaign.json', 'from A\n');
+    W.wput(a, 'src/a.ts', 'export const a = 3;\n');
+    W.wput(b, 'tests/fixtures/golden/campaign.json', 'from B\n');
+    W.wput(b, 'src/b.ts', 'export const b = 3;\n');
+    W.ready(A, 'line A'); W.ready(B, 'line B');
+    W.push(A);
+    has(W.origin('src/a.ts'), 'a = 3'); has(W.origin('src/b.ts'), 'b = 3');
+    const g = W.origin('tests/fixtures/golden/campaign.json');
+    has(g, 'regen export const a = 3; export const b = 3;', 'birleşmiş koddan');
+    hasNot(g, '<<<<'); hasNot(g, 'from');
+    ok(goldenRuns(W) === 1, 'bir kez üretildi');
+    ok(W.tests() === 1, 'tek test');
+    has(W.log(), 'yalnız golden'); has(W.log(), 'yeniden üretildi: campaign.json');
+    has(W.notices(), 'Golden kayıtları yeniden üretildi'); has(W.notices(), 'campaign.json');
+    for (const r of [a, b]) ok(W.wg(r, 'rev-parse', 'HEAD') === W.originSha(), 'dal taşındı');
+    ok(ent(W, B).ready === false && !ent(W, B).lastError, 'B gitti, düşmedi');
+  },
+  'golden iki dal cakismasiz da yeniden uretilir, tek dal uretmez ama raporlar': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    fakeGolden(W, 'quick.json', 'items.json');
+    W.wput(a, 'tests/fixtures/golden/quick.json', 'q A\n');
+    W.ready(A);
+    W.push(A);
+    ok(goldenRuns(W) === 0, 'tek dalda üretilmez');
+    has(W.origin('tests/fixtures/golden/quick.json'), 'q A');
+    has(W.notices(), 'Golden kayıtları değişti'); has(W.notices(), 'quick.json');
+    W.wput(a, 'tests/fixtures/golden/quick.json', 'q A2\n');
+    W.wput(b, 'tests/fixtures/golden/items.json', 'i B\n');
+    W.hook('hook-prompt', { session_id: B, prompt: 'y' });
+    W.wput(a, 'tests/fixtures/golden/quick.json', 'q A3\n');
+    W.ready(A); W.ready(B);
+    W.push(A);
+    ok(goldenRuns(W) === 1, 'iki dalda üretildi');
+    has(W.origin('tests/fixtures/golden/items.json'), 'regen');
+    has(W.origin('tests/fixtures/golden/quick.json'), 'regen');
+  },
+  'golden + gercek cakisma dal duser': (W) => {
+    W.upstream('tests/fixtures/golden/campaign.json', 'base\n');
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    fakeGolden(W, 'campaign.json');
+    W.wput(a, 'tests/fixtures/golden/campaign.json', 'from A\n');
+    W.wput(a, 'src/shared.ts', SHARED.replace('line 3', 'line 3 A'));
+    W.wput(b, 'tests/fixtures/golden/campaign.json', 'from B\n');
+    W.wput(b, 'src/shared.ts', SHARED.replace('line 3', 'line 3 B'));
+    W.ready(A); W.ready(B);
+    W.push(A);
+    has(W.origin('src/shared.ts'), 'line 3 A'); hasNot(W.origin('src/shared.ts'), 'line 3 B');
+    ok(ent(W, B).ready === false, 'B düştü');
+    has(W.q().chatNotices.cccccccc.join(), 'src/shared.ts');
+    ok(goldenRuns(W) === 0, 'düşen dal üretim istemez');
+    has(W.origin('tests/fixtures/golden/campaign.json'), 'from A');
+  },
+  'denge simi: baslar, not yazar, kopya silinir; docs gonderimi baslatmaz': async (W) => {
+    W.upstream('data/balance.json', BALANCE);
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    fakeSim(W, [['Mage', '60,1'], ['Warrior', '50,0'], ['Druid', '41,5']]);
+    // Yalnız docs ve denge dışı veri: başlamaz
+    W.wput(a, 'docs/n.md', 'n\n');
+    W.wput(a, 'data/audio.json', '{}\n');
+    W.ready(A);
+    W.push(A);
+    await sleepMs(1500);
+    ok(!existsSync(join(W.game, '.git', 'push-queue-sims')), 'denge dışı gönderim sim başlatmaz');
+    hasNot(W.notices(), 'denge simi');
+    // Motor dosyası: başlar
+    W.wput(a, 'src/engine/x.ts', 'x\n');
+    W.ready(A);
+    W.push(A);
+    await until(() => W.notices().includes('denge simi'), 'sim notu');
+    const n = W.notices();
+    has(n, 'Mage %60,1'); has(n, 'Druid %41,5'); hasNot(n, 'Warrior %'); has(n, '%44-56');
+    has(n, 'push-queue-sims');
+    const raw = join(W.game, '.git', 'push-queue-sims', '0.9.0.3.txt');
+    ok(existsSync(raw), 'ham çıktı: ' + n);
+    has(readFileSync(raw, 'utf8'), 'SINIF DENGES');
+    await until(() => !W.q().sim?.running, 'sim kaydı kalktı');
+    hasNot(W.g('worktree', 'list'), 'eov-sim', 'kopya silindi');
+    ok(!W.g('status', '--porcelain'), 'repo kökünde iz yok');
+    // Hepsi bantta
+    fakeSim(W, [['Mage', '50,1']]);
+    W.wput(a, 'data/skills.json', '{}\n');
+    W.ready(A);
+    W.push(A);
+    await until(() => W.notices().includes('tüm sınıflar'), 'bant içi notu');
+  },
+  'denge simi hatasi gonderimi etkilemez': async (W) => {
+    W.upstream('data/balance.json', BALANCE);
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.env.EOV_CMD_SIM = 'node -e "process.exit(3)"';
+    W.wput(a, 'src/engine/x.ts', 'x\n');
+    W.ready(A);
+    W.push(A);
+    has(W.origin('src/engine/x.ts'), 'x');
+    await until(() => W.notices().includes('hata verdi'), 'sim hata notu');
+    hasNot(W.g('worktree', 'list'), 'eov-sim');
+    ok(W.g('rev-parse', 'HEAD') === W.originSha(), 'gönderim etkilenmedi');
+  },
+  'denge simi tek tek, yenisi sirayi alir, doctor artigi temizler': async (W) => {
+    W.upstream('data/balance.json', BALANCE);
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    fakeSim(W, [['Mage', '50,1']]);
+    const holder = spawn(process.execPath, ['-e', 'setTimeout(()=>{},120000)'], { stdio: 'ignore' });
+    const liveDir = join(W.w, 'tmp', 'eov-sim-111');
+    W.g('worktree', 'add', '-q', '--detach', liveDir, 'HEAD');
+    setQ(W, (q) => { q.sim = { running: { pid: holder.pid, dir: liveDir, version: 'eski', sha: 'x' } }; });
+    for (const [f, v] of [['x', '0.9.0.2'], ['y', '0.9.0.3']]) {
+      W.wput(a, `src/engine/${f}.ts`, 'x\n');
+      W.ready(A);
+      W.push(A);
+      ok(W.q().sim.queued.version === v, 'yenisi kuyruktaki yerini alır: ' + JSON.stringify(W.q().sim));
+    }
+    ok(!existsSync(join(W.game, '.git', 'push-queue-sims')), 'koşan varken yenisi başlamaz');
+    // Doctor koşan simin kopyasına dokunmaz
+    ok(W.run(['doctor']).code === 0, 'doctor');
+    ok(existsSync(liveDir), 'canlı sim kopyası durur');
+    ok(W.q().sim.running.version === 'eski', 'kayıt durur');
+    // Sahibi ölünce kopya (bağlantısı önce) silinir, sıradaki başlar; eskisi atlanmış olur
+    const keep = join(W.w, 'sentinel');
+    mkdirSync(keep);
+    writeFileSync(join(keep, 'canli.txt'), 'dokunma');
+    execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', `New-Item -ItemType Junction -Path '${join(liveDir, 'node_modules')}' -Target '${keep}' | Out-Null`]);
+    holder.kill();
+    await sleepMs(500);
+    ok(W.run(['doctor']).code === 0, 'doctor 2');
+    ok(!existsSync(liveDir), 'artık sim kopyası silindi');
+    ok(existsSync(join(keep, 'canli.txt')), 'bağlantı hedefi durur');
+    hasNot(W.g('worktree', 'list'), 'eov-sim-111');
+    await until(() => W.notices().includes('0.9.0.3 denge simi (300 savaş)'), 'sıradaki sim');
+    has(W.notices(), 'eski denge simi yarıda kaldı');
+    ok(!existsSync(join(W.game, '.git', 'push-queue-sims', '0.9.0.2.txt')), 'atlanan sürüm koşmaz');
+  },
+  'devretme kurali + minor fixes + sahip listesi': (W) => {
+    W.cutover();
+    W.open(A, 'minor-fixes'); W.open(B, 'b');
+    const a = W.hook('hook-prompt', { session_id: A, prompt: 'x' }).out;
+    const b = W.hook('hook-prompt', { session_id: B, prompt: 'x' }).out;
+    for (const t of [a, b]) {
+      has(t, 'SendMessage'); has(t, 'ListAgents'); has(t, 'docs/arch/chat-owners.md'); has(t, 'otomatik gönderim');
+      has(t, 'kendiliğinden eşitlenir');
+      hasNot(t, 'mesaj atma'); hasNot(t, 'ilk kritik gönderimle');
+    }
+    has(a, 'koordinatör'); hasNot(b, 'koordinatör');
+    // Açık sohbet (eski metni görmüş) yeni kuralları bir kez alır
+    setQ(W, (q) => { q.sessions[B].rulesV = 1; });
+    has(W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out, 'SendMessage');
+    hasNot(W.hook('hook-prompt', { session_id: B, prompt: 'z' }).out, 'SendMessage');
+    const owners = readFileSync(join(dirname(TOOL), '..', 'docs', 'arch', 'chat-owners.md'), 'utf8');
+    for (const [n, k] of [['Character Design', 'vesper-tree'], ['Mekanik & Rework', 'mob-mana'], ['Campaign', 'campaign'], ['Character vfx', 'character-vfx'], ['Minor Fixes', 'minor-fixes']]) has(owners, `| ${n} | ${k} |`);
+  },
+  'ic is yalniz notsuz girdide': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.wput(a, 'docs/n.md', 'n\n');
+    ok(W.run(['ready', 'bbbbbbbb', '--internal']).code === 0, 'ready');
+    has(W.run(['status']).out, 'HAZIR (iç)');
+    W.ready(A, 'real line');
+    ok(!ent(W, A).internal, 'not gelince iç değil');
+    ok(W.run(['ready', 'bbbbbbbb', '--internal']).code === 0, 'ready 2');
+    ok(!ent(W, A).internal, 'not kaldıkça iç değil');
+    hasNot(W.run(['status']).out, 'HAZIR (iç)');
+    has(W.run(['status']).out, 'HAZIR');
   },
 });
 

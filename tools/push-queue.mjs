@@ -20,12 +20,17 @@
 //   wt-open <oturum> [ad]            : game/.claude/worktrees/chat-<ad> + chat/<ad> dalı + kendi npm ci + kendi port (5174+)
 //   wt-close <oturum>                : gönderilmemiş iş yoksa worktree, dal, port, launch kaydını siler
 //   legacy-merged <oturum> <dosya..> : eski akış sohbeti dosyayı origin/main ile elle birleştirdi, durdurma kalkar
-import { execFileSync, execSync, spawn, spawnSync } from 'node:child_process';
+// Koordinasyon (Ömer 2026-10-31): ready ucu mühürler (readySha), kopya istemde kendiliğinden eşitlenir, hazırdan 20 dk sonra otomatik gönderim,
+// başka kopyada değişen dosyaya erken uyarı, golden kayıtları gönderimde yeniden üretilir, denge dosyası gidince arka planda 300 savaşlık sim.
+//   wt-sync / wt-files / auto-wait / auto-ship / sim-run : kancaların ve gönderimin başlattığı arka plan süreçleri (elle çağrılmaz)
+import { execFileSync, execSync as execSyncRaw, spawn, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, lstatSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, appendFileSync, openSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
 import { homedir, tmpdir } from 'node:os';
+// Arka plan süreçlerinin konsolu yok: gizlenmeyen her komut Windows'ta kendi penceresini açar (Ömer 2026-11-01). Gizli konsolu alt süreçler de paylaşır (npm, npx, vitest, wrangler).
+const execSync = (cmd, opts) => execSyncRaw(cmd, { windowsHide: true, ...opts });
 
 // Worktree içindeki kopyadan çağrılırsa (Ömer 2026-10-31) asıl checkout'un aracı çalışır: kuyruk tek yerde, araç tek sürüm
 function mainCheckout(dir) {
@@ -62,11 +67,26 @@ const CMD = {
   deploy: ENVV.EOV_CMD_DEPLOY ?? 'npm run deploy:cf',
   npmci: ENVV.EOV_CMD_NPMCI ?? 'npm ci',
   related: ENVV.EOV_CMD_RELATED, // yalnız e2e; gerçekte vitest related
+  golden: ENVV.EOV_CMD_GOLDEN ?? 'npx tsx tests/golden/record.ts',
+  sim: ENVV.EOV_CMD_SIM ?? 'npx tsx src/sim/cli.ts 300 1',
 };
 // Ön test süre sınırı (Ömer 2026-10-31): motor dosyası yüzlerce testi tetikleyip tam testi tekrarlıyordu (11,5 dk)
 const RELATED_LIMIT = (Number(ENVV.EOV_RELATED_LIMIT_S) || 120) * 1000;
 const NET_WAITS = (ENVV.EOV_NET_WAITS ?? '30,60,120').split(',').map((x) => Number(x) * 1000);
 const LOCK_POLL = Number(ENVV.EOV_LOCK_POLL_MS) || 15000;
+// Otomatik gönderim penceresi (Ömer 2026-10-31); e2e'de süre verilmezse zamanlayıcı hiç başlamaz
+const AUTO_MS = (ENVV.EOV_AUTO_SHIP_MIN !== undefined ? Number(ENVV.EOV_AUTO_SHIP_MIN) : 20) * 60000;
+const AUTO_ON = !E2E || ENVV.EOV_AUTO_SHIP_MIN !== undefined;
+const WT_CACHE = (ENVV.EOV_WT_CACHE_S !== undefined ? Number(ENVV.EOV_WT_CACHE_S) : 60) * 1000;
+const WT_FILES = join(GAME, '.git', 'push-queue.wtfiles.json');
+const SIMS = join(GAME, '.git', 'push-queue-sims');
+const SIM_LIMIT = 15 * 60000;
+// Üretilen kayıtlar: elle çözülmez, gönderimde yeniden üretilir (Ömer 2026-10-31; dal düşmesinin baş sebebiydi)
+const isGolden = (f) => /^tests\/fixtures\/golden\//.test(f);
+// Herkesin sona eklediği ya da üretilen dosyalar: "o sohbete devret" uyarısı anlamsız
+const NO_HANDOFF = (f) => isGolden(f) || /^docs\/(design\/open-questions\.md|anim-review\/board\.md)$/.test(f);
+// 300 savaşlık sınıf simini gerçekten değiştiren yollar (src/engine + src/sim/simulate + src/progression'un okuduğu veri); patch-notes, ses, arayüz verisi sim istemez
+const BALANCE_PATHS = /^(src\/engine\/|src\/progression\/|src\/sim\/simulate\.ts$|data\/(ai|balance|battle-rules|formulas|global-skills|grounds|items|levels|skills|statuses|valor|waves)\.json$|data\/(battles|bosses|classes|mobs|skill-trees|summons)\/)/;
 const SESSIONS_DIR = ENVV.EOV_SESSIONS_DIR ?? join(homedir(), '.claude', 'projects', 'C--Users-Omer-Projects-embers-of-valdoria');
 // Kuyruğa girmeyen yollar: ham görseller (yayına elle eklenir), agent kopyaları, derleme çıktıları
 const SKIP = (rel) => /^(\.git\/|assets\/source\/|\.claude\/worktrees\/|node_modules\/|dist\/)/.test(rel);
@@ -82,6 +102,15 @@ const log = (s) => {
 };
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 
+// Windows'ta hedef o an başka süreçte okunuyorsa rename EPERM verir (Ömer 2026-10-31; arka plan süreçleriyle sıklaştı, kuyruk yazımı kayboluyordu): kısa aralıkla yeniden denenir
+function renameRetry(from, to) {
+  for (let i = 0; ; i++) {
+    try { return renameSync(from, to); } catch (e) {
+      if (i >= 40 || !['EPERM', 'EBUSY', 'EACCES'].includes(e.code)) throw e;
+      sleep(25);
+    }
+  }
+}
 // Kısa kilit: aynı anda iki sohbetin hook'u kuyruğu bozmasın
 function withQueue(fn) {
   for (let i = 0; ; i++) {
@@ -99,7 +128,7 @@ function withQueue(fn) {
       if (!e.ready && !e.files.length && !q.worktrees?.[short(sid)] && Date.now() - Math.max(e.updated ?? 0, e.seen ?? 0) > 2 * DAY) delete q.sessions[sid];
     const r = fn(q);
     writeFileSync(QUEUE + '.tmp', JSON.stringify(q, null, 2));
-    renameSync(QUEUE + '.tmp', QUEUE);
+    renameRetry(QUEUE + '.tmp', QUEUE);
     return r;
   } finally {
     rmSync(QLOCK, { recursive: true, force: true });
@@ -119,6 +148,8 @@ function entry(q, sid) {
     mergeNotes((e.notes ??= {}), dup.notes ?? {});
     e.ready ||= dup.ready;
     e.internal ||= dup.internal;
+    if (dup.readySha) e.readySha = dup.readySha;
+    if (dup.lastError) e.lastError = dup.lastError;
     e.updated = Math.max(e.updated, dup.updated);
     delete q.sessions[s];
   }
@@ -147,6 +178,8 @@ function parseNotes(args) {
 }
 const mergeNotes = (into, add) => { for (const [h, items] of Object.entries(add)) (into[h] ??= []).push(...items.filter((x) => !(into[h] ?? []).includes(x))); };
 const hasNotes = (n) => Object.values(n ?? {}).some((v) => v.length);
+// İç iş işareti yalnız girdide hiç not yoksa (Ömer 2026-10-31): önceki ready'den not kalmışsa sürüm alır, "HAZIR (iç)" yazmaz
+const setInternal = (e, want) => { if (want && !hasNotes(e.notes)) e.internal = true; else delete e.internal; };
 // patch-notes testinin sınırları testten önce (Ömer 2026-10-31): toplu gönderim 20 dk test sonunda bu sınırda durmuştu
 function checkNoteLimits(groups) {
   const lines = Object.values(groups).flat();
@@ -156,13 +189,14 @@ function checkNoteLimits(groups) {
 }
 const readStdin = () => { try { return JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { return {}; } };
 
-const RULES = (sid, mode) =>
+const AUTO_TEXT = `${AUTO_MS / 60000} dk`;
+const RULES = (sid, mode, auto) =>
   `[gönderim kuyruğu] Bu sohbetin oturumu: ${short(sid)} · mod: ${mode}. ` +
   `Düzenlediğin game/ dosyaları (Edit/Write ve Bash komutlarıyla değişenler) otomatik kuyruğa yazılır; gözden kaçan olursa \`node tools/push-queue.mjs add ${short(sid)} <dosya...>\`. ` +
   (mode === 'kritik'
     ? `İş bitip doğrulanınca Ömer'e tek satır "GitHub'a gönderiyorum" de, teyit BEKLEME, \`node tools/push-queue.mjs push ${short(sid)} --fixes "<oyuncuya yönelik İngilizce satır>"\` çalıştır (sürüm, test, 5000, Pages, push dahil; komut kendini arka plana alıp hemen döner, sonuç .git/push-queue.log son satırlarında ve kuyruk raporunda); bitince 5000 + Pages linkini ver.`
     : `Kendin GitHub'a gönderme. İş bitip doğrulanınca \`node tools/push-queue.mjs ready ${short(sid)} --fixes "<oyuncuya yönelik İngilizce satır>"\` çalıştır; ` +
-      (mode === 'eşlik' ? 'ilk kritik gönderimle ya da gece 03:00 görevinde gider.' : 'gece 03:00 görevinde gider.')) +
+      (mode === 'eşlik' ? (auto ? `ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle ya da gece 03:00 görevinde gider.` : 'ilk kritik gönderimle ya da gece 03:00 görevinde gider.') : 'gece 03:00 görevinde gider.')) +
   ` Oyuncunun göreceği bir şey değişmediyse (yalnız docs/ ya da araç) satır yazma, \`--internal\` ver (sürüm notuna girmez).` +
   ` Diğer sohbetlere mesaj atma.`;
 
@@ -180,13 +214,15 @@ function hookPrompt() {
       rememberMode(q, sid, mode);
     }
     e.seen = Date.now();
+    scheduleAutoShip(q);
     if (!e.label && prompt.trim() && !/^kuyruk/i.test(prompt.trim())) e.label = prompt.trim().replace(/\s+/g, ' ').slice(0, 50);
     let text;
     if (isNewChat(q, sid)) {
-      const first = fresh || changed || !e.told;
-      if (first) e.told = true;
+      // Kural metni değişince açık sohbetler de bir kez yeni metni görür
+      const first = fresh || changed || !e.told || e.rulesV !== WT_RULES_V;
+      if (first) { e.told = true; e.rulesV = WT_RULES_V; }
       text = wtRules(sid, e, wtOf(q, sid), first);
-    } else text = fresh || changed || !e.told ? ((e.told = true), RULES(sid, e.mode))
+    } else text = fresh || changed || !e.told ? ((e.told = true), RULES(sid, e.mode, !!q.cutover))
       : `[gönderim kuyruğu] oturum ${short(sid)} · mod: ${e.mode}${e.ready ? ' · hazır' : ''} · ${e.files.length} dosya`;
     // Bu sohbete özel bildirim (dalı düştü, eski akış girdisi durdu...)
     const own = q.chatNotices?.[short(sid)];
@@ -204,25 +240,31 @@ function hookPrompt() {
     return text;
   });
   console.log(out);
-  // Temiz ve işi olmayan kopya origin/main'e yetişir (ağ yok: origin/main yerel ref'i gönderimde ilerler)
-  catchUpCheck(wtOf(readQueue(), sid));
-  const behind = wtBehindNote(wtOf(readQueue(), sid));
-  if (behind) console.log(behind);
+  const q1 = readQueue();
+  try { autoShipKick(q1); } catch {}
+  if (!E2E && wtOf(q1, sid)) try { wtFilesFresh(); } catch {} // erken uyarı önbelleği düzenlemeden önce tazelensin
+  // Kopya origin/main'e kendiliğinden eşitlenir (ağ yok: origin/main yerel ref'i gönderimde ilerler)
+  const line = promptSync(wtOf(q1, sid));
+  if (line.trim()) console.log(line.trim());
 }
 
 // Kopya başkasının gönderiminden geride mi, birleşince ne çakışır (Ömer 2026-10-31); kopyaya dokunmaz, hata olursa susar
-function wtBehindNote(rec) {
+// conflicts: eşitlemenin deneme birleştirmesinde gördüğü dosyalar (verilmezse burada hesaplanır)
+function wtBehindNote(rec, conflicts) {
   if (!rec || !existsSync(rec.path)) return '';
   try {
     const n = Number(gx(rec.path, ['rev-list', '--count', `HEAD..${ORIGIN_MAIN}`]));
     if (!n) return '';
     const head = revOf('HEAD', rec.path);
     const mb = gx(rec.path, ['merge-base', head, ORIGIN_MAIN]);
-    const dirty = [...dirtyPaths(rec.path)].filter((p) => !SKIP(p));
-    if (mb === head && !dirty.length) return ''; // temiz kopya kendiliğinden yetişir
-    const merged = mergeTree(mb, ORIGIN_MAIN, head);
-    const touched = new Set(diffNames(mb, ORIGIN_MAIN, rec.path));
-    const clash = [...new Set([...(merged.ok ? [] : merged.files), ...dirty.filter((p) => touched.has(p))])];
+    let clash = conflicts;
+    if (!clash) {
+      const dirty = [...dirtyPaths(rec.path)].filter((p) => !SKIP(p));
+      const merged = mergeTree(mb, ORIGIN_MAIN, head);
+      const touched = new Set(diffNames(mb, ORIGIN_MAIN, rec.path));
+      clash = [...new Set([...(merged.ok ? [] : merged.files), ...dirty.filter((p) => touched.has(p))])];
+    }
+    if (clash.length && clash.every(isGolden)) return `[gönderim kuyruğu] Kopyan güncel sürümden ${n} gönderim geride. Çakışan yalnız üretilmiş golden kayıtları: ${clash.slice(0, 8).join(', ')}. Elle çözme; dal kuyruktan gönderilince (ready) kayıtlar birleşmiş koddan yeniden üretilir.`;
     const list = clash.length ? `Birleşince çakışacak: ${clash.slice(0, 8).join(', ')}${clash.length > 8 ? ` (+${clash.length - 8})` : ''}.` : 'Şu an çakışma görünmüyor.';
     return `[gönderim kuyruğu] Kopyan güncel sürümden ${n} gönderim geride, başka sohbetlerin işini görmüyorsun. ${list} Uygun noktada işini commit'leyip kopyanda: git -c user.name=Omer -c user.email=omerbekinn@gmail.com merge origin/main`;
   } catch { return ''; }
@@ -324,7 +366,7 @@ function statusText(q) {
   if (!ids.length) lines.push('Kuyruk boş.');
   for (const sid of ids) {
     const e = q.sessions[sid];
-    lines.push(`${short(sid)}  ${e.mode.padEnd(8)} ${e.ready ? (e.internal ? 'HAZIR (iç)' : 'HAZIR') : 'çalışıyor'}  ${e.files.length} dosya${e.label ? '  "' + e.label + '"' : ''}${e.lastError ? '  !! ' + e.lastError : ''}`);
+    lines.push(`${short(sid)}  ${e.mode.padEnd(8)} ${e.ready ? (e.internal && !hasNotes(e.notes) ? 'HAZIR (iç)' : 'HAZIR') : 'çalışıyor'}  ${e.files.length} dosya${e.label ? '  "' + e.label + '"' : ''}${e.lastError ? '  !! ' + e.lastError : ''}`);
     for (const f of e.files) lines.push('     ' + f);
     for (const [h, items] of Object.entries(e.notes ?? {})) for (const it of items) lines.push(`     [${h}] ${it}`);
   }
@@ -333,6 +375,8 @@ function statusText(q) {
   if (q.cutover) lines.push(`Worktree modu açık (${q.cutover.legacy.length} eski akış sohbeti).`);
   for (const r of Object.values(q.worktrees ?? {})) lines.push(`Worktree ${r.sid}: ${r.branch} · port ${r.port} · ${r.path}`);
   if (q.mainBlocked?.length) lines.push(`Yerel main geride: ${q.mainBlocked.slice(0, 10).join(', ')}`);
+  if (q.autoShipAt) lines.push(`Otomatik gönderim planlı: ${clock(q.autoShipAt)}.`);
+  if (q.sim?.running) lines.push(`Denge simi koşuyor: ${q.sim.running.version}.`);
   return lines.join('\n');
 }
 const status = () => console.log(statusText(readQueue()));
@@ -403,26 +447,33 @@ async function push(trigger, args) {
     }
   }
   const started = Date.now();
+  const solo = trigger !== 'eod' && trigger !== 'auto'; // gerçek bir sohbetin kendi gönderimi
+  let pickedIds = null;
   try {
     // Kilidin sahibi yazılır (doctor çalışan gönderimin kopyasına dokunmasın), sonra bakım (Ömer 2026-10-30, F2/F8)
     try { writeFileSync(join(PLOCK, 'owner.json'), JSON.stringify({ pid: process.pid })); } catch {}
     if (!E2E) try { doctor({ inPush: true }); } catch (e) { log('!! Bakım (doctor) hata verdi, gönderim sürüyor: ' + firstLine(e)); }
     // Tetikleyen worktree sohbetinin ağacı commit'lenir (ready ile aynı kural)
-    if (trigger !== 'eod' && !dry) { const r = wtOf(readQueue(), trigger); if (r) wtAutocommit(r, Object.values(notes).flat()[0]); }
+    // ve o an mühürlenir: gönderim bu ucu alır, sonraki commit'ler sonraki gönderime kalır (Ömer 2026-10-31)
+    let pin = null;
+    if (solo && !dry) { const r = wtOf(readQueue(), trigger); if (r) { withWtLock(r, () => wtAutocommit(r, Object.values(notes).flat()[0]), 20000); pin = revOf(`refs/heads/${r.branch}`); } }
     const picked = withQueue((q) => {
-      if (trigger !== 'eod') {
+      if (solo) {
         const sid = findSid(q, trigger);
         const e = entry(q, sid);
         e.ready = true;
         mergeNotes(e.notes, notes);
-        if (internal && !hasNotes(notes)) e.internal = true;
+        setInternal(e, internal || e.internal);
+        if (pin) { e.readySha = pin; delete e.lastError; }
         trigger = sid;
       }
       return Object.entries(q.sessions)
         // Hazır işaretlenmiş başka kritik sohbet de beraber gider (2026-10-30: 839e43ba hazır ama dışarıda kalıp dosyaları yarım gidiyordu)
-        .filter(([sid, e]) => e.ready && (trigger === 'eod' || sid === trigger || e.mode === 'eşlik' || e.mode === 'kritik'))
+        // Otomatik gönderim hata almış girdiyi yeniden denemez, gün sonu 03:00'ı bekler (Ömer 2026-10-31)
+        .filter(([sid, e]) => e.ready && (trigger === 'eod' || sid === trigger || (trigger === 'auto' ? autoEligible(e) : e.mode === 'eşlik' || e.mode === 'kritik')))
         .map(([sid, e]) => ({ sid, ...e }));
     });
+    pickedIds = new Set(picked.map((e) => e.sid));
     const q = readQueue();
     if (q.cutover) return await pushIntegrated(picked, trigger, { dry, forced, started });
     const files = [...new Set(picked.flatMap((e) => e.files))];
@@ -472,11 +523,15 @@ async function push(trigger, args) {
     log('!! Gönderim durdu: ' + err.message);
     if (dry) return 1; // deneme kuyruğa ve sohbetlere iz bırakmaz
     if (trigger === 'eod') notice(`Gece 03:00 gönderimi DURDU, hiçbir şey gitmedi: ${err.message}. Hazır işler kuyrukta bekliyor.`);
+    else if (trigger === 'auto') notice(`Otomatik gönderim DURDU: ${err.red ?? err.message}. Bu işler yeniden ready verilene ya da gece 03:00 görevine kadar otomatik gitmez.`);
     else notice(`${short(trigger)} gönderimi DURDU: ${err.red ?? err.message}`);
-    withQueue((qq) => { for (const e of Object.values(qq.sessions)) if (e.ready) e.lastError = err.red ?? err.message; });
+    // Yalnız bu gönderimdekiler: gönderim sürerken hazır olan başka girdi bu hatadan sorumlu değil
+    withQueue((qq) => { for (const [sid, e] of Object.entries(qq.sessions)) if (e.ready && (!pickedIds || pickedIds.has(sid))) e.lastError = err.red ?? err.message; });
     return 1;
   } finally {
     rmSync(PLOCK, { recursive: true, force: true });
+    // Gönderim sürerken hazır olanlar sıradaki pencereye girer; kalmadıysa eski plan sessizce kalkar (sonucu zaten rapor edildi)
+    if (!dry) try { withQueue((qq) => scheduleAutoShip(qq, true)); autoShipKick(); } catch {}
   }
 }
 
@@ -659,14 +714,17 @@ function pushOwned(inPush) {
   return (dir, ts) => (owner.scratch && normPath(owner.scratch) === normPath(dir)) || ts >= since - 60000;
 }
 
-// Artık eov-push kopyaları: ÖNCE node_modules bağlantıları (2026-10-18 olayı), doğrulama, sonra worktree. eov-maps ve .claude/worktrees adın dışında kaldığı için hiç seçilmez.
+// Artık eov-push / eov-sim kopyaları: ÖNCE node_modules bağlantıları (2026-10-18 olayı), doğrulama, sonra worktree. eov-maps ve .claude/worktrees adın dışında kaldığı için hiç seçilmez.
 function cleanLeftoverWorktrees(inPush, procs, say) {
   const owned = pushOwned(inPush);
   const registered = git('worktree list --porcelain').split('\n').filter((l) => l.startsWith('worktree ')).map((l) => resolve(l.slice(9).trim()));
-  const dirs = new Set(registered.filter((d) => /^eov-push-\d+$/.test(d.split(/[\\/]/).pop())).filter((d) => existsSync(d)));
-  for (const n of readdirSync(tmpdir())) if (/^eov-push-\d+$/.test(n)) dirs.add(resolve(tmpdir(), n));
+  const dirs = new Set(registered.filter((d) => /^eov-(push|sim)-\d+$/.test(d.split(/[\\/]/).pop())).filter((d) => existsSync(d)));
+  for (const n of readdirSync(tmpdir())) if (/^eov-(push|sim)-\d+$/.test(n)) dirs.add(resolve(tmpdir(), n));
+  const simNow = readQueue().sim?.running;
   for (const d of dirs) {
-    if (owned(d, Number(d.split('eov-push-').pop()))) { log(`> Çalışan gönderimin kopyası, dokunulmadı: ${d}`); continue; }
+    if (/eov-sim-\d+$/.test(d)) {
+      if (simNow && normPath(simNow.dir) === normPath(d) && ownerAlive(simNow.pid)) { log(`> Koşan denge siminin kopyası, dokunulmadı: ${d}`); continue; }
+    } else if (owned(d, Number(d.split('eov-push-').pop()))) { log(`> Çalışan gönderimin kopyası, dokunulmadı: ${d}`); continue; }
     if (procs.some((p) => normPath(p.cmd).includes(normPath(d)))) { log(`> Hâlâ bir süreç kullanıyor, dokunulmadı: ${d}`); continue; }
     const links = [join(d, 'cloudflare', 'node_modules'), join(d, 'node_modules')];
     for (const j of links) if (lexists(j)) { try { ps(`$j='${j}'; (Get-Item -LiteralPath $j -Force).Delete()`); } catch {} }
@@ -688,7 +746,8 @@ function doctor({ inPush = false } = {}) {
 
   let info = { procs: [], listen: [] };
   let listed = true;
-  try {
+  // E2E geçici depoda çalışır: makinedeki gerçek süreçlere bakmaz
+  if (!E2E) try {
     info = psJson(`$p = @(Get-CimInstance Win32_Process -Filter "Name='node.exe' OR Name='esbuild.exe'" | ForEach-Object { [pscustomobject]@{ id=[int]$_.ProcessId; ppid=[int]$_.ParentProcessId; age=$(if ($_.CreationDate) { [int]((Get-Date)-$_.CreationDate).TotalMinutes } else { 0 }); cmd=[string]$_.CommandLine } })
 $l = @(Get-NetTCPConnection -State Listen -LocalPort 5173,5000,5002,5187 -ErrorAction SilentlyContinue | ForEach-Object { [int]$_.OwningProcess })
 [pscustomobject]@{ procs=$p; listen=$l } | ConvertTo-Json -Depth 3 -Compress`);
@@ -716,6 +775,7 @@ $l = @(Get-NetTCPConnection -State Listen -LocalPort 5173,5000,5002,5187 -ErrorA
       catch (e) { say(`!! Artık süreç kapatılamadı: pid ${p.id} (${firstLine(e)})`); }
     }
     if (others.length) log(`> kontrol edilmedi (${others.length} uzun süreç): ${others.slice(0, 8).map((p) => `pid ${p.id} · ${p.age} dk · ${shortCmd(p.cmd)}`).join(' | ')}`);
+    try { simHealth(say); } catch (e) { log(`!! sim bakımı: ${firstLine(e)}`); }
   }
 
   // Git'in yarım bıraktığı geçici nesneler: 1 saatten eskiyse çöp; çalışan git varken dokunulmaz
@@ -740,6 +800,7 @@ $l = @(Get-NetTCPConnection -State Listen -LocalPort 5173,5000,5002,5187 -ErrorA
     say('!! UYARI: game/node_modules eksik görünüyor, npm install gerekebilir');
     notice('Bakım sonrası game/node_modules/.bin/vitest bulunamadı; npm install gerekebilir.');
   }
+  if (!inPush) try { withQueue((q) => scheduleAutoShip(q)); autoShipKick(); } catch (e) { log(`!! otomatik gönderim bakımı: ${firstLine(e)}`); }
   if (!inPush && !did.length) log('> Temizlenecek bir şey yok.');
   return did;
 }
@@ -962,8 +1023,21 @@ function mergeTree(mb, ours, theirs) {
   try { return { ok: true, tree: gx(GAME, ['merge-tree', '--write-tree', '--name-only', '--no-messages', `--merge-base=${mb}`, ours, theirs]) }; }
   catch (e) {
     if (e.status !== 1) throw e;
-    return { ok: false, files: String(e.stdout).split(/\r?\n/).slice(1).map((l) => l.trim()).filter(Boolean) };
+    const lines = String(e.stdout).split(/\r?\n/);
+    return { ok: false, conflictTree: lines[0].trim(), files: lines.slice(1).map((l) => l.trim()).filter(Boolean) };
   }
+}
+// Çakışma yalnız golden kayıtlarındaysa çözülmüş tree (dosyalar side tarafından, kapılardan önce zaten yeniden üretilir); değilse null
+function resolveGolden(r, side) {
+  if (r.ok || !r.files.length || !r.files.every(isGolden)) return null;
+  const idx = join(GAME, '.git', `push-queue.golden-${process.pid}.index`);
+  const env = { GIT_INDEX_FILE: idx };
+  try {
+    gx(GAME, ['read-tree', r.conflictTree], { env });
+    const info = r.files.map((f) => { const b = blobAt(side, f); return b ? `100644 ${b}\t${f}` : `0 ${'0'.repeat(40)}\t${f}`; }).join('\n') + '\n';
+    gx(GAME, ['update-index', '--index-info'], { env, input: info });
+    return { ok: true, tree: gx(GAME, ['write-tree'], { env }) };
+  } finally { rmSync(idx, { force: true }); }
 }
 // Dalın origin/main'e göre gönderilmemiş içeriği var mı (gönderim squash'lıdır, ata kontrolü yetmez: içerik karşılaştırılır)
 function branchHasWork(branch, target = ORIGIN_MAIN) {
@@ -973,6 +1047,8 @@ function branchHasWork(branch, target = ORIGIN_MAIN) {
   return !r.ok || r.tree !== revOf(`${target}^{tree}`);
 }
 
+// Metin değişince artırılır: açık sohbetler bir sonraki istemde yeni kuralları görür
+const WT_RULES_V = 2;
 function wtRules(sid, e, rec, first) {
   const s = short(sid);
   const base = `[gönderim kuyruğu] oturum ${s} · mod: ${e.mode}${e.ready ? ' · hazır' : ''}`;
@@ -982,8 +1058,10 @@ function wtRules(sid, e, rec, first) {
   return `${head}\nKurallar: Read/Edit/Write bu kopyanın mutlak yoluyla, komutlar önce cd ile bu kopyada; asıl game/ yazmaya kapalı. 5173 son gönderilen sürümdür, işini Ömer'e kendi portundan göster. Commit şart değil, ready ağacı commit'ler (assets/source gitmez). Kendin git push yapma, patch-notes.json'a yazma. ` +
     (e.mode === 'kritik'
       ? `İş bitip doğrulanınca Ömer'e tek satır "GitHub'a gönderiyorum" de, teyit BEKLEME: node "${TOOL}" push ${s} --fixes "<oyuncuya yönelik İngilizce satır>" (arka planda, sonuç kuyruk raporunda); bitince 5000 + Pages linkini ver.`
-      : `Kendin GitHub'a gönderme; iş bitip doğrulanınca: node "${TOOL}" ready ${s} --fixes "<oyuncuya yönelik İngilizce satır>"; ${e.mode === 'eşlik' ? 'ilk kritik gönderimle ya da gece 03:00 görevinde gider.' : 'gece 03:00 görevinde gider.'}`) +
-    ` Oyuncunun göreceği bir şey değişmediyse --internal ver. Yeni açık soru: docs/design/open-questions.md sonuna "## Q-NEW. Başlık" (numarayı gönderim verir). Agent'ların bu kopyada mutlak yolla çalışır; paralel olanlar için bu daldan: git -C "${rec.path}" worktree add "<game>/.claude/worktrees/agent-<ad>" -b agent/<ad> (isolation kullanma), bitince bu dala merge et. Gönderimden sonra dal yeni main'e taşınır. Sohbet işi tamamen bitince: node "${TOOL}" wt-close ${s}. Diğer sohbetlere mesaj atma.`;
+      : `Kendin GitHub'a gönderme; iş bitip doğrulanınca: node "${TOOL}" ready ${s} --fixes "<oyuncuya yönelik İngilizce satır>"; ${e.mode === 'eşlik' ? `ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle ya da gece 03:00 görevinde gider.` : 'gece 03:00 görevinde gider.'}`) +
+    ` Gönderime ready anındaki hâl girer, sonraki commit'lerin sonrakine kalır. Kopyan her istemde origin/main'e kendiliğinden eşitlenir; çakışma varsa yalnız uyarı görürsün. tests/fixtures/golden çakışmasını elle çözme, gönderim yeniden üretir.` +
+    ` Oyuncunun göreceği bir şey değişmediyse --internal ver. Yeni açık soru: docs/design/open-questions.md sonuna "## Q-NEW. Başlık" (numarayı gönderim verir). Agent'ların bu kopyada mutlak yolla çalışır; paralel olanlar için bu daldan: git -C "${rec.path}" worktree add "<game>/.claude/worktrees/agent-<ad>" -b agent/<ad> (isolation kullanma), bitince bu dala merge et. Gönderimden sonra dal yeni main'e taşınır. Sohbet işi tamamen bitince: node "${TOOL}" wt-close ${s}. Başka açık sohbetin konusuna ya da dosyalarına giren işi yapma: SendMessage ile o sohbete devret (adı ListAgents'ta), Ömer'e tek satır söyle; sana devredilen işi normal iş say. Yeni konuya başlamadan docs/arch/chat-owners.md oku.` +
+    (rec.name === 'minor-fixes' ? ` Sen koordinatörsün: Ömer'den küçük işleri alırsın, başka sohbetin alanına gireni devredersin, kalanı kısa turlarla yaparsın.` : '');
 }
 
 // Yeni sohbetin yazma koruması: asıl checkout'a (game/) yazamaz; kendi kopyası ve agent kopyaları serbest; game/ dışı ilgi alanımız değil
@@ -1004,7 +1082,76 @@ function hookEditPre() {
   const q = readQueue();
   if (!isNewChat(q, sid)) return;
   const why = guardReason(q, sid, isAbsolute(p) ? p : resolve(cwd, p));
-  if (why) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: why } }));
+  if (why) return console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: why } }));
+  let warn = null;
+  try { warn = earlyWarning(q, sid, isAbsolute(p) ? p : resolve(cwd, p)); } catch {}
+  if (warn) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: warn } }));
+}
+
+// Erken uyarı (Ömer 2026-10-31): düzenlenen dosya başka bir açık kopyada da değişiyorsa, dosya başına oturumda bir kez; engellemez
+function earlyWarning(q, sid, abs) {
+  const rec = wtOf(q, sid);
+  if (!rec) return null;
+  const m = /^\.claude\/worktrees\/[^/]+\/(.+)$/i.exec(relative(GAME, abs).replace(/\\/g, '/'));
+  if (!m || SKIP(m[1]) || NO_HANDOFF(m[1])) return null;
+  const rel = m[1];
+  const key = rel.toLowerCase();
+  if ((q.sessions[sid]?.warnedWt ?? []).includes(rel)) return null;
+  const cache = wtFilesFresh(true);
+  if (!cache) return null;
+  const who = Object.values(q.worktrees ?? {}).filter((r) => r.name !== rec.name && (cache.copies?.[r.name] ?? []).some((f) => f.toLowerCase() === key));
+  if (!who.length) return null;
+  withQueue((qq) => { const e = entry(qq, sid); if (!(e.warnedWt ??= []).includes(rel)) e.warnedWt.push(rel); });
+  const names = who.map((r) => `"${ownerName(r.name)}" (kopya chat-${r.name})`).join(', ');
+  return `[gönderim kuyruğu] ERKEN UYARI: ${rel} şu an ${names} sohbetinde de değişiyor. Bunu düzenlemek yerine işi o sohbete devret (SendMessage, sahip listesi: docs/arch/chat-owners.md), Ömer'e tek satır söyle.`;
+}
+// Sahip listesindeki sohbet adı (| Sohbet | Kopya | Alan |); yoksa kopya adı
+function ownerName(copy) {
+  try {
+    for (const line of readFileSync(join(GAME, 'docs', 'arch', 'chat-owners.md'), 'utf8').split(/\r?\n/)) {
+      const c = line.split('|').map((x) => x.trim());
+      if (c[2] === copy) return c[1];
+    }
+  } catch {}
+  return copy;
+}
+// Diğer kopyaların dosya listesi: en çok 60 sn'de bir, kancayı bekletmeyen ayrı süreçte. Bayat liste kullanılır; 10 dk'dan eskiyse kısa süre yenisi beklenir, gelmezse uyarı yok
+function wtFilesFresh(wait) {
+  const read = () => { try { return JSON.parse(readFileSync(WT_FILES, 'utf8')); } catch { return null; } };
+  const c = read();
+  const age = c ? Date.now() - c.at : Infinity;
+  if (age < WT_CACHE) return c;
+  if (E2E) { wtFilesRefresh(); return read(); }
+  spawn(process.execPath, [SELF, 'wt-files'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+  if (!wait || age < 10 * 60000) return c;
+  const t0 = Date.now();
+  while (Date.now() - t0 < 2500) {
+    sleep(100);
+    const n = read();
+    if (n && n.at !== c?.at) return n;
+  }
+  return null;
+}
+function wtFilesRefresh() {
+  const L = WT_FILES + '.lock';
+  try { mkdirSync(L); } catch {
+    try { if (Date.now() - statSync(L).mtimeMs > 120000) rmSync(L, { recursive: true, force: true }); } catch {}
+    return;
+  }
+  try {
+    const copies = {};
+    for (const r of Object.values(readQueue().worktrees ?? {})) {
+      if (!existsSync(r.path)) continue;
+      try {
+        const tip = revOf(`refs/heads/${r.branch}`);
+        const out = new Set(diffNames(gx(GAME, ['merge-base', ORIGIN_MAIN, tip]), tip));
+        for (const f of dirtyPaths(r.path)) out.add(f);
+        copies[r.name] = [...out];
+      } catch {}
+    }
+    writeFileSync(WT_FILES + '.tmp', JSON.stringify({ at: Date.now(), copies }));
+    renameRetry(WT_FILES + '.tmp', WT_FILES);
+  } finally { rmSync(L, { recursive: true, force: true }); }
 }
 
 function cutover() {
@@ -1125,23 +1272,224 @@ function wtAutocommit(rec, msg) {
   return true;
 }
 
-// Temiz kopyanın origin/main'e yetişmesi: kancada iki hızlı git, gerekiyorsa ayrı süreç (10 sn kanca süresine takılıp kilit bırakmasın)
-function catchUpCheck(rec) {
-  if (!rec) return;
-  try {
-    const [head, tgt] = gx(rec.path, ['rev-parse', 'HEAD', ORIGIN_MAIN]).split(/\s+/);
-    if (head === tgt || !isAncestor(head, tgt, rec.path)) return;
-    if (E2E) return wtCatchup(rec.sid);
-    spawn(process.execPath, [SELF, 'wt-catchup', rec.sid], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
-  } catch {}
+// Kopya başına kısa kilit (Ömer 2026-10-31): eşitleme, ready ve gönderim sonrası dal taşıma üst üste binmesin (biri commit'lerken öteki reset atarsa iş kaybolur)
+// Kilit alınamazsa undefined döner
+function withWtLock(rec, fn, waitMs = 0) {
+  const L = join(GAME, '.git', `push-queue.wt-${rec.name}.lock`);
+  const t0 = Date.now();
+  for (;;) {
+    try { mkdirSync(L); break; } catch {
+      try { if (Date.now() - statSync(L).mtimeMs > 120000) { rmSync(L, { recursive: true, force: true }); continue; } } catch { continue; }
+      if (Date.now() - t0 >= waitMs) return undefined;
+      sleep(100);
+    }
+  }
+  try { return fn(); } finally { rmSync(L, { recursive: true, force: true }); }
 }
-function wtCatchup(s) {
+const syncFile = (rec) => join(GAME, '.git', `push-queue.sync-${rec.name}.txt`);
+// Kanca eşitlemeyi ayrı süreçte başlatır, 10 sn sınırına takılmadan sonucu bekler; yetişmezse süreç öldürülmeden biter, satır bir sonraki isteme kalır
+function promptSync(rec) {
+  if (!rec || !existsSync(rec.path)) return '';
+  const take = () => { try { const t = readFileSync(syncFile(rec), 'utf8'); rmSync(syncFile(rec), { force: true }); return t || ' '; } catch { return ''; } };
+  try {
+    const old = take();
+    if (!Number(gx(rec.path, ['rev-list', '--count', `HEAD..${ORIGIN_MAIN}`]))) return old.includes('eşitlendi') ? old : '';
+    spawn(process.execPath, [SELF, 'wt-sync', rec.sid], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+    while (process.uptime() < 7.5) {
+      sleep(50);
+      const t = take();
+      if (t) return t;
+    }
+    return old.includes('eşitlendi') ? old : '';
+  } catch { return ''; }
+}
+function wtSync(s) {
   const rec = wtOf(readQueue(), s);
   if (!rec || !existsSync(rec.path)) return;
-  if ([...dirtyPaths(rec.path)].some((p) => !SKIP(p))) return;
-  const tgt = revOf(ORIGIN_MAIN, rec.path);
-  if (!isAncestor('HEAD', tgt, rec.path)) return;
-  gx(rec.path, ['merge', '-q', '--ff-only', tgt]);
+  let line;
+  try { line = withWtLock(rec, () => wtSyncNow(rec)); } catch (e) {
+    try { appendFileSync(LOG, `[${new Date().toISOString()}] !! ${rec.branch} eşitlenemedi: ${firstLine(e)}\n`); } catch {}
+    line = wtBehindNote(rec);
+  }
+  // Kilit doluysa (eşitleme/taşıma sürüyor) boş sonuç: kanca boşuna beklemesin
+  writeFileSync(syncFile(rec) + '.tmp', line ?? '');
+  renameRetry(syncFile(rec) + '.tmp', syncFile(rec));
+}
+function copyBusy(rec) {
+  try {
+    for (const st of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply', 'index.lock'])
+      if (existsSync(resolve(rec.path, gx(rec.path, ['rev-parse', '--git-path', st])))) return true;
+    return gx(rec.path, ['symbolic-ref', '-q', 'HEAD']) !== `refs/heads/${rec.branch}`;
+  } catch { return true; }
+}
+// Otomatik eşitleme (Ömer 2026-10-31): çakışma yoksa origin/main kopyaya birleşir. Upstream'in de değiştirdiği kirli dosyalar önce, deneme birleştirmesi temizse, kendi dalına commit'lenir.
+// Çakışma, yarım birleştirme ya da index.lock varsa kopyaya dokunulmaz, uyarı döner.
+function wtSyncNow(rec) {
+  const dir = rec.path;
+  const n = Number(gx(dir, ['rev-list', '--count', `HEAD..${ORIGIN_MAIN}`]));
+  if (!n) return '';
+  if (copyBusy(rec)) return wtBehindNote(rec);
+  const head = revOf('HEAD', dir);
+  const tgt = revOf(ORIGIN_MAIN, dir);
+  const mb = gx(dir, ['merge-base', head, tgt]);
+  const touched = new Set(diffNames(mb, tgt, dir));
+  const overlap = [...dirtyPaths(dir)].filter((p) => touched.has(p));
+  const unsaved = overlap.filter(SKIP); // commit'e girmeyen yollar (assets/source...) kaydedilemez
+  if (unsaved.length) return wtBehindNote(rec, unsaved);
+  const spec = join(GAME, '.git', `push-queue.sync-${rec.name}.paths`);
+  const idx = join(GAME, '.git', `push-queue.sync-${rec.name}.index`);
+  try {
+    let ours = head;
+    if (overlap.length) {
+      writeFileSync(spec, overlap.join('\n') + '\n');
+      const env = { GIT_INDEX_FILE: idx };
+      gx(dir, ['read-tree', head], { env });
+      gx(dir, ['add', '-A', `--pathspec-from-file=${spec}`], { env });
+      ours = commitTree(gx(dir, ['write-tree'], { env }), head, 'eşitleme denemesi');
+    }
+    const dry = mergeTree(mb, ours, tgt);
+    if (!dry.ok) return wtBehindNote(rec, dry.files);
+    if (overlap.length) {
+      gx(dir, ['add', '-A', `--pathspec-from-file=${spec}`]);
+      gx(dir, ['commit', '-q', '--no-verify', '-m', 'chat: otomatik eşitleme öncesi kayıt', `--pathspec-from-file=${spec}`], { env: WHO });
+    }
+    try { gx(dir, ['merge', '-q', '--no-edit', '--no-verify', tgt], { env: WHO }); } catch (e) {
+      gxOk(dir, ['merge', '--abort']); // deneme ile gerçek arasında dosya değiştiyse: yarım birleştirme bırakılmaz, iş commit'te ya da ağaçta durur
+      throw e;
+    }
+    return `[gönderim kuyruğu] Kopyan güncel sürüme eşitlendi: ${n} gönderim birleştirildi${overlap.length ? `, çakışmayan yarım işin (${overlap.length} dosya) önce dalına commit'lendi` : ''}.`;
+  } finally { rmSync(spec, { force: true }); rmSync(idx, { force: true }); }
+}
+
+// ---- Otomatik gönderim (Ömer 2026-10-31): ilk hazırdan 20 dk sonra; plan kuyrukta durur, zamanlayıcı ölse de hook-prompt/doctor gecikeni başlatır ----
+const clock = (ms) => new Date(ms).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+const autoEligible = (e) => e.ready && !e.lastError && e.mode !== 'gün sonu';
+function shipLive() {
+  try { const pid = JSON.parse(readFileSync(join(PLOCK, 'owner.json'), 'utf8')).pid; return !!pid && pidAlive(pid); } catch { return false; }
+}
+const addNotice = (q, text) => (q.notices ??= []).push(`[${new Date().toLocaleString('tr-TR')}] ${text}`);
+// withQueue içinde çağrılır. Gönderim sürerken bakılmaz: bitince kendisi çağırır (seçilenler o sırada hâlâ "hazır" görünür)
+function scheduleAutoShip(q, quiet) {
+  if (!q.cutover || shipLive()) return;
+  const list = Object.values(q.sessions).filter(autoEligible);
+  if (list.length) {
+    if (q.autoShipAt) return;
+    q.autoShipAt = Date.now() + AUTO_MS;
+    delete q.autoShipPid;
+    addNotice(q, `Otomatik gönderim planlandı: ${clock(q.autoShipAt)} (${list.length} hazır iş).`);
+  } else if (q.autoShipAt) {
+    delete q.autoShipAt;
+    delete q.autoShipPid;
+    if (!quiet) addNotice(q, 'Otomatik gönderim durduruldu: gönderilecek hazır iş kalmadı.');
+  }
+}
+function spawnBg(argv) {
+  const fd = openSync(OUT, 'a');
+  const p = spawn(process.execPath, [SELF, ...argv], { cwd: GAME, detached: true, stdio: ['ignore', fd, fd], windowsHide: true });
+  p.unref();
+  return p.pid;
+}
+// Planın vakti geçtiyse başlatır; zamanlayıcı ölmüşse yenisini açar. Kuyruk kilidi dışında çağrılır
+function autoShipKick(q = readQueue()) {
+  if (!AUTO_ON || !q.autoShipAt) return;
+  if (Date.now() >= q.autoShipAt) return void spawnBg(['auto-ship']);
+  if (q.autoShipPid && pidAlive(q.autoShipPid)) return;
+  const pid = spawnBg(['auto-wait']);
+  withQueue((qq) => { if (qq.autoShipAt) qq.autoShipPid = pid; });
+}
+async function autoWait() {
+  for (;;) {
+    const at = readQueue().autoShipAt;
+    if (!at) return 0;
+    if (Date.now() >= at) return autoShipRun();
+    sleep(Math.min(at - Date.now(), 30000));
+  }
+}
+// Planı kuyruk kilidi altında alan süreç gönderir: zamanlayıcı ile kanca yarışsa da tek gönderim başlar; kilidi başka gönderim tutuyorsa push onu bekler
+async function autoShipRun() {
+  const go = withQueue((q) => {
+    if (!q.autoShipAt || Date.now() < q.autoShipAt) return false;
+    delete q.autoShipAt;
+    delete q.autoShipPid;
+    const list = Object.values(q.sessions).filter(autoEligible);
+    if (!list.length) return false;
+    if (!shipLive()) addNotice(q, `Otomatik gönderim başladı (${list.length} hazır iş); sonucu ayrıca gelecek.`);
+    return true;
+  });
+  return go ? push('auto', []) : 0;
+}
+
+// ---- Gönderim sonrası denge simi (Ömer 2026-10-31): gönderimi beklemez, geri almaz; aynı anda bir tane, yenisi kuyruktakinin yerini alır ----
+function maybeSim(sha, version, files) {
+  if (!version || !files.some((f) => BALANCE_PATHS.test(f))) return;
+  if (E2E && !ENVV.EOV_CMD_SIM) return;
+  const start = withQueue((q) => {
+    const s = (q.sim ??= {});
+    s.queued = { sha, version };
+    return !(s.running && ownerAlive(s.running.pid));
+  });
+  log(`> Denge simi ${start ? 'başlıyor' : 'sıraya girdi'}: ${version}`);
+  if (start) spawnBg(['sim-run']);
+}
+async function simRun() {
+  for (;;) {
+    const job = withQueue((q) => {
+      const s = q.sim;
+      if (s?.running?.pid === process.pid) delete s.running;
+      if (!s?.queued || (s.running && ownerAlive(s.running.pid))) return null;
+      s.running = { ...s.queued, pid: process.pid, dir: join(tmpdir(), `eov-sim-${Date.now()}`) };
+      delete s.queued;
+      return s.running;
+    });
+    if (!job) return 0;
+    await simOne(job);
+  }
+}
+async function simOne({ sha, version, dir }) {
+  const raw = join(SIMS, `${version}.txt`);
+  let text;
+  let made = false;
+  try {
+    mkdirSync(SIMS, { recursive: true });
+    gx(GAME, ['worktree', 'add', '-q', '--detach', dir, sha]);
+    made = true;
+    ps(`New-Item -ItemType Junction -Path '${join(dir, 'node_modules')}' -Target '${join(GAME, 'node_modules')}' | Out-Null`);
+    const r = await runTee(CMD.sim, undefined, dir, 'sim', SIM_LIMIT);
+    writeFileSync(raw, r.out);
+    text = r.code === 0 ? simVerdict(r.out, dir, version, raw) : `${version} denge simi ${r.timedOut ? 'süreye sığmadı' : 'hata verdi'}; gönderim etkilenmedi. Ham çıktı: ${raw}`;
+  } catch (e) {
+    text = `${version} denge simi tamamlanamadı (${firstLine(e)}); gönderim etkilenmedi.`;
+  }
+  if (made) try { removeScratch(dir); } catch (e) { log(`!! sim kopyası silinemedi: ${firstLine(e)}`); }
+  log(`> ${text}`);
+  notice(text);
+}
+// Rapordaki SINIF DENGESİ satırları + data/balance.json bandı (src/sim/cli.ts biçimi)
+function simVerdict(out, dir, version, raw) {
+  const { low, high } = JSON.parse(readFileSync(join(dir, 'data', 'balance.json'), 'utf8')).bands.classWin;
+  const lines = out.split(/\r?\n/);
+  const rows = [];
+  for (let i = lines.findIndex((l) => l.startsWith('SINIF DENGES')) + 1; i > 0 && i < lines.length && lines[i].trim(); i++) {
+    const m = /^\s+(\S.*?)\s+\d+\s+%\s*(\d+(?:,\d+)?)/.exec(lines[i]);
+    if (m) rows.push({ name: m[1], win: Number(m[2].replace(',', '.')), text: m[2] });
+  }
+  if (!rows.length) return `${version} denge simi bitti ama sınıf tablosu okunamadı; gönderim etkilenmedi. Ham çıktı: ${raw}`;
+  const bad = rows.filter((r) => r.win < low || r.win > high);
+  return bad.length
+    ? `${version} denge simi (300 savaş): hedef bandın (%${low}-${high}) dışındaki sınıflar: ${bad.map((r) => `${r.name} %${r.text}`).join(', ')}. Ham çıktı: ${raw}`
+    : `${version} denge simi (300 savaş): tüm sınıflar hedef bandın (%${low}-${high}) içinde. Ham çıktı: ${raw}`;
+}
+// Sim süreci öldüyse kaydı silinir (kopyasını cleanLeftoverWorktrees temizler), sırada bekleyen başlatılır
+function simHealth(say) {
+  const dead = withQueue((q) => {
+    const r = q.sim?.running;
+    if (!r || ownerAlive(r.pid)) return null;
+    delete q.sim.running;
+    return r;
+  });
+  if (dead) { say(`> Denge simi yarıda kalmış: ${dead.version}`); notice(`${dead.version} denge simi yarıda kaldı; gönderim etkilenmedi.`); }
+  const q = readQueue();
+  if (q.sim?.queued && !q.sim.running) spawnBg(['sim-run']);
 }
 
 function legacyMerged(sid, files) {
@@ -1161,7 +1509,7 @@ function stopEntry(e, text) {
   log(`!! ${short(e.sid)}: ${text}`);
   withQueue((q) => {
     const cur = q.sessions[e.sid];
-    if (cur) { cur.ready = false; cur.lastError = text; }
+    if (cur) { cur.ready = false; cur.lastError = text; delete cur.readySha; }
     ((q.chatNotices ??= {})[short(e.sid)] ??= []).push(text);
     (q.notices ??= []).push(`[${new Date().toLocaleString('tr-TR')}] ${short(e.sid)}${e.label ? ` "${e.label}"` : ''}: ${text}`);
   });
@@ -1192,6 +1540,8 @@ function integrate(base, picked, gone, dry) {
   const contrib = new Set();
   const own = (files, sid) => { for (const f of files) { if (!owners.has(f)) owners.set(f, new Set()); owners.get(f).add(sid); } };
   const stop = (e, text) => { gone.add(e.sid); if (dry) log(`> (deneme) ${short(e.sid)} düşerdi: ${text}`); else stopEntry(e, text); };
+  let goldenConflict = false;
+  let goldenBranches = 0;
 
   const legacyFiles = [];
   const legacy = picked.filter((e) => !gone.has(e.sid) && e.files.length);
@@ -1231,22 +1581,34 @@ function integrate(base, picked, gone, dry) {
   for (const e of picked) {
     const rec = wtOf(q, e.sid);
     if (!rec || gone.has(e.sid)) continue;
-    let tip;
-    try { tip = revOf(`refs/heads/${rec.branch}`); } catch { stop(e, `${rec.branch} dalı bulunamadı.`); continue; }
+    let branchTip;
+    try { branchTip = revOf(`refs/heads/${rec.branch}`); } catch { stop(e, `${rec.branch} dalı bulunamadı.`); continue; }
+    // Ready anındaki mühür gönderilir, sonrası dalda kalır (Ömer 2026-10-31); mührü olmayan eski girdi dalın ucuyla gider
+    const tip = e.readySha ?? branchTip;
+    if (!isAncestor(tip, branchTip)) { stop(e, `Dal ready'den sonra yeniden yazılmış, mühürlenen hâl artık dalda değil. İşini kontrol edip yeniden ready ver.`); continue; }
     e.tip = tip;
     const mb = gx(GAME, ['merge-base', cur, tip]);
     if (mb === tip) continue; // gönderilecek bir şey yok
-    const r = mergeTree(mb, cur, tip);
+    let r = mergeTree(mb, cur, tip);
     if (!r.ok) {
-      stop(e, `Dal bu gönderimden çıkarıldı: şu dosyalar origin/main ile çakışıyor: ${r.files.slice(0, 8).join(', ')}. Kendi kopyanda: git -c user.name=Omer -c user.email=omerbekinn@gmail.com merge origin/main, çakışmayı çöz, testleri koş, sonra yeniden ready.`);
-      continue;
+      const solved = resolveGolden(r, cur);
+      if (!solved) {
+        const real = r.files.filter((f) => !isGolden(f));
+        stop(e, `Dal bu gönderimden çıkarıldı: şu dosyalar origin/main ile çakışıyor: ${real.slice(0, 8).join(', ')}. Kendi kopyanda: git -c user.name=Omer -c user.email=omerbekinn@gmail.com merge origin/main, çakışmayı çöz, testleri koş, sonra yeniden ready.`);
+        continue;
+      }
+      log(`> ${rec.branch}: yalnız golden kayıtları çakıştı (${r.files.join(', ')}), dal düşmedi, kayıtlar yeniden üretilecek.`);
+      goldenConflict = true;
+      r = solved;
     }
     if (r.tree === revOf(`${cur}^{tree}`)) continue;
+    if (diffNames(mb, tip).some(isGolden)) goldenBranches++;
     own(diffNames(cur, r.tree), e.sid);
     contrib.add(e.sid);
     cur = commitTree(r.tree, cur, rec.branch);
   }
-  return { commit: cur, owners, contrib, legacyFiles, changed: [...owners.keys()] };
+  // Birden çok dal golden değiştirdiyse çakışma olmasa da birleşmiş davranış kayıtları bayatlatır
+  return { commit: cur, owners, contrib, legacyFiles, changed: [...owners.keys()], regenGolden: goldenConflict || goldenBranches > 1 };
 }
 
 // Kırmızı dosyaların tek sahibi: her dosyanın tam bir sahibi yoksa belirsizdir (null)
@@ -1325,6 +1687,13 @@ function mergeBlobs(ours, base, theirs) {
 
 // Gönderilen dal yeni commit'e taşınır; sohbetin commit'lenmemiş ya da yeni işi kaybolmaz (Ömer 2026-10-31)
 function moveBranch(e, rec, shipped) {
+  const done = withWtLock(rec, () => moveBranchNow(e, rec, shipped), 20000);
+  if (done !== undefined) return done;
+  log(`!! ${rec.branch} taşınamadı: kopyada eşitleme sürüyor`);
+  withQueue((q) => { ((q.chatNotices ??= {})[short(e.sid)] ??= []).push(`İşin gönderildi ama ${rec.branch} yeni main'e kendiliğinden taşınamadı (kopya meşguldü). Kopyanda: git -c user.name=Omer -c user.email=omerbekinn@gmail.com merge origin/main`); });
+  return false;
+}
+function moveBranchNow(e, rec, shipped) {
   const dir = rec.path;
   const miss = (why) => {
     log(`!! ${rec.branch} taşınamadı: ${why}`);
@@ -1339,12 +1708,36 @@ function moveBranch(e, rec, shipped) {
     if (existsSync(resolve(dir, gx(dir, ['rev-parse', '--git-path', st])))) return miss('kopyada yarım birleştirme var');
   gxOk(GAME, ['update-ref', `refs/push-queue/backup/${rec.name}`, H]);
   let N = shipped;
+  let P = null; // gönderim sürerken yeniden ready verilmişse o mühür de yeni dala taşınır
+  let newPin = null;
   if (T && H !== T) {
-    // Gönderim sırasında yeni commit gelmiş: üstüne tek commit olarak taşınır
+    // Mühürden sonra commit gelmiş: üstüne tek commit olarak taşınır (mühürlü hâl zaten gönderildi)
     if (!isAncestor(T, H)) return miss('dal gönderim sırasında yeniden yazılmış');
-    const r = mergeTree(T, shipped, H);
-    if (!r.ok) return miss(`yeni commit'lerin çakışıyor: ${r.files.slice(0, 8).join(', ')}`);
-    N = commitTree(r.tree, shipped, 'chat: gönderim sonrası devam');
+    const step = (from, to, parent, msg) => {
+      // Mühürden sonra origin/main dala birleşmişse (otomatik eşitleme) sürüm notu gibi dosyalar mühür tabanıyla çakışır: ortak atayla bir kez daha denenir
+      let r;
+      for (const base of [from, gx(GAME, ['merge-base', parent, to])]) {
+        r = mergeTree(base, parent, to);
+        if (!r.ok) r = resolveGolden(r, parent) ?? r;
+        if (r.ok) break;
+      }
+      if (!r.ok) return { files: r.files };
+      return { commit: r.tree === revOf(`${parent}^{tree}`) ? parent : commitTree(r.tree, parent, msg) };
+    };
+    const cur = readQueue().sessions[e.sid]?.readySha;
+    let from = T;
+    if (cur && cur !== T && isAncestor(T, cur) && isAncestor(cur, H)) {
+      P = cur;
+      const s1 = step(T, P, N, 'chat: yeniden hazır');
+      if (!s1.commit) return miss(`yeni commit'lerin çakışıyor: ${s1.files.slice(0, 8).join(', ')}`);
+      N = newPin = s1.commit;
+      from = P;
+    }
+    if (from !== H) {
+      const s2 = step(from, H, N, 'chat: gönderim sonrası devam');
+      if (!s2.commit) return miss(`yeni commit'lerin çakışıyor: ${s2.files.slice(0, 8).join(', ')}`);
+      N = s2.commit;
+    }
   }
   // Kirli dosya hedefle de değişiyorsa üç yollu birleştirilir; olmuyorsa dal yerinde kalır (hiçbir şey yazılmaz)
   const dirty = dirtyPaths(dir);
@@ -1366,6 +1759,7 @@ function moveBranch(e, rec, shipped) {
     for (const m of merged) gx(dir, ['checkout', H, '--', m.f]);
     gx(dir, ['reset', '-q', '--keep', N]);
     for (const m of merged) writeFileSync(m.abs, m.out);
+    if (P) withQueue((q) => { const cur = q.sessions[e.sid]; if (cur?.readySha === P) cur.readySha = newPin; });
     return true;
   } catch (err) {
     for (const m of merged) { try { writeFileSync(m.abs, m.bytes); } catch {} }
@@ -1422,12 +1816,32 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
       paths.push(...numberOpenQuestions(scratch));
       if (paths.length) gx(scratch, ['add', '--', ...paths.filter((p) => existsSync(join(scratch, p)))]);
       const summary = version ? `${version}: ${Object.values(groups).flat()[0]}` : `Internal: docs/tools update (${I.changed.length} files)`;
-      const sha = commitTree(gx(scratch, ['write-tree']), base, `${summary}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`);
+      const message = `${summary}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`;
+      let sha = commitTree(gx(scratch, ['write-tree']), base, message);
       gx(scratch, ['reset', '-q', '--soft', sha]);
       ps(`New-Item -ItemType Junction -Path '${join(scratch, 'node_modules')}' -Target '${join(GAME, 'node_modules')}' | Out-Null`);
 
       const gate = makeGate(scratch, I.changed, (f) => (I.owners.has(f) ? `${[...I.owners.get(f)].map(short).join(', ')} (bu gönderimde)` : null));
+      let goldenText = '';
       try {
+        // Golden kayıtları birleşmiş koddan, testlerden önce (Ömer 2026-10-31); hangi kayıtların değiştiği günlükte ve raporda görünür: davranış değişikliği saklanmasın
+        if (I.regenGolden) {
+          log('> Golden kayıtları birleşmiş koddan yeniden üretiliyor');
+          await gate('golden yenileme', CMD.golden);
+          gx(scratch, ['add', '--', 'tests/fixtures/golden']);
+          const t = gx(scratch, ['write-tree']);
+          if (t !== revOf(`${sha}^{tree}`)) {
+            sha = commitTree(t, base, message);
+            gx(scratch, ['reset', '-q', '--soft', sha]);
+          }
+        }
+        const golden = diffNames(base, sha).filter(isGolden);
+        for (const f of golden) if (!I.changed.includes(f)) I.changed.push(f);
+        if (golden.length) {
+          const names = golden.map((f) => f.split('/').pop()).join(', ');
+          goldenText = ` Golden kayıtları ${I.regenGolden ? 'yeniden üretildi' : 'değişti'}, davranış değişikliğine bak: ${names}.`;
+          log(`> Golden kayıtları ${I.regenGolden ? 'yeniden üretildi' : 'değişti'}: ${names}`);
+        }
         await runGates(scratch, I.changed, gate);
       } catch (err) {
         if (!err.red || retested) throw err;
@@ -1461,10 +1875,11 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
       }
       try { clearEntries([...live, ...quiet], started, sha); } catch (e) { log(`!! kuyruk temizliği: ${firstLine(e)}`); }
       log(`> ${version ?? 'İç güncelleme'} GitHub'a gönderildi. 5000: http://localhost:5000/ · Pages: https://omerbekin.github.io/embers-of-valdoria/`);
-      if (trigger === 'eod') notice(`Gece 03:00 gönderimi: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti (${live.map(label).join(', ')}).`);
-      else notice(`${short(trigger)} gönderimi tamam: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti. 5000: http://localhost:5000/ · Pages: https://omerbekin.github.io/embers-of-valdoria/`);
+      if (trigger === 'eod') notice(`Gece 03:00 gönderimi: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti (${live.map(label).join(', ')}).${goldenText}`);
+      else notice(`${trigger === 'auto' ? 'Otomatik gönderim' : `${short(trigger)} gönderimi`} tamam: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti (${live.map(label).join(', ')}). 5000: http://localhost:5000/ · Pages: https://omerbekin.github.io/embers-of-valdoria/${goldenText}`);
       if (version) try { deployLive(scratch, version); } catch (e) { notice(`${version} GitHub'a gitti ama canlı yayın hata verdi: ${firstLine(e)}`); }
       if (!E2E) spawn(process.execPath, [SELF, 'pages-check', sha, version ?? 'iç güncelleme'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+      try { maybeSim(sha, version, I.changed); } catch (e) { log(`!! denge simi başlatılamadı: ${firstLine(e)}`); }
       return 0;
     }
   } finally {
@@ -1486,11 +1901,19 @@ function clearEntries(list, started, sha) {
     for (const e of list) {
       const cur = q.sessions[e.sid];
       if (!cur) continue;
-      if (wtOf(q, e.sid) || cur.updated > started) {
+      if (wtOf(q, e.sid) && cur.readySha && cur.readySha !== e.readySha) {
+        // Gönderim sürerken yeniden ready verilmiş: hazır kalır, sıradaki gönderime girer; gönderilen satırlar çıkarılır
+        const left = {};
+        for (const [h, items] of Object.entries(cur.notes ?? {})) left[h] = items.filter((x) => !(e.notes?.[h] ?? []).includes(x));
+        if (hasNotes(left)) cur.notes = left;
+        delete cur.lastError;
+        cur.files = leftover[e.sid] ?? [];
+      } else if (wtOf(q, e.sid) || cur.updated > started) {
         cur.ready = false;
         cur.notes = {};
         delete cur.internal;
         delete cur.lastError;
+        delete cur.readySha;
         cur.files = leftover[e.sid] ?? [];
       } else delete q.sessions[e.sid];
     }
@@ -1524,30 +1947,49 @@ const main = {
     const { notes } = parseNotes(args.slice(1));
     const internal = args.includes('--internal');
     if (!hasNotes(notes) && !internal) throw new Error('en az bir satır: --fixes "..." (oyuncuya görünmeyen iş için --internal)');
-    // Worktree sohbeti: ağacı commit'lenir (assets/source hariç), kuyruk dalı gönderir
+    // Worktree sohbeti: ağacı commit'lenir (assets/source hariç), dalın ucu mühürlenir; kuyruk bu ucu gönderir (Ömer 2026-10-31)
     const rec = wtOf(readQueue(), args[0]);
-    if (rec) wtAutocommit(rec, Object.values(notes).flat()[0]);
-    return withQueue((q) => {
-    const e = entry(q, findSid(q, args[0]));
-    e.ready = true; delete e.lastError;
-    if (internal && !hasNotes(notes)) e.internal = true; else delete e.internal;
-    mergeNotes(e.notes, notes);
-    console.log(`Hazır (${e.mode}, ${rec ? rec.branch : e.files.length + ' dosya'}). ${e.mode === 'gün sonu' ? 'Gece 03:00 görevinde gider.' : 'İlk kritik gönderimle ya da gece 03:00 görevinde gider.'}`);
+    let pin = null;
+    if (rec) {
+      if (withWtLock(rec, () => wtAutocommit(rec, Object.values(notes).flat()[0]), 20000) === undefined) throw new Error('Kopya şu an eşitleniyor, birkaç saniye sonra yeniden çalıştır.');
+      pin = revOf(`refs/heads/${rec.branch}`);
+    }
+    withQueue((q) => {
+      const e = entry(q, findSid(q, args[0]));
+      e.ready = true; delete e.lastError;
+      if (pin) e.readySha = pin;
+      mergeNotes(e.notes, notes);
+      setInternal(e, internal);
+      scheduleAutoShip(q);
+      const when = e.mode === 'gün sonu' ? 'Gece 03:00 görevinde gider.'
+        : !q.cutover ? 'İlk kritik gönderimle ya da gece 03:00 görevinde gider.'
+        : q.autoShipAt ? `Otomatik gönderim ${clock(q.autoShipAt)}, en geç gece 03:00.` : 'Süren gönderim bitince sıradaki otomatik gönderime girer.';
+      console.log(`Hazır (${e.mode}, ${rec ? rec.branch : e.files.length + ' dosya'}). ${when}`);
     });
+    try { autoShipKick(); } catch {}
   },
   // Hazır girdinin sürüm notunu değiştirir (eklemez); toplu gönderimde 8 satıra indirmek için
   notes: () => withQueue((q) => {
     const { notes } = parseNotes(args.slice(1));
     if (!hasNotes(notes)) throw new Error('kullanım: notes <oturum> --fixes "..." [--changes "..."] [--new "..."]');
-    entry(q, findSid(q, args[0])).notes = notes;
+    const e = entry(q, findSid(q, args[0]));
+    e.notes = notes;
+    delete e.internal;
+    // Not sınırı hatası sürüm notuyla düzelir (test koşmamıştı): bu bir yeniden deneme döngüsü değil, girdiler yeniden uygun olur
+    for (const o of Object.values(q.sessions)) if (o.lastError?.includes('sürüm notu sınırı')) delete o.lastError;
+    scheduleAutoShip(q);
     console.log(`Not satırı: ${Object.values(notes).flat().length}.`);
   }),
-  drop: () => withQueue((q) => { delete q.sessions[findSid(q, args[0])]; console.log('Silindi.'); }),
+  drop: () => withQueue((q) => { delete q.sessions[findSid(q, args[0])]; scheduleAutoShip(q); console.log('Silindi.'); }),
   doctor: () => { doctor(); },
   cutover,
   'wt-open': () => wtOpen(args[0], args[1]),
   'wt-close': () => wtClose(args[0]),
-  'wt-catchup': () => wtCatchup(args[0]),
+  'wt-sync': () => wtSync(args[0]),
+  'wt-files': () => wtFilesRefresh(),
+  'auto-wait': async () => process.exit(await autoWait()),
+  'auto-ship': async () => process.exit(await autoShipRun()),
+  'sim-run': async () => process.exit(await simRun()),
   'legacy-merged': () => legacyMerged(args[0], args.slice(1)),
   push: async () => process.exit(background('push', args) ? 0 : await push(args[0], args.slice(1))),
   eod: async () => process.exit(background('eod', args) ? 0 : await push('eod', args)),
