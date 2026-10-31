@@ -259,6 +259,8 @@ export interface CombatantData {
   id: string;
   name: string;
   spriteId: string;
+  /** Kalkanlı mob (Ömer 2026-10-31, #17): sabit Block şansı (oran 0-1); level ile büyümez (kalkan tabanı kuralı). Yoksa Block yok. */
+  blockChance?: number;
   /** Çizim boyutu çarpanı (yoksa 1): büyük yaratıklar için. */
   spriteScale?: number;
   color: string;
@@ -422,6 +424,8 @@ export interface CombatantDef {
   id: string;
   name: string;
   spriteId: string;
+  /** Kalkanlı mob: CombatantData.blockChance. */
+  blockChance?: number;
   /** Çizim boyutu çarpanı (yoksa 1): büyük yaratıklar için. */
   spriteScale?: number;
   color: string;
@@ -604,11 +608,13 @@ export interface ItemEffects {
    * Affix kancaları (Ömer 2026-10-11, items.md 1.3b; data/items.json > affixDefs). Oranlar 0-1. Hepsi genel; verilmezse birim aynı.
    */
   /**
-   * Blok (Ömer 2026-10-18): kalkanın taban blok şansı + kalkana özgü C affix'i (oran 0-1; tavan items.json > caps.block). Düşmanın DOĞRUDAN
+   * Blok (Ömer 2026-10-18): kalkanın taban blok şansı + kalkana özgü C affix'i (oran 0-1). Düşmanın DOĞRUDAN
    * FİZİKSEL skill vuruşu (yakın ve uzak) bu ihtimalle TAMAMEN bloklanır: hasar 0, vuruşun ek etkileri (Stun, Wound, Burning...) uygulanmaz.
    * Büyü, DoT, zemin tiki, Doom, isabet zarsız (sure) vuruşlar ve `unblockable` (Backstab) bloklanmaz. Guard payı korumacının kendi bloğuyla.
    */
   blockChance?: number;
+  /** Block Break (Ömer 2026-10-31, #17; b_blockbreak): bu birimin vuruşunda hedefin Block şansından bu oran doğrudan çıkar (en az 0). */
+  blockBreak?: number;
   /**
    * Daze şansı (Ömer 2026-10-27, çekiç örtüğü; 0-1): hasar veren her skill isabetinde (alan skill'inde hedef başına ayrı zar, seed'li Rng) hedefin sıra
    * sayacı formulas.daze.push x eşik geri itilir (boss yarım: daze.bossMult). CC değil (bağışıklık yok). Yalnızca turns modunda. Olay `daze`.
@@ -1961,6 +1967,8 @@ export interface Combatant {
   lockedSkills?: string[];
   /** Ölemez (UnitSetup.undying): hasar canı 1'in altına indiremez. */
   undying?: boolean;
+  /** Tanımdan gelen Block şansı (kalkanlı mob; CombatantDef.blockChance): item / ağaç Block'una eklenir. */
+  defBlock?: number;
   /** Epic item özel etkileri (UnitSetup.itemEffects; madde 292). */
   itemEffects?: ItemEffects;
   /** Second Wind bu savaşta kullanıldı. */

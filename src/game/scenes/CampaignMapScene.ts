@@ -119,7 +119,10 @@ import {
   townScene,
   townScreenNode,
   storyHeard,
+  type TownAction,
   type TownHotspot,
+  hotspotOffered,
+  smithHotspot,
   reviveWithValor,
   valorReviveBlocked,
   valorWoundHealBlocked,
@@ -232,6 +235,19 @@ const PLACE_CARD: Partial<Record<NodeType, { title: string; action: string }>> =
   treasure: { title: 'Open the chest?', action: 'Open' },
   event: { title: 'Look closer?', action: 'Continue' },
 };
+/** Kasaba kartının kısa yazısı: yalnız o kasabada gerçekten sunulan yerler (kasaba ekranı verisinden; demirci `smith: false` değilse). */
+const TOWN_VERB: Partial<Record<TownAction, string>> = { trade: 'trade', recruit: 'recruit', inn: 'rest', smith: 'forge your gear', pit: 'fight for prizes' };
+function townBlurb(n: MapNode): string {
+  const spots = (n.scene?.hotspots ?? []).filter((h) => h.action !== 'leave' && h.action !== 'story' && hotspotOffered(n, h));
+  const parts: string[] = [];
+  const smith = smithHotspot(n);
+  if (smith) parts.push(`${smith.label}: ${TOWN_VERB.smith}`);
+  for (const h of spots) {
+    const v = TOWN_VERB[h.action];
+    parts.push(v ? `${h.label}: ${v}` : h.label);
+  }
+  return parts.join(' · ');
+}
 const TYPE_LABEL: Record<NodeType, string> = { town: 'Town', battle: 'Battle', elite: 'Elite', event: 'Event', treasure: 'Treasure', boss: 'Boss', rest: 'Rest point', merchant: 'Merchant' };
 /** Varışta kartın onayını bekleyen adımlar (Ömer 2026-10-19: kart çıkıp onaysız girmesin; hikaye / askerleme / veda / yeni takım dahil). */
 const CONFIRM_STEPS: readonly string[] = ['town', 'rest', 'merchant', 'event', 'treasure', 'story', 'recruit', 'volunteer', 'farewell', 'company'];
@@ -377,7 +393,11 @@ export class CampaignMapScene extends Phaser.Scene {
     return current()!;
   }
 
-  init(): void {
+  /** Savaş Menu'sünden Load ile gelindiyse harita açılır açılmaz yuva ekranı açılır (Ömer 2026-10-31). */
+  private openLoadOnStart = false;
+
+  init(data?: { openLoad?: boolean }): void {
+    this.openLoadOnStart = !!data?.openLoad;
     this.curves = new Map();
     this.openEdges = [];
     this.clouds = new Map();
@@ -492,6 +512,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ESC', () => this.onEscape());
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => this.onKey(e));
     this.advance();
+    if (this.openLoadOnStart && this.s.mode === 'normal') this.openLoad();
   }
 
   // ------------------------------------------------------------ oyun menüsü (sağ üst Menu düğmesi / Esc)
@@ -2278,7 +2299,7 @@ export class CampaignMapScene extends Phaser.Scene {
       foes = p.names.join(', ');
       faces = p.classes.filter((c) => !!content.classes[c]).slice(0, 6);
     } else if (vis !== 'goal')
-      blurb = n.type === 'town' ? 'Leave tired heroes at the inn, recruit and trade. The town itself does not heal you.' : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : n.type === 'rest' ? (CONFIG.texts['camp'] ?? 'Make camp once: rest, tend a wound, sharpen a blade or train.') : n.type === 'merchant' ? 'Odo the Peddler sells gear and buys yours.' : '';
+      blurb = n.type === 'town' ? townBlurb(n) : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : n.type === 'rest' ? (CONFIG.texts['camp'] ?? 'Make camp once: rest, tend a wound, sharpen a blade or train.') : n.type === 'merchant' ? 'Odo the Peddler sells gear and buys yours.' : '';
     const after = vis === 'goal' ? [] : outgoing(this.map, id).map((a) => node(this.map, a));
     const then = after.map((a) => `${a.name} (${TYPE_LABEL[a.type]})`).join(' or ');
     // Devriye: temizlenmiş savaş düğümüne dönülünce aynı düşmanlar, ödül azalan getiriyle (sıradaki oynanışın yüzdesi)
@@ -2361,7 +2382,6 @@ export class CampaignMapScene extends Phaser.Scene {
       ...(info ? { info } : {}),
       ...(o.tags ? { tags: o.tags } : {}),
       ...(o.company ? { company: o.company } : {}),
-      then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
       ...this.firstSteps(id),
       preview: true,
       ...(unreachable ? { note: 'Not reachable yet' } : {}),
@@ -3908,7 +3928,6 @@ export class CampaignMapScene extends Phaser.Scene {
       ...(info ? { info } : {}),
       ...(o.tags ? { tags: o.tags } : {}),
       ...(o.company ? { company: o.company } : {}),
-      then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
       ...this.firstSteps(id),
       ...(o.note ? { note: o.note } : {}),
       ...(instant ? { instant: true } : {}),

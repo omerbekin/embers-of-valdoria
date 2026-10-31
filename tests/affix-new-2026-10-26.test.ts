@@ -32,9 +32,9 @@ describe('yeni affix verisi', () => {
     expect(ITEMS.affixDefs.c_gold!.slots).toEqual(['trinket']);
   });
 
-  it('ipucu metni şablondan (bonus yazım kuralı: direnç ayrı çarpan): "Takes 13% less Fire damage", "Your wounds lower your Max HP X% less"', () => {
+  it('ipucu metni şablondan (bonus yazım kuralı: direnç ayrı çarpan): "Takes 13% less Fire damage", "Each wound lowers your Max HP X% less" (yara başına düşen puan: 20 içinden)', () => {
     expect(affixLines(inst('leather_coif', 'c_res_fire'))[0]!.text).toBe(`Takes ${v('c_res_fire')}% less Fire damage`);
-    expect(affixLines(inst('leather_coif', 'b_wound_soft'))[0]!.text).toBe(`Your wounds lower your Max HP ${v('b_wound_soft')}% less`);
+    expect(affixLines(inst('leather_coif', 'b_wound_soft'))[0]!.text).toBe(`Each wound lowers your Max HP ${v('b_wound_soft')}% less`);
     expect(affixLines(inst('work_gloves', 'a_steady'))[0]!.text).toBe(`Each turn you don't move: ${v('a_steady')}% more damage, up to ${Number((3 * v('a_steady')).toFixed(2))}% more after 3 turns`);
   });
 
@@ -56,7 +56,7 @@ describe('loadout eşlemesi (yeni hedefler)', () => {
     expect(loadout({ class: 'warrior' }).goldBonus).toBeUndefined();
     const src = { class: 'warrior', equipment: { helm: inst('leather_coif', 'c_xp', 'h'), armor: inst('padded_gambeson', 'b_wound_soft', 'a'), gloves: inst('work_gloves', 'a_steady', 'g') } };
     expect(itemXpBonus(src)).toBeCloseTo(v('c_xp') / 100, 6);
-    expect(itemWoundSoft(src)).toBeCloseTo(v('b_wound_soft') / 100, 6);
+    expect(itemWoundSoft(src)).toBeCloseTo(v('b_wound_soft') * 0.05, 6); // yazı puan (20 içinden), etki oran
     expect(loadout(src).itemEffects?.steadyDamage).toBeCloseTo(v('a_steady') / 100, 6);
     const w = loadout({ class: 'warrior', equipment: { weapon: { uid: 'w', id: 'woodcutters_axe', rolls: { rarity: 'common', ilvl: 10, affixes: [{ id: 'c_lightning', q: 0.5 }, { id: 'a_pierce', q: 0.5 }] } } } });
     expect(w.modifiers?.elemDamageAdd?.lightning).toBeCloseTo(v('c_lightning') / 100, 6);

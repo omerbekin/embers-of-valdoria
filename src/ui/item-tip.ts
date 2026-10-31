@@ -107,9 +107,9 @@ function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unkn
     out.push(box);
   }
   const base = instanceBaseLines(inst);
-  // örtük satır(lar): tipin örtüğü (+ hız cezası) ve çift el yakın dövüşte Heavy grip (Ömer 2026-10-27)
+  // örtük satır(lar): tipin örtüğü (+ hız cezası) ve çift el yakın dövüşte Heavy grip (Ömer 2026-10-27); silahta bunlar gücün iki yanında (bigNode)
   for (const [line, hint] of [[base.implicit, state?.implicitHint], [base.heavy, undefined]] as const) {
-    if (!line) continue;
+    if (!line || base.weaponSides) continue;
     const row = el('div', 'it-implicit');
     const url = line.stat ? statIconUrl(line.stat) : '';
     if (url) {
@@ -136,7 +136,7 @@ function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unkn
     const tag = el('span', 'it-tier', l.tier);
     tag.style.setProperty('--tc', TIER_COLOR[l.tier]);
     row.append(tag);
-    const url = l.stat ? statIconUrl(l.stat) : l.icon === 'block' ? statIconUrl('block') : '';
+    const url = l.stat ? statIconUrl(l.stat) : l.icon === 'block' || l.icon === 'blockBreak' ? statIconUrl('block') : '';
     if (url) {
       const im = el('img', 'it-ico');
       im.src = url;
@@ -164,11 +164,24 @@ function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unkn
 }
 
 /** Büyük taban değeri: silah gücü ya da kalkan blok şansı (büyük sayı + küçük etiket). */
-function bigNode(base: ReturnType<typeof instanceBaseLines>): HTMLElement | null {
+function bigNode(base: ReturnType<typeof instanceBaseLines>, implicitHint?: string): HTMLElement | null {
   if (base.power === undefined && base.block === undefined) return null;
   const box = el('div', 'it-big');
   if (base.power !== undefined) {
-    box.append(el('strong', '', String(base.power)), el('span', '', 'Weapon power'));
+    const power = el('div', 'it-big-power');
+    power.append(el('strong', '', String(base.power)), el('span', '', 'Weapon power'));
+    if (!base.weaponSides) box.append(power);
+    else {
+      // Silah gücünün iki yanı (Ömer 2026-10-31): olumlu solda, Speed cezası sağda
+      const plus = el('div', 'it-side it-side-plus', base.weaponSides.plus ?? '');
+      if (implicitHint && base.weaponSides.plus) {
+        const h = el('span', '', ` ${implicitHint}`);
+        h.style.opacity = '0.55';
+        plus.append(h);
+      }
+      box.classList.add('sided');
+      box.append(plus, power, el('div', 'it-side it-side-minus', base.weaponSides.minus ?? ''));
+    }
   } else if (base.block !== undefined) {
     const n = el('span', 'it-big-n');
     const url = statIconUrl('block');
@@ -222,7 +235,7 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
   id.append(el('div', 'it-kind', (sub[0] ?? '').replace(' ', ' · ')));
   const line = [grip, ilvl].filter(Boolean).join(' · ');
   if (line) id.append(el('div', 'it-sub', line));
-  const big = bigNode(base);
+  const big = bigNode(base, state?.implicitHint);
   if (big) id.append(big);
   head.append(medal, id);
   card.append(head);

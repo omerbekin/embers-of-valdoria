@@ -325,6 +325,8 @@ function buildUnit(kind: WikiUnit['kind'], def: CombatantDef, files: WikiFiles):
     row('critChance', 'Crit', pct(st.critChance, 1)),
     row('armor', 'Armor', num(st.armor)),
     row('magicArmor', 'Magic armor', num(st.magicArmor)),
+    // Kalkanlı mob (Ömer 2026-10-31, #17): sabit Block şansı
+    ...(def.blockChance ? [{ ...row('armor', 'Block', pct(def.blockChance)) }] : []),
     row('hpRegen', 'HP regen / turn', String(Math.round(st.hpRegen))),
     row('mpRegen', 'MP regen / turn', String(st.mpRegen)),
   ];
@@ -466,6 +468,7 @@ export function buildGettingStarted(): WikiArticle[] {
     ...(f.range?.enabled ? [rangeArticle()] : []),
     article('mana', 'Basics', 'MP and cooldowns', statIconName('mp'), [
       p(`Skills cost MP. Every unit has ${a.mpBase} base MP (the same for all classes) plus ${a.mpPerInt} per point of Intelligence. At the start of its own turn, every unit regains MP equal to Intelligence x ${num(a.mpRegenPerInt)} (rounded; 0 Intelligence regains nothing) and HP equal to Strength x ${num(a.hpRegenPerStr)}. The Rest action restores extra MP on demand.`),
+      p('A unit that cannot use mana in any way (nothing in its kit costs or reads MP, like a Skeleton or a Treant) has no mana at all: no MP bar, it gains no MP, and mana burns do nothing to it. Rules for a target at 0 MP do not count it either.'),
       p('This regeneration shows on the bars, not as floating numbers: the HP or MP bar flashes briefly and a small faint "+1" or "+2 MP" appears next to it. The combat log lists it on its own line.'),
       p('Strong skills also have a cooldown: after you use one, you cannot use it again for that many of your own turns. The skill button shows the turns left.'),
       p(`Some powerful skills (usually the fourth one) start the battle on cooldown: they are not ready until the unit has taken up to ${f.cooldown.maxInitial} turns. The skill description says "Opens on cooldown" for these. Summoned units do not have this delay.`),
@@ -484,6 +487,7 @@ export function buildGettingStarted(): WikiArticle[] {
 /** stat-info.ts metnini "şu anki değer" kısımlarından arındırır (wiki genel kural anlatır, belirli bir birimi değil). */
 export function stripNow(line: string): string {
   return line
+    .replace(/\s*You have .*?\.(?=\s|$)/g, '')
     .replace(/\s*\(now [^)]*\)/g, '')
     .replace(/,\s*now [^)]*\)/g, ')')
     .replace(/\s*\((?:base [^)]*)\)/g, '')
@@ -764,6 +768,8 @@ export function buildMechanics(): WikiArticle[] {
         'Miss: the attacker\'s own accuracy was not enough, no matter the evasion. "MISS" shows above the attacker.',
         'A dodged or missed hit deals no damage and applies none of the skill\'s effects.',
         blockText(),
+        blockBreakText(),
+        shieldMobsText(),
         unblockableText(),
         'Heals, shields, buffs, effects on yourself and ground effects (poison, fire on the ground) never miss.',
         ...Object.values(content.statuses).filter((d) => d.accuracyDelta || d.evasionDelta).map((d) => `${d.name} (${d.type}): ${d.accuracyDelta ? `accuracy ${d.accuracyDelta > 0 ? '+' : '-'}${pct(Math.abs(d.accuracyDelta))}` : `evasion ${d.evasionDelta! > 0 ? '+' : '-'}${pct(Math.abs(d.evasionDelta!))}`} while it lasts. The hit chance still stays between 0% and ${pct(f.hit.max)}.`),
@@ -926,6 +932,7 @@ export function buildMechanics(): WikiArticle[] {
     article('control', 'Special rules', 'Taunt, guard and mana burn', 'taunt2', [
       p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit is hit by a control status: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself); a guard that covers a row (Close Ranks) protects every ally in the chosen ally's row (the user excluded). A unit holds one guard at a time (a new one replaces the old), the share passes on as it is (the protector's armor does not cut it again) and it stops while the protector is down. Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
       p(`Taunt: ${skillsWith((e) => e.type === 'taunt').join(', ') || 'none'}. Guard: ${skillsWith((e) => e.type === 'guard').join(', ') || 'none'}. Mana burn: ${skillsWith((e) => e.type === 'manaBurn').join(', ') || 'none'}.`),
+      p('Every mana burn follows one rule, whatever causes it (a skill, Spell Ward, a Hall of Silence ground, a Branded unit casting): the unit loses that much MP at once, never below 0, and "-N MP" shows over it. A unit with no mana loses nothing.'),
       p('Some mana burns take a share of the target\'s maximum MP instead of a fixed amount: a big mana pool loses more. See Silence for what happens when a target runs dry.'),
       p(`A mana burn that is part of an attack only works if the attack hits: on a miss or a dodge no MP is burned or stolen${allSkills().some((s) => s.name === 'Mana Steal') ? ' (Mana Steal gains nothing)' : ''}.`),
     ]),
@@ -950,7 +957,7 @@ export function buildMechanics(): WikiArticle[] {
           `Back-to-back fights: the Fighting Pit and a deep Salvage Dive give no healing between fights. Their windows and cards say so in one quiet line, such as "5 fights in a row · no rest between" or "Depth 3 · no rest since the surface". Information only; nothing changes.`,
           // Serbest dolaşım ve devriye (campaign-dev, roadmap 2.1-2.3 A; sayılar data/campaign/campaign.json > replay)
           `Free roaming: after you form your company in the first village, roads no longer close. Walk back along any road, or tap a far stop to travel there in one go through stops you have cleared (nothing happens on the way). A stop you have seen stays on the map. Patrols return to cleared battlefields: a cleared Battle, Elite or Guarded treasure can be fought again (same foes, new dice). Each repeat pays full gold and loot but less XP: ${REPLAY_PCTS.join(', ')} of the first victory's XP, then ${REPLAY_PCTS.at(-1) ?? '100%'} from then on. A patrol never lights Valor: each stop gives Valor only for its first victory. The chest of a Guarded treasure and an Elite's first-victory item come only once. Bosses, events, plain treasures and the tutorial road are not repeated. The Patrol badge on a stop shows the XP its next fight pays. Retreating from a patrol calls it off and you may move on, but what happened in the fight stays: lost health stays lost and heroes who fell rise wounded (see Health and wounds).`,
-          `Stops: Battle, Elite (a stronger leader), Boss, Guarded treasure (a battle, then a chest), Event (a short story stop; a guarded one is a battle first), Town (the Inn, recruits and, from Valdren Keep on, the Blacksmith), Rest (a camp you can use once: rest, tend a wound, sharpen an item or train) and Merchant (Odo sells gear for the region's item level, with new wares every day; the price depends on rarity and item level; he buys your spare items for half that price and lets you buy them back).`,
+          `Stops: Battle, Elite (a stronger leader), Boss, Guarded treasure (a battle, then a chest), Event (a short story stop; a guarded one is a battle first), Town (the Inn, recruits and, from Valdren Keep on, the Blacksmith), Rest (a camp you can use once: rest, tend a wound, sharpen an item or train) and Merchant (Odo's first wares match the level of the town. Each day that passes, ${(campaignConfig as unknown as { merchant: { restockPerDay: number } }).merchant.restockPerDay} shelves get new wares at your party's average level; rerolling replaces them all, also at your party's level. He never sells gear stronger than the strongest enemies on the roads ahead, up to the next town or, past the last town, to the end of the map. The price depends on rarity and item level; he buys your spare items for half that price and lets you buy them back).`,
           `Your party: you start alone as a Warrior or an Archer, a companion joins in the forest, and at the first village the escort stays behind and you form a new company of three from every class, starting at Level 1. Skip tutorial on the Choose your hero window starts you straight in that village to form your company (the gold and gear of the tutorial road are still in your bag). The tutorial road and the first stops past the village are all Level 1; from there the stops grow in level toward the final castle. The first hero you pick leads; the leader walks in front on the map. Another hero joins when you leave the city.`,
           `Health carries over between battles. After a victory the survivors regain ${pct(r.victoryHeal)} of their maximum HP, ${pct(r.eliteVictoryHeal ?? r.victoryHeal)} after an elite, and a boss victory heals them fully. Mana starts full in every battle. If the whole party falls, the battle is lost and you go back to your last save.`,
           `Wounds: a hero who is still down when a battle is won gets back up with ${pct(r.wounds.riseRatio)} of their HP and one wound. A hero raised during the battle (Valor, a revive skill) takes no wound; a Valor revive also heals ${VCW === 1 ? 'one wound' : `${VCW} wounds`} (revive skills do not). Each wound lowers maximum HP by ${pct(r.wounds.maxHpLoss)} (${r.wounds.lethal} wounds: -${pct(r.wounds.maxHpLoss * r.wounds.lethal)}). A hero with ${r.wounds.lethal} wounds who falls again and is still down at the end of a won battle dies: they enter the next battles as a corpse until Valor raises them${VCW ? ` (healing ${VCW === 1 ? 'one wound' : `${VCW} wounds`})` : ''}. Retreating from a patrol follows the same rule.`,
@@ -1360,12 +1367,22 @@ function gripText(): string {
   return `Grip and the Off-hand slot: every weapon is one-handed, two-handed, a bow or a charm. A hero with a one-handed weapon (or no weapon) can also fill the Off-hand slot with a shield (${shields.map((d) => d.name).join(', ')}; ${who(shields[0]?.family)}) or a second ${offFams.map((f) => f.name.toLowerCase().replace(/s$/, '')).join(' / ')} (${offFams.map((f) => who(f.id)).join(', ')}). Two-handed weapons, bows and charms need both hands: equipping one sends the off-hand item back to the bag (if the bag is full, make room first). An off-hand item adds its affixes like any other slot. Two-handed: ${names('two')}. Bows: ${names('bow')}. Charms: ${names('charm')}. Everything else is one-handed.`;
 }
 
-/** Kalkan bloğu (Ömer 2026-10-18): kural metni, sayılar veriden (kalkan tabanları, c_block, tavan). */
+/** Kalkan bloğu (Ömer 2026-10-18; 2026-10-31 Block Break + kalkanlı moblar): kural metni, sayılar veriden (kalkan tabanları, c_block, mob değerleri). */
 function blockText(): string {
   const shields = ITEM_DATA.items.filter((d) => d.slot === 'offhand' && d.implicitBase?.length);
   const vals = shields.map((d) => d.implicitBase![0]!);
-  const cap = (ITEM_DATA.caps as Record<string, number | undefined>)['block'];
-  return `Block: a hero with a shield can block an enemy's physical hit (melee or ranged) after it lands: ${Math.min(...vals)}-${Math.max(...vals)}% from the shield itself (fixed per shield, it does not grow with item level) plus the shield-only Block affix${cap !== undefined ? `, at most ${cap}% in total` : ''}. A blocked hit deals no damage and applies none of the skill's effects; "Block" shows above the target. Spells, damage over time, burning ground, Doom and ${UNBLOCKABLE_LABEL} skills cannot be blocked. When a guardian takes part of a hit (Guard), the guardian's own shield can block that share.`;
+  return `Block: a hero with a shield can block an enemy's physical hit (melee or ranged) after it lands: ${Math.min(...vals)}-${Math.max(...vals)}% from the shield itself (fixed per shield, it does not grow with item level) plus the shield-only Block affix. A blocked hit deals no damage and applies none of the skill's effects; "Block" shows above the target. Spells, damage over time, burning ground, Doom and ${UNBLOCKABLE_LABEL} skills cannot be blocked. When a guardian takes part of a hit (Guard), the guardian's own shield can block that share.`;
+}
+
+/** Block Break + kalkanlı moblar (Ömer 2026-10-31, #17); sayılar ve adlar veriden. */
+function blockBreakText(): string {
+  const a = ITEM_DATA.affixDefs.b_blockbreak;
+  return `Block break: an attacker's Block break is subtracted directly from the target's Block chance (20% Block against 6% Block break is 14%, never below 0%). It comes from the ${a?.name ?? 'Block break'} affix on ${(a?.slots ?? []).join(' and ')}, so it stacks across both.`;
+}
+
+function shieldMobsText(): string {
+  const mobs = Object.values(content.mobs).filter((m) => m.blockChance).sort((x, y) => x.name.localeCompare(y.name));
+  return `Enemies with a shield block the same way, with a fixed chance that does not grow with level: ${mobs.map((m) => `${m.name} ${Math.round(m.blockChance! * 100)}%`).join(', ')}.`;
 }
 
 /** "Unblockable" etiketi (Ömer 2026-10-18): Block maddesinin altındaki kural; skill adları veriden (src/engine/unblockable.ts). */
@@ -1433,7 +1450,7 @@ function itemsArticleBody(): WikiArticle {
     list(
       `Rarity sets how many affixes an item has, one more per step: ${itemsJson.rarities.map((x) => `${x.name} ${x.tiers.join(', ')}${x.id === 'legendary' ? ' + its unique effect' : ''}`).join('; ')}. The first affix is the item's main one (a weapon's is its damage type).`,
       `Each affix value is rolled within a small range when the item drops (shown as e.g. "+4 Max HP (3–5)"); the roll is kept for good. The range itself grows only with item level, but rarity decides how high the roll lands: ${rollFloorText()}. An item's gold value follows its power (${itemsJson.budget.goldPerIP} gold per power point).`,
-      `Limits: all of a hero's gear together adds at most +${itemsJson.caps.crit}% crit chance, +${itemsJson.caps.accuracy}% accuracy, +${itemsJson.caps.evasion}% evasion and +${itemsJson.caps.spd} SPD${(itemsJson.caps as Record<string, number | undefined>)['block'] !== undefined ? `, +${(itemsJson.caps as Record<string, number | undefined>)['block']}% block chance (shields)` : ''}${itemsJson.caps.mpCost !== undefined ? `, at most -${itemsJson.caps.mpCost}% MP cost` : ''}${itemsJson.caps.resist !== undefined ? ` and at most ${itemsJson.caps.resist}% debuff resistance` : ''}; anything above that is lost.`,
+      `Limits: all of a hero's gear together adds at most +${itemsJson.caps.crit}% crit chance, +${itemsJson.caps.accuracy}% accuracy, +${itemsJson.caps.evasion}% evasion and +${itemsJson.caps.spd} SPD${itemsJson.caps.mpCost !== undefined ? `, at most -${itemsJson.caps.mpCost}% MP cost` : ''}${itemsJson.caps.resist !== undefined ? ` and at most ${itemsJson.caps.resist}% debuff resistance` : ''}; anything above that is lost.`,
       (() => {
         const lo = dropChances(0);
         const hi = dropChances(999, 'boss');

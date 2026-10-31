@@ -15,7 +15,7 @@
  *   bone_throw (Bone Throw) -> 'bonethrow'        01 mezar kıymığı uçar, 02 patlar (Slow tuttuysa mezar ayazı yere çöker)
  *   wail_of_the_dead (Wail of the Dead) -> 'wail'  03 atanın önünde hayalet çığlığı, 04 vurulan her hücrede çığlık atan hayalet + mezar sisi
  *   dark_bond (Dark Bond) -> 'darkbond'            06 dikenli damar teli atandan dosta gerilir (döngü), 05 dostun göğsünde kan mührü
- *   raise_dead (Raise Dead) -> 'raise'             07'nin ilk iki karesi (rün halkası) yuvada; olaylar 'corpsedrain' (08 ruh tutamları
+ *   raise_dead (Raise Dead) -> 'raise'             asada mor ışık; olaylar 'corpsedrain' (08 ruh tutamları
  *                                                  cesetten yuvaya) ve 'summon_skeleton' (07 mezar patlaması, iskelet içinden yükselir)
  *   Vampiric Bite (pasif)                          08 kızıl ruh tutamı vurulandan Undead'e uçar; bağ şifası tutamı Undead'den dosta
  *   skeleton_strike (Bone Strike) -> 'bonestrike'  (değişmedi: paslı kılıç izi)
@@ -29,6 +29,7 @@ import type { CombatantView } from '../../combatant-view';
 import type { VfxCtx } from '../../vfx';
 import type { VfxKit } from '../../vfx-versions';
 import type { SheetOpts } from '../../vfx-sheets';
+import { RAISE_DEAD_IB } from '../../vfx-inbetween';
 import type { V2Vfx } from '../types';
 
 type Pt = { x: number; y: number };
@@ -227,11 +228,18 @@ const bonethrow: V2Vfx = async (c, k) => {
       c.sfx('boneImpact');
       const slowed = after.some((e) => e['type'] === 'status' && e['status'] === 'slow' && e['target'] === t.combatant.uid);
       const size = Math.max(200, Math.min(300, t.h * 1.15));
-      const hit = sheetAt(c, k, SH_HIT, p.x, p.y, { size, origin: [0.5, 0.52], flip: dir < 0, depth: k.DEPTH + 44, fps: 14, ...(slowed ? {} : { frames: [0, 1, 2, 3] }) });
-      if (hit && !slowed) c.scene.tweens.add({ targets: hit, alpha: 0, delay: k.slow(200), duration: k.slow(110) });
-      // mezar ayazı (s3-s8) patlamanın göğüs noktasında havada kalmasın: s2-s4 arasında hedefin ortasına ve ayak çizgisine çöker
-      // (içeriğin tabanı karenin ~0,95'i; patlama dayanağı 0,52)
-      if (hit && slowed) c.scene.tweens.add({ targets: hit, x: t.container.x, y: t.container.y - (0.95 - 0.52) * size + 6, delay: k.slow(150), duration: k.slow(220), ease: 'Sine.easeInOut' });
+      const hit = sheetAt(c, k, SH_HIT, p.x, p.y, { size, origin: [0.5, 0.52], flip: dir < 0, depth: k.DEPTH + 44, fps: 14, frames: slowed ? [0, 1, 2] : [0, 1, 2, 3] });
+      if (hit) c.scene.tweens.add({ targets: hit, alpha: 0, delay: k.slow(slowed ? 130 : 200), duration: k.slow(slowed ? 85 : 110) });
+      // mezar ayazı (s4-s8) ayrı sprite: baştan hedefin ayak çizgisinde belirir, yeri hiç değişmez (Ömer 2026-10-31: tek sprite patlama noktasından
+      // ayağa kayınca hare ışınlanıyor gibi görünüyordu). İçeriğin tabanı karenin ~0,95'i.
+      if (slowed) {
+        void k.wait(c.scene, k.slow(150)).then(() => {
+          const frost = sheetAt(c, k, SH_HIT, t.home.x, t.home.y + 6, { size, origin: [0.5, 0.95], flip: dir < 0, depth: k.DEPTH + 44, fps: 14, frames: [3, 4, 5, 6, 7] });
+          if (!frost) return;
+          frost.setAlpha(0);
+          c.scene.tweens.add({ targets: frost, alpha: 1, duration: k.slow(70) });
+        });
+      }
       glowAt(c, k, p.x, p.y, 150, 260, k.DEPTH + 45, 0xd9b8ff);
       k.shake(c.scene, 110, 0.004);
       c.scene.tweens.add({ targets: t.container, x: t.container.x + dir * 12, duration: k.slow(50), yoyo: true });
@@ -295,13 +303,78 @@ function wailCell(c: VfxCtx, k: VfxKit, slot: number, victims: CombatantView[], 
   for (const t of victims) wailRecoil(c, k, t, from, o.calm);
 }
 
+/** 03'ün yalnız ses halkası kareleri (son iki kare, sönen hayalet solda yumuşakça silinir): yol alan dalganın dokusu. Doku yoksa null. */
+function wailWaveTex(c: VfxCtx): string | null {
+  const key = 'v2undead:wailwave';
+  const tm = c.scene.textures;
+  if (tm.exists(key)) return key;
+  const src = `vfxsheet:${SH_SCREAM}`;
+  if (!tm.exists(src)) return null;
+  const ct = tm.createCanvas(key, FR * 2, FR);
+  if (!ct) return null;
+  const cx = ct.context;
+  [6, 7].forEach((f, i) => {
+    const fr = tm.get(src).get(f);
+    const x0 = i * FR;
+    cx.save();
+    cx.beginPath();
+    cx.rect(x0, 0, FR, FR);
+    cx.clip();
+    cx.drawImage(fr.source.image as CanvasImageSource, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, x0, 0, FR, FR);
+    cx.globalCompositeOperation = 'destination-in';
+    const g = cx.createLinearGradient(x0 + FR * 0.3, 0, x0 + FR * 0.5, 0);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,1)');
+    cx.fillStyle = g;
+    cx.fillRect(x0, 0, FR, FR);
+    cx.restore();
+    ct.add(i, 0, x0, 0, FR, FR);
+  });
+  ct.refresh();
+  return key;
+}
+
+/**
+ * Ses dalgası `from`dan `to`ya yol alır (03'ün halka kareleri, ön kenarı dayanak: varış = ön kenar `to`da). Çizim SAĞA açılır: hedef soldaysa aynalanır.
+ * Yolda büyür, varışta açılıp söner. Promise varışta çözülür. Doku yoksa yalnız bekler (efekt çökmez).
+ */
+function wailWave(c: VfxCtx, k: VfxKit, from: Pt, to: Pt, o: { dur: number; size0: number; size1: number; alpha: number; delay?: number }): Promise<void> {
+  const tex = wailWaveTex(c);
+  if (!tex) return k.wait(c.scene, k.slow((o.delay ?? 0) + o.dur));
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const flip = dx < 0;
+  const img = c.scene.add.image(from.x, from.y, tex, 0).setOrigin(flip ? 0.05 : 0.95, 0.5).setFlipX(flip).setRotation(flip ? Math.atan2(-dy, -dx) : Math.atan2(dy, dx)).setDepth(k.DEPTH + 38).setAlpha(0).setVisible(false);
+  const size = (v: number): void => void img.setDisplaySize(v, v);
+  size(o.size0);
+  const go = async (): Promise<void> => {
+    if (o.delay) await k.wait(c.scene, k.slow(o.delay));
+    if (!img.active) return;
+    img.setVisible(true);
+    await k.counter(c.scene, k.slow(o.dur), (u) => {
+      const e = u ** 1.25;
+      img.setPosition(from.x + dx * e, from.y + dy * e).setAlpha(o.alpha * clamp01(u * 5)).setFrame(Math.floor(u * 6) % 2);
+      size(o.size0 + (o.size1 - o.size0) * u);
+    });
+    if (!img.active) return;
+    c.scene.tweens.add({ targets: img, alpha: 0, scaleX: img.scaleX * 1.14, scaleY: img.scaleY * 1.14, duration: k.slow(130), ease: 'Quad.easeOut', onComplete: () => img.destroy() });
+  };
+  return go();
+}
+
+/** Çığlığın yüzden sonra dalganın kalkışına kadar geçen süre (ms; halkalar 03'te bu sıralarda açılmaya başlar). */
+const WAVE_LAUNCH = 130;
+/** Merkez hücrenin üstünde dalganın çarptığı yükseklik (px; gövdenin alt yarısı: varışta hayalet oradan çıkar). */
+const WAVE_HIT_DY = 90;
+
 /**
  * Wail of the Dead (plus, aşamalı distance; büyü hasarı + 2 tur zehir zemini; bedel: mevcut canın %20'si). ~1,35 sn (normal hız):
  * 1) Bedel + nefes (0-0,2 sn): lich başını GERİYE atar (gövde geriye eğilir), ağzında kızıl-mor ışık.
- * 2) Çığlık (0,2-0,55 sn): baş öne savrulur; atanın önünde soluk ektoplazmadan çığlık atan yüz belirir, ağzından hedefe doğru mor ses
- *    halkaları açılır (03).
- * 3) Merkez çarpış (~0,55 sn): merkez hücrede yerden hayalet fırlar, mezar sisi çöker (04); hedef sarsılır. releaseStage(0) + hit().
- * 4) Kollar (~0,8 sn): dalga artının kollarına yayılır, kol hücrelerinde aynı mezar efekti. releaseStage(1).
+ * 2) Çığlık (0,2-0,62 sn): baş öne savrulur; atanın önünde soluk ektoplazmadan çığlık atan yüz belirir, ağzından hedefe doğru mor ses
+ *    halkaları açılır (03). Halkalar açılırken ses dalgası kalkar ve merkez hücreye YOL ALIR (Ömer 2026-10-30: çığlık ile hayaletler arasında boşluk,
+ *    skill takılıyor gibi): üç dalga art arda, ilkinin varışı = merkez çarpış. Uzak hücrede yol biraz uzar (en çok ~0,08 sn).
+ * 3) Merkez çarpış (~0,62 sn): merkez hücrede yerden hayalet fırlar, mezar sisi çöker (04); hedef sarsılır. releaseStage(0) + hit().
+ * 4) Kollar (~0,82 sn): küçük dalgalar merkezden artının kollarına gider, kol hücrelerinde aynı mezar efekti. releaseStage(1).
  * 5) Kalan (~0,5 sn): sis hücrelerde söner. Vampiric Bite: çalınan can lich'e ruh tutamı olarak akar.
  * Kenar hücrede eksik kol(lar) atlanır. Azaltılmış hareket: ekran sarsıntısı ve kurban titremesi yok, parlama hafif.
  */
@@ -330,16 +403,30 @@ const wail: V2Vfx = (c, k) =>
     sheetAt(c, k, SH_SCREAM, mouth.x + dirX * 10, mouth.y + 6, { size: 250, origin: [0.16, 0.5], flip: dirX < 0, fps: 14, depth: k.DEPTH + 40 });
     glowAt(c, k, mouth.x, mouth.y, 110, 360, k.DEPTH + 31, 0xc79bff);
     if (!calm) k.shake(c.scene, 120, 0.003);
-    await k.wait(c.scene, k.slow(320));
+    await k.wait(c.scene, k.slow(WAVE_LAUNCH));
+    // ses dalgası: halkaların açıldığı yerden merkez hücreye yol alır; ilkinin varışı = çarpış (azaltılmış hareket: tek dalga, büyümez)
+    const waveFrom = { x: mouth.x + dirX * 90, y: mouth.y + 6 };
+    const waveTo = { x: cell.x, y: cell.y - WAVE_HIT_DY };
+    const waveDur = Math.min(380, Math.max(280, Math.hypot(waveTo.x - waveFrom.x, waveTo.y - waveFrom.y) * 0.75));
+    const arrive = wailWave(c, k, waveFrom, waveTo, { dur: waveDur, size0: calm ? 280 : 200, size1: 280, alpha: calm ? 0.7 : 0.95 });
+    if (!calm) {
+      void wailWave(c, k, waveFrom, waveTo, { dur: waveDur, size0: 190, size1: 260, alpha: 0.6, delay: 70 });
+      void wailWave(c, k, waveFrom, waveTo, { dur: waveDur, size0: 180, size1: 240, alpha: 0.38, delay: 140 });
+    }
+    await k.wait(c.scene, k.slow(waveDur - 110));
     // 3) merkez çarpış
     k.flash(c.scene, '#2e1446', calm ? 0.14 : 0.3, 380);
-    await k.wait(c.scene, k.slow(110));
+    await arrive;
     if (!calm) k.shake(c.scene, 200, 0.005);
     const linger = 620;
     for (const [si, st] of stages.entries()) {
       if (si > 0) {
         // dalga zeminde merkezden kollara yol alır (görünür gecikme)
         if (si === 1) c.sfx('graveMoan');
+        for (const s of st.slots) {
+          const arm = k.cellMid(c.board, s);
+          void wailWave(c, k, { x: cell.x, y: cell.y - 40 }, { x: arm.x, y: arm.y - 40 }, { dur: 200, size0: 110, size1: 170, alpha: calm ? 0.45 : 0.7 });
+        }
         await k.wait(c.scene, k.slow(200));
       }
       for (const s of st.slots)
@@ -450,8 +537,7 @@ function halfTurnGlass(c: VfxCtx, k: VfxKit, turnCost: number): void {
 
 /*
  * RAISE DEAD (2026-10-29 sheet seti). Üç parça art arda oynar (olay akışı değişmez):
- *  1) 'raise' (skill, ~0,7 sn): lich asasını kaldırır, kristalinde mor ışık toplanır; mezarın açılacağı yuvada mor mezar ateşinden rün halkası
- *     belirir ve toprak çatlar (07'nin ilk iki karesi).
+ *  1) 'raise' (skill, ~0,3 sn): lich asasını kaldırır, kristalinde mor ışık toplanır.
  *  2) 'corpsedrain' (olay, yalnızca ceset tüketildiyse, ~1 sn): ölünün soluk hayaleti cesedinden yarı doğrulur ve aşınır; ondan kopan kızıl
  *     ruh tutamları (08) kavisle mezar yuvasına uçup toprağa siner.
  *  3) 'summon_skeleton' (olay): toprak yarılır, rün halkası açılır, iskelet elleri ve kemik parçaları soluk yeşil ruh ateşi sütunuyla
@@ -475,32 +561,19 @@ const raiseSize = (cellW: number): number => cellW * 1.8;
 const raiseCell = (w: number): number => Math.max(140, Math.min(200, w * 1.1));
 
 /**
- * Raise Dead (skill): lich asasını kaldırır, kristalinde mor ışık toplanır; mezarın açılacağı yuvada mor rün halkası belirir, toprak çatlar
- * (07'nin 1-2. kareleri, kısa süre kalıp söner). Gerisi olay efektlerinde. ~0,7 sn.
+ * Raise Dead (skill): lich asasını kaldırır, kristalinde mor ışık toplanır (~0,3 sn). Gerisi olay efektlerinde.
  */
 const raise: V2Vfx = async (c, k) => {
   await k.sheetsReady(c.scene, [SH_RAISE, SH_WISP]);
   const a = c.actor;
-  const { used } = useEvents(c);
   c.sfx('graveMoan');
   a.play('cast');
   const st = staffOf(a);
   const halo = coldLight(c, k, st.x, st.y, 30, 30, 0xb36bff, 0, k.DEPTH + 32);
   c.scene.tweens.add({ targets: halo, alpha: 0.85, displayWidth: 120, displayHeight: 120, duration: k.slow(380), ease: 'Sine.easeIn' });
   fadeOut(c, k, halo, 420, 360);
-  const f = k.feet(a);
-  const to = graveSpot(c, k, used?.['slot']) ?? { x: f.x + facing(a) * 160, y: f.y };
+  // Yuvada ön efekt yok (Ömer 2026-10-31): aynı sütunun ilk kareleri burada oynayıp yarıda kayboluyor, sonra baştan başlıyor, kasma gibi görünüyordu
   await k.wait(c.scene, k.slow(300));
-  // rün halkası yuvada belirir, toprak çatlar (yalnız ilk iki kare; kalır ve söner)
-  c.sfx('earthCrack');
-  const ring = k.sheet(c.scene, SH_RAISE, to.x, to.y + 4, { size: raiseSize(raiseCell(0)), origin: [0.5, BASE_Y], frames: [0, 1], fps: 8, keep: true, depth: k.FLOOR_FX + 8 });
-  if (ring) {
-    ring.setAlpha(0);
-    c.scene.tweens.add({ targets: ring, alpha: 0.9, duration: k.slow(160) });
-    fadeOut(c, k, ring, 420, 260);
-  }
-  k.shake(c.scene, 160, 0.0015);
-  await k.wait(c.scene, k.slow(380));
   a.play('idle');
 };
 
@@ -559,39 +632,44 @@ const summon_skeleton: V2Vfx = async (c, k) => {
   const f = { x: v.home.x, y: v.home.y };
   const cellW = raiseCell(v.w);
   v.container.setAlpha(0);
-  // 0) karanlık çöker (yalnızca arka plan: birimlerin altında), yer derinden titrer
+  // 0) karanlık çöker (yalnızca arka plan: birimlerin altında)
   const dim = c.scene.add.rectangle(960, 540, FULL_W, 1080, 0x04070b, 0).setDepth(k.FLOOR_FX - 6);
   c.scene.tweens.add({ targets: dim, alpha: fed ? 0.38 : 0.24, duration: k.slow(360) });
   c.sfx('earthCrack');
-  k.shake(c.scene, 420, fed ? 0.0018 : 0.0012);
   // 1) mezar patlaması: rün halkası -> eller ve ruh ateşi sütunu -> kemik tozu (iskeleti sarar)
   const fps = fed ? 8 : 7;
   const col = sheetAt(c, k, SH_RAISE, f.x, f.y + 4, {
     size: raiseSize(cellW),
     origin: [0.5, BASE_Y],
     fps,
+    // kodla ara kare: 8 kare ~6,7 fps oynayınca eller ve alev kareden kareye sıçrıyordu (Codex Tur 5: #120-#136 s3-s5); süre aynı
+    inbetween: RAISE_DEAD_IB,
     ...(fed ? {} : { tint: 0xd8d4e0, alpha: 0.88 }),
     keep: true, // son kare kalır, aşağıda kemik tozuna dağılarak söner (ani kesilme yok)
     // hayalet ekranda hep 0,45 (Ömer): sarma çağıranın alfasıyla çarpar, beslenmemişin 0,88'ini geri böl
     wrap: { unit: () => v.container.depth, ghost: fed ? GHOST : GHOST / 0.88 },
   });
   const frameMs = 1000 / fps;
-  await k.wait(c.scene, k.slow(frameMs * 1.5));
+  // iskelet sütunun bir karesinin başında çıkar: adımları sütun kareleriyle aynı anda düşer
+  await k.wait(c.scene, k.slow((frameMs * 5) / RAISE_DEAD_IB.sub));
   c.sfx('thud');
   c.sfx('boneClatter');
-  k.shake(c.scene, 200, fed ? 0.005 : 0.0035);
+  // Ekran sarsıntısı yalnız patlamada ve yere oturuşta (2026-10-31; yakalama raise_dead_fed): 6 sarsıntı üst üste binip bütün ekranı ~0,64 sn ±4 px titretiyordu
+  k.shake(c.scene, 180, fed ? 0.002 : 0.0015);
   // 2) iskelet sütunun içinden sarsak hamlelerle yükselir
   c.sfx('boneRattle');
-  await clawRise(c, k, v, fed ? 640 : 760, {
+  // süre sütunun oynama süresine yakın (Ömer 2026-10-31: iskelet sütundan hızlı çıkınca kasma hissi veriyordu)
+  await clawRise(c, k, v, fed ? 760 : 900, {
     fed,
+    stepFps: fps * RAISE_DEAD_IB.sub,
+    sync: col,
     onJerk: (i) => {
       if (i > 0 && i % 2 === 0) c.sfx(i === 2 ? 'boneClatter' : 'boneRattle');
-      k.shake(c.scene, 90, fed ? 0.0025 : 0.0018);
     },
   });
   // 3) yere oturur
   c.sfx('thud');
-  k.shake(c.scene, 160, fed ? 0.004 : 0.0025);
+  k.shake(c.scene, 110, fed ? 0.0012 : 0.001);
   if (fed) {
     // beslenmiş: göğüste ve gözlerde soluk yeşil ruh ateşi yanar
     c.sfx('soulDrain');
@@ -633,9 +711,10 @@ function boneDust(c: VfxCtx, k: VfxKit, f: Pt, size: number, fed: boolean): void
 /**
  * İskelet topraktan pençeleyerek çıkar: birim zemin çizgisinin altında maskelenir (gömülü kısım görünmez), sarsak hamlelerle (çek -
  * dur - çek) yükselir, her hamlede yana yalpalar; gövdedeki koyu toprak lekesi yükseldikçe temizlenir. Beslenmemişte hamleler daha çok ve daha
- * zayıf (titrek). Promise birim tam çıkınca çözülür.
+ * zayıf (titrek). Konum sütunun kare hızında güncellenir (`stepFps`; Ömer 2026-10-31: iskelet saniyede ~60, sütun ~24 kare oynayınca ikisi ayrı akıyordu).
+ * Promise birim tam çıkınca çözülür.
  */
-function clawRise(c: VfxCtx, k: VfxKit, v: CombatantView, ms: number, o: { fed: boolean; onJerk: (i: number, p: number) => void }): Promise<void> {
+function clawRise(c: VfxCtx, k: VfxKit, v: CombatantView, ms: number, o: { fed: boolean; stepFps: number; sync: Spr | null; onJerk: (i: number, p: number) => void }): Promise<void> {
   const home = v.home;
   const mask = c.scene.make.graphics({ x: 0, y: 0 }, false);
   mask.fillStyle(0xffffff).fillRect(home.x - 500, home.y - 1000, 1000, 1004);
@@ -653,8 +732,12 @@ function clawRise(c: VfxCtx, k: VfxKit, v: CombatantView, ms: number, o: { fed: 
     ? [[0, 0], [0.14, 0.2], [0.24, 0.22], [0.4, 0.48], [0.5, 0.5], [0.66, 0.78], [0.74, 0.8], [0.9, 0.99], [1, 1]]
     : [[0, 0], [0.12, 0.14], [0.22, 0.15], [0.33, 0.33], [0.42, 0.34], [0.54, 0.55], [0.6, 0.56], [0.72, 0.74], [0.8, 0.75], [0.93, 0.99], [1, 1]];
   let lastSeg = -1;
+  const steps = Math.max(1, Math.round((ms * o.stepFps) / 1000));
+  const from = o.sync?.anims.currentFrame?.index ?? 0;
   return k
-    .counter(c.scene, k.slow(ms), (u) => {
+    .counter(c.scene, k.slow((steps * 1000) / o.stepFps), (raw) => {
+      const cur = o.sync?.active ? o.sync.anims.currentFrame : null; // sütun karesi değişmeden iskelet de oynamaz
+      const u = cur ? clamp01((cur.index - from) / steps) : Math.floor(raw * steps) / steps;
       let i = 0;
       while (i < KF.length - 2 && u > KF[i + 1]![0]) i++;
       const [u0, p0] = KF[i]!;
@@ -670,7 +753,7 @@ function clawRise(c: VfxCtx, k: VfxKit, v: CombatantView, ms: number, o: { fed: 
       const jerk = moving ? Math.sin(t * Math.PI) : 0;
       const sideSign = i % 4 === 0 ? 1 : -1;
       v.container.setY(start + (home.y - start) * p);
-      v.container.setX(home.x + (o.fed ? 2 : 4) * jerk * sideSign + (moving ? k.rnd(-1, 1) : 0));
+      v.container.setX(home.x + (o.fed ? 2 : 4) * jerk * sideSign); // kare başı rastgele kayma yok: hareket boyunca gövdeyi titretiyordu
       v.container.setAngle(sideSign * (o.fed ? 3.5 : 5) * jerk * (1 - p * 0.6));
       v.sprite.setTint(mixHex(0x3a3028, 0xffffff, clamp01((p - 0.25) / 0.75) ** 1.4));
     })

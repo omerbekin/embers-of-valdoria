@@ -10,9 +10,9 @@ export function hitPercent(chance: number): number {
   return Math.round(Math.min(1, Math.max(0, chance)) * 100);
 }
 
-/** "92% hit" */
+/** "92%" (önizlemede yazı küçük; "hit" kelimesi yok) */
 export function formatHit(chance: number): string {
-  return `${hitPercent(chance)}% hit`;
+  return `${hitPercent(chance)}%`;
 }
 
 /** İsabet şansına göre yazı rengi. */

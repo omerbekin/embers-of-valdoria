@@ -47,6 +47,7 @@ import { avatarUrl, className, heroMarks, renderLedgerPage } from './character-p
 import { mountCloseButton } from './nav-close';
 import { showHandoverToast } from './handover-toast';
 import { renderInventory, snapBagRows } from './inventory';
+import { clearBagMenus, installBagMenuDismiss, visibleByKind, type BagBarOpts, type BagMenu } from './bag-bar';
 import { itemTipNodes, type ItemTipAction, type ItemTipHero } from './item-tip';
 import type { DragSource, DropAction, DropTarget } from './gear-drop';
 import { attachItemInteractions } from './item-drag';
@@ -56,7 +57,7 @@ import { heroQuests, questBonusLine } from '../campaign/quests';
 import { boonList, respecHeroTree, respecTreeBlocked } from '../campaign';
 import { bandTipHtml } from './band-tip';
 import { tipOn, tipOff } from './tip-vis';
-import { createTreeTab } from './tree-tab';
+import { createTreeTab, treeNodeIconUrl, treeNodeSheetTip } from './tree-tab';
 import { treeOf } from '../progression/skill-tree-data';
 import { treePool } from '../progression/skill-tree';
 import { treeSpent } from '../progression/skill-tree-hero';
@@ -333,6 +334,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   /** Sürüklenen torba item'i (en öncelikli odak). */
   let dragUid = '';
   let usableOnly = false;
+  /** Çanta item türü süzgeci (Ömer 2026-10-31): kapalı türler; ekran açıkken hatırlanır, kayda yazılmaz. */
+  const hiddenKinds = new Set<string>();
+  let bagMenu: BagMenu = null;
   /** Sekme: Hero (yuvalar + torba) / Sheet (statlar + skill ağacı). Level Up "Spend points" Sheet ile açar. */
   let tab: 'hero' | 'sheet' | 'tree' = o.view === 'char' ? 'sheet' : 'hero';
   /** Bekleyen stat puanları (Sheet; Confirm kaynağa yazar, kahraman değişince silinir). */
@@ -532,6 +536,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     if (k === tab) return;
     flushPending();
     tab = k;
+    bagMenu = null;
     renderAll();
     swapIn(pageL);
     swapIn(pageR);
@@ -544,6 +549,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (closeAsk && overlay.querySelector('.gr-confirm')) {
         closeAsk();
         closeAsk = null;
+      } else if (bagMenu) {
+        bagMenu = null; // Esc önce açık çanta menüsünü kapatır
+        renderRight();
       } else if (ix.tipVisible() || treeTab.tipOpen()) {
         ix.hideTips();
         treeTab.closeTip(); // Esc önce açık ipucunu kapatır (playtest B4)
@@ -571,6 +579,14 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   // Panelin dışına (kararan zemine) dokunmak Gear'ı kapatır (X ile aynı; src/ui/backdrop.ts)
   // İÇERİ sayılanlar: tüm çift pencere (ganimet / tüccar paneli dahil) ve pencere içi onay kutusu (Ömer 2026-10-18: ganimetteki her tık "Leave?" açıyordu)
   const inPair = pair ?? panel;
+  installBagMenuDismiss(
+    overlay,
+    () => bagMenu !== null,
+    () => {
+      bagMenu = null;
+      renderRight();
+    },
+  );
   dismissOnBackdrop(overlay, (t) => inPair.contains(t) || !!(t instanceof Element && t.closest('.gr-confirm, .mw-welcome')), () => close());
 
   /** İşlem + yeniden çizim; `okSound` yalnızca işlem başarılıysa çalar (hata: uyarı + hata sesi, ikisi birden değil). */
@@ -788,6 +804,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         heroes: src.heroes(),
         heroId,
         focus: focusInst(),
+        spent: (id) => (id === heroId && src.allocate && !bagOnly ? Object.values(pending).reduce((t, n) => t + (n ?? 0), 0) : 0),
         onHero: (id) => {
           if (id !== heroId) flushPending();
           heroId = id;
@@ -820,13 +837,14 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
                 uiSound('select');
                 renderAll();
               },
-              onSub: (k: Attribute) => {
-                const n = (pending[k] ?? 0) - 1;
+              onClear: (k: Attribute) => {
+                if (!pending[k]) return;
                 pending = { ...pending };
-                if (n > 0) pending[k] = n;
-                else delete pending[k];
+                delete pending[k];
+                uiSound('select');
                 renderAll();
               },
+              onBlocked: (msg: string) => showToast(msg),
               onReset: () => {
                 pending = {};
                 renderAll();
@@ -860,37 +878,39 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     renderMarks();
     renderLeft();
   }
-  const bestButtons = (): HTMLElement[] => {
+  /** Equip best menüsü (kahraman + tüm takım); torba-yalnız ekranlarda (ganimet / ödül) yok. */
+  const bestOpts = (): BagBarOpts['best'] => {
     const hero = curHero();
-    const out: HTMLElement[] = [];
-    if (bagOnly) return out;
-    if (hero)
-      out.push(
-        (() => {
-          const b = btn('gr-btn sm gr-best', `Best: ${className(hero.class)}`, () => {
-            sel = '';
-            if (heroFallen(hero)) return fallenWarn();
-            apply(() => src.equipBest([hero.id]));
-          });
-          if (heroFallen(hero)) {
-            b.classList.add('off');
-            b.title = fallenMsg();
+    if (bagOnly) return undefined;
+    return {
+      label: phoneLayout() ? 'Best' : 'Equip best',
+      ...(hero
+        ? {
+            hero: {
+              label: className(hero.class),
+              title: heroFallen(hero) ? fallenMsg() : `Equip the best items for ${className(hero.class)}`,
+              ...(heroFallen(hero) ? { off: true } : {}),
+              run: () => {
+                sel = '';
+                if (heroFallen(hero)) return fallenWarn();
+                apply(() => src.equipBest([hero.id]));
+              },
+            },
           }
-          return b;
-        })(),
-      );
-    const all = btn('gr-btn sm gr-best', 'Best: all', () => {
-      sel = '';
-      const ids = src.heroes().filter((h) => !heroFallen(h)).map((h) => h.id);
-      if (!ids.length) return fallenWarn();
-      apply(() => src.equipBest(ids));
-    });
-    all.title = 'Equip best for the whole company';
-    all.dataset['tut'] = 'best'; // mentor dersi vurgusu (data/tutorial.json > gear)
-    out.push(all);
-    return out;
+        : {}),
+      all: {
+        title: 'Equip best for the whole company',
+        run: () => {
+          sel = '';
+          const ids = src.heroes().filter((h) => !heroFallen(h)).map((h) => h.id);
+          if (!ids.length) return fallenWarn();
+          apply(() => src.equipBest(ids));
+        },
+      },
+    };
   };
   /** Sheet sağ sayfası (ağaç sekmesi kapalıyken): kahramanın mastery özeti, harcanan / toplam puan ve aktif node'lar (playtest B6). */
+  let nodeTip: HTMLElement | null = null;
   function masterySummary(hero: GearHero | undefined): HTMLElement {
     const box = el('div', 'gr-tree gr-mastery');
     if (!hero) return box;
@@ -907,13 +927,43 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     if (!picked.length) list.append(el('div', 'gr-ms-none', 'No nodes chosen yet.'));
     for (const [key, n] of picked) {
       const row = el('div', 'gr-ms-row');
-      row.append(el('span', '', data?.nodes[key]?.name ?? key), el('i', '', n > 1 ? `x${n}` : ''));
+      const icon = data ? treeNodeIconUrl(data, key, hero) : '';
+      if (icon) {
+        const im = el('img', 'gr-ms-ico') as HTMLImageElement;
+        im.src = icon;
+        im.alt = '';
+        im.draggable = false;
+        row.append(im);
+      }
+      row.append(el('span', 'gr-ms-nm', data?.nodes[key]?.name ?? key), el('i', '', n > 1 ? `x${n}` : ''));
+      // A Band ipucu (ortak parça): ağaç metni + şu anki rank'ta kaç bonus (fare: üstüne gelince; dokunma: dokununca)
+      const show = (): void => {
+        const spec = data ? treeNodeSheetTip(data, key, n, hero) : null;
+        if (!spec) return;
+        nodeTip ??= el('div', 'el-tip gr-tip');
+        if (!nodeTip.isConnected) overlay.append(nodeTip);
+        nodeTip.innerHTML = bandTipHtml(spec);
+        tipOn(nodeTip);
+        const o = overlay.getBoundingClientRect();
+        const r = row.getBoundingClientRect();
+        const tw = nodeTip.offsetWidth;
+        const th = nodeTip.offsetHeight;
+        const left = r.left - o.left - tw - 10; // satırın soluna (sağ sayfa); sığmazsa sağına
+        nodeTip.style.left = `${Math.max(6, Math.min(overlay.clientWidth - tw - 6, left < 6 ? r.right - o.left + 10 : left))}px`;
+        nodeTip.style.top = `${Math.max(6, Math.min(overlay.clientHeight - th - 6, r.top - o.top + r.height / 2 - th / 2))}px`;
+      };
+      row.addEventListener('pointerenter', (e) => {
+        if (e.pointerType === 'mouse') show();
+      });
+      row.addEventListener('pointerleave', () => nodeTip && tipOff(nodeTip));
+      row.addEventListener('click', show);
       list.append(row);
     }
     box.append(list);
     return box;
   }
   function renderRight(): void {
+    clearBagMenus(overlay);
     if (tab === 'tree' && treeOn) return treeTab.render(leafR);
     if (tab === 'sheet' && !bagOnly) {
       // skill ağacı (Ömer 2026-10-18): kap aynı, içerik yok
@@ -925,14 +975,27 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     }
     const hero = curHero();
     const bag = src.bag();
-    if (sel && !bag.some((i) => i.uid === sel)) sel = '';
+    if (sel && !visibleByKind(bag, hiddenKinds).some((i) => i.uid === sel)) sel = '';
     const scroll = leafR.querySelector<HTMLElement>('.gr-bag')?.scrollTop ?? 0;
     const inv = renderInventory({
       items: bag,
       size: src.bagSize,
       ...(bagOnly ? { compactEmpty: { cols: 6, minRows: 2 } } : {}),
       ...(bagOnly ? { usableClasses: src.heroes().map((h) => h.class) } : hero ? { usableClass: hero.class } : {}),
-      filter: {
+      bar: {
+        hidden: hiddenKinds,
+        toggleKind: (id) => {
+          if (hiddenKinds.has(id)) hiddenKinds.delete(id);
+          else hiddenKinds.add(id);
+          renderRight();
+        },
+        open: bagMenu,
+        setOpen: (m) => {
+          bagMenu = m;
+          renderRight();
+        },
+        ...(bestOpts() ? { best: bestOpts()! } : {}),
+        filter: {
         on: usableOnly,
         // telefonda kısa (torba başlığına Best düğmeleriyle sığsın)
         label: usableOnly && (hero || bagOnly) ? (phoneLayout() ? 'Usable' : bagOnly ? 'Usable by party' : `Usable by ${className(hero!.class)}`) : phoneLayout() ? 'All' : 'All items',
@@ -940,8 +1003,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
           usableOnly = !usableOnly;
           renderRight();
         },
+        },
       },
-      headExtra: bestButtons(),
       ...(ext?.price ? { price: ext.price } : {}),
       selected: sel,
       shake: shakeUid,

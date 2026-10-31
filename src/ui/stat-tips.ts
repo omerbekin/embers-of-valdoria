@@ -1,7 +1,7 @@
 // Stat açıklamaları (savaş HUD'ı ile AYNI kaynak: src/engine/stat-info.ts > describeStat, değerler formulas.json): Gear ekranının stat paneli
 // ve item kartı satırları için. Motorda karşılığı tek stat olmayan "Damage" (Global damage affix'i = Stats.damageMult; eski Might'ın yerine,
 // Ömer 2026-10-11) burada anlatılır; ikonu eski Might ikonu.
-import { content, describeStat, UNBLOCKABLE_LABEL } from '../engine';
+import { content, describeStat } from '../engine';
 import type { StatKind, Stats } from '../engine';
 import { multText } from '../engine/bonus-text';
 import { iconUrl } from './dom-icons';
@@ -9,7 +9,6 @@ import { splitStatTitle } from './band-rich';
 import type { BandTipSpec } from './band-tip';
 import { MIGHT_COLOR, STAT_COLOR, statIconName } from './stat-icons';
 import { itemImageUrl } from '../game/item-icon-files';
-import itemsJson from '../../data/items.json';
 
 export interface StatTip {
   title: string;
@@ -120,6 +119,7 @@ export function statTip(id: string, stats: Stats, after?: Stats | null): StatTip
 
 function statTipBase(id: string, stats: Stats): StatTip | null {
   if (id === 'block') return BLOCK_TIP;
+  if (id === 'blockBreak') return BLOCK_BREAK_TIP;
   const kind = KIND[id];
   if (!kind) return null;
   if (kind === 'might') {
@@ -192,16 +192,23 @@ export function statBandSpec(id: string, tip: StatTip, diff?: { text: string; di
 const BLOCK_TIP: StatTip = {
   title: 'Block chance',
   lines: [
-    "Chance that your shield blocks an enemy's physical hit (melee or ranged): the hit deals no damage and none of its effects (Stun, Wound...).",
-    `Spells, damage over time, burning ground, Doom and ${UNBLOCKABLE_LABEL} skills (Backstab, boss warnings) cannot be blocked. A guardian's shield can block the share it takes.`,
-    `Comes only from shields: their base value plus the Block affix. At most ${(itemsJson.caps as Record<string, number>)['block'] ?? 30}%.`,
+    "Chance that a shield blocks an enemy's physical hit (melee or ranged): the hit deals no damage and none of its effects (Stun, Wound...).",
+    "Comes from shields: their base value plus the Block affix. Enemies that carry a shield can block too. An attacker's Block break lowers it.",
+  ],
+};
+/** Block Break (Ömer 2026-10-31, #17): item kancası, açıklaması burada. İkon geçici: Block ikonu (kendi çizimi yok). */
+const BLOCK_BREAK_TIP: StatTip = {
+  title: 'Block break',
+  lines: [
+    "Your hits lower the target's Block chance by this much: 20% Block against 6% Block break is 14%, and it never goes below 0%.",
+    'It only matters against a target with a shield, and only for physical hits. Comes from the Block break affix on weapons and gloves.',
   ],
 };
 export const blockIconUrl = (): string => itemImageUrl({ id: 'iron_buckler' }) ?? iconUrl(statIconName('armor'), STAT_COLOR.armor);
 
 /** DOM için ikon resmi (data URL; önbellekli). Bilinmeyen kimlikte ''. */
 export function statIconUrl(id: string): string {
-  if (id === 'block') return blockIconUrl();
+  if (id === 'block' || id === 'blockBreak') return blockIconUrl();
   const i = statIcon(id);
   return i ? iconUrl(i.kind, i.color) : '';
 }

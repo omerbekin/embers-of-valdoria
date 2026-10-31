@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, content, previewSkill, type BattleEvent, type BattleMode, type Teams, type UnitSetup } from '../src/engine';
-import { ITEM_HOOK_CAPS } from '../src/engine/item-caps';
 import { describeEvent } from '../src/engine/match-log';
 import { CombatLog } from '../src/game/combat-log';
 import { ITEMS } from '../src/progression';
@@ -9,7 +8,7 @@ import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../src/engine/unblockable
 import { skillTags } from '../src/ui/skill-tags';
 
 // Kalkan bloğu (Ömer 2026-10-18): kalkanlı hedef düşmanın DOĞRUDAN FİZİKSEL skill vuruşunu tamamen bloklar (hasar 0, ek etkiler yok).
-// Büyü, Backstab (unblockable) bloklanmaz; tavan items.json > caps.block; önizleme / YZ isabet şansını x(1 - blok) ile çarpar.
+// Büyü, Backstab (unblockable) bloklanmaz; önizleme / YZ isabet şansını x(1 - blok) ile çarpar. Block tavanı yok (Ömer 2026-10-31, #17).
 
 const cells = (u: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');
 const make = (party: Record<number, string>, enemies: Record<number, string>, enemyUnits: Record<number, UnitSetup> = {}, seed = 1, mode: BattleMode = 'test'): Battle => {
@@ -19,7 +18,8 @@ const make = (party: Record<number, string>, enemies: Record<number, string>, en
   return b;
 };
 const shield = (chance: number): UnitSetup => ({ itemEffects: { blockChance: chance } });
-const CAP = ITEM_HOOK_CAPS.block;
+/** Testlerde iki kalkan: tek başına %90 (eski "kırpılan" değer artık aynen işler). */
+const HIGH = 0.9;
 
 /** venom_edge: Cutthroat'ın fiziksel yakın dövüş saldırısı + Wound (ek etki). */
 const PHYS = 'venom_edge';
@@ -30,11 +30,10 @@ describe('kalkan bloğu: motor', () => {
     expect(content.skills[PHYS]!.effects.some((e) => e.type === 'status' && e.status === 'wound')).toBe(true);
     const bs = content.skills.backstab!.effects.find((e) => e.type === 'damage')!;
     expect(bs.type === 'damage' && bs.unblockable).toBe(true);
-    expect(CAP).toBeCloseTo((ITEMS.caps.block ?? 0) / 100, 9);
-    expect(CAP).toBeGreaterThanOrEqual(0.3);
+    expect(ITEMS.caps).not.toHaveProperty('block');
   });
 
-  it('fiziksel vuruş bloklanır: hasar 0, ek etki (Wound) uygulanmaz, "block" olayı; oran tavana uyar', () => {
+  it('fiziksel vuruş bloklanır: hasar 0, ek etki (Wound) uygulanmaz, "block" olayı; oran şansa uyar (kırpılmaz)', () => {
     let blocks = 0;
     const N = 300;
     for (let seed = 1; seed <= N; seed++) {
@@ -55,9 +54,8 @@ describe('kalkan bloğu: motor', () => {
         expect(def.statuses.some((s) => s.kind === 'wound')).toBe(true);
       }
     }
-    // 0,9 istendi, tavan (0,3) işler
-    expect(blocks / N).toBeGreaterThan(CAP - 0.1);
-    expect(blocks / N).toBeLessThan(CAP + 0.1);
+    expect(blocks / N).toBeGreaterThan(HIGH - 0.1);
+    expect(blocks / N).toBeLessThanOrEqual(1);
   });
 
   it('büyü bloklanmaz; Backstab bloklanmaz; dost vuruşu ve kalkansız hedef blok zarı atmaz', () => {
@@ -121,7 +119,7 @@ describe('kalkan bloğu: motor', () => {
     const plain = make({ 0: 'cutthroat' }, { 0: 'defender' });
     const block = make({ 0: 'cutthroat' }, { 0: 'defender' }, { 0: shield(0.9) });
     const hit = (b: Battle, sk: string) => previewSkill(b, 'party-0', sk, 'enemy-0')[0]!.damage!.hitChance;
-    expect(hit(block, PHYS)).toBeCloseTo(hit(plain, PHYS) * (1 - CAP), 9);
+    expect(hit(block, PHYS)).toBeCloseTo(hit(plain, PHYS) * (1 - HIGH), 9);
     expect(hit(block, 'backstab')).toBeCloseTo(hit(plain, 'backstab'), 9);
     const exp = (b: Battle, sk: string) => previewSkill(b, 'party-0', sk, 'enemy-0')[0]!.damage!.expected;
     expect(exp(block, PHYS)).toBeLessThan(exp(plain, PHYS));
@@ -230,9 +228,9 @@ describe('Unblockable ve Force block', () => {
     expect(run(false)).toBe(run(undefined));
   });
 
-  it('birim kartı: unitBlockChance tavanlı, kalkansızda 0', () => {
+  it('birim kartı: unitBlockChance kırpılmaz, kalkansızda 0', () => {
     const b = make({ 0: 'cutthroat' }, { 0: 'defender', 1: 'mage' }, { 0: shield(0.9), 1: shield(0.12) });
-    expect(b.unitBlockChance(b.get('enemy-0')!)).toBeCloseTo(CAP, 9);
+    expect(b.unitBlockChance(b.get('enemy-0')!)).toBeCloseTo(HIGH, 9);
     expect(b.unitBlockChance(b.get('enemy-1')!)).toBeCloseTo(0.12, 9);
     expect(b.unitBlockChance(b.get('party-0')!)).toBe(0);
   });

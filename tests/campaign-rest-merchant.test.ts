@@ -10,7 +10,7 @@ import {
   leaveMerchant,
   newCampaign,
   nextStep,
-  nodeIlvl,
+  shopCeiling,
   openCampaignShop,
   rerollCampaignShop,
   campaignRerollCost,
@@ -65,18 +65,18 @@ describe('dinlenme noktası (Riverside Camp)', () => {
 describe('tüccar (Forward Camp, Odo)', () => {
   const shopAt = (gold = 5000): CampaignState => openCampaignShop({ ...at('camp'), gold, inventory: [] }); // ışınlanma yolda loot toplar: torba boş başlar
 
-  it('adım merchant; tezgâh seed\'li: merchant.size mal, aynı sefer aynı stok, legendary yok, item seviyesi düğümü aşmaz, fiyat = değer', () => {
+  it('adım merchant; tezgâh seed\'li: merchant.size mal, aynı sefer aynı stok, legendary yok, item seviyesi dükkân tavanını aşmaz, fiyat = değer', () => {
     const s = at('camp');
     expect(nextStep(s)).toEqual({ kind: 'merchant', node: 'camp' });
     const t = openCampaignShop(s);
-    const ilvl = nodeIlvl(s.mapId, 'camp');
+    const ceiling = shopCeiling(s.mapId, 'camp'); // Ömer 2026-10-31: üst sınır düğümün item seviyesi değil, dükkân tavanı
     expect(t.shop!.wares).toHaveLength(CONFIG.merchant.size);
     expect(openCampaignShop(at('camp')).shop).toEqual(t.shop);
     expect(new Set(t.shop!.wares.map((w) => w.itemId)).size).toBe(t.shop!.wares.length);
     for (const w of t.shop!.wares) {
       const d = itemDef(w.itemId)!;
       expect(d.rarity).not.toBe('legendary');
-      expect(d.ilvl).toBeLessThanOrEqual(ilvl);
+      expect(d.ilvl).toBeLessThanOrEqual(ceiling);
       // Ömer 2026-10-26: fiyat = nadirlik tabanı x (1 + 0,1 x item seviyesi)
       const inst = { id: w.itemId, ...(w.rolls ? { rolls: w.rolls } : {}) };
       expect(w.price).toBe(Math.round(CONFIG.merchant.priceBase[instanceRarity(inst)]! * (1 + CONFIG.merchant.pricePerIlvl * instanceIlvl(inst))));
@@ -117,31 +117,20 @@ describe('tüccar (Forward Camp, Odo)', () => {
     expect(s.shop!.buyback).toHaveLength(CONFIG.merchant.buybackSize);
   });
 
-  it('günlük yenilenme (Ömer 2026-10-26): aynı gün = aynı stok (ilerleme değiştirmez); ertesi gün bütün raflar yeni', () => {
+  it('stok hesabı ilerlemeden bağımsız; alınan mal aynı gün "sold" kalır; ertesi gün alınmış raf yeni malla dolar; açık tezgâh gün değişince kısmen yenilenir', () => {
     const base = at('camp');
-    const d0 = campaignDay(base);
-    const w0 = campaignStock(base);
-    expect(campaignStock({ ...base, cleared: [...base.cleared, 'x1', 'x2', 'x3'] })).toEqual(w0); // ilerleme stok değiştirmez
-    const next = { ...base, day: d0 + 1 } as CampaignState;
-    expect(campaignDay(next)).toBe(d0 + 1);
-    const w1 = campaignStock(next);
-    const changed = w1.filter((w, i) => w.itemId !== w0[i]?.itemId || JSON.stringify(w.rolls) !== JSON.stringify(w0[i]?.rolls));
-    expect(changed.length).toBeGreaterThanOrEqual(w0.length - 1);
-  });
-
-  it('alınan mal: aynı gün sonraki ziyarette "sold" kalır; ertesi gün raf yeni malla dolar; açık / kapanan tezgâh gün değişince yenilenir', () => {
+    expect(campaignStock({ ...base, cleared: [...base.cleared, 'x1', 'x2', 'x3'] })).toEqual(campaignStock(base)); // ilerleme stok değiştirmez
     let s = shopAt(10000);
     const w0 = s.shop!.wares[3]!;
     s = buyWare(s, 3);
-    const again = campaignStock(s);
-    expect(again[3]).toMatchObject({ itemId: w0.itemId, sold: true });
+    expect(s.shop!.wares[3]).toMatchObject({ itemId: w0.itemId, sold: true });
     const later = { ...s, day: campaignDay(s) + 1 } as CampaignState;
-    const w1 = campaignStock(later)[3]!;
-    expect(w1.sold).toBeUndefined();
-    expect(JSON.stringify([w1.itemId, w1.rolls])).not.toBe(JSON.stringify([w0.itemId, w0.rolls]));
     const reopened = openCampaignShop(later);
     expect(reopened.shop!.day).toBe(campaignDay(later));
-    expect(reopened.shop!.wares).toEqual(campaignStock(later));
+    const w1 = reopened.shop!.wares[3]!;
+    expect(w1.sold).toBeUndefined();
+    expect(JSON.stringify([w1.itemId, w1.rolls])).not.toBe(JSON.stringify([w0.itemId, w0.rolls]));
+    expect(reopened.shop!.buyback).toEqual([]);
   });
 
   it('yenileme rerollCost altın; stok değişir; ayrılınca tezgâh kapanır ve adım tamamlanır', () => {

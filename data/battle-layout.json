@@ -2,6 +2,10 @@
   "_not": "Savaş ekranı yerleşimi (1920x1080 HD). Koordinatlar karakterin ayak noktasıdır. characterSize: placeholder çizim boyutu; spriteBox: karakterin ekranda sığdırıldığı kutu (oran korunur). Renkler geçici.",
   "width": 1920,
   "height": 1080,
+  "preview": {
+    "_not": "Savaşta skill hedefin üstüne gelince çıkan önizleme (src/game/preview-format.ts). statusIconMinChance: durum ikonu yalnız uygulanma ihtimali bu orana (0-1) ve üstündeyse görünür; daha düşükler hiç gösterilmez.",
+    "statusIconMinChance": 0.5
+  },
   "stage": {
     "_not": "Geniş ekran (src/ui/viewport.ts > stageMetrics): mantıksal yükseklik 1080 sabit, mantıksal genişlik ekran oranına göre width (16:9) ile maxWidth (~21.5:9) arasında esner; savaş/menü koordinatları 1920x1080 merkez bölgede kalır, kamera ortalar. Tuval gerçek piksel çözünürlüğünde çizilir (render ölçeği >= 1), üst sınır maxRenderWidth genişlik ve maxRenderScale kat. Performans modunda (Settings > Gameplay) render ölçeği en çok liteRenderScale (CSS büyütür) ve kare hızı liteFps.",
     "maxWidth": 2580,
@@ -220,6 +224,13 @@
       "medium": { "pose": true, "poseMs": 530, "flash": "#ffffff", "flashMs": 110, "tint": null, "tintMs": 0, "recoilPx": 22, "recoilMs": 280, "knockPx": 0, "knockMs": 0, "leanMult": 0.9, "crouchMult": 0.9, "dust": false },
       "heavy": { "pose": true, "poseMs": 880, "flash": "#ffffff", "flashMs": 190, "tint": "#ff6a6a", "tintMs": 260, "recoilPx": 50, "recoilMs": 440, "knockPx": 40, "knockMs": 130, "leanMult": 1.8, "crouchMult": 1.6, "dust": true },
       "shake": { "minRatio": 0.35, "ms": 220, "intensity": 0.0045 }
+    },
+    "forcedMove": {
+      "_not": "Zorla yer değiştirme (Ömer 2026-10-31): bir skill birimi kendi hücresinden çekip iter (olay moved + by: Ice Crater itmesi, Chain Hook / Drag Under / Boarding Hook / Pull Beneath çekmesi). YALNIZ hopSkills listesindeki skill'in (Mage Ice Crater) itmesinde birim yürümez, tek hafif sıçrayışla yeni hücreye geçer; diğer itme/çekmeler (hook'lar, Druid ağacı) eskisi gibi yürür. ms = geçiş süresi (skillSlowdown ile çarpılır), hopPx = sıçrayış yüksekliği, hops = süre boyunca sıçrayış sayısı. src/game/combatant-view.ts > forcedMoveTo.",
+      "ms": 380,
+      "hopPx": 22,
+      "hops": 1,
+      "hopSkills": ["ice_crater"]
     },
     "attackLungeDistance": 220,
     "attackDurationMs": 180,

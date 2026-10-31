@@ -49,3 +49,24 @@ Yakalama: captures/wail_of_the_dead (2026-10-29; ilk ~25 kare önceki atışın 
 Merkez havuz: düzeltme başarılı. g57'de ayaklar havuzun içinde; mor sis ayağın önüne taşıyor ve zeminle birleşiyor. Havuz havada değil, gereğinden aşağı da oturmuyor. f58'deki önceki görünümde havuz ayağın gerisinde/kenarında kalıyordu.
 Kol hücreleri: g100'de havuzlar ilgili hücre plakalarının ortasında. Sönüşte (g90) zemin izi de zemine bağlı kalıyor. Yeni yatay kayma veya katman/derinlik sorunu görünmüyor. İlk ~25 kare eski atış kuyruğu olduğundan kusur sayılmadı.
 Karar: tamam.
+
+## Tur 5 · Claude · düzeltme · 2026-10-31
+Ömer 2026-10-30: "çığlıktan hücrelere giden bir travel animasyonu yok; çığlık ile hücrelerdeki hayaletler arasında boşluk kalıyor, skill takılıyor gibi".
+Yeni çizim gerekmedi: 03'ün son iki karesi (yalnız ses halkaları; sönen hayalet solda yumuşakça silinir, türev doku `v2undead:wailwave`) `wailWave` ile yol alıyor (`src/game/art-v2/undead/vfx.ts`):
+- Çığlıktan 130 ms sonra halkaların açıldığı yerden üç dalga art arda kalkar (70 ms ara, saydamlık 0,95 / 0,6 / 0,38), yolda büyür (200 -> 280 px), hedefe döner. İlk dalganın ön kenarı merkez hücreye (gövde hizası, zeminden 90 px) vardığı an: 04 hayalet + hit() + hasar sayısı. Ölü bekleme kalmadı.
+- Kollar: merkezden kol hücrelerine küçük dalga (200 ms), varış = kol hücresinin mezar efekti (süre aynı).
+- Yol süresi uzaklığa göre 280-380 ms. Çığlıktan vuruşa 430 ms yerine 410 ms (ön sıra hedef, 20 ms daha erken); en uzak hücrede en çok +80 ms. Toplam süre pratikte aynı. Yakalamada dalga #37 kuklaya değiyor, #38 hayalet + hasar.
+- Aynalama: atan solda / sağda ikisi de `flip` + dönüş ile; azaltılmış hareket: tek dalga, büyümez, soluk. Yakalanan yalnız düşman tarafı + normal hareket.
+Not: dalga sprite'ı frames.json'da görünmez (türev doku anahtarı izlenmiyor); karelerde görünür.
+
+## Tur 6 · Codex · kontrol · 2026-10-31
+Yakalama: kullanıcı ekleri `w_flow` (#1–#57; ilk #1–#14 önceki atış kuyruğu).
+Genel: Çığlık sonrası ayrı bekleme hissi kalmamış; ses dalgaları atandan kopmadan sağdan sola ilerleyip merkez hayalete bağlanıyor.
+
+| Kare | Gözlem | Sonuç |
+|---|---|---|
+| #17–#29 · 283–483 ms | Hayalet yüz çığlık çıkışında beliriyor; mor dalga halkaları yüzün önünden açılıp sola, kuklaya doğru yayılıyor. | Geçiş okunaklı; arada boşluk/takılma yok. |
+| #33–#41 · 550–683 ms | Dalgalar yol boyunca katmanlanıp sola ilerliyor; #41'de hedef kuklada hayalet/hasar beliriyor. | Dalga hedefe varıyor; varış, merkez hayalet ve hasar aynı vuruş evresinde. |
+| #45–#57 · 750–950 ms | Hedefte hayalet etkisi sürerken yoldaki halkalar sönüyor; ardından hedef çevresindeki kollar/mezar etkileri belirginleşiyor. | Dalga çığlıktan kopuk değil; yön sağdan sola doğru. |
+
+Karar: tamam. Travel animasyonu boşluğu kapatmış; zamanlama ve yön doğru.

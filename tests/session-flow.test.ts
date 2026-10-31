@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flowButtons, menuItems, MENU_LABELS, RETREAT_CONFIRM } from '../src/game/session-flow';
+import { flowButtons, menuItems, LOAD_CONFIRM, MENU_LABELS, RETREAT_CONFIRM } from '../src/game/session-flow';
 
 describe('ayarlar menüsü: New Game / Team Select düğmeleri', () => {
   it('devam eden savaşta ikisi de var ve onay ister', () => {
@@ -38,6 +38,13 @@ describe('oyun içi Menu (sağ üst Menu düğmesi / Esc): içerik bağlama gör
     expect(m.confirm.mainMenu).toMatch(/main menu/i);
     expect(menuItems('campaign-battle-over')!.items).toEqual(['resume', 'codex', 'settings', 'mainMenu']);
     expect(MENU_LABELS.retreat).toBe('Retreat to Map');
+  });
+  it('sefer savaşı Normal modda Retreat yanında Load (onaylı) verir; Ironman ve bitmiş savaşta yok', () => {
+    const on = menuItems('campaign-battle-live', { available: true, save: null, load: true })!;
+    expect(on.items).toEqual(['resume', 'codex', 'settings', 'retreat', 'load', 'mainMenu']);
+    expect(on.confirm.load).toBe(LOAD_CONFIRM);
+    expect(menuItems('campaign-battle-live', { available: true, save: null, load: false })!.items).not.toContain('load');
+    expect(menuItems('campaign-battle-over', { available: true, save: null, load: true })!.items).not.toContain('load');
   });
   it('multiplayer: Resume / Codex / Settings / Leave (= maçı terk, canlıyken onaylı)', () => {
     const m = menuItems('mp-live')!;

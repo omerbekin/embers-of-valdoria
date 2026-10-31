@@ -8,6 +8,8 @@ import { CLOSE_PATH, navSvg } from '../src/ui/nav-icons';
 const style = readFileSync('src/style.css', 'utf8');
 const gearCss = readFileSync('src/ui/gear.css', 'utf8');
 const gear = readFileSync('src/ui/gear-screen.ts', 'utf8');
+const bagBar = readFileSync('src/ui/bag-bar.ts', 'utf8');
+const panel = readFileSync('src/ui/character-panel.ts', 'utf8');
 
 describe('Ortak envanter (Gear, v3 Ledger)', () => {
   it('her yuvanın boyalı boş yuva simgesi var (assets/ui-icons/slots) ve soluk (~%36) çizilir', () => {
@@ -26,6 +28,20 @@ describe('Ortak envanter (Gear, v3 Ledger)', () => {
   it('Hero / Sheet sekmeleri; alt Done çubuğu yok; Equip best mentor vurgusu duruyor', () => {
     expect(gear).toMatch(/'Hero' : 'Sheet'/);
     expect(gear).not.toMatch(/'primary', 'Done'|primary`, 'Done'|' primary', 'Done'/);
-    expect(gear).toContain("dataset['tut'] = 'best'");
+    expect(bagBar).toContain("dataset['tut'] = 'best'"); // Equip best artık ortak çanta çubuğunda (bag-bar.ts)
+    expect(gear).toContain('bestOpts');
+  });
+
+  it('çanta çubuğu TEK parça: inventory.ts çizer, gear-screen yalnız veriyi verir; Equip best yalnız torba-yalnız olmayan ekranlarda', () => {
+    const inv = readFileSync('src/ui/inventory.ts', 'utf8');
+    expect(inv).toContain('bagBarEls(v.bar)');
+    expect(gear).toContain("if (bagOnly) return undefined;");
+  });
+
+  it('Sheet stat kutuları (Ömer 2026-10-31): + / − düğmesi yok; dokun = +1, sağ tık / basılı tut = o statın bekleyen puanları geri', () => {
+    expect(panel).not.toContain("'sh-pmb'");
+    expect(panel).toContain('onClear');
+    expect(panel).toContain("'contextmenu'");
+    expect(gearCss).not.toContain('sh-pmb');
   });
 });

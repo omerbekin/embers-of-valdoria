@@ -245,7 +245,7 @@ export class GameMenu {
       case 'save':
         return this.hooks.save ? this.run(this.hooks.save) : undefined;
       case 'load':
-        return this.hooks.load ? this.run(this.hooks.load) : undefined;
+        return this.hooks.load ? this.ask(this.hooks.load, confirm) : undefined;
       case 'mainMenu':
         return this.ask(this.hooks.mainMenu, confirm);
     }

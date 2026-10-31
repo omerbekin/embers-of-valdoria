@@ -1,0 +1,40 @@
+{
+  "_not": "Sefer mobu, Harita 1 Deserters' Camp elit lideri (Ömer 2026-10-31): Bandit Chief'in varyantı; kit, stat, YZ ve pasif birebir, tek fark kalkan: Block %15 (sırtında değil elinde kalkan, poz sayfası data/mob-poses.json > deserter_captain). Bandit Chief değişmez. Sayılar PROVİZYON (sim YOK).",
+  "id": "deserter_captain",
+  "name": "Deserter Captain",
+  "family": "bandits",
+  "spriteId": "deserter_captain",
+  "spriteScale": 1.15,
+  "color": "#8b2e1f",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Bandit · Elite",
+  "attributes": {
+    "str": 30,
+    "int": 6,
+    "dex": 12,
+    "luck": 4
+  },
+  "armor": 20,
+  "magicArmor": 6,
+  "blockChance": 0.15,
+  "ai": "mob_tank",
+  "skills": [
+    "chiefs_cleaver",
+    "toll_sweep",
+    "hold_the_tower"
+  ],
+  "passive": {
+    "id": "shares_of_the_dead",
+    "name": "Shares of the Dead",
+    "icon": "muscle",
+    "text": "Whenever an ally dies, gains Fortified for 1 turn and its damage grows until the end of battle (15% more after one death, 30% more after two, and so on).",
+    "effect": {
+      "type": "sharesOfDead",
+      "status": "fortify",
+      "turns": 1,
+      "perDeath": 0.15
+    }
+  }
+}

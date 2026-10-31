@@ -10,7 +10,6 @@ import { heroSkillIconUrl } from './evolve-icon';
 import type { EvolveSource } from '../progression/skill-tree-evolve';
 import type { Stats } from '../engine';
 import {
-  ITEMS,
   SLOT_IDS,
   classUsesOffhand,
   defaultEquipSlot,
@@ -20,7 +19,6 @@ import {
   offhandBlocker,
   planEquip,
   cappedExtras,
-  classWeaponFamilies,
   equipDiff,
   fmtPanel,
   heroPanel,
@@ -97,8 +95,12 @@ export interface CharacterView {
 /** Stat puanı dağıtımı: bekleyen (onaylanmamış) puanlar ekranın elinde; Confirm kaynağa yazar. */
 export interface LevelPanel {
   pending: StatAlloc;
+  /** Stat kutusuna dokunma / tıklama: +1 puan (Ömer 2026-10-31; + ve − düğmeleri kalktı). */
   onAdd: (k: Attribute) => void;
-  onSub: (k: Attribute) => void;
+  /** Sağ tık / mobilde basılı tutma: o stata bu oturumda verilmiş, henüz Confirm edilmemiş puanların TÜMÜNÜ geri alır. */
+  onClear: (k: Attribute) => void;
+  /** Puan verilemeyen statta dokunuş: nedenini söyler (toast). */
+  onBlocked?: (msg: string) => void;
   onReset: () => void;
   onConfirm: () => void;
 }
@@ -109,7 +111,7 @@ const pendingCount = (p: StatAlloc): number => ATTR_IDS.reduce((t, k) => t + (p[
 /** Sheet'te tam stat adları (Ömer 2026-10-18, stats-panels A · Band): kısaltma yok; ipuçları `data-stat` kimliğiyle aynı kalır. */
 const FULL_NAME: Record<string, string> = {
   hp: 'HP', mp: 'MP', str: 'Strength', dex: 'Dexterity', int: 'Intelligence', luck: 'Luck', damage: 'Damage', crit: 'Crit chance', critMult: 'Crit damage',
-  accuracy: 'Accuracy', spd: 'Speed', armor: 'Armor', magicArmor: 'Magic armor', evasion: 'Evasion', hpRegen: 'HP regen', mpRegen: 'MP regen', block: 'Block',
+  accuracy: 'Accuracy', spd: 'Speed', armor: 'Armor', magicArmor: 'Magic armor', evasion: 'Evasion', hpRegen: 'HP regen', mpRegen: 'MP regen', block: 'Block', blockBreak: 'Block break',
 };
 
 /**
@@ -118,7 +120,7 @@ const FULL_NAME: Record<string, string> = {
  * bir stat satırına bırakılınca ya da satırdaki + ile o stata bir puan gider (bekleyen; Confirm yazar). Kural (temel stat diğer üçünün toplamını
  * aşamaz) + düğmesini kapatır ve satırı bırakma hedefi yapmaz. Puan satırı puan yokken de görünmez olarak yer tutar (altı kaymaz).
  */
-function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: string | null): HTMLElement[] {
+function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: string | null, foot?: HTMLElement): HTMLElement[] {
   const level = hero.level ?? 1;
   const need = xpToNext(level);
   const xp = hero.xp ?? 0;
@@ -143,16 +145,66 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
       if (idle) row.setAttribute('aria-hidden', 'true');
       const medal = el('span', `sh-medal${free > 0 ? '' : ' empty'}`);
       medal.append(el('span', '', String(free)));
-      medal.title = 'Drag onto a stat, or tap + next to it';
+      medal.title = 'Drag onto a stat, or tap a Main stat';
       if (free > 0) medal.dataset['ptdrag'] = '1';
       row.append(medal, el('span', 'sh-tx', free > 0 ? `stat point${free === 1 ? '' : 's'} to spend` : 'All points placed'));
       under.append(row);
     }
+    if (foot) under.append(foot); // Reset / Confirm puan satırında (Ömer 2026-10-31)
     // skill puanı çipi kaldırıldı (Ömer 2026-10-22)
     out.push(under);
   }
   if (lv && pend > 0 && primaryLost) out.push(el('div', 'sh-warn', primaryLost));
   return out;
+}
+
+/**
+ * Stat kutusu hareketleri (Ömer 2026-10-31): tıklama / dokunma = `onTap` (true dönerse yutulur: ipucu sabitlenmez; false = olağan ipucu kuralı);
+ * sağ tık ya da dokunmatikte basılı tutma = `onUndo`. Basılı tutma +1 üretmez (ardından gelen tıklama yutulur); tarayıcı menüsü açılmaz.
+ */
+export const HOLD_MS = 450;
+function attachAllocGestures(row: HTMLElement, onTap: () => boolean, onUndo: () => void): void {
+  let timer = 0;
+  let held = false;
+  let from: { x: number; y: number } | null = null;
+  const stop = (): void => {
+    window.clearTimeout(timer);
+    timer = 0;
+    from = null;
+  };
+  row.addEventListener('pointerdown', (e) => {
+    held = false;
+    if (e.pointerType === 'mouse') return;
+    from = { x: e.clientX, y: e.clientY };
+    timer = window.setTimeout(() => {
+      held = true;
+      timer = 0;
+      onUndo();
+    }, HOLD_MS);
+  });
+  row.addEventListener('pointermove', (e) => {
+    if (from && Math.hypot(e.clientX - from.x, e.clientY - from.y) > 10) stop();
+  });
+  for (const t of ['pointerup', 'pointercancel', 'pointerleave'] as const) row.addEventListener(t, stop);
+  row.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!held) onUndo();
+  });
+  row.addEventListener('click', (e) => {
+    if (held) {
+      held = false;
+      e.stopPropagation();
+      return;
+    }
+    if (onTap()) e.stopPropagation();
+  });
+  row.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onTap();
+    }
+  });
 }
 
 /** Puan taşının sürüklenmesi (fare + dokunma): bırakma hedefi `.sh-row[data-attr].can-add`; hayalet imleci izler. */
@@ -272,7 +324,7 @@ function heroCards(v: CharacterView, heroId: string | undefined): HTMLElement {
  * Defterin sol kenarındaki kahraman yer imleri (Ömer 2026-10-18, ortak envanter v3 "Ledger"): yalnızca portre; harcanmamış stat puanı rozeti;
  * bırakma hedefi (`data-drop`); üstüne gelince / uzun basınca ipucu: ad + üstüne gelinen item'in o kahramana etkisi (`data-hint`).
  */
-export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' | 'onHero'>): HTMLElement {
+export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' | 'onHero'> & { spent?: (id: string) => number }): HTMLElement {
   const box = el('div', 'gr-marks');
   for (const h of v.heroes) {
     const dead = heroFallen(h);
@@ -299,7 +351,13 @@ export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' |
     b.append(face);
     if (dead) b.append(el('span', 'gr-fallen-x', '✝'));
     if (h.wounds && h.woundCfg && !dead) b.append(woundPipsEl(h.wounds, h.woundCfg));
-    if ((h.statPoints ?? 0) > 0) b.append(el('span', 'gr-pt', String(h.statPoints)));
+    // Harcanmamış stat + skill puanı toplamı (Ömer 2026-10-31, #27): Tree sekmesindeki altın rozetin küçük hali; bekleyen (onaylanmamış) stat puanı düşülür
+    const open = Math.max(0, (h.statPoints ?? 0) - (v.spent?.(h.id) ?? 0)) + (h.skillPoints ?? 0);
+    if (open > 0) {
+      const pt = el('span', 'gr-pt sk', String(open));
+      pt.title = 'Unspent stat and skill points';
+      b.append(pt);
+    }
     box.append(b);
   }
   return box;
@@ -401,16 +459,16 @@ export function itemPlate(inst: ItemInstance, heroClass: string | undefined, ext
   const ico = el('span', 'gp-ico');
   ico.append(itemIcon(inst, k, 1.3));
   const txt = el('div', 'gr-slot-text gp-tx');
-  txt.append(plateLabel(k), el('div', 'gr-slot-name', d ? d.name : inst.id), plateL2(inst, heroClass));
+  txt.append(plateLabel(k), el('div', `gr-slot-name${(d ? d.name : inst.id).length >= 22 ? ' long' : ''}`, d ? d.name : inst.id), plateL2(inst, heroClass));
   cell.append(ico, txt);
   if (extra) cell.append(extra);
   return cell;
 }
 
-/** Sınıf başlığı (sınıf çipi + kullanılabilir silah ailesi çipleri) + 7 yuva plakası. */
+/** Sınıf başlığı (çerçevesiz "Level N Sınıf" yazısı; silah ailesi kutuları kalktı, Ömer 2026-10-31) + 7 yuva plakası. */
 function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
   const head = el('div', 'gr-sec gr-class-sec');
-  head.append(el('span', 'gp-chip cls', className(hero.class)));
+  head.append(el('span', 'gp-chip cls plain', `Level ${hero.level} ${className(hero.class)}`));
   // Yara: tek gösterge = elmas nokta çipi (Ömer 2026-10-23; 0 yara = yok)
   if (hero.wounds && hero.woundCfg) {
     const wc = woundChipEl(hero.wounds, hero.woundCfg, heroPanel(hero).find((x) => x.id === 'hp')?.value);
@@ -422,21 +480,6 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     oc.dataset['band'] = JSON.stringify({ kind: 'Oath', title: hero.oath.name, accent: '#9a7ac8', lines: [{ text: hero.oath.plus }, { text: hero.oath.minus }], foot: 'Broken only at the Saltspray Shrine, for gold.', noKeywords: true });
     oc.setAttribute('aria-label', `${hero.oath.name}: ${hero.oath.plus}; ${hero.oath.minus}`);
     head.append(oc);
-  }
-  for (const fid of classWeaponFamilies(hero.class)) {
-    const f = ITEMS.weaponFamilies.find((x) => x.id === fid);
-    if (!f) continue;
-    const chip = el('span', 'gp-chip');
-    const url = slotIconUrl(/shield/i.test(f.name) ? 'offhand' : 'weapon');
-    if (url) {
-      const i = el('img');
-      i.src = url;
-      i.alt = '';
-      i.draggable = false;
-      chip.append(i);
-    }
-    chip.append(f.name);
-    head.append(chip);
   }
   const slots = el('div', 'gr-slots');
   const dead = heroFallen(hero);
@@ -517,6 +560,7 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
   for (const p of heroPanel(hero)) {
     // Blok satırı yalnızca kalkanı olan (ya da kalkan takmayı deneyen) kahramanda (Ömer 2026-10-18)
     if (p.id === 'block' && !p.value && !diff.get(p.id)) continue;
+    if (p.id === 'blockBreak' && !p.value && !diff.get(p.id)) continue; // Block Break: yalnızca değeri olan kahramanda
     const name = FULL_NAME[p.id] ?? p.label;
     const dv = diff.get(p.id);
     const dText = dv ? `${dv > 0 ? '+' : ''}${fmtPanel({ value: dv, fmt: p.fmt })}` : '';
@@ -557,9 +601,16 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
       rowsById.set(p.id, box);
       continue;
     }
-    const row = el('div', `sh-row${p.id === primary ? (c.stats?.primaryActive ? ' p' : ' p off') : ''}`);
+    const attr = ATTR_IDS.find((k) => k === p.id);
+    const row = el('div', `sh-row${attr ? ' sh-tile' : ''}${p.id === primary ? (c.stats?.primaryActive ? ' p' : ' p off') : ''}`);
     row.dataset['stat'] = p.id;
-    row.append(ico, el('span', 'sh-k', name), el('span', 'sh-n', fmtPanel(p)));
+    if (attr) {
+      const top = el('span', 'sh-t-top');
+      top.append(ico, el('span', 'sh-k', name));
+      const bot = el('span', 'sh-t-bot');
+      bot.append(el('span', 'sh-n', fmtPanel(p)), dEl);
+      row.append(top, bot);
+    } else row.append(ico, el('span', 'sh-k', name), el('span', 'sh-n', fmtPanel(p)));
     // tavan dolu: fazlası kaybolur (Ömer 2026-10-13, itemcaps m1)
     if (p.capped) {
       row.classList.add('capped');
@@ -567,58 +618,44 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
       cap.title = 'Capped: extra from items is wasted';
       row.append(cap);
     }
-    row.append(dEl);
+    if (!attr) row.append(dEl);
     if (dv) {
       row.dataset['delta'] = dText;
       row.dataset['dir'] = dv > 0 ? 'up' : 'down';
     }
-    // Temel stat satırı: + / − (puan dağıtımı; kural izin vermiyorsa + kapalı). Puan ekranında iki düğme yuvası HER ZAMAN yer kaplar
-    // (kullanılamayan düğme görünmez ama yerinde durur): +, −, Reset, Confirm satırları kaydırmaz (Ömer 2026-10-18)
-    const attr = ATTR_IDS.find((k) => k === p.id);
+    // Temel stat kutusu (Ömer 2026-10-31): dokun / tıkla = +1 puan; sağ tık / basılı tut = o statın bekleyen puanlarının TÜMÜ geri. + ve − düğmesi yok.
     if (attr && v.level) {
       const lv = v.level;
-      const active = freePts > 0 || (pending[attr] ?? 0) > 0;
+      const mine = pending[attr] ?? 0;
+      const active = freePts > 0 || mine > 0;
       if (active) row.dataset['attr'] = attr;
       const can = freePts > 0 && canAddPoint(hero.class, allocNow, attr);
       if (can) row.classList.add('can-add');
-      const pm = el('span', 'sh-pm');
-      const hide = (b: HTMLButtonElement): void => {
-        b.disabled = true;
-        b.tabIndex = -1;
-        b.classList.add('off');
-        b.setAttribute('aria-hidden', 'true');
+      if (mine > 0) row.classList.add('has-pend');
+      row.tabIndex = 0;
+      row.setAttribute('role', 'button');
+      const why = (): string => {
+        const base = baseAttrs(hero.class, allocNow);
+        const others = base ? ATTR_IDS.reduce((t, k) => t + base[k], 0) - (base[attr] ?? 0) : 0;
+        return `Cannot add to ${name}: a base stat can never exceed the other three added together${base ? ` (${name} ${base[attr]}, the others total ${others})` : ''}.`;
       };
-      const sub = el('button', 'sh-pmb', '−');
-      sub.type = 'button';
-      if ((pending[attr] ?? 0) > 0) {
-        sub.title = `Take back a point from ${name}`;
-        sub.addEventListener('click', (e) => {
-          e.stopPropagation();
-          lv.onSub(attr);
-        });
-      } else hide(sub);
-      const add = el('button', 'sh-pmb', '+');
-      add.type = 'button';
-      if (freePts > 0) {
-        if (can) add.title = `Add a point to ${name}`;
-        else {
-          // Pasif + : gerçek `disabled` DEĞİL (disabled düğme üstüne gelince olay vermez); NEDEN yapılamadığını A Band ipucu söyler (hover / dokunuş; Ömer 2026-10-19)
-          const base = baseAttrs(hero.class, allocNow);
-          const others = base ? ATTR_IDS.reduce((t, k) => t + base[k], 0) - (base[attr] ?? 0) : 0;
-          add.classList.add('dis');
-          add.setAttribute('aria-disabled', 'true');
-          add.dataset['hint'] = `Cannot add to ${name}`;
-          add.dataset['hintSub'] = `A base stat can never exceed the other three added together${base ? ` (${name} ${base[attr]}, the others total ${others})` : ''}. Raise another stat first.`;
-          add.dataset['hintTone'] = 'no';
-          add.dataset['hintTap'] = '1';
-        }
-        add.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (can) lv.onAdd(attr);
-        });
-      } else hide(add);
-      pm.append(add, sub); // + solda ve sabit, − sağında (Ömer 2026-10-18)
-      row.append(pm);
+      attachAllocGestures(
+        row,
+        () => {
+          if (can) {
+            lv.onAdd(attr);
+            return true;
+          }
+          if (freePts > 0) {
+            lv.onBlocked?.(why());
+            return true;
+          }
+          return false; // puan yok: olağan stat ipucu kuralı (dokunma sabitler)
+        },
+        () => {
+          if (mine > 0) lv.onClear(attr);
+        },
+      );
     }
     rowsById.set(p.id, row);
   }
@@ -630,15 +667,21 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
   }
   out.push(vit, el('div', 'sh-dv'));
   const cols = el('div', 'sh-cols');
+  const two = el('div', 'sh-two');
   PANEL_GROUPS.forEach((ids, i) => {
     const g = el('div', `sh-col ${['base', 'attack', 'defense'][i] ?? ''}`);
     g.append(el('div', 'sh-sl', ['Main', 'Attack', 'Defense'][i] ?? ''));
+    const host = i === 0 ? el('div', 'sh-main') : g;
     for (const id of ids) {
       const r = rowsById.get(id);
-      if (r) g.append(r);
+      if (r) host.append(r);
     }
-    cols.append(g);
+    if (i === 0) {
+      g.append(host);
+      cols.append(g);
+    } else two.append(g);
   });
+  cols.append(two);
   out.push(cols);
   return out;
 }
@@ -646,12 +689,12 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
 /** Sheet: level bloğu + ayırıcı + çubuklar + MAIN / ATTACK / DEFENSE + tavan notu; puan taşı sürüklemesi `host` üstünde. Tek kap (`.sh`). */
 function sheetNodes(c: HeroCalc, v: CharacterView, host: HTMLElement, vitals?: { hpRatio: number }): HTMLElement[] {
   const sh = el('div', 'sh');
-  sh.append(...levelBlock(c.hero, v.level, c.primaryLost), el('div', 'sh-dv'), ...statGroups(c, v, vitals));
+  let foot: HTMLElement | undefined;
   if (v.level) {
     // Reset / Confirm panelin sağ altında (Ömer 2026-10-23); puan yokken görünmez yer tutar (sayfa kaymaz)
     const lvl = v.level;
     const pend = pendingCount(lvl.pending);
-    const foot = el('div', `sh-foot${pend > 0 ? '' : ' idle'}`);
+    foot = el('div', `sh-foot${pend > 0 ? '' : ' idle'}`);
     if (pend <= 0) foot.setAttribute('aria-hidden', 'true');
     const reset = el('button', 'sh-btn', 'Reset');
     reset.type = 'button';
@@ -662,8 +705,8 @@ function sheetNodes(c: HeroCalc, v: CharacterView, host: HTMLElement, vitals?: {
     ok.disabled = pend <= 0;
     ok.addEventListener('click', lvl.onConfirm);
     foot.append(reset, ok);
-    sh.append(foot);
   }
+  sh.append(...levelBlock(c.hero, v.level, c.primaryLost, foot), el('div', 'sh-dv'), ...statGroups(c, v, vitals));
   if (v.level) {
     const lv = v.level;
     const h = c.hero;
@@ -770,7 +813,7 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null, evo
     iconUrl: heroSkillIconUrl(evo, skill),
     meta,
     tags: skillTags(skill).map((g) => ({ text: g.text, kind: g.kind, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: iconUrl(g.icon, g.color ?? '#e8e2d0') } : {}) })),
-    rows: t.rows.map((r) => ({ text: r.text, ...(tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}) })),
+    rows: t.rows.map((r) => ({ text: r.text, ...(tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}), ...(r.section ? { section: true } : {}) })),
     ...(shape ? { shape } : {}),
   };
 }
@@ -825,7 +868,7 @@ function blurbOf(tip: { rows: { text: string }[] }, passive: boolean): string {
 function plateHtml(kind: '' | 'pas' | 'ult', id: string, name: string, icon: string, chips: string, nums: string, tip: string, blurb: string, big: string, idx: number, intro: boolean): string {
   const tag = kind ? `<span class="pl-tag">${kind === 'pas' ? 'Passive' : 'Ultimate'}</span>` : '';
   return `<div class="gr-pl ${kind}${intro ? ' intro' : ''}" style="--i:${idx}" data-skill="${escHtml(id)}"><div class="pl-ico">${tag}${icon ? `<img class="bh-ico" src="${escHtml(icon)}" alt="" draggable="false">` : ''}</div>
-    <div class="pl-bd"><div class="pl-hd"><div class="pl-nm">${escHtml(name)}</div><div class="pl-chips">${chips}</div></div><div class="pl-ds">${escHtml(blurb)}</div><div class="pl-dv"></div>${nums || '<div class="pl-sls"></div>'}</div>${big}
+    <div class="pl-bd"><div class="pl-hd"><div class="pl-nm${name.length >= 14 ? ' long' : ''}">${escHtml(name)}</div><div class="pl-chips">${chips}</div></div><div class="pl-ds">${escHtml(blurb)}</div><div class="pl-dv"></div>${nums || '<div class="pl-sls"></div>'}</div>${big}
     <div class="bh-sktip bh-panel bh-corners">${tip}</div></div>`;
 }
 

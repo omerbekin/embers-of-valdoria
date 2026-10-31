@@ -87,8 +87,8 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
       return {
         title: `Strength ${stats.str}`,
         lines: [
-          `Max HP: +${a.hpPerStr} per point (now ${stats.hp})`,
-          `HP regen: +${num(a.hpRegenPerStr)} per point at the start of each turn (now ${Math.round(stats.hpRegen)})`,
+          `Max HP: +${a.hpPerStr} per point. You have ${stats.hp} HP.`,
+          `HP regen: +${num(a.hpRegenPerStr)} per point at the start of each turn. You have ${Math.round(stats.hpRegen)} HP regen.`,
           `Strength skills deal ${num(f.scaling.str)}x of STR as base damage`,
         ],
       };
@@ -96,8 +96,8 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
       return {
         title: `Intelligence ${stats.int}`,
         lines: [
-          `Max MP: ${a.mpBase} base + ${a.mpPerInt} per point (now ${stats.mp})`,
-          `MP regen: +${num(a.mpRegenPerInt)} per point at the start of each turn (now ${stats.mpRegen}; 0 INT = none)`,
+          // MP havuzu olmayan birimde (mana-pool.ts) MP satırları yok
+          ...(stats.mp > 0 ? [`Max MP: ${a.mpBase} base + ${a.mpPerInt} per point. You have ${stats.mp} MP.`, `MP regen: +${num(a.mpRegenPerInt)} per point at the start of each turn. You have ${stats.mpRegen} MP regen.`] : []),
           `Intelligence skills (magic damage, heals, magic shields) use ${num(f.scaling.int)}x of INT`,
         ],
       };
@@ -105,8 +105,8 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
       return {
         title: `Dexterity ${stats.dex}`,
         lines: [
-          `Speed: +${num(a.spdPerDex)} per point (now ${stats.spd}); faster units act more often`,
-          `Evasion: +${pct(a.evasionPerStep)} per ${a.dexPerEvasionStep} Dex, whole steps only (now ${pct(stats.evasion)}; max ${pct(a.evasionMax)})`,
+          `Speed: +${num(a.spdPerDex)} per point; faster units act more often. You have ${stats.spd} Speed.`,
+          `Evasion: +${pct(a.evasionPerStep)} per ${a.dexPerEvasionStep} Dex, whole steps only (max ${pct(a.evasionMax)}). You have ${pct(stats.evasion)} evasion.`,
           `Dexterity skills deal ${num(f.scaling.dex)}x of DEX as base damage`,
         ],
       };
@@ -114,10 +114,10 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
       return {
         title: `Luck ${stats.luck}`,
         lines: [
-          `Crit chance: +${pct(a.critChancePerLuck, 1)} per point (now ${pct(stats.critChance, 1)})`,
+          `Crit chance: +${pct(a.critChancePerLuck, 1)} per point. You have ${pct(stats.critChance, 1)} crit chance.`,
           `Accuracy: +${pct(a.accuracyPerLuck, 1)} per point (base ${pct(a.accuracyBase)}, now ${pct(stats.accuracy)}); your attacks miss less often`,
           `A crit always deals ${multText(a.critMult)} damage; this does not depend on Luck`,
-          'Crits are the final multiplier of damage and healing, never of shields',
+          'Crits are the final multiplier of damage and healing',
         ],
       };
     case 'hp':
@@ -135,14 +135,14 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         ],
       };
     case 'critChance':
-      return { title: `Crit chance ${pct(stats.critChance, 1)}`, lines: [`Base ${pct(a.critChanceBase)}, +${pct(a.critChancePerLuck, 1)} per Luck`, `A crit always deals ${multText(a.critMult)} damage or healing (fixed)`, 'Applies to damage and healing, not shields'] };
+      return { title: `Crit chance ${pct(stats.critChance, 1)}`, lines: [`Base ${pct(a.critChanceBase)}, +${pct(a.critChancePerLuck, 1)} per Luck`, `A crit always deals ${multText(a.critMult)} damage or healing (fixed)`, 'Applies to damage and healing'] };
     case 'critMult':
       return {
         title: `Crit damage ${Math.round((stats.critMult ?? a.critMult) * 1000) / 10}%`,
         lines: [
           `Critical hits deal ${multText(stats.critMult ?? a.critMult)} damage`,
           'Fixed for every unit: Luck only raises the crit chance, never the multiplier',
-          'Applies to the final damage and healing of a crit, never to shields',
+          'Applies to the final damage and healing of a crit',
         ],
       };
     case 'hpRegen':
@@ -150,8 +150,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         title: `HP regen ${Math.round(stats.hpRegen)}`,
         lines: [
           `Restores ${Math.round(stats.hpRegen)} HP at the start of each of its own turns`,
-          `Comes from Strength: +${num(a.hpRegenPerStr)} per point (now STR ${stats.str})`,
-          'Nothing happens at full HP',
+          `Comes from Strength: +${num(a.hpRegenPerStr)} per point. You have ${stats.str} STR.`,
         ],
       };
     case 'mpRegen':
@@ -159,8 +158,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         title: `MP regen ${stats.mpRegen}`,
         lines: [
           `Restores ${stats.mpRegen} MP at the start of each of its own turns`,
-          `Comes from Intelligence: +${num(a.mpRegenPerInt)} per point (now INT ${stats.int}; 0 INT = none)`,
-          'Never goes above max MP',
+          `Comes from Intelligence: +${num(a.mpRegenPerInt)} per point. You have ${stats.int} INT.`,
         ],
       };
     case 'accuracy':
@@ -186,7 +184,6 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         title: `Armor ${num1(stats.armor)}`,
         lines: [
           `Reduces physical damage taken by ${pct(r, 1)}`,
-          `Diminishing returns: armor / (armor + ${f.armor.k}); 50% needs ${f.armor.k} armor`,
         ],
       };
     }
@@ -196,7 +193,6 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         title: `Magic armor ${num1(stats.magicArmor)}`,
         lines: [
           stats.magicArmor > 0 ? `Reduces magic damage taken by ${pct(r, 1)}` : 'No magic armor: magic damage is not reduced',
-          `Diminishing returns: armor / (armor + ${f.armor.k})`,
         ],
       };
     }

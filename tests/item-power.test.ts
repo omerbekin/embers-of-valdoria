@@ -202,12 +202,12 @@ describe('güç katmanı: katlama, tutuş, ikinci el, kalkan', () => {
     // zırh yalnızca ana affix'ten (c_armor), örtük zırh yok
     expect((shield.modifiers!.armorAdd ?? 0) - (noShield.modifiers?.armorAdd ?? 0)).toBeCloseTo(affixValues('c_armor', L, 0.5)[0]!, 6);
     expect(shield.weaponMult).toBe(noShield.weaponMult);
-    // kalkan C affix'i (c_block) tabana eklenir; toplam items.json > caps.block ile kırpılır ("max")
+    // kalkan C affix'i (c_block) tabana eklenir; toplam kırpılmaz (Block tavanı kalktı, Ömer 2026-10-31, #17)
     const withAffix = loadout({ class: 'warrior', equipment: eq({ weapon: inst('arming_sword', L), offhand: { uid: 's', id: 'oak_shield', rolls: { rarity: 'uncommon', ilvl: L, affixes: [{ id: 'c_armor', q: 0.5 }, { id: 'c_block', q: 0.5 }] } } }) });
     expect(withAffix.itemEffects!.blockChance).toBeCloseTo((imp + affixValues('c_block', L, 0.5)[0]!) / 100, 6);
     const big = loadout({ class: 'warrior', equipment: eq({ weapon: inst('arming_sword', L), offhand: { uid: 's', id: 'wardens_pavise', rolls: { rarity: 'uncommon', ilvl: 400, affixes: [{ id: 'c_armor', q: 0.5 }, { id: 'c_block', q: 1 }] } } }) });
-    expect(big.itemEffects!.blockChance).toBeCloseTo(ITEMS.caps.block! / 100, 6);
-    expect(big.capped).toContain('block');
+    expect(big.itemEffects!.blockChance).toBeCloseTo((itemDef('wardens_pavise')!.implicitBase![0]! + affixValues('c_block', 400, 1)[0]!) / 100, 6);
+    expect(big.capped).not.toContain('block');
     const cut = loadout({ class: 'cutthroat', equipment: eq({ weapon: inst('rondel_dagger', L) }) });
     expect(cut.modifiers!.spdMult).toBeCloseTo(1 + implicitValues(implicitDefOf(itemDef('rondel_dagger')!)!, L)[0]! / 100, 6);
   });

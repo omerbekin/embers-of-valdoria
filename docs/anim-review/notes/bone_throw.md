@@ -38,3 +38,6 @@ Genel: Uçuş, çarpma ve Slow ayazı brief'e uygun; belirgin sıçrama veya bo�
 
 Vuruş anı: #20'de patlama başlıyor (550 ms); temas noktası hedefin atana bakan kenarında, hizası uygun.
 Karar önerisi: tamam; belirtilen karelerde sıralama, boyut ve konum akıcı, sheet'te çerçeve/boş kare görünmüyor.
+
+## Tur 3 · Claude · düzeltme · 2026-10-31
+Ömer: kemikten sonra karakterin altındaki hare önce kemiğin ucunda çıkıyor, sonra karakterin altına ışınlanıyor. Patlama (s1-s3) çarpma noktasında, mezar ayazı (s4-s8) ayrı sprite olarak baştan ayak çizgisinde; yeri hiç değişmez. Slow tutmayan hal aynı. Ömer oyunda kontrol etti: düzelmiş.

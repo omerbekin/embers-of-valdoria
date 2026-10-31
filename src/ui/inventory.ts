@@ -9,6 +9,7 @@ import { itemDefIcon } from './item-icon-dom';
 import { isDoubleTap } from './gear-drop';
 import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
+import { bagBarEls, visibleByKind, type BagBarOpts } from './bag-bar';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -95,14 +96,12 @@ export interface InventoryView {
   usableClass?: string;
   /** Kullanılabilirlik bu sınıflardan HERHANGİ biri için (yalnızca torba ekranları: ganimet / ödül; kahraman seçili değil). */
   usableClasses?: string[];
-  /** "Usable" filtresi: verilirse başlıkta düğme görünür. */
-  filter?: { on: boolean; label: string; toggle: () => void };
+  /** Çanta çubuğu (src/ui/bag-bar.ts): All items / Equip best / item türü süzgeci. Verilirse başlıkta görünür ve kapalı türler çantada gizlenir. */
+  bar?: BagBarOpts;
   selected?: string;
   shake?: string;
   /** Satış fiyatı etiketi (tüccar). */
   price?: (inst: ItemInstance) => number;
-  /** Başlığın sağına ek öğe (ör. ödül ekranında "Close bag"). */
-  headExtra?: HTMLElement[];
   onTap?: (uid: string) => void;
   onDouble?: (uid: string) => void;
   /** Boş yuvalar yalnızca birkaç satır gösterilir (ganimet / ödül: 30 boş kare yer kaplamasın). Izgara yine bırakma hedefidir. */
@@ -123,26 +122,19 @@ export function renderInventory(v: InventoryView): HTMLElement {
     sec.prepend(i);
   }
   head.append(sec);
-  // sıra: ek düğmeler (Best: ...), filtre düğmesi en SAĞDA (Ömer 2026-10-18)
-  if (v.headExtra) head.append(...v.headExtra);
-  if (v.filter) {
-    const f = v.filter;
-    const chip = el('button', `gr-chip${f.on ? ' on' : ''}`, f.label);
-    chip.type = 'button';
-    chip.addEventListener('click', () => f.toggle());
-    head.append(chip);
-  }
+  if (v.bar) head.append(...bagBarEls(v.bar));
+  const shownItems = v.bar ? visibleByKind(v.items, v.bar.hidden) : v.items;
   root.append(head);
   const grid = el('div', `gr-bag${v.price ? ' priced' : ''}`);
   grid.dataset['drop'] = 'bag';
-  for (const inst of sortBag(v.items)) {
+  for (const inst of sortBag(shownItems)) {
     const d = itemDef(inst.id);
     if (!d) continue;
     const usable = v.usableClasses ? v.usableClasses.some((c) => canEquip(c, d)) : v.usableClass ? canEquip(v.usableClass, d) : true;
     const cell = itemCell(inst, {
       selected: v.selected === inst.uid,
       unusable: !usable,
-      filtered: !!v.filter?.on && !usable,
+      filtered: !!v.bar?.filter?.on && !usable,
       shake: v.shake === inst.uid,
       drag: `bag:${inst.uid}`,
       tip: `bag:${inst.uid}`,
@@ -161,8 +153,8 @@ export function renderInventory(v: InventoryView): HTMLElement {
     });
     grid.append(cell);
   }
-  const shown = v.compactEmpty ? Math.min(v.size, Math.max(v.compactEmpty.minRows, Math.ceil(v.items.length / v.compactEmpty.cols) + 1) * v.compactEmpty.cols) : v.size;
-  for (let i = v.items.length; i < shown; i++) {
+  const shown = v.compactEmpty ? Math.min(v.size, Math.max(v.compactEmpty.minRows, Math.ceil(shownItems.length / v.compactEmpty.cols) + 1) * v.compactEmpty.cols) : v.size;
+  for (let i = shownItems.length; i < shown; i++) {
     const empty = el('div', 'gr-item empty');
     if (v.price) {
       const w = el('div', 'gr-cellw');

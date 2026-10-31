@@ -823,14 +823,14 @@
         "costMult": 1.5,
         "burnDamagePct": 0.49,
         "explodePct": 0.49,
-        "castBurnPct": 0.75,
+        "castBurnPct": 0.5,
         "markDamagePct": 0.4,
         "markSkills": [
           "mana_burn",
           "void_strike"
         ],
         "threadTurns": 2,
-        "threadBurnMult": 2,
+        "threadBurnMult": 1.5,
         "element": "arcane"
       }
     ],
@@ -3309,14 +3309,14 @@
         "costMult": 1.5,
         "burnDamagePct": 0.49,
         "explodePct": 0.49,
-        "castBurnPct": 0.75,
+        "castBurnPct": 0.5,
         "markDamagePct": 0.4,
         "markSkills": [
           "mana_burn",
           "void_strike"
         ],
         "threadTurns": 2,
-        "threadBurnMult": 2,
+        "threadBurnMult": 1.5,
         "element": "arcane"
       }
     ],

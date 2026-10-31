@@ -9,6 +9,9 @@
  */
 import cfg from '../../data/vfx-inbetween.json';
 
+/** Raise Dead sütununun ara kare ayarı (efekt ve ön pişirme aynı türev dokuyu kullanır). */
+export const RAISE_DEAD_IB = { method: 'crossfade', sub: 3 };
+
 export interface IbMethodCfg {
   label: string;
   motion: number;

@@ -13,6 +13,7 @@
 //   eod [--dry]                      : gece görevi, hazır olan her şeyi gönderir
 //   doctor                           : bakım: bayat index.lock, artık eov-push kopyaları, artık süreçler (her gönderim başında da çalışır)
 // push/eod (--dry hariç) kendini arka plana alıp hemen döner (Ömer 2026-10-30); özet .git/push-queue.log, tam çıktı .git/push-queue.out.log
+//   notes <oturum> --fixes "..."     : hazır girdinin sürüm notunu değiştirir
 //   drop <oturum>                    : girdiyi siler (gönderilmeden)
 // Faz 2 (Ömer 2026-10-31): her yeni sohbet kendi worktree + dalında çalışır, kuyruk dalları taze origin/main üstünde birleştirip gönderir
 //   cutover                          : mevcut oturumları "eski akış" diye kaydeder; bundan sonra açılan sohbetler worktree modunda (bu çalışana kadar her şey eskisi gibi)
@@ -60,7 +61,10 @@ const CMD = {
   build: ENVV.EOV_CMD_BUILD ?? 'npm run build',
   deploy: ENVV.EOV_CMD_DEPLOY ?? 'npm run deploy:cf',
   npmci: ENVV.EOV_CMD_NPMCI ?? 'npm ci',
+  related: ENVV.EOV_CMD_RELATED, // yalnız e2e; gerçekte vitest related
 };
+// Ön test süre sınırı (Ömer 2026-10-31): motor dosyası yüzlerce testi tetikleyip tam testi tekrarlıyordu (11,5 dk)
+const RELATED_LIMIT = (Number(ENVV.EOV_RELATED_LIMIT_S) || 120) * 1000;
 const NET_WAITS = (ENVV.EOV_NET_WAITS ?? '30,60,120').split(',').map((x) => Number(x) * 1000);
 const LOCK_POLL = Number(ENVV.EOV_LOCK_POLL_MS) || 15000;
 const SESSIONS_DIR = ENVV.EOV_SESSIONS_DIR ?? join(homedir(), '.claude', 'projects', 'C--Users-Omer-Projects-embers-of-valdoria');
@@ -143,6 +147,13 @@ function parseNotes(args) {
 }
 const mergeNotes = (into, add) => { for (const [h, items] of Object.entries(add)) (into[h] ??= []).push(...items.filter((x) => !(into[h] ?? []).includes(x))); };
 const hasNotes = (n) => Object.values(n ?? {}).some((v) => v.length);
+// patch-notes testinin sınırları testten önce (Ömer 2026-10-31): toplu gönderim 20 dk test sonunda bu sınırda durmuştu
+function checkNoteLimits(groups) {
+  const lines = Object.values(groups).flat();
+  const long = lines.filter((l) => l.length > 140);
+  if (lines.length <= 8 && !long.length) return;
+  throw new Error(`sürüm notu sınırı aşıldı, test koşmadı, hiçbir şey gönderilmedi: ${lines.length} satır (en çok 8)${long.length ? `; 140 karakteri geçen ${long.length} satır: ${long.map((l) => l.slice(0, 40)).join(' | ')}` : ''}. Düzeltme: notes <oturum> --fixes "..."`);
+}
 const readStdin = () => { try { return JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { return {}; } };
 
 const RULES = (sid, mode) =>
@@ -409,6 +420,7 @@ async function push(trigger, args) {
     }
     // Oyuncuya görünen satır yoksa (yalnız --internal girdiler) sürüm ve patch notes ALMAZ
     if (!hasNotes(groups) && !picked.every((e) => e.internal)) throw new Error('patch notes satırı yok (ready/push --fixes "..." ya da --internal)');
+    checkNoteLimits(groups);
 
     // Aynı dosya dışarıda kalan bir sohbette de değiştiyse ayrılamaz, beraber gider
     for (const [sid, e] of Object.entries(q.sessions)) {
@@ -484,20 +496,32 @@ const firstLine = (e) => String(e?.stderr?.toString().trim() || e?.message || e)
 
 // Komut çıktısı hem ekranda hem dosyada (Ömer 2026-10-30, F3); dosya sistemin geçici klasöründe, repoya yazılmaz
 // args verilirse kabuksuz çalışır (cmd.exe satırı ~8k ile sınırlı, ön testte yüzlerce dosya yolu geçebiliyor)
-function runTee(cmd, args, cwd, tag) {
+function runTee(cmd, args, cwd, tag, limitMs) {
   const file = join(tmpdir(), `eov-out-${tag.replace(/\W+/g, '-')}-${Date.now()}.txt`);
   return new Promise((ok) => {
     const chunks = [];
+    let timedOut = false;
+    let timer;
+    let settled = false;
     const done = (code, extra = '') => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       const out = Buffer.concat(chunks).toString('utf8') + extra;
       try { writeFileSync(file, out); } catch {}
-      ok({ code, out, file });
+      ok({ code, out, file, timedOut });
     };
     const p = spawn(cmd, args ?? [], { cwd, shell: !args, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     p.stdout.on('data', (d) => { process.stdout.write(d); chunks.push(d); });
     p.stderr.on('data', (d) => { process.stderr.write(d); chunks.push(d); });
     p.on('error', (e) => done(-1, String(e)));
     p.on('close', (code) => done(code));
+    if (limitMs) timer = setTimeout(() => {
+      timedOut = true;
+      // Alt süreçler de kapanmalı, yoksa geçici kopya silinemez
+      try { execFileSync('taskkill', ['/PID', String(p.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true }); } catch {}
+      timer = setTimeout(() => done(-1), 5000); // boru açık kalırsa beklemeden geç
+    }, limitMs);
   });
 }
 
@@ -778,9 +802,9 @@ async function shipClean(version, groups, files, dry) {
 // Kapılar eski ve yeni akışta ortak (Ömer 2026-10-31)
 // Kırmızıda hangi dosya, kimin (Ömer 2026-10-30, F3)
 function makeGate(scratch, files, branchOwner) {
-  return async (stage, cmd, cmdArgs) => {
-    const r = await runTee(cmd, cmdArgs, scratch, stage);
-    if (r.code === 0) return;
+  return async (stage, cmd, cmdArgs, limitMs) => {
+    const r = await runTee(cmd, cmdArgs, scratch, stage, limitMs);
+    if (r.code === 0 || r.timedOut) return r;
     const red = redReport(stage, r.out, r.file, files, branchOwner);
     throw Object.assign(new Error(red), { red, hits: [...parseRed(r.out).keys()] });
   };
@@ -790,12 +814,15 @@ async function runGates(scratch, files, gate) {
   log('> Temiz kopyada tip kontrolü');
   await gate('tip kontrolü', CMD.tsc);
   // Ön test (Ömer 2026-10-30, F4): yalnız değişen dosyalara bağlı testler; kırmızı en hızlı burada görülür
-  const related = E2E ? [] : files.filter((f) => /^(src|tests|data)\//.test(f)).filter((f) => { try { return statSync(join(scratch, f)).isFile(); } catch { return false; } });
+  const related = E2E && !CMD.related ? [] : files.filter((f) => /^(src|tests|data)\//.test(f)).filter((f) => { try { return statSync(join(scratch, f)).isFile(); } catch { return false; } });
   if (!related.length) log('> Ön test atlandı: src/tests/data altında değişen dosya yok');
   else if (related.join(' ').length > 30000) log(`> Ön test atlandı: ${related.length} dosya komut satırına sığmıyor, tam teste geçiliyor`);
   else {
     log(`> Ön test: değişen ${related.length} dosyaya bağlı testler`);
-    await gate('ön test', process.execPath, [join('node_modules', 'vitest', 'vitest.mjs'), 'related', '--run', '--passWithNoTests', ...related]);
+    const r = CMD.related
+      ? await gate('ön test', CMD.related, undefined, RELATED_LIMIT)
+      : await gate('ön test', process.execPath, [join('node_modules', 'vitest', 'vitest.mjs'), 'related', '--run', '--passWithNoTests', ...related], RELATED_LIMIT);
+    if (r.timedOut) log(`> Ön test ${RELATED_LIMIT / 1000} sn'ye sığmadı, kesildi; tam test zaten hepsini koşacak`);
   }
   // Tam npm test göndermeden önce yerelde (Ömer 2026-10-25): yalnız hızlı testle 0.9.8.4/0.9.8.5 GitHub'a gidip CI'da kırmızı kalmıştı
   log('> Temiz kopyada tam test + build');
@@ -1358,6 +1385,7 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
       const groups = {};
       for (const e of live) mergeNotes(groups, e.notes);
       if (!hasNotes(groups) && !live.every((e) => e.internal)) throw new Error('patch notes satırı yok (ready/push --fixes "..." ya da --internal)');
+      checkNoteLimits(groups);
       for (const [sid, e] of Object.entries(readQueue().sessions)) {
         if (picked.some((p) => p.sid === sid)) continue;
         const both = e.files.filter((f) => I.legacyFiles.includes(f));
@@ -1487,6 +1515,13 @@ const main = {
     console.log(`Hazır (${e.mode}, ${rec ? rec.branch : e.files.length + ' dosya'}). ${e.mode === 'gün sonu' ? 'Gece 03:00 görevinde gider.' : 'İlk kritik gönderimle ya da gece 03:00 görevinde gider.'}`);
     });
   },
+  // Hazır girdinin sürüm notunu değiştirir (eklemez); toplu gönderimde 8 satıra indirmek için
+  notes: () => withQueue((q) => {
+    const { notes } = parseNotes(args.slice(1));
+    if (!hasNotes(notes)) throw new Error('kullanım: notes <oturum> --fixes "..." [--changes "..."] [--new "..."]');
+    entry(q, findSid(q, args[0])).notes = notes;
+    console.log(`Not satırı: ${Object.values(notes).flat().length}.`);
+  }),
   drop: () => withQueue((q) => { delete q.sessions[findSid(q, args[0])]; console.log('Silindi.'); }),
   doctor: () => { doctor(); },
   cutover,
@@ -1497,7 +1532,7 @@ const main = {
   push: async () => process.exit(background('push', args) ? 0 : await push(args[0], args.slice(1))),
   eod: async () => process.exit(background('eod', args) ? 0 : await push('eod', args)),
 }[cmd];
-if (!main) { console.error('Komut: status | mode | add | ready | push | eod | doctor | drop | cutover | wt-open | wt-close | legacy-merged'); process.exit(1); }
+if (!main) { console.error('Komut: status | mode | add | ready | notes | push | eod | doctor | drop | cutover | wt-open | wt-close | legacy-merged'); process.exit(1); }
 try { await main(); } catch (e) {
   // Hook'lar açık kalır: iç hata hiçbir araç çağrısını engellemez
   if (cmd.startsWith('hook-')) { try { appendFileSync(LOG, `[${new Date().toISOString()}] !! ${cmd} iç hata: ${firstLine(e)}\n`); } catch {} process.exit(0); }

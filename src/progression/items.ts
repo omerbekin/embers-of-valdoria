@@ -211,7 +211,7 @@ export interface ItemsData {
   effects: Record<string, EffectDef>;
   effectRules: { stack: boolean; endless: boolean };
   /** Toplam tavanlar (yüzde ya da düz): kritik, isabet, kaçınma, hız; MP bedeli indirimi, debuff direnci. */
-  caps: { crit: number; accuracy: number; evasion: number; spd: number; mpCost?: number; resist?: number; recovery?: number; aAffixCopies?: number; block?: number };
+  caps: { crit: number; accuracy: number; evasion: number; spd: number; mpCost?: number; resist?: number; recovery?: number; aAffixCopies?: number };
   weaponFamilies: WeaponFamilyDef[];
   /** Silah taban gücü (Item Güçlendirme x1-x3, Ömer 2026-10-17; items.md 1.12). */
   weaponPower: WeaponPowerRules;

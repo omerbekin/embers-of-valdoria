@@ -18,6 +18,7 @@
   },
   "armor": 24,
   "magicArmor": 10,
+  "blockChance": 0.2,
   "ai": "aggressive",
   "skills": [
     "halberd_chop",

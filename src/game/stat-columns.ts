@@ -18,7 +18,8 @@ export const DEFENSE_STATS: StatKind[] = ['armor', 'magicArmor', 'evasion', 'hpR
 export const VITAL_STATS: string[] = ['hp', 'mp'];
 export const PANEL_GROUPS: string[][] = [
   MAIN_STATS,
-  ['damage', ...ATTACK_STATS].map((k) => (k === 'critChance' ? 'crit' : k)),
+  // Block Break (Ömer 2026-10-31, #17): item kancası; panel yalnızca değer varken gösterir
+  [...['damage', ...ATTACK_STATS].map((k) => (k === 'critChance' ? 'crit' : k)), 'blockBreak'],
   // Blok (Ömer 2026-10-18): motor statı değil, kalkan kancası; panel yalnızca kahramanda blok varken (ya da takılacak item değiştirirken) gösterir
   [...DEFENSE_STATS, 'block'],
 ];

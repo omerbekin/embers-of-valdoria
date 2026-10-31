@@ -132,6 +132,7 @@ export function buildDef(data: CombatantData, formulas: Formulas): CombatantDef 
     name: data.name,
     spriteId: data.spriteId,
     ...(data.spriteScale ? { spriteScale: data.spriteScale } : {}),
+    ...(data.blockChance ? { blockChance: data.blockChance } : {}),
     color: data.color,
     logo: data.logo,
     frontPriority: data.frontPriority,

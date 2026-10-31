@@ -1,7 +1,7 @@
 // Gear > Tree sekmesinin DOM'suz mantığı (src/ui/tree-tab-model.ts, tree-tab-layout.ts): bekleyen puan akışı, yön kilidi, Confirm / Reset, respec bedeli.
 import { describe, expect, it } from 'vitest';
 import { TREE_RULES, treeOf } from '../src/progression/skill-tree-data';
-import { treeNodes, rankOf, spent } from '../src/progression/skill-tree';
+import { rankOf, spent } from '../src/progression/skill-tree';
 import { applyRespec, applyTree, type TreeHero } from '../src/progression/skill-tree-hero';
 import {
   addPending,
@@ -20,7 +20,7 @@ import {
   stripState,
   treeTabEnabled,
 } from '../src/ui/tree-tab-model';
-import { build, link, platePreset, plateConfig, plateNeed, PRESETS, template } from '../src/ui/tree-tab-layout';
+import { buildCols, link, deadStub, tierSpans, COL_AT, HIT_GOAL } from '../src/ui/tree-tab-layout';
 
 const hero = (level: number, extra: Partial<TreeHero> = {}): TreeHero => ({ id: 'h1', class: 'warrior', level, skillPoints: level - 1, ...extra });
 const rules = TREE_RULES;
@@ -169,33 +169,74 @@ describe('Tree sekmesi: Confirm ve respec (kayıt kuralıyla birlikte)', () => {
   });
 });
 
-describe('Tree sekmesi: yerleşim', () => {
-  it('her satırda tüm düğümler, ult için kol başına 3 adım, 5 tier bandı', () => {
-    const cfg = plateConfig({ avail: 1000, coarse: false, short: false, u: 1 }).cfg;
-    const L = build(cfg, rules);
-    const per = template(rules).length;
-    expect(Object.keys(L.pos)).toHaveLength(per * rules.rows);
-    expect(Object.keys(L.ult.pos)).toHaveLength(rules.ult.arms.length * rules.ult.levels.length);
-    expect(L.tiers.map((t) => t.tier)).toEqual(['I', 'II', 'III', 'IV', 'E']);
-    expect(L.rows).toHaveLength(rules.rows);
-    expect(L.W).toBe(cfg.padX * 2 + cfg.colW * 8);
-    // bütün düğümler kendi anahtarlarıyla var
-    for (const n of treeNodes(rules).list.filter((x) => x.row < rules.rows)) expect(L.pos[n.key]).toBeTruthy();
+describe('Tree sekmesi: sütun yerleşimi (V1 Columns)', () => {
+  const sizes = [
+    { n: '16:9', W: 1500, H: 640, short: false },
+    { n: '21:9', W: 2000, H: 640, short: false },
+    { n: 'telefon', W: 732, H: 255, short: true },
+  ];
+
+  it("rowShape içindeki her düğüm kimliğinin sütun yeri var; tier sırası I II III IV E", () => {
+    for (const d of rules.rowShape) expect(COL_AT[d.id], d.id).toBeTruthy();
+    expect(tierSpans(rules).map((t) => t.tier)).toEqual(['I', 'II', 'III', 'IV', 'E']);
+    expect(tierSpans(rules).map((t) => t.n)).toEqual([1, 1, 2, 1, 1]);
   });
 
-  it('ayar zinciri: geniş = m, dar = p; dokunmatikte l atlanır; en dar satıra sığmazsa hs', () => {
-    expect(platePreset({ avail: 1400, coarse: false, short: false, u: 1 })).toBe('m');
-    expect(platePreset({ avail: 1030, coarse: false, short: false, u: 1 })).toBe('l');
-    expect(platePreset({ avail: 1030, coarse: true, short: false, u: 1 })).toBe('p');
-    const pc = plateConfig({ avail: 300, coarse: true, short: true, u: 0.35 });
-    expect(pc.key).toBe('p');
-    expect(pc.hs).toBe(300 < plateNeed({ short: true, u: 0.35 }));
-    expect(pc.cfg.hdr).toBe(20); // kısa ekran: tek satırlık tier bandı
-    expect(PRESETS.p.hit).toBeGreaterThanOrEqual(44);
+  for (const z of sizes)
+    it(`${z.n}: her düğüm kutuya sığar, sütunlar ve ult kolları hizalı`, () => {
+      const L = buildCols(z, rules);
+      expect(Object.keys(L.pos)).toHaveLength(rules.rowShape.length * rules.rows + rules.ult.arms.length * rules.ult.levels.length);
+      for (const [key, p] of Object.entries(L.pos)) {
+        expect(p.x, key).toBeGreaterThan(L.labW);
+        expect(p.x, key).toBeLessThan(L.W);
+        expect(p.y, key).toBeGreaterThan(0);
+        expect(p.y, key).toBeLessThan(L.H);
+      }
+      // sütun i'nin düğümleri sütun i'nin genişliğinde; ult kolu i aynı sütunda
+      for (let i = 0; i < rules.rows; i++)
+        for (const d of rules.rowShape) {
+          const p = L.pos[`${i}.${d.id}`]!;
+          expect(p.x).toBeGreaterThan(L.colX[i]!);
+          expect(p.x).toBeLessThan(L.colX[i]! + L.cw);
+        }
+      rules.ult.arms.forEach((arm, j) => {
+        for (let s = 1; s <= rules.ult.levels.length; s++) {
+          const p = L.pos[`${rules.rows}.${arm}${s}`]!;
+          expect(p.x).toBeGreaterThan(L.colX[j]!);
+          expect(p.x).toBeLessThan(L.colX[j]! + L.cw);
+          expect(p.y).toBeGreaterThan(L.ultY0);
+        }
+      });
+      // ağaç alanı: başlık + sıralar + ult bandı toplamı kutuyu aşmaz (sayfa kaymaz)
+      expect(L.hh + L.pitch * 6 + L.ultH).toBeLessThanOrEqual(L.H + 1);
+      expect(L.tiers[L.tiers.length - 1]!.y + L.tiers[L.tiers.length - 1]!.h).toBeLessThanOrEqual(L.ultY0 + 1);
+    });
+
+  it('dokunma kutuları: komşuyla çakışmaz, masaüstünde 44 px, telefonda en iyi çaba (en yüksek değer kayda geçer)', () => {
+    const lay = (z: (typeof sizes)[number]) => buildCols(z, rules);
+    for (const z of sizes) {
+      const L = lay(z);
+      const keys = Object.keys(L.pos);
+      for (const a of keys)
+        for (const b of keys) {
+          if (a >= b) continue;
+          const dx = Math.abs(L.pos[a]!.x - L.pos[b]!.x);
+          const dy = Math.abs(L.pos[a]!.y - L.pos[b]!.y);
+          const ox = dx < (L.hit[a]!.w + L.hit[b]!.w) / 2 - 0.01;
+          const oy = dy < (L.hit[a]!.h + L.hit[b]!.h) / 2 - 0.01;
+          expect(ox && oy, `${z.n}: ${a} / ${b} kutuları çakışıyor`).toBe(false);
+        }
+    }
+    const min = (z: (typeof sizes)[number]) => Math.min(...Object.values(lay(z).hit).map((h) => Math.min(h.w, h.h)));
+    expect(min(sizes[0]!)).toBeGreaterThanOrEqual(HIT_GOAL);
+    expect(min(sizes[1]!)).toBeGreaterThanOrEqual(HIT_GOAL);
+    expect(min(sizes[2]!)).toBeGreaterThanOrEqual(24);
   });
 
-  it('yol: aynı hizada düz çizgi, değilse eğri', () => {
+  it('yol: aynı hizada düz; dikeyse dikey, yataysa yatay yumuşak eğri; blood ucu aşağı', () => {
     expect(link({ x: 0, y: 5 }, { x: 10, y: 5 })).toBe('M0,5 L10,5');
-    expect(link({ x: 0, y: 0 }, { x: 10, y: 6 })).toMatch(/^M0,0 C/);
+    expect(link({ x: 0, y: 0 }, { x: 4, y: 20 })).toBe('M0,0 C0,10 4,10 4,20');
+    expect(link({ x: 0, y: 0 }, { x: 20, y: 4 })).toBe('M0,0 C10,0 10,4 20,4');
+    expect(deadStub({ x: 10, y: 10 }, 5)).toMatch(/^M10,15 V24/);
   });
 });

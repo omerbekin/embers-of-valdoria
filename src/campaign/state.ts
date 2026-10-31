@@ -388,9 +388,12 @@ export function expectStep(s: CampaignState, kind: NextStep['kind']): NextStep {
   return step;
 }
 
-/** Tezgâhı kapatır (Leave): bu düğümde yeniden açılırsa aynı mallar dönsün diye saklanır (geri alım listesi ziyarete özel, boşalır). */
+/** Tüccar kaydının anahtarı: '<harita>:<düğüm>' (CampaignState.merchantStock). */
+export const shopKey = (mapId: string, nodeId: string): string => `${mapId}:${nodeId}`;
+
+/** Tezgâhı kapatır (Leave ya da yola çıkış): raflar kayda döner, yeniden açılınca aynı mallar gelir (geri alım listesi ziyarete özel, silinir). */
 export function closeShop(t: CampaignState): void {
-  if (t.shop?.node === t.at) t.closedShop = { ...t.shop, buyback: [] };
+  if (t.shop) t.merchantStock = { ...(t.merchantStock ?? {}), [shopKey(t.mapId, t.shop.node)]: { wares: t.shop.wares, rerolls: t.shop.rerolls, day: t.shop.day ?? 0 } };
   delete t.shop;
 }
 
@@ -1198,9 +1201,9 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
     t.path.push(id);
     if (!t.visited.includes(id)) t.visited.push(id);
   }
+  closeShop(t);
   t.at = to;
   delete t.eventChoice;
-  delete t.closedShop;
   delete t.formationDue;
   delete t.patrol;
   delete t.pit; // arena koşusu kasabada biter (güvenlik ağı)
@@ -1255,7 +1258,7 @@ export function continueToMap(s: CampaignState, mapId: string = nextMapFor(s) ??
   t.visited = [map.start];
   t.cleared = [];
   t.replays = {};
-  for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover', 'pit', 'dive', 'sea', 'lit', 'caravel'] as const) delete t[k]; // deniz / fener / Caravel yalnız o harita (faction taşınır)
+  for (const k of ['patrol', 'shop', 'merchantStock', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover', 'pit', 'dive', 'sea', 'lit', 'caravel'] as const) delete t[k]; // deniz / fener / Caravel yalnız o harita (faction taşınır)
   clearWounds(t); // D1 b: yeni haritaya yarasız girilir (cesetler aynen; yedekte bekleyenlere dokunulmaz)
   return t;
 }
@@ -1796,9 +1799,9 @@ export function debugRoamTeleport(s: CampaignState, target: string): CampaignSta
   t.visited = [...visitedNodes(t)];
   if (!t.visited.includes(target)) t.visited.push(target);
   t.path.push(target);
+  closeShop(t);
   t.at = target;
   delete t.eventChoice;
-  delete t.closedShop;
   delete t.formationDue;
   delete t.patrol;
   markCleared(t, target);

@@ -118,6 +118,8 @@ async function captureSkill(page, skill) {
     console.error(`HATA: "${skill}" test panelinde yok (src/game/mob-vfx.ts > MOB_VFX_SPECS anahtarı olmalı)`);
     return;
   }
+  // panel girdisi anahtarı sheet adında geçmeyebilir (raise_dead_fed, dark_bond_far, bone_slash_wide): girdinin izlediği sheet adları
+  const tracked = [...new Set([...vfxKeys(skill), ...(await page.evaluate((s) => window.__vbh().track(s), skill))])];
   await page.waitForTimeout(300);
   await waitIdle(page, 30000); // savaş kurulur + ilk atış biter
   await page.waitForTimeout(400);
@@ -168,7 +170,7 @@ async function captureSkill(page, skill) {
       };
       if (sc) walk(sc.children.list);
       return { vfx: list.filter((v) => v.visible && v.alpha > 0), busy: window.__vbh().busy() };
-    }, [vfxKeys(skill), DT]);
+    }, [tracked, DT]);
     const buf = await page.screenshot({ clip: canvas });
     const hash = createHash('md5').update(buf).digest('hex');
     if (info.vfx.length) {
@@ -207,7 +209,7 @@ async function captureSkill(page, skill) {
     for (const [uid, v] of sc?.views ?? []) {
       const u = sc.battle.get(uid);
       const m = v.sprite.getWorldTransformMatrix();
-      const role = u?.side === 'enemy' && u.slot === cs && !u.summoned ? 'caster' : uid === 'party-0' ? 'target (dummy)' : 'ally of caster';
+      const role = u?.side === 'enemy' && u.slot === cs && !u.summoned ? 'caster' : uid === 'party-0' ? 'target (dummy)' : uid.startsWith('party') ? 'second dummy' : 'ally of caster';
       out.push({ uid, role, name: u?.name ?? uid, side: uid.startsWith('party') ? 'left (player side)' : 'right (enemy side)', x: Math.round(m.tx), y: Math.round(m.ty), w: Math.round(v.sprite.displayWidth), h: Math.round(v.sprite.displayHeight) });
     }
     return out;

@@ -1,4 +1,4 @@
-﻿# Animasyon incelemesi: durum tablosu
+# Animasyon incelemesi: durum tablosu
 
 Süreç ve not formatı: README.md. İşini bitiren taraf "Durum" ve "Son" sütununu günceller.
 
@@ -91,9 +91,12 @@ Süreç ve not formatı: README.md. İşini bitiren taraf "Durum" ve "Son" sütu
 | Ley Thread · `ley_thread` | Anti-Mage (sınıf, durum) | tamam | 2026-10-29 · Codex | Tur 2 kontrolü: bağ çizgisi ve tüketim patlaması hedef üzerinde okunaklı. |
 | Spellbreaker's Instinct · `passive_spellbreaker_instinct` | Anti-Mage (sınıf, pasif) | kontrol | 2026-10-29 · Codex | Yakalama yok; kod tarifi okundu, oyunda elle bakılmalı. |
 | Bone Throw · `bone_throw` | Undead (sınıf) | tamam | 2026-10-29 · Codex | Tur 2 kontrolü: kıymık elden hedef kenarına akıcı; ayaz hedefin ayağında, yeni kayma yok. |
-| Wail of the Dead · `wail_of_the_dead` | Undead (sınıf) | tamam | 2026-10-29 · Codex | Tur 4 kontrolü: g57'de ayak havuzun içinde, sis öne taşıyor; g100 kol havuzları hücre plakalarının ortasında. Yeni kayma/derinlik sorunu yok. |
+| Wail of the Dead · `wail_of_the_dead` | Undead (sınıf) | tamam | 2026-10-31 · Codex | Tur 6 kontrolü: dalga atandan hedefe bağlı ilerliyor; varışta hayalet ve hasar birlikte. |
 | Dark Bond · `dark_bond` | Undead (sınıf) | tamam | 2026-10-30 · Codex | Tur 5 kontrolü: tel yeni lich pozunda elde bağlı; mühür sarma ve yumuşak sönüş korunmuş. |
-| Raise Dead · `raise_dead` | Undead (sınıf) | tamam | 2026-10-30 · Codex | Tur 4 kontrolü: hayalet α=0,45; kemik tozu eşliğinde sütun kademeli sönüyor. |
+| Dark Bond (uzak dost) · `dark_bond_far` | Undead (sınıf) | tamam | 2026-10-31 · Codex | Tur 6 kontrolü: uzak dostta tel erişimi ve mühür hizası doğru. |
+| Raise Dead · `raise_dead` | Undead (sınıf) | tamam | 2026-10-31 · Codex | Tur 7 kontrolü: sütun akışı yumuşak, iskelet okunur; görsel bozulma kalmamış. |
+| Raise Dead (beslenmiş + ceset emme) · `raise_dead_fed` | Undead (sınıf) | tamam | 2026-10-31 · Codex | Tur 7 kontrolü: sütun akışı yumuşak, iskelet okunur; görsel bozulma kalmamış. |
 | Vampiric Bite · `vampiric_bite` | Undead (sınıf, pasif) | tamam | 2026-10-29 · Codex | Tur 2 kontrolü: tutam okunaklı, Undead'in göğsüne ulaşıyor; yön doğru, siyah çerçeve/kesilme yok. |
 | Bone Slash · `bone_slash` | Skeleton (Undead çağrısı) | tamam | 2026-10-29 · Codex | Tur 4 kontrolü: 190 px kesik hedefi kapsıyor; beyaz vuruş parlaması ortak motor efekti, kusur değil; akış temiz. |
+| Bone Slash (iki hedef) · `bone_slash_wide` | Skeleton (Undead çağrısı) | tamam | 2026-10-31 · Codex | Tur 5 kontrolü: iki hedef kesiliyor; dönüş kesiği yan hedefe ulaşıyor, beyaz parlama ortak motor efekti. |
 

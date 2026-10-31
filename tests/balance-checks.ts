@@ -19,7 +19,8 @@ import { balance, simulate, skillCategory, skillShare, ultReadyRate, winRate } f
 // 2026-10-28 silah tipleri + Fire Bolt 1,07->1,02, Blizzard 0,81->0,77, asa +%8->+%5 sonrası Mage %57,3-57,7 (bant 56): Mage pasif/kit reworkü (Overflow seçildi) ve element reworkü sonrası sim'e kadar muaf.
 // 2026-10-28: vesper = yeni class (Ömer onayı), değerler PROVİZYON (Mage'den türetildi); sim Ömer onayıyla sonra (docs/design/classes/vesper.md).
 // 2026-10-30: AM reworkü (Instinct + Ley Thread) ve Void Strike / Mana Steal / Ley Brand kısmaları sonrası 2 x 1000'de %54,1-54,4, 5000'de %56,2-56,3 (sınırda): Ömer kararı bekliyor.
-export const PENDING_BALANCE: readonly string[] = ['paladin', 'mage', 'vesper', 'antimage'];
+// 2026-10-31: Ley Brand kısması (castBurnPct 0,5, threadBurnMult 1,5) sonrası Undead 5000'de %56,5 (bant %56). Ömer: karakter dengesi başka sohbette, bu değerlere dokunulmuyor.
+export const PENDING_BALANCE: readonly string[] = ['paladin', 'mage', 'vesper', 'antimage', 'undead'];
 
 /**
  * BANDI BEKLEYEN SKILL'LER (kullanım payı / ultimate oranı): Ömer onayı bekleyen yeniden tasarım önerisi olanlar; ölçülür, uyarı yazılır.
@@ -36,6 +37,8 @@ export const PENDING_SKILLS: Readonly<Record<string, string>> = {
   drain_field: 'Ley Brand yeni kurallar sonrası pay ~%39 (2026-10-29), YZ değeri ayarı bekliyor',
   spell_ward: 'Ley Brand payı arttı, Spell Ward %6,7 (bant %8) (2026-10-29), Ley Brand YZ ayarıyla bakılacak',
   toll: 'Vesper PROVİZYON değerler (2026-10-29), sim bekliyor',
+  // 2026-10-31: Ley Brand kısması sonrası Thunderpeal payı %35,1-35,2 (bant %35, gürültü sınırı). Karakter dengesi başka sohbette.
+  thunderpeal: 'Ley Brand kısması sonrası pay %35,2 (2026-10-31), karakter dengesi sohbetinde bakılacak',
   // 2026-10-29: Vesper havuza girince Resurrection payı %7,98 (bant %8, gürültü sınırı); Paladin zaten dengesi bekleyenlerde.
   resurrection: 'Vesper sonrası pay %7,98 (2026-10-29), Paladin turunda bakılacak',
   // 2026-10-30: YZ kapsam turu (open-questions 458) sonrası Dark Bond payı %7,8-8,0 (bant %8, gürültü sınırı).

@@ -59,6 +59,13 @@ describe('Mage ağacı fx (Faz 2b)', () => {
     expect(b.treeProcs().some((p) => p.node === 'mage:bar[0]')).toBe(true);
   });
 
+  it('Searing Crit: Fire Bolt kritik çarpanına rank başına düz +0,06 (önizleme ve YZ aynı değeri okur)', () => {
+    const b = make({ 0: 'mage' }, { 0: 'warrior' }, { 0: { tree: tree(['1.f1*3', '1.f2*5']) } });
+    const me = P(b);
+    const dmg = previewSkill(b, me.uid, 'fire_bolt', E0(b).uid).find((x) => x.uid === E0(b).uid)!.damage!;
+    expect(dmg.critMult).toBeCloseTo(me.stats.critMult + 5 * 0.06, 9);
+  });
+
   it('Execution Bolt + Finisher: düşük canlı hedefe Fire Bolt daha sert (önizleme)', () => {
     const prev = (withTree: boolean): number => {
       const b = make({ 0: 'mage' }, { 0: 'warrior' }, withTree ? { 0: { tree: tree(['2.f1*3', '2.f2*2', '1.f1*3', '1.f2', '1.f3', '1.n0', '1.r*3', '1.eb']) } } : {});

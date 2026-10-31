@@ -2,7 +2,7 @@
 // Veri: data/campaign/power-budget.json. Tasarım: docs/design/progression/roadmap.md 1.3, items.md 4.2-4.3.
 import budgetJson from '../../data/campaign/power-budget.json';
 import { getMap } from './data';
-import { finalNode, forwardDistances } from './graph';
+import { finalNode, forwardDistances, isBattleNode, outgoing, undirectedDistances } from './graph';
 import type { DifficultyEnemyMods } from './types';
 import { LEVELS, chapterLevels, levelAt } from '../progression/levels';
 
@@ -106,4 +106,40 @@ export function nodeLevel(mapId: string, nodeId: string): number {
   const d = dist.get(nodeId);
   if (d === undefined || total <= 0) return chapterLevels(ch)[0]; // tutorial (bölük kurma düğümünün gerisi)
   return levelAt(ch, Math.max(0, (d - k) / total));
+}
+
+/**
+ * Kasabanın level'ı (Ömer 2026-10-31, kasaba level'ı formu: otomatik, yanındaki düğümlerin düşman level'ından): kasabaya en yakın savaşlı
+ * düğümlerin (iki yönlü grafta; bitişikte savaş yoksa bir sonraki halka) en yüksek düşman level'ı. Veri alanı yok, elle sayı yok.
+ */
+export function townLevel(mapId: string, nodeId: string): number {
+  const map = getMap(mapId);
+  const near = [...undirectedDistances(map, nodeId)].filter(([id]) => id !== nodeId && map.nodes.some((n) => n.id === id && isBattleNode(n)));
+  if (!near.length) return nodeLevel(mapId, nodeId);
+  const ring = Math.min(...near.map(([, d]) => d));
+  return Math.max(...near.filter(([, d]) => d === ring).map(([id]) => nodeLevel(mapId, id)));
+}
+
+/**
+ * Dükkân tavanı (Ömer 2026-10-31): bu düğümün tüccarının satabileceği en yüksek item level'ı = buradan ileri yönde bir sonraki kasabaya kadar
+ * (kasaba hariç, cepler ve hub kolları dahil, dallanmada bütün yollar) çıkan en güçlü mobun level'ı; ileride kasaba yoksa harita sonuna kadar.
+ * Eşleme: 1 mob level'ı = 1 item level'ı (power-budget.json: bölüm aralıkları iki ölçekte aynı). levelRequirement (kahraman şartı) ile karışmaz.
+ * İleride savaş yoksa kasabanın kendi level'ı. Tasarım: items.md 2.2.
+ */
+export function shopCeiling(mapId: string, nodeId: string): number {
+  const map = getMap(mapId);
+  const seen = new Set<string>([nodeId]);
+  const queue = [nodeId];
+  let top = 0;
+  while (queue.length) {
+    for (const id of outgoing(map, queue.shift()!)) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const n = map.nodes.find((x) => x.id === id)!;
+      if (n.type === 'town') continue; // sonraki kasaba: sınır, ötesine bakılmaz
+      if (isBattleNode(n)) top = Math.max(top, nodeLevel(mapId, id));
+      queue.push(id);
+    }
+  }
+  return top || townLevel(mapId, nodeId);
 }

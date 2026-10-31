@@ -6,7 +6,7 @@
  * Epic / Legendary item etkileri (items.json > effects) skill sayılarını değiştiremez (skill-info yalnızca statları bilir): karşılaştırmaya girmez.
  */
 import { content } from '../engine';
-import { describePassive, describeSkill, passiveNumbers, skillNumbers, type SkillInfo, type SkillNumber } from '../engine/skill-info';
+import { TREE_SECTION, describePassive, describeSkill, passiveNumbers, skillNumbers, type SkillInfo, type SkillNumber } from '../engine/skill-info';
 import type { PassiveDef, SkillDef, Stats } from '../engine';
 import { diffText, mergeLine } from './stat-tips';
 
@@ -98,6 +98,8 @@ export function gearSkillRows(classId: string, stats: Stats, after: Stats | null
 export interface GearSkillTipRow {
   text: string;
   kind?: SkillInfo['kinds'][number];
+  /** Bölüm başlığı satırı ("From Skill Tree"). */
+  section?: boolean;
 }
 
 /** Skill / pasif tooltip'i (savaştaki skill tooltip'iyle aynı satırlar); `after` verilirse değişen sayılar "24 → 30 (+6)". */
@@ -116,6 +118,8 @@ export function skillTip(skill: SkillDef, stats: Stats, after: Stats | null = nu
   const next = after ? describeSkill(skill, after, f, content.summons, effectDefs(), content.ownerRangeOf(skill.id)) : null;
   const rows = now.lines.map((l, i): GearSkillTipRow => ({ text: next ? mergeLine(l, next.lines[i] ?? l, true) : l, ...(now.kinds[i] ? { kind: now.kinds[i] } : {}) }));
   if (now.initialCooldown) rows.push({ text: now.initialCooldown });
+  // Ağaçtan gelen satırlar (varsa) altta ayrı bölümde; skill'in kendi satırları aynı kalır
+  if (now.treeLines?.length) rows.push({ text: TREE_SECTION, section: true }, ...now.treeLines.map((l, i): GearSkillTipRow => ({ text: l, ...(now.treeKinds?.[i] ? { kind: now.treeKinds[i] } : {}) })));
   const meta = [now.cost, ...((skill.cooldown ?? 0) > 0 ? [`Cooldown ${now.cooldown}`] : []), ...(now.turnCost ? [now.turnCost] : [])];
   return { title: now.name, badge: now.targetBadge, meta, rows };
 }

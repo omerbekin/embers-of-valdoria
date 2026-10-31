@@ -28,6 +28,8 @@ import { bandRichHtml, bandTipHtml, type BandChip, type BandTipSpec } from './ba
 export interface TipRow {
   text: string;
   color?: string;
+  /** Bölüm başlığı satırı ("From Skill Tree"; band-tip.ts BandLine.section). */
+  section?: boolean;
 }
 export interface TipMeta {
   iconUrl?: string;
@@ -311,7 +313,7 @@ export function tipToBand(t: TipContent): BandTipSpec {
     ...(t.value !== undefined ? { value: t.value, ...(t.valueColor ? { valueColor: t.valueColor } : {}) } : {}),
     grid,
     chips,
-    lines: t.rows.map((r) => ({ text: r.text, ...(r.color ? { color: r.color } : {}) })),
+    lines: t.rows.map((r) => ({ text: r.text, ...(r.color ? { color: r.color } : {}), ...(r.section ? { section: true } : {}) })),
     ...(t.shape?.note ? { foot: t.shape.note } : {}),
     ...(t.bodyHtml ? { bodyHtml: t.bodyHtml, noKeywords: true } : {}),
   };

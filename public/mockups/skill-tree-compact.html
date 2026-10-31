@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Skill Tree Compact (mockup)</title>
+<!--
+  SKILL AGACI SIKISTIRMA taslagi (ui-dev, 2026-10-31). Oyun kodu DEGIL; yalnizca secim icin. Istek (Omer): agac tek sayfaya, scroll'suz sigsin; yukaridan asagi akis; ult icin alternatif gorunum. 5 yapi.
+  Gercek oyun gorunumu: Gear "Ledger" kabugu (GEAR basligi, Hero / Sheet / Tree sekmeleri, soldaki portre sutunu, altin), oyunun kendi CSS dosyalari (skill-tree-compact/css), gercek Warrior agaci
+  (Omer'in secimi: Berserker, Double Strike, Whirlwind, Charge, Headsman's Blow; data/ ve views.js skill-tree-gear taslagindan), A Band ipuclari, kural motoru (core.js + tree-logic.js).
+  Adres: #v1 | #v2 | #v3 | #v4 | #v5   [&lv=1..50]  [&ult (v3: ult paneli acik, v4: ult gorunumu)]  [&sel=0..3 (v3 secili skill)].
+    #v1 Columns: her skill bir dikey sutun, tier'lar asagi, ult altta genis bant.
+    #v2 Strips:  her skill bir yatay satir, ult sagda dar dikey panel.
+    #v3 Picker:  skill secilir, yalniz onun dali acilir; ult madalyon + acilir panel.
+    #v4 Grid:    siki izgara, ayrinti sabit aciklama alaninda, ult ayri gorunum.
+    #v5 Spine:   merkez omurga, dallar iki yana, ult omurganin dibinde haca.
+-->
+<link rel="stylesheet" href="skill-tree-compact/css/style.css" />
+<link rel="stylesheet" href="skill-tree-compact/css/elegant.css" />
+<link rel="stylesheet" href="skill-tree-compact/css/gear.css" />
+<link rel="stylesheet" href="skill-tree-compact/css/gear-plates.css" />
+<link rel="stylesheet" href="skill-tree-compact/css/band-tip.css" />
+<link rel="stylesheet" href="skill-tree-compact/tree.css" />
+<link rel="stylesheet" href="skill-tree-compact/tree4.css" />
+<link rel="stylesheet" href="skill-tree-compact/compact.css" />
+</head>
+<body>
+<div id="stage"><div id="bgimg"></div><div id="ui-root"></div><div id="tip"></div></div>
+<script src="skill-tree-compact/data/core.js"></script>
+<script src="skill-tree-compact/data/content.js"></script>
+<script src="skill-tree-compact/data/classes.js"></script>
+<script src="skill-tree-compact/data/final.js"></script>
+<script src="skill-tree-compact/data/mix-warrior.js"></script>
+<script src="skill-tree-compact/data/tree-logic.js"></script>
+<script src="skill-tree-compact/data/tree-layout.js"></script>
+<script src="skill-tree-compact/data/plates.js"></script>
+<script src="skill-tree-compact/views.js"></script>
+<script src="skill-tree-compact/layouts.js"></script>
+<script src="skill-tree-compact/compact.js"></script>
+</body>
+</html>

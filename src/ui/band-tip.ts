@@ -29,6 +29,8 @@ export interface BandLine {
   icon?: string;
   /** Sağdaki çip ("now 84"); verilmezse metindeki "(now N)" ayrılır. */
   now?: string;
+  /** Bölüm başlığı satırı (örn. "From Skill Tree"): ince çizgi + küçük etiket; sonraki satırlar o bölüme aittir. */
+  section?: boolean;
 }
 
 export interface BandGrid {
@@ -116,6 +118,7 @@ export function bandTipHtml(s: BandTipSpec): string {
   const chips = s.chips && s.chips.length ? `<div class="bt-meta">${s.chips.map(chipHtml).join('')}</div>` : '';
   const lines = (s.lines ?? [])
     .map((l) => {
+      if (l.section) return `<div class="bt-sec"><span>${esc(l.text)}</span></div>`;
       const sp = l.now === undefined ? splitNow(l.text) : { text: l.text, now: l.now };
       const lead = l.icon ? img(l.icon) : '<span class="dia"></span>';
       const txt = `${lead}<div class="tx">${bandRichHtml(sp.text, l.color, !s.noKeywords)}</div>`;

@@ -25,7 +25,17 @@ export interface SkillInfo {
   lines: string[];
   /** `lines` ile aynı sırada: satırın rengini belirleyen element ('shield' / 'magicShield' kalkan satırları). */
   kinds: Array<Element | 'shield' | 'magicShield' | undefined>;
+  /**
+   * Skill ağacından gelen satırlar (Ömer 2026-10-31): ağacın eklediği / değiştirdiği etkiler (SkillEffect.treeNode; yalnızca kahraman o düğümü aldıysa vardır).
+   * `lines` yalnızca skill'in kendi satırları kalır; arayüz bunları altta "From Skill Tree" bölümünde (TREE_SECTION) gösterir. Yoksa alan hiç yok.
+   */
+  treeLines?: string[];
+  /** `treeLines` ile aynı sırada renk türleri. */
+  treeKinds?: Array<Element | 'shield' | 'magicShield' | undefined>;
 }
+
+/** Skill ipucunda ağaçtan gelen satırların bölüm başlığı (tüm ipucu yüzeyleri aynı başlığı kullanır). */
+export const TREE_SECTION = 'From Skill Tree';
 
 export const TARGET_TEXT: Record<SkillTarget, string> = {
   single_enemy: 'One enemy',
@@ -362,13 +372,17 @@ function summonUnitFor(unit: CombatantDef | undefined, stats: Stats, formulas: F
 export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas, units: Record<string, CombatantDef> = {}, defs: EffectDefs = {}, ownerRange?: number): SkillInfo {
   const lines: string[] = [];
   const kinds: SkillInfo['kinds'] = [];
+  const treeLines: string[] = [];
+  const treeKinds: SkillInfo['kinds'] = [];
+  let fromTree = false; // ağacın eklediği / değiştirdiği etkinin satırları ayrı bölüme gider
   const add = (text: string, kind?: SkillInfo['kinds'][number]) => {
-    lines.push(text);
-    kinds.push(kind);
+    (fromTree ? treeLines : lines).push(text);
+    (fromTree ? treeKinds : kinds).push(kind);
   };
   const range = rangeLabel(skill, ownerRange, formulas);
   // Aynı etki art arda tekrar ediyorsa (Double Strike: iki vuruş) tek satır + 'x2'
   for (const { e, times } of groupEffects(skill)) {
+    fromTree = !!e.treeNode;
     const who = skill.target === 'area_any' ? (e.side === 'allies' ? ' (on your side: allies)' : e.side === 'enemies' ? ' (on the enemy side: enemies)' : '') : skill.target === 'everyone' ? ((e.side ?? (e.type === 'heal' || e.type === 'hot' || e.type === 'shield' || e.type === 'guard' ? 'allies' : 'enemies')) === 'allies' ? ' (allies)' : ' (enemies)') : '';
     const raw = (scale: Attribute, power: number) => scaled(stats, scale, power, formulas);
     if (e.type === 'damage') {
@@ -550,6 +564,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (skill.excludeSelf) add('Cannot target yourself');
     }
   }
+  fromTree = false;
   // Boss skill kuralları (The Bridge Warden): çekme, telgraf (gecikmeli saldırı), faz ve yardımcı şartları
   // Ice Crater (Ömer 2026-10-29): seçilen yönde itme / çarpma
   for (const e of skill.effects) {
@@ -611,6 +626,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     range,
     lines,
     kinds,
+    ...(treeLines.length ? { treeLines, treeKinds } : {}),
   };
 }
 

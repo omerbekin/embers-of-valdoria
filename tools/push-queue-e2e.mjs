@@ -544,6 +544,59 @@ execFileSync('git', ['push','-q','origin','main'], { cwd: c });`);
   },
 };
 
+// Ön test süre sınırı (Ömer 2026-10-31)
+Object.assign(S, {
+  'on test sinira takilirsa kesilir, tam testle gider': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 5;\n');
+    W.ready(A);
+    writeFileSync(join(W.w, 'slow.mjs'), `import { spawn } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+const c = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'inherit' });
+writeFileSync(process.env.EOV_W + '/slow-pid', String(c.pid));
+setTimeout(() => {}, 60000);`);
+    const t0 = Date.now();
+    W.push(A, { EOV_CMD_RELATED: `node "${join(W.w, 'slow.mjs')}"`, EOV_RELATED_LIMIT_S: '3' });
+    ok(Date.now() - t0 < 45000, 'ön test beklenmedi');
+    has(W.log(), 'sığmadı');
+    has(W.origin('src/a.ts'), 'a = 5');
+    ok(W.tests() === 1, 'tam test bir kez koştu');
+    let alive = true;
+    try { process.kill(Number(read(join(W.w, 'slow-pid'))), 0); } catch { alive = false; }
+    ok(!alive, 'alt süreç de kapandı');
+  },
+  'not siniri testten once durdurur, notes ile duzelir': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 7;\n');
+    const r = W.run(['ready', A.slice(0, 8), '--fixes', ...Array.from({ length: 9 }, (_, i) => `note line ${i}`)]);
+    ok(!r.code, r.out);
+    W.push(A);
+    has(W.log(), 'sürüm notu sınırı');
+    ok(W.tests() === 0, 'test koşmadı');
+    hasNot(W.origin('src/a.ts'), 'a = 7');
+    const n = W.run(['notes', A.slice(0, 8), '--fixes', 'short note line']);
+    ok(!n.code, n.out);
+    W.push(A);
+    has(W.origin('src/a.ts'), 'a = 7');
+    has(W.origin('data/patch-notes.json'), 'short note line');
+    hasNot(W.origin('data/patch-notes.json'), 'note line 3');
+  },
+  'on test suresinde kirmizi gonderimi durdurur': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 6;\n');
+    W.ready(A);
+    W.push(A, { EOV_CMD_RELATED: `node -e "console.log(' FAIL  |fast| tests/t.test.ts > boom'); process.exit(1)"` });
+    hasNot(W.origin('src/a.ts'), 'a = 6');
+    ok(W.tests() === 0, 'tam teste geçmedi');
+  },
+});
+
 const only = process.argv[2];
 let fail = 0;
 for (const [name, fn] of Object.entries(S)) {

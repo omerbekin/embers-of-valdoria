@@ -36,6 +36,13 @@
   padding-left: 0.8em;
 }
 
+/* Çerçevesiz sınıf satırı ("Level 3 Warrior") */
+.gp-chip.cls.plain {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
 /* A4 Hero Oath: yeminli kahramanın küçük çipi (ipucu A Band) */
 .gp-chip.oath {
   border-color: #9a7ac8;
@@ -178,6 +185,12 @@
   font-size: max(12px, calc(21 * var(--u)));
   letter-spacing: 0.05em;
   line-height: 1.2;
+}
+
+/* Çok uzun item adı (22+ harf, ör. Clapper of the Sunken Bell) "…" ile kesilmesin: biraz küçük + sıkı (telefonda 10px kuralı geçerli) */
+html:not(.short) .gr-slot.gr-plate .gr-slot-name.long {
+  font-size: max(11px, calc(19 * var(--u)));
+  letter-spacing: 0.02em;
 }
 
 .gr-slot.gr-plate:not(.empty) .gr-slot-name {

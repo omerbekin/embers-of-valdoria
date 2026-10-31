@@ -8,14 +8,14 @@ import { pitOf } from './pit';
 import { oathDef } from './oath';
 import { sanitizeHeroQuests } from './quests';
 import { boonIds } from './side-content';
-import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, stripUnusable, type ItemInstance } from '../progression/items';
+import { emptyEquipment, itemDef, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, stripUnusable, type ItemInstance } from '../progression/items';
 import { classes, statuses, valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
 import { normalizeSpdRoll } from '../progression/loadout';
 import { clampValor } from '../engine/valor';
-import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
+import type { CampaignMode, CampaignShop, CampaignState, Difficulty, Hero, MerchantStall, ShopWare } from './types';
 
 /**
  * Sefer kaydı (campaign.md 5.2-5.3 + madde 256): tarayıcıda tek anahtar, sürümlü JSON. Depolama dışarıdan verilir (tarayıcıda localStorage, testte bellek).
@@ -64,7 +64,11 @@ export const SAVE_KEY = 'eov.campaign.v1';
  * `freeRespec` (ağaç verisi değişti: bir kez bedava sıfırlama) ve `treeReset` (okumada iade bildirimi). `skillPoints` = harcanmamış puan.
  * Göç yok: sürüm 11 ve öncesi okunurken alan yok = boş ağaç, puanlar aynen. Her okumada onarım (progression > normalizeTree; idempotent).
  */
-export const SAVE_VERSION = 12;
+/**
+ * 13: Tüccar rafları kayıtta (Ömer 2026-10-31, items.md 2.2): kapalı tezgâhlar `merchantStock`ta. Sürüm 12 ve öncesi okunurken `closedShop` oraya taşınır, `merchantSold` silinir
+ * (mallar zaten rafın üstünde işaretli). Kaydı olmayan tüccar ilk girişte kurulur; bozuk girdi atılır (normalizeShopStock; her okumada, idempotent).
+ */
+export const SAVE_VERSION = 13;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -132,6 +136,32 @@ const isItem = (it: unknown): it is ItemInstance =>
   typeof (it as ItemInstance).id === 'string' &&
   ((it as ItemInstance).rolls === undefined || (typeof (it as ItemInstance).rolls === 'object' && (it as ItemInstance).rolls !== null));
 
+/** Kayıttaki raflar: dizi değilse boş; tanımı olmayan item'in ya da bozuk fiyatın rafı atılır (eksik raf sonraki gün dolar). */
+const cleanWares = (x: unknown): ShopWare[] =>
+  (Array.isArray(x) ? x : []).filter((w): w is ShopWare => !!w && typeof w === 'object' && typeof w.itemId === 'string' && !!itemDef(w.itemId) && typeof w.price === 'number' && Number.isFinite(w.price) && w.price >= 1 && (w.rolls === undefined || (typeof w.rolls === 'object' && w.rolls !== null)));
+
+/** Sürüm 13 (yerinde, idempotent): eski kapanan tezgâh kayda taşınır, eski `merchantSold` silinir, `merchantStock`un bozuk girdileri atılır. */
+function normalizeShopStock(s: CampaignState): void {
+  const count = (v: unknown): number => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : 0);
+  const raw = s.merchantStock as unknown;
+  const stock: Record<string, MerchantStall> = {};
+  if (raw && typeof raw === 'object' && !Array.isArray(raw))
+    for (const [k, v] of Object.entries(raw as Record<string, Partial<MerchantStall> | null>)) {
+      const wares = cleanWares(v?.wares);
+      if (wares.length) stock[k] = { wares, rerolls: count(v?.rerolls), day: count(v?.day) };
+    }
+  const old = s.closedShop as Partial<CampaignShop> | undefined;
+  if (old && typeof old === 'object' && typeof old.node === 'string') {
+    const wares = cleanWares(old.wares);
+    const k = `${s.mapId}:${old.node}`;
+    if (wares.length && !stock[k]) stock[k] = { wares, rerolls: count(old.rerolls), day: count(old.day) };
+  }
+  delete s.closedShop;
+  delete (s as { merchantSold?: unknown }).merchantSold;
+  if (Object.keys(stock).length) s.merchantStock = stock;
+  else delete s.merchantStock;
+}
+
 /**
  * Sefer durumu v1 -> v2 (madde 278): kahramana level 1, XP 0, boş 6 yuva; sefere boş torba, 0 altın. v2'de eksik/bozuk alanlar da aynı
  * varsayılanlarla tamamlanır (bozuk item girdisi atılır). Diğer her şey aynen kalır.
@@ -186,6 +216,7 @@ function upgradeState(s: CampaignState): void {
   // Gün (Ömer 2026-10-26; isteğe bağlı alanlar): eski kayıtta yok = gün 1, ilerleme 0; bozuk değer varsayılana
   s.day = typeof s.day === 'number' && Number.isInteger(s.day) && s.day >= 1 ? s.day : 1;
   s.dayProgress = typeof s.dayProgress === 'number' && s.dayProgress >= 0 && s.dayProgress < 1 ? s.dayProgress : 0;
+  normalizeShopStock(s);
   if (s.campsUsed !== undefined && !(s.campsUsed && typeof s.campsUsed === 'object' && !Array.isArray(s.campsUsed))) delete (s as { campsUsed?: unknown }).campsUsed;
   // A1 Wayshrine nimetleri (isteğe bağlı alan, sürüm değişmez; open-questions 428): bilinmeyen / tekrar eden id atılır, boşsa alan silinir
   if (s.boons !== undefined) {
@@ -485,7 +516,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
       return { file: restartForNewMap(m.file), corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9 && parsed.version !== 10 && parsed.version !== 11) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9 && parsed.version !== 10 && parsed.version !== 11 && parsed.version !== 12) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
     // Sürüm < 8 (Item Güçlendirme): silahsız kahramana sınıfının başlangıç silahı
     const starters = parsed.version < 8 ? migrateStarterWeapons(parsed.slots) : 0;
     const fromV2 = parsed.version === 2;
@@ -511,7 +542,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
     file.lastSlot = typeof parsed.lastSlot === 'number' && file.slots[parsed.lastSlot] ? parsed.lastSlot : null;
     // Sürüm < 6: Valdoria haritası değişti; seferler yeniden başlar (yuva korunur, uyarı işareti)
     // Sürüm 6 -> 7 (Valor): harita aynı, kayıtlar korunur; Valor alanı normalizeState'te tamamlanır, dosya yeni sürümle yeniden yazılır
-    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || parsed.version === 10 || parsed.version === 11 || starters > 0 };
+    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || parsed.version === 10 || parsed.version === 11 || parsed.version === 12 || starters > 0 };
   } catch {
     return { file: empty(), corrupt: true, migrated: false };
   }

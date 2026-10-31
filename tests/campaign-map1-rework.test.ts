@@ -53,7 +53,7 @@ const oldSave = (s: CampaignState): CampaignState => normalizeState(strip(JSON.p
 describe('Harita 1 yeniden çizim: veri', () => {
   it('blurb sayıları graftan (33 durak, 6 seçim noktası, 22 durak / sefer); kayıt sürümü değişmedi (12)', () => {
     expect(map.blurb).toBe(`From Mill Road to Castle Morvane: ${map.nodes.length} stops, ${choicePoints(map).length} choice points, ${map.stopsPerRun} stops per run.`);
-    expect(SAVE_VERSION).toBe(12);
+    expect(SAVE_VERSION).toBe(13);
   });
 
   it('eski 27 düğümün seviyesi aynen; yeni düğümler planlanan seviyede (Deserters\' Camp final ile aynı L10)', () => {
@@ -63,7 +63,7 @@ describe('Harita 1 yeniden çizim: veri', () => {
     for (const [id, lv] of Object.entries(neu)) expect(nodeLevel('valdoria', id), id).toBe(lv);
   });
 
-  it('yeni karşılaşmalar: var olan class\'lar, elle yazılmış 2 dalga; elit lider (Deserter Captain = Bandit Chief) son dalgada, ayrı sprite anahtarı veride', () => {
+  it('yeni karşılaşmalar: var olan class\'lar, elle yazılmış 2 dalga; elit lider (Deserter Captain, Bandit Chief varyantı) son dalgada, kendi tanımı', () => {
     const units = (id: string) => [...ENCOUNTERS[id]!.units, ...(ENCOUNTERS[id]!.waves ?? []).flatMap((w) => w.units)];
     const known = (c: string) => !!(content.mobs[c] ?? content.bosses[c] ?? content.summons[c] ?? content.classes[c]);
     for (const id of NEW) {
@@ -74,13 +74,14 @@ describe('Harita 1 yeniden çizim: veri', () => {
     }
     const des = ENCOUNTERS[node(map, 'deserters').encounter!]!;
     const lead = des.waves![0]!.units.find((u) => u.tier === 'elite')!;
-    expect([lead.class, lead.name, lead.sprite]).toEqual(['bandit_chief', 'Deserter Captain', 'deserter_captain']);
+    expect([lead.class, lead.name]).toEqual(['deserter_captain', 'Deserter Captain']);
+    expect(content.mobs['deserter_captain']!.spriteId).toBe('deserter_captain');
     expect(des.units.some((u) => u.tier)).toBe(false);
     // eşlikçileri Watchtower'dakilerden (Poacher + Ember Acolyte) farklı
     expect(units('deserters_camp').some((u) => u.class === 'ravenwood_poacher' || u.class === 'ember_acolyte')).toBe(false);
   });
 
-  it('yeni düğümlerde savaş kurulur (dalgalı); Deserter Captain motorda Bandit Chief olarak, kendi adıyla', () => {
+  it('yeni düğümlerde savaş kurulur (dalgalı); Deserter Captain kendi adıyla', () => {
     for (const id of NEW) {
       const s = debugTeleport(fresh(), id);
       expect(nextStep(s).kind, id).toBe('battle');

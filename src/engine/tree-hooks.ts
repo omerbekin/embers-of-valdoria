@@ -15,7 +15,7 @@ import type { Combatant, Element, ItemEffects, SkillCost, SkillDef, SkillEffect 
 export const UNIT_FX_KEYS = [
   'startShieldRatio', 'critMp', 'secondWind', 'startCharge', 'steadfast', 'debuffShorten', 'tierDamageMult', 'adjacentGuard', 'turnMp',
   'firstSkillFree', 'executeLifesteal', 'onHitDot', 'interceptLethal', 'firstAttackEcho', 'killExtraTurn', 'nthSpellFree', 'rerollMiss',
-  'ignoreFirstDebuff', 'shieldRefresh', 'moveStride', 'critHealAlly', 'blockChance', 'dazeChance', 'armorPen', 'magicPen', 'mpCostReduce', 'leech', 'manaLeech',
+  'ignoreFirstDebuff', 'shieldRefresh', 'moveStride', 'critHealAlly', 'blockChance', 'blockBreak', 'dazeChance', 'armorPen', 'magicPen', 'mpCostReduce', 'leech', 'manaLeech',
   'debuffAvoid', 'potencyTurns', 'auraDamage', 'damageTakenReduce', 'lowHpReduce', 'ultCdReduce', 'earlyImmunity', 'summonPower', 'rageGain',
   'retortStatus', 'critStatuses', 'killRush', 'lastStand', 'openerStatus', 'restBlessing', 'vengeance', 'tierStatus',
   'elemResist', 'thorns', 'frontRowDamage', 'backRowDamage', 'tierDamageTakenReduce', 'columnGuard', 'pierceBehind', 'steadyDamage',
@@ -720,8 +720,10 @@ export interface CondMod {
   lifesteal?: number;
   lifestealMul?: number;
   guaranteedCrit?: boolean;
-  /** Kritik çarpanı x (1 + v) (Searing Crit +%6: 0.06). */
+  /** Kritik çarpanı x (1 + v). */
   critDmgMul?: number;
+  /** Kritik çarpanına düz ek, item'lerdeki Crit damage gibi (Searing Crit +%6: 0.06, 1.5 -> 1.56). */
+  critMultAdd?: number;
   /** İsabet zarı atılmaz (vuruş kesin isabet; blok yine olabilir). */
   sureHit?: boolean;
   /** Kritik olamaz (guaranteedCrit'i de bozar). */
@@ -800,6 +802,7 @@ export const MOD_SPEC: Record<keyof CondMod, { t: 'num' | 'bool' | 'obj' | 'str'
   lifestealMul: { t: 'num', g: 'damage', at: ['hit', 'smite'] },
   guaranteedCrit: { t: 'bool', g: 'damage', at: ['hit', 'doom', 'smite'] },
   critDmgMul: { t: 'num', g: 'damage', at: ['hit', 'doom', 'smite'] },
+  critMultAdd: { t: 'num', g: 'damage', at: ['hit', 'doom', 'smite'] },
   sureHit: { t: 'bool', g: 'damage', at: ['hit', 'smite'] },
   noCrit: { t: 'bool', g: 'damage', at: ['hit', 'doom', 'smite'] },
   falloffAdd: { t: 'num', g: 'damage' },
@@ -1274,6 +1277,7 @@ export interface TreeModAcc {
   sureHit: boolean;
   noCrit: boolean;
   critDmg: number;
+  critMultAdd: number;
   falloffAdd: number;
   flat: number;
   repeat: number;
@@ -1286,4 +1290,4 @@ export interface TreeModAcc {
   permanent: boolean;
   nodes: string[];
 }
-export const newModAcc = (): TreeModAcc => ({ power: 1, critBonus: 0, ignoreDefense: 0, lifesteal: 0, lifestealMul: 1, guaranteedCrit: false, sureHit: false, noCrit: false, critDmg: 1, falloffAdd: 0, flat: 0, repeat: 0, drainMul: 1, drainAdd: 0, turns: 0, chance: 0, permanent: false, nodes: [] });
+export const newModAcc = (): TreeModAcc => ({ power: 1, critBonus: 0, ignoreDefense: 0, lifesteal: 0, lifestealMul: 1, guaranteedCrit: false, sureHit: false, noCrit: false, critDmg: 1, critMultAdd: 0, falloffAdd: 0, flat: 0, repeat: 0, drainMul: 1, drainAdd: 0, turns: 0, chance: 0, permanent: false, nodes: [] });

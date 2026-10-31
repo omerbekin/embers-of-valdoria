@@ -16,7 +16,7 @@
 import Phaser from 'phaser';
 import { slow } from './combatant-view';
 import { VFX_SHEET_FILES, vfxSheetFile } from './vfx-sheet-files';
-import { buildInbetween, stabilizeFrames, trimFrames, type StabilizeOpts } from './vfx-inbetween';
+import { buildInbetween, RAISE_DEAD_IB, stabilizeFrames, trimFrames, type StabilizeOpts } from './vfx-inbetween';
 
 export const vfxSheetKey = (id: string): string => `vfxsheet:${id}`;
 
@@ -243,6 +243,22 @@ function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: 
   }
 }
 
+/** Skill'e göre önceden pişirilecek türev dokular: efekt anında üretim oyunu kasıyor (Ömer 2026-10-31: Raise Dead sütununun başı). */
+const SKILL_PREWARM: Record<string, { id: string; inbetween: { method: string; sub: number } }> = {
+  raise_dead: { id: 'undead/07-raise-dead', inbetween: RAISE_DEAD_IB },
+};
+
+/** Birimin skill'lerinin türev dokularını efekt anından önce pişirir (savaş açılışında, BattleScene). Doku yüklenemezse efekt yine kendi üretir. */
+export function prewarmVfxForSkills(scene: Phaser.Scene, skills: readonly string[]): void {
+  for (const s of skills) {
+    const p = SKILL_PREWARM[s];
+    if (!p) continue;
+    void ensureVfxSheets(scene, [p.id]).then(() => {
+      if (scene.textures?.exists(vfxSheetKey(p.id))) derivedKey(scene, p.id, p.inbetween, undefined);
+    });
+  }
+}
+
 /**
  * Sahneye oynayan bir sheet sprite'ı koyar; doku yoksa null (efekt çökmez). Dönen sprite'a tween uygulanabilir (taşıma, ölçek, solma).
  */
@@ -364,9 +380,13 @@ export function vfxSheetAnchors(scene: Phaser.Scene, id: string, frame: number):
   return out;
 }
 
-/** Sheet sprite'ının animasyonu bitince (ya da yok edilince) çözülür; null için hemen. */
+/**
+ * Sheet sprite'ının animasyonu bitince (ya da yok edilince) çözülür; null için hemen. Animasyon ÇOKTAN bitmişse de hemen: `keep` sprite etkin kalır,
+ * ANIMATION_COMPLETE bir daha gelmez (düşük kare hızında beslenmiş Raise Dead'de olay kuyruğu burada sonsuza dek takılıyordu, 2026-10-31).
+ */
 export function sheetDone(spr: Phaser.GameObjects.Sprite | null): Promise<void> {
   if (!spr || !spr.active) return Promise.resolve();
+  if (spr.anims?.currentAnim && !spr.anims.isPlaying) return Promise.resolve();
   return new Promise<void>((resolve) => {
     spr.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => resolve());
     spr.once(Phaser.GameObjects.Events.DESTROY, () => resolve());

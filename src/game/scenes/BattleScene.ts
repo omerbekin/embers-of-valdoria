@@ -9,7 +9,7 @@ import { battleTrack, phaseTrack, sceneMusic, type MusicTrack } from '../../ui/m
 import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-layout';
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
-import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, groundReactionHint, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
+import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, TREE_SECTION, describeStat, groundReactionHint, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
 import type { AreaStage, BattleEvent, BattleMode, Combatant, PushDir, SkillDef, SkillModeSet, StatKind, Teams, TargetPreview } from '../../engine';
 import { type DamageTags } from '../float-text';
 import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-columns';
@@ -19,7 +19,7 @@ import { passiveIconName } from '../../ui/mob-icons';
 import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBackground, MENU_ONLY_TEXTURES, preloadAssets, releaseTextures } from '../assets';
 import { battleSpriteIds } from '../sprite-needs';
 import { CombatantView, color, slow, textStyle } from '../combatant-view';
-import { preloadVfxSheets } from '../vfx-sheets';
+import { preloadVfxSheets, prewarmVfxForSkills } from '../vfx-sheets';
 import { loadObjectArt, objectArtKey } from '../object-art';
 import { VFX_SHEET_FILES, mobSheetsOf } from '../vfx-sheet-files';
 import { viewMotion } from '../pose-timing';
@@ -39,6 +39,7 @@ import { enemiesEnter, showWaveBanner } from '../wave-banner';
 import { debugActive } from '../../ui/debug-entry';
 import { storage } from '../kv-storage';
 import { formatHit } from '../hit-format';
+import { splitPreviewStatuses } from '../preview-format';
 import { kitTextBand } from '../hud-kit';
 import type { BattleEffect } from '../battle-effects';
 import { CombatLog } from '../combat-log';
@@ -85,7 +86,7 @@ import type { RaiseFlow, RaiseInputs } from '../raise-dead-flow';
 import { crashLabel, pushArrowVector, pushOptions, type PushOption } from '../push-pick';
 import { brazierIconUrl, rememberShown, valorTip } from '../../ui/valor-braziers';
 import type { CorpseMarker } from '../corpse-marker';
-import { isDeltaStat, previewStatusText, statDir, statSources } from '../stat-delta';
+import { isDeltaStat, previewStatusText, statDir, statSources, statusCardText } from '../stat-delta';
 import { areaBoards, areaHoverSpecs, areaTone, blockedTargets, outOfRangeCells, sameAreaResult } from '../target-cells';
 import type { MpBattleHooks, MpResultInfo } from '../mp-hooks';
 import { isGameMenuOpen, toggleGameMenu } from '../../ui/game-menu';
@@ -156,6 +157,8 @@ export interface CampaignBattleHooks {
   retreatLabel?: string;
   /** Geri çekilme onay sorusu (yoksa session-flow RETREAT_CONFIRM); endless: savaş duraklar, sayılmaz değil. */
   retreatConfirm?: string;
+  /** Menu > Load (yalnız Normal mod sefer savaşı; yoksa Load satırı çıkmaz): savaşı kapatıp yuva ekranını açar. */
+  load?(): void;
   /** Boss olmayan savaşın müziği (sefer: haritanın kendi savaş parçası, data/campaign/<harita>.json > music.battle); yoksa 'battle'. */
   music?: MusicTrack;
   /** Koşu boyu etkiler (HUD > Battle info > Effects): Endless kalıntıları, sefer zorluk / bölüm ölçeği; ileride başka sistemler (src/game/battle-effects.ts). */
@@ -1155,9 +1158,9 @@ export class BattleScene extends Phaser.Scene {
    * Debug > VFX frame test (in battle; src/ui/debug-vfx-battle.ts): `casterUid` skill'i kukla `dummyUid` üstünde gerçek savaş hattıyla (hazırlık, efekt,
    * vuruş, hasar rakamı) oynatır; kukla ölmesin diye önce ve sonra canı doldurulur (debugResetAll). Oynama bitince çözülür; hata varsa kısa mesaj, yoksa ''.
    * Zincir (sınıf efekti denemesi, ör. Mana Steal -> Ley Brand): `keepAfter` atıştan sonra sıfırlamaz (durumlar kalır, yalnız can/MP dolar),
-   * `keepBefore` atıştan önce kuklanın durumlarını silmez.
+   * `keepBefore` atıştan önce kuklanın durumlarını silmez. `aimSlot`: hedefin hücresi (uzak dost dizilimi; yoksa en küçük yuvadaki birim).
    */
-  async vfxTestCast(skillId: string, casterUid: string, dummyUid: string, o: { keepBefore?: boolean; keepAfter?: boolean } = {}): Promise<string> {
+  async vfxTestCast(skillId: string, casterUid: string, dummyUid: string, o: { keepBefore?: boolean; keepAfter?: boolean; aimSlot?: number } = {}): Promise<string> {
     const b = this.battle;
     if (b.winner) return 'Battle is over';
     if (!b.get(casterUid) || !b.get(dummyUid)) return 'Unit missing';
@@ -1168,7 +1171,7 @@ export class BattleScene extends Phaser.Scene {
     b.debugSetResource(casterUid, 'mp', b.get(casterUid)!.maxMp);
     b.debugSetResource(dummyUid, 'hp', b.get(dummyUid)!.maxHp);
     this.galleryCaster = casterUid;
-    this.galleryCell = null;
+    this.galleryCell = o.aimSlot ?? null;
     const keep = debugState.galleryReset;
     debugState.galleryReset = false; // bu yöntem kendi sıfırlamasını yapar (galeri 700 ms bekler)
     const dodge = b.debug.dodge;
@@ -2749,8 +2752,33 @@ export class BattleScene extends Phaser.Scene {
 
   private showPreviews(list: TargetPreview[]): void {
     this.clearPreviewsOnly();
-    // Stat-changing statuses say what they do on the unit ('Blinded -30% hit 2 turns', 'Shrouded +20% dodge 2 turns')
-    for (const p of list) this.views.get(p.uid)?.showPreview(p.statuses ? { ...p, statuses: p.statuses.map((t) => previewStatusText(t, content.statuses)) } : p);
+    // Statuses with a chance of 50% or more show as small icons (no text, no durations); lower chances are hidden (data/battle-layout.json > preview).
+    // Other status lines stay as text. Ley Brand keeps only 'Branded N turns'.
+    // The user's own MP spend comes from the engine's cost rule (skillCostPay), the same one the cost chip uses.
+    const sel = this.selected ?? (this.pushPick ? { actor: this.pushPick.actor, skill: this.pushPick.skill } : null);
+    const actor = sel ? this.battle.get(sel.actor) : undefined;
+    const sk = sel && actor ? this.battle.skill(sel.skill, actor) : undefined;
+    let spend = 0;
+    if (actor && sk && sk.cost.resource === 'mp' && !this.battle.freeMp) {
+      const pay = skillCostPay(sk.cost, actor, undefined, false);
+      if (pay.resource === 'mp') spend = pay.amount;
+    }
+    const withActor = actor && spend > 0 && !list.some((p) => p.uid === actor.uid) ? [...list, { uid: actor.uid } as TargetPreview] : list;
+    for (const p of withActor) {
+      const split = p.statuses ? splitPreviewStatuses(p.statuses, content.statuses) : null;
+      const statusIcons = split?.icons.map((i) => {
+        const def = content.statuses[i.kind];
+        const fb = { taunt: ['finger', '#ff9f43'], guard: ['guardian', '#6ec1ff'] }[i.kind] ?? ['roar', '#ffffff'];
+        const art = statusBadge(i.kind, def?.icon ?? fb[0]!);
+        return { icon: art.name, owner: art.owner, color: def?.color ?? fb[1]! };
+      });
+      this.views.get(p.uid)?.showPreview({
+        ...p,
+        ...(split ? { statuses: split.text.map((t) => previewStatusText(t, content.statuses)) } : {}),
+        ...(statusIcons?.length ? { statusIcons } : {}),
+        ...(actor && p.uid === actor.uid && spend > 0 ? { mpSpend: spend } : {}),
+      });
+    }
   }
 
   private clearPreviewsOnly(): void {
@@ -2810,6 +2838,8 @@ export class BattleScene extends Phaser.Scene {
     if (this.battle.needsCorpseChoice(actor.uid, skill.id) && sp.unit) rows.push([`You choose the corpse to consume: empowered ${sp.unit.name} (HP ${sp.unit.stats.hp})`, '#c58bff'], ['Step 1: pick a corpse, step 2: pick the cell (Esc goes back)', colors.muted]);
     else if (summonLine) rows.push([summonLine.text, summonLine.tone === 'empowered' ? '#c58bff' : colors.muted]);
     const tip = this.makeInfo(info.name, colors.text, undefined, rows, 'Skill', meta, skillMiniGrid(skill, content.formulas.formation));
+    // Ağaçtan gelen satırlar (kahraman o düğümü aldıysa) altta ayrı bölümde; skill'in kendi satırları yukarıda aynı kalır
+    if (info.treeLines?.length) tip.rows.push({ text: TREE_SECTION, section: true }, ...info.treeLines.map((l, i) => ({ text: l, ...(kindColor(info.treeKinds?.[i]) ? { color: kindColor(info.treeKinds?.[i])! } : {}) })));
     tip.iconUrl = this.skillIconUrl(actor, skill);
     // Hedef türü · element · Melee / Ranged (ortak kaynak: src/ui/skill-tags.ts; Codex ve takım seçimiyle aynı)
     tip.tags = skillTags(skill).map((g) => ({ text: g.text, kind: g.kind, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: this.texUrl(ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false)) } : {}) }));
@@ -2903,9 +2933,11 @@ export class BattleScene extends Phaser.Scene {
       { iconUrl: icon('critChance'), label: 'CRIT', value: this.statValue('critChance', eff) },
       { iconUrl: icon('accuracy'), label: 'ACC', value: `${Math.round(eff.accuracy * 100)}%`, ...(tint('accuracy') ? { color: tint('accuracy')! } : {}) },
     ];
-    // Blok (Ömer 2026-10-18): yalnızca kalkanı olan birimde; değer motorun uyguladığı şans (tavan dahil: battle.blockChance ile aynı)
+    // Blok (Ömer 2026-10-18): yalnızca kalkanı olan birimde; değer birimin kendi şansı (saldırganın Block Break'i önizlemedeki isabette düşülür)
     const block = this.battle.unitBlockChance(c);
     if (block > 0) grid.push({ iconUrl: blockIconUrl(), label: 'BLOCK', value: `${Math.round(block * 100)}%` });
+    const blockBreak = this.battle.unitBlockBreak(c);
+    if (blockBreak > 0) grid.push({ iconUrl: blockIconUrl(), label: 'BREAK', value: `${Math.round(blockBreak * 100)}%` });
     const effects: UnitCard['effects'] = [];
     for (const st of c.statuses) {
       const sd = content.statuses[st.kind];
@@ -2917,7 +2949,7 @@ export class BattleScene extends Phaser.Scene {
         name: sd?.name ?? st.kind,
         color: sd?.color ?? colors.targetHighlight,
         turns: `${st.turns} turn${st.turns === 1 ? '' : 's'}`,
-        text: previewStatusText(st.kind, content.statuses).replace(/^[^ ]+ /, '') || (sd as { text?: string } | undefined)?.text || '',
+        text: statusCardText(sd),
         ...(iconUrl ? { iconUrl } : {}),
         ...(sd?.type ? { debuff: sd.type === 'debuff' } : {}),
         ...(maxStacks > 1 && st.stacks ? { stacks: st.stacks } : {}),
@@ -2962,7 +2994,7 @@ export class BattleScene extends Phaser.Scene {
           preview = {
             iconUrl: this.skillIconUrl(this.battle.get(this.selected.actor), sk),
             skill: sk.name,
-            ...(d ? { hit: formatHit(d.hitChance).replace(' hit', ''), amount: d.hpLoss === 0 ? 'blocked' : d.min === d.max ? `${d.min} dmg` : `${d.min}–${d.max} dmg` } : {}),
+            ...(d ? { hit: formatHit(d.hitChance), amount: d.hpLoss === 0 ? 'blocked' : d.min === d.max ? `${d.min} dmg` : `${d.min}–${d.max} dmg` } : {}),
             ...(heal && heal.avg > 0 ? { amount: `+${heal.avg} HP` } : {}),
             ...(pv.shield ? { amount: `+${pv.shield.amount} shield` } : {}),
             ...(d?.lethal ? { note: d.lethal === 'sure' ? 'Lethal' : 'May be lethal' } : {}),
@@ -3306,6 +3338,10 @@ export class BattleScene extends Phaser.Scene {
           const to = this.cellPos(c.board, e.to);
           await this.wait(slow(120));
           if (!this.tweens.isTweening(view.container) && (Math.abs(view.container.x - to.x) > 1 || Math.abs(view.container.y - to.y) > 1)) await view.moveTo(to.x, to.y);
+        } else if (view && c && e.by && e.cause && (layout.animation.forcedMove.hopSkills as string[]).includes(e.cause)) {
+          // Yalnız hopSkills'teki skill'in itmesi (Ice Crater): yürümez, hafifçe zıplar (data/battle-layout.json > animation.forcedMove)
+          const to = this.cellPos(c.board, e.to);
+          await view.forcedMoveTo(to.x, to.y);
         } else if (view && c) {
           const to = this.cellPos(c.board, e.to);
           playSfx(this, 'armorRun', SHARED_KEY);
@@ -4650,6 +4686,7 @@ export class BattleScene extends Phaser.Scene {
     // parıltı dokusu açılıştan hemen sonra, birer birer pişer (ilk skill seçimi beklemesin; src/game/sprite-glow.ts)
     this.time.delayedCall(300 + this.views.size * 60, () => view.prewarmGlow());
     if ((c.stats.surviveChance ?? 0) > 0) prewarmLuckyEscape(this); // Luck primary: nal dokusu Lucky Escape anından önce hazır olsun
+    prewarmVfxForSkills(this, c.skills); // sahne açılışında pişer: Raise Dead sütunu ilk atışta kasmasın
     return view;
   }
 

@@ -10,7 +10,9 @@ import {
   autoResolve,
   battlePlan,
   campaignPrice,
+  CONFIG,
   campaignStock,
+  campaignTeamLevel,
   campaignWaveTeams,
   chooseEvent,
   completeSimple,
@@ -259,9 +261,10 @@ describe('The Deep Market: yalnız bu tüccar', () => {
     expect(r.rerollMult!).toBeGreaterThan(1);
     const k = at('hc30');
     const base = campaignRerollCost(k);
+    const raw = CONFIG.merchant.rerollCost + (CONFIG.merchant.rerollPerLevel ?? 0) * campaignTeamLevel(k); // çarpan yuvarlanmamış bedele işler
     const s = { ...at('hc54'), roster: k.roster, active: k.active } as CampaignState;
-    expect(campaignRerollCost(s)).toBe(Math.round(base * r.rerollMult!));
-    expect(campaignRerollCost(debugSetStoneOath(s, 'sworn'))).toBe(Math.round(base * r.rerollMult! * (1 - r.oathDiscount!)));
+    expect(campaignRerollCost(s)).toBe(Math.round(raw * r.rerollMult!));
+    expect(campaignRerollCost(debugSetStoneOath(s, 'sworn'))).toBe(Math.round(raw * r.rerollMult! * (1 - r.oathDiscount!)));
     expect(campaignRerollCost(debugSetStoneOath(k, 'sworn'))).toBe(base);
     for (const id of ['valdoria', 'drowned-reach']) for (const n of MAPS[id]!.nodes) expect(marketRerollMult(n, { stoneOath: 'sworn' })).toBe(1);
   });

@@ -71,8 +71,6 @@ export const CAP_TARGETS = {
   armorPen: 'fx:armorPen',
   magicPen: 'fx:magicPen',
   damageTaken: 'fx:damageTakenReduce',
-  // Kalkan blok şansı (Ömer 2026-10-18): taban + kalkan C affix'i toplamı
-  block: 'fx:blockChance',
 } as const;
 export type CapKey = keyof typeof CAP_TARGETS;
 /** Tavan (oyun birimi: yüzde puan; spd düz). Tanımsızsa tavan yok. */
@@ -217,11 +215,12 @@ export function loadout(src: LoadoutSource): LoadoutResult {
       applyPart(p.to, v, p.scale ?? 1, { mods, fx, ...(primary ? { primary } : {}), acc, ...(p.form ? { form: p.form } : {}) });
     });
   }
-  // Silah tipinin hız cezası + çift el yakın dövüşün Heavy grip cezası (Ömer 2026-10-27): ×(1 - %), diğer hız çarpanlarıyla çarpılır; kişisel zar sonra
+  // Silah tipinin hız cezası + çift el yakın dövüşün Heavy grip cezası (Ömer 2026-10-27): aynı silahta toplanır (Ömer 2026-10-31: balta 5 + 5 = 10% less), sonuç ×(1 - %) diğer hız çarpanlarıyla çarpılır; kişisel zar sonra
   for (const slot of ['weapon', 'offhand'] as const) {
     const inst = src.equipment?.[slot];
     const d = inst ? itemDef(inst.id) : undefined;
-    if (d) for (const s of weaponSpeedPenalties(d)) mods.spdMult = ((mods.spdMult as number | undefined) ?? 1) * (1 - s.pct / 100);
+    const less = d ? weaponSpeedPenalties(d).reduce((sum, s) => sum + s.pct, 0) : 0;
+    if (less) mods.spdMult = ((mods.spdMult as number | undefined) ?? 1) * (1 - less / 100);
   }
   // Level puanları (levels.md): temel stata düz ek (item'lerin attr ekleriyle aynı kapı: UnitModifiers.attrAdd)
   for (const a of ATTRS) {

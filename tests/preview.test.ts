@@ -374,12 +374,12 @@ describe('stat açıklaması (tooltip)', () => {
 
   it('Strength: can ve STR skill hasarı', () => {
     expect(text('str')).toContain(`Strength ${w.str}`);
-    expect(text('str')).toContain(`+${f.attributes.hpPerStr} per point (now ${w.hp})`);
+    expect(text('str')).toContain(`+${f.attributes.hpPerStr} per point. You have ${w.hp} HP.`);
     expect(text('str')).toContain('Strength skills');
   });
 
   it('Intelligence: mana ve INT skill gücü', () => {
-    expect(text('int')).toContain(`${f.attributes.mpBase} base + ${f.attributes.mpPerInt} per point (now ${w.mp})`);
+    expect(text('int')).toContain(`${f.attributes.mpBase} base + ${f.attributes.mpPerInt} per point. You have ${w.mp} MP.`);
     expect(text('int')).toContain('Intelligence skills');
   });
 
@@ -395,12 +395,12 @@ describe('stat açıklaması (tooltip)', () => {
     expect(text('luck')).toContain('Accuracy');
     expect(text('luck')).toContain(`always deals ${Math.round((f.attributes.critMult - 1) * 100)}% more damage`);
     expect(text('luck')).not.toMatch(/Crit damage: +/);
-    expect(text('luck')).toContain('never of shields');
+    expect(text('luck')).not.toContain('shields');
   });
 
-  it('Armor: yüzdesel azaltma ve azalan getiri; büyü zırhı yoksa bunu söyler', () => {
+  it('Armor: yüzdesel azaltma (formül satırı yok); büyü zırhı yoksa bunu söyler', () => {
     expect(text('armor')).toContain('Reduces physical damage taken by');
-    expect(text('armor')).toContain('Diminishing returns');
+    expect(text('armor')).not.toContain('Diminishing');
     expect(text('magicArmor')).toContain('No magic armor');
     const am = content.classes.antimage!.stats;
     expect(describeStat('magicArmor', am, f).lines.join('\n')).toContain('Reduces magic damage taken by');

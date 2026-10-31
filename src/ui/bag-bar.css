@@ -1,0 +1,156 @@
+/* Çanta çubuğu (src/ui/bag-bar.ts): All items | Equip best v | süzgeç ikonu. Düğmeler `.gr-chip` ile AYNI görünüm. */
+.bb-wrap {
+  position: relative;
+  flex: none;
+}
+
+.gr-bag-head .bb-trigger {
+  gap: 0.45em;
+}
+
+.bb-caret,
+.bb-funnel {
+  flex: none;
+  width: 1.1em;
+  height: 1.1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.18s ease;
+}
+
+.bb-funnel {
+  width: 1.35em;
+  height: 1.35em;
+}
+
+.bb-trigger.open .bb-caret {
+  transform: rotate(180deg);
+}
+
+.gr-bag-head .gr-chip.bb-ico {
+  position: relative;
+  min-width: 44px;
+  padding: 0 10px;
+  justify-content: center;
+}
+
+.bb-trigger:hover,
+.bb-trigger.open {
+  border-color: var(--g-gold);
+  color: var(--g-gold);
+}
+
+.bb-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  background: var(--hot, #e0702a);
+  transform: rotate(45deg);
+  box-shadow: 0 0 6px rgba(224, 112, 42, 0.7);
+}
+
+.bb-menu {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden; /* bag-bar.ts > place() yerleştirince görünür */
+  z-index: 40;
+  min-width: max(180px, calc(260 * var(--u)));
+  background: rgba(12, 9, 6, 0.98);
+  border: 1px solid var(--g-edge, var(--g-line2));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  animation: bb-in 0.15s ease-out;
+}
+
+@keyframes bb-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.bb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 calc(16 * var(--u));
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--g-line);
+  color: var(--g-text);
+  text-align: left;
+  font: 600 max(12px, calc(16 * var(--u))) var(--g-disp);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.bb-item:last-child {
+  border-bottom: 0;
+}
+
+.bb-item:hover {
+  color: var(--g-gold);
+  background: rgba(224, 112, 42, 0.14);
+}
+
+.bb-item.off {
+  opacity: 0.5;
+}
+
+.bb-box {
+  flex: none;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid var(--g-line2);
+  background: rgba(8, 6, 4, 0.6);
+}
+
+.bb-kind.on .bb-box {
+  border-color: var(--g-gold);
+  background: rgba(224, 112, 42, 0.3);
+}
+
+.bb-kind.on .bb-box::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 4px;
+  height: 9px;
+  border: solid var(--g-gold);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.bb-kind:not(.on) {
+  color: var(--g-dim);
+}
+
+.bb-menu {
+  max-height: calc(100% - 12px);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* telefon (kısa ekran): tür menüsü iki sütun, ekrana sığar (7 x 44 px dikey sığmıyordu) */
+html.short .bb-kinds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-width: 300px;
+}
+
+html.short .bb-kinds .bb-item:nth-child(odd) {
+  border-right: 1px solid var(--g-line);
+}

@@ -282,19 +282,13 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     if (pv.items.length === COMBINE_COUNT) {
       const odds = el('div', 'bs-odds');
       const bar = el('div', 'bs-bar');
-      const leg = el('div', 'bs-leg');
       for (const sl of oddsSlices(pv.rarityLow, pv.rarityHigh, pv.upChance)) {
         const seg = el('i', '', `${sl.pct}%`);
         seg.style.width = `${sl.pct}%`;
         seg.style.background = sl.color;
         bar.append(seg);
-        const l = el('span');
-        const nm = el('b', '', sl.name);
-        nm.style.color = sl.color;
-        l.append(nm, ` ${sl.pct}%`);
-        leg.append(l);
       }
-      odds.append(bar, leg);
+      odds.append(bar);
       pane.append(odds);
       pane.append(el('div', 'bs-note', `${pv.sameBase ? 'Three of the same base item give that kind of item with new properties.' : 'Mixed items give a random item.'} Item level ${pv.ilvl}.`));
     }

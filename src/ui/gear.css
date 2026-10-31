@@ -1398,7 +1398,7 @@ html.short .gr-slot-sub {
   --rl: color-mix(in srgb, var(--rc, #d9b26a) 52%, #fff);
   position: relative;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   font: max(13px, calc(19 * var(--u))) / 1.25 var(--g-body);
   color: #e6dcc6;
   background: linear-gradient(180deg, rgba(30, 22, 14, 0.985), rgba(11, 8, 5, 0.985));
@@ -1496,11 +1496,34 @@ html.short .gr-slot-sub {
   text-shadow: 0 0 12px color-mix(in srgb, var(--rc, #d9b26a) 50%, transparent);
 }
 
-.it-big > span {
+.it-big > span,
+.it-big-power > span {
   font: 600 0.72em var(--g-disp);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--g-dim);
+}
+
+/* silah gücünün iki yanı: olumlu solda, Speed cezası sağda */
+.it-big.sided {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6em;
+}
+
+.it-side {
+  font-size: 0.82em;
+  line-height: 1.15;
+  min-width: 0;
+}
+
+.it-side-plus {
+  color: #a9dca8;
+}
+
+.it-side-minus {
+  color: #e0907a;
 }
 
 .it-big .it-big-n {
@@ -1825,7 +1848,6 @@ html.short .gr-slot-sub {
 .it-chip {
   padding: 0 0.45em;
   font: 600 0.86em / 1.5em var(--g-body);
-  white-space: nowrap;
   color: var(--g-dim);
 }
 
@@ -1915,6 +1937,17 @@ html.short .it-kind {
 
 html.short .it-big strong {
   font-size: 1.7em;
+}
+
+/* dar başlık sütunu: güç üstte, iki yanı altında */
+html.short .it-big.sided {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 6px;
+}
+
+html.short .it-big.sided .it-big-power {
+  grid-column: 1 / -1;
+  grid-row: 1;
 }
 
 html.short .it-big {
@@ -3531,8 +3564,8 @@ html.short .gr-lvl + .gr-sec {
 
 .gr-mark .gr-pt {
   position: absolute;
-  right: -9px;
-  top: -9px;
+  right: -13px;
+  top: -13px;
   min-width: 22px;
   height: 22px;
   font-size: 12px;
@@ -3735,6 +3768,24 @@ html.short .gr-lvl + .gr-sec {
   border-bottom: 1px solid rgba(217, 178, 106, 0.1);
   font: 400 max(14px, calc(22 * var(--u))) var(--g-body, 'EB Garamond', serif);
 }
+.gr-ms-row {
+  align-items: center;
+  gap: calc(12 * var(--u));
+  cursor: default;
+}
+.gr-ms-row:hover {
+  background: rgba(217, 178, 106, 0.06);
+}
+.gr-ms-ico {
+  flex: none;
+  width: max(26px, calc(40 * var(--u)));
+  height: max(26px, calc(40 * var(--u)));
+  object-fit: contain;
+  pointer-events: none;
+}
+.gr-ms-nm {
+  flex: 1 1 auto;
+}
 .gr-ms-row i {
   font-style: normal;
   color: var(--g-gold);
@@ -3811,8 +3862,8 @@ html.short .gr-ledger .gr-mark .gr-pt {
   min-width: 18px;
   height: 18px;
   font-size: 10px;
-  right: -6px;
-  top: -6px;
+  right: -9px;
+  top: -9px;
 }
 
 html.short .gr-ledger .gr-title {
@@ -5234,6 +5285,12 @@ html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-nm {
   text-overflow: ellipsis;
 }
 
+/* Uzun ad (14+ harf, ör. Headsman's Blow) yan yana duran maliyet çipleriyle aynı satıra sığsın: biraz küçük + sıkı, "…" ile kesilmez */
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-nm.long {
+  font-size: max(11px, calc(18 * var(--u)));
+  letter-spacing: 0.03em;
+}
+
 html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-chips {
   flex: none;
   flex-wrap: nowrap;
@@ -5545,7 +5602,6 @@ html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-bg span {
   display: flex;
   align-items: center;
   gap: 0.7em;
-  margin-left: auto;
 }
 
 .sh-ptr.idle {
@@ -5595,7 +5651,8 @@ html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-bg span {
   display: flex;
   justify-content: flex-end;
   gap: calc(10 * var(--u));
-  padding-top: calc(4 * var(--u));
+  margin-left: auto;
+  flex: none;
   transition: opacity 0.2s ease;
 }
 
@@ -5698,10 +5755,100 @@ html.short .sh-foot.idle {
 }
 
 /* sütunlar */
+/* B2 (Ömer 2026-10-31): Main dört büyük kutu (rakam; dokun = +1 puan), altında Attack | Defense yarım genişlikte */
 .sh-cols {
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--u));
+}
+
+.sh-main {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(10 * var(--u));
+}
+
+.sh-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0 calc(22 * var(--u));
+}
+
+.sh-row.sh-tile {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 8px;
+  margin: 0;
+  padding: calc(3 * var(--u)) calc(10 * var(--u));
+  min-height: 44px;
+  border: 1px solid var(--g-line);
+  background: linear-gradient(180deg, rgba(34, 24, 14, 0.55), rgba(8, 6, 4, 0.35));
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.sh-row.sh-tile.p {
+  border-color: rgba(224, 112, 42, 0.7);
+  border-left-width: 1px;
+  padding-left: calc(10 * var(--u));
+}
+
+.sh-t-top,
+.sh-t-bot {
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  min-width: 0;
+}
+
+.sh-t-top {
+  flex: 1 1 auto;
+}
+
+.sh-t-bot {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.sh-tile .sh-n {
+  margin: 0;
+  min-width: 0;
+  font-size: 1.35em;
+  text-align: left;
+}
+
+.sh-tile .sh-d {
+  min-width: 0;
+}
+
+.sh-tile .sh-d:empty {
+  display: none;
+}
+
+/* puan verilebilir: sade altın kenar, hover'da hafif yükselme; bekleyen puan: kor kenar */
+.sh-tile.can-add {
+  cursor: pointer;
+  border-color: rgba(217, 178, 106, 0.6);
+  background: linear-gradient(180deg, rgba(60, 42, 20, 0.6), rgba(8, 6, 4, 0.35));
+}
+
+.sh-tile.can-add:hover {
+  transform: translateY(-2px);
+  border-color: var(--g-gold);
+  box-shadow: 0 0 10px rgba(217, 178, 106, 0.3);
+}
+
+.sh-tile.has-pend {
+  cursor: pointer;
+  border-color: var(--hot);
+}
+
+.sh-tile:focus-visible {
+  outline: 1px solid var(--g-gold);
+  outline-offset: 2px;
 }
 
 .sh-col {
@@ -5744,9 +5891,9 @@ html.short .sh-foot.idle {
 
 .sh-k {
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.1;
   color: var(--g-dim);
 }
 
@@ -5811,54 +5958,6 @@ html.short .sh-foot.idle {
 .sh-row.drop-on {
   outline: 1px solid var(--g-ember2);
   background: rgba(224, 112, 42, 0.18);
-}
-
-/* + ve - : yuvalar puan bitince de yerinde (görünmez), satırlar kaymaz */
-.sh-pm {
-  display: inline-flex;
-  flex: none;
-  gap: max(8px, calc(10 * var(--u)));
-}
-
-.sh-row:has(.sh-pm) {
-  min-height: max(28px, calc(32 * var(--u)));
-}
-
-.sh-pmb {
-  position: relative;
-  width: max(26px, calc(30 * var(--u)));
-  height: max(26px, calc(30 * var(--u)));
-  padding: 0;
-  border: 1px solid var(--g-line);
-  background: rgba(20, 14, 8, 0.6);
-  color: var(--g-gold);
-  font: 600 max(13px, calc(20 * var(--u))) var(--g-disp);
-  line-height: 1;
-}
-
-.sh-pmb::after {
-  content: '';
-  position: absolute;
-  width: calc(100% + 8px); /* + ve − yan yana: dokunma alanları birbirine binmez (aralık >= 8 px) */
-  height: max(28px, calc(32 * var(--u))); /* satır yüksekliği kadar: komşu satırın düğmesini örtmez */
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.sh-pmb:hover:not(:disabled):not(.dis) {
-  border-color: var(--g-gold);
-}
-
-.sh-pmb:disabled,
-.sh-pmb.dis {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.sh-pmb.off {
-  visibility: hidden;
-  pointer-events: none;
 }
 
 .sh-capnote {
@@ -5926,7 +6025,20 @@ html.short .sh-bh-top {
 }
 
 html.short .sh-cols {
+  gap: 3px;
+}
+
+html.short .sh-two {
   gap: 0 8px;
+}
+
+html.short .sh-main {
+  gap: 4px;
+}
+
+html.short .sh-row.sh-tile {
+  min-height: 44px;
+  padding: 2px 6px;
 }
 
 html.short .sh-sl {
@@ -5952,36 +6064,55 @@ html.short .sh-n {
 
 html.short .sh-d {
   min-width: 1.6em;
-}
-
-html.short .sh-pmb {
-  width: 26px;
-  height: 26px;
-  font-size: 14px;
-}
-
-/* dokunma alanı satırdan taşmaz: üst/alt komşu satırın düğmesini örtmesin (bug-hunter 2026-10-19) */
-html.short .sh-pmb::after {
-  height: 28px;
-}
-
-html.short .sh-pm {
-  gap: 8px;
-}
-
-html.short .sh-row:has(.sh-pm) {
-  min-height: 28px;
-}
-
-/* dar sayfa (tüccar + Gear yan yana, telefon): kabın kendi genişliğine göre sıkılaşır (container query; sınıf değil) */
+}/* dar sayfa (tüccar + Gear yan yana, telefon): kabın kendi genişliğine göre sıkılaşır (container query; sınıf değil) */
 .sh {
   container-type: inline-size;
 }
 
-@container (max-width: 560px) {
+/* Main kutuları (560-700 px, ör. tüccar / demirci yanındaki Gear): dört kutu yine tek şerit, ikon gizlenir ki ad (Intelligence) sığsın */
+@container (max-width: 700px) {
+  .sh-main {
+    gap: 4px;
+  }
+
+  .sh-tile .sh-t-top .sh-ico {
+    display: none;
+  }
+
+  .sh-row.sh-tile {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  /* dar çift pencerede Sheet sayfası kaymasın: Attack / Defense satırları biraz sıkı */
+  .sh-two .sh-row {
+    min-height: 26px;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1.1;
+  }
+
+  .sh {
+    row-gap: 4px;
+  }
+
   .sh-cols {
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .sh-two .sh-ico {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@container (max-width: 560px) {
+  .sh-two {
     gap: 0 8px;
+  }
+
+  .sh-main {
+    gap: 6px;
   }
 
   .sh-sl {
@@ -6012,12 +6143,12 @@ html.short .sh-row:has(.sh-pm) {
 }
 
 @container (max-width: 330px) {
-  .sh-cols,
+  .sh-two,
   .sh-vit {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .sh-col + .sh-col {
+  .sh-two .sh-col + .sh-col {
     margin-top: 6px;
   }
 
@@ -6066,6 +6197,10 @@ html.short .sh-dv {
 /* telefon (Ömer 2026-10-23): "N stat points to spend" satırı yok (sayı Sheet sekmesindeki rozette); Reset / Confirm üst satırda
    (XP çubuğunun yerinde, sağda) belirir, ekstra yükseklik katmaz; Sheet sayfası kaymaz */
 html.short .sh-under {
+  display: contents;
+}
+
+html.short .sh-ptr {
   display: none;
 }
 
@@ -6084,28 +6219,7 @@ html.short .sh:has(.sh-foot:not(.idle)) .sh-xpv {
 
 html.short .sh-btn {
   min-height: 24px;
-}
-
-html.short .sh-row:has(.sh-pm) {
-  min-height: 21px;
-}
-
-html.short .sh-pmb {
-  width: 26px;
-  height: 19px;
-}
-
-/* + / −: görünür kutu küçük, dokunma alanı 44 px geniş (yükseklik satır kadar: komşu satırı örtmez) */
-html.short .sh-pmb::after {
-  width: calc(100% + 18px);
-  height: 21px;
-}
-
-html.short .sh-pm {
-  gap: 4px;
-}
-
-html.short .sh-row {
+}html.short .sh-row {
   min-height: 18px;
 }
 
@@ -6121,10 +6235,6 @@ html.short .sh-vit {
 html.short .sh-d,
 html.short .sh-d:empty {
   min-width: 0;
-}
-
-html.short .sh-cols {
-  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
 html.short .sh-n {
@@ -6189,13 +6299,7 @@ html.short .sh {
 html.short .sh-row {
   min-height: 16px;
   line-height: 1.1;
-}
-
-html.short .sh-row:has(.sh-pm) {
-  min-height: 21px;
-}
-
-html.short .sh-ico {
+}html.short .sh-ico {
   width: 14px;
   height: 14px;
 }
@@ -6207,4 +6311,53 @@ html.short .sh-bh-top {
 html.short .sh-sl {
   margin-bottom: 0;
   line-height: 1.1;
+}
+
+/* telefon: Main yine tek şerit (yükseklik kısıtlı); düğmesiz kutular 44 px */
+html.short .sh-main {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* telefon: 44 px'lik Main kutuları eklenince Sheet sayfası kaymasın (ölçüldü: 6 px taşıyordu) */
+html.short .sh-cols {
+  gap: 0;
+}
+
+html.short .sh-two .sh-row {
+  min-height: 15px;
+}
+
+html.short .sh {
+  row-gap: 0;
+}
+
+/* telefon, puan bekleyen durum: Reset / Confirm (dokunma alanı ::after ile 44 px) ve Main kutuları satırı büyütmesin */
+html.short .sh-btn {
+  min-height: 18px;
+  padding: 0 8px;
+}
+
+html.short .sh-row.sh-tile {
+  padding-top: 0;
+  padding-bottom: 0;
+  align-content: center;
+}
+
+html.short .sh-tile .sh-n {
+  font-size: 1.2em;
+}
+
+/* dar Sheet kabı (telefonda tüccar / demirci yanındaki Gear sayfası ~170 px): Main kutuları 2 sütun, çok darsa tek sütun; ad hiçbir zaman kesilmez ya da harf harf bölünmez */
+@container (max-width: 480px) {
+  .sh-main,
+  html.short .sh-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 250px) {
+  .sh-main,
+  html.short .sh-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

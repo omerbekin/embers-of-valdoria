@@ -397,9 +397,18 @@ export interface CampaignConfig {
    */
   replay?: { xp: number[] };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
-  merchant: { size: number; /** Yenileme tabanı; bedel = rerollCost + rerollPerLevel x aktif takımın ortalama level'ı (Ömer 2026-10-24). */ rerollCost: number; rerollPerLevel?: number; /** Fiyat = priceBase[nadirlik] x (1 + pricePerIlvl x item seviyesi); satış yarısı (Ömer 2026-10-26, src/campaign/merchant.ts > campaignPrice). */ priceBase: Record<string, number>; pricePerIlvl: number; buybackSize: number };
+  merchant: { size: number; /** Geçen gün başına yenilenen raf (Ömer 2026-10-31). */ restockPerDay?: number; /** Yenileme tabanı; bedel = rerollCost + rerollPerLevel x aktif takımın ortalama level'ı (Ömer 2026-10-24). */ rerollCost: number; rerollPerLevel?: number; /** Fiyat = priceBase[nadirlik] x (1 + pricePerIlvl x item seviyesi); satış yarısı (Ömer 2026-10-26, src/campaign/merchant.ts > campaignPrice). */ priceBase: Record<string, number>; pricePerIlvl: number; buybackSize: number };
   /** Kasaba ekranı yerleşimi (1920x1080 birim): kahraman boyu, ayak çizgisi (H oranı; telefonda alt yazıya yer kalsın diye feetYPhone), kahramanlar arası, yer etiketi yazı boyu (masaüstü / telefon). */
-  townScreen: { heroHeight: number; feetY: number; feetYPhone: number; gap: number; labelSize: number; labelSizePhone: number };
+  townScreen: {
+    heroHeight: number;
+    feetY: number;
+    feetYPhone: number;
+    gap: number;
+    labelSize: number;
+    labelSizePhone: number;
+    /** Kışlada katılmayı bekleyen aday rozeti (kasaba ekranı): size = etiket yüksekliğine oran, nabız süresi / büyümesi, bant yazısının y'si (1080 birimi). */
+    recruitBadge: { size: number; pulseMs: number; pulseScale: number; bandY: number; bandYPhone: number };
+  };
 }
 
 /** Kadrodaki bir karakter. hpRatio 0-1 (savaştan savaşa taşınır). */
@@ -530,15 +539,17 @@ export interface CampaignState {
   campsUsed?: Record<string, CampChoice['kind']>;
   /** Tanışma paneli gösterilen tüccarlar (Ömer 2026-10-20: "her merchant instance'ında 1 kere"): '<harita>:<düğüm>' -> 1. Eski kayıtta yok = hiçbiri görülmedi (isteğe bağlı alan; sürüm değişmez). */
   merchantSeen?: Record<string, number>;
-  /** Tüccarda satın alınan raflar (Ömer 2026-10-24, "sonraki ziyaretten önce 2 node geçildiyse çıksın"): '<harita>:<düğüm>' -> raf -> alındığı gün (CampaignState.day; Ömer 2026-10-26: stok günlük). Aynı günse raf "sold" kalır, ertesi gün bütün raflar yeni malla dolar. Eski kayıtta yok (isteğe bağlı alan; sürüm değişmez). */
-  merchantSold?: Record<string, Record<number, number>>;
+  /**
+   * Kapalı tezgâhlar (sürüm 13; Ömer 2026-10-31): '<harita>:<düğüm>' -> rafların kaydı. Yoksa o tüccara hiç gelinmedi (ilk varışta kasaba level'ında kurulur).
+   * Açık tezgâh `shop`'tadır, kapanınca buraya döner (merchant.ts > openCampaignShop, state.ts > closeShop). Harita geçişinde silinir (haritalar tek yönlü).
+   */
+  merchantStock?: Record<string, MerchantStall>;
   /** Son düşüş: haritada "Spoils" kartı olarak gösterilir, onaylanınca silinir (`acknowledgeLoot`). */
   pendingLoot?: LootDrop;
   /** Açık tüccar (merchant düğümü; Ömer 2026-10-11): tezgâh, bu ziyaretin geri alım listesi, yenileme sayısı. Düğümden ayrılınca silinir. */
   shop?: CampaignShop;
   /**
-   * Kapanan tezgâh (Ömer 2026-10-13, "Ashford'a giremiyorum"): kasaba / tüccar düğümünden ayrılmadan (Leave) kapanan tezgâh burada saklanır;
-   * aynı düğüme yeniden girilince (revisitNode) aynı mallar, satılanlar ve yenileme sayısı geri gelir (satılan mal yeniden dolmaz). Yola çıkınca silinir.
+   * ESKİ KAYIT ALANI (sürüm 12 ve öncesi): kapanan tezgâh. Artık yazılmaz; okunurken `merchantStock`a taşınır (save.ts > normalizeShopStock).
    */
   closedShop?: CampaignShop;
   /**
@@ -650,10 +661,26 @@ export interface CampaignSuspended {
   setup: string;
 }
 
+/** Tezgâhın bir rafı. `since` = malın rafa geldiği gün (yenilenme sırası; eski kayıtta yok = tezgâhın günü). */
+export interface ShopWare {
+  itemId: string;
+  rolls?: ItemInstance['rolls'];
+  price: number;
+  sold?: boolean;
+  since?: number;
+}
+
+/** Kapalı tezgâhın kayıttaki hâli (CampaignState.merchantStock): raflar, o günkü yenileme sayısı, rafların en son bakıldığı gün. */
+export interface MerchantStall {
+  wares: ShopWare[];
+  rerolls: number;
+  day: number;
+}
+
 /** Sefer tüccarının tezgâhı (src/campaign/merchant.ts). */
 export interface CampaignShop {
   node: string;
-  wares: Array<{ itemId: string; rolls?: ItemInstance['rolls']; price: number; sold?: boolean }>;
+  wares: ShopWare[];
   buyback: Array<{ item: ItemInstance; price: number }>;
   rerolls: number;
   /** Stoğun günü (CampaignState.day; Ömer 2026-10-26: tüccar stoğu günlük yenilenir). Eski kayıtta yok = 0. */

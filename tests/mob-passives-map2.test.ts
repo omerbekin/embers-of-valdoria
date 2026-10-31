@@ -18,7 +18,10 @@ const make = (teams: Teams, mode: 'turns' | 'test' = 'test', seed = 1) => new Ba
 function sure(b: Battle, hp = 5000): Battle {
   b.debug.crit = 'never';
   for (const c of b.combatants) Object.assign(c.stats, { accuracy: 10, evasion: 0, surviveChance: 0, resilience: 0 });
-  for (const c of b.combatants) c.hp = c.maxHp = hp;
+  for (const c of b.combatants) {
+    c.hp = c.maxHp = hp;
+    delete c.defBlock; // kalkanlı mob (Block zarı) bu testlerin konusu değil
+  }
   return b;
 }
 const unit = (b: Battle, uid: string): Combatant => b.get(uid)!;

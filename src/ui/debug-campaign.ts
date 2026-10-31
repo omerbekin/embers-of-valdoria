@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { CINEMATIC_IDS, CONFIG, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, debugRequireFormation, skipTutorial, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { CINEMATIC_IDS, CONFIG, acknowledgeLoot, advanceDay, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, debugRequireFormation, skipTutorial, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -561,8 +561,29 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     hint: "Jump to the first Merchant stop and open Odo the Peddler: shop panel on the left (Buy & Sell, Buyback, reroll icon), Gear on the right, X closes",
     run: () => {
       const s = ensureState();
-      const id = getMap(s.mapId).nodes.find((n) => n.type === 'merchant')?.id;
-      if (id) setState(debugTeleport(s, id));
+      const nodes = getMap(s.mapId).nodes;
+      const id = (nodes.find((n) => n.type === 'merchant') ?? nodes.find((n) => n.merchant))?.id; // tüccar durağı yoksa ilk tüccarlı kasaba (orada Merchant yerine dokunulur)
+      if (id) {
+        // yolda biriken kartlar (loot, teslim, zorunlu dizilim) tezgâhın önüne çıkmasın; item'ler zaten torbada
+        const t = acknowledgeLoot(debugTeleport(s, id));
+        const { pendingHandover: _h, formationDue: _f, ...clean } = t;
+        setState(clean as CampaignState);
+      }
+      reload();
+    },
+  });
+  // Dükkân yenilenmesi (Ömer 2026-10-31): gün atlatır (Inn iyileşmesi dahil, advanceDay), harita yeniden açılınca tezgâh iki rafını yeniler
+  debug.register({
+    id: 'campaign.shop-day',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'clover',
+    label: 'Pass 1 day (shop restock)',
+    hint: 'Advance the campaign by one day and reopen the map. Odo restocks 2 shelves for each day passed when his stall opens again (at a town, tap Merchant)',
+    run: () => {
+      const t = JSON.parse(JSON.stringify(ensureState())) as CampaignState;
+      while (!advanceDay(t));
+      setState(t);
       reload();
     },
   });

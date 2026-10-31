@@ -7,6 +7,7 @@
  * Sürükleme fare + dokunma (tek işaretçi olayları); görünüm formation-board.css. Mantıksal ölçü 1360x600; kabuk ölçekler (openFormationWindow).
  * Oyun içi metinler İngilizce.
  */
+import crownAnchor from '../../data/crown-anchor.json';
 import './formation-board.css';
 import './elegant.css';
 import { bandTipHtml } from './band-tip';
@@ -47,6 +48,8 @@ export interface FormationBoardHero {
   /** Portre (kare) adresi; yoksa boş (yer tutucu çerçeve). */
   avatar: string;
   leader?: boolean;
+  /** Sınıf kimliği (lider tacının kafa üstündeki yeri için; data/crown-anchor.json). */
+  classId?: string;
   /** Pasif HER ZAMAN skill'lerin önünde gösterilir. */
   passive?: { name: string; icon: string };
   /** En çok 4 skill (veri sırası). */
@@ -118,8 +121,26 @@ const hpCls = (r: number): string => (r > 0.6 ? '' : r > 0.3 ? 'mid' : 'low');
 const hpCol = (r: number): string => (r > 0.6 ? 'var(--fb-good)' : r > 0.3 ? '#d9b24a' : '#c4553f');
 const img = (url: string): string => (url ? `<img src="${esc(url)}" alt="" draggable="false">` : '');
 
-const CROWN =
-  '<svg class="fb-crown" viewBox="-16 -12 32 24"><polygon points="-14,8 -14,-6 -7,1 0,-10 7,1 14,-6 14,8" fill="#2a1d10" stroke="#f3d999" stroke-width="1.6"/><circle cx="0" cy="3" r="2.6" fill="#e0702a"/></svg>';
+const CROWN_SVG =
+  '<polygon points="-14,8 -14,-6 -7,1 0,-10 7,1 14,-6 14,8" fill="#2a1d10" stroke="#f3d999" stroke-width="1.6"/><circle cx="0" cy="3" r="2.6" fill="#e0702a"/>';
+
+// Avatar hücrede sol 10px, üst 4px, 110px kare (formation-board.css > .fb-av); 256x256 kaynak.
+const AV = { left: 10, top: 4, size: 110, src: 256 };
+
+/** Lider tacı: kafanın üstünde ortalı (sınıf başına ölçü data/crown-anchor.json); hücrenin içinde kalır, uzun başlarda saça biner. */
+export function crownPlace(classId: string | undefined): { left: number; top: number; w: number; h: number } {
+  const a = (classId && (crownAnchor.classes as Record<string, { x: number; top: number }>)[classId]) || crownAnchor.fallback;
+  const k = AV.size / AV.src;
+  const { w, h } = crownAnchor.size;
+  const cx = AV.left + a.x * k;
+  const bottom = AV.top + a.top * k + crownAnchor.rest;
+  return { left: Math.round((cx - w / 2) * 10) / 10, top: Math.max(1, Math.round((bottom - h) * 10) / 10), w, h };
+}
+
+function crownHtml(classId: string | undefined): string {
+  const c = crownPlace(classId);
+  return `<svg class="fb-crown" viewBox="-16 -12 32 24" style="left:${c.left}px;top:${c.top}px;width:${c.w}px;height:${c.h}px">${CROWN_SVG}</svg>`;
+}
 
 export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): FormationBoard {
   const root = document.createElement('div');
@@ -175,7 +196,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
         cls += ` fit-${fitOfHint(hints[slot])} own`;
         inner += '<i class="fb-pdot"></i>';
       }
-      if (h) inner += `${img(h.avatar).replace('<img ', '<img class="fb-av" ')}<div class="fb-nm">${esc(h.name)}</div><div class="fb-hp"><i class="${hpCls(h.hpRatio)}" style="width:${Math.round(h.hpRatio * 100)}%"></i></div>${h.leader ? CROWN : ''}`;
+      if (h) inner += `${img(h.avatar).replace('<img ', '<img class="fb-av" ')}<div class="fb-nm">${esc(h.name)}</div><div class="fb-hp"><i class="${hpCls(h.hpRatio)}" style="width:${Math.round(h.hpRatio * 100)}%"></i></div>${h.leader ? crownHtml(h.classId) : ''}`;
       out += `<div class="${cls}" data-slot="${slot}" role="button" aria-label="${esc(h ? `${h.name}, ${rowName(row)}` : `Empty cell, ${rowName(row)}`)}" style="left:${p.x - GX}px;top:${p.y - GY}px">${inner}</div>`;
     }
     return out;

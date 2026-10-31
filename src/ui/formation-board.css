@@ -314,11 +314,9 @@
 
 .fb-crown {
   position: absolute;
-  right: 8px;
-  top: 8px;
-  width: 28px;
-  height: 20px;
   pointer-events: none;
+  z-index: 2;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8)); /* konum / ölçü satır içi: data/crown-anchor.json */
 }
 
 /* menzil uygunluğu: her hücrede ince kenar rengi + küçük nokta (baskın değil) */

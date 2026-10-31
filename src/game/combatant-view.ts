@@ -1559,6 +1559,33 @@ export class CombatantView {
   }
 
   /**
+   * Zorla yer değiştirme (itme / çekme; olay moved + by): birim yürümez, hafifçe zıplayarak yeni hücreye geçer (yürüme pozu yok, bakış yönü değişmez).
+   * Süre ve yükseklik data/battle-layout.json > animation.forcedMove. Yeni hücre birimin yeni "evi" olur. Varışta çözülür.
+   */
+  forcedMoveTo(x: number, y: number): Promise<void> {
+    const fm = timing.forcedMove;
+    this.homeX = x;
+    this.baseY = y;
+    this.container.setDepth(Math.max(y, this.container.y) + 2);
+    const hops = Math.max(1, fm.hops);
+    this.scene.tweens.add({ targets: this.sprite, y: { from: 0, to: -fm.hopPx }, duration: slow(fm.ms) / (hops * 2), yoyo: true, repeat: hops - 1, ease: 'Sine.easeOut' });
+    return new Promise((resolve) => {
+      this.scene.tweens.add({
+        targets: this.container,
+        x,
+        y,
+        duration: slow(fm.ms),
+        ease: 'Sine.easeInOut',
+        onComplete: () => {
+          this.sprite.setY(0);
+          this.container.setDepth(y);
+          resolve();
+        },
+      });
+    });
+  }
+
+  /**
    * Hasar sayısı: vuruş şiddetiyle büyür ve sarıdan kırmızıya döner; kritikte altın renk, daha iri ve rakamın solunda patlama ikonu;
    * hasarın elementi/kaynağı varsa rakamın sağında küçük element ikonu (ateş, buz, zehir...). Üst üste binmez.
    */
@@ -1640,7 +1667,7 @@ export class CombatantView {
   // --- Hover önizlemesi: can çubuğunda hayalet parça + hasar/şifa/kalkan yazısı ---
 
   /** Bir skill'in bu karaktere tahmini etkisini çubukta ve yazıyla gösterir. */
-  showPreview(p: TargetPreview): void {
+  showPreview(p: TargetPreview & { mpSpend?: number; statusIcons?: Array<{ icon: string; owner?: string; color: string }> }): void {
     this.clearPreview();
     const W = hpBar.width;
     const curFrac = Math.max(0, this.combatant.hp / this.combatant.maxHp);
@@ -1651,6 +1678,7 @@ export class CombatantView {
       this.previewItems.push(r);
     };
     const lines: Array<[string, string, number]> = []; // [yazı, renk, punto]
+    const head: Array<[string, string, number]> = []; // üst satır: büyük hasar + aynı boyda MP yakma (farklı renk) + küçük isabet, tek satırda
 
     if (p.damage) {
       const d = p.damage;
@@ -1666,8 +1694,7 @@ export class CombatantView {
         this.previewItems.push(skull);
         this.scene.tweens.add({ targets: skull, scale: skull.scale * 1.12, duration: 420, yoyo: true, repeat: -1 });
       }
-      lines.push([d.hpLoss === 0 ? 'Blocked' : `-${d.avg}`, damageColor(damageNumberLevel(d.hpLoss / this.combatant.maxHp)), 46]);
-      lines.push([formatHit(d.hitChance), hitColor(d.hitChance), 26]); // hasar satırının hemen altında
+      head.push([d.hpLoss === 0 ? 'Blocked' : `-${d.avg}`, damageColor(damageNumberLevel(d.hpLoss / this.combatant.maxHp)), 46]);
       if (blocked) lines.push([blocked.trim(), colors.muted, 24]);
       if (d.splash) lines.push(['splash', colors.muted, 22]);
     }
@@ -1690,13 +1717,47 @@ export class CombatantView {
       segment(null, -W / 2 + bar.width, bar.y, Math.max(4, extra), 8, p.shield.magic ? colors.magicShield : colors.shield);
       lines.push([`+${p.shield.amount} ${p.shield.magic ? 'magic shield' : 'shield'}`, p.shield.magic ? colors.magicShield : colors.shield, 34]);
     }
-    if (p.burn) lines.push([`-${p.burn} MP`, colors.burn, 36]);
+    const hasMp = this.mpMax > 0 && this.combatant.maxMp > 0 && this.mpFill.visible; // manası olmayan birimde MP yazısı da çubuk önizlemesi de yok
+    if (p.burn && hasMp) head.push([`-${p.burn} MP`, colors.burn, 46]); // hasarla aynı boyda, yalnız renk farklı
+    if (p.damage) head.push([formatHit(p.damage.hitChance), hitColor(p.damage.hitChance), 26]); // küçük isabet şansı
+    // MP çubuğu önizlemesi (can çubuğuyla aynı yöntem): hedefte yanacak MP; kullanıcıda harcanan MP + bedel yakımı
+    const mpGone = hasMp ? Math.min(this.combatant.mp, (p.burn ?? 0) + (p.castBurn?.mp ?? 0) + (p.mpSpend ?? 0)) : 0;
+    if (mpGone > 0) {
+      const cur = this.combatant.mp / this.mpMax;
+      const left = Math.max(0, (this.combatant.mp - mpGone) / this.mpMax);
+      segment(null, -W / 2 + left * W, this.mpFill.y, (cur - left) * W, hpBar.mpHeight, colors.previewDamage);
+    }
     // Drain Field (madde 260): manası bitecek hedefte zar: "50%: Silenced 1t + 12-15 dmg"
     if (p.emptyProc) lines.push([`${Math.round(p.emptyProc.chance * 100)}%: ${p.emptyProc.statusName} ${p.emptyProc.turns}t${p.emptyProc.damage ? ` + ${p.emptyProc.damage.min}-${p.emptyProc.damage.max} dmg` : ''}`, colors.burn, 30]);
     for (const s of p.statuses ?? []) lines.push([s, colors.targetHighlight, 30]);
 
-    // Yazılar ismin üstünde, alttan yukarı dizilir (en önemli satır en altta durur)
+    // Yazılar ismin üstünde, alttan yukarı dizilir. En altta durum ikonları, üstünde hasar / MP / isabet satırı, sonra diğer satırlar
     let y = this.hpY - hpBar.height - 44;
+    const icons = p.statusIcons ?? [];
+    if (icons.length > 0) {
+      const size = 34;
+      const gap = 6;
+      const total = icons.length * size + (icons.length - 1) * gap;
+      icons.forEach((ic, i) => {
+        const img = this.scene.add.image(-total / 2 + size / 2 + i * (size + gap), y - size / 2, ensureIcon(this.scene, ic.icon, ic.color, false, ic.owner ?? SHARED_KEY)).setDisplaySize(size, size);
+        this.container.add(img);
+        this.previewItems.push(img);
+      });
+      y -= size + 4;
+    }
+    if (head.length > 0) {
+      const texts = head.map(([text, hex, px]) => this.scene.add.text(0, y, text, numStyle(px, hex)).setOrigin(0, 1));
+      const gap = 12;
+      const total = texts.reduce((a, t) => a + t.width, 0) + gap * (texts.length - 1);
+      let x = -total / 2;
+      for (const t of texts) {
+        t.setX(x);
+        x += t.width + gap;
+        this.container.add(t);
+        this.previewItems.push(t);
+      }
+      y -= Math.max(...head.map(([, , px]) => px)) * 1.05;
+    }
     for (const [text, hex, px] of [...lines].reverse()) {
       const t = this.scene.add.text(0, y, text, numStyle(px, hex)).setOrigin(0.5, 1);
       this.container.add(t);

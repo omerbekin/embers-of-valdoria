@@ -153,7 +153,7 @@
     "type": "debuff",
     "icon": "manaburn",
     "color": "#b48ae0",
-    "text": "The next Ley Brand on this unit lasts 2 turns longer and burns twice as much mana per cast"
+    "text": "The next Ley Brand on this unit lasts 2 turns longer and burns 50% more mana per cast"
   },
   "overextended": {
     "_not": "Bridge Warden: Breaking Span / Fall çözüldükten sonra çapa köprüye saplı kalır (Warden'ın sonraki turunun başına kadar). Sayı PROVİZYON.",

@@ -37,7 +37,7 @@ describe('mana ekonomisi', () => {
     const mp = describeStat('mp', s, f);
     expect(mp.lines.join('\n')).toContain(`${a.mpBase} base`);
     expect(mp.lines.join('\n')).toContain(`${a.mpPerInt} per Intelligence point`);
-    expect(describeStat('int', s, f).lines.join('\n')).toContain(`${a.mpBase} base + ${a.mpPerInt} per point (now ${s.mp})`);
+    expect(describeStat('int', s, f).lines.join('\n')).toContain(`${a.mpBase} base + ${a.mpPerInt} per point. You have ${s.mp} MP.`);
   });
 
   it('Gambler\'a ayrı mana azaltması yok (genel karar: yalnızca taban 30)', () => {

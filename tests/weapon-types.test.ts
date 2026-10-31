@@ -97,15 +97,21 @@ describe('silah tipi verisi', () => {
     const two = implicitValues(imp, 10, def('greatsword'))[0]!;
     expect(Math.abs(two - one * 1.6675)).toBeLessThanOrEqual(imp.parts[0]!.step);
     expect(implicitValues(implicitDefOf(def('ash_staff'))!, 10, def('ash_staff'))).toEqual(implicitValues(implicitDefOf(def('ash_staff'))!, 10));
-    // hız: tip cezası + Heavy grip, çarpılarak (balta 2H: 0,95 x 0,95)
+    // hız: tip cezası + Heavy grip, toplanarak (balta 2H: 5 + 5 = 10% less; kılıç 2H: yalnız 5)
     const pens = weaponSpeedPenalties(ga);
     expect(pens.map((p) => [p.pct, !!p.heavy])).toEqual([[5, false], [H2.spdLess, true]]);
-    expect(loadout({ class: 'warrior', equipment: { weapon: inst('greataxe') } }).modifiers?.spdMult).toBeCloseTo(0.95 * 0.95, 6);
+    expect(loadout({ class: 'warrior', equipment: { weapon: inst('greataxe') } }).modifiers?.spdMult).toBeCloseTo(0.9, 6);
+    expect(loadout({ class: 'warrior', equipment: { weapon: inst('greatsword') } }).modifiers?.spdMult).toBeCloseTo(0.95, 6);
     expect(weaponSpeedPenalties(def('ash_staff'))).toEqual([]);
     const lines = instanceBaseLines(inst('greataxe'));
     expect(lines.heavy?.name).toBe('Heavy grip');
     expect(lines.heavy?.text).toBe('5% less Speed');
     expect(lines.implicit?.text).toContain('5% less Speed');
+    // ipucu: gücün iki yanı, ceza tek toplam satır
+    expect(lines.weaponSides?.minus).toBe('10% less Speed');
+    expect(lines.weaponSides?.plus).toContain('Armor penetration');
+    expect(lines.weaponSides?.plus).not.toContain('Speed');
+    expect(instanceBaseLines(inst('arming_sword')).weaponSides?.minus).toBeUndefined();
   });
 
   it('gürz: oransal Accuracy ("6% more Accuracy"), ipucunda soluk "(önce → sonra)"', () => {

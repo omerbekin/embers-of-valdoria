@@ -58,3 +58,15 @@ Genel: Tur 4'teki el takibi düzeltmesi çalışıyor; tel lich'in yeni pozunda 
 | #78 | Önceki efekt bitmiş; görünür artık parça yok. | Temiz |
 
 Atan sağdaki Undead; hedef onun dostu Shieldwarden. Soldaki kuklanın yanındaki kum saati/½ bu skill'in hedefi değil, yarım tur göstergesi. Vuruş/bağ Shieldwarden üzerinde. Karar: Tur 4 düzeltmesi başarılı; tamam.
+
+## Tur 6 · Codex · kontrol · 2026-10-31
+Yakalama: kullanıcı eki `db2` (uzak dost; dost x≈1810, tel sağa uzanıyor).
+Genel: Uzaklıkta tel sağdaki dostun göğsüne kadar kesintisiz ulaşıyor; kırmızı mühür dostun üzerinde açılıp sarıyor.
+
+| Kare | Gözlem | Sonuç |
+|---|---|---|
+| #1–#19 · 233–550 ms | Asa/el çıkışından sağa uzayan kızıl tel, mesafe boyunca dostun konumuna doğru ilerliyor. | Tel dostta bitiyor; boşlukta kesilmiyor. |
+| #19–#37 · 550–850 ms | Tel dostun göğsündeki kırmızı mühre bağlanıyor; mühür gövde çevresinde kalıyor. | Mühür doğru alıcıda, dost üzerinde. |
+| #43–#67 · 950–1350 ms | Tel ve mühür kademeli sönüyor, dost sabit. | Bitiş temiz. |
+
+Atan sağda, hedef dost uzak sağ konumda; bu testte görsel olarak telin erişimi ve mührün alıcı hizası uygun. Karar: tamam.

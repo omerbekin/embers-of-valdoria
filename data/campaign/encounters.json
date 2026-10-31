@@ -521,7 +521,7 @@
     ],
     "waves": [
       { "units": [
-        { "class": "bandit_chief", "slot": 1, "name": "Deserter Captain", "tier": "elite", "sprite": "deserter_captain", "mods": { "hpMult": 1.794, "powerMult": 1.121, "statMult": 1.15 } },
+        { "class": "deserter_captain", "slot": 1, "name": "Deserter Captain", "tier": "elite", "mods": { "hpMult": 1.794, "powerMult": 1.121, "statMult": 1.15 } },
         { "class": "shieldwarden", "slot": 0, "mods": { "hpMult": 1.233, "powerMult": 1.121 } },
         { "class": "moor_raider", "slot": 2, "name": "Ember Outrider", "mods": { "hpMult": 1.233, "powerMult": 1.121 } }
       ] }

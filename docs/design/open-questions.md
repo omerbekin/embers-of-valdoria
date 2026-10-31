@@ -1362,3 +1362,53 @@ Denetimdeki (ai-coverage) B / C satırlarının hepsi değer alıyor. Ağırlık
 10. Çarpma önizlemesi artık ağacın çarpma tetiğinin durumunu gösterir ("Crash: Stun 1 turn", Mage 3.fa).
 11. **Test değişikliği:** `ai-value.test.ts` #5 (Defender ölmek üzere olan dost için Taunt) Taunt'ın breakRatio'su (0,25) değerlenince o senaryoda Tremor Slam seçiyor (Taunt ilk turda kırılıyor). Feda kuralı (K6) kırılma eşiği olmayan Taunt'la aynen geçiyor; test buna göre güncellendi. **Soru:** bu senaryoda Defender'in Taunt'u seçmesi mi istenir (breakRatio değerini yumuşatmak gerekir), yoksa yeni davranış doğru mu?
 Açık: denge simi (Ömer çalıştıracak); ağırlıkların ölçümü.
+
+## 459. Kasaba level'ı ve dükkân tavanı
+
+Ömer 2026-10-31 (#23, yeni kural, onaylı): her kasabanın level'ı var; dükkân bu level'ın çok üstünde item satamaz. Kasaba level'ı otomatik (yanındaki düğümlerin düşman level'ından). Tavan için notu: "level farkı bir sonraki towna kadar olan moblara göre belirlensin". Kod: `src/campaign/power.ts > townLevel, shopCeiling`; `merchant.ts > campaignStock`.
+
+Varsayımlar (Ömer'in onayı bekleniyor):
+
+1. **Tavan = bir sonraki kasabaya kadarki yollarda çıkan en güçlü mobun level'ı** (ana yol + cep + hub kolu, dallanmada bütün yollar; sınır kasabası ve ötesi sayılmaz). Son kasabadan sonra harita sonu.
+2. **Eşleme: 1 mob level'ı = 1 item level'ı.** Harita 2-3 düğümlerinde iki sayı zaten aynı (bölüm başı düğümler hariç); bölüm aralıkları da aynı (1-10, 11-20, 21-30). Harita 1'de düğümün item level'ı düşman level'ından 1-2 yüksek olabilir; tavan düşman level'ını alır. Kahramanın takma şartı (`levelRequirement` = item level - 3) ayrı kuraldır, hesaba girmez.
+3. **Tavan, eski sınırın (düğümün item level'ı) yerine geçer**, ona ek olarak uygulanmaz. Eski sınır her yerde tavandan düşük ya da eşit olduğundan, ek uygulansaydı kuralın oyunda hiçbir etkisi olmazdı. Sonuç: stok daralmıyor, genişliyor (Valdren Keep ilvl 4 -> 10, Forward Camp 8 -> 10). Ömer'in niyeti daraltmaysa tek satırla `min(düğüm item level'ı, tavan)` yapılır.
+4. **Kasaba sayılan yalnız `town` türü.** Forward Camp ve The Deep Market tüccar durağıdır: kendileri kuralla satar ama sınır değildir. Valdren Keep'in tavanı bu yüzden harita sonuna kadar gider (10).
+5. **Kasaba level'ı = en yakın savaşlı düğümlerin en yüksek düşman level'ı** (bitişikte savaş yoksa bir sonraki halka). Şimdilik yalnız hesapta; ekranda gösterilmiyor.
+6. **Nadirlik zarı düğümün item level'ında kaldı;** tavan yalnız taban item havuzunu sınırlar.
+7. **Kayıttaki günlük tezgâh dokunulmadan kalır;** tavan yeni kurulan stoğa (ertesi gün, yenileme) uygulanır. Şema değişmedi.
+
+Etkilenmeyenler: mob düşüşleri; kasaba hediyesi (düğüm item level'ı her yerde tavanın altında); Combine ve geri alım (oyuncunun kendi item'leri); Temper (kendi bölüm tavanı, dükkân tavanını aşabilir); Endless tüccarı. Reroll aynı stok fonksiyonunu kullandığı için tavana uyar. Sefer simi `openCampaignShop` üzerinden aynı kuralı kullanır.
+
+Açık: denge simi çalıştırılmadı (Valdren Keep'te daha güçlü mal, yüksek şartlı mal oranı).
+## 460. Kullanılmayan mana kuralı ve Ley Brand
+**Karar (Ömer 2026-10-31):** Birime özel istisna yok. Mana kullanmayan birimin manası olmaz; AM yine bu birimlere Ley Brand ile tainted mana açabilir (madde 444 aynen, Risen Skeleton ve The Weir-Wyrm dahil).
+**Karar (Ömer 2026-10-31):** kitinde MP harcayan bir şey olmayan birimde mana tamamen yoktur. Verisinde MP olup kuraldan etkilenen birimler: Risen Skeleton, The Weir-Wyrm (Skeleton, Treant, Risen Drowned'ın verisinde MP zaten 0'dı). **Varsayım (engine-dev):** madde 444 aynen kaldı: Ley Brand MP havuzu olmayan hedefe tainted mana açar, bu birimler de artık bu kapsamda (yeni bir istisna yazılmadı). **Açık soru:** Risen Skeleton ve Weir-Wyrm Ley Brand yiyince tainted havuz alsın mı, yoksa hiç almasın mı?
+
+## 461. Ley Brand yakımı azaldı, tek mana yakma kuralı
+**Karar (Ömer 2026-10-31):** Ley Brand'in alanı aynı, mana yakması azalır; oyunda tek mana yakma kuralı olur. **Değer önerisi (engine-dev, PROVİZYON, sim bekliyor):** `castBurnPct` 0,75 -> 0,5; `threadBurnMult` 2 -> 1,5. **Ömer teyit etti:** azalan, Ley Brand'in Branded yakması; Mana Steal'in 10 MP yakması değişmedi. Ağaç tetikleri (Drink Deep, Tempo Thief) yalnız skill yakımında kaldı.
+
+## 462. Block Break varsayımları
+
+Ömer'in kararı (#17, 2026-10-31): "block kırma şansı gibi karşı bufflar olsun. düşmanlarda kalkanı olanların da block şansı olsun. oyundaki itemlara da block kırma şansı gelsin." Block üst sınırı kalktı. Aşağıdakiler uygulayıcının varsayımı, sayılar PROVİZYON (sim çalıştırılmadı):
+
+1. **Kural:** Block şansı = Block - saldırganın Block Break'i, en az 0. Çıkarma önce yapılır, sonuç olasılık olduğu için 1'i aşmaz.
+2. **Affix:** `b_blockbreak`, B kademesi (Rare ve üstü), silah + eldiven; 1,5 + 0,2/ilvl yüzde puan, affix gücü 1,6 ile çarpılır (orta zar ilvl 10: ~%5,5, ilvl 30: ~%12, ilvl 60: ~%21), adım 0,5, ip 0,25 (`b_tier` kalıbı: yalnızca bazı hedeflere yarayan affix). İki yuva toplanır. Fiziksel olmayan sınıflara az uyar (`needs: element:physical`).
+3. **Kalkanlı moblar:** kalkan tabanı kuralıyla level ile büyümez, %15-20 bandında sabit: Risen Skeleton %15, Drowned Knight %15, Guild Enforcer "Bastion" %18, Thane of the Deep %18 (kit: Shield Wall, kalkan sırtta), Shieldwarden %20, Cinder Gatewarden %20, Sworn Guard %20. Küçük kalkan 15, orta 18, kule kalkanı 20.
+4. **Ömer seçti (2026-10-31):** Inquisition Brother %15, Deserter Captain %15 (kendi tanımı `data/mobs/deserter_captain.json`, Bandit Chief'in birebir kopyası; Bandit Chief değişmedi). Stonebound Warden, Drowned Champion, Morvane Halberdier Block almadı. **Hâlâ eklenmeyenler (Ömer'e soru):** çağrılar Skeleton ve Risen Drowned (görselde kalkan var; Skeleton aynı zamanda Undead kahramanın çağrısı, verilirse hızlı savaş dengesi değişir).
+5. **Mobların Block Break'i yok:** yalnızca item affix'inden gelir; düşmanlara verilmesi istenmedi.
+6. **İkon:** Block Break'in kendi çizimi yok, geçici olarak Block ikonu (Iron Buckler) kullanılıyor.
+7. **Duraklatılmış sefer savaşı:** kalkanlı mob olan yarım savaş yeni sürümde tutmaz, baştan başlar (mevcut güvenli kural).
+
+## 463. Dükkân rafları varsayımları
+
+Ömer'in kararı (2026-10-31): ilk gelişte raflar kasaba level'ında; geçen her gün 2 raf aktif takımın ortalama level'ında (en çok raf sayısı); parayla Reroll hepsini takım level'ında yeniler, fiyatı artar; tavan (`shopCeiling`) aşılmaz; raflar kayda yazılır. Kural: `docs/design/progression/items.md` 2.2. Aşağıdakiler uygulayıcının varsayımı, sayılar PROVİZYON (sim çalıştırılmadı):
+
+1. **Yuvarlama:** takımın ortalama level'ı yarım yukarı yuvarlanır (L4 + L5 = 5). Takım = aktif kahramanlar, yoksa kadro.
+2. **Hangi 2 raf:** önce alınmış raflar (dünkü "ertesi gün raf yeni malla dolar" davranışına en yakın), sonra en eski mallar, eşitlikte seed'li zar. Hiç satın alınmayan tezgâh sırayla tamamen dönüyor.
+3. **Mal level'ı = örnek level'ı:** taban kataloğundaki ilvl yalnız uygunluk süzgeci; L1 takıma ilvl 1 "Templar's Hammer" çıkabilir. Bu, Ashford'da (L1, tavan 2) yalnız ilvl <= 2 tabanların geçmesi kuralını korur; takım küçük kalıp taban biterse süzgeç kalkar.
+4. **İlk stok takım level'ından yüksek olabilir:** kasaba level'ı takımın 4+ üstündeyse (ör. Forward Camp L8 + L3 takım) ilk raflar "Requires Level X" ile takılamaz. Ömer'in kuralı kasaba level'ı dediği için dokunulmadı. Soru: burada takım level'ı + 3'e kısılsın mı?
+5. **Forward Camp ve The Deep Market** kasaba sayılır: `townLevel` ile aynı hesap (camp L8, Deep Market L26).
+6. **Eski kayıt:** kapanan tezgâh aynen taşınır; kaydı olmayan tüccar (eski kurala göre daha önce görülmüş olsa da) ilk girişte kurulur. Tavan üstü mal gün dönünce gider, o gün satılır.
+7. **Reroll bedeli x1,5:** taban 10 -> 15, level başına 5 -> 7,5; fiyat takım level'ından, kasabadan bağımsız. Rakam Ömer'in "x1,5" notu üzerine PROVİZYON.
+8. **Sim:** sefer simi tüccarı yalnız kasabanın ilk adımında açar (gün ilerler ama aynı kasabaya dönüp alışveriş etmez), bu yüzden sim ağırlıkla ilk stok kuralını ölçer; günlük yenilemenin etkisini az görür.
+9. **Geri alım listesi** gün dönünce de boşalır (bugünkü gibi).

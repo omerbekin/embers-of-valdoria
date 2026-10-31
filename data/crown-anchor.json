@@ -1,0 +1,19 @@
+{
+  "_not": "Formation hücresindeki lider tacının yeri: sınıf başına kafa merkezi (x) ve kafa/kukuleta üstü (top), 256x256 avatar (assets/avatars/<sınıf>.png) pikselinde, avatarın alfa kanalından ölçüldü. Taç kafanın üstünde x'te ortalanır; hücrenin dışına taşmaz. size = taç ölçüsü (hücre px), rest = tacın kafaya oturma payı (hücre px), fallback = sınıf burada yoksa. Kod: src/ui/formation-board.ts > crownStyle. Yeni sınıf = yeni satır.",
+  "size": { "w": 24, "h": 17 },
+  "rest": 4,
+  "fallback": { "x": 128, "top": 8 },
+  "classes": {
+    "warrior": { "x": 135, "top": 4 },
+    "paladin": { "x": 133, "top": 3 },
+    "mage": { "x": 130, "top": 8 },
+    "undead": { "x": 110, "top": 29 },
+    "archer": { "x": 102, "top": 4 },
+    "druid": { "x": 112, "top": 30 },
+    "defender": { "x": 128, "top": 3 },
+    "antimage": { "x": 100, "top": 16 },
+    "gambler": { "x": 115, "top": 16 },
+    "cutthroat": { "x": 138, "top": 4 },
+    "hexer": { "x": 132, "top": 8 }
+  }
+}

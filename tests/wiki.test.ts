@@ -129,6 +129,8 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
 
   it('Rage, global eylemler (Rest/Skip/Move) ve miss/dodge ayrımı Mechanics içinde yazılıdır; sayılar veriden', () => {
     const text = (id: string) => wiki.mechanics.find((a) => a.id === id)!.blocks.flatMap(blockText).join(' ');
+    // Dükkân tavanı (Ömer 2026-10-31): tüccar satırı kuralı anlatır
+    expect(wiki.mechanics.flatMap((a) => a.blocks.flatMap(blockText)).join(' ')).toContain('never sells gear stronger than the strongest enemies on the roads ahead');
     const r = content.formulas.rage;
     expect(text('rage')).toContain(`0 to ${r.max}`);
     expect(text('rage')).toContain(String(r.perHitCap));

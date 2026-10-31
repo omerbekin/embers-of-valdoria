@@ -67,3 +67,15 @@ Genel: 190 px'lik kesik hedefe ulaşıp görünür gövde açıklığını kaps�
 
 Vuruş anı: #12–#19 (sheet s2–s3), hasar ve darbe anı yerinde. Tam beyaz siluet ortak `setTintFill` darbe parlamasıdır ve bu efektin kusuru sayılmamıştır. Atan sağdaki Skeleton; hedef soldaki kukla ve kesik doğru hedefe ulaşıyor.
 Karar: tamam. Tur 3'te istenen 190 px boy uygulanmış; hedef kapsaması yeterli, örtme kabul edilebilir, akış düzgün, siyah kenar veya kırpılma yok.
+
+## Tur 5 · Codex · kontrol · 2026-10-31
+Yakalama: kullanıcı eki `bs` (iki hedefli Bone Slash).
+Genel: Yakın dövüş Skeleton yürüyerek hedeflere ulaşıp kesiyor; ana ve yan hedefte vuruşlar ayrı ayrı okunuyor.
+
+| Kare | Gözlem | Sonuç |
+|---|---|---|
+| #1–#13 · 17–217 ms | Skeleton hedef hattına yürüyüp ilk mor kesiği indiriyor; ilk hedefte 21 hasar beliriyor. | Yaklaşma ve ilk temas okunaklı. |
+| #19–#37 · 317–617 ms | İlk hedefte etki sürerken ikinci hedefte de 20 hasar görünür; iki hedef de kesiliyor. | İki hedef kapsanıyor. |
+| #43–#67 · 717–1117 ms | Dönüş kesiği mor yayı yan şerit/ikinci hedef tarafına taşıyor; vuruş etkileri sönüyor. | Dönüş kesiği yan hedefe ulaşıyor. Beyaz vuruş silueti ortak motor efekti; kusur değil. |
+
+Karar: tamam; iki hedefli vuruş ve dönüş kesiği doğru.

@@ -4,7 +4,8 @@ import { damageRange, missingHpHealMult, rollCrit, rollDamage, rollHeal, shieldA
 import { cursorAnchorSlot, isShapeArea, screenCellOf, shapeCells, shapeStages, shapeStagesShared } from './area-shape';
 import { pickSideNeighbors } from './formation';
 import { betMultipliers, betStakeParts } from './gamble';
-import { burnAmountFor, emptyProcApplies } from './mana-burn';
+import { burnAmountFor, capBurn, castBurnAmount, emptyProcApplies, groundBurnAmount } from './mana-burn';
+import { dropUnusedMana } from './mana-pool';
 import { Rng } from './rng';
 import { ITEM_HOOK_CAPS } from './item-caps';
 import { isUnblockableHit } from './unblockable';
@@ -346,8 +347,8 @@ export class Battle {
     this.tieFirst = (Math.imul(setup.seed >>> 0, 2654435761) >>> 16) % 2 === 0 ? 'party' : 'enemy';
     this.laterWaves = (setup.waves ?? []).filter((w) => w.enemies.length > 0);
     this.combatants = [
-      ...setup.party.map((d, i) => createSetupCombatant(d, 'party', setup.partySlots?.[i] ?? i, `party-${i}`, setup.partyUnits?.[i], setup.formulas, setup.seed)),
-      ...setup.enemies.map((d, i) => createSetupCombatant(d, 'enemy', setup.enemySlots?.[i] ?? i, `enemy-${i}`, setup.enemyUnits?.[i], setup.formulas, setup.seed)),
+      ...setup.party.map((d, i) => createSetupCombatant(d, 'party', setup.partySlots?.[i] ?? i, `party-${i}`, setup.partyUnits?.[i], setup.formulas, setup.seed, setup.skills)),
+      ...setup.enemies.map((d, i) => createSetupCombatant(d, 'enemy', setup.enemySlots?.[i] ?? i, `enemy-${i}`, setup.enemyUnits?.[i], setup.formulas, setup.seed, setup.skills)),
     ];
     this.treeUnits = this.combatants.some(hasTree);
     this.treeArmorOn = this.treeUnits || this.combatants.some(treeAura);
@@ -363,6 +364,7 @@ export class Battle {
       const ratio = c.maxHp > 0 ? c.hp / c.maxHp : 1;
       c.stats = { ...def.stats };
       rollSpeed(c, this.seed, setup.formulas); // statlar yeniden türedi: kişisel hız zarı yeniden (aynı uid = aynı zar)
+      dropUnusedMana(c, setup.skills); // statlar yeniden türedi: MP kullanmayan çağrının havuzu yine yok
       c.maxHp = def.stats.hp;
       const finite = (v: number | undefined): v is number => v !== undefined && Number.isFinite(v);
       c.hp = Math.max(1, Math.min(c.maxHp, Math.round(finite(unit?.startHp) ? unit.startHp : c.maxHp * ratio)));
@@ -571,19 +573,26 @@ export class Battle {
   }
 
   /**
-   * Blok şansı (Ömer 2026-10-18; 0-1): `target`'ın kalkanı (item kancası `blockChance`, tavan items.json > caps.block) `actor`'ün bu hasar
-   * etkisini bloklayabilir mi (blockableHit). İsabet zarsız (sure) vuruşu çağıran eler. Önizleme / YZ isabet şansını x(1 - blok) ile çarpar.
+   * Blok şansı (Ömer 2026-10-18; 0-1): `target`'ın kalkanı (item kancası `blockChance`, kalkanlı mobda tanım değeri) `actor`'ün bu hasar
+   * etkisini bloklayabilir mi (blockableHit). Saldırganın Block Break'i doğrudan çıkar (Ömer 2026-10-31: Block - Block Break, en az 0; sonuç olasılık
+   * olduğu için 1'i aşmaz). İsabet zarsız (sure) vuruşu çağıran eler. Önizleme / YZ isabet şansını x(1 - blok) ile çarpar.
    */
   blockChance(actor: Combatant, target: Combatant, effect: Pick<DamageEffect, 'damageType' | 'unblockable'>, skill?: Pick<SkillDef, 'telegraph'> | null): number {
     const c = this.unitBlockChance(target);
     if (!(c > 0) || !this.blockableHit(actor, target, effect, skill)) return 0;
-    return c;
+    return Math.min(1, Math.max(0, c - this.unitBlockBreak(actor)));
   }
 
-  /** Birimin kalkan blok şansı (0-1; tavan dahil, kalkansızda 0). Savaş birim kartı "BLOCK n%" satırı bunu gösterir. Saf. */
-  unitBlockChance(c: Partial<Pick<Combatant, 'itemEffects' | 'treeFx'>>): number {
-    const v = effNum(c, 'blockChance');
-    return v > 0 ? Math.min(ITEM_HOOK_CAPS.block, v) : 0;
+  /** Birimin kalkan blok şansı (kalkansızda 0; item + ağaç + kalkanlı mobun tanım değeri). Savaş birim kartı "BLOCK n%" satırı bunu gösterir. Saf. */
+  unitBlockChance(c: Partial<Pick<Combatant, 'itemEffects' | 'treeFx' | 'defBlock'>>): number {
+    const v = effNum(c, 'blockChance') + (c.defBlock ?? 0);
+    return v > 0 ? v : 0;
+  }
+
+  /** Birimin Block Break değeri (oran; yoksa 0). Birim kartı "BLOCK BREAK n%" satırı bunu gösterir. Saf. */
+  unitBlockBreak(c: Partial<Pick<Combatant, 'itemEffects' | 'treeFx'>>): number {
+    const v = effNum(c, 'blockBreak');
+    return v > 0 ? v : 0;
   }
 
   /**
@@ -876,7 +885,7 @@ export class Battle {
     const sure = forceCrit || !!dm?.guaranteedCrit;
     const rolled = dm?.noCrit ? { crit: false } : sure ? { crit: true } : rollCrit({ critChance: dm?.critBonus ? Math.min(1, Math.max(0, critChance + dm.critBonus)) : critChance, critMult }, this.rng);
     const crit = this.debug.crit === 'auto' ? rolled.crit : sure && !dm?.noCrit ? this.debug.crit !== 'never' : this.debug.crit === 'always';
-    const total = Math.max(f.damage.minDamage, Math.round(base * (crit ? critMult * (dm?.critDmg ?? 1) : 1) * this.debug.damageMult * (dm?.power ?? 1)));
+    const total = Math.max(f.damage.minDamage, Math.round(base * (crit ? (critMult + (dm?.critMultAdd ?? 0)) * (dm?.critDmg ?? 1) : 1) * this.debug.damageMult * (dm?.power ?? 1)));
     if (dm && owner) this.treeProcAll(owner.uid, dm.nodes);
     const meta: HitMeta = { origin: cause === 'expire' ? 'status' : 'skill', element: doom.element, damageType: doom.damageType, status: status.kind };
     const guard = cause === 'expire' ? undefined : target.statuses.find((s) => s.kind === 'guard');
@@ -1317,6 +1326,7 @@ export class Battle {
       if (m.lifestealMul) out.lifestealMul *= Math.max(0, 1 + m.lifestealMul * s);
       if (m.guaranteedCrit) out.guaranteedCrit = true;
       if (m.critDmgMul) out.critDmg *= Math.max(0, 1 + m.critDmgMul * s);
+      if (m.critMultAdd) out.critMultAdd += m.critMultAdd * s;
       if (m.sureHit) out.sureHit = true;
       if (m.noCrit) out.noCrit = true;
       if (m.falloffAdd) out.falloffAdd += m.falloffAdd * s;
@@ -1374,7 +1384,7 @@ export class Battle {
     if (!actor.treeHooks) return base;
     const pre = this.treeMods(actor, target, skill, effect, q);
     const late = this.treeMods(actor, target, skill, effect, { ...q, late: true, crit: true });
-    return base * (pre?.critDmg ?? 1) * (late?.critDmg ?? 1);
+    return (base + (pre?.critMultAdd ?? 0)) * (pre?.critDmg ?? 1) * (late?.critDmg ?? 1);
   }
 
   /**
@@ -2676,12 +2686,8 @@ export class Battle {
     for (const g of [...this.ground]) {
       if (g.board !== actor.board || !g.slots.includes(actor.slot) || g.sourceSide === actor.side || actor.hp <= 0) continue;
       const def = this.setup.grounds?.[g.ground];
-      if (!def?.manaBurnPct || !(actor.maxMp > 0 && actor.mp > 0)) continue;
-      const src = this.get(g.source) ?? actor;
-      const burn = Math.min(actor.mp, Math.max(1, Math.round(actor.maxMp * def.manaBurnPct)));
-      actor.mp -= burn;
-      emit({ type: 'resource', actor: actor.uid, resource: 'mp', amount: burn, after: actor.mp });
-      this.brandBurn(src, actor, burn, actor.mp + burn, emit); // Ley Brand
+      if (!def?.manaBurnPct) continue;
+      this.burnMp(this.get(g.source) ?? actor, actor, groundBurnAmount(actor, def.manaBurnPct), emit, { cause: g.ground });
     }
   }
 
@@ -5825,16 +5831,13 @@ export class Battle {
             const burned = bm && (bm.sum.manaBurnAdd || bm.sum.manaBurnMul !== undefined) ? Math.min(target.mp, Math.max(0, Math.round((burned0 + (bm.sum.manaBurnAdd ?? 0)) * (bm.sum.manaBurnMul ?? 1)))) : burned0;
             const empties = burned !== burned0 ? !!effect.onEmpty && target.hp > 0 && target.maxMp > 0 && target.mp - burned <= 0 : emptyProcApplies(effect, target);
             if (bm?.nodes.length) this.treeProcAll(actor.uid, bm.nodes);
-            if (burned > 0) {
-              target.mp -= burned;
-              total += burned;
-              emit({ type: 'manaBurn', source: actor.uid, target: target.uid, amount: burned, mpAfter: target.mp });
-              if (this.trigOn) {
+            total += this.burnMp(actor, target, burned, emit, {
+              onBurn: () => {
+                if (!this.trigOn) return;
                 this.trig([actor], { on: 'manaBurned', target, subject: target, skill: skill.id, amount: burned }, emit);
                 if (mpBefore > 0 && target.mp <= 0) this.trig([actor], { on: 'mpEmptied', target, subject: target, skill: skill.id, amount: burned }, emit);
-              }
-              this.brandBurn(actor, target, burned, mpBefore, emit); // Ley Brand: Branded hedefin yanan MP'si yakana hasar
-            }
+              },
+            });
             // Mana boşaldı (bu yakımla 0'a indi ya da zaten 0'dı): hedef başına bağımsız zar; tutarsa durum (Silence) + isabet zarsız hasar
             const spec = effect.onEmpty;
             if (!spec || !empties) continue;
@@ -6151,6 +6154,7 @@ export class Battle {
             const act = ts.hooks.find((h): h is RuleHook => h.h === 'rule' && h.rule === 'actions');
             if (act && (act.n ?? 1) > 1) summoned.actionsPerTurn = Math.floor(act.n!);
           }
+          dropUnusedMana(summoned, this.setup.skills); // MP kullanmayan çağrı havuzsuz (ağaç yamaları yerleştikten sonra)
           this.combatants.push(summoned);
           emit({ type: 'summon', actor: actor.uid, combatant: cloneCombatant(summoned), ...(empowered !== undefined ? { empowered } : {}) });
           // Faz 4c: sahaya indi (dinleyen çağrının kendisi; hedef = çağrı)
@@ -6596,7 +6600,7 @@ export class Battle {
         const { startDead: _dead, owner: _owner, ...rest } = given;
         unit = rest;
       }
-      const c = createSetupCombatant(d, 'enemy', slot, uidOf(i), unit, this.setup.formulas, this.seed);
+      const c = createSetupCombatant(d, 'enemy', slot, uidOf(i), unit, this.setup.formulas, this.seed, this.setup.skills);
       if (hasTree(c)) this.treeUnits = true;
       if (hasTree(c) || treeAura(c)) this.treeArmorOn = true;
       if (wave !== undefined) c.wave = wave;
@@ -7019,6 +7023,21 @@ export class Battle {
   }
 
   /**
+   * TEK mana yakma yolu (Ömer 2026-10-31): hedefin MP'sinden `amount` (mevcut MP ile sınırlı: capBurn) düşer, her zaman `manaBurn` olayı ("-N MP" yazısı, kayıt),
+   * ardından `onBurn` (yalnız skill yakımı: ağaç tetikleri) ve Branded hedefte brandBurn hasarı. Yakım yoksa hiçbir şey olmaz. Dönen: yanan MP.
+   */
+  private burnMp(source: Combatant, target: Combatant, amount: number, emit: Emit, o: { cause?: string; onBurn?: () => void; hurt?: boolean } = {}): number {
+    const burn = capBurn(target.mp, amount);
+    if (burn <= 0) return 0;
+    const mpBefore = target.mp;
+    target.mp -= burn;
+    emit({ type: 'manaBurn', source: source.uid, target: target.uid, amount: burn, mpAfter: target.mp, ...(o.cause ? { cause: o.cause } : {}) });
+    o.onBurn?.();
+    if (o.hurt !== false) this.brandBurn(source, target, burn, mpBefore, emit);
+    return burn;
+  }
+
+  /**
    * Branded hedef MP kaybetti (yakma / çalma / Spell Ward yakması / zemin yakması): yakana kaybedilen MP x burnPct büyü hasarı (isabet / kritik yok,
    * büyü zırhı ve element zayıflığı işler: tickDamage, DoT tikiyle aynı kural). `silence` (ağaç, Hush of the Brand): MP'si bu kayıpla 0'a inen hedef Silenced.
    */
@@ -7044,15 +7063,13 @@ export class Battle {
   private brandCastBurn(actor: Combatant, st: Status, paid: number, emit: Emit): void {
     const b = st.brand;
     if (!b?.castBurnPct || paid <= 0 || actor.mp <= 0) return;
-    const burn = Math.min(actor.mp, Math.round(paid * b.castBurnPct));
+    const burn = castBurnAmount(paid, b.castBurnPct, actor.mp);
     if (burn <= 0) return;
     const src = this.get(st.source) ?? actor;
-    const mpBefore = actor.mp;
-    actor.mp -= burn;
     emit({ type: 'passive', actor: actor.uid, passive: 'ley_brand', name: 'Brand Burn' });
-    emit({ type: 'manaBurn', source: src.uid, target: actor.uid, amount: burn, mpAfter: actor.mp });
-    if (actor.statuses.includes(st)) this.brandBurn(src, actor, burn, mpBefore, emit);
-    else {
+    const live = actor.statuses.includes(st); // Branded kullanımda silindiyse hasar ödeme anındaki örnekten (aşağıda)
+    this.burnMp(src, actor, burn, emit, { hurt: live });
+    if (!live) {
       const raw = Math.round(burn * b.burnPct);
       if (raw > 0) {
         this.applyHit(src, actor, this.tickDamage(b.element, 'magic', raw, actor), 'magic', false, emit, false, { origin: 'status', element: b.element, damageType: 'magic', status: 'branded' });
@@ -7305,7 +7322,7 @@ export class Battle {
     let mana = 0;
     // Madde 241 (Ömer): her şey kalkanın emdiği HER darbede (çok vuruşlu saldırı = her vuruşta)
     if (attacker.hp > 0) {
-      if (spec.burnMana) burned = Math.max(0, Math.min(attacker.mp, spec.burnMana));
+      if (spec.burnMana) burned = capBurn(attacker.mp, spec.burnMana);
       if (spec.dispelChance) {
         const pool = this.dispelCandidates(attacker, 'buff');
         // zar yalnızca silinecek buff varken; silinecek buff RASTGELE biri (seed'li RNG; ikinci sayı yalnızca birden çok aday varsa)
@@ -7315,11 +7332,7 @@ export class Battle {
     if (spec.giveMana && bearer.hp > 0 && bearer.maxMp > 0) mana = Math.max(0, Math.min(Math.round(spec.giveMana), this.mpRoom(bearer)));
     if (burned <= 0 && !dispelled && mana <= 0) return;
     emit({ type: 'shieldTrigger', bearer: bearer.uid, caster: hook.caster, attacker: attacker.uid, skill: hook.skill, absorbed: part, ...(burned > 0 ? { burned } : {}), ...(dispelled ? { dispelled: dispelled.kind } : {}), ...(mana > 0 ? { mana } : {}) });
-    if (burned > 0) {
-      attacker.mp -= burned;
-      emit({ type: 'manaBurn', source: bearer.uid, target: attacker.uid, amount: burned, mpAfter: attacker.mp, cause: hook.skill });
-      this.brandBurn(bearer, attacker, burned, attacker.mp + burned, emit); // Ley Brand: kalkanın yaktığı MP de hasar (kaynak: kalkanı taşıyan)
-    }
+    this.burnMp(bearer, attacker, burned, emit, { cause: hook.skill }); // Ley Brand hasarının kaynağı kalkanı taşıyan
     if (dispelled) {
       attacker.statuses = attacker.statuses.filter((s) => s !== dispelled);
       emit({ type: 'statusEnd', target: attacker.uid, status: dispelled.kind, dispelled: true, source: bearer.uid, cause: hook.skill });
@@ -7528,7 +7541,7 @@ export class Battle {
     }
     // Ağaç: kritik çarpanı (critDmgMul), vuruş sonrası kancalar (hitIsCrit: güç / zırh delme / kritik çarpanı / düz ek) ve düz hasar (flatDamage)
     const late = actor.treeHooks ? this.lateDamage(actor, target, this.castingSkill, baseEffect, spec, crit, tq) : null;
-    const mult = crit ? actor.stats.critMult * (treeMods?.critDmg ?? 1) * (late?.critDmg ?? 1) : 1;
+    const mult = crit ? (actor.stats.critMult + (treeMods?.critMultAdd ?? 0)) * (treeMods?.critDmg ?? 1) * (late?.critDmg ?? 1) : 1;
     const flat = (treeMods?.flat ?? 0) + (late?.flat ?? 0);
     // openingDamageMult (endless Banner of the Bridge): yalnızca birimin ilk eyleminde; yoksa x1 (sonuç birebir aynı)
     const raw = base * mult * this.debug.damageMult * (actor.openingDamageMult ?? 1) * (actor.empowerMult ?? 1);
@@ -8790,6 +8803,7 @@ function createCombatant(def: CombatantDef, side: Side, slot: number, uid: strin
     name: def.name,
     spriteId: def.spriteId,
     ...(def.spriteScale ? { spriteScale: def.spriteScale } : {}),
+    ...(def.blockChance ? { defBlock: def.blockChance } : {}),
     color: def.color,
     logo: def.logo,
     side,
@@ -8831,8 +8845,9 @@ function rollSpeed(c: Combatant, seed: number, formulas: Formulas, preset?: numb
 }
 
 /** Savaş kurulumundaki birim + kişisel hız zarı (bkz. rollSpeed; kahramanın kalıcı zarı UnitSetup.modifiers.spdRoll ile gelir). */
-function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, uid: string, unit: UnitSetup | undefined, formulas: Formulas, seed: number): Combatant {
+function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, uid: string, unit: UnitSetup | undefined, formulas: Formulas, seed: number, skills: Record<string, SkillDef>): Combatant {
   const c = buildSetupCombatant(baseDef, side, slot, uid, unit, formulas);
+  dropUnusedMana(c, skills); // manayı hiçbir yolla kullanamayan birim MP havuzsuz (Ömer 2026-10-31; ağaç / item / biçim yerleştikten sonra)
   rollSpeed(c, seed, formulas, unit?.modifiers?.spdRoll);
   return c;
 }

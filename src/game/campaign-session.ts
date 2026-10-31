@@ -333,6 +333,16 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
         if (replay.length) replayActions(battle, replay);
         startRecording(battle, plan, replay);
       },
+      // Savaş Menu'sü > Load (yalnız Normal mod; Ömer 2026-10-31): savaş temiz kapanır (kayıt durur, duraklatma kaydı yazılmaz), harita
+      // Menu > Load'daki yuva ekranıyla açılır. Ironman'de yok.
+      ...(st.mode === 'normal'
+        ? {
+            load: () => {
+              stopRecording();
+              screenGo(game.scene.getScene(BATTLE_SCENE) as Phaser.Scene, MAP_SCENE, { openLoad: true });
+            },
+          }
+        : {}),
       retreat: () => {
         if (pitRetreat) endPitRun();
         else if (patrolRetreat) retreatPatrolToMap();

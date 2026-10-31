@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { content } from '../engine';
-import { CONFIG, activeHeroes, hotspotOffered, idleStartFrame, hotspotRect, leaderOf, nextStep, partySpots, smithHotspot, townCover, townScene, type CampaignState, type Cover, type MapNode, type TownHotspot } from '../campaign';
+import { CONFIG, activeHeroes, hotspotOffered, idleStartFrame, hotspotRect, leaderOf, nextStep, partySpots, smithHotspot, townCover, townRecruitOffer, townScene, type CampaignState, type Cover, type MapNode, type TownHotspot } from '../campaign';
 import { animKey, characterTexture } from './assets';
 import { H, W, crown } from './campaign-ui';
 import { checkpoint, setState } from './campaign-session';
@@ -49,6 +49,8 @@ export class TownScreen {
   private hovered: string | null = null;
   private painters = new Map<string, (on: boolean) => void>();
   private destroyed = false;
+  /** Katılmayı bekleyen aday olan yer (kışla): rozeti ve bant yazısı bunun için; aday alınınca bir sonraki çizimde kalkar. */
+  private recruitSpot: string | null = null;
   /** Açık Inn ekranı (DOM; Ömer 2026-10-26): kapatma işlevi. */
   private closeInn: (() => void) | null = null;
   /** Açık demirci ekranı (DOM; TUR 1 madde 7): kapatma işlevi. */
@@ -164,6 +166,21 @@ export class TownScreen {
     fadeLine(lines, W / 2, W / 2 + 300, 80, EL.GOLD, 0.45, 'out');
     this.root.add(lines);
     this.root.add(elBody(s, W / 2, 104, this.node.subtitle, this.hooks.compact() ? 28 : 21, EL.MUTED).setOrigin(0.5));
+    // Katılmayı bekleyen aday (oyunun kendi bilgisi: townRecruitOffer): yerin üstünde rozet + bantta kısa yazı; aday alınınca ikisi de kalkar
+    const st0 = this.hooks.state();
+    const waiting = def && townRecruitOffer(st0).length > 0 ? def.hotspots.find((h) => h.action === 'recruit' && hotspotOffered(this.node, h, st0)) : undefined;
+    this.recruitSpot = waiting?.id ?? null;
+    if (waiting) {
+      const bd = CONFIG.townScreen.recruitBadge;
+      const line = (CONFIG.texts['townRecruitWaiting'] ?? 'A recruit waits at the {place}').replace('{place}', waiting.label);
+      const by = this.hooks.compact() ? bd.bandYPhone : bd.bandY;
+      const txt = elBody(s, W / 2, by, line, this.hooks.compact() ? 28 : 21, EL.ON).setOrigin(0.5);
+      const pad = this.hooks.compact() ? 22 : 18;
+      const plate = s.add.graphics(); // açık gökyüzünde okunsun: yarı saydam koyu hap
+      plate.fillStyle(0x0c0906, 0.72).fillRoundedRect(W / 2 - txt.width / 2 - pad, by - txt.height / 2 - 6, txt.width + pad * 2, txt.height + 12, (txt.height + 12) / 2);
+      plate.lineStyle(1.5, EL.ON_N, 0.45).strokeRoundedRect(W / 2 - txt.width / 2 - pad, by - txt.height / 2 - 6, txt.width + pad * 2, txt.height + 12, (txt.height + 12) / 2);
+      this.root.add([plate, txt]);
+    }
     if (def) for (const h of def.hotspots) if (hotspotOffered(this.node, h, this.hooks.state())) this.addHotspot(h, cover); // dinlenmiş hikâyenin NPC'si yok
     // Demirci (TUR 1 madde 7): yeri campaign.json > blacksmith.hotspots'ta (kasabanın kendi verisi değil)
     const smith = smithHotspot(this.node);
@@ -248,6 +265,7 @@ export class TownScreen {
     text.setPosition(tx, ly);
     tap.setPosition(lx, ly + ph / 2 + 4);
     this.root.add([plate, text, tap]);
+    if (h.id === this.recruitSpot) this.addRecruitBadge(lx + pw / 2 - ph * 0.2, ly - ph / 2, ph);
     if (icoSize) this.root.add(s.add.image(lx - pw / 2 + icoSize * 0.62, ly, ensureIcon(s, 'town:inn', '#ffffff', false)).setDisplaySize(icoSize, icoSize));
     const zone = s.add.zone(r.x, r.y, r.w, r.h).setOrigin(0, 0).setInteractive({ useHandCursor: true });
     // Etiket plakası da aynı yere götürür (telefonda küçük nesneler için daha büyük hedef)
@@ -262,6 +280,21 @@ export class TownScreen {
       tap.setAlpha(on && this.selected === id ? 1 : 0);
     });
     for (const z of [zone, labelZone]) this.bindTap(z, id, () => this.onSpot(h));
+  }
+
+  /** Aday rozeti: etiket plakasının sağ üst köşesinde kor yuvarlak + "!"; hafif nabız (Reduced motion: yok). Değerler campaign.json > townScreen.recruitBadge. */
+  private addRecruitBadge(x: number, y: number, ph: number): void {
+    const s = this.scene;
+    const bd = CONFIG.townScreen.recruitBadge;
+    const r = (ph * bd.size) / 2;
+    const c = s.add.container(x, y);
+    const g = s.add.graphics();
+    g.fillStyle(0x0c0906, 0.95).fillCircle(0, 0, r + 2);
+    g.fillStyle(EL.EMBER, 1).fillCircle(0, 0, r);
+    g.lineStyle(1.5, EL.ON_N, 0.95).strokeCircle(0, 0, r);
+    c.add([g, elText(s, 0, 1, '!', Math.round(r * 1.5), '#1a0f08', { em: 0 }).setOrigin(0.5)]);
+    this.root.add(c);
+    if (!reducedMotion()) s.tweens.add({ targets: c, scale: bd.pulseScale, duration: bd.pulseMs, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 
   /** Takım: alttaki açık alanda ayakta (gerçek sprite ya da yer tutucu), adı ayaklarının altında, liderin üstünde taç. */

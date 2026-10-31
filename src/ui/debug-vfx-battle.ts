@@ -72,6 +72,8 @@ interface PanelHandle {
   pick: (skill: string) => boolean;
   version: (v: Version) => void;
   busy: () => boolean;
+  /** Yakalama aracının izleyeceği sheet adları (varsayılan: girdinin anahtarı). */
+  track: (skill: string) => string[];
 }
 let openPanel: PanelHandle | null = null;
 /** Açık VFX test panelinin otomasyon tutamacı (tools/anim-capture.mjs). */
@@ -97,12 +99,18 @@ interface TestSkill {
   casterHp?: number;
   /** Atıştan sonra savaş sıfırlanmaz (atan bir çağrı: sıfırlama çağrıları kaldırır, ikinci atış olmazdı; Skeleton). */
   keepAfter?: boolean;
+  /** Kuklanın yanına konan ikinci kukla (aynı birim) ve hücresi: ceset senaryosu (debugCastSkill en arkadakini öldürür), yan şerit vuruşu. */
+  dummy2Slot?: number;
+  /** Dostun hücresi (varsayılan battleTest.allySlot) ve atışın hedefi: uzak dost dizilimi (Dark Bond). */
+  allySlot?: number;
+  /** Yakalama aracının izleyeceği sheet adları (varsayılan: `key`; anahtar sheet adında geçmeyince gerekir). */
+  track?: string[];
 }
 /**
  * SINIF efektleri (mob değil; Ömer 2026-10-29 Mage / AM reworkü, v2 sınıf efektleri art-v2/<sınıf>/vfx.ts). Atan sınıf birimi düşman tarafında;
  * pasif / durum olay efektleri (passive_<id>, status_<id> ...) bir skill'in yan sonucu olarak oynar.
  */
-const CLASS_TESTS: ReadonlyArray<{ key: string; skill: string; caster: string; label?: string; dummy?: string; dummySlot?: number; pre?: string[]; casterHp?: number; keepAfter?: boolean }> = [
+const CLASS_TESTS: ReadonlyArray<{ key: string; skill: string; caster: string; label?: string; dummy?: string; dummySlot?: number; pre?: string[]; casterHp?: number; keepAfter?: boolean; dummy2Slot?: number; allySlot?: number; track?: string[] }> = [
   { key: 'ice_crater', skill: 'ice_crater', caster: 'mage' },
   { key: 'ice_crater_crash', skill: 'ice_crater', caster: 'mage', dummySlot: 10, label: 'Ice Crater crash (dummy on the back row: pushed into the edge)' },
   { key: 'heat_mirage', skill: 'rend', caster: 'grey_wolf', dummy: 'mage', label: 'Heat Mirage (Grey Wolf bites the Mage)' },
@@ -113,9 +121,12 @@ const CLASS_TESTS: ReadonlyArray<{ key: string; skill: string; caster: string; l
   { key: 'bone_throw', skill: 'bone_throw', caster: 'undead' },
   { key: 'wail_of_the_dead', skill: 'wail_of_the_dead', caster: 'undead' },
   { key: 'dark_bond', skill: 'dark_bond', caster: 'undead' },
+  { key: 'dark_bond_far', skill: 'dark_bond', caster: 'undead', allySlot: 11, label: 'Dark Bond (far ally: back row, other lane)', track: ['dark_bond'] },
   { key: 'raise_dead', skill: 'raise_dead', caster: 'undead', label: 'Raise Dead (no corpse: unfed skeleton)' },
+  { key: 'raise_dead_fed', skill: 'raise_dead', caster: 'undead', dummy2Slot: 10, label: 'Raise Dead (corpse consumed: fed skeleton)', track: ['raise_dead', 'vampiric_bite'] },
   { key: 'vampiric_bite', skill: 'wail_of_the_dead', caster: 'undead', label: 'Vampiric Bite (Undead at half HP drains life with Wail)', casterHp: 0.5 },
   { key: 'bone_slash', skill: 'skeleton_slash', caster: 'skeleton', label: 'Bone Slash (Skeleton)', keepAfter: true },
+  { key: 'bone_slash_wide', skill: 'skeleton_slash', caster: 'skeleton', dummy2Slot: 2, label: 'Bone Slash (two targets: side lane too)', keepAfter: true, track: ['bone_slash'] },
 ];
 /** Tüm mob skill'leri, sahibine göre gruplu (MOB_VFX_SPECS sırası; aynı mob'un skill'leri yan yana). */
 function testSkills(): TestSkill[] {
@@ -133,7 +144,7 @@ function testSkills(): TestSkill[] {
     const unit = content.classes[t.caster] ?? content.summons[t.caster] ?? content.bosses[t.caster] ?? content.mobs[t.caster];
     const tgt = content.skills[t.skill]?.target;
     const ally = tgt === 'single_ally' || tgt === 'all_allies';
-    return { key: t.key, skill: t.skill, label: t.label ?? content.skills[t.skill]?.name ?? t.skill, mob: t.caster, mobName: `${unit?.name ?? t.caster} (class effects)`, ally, ...(t.dummy ? { dummy: t.dummy } : {}), ...(t.dummySlot !== undefined ? { dummySlot: t.dummySlot } : {}), ...(t.pre ? { pre: t.pre } : {}), ...(t.casterHp !== undefined ? { casterHp: t.casterHp } : {}), ...(t.keepAfter ? { keepAfter: true } : {}) };
+    return { key: t.key, skill: t.skill, label: t.label ?? content.skills[t.skill]?.name ?? t.skill, mob: t.caster, mobName: `${unit?.name ?? t.caster} (class effects)`, ally, ...(t.dummy ? { dummy: t.dummy } : {}), ...(t.dummySlot !== undefined ? { dummySlot: t.dummySlot } : {}), ...(t.pre ? { pre: t.pre } : {}), ...(t.casterHp !== undefined ? { casterHp: t.casterHp } : {}), ...(t.keepAfter ? { keepAfter: true } : {}), ...(t.dummy2Slot !== undefined ? { dummy2Slot: t.dummy2Slot } : {}), ...(t.allySlot !== undefined ? { allySlot: t.allySlot } : {}), ...(t.track ? { track: t.track } : {}) };
   });
   return [...byMob.values()].flat().concat(cls);
 }
@@ -164,7 +175,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   let seed = 0;
   const tweenOk = SK.map((s) => tweenExists(s.mob, s.skill));
   let builtFor = ''; // savaşın kurulduğu düzen (atan mob + dost): aynıysa skill değişince yalnızca atılır
-  const layoutKey = (i: number): string => `${SK[i]!.mob}|${SK[i]!.ally ? 1 : 0}|${SK[i]!.dummy ?? ''}|${SK[i]!.dummySlot ?? ''}`;
+  const layoutKey = (i: number): string => `${SK[i]!.mob}|${SK[i]!.ally ? 1 : 0}|${SK[i]!.dummy ?? ''}|${SK[i]!.dummySlot ?? ''}|${SK[i]!.dummy2Slot ?? ''}|${SK[i]!.allySlot ?? ''}`;
 
   const mk = (txt: string, title: string, fn: () => void, cls = ''): HTMLButtonElement => {
     const b = el('button', `el-icon-btn vb-btn ${cls}`, txt);
@@ -391,7 +402,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
           const c = sc.battle.get(caster);
           if (c) sc.battle.debugSetResource(caster, 'hp', Math.max(1, Math.round(c.maxHp * sk.casterHp)));
         }
-        if (!err) err = await sc.vfxTestCast(sk.skill, caster, DUMMY, { ...(sk.pre?.length ? { keepBefore: true } : {}), ...(sk.keepAfter ? { keepAfter: true } : {}) });
+        if (!err) err = await sc.vfxTestCast(sk.skill, caster, DUMMY, { ...(sk.pre?.length ? { keepBefore: true } : {}), ...(sk.keepAfter ? { keepAfter: true } : {}), ...(sk.allySlot !== undefined ? { aimSlot: sk.allySlot } : {}) });
         if (myGen !== gen || !alive) return;
         if (err) {
           info.textContent = `Cast failed: ${err}`;
@@ -418,13 +429,14 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     builtFor = layoutKey(state.skill);
     const cells = (units: Array<[number, string]>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => units.find(([s]) => s === i)?.[1] ?? '');
     // dost hedefli skill: dost daha küçük yuvada (debug atışı en küçük yuvadaki dostu seçer; kendisi hariç skill'ler de çalışsın)
-    const enemies: Array<[number, string]> = sk.ally ? [[BT.casterSlot, mob], [BT.allySlot, BT.allyMob]] : [[BT.casterSlot, mob]];
+    const enemies: Array<[number, string]> = sk.ally ? [[BT.casterSlot, mob], [sk.allySlot ?? BT.allySlot, BT.allyMob]] : [[BT.casterSlot, mob]];
+    const party: Array<[number, string]> = [[sk.dummySlot ?? BT.dummySlot, sk.dummy ?? BT.dummy], ...(sk.dummy2Slot !== undefined ? ([[sk.dummy2Slot, sk.dummy ?? BT.dummy]] as Array<[number, string]>) : [])];
     seed = newSeed();
     const data = {
       seed,
       mode: 'test' as const,
-      teams: { party: cells([[sk.dummySlot ?? BT.dummySlot, sk.dummy ?? BT.dummy]]), enemies: cells(enemies) },
-      partySize: 1,
+      teams: { party: cells(party), enemies: cells(enemies) },
+      partySize: party.length,
       enemySize: enemies.length,
       background: BT.background,
     };
@@ -496,6 +508,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
       sync();
     },
     busy: () => casting || !sceneNow(),
+    track: (skill) => SK.find((s) => s.key === skill)?.track ?? [skill],
   };
   root.append(panel);
   sync();

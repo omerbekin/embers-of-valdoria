@@ -48,3 +48,8 @@ export function previewStatusText(line: string, defs: Record<string, StatusDef |
   }
   return line;
 }
+
+/** Birim kartı EFFECTS satırının açıklaması: durumun kendi cümlesi (kimliği değil). */
+export function statusCardText(def: StatusDef | undefined): string {
+  return (def as { text?: string } | undefined)?.text ?? '';
+}

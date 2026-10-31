@@ -214,9 +214,9 @@ new GameMenu(document.getElementById('ui-root')!, {
   retreatLabel: () => battleNow()?.campaign?.retreatLabel,
   retreatConfirm: () => battleNow()?.campaign?.retreatConfirm,
   // Sefer haritası Menu'sü (aynı bileşen; Ömer 2026-10-10): sahnenin durumu ve Save / Load
-  mapMenu: () => mapNow()?.menuState() ?? null,
+  mapMenu: () => mapNow()?.menuState() ?? (battleNow()?.campaign?.load ? { available: true, save: null, load: true } : null),
   save: () => mapNow()?.menuSave(),
-  load: () => mapNow()?.menuLoad(),
+  load: () => (mapNow() ? mapNow()!.menuLoad() : battleNow()?.campaign?.load?.()),
   onOpen: () => {
     debugState.uiPaused = true;
     battleNow()?.applyDebugTiming();

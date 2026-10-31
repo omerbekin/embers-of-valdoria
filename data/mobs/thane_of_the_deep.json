@@ -18,6 +18,7 @@
   },
   "armor": 8,
   "magicArmor": 0,
+  "blockChance": 0.18,
   "overrides": {
     "hp": 125
   },

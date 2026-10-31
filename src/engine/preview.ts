@@ -1,7 +1,7 @@
 import type { Battle } from './battle';
 import { damageRange, healRange, missingHpHealMult } from './formulas';
 import { betMultipliers, betStakeParts } from './gamble';
-import { burnAmountFor, emptyProcApplies } from './mana-burn';
+import { burnAmountFor, castBurnAmount, emptyProcApplies } from './mana-burn';
 import { skillCostPay } from './cost';
 import { damageSpecFor, type DamageEffect } from './spec';
 import { slotOfTileUid } from './battle';
@@ -440,7 +440,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
   if (cb?.castBurnPct) {
     const pay = skillCostPay(skill.cost, actor);
     if (pay.resource === 'mp' && pay.amount > 0) {
-      const mp = Math.min(Math.max(0, actor.mp - pay.amount), Math.round(pay.amount * cb.castBurnPct));
+      const mp = castBurnAmount(pay.amount, cb.castBurnPct, Math.max(0, actor.mp - pay.amount));
       const raw = Math.round(mp * cb.burnPct);
       if (mp > 0) entry(actor.uid).castBurn = { mp, damage: raw > 0 ? battle.tickDamage(cb.element, 'magic', raw, actor) : 0 };
     }

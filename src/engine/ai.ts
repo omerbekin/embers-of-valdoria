@@ -7,6 +7,7 @@ import { previewForTargets } from './preview';
 import { manaShieldNeed, type TriggerAction } from './tree-hooks';
 import { armorReduction, attributePower, hitChance } from './stats';
 import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet } from './types';
+import { capBurn, castBurnAmount, groundBurnAmount } from './mana-burn';
 import { DEFAULT_VALUE, ValueContext, coverageOf, pAtLeast, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
 
 export type { AiDifficulty, AiDifficultyConfig, AiValueConfig } from './ai-value';
@@ -1167,7 +1168,7 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
   // Kalkan kancası (Spell Ward onAbsorb.burnMana): kalkanın emebileceği saldırganlardan (büyü kalkanı: büyü hasarlı düşmanlar) en çok yakılabilecek MP
   for (const e of skill.effects) {
     if (e.type !== 'shield' || !e.onAbsorb?.burnMana) continue;
-    const burn = Math.max(0, ...battle.living(foeSide(actor)).filter((f) => (e.shieldType === 'magic' ? hasMagicAttack(battle, f) : hasAttack(battle, f))).map((f) => Math.min(f.mp, e.onAbsorb!.burnMana!)));
+    const burn = Math.max(0, ...battle.living(foeSide(actor)).filter((f) => (e.shieldType === 'magic' ? hasMagicAttack(battle, f) : hasAttack(battle, f))).map((f) => capBurn(f.mp, e.onAbsorb!.burnMana!)));
     o.burn += burn;
     o.wardBurn = { amount: e.onAbsorb.burnMana, magic: e.shieldType === 'magic' };
   }
@@ -1330,6 +1331,15 @@ function bestAttackAvg(battle: Battle, attacker: Combatant, victim: Combatant): 
   return top;
 }
 
+/**
+ * Skill'in hedefte Block'tan geçme payı (1 - blok; Block Break düşülmüş): önizlemenin `hitChance`'i bunu içerir, burada elle hesaplanan "sonraki isabet" de
+ * aynı ölçüde olmalı. Kalkansızda 1. Saf.
+ */
+function passBlock(battle: Battle, attacker: Combatant, victim: Combatant, sk: SkillDef): number {
+  const e = sk.effects.find((x) => x.type === 'damage');
+  return e && e.type === 'damage' ? 1 - battle.blockChance(attacker, victim, e, sk) : 1;
+}
+
 /** `attacker` -> `victim` en iyi saldırısının beklenen hasar KAZANCI, hedefin kaçınması `eva` kadar düşünce (Saltbound noEvasion). */
 function hitGain(battle: Battle, attacker: Combatant, victim: Combatant, eva: number): number {
   const a = battle.effectiveStats(attacker);
@@ -1342,7 +1352,7 @@ function hitGain(battle: Battle, attacker: Combatant, victim: Combatant, eva: nu
     if (sk.cost.resource === 'mp' && attacker.mp < sk.cost.amount) continue;
     if (sk.cost.resource === 'rage' && (attacker.rage ?? 0) < sk.cost.amount) continue;
     const d = previewForTargets(battle, attacker, id, [victim]).find((p) => p.uid === victim.uid)?.damage;
-    if (d) top = Math.max(top, d.avg * Math.max(0, after - d.hitChance));
+    if (d) top = Math.max(top, d.avg * Math.max(0, after * passBlock(battle, attacker, victim, sk) - d.hitChance));
   }
   return top;
 }
@@ -1359,7 +1369,7 @@ function hitLossRaw(battle: Battle, attacker: Combatant, victim: Combatant, accD
     if (sk.cost.resource === 'mp' && attacker.mp < sk.cost.amount) continue;
     if (sk.cost.resource === 'rage' && (attacker.rage ?? 0) < sk.cost.amount) continue;
     const d = previewForTargets(battle, attacker, id, [victim]).find((p) => p.uid === victim.uid)?.damage;
-    if (d) top = Math.max(top, d.avg * Math.max(0, d.hitChance - after));
+    if (d) top = Math.max(top, d.avg * Math.max(0, d.hitChance - after * passBlock(battle, attacker, victim, sk)));
   }
   return top;
 }
@@ -1389,7 +1399,7 @@ function hitCritLoss(battle: Battle, attacker: Combatant, victim: Combatant, acc
     const cBefore = d.critChance;
     const cAfter = sure ? 1 : Math.max(0, Math.min(1, cBefore + critDelta));
     const before = avg * d.hitChance * (1 + cBefore * (cm - 1));
-    const now = avg * after * (1 + cAfter * (cm - 1));
+    const now = avg * after * passBlock(battle, attacker, victim, sk) * (1 + cAfter * (cm - 1));
     top = Math.max(top, before - now);
   }
   hitLossCache?.set(key, top);
@@ -1855,7 +1865,7 @@ function burnValue(ctx: ValueContext, o: Option): number {
       const share = i.focus.filter((u) => covered.has(u)).length / Math.max(1, i.focus.length);
       const f = battle.get(i.foe);
       if (!f || share <= 0) continue;
-      const amt = Math.min(f.mp, o.wardBurn.amount);
+      const amt = capBurn(f.mp, o.wardBurn.amount);
       v += (ctx.manaDenial(f, amt) + mpArmorValue(ctx, f, amt)) * share;
     }
   }
@@ -1971,8 +1981,8 @@ function brandFoeValue(ctx: ValueContext, eff: Extract<SkillDef['effects'][numbe
     const avg = wsum > 0 ? mpSkills.reduce((a, sk) => a + sk.cost.amount / ((sk.cooldown ?? 0) + 1), 0) / wsum : 0;
     const paid = avg > 0 ? Math.ceil(avg * x.costMult - 1e-9) : 0;
     const casts = span * w.castShare;
-    const burnPer = paid > 0 && x.castBurnPct > 0 ? Math.round(paid * x.castBurnPct) : 0;
     const room = f.mp + (battle.mode === 'turns' ? f.stats.mpRegen * span : 0);
+    const burnPer = paid > 0 && x.castBurnPct > 0 ? castBurnAmount(paid, x.castBurnPct, room) : 0;
     const extra = Math.min(room, (Math.max(0, paid - avg) + burnPer) * casts);
     if (extra > 0) t += ctx.manaDenial(f, extra);
     const burnTotal = Math.min(room, burnPer * casts);
@@ -3031,7 +3041,7 @@ function groundUnitWorth(ctx: ValueContext, u: Combatant, groundId: string, amou
     if (extra?.parts) extra.parts.tick += d;
   }
   const def = battle.groundDef(groundId);
-  if (def?.manaBurnPct && sourceSide !== u.side && u.maxMp > 0 && u.mp > 0) v -= ctx.manaDenial(u, Math.max(1, Math.round(u.maxMp * def.manaBurnPct)));
+  if (def?.manaBurnPct && sourceSide !== u.side && u.maxMp > 0 && u.mp > 0) v -= ctx.manaDenial(u, groundBurnAmount(u, def.manaBurnPct));
   return v;
 }
 
@@ -3055,7 +3065,7 @@ function cellWorth(ctx: ValueContext, u: Combatant, board: Side, slot: number, s
     const def = battle.groundDef(g.ground);
     const k = stayTicks(ctx, u, g.turns);
     if (def?.directTick && g.sourceSide !== u.side && !g.noDamage) v -= Math.min(u.hp, battle.groundTickDamage(g.ground, g.cellMult?.[slot] ? Math.round(g.amount * g.cellMult[slot]!) : g.amount, u) * k);
-    if (def?.manaBurnPct && g.sourceSide !== u.side && u.maxMp > 0 && u.mp > 0) v -= ctx.manaDenial(u, Math.max(1, Math.round(u.maxMp * def.manaBurnPct)));
+    if (def?.manaBurnPct && g.sourceSide !== u.side && u.maxMp > 0 && u.mp > 0) v -= ctx.manaDenial(u, groundBurnAmount(u, def.manaBurnPct));
   }
   for (const [kind, w] of want) {
     if (battle.groundStatusRefused(u, kind)) continue;

@@ -3,10 +3,10 @@ import { formatHit, hitColor, hitColors, hitPercent } from '../src/game/hit-form
 
 describe('hit preview format', () => {
   it('formats rounded percent', () => {
-    expect(formatHit(0.92)).toBe('92% hit');
-    expect(formatHit(1)).toBe('100% hit');
-    expect(formatHit(0.2)).toBe('20% hit');
-    expect(formatHit(0.9149)).toBe('91% hit');
+    expect(formatHit(0.92)).toBe('92%');
+    expect(formatHit(1)).toBe('100%');
+    expect(formatHit(0.2)).toBe('20%');
+    expect(formatHit(0.9149)).toBe('91%');
     expect(hitPercent(1.4)).toBe(100);
     expect(hitPercent(-1)).toBe(0);
   });

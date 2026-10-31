@@ -70,6 +70,7 @@ import mobGreyWolf from '../../data/mobs/grey_wolf.json';
 import mobRavenwoodPoacher from '../../data/mobs/ravenwood_poacher.json';
 import mobRavenSeer from '../../data/mobs/raven_seer.json';
 import mobBanditChief from '../../data/mobs/bandit_chief.json';
+import mobDeserterCaptain from '../../data/mobs/deserter_captain.json';
 // Bölge III (mob-plan.md 10)
 import mobMorvaneHalberdier from '../../data/mobs/morvane_halberdier.json';
 import mobSwornGuard from '../../data/mobs/sworn_guard.json';
@@ -236,6 +237,7 @@ const mobData: CombatantData[] = [
   mobRavenwoodPoacher,
   mobRavenSeer,
   mobBanditChief,
+  mobDeserterCaptain,
   mobMorvaneHalberdier,
   mobSwornGuard,
   mobAshHound,

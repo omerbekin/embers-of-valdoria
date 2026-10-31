@@ -1,179 +1,174 @@
-// Gear > Tree sekmesinin yerleşim hesabı (saf; DOM yok). Mockup public/mockups/skill-tree-gear/data/tree-layout.js'in karşılığı: satır şablonu artık
-// data/skill-trees/_rules.json > rowShape'ten gelir (kolon, şerit, tür). Tier bandı TEK sefer en üstte, tüm satırlarda aynı kolonlar, ult artı şekli.
+// Gear > Tree sekmesinin yerleşim hesabı (saf; DOM yok). Ömer'in seçtiği taslak: public/mockups/skill-tree-compact.html#v1 "Columns" (layouts.js > L1):
+// her skill bir DİKEY SÜTUN (tepede skill plakası, altında tier'lar aşağı iner), solda tek ortak tier bandı, altta geniş ult bandı (4 kol yan yana).
+// Sayfa kaymaz: her şey verilen W x H kutusuna sığar (mutlak koordinat). Düğüm şablonu data/skill-trees/_rules.json > rowShape'ten (id, tür, tier).
 import type { TreeNodeKind, TreeRules } from '../progression/skill-tree-data';
-
-export const COLS = 8;
 
 export type KindLetter = 'F' | 'E' | 'B' | 'N' | 'V';
 export const KIND_LETTER: Record<TreeNodeKind, KindLetter> = { filler: 'F', edge: 'E', blood: 'B', notable: 'N', evolve: 'V' };
-
-export interface LayoutCfg {
-  name: 'm' | 'l' | 'p';
-  laneH: number;
-  hdr: number;
-  padX: number;
-  padV: number;
-  sz: Record<KindLetter, number>;
-  lblH: number;
-  ultD: number;
-  coreSz: number;
-  colMin: number;
-  colMax: number;
-  hit: number;
-  /** pickColW sonucu. */
-  colW: number;
-}
-
-type Preset = Omit<LayoutCfg, 'colW'>;
-/** m = masaüstü (orta), l = sıkı masaüstü, p = telefon / dokunmatik (hedef >= 44 px). Düğüm adı yok (ipucunda): lblH 0. */
-export const PRESETS: Record<'m' | 'l' | 'p', Preset> = {
-  m: { name: 'm', laneH: 66, hdr: 46, padX: 14, padV: 8, sz: { F: 36, E: 30, B: 44, N: 54, V: 70 }, lblH: 28, ultD: 74, coreSz: 78, colMin: 104, colMax: 140, hit: 44 },
-  l: { name: 'l', laneH: 30, hdr: 38, padX: 10, padV: 6, sz: { F: 28, E: 26, B: 32, N: 42, V: 56 }, lblH: 14, ultD: 50, coreSz: 62, colMin: 96, colMax: 132, hit: 36 },
-  p: { name: 'p', laneH: 46, hdr: 38, padX: 17, padV: 6, sz: { F: 28, E: 28, B: 32, N: 42, V: 54 }, lblH: 14, ultD: 44, coreSz: 52, colMin: 54, colMax: 54, hit: 44 },
-};
-
-export interface TplNode {
-  id: string;
-  kind: KindLetter;
-  tier: string;
-  col: number;
-  lane: number;
-}
-
-/** Satır şablonu (rowShape; her satırda aynı). */
-export const template = (rules: TreeRules): TplNode[] => rules.rowShape.map((d) => ({ id: d.id, kind: KIND_LETTER[d.kind], tier: d.tier, col: d.col, lane: d.lane }));
 
 export interface Pt {
   x: number;
   y: number;
 }
-export interface TierRange {
-  tier: string;
-  c0: number;
-  c1: number;
-}
-export interface RowBox {
-  i: number;
-  top: number;
-  h: number;
-  cy: number;
-}
-export interface Layout {
-  cfg: LayoutCfg;
-  rows: RowBox[];
-  pos: Record<string, Pt>;
+
+/** Sütun içi yer: [x (sütun genişliğinin oranı), n (tier ızgarasında kaçıncı sıra, 0 = en üst)]. rowShape'teki her düğüm kimliği burada olmalı (test). */
+export const COL_AT: Record<string, [number, number]> = {
+  f1: [0.2, 0],
+  f2: [0.5, 0],
+  f3: [0.8, 0],
+  n0: [0.5, 1],
+  r: [0.5, 2],
+  ea: [0.25, 3],
+  eb: [0.75, 3],
+  ma: [0.125, 4],
+  fa: [0.375, 4],
+  fb: [0.625, 4],
+  mb: [0.875, 4],
+  v: [0.5, 5],
+};
+/** Ult düğümlerinin kolun sütunundaki x oranı (adım 1 / 2 / 3). */
+export const ULT_X = [0.2, 0.5, 0.8];
+
+/** Düğüm boyutları (kendi boyutunda, k = ölçek). */
+const BASE: Record<KindLetter, number> = { F: 30, E: 26, B: 34, N: 40, V: 54 };
+const clamp = (x: number, a: number, b: number): number => Math.max(a, Math.min(b, x));
+const px = (n: number): number => Math.round(n * 10) / 10;
+
+/** Dokunma hedefi: proje kuralı 44 px. */
+export const HIT_GOAL = 44;
+
+export interface ColsIn {
   W: number;
   H: number;
-  tiers: TierRange[];
-  rowH: number;
-  ult: { W: number; H: number; cx: number; cy: number; D: number; pos: Record<string, Pt> };
-}
-
-function tierRanges(tpl: TplNode[]): TierRange[] {
-  const m: Record<string, TierRange> = {};
-  for (const n of tpl) {
-    const t = m[n.tier] ?? (m[n.tier] = { tier: n.tier, c0: n.col, c1: n.col });
-    t.c0 = Math.min(t.c0, n.col);
-    t.c1 = Math.max(t.c1, n.col);
-  }
-  return Object.values(m).sort((a, b) => a.c0 - b.c0);
-}
-
-/** Düğümün satır içi taşma payı (üst, alt): satır yüksekliği buna göre. */
-function ext(n: TplNode, cfg: LayoutCfg): [number, number] {
-  const half = cfg.sz[n.kind] / 2;
-  const side = cfg.lblH && (n.kind === 'N' || n.kind === 'V') ? (n.lane < 0 ? 'up' : 'dn') : null;
-  return [half + (side === 'up' ? cfg.lblH + 6 : 0), half + (side === 'dn' ? cfg.lblH + (n.kind === 'V' ? 12 : 6) : n.kind === 'F' ? 14 : 0)];
-}
-
-/** Kolon genişliği: kullanılabilir genişlikten (plaka sütunu + kenar boşlukları düşülür) sınırlar içinde. */
-export function pickColW(avail: number, labW: number, cfg: Pick<LayoutCfg, 'padX' | 'colMin' | 'colMax'>): number {
-  const raw = Math.floor((avail - labW - 2 * cfg.padX) / COLS);
-  return Math.max(cfg.colMin, Math.min(cfg.colMax, raw));
-}
-
-export function build(cfg: LayoutCfg, rules: TreeRules): Layout {
-  const tpl = template(rules);
-  let lo = 1e9;
-  let hi = -1e9;
-  for (const n of tpl) {
-    const [a, b] = ext(n, cfg);
-    lo = Math.min(lo, n.lane * cfg.laneH - a);
-    hi = Math.max(hi, n.lane * cfg.laneH + b);
-  }
-  const rowH = Math.ceil(hi - lo + cfg.padV * 2);
-  const cy0 = cfg.padV - lo;
-  const xc = (c: number): number => cfg.padX + cfg.colW * (c + 0.5);
-  const pos: Record<string, Pt> = {};
-  const rows: RowBox[] = [];
-  let y = cfg.hdr;
-  for (let i = 0; i < rules.rows; i++) {
-    const row = { i, top: y, h: rowH, cy: y + cy0 };
-    rows.push(row);
-    for (const n of tpl) pos[`${i}.${n.id}`] = { x: xc(n.col), y: row.cy + n.lane * cfg.laneH };
-    y += rowH;
-  }
-  // ult: artı şekli (kol başına adım sayısı kadar düğüm); ortada ult ikonu
-  const steps = rules.ult.levels.length;
-  const D = cfg.ultD;
-  const half = cfg.sz.N / 2;
-  const M = half + (cfg.lblH ? 22 : 12);
-  const R = steps * D + M;
-  const dirs: Record<string, [number, number]> = { u: [0, -1], r: [1, 0], d: [0, 1], l: [-1, 0] };
-  const upos: Record<string, Pt> = {};
-  for (const arm of rules.ult.arms)
-    for (let s = 1; s <= steps; s++) {
-      const d = dirs[arm] ?? [0, 0];
-      upos[`${rules.rows}.${arm}${s}`] = { x: R + d[0] * D * s, y: R + d[1] * D * s };
-    }
-  return { cfg, rows, pos, W: cfg.padX * 2 + cfg.colW * COLS, H: y + 4, tiers: tierRanges(tpl), rowH, ult: { W: 2 * R, H: 2 * R, cx: R, cy: R, D, pos: upos } };
-}
-
-/** İki düğüm arası yol (aynı hizada düz, değilse yumuşak eğri). */
-export const link = (p: Pt, q: Pt): string => (p.y === q.y || p.x === q.x ? `M${p.x},${p.y} L${q.x},${q.y}` : `M${p.x},${p.y} C${(p.x + q.x) / 2},${p.y} ${(p.x + q.x) / 2},${q.y} ${q.x},${q.y}`);
-
-export interface PlateOpts {
-  avail: number;
-  coarse: boolean;
+  /** html.short (telefon yatay). */
   short: boolean;
-  /** Sahne ölçeği (--gu). */
-  u: number;
-}
-const GP_PG = 12;
-const GP_PG_SHORT = 8;
-export const plateW = (o: Pick<PlateOpts, 'short' | 'u'>): number => (o.short ? 104 : Math.max(150, Math.round(200 * (o.u || 1))));
-export const plateGap = (o: Pick<PlateOpts, 'short'>): number => (o.short ? GP_PG_SHORT : GP_PG);
-/** En dar satır: plaka + boşluk + telefon ayarının 8 kolonu. Alan bundan darsa ağaç alanı kendi içinde yatay kayar (plaka sütunu solda yapışık). */
-export const plateNeed = (o: Pick<PlateOpts, 'short' | 'u'>): number => plateW(o) + plateGap(o) + 2 * PRESETS.p.padX + COLS * PRESETS.p.colMin;
-
-/** Plakalı satır ayarı: orta (m) -> sıkı (l) -> telefon (p); dokunmatikte l atlanır. */
-export function platePreset(o: PlateOpts): 'm' | 'l' | 'p' {
-  const pw = plateW(o);
-  const pg = plateGap(o);
-  const chain: Array<'m' | 'l' | 'p'> = o.coarse ? ['m', 'p'] : ['m', 'l', 'p'];
-  for (let i = 0; i < chain.length - 1; i++) {
-    const p = PRESETS[chain[i]!];
-    if (o.avail >= pw + pg + 2 * p.padX + 8 * p.colMin) return chain[i]!;
-  }
-  return 'p';
 }
 
-/** Plakalı yerleşimin tam ayarı (V4: düğüm adı yok; kısa ekranda tek satırlık tier bandı). */
-export function plateConfig(o: PlateOpts): { cfg: LayoutCfg; key: 'm' | 'l' | 'p'; pw: number; pg: number; hs: boolean } {
-  const pg = plateGap(o);
-  const pw = plateW(o);
-  const key = platePreset(o);
-  const cfg: LayoutCfg = { ...PRESETS[key], colW: 0 };
-  if (o.short) {
-    cfg.hdr = 20;
-    cfg.padV = 3;
-  }
-  cfg.lblH = 0;
-  if (key === 'm') {
-    cfg.ultD = 64;
-    cfg.coreSz = 66;
-  }
-  if (key === 'p') cfg.colMax = 72;
-  cfg.colW = pickColW(o.avail, pw + pg, cfg);
-  return { cfg, key, pw, pg, hs: o.avail < plateNeed(o) };
+export interface TierBox {
+  tier: string;
+  y: number;
+  h: number;
 }
+
+export interface Hit {
+  w: number;
+  h: number;
+}
+
+export interface ColsLayout {
+  W: number;
+  H: number;
+  short: boolean;
+  /** Sol tier bandının genişliği. */
+  labW: number;
+  /** Skill plakası yüksekliği (sütun başlığı). */
+  hh: number;
+  /** Alt ult bandı yüksekliği (başı ult çizgisi). */
+  ultH: number;
+  cw: number;
+  /** Tier ızgarasındaki bir sıranın yüksekliği. */
+  pitch: number;
+  k: number;
+  sz: Record<KindLetter, number>;
+  /** Düğüm merkezleri: "<satır>.<id>" ve "<ult>.<kol><adım>". */
+  pos: Record<string, Pt>;
+  /** Her düğümün dokunma kutusu (görünmez alan komşu boşluğa kadar büyür; en çok 44 px). */
+  hit: Record<string, Hit>;
+  tiers: TierBox[];
+  /** Ult bandının üst çizgisi (y). */
+  ultY0: number;
+  /** Ult düğümlerinin merkez y'si. */
+  ultNy: number;
+  /** Ult skill'inin madalyonu: merkez + çap. */
+  core: Pt & { d: number };
+  /** Ult noktası ("n / 3") merkezi. */
+  upts: Pt;
+  /** Kol başına sütun başı x'i (4 sütunla aynı hizada). */
+  colX: number[];
+}
+
+/** Bir tier'ın kapladığı sıralar (rowShape sırasına göre): { tier, n0, n }. */
+export function tierSpans(rules: TreeRules): Array<{ tier: string; n0: number; n: number }> {
+  const m: Record<string, { tier: string; n0: number; n1: number; first: number }> = {};
+  rules.rowShape.forEach((d, idx) => {
+    const n = COL_AT[d.id]?.[1] ?? 0;
+    const t = m[d.tier] ?? (m[d.tier] = { tier: d.tier, n0: n, n1: n, first: idx });
+    t.n0 = Math.min(t.n0, n);
+    t.n1 = Math.max(t.n1, n);
+  });
+  return Object.values(m)
+    .sort((a, b) => a.n0 - b.n0 || a.first - b.first)
+    .map((t) => ({ tier: t.tier, n0: t.n0, n: t.n1 - t.n0 + 1 }));
+}
+
+/** Tüm düğümlerin dokunma kutusu: hedef 44 px; dikeyde, yatayda üst üste binen komşuya göre kısılır (ortak sınır = orta nokta). */
+function hitBoxes(pos: Record<string, Pt>, wGoal: number, hGoal: number): Record<string, Hit> {
+  const keys = Object.keys(pos);
+  const out: Record<string, Hit> = {};
+  for (const a of keys) {
+    let h = hGoal;
+    for (const b of keys) {
+      if (a === b) continue;
+      const dx = Math.abs(pos[a]!.x - pos[b]!.x);
+      const dy = Math.abs(pos[a]!.y - pos[b]!.y);
+      if (dx < wGoal && dy < h) h = Math.max(dy, 1);
+    }
+    out[a] = { w: px(wGoal), h: px(h) };
+  }
+  return out;
+}
+
+export function buildCols(o: ColsIn, rules: TreeRules): ColsLayout {
+  const { W, H, short } = o;
+  const labW = short ? 30 : 84;
+  const hh = short ? 30 : clamp(Math.round(H * 0.15), 66, 100);
+  const ultH = short ? 56 : clamp(Math.round(H * 0.19), 100, 150);
+  const cw = (W - labW) / 4;
+  const spans = tierSpans(rules);
+  const rowsN = spans.reduce((m, t) => Math.max(m, t.n0 + t.n), 0);
+  const pitch = Math.min(104, (H - hh - ultH) / rowsN);
+  const k = clamp(pitch / 52, 0.5, 1.35);
+  // düğümler tier sırasına sığar (dar sırada büyük evolve / notable komşu sıraya ya da ult çizgisine taşmasın)
+  const fit = (kind: KindLetter, cap: number): number => px(Math.min(BASE[kind] * k, pitch * cap));
+  const sz = { F: fit('F', 0.9), E: fit('E', 0.9), B: fit('B', 1), N: fit('N', 0.95), V: fit('V', 0.92) };
+  const yk = (n: number): number => hh + pitch * (n + 0.5);
+  const colX = [0, 1, 2, 3].map((i) => labW + cw * i);
+  const pos: Record<string, Pt> = {};
+  const rows = rules.rows;
+  for (let i = 0; i < rows; i++)
+    for (const d of rules.rowShape) {
+      const at = COL_AT[d.id];
+      if (at) pos[`${i}.${d.id}`] = { x: px(colX[i]! + cw * at[0]), y: px(yk(at[1])) };
+    }
+  // ult bandı
+  const ultY0 = H - ultH;
+  const ultNy = px(ultY0 + ultH * (short ? 0.64 : 0.6));
+  const steps = rules.ult.levels.length;
+  rules.ult.arms.forEach((arm, j) => {
+    for (let s = 1; s <= steps; s++) pos[`${rows}.${arm}${s}`] = { x: px(colX[j]! + cw * (ULT_X[s - 1] ?? 0.5)), y: ultNy };
+  });
+  const coreD = short ? 26 : 46;
+  const core = { x: px(labW / 2), y: px(ultY0 + ultH * 0.44), d: coreD };
+  const upts = { x: core.x, y: px(core.y + coreD / 2 + (short ? 8 : 12)) };
+  const wGoal = clamp(Math.floor(cw * 0.25) - 1, 20, HIT_GOAL);
+  const hit = hitBoxes(pos, wGoal, HIT_GOAL);
+  // ult düğümlerinde dikey kutu, ult bandının içinde kalır (üstte kol etiketi için yer bırakılır)
+  const ultHitH = clamp(ultH - (short ? 18 : 26), 20, HIT_GOAL);
+  for (const key of Object.keys(pos)) if (key.startsWith(`${rows}.`)) hit[key] = { w: hit[key]!.w, h: Math.min(hit[key]!.h, ultHitH) };
+  const tiers: TierBox[] = spans.map((t) => ({ tier: t.tier, y: px(hh + pitch * t.n0), h: px(pitch * t.n) }));
+  return { W, H, short, labW, hh, ultH, cw, pitch: px(pitch), k: px(k), sz, pos, hit, tiers, ultY0, ultNy, core, upts, colX };
+}
+
+/** İki düğüm arası yol: aynı hizada düz çizgi; dikey ağırlıklıysa dikey, yatay ağırlıklıysa yatay yumuşak eğri. */
+export function link(a: Pt, b: Pt): string {
+  if (a.x === b.x || a.y === b.y) return `M${a.x},${a.y} L${b.x},${b.y}`;
+  if (Math.abs(b.y - a.y) > Math.abs(b.x - a.x)) {
+    const my = px((a.y + b.y) / 2);
+    return `M${a.x},${a.y} C${a.x},${my} ${b.x},${my} ${b.x},${b.y}`;
+  }
+  const mx = px((a.x + b.x) / 2);
+  return `M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x},${b.y}`;
+}
+
+/** Blood Price düğümünün altındaki "kapalı uç" çizgisi (kısa dikey + enine kesik). */
+export const deadStub = (p: Pt, h: number): string => `M${p.x},${px(p.y + h)} V${px(p.y + h + 9)} M${px(p.x - 6)},${px(p.y + h + 9)} H${px(p.x + 6)}`;

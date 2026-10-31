@@ -4,7 +4,7 @@ import { Battle, content, previewSkill } from '../src/engine';
 import type { BattleEvent } from '../src/engine';
 import { cellKey, corpseMarkPos, corpseTip, empoweredLine, summonPreviewLine, visibleCorpseMarks } from '../src/game/corpse-marks';
 import { cellCenter } from '../src/game/shape-geometry';
-import { isDeltaStat, previewStatusText, statDir, statSources } from '../src/game/stat-delta';
+import { isDeltaStat, previewStatusText, statDir, statSources, statusCardText } from '../src/game/stat-delta';
 import { areaBoards, areaHoverSpecs, areaTone, blockedTargets } from '../src/game/target-cells';
 import { stageMap } from '../src/game/cell-style';
 import { miniGridText, rectExampleAxis, shapeMiniGrid, skillMiniGrid } from '../src/ui/shape-diagram';
@@ -315,6 +315,14 @@ describe('stat okları: Blinded / Shrouded (effectiveStats)', () => {
     expect(previewStatusText('Shrouded 2 turns', content.statuses)).toBe('Shrouded +20% dodge');
     expect(previewStatusText('Wound 2 turns', content.statuses)).toBe('Wound 2 turns');
     expect(previewStatusText('Taunt 2 turns', content.statuses)).toBe('Taunt 2 turns');
+  });
+
+  it('EFFECTS açıklaması durumun cümlesidir, kimliği değil; her durumun cümlesi var', () => {
+    expect(statusCardText(content.statuses.ley_thread)).toContain('next Ley Brand');
+    for (const [kind, def] of Object.entries(content.statuses)) {
+      expect(statusCardText(def), kind).not.toBe('');
+      expect(statusCardText(def), kind).not.toBe(kind);
+    }
   });
 
   it('Smoke Bomb önizlemesi her iki tahtada da durum satırı taşır ve metne çevrilir', () => {

@@ -131,6 +131,8 @@ export interface BaseLines {
   implicit?: { text: string; name: string; desc?: string; stat?: string; icon?: string };
   /** Çift el yakın dövüşün ek hız cezası satırı ("Heavy grip": "5% less Speed"; Ömer 2026-10-27). */
   heavy?: { text: string; name: string; desc?: string; stat?: string; icon?: string };
+  /** İpucunda silah gücünün iki yanı (Ömer 2026-10-31): solda örtük artı, sağda toplam hız cezası ("10% less Speed"). Silah değilse ya da ikisi de yoksa undefined. */
+  weaponSides?: { plus?: string; minus?: string };
   /** Takma seviye şartı (en az 1). */
   req: number;
 }
@@ -161,6 +163,11 @@ export function baseLinesOf(d: ItemDef, ilvl: number): BaseLines {
         stat: 'spd',
         icon: 'spd',
       };
+  }
+  if (d.slot === 'weapon') {
+    const plus = imp ? fillValues(imp.text, implicitValues(imp, ilvl, d)) : '';
+    const less = weaponSpeedPenalties(d).reduce((sum, p) => sum + p.pct, 0);
+    if (plus || less) out.weaponSides = { ...(plus ? { plus } : {}), ...(less ? { minus: `${lessText(less / 100)} Speed` } : {}) };
   }
   return out;
 }
@@ -326,9 +333,11 @@ export function heroPanel(src: LoadoutSource): HeroPanelStat[] {
     { id: 'critMult', label: 'CDMG', value: st.critMult, fmt: 'dec' },
     { id: 'accuracy', label: 'ACC', value: st.accuracy, fmt: 'pct' },
     { id: 'evasion', label: 'EVA', value: st.evasion, fmt: 'pct' },
-    // Blok (Ömer 2026-10-18): kalkan tabanı + kalkan C affix'i (tavanlı; Stats'ta değil, item kancası)
+    // Blok (Ömer 2026-10-18): kalkan tabanı + kalkan C affix'i (Stats'ta değil, item kancası)
     { id: 'block', label: 'BLOCK', value: lo.itemEffects?.blockChance ?? 0, fmt: 'pct' },
     { id: 'spd', label: 'SPD', value: st.spd, fmt: 'dec' },
+    // Block Break (Ömer 2026-10-31, #17; b_blockbreak): Stats'ta değil, item kancası
+    { id: 'blockBreak', label: 'BLOCK BREAK', value: lo.itemEffects?.blockBreak ?? 0, fmt: 'pct' },
     { id: 'hpRegen', label: 'HP+/t', value: st.hpRegen, fmt: 'dec' },
     { id: 'mpRegen', label: 'MP+/t', value: st.mpRegen, fmt: 'int' },
   ];

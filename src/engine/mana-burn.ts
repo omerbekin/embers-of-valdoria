@@ -12,6 +12,24 @@ export function nominalBurn(effect: ManaBurnEffect, target: Pick<Combatant, 'max
   return Math.max(0, (effect.amount ?? 0) + pct);
 }
 
+/**
+ * TEK mana yakma kuralı (Ömer 2026-10-31): her yakımın gerçek miktarı = istenen (yuvarlanır), hedefin mevcut MP'siyle sınırlı. Kaynağı ne olursa olsun
+ * (skill, Spell Ward kalkanı, Hall of Silence zemini, Branded bedel yakımı) motor Battle.burnMp ile uygular; önizleme ve YZ miktarı buradan okur.
+ */
+export function capBurn(mp: number, amount: number): number {
+  return Math.max(0, Math.min(mp, Math.round(amount)));
+}
+
+/** Branded bedel yakımı: ödenen MP x oran; `mpLeft` ödemeden sonra kalan MP. */
+export function castBurnAmount(paid: number, pct: number, mpLeft: number): number {
+  return capBurn(mpLeft, paid * pct);
+}
+
+/** Zemin yakımı (grounds.json > manaBurnPct): maks MP'nin oranı, en az 1; MP havuzu ya da MP'si olmayana 0. */
+export function groundBurnAmount(target: Pick<Combatant, 'mp' | 'maxMp'>, pct: number): number {
+  return target.maxMp > 0 ? capBurn(target.mp, Math.max(1, Math.round(target.maxMp * pct))) : 0;
+}
+
 /** Gerçek yakım: nominal yakım, hedefin mevcut MP'siyle sınırlı. Saf (motor, önizleme, YZ, skill-info aynı hesabı kullanır). */
 export function burnAmountFor(effect: ManaBurnEffect, target: Pick<Combatant, 'mp' | 'maxMp'>): number {
   return Math.max(0, Math.min(target.mp, nominalBurn(effect, target)));

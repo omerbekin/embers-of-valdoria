@@ -38,10 +38,10 @@ function brand(b: Battle, me: Combatant, slot = 0): BattleEvent[] {
 }
 
 describe('Ley Thread: veri ve metin', () => {
-  it('Mana Steal 2 tur ley_thread bırakır; Ley Brand threadTurns 2, threadBurnMult 1,5; durum debuff, CC değil', () => {
+  it('Mana Steal 2 tur ley_thread bırakır; Ley Brand threadTurns 2, threadBurnMult 1,5 (Ömer 2026-10-31); durum debuff, CC değil', () => {
     expect(THREAD?.turns).toBe(2);
     expect(BRAND.threadTurns).toBe(2);
-    expect(BRAND.threadBurnMult).toBe(2);
+    expect(BRAND.threadBurnMult).toBe(1.5);
     expect(content.statuses.ley_thread?.type).toBe('debuff');
     expect(content.statuses.ley_thread?.cc).toBeFalsy();
   });
@@ -52,7 +52,7 @@ describe('Ley Thread: veri ve metin', () => {
     const ms = describeSkill(content.skills.mana_burn!, P(st).stats, content.formulas, content.summons, defs).lines.join(' ');
     expect(ms).toContain('Ley Thread');
     const lb = describeSkill(content.skills.drain_field!, P(st).stats, content.formulas, content.summons, defs).lines.join(' ');
-    expect(lb).toContain('On an enemy with Ley Thread, the Brand lasts 2 turns longer and burns twice as much extra MP per cast; the Ley Thread is used up');
+    expect(lb).toContain('On an enemy with Ley Thread, the Brand lasts 2 turns longer and burns 50% more extra MP per cast; the Ley Thread is used up');
   });
 });
 

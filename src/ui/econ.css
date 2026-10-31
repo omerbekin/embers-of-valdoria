@@ -97,8 +97,6 @@ html.reduced-motion .ec-hp i.ghost, html.reduced-motion .ec-hp i.ghost::after { 
 .bs-odds { display: flex; flex-direction: column; gap: calc(6 * var(--u)); }
 .bs-bar { display: flex; height: max(18px, calc(28 * var(--u))); border: 1px solid var(--g-line2); background: rgba(8,6,4,.8); overflow: hidden; }
 .bs-bar i { display: flex; align-items: center; justify-content: center; font: 600 max(11px, calc(16 * var(--u))) var(--g-disp); color: #fff; letter-spacing: .06em; text-shadow: 0 1px 2px #000; min-width: 0; }
-.bs-leg { display: flex; flex-wrap: wrap; gap: 4px calc(16 * var(--u)); font: max(13px, calc(20 * var(--u))) var(--g-body); color: var(--g-text); }
-.bs-leg b { font-weight: 600; }
 
 @media (max-width: 980px) {
   .ec-grid2 { grid-template-columns: 1fr; }

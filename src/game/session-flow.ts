@@ -60,13 +60,14 @@ export interface MenuSpec {
 }
 
 export const RETREAT_CONFIRM = 'Retreat? This battle will not count.';
+export const LOAD_CONFIRM = 'Load a save? Progress since your last save will be lost.';
 
 /**
  * Pure decision (Ömer 2026-10-08, Geri / Menu kuralı 2026-10-09, menü listeleri 2026-10-09): the in-game Menu (top right "Menu" button / Esc)
  * exists only on battle screens; setup screens (team select, multiplayer lobby + multiplayer team select = 'mp-setup') use the top-left
  * "◂ Back" instead (no menu). Her bağlamda Codex, Settings'in hemen üstündedir:
  * Quick battle: Resume / Codex / Settings / Leave (= takım seçimine dön) / Main Menu;
- * campaign + endless battle (undecided): Resume / Codex / Settings / Retreat (to Map | to Camp) / Main Menu (retreat: the battle is paused
+ * campaign + endless battle (undecided): Resume / Codex / Settings / Retreat (to Map | to Camp) / Load (campaign battle, Normal mode only: `map.load`, asks first, opens the map's slot screen; the battle just closes) / Main Menu (retreat: the battle is paused
  * and resumes on the same turn, `retreatConfirm` hook; `retreatToMap` in campaign-session); multiplayer: Resume / Codex / Settings / Leave (= maçı terk, ana menü).
  * Leaving an undecided battle asks first. No menu (null) on the main menu. Campaign map (`map` state from the scene): Resume / Save / Load
  * (Normal) / Codex / Settings / Main Menu, the SAME shared component as battle (Ömer 2026-10-10).
@@ -84,10 +85,12 @@ export function menuItems(ctx: FlowContext, map?: MapMenuState | null): MenuSpec
       const items: MenuItemId[] = ['resume', 'codex', 'settings'];
       if (f.teamSelect) items.push('teamSelect');
       if (ctx === 'campaign-battle-live') items.push('retreat');
+      if (ctx === 'campaign-battle-live' && map?.load) items.push('load'); // yalnız Normal mod (Ironman'de yok); main.ts sahneden verir
       items.push('mainMenu');
       const confirm: MenuSpec['confirm'] = {};
       if (f.confirm) for (const id of ['teamSelect', 'mainMenu'] as const) if (items.includes(id)) confirm[id] = leave;
       if (items.includes('retreat')) confirm.retreat = RETREAT_CONFIRM;
+      if (items.includes('load')) confirm.load = LOAD_CONFIRM;
       const spec: MenuSpec = { items, confirm };
       if (ctx === 'mp-live' || ctx === 'mp') spec.labels = { mainMenu: 'Leave' };
       return spec;

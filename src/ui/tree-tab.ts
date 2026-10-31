@@ -1,15 +1,16 @@
-// Gear > Tree sekmesi (Faz 3b; Ömer'in seçtiği taslak public/mockups/skill-tree-gear.html#v4: "sade ağaç"). Sol: oyunun gerçek skill plakaları
-// (pasif 1. sırada, ult en altta), yanlarında her satırın düğümleri; üstte Mastery bar; altta Respec / Reset / Confirm. Yan sütun, puan kutusu,
+// Gear > Tree sekmesi (Ömer'in seçtiği taslak public/mockups/skill-tree-compact.html#v1 "Columns", 2026-10-31). Her skill DİKEY SÜTUN: tepede
+// oyunun skill plakası (Gear Hero sekmesindeki .gr-pl, yatay düzende: ikon + ad + çipler; pasif 1. sırada), altında tier'lar aşağı iner; solda tek
+// ortak tier bandı, altta geniş ult bandı (4 kol); sayfa kaymaz. Üstte Mastery bar; altta Respec / Reset / Confirm. Yan sütun, puan kutusu,
 // düğüm adı, kademe kutusu YOK: sayılar ve kilitler üstüne gelince / dokununca A Band ipucunda. Sakin hareketler (puan, yol, kilit, evolve,
 // Confirm / Reset, Blood Price damlası); Reduced motion = hareket yok.
-// Kurallar ve kayıt: src/progression/skill-tree*.ts (çağrılır, burada yeniden yazılmaz); ekran durumu tree-tab-model.ts; yerleşim tree-tab-layout.ts.
+// Kurallar ve kayıt: src/progression/skill-tree*.ts (çağrılır, burada yeniden yazılmaz); ekran durumu tree-tab-model.ts; yerleşim (sütunlar, dokunma kutuları) tree-tab-layout.ts.
 // Gear'a bağı tek kanca: gear-screen.ts `createTreeTab(...)` (sekme düğmesi + sağ sayfaya render). Görünüm: tree-tab.css.
 import './tree-tab.css';
 import { content } from '../engine';
 import { heroStats } from '../progression';
 import { TREE_RULES, type TreeData, type TreeRules } from '../progression/skill-tree-data';
 import { TREE_RESET_NOTICE, type TreeHero } from '../progression/skill-tree-hero';
-import { counter, rowSpent, ultSpent, treeNodes, type TreeNode } from '../progression/skill-tree';
+import { counter, rowSpent, ultSpent, ultArm, treeNodes, type TreeNode } from '../progression/skill-tree';
 import { skillCostAmount } from '../engine/cost';
 import type { SkillDef } from '../engine';
 import { bandTipEl, type BandChip, type BandTipSpec } from './band-tip';
@@ -17,6 +18,7 @@ import { gearSkillRows, passiveTip, skillTip, classSkills } from './gear-skills'
 import { escHtml } from './skill-bar';
 import { skillIconName } from './mob-icons';
 import { evolveNodeIconUrl, heroSkillIconUrl, nodeArtUrl, SAVE_TREE_MODE } from './evolve-icon';
+import { textAtRank } from '../progression/skill-tree-text';
 import { evolvedRows, type EvolveSource } from '../progression/skill-tree-evolve';
 import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import { iconUrl } from './dom-icons';
@@ -44,7 +46,7 @@ import {
   treeTabEnabled,
   type TreeSession,
 } from './tree-tab-model';
-import { build, link, plateConfig, type Layout, type LayoutCfg } from './tree-tab-layout';
+import { buildCols, deadStub, link, type ColsLayout, type Hit } from './tree-tab-layout';
 
 export type TreeTabHero = HoverHero & TreeHero;
 
@@ -84,6 +86,7 @@ const PL = '<svg class="pl" viewBox="0 0 12 14"><rect x="1.5" y="6" width="9" he
 const DROP = '<svg class="drop" viewBox="0 0 32 38"><path class="bd" d="M16 2 C16 2 4 17 4 25 a12 12 0 0 0 24 0 C28 17 16 2 16 2Z"/><path class="bi" d="M11 26 h10"/></svg>';
 const FX_CLASSES = ['anim-fill', 'anim-evolve', 'anim-reset', 'anim-confirm', 'anim-dim', 'anim-awaken', 'anim-evoready'];
 const LVL: Record<string, number> = { '': 0, half: 1, pend: 2, on: 2 };
+const ARM_NAME: Record<string, string> = { u: 'Up', r: 'Right', d: 'Down', l: 'Left' };
 
 const noticed = new Set<string>();
 
@@ -121,6 +124,42 @@ function rowInfos(tree: TreeData, hero?: EvolveSource): RowInfo[] {
   return out;
 }
 
+/** Düğümün ağaçtaki ikonu (Sheet > Active nodes listesi de bunu kullanır): notable kendi sanatı, evolve evolve sanatı, diğerleri satırın skill ikonu. */
+export function treeNodeIconUrl(tree: TreeData, key: string, hero?: EvolveSource, rules: TreeRules = TREE_RULES): string {
+  const nd = nodeOf(key, rules);
+  if (!nd) return '';
+  const r = rowInfos(tree, hero)[nd.row];
+  if (nd.kind === 'notable') return nodeArtUrl(tree.class, nd.key) ?? r?.base ?? '';
+  if (nd.kind !== 'evolve') return r?.base ?? '';
+  return (r?.skill ? evolveNodeIconUrl(tree.class, r.skill.id) : null) ?? r?.base ?? '';
+}
+
+/**
+ * Sheet > Active nodes ipucu (A Band): düğümün ağaç metni + şu anki rank'ta kaç bonus verdiği ("At rank 3: ..."; değer metnin kendi "per rank"
+ * sayısının rank ile çarpımı, src/progression/skill-tree-text.ts). Değer yok sayılan / kural yok.
+ */
+export function treeNodeSheetTip(tree: TreeData, key: string, rank: number, hero?: EvolveSource, rules: TreeRules = TREE_RULES): BandTipSpec | null {
+  const nd = nodeOf(key, rules);
+  const info = tree.nodes[key];
+  if (!nd || !info) return null;
+  const row = rowInfos(tree, hero)[nd.row];
+  const chips: BandChip[] = [{ text: KN[nd.kind] ?? nd.kind, tone: 'ac' }];
+  if (nd.max > 1) chips.push({ text: `Rank ${rank} / ${nd.max}` });
+  const now = textAtRank(info.text, rank);
+  const lines = [{ text: info.text }, ...(now ? [{ text: `At rank ${rank}: ${now}` }] : [])];
+  const accent = nd.kind === 'evolve' ? '#f3d999' : nd.kind === 'blood' ? '#c63b3b' : nd.arm ? '#e0702a' : row?.kind === 'pas' ? '#6fb0a8' : undefined;
+  return {
+    ...(accent ? { accent } : {}),
+    kind: `${KN[nd.kind] ?? nd.kind} · ${row?.name ?? ''}`,
+    title: info.name,
+    icon: treeNodeIconUrl(tree, key, hero, rules),
+    value: String(rank),
+    valueLabel: rank > 1 ? 'RANKS' : 'RANK',
+    chips,
+    lines,
+  };
+}
+
 export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): TreeTab {
   const enabled = treeTabEnabled(rules);
   const button = document.createElement('button');
@@ -153,13 +192,13 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   let failT = 0;
   let fail: { key: string; msg: string } | null = null;
   let ro: ResizeObserver | null = null;
+  let built = { w: 0, h: 0 };
   let roT = 0;
   const tip = document.createElement('div');
   tip.className = 'tt-tip';
   const TIP: { ref: string | null; pinned: HTMLElement | null } = { ref: null, pinned: null };
   const de = document.documentElement;
   const isShort = (): boolean => de.classList.contains('short');
-  const isCoarse = (): boolean => (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) || de.classList.contains('rotated');
   const reduced = (): boolean => reducedMotion();
 
   const $$ = <T extends HTMLElement = HTMLElement>(q: string, r: ParentNode = page ?? document): T[] => Array.from(r.querySelectorAll<T>(q));
@@ -189,7 +228,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     return art ?? r?.base ?? '';
   };
 
-  function nodeHTML(nd: TreeNode, p: { x: number; y: number }): string {
+  function nodeHTML(nd: TreeNode, p: { x: number; y: number }, hit?: Hit): string {
     const k = nd.kind === 'evolve' ? 'v' : nd.kind === 'blood' ? 'b' : nd.kind === 'notable' ? 'n' : nd.kind === 'edge' ? 'e' : 'f';
     const name = sess?.tree.nodes[nd.key]?.name ?? nd.key;
     let inner: string;
@@ -198,7 +237,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     else inner = '<span class="dm"></span>';
     const pp = k === 'f' ? '<span class="pp"></span>' : '';
     const fx = '<span class="fx"></span>' + (k === 'v' ? '<span class="evx"><i></i><i></i><i></i><i></i></span>' : '');
-    return `<button type="button" class="gt-nd k-${k}" data-key="${nd.key}" data-tt="n:${nd.key}" aria-label="${escHtml(name)}" style="left:${p.x}px;top:${p.y}px">${fx}<span class="lkic">${LOCK}</span>${inner}${pp}</button>`;
+    return `<button type="button" class="gt-nd k-${k}" data-key="${nd.key}" data-tt="n:${nd.key}" aria-label="${escHtml(name)}" style="left:${p.x}px;top:${p.y}px${hit ? `;--hw:${hit.w}px;--hh:${hit.h}px` : ''}">${fx}<span class="lkic">${LOCK}</span>${inner}${pp}</button>`;
   }
 
   function barHTML(slim: boolean, s: TreeSession): string {
@@ -209,36 +248,60 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     return slim || isShort() ? `<div class="gt-barw slim">${head}${track}</div>` : `<div class="gt-barw"><div class="gt-bar-top">${head}<span class="gt-bar-r">Level<b data-lvl>${s.level}</b></span></div>${track}</div>`;
   }
 
-  function ultHTML(L: Layout, cfg: LayoutCfg): string {
-    const U = L.ult;
-    const ur = rows[rules.rows]!;
-    const u = rules.rows;
-    let usvg = '';
-    let ucv = '';
-    for (const arm of rules.ult.arms)
-      for (let st = 1; st <= rules.ult.levels.length; st++) {
-        const key = `${u}.${arm}${st}`;
-        const P = U.pos[key]!;
-        const prev = st === 1 ? { x: U.cx, y: U.cy } : U.pos[`${u}.${arm}${st - 1}`]!;
-        usvg += `<path data-a="${st === 1 ? 'C' : `${u}.${arm}${st - 1}`}" data-b="${key}" d="M${prev.x},${prev.y} L${P.x},${P.y}"/>`;
-        ucv += nodeHTML(treeNodes(rules).by.get(key)!, P);
-        const vert = arm === 'u' || arm === 'd';
-        const half = (st === rules.ult.levels.length ? cfg.sz.N : cfg.sz.E) / 2;
-        const lx = vert ? P.x - (half + 30) : P.x;
-        const ly = vert ? P.y : P.y - (half + 13);
-        ucv += `<span class="gt-ulv" data-ulv="${key}" style="left:${lx}px;top:${ly}px">Lv ${rules.ult.levels[st - 1]}</span>`;
-      }
-    return `<div class="gt-ult q4u"><div class="gt-uwrap"><div class="gt-uscroll"><div class="gt-ucanvas" style="width:${U.W}px;height:${U.H}px"><svg class="gt-lines" width="${U.W}" height="${U.H}" viewBox="0 0 ${U.W} ${U.H}">${usvg}</svg>
-      <div class="gt-ucore" data-tt="p:${u}" style="left:${U.cx}px;top:${U.cy}px;width:${cfg.coreSz}px;height:${cfg.coreSz}px"><span class="ud"></span><img src="${escHtml(ur.icon)}" alt="${escHtml(ur.name)}"></div>${ucv}</div></div></div></div>`;
+  /** Sütun başlığı = Formation kartındaki skill satırı (ikon, Cinzel ad, sağda etiket / bedel) + altında skillin açıklaması; sağda satırın puanı. Telefonda yer yok: açıklama dokunuş ipucunda (p:N). */
+  function headHTML(i: number, L: ColsLayout): string {
+    const r = rows[i]!;
+    const p = plates[i];
+    const tag = r.kind ? `<span class="pl-tag">${r.kind === 'pas' ? 'Passive' : 'Ultimate'}</span>` : '';
+    const chips = !L.short && p?.chips ? `<div class="pl-chips">${p.chips}</div>` : '';
+    const desc = !L.short && p?.desc ? `<div class="pl-ds">${escHtml(p.desc)}</div>` : '';
+    return `<div class="gr-pl hz ${r.kind}" data-tt="p:${i}" style="left:${L.colX[i]! + 2}px;top:0;width:${L.cw - 4}px;height:${L.hh}px"><div class="pl-ico"><img src="${escHtml(r.icon)}" alt="" draggable="false"></div><div class="pl-bd"><div class="pl-hd"><div class="pl-nm">${escHtml(r.name)}</div>${tag}${chips}</div>${desc}</div><span class="gt-pts"><b data-pts="${i}">0</b><small>pts</small></span></div>`;
   }
 
-  function plateOne(i: number): string {
-    const p = plates[i];
-    const r = rows[i]!;
-    if (!p) return `<div class="gr-pl ${r.kind}" data-tt="p:${i}"><span class="pl-tag"${r.kind ? '' : ' hidden'}>${r.kind === 'pas' ? 'Passive' : 'Ultimate'}</span><div class="pl-ico"><img src="${escHtml(r.icon)}" alt="" draggable="false"></div><div class="pl-nm">${escHtml(r.name)}</div></div>`;
-    const tag = r.kind ? `<span class="pl-tag">${r.kind === 'pas' ? 'Passive' : 'Ultimate'}</span>` : '';
-    return `<div class="gr-pl ${r.kind}" data-tt="p:${i}">${tag}<div class="pl-ico"><img src="${escHtml(r.icon)}" alt="" draggable="false"></div>
-      <div class="pl-bd"><div class="pl-hd"><div class="pl-nm">${escHtml(r.name)}</div><div class="pl-chips">${p.chips}</div></div><div class="pl-dv"></div>${p.nums || '<div class="pl-sls"></div>'}</div></div>`;
+  /** Ağacın gövdesi (mutlak koordinat: body W x H): tier bandı + bantlar, sütun başlıkları, düğümler, yollar, ult bandı. */
+  function bodyHTML(L: ColsLayout): string {
+    const nodes = treeNodes(rules);
+    const u = rules.rows;
+    let svg = '';
+    let nds = '';
+    let tsh = '';
+    let bands = '';
+    let deco = '';
+    for (const t of L.tiers) {
+      tsh += `<div class="gt-ts${t.tier === 'E' ? ' evo' : ''}" data-tier="${t.tier}" data-tn="${t.tier}" style="left:0;top:${t.y}px;width:${L.labW}px;height:${t.h}px"><small></small><b>${PL}<span class="pt"></span><em></em></b></div>`;
+      bands += `<div class="gt-tb" data-tier="${t.tier}" style="left:${L.labW}px;top:${t.y}px;width:${L.W - L.labW}px;height:${t.h}px"></div>`;
+    }
+    for (const n of nodes.list) {
+      const B = L.pos[n.key];
+      if (!B) continue;
+      for (const term of n.req)
+        for (const src of term) {
+          const A = L.pos[src];
+          if (A) svg += `<path class="${term.length > 1 ? 'alt' : ''}" data-a="${src}" data-b="${n.key}" d="${link(A, B)}"/>`;
+        }
+      if (n.kind === 'blood') svg += `<path class="dead" data-b="${n.key}" data-dead="1" d="${deadStub(B, L.sz.B / 2)}"/>`;
+      nds += nodeHTML(n, B, L.hit[n.key]);
+    }
+    let heads = '';
+    for (let i = 0; i < rules.rows; i++) {
+      heads += headHTML(i, L);
+      if (i) deco += `<i class="gc-vsep" style="left:${L.colX[i]}px;top:0;height:${L.hh + L.pitch * 6}px"></i>`;
+    }
+    // ult bandı: solda ult skill'inin madalyonu + puanı, kollar sütunların altında (3 adım + level etiketi)
+    const ur = rows[u]!;
+    deco += `<div class="gc-hr" style="top:${L.ultY0}px"></div>`;
+    deco += `<div class="gt-ucore" data-tt="p:${u}" style="left:${L.core.x}px;top:${L.core.y}px;width:${L.core.d}px;height:${L.core.d}px"><span class="ud"></span><img src="${escHtml(ur.icon)}" alt="${escHtml(ur.name)}"></div>`;
+    deco += `<span class="gc-upts" style="left:${L.upts.x}px;top:${L.upts.y}px"><b data-upts>0</b>/${rules.ult.max}</span>`;
+    const narrow = L.cw < 130;
+    rules.ult.arms.forEach((arm, j) => {
+      const w = narrow ? 72 : 100;
+      deco += `<span class="gc-arm${narrow ? ' nar' : ''}" data-arm="${arm}" style="left:${L.colX[j]! + L.cw / 2 - w / 2}px;top:${L.ultY0 + (L.short ? 3 : 6)}px;width:${w}px"><i>${narrow ? ARM_NAME[arm]?.[0] : ARM_NAME[arm]}</i><b>0 / ${rules.ult.levels.length}</b></span>`;
+      for (let st = 1; st <= rules.ult.levels.length; st++) {
+        const P = L.pos[`${u}.${arm}${st}`]!;
+        deco += `<span class="gt-ulv" data-ulv="${u}.${arm}${st}" style="left:${P.x}px;top:${P.y + (L.short ? 11 : st === 3 ? 18 : 14) + L.k * 8}px">Lv ${rules.ult.levels[st - 1]}</span>`;
+      }
+    });
+    return `${bands}<svg class="gt-lines" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${svg}</svg>${tsh}${heads}${deco}${nds}`;
   }
 
   function actsHTML(h: TreeTabHero, s: TreeSession): string {
@@ -262,64 +325,32 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     return `<div class="gt-page fill q4p">${head}<div class="gt-wide q4w"><div class="gt-main"><div class="gt-in"></div></div>${short ? '' : `<div class="gt-acts gt-foot" data-dyn="acts"></div>`}</div></div>`;
   }
 
-  /** Düğüm tuvalleri + plakalar (ölçü: treeHost genişliği). */
-  function treeHTML(s: TreeSession, avail: number): { html: string; cfg: LayoutCfg; key: string; hs: boolean } {
+  /** Ağaç kutusu: üst şerit (Mastery bar; telefonda işlemler de) + gövde (kutunun kalanı; gövdenin ölçüsü kurulduktan sonra ölçülür). */
+  function treeHTML(s: TreeSession): string {
     const short = isShort();
-    const o = { avail, coarse: isCoarse(), short, u: parseFloat(getComputedStyle(de).getPropertyValue('--gu')) || 1 };
-    const { cfg, key, pw, pg, hs } = plateConfig(o);
-    const L = build(cfg, rules);
-    const nodes = treeNodes(rules);
-    let tsh = '';
-    for (const t of L.tiers) {
-      const x0 = cfg.padX + cfg.colW * t.c0;
-      const w = cfg.colW * (t.c1 - t.c0 + 1);
-      tsh += `<div class="gt-ts${t.tier === 'E' ? ' evo' : ''}" data-tier="${t.tier}" data-tn="${t.tier}" style="left:${x0}px;top:0;width:${w}px;height:${cfg.hdr}px"><small></small><b>${PL}<span class="pt"></span><em></em></b></div>`;
-    }
-    let rowsH = '';
-    for (const row of L.rows) {
-      const i = row.i;
-      const loc = (k: string) => ({ x: L.pos[k]!.x, y: L.pos[k]!.y - row.top });
-      let bands = '';
-      let svg = '';
-      let nds = '';
-      for (const t of L.tiers) bands += `<div class="gt-tb" data-tier="${t.tier}" style="left:${cfg.padX + cfg.colW * t.c0}px;top:0;bottom:0;width:${cfg.colW * (t.c1 - t.c0 + 1)}px"></div>`;
-      for (const n of nodes.list.filter((x) => x.row === i)) {
-        const B = loc(n.key);
-        for (const term of n.req)
-          for (const src of term) svg += `<path class="${term.length > 1 ? 'alt' : ''}" data-a="${src}" data-b="${n.key}" d="${link(loc(src), B)}"/>`;
-        if (n.kind === 'blood') {
-          const h = cfg.sz.B / 2 + 2;
-          svg += `<path class="dead" data-b="${n.key}" data-dead="1" d="M${B.x + h},${B.y} H${B.x + h + 12} M${B.x + h + 12},${B.y - 6} V${B.y + 6}"/>`;
-        }
-        nds += nodeHTML(n, B);
-      }
-      rowsH += `<div class="gt-prow" data-row="${i}"><div class="gt-pcell">${plateOne(i)}</div>
-        <div class="gt-pcv" style="width:${L.W}px">${bands}<div class="gt-pin" style="width:${L.W}px;height:${row.h}px"><svg class="gt-lines" width="${L.W}" height="${row.h}" viewBox="0 0 ${L.W} ${row.h}">${svg}</svg>${nds}</div></div></div>`;
-    }
-    const ultRow = `<div class="gt-prow ult" data-row="${rules.rows}"><div class="gt-pcell">${plateOne(rules.rows)}</div><div class="gt-pult"${short || hs ? ` style="flex:none;width:${L.W}px"` : ''}>${ultHTML(L, cfg)}</div></div>`;
-    const vars = `--sF:${cfg.sz.F}px;--sE:${cfg.sz.E}px;--sB:${cfg.sz.B}px;--sN:${cfg.sz.N}px;--sV:${cfg.sz.V}px;--hit:${cfg.hit}px;--hdr:${cfg.hdr}px;--pw:${pw}px;--pg:${pg}px`;
-    const tight = cfg.colW < 70;
-    const cls = `gt gp q4${key === 'm' && !short ? '' : ' cs'}${tight ? ' tight' : ''}${short ? ' sh' : ''}${hs ? ' hs' : ''} k-${key}`;
     const bar = barHTML(true, s);
-    const acts = short ? `<div class="gt-acts gt-inbar" data-dyn="acts"></div>` : '';
-    const top = short ? `<div class="gt-tools">${bar}${acts}</div>` : bar;
-    const html = `<div class="${cls}" style="${vars}">${top}<div class="gt-scroll"><div class="gt-gpw"><div class="gt-sk"><div class="gt-ghead"><div class="gt-gsp"></div><div class="gt-gcv" style="width:${L.W}px">${tsh}</div></div>${rowsH}</div>${ultRow}</div></div></div>`;
-    return { html, cfg, key, hs };
+    const top = short ? `<div class="gt-tools">${bar}<div class="gt-acts gt-inbar" data-dyn="acts"></div></div>` : bar;
+    return `<div class="gt q4 cols${short ? ' ph' : ''}">${top}<div class="gt-body"></div></div>`;
   }
 
   // ------------------------------------------------------------------ plaka verisi (gerçek skill sayıları)
   interface PlateData {
     chips: string;
     nums: string;
+    desc: string;
   }
   function plateData(h: TreeTabHero, tree: TreeData): PlateData[] {
     const stats = heroStats(h);
     if (!stats) return [];
     const list = gearSkillRows(tree.class, stats);
     if (list.length !== rules.rows + 1) return [];
+    const descOf = (tip: { rows: { text: string }[] }): string => tip.rows.map((x) => x.text).join(' · ');
     return list.map((r) => {
-      if (r.passive) return { chips: '', nums: numsHtml(r.numbers) };
-      return { chips: chipsHtml(r.skill!, stats), nums: numsHtml(r.numbers) };
+      if (r.passive) {
+        const p = content.classes[tree.class]?.passive;
+        return { chips: '', nums: numsHtml(r.numbers), desc: p ? descOf(passiveTip(p, stats)) : '' };
+      }
+      return { chips: chipsHtml(r.skill!, stats), nums: numsHtml(r.numbers), desc: descOf(skillTip(r.skill!, stats)) };
     });
   }
   const numsHtml = (nums: Array<{ label: string; text: string; times?: number }>): string =>
@@ -640,7 +671,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       }
       el._seen = true;
       el.querySelector('small')!.textContent = t.small;
-      el.querySelector('.pt')!.textContent = t.pt;
+      el.querySelector('.pt')!.textContent = isShort() ? t.pt.replace(/ pts$/, '') : t.pt; // telefonda dar bant: kilit + sayı
       el.querySelector('em')!.textContent = t.em;
       el.classList.toggle('lk', t.lk);
     });
@@ -651,6 +682,30 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
         const key = `${rules.rows}.${arm}${st}`;
         $$(`[data-ulv="${key}"]`).forEach((t) => t.classList.toggle('lk', s.level < (rules.ult.levels[st - 1] ?? 0)));
       }
+    // satır puanları (bekleyen varsa turuncu) + ult kolları ("n / 3"; tek kol seçiliyse diğerleri kapanır)
+    $$('[data-pts]').forEach((e) => {
+      const i = Number(e.dataset['pts']);
+      const v = rowSpent(E, i);
+      e.textContent = String(v);
+      e.classList.toggle('pd', v !== rowSpent(s.confirmed, i));
+    });
+    const chosen = ultArm(E, rules);
+    for (const arm of rules.ult.arms) {
+      let n = 0;
+      for (let st = 1; st <= rules.ult.levels.length; st++) n += E.r[`${rules.rows}.${arm}${st}`] ?? 0;
+      const off = !!rules.ult.singleArm && !!chosen && chosen !== arm;
+      $$(`[data-arm="${arm}"]`).forEach((e) => {
+        e.querySelector('b')!.textContent = off ? 'closed' : `${n} / ${rules.ult.levels.length}`;
+        e.classList.toggle('full', n === rules.ult.levels.length);
+        e.classList.toggle('off', off);
+        e.title = off ? `One ult path only: the ${ARM_NAME[chosen!]} arm is chosen` : '';
+      });
+    }
+    const up = ultSpent(E, rules);
+    $$('[data-upts]').forEach((e) => {
+      e.textContent = String(up);
+      e.parentElement?.classList.toggle('full', up >= rules.ult.max);
+    });
     // Mastery bar
     const vis = Math.max(...rules.barAt);
     const bvE = Math.min(vis, counter(E, rules));
@@ -875,26 +930,22 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
 
   function mountTree(s: TreeSession): void {
     if (!treeHost || !page) return;
-    const avail = Math.max(240, treeHost.clientWidth - (isShort() ? 14 : 14));
-    const t = treeHTML(s, avail);
-    const sc = { x: 0, y: 0 };
-    const old = $('.gt-scroll', treeHost);
-    if (old) {
-      sc.x = old.scrollLeft;
-      sc.y = old.scrollTop;
-    }
-    treeHost.innerHTML = t.html;
-    const scr = $('.gt-scroll', treeHost);
-    if (scr) {
-      scr.scrollLeft = sc.x;
-      scr.scrollTop = sc.y;
-    }
+    treeHost.innerHTML = treeHTML(s);
+    // işlem satırı (telefonda üst şeritte) gövdeden ÖNCE dolar: gövdenin ölçüsü şeridin son yüksekliğine göre alınır
+    const h0 = ctx.hero();
+    const ac = $('[data-dyn="acts"]', treeHost);
+    if (h0 && ac) ac.innerHTML = actsHTML(h0, s);
+    const g = $('.gt', treeHost);
+    const body = $('.gt-body', treeHost);
+    if (!g || !body) return;
+    built = { w: Math.floor(body.clientWidth), h: Math.floor(body.clientHeight) };
+    const L = buildCols({ W: built.w, H: built.h, short: isShort() }, rules);
+    ro?.observe(body);
+    g.style.cssText += `;--sF:${L.sz.F}px;--sE:${L.sz.E}px;--sB:${L.sz.B}px;--sN:${L.sz.N}px;--sV:${L.sz.V}px;--hit:${Math.min(L.pitch, 44)}px`;
+    body.innerHTML = bodyHTML(L);
     if (!entered && !reduced()) {
-      const g = $('.gt.q4', treeHost);
-      if (g) {
-        g.classList.add('enter');
-        window.setTimeout(() => g.classList.remove('enter'), 1200);
-      }
+      g.classList.add('enter');
+      window.setTimeout(() => g.classList.remove('enter'), 1200);
     }
     entered = true;
   }
@@ -942,24 +993,25 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     refresh();
   }
 
+  /** Gövde (ve kutu) ölçüsü kurulumdan sonra değişirse (pencere, yazı tipi yüklenmesi, işlem satırı sarması) ağaç yeniden yerleştirilir. */
   function watchSize(): void {
     ro?.disconnect();
     if (!treeHost || typeof ResizeObserver === 'undefined') return;
-    let w0 = treeHost.clientWidth;
     ro = new ResizeObserver(() => {
       window.clearTimeout(roT);
       roT = window.setTimeout(() => {
         const s = sess;
-        if (!s || !treeHost || !treeHost.isConnected) return;
-        const w = treeHost.clientWidth;
-        if (Math.abs(w - w0) < 3) return;
-        w0 = w;
+        const body = treeHost ? $('.gt-body', treeHost) : null;
+        if (!s || !treeHost || !treeHost.isConnected || !body) return;
+        if (Math.abs(Math.floor(body.clientWidth) - built.w) < 3 && Math.abs(Math.floor(body.clientHeight) - built.h) < 3) return;
         hideTip();
         mountTree(s);
         refresh();
-      }, 160);
+      }, 120);
     });
     ro.observe(treeHost);
+    const b0 = $('.gt-body', treeHost);
+    if (b0) ro.observe(b0);
   }
 
   function syncButton(on: boolean, points: number): void {

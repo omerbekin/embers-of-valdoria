@@ -417,14 +417,14 @@
     },
     "1.f2": {
       "name": "Searing Crit",
-      "text": "Fire Bolt's critical hits deal 6% more damage per rank.",
+      "text": "Fire Bolt gains +6% Crit damage per rank.",
       "src": "B:V5:1.f2",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "critDmgMul": 0.06
+            "critMultAdd": 0.06
           },
           "rank": true
         }

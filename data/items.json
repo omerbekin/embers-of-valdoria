@@ -1014,7 +1014,7 @@
     "b_wound_soft": {
       "tier": "B",
       "name": "Scarred hide",
-      "text": "Your wounds lower your Max HP {0}% less",
+      "text": "Each wound lowers your Max HP {0}% less",
       "slots": [
         "armor",
         "helm"
@@ -1023,12 +1023,12 @@
       "icon": "wound",
       "parts": [
         {
-          "base": 6,
-          "perIlvl": 1,
+          "base": 1.2,
+          "perIlvl": 0.2,
           "step": 1,
-          "ip": 0.1,
+          "ip": 0.5,
           "to": "prog:woundSoft",
-          "scale": 0.01
+          "scale": 0.05
         }
       ]
     },
@@ -1132,6 +1132,28 @@
           "step": 1,
           "ip": 0.4,
           "to": "fx:armorShred"
+        }
+      ]
+    },
+    "b_blockbreak": {
+      "tier": "B",
+      "name": "Block break",
+      "text": "{0}% Block break",
+      "slots": [
+        "weapon",
+        "gloves"
+      ],
+      "desc": "Your hits lower the target's Block chance by this much: 20% Block against 6% Block break is 14%. It only matters against a shield.",
+      "needs": "element:physical",
+      "icon": "blockBreak",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.2,
+          "step": 0.5,
+          "ip": 0.25,
+          "to": "fx:blockBreak",
+          "scale": 0.01
         }
       ]
     },
@@ -1693,7 +1715,7 @@
       ]
     }
   },
-  "_caps": "Kahramanın tüm ekipmanından gelen toplam tavanlar (src/progression/loadout.ts kırpar; fazlası kaybolur): crit / accuracy / evasion = yüzde puan, spd = düz hız, mpCost = MP bedeli indirimi %, resist = debuff direnci %. Ömer 2026-10-12 (Endless item dengesi p4): crit 15 -> 25, evasion 10 -> 15, mpCost 50 ve resist 40 eklendi. Ömer 2026-10-13 (itemcaps): recovery = savaş sonrası toparlanma toplamı % (tavan 20); aAffixCopies = aynı A kademe affix'i bir kahramanda en çok kaç item'de sayılır (2; fazlasında en güçlü 2 örnek işler, gerisi etkisiz ve ipucunda soluk). Tavanlar dolunca arayüz statı \"max\" olarak gösterir. Tavansız statlar (can çalma, kritik hasarı, hasar, hız %, Lucky Escape, DoT gücü) tavansız kalır. Ömer 2026-10-13 (itemfix m4): motorun gizli sınırları da buraya taşındı (aynı değerler, motor buradan okur: src/engine/item-caps.ts): initiative = Quick start en çok %99, armorPen / magicPen = delme en çok %100, damageTaken = alınan hasar azaltma (Global defense, düşük can azaltması) en çok %90; arayüz bunlarda da \"max\" gösterir. Ömer 2026-10-18 (kalkan bloğu): block = kalkanın taban blok şansı (%15-20, taban başına sabit, item seviyesiyle değişmez: items[].implicitBase) + kalkana özgü C affix'i c_block toplamı en çok %30 (motor da buradan okur: src/engine/item-caps.ts > block).",
+  "_caps": "Kahramanın tüm ekipmanından gelen toplam tavanlar (src/progression/loadout.ts kırpar; fazlası kaybolur): crit / accuracy / evasion = yüzde puan, spd = düz hız, mpCost = MP bedeli indirimi %, resist = debuff direnci %. Ömer 2026-10-12 (Endless item dengesi p4): crit 15 -> 25, evasion 10 -> 15, mpCost 50 ve resist 40 eklendi. Ömer 2026-10-13 (itemcaps): recovery = savaş sonrası toparlanma toplamı % (tavan 20); aAffixCopies = aynı A kademe affix'i bir kahramanda en çok kaç item'de sayılır (2; fazlasında en güçlü 2 örnek işler, gerisi etkisiz ve ipucunda soluk). Tavanlar dolunca arayüz statı \"max\" olarak gösterir. Tavansız statlar (can çalma, kritik hasarı, hasar, hız %, Lucky Escape, DoT gücü) tavansız kalır. Ömer 2026-10-13 (itemfix m4): motorun gizli sınırları da buraya taşındı (aynı değerler, motor buradan okur: src/engine/item-caps.ts): initiative = Quick start en çok %99, armorPen / magicPen = delme en çok %100, damageTaken = alınan hasar azaltma (Global defense, düşük can azaltması) en çok %90; arayüz bunlarda da \"max\" gösterir. Ömer 2026-10-31 (#17): Block bu listeden çıktı; karşılığı ödünleşme: saldırganın Block Break'i hedefin Block şansından çıkar (b_blockbreak).",
   "caps": {
     "crit": 25,
     "accuracy": 10,
@@ -1706,7 +1728,6 @@
     "armorPen": 100,
     "magicPen": 100,
     "damageTaken": 90,
-    "block": 30,
     "aAffixCopies": 2
   },
   "weaponFamilies": [

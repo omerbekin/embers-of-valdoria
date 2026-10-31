@@ -338,6 +338,20 @@
   gap: max(5px, calc(8 * var(--bu)));
 }
 
+/* bölüm başlığı (ör. "From Skill Tree"): ince altın çizgi, altında küçük büyük harf etiket */
+.bt-sec {
+  margin-top: max(2px, calc(4 * var(--bu)));
+  padding-top: max(5px, calc(8 * var(--bu)));
+  border-top: 1px solid var(--bt-line2);
+}
+
+.bt-sec span {
+  font: 600 max(10px, calc(13 * var(--bu))) var(--g-disp, 'Cinzel', serif);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--acl);
+}
+
 .bt-ln {
   display: flex;
   align-items: flex-start;

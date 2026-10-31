@@ -54,6 +54,7 @@ export function boardHero(h: BoardHeroSource): FormationBoardHero | null {
     mp: stats.mp,
     attr: { str: stats.str, dex: stats.dex, int: stats.int, luck: stats.luck },
     avatar: avatarUrl(h.class) ?? '',
+    classId: h.class,
     ...(h.leader ? { leader: true } : {}),
     // Pasif HER ZAMAN skill'lerin önünde (gearSkillRows sırası: pasif, sonra skill'ler)
     ...(passiveRow && p ? { passive: { name: p.name, icon: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(h.class)) } } : {}),
