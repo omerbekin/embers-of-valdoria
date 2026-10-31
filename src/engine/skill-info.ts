@@ -3,6 +3,7 @@ import { isRatioCost, skillCostLabel } from './cost';
 import { betMultipliers, betStake } from './gamble';
 import { lessText, moreText, multText } from './bonus-text';
 import { bonusScaleRaw } from './spec';
+import { bellsOfSkill } from './tree-hooks';
 import { rangeEnabled, rangeLabel } from './range';
 import { applySummonerScale, applySummonVariant, attributePower, outgoingDamageMult } from './stats';
 import type { UrnRule, AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
@@ -177,7 +178,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `When an enemy hits you with a melee skill, the cell it stands on becomes ${groundName(e.ground)} for ${turnsText(e.turns)} of its turns: it Burns while it stands there (${val(e.scale, e.power)} damage at the start of its turn); at most once between your turns.${resText}`;
     }
     case 'pealingBells':
-      return `Every Toll or Thunderpeal you ring makes your bells ${moreText(e.perBell)} stronger for the rest of the battle (it stacks with no limit; the bell that rings counts only for the next ones).`;
+      return `Every ${e.onlyRings ?? 'Toll or Thunderpeal'} you ring makes your bells ${moreText(e.perBell)} stronger for the rest of the battle (it stacks with no limit; the bell that rings counts only for the next ones).`;
     case 'longshot':
       return `Deal more damage the farther your target is: ${moreText(e.perRow)} at 1 row of distance, ${moreText(e.perRow * 2)} at 2, ${moreText(e.perRow * 3)} at 3 (distance = your row + their row${e.extraRows ? ` + ${e.extraRows}` : ''}).`;
     case 'naturesGrudge':
@@ -608,7 +609,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   if (rangeEnabled(formulas)) {
     // Menzil (range.md, range.ts): kart satırı; menzil kapalıyken eski melee satırı
   } else if (skill.motion === 'melee' && skill.target !== 'self') add(skill.requiresOpenBehind ? 'Slips behind any enemy, strikes, and returns' : skill.ignoreReach ? 'Charges at any enemy' : skill.reach ? `Melee: front ${skill.reach + 1} rows only (reach +${skill.reach})` : 'Melee: front row only');
-  if (skill.ringsBell) add('Rings a bell: counts for Pealing Bells and for the Great Bell of Valdoria');
+  if (skill.ringsBell) add(`${bellsOfSkill(skill) > 1 ? `Rings ${bellsOfSkill(skill)} bells` : 'Rings a bell'}: counts for Pealing Bells and for the Great Bell of Valdoria`);
   if (skill.advanceToFront) add('If you are not in the front row, you then step into the front row: the front cell of your own lane, or the nearest empty front cell if that one is taken (you stay put if the front row is full)');
   // Oranlı bedel (Wail of the Dead: mevcut canın %20'si): açıklama satırı; başlık skillCostLabel
   // Bedelin kendisi başlıkta (skillCostLabel: "All RAGE (min 30)" / "20% of current HP"); satırda yalnızca başlıkta olmayan kural

@@ -585,6 +585,21 @@ setTimeout(() => {}, 60000);`);
     has(W.origin('data/patch-notes.json'), 'short note line');
     hasNot(W.origin('data/patch-notes.json'), 'note line 3');
   },
+  'geride kalan kopya uyarilir, cakisma soylenir, kopyaya dokunulmaz': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 8;\n');
+    W.ready(A);
+    W.push(A);
+    const sha = W.originSha();
+    W.wput(b, 'src/a.ts', 'export const a = 9;\n');
+    const before = W.wg(b, 'rev-parse', 'HEAD');
+    const p = W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out;
+    has(p, 'geride'); has(p, 'çakışacak: src/a.ts');
+    ok(W.wg(b, 'rev-parse', 'HEAD') === before, 'kopya taşınmadı');
+    ok(W.originSha() === sha, 'origin aynı');
+  },
   'on test suresinde kirmizi gonderimi durdurur': (W) => {
     W.cutover();
     const a = W.open(A, 'a');

@@ -5,7 +5,7 @@
  */
 import type Phaser from 'phaser';
 import layout from '../../data/battle-layout.json';
-import { content, TARGET_TEXT, UNBLOCKABLE_LABEL } from '../engine';
+import { content, speedText, TARGET_TEXT, UNBLOCKABLE_LABEL } from '../engine';
 import type { Combatant } from '../engine';
 import {
   DAMAGE_MULTS,
@@ -1446,7 +1446,7 @@ export function registerDebugTools({ game, debug }: Ctx): void {
           c.maxRage !== undefined ? `Rage ${c.rage ?? 0}/${c.maxRage}` : '',
           `STR ${c.stats.str} DEX ${c.stats.dex} INT ${c.stats.int} LCK ${c.stats.luck}`,
           c.stats.primary ? `Primary: ${c.stats.primary.toUpperCase()}${c.stats.primaryActive ? "" : " (inactive)"}` : "",
-          `SPD ${c.stats.spd}`,
+          `SPD ${speedText(c.stats.spd, content.formulas)}`,
           `ARM ${c.stats.armor}${c.stats.magicArmor > 0 ? ` M.ARM ${c.stats.magicArmor}` : ''}`,
           c.shield > 0 ? `Shield ${c.shield}` : '',
           c.magicShield > 0 ? `Magic shield ${c.magicShield}` : '',

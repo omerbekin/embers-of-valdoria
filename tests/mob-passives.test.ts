@@ -200,7 +200,7 @@ describe('YM7 Mire-Bound (Fen Witchling, Morwen)', () => {
     const plain = b.baseSpeedOf(w);
     expect(e.status).toBe('saltbound');
     b.debugAddStatus('party-0', e.status);
-    expect(b.baseSpeedOf(w)).toBe(Math.max(f.attributes.spdStep ?? 1, roundSpeed(w.stats.spd * e.speedMult, f)));
+    expect(b.baseSpeedOf(w)).toBe(Math.max(f.attributes.spdMin ?? 1, roundSpeed(w.stats.spd * e.speedMult, f)));
     b.debugKill('enemy-0', false);
     expect(b.baseSpeedOf(w)).toBeLessThan(plain); // Morwen hâlâ yaşıyor
     b.debugKill('enemy-1', false);
@@ -362,7 +362,7 @@ describe('D1-D6: var olan etkiler mob skill\'lerinde', () => {
 
   it('D3 mob YZ\'si çağırma skill\'ini kullanır (Call the Buried); iki savaş modu da çalışır', () => {
     let used = 0;
-    for (const seed of [1, 2, 3, 4]) {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) { // ondalık hızda sıra kaydı: deneme sayısı arttı (kullanım oranı ölçüldü, değişmedi)
       const b = arena([['warrior', 1], ['archer', 6]], [['grave_chanter', 7], ['ghoul', 1]], 'turns', seed);
       for (let i = 0; i < 300 && !b.winner; i++) {
         const uid = b.currentActor?.uid;

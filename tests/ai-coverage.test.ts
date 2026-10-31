@@ -301,3 +301,123 @@ describe('9. skill ağacı tetikleri (veri güdümlü)', () => {
     expect(JSON.stringify(pv)).toContain('Crash: Stun');
   });
 });
+
+describe('7b. Vesper ağacı: her tetik / etki terazide', () => {
+  const T = treeOf('vesper')!;
+  const vt = (r: Record<string, number>) => compileTree(T, { v: T.version, r })!;
+  const fight = (r: Record<string, number>, enemies: Record<number, string> = { 1: 'warrior', 4: 'warrior' }) => withTrees({ 7: 'vesper' }, enemies, { party: { 7: { tree: vt(r) } } });
+  const V = (b: Battle) => b.combatants.find((c) => c.side === 'party' && c.defId === 'vesper')!;
+  const term = (b: Battle, uid: string, skill: string, k: string) => cand(b, uid, skill)[0]?.terms?.[k];
+
+  it('Long Echo: ilk çan ek çan değerinde, hak bitince değil; çan çalmayan skill\'de yok', () => {
+    const b = fight({ '0.f3': 1 });
+    const v = V(b);
+    b.debugClearCooldowns();
+    expect(term(b, v.uid, 'toll', 'tree') ?? 0).toBeGreaterThan(0);
+    expect(term(b, v.uid, 'cracked_bell', 'tree') ?? 0).toBe(0);
+    (v.treeOnce ??= []).push('vesper:0.f3');
+    expect(term(b, v.uid, 'toll', 'tree') ?? 0).toBe(0);
+  });
+  it('Quickening Peal: çan skill\'i erken tur payı alır', () => {
+    const b = fight({ '0.ea': 1 });
+    expect(term(b, V(b).uid, 'toll', 'tree') ?? 0).toBeGreaterThan(0);
+  });
+  it('Passing Bell: öldürme ihtimalinde tree artı, yoksa yok', () => {
+    const b = fight({ '1.ma': 1 });
+    expect(term(b, V(b).uid, 'toll', 'tree') ?? 0).toBe(0);
+    E(b).hp = 1;
+    expect(term(b, V(b).uid, 'toll', 'tree') ?? 0).toBeGreaterThan(0);
+  });
+  it('Compline: düşman Vesper\'in dostunu öldürmek bedel (retaliation eksi)', () => {
+    const b = withTrees({ 7: 'mage' }, { 1: 'warrior', 7: 'vesper' }, { enemies: { 7: { tree: vt({ '0.mb': 1 }) } } });
+    const m = b.combatants.find((c) => c.side === 'party')!;
+    const w = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'warrior')!;
+    w.hp = 1;
+    expect(cand(b, m.uid, 'fire_bolt').some((x) => (x.terms?.retaliation ?? 0) < 0)).toBe(true);
+    w.hp = w.maxHp; // öldürme yoksa bedel yok
+    expect(cand(b, m.uid, 'fire_bolt').every((x) => (x.terms?.retaliation ?? 0) === 0)).toBe(true);
+  });
+  it('Ringing Skull: Cracked Bell Stun şansıyla tree artı', () => {
+    const b = fight({ '3.n0': 1 });
+    b.debugClearCooldowns();
+    expect(term(b, V(b).uid, 'cracked_bell', 'tree') ?? 0).toBeGreaterThan(0);
+  });
+  it('Storm Tower iki çan değerinde; Echoing Hall ult\'e çan değeri verir; Deep Peal Thunderpeal\'in çan değerini kapatır', () => {
+    const one = fight({});
+    const two = fight({ '2.v': 1 });
+    expect(term(two, V(two).uid, 'thunderpeal', 'bell')!).toBeCloseTo(term(one, V(one).uid, 'thunderpeal', 'bell')! * 2, 6);
+    const hall = fight({ '4.l1': 1 });
+    hall.debugClearCooldowns();
+    expect(term(hall, V(hall).uid, 'great_bell_of_valdoria', 'bell') ?? 0).toBeGreaterThan(0);
+    const deep = fight({ '0.eb': 1 });
+    expect(term(deep, V(deep).uid, 'thunderpeal', 'bell')).toBeUndefined();
+    expect(term(deep, V(deep).uid, 'toll', 'bell') ?? 0).toBeGreaterThan(0);
+  });
+  it('Wide Toll ve Shaken Ranks: eklenen durum treeStatus artı; düğümsüz yok', () => {
+    const no = fight({});
+    expect(term(no, V(no).uid, 'toll', 'treeStatus')).toBeUndefined();
+    const wide = fight({ '1.eb': 1 });
+    expect(term(wide, V(wide).uid, 'toll', 'treeStatus') ?? 0).toBeGreaterThan(0);
+    const shaken = fight({ '1.mb': 1 });
+    for (const c of shaken.combatants) if (c.side === 'enemy') c.stats.accuracy = 0.8; // isabet cezası ancak %100'ün altında işe yarar
+    expect(term(shaken, V(shaken).uid, 'toll', 'treeStatus') ?? 0).toBeGreaterThan(0);
+  });
+  it('Forked Peal: arkada düşman varken tree artı, yokken yok', () => {
+    const b = fight({ '2.ea': 1 });
+    // Ön sıra vurulunca arkada düşman var (artı); arka sıra vurulunca onun arkası boş (terim yok)
+    const treeBy = cand(b, V(b).uid, 'thunderpeal').map((x) => x.terms?.tree ?? 0);
+    expect(treeBy.filter((t) => t > 0).length).toBe(1);
+    expect(treeBy.filter((t) => t === 0).length).toBe(1);
+    const alone = fight({ '2.ea': 1 }, { 1: 'warrior' });
+    expect(term(alone, V(alone).uid, 'thunderpeal', 'tree') ?? 0).toBe(0);
+  });
+  it('Bell of Kings: Great Bell\'de kurtarılan MP değeri (MP eksikken), silahlıyken yok', () => {
+    const b = fight({ '4.l3': 1 });
+    const v = V(b);
+    b.debugClearCooldowns();
+    v.mp = Math.round(v.maxMp * 0.5);
+    expect(term(b, v.uid, 'great_bell_of_valdoria', 'armedCost') ?? 0).toBeGreaterThan(0);
+    (v.treeArmed ??= []).push('vesper:4.l3');
+    expect(term(b, v.uid, 'great_bell_of_valdoria', 'armedCost') ?? 0).toBe(0);
+  });
+  it('koşullu güçler önizlemeden YZ hasarına geçer (Funeral Toll, Knell, Toll for One, Last Peal); Cathedral Choir önizleme kritiğinde; Angelus bedelde', () => {
+    const dmg = (r: Record<string, number>, skill: string, set?: (b: Battle) => void) => {
+      const b = fight(r);
+      b.debugClearCooldowns();
+      for (const c of b.combatants) c.hp = c.maxHp = 50000;
+      V(b).stats.int = 2000;
+      b.debug.crit = 'auto' as never;
+      set?.(b);
+      return cand(b, V(b).uid, skill)[0]!.terms!.damage!;
+    };
+    const half = (b: Battle) => { E(b, 0).hp = 20000; E(b, 1).hp = 20000; };
+    expect(dmg({ '1.n0': 1 }, 'toll', half)).toBeGreaterThan(dmg({}, 'toll', half));
+    expect(dmg({ '1.ea': 1 }, 'toll')).toBeGreaterThan(dmg({}, 'toll'));
+    const elite = (b: Battle) => { E(b, 0).tier = 'elite'; E(b, 1).tier = 'elite'; };
+    expect(dmg({ '3.ma': 1 }, 'cracked_bell', elite)).toBeGreaterThan(dmg({}, 'cracked_bell', elite));
+    expect(dmg({ '4.d3': 1 }, 'great_bell_of_valdoria', half)).toBeGreaterThan(dmg({}, 'great_bell_of_valdoria', half));
+    const crit = (r: Record<string, number>) => {
+      const b = fight(r);
+      V(b).bells = 40;
+      return previewSkill(b, V(b).uid, 'toll')[0]!.damage!.critChance;
+    };
+    expect(crit({ '0.v': 1 })).toBeGreaterThan(crit({}));
+    // YZ kritiği öldürme ihtimalinde okur: yalnız kritik öldürürken Cathedral Choir kill terimi doğurur
+    const killBy = (r: Record<string, number>) => {
+      const b = fight(r);
+      V(b).bells = 40;
+      V(b).stats.int = 2000;
+      V(b).stats.critChance = 0;
+      const p = previewSkill(b, V(b).uid, 'toll')[0]!;
+      for (const c of b.combatants) if (c.side === 'enemy') c.hp = c.maxHp = Math.round(p.damage!.max + 1);
+      return term(b, V(b).uid, 'toll', 'kill') ?? 0;
+    };
+    expect(killBy({ '0.v': 1 })).toBeGreaterThan(killBy({}));
+    const cost = (bells: number) => {
+      const b = fight({ '0.ma': 1 });
+      V(b).bells = bells;
+      return -(term(b, V(b).uid, 'toll', 'cost') ?? 0);
+    };
+    expect(cost(5)).toBeLessThan(cost(4));
+  });
+});

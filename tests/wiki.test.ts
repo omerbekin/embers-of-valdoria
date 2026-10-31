@@ -112,6 +112,12 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     }
   });
 
+  it('ondalık hız (Ömer 2026-10-31) Turn order makalesinde yazılıdır; alt sınır veriden', () => {
+    const turns = JSON.stringify(wiki.gettingStarted.find((a) => a.id === 'turns'));
+    expect(turns).toContain('Speed keeps its decimals');
+    expect(turns).toContain(`below ${content.formulas.attributes.spdMin}`);
+  });
+
   it('Mechanics: her stat, her primary bonus ve ana mekanikler var; boş metin ve şimdiki değer sızıntısı yok', () => {
     const ids = wiki.mechanics.map((a) => a.id);
     for (const k of ['str', 'int', 'dex', 'luck', 'hp', 'mp', 'spd', 'critChance', 'accuracy', 'evasion', 'armor', 'magicArmor']) expect(ids, k).toContain(`stat-${k}`);

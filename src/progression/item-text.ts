@@ -2,7 +2,7 @@
 // Affix satırları kademesiyle (C / B / A) gelir (Ömer onayı 2026-10-11, items.md 1.3b).
 import { classes, formulas, statuses as statusDefs } from '../engine/content';
 import { lessText, moreText, multText } from '../engine/bonus-text';
-import { applyUnitModifiers } from '../engine/stats';
+import { applyUnitModifiers, speedText } from '../engine/stats';
 import type { Stats } from '../engine/types';
 import {
   ITEMS,
@@ -295,7 +295,7 @@ export interface HeroPanelStat {
   label: string;
   value: number;
   /** Gösterim: tam sayı, yüzde ya da 1 ondalık. */
-  fmt: 'int' | 'pct' | 'dec';
+  fmt: 'int' | 'pct' | 'dec' | 'spd';
   /** Item toplamı tavanda (fazlası kaybolur; arayüz "max" gösterir; Ömer 2026-10-13, itemcaps m1). */
   capped?: boolean;
 }
@@ -335,7 +335,7 @@ export function heroPanel(src: LoadoutSource): HeroPanelStat[] {
     { id: 'evasion', label: 'EVA', value: st.evasion, fmt: 'pct' },
     // Blok (Ömer 2026-10-18): kalkan tabanı + kalkan C affix'i (Stats'ta değil, item kancası)
     { id: 'block', label: 'BLOCK', value: lo.itemEffects?.blockChance ?? 0, fmt: 'pct' },
-    { id: 'spd', label: 'SPD', value: st.spd, fmt: 'dec' },
+    { id: 'spd', label: 'SPD', value: st.spd, fmt: 'spd' },
     // Block Break (Ömer 2026-10-31, #17; b_blockbreak): Stats'ta değil, item kancası
     { id: 'blockBreak', label: 'BLOCK BREAK', value: lo.itemEffects?.blockBreak ?? 0, fmt: 'pct' },
     { id: 'hpRegen', label: 'HP+/t', value: st.hpRegen, fmt: 'dec' },
@@ -352,6 +352,7 @@ export function cappedExtras(src: LoadoutSource): string[] {
 
 export function fmtPanel(s: Pick<HeroPanelStat, 'value' | 'fmt'>): string {
   if (s.fmt === 'pct') return `${Math.round(s.value * 1000) / 10}%`;
+  if (s.fmt === 'spd') return speedText(s.value, formulas);
   if (s.fmt === 'dec') return String(Math.round(s.value * 10) / 10);
   return String(Math.round(s.value));
 }

@@ -1,5 +1,5 @@
 import { describePassive } from './skill-info';
-import { armorReduction } from './stats';
+import { armorReduction, speedText } from './stats';
 import type { CombatantDef, Formulas, SkillDef, Stats } from './types';
 
 /** Arayüzde gösterilen stat türleri: 4 temel özellik, can/mana ve alt stat'lar (kritik çarpanı sabittir ama alt barda salt okunur satır olarak görünür; hpRegen/mpRegen tur başı yenilenmeler). */
@@ -105,7 +105,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
       return {
         title: `Dexterity ${stats.dex}`,
         lines: [
-          `Speed: +${num(a.spdPerDex)} per point; faster units act more often. You have ${stats.spd} Speed.`,
+          `Speed: +${num(a.spdPerDex)} per point; faster units act more often. You have ${speedText(stats.spd, f)} Speed.`,
           `Evasion: +${pct(a.evasionPerStep)} per ${a.dexPerEvasionStep} Dex, whole steps only (max ${pct(a.evasionMax)}). You have ${pct(stats.evasion)} evasion.`,
           `Dexterity skills deal ${num(f.scaling.dex)}x of DEX as base damage`,
         ],
@@ -126,7 +126,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
       return { title: `Mana ${stats.mp}`, lines: [`Max MP = ${a.mpBase} base (the same for every class) + ${a.mpPerInt} per Intelligence point`, `Regenerates ${stats.mpRegen} at the start of each of its turns (Intelligence x ${num(a.mpRegenPerInt)})`] };
     case 'spd':
       return {
-        title: `Speed ${stats.spd}`,
+        title: `Speed ${speedText(stats.spd, f)}`,
         lines: [
           `Comes from Dexterity (+${num(a.spdPerDex)} per point)`,
           // Kişisel hız zarı (Ömer 2026-10-24): birimin sapması; zar yoksa (sınıf kartı, wiki örneği) satır yok
@@ -200,14 +200,14 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
 }
 
 /** Takım seçim ekranındaki class kartı için özet (İngilizce). */
-export function describeClass(def: CombatantDef, skills: Record<string, SkillDef>, _f: Formulas): StatInfo {
+export function describeClass(def: CombatantDef, skills: Record<string, SkillDef>, f: Formulas): StatInfo {
   const s = def.stats;
   const names = def.skills.map((id) => skills[id]?.name ?? id).join(', ');
   const lines = [
     `STR ${s.str}   DEX ${s.dex}   INT ${s.int}   LUCK ${s.luck}`,
-    `HP ${s.hp}   MP ${s.mp}   SPD ${s.spd}   Armor ${num1(s.armor)}${s.magicArmor > 0 ? `   Magic armor ${num1(s.magicArmor)}` : ''}   Crit ${pct(s.critChance, 1)}   ACC ${pct(s.accuracy)}   EVA ${pct(s.evasion)}`,
-    ...(def.maxRage !== undefined ? [`Rage 0/${def.maxRage}: gained by damaging with skills (+${_f.rage.hitBase} to +${_f.rage.perHitCap} per hit), spent by Rage skills`] : []),
-    ...(def.passive ? [`Passive - ${def.passive.name}: ${describePassive(def.passive, def.stats, _f)}`] : []),
+    `HP ${s.hp}   MP ${s.mp}   SPD ${speedText(s.spd, f)}   Armor ${num1(s.armor)}${s.magicArmor > 0 ? `   Magic armor ${num1(s.magicArmor)}` : ''}   Crit ${pct(s.critChance, 1)}   ACC ${pct(s.accuracy)}   EVA ${pct(s.evasion)}`,
+    ...(def.maxRage !== undefined ? [`Rage 0/${def.maxRage}: gained by damaging with skills (+${f.rage.hitBase} to +${f.rage.perHitCap} per hit), spent by Rage skills`] : []),
+    ...(def.passive ? [`Passive - ${def.passive.name}: ${describePassive(def.passive, def.stats, f)}`] : []),
     `Skills: ${names}`,
   ];
   return { title: def.name, lines };

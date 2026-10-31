@@ -242,7 +242,7 @@ export type PassiveEffect =
    * Pealing Bells (Vesper, docs/design/classes/vesper.md): `ringsBell` skill'i her kullanıldığında sahibin çan sayacı (`Combatant.bells`) 1 artar;
    * `bell` işaretli hasar etkileri x(1 + perBell x çalınan çan). Üst sınır yok (Ömer kuralı: yeni stat tavanı yok).
    */
-  | { type: 'pealingBells'; perBell: number };
+  | { type: 'pealingBells'; perBell: number; /** Deep Peal (ağaç): yalnız bu skill çan çalar (görünen ad; ipucu metni). */ onlyRings?: string };
 
 export interface PassiveDef {
   id: string;
@@ -827,6 +827,8 @@ export interface TreeSetup {
   armorAdd?: number;
   /** Faz 5a (Pledged Plate): birimin kendi zırh çarpanı (stat türetiminden sonra). */
   armorMult?: number;
+  /** Vesper ağacı (Heavy Bronze): hız çarpanı; stat türetiminde UnitModifiers.spdMult ile çarpılır (Combatant.modifiers değişmez). */
+  spdMult?: number;
   /** Faz 4c: çağrıya geçen ağaç (çağrı id'si; ceset tüketen çağrıda '<id>#fed' beslenmiş kopyası): skill yamaları, kancalar, can çarpanı, zırh. */
   summons?: Record<string, TreeSetup>;
   /** Faz 8: skill biçim seçimleri (skill id -> biçimler; Paladin Focused Beam, Gambler Stacked Deck). Eylem `mode` ile seçer. */
@@ -1356,8 +1358,8 @@ export interface SkillDef {
    * yerinde kalır. Canlı birim olmayan hücre boştur (ceset hücresi de: Move kuralı). Olay `moved { cause: skill id, by, advance: true }`. battle.advanceDestination.
    */
   advanceToFront?: boolean;
-  /** Pealing Bells: bu skill kullanılınca kullanıcının çan sayacı (`Combatant.bells`) 1 artar (Toll, Thunderpeal). */
-  ringsBell?: boolean;
+  /** Pealing Bells: bu skill kullanılınca kullanıcının çan sayacı (`Combatant.bells`) 1 artar (Toll, Thunderpeal); sayı = o kadar çan (ağaç: Storm Tower 2). */
+  ringsBell?: boolean | number;
   /** Animasyonun çaldığı ses efektleri (data/audio.json adları); vfx yalnızca bu listedekileri çalar. */
   sfx?: string[];
   /** Skill efekti (animasyon) adı: src/ui/vfx-kinds.ts; yoksa `motion`/`skyFx` genel animasyonu oynar. */
@@ -1469,8 +1471,12 @@ export interface Formulas {
     mpPerInt: number;
     spdBase: number;
     spdPerDex: number;
-    /** Hız yuvarlama adımı (yoksa 1; stats.ts > roundSpeed). */
+    /** Hız yuvarlama adımı (Ömer 2026-10-31: 0,001 = hız ondalıklı, en çok 3 basamak; stats.ts > roundSpeed). */
     spdStep?: number;
+    /** Hızın alt sınırı (spdStep'ten bağımsız; stats.ts > speedMin). */
+    spdMin?: number;
+    /** Arayüzde gösterilen hızın adımı (0,01 = en çok 2 ondalık, sondaki sıfırlar yok; stats.ts > speedText). Motor hesabını etkilemez. */
+    spdShowStep?: number;
     /** Kişisel hız sapması (Ömer 2026-10-24): her birimin hızı [1 - v, 1 + v] çarpanıyla zarlanır (yoksa 0 = zar yok; stats.ts > speedRoll). */
     spdVariance?: number;
     critChanceBase: number;
@@ -1529,7 +1535,8 @@ export interface Formulas {
      */
     screenGrid?: { party: ScreenCell[]; enemy: ScreenCell[] };
   };
-  turn: { threshold: number; queueLength: number };
+  /** counterStep: sıra sayacının çözünürlüğü (turn-order.ts > snapCounter); spdStep'ten kaba olamaz. */
+  turn: { threshold: number; queueLength: number; counterStep: number };
   /** Daze (Ömer 2026-10-27, open-questions 443; çekiç örtüğü ItemEffects.dazeChance): tutan vuruş hedefin sıra sayacını push x turn.threshold geri iter; boss rütbesi bossMult kadar. Yoksa Daze yok. */
   daze?: { push: number; bossMult: number };
   /** Cooldown kuralları: `maxInitial` = bir skill'in savaş başı başlangıç cooldown'unun (initialCooldown) üst sınırı. */
@@ -1558,7 +1565,7 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread';
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'shaken';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {

@@ -64,8 +64,9 @@ describe('bölge I mob hızları (veri)', () => {
       const lists = [{ enemies: p.enemies, units: p.units.enemies }, ...(p.waves ?? [])];
       for (const w of lists) {
         const b = new Battle(flat(content.battleSetup(content.DEFAULT_BATTLE, 1, 'turns', { party: p.party, enemies: w.enemies, units: { party: p.units.party, enemies: w.units } }, false)));
+        // ondalık hız (Ömer 2026-10-31): bant yuvarlanmış değerin bandı (14,8 eskiden 15'ti; denge sayısı değişmedi)
         for (const c of b.combatants.filter((x) => x.side === 'enemy' && LOWERED.includes(x.defId)))
-          expect(c.stats.spd, `${node} ${c.defId}`).toBeGreaterThanOrEqual(15), expect(c.stats.spd, `${node} ${c.defId}`).toBeLessThanOrEqual(17);
+          expect(Math.round(c.stats.spd), `${node} ${c.defId}`).toBeGreaterThanOrEqual(15), expect(Math.round(c.stats.spd), `${node} ${c.defId}`).toBeLessThanOrEqual(17);
       }
     }
   });
@@ -89,8 +90,8 @@ describe('bölge I mob hızları (veri)', () => {
     const p = plan('2');
     const b = new Battle(flat(content.battleSetup(content.DEFAULT_BATTLE, 1, 'turns', { party: ['defender', 'mage', 'paladin'], enemies: p.enemies, units: { enemies: p.units.enemies } }, false)));
     const wolves = b.combatants.filter((x) => x.side === 'enemy' && x.defId === 'grey_wolf').map((x) => x.stats.spd).sort((a, z) => z - a);
-    expect(wolves[0]).toBe(19);
-    for (const s of wolves.slice(1)) expect(s).toBeLessThanOrEqual(16);
+    expect(Math.round(wolves[0]!)).toBe(19); // ondalık hız: 18,8
+    for (const s of wolves.slice(1)) expect(Math.round(s)).toBeLessThanOrEqual(16);
     expect(b.turnQueue(8).findIndex((u) => u.startsWith('party'))).toBeLessThanOrEqual(1);
   });
 

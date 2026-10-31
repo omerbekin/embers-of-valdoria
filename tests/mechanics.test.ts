@@ -449,6 +449,7 @@ describe('Druid: tur bazlı şifa ve çağrı süresi', () => {
     skipUntil(b, druid.uid);
     target.stats.hpRegen = 0; // Str can yenilenmesi bu ölçümü bozmasın
     target.hp = 20;
+    target.turnCounter = -1000; // hedefin kendi turu bu eylemin hemen ardından gelmesin: ilk şifa tek başına ölçülsün (ondalık hızda sıra kayabilir)
     const events = act(b, druid.uid, 'rejuvenate', target.uid);
     // hemen bir başlangıç şifası (tur başına x tik sayısı) verir; asıl tur bazlı şifa sonraki turlarda gelir
     const initial = ofType(events, 'heal');

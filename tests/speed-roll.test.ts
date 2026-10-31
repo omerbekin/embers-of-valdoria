@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, content, describeStat, rolledSpeed, speedRoll, type Teams } from '../src/engine';
+import { Battle, content, describeStat, rolledSpeed, speedRoll, speedText, type Teams } from '../src/engine';
 import { newCampaign, pickHero } from '../src/campaign/state';
 import { normalizeState } from '../src/campaign/save';
 import { newRun } from '../src/endless/run';
@@ -25,11 +25,11 @@ describe('kişisel hız zarı', () => {
     // zarsız formül (spdVariance yok / 0) = 1, hız aynen
     expect(speedRoll(7, 'x', { attributes: { ...f.attributes, spdVariance: 0 } })).toBe(1);
     expect(rolledSpeed(17, 1, f)).toBe(17);
-    expect(rolledSpeed(17, 1.06, f)).toBe(18);
+    expect(rolledSpeed(17, 1.06, f)).toBe(18.02); // ondalık hız (Ömer 2026-10-31)
     expect(rolledSpeed(1, 0.9, f)).toBe(1); // alt sınır speedMin
   });
 
-  it('savaş: her birim zarlı tam sayı hız; aynı seed = aynı hızlar; ana Rng akışı tüketilmez', () => {
+  it('savaş: her birim zarlı ondalık hız (en çok 3 basamak); aynı seed = aynı hızlar; ana Rng akışı tüketilmez', () => {
     const teams: Teams = { party: cells({ 0: 'warrior', 1: 'mage' }), enemies: cells({ 0: 'warrior', 1: 'warrior', 2: 'warrior' }) };
     const a = make(5, teams);
     const b = make(5, teams);
@@ -37,7 +37,7 @@ describe('kişisel hız zarı', () => {
       const roll = speedRoll(5, c.uid, f);
       expect(c.stats.spdRoll).toBe(roll);
       expect(c.stats.spd).toBe(rolledSpeed(content.classes[c.defId]!.stats.spd, roll, f));
-      expect(Number.isInteger(c.stats.spd)).toBe(true);
+      expect(c.stats.spd).toBe(Number(c.stats.spd.toFixed(3)));
     }
     expect(a.combatants.map((c) => c.stats.spd)).toEqual(b.combatants.map((c) => c.stats.spd));
     // aynı sınıf, farklı uid: hızlar farklılaşabilir (seed'ler arasında en az bir fark)
@@ -76,7 +76,7 @@ describe('kişisel hız zarı', () => {
     const teams: Teams = { party: cells({ 0: h.class }), enemies: cells({ 0: 'warrior' }), units: { party: { 0: loadoutSetup(h) } } };
     for (const seed of [1, 2, 3]) expect(make(seed, teams).get('party-0')!.stats.spd).toBe(sheet.spd);
     const tip = describeStat('spd', { ...sheet, spdRoll: 1.0634 }, f);
-    expect(tip.title).toBe(`Speed ${sheet.spd}`);
+    expect(tip.title).toBe(`Speed ${speedText(sheet.spd, f)}`);
     expect(tip.lines).toContain('Natural pace: 6% more Speed');
     expect(describeStat('spd', { ...sheet, spdRoll: 0.96 }, f).lines).toContain('Natural pace: 4% less Speed');
     expect(describeStat('spd', { ...sheet, spdRoll: 1.002 }, f).lines).toContain('Natural pace: normal Speed');

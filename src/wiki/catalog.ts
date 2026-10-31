@@ -28,7 +28,7 @@ import endlessJson from '../../data/endless.json';
 import levelsJson from '../../data/levels.json';
 import { BATTLE_SPEEDS } from '../ui/battle-speed';
 import layout from '../../data/battle-layout.json';
-import { applySummonVariant, content, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, skillCostLabel, TARGET_TEXT } from '../engine';
+import { applySummonVariant, content, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, skillCostLabel, speedText, TARGET_TEXT } from '../engine';
 import { TARGET_BADGE } from '../engine/skill-info';
 import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../engine/unblockable';
 import { isAccuracyCritDebuff } from '../engine/cc-immunity';
@@ -319,7 +319,7 @@ function buildUnit(kind: WikiUnit['kind'], def: CombatantDef, files: WikiFiles):
     row('hp', 'HP', fed && unfed ? `${fed.hp} / ${unfed.hp}` : String(st.hp), fed && unfed ? 'empowered / unfed' : undefined),
     ...(fed && unfed ? [row('str', 'STR', `${num(fed.str)} / ${num(unfed.str)}`, 'empowered / unfed')] : []),
     row('mp', 'MP', String(st.mp)),
-    row('spd', 'SPD', String(st.spd)),
+    row('spd', 'SPD', speedText(st.spd, content.formulas)),
     row('evasion', 'Evasion', pct(st.evasion)),
     row('accuracy', 'Accuracy', pct(st.accuracy)),
     row('critChance', 'Crit', pct(st.critChance, 1)),
@@ -448,6 +448,7 @@ export function buildGettingStarted(): WikiArticle[] {
     ]),
     article('turns', 'Basics', 'Turn order and the SPD counter', cx('gs_turns', 'hourglass'), [
       p(`Every unit has a SPD (speed) stat: ${num(a.spdBase)} + ${num(a.spdPerDex)} per point of Dexterity. On top of that, every unit has its own natural pace: its final speed is up to ${num(Math.round((a.spdVariance ?? 0) * 100))}% faster or slower (a hero keeps the same pace for good; the Speed tooltip shows it). Each tick, every unit's action counter fills by its SPD; the first one to reach ${f.turn.threshold} acts, then its counter restarts.`),
+      p(`Speed keeps its decimals: 15 SPD with 10% less Speed is 13.5, not a rounded number, so every speed bonus and penalty counts in full. Speed never drops below ${num(a.spdMin ?? 1)}.`),
       p(`Faster units therefore act more often, not just first. The bar at the top shows the next ${f.turn.queueLength} units in order, and it updates live when speed changes (for example Haste or Slow).`),
       p('A stunned unit skips its next turn. Status durations count down on the turns of the unit that carries them.'),
       p(debuffStackingText()),
@@ -610,6 +611,7 @@ function bellsArticle(): WikiArticle | null {
     list(
       `Each bell rung makes the ${owner.name}'s bells (${bells.join(', ')}) deal ${moreText(pe.perBell)} damage: ${moreText(pe.perBell * 5)} after 5 bells, ${moreText(pe.perBell * 10)} after 10.`,
       'The bell that rings counts only for the next ones: its own hit uses the count from before.',
+      'Skill tree choices can ring more bells (at the start of battle, on a kill, when an ally falls): they count the same.',
       ...great,
     ),
   ], owner.color);
@@ -1551,7 +1553,7 @@ function mobArticles(): WikiArticle[] {
       p(`Campaign enemies of the ${famName} family. HP is before campaign and difficulty scaling.`),
       ...defs.map((def) =>
         list(
-          `${def.name} (${def.role ?? 'Enemy'}): ${def.stats.hp} HP, ${def.stats.armor} armor, speed ${def.stats.spd}.`,
+          `${def.name} (${def.role ?? 'Enemy'}): ${def.stats.hp} HP, ${def.stats.armor} armor, speed ${speedText(def.stats.spd, content.formulas)}.`,
           ...def.skills.flatMap((id) => {
             const sk = content.skills[id];
             if (!sk) return [];

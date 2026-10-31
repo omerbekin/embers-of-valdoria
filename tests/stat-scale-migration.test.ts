@@ -12,7 +12,8 @@ describe('x2 stat ölçeği: veri ve kayıt göçü', () => {
   it('veri: gizli ölçek yok (statScale kaldırıldı, Ömer 2026-10-17), katsayılar x2 dönüşümündeki gibi, hız adımı veride', () => {
     const f = content.formulas;
     expect((f as unknown as Record<string, unknown>).statScale).toBeUndefined();
-    expect(f.attributes.spdStep).toBe(1); // hız tam sayı (tek değerler de olur; çift sayıya yuvarlama yok)
+    expect(f.attributes.spdStep).toBe(0.001); // hız ondalık, en çok 3 basamak (Ömer 2026-10-31)
+    expect(f.attributes.spdMin).toBe(1); // alt sınır adımdan bağımsız
     expect(f.summon.variantStatStep).toBe(0.1);
     expect(f.armor.k).toBe(60);
     expect(f.turn.threshold).toBe(200);

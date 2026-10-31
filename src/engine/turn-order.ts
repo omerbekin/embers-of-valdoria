@@ -1,10 +1,19 @@
+import formulasJson from '../../data/formulas.json';
 import type { Side } from './types';
 
 /**
  * Sayaç (ATB benzeri) sıra sistemi, saf fonksiyonlar halinde.
  * Her tikte herkesin sayacı SPD kadar dolar; eşiğe ulaşan oynar, oynayınca sayacından eşik düşer
  * (taşan kısım korunur, yani hızlı karakter daha sık oynar). Rastgelelik yok: aynı durum = aynı sıra.
+ *
+ * ONDALIK HIZ (Ömer 2026-10-31): sayaç hesabı `turn.counterStep` (0,001) katlarında TAM SAYIYLA yapılır, sonuç aynı ondalığın tek karşılığı olan
+ * sayıya çevrilir. Böylece kayan nokta artığı birikmez: eşik atlanmaz, eşit sayaçlar gerçekten eşit kalır, iki istemci (lockstep) aynı sayıyı görür.
  */
+const COUNTER_SCALE = Math.round(1 / formulasJson.turn.counterStep);
+
+/** Sayacı çözünürlüğüne oturtur (aynı ondalık = birebir aynı sayı; -0 yok). Sayacı değiştiren her yer bunu kullanır. */
+export const snapCounter = (v: number): number => Math.round(v * COUNTER_SCALE) / COUNTER_SCALE + 0;
+
 export interface TurnSlot {
   uid: string;
   side: Side;
@@ -38,8 +47,11 @@ function compare(a: TurnSlot, b: TurnSlot, firstSide: Side): number {
 export function advanceTurn(slots: TurnSlot[], threshold: number, firstSide: Side = 'party'): TurnSlot | null {
   const movers = slots.filter((s) => s.spd > 0);
   if (movers.length === 0) return null;
-  const ticks = Math.min(...movers.map((s) => Math.max(0, Math.ceil((threshold - s.counter) / s.spd))));
-  for (const s of movers) s.counter += s.spd * ticks;
+  // Tam sayı birimleri (bkz. COUNTER_SCALE): tik hesabı ve eşik karşılaştırması artıksız
+  const target = Math.ceil(threshold * COUNTER_SCALE);
+  const units = movers.map((s) => ({ s, c: Math.round(s.counter * COUNTER_SCALE), v: Math.max(1, Math.round(s.spd * COUNTER_SCALE)) }));
+  const ticks = Math.min(...units.map((u) => Math.max(0, Math.ceil((target - u.c) / u.v))));
+  for (const u of units) u.s.counter = (u.c + u.v * ticks) / COUNTER_SCALE + 0;
   return movers.filter((s) => s.counter >= threshold).sort((a, b) => compare(a, b, firstSide))[0] ?? null;
 }
 
@@ -67,14 +79,14 @@ export function predictQueue(
   let tieSide = firstSide;
   if (current) {
     queue.push(current.uid);
-    current.counter -= threshold * currentCost;
+    current.counter = snapCounter(current.counter - threshold * currentCost);
     tieSide = tieSideAfter(current.side);
   }
   while (queue.length < count) {
     const next = advanceTurn(copy, threshold, tieSide);
     if (!next) break;
     queue.push(next.uid);
-    next.counter -= threshold;
+    next.counter = snapCounter(next.counter - threshold);
     tieSide = tieSideAfter(next.side);
     if (next.baseSpd !== undefined) {
       next.spd = next.baseSpd; // Skip Turn desteği oynadığı turla biter

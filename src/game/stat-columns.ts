@@ -1,4 +1,4 @@
-import type { StatKind, Stats } from '../engine';
+import { content, speedText, type StatKind, type Stats } from '../engine';
 
 /**
  * Alt bardaki stat bloğunun düzeni (saf, Phaser'sız): avatar | ana özellikler (STR/DEX/INT/LUCK) | ATAK alt statları | DEFANS alt statları.
@@ -62,7 +62,7 @@ const trim = (v: number, digits: number) => v.toFixed(digits).replace(/\.0+$/, '
 export function statRowText(k: StatKind, s: Stats, label: Record<StatKind, string>): string {
   switch (k) {
     case 'str': case 'int': case 'dex': case 'luck': return `${label[k]} ${trim(s[k], 1)}`; // çağrı statı 0,1 adımlı: kayan nokta artığı yazılmasın
-    case 'spd': return `SPD ${trim(s.spd, 1)}`;
+    case 'spd': return `SPD ${speedText(s.spd, content.formulas)}`;
     case 'critChance': return `CRIT ${trim(s.critChance * 100, 1)}%`;
     case 'critMult': return `CDMG ${trim(s.critMult * 100, 1)}%`;
     case 'accuracy': return `ACC ${Math.round(s.accuracy * 100)}%`;

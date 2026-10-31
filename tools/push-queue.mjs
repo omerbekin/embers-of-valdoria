@@ -206,6 +206,26 @@ function hookPrompt() {
   console.log(out);
   // Temiz ve işi olmayan kopya origin/main'e yetişir (ağ yok: origin/main yerel ref'i gönderimde ilerler)
   catchUpCheck(wtOf(readQueue(), sid));
+  const behind = wtBehindNote(wtOf(readQueue(), sid));
+  if (behind) console.log(behind);
+}
+
+// Kopya başkasının gönderiminden geride mi, birleşince ne çakışır (Ömer 2026-10-31); kopyaya dokunmaz, hata olursa susar
+function wtBehindNote(rec) {
+  if (!rec || !existsSync(rec.path)) return '';
+  try {
+    const n = Number(gx(rec.path, ['rev-list', '--count', `HEAD..${ORIGIN_MAIN}`]));
+    if (!n) return '';
+    const head = revOf('HEAD', rec.path);
+    const mb = gx(rec.path, ['merge-base', head, ORIGIN_MAIN]);
+    const dirty = [...dirtyPaths(rec.path)].filter((p) => !SKIP(p));
+    if (mb === head && !dirty.length) return ''; // temiz kopya kendiliğinden yetişir
+    const merged = mergeTree(mb, ORIGIN_MAIN, head);
+    const touched = new Set(diffNames(mb, ORIGIN_MAIN, rec.path));
+    const clash = [...new Set([...(merged.ok ? [] : merged.files), ...dirty.filter((p) => touched.has(p))])];
+    const list = clash.length ? `Birleşince çakışacak: ${clash.slice(0, 8).join(', ')}${clash.length > 8 ? ` (+${clash.length - 8})` : ''}.` : 'Şu an çakışma görünmüyor.';
+    return `[gönderim kuyruğu] Kopyan güncel sürümden ${n} gönderim geride, başka sohbetlerin işini görmüyorsun. ${list} Uygun noktada işini commit'leyip kopyanda: git -c user.name=Omer -c user.email=omerbekinn@gmail.com merge origin/main`;
+  } catch { return ''; }
 }
 
 function hookEdit() {

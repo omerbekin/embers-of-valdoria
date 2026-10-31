@@ -266,6 +266,10 @@ export interface CondHost {
   isAreaSkill(skill: SkillDef): boolean;
   /** Faz 2c: `node` kancası `self` için `target`a bu savaşta tetiklendi mi (koşul oncePerTarget; Grave Shackle). */
   firedOn(self: string, node: string, target: string): boolean;
+  /** Vesper ağacı: bu kullanım BAŞLARKEN (yoksa şu an) `self`in düşmanları arasında mevcut canı en düşük olanların uid'leri (eşitlikte hepsi; Knell). */
+  lowestHpAtCast(self: Combatant): readonly string[];
+  /** Vesper ağacı: bu kullanım BAŞLARKEN (yoksa şu an) `self`in düşman tarafının en ön dolu sırasındaki birimlerin uid'leri (Wide Toll). */
+  frontRowAtCast(self: Combatant): readonly string[];
   /** Faz 2c: birimin üst üste kaç eylemdir Move yapmadığı (son eylem Move ise 0; ölçek stillStreak, Rooted Stance). */
   stillStreak(uid: string): number;
 }
@@ -422,6 +426,12 @@ export const COND: Record<string, (x: CondCtx, arg: unknown) => boolean | undefi
   /** Hedefin canı bu oranın altında / üstünde (0-1). */
   targetHpBelow: (x, a) => (num(a) !== undefined ? onTarget(x, (t) => t.hp < num(a)! * t.maxHp) : undefined),
   targetHpAbove: (x, a) => (num(a) !== undefined ? onTarget(x, (t) => t.hp > num(a)! * t.maxHp) : undefined),
+  /** Hedefin rütbesi (dize ya da dizi: biri yeter; 'elite' / 'boss'; Toll for One). */
+  targetTier: (x, a) => onTarget(x, (t) => (Array.isArray(a) ? a.includes(t.tier) : t.tier === a)),
+  /** Hedef, kullanım başında mevcut canı en düşük düşman (eşitlikte hepsi; önizlemede şimdiki can; Knell). */
+  targetLowestHp: (x, a) => onTarget(x, (t) => flag(needHost(x, (h) => h.lowestHpAtCast(x.self as Combatant).includes(t.uid)), a)),
+  /** Hedef, kullanım başında düşman tarafının en ön dolu sırasında (önizlemede şimdiki dizilim; Wide Toll). */
+  targetFrontAtCast: (x, a) => onTarget(x, (t) => flag(needHost(x, (h) => h.frontRowAtCast(x.self as Combatant).includes(t.uid)), a)),
   /** Hedefin MP'si 0 (maks MP'si > 0). */
   targetMpZero: (x, a) => onTarget(x, (t) => flag(t.maxMp > 0 && t.mp <= 0, a)),
   /** Hedefin MP'si maks MP'sinin bu oranının üstünde. */
@@ -468,6 +478,8 @@ export const COND: Record<string, (x: CondCtx, arg: unknown) => boolean | undefi
   /** (Ölü dost) hedef senin son turundan beri öldü. */
   targetDiedSinceMyTurn: (x, a) => onTarget(x, (t) => flag(needHost(x, (h) => h.diedSinceTurn(x.self.uid, t.uid)), a)),
   // --- kendin ---
+  /** Bu savaşta çalınan çan sayısı (Combatant.bells): sayı = en az, { atLeast, atMost } (bedel koşulunda da çalışır; Angelus). */
+  selfBells: (x, a) => cmp((x.self as Combatant).bells ?? 0, a),
   /** Kendi canın bu oranın altında / üstünde. */
   selfHpBelow: (x, a) => (num(a) !== undefined ? x.self.hp < num(a)! * x.self.maxHp : undefined),
   selfHpAbove: (x, a) => (num(a) !== undefined ? x.self.hp > num(a)! * x.self.maxHp : undefined),
@@ -585,7 +597,7 @@ function castCount(x: CondCtx): number | undefined {
 }
 
 /** Savaş bağlamı (host / hedef) olmadan da değerlendirilen koşullar: bedel koşulu (SkillCost.cond) yalnızca bunları kullanabilir. */
-export const SELF_CONDS: ReadonlySet<string> = new Set(['selfHpBelow', 'selfHpAbove', 'rageAtLeast', 'rageAtMost', 'firstUseOfSkill', 'selfStatus', 'selfTaunting', 'selfHasShield']);
+export const SELF_CONDS: ReadonlySet<string> = new Set(['selfHpBelow', 'selfHpAbove', 'rageAtLeast', 'rageAtMost', 'firstUseOfSkill', 'selfStatus', 'selfTaunting', 'selfHasShield', 'selfBells']);
 /**
  * Faz 2c (Not Yet): hedefe bağlı bedel koşulları. Bedel hedefle ve savaş okumalarıyla hesaplanınca (Battle.canUse: geçerli hedeflerden en ucuzu;
  * ödeme: seçilen hedef) değerlendirilir; hedefsiz hesapta (önizleme, YZ, tooltip) tutmaz = tam bedel.
@@ -647,6 +659,8 @@ export const SCALE: Record<string, (x: CondCtx, arg: unknown) => number> = {
   },
   /** Faz 2c (Rooted Stance): üst üste Move yapmadığın eylem sayısı, en çok { max } (sayı argüman da max). */
   stillStreak: (x, a) => (x.host ? Math.min(num(a) ?? num((a as { max?: number } | undefined)?.max) ?? Infinity, x.host.stillStreak(x.self.uid)) : 0),
+  /** Bu savaşta çalınan çan sayısı (Cathedral Choir: "each bell"). */
+  selfBells: (x) => (x.self as Combatant).bells ?? 0,
   /** Faz 4a (tetik): olayın miktarı / argüman, aşağı yuvarlanır (Blood Glut benzeri "her X başına"). */
   eventAmount: (x, a) => (x.amount !== undefined && num(a) ? Math.max(0, Math.floor(x.amount / num(a)! + 1e-9)) : 0),
 };
@@ -953,6 +967,8 @@ export const TRIGGER_EVENTS = [
   // Ömer 2026-10-29 (open-q 457): itmenin çarpması (sahip = iten, hedef = itilemeyen birim, skill = itmenin skill'i), Spellbreaker's Instinct işledi
   // (sahip = Anti-Mage, hedef / kaynak = MP ödeyen düşman), Ley Brand bir Ley Thread'i tüketti (sahip = Brand'i atan, hedef = iplikli düşman)
   'crash', 'instinct', 'threadConsumed',
+  // Vesper ağacı: sahibin bir çanı çaldı (çan başına bir kez, kaynak fark etmez: skill, tetik, savaş başı; Long Echo, Quickening Peal)
+  'bellRung',
 ] as const;
 export type TriggerEvent = (typeof TRIGGER_EVENTS)[number];
 
@@ -973,6 +989,8 @@ export const TRIGGER_TARGETS = [
   'sourceNeighbors',
   // Altıncı tur (Rot Bomb): bu olayda sahibin tetikle bıraktığı zeminlerin içinde duran düşmanlar
   'placedGround',
+  // Vesper ağacı (Forked Peal): bu kullanımın vurduğu sıranın hemen arkasındaki sıra (kullanım merkezi, yoksa ilk hedef)
+  'rowBehind',
 ] as const;
 export type TriggerTarget = (typeof TRIGGER_TARGETS)[number];
 
@@ -1100,7 +1118,13 @@ export interface TriggerAction {
   cutStatus?: { status: string; turns: number };
   /** Alıcıdaki bu DoT durumunun kalan tiklerinin hepsi bir anda vurur (tik miktarı x kalan tur), durum biter (Rot Bomb: 'wither'). */
   detonate?: string;
+  // ---- Vesper ağacı ----
+  /** Sahibin çan sayacı N artar (alıcı yok). `skill`: çanı çalan skill (Deep Peal bunları eler); sürmekte olan kullanımda kullanım sonunda çalar. */
+  bell?: number;
 }
+
+/** Skill'in bir kullanımda çaldığı çan sayısı (SkillDef.ringsBell: true = 1, sayı = N; Storm Tower 2). */
+export const bellsOfSkill = (skill: Pick<SkillDef, 'ringsBell'>): number => (skill.ringsBell === true ? 1 : Math.max(0, Number(skill.ringsBell ?? 0)));
 
 /**
  * C3 tetik kancası. Süzgeçler: `skill` (olayın skill'i), `status` (olayın durumu), `ground` (ölenin durduğu zemin), `end` (durum bitişi), `mine`

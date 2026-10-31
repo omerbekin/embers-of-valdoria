@@ -1,3 +1,4 @@
+import { content, speedText } from '../../engine';
 import { bindIcon, iconUrl } from '../../ui/dom-icons';
 import { ownerOfUnit } from '../../game/asset-versions';
 import { variantLabel } from '../../game/sprite-variants';
@@ -41,7 +42,7 @@ export function mountCharacters(cat: Catalog): SectionApi {
         h('span', { class: 'bar' }, h('span', { class: 'fill', style: { width: `${Math.min(100, v * 5)}%`, background: STAT_COLOR[a] } })),
         h('span', { class: 'attr-val', text: String(v) }));
     });
-    const stats = STAT_ROWS.map(([k, label]) => h('span', { class: 'stat', title: label }, h('span', { class: 'muted', text: `${label} ` }), num(c.stats[k] * (k === 'critChance' || k === 'accuracy' || k === 'evasion' ? 100 : 1)) + (k === 'critChance' || k === 'accuracy' || k === 'evasion' ? '%' : '')));
+    const stats = STAT_ROWS.map(([k, label]) => h('span', { class: 'stat', title: label }, h('span', { class: 'muted', text: `${label} ` }), (k === 'spd' ? speedText(c.stats[k], content.formulas) : num(c.stats[k] * (k === 'critChance' || k === 'accuracy' || k === 'evasion' ? 100 : 1))) + (k === 'critChance' || k === 'accuracy' || k === 'evasion' ? '%' : '')));
     const passive = c.passive
       ? h('div', { class: 'passive' }, bindIcon(h('img', { class: 'icon32 pixelated', attrs: { alt: '' } }), c.passive.icon, c.color, ownerOfUnit(c.id)), h('div', {}, h('b', { text: c.passive.name }), h('div', { class: 'muted small', text: c.passive.text })))
       : h('div', { class: 'muted small', text: 'No passive' });

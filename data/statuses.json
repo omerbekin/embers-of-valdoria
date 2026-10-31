@@ -70,6 +70,14 @@
     "accuracyDelta": -0.3,
     "text": "Accuracy -30% (smoke in the eyes)"
   },
+  "shaken": {
+    "name": "Shaken",
+    "type": "debuff",
+    "icon": "blinded",
+    "color": "#b8a06a",
+    "accuracyDelta": -0.1,
+    "text": "Accuracy -10% (the toll still rings)"
+  },
   "shrouded": {
     "name": "Shrouded",
     "type": "buff",

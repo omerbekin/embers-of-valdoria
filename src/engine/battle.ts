@@ -14,8 +14,8 @@ import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
 import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
 import type { Attribute, Attributes, BrandSpec, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect, PushDir } from './types';
-import { advanceTurn, predictQueue, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
-import { condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, manaShieldPay, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
+import { advanceTurn, predictQueue, snapCounter, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
+import { bellsOfSkill, condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, manaShieldPay, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
 import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BattleObjective, BattleRules, BetSpec, Combatant, CombatantDef, FloodRule, Formulas, GlobalSkillDef, UrnRule, GroundDef, GroundEffect, GroundReactionDef, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleSetup {
@@ -1198,7 +1198,45 @@ export class Battle {
       isAreaSkill: (skill) => (skill.target === 'area_enemies' || skill.target === 'area_any') && isShapeArea(skill.area),
       firedOn: (self, node, target) => this.firedOnSet.has(`${self}|${node}|${target}`),
       stillStreak: (uid) => this.stillCount.get(uid) ?? 0,
+      lowestHpAtCast: (c) => (this.castSnap ?? this.castSnapOf(c)).lowest,
+      frontRowAtCast: (c) => (this.castSnap ?? this.castSnapOf(c)).front,
     });
+  }
+  /**
+   * Vesper ağacı (Knell, Wide Toll): kullanım BAŞINDA en düşük canlı düşmanlar ve düşmanın en ön dolu sırası. Alan vuruşu sırayla işlediği için canlı okuma
+   * yanlış olur (ilk vuruşlar canı / dizilimi değiştirir). Kullanım dışında (önizleme, YZ) şimdiki durum okunur.
+   */
+  private castSnap: { lowest: string[]; front: string[] } | null = null;
+  private castSnapOf(c: Combatant): { lowest: string[]; front: string[] } {
+    const foes = this.living(opposite(c.side)).filter((a) => !a.inert);
+    const low = foes.length ? Math.min(...foes.map((a) => a.hp)) : 0;
+    const frontOf = new Map<string, number>();
+    for (const a of foes) frontOf.set(a.board, Math.min(frontOf.get(a.board) ?? Infinity, this.rowOf(a.slot)));
+    return { lowest: foes.filter((a) => a.hp === low).map((a) => a.uid), front: foes.filter((a) => this.rowOf(a.slot) === frontOf.get(a.board)).map((a) => a.uid) };
+  }
+  /** Sürmekte olan kullanımda kazanılan çanlar (uid -> sayı): kullanım sonunda çalar ("çalan çan yalnız sonrakileri güçlendirir"). */
+  private readonly bellQueue = new Map<string, number>();
+  /** Çan çal: sayaç + her çanda bellRung tetiği; pasif olayı çağrı başına bir kez. */
+  private ringBells(actor: Combatant, n: number, emit: Emit): void {
+    if (n <= 0) return;
+    for (let i = 0; i < n; i++) {
+      actor.bells = (actor.bells ?? 0) + 1;
+      if (this.trigOn) this.trig([actor], { on: 'bellRung' }, emit);
+    }
+    if (actor.passive?.effect.type === 'pealingBells') emit({ type: 'passive', actor: actor.uid, passive: actor.passive.id, name: actor.passive.name });
+  }
+  /** YZ (SALT OKUNUR): bu vuruşta tutacak C1 "durum ekle" kancaları (zarsız: procChance'lı kanca sayılmaz, seçicisi 'damage' olanlar). */
+  aiProcStatuses(actor: Combatant, target: Combatant, skill: SkillDef, cast: readonly Combatant[]): Array<{ status: string; turns: number; chance?: number }> {
+    if (!actor.treeHooks?.length) return [];
+    const prev = this.setCondTargets(cast);
+    try {
+      return this.heldHooks(actor, target, skill, { groups: ['proc'] }).flatMap(({ h }) => {
+        const a = h.mod.addStatus;
+        return a && !a.self ? [{ status: a.status, turns: a.turns, ...(a.chance !== undefined ? { chance: a.chance } : {}) }] : [];
+      });
+    } finally {
+      this.setCondTargets(prev);
+    }
   }
   /** Faz 2c izleme (yalnızca ağaçlı savaş): "her düşmana bir kez" kancalarının tetiklendiği hedefler ('uid|düğüm|hedef') ve Move'suz eylem serisi. */
   private readonly firedOnSet = new Set<string>();
@@ -1723,6 +1761,13 @@ export class Battle {
     switch (a.to ?? 'self') {
       case 'self':
         return alive(owner) ? [owner] : [];
+      case 'rowBehind': {
+        // Vesper ağacı (Forked Peal): kullanım merkezinin (yoksa ilk hedefin) sırasının hemen arkası, aynı tahta
+        const first = this.condTargetList?.[0] ?? ev.target;
+        const board = ev.board ?? first?.board;
+        const row = ev.center !== undefined ? this.rowOf(ev.center) : first ? this.rowOf(first.slot) : undefined;
+        return row === undefined ? [] : enemies().filter((c) => c.board === board && this.rowOf(c.slot) === row + 1);
+      }
       case 'target':
         return alive(ev.target) ? [ev.target] : [];
       case 'subject':
@@ -1924,6 +1969,13 @@ export class Battle {
     if (a.cast !== undefined) return this.queueFree(owner, h, a, ev);
     if (a.ground !== undefined) return this.trigGround(owner, h, a, ev, s, emit);
     if (a.overflow) return this.fireOverflow(owner, owner, emit);
+    if (a.bell !== undefined) {
+      // Vesper ağacı: sürmekte olan kullanımda kuyruğa (kullanımın kendi vuruşları artmaz), yoksa hemen
+      const n = Math.max(0, Math.round(a.bell * s));
+      if (this.castingActor === owner) this.bellQueue.set(owner.uid, (this.bellQueue.get(owner.uid) ?? 0) + n);
+      else this.ringBells(owner, n, emit);
+      return;
+    }
     if (a.steal) return this.trigSteal(owner, h, a, ev, emit);
     if (a.smite) {
       // Faz 5a (Chain of Light): son smite aynı güçle hemen yeniden (yeni en zayıf düşmana); smite yoksa bir şey olmaz
@@ -4075,7 +4127,7 @@ export class Battle {
       if (!targets.some((t) => t.side === am.side)) continue;
       am.instinctUsed = true;
       const shift = Math.round(this.setup.formulas.turn.threshold * e.advance * 1000) / 1000;
-      am.turnCounter += shift;
+      am.turnCounter = snapCounter(am.turnCounter + shift);
       emit({ type: 'passive', actor: am.uid, passive: am.passive!.id, name: am.passive!.name });
       // Instinct tetiği (Ömer 2026-10-29, open-q 457; Ready Reflexes: Fleet)
       if (this.trigOn) this.trig([am], { on: 'instinct', target: caster, source: caster }, emit);
@@ -5586,6 +5638,7 @@ export class Battle {
       this.condTargetList = targets;
       this.castInfo = { skill: skill.id, landed: new Set(), kills: 0, hpPaid: !debug && paidRes === 'hp' ? paidAmt : 0, silenced: 0, buffsRemoved: 0, healedRatios: [] };
       this.preHitDone = skill.effects.some((e) => e.type === 'status' && e.preHit) ? new Set() : null;
+      this.castSnap = actor.treeHooks?.length ? this.castSnapOf(actor) : null;
     }
     // Skill ağacı (plan 10a): hasarı kaldırılan skill (treeHitRoll) yine isabet zarı atar; düşman hedefe durumlar yalnızca isabet edince işler
     const preRolled = !!skill.treeHitRoll && !skill.effects.some((e) => e.type === 'damage');
@@ -6302,6 +6355,7 @@ export class Battle {
       this.hitsAtUse.set(`${actor.uid}|${skill.id}`, this.hitsTaken.get(actor.uid) ?? 0);
     }
     this.castInfo = null;
+    this.castSnap = null;
     this.preHitDone = null;
     this.castPaid = null;
     this.condTargetList = null;
@@ -6336,11 +6390,10 @@ export class Battle {
     }
 
     // Pealing Bells (Vesper): çan skill'i (ringsBell) kullanım SONUNDA sayacı artırır; bu kullanımın kendi vuruşu artıştan önceki sayıyla hesaplandı
-    // (yalnızca 'sonraki' çanlar güçlenir). Bedava (ağaç tetiği) kullanım da çandır; debug oynatması saymaz.
-    if (!debug && skill.ringsBell) {
-      actor.bells = (actor.bells ?? 0) + 1;
-      if (actor.passive?.effect.type === 'pealingBells') emit({ type: 'passive', actor: actor.uid, passive: actor.passive.id, name: actor.passive.name });
-    }
+    // (yalnızca 'sonraki' çanlar güçlenir). Bedava (ağaç tetiği) kullanım da çandır; debug oynatması saymaz. Kullanım içinde ağaç tetiklerinin kazandığı çanlar da burada çalar.
+    const queuedBells = this.bellQueue.get(actor.uid) ?? 0;
+    if (queuedBells) this.bellQueue.delete(actor.uid);
+    this.ringBells(actor, (debug ? 0 : bellsOfSkill(skill)) + queuedBells, emit);
 
     // Pasif: Spell Echo, cooldown'lu bir hasar skill'i bazen anında yeniden hazır olur
     const echo = actor.passive?.effect;
@@ -6502,7 +6555,7 @@ export class Battle {
     }
     // Tur sonu süreleri (tickAtTurnEnd: Silence): taşıyanın turu bitince 1 azalır; biten durum kalkar
     if (this.mode === 'turns' && this.currentUid === actor.uid) this.tickTurnEnd(actor, emit);
-    if (this.mode === 'turns' && !this.winner) actor.turnCounter -= this.setup.formulas.turn.threshold * turnCost;
+    if (this.mode === 'turns' && !this.winner) actor.turnCounter = snapCounter(actor.turnCounter - this.setup.formulas.turn.threshold * turnCost);
     wave?.(); // yeni dalga: sıra kuralı (reset sayaçları sıfırlar) + waveStart olayı, sıra ilerlemeden önce
     if (this.mode === 'turns' && !this.winner) this.advance(emit);
   }
@@ -7911,7 +7964,7 @@ export class Battle {
       proc('dazeChance');
       const boss = target.tier === 'boss' || target.boss !== undefined;
       const push = Math.round(this.setup.formulas.turn.threshold * daze.push * (boss ? daze.bossMult : 1) * 1000) / 1000;
-      target.turnCounter -= push;
+      target.turnCounter = snapCounter(target.turnCounter - push);
       emit({ type: 'daze', source: actor.uid, target: target.uid, push });
     }
     if (fx.killRush && target.hp <= 0 && actor.hp > 0) {
@@ -8863,7 +8916,9 @@ function buildSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, ui
   const variantDef = unit.empowered !== undefined && baseDef.variants ? applySummonVariant(baseDef, unit.empowered ? 'fed' : 'unfed', formulas) : baseDef;
   // Faz 2c (Gaunt Frame): ağacın maks can çarpanı yalnızca stat türetiminde modifiers.hpMult ile çarpılır (c.modifiers aynen kalır)
   const th = unit.tree?.hpMult;
-  const statMods = th !== undefined && th !== 1 ? { ...(mods ?? {}), hpMult: (mods?.hpMult ?? 1) * th } : mods;
+  // Vesper ağacı (Heavy Bronze): hız çarpanı aynı yolla
+  const ts = unit.tree?.spdMult;
+  const statMods = (th !== undefined && th !== 1) || (ts !== undefined && ts !== 1) ? { ...(mods ?? {}), ...(th !== undefined && th !== 1 ? { hpMult: (mods?.hpMult ?? 1) * th } : {}), ...(ts !== undefined && ts !== 1 ? { spdMult: (mods?.spdMult ?? 1) * ts } : {}) } : mods;
   const c = createCombatant(applyUnitModifiers(variantDef, statMods, formulas), side, slot, uid);
   // Faz 5a (Pledged Plate): ağacın kendi zırh çarpanı (türetilmiş zırha; aura payları bu zırhtan hesaplanır)
   const tam = unit.tree?.armorMult;

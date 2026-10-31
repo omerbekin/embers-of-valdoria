@@ -42,7 +42,9 @@ describe('Resurrection: motor', () => {
       expect(ofType(r.events, 'revive')[0]).toMatchObject({ target: 'party-0', slot: 3, from: 0 });
       const w = b.get('party-0')!;
       expect(w).toMatchObject({ slot: 3, board: 'party', hp: Math.max(1, Math.round(w.maxHp * revive().hpRatio)) });
-      expect(w.turnCounter).toBe(0); // dirilen boş tur sayacıyla başlar
+      // dirilen boş tur sayacıyla başlar: sonraki aktöre kadar geçen tikler dışında sayaçta bir şey yok (ondalık hız: bu tikler artık 0 olmayabilir)
+      const ticks = w.turnCounter / b.speedOf(w);
+      expect(ticks).toBeCloseTo(Math.round(ticks), 6);
       expect(b.corpseOf('party-0')).toBeNull();
       expect(b.freeSlots('party')).not.toContain(3);
     }

@@ -1363,6 +1363,37 @@ Denetimdeki (ai-coverage) B / C satırlarının hepsi değer alıyor. Ağırlık
 11. **Test değişikliği:** `ai-value.test.ts` #5 (Defender ölmek üzere olan dost için Taunt) Taunt'ın breakRatio'su (0,25) değerlenince o senaryoda Tremor Slam seçiyor (Taunt ilk turda kırılıyor). Feda kuralı (K6) kırılma eşiği olmayan Taunt'la aynen geçiyor; test buna göre güncellendi. **Soru:** bu senaryoda Defender'in Taunt'u seçmesi mi istenir (breakRatio değerini yumuşatmak gerekir), yoksa yeni davranış doğru mu?
 Açık: denge simi (Ömer çalıştıracak); ağırlıkların ölçümü.
 
+## 464. Vesper ağacı: 25 düğümün varsayımları ve savaş içi dalgada çan sayacı
+
+Ömer 2026-10-31 ağacı onayladı, sayılar provizyon (sim yok). Metni tek anlama gelmeyen düğümlerde en dar yorum alındı:
+
+1. **Long Echo:** Matins / Tower Stance'in başlangıç çanı da "ilk çan" sayılır.
+2. **Quickening Peal:** her kaynaktan gelen çanı sayar (üçüncü çanda erken tur).
+3. **Deep Peal:** yalnız başka SKILL'lerin çanını kapatır (Thunderpeal, Storm Tower, Echoing Hall, Ringing Skull). Matins, Tower Stance, Long Echo, Passing Bell, Compline çalışır.
+4. **Angelus, Cathedral Choir:** "bell skills" = dört skill (bell hasarlı olanlar).
+5. **Knell:** kullanım başındaki mevcut cana bakar; eşitlikte hepsi alır.
+6. **Wide Toll:** yalnız isabet edilenler, kullanım başındaki en ön dolu sıra.
+7. **Passing Bell:** öldürme başına bir çan. **Compline:** çağrılar sayılmaz.
+8. **Forked Peal:** yalnız hasar, Blind yok; skill plakası önizlemesi bu ek vuruşu göstermez (Tremor Slam emsali).
+9. **Single Bolt:** alan 1x1 dikdörtgen. **Ringing Skull:** Brittle Bell ile (Stun yok) tetiklenmez.
+10. **Bell of Kings:** araya başka skill girse de sıradaki Toll'a kadar silahlı kalır.
+11. **Shaken:** yeni durum, isabet -%10; ikon yer tutucu (`blinded`); isabet düşürme kuralı gereği bosslar bağışık.
+12. **Heavy Bronze:** ondalık hızla çözüldü: 15 → 13.5 (tam -%10).
+13. **Matins + Tower Stance** birlikte savaşa 2 çanla başlatır, üst sınır yok.
+
+**Karar:** Ömer 2026-10-31: savaş içi Round 2/3 dalgalarında çan sayacı sürer. Endless dalgaları sıfırlanır.
+
+## 465. Ondalık hız
+
+**Karar (Ömer 2026-10-31):** hız tam sayıya yuvarlanmaz; her kaynakta (nitelik, doğal tempo zarı, item, buff/debuff, ağaç `spdMult`, Slow) ondalık kalır, en çok 3 basamak (`attributes.spdStep` 0,001). Ekranda en çok 2 ondalık, sondaki sıfırlar yok (14, 13.5). Formül ve denge sayısı değişmedi; yalnız yuvarlama kalktı.
+
+Varsayımlar:
+1. **Alt sınır:** `attributes.spdMin` 1 ayrı alan oldu (eskiden adımın kendisiydi). Değeri aynı.
+2. **Sayaç çözünürlüğü:** `turn.counterStep` 0,001 (yeni veri alanı, kural değil). Tik modeli aynı: herkes tam tik sayısı kadar dolar.
+3. **Ara yuvarlama:** `spdAdd` ve `spdMult` sonrası da 3 ondalık; eski kodda `spdMult` 4 ondalıktı, fark en çok 0,0005 hız.
+4. **Mob hızları:** bazı mobların ekran hızı artık formülün gerçek değeri (Road Thug 15 → 14.8, lider kurt 19 → 18.8). Dex değerleri değişmedi; "15-17 hız" gibi test bantları yuvarlanmış değere bakıyor. Bu mobların hızı dengelensin mi, sim sonrası Ömer karar verir.
+5. **Eşitlikler seyrekleşti:** eskiden aynı tam sayıya düşen birimler artık genelde farklı hızda. Karışık sıra (D4) yalnız gerçek eşitlikte çalışır; "hedeften hızlıysan" kuralları (Hunter's Mark, ağaç `fasterThanTarget`) küçük farkta da tetiklenir. Etkisi sim'le ölçülmedi.
+6. **Match log:** hız ve sayaç ham (3 ondalık) yazılır, oyuncu ekranı değil.
 ## 459. Kasaba level'ı ve dükkân tavanı
 
 Ömer 2026-10-31 (#23, yeni kural, onaylı): her kasabanın level'ı var; dükkân bu level'ın çok üstünde item satamaz. Kasaba level'ı otomatik (yanındaki düğümlerin düşman level'ından). Tavan için notu: "level farkı bir sonraki towna kadar olan moblara göre belirlensin". Kod: `src/campaign/power.ts > townLevel, shopCeiling`; `merchant.ts > campaignStock`.

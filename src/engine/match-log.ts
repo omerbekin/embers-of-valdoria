@@ -83,7 +83,7 @@ export function snapshotUnit(battle: Battle, c: Combatant): UnitSnap {
     armor: Math.round(battle.effectiveStats(c).armor),
     magicArmor: Math.round(battle.effectiveStats(c).magicArmor),
     spd: battle.speedOf(c),
-    counter: Math.round(c.turnCounter),
+    counter: c.turnCounter, // ondalık hız (Ömer 2026-10-31): snapCounter ile en çok 3 ondalık
     speedBoost: battle.speedBoostOf(c.uid),
     cooldowns: { ...c.cooldowns },
     statuses: c.statuses.map((s) => `${s.kind}${s.stacks !== undefined ? `x${s.stacks}` : ''}:${s.turns}`),

@@ -48,7 +48,7 @@ describe('turn-wait: oyun zamanı -> gerçek zaman', () => {
           for (const [uid, n] of next) {
             const p = last.get(uid);
             if (!p || uid === lastActor || uid === e.actor || n.spd <= 0) continue;
-            if (n.counter - p.counter === n.spd * t) agree++;
+            if (Math.abs(n.counter - p.counter - n.spd * t) < 1e-6) agree++; // ondalık hız: sayaçlar 3 ondalık, karşılaştırma artığa dayanıklı
             else disagree++;
           }
           checked++;

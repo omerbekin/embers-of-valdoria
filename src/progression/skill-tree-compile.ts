@@ -13,7 +13,7 @@ import { barReached, focusBuild, rankOf, spent, treeNodes, validate, type TreeAl
 /** Seçici türü -> yamalanabilir alanlar (beyaz liste; bilinmeyen seçici / alan = derleme hatası, veri testi kırmızı). */
 export const FX_FIELDS: Record<string, readonly string[]> = {
   /** Skill'in kendisi. */
-  self: ['cost.amount', 'cost.ofCurrent', 'cost.hpFallback', 'cooldown', 'initialCooldown', 'count', 'turnCost'],
+  self: ['cost.amount', 'cost.ofCurrent', 'cost.hpFallback', 'cooldown', 'initialCooldown', 'count', 'turnCost', 'ringsBell'],
   /** Tüm hasar etkileri ('damage') ya da N. hasar etkisi ('damage:1', 0 tabanlı). */
   damage: ['power', 'lifesteal', 'ignoreDefense', 'critBonus', 'powerPerRage', 'executeBonus', 'falloff', 'repeatChance', 'powerPerBell'],
   /** 'status:<durum>' (ör. status:slow). */
@@ -90,7 +90,7 @@ const FX_DEFAULTS: Record<string, number> = {
 };
 
 /** Tam sayı alanlar (sonuç yuvarlanır, en az 0). */
-const INT_FIELDS = new Set(['cost.amount', 'cooldown', 'initialCooldown', 'count', 'turns', 'stacks', 'critStacks', 'lifespan', 'onEmpty.turns', 'amount', 'silenceOnEmpty']);
+const INT_FIELDS = new Set(['cost.amount', 'cooldown', 'initialCooldown', 'count', 'turns', 'stacks', 'critStacks', 'lifespan', 'onEmpty.turns', 'amount', 'silenceOnEmpty', 'ringsBell']);
 
 export class TreeFxError extends Error {}
 
@@ -312,6 +312,10 @@ interface Acc {
   armorAdd?: number;
   /** Faz 5a (fx k 'stat' f armorMult; yalnızca kahraman): kendi zırh çarpanı. */
   armorMult?: number;
+  /** Vesper ağacı (fx k 'stat' f spdMult; yalnızca kahraman): hız çarpanı. */
+  spdMult?: number;
+  /** Vesper ağacı (Deep Peal): çanı yalnız bu skill çalar (compileTree sonunda uygulanır: applyBellOnly). */
+  bellOnly?: string;
   /** Faz 4c: çağrıya geçen yamalar (çağrı id'si; ceset tüketen çağrıda '<id>#fed' beslenmiş kopyası). */
   summons?: Record<string, Acc>;
   /** Faz 8: skill biçim fx'leri (skill id -> sırayla; biçimler setupOf'ta son yamalı tanımdan kurulur). */
@@ -568,6 +572,13 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
         acc.armorMult = r6((acc.armorMult ?? 1) * applyOp(1, fx, p.rank, fx.f, rules));
         return;
       }
+      if ((fx.f as string) === 'spdMult') {
+        // Vesper ağacı (Heavy Bronze): birimin hız çarpanı (op mul: x (1 + v)); stat türetiminde UnitModifiers.spdMult ile çarpılır
+        if (unit) throw new TreeFxError('stat spdMult does not work on a summon');
+        if (fx.op !== 'mul') throw new TreeFxError('stat spdMult only takes op "mul"');
+        acc.spdMult = r6((acc.spdMult ?? 1) * applyOp(1, fx, p.rank, fx.f, rules));
+        return;
+      }
       if ((fx.f as string) !== 'hpMult') throw new TreeFxError(`unknown stat "${String(fx.f)}"`);
       if (fx.op !== 'mul') throw new TreeFxError('stat hpMult only takes op "mul"');
       acc.hpMult = r6((acc.hpMult ?? 1) * applyOp(1, fx, p.rank, fx.f, rules));
@@ -741,15 +752,15 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
         checkScale(fx.scale, false);
         if (fx.on !== undefined && fx.on !== 'hit' && fx.on !== 'cast') throw new TreeFxError(`unknown trigger "${String(fx.on)}"`);
         if (fx.rule !== undefined && fx.rule !== 'tallyAll') throw new TreeFxError(`unknown rule "${String(fx.rule)}"`);
-        for (const k of ['gain', 'floor', 'cost'] as const) if (fx[k] !== undefined && (typeof fx[k] !== 'number' || !Number.isFinite(fx[k]))) throw new TreeFxError(`${k} must be a number`);
+        for (const k of ['gain', 'floor', 'cost', 'costMul'] as const) if (fx[k] !== undefined && (typeof fx[k] !== 'number' || !Number.isFinite(fx[k]))) throw new TreeFxError(`${k} must be a number`);
         const skill = scope(fx.skill);
         let any = false;
-        if (fx.cost !== undefined) {
+        if (fx.cost !== undefined || fx.costMul !== undefined) {
           checkWhen(fx.when, true);
           checkScale(fx.scale, true);
           if (fx.after !== undefined && !cls.skills.includes(fx.after)) throw new TreeFxError(`skill ${fx.after} is not a ${tree.class} skill`);
           const def = ownSkill(skill);
-          (def.cost.cond ??= []).push({ node, add: Math.round(fx.cost * r), ...(fx.when ? { when: clone(fx.when) } : {}), ...(fx.scale ? { scale: clone(fx.scale) } : {}), ...(fx.after ? { after: fx.after } : {}) });
+          (def.cost.cond ??= []).push({ node, add: Math.round((fx.cost ?? 0) * r), ...(fx.costMul !== undefined ? { mul: fx.costMul } : {}), ...(fx.when ? { when: clone(fx.when) } : {}), ...(fx.scale ? { scale: clone(fx.scale) } : {}), ...(fx.after ? { after: fx.after } : {}) });
           any = true;
         } else if (fx.after !== undefined) throw new TreeFxError('"after" is only for a cost change');
         if (fx.gain !== undefined || fx.floor !== undefined || fx.rule) {
@@ -1022,13 +1033,17 @@ const ENEMY_TARGETS: ReadonlySet<string> = new Set(['random_enemies', 'all_enemi
 /** C5 hedef fx'i: skill / pasif kopyasını yamalar (sıra: hedef türü -> alan -> sıçrama -> menzil -> açıklık -> öncelik -> çekme -> Guard -> aura -> smite). */
 function applyTarget(fx: Extract<TreeFx, { h: 'target' }>, acc: Acc, def: SkillDef | null, cls: (typeof classes)[string], r: number): void {
   const META = ['k', 'h', 'skill', 'rank', 'drop', 'needs', 'onlyWith', 'unless', 'summon', 'fed', 'skillRow'];
-  const KEYS = ['area', 'target', 'count', 'splash', 'range', 'open', 'priority', 'gather', 'guard', 'groundWide', 'aura', 'smite', 'noSelf', 'overflow'];
+  const KEYS = ['area', 'target', 'count', 'splash', 'range', 'open', 'priority', 'gather', 'guard', 'groundWide', 'aura', 'smite', 'noSelf', 'overflow', 'bellOnly'];
   for (const k of Object.keys(fx)) if (!META.includes(k) && !KEYS.includes(k)) throw new TreeFxError(`target hook: unknown field "${k}"`);
   if (!KEYS.some((k) => (fx as unknown as Bag)[k] !== undefined)) throw new TreeFxError('target hook has no effect');
   const needDef = (): SkillDef => {
     if (!def) throw new TreeFxError('target hook needs a skill here');
     return def;
   };
+  if (fx.bellOnly !== undefined) {
+    if (!cls.skills.includes(fx.bellOnly) || (cls.passive?.effect as { type?: string } | undefined)?.type !== 'pealingBells') throw new TreeFxError('bellOnly needs an own skill and the Pealing Bells passive');
+    acc.bellOnly = fx.bellOnly;
+  }
   if (fx.target !== undefined) {
     const d = needDef();
     const ok = ['random_enemies', 'all_enemies', 'all_allies', 'self', 'single_enemy', 'single_ally'];
@@ -1229,6 +1244,8 @@ const ACTION_KEYS: Record<string, readonly string[]> = {
   smite: [],
   // Altıncı tur (Rot Bomb): DoT'un kalan tikleri bir anda
   detonate: [],
+  // Vesper ağacı: çan çal (skill: çanı çalan skill; Deep Peal eler)
+  bell: ['skill'],
 };
 /** Faz 5a: `count` alan hedefler. */
 const COUNT_TARGETS: ReadonlySet<string> = new Set(['nearestEnemies', 'outsideArea', 'randomInCast', 'beside']);
@@ -1435,6 +1452,12 @@ function compileAction(tree: TreeData, cls: (typeof classes)[string], a: Trigger
         for (const f of Object.keys(cs)) if (f !== 'status' && f !== 'turns') throw new TreeFxError(`cutStatus: unknown field "${f}"`);
       }
       break;
+    case 'bell':
+      scaleNum('bell');
+      if (!Number.isInteger(out.bell) || (out.bell as number) < 1) throw new TreeFxError('bell must be an integer >= 1');
+      if ((cls.passive?.effect as { type?: string } | undefined)?.type !== 'pealingBells') throw new TreeFxError('bell needs the Pealing Bells passive');
+      if (a.skill !== undefined && !cls.skills.includes(a.skill)) throw new TreeFxError(`skill ${a.skill} is not a ${tree.class} skill`);
+      break;
     case 'detonate':
       if (!knownStatus(a.detonate) || !STATUSES[a.detonate as string]!.dot) throw new TreeFxError(`detonate needs a DoT status (got "${String(a.detonate)}")`);
       break;
@@ -1514,6 +1537,27 @@ function compileHeal(fx: Extract<TreeFx, { h: 'heal' }>, node: string, r: number
   };
 }
 
+/**
+ * Deep Peal (fx bellOnly; yalnızca compileTree, TÜM yamalardan sonra: sırası sonra gelen Storm Tower / Echoing Hall da kapanır): diğer skill'lerin
+ * ringsBell'i silinir, başka skill adına çalan bell eylemleri (Ringing Skull) düşer, pasif metni bilir. Skill adı taşımayan çanlar (savaş başı, Long Echo...) kalır.
+ */
+function applyBellOnly(acc: Acc, clsId: string): void {
+  const only = acc.bellOnly;
+  const cls = classes[clsId];
+  if (!only || !cls?.passive) return;
+  for (const id of cls.skills) {
+    if (id === only || !(acc.skills[id] ?? SKILLS[id])?.ringsBell) continue;
+    delete (acc.skills[id] ??= cloneSkill(SKILLS[id]!)).ringsBell;
+  }
+  acc.hooks = acc.hooks.flatMap<TreeHook>((h) => {
+    if (h.h !== 'trigger') return [h];
+    const left = h.do.filter((a) => a.bell === undefined || a.skill === undefined || a.skill === only);
+    return left.length === h.do.length ? [h] : left.length ? [{ ...h, do: left }] : [];
+  });
+  const passive = (acc.passive ??= clone(cls.passive));
+  if (passive.effect.type === 'pealingBells') passive.effect.onlyRings = SKILLS[only]!.name;
+}
+
 /** Birikim -> TreeSetup (boş kanallar yazılmaz); hiçbir şey yoksa undefined. */
 function setupOf(acc: Acc): TreeSetup | undefined {
   // Faz 8: biçimler önce (Double Deal + Cold Deck skill'in kendi tanımını da yamalar)
@@ -1524,11 +1568,12 @@ function setupOf(acc: Acc): TreeSetup | undefined {
   const hp = acc.hpMult !== undefined && acc.hpMult !== 1;
   const armor = !!acc.armorAdd;
   const armorMul = acc.armorMult !== undefined && acc.armorMult !== 1;
+  const spd = acc.spdMult !== undefined && acc.spdMult !== 1;
   const subs = Object.entries(acc.summons ?? {}).flatMap(([k, a]) => {
     const s = setupOf(a);
     return s ? [[k, s] as const] : [];
   });
-  if (!skills && !acc.passive && !fx && !hooks && !hp && !armor && !armorMul && !subs.length && !modes) return undefined;
+  if (!skills && !acc.passive && !fx && !hooks && !hp && !armor && !armorMul && !spd && !subs.length && !modes) return undefined;
   return {
     ...(skills ? { skills: acc.skills } : {}),
     ...(acc.passive ? { passive: acc.passive } : {}),
@@ -1537,6 +1582,7 @@ function setupOf(acc: Acc): TreeSetup | undefined {
     ...(hp ? { hpMult: acc.hpMult } : {}),
     ...(armor ? { armorAdd: acc.armorAdd } : {}),
     ...(armorMul ? { armorMult: acc.armorMult } : {}),
+    ...(spd ? { spdMult: acc.spdMult } : {}),
     ...(subs.length ? { summons: Object.fromEntries(subs) } : {}),
     ...(modes ? { modes } : {}),
   };
@@ -1557,6 +1603,7 @@ export function compileTree(tree: TreeData, alloc: TreeAlloc, rules: TreeRules =
       throw new TreeFxError(`${tree.class} ${p.label}: ${(e as Error).message}`);
     }
   }
+  applyBellOnly(acc, tree.class);
   return setupOf(acc);
 }
 

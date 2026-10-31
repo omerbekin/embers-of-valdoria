@@ -5,7 +5,7 @@
 // sınıfta silahsız kahraman silah çarpanı < 1 alır (Item Güçlendirme 2026-10-17: başlangıç silahı sıfır noktası).
 // Affix eşlemesi veride (items.json > affixDefs[].parts[].to; Ömer onayı 2026-10-11, items.md 1.3b).
 import { classes, formulas } from '../engine/content';
-import { applyUnitModifiers, speedRoll } from '../engine/stats';
+import { applyUnitModifiers, speedRoll, speedText } from '../engine/stats';
 import { STACK_FORM, stackValues, type StackForm } from '../engine/tree-hooks';
 import type { Attribute, Attributes, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
 import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, weaponSpeedPenalties, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
@@ -309,7 +309,7 @@ export function implicitResultHint(classId: string, mods: UnitModifiers | undefi
   const cur = typeof m[key] === 'number' ? (m[key] as number) : 1;
   const after = applyUnitModifiers(def, { ...mods, [key]: cur } as UnitModifiers, formulas).stats[h.stat];
   const before = applyUnitModifiers(def, { ...mods, [key]: cur / factor } as UnitModifiers, formulas).stats[h.stat];
-  const f = (v: number) => (h.pct ? `${Math.round(v * 1000) / 10}%` : String(Math.round(v * 10) / 10));
+  const f = (v: number) => (h.pct ? `${Math.round(v * 1000) / 10}%` : h.stat === 'spd' ? speedText(v, formulas) : String(Math.round(v * 10) / 10));
   return `(${f(before)} → ${f(after)})`;
 }
 

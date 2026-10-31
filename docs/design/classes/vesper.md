@@ -1,6 +1,6 @@
 # Vesper: tasarım dökümanı (UYGULANDI: motor + veri, TASLAK değerler, 2026-10-28)
 
-> **Durum:** engine-dev / content-designer (Opus), 2026-10-28; open-questions madde 451. Tüm sayılar **PROVİZYON** (Mage'den türetildi, sim YOK; Ömer her sim'i onaylar). Skill ağacı **TASLAK**. Sanat **yer tutucu** (Mage gövdesi; yeni görsel üretilmedi). `tests/balance-checks.ts > PENDING_BALANCE` içinde.
+> **Durum:** engine-dev / content-designer (Opus), 2026-10-28; open-questions madde 451. Tüm sayılar **PROVİZYON** (Mage'den türetildi, sim YOK; Ömer her sim'i onaylar). Skill ağacı **Ömer onaylı (2026-10-31), sayıları provizyon**. Sanat **yer tutucu** (Mage gövdesi; yeni görsel üretilmedi). `tests/balance-checks.ts > PENDING_BALANCE` içinde.
 > Ad / id: brifte "Bellwarden" idi, Ömer kararıyla **Vesper**, id `vesper` (Blood Warden ile karışmasın; o başka sohbetin tasarımı, dokunulmadı).
 
 ## 1. Kimlik
@@ -45,18 +45,18 @@ Arketip: batık bir katedralin çan kulesinin bekçisi. Çan sesi = **holy**, g�
 - İpucu metinleri `skill-info.ts`: pasif değerleri, "Rings a bell..." satırı, Great Bell için "5 çanda" örnek değer.
 
 ### YZ (`ai.json > vesper`)
-Kalkansız büyücü kalıbı; öncelikler kill / aoe / tactic / damage, `aoeMinTargets 2`, ult için `reserveMp 2`. YZ gelecekteki çan büyümesini DEĞERLENDİRMEZ (yalnız anlık hasar).
+Kalkansız büyücü kalıbı; öncelikler kill / aoe / tactic / damage, `aoeMinTargets 2`, ult için `reserveMp 2`. YZ çan büyümesini DEĞERLENDİRİR: `ringsBell` skill'i, bir çanın sonraki çan vuruşlarına katacağı hasar kadar değer alır (`bell.horizon` 2 kendi turu, `discount` 0,7; `open-questions.md` "Vesper çan büyümesi" maddesi). Ağaç kancaları da terazidedir (`ai.ts > bellValue`, `treeTriggerValue`, `treeProcStatusValue`, `armedCostValue`).
 
-## 3. Skill ağacı (`data/skill-trees/vesper.json`, TASLAK)
+## 3. Skill ağacı (`data/skill-trees/vesper.json`, Ömer onaylı 2026-10-31, sayılar provizyon, sim yok)
 
-Var olan ağaç yapısında (rows: pasif + 3 skill, ult, mastery). 60 düğüm; **36'sının fx'i var** (yalnız var olan yamalar: güç %, MP bedeli, bekleme, ilk bekleme, durum şansı / süresi, pasif `perBell`, Great Bell `powerPerBell` (yeni FX alanı, `skill-tree-compile.ts`), etki ekle / kaldır, koşullu güç, kesin isabet, kritik bonusu, savunma yok sayma). **24'ü `fx: null`** = oyunda "Not active yet" (yeni mekanik ister: savaşa çanla başlama, çan tetikleyicileri, alan değişimi vb.).
+Var olan ağaç yapısında (rows: pasif + 3 skill, ult, mastery). **Tüm düğümler çalışır** (`fx: null` kalmadı). 2026-10-31'de eklenen genel kancalar: tetik olayı `bellRung`, tetik eylemi `bell`, koşullar `selfBells` / `targetTier` / `targetLowestHp` / `targetFrontAtCast`, ölçek `selfBells`, tetik hedefi `rowBehind`, skill alanı `ringsBell` sayı olabilir (kaç çan), hedef yaması `bellOnly`, stat `spdMult`, Rage kancası `costMul`, yeni durum `shaken` (isabet düşürür, ikonu yer tutucu `blinded`).
 
-- **Pealing Bells:** perBell +%0,5/rank (2 düğüm), genel güç +%2/rank; null: Long Echo, Matins, Quickening Peal, Deep Peal, Angelus, Fraying Rope, Heavy Bronze, Compline, Cathedral Choir (evrim).
-- **Toll:** güç +%3/rank (3), MP -1/rank, Cracked Rim (+%20 güç, +3 MP), Muffled Toll (bedava, -%25), evrim Death Knell (+%30, kesin isabet); null: Funeral Toll, Knell, Wide Toll, Passing Bell, Shaken Ranks.
-- **Thunderpeal:** güç +%3/rank (3), kritik +%2/rank, Blinded +1 tur, Stormbell (bekleme -1), Overcharged (+%25, bekleme +1), Dull Flash (-4 MP, Blind yok), Thunderstruck (%15 Stun); null: Forked Peal, Single Bolt, Storm Tower (evrim).
-- **Cracked Bell:** güç +%3/rank (3), Stun şansı +%3/rank, Shatter (büyü zırhının %20'si yok), Brittle Bell (+%25, Stun yok), Gentle Ring (bekleme -1, -%20), Deafened (+Blind 1 tur); null: Ringing Skull, Shards, Toll for One, Sundered Bell (evrim).
-- **Great Bell (ult):** +%8 güç (3 düğüm), çan başına +0,005 INT, Crown of Bells (Blind 1), -3 MP, ilk bekleme -1, bekleme -1, kritik +%10; null: Last Peal, Echoing Hall, Bell of Kings.
-- **Mastery "Belltower Mastery":** 5 adım: +%4 hasar, Toll -1 MP, (null) savaşa 1 çanla başla, perBell +%1, +%6 hasar.
+- **Pealing Bells:** perBell +%0,5/rank (2 düğüm), genel güç +%2/rank; Long Echo (ilk çan bir çan daha), Matins (savaşa 1 çanla), Quickening Peal (3 çanda bir erken tur), Deep Peal (yalnız Toll çalar, perBell artar), Angelus (5+ çanda çan skill'leri -2 MP), Fraying Rope (perBell artar, alınan hasar +%10), Heavy Bronze (perBell artar, hız -%10), Compline (müttefik düşünce çan), Cathedral Choir (evrim: çan başına kritik +%1).
+- **Toll:** güç +%3/rank (3), MP -1/rank, Cracked Rim (+%20 güç, +3 MP), Muffled Toll (bedava, -%25), evrim Death Knell (+%30, kesin isabet), Funeral Toll (%50 altı cana +%25), Knell (en düşük cana +%15), Wide Toll (ön sırayı Slow), Passing Bell (öldürme başına çan), Shaken Ranks (Shaken 1 tur).
+- **Thunderpeal:** güç +%3/rank (3), kritik +%2/rank, Blinded +1 tur, Stormbell (bekleme -1), Overcharged (+%25, bekleme +1), Dull Flash (-4 MP, Blind yok), Thunderstruck (%15 Stun), Forked Peal (arka sıraya yarı hasar), Single Bolt (tek hücre, +%60), Storm Tower (evrim: +%30, 2 çan).
+- **Cracked Bell:** güç +%3/rank (3), Stun şansı +%3/rank, Shatter (büyü zırhının %20'si yok), Brittle Bell (+%25, Stun yok), Gentle Ring (bekleme -1, -%20), Deafened (+Blind 1 tur), Ringing Skull (Stun tutunca çan), Shards (yan hücrelere yarı hasar), Toll for One (elit / boss +%30), Sundered Bell (evrim: +%30, Stun şansı 2 kat).
+- **Great Bell (ult):** +%8 güç (3 düğüm), çan başına +0,005 INT, Crown of Bells (Blind 1), -3 MP, ilk bekleme -1, bekleme -1, kritik +%10, Last Peal (%50 altı cana +%30), Echoing Hall (ult de çan çalar), Bell of Kings (ulttan sonraki Toll bedava).
+- **Mastery "Belltower Mastery":** 5 adım: +%4 hasar, Toll -1 MP, Tower Stance (savaşa 1 çanla başla; Matins ile 2 çan, üst sınır yok), perBell +%1, +%6 hasar.
 
 ## 4. Kampanya buluşması: dr19 Sunken Chapel (`drowned-reach.json`)
 
@@ -71,7 +71,7 @@ Sandık (treasure) aynen kalır; düğüme `"event": "dr_vesper"` eklendi, sand�
 - **Leave her to her vigil** (`relic: clapper_of_the_sunken_bell`): tokmağı verir. Sonuç: "...She returns with the chapel bell's old iron clapper, cracked along its length. 'This one has rung enough for the drowned. Let it ring for the living.' ..."
 - Bölükte / kışlada / Inn'de zaten bir Vesper varsa kabul seçeneği gizlenir (yalnız ret kalır).
 
-### Emanet: Clapper of the Sunken Bell
+### Emanet: Clapper of the Sunken Bell (Ömer onaylı 2026-10-31)
 | Alan | Değer |
 |---|---|
 | Yuva | trinket (her sınıf takar) |
@@ -97,10 +97,12 @@ Quick Battle / MP rastgele havuzu (`random-battle.json`), Endless (aynı havuz),
 
 ## 7. Varsayımlar
 1. Silah ailesi staves (Mage'le aynı başlangıç asası).
-2. Pasif dört çan skill'inin hepsini güçlendirir; yalnız Toll ve Thunderpeal çalar (Cracked Bell ve ult çalmaz).
+2. Pasif dört çan skill'inin hepsini güçlendirir; ağaçsız yalnız Toll ve Thunderpeal çalar (ağaç seçimleri ek çan çaldırabilir: bölüm 3).
 3. Debug kullanımı çan çalmaz; ağaçtan gelen bedava kullanımlar çalar.
 4. Emanet trinket, etkisi kritikte Blind; eventOnly.
 5. Yer tutucu görünüş Mage; logo `divine`; ikon / vfx / ses ödünç.
 6. Thunderpeal ilk lightning KAHRAMAN skill'i (Ömer brifi); `tests/lightning-element.test.ts` Vesper istisnasıyla güncellendi.
-7. YZ çan büyümesini değerlendirmez.
-8. Sayaç savaş başına; Endless dalgaları arasında sıfırlanıp sıfırlanmadığı motorun savaş kurulumuna bağlı (yeni Combatant = 0).
+7. YZ çan büyümesini değerlendirir (`bell.horizon` 2, `discount` 0,7; bölüm 2).
+
+## 8. Kesin kural: çan sayacı ve Endless (Ömer 2026-10-31)
+Çan sayacı Endless'ta dalga arasında **sıfırlanır**: her Endless dalgası ayrı savaştır (yeni Combatant, `carry` çan taşımaz), Endless simi de aynı `fightWave` yolunu kullanır. Başlangıç çanları (Matins, Tower Stance) her dalgada yeniden verilir. `tests/vesper.test.ts` kilitler. **Ömer 2026-10-31: savaş içi Round 2/3 dalgalarında (`BattleSetup.waves`, aynı savaşçılar) çan sayacı sürer.**

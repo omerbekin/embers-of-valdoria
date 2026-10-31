@@ -1,7 +1,7 @@
 {
-  "_not": "TASLAK (draft, 2026-10-28; Ömer onayı bekliyor): Vesper ağacı mevcut ağaçların yapısında (_rules.json rowShape). fx yazılanlar var olan yamalarla çalışır (güç / bedel / bekleme / durum / pasif perBell / Great Bell powerPerBell); fx null olanlar \"Not active yet\" (yeni mekanik ister: çan sayacı tetikleri, alan değişimleri). Sayılar PROVİZYON, sim yok. docs/design/classes/vesper.md.",
+  "_not": "Ömer onayladı 2026-10-31, sayılar provizyon (sim yok). Vesper ağacı mevcut ağaçların yapısında (_rules.json rowShape); tüm düğümler çalışır. docs/design/classes/vesper.md.",
   "class": "vesper",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "D",
@@ -81,7 +81,18 @@
         "name": "Tower Stance",
         "text": "You start each battle with one bell already rung.",
         "src": "D:draft 2026-10-28",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "battleStart",
+            "do": [
+              {
+                "bell": 1
+              }
+            ]
+          }
+        ]
       },
       {
         "at": 20,
@@ -150,13 +161,36 @@
       "name": "Long Echo",
       "text": "Your first bell each battle counts as two bells.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "bellRung",
+          "once": true,
+          "do": [
+            {
+              "bell": 1
+            }
+          ]
+        }
+      ]
     },
     "0.n0": {
       "name": "Matins",
       "text": "You start every battle with one bell already rung.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "battleStart",
+          "do": [
+            {
+              "bell": 1
+            }
+          ]
+        }
+      ]
     },
     "0.r": {
       "name": "Steady Peal",
@@ -176,43 +210,195 @@
       "name": "Quickening Peal",
       "text": "Every third bell you ring makes your next turn come 10% sooner.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "bellRung",
+          "every": 3,
+          "do": [
+            {
+              "sooner": 0.1
+            }
+          ]
+        }
+      ]
     },
     "0.eb": {
       "name": "Deep Peal",
       "text": "Pealing Bells +1% per bell, but only Toll rings a bell.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "perBell",
+          "op": "add",
+          "v": 0.01
+        },
+        {
+          "k": "hook",
+          "h": "target",
+          "bellOnly": "toll"
+        }
+      ]
     },
     "0.ma": {
       "name": "Angelus",
       "text": "At five bells or more, your bell skills cost 2 less MP.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "toll",
+          "when": {
+            "selfBells": 5
+          },
+          "mod": {
+            "cost": -2
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "thunderpeal",
+          "when": {
+            "selfBells": 5
+          },
+          "mod": {
+            "cost": -2
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "cracked_bell",
+          "when": {
+            "selfBells": 5
+          },
+          "mod": {
+            "cost": -2
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "great_bell_of_valdoria",
+          "when": {
+            "selfBells": 5
+          },
+          "mod": {
+            "cost": -2
+          }
+        }
+      ]
     },
     "0.fa": {
       "name": "Fraying Rope",
       "text": "Pealing Bells +2% per bell, but you take 10% more damage.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "perBell",
+          "op": "add",
+          "v": 0.02
+        },
+        {
+          "k": "hook",
+          "h": "heal",
+          "on": "damageTaken",
+          "who": "self",
+          "mul": 0.1
+        }
+      ]
     },
     "0.fb": {
       "name": "Heavy Bronze",
       "text": "Pealing Bells +2% per bell, but you are 10% slower.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "perBell",
+          "op": "add",
+          "v": 0.02
+        },
+        {
+          "k": "stat",
+          "f": "spdMult",
+          "op": "mul",
+          "v": -0.1
+        }
+      ]
     },
     "0.mb": {
       "name": "Compline",
       "text": "When an ally falls, ring a bell.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "allyFell",
+          "do": [
+            {
+              "bell": 1
+            }
+          ]
+        }
+      ]
     },
     "0.v": {
       "name": "Cathedral Choir",
       "text": "Pealing Bells evolves: each bell also adds 1% critical chance to your bell skills.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "toll",
+          "scale": {
+            "selfBells": true
+          },
+          "mod": {
+            "critBonus": 0.01
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "thunderpeal",
+          "scale": {
+            "selfBells": true
+          },
+          "mod": {
+            "critBonus": 0.01
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "cracked_bell",
+          "scale": {
+            "selfBells": true
+          },
+          "mod": {
+            "critBonus": 0.01
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "great_bell_of_valdoria",
+          "scale": {
+            "selfBells": true
+          },
+          "mod": {
+            "critBonus": 0.01
+          }
+        }
+      ]
     },
     "1.f1": {
       "name": "Clear Toll",
@@ -263,7 +449,18 @@
       "name": "Funeral Toll",
       "text": "Toll deals 25% more damage to enemies below half health.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 0.25
+          }
+        }
+      ]
     },
     "1.r": {
       "name": "Thrifty Rope",
@@ -284,19 +481,55 @@
       "name": "Knell",
       "text": "Toll deals 15% more damage to the enemy with the lowest health.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetLowestHp": true
+          },
+          "mod": {
+            "powerMul": 0.15
+          }
+        }
+      ]
     },
     "1.eb": {
       "name": "Wide Toll",
       "text": "Toll also slows the enemy front row for 1 turn.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetFrontAtCast": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "slow",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "1.ma": {
       "name": "Passing Bell",
       "text": "When Toll kills an enemy, ring one more bell.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "bell": 1
+            }
+          ]
+        }
+      ]
     },
     "1.fa": {
       "name": "Cracked Rim",
@@ -344,7 +577,18 @@
       "name": "Shaken Ranks",
       "text": "Toll lowers the accuracy of enemies it hits by 10% for 1 turn.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "mod": {
+            "addStatus": {
+              "status": "shaken",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "1.v": {
       "name": "Death Knell",
@@ -445,13 +689,42 @@
       "name": "Forked Peal",
       "text": "Thunderpeal also strikes the row behind for half damage.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "strike": 0.5,
+              "to": "rowBehind"
+            }
+          ]
+        }
+      ]
     },
     "2.eb": {
       "name": "Single Bolt",
       "text": "Thunderpeal hits only the centre cell, but deals 60% more damage.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.6
+        },
+        {
+          "k": "hook",
+          "h": "target",
+          "area": {
+            "shape": "rect",
+            "rows": 1,
+            "cols": 1
+          }
+        }
+      ]
     },
     "2.ma": {
       "name": "Stormbell",
@@ -526,7 +799,22 @@
       "name": "Storm Tower",
       "text": "Thunderpeal evolves into Storm Tower: 30% more damage and it rings two bells.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.3
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "ringsBell",
+          "op": "set",
+          "v": 2
+        }
+      ]
     },
     "3.f1": {
       "name": "Iron Clapper",
@@ -577,7 +865,20 @@
       "name": "Ringing Skull",
       "text": "Cracked Bell rings a bell when it Stuns.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "statusApplied",
+          "status": "stun",
+          "do": [
+            {
+              "bell": 1,
+              "skill": "cracked_bell"
+            }
+          ]
+        }
+      ]
     },
     "3.r": {
       "name": "Heavy Strike",
@@ -612,13 +913,36 @@
       "name": "Shards",
       "text": "Cracked Bell splashes half its damage to the enemies beside the target.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "splash": {
+            "pattern": "perpendicular",
+            "mult": 0.5
+          }
+        }
+      ]
     },
     "3.ma": {
       "name": "Toll for One",
       "text": "Cracked Bell deals 30% more damage to elites and bosses.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetTier": [
+              "elite",
+              "boss"
+            ]
+          },
+          "mod": {
+            "powerMul": 0.3
+          }
+        }
+      ]
     },
     "3.fa": {
       "name": "Brittle Bell",
@@ -678,7 +1002,22 @@
       "name": "Sundered Bell",
       "text": "Cracked Bell evolves into Sundered Bell: 30% more damage and its Stun chance doubles.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.3
+        },
+        {
+          "k": "skill",
+          "sel": "status:stun",
+          "f": "chance",
+          "op": "mul",
+          "v": 1
+        }
+      ]
     },
     "4.u1": {
       "name": "Gilded Bronze",
@@ -797,13 +1136,32 @@
       "name": "Last Peal",
       "text": "Great Bell deals 30% more damage to enemies below half health.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 0.3
+          }
+        }
+      ]
     },
     "4.l1": {
       "name": "Echoing Hall",
       "text": "Great Bell rings a bell for Pealing Bells.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "ringsBell",
+          "op": "set",
+          "v": 1
+        }
+      ]
     },
     "4.l2": {
       "name": "Resounding",
@@ -823,7 +1181,15 @@
       "name": "Bell of Kings",
       "text": "After Great Bell, your next Toll costs no MP.",
       "src": "D:draft 2026-10-28",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "rage",
+          "skill": "toll",
+          "after": "great_bell_of_valdoria",
+          "costMul": -1
+        }
+      ]
     }
   }
 }

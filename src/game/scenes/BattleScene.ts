@@ -2928,7 +2928,7 @@ export class BattleScene extends Phaser.Scene {
     const grid: UnitCard['grid'] = [
       { iconUrl: icon('armor'), label: 'ARM', value: String(Math.round(eff.armor)), small: pctOf(eff.armor) },
       { iconUrl: icon('evasion'), label: 'EVA', value: `${Math.round(eff.evasion * 100)}%`, ...(tint('evasion') ? { color: tint('evasion')! } : {}) },
-      { iconUrl: icon('spd'), label: 'SPD', value: String(c.stats.spd) },
+      { iconUrl: icon('spd'), label: 'SPD', value: this.statValue('spd', c.stats) },
       { iconUrl: icon('magicArmor'), label: 'M.ARM', value: String(Math.round(eff.magicArmor)), ...(eff.magicArmor > 0 ? { small: pctOf(eff.magicArmor) } : {}) },
       { iconUrl: icon('critChance'), label: 'CRIT', value: this.statValue('critChance', eff) },
       { iconUrl: icon('accuracy'), label: 'ACC', value: `${Math.round(eff.accuracy * 100)}%`, ...(tint('accuracy') ? { color: tint('accuracy')! } : {}) },

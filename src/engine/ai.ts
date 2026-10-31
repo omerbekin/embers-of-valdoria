@@ -4,7 +4,7 @@ import { skillCostAmount, skillCostPay } from './cost';
 import { betStakeParts } from './gamble';
 import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
-import { manaShieldNeed, type TriggerAction } from './tree-hooks';
+import { bellsOfSkill, manaShieldNeed, type TriggerAction } from './tree-hooks';
 import { armorReduction, attributePower, hitChance } from './stats';
 import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet } from './types';
 import { capBurn, castBurnAmount, groundBurnAmount } from './mana-burn';
@@ -1631,6 +1631,8 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
     strikeSideTerms(ctx, profile, o, add);
     add('setup', opportunistSetup(ctx, o));
     add('bell', bellValue(ctx, o));
+    add('treeStatus', treeProcStatusValue(ctx, o));
+    add('armedCost', armedCostValue(ctx, o));
     add('divineLight', -divineLightOverlap(ctx, o));
     add('dispel', dispelBuffValue(ctx, profile, o));
     if (o.mpGain) add('manaGain', ctx.manaGain(actor, o.mpGain));
@@ -3210,6 +3212,8 @@ function trigActionWorth(ctx: ValueContext, owner: Combatant, a: TriggerAction, 
     v += ctx.manaGain(rec, Math.round((a.of ? base(a.of) : 1) * a.mp * s));
   } else if (a.hpLoss !== undefined) {
     v -= Math.max(0, Math.min(rec.hp - 1, base(a.of ?? 'maxHp') * a.hpLoss * s));
+  } else if (a.bell !== undefined) {
+    v += a.bell * s * oneBellWorth(ctx, rec);
   } else if (a.sooner !== undefined) {
     v += ctx.turnValue(rec) * Math.min(1, a.sooner * s);
   } else if (a.cooldown !== undefined) {
@@ -3268,6 +3272,9 @@ function treeTriggerValue(ctx: ValueContext, o: Option): { own: number; retaliat
   const cast = o.targets;
   if (actor.treeHooks) {
     own += trigEventValue(ctx, actor, { on: 'skillUse', ...(o.primary ? { target: o.primary } : {}), skill: sid, castTargets: cast }, 1, o);
+    // Vesper ağacı: skill'in çaldığı her çan 'bellRung' kancalarını işletir (Long Echo, Quickening Peal)
+    const rung = bellsOfSkill(o.skill);
+    if (rung) own += trigEventValue(ctx, actor, { on: 'bellRung' }, rung, o);
     const crit = battle.effectiveStats(actor).critChance;
     for (const [uid, d] of Object.entries(o.dmgBy)) {
       const t = battle.get(uid);
@@ -3299,6 +3306,12 @@ function treeTriggerValue(ctx: ValueContext, o: Option): { own: number; retaliat
     const amount = h > 0 ? d / h : d;
     ret += trigEventValue(ctx, t, { on: 'hitTaken', target: actor, subject: t, source: actor, incomingSkill: o.skill, amount }, h * (1 - (o.killP[uid] ?? 0)), o);
     ret += trigEventValue(ctx, t, { on: 'dodge', target: actor, subject: t, source: actor, incomingSkill: o.skill }, 1 - h, o);
+  }
+  // Ölenin dostlarının 'allyFell' kancaları (Compline: düşman Vesper'in çanı öldürene bedel; çağrı ölümü tetiklemez)
+  for (const [uid, p] of Object.entries(o.killP)) {
+    const t = battle.get(uid);
+    if (!t || p <= 0 || t.side === actor.side || t.summoned) continue;
+    for (const g of battle.living(t.side)) if (g !== t && g.treeHooks) ret += trigEventValue(ctx, g, { on: 'allyFell', target: t, subject: t, source: actor }, p, o);
   }
   return { own: own * cov.tree.triggerShare, retaliation: ret * cov.tree.retaliationShare };
 }
@@ -3397,12 +3410,53 @@ function opportunistSetup(ctx: ValueContext, o: Option): number {
   return v * coverageOf(ctx.vc).opportunistShare;
 }
 
-/** Vesper çan büyümesi: ringsBell skill'i çan sayacını 1 artırır; kısa ufukta (bell.horizon kendi turu, tur başı iskonto) çan vuruşlarının artışı. */
+/** Vesper çan büyümesi: ringsBell skill'i çan sayacını artırır (Storm Tower 2); değer çan başına aynı. */
 function bellValue(ctx: ValueContext, o: Option): number {
-  const pe = ctx.actor.passive?.effect;
-  if (!o.skill.ringsBell || pe?.type !== 'pealingBells') return 0;
-  const battle = ctx.battle;
+  return o.skill.ringsBell ? bellsOfSkill(o.skill) * oneBellWorth(ctx, ctx.actor) : 0;
+}
+
+/** C1 "durum ekle" kancalarının (ağaç; ör. Wide Toll'un Slow'u, Shaken Ranks) değeri: hedefe isabet edip öldürmezse durumun etkisi + isabet cezası. */
+function treeProcStatusValue(ctx: ValueContext, o: Option): number {
   const actor = ctx.actor;
+  const battle = ctx.battle;
+  if (!actor.treeHooks?.length || !o.skill.effects.some((e) => e.type === 'damage')) return 0;
+  let v = 0;
+  for (const t of o.targets) {
+    if (t.hp <= 0 || t.side === actor.side) continue;
+    const p = previewHitChance(o, t) * (1 - (o.killP[t.uid] ?? 0));
+    if (p <= 0) continue;
+    for (const s of battle.aiProcStatuses(actor, t, o.skill, o.targets)) {
+      if (battle.statusBlocked(t, s.status)) continue;
+      const k = Math.min(Math.max(0, s.turns - (t.statuses.find((x) => x.kind === s.status)?.turns ?? 0)), ctx.turnsWithin(t));
+      if (k <= 0) continue;
+      const probe = { ...o.skill, effects: [{ type: 'status', status: s.status, turns: s.turns }] } as SkillDef;
+      v += (statusMitigation(battle, actor, probe, [t]) - statusEffectWorth(ctx, t, s.status, k)) * p * (s.chance ?? 1);
+    }
+  }
+  return v * coverageOf(ctx.vc).tree.triggerShare;
+}
+
+/** Bu skill'in silahladığı MP bedel koşullarının (CostCond.after; Bell of Kings) değeri: sıradaki kullanımda kurtarılan MP. */
+function armedCostValue(ctx: ValueContext, o: Option): number {
+  const actor = ctx.actor;
+  let saved = 0;
+  for (const id of actor.skills) {
+    const sk = ctx.battle.skill(id, actor);
+    if (sk?.cost.resource !== 'mp') continue;
+    for (const c of sk.cost.cond ?? []) {
+      if (c.after !== o.skill.id || actor.treeArmed?.includes(c.node)) continue;
+      saved += Math.max(0, skillCostAmount(sk.cost, actor) - skillCostAmount(sk.cost, { ...actor, treeArmed: [...(actor.treeArmed ?? []), c.node] }));
+    }
+  }
+  return saved > 0 ? ctx.manaGain(actor, saved) * coverageOf(ctx.vc).tree.triggerShare : 0;
+}
+
+/** Bir çanın `owner`a değeri: kısa ufukta (bell.horizon kendi turu, tur başı iskonto) çan vuruşlarının artışı (en iyi skill'i). */
+function oneBellWorth(ctx: ValueContext, owner: Combatant): number {
+  const pe = owner.passive?.effect;
+  if (pe?.type !== 'pealingBells') return 0;
+  const battle = ctx.battle;
+  const actor = owner;
   const cov = coverageOf(ctx.vc);
   let raw = 0;
   for (const id of actor.skills) {

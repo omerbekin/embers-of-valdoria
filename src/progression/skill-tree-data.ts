@@ -216,6 +216,8 @@ export interface TargetFx {
   groundWide?: 'touch';
   /** Faz 5a: manaOverflow pasifi (Conduit / Lifeline Pact / Martyr's Overflow / Spillover / Endless Spring). */
   overflow?: { to?: 'lowestMp'; mult?: number; noSelf?: true; spill?: true; allies?: true };
+  /** Vesper ağacı (Deep Peal): çanı yalnız bu skill çalar; diğer skill'lerin ringsBell'i ve `skill` taşıyan başka bell eylemleri derlemenin sonunda düşer. */
+  bellOnly?: string;
   rank?: boolean;
   drop?: string;
 }
@@ -236,6 +238,8 @@ export interface RageFx {
   scale?: CondScale;
   rule?: 'tallyAll';
   cost?: number;
+  /** Bedel çarpanı: x (1 + costMul), -1 = bedelsiz; `after` ile silahlanır (Bell of Kings). */
+  costMul?: number;
   after?: string;
   rank?: boolean;
   skill?: string;
