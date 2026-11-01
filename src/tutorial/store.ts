@@ -101,6 +101,12 @@ export function markLessonSeen(id: string): void {
   save({ ...s, seen: [...s.seen, id] });
 }
 
+/** Debug: tek dersi görülmemiş yapar (Garrick şeridi yeniden denensin). */
+export function forgetLesson(id: string): void {
+  const s = load();
+  if (s.seen.includes(id)) save({ ...s, seen: s.seen.filter((x) => x !== id) });
+}
+
 /** Eylem dersi tamamlandı mı (önerilen eylem yapıldı ya da tekrar sınırı doldu). */
 export function lessonDoneIds(): ReadonlySet<string> {
   return new Set(load().done ?? []);

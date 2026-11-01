@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { autoResolve, debugTeleport, debugWinNode, idleStartFrame, moveTo, newCampaign, nextStep, townScreenNode, type CampaignState } from '../src/campaign';
+import { legacyBlank } from './legacy-start';
+import { autoResolve, debugTeleport, debugWinNode, idleStartFrame, moveTo, nextStep, townScreenNode, type CampaignState } from '../src/campaign';
 import { guarded, installLoopGuard, makeGuardLog } from '../src/ui/loop-guard';
 
 // 0.7.7 Ashford donması (Ömer 2026-10-14, telefon): Watchtower'dan sonra Ashford'a varınca kasaba ekranı ikinci kahramanın bekleme
@@ -58,7 +59,7 @@ describe('oyun döngüsü güvenlik ağı', () => {
 describe('Ashford varışında kaydedilen sefer yüklenince akış sürer', () => {
   /** Ömer'in durumu: Warrior + düşmüş Anti-Mage, Watchtower kazanıldı, Ashford'a yüründü (Farewell bekliyor). */
   function omer(): CampaignState {
-    let s = debugTeleport(newCampaign({ mode: 'normal', seed: 5 }), '3');
+    let s = debugTeleport(legacyBlank({ mode: 'normal', seed: 5 }), '3'); // veda yalnız eski yapıda
     s = { ...s, roster: s.roster.map((h, i) => ({ ...h, class: i === 0 ? 'warrior' : 'antimage' })) };
     s = debugWinNode(s);
     for (let n = 0; n < 10 && nextStep(s).kind !== 'move'; n++) s = autoResolve(s);

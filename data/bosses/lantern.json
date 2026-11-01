@@ -1,0 +1,28 @@
+{
+  "_not": "Lantern (Harita 3 Darkness, M-F; maps-2-3.md 5): oyuncu tarafındaki kırılabilir ışık nesnesi. Inert: sıra almaz, skill i yok. Maks can gerçekte battle-rules.json > lanterns.lantern.hpRatio ile tarafın ortalama maks canından gelir (overrides.hp yalnızca taban). Sanat YER TUTUCU: sprite yok, BattleScene kodla çizer.",
+  "id": "lantern",
+  "name": "Lantern",
+  "spriteId": "lantern",
+  "color": "#e8b64c",
+  "logo": "ironmooring",
+  "frontPriority": 9,
+  "range": 1,
+  "role": "Lantern",
+  "attributes": {
+    "str": 0,
+    "int": 0,
+    "dex": 0,
+    "luck": 0
+  },
+  "armor": 10,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 60,
+    "mp": 0,
+    "spd": 2,
+    "hpRegen": 0,
+    "mpRegen": 0
+  },
+  "inert": true,
+  "skills": []
+}

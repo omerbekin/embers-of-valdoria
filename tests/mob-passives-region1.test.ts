@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { legacyBlank } from './legacy-start';
 import { Battle, chooseAction, content, describePassive } from '../src/engine';
 import type { BattleEvent, Combatant, CombatantDef, PassiveEffect } from '../src/engine';
 import { battlePlan, chapterEnemyMods, CONFIG, debugTeleport, ENCOUNTERS, newCampaign, withDifficulty } from '../src/campaign';
@@ -178,7 +179,7 @@ describe('D7-D9', () => {
     const enc = ENCOUNTERS.watchtower_tutorial!;
     const u = enc.units.find((x) => x.class === 'ember_acolyte')!;
     expect(CONFIG.enemyScale?.skipNodes).toContain('3'); // 2026-10-22: skipRegions I -> eğitim düğümleri
-    const plan = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 5, difficulty: 'medium' }), '3'));
+    const plan = battlePlan(debugTeleport(legacyBlank({ mode: 'normal', seed: 5, difficulty: 'medium' }), '3'));
     // + elit düğümün rütbesiz eşlikçisi: zorluğun eliteEscort'u (open-questions 365)
     const expected = withDifficulty(withDifficulty(withDifficulty(u.mods, chapterEnemyMods('valdoria', '3')), CONFIG.difficulties.medium!.enemy), CONFIG.difficulties.medium!.eliteEscort)!;
     const m = plan.units.enemies[u.slot]!.modifiers!;

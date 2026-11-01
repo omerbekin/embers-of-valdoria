@@ -28,7 +28,7 @@ import {
 } from '../src/campaign';
 
 const start = (mode: CampaignMode, seed = 10, slot = 0, difficulty: Difficulty = 'medium') =>
-  autoResolve(pickHero(newCampaign({ mode, seed, slot, difficulty, campaignId: `c${seed}` }), 'archer'));
+  autoResolve(pickHero(newCampaign({ mode, seed, slot, difficulty, campaignId: `c${seed}` }), 'druid'));
 
 describe('sefer kaydı: 3 yuva, yuva başına kayıtlar', () => {
   it('3 yuva; Normal yuvada en fazla 5 kayıt, en eskisi silinir; en yeni üstte; elle kayıt serbest', () => {
@@ -44,7 +44,7 @@ describe('sefer kaydı: 3 yuva, yuva başına kayıtlar', () => {
     const list = listSaves(kv, 0);
     expect(list).toHaveLength(5);
     expect(list[0]!.savedAt).toBe('2026-10-07T10:09:00Z');
-    expect(list[0]!.summary).toMatchObject({ map: 'VALDORIA', stop: 1, stops: 22, node: 'Mill Road', classes: ['archer'] });
+    expect(list[0]!.summary).toMatchObject({ map: 'VALDORIA', stop: 1, stops: 22, node: 'Mill Road', classes: ['druid'] });
   });
 
   it('her yuvanın kendi listesi var: bir yuvanın 5 sınırı diğerini etkilemez; Ironman yuvası tek kayıt', () => {
@@ -104,7 +104,7 @@ describe('sefer kaydı: 3 yuva, yuva başına kayıtlar', () => {
     const s = start('normal', 5, 0, 'hard');
     writeSave(kv, s, 'auto');
     expect(latestSave(kv)!.state.difficulty).toBe('hard');
-    expect(battlePlan(pickHero(newCampaign({ mode: 'normal', seed: 5, difficulty: 'easy' }), 'archer')).difficulty).toBe(CONFIG.difficulties.easy.ai);
+    expect(battlePlan(pickHero(newCampaign({ mode: 'normal', seed: 5, difficulty: 'easy' }), 'druid')).difficulty).toBe(CONFIG.difficulties.easy.ai);
     expect(newCampaign({ mode: 'normal', seed: 1 }).difficulty).toBe(CONFIG.defaultDifficulty);
     expect(Object.keys(CONFIG.difficulties)).toEqual(['easy', 'medium', 'hard']);
   });

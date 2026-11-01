@@ -64,6 +64,9 @@ html.reduced-motion .mw-in .mw-panel, html.reduced-motion .mw-in .mw-scrim { ani
 .mw-acts .el-btn:disabled { opacity: .5; cursor: not-allowed; }
 .mw-acts .el-btn img { width: 1.3em; height: 1.3em; margin-right: .5em; object-fit: contain; }
 .mw-acts.mid { justify-content: center; }
+/* C kartında üç düğme (Valdren kışlası: Not now / Recruits / Choose) dar kartta taşmasın */
+.mw-C .mw-acts:has(> .el-btn:nth-child(3)) { gap: max(8px, calc(12 * var(--u))); }
+.mw-C .mw-acts:has(> .el-btn:nth-child(3)) .el-btn { padding-left: max(8px, calc(16 * var(--u))); padding-right: max(8px, calc(16 * var(--u))); }
 
 /* ---------- secenek plakalari (A Plates dili) ---------- */
 .mw-plates { display: grid; grid-template-columns: 1fr 1fr; gap: max(10px, calc(24 * var(--u))) max(10px, calc(22 * var(--u))); padding-top: max(6px, calc(12 * var(--u))); }

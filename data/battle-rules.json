@@ -10,7 +10,69 @@
       "name": "Storm",
       "text": "Wind and rain lash the battle: every ranged attack, on both sides, has 15% less chance to hit, arrows falling from the sky included.",
       "rangedAccuracy": { "delta": -0.15, "motions": ["ranged"], "shots": true }
+    },
+    "blizzard": {
+      "_not": "M-E (Ömer 2026-10-31; Harita 3 Windwall): Heat'in kancası (seed'li işaretli sıra), zemin Chill Ground: içindeyken Chilled, çıkınca kalkar; hava karakter dondurmaz; aynı hücreye ikinci kar Ice olur (reactions.frozen_chill). threatRatio: AI'ın işaretli sıradan kaçma değeri (tahta ortalama canı x oran). Menzilli isabet Storm ile aynı kanal. Sayılar PROVİZYON.",
+      "name": "Blizzard",
+      "text": "A white wall of snow: every turn a random row is marked, and at the start of the next turn it becomes Chill Ground for 2 turns. Snow on snow turns to Ice. Every ranged attack, on both sides, has 15% less chance to hit.",
+      "heat": { "ground": "storm", "rounds": 2, "boards": ["party", "enemy"], "amountRatio": 0, "aimAtUnits": true, "threatRatio": 0.03, "warn": "the marked row is buried in snow next turn" },
+      "rangedAccuracy": { "delta": -0.15, "motions": ["ranged"], "shots": true },
+      "encasedRepair": 0.1
+    },
+    "heat": {
+      "_not": "M-H (Harita 3 Warrens + Forge-Heart): her Round başında rastgele (seed'li) bir sıra işaretlenir, sonraki Round başında rounds Round ground olur; amountRatio = yanma tiki, o tahtadaki savaşanların ortalama maks canının oranı (seviye ile ölçeklenir). aimAtUnits: yalnızca içinde birim olan sıralardan seçilir. noChill: bu savaşta Chilled tutmaz (isim belge: 'Chilled yok'). Sayılar PROVİZYON.",
+      "name": "Heat",
+      "text": "The forge breathes: every turn a random row is marked, and at the start of the next turn it becomes Burning Ground for 2 turns. Move out of the marked row in time. The heat also keeps anyone from being Chilled.",
+      "heat": { "ground": "burning", "rounds": 2, "boards": ["party", "enemy"], "amountRatio": 0.05, "aimAtUnits": true, "warn": "the marked row burns next turn" },
+      "noChill": "chilled"
+    },
+    "darkness": {
+      "_not": "M-F (Harita 3 Deep Halls): sides tarafındaki birimlerin tek hedefli ve alan skill'leri yalnızca düşman tahtasının en öndeki dolu sırasını ve depth sıra arkasını seçebilir; menzil kuralına EK kısıt (moblar kısıtsız). fireRounds: herhangi bir ateş skill'i (iki taraf da) tahtayı o kadar Round aydınlatır (Battle.lightUp tek kanca; Thunderflash da kullanacak). Sayılar PROVİZYON.",
+      "name": "Darkness",
+      "text": "The halls are pitch black: your heroes can only target the enemy front row and the row right behind it. Any fire skill lights the field for 2 turns and the limit is lifted. A Lantern, if you have one, keeps the field lit until it is broken.",
+      "darkness": { "sides": ["party"], "depth": 1, "fireRounds": 2 }
+    },
+    "dark_tide": {
+      "_not": "Harita 3 hc_46 Boat Crossing (maps-2-3.md 'Darkness + Flooded'): darkness ve tide kurallarının aynı değerlerle birleşimi; Gloam Eel'in su kuralı Bölge IV'te yalnız burada işler.",
+      "name": "Black Water",
+      "text": "The halls are pitch black: your heroes can only target the enemy front row and the row right behind it. Any fire skill lights the field for 2 turns and the limit is lifted. The tide also floods both front rows at the start of every Round and again every 4 turns; anyone standing in it is Soaked.",
+      "darkness": {
+        "sides": [
+          "party"
+        ],
+        "depth": 1,
+        "fireRounds": 2
+      },
+      "flood": {
+        "ground": "flooded",
+        "onWave": true,
+        "everyRounds": 4,
+        "rows": [
+          0
+        ],
+        "boards": [
+          "party",
+          "enemy"
+        ],
+        "rounds": 2,
+        "soak": "soaked"
+      }
     }
+  },
+  "hazards": {
+    "_not": "M-G Cave-in: koşuldan BAĞIMSIZ (Darkness ile birlikte olabilir); karşılaşma alanı caveIn: anahtar. everyRounds Round'da bir, her boards tahtasında cells hücre işaretlenir (aimAtUnits: ilk hücre üstünde birim olan bir hücre), sonraki Round başında çöker: üstündeki birim damageRatio x tahtadaki ortalama maks can hasar + status (statusTurns tur), hücre savaş boyunca kapalı (M-I ile aynı kural, birim en yakın açık hücreye atılır). maxClosed: tahta başına kapalı hücre sınırı; savaşanlara yer kalmayacaksa işaretlenmez. Hollow King ultu aynı kancayı kullanacak (Battle.warnCaveIn). Sayılar PROVİZYON."
+    ,
+    "cave_in": { "name": "Cave-in", "text": "The roof is giving way: marked cells collapse at the start of the next turn. Anyone standing there takes damage and is Slowed, and the cell stays closed for the rest of the battle.", "everyRounds": 3, "cells": 1, "boards": ["party", "enemy"], "damageRatio": 0.1, "status": "slow", "statusTurns": 2, "maxClosed": 3, "aimAtUnits": true },
+    "cave_in_heavy": { "name": "Cave-in", "text": "The whole gallery is coming down: marked cells collapse at the start of the next turn. Anyone standing there takes damage and is Slowed, and the cell stays closed for the rest of the battle.", "everyRounds": 2, "cells": 2, "boards": ["party", "enemy"], "damageRatio": 0.12, "status": "slow", "statusTurns": 2, "maxClosed": 5, "aimAtUnits": true }
+  },
+  "noise": {
+    "_not": "C5 Wake the Halls (maps-2-3.md; Harita 3 Deep Halls; karşılaşma alanı noise: anahtar). sides tarafının kritiği, reactions patlaması ve alan skill'i sayacı points kadar doldurur; goal dolunca sayaç sıfırlanır, unit kalkar (tercih edilen hücre doluysa en yakın boş), en çok maxRises kez. İleride Hollow King'in bedava çağrısı Battle.noiseFull kancasına bağlanacak (kit yazılmadı). Sayılar PROVİZYON.",
+    "wake_the_halls": { "name": "Noise", "text": "These halls are not empty, and they are listening. Critical hits, explosions and area skills of your party make Noise. When the counter fills, a Hollow Warden rises from the dark.", "goal": 10, "sides": ["party"], "points": { "crit": 1, "explosion": 2, "area": 1 }, "reactions": ["explosion", "shatter"], "maxRises": 2, "unit": { "class": "stonebound_warden", "name": "Hollow Warden", "slot": 1 } }
+  },
+  "lanterns": {
+    "_not": "M-F Lantern: oyuncu tarafında duran kırılabilir nesne (data/bosses/lantern.json, inert birim, düşman vurabilir, sıra almaz). Ayaktayken Darkness kısıtı kalkar. slot: tercih edilen hücre (doluysa en yakın açık); hpRatio: maks can = oyuncu tarafının ortalama maks canının oranı. Sayılar PROVİZYON."
+    ,
+    "lantern": { "name": "Lantern", "text": "A miners' lantern stands with your party. While it burns, the darkness does not limit your heroes. Enemies can break it.", "unit": "lantern", "side": "party", "slot": 4, "hpRatio": 0.6 }
   },
   "devices": {
     "tidewater_urn": {
@@ -23,7 +85,7 @@
       "ground": "flooded",
       "rounds": 2,
       "soak": "soaked",
-      "ai": { "minScore": 2, "burningCell": 1, "burningHero": 2, "burning": "burning", "burningGround": "burning" }
+      "ai": { "minScore": 2, "burningCell": 1, "burningHero": 2, "burning": "burning", "burningGround": "burning", "thunderHero": 1 }
     }
   },
   "objectives": {

@@ -1,0 +1,62 @@
+/* C6 taslagi: YALNIZCA sahne duzeni + sessiz ders cizgisi. Savas HUD'i ve ders kutusu oyunun kendi CSS'i. */
+html, body { margin: 0; height: 100%; overflow: hidden; background: #070504; }
+html:root { position: static; }
+body { color: #d9c8a2; font-family: 'EB Garamond', Georgia, serif; }
+#stage { position: fixed; inset: 0; overflow: hidden; --el: 0px; --er: 0px; --et: 0px; --eb: 0px; --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-ember: #e0702a; --g-ember2: #ffb35a;
+  --g-disp: Cinzel, Georgia, serif; --g-body: 'EB Garamond', Georgia, serif; --el-display: Cinzel, Georgia, serif; --el-body: 'EB Garamond', Georgia, serif; }
+#ui-root { position: absolute; inset: 0; pointer-events: none; }
+#ui-root > * { pointer-events: auto; }
+#world { position: absolute; left: 0; top: 0; height: 1080px; transform-origin: 0 0; overflow: visible; }
+#world * { box-sizing: border-box; }
+#world .bh-root { position: absolute; left: 0; top: 0; transform: none; width: 100%; }
+.sc-bg { position: absolute; left: 0; top: -35px; width: 100%; height: 1280px; background: #0b0806 center top / auto 1280px repeat-x; }
+.sc-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 4, 3, .1), rgba(6, 4, 3, .25) 60%, rgba(6, 4, 3, .55)); }
+.sc-unit { position: absolute; width: 140px; height: 190px; display: flex; align-items: flex-end; justify-content: center; }
+.sc-unit > img.sp { max-width: 140px; max-height: 190px; object-fit: contain; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .55)); }
+.sc-unit.flip > img.sp { transform: scaleX(-1); }
+.sc-unit .pl { position: absolute; left: 50%; top: -34px; transform: translateX(-50%); width: 120px; text-align: center; }
+.sc-unit .pl b { display: block; font: 600 15px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: #f4ede1; text-shadow: 0 2px 4px #000; white-space: nowrap; }
+.sc-unit .pl i { display: block; height: 6px; margin-top: 3px; background: rgba(0, 0, 0, .65); border: 1px solid rgba(217, 178, 106, .35); }
+.sc-unit .pl i u { display: block; height: 100%; background: #c04b3a; text-decoration: none; }
+.sc-unit.party .pl i u { background: #6fae45; }
+.sc-unit .st { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); display: flex; gap: 4px; }
+.sc-unit .st img { width: 22px; height: 22px; image-rendering: pixelated; filter: drop-shadow(0 1px 2px #000); }
+
+/* ---- sessiz ders cizgisi: sira cubugunun altinda, etiketin (Your turn) altinda tek satir. Olcu oyun biriminde, telefonda --bh-inv ile okunur boyuta cikar ---- */
+.ql { position: absolute; top: 142px; left: 50%; transform: translateX(-50%); z-index: 20; pointer-events: auto; max-width: calc(100% - 40px); white-space: nowrap;
+  --f: max(20px, calc(13px * var(--bh-inv, 1))); font-family: var(--g-body); color: #e6d7b4; opacity: 0; transition: opacity .6s ease-out; }
+.ql.on { opacity: 1; }
+.ql .k { font-family: var(--g-disp); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--g-ember2); font-size: calc(var(--f) * .72); }
+.ql .t { font-size: var(--f); line-height: 1.2; }
+.ql .dia { display: inline-block; width: calc(var(--f) * .32); height: calc(var(--f) * .32); transform: rotate(45deg); background: var(--g-ember); border: 1px solid var(--g-ember2); box-shadow: 0 0 8px rgba(240, 140, 40, .6); flex: none; }
+/* A: yalniz yazi, ince kor elmaslar, yumusak karartma (kutu yok) */
+.ql-a { display: flex; align-items: center; gap: calc(var(--f) * .55); padding: calc(var(--f) * .1) calc(var(--f) * 1.1); background: radial-gradient(ellipse at center, rgba(5, 3, 2, .9), rgba(5, 3, 2, .8) 55%, rgba(5, 3, 2, 0) 100%); text-shadow: 0 2px 6px rgba(0, 0, 0, .95); }
+/* B: Garrick'in kucuk portresi + soz */
+.ql-b { display: flex; align-items: center; gap: calc(var(--f) * .6); padding: calc(var(--f) * .12) calc(var(--f) * 1.0) calc(var(--f) * .12) calc(var(--f) * .12); background: rgba(10, 7, 4, .9); border: 1px solid rgba(217, 178, 106, .45); }
+.ql-b .face { width: calc(var(--f) * 1.35); height: calc(var(--f) * 1.35); flex: none; border: 1px solid rgba(217, 178, 106, .55); background: #140e09; overflow: hidden; }
+.ql-b .face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ql-b .who { font-family: var(--g-disp); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: calc(var(--f) * .72); color: var(--g-gold); margin-right: calc(var(--f) * .4); }
+/* C: genis ince bant: baslik cipi + cumle + "Codex" notu; altinda kalan sureyi gosteren ince cizgi; ustune gelince durur */
+.ql-c { width: min(calc(100% - 40px), calc(var(--f) * 64)); padding: 0; background: linear-gradient(90deg, rgba(10, 7, 4, 0), rgba(10, 7, 4, .82) 12%, rgba(10, 7, 4, .82) 88%, rgba(10, 7, 4, 0)); }
+.ql-c .row { display: flex; align-items: center; gap: calc(var(--f) * .8); padding: calc(var(--f) * .12) calc(var(--f) * 1.6) calc(var(--f) * .2); }
+.ql-c .chip { flex: none; padding: calc(var(--f) * .12) calc(var(--f) * .6); border: 1px solid rgba(255, 179, 90, .6); background: rgba(224, 112, 42, .14); }
+.ql-c .t { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ql-c .cx { flex: none; font-size: calc(var(--f) * .72); color: var(--g-dim); }
+.ql-c .bar { position: absolute; left: 8%; right: 8%; bottom: 0; height: 2px; background: rgba(217, 178, 106, .15); }
+.ql-c .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--g-ember), var(--g-ember2)); transform-origin: 0 50%; animation: ql-drain var(--hold, 7s) linear forwards; }
+.ql-c:hover .bar i { animation-play-state: paused; }
+@keyframes ql-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.ql.pin .bar i { animation: none; }
+@media (prefers-reduced-motion: reduce) { .ql { transition: none; } .ql-c .bar i { animation: none; } }
+/* telefon: kicker yazisi (baslik) tek satira sigsin diye kucuk; cumle okunur */
+html.short .ql { top: 140px; }
+html.short.both .tut-wrap:not(.bottom) { top: calc(var(--et, 0px) + 78px); }
+html.short .ql-c .cx { display: none; }
+html.short .ql-a .k, html.short .ql-b .who { display: none; }
+
+/* eylem dersi kutusu (karsilastirma): gercek .tut-box; yalniz sahne icinde konumlanir */
+.tut-wrap { position: absolute; }
+html.short .ql { --f: max(20px, calc(12px * var(--bh-inv, 1))); }
+html.short .ql-c .chip { display: none; }
+.ql-c { background: linear-gradient(90deg, rgba(10, 7, 4, 0), rgba(10, 7, 4, .92) 8%, rgba(10, 7, 4, .92) 92%, rgba(10, 7, 4, 0)); }
+.sc-bg { background-size: cover !important; background-repeat: no-repeat !important; background-position: center top !important; }

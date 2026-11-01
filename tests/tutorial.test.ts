@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content } from '../src/engine';
 import type { Teams } from '../src/engine';
 import { ENCOUNTERS, battlePlan, debugTeleport, getMap, newCampaign } from '../src/campaign';
+import { legacyBlank } from './legacy-start';
 import {
   LESSONS,
   TUTORIAL,
@@ -13,6 +14,7 @@ import {
   forcedSteps,
   lessonById,
   lessonPages,
+  lessonCapFull,
   lessonCodexText,
   LESSON_VARS,
   openingLine,
@@ -87,7 +89,9 @@ describe('savaş içi tetikler', () => {
     expect(ids(forcedSteps(ctx('1'), new Set(['f_mp_skill']), 2))).toEqual([]);
     expect(forcedSteps(ctx('2'), none, 2)).toEqual([]);
     expect(openingLine(ctx('1'), new Set(['turn_bar', 'attack', 'target']))).toBeNull();
-    expect(openingLine(ctx('1'), none)).toBe(TUTORIAL.opening.text);
+    expect(openingLine(ctx('1'), none)).toBe(TUTORIAL.opening.text.replace('{classLine} ', ''));
+    expect(openingLine(ctx('1'), none, 'warrior')).toContain(TUTORIAL.opening.classLine!['warrior']!);
+    expect(openingLine(ctx('1'), none, 'warrior')).not.toMatch(/[{}]/);
     // görülen adım atlanır; hepsi görüldüyse açılış sözü de yok
     expect(ids(forcedSteps(ctx('1'), new Set(['turn_bar'])))).toEqual(['attack', 'target']);
     expect(openingLine(ctx('1'), new Set(['turn_bar', 'attack', 'target']))).toBeNull();
@@ -292,7 +296,7 @@ describe('ilk savaş kaybedilemez (UnitSetup.undying)', () => {
 
   it('Mill Road iki kahramanla: planda iki kahraman da ölemez; ağır hasarda ikisi de ayakta kalır, savaş kaybedilmez', () => {
     // Ravenwood'dan sonra iki kahramanlı takım Mill Road'daymış gibi (debug / ileride 2 kişilik açılış)
-    let s = debugTeleport(newCampaign({ mode: 'normal', seed: 5 }), '3');
+    let s = debugTeleport(legacyBlank({ mode: 'normal', seed: 5 }), '3');
     expect(s.active.filter(Boolean)).toHaveLength(2);
     s = { ...s, at: '1', done: s.done.filter((d) => !d.startsWith('1:battle')) };
     const plan = battlePlan(s);
@@ -312,5 +316,61 @@ describe('ilk savaş kaybedilemez (UnitSetup.undying)', () => {
       }
       expect(b.winner, `seed ${seed}`).not.toBe('enemy');
     }
+  });
+});
+
+describe('savaş başına ders tavanı (C2)', () => {
+  const cap = TUTORIAL.battleLessonCap;
+  const info = LESSONS.filter((l) => l.trigger.battle && !l.forced && !l.done && !l.capExempt && l.trigger.battle.when !== 'status').map((l) => l.id);
+  const action = LESSONS.filter((l) => l.done).map((l) => l.id);
+  const full = () => new Set(info.slice(0, cap.perBattle));
+
+  it('tavan veride: ilk üç savaş (Mill Road, Ravenwood, Ruined Watchtower), savaş başına 3', () => {
+    expect(cap.nodes.map((id) => map.nodes.find((n) => n.id === id)?.name)).toEqual(['Mill Road', 'Ravenwood', 'Ruined Watchtower']);
+    expect(cap.perBattle).toBe(3);
+  });
+
+  it('tavan dolunca bilgi dersi çıkmaz, görülmemiş kalır; aynı ders tavan boşken çıkar', () => {
+    const found: Situation[] = [{ when: 'status' }];
+    expect(due('2', found, prog({ thisBattle: full() }))).toBeNull();
+    expect(due('3', found, prog({ thisBattle: new Set(info.slice(0, cap.perBattle - 1)) }))).toBe('statuses');
+    expect(due('3', found)).toBe('statuses');
+  });
+
+  it('eylem dersleri tavanı aşar ve sayıya girmez', () => {
+    expect(due('2', [{ when: 'rest', skill: 's' }], prog({ thisBattle: full() }))).toBe('rest');
+    expect(lessonCapFull(ctx('2'), new Set(action))).toBe(false);
+    expect(due('2', [{ when: 'status' }], prog({ thisBattle: new Set(action) }))).toBe('statuses');
+  });
+
+  it('Taunting Enemies tavandan muaf ve sayıya girmez; öbür bilgi dersi yine bekler', () => {
+    expect(lessonById('taunt_rejected')?.capExempt).toBe(true);
+    expect(due('2', [{ when: 'protected' }], prog({ thisBattle: full() }))).toBe('taunt_rejected');
+    const two = info.filter((id) => id !== 'taunt_rejected').slice(0, cap.perBattle - 1);
+    expect(lessonCapFull(ctx('2'), new Set([...two, 'taunt_rejected']))).toBe(false);
+    expect(due('2', [{ when: 'status' }], prog({ thisBattle: new Set([...two, 'taunt_rejected']) }))).toBe('statuses');
+    expect(LESSONS.filter((l) => l.capExempt).map((l) => l.id).sort()).toEqual(['strong_can_miss', 'taunt_rejected']);
+  });
+
+  it('ilk üç savaşın dışında tavan yok', () => {
+    expect(lessonCapFull(ctx('moor'), full())).toBe(false);
+    expect(due('moor', [{ when: 'status' }], prog({ thisBattle: full() }))).toBe('statuses');
+  });
+});
+
+describe('"Neden olmadı" dersi verisi (C4)', () => {
+  const l = lessonById('taunt_rejected')!;
+  it('durum dersi: bilgi dersi, In Battle, Codex metni yer tutucusuz', () => {
+    expect(l.trigger.battle?.when).toBe('protected');
+    expect(l.done).toBeUndefined();
+    expect(l.group).toBe('In Battle');
+    expect(lessonCodexText(l).join(' ')).not.toMatch(/[{}]/);
+    expect(codexLessons(new Set(['taunt_rejected'])).map((c) => c.id)).toEqual(['taunt_rejected']);
+  });
+  it('koruyanın adı metne girer (tek ve çok koruyan); adsız çağrı (debug) ham yer tutucu göstermez', () => {
+    expect(lessonPages(l, { vars: { protector: 'Bandit Chief' } })[0]!.text).toContain('Strike Bandit Chief first');
+    const many = lessonPages(l, { variant: 'many', vars: { protector: 'Bandit Chief and Shieldwarden' } })[0]!.text;
+    expect(many).toContain('Bandit Chief and Shieldwarden are taunting');
+    expect(lessonPages(l)[0]!.text).not.toMatch(/[{}]/);
   });
 });

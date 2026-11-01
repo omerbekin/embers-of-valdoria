@@ -10,7 +10,7 @@ import { content } from '../engine';
 import { heroStats } from '../progression';
 import { TREE_RULES, type TreeData, type TreeRules } from '../progression/skill-tree-data';
 import { TREE_RESET_NOTICE, type TreeHero } from '../progression/skill-tree-hero';
-import { counter, rowSpent, ultSpent, ultArm, treeNodes, type TreeNode } from '../progression/skill-tree';
+import { check, counter, rowSpent, ultSpent, ultArm, treeNodes, type TreeNode } from '../progression/skill-tree';
 import { skillCostAmount } from '../engine/cost';
 import type { SkillDef } from '../engine';
 import { bandTipEl, type BandChip, type BandTipSpec } from './band-tip';
@@ -64,6 +64,8 @@ export interface TreeTabCtx {
   ask(text: string, ok: string, run: () => void, danger?: boolean): void;
   /** Gear'ı yeniden çizdirir (kaynak değişti). */
   rerender(): void;
+  /** Sekme kendini tazeledi (bekleyen puan değişti; Garrick şeridi izler). */
+  onChange?(): void;
 }
 
 export interface TreeTab {
@@ -75,6 +77,8 @@ export interface TreeTab {
   /** Sağ sayfayı çizer (aynı kahraman / ölçü ise yeniden kurmadan günceller). */
   render(host: HTMLElement): void;
   destroy(): void;
+  /** Garrick şeridi (src/ui/first-point.ts) için: puan durumu, düğüm alınabilir mi, düğümü bekleyen koy. Kural burada değil (model). */
+  coach: { free(): number; pending(): number; pendingOf(key: string): number; canTake(key: string): boolean; take(key: string): void; node(key: string): HTMLElement | null; head(): HTMLElement | null };
   /** Açık düğüm ipucu var mı / kapat (Esc önce ipucunu kapatır). */
   tipOpen(): boolean;
   closeTip(): void;
@@ -728,6 +732,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       if (l) l.textContent = String(s.level);
     });
     refreshTip();
+    ctx.onChange?.();
   }
 
   // ------------------------------------------------------------------ eylemler
@@ -1041,5 +1046,23 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     tip.remove();
   }
 
-  return { enabled, button, syncButton, render, destroy, tipOpen: () => tip.classList.contains('show'), closeTip: hideTip };
+  const coach: TreeTab['coach'] = {
+    free: () => {
+      const s = session();
+      return s ? freePoints(s) : 0;
+    },
+    pending: () => {
+      const s = session();
+      return s ? pendingCount(s) : 0;
+    },
+    pendingOf: (key) => session()?.pending[key] ?? 0,
+    canTake: (key) => {
+      const s = session();
+      return !!s && !!treeNodes(rules).by.get(key) && !check(s.tree, s.level, effective(s), key, {}, rules);
+    },
+    take: (key) => act(key, 1),
+    node: (key) => (page ? $<HTMLElement>(`.gt-nd[data-key="${key}"]`) : null),
+    head: () => (page ? $<HTMLElement>('.gt-head') : null),
+  };
+  return { enabled, button, syncButton, render, destroy, coach, tipOpen: () => tip.classList.contains('show'), closeTip: hideTip };
 }

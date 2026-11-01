@@ -51,6 +51,8 @@ import {
   clearedNodes,
   completeSimple,
   equipBest,
+  acknowledgeBriefing,
+  companyChoices,
   farewell,
   formCompany,
   getMap,
@@ -139,6 +141,27 @@ export interface GrindSimOptions {
    * duvara vuran koşu hedefe ulaşamaz: sonuçta sayılmaz, carry.prevStopped'a yazılır. Bonuslar (level / altın) bölük kurulunca (Harita 1) verilir.
    */
   map?: string;
+  /**
+   * Tek kişi ölçümü (--solo-check=moor,hills,cairn; Ömer 2026-11-01: biri Inn'de dinlenirken öteki tek başına geçebilmeli). Listedeki düğüme ilk varışta
+   * her yaşayan kahraman AYRI AYRI tek başına oynar; sonuç soloCheck'e yazılır, koşunun durumuna ve zarlarına dokunmaz.
+   */
+  soloCheck?: string[];
+  /** --solo-only: listenin son düğümü ölçülünce koşu biter (hızlı ölçüm; düğüm tablosu anlamsız). */
+  soloOnly?: boolean;
+}
+
+/** Tek kişi ölçümü sayaçları (düğüm başına; n = kahraman x koşu). */
+export interface SoloCheckAgg {
+  n: number;
+  wins: number;
+  /** Zaferde kalan can oranı toplamı. */
+  hpEnd: number;
+  classes: Record<string, { n: number; wins: number }>;
+}
+
+/** Yalnız bu kahraman yolda: öteki aktif kahramanlar dizilimden çıkar (Inn'e bırakmanın savaş kurulumuna etkisi; kahraman hücresinde kalır). */
+export function withOnlyHero(s: CampaignState, heroId: string): CampaignState {
+  return { ...s, roster: s.roster.filter((h) => h.id === heroId), active: s.active.map((id) => (id === heroId ? id : '')) };
 }
 
 /**
@@ -301,6 +324,12 @@ export interface GrindNodeAgg {
   walls: number;
   /** Duvarın kasma yeri olmadan (düz tekrarla) olanı. */
   noFarmWalls: number;
+  /** Duvar anında Inn'de kahraman bekleyen koşu; duvar anında savaşan (yaşayan aktif) kahraman toplamı. Tanı: eksik takım duvarı mı. */
+  wallInn: number;
+  wallParty: number;
+  /** Bu düğüm için, Inn'de kahraman beklerken yapılan kolay devriye (kasma sayılır, duvar sınırına girer); uygun kolay düğüm bulunamayan kasma adımı. */
+  innEasy: number;
+  innEasyNone: number;
   /** Bu düğümün kendi savaşları (yeni düğüm denemeleri; kasma savaşları farmBattles'ta). */
   battles: number;
   wins: number;
@@ -358,6 +387,8 @@ export interface GrindSimResult {
   rests: number;
   /** Koşu sonunda takımın ort. level'ı toplamı. */
   levelEnd: number;
+  /** Tek kişi ölçümü (yalnız --solo-check ile). */
+  soloCheck?: Record<string, SoloCheckAgg>;
   /** Seçenekler (metin; parçalar birleşince ilkinden). */
   repeat: RepeatMode;
   merchant: MerchantMode;
@@ -373,7 +404,7 @@ export interface GrindSimResult {
 }
 
 const emptyNode = (): GrindNodeAgg => ({
-  reached: 0, firstWins: 0, cleared: 0, attemptsSum: 0, grindSum: 0, grindRuns: 0, grindWall: 0, walls: 0, noFarmWalls: 0, battles: 0, wins: 0, hpEndSum: 0,
+  reached: 0, firstWins: 0, cleared: 0, attemptsSum: 0, grindSum: 0, grindRuns: 0, grindWall: 0, walls: 0, noFarmWalls: 0, wallInn: 0, wallParty: 0, innEasy: 0, innEasyNone: 0, battles: 0, wins: 0, hpEndSum: 0,
   deathsOnWin: 0, hpStartSum: 0, turnsSum: 0, turnHist: {}, lvSum: 0, ilvlSum: 0, gearSum: 0, farmBattles: 0, farmWins: 0,
   ipSum: 0, ipHeroSum: 0, woundInSum: 0, corpseInSum: 0, woundsTaken: 0, corpses: 0,
 });
@@ -425,6 +456,32 @@ export function pickFarm(s: CampaignState, record?: Map<string, { w: number; n: 
     if (!canReplay(map, node(map, id)) || (id !== s.at && !reach.has(id))) continue;
     const r = record?.get(id) ?? { w: 0, n: 0 };
     const score = expectedXp(s, id) * replayMult(replayCount(s, id) + 1) * ((r.w + 1) / (r.n + 2));
+    if (score > bestScore) {
+      bestScore = score;
+      best = id;
+    }
+  }
+  return best;
+}
+
+/** Kolay devriye için bu koşudaki kazanma tahmini ((zafer + 1) / (savaş + 2)) en az bu olmalı; altındaki düğümde eksik takım gün döndüremiyor. */
+export const SIM_EASY_FARM_MIN = 0.25;
+/**
+ * Inn beklerken kolay devriye yeri (Ömer 2026-11-01; yalnız oyuncu varsayımı): eksik takım gün döndürmek için kazanabileceği düğümü seçer. pickFarm'la aynı
+ * adaylar ve aynı kazanma tahmini; XP yerine (gün her zaferde aynı döner) düşük düğüm seviyesi tercih edilir. Tahmini SIM_EASY_FARM_MIN altındaki düğüm uygun değil; yoksa null.
+ */
+export function pickEasyFarm(s: CampaignState, record?: Map<string, { w: number; n: number }>): string | null {
+  if (!roamOpen(s) || nextStep(s).kind !== 'move') return null;
+  const map = getMap(s.mapId);
+  const reach = travelRoutes(s);
+  let best: string | null = null;
+  let bestScore = -1;
+  for (const id of clearedNodes(s)) {
+    if (!canReplay(map, node(map, id)) || (id !== s.at && !reach.has(id))) continue;
+    const r = record?.get(id) ?? { w: 0, n: 0 };
+    const est = (r.w + 1) / (r.n + 2);
+    if (est < SIM_EASY_FARM_MIN) continue;
+    const score = est / nodeLevel(s.mapId, id);
     if (score > bestScore) {
       bestScore = score;
       best = id;
@@ -877,6 +934,8 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
       a.walls++;
       a.grindWall += ctx.get(id)?.grinds ?? 0;
       if (noFarm) a.noFarmWalls++;
+      if (innGuests(s).length) a.wallInn++;
+      a.wallParty += activeHeroes(s).filter((h) => !isFallen(h)).length;
       wall = true;
       if ((o.onWall ?? 'stop') === 'stop') stop = true;
       else s = win(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: h.hpRatio, alive: !isFallen(h) })) });
@@ -936,19 +995,23 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
       switch (step.kind) {
         case 'hero':
           s = pickHero(s, CONFIG.starterPool[pick('hero').int(0, CONFIG.starterPool.length - 1)]!);
+          company.add(s.roster[0]!.class); // ilk kahraman kalıcı (Ömer 2026-11-01)
           break;
         case 'recruit':
         case 'volunteer': {
           const c = step.offer[pick(`recruit:${step.node}`).int(0, step.offer.length - 1)]!;
           s = recruit(s, c);
-          if (step.kind === 'volunteer') company.add(c);
+          if (step.kind === 'volunteer' || s.soloStart) company.add(c); // tek kişilik başlangıçta her katılan kalıcı
           break;
         }
         case 'farewell':
           s = farewell(s);
           break;
+        case 'briefing':
+          s = acknowledgeBriefing(s);
+          break;
         case 'company': {
-          const picks = shuffle(CONFIG.companyPool, pick('company')).slice(0, step.size);
+          const picks = shuffle(companyChoices(s), pick('company')).slice(0, step.size);
           picks.forEach((c) => company.add(c));
           s = formCompany(s, picks);
           s = withLevelBonus(s, bonus.level);
@@ -988,6 +1051,27 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
           const a = nodeAgg(id);
           s = prepare(s);
           const party = activeHeroes(withIlvlBonus(s, bonus.ilvl)); // güç sütunları savaşa giren (bonuslu) item'lerle
+          if (c.tries === 0 && last && o.soloCheck?.includes(id)) {
+            // Tek kişi ölçümü: ayrı seed (deneme 1000+), durum değişmez; ana koşunun sonucu aynı kalır
+            const sc = ((res.soloCheck ??= {})[id] ??= { n: 0, wins: 0, hpEnd: 0, classes: {} });
+            party.filter((h) => !isFallen(h)).forEach((h, k) => {
+              const plan = battlePlan(withOnlyHero(withIlvlBonus(s, bonus.ilvl), h.id), 1000 + k);
+              const b = fightPlan(plan, ai, valorInBattle(o.valor), o.player === 'average');
+              const won = b.winner === 'party';
+              const cl = (sc.classes[h.class] ??= { n: 0, wins: 0 });
+              sc.n++;
+              cl.n++;
+              if (won) {
+                sc.wins++;
+                cl.wins++;
+                sc.hpEnd += mean(battleOutcomeOf(plan, b, true).units.map((u) => (u.alive ? u.hpRatio : 0)));
+              }
+            });
+            if (o.soloOnly && o.soloCheck[o.soloCheck.length - 1] === id) {
+              stop = true;
+              break;
+            }
+          }
           if (c.tries === 0) {
             a.reached++;
             a.hpStartSum += mean(party.map((h) => h.hpRatio));
@@ -1047,8 +1131,17 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
         }
         case 'move': {
           if (grindLeft > 0 && grindFor) {
-            if (!grindOnce(grindFor)) grindLeft = 0;
-            else grindLeft--;
+            // Inn'de iyileşmemiş kahraman bekliyorsa (Ömer 2026-11-01): eksik takım kolay düğümde gün döndürür; kahraman iyileşince sıradaki yola çıkışta (innCycle) alınır, takılan düğüme tam takımla dönülür
+            const waiting = () => innGuests(s).some((g) => g.mapId === s.mapId && !simInnReady(g.hero));
+            const fa = nodeAgg(grindFor);
+            const easy = waiting() ? pickEasyFarm(s, farmRec) : null;
+            if (waiting() && !easy) fa.innEasyNone++; // uygun kolay düğüm yok: normal kasma yerine düşer
+            if (!grindOnce(grindFor, false, easy ?? undefined)) grindLeft = 0;
+            else {
+              if (easy) fa.innEasy++;
+              grindLeft--;
+              if (easy && waiting() && ctx.get(grindFor)!.grinds < wallCap) grindLeft = 1; // iyileşene kadar takılan düğüme dönme
+            }
             break;
           }
           if (preLeft > 0 && roamOpen(s)) {

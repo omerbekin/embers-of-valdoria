@@ -1,0 +1,40 @@
+{
+  "id": "temper_tester",
+  "name": "Temper Tester",
+  "spriteId": "mage",
+  "color": "#ff7a3a",
+  "logo": "whirlwind",
+  "role": "Tempering Test",
+  "testOnly": true,
+  "hidden": true,
+  "frontPriority": 7,
+  "range": 7,
+  "attributes": {
+    "str": 6,
+    "int": 34,
+    "dex": 10,
+    "luck": 10
+  },
+  "primary": "int",
+  "armor": 8,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "temper_test_strike",
+    "storm_test_plain",
+    "storm_test_bolt",
+    "storm_test_iron"
+  ],
+  "passive": {
+    "id": "tempering",
+    "name": "Tempering",
+    "icon": "flame",
+    "text": "Changes stance on each of its turns. Red-hot: immune to Fire, weak to Ice and water. Quenched: Armor halved, and Fire makes it Red-hot again.",
+    "effect": {
+      "type": "tempering",
+      "hot": "tempered_red_hot",
+      "cold": "tempered_quenched",
+      "waterTaken": 1.5
+    }
+  }
+}

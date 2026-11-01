@@ -92,13 +92,14 @@ import type { MpBattleHooks, MpResultInfo } from '../mp-hooks';
 import { isGameMenuOpen, toggleGameMenu } from '../../ui/game-menu';
 import { isSettingsOpen } from '../../ui/settings';
 import { onStageResize, stageView, worldXY } from '../stage';
+import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { backgroundPlacement, battleBackground } from '../battle-background';
 import { playLuckyEscape, prewarmLuckyEscape } from '../lucky-escape-fx';
 import { playRegenTick } from '../regen-fx';
 import { betweenTurnEvents, regenTickEvents } from '../regen-ticks';
-import { BattleTutorial } from '../battle-tutorial';
+import { BattleTutorial, CAN_MISS_LESSON, PROTECTED_LESSON } from '../battle-tutorial';
 import { SkillChoicePanel, SkillChoicePrompt, type SkillChoiceCard } from '../../ui/skill-choice';
-import type { BattleLessonCtx } from '../../tutorial/lessons';
+import { TUTORIAL, type BattleLessonCtx } from '../../tutorial/lessons';
 
 export interface BattleSceneData {
   seed: number;
@@ -188,7 +189,7 @@ const SHIELD_LOCK_SFX: Record<string, string> = { spell_ward: 'wardLock', mana_b
  * (yalnızca Endless kampı), sefer haritası görselleri ve bulanık kopyaları, ana menü kartları / logo / katmanları / gölgesi.
  */
 const BATTLE_DROP = ['item-img:', 'campaign:', ...MENU_ONLY_TEXTURES];
-const GLOBAL_ACCENT: Record<string, string> ={ rest: '#9cc4ff', skip: '#e8dcc0', move: '#e8c47e', urn: '#7fc4d8' };
+const GLOBAL_ACCENT: Record<string, string> ={ rest: '#9cc4ff', skip: '#e8dcc0', move: '#e8c47e', urn: '#7fc4d8', rod: '#7fc8ff' };
 
 const { width: W, height: H, colors } = layout;
 
@@ -222,6 +223,7 @@ export class BattleScene extends Phaser.Scene {
   campaign: CampaignBattleHooks | undefined = undefined;
   /** Sefer tutorial'ı (yalnızca sefer savaşı; yoksa null). */
   tut: BattleTutorial | null = null;
+  private protectorPulse: Phaser.Time.TimerEvent | undefined;
   private tutCtx: BattleLessonCtx | undefined;
   /** Sefer genel zorluğu (yalnızca sefer savaşında; bkz. BattleSceneData.difficulty). */
   difficulty: 'easy' | 'medium' | 'hard' | undefined = undefined;
@@ -426,7 +428,10 @@ export class BattleScene extends Phaser.Scene {
     // gerisi (başka moblar, poz sayfaları) bırakılır; harita / menü / item görselleri ve başka savaşların efektleri de savaşta tutulmaz
     // (dönüşte o sahnenin preload'u yeniden yükler). Rastgele takımda (takım preload'da belli değil) eskisi gibi hepsi.
     // + kurulumun görünüş kimlikleri (UnitSetup.spriteId: Harita 2 elit / boss çizimi, mob varyasyonu)
-    const sprites = cells ? battleSpriteIds([...cells, ...(units ?? []).map((u) => u.spriteId)]) : undefined;
+    const lanternRule = this.teams?.rules?.lantern; // M-F Lantern: kuralın kurduğu nesne takım listesinde yok, görseli ayrıca iner
+    const lanternId = typeof lanternRule === 'string' ? lanternRule : lanternRule?.id;
+    const lanternSprite = lanternId ? content.bosses[content.battleRulesData.lanterns[lanternId]?.unit ?? '']?.spriteId : undefined;
+    const sprites = cells ? battleSpriteIds([...cells, ...(units ?? []).map((u) => u.spriteId), ...(lanternSprite ? [lanternSprite] : [])]) : undefined;
     preloadAssets(this, { backgrounds: [this.backgroundChoice()], items: false, ...(sprites ? { sprites, avatars: sprites } : {}) }); // yalnızca bu savaşın arka planı (src/game/assets.ts > arka plan belleği)
     releaseTextures(this, (key) => BATTLE_DROP.some((p) => key.startsWith(p)));
     // poz kütüphanesi: takımda pozlu sınıf varsa onun pozları (rastgele takımda hepsi; şimdilik yalnızca Warrior denemesi)
@@ -520,7 +525,7 @@ export class BattleScene extends Phaser.Scene {
       this.tut?.destroy();
       this.tut = null;
     });
-    this.renderTurnBar(this.battle.turnQueue());
+    this.renderTurnBar(this.battle.turnBar());
     this.stats = new BattleStats(this.battle);
     this.matchLog?.stop();
     this.matchLog = debugState.matchLog
@@ -1089,6 +1094,9 @@ export class BattleScene extends Phaser.Scene {
   debugAfterChange(): void {
     const b = this.battle;
     if (b.winner) return;
+    for (const c of b.combatants) {
+      if (c.touch?.type === 'overheat') this.views.get(c.uid)?.setTouchBar(c.heat ?? 0, c.touch.max, 0xff8a3a); // Heat +2 (debug olayı sahneye gelmez)
+    }
     const cur = b.currentActor;
     if (b.mode === 'turns' && cur && cur.hp <= 0) {
       // The unit whose turn it was is gone: move on
@@ -1354,7 +1362,7 @@ export class BattleScene extends Phaser.Scene {
    * and unreachable units all behave the same. Mouse: hover previews, click picks. Touch: `twoTap` (area skills) = first tap previews, second tap
    * on the same cell picks; otherwise a tap picks at once.
    */
-  private bindCellZones(boards: Array<'party' | 'enemy'>, h: { twoTap: boolean; canPick: (board: 'party' | 'enemy', slot: number) => boolean; sameArea?: (board: 'party' | 'enemy', prev: number, next: number) => boolean; onHover: (board: 'party' | 'enemy', slot: number | null) => void; onPick: (board: 'party' | 'enemy', slot: number) => void }): void {
+  private bindCellZones(boards: Array<'party' | 'enemy'>, h: { twoTap: boolean; canPick: (board: 'party' | 'enemy', slot: number) => boolean; sameArea?: (board: 'party' | 'enemy', prev: number, next: number) => boolean; onHover: (board: 'party' | 'enemy', slot: number | null) => void; onPick: (board: 'party' | 'enemy', slot: number) => void; onReject?: (board: 'party' | 'enemy', slot: number) => void }): void {
     const lanes = content.GRID.lanes;
     const body = { w: layout.spriteBox.width, h: layout.spriteBox.height };
     let downWasHover = false;
@@ -1411,7 +1419,8 @@ export class BattleScene extends Phaser.Scene {
         // touch: the first tap only previews; a second tap on another cell that gives the exact same area casts
         if (p.wasTouch && h.twoTap && !downWasHover && !(prevHoverSlot !== null && h.sameArea?.(board, prevHoverSlot, cell))) return;
         if (!h.canPick(board, cell)) {
-          // Hedef olmayan birime tek tık: hiçbir şey olmaz (panel yalnızca basılı tutunca / sağ tıkla açılır)
+          // Hedef olmayan birime tek tık: panel açılmaz (panel yalnızca basılı tutunca / sağ tıkla açılır); sebep Taunt ise ders çıkabilir (onReject)
+          h.onReject?.(board, cell);
           return;
         }
         h.onPick(board, cell);
@@ -1533,6 +1542,11 @@ export class BattleScene extends Phaser.Scene {
   private syncLoadedEffects(): void {
     for (const g of this.battle.ground) this.addGroundView(g);
     for (const t of this.battle.telegraphs) this.showTelegraph(t.id, t.skill, t.kind, t.board, t.cells, t.safeCells, t.bound);
+    for (const h of this.battle.hazards) {
+      if (h.rod) this.drawRod(h.id, h.board, h.rod.slot);
+      else this.showHazard(h.id, h.board, h.cells);
+    }
+    for (const l of this.battle.liveWaters) this.drawLiveWater(l.id, l.board, l.slots);
   }
 
     private syncCorpsesNow(): void {
@@ -1922,7 +1936,39 @@ export class BattleScene extends Phaser.Scene {
           if (t) this.perform(actorUid, skillId, t.uid);
         }
       },
+      onReject: (board, slot) => {
+        const here = area ? undefined : this.battle.combatants.find((u) => u.board === board && u.slot === slot && u.hp > 0);
+        if (here) this.pulseProtectors(this.tut?.onTargetRejected(actorUid, skillId, here.uid) ?? []);
+      },
     });
+  }
+
+  /** C1 (Ömer 2026-11-01): "It Can Miss" kartı açıldıysa her hedefin üstünde isabet yüzdesi kısa süre vurgulanır (öğretim katmanı, kural değil). */
+  private pulseHitChance(actorUid: string, skillId: string): void {
+    if (!this.tut?.isLessonOpen(CAN_MISS_LESSON)) return;
+    const area = this.battle.isAreaSkill(skillId, actorUid);
+    const targets = area ? this.battle.living('enemy') : this.battle.validTargets(actorUid, skillId);
+    for (const t of targets) {
+      const list = area ? previewSkill(this.battle, actorUid, skillId, undefined, this.battle.cursorAnchor(skillId, t.slot, t.board, actorUid), t.board) : previewSkill(this.battle, actorUid, skillId, t.uid);
+      const hit = list.find((p) => p.uid === t.uid)?.damage?.hitChance;
+      if (hit !== undefined) this.views.get(t.uid)?.pulseHitChance(hit, TUTORIAL.hitPulseMs);
+    }
+  }
+
+  /** Tutorial's Taunt lesson: the protecting units pulse a ring while the lesson box stays open (teaching only, no rule). */
+  private pulseProtectors(uids: readonly string[]): void {
+    if (!uids.length) return;
+    this.protectorPulse?.remove();
+    const tick = (): void => {
+      if (!this.tut?.isLessonOpen(PROTECTED_LESSON)) {
+        this.protectorPulse?.remove();
+        this.protectorPulse = undefined;
+        return;
+      }
+      for (const uid of uids) this.views.get(uid)?.ring(colors.targetHighlight, 0.9);
+    };
+    this.protectorPulse = this.time.addEvent({ delay: TUTORIAL.protectorPulseMs, loop: true, callback: tick });
+    tick();
   }
 
   /** The pointer moved to another cell (or off the board): refresh the preview numbers, the hover plates and the unit tooltip. */
@@ -1953,6 +1999,7 @@ export class BattleScene extends Phaser.Scene {
       const previews = previewSkill(this.battle, actorUid, skillId, t.uid);
       this.showPreviews(previews);
       this.refreshGlows(previews.map((p) => p.uid));
+      if (this.battle.skill(skillId, actorUid)?.thunder) this.showReactionMarks(this.battle.groundReactionPreview(actorUid, skillId, undefined, board, t.uid)); // Live Water / Shatter hücreleri
       // Close Ranks (splash 'row'): the other allies in the chosen one's row are lit too (the whole row will be guarded)
       const around = skill.splash?.pattern === 'row' ? this.battle.splashTargets(skillId, t, actorUid).filter((c) => c.board === board).map((c) => ({ slot: c.slot, state: 'ally' as const })) : [];
       this.showPlates(board, [{ slot, state: this.toneOf(skill) === 'enemy' ? 'enemy' : 'ally' }, ...around]);
@@ -2128,6 +2175,7 @@ export class BattleScene extends Phaser.Scene {
       if (this.battle.mode === 'test') this.lastSkill.set(actor.uid, skillId);
       this.refreshCommands();
       this.tut?.onSkillSelected(skillId);
+      this.pulseHitChance(actor.uid, skillId);
       return;
     }
     if (this.selected?.skill === skillId && this.selected.actor === actor.uid && this.battle.needsSlotChoice(skillId)) return;
@@ -2140,6 +2188,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.battle.mode === 'test') this.lastSkill.set(actor.uid, skillId);
     this.refreshCommands();
     this.tut?.onSkillSelected(skillId);
+    this.pulseHitChance(actor.uid, skillId);
   }
 
   /**
@@ -3589,11 +3638,30 @@ export class BattleScene extends Phaser.Scene {
         this.extraAction = !!e.extra;
         if (this.uiActor && this.uiActor !== e.actor) this.playedUids.push(this.uiActor);
         this.uiActor = e.actor;
-        this.renderTurnBar(e.queue);
+        this.renderTurnBar(e.bar ?? e.queue);
         this.refreshSpeedBars();
         this.refreshCommands();
         return;
+      case 'dive': {
+        // YER TUTUCU (sanat yok): yerin altındayken sprite soluk, çatlak telgrafın hücresinde
+        const v = this.views.get(e.actor);
+        v?.setUnderground(true);
+        v?.floatText('Dives', colors.turnCell, 36);
+        return;
+      }
+      case 'surface': {
+        const v = this.views.get(e.actor);
+        v?.setUnderground(false);
+        if (e.whiffed) v?.floatText('Nothing there', colors.turnCell, 36);
+        return;
+      }
       case 'turnSkipped': {
+        if (e.spent) return; // tur telgraf çözülmesine gitti: çözülmenin kendisi gösterildi
+        if (e.rest) {
+          this.views.get(e.actor)?.floatText(e.rest, colors.turnCell, 48);
+          await this.wait(500);
+          return;
+        }
         const actor = this.battle.get(e.actor);
         this.views.get(e.actor)?.floatText(e.stunned ? 'Stunned' : 'Skipped', e.stunned ? colors.targetHighlight : colors.turnCell, 48);
         if (e.voluntary) {
@@ -3621,6 +3689,122 @@ export class BattleScene extends Phaser.Scene {
         return;
       }
       // --- Boss (The Bridge Warden): telgraf göstergeleri, çözülme/faz/Mooring efektleri (src/game/vfx-warden.ts) ---
+      case 'hazardWarn':
+        this.showHazard(e.id, e.board, e.cells);
+        if (e.kind === 'strike') {
+          this.announce('Thundersnow: step out of the glowing lane');
+          return;
+        }
+        if (e.kind === 'bolt') {
+          this.announce('Rolling Thunder: step out of the glowing row');
+          this.renderTurnBar(this.battle.turnBar());
+          return;
+        }
+        { const c = this.battle.rules?.condition; this.announce(e.kind === 'heat' ? `${c?.name ?? 'Heat'}: ${c?.heat?.warn ?? 'the marked row changes next turn'}` : 'Cave-in: the marked cells collapse next turn'); }
+        return;
+      case 'hazardLand':
+        this.clearTelegraph(e.id);
+        if (e.kind === 'caveIn') this.cameras.main.shake(slow(180), 0.004);
+        if (e.kind === 'bolt' || e.kind === 'strike') {
+          for (const slot of e.cells) this.boltFlash(e.board, slot);
+          this.cameras.main.shake(slow(140), 0.003);
+        }
+        await this.wait(slow(150));
+        return;
+      case 'cellsClosed':
+        this.drawClosedCells(e.board, e.slots);
+        return;
+      // Harita 3 imza mekanikleri: YER TUTUCU efektler (sanat yok)
+      case 'rodPlanted':
+        this.drawRod(e.id, e.board, e.slot);
+        this.boltFlash(e.board, e.slot);
+        await this.wait(slow(180));
+        return;
+      case 'rodStrike':
+        this.boltFlash(e.board, e.slot);
+        await this.wait(slow(120));
+        return;
+      case 'rodDown':
+        this.rodViews.get(e.id)?.destroy();
+        this.rodViews.delete(e.id);
+        this.reactionFloat(e.board, e.slot, 'Rod toppled', SHOCK_HEX);
+        return;
+      case 'encasedHit': {
+        const view = this.views.get(e.target);
+        const u = this.battle.get(e.target);
+        view?.setBlock(e.left, e.max);
+        if (u) view?.syncTone(true, u.temper);
+        if (e.repaired) view?.floatText('Ice mends', '#a8dcf0', 26);
+        return;
+      }
+      case 'encasedBreak': {
+        const view = this.views.get(e.target);
+        const u = this.battle.get(e.target);
+        view?.setBlock(0, 0);
+        view?.syncTone(false, u?.temper);
+        view?.floatText(e.cause === 'fire' ? 'Thawed!' : 'Ice breaks', '#a8dcf0', 34);
+        view?.ring('#a8dcf0', 1);
+        await this.wait(slow(160));
+        return;
+      }
+      case 'noise':
+        this.syncGoalLabel();
+        return;
+      case 'noiseFull':
+        this.announce('Too much noise: something rises in the dark');
+        this.cameras.main.shake(slow(180), 0.003);
+        return;
+      // Harita 3 boss / elit dokunuşları: YER TUTUCU çubuk, duyuru ve yazı (sanat yok)
+      case 'touchBar':
+        this.views.get(e.target)?.setTouchBar(e.value, e.max, e.bar === 'heat' ? 0xff8a3a : 0xffd28a);
+        return;
+      case 'vent':
+        this.views.get(e.target)?.floatText('Vent', '#ff9a6a', 30);
+        return;
+      case 'packRotation':
+        this.announce('Pack Rotation: a wounded wolf falls back');
+        return;
+      case 'sermonStart':
+        this.announce('The Long Sermon: hit the preacher hard to break it');
+        return;
+      case 'sermonEnd':
+        this.announce(e.outcome === 'broken' ? 'The sermon is broken' : 'The sermon is done: burning ground heals the Ashborn');
+        return;
+      case 'kingHears':
+        this.announce('The King hears: the vault opens');
+        return;
+      case 'tempered': {
+        const view = this.views.get(e.target);
+        view?.syncTone(!!this.battle.get(e.target)?.encased, e.stance);
+        view?.floatText(e.stance === 'hot' ? 'Red-hot' : 'Quenched', e.stance === 'hot' ? '#ff9a6a' : '#8fb0c8', 30);
+        return;
+      }
+      // Harita 3 şimşek kuralları: YER TUTUCU efektler (sanat yok)
+      case 'shock': {
+        const view = this.views.get(e.target);
+        view?.floatText(e.stunned ? 'Shocked: Stunned' : e.pushed > 0 ? 'Shocked' : 'Shock resisted', SHOCK_HEX, 34);
+        view?.ring(SHOCK_HEX, 0.9);
+        await this.wait(slow(180));
+        return;
+      }
+      case 'liveWater':
+        this.drawLiveWater(e.id, e.board, e.cells);
+        this.reactionFloat(e.board, e.cells[0]!, 'Live Water', SHOCK_HEX);
+        await this.wait(slow(260));
+        return;
+      case 'liveWaterEnd':
+        this.liveViews.get(e.id)?.destroy();
+        this.liveViews.delete(e.id);
+        return;
+      case 'thunderflash':
+        this.cameras.main.flash(slow(160), 205, 228, 255);
+        this.announce('Thunderflash: the field is lit for a hero turn');
+        await this.wait(slow(160));
+        return;
+      case 'light':
+        this.announce(e.lit ? 'The field is lit' : 'Darkness closes in');
+        this.syncGoalLabel();
+        return;
       case 'telegraph':
         this.showTelegraph(e.id, e.skill, e.kind, e.board, e.cells, e.safeCells, e.bound);
         await this.wait(slow(200));
@@ -3671,6 +3855,9 @@ export class BattleScene extends Phaser.Scene {
       case 'waveStart':
         await this.playWaveStart(e);
         this.syncGoalLabel();
+        return;
+      case 'skillUnlocked':
+        this.tut?.onSkillsUnlocked(e.skills); // Garrick sıradaki kararda anlatır; düğme bir sonraki çizimde açılır
         return;
       case 'round':
         this.shownRound = e.round;
@@ -3726,10 +3913,20 @@ export class BattleScene extends Phaser.Scene {
       const f = r.condition.flood;
       const ra = r.condition.rangedAccuracy;
       if (ra) rows.push({ text: `Ranged hit chance ${ra.delta > 0 ? '+' : ''}${Math.round(ra.delta * 100)}% for both sides`, color: colors.muted });
+      if (r.condition.darkness && !r.objective) counter = this.battle.isDark() ? 'Dark' : this.battle.litRoundsLeft() > 0 ? `Lit ${this.battle.litRoundsLeft()}` : 'Lit';
       if (f && f.everyRounds > 0 && !r.objective) {
         const left = f.everyRounds - ((this.shownRound - 1) % f.everyRounds);
         counter = left === f.everyRounds ? 'Tide now' : `Tide in ${left}`;
       }
+    }
+    if (r.caveIn) {
+      if (!r.condition && !r.objective && !r.layout) parts.push(r.caveIn.name);
+      rows.push({ text: `${r.caveIn.name}: ${r.caveIn.text}` });
+      title ||= r.caveIn.name;
+    }
+    if (r.lantern) {
+      const standing = this.battle.combatants.some((c) => c.lightSource && c.hp > 0);
+      rows.push({ text: `${r.lantern.name}: ${r.lantern.text}${standing ? '' : ' It is broken.'}`, ...(standing ? {} : { color: colors.muted }) });
     }
     const urn = this.battle.urnState();
     if (urn) {
@@ -3742,6 +3939,16 @@ export class BattleScene extends Phaser.Scene {
       if (!r.condition && !r.objective) parts.push(layout.name);
       rows.push({ text: `${layout.name}: ${layout.text}` });
       title ||= layout.name;
+    }
+    const noise = this.battle.noiseState();
+    if (noise) {
+      if (!r.condition && !r.objective && !r.layout) parts.push(noise.rule.name);
+      rows.push({ text: `${noise.rule.name}: ${noise.rule.text}` });
+      rows.push({ text: `Rises so far: ${noise.rises} of ${noise.rule.maxRises}`, color: colors.muted });
+      title ||= noise.rule.name;
+      // Sayaç her zaman Noise (Darkness'ın Dark/Lit yazısı karartmadan okunur)
+      if (!r.objective) counter = `${r.condition ? `${noise.rule.name} ` : ''}${noise.value}/${noise.rule.goal}`;
+      else rows.push({ text: `${noise.rule.name} ${noise.value}/${noise.rule.goal}` });
     }
     if (r.objective) {
       const t = content.objectiveTexts(r.objective);
@@ -3756,6 +3963,112 @@ export class BattleScene extends Phaser.Scene {
     if (this.goalState === 'done') counter = 'Done';
     if (this.goalState === 'failed') counter = 'Failed';
     this.hud.setGoal({ parts, ...(counter ? { counter } : {}), ...(this.goalState ? { state: this.goalState } : {}), tip: { title, kind: 'Battle rule', rows } });
+    this.syncDarkness();
+  }
+
+  private darkVeil?: Phaser.GameObjects.Graphics;
+  private readonly liveViews = new Map<string, Phaser.GameObjects.Graphics>();
+
+  /** A2 Live Water görünümü (YER TUTUCU, sanat yok): su hücrelerinde yanıp sönen mavi ark çizgileri. */
+  private drawLiveWater(id: string, board: 'party' | 'enemy', cells: readonly number[]): void {
+    this.liveViews.get(id)?.destroy();
+    const g = this.add.graphics().setDepth(30);
+    g.lineStyle(4, color(SHOCK_HEX), 0.95);
+    for (const s of cells) {
+      const q = this.cellPos(board, s);
+      for (const dy of [-14, 6]) {
+        g.beginPath();
+        g.moveTo(q.x - 54, q.y + dy);
+        for (const [dx, oy] of [[-30, -9], [-10, 8], [10, -8], [30, 9], [54, 0]] as const) g.lineTo(q.x + dx, q.y + dy + oy);
+        g.strokePath();
+      }
+    }
+    this.tweens.add({ targets: g, alpha: 0.35, duration: slow(240), yoyo: true, repeat: -1 });
+    this.liveViews.set(id, g);
+  }
+
+  /**
+   * M-F Darkness görünümü (YER TUTUCU, sanat yok): karanlıkta tüm sahnenin üstünde koyu örtü (birimlerin altında) + düşman tahtasında görülemeyen hücrelerde kara leke;
+   * Lantern ayaktayken hücresinde sıcak ışık halkası. Aydınlıkta örtü kalkar. Hamle ve Round başında tazelenir.
+   */
+  private syncDarkness(): void {
+    const dark = this.battle.darkRule();
+    this.darkVeil?.destroy();
+    this.darkVeil = undefined;
+    if (!dark) return;
+    const g = this.add.graphics().setDepth(28);
+    if (this.battle.isDark()) {
+      g.fillStyle(0x04060c, 0.42).fillRect(FULL_X0, 0, FULL_W, 1080);
+      const { rows, lanes } = content.formulas.formation;
+      const reach = this.battle.darkReachRow('enemy');
+      for (let row = reach + 1; row < rows; row++)
+        for (let lane = 0; lane < lanes; lane++) {
+          const q = this.cellPos('enemy', row * lanes + lane);
+          g.fillStyle(0x020308, 0.7).fillEllipse(q.x, q.y - 4, 130, 48);
+        }
+    } else {
+      g.fillStyle(0x0a0a10, 0.1).fillRect(FULL_X0, 0, FULL_W, 1080);
+    }
+    const lantern = this.battle.combatants.find((c) => c.lightSource && c.hp > 0);
+    if (lantern) {
+      const q = this.cellPos(lantern.board, lantern.slot);
+      g.fillStyle(0xe8b64c, 0.16).fillEllipse(q.x, q.y - 8, 260, 110);
+      g.fillStyle(0xffd77a, 0.28).fillEllipse(q.x, q.y - 6, 130, 52);
+    }
+    this.darkVeil = g;
+  }
+
+  /** M-H / M-G: işaretli hücreler (Warden'ın çatlak plakası, YER TUTUCU); iniş 'hazardLand' ile kalkar. */
+  private showHazard(id: string, board: 'party' | 'enemy', cells: number[]): void {
+    this.clearTelegraph(id);
+    const entry: { cells?: { destroy(): void }; kind: 'span' | 'fall' | 'brand' } = { kind: 'span' };
+    try {
+      entry.cells = wardenTelegraphCells(this, 'span', board, cells, []);
+    } catch (err) {
+      console.warn('[hazard] telgraf göstergesi çizilemedi', err);
+    }
+    this.telegraphViews.set(id, entry);
+  }
+
+  /** M-G çökmüş hücreler (YER TUTUCU, sanat yok): koyu çukur ve moloz taşları. */
+  private drawClosedCells(board: 'party' | 'enemy', slots: readonly number[]): void {
+    if (!slots.length) return;
+    const g = this.add.graphics().setDepth(29);
+    for (const slot of slots) {
+      const q = this.cellPos(board, slot);
+      g.fillStyle(0x0b0806, 0.75).fillEllipse(q.x, q.y - 4, 118, 42);
+      g.lineStyle(2, 0x6b6257, 0.9).strokeEllipse(q.x, q.y - 4, 118, 42);
+      for (const [dx, dy, r] of [[-30, -10, 12], [-6, -16, 15], [22, -8, 11], [6, 2, 13], [-22, 4, 9], [34, 2, 8]] as const) g.fillStyle(0x4d463d, 1).fillCircle(q.x + dx, q.y - 4 + dy, r).fillStyle(0x6b6257, 1).fillCircle(q.x + dx - r * 0.25, q.y - 4 + dy - r * 0.3, r * 0.45);
+    }
+  }
+
+  private readonly rodViews = new Map<string, Phaser.GameObjects.Graphics>();
+
+  /** B2 Thunder Rod (YER TUTUCU, sanat yok): hücrede koyu demir çubuk ve dibinde çatlak; 'rodDown' ile kalkar. */
+  private drawRod(id: string, board: 'party' | 'enemy', slot: number): void {
+    this.rodViews.get(id)?.destroy();
+    const q = this.cellPos(board, slot);
+    const g = this.add.graphics().setDepth(q.y);
+    g.fillStyle(0x0b0806, 0.7).fillEllipse(q.x, q.y - 4, 96, 30);
+    g.fillStyle(0x4d5560, 1).fillRect(q.x - 6, q.y - 150, 12, 146);
+    g.fillStyle(0x9fb4c8, 1).fillTriangle(q.x - 9, q.y - 150, q.x + 9, q.y - 150, q.x, q.y - 182);
+    g.lineStyle(2, color(SHOCK_HEX), 0.9).strokeRect(q.x - 6, q.y - 150, 12, 146);
+    this.rodViews.set(id, g);
+  }
+
+  /** Şimşek çizgisi + hücre parlaması (YER TUTUCU). */
+  private boltFlash(board: 'party' | 'enemy', slot: number): void {
+    const q = this.cellPos(board, slot);
+    const g = this.add.graphics().setDepth(4000);
+    g.lineStyle(5, color(SHOCK_HEX), 1);
+    g.beginPath();
+    g.moveTo(q.x + 20, q.y - 420);
+    g.lineTo(q.x - 18, q.y - 280);
+    g.lineTo(q.x + 14, q.y - 170);
+    g.lineTo(q.x, q.y - 10);
+    g.strokePath();
+    g.fillStyle(color(SHOCK_HEX), 0.35).fillEllipse(q.x, q.y - 4, 130, 46);
+    this.tweens.add({ targets: g, alpha: 0, duration: slow(260), onComplete: () => g.destroy() });
   }
 
   private urnMark?: Phaser.GameObjects.Container;
@@ -3797,6 +4110,7 @@ export class BattleScene extends Phaser.Scene {
   /** M-I kapalı hücreler (direk / küpeşte): iki tahtada da koyu, çapraz tahtalı işaret (zemin katmanının altında). */
   private drawBlockedCells(): void {
     this.drawUrn();
+    for (const board of ['party', 'enemy'] as const) this.drawClosedCells(board, this.battle.closedCells[board]); // yarım savaştan devam
     const blocked = this.battle.rules?.blocked;
     if (!blocked?.length) return;
     const g = this.add.graphics().setDepth(29);
@@ -4516,6 +4830,19 @@ export class BattleScene extends Phaser.Scene {
     }
     const cells: HudQueueCell[] = [];
     const push = (uid: string | undefined, state: HudQueueCell['state'], n: number) => {
+      if (uid && this.battle.isBoltToken(uid)) {
+        // C1 Rolling Thunder belirteci (ikon YER TUTUCU)
+        const info = this.battle.boltInfo(uid);
+        cells.push({
+          uid,
+          avatarUrl: this.texUrl(ensureIcon(this, 'bolt', SHOCK_HEX, true, SHARED_KEY)),
+          enemy: true,
+          flip: false,
+          state,
+          tip: { title: 'Rolling Thunder', titleColor: SHOCK_HEX, badge: 'Bolt', rows: [{ text: `Strikes the glowing row in ${n} turn${n === 1 ? '' : 's'}` }, { text: 'Haste and Slow do not change it. Defeating the caster does not stop it.', color: colors.muted }, ...(info ? [{ text: `Row of ${info.cells.length} cells on ${info.board === 'party' ? 'your' : 'the enemy'} side`, color: colors.muted }] : [])] },
+        });
+        return;
+      }
       const unit = uid ? this.battle.get(uid) : undefined;
       if (!unit) return;
       const tier = tierStyle(unit.tier);
@@ -4534,6 +4861,10 @@ export class BattleScene extends Phaser.Scene {
     };
     for (const uid of this.playedUids.slice(-layout.turnBar.pastCells)) push(uid, 'past', 0);
     queue.slice(0, layout.turnBar.cells).forEach((uid, i) => push(uid, i === 0 ? 'now' : 'next', i));
+    // C1: görünen hücrelerin ötesindeki belirteç de çubukta durur (ipucu kaç tur kaldığını söyler)
+    queue.forEach((uid, i) => {
+      if (i >= layout.turnBar.cells && this.battle.isBoltToken(uid)) push(uid, 'next', i);
+    });
     this.hud.setQueue(cells);
   }
 
@@ -5203,8 +5534,12 @@ export class BattleScene extends Phaser.Scene {
   }
 }
 
+/** Şimşek kuralları yer tutucu rengi (Shocked rozetiyle aynı). */
+const SHOCK_HEX = '#7fc8ff';
+
 /** Zemin tepkimesinin rengi: doğan zemin, yoksa hücrede kalan zemin (grounds.json renkleri). */
 function reactionColor(id: string): string {
+  if (id === 'live_water' || id === 'shatter') return SHOCK_HEX;
   const d = content.groundReactions[id];
   if (!d) return '#e8c47e';
   const stays = [...d.trigger, ...d.setup].find((g) => !d.remove?.includes(g));

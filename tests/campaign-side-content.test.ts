@@ -226,6 +226,7 @@ describe('B1 Salvage Dive', () => {
     s = diveDeeper(s);
     s = win(s); // derinlik 2 kazanıldı
     s = diveDeeper(s); // 3. derinlikte yenilir
+    s = { ...s, inventory: s.inventory.slice(0, 10) }; // torbada yer: hediye sığmalı
     const plan = battlePlan(s);
     const g0 = s.gold;
     const bag0 = s.inventory.length;

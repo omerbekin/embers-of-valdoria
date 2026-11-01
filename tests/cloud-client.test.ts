@@ -13,7 +13,7 @@ import * as endlessSave from '../src/endless/save';
 import { decidePut, parseSavePut, serializeBlob, type SaveData, type Tombstone as WireTomb, type Versions } from '../cloudflare/src/save-logic';
 
 const T0 = Date.parse('2026-10-24T12:00:00.000Z');
-const start = (mode: CampaignMode, seed = 10, slot = 0) => autoResolve(pickHero(newCampaign({ mode, seed, slot, difficulty: 'medium', campaignId: `c${seed}` }), 'archer'));
+const start = (mode: CampaignMode, seed = 10, slot = 0) => autoResolve(pickHero(newCampaign({ mode, seed, slot, difficulty: 'medium', campaignId: `c${seed}` }), 'druid'));
 
 /** Sahte saat + zamanlayıcılar. */
 function fakeClock() {

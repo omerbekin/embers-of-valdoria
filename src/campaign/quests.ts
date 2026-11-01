@@ -7,7 +7,7 @@ import questsJson from '../../data/campaign/quests.json';
 import { classes } from '../engine/content';
 import type { PassiveDef, UnitSetup } from '../engine/types';
 import type { CampaignMap, CampaignState, Hero } from './types';
-import { getMap } from './data';
+import { mapFor } from './data';
 
 export interface QuestDef {
   id: string;
@@ -125,11 +125,11 @@ export function hiddenQuestNodes(map: CampaignMap, s: Pick<CampaignState, 'at' |
 const shownCache = new Map<string, CampaignMap>();
 
 /** Oyuncunun gördüğü harita: gizli görev cepleri ve kenarları çıkarılmış kopya (aynı gizli küme için aynı nesne; gizli yoksa haritanın kendisi). */
-export function shownMap(s: Pick<CampaignState, 'mapId' | 'at' | 'roster' | 'reserve' | 'visited' | 'path'>): CampaignMap {
-  const map = getMap(s.mapId);
+export function shownMap(s: Pick<CampaignState, 'mapId' | 'soloStart' | 'at' | 'roster' | 'reserve' | 'visited' | 'path'>): CampaignMap {
+  const map = mapFor(s);
   const hidden = hiddenQuestNodes(map, s);
   if (!hidden.length) return map;
-  const key = `${s.mapId}|${hidden.join(',')}`;
+  const key = `${s.mapId}|${s.soloStart ? 1 : 0}|${hidden.join(',')}`;
   let m = shownCache.get(key);
   if (!m) {
     const h = new Set(hidden);

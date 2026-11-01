@@ -6,6 +6,9 @@ Mage'in kit kararları. Genel sınıf çerçevesi `docs/design/classes.md`; say�
 
 Kit: **Fire Bolt, Blizzard, Ice Crater, Meteor** + pasif **Heat Mirage**. Fire Bolt, Blizzard ve Meteor değişmedi.
 
+### Frozen etkisi (Ömer 2026-10-31; sim bekliyor)
+- Buz atışı zaten Chilled olan düşmanı dondurur (1 tur kayıp), ateş çözer. Kural: `campaign/maps-2-3.md` M-D. Denge etkisi ölçülmedi: **sim bekliyor**.
+
 ### Chilled (yeni durum)
 - "Chilled: 20% less Speed and 10% less Evasion" (`statuses.json > chilled`: speedMult 0,8, evasionMult 0,9). Buz mavisi (#9fe3ff).
 - Slow'dan ayrı bir durum; ikisi aynı birimde birlikte durabilir (çarpanlar çarpılır).

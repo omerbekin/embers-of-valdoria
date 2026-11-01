@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { legacyBlank } from './legacy-start';
 import {
   campaignWaveTeams,
   ENCOUNTERS,
@@ -91,7 +92,7 @@ describe('sefer karşılaşmaları', () => {
     expect([Math.round(c.maxHp * 0.4), Math.round(c.maxHp * 0.4) + regen]).toContain(c.hp);
     // can taşıması kapalı: kurulumda yalnızca ekipman (başlangıç silahı) kalır
     // (level: kahraman L2+ ise çağrı level'ı için; çağrı yeniden tasarımı 2026-10-18)
-    for (const u of Object.values(battlePlan(s, 0, { unitMods: true, startHp: false }).units.party)) expect(Object.keys(u).filter((k) => k !== 'level')).toEqual(['modifiers']);
+    for (const u of Object.values(battlePlan(s, 0, { unitMods: true, startHp: false }).units.party)) expect(Object.keys(u).filter((k) => k !== 'level' && k !== 'itemEffects')).toEqual(['modifiers']);
   });
 
   it('savaş planı mevcut savaş girişiyle kurulur; sonuç hero id ile geri okunur; seed belirleyici', () => {
@@ -110,7 +111,7 @@ describe('sefer karşılaşmaları', () => {
   });
 
   it('4 kişilik takım planı: hero sırası yuva sırasıdır (party-i = i. dolu hücre)', () => {
-    const s = debugTeleport(newCampaign({ mode: 'normal', seed: 8 }), '8A');
+    const s = debugTeleport(legacyBlank({ mode: 'normal', seed: 8 }), '8A'); // eski yapıda 8A dört kişi (yeni seferde King's Bridge sonrası)
     const plan = battlePlan(s);
     expect(plan.heroOrder).toHaveLength(4);
     const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies }, false));

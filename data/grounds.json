@@ -229,6 +229,15 @@
       "either": true,
       "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 }
     },
+    "shatter": {
+      "_not": "Harita 3 A6 (maps-2-3.md): tetik zemin değil şimşek (trigger 'lightning': yalnız skill alanı thunder olan skill; Battle.boltOutcome). hpRatio = tahtanın ortalama maks canının oranı (fiziksel, zırh düşer, taraf ayırmaz); adjacent = artı şeklinde komşu payı. PROVİZYON. Frozen karaktere ek kural yok.",
+      "label": "Shatter",
+      "text": "Lightning on Ice: the ice blows apart, the unit on the cell and those on the cells around it (four directions) take physical damage, either side; the ice is gone.",
+      "setup": ["ice_ground"],
+      "trigger": ["lightning"],
+      "remove": ["ice_ground"],
+      "damage": { "element": "physical", "hpRatio": 0.08, "mult": 1, "adjacent": 0.5 }
+    },
     "frozen_chill": {
       "_not": "Ömer 2026-10-29 (445): zaten Chill Ground olan hücreye yeniden Chill Ground bırakılınca Ice olur (aynı türden tepkime; setup = trigger). Güç / süre frozen ile aynı.",
       "label": "Frozen solid",

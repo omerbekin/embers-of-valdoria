@@ -3,6 +3,7 @@
 //   npm run sim:campaign -- [sefer] [ilk seed] [easy|medium|hard|all] [good|average|both (medium|easy da olur)]
 //     [--wall-cap=N | --wall-cap=easy:5,medium:10,hard:20] [--retries=2] [--grind-step=1] [--on-wall=stop|force] [--overgrind=10 (0 = yok)]
 //     [--heal-at=0.5] [--jobs=N] [--json=dosya]
+//     [--solo-check=moor,hills,cairn]: bu düğümlere ilk varışta her kahraman tek başına da oynar (TEK KAHRAMANLA İLK DENEMEDE KAZANMA bölümü; ana koşu aynı kalır). [--solo-only]: yalnız bu ölçüm, listenin son düğümünde koşu biter, rapor yalnız bu bölüm.
 //     [--map=valdoria|drowned-reach (drowned_reach, 1, 2 da olur)]: ölçülen harita (varsayılan Harita 1). Harita 2: her koşu önce Harita 1'i aynı seed
 //       ve kurallarla oynar, bitirirse takım continueToMap ile taşınır (seviye, ağaç, eşya, torba, altın, Valor, yedek); rapor yalnız Harita 2'nin.
 //     Güç kaldıracı (yalnızca sim; varsayılan 0): [--bonus-level=N] (bölük kurulunca herkes +N level) [--bonus-ilvl=N] (savaşta takılı her item +N
@@ -22,7 +23,7 @@ import { valorRules } from '../engine/content';
 import { content } from '../engine';
 import { nodeCategory, resolveSimMap, type SimCarry } from './campaign';
 import { LEVEL_FARM_GAP, bonusOf, mergeGrindResults, simulateGrind, type GrindBonus, type GrindGroupAgg, type GrindNodeAgg, type GrindSimResult, type MerchantMode, type PlayerType, type RepeatMode } from './campaign-grind';
-import { CAMPAIGN_TARGETS as T, inBand, type Band, type GrindCategory } from './campaign-targets';
+import { CAMPAIGN_TARGETS as T, inBand, isGrinderMeasure, type Band, type GrindCategory } from './campaign-targets';
 import { valorMode } from './valor-mode';
 
 const DIFFS: Difficulty[] = ['easy', 'medium', 'hard'];
@@ -109,7 +110,10 @@ export async function grindCli(args: string[], script: string): Promise<void> {
   const players = toPlayers(pos[3]);
   const caps = parseWallCap(flag('wall-cap'));
   const overgrind = Number(flag('overgrind') ?? T.overgrind);
+  const soloCheck = flag('solo-check')?.split(',').filter(Boolean);
+  const soloOnly = !!soloCheck?.length && args.includes('--solo-only');
   const opts = {
+    ...(soloCheck?.length ? { soloCheck, soloOnly } : {}),
     retries: Number(flag('retries') ?? 2),
     grindStep: Number(flag('grind-step') ?? 1),
     onWall: (flag('on-wall') ?? 'stop') as 'stop' | 'force',
@@ -157,7 +161,46 @@ export async function grindCli(args: string[], script: string): Promise<void> {
   const json = flag('json');
   // JSON: her sonuca özet (boss ilk deneme) eklenir; bonus zaten sonuçta (GrindSimResult.bonus)
   if (json) writeFileSync(json, JSON.stringify(results.map((r) => ({ ...r, bossFirstWin: bossFirstWins(r) })), null, 1));
-  console.log(grindReport(results, { runs, firstSeed, secs: (Date.now() - t0) / 1000, opts, caps }));
+  console.log(soloOnly ? soloCheckLines(results).join('\n') : grindReport(results, { runs, firstSeed, secs: (Date.now() - t0) / 1000, opts, caps }));
+}
+
+/** Tek kişi ölçümü bölümü (--solo-check); ölçüm yoksa boş. */
+export function soloCheckLines(results: GrindSimResult[]): string[] {
+  const rows = results.filter((r) => r.preGrind === 0 && r.soloCheck);
+  if (!rows.length) return [];
+  const L = ['TEK KAHRAMANLA İLK DENEMEDE KAZANMA  (düğüme ilk varışta her kahraman tek başına bir kez oynar; hedef düğüm başına, Medium iyi oyuncu; zafer canı; n = kahraman x koşu)'];
+  for (const r of rows)
+    for (const [id, a] of Object.entries(r.soloCheck!)) {
+      const first = pct(a.wins, a.n);
+      const min = r.difficulty === 'medium' && r.player === 'good' ? T.soloFirstWinMin[id] : undefined;
+      const cls = Object.entries(a.classes)
+        .sort((x, y) => pct(x[1].wins, x[1].n) - pct(y[1].wins, y[1].n))
+        .map(([c, v]) => `${content.classes[c]?.name ?? c} %${fmt(pct(v.wins, v.n), 0)}`)
+        .join(', ');
+      L.push(`  ${`${r.difficulty}/${TYPE_NAME[r.player]}`.padEnd(16)} ${node(mapOf(r), id).name.padEnd(18)} n=${String(a.n).padStart(4)}  tek kahramanla ilk denemede kazanma %${fmt(first).padStart(5)}${min !== undefined ? ` (hedef en az %${min})${mark(first >= min)}` : ''}  zafer canı %${fmt(a.wins ? (a.hpEnd / a.wins) * 100 : 0, 0)}  ${cls}`);
+    }
+  return L;
+}
+
+/** Eğri gereği kolay düğüm mü (bandın üstü kusur değil). */
+const easyByDesign = (r: Pick<GrindSimResult, 'map'>, id: string) => !!T.easyByDesign[mapOf(r).id]?.includes(id);
+/** Kolay düğümleri ayırarak normal düğüm ilk deneme: kalan düğümler %, bandın üstündeki kolay düğüm sayısı. */
+export function normalCore(r: GrindSimResult): { first: number; easyAbove: number; easy: number } {
+  let reached = 0;
+  let wins = 0;
+  let easy = 0;
+  let easyAbove = 0;
+  for (const [id, a] of Object.entries(r.nodes)) {
+    if (!a.reached || nodeCategory(mapOf(r), id) !== 'normal') continue;
+    if (!easyByDesign(r, id)) {
+      reached += a.reached;
+      wins += a.firstWins;
+    } else {
+      easy++;
+      if (pct(a.firstWins, a.reached) > T.firstWinNormal[1]) easyAbove++;
+    }
+  }
+  return { first: pct(wins, reached), easyAbove, easy };
 }
 
 // ---------------------------------------------------------------- rapor
@@ -174,9 +217,12 @@ interface CatRow {
   cleared: number;
   wins: number;
   hpEnd: number;
+  walls: number;
+  grindSum: number;
+  grindWall: number;
 }
 export function categoryRows(r: GrindSimResult): Record<GrindCategory, CatRow> {
-  const out = Object.fromEntries(CATS.map((c) => [c, { reached: 0, firstWins: 0, grind: 0, grindRuns: 0, cleared: 0, wins: 0, hpEnd: 0 }])) as Record<GrindCategory, CatRow>;
+  const out = Object.fromEntries(CATS.map((c) => [c, { reached: 0, firstWins: 0, grind: 0, grindRuns: 0, cleared: 0, wins: 0, hpEnd: 0, walls: 0, grindSum: 0, grindWall: 0 }])) as Record<GrindCategory, CatRow>;
   for (const [id, a] of Object.entries(r.nodes)) {
     const c = nodeCategory(mapOf(r), id);
     if (c === 'tutorial' || !a.reached) continue;
@@ -188,13 +234,27 @@ export function categoryRows(r: GrindSimResult): Record<GrindCategory, CatRow> {
     o.cleared += a.cleared;
     o.wins += a.wins;
     o.hpEnd += a.hpEndSum;
+    o.walls += a.walls;
+    o.grindSum += a.grindSum;
+    o.grindWall += a.grindWall;
   }
   return out;
 }
-/** Kasma (düğüme ulaşan koşu başına ortalama kasma savaşı) kategori başına. */
+type GrindCounts = { grindRuns: number; reached: number; grindSum: number; grindWall: number };
+/** Bir satırın kasma değeri: Medium / Hard elit-boss kasıp geçen koşu başına (duvar girmez), kalanı ulaşan koşu başına, duvar kasması dahil (campaign-targets.ts > grind). */
+export function grindValue(d: Difficulty, c: GrindCategory, x: GrindCounts): number {
+  if (isGrinderMeasure(d, c)) return x.grindRuns ? x.grindSum / x.grindRuns : 0;
+  return x.reached ? (x.grindSum + x.grindWall) / x.reached : 0;
+}
+/** Kasma değeri hedefte mi; kasıp geçen ölçüsünde kasıp geçen yoksa ölçülecek bir şey yok, hedefte sayılır. */
+export function grindOk(d: Difficulty, c: GrindCategory, p: PlayerType, x: GrindCounts): boolean {
+  if (isGrinderMeasure(d, c) && !x.grindRuns) return true;
+  return inBand(grindValue(d, c, x), grindBand(d, c, p));
+}
+/** Kategori başına kasma değeri (grindValue). */
 export const categoryGrind = (r: GrindSimResult): Record<GrindCategory, number> => {
   const rows = categoryRows(r);
-  return Object.fromEntries(CATS.map((c) => [c, rows[c].reached ? rows[c].grind / rows[c].reached : 0])) as Record<GrindCategory, number>;
+  return Object.fromEntries(CATS.map((c) => [c, grindValue(r.difficulty, c, rows[c])])) as Record<GrindCategory, number>;
 };
 /** Oyuncu tipine göre kasma bandı: ortalama oyuncuda üst sınır x(1 + averageGrindExtra). */
 export function grindBand(d: Difficulty, c: GrindCategory, p: PlayerType): Band {
@@ -233,14 +293,16 @@ export function grindReport(
     `Sefer: ${meta.runs} (rotalar eşit), seed ${meta.firstSeed}.., süre ${fmt(meta.secs, 0)} sn. Yenilgide ${meta.opts.retries} tekrar, sonra ${meta.opts.grindStep} kasma -> 1 deneme döngüsü; ` +
       `duvar sınırı Easy ${meta.caps.easy} / Medium ${meta.caps.medium} / Hard ${meta.caps.hard} kasma (duvarda: ${meta.opts.onWall === 'stop' ? 'koşu biter' : 'zorla geçilir'}); dinlenme eşiği can %${fmt(meta.opts.healAt * 100, 0)}.`,
   );
-  L.push('İyi oyuncu = Medium YZ + ana stata puan; ortalama oyuncu = Easy YZ + eşit puan. Kasma = düğümü geçmek için yapılan devriye savaşı (ulaşan koşu başına ortalama).');
+  L.push('İyi oyuncu = Medium YZ + ana stata puan; ortalama oyuncu = Easy YZ + eşit puan. Kasma = düğümü geçmek için yapılan devriye savaşı.');
+  L.push("Inn beklerken kolay devriye: kasmaya düşen takımın Inn'de iyileşmemiş kahramanı varsa eksik takım kolay düğümde gün döndürür; bu savaşlar kasma sayılır ve duvar sınırına girer.");
+  L.push('Kasma ölçüsü: normal düğüm ve Easy ulaşan koşu başına; Medium / Hard elit ve boss KASIP GEÇEN koşu başına (/geçen). Duvara vuran koşular bu ortalamaya girmez, duvar ayrı sınırla ölçülür.');
   const vr = meta.opts.valorRevive;
   L.push(
     `Seçenekler: tekrar loot'u ${meta.opts.repeat ?? 'today'}, tüccar ${meta.opts.merchant ?? 'sell'}` +
       `${vr ? `, Valor diriltme ${vr[0]} savaşta / ${vr[1]} dışarıda` : ''}${meta.opts.restPrice !== undefined ? `, dinlenme fiyatı ${meta.opts.restPrice}` : ''}.`,
   );
   L.push(`Güç kaldıracı (bonus): ${bonusText(meta.opts.bonus ?? results[0]?.bonus)}.${bonusOf(meta.opts.bonus ?? results[0]?.bonus).gold ? ' Bonus altın kazanca sayılmaz, harcamaya ve keseye dahil.' : ''}`);
-  L.push('İşaret: + hedefte, ! hedef dışı. Hedefler: src/sim/campaign-targets.ts.');
+  L.push('İşaret: + hedefte, ! hedef dışı, ~ eğri gereği kolay düğüm bandın üstünde (kusur değil). Hedefler: src/sim/campaign-targets.ts.');
   L.push('');
   const base = results.filter((r) => r.preGrind === 0);
   L.push('ÖZET (aşırı kasmasız koşular)');
@@ -253,7 +315,7 @@ export function grindReport(
     const hp = n.wins ? (n.hpEnd / n.wins) * 100 : 0;
     const grinds = CATS.map((c) => {
       const b = grindBand(r.difficulty, c, r.player);
-      return `${CAT_NAME[c]} ${fmt(g[c], 2)} (${band(b, 2)})${mark(inBand(g[c], b))}`;
+      return `${CAT_NAME[c]} ${fmt(g[c], 2)}${isGrinderMeasure(r.difficulty, c) ? '/geçen' : ''} (${band(b, 2)})${mark(grindOk(r.difficulty, c, r.player, rows[c]))}`;
     }).join('  ');
     L.push(`  ${`${r.difficulty}/${TYPE_NAME[r.player]}`.padEnd(16)} normal ilk %${fmt(first)} (${band(T.firstWinNormal)})${mark(inBand(first, T.firstWinNormal))}  kasma: ${grinds}`);
     L.push(
@@ -261,8 +323,18 @@ export function grindReport(
         `  duvar %${fmt(pct(r.walls, r.runs))}  bitirme %${fmt(pct(r.completed, r.runs))}  savaş/koşu ${fmt(r.battles / r.runs)}  son level ${fmt(r.levelEnd / r.runs)}`,
     );
     const bosses = bossFirstWins(r);
-    if (bosses.length) L.push(`  ${''.padEnd(16)} boss ilk deneme: ${bosses.map((b) => `${b.name} %${fmt(b.pct)} (n=${b.reached})`).join(', ')}`);
+    const bossTarget = r.difficulty === 'medium' && r.player === 'good';
+    if (bosses.length) L.push(`  ${''.padEnd(16)} boss ilk deneme: ${bosses.map((b) => `${b.name} %${fmt(b.pct)}${bossTarget ? mark(inBand(b.pct, T.bossFirstWin)) : ''} (n=${b.reached})`).join(', ')}${bossTarget ? ` (hedef ${band(T.bossFirstWin)})` : ''}`);
+    const core = normalCore(r);
+    if (core.easy) L.push(`  ${''.padEnd(16)} kolay düğümler hariç normal ilk %${fmt(core.first)} (${band(T.firstWinNormal)})${mark(inBand(core.first, T.firstWinNormal))}; eğri gereği bandın üstünde: ${core.easyAbove}/${core.easy} düğüm (~, kusur değil)`);
   }
+  for (const r of base) {
+    const nodes = Object.values(r.nodes);
+    const sum = (f: (a: GrindNodeAgg) => number) => nodes.reduce((x, a) => x + (f(a) ?? 0), 0);
+    L.push(`  ${`${r.difficulty}/${TYPE_NAME[r.player]}`.padEnd(16)} Inn beklerken kolay devriye ${fmt(sum((a) => a.innEasy) / r.runs, 2)}/koşu (kasmaya dahil), uygun kolay düğüm yok ${fmt(sum((a) => a.innEasyNone) / r.runs, 2)}/koşu; duvarın Inn'de bekleyeni ${sum((a) => a.wallInn)}/${r.walls}`);
+  }
+  const solo = soloCheckLines(results);
+  if (solo.length) L.push('', ...solo);
   L.push(...econLines(base));
   if (results[0]?.map) L.push(...lossLines(base));
   // ortalama vs iyi
@@ -305,7 +377,7 @@ export function grindReport(
   for (const r of base) {
     L.push('');
     L.push(`---- ${r.difficulty.toUpperCase()} / ${TYPE_NAME[r.player]} oyuncu (YZ ${r.player === 'good' ? 'Medium' : 'Easy'}, duvar ${r.wallCap}) ----`);
-    L.push('  DÜĞÜMLER  (n = ulaşan; ilk %; deneme = geçenlerde yeni düğüm denemesi; kasma = ulaşan başına (kasan koşu %); duvar %; can giriş/çıkış;');
+    L.push('  DÜĞÜMLER  (n = ulaşan; ilk %; deneme = geçenlerde yeni düğüm denemesi; kasma = ulaşan ya da /geçen başına (kasıp geçen koşu %); duvar %; can giriş/çıkış;');
     L.push('            güç: takım level / düğüm level, item seviyesi / düğüm item seviyesi, kahraman başına item, IP = item başına / kahraman başına;');
     L.push('            yara / ceset girişte (kahraman başına yara, takımda ceset); zaferde alınan yara / ceset (ulaşan başına); tur; kasma yeri olarak savaş)');
     const ids = m.nodes.filter((n) => r.nodes[n.id]?.reached || r.nodes[n.id]?.farmBattles).map((n) => n.id);
@@ -314,9 +386,10 @@ export function grindReport(
       const cat = nodeCategory(m, id);
       const first = pct(a.firstWins, a.reached);
       const wallPct = pct(a.walls, a.reached);
-      const firstMark = cat === 'normal' ? mark(inBand(first, T.firstWinNormal)) : ' ';
-      const g = a.reached ? nodeGrind(a) / a.reached : 0;
-      const gMark = cat === 'tutorial' ? ' ' : mark(inBand(g, grindBand(r.difficulty, cat, r.player)));
+      const firstMark = cat !== 'normal' ? ' ' : first > T.firstWinNormal[1] && easyByDesign(r, id) ? '~' : mark(inBand(first, T.firstWinNormal));
+      const g = cat === 'tutorial' ? (a.reached ? nodeGrind(a) / a.reached : 0) : grindValue(r.difficulty, cat, a);
+      const gMark = cat === 'tutorial' ? ' ' : mark(grindOk(r.difficulty, cat, r.player, a));
+      const gUnit = cat !== 'tutorial' && isGrinderMeasure(r.difficulty, cat) ? '/geçen' : '';
       const hpEnd = a.wins ? (a.hpEndSum / a.wins) * 100 : 0;
       const hpMark = cat === 'normal' ? mark(inBand(hpEnd, T.hpEndNormal)) : ' ';
       const lv = a.reached ? a.lvSum / a.reached : 0;
@@ -324,7 +397,7 @@ export function grindReport(
       const per = (v: number | undefined) => (a.reached ? (v ?? 0) / a.reached : 0);
       L.push(
         `  ${id.padEnd(8)} ${node(m, id).name.padEnd(18)} ${(cat === 'tutorial' ? 'tutorial' : CAT_NAME[cat]).padEnd(8)} n=${String(a.reached).padStart(4)}  ilk %${fmt(first).padStart(5)}${firstMark}` +
-          `  deneme ${fmt(a.attemptsSum / Math.max(1, a.cleared), 2)}  kasma ${fmt(g, 2).padStart(5)}${gMark} (%${fmt(pct(a.grindRuns, a.cleared), 0)})  duvar %${fmt(wallPct, 0)}${mark(wallPct <= T.wallRunsMaxPct)}` +
+          `  deneme ${fmt(a.attemptsSum / Math.max(1, a.cleared), 2)}  kasma ${fmt(g, 2).padStart(5)}${gUnit}${gMark} (%${fmt(pct(a.grindRuns, a.cleared), 0)})  duvar %${fmt(wallPct, 0)}${mark(wallPct <= T.wallRunsMaxPct)}${a.walls ? ` (${a.walls}: Inn'de bekleyen ${a.wallInn ?? 0}, savaşan ${fmt((a.wallParty ?? 0) / a.walls)})` : ''}${a.innEasy || a.innEasyNone ? ` [Inn kolay devriye ${a.innEasy ?? 0}, kolay düğüm yok ${a.innEasyNone ?? 0}]` : ''}` +
           `  can %${fmt(a.reached ? (a.hpStartSum / a.reached) * 100 : 0, 0)}/%${fmt(hpEnd, 0)}${hpMark}` +
           `  Lv ${fmt(lv)}/${nl} (${fmt(lv / nl, 2)})  ilvl ${fmt(a.reached ? a.ilvlSum / a.reached : 0)}/${nodeIlvl(m.id, id)}  item ${fmt(a.reached ? a.gearSum / a.reached : 0)}` +
           `  IP ${fmt(per(a.ipSum))}/${fmt(per(a.ipHeroSum), 0)}  yara ${fmt(per(a.woundInSum), 2)} ceset ${fmt(per(a.corpseInSum), 2)}  zaferde yara ${fmt(per(a.woundsTaken), 2)} ceset ${fmt(per(a.corpses), 2)}` +

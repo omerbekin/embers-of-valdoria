@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { CINEMATIC_IDS, CONFIG, acknowledgeLoot, advanceDay, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, debugRequireFormation, skipTutorial, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { CINEMATIC_IDS, CONFIG, autoResolve, acknowledgeLoot, advanceDay, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, debugRequireFormation, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -263,24 +263,10 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     tab: CAMPAIGN_TAB,
     section: 'Progress',
     icon: 'next',
-    label: 'Skip tutorial',
-    hint: 'Jump to Ashford Village (the tutorial heroes say farewell, then you form your company of three)',
+    label: 'Jump to Ashford',
+    hint: 'Debug only: jump to Ashford Village, where the first companion joins',
     run: () => {
       setState(debugTeleport(ensureState(), '4'));
-      reload();
-    },
-  });
-  debug.register({
-    id: 'campaign.skip-tutorial-new',
-    tab: CAMPAIGN_TAB,
-    section: 'Progress',
-    icon: 'next',
-    label: 'New run, Skip tutorial button',
-    hint: 'Start a new Normal campaign as if "Skip tutorial" was pressed on Choose your hero: you start in Ashford Village with the Form your company window (no farewell)',
-    run: () => {
-      const s = newCampaign({ mode: 'normal', seed: Math.floor(Date.now() % 1_000_000_000) });
-      session.tutorialClasses = [];
-      setState(skipTutorial(s));
       reload();
     },
   });
@@ -742,6 +728,46 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     hint: 'Forget every seen lesson and turn tutorials on: lessons show again (Mill Road is step by step again). Codex > Lessons empties.',
     run: () => resetTutorials(),
   });
+  // Tek kişilik başlangıç (Ömer 2026-11-01): taze yeni seferle duraklara atlama; kahraman düğmeyle seçilir
+  let soloHero = 0;
+  const soloClass = (): string => CONFIG.starterPool[soloHero % CONFIG.starterPool.length]!;
+  debug.register({
+    id: 'campaign.solo-class',
+    tab: CAMPAIGN_TAB,
+    section: 'Tutorial',
+    icon: 'shield',
+    label: () => `Solo start hero: ${soloClass()}`,
+    hint: 'Which starting hero the solo start jumps below use (tap to change)',
+    run: () => {
+      soloHero++;
+    },
+  });
+  const soloJump = (id: string, label: string, hint: string, go: (s: CampaignState) => CampaignState): void =>
+    debug.register({
+      id: `campaign.solo-${id}`,
+      tab: CAMPAIGN_TAB,
+      section: 'Tutorial',
+      icon: 'next',
+      label,
+      hint,
+      run: () => {
+        const fresh = newCampaign({ mode: 'normal', seed: Math.floor(Date.now() % 1_000_000_000) });
+        session.tutorialClasses = [];
+        setState(acknowledgeLoot(go(fresh)));
+        reload();
+      },
+    });
+  const soloAt = (node: string) => (s: CampaignState): CampaignState => debugTeleport(s, node, soloClass());
+  soloJump('mill', 'Solo at Mill Road', 'New run alone at Mill Road: basic attack only, cannot lose', soloAt('1'));
+  soloJump('raven', 'Solo at Ravenwood', 'New run at Ravenwood: second skill open, the next one opens when wave 2 arrives', soloAt('2'));
+  soloJump('watch', 'Solo at Watchtower', 'New run at the Ruined Watchtower: every skill open, can be lost', soloAt('3'));
+  soloJump('ashford', 'Solo at Ashford join', 'New run at Ashford: choose one companion from every class (one is marked Suggested for the missing role; hover it for the reason), then Garrick gives the charge', soloAt('4'));
+  soloJump('valdren', 'Solo at Valdren barracks', 'New run at Valdren Keep with an auto-picked Ashford companion: open the Barracks in town for the three candidates (one may be marked Suggested)', soloAt('7'));
+  soloJump('bridge', "Solo at King's Bridge join", "New run past the King's Bridge boss: the three candidate cards of the third companion", (s) => {
+    let t = soloAt('9')(s);
+    while (nextStep(t).kind !== 'recruit' && nextStep(t).kind !== 'move' && nextStep(t).kind !== 'complete') t = autoResolve(t);
+    return t;
+  });
   // Zorunlu Formation kapısı (Ömer 2026-10-17, 2026-10-27): Mill Road katılımından sonra Ravenwood'a dokunmak spot ışıklı Formation dersini açar
   debug.register({
     id: 'campaign.formation-gate',
@@ -755,6 +781,45 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       const t = debugRequireFormation(s);
       if (t === s) return; // savaş yok: değişmez
       setState(t);
+      reload();
+    },
+  });
+  // Garrick şeridi (C5) ve bölük adı (D4), Ömer 2026-11-01
+  const firstPoint = (kind: 'tree' | 'stat') => () => {
+    ensureState();
+    const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { debugFirstPoint?: (k: 'tree' | 'stat') => void }) : undefined;
+    if (scene?.debugFirstPoint) scene.debugFirstPoint(kind);
+    else reload();
+  };
+  debug.register({
+    id: 'campaign.first-point-tree',
+    tab: CAMPAIGN_TAB,
+    section: 'Tutorial',
+    icon: 'book',
+    label: 'Garrick ribbon (skill tree)',
+    hint: 'Give the first hero with a Garrick pick one level, forget the lesson and open Gear > Tree: the ribbon, glow, Take it and I will choose. Open the map first. Needs tutorials on.',
+    run: firstPoint('tree'),
+  });
+  debug.register({
+    id: 'campaign.first-point-stat',
+    tab: CAMPAIGN_TAB,
+    section: 'Tutorial',
+    icon: 'book',
+    label: 'Garrick ribbon (stat point)',
+    hint: 'Same for Gear > Sheet: the ribbon glows the main stat. Open the map first. Needs tutorials on.',
+    run: firstPoint('stat'),
+  });
+  debug.register({
+    id: 'campaign.company-name',
+    tab: CAMPAIGN_TAB,
+    section: 'Tutorial',
+    icon: 'book',
+    label: 'Form your company (name box)',
+    hint: 'Start a new Normal campaign in Ashford with the Form your company window: type a name or press Suggest; the name replaces Your party on the map and the short heading on the save card.',
+    run: () => {
+      const s = newCampaign({ mode: 'normal', seed: Math.floor(Date.now() % 1_000_000_000) });
+      session.tutorialClasses = [];
+      setState(acknowledgeLoot(soloAt('4')(s)));
       reload();
     },
   });

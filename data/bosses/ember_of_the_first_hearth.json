@@ -1,0 +1,63 @@
+{
+  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
+  "id": "ember_of_the_first_hearth",
+  "name": "The Ember of the First Hearth",
+  "spriteId": "ember_of_the_first_hearth",
+  "spriteScale": 1.35,
+  "color": "#ff9a3a",
+  "logo": "floodedplanks",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Boss · Living Flame",
+  "attributes": {
+    "str": 50,
+    "int": 12,
+    "dex": 2,
+    "luck": 8
+  },
+  "armor": 24,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 432,
+    "hpRegen": 0
+  },
+  "ai": "bridge_warden",
+  "skills": [
+    "flare"
+  ],
+  "boss": {
+    "where": "burns at the First Hearth",
+    "firstBanner": "The first fire remembers.",
+    "unyielding": {
+      "stunToStagger": false,
+      "debuffDurationDelta": -1,
+      "immuneDisplacement": true
+    },
+    "phases": [
+      {
+        "at": 0.3,
+        "banner": "A storm in the chimney.",
+        "swapSkills": {
+          "flare": "flare_storm"
+        }
+      }
+    ],
+    "notes": [
+      "At 30% HP the storm comes down the chimney: Flare becomes lightning and every lightning hit can spread through water, even the water of the Tidewater Urn. Think twice before tipping it."
+    ],
+    "passives": [
+      {
+        "id": "unyielding",
+        "name": "Unyielding",
+        "icon": "unyielding",
+        "text": "Immune to crowd control: Stun, Slow, Silence and Frozen do not take hold, taunts do not force its attacks, and it cannot be pulled or pushed. Other ailments last 1 turn less."
+      },
+      {
+        "id": "storm_in_the_chimney",
+        "name": "Storm in the Chimney",
+        "icon": "bolt",
+        "text": "At 30% HP Flare turns to lightning. Water on the board conducts it too, Tidewater Urn included."
+      }
+    ]
+  }
+}

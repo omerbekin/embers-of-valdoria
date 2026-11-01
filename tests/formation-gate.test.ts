@@ -10,20 +10,19 @@ import {
   formationTapGated,
   markFormationOpened,
   moveTo,
-  newCampaign,
   nextStep,
   normalizeState,
-  pickHero,
   recruit,
   type CampaignState,
 } from '../src/campaign';
 import { lessonById } from '../src/tutorial/lessons';
+import { legacyBlank, legacyHero } from './legacy-start';
 
 const clone = (s: CampaignState): CampaignState => JSON.parse(JSON.stringify(s)) as CampaignState;
 
 /** Mill Road kazanılmış, katılım bekliyor. */
 function wonMillRoad(seed = 77): CampaignState {
-  let s = pickHero(newCampaign({ mode: 'normal', seed }), 'warrior');
+  let s = legacyHero(seed); // Mill Road katılımı yalnız eski yapıda (yeni sefer: tests/solo-start.test.ts)
   s = autoResolve(s); // Mill Road savaşı
   return s;
 }
@@ -86,7 +85,7 @@ describe('katılım zamanı (Mill Road zaferinden sonra)', () => {
     expect(nextStep(loaded).kind).toBe('battle');
     expect(loaded.roster).toHaveLength(2);
     // ilerlemiş eski kayıt (Watchtower)
-    const far = clone(debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 5 }), 'archer'), '3'));
+    const far = clone(debugTeleport(legacyBlank({ mode: 'normal', seed: 5 }), '3'));
     far.done = far.done.map((d) => (d === '1:recruit' ? '2:recruit' : d));
     const farLoaded = normalizeState(far)!;
     expect(nextStep(farLoaded).kind).not.toBe('recruit');

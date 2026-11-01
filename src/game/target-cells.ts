@@ -92,9 +92,9 @@ export function blockedTargets(battle: Battle, actorUid: string, skillId: string
 export function outOfRangeCells(battle: Battle, actorUid: string, skillId: string): Array<{ board: Side; slot: number }> {
   const actor = battle.get(actorUid);
   const skill = battle.skill(skillId, actorUid);
-  if (!battle.rangeOn || !actor || !skill) return [];
+  if ((!battle.rangeOn && !battle.isDark()) || !actor || !skill) return [];
   const foe: Side = actor.side === 'party' ? 'enemy' : 'party';
-  if (skill.target === 'single_enemy') return battle.living(foe).filter((c) => battle.targetProblem(actorUid, skillId, c.uid) === 'Out of range').map((c) => ({ board: c.board, slot: c.slot }));
+  if (skill.target === 'single_enemy') return battle.living(foe).filter((c) => { const p = battle.targetProblem(actorUid, skillId, c.uid); return p === 'Out of range' || p === 'Too dark to see'; }).map((c) => ({ board: c.board, slot: c.slot }));
   if (battle.isAreaSkill(skillId, actorUid)) return battle.living(foe).filter((c) => c.board === foe && !battle.inRange(actor, skill, foe, c.slot)).map((c) => ({ board: c.board, slot: c.slot }));
   return [];
 }

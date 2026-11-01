@@ -9,7 +9,7 @@
 import { applyUnitModifiers, content } from '../engine';
 import { encounterUnit } from '../engine/content';
 import type { UnitSetup } from '../engine/types';
-import { CONFIG, getMap } from './data';
+import { CONFIG, mapFor } from './data';
 import { battlePlan } from './encounters';
 import { isInertUnit } from './encounter-waves';
 import { forwardDistances } from './graph';
@@ -67,7 +67,7 @@ const baseCache = new Map<string, number | null>();
 export function roadBaseline(s: CampaignState, nodeId: string): number | null {
   const key = `${s.mapId}|${s.difficulty}|${nodeId}`;
   if (baseCache.has(key)) return baseCache.get(key)!;
-  const map: CampaignMap = getMap(s.mapId);
+  const map: CampaignMap = mapFor(s);
   const dist = forwardDistances(map, map.start);
   const d = dist.get(nodeId);
   let best: number | null = null;
@@ -102,7 +102,7 @@ export function sideBand(ratio: number, c: SideDangerCfg = cfg()): SideDangerBan
  * değilse null. Bulunulan düğümde dalış derinliği beklerken o derinliğin savaşı ölçülür (battlePlan / nextStep).
  */
 export function sideDanger(s: CampaignState, nodeId: string): SideDanger | null {
-  const n = getMap(s.mapId).nodes.find((x) => x.id === nodeId);
+  const n = mapFor(s).nodes.find((x) => x.id === nodeId);
   if (!n || !isSideFight(n)) return null;
   if (isCleared(s, nodeId) && !patrolAvailable(s, nodeId) && s.at !== nodeId) return null;
   const v = strengthAt(s, nodeId);

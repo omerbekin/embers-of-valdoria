@@ -27,7 +27,7 @@ Durum: **UYGULANDI (2026-10-20, campaign-dev; varsayımlar open-questions 369).*
 ## Açık uygulama noktaları (agent varsayım yazıp sorar)
 - Yaralı kahraman savaşta düşerse aynı savaş içinde Valor/Resurrection ile kalkabilir mi (evet varsayılır; yara yalnızca savaş SONUNDA hâlâ düşmüşse eklenir).
 - Yara gösterimi (kart, takım şeridi, Gear): UI → mockup akışı (Ömer seçer).
-- Boss tam şifası yaraları silmez (yalnızca dinlenme siler).
+- Boss tam şifası yaraları silmez (yalnızca dinlenme siler). **Ömer 2026-10-31 (sefer):** boss zaferinde savaşı düşmüş bitiren de tam canla kalkar, 1 yarasını yine alır; 3 yaralıyken düşen yine ceset kalır. Normal ve elit düğümde `wounds.riseRatio` aynı, Endless değişmedi.
 - Endless sayıları (elit %60 / boss %50 bugün) ve Endless'ta yara silen dinlenme karşılığı (kamp/ödül ekranı).
 - Kayıt sürümü artışı (kahraman başına `wounds`).
 - Kasmalı sim (`src/sim/campaign-grind.ts`) yeni kurallara göre güncellenir, tam ölçüm ondan sonra.

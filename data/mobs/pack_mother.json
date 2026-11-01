@@ -1,0 +1,42 @@
+{
+  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
+  "id": "pack_mother",
+  "name": "The Pack-Mother",
+  "family": "beasts",
+  "spriteId": "pack_mother",
+  "spriteScale": 1.4,
+  "color": "#3b3d42",
+  "logo": "roar",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Elite · Pack Leader",
+  "attributes": {
+    "str": 20,
+    "int": 2,
+    "dex": 16,
+    "luck": 4
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "bite"
+  ],
+  "touch": {
+    "type": "packRotation",
+    "pack": [
+      "grey_wolf",
+      "snow_wolf"
+    ],
+    "healRatio": 0.05
+  },
+  "passive": {
+    "id": "pack_rotation",
+    "name": "Pack Rotation",
+    "icon": "roar",
+    "text": "At the start of each Round the most wounded wolf falls back and a healthier wolf from behind takes its place. Her attacks heal every wounded wolf by 5% of its max HP.",
+    "effect": {
+      "type": "touchLabel"
+    }
+  }
+}

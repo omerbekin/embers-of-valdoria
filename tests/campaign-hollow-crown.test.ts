@@ -110,14 +110,13 @@ describe('The Hollow Crown: harita verisi', () => {
     expect(nodeLevel(HOLLOW_CROWN, 'hc85')).toBe(30);
   });
 
-  it('karşılaşma / olay / hazine / hikâye bağları çözülür; her düşman var olan bir birim (hollow_king kullanılmaz)', () => {
+  it('karşılaşma / olay / hazine / hikâye bağları çözülür; her düşman var olan bir birim', () => {
     for (const n of map.nodes) {
       if (n.encounter) {
         const enc = ENCOUNTERS[n.encounter];
         expect(enc, `${n.id} ${n.encounter}`).toBeDefined();
         for (const u of enc!.units) {
           expect(content.classes[u.class] ?? content.encounterUnit(u.class), `${n.encounter}: ${u.class}`).toBeDefined();
-          expect(u.class).not.toBe('hollow_king');
         }
       }
       if (n.event) expect(EVENTS[n.event], n.id).toBeDefined();

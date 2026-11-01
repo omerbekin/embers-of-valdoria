@@ -2572,6 +2572,7 @@
       "id": "copper_ring",
       "name": "Copper Ring",
       "icon": "ring",
+      "kindName": "Ring",
       "slot": "trinket",
       "rarity": "common",
       "ilvl": 4,

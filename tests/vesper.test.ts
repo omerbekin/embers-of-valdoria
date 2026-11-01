@@ -279,9 +279,9 @@ describe('kışla-yedek kuralı tüm katılım yollarında (Valdren Keep kasaba 
   /** Bölüğü dörde tamamla (adaylarda olmayan bir sınıfla). */
   const fill = (s: CampaignState): CampaignState => {
     const offer = townRecruitOffer(s);
-    const extra = CONFIG.recruitPool.find((c) => !offer.includes(c) && !s.roster.some((h) => h.class === c))!;
     let t = s;
-    while (t.roster.length < COMPANY_MAX) t = debugEnsureClass(t, extra);
+    // Yeni seferde kadro burada daha küçük: her turda kadroda olmayan yeni bir sınıf eklenir
+    while (t.roster.length < COMPANY_MAX) t = debugEnsureClass(t, CONFIG.recruitPool.find((c) => !offer.includes(c) && !t.roster.some((h) => h.class === c))!);
     return t;
   };
 

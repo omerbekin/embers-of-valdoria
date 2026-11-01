@@ -146,7 +146,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(text('rage')).toContain(`${berserker.rageOnHurt!.perHpPercent} per 1% of max HP lost`);
     expect(text('rage')).toContain(`spends ALL your Rage (at least ${content.skills.headsmans_blow!.cost.amount})`);
     // Tidewater Urn (M-N3) yalnızca Urn'lü savaşta: Battle rules maddesinde anlatılır
-    for (const d of Object.values(content.globalSkills).filter((x) => x.kind !== 'urn' && x.kind !== 'surge')) expect(text('actions'), d.id).toContain(d.name);
+    for (const d of Object.values(content.globalSkills).filter((x) => x.kind !== 'urn' && x.kind !== 'rod' && x.kind !== 'surge')) expect(text('actions'), d.id).toContain(d.name);
     expect(text('battle-rules')).toContain(content.globalSkills.tidewater_urn!.name);
     expect(text('actions')).toContain(`${content.globalSkills.rest!.mp} MP`);
     expect(text('actions')).toContain('next turn arrives in half the time');
@@ -325,7 +325,7 @@ describe('Codex: Ground reactions (Ömer 2026-10-27)', () => {
       const row = table.rows.find((x) => x[3] === r.text);
       expect(row, r.label).toBeDefined();
       expect(row![0]).toContain(content.grounds[r.setup[0]!]!.name);
-      expect(row![1]).toContain(content.grounds[r.trigger[0]!]!.name);
+      expect(row![1]).toContain(content.grounds[r.trigger[0]!]?.name ?? 'A lightning strike'); // Shatter: tetik zemin değil şimşek
       expect(row![2]).toBe(r.label);
     }
   });

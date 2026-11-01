@@ -1,4 +1,5 @@
 import { PUSH_DIRS, tileUid, type Battle } from './battle';
+import { statusCounts } from './status-count';
 import { shapeLabel } from './area-shape';
 import { skillCostAmount, skillCostPay } from './cost';
 import { betStakeParts } from './gamble';
@@ -166,7 +167,7 @@ export interface AiChoice {
    * Kararın baskın değer terimi (etiket; seçim terazisi verir): kill (öldürme), heal (şifa/diriltme/kurtarma), summon, shield, taunt, guard, burn,
    * tactic (saf self-buff / kontrol), aoe (alan hasarı), damage (tek hedef hasar); 'fallback' kullanılmıyor; rest/skip/move: global skill kuralı.
    */
-  reason: AiPriority | 'fallback' | 'rest' | 'skip' | 'move' | 'urn';
+  reason: AiPriority | 'fallback' | 'rest' | 'skip' | 'move' | 'urn' | 'rod';
   /** Seçilen adayın terazi puanı (can-eşdeğer); global skill kararlarında tanımsız. */
   score?: number;
 }
@@ -282,6 +283,9 @@ export interface Option {
   tempo: number;
   /** Hedef başına beklenen hasar (isabetle çarpılmış, can+kalkanla sınırlı), öldürme ihtimali, şifa, kalkan (terazi için; preview'dan). */
   dmgBy: Record<string, number>;
+  /** C2 Encased: bu hamlenin kıracağı / ateşle uyandıracağı bloklar ve bloğa giden hasar (dmgBy'dan düşülmüş). */
+  wakes?: string[];
+  blockBy?: Record<string, number>;
   killP: Record<string, number>;
   healBy: Record<string, number>;
   shieldBy: Record<string, number>;
@@ -386,11 +390,25 @@ export function urnChoice(battle: Battle, actor: Combatant): { choice: AiChoice;
     const burningCells = new Set<number>();
     for (const g of battle.ground) if (g.board === side && g.ground === ai.burningGround) for (const s of g.slots) if (cells.includes(s)) burningCells.add(s);
     const burningHeroes = battle.combatants.filter((c) => c.hp > 0 && !c.inert && c.side === side && c.board === side && cells.includes(c.slot) && c.statuses.some((s) => s.kind === ai.burning)).length;
-    const score = burningCells.size * ai.burningCell + burningHeroes * ai.burningHero;
+    // E5: düşmanda şimşek varken Urn suyu şimşeği iletir: satırdaki kahraman başına bedel
+    const conducted = ai.thunderHero && battle.thunderSkillsOf(side === 'party' ? 'enemy' : 'party').length ? battle.combatants.filter((c) => c.hp > 0 && !c.inert && c.side === side && c.board === side && cells.includes(c.slot)).length * ai.thunderHero : 0;
+    const score = burningCells.size * ai.burningCell + burningHeroes * ai.burningHero - conducted;
     if (!best || score > best.score) best = { row, score, slot: cells[0]! };
   }
   if (!best || best.score < ai.minScore) return null;
   return { choice: { skillId: 'tidewater_urn', slot: best.slot, reason: 'urn' }, note: `tidewater_urn: row ${best.row + 1} puts out fire (score ${best.score} >= ${ai.minScore})` };
+}
+
+/**
+ * B2 Thunder Rod (oyuncu tarafı YZ'si / sim): çubuğa bitişik birim, çubuğun kurtaracağı hasar (komşu kahramanlar x vuruş x toppleRounds) sıradaki hamlesinin değerini (x toppleShare) geçiyorsa çubuğu devirir. Saf.
+ */
+export function rodChoice(battle: Battle, actor: Combatant, pickScore: number, cfg: NonNullable<AiValueConfig['signature']>): { choice: AiChoice; note: string } | null {
+  if (actor.summoned || !battle.canUseGlobal(actor.uid, 'thunder_rod_topple').ok) return null;
+  const h = battle.rodsNextTo(actor)[0];
+  if (!h?.rod) return null;
+  const save = cfg.toppleRounds * sum(battle.rodVictims(h.board, h.rod.slot, h.rod.side).map((c) => Math.min(c.hp, battle.mechanicHit(h.board, h.rod!.ratio, c))));
+  if (save < pickScore * cfg.toppleShare) return null;
+  return { choice: { skillId: 'thunder_rod_topple', reason: 'rod' }, note: `thunder_rod_topple: saves ${r1(save)} damage (next move worth ${r1(pickScore)})` };
 }
 
 function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, trace: AiTrace | undefined, difficulty: AiDifficulty, valueOverride?: Partial<AiValueConfig>): AiChoice | null {
@@ -419,6 +437,12 @@ function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, t
     if (trace) trace.global = { enabled: true, outcome: urn.note };
     return urn.choice;
   }
+  // B2 Thunder Rod: ayakta çubuk yoksa hiçbir şey hesaplanmaz
+  const rod = vc.signature && battle.hazards.some((h) => h.rod) ? rodChoice(battle, actor, optionNet(pick?.option), vc.signature) : null;
+  if (rod) {
+    if (trace) trace.global = { enabled: true, outcome: rod.note };
+    return rod.choice;
+  }
   const g = config.global;
   if (g?.enabled && !actor.summoned && battle.globalSkillIds().length > 0) {
     const gt: GlobalTrace | undefined = trace ? { enabled: true } : undefined;
@@ -427,7 +451,7 @@ function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, t
       // Easy: Move/Skip yok; yalnızca yapacak hamle yokken Rest (MP biriktir)
       if (gt) gt.gate = `difficulty ${difficulty}: only Rest when there is nothing to do (and Move to dodge a pending warning)`;
       // Bekleyen düşman telgrafı (çöken köprü, kül damgası) açıkça görünür: ortalama oyuncu da ondan kaçar (M12)
-      if (battle.telegraphs.length > 0 && battle.canUseGlobal(actor.uid, 'move_tile').ok) {
+      if ((battle.telegraphs.length > 0 || battle.hazards.length > 0) && battle.canUseGlobal(actor.uid, 'move_tile').ok) {
         const d = telegraphDodge(battle, actor, battle.freeTiles(actor.uid).filter((s) => !battle.breaksHold(actor.uid, s)), optionNet(pick?.option));
         if (d) {
           if (gt) gt.outcome = `move_tile: dodge a pending warning (net ${r2(d.net)})`;
@@ -715,7 +739,8 @@ function skillOptions(battle: Battle, actor: Combatant, skillId: string, profile
         continue;
       }
       const seen = new Set<string>();
-      for (const dir of PUSH_DIRS) {
+      const fixed = skill.effects.find((e) => e.type === 'push' && e.fixedDir); // Headlong: yön sabit
+      for (const dir of fixed?.type === 'push' && fixed.fixedDir ? [fixed.fixedDir] : PUSH_DIRS) {
         const po = battle.pushOutcome(t, dir);
         const key = po.kind === 'move' ? `m${po.to}` : po.kind === 'crash' ? `c${po.with ?? 'edge'}` : 'i';
         if (seen.has(key)) continue;
@@ -1243,7 +1268,31 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
     o.kills = [];
   }
   o.selfHeal = Math.min(Math.round(o.selfHeal), actor.maxHp - actor.hp);
+  settleBlocks(battle, skill, o);
   return o;
+}
+
+/** C2 Encased: bloğa giden hasar can hasarı değildir; ateş bloğu kırar ve tam geçer. Bloklu hedef yoksa hiçbir şey yapmaz. */
+function settleBlocks(battle: Battle, skill: SkillDef, o: Option): void {
+  for (const uid of Object.keys(o.dmgBy)) {
+    const u = battle.get(uid);
+    const block = u?.encased;
+    if (!u || !block) continue;
+    const d = o.dmgBy[uid]!;
+    if (skill.effects.some((e) => e.type === 'damage' && e.element === 'fire')) {
+      if (d > 0) (o.wakes ??= []).push(uid);
+      continue;
+    }
+    const took = Math.min(block.hp, d);
+    if (d >= block.hp) (o.wakes ??= []).push(uid);
+    (o.blockBy ??= {})[uid] = took;
+    o.dmgBy[uid] = d - took;
+    o.damage = Math.max(0, o.damage - took);
+    if (d - took < u.hp) {
+      delete o.killP[uid];
+      o.kills = o.kills.filter((c) => c.uid !== uid);
+    }
+  }
 }
 
 /**
@@ -1815,6 +1864,246 @@ function controlValue(ctx: ValueContext, o: Option): number {
       }
     }
   }
+  return v + darknessValue(ctx, o) + frostValue(ctx, o) + thunderValue(ctx, o) + signatureValue(ctx, o) + mobKitValue(ctx, o) + bossTouchValue(ctx, o);
+}
+
+/**
+ * Harita 3 boss / elit dokunuşlarının hamle değeri (can-eşdeğer; ayarlar ai.json > value.bossTouch; taşıyan yoksa 0): Heat çubuğuna ateş / buz / su (E1), Whiteout (E2), kurt şifası ve
+ * Pack-Mother'ı indirmek (E3), vaaz başlatmak ve eşiği doldurmak (E4), Call the Vault (E6). Thundersnow'un telgrafı hazardThreat ile, Urn'ün bedeli urnChoice ile, Noise bedeli signatureValue ile okunur.
+ */
+function bossTouchValue(ctx: ValueContext, o: Option): number {
+  const cfg = ctx.vc.bossTouch;
+  if (!cfg) return 0;
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const skill = o.skill;
+  const foes = actor.side === 'party' ? 'enemy' : 'party';
+  let v = 0;
+  for (const u of o.targets) {
+    if (u.side === actor.side) continue;
+    const t = u.touch;
+    if (t?.type === 'overheat') v += (cfg.heat * ctx.turnValue(u) * battle.heatDelta(u, skill)) / t.max * previewHitChance(o, u);
+    if (u.sermon) v += cfg.sermonBreak * ctx.turnValue(u) * Math.min(1, (o.dmgBy[u.uid] ?? 0) / u.sermon.goal);
+    if (t?.type === 'packRotation') v += cfg.packKill * (o.killP[u.uid] ?? 0) * sum(battle.packOfTouch(u).map((w) => ctx.turnValue(w)));
+  }
+  if (skill.whiteout && !battle.isDark()) v += cfg.whiteout * sum(battle.fighting(foes).map((c) => ctx.turnValue(c)));
+  if (skill.longSermon && !battle.sermonDone(actor.side)) {
+    const flock = battle.sermonFlock(actor.side, skill.longSermon);
+    v += cfg.sermon * sum(flock.map((c) => ctx.turnValue(c))) - cfg.sermonTurn * ctx.turnValue(actor) * skill.longSermon.rounds;
+  }
+  if (actor.touch?.type === 'packRotation' && skill.effects.some((e) => e.type === 'damage')) v += cfg.packHeal * battle.packHealWorth(actor);
+  if (skill.callVault) v += cfg.vault * ctx.turnValue(actor);
+  if (v !== 0 && o.notes.length < 6) o.notes.push(`boss touch: ${v > 0 ? '+' : ''}${r1(v)}`);
+  return v;
+}
+
+/**
+ * Harita 3 4. dilim moblarının hamle değeri (can-eşdeğer; ayarlar ai.json > value.mobKit): kendine verilen açıklık (Pole Vault), dalışın güvenliği, çözülmenin yediği tur ve soğuma (Undermine,
+ * Slagcart), erişim kuralıyla ulaşılan hedef (Shardwalk, Dark Step, Through the Flame, Pole Vault), Stormhide'a yakın dövüşle vurmanın bedeli. İlgili skill / pasif yoksa 0.
+ */
+function mobKitValue(ctx: ValueContext, o: Option): number {
+  const cfg = ctx.vc.mobKit;
+  if (!cfg) return 0;
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const skill = o.skill;
+  const incoming = ctx.round.get(actor.uid) ?? 0;
+  let v = 0;
+  for (const e of skill.effects) {
+    if (e.type !== 'status' || !e.self) continue;
+    const m = battle.statusDef(e.status)?.damageTakenMult;
+    if (m && m > 1) v -= cfg.exposure * (m - 1) * incoming;
+  }
+  const tg = skill.telegraph;
+  if (tg?.dive) v += cfg.diveSafe * incoming;
+  if (tg?.endsTurn) v -= cfg.spentTurn * ctx.turnValue(actor);
+  if (tg?.after) {
+    const d = battle.statusDef(tg.after.status);
+    if (d?.skipTurn) v -= cfg.coolTurn * ctx.turnValue(actor);
+    if (d?.armorMult === 0) v -= cfg.coolArmor * incoming;
+  }
+  if (skill.reachRule && o.targetUid) {
+    const t = battle.get(o.targetUid);
+    if (t && battle.reachOpens(actor, skill, t) && battle.rowOf(t.slot) > battle.frontOccupiedRow(t.board)) v += cfg.reach * (o.dmgBy[t.uid] ?? 0);
+  }
+  if (skill.motion === 'melee') {
+    for (const u of o.targets) {
+      if (u.side !== actor.side && u.passive?.effect.type === 'stormhide') v -= cfg.stormhide * ctx.turnValue(actor) * battle.formulas.thunder.pushback * previewHitChance(o, u);
+    }
+  }
+  if (v !== 0 && o.notes.length < 6) o.notes.push(`mob kit: ${v > 0 ? '+' : ''}${r1(v)}`);
+  return v;
+}
+
+/**
+ * Harita 3 imza mekaniklerinin hamle değeri (can-eşdeğer; ayarlar ai.json > value.signature): uyuyanı erken uyandırma cezası (Encased), çubuk ve belirteç kazancı (mob), Quenched'i ateşle kızdırma cezası
+ * (Tempering), Eye of the Storm taşıyanını öldürme, Noise bedeli. İlgili birim / skill / kural yoksa 0 ve hesap yok.
+ */
+function signatureValue(ctx: ValueContext, o: Option): number {
+  const cfg = ctx.vc.signature;
+  if (!cfg) return 0;
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const skill = o.skill;
+  const foes = actor.side === 'party' ? 'enemy' : 'party';
+  let v = 0;
+  if (o.wakes?.length || o.blockBy) {
+    const awake = battle.fighting(foes).some((c) => !c.encased);
+    if (awake) for (const uid of o.wakes ?? []) v -= cfg.wake * ctx.turnValue(battle.get(uid)!) * previewHitChance(o, battle.get(uid)!);
+    else for (const d of Object.values(o.blockBy ?? {})) v += cfg.chip * d; // yalnız bloklar kaldı: kırmak ilerlemedir
+  }
+  if (skill.thunderRod) {
+    const cell = battle.rodCellFor(actor, skill);
+    if (cell !== null) for (const c of battle.rodVictims(foes, cell, actor.side)) v += cfg.rodRounds * Math.min(c.hp, battle.mechanicHit(foes, skill.thunderRod.ratio, c));
+  }
+  if (skill.rollingThunder && o.targetUid) {
+    const t = battle.get(o.targetUid);
+    if (t) for (const c of battle.fighting(foes)) if (c.board === t.board && battle.rowOf(c.slot) === battle.rowOf(t.slot)) v += cfg.rollShare * Math.min(c.hp, battle.mechanicHit(c.board, skill.rollingThunder.ratio, c));
+  }
+  const fire = skill.effects.some((e) => e.type === 'damage' && e.element === 'fire');
+  if (fire) for (const uid of Object.keys(o.dmgBy)) {
+    const u = battle.get(uid);
+    if (u?.temper === 'cold' && u.side !== actor.side) v -= cfg.reheat * ctx.turnValue(u) * previewHitChance(o, u);
+  }
+  for (const [uid, k] of Object.entries(o.killP)) {
+    const u = battle.get(uid);
+    if (u?.side === actor.side || u?.passive?.effect.type !== 'eyeOfStorm') continue;
+    const sheltered = battle.fighting(u.side).filter((c) => c.board === u.board && battle.laneOf(c.slot) === battle.laneOf(u.slot)).length;
+    v += cfg.eyeKill * k * sheltered * ctx.turnValue(u);
+  }
+  const noise = battle.noiseState();
+  if (noise && noise.rule.sides.includes(actor.side) && noise.rises < noise.rule.maxRises) {
+    const pts = battle.noisePoints(actor, skill, o.anchorSlot, o.board, o.targetUid);
+    if (pts > 0) {
+      const team = battle.fighting(foes);
+      const mean = team.length ? sum(team.map((c) => ctx.turnValue(c))) / team.length : 0;
+      const full = cfg.noiseRise * mean * ctx.vc.horizon * (battle.kingListening() ? 2 : 1); // E6: King ayaktaysa dolum iki Warden kaldırır
+      v -= noise.value + pts >= noise.rule.goal ? full : (full * pts) / noise.rule.goal;
+    }
+  }
+  if (v !== 0 && o.notes.length < 6) o.notes.push(`signature: ${v > 0 ? '+' : ''}${r1(v)}`);
+  return v;
+}
+
+/**
+ * M-F Darkness değeri (can-eşdeğer; ayarlar ai.json > value.darkness): ateş skill'i tahtayı aydınlatır: kısıtlı taraf için artı, kısıtsız taraf (moblar) için eksi; yalnızca karanlığın
+ * gerçekten sakladığı düşman varken. Lantern'e vuran düşman: kırma payı x kısıtlı tarafın tur değeri. Darkness yoksa 0.
+ */
+/**
+ * Frozen (Ömer 2026-10-31): Chilled düşmana buz atışı onu dondurur (kaçırdığı tur), donmuş düşmana ateşsiz vuruş öncelikli, ateş Chilled / Frozen'ı çözer (kaybedilen kontrol cezası).
+ * Yalnızca birimlerde bu durumlar varken çalışır; kuralsız savaşta değer 0.
+ */
+/**
+ * Harita 3 şimşek skill'inin kural değeri (can-eşdeğer; ayarlar ai.json > value.thunder): ark ve buz patlaması taraf ayırmaz (düşmana artı, kendi birimine eksi: Live Water'da kendi birimini vurmama),
+ * su canlı kalır, Shocked geri itme / Stun, Thunderflash'ın bedeli (kısıtlı taraf bir tur serbest). Etiketsiz skill'de 0.
+ */
+function thunderValue(ctx: ValueContext, o: Option): number {
+  const cfg = ctx.vc.thunder;
+  if (!cfg || !o.skill.thunder) return 0;
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const feet = o.cells ? [{ board: o.board ?? (actor.side === 'party' ? ('enemy' as Side) : ('party' as Side)), cells: o.cells }] : battle.boltFeetOf(o.targets);
+  const out = battle.boltOutcome(actor, o.skill, feet, o.targets);
+  const sign = (u: Combatant) => (u.side === actor.side ? -1 : 1);
+  let v = 0;
+  for (const p of [...out.arcs, ...out.shards]) {
+    const u = battle.get(p.uid);
+    if (!u) continue;
+    const left = Math.max(0, u.hp - (o.dmgBy[u.uid] ?? 0));
+    v += sign(u) * Math.min(left, p.damage);
+    if (out.arcs.includes(p)) v += sign(u) * cfg.liveStay * Math.min(left, p.damage); // su canlı kalır: ağda kalan bir ark daha yer (bir kısmı kaçar)
+  }
+  for (const s of out.shocks) {
+    const u = battle.get(s.uid);
+    if (!u) continue;
+    const hit = previewHitChance(o, u);
+    v += s.stun ? -statusEffectWorth(ctx, u, 'stun', 1) * hit : cfg.pushShare * ctx.turnValue(u) * battle.formulas.thunder.pushback * hit;
+  }
+  if (out.flash) {
+    const d = battle.darkRule();
+    const heroes = d ? d.sides.flatMap((s) => battle.fighting(s)) : [];
+    if (heroes.length) v -= (cfg.flashCost * sum(heroes.map((u) => ctx.turnValue(u)))) / heroes.length;
+    const b = out.blinded ? battle.get(out.blinded) : undefined;
+    if (b) v -= statusEffectWorth(ctx, b, 'blinded', battle.formulas.thunder.flashBlindTurns);
+  }
+  if (v !== 0 && o.notes.length < 6) o.notes.push(`thunder: ${v > 0 ? '+' : ''}${r1(v)}`);
+  return v;
+}
+
+/**
+ * Şimşek kurallarının hücre değeri (eksi = riskli; ayarlar ai.json > value.thunder): canlı suda kalmak bir ark; düşmanda şimşek skill'i varken suda / buzda ya da buz komşusunda durmak
+ * ark, Stun, patlama riski; etiketli zırh skill'inin (Iron Draws the Bolt) menzilinde duran zırhlı birim ek hasar riski (geri alınır). Düşmanda şimşek skill'i ve canlı su yoksa 0 (hesap yok).
+ */
+function thunderCellWorth(ctx: ValueContext, u: Combatant, board: Side, slot: number): number {
+  const cfg = ctx.vc.thunder;
+  if (!cfg || u.inert) return 0;
+  const battle = ctx.battle;
+  const foes = battle.thunderSkillsOf(u.side === 'party' ? 'enemy' : 'party');
+  if (!foes.length && !battle.liveWaters.length) return 0;
+  const risk = battle.boltCellRisk(u, board, slot);
+  let v = 0;
+  if (risk.live) v -= Math.min(u.hp, risk.arc);
+  const reach = foes.filter((f) => battle.inRange(f.unit, f.skill, board, slot, { moved: { uid: u.uid, slot } }));
+  if (reach.length) {
+    if (risk.water) v -= cfg.cellRisk * Math.min(u.hp, risk.arc);
+    if (risk.water && reach.some((f) => f.skill.thunder?.shocks) && !battle.statusBlocked(u, 'stun')) v += cfg.cellRisk * statusEffectWorth(ctx, u, 'stun', 1);
+    v -= cfg.cellRisk * Math.min(u.hp, risk.shards);
+    let iron = 0;
+    for (const f of reach) for (const e of f.skill.effects) if (e.type === 'damage' && e.ironBolt) iron = Math.max(iron, battle.tickDamage('lightning', 'magic', battle.effectiveStats(u).armor * e.ironBolt, u));
+    v -= cfg.ironRisk * iron;
+  }
+  return v;
+}
+
+function frostValue(ctx: ValueContext, o: Option): number {
+  const cfg = ctx.vc.frost;
+  if (!cfg) return 0;
+  const battle = ctx.battle;
+  const foes = o.targets.filter((t) => t.hp > 0 && t.side !== ctx.actor.side && t.statuses.length);
+  if (!foes.length) return 0;
+  const fire = o.skill.effects.some((e) => e.type === 'damage' && e.element === 'fire');
+  const damage = o.skill.effects.some((e) => e.type === 'damage');
+  let v = 0;
+  for (const t of foes) {
+    const tv = ctx.turnValue(t);
+    const hit = previewHitChance(o, t);
+    for (const e of o.skill.effects) {
+      const kind = e.type === 'status' && !e.self ? e.status : e.type === 'ground' ? battle.groundStatusId(e.ground) : undefined;
+      if (kind && battle.wouldFreeze(t, kind)) v += cfg.freeze * tv * (e.type === 'status' ? ((e as { chance?: number }).chance ?? 1) * hit : 1);
+    }
+    if (damage && !fire && t.statuses.some((s) => battle.statusDef(s.kind)?.skipTurn && battle.statusDef(s.kind)?.clearedBy)) v += cfg.focus * tv * hit;
+    if (fire)
+      for (const st of t.statuses) {
+        const def = battle.statusDef(st.kind);
+        if (!def?.clearedBy?.includes('fire')) continue;
+        const own = Math.min(st.turns, ctx.turnsWithin(t));
+        if (def.skipTurn) v -= cfg.thaw * tv * Math.min(1, own) * hit;
+        else if (def.speedMult !== undefined && def.speedMult < 1) v -= cfg.thaw * (1 - def.speedMult) * own * tv * hit;
+      }
+  }
+  return v;
+}
+
+function darknessValue(ctx: ValueContext, o: Option): number {
+  const battle = ctx.battle;
+  const d = battle.darkRule();
+  const cfg = ctx.vc.darkness;
+  if (!d || !cfg) return 0;
+  const actor = ctx.actor;
+  const restricted = d.sides.flatMap((s) => battle.fighting(s));
+  const team = sum(restricted.map((u) => ctx.turnValue(u)));
+  let v = 0;
+  if (battle.isDark() && battle.isFireSkill(o.skill)) {
+    const hidden = (s: (typeof d.sides)[number]) => {
+      const foe = s === 'party' ? 'enemy' : 'party';
+      return battle.fighting(foe).some((f) => f.board === foe && battle.rowOf(f.slot) > battle.darkReachRow(foe));
+    };
+    if (d.sides.some(hidden)) v += (d.sides.includes(actor.side) ? 1 : -1) * cfg.fireLight * team;
+  }
+  for (const t of o.targets) {
+    if (!t.lightSource || t.side === actor.side || t.hp <= 0) continue;
+    v += cfg.lanternBreak * team * previewHitChance(o, t);
+  }
   return v;
 }
 
@@ -2092,7 +2381,7 @@ function advanceValue(ctx: ValueContext, o: Option): number {
     extra = Math.max(0, meleeIncoming(battle, actor, to) - meleeIncoming(battle, actor, actor.slot));
   }
   const risk = extra * (vc.advanceRiskShare ?? 0.5) * (2 - ratio(actor));
-  const tg = battle.telegraphs.length > 0 ? telegraphLoad(battle, actor, to) - telegraphLoad(battle, actor, actor.slot) : 0;
+  const tg = battle.telegraphs.length > 0 || battle.hazards.length > 0 ? telegraphLoad(battle, actor, to) - telegraphLoad(battle, actor, actor.slot) : 0;
   // YZ kapsamı: yeni hücrenin zemin farkı (genel zemin kuralı)
   const v = gain - risk - tg + cellDelta(ctx, actor, actor.board, to);
   if (v !== 0 && o.notes.length < 6) o.notes.push(`advance to cell ${to}: ${v > 0 ? '+' : ''}${r1(v)}`);
@@ -2288,6 +2577,13 @@ function telegraphLoad(battle: Battle, actor: Combatant, slot: number): number {
       if (cells.includes(at)) total += Math.min(u.hp + u.shield, battle.telegraphDamage(t, u).avg);
     }
   }
+  // M-G / M-H: işaretli ortam tehlikeleri (Cave-in, Heat): telgrafla aynı ölçü; ortam her iki tarafa da iner
+  if (battle.hazards.length > 0) {
+    for (const u of battle.living(actor.side)) {
+      if (u.inert) continue;
+      total += Math.min(u.hp + u.shield, battle.hazardThreat(u, u.uid === actor.uid ? slot : u.slot));
+    }
+  }
   return total;
 }
 
@@ -2481,7 +2777,7 @@ function bestMoveLegacy(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNo
  * (yakın dövüşçü melee yeteneğini kaybediyorsa + şimdiki hamlenin yarısı).
  */
 function telegraphDodgeLegacy(battle: Battle, actor: Combatant, free: number[], vNow: number): MovePlan | null {
-  if (battle.telegraphs.length === 0) return null;
+  if (battle.telegraphs.length === 0 && battle.hazards.length === 0) return null;
   const now = telegraphLoad(battle, actor, actor.slot);
   if (now <= 0) return null;
   const meleeSkills = actor.skills.map((id) => battle.skill(id, actor)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
@@ -2520,7 +2816,7 @@ function bestMove(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: num
  */
 function groundMove(battle: Battle, actor: Combatant, vNow: number, base: MovePlan | null): MovePlan | null {
   const ctx = activeCtx;
-  if (!ctx || !battle.ground.some((gr) => gr.board === actor.board)) return base;
+  if (!ctx || (!battle.ground.some((gr) => gr.board === actor.board) && !battle.thunderSkillsOf(actor.side === 'party' ? 'enemy' : 'party').some((f) => f.skill.effects.some((e) => e.type === 'damage' && e.ironBolt)))) return base;
   const plans: MovePlan[] = [];
   if (base) plans.push({ ...base, net: base.net + cellDelta(ctx, actor, actor.board, base.slot) });
   const free = battle.freeTiles(actor.uid).filter((s) => !battle.breaksHold(actor.uid, s));
@@ -2540,7 +2836,7 @@ function groundMove(battle: Battle, actor: Combatant, vNow: number, base: MovePl
     if (d <= 0) continue;
     const saved = ctx.rescued(actor, 0, d) ? ctx.save(actor) : 0;
     const lose = now && !attackFrom(s) ? vNow * 0.5 : 0;
-    const tg = battle.telegraphs.length > 0 ? telegraphLoad(battle, actor, s) - telegraphLoad(battle, actor, actor.slot) : 0;
+    const tg = battle.telegraphs.length > 0 || battle.hazards.length > 0 ? telegraphLoad(battle, actor, s) - telegraphLoad(battle, actor, actor.slot) : 0;
     const net = d + saved - vNow * activeTg.dodgeOpportunityShare - lose - tg;
     if (net > 0 && (!top || net > top.net + 1e-9)) top = { slot: s, net, kind: 'leave ground' };
   }
@@ -2881,7 +3177,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
   const tag = (c: AiCandidate) => `${c.name}${c.target ? ` -> ${c.target}` : ''}${c.reviveSlot !== undefined ? ` @cell ${c.reviveSlot}` : ''}`;
   let why: string;
   if (!choice) why = 'No usable action: the turn is passed.';
-  else if (choice.reason === 'rest' || choice.reason === 'skip' || choice.reason === 'move' || choice.reason === 'urn') {
+  else if (choice.reason === 'rest' || choice.reason === 'skip' || choice.reason === 'move' || choice.reason === 'urn' || choice.reason === 'rod') {
     why = `Global skill "${skillName(choice.skillId)}": ${trace.global?.outcome ?? choice.reason}. ${chosen ? `The class move would have been ${tag(chosen)} (score ${chosen.score}).` : 'No class move was available.'}`;
   } else {
     why = `Highest value (${choice.reason}): ${chosen ? `${tag(chosen)} score ${chosen.score} = ${termText(chosen.terms ?? {})}` : skillName(choice.skillId)}${runnerUp ? `; next best ${tag(runnerUp)} score ${runnerUp.score} = ${termText(runnerUp.terms ?? {})}` : ''}.`;
@@ -3086,9 +3382,10 @@ function cellWorth(ctx: ValueContext, u: Combatant, board: Side, slot: number, s
 
 /** Birimin bulunduğu hücreden `slot`'a geçmesinin zemin değeri farkı (artı = birim için iyi). Zemin yoksa 0 (ucuz). */
 function cellDelta(ctx: ValueContext | null, u: Combatant, board: Side, slot: number): number {
-  if (!ctx || ctx.battle.ground.length === 0) return 0;
-  if (board === u.board && slot === u.slot) return 0;
-  return cellWorth(ctx, u, board, slot) - cellWorth(ctx, u, u.board, u.slot);
+  if (!ctx || (board === u.board && slot === u.slot)) return 0;
+  const bolt = thunderCellWorth(ctx, u, board, slot) - thunderCellWorth(ctx, u, u.board, u.slot); // etiketsiz savaşta 0
+  if (ctx.battle.ground.length === 0) return bolt;
+  return cellWorth(ctx, u, board, slot) - cellWorth(ctx, u, u.board, u.slot) + bolt;
 }
 
 /** Zemin tepkimesi (Explosion, Steam...) hücresindeki tetik zeminini siliyor mu (yaratma değeri o hücrede sayılmaz)? */
@@ -3398,7 +3695,7 @@ function opportunistSetup(ctx: ValueContext, o: Option): number {
   for (const e of o.skill.effects) {
     if (e.type !== 'status' || e.self) continue;
     for (const t of o.targets) {
-      if (t.hp <= 0 || t.side === actor.side || t.statuses.some((s) => s.kind === e.status) || battle.statusBlocked(t, e.status)) continue;
+      if (t.hp <= 0 || t.side === actor.side || t.statuses.some((s) => statusCounts(s, e.status)) || battle.statusBlocked(t, e.status)) continue;
       const p = previewHitChance(o, t) * ((e as { chance?: number }).chance ?? 1) * (1 - (o.killP[t.uid] ?? 0));
       const foes = Math.max(1, battle.living(t.side).filter((f) => !f.inert).length);
       for (const a of opp) {

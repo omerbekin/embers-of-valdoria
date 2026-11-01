@@ -1,6 +1,6 @@
 # Diyalog cevapları taslağı (Ömer görecek, oyuna henüz GİRMEDİ)
 
-Durum: 2026-10-31 Ömer aşağıdaki 7 taslağı aynen onayladı, `data/` içinde `"reply"` olarak var. Lore soruları açık kaldı (iki warden, başka kurtulan). Sonuncu tablodaki 6 seçeneğin taslakları Form 7'de.
+Durum: 2026-10-31 Ömer aşağıdaki 7 taslağı aynen onayladı, `data/` içinde `"reply"` olarak var. Lore soruları açık kaldı (iki warden, başka kurtulan). Sonuncu tablodaki 6 seçeneğe de Ömer'in Form 7 onayıyla (2026-10-31) cevap eklendi, metinleri `data/` içinde.
 
 Görünüşü: oyuncu seçeneği seçer, NPC bu kısa cevabı söyler, altta tek "Continue" olur, ondan sonra sıradaki replik gelir. Beğeni sayısı ve hediye değişmez. `reply` olmayan seçeneklerde akış bugünkü gibidir.
 

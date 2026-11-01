@@ -5,7 +5,7 @@ import { autoResolve, debugTeleport, latestSave, listSaves, memoryKV, newCampaig
  * Playtest B1 / H4 (Ömer 2026-10-23): kasaba işlemleri otomatik kayda girer; yenilgide Load Last Save kasabadaki ilerlemeyi korur.
  * Aynı düğümdeki art arda kasaba kayıtları tek kaydın yerine yazılır (Normal'in 5 kaydı erimez), elle kayıt silinmez.
  */
-const start = (): CampaignState => autoResolve(pickHero(newCampaign({ mode: 'normal', seed: 7, slot: 0, difficulty: 'medium', campaignId: 'c7' }), 'archer'));
+const start = (): CampaignState => autoResolve(pickHero(newCampaign({ mode: 'normal', seed: 7, slot: 0, difficulty: 'medium', campaignId: 'c7' }), 'druid'));
 const keep = (s: CampaignState) => debugTeleport(s, '7'); // Valdren Keep (kasaba)
 
 describe('kasaba kaydı (B1)', () => {
@@ -36,7 +36,7 @@ describe('kasaba kaydı (B1)', () => {
 
   it('Ironman da kasaba kaydı alır (tek kayıt)', () => {
     const kv = memoryKV();
-    const s = keep(autoResolve(pickHero(newCampaign({ mode: 'ironman', seed: 8, slot: 1, difficulty: 'medium', campaignId: 'i8' }), 'archer')));
+    const s = keep(autoResolve(pickHero(newCampaign({ mode: 'ironman', seed: 8, slot: 1, difficulty: 'medium', campaignId: 'i8' }), 'druid')));
     expect(writeCheckpointSave(kv, { ...s, gold: 1 })).toBe(true);
     expect(writeCheckpointSave(kv, { ...s, gold: 2 })).toBe(true);
     expect(saveCount(kv, 1)).toBe(1);

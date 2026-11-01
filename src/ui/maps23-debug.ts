@@ -8,6 +8,7 @@ import {
   WAYSHRINES,
   debugFinishMap1,
   debugFinishMap2,
+  debugValdrenReserve,
   debugJumpHollowCrown,
   debugJumpHollowNode,
   debugSealedTomb,
@@ -409,6 +410,15 @@ export function registerMaps23Debug(debug: DebugMenu, reload: () => void, ensure
       enable3();
       apply(debugSealedTomb(ensureState()));
     },
+  });
+  debug.register({
+    id: 'maps23.valdren.reserve',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'swap',
+    label: 'Jump to Valdren Keep (hero in reserve)',
+    hint: 'Teleport to Valdren Keep (same seed) with a full company and one hero in reserve, the recruit still open. In the town, tap "Barracks": swap with the reserve, or "Recruits" for the usual pick. Replaces the current campaign in its slot.',
+    run: () => apply(debugValdrenReserve(ensureState())),
   });
   debug.register({
     id: 'maps23.finish1',

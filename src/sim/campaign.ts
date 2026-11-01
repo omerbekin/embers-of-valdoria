@@ -23,6 +23,8 @@ import {
   battlePlan,
   completeSimple,
   equipBest,
+  acknowledgeBriefing,
+  companyChoices,
   farewell,
   formCompany,
   getMap,
@@ -432,23 +434,27 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
         case 'hero':
           hero = CONFIG.starterPool[rng.int(0, CONFIG.starterPool.length - 1)]!;
           s = pickHero(s, hero);
+          company.push(hero); // ilk kahraman kalıcı (Ömer 2026-11-01)
           break;
         case 'recruit':
         case 'volunteer': {
           const pick = step.offer[rng.int(0, step.offer.length - 1)]!;
           s = recruit(s, pick);
-          if (step.kind === 'volunteer') company.push(pick);
+          if (step.kind === 'volunteer' || s.soloStart) company.push(pick); // tek kişilik başlangıçta her katılan kalıcı
           break;
         }
         case 'farewell':
           s = farewell(s);
           break;
         case 'company': {
-          const picks = shuffle(CONFIG.companyPool, rng).slice(0, step.size);
+          const picks = shuffle(companyChoices(s), rng).slice(0, step.size);
           company.push(...picks);
           s = formCompany(s, picks);
           break;
         }
+        case 'briefing':
+          s = acknowledgeBriefing(s);
+          break;
         case 'battle': {
           const agg = nodeAgg(step.node);
           agg.reached++;

@@ -19,6 +19,120 @@ Sayılar `data/balance.json` dosyasındadır; `npm run sim` raporu ve `tests/bal
 - Yapay zeka her iki tarafta Medium (tam terazi).
 - Test grup başına `balance.json > test.runs` (5.000) savaşla iki ayrı seed grubunda (900001.., 300001..) aynı bantları korur; iki dosya paralel koşar (~1,5 dk). Tam ölçüm: `npm run sim` (argümansız: 2 x 10.000, tek çekirdekte birkaç dakika) ya da `npm run sim -- <savaş> <seed> [boyut] [boyut]`.
 
+## Harita 1 tek kişilik başlangıç eğrisi (balance-tester 2026-11-01; Ömer hedefleri)
+Yalnız yeni sefer (`soloStart`); eski kayıt değişmedi, Harita 2 aşağıda ayrı bölümde. Kaldıraç yalnız `data/campaign/campaign.json > soloStart.enemyScale` (mob canı ve hasarı). Ölçüm: Medium, duvar 10, `--overgrind=0`, 300 koşu, kasma simi; ±5 puan hata payı. Sim yüzdesi oyuncu yüzdesi değildir, Ömer'in gerçek oyunu simden güçlüdür.
+
+Hedefler (Medium iyi oyuncu, ilk deneme): Grave ~85, Pilgrim ~88, St. Brann's ~75, Black Cathedral ~62, King's Bridge 45-50, Ashen Plain ~85, Siege Line ~82, Thornwood ~75, Ember Road ~84, Burnt Hamlet ~88, Riverhead ~92, Gate of Cinders ~86, Castle Morvane 45-55. Tek kahramanla ilk denemede kazanma: Windy Moor ve Brackenridge en az %80, Cairn Hill en az %75. Düğüm başına duvar en fazla %10. Kasma: Medium elit 2-3, boss 3-4, KASIP GEÇEN koşu başına (duvara vuran koşu bu ortalamaya girmez); Hard x2; Easy kasmasız; ortalama oyuncu üst sınır x1,5. Hedefler kodda `src/sim/campaign-targets.ts`.
+
+| Düğüm | Takım | İlk deneme % | Zafer canı % | Takım / düğüm level | Duvar % | Kasıp geçen kasma |
+|---|---|---|---|---|---|---|
+| Mill Road | 1 | 100 | 73 | 1,0 / 1 | 0 | - |
+| Ravenwood | 1 | 100 | 95 | 1,0 / 1 | 0 | - |
+| Ruined Watchtower | 1 | 100 | 90 | 3,0 / 1 | 0 | - |
+| Windy Moor | 2 | 100 (tek kahraman 84,9) | 93 | 4,0 / 1 | 0 | - |
+| Brackenridge | 2 | 100 (tek kahraman 85,1) | 94 | 4,0 / 1 | 0 | - |
+| Cairn Hill | 2 | 100 (tek kahraman 79,2) | 92 | 4,0 / 1 | 0 | - |
+| Iron Pass | 2 | 94,2 | 66 | 4,0 / 2 | 1 | - |
+| Charcoal Camp | 2 | 95,1 | 70 | 4,0 / 2 | 0 | - |
+| Dwarven Mine | 3 | 92,6 | 79 | 4,1 / 3 | 0 | - |
+| Witch's Hut | 3 | 94,2 | 78 | 4,2 / 3 | 0 | - |
+| Misty Marsh | 3 | 99,0 | 81 | 4,0 / 3 | 0 | - |
+| Grave Field | 3 | 86,0 | 70 | 4,2 / 3 | 1 | - |
+| Pilgrim Road | 3 | 89,9 | 66 | 4,7 / 4 | 1 | - |
+| St. Brann's Abbey | 3 | 76,4 | 63 | 5,0 / 4 | 3 | - |
+| Black Cathedral (elit) | 3 | 64,8 | 61 | 5,3 / 4 | 8 | 4,57 |
+| King's Bridge (boss) | 3 | 44,0 | 35 | 5,4 / 6 | 5 | 3,11 |
+| Ashen Plain | 4 | 84,0 | 71 | 6,8 / 6 | 0 | - |
+| Siege Line | 4 | 80,9 | 68 | 6,9 / 7 | 1 | - |
+| Thornwood Hollow (elit) | 4 | 70,3 | 49 | 7,1 / 7 | 3 | 3,31 |
+| Ember Road | 4 | 83,9 | 63 | 7,0 / 8 | 0 | - |
+| Burnt Hamlet | 4 | 87,8 | 72 | 7,3 / 8 | 0 | - |
+| Riverhead | 4 | 85,4 | 78 | 7,5 / 9 | 0 | - |
+| Gate of Cinders | 4 | 83,4 | 72 | 7,8 / 9 | 0 | - |
+| Castle Morvane (boss) | 4 | 54,5 | 38 | 8,1 / 10 | 16 | 3,40 |
+
+Özet: iyi oyuncu bitirme %70,7, duvar %29,3; kolay düğümler hariç normal ilk deneme %86,3. Ortalama oyuncu bitirme %34, en büyük duvarlar Black Cathedral 31, Castle Morvane 25, St. Brann's 18, Thornwood 14, King's Bridge 13 (hedef dışı değil, bilgi: %10 duvar hedefi iyi oyuncu için).
+
+Hedef dışı kalanlar: Castle Morvane duvarı %16 (sınır 10); Black Cathedral kasıp geçen 4,57 ve Thornwood 3,31 (elit 2-3); Riverhead ilk deneme 85,4 (hedef ~92); Thornwood ilk deneme 70,3 (hedef ~75). Normal düğümlerde 0,3-0,48 görünen kasmanın çoğu Inn beklerken kolay devriyedir (ör. Ember Road 0,43'ün 0,41'i), gerçek kasma değildir.
+
+## Harita 2 eğrisi (balance-tester 2026-11-01; Ömer hedefleri)
+Eski ve yeni kayıtta aynı (Harita 2 iki kayıt türünde de aynı yapıda; open-questions Q-NEW). Kaldıraç yalnız `data/campaign/campaign.json > mapEnemyScale` (mob canı ve hasarı). Ölçüm: Medium, iyi oyuncu, duvar 10, `--overgrind=0`, 300 koşu, kasma simi. Hata payı n'e göre: n=200'de ±5, n=40'ta ±12 puan. Throne of Brine aynı çarpanla iki 300 koşuda ilk deneme %50 ve %40 verdi. Sim yüzdesi oyuncu yüzdesi değildir.
+
+**Ana hedef (Ömer 2026-11-01):** iyi oyuncu Harita 2 bitirme %60-75 (Harita 2'ye ulaşan koşular içinde). Ölçülen: %58,6, hedefin 1,4 puan altında (n=215'te hata payı ±7). Bitirme tutmuyorsa elit ve boss ilk deneme oranları eski hedefin üstüne çıkabilir (Ömer).
+
+Eski hedefler (ilk denemede kazanma; artık ikincil): ilk bölge normal 90-95; sonrası normal 80-88; elit 60-70; The Weir Mouth 55-60, Gallows Cove 50-55, Throne of Brine 45-55. Kasıp geçen koşu başına kasma: elit 2-3, boss 3-4. Düğüm başına duvar en çok %10.
+
+| Düğüm | Çarpan can / hasar: önce -> şimdi | n | İlk denemede kazanma %: önce -> şimdi | Eski hedef | Duvar % | Kasma |
+|---|---|---|---|---|---|---|
+| dr1 The Long Stair | 1,3 / 1,3 -> 1,12 / 1,12 | 215 | 100,0 -> 100,0 | 90-95 | 0 | 0,00 |
+| dr3 The Rapids | 1,25 / 1,25 -> 1,1 / 1,1 | 215 | 94,0 -> 99,1 | 90-95 | 0 | 0,00 |
+| dr4 Drowned Mill | 1,25 / 1,25 -> 1,1 / 1,1 | 177 | 91,2 -> 94,4 | 90-95 | 0 | 0,00 |
+| dr5 Barge Wreck | 1,3 / 1,3 -> 1,12 / 1,12 | 198 | 96,8 -> 99,5 | 90-95 | 0 | 0,00 |
+| dr7 Tollhouse (elit) | 1,05 / 1,18 -> 1 / 1,05 | 215 | 73,6 -> 88,8 | 60-70 | 4 | 2,50 /geçen |
+| dr8 Hangman's Oak | 1,35 / 1,35 -> 1,15 / 1,15 | 206 | 96,8 -> 99,5 | 90-95 | 0 | 0,05 |
+| dr9 Old Weir Road | 1,15 / 1,15 -> 1,05 / 1,05 | 183 | 94,1 -> 95,6 | 90-95 | 1 | 0,05 |
+| dr10 Widow's Ford | 1,25 / 1,25 -> 1,1 / 1,1 | 175 | 96,9 -> 96,6 | 90-95 | 0 | 0,00 |
+| dr13 Reedway | 0,8 / 0,8 -> 0,73 / 0,73 | 204 | 89,4 -> 92,6 | 80-88 | 3 | 0,29 |
+| dr14 Salt Pans | 1,2 / 1,2 -> 1,05 / 1,05 | 153 | 91,7 -> 95,4 | 80-88 | 1 | 0,13 |
+| dr17 The Great Weir | 0,77 / 0,77 -> 0,7 / 0,7 | 184 | 82,7 -> 88,6 | 80-88 | 3 | 0,40 |
+| dr18 Hag's Island (elit) | 1,3 / 1,6 -> 1,2 / 1,4 | 109 | 93,1 -> 96,3 | 60-70 | 0 | 0,00 /geçen |
+| dr19 Sunken Chapel | 1,15 / 1,15 -> 1,03 / 1,03 | 166 | 84,7 -> 94,6 | 80-88 | 1 | 0,10 |
+| dr20 Heron Flats | 1 / 1 -> 0,9 / 0,9 | 189 | 87,0 -> 93,1 | 80-88 | 2 | 0,21 |
+| dr21 The Drowned Causeway | 1,25 / 1,25 -> 1,05 / 1,05 | 185 | 89,7 -> 96,8 | 80-88 | 1 | 0,15 |
+| dr24 Brine Pools | 0,88 / 0,88 -> 0,8 / 0,8 | 183 | 82,1 -> 90,7 | 80-88 | 5 | 0,72 |
+| dr25 Eel-Mother's Lair | 1,2 / 1,2 -> 1,08 / 1,08 | 146 | 88,5 -> 93,8 | 80-88 | 0 | 0,00 |
+| dr26 The Weir Mouth (boss) | 1,1 / 1,7 -> 1 / 1,38 | 173 | 56,6 -> 83,2 | 55-60 | 3 | 2,50 /geçen |
+| dr27 Saltmere Gate | 1,04 / 1,04 -> 0,95 / 0,95 | 168 | 77,1 -> 93,5 | 80-88 | 1 | 0,21 |
+| dr30 Chandlers' Row | 0,9 / 0,9 | 15 | 75,0 -> 73,3 | 80-88 | 0 | 0,00 |
+| dr32 Harbor Fort (elit) | 1,35 / 2 -> 1,2 / 1,6 | 140 | 69,2 -> 89,3 | 60-70 | 0 | 0,00 /geçen |
+| dr33 Sewer Outfall | 0,9 / 0,9 | 7 | 33,3 -> 42,9 | 80-88 | 0 | 0,00 |
+| dr34 The Drowned Cathedral | 0,9 / 0,9 | 6 | 66,7 -> 50,0 | 80-88 | 0 | 0,00 |
+| dr35 The Crypt Stair | 1 / 1 | 1 | - -> 100,0 | 80-88 | 0 | 0,00 |
+| dr36 Chainwalk | 0,95 / 0,95 | 2 | - -> 50,0 | 80-88 | 0 | 0,00 |
+| dr37 The Old Mole | 0,95 / 0,95 | 1 | - -> 0,0 | 80-88 | 0 | 0,00 |
+| dr40 Quarantine Yard | 1,13 / 1,13 -> 1,05 / 1,05 | 166 | 81,7 -> 92,2 | 80-88 | 2 | 0,37 |
+| dr41 Gull Cliffs | 1 / 1 -> 0,92 / 0,92 | 163 | 85,8 -> 92,0 | 80-88 | 1 | 0,23 |
+| dr42 Wreckers' Beacon | 1 / 1 | 85 | 91,0 -> 84,7 | 80-88 | 2 | 0,40 |
+| dr43 Smugglers' Cave | 1,35 / 1,35 -> 1,15 / 1,15 | 151 | 88,3 -> 97,4 | 80-88 | 0 | 0,02 |
+| dr44 Bone Beach | 1,2 / 1,2 -> 1,08 / 1,08 | 81 | 89,8 -> 93,8 | 80-88 | 1 | 0,19 |
+| dr47 The Hanging Stair | 0,95 / 0,95 -> 0,86 / 0,86 | 158 | 81,3 -> 89,2 | 80-88 | 1 | 0,23 |
+| dr48 Wreck of the Valdren Pride | 1,03 / 1,03 -> 0,94 / 0,94 | 157 | 80,4 -> 89,2 | 80-88 | 0 | 0,33 |
+| dr50 The Wrecker's Hall (elit) | 1,1 / 1,3 -> 1 / 1,1 | 157 | 69,6 -> 84,1 | 60-70 | 2 | 1,86 /geçen |
+| dr51 Sea Cave Hoard | 1,5 / 1,5 -> 1,2 / 1,2 | 144 | 98,8 -> 98,6 | 80-88 | 0 | 0,00 |
+| dr53 Gallows Point | 1,28 / 1,28 -> 1,12 / 1,12 | 154 | 91,6 -> 96,1 | 80-88 | 1 | 0,21 |
+| dr55 The Sound | 1,15 / 1,15 -> 1,05 / 1,05 | 109 | 85,7 -> 90,8 | 80-88 | 0 | 0,20 |
+| dr57 Siren Rocks | 1,2 / 1,2 -> 1,08 / 1,08 | 71 | 88,1 -> 85,9 | 80-88 | 1 | 0,55 |
+| dr58 Gull Isle | 1,15 / 1,15 -> 1,05 / 1,05 | 81 | 80,0 -> 90,1 | 80-88 | 1 | 0,21 |
+| dr60 The Narrows | 1,15 / 1,15 -> 1,05 / 1,05 | 90 | 87,7 -> 88,9 | 80-88 | 2 | 0,38 |
+| dr62 Open Water | 1,35 / 1,35 -> 1,15 / 1,15 | 87 | 85,2 -> 93,1 | 80-88 | 1 | 0,22 |
+| dr63 Pirate Cove | 1 / 1 | 148 | 84,6 -> 83,8 | 80-88 | 1 | 0,58 |
+| dr64 Storm Strait | 1,12 / 1,12 -> 1,05 / 1,05 | 146 | 82,4 -> 87,0 | 80-88 | 1 | 0,45 |
+| dr66 Gallows Cove (boss) | 1 / 1,58 -> 1 / 1,25 | 145 | 58,4 -> 79,3 | 50-55 | 4 | 2,00 /geçen |
+| dr68 Drowned Shoal | 1,45 / 1,45 -> 1,2 / 1,2 | 139 | 96,3 -> 99,3 | 80-88 | 0 | 0,00 |
+| dr70 The Drowned Gate | 1,2 / 1,2 -> 1,08 / 1,08 | 139 | 88,9 -> 94,2 | 80-88 | 1 | 0,22 |
+| dr71 Hall of Tides | 1,35 / 1,35 -> 1,15 / 1,15 | 74 | 100,0 -> 93,2 | 80-88 | 0 | 0,00 |
+| dr72 The Salt Garden | 1,5 / 1,5 -> 1,2 / 1,2 | 74 | 90,9 -> 93,2 | 80-88 | 0 | 0,15 |
+| dr73 Courtiers' Walk | 1,3 / 1,3 -> 1,12 / 1,12 | 64 | 83,3 -> 93,8 | 80-88 | 0 | 0,05 |
+| dr74 The Bishop's Chapel (elit) | 1,05 / 1,3 -> 1 / 1,15 | 64 | 62,9 -> 85,9 | 60-70 | 2 | 2,25 /geçen |
+| dr76 Kennels of the Deep | 1,03 / 1,03 | 137 | 83,5 -> 79,6 | 80-88 | 1 | 0,63 |
+| dr78 The Long Gallery | 1,07 / 1,07 -> 0,97 / 0,97 | 136 | 81,0 -> 83,1 | 80-88 | 1 | 0,55 |
+| dr79 The Champion's Stair (elit) | 1 / 1,6 -> 1 / 1,3 | 134 | 67,9 -> 78,4 | 60-70 | 2 | 3,13 /geçen |
+| dr81 Antechamber | 1,05 / 1,05 -> 0,96 / 0,96 | 131 | 75,6 -> 87,8 | 80-88 | 1 | 0,34 |
+| dr82 Throne of Brine (boss) | 0,9 / 1,85 -> 0,9 / 1,45 | 130 | 40,0 -> 73,1 | 45-55 | 3 | 1,45 /geçen |
+| dr84 Wayshrine of Stone | 1,25 / 1,25 -> 1,1 / 1,1 | 158 | 97,7 -> 98,7 | - | 0 | 0,00 |
+| dr85 Wayshrine of the Heron | 1,2 / 1,2 -> 1,08 / 1,08 | 139 | 90,5 -> 97,8 | - | 0 | 0,00 |
+| dr86 Wayshrine of Mercy | 1,2 / 1,2 -> 1,08 / 1,08 | 139 | 96,3 -> 98,6 | - | 0 | 0,00 |
+| dr87 Wayshrine of the Line | 1,25 / 1,25 -> 1,1 / 1,1 | 132 | 92,0 -> 94,7 | - | 0 | 0,00 |
+| dr91 The Gull Roost | 0,95 / 0,95 | 49 | 76,7 -> 69,4 | - | 0 | 0,00 |
+
+Simde ölçülmeyen düğümler: dr65, dr77, dr88, dr89. dr65 Siren Queen's Rock çarpanı "Stronger than the road ahead" uyarısı sürsün diye seçildi, zorluk ölçüsüne göre değil. n'i 15 ve altındaki düğümler (dr30, dr33, dr34, dr35, dr36, dr37) yorumlanmaz. Yan düğüm uyarısı: önce dr25, dr43, dr51, dr65 alıyordu; şimdi yalnız dr65.
+
+Özet: iyi oyuncu bitirme %33,0 -> %58,6 (ayarsız %66,5), toplam duvar %67,0 -> %41,4; ortalama oyuncu bitirme %8,3 -> %24,8 (ayarsız %32,4). Bitirme yüzdesi Harita 2'ye ulaşan koşular üzerindendir: iyi oyuncuda 300 koşunun 215'i Harita 2'ye girer (89 duvar, 126 bitirme), ortalama oyuncuda 109'u.
+
+Öğrenilen: duvarlı düğümleri tek tek düşürmek bitirmeyi kıpırdatmadı (2 tur: %38 ve %35, 96 koşu). Duvarın %60'ı (89'un 53'ü) kahramanı Inn'de bekleyen takımda oluşuyor; o takımı Inn'e gönderen yara, duvarın olduğu düğümde değil, önceki yüksek çarpanlı savaşlarda alınıyor. Sıçrama, ilk bölge ve yüksek çarpanlı normalleri 1,05-1,2'ye, boss ve elit hasarını aşağı çekince geldi (3. tur %68,3, 96 koşu). Hangi grubun ne kadar katkı verdiği ayrı ölçülmedi.
+
+Eski hedefi aşanlar (ilk deneme): boss The Weir Mouth 83,2 (55-60), Gallows Cove 79,3 (50-55), Throne of Brine 73,1 (45-55); elit Hag's Island 96,3, Harbor Fort 89,3, Tollhouse 88,8, The Bishop's Chapel 85,9, The Wrecker's Hall 84,1, The Champion's Stair 78,4 (hepsi 60-70). Boss kasması 1,87/geçen (hedef 3-4, altında). Normal düğümlerin çoğu 80-88 bandının üstünde (ort. 93,1). Throne of Brine savaşlarının %51'i 100+ tur (önce %47); can artırılmadı (0,9), kök sebep çarpan değil.
+
 ## Dengesi / bandı bekleyenler (geçici muafiyet; normalde BOŞ)
 - `tests/balance-checks.ts > PENDING_BALANCE` (class bandı): **boş**. Hexer bu turda bantta (%48) olduğu için listeden çıkarıldı.
 - `tests/balance-checks.ts > PENDING_SKILLS` (skill bandı): **boş**. Whirlwind 2026-10-20 kısa süre listedeydi (pay %11); Ömer kararıyla ilk iki sıraya vuran rect 2x3 olunca (güç 0,5) pay %22, çıkarıldı (open-questions 376).
@@ -261,3 +375,6 @@ Genel kol olarak **can tabanı** seçildi (Ömer: 20 -> 30): her birime aynı mu
 - Normal savaş: ortalama 4-7 oyuncu aksiyonu / karakter başına yaklaşık 3-5 tur. Boss savaşı: 10-15 tur (taslak, sefer için).
 - Ömer "X zayıf/güçlü" dediğinde: önce rapor, sonra veri dosyasında ayar, sonra yeni rapor.
 - Eski hedef (2026-10-04): sınıf kazanma %40-60, 5'e 5; bu bölümdeki bantlarla değişti.
+
+## Kasmasız sefer simi bantları (Ömer onayı 2026-11-01)
+Tek kişilik başlangıç eğrisinden sonra `data/campaign/balance.json > targets, finish` yenilendi (Harita 1, iyi oyuncu, ilk denemede kazanma; 300 koşu ölçümü: Easy 98,6 / 93 / 87 / bitirme 94,3; Medium 86,4 / 57,4 / 37,8 / 44,3; Hard 79,3 / 39,6 / 17,7 / 21,3). Ana ölçüm kasma simi kalır. Harita 2 kasmadan geçilmek üzere ayarlı değil (Medium iyi oyuncu bitirme %7,7), o yüzden kasmasız simde bandı yok.

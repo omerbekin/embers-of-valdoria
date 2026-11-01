@@ -1,0 +1,25 @@
+{
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: ember_acolyte. YER TUTUCU görünüm: çizimi yok, ember_acolyte sprite'ı.",
+  "id": "cinderleaper",
+  "name": "Cinderleaper",
+  "family": "ember_cult",
+  "spriteId": "ember_acolyte",
+  "color": "#c8562a",
+  "logo": "wizhat",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Ashborn · Leaper",
+  "attributes": {
+    "str": 25,
+    "int": 6,
+    "dex": 16,
+    "luck": 4
+  },
+  "armor": 10,
+  "magicArmor": 4,
+  "ai": "aggressive",
+  "skills": [
+    "through_the_flame",
+    "rend"
+  ]
+}

@@ -1,8 +1,8 @@
 import { woundCount } from '../progression/wounds';
 import { normalizeSurge, taintOf } from './surge';
-import { CONFIG, MAPS } from './data';
+import { CONFIG, MAPS, mapFor } from './data';
 import { findNode } from './graph';
-import { activeHeroes, canReplay, clearedProgress, formationGate, nodeCleared, stopNumber } from './state';
+import { activeHeroes, canReplay, cleanCompanyName, clearedProgress, formationGate, nodeCleared, stopNumber } from './state';
 import { validCampaignSuspended } from './suspend';
 import { pitOf } from './pit';
 import { oathDef } from './oath';
@@ -88,6 +88,8 @@ export interface SaveSummary {
   classes: string[];
   hp: number[];
   victories: number;
+  /** Bölük adı (D4; kayıt kartının kısa başlığı, yoksa "Slot N"). */
+  company?: string;
   /** Temizlenmiş / toplam düğüm (sürüm 10; eski kayıt kartında yok, kart "Stop" yazar). */
   cleared?: number;
   total?: number;
@@ -250,6 +252,14 @@ function upgradeState(s: CampaignState): void {
   if (s.suspended !== undefined && !(validCampaignSuspended(s.suspended) && s.suspended.node === s.at)) delete (s as { suspended?: unknown }).suspended;
   // Zorunlu Formation kapısı (Ömer 2026-10-17; isteğe bağlı alan): bozuksa atılır; geçerliliği upgradeRecruitTiming'de (eski kayıt takılmaz)
   if (s.formationDue !== undefined && typeof s.formationDue !== 'string') delete (s as { formationDue?: unknown }).formationDue;
+  // Tek kişilik başlangıç (Ömer 2026-11-01; isteğe bağlı alan, sürüm değişmez): yalnız true geçerli, yoksa eski yapı
+  if (s.soloStart !== undefined && s.soloStart !== true) delete (s as { soloStart?: unknown }).soloStart;
+  // Bölük adı (Ömer 2026-11-01, D4; isteğe bağlı alan, sürüm değişmez): geçersizse atılır, geçerliyse sadeleşmiş hali
+  if (s.companyName !== undefined) {
+    const name = cleanCompanyName(s.companyName);
+    if (name) s.companyName = name;
+    else delete (s as { companyName?: unknown }).companyName;
+  }
   // Valor (sürüm 7): bozuk değer kırpılır; alanı olmayan eski kayıt Valdren Keep'in hikâyesini / kasabasını bitirmişse hediye ile açılır
   const intro = valorRules.campaign.introNode;
   if (s.valor !== undefined) s.valor = clampValor(valorRules, Number(s.valor));
@@ -307,7 +317,8 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
  * kahraman gelmez); bitmemişse state.ts > carriedRecruit kahramanı bulunulan yerde verir. Zorunlu Formation alanı kapı geçerli değilse atılır.
  */
 function upgradeRecruitTiming(s: CampaignState): void {
-  const map = MAPS[s.mapId];
+  // Yeni seferde (soloStart) eski taşıma yok; eski kayıt eski harita sürümüne bakar
+  const map = s.soloStart || !MAPS[s.mapId] ? undefined : mapFor(s);
   const after = map?.nodes.find((n) => n.recruit?.when === 'after');
   if (after && !s.done.includes(`${after.id}:recruit`)) {
     const old = s.done.find((d) => {
@@ -318,7 +329,8 @@ function upgradeRecruitTiming(s: CampaignState): void {
     });
     if (old) s.done = s.done.map((d) => (d === old ? `${after.id}:recruit` : d));
   }
-  if (s.formationDue !== undefined && !formationGate(s)) delete (s as { formationDue?: unknown }).formationDue;
+  // Ashford katılımı kapıyı bulunulan düğüme yazar (yola çıkışta işler): kasabadayken kapı henüz geçersiz görünür, atılmaz
+  if (s.formationDue !== undefined && s.formationDue !== s.at && !formationGate(s)) delete (s as { formationDue?: unknown }).formationDue;
 }
 
 /**
@@ -602,6 +614,7 @@ export function summarize(s: CampaignState): SaveSummary {
     classes: team.map((h) => h.class),
     hp: team.map((h) => h.hpRatio),
     victories: s.stats.victories,
+    ...(s.companyName ? { company: s.companyName } : {}),
     ...clearedProgress(s),
   };
 }

@@ -979,6 +979,8 @@ Kasma simde sıradaki yeni düğümden önce fark = düğüm level'ı - aktif ta
 
 Düz sim (farm / Inn / kamp yok, kasabada bedava şifa kalktı) Medium'da elit %53, boss %42, bitirme %53 veriyor; bantlar (data/campaign/balance.json) eski oyuna göre: elit 62+, boss 48+, bitirme 79+. Ömer kasma simi v11 oranlarını kabul etti ("bu oranlar iyi gibi") ve 0.9.9 yayını istedi; alt sınırlar geçici muaf (uyarı yazılır). AÇIK: bantlar kasma simine göre yeniden belirlenecek mi, düz sim emekliye mi ayrılacak? Ömer'e sorulacak.
 
+Ömer 2026-11-01: düz sefer simi KALIR ("ilk seferde win rate de bir şeyler anlatıyor"; aynı gün önceki emeklilik kararını değiştirdi). Düz sim hiç kasmayan oyuncunun taban ölçüsü, kasma simi kasma hedeflerinin ölçüsü. Elit, boss ve bitirme alt sınırları muaf kalır; yeni bantlar bir sonraki sim turunun ölçümünden önerilir, Ömer onaylamadan değişmez.
+
 ## 428. Harita 2 yan içerik: A1 Wayshrines + B1 Salvage Dive (campaign-dev 2026-10-27; PROVİZYON sayılar, sim YOK; `data/campaign/side-content.json`, `src/campaign/side-content.ts`, `state.ts > winDive / diveDeeper / diveDefeat / diveState`, `encounters.ts > battlePlan`; test `tests/campaign-side-content.test.ts`)
 
 Varsayımlar (Ömer onayı bekleniyor):
@@ -1247,7 +1249,7 @@ Tasarım metni `docs/design/classes.md > Anti-Mage: Ley Brand`.
 1. **Sayılar PROVİZYON (sim YOK, 427'den sonra):** Toll 0,28 holy tüm düşman 4 MP; Thunderpeal 0,60 lightning sıra + Blinded 1, 12 MP, cd 2; Cracked Bell 0,80 holy tek, %30 Stun 1, 10 MP, cd 3; Great Bell 0,30 holy + 0,20 lightning, çan başına her biri +0,025, 22 MP, cd 4 (ilk 2); Pealing Bells çan başına +%5, sınırsız. `PENDING_BALANCE`'ta. Uzun savaşta (Endless, boss) sınırsız birikim ne kadar büyür: sim ile bakılsın mı?
 2. **Sanat yer tutucu:** Mage sprite / v2 gövdesi / avatar / büst, logo `divine`, ödünç ikon / vfx / ses; sürüm seçicide yok (VERSION_EXCLUDED). Bronze Abbess için kendi sprite, poz, büst, amblem, ikon, VFX ve ses ne zaman (art-pipeline)?
 3. **Ağaç TASLAK:** 60 düğümün 24'ü `fx: null` ("Not active yet"; savaşa çanla başlama, çan tetikleyicileri, alan değişimi gibi yeni mekanik ister). Düğüm adları / metinleri onay bekliyor.
-4. **Kışla-yedek kuralı (yeni, her yerde):** bölük 4 iken katılan kahraman (gezgin / gönüllü `recruit`, şehir `recruitInTown`, olay `join`) kışlada yedek bekler. Harita 1'de kışla takası yok; yedek yalnız Inn `recruitFromReserve` ile alınır. Uygun mu?
+4. **Kışla-yedek kuralı (yeni, her yerde):** bölük 4 iken katılan kahraman (gezgin / gönüllü `recruit`, şehir `recruitInTown`, olay `join`) kışlada yedek bekler. Harita 1'de kışla takası yok; yedek yalnız Inn `recruitFromReserve` ile alınır. Uygun mu? **KAPANDI: Ömer 2026-10-31: Harita 1 Barracks'a yedek takası eklendi.**
 5. **Emanet:** Clapper of the Sunken Bell = trinket Legendary (C Holy, C Lightning, B Magic pen, A Elemental) + kritikte 1 tur Blind; `eventOnly` (rastgele / tüccar / Endless'ta yok). Etki ve affix seçimi onay bekliyor.
 6. **Bilinen test kırığı (Vesper'dan bağımsız, havuz karışımı açığa çıkardı):** `tests/mechanics.test.ts > menzil açıkken Archer arka yarıda` seed 40'ta kırmızı. Takım [defender, paladin, mage, archer] (Vesper yok); `randomCells` (formation-ai + jitter) bu takımda seed'lerin ~%14'ünde Archer'ı Paladin'le aynı 2. sıraya koyuyor. Havuza bir sınıf eklenince 1..300 seed'lerinin çektiği takımlar değişti. Dizilim YZ'si düzeltilsin mi (jitter melee kuralını ezmesin) yoksa test mi gevşesin?
 7. **Golden kayıtları:** havuz karışımı değiştiği için yeniden kaydedilmeli (koordinatör).
@@ -1363,6 +1365,56 @@ Denetimdeki (ai-coverage) B / C satırlarının hepsi değer alıyor. Ağırlık
 11. **Test değişikliği:** `ai-value.test.ts` #5 (Defender ölmek üzere olan dost için Taunt) Taunt'ın breakRatio'su (0,25) değerlenince o senaryoda Tremor Slam seçiyor (Taunt ilk turda kırılıyor). Feda kuralı (K6) kırılma eşiği olmayan Taunt'la aynen geçiyor; test buna göre güncellendi. **Soru:** bu senaryoda Defender'in Taunt'u seçmesi mi istenir (breakRatio değerini yumuşatmak gerekir), yoksa yeni davranış doğru mu?
 Açık: denge simi (Ömer çalıştıracak); ağırlıkların ölçümü.
 
+## 472. Harita 3 koşulları 1. dilim: belgede yazmayan kararlar (engine-dev 2026-10-31; Heat, Cave-in, Darkness + Lantern)
+Hepsi veriden değişir, Ömer onaylarsa kalır:
+1. **Cave-in koşul değil ayrı kural:** Darkness ile aynı savaşta durabilsin diye (`hazards`). İki tahtada da olur.
+2. **Sayılar geçici (sim yok):** Cave-in 3 Round'da bir tahta başına 1 hücre, hasar tahta ortalama canının %10'u, Slow 2 tur, en çok 3 kapalı hücre; ağır sürüm 2 Round'da bir 2 hücre, %12, en çok 5. Heat tik gücü ortalama canın %5'i.
+3. **Heat sırası:** iki tahtadan birinde, içinde birim olan sıralar arasından seçilir (boş sıraya düşmez). Mob da yanar. İlk işaret savaş başında, ilk iniş 2. Round.
+4. **Darkness istisnaları:** tüm tahtaya ve rastgele vuran skill'ler sınırlı değil. Düşmanın ateş skill'i de aydınlatır (belge "herhangi" diyor).
+5. **Lantern:** yalnızca hc_43'e kondu; can = takımın ortalama canının %60'ı. Olay 33 ödülü olarak verilmesi çözülmedi.
+6. **Bağlar:** hc_46 yalnızca Darkness (belgedeki Flooded + güverte eklenmedi, tek koşul). Hearthwarden ve Ember Heat almadı (kendi kitleri var). Windwall'a Blizzard bağlanmadı (Ömer'in yeni Chilled kararını bekliyor).
+7. **Atılma:** çöken hücredeki birim en yakın boş hücreye gider; boş hücre yoksa yerinde kalır.
+
+## 473. Frozen: yorumlanan köşe durumları (engine-dev 2026-10-31)
+1. Frozen bitince birim hâlâ Chill Ground içindeyse zemin yeniden Chilled verir; o durumda donmak için tek atış yeter ("iki yeni atış" kuralının zemin istisnası).
+2. Ateşle çözülen birim Chill Ground içindeyse zemin Chilled'ı hemen geri verir.
+3. Burning status tiki de ateş hasarıdır: Chilled / Frozen'ı çözer. Düşmanın ateşi kendi müttefikinin donmuş kahramanını da çözer.
+4. Chilled birim Burning zemine girerse elindeki Chilled kalkmaz, yalnızca yenisini alamaz ve donamaz (ilk ateş tikine kadar).
+5. Ice'a dönen hava hücresi 2 tur sürer, ortam zemini olarak iki tarafa da işler.
+6. Snowfather savaşı da Blizzard'a bağlandı (4.2 Windwall düğümü); Frost kitleri yazılınca gözden geçirilmeli.
+7. Yapay zeka değerleri provizyon (ai.json > value.frost).
+## 474. Harita 1 Barracks yedek takası: varsayımlar ve soru (campaign-dev 2026-10-31)
+Valdren Keep'e `barracksSwap: { offer: 0 }` eklendi (`data/campaign/valdoria.json`): yeni aday yok, yalnız yedektekilerle takas; yedek boşken kışla eskisi gibi. Test `tests/reserve-recruit.test.ts`, debug `Maps 2-3 (test) > Jump to Valdren Keep (hero in reserve)`.
+1. **Soru: Harita 1'de normal oyunda yedek dolmuyor.** Bölük Ashford'da 3, Valdren gönüllüsüyle 4 olur; Harita 1'de başka katılım yok, `join` olayları yalnız Harita 2'de. Bölük doluyken katılım olmadığı için yedek boş kalır, takas ekranı bugün yalnız debug ile görünür. **KARAR (Ömer 2026-10-31): yeni yol eklenmez, takas ileride eklenecek katılımlar için hazır kalır.**
+2. **Varsayım:** yedekte kahraman varken Valdren adayı da bekliyorsa Barracks önce takas penceresini açar, yanında `Recruits` düğmesi her zamanki aday penceresine gider. Kapıdaki gönüllü sorusu aynı.
+3. **Varsayım:** yeni metin `townSwapReserve` (Harita 2 metnindeki "Swords for hire" ve "stays at four" burada doğru değil). Yeni adaysız her kışlada bu metin çıkar.
+## 475. Harita 3 şimşek kuralları: belgede yazmayan kararlar (engine-dev 2026-10-31; A1, A2, A4, A5, A6)
+Hepsi veriden değişir, sayılar geçici (sim yok), Ömer onaylarsa kalır:
+1. **Etiket kapısı:** Live Water, Shatter ve Thunderflash da yalnız `thunder` etiketli skill'de çalışır, sadece Shocked değil. Bog Spark, Wisp Spark, Rune Spark ve Mage, Bellwarden, Vesper şimşekleri etiketsiz kaldı, davranışları değişmedi. Harita 3 moblarına etiket tek tek verilecek.
+2. **Iskalayan bolt:** Live Water ve Shatter isabet zarına bakmaz (bolt yere düşer); Shocked yalnız isabette gelir.
+3. **Su 1 tur canlı:** atanın sonraki turu bitene dek (ya da ölene dek) canlı; bu sürede turunu canlı suda bitiren %6 tahta ortalama canı kadar hasar alır, çıkan kurtulur. Atanın kendi atış turu sayılmaz.
+4. **Sayılar:** itme %20, ark tahta ortalama canının %6'sı (büyü, şimşek), Shatter %8 fiziksel, komşuya bunun yarısı, Armor geçerli.
+5. **İki taraf:** Live Water ve Shatter iki tarafı da vurur, cansız birimler (kutu, varil gibi) hariç.
+6. **Shocked Stun'u:** normal durum olarak gelir, direnç ve bağışıklık düşürür. Tur çubuğu itmesine direnç işlemez.
+7. **Thunderflash:** yalnız hamle öncesi tahta karanlıksa ve atan Darkness'tan etkilenmeyen taraftaysa çakar; Lantern açıkken çakmaz, Blinded de gelmez.
+8. **AI:** saldırı değeri sudan kaçma değerini geçerse birim suda kalıp vurabilir (terazi aynı). Tek başına duran birim zırh boltundan kaçamaz, menzil en öndeki dolu sıradan ölçülüyor.
+
+## 476. Harita 3 imza mekanikleri: varsayımlar (B1, B2, C1, C2, C5, C6)
+Tüm sayılar PROVİZYON (sim dilimler bitince). Varsayımlar: Thunder Rod hücresini motor seçer (en çok kahramana komşu), en çok 2 çubuk, çakan ölünce kalır. Rolling Thunder hedefin sırasını döküm anında sabitler, hasar tahta ortalama canına orantılı. Encased'de ateş dışı artan hasar cana geçer, uyanan birim ek gecikme almaz. Noise yalnız oyuncu eylemleriyle dolar, DoT kritiği saymaz, savaş başına 2 Warden; Hollow Warden'ın kendi sınıfı yok, `stonebound_warden` adıyla kalkar. Tempering'de "su" = Soaked veren ya da ıslak zemin bırakan skill. Noise Region IV'ün boss, elit ve hazine dışı savaşlarında açık (hc_43, 45, 46, 47, 49, 53); Encased yalnız hc_17. Doğru mu?
+
+## 477. Harita 3 mobları: varsayımlar (engine-dev 2026-10-31; 4. dilim)
+Tüm sayılar PROVİZYON (sim dilimler bitince). Tanımda açık olmayan yerlerde en basit yorum:
+1. **Pole Vault hedefi:** "arka sıra" = kahramanların en öndeki dolu sırasının arkasındaki herkes. Herkes aynı sıradaysa skill kullanılamaz, Billhook vurur.
+2. **Undermine sırası:** dalış turu biter, sonraki turunda çıkıp vurur ve o tur başka şey yapmaz. Boşa çıkarsa ayrıca Staggered (bir sonraki eylemi de gider). Çatlak, adalet kuralı gereği her kahraman en az bir kez oynamadan çözülmez; bu arada yerin altında bekler. Yerin altındayken üstündeki Burning gibi hasarlar işlemez; zaten üstünde olan durumlar turla azalır.
+3. **Slagcart zırhı:** zırh 0, koşu bittiği andan soğuma turu başlayana dek sürer; asıl pencere kahramanların o aradaki turlarıdır. Soğuma turu başlayınca kalkar. Test modunda soğuma tur kaybı yerine yalnız durum olarak görünür.
+4. **Headlong:** motor şeritteki ilk kahramana izin verir; arkası doluysa çarpma hasarı (Ice Crater kuralı).
+5. **Ring the Anvil:** Armor'u 0 olan kahramana zıplamaz; eşitlikte küçük yuva. Zıplama menzile bakmaz.
+6. **Fork:** kuruda hedef normal Shocked (itme) alır, Soaked ya da suda Stun alır. Tanım yalnız Stun'ı söylüyor; Shocked kuralı `thunder.shocks`tan geldi. Soru: kuru hedefe itme kalsın mı?
+7. **Gloam Bite:** Live Water için yılan ve hedef ikisi de suda olmalı. Thunderflash Darkness'ta her ısırıkta çakar (kuruda da). Soru: kuruda da çaksın mı? Çok sık çakabilir.
+8. **Through the Flame:** "geldiği hücre" = hedefin hücresi (moblar tahta değiştirmez). Normal vuruşta zemin yok.
+9. **Stormhide:** yalnız kahraman yakın dövüş skill'i ve isabet; pasif yakın dövüş vuruşu ya da menzilli vuruş tetiklemez. Hedef suda ise Stun.
+10. **Chilled kaynağı:** Rime Witch ve Rime Hound henüz yer tutucu ve Chilled atmıyor; Shardwalker düğümlerinde Chilled yalnız Blizzard'ın Chill Ground'undan gelir. Fork için Soaked kaynağı da az (yalnız Tide, Tidewater Urn). Asıl kitler gelince bu eşleşmeler güçlenir.
+11. **Black Water (`dark_tide`):** hc_46 için Darkness + Tide tek koşulda birleşti, yeni kural yok. Oyuncu ismi yer tutucu.
 ## 466. Mob mana bedelleri hedefli artırıldı (Ömer 2026-10-31, seçenek 1)
 
 Ömer "mobların mana bedeli çok az" dedi ve hedefli zammı seçti. Kural: skill'lerini sürekli kullanan birim 5-6 kullanımda ilk kez "mana yetmedi"ye düşer; hesap birimin çıktığı canlı haritanın üst level'ında (Map 1 L10, Map 2 L20; yalnız Map 3 yer tutucularındaki moblar L30) yapıldı, birimin skill'leri aynı oranda arttı, zaten hedefte olanlar değişmedi, bedelsiz skill'ler bedelsiz kaldı. Değişiklik yalnızca `data/skills.json` bedelleri. YZ kuralı: bedeli değişen her skill'e `ai.scoreCost` = eski miktar yazıldı; YZ skorundaki MP cezası gerçek bedel ile `scoreCost`un küçüğünü sayar, ödeme ve mana yeterliliği gerçek bedelle kalır, yani mob bol manada eski kararlarını verir ve tek fark mananın bitebilmesidir. VARSAYIM: Map 3 açılınca oradaki bedeller yeniden bakılmalı; birim haritanın alt level'ında 1-2 kullanım daha erken tükenebilir. AÇIK: moblar zayıfladığı için sefer simi henüz koşulmadı (Ömer'in kararı bekleniyor); hasar/can telafisi gerekip gerekmediği buna bağlı. `docs/design/campaign/mob-plan.md` tablolarındaki eski bedeller tarihsel plan olarak kaldı.
@@ -1456,3 +1508,66 @@ Açık: denge simi çalıştırılmadı (Valdren Keep'te daha güçlü mal, yük
 7. **Reroll bedeli x1,5:** taban 10 -> 15, level başına 5 -> 7,5; fiyat takım level'ından, kasabadan bağımsız. Rakam Ömer'in "x1,5" notu üzerine PROVİZYON.
 8. **Sim:** sefer simi tüccarı yalnız kasabanın ilk adımında açar (gün ilerler ama aynı kasabaya dönüp alışveriş etmez), bu yüzden sim ağırlıkla ilk stok kuralını ölçer; günlük yenilemenin etkisini az görür.
 9. **Geri alım listesi** gün dönünce de boşalır (bugünkü gibi).
+
+## 478. Harita 3 E1-E6 dokunuşlarının okunuşu ve kit bekleyen birimler
+Harita 3 5. dilim (2026-10-31). Tanımda açık kalan yerlerde en basit okuma seçildi; ayrıntı `docs/design/campaign/maps-2-3.md` son bölüm. Ömer'in teyidini bekleyenler:
+1. **Overheat:** ateş vuruşu bar doldurursa Vent hemen başlıyor (sonraki turu yanar). Hasarsız su skill'i boşaltmıyor; Soaked ise Round başında boşaltıyor.
+2. **Thundersnow:** bir Round telgraflı; Snowfather ölse de iner.
+3. **Whiteout:** tanımda ayrıntı yok. Bu Round + sonraki Round Darkness ve tek Chilled atışı.
+4. **Pack Rotation:** daha derin sırada daha sağlam kurt yoksa dönüş yok. Şifa, saldırı ıskalasa da çalışır.
+5. **The Long Sermon:** eşik maxHp'nin %25'i, tikler sayılır. "Ashborn" kimlerdir (şimdilik `ember_cult` + Pyre Witch, Cinder Knight, Hierarch)? Tamamlanınca savaş sonuna dek. Staggered yalnız `turns` modunda var.
+6. **Storm in the Chimney:** Urn hc_ember karşılaşmasına eklendi; Ömer karşılaşmada Urn istiyor mu?
+7. **The King Hears:** dolum başına iki Warden, sefer gücü kural kurulumundan. Tavan `maxRises` 2 + `maxAlive` 4.
+8. **Kit bekleyenler:** Forge-Master Golem, The Pack-Mother, The Ashborn Hierarch, The Snowfather, The Ember of the First Hearth, The Hollow King. Hepsi yalnız dokunuş + temel saldırı taşıyor; tam kit seçim sayfasından geçecek. Snowfather için eski "yığın" notu yerine Chilled/Frozen kuralı geçerli, bossların Frozen'a bağışık olduğu kit yazılırken unutulmayacak.
+## 479. Ders tavanı ve "Neden olmadı" dersi: varsayımlar (engine-dev, 2026-10-31; Ömer seçimi C2, C4)
+- Hedef reddeden tek koruma kuralı Taunt olduğu için ders yalnız Taunt'ta çıkar. Guard hasarı yönlendirir, hedefi reddetmez; menzil, Backstab ve karanlık reddi yalnız plakada yazar.
+- Ret = reddedilen düşmana tıklamak. Yalnızca üzerine gelmek ders açmaz (plaka sebebi zaten yazar).
+- Taunt dersi tavandan muaftır ve sayıya girmez (karar, 2026-10-31: yalnız reddedilen tıklamada çıkar, en çok ihtiyaç anı). "Kararda bir ders" kuralına uyar; o karar başka ders çıkardıysa bir sonraki redde kalır.
+- Tavan yalnız düğüm 1-3'te ve yalnız bilgi durum derslerini sayar. Mill Road'da durum dersi çıkmadığı için orada fiilen etkisi yoktur.
+- Durum dersleri gibi bu ders de `test` modunda çıkmaz (motor tespiti orada da doğru çalışır).
+
+## 480. Tek kişilik sefer başlangıcı: varsayımlar ve sorular (campaign-dev 2026-11-01)
+Sayıların tamamı PROVİZYON; sim sonraki turda (madde 427 notu). Metinler taslak.
+1. **Defender sırası:** Taunt ve Close Ranks tek başına boş (Close Ranks kendini kapsamaz), bu yüzden sıra Tremor Slam -> Fist Crush -> Taunt -> Close Ranks. Fist Crush ulti: Ravenwood başında "açıldı" der ama başlangıç bekleme süresi 3 tur. Soru: ulti erken açılsın mı?
+2. **Paladin sırası:** Holy Strike -> Judgment -> Radiance -> Resurrection. Radiance ulti, ikinci dalgada açılıyor; Resurrection tek başına işe yaramaz, son sırada. "The Ultimate" dersi 4. yuvaya baktığı için Defender ve Paladin'de açılış sırasıyla örtüşmez.
+3. **XP bölünmüyor:** tek kişi Ashford'a L3 civarı varır, ilk duraklar L1, ekranda "Hard fight / Recommended level" tersine döner; katılan da aynı seviyede gelir. Bölüm 1 sonu ortalama L9,5 (hedef 8,5 ± 0,5). `tests/levels.test.ts > PENDING_SOLO_LEVEL_HIGH` ile muaf; sim turunda karar.
+4. **Çarpan düğüme bağlı:** takım boyuna göre değil düğüme göre yazıldı; oyuncu geri dönüp eski düğümde devriyeyle dövüşürse (takımı daha büyük) daha kolay olur. Yeni kural eklememek için böyle bırakıldı.
+5. **Skill kilitleri Tutorials kapalıyken de geçerli** (Skip yok, kilit oyun kuralı; ders yalnız sözdür).
+6. **Garrick Mill Road'dan beri sesli konuşuyor, Ashford'da "face to face" diyor:** taslak bir hikâye tercihi; yeni sanat yok, portre kutusu.
+7. **Ashford Formation kapısı:** iki ileri savaş seçeneği olduğu için kapı kasabanın kendisine yazıldı; yola çıkışta ileri düğümlerin hepsinde işler.
+8. **Kaydedilmiş eski kayıtta kahraman seçilmemişse** seçim anında yeni yapıya geçer (henüz oynanmamış).
+9. **King's Bridge'de takım sınırı 4 yazılı, boss üç kişiyle oynanır** (katılım zaferden sonra); sınır boş kalır, kadro 3.
+10. **Ruined Watchtower dalgası:** mevcut takviye kuralı 2. dalgada lideri (Bandit Chief) ve eşlik kopyalarını getirir; yeni yapı da aynısını kullanır (toplam 5 mob, 2 + 3). Reis ilk dalgada görünmez.
+## 481. Garrick şeridi, Whisper, bölük adı: varsayımlar (ui-dev, 2026-11-01; Ömer seçimi C5, C6, D4)
+- Sınıf önerileri Ömer'in onayını bekliyor (`data/tutorial.json > firstPoint.classes`). Warrior: Knee Cutter + Strength (Ömer'in). Archer: Hock Shot + Dexterity. Defender: Bellow + Strength. Paladin: Relentless Hammer + Intelligence. Druid: Hooked Barbs + Intelligence. Kural: ücretsiz temel skille her tur çalışan ilk düğüm; Defender'da temel skill yerine Taunt.
+- Şerit yalnız seferde çıkar; Endless ve tüccar içindeki Gear'da çıkmaz (Tutorial yalnız sefere ait).
+- Aynı Gear açılışında kahraman değiştirilirse diğer kahramanın önerisi de gösterilir; pencere kapanınca bir daha çıkmaz.
+- Gear'ın ilk açılış dersi aynı anda açıksa şerit onunla birlikte görünür; ikisi çakışmaz.
+- Kayıt kartındaki kısa başlık "Slot N". Adlı kayıtta numaranın yerine ad yazar; adsızda "Slot N" kalır.
+- Ad kutusu boş açılır (Suggest'e basılana kadar hazır ad konmaz). Boş bırakılırsa harita başlığı olduğu gibi kalır.
+- Whisper metinleri kutu metinlerinden tek cümleye indirilerek yeniden yazıldı; Codex tam metni gösterir.
+- "Skills and MP" Whisper'ında kullanılan skilli gösteren vurgu halkası Whisper süresince durur.
+- Döndürülmüş sahnede (dikey telefon) Form your company penceresi ekran genişliğine göre daralıyordu (eski CSS); yazı kutusu sığmadığı için ekran yüksekliğine göre düzeltildi.
+## 482. Harita 1 tek kişilik eğri: varsayımlar (balance-tester, 2026-11-01)
+- **Kolay düğüm listesi genişledi:** `campaign-targets.ts > easyByDesign` Ömer'in saydığı Windy Moor, Brackenridge, Cairn Hill dışında 6B, 6A, 5A (Valdren sonrası 3. kahramanla kolay) ve 10 (Ashen Plain, 4. kahramanla rahat) düğümlerini de içeriyor; bandın üstünde kalmaları kusur sayılmıyor.
+- **Iron Pass ve Charcoal Camp:** Ömer sayı vermedi, ~93 hedefini ben seçtim; sonuç 94-95. "Yavaş yavaş zorlaşma" ilk deneme yüzdesinde az görünüyor, zafer canında görünüyor (Cairn Hill 92, Iron Pass 66, Charcoal Camp 70).
+- **Sim oyuncusu Inn'de beklerken kolay düğümde devriye gezer (Ömer'in cevabı):** kasmaya düşen takımın Inn'de iyileşmemiş kahramanı varsa eksik takım kolay düğümde gün döndürür; bu savaşlar kasma sayılır ve duvar sınırına girer. Kolay düğüm eşiği `SIM_EASY_FARM_MIN = 0.25` (kazanma tahmini) benim seçimim.
+- **Easy zorlukta kasma ulaşan koşu başına ölçülür;** Easy zaten kasmasız olduğu için kasıp geçen ölçüsü kullanılmadı. Normal düğüm kasması da ulaşan başına ve duvar kasması dahil okunur.
+- **Yalnız Medium ölçüldü.** Easy ve Hard bu turlarda ölçülmedi; çarpanlar zorluktan bağımsız olduğu için onlara da uygulanır.
+- **Tek kahraman ortalaması sınıflar arasında çok açık:** Anti-Mage, Vesper, Gambler bu düğümlerde çok düşük (Anti-Mage %10-15), Paladin, Druid, Mage %94-100. Sınıf değerlerine dokunulmadı; sınıf seçimi gerçek oyunda bu farkı oyuncuya hissettirebilir.
+
+## 483. Harita 2 eğrisi: kayıt türü, bitirme oranı, Inn duvarı (balance-tester 2026-11-01)
+- **Varsayım, eski ve yeni kayıt aynı çarpanı alır:** `legacyStart` yalnız Harita 1'i değiştiriyor, Harita 2 yapısı iki kayıtta aynı. Bu yüzden çarpan `soloStart` altında değil, ayrı `campaign.json > mapEnemyScale` alanında. Eski kayıtla Harita 2'de ilerleyen oyuncu da sertleşir.
+- **Varsayım, Easy ve Hard da aynı çarpanı alır:** yalnız Medium ölçüldü (Harita 1 ile aynı).
+- **Soru, bitirme oranı:** düğüm hedefleri tutunca iyi oyuncu bitirme %66,5'ten %33'e, ortalama oyuncu %32,4'ten %8,3'e düştü; düğüm başına duvar en çok %10 sınırı tutuyor ama birikiyor. Harita toplamı için bir hedef verilmedi; kabul mü, yoksa normal düğümler mi gevşesin?
+- **Soru, Inn duvarı:** duvarın %61'i (144'ün 88'i) kahramanı Inn'de bekleyen takımda oluşuyor, kasma sayacının normal düğümlerdeki kısmı da çoğunlukla Inn beklerken kolay devriye. Düşman çarpanı bunu çözmez; Inn kuralı ya da sim oyuncusunun davranışı konusu.
+- **Varsayım, oynanmayan düğümler:** simin hiç girmediği dr35, dr36, dr37, dr65, dr77, dr88, dr89 çarpanları komşulardan seçildi, ölçülmedi. dr88 yan düğüm uyarısı almasın diye 1,0, dr65 uyarısını korusun diye 1,2 / 1,55. Dr43 Smugglers' Cave yeni "Stronger than the road ahead" uyarısı alır (bilgi, oran 1,31).
+
+## 484. Harita 2 bitirme %60-75 turu: sonuç ve varsayımlar (balance-tester 2026-11-01)
+- **Sonuç:** iyi oyuncu bitirme %58,6 (300 koşu, n=215, hata payı ±7), hedefin 1,4 puan altında; 4 tur sınırı doldu. Ek tur Ömer'in kararına bağlı.
+- **Varsayım, kapsam:** hedef tek tek duvarlı düğümleri düşürerek tutmadı, bu yüzden duvarsız ve kolay görünen yüksek çarpanlı normaller (ilk bölge dahil) ve tüm boss/elit hasarı da düşürüldü. Ömer'in "eklemeden sonra kolay" eğrisi korunur ama normal düğümlerin çoğu eski 80-88 bandının üstünde.
+- **Soru, Inn duvarı:** duvarın %60'ı (89'un 53'ü) kahramanı Inn'de bekleyen takımda. Sayaçta Inn beklerken kolay devriye kasma sayılıyor; düşman çarpanı bunu yalnız dolaylı azaltır. Kural ya da sim davranışı Ömer'in kararı.
+- **Soru, yan düğüm uyarısı:** dr25, dr43, dr51 artık "Stronger than the road ahead" almıyor (dr65 alıyor). Kabul mü?
+
+## 485. Yoldaş önerisi (Suggested): varsayımlar (ui-dev, 2026-11-01; Ömer seçimi A, banner yok, altın 2. satır)
+Yer Ashford ve Valdren kışlası. Öncelik ön saf > arka saf > takımı besleyen (Ömer). Rol eşlemesi (campaign.json > companySuggest, varsayım): Warrior, Defender ön saf; Paladin ön saf + besleyen; Archer, Mage, Vesper, Hexer arka saf; Druid, AM besleyen; Cutthroat, Undead, Gambler rolsüz, önerilmez. Defender'ın Close Ranks'ı ve Undead'in Dark Bond'u besleyen sayılmadı (yalnız can, can yenileme, kalkan). Aday sunulan havuzda yoksa sıradaki eksik role geçilir. Valdren'in kışla dışı "volunteer" kartı öneri almaz.

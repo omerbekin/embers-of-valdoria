@@ -8,6 +8,7 @@
 //     (+ gerekiyorsa CondHost'a bir okuma). Değerlendirilemeyen koşul (ör. savaş bağlamı olmayan bedel hesabı) = tutmaz.
 //  3) Ölçüm: tetiklenen ağaç etkisi Battle.onTreeProc dinleyicisine { type: 'treeProc', uid, node } verir (olay akışına / kayda GİRMEZ).
 import type { Combatant, Element, ItemEffects, SkillCost, SkillDef, SkillEffect } from './types';
+import { statusCounts, statusCountsAny } from './status-count';
 
 /* ------------------------------------------------------------------ (b) unitFx kanalı ------------------------------------------------------------------ */
 
@@ -203,7 +204,7 @@ export function mergeFxValue(key: string, prev: unknown, next: unknown): unknown
 /* ------------------------------------------------------------------ C1 koşullar ------------------------------------------------------------------ */
 
 /** Son eylem türü (Battle.lastKind; LastActionKind ile aynı değerler). */
-export type ActionKindLite = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge' | 'pass';
+export type ActionKindLite = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'rod' | 'surge' | 'pass';
 
 /** Koşul değerlendiricilerinin savaştan okuduğu her şey (Battle uygular). Yeni koşul savaş verisi isterse buraya bir okuma eklenir. */
 export interface CondHost {
@@ -367,7 +368,7 @@ const hpRatio = (c: { hp: number; maxHp: number }): number => (c.maxHp > 0 ? c.h
 const hasStatus = (c: Pick<Combatant, 'statuses'> | undefined, arg: unknown): boolean => {
   if (!c?.statuses) return false;
   const list = Array.isArray(arg) ? arg : [arg];
-  return c.statuses.some((s) => list.includes(s.kind));
+  return c.statuses.some((s) => statusCountsAny(s, list));
 };
 /** Savaş bağlamı gerektiren koşul: host yoksa tutmaz. */
 const needHost = <T>(x: CondCtx, f: (h: CondHost) => T): T | undefined => (x.host ? f(x.host) : undefined);
@@ -390,7 +391,7 @@ const stacksOf = (c: Combatant | undefined, kind: unknown): number => c?.statuse
 function opportunistHolds(x: CondCtx): boolean | undefined {
   const pe = x.self.passive?.effect;
   if (pe?.type !== 'bonusVsStatus' || !x.target) return undefined;
-  return x.target.statuses.some((s) => pe.statuses.includes(s.kind));
+  return x.target.statuses.some((s) => statusCountsAny(s, pe.statuses));
 }
 const debuffs = (x: CondCtx, c: Combatant): number => c.statuses.filter((s) => x.host?.statusType(s.kind) === 'debuff').length;
 const buffs = (x: CondCtx, c: Combatant): number => c.statuses.filter((s) => x.host?.statusType(s.kind) === 'buff').length;
@@ -410,7 +411,7 @@ export const COND: Record<string, (x: CondCtx, arg: unknown) => boolean | undefi
   /** Hedefteki durumun kalan turu en az N: { status, n }. */
   targetStatusTurnsAtLeast: (x, a) => {
     const o = a as { status?: string; n?: number } | undefined;
-    return onTarget(x, (t) => t.statuses.some((s) => s.kind === o?.status && s.turns >= (o?.n ?? 1)));
+    return onTarget(x, (t) => t.statuses.some((s) => statusCounts(s, o?.status) && s.turns >= (o?.n ?? 1)));
   },
   /** Hedefteki yığın sayısı (Omen): { status?: 'omen', eq?, atLeast?, atMost? }. */
   targetStatusStacks: (x, a) => onTarget(x, (t) => cmp(stacksOf(t, (a as { status?: string } | undefined)?.status), { atLeast: 0, ...(a as object) })),
@@ -609,7 +610,7 @@ export const COST_TARGET_CONDS: ReadonlySet<string> = new Set(['targetDiedSinceM
  */
 export const SCALE: Record<string, (x: CondCtx, arg: unknown) => number> = {
   /** Hedefteki durumun kalan turu (argüman: durum). */
-  targetStatusTurns: (x, a) => (x.target ? Math.max(0, ...x.target.statuses.filter((s) => s.kind === a).map((s) => s.turns), 0) : 0),
+  targetStatusTurns: (x, a) => (x.target ? Math.max(0, ...x.target.statuses.filter((s) => statusCounts(s, a)).map((s) => s.turns), 0) : 0),
   /** Hedefteki yığın sayısı (argüman: durum, ör. 'omen'). */
   targetStatusStacks: (x, a) => stacksOf(x.target, a),
   /** Hedefin geçerli zırhı / argüman (argüman: kaç puan başına 1; ör. 1). */

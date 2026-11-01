@@ -1,9 +1,10 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { legacyBlank } from './legacy-start';
 import { Battle, chooseAction, content } from '../src/engine';
 import { applyUnitModifiers } from '../src/engine/stats';
 import { enemyLevelAttrAdd } from '../src/progression/levels';
-import { battlePlan, chapterEnemyMods, CONFIG, debugTeleport, ENCOUNTERS, newCampaign, validateEncounters, withDifficulty } from '../src/campaign';
+import { battlePlan, chapterEnemyMods, CONFIG, debugTeleport, ENCOUNTERS, validateEncounters, withDifficulty } from '../src/campaign';
 
 // Sefer mobları (data/mobs; N1, docs/design/campaign/fill-plan.md 2 ve 6): gizli birim kategorisi. Yükleyici, gizlilik, mob kuralları
 // (1 temel saldırı + 1 imza skill'i, birkaçında 3.), ödünç sanat (artOf), geçici sprite ve sefer ölçeği (N4).
@@ -37,8 +38,9 @@ describe('data/mobs yükleyicisi', () => {
   });
 
   it('mob kuralları: 2 skill (birkaçında 3); 1. skill bedelsiz ve bekleme süresiz temel saldırı, diğerleri bekleme süreli', () => {
+    const KIT_PENDING = ['forge_master_golem', 'pack_mother']; // Harita 3 5. dilim: yalnız dokunuş + temel saldırı, kit Ömer'in seçim sayfasından geçecek
     for (const m of mobs) {
-      expect([2, 3], m.id).toContain(m.skills.length);
+      expect(KIT_PENDING.includes(m.id) ? [1] : [2, 3], m.id).toContain(m.skills.length);
       const [basic, ...rest] = m.skills.map((id) => content.skills[id]!);
       expect(basic!.cost.amount, `${m.id} ${basic!.id}`).toBe(0);
       expect(basic!.cooldown ?? 0, `${m.id} ${basic!.id}`).toBe(0);
@@ -118,7 +120,7 @@ describe('moblar savaşta ve seferde', () => {
     const expected = (u: (typeof enc.units)[number], d: 'medium' | 'hard') =>
       withDifficulty(withDifficulty(withDifficulty(u.mods, withDifficulty(CONFIG.enemyScale!.all, { hpMult: CONFIG.enemyScale!.regions?.I ?? 1, powerMult: CONFIG.enemyScale!.regions?.I ?? 1 })), chapterEnemyMods('valdoria', 'moor')), CONFIG.difficulties[d]!.enemy)!;
     const at = (difficulty: 'medium' | 'hard') => {
-      const plan = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 5, difficulty }), 'moor'));
+      const plan = battlePlan(debugTeleport(legacyBlank({ mode: 'normal', seed: 5, difficulty }), 'moor')); // eski yapı: tek kişilik ölçek yok (o: tests/solo-start.test.ts)
       const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units }, false));
       // dalgalı savaş (waves.md): birimler dalgalara bölünür; kurulumlar tüm dalgalardan (yuvalar karşılaşmada tekrarsız)
       return { mods: Object.assign({}, ...(plan.waves ?? []).map((w) => w.units), plan.units.enemies) as typeof plan.units.enemies, battle };
@@ -126,7 +128,7 @@ describe('moblar savaşta ve seferde', () => {
     const enc = ENCOUNTERS.windy_moor!;
     const med = at('medium');
     const hard = at('hard');
-    const plan0 = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 5 }), 'moor'));
+    const plan0 = battlePlan(debugTeleport(legacyBlank({ mode: 'normal', seed: 5 }), 'moor'));
     expect(enc.units.every((u) => content.mobs[u.class])).toBe(true);
     for (const u of enc.units) {
       const m = med.mods[u.slot]!.modifiers!;

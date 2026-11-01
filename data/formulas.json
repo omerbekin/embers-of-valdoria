@@ -68,6 +68,21 @@
     "damageTakenMultiplier": 2,
     "variantStatStep": 0.1
   },
+  "encased": {
+    "_not": "Harita 3 C2 Encased (maps-2-3.md; PROVİZYON, sim yok): buz bloğunun canı = birimin maks canı x hpRatio. Onarım koşulda (battle-rules.json > conditions.blizzard.encasedRepair).",
+    "hpRatio": 0.4
+  },
+  "thunder": {
+    "_not": "Harita 3 şimşek kuralları (maps-2-3.md A1, A2, A5, A6; skill alanı thunder; PROVİZYON, sim yok). pushback = eşiğin oranı olarak sıra çubuğunda anında geri itme; badge = yalnız görünüş rozeti; stunTurns = suda geri itme yerine Stun; wetStatus = Stun koşulu durumu (ya da su hücresi); arcRatio = Live Water ark hasarı, tahtanın ortalama maks canının oranı; flashHeroTurns = Thunderflash kaç kahraman turu aydınlatır; flashBlindTurns = en yakın kahramanın Blinded süresi.",
+    "pushback": 0.2,
+    "badge": "shocked",
+    "badgeTurns": 1,
+    "stunTurns": 1,
+    "wetStatus": "soaked",
+    "arcRatio": 0.06,
+    "flashHeroTurns": 1,
+    "flashBlindTurns": 1
+  },
   "range": {
     "_not": "MENZİL (docs/design/range.md, Ömer 2026-10-17): her skill bir menzil taşır = skill.range ?? birimin (sınıf/mob/çağrı) range alanı ?? default. Mesafe = saldıranın kendi tarafındaki GERÇEK sıra derinliği (ön 0 ... arka 3; boş sıralar sayılır) + hedefin derinliği (hedef tarafının en öndeki DOLU sırasından sayılır) + 1 (ön-ön 1, arka-arka 7). Dost skill'inde mesafe = sıra farkı. skill.global = menzilsiz (Global). Alan skill'inde menzil hedeflenen anchor hücreye bakar. Taunt yalnızca taunt eden menzildeyse zorlar. Menzilde hedef yoksa skill kullanılamaz (Move ile yaklaş). Değerler: range.md > Onaylanan menzil tablosu. Dost skill'leri (single_ally, dead_ally) yalnızca kendi range'i varsa kısıtlanır (Guard 2), diğerleri sınırsız. enabled false = sistem KAPALI: eski hedefleme birebir (melee yalnızca formation.meleeRows en öndeki dolu sıraya; skill reach / ignoreReach / ignoreFrontRow).",
     "enabled": true,

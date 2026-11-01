@@ -3,7 +3,8 @@ import { applyTaint, surgeIdsAt, surgedFromLog, taintOf } from './surge';
 import { battleSummary, type Battle } from '../engine';
 import { battleRulesData, CELL_COUNT, classes, encounterUnit, randomPool, resolveBattleRules, summons, type RulesSpec } from '../engine/content';
 import { encounterWaves, encounterWavesById, isInertUnit, objectiveType } from './encounter-waves';
-import { CONFIG, ENCOUNTERS, getMap } from './data';
+import { CONFIG, ENCOUNTERS, mapFor } from './data';
+import { mapEnemyScale, soloEnemyScale, soloSkillStage } from './solo-start';
 import { node } from './graph';
 import { battleSeed } from './seed';
 import { mobLook } from './mob-looks';
@@ -77,7 +78,7 @@ export interface BattlePlan {
    * Karşılaşma kuralları (EncounterDef.condition / objective / blocked; data/battle-rules.json): motora teams.rules olarak gider. Totem'de `reinforce` =
    * takviye grubunun hücre listesi + kurulumları (dalga biçimi). Kuralsız karşılaşmada alan yazılmaz.
    */
-  rules?: RulesSpec & { reinforce?: { enemies: string[]; units: Record<number, UnitSetup> } };
+  rules?: RulesSpec & { reinforce?: { enemies: string[]; units: Record<number, UnitSetup> }; noiseRise?: { enemies: string[]; units: Record<number, UnitSetup> } };
   /** B1 Salvage Dive: bu savaşın derinliği (2+; yalnız derinlik savaşında). Yenilgide sonuç ekranı "Swim for the surface" sunar. */
   dive?: number;
   /** Genel zorluğun yapay zeka değeri (campaign.json > difficulties[x].ai): savaş kurulumuna iletilir. */
@@ -128,7 +129,7 @@ function encounterRules(
   first: EncounterUnit[],
   setups: (list: EncounterUnit[], out: Record<number, UnitSetup>) => void,
 ): BattlePlan['rules'] | undefined {
-  if (!def.condition && !def.objective && def.blocked === undefined && !def.device) return undefined;
+  if (!def.condition && !def.objective && def.blocked === undefined && !def.device && !def.caveIn && !def.lantern && !def.noise) return undefined;
   const o = def.objective;
   const objective: RulesSpec['objective'] | undefined =
     o === undefined ? undefined : typeof o === 'string' ? o : o.type === 'totem' ? { type: 'totem', every: o.every, maxEnemies: o.maxEnemies } : { ...o };
@@ -137,7 +138,20 @@ function encounterRules(
     ...(objective ? { objective } : {}),
     ...(def.blocked !== undefined ? { blocked: Array.isArray(def.blocked) ? [...def.blocked] : def.blocked } : {}),
     ...(def.device ? { device: def.device } : {}),
+    ...(def.caveIn ? { caveIn: def.caveIn } : {}),
+    ...(def.lantern ? { lantern: def.lantern } : {}),
+    ...(def.noise ? { noise: def.noise } : {}),
   };
+  if (def.noise) {
+    // C5: kalkan birim, karşılaşmanın diğer birimleriyle aynı güç kuralından
+    const n = battleRulesData.noise[def.noise];
+    if (n) {
+      const list: EncounterUnit[] = [{ class: n.unit.class, name: n.unit.name, slot: n.unit.slot }];
+      const units: Record<number, UnitSetup> = {};
+      setups(list, units);
+      out.noiseRise = { enemies: enemyCells({ units: list }), units };
+    }
+  }
   if (objectiveType(o) === 'totem') {
     const own = typeof o === 'object' && o.type === 'totem' ? o.units : undefined;
     const group = own?.length ? own : first.filter((u) => !u.tier && !u.objective && !isInertUnit(u.class));
@@ -151,7 +165,7 @@ function encounterRules(
 }
 
 export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): BattlePlan {
-  const map = getMap(s.mapId);
+  const map = mapFor(s);
   const n = node(map, s.at);
   // Seçenekli olayın savaşı (N2) düğümün kendi karşılaşmasının yerine geçer; The Fighting Pit (B5) kademesi kasabanın karşılaşmasıdır
   const pitIdx = s.pit?.node === n.id && s.pit.fight ? s.pit.wins : undefined;
@@ -198,6 +212,10 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     if (!h.alive || h.hpRatio <= 0) setup.startDead = 'revivable';
     else if (CONFIG.rules.carryHp && caps.startHp && h.hpRatio < 1) setup.startHpRatio = h.hpRatio;
     if (enc.def.partyUndying && caps.unitMods) setup.undying = true; // açılış savaşı kaybedilemez (tutorial)
+    // Tek kişilik başlangıç (Ömer 2026-11-01): ilk üç savaşta liderin skill kilitleri (dalga ortası açılış dahil)
+    const solo = soloSkillStage(s, h, n.id);
+    if (solo?.locked.length) setup.lockSkills = [...solo.locked];
+    if (solo?.onWave?.skills.length) setup.unlockOnWave = { wave: solo.onWave.wave, skills: [...solo.onWave.skills] };
     const pend = caps.unitMods && !setup.startDead ? pendingStartStatuses(s, `party-${order.indexOf(h.id)}`) : undefined;
     if (pend) setup.startStatuses = [...(setup.startStatuses ?? []), ...pend];
     if (Object.keys(setup).length) party[cell] = setup;
@@ -212,6 +230,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   const enemySetups = (list: EncounterUnit[], enemies: Record<number, UnitSetup>, wave = 0): void => {
     // B3 Break the Totem: kırılacak nesne işareti güç katmanından bağımsız (kural mekaniği)
     if (objectiveType(enc.def.objective) === 'totem') for (const u of list) if (u.objective) enemies[u.slot] = { ...enemies[u.slot], objective: true };
+    // C2 Encased: kural mekaniği, güç katmanından bağımsız
+    for (const u of list) if (u.encased) enemies[u.slot] = { ...enemies[u.slot], encased: true };
     if (!caps.unitMods) return;
     for (const u of list) {
       const diff = CONFIG.difficulties[s.difficulty];
@@ -221,7 +241,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
       const scale = u.tier === 'boss' ? (es?.boss ?? es?.all) : nodeType === 'elite' ? (es?.elite ?? es?.all) : es?.all;
       const rk = s.mapId === (es?.regionsMap ?? CONFIG.maps[0]) ? es?.regions?.[n.region ?? ''] : undefined; // bölge id'leri haritalar arasında tekrar eder
       const regional = rk && rk !== 1 ? withDifficulty(scale, { hpMult: rk, powerMult: rk }) : scale; // bölge çarpanı (Ömer 2026-10-24)
-      const own = withDifficulty(withDifficulty(u.mods, regional), u.tier ? n.enemyTierMods?.[u.tier] : undefined); // + düğüme özel rütbe ayarı (seferde)
+      const own = withDifficulty(withDifficulty(withDifficulty(withDifficulty(u.mods, regional), soloEnemyScale(s, n.id)), mapEnemyScale(s.mapId, n.id)), u.tier ? n.enemyTierMods?.[u.tier] : undefined); // + takım boyu çarpanı (tek kişilik başlangıç) + harita eğrisi + düğüme özel rütbe ayarı (seferde)
       // eliteEscort (open-questions 365 seçenek 3): elit düğümde rütbesiz eşlikçilere zorluk eki (rütbeliler enemyTier'dan alır)
       const rank = u.tier ? (u.noTierMods ? undefined : diff?.enemyTier?.[u.tier]) : nodeType === 'elite' ? diff?.eliteEscort : undefined;
       const mods = withEnemyLevel(withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), rank), u.class, enemyLevel);
@@ -236,6 +256,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
         ...(u.initialCooldownBonus ? { initialCooldownBonus: u.initialCooldownBonus } : {}),
       };
       if (u.objective && objectiveType(enc.def.objective) === 'totem') setup.objective = true;
+      if (u.encased) setup.encased = true;
       if (Object.keys(setup).length) enemies[u.slot] = setup;
     }
   };
@@ -334,7 +355,7 @@ export function validateEncounters(): string[] {
     }
     if (def.fallback && (!ENCOUNTERS[def.fallback] || ENCOUNTERS[def.fallback]!.fallback)) errors.push(`${id}: bad fallback ${def.fallback}`);
     // Karşılaşma kuralları (data/battle-rules.json): koşul / hedef / düzen id'leri, kapalı hücrede birim yok, totem'de hedef nesne var
-    if (def.condition || def.objective || def.blocked !== undefined || def.device) {
+    if (def.condition || def.objective || def.blocked !== undefined || def.device || def.caveIn || def.lantern || def.noise) {
       try {
         const r = resolveBattleRules(encounterRules(def, def.units, () => {}));
         const blocked = r?.blocked ?? [];

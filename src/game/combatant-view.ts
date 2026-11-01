@@ -143,6 +143,15 @@ export class CombatantView {
   private chevronTween: Phaser.Tweens.Tween | null = null;
   private readonly chevronPhase = { v: 0 };
   private readonly shieldFill: Phaser.GameObjects.Rectangle;
+  /** C2 Encased: bloğun kendi can çubuğu (YER TUTUCU: buz mavisi şerit); blok yokken gizli. */
+  private readonly blockBack: Phaser.GameObjects.Rectangle;
+  private readonly blockFill: Phaser.GameObjects.Rectangle;
+  /** Harita 3 dokunuş çubuğu (Heat / vaaz): YER TUTUCU ince çubuk. */
+  private readonly touchBack: Phaser.GameObjects.Rectangle;
+  private readonly touchFill: Phaser.GameObjects.Rectangle;
+  private readonly blockIce: Phaser.GameObjects.Rectangle;
+  /** C2 / C6: kalıcı sprite tonu (buz, kor, su verilmiş); vuruş flaşından sonra geri gelir. */
+  private tone: number | null = null;
   private readonly magicShieldFill: Phaser.GameObjects.Rectangle;
   private readonly statusBox: Phaser.GameObjects.Container;
   private readonly sealBox: Phaser.GameObjects.Container;
@@ -274,6 +283,11 @@ export class CombatantView {
     this.speedBox = scene.add.container(0, 0, [speedBack, this.speedFill, this.speedGlow]).setVisible(false);
     // Kalkan çubukları: can çubuğunun hemen üstünde ince çizgiler (genel: açık mavi, büyü: mor)
     this.shieldFill = scene.add.rectangle(-hpBar.width / 2, this.shieldY, 0, 6, color(colors.shield)).setOrigin(0, 0.5);
+    this.touchBack = scene.add.rectangle(-hpBar.width / 2, this.shieldY - 14, hpBar.width, 6, 0x1c1410, 0.9).setOrigin(0, 0.5).setStrokeStyle(1, 0x000000, 0.8).setVisible(false);
+    this.touchFill = scene.add.rectangle(-hpBar.width / 2, this.shieldY - 14, 0, 6, 0xff8a3a).setOrigin(0, 0.5).setVisible(false);
+    this.blockBack = scene.add.rectangle(-hpBar.width / 2, this.shieldY - 14, hpBar.width, 8, 0x12222e, 0.9).setOrigin(0, 0.5).setStrokeStyle(1, 0xa8dcf0, 0.9).setVisible(false);
+    this.blockFill = scene.add.rectangle(-hpBar.width / 2, this.shieldY - 14, 0, 8, 0xa8dcf0).setOrigin(0, 0.5).setVisible(false);
+    this.blockIce = scene.add.rectangle(0, -this.h * 0.5, this.w * 0.9, this.h * 1.02, 0xa8dcf0, 0.32).setStrokeStyle(3, 0xdff4ff, 0.85).setVisible(false);
     this.magicShieldFill = scene.add.rectangle(-hpBar.width / 2, this.shieldY - 7, 0, 6, color(colors.magicShield)).setOrigin(0, 0.5);
     // Ad plakası: sefer özel adı ('Bandit Chief') ya da class adı; elit altın, boss kızıl yazı + üstünde küçük rütbe rozeti
     const tier = tierStyle(combatant.tier);
@@ -369,6 +383,11 @@ export class CombatantView {
       this.mpFill,
       this.speedBox,
       this.shieldFill,
+      this.blockIce,
+      this.blockBack,
+      this.blockFill,
+      this.touchBack,
+      this.touchFill,
       this.magicShieldFill,
       this.statusBox,
       this.sealBox,
@@ -378,10 +397,14 @@ export class CombatantView {
       this.selFrame,
     ]);
     this.container.setDepth(y); // öndeki sıra arkadakinin üstünde çizilir
-    this.overlayParts = [this.hpBox, mpBack, this.mpFill, this.speedBox, this.shieldFill, this.magicShieldFill, this.statusBox, this.sealBox, name, ...tierBadge, this.marker, this.footRing, this.selFrame] as Array<Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha>;
+    this.overlayParts = [this.hpBox, mpBack, this.mpFill, this.speedBox, this.shieldFill, this.blockBack, this.blockFill, this.touchBack, this.touchFill, this.magicShieldFill, this.statusBox, this.sealBox, name, ...tierBadge, this.marker, this.footRing, this.selFrame] as Array<Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha>;
     this.setHp(combatant.hp, false);
     this.setMp(combatant.mp, false);
     this.setShield(combatant.shield, combatant.magicShield, false);
+    this.setBlock(combatant.encased?.hp ?? 0, combatant.encased?.maxHp ?? 0, false);
+    if (combatant.touch?.type === 'overheat') this.setTouchBar(combatant.heat ?? 0, combatant.touch.max, 0xff8a3a, false);
+    if (combatant.sermon) this.setTouchBar(combatant.sermon.taken, combatant.sermon.goal, 0xffd28a, false);
+    this.syncTone();
     this.play('idle');
     if (combatant.empowered) this.setEmpowered(true); // beslenmiş çağrı (Raise Dead): kalıcı hafif mor aura
   }
@@ -602,6 +625,41 @@ export class CombatantView {
     this.speedGlow.setVisible(full).setAlpha(1);
     this.paintSpeedFill();
     if (full) this.scene.tweens.add({ targets: this.speedGlow, alpha: 0.25, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  /** C2 Encased: blok çubuğu; max 0 = blok yok. */
+  setBlock(left: number, max: number, animate = true): void {
+    const on = max > 0 && left > 0;
+    this.blockBack.setVisible(on);
+    this.blockFill.setVisible(on);
+    this.blockIce.setVisible(on);
+    if (on) this.tweenWidth(this.blockFill, hpBar.width * Math.min(1, left / max), animate);
+  }
+
+  /** Harita 3 Heat / vaaz çubuğu (YER TUTUCU); max 0 = çubuk yok. */
+  setTouchBar(value: number, max: number, color: number, animate = true): void {
+    const on = max > 0;
+    this.touchBack.setVisible(on);
+    this.touchFill.setVisible(on);
+    if (!on) return;
+    this.touchFill.setFillStyle(color);
+    this.tweenWidth(this.touchFill, hpBar.width * Math.min(1, value / max), animate);
+  }
+
+  /** Hollow Delver yerin altında: sprite soluk (YER TUTUCU, sanat yok). */
+  setUnderground(on: boolean): void {
+    this.sprite.setAlpha(on ? 0.25 : 1);
+  }
+
+  /** Kalıcı ton motor durumundan: blok buz mavisi, Red-hot kor, Quenched çelik (YER TUTUCU, sanat yok). */
+  syncTone(blocked = !!this.combatant.encased, stance = this.combatant.temper): void {
+    this.tone = blocked ? 0x9fd8f0 : stance === 'hot' ? 0xff6a3a : stance === 'cold' ? 0x6a9ccc : null;
+    this.applyTone();
+  }
+
+  private applyTone(): void {
+    if (this.tone !== null) this.sprite.setTint(this.tone);
+    else this.sprite.clearTint();
   }
 
   setShield(shield: number, magicShield: number, animate = true): void {
@@ -1458,8 +1516,8 @@ export class CombatantView {
     this.scene.time.delayedCall(flash, () => {
       if (r.tint) {
         this.sprite.setTint(color(r.tint));
-        this.scene.time.delayedCall(r.tintMs, () => this.sprite.clearTint());
-      } else this.sprite.clearTint();
+        this.scene.time.delayedCall(r.tintMs, () => this.applyTone());
+      } else this.applyTone();
     });
     const dir = this.combatant.side === 'enemy' ? 1 : -1;
     this.scene.tweens.add({
@@ -1764,6 +1822,13 @@ export class CombatantView {
       this.previewItems.push(t);
       y -= px * 1.05;
     }
+  }
+
+  /** C1 dersi: isabet yüzdesi birimin üstünde büyüyüp söner (önizleme yazısından ayrı, kendi kendini siler). */
+  pulseHitChance(chance: number, ms: number): void {
+    const t = this.scene.add.text(0, this.hpY - 54, formatHit(chance), numStyle(40, hitColor(chance))).setOrigin(0.5, 1);
+    this.container.add(t);
+    this.scene.tweens.add({ targets: t, scale: { from: 0.8, to: 1.2 }, duration: ms / 6, yoyo: true, repeat: 2, ease: 'Sine.easeInOut', onComplete: () => t.destroy() });
   }
 
   clearPreview(): void {

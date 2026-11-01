@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { legacyHero } from './legacy-start';
 import {
   CONFIG,
   activeHeroes,
@@ -134,12 +135,9 @@ describe('ilerleme: seçim noktası, serbest dolaşım, birleşme', () => {
     let s = fresh();
     expect(nextStep(s)).toEqual({ kind: 'hero' });
     expect(() => moveTo(s, '2')).toThrow();
-    s = pickHero(s, 'archer');
+    s = pickHero(s, 'druid');
     expect(nextStep(s)).toEqual({ kind: 'battle', node: '1', encounter: 'mill_road_thugs' });
     expect(() => moveTo(s, '2')).toThrow(); // savaş bitmeden yola çıkılmaz
-    s = autoResolve(s);
-    expect(nextStep(s).kind).toBe('recruit'); // Mill Road zaferinden sonra yeni yoldaş (Ömer 2026-10-27)
-    expect(() => moveTo(s, '2')).toThrow();
     s = autoResolve(s);
     expect(nextStep(s)).toEqual({ kind: 'move', options: ['2'] });
     s = moveTo(s, '2');
@@ -242,9 +240,9 @@ describe('sis ve görünürlük', () => {
   });
 });
 
-describe('tutorial takım akışı', () => {
+describe('eski kayıt: tutorial takım akışı (yeni sefer: tests/solo-start.test.ts)', () => {
   it('1 karakter -> Mill Road zaferi: 3 adaydan 1 (en az biri alan saldırılı) -> Ashford: veda + serbest 3 kişilik takım (ilk seçilen lider) -> Valdren Keep çıkışı: 3 adaydan 1', () => {
-    let s = pickHero(fresh(77), 'warrior');
+    let s = legacyHero(77);
     expect(s.roster).toHaveLength(1);
     expect(leaderOf(s)!.class).toBe('warrior');
     expect(partyCap(s)).toBe(1);
@@ -305,7 +303,7 @@ describe('tutorial takım akışı', () => {
   });
 
   it('lider Ashford ekranında seçilebilir; dizilim değiştirilebilir', () => {
-    let s = playTo(fresh(5), '4');
+    let s = playTo(legacyHero(5), '4');
     s = farewell(s);
     s = formCompany(s, ['mage', 'defender', 'gambler'], 2);
     expect(leaderOf(s)!.class).toBe('gambler');
@@ -317,8 +315,8 @@ describe('tutorial takım akışı', () => {
     expect(s.active[before]).toBe('');
   });
 
-  it('takım ve aday havuzu 12 oynanabilir sınıf (Geometer yok; 2026-10-28 Vesper eklendi); başlangıç havuzu yalnızca Warrior + Archer (Ömer 2026-10-14)', () => {
-    expect(CONFIG.starterPool).toEqual(['warrior', 'archer']);
+  it('takım ve aday havuzu 12 oynanabilir sınıf (Geometer yok; 2026-10-28 Vesper eklendi); başlangıç havuzu Warrior, Defender, Paladin, Druid (Ömer 2026-11-01)', () => {
+    expect(CONFIG.starterPool).toEqual(['warrior', 'defender', 'paladin', 'druid']);
     for (const pool of [CONFIG.companyPool, CONFIG.recruitPool]) {
       expect(pool).toHaveLength(12);
       expect(pool).not.toContain('aoe_tester');
@@ -330,14 +328,15 @@ describe('tutorial takım akışı', () => {
   it('pickHero yalnızca başlangıç havuzundaki sınıfı kabul eder', () => {
     for (const c of CONFIG.recruitPool.filter((x) => !CONFIG.starterPool.includes(x))) expect(() => pickHero(fresh(), c), c).toThrow();
     expect(() => pickHero(fresh(), 'aoe_tester')).toThrow();
-    expect(leaderOf(pickHero(fresh(), 'archer'))!.class).toBe('archer');
+    expect(leaderOf(pickHero(fresh(), 'druid'))!.class).toBe('druid');
+    expect(() => pickHero(fresh(), 'archer')).toThrow(); // eski başlangıç sınıfı yalnız eski kayıtta
   });
 
   it('Mill Road zaferinden sonraki adaylar ilk kahramana göre sabit (seed fark etmez): Warrior -> Druid/Undead/Gambler, Archer -> Anti-Mage/Cutthroat/Undead', () => {
     const want: Record<string, string[]> = { warrior: ['druid', 'undead', 'gambler'], archer: ['antimage', 'cutthroat', 'undead'] };
     for (const [hero, list] of Object.entries(want)) {
       for (const seed of [1, 2, 3, 42, 777]) {
-        const s = autoResolve(pickHero(fresh(seed), hero));
+        const s = autoResolve(legacyHero(seed, hero));
         expect(recruitOffer(s, '1'), `${hero} ${seed}`).toEqual(list);
         expect((nextStep(s) as { offer: string[] }).offer).toEqual(list);
         expect(list.some(isAreaClass)).toBe(true); // Ravenwood alan saldırısını öğretir
@@ -349,7 +348,7 @@ describe('can taşıma', () => {
   it('zaferde hayatta kalanlar +victoryHeal; savaşı düşmüş bitiren %10 canla yaralı kalkar, ceset girip kalkmayan ceset kalır (Ömer 2026-10-19)', () => {
     // tavan level: XP level atlatmasın (level atlayınca tam iyileşme bu testin can kuralını örterdi; levels.md)
     const maxed = (x: CampaignState): CampaignState => ({ ...x, roster: x.roster.map((h) => ({ ...h, level: 50, xp: 0 })) });
-    let s = maxed(playTo(fresh(9), '3'));
+    let s = maxed(playTo(legacyHero(9), '3')); // iki kişilik eski kayıt
     const [a, b] = s.roster;
     s = applyBattle(s, { victory: true, units: [{ heroId: a!.id, hpRatio: 0.5, alive: true }, { heroId: b!.id, hpRatio: 0, alive: false }] });
     expect(s.roster[0]!.hpRatio).toBeCloseTo(0.5 + CONFIG.rules.eliteVictoryHeal!); // düğüm 3 elit: %50
@@ -364,13 +363,13 @@ describe('can taşıma', () => {
     expect(t.roster[0]!.hpRatio).toBe(1); // tavan 1
   });
 
-  it('boss zaferi YAŞAYANLARI tam iyileştirir (düşen yaralı %10 kalkar); kasaba varışı iyileştirmez (Ömer 2026-10-26), cesedi KALDIRMAZ (TUR 1 madde 10); yenilgi yalnızca sayaç', () => {
-    let s = playTo(fresh(11), '9');
+  it('boss zaferi herkesi tam iyileştirir (düşen de tam canla yaralı kalkar, Ömer 2026-10-31); kasaba varışı iyileştirmez (Ömer 2026-10-26), cesedi KALDIRMAZ (TUR 1 madde 10); yenilgi yalnızca sayaç', () => {
+    let s = playTo(legacyHero(11), '9');
     const team = activeHeroes(s);
     s = applyBattle(s, { victory: true, units: team.map((h, i) => ({ heroId: h.id, hpRatio: i === 0 ? 0 : 0.1, alive: i !== 0 })) });
-    expect(s.roster.find((h) => h.id === team[0]!.id)).toMatchObject({ hpRatio: CONFIG.rules.wounds.riseRatio, alive: true, wounds: 1 });
+    expect(s.roster.find((h) => h.id === team[0]!.id)).toMatchObject({ hpRatio: CONFIG.rules.bossVictoryHeal, alive: true, wounds: 1 });
     expect(team.slice(1).every((h) => s.roster.find((x) => x.id === h.id)!.hpRatio === 1)).toBe(true);
-    let t = playTo(fresh(11), '3');
+    let t = playTo(legacyHero(11), '3');
     t = { ...t, roster: t.roster.map((h) => ({ ...h, level: 50, xp: 0 })) }; // XP level atlatmasın (tam iyileşme)
     t = applyBattle(t, { victory: true, units: t.roster.map((h) => ({ heroId: h.id, hpRatio: 0.1, alive: true })) });
     expect(t.roster[0]!.hpRatio).toBeCloseTo(0.1 + CONFIG.rules.eliteVictoryHeal!); // düğüm 3 elit

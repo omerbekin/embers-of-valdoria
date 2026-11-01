@@ -25,7 +25,7 @@ const STEP_TEXT: Record<PreStep, string> = { recruit: 'stepRecruit', farewell: '
 /** Kartın "First" satırı: ön adımların İngilizce cümleleri (campaign.json > texts.stepRecruit / stepFarewell / stepCompany). */
 export function arrivalStepLines(s: CampaignState, nodeId: string): string[] {
   return arrivalPreSteps(s, nodeId)
-    .map((k) => CONFIG.texts[STEP_TEXT[k]] ?? '')
+    .map((k) => CONFIG.texts[k === 'company' && s.soloStart ? 'stepCompanyJoin' : STEP_TEXT[k]] ?? '')
     .filter(Boolean);
 }
 

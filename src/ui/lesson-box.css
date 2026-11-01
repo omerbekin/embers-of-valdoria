@@ -296,3 +296,73 @@ html[data-tut-lock='mp'] .bh-skills [data-skill]:not(.tut-focus) {
     transition: none;
   }
 }
+
+/* Whisper (Ömer 2026-11-01, C6 B; lesson-box.ts > showWhisper): bilgi dersi, sıra çubuğunun ve "Your turn" etiketinin altında ortada tek satır: küçük
+   Garrick portresi + ad + cümle. Görünüp solar; dokunmayı engellemez (pointer-events yok). Savaşanların üstüne inmez (üst bantta durur). */
+.tut-whisper {
+  --u: var(--gu, 1px);
+  position: fixed;
+  left: var(--el, 0px);
+  right: var(--er, 0px);
+  top: calc(var(--et, 0px) + max(66px, calc(150 * var(--u))));
+  z-index: 26;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--tw-fade, 600ms) ease-out;
+}
+
+.tut-whisper.on {
+  opacity: 1;
+}
+
+.tut-wh-in {
+  display: flex;
+  align-items: center;
+  gap: max(6px, calc(12 * var(--u)));
+  max-width: calc(100% - 24px);
+  padding: max(2px, calc(3 * var(--u))) max(10px, calc(20 * var(--u))) max(2px, calc(3 * var(--u))) max(2px, calc(3 * var(--u)));
+  background: rgba(10, 7, 4, 0.9);
+  border: 1px solid rgba(217, 178, 106, 0.45);
+}
+
+.tut-wh-face {
+  flex: none;
+  width: max(24px, calc(30 * var(--u)));
+  height: max(24px, calc(30 * var(--u)));
+  border: 1px solid rgba(217, 178, 106, 0.55);
+  background: #140e09;
+  overflow: hidden;
+}
+
+.tut-wh-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tut-wh-text {
+  min-width: 0;
+  font: max(13px, calc(21 * var(--u))) / 1.2 var(--el-body);
+  color: var(--el-txt);
+}
+
+.tut-wh-who {
+  margin-right: 0.55em;
+  font: 600 0.74em var(--el-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--el-on);
+}
+
+html.reduced-motion .tut-whisper {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tut-whisper {
+    transition: none;
+  }
+}

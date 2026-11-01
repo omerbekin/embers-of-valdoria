@@ -115,7 +115,7 @@ function potentialFrom(battle: Battle, actor: Combatant, slot: number, memo: Hit
 
 /** Telgraftan kaçma (menzil sürümü): eşitlikte saldırı yeteneğini koruyan hücre; menzilden çıkıp saldıramayacaksa + şimdiki hamlenin yarısı bedel. */
 export function telegraphDodgeRange(battle: Battle, actor: Combatant, free: number[], vNow: number, deps: RangeAiDeps): RangeMovePlan | null {
-  if (battle.telegraphs.length === 0) return null;
+  if (battle.telegraphs.length === 0 && battle.hazards.length === 0) return null;
   const now = deps.telegraphLoad(battle, actor, actor.slot);
   if (now <= 0) return null;
   const usable = rangedSkills(battle, actor).filter((s) => !blockedByCost(battle, actor, s));

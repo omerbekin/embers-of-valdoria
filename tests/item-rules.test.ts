@@ -231,7 +231,7 @@ describe('eski kayıt göçü (en yakın yeni biçim; asla çökmez)', () => {
 
 describe('zarlar kayıtta: sefer ve Endless', () => {
   const won = (seed = 31): CampaignState => {
-    const s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed }), 'archer'), '5A');
+    const s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed }), 'druid'), '5A');
     return applyBattle({ ...s, inventory: [] }, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: 1, alive: true })) });
   };
 

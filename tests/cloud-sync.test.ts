@@ -26,7 +26,7 @@ import { deleteSlot } from '../src/campaign';
 import { leveledRun } from './level-helpers';
 
 const NOW = '2026-10-24T12:00:00.000Z';
-const start = (mode: CampaignMode, seed = 10, slot = 0) => autoResolve(pickHero(newCampaign({ mode, seed, slot, difficulty: 'medium', campaignId: `c${seed}` }), 'archer'));
+const start = (mode: CampaignMode, seed = 10, slot = 0) => autoResolve(pickHero(newCampaign({ mode, seed, slot, difficulty: 'medium', campaignId: `c${seed}` }), 'druid'));
 type KVm = ReturnType<typeof memoryKV>;
 
 /** Gerçek kayıt yollarıyla dolu bir depo: sefer (Normal + Ironman), süren Endless koşusu, skor, tutorial. */

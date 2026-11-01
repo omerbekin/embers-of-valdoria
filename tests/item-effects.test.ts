@@ -199,7 +199,7 @@ describe('güç katmanı: etkiler, yığılmama, Endless, kayıt', () => {
   });
 
   it('sefer: affix kancalı item kayıt round-trip sonrası savaş planında kancasıyla gelir', () => {
-    let s = leveledCampaign(debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 21 }), 'archer'), '5A'));
+    let s = leveledCampaign(debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 21 }), 'druid'), '5A'));
     s = { ...s, inventory: [] };
     const hero = activeHeroes(s)[0]!;
     const r = addItem(s, 'great_helm');

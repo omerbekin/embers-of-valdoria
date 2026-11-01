@@ -4,8 +4,8 @@ import { Battle, content } from '../src/engine';
 import { valorRules } from '../src/engine/content';
 import { lateValorChoice, nodeCategory, resolveSimMap, simMapChain } from '../src/sim/campaign';
 import { ITEMS } from '../src/progression/items';
-import { equalAllocateAll, mergeGrindResults, pickFarm, repeatPreset, simOverrides, simulateGrind, withIlvlBonus, withLevelBonus } from '../src/sim/campaign-grind';
-import { bonusText, bossFirstWins, grindBand, grindReport, parseBonus, parseSimOptions, parseWallCap } from '../src/sim/campaign-grind-report';
+import { equalAllocateAll, mergeGrindResults, pickEasyFarm, pickFarm, repeatPreset, simOverrides, simulateGrind, withIlvlBonus, withLevelBonus, withOnlyHero } from '../src/sim/campaign-grind';
+import { bonusText, bossFirstWins, grindBand, grindOk, grindReport, grindValue, normalCore, parseBonus, parseSimOptions, parseWallCap, soloCheckLines } from '../src/sim/campaign-grind-report';
 import { instanceIlvl, SLOT_IDS } from '../src/progression/items';
 import { CAMPAIGN_TARGETS } from '../src/sim/campaign-targets';
 
@@ -28,6 +28,80 @@ describe('sefer kasma simülatörü', () => {
     expect(nodeCategory(map, map.start)).toBe('tutorial');
     const dr = getMap('drowned-reach');
     expect(dr.nodes.filter((n) => n.encounter).every((n) => nodeCategory(dr, n.id) !== 'tutorial')).toBe(true);
+  });
+
+  it('tek kişi ölçümü (--solo-check): her kahraman ayrı oynar, ana koşu aynı kalır; --solo-only son düğümde biter; rapor bölümü', () => {
+    const base = { difficulty: 'medium', player: 'good', runs: 2, firstSeed: 11 } as const;
+    const plain = simulateGrind({ ...base, soloCheck: undefined, soloOnly: true });
+    expect(plain.soloCheck).toBeUndefined();
+    expect(plain.nodes['1']?.wallInn).toBe(0); // duvar tanısı sayacı
+    const only = simulateGrind({ ...base, soloCheck: ['moor', 'hills', 'cairn'], soloOnly: true });
+    const cairn = only.soloCheck!.cairn!;
+    expect(cairn.n).toBe(4); // 2 koşu x 2 kahraman
+    expect(Object.values(cairn.classes).reduce((a, c) => a + c.n, 0)).toBe(4);
+    expect(only.completed).toBe(0); // Cairn Hill'de durdu
+    expect(only.nodes.cairn?.reached ?? 0).toBe(0);
+    expect(Object.keys(only.nodes)).toEqual(expect.arrayContaining(['1', '2', '3']));
+    expect(soloCheckLines([only]).join('\n')).toContain('Cairn Hill');
+    expect(soloCheckLines([plain])).toEqual([]);
+    // Hedef düğüm başına, adı raporda açık; yalnız Medium iyi oyuncuda işaretlenir
+    expect(CAMPAIGN_TARGETS.soloFirstWinMin).toEqual({ moor: 80, hills: 80, cairn: 75 });
+    const one = (player: 'good' | 'average', wins: number) =>
+      soloCheckLines([{ ...only, player, preGrind: 0, soloCheck: { cairn: { n: 100, wins, hpEnd: wins / 2, classes: {} } } }]).join(' ');
+    expect(one('good', 75)).toContain('tek kahramanla ilk denemede kazanma % 75,0 (hedef en az %75)+');
+    expect(one('good', 74)).toContain('(hedef en az %75)!');
+    expect(one('average', 50)).not.toContain('hedef en az');
+    // Tek kişi kurulumu: yalnız o kahraman savaşa girer
+    let s = debugTeleport(newCampaign({ mode: 'normal', seed: 5 }), 'cairn');
+    const id = s.roster[0]!.id;
+    s = { ...s, active: [...s.active] };
+    const solo = withOnlyHero(s, id);
+    expect(solo.active.filter(Boolean)).toEqual([id]);
+    expect(solo.roster.map((h) => h.id)).toEqual([id]);
+  });
+
+  it('ana koşu tek kişi ölçümünden etkilenmez (aynı seed = aynı sonuç)', () => {
+    const base = { difficulty: 'medium', player: 'good', runs: 1, firstSeed: 21, map: undefined } as const;
+    const a = simulateGrind(base);
+    const b = simulateGrind({ ...base, soloCheck: ['moor', 'hills', 'cairn'] });
+    expect(b.battles).toBe(a.battles);
+    expect(b.nodes).toEqual(a.nodes);
+    expect(b.levelEnd).toBe(a.levelEnd);
+  });
+
+  it('eğri gereği kolay düğümler bandın üstünde kusur sayılmaz, normalCore onları ayırır; kasma hedefleri Hard = Medium x2', () => {
+    const r = { map: undefined, nodes: { moor: { reached: 10, firstWins: 10 }, grave: { reached: 10, firstWins: 8 } } } as unknown as Parameters<typeof normalCore>[0];
+    expect(normalCore(r)).toEqual({ first: 80, easyAbove: 1, easy: 1 });
+    const { medium, hard } = CAMPAIGN_TARGETS.grind;
+    for (const c of ['elite', 'boss'] as const) expect(hard[c]).toEqual([medium[c][0] * 2, medium[c][1] * 2]);
+  });
+
+  it('kasma ölçüsü: Medium / Hard elit-boss kasıp geçen koşu başına (duvar girmez), normal ve Easy ulaşan başına (duvar dahil)', () => {
+    const x = (grindSum: number, grindWall = 20) => ({ reached: 100, grindRuns: 8, grindSum, grindWall });
+    expect(grindValue('medium', 'boss', x(28))).toBeCloseTo(3.5); // 28 kasma / 8 kasıp geçen; duvarın 20 kasması sayılmaz
+    expect(grindValue('hard', 'elite', x(40))).toBeCloseTo(5);
+    expect(grindValue('medium', 'normal', x(5))).toBeCloseTo(0.25); // (5 + 20) / 100
+    expect(grindValue('easy', 'boss', x(5, 0))).toBeCloseTo(0.05);
+    expect(grindOk('medium', 'boss', 'good', x(28))).toBe(true);
+    expect(grindOk('medium', 'boss', 'good', x(28, 500))).toBe(true); // duvar ayrı sınırla ölçülür, işareti bozmaz
+    expect(grindOk('medium', 'boss', 'good', x(46))).toBe(false); // 5,75 kasma: hedef 3-4
+    expect(grindOk('medium', 'boss', 'average', x(46))).toBe(true); // ortalama oyuncu üst sınır x1,5 = 6
+    expect(grindOk('medium', 'elite', 'good', { reached: 100, grindRuns: 0, grindSum: 0, grindWall: 30 })).toBe(true); // kasıp geçen yok
+    expect(CAMPAIGN_TARGETS.wallCap.medium).toBe(10);
+  });
+
+  it('Inn beklerken kolay devriye yeri: düşük seviyeli düğüm; orada hep kaybeden başkasına geçer; hepsi kaybedildiyse yok', () => {
+    let s = debugTeleport(newCampaign({ mode: 'normal', seed: 5 }), 'cairn');
+    while (nextStep(s).kind !== 'move') s = autoResolve(s);
+    const first = pickEasyFarm(s)!;
+    expect(first).toBeTruthy();
+    expect(canReplay(map, node(map, first))).toBe(true);
+    const lostFirst = new Map([[first, { w: 0, n: 3 }]]);
+    const other = pickEasyFarm(s, lostFirst);
+    expect(other).not.toBe(first);
+    const all = new Map<string, { w: number; n: number }>();
+    for (let id = pickEasyFarm(s, all), k = 0; id && k < 50; id = pickEasyFarm(s, all), k++) all.set(id, { w: 0, n: 3 });
+    expect(pickEasyFarm(s, all)).toBeNull();
   });
 
   it('duvar sınırı: varsayılan zorluk başına hedef bloğundan, --wall-cap hepsini ya da zorluk başına ezer', () => {

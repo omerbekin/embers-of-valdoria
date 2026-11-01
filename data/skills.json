@@ -9461,5 +9461,762 @@
     "ai": {
       "reserveMp": 2
     }
+  },
+  "storm_test_bolt": {
+    "_not": "TEST: Harita 3 şimşek kuralları için (Storm Tester, testOnly; kampanyaya bağlı değil). Sanat YER TUTUCU.",
+    "id": "storm_test_bolt",
+    "name": "Test Bolt",
+    "icon": "bolt",
+    "target": "single_enemy",
+    "thunder": { "shocks": true },
+    "cost": { "resource": "mp", "amount": 0 },
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#bfe3ff",
+    "effects": [{ "type": "damage", "damageType": "magic", "scale": "int", "power": 0.5, "element": "lightning" }],
+    "vfx": "judgment",
+    "sfx": ["bigBoom"]
+  },
+  "storm_test_plain": {
+    "_not": "TEST: etiketsiz şimşek; suda, buzda, karanlıkta hiçbir kural açmaz (karşılaştırma).",
+    "id": "storm_test_plain",
+    "name": "Test Plain Spark",
+    "icon": "bolt",
+    "target": "single_enemy",
+    "cost": { "resource": "mp", "amount": 0 },
+    "motion": "cast",
+    "fx": "#bfe3ff",
+    "effects": [{ "type": "damage", "damageType": "magic", "scale": "int", "power": 0.5, "element": "lightning" }],
+    "vfx": "judgment",
+    "sfx": ["bigBoom"]
+  },
+  "storm_test_iron": {
+    "_not": "TEST: A4 Iron Draws the Bolt (ironBolt) denemesi; Shocked vermez.",
+    "id": "storm_test_iron",
+    "name": "Test Iron Bolt",
+    "icon": "bolt",
+    "target": "single_enemy",
+    "thunder": {},
+    "cost": { "resource": "mp", "amount": 0 },
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#bfe3ff",
+    "effects": [{ "type": "damage", "damageType": "magic", "scale": "int", "power": 0.5, "element": "lightning", "ironBolt": 0.08 }],
+    "vfx": "judgment",
+    "sfx": ["bigBoom"]
+  },
+  "storm_test_row": {
+    "_not": "TEST: alan şimşeği (boş su / buz hücresine de düşer).",
+    "id": "storm_test_row",
+    "name": "Test Bolt Row",
+    "icon": "bolt",
+    "target": "area_enemies",
+    "area": { "shape": "row" },
+    "thunder": { "shocks": true },
+    "cost": { "resource": "mp", "amount": 0 },
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#bfe3ff",
+    "effects": [{ "type": "damage", "damageType": "magic", "scale": "int", "power": 0.3, "element": "lightning" }],
+    "vfx": "judgment",
+    "sfx": ["bigBoom"]
+  },
+  "thunder_rod": {
+    "_not": "Harita 3 B2 (maps-2-3.md): YALNIZ TEST (rod_tester). Hücreyi motor seçer (en çok kahramana komşu boş hücre). Sayılar PROVİZYON. Kampanyaya bağlı değil.",
+    "id": "thunder_rod",
+    "name": "Thunder Rod",
+    "icon": "bolt",
+    "target": "self",
+    "thunderRod": { "ratio": 0.06, "max": 2 },
+    "cost": { "resource": "mp", "amount": 0 },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#bfe3ff",
+    "effects": [],
+    "vfx": "judgment",
+    "sfx": ["bigBoom"]
+  },
+  "rolling_thunder": {
+    "_not": "Harita 3 C1 (maps-2-3.md): Clan Stormcaller (4. dilim) ve test rod_tester. Hedefin sırası işaretlenir, sıra çubuğuna belirteç girer. speed birim hızıyla aynı sayaç (eşik 200). Şimşek kuralları (thunder alanı) iniş anında işler. Sayılar PROVİZYON.",
+    "id": "rolling_thunder",
+    "name": "Rolling Thunder",
+    "icon": "bolt",
+    "target": "single_enemy",
+    "thunder": {},
+    "rollingThunder": { "ratio": 0.3, "speed": 34, "testActions": 4 },
+    "cost": { "resource": "mp", "amount": 0 },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#bfe3ff",
+    "effects": [],
+    "vfx": "judgment",
+    "sfx": ["bigBoom"]
+  },
+  "eye_test_shot": {
+    "_not": "TEST: eye_tester'ın kendi menzilli vuruşu (Blizzard isabet cezasını görmek için).",
+    "id": "eye_test_shot",
+    "name": "Test Shot",
+    "icon": "bolt",
+    "target": "single_enemy",
+    "cost": { "resource": "mp", "amount": 0 },
+    "motion": "ranged",
+    "fx": "#bfe3ff",
+    "effects": [{ "type": "damage", "damageType": "magic", "scale": "int", "power": 0.5 }],
+    "vfx": "judgment",
+    "sfx": ["bigBoom"]
+  },
+  "temper_test_strike": {
+    "_not": "TEST: temper_tester'ın kendi vuruşu (duruş denemesi).",
+    "id": "temper_test_strike",
+    "name": "Test Strike",
+    "icon": "flame",
+    "target": "single_enemy",
+    "cost": { "resource": "mp", "amount": 0 },
+    "motion": "cast",
+    "fx": "#ff7a3a",
+    "effects": [{ "type": "damage", "damageType": "magic", "scale": "int", "power": 0.5 }],
+    "vfx": "judgment",
+    "sfx": ["bigBoom"]
+  },
+  "pole_vault": {
+    "_not": "Clan Vaulter: ön sıranın üstünden arka sıralara; sonraki turuna kadar Overreached. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf lunge sahibinden.",
+    "id": "pole_vault",
+    "name": "Pole Vault",
+    "target": "single_enemy",
+    "reachRule": {
+      "kind": "backRows"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 2,
+    "motion": "melee",
+    "fx": "#b0a090",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.0
+      },
+      {
+        "type": "status",
+        "status": "overreached",
+        "turns": 1,
+        "self": true
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "lunge"
+  },
+  "shardwalk": {
+    "_not": "Shardwalker temel saldırı: Chilled hedefe her sıradan, yoksa normal yakın dövüş. Chilled uygulamaz, Frozen tetiklemez. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf run_down sahibinden.",
+    "id": "shardwalk",
+    "name": "Shardwalk",
+    "target": "single_enemy",
+    "reachRule": {
+      "kind": "status",
+      "statuses": [
+        "chilled"
+      ]
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.85
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "run_down"
+  },
+  "undermine": {
+    "_not": "Hollow Delver: yere dalar, çatlak telgrafı; sonraki turunda fırlar. Boşsa Staggered. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf wyrm_swallow sahibinden.",
+    "id": "undermine",
+    "name": "Undermine",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "rect",
+      "rows": 1,
+      "cols": 1,
+      "anchor": "bottom_left"
+    },
+    "telegraph": {
+      "kind": "area",
+      "dive": true,
+      "endsTurn": true,
+      "whiff": {
+        "status": "staggered",
+        "turns": 1
+      }
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#8c8f8a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.3
+      }
+    ],
+    "icon": "breakingspan",
+    "vfx": "breakingspan",
+    "sfx": [
+      "chainDrag",
+      "stoneCrack",
+      "timberSplinter",
+      "riverBurst"
+    ],
+    "artOf": "wyrm_swallow"
+  },
+  "dark_step": {
+    "_not": "Gloamstalker temel saldırı: Darkness sürerken her sıraya; aydınlıkta normal yakın dövüş. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf hamstring sahibinden.",
+    "id": "dark_step",
+    "name": "Dark Step",
+    "target": "single_enemy",
+    "reachRule": {
+      "kind": "dark"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#5a4a7a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.8
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "hamstring"
+  },
+  "through_the_flame": {
+    "_not": "Cinderleaper temel saldırı: yanan hedefe ya da Burning zemindekine her sıradan, hücreye 1 tur Burning zemin; yanan yoksa normal vuruş. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf scorch_bite sahibinden.",
+    "id": "through_the_flame",
+    "name": "Through the Flame",
+    "target": "single_enemy",
+    "reachRule": {
+      "kind": "status",
+      "statuses": [
+        "burning"
+      ],
+      "ground": "burning"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#e0702a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.85
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 1,
+        "scale": "str",
+        "power": 0.2,
+        "whenOpened": true
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "scorch_bite"
+  },
+  "slag_charge": {
+    "_not": "Slagcart Golem: sıra telgrafı, sonraki turunda koşu (orta hasar + 2 tur Burning), sonra Cooling (oynamaz, zırh 0). Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf gatestone_slam sahibinden.",
+    "id": "slag_charge",
+    "name": "Slag Charge",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "row"
+    },
+    "telegraph": {
+      "kind": "area",
+      "endsTurn": true,
+      "after": {
+        "status": "cooling",
+        "turns": 1
+      }
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#d0603a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.8
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "str",
+        "power": 0.12,
+        "turns": 2
+      }
+    ],
+    "icon": "tremor2",
+    "vfx": "tremor2",
+    "sfx": [
+      "plateCreak",
+      "heaveGrunt",
+      "shieldPlant",
+      "groundHeave"
+    ],
+    "artOf": "gatestone_slam"
+  },
+  "anvil_strike": {
+    "_not": "Thunderwright temel saldırı: Shocked verir. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf shield_bash sahibinden.",
+    "id": "anvil_strike",
+    "name": "Anvil Strike",
+    "target": "single_enemy",
+    "thunder": {
+      "shocks": true
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#bfe3ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "lightning",
+        "ironBolt": 0.08
+      }
+    ],
+    "icon": "fistcrush2",
+    "vfx": "fistcrush2",
+    "sfx": [
+      "plateCreak",
+      "heaveGrunt",
+      "gauntletDrop",
+      "gauntletCrush"
+    ],
+    "artOf": "shield_bash"
+  },
+  "ring_the_anvil": {
+    "_not": "Thunderwright: şimşek en ağır zırhlıdan başlar, sıradaki iki zırhlıya zıplar. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses storm_test kalıbı (bolt, judgment, bigBoom); ses kendi kopyası.",
+    "id": "ring_the_anvil",
+    "name": "Ring the Anvil",
+    "target": "single_enemy",
+    "reachRule": {
+      "kind": "heaviest"
+    },
+    "splash": {
+      "pattern": "armor",
+      "jumps": 2
+    },
+    "thunder": {},
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#bfe3ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.65,
+        "element": "lightning",
+        "ironBolt": 0.08,
+        "falloff": 0.75
+      }
+    ],
+    "icon": "bolt",
+    "vfx": "judgment",
+    "sfx": [
+      "bigBoom"
+    ]
+  },
+  "fork": {
+    "_not": "Clan Stormcaller temel saldırı: Soaked ya da suda duran hedefe Stun, kuruysa Shocked itişi. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses storm_test kalıbı (bolt, judgment, bigBoom); ses kendi kopyası.",
+    "id": "fork",
+    "name": "Fork",
+    "target": "single_enemy",
+    "thunder": {
+      "shocks": true
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#bfe3ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "lightning"
+      }
+    ],
+    "icon": "bolt",
+    "vfx": "judgment",
+    "sfx": [
+      "bigBoom"
+    ]
+  },
+  "gloam_bite": {
+    "_not": "Gloam Eel temel saldırı: kendisi Flooded hücredeyken Live Water tetikler; Darkness'ta Thunderflash. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf eel_bite sahibinden.",
+    "id": "gloam_bite",
+    "name": "Gloam Bite",
+    "target": "single_enemy",
+    "thunder": {
+      "liveFrom": "flooded"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#7fd4c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.85,
+        "element": "lightning"
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "eel_bite"
+  },
+  "headlong": {
+    "_not": "Stormhorn Ram: şeritte koşar, şeridin ilk kahramanına vurur ve bir sıra geri iter. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf run_down sahibinden.",
+    "id": "headlong",
+    "name": "Headlong",
+    "target": "single_enemy",
+    "reachRule": {
+      "kind": "laneFirst"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#bfe3ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.85
+      },
+      {
+        "type": "push",
+        "crashPower": 0.3,
+        "scale": "str",
+        "element": "physical",
+        "fixedDir": "back"
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "run_down"
+  },
+  "thundersnow": {
+    "_not": "Harita 3 5. dilim (maps-2-3.md): dokunuşu çalıştıran en küçük skill; sanat YER TUTUCU, sayılar PROVİZYON. E2: birim listesinde yok, touch.skill üstünden iner; şimşek kurallarını taşır.",
+    "id": "thundersnow",
+    "name": "Thundersnow",
+    "target": "self",
+    "thunder": {
+      "shocks": true
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#bfe3ff",
+    "effects": [],
+    "icon": "bolt",
+    "vfx": "judgment",
+    "sfx": [
+      "bigBoom"
+    ]
+  },
+  "icy_grasp": {
+    "_not": "Harita 3 5. dilim (maps-2-3.md): dokunuşu çalıştıran en küçük skill; sanat YER TUTUCU, sayılar PROVİZYON. E2: Snowfather temel saldırı. Chilled atar; zaten Chilled hedefte Frozen olur (bosslar bağışık).",
+    "id": "icy_grasp",
+    "name": "Icy Grasp",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#8fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "str",
+        "power": 0.6,
+        "element": "ice"
+      },
+      {
+        "type": "status",
+        "status": "chilled",
+        "turns": 2
+      }
+    ],
+    "icon": "blizzard",
+    "vfx": "blizzard",
+    "sfx": [
+      "iceCrack",
+      "hailPatter"
+    ]
+  },
+  "whiteout": {
+    "_not": "Harita 3 5. dilim (maps-2-3.md): dokunuşu çalıştıran en küçük skill; sanat YER TUTUCU, sayılar PROVİZYON. E2: tek Chilled atışı + kısa süreli Darkness (rounds; Thunderflash aydınlatır). Tam kit değil.",
+    "id": "whiteout",
+    "name": "Whiteout",
+    "target": "all_enemies",
+    "whiteout": {
+      "rounds": 1,
+      "darkness": {
+        "sides": [
+          "party"
+        ],
+        "depth": 1,
+        "fireRounds": 2
+      }
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#dfefff",
+    "effects": [
+      {
+        "type": "status",
+        "status": "chilled",
+        "turns": 2
+      }
+    ],
+    "icon": "blizzard",
+    "vfx": "blizzard",
+    "sfx": [
+      "iceCrack",
+      "hailPatter"
+    ]
+  },
+  "long_sermon": {
+    "_not": "Harita 3 5. dilim (maps-2-3.md): dokunuşu çalıştıran en küçük skill; sanat YER TUTUCU, sayılar PROVİZYON. E4: rounds Round sürer; yalnız hasar eşiği (breakRatio x maxHp) bozar, Silence/Stun bozmaz (Ömer). Ashborn = families + names (yer tutucu kadro).",
+    "id": "long_sermon",
+    "name": "The Long Sermon",
+    "target": "self",
+    "longSermon": {
+      "rounds": 3,
+      "breakRatio": 0.25,
+      "ground": "burning",
+      "families": [
+        "ember_cult"
+      ],
+      "names": [
+        "Pyre Witch",
+        "Cinder Knight",
+        "The Ashborn Hierarch"
+      ]
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 5,
+    "motion": "cast",
+    "fx": "#ff7a1a",
+    "effects": [],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar"
+    ]
+  },
+  "flare": {
+    "_not": "Harita 3 5. dilim (maps-2-3.md): dokunuşu çalıştıran en küçük skill; sanat YER TUTUCU, sayılar PROVİZYON. E5: Ember temel saldırı; son fazda flare_storm olur.",
+    "id": "flare",
+    "name": "Flare",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ff7a1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "str",
+        "power": 0.6,
+        "element": "fire"
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "fireBlast"
+    ]
+  },
+  "flare_storm": {
+    "_not": "Harita 3 5. dilim (maps-2-3.md): dokunuşu çalıştıran en küçük skill; sanat YER TUTUCU, sayılar PROVİZYON. E5: son faz Flare; şimşek kuralları (Shocked, Live Water), Urn suyu da iletir.",
+    "id": "flare_storm",
+    "name": "Flare",
+    "target": "single_enemy",
+    "thunder": {
+      "shocks": true
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#bfe3ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "str",
+        "power": 0.6,
+        "element": "lightning"
+      }
+    ],
+    "icon": "bolt",
+    "vfx": "judgment",
+    "sfx": [
+      "bigBoom"
+    ]
+  },
+  "kingsmaul": {
+    "_not": "Harita 3 5. dilim (maps-2-3.md): dokunuşu çalıştıran en küçük skill; sanat YER TUTUCU, sayılar PROVİZYON. E6: Hollow King temel saldırı.",
+    "id": "kingsmaul",
+    "name": "Kingsmaul",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#9aa8b8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.6
+      }
+    ],
+    "icon": "anchorsmash",
+    "vfx": "anchorsmash",
+    "sfx": [
+      "chainDrag",
+      "anchorImpact"
+    ]
+  },
+  "call_the_vault": {
+    "_not": "Harita 3 5. dilim (maps-2-3.md): dokunuşu çalıştıran en küçük skill; sanat YER TUTUCU, sayılar PROVİZYON. E6: Hollow Warden kaldırır; Noise dolunca bedava da çalışır (battle.ts > kingHears). maxAlive tavanı boş hücre ve birikmeyi sınırlar.",
+    "id": "call_the_vault",
+    "name": "Call the Vault",
+    "target": "self",
+    "callVault": {
+      "unit": "stonebound_warden",
+      "name": "Hollow Warden",
+      "slot": 1,
+      "maxAlive": 4
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#9aa8b8",
+    "effects": [],
+    "icon": "anchorsmash",
+    "vfx": "anchorsmash",
+    "sfx": [
+      "chainDrag",
+      "anchorImpact"
+    ]
   }
 }

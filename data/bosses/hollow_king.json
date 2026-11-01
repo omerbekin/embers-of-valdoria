@@ -1,18 +1,58 @@
 {
-  "_not": "GEÇİCİ GÖRÜNÜM KAYDI (content-designer 2026-10-29, /vfx idle sprite denemesi): Harita 3 son bossu The Hollow King'in (maps-2-3.md 4.3) yalnız savaştaki görünüşü için. Kit YOK (inert: savaşta durur, hiçbir şey yapmaz), sayılar Iron Mooring kopyası; hiçbir karşılaşmada kullanılmıyor. Asıl boss tanımını (pasif Hollow Crown, Kingsmaul, Call the Vault, Decree of Stone, ult Bring Down the Hall) Harita 3 kampanya işi yazınca bu dosya onunla değişir. Görsel: assets/sprites/hollow_king (idle.png + poses.png boşta nefes döngüsü, data/mob-poses.json), kaynak assets/source/mobs + assets/source/mob-poses.",
+  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
   "id": "hollow_king",
   "name": "The Hollow King",
   "spriteId": "hollow_king",
   "spriteScale": 1.12,
   "color": "#5d6b7a",
   "logo": "skull",
-  "frontPriority": 0,
-  "range": 1,
+  "frontPriority": 4,
+  "range": 5,
   "role": "Boss · Hollow King",
-  "attributes": { "str": 0, "int": 0, "dex": 0, "luck": 0 },
-  "armor": 20,
-  "magicArmor": 0,
-  "overrides": { "hp": 55, "mp": 0, "spd": 2, "hpRegen": 0, "mpRegen": 0 },
-  "inert": true,
-  "skills": []
+  "attributes": {
+    "str": 16,
+    "int": 40,
+    "dex": 8,
+    "luck": 8
+  },
+  "armor": 18,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 460,
+    "hpRegen": 0
+  },
+  "ai": "bridge_warden",
+  "skills": [
+    "kingsmaul",
+    "call_the_vault"
+  ],
+  "touch": {
+    "type": "kingHears",
+    "skill": "call_the_vault"
+  },
+  "passive": {
+    "id": "the_king_hears",
+    "name": "The King Hears",
+    "icon": "skull",
+    "text": "Each time your Noise counter fills, the King calls the vault for free and one more Hollow Warden rises.",
+    "effect": {
+      "type": "touchLabel"
+    }
+  },
+  "boss": {
+    "where": "sleeps beneath the Deep Halls",
+    "firstBanner": "Who walks in my halls?",
+    "phases": [],
+    "notes": [
+      "Noise matters here. Critical hits, explosions and area skills fill the counter; each time it fills a Hollow Warden rises, and the King calls another for free."
+    ],
+    "passives": [
+      {
+        "id": "the_king_hears",
+        "name": "The King Hears",
+        "icon": "skull",
+        "text": "Each time your Noise counter fills, the King calls the vault for free and one more Hollow Warden rises."
+      }
+    ]
+  }
 }

@@ -1,0 +1,37 @@
+{
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: weir_eel. Kendi idle çizimi (assets/sprites/gloam_eel, mob-poses); saldırı pozu, VFX ve ses yer tutucu.",
+  "id": "gloam_eel",
+  "name": "Gloam Eel",
+  "family": "beasts",
+  "spriteId": "gloam_eel",
+  "spriteScale": 1.2,
+  "color": "#4f8f8a",
+  "logo": "roar",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Beast · Ambusher",
+  "attributes": {
+    "str": 21,
+    "int": 2,
+    "dex": 18,
+    "luck": 4
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "gloam_bite",
+    "lunge"
+  ],
+  "passive": {
+    "id": "slick",
+    "name": "Slick",
+    "icon": "boot",
+    "text": "While it stands on Flooded ground, its evasion is +20%. Fight it on dry planks.",
+    "effect": {
+      "type": "slick",
+      "ground": "flooded",
+      "evasion": 0.2
+    }
+  }
+}

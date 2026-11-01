@@ -30,6 +30,35 @@
     ],
     "fallback": "ravenwood_pack_lite"
   },
+  "ravenwood_solo": {
+    "_not": "Tek kişilik sefer başlangıcı (Ömer 2026-11-01; docs/design/tutorial.md). Ravenwood'un yeni sefer sürümü: eski ravenwood_pack eski kayıtlar için durur. Toplam 6 düşman (eskisi 5), iki dalga: 1. dalga kümeli 3 kurt (alan dersi), 2. dalga kurt + poacher + seer; 2. dalga gelirken kahramanın 3. skill'i açılır (campaign.json > soloStart.stages). Can ve hasar tek kahramana göre düşük. PROVİZYON, sim düzeltecek.",
+    "name": "Ravenwood Outlaws",
+    "units": [
+      { "class": "grey_wolf", "slot": 0, "mods": { "spdAdd": -3, "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.22 }, "initialCooldownBonus": 1 },
+      { "class": "grey_wolf", "slot": 1, "mods": { "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.22 }, "initialCooldownBonus": 1 },
+      { "class": "grey_wolf", "slot": 2, "mods": { "spdAdd": -3, "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.22 }, "initialCooldownBonus": 1 }
+    ],
+    "waves": [
+      {
+        "units": [
+          { "class": "grey_wolf", "slot": 1, "mods": { "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.22 }, "initialCooldownBonus": 1 },
+          { "class": "ravenwood_poacher", "slot": 7, "mods": { "spdAdd": -5, "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.21 }, "initialCooldownBonus": 1 },
+          { "class": "raven_seer", "slot": 8, "mods": { "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.21 }, "initialCooldownBonus": 1 }
+        ]
+      }
+    ],
+    "fallback": "ravenwood_pack_lite"
+  },
+  "watchtower_solo": {
+    "_not": "Tek kişilik sefer başlangıcı (Ömer 2026-11-01). Ruined Watchtower'ın yeni sefer sürümü: eski watchtower_tutorial eski kayıtlar için durur. Aynı üç birim, aynı dizilim, Bandit Chief'in Taunt'ı ve koruma davranışı aynen (mob verisinde); can ve hasar tek kahramana göre düşük. Harita kuralıyla takviye dalgası da aynı çarpanlardan türer. Kaybedilebilir. PROVİZYON, sim düzeltecek.",
+    "name": "The Bandit Chief",
+    "units": [
+      { "class": "bandit_chief", "slot": 1, "name": "Bandit Chief", "tier": "elite", "noTierMods": true, "mods": { "hpMult": 0.6, "statMult": 0.95, "powerMult": 0.32 }, "initialCooldownBonus": 1 },
+      { "class": "ravenwood_poacher", "slot": 6, "mods": { "spdAdd": -4, "hpMult": 0.26, "statMult": 0.68, "powerMult": 0.22 } },
+      { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 0.26, "statMult": 0.68, "powerMult": 0.22 } }
+    ],
+    "fallback": "watchtower_chief_lite"
+  },
   "ravenwood_pack_lite": {
     "name": "Ravenwood Outlaws",
     "fallbackOnly": true,

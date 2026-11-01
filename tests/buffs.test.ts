@@ -45,6 +45,8 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
       if (id === 'hallowed') continue;
       // Ley Thread (Ömer 2026-10-29): etkisi Ley Brand'de motor kuralı (threadTurns / threadBurnMult; skills.json > drain_field)
       if (id === 'ley_thread') continue;
+      // Shocked (maps-2-3.md A1): yalnız rozet, etkisi anlık (formulas.thunder)
+      if (id === 'shocked') continue;
       expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.armorMult !== undefined || def.damageDealtMult !== undefined || def.magicDealtMult !== undefined || def.rooted === true || def.noEvasion === true || def.armorLossFromAmount === true, id).toBe(true);
     }
   });

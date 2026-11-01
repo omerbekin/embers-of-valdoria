@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { legacyBlank } from './legacy-start';
 import { Rng } from '../src/engine/rng';
 import campaignJson from '../data/campaign/campaign.json';
 import {
@@ -54,8 +55,8 @@ import { ENDLESS, applyOutcome, chooseReward, itemOptions, newRun, rewardOffer, 
 
 // İlerleme sistemi kararları TUR 1 (Ömer 2026-10-18; open-questions "360. İlerleme sistemi kararları, TUR 1"): madde 6, 7, 8, 9, 10, 13.
 
-function at(target: string, until: string, seed = 4242): CampaignState {
-  let s = debugTeleport(newCampaign({ mode: 'normal', seed }), target);
+function at(target: string, until: string, seed = 4242, start = newCampaign): CampaignState {
+  let s = debugTeleport(start({ mode: 'normal', seed }), target);
   for (let i = 0; i < 20 && nextStep(s).kind !== until; i++) s = autoResolve(s);
   expect(nextStep(s).kind).toBe(until);
   return s;
@@ -347,7 +348,7 @@ describe('karar 364: bölük L1; düğüm seviyesi Ashford sonrası L1den ölçe
   it('bölük kurma ekranında seçilenler L1, XP 0, puan yok; tutorial kahramanı L1', () => {
     const tut = autoResolve(newCampaign({ mode: 'normal', seed: 77 })); // tutorial kahramanı seçildi
     expect(tut.roster.map((h) => h.level)).toEqual([1]);
-    const t = autoResolve(at('4', 'company', 77));
+    const t = autoResolve(at('4', 'company', 77, legacyBlank)); // eski kayıt: bölük L1 (yeni seferde katılan liderin seviyesine gelir)
     const company = t.roster.filter((h) => !h.tutorial);
     expect(company.length).toBeGreaterThan(0);
     for (const h of company) expect([h.level, h.xp, h.statPoints, h.skillPoints, h.alloc]).toEqual([1, 0, 0, 0, {}]);

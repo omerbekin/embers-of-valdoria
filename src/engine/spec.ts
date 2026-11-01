@@ -1,4 +1,5 @@
 import type { DamageSpec } from './formulas';
+import { statusCounts, statusCountsAny } from './status-count';
 import { outgoingDamageMult } from './stats';
 import { ITEM_HOOK_CAPS } from './item-caps';
 import { effNum } from './tree-hooks';
@@ -25,16 +26,20 @@ export function damageSpecFor(
   attackerStats?: Combatant['stats'],
   /** powerPerRage (Headsman's Blow): harcanan Rage; verilmezse kullanıcının o anki Rage'i (önizleme/YZ: vuruştan önce). Motor vuruşta ödenen bedeli verir. */
   rageSpent?: number,
+  /** A4 Iron Draws the Bolt: hedefin geçerli zırhı (durum / aura dahil); verilmezse temel zırh. */
+  targetArmor?: number,
 ): DamageSpec {
   // Tür hassasiyeti: ör. undead + holy, nature + fire
   const element = effect.element ?? 'physical';
   let weak = 1;
   for (const tag of target.tags) weak *= formulas.weaknesses?.[tag]?.[element] ?? 1;
   // bonusVsStatus (Weir Eel Bite): hedefte durum varsa ek çarpan
-  const tagBonus = (effect.bonusVsTag && target.tags.includes(effect.bonusVsTag.tag) ? effect.bonusVsTag.multiplier : 1) * (effect.bonusVsStatus && target.statuses.some((s) => s.kind === effect.bonusVsStatus!.status) ? effect.bonusVsStatus.multiplier : 1);
+  const tagBonus = (effect.bonusVsTag && target.tags.includes(effect.bonusVsTag.tag) ? effect.bonusVsTag.multiplier : 1) * (effect.bonusVsStatus && target.statuses.some((s) => statusCounts(s, effect.bonusVsStatus!.status)) ? effect.bonusVsStatus.multiplier : 1);
   let extra = 0;
   if (extras && effect.bonusPerMissingMana) extra += Math.max(0, target.maxMp - target.mp) * effect.bonusPerMissingMana;
   if (extras && effect.bonusFromShield) extra += actor.shield * effect.bonusFromShield.ratio;
+  // A4: yalnız etiketli skill; alan vuruşunda her hedefe (extras'tan bağımsız)
+  if (effect.ironBolt) extra += (targetArmor ?? target.stats.armor) * effect.ironBolt;
   // Pasifler: rage (eksik cana göre) ve openingShot (canı dolu hedefe)
   let passiveMult = 1;
   const pe = actor.passive?.effect;
@@ -44,7 +49,7 @@ export function damageSpecFor(
     passiveMult *= 1 + pe.perRow * (Math.floor(actor.slot / lanes) + Math.floor(target.slot / lanes) + (pe.extraRows ?? 0));
   }
   // Opportunist (bonusVsStatus): hedefte listedeki durumlardan biri (Wound/Slow/Stun) varsa hasar x(1 + bonus); kritik ayrıca son çarpandır
-  if (pe?.type === 'bonusVsStatus' && target.statuses.some((s) => pe.statuses.includes(s.kind))) passiveMult *= 1 + pe.bonus;
+  if (pe?.type === 'bonusVsStatus' && target.statuses.some((s) => statusCountsAny(s, pe.statuses))) passiveMult *= 1 + pe.bonus;
   // executeBonus (Headsman's Blow): hedefin eksik can oranıyla x(1 + executeBonus x eksik oran); alan yoksa çarpan yok (determinizm)
   if (effect.executeBonus && target.maxHp > 0) passiveMult *= 1 + effect.executeBonus * Math.max(0, 1 - target.hp / target.maxHp);
   // Pealing Bells (Vesper): çan vuruşu, bu savaşta çalınan her çan için x(1 + perBell); sayaç yoksa çarpan yok (determinizm)

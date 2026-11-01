@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Tutorial rework mockups</title>
+<!--
+  SEFER TUTORIAL'I REWORK taslagi (ui-dev, 2026-10-31). Oyun kodu DEGIL; yalnizca secim icin. Ömer'in sectigi 4 parca, her biri A / B / C.
+  Adres: #c5a #c5b #c5c (Garrick ilk puanda)  #c6a #c6b #c6c (sessiz bilgi dersleri)  #d4a #d4b #d4c (bolugu adlandirma)  #c2a #c2b #c2c (Garrick'in notlari)
+  Ek: &s=<durum> (c5: tree|stat, c6: both|info|box, d4: form|map|saves, c2: notes|none)  &clean = alt serit gizli.
+  Her parca tutorial-rework/<parca>.html olarak ayri sayfada (oyunun gercek CSS'i, sanati ve fontlari); bu dosya yalnizca gecis cubugu + tam ekran cerceve.
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #070504; overflow: hidden; }
+  #f { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #070504; }
+  /* gecis cubugu: sol altta, oyun disi oldugu belli; kapatilabilir (telefonda varsayilan kapali) */
+  #bar { position: fixed; left: 6px; bottom: 6px; z-index: 99999; display: flex; flex-wrap: wrap; gap: 3px 4px; align-items: center; max-width: calc(100vw - 12px);
+    padding: 3px 5px; background: rgba(20, 10, 4, 0.92); border: 1px dashed #e0702a; font: 600 11px/1 system-ui, sans-serif; color: #ffb35a; letter-spacing: 0.03em; }
+  #bar b { color: #e0702a; margin: 0 2px; }
+  #bar .g { display: flex; gap: 2px; align-items: center; }
+  #bar .sep { width: 1px; height: 16px; background: rgba(224, 112, 42, 0.5); margin: 0 3px; }
+  #bar button { font: 600 11px system-ui, sans-serif; color: #f3d999; background: #1b120a; border: 1px solid rgba(224, 112, 42, 0.5); padding: 0 7px; min-height: 24px; cursor: pointer; }
+  #bar button.on { background: #e0702a; color: #1a0f06; }
+  #bar .lbl { color: #a8977a; font-weight: 400; }
+  #bar.min .more { display: none; }
+  #bar .tg { min-width: 24px; padding: 0 4px; }
+  html.clean #bar { display: none; }
+</style>
+</head>
+<body>
+<iframe id="f" title="Tutorial rework mockup" allow="fullscreen"></iframe>
+<div id="bar"><b>MOCKUP</b><span class="g more" id="g-part"></span><span class="sep more"></span><span class="g more" id="g-var"></span><span class="sep more" id="sep-o"></span><span class="g more" id="g-opt"></span><button class="tg" id="tg" title="Hide or show this bar">&#8942;</button></div>
+<script>
+(function () {
+  const PARTS = {
+    c5: { tab: 'C5 First point', page: 'c5.html', vars: ['A Bubble', 'B Ribbon', 'C Token'], opt: [['View', 's', [['tree', 'Skill tree'], ['stat', 'Stat point']]]] },
+    c6: { tab: 'C6 Quiet lessons', page: 'c6.html', vars: ['A Caption', 'B Whisper', 'C Band'], opt: [['Show', 's', [['both', 'Both'], ['info', 'Info only'], ['box', 'Box only']]], ['Lesson', 'l', [['cycle', 'Cycle'], ['fighter', 'Fighter'], ['status', 'Statuses'], ['area', 'Area']]]] },
+    d4: { tab: 'D4 Company name', page: 'd4.html', vars: ['A Chips', 'B Reroll', 'C Step'], opt: [['Screen', 's', [['form', 'Form'], ['map', 'Map'], ['saves', 'Saves']]]] },
+    c2: { tab: 'C2 Garrick notes', page: 'c2.html', vars: ['A Strip', 'B Plaque', 'C Link'], opt: [['State', 's', [['notes', 'With notes'], ['none', 'No notes']]]] },
+  };
+  const $ = (id) => document.getElementById(id), f = $('f'), bar = $('bar');
+  const st = { part: 'c5', v: 'a', p: {}, clean: false };
+  let loaded = '';
+  function read() {
+    const toks = location.hash.replace(/^#/, '').split('&').filter(Boolean);
+    const m = /^(c5|c6|d4|c2)([abc])?$/.exec(toks[0] || '');
+    st.part = m ? m[1] : 'c5';
+    st.v = m && m[2] ? m[2] : 'a';
+    st.p = {};
+    st.clean = false;
+    toks.slice(1).forEach((t) => { if (t === 'clean') st.clean = true; else { const i = t.indexOf('='); if (i > 0) st.p[t.slice(0, i)] = t.slice(i + 1); } });
+  }
+  function childHash() {
+    const x = Object.entries(st.p).map(([k, v]) => k + '=' + v);
+    return '#' + [st.v, ...x].join('&');
+  }
+  function write() {
+    const x = Object.entries(st.p).map(([k, v]) => k + '=' + v);
+    history.replaceState(null, '', '#' + [st.part + st.v, ...x, st.clean ? 'clean' : ''].filter(Boolean).join('&'));
+  }
+  function apply(force) {
+    read();
+    document.documentElement.classList.toggle('clean', st.clean);
+    const P = PARTS[st.part];
+    document.title = 'Tutorial rework: ' + P.tab + ' ' + st.v.toUpperCase();
+    if (loaded !== st.part || force) {
+      loaded = st.part;
+      f.src = 'tutorial-rework/' + P.page + childHash();
+    } else {
+      try { f.contentWindow.location.hash = childHash(); } catch (e) { f.src = 'tutorial-rework/' + P.page + childHash(); }
+    }
+    draw();
+  }
+  function draw() {
+    const P = PARTS[st.part];
+    $('g-part').innerHTML = Object.keys(PARTS).map((k) => `<button data-part="${k}" class="${k === st.part ? 'on' : ''}">${PARTS[k].tab}</button>`).join('');
+    $('g-var').innerHTML = P.vars.map((n, i) => `<button data-v="${'abc'[i]}" class="${'abc'[i] === st.v ? 'on' : ''}">${n}</button>`).join('');
+    $('g-opt').innerHTML = P.opt.map(([label, key, vals]) => { const cur = st.p[key] || vals[0][0]; return `<span class="lbl">${label}:</span>` + vals.map(([k, n]) => `<button data-o="${key}=${k}" class="${k === cur ? 'on' : ''}">${n}</button>`).join(''); }).join('<span class="lbl"> | </span>');
+  }
+  bar.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.id === 'tg') { bar.classList.toggle('min'); try { localStorage.setItem('tw.bar.min', bar.classList.contains('min') ? '1' : '0'); } catch (x) { /* yok say */ } return; }
+    if (b.dataset.part) { st.part = b.dataset.part; st.p = {}; }
+    else if (b.dataset.v) st.v = b.dataset.v;
+    else if (b.dataset.o) { const [k, v] = b.dataset.o.split('='); st.p[k] = v; }
+    write();
+    apply(b.dataset.part ? false : false);
+  });
+  window.addEventListener('hashchange', () => apply(false));
+  /* alt sayfa kendi durumunu (ornegin sekme) geri bildirir */
+  window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (!d || d.tw !== 'state') return;
+    st.p = Object.assign({}, st.p, d.p || {});
+    write();
+    draw();
+  });
+  let minPref = null;
+  try { minPref = localStorage.getItem('tw.bar.min'); } catch (e) { /* yok say */ }
+  const short = Math.min(innerWidth, innerHeight) <= 520;
+  if (minPref === '1' || (minPref === null && short)) bar.classList.add('min');
+  read();
+  if (!location.hash) write();
+  apply(true);
+})();
+</script>
+</body>
+</html>

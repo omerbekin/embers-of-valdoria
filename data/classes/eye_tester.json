@@ -1,0 +1,40 @@
+{
+  "id": "eye_tester",
+  "name": "Eye Tester",
+  "spriteId": "mage",
+  "color": "#bfe3ff",
+  "logo": "charge",
+  "role": "Eye of the Storm Test",
+  "testOnly": true,
+  "hidden": true,
+  "frontPriority": 7,
+  "range": 7,
+  "attributes": {
+    "str": 6,
+    "int": 34,
+    "dex": 10,
+    "luck": 10
+  },
+  "primary": "int",
+  "armor": 8,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "eye_test_shot",
+    "storm_test_plain",
+    "storm_test_bolt",
+    "storm_test_iron"
+  ],
+  "passive": {
+    "id": "eye_of_the_storm",
+    "name": "Eye of the Storm",
+    "icon": "bolt",
+    "text": "Allies in this unit's lane ignore Blizzard: its Chill Ground does not touch them and they suffer no ranged penalty. Ends when this unit falls.",
+    "effect": {
+      "type": "eyeOfStorm",
+      "conditions": [
+        "blizzard"
+      ]
+    }
+  }
+}

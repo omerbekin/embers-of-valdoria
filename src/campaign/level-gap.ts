@@ -6,7 +6,7 @@ import { CONFIG } from './data';
 import { isCleared, patrolAvailable } from './state';
 import { nodeLevel } from './power';
 import { forwardDistances } from './graph';
-import { getMap } from './data';
+import { mapFor } from './data';
 import type { CampaignMap, CampaignState } from './types';
 
 export type GapBand = 'normal' | 'danger' | 'deadly';
@@ -50,7 +50,7 @@ function isTutorialNode(map: CampaignMap, nodeId: string): boolean {
  * Devriye açık temizlenmiş düğüm de sayılır (devriye düşmanı aynı seviyede).
  */
 export function nodeThreat(s: CampaignState, nodeId: string): NodeThreat | null {
-  const map = getMap(s.mapId);
+  const map = mapFor(s);
   const n = map.nodes.find((x) => x.id === nodeId);
   if (!n || !n.encounter || isTutorialNode(map, nodeId)) return null;
   if (isCleared(s, nodeId) && !patrolAvailable(s, nodeId)) return null;

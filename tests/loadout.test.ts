@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { legacyHero } from './legacy-start';
 import { applyUnitModifiers, Battle, content } from '../src/engine';
 import {
   acknowledgeHandover,
@@ -29,7 +30,7 @@ const f = content.formulas;
 /** Valdoria'da savaşlı bir düğüme ışınlanmış sefer (kadro seed'li otomatik). */
 const atBattle = (node = '5A', seed = 42): CampaignState => {
   // Işınlanırken kazanılan savaşların loot'u torbayı doldurur: bu testler boş torbayla başlar
-  const s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed }), 'archer'), node);
+  const s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed }), 'druid'), node);
   const { pendingLoot: _p, ...rest } = s;
   // Seviye şartı (Item Güçlendirme x6) bu testlerin konusu değil: kahramanlar yüksek seviyede
   return { ...rest, roster: rest.roster.map((h) => ({ ...h, level: 50 })), inventory: [], nextItemId: 1 };
@@ -161,7 +162,7 @@ describe('sefer ekipmanı: torba, kuşanma, altın', () => {
   });
 
   it("Ashford vedası: tutorial takımının item'leri torbaya düşer, yeni bölük takabilir (karar 7)", () => {
-    let s = pickHero(newCampaign({ mode: 'normal', seed: 3 }), 'warrior');
+    let s = legacyHero(3); // veda yalnız eski yapıda
     const hero = s.roster[0]!;
     const r = addItem(s, 'woodcutters_axe');
     s = equipItem(r.state, hero.id, r.item.uid);

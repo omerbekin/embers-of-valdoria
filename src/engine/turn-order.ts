@@ -25,6 +25,8 @@ export interface TurnSlot {
    * tahmin (predictQueue), birim bir kez oynadıktan sonra spd'yi buna döndürür.
    */
   baseSpd?: number;
+  /** Harita 3 C1 sıra çubuğu belirteci: tahminde bir kez öne gelir, sonra listeden çıkar (oynamaz, sayacı düşmez, eşitlik tarafını değiştirmez). */
+  once?: boolean;
 }
 
 /**
@@ -86,6 +88,10 @@ export function predictQueue(
     const next = advanceTurn(copy, threshold, tieSide);
     if (!next) break;
     queue.push(next.uid);
+    if (next.once) {
+      copy.splice(copy.indexOf(next), 1);
+      continue;
+    }
     next.counter = snapCounter(next.counter - threshold);
     tieSide = tieSideAfter(next.side);
     if (next.baseSpd !== undefined) {

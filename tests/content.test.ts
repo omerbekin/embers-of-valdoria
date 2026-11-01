@@ -42,7 +42,7 @@ describe('skill verisi', () => {
         expect(s.cost.ofCurrent, `${key} ofCurrent`).toBeGreaterThan(0);
         expect(s.cost.ofCurrent, `${key} ofCurrent`).toBeLessThan(1);
       }
-      expect(s.effects.length).toBeGreaterThan(0);
+      if (!s.thunderRod && !s.rollingThunder && !s.longSermon && !s.callVault && s.id !== 'thundersnow') expect(s.effects.length).toBeGreaterThan(0); // Harita 3: işi skill alanında, etki listesi boş
       // Yarım turn (madde 240): 0 < turnCost <= 1; turnCost < 1 skill'ler üst üste kullanılamasın diye cooldown >= 2 (sömürü koruması)
       if (s.turnCost !== undefined) {
         expect(s.turnCost, `${key} turnCost`).toBeGreaterThan(0);
@@ -311,7 +311,7 @@ describe('class ve çağrı verisi', () => {
   });
 
   it('her skill en az bir karakter tarafından kullanılıyor', () => {
-    const used = new Set(Object.values(everyone).flatMap((d) => d.skills));
+    const used = new Set(Object.values(everyone).flatMap((d) => [...d.skills, ...(d.touch?.type === 'thundersnow' ? [d.touch.skill] : []), ...(d.boss?.phases ?? []).flatMap((p) => Object.values(p.swapSkills ?? {}))])); // Harita 3: dokunuş ve faz skill'leri
     for (const id of Object.keys(content.skills)) if (!content.skills[id]!.retired) expect(used.has(id), id).toBe(true); // emekli: Mana Barrier (2026-10-29)
   });
 
@@ -578,7 +578,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground', 'toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria', 'ice_crater'];
+    const base = ['ring_the_anvil', 'fork', 'storm_test_bolt', 'storm_test_iron', 'storm_test_row', 'arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground', 'toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria', 'ice_crater'];
     // Pose Tester kopyaları (pt_<id>, gizli debug): sınıf skill'lerinin kopyası, aynı hareket
     const copies = base.filter((id) => content.skills[`pt_${id}`]).map((id) => `pt_${id}`);
     expect(copies.length).toBeGreaterThan(0);

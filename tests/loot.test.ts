@@ -119,7 +119,7 @@ describe('loot üretimi', () => {
 });
 
 describe('seferde loot', () => {
-  const at5A = (difficulty: 'easy' | 'medium' | 'hard' = 'medium'): CampaignState => debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 77, difficulty }), 'archer'), '5A');
+  const at5A = (difficulty: 'easy' | 'medium' | 'hard' = 'medium'): CampaignState => debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 77, difficulty }), 'druid'), '5A');
   const win = (s: CampaignState) => applyBattle(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: 1, alive: true })) });
 
   it("zafer loot'u torbaya + altın + Spoils kartı; zorluktan bağımsız (karar 6); deneme sayısından bağımsız", () => {
@@ -139,7 +139,7 @@ describe('seferde loot', () => {
   });
 
   it('hazine sandığı: en az 1 item; torba doluysa sığmayan altına ÇEVRİLMEZ, kartta bekler; yer açılıp alınabilir, kart kapanınca kaybolur', () => {
-    let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 9 }), 'archer'), '6B');
+    let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 9 }), 'druid'), '6B');
     while (nextStep(s).kind !== 'treasure') s = autoResolve(s);
     const open = completeSimple(s, 'treasure');
     const got = open.pendingLoot!.items.map((u) => open.inventory.find((i) => i.uid === u)).filter((x): x is NonNullable<typeof x> => !!x);
@@ -167,7 +167,7 @@ describe('seferde loot', () => {
   });
 
   it('stashLoot (LOOT ekranı): torbaya giren düşüş ganimet alanına döner, miktar / zarlar aynı; almak torbaya koyar; boşsa değişmez', () => {
-    let s0 = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 9 }), 'archer'), '6B');
+    let s0 = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 9 }), 'druid'), '6B');
     while (nextStep(s0).kind !== 'treasure') s0 = autoResolve(s0);
     let s: CampaignState = { ...s0, inventory: [] };
     delete s.pendingLoot;

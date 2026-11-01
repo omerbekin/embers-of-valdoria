@@ -18,11 +18,10 @@ const cat = categoryFirstWin(result);
 export const PENDING_CATEGORY_HIGH: Readonly<Record<string, string>> = {};
 
 /**
- * BİLİNEN EKSİK (ekonomi reworkü 0.9.9, Ömer 2026-10-27 "bu oranlar iyi gibi"): düz sefer simi farm / Inn / kamp yapmaz, kasabada bedava şifa
- * kalktığı için elit, boss ve bitirme ALT sınırının altında kalır. Hedef ölçümü artık kasma simi (npm run sim:campaign, campaign-grind.ts).
- * Buradakilerin alt sınırı denetlenmez (uyarı yazılır); bantlar yeni sim için yeniden belirlenince listeden çıkarılır (open-questions 427).
+ * BİLİNEN EKSİK (geçici muafiyet; normalde BOŞ): listedeki kategorinin alt sınırı denetlenmez (uyarı yazılır).
+ * Düz sim bantları tek kişilik eğriye göre yenilendi (Ömer onayı 2026-11-01), liste boşaldı. Ana ölçüm kasma simi (npm run sim:campaign).
  */
-export const PENDING_LOW: ReadonlySet<string> = new Set(['elite', 'boss', 'finish']);
+export const PENDING_LOW: ReadonlySet<string> = new Set();
 
 describe(`sefer zorluk eğrisi (Medium, ${T.runs} sefer, seed ${T.firstSeed})`, () => {
   for (const c of ['tutorial', 'normal', 'elite', 'boss'] as NodeCategory[]) {

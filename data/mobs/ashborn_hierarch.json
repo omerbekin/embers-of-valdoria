@@ -1,0 +1,40 @@
+{
+  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
+  "id": "ashborn_hierarch",
+  "name": "The Ashborn Hierarch",
+  "family": "ember_cult",
+  "spriteId": "ashborn_hierarch",
+  "spriteScale": 1.15,
+  "color": "#d8cfc0",
+  "logo": "wizhat",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Elite · Ashborn High Priest",
+  "attributes": {
+    "str": 10,
+    "int": 34,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 10,
+  "magicArmor": 12,
+  "ai": "sniper",
+  "skills": [
+    "ember_toss",
+    "burn_the_field",
+    "long_sermon"
+  ],
+  "passive": {
+    "id": "last_ember",
+    "name": "Last Ember",
+    "icon": "flame",
+    "text": "If a hero kills this unit with a skill, the hero's cell becomes burning ground for 2 of the hero's turns. Deaths from ground or damage over time leave no ember.",
+    "effect": {
+      "type": "lastEmber",
+      "ground": "burning",
+      "turns": 2,
+      "scale": "int",
+      "power": 0.35
+    }
+  }
+}

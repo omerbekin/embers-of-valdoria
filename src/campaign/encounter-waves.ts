@@ -2,7 +2,7 @@
 // önizleme / "Start battle?" kartı ve XP yedek sayımı (xp.ts) aynı listeyi buradan alır (döngüsel içe aktarma olmasın diye ayrı modül).
 import { classes, encounterUnit, summons } from '../engine/content';
 import { buildWaves, reinforceConfig, waveOpening } from '../engine/wave-split';
-import { ENCOUNTERS, MAPS } from './data';
+import { ENCOUNTERS, LEGACY_MAPS, MAPS } from './data';
 import type { EncounterDef, EncounterUnit } from './types';
 
 /** Sıra almayan yardımcı nesne mi (Iron Mooring): takviye şablonuna girmez, önderle kendi dalgasında kalır. */
@@ -34,7 +34,7 @@ export const objectiveType = (o: EncounterDef['objective']): 'survive' | 'totem'
 
 /** Karşılaşmayı kullanan ilk sefer düğümü (önizleme bağlamı: düğüm id'si, türü, bölgesi). Yoksa undefined (ör. yalnızca Endless). */
 export function nodeForEncounter(encounterId: string): { id: string; type: string; region?: string } | undefined {
-  for (const map of Object.values(MAPS)) {
+  for (const map of [...Object.values(MAPS), ...Object.values(LEGACY_MAPS)]) { // eski kayıtların karşılaşmaları (Ravenwood, Watchtower) yalnız eski sürümde
     const n = map.nodes.find((x) => x.encounter === encounterId || Object.values(x.factionEncounter ?? {}).includes(encounterId)); // M-L: tarafa göre elit
     if (n) return { id: n.id, type: n.type, region: n.region };
     // M-K The Black Caravel: düğümü yok (gezici); rotanın ilk düğümünün bağlamı, elit kuralıyla

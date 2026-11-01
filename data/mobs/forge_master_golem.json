@@ -1,0 +1,46 @@
+{
+  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
+  "id": "forge_master_golem",
+  "name": "Forge-Master Golem",
+  "family": "bandits",
+  "spriteId": "forge_master_golem",
+  "spriteScale": 1.2,
+  "color": "#7a5a34",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Elite · Forge Golem",
+  "attributes": {
+    "str": 28,
+    "int": 14,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 26,
+  "magicArmor": 14,
+  "overrides": {
+    "hp": 125
+  },
+  "ai": "aggressive",
+  "skills": [
+    "iron_maul"
+  ],
+  "touch": {
+    "type": "overheat",
+    "max": 6,
+    "perAction": 1,
+    "fireHit": 2,
+    "coolHit": 2,
+    "status": "cooling",
+    "ventTurns": 1
+  },
+  "passive": {
+    "id": "overheat",
+    "name": "Overheat",
+    "icon": "flame",
+    "text": "Every action fills its Heat bar. Fire hits fill it faster; ice hits and water skills drain it. When the bar is full it must Vent: it loses its next turn and has 0 Armor until then.",
+    "effect": {
+      "type": "touchLabel"
+    }
+  }
+}

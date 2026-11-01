@@ -1,0 +1,25 @@
+{
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: moor_raider. YER TUTUCU görünüm: çizimi yok, moor_raider sprite'ı.",
+  "id": "clan_vaulter",
+  "name": "Clan Vaulter",
+  "family": "bandits",
+  "spriteId": "moor_raider",
+  "color": "#5f6b4a",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Hillclan · Skirmisher",
+  "attributes": {
+    "str": 26,
+    "int": 4,
+    "dex": 16,
+    "luck": 4
+  },
+  "armor": 10,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "billhook",
+    "pole_vault"
+  ]
+}

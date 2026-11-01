@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content } from '../src/engine';
 import type { Teams } from '../src/engine';
-import { selectSituations, strongMpSkill, turnSituations } from '../src/tutorial/situations';
+import { rejectSituations, selectSituations, strongMpSkill, turnSituations } from '../src/tutorial/situations';
 import { dueBattleLesson, type BattleLessonCtx } from '../src/tutorial/lessons';
 
 // Durum dersleri (Ömer 2026-10-14, docs/design/tutorial.md > Durum dersleri): gerçek savaş durumundan saf tespit (src/tutorial/situations.ts).
@@ -160,5 +160,75 @@ describe('uçtan uca: durum -> ders', () => {
     expect(d?.lesson.focus).toBe('[data-global=rest]');
     // Mill Road'da (senaryo savaşı) aynı durum ders çıkarmaz
     expect(dueBattleLesson({ ...ctx, node: '1' }, turnSituations(b, uid), prog)).toBeNull();
+  });
+});
+
+describe('hedef reddi: Taunt (C4)', () => {
+  /** Sıra ilerletmeden kurulum (hedef kuralı sıraya bakmaz; YZ birimleri yerinden oynatmasın). */
+  const mk = (party: Record<number, string>, enemies: Record<number, string>, mode: 'turns' | 'test' = 'turns') => {
+    const b = new Battle(content.battleSetup('random-battle', 3, mode, { party: cells(party), enemies: cells(enemies) }, false));
+    const at = (slot: number) => b.combatants.find((c) => c.side === 'enemy' && c.slot === slot)!;
+    return { b, uid: b.combatants.find((c) => c.side === 'party')!.uid, at };
+  };
+  /** Gerçek Taunt skill'i: Taunt ayrı bir durum tanımı değil, skill etkisi. */
+  const taunt = (b: Battle, uid: string) => expect(b.debugCast(uid, 'taunt').ok).toBe(true);
+  /** Büyücü (menzilli) ve yan yana iki düşman: soldaki Taunt yapabilir. */
+  const scene = () => {
+    const { b, uid, at } = mk({ 1: 'mage' }, { 0: 'warrior', 2: 'warrior' });
+    return { b, uid, shield: at(0), other: at(2), basic: b.get(uid)!.skills[0]! };
+  };
+
+  it('taunt yüzünden reddedilen düşman: protected; koruyan birim ve adı gelir', () => {
+    const { b, uid, shield, other, basic } = scene();
+    taunt(b, shield.uid);
+    expect(b.targetProblem(uid, basic, other.uid)).toBe('Must target the taunting enemy');
+    const [s] = rejectSituations(b, uid, basic, other.uid);
+    expect(s).toMatchObject({ when: 'protected', skill: basic, units: [shield.uid], vars: { protector: shield.displayName ?? shield.name } });
+    expect(s?.variant).toBeUndefined();
+  });
+
+  it('iki koruyan: ikisi de vurgulanır', () => {
+    const { b, uid, at } = mk({ 1: 'mage' }, { 0: 'warrior', 1: 'defender', 2: 'warrior' });
+    taunt(b, at(0).uid);
+    taunt(b, at(1).uid);
+    const [s] = rejectSituations(b, uid, b.get(uid)!.skills[0]!, at(2).uid);
+    expect(s?.units).toHaveLength(2);
+    expect(s?.variant).toBe('many');
+    expect(String(s?.vars?.protector)).toContain(' and ');
+  });
+
+  it('taunt yoksa, Guard varsa, hedef geçerliyse ya da taunt’lının kendisi tıklanırsa ders yok', () => {
+    const { b, uid, shield, other, basic } = scene();
+    expect(rejectSituations(b, uid, basic, other.uid)).toEqual([]);
+    b.debugAddStatus(shield.uid, 'guard', 2); // Guard hasarı yönlendirir, hedefi reddetmez
+    expect(b.validTargets(uid, basic).map((c) => c.uid)).toContain(other.uid);
+    expect(rejectSituations(b, uid, basic, other.uid)).toEqual([]);
+    taunt(b, shield.uid);
+    expect(rejectSituations(b, uid, basic, shield.uid)).toEqual([]);
+  });
+
+  it('menzil reddi bu dersi açmaz; taunt’lı menzil dışındaysa zorlamaz', () => {
+    const { b, uid, at } = mk({ 1: 'warrior' }, { 1: 'warrior', 10: 'warrior' });
+    const [near, far] = [at(1), at(10)];
+    const basic = b.get(uid)!.skills[0]!;
+    expect(b.targetProblem(uid, basic, far.uid)).toBeTruthy(); // yakın dövüş arka sıraya ulaşmaz
+    expect(rejectSituations(b, uid, basic, far.uid)).toEqual([]);
+    taunt(b, far.uid);
+    expect(b.validTargets(uid, basic).map((c) => c.uid)).toContain(near.uid);
+    expect(rejectSituations(b, uid, basic, far.uid)).toEqual([]);
+  });
+
+  it('alan skill’i ve dost hedefleri protected üretmez', () => {
+    const { b, uid, shield, other } = scene();
+    taunt(b, shield.uid);
+    const area = b.get(uid)!.skills.find((id) => b.isAreaSkill(id, uid));
+    if (area) expect(rejectSituations(b, uid, area, other.uid)).toEqual([]);
+    expect(rejectSituations(b, uid, b.get(uid)!.skills[0]!, uid)).toEqual([]);
+  });
+
+  it('test modunda da saf tespit aynı çalışır', () => {
+    const { b, uid, at } = mk({ 1: 'mage' }, { 0: 'warrior', 2: 'warrior' }, 'test');
+    taunt(b, at(0).uid);
+    expect(rejectSituations(b, uid, b.get(uid)!.skills[0]!, at(2).uid)[0]?.units).toEqual([at(0).uid]);
   });
 });

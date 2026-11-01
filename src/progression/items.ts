@@ -169,6 +169,8 @@ export interface ItemDef {
   grip?: Grip;
   /** Silah tipi (Ömer 2026-10-27); yoksa ailesinin `type`ı. Yalnızca ailenin tipinden farklıysa yazılır (Arming Sword: sword). */
   type?: WeaponType;
+  /** Item ekranlarındaki tür adı, yuva adından farklıysa (Copper Ring: "Ring"; yuvası Trinket kalır). */
+  kindName?: string;
   /** Varsayılan nadirlik (örnek kendi nadirliğini taşır: ItemRoll.rarity). Legendary taban yalnızca Legendary olur. */
   rarity: RarityId;
   ilvl: number;

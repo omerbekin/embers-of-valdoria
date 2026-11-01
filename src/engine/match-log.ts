@@ -196,7 +196,13 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `${L(e.actor)} is staggered: loses this action`;
     case 'passive':
       return `${L(e.actor)} passive: ${e.name}`;
+    case 'dive':
+      return `${L(e.actor)} dives underground`;
+    case 'surface':
+      return `${L(e.actor)} surfaces${e.whiffed ? ' on an empty cell' : ''}`;
     case 'turnSkipped':
+      if (e.spent) return `${L(e.actor)}: the turn went to its delayed strike`;
+      if (e.rest) return `${L(e.actor)} loses the turn: ${e.rest}`;
       return e.stunned ? `${L(e.actor)} is stunned: turn skipped` : e.voluntary ? `${L(e.actor)} skips the turn (speed boost +${Math.round((e.speedBoost ?? 0) * 100)}%)` : `${L(e.actor)} had nothing to do: turn passed`;
     case 'ground':
       return `ground ${e.ground} on ${e.board} cells [${e.slots.join(',')}] for ${e.turns}t`;
@@ -208,6 +214,8 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `${L(e.target)} DIED${e.corpse ? ' (leaves a revivable corpse)' : ''}`;
     case 'waveCleared':
       return `WAVE ${e.index + 1}/${e.total} CLEARED`;
+    case 'skillUnlocked':
+      return `${L(e.actor)} UNLOCKS: ${e.skills.join(', ')}`;
     case 'waveStart':
       return e.index === 0 ? `WAVE 1/${e.total}` : `WAVE ${e.index + 1}/${e.total} ARRIVES: ${e.combatants.map((c) => unitLabel(c)).join(', ') || 'no units'}`;
     case 'round':
@@ -218,6 +226,52 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `REINFORCEMENTS: ${e.combatants.map((c) => unitLabel(c)).join(', ')}`;
     case 'urn':
       return `TIDEWATER URN: ${L(e.actor)} floods row ${e.row + 1} (cells ${e.slots.join(', ')}), ${e.left} use(s) left`;
+    case 'hazardWarn':
+      if (e.kind === 'bolt') return `ROLLING THUNDER WARNING: ${e.board} cells ${e.cells.join(', ')} when the token reaches the front`;
+      if (e.kind === 'strike') return `THUNDERSNOW WARNING: ${e.board} cells ${e.cells.join(', ')} at round ${e.dueRound}`;
+      return `${e.kind === 'heat' ? 'HEAT' : 'CAVE-IN'} WARNING: ${e.board} cells ${e.cells.join(', ')} at round ${e.dueRound}`;
+    case 'hazardLand':
+      return `${e.kind === 'strike' ? 'THUNDERSNOW' : e.kind === 'bolt' ? 'ROLLING THUNDER' : e.kind === 'heat' ? 'HEAT' : 'CAVE-IN'} LANDS: ${e.board} cells ${e.cells.join(', ')}${e.hit.length ? ` on ${e.hit.map(L).join(', ')}` : ''}`;
+    case 'rodPlanted':
+      return `THUNDER ROD by ${L(e.source)}: ${e.board} cell ${e.slot} closed`;
+    case 'rodStrike':
+      return `ROD STRIKE: ${e.board} cell ${e.slot}${e.hit.length ? ` arcs to ${e.hit.map(L).join(', ')}` : ''}`;
+    case 'rodDown':
+      return `ROD DOWN: ${L(e.actor)} topples the rod at ${e.board} cell ${e.slot}`;
+    case 'encasedHit':
+      return `ICE BLOCK ${L(e.target)}: ${e.left}/${e.max}${e.repaired ? ' (repaired)' : ''}`;
+    case 'encasedBreak':
+      return `ICE BLOCK BROKEN: ${L(e.target)} wakes (${e.cause})`;
+    case 'noise':
+      return `NOISE ${e.value}/${e.goal}`;
+    case 'noiseFull':
+      return `NOISE FULL: rise ${e.rise}`;
+    case 'touchBar':
+      return `${e.bar === 'heat' ? 'HEAT' : 'SERMON'} ${L(e.target)}: ${e.value}/${e.max}`;
+    case 'vent':
+      return `VENT: ${L(e.target)} loses its next turn with 0 Armor`;
+    case 'packRotation':
+      return `PACK ROTATION by ${L(e.actor)}: ${L(e.back)} falls back, ${L(e.front)} comes forward`;
+    case 'sermonStart':
+      return `THE LONG SERMON: ${L(e.actor)} preaches for ${e.rounds} rounds (break at ${e.goal} damage)`;
+    case 'sermonEnd':
+      return e.outcome === 'broken' ? `SERMON BROKEN: ${L(e.actor)} is staggered` : `SERMON DONE: burning ground now heals the Ashborn (${L(e.actor)})`;
+    case 'kingHears':
+      return `THE KING HEARS: ${L(e.actor)} uses ${e.skill} for free`;
+    case 'tempered':
+      return `TEMPERING ${L(e.target)}: ${e.stance === 'hot' ? 'Red-hot' : 'Quenched'} (${e.cause})`;
+    case 'shock':
+      return e.stunned ? `SHOCKED ${L(e.target)}: in water, stunned (${e.skill})` : e.pushed > 0 ? `SHOCKED ${L(e.target)}: pushed back ${e.pushed} on the turn bar (${e.skill})` : `SHOCKED ${L(e.target)}: stun did not take (${e.skill})`;
+    case 'liveWater':
+      return `LIVE WATER by ${L(e.source)}: ${e.board} cells ${e.cells.join(', ')}${e.hit.length ? ` arcs through ${e.hit.map(L).join(', ')}` : ''}`;
+    case 'liveWaterEnd':
+      return `live water ${e.id} ended`;
+    case 'thunderflash':
+      return `THUNDERFLASH by ${L(e.source)} (${e.skill}): the field is lit for a hero turn${e.blinded ? `, ${L(e.blinded)} blinded` : ''}`;
+    case 'cellsClosed':
+      return `CELLS CLOSED: ${e.board} ${e.slots.join(', ')}`;
+    case 'light':
+      return `${e.lit ? 'FIELD LIT' : 'DARK AGAIN'} (${e.cause})${e.until !== undefined ? ` until round ${e.until}` : ''}`;
     case 'battleEnd':
       return `BATTLE END: ${e.winner} wins`;
   }

@@ -42,7 +42,8 @@ import {
   type ItemInstance,
   type ItemsData,
 } from '../src/progression';
-import { SAVE_KEY, addItem, autoResolve, debugTeleport, equipItem, memoryKV, newCampaign, nextStep, pickHero, readSaves, recruit, type CampaignState } from '../src/campaign';
+import { legacyBlank } from './legacy-start';
+import { SAVE_KEY, addItem, debugTeleport, equipItem, formCompany, memoryKV, newCampaign, pickHero, readSaves, type CampaignState } from '../src/campaign';
 import { equipFromBag, newRun, parseRun, upgradePairs } from '../src/endless';
 import { heroItemLine } from '../src/ui/gear-hover';
 import { leveledCampaign, leveledRun } from './level-helpers';
@@ -300,10 +301,9 @@ describe('başlangıç ikinci eli (Ömer 2026-10-23)', () => {
   });
 
   it('yeni sefer kahramanı ve yeni Endless koşusu ikinci eliyle başlar; silah çarpanı kalkanla 1, ikinci hançerle biraz üstünde', () => {
-    // sefer: Mill Road zaferinden sonra (archer liderine) Cutthroat katılır; lider okçunun ikinci eli boş (yay iki eli kapatır)
-    let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 1 }), 'archer'), '1');
-    for (let i = 0; i < 20 && nextStep(s).kind !== 'recruit'; i++) s = autoResolve(s);
-    s = recruit(s, 'cutthroat');
+    // sefer: Ashford'da (Druid liderine) Cutthroat katılır; liderin ikinci eli boş (iki elli asa)
+    let s = debugTeleport(newCampaign({ mode: 'normal', seed: 1 }), '4', 'druid');
+    s = formCompany(s, ['cutthroat']);
     expect(s.roster[0]!.equipment.offhand ?? null).toBeNull();
     expect(s.roster.find((h) => h.class === 'cutthroat')!.equipment.offhand?.id).toBe('rondel_dagger');
     const run = newRun(4, ['defender', 'cutthroat', 'mage', 'paladin'], 't');
@@ -329,18 +329,18 @@ describe('başlangıç ikinci eli (Ömer 2026-10-23)', () => {
 describe('kayıt göçü: başlangıç silahı', () => {
   it('yeni sefer ve Endless kahramanları başlangıç silahıyla başlar', () => {
     const s = newCampaign({ mode: 'normal', seed: 1 });
-    const t = pickHero(s, 'archer');
+    const t = pickHero(s, 'druid');
     for (const h of t.roster) expect(h.equipment.weapon?.id).toBe(starterWeaponId(h.class));
     const run = newRun(4, ['warrior', 'archer', 'mage', 'gambler'], 't');
     for (const h of run.heroes) expect(h.equipment.weapon?.id).toBe(starterWeaponId(h.class));
   });
 
   it('sefer dosyası v7 -> 8: silahsız kahraman başlangıç silahını alır (duraklatılmış savaş atılır); silahlı kahramana dokunulmaz; v8 tekrar vermez', () => {
-    const s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 5, campaignId: 'c5' }), 'warrior'), '3');
+    const s = debugTeleport(legacyBlank({ mode: 'normal', seed: 5, campaignId: 'c5' }), '3'); // eski kayıt: iki kişi
     const armed = s.roster[0]!;
     const old = JSON.parse(JSON.stringify(s)) as CampaignState;
     // v7 kaydında başlangıç ikinci eli yoktu (Ömer 2026-10-23'te geldi): silahsız kahramanın ikinci eli de boş
-    old.roster = old.roster.map((h, i) => (i === 0 ? { ...h, equipment: { ...h.equipment, weapon: { uid: 'i50', id: 'hunting_bow' } } } : { ...h, equipment: { ...h.equipment, weapon: null, offhand: null } })); // roster[0] okçu: sınıfının taşıyabildiği silah (2026-10-28: takılamayan item okunurken torbaya döner)
+    old.roster = old.roster.map((h, i) => (i === 0 ? { ...h, class: 'archer', equipment: { ...h.equipment, weapon: { uid: 'i50', id: 'hunting_bow' } } } : { ...h, equipment: { ...h.equipment, weapon: null, offhand: null } })); // roster[0] okçu: sınıfının taşıyabildiği silah (2026-10-28: takılamayan item okunurken torbaya döner)
     (old as unknown as Record<string, unknown>).suspended = { node: old.at, seed: 1, turn: 0, hash: 'x', setup: 'y', actions: [] };
     const file = (version: number, st: CampaignState) => JSON.stringify({ version, counter: 1, lastSlot: 0, slots: [{ campaignId: st.campaignId, mode: 'normal', difficulty: st.difficulty, startedAt: 't', lastPlayed: 't', saves: [{ id: 's1', kind: 'auto', savedAt: 't', mode: 'normal', campaignId: st.campaignId, summary: {}, state: st }] }, null, null] });
     const kv = memoryKV();

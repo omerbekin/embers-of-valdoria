@@ -111,6 +111,75 @@ export interface TargetPreview {
  * Ceset tüketen çağrıda (Raise Dead) `corpseUid` seçilen ceset (yoksa YZ önerisi = en tehlikeli), `slot` seçilen çağrı yuvası.
  */
 export function previewSkill(battle: Battle, actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string, dir?: PushDir): TargetPreview[] {
+  const list = previewSkillBase(battle, actorUid, skillId, targetUid, slot, board, corpseUid, dir);
+  const actor = battle.get(actorUid);
+  const skill = actor && battle.skill(skillId, actor);
+  if (!actor || !skill) return list;
+  const lit = skill.thunder && !skill.rollingThunder ? withBoltLines(battle, actor, skill, list, targetUid, slot, board) : list;
+  return withSignatureLines(battle, actor, skill, lit, targetUid, slot, board);
+}
+
+/** Harita 3 imza mekanikleri: buz bloğu, duruş, çubuk, belirteç, Noise satırları (ilgili birim / skill / kural yoksa liste aynen). */
+function withSignatureLines(battle: Battle, actor: Combatant, skill: SkillDef, list: TargetPreview[], targetUid?: string, slot?: number, board?: Side): TargetPreview[] {
+  const line = (uid: string, text: string) => {
+    let e = list.find((p) => p.uid === uid);
+    if (!e) list.push((e = { uid } as TargetPreview));
+    e.statuses = [...(e.statuses ?? []), text];
+  };
+  const fire = skill.effects.some((e) => e.type === 'damage' && e.element === 'fire');
+  const hits = skill.effects.some((e) => e.type === 'damage');
+  if (hits) for (const p of [...list]) {
+    const u = battle.get(p.uid);
+    if (u?.encased) line(u.uid, fire ? 'Fire shatters the ice block: wakes' : `Ice block ${u.encased.hp}/${u.encased.maxHp} takes the hit first`);
+    if (u?.temper === 'cold' && fire) line(u.uid, 'Fire makes it Red-hot again');
+    if (u?.touch?.type === 'overheat') {
+      const d = battle.heatDelta(u, skill);
+      if (d) line(u.uid, `Heat ${d > 0 ? '+' : ''}${d}`);
+    }
+    if (u?.sermon) line(u.uid, `Sermon bar ${u.sermon.taken}/${u.sermon.goal}: damage breaks it`);
+    if (u?.passive?.effect.type === 'stormhide' && skill.motion === 'melee' && u.side !== actor.side) line(u.uid, 'Stormhide: this melee hit Shocks you');
+  }
+  if (skill.thunderRod) {
+    const cell = battle.rodCellFor(actor, skill);
+    const foes = foe(actor.side);
+    if (cell !== null) for (const c of battle.rodVictims(foes, cell, actor.side)) line(c.uid, `Thunder Rod: ${battle.mechanicHit(foes, skill.thunderRod.ratio, c)} damage every turn while it stands`);
+  }
+  if (skill.rollingThunder && targetUid) {
+    const t = battle.get(targetUid);
+    if (t) for (const c of battle.fighting(t.side)) if (c.board === t.board && battle.rowOf(c.slot) === battle.rowOf(t.slot)) line(c.uid, `Rolling Thunder: ${battle.mechanicHit(c.board, skill.rollingThunder.ratio, c)} damage when the bolt arrives`);
+  }
+  const noise = battle.noiseState();
+  if (noise) {
+    const pts = battle.noisePoints(actor, skill, slot, board, targetUid);
+    if (pts >= 1) line(actor.uid, `Noise +${Math.round(pts)} (${noise.value}/${noise.rule.goal})`);
+  }
+  return list;
+}
+
+/** Harita 3 şimşek kuralları: Live Water, Shatter, Shocked, Thunderflash satırları (hedef olmayan birim de önizlenir: ark taraf ayırmaz). */
+function withBoltLines(battle: Battle, actor: Combatant, skill: SkillDef, list: TargetPreview[], targetUid?: string, slot?: number, board?: Side): TargetPreview[] {
+  const area = battle.isAreaSkill(skill.id, actor);
+  const anchored = targetUid ? battle.get(targetUid) : undefined;
+  const b: Side = skill.target === 'area_any' ? (anchored?.board ?? board ?? foe(actor.side)) : foe(actor.side);
+  const anchor = anchored?.slot ?? slot;
+  const info = area && anchor !== undefined ? battle.shapePreviewCells(actor.uid, skill.id, anchor, b) : undefined;
+  const targets = list.map((p) => battle.get(p.uid)).filter((c): c is Combatant => !!c && c.side !== actor.side);
+  const feet = info?.valid ? [{ board: b, cells: info.cells }] : area ? [] : battle.boltFeetOf(targets);
+  const out = battle.boltOutcome(actor, skill, feet, targets);
+  const T = battle.formulas.thunder;
+  const line = (uid: string, text: string) => {
+    let e = list.find((p) => p.uid === uid);
+    if (!e) list.push((e = { uid } as TargetPreview));
+    e.statuses = [...(e.statuses ?? []), text];
+  };
+  for (const a of out.arcs) line(a.uid, `Live Water: ${a.damage} damage`);
+  for (const a of out.shards) line(a.uid, `Shatter: ${a.damage} damage`);
+  for (const s of out.shocks) line(s.uid, s.stun ? `Shocked: Stun ${T.stunTurns} turn` : `Shocked: pushed back ${Math.round(T.pushback * 100)}%`);
+  if (out.blinded) line(out.blinded, `Thunderflash: Blinded ${T.flashBlindTurns} turn`);
+  return list;
+}
+
+function previewSkillBase(battle: Battle, actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string, dir?: PushDir): TargetPreview[] {
   const actor = battle.get(actorUid);
   if (!actor || !battle.skill(skillId, actor)) return [];
   let targets = battle.validTargets(actorUid, skillId);
@@ -182,7 +251,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     const effect = battle.treeEffect(actor, target, skill, base, tq);
     const tm = actor.treeHooks ? battle.treeMods(actor, target, skill, base, tq) : null;
     const stats = battle.effectiveStats(target);
-    const specFor = (mult: number) => damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, battle.damageTakenMult(target, actor, effect.damageType, skill, effect.element ?? 'physical') * battle.flockMult(actor, target), battle.dealtDamageMult(actor, target, skill, effect, tq), effect.bonusScale ? battle.effectiveStats(actor) : undefined);
+    const specFor = (mult: number) => damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, battle.damageTakenMult(target, actor, effect.damageType, skill, effect.element ?? 'physical') * battle.flockMult(actor, target), battle.dealtDamageMult(actor, target, skill, effect, tq), effect.bonusScale ? battle.effectiveStats(actor) : undefined, undefined, effect.ironBolt ? stats.armor : undefined);
     // Ağaç: düz hasar (flatDamage) ve vuruş sonrası (hitIsCrit) kancaları gerçek vuruşla aynı sırada (çarpan, sonra düz ek); kancasızda aynı aralık
     const adj = (x: number, late: { mult: number; flat: number } | null) => (late || tm?.flat ? Math.round(x * (late?.mult ?? 1) + (tm?.flat ?? 0) + (late?.flat ?? 0)) : x);
     const lateN = actor.treeHooks ? battle.lateDamage(actor, target, skill, base, specFor(1), false, tq) : null;

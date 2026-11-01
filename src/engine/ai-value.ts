@@ -20,6 +20,18 @@ export type AiDifficulty = 'easy' | 'medium' | 'hard';
 export interface AiValueConfig {
   /** Değerlendirme ufku: kullanıcının kaç kendi turu (Ömer: 3). */
   horizon: number;
+  /** M-F Darkness: ateş skill'inin aydınlatma payı ve Lantern'e vurmanın payı (kısıtlı tarafın toplam tur değerinin oranı). Yoksa 0. */
+  darkness?: { fireLight: number; lanternBreak: number };
+  /** Harita 3 şimşek kuralları (ai.ts > thunderValue, thunderCellWorth). Yoksa 0. */
+  thunder?: { pushShare: number; liveStay: number; flashCost: number; cellRisk: number; ironRisk: number };
+  /** Harita 3 4. dilim mob kitleri (ai.ts > mobKitValue). Yoksa 0. */
+  mobKit?: { exposure: number; diveSafe: number; spentTurn: number; coolTurn: number; coolArmor: number; reach: number; stormhide: number };
+  /** Harita 3 boss / elit dokunuşları (ai.ts > bossTouchValue). Yoksa 0. */
+  bossTouch?: { heat: number; whiteout: number; sermon: number; sermonTurn: number; sermonBreak: number; packHeal: number; packKill: number; vault: number };
+  /** Harita 3 imza mekanikleri (ai.ts > signatureValue, rodChoice). Yoksa 0. */
+  signature?: { wake: number; chip: number; rodRounds: number; rollShare: number; reheat: number; eyeKill: number; noiseRise: number; toppleRounds: number; toppleShare: number };
+  /** Frozen (ai.ts > frostValue): tur değeri payları. */
+  frost?: { freeze: number; focus: number; thaw: number };
   /** Birimin tur başına değeri = en iyi skill'inin ham değeri x bu pay (zırh, isabet, fazla vuruş için iskonto). */
   contributionShare: number;
   /** Öldürme terimi çarpanı (öldürme ihtimali x kalan katkı x killWeight). */

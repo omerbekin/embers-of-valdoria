@@ -1,5 +1,5 @@
 import './lesson-box.css';
-import { MENTOR, lessonById, lessonPages, type LessonVars } from '../tutorial/lessons';
+import { MENTOR, TUTORIAL, lessonById, lessonPages, lessonWhisperText, type LessonVars } from '../tutorial/lessons';
 import { isLessonSeen, markLessonSeen, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 import { uiSound } from './ui-sound';
 
@@ -46,6 +46,8 @@ const avatars = import.meta.glob('../../assets/avatars/*.webp', { eager: true, q
 const avatarUrl = (id: string): string | undefined => avatars[`../../assets/avatars/${id}.webp`];
 
 const queue: Pending[] = [];
+/** Açık Whisper (kutudan bağımsız, kuyruğa girmez). */
+let whisperNow: { lesson: string; root: HTMLElement; timers: number[]; focus: Element | null; onClose?: () => void } | null = null;
 let current: { p: Pending; root: HTMLElement; timer: number; spot: HTMLElement | null } | null = null;
 const offListeners = new Set<() => void>();
 
@@ -167,6 +169,7 @@ function render(p: Pending): void {
   current = { p, root: wrap, timer, spot: null };
   setSpot(current, !!p.card.spotlight && !!p.card.focus);
   paint();
+  whisperBesideBox();
   uiSound('toast');
 }
 
@@ -175,6 +178,7 @@ function closeCurrent(): void {
   removeCurrent(current);
   const cb = current.p.onClose;
   current = null;
+  whisperBesideBox();
   cb?.();
 }
 
@@ -243,6 +247,11 @@ export function showLesson(id: string, o: { force?: boolean; onClose?: () => voi
   const l = lessonById(id);
   if (!l || (!o.force && (!tutorialsOn() || isLessonSeen(id)))) return false;
   markLessonSeen(id);
+  const quiet = lessonWhisperText(l, { ...(o.variant ? { variant: o.variant } : {}), ...(o.vars ? { vars: o.vars } : {}) });
+  if (quiet !== null) {
+    showWhisper(id, quiet, { ...(l.focus ? { focus: focusFor(l.focus, o.skill) } : {}), ...(o.onClose ? { onClose: o.onClose } : {}) });
+    return true;
+  }
   const pages = lessonPages(l, { ...(o.variant ? { variant: o.variant } : {}), ...(o.vars ? { vars: o.vars } : {}) });
   pages.forEach((pg, i) =>
     showCard(
@@ -259,6 +268,77 @@ export function showLesson(id: string, o: { force?: boolean; onClose?: () => voi
     ),
   );
   return true;
+}
+
+/**
+ * Whisper (Ömer 2026-11-01, C6 B): bilgi dersi kutu yerine sıra çubuğunun altında küçük portre + "Garrick" + tek cümle olarak görünüp solar
+ * (süre data/tutorial.json > whisper). Oyunu durdurmaz, dokunmayı engellemez (pointer-events yok), düğmesi yok; oyuncu eylem yapınca
+ * `dismissLesson` hemen kaldırır. Süre dolunca `onClose` çalışır.
+ */
+function showWhisper(lesson: string, text: string, o: { focus?: string; onClose?: () => void }): void {
+  endWhisper();
+  const host = document.getElementById('ui-root') ?? document.body;
+  const root = el('div', 'tut-whisper');
+  root.setAttribute('role', 'status');
+  root.style.setProperty('--tw-fade', `${TUTORIAL.whisper.fadeMs}ms`);
+  const inner = el('div', 'tut-wh-in');
+  const face = el('span', 'tut-wh-face');
+  const url = avatarUrl(MENTOR.avatar);
+  if (url) {
+    const img = el('img', '');
+    img.src = url;
+    img.alt = '';
+    face.append(img);
+  }
+  const line = el('span', 'tut-wh-text');
+  line.append(el('span', 'tut-wh-who', MENTOR.name), document.createTextNode(text));
+  inner.append(face, line);
+  root.append(inner);
+  host.append(root);
+  const focus = o.focus ? document.querySelector(o.focus) : null;
+  focus?.classList.add('tut-focus');
+  const w = { lesson, root, timers: [] as number[], focus, ...(o.onClose ? { onClose: o.onClose } : {}) };
+  whisperNow = w;
+  whisperBesideBox();
+  w.timers.push(window.setTimeout(() => root.classList.add('on'), 30));
+  w.timers.push(
+    window.setTimeout(() => {
+      root.classList.remove('on');
+      focus?.classList.remove('tut-focus');
+      w.timers.push(
+        window.setTimeout(() => {
+          const cb = w.onClose;
+          if (whisperNow === w) endWhisper();
+          cb?.();
+        }, TUTORIAL.whisper.fadeMs),
+      );
+    }, TUTORIAL.whisper.ms),
+  );
+}
+
+/** Aynı anda açık bir ders kutusu varsa Whisper üstüne binmez: kutunun yanındaki boşlukta ortalanır (dar ekranda iki satıra iner). */
+function whisperBesideBox(): void {
+  const w = whisperNow;
+  if (!w) return;
+  w.root.style.paddingLeft = '';
+  const box = current?.root.querySelector('.tut-box')?.getBoundingClientRect();
+  const line = w.root.firstElementChild?.getBoundingClientRect();
+  if (!box || !line) return;
+  if (line.left < box.right && line.right > box.left && line.top < box.bottom && line.bottom > box.top) {
+    w.root.style.paddingLeft = `${Math.ceil(box.right - w.root.getBoundingClientRect().left + 8)}px`;
+  }
+}
+
+/** Whisper'ı hemen kaldırır (geri çağrı çalışmaz). */
+function endWhisper(): void {
+  const w = whisperNow;
+  if (!w) return;
+  whisperNow = null;
+  for (const t of w.timers) {
+    window.clearTimeout(t);
+  }
+  w.focus?.classList.remove('tut-focus');
+  w.root.remove();
 }
 
 /**
@@ -292,6 +372,7 @@ export function focusFor(focus: string, skill?: string): string {
 
 /** Dersin açık / kuyruktaki kartlarını kapatır (oyuncu önerilen eylemi yaptı ya da karar geçti). Kapanış geri çağrıları çalışmaz. */
 export function dismissLesson(id: string): void {
+  if (whisperNow?.lesson === id) endWhisper();
   for (let i = queue.length - 1; i >= 0; i--) if (queue[i]!.lesson === id) queue.splice(i, 1);
   if (current?.p.lesson === id) {
     current.p.handle.closed = true;
@@ -324,6 +405,7 @@ export function lessonBoxOpen(): boolean {
 
 /** Tüm kutuları kapatır (sahne değişimi, "Don't show again"). Kapanış geri çağrıları çalışmaz. */
 export function closeAllLessons(): void {
+  endWhisper();
   queue.length = 0;
   if (blockTimer) window.clearTimeout(blockTimer);
   blockTimer = 0;

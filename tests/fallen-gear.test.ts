@@ -12,7 +12,7 @@ const levelUp = <T extends { roster: Array<{ id: string; statPoints?: number }> 
 
 describe('fallen hero gear lock (campaign)', () => {
   it('equip / unequip throw for a fallen hero, equipBest skips them (no option needed: sim best policy too)', () => {
-    let s = pickHero(newCampaign({ mode: 'normal', seed: 7 }), 'archer');
+    let s = pickHero(newCampaign({ mode: 'normal', seed: 7 }), 'druid');
     const hid = s.active.find((x) => x)!;
     const slotItem = Object.entries(s.roster.find((h) => h.id === hid)!.equipment).find(([, v]) => v);
     s = debugToggleFallen(s, hid);
@@ -27,7 +27,7 @@ describe('fallen hero gear lock (campaign)', () => {
   });
 
   it('a fallen hero CAN spend stat points', () => {
-    let s = pickHero(newCampaign({ mode: 'normal', seed: 7 }), 'archer');
+    let s = pickHero(newCampaign({ mode: 'normal', seed: 7 }), 'druid');
     const hid = s.active.find((x) => x)!;
     s = debugToggleFallen(levelUp(s, hid, 2), hid);
     const t = allocateStats(s, hid, { dex: 1 });
@@ -35,7 +35,7 @@ describe('fallen hero gear lock (campaign)', () => {
   });
 
   it('reviving restores the ability to change gear', () => {
-    let s = pickHero(newCampaign({ mode: 'normal', seed: 7 }), 'archer');
+    let s = pickHero(newCampaign({ mode: 'normal', seed: 7 }), 'druid');
     const hid = s.active.find((x) => x)!;
     s = debugToggleFallen(s, hid);
     s = debugToggleFallen(s, hid);

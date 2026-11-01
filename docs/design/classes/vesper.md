@@ -90,7 +90,7 @@ Not: C Holy / C Lightning / B Magic pen rastgele çekilişte yalnız silah yuvas
 2. `recruitInTown()`: şehir kışlası / ilan tahtası işe alımı doluyken yedeğe.
 3. Yeni olay seçeneği `join` (`chooseEvent`): dr_vesper kabulü.
 4. `recruitOffer`: sahip olunan sınıflara yedektekiler de sayılır (aynı sınıf iki kez önerilmez). Yeni yardımcı `ownsClass()` (bölük + yedek + Inn).
-Yedekteki kahraman var olan takas kuralıyla alınır: kışla değişimi (`swapHero`, Harita 2'de Saltmere) ya da Inn `recruitFromReserve`. Harita 1'de kışla takası yok.
+Yedekteki kahraman var olan takas kuralıyla alınır: kışla değişimi (`swapHero`, Harita 2'de Saltmere) ya da Inn `recruitFromReserve`. Harita 1'de Valdren Keep Barracks yalnız yedektekilerle takas yapar (`barracksSwap: { offer: 0 }`, yeni aday yok; Ömer 2026-10-31).
 
 ## 6. Havuzlar (her zaman açık)
 Quick Battle / MP rastgele havuzu (`random-battle.json`), Endless (aynı havuz), kampanya `companyPool` + `recruitPool`. Havuz karışımları değişti: **golden kayıtları yeniden kaydedilmeli** (koordinatör).

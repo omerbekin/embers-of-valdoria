@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>C5 Garrick at the first point</title>
+<!-- C5 taslagi (ui-dev, 2026-10-31). Oyun kodu DEGIL. Gercek Gear Ledger + sutunlu skill agaci (tree/ = skill-tree-compact mockup'i: oyunun css'i, Warrior agaci, kural motoru).
+     Adres (tutorial-rework.html icinden): #a | #b | #c  &s=tree|stat. Garrick katmani: c5.js / c5.css. -->
+<script>
+  window.TW = (function () { const o = { v: 'a', p: {} }; location.hash.replace(/^#/, '').split('&').filter(Boolean).forEach((t, i) => { if (i === 0 && /^[abc]$/.test(t)) o.v = t; else { const k = t.split('='); o.p[k[0]] = k[1] === undefined ? true : k[1]; } }); return o; })();
+  history.replaceState = function () {}; /* compact.js kendi #v1 adresini yazmasin */
+</script>
+<link rel="stylesheet" href="tree/css/style.css" />
+<link rel="stylesheet" href="tree/css/elegant.css" />
+<link rel="stylesheet" href="tree/css/gear.css" />
+<link rel="stylesheet" href="tree/css/gear-plates.css" />
+<link rel="stylesheet" href="tree/css/band-tip.css" />
+<link rel="stylesheet" href="tree/tree.css" />
+<link rel="stylesheet" href="tree/tree4.css" />
+<link rel="stylesheet" href="tree/compact.css" />
+<link rel="stylesheet" href="css/lesson-box.css" />
+<link rel="stylesheet" href="c5.css" />
+</head>
+<body>
+<div id="stage"><div id="bgimg"></div><div id="ui-root"></div><div id="tip"></div></div>
+<script src="tree/data/core.js"></script>
+<script src="tree/data/content.js"></script>
+<script src="tree/data/classes.js"></script>
+<script src="tree/data/final.js"></script>
+<script src="tree/data/mix-warrior.js"></script>
+<script src="tree/data/tree-logic.js"></script>
+<script src="tree/data/tree-layout.js"></script>
+<script src="tree/data/plates.js"></script>
+<script src="tree/views.js"></script>
+<script src="tree/layouts.js"></script>
+<script src="tree/compact.js"></script>
+<script src="c5.js"></script>
+</body>
+</html>

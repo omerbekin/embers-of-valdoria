@@ -266,6 +266,16 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `At the start of your turn, every wounded ally standing on ${groundName(e.ground)} ground (you included) heals ${pct(e.ratio)} of their max HP (Wound reduces it).`;
     case 'undertow':
       return `Your skills that hit an enemy standing on ${groundName(e.ground)} ground also inflict ${cap(e.status)} for ${turnsText(e.turns)}.`;
+    case 'eyeOfStorm':
+      return "Allies in this unit's lane ignore the storm: its Chill Ground does not touch them and they suffer no ranged penalty. Ends when this unit falls.";
+    case 'stormhide':
+      return 'A hero that hits this unit with a melee skill is Shocked. If that hero stands in water, it is Stunned instead.';
+    case 'touchLabel':
+      return passive.text;
+    case 'ironDraws':
+      return "This unit's lightning deals more damage to targets with more Armor.";
+    case 'tempering':
+      return `Changes stance on each of its turns. Red-hot: immune to Fire, takes more Ice damage and ${multText(e.waterTaken)} damage from water skills. Quenched: Armor halved, and Fire makes it Red-hot again.`;
   }
 }
 
@@ -288,6 +298,10 @@ export interface GlobalSkillInfo {
 
 export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas, valor?: ValorRules, urn?: { rule: UrnRule; left: number } | null, statusDefs?: Record<string, StatusDef>): GlobalSkillInfo {
   const lines: string[] = [];
+  if (def.kind === 'rod') {
+    lines.push('Only a hero standing next to the rod (in front, behind, above or below it) can do this', 'The cell opens again and the rod draws no more lightning', 'Uses your turn');
+    return { id: def.id, name: def.name, icon: def.icon, target: 'The rod beside you', targetBadge: 'Rod', cost: 'Free', summary: def.text, lines, turnsOnly: false };
+  }
   if (def.kind === 'urn') {
     // M-N3 Tidewater Urn: sayılar savaşın Urn kuralından (battle-rules.json > devices)
     const r = urn?.rule;
@@ -381,6 +395,23 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     (fromTree ? treeKinds : kinds).push(kind);
   };
   const range = rangeLabel(skill, ownerRange, formulas);
+  if (skill.thunder && !skill.effects.length && !skill.rollingThunder) add('Lightning strikes a marked lane at the start of the next Round, reduced by Armor. Heavier armor draws more of the bolt. Step out of the lane');
+  if (skill.whiteout) add(`The board goes dark for ${skill.whiteout.rounds} Round: your heroes reach only as deep as the light allows. Lightning lights the board`);
+  if (skill.longSermon) {
+    add(`Preaches for ${skill.longSermon.rounds} Rounds and cannot act. Only damage breaks it: ${pct(skill.longSermon.breakRatio)} of max HP staggers the preacher. Silence and Stun do not`);
+    add(`If it finishes, the ${skill.longSermon.ground} ground heals every Ashborn instead of burning them`);
+  }
+  if (skill.callVault) add(`Raises a ${skill.callVault.name} (at most ${skill.callVault.maxAlive} standing)`);
+  if (skill.thunderRod) {
+    add('Drives an iron rod into the empty enemy-side cell with the most units next to it: the cell closes');
+    add(`At the start of each turn lightning strikes the rod and arcs to units right next to it, ${pct(skill.thunderRod.ratio)} of the side's average max HP (reduced by Armor)`);
+    add(`At most ${skill.thunderRod.max} rods on a side. A unit next to the rod can spend its turn to topple it`);
+  }
+  if (skill.rollingThunder) {
+    add("A lightning token enters the turn bar and the target's row glows");
+    add(`When the token reaches the front the row is struck for ${pct(skill.rollingThunder.ratio)} of the side's average max HP (reduced by Armor)`);
+    add('Haste and Slow do not change the token, and defeating the caster does not stop it. Step out of the row');
+  }
   // Aynı etki art arda tekrar ediyorsa (Double Strike: iki vuruş) tek satır + 'x2'
   for (const { e, times } of groupEffects(skill)) {
     fromTree = !!e.treeNode;
@@ -399,6 +430,12 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.lifesteal) add(`Heals you for ${pct(e.lifesteal)} of damage dealt`);
       if (e.bonusVsTag) add(`${multText(e.bonusVsTag.multiplier)} damage vs ${e.bonusVsTag.tag}`);
       if (e.bonusVsStatus) add(`${multText(e.bonusVsStatus.multiplier)} damage against ${cap(e.bonusVsStatus.status)} targets`);
+      if (e.ironBolt) add(`Iron Draws the Bolt: bonus damage equal to ${pct(e.ironBolt)} of the target's Armor`);
+      if (skill.thunder) {
+        if (skill.thunder.shocks) add(`Shocked: pushes the target back ${pct(formulas.thunder.pushback)} on the turn bar; in water or Soaked it is Stunned for ${formulas.thunder.stunTurns} turn instead`);
+        add('Live Water: striking a Flooded cell arcs through all water connected to it and hits everyone standing there, either side; the water stays live for 1 turn');
+        add('Shatter: striking an Ice cell blows the ice apart, hurting the unit there and the cells around it');
+      }
       if (e.falloff) add(`Each target hit takes ${multText(e.falloff)} damage than the previous one`);
       // Headsman's Blow: harcanan Rage ve hedefin eksik canı (spec.ts > damageSpecFor ile aynı formül)
       if (e.powerPerRage) {
@@ -511,6 +548,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       const how = e.cause === 'vines' ? ' (rooted by vines)' : '';
       if (e.chance !== undefined && e.chance < 1) add(`${pct(e.chance)} chance per target hit (rolled separately) to apply ${def?.name ?? e.status} for ${e.turns} turn${e.turns > 1 ? 's' : ''}${how}${def ? `: ${def.text}` : ''}`, undefined);
       else add(`${e.self ? 'You gain' : 'Applies'} ${def?.name ?? e.status}${skill.target === 'area_any' ? who : ''} for ${e.turns} turn${e.turns > 1 ? 's' : ''}${how}${def ? `: ${def.text}` : ''}`, undefined);
+      if (def?.freeze && !e.self) add(`Freezes ${def.name} targets: they become ${defs.statuses?.[def.freeze.into]?.name ?? def.freeze.into} instead. ${defs.statuses?.[def.freeze.into]?.text ?? ''}`);
     } else if (e.type === 'randomStatus') {
       const total = e.options.reduce((a, o) => a + o.weight, 0);
       add(`Random effect on each target hit: ${e.options.map((o) => `${defs.statuses?.[o.status]?.name ?? o.status} ${o.turns} turn${o.turns > 1 ? 's' : ''} (${pct(o.weight / total)})`).join(', ')}`);
@@ -585,7 +623,11 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   if (tg) {
     if (tg.kind === 'brand') add(`Delayed: brands the target now; at the start of your next turn the brand bursts on the branded unit and everyone right next to it (${tg.area?.shape === 'plus' ? 'a cross around it' : 'around it'}). Dispel or death removes it`);
     else if (tg.wholeBoard) add(tg.keystones ? `Delayed: cracks the whole enemy board except ${tg.keystones.perLane} Keystone cell per lane; it collapses at the start of your next turn` : 'Delayed: marks the whole enemy board, with no safe cell; it lands at the start of your next turn');
-    else add('Delayed: marks the cells now; they collapse at the start of your next turn');
+    else add(tg.dive ? 'Delayed: dives underground and marks the cell; it bursts out at the start of your next turn' : 'Delayed: marks the cells now; they collapse at the start of your next turn');
+    if (tg.dive) add('Underground it cannot be targeted and nothing reaches it');
+    if (tg.endsTurn) add('The strike takes up that whole turn');
+    if (tg.whiff) add(`If the cell is empty it comes up for nothing and is ${defs.statuses?.[tg.whiff.status]?.name ?? tg.whiff.status}`);
+    if (tg.after) add(`Afterwards: ${defs.statuses?.[tg.after.status]?.name ?? tg.after.status}. ${defs.statuses?.[tg.after.status]?.text ?? ''}`);
     add('Every enemy gets at least one turn before it lands; it cannot miss. One area warning and one brand at a time, at most one new warning per turn');
   }
   for (const [ph, area] of Object.entries(skill.areaByPhase ?? {})) add(`From phase ${ph}: ${shapeText(area).replace(/^Hits/, 'hits').replace(/; your cursor cell.*$/, '')}`);
@@ -595,7 +637,20 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   if (turnCost < 1) add(turnCost === 0.5 ? 'Takes half a turn: your next turn comes in half the usual time' : `Takes ${pct(turnCost)} of a turn: your next turn comes sooner`);
   const waves = skill.target === 'area_enemies' || skill.target === 'area_any' ? stageText(skill.area) : '';
   if (waves) add(waves);
-  if (skill.splash?.pattern === 'chain' && skill.target === 'single_enemy') {
+  const rr = skill.reachRule;
+  if (rr) {
+    if (rr.kind === 'status') add(`Reaches any row to hit a target with ${rr.statuses.map((s) => defs.statuses?.[s]?.name ?? s).join(' or ')}${rr.ground ? ` or standing on ${defs.grounds?.[rr.ground]?.name ?? rr.ground}` : ''}; otherwise normal melee`);
+    else if (rr.kind === 'dark') add('Reaches any row while the field is in Darkness; on a lit field it is normal melee');
+    else if (rr.kind === 'backRows') add('Only hits targets behind the front row, leaping over it');
+    else if (rr.kind === 'laneFirst') add('Charges down a lane: only hits the first hero in that lane');
+    else add('Always starts on the hero with the most Armor');
+  }
+  if (skill.thunder?.liveFrom) add(`Sets water alive only while this unit stands on ${defs.grounds?.[skill.thunder.liveFrom]?.name ?? skill.thunder.liveFrom}`);
+  if (skill.effects.some((e) => e.type === 'ground' && e.whenOpened)) add('Leaves the ground only when its special reach was used');
+  if (skill.effects.some((e) => e.type === 'push' && e.fixedDir)) add('Pushes the target one row back');
+  if (skill.splash?.pattern === 'armor' && skill.target === 'single_enemy') {
+    add(`Then jumps to the next ${skill.splash.jumps ?? 0} most armored heroes (jumps ignore range; no Armor, no jump)`);
+  } else if (skill.splash?.pattern === 'chain' && skill.target === 'single_enemy') {
     add(`Then jumps from foe to foe: each jump goes to the nearest foe not yet hit, up to ${skill.splash.jumps ?? 0} jumps (jumps ignore range)`);
   } else if (skill.splash?.pattern === 'lane' && skill.target === 'single_enemy') {
     add(`Also pierces every unit behind the target in its lane for ${pct(skill.splash.mult ?? 1)} damage`);
@@ -780,7 +835,7 @@ export function groundReactionHint(groundId: string, reactions: Record<string, G
     const others = [...new Set([...(d.setup.includes(groundId) ? d.trigger : []), ...(d.trigger.includes(groundId) ? d.setup : [])])].filter((g) => g !== groundId);
     if (d.setup.includes(groundId) && d.trigger.includes(groundId)) others.push(groundId); // aynı türle tepkime (Chill on chill)
     if (!others.length) continue;
-    parts.push(`${d.label} (with ${others.map((g) => grounds[g]?.name ?? g).join(' or ')})`);
+    parts.push(`${d.label} (with ${others.map((g) => grounds[g]?.name ?? cap(g)).join(' or ')})`);
   }
   return parts.length ? `Ground reactions: ${parts.join(', ')}` : null;
 }

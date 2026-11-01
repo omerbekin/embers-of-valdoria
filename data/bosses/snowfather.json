@@ -1,0 +1,78 @@
+{
+  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
+  "id": "snowfather",
+  "name": "The Snowfather",
+  "spriteId": "snowfather",
+  "spriteScale": 1.35,
+  "color": "#cfe0ee",
+  "logo": "wardenlogo",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Boss · Winter Giant",
+  "attributes": {
+    "str": 50,
+    "int": 12,
+    "dex": 2,
+    "luck": 8
+  },
+  "armor": 24,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 432,
+    "hpRegen": 0
+  },
+  "ai": "bridge_warden",
+  "skills": [
+    "icy_grasp",
+    "whiteout"
+  ],
+  "touch": {
+    "type": "thundersnow",
+    "below": 0.5,
+    "skill": "thundersnow",
+    "ratio": 0.2,
+    "iron": 0.5
+  },
+  "passive": {
+    "id": "thundersnow_touch",
+    "name": "Thundersnow",
+    "icon": "bolt",
+    "text": "Below half HP, at the start of each Round a marked lane on your side is struck by lightning at the start of the next Round. Heavier armor draws more of the bolt.",
+    "effect": {
+      "type": "touchLabel"
+    }
+  },
+  "boss": {
+    "where": "holds the Frozen Pass",
+    "firstBanner": "Winter does not end.",
+    "unyielding": {
+      "stunToStagger": false,
+      "debuffDurationDelta": -1,
+      "immuneDisplacement": true
+    },
+    "phases": [
+      {
+        "at": 0.5,
+        "banner": "The storm breaks."
+      }
+    ],
+    "notes": [
+      "Below half HP a lane on your side glows: lightning lands there at the start of the next Round. Step out of the lane.",
+      "Whiteout darkens the board for a short while: your heroes reach only as deep as the light allows. A lightning strike in the dark lights the board (Thunderflash)."
+    ],
+    "passives": [
+      {
+        "id": "unyielding",
+        "name": "Unyielding",
+        "icon": "unyielding",
+        "text": "Immune to crowd control: Stun, Slow, Silence and Frozen do not take hold, taunts do not force its attacks, and it cannot be pulled or pushed. Other ailments last 1 turn less."
+      },
+      {
+        "id": "thundersnow_touch",
+        "name": "Thundersnow",
+        "icon": "bolt",
+        "text": "Below half HP, a marked lane is struck by lightning each Round. Heavier armor draws more of the bolt."
+      }
+    ]
+  }
+}

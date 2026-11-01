@@ -1,7 +1,7 @@
 // Harita 2-3 test kısayolları (saf; maps-2-3.md 9.1-9.2, Adım 1): debug > Campaign > "Maps 2-3 (test)" ve testler kullanır.
 // Yeni kural yok: hepsi var olan debugTeleport / autoResolve / continueToMap / debugSetLevel / equipBest yollarının birleşimi.
 // Harita 2'ye geçiş `nextMapFor`'a bağlıdır: çağıran önce bayrağı açar (setMapOverride('drowned-reach', true)).
-import { EVENTS, getMap, WAYSHRINES } from './data';
+import { CONFIG, EVENTS, getMap, WAYSHRINES } from './data';
 import { finalNode } from './graph';
 import { grantLoot } from './loot';
 import { nodeLevel } from './power';
@@ -59,6 +59,21 @@ export function debugFinishMap1(s: CampaignState): CampaignState {
   const base = s.mapId === 'valdoria' ? s : newCampaign({ mode: s.mode, seed: s.seed, difficulty: s.difficulty, slot: s.slot, campaignId: s.campaignId });
   const fin = finalNode(getMap('valdoria'));
   return tidy(settle(debugTeleport(base, fin)));
+}
+
+/**
+ * Debug "Jump to Valdren Keep (hero in reserve)": Harita 1'de normal akışta yedek dolmaz (bölük en çok 4'e burada ulaşır); takası denemek için
+ * Valdren'in kasaba adımına ışınlar, bölüğü 4'e tamamlar ve bir kahramanı yedeğe çıkarır. Valdren'in adayı seçilmemiş kalır (ikisi de denenir).
+ */
+export function debugValdrenReserve(s: CampaignState): CampaignState {
+  const base = s.mapId === 'valdoria' ? s : newCampaign({ mode: s.mode, seed: s.seed, difficulty: s.difficulty, slot: s.slot, campaignId: s.campaignId });
+  let t = debugTeleport(base, '7');
+  for (let i = 0; i < 10 && nextStep(t).kind !== 'town'; i++) t = autoResolve(t);
+  for (let i = 0; i < 10 && !t.reserve?.length; i++) {
+    const owned = new Set(t.roster.map((h) => h.class));
+    t = debugEnsureClass(t, CONFIG.recruitPool.find((c) => !owned.has(c))!);
+  }
+  return tidy(t);
 }
 
 /** Takımı `level`'a çıkarır, puanları dağıtır, birkaç elit ganimeti verip en iyisini takar, herkesi iyileştirir. */

@@ -26,11 +26,11 @@ const hpOf = (b: Battle, uid: string) => b.get(uid)!.hp;
 describe('zemin tepkimeleri: veri', () => {
   it('reactions bloğu zemin değil; her tepkimenin zeminleri ve yeni zeminleri tanımlı, etiketi ve metni var', () => {
     expect(content.grounds.reactions).toBeUndefined();
-    expect(Object.keys(R).sort()).toEqual(['evaporate', 'explosion', 'feed', 'frozen', 'frozen_chill', 'holy_water', 'holy_water_ground', 'purge', 'quenched', 'roots_burn', 'sanctified', 'spread', 'toxic_smoke']);
+    expect(Object.keys(R).sort()).toEqual(['evaporate', 'explosion', 'feed', 'frozen', 'frozen_chill', 'holy_water', 'holy_water_ground', 'purge', 'quenched', 'roots_burn', 'sanctified', 'shatter', 'spread', 'toxic_smoke']);
     for (const [id, d] of Object.entries(R)) {
       expect(d.label, id).toBeTruthy();
       expect(d.text, id).toBeTruthy();
-      for (const g of [...d.setup, ...d.trigger, ...(d.becomes ? [d.becomes.ground] : [])]) expect(content.grounds[g], `${id}: ${g}`).toBeDefined();
+      for (const g of [...d.setup, ...d.trigger.filter((t) => t !== 'lightning'), ...(d.becomes ? [d.becomes.ground] : [])]) expect(content.grounds[g], `${id}: ${g}`).toBeDefined();
     }
   });
 });

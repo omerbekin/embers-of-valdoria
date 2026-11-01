@@ -34,7 +34,7 @@ function asV1(s: CampaignState): Record<string, unknown> {
 }
 
 // Yalnızca kahraman seçimi (savaş yok => loot yok: v1 kaydı torbasız olduğu için birebir karşılaştırılabilir)
-const played = (seed = 11): CampaignState => pickHero(newCampaign({ mode: 'normal', seed, campaignId: `c${seed}` }), 'archer');
+const played = (seed = 11): CampaignState => pickHero(newCampaign({ mode: 'normal', seed, campaignId: `c${seed}` }), 'druid');
 
 describe('kayıt v3: kahraman kaydı ve geçiş', () => {
   it('yeni sefer: sürüm 2 durum, kahraman level 1 / XP 0 / yalnızca başlangıç silahı (Item Güçlendirme x5), torba boş, altın 0', () => {
@@ -71,7 +71,7 @@ describe('kayıt v3: kahraman kaydı ve geçiş', () => {
     expect(readSaves(kv).migrated).toBe(false);
     expect(readSaves(kv).file.slots[0]!.mapChanged).toBe(true); // uyarı yeni sefer kaydedilene kadar kalır
     expect(latestSave(kv)).toBeNull();
-    const fresh = { ...pickHero(newCampaign({ mode: 'normal', seed: 99, campaignId: 'new' }), 'archer'), slot: 0 };
+    const fresh = { ...pickHero(newCampaign({ mode: 'normal', seed: 99, campaignId: 'new' }), 'druid'), slot: 0 };
     writeSave(kv, fresh, 'start');
     expect(readSaves(kv).file.slots[0]!.mapChanged).toBeUndefined();
     expect(latestSave(kv)!.state).toEqual(fresh);

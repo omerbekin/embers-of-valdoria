@@ -69,11 +69,17 @@ export interface MapNode {
   treasure?: string;
   recruit?: RecruitDef;
   endsTutorial?: boolean;
-  newCompany?: { size: number; leader: 'firstPick' };
+  /** Eski kayıtların Ashford vedası (campaign.json > legacyStart): tutorial takımı ayrılır. */
+  farewell?: boolean;
+  /** leader 'firstPick': yeni bölük, ilk seçilen lider (eski kayıt). 'keep': lider sabit, seçilenler katılır (tek kişilik başlangıç). */
+  newCompany?: { size: number; leader: 'firstPick' | 'keep' };
+  /** Bölük kurulunca Garrick'in görevi (campaign.json > texts anahtarı; tek kişilik başlangıç, Ashford). */
+  briefing?: string;
   partyCap?: number;
   /**
    * Kışla değişimi (Ömer 2026-10-25, form K1 = b; Saltmere): takım 4'te kalır, kışla `offer` aday önerir; aday bir kahramanın YERİNE geçer,
    * çıkan kahraman yedeğe (`CampaignState.reserve`) gider ve aynı kışlada geri alınabilir. Kasaba adımındayken kışla yerinden.
+   * `offer: 0` (Valdren Keep, Ömer 2026-10-31): yeni aday yok, yalnız yedektekilerle takas; yedek boşsa kışla eskisi gibi davranır.
    */
   barracksSwap?: { offer: number };
   city?: boolean;
@@ -292,6 +298,8 @@ export interface EncounterUnit {
   initialCooldownBonus?: number;
   /** B3 Break the Totem: bu birim kırılması gereken nesnedir (motor: UnitSetup.objective). Yalnızca `objective` totem olan karşılaşmada anlamlı. */
   objective?: boolean;
+  /** C2 Encased (maps-2-3.md): savaşa buz bloğu içinde başlar (motor: UnitSetup.encased). */
+  encased?: boolean;
 }
 
 /** Dalgalı savaşın sonraki bir dalgası (EncounterDef.waves; docs/design/waves.md): birimler ilk dalgayla aynı şemada. */
@@ -333,6 +341,12 @@ export interface EncounterDef {
   trial?: { heroes?: number; ultLock?: number; /** A5 Archer görevi: "yalnız N kahraman" sayımında bu sınıftan ayakta kahraman önce girer, kalan yer en öndekilere. */ requireClass?: string };
   /** M-N3: oyuncu tarafındaki etkileşimli nesne (battle-rules.json > devices anahtarı, ör. 'tidewater_urn'; hücre veri varsayılanı). */
   device?: string;
+  /** C5 Wake the Halls (battle-rules.json > noise anahtarı). */
+  noise?: string;
+  /** M-G Cave-in (battle-rules.json > hazards anahtarı). */
+  caveIn?: string;
+  /** M-F Lantern (battle-rules.json > lanterns anahtarı); Darkness'lı karşılaşmada. */
+  lantern?: string;
 }
 
 /** Karşılaşmanın hedefi (EncounterDef.objective): id ya da sayılarıyla nesne. Sayı verilmezse data/battle-rules.json varsayılanı. */
@@ -358,6 +372,19 @@ export interface CampaignRules {
   slots: number;
 }
 
+/** Öneri rolü: ön saf / arka saf / takımı besleyen (can ya da kalkan veren). */
+export type SuggestRole = 'front' | 'back' | 'feed';
+export interface CompanySuggestCfg {
+  label: string;
+  /** Harita id -> öneri gösterilen düğüm id'leri. */
+  nodes: Record<string, string[]>;
+  /** Eksik rol öncelik sırası. */
+  order: SuggestRole[];
+  lines: Record<SuggestRole, string>;
+  /** Sınıf id -> saydığı roller. */
+  roles: Record<string, SuggestRole[]>;
+}
+
 export interface CampaignConfig {
   /** Haritalar sefer sırasıyla (ilki yeni seferin haritası; sonraki harita "Continue to ..." ile açılır). */
   maps: string[];
@@ -367,9 +394,23 @@ export interface CampaignConfig {
    */
   mapFlags?: Record<string, { enabled: boolean }>;
   rules: CampaignRules;
+  /** Tek kişilik sefer başlangıcı (src/campaign/solo-start.ts). */
+  soloStart: {
+    skillOrder: Record<string, string[]>;
+    stages: Record<string, { open: number; wave?: { index: number; open: number } }>;
+    enemyScale: { groups: Record<string, UnitMods>; nodes: Record<string, string> };
+  };
+  /** Harita eğrisi çarpanı: harita id -> soloStart.enemyScale ile aynı yapı, kayıt türünden bağımsız (solo-start.ts > mapEnemyScale). */
+  mapEnemyScale: Record<string, { groups: Record<string, UnitMods>; nodes: Record<string, string> }>;
+  /** Eski kayıtların harita farkı: harita id -> düğüm id -> alanlar (null = alan yok; data.ts > mapFor). */
+  legacyStart: Record<string, Record<string, Record<string, unknown>>>;
   starterPool: string[];
   companyPool: string[];
   recruitPool: string[];
+  /** Bölük adı (D4): en çok harf + Suggest'in hazır adları. */
+  companyName: { max: number; suggestions: string[] };
+  /** Yoldaş önerisi (Ömer 2026-11-01; suggest.ts): rol eşlemesi, düğümler, metinler. */
+  companySuggest: CompanySuggestCfg;
   texts: Record<string, string>;
   tips: Record<string, string>;
   defaultDifficulty: Difficulty;
@@ -462,7 +503,7 @@ export interface Hero {
  * Bir düğümdeki adımlar (sırayla): recruit-before -> farewell -> company -> battle -> treasure -> event -> town -> recruit-leave.
  * Hepsi bitince düğüm temizlenmiş sayılır ve yola çıkılır (move).
  */
-export type StepKind = 'hero' | 'recruit' | 'farewell' | 'company' | 'battle' | 'treasure' | 'event' | 'story' | 'town' | 'rest' | 'merchant' | 'volunteer';
+export type StepKind = 'hero' | 'recruit' | 'farewell' | 'company' | 'briefing' | 'battle' | 'treasure' | 'event' | 'story' | 'town' | 'rest' | 'merchant' | 'volunteer';
 
 /** Sefer durumunun şema sürümü (2: kahraman level/XP/ekipman, torba, altın; eski 1 okunurken tamamlanır: save.ts > normalizeState). */
 export const STATE_VERSION = 2;
@@ -575,6 +616,16 @@ export interface CampaignState {
    * İsteğe bağlı alan (kayıt sürümü değişmez): eski kayıtta yok = kapı yok (takılma olmaz); kapı geçerli değilse okunurken atılır.
    */
   formationDue?: string;
+  /**
+   * Tek kişilik sefer başlangıcı (Ömer 2026-11-01): yeni seferde true. İsteğe bağlı alan, kayıt sürümü değişmez: eski kayıtta yok = eski yapı
+   * (tutorial kahramanı, Ashford vedası; data.ts > mapFor). Kahraman seçilmemiş eski kayıt seçimde yeni yapıya geçer.
+   */
+  soloStart?: true;
+  /**
+   * Oyuncunun verdiği bölük adı (Ömer 2026-11-01, D4; "Form your company" kutusu): haritadaki "Your party" başlığının ve kayıt kartındaki kısa
+   * başlığın yerine geçer. İsteğe bağlı alan (kayıt sürümü değişmez): yok / boş = ad yok; geçersizse okunurken atılır (state.ts > cleanCompanyName).
+   */
+  companyName?: string;
   /** Gösterilmemiş level atlamaları (Ömer 2026-10-17): haritada "Level Up" kartı gösterilip onaylanınca silinir (`acknowledgeLevelUps`). */
   levelUps?: LevelUp[];
   /**
@@ -741,6 +792,7 @@ export type NextStep =
   | { kind: 'volunteer'; node: string; offer: string[] }
   | { kind: 'farewell'; node: string }
   | { kind: 'company'; node: string; size: number }
+  | { kind: 'briefing'; node: string }
   | { kind: 'battle'; node: string; encounter: string; /** Devriye (temizlenmiş düğümün yeniden oynanışı). */ patrol?: true; /** The Fighting Pit kademesi (B5). */ pit?: true; /** Salvage Dive: bu savaşın derinliği (2+). */ dive?: number; /** M-K Black Caravel'in elit savaşı (bulunulan crossing düğümünde). */ caravel?: true }
   | { kind: 'treasure'; node: string; treasure: string }
   | { kind: 'event'; node: string; event: string }

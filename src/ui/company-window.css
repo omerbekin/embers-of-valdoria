@@ -95,6 +95,7 @@ html.short .cw-card .tut:empty { display: none; }
 html.short .cw-sub { left: calc(20 * var(--u)); right: calc(20 * var(--u)); font-size: 10px; line-height: 1.2; top: calc(86 * var(--u)); }
 /* telefonda pencere 1500u = ~540px dar kalıyordu: 11 sınıf adı tek satıra sığmıyor, iki sıra zikzak oluyordu; pencere genişler, kartlar aralıklı, ad kartın altında tek satır */
 html.short .cw-win { width: min(calc(100vw - 24px), calc(2100 * var(--u))); }
+html.short.rotated .cw-win { width: min(calc(100vh - 24px), calc(2100 * var(--u))); } /* döndürülmüş sahnede sahne genişliği ekran yüksekliğidir */
 html.short .cw-strip { margin-bottom: 24px; gap: calc(26 * var(--u)); }
 html.short .cw-pc { width: calc(140 * var(--u)); height: calc(100 * var(--u)); overflow: visible; }
 html.short .cw-pc img { object-position: 50% 18%; }
@@ -103,3 +104,20 @@ html.short .cw-pc::after { overflow: hidden; }
 /* Barracks modu (Ömer 2026-10-27): Not now (solda) + birincil (sağda) */
 .cw-acts { display: flex; align-items: center; gap: max(10px, calc(18 * var(--u))); }
 .cw-acts .el-btn:not(.primary) { min-height: max(40px, calc(54 * var(--u))); font-size: max(13px, calc(20 * var(--u))); }
+
+/* ---- bölük adı (Ömer 2026-11-01, D4): alt çubuğun ortasında tek yazı kutusu + Suggest; pencere sınırları değişmez ---- */
+.cw-name { position: absolute; left: calc(320 * var(--u)); right: calc(430 * var(--u)); bottom: calc(24 * var(--u)); height: calc(72 * var(--u)); display: flex; align-items: center; gap: max(8px, calc(14 * var(--u))); z-index: 2; }
+.cw-name-box { position: relative; flex: 1 1 auto; min-width: 0; display: block; }
+.cw-name-in.el-field { display: block; min-height: 44px; height: max(44px, calc(56 * var(--u))); padding: 0 calc(max(46px, calc(78 * var(--u)))) 0 max(10px, calc(16 * var(--u))); font-size: max(16px, calc(23 * var(--u))); }
+.cw-name-n { position: absolute; right: max(8px, calc(14 * var(--u))); top: 50%; translate: 0 -50%; font: 400 max(11px, calc(17 * var(--u))) var(--g-body); color: var(--g-dim); pointer-events: none; white-space: nowrap; }
+.cw-name-sug.el-btn { flex: none; min-height: 44px; height: max(44px, calc(56 * var(--u))); min-width: 0; padding: 0 max(12px, calc(24 * var(--u))); font-size: max(13px, calc(19 * var(--u))); }
+/* telefon: sayaç ile Set out arasına sığar; odaklıyken pencerenin sol üstüne çıkar (klavyenin üstünde kalır) */
+html.short .cw-name { left: calc(300 * var(--u)); right: calc(470 * var(--u)); bottom: calc(24 * var(--u)); }
+html.short .cw-name.editing { left: 8px; right: auto; top: 6px; bottom: auto; width: min(460px, calc(100% - 16px)); height: 56px; padding: 0 8px; background: rgba(14, 10, 7, .98); border: 1px solid var(--g-edge); box-shadow: 0 0 0 3px rgba(8, 6, 4, .7), 0 10px 24px rgba(0, 0, 0, .6); z-index: 6; }
+
+/* ---- öneri (Ömer 2026-11-01): önerilen kahramanın portre kutusunun altında küçük yazı; başka şerit yok, pencere aynı ---- */
+.cw-pcw { position: relative; flex: none; }
+.cw-sug { position: absolute; left: 0; right: 0; top: calc(100% + 7 * var(--u)); text-align: center; font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: .2em; text-transform: uppercase; color: var(--g-gold); white-space: nowrap; pointer-events: none; }
+.cw-strip.has-sug { margin-bottom: calc(34 * var(--u)); }
+html.short .cw-strip.has-sug { margin-bottom: 36px; }
+html.short .cw-sug { top: calc(100% + 19px); font-size: 8px; letter-spacing: .12em; }

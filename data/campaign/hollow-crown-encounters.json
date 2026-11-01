@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 3 karşılaşmaları (campaign-dev 2026-10-29; maps-2-3.md 4.2, iskelet adımı). YER TUTUCU: Harita 3 mobları henüz yok; belgedeki her birim var olan bir mobla, belgedeki adıyla (name) oynanır: Snow Wolf = grey_wolf, Rime Hound / Molten Hound = ash_hound, Cave Crawler = salt_crab, Clan Axeman = moor_raider, Clan Slinger / Frozen Crossbowman = bandit_crossbowman, Clan Skald = censer_monk, Rime Witch = fen_witchling, Frost-light / Deep-light = will_o_wisp, Wight = ghoul, Frozen Halberdier = morvane_halberdier, Hollow Warden = stonebound_warden, Hollow Runecaller = deep_runecaller, Blind Eel = weir_eel, Ashborn (Acolyte) = ember_acolyte, Pyre Witch = pitch_boiler, Cinder Knight = sworn_guard, Forge Golem = shieldwarden. Elitler (tier elite, can 1,7 / güç 1,1 / stat 1,15; Harita 2 iskeleti kalıbı): Pack-Mother = grey_wolf, Brannoc = bandit_chief, Frozen Standard-Bearer = morvane_halberdier, Oathkeeper = thane_of_the_deep, Pyre Matriarch = hedge_witch_morwen, Forge-Master Golem = guild_enforcer_bastion, Ashborn Hierarch = ember_hierophant, Cinder Warden = cinder_gatewarden. Bosslar: Snowfather = bridge_warden (dev, mooring yok), Hollow King = lord_morvane, Hearthwarden = drowned_queen, Ember = weir_wyrm (dev, tek). Kendi kitler, Harita 3 kuralları (Chill, Blizzard, Darkness, Cave-in, Heat, Tidewater Urn) bu adımda YOK. Düşman level'ı bölüm 3 rampasından (L21-30, ilk 3 durak L20). Dalgalar var olan ekleme kuralıyla. Sayılar PROVİZYON, sim ölçümü YOK.",
+  "_not": "Harita 3 karşılaşmaları (campaign-dev 2026-10-29; maps-2-3.md 4.2, iskelet adımı). YER TUTUCU: Harita 3 mobları henüz yok; belgedeki her birim var olan bir mobla, belgedeki adıyla (name) oynanır: Snow Wolf = grey_wolf, Rime Hound / Molten Hound = ash_hound, Cave Crawler = salt_crab, Clan Axeman = moor_raider, Clan Slinger / Frozen Crossbowman = bandit_crossbowman, Clan Skald = censer_monk, Rime Witch = fen_witchling, Frost-light / Deep-light = will_o_wisp, Wight = ghoul, Frozen Halberdier = morvane_halberdier, Hollow Warden = stonebound_warden, Hollow Runecaller = deep_runecaller, Blind Eel = weir_eel, Ashborn (Acolyte) = ember_acolyte, Pyre Witch = pitch_boiler, Cinder Knight = sworn_guard, Forge Golem = shieldwarden. Elitler (tier elite, can 1,7 / güç 1,1 / stat 1,15; Harita 2 iskeleti kalıbı): Pack-Mother = grey_wolf, Brannoc = bandit_chief, Frozen Standard-Bearer = morvane_halberdier, Oathkeeper = thane_of_the_deep, Pyre Matriarch = hedge_witch_morwen, Forge-Master Golem = guild_enforcer_bastion, Ashborn Hierarch = ember_hierophant, Cinder Warden = cinder_gatewarden. Bosslar: Snowfather = bridge_warden (dev, mooring yok), Hollow King = lord_morvane, Hearthwarden = drowned_queen, Ember = weir_wyrm (dev, tek). 4. dilim: 10 mob (clan_vaulter, shardwalker, hollow_delver, gloamstalker, cinderleaper, slagcart_golem, thunderwright, clan_stormcaller, gloam_eel, stormhorn_ram) kendi kitleriyle yerleşti (maps-2-3.md); kalan yer tutucu birimler hâlâ var olan mob. Düşman level'ı bölüm 3 rampasından (L21-30, ilk 3 durak L20). Dalgalar var olan ekleme kuralıyla. Sayılar PROVİZYON, sim ölçümü YOK.",
   "hc_1": {
     "name": "Hearthstead Road",
     "units": [
@@ -54,8 +54,7 @@
         "slot": 1
       },
       {
-        "class": "moor_raider",
-        "name": "Clan Axeman",
+        "class": "clan_vaulter",
         "slot": 0
       },
       {
@@ -74,8 +73,7 @@
         "slot": 1
       },
       {
-        "class": "moor_raider",
-        "name": "Clan Axeman",
+        "class": "clan_vaulter",
         "slot": 0
       },
       {
@@ -94,7 +92,7 @@
     "name": "The Pack-Mother",
     "units": [
       {
-        "class": "grey_wolf",
+        "class": "pack_mother",
         "name": "The Pack-Mother",
         "tier": "elite",
         "mods": {
@@ -124,6 +122,7 @@
   },
   "hc_9": {
     "name": "Avalanche Pass",
+    "caveIn": "cave_in",
     "units": [
       {
         "class": "ash_hound",
@@ -131,8 +130,7 @@
         "slot": 1
       },
       {
-        "class": "ash_hound",
-        "name": "Rime Hound",
+        "class": "stormhorn_ram",
         "slot": 0
       },
       {
@@ -197,8 +195,7 @@
         "slot": 0
       },
       {
-        "class": "moor_raider",
-        "name": "Clan Axeman",
+        "class": "clan_vaulter",
         "slot": 2
       }
     ]
@@ -217,8 +214,7 @@
         "slot": 0
       },
       {
-        "class": "fen_witchling",
-        "name": "Rime Witch",
+        "class": "clan_stormcaller",
         "slot": 7
       },
       {
@@ -229,6 +225,7 @@
     ]
   },
   "hc_15": {
+    "condition": "blizzard",
     "name": "Glacier Foot",
     "units": [
       {
@@ -254,6 +251,7 @@
     ]
   },
   "hc_16": {
+    "condition": "blizzard",
     "name": "Crevasse Field",
     "units": [
       {
@@ -262,8 +260,7 @@
         "slot": 1
       },
       {
-        "class": "ash_hound",
-        "name": "Rime Hound",
+        "class": "shardwalker",
         "slot": 0
       },
       {
@@ -279,6 +276,7 @@
     ]
   },
   "hc_17": {
+    "condition": "blizzard",
     "name": "The Frozen Legion",
     "units": [
       {
@@ -289,12 +287,14 @@
       {
         "class": "morvane_halberdier",
         "name": "Frozen Halberdier",
-        "slot": 0
+        "slot": 0,
+        "encased": true
       },
       {
         "class": "morvane_halberdier",
         "name": "Frozen Halberdier",
-        "slot": 2
+        "slot": 2,
+        "encased": true
       },
       {
         "class": "bandit_crossbowman",
@@ -304,6 +304,7 @@
     ]
   },
   "hc_18": {
+    "condition": "blizzard",
     "name": "The Frozen Standard-Bearer",
     "units": [
       {
@@ -324,8 +325,7 @@
         "slot": 0
       },
       {
-        "class": "morvane_halberdier",
-        "name": "Frozen Halberdier",
+        "class": "shardwalker",
         "slot": 2
       },
       {
@@ -336,6 +336,7 @@
     ]
   },
   "hc_19": {
+    "condition": "blizzard",
     "name": "Ice Chapel",
     "units": [
       {
@@ -349,8 +350,7 @@
         "slot": 0
       },
       {
-        "class": "ghoul",
-        "name": "Wight",
+        "class": "shardwalker",
         "slot": 2
       },
       {
@@ -361,6 +361,7 @@
     ]
   },
   "hc_22": {
+    "condition": "blizzard",
     "name": "Serac Maze",
     "units": [
       {
@@ -374,8 +375,7 @@
         "slot": 0
       },
       {
-        "class": "ash_hound",
-        "name": "Rime Hound",
+        "class": "stormhorn_ram",
         "slot": 2
       },
       {
@@ -386,6 +386,7 @@
     ]
   },
   "hc_26": {
+    "condition": "blizzard",
     "name": "Frostbite Ridge",
     "units": [
       {
@@ -404,13 +405,13 @@
         "slot": 7
       },
       {
-        "class": "fen_witchling",
-        "name": "Rime Witch",
+        "class": "clan_stormcaller",
         "slot": 6
       }
     ]
   },
   "hc_27": {
+    "condition": "blizzard",
     "name": "The Gate Road",
     "units": [
       {
@@ -448,7 +449,7 @@
         "slot": 1
       },
       {
-        "class": "stonebound_warden",
+        "class": "thunderwright",
         "slot": 0
       },
       {
@@ -459,6 +460,7 @@
   },
   "hc_32": {
     "name": "The Deep Stair",
+    "condition": "darkness",
     "units": [
       {
         "class": "stonebound_warden",
@@ -532,6 +534,7 @@
   },
   "hc_36": {
     "name": "Collapsed Hall",
+    "caveIn": "cave_in_heavy",
     "units": [
       {
         "class": "stonebound_warden",
@@ -539,8 +542,7 @@
         "slot": 1
       },
       {
-        "class": "stonebound_warden",
-        "name": "Hollow Warden",
+        "class": "thunderwright",
         "slot": 0
       },
       {
@@ -641,7 +643,10 @@
     ]
   },
   "hc_43": {
+    "noise": "wake_the_halls",
     "name": "Hall of Kings",
+    "condition": "darkness",
+    "lantern": "lantern",
     "units": [
       {
         "class": "stonebound_warden",
@@ -654,9 +659,9 @@
         "slot": 0
       },
       {
-        "class": "stonebound_warden",
-        "name": "Hollow Warden",
-        "slot": 2
+        "class": "thunderwright",
+        "slot": 2,
+        "name": "Hollow Thunderwright"
       },
       {
         "class": "deep_runecaller",
@@ -667,6 +672,7 @@
   },
   "hc_44": {
     "name": "Treasury Vault",
+    "condition": "darkness",
     "units": [
       {
         "class": "shieldwarden",
@@ -679,14 +685,16 @@
         "slot": 0
       },
       {
-        "class": "stonebound_warden",
-        "name": "Hollow Warden",
-        "slot": 2
+        "class": "thunderwright",
+        "slot": 2,
+        "name": "Hollow Thunderwright"
       }
     ]
   },
   "hc_45": {
+    "noise": "wake_the_halls",
     "name": "The Sunless Lake",
+    "condition": "darkness",
     "units": [
       {
         "class": "salt_crab",
@@ -694,8 +702,7 @@
         "slot": 1
       },
       {
-        "class": "salt_crab",
-        "name": "Cave Crawler",
+        "class": "gloamstalker",
         "slot": 0
       },
       {
@@ -709,14 +716,15 @@
         "slot": 6
       },
       {
-        "class": "weir_eel",
-        "name": "Blind Eel",
+        "class": "gloam_eel",
         "slot": 2
       }
     ]
   },
   "hc_46": {
+    "noise": "wake_the_halls",
     "name": "Boat Crossing",
+    "condition": "dark_tide",
     "units": [
       {
         "class": "weir_eel",
@@ -729,8 +737,7 @@
         "slot": 0
       },
       {
-        "class": "weir_eel",
-        "name": "Blind Eel",
+        "class": "gloam_eel",
         "slot": 2
       },
       {
@@ -741,7 +748,9 @@
     ]
   },
   "hc_47": {
+    "noise": "wake_the_halls",
     "name": "Drowned Dwarf Quarter",
+    "condition": "darkness",
     "units": [
       {
         "class": "stonebound_warden",
@@ -749,13 +758,11 @@
         "slot": 1
       },
       {
-        "class": "stonebound_warden",
-        "name": "Hollow Warden",
+        "class": "hollow_delver",
         "slot": 0
       },
       {
-        "class": "weir_eel",
-        "name": "Blind Eel",
+        "class": "gloam_eel",
         "slot": 2
       },
       {
@@ -766,7 +773,9 @@
     ]
   },
   "hc_49": {
+    "noise": "wake_the_halls",
     "name": "Ashborn Shrine",
+    "condition": "darkness",
     "units": [
       {
         "class": "ember_acolyte",
@@ -792,6 +801,7 @@
   },
   "hc_50": {
     "name": "The Pyre Matriarch",
+    "condition": "darkness",
     "units": [
       {
         "class": "hedge_witch_morwen",
@@ -820,14 +830,14 @@
         "slot": 1
       },
       {
-        "class": "ash_hound",
-        "name": "Molten Hound",
+        "class": "gloamstalker",
         "slot": 0
       }
     ]
   },
   "hc_52": {
     "name": "Kings' Armory",
+    "condition": "darkness",
     "units": [
       {
         "class": "shieldwarden",
@@ -842,7 +852,10 @@
     ]
   },
   "hc_53": {
+    "noise": "wake_the_halls",
     "name": "Cave-in Gallery",
+    "condition": "darkness",
+    "caveIn": "cave_in_heavy",
     "units": [
       {
         "class": "salt_crab",
@@ -855,8 +868,7 @@
         "slot": 0
       },
       {
-        "class": "stonebound_warden",
-        "name": "Hollow Warden",
+        "class": "hollow_delver",
         "slot": 2
       },
       {
@@ -868,6 +880,7 @@
   },
   "hc_55": {
     "name": "The Roots",
+    "condition": "darkness",
     "units": [
       {
         "class": "ash_hound",
@@ -875,8 +888,7 @@
         "slot": 1
       },
       {
-        "class": "ash_hound",
-        "name": "Molten Hound",
+        "class": "gloamstalker",
         "slot": 0
       },
       {
@@ -893,6 +905,7 @@
   },
   "hc_56": {
     "name": "Chain Stair",
+    "condition": "darkness",
     "units": [
       {
         "class": "sworn_guard",
@@ -918,6 +931,7 @@
   },
   "hc_58": {
     "name": "Lava Tube",
+    "condition": "heat",
     "units": [
       {
         "class": "ash_hound",
@@ -943,6 +957,7 @@
   },
   "hc_59": {
     "name": "Cinder Gate",
+    "condition": "heat",
     "units": [
       {
         "class": "sworn_guard",
@@ -960,14 +975,14 @@
         "slot": 7
       },
       {
-        "class": "ember_acolyte",
-        "name": "Ashborn",
-        "slot": 6
+        "class": "cinderleaper",
+        "slot": 2
       }
     ]
   },
   "hc_60": {
     "name": "Kiln Chapel",
+    "condition": "heat",
     "units": [
       {
         "class": "shieldwarden",
@@ -988,9 +1003,10 @@
   },
   "hc_61": {
     "name": "The Ashborn Hierarch",
+    "condition": "heat",
     "units": [
       {
-        "class": "ember_hierophant",
+        "class": "ashborn_hierarch",
         "name": "The Ashborn Hierarch",
         "tier": "elite",
         "mods": {
@@ -1006,9 +1022,8 @@
         "slot": 6
       },
       {
-        "class": "pitch_boiler",
-        "name": "Pyre Witch",
-        "slot": 8
+        "class": "cinderleaper",
+        "slot": 0
       },
       {
         "class": "sworn_guard",
@@ -1019,10 +1034,10 @@
   },
   "hc_63": {
     "name": "Bridge of Chains",
+    "condition": "heat",
     "units": [
       {
-        "class": "shieldwarden",
-        "name": "Forge Golem",
+        "class": "slagcart_golem",
         "slot": 1
       },
       {
@@ -1044,6 +1059,7 @@
   },
   "hc_64": {
     "name": "Ash Catacombs",
+    "condition": "heat",
     "units": [
       {
         "class": "ghoul",
@@ -1066,17 +1082,17 @@
         "slot": 6
       },
       {
-        "class": "ash_hound",
-        "name": "Molten Hound",
+        "class": "cinderleaper",
         "slot": 2
       }
     ]
   },
   "hc_65": {
     "name": "Forge-Master Golem",
+    "condition": "heat",
     "units": [
       {
-        "class": "guild_enforcer_bastion",
+        "class": "forge_master_golem",
         "name": "Forge-Master Golem",
         "tier": "elite",
         "mods": {
@@ -1093,8 +1109,7 @@
         "slot": 0
       },
       {
-        "class": "shieldwarden",
-        "name": "Forge Golem",
+        "class": "slagcart_golem",
         "slot": 2
       },
       {
@@ -1106,6 +1121,7 @@
   },
   "hc_66": {
     "name": "Warren Hoard",
+    "condition": "heat",
     "units": [
       {
         "class": "ash_hound",
@@ -1126,6 +1142,7 @@
   },
   "hc_68": {
     "name": "Slag Fields",
+    "condition": "heat",
     "units": [
       {
         "class": "sworn_guard",
@@ -1151,6 +1168,7 @@
   },
   "hc_69": {
     "name": "Pilgrims' Stair",
+    "condition": "heat",
     "units": [
       {
         "class": "ember_acolyte",
@@ -1181,6 +1199,7 @@
   },
   "hc_70": {
     "name": "Vault of the First Kings",
+    "condition": "heat",
     "units": [
       {
         "class": "shieldwarden",
@@ -1201,6 +1220,7 @@
   },
   "hc_72": {
     "name": "Ember Stair",
+    "condition": "heat",
     "units": [
       {
         "class": "ash_hound",
@@ -1226,6 +1246,7 @@
   },
   "hc_73": {
     "name": "Furnace Hall",
+    "condition": "heat",
     "units": [
       {
         "class": "sworn_guard",
@@ -1251,6 +1272,7 @@
   },
   "hc_74": {
     "name": "The Anvil Road",
+    "condition": "heat",
     "units": [
       {
         "class": "shieldwarden",
@@ -1258,8 +1280,7 @@
         "slot": 1
       },
       {
-        "class": "shieldwarden",
-        "name": "Forge Golem",
+        "class": "slagcart_golem",
         "slot": 0
       },
       {
@@ -1276,6 +1297,7 @@
   },
   "hc_76": {
     "name": "Magma Bridge",
+    "condition": "heat",
     "units": [
       {
         "class": "ash_hound",
@@ -1306,6 +1328,7 @@
   },
   "hc_77": {
     "name": "Chamber of Embers",
+    "condition": "heat",
     "units": [
       {
         "class": "ember_acolyte",
@@ -1336,6 +1359,7 @@
   },
   "hc_78": {
     "name": "Forgemaster's Vault",
+    "condition": "heat",
     "units": [
       {
         "class": "shieldwarden",
@@ -1356,6 +1380,7 @@
   },
   "hc_79": {
     "name": "The Cinder Warden",
+    "condition": "heat",
     "units": [
       {
         "class": "cinder_gatewarden",
@@ -1387,6 +1412,7 @@
   },
   "hc_81": {
     "name": "Hall of Bearers",
+    "condition": "heat",
     "units": [
       {
         "class": "sworn_guard",
@@ -1461,10 +1487,11 @@
     ]
   },
   "hc_snowfather": {
+    "condition": "blizzard",
     "name": "The Snowfather",
     "units": [
       {
-        "class": "bridge_warden",
+        "class": "snowfather",
         "slot": 1,
         "name": "The Snowfather",
         "tier": "boss",
@@ -1490,9 +1517,11 @@
   },
   "hc_hollow_king": {
     "name": "The Hollow King",
+    "condition": "darkness",
+    "noise": "wake_the_halls",
     "units": [
       {
-        "class": "lord_morvane",
+        "class": "hollow_king",
         "slot": 4,
         "name": "The Hollow King",
         "tier": "boss",
@@ -1547,9 +1576,10 @@
   },
   "hc_ember": {
     "name": "The Ember of the First Hearth",
+    "device": "tidewater_urn",
     "units": [
       {
-        "class": "weir_wyrm",
+        "class": "ember_of_the_first_hearth",
         "slot": 1,
         "name": "The Ember of the First Hearth",
         "tier": "boss",

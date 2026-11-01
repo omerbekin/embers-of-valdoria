@@ -1,0 +1,37 @@
+{
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: fen_witchling. Kendi idle çizimi (assets/sprites/clan_stormcaller, mob-poses); saldırı pozu, VFX ve ses yer tutucu.",
+  "id": "clan_stormcaller",
+  "name": "Clan Stormcaller",
+  "family": "hexes",
+  "spriteId": "clan_stormcaller",
+  "color": "#6a7fb0",
+  "logo": "wizhat",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Hillclan · Stormcaller",
+  "attributes": {
+    "str": 10,
+    "int": 27,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 6,
+  "magicArmor": 4,
+  "ai": "sniper",
+  "skills": [
+    "fork",
+    "rolling_thunder"
+  ],
+  "passive": {
+    "id": "eye_of_the_storm",
+    "name": "Eye of the Storm",
+    "icon": "bolt",
+    "text": "Allies in this unit's lane ignore Blizzard: its Chill Ground does not touch them and they suffer no ranged penalty. Ends when this unit falls.",
+    "effect": {
+      "type": "eyeOfStorm",
+      "conditions": [
+        "blizzard"
+      ]
+    }
+  }
+}

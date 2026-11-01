@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 // Gönderim kuyruğu (Ömer 2026-10-24): sohbetler birbirine mesaj atmadan GitHub gönderimini paylaşır.
-// Modlar: kritik (iş bitince kendisi gönderir), eşlik (biri gönderince beraber gider; etiketsiz sohbet), gün sonu (yalnız gece 03:00).
+// Modlar: kritik (iş bitince kendisi gönderir), eşlik (ilk hazırdan 3 saat sonra ya da daha önceki bir gönderimle gider; etiketsiz sohbet). Gece 03:00 görevi 2026-11-01'de kaldırıldı, gün sonu etiketi eşlik sayılır.
 // Kuyruk .git/push-queue.json içinde durur (git'e girmez, Changes'ta görünmez). Hook'lar .claude/settings.local.json'da.
 // Komutlar:
 //   hook-prompt / hook-edit / hook-edit-pre / hook-bash-pre / hook-bash-post : Claude Code hook'ları (stdin JSON)
 //   status                           : kuyruğu yazar (sahipsiz değişiklikler dahil)
 //   pages-check <sha> <sürüm>        : gönderimden sonra arka planda Pages yayınını izler
-//   mode <oturum> <kritik|eşlik|gün sonu>
+//   mode <oturum> <kritik|eşlik>
 //   add <oturum> <dosya...>          : hook'un görmediği dosyalar (Bash ile, script ile, worktree'den gelenler)
 //   ready <oturum> --fixes "..." [--new "..."] [--changes "..."]   : iş bitti, sıradaki gönderime katılır
 //   push <oturum> [--fixes "..." ...] [--version x] [--dry]        : kritik sohbetin gönderimi (+ hazır eşlikler)
-//   eod [--dry]                      : gece görevi, hazır olan her şeyi gönderir
+//   eod [--dry]                      : elle, hazır olan her şeyi hemen gönderir (zamanlanmış görev yok)
 //   doctor                           : bakım: bayat index.lock, artık eov-push kopyaları, artık süreçler (her gönderim başında da çalışır)
 // push/eod (--dry hariç) kendini arka plana alıp hemen döner (Ömer 2026-10-30); özet .git/push-queue.log, tam çıktı .git/push-queue.out.log
 //   notes <oturum> --fixes "..."     : hazır girdinin sürüm notunu değiştirir
@@ -20,7 +20,7 @@
 //   wt-open <oturum> [ad]            : game/.claude/worktrees/chat-<ad> + chat/<ad> dalı + kendi npm ci + kendi port (5174+)
 //   wt-close <oturum>                : gönderilmemiş iş yoksa worktree, dal, port, launch kaydını siler
 //   legacy-merged <oturum> <dosya..> : eski akış sohbeti dosyayı origin/main ile elle birleştirdi, durdurma kalkar
-// Koordinasyon (Ömer 2026-10-31): ready ucu mühürler (readySha), kopya istemde kendiliğinden eşitlenir, hazırdan 20 dk sonra otomatik gönderim,
+// Koordinasyon (Ömer 2026-10-31): ready ucu mühürler (readySha), kopya istemde kendiliğinden eşitlenir, hazırdan 3 saat sonra otomatik gönderim,
 // başka kopyada değişen dosyaya erken uyarı, golden kayıtları gönderimde yeniden üretilir, denge dosyası gidince arka planda 300 savaşlık sim.
 //   wt-sync / wt-files / auto-wait / auto-ship / sim-run : kancaların ve gönderimin başlattığı arka plan süreçleri (elle çağrılmaz)
 import { execFileSync, execSync as execSyncRaw, spawn, spawnSync } from 'node:child_process';
@@ -75,7 +75,7 @@ const RELATED_LIMIT = (Number(ENVV.EOV_RELATED_LIMIT_S) || 120) * 1000;
 const NET_WAITS = (ENVV.EOV_NET_WAITS ?? '30,60,120').split(',').map((x) => Number(x) * 1000);
 const LOCK_POLL = Number(ENVV.EOV_LOCK_POLL_MS) || 15000;
 // Otomatik gönderim penceresi (Ömer 2026-10-31); e2e'de süre verilmezse zamanlayıcı hiç başlamaz
-const AUTO_MS = (ENVV.EOV_AUTO_SHIP_MIN !== undefined ? Number(ENVV.EOV_AUTO_SHIP_MIN) : 20) * 60000;
+const AUTO_MS = (ENVV.EOV_AUTO_SHIP_MIN !== undefined ? Number(ENVV.EOV_AUTO_SHIP_MIN) : 180) * 60000; // 2026-11-01: 20 dk erkendi, 3 saat; süre dolmadan başka gönderim olursa hazırlar ona katılır
 const AUTO_ON = !E2E || ENVV.EOV_AUTO_SHIP_MIN !== undefined;
 const WT_CACHE = (ENVV.EOV_WT_CACHE_S !== undefined ? Number(ENVV.EOV_WT_CACHE_S) : 60) * 1000;
 const WT_FILES = join(GAME, '.git', 'push-queue.wtfiles.json');
@@ -92,7 +92,7 @@ const SESSIONS_DIR = ENVV.EOV_SESSIONS_DIR ?? join(homedir(), '.claude', 'projec
 const SKIP = (rel) => /^(\.git\/|assets\/source\/|\.claude\/worktrees\/|node_modules\/|dist\/)/.test(rel);
 process.chdir(GAME);
 
-const MODES = { kritik: 'kritik', 'eşlik': 'eşlik', eslik: 'eşlik', 'günsonu': 'gün sonu', gunsonu: 'gün sonu' };
+const MODES = { kritik: 'kritik', 'eşlik': 'eşlik', eslik: 'eşlik', 'günsonu': 'eşlik', gunsonu: 'eşlik' };
 const HEAD = { '--new': 'New', '--changes': 'Changes', '--fixes': 'Fixes' };
 
 const log = (s) => {
@@ -189,14 +189,14 @@ function checkNoteLimits(groups) {
 }
 const readStdin = () => { try { return JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { return {}; } };
 
-const AUTO_TEXT = `${AUTO_MS / 60000} dk`;
+const AUTO_TEXT = AUTO_MS >= 3600000 ? `${AUTO_MS / 3600000} saat` : `${AUTO_MS / 60000} dk`;
 const RULES = (sid, mode, auto) =>
   `[gönderim kuyruğu] Bu sohbetin oturumu: ${short(sid)} · mod: ${mode}. ` +
   `Düzenlediğin game/ dosyaları (Edit/Write ve Bash komutlarıyla değişenler) otomatik kuyruğa yazılır; gözden kaçan olursa \`node tools/push-queue.mjs add ${short(sid)} <dosya...>\`. ` +
   (mode === 'kritik'
     ? `İş bitip doğrulanınca Ömer'e tek satır "GitHub'a gönderiyorum" de, teyit BEKLEME, \`node tools/push-queue.mjs push ${short(sid)} --fixes "<oyuncuya yönelik İngilizce satır>"\` çalıştır (sürüm, test, 5000, Pages, push dahil; komut kendini arka plana alıp hemen döner, sonuç .git/push-queue.log son satırlarında ve kuyruk raporunda); bitince 5000 + Pages linkini ver.`
     : `Kendin GitHub'a gönderme. İş bitip doğrulanınca \`node tools/push-queue.mjs ready ${short(sid)} --fixes "<oyuncuya yönelik İngilizce satır>"\` çalıştır; ` +
-      (mode === 'eşlik' ? (auto ? `ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle ya da gece 03:00 görevinde gider.` : 'ilk kritik gönderimle ya da gece 03:00 görevinde gider.') : 'gece 03:00 görevinde gider.')) +
+      (auto ? `daha önce bir gönderim olursa ona katılır; yoksa ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle gider.` : 'ilk gönderimle gider.')) +
   ` Oyuncunun göreceği bir şey değişmediyse (yalnız docs/ ya da araç) satır yazma, \`--internal\` ver (sürüm notuna girmez).` +
   ` Diğer sohbetlere mesaj atma.`;
 
@@ -469,8 +469,8 @@ async function push(trigger, args) {
       }
       return Object.entries(q.sessions)
         // Hazır işaretlenmiş başka kritik sohbet de beraber gider (2026-10-30: 839e43ba hazır ama dışarıda kalıp dosyaları yarım gidiyordu)
-        // Otomatik gönderim hata almış girdiyi yeniden denemez, gün sonu 03:00'ı bekler (Ömer 2026-10-31)
-        .filter(([sid, e]) => e.ready && (trigger === 'eod' || sid === trigger || (trigger === 'auto' ? autoEligible(e) : e.mode === 'eşlik' || e.mode === 'kritik')))
+        // Otomatik gönderim hata almış girdiyi yeniden denemez, yeniden ready bekler (Ömer 2026-10-31)
+        .filter(([sid, e]) => e.ready && (trigger === 'eod' || sid === trigger || (trigger === 'auto' ? autoEligible(e) : true)))
         .map(([sid, e]) => ({ sid, ...e }));
     });
     pickedIds = new Set(picked.map((e) => e.sid));
@@ -514,7 +514,7 @@ async function push(trigger, args) {
       }
     });
     log(`> ${version ?? 'İç güncelleme'} GitHub'a gönderildi. 5000: http://localhost:5000/ · Pages: https://omerbekin.github.io/embers-of-valdoria/`);
-    if (trigger === 'eod') notice(`Gece 03:00 gönderimi: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti (${picked.map((e) => e.label ? '"' + e.label + '"' : short(e.sid)).join(', ')}).`);
+    if (trigger === 'eod') notice(`Toplu gönderim: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti (${picked.map((e) => e.label ? '"' + e.label + '"' : short(e.sid)).join(', ')}).`);
     // Arka planda koştuğu için (F5) başlatan sohbet sonucu kuyruk raporundan öğrenir
     if (trigger !== 'eod') notice(`${short(trigger)} gönderimi tamam: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti. 5000: http://localhost:5000/ · Pages: https://omerbekin.github.io/embers-of-valdoria/`);
     if (!E2E) spawn(process.execPath, [SELF, 'pages-check', shipped.sha, version ?? 'iç güncelleme'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
@@ -522,8 +522,8 @@ async function push(trigger, args) {
   } catch (err) {
     log('!! Gönderim durdu: ' + err.message);
     if (dry) return 1; // deneme kuyruğa ve sohbetlere iz bırakmaz
-    if (trigger === 'eod') notice(`Gece 03:00 gönderimi DURDU, hiçbir şey gitmedi: ${err.message}. Hazır işler kuyrukta bekliyor.`);
-    else if (trigger === 'auto') notice(`Otomatik gönderim DURDU: ${err.red ?? err.message}. Bu işler yeniden ready verilene ya da gece 03:00 görevine kadar otomatik gitmez.`);
+    if (trigger === 'eod') notice(`Toplu gönderim DURDU, hiçbir şey gitmedi: ${err.message}. Hazır işler kuyrukta bekliyor.`);
+    else if (trigger === 'auto') notice(`Otomatik gönderim DURDU: ${err.red ?? err.message}. Bu işler yeniden ready verilene kadar otomatik gitmez.`);
     else notice(`${short(trigger)} gönderimi DURDU: ${err.red ?? err.message}`);
     // Yalnız bu gönderimdekiler: gönderim sürerken hazır olan başka girdi bu hatadan sorumlu değil
     withQueue((qq) => { for (const [sid, e] of Object.entries(qq.sessions)) if (e.ready && (!pickedIds || pickedIds.has(sid))) e.lastError = err.red ?? err.message; });
@@ -1048,7 +1048,7 @@ function branchHasWork(branch, target = ORIGIN_MAIN) {
 }
 
 // Metin değişince artırılır: açık sohbetler bir sonraki istemde yeni kuralları görür
-const WT_RULES_V = 2;
+const WT_RULES_V = 3;
 function wtRules(sid, e, rec, first) {
   const s = short(sid);
   const base = `[gönderim kuyruğu] oturum ${s} · mod: ${e.mode}${e.ready ? ' · hazır' : ''}`;
@@ -1058,7 +1058,7 @@ function wtRules(sid, e, rec, first) {
   return `${head}\nKurallar: Read/Edit/Write bu kopyanın mutlak yoluyla, komutlar önce cd ile bu kopyada; asıl game/ yazmaya kapalı. 5173 son gönderilen sürümdür, işini Ömer'e kendi portundan göster. Commit şart değil, ready ağacı commit'ler (assets/source gitmez). Kendin git push yapma, patch-notes.json'a yazma. ` +
     (e.mode === 'kritik'
       ? `İş bitip doğrulanınca Ömer'e tek satır "GitHub'a gönderiyorum" de, teyit BEKLEME: node "${TOOL}" push ${s} --fixes "<oyuncuya yönelik İngilizce satır>" (arka planda, sonuç kuyruk raporunda); bitince 5000 + Pages linkini ver.`
-      : `Kendin GitHub'a gönderme; iş bitip doğrulanınca: node "${TOOL}" ready ${s} --fixes "<oyuncuya yönelik İngilizce satır>"; ${e.mode === 'eşlik' ? `ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle ya da gece 03:00 görevinde gider.` : 'gece 03:00 görevinde gider.'}`) +
+      : `Kendin GitHub'a gönderme; iş bitip doğrulanınca: node "${TOOL}" ready ${s} --fixes "<oyuncuya yönelik İngilizce satır>"; daha önce bir gönderim olursa ona katılır; yoksa ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle gider.`) +
     ` Gönderime ready anındaki hâl girer, sonraki commit'lerin sonrakine kalır. Kopyan her istemde origin/main'e kendiliğinden eşitlenir; çakışma varsa yalnız uyarı görürsün. tests/fixtures/golden çakışmasını elle çözme, gönderim yeniden üretir.` +
     ` Oyuncunun göreceği bir şey değişmediyse --internal ver. Yeni açık soru: docs/design/open-questions.md sonuna "## Q-NEW. Başlık" (numarayı gönderim verir). Agent'ların bu kopyada mutlak yolla çalışır; paralel olanlar için bu daldan: git -C "${rec.path}" worktree add "<game>/.claude/worktrees/agent-<ad>" -b agent/<ad> (isolation kullanma), bitince bu dala merge et. Gönderimden sonra dal yeni main'e taşınır. Sohbet işi tamamen bitince: node "${TOOL}" wt-close ${s}. Başka açık sohbetin konusuna ya da dosyalarına giren işi yapma: SendMessage ile o sohbete devret (adı ListAgents'ta), Ömer'e tek satır söyle; sana devredilen işi normal iş say. Yeni konuya başlamadan docs/arch/chat-owners.md oku.` +
     (rec.name === 'minor-fixes' ? ` Sen koordinatörsün: Ömer'den küçük işleri alırsın, başka sohbetin alanına gireni devredersin, kalanı kısa turlarla yaparsın.` : '');
@@ -1361,9 +1361,9 @@ function wtSyncNow(rec) {
   } finally { rmSync(spec, { force: true }); rmSync(idx, { force: true }); }
 }
 
-// ---- Otomatik gönderim (Ömer 2026-10-31): ilk hazırdan 20 dk sonra; plan kuyrukta durur, zamanlayıcı ölse de hook-prompt/doctor gecikeni başlatır ----
+// ---- Otomatik gönderim (Ömer 2026-10-31): ilk hazırdan 3 saat sonra, sonraki hazırlar aynı plana katılır; plan kuyrukta durur, zamanlayıcı ölse de hook-prompt/doctor gecikeni başlatır ----
 const clock = (ms) => new Date(ms).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-const autoEligible = (e) => e.ready && !e.lastError && e.mode !== 'gün sonu';
+const autoEligible = (e) => e.ready && !e.lastError;
 function shipLive() {
   try { const pid = JSON.parse(readFileSync(join(PLOCK, 'owner.json'), 'utf8')).pid; return !!pid && pidAlive(pid); } catch { return false; }
 }
@@ -1875,7 +1875,7 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
       }
       try { clearEntries([...live, ...quiet], started, sha); } catch (e) { log(`!! kuyruk temizliği: ${firstLine(e)}`); }
       log(`> ${version ?? 'İç güncelleme'} GitHub'a gönderildi. 5000: http://localhost:5000/ · Pages: https://omerbekin.github.io/embers-of-valdoria/`);
-      if (trigger === 'eod') notice(`Gece 03:00 gönderimi: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti (${live.map(label).join(', ')}).${goldenText}`);
+      if (trigger === 'eod') notice(`Toplu gönderim: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti (${live.map(label).join(', ')}).${goldenText}`);
       else notice(`${trigger === 'auto' ? 'Otomatik gönderim' : `${short(trigger)} gönderimi`} tamam: ${version ?? 'sürümsüz iç güncelleme'} GitHub'a gitti (${live.map(label).join(', ')}). 5000: http://localhost:5000/ · Pages: https://omerbekin.github.io/embers-of-valdoria/${goldenText}`);
       if (version) try { deployLive(scratch, version); } catch (e) { notice(`${version} GitHub'a gitti ama canlı yayın hata verdi: ${firstLine(e)}`); }
       if (!E2E) spawn(process.execPath, [SELF, 'pages-check', sha, version ?? 'iç güncelleme'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
@@ -1931,7 +1931,7 @@ const main = {
   status,
   mode: () => withQueue((q) => {
     const mode = MODES[args.slice(1).join('').toLowerCase().replace(/[ -]/g, '')];
-    if (!mode) throw new Error('mod: kritik | eşlik | gün sonu');
+    if (!mode) throw new Error('mod: kritik | eşlik');
     const sidM = findSid(q, args[0]);
     entry(q, sidM).mode = mode;
     rememberMode(q, sidM, mode);
@@ -1961,9 +1961,8 @@ const main = {
       mergeNotes(e.notes, notes);
       setInternal(e, internal);
       scheduleAutoShip(q);
-      const when = e.mode === 'gün sonu' ? 'Gece 03:00 görevinde gider.'
-        : !q.cutover ? 'İlk kritik gönderimle ya da gece 03:00 görevinde gider.'
-        : q.autoShipAt ? `Otomatik gönderim ${clock(q.autoShipAt)}, en geç gece 03:00.` : 'Süren gönderim bitince sıradaki otomatik gönderime girer.';
+      const when = !q.cutover ? 'İlk gönderimle gider.'
+        : q.autoShipAt ? `Otomatik gönderim ${clock(q.autoShipAt)}, daha önce bir gönderim olursa ona katılır.` : 'Süren gönderim bitince sıradaki otomatik gönderime girer.';
       console.log(`Hazır (${e.mode}, ${rec ? rec.branch : e.files.length + ' dosya'}). ${when}`);
     });
     try { autoShipKick(); } catch {}

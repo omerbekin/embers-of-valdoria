@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { legacyHero } from './legacy-start';
 import {
   CONFIG,
   arrivalPreSteps,
@@ -8,7 +9,6 @@ import {
   getMap,
   joinLevel,
   moveTo,
-  newCampaign,
   nextStep,
   node,
   temporaryCompany,
@@ -24,7 +24,7 @@ import { REGION_VIEW, hudClear } from '../src/game/region-view';
 // Playtest 2026-10-23 seçimleri, sefer tarafı (docs/design/playtest-2026-10-23-picks.md): U1, U3, U8, H2, H3, D6, D12.
 
 const map = getMap('valdoria');
-const fresh = (seed = 21): CampaignState => newCampaign({ mode: 'normal', seed });
+const fresh = (seed = 21): CampaignState => legacyHero(seed); // veda ve geçici kadro yalnız eski kayıtta
 function finish(s: CampaignState): CampaignState {
   let t = s;
   for (let g = 0; g < 30 && nextStep(t).kind !== 'move' && nextStep(t).kind !== 'complete'; g++) t = autoResolve(t);

@@ -222,7 +222,7 @@ describe('town screen geometry (cover + percentage hotspots)', () => {
 });
 
 describe('town screen flow', () => {
-  it('the town screen is up for the first-entry flow (farewell, company, story) and the town itself, gone after Leave', () => {
+  it('the town screen is up for the first-entry flow (company, briefing, story) and the town itself, gone after Leave', () => {
     let s = debugTeleport(base(), '4');
     const seen: string[] = [];
     for (let i = 0; i < 10 && nextStep(s).kind !== 'move'; i++) {
@@ -231,7 +231,7 @@ describe('town screen flow', () => {
       expect(townScreenNode(s), `adım ${k}`).toBe('4');
       s = autoResolve(s);
     }
-    expect(seen).toEqual(['farewell', 'company', 'story', 'town']);
+    expect(seen).toEqual(['company', 'briefing', 'story', 'town']);
     expect(townScreenNode(s)).toBeNull();
     expect(townScreenNode(at('3', 'battle'))).toBeNull(); // kasaba olmayan düğüm
   });

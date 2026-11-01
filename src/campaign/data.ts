@@ -28,6 +28,30 @@ export const MAPS: Record<string, CampaignMap> = {
 
 export const CONFIG: CampaignConfig = campaignJson as unknown as CampaignConfig;
 
+/** Eski kayıtların harita sürümü: veride yeni yapı, üstüne campaign.json > legacyStart (null = alan yok). */
+function legacyMap(id: string, base: CampaignMap): CampaignMap {
+  const diff = CONFIG.legacyStart[id] ?? {};
+  const nodes = base.nodes.map((n) => {
+    const d = diff[n.id];
+    if (!d) return n;
+    const out: Record<string, unknown> = { ...n };
+    for (const [k, v] of Object.entries(d)) {
+      if (v === null) delete out[k];
+      else out[k] = v;
+    }
+    return out as unknown as CampaignMap['nodes'][number];
+  });
+  return { ...base, nodes };
+}
+
+/** Eski yapıdaki harita sürümleri (yalnız farkı olan haritalar). */
+export const LEGACY_MAPS: Record<string, CampaignMap> = Object.fromEntries(Object.keys(CONFIG.legacyStart).map((id) => [id, legacyMap(id, MAPS[id]!)]));
+
+/** Bu seferin haritası: yeni sefer (soloStart) veri dosyasını, eski kayıt eski başlangıç yapısını görür. */
+export function mapFor(s: { mapId: string; soloStart?: true }): CampaignMap {
+  return (!s.soloStart ? LEGACY_MAPS[s.mapId] : undefined) ?? getMap(s.mapId);
+}
+
 export const ENCOUNTERS: Record<string, EncounterDef> = { ...strip<EncounterDef>(encountersJson), ...strip<EncounterDef>(drEncountersJson), ...strip<EncounterDef>(hcEncountersJson) };
 
 export interface EventText {

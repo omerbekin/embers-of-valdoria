@@ -138,6 +138,18 @@ export function parseRotateMode(search: string): RotateMode {
 let currentRotated = false;
 let currentMode: RotateMode = 'auto';
 let relayout: (() => void) | null = null;
+/** Sanal klavye açıkken sahne küçülmesin (holdViewportForKeyboard). */
+let keyboardHold = false;
+
+/**
+ * Telefonda yazı kutusu odaklıyken (Ömer 2026-11-01, D4): klavye görünür alanı daraltınca sahne yeniden ölçeklenmez, kutu okunur boyda kalır.
+ * Bırakılınca (odak gidince) ölçü hemen tazelenir.
+ */
+export function holdViewportForKeyboard(on: boolean): void {
+  if (keyboardHold === on) return;
+  keyboardHold = on;
+  if (!on) relayout?.();
+}
 let liteRender = false;
 
 /** Performans modu: tuval düşük çözünürlükte (src/game/perf-apply.ts çağırır); yerleşim hemen yenilenir. */
@@ -231,6 +243,7 @@ export function installViewport(game: unknown, stage: HTMLElement, initialMode: 
   let queued = false;
   const apply = (): void => {
     queued = false;
+    if (keyboardHold) return;
     const vv = window.visualViewport;
     const w = Math.round(vv?.width ?? window.innerWidth);
     const h = Math.round(vv?.height ?? window.innerHeight);

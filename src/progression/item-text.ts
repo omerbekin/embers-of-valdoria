@@ -27,6 +27,8 @@ import {
   levelReqMsg,
   weaponPowerOf,
   weaponSpeedPenalties,
+  weaponTypeDef,
+  weaponTypeOf,
   type AffixTier,
   type Equipment,
   type ItemDef,
@@ -273,11 +275,11 @@ export function gripNote(d: ItemDef): string {
   return '';
 }
 
-/** Alt başlık: "Rare Gloves · Item level 9" (silahta aile adı + tutuş; kalkanda "Shield · Off-hand"). Örneğin nadirliği / seviyesi verilebilir. */
+/** Alt başlık: "Rare Gloves · Item level 9" (silahta tipin adı + tutuş: "Epic Axe"; kalkanda "Shield · Off-hand"; `kindName` varsa o: "Common Ring"). Örneğin nadirliği / seviyesi verilebilir. */
 export function itemSubtitle(d: ItemDef, rarity: RarityId = d.rarity, ilvl: number = d.ilvl): string {
-  const fam = d.slot === 'offhand' ? 'Shield' : d.family ? ITEMS.weaponFamilies.find((f) => f.id === d.family)?.name : undefined;
+  const kind = d.kindName ?? (d.slot === 'offhand' ? 'Shield' : weaponTypeDef(weaponTypeOf(d))?.name);
   const grip = gripNote(d);
-  return `${rarityDef(rarity).name} ${fam ?? slotDef(d.slot).name}${grip ? ` · ${grip}` : ''} · Item level ${ilvl}`;
+  return `${rarityDef(rarity).name} ${kind ?? slotDef(d.slot).name}${grip ? ` · ${grip}` : ''} · Item level ${ilvl}`;
 }
 
 /** Örneğin alt başlığı (nadirliği zarından). */

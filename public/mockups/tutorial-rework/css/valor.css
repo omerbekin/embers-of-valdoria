@@ -1,0 +1,709 @@
+/* Valor göstergesi ve savaş dışı diriltme penceresi (src/ui/valor-braziers.ts; Ömer 2026-10-13). Kit dili: koyu demir + kor, Cinzel etiket,
+   ince altın çizgi. Mangallar boyalı görsel (assets/valor, Ömer 2026-10-14), yumuşak ölçek. Boyut TEK değişkende: --vl-h = kâse yüksekliği
+   (genişlik kare oranından; alevli kare kâsenin üstüne taşar, yerleşimi büyütmez). Görsel değişse de yerleşim aynı kalır. */
+.vl-meter {
+  --vl-h: 40px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(var(--vl-h) * 0.22);
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+}
+
+.vl-brs {
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--vl-h) * 0.08);
+}
+
+.vl-br {
+  position: relative;
+  display: block;
+  flex: none;
+  width: calc(var(--vl-h) * 1.055);
+  height: var(--vl-h);
+}
+
+.vl-br > img {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  pointer-events: none;
+  user-select: none;
+  image-rendering: auto;
+}
+
+.vl-br > .vl-img {
+  height: 100%;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.75));
+  transition: filter 0.2s;
+}
+
+/* alevli kare (diriltme hazır): kâseyle aynı taban ve genişlik, yalnızca yukarı uzar */
+.vl-br > .vl-flame {
+  height: auto;
+  opacity: 0;
+  transform-origin: 50% 100%;
+  transition: opacity 0.25s;
+  filter: drop-shadow(0 0 calc(var(--vl-h) * 0.18) rgba(255, 140, 50, 0.55));
+}
+
+.vl-br.on > .vl-flame {
+  opacity: 1;
+  animation: vl-flicker 1.6s ease-in-out infinite alternate;
+}
+
+.vl-br.on > .vl-img {
+  opacity: 0;
+}
+
+/* yeni tutuşan korun mangalı kısa parlar */
+.vl-br.vl-flash > .vl-img {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.75)) brightness(1.7) drop-shadow(0 0 6px rgba(255, 179, 90, 0.8));
+  transition: none;
+}
+
+@keyframes vl-flicker {
+  0% {
+    transform: scale(1, 1);
+    filter: drop-shadow(0 0 calc(var(--vl-h) * 0.16) rgba(255, 140, 50, 0.5)) brightness(1);
+  }
+  50% {
+    transform: scale(1.015, 1.035);
+    filter: drop-shadow(0 0 calc(var(--vl-h) * 0.22) rgba(255, 150, 60, 0.6)) brightness(1.08);
+  }
+  100% {
+    transform: scale(0.995, 0.99);
+    filter: drop-shadow(0 0 calc(var(--vl-h) * 0.18) rgba(255, 140, 50, 0.5)) brightness(0.97);
+  }
+}
+
+html.reduced-motion .vl-br.on > .vl-flame {
+  animation: none;
+}
+
+/* savaş bedeli çentiği: bedel korunun mangalının altında küçük altın çizgi; eşik dolunca kor rengi */
+.vl-notch {
+  position: absolute;
+  bottom: calc(var(--vl-h) * -0.1);
+  width: 2px;
+  height: calc(var(--vl-h) * 0.16);
+  margin-left: -1px;
+  background: #e8c47e;
+  box-shadow: 0 0 0 1px rgba(16, 11, 7, 0.9);
+}
+
+.vl-meter.vl-ready .vl-notch {
+  background: var(--el-ember2, #ffb35a);
+}
+
+.vl-meter .vl-lbl {
+  font: 600 11px var(--el-display, serif);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--el-muted, #a8977a);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.vl-meter.vl-ready .vl-lbl {
+  color: var(--el-ember2, #ffb35a);
+}
+
+.vl-click {
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.vl-click:hover .vl-lbl,
+.vl-click:focus-visible .vl-lbl {
+  color: var(--el-on, #f3d999);
+}
+
+.vl-tip {
+  position: fixed;
+  z-index: 40;
+  max-width: 360px;
+}
+
+.vl-tip div + div {
+  margin-top: 4px;
+}
+
+/* ===== Savaş dışı yerleşim (Ömer 2026-10-14): TEK kural, her ekranda aynı. Sol üst bant, ◂ Back'in (ya da haritada o köşenin) hemen sağında,
+   Back ile aynı dikey ortada; küçük, kutusuz ince şerit + yanında küçük "VALOR". Başlıklar ortada, kartlar/paneller bandın altında başlar:
+   hiçbir karta binmez. Kâse ~40 px masaüstü, ~26 px yatay telefon. ===== */
+.vl-corner {
+  --vl-h: max(30px, calc(44 * var(--gu, 1px)));
+  position: absolute;
+  left: calc(var(--el, 0px) + max(64px, 112 * var(--gu, 1px)));
+  top: calc(var(--et, 0px) + 56 * var(--gu, 1px));
+  transform: translateY(-50%);
+  z-index: 6;
+  padding: 4px 12px 4px 8px;
+  background: linear-gradient(90deg, rgba(12, 9, 6, 0.62), rgba(12, 9, 6, 0.38) 70%, rgba(12, 9, 6, 0));
+  border-left: 1px solid rgba(217, 178, 106, 0.3);
+}
+
+html.short .vl-corner {
+  --vl-h: 30px;
+  left: calc(var(--el, 0px) + 60px);
+  top: calc(var(--et, 0px) + 22px);
+  padding: 2px 8px 2px 6px;
+}
+
+html.short .vl-corner .vl-lbl {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+/* --- Savaş dışı diriltme penceresi: "Nöbet" (Ömer 2026-10-19; taslak public/mockups/valor-v4.html #v1). Tüm ölçüler --k ile (masaüstü 1, telefon yatay .58). --- */
+.vl-overlay {
+  --k: 1; /* JS (valor-braziers.ts > fit) ekrana göre 0.4..1 yazar */
+  --g-gold: #e8c47e;
+  --g-text: #f4ede1;
+  --g-dim: #a8977a;
+  --g-ember: #e0702a;
+  --g-ember2: #ffb35a;
+  --g-disp: Cinzel, Georgia, serif;
+  --g-body: 'EB Garamond', Georgia, serif;
+  z-index: 20;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 108%, rgba(224, 112, 42, 0.24), transparent 58%), rgba(5, 3, 2, 0.7);
+}
+
+.vl-overlay * {
+  box-sizing: border-box;
+}
+
+.vl-overlay .el-title {
+  font-size: max(20px, calc(34px * var(--k)));
+  gap: calc(14px * var(--k));
+  margin: 0;
+}
+
+/* yükselen kor kıvılcımları (Reduced motion: yok) */
+.vz-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.vz-sparks i {
+  position: absolute;
+  bottom: -10px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffb35a;
+  box-shadow: 0 0 6px 1px rgba(240, 140, 40, 0.8);
+  opacity: 0;
+  animation: vz-rise 8s linear infinite;
+}
+
+@keyframes vz-rise {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--dx, 10px), calc(var(--fh, 700px) * -0.95));
+    opacity: 0;
+  }
+}
+
+html.reduced-motion .vz-sparks {
+  display: none;
+}
+
+.vz-dia {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  background: var(--g-ember);
+  border: 1px solid var(--g-ember2);
+  box-shadow: 0 0 8px rgba(240, 140, 40, 0.6);
+  flex: none;
+}
+
+.vg {
+  position: relative;
+  text-align: center;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vg-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: calc(34px * var(--k));
+  margin-top: calc(22px * var(--k));
+}
+
+.vg-br {
+  padding-top: calc(130px * var(--k));
+}
+
+.vg-br .vl-meter {
+  --vl-h: calc(130px * var(--k));
+  cursor: default;
+}
+
+.vg-br .vl-br {
+  margin-top: calc(var(--vl-h) * 0.56);
+}
+
+/* A Band ipucu kutusu: üstüne gelince / odakta (dokunmada ilk dokunuş) açılır */
+.vl-tw {
+  position: relative;
+}
+
+.vl-tipbox {
+  position: absolute;
+  z-index: 30;
+  display: none;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.vl-tw:hover > .vl-tipbox,
+.vl-tw:focus-within > .vl-tipbox {
+  display: block;
+  z-index: 50;
+}
+
+.vl-tw:has(.holding) > .vl-tipbox {
+  display: none;
+}
+
+.vl-tipbox .bt {
+  --bu: calc(1.1px * var(--k) + 0.35px);
+}
+
+html.short .vl-tipbox .bt {
+  --bu: 0.8px;
+}
+
+.vg-hang {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vg-bar {
+  position: relative;
+  align-self: stretch;
+  height: calc(8px * var(--k) + 2px);
+  background: linear-gradient(180deg, #e8c47e, #8a6a30 60%, #4a3718);
+  border: 1px solid #130d07;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.vg-bar i {
+  position: absolute;
+  top: 50%;
+  width: calc(12px * var(--k) + 4px);
+  height: calc(12px * var(--k) + 4px);
+  margin-top: calc(-6px * var(--k) - 2px);
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid #f3d999;
+}
+
+.vg-bar i:first-child {
+  left: calc(-8px * var(--k) - 2px);
+}
+
+.vg-bar i:last-child {
+  right: calc(-8px * var(--k) - 2px);
+}
+
+.vg-banners {
+  display: flex;
+  gap: calc(26px * var(--k));
+  padding: 0 calc(30px * var(--k));
+}
+
+.vg-bnw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vg-bnw .rope {
+  width: 2px;
+  height: calc(20px * var(--k));
+  background: #8a6a30;
+}
+
+.vg-bn {
+  position: relative;
+  width: calc(204px * var(--k));
+  height: calc(352px * var(--k));
+  clip-path: polygon(0 0, 100% 0, 100% 93%, 50% 100%, 0 93%);
+  background: linear-gradient(180deg, rgba(217, 178, 106, 0.7), rgba(217, 178, 106, 0.3));
+  cursor: not-allowed;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  outline: none;
+  transition: transform 0.2s;
+}
+
+.vg-bn.can {
+  cursor: pointer;
+  background: linear-gradient(180deg, #f3d999, rgba(217, 178, 106, 0.5));
+}
+
+/* klavye odağı: clip-path kenarı kestiği için çerçeve parlar */
+.vg-bn:focus-visible {
+  background: linear-gradient(180deg, #fff2c4, #ffb35a);
+}
+
+.bn-in {
+  position: absolute;
+  inset: 2px;
+  clip-path: polygon(0 0, 100% 0, 100% 93%, 50% 100%, 0 93%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(10px * var(--k)) calc(10px * var(--k)) 0;
+  background: linear-gradient(180deg, #2a1410, #170b09 55%, #0d0706);
+}
+
+.vg-bn .pt {
+  position: relative;
+  width: 100%;
+  height: calc(180px * var(--k));
+  border: 1px solid rgba(217, 178, 106, 0.45);
+  background: #0a0605;
+  overflow: hidden;
+}
+
+.vg-bn .pt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+  pointer-events: none;
+  filter: grayscale(calc(0.92 * (1 - var(--hold)))) brightness(calc(0.55 + 0.45 * var(--hold)));
+}
+
+.vg-bn .cross {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: calc(26px * var(--k));
+  height: calc(26px * var(--k));
+  display: grid;
+  place-items: center;
+  color: #e8806a;
+  background: #1a0f0b;
+  border: 1px solid rgba(214, 74, 52, 0.7);
+  opacity: calc(1 - var(--hold));
+}
+
+.vg-bn .cross svg {
+  width: 60%;
+  height: 60%;
+}
+
+.vg-bn .nm {
+  margin-top: calc(10px * var(--k));
+  font: 600 max(12px, calc(20px * var(--k))) var(--g-disp);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g-text);
+}
+
+.vg-bn .rl {
+  font: max(11px, calc(16px * var(--k))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.vg-bn .pill {
+  margin-top: calc(14px * var(--k));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 calc(14px * var(--k));
+  height: max(26px, calc(36px * var(--k)));
+  white-space: nowrap;
+  border: 1px solid rgba(224, 112, 42, 0.7);
+  background: rgba(224, 112, 42, 0.14);
+  font: 700 max(11px, calc(16px * var(--k))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffd2a0;
+}
+
+.vg-bn .pill.low {
+  border-color: rgba(214, 74, 52, 0.45);
+  background: rgba(214, 74, 52, 0.08);
+  color: #b9705f;
+}
+
+.vg-bn .pill.low .vz-dia {
+  background: transparent;
+  border-color: #b9705f;
+  box-shadow: none;
+}
+
+html.short .vg-bn .pill {
+  padding: 0 8px;
+  gap: 5px;
+  letter-spacing: 0.04em;
+}
+
+.vg-bn .fire {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.vg-bn.can:not(.holding) {
+  animation: bn-sway 5s ease-in-out infinite alternate;
+  transform-origin: 50% 0;
+}
+
+.vg-bn.can:not(.holding):hover {
+  animation: none;
+  transform: translateY(-3px);
+}
+
+.vg-bn.holding {
+  transform: translateY(-3px) scale(1.02);
+  filter: drop-shadow(0 0 10px rgba(255, 120, 40, 0.5));
+}
+
+@keyframes bn-sway {
+  from {
+    transform: rotate(-0.5deg);
+  }
+  to {
+    transform: rotate(0.5deg);
+  }
+}
+
+html.reduced-motion .vg-bn.can:not(.holding) {
+  animation: none;
+}
+
+.vg-empty {
+  padding: calc(40px * var(--k)) calc(60px * var(--k));
+  text-align: center;
+}
+
+.vg-empty .t1 {
+  font: 600 max(14px, calc(24px * var(--k))) var(--g-disp);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+
+.vg-empty .t2 {
+  margin-top: 4px;
+  font: max(12px, calc(19px * var(--k))) var(--g-body);
+  color: #cdb88d;
+}
+
+.vg-hang.none .vg-bar {
+  min-width: calc(520px * var(--k));
+}
+
+.vg-count {
+  margin-top: calc(16px * var(--k));
+  font: 600 max(11px, calc(14px * var(--k))) var(--g-disp);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.vg-count b {
+  font: 700 max(18px, calc(30px * var(--k))) var(--g-disp);
+  color: var(--g-ember2);
+  letter-spacing: 0;
+}
+
+/* Alt şerit: mesaj üstte, Close ayrı satırda altta ortada (sancak adlarından uzak: taslakta yakın durması sorun olmuştu) */
+.vz-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(10px * var(--k));
+  margin-top: calc(14px * var(--k));
+}
+
+.vz-msg {
+  min-height: 1.2em;
+  text-align: center;
+  font: 600 max(11px, calc(16px * var(--k))) var(--g-disp);
+  letter-spacing: 0.06em;
+  color: var(--g-ember2);
+}
+
+.vz-foot .el-btn.primary {
+  min-height: 44px;
+  font-size: max(15px, calc(22px * var(--k)));
+}
+
+html.short .vz-foot {
+  margin-top: 6px;
+  gap: 4px;
+}
+
+html.short .vg-row {
+  margin-top: 6px;
+}
+
+html.short .el-dialog.vl-overlay {
+  padding-top: calc(6px + var(--et, 0px));
+  padding-bottom: calc(6px + var(--eb, 0px));
+}
+
+.vl-meter[hidden] {
+  display: none !important;
+}
+
+/* Savaş HUD'ı (src/ui/battle-hud.ts > .bh-valor; oyun biriminde): mangallar üstte, küçük "VALOR" altta, alt çubukta dikey ortalı */
+.vl-meter.vl-stack {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vl-meter.vl-stack .vl-lbl {
+  font-size: 15px;
+}
+
+.bh-valor .vl-meter {
+  --vl-h: 60px;
+}
+
+/* telefonda HUD küçülür: mangal ve yazı oyun biriminde büyür (~30 px kâse, ~9 px yazı) */
+html.short .bh-valor .vl-meter {
+  --vl-h: 82px;
+  gap: 4px;
+}
+
+html.short .bh-valor .vl-meter .vl-lbl {
+  font-size: 24px;
+  letter-spacing: 0.14em;
+}
+
+/* Revive düğmesi / ipucu başlığı: alevli mangal karesi kare değil (uzun), ezilmeden sığar */
+.bh-gl .bh-ico,
+.bh-tt-ico {
+  object-fit: contain;
+}
+
+/* Wounds bölümü (Ömer 2026-10-26): sancakların altında, yaralı yaşayan kahramanlar; Valor ile yara silme */
+.vg-wounds {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.vg-wounds[hidden] {
+  display: none;
+}
+
+.vg-wt {
+  font: 600 14px var(--g-disp);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+
+.vg-wl {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
+}
+
+.vg-wd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid rgba(201, 162, 86, 0.35);
+  border-radius: 6px;
+  background: rgba(20, 12, 8, 0.7);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.vg-wd:hover {
+  border-color: var(--g-gold);
+  box-shadow: 0 0 10px rgba(240, 140, 40, 0.25);
+  transform: translateY(-1px);
+}
+
+.vg-wd .pt {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 162, 86, 0.5);
+}
+
+.vg-wd .who {
+  text-align: left;
+}
+
+.vg-wd .nm {
+  font: 600 15px var(--g-disp);
+  color: var(--g-gold);
+}
+
+.vg-wd .wn {
+  font: 14px var(--g-body);
+  color: #cdb88d;
+}
+
+.vg-wbtn {
+  min-height: 36px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.vg-wbtn:disabled {
+  opacity: 0.5;
+}
+
+.vg-wnone {
+  font: 15px var(--g-body);
+  color: #cdb88d;
+}
+
+html.reduced-motion .vg-wd {
+  transition: none;
+}
+
+/* Valor penceresi (Nöbet) açıkken mentor kutusu üstüne binmesin (Ömer 2026-10-28; telefonda başlığa biniyordu) */
+body:has(.vl-overlay) .tut-wrap {
+  visibility: hidden;
+}

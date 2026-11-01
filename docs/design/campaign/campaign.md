@@ -319,6 +319,8 @@ Sonuç (v5): **alt yol (5A-6A) 9 savaş, üst yol (5B-6B) 10 savaş.** Alt yolda
 
 ## 4. Takım: dinamik kadro, tutorial, lider
 
+> **Ömer 2026-11-01, yeni sefer başlangıcı:** yeni seferde tek kahramanla başlanır (Warrior, Defender, Paladin, Druid; kalıcı lider), katılımlar Ashford (serbest), Valdren Keep (3 aday), King's Bridge zaferi (3 aday). Takım 1 -> 2 -> 3 -> 4; veda ve Skip tutorial yok. Ayrıntı `docs/design/tutorial.md > Yeni sefer başlangıcı`. Aşağıdaki 4.1-4.3 eski yapıyı anlatır; bu yapı yalnız kayıtta `soloStart` olmayan eski seferlerde sürer (`campaign.json > legacyStart`).
+
 ### 4.1 Tutorial (Bölge I: Mill Road -> Ashford Village)
 Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e taşınmış hâli):
 

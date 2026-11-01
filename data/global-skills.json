@@ -44,6 +44,15 @@
     "target": "row",
     "text": "Tip the urn beside you: flood one row of your side and end your turn."
   },
+  "thunder_rod_topple": {
+    "_not": "Harita 3 B2 Thunder Rod: bitişik kahraman eylem harcayıp çubuğu devirir (Tidewater Urn yolu). Yalnızca ayakta çubuk varken listelenir. Birden çok çubuğa bitişikse en çok kahramana komşu olan devrilir.",
+    "id": "thunder_rod_topple",
+    "name": "Topple Rod",
+    "icon": "bolt",
+    "kind": "rod",
+    "target": "self",
+    "text": "Knock down the iron rod beside you: its cell opens and it draws no more lightning. Ends your turn."
+  },
   "ash_surge": {
     "_not": "Crown Surge (Ömer 2026-10-27, map2-quests-surge.md C1 V1: savaş HUD'ında taç plakası, kahramanın eylemini harcar). Yalnızca sefer savaşında, BattleSetup.surge o tarafa bu id'yi verirse görünür (bölge hakkı: data/campaign/crown-surge.json). Savaş başına tek Surge (C10 c). status = takıma verilen durum (statuses.json > ash_surge), turns = her taşıyanın kendi sonraki turları (C8 a; Ömer 2026-10-27: 3 tur, eski 2). Sayılar PROVİZYON.",
     "id": "ash_surge",

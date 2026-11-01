@@ -9,6 +9,7 @@ import type { Situation } from './lessons';
 const ENEMY_TARGETS = new Set(['single_enemy', 'area_enemies', 'random_enemies', 'all_enemies']);
 const REACH_REASONS = new Set(['Melee: front row only', 'No target in reach', 'No target in range']); // sonuncusu: menzil sistemi (range.md)
 const GLOBAL = { rest: 'rest', skip: 'skip_turn', move: 'move_tile' } as const;
+const TAUNT_REASON = 'Must target the taunting enemy'; // Battle.targetProblem
 
 /** Bu savaşta birimin kullandığı class skill'leri (savaş kaydından). */
 function usedSkills(b: Battle, uid: string): Set<string> {
@@ -86,6 +87,8 @@ export function selectSituations(b: Battle, uid: string, skillId: string): Situa
   const out: Situation[] = [];
   const sk = b.skill(skillId);
   if (sk && ENEMY_TARGETS.has(sk.target) && sk.effects.some((e) => e.type === 'damage') && b.validTargets(uid, skillId).length) out.push({ when: 'preview', skill: skillId });
+  // C1 (Ömer 2026-11-01): temel saldırı dışındaki hasar veren skill: ıskalayabilir
+  if (sk && skillId !== actor.skills[0] && ENEMY_TARGETS.has(sk.target) && sk.effects.some((e) => e.type === 'damage')) out.push({ when: 'strong', skill: skillId });
   if (sk?.target === 'single_ally' && b.validTargets(uid, skillId).length) out.push({ when: 'ally', skill: skillId });
   if (b.isMelee(skillId) && ENEMY_TARGETS.has(b.skill(skillId)?.target ?? '')) {
     const valid = b.validTargets(uid, skillId);
@@ -95,6 +98,23 @@ export function selectSituations(b: Battle, uid: string, skillId: string): Situa
   }
   if (b.isAreaSkill(skillId, uid) || b.isShapeSkill(skillId, uid)) out.push({ when: 'area', skill: skillId });
   return out;
+}
+
+/**
+ * Hedefe tıklandı ve reddedildi (C4, Ömer 2026-10-31): sebep Taunt ise `protected` durumu; koruyan birimler `units`, adları {protector}. Motorda hedef
+ * reddeden tek koruma kuralı Taunt'tur (Guard hasarı yönlendirir, hedefi reddetmez); menzil / Backstab / karanlık reddi bu dersi açmaz. Yalnızca
+ * gerçekten vurulabilecek (validTargets içindeki) koruyan sayılır: "önce ona vur" denebilsin. Saf okuma: motor kuralı değil.
+ */
+export function rejectSituations(b: Battle, uid: string, skillId: string, targetUid: string): Situation[] {
+  const actor = b.get(uid);
+  const target = b.get(targetUid);
+  if (!actor || !target || actor.side !== 'party' || target.side === actor.side || target.hp <= 0) return [];
+  if (b.skill(skillId, uid)?.target !== 'single_enemy' || b.targetProblem(uid, skillId, targetUid) !== TAUNT_REASON) return [];
+  const taunters = b.validTargets(uid, skillId).filter((c) => c.statuses.some((s) => s.kind === 'taunt'));
+  if (!taunters.length) return [];
+  const names = [...new Set(taunters.map((c) => c.displayName ?? c.name))];
+  const protector = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]!;
+  return [{ when: 'protected', skill: skillId, vars: { protector }, units: taunters.map((c) => c.uid), ...(names.length > 1 ? { variant: 'many' } : {}) }];
 }
 
 /**

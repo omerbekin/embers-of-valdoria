@@ -526,7 +526,7 @@ execFileSync('git', ['push','-q','origin','main'], { cwd: c });`);
     W.run(['eod', '--bg']);
     has(W.origin('src/a.ts'), 'a = 3'); has(W.origin('src/b.ts'), 'b = 3');
     ok(W.origin('src/c.ts') === null, 'hazır olmayan gitmez');
-    has(W.notices(), 'Gece 03:00');
+    has(W.notices(), 'Toplu gönderim');
     ok(existsSync(join(c.path, 'src/c.ts')), 'C işi durur');
   },
   'kopyadaki arac asil kopyaya yonlenir': (W) => {
@@ -716,15 +716,18 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
   'muhur + esitleme: birlesen dal mührünü korur, sonraki is kaybolmaz': (W) => {
     W.cutover();
     const a = W.open(A, 'a'); const b = W.open(B, 'b');
-    W.hook('hook-prompt', { session_id: A, prompt: '[gün sonu] x' });
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
     W.hook('hook-prompt', { session_id: B, prompt: 'x' });
     W.wput(a, 'src/a.ts', 'export const a = 3;\n');
     W.ready(A, 'line A');
     const pin = ent(W, A).readySha;
+    const setReady = (v) => { const f = join(W.game, '.git', 'push-queue.json'); const q = JSON.parse(readFileSync(f, 'utf8')); q.sessions[A].ready = v; writeFileSync(f, JSON.stringify(q)); };
+    setReady(false); // B tek başına gitsin: A'nın mührü sonraki gönderime kalmış gibi
     W.wput(b, 'src/b.ts', 'export const b = 3;\n');
     W.ready(B, 'line B');
     W.push(B);
-    hasNot(W.origin('src/a.ts'), 'a = 3', 'gün sonu beklemeli');
+    setReady(true);
+    hasNot(W.origin('src/a.ts'), 'a = 3', 'A bu gönderimde değil');
     has(W.hook('hook-prompt', { session_id: A, prompt: 'y' }).out, 'birleştirildi');
     ok(W.wg(a, 'merge-base', '--is-ancestor', pin, 'HEAD') === '', 'mühür atada');
     ok(ent(W, A).readySha === pin, 'eşitleme mührü değiştirmez');
@@ -862,24 +865,23 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
     ok(!ent(W, A).lastError, 'hata silindi');
     await until(() => (W.origin('src/b.ts') ?? '').includes('b = 5'), 'yeniden ready gider');
   },
-  'otomatik gonderim gun sonunu almaz': async (W) => {
+  'gun sonu etiketi esliktir, otomatik plana katilir': async (W) => {
     W.cutover();
     const a = W.open(A, 'a'); const b = W.open(B, 'b');
     W.hook('hook-prompt', { session_id: A, prompt: '[gün sonu] x' });
     W.hook('hook-prompt', { session_id: B, prompt: 'x' });
-    W.env.EOV_AUTO_SHIP_MIN = '0.02';
+    ok(ent(W, A).mode === 'eşlik', 'etiket eşlik sayılır');
+    W.env.EOV_AUTO_SHIP_MIN = '0.1';
     W.wput(a, 'src/a.ts', 'export const a = 3;\n');
-    has(W.ready(A).out, '03:00');
-    ok(!W.q().autoShipAt, 'gün sonu planlamaz');
+    has(W.ready(A).out, 'Otomatik gönderim');
+    const at = W.q().autoShipAt;
+    ok(at, 'plan kuruldu');
     W.wput(b, 'src/b.ts', 'export const b = 3;\n');
     W.ready(B);
-    await until(() => (W.origin('src/b.ts') ?? '').includes('b = 3'), 'eşlik gider');
+    ok(!W.q().autoShipAt || W.q().autoShipAt === at, 'ikinci hazır aynı plana katılır');
+    await until(() => (W.origin('src/a.ts') ?? '').includes('a = 3') && (W.origin('src/b.ts') ?? '').includes('b = 3'), 'ikisi de gider');
     await until(() => !existsSync(join(W.game, '.git', 'push-queue.push.lock')), 'kilit');
-    hasNot(W.origin('src/a.ts'), 'a = 3', 'gün sonu beklemeli');
-    ok(ent(W, A).ready, 'gün sonu hazır kalır');
     ok(!W.q().autoShipAt, 'yeni plan yok');
-    W.run(['eod', '--bg']);
-    has(W.origin('src/a.ts'), 'a = 3', 'gece görevi alır');
   },
   'otomatik plan hazir is kalmayinca durur': (W) => {
     W.cutover();

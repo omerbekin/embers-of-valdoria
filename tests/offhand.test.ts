@@ -49,6 +49,15 @@ describe('grip data', () => {
     expect(itemSubtitle(itemDef('oak_shield')!)).toContain('Off-hand');
   });
 
+  it('subtitle names the item kind, not the weapon family (Omer 2026-11-01)', () => {
+    expect(itemSubtitle(itemDef('dane_axe')!, 'epic', 8)).toBe('Epic Axe · Two-handed · Item level 8');
+    expect(itemSubtitle(itemDef('arming_sword')!, 'rare', 8)).toContain('Rare Sword');
+    expect(itemSubtitle(itemDef('flanged_mace')!, 'rare', 8)).toContain('Rare Mace');
+    expect(itemSubtitle(itemDef('oak_shield')!, 'rare', 8)).toContain('Rare Shield');
+    expect(itemSubtitle(itemDef('copper_ring')!, 'common', 2)).toBe('Common Ring · Item level 2');
+    expect(itemSubtitle(itemDef('wolf_tooth')!, 'common', 2)).toBe('Common Trinket · Item level 2');
+  });
+
   it('a weapon without a grip fails validation', () => {
     const items = ITEMS.items.map((d) => (d.id === 'short_bow' ? { ...d, grip: undefined } : d));
     expect(validateItems({ ...ITEMS, items }).join()).toMatch(/short_bow: weapon needs a grip/);

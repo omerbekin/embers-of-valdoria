@@ -9,6 +9,10 @@ import wavesJson from '../../data/waves.json';
 import firstBattle from '../../data/battles/first-battle.json';
 import randomBattle from '../../data/battles/random-battle.json';
 import aoeTester from '../../data/classes/aoe_tester.json';
+import stormTester from '../../data/classes/storm_tester.json';
+import rodTester from '../../data/classes/rod_tester.json';
+import eyeTester from '../../data/classes/eye_tester.json';
+import temperTester from '../../data/classes/temper_tester.json';
 import poseTester1 from '../../data/classes/pose_tester_1.json';
 import poseTester2 from '../../data/classes/pose_tester_2.json';
 import poseTester3 from '../../data/classes/pose_tester_3.json';
@@ -37,6 +41,17 @@ import skeleton from '../../data/summons/skeleton.json';
 import treant from '../../data/summons/treant.json';
 // Harita 2 Tide Caller'ın Rise from the Deep çağrısı (Skeleton ile aynı statlar, kendi kit; content-designer 2026-10-27, open-questions 446)
 import risenDrowned from '../../data/summons/risen_drowned.json';
+// Harita 3 4. dilim moblari (maps-2-3.md)
+import clanVaulterMob from '../../data/mobs/clan_vaulter.json';
+import shardwalkerMob from '../../data/mobs/shardwalker.json';
+import hollowDelverMob from '../../data/mobs/hollow_delver.json';
+import gloamstalkerMob from '../../data/mobs/gloamstalker.json';
+import cinderleaperMob from '../../data/mobs/cinderleaper.json';
+import slagcartGolemMob from '../../data/mobs/slagcart_golem.json';
+import thunderwrightMob from '../../data/mobs/thunderwright.json';
+import clanStormcallerMob from '../../data/mobs/clan_stormcaller.json';
+import gloamEelMob from '../../data/mobs/gloam_eel.json';
+import stormhornRamMob from '../../data/mobs/stormhorn_ram.json';
 import bridgeWarden from '../../data/bosses/bridge_warden.json';
 import ironMooring from '../../data/bosses/iron_mooring.json';
 import lordMorvane from '../../data/bosses/lord_morvane.json';
@@ -45,8 +60,14 @@ import admiralVane from '../../data/bosses/admiral_vane.json';
 import harpoonBallista from '../../data/bosses/harpoon_ballista.json';
 import drownedQueen from '../../data/bosses/drowned_queen.json';
 import hexTotem from '../../data/bosses/hex_totem.json';
+import lanternObject from '../../data/bosses/lantern.json';
 import hollowKing from '../../data/bosses/hollow_king.json';
 import hollowCrownLooks from '../../data/bosses/hollow-crown-looks.json';
+import snowfatherBoss from '../../data/bosses/snowfather.json';
+import emberFirstHearthBoss from '../../data/bosses/ember_of_the_first_hearth.json';
+import forgeMasterGolemMob from '../../data/mobs/forge_master_golem.json';
+import packMotherMob from '../../data/mobs/pack_mother.json';
+import ashbornHierarchMob from '../../data/mobs/ashborn_hierarch.json';
 import mobRoadThug from '../../data/mobs/road_thug.json';
 import mobMoorRaider from '../../data/mobs/moor_raider.json';
 import mobBanditCrossbowman from '../../data/mobs/bandit_crossbowman.json';
@@ -129,7 +150,7 @@ import { placementHints, type HintRules, type PlacementHint } from './formation-
 import { AREA_TARGETS } from './area-shape';
 import { FOE_TARGETS, skillRangeFor } from './range';
 import { buildDef } from './stats';
-import type { UrnRule, AreaDef, BattleCondition, BattleMode, BattleObjective, BattleRules, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
+import type { CaveInRule, LanternRule, NoiseRule, UrnRule, AreaDef, BattleCondition, BattleMode, BattleObjective, BattleRules, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleDef {
   id: string;
@@ -158,6 +179,10 @@ const classData: Record<string, CombatantData> = {
   hexer,
   vesper,
   aoe_tester: aoeTester,
+  storm_tester: stormTester,
+  rod_tester: rodTester,
+  eye_tester: eyeTester,
+  temper_tester: temperTester,
   pose_tester_1: poseTester1,
   pose_tester_2: poseTester2,
   pose_tester_3: poseTester3,
@@ -207,13 +232,19 @@ export const bosses: Record<string, CombatantDef> = {
   drowned_queen: buildDef(drownedQueen as unknown as CombatantData, formulas),
   // Harita 2 Break the Totem nesnesi (eskiden Iron Mooring "Hex Totem" adıyla; Iron Mooring ile aynı statlar, inert)
   hex_totem: buildDef(hexTotem as unknown as CombatantData, formulas),
+  // Harita 3 Darkness Lantern nesnesi (M-F; inert, oyuncu tarafında; battle-rules.json > lanterns)
+  lantern: buildDef(lanternObject as unknown as CombatantData, formulas),
   // Harita 3 son bossu: GEÇİCİ görünüm kaydı (kit yok, inert; /vfx idle sprite denemesi 2026-10-29)
   hollow_king: buildDef(hollowKing as unknown as CombatantData, formulas),
+  snowfather: buildDef(snowfatherBoss as unknown as CombatantData, formulas),
+  ember_of_the_first_hearth: buildDef(emberFirstHearthBoss as unknown as CombatantData, formulas),
   // Harita 3 kadrosu + yıldırım konseptleri: GEÇİCİ görünüm kayıtları (kit yok, inert, karşılaşmaya bağlı değil; /vfx idle sprite turu 2026-10-29)
   ...Object.fromEntries(hollowCrownLooks.units.map((u) => [u.id, buildDef(u as unknown as CombatantData, formulas)])),
 };
 
 const mobData: CombatantData[] = [
+  forgeMasterGolemMob, packMotherMob, ashbornHierarchMob,
+  clanVaulterMob, shardwalkerMob, hollowDelverMob, gloamstalkerMob, cinderleaperMob, slagcartGolemMob, thunderwrightMob, clanStormcallerMob, gloamEelMob, stormhornRamMob,
   mobRoadThug,
   mobMoorRaider,
   mobBanditCrossbowman,
@@ -327,6 +358,12 @@ export interface BattleRulesData {
   layouts: Record<string, { name: string; text: string; blocked: number[] }>;
   /** M-N3 etkileşimli nesneler (Tidewater Urn). */
   devices: Record<string, Omit<UrnRule, 'id'>>;
+  /** M-G Cave-in kuralları (`_not` anahtarı atılır). */
+  hazards: Record<string, Omit<CaveInRule, 'id'>>;
+  /** M-F Lantern nesneleri (`_not` anahtarı atılır). */
+  lanterns: Record<string, Omit<LanternRule, 'id' | 'def'>>;
+  /** C5 Wake the Halls (`_not` anahtarı atılır). */
+  noise: Record<string, Omit<NoiseRule, 'id' | 'rise'>>;
 }
 export const battleRulesData = battleRulesJson as unknown as BattleRulesData;
 
@@ -340,6 +377,12 @@ export interface RulesSpec {
   blocked?: number[] | string;
   /** M-N3: etkileşimli nesne (devices anahtarı; `slot` verilirse veri varsayılanı yerine o hücre). */
   device?: string | { id: string; slot?: number };
+  /** M-G Cave-in (hazards anahtarı). */
+  caveIn?: string;
+  /** M-F Lantern (lanterns anahtarı; `slot` verilirse veri varsayılanı yerine o hücre). */
+  lantern?: string | { id: string; slot?: number };
+  /** C5 Wake the Halls (noise anahtarı). */
+  noise?: string;
 }
 
 /** Kural girdisinden motorun BattleRules'u (sayılar verilmezse battle-rules.json varsayılanı). Bilinmeyen koşul / düzen / hedef hata verir. Boş girdi = undefined. */
@@ -355,6 +398,25 @@ export function resolveBattleRules(spec: RulesSpec | undefined): BattleRules | u
       ...(c.flood ? { flood: { ...c.flood, rows: [...c.flood.rows], boards: [...c.flood.boards] } } : {}),
       ...(c.rangedAccuracy ? { rangedAccuracy: { ...c.rangedAccuracy, motions: [...c.rangedAccuracy.motions] } } : {}),
     };
+    delete (out.condition as { _not?: string })._not;
+  }
+  if (spec.caveIn) {
+    const c = battleRulesData.hazards[spec.caveIn];
+    if (!c || spec.caveIn.startsWith('_')) throw new Error(`Tehlike bulunamadı: ${spec.caveIn}`);
+    out.caveIn = { id: spec.caveIn, ...c, boards: [...c.boards] };
+  }
+  if (spec.lantern) {
+    const l = typeof spec.lantern === 'string' ? { id: spec.lantern } : spec.lantern;
+    const def = battleRulesData.lanterns[l.id];
+    if (!def || l.id.startsWith('_')) throw new Error(`Nesne bulunamadı: ${l.id}`);
+    const unit = bosses[def.unit];
+    if (!unit) throw new Error(`Nesne birimi bulunamadı: ${def.unit}`);
+    out.lantern = { id: l.id, ...def, def: unit, ...(l.slot !== undefined ? { slot: l.slot } : {}) };
+  }
+  if (spec.noise) {
+    const n = battleRulesData.noise[spec.noise];
+    if (!n || spec.noise.startsWith('_')) throw new Error(`Noise kuralı bulunamadı: ${spec.noise}`);
+    out.noise = { id: spec.noise, ...n, rise: { enemies: [] } }; // rise birimi battleSetup'ta kurulur (sefer gücü: Teams.rules.noiseRise)
   }
   if (spec.device) {
     const d = typeof spec.device === 'string' ? { id: spec.device } : spec.device;
@@ -413,7 +475,7 @@ export interface Teams {
    */
   waves?: TeamWave[];
   /** Karşılaşma kuralları (koşul / hedef / kapalı hücre; resolveBattleRules) + Break the Totem takviye grubu (dalga biçiminde). Yoksa savaş birebir eskisi. */
-  rules?: RulesSpec & { reinforce?: TeamWave };
+  rules?: RulesSpec & { reinforce?: TeamWave; /** C5: kalkan birimin kurulumu (yoksa veride birim, güçlendirmesiz). */ noiseRise?: TeamWave };
 }
 
 /** Sonraki bir dalga (Teams.waves). */
@@ -749,6 +811,11 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     const b = build(r.enemies, undefined, 0x3333, { foes: idsOf(teams?.party, rolled?.party), board: 'enemy' });
     const units = unitsFor(b, r.units);
     if (b.ids.length) rules.objective.reinforce = { enemies: b.ids.map(unitDef), enemySlots: b.slots, ...(units ? { enemyUnits: units } : {}) };
+  }
+  if (rules?.noise) {
+    const u = rules.noise.unit;
+    const r = teams?.rules?.noiseRise;
+    rules.noise.rise = { enemies: [unitDef(u.class)], enemySlots: [u.slot], enemyUnits: [r?.units ? (r.units as Record<number, UnitSetup | undefined>)[u.slot] ?? { displayName: u.name } : { displayName: u.name }] };
   }
   return {
     seed,

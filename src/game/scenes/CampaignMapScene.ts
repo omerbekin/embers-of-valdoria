@@ -40,6 +40,10 @@ import {
   startCardInfo,
   type FoeGroup,
   nodeLevel,
+  acknowledgeBriefing,
+  briefingText,
+  companyChoices,
+  companySuggestionFor,
   farewell,
   formCompany,
   getMap,
@@ -63,7 +67,6 @@ import {
   mainOutgoing,
   pendingTip,
   pickHero,
-  skipTutorial,
   recruit,
   recruitHoldsBattle,
   formationGate,
@@ -132,6 +135,8 @@ import {
   arrivalStepLines,
   joinLevel,
   temporaryCompany,
+  setCompanyName,
+  debugSetLevel,
   victoryRecovery,
   victoryRecoveryNote,
   diveState,
@@ -147,9 +152,10 @@ import {
   passable,
 } from '../../campaign';
 import { instanceRarity } from '../../progression/items';
-import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
+import { TUTORIAL, dueScreenLessons, firstPointRec, type FirstPointKind, type LessonScreen } from '../../tutorial/lessons';
+import { forgetLesson } from '../../tutorial/store';
 import { markLessonSeen, seenLessons, tutorialsOn } from '../../tutorial/store';
-import { closeAllLessons, dismissLesson, nudgeLesson, onLessonsTurnedOff, showGateLesson, showLesson, type LessonHandle } from '../../ui/lesson-box';
+import { closeAllLessons, dismissLesson, nudgeLesson, onLessonsTurnedOff, showCard, showGateLesson, showLesson, type LessonHandle } from '../../ui/lesson-box';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
 import { isInputLocked } from '../../ui/input-lock';
 import { avatarUrl } from '../../ui/character-panel';
@@ -251,7 +257,7 @@ function townBlurb(n: MapNode): string {
 }
 const TYPE_LABEL: Record<NodeType, string> = { town: 'Town', battle: 'Battle', elite: 'Elite', event: 'Event', treasure: 'Treasure', boss: 'Boss', rest: 'Rest point', merchant: 'Merchant' };
 /** Varışta kartın onayını bekleyen adımlar (Ömer 2026-10-19: kart çıkıp onaysız girmesin; hikaye / askerleme / veda / yeni takım dahil). */
-const CONFIRM_STEPS: readonly string[] = ['town', 'rest', 'merchant', 'event', 'treasure', 'story', 'recruit', 'volunteer', 'farewell', 'company'];
+const CONFIRM_STEPS: readonly string[] = ['town', 'rest', 'merchant', 'event', 'treasure', 'story', 'recruit', 'volunteer', 'farewell', 'company', 'briefing'];
 const WALK_SPEED = 320; // px/sn
 /** İki parmak arası en çok bu kadar ms önce basılmış olmalı (daha eskisi kaybolmuş touchend: takılı parmak). */
 const PINCH_STALE_MS = 8000;
@@ -262,7 +268,7 @@ const PAN_STEP = 340;
 const SIDE = { left: 36, top: 124, partyW: 360 };
 const COL_K = 1.45;
 /** Zorunlu seçim pencereleri (Esc ile kapanmaz; Party / Formation bunların üstünde açılmaz). */
-const FORCED: ReadonlyArray<NextStep['kind']> = ['hero', 'recruit', 'volunteer', 'farewell', 'company'];
+const FORCED: ReadonlyArray<NextStep['kind']> = ['hero', 'recruit', 'volunteer', 'farewell', 'company', 'briefing'];
 
 type CompanyCard = NonNullable<ReturnType<typeof companyCard>>;
 type PatrolTags = Array<{ text: string; tone?: 'gold' | 'dim' }>;
@@ -2071,7 +2077,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const MUTE_LINE = 0.2;
     // başlık + tek not
     // Tutorial kadrosu (playtest H2, Ömer 2026-10-23): "Temporary company" (Ashford'da veda edecekler; puan harcamak serbest kalır)
-    const head = elText(this, 0, 0, temporaryCompany(s) ? (CONFIG.texts['tutorialCompany'] ?? 'Your party') : 'Your party', 14, 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5);
+    const head = elText(this, 0, 0, s.companyName ?? (temporaryCompany(s) ? (CONFIG.texts['tutorialCompany'] ?? 'Your party') : 'Your party'), 14, 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5);
     col.add(head);
     let headRoom = w;
     const pts = (h: (typeof team)[number]) => (isFallen(h) ? 0 : (h.statPoints ?? 0));
@@ -2701,7 +2707,7 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Gear ekranını açar (kahraman paneli / takım sütunu / kasaba / Spoils / teslim kartından). Kapanınca HUD yenilenir, `after` çağrılır. */
-  openGear(hero?: string, tutorial = false, after?: () => void, view?: 'char' | 'inv'): void {
+  openGear(hero?: string, tutorial = false, after?: () => void, view?: 'char' | 'inv' | 'tree'): void {
     const root = document.getElementById('ui-root');
     if (!root || this.pausedBlocks()) return;
     if (legendaryPreviewWanted()) setState(grantAllLegendaries(this.s)); // ?legendary=1 önizlemesi (madde 296)
@@ -2887,8 +2893,10 @@ export class CampaignMapScene extends Phaser.Scene {
         return;
       case 'company':
         this.companyModal(step.size);
-        this.lessons('company');
+        this.lessons(this.s.soloStart ? 'company_solo' : 'company');
         return;
+      case 'briefing':
+        return this.briefingCard();
       case 'town': {
         // Kasaba ekranı (Ömer 2026-10-12): syncTown tam ekran kasabayı kurdu; eylemler resimdeki yerlerden (onTownHotspot). Verisi olmayan
         // kasaba (scene yok) için yedek pencere: Gear / Trade / Leave (ücretsiz şifa varışta).
@@ -3394,15 +3402,18 @@ export class CampaignMapScene extends Phaser.Scene {
   private townSwapModal(h: TownHotspot): void {
     const offer = swapOffer(this.s);
     if (!offer) return;
+    const recruits = townRecruitOffer(this.s);
     const cards = [
       ...offer.recruits.map((id) => this.mwCard(id, this.joinTag())),
       ...offer.reserve.map((r) => ({ ...this.mwCard(r.class, `In reserve · Lv ${r.level}${r.alive ? '' : ' · Fallen'}`), id: r.id })),
     ];
     this.townWindow(h, {
-      paras: paragraphs(CONFIG.texts.townSwap ?? ''),
+      paras: paragraphs((offer.recruits.length ? CONFIG.texts.townSwap : CONFIG.texts.townSwapReserve) ?? ''),
       body: { k: 'cards', cards },
       acts: [
         { label: 'Not now', run: () => this.closeModal() },
+        // Valdren Keep (offer 0): bekleyen işe alım takasın arkasında kalmasın (Ömer 2026-10-31: işe alım akışı aynı)
+        ...(recruits.length ? [{ label: 'Recruits', run: () => this.townRecruitModal(h, recruits) }] : []),
         { label: 'Choose', primary: true, needPick: 'Pick who joins first.', run: (inc) => (inc ? this.townSwapOut(h, inc) : this.toast('Pick who joins first.')) },
       ],
     });
@@ -3454,9 +3465,11 @@ export class CampaignMapScene extends Phaser.Scene {
       w = null;
       this.modal = null;
     };
+    const sug = companySuggestionFor(this.s, offer); // yoldaş önerisi (Valdren Keep kışlası; suggest.ts)
     w = openCompanyWindow(root, {
       size: 1,
       cards: offer.map((id) => this.mwCard(id, this.joinTag())),
+      ...(sug ? { suggest: { hero: sug.hero, label: CONFIG.companySuggest.label, line: sug.line } } : {}),
       tutorial: new Set(),
       title: h.label,
       sub: CONFIG.texts.townRecruit ?? CONFIG.texts.volunteer ?? '',
@@ -4103,6 +4116,15 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Debug > Campaign > "Start card: <tür>": haritadaki ilk o türden düğüm için kartı açar (eylem yalnızca bildirim gösterir). */
+  /** Debug > Campaign > Tutorial: Garrick şeridi (C5). Önerisi olan ilk kahramana 1 level verir, dersi unutur, Gear'ı ilgili sekmede açar. */
+  debugFirstPoint(kind: FirstPointKind): void {
+    const hero = activeHeroes(this.s).find((h) => firstPointRec(h.class, kind as 'tree'));
+    if (!hero) return this.toast('No hero with a Garrick pick in this company.');
+    forgetLesson(TUTORIAL.firstPoint.lessons[kind]);
+    setState(debugSetLevel(this.s, hero.level + 1, hero.id));
+    this.openGear(hero.id, false, undefined, kind === 'tree' ? 'tree' : 'char');
+  }
+
   debugNodeCard(type: string): void {
     if (this.inputBusy()) return;
     const n = this.map.nodes.find((x) => x.type === type);
@@ -4416,8 +4438,6 @@ export class CampaignMapScene extends Phaser.Scene {
       paras: paragraphs(cinematicSeen(this.s, 'prologue') ? (CONFIG.texts['introRules'] ?? CONFIG.texts.intro) : CONFIG.texts.intro),
       body: { k: 'cards', leader: true, cards: this.sorted(CONFIG.starterPool).map((id) => this.mwCard(id)) },
       acts: [
-        // Skip tutorial (Ömer 2026-10-23): ikincil, solda; kahraman gerekmez, Ashford'da "Form your company" ile sürer (state.ts > skipTutorial)
-        ...(this.map.nodes.some((n) => n.newCompany) ? [{ label: 'Skip tutorial', run: () => this.skipTutorialNow() }] : []),
         {
           label: 'Begin the journey',
           primary: true,
@@ -4431,16 +4451,6 @@ export class CampaignMapScene extends Phaser.Scene {
         },
       ],
     });
-  }
-
-  /** Tutorial'ı atla: sefer bölük kurma düğümünde sürer (karavan oraya geçer), "Form your company" açılır. Debug menüsünden de çağrılır. */
-  skipTutorialNow(): boolean {
-    if (nextStep(this.s).kind !== 'hero') return false;
-    session.tutorialClasses = []; // "Played in the tutorial" notu yok
-    this.update2(skipTutorial(this.s));
-    markJourneyStart();
-    this.commit(this.s);
-    return true;
   }
 
   /** Yeni yoldaş / gönüllü (A levha): aday kartları (büst + kısa açıklama), Join us sağda. */
@@ -4483,12 +4493,33 @@ export class CampaignMapScene extends Phaser.Scene {
     });
   }
 
+  /** Garrick'in görevi (Ömer 2026-11-01, D2): mentor kutusu; hikâye adımı, Tutorials kapalıyken de görünür. Kapanınca adım biter. */
+  private briefingCard(): void {
+    closeAllLessons();
+    let done = false;
+    const finish = (): void => {
+      if (done) return;
+      done = true;
+      off();
+      if (this.scene.isActive() && nextStep(this.s).kind === 'briefing') this.commit(acknowledgeBriefing(this.s));
+    };
+    const off = onLessonsTurnedOff(finish); // "Don't show again" kutuyu geri çağrısız kapatır
+    this.events.once('shutdown', () => {
+      done = true;
+      off();
+    });
+    showCard({ title: CONFIG.texts['briefingTitle'] ?? 'Garrick', text: briefingText(this.s) }, finish);
+  }
+
   /** "Form your company" (Ömer 2026-10-23, taslak form-company-v2 B): DOM penceresi (src/ui/company-window.ts); kural değişmez: 3 kişi, ilk seçilen lider, tekrar dokunmak lider yapar. */
   private companyModal(size: number): void {
     const root = document.getElementById('ui-root');
     if (!root) return;
     this.closeModal();
-    const cards = this.sorted(CONFIG.companyPool).map((id) => this.mwCard(id));
+    const joining = node(this.map, this.s.at).newCompany?.leader === 'keep'; // tek kişilik başlangıç: lider sabit, seçilen katılır
+    const choices = companyChoices(this.s);
+    const cards = this.sorted(choices).map((id) => this.mwCard(id, joining ? this.joinTag() : undefined));
+    const sug = joining ? companySuggestionFor(this.s, choices) : null; // yoldaş önerisi (Ashford; suggest.ts)
     let h: CompanyHandle | null = null;
     const close = (): void => {
       h?.close();
@@ -4499,9 +4530,12 @@ export class CampaignMapScene extends Phaser.Scene {
       size,
       cards,
       // Tutorial'da oynanan sınıflar (veda ettiler; yine seçilebilir): "Played in the tutorial" notu
-      tutorial: new Set(session.tutorialClasses),
+      tutorial: new Set(joining ? [] : session.tutorialClasses),
+      ...(joining ? { noLeader: true, title: CONFIG.texts['companyJoinTitle'] ?? 'Choose a companion', sub: CONFIG.texts['companyJoinSub'] ?? '' } : {}),
+      ...(sug ? { suggest: { hero: sug.hero, label: CONFIG.companySuggest.label, line: sug.line } } : {}),
       toast: (m) => this.toast(m),
-      onSetOut: (picks, leader) => this.commit(formCompany(this.s, picks, leader)),
+      naming: CONFIG.companyName,
+      onSetOut: (picks, leader, name) => this.commit(setCompanyName(formCompany(this.s, picks, leader), name)),
     });
     this.events.once('shutdown', close);
     this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;

@@ -1,0 +1,25 @@
+/* ortak: 1920x1080 mantik sahnesi (genis ekranda 2580'e kadar), olcek = vh/1080; telefonda --m yazi carpani */
+@font-face{font-family:Cinzel;font-weight:400 900;font-display:swap;src:url(fonts/Cinzel-normal-latin.woff2) format('woff2')}
+@font-face{font-family:'EB Garamond';font-weight:400 800;font-display:swap;src:url(fonts/EBGaramond-normal-latin.woff2) format('woff2')}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#070504;color:#d9c8a2;font-family:'EB Garamond',Georgia,serif;user-select:none;-webkit-user-select:none}
+button,input{font:inherit;color:inherit}
+#root{position:fixed;inset:0;overflow:hidden;background:#0c0806 var(--bg) center top/cover no-repeat}
+#root::after{content:'';position:absolute;inset:0;background:rgba(5,3,2,.55);pointer-events:none}
+#stage{--m:1;--g-text:#d9c8a2;--g-dim:#a8977a;--g-gold:#f3d999;--g-edge:rgba(217,178,106,.42);--g-line:rgba(217,178,106,.16);--g-line2:rgba(217,178,106,.3);--g-ember:#e0702a;--g-ember2:#ffb35a;
+ --g-disp:Cinzel,Georgia,serif;--g-body:'EB Garamond',Georgia,serif;--el-display:Cinzel,Georgia,serif;--el-body:'EB Garamond',Georgia,serif;
+ position:absolute;top:0;height:1080px;transform-origin:0 0;color:var(--g-text);font-family:var(--g-body);z-index:1}
+html.short #stage{--m:1.75}
+#stage .panelx{background:linear-gradient(180deg,rgba(30,22,14,.97),rgba(12,9,6,.97));border:1px solid var(--g-edge);box-shadow:0 0 0 3px rgba(8,6,4,.7),0 12px 30px rgba(0,0,0,.55)}
+#stage .cn{position:absolute;width:10px;height:10px;background:#140e09;border:1px solid rgba(217,178,106,.7);transform:rotate(45deg)}
+.cn.tl{left:-6px;top:-6px}.cn.tr{right:-6px;top:-6px}.cn.bl{left:-6px;bottom:-6px}.cn.br{right:-6px;bottom:-6px}
+.disp{font-family:var(--g-disp);font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.btnx{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:max(calc(56px*var(--m)),calc(44px*var(--bh-inv,1)));padding:0 calc(30px*var(--m));font:600 calc(22px*var(--m)) var(--g-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--g-gold);background:linear-gradient(180deg,rgba(34,24,15,.96),rgba(14,10,7,.98));border:1px solid rgba(240,220,168,.7);box-shadow:0 0 0 2px rgba(8,6,4,.9);cursor:pointer;transition:box-shadow .15s,color .15s}
+.btnx:hover{color:#fff3d0;box-shadow:0 0 0 2px rgba(8,6,4,.9),0 0 22px rgba(224,112,42,.45)}
+.btnx.sec{background:transparent;border-color:var(--g-line2);color:var(--g-dim)}
+.btnx.sec:hover{color:var(--g-gold)}
+.btnx[disabled]{opacity:.45;cursor:default;box-shadow:0 0 0 2px rgba(8,6,4,.9)}
+.chipx{display:inline-flex;align-items:center;min-height:max(calc(46px*var(--m)),calc(44px*var(--bh-inv,1)));padding:0 calc(20px*var(--m));font:500 calc(22px*var(--m)) var(--g-body);color:var(--g-text);background:rgba(8,6,4,.55);border:1px solid var(--g-line2);cursor:pointer;transition:border-color .15s,background .15s,color .15s;white-space:nowrap}
+.chipx:hover{border-color:var(--g-edge);color:var(--g-gold)}
+.chipx.on{border-color:var(--g-gold);background:rgba(224,112,42,.16);color:#fff1c8;box-shadow:0 0 12px rgba(224,112,42,.3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

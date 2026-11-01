@@ -96,6 +96,22 @@ export interface SmiteSpec {
 
 export type PassiveEffect =
   /**
+   * Eye of the Storm (Harita 3 B1): taşıyanın kendi şeridindeki (aynı tahta, aynı taraf; kendisi dahil) birimler `conditions` koşullarının ortam zemininden
+   * (Chill Ground, kar üstüne kar Ice) ve menzilli isabet cezasından etkilenmez. Taşıyan ölünce biter. Yalnız `conditions` listesindeki koşul açıkken işler.
+   */
+  | { type: 'eyeOfStorm'; conditions: string[] }
+  /** Stormhorn Ram (Harita 3 D4): yakın dövüş skill'iyle bu birime isabet ettiren düşman Shocked olur (formulas.thunder; suda Stun). Birim o vuruşta ölürse çalışmaz. */
+  | { type: 'stormhide' }
+  /** Thunderwright (Harita 3 D1): kural skill'lerin ironBolt alanındadır; bu pasif yalnız etikettir, motor kancası yok. */
+  | { type: 'ironDraws' }
+  /** Harita 3 boss dokunuşları: yalnız etiket; kural CombatantData.touch ya da skill alanındadır, motor kancası yok. */
+  | { type: 'touchLabel' }
+  /**
+   * Tempering (Harita 3 C6): taşıyan her kendi turunda duruş değiştirir: `hot` durumu (statuses.json; elementTakenMult ateş 0, buz çarpanı) <-> `cold` durumu (armorMult).
+   * `cold`'dayken ateş hasarı onu anında `hot`a döndürür. `waterTaken`: `hot`dayken ıslatan (su) skill'inin hasar çarpanı. Savaşa `hot` başlar.
+   */
+  | { type: 'tempering'; hot: string; cold: string; waterTaken: number }
+  /**
    * Kullanıcının hasarı, eksik can oranıyla artar: x(1 + maxBonus * eksikCanOranı).
    * rageOnHurt (Berserker, Ömer 2026-10-17): Rage'li taşıyıcı CAN kaybettikçe Rage kazanır: kaybedilen can maks canının %1'i başına
    * perHpPercent Rage (vuruş başına en fazla perHitCap; kalkanın emdiği, Lucky Escape ile yok sayılan ve kendi verdiği hasar sayılmaz).
@@ -307,12 +323,27 @@ export interface CombatantData {
    * Yalnızca boss tanımlarında; class/çağrılarda yok.
    */
   boss?: BossDef;
+  /** Harita 3 boss / elit dokunuşu (maps-2-3.md E1-E6): pasiften ayrı kural; kit yazılınca pasif boşa düşmez. */
+  touch?: BossTouch;
   /**
    * true: SIRA ALMAYAN yardımcı nesne (Iron Mooring): turu yok, eylemi yok, şifa/kalkan almaz, ceset bırakmaz, savaşın bitişinde sayılmaz
    * (tarafında yalnızca inert birimler kalırsa o taraf kaybeder). Hedeflenebilir, alan skill'lerine girer.
    */
   inert?: boolean;
 }
+
+/** Harita 3 boss / elit dokunuşu (maps-2-3.md E1-E3, E6). E4 skill alanı `longSermon`, E5 faz alanı `swapSkills`. Sayılar veride, PROVİZYON. */
+export type BossTouch =
+  /**
+   * E1 Overheat: Heat çubuğu `max`; her eylem `perAction`, ateş vuruşu `fireHit` doldurur; buz ve su vuruşu `coolHit` boşaltır. Dolunca Vent: `status` (`ventTurns` tur), çubuk sıfırlanır.
+   */
+  | { type: 'overheat'; max: number; perAction: number; fireHit: number; coolHit: number; status: string; ventTurns: number }
+  /** E2 Thundersnow: can oranı `below` altındayken her Round başı rastgele sütun işaretlenir, sonraki Round başı `skill` iner: `ratio` x tahta ortalama canı + `iron` x hedef Armor (büyü). */
+  | { type: 'thundersnow'; below: number; skill: string; ratio: number; iron: number }
+  /** E3 Pack Rotation: her Round başı en yaralı `pack` birimi, arkasındaki daha sağlam biriyle yer değiştirir; taşıyanın hasar skill'i yaralı `pack` birimlerini maks canın `healRatio`'su kadar iyileştirir. */
+  | { type: 'packRotation'; pack: string[]; healRatio: number }
+  /** E6 The King Hears: Noise her dolduğunda `skill` (SkillDef.callVault) bedelsiz çalışır. */
+  | { type: 'kingHears'; skill: string };
 
 /** Boss fazı (Ember Heart): can oranı `at`'ın altına (<=) inince girilir. Faz numarası 1'den başlar (faz 1 = başlangıç; phases[0] = faz 2). */
 export interface BossPhaseDef {
@@ -339,6 +370,8 @@ export interface BossPhaseDef {
    * takviye olarak yeniden) maks canın `hpRatio` kadarıyla. Canlı olan varsa ya da hiç yoksa hiçbir şey olmaz.
    */
   riseAllies?: { unit: string; hpRatio: number };
+  /** E5: bu fazdan itibaren skill değişir (eski id -> yeni id; The Ember: Flare şimşeğe döner). Bekleme süresi yeni skill'e geçer. */
+  swapSkills?: Record<string, string>;
 }
 
 /** Boss kuralları (CombatantData.boss). */
@@ -386,6 +419,14 @@ export interface BossDef {
  */
 export interface TelegraphDef {
   kind: 'area' | 'brand';
+  /** Hollow Delver: atan çözülene dek yerin altındadır (Combatant.underground): hedef alınamaz, hasar ve durum almaz; sırası gelirse oynamaz. */
+  dive?: boolean;
+  /** Çözülme atanın turunu yer (Undermine, Slagcart): o tur başka eylem yok. Yalnız turns modunda. */
+  endsTurn?: boolean;
+  /** Çözülmede işaretli hücrede kimse yoksa atana bu durum (Undermine: Staggered). */
+  whiff?: { status: StatusKind; turns: number };
+  /** Çözülmeden sonra atana bu durum (Slagcart: soğuma). */
+  after?: { status: StatusKind; turns: number };
   /** brand: damga durumu (statuses.json, untilResolved). */
   status?: StatusKind;
   /** brand: çözülme şekli (damgalının hücresi anchor). */
@@ -461,6 +502,8 @@ export interface CombatantDef {
   accuracyBase?: number;
   /** Boss kuralları (CombatantData.boss aynen). */
   boss?: BossDef;
+  /** Harita 3 dokunuşu (CombatantData.touch aynen). */
+  touch?: BossTouch;
   /** Sıra almayan yardımcı nesne (CombatantData.inert aynen). */
   inert?: boolean;
 }
@@ -772,6 +815,11 @@ export interface UnitSetup {
   /** Bu savaşta kullanamayacağı skill id'leri (ör. tutorial düşmanında ultimate yok). Skill listede kalır; canUse 'Locked'; YZ seçmez. İki modda. */
   lockSkills?: string[];
   /**
+   * Dalga ortasında kilit açma (tek kişilik sefer başlangıcı; Ravenwood): `wave` numaralı dalga (0 tabanlı, ilk dalga 0) başlarken `skills` kilitten
+   * çıkar ve `skillUnlocked` olayı gelir. Rastgele sayı tüketmez; dalgasız savaşta etkisizdir. İki savaş modunda da çalışır.
+   */
+  unlockOnWave?: { wave: number; skills: string[] };
+  /**
    * true: birim bu savaşta ölemez (sefer açılış savaşı, Mill Road: 'kaybedilemez' tutorial; docs/design/tutorial.md). Canı en az 1'de durur
    * (skill, zemin, DoT hasarı); diğer her kural aynı. Verilmezse birim bugünküyle aynı.
    */
@@ -784,6 +832,8 @@ export interface UnitSetup {
   startRage?: number;
   /** Başlangıç durumları (taşınan buff'lar; süreleri kalan haliyle). */
   startStatuses?: Status[];
+  /** Encased (Harita 3 C2): savaşa buz bloğu içinde başlar (blok canı formulas.encased). */
+  encased?: boolean;
   /** Taşınan kalkan / büyü kalkanı (mutlak) ve kancalı katmanlar. Savaş başı kalkan kaynakları (kalıntı, Epic, Mantle) bunun ÜSTÜNE eklenmez: havuz = en büyüğü. */
   startShield?: number;
   startMagicShield?: number;
@@ -1011,6 +1061,8 @@ export type SkillEffectKind =
       bonusVsTag?: { tag: string; multiplier: number };
       /** Hedefte bu durum varsa hasar x multiplier (Weir Eel Bite: Soaked hedefe ek hasar; Harita 2). */
       bonusVsStatus?: { status: StatusKind; multiplier: number };
+      /** A4 Iron Draws the Bolt (Ömer 2026-10-28; YALNIZ etiketli skill, genel kural değil): hedefin geçerli zırhının bu oranı kadar ek hasar (ham, büyü zırhı ayrıca düşer). */
+      ironBolt?: number;
       /** Çok hedefli vuruşta (ör. şerit skill'i) her yeni hedef bir öncekinin bu katı kadar hasar alır (hedef sırası: öndekinden arkadakine). */
       falloff?: number;
       /** Hedefin eksik mana başına eklenen hasar. */
@@ -1127,6 +1179,8 @@ export type SkillEffectKind =
       turns: number;
       scale: Attribute;
       power: number;
+      /** Through the Flame: zemin yalnız hedefe skill'in reachRule'u açıkken ulaşıldıysa konur (yanan hedef yoksa normal vuruş, zemin yok). */
+      whenOpened?: boolean;
       /** Skill ağacı (Faz 4c): aynı türden zemin zaten yanan hücrelerde güç çarpanı (Fire on Fire; eski zemin o hücreyi bırakır), merkez hücre çarpanı (Molten Core), tur başı ek durumlar (Hushing Moss, Killing Field). */
       stackMult?: number;
       centerMult?: number;
@@ -1181,7 +1235,7 @@ export type SkillEffectKind =
    * ÇARPMA: hedef (ve hücredeki birim) `crashPower` x `scale` `element` büyü hasarı alır (tickDamage kuralı: zırh + zayıflık, isabet/kritik yok).
    * Yer değiştirme bağışıklığı (Battle.immuneToDisplacement), nesne ve sızmış birim itilmez, çarpmaz. Olaylar `moved` ya da `crash`.
    */
-  | { type: 'push'; crashPower: number; scale: Attribute; element: Element };
+  | { type: 'push'; crashPower: number; scale: Attribute; element: Element; /** Headlong: yön sabit (seçilmez, YZ de denemez). */ fixedDir?: PushDir };
 
 /** İtme yönü (motor dili): forward = bir sıra öne (sıra - 1), back = bir sıra arkaya, lanePrev / laneNext = şerit - 1 / + 1. */
 export type PushDir = 'forward' | 'back' | 'lanePrev' | 'laneNext';
@@ -1396,7 +1450,9 @@ export interface SkillDef {
    * pattern 'row' (YALNIZCA target 'single_ally'; Close Ranks, Ömer 2026-10-20): seçilen dostun sırasındaki (alan şekli 'row') diğer canlı dostlar
    * (kullanıcı HARİÇ) da hedef olur; menzile yalnızca seçilen dost bakar. Etkiler (ör. guard) hepsine uygulanır.
    */
-  splash?: { pattern: 'perpendicular' | 'chain' | 'row' | 'behind' | 'lane'; mult?: number; jumps?: number };
+  splash?: { pattern: 'perpendicular' | 'chain' | 'row' | 'behind' | 'lane' | 'armor'; mult?: number; jumps?: number };
+  /** Harita 3 gezgin moblar: yakın dövüş erişiminin istisnası (bkz. ReachRule; Battle.reachOpens / reachDenied). Yalnız single_enemy. */
+  reachRule?: ReachRule;
   /**
    * target 'area_enemies' / 'area_any' (zorunlu): oyuncu bir ANCHOR hücre seçer (boş hücre de olabilir); şekil (hücre kümesi, bkz. area-shape.ts) row | column | rect | plus | x.
    * 'area_any': anchor KENDİ ya da KARŞI tahtada olabilir (Smoke Bomb); etkiler `side` ile dost/düşmana ayrılır.
@@ -1405,6 +1461,32 @@ export interface SkillDef {
   area?: AreaDef;
   /** Telgraflı (gecikmeli) skill (bkz. TelegraphDef): etkiler kullanılınca değil, sahibin bir sonraki turunun başında işaretli hücrelere uygulanır. */
   telegraph?: TelegraphDef;
+  /**
+   * Harita 3 şimşek kuralları (maps-2-3.md A1, A2, A5, A6; sayılar formulas.json > thunder). Alan VARSA skill bu kurallara girer: Flooded'a düşerse Live Water,
+   * Ice'a düşerse Shatter, Darkness'ta mob kullanırsa Thunderflash. `shocks`: isabet ettiği düşman Shocked olur. Element 'lightning' tek başına hiçbir kuralı açmaz.
+   */
+  thunder?: { shocks?: boolean; /** Gloam Eel: Live Water yalnız atan bu zemindeyken (hedef hücresi de suda olmalı); Thunderflash ve Shocked bundan etkilenmez. */ liveFrom?: string };
+  /**
+   * Thunder Rod (Harita 3 B2): kullanan, karşı tahtada en çok düşmana artı komşu boş hücreye çubuk çakar (hedef 'self'; hücre motorca seçilir). Hücre kapanır; her Round başında çubuğa
+   * şimşek iner, artı komşulardaki düşmanlara `ratio` x tahtanın ortalama maks canı büyü hasarı. Bitişik kahraman global eylemle devirir. `max`: tahtada aynı anda en çok çubuk.
+   */
+  thunderRod?: { ratio: number; max: number };
+  /**
+   * Rolling Thunder (Harita 3 C1): etkiler kullanılınca uygulanmaz; hedefin sırası işaretlenir ve sıra çubuğuna bağımsız belirteç girer (`speed`: birim hızıyla aynı sayaç, Haste / Slow almaz;
+   * test modunda `testActions` eylem sonra). Belirteç öne ulaşınca o sıradaki düşmanlara `ratio` x tahtanın ortalama maks canı büyü hasarı. Atan ölse de iner. `thunder` alanı varsa şimşek kuralları da çalışır.
+   */
+  rollingThunder?: { ratio: number; speed: number; testActions: number };
+  /**
+   * E2 Whiteout (The Snowfather): `rounds` Round geçici Darkness (`darkness` kuralıyla; koşul olmayan savaşta da). Kullanıldığı Round'un kalanı + `rounds` Round.
+   */
+  whiteout?: { rounds: number; darkness: DarknessRule };
+  /**
+   * E4 The Long Sermon: kullanan `rounds` Round vaaz eder (turu yanar, başka eylem yok). Bu sürede maks canın `breakRatio`'su kadar hasar alırsa bozulur + Staggered (Silence / Stun bozmaz).
+   * Tamamlanırsa `families` ya da `names` eşleşen tarafı `ground` zemininin hasarı yerine o kadar şifa alır (savaş sonuna dek).
+   */
+  longSermon?: { rounds: number; breakRatio: number; ground: string; families: string[]; names: string[] };
+  /** E6 Call the Vault (The Hollow King): `unit` düşman tahtasına kalkar (`slot` doluysa en yakın boş; Noise kuralı varsa onun sefer gücüyle kurulumu); tahtada canlı `maxAlive` varsa kalkmaz. */
+  callVault?: { unit: string; name: string; slot: number; maxAlive: number };
   /** Skill'in kullanılabilmesi için tarafında canlı olması gereken birim id'si (Chain Hook: 'iron_mooring'; canUse 'Needs a standing Mooring'). */
   requiresAlly?: string;
   /** Boss fazı şartı: kullanıcının fazı bu ve üstüyse kullanılabilir (Ash Brand 2, Fall 3; fazsız birimde faz 1). */
@@ -1468,7 +1550,35 @@ export interface ScreenCell {
   row: number;
 }
 
+/** A2 Live Water: şimşeğin canlandırdığı su ağı; `source` birimin sonraki turu bitene dek içinde turunu bitiren ark yer (`fresh`: atış turu henüz bitmedi). */
+export interface LiveWater {
+  id: string;
+  board: Side;
+  slots: number[];
+  source: string;
+  fresh: boolean;
+}
+
+/** Şimşek skill'inin sonucu (motor, önizleme ve YZ aynı hesabı kullanır). */
+export interface BoltOutcome {
+  /** Su ağı (hücreler) ve ağdaki birimlerin ark hasarı. */
+  live: Array<{ board: Side; cells: number[] }>;
+  arcs: Array<{ uid: string; damage: number }>;
+  /** Patlayan zeminli hücreler ve patlamanın birim başına hasarı. */
+  shatters: Array<{ board: Side; slot: number; reaction: string; label: string }>;
+  shards: Array<{ uid: string; damage: number }>;
+  /** Shocked hedefler: stun = suda olduğu için geri itilmek yerine Stun. */
+  shocks: Array<{ uid: string; stun: boolean }>;
+  /** Thunderflash olur mu; Blinded olacak kahraman. */
+  flash: boolean;
+  blinded?: string;
+}
+
 export interface Formulas {
+  /** Harita 3 C2 Encased (PROVİZYON): blok canı = birimin maks canı x hpRatio. */
+  encased: { hpRatio: number };
+  /** Harita 3 şimşek kuralları (data/formulas.json > thunder; PROVİZYON). */
+  thunder: { pushback: number; badge: string; badgeTurns: number; stunTurns: number; wetStatus: string; arcRatio: number; flashHeroTurns: number; flashBlindTurns: number };
   attributes: {
     hpBase: number;
     hpPerStr: number;
@@ -1570,7 +1680,13 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'shaken';
+/**
+ * Harita 3 moblarının erişim kuralı (maps-2-3.md 4. dilim). `status`: bu durumdaki ya da bu zemindeki hedefe her sıradan ulaşır, diğerlerine normal menzil (Shardwalk, Through the Flame).
+ * `dark`: Darkness sürerken her sıraya, aydınlıkta normal menzil (Dark Step). `backRows`: yalnız kahramanların en öndeki dolu sırasının arkasındakilere (Pole Vault).
+ * `laneFirst`: yalnız şeridindeki ilk kahramana (Headlong). `heaviest`: yalnız en yüksek Armor'lu kahramana, eşitlikte küçük yuva (Ring the Anvil; sonrası splash.pattern 'armor').
+ */
+export type ReachRule = { kind: 'status'; statuses: string[]; ground?: string } | { kind: 'dark' } | { kind: 'backRows' } | { kind: 'laneFirst' } | { kind: 'heaviest' };
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'shaken' | 'frozen' | 'overreached' | 'cooling';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1584,6 +1700,14 @@ export interface DoomDef {
 
 /** data/statuses.json girişi: veriyle tanımlı buff/debuff. */
 export interface StatusDef {
+  /** Ömer 2026-10-31 (Chilled): taşıyana kaynağı `sources` içinde olan yeni bir uygulama gelirse `into` olur (`turns`). Kaynaksız uygulama (zemin, hava, pasif, startStatuses) yalnızca verir / yeniler. */
+  freeze?: { into: string; turns: number; sources: StatusOrigin[] };
+  /** Bu element hasarı durumu anında kaldırır (Chilled, Frozen: ateş). */
+  clearedBy?: string[];
+  /** Birim bu zeminlerden birinde (zemin ona işliyorsa) dururken durum tutmaz (Chilled: Burning). */
+  refusedOnGround?: string[];
+  /** Bu durum sürerken verilen türler tutmaz, uygulanınca taşıyandan kalkar (Frozen: Chilled). */
+  blocks?: string[];
   name: string;
   type: 'buff' | 'debuff';
   icon: string;
@@ -1734,7 +1858,7 @@ export interface GroundReactionDef {
   /** Bu hücreden kalkan zemin türleri (çiftten hangisi listedeyse). */
   remove?: string[];
   /** Anlık büyü hasarı (kritiksiz, isabet zarsız; tik kuralı): tutar = `of` listesindeki zeminlerin hücredeki tik tutarı (sum: toplamı, yoksa en büyüğü; `of` yoksa ikisinin güçlüsü) x mult; adjacent: 4 yönden komşu hücrelere çarpan. */
-  damage?: { element: Element; of?: string[]; sum?: boolean; mult: number; adjacent?: number };
+  damage?: { element: Element; of?: string[]; sum?: boolean; mult: number; adjacent?: number; /** Şimşek tetikli tepkime (Shatter): tutar = tahtanın ortalama maks canı x oran (zemin tutarı yok), fiziksel; zırh düşer, taraf ayırmaz. */ hpRatio?: number };
   /** Hücredeki (tetiği bırakana düşman) birimlere durum. */
   status?: { status: string; turns: number };
   /** Kurulumun sahibinin tarafındaki, hücrede duran birimlerden silinen durumlar. */
@@ -1795,7 +1919,14 @@ export interface GroundEffect {
 }
 
 /** Karakter üzerindeki süreli durum. `turns`, taşıyıcının kendi turunun başında azalır. */
+/** Uygulamanın kaynak türü (StatusDef.freeze): skill atışı ya da ağaç düğümü; zemin / hava / pasif kaynağı yazmaz. */
+export type StatusOrigin = 'skill' | 'tree';
+
 export interface Status {
+  /** Bu durum, üstüne geldiği şu türün yerini aldı ve kurallarda onu da sayar (Frozen: Chilled; status-count.ts). */
+  countsAs?: StatusKind;
+  /** Uygulama anındaki kaynak türü (yalnızca `freeze` tanımlı durumda yazılır). */
+  origin?: StatusOrigin;
   kind: StatusKind;
   turns: number;
   /** Durumu uygulayan birimin uid'si. */
@@ -1977,6 +2108,8 @@ export interface Combatant {
   actionsPerTurn?: number;
   /** Bu savaşta kullanılamayan skill'ler (UnitSetup.lockSkills; canUse 'Locked'). Skill listede kalır. */
   lockedSkills?: string[];
+  /** Hangi dalga başında hangi kilitlerin açılacağı (UnitSetup.unlockOnWave; açılınca silinir). */
+  unlockOnWave?: { wave: number; skills: string[] };
   /** Ölemez (UnitSetup.undying): hasar canı 1'in altına indiremez. */
   undying?: boolean;
   /** Tanımdan gelen Block şansı (kalkanlı mob; CombatantDef.blockChance): item / ağaç Block'una eklenir. */
@@ -2013,6 +2146,20 @@ export interface Combatant {
   boss?: BossDef;
   /** Boss fazı (1 = başlangıç); boss olmayan birimde tanımsız. */
   phase?: number;
+  /** M-F Lantern: ayaktayken Darkness kısıtını kaldıran nesne. */
+  lightSource?: boolean;
+  /** Encased (Harita 3 C2): buz bloğu; sıra almaz, durum tutmaz, hasarı önce blok yer. Ateş ya da blok canının bitmesi uyandırır. */
+  encased?: { hp: number; maxHp: number };
+  /** Hollow Delver: yerin altında, bu telgraf çözülene dek (TelegraphDef.dive). */
+  underground?: string;
+  /** Tempering (Harita 3 C6): şu anki duruş. */
+  temper?: 'hot' | 'cold';
+  /** Harita 3 dokunuşu (CombatantData.touch). */
+  touch?: BossTouch;
+  /** E1 Overheat: Heat çubuğu. */
+  heat?: number;
+  /** E4 The Long Sermon: bekleyen vaaz. `left` kalan Round, `taken` / `goal` kırılma çubuğu. */
+  sermon?: { skill: string; left: number; taken: number; goal: number };
   /** Sıra almayan yardımcı nesne (Iron Mooring; bkz. CombatantData.inert). */
   inert?: boolean;
   /** B3 Break the Totem: hedef nesne (UnitSetup.objective). */
@@ -2224,9 +2371,13 @@ type BattleEventBody =
   /** Bir pasif tetiklendi (UI kısa bir yazı gösterir). */
   | { type: 'passive'; actor: string; passive: string; name: string }
   /** `extra`: tur başına birden çok eylemli birimin (UnitModifiers.actionsPerTurn) aynı turdaki ek eylemi; tur başı işlemleri yapılmadı. */
-  | { type: 'turnStart'; actor: string; queue: string[]; extra?: boolean }
+  | { type: 'turnStart'; actor: string; queue: string[]; extra?: boolean; /** C1: sıra çubuğu, belirteçlerle (`bolt:` kimlikli); yalnızca belirteç varken. */ bar?: string[] }
   /** stunned: sersemlediği için oynayamadı; voluntary: Skip Turn global skill'i ile isteyerek geçti (speedBoost: sonraki tura kadar hız desteği, 1 = +%100; `battle.speedBoostOf(uid)` aynı değeri verir); ikisi de yoksa: yapacak hamlesi olmadığı için pas. */
-  | { type: 'turnSkipped'; actor: string; stunned?: boolean; voluntary?: boolean; speedBoost?: number }
+  | { type: 'turnSkipped'; actor: string; stunned?: boolean; voluntary?: boolean; speedBoost?: number; /** Tur telgraf çözülmesine gitti (Undermine, Slagcart): "Skipped" yazısı yok. */ spent?: boolean; /** Sersemlik değil, cc olmayan tur kaybı (Slagcart: Cooling): durum adı. */ rest?: string }
+  /** Hollow Delver yere daldı (`telegraph` çözülene dek). */
+  | { type: 'dive'; actor: string; telegraph: string }
+  /** Yerin altından çıktı; `whiffed`: işaretli hücre boştu. */
+  | { type: 'surface'; actor: string; whiffed?: boolean }
   /** Yerde kalan bir etki bırakıldı / bitti. */
   | { type: 'ground'; id: string; ground: string; board: Side; slots: number[]; turns: number }
   | { type: 'groundEnd'; id: string }
@@ -2245,6 +2396,8 @@ type BattleEventBody =
    * birimlerinin uid'leri (sahne görünümlerini/ceset işaretlerini kaldırır), `queue` = yeniden hesaplanan sıra.
    */
   | { type: 'waveCleared'; index: number; total: number }
+  /** UnitSetup.unlockOnWave: birimin kilitli skill'leri bu dalgayla açıldı (waveStart'tan hemen sonra gelir). */
+  | { type: 'skillUnlocked'; actor: string; skills: string[] }
   | { type: 'waveStart'; index: number; total: number; combatants: Combatant[]; removed: string[]; queue: string[] }
   /**
    * Karşılaşma kuralları (BattleRules; yalnızca kuralı olan savaşta gelir). round: yeni savaş turu başladı (her savaşan bir kez oynayınca; 1'den
@@ -2256,6 +2409,36 @@ type BattleEventBody =
   | { type: 'reinforce'; combatants: Combatant[]; queue: string[] }
   /** M-N3 Tidewater Urn devrildi: `actor` (bitişik kahraman) kendi tahtasının `row` sırasını (hücreleri `slots`) su bastı; `left` kalan kullanım. Ardından 'ground'. */
   | { type: 'urn'; actor: string; row: number; slots: number[]; left: number }
+  /**
+   * Ortam tehlikesi (Heat / Cave-in): hazardWarn = hücreler işaretlendi, `dueRound` başında iner; hazardLand = indi (`hit`: hücrede kalan birimler; ardından Heat'te 'ground',
+   * Cave-in'de damage / status / 'moved' / cellsClosed). cellsClosed: `board` tahtasının `slots` hücreleri savaş boyunca kapandı.
+   */
+  | { type: 'hazardWarn'; id: string; kind: Hazard['kind']; board: Side; cells: number[]; dueRound: number }
+  | { type: 'hazardLand'; id: string; kind: Hazard['kind']; board: Side; cells: number[]; hit: string[] }
+  | { type: 'cellsClosed'; board: Side; slots: number[] }
+  /** M-F Darkness: aydınlık değişti (`lit`); `cause`: skill id, 'lantern', 'lantern_broken', 'fade' ya da ileride Thunderflash; `until`: aydınlığın bittiği Round (nesne yoksa). */
+  | { type: 'light'; lit: boolean; cause: string; until?: number }
+  // Harita 3 şimşek kuralları: A1 Shocked (pushed: sıra sayacından düşen; stunned: suda Stun yedi), A2 Live Water, A5 Thunderflash
+  | { type: 'shock'; source: string; target: string; skill: string; pushed: number; stunned: boolean }
+  | { type: 'liveWater'; id: string; source: string; board: Side; cells: number[]; hit: string[] }
+  | { type: 'liveWaterEnd'; id: string }
+  | { type: 'thunderflash'; source: string; skill: string; blinded?: string }
+  // Harita 3 imza mekanikleri: B2 Thunder Rod, C2 Encased, C5 Noise, C6 Tempering (C1 Rolling Thunder hazardWarn / hazardLand kind 'bolt')
+  | { type: 'rodPlanted'; id: string; source: string; skill: string; board: Side; slot: number }
+  | { type: 'rodStrike'; id: string; board: Side; slot: number; hit: string[] }
+  | { type: 'rodDown'; id: string; actor: string; board: Side; slot: number }
+  | { type: 'encasedHit'; target: string; left: number; max: number; repaired?: boolean }
+  | { type: 'encasedBreak'; target: string; cause: 'fire' | 'broken' | 'debug' }
+  | { type: 'noise'; value: number; goal: number }
+  | { type: 'noiseFull'; rise: number }
+  | { type: 'tempered'; target: string; stance: 'hot' | 'cold'; cause: 'turn' | 'fire' | 'debug' }
+  // Harita 3 boss dokunuşları: birim üstü çubuk (max 0 = çubuk kalkar), E1 Vent, E3 Pack Rotation, E4 vaaz sonu, E6 bedava çağrı
+  | { type: 'touchBar'; target: string; bar: 'heat' | 'sermon'; value: number; max: number }
+  | { type: 'vent'; target: string }
+  | { type: 'packRotation'; actor: string; back: string; front: string }
+  | { type: 'sermonStart'; actor: string; rounds: number; goal: number }
+  | { type: 'sermonEnd'; actor: string; outcome: 'broken' | 'done' }
+  | { type: 'kingHears'; actor: string; skill: string }
   | { type: 'battleEnd'; winner: Side };
 
 /**
@@ -2279,6 +2462,12 @@ export interface BattleRules {
   objective?: BattleObjective;
   /** M-N3 Tidewater Urn: oyuncu tarafında duran etkileşimli nesne (hücresi o tahtada kapalı); bitişik kahraman eylemini harcayıp bir sırayı Flooded yapar. */
   urn?: UrnRule;
+  /** M-G Cave-in: telgraflı çöken hücreler (koşuldan bağımsız). */
+  caveIn?: CaveInRule;
+  /** M-F Lantern: Darkness'ı kaldıran kırılabilir nesne. */
+  lantern?: LanternRule;
+  /** C5 Wake the Halls: Noise sayacı. */
+  noise?: NoiseRule;
   /** M-I: İKİ tahtada da kullanılamaz hücreler (güverte direği / küpeşte): kimse giremez, kimse orada başlamaz. */
   blocked?: number[];
   /** Hücre düzeninin adı (data/battle-rules.json > layouts; ör. 'deck'); yalnızca sunum. */
@@ -2294,6 +2483,98 @@ export interface BattleCondition {
   flood?: FloodRule;
   /** M-C Storm: `motions` hareketli (menzilli) skill'lerin isabetine `delta` eklenir (iki taraf; -0,15 = isabet -%15 puan); `shots` açıksa `SkillDef.shot` işaretli düşen ok skill'leri de (Arrow Rain; büyüler değil). */
   rangedAccuracy?: { delta: number; motions: SkillMotion[]; shots?: boolean };
+  /** M-H Heat: her Round başında rastgele sıra işaretlenir, sonraki Round başında `rounds` Round `ground` olur (bkz. Battle.startRound). */
+  heat?: HeatRule;
+  /** M-H Heat: bu savaşta bu durum hiç tutmaz (Chilled yok). */
+  noChill?: string;
+  /** C2 Encased (Blizzard): buz blokları her Round maks blok canının bu oranı kadar onarılır. */
+  encasedRepair?: number;
+  /** M-F Darkness: `sides` tarafının tek hedefli / alan skill'leri düşmanın en öndeki dolu sırası + `depth` sıra arkasıyla sınırlı; ateş skill'i `fireRounds` Round aydınlatır. */
+  darkness?: DarknessRule;
+}
+
+/** M-H Heat (data/battle-rules.json > conditions.heat.heat). `amountRatio`: tik gücü = o tahtadaki birimlerin ortalama maks canı x oran. `aimAtUnits`: yalnızca içinde birim olan sıralardan seçer. */
+export interface HeatRule {
+  ground: string;
+  rounds: number;
+  boards: Side[];
+  amountRatio: number;
+  aimAtUnits?: boolean;
+  /** AI: işaretli sıranın tehdidi, tik gücü yoksa (Blizzard): tahta ortalama canı x oran. */
+  threatRatio?: number;
+  /** HUD uyarısı: "<koşul adı>: <warn>". */
+  warn?: string;
+}
+
+/** M-F Darkness (data/battle-rules.json > conditions.darkness.darkness). */
+export interface DarknessRule {
+  sides: Side[];
+  depth: number;
+  fireRounds: number;
+}
+
+/**
+ * M-G Cave-in (data/battle-rules.json > hazards; koşuldan bağımsız). `everyRounds` Round'da bir her `boards` tahtasında `cells` hücre işaretlenir, sonraki Round başında çöker:
+ * üstündeki birim `damageRatio` x tahtanın ortalama maks canı hasar + `status`, hücre savaş boyunca kapalı. `everyRounds` 0 = kendiliğinden işaretlemez (yalnızca Battle.warnCaveIn; boss ultu).
+ */
+export interface CaveInRule {
+  id: string;
+  name: string;
+  text: string;
+  everyRounds: number;
+  cells: number;
+  boards: Side[];
+  damageRatio: number;
+  status: string;
+  statusTurns: number;
+  maxClosed: number;
+  aimAtUnits?: boolean;
+}
+
+/** M-F Lantern (data/battle-rules.json > lanterns): oyuncu tarafında inert, kırılabilir birim (`def` çözümlenmiş tanım); ayaktayken Darkness kısıtı yok. */
+export interface LanternRule {
+  id: string;
+  name: string;
+  text: string;
+  unit: string;
+  side: Side;
+  slot: number;
+  hpRatio: number;
+  def: CombatantDef;
+}
+
+/** Bekleyen ortam tehlikesi (Heat sırası / Cave-in hücreleri): `dueRound` Round'u başlayınca iner. */
+export interface Hazard {
+  id: string;
+  kind: 'heat' | 'caveIn' | 'rod' | 'bolt' | 'strike';
+  board: Side;
+  cells: number[];
+  dueRound: number;
+  /** caveIn: uygulanacak kural. */
+  caveIn?: CaveInRule;
+  /** rod (B2): çubuğun hücresi (`cells` artı komşular); dueRound her Round yenilenir. */
+  rod?: { slot: number; side: Side; source: string; skill: string; ratio: number };
+  /** bolt (C1): sıra çubuğu belirteci (`token` = sıra listesindeki kimlik); dueRound kullanılmaz, belirteç öne ulaşınca iner. */
+  bolt?: { token: string; side: Side; source: string; skill: string; ratio: number; speed: number; counter: number; actionsLeft: number };
+  /** strike (E2 Thundersnow): işaretli sütuna `dueRound` başında şimşek; `iron` x hedef Armor ek hasar. */
+  strike?: { side: Side; source: string; skill: string; ratio: number; iron: number };
+}
+
+/**
+ * Wake the Halls (Harita 3 C5; data/battle-rules.json > noise): `sides` tarafının kritik, patlama (`reactions` zemin tepkimeleri) ve alan skill'leri sayacı doldurur; `goal` dolunca
+ * sayaç sıfırlanır ve (`maxRises` kez) `rise` birimi kalkar. Birimin kurulumu sefer gücüyle `reinforce` gibi gelir.
+ */
+export interface NoiseRule {
+  id: string;
+  name: string;
+  text: string;
+  goal: number;
+  sides: Side[];
+  points: { crit: number; explosion: number; area: number };
+  reactions: string[];
+  maxRises: number;
+  unit: { class: string; name: string; slot: number };
+  rise: WaveSetup;
 }
 
 /**
@@ -2312,7 +2593,7 @@ export interface UrnRule {
   rounds: number;
   soak: string;
   /** Yapay zeka: sıra puanı = kendi Burning zemin hücresi x burningCell + o sıradaki Burning kahraman x burningHero; puan >= minScore ise kullanır. */
-  ai: { minScore: number; burningCell: number; burningHero: number; burning: string; burningGround: string };
+  ai: { minScore: number; burningCell: number; burningHero: number; burning: string; burningGround: string; /** E5: düşmanda şimşek varken sıradaki kahraman başına eksi puan (su Live Water olur). */ thunderHero?: number };
 }
 
 /** M-B Tide (maps-2-3.md 5): `onWave` her dalga başında, `everyRounds` her N savaş turunda bir, `boards` tahtalarının `rows` sıraları `rounds` tur Flooded. */
@@ -2373,7 +2654,7 @@ export interface GlobalSkillDef {
    * surge: Crown Surge (Harita 2-3, map2-quests-surge.md C1; yalnızca BattleSetup.surge'de o tarafa verilen id'ler görünür, savaş başına TEK Surge):
    * tarafın yaşayan tüm birimlerine `status` (`turns`; Ash Surge) ve / veya maks canın `shieldRatio` oranı süreli kalkan (`shieldTurns`; Salt Surge).
    */
-  kind: 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge';
+  kind: 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge' | 'rod';
   /** self: hedef yok; empty_tile: kendi tarafındaki boş (canlı olmayan) bir yuva seçilir; row: kendi tahtasında bir sıra (hücresiyle). */
   target: 'self' | 'empty_tile' | 'dead_ally' | 'row';
   /** rest: kazanılan MP (maks MP'yi aşmaz). */

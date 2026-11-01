@@ -11,12 +11,12 @@ export type ForcedAwait = 'next' | 'skill' | 'target';
  * Savaş dersinin tetik durumu (Ömer 2026-10-14: Mill Road'dan sonra her ders DURUMLA tetiklenir; saf tespit src/tutorial/situations.ts).
  * start = yalnızca ilk savaşın zorunlu adımları. Karar başı (sırası gelen kahraman için): first (savaşın ilk oyuncu kararı), rest, move, skip,
  * ultimate, fallen (bir kahraman düştü), spent, status, ground, telegraph. Skill seçilince: preview (düşmana hasar veren skill: hedefin üstünde
- * hasar / isabet önizlemesi), ally (dostu hedefleyen skill), reach, area.
+ * hasar / isabet önizlemesi), ally (dostu hedefleyen skill), reach, area. Hedefe tıklanıp reddedilince: protected (Taunt yüzünden).
  */
-export type BattleWhen = 'start' | 'first' | 'rest' | 'move' | 'skip' | 'ultimate' | 'fallen' | 'spent' | 'status' | 'ground' | 'telegraph' | 'preview' | 'ally' | 'reach' | 'area';
+export type BattleWhen = 'start' | 'first' | 'rest' | 'move' | 'skip' | 'ultimate' | 'fallen' | 'spent' | 'status' | 'ground' | 'telegraph' | 'preview' | 'ally' | 'reach' | 'area' | 'protected' | 'strong';
 /** Eylem dersini tamamlayan oyuncu eylemi (yoksa ders bilgi dersidir: bir kez gösterilince biter). */
 export type LessonAction = 'rest' | 'move' | 'skip' | 'ultimate';
-export type LessonScreen = 'town' | 'merchant' | 'company' | 'map' | 'event' | 'gear' | 'endless' | 'valor' | 'rest';
+export type LessonScreen = 'town' | 'merchant' | 'company' | 'company_solo' | 'map' | 'event' | 'gear' | 'endless' | 'valor' | 'rest';
 
 export interface LessonPage {
   title?: string;
@@ -64,23 +64,43 @@ export interface Lesson {
   variants?: Record<string, string>;
   /** Eylem dersi: oyuncu bu eylemi yapınca tamamlanır (yapmazsa durum yeniden oluşunca, en çok actionRepeats savaşta, yeniden çıkar). */
   done?: LessonAction;
+  /** Savaş başına ders tavanından muaf, sayıya da girmez (Taunting Enemies: yalnız reddedilen tıklamada çıkar, en çok ihtiyaç anı). */
+  capExempt?: boolean;
   /** Kutunun yeri: üst orta (varsayılan) ya da alt (Gear: torbayı kapatmasın). */
   place?: 'top' | 'bottom';
+  /** Whisper (Ömer 2026-11-01, C6): kutu yerine sıra çubuğu altında tek cümle (Codex yine text / codex gösterir). */
+  whisper?: { text: string; variants?: Record<string, string> };
   /** Zorunlu ekran dersi (kapı): düğme yerine bu bekleme yazısı; kutu beklenen eylem yapılınca dışarıdan kapanır. */
   awaitText?: string;
-  /** gate: oyunun kendisi açar (ör. 'formation' = Zorunlu Formation kapısı, CampaignMapScene); ekran / savaş tetiği yok. */
-  trigger: { battle?: BattleTrigger; gate?: 'formation' } & Partial<ScreenTrigger>;
+  /** gate: oyunun kendisi açar ('formation' = Zorunlu Formation kapısı, CampaignMapScene; 'first_point' = Garrick şeridi, src/ui/first-point.ts); ekran / savaş tetiği yok. */
+  trigger: { battle?: BattleTrigger; gate?: 'formation' | 'first_point' } & Partial<ScreenTrigger>;
 }
+
+/** Garrick şeridinin (C5) sınıf verisi: önerilen düğüm ve temel stat. */
+export interface FirstPointClass {
+  tree?: { node: string; text: string };
+  stat?: { attr: string; text: string };
+}
+export type FirstPointKind = 'tree' | 'stat';
 
 export interface TutorialData {
   version: number;
   mentor: { name: string; title: string; avatar: string };
-  opening: { node: string; text: string };
+  opening: { node: string; text: string; classLine?: Record<string, string> };
+  skillUnlockTitle: string;
+  skillUnlocks: Record<string, string>;
+  hitPulseMs: number;
   groups: string[];
   lessons: Lesson[];
   defeatHints: { regions: string[]; minDefeats: number; byEncounter: Record<string, string>; default: string };
   /** Eylem dersi tamamlanmadan en çok kaç savaşta gösterilir. */
   actionRepeats: number;
+  /** Ders tavanı: bu düğümlerde savaş başına en çok perBattle yeni bilgi dersi. */
+  battleLessonCap: { nodes: string[]; perBattle: number };
+  /** Taunt dersi açıkken koruyan birimin halkasının yinelenme aralığı (ms). */
+  protectorPulseMs: number;
+  whisper: { ms: number; fadeMs: number };
+  firstPoint: { lessons: Record<FirstPointKind, string>; lines: { good: string; other: string }; classes: Record<string, FirstPointClass> };
 }
 
 export const TUTORIAL = data as unknown as TutorialData;
@@ -97,6 +117,33 @@ export function lessonPages(l: Lesson, o: { variant?: string; vars?: LessonVars 
   if (l.pages?.length) return l.pages.map((p) => ({ ...p, text: fillVars(p.text, vars) }));
   const text = (o.variant && l.variants?.[o.variant]) || l.text || '';
   return [{ text: fillVars(text, vars), ...(l.focus ? { focus: l.focus } : {}) }];
+}
+
+/** Whisper metni (dersin whisper alanı yoksa null: ders kutuyla çıkar). */
+export function lessonWhisperText(l: Lesson, o: { variant?: string; vars?: LessonVars } = {}): string | null {
+  if (!l.whisper) return null;
+  return fillVars((o.variant && l.whisper.variants?.[o.variant]) || l.whisper.text, { ...LESSON_VARS, ...(o.vars ?? {}) });
+}
+
+/** Sınıfın Garrick önerisi (verisi yoksa null: şerit çıkmaz). */
+export function firstPointRec(classId: string, kind: 'tree'): { node: string; text: string } | null;
+export function firstPointRec(classId: string, kind: 'stat'): { attr: string; text: string } | null;
+export function firstPointRec(classId: string, kind: FirstPointKind): { node: string; text: string } | { attr: string; text: string } | null {
+  return TUTORIAL.firstPoint.classes[classId]?.[kind] ?? null;
+}
+
+/** Şeridin durumu: bekleyen puan yoksa öneri (suggest; "I will choose" sonrası quiet), önerilen bekliyorsa good, başkası bekliyorsa other. */
+export type FirstPointState = 'suggest' | 'quiet' | 'good' | 'other';
+export function firstPointState(o: { pending: number; recPending: boolean; dismissed: boolean }): FirstPointState {
+  if (o.pending > 0) return o.recPending ? 'good' : 'other';
+  return o.dismissed ? 'quiet' : 'suggest';
+}
+
+/** Şeridin cümlesi. */
+export function firstPointLine(state: FirstPointState, recText: string): string {
+  if (state === 'good') return TUTORIAL.firstPoint.lines.good;
+  if (state === 'other') return TUTORIAL.firstPoint.lines.other;
+  return recText;
 }
 
 /** Codex'te yeniden okunan metin (codex alanı, yoksa sayfalar art arda). */
@@ -118,6 +165,7 @@ const pct = (v: number) => Math.round(v * 100);
 export const LESSON_VARS: LessonVars = {
   victoryHeal: pct(campaignJson.rules.victoryHeal),
   restHeal: pct(campaignJson.rest.heal),
+  protector: 'the marked enemy', // gerçek savaşta birimin adı (rejectSituations); bu değer yalnız debug "Trigger a lesson" içindir
 };
 
 /** {ad} -> değer (bilinmeyen ad olduğu gibi kalır; {skill} odak seçicisine aittir). */
@@ -133,6 +181,8 @@ export interface BattleLessonCtx {
   region: string;
   encounter: string;
   defeats: number;
+  /** Tek kişilik başlangıç: bu savaşın başında yeni açılan skill'ler (Garrick'in cümlesi; dalga ortası açılış motor olayından). */
+  unlocks?: readonly string[];
 }
 
 /** Şu an oluşan bir durum (saf tespit: src/tutorial/situations.ts). `skill`: dersin göstereceği skill (odak seçicisindeki {skill}). */
@@ -141,6 +191,10 @@ export interface Situation {
   skill?: string;
   /** Dersin metin seçeneği (Lesson.variants; ör. 'valor'). */
   variant?: string;
+  /** Metindeki {ad} değerleri (ör. {protector}: koruyan birimin adı). */
+  vars?: LessonVars;
+  /** Dersin sahnede vurgulanacak birimleri (uid; protected: koruyan birimler). */
+  units?: readonly string[];
 }
 
 /** Ders ilerlemesi: görülen (Codex), tamamlanan eylem dersleri, eylem dersinin gösterildiği savaş sayısı, bu savaşta gösterilenler. */
@@ -163,16 +217,33 @@ export function situationLessonsIn(ctx: BattleLessonCtx): boolean {
 }
 
 /**
+ * Ders tavanı (Ömer 2026-10-31, C2) doldu mu: ilk savaşlarda (battleLessonCap.nodes) bu savaşta gösterilen bilgi dersi sayısı tavana ulaştı.
+ * Eylem dersleri (done) ve capExempt dersler sayılmaz; zorunlu adımlar ve ekran dersleri `thisBattle`a hiç girmez.
+ */
+export function lessonCapFull(ctx: BattleLessonCtx, thisBattle: ReadonlySet<string>): boolean {
+  const cap = TUTORIAL.battleLessonCap;
+  if (!cap.nodes.includes(ctx.node)) return false;
+  let shown = 0;
+  for (const id of thisBattle) {
+    const l = lessonById(id);
+    if (!l?.done && !l?.capExempt) shown++;
+  }
+  return shown >= cap.perBattle;
+}
+
+/**
  * Şimdi gösterilecek TEK durum dersi (veri sırası = öncelik) ve göstereceği skill; yoksa null. Bitmiş, bu savaşta zaten gösterilmiş,
  * zorunlu ya da durumu oluşmamış dersler atlanır. Aynı anda birden çok durum varsa yalnızca ilki: oyuncu her kararda en çok bir yeni şey okur.
+ * Ders tavanı doluysa yalnızca eylem dersi ve capExempt ders çıkar; bilgi dersi görülmemiş kalır, durum yeniden oluşunca sonraki savaşta çıkar.
  */
-export function dueBattleLesson(ctx: BattleLessonCtx, found: readonly Situation[], p: LessonProgress): { lesson: Lesson; skill?: string; variant?: string } | null {
+export function dueBattleLesson(ctx: BattleLessonCtx, found: readonly Situation[], p: LessonProgress): { lesson: Lesson; skill?: string; variant?: string; vars?: LessonVars } | null {
   if (!situationLessonsIn(ctx) || !found.length) return null;
+  const capFull = lessonCapFull(ctx, p.thisBattle);
   for (const l of LESSONS) {
     const t = l.trigger.battle;
-    if (!t || l.forced || p.thisBattle.has(l.id) || lessonComplete(l, p)) continue;
+    if (!t || l.forced || p.thisBattle.has(l.id) || lessonComplete(l, p) || (capFull && !l.done && !l.capExempt)) continue;
     const hit = found.find((f) => f.when === t.when);
-    if (hit) return { lesson: l, ...(hit.skill ? { skill: hit.skill } : {}), ...(hit.variant ? { variant: hit.variant } : {}) };
+    if (hit) return { lesson: l, ...(hit.skill ? { skill: hit.skill } : {}), ...(hit.variant ? { variant: hit.variant } : {}), ...(hit.vars ? { vars: hit.vars } : {}) };
   }
   return null;
 }
@@ -183,9 +254,11 @@ export function forcedSteps(ctx: BattleLessonCtx, seen: ReadonlySet<string>, dec
 }
 
 /** Açılış sözü (hikâye ile birleşik ilk savaş): yalnızca açılış düğümünde, zorunlu adımlar daha görülmemişse. */
-export function openingLine(ctx: BattleLessonCtx, seen: ReadonlySet<string>): string | null {
+export function openingLine(ctx: BattleLessonCtx, seen: ReadonlySet<string>, heroClass?: string): string | null {
   if (ctx.node !== TUTORIAL.opening.node) return null;
-  return forcedSteps(ctx, seen).length ? TUTORIAL.opening.text : null;
+  if (!forcedSteps(ctx, seen).length) return null;
+  const line = (heroClass && TUTORIAL.opening.classLine?.[heroClass]) || '';
+  return TUTORIAL.opening.text.replace('{classLine}', line).replace(/ {2,}/g, ' ');
 }
 
 /** Bölüm III: aynı savaş minDefeats kez kaybedildiyse duruma özel ipucu; değilse null. */

@@ -1,4 +1,5 @@
 import { isAccuracyCritDebuff } from './cc-immunity';
+import { statusCounts, statusCountsAny } from './status-count';
 import { hpFallbackAmount, skillCostAmount } from './cost';
 import { damageRange, missingHpHealMult, rollCrit, rollDamage, rollHeal, shieldAmount, type DamageSpec, type Range } from './formulas';
 import { cursorAnchorSlot, isShapeArea, screenCellOf, shapeCells, shapeStages, shapeStagesShared } from './area-shape';
@@ -16,7 +17,7 @@ import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduct
 import type { Attribute, Attributes, BrandSpec, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect, PushDir } from './types';
 import { advanceTurn, predictQueue, snapCounter, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
 import { bellsOfSkill, condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, manaShieldPay, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
-import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BattleObjective, BattleRules, BetSpec, Combatant, CombatantDef, FloodRule, Formulas, GlobalSkillDef, UrnRule, GroundDef, GroundEffect, GroundReactionDef, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
+import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BattleObjective, BattleRules, BetSpec, Combatant, CombatantDef, FloodRule, Formulas, GlobalSkillDef, UrnRule, GroundDef, GroundEffect, GroundReactionDef, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup, BossTouch, DarknessRule, BoltOutcome, LiveWater, NoiseRule, CaveInRule, Hazard, HeatRule, StatusOrigin } from './types';
 
 export interface BattleSetup {
   seed: number;
@@ -196,7 +197,7 @@ interface FreeCast {
 }
 
 /** Global skill'in oyun içi sonucu için birim başına son eylem türü (yapay zeka salınımı önlemek için okur). */
-export type LastActionKind = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge' | 'pass';
+export type LastActionKind = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge' | 'rod' | 'pass';
 
 export type ActionResult = { ok: true; events: BattleEvent[] } | { ok: false; reason: string };
 export type CanUse = { ok: true } | { ok: false; reason: string };
@@ -313,6 +314,8 @@ export class Battle {
   readonly ground: GroundEffect[] = [];
   /** Bekleyen telgraflar (gecikmeli saldırılar: Breaking Span, Ash Brand, Fall of King's Bridge); oluşturulma sırasıyla. */
   readonly telegraphs: Telegraph[] = [];
+  /** Bu tur çözülmesi turunu yiyen telgrafların sahipleri (TelegraphDef.endsTurn). */
+  private readonly telegraphSpent = new Set<string>();
   private telegraphCount = 0;
   /** Bu turunda yeni telgraf kuran birimler (bir turda en fazla bir yeni telgraf); birimin turu başlayınca silinir. */
   private readonly telegraphedThisTurn = new Set<string>();
@@ -383,6 +386,8 @@ export class Battle {
     });
     // Karşılaşma kuralları: kapalı hücrede başlayan birim en yakın açık hücreye, Hold the Bridge'de ön sıra boşsa en öndeki birim öne (battleStart'tan önce)
     if (setup.rules) this.arrangeForRules();
+    for (const c of this.combatants) this.temperStart(c); // C6 Tempering: savaşa Red-hot başlar (pasif yoksa dokunmaz)
+    if (this.combatants.some((c) => c.touch)) this.roundsOn = true; // Harita 3 dokunuşları Round sayar (kuralsız savaşta da)
     // Valor: yalnızca verilen tarafta (0..cap)
     if (setup.valorRules) for (const side of ['party', 'enemy'] as const) {
       const v = setup.valor?.[side];
@@ -499,6 +504,7 @@ export class Battle {
 
   private noteAction(uid: string, kind: LastActionKind): void {
     this.lastKind.set(uid, kind);
+    if (kind !== 'skip' && kind !== 'pass') this.heatActed.add(uid); // E1 (taşıyan değilse kullanılmaz)
     this.skipStreak.set(uid, kind === 'skip' ? (this.skipStreak.get(uid) ?? 0) + 1 : 0);
     // Skill ağacı koşul izlemesi (yalnızca ağaçlı savaş): eylem yaptı, son turundan beri vuranlar sıfırlanır, harcanan Rage bir önceki eyleme kayar
     if (this.treeUnits) {
@@ -617,6 +623,8 @@ export class Battle {
       const em = this.statusElementMult(target, element);
       if (em !== 1) m *= em;
     }
+    // C6 Tempering: Red-hot birime ıslatan (su) skill'i ek hasar
+    if (target.temper === 'hot' && skill && target.passive?.effect.type === 'tempering' && this.isWaterSkill(skill)) m *= target.passive.effect.waterTaken;
     if (!target.statuses.some((s) => s.kind === 'taunt')) {
       let protect = 1;
       for (const ally of this.living(target.side)) {
@@ -1388,7 +1396,7 @@ export class Battle {
     // Opportunist (bonusVsStatus) yamaları: spec.ts tabanı uyguladı; burada (1 + yeni bonus) / (1 + taban bonus) oranı güce eklenir
     const pe = actor.passive?.effect;
     if (opp && pe?.type === 'bonusVsStatus' && target) {
-      const base = target.statuses.some((s) => pe.statuses.includes(s.kind));
+      const base = target.statuses.some((s) => statusCountsAny(s, pe.statuses));
       const now = Math.max(base || opp.force ? pe.bonus + opp.add : 0, opp.alt);
       out.power *= (1 + now) / (1 + (base ? pe.bonus : 0));
     }
@@ -1582,7 +1590,7 @@ export class Battle {
               }
               const n = a.to === 'randomInCast' ? (a.count ?? 1) : a.to === 'outsideArea' || a.to === 'beside' ? a.count : undefined;
               let list = this.trigRecipients0(owner, n !== undefined ? { ...a, count: undefined } : a, tev);
-              if (a.ifStatus !== undefined) list = list.filter((c) => c.statuses.some((s) => s.kind === a.ifStatus));
+              if (a.ifStatus !== undefined) list = list.filter((c) => c.statuses.some((s) => statusCounts(s, a.ifStatus)));
               if (a.ifMpZero) list = list.filter((c) => c.maxMp > 0 && c.mp <= 0);
               list = list.filter((c) => c.hp > 0);
               return { units: list, weight: n !== undefined && list.length > n ? n / list.length : 1 };
@@ -1691,7 +1699,7 @@ export class Battle {
   private trigMatches(owner: Combatant, h: TriggerHook, ev: TrigEv): boolean {
     if (h.skill && h.skill !== ev.skill) return false;
     if (h.on === 'enemyDied') {
-      if (h.status && !(ev.statuses ?? []).some((st) => st.kind === h.status && (!h.mine || st.source === owner.uid))) return false;
+      if (h.status && !(ev.statuses ?? []).some((st) => statusCounts(st, h.status) && (!h.mine || st.source === owner.uid))) return false;
       if (h.ground && !(ev.grounds ?? []).includes(h.ground)) return false;
       // Faz 4c: işaret (Feeding Frenzy) ve öldüren (dost / kendisi / takım)
       if (h.marked && !(ev.subject && this.isMarked(owner, h.node, ev.subject))) return false;
@@ -1703,7 +1711,7 @@ export class Battle {
       }
     } else if (h.on === 'enemyHealed') {
       // Faz 4c (Stolen Remedy): iyileşen düşman bu durumu taşıyor (mine: sahibin verdiği)
-      if (h.status && !(ev.target?.statuses ?? []).some((st) => st.kind === h.status && (!h.mine || st.source === owner.uid))) return false;
+      if (h.status && !(ev.target?.statuses ?? []).some((st) => statusCounts(st, h.status) && (!h.mine || st.source === owner.uid))) return false;
     } else if (h.on === 'groundEnd') {
       if (h.ground && ev.groundFx?.ground !== h.ground) return false;
     } else if (h.status && h.status !== ev.status) return false;
@@ -1742,7 +1750,7 @@ export class Battle {
     const key = shared ? `${a.to}|${a.count ?? 1}` : '';
     let list = shared && this.pickCache!.has(key) ? this.pickCache!.get(key)!.filter((c) => c.hp > 0) : this.trigRecipients0(owner, a, ev);
     if (shared && !this.pickCache!.has(key)) this.pickCache!.set(key, list);
-    if (a.ifStatus !== undefined) list = list.filter((c) => c.statuses.some((s) => s.kind === a.ifStatus));
+    if (a.ifStatus !== undefined) list = list.filter((c) => c.statuses.some((s) => statusCounts(s, a.ifStatus)));
     if (a.ifMpZero) list = list.filter((c) => c.maxMp > 0 && c.mp <= 0);
     if (a.caster) list = list.filter((c) => c.skills.some((id) => this.skill(id, c.uid)?.cost.resource === 'mp' && (this.skill(id, c.uid)?.cost.amount ?? 0) > 0));
     return list;
@@ -2069,7 +2077,7 @@ export class Battle {
         }
         if (a.chance !== undefined && a.chance < 1 && !(this.rng.next() < a.chance)) continue;
         // Faz 4c: örnek düğümü taşır (kaynağa göre silme: removeStatus node), süresiz (Bastion Cry: Taunt sürerken)
-        const st: Status = { kind: a.status as Status['kind'], turns: a.turns ?? 1, source: owner.uid, cause: h.node, ...(a.permanent ? { permanent: true } : {}) };
+        const st: Status = { kind: a.status as Status['kind'], turns: a.turns ?? 1, source: owner.uid, cause: h.node, ...(a.permanent ? { permanent: true } : {}), ...this.shotOrigin(a.status!, 'tree') };
         if (def.dot) {
           const scale = (a.stat ?? def.dot.scale) as Attribute | undefined;
           const power = a.power ?? def.dot.power;
@@ -2289,6 +2297,7 @@ export class Battle {
         ...(amount <= 0 ? { noDamage: true } : {}),
       };
       g.fullTurns = g.turns;
+      this.freezeOnDrop(owner, g.ground, g.board, g.slots, 'tree', emit);
       this.ground.push(g);
       (ev.placed ??= []).push(g);
       emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
@@ -2585,6 +2594,17 @@ export class Battle {
         if (r) out.push({ board: gb, slot: s, reaction: r.id, label: r.def.label });
       }
     }
+    if (skill.thunder) {
+      // Şimşek skill'i: suya düşünce Live Water (ağın her hücresinde), buza düşünce Shatter
+      const area = anchor !== undefined && this.isAreaSkill(skillId, actorUid);
+      const b = area ? (skill.target === 'area_any' && board ? board : opposite(actor.side)) : undefined;
+      const info = b ? this.shapePreviewCells(actorUid, skillId, anchor!, b) : undefined;
+      const t = targetUid ? this.get(targetUid) : undefined;
+      const feet = b && info?.valid ? [{ board: b, cells: info.cells }] : !area && t ? [{ board: t.board, cells: [t.slot] }] : [];
+      const res = this.boltOutcome(actor, skill, feet, t ? [t] : [], false);
+      for (const n of res.live) for (const s of n.cells) if (!out.some((o) => o.board === n.board && o.slot === s)) out.push({ board: n.board, slot: s, reaction: 'live_water', label: 'Live Water' });
+      for (const s of res.shatters) if (!out.some((o) => o.board === s.board && o.slot === s.slot)) out.push({ board: s.board, slot: s.slot, reaction: s.reaction, label: s.label });
+    }
     return out;
   }
 
@@ -2751,7 +2771,7 @@ export class Battle {
   /** Zemin bu birimi etkiler mi (taraf kuralı bugünkü gibi): şifa zemini bırakanın tarafını, su herkesi (yardımcı nesne hariç), diğerleri bırakanın düşmanını. Saf. */
   groundAffects(g: GroundEffect, c: Pick<Combatant, 'side' | 'inert'>): boolean {
     if (this.isHealGround(g.ground)) return c.side === g.sourceSide;
-    if (this.isWater(g)) return !c.inert;
+    if (this.isWater(g) || g.source === 'env') return !c.inert; // ortam zemini (Tide suyu, Heat ateşi) herkesi etkiler
     return c.side !== g.sourceSide;
   }
 
@@ -2759,7 +2779,7 @@ export class Battle {
   groundGrants(g: GroundEffect): Array<{ kind: string; primary: boolean; mpZero?: boolean }> {
     const def = this.setup.grounds?.[g.ground];
     const out: Array<{ kind: string; primary: boolean; mpZero?: boolean }> = [];
-    const main = g.envUntilRound !== undefined ? g.soak : (def?.status ?? def?.soak);
+    const main = g.envUntilRound !== undefined && g.soak ? g.soak : (def?.status ?? def?.soak);
     if (main && this.statusDef(main)) out.push({ kind: main, primary: true });
     for (const st of [...(def?.statuses ?? []), ...(g.statuses ?? [])]) if (this.statusDef(st.status) && !out.some((o) => o.kind === st.status)) out.push({ kind: st.status, primary: false, ...(st.mpZero ? { mpZero: true } : {}) });
     return out;
@@ -2782,7 +2802,7 @@ export class Battle {
     const slot = at?.slot ?? c.slot;
     const want = new Map<string, { g: GroundEffect; amount: number; primary: boolean; mpZero?: boolean }>();
     for (const g of this.ground) {
-      if (g.board !== board || !g.slots.includes(slot) || !this.groundAffects(g, c)) continue;
+      if (g.board !== board || !g.slots.includes(slot) || !this.groundAffects(g, c) || this.eyeShelters(g, c.side, board, slot)) continue;
       for (const gr of this.groundGrants(g)) {
         const amount = gr.primary ? this.groundStatusAmount(g, slot) : 0;
         const cur = want.get(gr.kind);
@@ -2794,6 +2814,7 @@ export class Battle {
 
   /** Zemin durumunun girişte tutmadığı hâller: CC bağışıklığı (boss), item Immunity'si, ağaç bağışıklığı / ward. Rastgele sayı tüketmez. Saf. */
   groundStatusRefused(c: Combatant, kind: string): boolean {
+    if (c.encased || c.underground) return true; // C2, Undermine
     if (this.statusBlocked(c, kind)) return true;
     const imm = effArr(c, 'earlyImmunity')?.find((e) => e.status === kind);
     if (imm && (c.ownTurns ?? 0) <= imm.turns) return true;
@@ -2849,6 +2870,8 @@ export class Battle {
     if (cur && statusStrength(cur) >= w.amount) return; // aynı türden skill örneği güçlü (ya da eşit): o geçerli; bitince zemin yeniden verir
     if (w.mpZero && !(c.maxMp > 0 && c.mp <= 0)) return;
     if (c.statuses.some((s) => this.statusDef(s.kind)?.cleanses?.includes(kind))) return; // Soaked'taki birime Burning tutmaz
+    if (this.statusRefused(c, kind)) return; // Frozen'a Chilled, Burning zemindekine Chilled tutmaz
+    if (this.castingActor?.uid === g.source && this.statusDef(kind)?.freeze && !cur) this.castChilled.add(`${g.source}:${c.uid}`); // bu atışın zemini: aynı atışta ikinci kez saymaz
     const key = `${c.uid}:${kind}`;
     if (this.groundStatusRefused(c, kind)) {
       if (!this.groundRefusedSeen.has(key)) {
@@ -2900,6 +2923,10 @@ export class Battle {
         this.applyHeal(src, actor, st.amount, false, emit, g.ground);
         continue;
       }
+      if (this.sermonHeals(actor, g.ground)) {
+        this.applyHeal(actor, actor, st.amount, false, emit, 'long_sermon'); // E4: zeminin hasarı şifa olur
+        continue;
+      }
       this.groundHit(g, src, actor, st.amount, emit);
     }
     for (const g of [...this.ground]) {
@@ -2912,7 +2939,8 @@ export class Battle {
 
   /** Bir zemin tikinin vuruşu (eski tur başı zemin hasarı yolu): bırakanın 'ground' kancaları (güç; groundAgeAtLeast), kritiksiz büyü, zeminin elementi. */
   private groundHit(g: GroundEffect, src: Combatant, actor: Combatant, amount: number, emit: Emit): void {
-    const gm = src.treeHooks ? this.treeMods(src, actor, null, undefined, { at: 'ground', tick: { age: g.age ?? 0 }, roll: true }) : null;
+    // Ortam ateşi (Heat): bırakan birim yok; yanan birimin kendi ağaç kancaları kendi yanmasını büyütmez
+    const gm = g.source !== 'env' && src.treeHooks ? this.treeMods(src, actor, null, undefined, { at: 'ground', tick: { age: g.age ?? 0 }, roll: true }) : null;
     const gd = this.groundTickDamage(g.ground, amount, actor);
     if (gm) this.treeProcAll(src.uid, gm.nodes);
     this.applyHit(src, actor, gm && gm.power !== 1 ? Math.max(this.setup.formulas.damage.minDamage, Math.round(gd * gm.power)) : gd, 'magic', false, emit, false, { origin: 'ground', element: this.setup.grounds?.[g.ground]?.element ?? 'physical', damageType: 'magic', ground: g.ground, groundId: g.id });
@@ -2926,7 +2954,7 @@ export class Battle {
   groundHazardAt(c: Combatant, board: Side, slot: number, side?: Side): number {
     let dmg = 0;
     for (const [kind, w] of this.groundStatusesAt(c, { board, slot })) {
-      if (w.amount <= 0 || this.isHealGround(w.g.ground) || (side && w.g.sourceSide !== side)) continue;
+      if (w.amount <= 0 || this.isHealGround(w.g.ground) || (side && w.g.sourceSide !== side) || this.sermonHeals(c, w.g.ground)) continue;
       const cur = c.statuses.find((s) => s.kind === kind);
       if (cur && !cur.fromGround && statusStrength(cur) >= w.amount) continue;
       if (this.groundStatusRefused(c, kind)) continue;
@@ -2984,7 +3012,7 @@ export class Battle {
   /** Tetik hasarına sınıf pasifinin hasar eki (Opportunist: hedefte listedeki durum varsa 1 + bonus; ağaç yamalı pasif). */
   private trigPassiveMult(owner: Combatant, rec: Combatant): number {
     const pe = owner.passive?.effect;
-    return pe?.type === 'bonusVsStatus' && rec.statuses.some((x) => pe.statuses.includes(x.kind)) ? 1 + pe.bonus : 1;
+    return pe?.type === 'bonusVsStatus' && rec.statuses.some((x) => statusCountsAny(x, pe.statuses)) ? 1 + pe.bonus : 1;
   }
 
   /** Tetik Doom'u: sahibin canlı statıyla `omens` Omen'lik Doom (yığın taşımayan hedefte de; sıçrayan Doom = leap). */
@@ -3115,7 +3143,7 @@ export class Battle {
         if (who === 'self' && u !== target) continue;
         if (who === 'ally' && u === target) continue;
         if (h.ground && !this.ground.some((g) => g.ground === h.ground && g.board === target.board && g.sourceSide === u.side && g.slots.includes(target.slot))) continue;
-        if (h.status && !target.statuses.some((st) => st.kind === h.status && (!h.mine || st.source === u.uid))) continue;
+        if (h.status && !target.statuses.some((st) => statusCounts(st, h.status) && (!h.mine || st.source === u.uid))) continue;
         if (h.shield && !target.shieldHooks?.some((x) => x.skill === h.shield && x.caster === u.uid && x.amount > 0)) continue;
         if (h.marked && !this.isMarked(u, h.node, target)) continue;
         m *= Math.max(0, 1 + (h.mul ?? 0) * s);
@@ -3344,7 +3372,7 @@ export class Battle {
   frontOccupiedRow(board: Side, moved?: { uid: string; slot: number }): number {
     let front = Infinity;
     for (const c of this.combatants) {
-      if (c.hp <= 0 || c.board !== board) continue;
+      if (c.hp <= 0 || c.board !== board || c.underground) continue;
       const slot = moved && c.uid === moved.uid ? moved.slot : c.slot;
       front = Math.min(front, this.rowOf(slot));
     }
@@ -3360,9 +3388,51 @@ export class Battle {
 
   /** Hücre bu skill'in menzilinde mi? Sistem kapalıyken ve debugCast sırasında hep evet. Alan skill'inde hücre = hedeflenen anchor. */
   inRange(actor: Combatant, skill: SkillDef, board: Side, slot: number, opts?: { from?: number; moved?: { uid: string; slot: number } }): boolean {
+    if (skill.reachRule && board !== actor.side) {
+      const u = this.combatants.find((c) => c.hp > 0 && c.board === board && c.slot === slot);
+      if (u && this.reachOpens(actor, skill, u)) return true; // Harita 3 gezgin moblar: menzilden bağımsız
+    }
+    if (this.darkBlocks(actor, skill, board, slot, opts?.moved)) return false; // M-F Darkness: menzile ek kısıt
     if (!this.rangeOn || this.debugCasting || this.setup.ignoreRange) return true;
     const r = this.rangeOf(actor, skill);
     return r === Infinity || this.distanceTo(actor, board, slot, opts) <= r;
+  }
+
+  /** Harita 3 gezgin moblar (SkillDef.reachRule): bu hedefe, menzile bakılmadan ulaşılır mı? Saf. */
+  reachOpens(actor: Combatant, skill: SkillDef, c: Combatant): boolean {
+    const r = skill.reachRule;
+    if (!r || c.side === actor.side || c.inert || c.underground) return false;
+    switch (r.kind) {
+      case 'status':
+        return c.statuses.some((s) => statusCountsAny(s, r.statuses)) || (!!r.ground && this.onGround(c, r.ground));
+      case 'dark':
+        return this.isDark();
+      case 'backRows':
+        return this.rowOf(c.slot) > this.fightingFrontRow(c.board);
+      case 'laneFirst':
+        return !this.fighting(c.side).some((o) => o.uid !== c.uid && o.board === c.board && this.laneOf(o.slot) === this.laneOf(c.slot) && o.slot < c.slot);
+      case 'heaviest':
+        return this.armorOrder(c.side, c.board)[0]?.uid === c.uid;
+    }
+  }
+
+  /** Erişim kuralı başka hedefi yasaklıyor mu (backRows, laneFirst, heaviest yalnız açtıklarını vurur)? Saf. */
+  private reachDenied(actor: Combatant, skill: SkillDef, c: Combatant): boolean {
+    const r = skill.reachRule;
+    if (!r || r.kind === 'status' || r.kind === 'dark') return false;
+    return !this.reachOpens(actor, skill, c);
+  }
+
+  /** Savaşan birimlerin en öndeki sırası (nesneler sayılmaz). Saf. */
+  private fightingFrontRow(board: Side): number {
+    let front = Infinity;
+    for (const c of this.combatants) if (c.hp > 0 && !c.inert && !c.underground && c.board === board) front = Math.min(front, this.rowOf(c.slot));
+    return front;
+  }
+
+  /** Savaşanlar, Armor'u yüksek olandan düşüğe; eşitlikte küçük yuva (Ring the Anvil). Saf. */
+  private armorOrder(side: Side, board: Side): Combatant[] {
+    return this.fighting(side).filter((c) => c.board === board).sort((a, b) => this.effectiveStats(b).armor - this.effectiveStats(a).armor || a.slot - b.slot);
   }
 
   /**
@@ -3591,6 +3661,7 @@ export class Battle {
     emit({ type: 'statusEnd', target: actor.uid, status: 'staggered', consumed: true });
     emit({ type: 'staggered', actor: actor.uid });
     this.noteAction(actor.uid, 'skill'); // eylem harcandı sayılır: ek eylemi varsa sürer
+    this.heatActed.delete(actor.uid); // E1: yanan eylem Heat doldurmaz
     this.finishAction(actor, emit);
     return true;
   }
@@ -3658,6 +3729,17 @@ export class Battle {
       }
     }
     if (def.riseAllies) this.riseAllies(c, def.riseAllies, emit);
+    if (def.swapSkills) this.swapPhaseSkills(c, def.swapSkills);
+  }
+
+  /** E5: faz skill'i değiştirir (The Ember: Flare şimşeğe döner); bekleme süresi yeni skill'e geçer. */
+  private swapPhaseSkills(c: Combatant, swap: Record<string, string>): void {
+    c.skills = c.skills.map((id) => swap[id] ?? id);
+    for (const [from, to] of Object.entries(swap)) {
+      if (c.cooldowns[from] === undefined) continue;
+      c.cooldowns[to] = c.cooldowns[from]!;
+      delete c.cooldowns[from];
+    }
   }
 
   /**
@@ -3860,12 +3942,16 @@ export class Battle {
     }
     // Adalet kuralı (M3): şu an karşı tarafta canlı, sersem olmayan her savaşan birim en az bir kez oynamadan çözülmez
     t.waitFor = this.fighting(opposite(actor.side))
-      .filter((c) => !c.statuses.some((s) => this.statusDef(s.kind)?.skipTurn))
+      .filter((c) => !c.encased && !c.statuses.some((s) => this.statusDef(s.kind)?.skipTurn))
       .map((c) => c.uid);
     if (t.kind === 'area') t.marked = this.combatants.filter((c) => c.hp > 0 && c.board === t.board && c.side === t.board && t.cells.includes(c.slot) && !t.safeCells?.includes(c.slot)).map((c) => c.uid);
     this.telegraphs.push(t);
     if (countTurn) this.telegraphedThisTurn.add(actor.uid);
     emit({ type: 'telegraph', id: t.id, source: t.source, skill: t.skill, kind: t.kind, board: t.board, cells: [...t.cells], ...(t.safeCells ? { safeCells: [...t.safeCells] } : {}), ...(t.bound ? { bound: t.bound } : {}) });
+    if (tg.dive) {
+      actor.underground = t.id;
+      emit({ type: 'dive', actor: actor.uid, telegraph: t.id });
+    }
     return t;
   }
 
@@ -3876,6 +3962,15 @@ export class Battle {
     this.telegraphs.splice(i, 1);
     this.clearBrand(t, emit);
     emit({ type: 'telegraphCancel', id: t.id, source: t.source, skill: t.skill, cause });
+    this.surfaceFrom(t, false, emit);
+  }
+
+  /** Undermine: telgraf bitti, dalan yüzeye çıkar. */
+  private surfaceFrom(t: Telegraph, whiffed: boolean, emit: Emit): void {
+    const c = this.get(t.source);
+    if (c?.underground !== t.id) return;
+    delete c.underground;
+    emit({ type: 'surface', actor: c.uid, ...(whiffed ? { whiffed: true } : {}) });
   }
 
   private clearBrand(t: Telegraph, emit: Emit): void {
@@ -3925,26 +4020,37 @@ export class Battle {
     const marked = t.marked.filter((u) => (this.get(u)?.hp ?? 0) > 0);
     const victims = this.combatants.filter((c) => c.hp > 0 && c.board === t.board && c.side !== src.side && cells.includes(c.slot)).sort((a, b) => a.slot - b.slot);
     this.clearBrand(t, emit);
+    this.surfaceFrom(t, victims.length === 0, emit);
+    if (tg.endsTurn && this.mode === 'turns') this.telegraphSpent.add(src.uid);
     emit({ type: 'telegraphResolve', id: t.id, source: src.uid, skill: t.skill, board: t.board, cells: [...cells], hit: victims.map((v) => v.uid), avoided: tg.kind === 'brand' ? [] : marked.filter((u) => !victims.some((v) => v.uid === u)) });
+    const boltHit = new Set<string>(); // telgraflı şimşek (ileride boss): isabet edenler
+    const boltDark = !!skill.thunder && this.isDark();
     for (const effect of skill.effects) {
       if (effect.type === 'damage') {
         // Unblockable (src/engine/unblockable.ts): telgraf çözülmesi zarsızdır ve bloklanamaz; bayrak açıkça verilir (strike'ta castingSkill yok)
         const hit = isUnblockableHit(skill, effect) ? { ...effect, unblockable: true } : effect;
         victims.forEach((v, i) => {
-          if (v.hp > 0) this.strike(src, v, hit, emit, 1, i === 0, true);
+          if (v.hp > 0 && this.strike(src, v, hit, emit, 1, i === 0, true).landed) boltHit.add(v.uid);
         });
       } else if (effect.type === 'ground') {
         this.placeGround(src, effect, t.board, cells, emit);
       } else if (effect.type === 'status') {
-        for (const v of victims) if (v.hp > 0) this.addStatus(v, { kind: effect.status, turns: effect.turns, source: src.uid }, emit, effect.cause);
+        for (const v of victims) if (v.hp > 0) this.addStatus(v, { kind: effect.status, turns: effect.turns, source: src.uid, ...this.shotOrigin(effect.status, 'skill') }, emit, effect.cause);
+      } else if (effect.type === 'dot') {
+        const amount = Math.round(attributePower(src.stats, effect.scale, this.setup.formulas) * effect.power); // Slagcart: telgraflı DoT
+        for (const v of victims) if (v.hp > 0) this.addStatus(v, { kind: effect.status, turns: effect.turns, source: src.uid, amount }, emit);
       }
     }
+    if (src.hp > 0 && tg.after) this.addStatus(src, { kind: tg.after.status, turns: tg.after.turns, source: src.uid }, emit);
+    if (src.hp > 0 && tg.whiff && victims.length === 0) this.addStatus(src, { kind: tg.whiff.status, turns: tg.whiff.turns, source: src.uid }, emit);
+    if (skill.thunder) this.boltLanded(src, skill, [{ board: t.board, cells: [...cells] }], boltHit, boltDark, emit);
     const after = src.boss?.afterResolve;
     if (after && src.hp > 0 && after.skills.includes(t.skill)) this.addStatus(src, { kind: after.status, turns: after.turns, source: src.uid }, emit);
   }
 
   /** Hücrelere yer etkisi bırakır (skill vuruşu ve telgraf çözülmesi ortak). */
   private placeGround(actor: Combatant, effect: Extract<SkillEffect, { type: 'ground' }>, board: Side, slots: number[], emit: Emit): void {
+    this.freezeOnDrop(actor, effect.ground, board, slots, 'skill', emit); // telgraflı skill zemini de atıştır (Frozen)
     if (slots.length === 0) return;
     const g: GroundEffect = {
       id: `g${this.groundCount++}`,
@@ -4024,6 +4130,7 @@ export class Battle {
   statusBlocked(c: Pick<Combatant, 'tier' | 'boss'>, kind: string): boolean {
     const d = this.statusDef(kind);
     if (!d) return false;
+    if (this.setup.rules?.condition?.noChill === kind) return true; // M-H Heat: bu savaşta Chilled tutmaz
     // Faz 5a: ağaç kuralı immune (önizleme / YZ de görür); kancasız birimde okunmaz
     const full = c as Partial<Combatant>;
     if (full.treeHooks && full.uid && this.rulesOf(full as Combatant, 'immune').some((h) => h.statuses?.includes(kind))) return true;
@@ -4136,6 +4243,7 @@ export class Battle {
 
   /** Birim çekilemez/itilemez mi (boss bağışıklığı ya da Unyielding)? Saf. */
   immuneToDisplacement(c: Combatant): boolean {
+    if (c.encased || c.underground) return true; // C2: buz bloğu yerinden oynamaz; yerin altındaki de
     // Faz 5a (Unyielding): ağaç kuralı immune pull
     return !!c.boss?.unyielding?.immuneDisplacement || (!!this.setup.formulas.ccImmunity?.displacement && this.ccImmune(c)) || effFlag(c, 'steadfast') || (!!c.treeHooks && this.rulesOf(c, 'immune').some((h) => h.pull));
   }
@@ -4230,7 +4338,24 @@ export class Battle {
   /** Sıra çubuğu: şu anki aktör + sonrakiler (uid listesi). Ölüm/çağrı sonrası yeniden hesaplanır. */
   turnQueue(count = this.setup.formulas.turn.queueLength): string[] {
     if (this.mode !== 'turns') return [];
+    const tokens = this.boltSlots();
+    if (tokens.length) return this.turnBar(count + tokens.length).filter((u) => !this.isBoltToken(u)).slice(0, count);
     return predictQueue(this.turnSlots(), this.setup.formulas.turn.threshold, count, this.currentUid, this.tieSideNow());
+  }
+
+  /** Sıra çubuğu görünümü: birimler + C1 Rolling Thunder belirteçleri (`bolt:` kimlikli) gerçek geliş sırasıyla. Belirteç yoksa turnQueue ile aynı. */
+  turnBar(count = this.setup.formulas.turn.queueLength): string[] {
+    if (this.mode !== 'turns') return [];
+    const slots = [...this.turnSlots(), ...this.boltSlots()];
+    const predict = (n: number) => predictQueue(slots, this.setup.formulas.turn.threshold, n, this.currentUid, this.tieSideNow());
+    let q = predict(count);
+    // Belirteç uzaktaysa da çubukta görünsün: hepsi girene dek tahmin uzar
+    for (let n = count * 2; n <= count * 8 && this.hazards.some((h) => h.bolt && !q.includes(h.bolt.token)); n *= 2) q = predict(n);
+    return q;
+  }
+
+  isBoltToken(uid: string): boolean {
+    return uid.startsWith('bolt:');
   }
 
   /**
@@ -4239,7 +4364,8 @@ export class Battle {
    */
   turnQueueAfter(skillId: string, count = this.setup.formulas.turn.queueLength): string[] {
     if (this.mode !== 'turns') return [];
-    return predictQueue(this.turnSlots(), this.setup.formulas.turn.threshold, count, this.currentUid, this.tieSideNow(), this.turnCostOf(skillId, this.currentUid ?? undefined));
+    const tokens = this.boltSlots();
+    return predictQueue(tokens.length ? [...this.turnSlots(), ...tokens] : this.turnSlots(), this.setup.formulas.turn.threshold, count + tokens.length, this.currentUid, this.tieSideNow(), this.turnCostOf(skillId, this.currentUid ?? undefined)).filter((u) => !this.isBoltToken(u)).slice(0, count);
   }
 
   /** Skill'in turn bedeli (0 < x <= 1; yoksa 1). Global skill'ler ve bilinmeyen id'ler 1. `actorUid`: kullanıcının (ağaçla yamalı) tanımı. */
@@ -4304,6 +4430,8 @@ export class Battle {
     }
     if (!skill?.splash || skill.target !== 'single_enemy') return [];
     if (skill.splash.pattern === 'chain') return this.chainTargets(chosen, skill.splash.jumps ?? 0);
+    // Ring the Anvil: kalan en zırhlı birimlere sıçrar (Armor 0 olan zırhlı sayılmaz; menzile bakmaz)
+    if (skill.splash.pattern === 'armor') return this.armorOrder(chosen.side, chosen.board).filter((c) => c.uid !== chosen.uid && this.effectiveStats(c).armor > 0).slice(0, skill.splash.jumps ?? 0);
     // Faz 5a (ağaç; Femur Chain): hedefin hemen ARKASINDAKİ canlı birim (aynı şerit, bir sıra derin; boşsa yok)
     // Faz 8 (Lance of Dawn): hedefin ŞERİDİNDE ondan daha derindeki tüm canlı birimler (önden arkaya)
     if (skill.splash.pattern === 'lane') {
@@ -4453,7 +4581,7 @@ export class Battle {
     // Kapalı (eski kural): yakın dövüşte erişilemeyen hücreler validTargets ile elenir.
     const own: Side = actor?.side ?? 'party';
     const pool = !this.rangeOn ? this.validTargets(actorUid, skillId) : skill.target === 'area_any' ? [...this.livingByDepth(opposite(own)), ...this.livingByDepth(own)] : this.livingByDepth(opposite(own));
-    let hits = pool.filter((c) => c.board === b && cells.has(c.slot));
+    let hits = pool.filter((c) => c.board === b && cells.has(c.slot) && !c.underground);
     // area_any: hiçbir etkinin uygulanmadığı birimler (ör. yalnızca düşmana giden etki varken dostlar) hedef sayılmaz
     if (actor && skill.target === 'area_any') hits = hits.filter((c) => skill.effects.some((e) => this.effectAppliesTo(skill, e, c, actor)));
     // Faz 5a (Brittle Point): alan, vuruş sırasıyla en çok maxTargets hedefte durur (alan yoksa liste aynı)
@@ -4789,8 +4917,11 @@ export class Battle {
           // ESKİ kural: ön sıra, düşmanın kendi tahtasındaki birimlere göre belirlenir
           const home = list.filter((c) => c.board === c.side);
           const limit = this.meleeRowLimit(home.map((c) => this.rowOf(c.slot)), this.reachOf(actor, skill));
-          list = list.filter((c) => c.board !== c.side || this.rowOf(c.slot) <= limit);
+          list = list.filter((c) => c.board !== c.side || this.rowOf(c.slot) <= limit || this.reachOpens(actor, skill, c));
         }
+        if (!this.rangeOn) list = list.filter((c) => !this.darkBlocks(actor, skill, c.board, c.slot)); // M-F: menzil kapalıyken de
+        if (skill.reachRule && !this.debugCasting) list = list.filter((c) => !this.reachDenied(actor, skill, c));
+        list = list.filter((c) => !c.underground); // Undermine: yerin altındaki hedef alınamaz
         // Backstab: yalnızca arkası boş hedefler (menzil gibi bir erişim kuralı; taunt bundan SONRA uygulanır: arkası dolu taunter seçilemez)
         if (skill.requiresOpenBehind && !this.debugCasting) list = list.filter((c) => this.openBehindProblem(c) === null);
         if (skill.target === 'single_enemy' && !this.debugCasting && !this.ignoresTaunt(actor)) {
@@ -4801,7 +4932,7 @@ export class Battle {
       }
       case 'single_ally':
         // excludeSelf (Guard): kullanıcı kendini hedefleyemez
-        return this.livingByDepth(actor.side).filter((c) => (!skill.excludeSelf || c.uid !== actor.uid) && this.inRange(actor, skill, c.board, c.slot));
+        return this.livingByDepth(actor.side).filter((c) => (!skill.excludeSelf || c.uid !== actor.uid) && !c.underground && this.inRange(actor, skill, c.board, c.slot));
       case 'all_allies':
         return this.livingByDepth(actor.side);
       case 'dead_ally':
@@ -4812,7 +4943,7 @@ export class Battle {
           .sort((x, y) => x.slot - y.slot);
       case 'everyone':
         // Dost kısmı menzilsiz; düşman kısmı menzile bağlı (Radiance global: hepsi)
-        return [...this.livingByDepth(actor.side), ...this.livingByDepth(opposite(actor.side)).filter((c) => this.inRange(actor, skill, c.board, c.slot))];
+        return [...this.livingByDepth(actor.side), ...this.livingByDepth(opposite(actor.side)).filter((c) => !c.underground && this.inRange(actor, skill, c.board, c.slot))];
       case 'area_any':
         // İki tahtaya da atılabilen alan (Smoke Bomb): menzildeki anchor'lardan kapsanan canlı birimler (menzil kapalıyken alandaki her canlı birim); etkiler `side` ile ayrılır (taunt yok)
         if (!this.rangeOn) return [...this.livingByDepth(opposite(actor.side)), ...this.livingByDepth(actor.side)];
@@ -4884,6 +5015,7 @@ export class Battle {
         const p = this.openBehindProblem(target);
         if (p) return p;
       }
+      if (this.darkBlocks(actor, skill, target.board, target.slot)) return 'Too dark to see';
       if (!this.inRange(actor, skill, target.board, target.slot)) return 'Out of range';
       const tauntingFoe = !this.ignoresTaunt(actor) && this.living(target.side).some((c) => c.statuses.some((s) => s.kind === 'taunt'));
       return tauntingFoe ? 'Must target the taunting enemy' : this.rangeOn ? 'Out of range' : 'Out of reach';
@@ -4904,6 +5036,10 @@ export class Battle {
     if (!actor) return { ok: false, reason: 'No such unit' };
     if (actor.hp <= 0) return { ok: false, reason: 'Unit is dead' };
     if (this.mode === 'turns' && this.currentUid !== actorUid) return { ok: false, reason: "Not this unit's turn" };
+    if (actor.encased) return { ok: false, reason: 'Encased in ice' };
+    if (actor.underground && this.mode === 'turns') return { ok: false, reason: 'Underground' };
+    if (actor.sermon) return { ok: false, reason: 'Preaching' }; // E4
+    if (this.mode === 'test' && actor.heat !== undefined && this.isVenting(actor)) return { ok: false, reason: 'Venting' }; // E1: test modunda Round sonuna dek
     if (!actor.skills.includes(skillId)) return { ok: false, reason: 'Unit does not have this skill' };
     const skill = this.skill(skillId, actorUid);
     if (!skill) return { ok: false, reason: 'Unknown skill' };
@@ -4914,6 +5050,9 @@ export class Battle {
     if (actor.treeHooks && skill.effects.some((e) => e.type === 'taunt') && this.rulesOf(actor, 'noTaunt').length) return { ok: false, reason: 'Chained: cannot Taunt' };
     // Boss fazı şartı (Ash Brand faz 2, Fall faz 3) ve bağlı yardımcı şartı (Chain Hook: canlı Iron Mooring)
     if ((skill.minPhase ?? 1) > this.phaseOf(actor)) return { ok: false, reason: 'Not in this phase' };
+    if (skill.thunderRod && this.rodCellFor(actor, skill) === null) return { ok: false, reason: 'No room for a rod' };
+    if (skill.callVault && !this.vaultRoom(skill)) return { ok: false, reason: 'The vault is empty' };
+    if (skill.longSermon && this.sermonBlessed.has(actor.side)) return { ok: false, reason: 'The sermon is done' };
     if (skill.requiresAlly && !this.combatants.some((c) => c.hp > 0 && c.side === actor.side && c.defId === skill.requiresAlly)) {
       return { ok: false, reason: `Needs a standing ${this.setup.units[skill.requiresAlly]?.name ?? skill.requiresAlly}` };
     }
@@ -4925,7 +5064,7 @@ export class Battle {
     }
     if (this.mode === 'turns' && !this.noCooldowns && (actor.cooldowns[skillId] ?? 0) > 0) return { ok: false, reason: 'On cooldown' };
     // ESKİ kural (menzil kapalı): yakın dövüş yalnızca kendi takımının ön sırasındaki birimlerden (ignoreFrontRow / ignoreReach istisna)
-    if (!this.rangeOn && !this.setup.ignoreRange && skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && actor.board === actor.side && this.rowOf(actor.slot) > this.frontRowOf(actor.side) + this.reachOf(actor, skill)) {
+    if (!this.rangeOn && !this.setup.ignoreRange && skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && !skill.reachRule && actor.board === actor.side && this.rowOf(actor.slot) > this.frontRowOf(actor.side) + this.reachOf(actor, skill)) {
       return { ok: false, reason: 'Melee: front row only' };
     }
     const resource = skill.cost.resource;
@@ -5072,6 +5211,7 @@ export class Battle {
     const present = (id: string) => {
       const kind = this.globalDef(id)?.kind;
       if (kind === 'surge') return side === undefined ? [...this.surgeAvail.values()].some((l) => l.includes(id)) : !!this.surgeAvail.get(side)?.includes(id);
+      if (kind === 'rod') return this.hazards.some((h) => h.rod && (side === undefined || h.rod.side !== side)); // B2: yalnızca ayakta çubuk varken, karşı tarafına
       return kind !== 'urn' || (urnSide !== undefined && (side === undefined || side === urnSide));
     };
     return (side ? ids.filter((id) => this.globalDef(id)?.kind !== 'valor' || this.valorOf(side) !== null) : ids).filter(present);
@@ -5238,6 +5378,9 @@ export class Battle {
     const def = this.globalDef(id);
     if (!def) return { ok: false, reason: 'Unknown action' };
     if (this.winner) return { ok: false, reason: 'Battle is over' };
+    if (this.get(actorUid)?.encased) return { ok: false, reason: 'Encased in ice' };
+    if (this.get(actorUid)?.underground && this.mode === 'turns') return { ok: false, reason: 'Underground' };
+    if (this.get(actorUid)?.sermon) return { ok: false, reason: 'Preaching' }; // E4
     const actor = this.get(actorUid);
     if (!actor) return { ok: false, reason: 'No such unit' };
     if (actor.hp <= 0) return { ok: false, reason: 'Unit is dead' };
@@ -5255,6 +5398,8 @@ export class Battle {
       if (urn.left <= 0) return { ok: false, reason: 'The urn is empty' };
       if (!this.nextToUrn(actor)) return { ok: false, reason: 'Stand next to the urn' };
       if (slot !== undefined && !this.urnRows().includes(this.rowOf(slot))) return { ok: false, reason: 'Pick a row of your side' };
+    } else if (def.kind === 'rod') {
+      if (!this.rodsNextTo(actor).length) return { ok: false, reason: 'Stand next to a rod' };
     } else if (def.kind === 'surge') {
       if (!this.surgeAvail.get(actor.side)?.includes(id)) return { ok: false, reason: 'The Crown is not with you here' };
       if (this.surgeUsed.has(actor.side)) return { ok: false, reason: 'The Crown was already called in this battle' };
@@ -5333,6 +5478,8 @@ export class Battle {
       this.valorRevive(actor, this.get(targetUid!)!, slot, emit);
     } else if (def!.kind === 'urn') {
       this.tipUrn(actor, this.rowOf(slot!), emit);
+    } else if (def!.kind === 'rod') {
+      this.toppleRod(actor, emit);
     } else {
       const from = actor.slot;
       actor.slot = slot!;
@@ -5347,7 +5494,7 @@ export class Battle {
       this.addStatus(actor, { kind: stride.status as Status['kind'], turns: stride.turns, source: actor.uid }, emit);
     }
     this.flushFree(emit); // Faz 4c: Move'un tetiklediği bedava kullanım (Range Keeper)
-    this.noteAction(actor.uid, def!.kind === 'rest' ? 'rest' : def!.kind === 'skip' ? 'skip' : def!.kind === 'valor' ? 'valor' : def!.kind === 'urn' ? 'urn' : def!.kind === 'surge' ? 'surge' : 'move');
+    this.noteAction(actor.uid, def!.kind === 'rest' ? 'rest' : def!.kind === 'skip' ? 'skip' : def!.kind === 'valor' ? 'valor' : def!.kind === 'urn' ? 'urn' : def!.kind === 'surge' ? 'surge' : def!.kind === 'rod' ? 'rod' : 'move');
     this.finishAction(actor, emit, stride ? stride.turnCost : 1);
     return { ok: true, events };
   }
@@ -5576,6 +5723,8 @@ export class Battle {
       ...(corpseUid ? { corpseUid } : {}),
       ...(this.turnCostOf(skill.id, actor.uid) < 1 ? { turnCost: this.turnCostOf(skill.id, actor.uid) } : {}),
     });
+    const dark = this.darkRule();
+    if (dark && this.isFireSkill(skill)) this.lightUp(dark.fireRounds, skill.id, emit); // M-F: herhangi bir ateş skill'i tahtayı aydınlatır
 
     if (turned) {
       this.turnedJinx.add(turned.st); // "sıradaki saldırı": aynı Jinxed ikinci kez çevirmez (ağaç Jinxed'i birden çok saldırı tutsa da)
@@ -5664,6 +5813,7 @@ export class Battle {
     // Rage'li kullanıcı: bu skill'in isabet eden hasar vuruşları hedef başına toplanır (strike doldurur), skill bitince tek kazanç olarak işlenir
     this.rageTally = !debug && actor.maxRage !== undefined ? new Map() : null;
     this.castingSkill = skill; // strike'ın skill'e bakan pasifleri (Rebuke: yakın dövüş) için
+    this.castChilled.clear();
     this.castingActor = actor;
     // Doom Mark: vuruşu ya da patlaması hedefi öldürürse hedefin Omen'leri silinir, Ill Omen çalışmaz
     this.noTransferKill = skill.effects.some((e) => e.type === 'detonate' && e.noTransferOnKill) ? new Set(targets.map((c) => c.uid)) : null;
@@ -5672,6 +5822,11 @@ export class Battle {
     // Telgraflı skill: etkiler şimdi uygulanmaz (grup yok); aşağıda telgraf kurulur, sahibin sonraki turunda çözülür
     const groups: Array<{ targets: Combatant[]; cells?: number[] }> = skill.telegraph ? [] :
       stageTargets && stageGroups ? stageTargets.map((ts, i) => ({ targets: ts, cells: stageGroups![i]!.cells })) : [{ targets, ...(centerCells ? { cells: centerCells } : {}) }];
+    // Harita 3 şimşek kuralları: şimşeğin düştüğü hücreler ve karanlık durumu vuruştan ÖNCE (ölen hedefin hücresi de sayılır; etiketsiz skill'de hesap yok)
+    if (this.setup.rules?.noise && this.isAreaSkill(skill.id, actor)) this.noiseAdd(actor.side, this.setup.rules.noise.points.area); // C5: alan skill'i gürültü yapar
+    const boltFeet = skill.thunder && !skill.telegraph && !skill.rollingThunder ? this.boltFootprint(targets, areaBoard, centerCells) : null;
+    const boltDark = !!boltFeet && this.isDark();
+    const reachOpened = !!skill.reachRule && !!targets[0] && this.reachOpens(actor, skill, targets[0]); // vuruştan ÖNCE (hedef ölebilir)
     let repeatAnnounced = false;
     // endsOnOwnAttack (Jinxed): bu hasar skill'inin TÜM vuruşları durumdan etkilenir, skill bitince durum düşer
     // endsOnOwnSkill (Spellbound): her skill'de (hasarsız da) düşer
@@ -6022,7 +6177,7 @@ export class Battle {
         }
         case 'push': {
           // Ice Crater (Ömer 2026-10-29): isabet eden, hayatta kalan hedef seçilen yönde 1 hücre; dolu / tahta dışı hücrede çarpma (iki birime küçük hasar)
-          const dir: PushDir = dirArg && PUSH_DIRS.includes(dirArg) ? dirArg : 'back';
+          const dir: PushDir = effect.fixedDir ?? (dirArg && PUSH_DIRS.includes(dirArg) ? dirArg : 'back');
           const hasDamage = skill.effects.some((e) => e.type === 'damage');
           for (const r of hasDamage ? ts.filter((c) => hit.has(c.uid)) : ts) {
             if (r.hp <= 0) continue;
@@ -6049,6 +6204,7 @@ export class Battle {
           break;
         }
         case 'ground': {
+          if (effect.whenOpened && !reachOpened) break; // Through the Flame: normal vuruşta zemin yok
           // Tek hedefli skill (D7, Tainted Bait): zemin hedefin hücresine (hedefin tahtası) konur; alan skill'inde şeklin hücreleri
           const single = centerSlot === undefined && skill.target === 'single_enemy' ? ts[0] : undefined;
           // Faz 5a (Banshee's Toll; yalnızca ağaçla hedefi değişen skill): alansız çok hedefli kullanımda zemin hedeflerin hücrelerine
@@ -6085,6 +6241,7 @@ export class Battle {
             if (effect.stackMult !== undefined && effect.stackMult !== 1) this.stackGround(g, effect.stackMult, emit);
           }
           g.fullTurns = g.turns;
+          this.freezeOnDrop(actor, g.ground, g.board, g.slots, 'skill', emit); // Frozen: zaten Chilled olan içeride donar (tepkimeden önce)
           this.ground.push(g);
           emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
           this.reactGrounds(g, emit); // zemin tepkimeleri (grounds.json > reactions)
@@ -6220,7 +6377,14 @@ export class Battle {
     }
     }
     stage = undefined;
+    if (boltFeet) this.boltLanded(actor, skill, boltFeet, hit, boltDark, emit);
     if (skill.telegraph) this.createTelegraph(actor, skill, targets, centerCells, emit);
+    if (skill.rollingThunder && targets[0]) this.castRolling(actor, skill, targets[0], emit);
+    if (skill.thunderRod) this.plantRod(actor, skill, emit);
+    if (skill.whiteout) this.castWhiteout(skill, emit);
+    if (skill.longSermon) this.startSermon(actor, skill, emit);
+    if (skill.callVault) this.callVault(actor, skill, emit);
+    if (actor.touch?.type === 'packRotation' && skill.effects.some((e) => e.type === 'damage')) this.packHeal(actor, actor.touch, emit);
     // advanceToFront (Warrior Charge, madde 271): kullanıcı ön sırada değilse ön sıraya geçer (önce kendi şeridi; isabet etse de etmese de)
     if (skill.advanceToFront && actor.hp > 0) {
       const to = this.advanceDestination(actor);
@@ -6524,6 +6688,8 @@ export class Battle {
     if (actor.openingDamageMult !== undefined) delete actor.openingDamageMult; // ilk eylem bitti
     // Telgraf adalet kuralı: bu birim oynadı (eylem, pas ya da sersemlik)
     for (const t of this.telegraphs) if (t.waitFor.includes(actor.uid)) t.waitFor = t.waitFor.filter((u) => u !== actor.uid);
+    if (this.liveWaters.length) this.liveWaterTurnEnd(actor, emit); // A2: canlı suda turunu bitiren ark yer
+    if (this.flashTurns > 0) this.flashTurnEnd(actor, emit); // A5: Thunderflash bir kahraman turu sürer
     if (this.mode === 'turns' && actor.summoned && actor.lifespan !== undefined && actor.hp > 0) {
       actor.lifespan--;
       if (actor.lifespan <= 0) {
@@ -6534,10 +6700,17 @@ export class Battle {
       }
     }
     // Karşılaşma kuralları: test modunda savaş turu eylemle sayılır (turns modunda advance sayar); su hücresine girene Soaked, suya düşen ateş söner
+    if (this.mode === 'test' && this.hazards.length) this.boltTestTick(emit); // C1: test modunda belirteç eylemle ilerler
+    if (actor.temper && this.mode === 'test' && actor.hp > 0) this.temperFlip(actor, emit); // C6: test modunda tur başı yok, eylem sonunda
+    if (actor.heat !== undefined) this.heatAfterAction(actor, emit); // E1: her gerçek eylem Heat doldurur
     if (this.setup.rules) {
       if (this.mode === 'test') this.noteRound(actor, emit);
       this.applyEnvironment(emit);
-    } else this.settleWater(emit); // kuralsız savaşta da skill suyu (Surge, High Tide...): suya giren ıslanır, suya düşen ateş söner
+      if (this.noiseDirty) this.noiseSettle(emit); // C5: bu eylemin gürültüsü
+    } else {
+      if (this.roundsOn && this.mode === 'test') this.noteRound(actor, emit); // B2: kuralsız savaşta çubuk Round sayacını açar
+      this.settleWater(emit);
+    } // kuralsız savaşta da skill suyu (Surge, High Tide...): suya giren ıslanır, suya düşen ateş söner
     if (this.combatants.some((u) => u.taint !== undefined)) this.syncTaint(emit); // Ley Brand: bu eylemde silinen Brand'in tainted mana havuzu
     // Savaşın bitişi ya da sıradaki dalga (dalgalı savaş); sıra almayan yardımcı nesneler (inert) sayılmaz
     const wave = this.resolveEnd(emit);
@@ -6631,10 +6804,24 @@ export class Battle {
       // (createSetupCombatant) başlar ve hızlarına göre mevcut sıraya girer (eşitlikte karışık sıra kuralı: son oynayanın karşı tarafı). 'reset': herkes 0'dan.
       if (this.mode === 'turns' && rules.turnOrder === 'reset') for (const c of this.combatants) if (c.hp > 0) c.turnCounter = 0;
       emit({ type: 'waveStart', index, total: this.waveCount, combatants: added.map(cloneCombatant), removed, queue: this.mode === 'turns' ? this.turnQueue() : [] });
+      this.unlockSkillsForWave(index, emit);
       for (const c of headStart) emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
       this.boardingEnter(added, emit);
       if (this.setup.rules) this.waveBeganForRules(emit); // Tide: her dalga başında su basar
     };
+  }
+
+  /** UnitSetup.unlockOnWave: bu dalgada açılacak kilitler (ölü birim dahil; rastgele sayı tüketmez). */
+  private unlockSkillsForWave(index: number, emit: Emit): void {
+    for (const c of this.combatants) {
+      const u = c.unlockOnWave;
+      if (!u || u.wave !== index) continue;
+      delete c.unlockOnWave;
+      const left = (c.lockedSkills ?? []).filter((id) => !u.skills.includes(id));
+      if (left.length) c.lockedSkills = left;
+      else delete c.lockedSkills;
+      emit({ type: 'skillUnlocked', actor: c.uid, skills: [...u.skills] });
+    }
   }
 
   /**
@@ -6663,6 +6850,8 @@ export class Battle {
     if (this.mode === 'turns') for (const c of added) this.applyInitialCooldowns(c);
     for (const c of added) if (c.boss?.phases?.length) c.phase = 1;
     for (const c of added) if (c.boss) this.refreshAnchored(c);
+    for (const c of added) this.temperStart(c);
+    if (added.some((c) => c.touch)) this.roundsOn = true; // Harita 3 dokunuşları Round sayar (kuralsız savaşta da)
     const headStart = this.mode === 'turns' ? added.filter((c) => c.passive?.effect.type === 'headStart') : [];
     for (const c of headStart) {
       const e = c.passive!.effect as Extract<PassiveEffect, { type: 'headStart' }>;
@@ -6684,18 +6873,32 @@ export class Battle {
 
   /** Sıradaki aktörü belirler; onun turu başlarken bekleme, durum ve MP işlemlerini yapıp turnStart yayınlar. */
   private advance(emit: Emit): void {
-    const slots = this.turnSlots();
+    const tokens = this.boltSlots(); // C1 Rolling Thunder belirteçleri; yoksa sıra birebir eskisi
+    const slots = tokens.length ? [...this.turnSlots(), ...tokens] : this.turnSlots();
     // Karışık sıra (D4): eşit sayaçta son oynayanın karşı tarafı önce; savaşın ilk turunda seed'li yazı-tura (tieFirst)
     const next = advanceTurn(slots, this.setup.formulas.turn.threshold, this.tieSideNow());
     for (const s of slots) {
+      if (s.once) {
+        const h = this.hazards.find((x) => x.bolt?.token === s.uid);
+        if (h) h.bolt!.counter = s.counter;
+        continue;
+      }
       const c = this.get(s.uid);
       if (c) c.turnCounter = s.counter;
+    }
+    if (next?.once) {
+      // Belirteç öne ulaştı: darbe iner, sayaçlar olduğu gibi kalır, sıradaki aktör yeniden aranır
+      const h = this.hazards.find((x) => x.bolt?.token === next.uid);
+      if (h) this.landBolt(h, emit);
+      this.resolveEnd(emit)?.();
+      if (!this.winner) this.advance(emit);
+      return;
     }
     this.currentUid = next?.uid ?? null;
     const actor = next ? this.get(next.uid) : undefined;
     if (!next || !actor) return;
     // Karşılaşma kuralları: savaş turu sayacı (sıradaki aktör bu turda zaten oynadıysa yeni tur); Survive N tur dolunca bölük kaçar (zafer)
-    if (this.setup.rules && !this.noteRound(actor, emit)) return;
+    if ((this.setup.rules || this.roundsOn) && !this.noteRound(actor, emit)) return;
     this.speedBoost.delete(actor.uid); // Skip Turn desteği, birimin sıradaki turu başlayınca biter
     if (actor.extraTurnGranted) actor.extraTurnGranted = false; // Whisper of Morvane: tur başına en çok bir ek eylem
     if (effArr(actor, 'earlyImmunity')) actor.ownTurns = (actor.ownTurns ?? 0) + 1; // Immunity affix'inin süresi (kendi turları)
@@ -6721,6 +6924,8 @@ export class Battle {
     }
     // Sersemlemiş (skipTurn) birim bu turu oynayamaz; durum süresi aşağıda azalmadan önce okunur
     let skipThisTurn = actor.statuses.some((st) => this.statusDef(st.kind)?.skipTurn);
+    const restDef = skipThisTurn ? actor.statuses.map((st) => this.statusDef(st.kind)).filter((d) => d?.skipTurn) : [];
+    const rest = restDef.length && restDef.every((d) => !d?.cc) ? restDef[0]?.name : undefined; // Slagcart: Cooling sersemlik sayılmaz
     // GENEL ZEMİN KURALI (Ömer 2026-10-29): önce zemin durumları güncel (giriş/çıkış), sonra zemin kaynaklı durumlar BİR kez tikler (hasar: zeminin
     // gücü ve elementi; Hallowed: şifa). Flooded Planks (directTick) kendi küçük hasarını doğrudan vurur (istisna).
     this.syncGroundStatuses(emit);
@@ -6893,10 +7098,17 @@ export class Battle {
         if (this.winner) return;
       }
     }
-    emit({ type: 'turnStart', actor: next.uid, queue: this.turnQueue() });
+    if (actor.temper && actor.hp > 0) this.temperFlip(actor, emit); // C6 Tempering: her kendi turunda duruş değişir
+    const barTokens = this.hazards.length ? this.boltSlots().length : 0;
+    emit({ type: 'turnStart', actor: next.uid, queue: this.turnQueue(), ...(barTokens ? { bar: this.turnBar(this.setup.formulas.turn.queueLength + barTokens) } : {}) });
+    const spent = this.telegraphSpent.delete(actor.uid) || (!!actor.underground && this.mode === 'turns') || !!actor.sermon; // E4: vaaz turu yer // Undermine, Slagcart: çözülme turu yer; adalet kuralıyla ertelenen dalış da yerin altında bekler
     if (skipThisTurn) {
-      emit({ type: 'turnSkipped', actor: actor.uid, stunned: actor.hp > 0 });
+      emit({ type: 'turnSkipped', actor: actor.uid, stunned: actor.hp > 0 && !rest, ...(rest ? { rest } : {}) });
       this.actionsLeft.delete(actor.uid); // sersemlik tüm turu (ek eylemler dahil) yer
+      this.finishAction(actor, emit);
+    } else if (spent) {
+      emit({ type: 'turnSkipped', actor: actor.uid, spent: true });
+      this.actionsLeft.delete(actor.uid);
       this.finishAction(actor, emit);
     } else this.tryStagger(actor, emit); // Stagger: turun ilk eylemi yanar
   }
@@ -6968,7 +7180,7 @@ export class Battle {
 
   private turnSlots(): TurnSlot[] {
     return this.combatants
-      .filter((c) => c.hp > 0 && !c.inert) // sıra almayan yardımcı nesne (Iron Mooring) sırada yok
+      .filter((c) => c.hp > 0 && !c.inert && !c.encased) // sıra almayan yardımcı nesne (Iron Mooring) ve buz bloğundaki birim (C2) sırada yok
       .map((c) => ({
         uid: c.uid,
         side: c.side,
@@ -6996,7 +7208,7 @@ export class Battle {
     const tm = actor.treeHooks ? this.treeMods(actor, r, skill, effect, { roll: true }) : null;
     const ch = tm ? Math.max(0, Math.min(1, chance + tm.chance)) : chance;
     if (ch < 1 && !(this.rng.next() < ch)) return false;
-    const st: Status = { kind, turns: tm ? Math.max(1, Math.round(turns + tm.turns)) : turns, source: actor.uid };
+    const st: Status = { kind, turns: tm ? Math.max(1, Math.round(turns + tm.turns)) : turns, source: actor.uid, ...this.shotOrigin(kind, 'skill') };
     if (tm?.potency) st.potency = { ...tm.potency };
     if (tm?.permanent || extra?.permanent || (effect.type === 'status' && effect.permanent)) st.permanent = true;
     const dot = this.statusDef(kind)?.dot;
@@ -7173,6 +7385,18 @@ export class Battle {
   }
 
   private addStatus(target: Combatant, status: Status, emit: Emit, cause?: string): void {
+    if (target.encased || target.underground) {
+      emit({ type: 'immune', target: target.uid, status: status.kind, source: status.source, ...(cause ? { cause } : {}) }); // C2: buz bloğundaki birime durum işlemez
+      return;
+    }
+    // Frozen (Ömer 2026-10-31): Frozen'a Chilled tutmaz, Burning zeminde duran Chilled almaz; zaten Chilled olana skill atışı gelirse Frozen olur
+    if (this.statusHeldOff(target, status.kind)) return;
+    // Ağaç düğümünün kendi bıraktığı zeminle birlikte verdiği durum bugünkü gibi tutar (Mirage Veil: Burning + Chilled)
+    if (status.origin !== 'tree' && this.onRefusingGround(target, status.kind)) {
+      emit({ type: 'immune', target: target.uid, status: status.kind, source: status.source, ...(cause ? { cause } : {}) });
+      return;
+    }
+    status = this.freezeShot(target, status);
     // Faz 4c (Herald of Ruin): durumu doğuran skill (uygulayan o an kendi kullanımındaysa); yalnızca ağaçlı savaş
     if (this.treeUnits && !status.fromSkill && this.castingSkill && this.castingActor?.uid === status.source) status = { ...status, fromSkill: this.castingSkill.id };
     // Crown of the Ashen King (ignoreFirstDebuff): savaşta uygulanan ilk debuff yok sayılır (kendi kendine uygulananlar hariç)
@@ -7266,6 +7490,10 @@ export class Battle {
       // Aynı türden durum yenisiyle değişir; tur bazlı şifa (regen) ve Dark Bond kopyası kaynağa göre ayrı tutulur (iki farklı Undead aynı dostu bağlayabilir)
       target.statuses = target.statuses.filter((s) => !(s.kind === status.kind && (!perSource || s.source === status.source)));
       target.statuses.push(status);
+      for (const k of this.statusDef(status.kind)?.blocks ?? []) {
+        if (target.statuses.some((s) => s.kind === k)) status.countsAs = k as Status['kind']; // üstüne geldi: kurallarda onu da sayar
+        this.liftStatus(target, k, emit);
+      }
       emit({ type: 'status', target: target.uid, status: status.kind, turns: status.turns, source: status.source, ...(cause ? { cause } : {}), ...(status.partner ? { partner: status.partner } : {}), ...(status.stacks !== undefined ? { stacks: status.stacks } : {}) });
       // Ley Brand: MP havuzu olmayan birime DOLU tainted mana havuzu (zaten havuzu varsa yeniden atış süreyi tazeler, havuzu doldurmaz; MP'si olan birime havuz yok)
       if (status.kind === 'branded' && status.brand && target.maxMp <= 0 && target.taint === undefined && target.hp > 0) {
@@ -7290,6 +7518,83 @@ export class Battle {
       this.trig([target], { on: 'statusGained', target: src ?? target, subject: target, ...(src ? { source: src } : {}), status: status.kind, statusSource: status.source }, emit);
       if (src) this.trig([src], { on: 'statusApplied', target, subject: target, source: src, status: status.kind, statusSource: status.source, ...(skill ? { skill } : {}) }, emit);
       if (this.statusDef(status.kind)?.type === 'buff') this.trigAll({ on: 'enemyBuffed', target, subject: target, status: status.kind }, emit, (u) => u.side !== target.side);
+    }
+  }
+
+  // --- Frozen (Ömer 2026-10-31; statuses.json > freeze / blocks / clearedBy / refusedOnGround) ---
+
+  /** Bu atışta kendi ilk Chilled'ını veren kaynak:hedef çiftleri: aynı atışın ikinci etkisi (hasar + zemin, çok vuruş) dondurmaz. Atış bitince silinir. */
+  private readonly castChilled = new Set<string>();
+
+  /** Birimdeki bir durum bunu engelliyor (Frozen: Chilled). Saf. */
+  private statusHeldOff(c: Combatant, kind: string): boolean {
+    return c.statuses.some((s) => this.statusDef(s.kind)?.blocks?.includes(kind));
+  }
+
+  /** Birim, işleyen bir zeminde bu durumu reddediyor (Burning: Chilled). Saf. */
+  private onRefusingGround(c: Combatant, kind: string): boolean {
+    const refused = this.statusDef(kind)?.refusedOnGround;
+    return !!refused && this.ground.some((g) => g.board === c.board && g.slots.includes(c.slot) && refused.includes(g.ground) && this.groundAffects(g, c));
+  }
+
+  /** Durum tutmaz: başka durum engelliyor ya da zemin reddediyor. Saf (YZ). */
+  statusRefused(c: Combatant, kind: string): boolean {
+    return this.statusHeldOff(c, kind) || this.onRefusingGround(c, kind);
+  }
+
+  /** Zeminin içindekine verdiği durum (YZ). Saf. */
+  groundStatusId(groundId: string): string | undefined {
+    return this.setup.grounds?.[groundId]?.status;
+  }
+
+  /** Bu birime `kind` şimdi gelse donar mı (kaynak türü skill kabul edilir). Saf (YZ, önizleme). */
+  wouldFreeze(c: Combatant, kind: string): boolean {
+    const fz = this.statusDef(kind)?.freeze;
+    return !!fz && c.statuses.some((s) => s.kind === kind) && !this.statusRefused(c, kind) && !this.statusBlocked(c, fz.into);
+  }
+
+  /** Kaynak türü: yalnızca `freeze` tanımlı durumda yazılır (diğer durumların nesnesi değişmez). */
+  private shotOrigin(kind: string, origin: StatusOrigin): { origin?: StatusOrigin } {
+    return this.statusDef(kind)?.freeze ? { origin } : {};
+  }
+
+  private freezeShot(target: Combatant, status: Status): Status {
+    const fz = this.statusDef(status.kind)?.freeze;
+    if (!fz) return status;
+    const shot = !!status.origin && fz.sources.includes(status.origin);
+    const key = `${status.source}:${target.uid}`;
+    if (!target.statuses.some((s) => s.kind === status.kind)) {
+      if (shot && this.castingSkill) this.castChilled.add(key); // aynı atıştaki tepki düğümü de bu sayıma girer
+      return status;
+    }
+    if (!shot || this.castChilled.has(key)) return status;
+    return { kind: fz.into as Status['kind'], turns: fz.turns, source: status.source, ...(status.fromSkill ? { fromSkill: status.fromSkill } : {}) };
+  }
+
+  /** Durumu taşıyandan kaldırır (skill / ateş / Frozen; 'statusEnd'). */
+  private liftStatus(c: Combatant, kind: string, emit: Emit): void {
+    for (const st of c.statuses.filter((s) => s.kind === kind)) {
+      c.statuses = c.statuses.filter((s) => s !== st);
+      emit({ type: 'statusEnd', target: c.uid, status: st.kind });
+      if (this.trigOn) this.statusEndTrig(c, st, 'broken', emit);
+    }
+  }
+
+  /** Durumun `clearedBy` elementi vurdu (ateş: Chilled, Frozen). */
+  private thawByElement(c: Combatant, element: string, emit: Emit): void {
+    for (const st of [...c.statuses]) if (this.statusDef(st.kind)?.clearedBy?.includes(element)) this.liftStatus(c, st.kind, emit);
+  }
+
+  /**
+   * Zemin skill'i / ağaç düğümü, zeminin verdiği durumu ZATEN taşıyan düşmanın hücresine bırakıldı: bu bir atıştır (Frozen). Hava (env) buradan geçmez.
+   * Zemin konmadan ÖNCE çağrılır; böylece aynı atışın zemin kazancı kendini saymaz.
+   */
+  private freezeOnDrop(owner: Combatant, groundId: string, board: Side, slots: readonly number[], origin: StatusOrigin, emit: Emit): void {
+    const kind = this.setup.grounds?.[groundId]?.status;
+    if (!kind || !this.statusDef(kind)?.freeze) return;
+    for (const c of this.combatants) {
+      if (c.hp <= 0 || c.inert || c.board !== board || !slots.includes(c.slot) || c.side === owner.side) continue;
+      if (c.statuses.some((s) => s.kind === kind)) this.addStatus(c, { kind: kind as Status['kind'], turns: 1, source: owner.uid, origin }, emit);
     }
   }
 
@@ -7513,6 +7818,7 @@ export class Battle {
   }
 
   private strike(actor: Combatant, target: Combatant, effect: DamageEffect, emit: Emit, powerMult: number, extras: boolean, sure = false, info?: HitInfo): { landed: boolean; crit?: boolean } {
+    if (target.underground) return { landed: false }; // Undermine: yerin altında
     const f = this.setup.formulas;
     // Skill ağacı (Faz 2a): C1 koşullar vuruştan ÖNCEKİ duruma bakar (etki kopyası: kritik / zırh delme / lifesteal; güç dealtDamageMult'ta), C2 isabet
     // Rage'i de öyle; ölçüm yalnızca vuruş isabet edince. Kancası olmayan birimde hiçbiri hesaplanmaz (zar ve olay akışı aynı)
@@ -7572,7 +7878,7 @@ export class Battle {
     }
     // Flock Shield (YM18): savaşta bir kez ilk isabet eden düşman skill vuruşu azalır; yoksa 1 (ifade aynı)
     const flock = this.flockMult(actor, target);
-    const spec = damageSpecFor(actor, target, effect, f, powerMult, extras, flock !== 1 ? this.damageTakenMult(target, actor, effect.damageType, this.castingSkill, effect.element ?? 'physical') * flock : this.damageTakenMult(target, actor, effect.damageType, this.castingSkill, effect.element ?? 'physical'), this.dealtDamageMult(actor, target, this.castingSkill, effect, tq), effect.bonusScale ? this.effectiveStats(actor) : undefined, this.castRage ?? undefined);
+    const spec = damageSpecFor(actor, target, effect, f, powerMult, extras, flock !== 1 ? this.damageTakenMult(target, actor, effect.damageType, this.castingSkill, effect.element ?? 'physical') * flock : this.damageTakenMult(target, actor, effect.damageType, this.castingSkill, effect.element ?? 'physical'), this.dealtDamageMult(actor, target, this.castingSkill, effect, tq), effect.bonusScale ? this.effectiveStats(actor) : undefined, this.castRage ?? undefined, effect.ironBolt ? this.effectiveStats(target).armor : undefined);
     if (this.healOn) this.treeTakenMult(target, actor, effect.damageType, this.castingSkill, true); // C4 ölçümü (yalnızca gerçek vuruş)
     if (flock !== 1) {
       target.passiveUsed = true;
@@ -7823,6 +8129,11 @@ export class Battle {
         this.announceIfDead(actor, emit);
       }
     }
+    // Stormhide (Stormhorn Ram): yakın dövüşle isabet ettiren Shocked olur (suda Stun)
+    if (rb?.type === 'stormhide' && this.castingSkill?.motion === 'melee' && actor === this.castingActor && target.hp > 0 && actor.hp > 0 && actor.side !== target.side) {
+      emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
+      this.shock(target, actor, this.castingSkill, this.standsWet(actor), emit);
+    }
     // Heat Mirage (Mage, Ömer 2026-10-29): düşmanın yakın dövüş skill vuruşu isabet edince saldıranın hücresine Burning Ground (Mage'in turları arasında bir kez)
     if (this.castingSkill?.motion === 'melee' && actor === this.castingActor && actor.hp > 0 && target.hp > 0 && actor.side !== target.side) this.heatMirage(target, actor, emit);
     // Thorns (b_thorns, Ömer 2026-10-26): düşmanın yakın dövüş skill vuruşunda hedefe düşen hasarın (kalkan dahil; Guard payı hariç) bu oranı saldırana döner (zırhsız)
@@ -7994,6 +8305,19 @@ export class Battle {
   /** Hasarı kalkana (büyüyse önce büyü kalkanına) ve cana uygular; canı düşüren miktarı döndürür. */
   private applyHit(actor: Combatant, target: Combatant, amount: number, type: 'physical' | 'magic', crit: boolean, emit: Emit, redirected: boolean, meta: HitMeta): number {
     this.lastHitLucky = false;
+    if (target.underground) return 0; // Undermine: yerin altındaki hasar almaz
+    if (crit && this.setup.rules?.noise && meta.origin === 'skill') this.noiseAdd(actor.side, this.setup.rules.noise.points.crit); // C5: kritik gürültü yapar
+    if (meta.element && amount > 0 && target.statuses.length && this.statusElementMult(target, meta.element) === 0) amount = 0; // C6 Red-hot: tam bağışıklık (en az 1 hasar kuralı işlemez)
+    if (meta.element && amount > 0 && target.statuses.length) this.thawByElement(target, meta.element, emit); // Ateş hasarı Chilled ve Frozen'ı anında kaldırır
+    if (target.temper === 'cold' && meta.element === 'fire' && amount > 0) this.temperSet(target, 'hot', 'fire', emit); // C6: ateş Quenched'i yeniden kızdırır
+    if (target.heat !== undefined && amount > 0) this.heatFromHit(target, meta, emit); // E1
+    if (target.sermon && amount > 0) this.sermonHit(target, amount, emit); // E4
+    if (target.encased && amount > 0) {
+      // C2 Encased: ateş bloğu kırar ve vuruş tam geçer; diğer hasarı önce blok yer, artanı cana geçer (kalkan gibi)
+      const left = this.hitBlock(actor, target, amount, crit, meta, emit);
+      if (left <= 0) return 0;
+      amount = left;
+    }
     // Faz 4a C4 (bigHit, Stand Firm): düşman skill vuruşu maks canın eşiğini aşarsa indirilir (yalnızca kancalı hedefte)
     if (this.healOn && target.treeHooks && meta.origin === 'skill' && actor.side !== target.side && amount > 0) amount = this.bigHitCut(target, actor, amount);
     // Luck-primary Lucky Escape (madde 258): kalkanlardan sonra kalan hasar canı bitirecekse, savaş başına bir kez şansla vuruş TAMAMEN
@@ -8261,6 +8585,7 @@ export class Battle {
     const corpse = this.leaveCorpse(c);
     if (!c.summoned && !c.inert) this.fellInBattle.add(c.uid);
     emit({ type: 'death', target: c.uid, corpse });
+    if (c.lightSource) this.syncLight(emit, 'lantern_broken'); // M-F: Lantern kırıldı
     if (this.trigOn && !c.inert) this.deathTrig(c, emit, doomed);
     // fallAllyHealRatio (endless Last Rites): düşen kahramanın canlı dostları maks canlarının bu oranı kadar iyileşir
     if (!c.summoned && c.fallAllyHealRatio) for (const a of this.living(c.side)) if (!a.summoned && a !== c) this.applyHeal(c, a, Math.round(a.maxHp * c.fallAllyHealRatio), false, emit, 'last_rites');
@@ -8370,9 +8695,1064 @@ export class Battle {
 
   /** M-I: hücre kapalı mı (iki tahtada aynı yuva; direk / küpeşte)? `board` verilirse o tahtadaki Tidewater Urn hücresi de kapalı (M-N3). */
   isBlocked(slot: number, board?: Side): boolean {
+    if (board !== undefined && this.hazards.length && this.hazards.some((h) => h.rod?.slot === slot && h.board === board)) return true; // B2 Thunder Rod
     const r = this.setup.rules;
     if (!r) return false;
-    return !!r.blocked?.includes(slot) || (board !== undefined && r.urn?.side === board && r.urn.slot === slot);
+    return !!r.blocked?.includes(slot) || (board !== undefined && r.urn?.side === board && r.urn.slot === slot) || (board !== undefined && this.closedCells[board].includes(slot));
+  }
+
+  // --- M-H Heat / M-G Cave-in: telgraflı ortam tehlikeleri ---
+
+  /** Bekleyen tehlikeler (işaretli hücreler; önizleme, YZ, sahne). */
+  hazards: Hazard[] = [];
+  /** M-G: çökmüş hücreler (tahta başına; savaş boyunca kapalı). */
+  readonly closedCells: Record<Side, number[]> = { party: [], enemy: [] };
+  private hazardCount = 0;
+
+  /** Tahtanın ortalama maks canı (ortam hasarının ölçeği: seviye ile büyür, boss'u yüzdeyle ezmez); savaşan yoksa 1. */
+  private boardMeanHp(board: Side): number {
+    const list = this.combatants.filter((c) => c.hp > 0 && !c.inert && c.board === board);
+    return list.length ? list.reduce((t, c) => t + c.maxHp, 0) / list.length : 1;
+  }
+
+  /** Round başı: vakti gelen tehlikeler iner, sonra yenileri işaretlenir. Savaş bu yüzden bitebilir (çöken hücre son birimi öldürür). */
+  private hazardsForRound(emit: Emit): void {
+    const r = this.setup.rules;
+    if (!this.hazards.length && (!r || (!r.condition?.heat && !r.caveIn))) return;
+    for (const h of this.hazards.filter((x) => x.dueRound <= this.round)) {
+      if (h.rod) {
+        h.dueRound = this.round + 1; // çubuk ayakta kaldıkça her Round
+        this.rodStrike(h, emit);
+        continue;
+      }
+      this.hazards.splice(this.hazards.indexOf(h), 1);
+      if (h.strike) this.landStrike(h, emit);
+      else if (h.kind === 'heat') this.landHeat(h, emit);
+      else this.landCaveIn(h, emit);
+    }
+    this.resolveEnd(emit)?.();
+    if (!this.winner && r) this.markHazards(emit);
+  }
+
+  /** Bu Round'un yeni işaretleri (Heat her Round, Cave-in her everyRounds Round'da). Rastgele sayı yalnızca bu kurallarda tüketilir. */
+  private markHazards(emit: Emit): void {
+    const r = this.setup.rules!;
+    if (r.condition?.heat) this.warnHeat(r.condition.heat, emit);
+    const c = r.caveIn;
+    if (c && c.everyRounds > 0 && (this.round - 1) % c.everyRounds === 0) for (const board of c.boards) this.warnCaveIn(board, this.pickCaveCells(board, c), c, emit);
+  }
+
+  private pushHazard(kind: Hazard['kind'], board: Side, cells: number[], emit: Emit, caveIn?: CaveInRule): void {
+    const h: Hazard = { id: `hz${this.hazardCount++}`, kind, board, cells, dueRound: this.round + 1, ...(caveIn ? { caveIn } : {}) };
+    this.hazards.push(h);
+    emit({ type: 'hazardWarn', id: h.id, kind, board, cells: [...cells], dueRound: h.dueRound });
+  }
+
+  /** M-H: rastgele (seed'li) bir sıra işaretlenir; `aimAtUnits` varsa içinde birim olan sıralardan (yoksa herhangi bir açık sıra). */
+  private warnHeat(rule: HeatRule, emit: Emit): void {
+    const { rows, lanes } = this.setup.formulas.formation;
+    const all: Array<{ board: Side; cells: number[]; busy: boolean }> = [];
+    for (const board of rule.boards)
+      for (let row = 0; row < rows; row++) {
+        const cells = Array.from({ length: lanes }, (_, l) => row * lanes + l).filter((s) => s < this.setup.maxSlots[board] && !this.isBlocked(s, board));
+        if (cells.length) all.push({ board, cells, busy: this.combatants.some((c) => c.hp > 0 && !c.inert && c.board === board && cells.includes(c.slot)) });
+      }
+    const busy = rule.aimAtUnits ? all.filter((x) => x.busy) : [];
+    const pool = busy.length ? busy : all;
+    if (!pool.length) return;
+    const pick = pool[this.rng.int(0, pool.length - 1)]!;
+    this.pushHazard('heat', pick.board, pick.cells, emit);
+  }
+
+  /** M-H: işaretli sıra `rounds` Round ortam ateşi olur (Tide suyu gibi süresi Round ile); içindekiler o an Burning alır, tiki kendi tur başlarında. */
+  private landHeat(h: Hazard, emit: Emit): void {
+    const rule = this.setup.rules?.condition?.heat;
+    if (!rule) return;
+    emit({ type: 'hazardLand', id: h.id, kind: 'heat', board: h.board, cells: [...h.cells], hit: this.combatants.filter((c) => c.hp > 0 && c.board === h.board && h.cells.includes(c.slot)).map((c) => c.uid) });
+    const g: GroundEffect = { id: `g${this.groundCount++}`, ground: rule.ground, board: h.board, slots: [...h.cells], turns: rule.rounds, source: 'env', sourceSide: opposite(h.board), amount: this.heatAmount(rule, h.board), envUntilRound: this.round + rule.rounds, envCause: this.setup.rules!.condition!.id };
+    if (rule.amountRatio <= 0) g.noDamage = true;
+    this.envSnowOnSnow(g, emit);
+    if (g.slots.length) {
+      this.ground.push(g);
+      emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+    }
+    this.applyEnvironment(emit);
+  }
+
+  /**
+   * M-E: ortamın bıraktığı zemin, aynı türden zemine düşerse aynı-tür tepkimesi (reactions.frozen_chill: Ice) hücrede çalışır. Yeni zemin o hücreden düşer; sonuç da ortam
+   * zeminidir (bıraktığı Round + tepkime süresi). Karakter dondurmaz: durum atışı yok, Ice'ın kendi Slow'u işler.
+   */
+  private envSnowOnSnow(g: GroundEffect, emit: Emit): void {
+    const r = this.groundReactionFor(g.ground, g.ground);
+    const b = r?.def.becomes;
+    if (!r || !b || b.turns === 'longer') return;
+    for (const s of [...g.slots]) {
+      const old = this.ground.find((o) => o.ground === g.ground && o.board === g.board && o.slots.includes(s));
+      if (!old) continue;
+      emit({ type: 'groundReaction', reaction: r.id, label: r.def.label, board: g.board, slot: s, setup: g.ground, trigger: g.ground, source: 'env' });
+      this.cutGround(old, [s], emit);
+      g.slots = g.slots.filter((x) => x !== s);
+      const made: GroundEffect = { id: `g${this.groundCount++}`, ground: b.ground, board: g.board, slots: [s], turns: b.turns, source: 'env', sourceSide: g.sourceSide, amount: 0, noDamage: true, envUntilRound: this.round + b.turns, ...(g.envCause ? { envCause: g.envCause } : {}) };
+      this.ground.push(made);
+      emit({ type: 'ground', id: made.id, ground: made.ground, board: made.board, slots: made.slots, turns: made.turns });
+    }
+  }
+
+  private heatAmount(rule: HeatRule, board: Side): number {
+    return rule.amountRatio > 0 ? Math.max(1, Math.round(this.boardMeanHp(board) * rule.amountRatio)) : 0;
+  }
+
+  /** M-G: bu kural için tahtada çökecek hücreler (seed'li); kapalı + bekleyen hücreler maxClosed'u, savaşanların yerini kapatacak kadar çoğu seçilmez. */
+  private pickCaveCells(board: Side, rule: CaveInRule): number[] {
+    const pending = this.hazards.filter((h) => h.kind === 'caveIn' && h.board === board).flatMap((h) => h.cells);
+    const total = this.setup.maxSlots[board];
+    const open = Array.from({ length: total }, (_, s) => s).filter((s) => !this.isBlocked(s, board) && !pending.includes(s));
+    const living = this.combatants.filter((c) => c.hp > 0 && c.board === board);
+    const n = Math.min(rule.cells, rule.maxClosed - this.closedCells[board].length - pending.length, open.length - living.length);
+    if (n <= 0) return [];
+    const out: number[] = [];
+    const occupied = rule.aimAtUnits ? open.filter((s) => living.some((c) => !c.inert && c.slot === s)) : [];
+    if (occupied.length) out.push(occupied[this.rng.int(0, occupied.length - 1)]!);
+    while (out.length < n) {
+      const rest = open.filter((s) => !out.includes(s));
+      out.push(rest[this.rng.int(0, rest.length - 1)]!);
+    }
+    return out;
+  }
+
+  /** M-G TEK KANCA: `board` tahtasının `cells` hücreleri işaretlenir, sonraki Round başında `rule` ile çöker (koşul ritmi; ileride Hollow King ultu da bunu çağırır). */
+  warnCaveIn(board: Side, cells: number[], rule: CaveInRule, emit: Emit): void {
+    const ok = cells.filter((s) => !this.isBlocked(s, board));
+    if (ok.length) this.pushHazard('caveIn', board, ok, emit, rule);
+  }
+
+  /** M-G: hücreler kapanır; üstündeki birim hasar + durum alır, sağsa en yakın açık hücreye atılır (yer yoksa üstünde kalır, çıkınca giremez). */
+  private landCaveIn(h: Hazard, emit: Emit): void {
+    const rule = h.caveIn!;
+    const victims = this.combatants.filter((c) => c.hp > 0 && c.board === h.board && h.cells.includes(c.slot)).sort((a, b) => a.slot - b.slot);
+    const base = Math.max(1, Math.round(this.boardMeanHp(h.board) * rule.damageRatio));
+    emit({ type: 'hazardLand', id: h.id, kind: 'caveIn', board: h.board, cells: [...h.cells], hit: victims.map((v) => v.uid) });
+    const closed = h.cells.filter((s) => !this.closedCells[h.board].includes(s));
+    this.closedCells[h.board].push(...closed);
+    emit({ type: 'cellsClosed', board: h.board, slots: closed });
+    for (const v of victims) {
+      this.applyHit(v, v, this.tickDamage('physical', 'physical', base, v), 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical' });
+      this.announceIfDead(v, emit);
+      if (v.hp <= 0) continue;
+      if (!v.inert) this.addStatus(v, { kind: rule.status as Status['kind'], turns: rule.statusTurns, source: v.uid }, emit, rule.id);
+      const to = this.nearestFreeSlot(h.board, v.slot);
+      if (to === null) continue;
+      const from = v.slot;
+      v.slot = to;
+      emit({ type: 'moved', actor: v.uid, from, to, cause: rule.id });
+    }
+    this.syncGroundStatuses(emit);
+  }
+
+  /** Birim `slot` hücresinde dururken bekleyen tehlikelerden alacağı hasar (YZ, önizleme). Saf. */
+  hazardThreat(c: Combatant, slot = c.slot): number {
+    let t = 0;
+    for (const h of this.hazards) {
+      if (h.board !== c.board || !h.cells.includes(slot) || c.inert) continue;
+      if (h.strike) {
+        if (c.side !== h.strike.side) t += this.strikeDamage(h, c);
+      } else if (h.rod || h.bolt) {
+        if (c.side !== (h.rod?.side ?? h.bolt!.side)) t += this.mechanicHit(h.board, h.rod?.ratio ?? h.bolt!.ratio, c);
+      } else if (h.kind === 'caveIn') t += this.tickDamage('physical', 'physical', Math.max(1, Math.round(this.boardMeanHp(h.board) * h.caveIn!.damageRatio)), c);
+      else {
+        const rule = this.setup.rules?.condition?.heat;
+        if (rule) t += rule.amountRatio > 0 ? this.groundTickDamage(rule.ground, this.heatAmount(rule, h.board), c) : this.boardMeanHp(h.board) * (rule.threatRatio ?? 0);
+      }
+    }
+    return t;
+  }
+
+  // --- Harita 3 imza mekanikleri (maps-2-3.md B1, B2, C1, C2, C5, C6; sayılar veride, PROVİZYON). Hepsi taşıyanı / skill'i / kuralı olmayan savaşta çalışmaz, rastgele sayı tüketmez. ---
+
+  /** Çubuk ya da belirteç vuruşunun bu birime tutarı (büyü, zırh düşer; Cave-in ölçeği). Saf. */
+  mechanicHit(board: Side, ratio: number, c: Combatant): number {
+    return this.tickDamage('lightning', 'magic', Math.max(1, Math.round(this.boardMeanHp(board) * ratio)), c);
+  }
+
+  /** B1: bu zemin bu tarafın bu hücresine Eye of the Storm yüzünden işlemiyor mu (ortam zemini, koşul listede, aynı şeritte canlı taşıyan)? Saf. */
+  private eyeShelters(g: GroundEffect, side: Side, board: Side, slot: number): boolean {
+    return g.source === 'env' && !!g.envCause && !!this.eyeCarrier(side, board, slot, g.envCause);
+  }
+
+  /** B1: bu hücreyi koruyan canlı Eye of the Storm taşıyanı (yoksa undefined). `condition` verilmezse savaşın koşulu. Saf. */
+  eyeCarrier(side: Side, board: Side, slot: number, condition = this.setup.rules?.condition?.id): Combatant | undefined {
+    if (!condition) return undefined;
+    return this.combatants.find((c) => c.hp > 0 && c.side === side && c.board === board && c.passive?.effect.type === 'eyeOfStorm' && c.passive.effect.conditions.includes(condition) && this.laneOf(c.slot) === this.laneOf(slot));
+  }
+
+  // B2 Thunder Rod
+
+  /** Round sayacı kuralsız savaşta da çalışsın (çubuk). */
+  private roundsOn = false;
+
+  /** Çubuğun çakılacağı hücre: karşı tahtanın boş hücrelerinden en çok düşmana artı komşu olan (eşitlikte küçük yuva); sınır dolu / yer yoksa null. Saf. */
+  rodCellFor(actor: Combatant, skill: SkillDef): number | null {
+    const cfg = skill.thunderRod;
+    if (!cfg) return null;
+    const board = opposite(actor.side);
+    if (this.hazards.filter((h) => h.rod && h.board === board).length >= cfg.max) return null;
+    let best: { slot: number; n: number } | null = null;
+    for (const slot of this.freeSlots(board)) {
+      const n = this.rodVictims(board, slot, actor.side).length;
+      if (!best || n > best.n) best = { slot, n };
+    }
+    return best?.slot ?? null;
+  }
+
+  /** Çubuğun artı komşularındaki düşmanlar. Saf. */
+  rodVictims(board: Side, slot: number, side: Side): Combatant[] {
+    const near = this.touchingSlots([slot]).filter((s) => s !== slot);
+    return this.combatants.filter((c) => c.hp > 0 && !c.inert && c.board === board && c.side !== side && near.includes(c.slot)).sort((a, b) => a.slot - b.slot);
+  }
+
+  private plantRod(actor: Combatant, skill: SkillDef, emit: Emit): void {
+    const slot = this.rodCellFor(actor, skill);
+    if (slot === null) return;
+    const board = opposite(actor.side);
+    if (!this.setup.rules) this.roundsOn = true;
+    const h: Hazard = { id: `hz${this.hazardCount++}`, kind: 'rod', board, cells: this.touchingSlots([slot]).filter((s) => s !== slot), dueRound: this.round + 1, rod: { slot, side: actor.side, source: actor.uid, skill: skill.id, ratio: skill.thunderRod!.ratio } };
+    this.hazards.push(h);
+    emit({ type: 'rodPlanted', id: h.id, source: actor.uid, skill: skill.id, board, slot });
+  }
+
+  private rodStrike(h: Hazard, emit: Emit): void {
+    const rod = h.rod!;
+    const hit = this.rodVictims(h.board, rod.slot, rod.side);
+    emit({ type: 'rodStrike', id: h.id, board: h.board, slot: rod.slot, hit: hit.map((c) => c.uid) });
+    for (const c of hit) {
+      this.applyHit(c, c, this.mechanicHit(h.board, rod.ratio, c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic' });
+      this.announceIfDead(c, emit);
+    }
+  }
+
+  /** Birime artı komşu ayakta çubuklar (en çok düşmana komşu olan önce, eşitlikte küçük yuva). Saf. */
+  rodsNextTo(c: Combatant): Hazard[] {
+    if (!this.hazards.length) return [];
+    return this.hazards
+      .filter((h) => h.rod && h.board === c.board && h.rod.side !== c.side && h.cells.includes(c.slot))
+      .sort((a, b) => this.rodVictims(b.board, b.rod!.slot, b.rod!.side).length - this.rodVictims(a.board, a.rod!.slot, a.rod!.side).length || a.rod!.slot - b.rod!.slot);
+  }
+
+  private toppleRod(actor: Combatant, emit: Emit): void {
+    const h = this.rodsNextTo(actor)[0];
+    if (!h) return;
+    this.hazards.splice(this.hazards.indexOf(h), 1);
+    emit({ type: 'rodDown', id: h.id, actor: actor.uid, board: h.board, slot: h.rod!.slot });
+  }
+
+  // C1 Rolling Thunder
+
+  /** Sıra tahmini için belirteçler (`once`: öne gelince listeden çıkar; hız sabit, Haste / Slow almaz). Belirteç yoksa boş. Saf. */
+  private boltSlots(): TurnSlot[] {
+    if (!this.hazards.length) return [];
+    return this.hazards.filter((h) => h.bolt).map((h) => ({ uid: h.bolt!.token, side: h.bolt!.side, slot: -1, spd: h.bolt!.speed, counter: h.bolt!.counter, once: true }));
+  }
+
+  /** Sıra çubuğundaki belirtecin bilgisi (HUD ipucu). İnmişse undefined. Saf. */
+  boltInfo(token: string): Hazard | undefined {
+    return this.hazards.find((h) => h.bolt?.token === token);
+  }
+
+  private castRolling(actor: Combatant, skill: SkillDef, target: Combatant, emit: Emit): void {
+    const cfg = skill.rollingThunder!;
+    const { lanes } = this.setup.formulas.formation;
+    const row = this.rowOf(target.slot);
+    const cells = Array.from({ length: lanes }, (_, l) => row * lanes + l).filter((s) => s < this.setup.maxSlots[target.board] && !this.isBlocked(s, target.board));
+    const id = `hz${this.hazardCount++}`;
+    const h: Hazard = { id, kind: 'bolt', board: target.board, cells, dueRound: Number.MAX_SAFE_INTEGER, bolt: { token: `bolt:${id}`, side: actor.side, source: actor.uid, skill: skill.id, ratio: cfg.ratio, speed: cfg.speed, counter: 0, actionsLeft: cfg.testActions } };
+    this.hazards.push(h);
+    emit({ type: 'hazardWarn', id, kind: 'bolt', board: target.board, cells: [...cells], dueRound: h.dueRound });
+  }
+
+  /** Belirteç öne ulaştı: sıradaki düşmanlara ağır darbe; skill `thunder` etiketliyse şimşek kuralları (Live Water, Shatter, Shocked...). Atan ölmüş olabilir. */
+  private landBolt(h: Hazard, emit: Emit): void {
+    const b = h.bolt!;
+    this.hazards.splice(this.hazards.indexOf(h), 1);
+    const hit = this.combatants.filter((c) => c.hp > 0 && !c.inert && c.board === h.board && c.side !== b.side && h.cells.includes(c.slot)).sort((x, y) => x.slot - y.slot);
+    const dark = this.isDark();
+    emit({ type: 'hazardLand', id: h.id, kind: 'bolt', board: h.board, cells: [...h.cells], hit: hit.map((c) => c.uid) });
+    for (const c of hit) {
+      this.applyHit(c, c, this.mechanicHit(h.board, b.ratio, c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic' });
+      this.announceIfDead(c, emit);
+    }
+    const src = this.get(b.source);
+    const skill = src && this.skill(b.skill, src);
+    if (src && skill?.thunder) this.boltLanded(src, skill, [{ board: h.board, cells: [...h.cells] }], new Set(hit.filter((c) => c.hp > 0).map((c) => c.uid)), dark, emit);
+  }
+
+  /** Test modunda sıra yok: belirteç eylem sayar. */
+  private boltTestTick(emit: Emit): void {
+    for (const h of this.hazards.filter((x) => x.bolt)) {
+      h.bolt!.actionsLeft--;
+      if (h.bolt!.actionsLeft <= 0) this.landBolt(h, emit);
+    }
+  }
+
+  // C2 Encased
+
+  private hitBlock(actor: Combatant, target: Combatant, amount: number, crit: boolean, meta: HitMeta, emit: Emit): number {
+    const block = target.encased!;
+    if (meta.element === 'fire') {
+      this.breakBlock(target, 'fire', emit);
+      return amount;
+    }
+    const took = Math.min(block.hp, amount);
+    block.hp -= took;
+    emit({ type: 'encasedHit', target: target.uid, left: block.hp, max: block.maxHp });
+    if (block.hp <= 0) this.breakBlock(target, 'broken', emit);
+    const rest = amount - took;
+    if (rest <= 0) {
+      emit({ type: 'damage', source: actor.uid, target: target.uid, amount: 0, absorbed: took, hpAfter: target.hp, shieldAfter: target.shield, magicShieldAfter: target.magicShield, crit, origin: meta.origin, ...(meta.element ? { element: meta.element } : {}), ...(meta.damageType ? { damageType: meta.damageType } : {}) });
+    }
+    return rest;
+  }
+
+  private breakBlock(c: Combatant, cause: 'fire' | 'broken' | 'debug', emit: Emit): void {
+    if (!c.encased) return;
+    delete c.encased;
+    emit({ type: 'encasedBreak', target: c.uid, cause });
+  }
+
+  /** Round başı: koşul blokları onarır (Blizzard). */
+  private repairBlocks(ratio: number, emit: Emit): void {
+    for (const c of this.combatants) {
+      if (!c.encased || c.hp <= 0 || c.encased.hp >= c.encased.maxHp) continue;
+      c.encased.hp = Math.min(c.encased.maxHp, c.encased.hp + Math.max(1, Math.round(c.encased.maxHp * ratio)));
+      emit({ type: 'encasedHit', target: c.uid, left: c.encased.hp, max: c.encased.maxHp, repaired: true });
+    }
+  }
+
+  // C5 Wake the Halls
+
+  private noiseValue = 0;
+  private noiseRises = 0;
+  private noiseDirty = false;
+  private noiseUids = 0;
+
+  /** HUD ve YZ: sayaç. Kural yoksa null. Saf. */
+  noiseState(): { rule: NoiseRule; value: number; rises: number } | null {
+    const rule = this.setup.rules?.noise;
+    return rule ? { rule, value: this.noiseValue, rises: this.noiseRises } : null;
+  }
+
+  /** YZ / önizleme: bu skill'in sayaca beklenen katkısı (alan + kritik şansı + beklenen patlama). Kural yoksa 0. Saf. */
+  noisePoints(actor: Combatant, skill: SkillDef, anchor?: number, board?: Side, targetUid?: string): number {
+    const rule = this.setup.rules?.noise;
+    if (!rule || !rule.sides.includes(actor.side)) return 0;
+    let p = this.isAreaSkill(skill.id, actor) ? rule.points.area : 0;
+    if (skill.effects.some((e) => e.type === 'damage')) p += this.effectiveStats(actor).critChance * rule.points.crit;
+    if (skill.effects.some((e) => e.type === 'ground') || skill.thunder) {
+      const n = this.groundReactionPreview(actor.uid, skill.id, anchor, board, targetUid).filter((x) => rule.reactions.includes(x.reaction)).length;
+      p += n * rule.points.explosion;
+    }
+    return p;
+  }
+
+  /** `side` tarafının eylemi sayacı doldurur (kural `sides`); eşik eylem sonunda denetlenir. */
+  private noiseAdd(side: Side, points: number): void {
+    const rule = this.setup.rules?.noise;
+    if (!rule || points <= 0 || !rule.sides.includes(side) || this.noiseRises >= rule.maxRises) return;
+    this.noiseValue += points;
+    this.noiseDirty = true;
+  }
+
+  private noiseSettle(emit: Emit): void {
+    const rule = this.setup.rules?.noise;
+    this.noiseDirty = false;
+    if (!rule) return;
+    if (this.noiseValue >= rule.goal && this.nearestFreeSlot('enemy', rule.rise.enemySlots?.[0] ?? 0) !== null) {
+      this.noiseValue = 0;
+      this.noiseRises++;
+      emit({ type: 'noise', value: 0, goal: rule.goal });
+      this.noiseFull(rule, emit);
+    } else emit({ type: 'noise', value: Math.min(this.noiseValue, rule.goal), goal: rule.goal });
+  }
+
+  /** TEK KANCA: sayaç doldu. `rise` birimi (Hollow Warden) kalkar; E6: Hollow King ayaktaysa Call the Vault bedelsiz çalışır (bir Warden daha). */
+  private noiseFull(rule: NoiseRule, emit: Emit): void {
+    emit({ type: 'noiseFull', rise: this.noiseRises });
+    const n = this.noiseUids++;
+    const { added } = this.enlistEnemies(rule.rise, (i) => `enemy-noise${n}-${i}`, this.waveCount > 1 ? this.waveIdx : undefined, 1);
+    if (added.length) {
+      emit({ type: 'reinforce', combatants: added.map(cloneCombatant), queue: this.mode === 'turns' ? this.turnQueue() : [] });
+      this.applyEnvironment(emit);
+    }
+    this.kingHears(emit);
+  }
+
+  // C6 Tempering
+
+  /** Skill su mu: ıslatan zemin bırakır ya da Soaked verir. Saf. */
+  isWaterSkill(skill: SkillDef): boolean {
+    return skill.effects.some((e) => (e.type === 'ground' && !!this.setup.grounds?.[e.ground]?.soak) || (e.type === 'status' && e.status === 'soaked'));
+  }
+
+  /** Savaşa ya da dalgaya giren taşıyıcı Red-hot başlar (olaysız; sahne kurulumda rozeti okur). */
+  private temperStart(c: Combatant): void {
+    const e = c.passive?.effect;
+    if (e?.type !== 'tempering' || c.temper) return;
+    c.temper = 'hot';
+    c.statuses.push({ kind: e.hot as Status['kind'], turns: 1, source: c.uid });
+  }
+
+  private temperFlip(c: Combatant, emit: Emit): void {
+    this.temperSet(c, c.temper === 'hot' ? 'cold' : 'hot', 'turn', emit);
+  }
+
+  /** Duruş değişir: eski rozet kalkar, yenisi gelir (durum yolu dışı: çevre etkisi gibi zarsız, bağışıklık yok). */
+  private temperSet(c: Combatant, stance: 'hot' | 'cold', cause: 'turn' | 'fire' | 'debug', emit: Emit): void {
+    const e = c.passive?.effect;
+    if (e?.type !== 'tempering') return;
+    const next = stance === 'hot' ? e.hot : e.cold;
+    for (const old of [e.hot, e.cold]) {
+      if (old === next || !c.statuses.some((s) => s.kind === old)) continue;
+      c.statuses = c.statuses.filter((s) => s.kind !== old);
+      emit({ type: 'statusEnd', target: c.uid, status: old as Status['kind'] });
+    }
+    c.temper = stance;
+    if (!c.statuses.some((s) => s.kind === next)) {
+      c.statuses.push({ kind: next as Status['kind'], turns: 1, source: c.uid });
+      emit({ type: 'status', target: c.uid, status: next as Status['kind'], turns: 1, source: c.uid, cause: c.passive!.id });
+    }
+    emit({ type: 'tempered', target: c.uid, stance, cause });
+  }
+
+  // --- Harita 3 boss / elit dokunuşları (maps-2-3.md E1-E6; sayılar birim ve skill verisinde, PROVİZYON). Taşıyanı olmayan savaşta çalışmaz, rastgele sayı tüketmez. ---
+
+  /** Round başı: taşıyanların dokunuşları. Thundersnow'un sütunu seed'li. */
+  private touchesForRound(emit: Emit): void {
+    for (const c of [...this.combatants]) {
+      if (c.sermon && c.hp > 0) {
+        c.sermon.left--;
+        if (c.sermon.left <= 0) this.finishSermon(c, emit);
+      }
+      const t = c.touch;
+      if (!t || c.hp <= 0) continue;
+      if (t.type === 'thundersnow') this.markThundersnow(c, t, emit);
+      else if (t.type === 'packRotation') this.rotatePack(c, t, emit);
+      else if (t.type === 'overheat') {
+        if (this.mode === 'test') this.endVentInTest(c, emit);
+        if (c.statuses.some((s) => s.kind === 'soaked')) this.heatChange(c, -t.coolHit, emit); // E1: su boşaltır (Tide, Urn)
+      }
+    }
+  }
+
+  // E1 Overheat
+
+  isVenting(c: Combatant): boolean {
+    const t = c.touch;
+    return t?.type === 'overheat' && c.statuses.some((s) => s.kind === t.status);
+  }
+
+  /** Bu skill vuruşu Heat'i ne kadar değiştirir: ateş +, buz ve su -. Taşıyan değilse ya da Vent sürerken 0. Saf. */
+  heatDelta(c: Combatant, skill: SkillDef): number {
+    const t = c.touch;
+    if (t?.type !== 'overheat' || this.isVenting(c)) return 0;
+    const dmg = skill.effects.filter((e): e is DamageEffect => e.type === 'damage');
+    if (dmg.some((e) => e.element === 'fire')) return t.fireHit;
+    if (dmg.some((e) => e.element === 'ice') || this.isWaterSkill(skill)) return -t.coolHit;
+    return 0;
+  }
+
+  private heatChange(c: Combatant, delta: number, emit: Emit): void {
+    const t = c.touch;
+    if (t?.type !== 'overheat' || c.hp <= 0 || this.isVenting(c)) return;
+    const v = Math.max(0, Math.min(t.max, (c.heat ?? 0) + delta));
+    if (v === c.heat) return;
+    c.heat = v;
+    if (v >= t.max) {
+      c.heat = 0;
+      emit({ type: 'touchBar', target: c.uid, bar: 'heat', value: 0, max: t.max });
+      emit({ type: 'vent', target: c.uid });
+      c.statuses = c.statuses.filter((s) => s.kind !== t.status);
+      c.statuses.push({ kind: t.status as Status['kind'], turns: t.ventTurns, source: c.uid }); // zarsız: kendi kuralı, CC değil
+      emit({ type: 'status', target: c.uid, status: t.status as Status['kind'], turns: t.ventTurns, source: c.uid, cause: 'overheat' });
+    } else emit({ type: 'touchBar', target: c.uid, bar: 'heat', value: v, max: t.max });
+  }
+
+  /** Vuruşla Heat: ateş elementi doldurur (zemin tiki dahil); buz elementi ya da su skill'i boşaltır. */
+  private heatFromHit(c: Combatant, meta: HitMeta, emit: Emit): void {
+    const t = c.touch;
+    if (t?.type !== 'overheat') return;
+    if (meta.element === 'fire') this.heatChange(c, t.fireHit, emit);
+    else if (meta.element === 'ice' || (this.castingSkill && meta.origin === 'skill' && this.isWaterSkill(this.castingSkill))) this.heatChange(c, -t.coolHit, emit);
+  }
+
+  /** Eylem sonu: gerçek eylem (skill, Rest, Move) doldurur; sıra kaybı ve pas doldurmaz. */
+  private heatAfterAction(actor: Combatant, emit: Emit): void {
+    const t = actor.touch;
+    const acted = this.heatActed.delete(actor.uid);
+    if (t?.type !== 'overheat' || actor.hp <= 0 || !acted) return;
+    this.heatChange(actor, t.perAction, emit);
+  }
+  /** Bu eylemde gerçekten bir şey yapan Overheat taşıyanları (noteAction yazar; sıra kaybı finishAction'dan da geçer). */
+  private readonly heatActed = new Set<string>();
+
+  /** Test modunda tur yok: Vent, başladığı Round bitince biter. */
+  private endVentInTest(c: Combatant, emit: Emit): void {
+    const t = c.touch;
+    if (t?.type !== 'overheat') return;
+    const st = c.statuses.find((s) => s.kind === t.status);
+    if (!st) return;
+    c.statuses = c.statuses.filter((s) => s !== st);
+    emit({ type: 'statusEnd', target: c.uid, status: st.kind });
+  }
+
+  /** Debug: Heat ekler (aynı yol). */
+  debugHeat(uid: string, delta: number): ActionResult {
+    const c = this.get(uid);
+    if (c?.touch?.type !== 'overheat') return { ok: false, reason: 'This unit has no Heat bar' };
+    this.heatChange(c, delta, this.debugEmit);
+    return { ok: true, events: [] };
+  }
+
+  // E2 Thundersnow + Whiteout
+
+  private whiteoutUntil = 0;
+  private whiteoutRule: DarknessRule | undefined;
+
+  private markThundersnow(c: Combatant, t: Extract<BossTouch, { type: 'thundersnow' }>, emit: Emit): void {
+    if (c.hp >= c.maxHp * t.below) return;
+    const board = opposite(c.side);
+    const { rows, lanes } = this.setup.formulas.formation;
+    const lane = this.rng.int(0, lanes - 1);
+    const cells = Array.from({ length: rows }, (_, r) => r * lanes + lane).filter((s) => s < this.setup.maxSlots[board] && !this.isBlocked(s, board));
+    if (!cells.length) return;
+    const h: Hazard = { id: `hz${this.hazardCount++}`, kind: 'strike', board, cells, dueRound: this.round + 1, strike: { side: c.side, source: c.uid, skill: t.skill, ratio: t.ratio, iron: t.iron } };
+    this.hazards.push(h);
+    emit({ type: 'hazardWarn', id: h.id, kind: 'strike', board, cells: [...cells], dueRound: h.dueRound });
+  }
+
+  /** Thundersnow'un bu birime hasarı: tahta ortalaması x oran + Armor x iron (Iron Draws the Bolt), büyü. Saf. */
+  strikeDamage(h: Hazard, c: Combatant): number {
+    const s = h.strike!;
+    return this.tickDamage('lightning', 'magic', Math.max(1, Math.round(this.boardMeanHp(h.board) * s.ratio + this.effectiveStats(c).armor * s.iron)), c);
+  }
+
+  /** Vuruş + şimşek kuralları (Shocked, Live Water, Shatter, Thunderflash). Atan ölmüş olsa da iner. */
+  private landStrike(h: Hazard, emit: Emit): void {
+    const s = h.strike!;
+    const hit = this.combatants.filter((c) => c.hp > 0 && !c.inert && c.board === h.board && c.side !== s.side && h.cells.includes(c.slot)).sort((a, b) => a.slot - b.slot);
+    const dark = this.isDark();
+    emit({ type: 'hazardLand', id: h.id, kind: 'strike', board: h.board, cells: [...h.cells], hit: hit.map((c) => c.uid) });
+    for (const c of hit) {
+      this.applyHit(c, c, this.strikeDamage(h, c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic' });
+      this.announceIfDead(c, emit);
+    }
+    const src = this.get(s.source);
+    const skill = src && this.skill(s.skill, src);
+    if (src && skill?.thunder) this.boltLanded(src, skill, [{ board: h.board, cells: [...h.cells] }], new Set(hit.filter((c) => c.hp > 0).map((c) => c.uid)), dark, emit);
+  }
+
+  private castWhiteout(skill: SkillDef, emit: Emit): void {
+    const w = skill.whiteout!;
+    this.whiteoutRule = w.darkness;
+    this.whiteoutUntil = Math.max(this.whiteoutUntil, this.round + w.rounds + 1);
+    if (!this.setup.rules) this.roundsOn = true;
+    this.syncLight(emit, skill.id);
+  }
+
+  // E3 Pack Rotation
+
+  private packOf(c: Combatant, t: Extract<BossTouch, { type: 'packRotation' }>): Combatant[] {
+    return this.combatants.filter((u) => u.hp > 0 && u !== c && u.side === c.side && u.board === c.board && t.pack.includes(u.defId));
+  }
+
+  /** Bu tahtada dönecek çift: en yaralı birim + ondan daha derin sıradaki en sağlam (daha yüksek can oranlı) birim; yoksa null. Saf. */
+  packSwap(c: Combatant, t: Extract<BossTouch, { type: 'packRotation' }>): { back: Combatant; front: Combatant } | null {
+    const pack = this.packOf(c, t);
+    const ratio = (u: Combatant) => u.hp / u.maxHp;
+    const hurt = pack.filter((u) => u.hp < u.maxHp).sort((a, b) => ratio(a) - ratio(b) || a.slot - b.slot);
+    for (const back of hurt) {
+      const front = pack.filter((u) => this.rowOf(u.slot) > this.rowOf(back.slot) && ratio(u) > ratio(back)).sort((a, b) => ratio(b) - ratio(a) || a.slot - b.slot)[0];
+      if (front) return { back, front };
+    }
+    return null;
+  }
+
+  private rotatePack(c: Combatant, t: Extract<BossTouch, { type: 'packRotation' }>, emit: Emit): void {
+    const pair = this.packSwap(c, t);
+    if (!pair) return;
+    const { back, front } = pair;
+    const [a, b] = [back.slot, front.slot];
+    back.slot = b;
+    front.slot = a;
+    emit({ type: 'packRotation', actor: c.uid, back: back.uid, front: front.uid });
+    emit({ type: 'moved', actor: back.uid, from: a, to: b, cause: 'pack_rotation' });
+    emit({ type: 'moved', actor: front.uid, from: b, to: a, cause: 'pack_rotation' });
+    this.syncGroundStatuses(emit);
+  }
+
+  /** Saldırısı yaralı kurtları iyileştirir (taşıyanın kendisi hariç). */
+  private packHeal(c: Combatant, t: Extract<BossTouch, { type: 'packRotation' }>, emit: Emit): void {
+    for (const u of this.packOf(c, t)) if (u.hp < u.maxHp) this.applyHeal(c, u, Math.max(1, Math.round(u.maxHp * t.healRatio)), false, emit, 'pack_rotation');
+  }
+
+  /** YZ: saldırının kurtlara beklenen şifası. Saf. */
+  packHealWorth(c: Combatant): number {
+    const t = c.touch;
+    if (t?.type !== 'packRotation') return 0;
+    return this.packOf(c, t).reduce((a, u) => a + Math.min(u.maxHp - u.hp, Math.max(1, Math.round(u.maxHp * t.healRatio))), 0);
+  }
+
+  /** YZ: taşıyanın ayakta tuttuğu kurtlar. Saf. */
+  packOfTouch(c: Combatant): Combatant[] {
+    return c.touch?.type === 'packRotation' ? this.packOf(c, c.touch) : [];
+  }
+
+  // E4 The Long Sermon
+
+  /** Tamamlanmış vaazın tarafı -> kapsamı (savaş sonuna dek). */
+  private readonly sermonBlessed = new Map<Side, NonNullable<SkillDef['longSermon']>>();
+
+  private startSermon(actor: Combatant, skill: SkillDef, emit: Emit): void {
+    const cfg = skill.longSermon!;
+    if (!this.setup.rules) this.roundsOn = true;
+    const goal = Math.max(1, Math.round(actor.maxHp * cfg.breakRatio));
+    actor.sermon = { skill: skill.id, left: cfg.rounds, taken: 0, goal };
+    emit({ type: 'sermonStart', actor: actor.uid, rounds: cfg.rounds, goal });
+    emit({ type: 'touchBar', target: actor.uid, bar: 'sermon', value: 0, max: goal });
+  }
+
+  /** Vaaz sürerken alınan her hasar çubuğu doldurur; yalnız eşik bozar (Silence / Stun bozmaz). */
+  private sermonHit(c: Combatant, amount: number, emit: Emit): void {
+    const s = c.sermon!;
+    s.taken = Math.min(s.goal, s.taken + amount);
+    emit({ type: 'touchBar', target: c.uid, bar: 'sermon', value: s.taken, max: s.goal });
+    if (s.taken < s.goal) return;
+    delete c.sermon;
+    emit({ type: 'touchBar', target: c.uid, bar: 'sermon', value: 0, max: 0 });
+    emit({ type: 'sermonEnd', actor: c.uid, outcome: 'broken' });
+    this.applyStagger(c, c, emit);
+  }
+
+  private finishSermon(c: Combatant, emit: Emit): void {
+    const cfg = this.skill(c.sermon!.skill, c)?.longSermon;
+    delete c.sermon;
+    emit({ type: 'touchBar', target: c.uid, bar: 'sermon', value: 0, max: 0 });
+    if (!cfg) return;
+    this.sermonBlessed.set(c.side, cfg);
+    emit({ type: 'sermonEnd', actor: c.uid, outcome: 'done' });
+  }
+
+  private inFlock(c: Pick<Combatant, 'name' | 'displayName' | 'defId'>, cfg: NonNullable<SkillDef['longSermon']>): boolean {
+    const family = this.setup.units[c.defId]?.family;
+    return (!!family && cfg.families.includes(family)) || cfg.names.includes(c.displayName ?? c.name);
+  }
+
+  /** Bu birim bu zeminden şifa alıyor mu (tamamlanmış vaaz + Ashborn + zemin)? Saf. */
+  sermonHeals(c: Pick<Combatant, 'side' | 'name' | 'displayName' | 'defId'>, ground: string): boolean {
+    if (!this.sermonBlessed.size) return false;
+    const cfg = this.sermonBlessed.get(c.side);
+    return !!cfg && cfg.ground === ground && this.inFlock(c, cfg);
+  }
+
+  /** YZ: bu tarafta vaazın iyileştireceği birimler. Saf. */
+  sermonFlock(side: Side, cfg: NonNullable<SkillDef['longSermon']>): Combatant[] {
+    return this.fighting(side).filter((c) => this.inFlock(c, cfg));
+  }
+
+  /** `side` tarafının vaazı bitti mi. Saf. */
+  sermonDone(side: Side): boolean {
+    return this.sermonBlessed.has(side);
+  }
+
+  // E6 The King Hears
+
+  private vaultUids = 0;
+
+  private vaultRoom(skill: SkillDef): boolean {
+    const v = skill.callVault!;
+    const alive = this.combatants.filter((c) => c.hp > 0 && c.side === 'enemy' && (c.displayName ?? c.name) === v.name).length;
+    return alive < v.maxAlive && this.nearestFreeSlot('enemy', v.slot) !== null && !!this.setup.units[v.unit];
+  }
+
+  /** Call the Vault: Noise kuralı varsa aynı kurulumla (sefer gücü), yoksa verideki birim. */
+  private callVault(actor: Combatant, skill: SkillDef, emit: Emit): void {
+    if (actor.side !== 'enemy' || !this.vaultRoom(skill)) return;
+    const v = skill.callVault!;
+    const rise = this.setup.rules?.noise?.rise;
+    const setup: WaveSetup = rise?.enemies.length ? { ...rise, enemySlots: [v.slot] } : { enemies: [this.setup.units[v.unit]!], enemySlots: [v.slot], enemyUnits: [{ displayName: v.name }] };
+    const n = this.vaultUids++;
+    const { added } = this.enlistEnemies(setup, (i) => `enemy-vault${n}-${i}`, this.waveCount > 1 ? this.waveIdx : undefined, 1);
+    if (!added.length) return;
+    emit({ type: 'reinforce', combatants: added.map(cloneCombatant), queue: this.mode === 'turns' ? this.turnQueue() : [] });
+    this.applyEnvironment(emit);
+  }
+
+  /** Noise doldu: King ayaktaysa çağrısı bedelsiz çalışır (tur, MP, bekleme harcamaz). */
+  private kingHears(emit: Emit): void {
+    const king = this.combatants.find((c) => c.hp > 0 && c.touch?.type === 'kingHears');
+    if (king?.touch?.type !== 'kingHears') return;
+    const skill = this.skill(king.touch.skill, king);
+    if (!skill?.callVault) return;
+    emit({ type: 'kingHears', actor: king.uid, skill: skill.id });
+    this.callVault(king, skill, emit);
+  }
+
+  /** YZ: Noise dolunca kalkacak ek birim var mı (King ayakta). Saf. */
+  kingListening(): boolean {
+    return this.combatants.some((c) => c.hp > 0 && c.touch?.type === 'kingHears');
+  }
+
+  // Debug (Units paneli): aynı yollar
+
+  /** Seçili birimin tahtasına çubuk (karşı taraftan). */
+  debugRod(uid: string, skill: SkillDef): ActionResult {
+    const c = this.get(uid);
+    const by = c && this.combatants.find((o) => o.hp > 0 && o.side !== c.side && !o.inert && o.board === o.side);
+    if (!by || this.rodCellFor(by, skill) === null) return { ok: false, reason: 'No room for a rod' };
+    this.plantRod(by, skill, this.debugEmit);
+    return { ok: true, events: [] };
+  }
+
+  /** Seçili birimin sırasına Rolling Thunder (karşı taraftan). */
+  debugRolling(uid: string, skill: SkillDef): ActionResult {
+    const c = this.get(uid);
+    const by = c && this.combatants.find((o) => o.hp > 0 && o.side !== c.side && !o.inert);
+    if (!c || !by) return { ok: false, reason: 'No unit' };
+    this.castRolling(by, skill, c, this.debugEmit);
+    return { ok: true, events: [] };
+  }
+
+  /** Buz bloğu: yoksa koyar, varsa uyandırır. */
+  debugEncase(uid: string): ActionResult {
+    const c = this.get(uid);
+    if (!c || c.hp <= 0) return { ok: false, reason: 'Unit is not alive' };
+    if (c.encased) this.breakBlock(c, 'debug', this.debugEmit);
+    else {
+      const hp = Math.max(1, Math.round(c.maxHp * this.setup.formulas.encased.hpRatio));
+      c.encased = { hp, maxHp: hp };
+      this.debugEmit({ type: 'encasedHit', target: c.uid, left: hp, max: hp });
+    }
+    return { ok: true, events: [] };
+  }
+
+  /** Noise sayacına ek (kural varsa; taraf süzgeci yok). */
+  debugNoise(points: number): ActionResult {
+    const rule = this.setup.rules?.noise;
+    if (!rule) return { ok: false, reason: 'No Noise rule in this battle' };
+    if (this.noiseRises >= rule.maxRises) return { ok: false, reason: 'No more can rise in this battle' };
+    this.noiseValue += points;
+    this.noiseSettle(this.debugEmit);
+    return { ok: true, events: [] };
+  }
+
+  /** Tempering duruşunu çevirir. */
+  debugTemper(uid: string): ActionResult {
+    const c = this.get(uid);
+    if (!c?.temper) return { ok: false, reason: 'This unit has no Tempering' };
+    this.temperSet(c, c.temper === 'hot' ? 'cold' : 'hot', 'debug', this.debugEmit);
+    return { ok: true, events: [] };
+  }
+
+  /** Debug: bu savaşın Cave-in kuralıyla (yoksa veride ilk kural çağıran verir) hücreleri işaretler. */
+  debugCaveIn(board: Side, cells: number[], rule: CaveInRule): void {
+    this.warnCaveIn(board, cells, rule, this.debugEmit);
+  }
+
+  // --- M-F Darkness + Lantern ---
+
+  private litUntil = 0;
+  private wasDark = false;
+
+  /** Geçerli Darkness kuralı: savaş koşulu, yoksa süren Whiteout (E2). Saf. */
+  darkRule(): DarknessRule | undefined {
+    return this.setup.rules?.condition?.darkness ?? (this.round < this.whiteoutUntil ? this.whiteoutRule : undefined);
+  }
+
+  /** Karanlık şu an hedeflemeyi kısıtlıyor mu: koşul var, aydınlatma süresi bitmiş, Lantern ayakta değil. Saf. */
+  isDark(): boolean {
+    return !!this.darkRule() && this.round >= this.litUntil && this.flashTurns <= 0 && !this.combatants.some((c) => c.lightSource && c.hp > 0);
+  }
+
+  /** Aydınlatmanın kalan Round sayısı (Lantern hariç; HUD). Saf. */
+  litRoundsLeft(): number {
+    return Math.max(0, this.litUntil - this.round);
+  }
+
+  /** Bu tahtada karanlıkta görülebilen en derin sıra (HUD perdesi). Saf. */
+  darkReachRow(board: Side): number {
+    return this.frontOccupiedRow(board) + (this.darkRule()?.depth ?? 0);
+  }
+
+  /** M-F kısıtı: karanlıkta bu skill bu hücreyi seçemez mi? Yalnızca `sides` tarafı, karşı tahta, hedef seçilen türler (tek hedef ve alan anchor'ı). Saf. */
+  darkBlocks(actor: Combatant, skill: SkillDef, board: Side, slot: number, moved?: { uid: string; slot: number }): boolean {
+    const d = this.darkRule();
+    if (!d || this.debugCasting || this.setup.ignoreRange || !d.sides.includes(actor.side) || board === actor.side) return false;
+    if (skill.target !== 'single_enemy' && skill.target !== 'area_enemies' && skill.target !== 'area_any') return false;
+    return this.isDark() && this.rowOf(slot) > this.frontOccupiedRow(board, moved) + d.depth;
+  }
+
+  /** Ateş skill'i mi: ateş hasarı, ateş elementli zemin ya da ateş tikli durum bırakır. Saf. */
+  isFireSkill(skill: SkillDef): boolean {
+    return skill.effects.some((e) => (e.type === 'damage' && e.element === 'fire') || (e.type === 'ground' && this.setup.grounds?.[e.ground]?.element === 'fire') || (e.type === 'dot' && this.statusDef(e.status)?.dot?.element === 'fire'));
+  }
+
+  /** "Aydınlat" TEK KANCA (ateş skill'i; ileride Thunderflash): tahta `rounds` Round aydınlık (bulunulan Round dahil). Darkness yoksa etkisiz. */
+  lightUp(rounds: number, cause: string, emit: Emit): void {
+    if (!this.darkRule()) return;
+    this.litUntil = Math.max(this.litUntil, this.round + rounds);
+    this.syncLight(emit, cause);
+  }
+
+  /** Aydınlık değiştiyse olay verir. */
+  private syncLight(emit: Emit, cause: string): void {
+    if (!this.darkRule() && !this.wasDark) return; // geçici Whiteout bitince de olay gelsin
+    const dark = this.isDark();
+    if (dark === this.wasDark) return;
+    this.wasDark = dark;
+    emit({ type: 'light', lit: !dark, cause, ...(this.litUntil > this.round ? { until: this.litUntil } : {}) });
+  }
+
+  /** Debug: tahtayı aydınlatır (aydınlat kancası). */
+  debugLightUp(rounds: number): void {
+    this.lightUp(rounds, 'debug', this.debugEmit);
+  }
+
+  // --- Harita 3 şimşek kuralları (maps-2-3.md A1 Shocked, A2 Live Water, A5 Thunderflash, A6 Shatter; skill alanı `thunder`, sayılar formulas.json > thunder) ---
+  // Yalnız `thunder` alanlı skill'ler girer: element 'lightning' tek başına kural açmaz (Bog Spark, Thunderpeal, Great Bell aynı kalır). Etiketsiz savaşta hiçbir yol çalışmaz, rastgele sayı tüketilmez.
+
+  /** A2: canlı su ağları (motor, YZ, sahne). */
+  readonly liveWaters: LiveWater[] = [];
+  private liveCount = 0;
+  /** A5: Thunderflash'ın kalan kısıtlı taraf (kahraman) turu. */
+  private flashTurns = 0;
+
+  /** Hücrede şimşekle patlayan zemin var mı (Ice; reactions > trigger 'lightning'). */
+  private boltReaction(ground: string): { id: string; def: GroundReactionDef } | null {
+    return this.groundReactionFor(ground, 'lightning');
+  }
+
+  /** Şimşeği ileten hücreler: su (Tide, Urn, skill suyu); şimşekle patlayan zeminli hücre (Ice) iletmez. Saf. */
+  private conductingCells(board: Side): Set<number> {
+    const out = new Set<number>();
+    for (const g of this.ground) if (g.board === board && this.isWater(g)) for (const s of g.slots) out.add(s);
+    if (out.size) for (const g of this.ground) if (g.board === board && this.boltReaction(g.ground)) for (const s of g.slots) out.delete(s);
+    return out;
+  }
+
+  /** `from` hücrelerinden 4 yönden bağlı su ağı (artan sıra); `from`'da su yoksa boş. Saf. */
+  private waterNetwork(board: Side, from: readonly number[]): number[] {
+    const water = this.conductingCells(board);
+    const seen = new Set(from.filter((s) => water.has(s)));
+    const queue = [...seen];
+    while (queue.length) {
+      for (const n of this.touchingSlots([queue.shift()!])) {
+        if (seen.has(n) || !water.has(n)) continue;
+        seen.add(n);
+        queue.push(n);
+      }
+    }
+    return [...seen].sort((a, b) => a - b);
+  }
+
+  /** Bir ark'ın bu birime hasarı: tahtanın ortalama maks canı x arcRatio; büyü zırhı düşer. Saf. */
+  arcDamage(c: Combatant): number {
+    return this.tickDamage('lightning', 'magic', Math.max(1, Math.round(this.boardMeanHp(c.board) * this.setup.formulas.thunder.arcRatio)), c);
+  }
+
+  /** Shocked bu birimi Stun'lar mı (Soaked ya da su hücresinde). Saf. */
+  private standsWet(c: Combatant, slot = c.slot): boolean {
+    return c.statuses.some((s) => s.kind === this.setup.formulas.thunder.wetStatus) || this.conductingCells(c.board).has(slot);
+  }
+
+  /** Şimşeğin düştüğü hücreler: alan skill'inde alanın hücreleri, diğerlerinde hedeflerin hücreleri (tahta başına). */
+  private boltFootprint(targets: readonly Combatant[], areaBoard?: Side, cells?: readonly number[]): Array<{ board: Side; cells: number[] }> {
+    if (areaBoard && cells) return [{ board: areaBoard, cells: [...cells] }];
+    const out: Array<{ board: Side; cells: number[] }> = [];
+    for (const t of targets) {
+      const f = out.find((x) => x.board === t.board);
+      if (f) {
+        if (!f.cells.includes(t.slot)) f.cells.push(t.slot);
+      } else out.push({ board: t.board, cells: [t.slot] });
+    }
+    return out;
+  }
+
+  /** YZ / önizleme: hedef listesinin şimşek hücreleri. Saf. */
+  boltFeetOf(targets: readonly Combatant[]): Array<{ board: Side; cells: number[] }> {
+    return this.boltFootprint(targets);
+  }
+
+  /** Şimşeğin sonucu; motor (uygulama), önizleme ve YZ aynı hesabı okur. Saf. `shockable`: isabet ettiği varsayılan birimler. */
+  boltOutcome(actor: Combatant, skill: SkillDef, feet: ReadonlyArray<{ board: Side; cells: readonly number[] }>, shockable: readonly Combatant[], dark = this.isDark()): BoltOutcome {
+    const res: BoltOutcome = { live: [], arcs: [], shatters: [], shards: [], shocks: [], flash: false };
+    if (!skill.thunder) return res;
+    const units = (board: Side, slots: readonly number[]) => this.combatants.filter((c) => c.hp > 0 && !c.inert && c.board === board && slots.includes(c.slot)).sort((a, b) => a.slot - b.slot);
+    const dry = !!skill.thunder.liveFrom && !this.onGround(actor, skill.thunder.liveFrom); // Gloam Eel: kendisi suda değilse su canlanmaz
+    for (const f of feet) {
+      const net = dry ? [] : this.waterNetwork(f.board, f.cells);
+      if (net.length) {
+        res.live.push({ board: f.board, cells: net });
+        for (const c of units(f.board, net)) res.arcs.push({ uid: c.uid, damage: this.arcDamage(c) });
+      }
+      for (const s of f.cells) {
+        const g = this.ground.find((x) => x.board === f.board && x.slots.includes(s) && this.boltReaction(x.ground));
+        const r = g && this.boltReaction(g.ground);
+        if (!r) continue;
+        res.shatters.push({ board: f.board, slot: s, reaction: r.id, label: r.def.label });
+        const d = r.def.damage;
+        if (!d?.hpRatio) continue;
+        const raw = Math.max(1, Math.round(this.boardMeanHp(f.board) * d.hpRatio * d.mult));
+        const hit = (c: Combatant, x: number) => {
+          const dmg = this.tickDamage(d.element, 'physical', x, c);
+          const had = res.shards.find((p) => p.uid === c.uid);
+          if (had) had.damage += dmg;
+          else res.shards.push({ uid: c.uid, damage: dmg });
+        };
+        for (const c of units(f.board, [s])) hit(c, raw);
+        if (d.adjacent) for (const c of units(f.board, this.touchingSlots([s]).filter((n) => n !== s))) hit(c, Math.max(1, Math.round(raw * d.adjacent)));
+      }
+    }
+    if (skill.thunder.shocks) for (const c of shockable) if (c.hp > 0 && !c.inert && c.side !== actor.side) res.shocks.push({ uid: c.uid, stun: this.standsWet(c) });
+    const d = this.darkRule();
+    if (d && dark && !d.sides.includes(actor.side)) {
+      res.flash = true;
+      const heroes = this.combatants.filter((c) => c.hp > 0 && !c.inert && d.sides.includes(c.side) && feet.some((f) => f.board === c.board));
+      const dist = (c: Combatant) => Math.min(...feet.filter((f) => f.board === c.board).flatMap((f) => f.cells.map((s) => Math.abs(this.rowOf(s) - this.rowOf(c.slot)) + Math.abs(this.laneOf(s) - this.laneOf(c.slot)))));
+      const near = [...heroes].sort((a, b) => dist(a) - dist(b) || a.slot - b.slot)[0];
+      if (near) res.blinded = near.uid;
+    }
+    return res;
+  }
+
+  /** Şimşek düştü: Shocked, Live Water, Shatter, Thunderflash (bu sırayla). `landed`: isabet eden birimler. */
+  private boltLanded(actor: Combatant, skill: SkillDef, feet: Array<{ board: Side; cells: number[] }>, landed: ReadonlySet<string>, dark: boolean, emit: Emit): void {
+    const shockable = [...landed].map((u) => this.get(u)).filter((c): c is Combatant => !!c);
+    const out = this.boltOutcome(actor, skill, feet, shockable, dark);
+    for (const s of out.shocks) this.shock(actor, this.get(s.uid)!, skill, s.stun, emit);
+    for (const n of out.live) {
+      const id = `lw${this.liveCount++}`;
+      this.liveWaters.push({ id, board: n.board, slots: [...n.cells], source: actor.uid, fresh: true });
+      const hit = this.combatants.filter((c) => c.hp > 0 && !c.inert && c.board === n.board && n.cells.includes(c.slot)).sort((a, b) => a.slot - b.slot);
+      emit({ type: 'liveWater', id, source: actor.uid, board: n.board, cells: [...n.cells], hit: hit.map((c) => c.uid) });
+      for (const c of hit) this.arcHit(c, emit);
+    }
+    for (const s of out.shatters) {
+      const g = this.ground.find((x) => x.board === s.board && x.slots.includes(s.slot) && this.boltReaction(x.ground));
+      if (g) {
+        emit({ type: 'groundReaction', reaction: s.reaction, label: s.label, board: s.board, slot: s.slot, setup: g.ground, trigger: 'lightning', source: actor.uid });
+        if (this.groundReactionDef(s.reaction)?.remove?.includes(g.ground)) this.cutGround(g, [s.slot], emit);
+      }
+    }
+    for (const p of out.shards) {
+      const c = this.get(p.uid);
+      if (!c || c.hp <= 0) continue;
+      this.applyHit(c, c, p.damage, 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical' });
+      this.announceIfDead(c, emit);
+    }
+    if (out.shatters.length) this.syncGroundStatuses(emit);
+    if (out.flash) {
+      const T = this.setup.formulas.thunder;
+      this.flashTurns = Math.max(this.flashTurns, T.flashHeroTurns);
+      emit({ type: 'thunderflash', source: actor.uid, skill: skill.id, ...(out.blinded ? { blinded: out.blinded } : {}) });
+      this.syncLight(emit, 'thunderflash');
+      const b = out.blinded ? this.get(out.blinded) : undefined;
+      if (b && b.hp > 0) this.addStatus(b, { kind: 'blinded', turns: T.flashBlindTurns, source: actor.uid }, emit, 'thunderflash');
+    }
+  }
+
+  /** A1: sıra çubuğunda anında geri itilir + rozet; suda geri itme yerine Stun (normal durum yolu: direnç / bağışıklık geçerli). */
+  private shock(actor: Combatant, c: Combatant, skill: SkillDef, stun: boolean, emit: Emit): void {
+    if (c.hp <= 0) return;
+    const T = this.setup.formulas.thunder;
+    if (stun) {
+      this.addStatus(c, { kind: 'stun', turns: T.stunTurns, source: actor.uid }, emit, skill.id);
+      emit({ type: 'shock', source: actor.uid, target: c.uid, skill: skill.id, pushed: 0, stunned: c.statuses.some((s) => s.kind === 'stun') });
+      return;
+    }
+    const pushed = Math.round(this.setup.formulas.turn.threshold * T.pushback);
+    c.turnCounter -= pushed;
+    // Rozet: yalnız görünüş (etkisi anlık geri itmedir); çevre etkisi gibi zarsız
+    c.statuses = c.statuses.filter((s) => s.kind !== T.badge);
+    c.statuses.push({ kind: T.badge as Status['kind'], turns: T.badgeTurns, source: actor.uid });
+    emit({ type: 'status', target: c.uid, status: T.badge as Status['kind'], turns: T.badgeTurns, source: actor.uid, cause: skill.id });
+    emit({ type: 'shock', source: actor.uid, target: c.uid, skill: skill.id, pushed, stunned: false });
+  }
+
+  private arcHit(c: Combatant, emit: Emit): void {
+    if (c.hp <= 0) return;
+    this.applyHit(c, c, this.arcDamage(c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic' });
+    this.announceIfDead(c, emit);
+  }
+
+  /** Birim bu hücrede canlı suda mı (buza dönen / çekilen su canlı değildir). Saf. */
+  onLiveWater(board: Side, slot: number): boolean {
+    return this.liveWaters.some((l) => l.board === board && l.slots.includes(slot)) && this.conductingCells(board).has(slot);
+  }
+
+  /** A2: turunu canlı suda bitiren ark yer (hamleyle çıkan yemez); ağ, atanın sonraki turu bitince (ya da atan ölünce) söner. */
+  private liveWaterTurnEnd(actor: Combatant, emit: Emit): void {
+    if (actor.hp > 0 && !actor.inert && !this.liveWaters.some((l) => l.fresh && l.source === actor.uid) && this.onLiveWater(actor.board, actor.slot)) this.arcHit(actor, emit);
+    for (const l of [...this.liveWaters]) {
+      const src = this.get(l.source);
+      if (l.source === actor.uid && l.fresh) {
+        l.fresh = false;
+        continue;
+      }
+      if (l.source !== actor.uid && src && src.hp > 0) continue;
+      this.liveWaters.splice(this.liveWaters.indexOf(l), 1);
+      emit({ type: 'liveWaterEnd', id: l.id });
+    }
+  }
+
+  /** A5: kısıtlı tarafın bir birimi turunu bitirince Thunderflash söner. */
+  private flashTurnEnd(actor: Combatant, emit: Emit): void {
+    const d = this.darkRule();
+    if (actor.inert || !d?.sides.includes(actor.side)) return;
+    this.flashTurns--;
+    if (this.flashTurns <= 0) this.syncLight(emit, 'fade');
+  }
+
+  /** YZ: `side` tarafının elindeki şimşek skill'leri (kullanılabilirlik bakılmaz; tehdit ölçüsü). Etiket yoksa boş. Saf. */
+  thunderSkillsOf(side: Side): Array<{ unit: Combatant; skill: SkillDef }> {
+    const out: Array<{ unit: Combatant; skill: SkillDef }> = [];
+    for (const c of this.combatants) {
+      if (c.hp <= 0 || c.side !== side || c.inert) continue;
+      for (const id of c.skills) {
+        const skill = this.skill(id, c);
+        if (skill?.thunder) out.push({ unit: c, skill });
+      }
+    }
+    return out;
+  }
+
+  /** YZ: birim bu hücrede dursa bir şimşek ona ne yapar: su (ark), komşu dahil buz patlaması, Stun riski. Saf. */
+  boltCellRisk(u: Combatant, board: Side, slot: number): { water: boolean; live: boolean; arc: number; shards: number } {
+    const water = this.conductingCells(board).has(slot);
+    let shards = 0;
+    for (const g of this.ground) {
+      if (g.board !== board) continue;
+      const d = this.boltReaction(g.ground)?.def.damage;
+      if (!d?.hpRatio) continue;
+      const raw = Math.max(1, Math.round(this.boardMeanHp(board) * d.hpRatio * d.mult));
+      for (const s of g.slots) {
+        const far = Math.abs(this.rowOf(s) - this.rowOf(slot)) + Math.abs(this.laneOf(s) - this.laneOf(slot));
+        if (far === 0) shards = Math.max(shards, this.tickDamage(d.element, 'physical', raw, u));
+        else if (far === 1 && d.adjacent) shards = Math.max(shards, this.tickDamage(d.element, 'physical', Math.max(1, Math.round(raw * d.adjacent)), u));
+      }
+    }
+    return { water, live: this.onLiveWater(board, slot), arc: water ? this.arcDamage(u) : 0, shards };
+  }
+
+  /**
+   * Debug (Ground reactions > Lightning bolt): seçili birimin hücresine şimşek düşmüş gibi: karşı taraftaki ilk birim atar; Shocked + Live Water + Shatter + Thunderflash aynı yol.
+   * Skill bedeli, isabet zarı, doğrudan hasar yok.
+   */
+  debugBolt(uid: string): ActionResult {
+    const c = this.get(uid);
+    if (!c || c.hp <= 0) return { ok: false, reason: 'Unit is not alive' };
+    const by = this.combatants.find((o) => o.hp > 0 && o.side !== c.side && !o.inert) ?? c;
+    const bolt = { id: 'debug_bolt', thunder: { shocks: true } } as unknown as SkillDef;
+    this.boltLanded(by, bolt, [{ board: c.board, cells: [c.slot] }], new Set([c.uid]), this.isDark(), this.debugEmit);
+    return { ok: true, events: [] };
   }
 
   // --- M-N3 Tidewater Urn ---
@@ -8445,7 +9825,8 @@ export class Battle {
   /** Vuruşun isabet zarında saldıranın stat'ları: effectiveStats + koşulun skill'e göre isabet eki (Storm). Koşul yoksa effectiveStats aynen. */
   hitStats(actor: Combatant, skill: SkillDef | null | undefined): Combatant['stats'] {
     const st = this.effectiveStats(actor);
-    const d = this.conditionAccuracy(skill);
+    const raw = this.conditionAccuracy(skill);
+    const d = raw !== 0 && this.eyeCarrier(actor.side, actor.board, actor.slot) ? 0 : raw; // B1: Eye of the Storm cezayı keser
     return d === 0 ? st : { ...st, accuracy: Math.max(0, Math.round((st.accuracy + d) * 10000) / 10000) };
   }
 
@@ -8510,6 +9891,19 @@ export class Battle {
    */
   private arrangeForRules(): void {
     const r = this.setup.rules!;
+    if (r.lantern) {
+      // M-F Lantern: tarafa inert nesne (tercih edilen hücre doluysa en yakın açık); maks can tarafın ortalamasının oranı
+      const l = r.lantern;
+      const slot = this.nearestFreeSlot(l.side, l.slot);
+      if (slot !== null) {
+        const c = createSetupCombatant(l.def, l.side, slot, `${l.side}-lantern`, undefined, this.setup.formulas, this.seed, this.setup.skills);
+        c.maxHp = c.hp = Math.max(1, Math.round(this.boardMeanHp(l.side) * l.hpRatio));
+        c.stats = { ...c.stats, hp: c.maxHp };
+        c.lightSource = true;
+        this.combatants.push(c);
+      }
+    }
+    this.wasDark = this.isDark();
     if (r.blocked?.length || r.urn)
       for (const c of [...this.combatants].sort((a, b) => b.hp - a.hp || a.slot - b.slot)) {
         if (!this.isBlocked(c.slot, c.board)) continue;
@@ -8534,7 +9928,13 @@ export class Battle {
   private waveBeganForRules(emit: Emit): void {
     const flood = this.setup.rules?.condition?.flood;
     if (flood?.onWave) this.flood(flood, emit);
+    // Heat / Cave-in: ilk işaret savaşın başında (sonraki dalgalarda Round sayacı sürer, yeniden işaretlenmez)
+    if (!this.hazardsStarted && (this.setup.rules?.condition?.heat || this.setup.rules?.caveIn)) {
+      this.hazardsStarted = true;
+      this.markHazards(emit);
+    }
   }
+  private hazardsStarted = false;
 
   /** Savaş turu sayacı: false = savaş bitti (Survive tamamlandı), çağıran turu başlatmaz. */
   private noteRound(actor: Combatant, emit: Emit): boolean {
@@ -8551,7 +9951,15 @@ export class Battle {
   /** Yeni savaş turu: Survive sayacı (N tur dolunca kaçış = zafer); biten su çekilir; Tide her N turda bir; Totem ayaktaysa takviye. */
   private startRound(emit: Emit): void {
     const r = this.setup.rules;
-    if (!r) return;
+    if (!r) {
+      if (this.roundsOn) {
+        emit({ type: 'round', round: this.round });
+        this.hazardsForRound(emit);
+        if (!this.winner) this.touchesForRound(emit);
+        if (!this.winner) this.syncLight(emit, 'fade');
+      }
+      return;
+    }
     emit({ type: 'round', round: this.round });
     const o = r.objective;
     if (o?.type === 'survive') {
@@ -8573,6 +9981,10 @@ export class Battle {
     const flood = r.condition?.flood;
     if (flood && flood.everyRounds > 0 && (this.round - 1) % flood.everyRounds === 0) this.flood(flood, emit);
     if (o?.type === 'totem' && o.every > 0 && (this.round - 1) % o.every === 0 && this.objectiveUnits().some((c) => c.hp > 0)) this.reinforce(o, emit);
+    if (r.condition?.encasedRepair) this.repairBlocks(r.condition.encasedRepair, emit);
+    this.hazardsForRound(emit);
+    if (!this.winner) this.touchesForRound(emit);
+    if (!this.winner) this.syncLight(emit, 'fade');
   }
 
   /** M-B Tide: `boards` tahtalarının `rows` sıraları (kapalı hücreler hariç) `rounds` tur Flooded; aynı tahtadaki eski su yenisiyle değişir. */
@@ -8591,7 +10003,7 @@ export class Battle {
    * (Ömer 2026-10-29): sudaki her birim (yardımcı nesne hariç) Soaked, suda kaldıkça sürer, çıkınca o an kalkar (eski soakTurns kalktı).
    */
   private isWater(g: GroundEffect): boolean {
-    return g.envUntilRound !== undefined || !!this.setup.grounds?.[g.ground]?.soak;
+    return (g.envUntilRound !== undefined && !!g.soak) || !!this.setup.grounds?.[g.ground]?.soak;
   }
 
   /** Çevre etkisi (söndürme) + zemin durumlarının eşitlenmesi; kurallı savaşta her eylem sonunda, kuralsızda da eylem sonunda çalışır. */
@@ -8783,6 +10195,11 @@ export class Battle {
     if (!def) return { ok: false, reason: 'Unknown reaction' };
     // Kendi tahtası koşullu tepkime (Holy Water): birimin kendisi bırakır (şifa ona); diğerleri karşı taraf
     const by = def.board === 'own' ? c : this.combatants.find((o) => o.hp > 0 && o.side !== c.board && !o.inert) ?? c;
+    if (def.trigger[0] === 'lightning') {
+      // Şimşek tetikli tepkime (Shatter): zemin bırakılmaz, şimşek düşer
+      const made = this.debugPlaceGround(by.uid, def.setup[0]!, c.board, [c.slot]);
+      return made.ok ? this.debugBolt(uid) : made;
+    }
     const lanes = this.setup.formulas.formation.lanes;
     const row = Array.from({ length: lanes }, (_, l) => this.rowOf(c.slot) * lanes + l);
     const first = this.debugPlaceGround(by.uid, def.setup[0]!, c.board, def.spread?.length ? row : [c.slot]);
@@ -8839,6 +10256,10 @@ export class Battle {
 
   private record(e: BattleEvent): void {
     this.log.push(e);
+    if (e.type === 'groundReaction' && this.setup.rules?.noise?.reactions.includes(e.reaction)) {
+      const by = this.get(e.source);
+      if (by) this.noiseAdd(by.side, this.setup.rules.noise.points.explosion); // C5: patlama gürültü yapar
+    }
     for (const l of this.listeners) l(e);
   }
 }
@@ -8881,6 +10302,7 @@ function createCombatant(def: CombatantDef, side: Side, slot: number, uid: strin
     cooldowns: {},
     ...(def.maxRage !== undefined ? { rage: 0, maxRage: def.maxRage } : {}),
     ...(def.boss ? { boss: def.boss } : {}),
+    ...(def.touch ? { touch: def.touch, ...(def.touch.type === 'overheat' ? { heat: 0 } : {}) } : {}),
     ...(def.inert ? { inert: true } : {}),
   };
 }
@@ -8977,12 +10399,17 @@ function buildSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, ui
   // Hazır çağrı (ör. düşman Skeleton): çağrı kuralları, sahipsiz ve süresiz
   if (unit.summoned) c.summoned = true;
   if (unit.lockSkills && unit.lockSkills.length > 0) c.lockedSkills = [...unit.lockSkills];
+  if (unit.unlockOnWave?.skills.length) c.unlockOnWave = { wave: unit.unlockOnWave.wave, skills: [...unit.unlockOnWave.skills] };
   if (unit.undying) c.undying = true;
   if (unit.objective) c.objective = true; // B3 Break the Totem: hedef nesne
   if (finite(unit.initialCooldownBonus) && unit.initialCooldownBonus > 0) c.initialCooldownBonus = Math.floor(unit.initialCooldownBonus);
   // Endless sürekli akış: taşınan durum (Rage, buff'lar, kalkan, çağrı sahibi/ömrü); verilmezse birim aynı
   if (finite(unit.startRage) && c.maxRage !== undefined) c.rage = Math.max(0, Math.min(c.maxRage, Math.round(unit.startRage)));
   if (unit.startStatuses && unit.startStatuses.length > 0) c.statuses = unit.startStatuses.map((s) => ({ ...s }));
+  if (unit.encased) {
+    const hp = Math.max(1, Math.round(c.maxHp * formulas.encased.hpRatio));
+    c.encased = { hp, maxHp: hp };
+  }
   if (finite(unit.startShield) && unit.startShield > 0) c.shield = Math.max(c.shield, Math.round(unit.startShield));
   if (finite(unit.startMagicShield) && unit.startMagicShield > 0) c.magicShield = Math.max(c.magicShield, Math.round(unit.startMagicShield));
   if (unit.startShieldHooks && unit.startShieldHooks.length > 0) c.shieldHooks = unit.startShieldHooks.map((h) => ({ ...h, onAbsorb: { ...h.onAbsorb } }));
@@ -9009,6 +10436,7 @@ function cloneCombatant(c: Combatant): Combatant {
     tags: [...c.tags],
     skills: [...c.skills],
     ...(c.lockedSkills ? { lockedSkills: [...c.lockedSkills] } : {}),
+    ...(c.unlockOnWave ? { unlockOnWave: { wave: c.unlockOnWave.wave, skills: [...c.unlockOnWave.skills] } } : {}),
     cooldowns: { ...c.cooldowns },
     statuses: c.statuses.map((s) => ({ ...s, ...(s.held ? { held: { ...s.held } } : {}) })),
     ...(c.shieldHooks ? { shieldHooks: c.shieldHooks.map((h) => ({ ...h, onAbsorb: { ...h.onAbsorb } })) } : {}),

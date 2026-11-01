@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: stonebound_warden. Kendi idle çizimi (assets/sprites/thunderwright, mob-poses); saldırı pozu, VFX ve ses yer tutucu.",
+  "id": "thunderwright",
+  "name": "Thunderwright",
+  "family": "guardians",
+  "spriteId": "thunderwright",
+  "spriteScale": 0.88,
+  "color": "#7d8fa8",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Dwarf Road · Stormsmith",
+  "attributes": {
+    "str": 20,
+    "int": 24,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 24,
+  "magicArmor": 4,
+  "overrides": {
+    "hp": 110
+  },
+  "ai": "aggressive",
+  "skills": [
+    "anvil_strike",
+    "ring_the_anvil"
+  ],
+  "passive": {
+    "id": "iron_draws_the_bolt",
+    "name": "Iron Draws the Bolt",
+    "icon": "bolt",
+    "text": "This unit's lightning deals more damage to targets with more Armor.",
+    "effect": {
+      "type": "ironDraws"
+    }
+  }
+}

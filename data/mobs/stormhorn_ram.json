@@ -1,0 +1,35 @@
+{
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: ash_hound. Kendi idle çizimi (assets/sprites/stormhorn_ram, mob-poses); saldırı pozu, VFX ve ses yer tutucu.",
+  "id": "stormhorn_ram",
+  "name": "Stormhorn Ram",
+  "family": "beasts",
+  "spriteId": "stormhorn_ram",
+  "spriteScale": 1.25,
+  "color": "#8a8fa8",
+  "logo": "roar",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Beast · Charger",
+  "attributes": {
+    "str": 24,
+    "int": 2,
+    "dex": 12,
+    "luck": 4
+  },
+  "armor": 14,
+  "magicArmor": 4,
+  "ai": "aggressive",
+  "skills": [
+    "shield_bash",
+    "headlong"
+  ],
+  "passive": {
+    "id": "stormhide",
+    "name": "Stormhide",
+    "icon": "bolt",
+    "text": "A hero that hits this unit with a melee skill is Shocked. If that hero stands in water, it is Stunned instead.",
+    "effect": {
+      "type": "stormhide"
+    }
+  }
+}

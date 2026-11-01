@@ -1,5 +1,5 @@
 import { classes, defaultSlots, skills, CELL_COUNT } from '../engine/content';
-import { CONFIG, ENCOUNTERS, EVENTS, STORIES, TREASURES, getMap, type EventChoice } from './data';
+import { CONFIG, ENCOUNTERS, EVENTS, STORIES, TREASURES, getMap, mapFor, type EventChoice } from './data';
 import { finalNode, incoming, neighbors, node, outgoing, undirectedDistances, upstreamOf } from './graph';
 import { rngFor, shuffle } from './seed';
 import { nextMapId } from './map-flags';
@@ -39,7 +39,7 @@ export const PAUSED_LOCK = 'Finish the paused battle first';
 /** Duraklatılmış savaş varken yola çıkmak, Formation, Gear, Valor diriltmesi kilitli: nedeni (yoksa null). */
 export const pausedLock = (s: CampaignState | null): string | null => (s?.suspended ? PAUSED_LOCK : null);
 const key = (nodeId: string, kind: StepKind) => `${nodeId}:${kind}`;
-export const mapOf = (s: CampaignState): CampaignMap => getMap(s.mapId);
+export const mapOf = (s: CampaignState): CampaignMap => mapFor(s);
 
 export function newCampaign(o: { mode: CampaignMode; seed: number; mapId?: string; campaignId?: string; difficulty?: Difficulty; slot?: number }): CampaignState {
   const map = getMap(o.mapId ?? CONFIG.maps[0]!);
@@ -50,6 +50,7 @@ export function newCampaign(o: { mode: CampaignMode; seed: number; mapId?: strin
     difficulty: o.difficulty ?? CONFIG.defaultDifficulty,
     slot: o.slot ?? 0,
     mapId: map.id,
+    soloStart: true, // tek kişilik başlangıç (Ömer 2026-11-01): eski kayıtta alan yok, eski yapı sürer
     seed: o.seed,
     roster: [],
     active: Array.from({ length: CELL_COUNT }, () => ''),
@@ -76,8 +77,9 @@ export function nodeSteps(map: CampaignMap, n: MapNode): StepKind[] {
   const steps: StepKind[] = [];
   if (n.id === map.start && !map.continues) steps.push('hero'); // devam haritasında (Harita 2) takım taşınır: kahraman seçimi yok
   if (n.recruit?.when === 'before') steps.push('recruit');
-  if (n.endsTutorial) steps.push('farewell');
+  if (n.farewell) steps.push('farewell');
   if (n.newCompany) steps.push('company');
+  if (n.briefing) steps.push('briefing');
   if (n.encounter) steps.push('battle');
   if (n.recruit?.when === 'after') steps.push('recruit'); // zaferden sonra katılım (Mill Road; Ömer 2026-10-27): haritaya dönüşte
   if (n.treasure) steps.push('treasure');
@@ -128,6 +130,8 @@ export function nextStep(s: CampaignState): NextStep {
         return { kind: 'farewell', node: n.id };
       case 'company':
         return { kind: 'company', node: n.id, size: n.newCompany!.size };
+      case 'briefing':
+        return { kind: 'briefing', node: n.id };
       case 'battle':
         return { kind: 'battle', node: n.id, encounter: nodeEncounter(n, s)! }; // M-L Harbor Fort: tarafa göre elit
       case 'treasure':
@@ -294,7 +298,7 @@ export function moveHero(s: CampaignState, heroId: string, cell: number): Campai
   return t;
 }
 
-const tutorialActive = (s: CampaignState): boolean => !mapOf(s).nodes.some((n) => n.endsTutorial && isDone(s, n.id, 'farewell'));
+const tutorialActive = (s: CampaignState): boolean => !s.soloStart && !mapOf(s).nodes.some((n) => n.farewell && isDone(s, n.id, 'farewell'));
 
 export function complete(s: CampaignState, kind: StepKind, at: string = s.at): void {
   const k = key(at, kind);
@@ -424,12 +428,13 @@ export function revisitNode(s: CampaignState): CampaignState {
   return t;
 }
 
-/** "Choose your hero": tutorial kahramanı (lider). */
+/** "Choose your hero": kalıcı ilk kahraman, bölük lideri (Ömer 2026-11-01). Kahraman seçilmemiş eski kayıt da yeni yapıya geçer. */
 export function pickHero(s: CampaignState, classId: string): CampaignState {
   expectStep(s, 'hero');
   if (!CONFIG.starterPool.includes(classId)) throw new Error(`Class not in the starter pool: ${classId}`);
   const t = clone(s);
-  addHero(t, classId, { leader: true, tutorial: true });
+  t.soloStart = true;
+  addHero(t, classId, { leader: true });
   complete(t, 'hero');
   return t;
 }
@@ -472,7 +477,8 @@ export function formationGate(s: CampaignState, lessonsOn = true): boolean {
   const due = s.formationDue;
   if (!lessonsOn || due === undefined) return false;
   const step = nextStep(s);
-  if (due === s.at) return step.kind === 'battle';
+  // Ashford katılımı (tek kişilik başlangıç): kapı bulunulan kasabada yazılır, yola çıkışta ileri düğümlerin hepsinde işler
+  if (due === s.at) return step.kind === 'battle' || (step.kind === 'move' && !!node(mapOf(s), s.at).newCompany);
   return step.kind === 'move' && step.options.includes(due);
 }
 
@@ -489,7 +495,10 @@ export function debugRequireFormation(s: CampaignState): CampaignState {
 
 /** Bu düğüme dokunmak kapıya takılır mı (kapı bekliyor ve düğüm kapının düğümü)? */
 export function formationTapGated(s: CampaignState, nodeId: string, lessonsOn = true): boolean {
-  return s.formationDue === nodeId && formationGate(s, lessonsOn);
+  if (!formationGate(s, lessonsOn)) return false;
+  if (s.formationDue === nodeId) return true;
+  const step = nextStep(s);
+  return s.formationDue === s.at && step.kind === 'move' && step.options.includes(nodeId);
 }
 
 /** Formation açıldı ve kapandı: kapı kalkar (yoksa aynı durum döner). */
@@ -656,7 +665,35 @@ function skippedHandoverFaces(t: CampaignState, ho: NonNullable<CampaignState['p
   return { node: ho.node, items: ho.items, from };
 }
 
-/** "Form your company": `size` farklı sınıf, companyPool'dan serbest; ilk seçilen (ya da `leaderIndex`) lider. */
+/** Katılım ekranının sınıfları: bölük kurulurken serbest havuz; lider sabitse (tek kişilik başlangıç) kadroda olan sınıflar çıkar. */
+export function companyChoices(s: CampaignState): string[] {
+  const keep = node(mapOf(s), s.at).newCompany?.leader === 'keep';
+  const owned = new Set(keep ? s.roster.map((h) => h.class) : []);
+  return CONFIG.companyPool.filter((c) => !owned.has(c));
+}
+
+/** Geçerli bölük adı ya da undefined (Ömer 2026-11-01, D4): metin, denetim karakteri yok, boşluklar sadeleşir, boş değil, en çok CONFIG.companyName.max harf. */
+export function cleanCompanyName(x: unknown): string | undefined {
+  if (typeof x !== 'string') return undefined;
+  // eslint-disable-next-line no-control-regex
+  const t = x.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  return t && t.length <= CONFIG.companyName.max ? t : undefined;
+}
+
+/** Bölük adını yazar; boş / geçersiz ad alanı siler ("Your party" kalır). Fazlası kırpılır. */
+export function setCompanyName(s: CampaignState, name: string): CampaignState {
+  const clean = cleanCompanyName(name.slice(0, CONFIG.companyName.max));
+  if (clean === s.companyName) return s;
+  const t = { ...s };
+  if (clean) t.companyName = clean;
+  else delete t.companyName;
+  return t;
+}
+
+/**
+ * "Form your company": `size` farklı sınıf, companyPool'dan serbest; ilk seçilen (ya da `leaderIndex`) lider. Tek kişilik başlangıçta (newCompany.leader
+ * 'keep', Ashford): lider değişmez, seçilen katılım seviyesinde katılır (joinLevel) ve yola çıkışta Zorunlu Formation kapısı kurulur.
+ */
 export function formCompany(s: CampaignState, picks: string[], leaderIndex = 0): CampaignState {
   const step = expectStep(s, 'company');
   const size = (step as Extract<NextStep, { kind: 'company' }>).size;
@@ -664,12 +701,37 @@ export function formCompany(s: CampaignState, picks: string[], leaderIndex = 0):
   if (new Set(picks).size !== picks.length) throw new Error('Each class can be picked only once');
   for (const c of picks) if (!CONFIG.companyPool.includes(c)) throw new Error(`Class not in the company pool: ${c}`);
   const t = clone(s);
+  if (node(mapOf(s), s.at).newCompany?.leader === 'keep') {
+    const open = companyChoices(s);
+    for (const c of picks) if (!open.includes(c)) throw new Error(`${c} is already in the company`);
+    for (const c of picks) joinHero(t, c);
+    const joined = autoFormation(t);
+    joined.formationDue = joined.at;
+    complete(joined, 'company');
+    return joined;
+  }
   picks.forEach((c, i) => addHero(t, c, { leader: i === leaderIndex }));
   // Tutorial atlandıysa teslim kartına eşyayla eşleşen portreler (open-questions 407, Ömer 2026-10-24 "Eşleşsin")
   if (t.pendingHandover?.skippedSets) t.pendingHandover = skippedHandoverFaces(t, t.pendingHandover, picks);
   const arranged = autoFormation(t);
   complete(arranged, 'company');
   return arranged;
+}
+
+/** Garrick'in görevi (texts anahtarı düğümde): {leader}, {companion} sınıf adlarıyla. Ashford'da bölük kurulunca bir kez. */
+export function briefingText(s: CampaignState): string {
+  const n = node(mapOf(s), s.at);
+  const lead = leaderOf(s);
+  const mate = s.roster.filter((h) => h !== lead).at(-1);
+  return (CONFIG.texts[n.briefing ?? ''] ?? '').replace('{leader}', classes[lead?.class ?? '']?.name ?? '').replace('{companion}', classes[mate?.class ?? '']?.name ?? '');
+}
+
+/** Garrick'in görevi okundu. */
+export function acknowledgeBriefing(s: CampaignState): CampaignState {
+  expectStep(s, 'briefing');
+  const t = clone(s);
+  complete(t, 'briefing');
+  return t;
 }
 
 /** Tek tıkla biten adımlar: olay (seçenekli olayda "hiçbir şey yapmadan geç"), hazine, kasaba sahnesi, kasaba (Leave). */
@@ -1040,10 +1102,12 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   // Devriye (yeniden oynama): XP azalan getiriyle (roadmap 2.3 A; campaign.json > replay.xp); altın / item loot.ts'te (items.json > loot.repeat)
   const gains = battleXp(t, outcome, encounterId);
   applyXp(t, patrol ? scaleGains(gains, replayMult(replayCount(t, t.at) + 1)) : gains);
-  // Yaralı kalkan kahraman level atlasa da riseRatio canla kalır (level şifası yalnızca savaşı ayakta bitirene; VARSAYIM open-questions 369)
+  // Yaralı kalkan kahraman level atlasa da riseRatio canla kalır (level şifası yalnızca savaşı ayakta bitirene; VARSAYIM open-questions 369).
+  // Boss zaferi (Ömer 2026-10-31): yaralı kalkan da bossVictoryHeal (tam) canla kalkar; yara işlemeye devam eder.
+  const riseHp = nodeType === 'boss' ? heal : (rules.wounds ?? woundRules()).riseRatio;
   for (const id of risen) {
     const h = heroById(t, id);
-    if (h) h.hpRatio = Math.round(clamp01((rules.wounds ?? woundRules()).riseRatio) * 1000) / 1000;
+    if (h) h.hpRatio = Math.round(clamp01(riseHp) * 1000) / 1000;
   }
   // Valor: yalnızca açıksa birikir (savaşta harcanan düşülür); elit +2, boss +3 (win yerine), kusursuzsa +1. Düğüm başına bir kez
   // (Ömer 2026-10-18, karar 364: "Valorü node başına 1 kere al"): devriye zaferi Valor KAZANDIRMAZ (savaşta harcanan yine düşülür).
@@ -1660,9 +1724,11 @@ export function pathTo(map: CampaignMap, target: string): string[] {
  * Debug: düğüme ışınlan. Yol başlangıçtan oraya kurulur, önceki düğümlerin adımları bitmiş sayılır; kadro gerekiyorsa seed'li otomatik
  * seçimlerle doldurulur (kahraman, adaylar, Ashford takımı). Hedef düğümün adımları baştan başlar.
  */
-export function debugTeleport(s: CampaignState, target: string): CampaignState {
+export function debugTeleport(s: CampaignState, target: string, hero?: string): CampaignState {
   const map = mapOf(s);
   let t = newCampaign({ mode: s.mode, seed: s.seed, mapId: s.mapId, campaignId: s.campaignId, difficulty: s.difficulty, slot: s.slot });
+  const old = !s.soloStart; // eski kayıtta ışınlanma eski yapıda kalır (kahraman seçimi yeni yapıya geçirmesin)
+  if (old) delete t.soloStart;
   t.stats = { ...s.stats };
   t.tipsSeen = [...s.tipsSeen];
   const route = pathTo(map, target);
@@ -1674,52 +1740,14 @@ export function debugTeleport(s: CampaignState, target: string): CampaignState {
       const step = nextStep(t);
       if (step.kind === 'move' || step.kind === 'complete') break;
       if (last && step.kind !== 'hero') break;
-      t = autoResolve(t, step);
+      t = hero && step.kind === 'hero' ? pickHero(t, hero) : autoResolve(t, step);
+      if (old && step.kind === 'hero') {
+        delete t.soloStart;
+        t.roster[0]!.tutorial = true;
+      }
     }
     if (!last) t = moveTo(t, route[i + 1]!);
   }
-  return t;
-}
-
-/**
- * "Skip tutorial" (Ömer 2026-10-23): kahraman seçiminde tutorial atlanır, sefer bölük kurma düğümünde (Ashford) "Form your company"
- * adımında başlar. Tutorial'ı bitiren oyuncuyla aynı durum mevcut kurallarla kurulur: tutorial yolu (Mill Road -> Ravenwood -> Watchtower)
- * seed'li otomatik seçimlerle kazanılmış sayılır (debugTeleport ile aynı yol), Ashford vedası yapılır (tutorial takımı ayrılır, eşyaları
- * torbaya). Kazanılan altın ve eşyalar kalır (open-questions 407 varsayımı); oyuncunun hiç görmediği şeyler temizlenir: zafer sayacı
- * değişmez, bekleyen ganimet / level kartı yok, tutorial düğümlerinin ipuçları görüldü. Teslim kartı (Ömer 2026-10-24, madde 407): ayrılan
- * kahramanlar yerine bölük kurulunca torbadaki eşyayı takabilen sınıflardan seed'li portreler (`skippedSets`, bkz. formCompany).
- */
-export function skipTutorial(s: CampaignState): CampaignState {
-  expectStep(s, 'hero');
-  const map = mapOf(s);
-  const target = map.nodes.find((n) => n.newCompany);
-  if (!target) throw new Error('This map has no tutorial to skip');
-  const route = pathTo(map, target.id);
-  let t = clone(s);
-  let sets: string[][] = [];
-  for (let i = 0; i < route.length; i++) {
-    const last = i === route.length - 1;
-    while (true) {
-      const step = nextStep(t);
-      if (step.kind === 'move' || step.kind === 'complete') break;
-      if (last && step.kind === 'company') break;
-      if (step.kind === 'farewell')
-        sets = t.roster.filter((h) => h.tutorial).map((h) => SLOT_IDS.map((k) => h.equipment[k]?.uid).filter((u): u is string => !!u)).filter((g) => g.length);
-      t = autoResolve(t, step);
-    }
-    if (!last) t = moveTo(t, route[i + 1]!);
-  }
-  t.stats = { ...s.stats };
-  delete t.pendingLoot;
-  delete t.levelUps;
-  delete t.formationDue;
-  if (t.pendingHandover) {
-    const ho = t.pendingHandover;
-    const given = new Set(ho.items);
-    const groups = sets.map((g) => g.filter((u) => given.has(u))).filter((g) => g.length);
-    t.pendingHandover = { node: ho.node, items: ho.items, from: [], ...(groups.length ? { skippedSets: groups } : {}) };
-  }
-  for (const id of route.slice(0, -1)) if (CONFIG.tips[id] && !t.tipsSeen.includes(id)) t.tipsSeen.push(id);
   return t;
 }
 
@@ -1734,7 +1762,9 @@ export function autoResolve(s: CampaignState, step: NextStep = nextStep(s)): Cam
     case 'farewell':
       return farewell(s);
     case 'company':
-      return formCompany(s, shuffle(CONFIG.companyPool, rngFor(s.seed, 'auto-company')).slice(0, step.size));
+      return formCompany(s, shuffle(companyChoices(s), rngFor(s.seed, 'auto-company')).slice(0, step.size));
+    case 'briefing':
+      return acknowledgeBriefing(s);
     case 'battle':
       return applyBattle(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: h.hpRatio, alive: !isFallen(h) })) });
     case 'treasure':

@@ -445,7 +445,7 @@
           "text": "\"Another lot come down the Long Stair. You walk like men with a coffin on your backs. Whatever is wrapped in that cloth, it's warm; I can feel it from here. Where are you taking it?\"",
           "choices": [
             { "label": "\"To the sea. Lord Morvane's last words asked it of us.\"", "likes": true },
-            { "label": "\"That's our business, old man.\"" }
+            { "label": "\"That's our business, old man.\"", "reply": "\"Keep it, then. I hear the talk from upriver, and I know whose crown that was.\"" }
           ]
         },
         {
@@ -453,7 +453,7 @@
           "choices": [
             { "label": "\"What are they afraid of?\"", "likes": true },
             { "label": "\"Who else crosses this river, besides us?\"", "likes": true, "reply": "\"Few enough, since the monks shut the road. You'd do better to ask what they're afraid of.\"" },
-            { "label": "\"We'll give them a reason. Steel is a good one.\"" }
+            { "label": "\"We'll give them a reason. Steel is a good one.\"", "reply": "\"Steel won't move them. It isn't you they're afraid of.\"" }
           ]
         },
         {
@@ -483,7 +483,7 @@
           "text": "\"You're bound for the Weir Mouth? Then listen, for I'll say it once. The wyrm is strong in the water and slow on the mud. On flooded ground its hide turns blades like oiled leather, and when it calls the flood in, it is twice the beast it was.\"",
           "choices": [
             { "label": "\"Then we strike it on dry ground, before the flood.\"", "likes": true },
-            { "label": "\"We've killed bigger things than an eel.\"" }
+            { "label": "\"We've killed bigger things than an eel.\"", "reply": "\"Then you know to look before you strike.\"" }
           ]
         },
         {
@@ -520,7 +520,7 @@
           "text": "\"Welcome to Saltmere. You'll find everything here: Odo's Chandlery for supplies, the smithies by the quay, swords for hire at the barracks, a ship to the isles at the Ferry Office. Everything has a price. What brings you to the sea?\"",
           "choices": [
             { "label": "\"The Tide. We mean to stop it.\"", "likes": true },
-            { "label": "\"Whatever pays.\"" }
+            { "label": "\"Whatever pays.\"", "reply": "\"Everything pays in Saltmere, until the Tide takes it.\"" }
           ]
         },
         {
@@ -564,7 +564,7 @@
         {
           "text": "\"Captain Marrow. He laughs when he boards a ship, my father said, and he leaves nobody to tell of it. And behind him, in Gallows Cove, the Admiral. Admiral Vane. My father said the Admiral would never leave the cove while the Caravel still sails.\"",
           "choices": [
-            { "label": "\"Then we'll find the Caravel first.\"", "likes": true },
+            { "label": "\"Then we'll find the Caravel first.\"", "likes": true, "reply": "\"My father would have said the same, before the storm.\"" },
             { "label": "\"Where is your father now?\"", "likes": true },
             { "label": "\"Your father talked a lot.\"" }
           ]

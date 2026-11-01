@@ -202,7 +202,12 @@ interface MapMenuScene {
   menuSave(): void;
   menuLoad(): void;
 }
-const mapNow = (): MapMenuScene | null => (game.scene.isActive('CampaignMapScene') ? (game.scene.getScene('CampaignMapScene') as unknown as MapMenuScene) : null);
+// Sahne etkin ama sınıfı henüz kurulmamış olabilir (tembel yükleme / sahne geçişi): menuState yoksa harita yok sayılır
+const mapNow = (): MapMenuScene | null => {
+  if (!game.scene.isActive('CampaignMapScene')) return null;
+  const sc = game.scene.getScene('CampaignMapScene') as unknown as MapMenuScene | undefined;
+  return typeof sc?.menuState === 'function' ? sc : null;
+};
 
 new GameMenu(document.getElementById('ui-root')!, {
   context: () => flowContext(game),

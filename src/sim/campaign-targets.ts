@@ -11,14 +11,24 @@ export const CAMPAIGN_TARGETS = {
   /** Normal düğümde ilk deneme kazanma (%), iyi oyuncu. */
   firstWinNormal: [75, 90] as Band,
   /**
-   * Düğüm geçmek için kasma savaşı (ortalama, düğüme ulaşan koşu başına). Medium = iyi oyuncunun hedefi; Hard = Medium x2 (elit ve boss dahil; Ömer 2026-10-19);
-   * Easy = hiç kasma. Normal düğümde "~0" = en fazla 0,25 (Hard 0,5) kabul.
+   * Eğri gereği kolay düğümler (Ömer 2026-11-01, Harita 1 eğrisi): bandın ÜSTÜNDE kalmaları kusur değil (rapor `~` yazar, özet bunları ayrı sayar).
+   * Ashford sonrası ilk düğümler (tek kişi de geçebilmeli), Valdren sonrası ilk savaşlar (3. kişi), King's Bridge sonrası ilk savaş (4. kişi).
+   */
+  easyByDesign: { valdoria: ['moor', 'hills', 'cairn', '6B', '6A', '5A', '10'] } as Record<string, readonly string[]>,
+  /** Tek kahramanla ilk denemede kazanma, düğüm başına en az (%), Medium iyi oyuncu (Ömer 2026-11-01: hafif hafif zorlaşır; --solo-check). */
+  soloFirstWinMin: { moor: 80, hills: 80, cairn: 75 } as Record<string, number>,
+  /**
+   * Düğüm geçmek için kasma savaşı. Medium = iyi oyuncunun hedefi; Hard = Medium x2 (elit ve boss dahil; Ömer 2026-11-01); Easy = hiç kasma.
+   * ÖLÇÜ (Ömer 2026-11-01): Medium / Hard elit ve boss = KASIP GEÇEN koşu başına (isGrinderMeasure; ilk denemede geçemeyip kasan oyuncu kaç kasınca geçer;
+   * duvara vuran koşular bu ortalamaya GİRMEZ, duvar ayrı wallRunsMaxPct sınırıyla ölçülür). Normal düğüm ve Easy = düğüme ulaşan koşu başına (duvar kasması dahil); normalde "~0" = en fazla 0,25 (Hard 0,5) kabul.
    */
   grind: {
     easy: { normal: [0, 0.1], elite: [0, 0.1], boss: [0, 0.1] },
-    medium: { normal: [0, 0.25], elite: [1, 2], boss: [3, 5] },
-    hard: { normal: [0, 0.5], elite: [2, 4], boss: [6, 10] },
+    medium: { normal: [0, 0.25], elite: [2, 3], boss: [3, 4] },
+    hard: { normal: [0, 0.5], elite: [4, 6], boss: [6, 8] },
   } as Record<Difficulty, Record<GrindCategory, Band>>,
+  /** Boss düğümünde ilk deneme kazanma (%), Medium iyi oyuncu (Ömer 2026-11-01: kabaca %30-50). */
+  bossFirstWin: [30, 50] as Band,
   /** Ortalama oyuncu: aynı bantlar, kasma en fazla bu oran kadar fazla (üst sınır x1,5; iyi oyuncuya oranı da en fazla 1,5). */
   averageGrindExtra: 0.5,
   /** Kasma savaşlarının tüm savaşlara oranı (%). */
@@ -39,6 +49,9 @@ export const CAMPAIGN_TARGETS = {
   /** Ek "aşırı kasma" koşusu: Ashford sonrası ilk bölgede önceden yapılan kasma savaşı sayısı. */
   overgrind: 10,
 } as const;
+
+/** Bu zorluk + kategoride kasma hedefi kasıp geçen koşu başına mı ölçülür (değilse ulaşan koşu başına). */
+export const isGrinderMeasure = (d: Difficulty, c: GrindCategory): boolean => c !== 'normal' && d !== 'easy';
 
 /** Değer bantta mı (rapor işareti: yeşil "+" / kırmızı "!"). */
 export const inBand = (v: number, b: Band): boolean => v >= b[0] && v <= b[1];

@@ -46,7 +46,7 @@ import { VERSIONS_TAB, registerVersionsPanel } from './debug-versions';
 import { POSE_TESTER_GEAR, registerPosesPanel } from './debug-poses';
 import { weaponFor, type WeaponPick } from '../game/poses';
 import { waveTestBattleData } from '../game/wave-test-battle';
-import { BOSS_TESTS, RULES_TESTS, bossTestBattleData, rulesTestBattleData } from '../game/rules-test-battle';
+import { BOSS_TESTS, RULES_TESTS, TOUCH_TESTS, bossTestBattleData, rulesTestBattleData, touchTestBattleData } from '../game/rules-test-battle';
 import { offhandItem, weaponItem } from '../game/pose-weapons';
 
 /** Sekme sırası (menü bu sırayla gösterir). */
@@ -196,7 +196,7 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     id: 'panel.rules-test',
     tab: 'Setup',
     render: (el) => {
-      el.append(heading('Objective test'), noteLineText('Map 2 battle rules against Drowned Reach mobs. Your campaign save is not touched. The rule line sits under the Round plate; hover it for the full text.'));
+      el.append(heading('Objective test'), noteLineText('Map 2 and Map 3 battle rules against Drowned Reach mobs. Your campaign save is not touched. The rule line sits under the Round plate; hover it for the full text.'));
       for (const mode of ['turns', 'test'] as const) {
         const grid = document.createElement('div');
         grid.className = 'debug-grid';
@@ -226,6 +226,28 @@ export function registerDebugTools({ game, debug }: Ctx): void {
           grid.append(
             debugButton(mode === 'turns' ? t.label : `${t.label} (test)`, () => {
               const data = bossTestBattleData(newSeed(), mode, t.kind);
+              const b = battle();
+              if (b) b.scene.restart(data);
+              else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
+            }, { icon: mode === 'turns' ? 'skull' : 'flask', title: t.hint }),
+          );
+        el.append(grid);
+      }
+    },
+  });
+  // Map 3 boss / elit dokunuşları (maps-2-3.md E1-E6): turns ve test modu
+  debug.registerPanel({
+    id: 'panel.touch-test-map3',
+    tab: 'Setup',
+    render: (el) => {
+      el.append(heading('Map 3 boss touches'), noteLineText('The six boss and elite touches against a random party. Your campaign save is not touched. Use Set HP to reach the thresholds. Bars and marks are placeholders.'));
+      for (const mode of ['turns', 'test'] as const) {
+        const grid = document.createElement('div');
+        grid.className = 'debug-grid';
+        for (const t of TOUCH_TESTS)
+          grid.append(
+            debugButton(mode === 'turns' ? t.label : `${t.label} (test)`, () => {
+              const data = touchTestBattleData(newSeed(), mode, t.kind);
               const b = battle();
               if (b) b.scene.restart(data);
               else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
@@ -558,7 +580,17 @@ export function registerDebugTools({ game, debug }: Ctx): void {
           title: `${content.grounds[d.setup[0]!]?.name ?? d.setup[0]} first, then ${content.grounds[d.trigger[0]!]?.name ?? d.trigger[0]} on this unit's cell (placed by the other side). ${d.text}`,
         }),
       );
-      el.append(...debugSection('Ground reactions', ...reactionButtons));
+      const boltButton = debugButton('Lightning bolt', act((u) => b.debugBolt(u.uid)), { icon: 'bolt', title: "A bolt lands on this unit's cell, thrown by the other side: Shocked, then Live Water if the cell is Flooded, Shatter if it is Ice, Thunderflash in Darkness." });
+      el.append(...debugSection('Ground reactions', ...reactionButtons, boltButton));
+      const skillOf = (id: string) => content.skills[id]!;
+      el.append(...debugSection('Map 3 signature mechanics',
+        debugButton('Thunder Rod here', act((u) => b.debugRod(u.uid, skillOf('thunder_rod'))), { icon: 'bolt', title: "The other side drives a rod into the best empty cell on this unit's side" }),
+        debugButton('Rolling Thunder', act((u) => b.debugRolling(u.uid, skillOf('rolling_thunder'))), { icon: 'bolt', title: "A lightning token enters the turn bar, aimed at this unit's row" }),
+        debugButton('Ice block on/off', act((u) => b.debugEncase(u.uid)), { icon: 'droplet', title: 'Encases this unit, or wakes it if it is encased' }),
+        debugButton('Noise +5', act(() => b.debugNoise(5)), { icon: 'bolt', title: 'Only in a battle with the Noise rule (Rules test: Wake the Halls)' }),
+        debugButton('Heat +2', act((u) => b.debugHeat(u.uid, 2)), { icon: 'flame', title: 'Only for a unit with Overheat (Map 3 boss touches: Golem)' }),
+        debugButton('Flip stance', act((u) => b.debugTemper(u.uid)), { icon: 'flame', title: 'Only for a unit with Tempering (Rules test: Tempering)' }),
+      ));
 
     },
   });

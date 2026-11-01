@@ -1,0 +1,28 @@
+{
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: stonebound_warden. YER TUTUCU görünüm: çizimi yok, stonebound_warden sprite'ı.",
+  "id": "hollow_delver",
+  "name": "Hollow Delver",
+  "family": "guardians",
+  "spriteId": "stonebound_warden",
+  "color": "#7a7468",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Hollow · Burrower",
+  "attributes": {
+    "str": 26,
+    "int": 6,
+    "dex": 8,
+    "luck": 4
+  },
+  "armor": 24,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 115
+  },
+  "ai": "aggressive",
+  "skills": [
+    "gatestone_slam",
+    "undermine"
+  ]
+}

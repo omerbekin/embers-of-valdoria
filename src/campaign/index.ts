@@ -8,6 +8,8 @@ export * from './fog';
 export * from './seed';
 export * from './state';
 export * from './encounters';
+export * from './solo-start';
+export * from './suggest';
 export * from './save';
 export * from './power';
 export * from './gear';

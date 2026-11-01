@@ -102,7 +102,7 @@ describe('sefer ve Endless bağlantısı, kayıt', () => {
   });
 
   it('sefer: her savaş zaferinde zar; sayaç kayıtta; eski kayıtta yoksa 0', () => {
-    const s0: CampaignState = { ...debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 5 }), 'archer'), '5A'), inventory: [] };
+    const s0: CampaignState = { ...debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 5 }), 'druid'), '5A'), inventory: [] };
     const before = s0.lootState.rareMisses ?? 0;
     const s1 = applyBattle(s0, { victory: true, units: activeHeroes(s0).map((h) => ({ heroId: h.id, hpRatio: 1, alive: true })) });
     expect([before + 1, 0]).toContain(s1.lootState.rareMisses);
@@ -115,7 +115,7 @@ describe('sefer ve Endless bağlantısı, kayıt', () => {
     RARE.chance.battle = 1;
     let hit: CampaignState | null = null;
     for (let seed = 1; seed < 80 && !hit; seed++) {
-      const s0: CampaignState = { ...debugTeleport(pickHero(newCampaign({ mode: 'normal', seed }), 'archer'), '5A'), inventory: [] };
+      const s0: CampaignState = { ...debugTeleport(pickHero(newCampaign({ mode: 'normal', seed }), 'druid'), '5A'), inventory: [] };
       const s1 = applyBattle(s0, { victory: true, units: activeHeroes(s0).map((h) => ({ heroId: h.id, hpRatio: 1, alive: true })) });
       if (s1.pendingLoot?.rare?.length) hit = s1;
     }

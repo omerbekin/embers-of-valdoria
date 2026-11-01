@@ -57,7 +57,9 @@ import { heroQuests, questBonusLine } from '../campaign/quests';
 import { boonList, respecHeroTree, respecTreeBlocked } from '../campaign';
 import { bandTipHtml } from './band-tip';
 import { tipOn, tipOff } from './tip-vis';
+import { canAddPoint } from '../progression/levels';
 import { createTreeTab, treeNodeIconUrl, treeNodeSheetTip } from './tree-tab';
+import { createFirstPoint, type FirstPointCoach } from './first-point';
 import { treeOf } from '../progression/skill-tree-data';
 import { treePool } from '../progression/skill-tree';
 import { treeSpent } from '../progression/skill-tree-hero';
@@ -83,8 +85,8 @@ export interface GearOptions {
   /** Item takma tutorial'ı (Ashford teslimi): üstte yönlendirme satırı. */
   tutorial?: boolean;
   onClose?: () => void;
-  /** Telefonda açılış görünümü ('char' = Character; stat puanı dağıtımı / Level Up kartı). */
-  view?: 'char' | 'inv';
+  /** Açılış görünümü ('char' = Sheet; stat puanı dağıtımı / Level Up kartı; 'tree' = skill ağacı). */
+  view?: 'char' | 'inv' | 'tree';
 }
 
 /** Gear ekranının gördüğü kahraman (sefer Hero'su ve endless kahramanı bu şekle uyar; ekipman 6 yuvalı, boş = null). */
@@ -204,7 +206,7 @@ function withUiIcon(e: HTMLElement, k: UiIconKind): void {
 /** Sefer Gear ekranı (eski giriş; kaynak CampaignState). */
 export function openGearScreen(root: HTMLElement, o: GearOptions): () => void {
   const s0 = o.get();
-  return openGear(root, campaignGearSource(o.get, o.set), { hero: o.hero ?? activeHeroes(s0)[0]?.id ?? s0.roster[0]?.id ?? '', tutorial: o.tutorial, onClose: o.onClose, ...(o.view ? { view: o.view } : {}) });
+  return openGear(root, campaignGearSource(o.get, o.set), { hero: o.hero ?? activeHeroes(s0)[0]?.id ?? s0.roster[0]?.id ?? '', tutorial: o.tutorial, onClose: o.onClose, firstPoint: true, ...(o.view ? { view: o.view } : {}) });
 }
 
 /** Gear'ın dışarıya açtığı işlevler (tüccar / ganimet eki bunlarla Gear'ı sürer). */
@@ -307,7 +309,7 @@ export const GEAR_REFRESH_EVENT = 'gear:refresh';
  * atma: sürüklerken beliren çöp kutusu (Rare+ onaylı). İpucu: item'in özellikleri + her kahramana etkisi. Kaynaktan beslenir (sefer / endless).
  * Sayfa kapları kalıcıdır: odak (üstüne gelinen item) değişince yalnızca içerik yenilenir, kaydırma kabı yerinde kalır (dokunmatikte kaydırma takılmaz).
  */
-export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string; tutorial?: boolean; onClose?: () => void; view?: 'char' | 'inv'; ext?: GearExt } = {}): () => void {
+export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string; tutorial?: boolean; onClose?: () => void; view?: 'char' | 'inv' | 'tree'; ext?: GearExt; firstPoint?: boolean } = {}): () => void {
   const ext = o.ext;
   const overlay = el('div', 'gr-overlay el-modal gr-ledger-ov'); // ortak pencere hareketi (elegant.css > .el-modal, src/ui/motion.ts)
   overlay.setAttribute('role', 'dialog');
@@ -338,7 +340,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   const hiddenKinds = new Set<string>();
   let bagMenu: BagMenu = null;
   /** Sekme: Hero (yuvalar + torba) / Sheet (statlar + skill ağacı). Level Up "Spend points" Sheet ile açar. */
-  let tab: 'hero' | 'sheet' | 'tree' = o.view === 'char' ? 'sheet' : 'hero';
+  let tab: 'hero' | 'sheet' | 'tree' = o.view === 'char' ? 'sheet' : o.view === 'tree' ? 'tree' : 'hero';
+  let firstPoint: FirstPointCoach | null = null;
   /** Bekleyen stat puanları (Sheet; Confirm kaynağa yazar, kahraman değişince silinir). */
   let pending: StatAlloc = {};
   let shakeUid = '';
@@ -521,6 +524,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     closing = true;
     window.clearTimeout(toastTimer);
     unmountX();
+    firstPoint?.destroy();
     treeTab.destroy();
     ext?.destroy?.();
     closeDom(overlay, () => overlay.remove());
@@ -577,7 +581,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   document.addEventListener('keydown', onKey, true);
   // Panelin dışına (kararan zemine) dokunmak Gear'ı kapatır (X ile aynı; src/ui/backdrop.ts)
-  // İÇERİ sayılanlar: tüm çift pencere (ganimet / tüccar paneli dahil) ve pencere içi onay kutusu (Ömer 2026-10-18: ganimetteki her tık "Leave?" açıyordu)
+  // İÇERİ sayılanlar: tüm çift pencere (ganimet / tüccar paneli dahil), pencere içi onay kutusu (Ömer 2026-10-18: ganimetteki her tık "Leave?" açıyordu)
+  // ve çanta menüleri (örtünün çocuğu, panelin dışında; Ömer 2026-11-01: seçeneklere tıklamak Gear'ı kapatıyordu)
   const inPair = pair ?? panel;
   installBagMenuDismiss(
     overlay,
@@ -587,7 +592,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       renderRight();
     },
   );
-  dismissOnBackdrop(overlay, (t) => inPair.contains(t) || !!(t instanceof Element && t.closest('.gr-confirm, .mw-welcome')), () => close());
+  dismissOnBackdrop(overlay, (t) => inPair.contains(t) || !!(t instanceof Element && t.closest('.gr-confirm, .mw-welcome, .bb-menu')), () => close());
 
   /** İşlem + yeniden çizim; `okSound` yalnızca işlem başarılıysa çalar (hata: uyarı + hata sesi, ikisi birden değil). */
   const apply = (fn: () => void, okSound?: () => void): void => {
@@ -726,8 +731,36 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   boonsEl.addEventListener('click', () => showBoons());
   if (bagOnly) tabsBox.hidden = true;
   // Tree sekmesi (Faz 3b; src/ui/tree-tab.ts): yalnızca ağaç şalteri açıkken, çift pencerede (tüccar / ganimet) yok
-  const treeTab = createTreeTab({ overlay, hero: () => curHero(), gold: () => src.gold(), setTree: (id, a) => src.setTree?.(id, a), respec: (id) => src.respecTree?.(id), toast: (t, ok) => showToast(t, ok), ask: (t, ok, run, danger) => ask(t, ok, run, danger), rerender: () => renderAll() });
+  const treeTab = createTreeTab({ overlay, hero: () => curHero(), gold: () => src.gold(), setTree: (id, a) => src.setTree?.(id, a), onChange: () => firstPoint?.sync(), respec: (id) => src.respecTree?.(id), toast: (t, ok) => showToast(t, ok), ask: (t, ok, run, danger) => ask(t, ok, run, danger), rerender: () => renderAll() });
   const treeOn = treeTab.enabled && !ext && !!src.setTree;
+  // Garrick şeridi (Ömer 2026-11-01, C5): ağaç / stat ekranı ilk kez puanla açılınca (yalnız sefer Gear'ı; src/ui/first-point.ts)
+  firstPoint = o.firstPoint && !ext
+    ? createFirstPoint({
+        panel,
+        view: () => (tab === 'tree' && treeOn ? 'tree' : tab === 'sheet' ? 'stat' : null),
+        hero: () => curHero(),
+        tree: treeTab.coach,
+        stat: {
+          free: () => Math.max(0, (curHero()?.statPoints ?? 0) - Object.values(pending).reduce((t, n) => t + (n ?? 0), 0)),
+          pending: () => Object.values(pending).reduce((t, n) => t + (n ?? 0), 0),
+          pendingOf: (k) => pending[k as Attribute] ?? 0,
+          canTake: (k) => {
+            const h = curHero();
+            if (!h || !src.allocate) return false;
+            const now: StatAlloc = { ...(h.alloc ?? {}) };
+            for (const [a, n] of Object.entries(pending)) now[a as Attribute] = (now[a as Attribute] ?? 0) + (n ?? 0);
+            return canAddPoint(h.class, now, k as Attribute);
+          },
+          take: (k) => {
+            pending = { ...pending, [k as Attribute]: (pending[k as Attribute] ?? 0) + 1 };
+            uiSound('select');
+            renderAll();
+          },
+          node: (k) => leafL.querySelector<HTMLElement>(`.sh-row[data-stat="${k}"]`),
+          head: () => leafR.querySelector<HTMLElement>('.gr-tree-head'),
+        },
+      })
+    : null;
   if (treeOn) {
     tabsBox.append(treeTab.button);
     treeTab.button.addEventListener('click', () => setTab('tree'));
@@ -1040,6 +1073,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     renderLeft();
     renderRight();
     ext?.render();
+    firstPoint?.sync();
     if (flashText) {
       showToast(flashText);
       flashText = '';

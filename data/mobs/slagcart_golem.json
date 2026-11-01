@@ -1,0 +1,28 @@
+{
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: shieldwarden. YER TUTUCU görünüm: çizimi yok, shieldwarden sprite'ı.",
+  "id": "slagcart_golem",
+  "name": "Slagcart Golem",
+  "family": "guardians",
+  "spriteId": "shieldwarden",
+  "color": "#a8583a",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Forgeborn · Charger",
+  "attributes": {
+    "str": 27,
+    "int": 8,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 28,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 130
+  },
+  "ai": "aggressive",
+  "skills": [
+    "shield_bash",
+    "slag_charge"
+  ]
+}

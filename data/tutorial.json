@@ -9,11 +9,78 @@
   },
   "opening": {
     "node": "1",
-    "text": "Thugs on the mill road, and only you between them and the village. Steady now. I'll talk you through it."
+    "text": "The village at the end of Mill Road is yours, and these thugs stand between it and the world. {classLine} Once the road is clear, word of the ash must reach Ashford, and that debt is yours. I'll talk you through it.",
+    "_classLine": "Tek kişilik başlangıç (Ömer 2026-11-01, D1): {classLine} ilk kahramanın sınıfına göre; listede olmayan sınıfta (eski kayıt) cümle yok. TASLAK, Ömer onaylayacak.",
+    "classLine": {
+      "warrior": "You learned the blade guarding its fences.",
+      "defender": "You have stood at its gate since the day they gave you a shield.",
+      "paladin": "You swore your oath in its little chapel, and you meant every word.",
+      "druid": "You tended its orchards, and the roots here still answer you."
+    }
   },
+  "_skillUnlocks": "Tek kişilik başlangıç (Ömer 2026-11-01): skill açılınca Garrick'in tek cümlesi (skill id -> metin; açılış sırası campaign.json > soloStart). Skill başına bir kez (eov.tutorial.v1 seen: unlock:<skill>), tavana girmez, kararda en çok bir ders kuralına uyar. TASLAK, Ömer onaylayacak.",
+  "skillUnlockTitle": "A New Skill",
+  "skillUnlocks": {
+    "whirlwind": "Whirlwind is yours now: it cuts through the two front enemy rows at once, so save it for when they bunch up.",
+    "charge": "Charge is ready: rush any enemy, even in the back row, and stun them.",
+    "headsmans_blow": "Headsman's Blow is ready: it spends all your Rage, and the more you burn, the harder it falls.",
+    "fist_crush": "Fist Crush is yours now: after a short wind-up it drops on three random enemies.",
+    "taunt": "Taunt is ready: it draws the enemy's blows to you, and it pays off once someone walks beside you.",
+    "close_ranks": "Close Ranks is ready: once you have companions, it sends half the blows they take to you.",
+    "judgment": "Judgment is yours now: call it down on an enemy to burn the ground there, or on your own cell to heal.",
+    "radiance": "Radiance is ready: after a short wait it heals you and scorches every enemy at once.",
+    "resurrection": "Resurrection is ready: alone it does nothing, but once you have companions it raises the fallen mid-battle.",
+    "natures_wrath": "Nature's Wrath is yours now: roots tear through the two front enemy rows at once.",
+    "rejuvenate": "Rejuvenate is ready: it heals you now and keeps healing for three turns.",
+    "summon_treant": "Summon Treant is ready: it calls a treant to fight beside you for a few turns."
+  },
+  "_hitPulse": "C1 (Ömer 2026-11-01): 'It Can Miss' dersi açılınca hedeflerin üstünde isabet yüzdesinin kısa vurgusu (ms).",
+  "hitPulseMs": 2600,
   "groups": ["First Battle", "In Battle", "On the Road", "Endless"],
   "_actionRepeats": "Eylem dersi (done) tamamlanmadan en çok kaç savaşta gösterilir.",
   "actionRepeats": 3,
+  "_battleLessonCap": "Ders tavanı (Ömer 2026-10-31, C2): bu düğümlerde savaş başına en çok perBattle yeni bilgi dersi; kalanlar durum yeniden oluşunca sonraki savaşa kalır. Eylem dersleri (done), capExempt dersler, zorunlu adımlar ve ekran dersleri sayılmaz (src/tutorial/lessons.ts > lessonCapFull).",
+  "battleLessonCap": {
+    "nodes": ["1", "2", "3"],
+    "perBattle": 3
+  },
+  "_protectorPulseMs": "Taunt dersi açıkken koruyan birimin üstündeki halkanın yinelenme aralığı (BattleScene).",
+  "protectorPulseMs": 900,
+  "_whisper": "Whisper (Ömer 2026-11-01, C6 B): bilgi dersleri kutu yerine sıra çubuğu altında portre + Garrick + tek cümle olarak ms kadar görünüp fadeMs içinde solar; dersin whisper alanı metni verir (Codex text / codex gösterir). Dokunmayı engellemez, oyuncu eylem yapınca hemen kaybolur (src/ui/lesson-box.ts > showWhisper).",
+  "whisper": {
+    "ms": 7000,
+    "fadeMs": 600
+  },
+  "_firstPoint": "Garrick şeridi (Ömer 2026-11-01, C5 B): skill ağacı / stat ekranı ilk kez puanla açılınca başlıkta öneri (src/ui/first-point.ts). Sınıf başına tree = düğüm anahtarı + cümle, stat = temel stat + cümle; verisi olmayan sınıfta şerit çıkmaz. lessons: kayıt + Codex dersi. lines: öneri alındıktan sonraki satırlar.",
+  "firstPoint": {
+    "lessons": { "tree": "first_skill_point", "stat": "first_stat_point" },
+    "lines": {
+      "good": "Good. Press Confirm to lock it in.",
+      "other": "Your call, commander. Press Confirm when you are happy with it."
+    },
+    "classes": {
+      "warrior": {
+        "tree": { "node": "1.f1", "text": "Start with Knee Cutter. Double Strike is free, so you will swing it every single turn." },
+        "stat": { "attr": "str", "text": "Put it in Strength. It is the Warrior's main stat: every point makes every hit land harder." }
+      },
+      "archer": {
+        "tree": { "node": "1.f1", "text": "Start with Hock Shot. Quick Shot is free, so you will loose it every single turn." },
+        "stat": { "attr": "dex", "text": "Put it in Dexterity. It is the Archer's main stat: every point makes every arrow land harder." }
+      },
+      "defender": {
+        "tree": { "node": "2.f1", "text": "Start with Bellow. Your Taunt keeps the others alive, so make it hold for longer." },
+        "stat": { "attr": "str", "text": "Put it in Strength. It is the Defender's main stat: every point makes every blow land harder." }
+      },
+      "paladin": {
+        "tree": { "node": "1.f1", "text": "Start with Relentless Hammer. Holy Strike is free, and it hits harder on the enemy you struck last turn." },
+        "stat": { "attr": "int", "text": "Put it in Intelligence. It is the Paladin's main stat: every point makes your holy power stronger." }
+      },
+      "druid": {
+        "tree": { "node": "1.f1", "text": "Start with Hooked Barbs. Thorn Whip is free, so you will crack it every single turn." },
+        "stat": { "attr": "int", "text": "Put it in Intelligence. It is the Druid's main stat: every point makes your spells and healing stronger." }
+      }
+    }
+  },
   "lessons": [
     {
       "id": "turn_bar",
@@ -79,6 +146,7 @@
     },
     {
       "id": "unit_card",
+      "whisper": {"text":"Tap or hover over any fighter to read their stats, passive and cooldowns."},
       "group": "In Battle",
       "title": "Reading a Fighter",
       "text": "Tap or hover over any fighter to read their stats, passive and cooldowns.",
@@ -155,6 +223,7 @@
     },
     {
       "id": "fallen_battle",
+      "whisper": {"text":"A fallen hero stays down after the battle, but towns and rest camps can raise them.","variants":{"valor":"A fallen hero stays down after the battle, but towns, rest camps and Valor can raise them."}},
       "group": "In Battle",
       "title": "Fallen Heroes",
       "text": "A fallen hero stays down after the battle. Towns and rest camps can raise them.",
@@ -169,6 +238,7 @@
     },
     {
       "id": "skills_mp",
+      "whisper": {"text":"Stronger skills cost MP, and a used skill may rest for a few turns."},
       "group": "In Battle",
       "title": "Skills and MP",
       "text": "Stronger skills cost MP, which refills a little each turn. A used skill may rest for a few turns.",
@@ -180,7 +250,21 @@
       }
     },
     {
+      "id": "strong_can_miss",
+      "_not": "C1 (Ömer 2026-11-01): temel saldırı dışındaki hasar veren skill ilk kez seçilince; hedeflerin üstünde isabet yüzdesi kısa süre vurgulanır (BattleScene). TASLAK metin.",
+      "group": "In Battle",
+      "title": "It Can Miss",
+      "capExempt": true,
+      "text": "Even a strong skill can miss. The percentage over each target is your chance to hit, so read it before you commit.",
+      "trigger": {
+        "battle": {
+          "when": "strong"
+        }
+      }
+    },
+    {
       "id": "hit_preview",
+      "whisper": {"text":"Before you strike, the numbers over a target show the damage and the chance to hit."},
       "group": "In Battle",
       "title": "Hit Chance",
       "text": "Before you strike, the numbers over a target show the damage and the chance to hit.",
@@ -192,6 +276,7 @@
     },
     {
       "id": "ally_target",
+      "whisper": {"text":"Healing and blessings go to your own side, so tap a glowing ally."},
       "group": "In Battle",
       "title": "Helping Allies",
       "text": "Healing and blessings go to your own side. Tap a glowing ally.",
@@ -203,6 +288,7 @@
     },
     {
       "id": "rows_reach",
+      "whisper": {"text":"Melee attacks reach only the front row, but ranged attacks and spells hit any row."},
       "group": "In Battle",
       "title": "Rows and Reach",
       "text": "Melee attacks reach only the front row. Ranged attacks and spells hit any row.",
@@ -213,7 +299,25 @@
       }
     },
     {
+      "id": "taunt_rejected",
+      "_not": "C4 (Ömer 2026-10-31): saldırı Taunt yüzünden ilk kez reddedilince (hedefe tıklama; motorda hedef reddeden tek koruma kuralı Taunt, Guard hasarı yönlendirir ama hedefi reddetmez). {protector}: koruyan birimin adı; koruyan birim sahnede halkayla vurgulanır.",
+      "group": "In Battle",
+      "title": "Taunting Enemies",
+      "capExempt": true,
+      "text": "You can't get past them: {protector} is taunting and covers the others. Strike {protector} first; area skills can still reach the rest.",
+      "variants": {
+        "many": "You can't get past them: {protector} are taunting and cover the others. Strike one of them first; area skills can still reach the rest."
+      },
+      "codex": "An enemy with Taunt covers its allies: if it is within reach, your single-target attacks must strike it first. Area skills can still reach the others.",
+      "trigger": {
+        "battle": {
+          "when": "protected"
+        }
+      }
+    },
+    {
       "id": "area_shapes",
+      "whisper": {"text":"Area skills hit a fixed shape, and the lit cells show exactly who gets caught."},
       "group": "In Battle",
       "title": "Area Shapes",
       "text": "Area skills hit a fixed shape of cells. The lit cells show exactly who gets caught.",
@@ -225,6 +329,7 @@
     },
     {
       "id": "statuses",
+      "whisper": {"text":"Icons beside a health bar are statuses, so tap the unit to read what they do."},
       "group": "In Battle",
       "title": "Statuses",
       "text": "Icons beside a health bar are statuses, like Slow or Wound. Tap the unit to read what they do.",
@@ -302,6 +407,16 @@
       }
     },
     {
+      "id": "company_solo",
+      "_not": "Tek kişilik başlangıç (Ömer 2026-11-01, D2): Garrick Ashford'da yüz yüze; yalnız yeni seferin katılım ekranında. TASLAK metin.",
+      "group": "On the Road",
+      "title": "Your Company",
+      "text": "You made it, and face to face at last. I won't send anyone north alone: choose who walks beside you.",
+      "trigger": {
+        "screen": "company_solo"
+      }
+    },
+    {
       "id": "merchant",
       "group": "On the Road",
       "title": "The Merchant",
@@ -340,10 +455,28 @@
       }
     },
     {
+      "id": "first_skill_point",
+      "group": "On the Road",
+      "title": "Your First Skill Point",
+      "text": "When a hero first has a skill point, I point at a node worth taking. Take it or choose your own; nothing is final until you press Confirm.",
+      "trigger": {
+        "gate": "first_point"
+      }
+    },
+    {
+      "id": "first_stat_point",
+      "group": "On the Road",
+      "title": "Your First Stat Point",
+      "text": "When a hero first has a stat point, I point at their main stat. Take it or choose your own; nothing is final until you press Confirm.",
+      "trigger": {
+        "gate": "first_point"
+      }
+    },
+    {
       "id": "formation_new_hero",
       "group": "On the Road",
       "title": "A New Companion",
-      "text": "A new hero has joined, so set your formation before the next fight. Drag heroes into cells: the front row takes the hits, the back row keeps archers and casters safer.",
+      "text": "A companion walks with you now, so set your formation before the next fight. Drag heroes into cells: the front row takes the hits, the back row keeps archers and casters safer.",
       "awaitText": "Open Formation",
       "focus": ".camp-formation",
       "place": "bottom",

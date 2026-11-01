@@ -15,7 +15,7 @@ export function townScene(n: MapNode): TownSceneDef | null {
 }
 
 /** Kasaba ekranının arkasında açıldığı adımlar: veda, yeni bölük, hikâye sahnesi (ilk giriş akışı ekranın üstünde oynar) ve kasabanın kendisi. */
-const TOWN_STEPS: ReadonlyArray<NextStep['kind']> = ['farewell', 'company', 'story', 'town'];
+const TOWN_STEPS: ReadonlyArray<NextStep['kind']> = ['farewell', 'company', 'briefing', 'story', 'town'];
 
 /** Şu an kasaba ekranı görünmeli mi: görünecekse kasaba düğümünün id'si, yoksa null. */
 export function townScreenNode(s: CampaignState): string | null {

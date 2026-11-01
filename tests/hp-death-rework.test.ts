@@ -87,13 +87,16 @@ describe('sefer: zafer sonrası', () => {
     expect(hero(ok, id).wounds).toBeUndefined();
   });
 
-  it('boss tam şifası yara silmez; yaralı kahraman level atlasa da %10 canla kalır', () => {
+  it('boss tam şifası yara silmez; yaralı kalkan da tam canla kalkar (Ömer 2026-10-31); başka düğümde level atlasa da riseRatio', () => {
     const s0 = maxed(at('9'));
     const [a, b] = activeHeroes(s0);
     const s = setHero(s0, a!.id, { wounds: 2 });
     const t = win(s, [b!.id], 0.2);
     expect(hero(t, a!.id)).toMatchObject({ hpRatio: 1, wounds: 2 });
-    expect(hero(t, b!.id)).toMatchObject({ hpRatio: W.riseRatio, wounds: 1 });
+    expect(hero(t, b!.id)).toMatchObject({ alive: true, hpRatio: 1, wounds: 1 });
+    // 3 yaralı boss'ta da düşerse ceset kalır
+    const lethal = win(setHero(s0, b!.id, { wounds: W.lethal }), [b!.id], 0.2);
+    expect(hero(lethal, b!.id)).toMatchObject({ alive: false, hpRatio: 0, wounds: W.lethal });
     // level atlayan düşmüş: yine riseRatio
     const lv = at('moor');
     const c = activeHeroes(lv)[0]!;

@@ -10,7 +10,7 @@
     "text": "30% less Speed"
   },
   "chilled": {
-    "_not": "Ömer 2026-10-29 Mage reworkü (Ice Crater): Slow'dan AYRI buz durumu (ikisi aynı anda olabilir, çarpanlar çarpılır). Ayrım geçici: hız x0,8 ve kaçınma x0,9 (evasionMult, ekler toplandıktan sonra çarpılır). cc: true = Slow gibi boss bağışıklığına girer (madde 271). İkon YER TUTUCU: blizzard (boyalı status:chilled yok). Sayılar PROVİZYON.",
+    "_not": "Ömer 2026-10-31 Frozen: freeze = zaten Chilled olan birime KAYNAĞI sources içinde olan (skill atışı, ağaç düğümü) bir Chilled gelirse into olur; zemin tiki, hava, pasif, startStatuses kaynaksızdır, yalnızca Chilled verir/yeniler. clearedBy: bu element hasarı durumu anında kaldırır. refusedOnGround: bu zeminde durana tutmaz. Ömer 2026-10-29 Mage reworkü (Ice Crater): Slow'dan AYRI buz durumu (ikisi aynı anda olabilir, çarpanlar çarpılır). Ayrım geçici: hız x0,8 ve kaçınma x0,9 (evasionMult, ekler toplandıktan sonra çarpılır). cc: true = Slow gibi boss bağışıklığına girer (madde 271). İkon YER TUTUCU: blizzard (boyalı status:chilled yok). Sayılar PROVİZYON.",
     "name": "Chilled",
     "type": "debuff",
     "icon": "blizzard",
@@ -18,7 +18,22 @@
     "speedMult": 0.8,
     "evasionMult": 0.9,
     "cc": true,
+    "freeze": { "into": "frozen", "turns": 1, "sources": ["skill", "tree"] },
+    "clearedBy": ["fire"],
+    "refusedOnGround": ["burning"],
     "text": "20% less Speed and 10% less Evasion"
+  },
+  "frozen": {
+    "_not": "Ömer 2026-10-31: Chilled'ın ikinci atışı. Stun'ın tur kaybı yolu (skipTurn); yığın yok, tavan yok, Thawed yok. blocks: Frozen sürerken Chilled tutmaz ve Frozen olunca Chilled kalkar, böylece bitince Chilled kalmaz (yeniden donmak iki yeni atış ister). Ateş hasarı anında kaldırır. İkon YER TUTUCU: blizzard. Sayılar PROVİZYON.",
+    "name": "Frozen",
+    "type": "debuff",
+    "icon": "blizzard",
+    "color": "#5fc8ff",
+    "skipTurn": true,
+    "cc": true,
+    "blocks": ["chilled"],
+    "clearedBy": ["fire"],
+    "text": "Skips its next turn. Fire damage thaws it at once"
   },
   "haste": {
     "name": "Haste",
@@ -358,5 +373,60 @@
     "duration": 2,
     "armorLossFromAmount": true,
     "text": "Armor lowered per stack (up to 3 stacks); each new stack refreshes the 2 turns"
+  },
+  "shocked": {
+    "_not": "Harita 3 A1 (maps-2-3.md): yalnız rozet; etki anlıktır (formulas.json > thunder.pushback). İkon YER TUTUCU (Thunderpeal'in bolt ikonu).",
+    "name": "Shocked",
+    "type": "debuff",
+    "icon": "bolt",
+    "color": "#7fc8ff",
+    "dispellable": false,
+    "text": "Struck by lightning and pushed back on the turn bar"
+  },
+  "tempered_red_hot": {
+    "_not": "Harita 3 C6 Tempering (maps-2-3.md): duruş rozeti; pasif çevirir (süre işlemez). İkon YER TUTUCU. Ek su çarpanı pasifte (waterTaken).",
+    "name": "Red-hot",
+    "type": "buff",
+    "icon": "flame",
+    "color": "#ff7a3a",
+    "untilResolved": true,
+    "dispellable": false,
+    "elementTakenMult": {
+      "fire": 0,
+      "ice": 1.5
+    },
+    "text": "Immune to Fire damage, takes 50% more Ice damage and 50% more damage from water skills. Changes stance on its turn"
+  },
+  "tempered_quenched": {
+    "_not": "Harita 3 C6 Tempering: duruş rozeti; zırh yarım, ateş hasarı yeniden Red-hot yapar. İkon YER TUTUCU.",
+    "name": "Quenched",
+    "type": "debuff",
+    "icon": "droplet",
+    "color": "#7fb4c8",
+    "untilResolved": true,
+    "dispellable": false,
+    "armorMult": 0.5,
+    "text": "50% less Armor. Fire damage makes it Red-hot again. Changes stance on its turn"
+  },
+  "overreached": {
+    "_not": "Clan Vaulter Pole Vault: sonraki turuna kadar (kendine). Silinmez. İkon yer tutucu (overextended). Sayı PROVİZYON.",
+    "name": "Overreached",
+    "type": "debuff",
+    "icon": "overextended",
+    "color": "#d0603a",
+    "damageTakenMult": 1.25,
+    "dispellable": false,
+    "text": "Takes 25% more damage until its next turn"
+  },
+  "cooling": {
+    "_not": "Slagcart Golem: koşudan sonra soğuma. skipTurn + armorMult 0; cc değil (bağışıklık ya da sersemletme sayılmaz). Silinmez. İkon yer tutucu (flame).",
+    "name": "Cooling",
+    "type": "debuff",
+    "icon": "flame",
+    "color": "#b8735a",
+    "skipTurn": true,
+    "armorMult": 0,
+    "dispellable": false,
+    "text": "Skips its next turn and has 100% less Armor until then"
   }
 }

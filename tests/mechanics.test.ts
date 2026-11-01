@@ -974,7 +974,7 @@ describe('Pasif skill\'ler', () => {
       expect(def.passive, id).toBeDefined();
       expect(def.passive!.name.length, id).toBeGreaterThan(0);
       expect(describePassive(def.passive!, def.stats, content.formulas).length, id).toBeGreaterThan(20); // açıklama değerleri de yazar
-      expect(['rage', 'divineLight', 'spellEcho', 'heatMirage', 'longshot', 'naturesGrudge', 'soulDrain', 'spellbreakerInstinct', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells'], id).toContain(def.passive!.effect.type);
+      expect(['rage', 'divineLight', 'spellEcho', 'heatMirage', 'longshot', 'naturesGrudge', 'soulDrain', 'spellbreakerInstinct', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells', 'eyeOfStorm', 'tempering'], id).toContain(def.passive!.effect.type);
     }
   });
 

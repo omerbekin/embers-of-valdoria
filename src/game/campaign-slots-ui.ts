@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { motion } from '../ui/motion';
 import { content } from '../engine';
-import { CONFIG, deleteSave, deleteSlot, listSaves, progressText, slotSummaries, type CampaignMode, type Difficulty, type SaveEntry, type SlotSummary } from '../campaign';
+import { CONFIG, cleanCompanyName, deleteSave, deleteSlot, listSaves, progressText, slotSummaries, type CampaignMode, type Difficulty, type SaveEntry, type SlotSummary } from '../campaign';
 import { storage } from './campaign-session';
 import { H, W } from './campaign-ui';
 import { classAvatar } from './menu-ui';
@@ -182,9 +182,15 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     vGradient(art, 0, 0, w, artH, 0x0a0705, [[0, 0.05], [1, 0.85]]);
     art.lineStyle(1, EL.GOLD, EL.LINE.a2).lineBetween(0, artH, w, artH);
     c.add(art);
-    c.add(elText(scene, 24, 16, `Slot ${i + 1}`, 16, '#fff4d6', { em: 0.24 }).setOrigin(0, 0));
-    if (s) c.add(elText(scene, w - 24, 18, `${modeName(s.mode)} · ${diffName(s.difficulty)}`, 14, s.mode === 'ironman' ? EL.BAD : '#e7d5a8', { em: 0.14 }).setOrigin(1, 0));
     const l = s?.latest;
+    // Kısa başlık: bölük adı varsa "Slot N" yerine (Ömer 2026-11-01, D4; yeni parça yok), mod etiketiyle çakışmaz
+    const slotHead = elText(scene, 24, 16, cleanCompanyName(l?.summary.company) ?? `Slot ${i + 1}`, 16, '#fff4d6', { em: 0.24 }).setOrigin(0, 0);
+    c.add(slotHead);
+    if (s) {
+      const modeTag = elText(scene, w - 24, 18, `${modeName(s.mode)} · ${diffName(s.difficulty)}`, 14, s.mode === 'ironman' ? EL.BAD : '#e7d5a8', { em: 0.14 }).setOrigin(1, 0);
+      c.add(modeTag);
+      fitW(slotHead, w - 48 - modeTag.width - 16);
+    }
     const nodeName = s ? (l ? l.summary.node : s.mapChanged ? 'Journey ended' : 'Journey started') : 'Empty slot';
     const name = elText(scene, 24, artH - 14, nodeName, compact ? 30 : 40, s ? EL.ON : EL.MUTED, { em: 0.04, upper: false }).setOrigin(0, 1);
     c.add(fitW(name, w - 48));
