@@ -13,6 +13,8 @@ import { cellOutlineEdges } from './cell-style';
 import { cellQuad } from './shape-geometry';
 import * as WARDEN from './vfx-warden';
 import { CONTACT_EDGE_RATIO } from './vfx-scale';
+import { ensureVfxSheets, sheetDone, vfxSheet } from './vfx-sheets';
+import { SMOKE_BOMB_IB } from './vfx-inbetween';
 
 /**
  * Skill efektleri (VFX): hepsi piksel art. Küçük 16x16'lık sprite'lar (ikonlar + efekt sprite'ları) tamsayı katıyla büyütülür,
@@ -5012,12 +5014,33 @@ const saltire = (c: VfxCtx) => playUntilHit(async (release0) => {
 }, c.actor);
 
 /**
- * Smoke Bomb (rect 2x2, area_any: iki tahtaya atılabilir; ctx.board): Cutthroat fitili yanan kil bombayı yay çizerek alanın ortasına atar;
- * bomba çatlayıp kırılır, gri-kömür duman bulutu hücreleri kaplar (karakterlerin önünde ve arkasında kabaran yumuşak duman).
+ * Smoke Bomb (rect 2x2, area_any: iki tahtaya atılabilir; ctx.board): Cutthroat fitili yanan kil bombayı yay çizerek alanın ortasına atar
+ * (assets/vfx/cutthroat/02: uçuş döngüsü); bomba çatlar, alçak duman bulutu hücreleri kaplar (01: 8 kare, 2. kare kırılma, durumlar burada işler).
+ * Bulut iki kopya: tam kopya alandaki birimlerin ARKASINDA, soluk kopya ÖNÜNDE (birimler dumanın içinde okunur). Sheet yüklenemezse eski kil bomba + duman yumakları.
  * Düşman tahtasında: düşmanların gözlerinin önünden koyu duman şeridi geçer (Blinded), öksürür gibi sarsılırlar. Kendi tahtasında: dostların
- * çevresinde yumuşak duman perdesi döner, siluetleri bir an soluklaşır (Shrouded: savunma). Kalıcı görsel yok: süre rozetle görünür.
+ * çevresinde yumuşak duman perdesi döner, siluetleri bir an soluklaşır (Shrouded: savunma). Sonrasında soluk pus: linger-haze.ts (ayrı katman).
  */
+const SMOKE_SHEET = { burst: 'cutthroat/01-smoke-bomb', fly: 'cutthroat/02-smoke-bomb-fly' };
+const SMOKE_LOOK = {
+  /** Bulutun en geniş karesinin kare genişliğine oranı: alan genişliği bu orana bölünerek sheet boyu bulunur. */
+  cloudWidth: 0.87,
+  /** Taban çizgisi ön sıranın ayak çizgisinden şerit derinliğinin bu kesri kadar aşağıda (ön sıranın ayakları dumanın içinde). */
+  baseDrop: 0.45,
+  fps: 8,
+  /** Kırılmadan önce sheet bu ölçekte (bomba elde taşınır boyda kalır); kırılınca tam boya kabarır, bulut boyu `squashY` ile basılır (alçak duman). */
+  startScale: 0.7,
+  squashY: 0.8,
+  /** Karenin (320 px) içinde 1. karenin bombası: gövde ortası ve çapı. */
+  bombAt: [128, 281],
+  bombDia: 42,
+  /** Uçuş sheet'inde küre çapı (kare pikseli). */
+  flyDia: 139,
+  backAlpha: 0.9,
+  frontAlpha: 0.42,
+  fadeMs: 240,
+};
 const smokebomb = (c: VfxCtx) => playUntilHit(async (hit) => {
+  await ensureVfxSheets(c.scene, [SMOKE_SHEET.burst, SMOKE_SHEET.fly]);
   const a = c.actor;
   const slots = fxSlots(c);
   const own = c.board === a.combatant.side;
@@ -5028,60 +5051,70 @@ const smokebomb = (c: VfxCtx) => playUntilHit(async (hit) => {
   const dir = aim.x >= a.container.x ? 1 : -1;
   c.scene.tweens.add({ targets: a.container, x: a.container.x - dir * 14, duration: slow(90), yoyo: true });
   await wait(c.scene, slow(90));
-  // bomba: elden alanın ortasına yay çizerek uçar; fitilinden kıvılcım ve ince duman izi
+  // bulutun ölçüsü: alanın ekrandaki genişliği (2x2 eğik ızgarada iki sıra + iki şerit adımı); taban ön sıranın biraz önünde
+  const quads = slots.flatMap((s) => quadOf(c.board, s, 1));
+  const areaW = quads.length ? Math.max(...quads.map((q) => q.x)) - Math.min(...quads.map((q) => q.x)) : Math.abs(gridSteps(c.board).R.x) * 2;
+  const burstSize = Math.round(areaW / SMOKE_LOOK.cloudWidth);
+  const k = burstSize / 320;
+  const footY = mids.length ? Math.max(...mids.map((m) => m.y)) : aim.y;
+  const baseY = footY + Math.abs(gridSteps(c.board).L.y) * SMOKE_LOOK.baseDrop;
+  // varış noktası: 1. karenin bombasının ekrandaki yeri (uçuş bittiği yerde sheet aynı bombayla devam eder)
+  const k0 = k * SMOKE_LOOK.startScale;
+  const land = { x: aim.x + (SMOKE_LOOK.bombAt[0]! - 160) * k0, y: baseY + (SMOKE_LOOK.bombAt[1]! - 301) * k0 };
+  // bomba: elden alanın ortasına yay çizerek uçar; küre dönüşü ve fitil çizimde, ince duman izi kodda
   // v2 pozlu birim (Pose Tester): bomba fırlatan açık elden (CombatantView.castPoint); gerçek sınıfta eskisi gibi
   const hand = a.castPoint() ?? { x: a.container.x + dir * a.w * 0.3, y: a.container.y - a.h * 0.7 };
-  const bomb = sprite(c.scene, 'claybomb', '#8c5a2b', hand.x, hand.y, 56, DEPTH + 45);
-  const dist = Math.hypot(aim.x - hand.x, aim.y - hand.y);
-  await travel(c.scene, bomb, { x: aim.x, y: aim.y - 14 }, Math.max(380, Math.min(560, dist * 0.6)), {
+  const flySize = Math.round((burstSize * SMOKE_LOOK.startScale * SMOKE_LOOK.bombDia) / SMOKE_LOOK.flyDia);
+  const bomb = (vfxSheet(c.scene, SMOKE_SHEET.fly, hand.x, hand.y, { size: flySize, loop: true, flipX: dir < 0, depth: DEPTH + 45 }) as unknown as Phaser.GameObjects.Image | null) ?? sprite(c.scene, 'claybomb', '#8c5a2b', hand.x, hand.y, 56, DEPTH + 45);
+  const dist = Math.hypot(land.x - hand.x, land.y - hand.y);
+  await travel(c.scene, bomb, land, Math.max(380, Math.min(560, dist * 0.6)), {
     arc: own ? 150 : 200,
-    spin: 1.25 * dir,
-    trail: (x, y) => {
-      burst(c.scene, x, y - 18, { colors: ['#ffd23f', '#ff8a1f'], n: 1, speed: [10, 60], gravity: 80, life: [120, 240], size: [4, 8] });
-      smokePuffs(c.scene, x, y - 20, { n: 1, spread: 2, size: [16, 26], rise: 10, life: 360, alpha: 0.55 });
-    },
-    trailEvery: 30,
+    trail: (x, y) => smokePuffs(c.scene, x, y - 18, { n: 1, spread: 2, size: [14, 24], rise: 10, life: 320, alpha: 0.4 }),
+    trailEvery: 60,
   });
-  // kırılma: kil kırıkları, kısa parlama, duman patlaması
+  // varış: tam kopya alandaki birimlerin arkasında, soluk kopya önünde; birim derinliği ayak y'si (CombatantView)
+  const opts = { size: burstSize, fps: SMOKE_LOOK.fps, inbetween: SMOKE_BOMB_IB, keep: true };
+  const ys = slots.map((s) => boardSlots(c.board)[s]?.y ?? aim.y);
+  const cloud = [
+    vfxSheet(c.scene, SMOKE_SHEET.burst, aim.x, baseY, { ...opts, depth: (ys.length ? Math.min(...ys) : aim.y) - 1, alpha: SMOKE_LOOK.backAlpha }),
+    vfxSheet(c.scene, SMOKE_SHEET.burst, aim.x, baseY, { ...opts, depth: (ys.length ? Math.max(...ys) : aim.y) + 1, alpha: SMOKE_LOOK.frontAlpha }),
+  ];
+  for (const spr of cloud) spr?.setScale(k0);
   bomb.destroy();
+  const frameMs = 1000 / SMOKE_LOOK.fps;
+  await wait(c.scene, slow(frameMs));
+  // kırılma (2. kare): ses, sarsıntı, zeminde koyu duman gölgesi (hücrelere oturur)
   c.sfx('smokePuff');
-  for (let i = 0; i < 7; i++) {
-    const chip = sprite(c.scene, 'claychip', '#8c5a2b', aim.x, aim.y - 14, rnd(16, 26), DEPTH + 46).setRotation(rnd(0, 6));
-    c.scene.tweens.add({ targets: chip, x: aim.x + rnd(-120, 120), rotation: chip.rotation + rnd(-6, 6), duration: slow(rnd(380, 560)), onComplete: () => chip.destroy() });
-    c.scene.tweens.add({ targets: chip, y: aim.y - rnd(40, 110), duration: slow(160), ease: 'Quad.easeOut', onComplete: () => c.scene.tweens.add({ targets: chip, y: aim.y + rnd(0, 20), alpha: 0, duration: slow(260), ease: 'Quad.easeIn' }) });
-  }
-  burst(c.scene, aim.x, aim.y - 14, { colors: ['#ffffff', '#ffd23f', '#ff8a1f'], n: 6, speed: [80, 220], gravity: 200, life: [140, 260], size: [6, 10] });
-  void ring(c.scene, aim.x, aim.y, { r: Math.abs(gridSteps(c.board).R.x) * 0.9, flat: 0.32, n: 28, colors: ['#d7dce6', '#98a2b4', '#5b6579'], dur: 420, size: 12 });
   shake(c.scene, 110, 0.003);
-  // zeminde koyu duman gölgesi (hücrelere oturur)
+  for (const spr of cloud) if (spr) c.scene.tweens.add({ targets: spr, scaleX: k, scaleY: k * SMOKE_LOOK.squashY, duration: slow(frameMs * 2), ease: 'Quad.easeOut' });
   const floor = c.scene.add.graphics().setDepth(FLOOR_FX + 2).setAlpha(0);
-  fillCells(floor, c.board, slots, { fill: 0x2a2f36, fillA: 0.5, edge: 0x98a2b4, edgeA: 0.45, edgeW: 3, k: 1 });
+  fillCells(floor, c.board, slots, { fill: 0x2a2f36, fillA: 0.4, edge: 0x98a2b4, edgeA: 0.3, edgeW: 3, k: 1 });
   c.scene.tweens.add({ targets: floor, alpha: 1, duration: slow(160) });
-  c.scene.tweens.add({ targets: floor, alpha: 0, delay: slow(1400), duration: slow(700), onComplete: () => floor.destroy() });
-  // duman bulutu: her hücrede karakterlerin önünde ve arkasında kabaran yumaklar (bomba noktasından hücreye doğru kısa gecikme)
-  const cellW = Math.abs(gridSteps(c.board).R.x);
-  for (const s of slots) {
-    const m = cellMid(c.board, s);
-    const lag = Math.hypot(m.x - aim.x, m.y - aim.y) / 3;
-    void wait(c.scene, slow(lag)).then(() => {
+  c.scene.tweens.add({ targets: floor, alpha: 0, delay: slow(frameMs * 5), duration: slow(frameMs * 2), onComplete: () => floor.destroy() });
+  // bulut bitince son kare soluyarak kaybolur (altında pus kalır)
+  void sheetDone(cloud[0] ?? null).then(() => {
+    for (const spr of cloud) if (spr?.active) c.scene.tweens.add({ targets: spr, alpha: 0, duration: slow(SMOKE_LOOK.fadeMs), onComplete: () => spr.destroy() });
+  });
+  // sheet yoksa: eski duman yumakları
+  if (!cloud[0]) {
+    const cellW = Math.abs(gridSteps(c.board).R.x);
+    for (const s of slots) {
       const q = quadOf(c.board, s, 0.95);
-      for (let k = 0; k < 4; k++) {
+      for (let n = 0; n < 4; n++) {
         const p = inQuad(q, 0.9);
-        smokePuffs(c.scene, p.x, p.y - 10, { n: 1, spread: 6, size: [cellW * 0.8, cellW * 1.15], rise: 24, life: 1300, hold: 500, alpha: 0.88, depth: p.y + (k % 2 ? 2 : -2) });
+        smokePuffs(c.scene, p.x, p.y - 10, { n: 1, spread: 6, size: [cellW * 0.8, cellW * 1.15], rise: 24, life: 1300, hold: 500, alpha: 0.7, depth: p.y + (n % 2 ? 2 : -2) });
       }
-      smokePuffs(c.scene, m.x, m.y - 90, { n: 2, spread: cellW * 0.3, size: [cellW * 0.7, cellW * 1.0], rise: 50, life: 1300, hold: 300, alpha: 0.5 });
-    });
+    }
   }
-  await wait(c.scene, slow(220));
+  await wait(c.scene, slow(90));
   // durum görselleri
   for (const t of c.targets) {
     const head = { x: t.container.x, y: t.container.y - t.h * 0.86 };
     if (!own) {
       // Blinded: gözlerin önünden geçen koyu duman şeridi + öksürük sarsıntısı
-      const band = c.scene.add.image(head.x - dirTo(a, t.container) * 40, head.y, smokeTexture(c.scene)).setDisplaySize(t.w * 0.3, 18).setTint(0x30353c).setAlpha(0).setDepth(t.container.depth + 3);
-      c.scene.tweens.add({ targets: band, x: head.x, displayWidth: t.w * 0.85, displayHeight: 30, alpha: 0.95, duration: slow(220), ease: 'Quad.easeOut' });
+      const band = c.scene.add.image(head.x - dirTo(a, t.container) * 40, head.y, smokeTexture(c.scene)).setDisplaySize(t.w * 0.3, 18).setTint(0x4a4f57).setAlpha(0).setDepth(t.container.depth + 3);
+      c.scene.tweens.add({ targets: band, x: head.x, displayWidth: t.w * 0.85, displayHeight: 30, alpha: 0.6, duration: slow(220), ease: 'Quad.easeOut' });
       c.scene.tweens.add({ targets: band, alpha: 0, displayWidth: t.w * 1.1, y: head.y - 16, delay: slow(820), duration: slow(420), onComplete: () => band.destroy() });
-      smokePuffs(c.scene, head.x, head.y, { n: 2, spread: t.w * 0.2, size: [30, 46], rise: 30, life: 900, hold: 200, alpha: 0.7, tint: 0x8a929c, depth: t.container.depth + 3 });
       c.scene.tweens.add({ targets: t.container, x: t.container.x + 5, duration: slow(45), yoyo: true, repeat: 3, delay: slow(160) });
     } else {
       // Shrouded: çevresinde dönen yumuşak duman perdesi; silueti bir an soluklaşır
@@ -5099,7 +5132,7 @@ const smokebomb = (c: VfxCtx) => playUntilHit(async (hit) => {
     }
   }
   hit();
-  await wait(c.scene, slow(600));
+  await wait(c.scene, slow(frameMs * 6 + SMOKE_LOOK.fadeMs));
 }, c.actor);
 
 /**

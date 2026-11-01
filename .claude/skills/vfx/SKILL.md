@@ -1,6 +1,6 @@
 ---
 name: vfx
-description: Animasyon / VFX işini Codex (Luna 6) ile ortak döngüde yapar. Yeni skill efekti oluştururken de, bozuk efekti düzeltirken de kullan. Codex inceler ve çizer, Claude oyuna kurar ve düzeltir, Codex oyundan yakalanan karelerle kontrol eder. Ömer "/vfx <iş>" dediğinde, "Codex'le yap" dediğinde ya da bir skill efektinin kaydığını / zıpladığını / yanlış yerden çıktığını söylediğinde kullan.
+description: Animasyon / VFX işini Codex (Terra 6.1) ile ortak döngüde yapar. Yeni skill efekti oluştururken de, bozuk efekti düzeltirken de kullan. Codex inceler ve çizer, Claude oyuna kurar ve düzeltir, Codex oyundan yakalanan karelerle kontrol eder. Ömer "/vfx <iş>" dediğinde, "Codex'le yap" dediğinde ya da bir skill efektinin kaydığını / zıpladığını / yanlış yerden çıktığını söylediğinde kullan.
 ---
 
 # Codex ile ortak çalışma (animasyon / VFX)

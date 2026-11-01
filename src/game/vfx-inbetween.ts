@@ -11,6 +11,8 @@ import cfg from '../../data/vfx-inbetween.json';
 
 /** Raise Dead sütununun ara kare ayarı (efekt ve ön pişirme aynı türev dokuyu kullanır). */
 export const RAISE_DEAD_IB = { method: 'crossfade', sub: 3 };
+/** Smoke Bomb bulutu (vfx.ts > smokebomb): 8 kare 8 fps kasma hissi vermesin; ön pişirme vfx-sheets.ts > SKILL_PREWARM. */
+export const SMOKE_BOMB_IB = { method: 'crossfade', sub: 3 };
 
 export interface IbMethodCfg {
   label: string;

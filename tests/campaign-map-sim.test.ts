@@ -8,6 +8,8 @@ import { grindReport } from '../src/sim/campaign-grind-report';
 // Yavaş (Harita 1 + Harita 2 tam koşu): vitest.slow-list.ts.
 const H1 = CONFIG.maps[0]!;
 const H2 = 'drowned-reach';
+// Tam harita koşuları GitHub makinesinde genel 30 sn sınırını aşıyor (0.9.10.9 Pages'e bu yüzden çıkamadı)
+const SIM_LIMIT = 180_000;
 const meta = { runs: 1, firstSeed: 3, secs: 0, opts: { retries: 2, grindStep: 1, onWall: 'stop', healAt: 0.5 }, caps: { easy: 5, medium: 10, hard: 20 } };
 
 describe('sefer simi harita seçimi', () => {
@@ -20,7 +22,7 @@ describe('sefer simi harita seçimi', () => {
     const f = simulateCampaign({ difficulty: 'medium', player: 'medium', runs: 1, firstSeed: 3 });
     expect(simulateCampaign({ difficulty: 'medium', player: 'medium', runs: 1, firstSeed: 3, map: H1 })).toEqual(f);
     expect('map' in f || 'carry' in f).toBe(false);
-  });
+  }, SIM_LIMIT);
 
   it('Harita 2 (kasma modu): önce Harita 1 aynı seed ile oynanır, takım taşınır; sayaçlar yalnız Harita 2 düğümlerinin', () => {
     const h1 = simulateGrind({ difficulty: 'medium', player: 'good', runs: 1, firstSeed: 3, preGrind: 0 });
@@ -40,7 +42,7 @@ describe('sefer simi harita seçimi', () => {
       expect(txt).toContain('BAŞLANGIÇ');
       expect(txt).toContain('KAHRAMAN KAYBI');
     }
-  });
+  }, SIM_LIMIT);
 
   it('Harita 2 (düz mod): takım Harita 1 sonundan taşınır, düğüm sayaçları yalnız Harita 2', () => {
     const r = simulateCampaign({ difficulty: 'medium', player: 'medium', runs: 1, firstSeed: 3, map: H2 });
@@ -50,5 +52,5 @@ describe('sefer simi harita seçimi', () => {
     expect(r.carry!.levelSum).toBeGreaterThan(1);
     for (const id of Object.keys(r.nodes)) expect(id.startsWith('dr')).toBe(true);
     expect(Object.values(r.classes).every((c) => c.heroRuns === 0)).toBe(true); // tutorial kahramanı ölçüsü yalnız Harita 1'de
-  });
+  }, SIM_LIMIT);
 });

@@ -883,6 +883,35 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
     await until(() => !existsSync(join(W.game, '.git', 'push-queue.push.lock')), 'kilit');
     ok(!W.q().autoShipAt, 'yeni plan yok');
   },
+  'koordinator raporlari tek basina alir, kural bir kez soylenir': (W) => {
+    W.cutover();
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.hook('hook-prompt', { session_id: B, prompt: 'x' });
+    W.run(['coordinator', A]);
+    const q = W.q(); q.notices = ['deneme raporu']; writeFileSync(join(W.game, '.git', 'push-queue.json'), JSON.stringify(q));
+    const b1 = W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out;
+    has(b1, 'KOORDİNATÖR DÜZENİ'); hasNot(b1, 'deneme raporu');
+    hasNot(W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out, 'KOORDİNATÖR DÜZENİ');
+    const a1 = W.hook('hook-prompt', { session_id: A, prompt: 'y' }).out;
+    has(a1, 'Sen Koordinatörsün'); has(a1, 'deneme raporu');
+    W.run(['coordinator', 'off']);
+    ok(!W.q().coordinator, 'kaldırıldı');
+  },
+  'yalniz sure asimi kirmizisi tek basina yinelenir': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    W.hook('hook-prompt', { session_id: A, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 9;\n');
+    W.ready(A);
+    writeFileSync(join(W.w, 'slow.mjs'), "console.log(' FAIL  |fast| tests/t.test.ts > boom'); console.log('Error: Test timed out in 30000ms.'); process.exit(1);");
+    const test = { EOV_CMD_TEST: 'node "' + join(W.w, 'slow.mjs') + '"' };
+    W.push(A, { ...test, EOV_CMD_RETEST: 'node -e "process.exit(1)" --' });
+    hasNot(W.origin('src/a.ts'), 'a = 9', 'yinelemede kalan gitmez');
+    W.ready(A);
+    W.push(A, { ...test, EOV_CMD_RETEST: 'node -e 0 --' });
+    has(W.origin('src/a.ts'), 'a = 9', 'yinelemede geçen gider');
+    has(W.log(), 'Yinelemede geçti');
+  },
   'otomatik plan hazir is kalmayinca durur': (W) => {
     W.cutover();
     const a = W.open(A, 'a');
@@ -1084,7 +1113,7 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
       has(t, 'kendiliğinden eşitlenir');
       hasNot(t, 'mesaj atma'); hasNot(t, 'ilk kritik gönderimle');
     }
-    has(a, 'koordinatör'); hasNot(b, 'koordinatör');
+    has(a, 'sahipsiz işlerin sohbeti'); hasNot(b, 'sahipsiz işlerin sohbeti');
     // Açık sohbet (eski metni görmüş) yeni kuralları bir kez alır
     setQ(W, (q) => { q.sessions[B].rulesV = 1; });
     has(W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out, 'SendMessage');

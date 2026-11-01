@@ -25,6 +25,10 @@ const FRAME = 320;
 const GROUND_BASE = 0.94;
 
 const CLASSES = {
+  cutthroat: [
+    { src: '01-smoke-bomb', out: '01-smoke-bomb', title: 'Smoke Bomb: clay bomb bursts into a low smoke bank', align: 'ground', fps: 11, shift: { 0: [-32, 0] } }, // s1'in bombası s2'nin kırılma noktasına (ground hizası bombayı 32 px sağa atıyordu)
+    { src: '02-smoke-bomb-fly', out: '02-smoke-bomb-fly', title: 'Smoke Bomb: spinning clay bomb (flight loop)', align: 'center', fps: 16 },
+  ],
   undead: [
     { src: '01-grave-shard-fly', out: '01-bone-throw-fly', title: 'Bone Throw: grave shard (flight loop)', align: 'center', fps: 16 },
     { src: '02-grave-shard-hit', out: '02-bone-throw-hit', title: 'Bone Throw: shard burst + grave chill', align: 'keep', fps: 14 },
@@ -209,7 +213,16 @@ for (const s of list) {
         }
         c.px.copy(canvas, (ty * side + tx) * 4, (y * c.w + x) * 4, (y * c.w + x) * 4 + 4);
       }
-    const small = await sharp(canvas, { raw: { width: side, height: side, channels: 4 } }).resize(FRAME, FRAME, { kernel: 'lanczos3' }).raw().toBuffer();
+    const resized = await sharp(canvas, { raw: { width: side, height: side, channels: 4 } }).resize(FRAME, FRAME, { kernel: 'lanczos3' }).raw().toBuffer();
+    // kare kaydırma (SHEETS > shift: { kareNo: [dx, dy] }, çıktı pikseli): hizalamanın bozduğu tek kareyi yerine koyar; dışarı taşan saydam kabul edilir
+    const [dx, dy] = s.shift?.[i] ?? [0, 0];
+    const small = Buffer.alloc(resized.length);
+    for (let y = 0; y < FRAME; y++)
+      for (let x = 0; x < FRAME; x++) {
+        const tx = x + dx;
+        const ty = y + dy;
+        if (tx >= 0 && ty >= 0 && tx < FRAME && ty < FRAME) resized.copy(small, (ty * FRAME + tx) * 4, (y * FRAME + x) * 4, (y * FRAME + x) * 4 + 4);
+      }
     const so = stats(small, FRAME, FRAME);
     let edge = 0;
     for (let t = 0; t < FRAME; t++) for (const [x, y] of [[t, 0], [t, FRAME - 1], [0, t], [FRAME - 1, t]]) if (small[(y * FRAME + x) * 4 + 3] >= A_MIN) edge++;

@@ -20,8 +20,13 @@ function findCodex() {
   return 'codex';
 }
 
+// Projenin Codex modeli (Ömer 2026-10-31); `exec`te -m / --model verilmişse o geçerli. Codex uygulamasının kendi ayarına dokunulmaz.
+const MODEL = 'gpt-6.1-terra';
+const args = process.argv.slice(2);
+if (args[0] === 'exec' && !args.some((a) => a === '-m' || a === '--model' || a.startsWith('--model='))) args.splice(1, 0, '-m', MODEL);
+
 const exe = findCodex();
-const child = spawn(exe, process.argv.slice(2), { stdio: 'inherit', shell: exe === 'codex' });
+const child = spawn(exe, args, { stdio: 'inherit', shell: exe === 'codex' });
 child.on('error', (e) => {
   console.error(`codex çalıştırılamadı (${exe}): ${e.message}`);
   process.exit(127);

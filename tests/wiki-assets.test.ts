@@ -236,6 +236,11 @@ describe('Sprite sheet efektleri (assets/vfx) bağlı; assets/source yalnızca k
       const [w, hgt] = [png.readUInt32BE(16), png.readUInt32BE(20)]; // PNG IHDR
       expect(Math.floor(w / meta.frame_size[0]) * Math.floor(hgt / meta.frame_size[1]), `${f.id}: kare sayısı sheet'e sığmıyor`).toBeGreaterThanOrEqual(meta.frames);
       expect(meta.fps, f.id).toBeGreaterThan(0);
+      // Cutthroat sürüm seçicinin dışında (VERSION_EXCLUDED): sheet'lerini v1 efekti oynatır (vfx.ts > smokebomb), v2 dosyası ve Versions satırı yok
+      if (f.owner === 'cutthroat') {
+        expect(readFileSync(join(__dirname, '..', 'src/game/vfx.ts'), 'utf8').includes(`'${f.id}'`), `${f.id}: vfx.ts kullanmıyor (bağlantısız)`).toBe(true);
+        continue;
+      }
       expect(versionKeys(), `${f.id}: sahibi bir sürüm anahtarı değil`).toContain(f.owner);
       expect(inScope(f.owner, 'vfx'), `${f.id}: sahibinin v2 animasyonu kapsam dışı`).toBe(true);
       const src = readFileSync(join(__dirname, '..', 'src/game/art-v2', f.owner, 'vfx.ts'), 'utf8');

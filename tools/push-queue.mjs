@@ -15,6 +15,7 @@
 // push/eod (--dry hariç) kendini arka plana alıp hemen döner (Ömer 2026-10-30); özet .git/push-queue.log, tam çıktı .git/push-queue.out.log
 //   notes <oturum> --fixes "..."     : hazır girdinin sürüm notunu değiştirir
 //   drop <oturum>                    : girdiyi siler (gönderilmeden)
+//   coordinator <oturum|off>         : Ömer'in konuştuğu tek sohbet; raporlar yalnız ona gider
 // Faz 2 (Ömer 2026-10-31): her yeni sohbet kendi worktree + dalında çalışır, kuyruk dalları taze origin/main üstünde birleştirip gönderir
 //   cutover                          : mevcut oturumları "eski akış" diye kaydeder; bundan sonra açılan sohbetler worktree modunda (bu çalışana kadar her şey eskisi gibi)
 //   wt-open <oturum> [ad]            : game/.claude/worktrees/chat-<ad> + chat/<ad> dalı + kendi npm ci + kendi port (5174+)
@@ -69,6 +70,7 @@ const CMD = {
   related: ENVV.EOV_CMD_RELATED, // yalnız e2e; gerçekte vitest related
   golden: ENVV.EOV_CMD_GOLDEN ?? 'npx tsx tests/golden/record.ts',
   sim: ENVV.EOV_CMD_SIM ?? 'npx tsx src/sim/cli.ts 300 1',
+  retest: ENVV.EOV_CMD_RETEST ?? 'npx vitest run --testTimeout=120000',
 };
 // Ön test süre sınırı (Ömer 2026-10-31): motor dosyası yüzlerce testi tetikleyip tam testi tekrarlıyordu (11,5 dk)
 const RELATED_LIMIT = (Number(ENVV.EOV_RELATED_LIMIT_S) || 120) * 1000;
@@ -81,6 +83,7 @@ const WT_CACHE = (ENVV.EOV_WT_CACHE_S !== undefined ? Number(ENVV.EOV_WT_CACHE_S
 const WT_FILES = join(GAME, '.git', 'push-queue.wtfiles.json');
 const SIMS = join(GAME, '.git', 'push-queue-sims');
 const SIM_LIMIT = 15 * 60000;
+const RETEST_LIMIT = 15 * 60000;
 // Üretilen kayıtlar: elle çözülmez, gönderimde yeniden üretilir (Ömer 2026-10-31; dal düşmesinin baş sebebiydi)
 const isGolden = (f) => /^tests\/fixtures\/golden\//.test(f);
 // Herkesin sona eklediği ya da üretilen dosyalar: "o sohbete devret" uyarısı anlamsız
@@ -230,8 +233,14 @@ function hookPrompt() {
       text += `\n[gönderim kuyruğu] BU SOHBETE RAPOR: bunları Ömer'e sade Türkçeyle ilet ve gereğini yap:\n- ${own.join('\n- ')}`;
       delete q.chatNotices[short(sid)];
     }
-    // Gece raporu / Pages uyarısı: ilk gelen sohbete bir kez gösterilir
-    if (q.notices?.length) {
+    // Koordinatör düzeni (Ömer 2026-11-01): Ömer tek sohbetle konuşur; kural her sohbete bir kez söylenir
+    const coord = q.coordinator;
+    if (coord && e.coordOf !== coord) {
+      e.coordOf = coord;
+      text += coord === sid ? `\n${COORD_SELF(short(sid))}` : `\n${COORD_WORKER}`;
+    }
+    // Gönderim raporları, Pages uyarısı: varsa Koordinatör'e, yoksa ilk gelen sohbete bir kez gösterilir
+    if (q.notices?.length && (!coord || coord === sid)) {
       text += `\n[gönderim kuyruğu] RAPOR: bunları Ömer'e cevabının en başında sade Türkçeyle ilet:\n- ${q.notices.join('\n- ')}`;
       q.notices = [];
     }
@@ -880,12 +889,27 @@ async function shipClean(version, groups, files, dry) {
   }
 }
 
+// Yük kaynaklı süre aşımı (Ömer 2026-11-01): sohbetler aynı anda çalışırken testler 30 sn sınırına takılıp gönderimi durduruyordu.
+// Kırmızıların TAMAMI süre aşımıysa yalnız o dosyalar tek başına yeniden koşar; geçerlerse gönderim sürer, geçmezse kırmızı kalır
+async function loadOnly(stage, out, scratch) {
+  const text = out.replace(/\x1b\[[0-9;]*m/g, '');
+  const fails = (text.match(/\bFAIL\s/g) ?? []).length;
+  const slow = (text.match(/Error: Test timed out/g) ?? []).length;
+  const list = [...parseRed(out).keys()];
+  if (!fails || fails !== slow || !list.length || list.join(' ').length > 30000) return false;
+  log(`> ${list.length} test yalnız süre sınırına takıldı, tek başına yeniden koşuyor: ${list.join(', ')}`);
+  const r = await runTee(`${CMD.retest} ${list.join(' ')}`, undefined, scratch, `${stage} yineleme`, RETEST_LIMIT);
+  if (r.code !== 0) { log('!! Yinelemede de geçmedi'); return false; }
+  log('> Yinelemede geçti, gönderim sürüyor');
+  return true;
+}
 // Kapılar eski ve yeni akışta ortak (Ömer 2026-10-31)
 // Kırmızıda hangi dosya, kimin (Ömer 2026-10-30, F3)
 function makeGate(scratch, files, branchOwner) {
   return async (stage, cmd, cmdArgs, limitMs) => {
     const r = await runTee(cmd, cmdArgs, scratch, stage, limitMs);
     if (r.code === 0 || r.timedOut) return r;
+    if (await loadOnly(stage, r.out, scratch)) return r;
     const red = redReport(stage, r.out, r.file, files, branchOwner);
     throw Object.assign(new Error(red), { red, hits: [...parseRed(r.out).keys()] });
   };
@@ -1048,7 +1072,9 @@ function branchHasWork(branch, target = ORIGIN_MAIN) {
 }
 
 // Metin değişince artırılır: açık sohbetler bir sonraki istemde yeni kuralları görür
-const WT_RULES_V = 3;
+const WT_RULES_V = 4;
+const COORD_WORKER = `[gönderim kuyruğu] KOORDİNATÖR DÜZENİ: Ömer artık yalnız "Koordinatör" sohbetiyle konuşur. Sana iş ondan gelir. Açık sorunu, karar isteğini, bitti raporunu, engelini SendMessage ile Koordinatör'e yaz: tek mesajda soru, seçenekler, önerin, mockup linki. Kendin form açma, kararı Koordinatör'ün formu alır. "BU SOHBETE RAPOR" notlarını da ona ilet. Ömer sana doğrudan yazarsa normal cevap ver, sonra Koordinatör'e tek satır söyle. Ayrıntı: docs/arch/coordinator.md`;
+const COORD_SELF = (s) => `[gönderim kuyruğu] Sen Koordinatörsün (oturum ${s}). Kuralların: docs/arch/coordinator.md. Gönderim raporları yalnız sana gelir.`;
 function wtRules(sid, e, rec, first) {
   const s = short(sid);
   const base = `[gönderim kuyruğu] oturum ${s} · mod: ${e.mode}${e.ready ? ' · hazır' : ''}`;
@@ -1061,7 +1087,7 @@ function wtRules(sid, e, rec, first) {
       : `Kendin GitHub'a gönderme; iş bitip doğrulanınca: node "${TOOL}" ready ${s} --fixes "<oyuncuya yönelik İngilizce satır>"; daha önce bir gönderim olursa ona katılır; yoksa ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle gider.`) +
     ` Gönderime ready anındaki hâl girer, sonraki commit'lerin sonrakine kalır. Kopyan her istemde origin/main'e kendiliğinden eşitlenir; çakışma varsa yalnız uyarı görürsün. tests/fixtures/golden çakışmasını elle çözme, gönderim yeniden üretir.` +
     ` Oyuncunun göreceği bir şey değişmediyse --internal ver. Yeni açık soru: docs/design/open-questions.md sonuna "## Q-NEW. Başlık" (numarayı gönderim verir). Agent'ların bu kopyada mutlak yolla çalışır; paralel olanlar için bu daldan: git -C "${rec.path}" worktree add "<game>/.claude/worktrees/agent-<ad>" -b agent/<ad> (isolation kullanma), bitince bu dala merge et. Gönderimden sonra dal yeni main'e taşınır. Sohbet işi tamamen bitince: node "${TOOL}" wt-close ${s}. Başka açık sohbetin konusuna ya da dosyalarına giren işi yapma: SendMessage ile o sohbete devret (adı ListAgents'ta), Ömer'e tek satır söyle; sana devredilen işi normal iş say. Yeni konuya başlamadan docs/arch/chat-owners.md oku.` +
-    (rec.name === 'minor-fixes' ? ` Sen koordinatörsün: Ömer'den küçük işleri alırsın, başka sohbetin alanına gireni devredersin, kalanı kısa turlarla yaparsın.` : '');
+    (rec.name === 'minor-fixes' ? ` Sen küçük ve sahipsiz işlerin sohbetisin, iş Koordinatör'den gelir.` : '');
 }
 
 // Yeni sohbetin yazma koruması: asıl checkout'a (game/) yazamaz; kendi kopyası ve agent kopyaları serbest; game/ dışı ilgi alanımız değil
@@ -1978,6 +2004,12 @@ const main = {
     for (const o of Object.values(q.sessions)) if (o.lastError?.includes('sürüm notu sınırı')) delete o.lastError;
     scheduleAutoShip(q);
     console.log(`Not satırı: ${Object.values(notes).flat().length}.`);
+  }),
+  // Ömer'in konuştuğu tek sohbet (Ömer 2026-11-01); off kaldırır, raporlar yine ilk gelen sohbete gider
+  coordinator: () => withQueue((q) => {
+    if (args[0] === 'off') { delete q.coordinator; console.log('Koordinatör kaldırıldı.'); return; }
+    q.coordinator = findSid(q, args[0]);
+    console.log(`Koordinatör: ${short(q.coordinator)}`);
   }),
   drop: () => withQueue((q) => { delete q.sessions[findSid(q, args[0])]; scheduleAutoShip(q); console.log('Silindi.'); }),
   doctor: () => { doctor(); },

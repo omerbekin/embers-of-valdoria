@@ -23,3 +23,6 @@ Liste: `[{ "out": "...", "prompt": "...", "refs": ["..."] }]`. Hedef varsa atlan
 - En fazla 2 paralel iş; 4 işte ChatGPT sıraya alıyor (görsel başına 8-15 dk).
 - Piksel sanatı: imagegen piksel ızgarasına tam uymaz; ham görsel gerektiğinde ayrı bir araçla ızgaraya oturtulur.
 - Şeffaf arka plan garantisi yok; dama tahtası / koyu hale kontrolü `.claude/agents/art-pipeline.md` kurallarıyla aynen geçerli.
+
+## Model
+`tools/codex/run.mjs` her `exec` çağrısında `gpt-6.1-terra` (Terra 6.1) kullanır (Ömer 2026-10-31); `-m` verilirse o geçerli.

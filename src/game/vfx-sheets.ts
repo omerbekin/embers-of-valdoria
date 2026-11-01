@@ -16,7 +16,7 @@
 import Phaser from 'phaser';
 import { slow } from './combatant-view';
 import { VFX_SHEET_FILES, vfxSheetFile } from './vfx-sheet-files';
-import { buildInbetween, RAISE_DEAD_IB, stabilizeFrames, trimFrames, type StabilizeOpts } from './vfx-inbetween';
+import { buildInbetween, RAISE_DEAD_IB, SMOKE_BOMB_IB, stabilizeFrames, trimFrames, type StabilizeOpts } from './vfx-inbetween';
 
 export const vfxSheetKey = (id: string): string => `vfxsheet:${id}`;
 
@@ -246,6 +246,8 @@ function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: 
 /** Skill'e göre önceden pişirilecek türev dokular: efekt anında üretim oyunu kasıyor (Ömer 2026-10-31: Raise Dead sütununun başı). */
 const SKILL_PREWARM: Record<string, { id: string; inbetween: { method: string; sub: number } }> = {
   raise_dead: { id: 'undead/07-raise-dead', inbetween: RAISE_DEAD_IB },
+  smoke_bomb: { id: 'cutthroat/01-smoke-bomb', inbetween: SMOKE_BOMB_IB },
+  pt_smoke_bomb: { id: 'cutthroat/01-smoke-bomb', inbetween: SMOKE_BOMB_IB },
 };
 
 /** Birimin skill'lerinin türev dokularını efekt anından önce pişirir (savaş açılışında, BattleScene). Doku yüklenemezse efekt yine kendi üretir. */

@@ -127,6 +127,8 @@ const CLASS_TESTS: ReadonlyArray<{ key: string; skill: string; caster: string; l
   { key: 'vampiric_bite', skill: 'wail_of_the_dead', caster: 'undead', label: 'Vampiric Bite (Undead at half HP drains life with Wail)', casterHp: 0.5 },
   { key: 'bone_slash', skill: 'skeleton_slash', caster: 'skeleton', label: 'Bone Slash (Skeleton)', keepAfter: true },
   { key: 'bone_slash_wide', skill: 'skeleton_slash', caster: 'skeleton', dummy2Slot: 2, label: 'Bone Slash (two targets: side lane too)', keepAfter: true, track: ['bone_slash'] },
+  // Cutthroat sheet'i (2026-11-01; assets/vfx/cutthroat/, sürüm seçicinin dışında, v1 efekti vfx.ts > smokebomb oynatır)
+  { key: 'smoke_bomb', skill: 'smoke_bomb', caster: 'cutthroat' },
 ];
 /** Tüm mob skill'leri, sahibine göre gruplu (MOB_VFX_SPECS sırası; aynı mob'un skill'leri yan yana). */
 function testSkills(): TestSkill[] {
