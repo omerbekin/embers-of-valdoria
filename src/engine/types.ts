@@ -102,6 +102,34 @@ export type PassiveEffect =
   | { type: 'eyeOfStorm'; conditions: string[] }
   /** Stormhorn Ram (Harita 3 D4): yakın dövüş skill'iyle bu birime isabet ettiren düşman Shocked olur (formulas.thunder; suda Stun). Birim o vuruşta ölürse çalışmaz. */
   | { type: 'stormhide' }
+  /*
+   * Harita 3 kit dilimi (maps-2-3.md 4.3; Ömer 2026-11-01). Grave Cold ve Hoarfrost kaynak türü taşımaz: yalnız Chilled verir, dondurmaz.
+   */
+  /** Blind Hunger (Cave Crawler): tek hedefli skill yalnız en yakın hedefe (validTargets); Darkness'ta verilen hasar x(1 + darkBonus). */
+  | { type: 'blindHunger'; darkBonus: number }
+  /** Highland Fury (Clan Axeman): `immune` durumları tutmaz; can `below` altındayken verilen hasar x(1 + bonus). */
+  | { type: 'highlandFury'; below: number; bonus: number; immune: string[] }
+  /** War-Chant (Clan Skald): kendi tur başında aynı sıradaki dostlara `turns` tur `status`. */
+  | { type: 'warChant'; status: StatusKind; turns: number }
+  /** Kindling (Pyre Witch): iki tahtadaki her `ground` hücresi için verilen hasar +perCell, en çok +max. Greater Kindling (The Pyre Matriarch): `max` yok, tavansız. */
+  | { type: 'kindling'; ground: string; perCell: number; max?: number }
+  /** Furnace Core (Forge Golem): ölünce kendi hücresi ve dört komşusu `turns` tur `ground` (tik = gücü x power; kendi tarafına işlemez). */
+  | { type: 'furnaceCore'; ground: string; turns: number; scale: Attribute; power: number }
+  /** Grave Cold (Wight): skill vuruşu isabet edince hedefe `turns` tur `status` (atış sayılmaz, dondurmaz). */
+  | { type: 'graveCold'; status: StatusKind; turns: number }
+  /** Hoarfrost (Rime Witch): yaşadıkça `wet` durumundaki düşman kendi tur başında `turns` tur `status` alır (atış sayılmaz, dondurmaz). */
+  | { type: 'hoarfrost'; wet: string; status: StatusKind; turns: number }
+  /** Hollow (Hollow Warden): Darkness'ta alınan TÜM hasar x darkTakenMult. */
+  | { type: 'hollow'; darkTakenMult: number }
+  /*
+   * Harita 3 elit ve boss kitleri (maps-2-3.md; Ömer 2026-11-01).
+   */
+  /** Frostbound (The Snowfather): `statuses` durumlarından birini taşıyan her canlı düşman için verilen hasar +perUnit. */
+  | { type: 'frostbound'; statuses: StatusKind[]; perUnit: number }
+  /** Hollow Crown (The Hollow King): adı `names` içinde olan dost ölünce sonraki turunda bir eylem daha (birikmez; yalnız turns). */
+  | { type: 'hollowCrown'; names: string[] }
+  /** Shepherd of Ash (The Ashborn Hierarch): `families` / `names` kapsamındaki bir dost yaşarken alınan TÜM hasar x takenMult. */
+  | { type: 'shepherdOfAsh'; takenMult: number; families: string[]; names: string[] }
   /** Thunderwright (Harita 3 D1): kural skill'lerin ironBolt alanındadır; bu pasif yalnız etikettir, motor kancası yok. */
   | { type: 'ironDraws' }
   /** Harita 3 boss dokunuşları: yalnız etiket; kural CombatantData.touch ya da skill alanındadır, motor kancası yok. */
@@ -337,13 +365,15 @@ export type BossTouch =
   /**
    * E1 Overheat: Heat çubuğu `max`; her eylem `perAction`, ateş vuruşu `fireHit` doldurur; buz ve su vuruşu `coolHit` boşaltır. Dolunca Vent: `status` (`ventTurns` tur), çubuk sıfırlanır.
    */
-  | { type: 'overheat'; max: number; perAction: number; fireHit: number; coolHit: number; status: string; ventTurns: number }
+  | { type: 'overheat'; max: number; perAction: number; fireHit: number; coolHit: number; status: string; ventTurns: number; /** Forge-Master Golem: ölünce kendi hücresi ve komşuları zemin (Furnace Core'un yolu). */ core?: { ground: string; turns: number; scale: Attribute; power: number } }
   /** E2 Thundersnow: can oranı `below` altındayken her Round başı rastgele sütun işaretlenir, sonraki Round başı `skill` iner: `ratio` x tahta ortalama canı + `iron` x hedef Armor (büyü). */
   | { type: 'thundersnow'; below: number; skill: string; ratio: number; iron: number }
   /** E3 Pack Rotation: her Round başı en yaralı `pack` birimi, arkasındaki daha sağlam biriyle yer değiştirir; taşıyanın hasar skill'i yaralı `pack` birimlerini maks canın `healRatio`'su kadar iyileştirir. */
   | { type: 'packRotation'; pack: string[]; healRatio: number }
   /** E6 The King Hears: Noise her dolduğunda `skill` (SkillDef.callVault) bedelsiz çalışır. */
-  | { type: 'kingHears'; skill: string };
+  | { type: 'kingHears'; skill: string }
+  /** Forge-Heat (The Hearthwarden): her Round başı içinde kahraman olan bir sıra (seed'li) işaretlenir, sonraki Round başı `turns` tur `ground` olur. Taşıyan ölürse inmez. */
+  | { type: 'forgeHeat'; ground: string; turns: number; scale: Attribute; power: number };
 
 /** Boss fazı (Ember Heart): can oranı `at`'ın altına (<=) inince girilir. Faz numarası 1'den başlar (faz 1 = başlangıç; phases[0] = faz 2). */
 export interface BossPhaseDef {
@@ -1105,7 +1135,7 @@ export type SkillEffectKind =
    * oran şifadan hemen önceki (maxHp - hp) / maxHp. Canı dolu dosta +%0, ölmek üzere olana ~+%(bonus x 100). Zar ve kritik değişmez (aynı RNG sırası),
    * çarpan kritikten sonra, alınan şifa çarpanından (Wound) önce uygulanır. Bkz. formulas.ts > missingHpHealMult.
    */
-  | { type: 'heal'; scale: Attribute; power: number; missingHpBonus?: number }
+  | { type: 'heal'; scale: Attribute; power: number; missingHpBonus?: number; /** Reforge: şifa statla değil, hedefin maks canının bu oranı kadar (zar ve kritik yok). */ maxHpRatio?: number }
   /**
    * Düşmüş bir dostu diriltir: maks canının/manasının bu oranlarıyla (hedef 'dead_ally'). Madde 257: iki adım: önce ölü dost, sonra kendi tarafında
    * BOŞ bir hücre (battle.reviveSlots; useSkill'in `slot` parametresi; verilmezse reviveSlotFor: kendi hücresi boşsa o, değilse en yakın boş hücre).
@@ -1403,6 +1433,16 @@ export interface SkillDef {
   ignoreFrontRow?: boolean;
   /** ESKİ erişim kuralı (yalnızca range.enabled false): yakın dövüş skill'i menzil sınırı olmadan herhangi bir düşmana gider (charge/dash). */
   ignoreReach?: boolean;
+  /** Spread the Flame: alan skill'i yalnız bu zeminin bulunduğu hücreye atılır (Battle.shapeAnchors, cast, canUse). */
+  anchorGround?: string;
+  /** Reforge: dost hedefi yalnız bu adlı birimler (görünen ad; yer tutucu sınıflı kadro için ad okunur). */
+  allyNames?: string[];
+  /** Kingsmaul (`onTarget`: hedefin hücresi), Bring Down the Hall (`rule.cells` kadar seçilen hücre): sonraki Round başında Cave-in. `rule.maxClosed` tahtadaki kapalı + bekleyen hücre tavanı. */
+  caveIn?: { rule: CaveInRule; onTarget?: boolean };
+  /** Quench: iki tahtadaki `ground` hücreleri söner, her biri için kullanan maks canının `healRatio`'su kadar iyileşir. Hücre yoksa kullanılamaz. */
+  quench?: { ground: string; healRatio: number };
+  /** Kindle the Nave: yalnız tamamlanmış vaazdan sonra; kullananın kendi sırası zemin olur ve kendi tarafına da işler (Ashborn için şifa: E4, öbürleri yanar). */
+  kindleNave?: { ground: string; turns: number; scale: Attribute; power: number };
   /** ESKİ erişim kuralı (yalnızca range.enabled false): yakın dövüş menzili bonusu (satır). */
   reach?: number;
   /**
@@ -1465,7 +1505,7 @@ export interface SkillDef {
    * Harita 3 şimşek kuralları (maps-2-3.md A1, A2, A5, A6; sayılar formulas.json > thunder). Alan VARSA skill bu kurallara girer: Flooded'a düşerse Live Water,
    * Ice'a düşerse Shatter, Darkness'ta mob kullanırsa Thunderflash. `shocks`: isabet ettiği düşman Shocked olur. Element 'lightning' tek başına hiçbir kuralı açmaz.
    */
-  thunder?: { shocks?: boolean; /** Gloam Eel: Live Water yalnız atan bu zemindeyken (hedef hücresi de suda olmalı); Thunderflash ve Shocked bundan etkilenmez. */ liveFrom?: string };
+  thunder?: { shocks?: boolean; /** Gloam Eel: Live Water yalnız atan bu zemindeyken (hedef hücresi de suda olmalı); Thunderflash ve Shocked bundan etkilenmez. */ liveFrom?: string; /** Gloam Bite (Ömer 2026-11-01): Thunderflash yalnız hedef hücresi sudayken çakar. */ flashWet?: boolean };
   /**
    * Thunder Rod (Harita 3 B2): kullanan, karşı tahtada en çok düşmana artı komşu boş hücreye çubuk çakar (hedef 'self'; hücre motorca seçilir). Hücre kapanır; her Round başında çubuğa
    * şimşek iner, artı komşulardaki düşmanlara `ratio` x tahtanın ortalama maks canı büyü hasarı. Bitişik kahraman global eylemle devirir. `max`: tahtada aynı anda en çok çubuk.
@@ -1854,6 +1894,8 @@ export interface GroundStatus {
 export interface GroundReactionDef {
   /** Oyun içi kısa ad (yüzen yazı, hedefleme önizlemesi): "Explosion". */
   label: string;
+  /** Hedefleme önizlemesinde adın altında kısa sonuç (en çok ~5 kelime): "Fire damage around". */
+  result?: string;
   /** Codex / ipucu cümlesi (İngilizce). */
   text: string;
   setup: string[];
@@ -2157,6 +2199,8 @@ export interface Combatant {
   encased?: { hp: number; maxHp: number };
   /** Hollow Delver: yerin altında, bu telgraf çözülene dek (TelegraphDef.dive). */
   underground?: string;
+  /** Hollow Crown: sonraki turunda bir eylem daha. */
+  crownAction?: boolean;
   /** Tempering (Harita 3 C6): şu anki duruş. */
   temper?: 'hot' | 'cold';
   /** Harita 3 dokunuşu (CombatantData.touch). */
@@ -2270,6 +2314,11 @@ type BattleEventBody =
       reaction?: string;
       /** Durum kaynaklı hasar: 'wither' (DoT tiki, origin 'status') ya da 'omen' (Doom patlaması; süre bitiminde origin 'status', skill içinde origin 'skill'). */
       status?: StatusKind;
+      /**
+       * Yalnız günlük için, kurala etkisi yok: `status` / `ground` taşımayan hasarın kaynağı: ağaç düğümü ('<class>:<anahtar>'), pasif id, skill id ya da
+       * mekanik anahtarı (thorns, overflow, cave_in, shatter, live_water; heal.cause ile aynı fikir). Ad çözümü src/game/log-cause.ts.
+       */
+      cause?: string;
       /**
        * Madde 258: Lucky Escape (Luck primary) bu ölümcül vuruşu TAMAMEN yok saydı: amount 0, absorbed 0, can ve kalkan değişmedi;
        * ardından 'passive' (Lucky Escape) olayı gelir. Vuruşa bağlı yan etkiler (lifesteal, Soul Drain, Rage, kalkan kancaları, taunt kırılması, Mana Overflow) işlemez.
@@ -2561,6 +2610,8 @@ export interface Hazard {
   rod?: { slot: number; side: Side; source: string; skill: string; ratio: number };
   /** bolt (C1): sıra çubuğu belirteci (`token` = sıra listesindeki kimlik); dueRound kullanılmaz, belirteç öne ulaşınca iner. */
   bolt?: { token: string; side: Side; source: string; skill: string; ratio: number; speed: number; counter: number; actionsLeft: number };
+  /** forge (Forge-Heat; kind 'heat'): işaretli sıra `dueRound` başında taşıyanın zemini olur. */
+  forge?: { side: Side; source: string; ground: string; turns: number; scale: Attribute; power: number };
   /** strike (E2 Thundersnow): işaretli sütuna `dueRound` başında şimşek; `iron` x hedef Armor ek hasar. */
   strike?: { side: Side; source: string; skill: string; ratio: number; iron: number };
 }

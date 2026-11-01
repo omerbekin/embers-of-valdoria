@@ -62,7 +62,7 @@ describe('Vesper class verisi', () => {
     expect(BW.primary).toBe('int');
     expect(BW.skills).toEqual(['toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria']);
     expect(pe.type).toBe('pealingBells');
-    expect(pe.perBell).toBe(0.05);
+    expect(pe.perBell).toBe(0.07);
     expect(ITEMS.weaponFamilies.find((f) => f.id === 'staves')!.classes).toContain('vesper');
     expect(ITEMS.starterWeapons.classes.vesper).toBe('ash_staff');
     expect(validateTreeData(treeOf('vesper')!)).toEqual([]);
@@ -81,7 +81,7 @@ describe('Vesper class verisi', () => {
 
   it('kart ve pasif metinleri çanı anlatır; Codex Mechanics > Bells makalesi', () => {
     const st = me(arena([['warrior', 0]])).stats;
-    expect(describePassive(BW.passive!, st, content.formulas)).toContain('5% more');
+    expect(describePassive(BW.passive!, st, content.formulas)).toContain('7% more');
     expect(describeSkill(S.toll!, st, content.formulas).lines.join(' ')).toContain('Rings a bell');
     expect(describeSkill(S.great_bell_of_valdoria!, st, content.formulas).lines.join(' ')).toContain('for every bell rung');
     const art = buildMechanics().find((a) => a.id === 'bells');

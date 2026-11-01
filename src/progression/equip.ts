@@ -2,7 +2,7 @@
 // aynı fonksiyonu kullanır (items.md 4.4, 5.4). Puan = affix IP'lerinin toplamı, sınıfa uymayan affix'ler (başka element, Rage'li sınıfta MP,
 // çağrısı olmayan sınıfta Summon mastery...) düşük ağırlıklı; primary bonusunu kapatacak item seçilmez.
 import { affixFit } from './affix-fit';
-import { ITEMS, affixIP, baseIP, blocksOffhand, canEquip, effectIP, equipInto, fitsSlot, instanceIlvl, itemDef, itemIP, legendaryConflict, meetsLevel, offhandBlocker, rolledAffixes, SLOT_IDS, type Equipment, type ItemDef, type ItemInstance, type RolledAffix, type SlotId } from './items';
+import { ITEMS, affixIP, baseIP, blocksOffhand, canEquip, effectIP, equipInto, fitsSlot, instanceIlvl, itemDef, itemIP, legendaryConflict, meetsLevel, offhandBlocker, rolledAffixes, SLOT_IDS, type Equipment, type ItemDef, type ItemInstance, type RolledAffix, type SlotId, type SlotLocks } from './items';
 import { inactivePenalty } from './loadout';
 import { primaryCheck } from './primary';
 
@@ -50,7 +50,7 @@ export interface EquipMove {
  * İkinci el (2026-10-12): ana el adayının değeri = silah + (ikinci eli kapatmıyorsa) eldeki ya da torbadaki en iyi ikinci el; çift el silah
  * ikinci eldeki item'i torbaya çıkarır. İkinci el yuvası ana elden sonra, ana el kapatmıyorsa doldurulur; ana el boşsa önce o dolar.
  */
-export function bestMoves(hero: { class: string; equipment: Equipment; level?: number }, bag: ItemInstance[], taken: Set<string> = new Set()): EquipMove[] {
+export function bestMoves(hero: { class: string; equipment: Equipment; level?: number }, bag: ItemInstance[], taken: Set<string> = new Set(), locks?: SlotLocks): EquipMove[] {
   const moves: EquipMove[] = [];
   let equipment = { ...hero.equipment };
   const score = (inst: ItemInstance | null | undefined, slot: SlotId = 'weapon', eq: Equipment = equipment) => slotScore(hero.class, eq, inst, slot);
@@ -65,6 +65,7 @@ export function bestMoves(hero: { class: string; equipment: Equipment; level?: n
     return best;
   };
   for (const slot of SLOT_IDS) {
+    if (locks?.[slot]) continue; // kilitli yuva (seferde Reedgate'ten önce Trinket)
     if (slot === 'offhand' && offhandBlocker(equipment)) continue;
     const cur = equipment[slot];
     /** Yuvanın değeri: ana elde, silah + açık kalan ikinci elin ulaşılabilir değeri. */

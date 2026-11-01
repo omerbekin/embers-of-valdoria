@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Skill Tip Lengths</title>
+<!--
+  Taslak (ui-dev, 2026-11-01). Oyun kodu DEGIL.
+  Adres: #<gorunum>&z=<boyut>&s=<skill>&o=1&clean&nocover
+    gorunum: now | a | b | c (yoksa hepsi)   boyut z: 169 | 219 | ph (844x390)   skill s: judgment | double | charge | brand
+    o=1: ikinci kat acik (A: "More", B: cip)   clean: ust cubuk ve yazilar gizli (yalniz sahne)   nocover: kirmizi kesikli kutu yok
+  ornek: skill-tips.html#a&z=ph&clean
+  real/battle-hud.css ve real/band-tip.css = src/ui kopyalari (degistirilmedi). data.js = oyunun describeSkill ciktisi + gercek bandTipHtml (atik betikle uretildi).
+-->
+<link rel="stylesheet" href="skill-tips/real/band-tip.css" />
+<link rel="stylesheet" href="skill-tips/real/battle-hud.css" />
+<link rel="stylesheet" href="skill-tips/mock.css" />
+</head>
+<body>
+<div id="mk-bar"></div>
+<div class="pg" id="app"></div>
+<script src="skill-tips/data.js"></script>
+<script src="skill-tips/rules.js"></script>
+<script src="skill-tips/mock.js"></script>
+</body>
+</html>

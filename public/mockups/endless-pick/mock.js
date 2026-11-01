@@ -231,8 +231,11 @@
   function render() {
     bar(); fit(); clearTimeout(hideT); tipEl = null; S.pin = null;
     stage.innerHTML = '<span class="size-tag">' + (S.size === 'phone' ? '844x390 (html.short)' : S.size) + '</span>' + (S.view === 'pick' ? pickHtml() : rwHtml());
-    if (S.view === 'pick') wirePick();
-    else stage.querySelectorAll('[data-rw]').forEach(function (b) { b.addEventListener('click', function () { S.rwSel = +b.getAttribute('data-rw'); stage.querySelectorAll('.rw-card').forEach(function (x) { x.classList.toggle('sel', x === b); }); }); });
+    if (S.view === 'pick') {
+      wirePick();
+      // Varyantlar yalnız ipucunda ayrılıyor: örnek ipucu açık gelir, yoksa düğmeler çalışmıyor sanılıyor (Ömer 2026-11-01)
+      if (S.v !== 'now') { var sample = stage.querySelector('[data-cls="mage"][data-src="g"]'); if (sample) sample.click(); }
+    } else stage.querySelectorAll('[data-rw]').forEach(function (b) { b.addEventListener('click', function () { S.rwSel = +b.getAttribute('data-rw'); stage.querySelectorAll('.rw-card').forEach(function (x) { x.classList.toggle('sel', x === b); }); }); });
   }
 
   document.addEventListener('click', function (e) {

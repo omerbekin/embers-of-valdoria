@@ -95,10 +95,12 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
   let overlayEl: HTMLElement | null = null;
   let tab: 'sell' | 'bb' = 'sell';
   let sel: ShopSel = null;
+  let lastScrollTab: 'sell' | 'bb' = tab;
   let line: MerchantLine = 'idle';
   /** Mala son dokunuş (çift dokunma = satın al; yeniden çizimden sonra da sürer). */
   let lastWareTap: { key: string; at: number } | null = null;
-  const side = el('div', 'gr-panel gr-gear gr-ledger gr-shop');
+  // gr-fixhead: üst kısım sabit, yalnızca mal listesi kayar (Ömer 2026-11-01; gear.css > .gr-fixhead)
+  const side = el('div', 'gr-panel gr-gear gr-ledger gr-shop gr-fixhead');
   side.dataset['drop'] = 'wares';
   const curHero = () => api?.hero();
   const instOf = (key: string): ItemInstance | undefined => {
@@ -256,7 +258,9 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       tabs.append(b);
     }
     kids.push(tabs);
-    const pane = el('div', 'gr-shoppane');
+    const pane = el('div', 'gr-shoppane gr-shopfix');
+    /** Yalnızca bu kutu kayar (tekerlek / dokunma / ince çubuk); başlık satırı ve üstündeki her şey sabit. */
+    const scroller = el('div', 'gr-shopscroll');
     if (tab === 'sell') {
       // mallar (satılmış soluk, yetmeyen altın kırmızı fiyat) + yenileme (simge + küçük fiyat)
       const sec = el('div', 'gr-sec gr-wares-head', 'Wares');
@@ -304,7 +308,8 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
         const uid = api?.selected();
         if (uid) doSell(uid);
       });
-      pane.append(sec, wares, box);
+      scroller.append(wares, box);
+      pane.append(sec, scroller);
     } else {
       // geri alım (bu ziyaret)
       const row = el('div', 'gr-bb-row gr-wplates');
@@ -319,8 +324,9 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
         row.append(b);
       });
       if (!list.length) row.append(el('div', 'gr-card-empty', 'Sold something by mistake? It waits here until you leave.'));
-      pane.append(row);
-      if (list.length) pane.append(el('div', 'gr-shop-sub', 'Sold this visit. Buy back for the price you sold at, until you leave.'));
+      scroller.append(row);
+      if (list.length) scroller.append(el('div', 'gr-shop-sub', 'Sold this visit. Buy back for the price you sold at, until you leave.'));
+      pane.append(scroller);
     }
     kids.push(pane);
     // seçimin eylemi (birincil): tıklayarak seçilen mal / geri alım
@@ -346,7 +352,12 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     }
     if (strip.childElementCount) kids.push(strip);
     if (src.note) kids.push(el('div', 'gr-shop-sub', src.note));
+    // yeniden çizim (seçim, satın alma, yenileme) listeyi başa sarmasın: aynı sekmede kaydırma konumu korunur
+    const prev = side.querySelector<HTMLElement>('.gr-shopscroll');
+    const keepTop = prev && lastScrollTab === tab ? prev.scrollTop : 0;
     side.replaceChildren(...kids);
+    lastScrollTab = tab;
+    if (keepTop) scroller.scrollTop = keepTop;
   }
 
   // --- karşılama (seçenek C): yarım panel kayıp çekilir, arkada tüccar hazır

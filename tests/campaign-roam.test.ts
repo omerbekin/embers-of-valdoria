@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import itemsData from '../data/items.json';
 import {
   CONFIG,
   SAVE_KEY,
@@ -20,7 +21,6 @@ import {
   memoryKV,
   moveTo,
   newCampaign,
-  nextReplayMult,
   nextStep,
   node,
   nodeVisibility,
@@ -30,7 +30,6 @@ import {
   patrolRetreatMaxLoss,
   readSaves,
   retreatPatrol,
-  replayMult,
   roamOpen,
   startPatrol,
   travelRoute,
@@ -147,11 +146,10 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
     expect(ok.some((id) => node(map, id).type === 'treasure' && !node(map, id).encounter)).toBe(false);
   });
 
-  it('devriye: aynı karşılaşma, seed oynama sayısını içerir; zafer sayacı artar, XP %60 / %40 / %25 (taban), sandık yok', () => {
+  it('devriye: aynı karşılaşma, seed oynama sayısını içerir; zafer sayacı artar, XP tam (Ömer 2026-11-01), sandık yok', () => {
     let s = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7', '6B');
     expect(nextStep(s).kind).toBe('move');
     expect(patrolAvailable(s)).toBe(true);
-    expect(nextReplayMult(s, '6B')).toBe(CONFIG.replay!.xp[1]);
     const firstSeed = battlePlan({ ...s, patrol: undefined }).seed;
     s = startPatrol(s);
     const step = nextStep(s);
@@ -166,9 +164,7 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
       const before = new Map(s.roster.map((h) => [h.id, total(s, h.id)]));
       const clears = s.lootState.clears['6B:battle'] ?? 0;
       const t = applyBattle(s, outcome);
-      const k = replayMult(i);
-      expect(k).toBe(CONFIG.replay!.xp[Math.min(i, CONFIG.replay!.xp.length - 1)]);
-      for (const [id, g] of Object.entries(gains)) expect(total(t, id) - before.get(id)!).toBe(Math.round(g * k));
+      for (const [id, g] of Object.entries(gains)) expect(total(t, id) - before.get(id)!).toBe(g);
       expect(t.replays['6B']).toBe(i);
       expect(t.lootState.clears['6B:battle']).toBe(clears + 1); // altın / item çarpanı loot.ts'te (items.json > loot.repeat)
       expect(t.lootState.clears['6B:treasure']).toBe(1); // sandık yalnızca ilk zaferde
@@ -176,7 +172,6 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
       expect(nextStep(t).kind).toBe('move');
       s = t;
     }
-    expect(replayMult(99)).toBe(CONFIG.replay!.xp.at(-1));
   });
 
   it('boss ve olay düğümünde devriye başlatılamaz; başlatılmış devriye savaştan önce bırakılabilir', () => {
@@ -195,7 +190,7 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
   it('devriyeden geri çekilme (Ömer 2026-10-19, hp-death-rework): devriye iptal, takım serbest; savaşta ne olduysa kalır (can kaybı, düşen yaralı / 3 yaralıysa ceset)', () => {
     expect(patrolRetreatConfirm()).toContain('stays lost');
     expect(patrolRetreatConfirm()).toContain(`${Math.round(CONFIG.rules.wounds.riseRatio * 100)}% health and a wound`);
-    expect((CONFIG.replay as Record<string, unknown>)['retreatHpLoss']).toBeUndefined(); // eski rastgele kayıp kalktı
+    expect((CONFIG as unknown as Record<string, unknown>)['replay']).toBeUndefined(); // eski rastgele kayıp ve XP kesintisi verisi kalktı
     expect(patrolRetreatMaxLoss()).toBe(0);
     const base = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7', '6B');
     const armed = startPatrol(base);
@@ -229,11 +224,18 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
     expect(bare.state.roster).toEqual(set.roster);
   });
 
-  it('ödül çarpanları veride (campaign.json > replay.xp): ilk zafer 1, azalan, taban > 0', () => {
-    const xs = CONFIG.replay!.xp;
-    expect(xs[0]).toBe(1);
-    for (let i = 1; i < xs.length; i++) expect(xs[i]!).toBeLessThanOrEqual(xs[i - 1]!);
-    expect(xs.at(-1)!).toBeGreaterThan(0);
+  it('kilit (Ömer 2026-11-01): aynı düğümün 1. ve sonraki devriyesi aynı XP; altın / item satırı ilk zaferle aynı', () => {
+    const base = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7', '6B');
+    const outcome = { victory: true, units: activeHeroes(base).map((h) => ({ heroId: h.id, hpRatio: 1, alive: true })) };
+    const expected = battleXp(base, outcome, node(map, '6B').encounter!);
+    const earned = (replays: number) => {
+      const from = { ...base, replays: { ...base.replays, '6B': replays } };
+      const t = applyBattle(startPatrol(from), outcome);
+      return Object.fromEntries(Object.keys(expected).map((id) => [id, total(t, id) - total(from, id)]));
+    };
+    expect(Object.values(expected).some((g) => g > 0)).toBe(true);
+    for (const replays of [0, 1, 2, 3, 9]) expect(earned(replays)).toEqual(expected);
+    expect(itemsData.loot.repeat).toEqual([{ items: 1, gold: 1, maxRarity: 'legendary' }]);
   });
 });
 
@@ -250,7 +252,6 @@ describe('ilerleme yazısı ve debug', () => {
     const r = debugResetReplays(s);
     expect(r.replays).toEqual({});
     expect(r.lootState.clears['moor:battle']).toBe(1);
-    expect(nextReplayMult(r, 'moor')).toBe(CONFIG.replay!.xp[1]);
     const t = debugRoamTeleport(s, '4');
     expect(t.at).toBe('4');
     expect(t.roster).toEqual(s.roster);
@@ -284,7 +285,7 @@ describe('kayıt: sürüm 10 göçü (visited / cleared / replays)', () => {
     expect(r.migrated).toBe(true);
     expect(r.file.slots[0]!.saves[0]!.state.at).toBe('7');
     expect(r.file.slots[0]!.saves[0]!.state.visited).toContain('charcoal');
-    expect(SAVE_VERSION).toBe(13);
+    expect(SAVE_VERSION).toBe(14);
   });
 
   it('başlatılmış devriye duraklatma olmadan kayıtta kalmaz; bozuk alanlar onarılır; özet "Cleared"', () => {

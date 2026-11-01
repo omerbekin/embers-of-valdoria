@@ -100,3 +100,5 @@ Süreç ve not formatı: README.md. İşini bitiren taraf "Durum" ve "Son" sütu
 | Bone Slash · `bone_slash` | Skeleton (Undead çağrısı) | tamam | 2026-10-29 · Codex | Tur 4 kontrolü: 190 px kesik hedefi kapsıyor; beyaz vuruş parlaması ortak motor efekti, kusur değil; akış temiz. |
 | Bone Slash (iki hedef) · `bone_slash_wide` | Skeleton (Undead çağrısı) | tamam | 2026-10-31 · Codex | Tur 5 kontrolü: iki hedef kesiliyor; dönüş kesiği yan hedefe ulaşıyor, beyaz parlama ortak motor efekti. |
 | Smoke Bomb · `smoke_bomb` | Cutthroat (sınıf) | ekle | 2026-10-31 · Claude | Terra 6.1 ile çizildi: new-art/smoke_bomb/ (varış + uçuş). Ömer görmeden oyuna kurulmuyor, Codex yeniden çizmesin. |
+| Grave Strike · `grave_strike` | Risen Skeleton | tamam | 2026-11-01 · Codex | Tur 3 kontrolü: parlama yok; vuruş, akış ve iki zeminde okunurluk uygun. |
+| Grave Sweep · `grave_sweep` | Risen Skeleton | tamam | 2026-11-01 · Codex | Tur 3 kontrolü: parlama yok; vuruş, akış ve iki zeminde okunurluk uygun. |

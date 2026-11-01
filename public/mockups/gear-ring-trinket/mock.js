@@ -27,6 +27,7 @@
     v: (location.hash.slice(1).split('&')[0] || 'a'),
     st: hp.get('s') || 'open',
     z: hp.get('z') || (innerWidth < 900 ? 'ph' : '169'),
+    tel: hp.get('tel') === 'scroll' ? 'scroll' : 'hide',
     equip: {}, bag: [], sel: null,
   };
   if (!NOTES[S.v]) S.v = 'a';
@@ -164,7 +165,7 @@
   const skills = () => SKILLS;
 
   function shell() {
-    return `<div class="gr-overlay el-modal gr-ledger-ov mk-ov${S.v === 'now' ? '' : ' mk-fit'}" role="dialog" aria-label="Gear"><div class="gr-panel gr-gear gr-ledger el-modal-panel gr-solo tab-hero">`
+    return `<div class="gr-overlay el-modal gr-ledger-ov mk-ov${S.v === 'now' ? '' : S.tel === 'scroll' ? ' mk-scroll' : ' mk-fit'}" role="dialog" aria-label="Gear"><div class="gr-panel gr-gear gr-ledger el-modal-panel gr-solo tab-hero">`
       + `<div class="gr-head gr-lhead"><div class="gr-title">Gear</div><div class="gr-tabs gr-headtabs mk-deadtab" role="tablist"><button class="gr-tab on" type="button" role="tab" aria-selected="true"><img class="gr-tab-ico" alt="" draggable="false" src="${P}icons/gear.webp">Hero</button><button class="gr-tab" type="button" role="tab" aria-selected="false"><img class="gr-tab-ico" alt="" draggable="false" src="${P}stats/str.webp">Sheet</button><button type="button" class="gr-tab" role="tab" aria-selected="false"><img class="gr-tab-ico" alt="" draggable="false" src="${P}icons/passive.webp">Tree</button></div><span class="gr-grow"></span><div class="gr-gold gr-has-ico"><img class="gr-ui-ico" alt="" draggable="false" src="${P}icons/gold.webp">0</div></div>`
       + `<div class="gr-body gr-lbody"><div class="gr-marks-col"><div class="gr-marks"><button class="gr-mark on" type="button" aria-label="Warrior"><div class="gr-face" style="background-image:url(&quot;${P}av/warrior.png&quot;)"></div></button></div></div>`
       + `<div class="gr-page"><div class="gr-page-in">${heroPage()}</div></div><div class="gr-spine"></div><div class="gr-page r"><div class="gr-page-in">${bagHtml()}</div></div>${skills()}</div></div>`
@@ -383,13 +384,14 @@
     for (const [s, l] of [['open', 'Both open'], ['locked', 'Trinket locked'], ['filled', 'Filled']]) add(l, S.st === s, () => go({ st: s }), S.v === 'now' && s === 'locked', S.v === 'now' && s === 'locked' ? 'Today there is a single slot, nothing to lock' : '');
     bar.append(el('span', 'sep'));
     for (const z of ['169', '219', 'ph']) add(SIZES[z].label, S.z === z, () => go({ z }));
+    if (S.z === 'ph' && S.v !== 'now') { bar.append(el('span', 'sep')); for (const [t, l] of [['hide', 'Tags hidden'], ['scroll', 'Scrolling']]) add(l, S.tel === t, () => go({ tel: t })); }
     note.innerHTML = NOTES[S.v] + ' <b>' + STATE_NOTE[S.st] + '</b>' + (S.v === 'now' ? '' : ' Dene: bagdan surukle / dokun, cift tikla.');
   }
   function go(o) {
     const nv = o.v ?? S.v, ns = o.st ?? S.st;
     const reset = o.v !== undefined || o.st !== undefined;
-    Object.assign(S, { v: nv, st: nv === 'now' && ns === 'locked' ? 'open' : ns, z: o.z ?? S.z });
-    history.replaceState(null, '', `#${S.v}&s=${S.st}&z=${S.z}`);
+    Object.assign(S, { v: nv, st: nv === 'now' && ns === 'locked' ? 'open' : ns, z: o.z ?? S.z, tel: o.tel ?? S.tel });
+    history.replaceState(null, '', `#${S.v}&s=${S.st}&z=${S.z}&tel=${S.tel}`);
     if (reset) resetItems();
     render(false);
   }

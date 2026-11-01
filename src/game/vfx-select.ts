@@ -19,7 +19,11 @@ export function v2VfxOf(owner: string, skill: Pick<SkillDef, 'id' | 'vfx'>): V2V
   const art = (skill as { artOf?: string }).artOf; // Pose Tester kopyası: gerçek skill'in anahtarı (vfx'siz skill'lerde id)
   // Önce skill'in KENDİ v2 efekti (id; ör. Ice Crater: v1 düşüşü için vfx 'blizzard' taşır ama v2'de kendi efekti var), sonra Pose Tester'ın gerçek
   // skill'i (artOf), en son vfx anahtarı (efekti ödünç alan skill'ler)
-  return file ? (file[skill.id] ?? (art ? file[art] : undefined) ?? file[v2VfxKey(skill)]) : undefined;
+  if (!file) return undefined;
+  // Çağrı doğuşu olayı `summon_<birim>` adıyla aynı dosyadadır: çağıran skill'in id'si bu adla çakışırsa (Summon Treant) olay efekti skill diye OYNAMAZ, yoksa çağıran yerden çıkar
+  const effects = (skill as { effects?: ReadonlyArray<{ type: string; unit?: string }> }).effects;
+  const own = effects?.some((ef) => ef.type === 'summon' && `summon_${ef.unit}` === skill.id) ? undefined : file[skill.id];
+  return own ?? (art ? file[art] : undefined) ?? file[v2VfxKey(skill)];
 }
 
 /** Seçili sürüme göre: v2 efekti (varsa) ya da v1'e düşüş. */

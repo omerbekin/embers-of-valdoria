@@ -160,6 +160,16 @@ describe('ekran tetikleri ve Codex', () => {
     expect(ids(dueScreenLessons('gear', { bagSize: 1 }, new Set(['gear'])))).toEqual([]);
   });
 
+  it('ilk item: ganimette alma, haritada Gear yönlendirmesi; Gear kendi açıldıysa yönlendirme yok', () => {
+    expect(ids(dueScreenLessons('loot', {}, none))).toEqual(['first_loot']);
+    expect(ids(dueScreenLessons('loot', {}, new Set(['first_loot'])))).toEqual([]);
+    expect(ids(dueScreenLessons('map', { bagSize: 1 }, none))).toEqual(['gear_equip']);
+    expect(ids(dueScreenLessons('map', { bagSize: 0 }, none))).toEqual([]);
+    expect(ids(dueScreenLessons('map', { bagSize: 1 }, new Set(['gear'])))).toEqual([]);
+    // ilk zaferde Wounds Carry Over'dan önce gelir (kararda tek ders)
+    expect(ids(dueScreenLessons('map', { bagSize: 1, wins: 1 }, none))[0]).toBe('gear_equip');
+  });
+
   it('yeni ekran dersleri: Wounds Carry Over (ilk zafer), Reading the Road (elit / boss / kamp / hazine görünür), Rest Camps, Item Quality', () => {
     expect(ids(dueScreenLessons('map', { wins: 0 }, none))).toEqual([]);
     expect(ids(dueScreenLessons('map', { wins: 1 }, none))).toEqual(['hp_carry']);

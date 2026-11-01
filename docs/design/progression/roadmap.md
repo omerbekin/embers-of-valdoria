@@ -54,7 +54,7 @@ class temeli (data/classes)  ->  + level  ->  + ağaç (filler)  ->  + item'ler 
 
 - **Ömer onayladı (2026-10-09, madde 278): telafi %80.** Düşman ölçeği sabit bir tablo değil: item'lerin (ve açıldıkça level/ağacın) o düğümde BEKLENEN gücünün x0,8'i (`data/campaign/power-budget.json`, `src/campaign/power.ts`; bölüm içinde düğüm derinliğiyle doğrusal). Eski taslaktaki düşman sütunu (x1,25 / x1,65 / x2,10, ~%85 telafi) ve toplam sütunundaki yuvarlamalar (x1,75 / x2,30) bu karara göre düzeltildi. Yalnızca oyunda açık sistemler sayılır (`activeSystems`; aşama 0'da boş => ölçek 1).
 
-- Fikir: oyuncunun normal ilerlemesi düşmanın biraz önünde gider (oyuncu güçlendiğini hisseder), farm bu farkı **sınırlı** büyütür (zorluk kolu gibi), ama "her şeyi ezme" seviyesine çıkaramaz (bölüm 2.3 azalan getiri).
+- Fikir: oyuncunun normal ilerlemesi düşmanın biraz önünde gider (oyuncu güçlendiğini hisseder), farm bu farkı **sınırlı** büyütür (zorluk kolu gibi), ama "her şeyi ezme" seviyesine çıkaramaz (level farkı freni, levels.md).
 - Kural önerisi: tek bir item karakter gücünün bütçesinin ~1/4'ünden fazlasını vermez; HIZ (SPD/DEX) ve kritik veren item'lerin ayrı tavanı var (risk: bölüm 5).
 
 ### 1.4 Kayıt ve sürüm geçişi (aşama 0)
@@ -89,18 +89,20 @@ class temeli (data/classes)  ->  + level  ->  + ağaç (filler)  ->  + item'ler 
 ### 2.2 Yeniden oynama (farm)
 | Düğüm türü | Yeniden oynanır mı | Düşman | Ödül |
 |---|---|---|---|
-| Battle | Evet | **Aynı karşılaşma olabilir** (karar 4, Ömer 2026-10-09); bölgenin devriye listesi (`regions[x].patrols`) isteğe bağlı çeşit olarak ileride, zorunlu değil | XP + altın + normal loot, azalan getiri (2.3) |
+| Battle | Evet | **Aynı karşılaşma olabilir** (karar 4, Ömer 2026-10-09); bölgenin devriye listesi (`regions[x].patrols`) isteğe bağlı çeşit olarak ileride, zorunlu değil | XP + altın + normal loot, tam (Ömer 2026-11-01) |
 | Guarded Treasure | Savaşı evet (devriye gibi) | Aynı devriye kuralı | Sandık YALNIZCA ilk zaferde; sonra normal savaş ödülü |
-| Elite | Evet (öneri) | Aynı elit karşılaşma, bölüm seviyesine göre | Elitin özel item'i (varsa) yalnızca ilk zaferde; sonra elit loot tablosu, azalan getiri |
+| Elite | Evet (öneri) | Aynı elit karşılaşma, bölüm seviyesine göre | Elitin özel item'i (varsa) yalnızca ilk zaferde; sonra elit loot tablosu, tam XP |
 | Boss | **Hayır** (öneri) | — | — |
 | Event / Treasure (saf) | Hayır (bir kez) | — | — |
 | Town / City | Her zaman girilir | — | Dinlenme, tüccar, aday |
 | Fountain (yeni) | Evet, şarjlı | — | İyileştirme (2.5) |
 
 - **Karar 4:** tekrar oynanan savaşta aynı moblar görünebilir (devriye üretici zorunlu değil). Savaş seed'i yine oynama sayısını içerir: `hash(seed, harita, düğüm, oynama sayısı, deneme)` (zarlar farklı, takım aynı olabilir).
-- **Ölçek bölüm seviyesine bağlı, oyuncu seviyesine DEĞİL.** Düşman oyuncuyla birlikte büyürse farm anlamsızlaşır; bölüme bağlı olunca farm gerçekten kolaylaştırır ama azalan getiriyle sınırlanır.
+- **Ölçek bölüm seviyesine bağlı, oyuncu seviyesine DEĞİL.** Düşman oyuncuyla birlikte büyürse farm anlamsızlaşır; bölüme bağlı olunca farm gerçekten kolaylaştırır ama level farkıyla sınırlanır.
 
 ### 2.3 Farm sömürüsüne karşı önlemler (öneri: A + B, C yok)
+
+**Güncel (Ömer 2026-11-01):** A artık yürürlükte değil: devriye tam XP, altın ve loot verir; fren level farkıdır (`levels.md`).
 | | Kural | Öneri |
 |---|---|---|
 | **A. Azalan getiri (düğüm başına)** | Aynı düğümün N. yeniden oynanışında XP / altın / loot şansı ilk zaferin %60 / %40 / %25'i; taban %25'te kalır. | **Evet** |
@@ -150,7 +152,7 @@ class temeli (data/classes)  ->  + level  ->  + ağaç (filler)  ->  + item'ler 
 
 ### 2.10 Harita arayüzüne etkisi (ui-dev)
 - Kaldırılanlar: "Road closed", "Take this road" onayı, kapanan dalların sise dönmesi.
-- Eklenenler: temizlenmiş savaş düğümünde küçük "devriye" rozeti + azalan getiri göstergesi (ödül çubuğu 100/60/40/25); fountain şarj göstergesi; tek dokunuşla yolculuk (hedefe dokun -> rota vurgusu -> yürü); bölüm göstergesi ve bölüm geçiş ekranı; Party penceresinde envanter ve (aşama 3'ten sonra) ağaç sekmesi; kasabada Merchant.
+- Eklenenler: temizlenmiş savaş düğümünde küçük "devriye" rozeti; fountain şarj göstergesi; tek dokunuşla yolculuk (hedefe dokun -> rota vurgusu -> yürü); bölüm göstergesi ve bölüm geçiş ekranı; Party penceresinde envanter ve (aşama 3'ten sonra) ağaç sekmesi; kasabada Merchant.
 - Lejant: Fountain, Merchant, Shrine, Scout Tower, Patrol.
 - Debug (Campaign sekmesi): Give item, Give gold, Set level, Reset replays, Teleport (iki yönlü), Next chapter, Farm report (sim'den).
 
@@ -214,8 +216,8 @@ class temeli (data/classes)  ->  + level  ->  + ağaç (filler)  ->  + item'ler 
 
 | Risk | Nerede | Önlem |
 |---|---|---|
-| Güç artışı düşman ölçeğini geçer, sefer kolaylaşır | Sefer | Bütçe tablosu (1.3), bölüm seviyesi ölçeği, azalan getiri; her aşama sonunda `sim:campaign` kontrol noktası (1.5). |
-| Farm sınırsız güç verir | Sefer | Azalan getiri + seviye farkı cezası + ücretli dinlenme (2.3); boss tekrar yok. |
+| Güç artışı düşman ölçeğini geçer, sefer kolaylaşır | Sefer | Bütçe tablosu (1.3), bölüm seviyesi ölçeği; her aşama sonunda `sim:campaign` kontrol noktası (1.5). |
+| Farm sınırsız güç verir | Sefer | Seviye farkı cezası + ücretli dinlenme (2.3); boss tekrar yok. |
 | HIZ (SPD) item'leri sıra sistemini bozar (hızlı = çok daha fazla tur) | Hepsi | SPD/DEX item'lerine ayrı tavan; sim'de "tur payı" ölçümü. |
 | Zırh yığma (zırh/(zırh+30)) | Hepsi | Zırh eklerinin toplam tavanı; büyü zırhı ile denge. |
 | Kritik / Luck yığma, Lucky Escape | Hepsi | Kritik item tavanı; Lucky Escape şansı item'den etkilenmez (öneri). |
@@ -235,7 +237,7 @@ class temeli (data/classes)  ->  + level  ->  + ağaç (filler)  ->  + item'ler 
 
 | # | Soru | Karar |
 |---|---|---|
-| 1 | Farm'da **azalan getiri** olsun mu? | **EVET** (%60 / %40 / %25, taban %25; 2.3 A). Seviye farkı cezası (2.3 B) öneri olarak kalır, level sistemiyle (aşama 2) birlikte sorulur. |
+| 1 | Farm'da **azalan getiri** olsun mu? | **EVET** (%60 / %40 / %25, taban %25; 2.3 A), **Ömer 2026-11-01'de kaldırdı.** Seviye farkı cezası (2.3 B) öneri olarak kalır, level sistemiyle (aşama 2) birlikte sorulur. |
 | 2 | Bölüm boss'u geçilince **önceki bölüme geri dönülsün mü**? | İlk sürümde **HAYIR** (boss öncesi uyarıyla). |
 | 3 | **Endless önce mi?** | **EVET: Endless Lite item MVP ile paralel**, aşama 0'dan hemen sonra. |
 | 4 | Yeniden oynanan savaşta düşman aynı takım mı, devriye mi? | **AYNI moblar görünebilir**; yeniden üretilen devriye zorunlu değil (ileride çeşit için eklenebilir). 2.2 güncellendi. |

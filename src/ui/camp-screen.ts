@@ -28,6 +28,7 @@ import { instanceIlvl, itemDef, type ItemInstance } from '../progression';
 import { woundCount } from '../progression/wounds';
 import { SLOT_IDS } from '../progression';
 import { className, itemPlate } from './character-panel';
+import { attachBandTip, reasonSpec } from './band-tip-attach';
 import { woundPipsEl } from './wound-ui';
 import { itemTipNodes } from './item-tip';
 import { el, button, goldImg, heroFace, hpBar, openShell } from './econ-shell';
@@ -171,7 +172,7 @@ export function openCamp(
     const b = el('button', `ec-hero pick${target === h.id ? ' on' : ''}${why ? ' dim' : ''}`);
     b.type = 'button';
     if (why) {
-      b.title = why;
+      attachBandTip(b, reasonSpec(className(h.class), why));
       b.setAttribute('aria-disabled', 'true');
     }
     const t = el('div', 'ec-ht');
@@ -247,7 +248,7 @@ export function openCamp(
       const b = el('button', `ec-card${kind === c.kind ? ' on' : ''}`);
       b.type = 'button';
       b.disabled = !!why;
-      if (why) b.title = why;
+      if (why) attachBandTip(b, reasonSpec(c.name, why));
       const ic = el('span', 'ec-card-ico');
       if (c.kind === 'rest' && ico) {
         const im = el('img');

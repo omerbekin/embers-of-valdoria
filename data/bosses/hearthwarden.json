@@ -1,0 +1,63 @@
+{
+  "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim A (Sönen ocak). Statlar ve can eski yer tutucu sınıf Drowned Queen kopyası (karşılaşma gücü değişmesin). Kendi çizimi; skill sanatı ödünç.",
+  "id": "hearthwarden",
+  "name": "The Hearthwarden",
+  "spriteId": "hearthwarden",
+  "spriteScale": 1.2,
+  "color": "#b0501c",
+  "logo": "skull",
+  "frontPriority": 4,
+  "range": 5,
+  "role": "Boss · The First King",
+  "attributes": {
+    "str": 16,
+    "int": 40,
+    "dex": 8,
+    "luck": 8
+  },
+  "armor": 18,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 460,
+    "hpRegen": 0
+  },
+  "ai": "bridge_warden",
+  "skills": [
+    "hammerfall",
+    "quench",
+    "forge_chains",
+    "temper_the_crown"
+  ],
+  "touch": {
+    "type": "forgeHeat",
+    "ground": "burning",
+    "turns": 2,
+    "scale": "int",
+    "power": 0.2
+  },
+  "passive": {
+    "id": "forge_heat",
+    "name": "Forge-Heat",
+    "icon": "flame",
+    "text": "At the start of each Round a row on your side is marked. At the start of the next Round it burns.",
+    "effect": {
+      "type": "touchLabel"
+    }
+  },
+  "boss": {
+    "where": "waits at the First Hearth",
+    "firstBanner": "The crown is not yours to take.",
+    "phases": [],
+    "notes": [
+      "A row glows each Round and burns the next: step out of it. Quench puts out every Burning cell and heals the Hearthwarden for each one, so put the fire out before she does."
+    ],
+    "passives": [
+      {
+        "id": "forge_heat",
+        "name": "Forge-Heat",
+        "icon": "flame",
+        "text": "At the start of each Round a row on your side is marked. At the start of the next Round it burns."
+      }
+    ]
+  }
+}

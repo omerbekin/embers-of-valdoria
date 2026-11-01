@@ -122,6 +122,7 @@ const CLASS_TESTS: ReadonlyArray<{ key: string; skill: string; caster: string; l
   { key: 'wail_of_the_dead', skill: 'wail_of_the_dead', caster: 'undead' },
   { key: 'dark_bond', skill: 'dark_bond', caster: 'undead' },
   { key: 'dark_bond_far', skill: 'dark_bond', caster: 'undead', allySlot: 11, label: 'Dark Bond (far ally: back row, other lane)', track: ['dark_bond'] },
+  { key: 'summon_treant', skill: 'summon_treant', caster: 'druid' },
   { key: 'raise_dead', skill: 'raise_dead', caster: 'undead', label: 'Raise Dead (no corpse: unfed skeleton)' },
   { key: 'raise_dead_fed', skill: 'raise_dead', caster: 'undead', dummy2Slot: 10, label: 'Raise Dead (corpse consumed: fed skeleton)', track: ['raise_dead', 'vampiric_bite'] },
   { key: 'vampiric_bite', skill: 'wail_of_the_dead', caster: 'undead', label: 'Vampiric Bite (Undead at half HP drains life with Wail)', casterHp: 0.5 },

@@ -70,15 +70,17 @@ describe('nadirlik = affix sayısı', () => {
     only('a_keen', ['weapon', 'gloves']);
     only('c_acc', ['gloves', 'weapon']);
     only('c_eva', ['boots', 'gloves']);
-    only('c_shield', ['offhand', 'trinket']);
+    only('c_shield', ['offhand', 'ring', 'trinket']);
     only('c_block', ['offhand']);
     only('b_blockbreak', ['weapon', 'gloves']);
-    only('b_speed', ['boots', 'trinket']);
-    only('b_initiative', ['boots', 'trinket']);
+    only('b_speed', ['boots', 'ring', 'trinket']);
+    only('b_initiative', ['boots', 'ring', 'trinket']);
     for (const id of ['a_auradmg', 'a_auradef']) only(id, ['armor', 'offhand']);
     for (const id of ['a_primary', 'a_allattr', 'a_recovery', 'a_ultcd', 'a_immunity', 'a_endure']) only(id, [...SLOT_IDS]);
-    // rastgele affix'ler en çok 3 yuvada (genel A affix'leri hariç)
-    for (const [id, a] of Object.entries(ITEMS.affixDefs)) if (a.slots) expect(a.slots.length, id).toBeLessThanOrEqual(3);
+    // rastgele affix'ler en çok 3 yuvada (genel A affix'leri hariç); Ring + Trinket aynı havuzu paylaştığı için tek yuva sayılır (2026-11-01)
+    for (const [id, a] of Object.entries(ITEMS.affixDefs)) if (a.slots) expect(a.slots.filter((s) => s !== 'ring').length, id).toBeLessThanOrEqual(3);
+    // Trinket'e izin verilen her affix Ring'e de izinli
+    for (const [id, a] of Object.entries(ITEMS.affixDefs)) if (a.slots?.includes('trinket')) expect(a.slots, id).toContain('ring');
     // her yuvada her kademe için seçenek var; zar hiç boş kalmaz
     for (const s of SLOT_IDS) for (const t of ['C', 'B', 'A'] as const) expect(tierPool(t, s).length, `${t} ${s}`).toBeGreaterThanOrEqual(t === 'C' ? 3 : 2);
     // 1000 zar: rastgele affix'ler yuva havuzunda (ana affix tabanın örtük statı, havuzdan muaf), aynı affix iki kez olmaz, Epic hep 4 affix

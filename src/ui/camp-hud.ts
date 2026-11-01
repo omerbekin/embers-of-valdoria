@@ -5,6 +5,7 @@
  * Üstüne gelince / uzun basınca kısa ipucu (ad). Dokunma hedefi >= 44 px. Oyun içi metinler İngilizce.
  */
 import './camp-hud.css';
+import { attachBandTip } from './band-tip-attach';
 import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName, type UiIconKind } from './ui-icons';
 
@@ -21,12 +22,11 @@ export interface CampHudHooks {
   formation: () => void;
 }
 
-const button = (kind: 'gear' | 'formation', label: string, tip: string, run: () => void): HTMLButtonElement => {
+const button = (kind: 'gear' | 'formation', label: string, tip: { lines: string; key: string }, run: () => void): HTMLButtonElement => {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = `camp-ib camp-${kind}`;
-  b.title = tip;
-  b.setAttribute('aria-label', label);
+  b.setAttribute('aria-label', `${label}: ${tip.lines} (${tip.key})`);
   const k: UiIconKind = kind;
   if (hasUiImage(k)) {
     const img = document.createElement('img');
@@ -36,14 +36,15 @@ const button = (kind: 'gear' | 'formation', label: string, tip: string, run: () 
     b.append(img);
   } else b.textContent = label;
   b.addEventListener('click', run);
+  attachBandTip(b, { title: label, lines: [{ text: tip.lines }], foot: `Shortcut: ${tip.key}` });
   return b;
 };
 
 export function mountCampHud(root: HTMLElement, h: CampHudHooks): CampHud {
   const box = document.createElement('div');
   box.className = 'camp-hud';
-  const gear = button('gear', 'Gear', 'Gear: heroes and bag (C)', h.gear);
-  const form = button('formation', 'Formation', 'Formation: who stands in front (F)', h.formation);
+  const gear = button('gear', 'Gear', { lines: 'Heroes and bag', key: 'C' }, h.gear);
+  const form = button('formation', 'Formation', { lines: 'Who stands in front', key: 'F' }, h.formation);
   box.append(gear, form);
   root.append(box);
   const of = (w: 'gear' | 'formation'): HTMLElement => (w === 'gear' ? gear : form);

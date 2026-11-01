@@ -411,17 +411,35 @@ function openLootThenMap(game: Phaser.Game, xp: LootXp[]): void {
   if (!session.state?.pendingLoot || !root) return void goTo(game, MAP_SCENE);
   void import('../ui/loot-screen').then(async (m) => {
     const g = await import('../ui/gear-screen');
-    const h = m.openLootScreen(root, {
+    const pc = await import('../ui/chest-open');
+    const openLoot = (): void => {
+      const h = m.openLootScreen(root, {
+        quiet: pc.chestWasPlayed(session.state),
+        get: () => session.state!,
+        set: setState,
+        gear: g.campaignGearSource(() => session.state!, setState),
+        xp,
+        onDone: () => {
+          save('auto'); // alınan item'ler kayda geçsin
+          goTo(game, MAP_SCENE);
+        },
+      });
+      game.scene.getScene(BATTLE_SCENE).events.once('shutdown', () => h.abort());
+    };
+    // Korumalı sandık (Ömer 2026-11-01): düşüş sandık kaynaklıysa önce tam ekran sandık açılışı, sonra LOOT ekranı
+    const drop = pc.chestDropOf(session.state);
+    if (!drop) return openLoot();
+    const ch = pc.playChestOpen(root, {
+      drop,
       get: () => session.state!,
       set: setState,
-      gear: g.campaignGearSource(() => session.state!, setState),
-      xp,
-      onDone: () => {
+      onClaimed: () => {
         save('auto'); // alınan item'ler kayda geçsin
         goTo(game, MAP_SCENE);
       },
+      onOpenLoot: openLoot,
     });
-    game.scene.getScene(BATTLE_SCENE).events.once('shutdown', () => h.abort());
+    game.scene.getScene(BATTLE_SCENE).events.once('shutdown', () => ch.abort());
   });
 }
 

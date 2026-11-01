@@ -25,9 +25,9 @@ export interface AiValueConfig {
   /** Harita 3 şimşek kuralları (ai.ts > thunderValue, thunderCellWorth). Yoksa 0. */
   thunder?: { pushShare: number; liveStay: number; flashCost: number; cellRisk: number; ironRisk: number };
   /** Harita 3 4. dilim mob kitleri (ai.ts > mobKitValue). Yoksa 0. */
-  mobKit?: { exposure: number; diveSafe: number; spentTurn: number; coolTurn: number; coolArmor: number; reach: number; stormhide: number };
+  mobKit?: { exposure: number; diveSafe: number; spentTurn: number; coolTurn: number; coolArmor: number; reach: number; stormhide: number; stagger: number; furnace: number; chant: number; fury: number; lightDark: number; kindle: number; graveCold: number; hoarfrost: number };
   /** Harita 3 boss / elit dokunuşları (ai.ts > bossTouchValue). Yoksa 0. */
-  bossTouch?: { heat: number; whiteout: number; sermon: number; sermonTurn: number; sermonBreak: number; packHeal: number; packKill: number; vault: number };
+  bossTouch?: { heat: number; whiteout: number; sermon: number; sermonTurn: number; sermonBreak: number; packHeal: number; packKill: number; vault: number; frostbound: number; caveMark: number; fervour: number; everburn: number; quench: number; nave: number; crown: number; shepherd: number; douse: number };
   /** Harita 3 imza mekanikleri (ai.ts > signatureValue, rodChoice). Yoksa 0. */
   signature?: { wake: number; chip: number; rodRounds: number; rollShare: number; reheat: number; eyeKill: number; noiseRise: number; toppleRounds: number; toppleShare: number };
   /** Frozen (ai.ts > frostValue): tur değeri payları. */
@@ -140,6 +140,14 @@ export const DEFAULT_COVERAGE: AiCoverageConfig = {
 
 const covCache = new WeakMap<AiValueConfig, AiCoverageConfig>();
 /** Kapsam ağırlıkları (iç içe nesneler alan alan birleşir; config başına önbellekli). */
+/**
+ * YZ'nin değer hesaplarında saydığı MP bedeli (Ömer 2026-11-01, tek hesap): `ai.scoreCost` varsa gerçek bedel ile küçüğü (mob mana zammı, madde 466).
+ * Ödeme ve "mana yetiyor mu" kontrolleri gerçek bedelle kalır.
+ */
+export function scoredMpCost(skill: SkillDef): number {
+  return Math.min(skill.cost.amount, skill.ai?.scoreCost ?? skill.cost.amount);
+}
+
 export function coverageOf(vc: AiValueConfig): AiCoverageConfig {
   let r = covCache.get(vc);
   if (!r) {
@@ -529,7 +537,7 @@ export class ValueContext {
       .filter((sk) => sk.cost.resource === 'mp' && sk.cost.amount > 0)
       .map((sk) => {
         const cd = this.battle.mode === 'turns' ? (sk.cooldown ?? 0) : 0;
-        return { cost: sk.cost.amount, delta: (raw(sk) - free) * this.vc.contributionShare, cap: cd > 0 ? Math.ceil(T / (cd + 1)) : T };
+        return { cost: scoredMpCost(sk), delta: (raw(sk) - free) * this.vc.contributionShare, cap: cd > 0 ? Math.ceil(T / (cd + 1)) : T };
       })
       .filter((u) => u.delta > 0);
     const worth = (mp: number): number => {

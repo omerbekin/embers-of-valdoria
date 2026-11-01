@@ -49,13 +49,11 @@ describe("Witch's Hut choice event", () => {
     expect(() => chooseEvent({ ...s, gold: 10 }, 'pay')).toThrow(/gold/);
     const rich = { ...s, gold: 500, pendingLoot: undefined };
     const t = chooseEvent(rich, 'pay');
-    // Küçük sandık (Ömer 2026-10-12): tek item + 20-30 altın, kartta görünür
-    expect(t.inventory.length).toBe(rich.inventory.length + 1);
+    // İki item, altın yok (Ömer 2026-11-01 olay dengesi)
+    expect(t.inventory.length).toBe(rich.inventory.length + 2);
     expect(t.pendingLoot?.kind).toBe('treasure');
-    expect(t.pendingLoot?.items.length).toBe(1);
-    expect(t.pendingLoot?.gold).toBeGreaterThanOrEqual(20);
-    expect(t.pendingLoot?.gold).toBeLessThanOrEqual(30);
-    expect(t.gold).toBe(rich.gold - 60 + t.pendingLoot!.gold);
+    expect(t.pendingLoot?.items.length).toBe(2);
+    expect(t.gold).toBe(rich.gold - 60);
     expect(nextStep(t).kind).toBe('move');
   });
 
@@ -111,10 +109,10 @@ describe("Shepherd's Fold choice event", () => {
     return { ...s, gold: 200, roster: s.roster.map((h) => ({ ...h, hpRatio: 0.2 })) };
   };
 
-  it('Share your bread: pay 40 gold, the rest heals 100%', () => {
+  it('Share your bread: pay 60 gold, the rest heals 100%', () => {
     const s = atFold();
     const t = chooseEvent(s, 'bread');
-    expect(t.gold).toBe(160);
+    expect(t.gold).toBe(140);
     expect(nextStep(t).kind).toBe('rest');
     expect(restHealOf(t)).toBe(1);
     const r = restAtCamp(t);

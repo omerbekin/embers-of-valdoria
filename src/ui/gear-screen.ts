@@ -30,6 +30,7 @@ import {
   type Equipment,
   type ItemInstance,
   type SlotId,
+  type SlotLocks,
   meetsLevel,
   levelReqMsg,
   instanceLevelReq,
@@ -55,7 +56,7 @@ import { goToTreeButton } from './gear-tree-link';
 import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, equippedAgainst, heroFallen, heroItemLine } from './gear-hover';
 import { heroOath, oathMinusText, oathPlusText } from '../campaign/oath';
 import { heroQuests, questBonusLine } from '../campaign/quests';
-import { boonList, respecHeroTree, respecTreeBlocked } from '../campaign';
+import { boonList, respecHeroTree, respecTreeBlocked, slotLocks } from '../campaign';
 import { bandTipHtml } from './band-tip';
 import { tipOn, tipOff } from './tip-vis';
 import { canAddPoint } from '../progression/levels';
@@ -108,6 +109,8 @@ export interface GearHero {
   treeReset?: boolean;
   /** Şu anki can oranı (Sheet'te "93 / 150" + çubuk; yoksa dolu). */
   hpRatio?: number;
+  /** Kilitli yuvalar ve kısa nedenleri (seferde Trinket, Reedgate'e kadar; Endless'ta yok). */
+  locks?: SlotLocks;
   /** Yara sayısı ve kuralı (Sheet HP çubuğu + yer imi noktaları; Ömer 2026-10-23). */
   wounds?: number;
   woundCfg?: WoundCfg;
@@ -159,11 +162,13 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
       const s = get();
       // Yara (Ömer 2026-10-23, V1 "Scar + dots"): Sheet HP çubuğunda yara bölümü + noktalar, yer imlerinde küçük noktalar
       const cfg: WoundCfg = { rules: woundRules(), town: true };
+      const locks = slotLocks(s);
+      const lockOf = Object.keys(locks).length ? { locks } : {}; // Trinket: Reedgate'e kadar
       return [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))].map((h) => {
         const o = heroOath(s, h.id); // A4 Hero Oath: Gear'da küçük çip
         const qs = heroQuests(h); // A5: unvanlar
         const oath = { ...(o ? { oath: { name: o.name, plus: oathPlusText(o), minus: oathMinusText(o) } } : {}), ...(qs.length ? { titles: qs.map((q) => ({ title: q.title, bonus: questBonusLine(q) })) } : {}) };
-        return woundCount(h) > 0 ? { ...h, wounds: woundCount(h), woundCfg: cfg, ...oath } : { ...h, ...oath };
+        return woundCount(h) > 0 ? { ...h, wounds: woundCount(h), woundCfg: cfg, ...oath, ...lockOf } : { ...h, ...oath, ...lockOf };
       });
     },
     bag: () => get().inventory,
@@ -454,8 +459,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         const inst = bagInst(uid);
         const fam = !!d && canEquip(hero.class, d);
         const lvl = !!inst && meetsLevel(hero.level, inst);
-        const ok = fam && lvl;
-        const acts: ItemTipAction[] = [{ label: ok ? `Equip · ${className(hero.class)}` : fam && inst ? levelReqMsg(instanceLevelReq(inst)) : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid, d ? (fitsSlot(d, 'offhand') && d.slot === 'weapon' ? 'weapon' : undefined) : undefined) }];
+        const slotLock = d ? hero.locks?.[d.slot] : undefined;
+        const ok = fam && lvl && !slotLock;
+        const acts: ItemTipAction[] = [{ label: ok ? `Equip · ${className(hero.class)}` : slotLock && fam ? slotLock : fam && inst ? levelReqMsg(instanceLevelReq(inst)) : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid, d ? (fitsSlot(d, 'offhand') && d.slot === 'weapon' ? 'weapon' : undefined) : undefined) }];
         // Tek el hançer: ikinci ele de (ana elde tek el silah varken)
         // ana el boşken "Off-hand" yok (hançer zaten ana ele gider, Ömer 2026-10-14)
         if (ok && d && d.slot === 'weapon' && fitsSlot(d, 'offhand') && hero.equipment.weapon) acts.push({ label: 'Off-hand', disabled: !!offhandBlocker(hero.equipment), run: () => tryEquip(hero.id, uid, 'offhand') });
@@ -643,7 +649,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       return;
     }
     // İkinci el kapalı (çift el silah) / Legendary sınırı: açık mesaj + sallanma (torba dolu ise işlem hatası mesajı)
-    const plan = planEquip(h.class, h.equipment, inst, slot, { level: h.level });
+    const plan = planEquip(h.class, h.equipment, inst, slot, { level: h.level, ...(h.locks ? { locks: h.locks } : {}) });
     if (isPlanError(plan)) {
       shakeUid = uid;
       uiSound('error');

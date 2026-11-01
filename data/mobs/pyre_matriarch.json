@@ -1,0 +1,41 @@
+{
+  "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim A (Yanan salon). Statlar Pyre Witch kopyası (eski yer tutucu Morwen Luck ile ölçekleniyordu), can Morwen. Kendi çizimi; skill sanatı ödünç.",
+  "id": "pyre_matriarch",
+  "name": "The Pyre Matriarch",
+  "family": "ember_cult",
+  "spriteId": "pyre_matriarch",
+  "spriteScale": 1.15,
+  "color": "#c8541e",
+  "logo": "wizhat",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Elite · Ashborn Matriarch",
+  "attributes": {
+    "str": 10,
+    "int": 30,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 8,
+  "magicArmor": 4,
+  "overrides": {
+    "hp": 90
+  },
+  "ai": "sniper",
+  "skills": [
+    "pyre_bolt",
+    "matriarch_stoke",
+    "spread_the_flame"
+  ],
+  "passive": {
+    "id": "greater_kindling",
+    "name": "Greater Kindling",
+    "icon": "flame",
+    "text": "Deals 5% more damage for each Burning cell on the field.",
+    "effect": {
+      "type": "kindling",
+      "ground": "burning",
+      "perCell": 0.05
+    }
+  }
+}

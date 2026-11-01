@@ -24,6 +24,7 @@ import {
   SLOT_IDS,
   type Equipment,
   type ItemInstance,
+  type SlotLocks,
   type SlotId,
 } from '../progression';
 
@@ -47,6 +48,8 @@ export interface HoverHero {
   woundCfg?: WoundCfg;
   /** A4 Hero Oath (sefer): yemin adı + artı / eksi metni. */
   oath?: { name: string; plus: string; minus: string };
+  /** Kilitli yuvalar ve kısa nedenleri (seferde Trinket, Reedgate'e kadar; Endless'ta yok). */
+  locks?: SlotLocks;
   /** A5 Personal Quests (sefer): kazanılan unvanlar ve bonus satırları (karakter kartında adın altında küçük satır). */
   titles?: Array<{ title: string; bonus: string }>;
 }
@@ -90,13 +93,13 @@ export function equippedAgainst(h: HoverHero, inst: ItemInstance | null | undefi
 
 /** Dolu yuva sayısı / toplam yuva ("2/7"; kahraman ipucunda elmas sırası). */
 export function heroItemCount(h: HoverHero): { filled: number; total: number } {
-  return { filled: SLOT_IDS.filter((k) => h.equipment[k]).length, total: SLOT_IDS.length };
+  return { filled: SLOT_IDS.filter((k) => h.equipment[k]).length, total: SLOT_IDS.filter((k) => !h.locks?.[k]).length };
 }
 
 /** Olağan satır: "Level 1 · 4/6 items". */
 export function idleHeroLine(h: HoverHero): HeroLine {
   const count = SLOT_IDS.filter((k) => h.equipment[k]).length;
-  const text = `Level ${h.level} · ${count}/${SLOT_IDS.length} items`;
+  const text = `Level ${h.level} · ${count}/${heroItemCount(h).total} items`;
   return { text, tone: 'idle', parts: [{ text }] };
 }
 
@@ -120,7 +123,7 @@ export function heroItemLine(h: HoverHero, inst: ItemInstance | null | undefined
   if (SLOT_IDS.some((k) => h.equipment[k]?.uid === inst.uid)) return { text: 'Equipped', tone: 'none', parts: [{ text: 'Equipped' }] };
   // Legendary sınırı / ikinci el kapalı (çift el silah): kısa neden
   const slot = defaultEquipSlot(h.equipment, d);
-  const plan = planEquip(h.class, h.equipment, inst, slot);
+  const plan = planEquip(h.class, h.equipment, inst, slot, h.locks ? { locks: h.locks } : {});
   if (isPlanError(plan)) {
     const text = plan.error === LEGENDARY_LIMIT_MSG ? plan.error : offhandBlocker(h.equipment) && slot === 'offhand' ? 'Hands full' : plan.error;
     return { text, tone: 'no', parts: [{ text }] };

@@ -132,6 +132,8 @@ interface HitMeta {
   reaction?: string;
   /** Durum kaynaklı hasar (Wither tiki, Doom): damage olayına `status` olarak yazılır. */
   status?: Status['kind'];
+  /** Yalnız günlük için: hasarın durum dışı kaynağı (ağaç düğümü, pasif, skill, mekanik; BattleEvent 'damage' > cause). Kurala etkisi yok. */
+  cause?: string;
 }
 
 /** Faz 4a: tetik olayı (Battle.fireTrig). target = bağlamın hedefi (koşullar / eylem 'target'), subject = olayın öznesi, source = sebep olan. */
@@ -564,6 +566,10 @@ export class Battle {
     if (e?.type === 'slickHide') return type === 'physical' && target.hp > 0 && this.onGround(target, e.ground) ? e.physicalTakenMult : 1;
     // Crown of Salt (Drowned Queen): iki tahtadaki her Flooded hücre başına -perCell (toplamsal, en az 0)
     if (e?.type === 'crownOfSalt') return Math.max(0, 1 - e.perCell * this.groundCellCount(e.ground));
+    // Hollow (Hollow Warden): Darkness'ta alınan hasar düşer
+    if (e?.type === 'hollow') return this.isDark() ? e.darkTakenMult : 1;
+    // Shepherd of Ash (The Ashborn Hierarch): kapsamdaki bir dost yaşarken
+    if (e?.type === 'shepherdOfAsh') return this.flockGuards(target).length ? e.takenMult : 1;
     // Close Ranks (YM20): aynı sıradaki her diğer canlı sıra alan dost için -perAlly (toplamsal; en az 0)
     if (e?.type === 'closeRanks') return Math.max(0, 1 - e.perAlly * this.rowMatesOf(target));
     if (e?.type !== 'boneWard') return 1;
@@ -907,7 +913,7 @@ export class Battle {
       const lost = this.applyHit(src, target, total, doom.damageType, crit, emit, false, meta);
       // Ağaç Doom lifesteal (Feast of Ruin): patlatana, hedefin kaybettiği canın oranı
       dealt = lost;
-      if (dm?.lifesteal && owner && owner.hp > 0 && lost > 0) this.bondEcho(owner, this.applyHeal(owner, owner, Math.round(lost * dm.lifesteal), false, emit), emit);
+      if (dm?.lifesteal && owner && owner.hp > 0 && lost > 0) this.bondEcho(owner, this.applyHeal(owner, owner, Math.round(lost * dm.lifesteal), false, emit, 'lifesteal'), emit);
     }
     // Faz 4a: Doom tetiği (patlatan / yığının sahibi; hedef = Doom yiyen; koşul targetHpAbove 0 = sağ kaldı)
     if (this.trigOn && owner) this.trig([owner], { on: 'doom', target, subject: target, amount: omens, dealt, ...(skillId ? { skill: skillId } : {}) }, emit);
@@ -2102,7 +2108,7 @@ export class Battle {
             ? Math.max(1, Math.round(flat * a.damage * s * pm))
             : this.tickDamage(element, type, Math.round(attributePower(statSrc.stats, a.stat as Attribute, f) * a.damage * s * pm), rec);
         if (dmg <= 0) continue;
-        this.applyHit(owner, rec, dmg, type, !!a.crit, emit, false, { origin: 'status', element, damageType: type });
+        this.applyHit(owner, rec, dmg, type, !!a.crit, emit, false, { origin: 'status', element, damageType: type, cause: h.node });
         this.announceIfDead(rec, emit);
       } else if (a.rage !== undefined) {
         if (rec.maxRage === undefined) continue;
@@ -2567,11 +2573,11 @@ export class Battle {
    * Hedefleme önizlemesi (arayüz): skill bu anchor'a / hedefe atılırsa bıraktığı zeminlerin hangi hücrelerde tepkiyeceği ve sonucun adı.
    * Motorun yerleştirme kuralının aynısı (alan hücreleri, area_any tahtası, Sea of Fire dokunan hücreler, tek hedefte hedefin hücresi). Saf.
    */
-  groundReactionPreview(actorUid: string, skillId: string, anchor?: number, board?: Side, targetUid?: string): Array<{ board: Side; slot: number; reaction: string; label: string }> {
+  groundReactionPreview(actorUid: string, skillId: string, anchor?: number, board?: Side, targetUid?: string): Array<{ board: Side; slot: number; reaction: string; label: string; result?: string }> {
     const actor = this.get(actorUid);
     const skill = this.skill(skillId, actorUid);
     if (!actor || !skill || !this.setup.groundReactions) return [];
-    const out: Array<{ board: Side; slot: number; reaction: string; label: string }> = [];
+    const out: Array<{ board: Side; slot: number; reaction: string; label: string; result?: string }> = [];
     for (const e of skill.effects) {
       if (e.type !== 'ground') continue;
       let gb: Side;
@@ -2591,7 +2597,7 @@ export class Battle {
       for (const s of slots) {
         if (out.some((o) => o.board === gb && o.slot === s)) continue;
         const r = this.cellReaction(gb, s, e.ground, actor.side);
-        if (r) out.push({ board: gb, slot: s, reaction: r.id, label: r.def.label });
+        if (r) out.push({ board: gb, slot: s, reaction: r.id, label: r.def.label, ...(r.def.result ? { result: r.def.result } : {}) });
       }
     }
     if (skill.thunder) {
@@ -2602,8 +2608,8 @@ export class Battle {
       const t = targetUid ? this.get(targetUid) : undefined;
       const feet = b && info?.valid ? [{ board: b, cells: info.cells }] : !area && t ? [{ board: t.board, cells: [t.slot] }] : [];
       const res = this.boltOutcome(actor, skill, feet, t ? [t] : [], false);
-      for (const n of res.live) for (const s of n.cells) if (!out.some((o) => o.board === n.board && o.slot === s)) out.push({ board: n.board, slot: s, reaction: 'live_water', label: 'Live Water' });
-      for (const s of res.shatters) if (!out.some((o) => o.board === s.board && o.slot === s.slot)) out.push({ board: s.board, slot: s.slot, reaction: s.reaction, label: s.label });
+      for (const n of res.live) for (const s of n.cells) if (!out.some((o) => o.board === n.board && o.slot === s)) out.push({ board: n.board, slot: s, reaction: 'live_water', label: 'Live Water', result: 'Arcs through all water' });
+      for (const s of res.shatters) if (!out.some((o) => o.board === s.board && o.slot === s.slot)) out.push({ board: s.board, slot: s.slot, reaction: s.reaction, label: s.label, ...(this.groundReactionDef(s.reaction)?.result ? { result: this.groundReactionDef(s.reaction)!.result! } : {}) });
     }
     return out;
   }
@@ -3291,6 +3297,12 @@ export class Battle {
     if (!e || actor.side === target.side) return 1;
     if (e.type === 'grudge') return skill?.id === e.skill && actor.grudgeOn === target.uid ? 1 + e.bonus : 1;
     if (e.type === 'packTactics') return 1 + e.perAlly * this.packMatesOf(actor);
+    // Harita 3 kit dilimi: Blind Hunger (Darkness), Highland Fury (can eşiği), Kindling (Burning hücre sayısı)
+    if (e.type === 'blindHunger') return this.isDark() ? 1 + e.darkBonus : 1;
+    if (e.type === 'highlandFury') return actor.hp < e.below * actor.maxHp ? 1 + e.bonus : 1;
+    if (e.type === 'kindling') return 1 + Math.min(e.max ?? Infinity, e.perCell * this.groundCellCount(e.ground));
+    // Frostbound (The Snowfather): durumu taşıyan düşman başına
+    if (e.type === 'frostbound') return 1 + e.perUnit * this.fighting(target.side).filter((c) => c.statuses.some((s) => e.statuses.includes(s.kind))).length;
     if (e.type === 'sharesOfDead') return 1 + e.perDeath * (actor.shares ?? 0);
     // Blood Scent (YM21): canı eşiğin altındaki hedefe ek hasar
     if (e.type === 'bloodScent') return target.hp > 0 && target.hp < e.below * target.maxHp ? 1 + e.bonus : 1;
@@ -3414,6 +3426,19 @@ export class Battle {
       case 'heaviest':
         return this.armorOrder(c.side, c.board)[0]?.uid === c.uid;
     }
+  }
+
+  /** Blind Hunger: listedeki en yakın hedefler (sıra derinliği + şerit farkı; eşitler kalır). Saf. */
+  private nearestOf(actor: Combatant, list: Combatant[]): Combatant[] {
+    const dist = (c: Combatant) => this.rowOf(c.slot) + Math.abs(this.laneOf(c.slot) - this.laneOf(actor.slot));
+    const min = Math.min(...list.map(dist));
+    return list.filter((c) => dist(c) === min);
+  }
+
+  /** Spread the Flame: skill'in şart koştuğu zemin bu hücrede var mı (şart yoksa evet). Saf. */
+  private anchorGroundOk(skill: SkillDef, board: Side, slot: number): boolean {
+    if (this.debugCasting) return true; // skill galerisi: menzil gibi bu şart da yok sayılır
+    return !skill.anchorGround || this.ground.some((g) => g.ground === skill.anchorGround && g.board === board && g.slots.includes(slot));
   }
 
   /** Erişim kuralı başka hedefi yasaklıyor mu (backRows, laneFirst, heaviest yalnız açtıklarını vurur)? Saf. */
@@ -4133,6 +4158,8 @@ export class Battle {
     if (this.setup.rules?.condition?.noChill === kind) return true; // M-H Heat: bu savaşta Chilled tutmaz
     // Faz 5a: ağaç kuralı immune (önizleme / YZ de görür); kancasız birimde okunmaz
     const full = c as Partial<Combatant>;
+    // Highland Fury: Chilled ve Frozen tutmaz
+    if (full.passive?.effect.type === 'highlandFury' && full.passive.effect.immune.includes(kind)) return true;
     if (full.treeHooks && full.uid && this.rulesOf(full as Combatant, 'immune').some((h) => h.statuses?.includes(kind))) return true;
     // Madde 272: isabet/kritik düşüren debuff'lar (Blinded, Jinxed) da (ccImmunity.accuracyCrit)
     const blockable = !!d.cc || (!!this.setup.formulas.ccImmunity?.accuracyCrit && isAccuracyCritDebuff(d));
@@ -4189,7 +4216,7 @@ export class Battle {
       if (onceUsed(target, src, 'secondWind') || target.hp <= 0 || target.hp >= sw.below * target.maxHp) continue;
       markOnce(target, src, 'secondWind');
       emit({ type: 'passive', actor: target.uid, passive: 'second_wind', name: 'Second Wind' });
-      this.applyHeal(target, target, Math.max(1, Math.round(target.maxHp * sw.heal)), false, emit);
+      this.applyHeal(target, target, Math.max(1, Math.round(target.maxHp * sw.heal)), false, emit, 'second_wind');
       if (src === 'tree') this.fxProc(target, 'secondWind');
     }
   }
@@ -4602,7 +4629,7 @@ export class Battle {
     const total = this.setup.formulas.formation.rows * this.setup.formulas.formation.lanes;
     const skill = this.skill(skillId, actorUid)!;
     const emptyOk = this.emptyOwnAnchor(actor, skillId, b);
-    return Array.from({ length: total }, (_, i) => i).filter((i) => this.inRange(actor, skill, b, i) && (emptyOk || this.areaWindowAt(actorUid, skillId, i, b).length > 0));
+    return Array.from({ length: total }, (_, i) => i).filter((i) => this.inRange(actor, skill, b, i) && this.anchorGroundOk(skill, b, i) && (emptyOk || this.areaWindowAt(actorUid, skillId, i, b).length > 0));
   }
 
   /** TÜM seçilebilir anchor hücreleri (tahta + yuva): area_enemies'de yalnızca karşı tahta; area_any'de önce karşı, sonra kendi tahtası. */
@@ -4628,6 +4655,7 @@ export class Battle {
     const cells = this.areaCells(skillId, anchorSlot, b, actorUid);
     const targets = this.areaWindowAt(actorUid, skillId, anchorSlot, b).map((c) => c.uid);
     if (!this.inRange(actor, this.skill(skillId, actor)!, b, anchorSlot)) return { cells, targets, valid: false, reason: 'Out of range' };
+    if (!this.anchorGroundOk(this.skill(skillId, actor)!, b, anchorSlot)) return { cells, targets, valid: false, reason: 'Needs a burning cell' };
     if (targets.length > 0 || this.emptyOwnAnchor(actor, skillId, b)) return { cells, targets, valid: true };
     if (this.isAnyBoardArea(skillId, actor)) return { cells, targets, valid: false, reason: b === actor.side ? 'No ally in the area' : 'No enemy in the area' };
     const inShape = this.livingByDepth(opposite(actor.side)).some((c) => c.board === b && cells.includes(c.slot));
@@ -4922,6 +4950,7 @@ export class Battle {
         if (!this.rangeOn) list = list.filter((c) => !this.darkBlocks(actor, skill, c.board, c.slot)); // M-F: menzil kapalıyken de
         if (skill.reachRule && !this.debugCasting) list = list.filter((c) => !this.reachDenied(actor, skill, c));
         list = list.filter((c) => !c.underground); // Undermine: yerin altındaki hedef alınamaz
+        if (skill.target === 'single_enemy' && !this.debugCasting && actor.passive?.effect.type === 'blindHunger') list = this.nearestOf(actor, list);
         // Backstab: yalnızca arkası boş hedefler (menzil gibi bir erişim kuralı; taunt bundan SONRA uygulanır: arkası dolu taunter seçilemez)
         if (skill.requiresOpenBehind && !this.debugCasting) list = list.filter((c) => this.openBehindProblem(c) === null);
         if (skill.target === 'single_enemy' && !this.debugCasting && !this.ignoresTaunt(actor)) {
@@ -4932,7 +4961,7 @@ export class Battle {
       }
       case 'single_ally':
         // excludeSelf (Guard): kullanıcı kendini hedefleyemez
-        return this.livingByDepth(actor.side).filter((c) => (!skill.excludeSelf || c.uid !== actor.uid) && !c.underground && this.inRange(actor, skill, c.board, c.slot));
+        return this.livingByDepth(actor.side).filter((c) => (!skill.excludeSelf || c.uid !== actor.uid) && !c.underground && (!skill.allyNames || this.debugCasting || skill.allyNames.includes(c.displayName ?? c.name)) && this.inRange(actor, skill, c.board, c.slot));
       case 'all_allies':
         return this.livingByDepth(actor.side);
       case 'dead_ally':
@@ -4966,7 +4995,7 @@ export class Battle {
       for (const board of boards) {
         const b = this.areaBoard(actor, skill.id, board);
         for (let slot = 0; slot < total; slot++) {
-          if (!this.inRange(actor, sk, b, slot)) continue;
+          if (!this.inRange(actor, sk, b, slot) || !this.anchorGroundOk(sk, b, slot)) continue;
           for (const c of this.areaWindowAt(actor.uid, skill.id, slot, b)) {
             if (seen.has(c.uid)) continue;
             seen.add(c.uid);
@@ -5052,6 +5081,9 @@ export class Battle {
     if ((skill.minPhase ?? 1) > this.phaseOf(actor)) return { ok: false, reason: 'Not in this phase' };
     if (skill.thunderRod && this.rodCellFor(actor, skill) === null) return { ok: false, reason: 'No room for a rod' };
     if (skill.callVault && !this.vaultRoom(skill)) return { ok: false, reason: 'The vault is empty' };
+    if (skill.anchorGround && this.shapeAnchorCells(actorUid, skillId).length === 0) return { ok: false, reason: 'Needs a burning cell' };
+    if (skill.quench && this.groundCellCount(skill.quench.ground) === 0) return { ok: false, reason: 'Needs a burning cell' };
+    if (skill.kindleNave && !this.sermonDone(actor.side)) return { ok: false, reason: 'The sermon must end first' };
     if (skill.longSermon && this.sermonBlessed.has(actor.side)) return { ok: false, reason: 'The sermon is done' };
     if (skill.requiresAlly && !this.combatants.some((c) => c.hp > 0 && c.side === actor.side && c.defId === skill.requiresAlly)) {
       return { ok: false, reason: `Needs a standing ${this.setup.units[skill.requiresAlly]?.name ?? skill.requiresAlly}` };
@@ -5625,6 +5657,7 @@ export class Battle {
       const center = anchor ? anchor.slot : (tileSlot ?? slot ?? (debug ? targets.find((c) => c.board === board)?.slot ?? targets[0]?.slot : undefined));
       if (center === undefined || !Number.isInteger(center) || center < 0 || center >= total) return { ok: false, reason: 'Invalid target' };
       if (!debug && !fc && !this.inRange(actor, skill, board, center)) return { ok: false, reason: 'Out of range' };
+      if (!debug && !fc && !this.anchorGroundOk(skill, board, center)) return { ok: false, reason: 'Needs a burning cell' };
       targets = this.areaWindowAt(actorUid, skillId, center, board);
       if (!debug && targets.length === 0 && !this.emptyOwnAnchor(actor, skillId, board)) return { ok: false, reason: anyBoard && board === actor.side ? 'No ally in the area' : 'No target in the area' };
       centerSlot = center;
@@ -5916,6 +5949,11 @@ export class Battle {
           for (const target of ts) {
             if (target.hp <= 0) continue;
             if (this.castInfo && this.castPaid?.uid === actor.uid) this.castInfo.healedRatios.push(target.maxHp > 0 ? target.hp / target.maxHp : 1);
+            // Reforge: zar ve kritik yok, RNG tüketmez
+            if (effect.maxHpRatio !== undefined) {
+              this.applyHeal(actor, target, Math.max(1, Math.round(target.maxHp * effect.maxHpRatio)), false, emit, skill.id);
+              continue;
+            }
             const hm = actor.stats.healPowerMult; // Support power (affix): yoksa güç aynen
             const base = rollHeal(actor.stats, effect.scale, hm !== undefined && hm !== 1 ? effect.power * hm : effect.power, f, this.rng);
             const { crit, mult } = rollCrit(this.effectiveStats(actor), this.rng); // kritik: şifanın SON çarpanı (geçerli kritik şansı: Misfortune/Jinxed dahil)
@@ -6384,6 +6422,9 @@ export class Battle {
     if (skill.whiteout) this.castWhiteout(skill, emit);
     if (skill.longSermon) this.startSermon(actor, skill, emit);
     if (skill.callVault) this.callVault(actor, skill, emit);
+    if (skill.caveIn) this.castCaveIn(actor, skill, targets[0], emit);
+    if (skill.quench) this.castQuench(actor, skill, emit);
+    if (skill.kindleNave) this.castKindle(actor, skill, emit);
     if (actor.touch?.type === 'packRotation' && skill.effects.some((e) => e.type === 'damage')) this.packHeal(actor, actor.touch, emit);
     // advanceToFront (Warrior Charge, madde 271): kullanıcı ön sırada değilse ön sıraya geçer (önce kendi şeridi; isabet etse de etmese de)
     if (skill.advanceToFront && actor.hp > 0) {
@@ -6905,6 +6946,10 @@ export class Battle {
     this.phaseCrossed.clear();
     this.telegraphedThisTurn.delete(actor.uid);
     if ((actor.actionsPerTurn ?? 1) > 1) this.actionsLeft.set(actor.uid, actor.actionsPerTurn! - 1);
+    if (actor.crownAction) {
+      delete actor.crownAction;
+      this.actionsLeft.set(actor.uid, (this.actionsLeft.get(actor.uid) ?? 0) + 1); // Hollow Crown: bu tur bir eylem daha
+    }
     // Kendi turunun başında: bekleme süreleri 1 azalır
     const held = this.initialHold.get(actor.uid);
     this.initialHold.delete(actor.uid);
@@ -6958,7 +7003,7 @@ export class Battle {
       if (tm) this.treeProcAll(src.uid, tm.nodes);
       const lost = this.applyHit(src, actor, tm && tm.power !== 1 ? Math.max(this.setup.formulas.damage.minDamage, Math.round(dd * tm.power)) : dd, dot.damageType, false, emit, false, { origin: 'status', element: dot.element, damageType: dot.damageType, status: st.kind });
       if (this.treeUnits) st.dealt = (st.dealt ?? 0) + lost;
-      if (tm?.lifesteal && src !== actor && src.hp > 0 && lost > 0) this.bondEcho(src, this.applyHeal(src, src, Math.round(lost * tm.lifesteal), false, emit), emit);
+      if (tm?.lifesteal && src !== actor && src.hp > 0 && lost > 0) this.bondEcho(src, this.applyHeal(src, src, Math.round(lost * tm.lifesteal), false, emit, 'lifesteal'), emit);
       if (this.trigOn && src !== actor) this.trig([src], { on: 'dotTick', target: actor, subject: actor, status: st.kind, amount: lost }, emit);
       this.announceIfDead(actor, emit);
     }
@@ -6998,7 +7043,7 @@ export class Battle {
       }
       if (status.kind === 'regen' && actor.hp > 0) {
         const { crit, mult } = rollCrit({ critChance: status.critChance ?? 0, critMult: status.critMult ?? 1 }, this.rng);
-        this.applyHeal(this.get(status.source) ?? actor, actor, Math.round((status.amount ?? 0) * mult), crit, emit);
+        this.applyHeal(this.get(status.source) ?? actor, actor, Math.round((status.amount ?? 0) * mult), crit, emit, 'regen');
       }
       if (status.permanent) continue; // ağaç: süresiz durum (soru 14.16)
       status.turns--;
@@ -7040,6 +7085,22 @@ export class Battle {
       if (wet.length) emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
       for (const c of wet) this.applyHeal(actor, c, Math.max(1, Math.round(c.maxHp * st.ratio)), false, emit, actor.passive!.id);
     }
+    // War-Chant (Clan Skald): kendi tur başında aynı sıradaki dostlar kısa Haste
+    const wc = actor.passive?.effect;
+    if (wc?.type === 'warChant' && actor.hp > 0 && !skipThisTurn) {
+      const row = this.living(actor.side).filter((c) => c.uid !== actor.uid && !c.inert && c.board === actor.board && this.rowOf(c.slot) === this.rowOf(actor.slot));
+      if (row.length) emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
+      for (const c of row) this.addStatus(c, { kind: wc.status, turns: wc.turns, source: actor.uid }, emit, actor.passive!.id);
+    }
+    // Hoarfrost (Rime Witch): Soaked birim kendi tur başında Chilled alır; kaynak türü yok, dondurmaz. Birden çok cadı tek sayılır
+    if (actor.hp > 0 && actor.statuses.length) {
+      const frost = this.living(opposite(actor.side)).find((c) => { const h = c.passive?.effect; return h?.type === 'hoarfrost' && actor.statuses.some((s) => s.kind === h.wet); });
+      const hf = frost?.passive?.effect;
+      if (frost && hf?.type === 'hoarfrost') {
+        emit({ type: 'passive', actor: frost.uid, passive: frost.passive!.id, name: frost.passive!.name });
+        this.addStatus(actor, { kind: hf.status, turns: hf.turns, source: frost.uid }, emit, frost.passive!.id);
+      }
+    }
     // MP yenilenir (Ember Heart: can eşiğin üstündeyse ek MP; item etkisi turnMp)
     let bonusMp = 0;
     for (const { v: th } of effList(actor, 'turnMp')) if (actor.hp > th.above * actor.maxHp) bonusMp += th.mp;
@@ -7062,7 +7123,7 @@ export class Battle {
         if (pm) this.treeProcAll(actor.uid, pm.nodes);
         const heldProc = actor.treeHooks ? this.heldHooks(actor, hurt, null, { at: 'passiveHeal', groups: ['proc'], roll: true }) : null;
         // Crusader's Dawn (smite.dual): şifa da dual kat güçlü
-        const dlHealed = this.applyHeal(actor, hurt, Math.round(attributePower(actor.stats, dl.scale, this.setup.formulas) * dl.power * (dl.smite?.dual ?? 1) * (pm?.power ?? 1)), false, emit);
+        const dlHealed = this.applyHeal(actor, hurt, Math.round(attributePower(actor.stats, dl.scale, this.setup.formulas) * dl.power * (dl.smite?.dual ?? 1) * (pm?.power ?? 1)), false, emit, actor.passive!.id);
         dlHealedAmt = dlHealed;
         if (heldProc?.length) this.applyProcHooks(actor, hurt, null, heldProc, emit);
         if (this.trigOn) this.trig([actor], { on: 'passiveHeal', target: hurt, subject: hurt, amount: dlHealed }, emit);
@@ -7145,7 +7206,7 @@ export class Battle {
     emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
     this.smiting = true;
     try {
-      this.applyHit(actor, target, dmg, 'magic', false, emit, false, { origin: 'status', element: 'holy', damageType: 'magic' });
+      this.applyHit(actor, target, dmg, 'magic', false, emit, false, { origin: 'status', element: 'holy', damageType: 'magic', cause: actor.passive!.id });
       this.announceIfDead(target, emit);
     } finally {
       this.smiting = false;
@@ -7391,8 +7452,7 @@ export class Battle {
     }
     // Frozen (Ömer 2026-10-31): Frozen'a Chilled tutmaz, Burning zeminde duran Chilled almaz; zaten Chilled olana skill atışı gelirse Frozen olur
     if (this.statusHeldOff(target, status.kind)) return;
-    // Ağaç düğümünün kendi bıraktığı zeminle birlikte verdiği durum bugünkü gibi tutar (Mirage Veil: Burning + Chilled)
-    if (status.origin !== 'tree' && this.onRefusingGround(target, status.kind)) {
+    if (this.onRefusingGround(target, status.kind)) {
       emit({ type: 'immune', target: target.uid, status: status.kind, source: status.source, ...(cause ? { cause } : {}) });
       return;
     }
@@ -8011,7 +8071,7 @@ export class Battle {
     for (const { v: exe, src } of exes) {
       if (actor.hp <= 0 || hpLoss <= 0) break;
       emit({ type: 'passive', actor: actor.uid, passive: 'bloodletter', name: 'Bloodletter' });
-      this.applyHeal(actor, actor, Math.max(1, Math.round(hpLoss * exe.ratio)), false, emit);
+      this.applyHeal(actor, actor, Math.max(1, Math.round(hpLoss * exe.ratio)), false, emit, 'bloodletter');
       if (src === 'tree') this.fxProc(actor, 'executeLifesteal');
     }
     // Emberbrand (onHitDot): isabet eden vuruş hedefe DoT bırakır (miktar uygulamada sabitlenir; yenisi süreyi max(kalan, yeni) yapar, büyük miktar kalır)
@@ -8027,7 +8087,7 @@ export class Battle {
       const hurt = this.living(actor.side).filter((c) => !c.inert && c.hp < c.maxHp).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
       if (hurt) {
         emit({ type: 'passive', actor: actor.uid, passive: 'forge_heart', name: 'Heart of the Forge' });
-        this.applyHeal(actor, hurt, Math.max(1, Math.round(hpLoss * forge)), false, emit);
+        this.applyHeal(actor, hurt, Math.max(1, Math.round(hpLoss * forge)), false, emit, 'forge_heart');
       }
     }
     // Whisper of Morvane (killExtraTurn): skill vuruşuyla öldürünce ihtimalle aynı turda bir eylem daha (tur başına en çok bir kez; zincir yok)
@@ -8047,7 +8107,7 @@ export class Battle {
     const ls = post ? Math.max(0, ((effect.lifesteal ?? 0) + post.lifesteal) * post.lifestealMul) : effect.lifesteal;
     if (ls && actor.hp > 0) {
       // Madde 241: canı doluyken can çalınmaz; Dark Bond kopyası yalnızca GERÇEKTEN iyileşen miktar
-      const healed = this.applyHeal(actor, actor, Math.round(hpLoss * ls), false, emit);
+      const healed = this.applyHeal(actor, actor, Math.round(hpLoss * ls), false, emit, 'lifesteal');
       this.bondEcho(actor, healed, emit);
     }
     this.itemHitHooks(actor, target, effect, hpLoss, crit, emit);
@@ -8062,9 +8122,9 @@ export class Battle {
       const ratio = own ? (drain.ratio + (treeMods?.drainAdd ?? 0) + (post?.drainAdd ?? 0)) * (treeMods?.drainMul ?? 1) * (post?.drainMul ?? 1) : drain.ratio;
       // Faz 4c (Lifeline): şifanın tamamı Dark Bond'lu dosta (bağ yoksa sahibine)
       const bondTo = own && (treeMods?.drainBond || post?.drainBond) ? this.get(this.bondPartnerOf(drainer.uid) ?? '') : undefined;
-      if (bondTo && bondTo.hp > 0) this.applyHeal(drainer, bondTo, Math.max(1, Math.round(hpLoss * Math.max(0, ratio))), false, emit);
+      if (bondTo && bondTo.hp > 0) this.applyHeal(drainer, bondTo, Math.max(1, Math.round(hpLoss * Math.max(0, ratio))), false, emit, drainer.passive!.id);
       else {
-        const healed = this.applyHeal(drainer, drainer, Math.max(1, Math.round(hpLoss * Math.max(0, ratio))), false, emit);
+        const healed = this.applyHeal(drainer, drainer, Math.max(1, Math.round(hpLoss * Math.max(0, ratio))), false, emit, drainer.passive!.id);
         this.bondEcho(drainer, healed, emit);
       }
     }
@@ -8117,6 +8177,11 @@ export class Battle {
       emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
       this.addStatus(target, { kind: ut.status, turns: ut.turns, source: actor.uid }, emit, actor.passive!.id);
     }
+    // Grave Cold (Wight): skill vuruşu Chilled bırakır; kaynak türü yok, dondurmaz
+    if (ut?.type === 'graveCold' && this.castingSkill && actor === this.castingActor && target.hp > 0 && actor.side !== target.side) {
+      emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
+      this.addStatus(target, { kind: ut.status, turns: ut.turns, source: actor.uid }, emit, actor.passive!.id);
+    }
     // Rebuke (YM3, mob pasifi): yakın dövüş skill'inin fiziksel vuruşunda zırhın engellediği hasarın bir kısmı saldırana döner (saldıranın zırhı uygulanır)
     const rb = target.passive?.effect;
     if (rb?.type === 'rebuke' && effect.damageType === 'physical' && this.castingSkill?.motion === 'melee' && target.hp > 0 && actor.hp > 0 && actor.side !== target.side) {
@@ -8125,7 +8190,7 @@ export class Battle {
       const back = red > 0 && red < 1 ? Math.round(((landedOnTarget * red) / (1 - red)) * rb.ratio) : 0;
       if (back > 0) {
         emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
-        this.applyHit(target, actor, this.tickDamage('physical', 'physical', back, actor), 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical' });
+        this.applyHit(target, actor, this.tickDamage('physical', 'physical', back, actor), 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical', cause: target.passive!.id });
         this.announceIfDead(actor, emit);
       }
     }
@@ -8143,7 +8208,7 @@ export class Battle {
       const back = Math.round(landedOn * thorns);
       if (back > 0) {
         emit({ type: 'passive', actor: target.uid, passive: 'thorns', name: 'Thorns' });
-        this.applyHit(target, actor, back, 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical' });
+        this.applyHit(target, actor, back, 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical', cause: 'thorns' });
         this.announceIfDead(actor, emit);
       }
     }
@@ -8170,7 +8235,7 @@ export class Battle {
     emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
     const raw = Math.round(attributePower(c.stats, e.scale, this.setup.formulas) * e.power);
     for (const foe of this.living(opposite(c.side)).filter((u) => !u.inert)) {
-      if (raw > 0) this.applyHit(c, foe, this.tickDamage(e.element, 'magic', raw, foe), 'magic', false, emit, false, { origin: 'status', element: e.element, damageType: 'magic' });
+      if (raw > 0) this.applyHit(c, foe, this.tickDamage(e.element, 'magic', raw, foe), 'magic', false, emit, false, { origin: 'status', element: e.element, damageType: 'magic', cause: c.passive!.id });
       this.announceIfDead(foe, emit);
     }
     if (this.statusDef(e.status)) this.addStatus(c, { kind: e.status, turns: e.turns, source: c.uid }, emit, c.passive!.id);
@@ -8238,7 +8303,7 @@ export class Battle {
       if (amount > 0 && near) {
         emit({ type: 'passive', actor: actor.uid, passive: 'overflow', name: 'Overflow' });
         const el = effect.element ?? 'physical';
-        this.applyHit(actor, near, amount, effect.damageType, false, emit, false, { origin: 'status', element: el, damageType: effect.damageType });
+        this.applyHit(actor, near, amount, effect.damageType, false, emit, false, { origin: 'status', element: el, damageType: effect.damageType, cause: 'overflow' });
         this.announceIfDead(near, emit);
       }
     }
@@ -8347,6 +8412,7 @@ export class Battle {
         ...(meta.ground ? { ground: meta.ground, groundId: meta.groundId } : {}),
         ...(meta.reaction ? { reaction: meta.reaction } : {}),
         ...(meta.status ? { status: meta.status } : {}),
+        ...(meta.cause ? { cause: meta.cause } : {}),
         luckyEscape: true,
       });
       emit({ type: 'passive', actor: target.uid, passive: 'primary_luck', name: 'Lucky Escape' });
@@ -8430,6 +8496,7 @@ export class Battle {
       ...(meta.ground ? { ground: meta.ground, groundId: meta.groundId } : {}),
       ...(meta.reaction ? { reaction: meta.reaction } : {}),
       ...(meta.status ? { status: meta.status } : {}),
+      ...(meta.cause ? { cause: meta.cause } : {}),
     });
     if (pendingBreak) emit({ type: 'statusEnd', target: target.uid, status: 'taunt', broken: true });
     if (pendingBreak && taunt && this.trigOn) this.statusEndTrig(target, taunt, 'broken', emit);
@@ -8626,6 +8693,38 @@ export class Battle {
         this.syncGroundStatuses(emit);
       }
     }
+    // Furnace Core (Forge Golem; Forge-Master Golem iki kat: dokunuşun core alanı): nasıl ölürse ölsün kendi hücresi ve komşuları yanar (kendi tarafına işlemez; Kindling ve Sermon bunu okur)
+    const core = le?.type === 'furnaceCore' ? le : c.touch?.type === 'overheat' ? c.touch.core : undefined;
+    if (core && !c.inert) {
+      // Bırakan öldü: ömür Last Ember gibi öldürenin turuyla sayılır (öldüren yoksa karşı tarafın ilk canlısı), yoksa zemin ilk tur başında biterdi
+      const lastKiller = lh ? this.get(lh.source) : undefined;
+      const clock = lastKiller && lastKiller.hp > 0 ? lastKiller : this.living(opposite(c.side))[0];
+      const g: GroundEffect = {
+        id: `g${this.groundCount++}`,
+        ground: core.ground,
+        board: c.board,
+        slots: this.touchingSlots([c.slot]),
+        turns: core.turns,
+        source: c.uid,
+        sourceSide: c.side,
+        amount: Math.round(attributePower(c.stats, core.scale, this.setup.formulas) * core.power),
+        scale: core.scale,
+        sourceStat: c.stats[core.scale],
+        power: core.power,
+        ...(clock ? { tickOn: clock.uid } : {}),
+      };
+      this.ground.push(g);
+      if (c.passive) emit({ type: 'passive', actor: c.uid, passive: c.passive.id, name: c.passive.name });
+      emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+      this.syncGroundStatuses(emit);
+    }
+    // Hollow Crown (The Hollow King): kapsamdaki dost ölünce sonraki turunda bir eylem daha (birikmez)
+    if (!c.inert) for (const a of this.living(c.side)) {
+      const e = a.passive?.effect;
+      if (e?.type !== 'hollowCrown' || a === c || !e.names.includes(c.displayName ?? c.name)) continue;
+      a.crownAction = true;
+      emit({ type: 'passive', actor: a.uid, passive: a.passive!.id, name: a.passive!.name });
+    }
     // Shares of the Dead (YM19, mob pasifi): çağrı olmayan bir dost ölünce Fortified + kalıcı hasar eki (yığılır)
     if (!c.summoned && !c.inert) for (const a of this.living(c.side)) {
       const e = a.passive?.effect;
@@ -8696,9 +8795,10 @@ export class Battle {
   /** M-I: hücre kapalı mı (iki tahtada aynı yuva; direk / küpeşte)? `board` verilirse o tahtadaki Tidewater Urn hücresi de kapalı (M-N3). */
   isBlocked(slot: number, board?: Side): boolean {
     if (board !== undefined && this.hazards.length && this.hazards.some((h) => h.rod?.slot === slot && h.board === board)) return true; // B2 Thunder Rod
+    if (board !== undefined && this.closedCells[board].includes(slot)) return true; // M-G; Bring Down the Hall kuralsız savaşta da
     const r = this.setup.rules;
     if (!r) return false;
-    return !!r.blocked?.includes(slot) || (board !== undefined && r.urn?.side === board && r.urn.slot === slot) || (board !== undefined && this.closedCells[board].includes(slot));
+    return !!r.blocked?.includes(slot) || (board !== undefined && r.urn?.side === board && r.urn.slot === slot);
   }
 
   // --- M-H Heat / M-G Cave-in: telgraflı ortam tehlikeleri ---
@@ -8727,6 +8827,7 @@ export class Battle {
       }
       this.hazards.splice(this.hazards.indexOf(h), 1);
       if (h.strike) this.landStrike(h, emit);
+      else if (h.forge) this.landForge(h, emit);
       else if (h.kind === 'heat') this.landHeat(h, emit);
       else this.landCaveIn(h, emit);
     }
@@ -8742,8 +8843,8 @@ export class Battle {
     if (c && c.everyRounds > 0 && (this.round - 1) % c.everyRounds === 0) for (const board of c.boards) this.warnCaveIn(board, this.pickCaveCells(board, c), c, emit);
   }
 
-  private pushHazard(kind: Hazard['kind'], board: Side, cells: number[], emit: Emit, caveIn?: CaveInRule): void {
-    const h: Hazard = { id: `hz${this.hazardCount++}`, kind, board, cells, dueRound: this.round + 1, ...(caveIn ? { caveIn } : {}) };
+  private pushHazard(kind: Hazard['kind'], board: Side, cells: number[], emit: Emit, caveIn?: CaveInRule, dueRound = this.round + 1): void {
+    const h: Hazard = { id: `hz${this.hazardCount++}`, kind, board, cells, dueRound, ...(caveIn ? { caveIn } : {}) };
     this.hazards.push(h);
     emit({ type: 'hazardWarn', id: h.id, kind, board, cells: [...cells], dueRound: h.dueRound });
   }
@@ -8803,13 +8904,20 @@ export class Battle {
     return rule.amountRatio > 0 ? Math.max(1, Math.round(this.boardMeanHp(board) * rule.amountRatio)) : 0;
   }
 
-  /** M-G: bu kural için tahtada çökecek hücreler (seed'li); kapalı + bekleyen hücreler maxClosed'u, savaşanların yerini kapatacak kadar çoğu seçilmez. */
-  private pickCaveCells(board: Side, rule: CaveInRule): number[] {
+  /** M-G: tahtada şu an çöktürülebilecek açık hücreler ve sayı üstü: kapalı + bekleyen hücreler maxClosed'u, savaşanların yerini kapatacak kadar çoğu seçilmez. Saf. */
+  caveRoom(board: Side, rule: CaveInRule): { open: number[]; room: number } {
     const pending = this.hazards.filter((h) => h.kind === 'caveIn' && h.board === board).flatMap((h) => h.cells);
     const total = this.setup.maxSlots[board];
     const open = Array.from({ length: total }, (_, s) => s).filter((s) => !this.isBlocked(s, board) && !pending.includes(s));
     const living = this.combatants.filter((c) => c.hp > 0 && c.board === board);
-    const n = Math.min(rule.cells, rule.maxClosed - this.closedCells[board].length - pending.length, open.length - living.length);
+    return { open, room: Math.min(rule.maxClosed - this.closedCells[board].length - pending.length, open.length - living.length) };
+  }
+
+  /** M-G: bu kural için tahtada çökecek hücreler (seed'li). */
+  private pickCaveCells(board: Side, rule: CaveInRule): number[] {
+    const { open, room } = this.caveRoom(board, rule);
+    const living = this.combatants.filter((c) => c.hp > 0 && c.board === board);
+    const n = Math.min(rule.cells, room);
     if (n <= 0) return [];
     const out: number[] = [];
     const occupied = rule.aimAtUnits ? open.filter((s) => living.some((c) => !c.inert && c.slot === s)) : [];
@@ -8822,9 +8930,9 @@ export class Battle {
   }
 
   /** M-G TEK KANCA: `board` tahtasının `cells` hücreleri işaretlenir, sonraki Round başında `rule` ile çöker (koşul ritmi; ileride Hollow King ultu da bunu çağırır). */
-  warnCaveIn(board: Side, cells: number[], rule: CaveInRule, emit: Emit): void {
+  warnCaveIn(board: Side, cells: number[], rule: CaveInRule, emit: Emit, dueRound?: number): void {
     const ok = cells.filter((s) => !this.isBlocked(s, board));
-    if (ok.length) this.pushHazard('caveIn', board, ok, emit, rule);
+    if (ok.length) this.pushHazard('caveIn', board, ok, emit, rule, dueRound);
   }
 
   /** M-G: hücreler kapanır; üstündeki birim hasar + durum alır, sağsa en yakın açık hücreye atılır (yer yoksa üstünde kalır, çıkınca giremez). */
@@ -8837,7 +8945,7 @@ export class Battle {
     this.closedCells[h.board].push(...closed);
     emit({ type: 'cellsClosed', board: h.board, slots: closed });
     for (const v of victims) {
-      this.applyHit(v, v, this.tickDamage('physical', 'physical', base, v), 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical' });
+      this.applyHit(v, v, this.tickDamage('physical', 'physical', base, v), 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical', cause: 'cave_in' });
       this.announceIfDead(v, emit);
       if (v.hp <= 0) continue;
       if (!v.inert) this.addStatus(v, { kind: rule.status as Status['kind'], turns: rule.statusTurns, source: v.uid }, emit, rule.id);
@@ -8857,6 +8965,9 @@ export class Battle {
       if (h.board !== c.board || !h.cells.includes(slot) || c.inert) continue;
       if (h.strike) {
         if (c.side !== h.strike.side) t += this.strikeDamage(h, c);
+      } else if (h.forge) {
+        const src = this.get(h.forge.source);
+        if (src && src.hp > 0 && c.side !== h.forge.side) t += this.groundTickDamage(h.forge.ground, Math.round(attributePower(src.stats, h.forge.scale, this.setup.formulas) * h.forge.power), c);
       } else if (h.rod || h.bolt) {
         if (c.side !== (h.rod?.side ?? h.bolt!.side)) t += this.mechanicHit(h.board, h.rod?.ratio ?? h.bolt!.ratio, c);
       } else if (h.kind === 'caveIn') t += this.tickDamage('physical', 'physical', Math.max(1, Math.round(this.boardMeanHp(h.board) * h.caveIn!.damageRatio)), c);
@@ -8926,7 +9037,7 @@ export class Battle {
     const hit = this.rodVictims(h.board, rod.slot, rod.side);
     emit({ type: 'rodStrike', id: h.id, board: h.board, slot: rod.slot, hit: hit.map((c) => c.uid) });
     for (const c of hit) {
-      this.applyHit(c, c, this.mechanicHit(h.board, rod.ratio, c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic' });
+      this.applyHit(c, c, this.mechanicHit(h.board, rod.ratio, c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic', cause: rod.skill });
       this.announceIfDead(c, emit);
     }
   }
@@ -8978,7 +9089,7 @@ export class Battle {
     const dark = this.isDark();
     emit({ type: 'hazardLand', id: h.id, kind: 'bolt', board: h.board, cells: [...h.cells], hit: hit.map((c) => c.uid) });
     for (const c of hit) {
-      this.applyHit(c, c, this.mechanicHit(h.board, b.ratio, c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic' });
+      this.applyHit(c, c, this.mechanicHit(h.board, b.ratio, c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic', cause: b.skill });
       this.announceIfDead(c, emit);
     }
     const src = this.get(b.source);
@@ -9008,7 +9119,9 @@ export class Battle {
     if (block.hp <= 0) this.breakBlock(target, 'broken', emit);
     const rest = amount - took;
     if (rest <= 0) {
-      emit({ type: 'damage', source: actor.uid, target: target.uid, amount: 0, absorbed: took, hpAfter: target.hp, shieldAfter: target.shield, magicShieldAfter: target.magicShield, crit, origin: meta.origin, ...(meta.element ? { element: meta.element } : {}), ...(meta.damageType ? { damageType: meta.damageType } : {}) });
+      // Günlük için kaynak: bu olay `status` / `ground` taşımaz (sahne onlara göre efekt çalar), adları cause'tan çözülür
+      const cause = meta.cause ?? meta.status ?? meta.ground;
+      emit({ type: 'damage', source: actor.uid, target: target.uid, amount: 0, absorbed: took, hpAfter: target.hp, shieldAfter: target.shield, magicShieldAfter: target.magicShield, crit, origin: meta.origin, ...(meta.element ? { element: meta.element } : {}), ...(meta.damageType ? { damageType: meta.damageType } : {}), ...(cause ? { cause } : {}) });
     }
     return rest;
   }
@@ -9138,12 +9251,107 @@ export class Battle {
       const t = c.touch;
       if (!t || c.hp <= 0) continue;
       if (t.type === 'thundersnow') this.markThundersnow(c, t, emit);
+      else if (t.type === 'forgeHeat') this.markForge(c, t, emit);
       else if (t.type === 'packRotation') this.rotatePack(c, t, emit);
       else if (t.type === 'overheat') {
         if (this.mode === 'test') this.endVentInTest(c, emit);
         if (c.statuses.some((s) => s.kind === 'soaked')) this.heatChange(c, -t.coolHit, emit); // E1: su boşaltır (Tide, Urn)
       }
     }
+  }
+
+  // Harita 3 elit ve boss kitleri: Forge-Heat, Quench, Kindle the Nave, Cave-in skill'leri, Shepherd of Ash
+
+  /** Forge-Heat: içinde kahraman olan sıralardan biri (yoksa herhangi bir açık sıra) işaretlenir; seed'li, yalnız taşıyan varken. */
+  private markForge(c: Combatant, t: Extract<BossTouch, { type: 'forgeHeat' }>, emit: Emit): void {
+    const board = opposite(c.side);
+    const { rows, lanes } = this.setup.formulas.formation;
+    const all = Array.from({ length: rows }, (_, row) => Array.from({ length: lanes }, (_, l) => row * lanes + l).filter((s) => s < this.setup.maxSlots[board] && !this.isBlocked(s, board))).filter((cells) => cells.length);
+    const busy = all.filter((cells) => this.combatants.some((u) => u.hp > 0 && !u.inert && u.board === board && cells.includes(u.slot)));
+    const pool = busy.length ? busy : all;
+    if (!pool.length) return;
+    const cells = pool[this.rng.int(0, pool.length - 1)]!;
+    const h: Hazard = { id: `hz${this.hazardCount++}`, kind: 'heat', board, cells, dueRound: this.round + 1, forge: { side: c.side, source: c.uid, ground: t.ground, turns: t.turns, scale: t.scale, power: t.power } };
+    this.hazards.push(h);
+    emit({ type: 'hazardWarn', id: h.id, kind: 'heat', board, cells: [...cells], dueRound: h.dueRound });
+  }
+
+  private landForge(h: Hazard, emit: Emit): void {
+    const f = h.forge!;
+    const src = this.get(f.source);
+    if (!src || src.hp <= 0) return;
+    const cells = h.cells.filter((s) => !this.isBlocked(s, h.board));
+    emit({ type: 'hazardLand', id: h.id, kind: 'heat', board: h.board, cells: [...cells], hit: this.combatants.filter((c) => c.hp > 0 && c.board === h.board && cells.includes(c.slot)).map((c) => c.uid) });
+    this.placeGround(src, { type: 'ground', ground: f.ground, turns: f.turns, scale: f.scale, power: f.power }, h.board, cells, emit);
+  }
+
+  private castCaveIn(actor: Combatant, skill: SkillDef, target: Combatant | undefined, emit: Emit): void {
+    const { rule, onTarget } = skill.caveIn!;
+    const board = opposite(actor.side);
+    if (!this.setup.rules) this.roundsOn = true;
+    // Adalet: işareti gören taraftan bu Round oynayacak kimse kalmadıysa çöküş bir Round sonraya (uyarısız düşmesin)
+    const due = this.mode === 'turns' && !this.fighting(board).some((c) => !this.roundActed.has(c.uid)) ? this.round + 2 : undefined;
+    if (!onTarget) {
+      this.warnCaveIn(board, this.pickCaveCells(board, rule), rule, emit, due);
+      return;
+    }
+    const { open, room } = this.caveRoom(board, rule);
+    if (target && room > 0 && target.board === board && open.includes(target.slot)) this.warnCaveIn(board, [target.slot], rule, emit, due);
+  }
+
+  private castQuench(actor: Combatant, skill: SkillDef, emit: Emit): void {
+    const { ground, healRatio } = skill.quench!;
+    const n = this.groundCellCount(ground);
+    if (!n) return;
+    for (const g of this.ground.filter((x) => x.ground === ground)) this.cutGround(g, [...g.slots], emit);
+    this.syncGroundStatuses(emit);
+    this.applyHeal(actor, actor, Math.max(1, Math.round(actor.maxHp * healRatio * n)), false, emit, skill.id);
+  }
+
+  /** Kindle the Nave: bırakan kendi tarafı olsa da içindekilere işlesin diye zeminin tarafı karşı taraf yazılır (genel zemin kuralı); şifayı vaaz kuralı (sermonHeals) yapar. */
+  private castKindle(actor: Combatant, skill: SkillDef, emit: Emit): void {
+    const k = skill.kindleNave!;
+    const g: GroundEffect = {
+      id: `g${this.groundCount++}`,
+      ground: k.ground,
+      board: actor.board,
+      slots: this.rowCellsOf(actor),
+      turns: k.turns,
+      source: actor.uid,
+      sourceSide: opposite(actor.side),
+      amount: Math.round(attributePower(actor.stats, k.scale, this.setup.formulas) * k.power),
+      scale: k.scale,
+      sourceStat: actor.stats[k.scale],
+      power: k.power,
+      fullTurns: k.turns,
+    };
+    this.ground.push(g);
+    emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+    this.applyEnvironment(emit);
+  }
+
+  /** Birimin kendi sırasının açık hücreleri. Saf. */
+  rowCellsOf(c: Pick<Combatant, 'board' | 'slot'>): number[] {
+    const { lanes } = this.setup.formulas.formation;
+    const row = this.rowOf(c.slot);
+    return Array.from({ length: lanes }, (_, l) => row * lanes + l).filter((s) => s < this.setup.maxSlots[c.board] && !this.isBlocked(s, c.board));
+  }
+
+  /** Shepherd of Ash: taşıyanın kapsamındaki canlı dostlar. Saf. */
+  flockGuards(c: Combatant): Combatant[] {
+    const e = c.passive?.effect;
+    if (e?.type !== 'shepherdOfAsh') return [];
+    return this.fighting(c.side).filter((a) => a.uid !== c.uid && this.inFlock(a, e));
+  }
+
+  /** Zemin tanımları (YZ). */
+  get groundDefs(): Battle['setup']['grounds'] {
+    return this.setup.grounds;
+  }
+
+  /** Su zemini bu zemini söndürüyor mu (grounds.json > quenches)? Saf. */
+  groundPutsOut(water: string, ground: string): boolean {
+    return !!this.setup.grounds?.[water]?.quenches?.includes(ground);
   }
 
   // E1 Overheat
@@ -9245,7 +9453,7 @@ export class Battle {
     const dark = this.isDark();
     emit({ type: 'hazardLand', id: h.id, kind: 'strike', board: h.board, cells: [...h.cells], hit: hit.map((c) => c.uid) });
     for (const c of hit) {
-      this.applyHit(c, c, this.strikeDamage(h, c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic' });
+      this.applyHit(c, c, this.strikeDamage(h, c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic', cause: s.skill });
       this.announceIfDead(c, emit);
     }
     const src = this.get(s.source);
@@ -9344,7 +9552,7 @@ export class Battle {
     emit({ type: 'sermonEnd', actor: c.uid, outcome: 'done' });
   }
 
-  private inFlock(c: Pick<Combatant, 'name' | 'displayName' | 'defId'>, cfg: NonNullable<SkillDef['longSermon']>): boolean {
+  private inFlock(c: Pick<Combatant, 'name' | 'displayName' | 'defId'>, cfg: { families: string[]; names: string[] }): boolean {
     const family = this.setup.units[c.defId]?.family;
     return (!!family && cfg.families.includes(family)) || cfg.names.includes(c.displayName ?? c.name);
   }
@@ -9616,7 +9824,7 @@ export class Battle {
     }
     if (skill.thunder.shocks) for (const c of shockable) if (c.hp > 0 && !c.inert && c.side !== actor.side) res.shocks.push({ uid: c.uid, stun: this.standsWet(c) });
     const d = this.darkRule();
-    if (d && dark && !d.sides.includes(actor.side)) {
+    if (d && dark && !d.sides.includes(actor.side) && (!skill.thunder.flashWet || feet.some((f) => f.cells.some((s) => this.conductingCells(f.board).has(s))))) {
       res.flash = true;
       const heroes = this.combatants.filter((c) => c.hp > 0 && !c.inert && d.sides.includes(c.side) && feet.some((f) => f.board === c.board));
       const dist = (c: Combatant) => Math.min(...feet.filter((f) => f.board === c.board).flatMap((f) => f.cells.map((s) => Math.abs(this.rowOf(s) - this.rowOf(c.slot)) + Math.abs(this.laneOf(s) - this.laneOf(c.slot)))));
@@ -9648,7 +9856,7 @@ export class Battle {
     for (const p of out.shards) {
       const c = this.get(p.uid);
       if (!c || c.hp <= 0) continue;
-      this.applyHit(c, c, p.damage, 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical' });
+      this.applyHit(c, c, p.damage, 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical', cause: 'shatter' });
       this.announceIfDead(c, emit);
     }
     if (out.shatters.length) this.syncGroundStatuses(emit);
@@ -9682,7 +9890,7 @@ export class Battle {
 
   private arcHit(c: Combatant, emit: Emit): void {
     if (c.hp <= 0) return;
-    this.applyHit(c, c, this.arcDamage(c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic' });
+    this.applyHit(c, c, this.arcDamage(c), 'magic', false, emit, false, { origin: 'status', element: 'lightning', damageType: 'magic', cause: 'live_water' });
     this.announceIfDead(c, emit);
   }
 

@@ -1538,18 +1538,19 @@ export class CombatantView {
    */
   private crouchTween?: Phaser.Tweens.Tween;
   private crouchBaseY = 1;
+  private flashOverlay?: Phaser.GameObjects.Sprite;
+  private flashTween?: Phaser.Tweens.Tween;
 
   hit(input: number | HitReaction = 0.1): void {
     const r = typeof input === 'number' ? hitReaction(HIT_REACTION, { amount: input * 1000, maxHp: 1000, calm: reducedMotion() || perfLite() }) : input;
     if (r.pose) this.play('hit', r.poseMs);
     const flash = slow(r.flashMs);
-    this.sprite.setTintFill(color(r.flash));
-    this.scene.time.delayedCall(flash, () => {
-      if (r.tint) {
-        this.sprite.setTint(color(r.tint));
+    if (r.tint) {
+      this.scene.time.delayedCall(flash, () => {
+        this.sprite.setTint(color(r.tint as string));
         this.scene.time.delayedCall(r.tintMs, () => this.applyTone());
-      } else this.applyTone();
-    });
+      });
+    }
     const dir = this.combatant.side === 'enemy' ? 1 : -1;
     this.scene.tweens.add({
       targets: this.sprite,
@@ -1582,7 +1583,39 @@ export class CombatantView {
       tw.on('complete', done).on('stop', done);
       this.crouchTween = tw;
     }
+    // Geri tepme ve eğilme tween'lerinden SONRA: kopya aynı karede onların sonucunu izlesin, geride kalmasın
+    this.flashHit(color(r.flash), r.flashAlpha, flash);
     if (r.shake) this.scene.cameras.main.shake(r.shake.ms, r.shake.intensity);
+  }
+
+  /** Darbe parlaması: gövdenin üstünde, aynı kareyi izleyen yarı saydam kopya (sprite'ın kendi tonuna dokunmaz). */
+  private flashHit(tone: number, alpha: number, ms: number): void {
+    const s = this.sprite;
+    this.flashTween?.stop();
+    let o = this.flashOverlay;
+    if (!o) {
+      o = this.scene.add.sprite(0, 0, s.texture.key, s.frame.name);
+      this.container.addAt(o, this.container.getIndex(s) + 1);
+      this.flashOverlay = o;
+    }
+    const overlay = o;
+    const sync = (u: number) => {
+      if (!s.active || !overlay.active) return;
+      overlay.setTexture(s.texture.key, s.frame.name).setOrigin(s.originX, s.originY).setPosition(s.x, s.y).setScale(s.scaleX, s.scaleY).setAngle(s.angle).setFlip(s.flipX, s.flipY);
+      overlay.setVisible(s.visible).setAlpha(alpha * u * s.alpha);
+    };
+    // İlk çizimi tween'in ilk adımı yapar: o adımdan önce gövde geri tepmeyle kayıyor, kopya yerinde kalırdı
+    overlay.setTintFill(tone).setAlpha(0);
+    this.flashTween = this.scene.tweens.addCounter({
+      from: 1,
+      to: 0,
+      duration: ms,
+      ease: 'Quad.easeIn',
+      onUpdate: (t) => sync(t.getValue() ?? 0),
+      onComplete: () => {
+        if (overlay.active) overlay.setVisible(false);
+      },
+    });
   }
 
   /** Fiziksel saldırıdan kaçınma: yana kayıp geri döner. */

@@ -47,6 +47,7 @@ Kit: **Fire Bolt, Blizzard, Ice Crater, Meteor** + pasif **Heat Mirage**. Fire B
 - Mage skill ağacı v3 (`data/skill-trees/mage.json`; content-designer 2026-10-29, sürüm artışı = bedava sıfırlama): eski Spell Echo (0.*) ve Mana Barrier (3.*) düğümleri ve First Refrain yerine yeni düğümler geldi (yalnızca var olan fx sözlüğü, Ömer onayı bekliyor):
   - 0. satır (Heat Mirage / Frost Skin): Heat Haze, Searing Mirage, Rime Touch, Lingering Mirage, Cold Comfort, Backdraft, Rime Skin, Stoked Flames, Pyre Heart, Hoarfrost, Brittle Cold, evolve Mirage Veil.
   - 3. satır (Ice Crater): Deep Crater, Hard Landing, Bitter Frost, Frozen Crater, Long Chill, Frostbitten Mark, Deep Freeze, Glacial Spike, Battering Frost, Permafrost, Black Frost, evolve Glacier Crater.
+  - Mirage Veil (Ömer 2026-10-31, ağaç v5): saldıran Chilled yerine 1 tur Blinded olur; Burning zeminde Chilled tutmaz, ağaç düğümü için de istisna yok (Rime Touch, Rime Skin dahil).
   - Mastery bar 5: Opening Spark. Blizzard'ın Slow koşullu düğümleri (Numbing Cold, Flash Freeze, Black Ice) Chilled'ı da sayar.
 - Eternal Winter (2.v) metni: "...and Chills every enemy standing in it."
 

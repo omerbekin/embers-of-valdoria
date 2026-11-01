@@ -48,7 +48,7 @@ export function dropAction(src: DragSource, target: DropTarget, classOf: (heroId
       if (!d || !cls) return { kind: 'none' };
       if (target.kind === 'slot' && !fitsSlot(d, target.slot)) return { kind: 'none', reason: 'Wrong slot' };
       if (!canEquip(cls, d)) return { kind: 'none', reason: 'Cannot use' };
-      return { kind, index: src.index, heroId: target.heroId, ...(target.kind === 'slot' ? { slot: target.slot } : {}) };
+      return { kind, index: src.index, heroId: target.heroId, ...(target.kind === 'slot' ? { slot: target.slot } : {}) } as DropAction; // 8 yuva x 3 tür: TS birleşimi otomatik ayıramıyor
     }
     return { kind: 'none' };
   }

@@ -260,10 +260,22 @@ describe.each(MODES)('%s modu', (mode) => {
     const d = make({ condition: 'darkness' }, { 0: 'warrior', 3: 'druid' }, { 0: 'gloam_eel' }, mode);
     const e2 = at(d, 'enemy', 0);
     expect(d.isDark()).toBe(true);
+    d.debugPlaceGround(at(d, 'party', 0).uid, 'flooded', 'party', [0], 5);
     turnOf(d, e2.uid);
     const r = d.useSkill(e2.uid, 'gloam_bite', at(d, 'party', 0).uid);
     expect(r.ok && r.events.some((x) => x.type === 'thunderflash')).toBe(true);
     expect(d.isDark()).toBe(false);
+  });
+
+  it('Gloam Eel: kuru hedefe ısırık Thunderflash yapmaz, karanlık sürer (Ömer 2026-11-01)', () => {
+    const d = make({ condition: 'darkness' }, { 0: 'warrior', 3: 'druid' }, { 0: 'gloam_eel' }, mode);
+    const e2 = at(d, 'enemy', 0);
+    const h = at(d, 'party', 0);
+    expect(d.boltOutcome(e2, skill('gloam_bite'), d.boltFeetOf([h]), [h]).flash).toBe(false);
+    turnOf(d, e2.uid);
+    const r = d.useSkill(e2.uid, 'gloam_bite', h.uid);
+    expect(r.ok && r.events.some((x) => x.type === 'thunderflash')).toBe(false);
+    expect(d.isDark()).toBe(true);
   });
 
   it('Stormhorn Ram: yakın dövüşle vuran Shocked; menzilli vuran olmaz; Headlong ilk kahramanı geri iter', () => {
@@ -358,8 +370,9 @@ describe('YZ mekaniği kullanır', () => {
   it('Gloam Eel karanlıkta Thunderflash bedeline rağmen ısırır', () => {
     const b = make({ condition: 'darkness' }, { 0: 'warrior', 3: 'archer' }, { 0: 'gloam_eel' }, 'turns');
     const e = at(b, 'enemy', 0);
+    b.debugPlaceGround(at(b, 'party', 0).uid, 'flooded', 'party', [0], 5); // çakması için hedef suda (Ömer 2026-11-01)
     e.cooldowns ??= {};
-    e.cooldowns['lunge'] = 5;
+    e.cooldowns['gloam_lunge'] = 5;
     turnOf(b, e.uid);
     expect(ai(b, e)?.skillId).toBe('gloam_bite');
   });

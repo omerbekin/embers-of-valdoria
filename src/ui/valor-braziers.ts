@@ -9,6 +9,7 @@ import type { ValorRules } from '../engine/types';
 import { brazierFill } from '../engine/valor';
 import { valorRules } from '../engine/content';
 import { bandTipEl, type BandTipSpec } from './band-tip';
+import { attachBandTip } from './band-tip-attach';
 import { BurnEdge } from './valor-fire';
 import { dismissOnBackdrop } from './backdrop';
 import { lockInput, unlockInput } from './input-lock';
@@ -430,7 +431,7 @@ export function openValorRevive(o: ValorReviveOptions): void {
     if (b) {
       const btn = el('button', 'el-btn vg-wbtn', b.label);
       btn.type = 'button';
-      btn.title = b.tip;
+      attachBandTip(btn, { title: b.label, lines: [{ text: b.tip }] });
       btn.setAttribute('aria-label', `${b.label}: ${h.name}. ${b.tip}`);
       btn.disabled = b.disabled;
       btn.addEventListener('click', () => doHeal(h));

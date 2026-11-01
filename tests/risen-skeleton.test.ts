@@ -35,7 +35,7 @@ describe('karşılaşmalarda çağrı birimi yok; Risen Skeleton ayrı düşman 
     expect(r.stats.str).toBe(g.stats.str);
     expect(r.stats.str).toBeLessThan(s.stats.str);
     expect(r.tags).toContain('undead');
-    expect(r.spriteId).toBe('skeleton');
+    expect(r.spriteId).toBe('risen_skeleton');
     expect((r as { summonerScale?: unknown }).summonerScale).toBeUndefined();
     expect(s.skills).toEqual(['skeleton_strike', 'skeleton_slash']);
     // Grave Chanter hâlâ kahraman tarzı Skeleton çağırır

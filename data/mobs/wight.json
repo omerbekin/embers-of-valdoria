@@ -1,0 +1,36 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Ghoul; palet YOK, ghoul çizimi. Tek pasif yuvası: Corpse Hunger yerine Grave Cold.",
+  "id": "wight",
+  "name": "Wight",
+  "family": "undead",
+  "spriteId": "ghoul",
+  "color": "#9fb4c0",
+  "logo": "skull",
+  "frontPriority": 2,
+  "range": 1,
+  "role": "Undead · Brute",
+  "attributes": {
+    "str": 26,
+    "int": 4,
+    "dex": 8,
+    "luck": 4
+  },
+  "armor": 12,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "gnaw",
+    "wight_feast"
+  ],
+  "passive": {
+    "id": "grave_cold",
+    "name": "Grave Cold",
+    "icon": "blizzard",
+    "text": "Its skill hits make the target Chilled for 1 turn. This never freezes.",
+    "effect": {
+      "type": "graveCold",
+      "status": "chilled",
+      "turns": 1
+    }
+  }
+}

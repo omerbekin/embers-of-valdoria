@@ -13,6 +13,7 @@ import { lockInput, unlockInput } from './input-lock';
 import { holdViewportForKeyboard } from './viewport';
 import { miscImage, statImage } from '../game/icon-image-files';
 import type { MwCard } from './map-window';
+import { attachBandTip, reasonSpec } from './band-tip-attach';
 
 export interface CompanySpec {
   size: number;
@@ -30,8 +31,8 @@ export interface CompanySpec {
   goLabel?: string;
   noLeader?: boolean;
   onCancel?: () => void;
-  /** Öneri (Ömer 2026-11-01; campaign/suggest.ts): bu kahramanın portresi altında küçük `label`, ipucunun 2. satırı altın `line`. Seçimi zorlamaz. */
-  suggest?: { hero: string; label: string; line: string };
+  /** Öneri (Ömer 2026-11-01; campaign/suggest.ts): bu kahramanların portresi altında küçük `label`, ipucunun 2. satırı altın `line`. Seçimi zorlamaz. */
+  suggest?: { heroes: string[]; label: string; line: string };
 }
 export interface CompanyHandle {
   close(): void;
@@ -59,7 +60,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
     .map((c, i) => {
       const av = avatarUrlOf(c.spriteId);
       const tile = `<button type="button" class="cw-pc" data-id="${esc(c.id)}" style="--i:${i}">${av ? `<img src="${av}" alt="" draggable="false">` : ''}<span class="dm"></span><span class="nm">${esc(c.name)}</span></button>`;
-      return o.suggest?.hero === c.id ? `<div class="cw-pcw">${tile}<span class="cw-sug">${esc(o.suggest.label)}</span></div>` : tile;
+      return o.suggest?.heroes.includes(c.id) ? `<div class="cw-pcw">${tile}<span class="cw-sug">${esc(o.suggest.label)}</span></div>` : tile;
     })
     .join('');
   wrap.innerHTML = `<div class="mw-scrim"></div>
@@ -91,17 +92,20 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
 
   // ---- ipucu (A Band, hover) ----
   let tipEl: HTMLElement | null = null;
+  let tipFor: HTMLElement | null = null;
   const hideTip = (): void => {
     tipEl?.remove();
     tipEl = null;
+    tipFor = null;
   };
   const showTip = (target: HTMLElement, id: string): void => {
+    if (tipEl && tipFor === target) return; // tıklama odağı açık ipucunu yeniden kurmaz (Ömer 2026-11-01: başka karta tıklayınca titriyordu)
     hideTip();
     const c = by.get(id);
     if (!c) return;
     // Öneri: önerilen kahramanın ipucunda 2. satır altın gerekçe (ilk satır açıklama kalır; başka satır / başka kahraman değişmez)
     const base = [...(c.blurb ? [{ text: c.blurb }] : []), ...(o.tutorial.has(id) ? [{ text: 'Played in the tutorial' }] : [])];
-    const why = o.suggest?.hero === id ? [{ text: o.suggest.line, color: SUG_GOLD }] : [];
+    const why = o.suggest?.heroes.includes(id) ? [{ text: o.suggest.line, color: SUG_GOLD }] : [];
     const lines = [...base.slice(0, 1), ...why, ...base.slice(1)];
     const av = avatarUrlOf(c.spriteId);
     const html = bandTipHtml({ accent: c.color, ...(c.role ? { kind: c.role } : {}), title: c.name, ...(av ? { icon: av, iconShape: 'portrait' as const } : {}), ...(c.stat ? { value: c.stat.toUpperCase(), valueLabel: 'Primary' } : {}), lines });
@@ -110,6 +114,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
     t.innerHTML = html;
     wrap.append(t);
     tipEl = t;
+    tipFor = target;
     const r = target.getBoundingClientRect();
     const w = wrap.getBoundingClientRect();
     const tw = t.offsetWidth;
@@ -127,7 +132,9 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
     });
     el.addEventListener('pointerleave', hideTip);
     el.addEventListener('focus', () => showTip(el, id));
-    el.addEventListener('blur', hideTip);
+    el.addEventListener('blur', () => {
+      if (tipFor === el) hideTip(); // odağı kaybeden önceki kart, üstünde durulan kartın ipucunu kapatmaz
+    });
   };
 
   // ---- kart ----
@@ -178,7 +185,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
     countEl.innerHTML = `${n} / ${SIZE} chosen`;
     goBtn.disabled = n !== SIZE;
     goBtn.classList.toggle('ready', n === SIZE);
-    goBtn.title = n === SIZE ? '' : `Pick ${SIZE} heroes first.`;
+    if (!goBtn.dataset['bt']) attachBandTip(goBtn, () => (goBtn.disabled ? reasonSpec(goBtn.textContent?.trim() || 'Go', `Pick ${SIZE} heroes first.`) : null));
   };
 
   // ---- seçim (dokunma) ----

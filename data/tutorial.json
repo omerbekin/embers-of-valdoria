@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer tutorial'ı (Ömer 2026-10-13 onayı; 2026-10-14 durum dersleri; tasarım docs/design/tutorial.md). Metinler oyun içi (İngilizce), her ders en çok 1-2 cümle. Mentor kutusu src/ui/lesson-box.ts, kurallar (saf) src/tutorial/lessons.ts + durum tespiti src/tutorial/situations.ts, kayıt localStorage proto.tutorial.v1 (src/tutorial/store.ts). İlk savaş (Mill Road) adım adım zorunlu: forced = next (düğme) | skill (temel saldırı düğmesi) | target (hedef seçilip saldırı yapılınca), trigger.battle {node:[1], when:start}. Sonraki TÜM savaş dersleri DURUMLA tetiklenir (trigger.battle.when; düğüm/bölge yok): durum ilk kez oluştuğunda, sırası gelen kahraman için, o an kullanılacak düğmeyi gösterir. when: first (Mill Road sonrası savaşın ilk kararı), rest (MP'li skill'lerin hiçbiri MP yetmediği için kullanılamıyor), move (yakın dövüş hiçbir düşmana ulaşamıyor), skip (hiçbir skill kullanılamıyor, Rest/Move çözüm değil), ultimate (4. skill hazır), spent (kullanılan skill beklemede ya da MP harcandı), status (kahramanda durum), ground (kahramanın hücresinde / yanında zararlı zemin), telegraph (boss vuruş hücrelerini işaretledi), fallen (oyuncunun bir kahramanı düştü; Valor açıksa variants.valor metni), preview (düşmana hasar veren skill seçildi), ally (dost seçen skill seçildi), reach (seçilen yakın dövüş skill'i arka sıradaki düşmana ulaşamıyor), area (alan skill'i seçildi). Veri sırası = öncelik; kararda en çok bir ders. done = eylem dersi (rest | move | skip | ultimate): oyuncu o eylemi yapınca tamamlanır, yapmazsa durum yeniden oluşunca (savaş başına bir kez, en çok actionRepeats savaş) yeniden çıkar; done yoksa bilgi dersi (bir kez). focus içindeki {skill} durumun skill'iyle değişir. Durum hiç oluşmazsa ders çıkmaz ve Codex > Lessons'ta da görünmez. trigger.screen: ekran dersleri (town, merchant, company, map, event, gear, endless, valor, rest); ek koşullar minWins (sefer zaferi), visible (haritada görünen düğüm türü), anyRarity (torbada / takılı nadirlik), bag (torbada item). Ekranda aynı anda tek ders. Metinde {victoryHeal} / {restHeal}: data/campaign/campaign.json yüzdeleri (src/tutorial/lessons.ts > LESSON_VARS). decision: zorunlu adımın kaçıncı oyuncu kararı (f_mp_skill = 2: en güçlü MP skill). spotlight: ekran kararır, yalnızca odak aydınlık (zorunlu adımlar, Boss). codex: Codex > Lessons metni (yoksa text). place: bottom = kutu altta (Gear). trigger.gate: formation = Zorunlu Formation kapısı (katılımdan sonra sıradaki savaşa dokununca; CampaignMapScene, awaitText = düğme yerine bekleme yazısı, Formation açılınca kapanır). defeatHints: Bölüm III'te aynı savaş 2 kez kaybedilince savaş başında mentor ipucu (Codex'e girmez).",
+  "_not": "Sefer tutorial'ı (Ömer 2026-10-13 onayı; 2026-10-14 durum dersleri; tasarım docs/design/tutorial.md). Metinler oyun içi (İngilizce), her ders en çok 1-2 cümle. Mentor kutusu src/ui/lesson-box.ts, kurallar (saf) src/tutorial/lessons.ts + durum tespiti src/tutorial/situations.ts, kayıt localStorage proto.tutorial.v1 (src/tutorial/store.ts). İlk savaş (Mill Road) adım adım zorunlu: forced = next (düğme) | skill (temel saldırı düğmesi) | target (hedef seçilip saldırı yapılınca), trigger.battle {node:[1], when:start}. Sonraki TÜM savaş dersleri DURUMLA tetiklenir (trigger.battle.when; düğüm/bölge yok): durum ilk kez oluştuğunda, sırası gelen kahraman için, o an kullanılacak düğmeyi gösterir. when: first (Mill Road sonrası savaşın ilk kararı), rest (MP'li skill'lerin hiçbiri MP yetmediği için kullanılamıyor), move (yakın dövüş hiçbir düşmana ulaşamıyor), skip (hiçbir skill kullanılamıyor, Rest/Move çözüm değil), ultimate (4. skill hazır), spent (kullanılan skill beklemede ya da MP harcandı), status (kahramanda durum), ground (kahramanın hücresinde / yanında zararlı zemin), telegraph (boss vuruş hücrelerini işaretledi), fallen (oyuncunun bir kahramanı düştü; Valor açıksa variants.valor metni), preview (düşmana hasar veren skill seçildi), ally (dost seçen skill seçildi), reach (seçilen yakın dövüş skill'i arka sıradaki düşmana ulaşamıyor), area (alan skill'i seçildi). Veri sırası = öncelik; kararda en çok bir ders. done = eylem dersi (rest | move | skip | ultimate): oyuncu o eylemi yapınca tamamlanır, yapmazsa durum yeniden oluşunca (savaş başına bir kez, en çok actionRepeats savaş) yeniden çıkar; done yoksa bilgi dersi (bir kez). focus içindeki {skill} durumun skill'iyle değişir. Durum hiç oluşmazsa ders çıkmaz ve Codex > Lessons'ta da görünmez. trigger.screen: ekran dersleri (town, merchant, company, map, event, gear, loot, endless, valor, rest); ek koşullar minWins (sefer zaferi), visible (haritada görünen düğüm türü), anyRarity (torbada / takılı nadirlik), bag (torbada item), unseen (o ders görüldüyse çıkmaz). Ekranda aynı anda tek ders. Metinde {victoryHeal} / {restHeal}: data/campaign/campaign.json yüzdeleri (src/tutorial/lessons.ts > LESSON_VARS). decision: zorunlu adımın kaçıncı oyuncu kararı (f_mp_skill = 2: en güçlü MP skill). spotlight: ekran kararır, yalnızca odak aydınlık (zorunlu adımlar, Boss). codex: Codex > Lessons metni (yoksa text). place: bottom = kutu altta (Gear). trigger.gate: formation = Zorunlu Formation kapısı (katılımdan sonra sıradaki savaşa dokununca; CampaignMapScene, awaitText = düğme yerine bekleme yazısı, Formation açılınca kapanır). defeatHints: Bölüm III'te aynı savaş 2 kez kaybedilince savaş başında mentor ipucu (Codex'e girmez).",
   "version": 1,
   "mentor": {
     "name": "Garrick",
@@ -18,21 +18,21 @@
       "druid": "You tended its orchards, and the roots here still answer you."
     }
   },
-  "_skillUnlocks": "Tek kişilik başlangıç (Ömer 2026-11-01): skill açılınca Garrick'in tek cümlesi (skill id -> metin; açılış sırası campaign.json > soloStart). Skill başına bir kez (eov.tutorial.v1 seen: unlock:<skill>), tavana girmez, kararda en çok bir ders kuralına uyar. TASLAK, Ömer onaylayacak.",
+  "_skillUnlocks": "Tek kişilik başlangıç (Ömer 2026-11-01): skill açılınca Garrick'in tek cümlesi (skill id -> metin; açılış sırası campaign.json > soloStart). Skill başına bir kez (eov.tutorial.v1 seen: unlock:<skill>), tavana girmez, kararda en çok bir ders kuralına uyar. initialCooldown'u olan skill 'is ready' demez, savaşa beklemede başladığını söyler (Ömer 2026-11-01). TASLAK, Ömer onaylayacak.",
   "skillUnlockTitle": "A New Skill",
   "skillUnlocks": {
     "whirlwind": "Whirlwind is yours now: it cuts through the two front enemy rows at once, so save it for when they bunch up.",
     "charge": "Charge is ready: rush any enemy, even in the back row, and stun them.",
-    "headsmans_blow": "Headsman's Blow is ready: it spends all your Rage, and the more you burn, the harder it falls.",
-    "fist_crush": "Fist Crush is yours now: after a short wind-up it drops on three random enemies.",
+    "headsmans_blow": "Headsman's Blow is yours now, but it starts every battle on cooldown. Once it is up, it spends all your Rage, and the more you burn, the harder it falls.",
+    "fist_crush": "Fist Crush is yours now, but it starts every battle on cooldown. Once it is up, it drops on three random enemies.",
     "taunt": "Taunt is ready: it draws the enemy's blows to you, and it pays off once someone walks beside you.",
     "close_ranks": "Close Ranks is ready: once you have companions, it sends half the blows they take to you.",
     "judgment": "Judgment is yours now: call it down on an enemy to burn the ground there, or on your own cell to heal.",
-    "radiance": "Radiance is ready: after a short wait it heals you and scorches every enemy at once.",
+    "radiance": "Radiance is yours now, but it starts every battle on cooldown. Once it is up, it heals you and scorches every enemy at once.",
     "resurrection": "Resurrection is ready: alone it does nothing, but once you have companions it raises the fallen mid-battle.",
     "natures_wrath": "Nature's Wrath is yours now: roots tear through the two front enemy rows at once.",
     "rejuvenate": "Rejuvenate is ready: it heals you now and keeps healing for three turns.",
-    "summon_treant": "Summon Treant is ready: it calls a treant to fight beside you for a few turns."
+    "summon_treant": "Summon Treant is yours now, but it starts every battle on cooldown. Once it is up, it calls a treant to fight beside you for a few turns."
   },
   "_hitPulse": "C1 (Ömer 2026-11-01): 'It Can Miss' dersi açılınca hedeflerin üstünde isabet yüzdesinin kısa vurgusu (ms).",
   "hitPulseMs": 2600,
@@ -375,6 +375,25 @@
         "screen": "gear",
         "bag": true
       }
+    },
+    {
+      "id": "first_loot",
+      "_not": "Ömer 2026-11-01: ilk item düşünce yönlendirme yoktu. Eskiden Ashford teslim kartı Gear'a götürüyordu, tek kişilik başlangıçta teslim yok. Ganimet ekranında item varken bir kez; item alınınca ya da ekran kapanınca kutu kapanır. TASLAK metin.",
+      "group": "On the Road",
+      "title": "Your First Spoils",
+      "text": "Tap the item to put it in your bag. Whatever you leave here is lost.",
+      "focus": ".gr-loot-tile",
+      "place": "bottom",
+      "trigger": { "screen": "loot" }
+    },
+    {
+      "id": "gear_equip",
+      "_not": "Ömer 2026-11-01: torbada item varken haritada Gear düğmesini gösterir; Gear açılınca kapanır, sürükleme dersi (gear) oradan sürer. Oyuncu Gear'ı önceden kendisi açtıysa çıkmaz. Veri sırası: hp_carry ve node_types'tan önce. TASLAK metin.",
+      "group": "On the Road",
+      "title": "Wear Your Gear",
+      "text": "Gear in the bag does nothing. Open Gear and put it on.",
+      "focus": ".camp-gear",
+      "trigger": { "screen": "map", "bag": true, "unseen": "gear" }
     },
     {
       "id": "item_quality",

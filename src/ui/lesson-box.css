@@ -217,7 +217,7 @@ html[data-tut-lock='target'] .bh-skills [data-skill]:not(:first-child),
 html[data-tut-lock] .bh-globs [data-global]:not(.tut-focus) {
   opacity: 0.35;
   filter: grayscale(0.85);
-  transition: opacity 0.2s, filter 0.2s;
+  transition: opacity var(--m-modal-in, 200ms), filter var(--m-modal-in, 200ms);
 }
 
 /* Zorunlu Formation kapısı (Ömer 2026-10-27; CampaignMapScene > formationSpotlight): yalnızca Formation düğmesi ve mentor kutusu çalışır,
@@ -241,8 +241,8 @@ html[data-tut-lock='formation'] #ui-root .tut-wrap button {
   pointer-events: none;
   border-radius: max(6px, calc(10 * var(--gu, 1px)));
   box-shadow: 0 0 0 300vmax rgba(6, 4, 2, 0.5);
-  transition: transform 0.18s ease-out, width 0.18s ease-out, height 0.18s ease-out;
-  animation: tut-spot-in 0.35s ease-out both;
+  transition: transform var(--m-card-hover, 170ms) ease-out, width var(--m-card-hover, 170ms) ease-out, height var(--m-card-hover, 170ms) ease-out;
+  animation: tut-spot-in var(--m-card-in, 260ms) ease-out both;
 }
 
 .tut-spot[hidden] {
@@ -262,11 +262,11 @@ html[data-tut-lock='formation'] #ui-root .tut-wrap button {
 html[data-tut-lock='mp'] .bh-skills [data-skill]:not(.tut-focus) {
   opacity: 0.35;
   filter: grayscale(0.85);
-  transition: opacity 0.2s, filter 0.2s;
+  transition: opacity var(--m-modal-in, 200ms), filter var(--m-modal-in, 200ms);
 }
 
 .tut-box.tut-nudge {
-  animation: tut-nudge 0.42s ease-in-out;
+  animation: tut-nudge var(--m-hold-bump, 420ms) ease-in-out;
 }
 
 @keyframes tut-nudge {

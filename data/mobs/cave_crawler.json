@@ -1,0 +1,36 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Komşu: ash_hound. Kendi çizimi.",
+  "id": "cave_crawler",
+  "name": "Cave Crawler",
+  "family": "beasts",
+  "spriteId": "cave_crawler",
+  "spriteScale": 1.2,
+  "color": "#b8b4a2",
+  "logo": "roar",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Beast · Crawler",
+  "attributes": {
+    "str": 24,
+    "int": 2,
+    "dex": 14,
+    "luck": 4
+  },
+  "armor": 10,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "mandible",
+    "skitter"
+  ],
+  "passive": {
+    "id": "blind_hunger",
+    "name": "Blind Hunger",
+    "icon": "soul",
+    "text": "Always goes for the nearest hero. In Darkness it deals 25% more damage.",
+    "effect": {
+      "type": "blindHunger",
+      "darkBonus": 0.25
+    }
+  }
+}

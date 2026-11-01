@@ -21,7 +21,7 @@
   "ai": "aggressive",
   "skills": [
     "gloam_bite",
-    "lunge"
+    "gloam_lunge"
   ],
   "passive": {
     "id": "slick",

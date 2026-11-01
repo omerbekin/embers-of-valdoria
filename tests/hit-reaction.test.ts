@@ -54,6 +54,10 @@ describe('hit reaction tiers', () => {
       expect(m[k], k).toBeLessThan(h[k]);
     }
     expect(m.poseMs).toBeLessThan(h.poseMs);
+    for (const t of [l, m, h]) {
+      expect(t.flashAlpha).toBeGreaterThan(0);
+      expect(t.flashAlpha).toBeLessThan(1);
+    }
     expect(h.knockPx).toBeGreaterThan(0);
     expect(h.dust).toBe(true);
   });

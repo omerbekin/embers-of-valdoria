@@ -230,6 +230,15 @@ describe('skill açılışı', () => {
 
   it('her açılışın Garrick cümlesi var; kilit yalnız lider ve yalnız ilk zafere kadar', () => {
     for (const c of STARTERS) for (const id of soloSkillOrder(c).slice(1)) expect(TUTORIAL.skillUnlocks[id], id).toBeTruthy();
+    // savaşa beklemede başlayan skill 'hazır' demez, beklemeyi söyler (Ömer 2026-11-01)
+    for (const c of STARTERS) {
+      for (const id of soloSkillOrder(c).slice(1)) {
+        const text = TUTORIAL.skillUnlocks[id]!;
+        const waits = (content.skills[id]?.initialCooldown ?? 0) > 0;
+        if (waits) expect(text, id).not.toContain('is ready');
+        expect(text.includes('starts every battle on cooldown'), id).toBe(waits);
+      }
+    }
     const s = fresh();
     expect(soloSkillStage(s, { class: 'warrior' }, '1')).toBeNull(); // lider değil
     expect(soloSkillStage(autoResolve(s), leaderOf(s)!, '1')).toBeNull(); // kazanıldı: devriyede kilit yok

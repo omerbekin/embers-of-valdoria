@@ -97,5 +97,11 @@ html.short .mk-fit .gr-lskills .gr-skillbar { padding-top: 4px; }
 html.short .mk-fit .gr-lskills { padding-top: 4px; }
 html.short .mk-fit .gr-ledger .gr-leaf-hero > .gr-slots, html.short .mk-fit .gr-slots { gap: 2px 8px; }
 
+/* telefon, ikinci secenek: skill etiketleri kalir, sol sayfa kaydirilir */
+html.short .mk-scroll .gr-leaf-hero { overflow-y: auto; min-height: 0; }
+
 /* mockup: pencere acilis animasyonu yok (ekran goruntusu ve olcum icin; oyunda data/ui-motion.json > modal gecerli) */
 .mk-ov, .mk-ov .gr-panel { animation: none !important; }
+
+html.short .mk-scroll .gr-leaf-hero > .gr-slots, html.short .mk-scroll .gr-leaf-hero > .mk-jbar { flex: none; }
+html.short .mk-scroll .gr-leaf-hero { display: flex; flex-direction: column; }

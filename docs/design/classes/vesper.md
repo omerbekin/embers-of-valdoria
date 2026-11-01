@@ -14,7 +14,7 @@
 | Silah ailesi | **staves** (asa; başlangıç silahı `ash_staff`, Mage ile aynı) |
 | Menzil | 6 (Mage gibi arka sıra; `frontPriority` 7) |
 | Nitelikler | STR 21 / INT 26 / DEX 5 / LUCK 8 |
-| Zırh | 14 |
+| Zırh | 22 (2026-11-01 denge turu, Ömer onayına kadar geçici; önce 14) |
 | YZ profili | `vesper` (`data/ai.json`) |
 | Görünüş (yön A, "Bronze Abbess") | Uzun boylu yaşlı başrahibe, beyaz-altın cüppe, sırtında zincirli kocaman yeşil pas tutmuş (verdigris) bronz çan, elinde asa olarak çanın demir tokmağı |
 
@@ -25,8 +25,8 @@ Arketip: batık bir katedralin çan kulesinin bekçisi. Çan sesi = **holy**, g�
 ## 2. Kit
 
 ### Pasif: Pealing Bells
-Çalınan her **Toll** ya da **Thunderpeal** sonraki çan skill'lerini **%5** güçlendirir; üst sınır yok, savaş boyunca birikir.
-- Motor: yeni pasif tipi `{ type: 'pealingBells', perBell: 0.05 }`; savaşçıda yeni sayaç `bells` (savaş başında 0).
+Çalınan her **Toll** ya da **Thunderpeal** sonraki çan skill'lerini **%7** güçlendirir (2026-11-01 denge turu, geçici; önce %5); üst sınır yok, savaş boyunca birikir.
+- Motor: yeni pasif tipi `{ type: 'pealingBells', perBell: 0.07 }`; savaşçıda yeni sayaç `bells` (savaş başında 0).
 - `ringsBell: true` taşıyan skill kullanılınca sayaç +1 (`battle.ts > cast`, Spell Echo bloğundan önce; debug kullanımı saymaz). Pasif olayı yayılır (savaş günlüğü).
 - Çarpan: `bell: true` taşıyan hasar etkileri `1 + perBell x bells` ile çarpılır (`spec.ts > damageSpecFor`; motor, önizleme ve YZ aynı fonksiyonu kullanır). Sayaç, skill'in KENDİ hasarından sonra artar (ilk Toll x1,00 vurur).
 
@@ -34,13 +34,15 @@ Arketip: batık bir katedralin çan kulesinin bekçisi. Çan sesi = **holy**, g�
 
 | Skill | Hedef | Element | Güç (INT) | MP | Bekleme | Ek | Çan çalar? |
 |---|---|---|---|---|---|---|---|
-| **Toll** | tüm düşmanlar | holy | 0,28 | 4 | yok | - | evet |
-| **Thunderpeal** | bir düşman SIRASI (`area_enemies`, şekil row) | lightning | 0,60 | 12 | 2 | Blinded 1 tur | evet |
-| **Cracked Bell** | tek düşman | holy | 0,80 | 10 | 3 | %30 Stun 1 tur | hayır |
-| **Great Bell of Valdoria** (ult) | tüm düşmanlar | holy 0,30 + lightning 0,20 | çan başına her biri +0,025 INT | 22 | 4 (ilk bekleme 2) | - | hayır |
+| **Toll** | tüm düşmanlar | holy | 0,44 | 4 | yok | - | evet |
+| **Thunderpeal** | bir düşman SIRASI (`area_enemies`, şekil row) | lightning | 0,72 | 12 | 2 | Blinded 1 tur | evet |
+| **Cracked Bell** | tek düşman | holy | 1,02 | 10 | 3 | %30 Stun 1 tur | hayır |
+| **Great Bell of Valdoria** (ult) | tüm düşmanlar | holy 0,46 + lightning 0,31 | çan başına her biri +0,025 INT | 22 | 4 (ilk bekleme 2) | - | hayır |
+
+Değerler 2026-11-01 denge turunun geçici sonucu (Ömer onayına kadar); önceki 0,28 / 0,60 / 0,80 / 0,30 + 0,20. Hasar ve zırh artışları 28,9 olan kazanma oranını 45,3'e çıkardı (`open-questions.md`, "Mage ve Vesper denge turu").
 
 - Dört skill'in hasarı da `bell: true`: Pealing Bells hepsini güçlendirir; ama yalnız Toll ve Thunderpeal çan çalar.
-- Great Bell ayrıca `powerPerBell: 0.025`: güç = taban + 0,025 x çan (iki hasar satırında ayrı ayrı), üstüne Pealing Bells çarpanı. Örnek 6 çanda: holy (0,30 + 0,15) x 1,30 = 0,585, lightning (0,20 + 0,15) x 1,30 = 0,455 INT.
+- Great Bell ayrıca `powerPerBell: 0.025`: güç = taban + 0,025 x çan (iki hasar satırında ayrı ayrı), üstüne Pealing Bells çarpanı. Örnek 6 çanda: holy (0,46 + 0,15) x 1,42 = 0,866, lightning (0,31 + 0,15) x 1,42 = 0,653 INT.
 - Mage'den türetme (Fire Bolt 1,02 / 4 MP; Blizzard 0,77 rect 3x2 / 14 MP / cd 2; Meteor 0,628 plus / 20 MP / cd 3): Toll Fire Bolt'un bedeli, gücü tüm tahtaya yayıldığı için ~%27'si (sayaç kurucusu); Thunderpeal Blizzard'dan dar alan (sıra) + Blind karşılığı biraz düşük; Cracked Bell Fire Bolt'tan düşük (Stun şansı + bekleme karşılığı); Great Bell tüm tahta, 0 çanda toplam 0,50 (Meteor'dan düşük), ~6 çanda ~1,04.
 - İpucu metinleri `skill-info.ts`: pasif değerleri, "Rings a bell..." satırı, Great Bell için "5 çanda" örnek değer.
 

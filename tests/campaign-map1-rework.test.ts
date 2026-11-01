@@ -53,7 +53,7 @@ const oldSave = (s: CampaignState): CampaignState => normalizeState(strip(JSON.p
 describe('Harita 1 yeniden çizim: veri', () => {
   it('blurb sayıları graftan (33 durak, 6 seçim noktası, 22 durak / sefer); kayıt sürümü değişmedi (12)', () => {
     expect(map.blurb).toBe(`From Mill Road to Castle Morvane: ${map.nodes.length} stops, ${choicePoints(map).length} choice points, ${map.stopsPerRun} stops per run.`);
-    expect(SAVE_VERSION).toBe(13);
+    expect(SAVE_VERSION).toBe(14);
   });
 
   it('eski 27 düğümün seviyesi aynen; yeni düğümler planlanan seviyede (Deserters\' Camp final ile aynı L10)', () => {

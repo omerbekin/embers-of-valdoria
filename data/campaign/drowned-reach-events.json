@@ -38,7 +38,7 @@
           "id": "pay",
           "label": "Pay what you owe",
           "hint": "Your Cutthroat's quest. Settle the old debt in coin, and walk away clean.",
-          "cost": 60,
+          "cost": 80,
           "quest": "cutthroat_debt",
           "result": "The Dock Rats count the coin twice and wipe the chalk from the door. Your Cutthroat walks out of Saltmere owing no one."
         },
@@ -50,7 +50,7 @@
             "dr_92"
           ],
           "win": {
-            "gold": 40
+            "gold": 70
           },
           "quest": "cutthroat_debt",
           "result": "The collectors will not be collecting again. Your Cutthroat takes back the purse they came for, and a little more."
@@ -66,12 +66,12 @@
           "id": "stake",
           "label": "Lay the stake",
           "hint": "Your Gambler's quest. Win the throw, then win the fight: the house keeps its back row empty. Win: double your stake.",
-          "cost": 40,
+          "cost": 80,
           "battle": [
             "dr_93"
           ],
           "win": {
-            "gold": 80
+            "gold": 160
           },
           "quest": "gambler_table",
           "result": "The house loses for the first time in living memory. Your Gambler sweeps the purse off the table and leaves the dice behind."
@@ -116,8 +116,8 @@
         {
           "id": "barter",
           "label": "Barter with them",
-          "hint": "Pay 30 gold. They trade you one item from their stores.",
-          "cost": 30,
+          "hint": "Pay 70 gold. They trade you one item from their stores.",
+          "cost": 70,
           "chest": true,
           "chestItems": 1,
           "result": "The eldest weighs your coins in her palm, then fetches a bundle wrapped in eel-skin."
@@ -170,8 +170,8 @@
         {
           "id": "barter",
           "label": "Buy from a stall",
-          "hint": "Pay 25 gold for one item a sailor brought back from the isles.",
-          "cost": 25,
+          "hint": "Pay 80 gold for one item a sailor brought back from the isles.",
+          "cost": 80,
           "chest": true,
           "chestItems": 1,
           "result": "The sailor unwraps a bundle of oilcloth and lets you pick one thing from it."
@@ -221,9 +221,9 @@
         {
           "id": "charter_gold",
           "label": "Charter a ship",
-          "hint": "Pay 60 gold. The sea lanes from Fisher's Landing to the isles open for the rest of this map.",
+          "hint": "Pay 100 gold. The sea lanes from Fisher's Landing to the isles open for the rest of this map.",
           "needFaction": ["none", "order"],
-          "cost": 60,
+          "cost": 100,
           "charter": true,
           "result": "The clerk counts your coins twice and writes a name in the ledger. \"Fisher's Landing. Look for the boat with the red sail.\""
         },

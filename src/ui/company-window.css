@@ -120,4 +120,6 @@ html.short .cw-name.editing { left: 8px; right: auto; top: 6px; bottom: auto; wi
 .cw-sug { position: absolute; left: 0; right: 0; top: calc(100% + 7 * var(--u)); text-align: center; font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: .2em; text-transform: uppercase; color: var(--g-gold); white-space: nowrap; pointer-events: none; }
 .cw-strip.has-sug { margin-bottom: calc(34 * var(--u)); }
 html.short .cw-strip.has-sug { margin-bottom: 36px; }
-html.short .cw-sug { top: calc(100% + 19px); font-size: 8px; letter-spacing: .12em; }
+html.short .cw-sug { top: calc(100% + 19px); font-size: 8px; letter-spacing: .02em; }
+/* telefonda ipucu kartı pencere başlığını kapatmasın: başlığın altına iner */
+html.short:has(.cw-win) .tut-wrap:not(.bottom) { top: calc(var(--et, 0px) + 84px); }

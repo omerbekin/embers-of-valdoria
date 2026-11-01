@@ -36,6 +36,7 @@ import { uiSound, worldSound } from './ui-sound';
 import { hasUiImage, uiIconName } from './ui-icons';
 import { iconUrl } from './dom-icons';
 import { oddsSlices } from './econ-model';
+import { attachBandTip, reasonSpec } from './band-tip-attach';
 import { COMBINE_ICON, REROLL_ICON, TEMPER_STONE_ICON, iconImg, temperStoneImg } from './temper-stone';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -235,7 +236,7 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
   const actRow = (label: string, blocked: string | null, run: () => void, cost: HTMLElement): HTMLElement => {
     const b = btn('gr-btn primary', label, run);
     b.disabled = !!blocked;
-    if (blocked) b.title = blocked;
+    if (blocked) attachBandTip(b, reasonSpec(label, blocked));
     const wrap = el('div', 'gr-shopact bs-act');
     wrap.append(cost);
     if (blocked) wrap.append(el('span', 'bs-why', blocked));
@@ -319,7 +320,7 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
         renderSide();
       });
       b.disabled = !can;
-      if (!can) b.title = 'The main property stays';
+      if (!can) attachBandTip(b, reasonSpec('Main property', 'The main property stays'));
       list.append(b);
     });
     pane.append(list);

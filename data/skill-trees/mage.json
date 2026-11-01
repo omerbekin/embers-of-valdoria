@@ -1,6 +1,6 @@
 {
   "class": "mage",
-  "version": 4,
+  "version": 5,
   "picked": {
     "rows": [
       "b",
@@ -370,9 +370,9 @@
     },
     "0.v": {
       "name": "Mirage Veil",
-      "text": "Heat Mirage evolves: Burning Ground also appears under the enemies beside the attacker, and the attacker is Chilled for 1 turn.",
+      "text": "Heat Mirage evolves: Burning Ground also appears under the enemies beside the attacker, and the attacker is Blinded for 1 turn.",
       "src": "B:V5:0.v",
-      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
+      "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457). Frozen (Ömer 2026-10-31): Burning zeminde Chilled tutmadığı için saldırana Chilled yerine Blinded.",
       "fx": [
         {
           "k": "hook",
@@ -392,7 +392,7 @@
               "to": "target"
             },
             {
-              "status": "chilled",
+              "status": "blinded",
               "turns": 1,
               "to": "target"
             }

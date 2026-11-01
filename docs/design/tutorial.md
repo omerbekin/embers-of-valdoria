@@ -29,6 +29,8 @@ Yalnız yeni seferlerde (kayıtta `soloStart: true`); eski kayıt eski yapıda s
 | I · Ravenwood (katılımdan sonra) | Zorunlu Formation (ipucu kartı "Arrange your formation...") | Yeni kahraman katılınca savaş beklemede; Formation düğmesi kor rengiyle parlar; Formation açılana kadar savaşa dokunmak savaşı BAŞLATMAZ ("Open Formation first." notu + ipucu kartı yeniden + parıltı çakar). Açılıp kapanınca parıltı söner, savaş normal (aşağıda Kurallar). |
 | I · ilk zafer sonrası harita | Wounds Carry Over | İlk zaferden sonraki ilk yol seçimi; yüzde verinin zafer toparlanmasından (`victoryHeal`) |
 | Harita | Reading the Road | Yolda (yakın / uzak) ilk kez elit, boss, dinlenme ya da hazine düğümü görününce (gerçek ikonlar: boynuzlu miğfer, taçlı kafatası, kamp ateşi, sandık) |
+| Ganimet ekranı | Your First Spoils | Ganimette item varken ilk kez; item alınınca ya da ekran kapanınca kutu kapanır (Ömer 2026-11-01) |
+| Harita | Wear Your Gear | Torbada item varken ve Gear dersi görülmemişken; Gear düğmesini gösterir, Gear açılınca kapanır (Ömer 2026-11-01; tek kişilik başlangıçta Ashford teslim kartı yok) |
 | I · ilk loot | Gear (3 sayfa: sürükle, karşılaştır, Equip best) | Torbada item varken Gear ilk açıldığında; Gear kapanınca kutu da kapanır |
 | Gear | Item Quality | Torbada ya da takılı Uncommon ya da üstü item varken Gear açılınca (Gear dersi önce) |
 | İlk dinlenme noktası | Rest Camps | Kamp penceresi ilk açılınca; yüzde `restHealOf` (veri) |

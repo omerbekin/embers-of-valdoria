@@ -909,8 +909,8 @@ const campKey = (s: Pick<CampaignState, 'mapId'>, nodeId: string): string => `${
 export const campUsed = (s: CampaignState, nodeId: string = s.at): CampChoice['kind'] | null => s.campsUsed?.[campKey(s, nodeId)] ?? null;
 
 /**
- * Kampın Train XP'si (Ömer 2026-10-26; miktar VARSAYIM campaign-dev): o düğümün seviyesindeki NORMAL savaşta (camp.trainEnemies düşman, savaş
- * çarpanı, kimse düşmeden) bu kahramanın bugünkü aktif takımla alacağı payın camp.trainShare oranı (level farkı ve yakalama bonusu dahil).
+ * Kampın Train XP'si (Ömer 2026-10-26; miktar VARSAYIM campaign-dev): o düğümün seviyesindeki NORMAL savaşın (camp.trainEnemies düşman, savaş
+ * çarpanı, kimse düşmeden) toplam XP'sinin camp.trainShare oranı (level farkı ve yakalama bonusu dahil; takım boyutundan bağımsız).
  * Kahraman aktif takımda değilse 0.
  */
 export function campTrainXp(s: CampaignState, heroId: string): number {
@@ -918,7 +918,8 @@ export function campTrainXp(s: CampaignState, heroId: string): number {
   if (!team.some((h) => h.id === heroId)) return 0;
   const c = CONFIG.camp;
   const kills = Array.from({ length: Math.max(0, c.trainEnemies) }, () => ({ down: [] as string[] }));
-  const xp = splitXp({ heroes: team.map((h) => ({ id: h.id, level: h.level })), nodeLevel: nodeLevel(s.mapId, s.at), mult: nodeXpMult('battle', LEVELS, true), kills });
+  // XP tek kahramana gider, takım sayısına bölünmez (Ömer 2026-11-01): scale splitXp'in bölmesini geri alır
+  const xp = splitXp({ heroes: team.map((h) => ({ id: h.id, level: h.level })), nodeLevel: nodeLevel(s.mapId, s.at), mult: nodeXpMult('battle', LEVELS, true), kills, scale: team.length });
   return Math.max(0, Math.round((xp[heroId] ?? 0) * c.trainShare));
 }
 
@@ -1099,9 +1100,8 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   // XP (levels.md): düşman başına, düğüm çarpanı, savaşa girenlere bölünür; level atlayan (ayaktaki) kahraman tam iyileşir
   const encounterId = step.encounter; // olay savaşı, düğümün (tarafa göre) karşılaşması ya da Caravel'in elit savaşı
   const patrol = t.patrol === t.at && !step.caravel;
-  // Devriye (yeniden oynama): XP azalan getiriyle (roadmap 2.3 A; campaign.json > replay.xp); altın / item loot.ts'te (items.json > loot.repeat)
-  const gains = battleXp(t, outcome, encounterId);
-  applyXp(t, patrol ? scaleGains(gains, replayMult(replayCount(t, t.at) + 1)) : gains);
+  // Devriye (yeniden oynama) tam XP verir (Ömer 2026-11-01: XP kesintisi kalktı; fren level farkı, levels.md); altın / item loot.ts'te (items.json > loot.repeat)
+  applyXp(t, battleXp(t, outcome, encounterId));
   // Yaralı kalkan kahraman level atlasa da riseRatio canla kalır (level şifası yalnızca savaşı ayakta bitirene; VARSAYIM open-questions 369).
   // Boss zaferi (Ömer 2026-10-31): yaralı kalkan da bossVictoryHeal (tam) canla kalkar; yara işlemeye devam eder.
   const riseHp = nodeType === 'boss' ? heal : (rules.wounds ?? woundRules()).riseRatio;
@@ -1566,16 +1566,6 @@ export function canReplay(map: CampaignMap, n: MapNode): boolean {
 /** Düğümün devriye zaferi sayısı. */
 export const replayCount = (s: CampaignState, id: string): number => s.replays?.[id] ?? 0;
 
-/** i. yeniden oynanışın ödül çarpanı (0 = ilk zafer = 1; son değer taban): campaign.json > replay.xp. */
-export function replayMult(i: number): number {
-  const xs = CONFIG.replay?.xp ?? [1];
-  return xs[Math.max(0, Math.min(i, xs.length - 1))] ?? 1;
-}
-/** Bu düğümde sıradaki devriyenin ödül çarpanı (rozet: 100 / 60 / 40 / 25). */
-export const nextReplayMult = (s: CampaignState, id: string): number => replayMult(replayCount(s, id) + 1);
-
-const scaleGains = (g: Record<string, number>, k: number): Record<string, number> => Object.fromEntries(Object.entries(g).map(([id, v]) => [id, Math.round(v * k)]));
-
 /** Devriye bu düğümde başlatılabilir mi (düğüm temizlenmiş, yeniden oynanır, serbest dolaşım açık, yola çıkılabilir durumda). */
 export function patrolAvailable(s: CampaignState, id: string = s.at): boolean {
   const map = mapOf(s);
@@ -1810,7 +1800,7 @@ export function debugEnsureClass(s: CampaignState, classId: string): CampaignSta
 /** Debug: bulunulan düğümün savaşını kazanılmış say (can değişmeden). */
 export const debugWinNode = (s: CampaignState): CampaignState => (nextStep(s).kind === 'battle' ? autoResolve(s) : s);
 
-/** Debug (Reset replays): devriye sayaçları sıfırlanır; loot sayacı ilk zafere döner (sonraki devriye yine %60'tan başlar). */
+/** Debug (Reset replays): devriye sayaçları sıfırlanır; loot sayacı ilk zafere döner. */
 export function debugResetReplays(s: CampaignState): CampaignState {
   const t = clone(s);
   t.replays = {};

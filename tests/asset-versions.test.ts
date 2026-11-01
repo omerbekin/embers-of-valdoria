@@ -228,6 +228,15 @@ describe('sürüm çözümleme', () => {
     });
   });
 
+  it('Summon Treant skill efekti Treant doğuşu olayıyla karışmaz (Druid yerden çıkmaz)', () => {
+    const summon = content.skills.summon_treant!;
+    const birth: typeof VFX_FN = async () => {};
+    withV2('druid', { vfx: { [summon.id]: birth, [summon.vfx!]: VFX_FN } }, () => {
+      setVersion('druid', 'v2');
+      expect(selectSkillVfx(summon)).toMatchObject({ version: 'v2', v2: VFX_FN });
+    });
+  });
+
   it('v2 efektinin yeni ses adı yalnızca sahibi v2 iken çalınabilir', () => {
     withV2('warrior', { sfx: { testOnlyNewSound: NOISE } }, () => {
       setVersion('warrior', 'v1');

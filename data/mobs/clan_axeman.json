@@ -1,0 +1,40 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Komşu: moor_raider. Kendi çizimi.",
+  "id": "clan_axeman",
+  "name": "Clan Axeman",
+  "family": "bandits",
+  "spriteId": "clan_axeman",
+  "color": "#5f6b4a",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Hillclan · Brute",
+  "attributes": {
+    "str": 26,
+    "int": 4,
+    "dex": 14,
+    "luck": 4
+  },
+  "armor": 12,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "clan_axe",
+    "cleave"
+  ],
+  "passive": {
+    "id": "highland_fury",
+    "name": "Highland Fury",
+    "icon": "bash",
+    "text": "Immune to Chilled and Frozen. Below 50% HP it deals 20% more damage.",
+    "effect": {
+      "type": "highlandFury",
+      "below": 0.5,
+      "bonus": 0.2,
+      "immune": [
+        "chilled",
+        "frozen"
+      ]
+    }
+  }
+}

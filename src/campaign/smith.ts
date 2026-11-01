@@ -33,6 +33,7 @@ import {
   type SlotId,
 } from '../progression';
 import { CONFIG } from './data';
+import { noDropSlots, slotLocks } from './slots';
 import { campaignPrice, rarityPrice } from './merchant';
 import { chapterOf } from './power';
 import { rngFor } from './seed';
@@ -357,7 +358,8 @@ export function combineItems(s: CampaignState, uids: string[], rng?: Rng, cfg: B
     const fits = d.family ? team.filter((h) => canEquip(h.class, d)) : [];
     forClass = fits.length ? fits[r.int(0, fits.length - 1)]!.class : undefined;
   } else {
-    const pick = rollDropBase(r, team.map((h) => ({ class: h.class, equipment: h.equipment })), p.ilvl);
+    const party = team.map((h) => ({ class: h.class, equipment: h.equipment }));
+    const pick = rollDropBase(r, party, p.ilvl, undefined, { locks: slotLocks(s), banned: noDropSlots(s.mapId) });
     if (!pick) throw new Error('Nothing to forge');
     id = pick.def.id;
     forClass = pick.forClass;

@@ -8,7 +8,8 @@ import { pitOf } from './pit';
 import { oathDef } from './oath';
 import { sanitizeHeroQuests } from './quests';
 import { boonIds } from './side-content';
-import { emptyEquipment, itemDef, migrateItemRolls, migrateOffhand, migrateRemovedAffixes, migrateRollsX2, promoteOffhand, SLOT_IDS, stripUnusable, type ItemInstance } from '../progression/items';
+import { emptyEquipment, itemDef, migrateItemRolls, migrateOffhand, migrateRemovedAffixes, migrateRingSlot, migrateRollsX2, promoteOffhand, SLOT_IDS, stripUnusable, type ItemInstance, type SlotId } from '../progression/items';
+import { noDropSlots, slotLocks } from './slots';
 import { classes, statuses, valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
@@ -68,7 +69,11 @@ export const SAVE_KEY = 'eov.campaign.v1';
  * 13: Tüccar rafları kayıtta (Ömer 2026-10-31, items.md 2.2): kapalı tezgâhlar `merchantStock`ta. Sürüm 12 ve öncesi okunurken `closedShop` oraya taşınır, `merchantSold` silinir
  * (mallar zaten rafın üstünde işaretli). Kaydı olmayan tüccar ilk girişte kurulur; bozuk girdi atılır (normalizeShopStock; her okumada, idempotent).
  */
-export const SAVE_VERSION = 13;
+/**
+ * 14: Ring ve Trinket ayrı yuva (Ömer 2026-11-01, item-design-plan.md T3, T5). Ring item'i `ring` yuvasına geçer; Trinket yuvası henüz açılmadıysa (Reedgate'ten önce) takılı Trinket
+ * torbaya döner, torba sınırı aşılabilir, item kaybolmaz. Eski sürüm `ring` alanını okuyamazdı: sürüm artışı eski bulut paketi / eski sekme yüzünden item kaybını önler. Her okumada, idempotent.
+ */
+export const SAVE_VERSION = 14;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -164,6 +169,15 @@ function normalizeShopStock(s: CampaignState): void {
   else delete s.merchantStock;
 }
 
+/** Haritanın yasak yuvasından kalan raf malları atılır (eski Harita 1 kaydında Trinket; eksik raf sonraki gün dolar). Yerinde, idempotent. */
+function dropBannedWares(s: CampaignState): void {
+  const banned = noDropSlots(s.mapId);
+  if (!banned.length) return;
+  const ok = (w: ShopWare) => !banned.includes(itemDef(w.itemId)?.slot ?? 'weapon');
+  for (const stall of Object.values(s.merchantStock ?? {})) stall.wares = stall.wares.filter(ok);
+  if (s.shop && Array.isArray(s.shop.wares)) s.shop = { ...s.shop, wares: s.shop.wares.filter(ok) };
+}
+
 /**
  * Sefer durumu v1 -> v2 (madde 278): kahramana level 1, XP 0, boş 6 yuva; sefere boş torba, 0 altın. v2'de eksik/bozuk alanlar da aynı
  * varsayılanlarla tamamlanır (bozuk item girdisi atılır). Diğer her şey aynen kalır.
@@ -173,6 +187,7 @@ function upgradeState(s: CampaignState): void {
   if (raw.version === 1) raw.version = 2;
   const overflow: ItemInstance[] = []; // ikinci el taşıması: ikinci el doluysa oradaki item torbaya
   let stripped = false; // sınıfın takamadığı item yuvadan çıktı mı (kurulum değişti: yarım savaş atılır)
+  const locks = slotLocks(s);
   const upgradeHero = (h: Hero): Hero => {
       if (!h || typeof h !== 'object') return h;
       const eq = emptyEquipment();
@@ -185,6 +200,14 @@ function upgradeState(s: CampaignState): void {
       }
       // 2026-10-12 ikinci el yuvası: silah yuvasındaki kalkan ikinci ele geçer (sürüm artmaz; her okumada çalışır, idempotent)
       migrateOffhand(eq, overflow);
+      // 2026-11-01 Ring ve Trinket ayrı yuva: Ring item'i kendi yuvasına; kilitli yuvadaki item torbaya (kurulum değişti: yarım savaş atılır)
+      migrateRingSlot(eq, overflow);
+      for (const k of Object.keys(locks) as SlotId[])
+        if (eq[k]) {
+          overflow.push(eq[k]!);
+          eq[k] = null;
+          stripped = true;
+        }
       // 2026-10-28 (Ömer): sınıfın artık takamadığı item (örn. war_maul hammers ailesine geçti, Warrior kullanamaz) torbaya döner; yarım savaş atılır
       if (stripUnusable(h.class, eq, overflow).length) stripped = true;
       promoteOffhand(eq); // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
@@ -219,6 +242,8 @@ function upgradeState(s: CampaignState): void {
   s.day = typeof s.day === 'number' && Number.isInteger(s.day) && s.day >= 1 ? s.day : 1;
   s.dayProgress = typeof s.dayProgress === 'number' && s.dayProgress >= 0 && s.dayProgress < 1 ? s.dayProgress : 0;
   normalizeShopStock(s);
+  dropBannedWares(s);
+  if (s.openSlots !== undefined && !(Array.isArray(s.openSlots) && s.openSlots.every((k) => SLOT_IDS.includes(k)))) delete (s as { openSlots?: unknown }).openSlots;
   if (s.campsUsed !== undefined && !(s.campsUsed && typeof s.campsUsed === 'object' && !Array.isArray(s.campsUsed))) delete (s as { campsUsed?: unknown }).campsUsed;
   // A1 Wayshrine nimetleri (isteğe bağlı alan, sürüm değişmez; open-questions 428): bilinmeyen / tekrar eden id atılır, boşsa alan silinir
   if (s.boons !== undefined) {
@@ -528,7 +553,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
       return { file: restartForNewMap(m.file), corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9 && parsed.version !== 10 && parsed.version !== 11 && parsed.version !== 12) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9 && parsed.version !== 10 && parsed.version !== 11 && parsed.version !== 12 && parsed.version !== 13) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
     // Sürüm < 8 (Item Güçlendirme): silahsız kahramana sınıfının başlangıç silahı
     const starters = parsed.version < 8 ? migrateStarterWeapons(parsed.slots) : 0;
     const fromV2 = parsed.version === 2;
@@ -555,7 +580,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
     file.lastSlot = typeof parsed.lastSlot === 'number' && file.slots[parsed.lastSlot] ? parsed.lastSlot : null;
     // Sürüm < 6: Valdoria haritası değişti; seferler yeniden başlar (yuva korunur, uyarı işareti)
     // Sürüm 6 -> 7 (Valor): harita aynı, kayıtlar korunur; Valor alanı normalizeState'te tamamlanır, dosya yeni sürümle yeniden yazılır
-    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || parsed.version === 10 || parsed.version === 11 || parsed.version === 12 || starters > 0 };
+    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || parsed.version === 10 || parsed.version === 11 || parsed.version === 12 || parsed.version === 13 || starters > 0 };
   } catch {
     return { file: empty(), corrupt: true, migrated: false };
   }

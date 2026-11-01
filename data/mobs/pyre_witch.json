@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Komşu: ember_acolyte. Kendi çizimi.",
+  "id": "pyre_witch",
+  "name": "Pyre Witch",
+  "family": "ember_cult",
+  "spriteId": "pyre_witch",
+  "spriteScale": 0.97,
+  "color": "#e0702a",
+  "logo": "wizhat",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Ashborn · Caster",
+  "attributes": {
+    "str": 10,
+    "int": 30,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 8,
+  "magicArmor": 4,
+  "ai": "sniper",
+  "skills": [
+    "pyre_bolt",
+    "spread_the_flame"
+  ],
+  "passive": {
+    "id": "kindling",
+    "name": "Kindling",
+    "icon": "flame",
+    "text": "Deals 5% more damage for each Burning cell on the field, up to 20%.",
+    "effect": {
+      "type": "kindling",
+      "ground": "burning",
+      "perCell": 0.05,
+      "max": 0.2
+    }
+  }
+}

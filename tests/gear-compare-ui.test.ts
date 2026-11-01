@@ -135,7 +135,7 @@ describe('portrait card: no item comparison', () => {
   it('the hint sub-line is the plain line whatever item is selected; fallen heroes keep their mark', async () => {
     const { heroMarkHint } = await import('../src/ui/character-panel');
     const h = hero('warrior');
-    expect(heroMarkHint(h)).toEqual({ sub: 'Level 20 · 0/7 items', tone: 'idle' });
+    expect(heroMarkHint(h)).toEqual({ sub: 'Level 20 · 0/8 items', tone: 'idle' });
     // item karşılaştırması hâlâ hesaplanabilir (item ipucundaki kahraman satırları için), ama portre kartına girmez
     expect(heroItemLine(h, inst('leather_coif', 'b1')).tone).not.toBe('idle');
     expect(heroMarkHint({ ...h, alive: false })).toEqual({ sub: 'Fallen', tone: 'no' });

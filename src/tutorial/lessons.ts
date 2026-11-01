@@ -16,7 +16,7 @@ export type ForcedAwait = 'next' | 'skill' | 'target';
 export type BattleWhen = 'start' | 'first' | 'rest' | 'move' | 'skip' | 'ultimate' | 'fallen' | 'spent' | 'status' | 'ground' | 'telegraph' | 'preview' | 'ally' | 'reach' | 'area' | 'protected' | 'strong';
 /** Eylem dersini tamamlayan oyuncu eylemi (yoksa ders bilgi dersidir: bir kez gösterilince biter). */
 export type LessonAction = 'rest' | 'move' | 'skip' | 'ultimate';
-export type LessonScreen = 'town' | 'merchant' | 'company' | 'company_solo' | 'map' | 'event' | 'gear' | 'endless' | 'valor' | 'rest';
+export type LessonScreen = 'town' | 'merchant' | 'company' | 'company_solo' | 'map' | 'event' | 'gear' | 'loot' | 'endless' | 'valor' | 'rest';
 
 export interface LessonPage {
   title?: string;
@@ -45,6 +45,8 @@ export interface ScreenTrigger {
   anyRarity?: string[];
   /** Torbada en az bir item (Gear dersi: ilk loot). */
   bag?: boolean;
+  /** Bu ders görüldüyse çıkmaz (Wear Your Gear: oyuncu Gear'ı kendisi açıp öğrendiyse yönlendirme gereksiz). */
+  unseen?: string;
 }
 
 export interface Lesson {
@@ -297,6 +299,7 @@ export function dueScreenLessons(screen: LessonScreen, ctx: ScreenCtx, seen: Rea
     if (t.visible && !t.visible.some((x) => ctx.visibleTypes?.includes(x))) return false;
     if (t.anyRarity && !t.anyRarity.some((x) => ctx.rarities?.includes(x))) return false;
     if (t.bag && !(ctx.bagSize ?? 0)) return false;
+    if (t.unseen && seen.has(t.unseen)) return false;
     return true;
   });
 }

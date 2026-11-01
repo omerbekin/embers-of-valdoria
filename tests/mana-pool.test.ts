@@ -49,7 +49,7 @@ describe('kullanılmayan mana yok: kim etkilenir', () => {
       .filter((d) => d.stats.mp > 0 && unit(arena([['warrior', 0]], [[d.id, 0]]), 'enemy-0').maxMp === 0)
       .map((d) => d.id)
       .sort();
-    expect(dropped).toEqual(['clan_stormcaller', 'clan_vaulter', 'ember_of_the_first_hearth', 'forge_master_golem', 'hollow_delver', 'hollow_king', 'pack_mother', 'risen_skeleton', 'slagcart_golem', 'snowfather', 'stormhorn_ram', 'thunderwright', 'weir_wyrm']);
+    expect(dropped).toEqual(['clan_stormcaller', 'clan_vaulter', 'hollow_delver', 'risen_skeleton', 'slagcart_golem', 'stormhorn_ram', 'thunderwright', 'weir_wyrm']);
   });
 
   it('MP harcayan mob etkilenmez', () => {

@@ -96,7 +96,7 @@ describe('M-J deniz yolları ve crossing düğümleri', () => {
     expect(eventChoices('dr_ferry_office', { faction: 'guild' }).map((c) => c.id)).toEqual(['charter_favor', 'later']);
     const rich = { ...ferry, gold: 500 };
     const paid = chooseEvent(rich, 'charter_gold');
-    expect(paid.gold).toBe(440);
+    expect(paid.gold).toBe(400);
     expect(paid.sea).toBe(true);
     expect(paid.caravel).toEqual({ i: 0 });
     const free = chooseEvent(debugSetFaction(rich, 'guild'), 'charter_favor');
@@ -271,7 +271,7 @@ describe('olay çipleri (harita penceresi)', () => {
   it('taraf / gemi / fener / hediye seçenekleri okunur çip verir', () => {
     const text = (id: string, ev: string, f?: 'order' | 'guild') => choiceChips(eventChoices(ev, f ? { faction: f } : {}).find((c) => c.id === id)!).map((c) => c.text);
     expect(text('guild', 'dr_guild_hall')).toContain('Side with the Guild (final)');
-    expect(text('charter_gold', 'dr_ferry_office')).toEqual(['60 gold', 'Opens the sea lanes']);
+    expect(text('charter_gold', 'dr_ferry_office')).toEqual(['100 gold', 'Opens the sea lanes']);
     expect(text('light', 'dr_lantern_rock')).toEqual(['Sight +1 on this map']);
     expect(text('order_rest', 'dr_monks_isle', 'order')).toContain('Uncommon relic');
     expect(resultChips({ charter: true }).map((c) => c.text)).toEqual(['Sea lanes open']);

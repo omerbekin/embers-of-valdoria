@@ -601,24 +601,52 @@ setTimeout(() => {}, 60000);`);
     try { process.kill(Number(read(join(W.w, 'slow-pid'))), 0); } catch { alive = false; }
     ok(!alive, 'alt süreç de kapandı');
   },
-  'not siniri testten once durdurur, notes ile duzelir': (W) => {
+  'not fazlasi gonderimi durdurmaz, hic ready istemez, tam metin kayitta': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    W.wput(a, 'src/a.ts', 'export const a = 7;\n');
+    W.wput(b, 'src/b.ts', 'export const b = 7;\n');
+    const r = W.run(['ready', A.slice(0, 8), '--fixes', ...Array.from({ length: 9 }, (_, i) => `alpha change number ${i}`)]);
+    ok(!r.code, r.out);
+    const r2 = W.run(['ready', B.slice(0, 8), '--fixes', 'bravo only line']);
+    ok(!r2.code, r2.out);
+    W.push(A);
+    has(W.origin('src/a.ts'), 'a = 7'); has(W.origin('src/b.ts'), 'b = 7');
+    const rel = JSON.parse(W.origin('data/patch-notes.json')).releases[0];
+    const lines = rel.groups.flatMap((g) => g.items);
+    ok(lines.length === 8, 'en çok 8 satır: ' + lines.length);
+    ok(lines.includes('bravo only line'), 'taşma tek satırlı sohbeti silmez');
+    ok(lines.includes('Plus 3 more changes.'), 'eksik sayısı doğru: ' + lines.join(' / '));
+    has(execFileSync('git', ['--git-dir', join(W.w, 'origin.git'), 'log', '-1', '--format=%B', 'main'], { encoding: 'utf8' }), 'alpha change number 8');
+    has(read(join(W.game, '.git', 'push-queue-notes', `${rel.version}.json`)), 'alpha change number 8');
+    ok(!ent(W, A).lastError && !ent(W, A).ready && !ent(W, B).ready, 'hazır kalan yok, hata yok');
+    has(W.notices(), 'otomatik düzenlendi');
+  },
+  'uzun not tam cumleye ayrilir, cumle kesilmez, zamir oznesiz kalmaz, ic terim elenir': (W) => {
     W.cutover();
     const a = W.open(A, 'a');
     W.hook('hook-prompt', { session_id: A, prompt: 'x' });
     W.wput(a, 'src/a.ts', 'export const a = 7;\n');
-    const r = W.run(['ready', A.slice(0, 8), '--fixes', ...Array.from({ length: 9 }, (_, i) => `note line ${i}`)]);
+    const unfit = 'This one very long single sentence keeps on going without any full stop because it describes a rule that only applies when a certain condition holds in battle';
+    const pronoun = 'Smoke Bomb has a new animation for the whole cloud effect that plays after the throw lands on the ground somewhere. It now flies in first and then shatters into smoke.';
+    const r = W.run(['ready', A.slice(0, 8), '--fixes', 'Gear: first sentence is here now for the comparison tip on hover. Sheet: second sentence is here too and it is long enough to pass the limit.', unfit, pronoun, 'Fixed the config.json loader', 'ok duplicate line', 'OK duplicate line!']);
     ok(!r.code, r.out);
-    W.push(A);
-    has(W.log(), 'sürüm notu sınırı');
-    ok(W.tests() === 0, 'test koşmadı');
-    hasNot(W.origin('src/a.ts'), 'a = 7');
-    const n = W.run(['notes', A.slice(0, 8), '--fixes', 'short note line']);
-    ok(!n.code, n.out);
-    ok(!ent(W, A).lastError && W.q().autoShipAt, 'sürüm notu düzelince yeniden uygun');
+    has(r.out, 'Uyarı');
     W.push(A);
     has(W.origin('src/a.ts'), 'a = 7');
-    has(W.origin('data/patch-notes.json'), 'short note line');
-    hasNot(W.origin('data/patch-notes.json'), 'note line 3');
+    const rel = JSON.parse(W.origin('data/patch-notes.json')).releases[0];
+    const lines = rel.groups.flatMap((g) => g.items);
+    ok(lines.includes('Gear: first sentence is here now for the comparison tip on hover.'), 'ilk cümle tam');
+    ok(lines.includes('Sheet: second sentence is here too and it is long enough to pass the limit.'), 'ikinci cümle tam');
+    ok(lines.some((l) => l.startsWith('Smoke Bomb has a new animation')), 'zamirli cümlenin öznesi kalır');
+    ok(!lines.some((l) => l.startsWith('It now')), 'öznesiz cümle görünmez');
+    ok(!lines.some((l) => l.includes('config.json')), 'iç terim görünmez');
+    ok(lines.filter((l) => /duplicate/i.test(l)).length === 1, 'aynı satır bir kez');
+    ok(lines.includes('Plus 3 more changes.'), 'eksik sayısı: ' + lines.join(' / '));
+    ok(lines.every((l) => l.length <= 140), 'hepsi 140 altı');
+    const rec = read(join(W.game, '.git', 'push-queue-notes', `${rel.version}.json`));
+    has(rec, 'only applies when a certain condition'); has(rec, 'It now flies in first'); has(rec, 'config.json');
   },
   'geride kalan kopya uyarilir, cakisma soylenir, kopyaya dokunulmaz': (W) => {
     W.cutover();

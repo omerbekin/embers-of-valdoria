@@ -27,8 +27,8 @@
         {
           "id": "bread",
           "label": "Share your bread",
-          "hint": "Pay 40 gold. Tonight's rest heals fully.",
-          "cost": 40,
+          "hint": "Pay 60 gold. Tonight's rest heals fully.",
+          "cost": 60,
           "restHeal": 1,
           "result": "You share your supplies with the shepherds. Bellies full and spirits lifted, your company sleeps soundly by the fire."
         },
@@ -47,12 +47,11 @@
         {
           "id": "pay",
           "label": "Pay her price",
-          "hint": "Pay 60 gold. She gives you one item from her chest and a few coins.",
+          "hint": "Pay 60 gold. She gives you two items from her chest and keeps the coins.",
           "cost": 60,
           "chest": true,
-          "chestItems": 1,
-          "gold": 25,
-          "result": "The witch weighs the coins, grins, and rummages in the chest. She tosses you one piece and a few coppers. \"That's what your gold buys.\""
+          "chestItems": 2,
+          "result": "The witch weighs the coins, grins, and rummages in the chest. She tosses you two pieces. \"That's what your gold buys.\""
         },
         {
           "id": "blood",

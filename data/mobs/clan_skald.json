@@ -1,0 +1,37 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Komşu: bandit_crossbowman. Kendi çizimi. Temel saldırı Sling Stone (corsair_slinger ile ortak): belgedeki iki skill de bekleme süreli, mob kuralı bedelsiz temel saldırı ister.",
+  "id": "clan_skald",
+  "name": "Clan Skald",
+  "family": "bandits",
+  "spriteId": "clan_skald",
+  "color": "#6b5a43",
+  "logo": "rune",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Hillclan · Skald",
+  "attributes": {
+    "str": 10,
+    "int": 18,
+    "dex": 12,
+    "luck": 6
+  },
+  "armor": 8,
+  "magicArmor": 4,
+  "ai": "sniper",
+  "skills": [
+    "sling_stone",
+    "mock",
+    "chant"
+  ],
+  "passive": {
+    "id": "war_chant",
+    "name": "War-Chant",
+    "icon": "roar",
+    "text": "At the start of its turn, allies in its row gain Haste for 1 turn.",
+    "effect": {
+      "type": "warChant",
+      "status": "haste",
+      "turns": 1
+    }
+  }
+}

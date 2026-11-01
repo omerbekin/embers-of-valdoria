@@ -45,7 +45,7 @@ export interface StartBattleOpts {
   actionLabel?: string;
   /** who yoksa (düğüm lore'u) yalnızca italik cümle. */
   info?: { who?: string; text: string; quote?: boolean; plain?: boolean };
-  /** Bilgi satırının üstünde etiketler (Ömer 2026-10-27: devriye PATROL · 60% XP · FULL LOOT · NO VALOR); gold = vurgulu, dim = sönük. Telefonda da görünür. */
+  /** Bilgi satırının üstünde etiketler (Ömer 2026-10-27: devriye PATROL · FULL LOOT · NO VALOR); gold = vurgulu, dim = sönük. Telefonda da görünür. */
   tags?: Array<{ text: string; tone?: 'gold' | 'dim' | 'silver' }>;
   /** Rakip bölük (Silver Stag, Ömer 2026-10-28, taslak rival-company C): başlığın altında bölük şeridi, düşmanlar bölük üyesi, gümüş "Rival Company" etiketi, "Their cause" bilgi satırı. */
   company?: { name: string; line: string; cause: string; waves?: number };

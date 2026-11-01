@@ -16,6 +16,8 @@ export interface HitTierLook {
   poseMs: number;
   flash: string;
   flashMs: number;
+  /** Parlamanın başlangıç saydamlığı (0-1); Ömer 2026-11-01: hedefi ve efekti örtmesin diye yarı saydam. */
+  flashAlpha: number;
   tint: string | null;
   tintMs: number;
   recoilPx: number;

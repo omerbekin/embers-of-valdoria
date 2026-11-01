@@ -9,7 +9,7 @@ import { bellsOfSkill, manaShieldNeed, type TriggerAction } from './tree-hooks';
 import { armorReduction, attributePower, hitChance } from './stats';
 import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet } from './types';
 import { capBurn, castBurnAmount, groundBurnAmount } from './mana-burn';
-import { DEFAULT_VALUE, ValueContext, coverageOf, pAtLeast, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
+import { DEFAULT_VALUE, ValueContext, coverageOf, pAtLeast, scoredMpCost, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
 
 export type { AiDifficulty, AiDifficultyConfig, AiValueConfig } from './ai-value';
 
@@ -1011,7 +1011,7 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
     // Oranlı bedel (Wail: mevcut canın %20'si) şu anki kaynaktan hesaplanır (skillCostAmount).
     // Soul Exchange (cost.hpFallback): MP yetmezse gerçekten ödenecek can bedeli can ağırlığıyla (skillCostPay)
     // ai.scoreCost (mob mana zammı): skordaki MP bedeli en fazla bu kadar sayılır; ödeme ve mana yeterliliği gerçek bedelle kalır
-    cost: ((p) => (p.resource === 'mp' ? Math.min(p.amount, skill.ai?.scoreCost ?? p.amount) * profile.mpCostWeight : p.resource === 'hp' ? p.amount * profile.hpCostWeight : 0))(skillCostPay(skill.cost, actor, undefined, battle.freeMp)),
+    cost: ((p) => (p.resource === 'mp' ? Math.min(p.amount, scoredMpCost(skill)) * profile.mpCostWeight : p.resource === 'hp' ? p.amount * profile.hpCostWeight : 0))(skillCostPay(skill.cost, actor, undefined, battle.freeMp)),
     // Düşük can kuralı (minHpRatioForHpCost) yalnızca SABİT can bedeline ve can bahsine uygulanır. Oranlı can bedeli
     // (cost.ofCurrent; Wail of the Dead: mevcut canın %20'si) muaf: bedel can azaldıkça kendiliğinden küçülür (Ömer kararı, madde 247).
     hpCost: (skill.cost.resource === 'hp' && !(skill.cost.ofCurrent ?? 0) && skillCostAmount(skill.cost, actor) > 0) || skill.effects.some((e) => e.type === 'damage' && e.bet?.resource === 'hp'),
@@ -1892,6 +1892,7 @@ function bossTouchValue(ctx: ValueContext, o: Option): number {
   }
   if (actor.touch?.type === 'packRotation' && skill.effects.some((e) => e.type === 'damage')) v += cfg.packHeal * battle.packHealWorth(actor);
   if (skill.callVault) v += cfg.vault * ctx.turnValue(actor);
+  v += eliteKitValue(ctx, o, cfg);
   if (v !== 0 && o.notes.length < 6) o.notes.push(`boss touch: ${v > 0 ? '+' : ''}${r1(v)}`);
   return v;
 }
@@ -1930,7 +1931,143 @@ function mobKitValue(ctx: ValueContext, o: Option): number {
       if (u.side !== actor.side && u.passive?.effect.type === 'stormhide') v -= cfg.stormhide * ctx.turnValue(actor) * battle.formulas.thunder.pushback * previewHitChance(o, u);
     }
   }
+  v += kitPassiveValue(ctx, o, cfg);
   if (v !== 0 && o.notes.length < 6) o.notes.push(`mob kit: ${v > 0 ? '+' : ''}${r1(v)}`);
+  return v;
+}
+
+/**
+ * Harita 3 kit dilimi moblarının hamle değeri (ayarlar ai.json > value.mobKit): Mock, Spread the Flame + Kindling, Grave Cold, Hoarfrost; düşmanın Furnace Core, War-Chant, Highland Fury, Blind Hunger, Hollow pasifleri.
+ * İlgili skill / pasif yoksa 0.
+ */
+function kitPassiveValue(ctx: ValueContext, o: Option, cfg: NonNullable<AiValueConfig['mobKit']>): number {
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const skill = o.skill;
+  const own = actor.passive?.effect;
+  let v = 0;
+  const foes = o.targets.filter((t) => t.hp > 0 && t.side !== actor.side);
+  for (const e of skill.effects) {
+    if (e.type !== 'status' || e.self) continue;
+    for (const t of foes) {
+      // Mock: eylem kaybı; zaten Staggered hedefe boşa gider (yalnız Staggered: diğer untilResolved durumları Harita 1-2'de başka değerlenir)
+      if (e.status === 'staggered' && !t.statuses.some((s) => s.kind === e.status)) v += cfg.stagger * ctx.turnValue(t) * previewHitChance(o, t);
+      // Sodden Hex + Hoarfrost: her tur Chilled kaynağı
+      if (own?.type === 'hoarfrost' && e.status === own.wet && !t.statuses.some((s) => s.kind === own.wet) && !battle.statusBlocked(t, own.status)) v += cfg.hoarfrost * ctx.turnValue(t) * previewHitChance(o, t);
+    }
+  }
+  if (own?.type === 'graveCold' && skill.effects.some((e) => e.type === 'damage')) {
+    const slow = 1 - (battle.statusDef(own.status)?.speedMult ?? 1);
+    for (const t of foes) if (!t.statuses.some((s) => s.kind === own.status) && !battle.statusBlocked(t, own.status) && !battle.statusRefused(t, own.status)) v += cfg.graveCold * slow * ctx.turnValue(t) * previewHitChance(o, t);
+  }
+  if (own?.type === 'kindling' && o.cells?.length) {
+    for (const e of skill.effects) {
+      if (e.type !== 'ground' || e.ground !== own.ground) continue;
+      const foeBoard = actor.side === 'party' ? 'enemy' : 'party';
+      const fresh = o.cells.filter((s) => !battle.ground.some((g) => g.ground === e.ground && g.board === foeBoard && g.slots.includes(s))).length;
+      const room = Math.max(0, (own.max ?? Infinity) - own.perCell * battle.groundCellCount(own.ground));
+      v += cfg.kindle * Math.min(room, fresh * own.perCell) * ctx.turnValue(actor) * Math.min(e.turns, ctx.vc.horizon);
+    }
+  }
+  for (const u of foes) {
+    const pe = u.passive?.effect;
+    const kill = o.killP[u.uid] ?? 0;
+    if (pe?.type === 'furnaceCore' || (u.touch?.type === 'overheat' && u.touch.core)) v -= cfg.furnace * kill * sum(battle.fighting(u.side).filter((a) => a.passive?.effect.type === 'kindling').map((a) => ctx.turnValue(a)));
+    if (pe?.type === 'warChant') {
+      const haste = (battle.statusDef(pe.status)?.speedMult ?? 1) - 1;
+      v += cfg.chant * kill * haste * sum(battle.fighting(u.side).filter((a) => a.uid !== u.uid && a.board === u.board && battle.rowOf(a.slot) === battle.rowOf(u.slot)).map((a) => ctx.turnValue(a)));
+    }
+    if (pe?.type === 'highlandFury') {
+      const after = u.hp - (o.dmgBy[u.uid] ?? 0);
+      if (u.hp >= pe.below * u.maxHp && after < pe.below * u.maxHp) v -= cfg.fury * pe.bonus * ctx.turnValue(u) * previewHitChance(o, u) * (1 - kill);
+    }
+  }
+  if (battle.isDark() && battle.isFireSkill(skill)) {
+    const foeSide = actor.side === 'party' ? 'enemy' : 'party';
+    const dark = battle.fighting(foeSide).filter((a) => a.passive?.effect.type === 'blindHunger' || a.passive?.effect.type === 'hollow');
+    if (dark.length && actor.side === 'party') v += cfg.lightDark * sum(dark.map((a) => ctx.turnValue(a)));
+  }
+  return v;
+}
+
+/**
+ * Harita 3 elit ve boss kitlerinin hamle değeri (ayarlar ai.json > value.bossTouch): kendi hamlesinde Frostbound, Cave-in skill'leri, Quench, Kindle the Nave; düşmanın Hollow Crown, Shepherd of Ash pasifleri;
+ * Everburning / Quench taşıyanına karşı Burning hücre bırakmak ve söndürmek. İlgili skill / pasif yoksa 0.
+ */
+function eliteKitValue(ctx: ValueContext, o: Option, cfg: NonNullable<AiValueConfig['bossTouch']>): number {
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const skill = o.skill;
+  const own = actor.passive?.effect;
+  const foeBoard = actor.side === 'party' ? 'enemy' : 'party';
+  let v = 0;
+  const foes = o.targets.filter((t) => t.hp > 0 && t.side !== actor.side);
+  // Frostbound: yeni Chilled kahraman başına kendi hasarı artar
+  if (own?.type === 'frostbound') {
+    for (const e of skill.effects) {
+      if (e.type !== 'status' || e.self || !own.statuses.includes(e.status)) continue;
+      for (const t of foes) if (!t.statuses.some((s) => own.statuses.includes(s.kind))) v += cfg.frostbound * own.perUnit * ctx.turnValue(actor) * previewHitChance(o, t);
+    }
+  }
+  // Cave-in: kapanacak hücre başına; yer kalmadıysa 0
+  if (skill.caveIn) {
+    const { open, room } = battle.caveRoom(foeBoard, skill.caveIn.rule);
+    const n = skill.caveIn.onTarget ? (foes[0] && open.includes(foes[0].slot) ? Math.min(1, room) : 0) : Math.min(skill.caveIn.rule.cells, room);
+    v += cfg.caveMark * Math.max(0, n) * ctx.turnValue(actor);
+  }
+  // Fervour: dosta hasar çarpanı veren durum; zaten taşıyana boşa
+  for (const e of skill.effects) {
+    if (e.type !== 'status' || e.self || actor.uid === o.targetUid) continue;
+    const mult = battle.statusDef(e.status)?.damageDealtMult ?? 1;
+    if (mult <= 1) continue;
+    for (const t of o.targets) if (t.side === actor.side && t.hp > 0 && !t.statuses.some((s) => s.kind === e.status)) v += cfg.fervour * (mult - 1) * e.turns * ctx.turnValue(t);
+  }
+  // Everburning: kendi yangın hücresi kendini korur (yeni hücre başına)
+  if (own?.type === 'crownOfSalt' && o.cells?.length && skill.effects.some((e) => e.type === 'ground' && e.ground === own.ground)) {
+    const fresh = o.cells.filter((s) => !battle.ground.some((g) => g.ground === own.ground && g.board === foeBoard && g.slots.includes(s))).length;
+    v += cfg.everburn * fresh * own.perCell * ctx.turnValue(actor);
+  }
+  if (skill.quench) v += cfg.quench * Math.min(actor.maxHp - actor.hp, actor.maxHp * skill.quench.healRatio * battle.groundCellCount(skill.quench.ground));
+  // Kindle the Nave: sıradaki yaralı Ashborn'a gidecek şifa, öbür dostlara gidecek yanık
+  if (skill.kindleNave) {
+    const k = skill.kindleNave;
+    const tick = attributePower(actor.stats, k.scale, battle.formulas) * k.power * Math.min(k.turns, ctx.vc.horizon);
+    const row = battle.rowCellsOf(actor);
+    for (const a of battle.fighting(actor.side)) {
+      if (a.board !== actor.board || !row.includes(a.slot)) continue;
+      v += battle.sermonHeals(a, k.ground) ? cfg.nave * Math.min(a.maxHp - a.hp, tick) : -cfg.nave * tick;
+    }
+  }
+  for (const u of foes) {
+    const kill = o.killP[u.uid] ?? 0;
+    if (kill <= 0) continue;
+    for (const a of battle.fighting(u.side)) {
+      if (a.uid === u.uid) continue;
+      const pe = a.passive?.effect;
+      // Hollow Crown: öldürmek krala eylem verir (zaten taşıyorsa ek bedel yok)
+      if (pe?.type === 'hollowCrown' && !a.crownAction && pe.names.includes(u.displayName ?? u.name)) v -= cfg.crown * kill * ctx.turnValue(a);
+      // Shepherd of Ash: son Ashborn düşünce korunma biter
+      if (pe?.type === 'shepherdOfAsh') {
+        const flock = battle.flockGuards(a);
+        if (flock.length === 1 && flock[0]!.uid === u.uid) v += cfg.shepherd * kill * (1 - pe.takenMult) * ctx.turnValue(a);
+      }
+    }
+  }
+  // Everburning / Quench taşıyanı: hücreye ateş bırakmak ona yarar, söndürmek ondan alır
+  if (o.cells?.length) {
+    const board = skill.target === 'area_any' ? actor.side : foeBoard;
+    for (const carrier of battle.fighting(foeBoard)) {
+      const pe = carrier.passive?.effect;
+      const fuel = pe?.type === 'crownOfSalt' ? pe.ground : carrier.skills.map((id) => battle.skill(id, carrier)?.quench?.ground).find((g) => !!g);
+      if (!fuel) continue;
+      for (const e of skill.effects) {
+        if (e.type !== 'ground') continue;
+        const burning = o.cells.filter((s) => battle.ground.some((g) => g.ground === fuel && g.board === board && g.slots.includes(s))).length;
+        if (battle.groundPutsOut(e.ground, fuel)) v += cfg.douse * burning * ctx.turnValue(carrier);
+        else if (e.ground === fuel && Object.values(battle.groundDefs ?? {}).some((d) => d.quenches?.includes(fuel))) v -= cfg.douse * (o.cells.length - burning) * ctx.turnValue(carrier);
+      }
+    }
+  }
   return v;
 }
 
@@ -2269,7 +2406,7 @@ function brandFoeValue(ctx: ValueContext, eff: Extract<SkillDef['effects'][numbe
     // skill'lerinin kullanım sıklığıyla ağırlıklı ORTALAMA bedeli (en pahalısı değil); kaybedilen ek MP (bedel artışı + bedel yakımı) elindeki MP (+ süre boyunca yenilenme) ile sınırlı
     // kullanım sıklığı ağırlığı 1 / (cooldown + 1): cooldown'suz temel büyü (Fire Bolt) ultimate'ten (Meteor) sık atılır
     const wsum = mpSkills.reduce((a, sk) => a + 1 / ((sk.cooldown ?? 0) + 1), 0);
-    const avg = wsum > 0 ? mpSkills.reduce((a, sk) => a + sk.cost.amount / ((sk.cooldown ?? 0) + 1), 0) / wsum : 0;
+    const avg = wsum > 0 ? mpSkills.reduce((a, sk) => a + scoredMpCost(sk) / ((sk.cooldown ?? 0) + 1), 0) / wsum : 0;
     const paid = avg > 0 ? Math.ceil(avg * x.costMult - 1e-9) : 0;
     const casts = span * w.castShare;
     const room = f.mp + (battle.mode === 'turns' ? f.stats.mpRegen * span : 0);
@@ -2742,7 +2879,7 @@ function bestMoveLegacy(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNo
         };
         const single = Math.max(0, ...reachable.map((c) => exp(c.uid)));
         const total = sk.target === 'single_enemy' ? single : reachable.reduce((a, c) => a + exp(c.uid), 0);
-        potential = Math.max(potential, total - (sk.cost.resource === 'mp' ? sk.cost.amount * 0.5 : 0));
+        potential = Math.max(potential, total - (sk.cost.resource === 'mp' ? scoredMpCost(sk) * 0.5 : 0));
       }
       const net = potential * 0.9 - vNow;
       if (potential > 0 && net >= g.move.minFrontGainShare * potential) plans.push({ slot: pickSlot(front, neighbors), net });

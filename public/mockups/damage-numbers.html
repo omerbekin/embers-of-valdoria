@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Damage Numbers Mockups</title>
+<!-- Yüzen savaş sayıları taslağı (ui-dev, 2026-11-01). Oyun kodu DEGIL. Adres: #a|b|c|d|e|all &z=169|219|ph &cb=none|deut|prot|gray &bg=ember|sunny &fl=0|1 &clean (örn. #b&z=ph&cb=deut) -->
+<style>
+@font-face { font-family: Cinzel; font-weight: 400 900; font-display: swap; src: url('damage-numbers/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: swap; src: url('damage-numbers/EBGaramond-normal-latin.woff2') format('woff2'); }
+* { box-sizing: border-box; }
+:root { --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-line: rgba(217,178,106,.16); --g-line2: rgba(217,178,106,.3); --g-disp: Cinzel, Georgia, serif; --g-body: 'EB Garamond', Georgia, serif; --ember: #e0702a; }
+html, body { margin: 0; background: #070504; color: var(--g-text); font-family: var(--g-body); font-style: normal; }
+body { padding: 0 0 80px; }
+.page { padding: 18px 22px; }
+html.mk-phone .page { padding: 10px 0; }
+.intro { max-width: 1100px; margin: 0 0 20px; font: 18px/1.45 var(--g-body); }
+html.mk-phone .intro, html.mk-phone .vinfo, html.mk-phone .scalenote, html.mk-phone .sec { padding-left: 10px; padding-right: 10px; }
+.intro h1 { font: 600 26px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-gold); margin: 6px 0 4px; }
+.intro b { color: var(--g-gold); }
+.intro .q { color: var(--g-dim); }
+.vinfo { max-width: 1100px; margin: 0 0 8px; }
+.vname { font: 600 20px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-gold); }
+.vtag { font: 600 11px system-ui, sans-serif; letter-spacing: .1em; font-style: normal; margin-left: 8px; padding: 2px 6px; border: 1px solid var(--g-line2); color: var(--g-dim); vertical-align: middle; }
+.vtag.rec { color: #1a0f06; background: var(--ember); border-color: var(--ember); }
+.vnote { font: 17px/1.4 var(--g-body); margin: 4px 0; }
+.vcvd { font: 15px/1.4 var(--g-body); color: var(--g-dim); }
+.vcvd b { color: #ffb35a; font-weight: 600; }
+.one { margin: 0 0 34px; padding-top: 12px; border-top: 1px solid var(--g-line2); }
+.scalenote { font: 13px system-ui, sans-serif; color: var(--g-dim); margin: 6px 0 0; }
+#stages { overflow-x: auto; }
+.sec { max-width: 1100px; margin: 30px 0; padding-top: 14px; border-top: 1px solid var(--g-line2); }
+.sec h2 { font: 600 18px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-gold); margin: 0 0 6px; }
+.sec p, .sec li { font: 16px/1.45 var(--g-body); }
+.sec ul { padding-left: 1.2em; margin: 6px 0; }
+table { border-collapse: collapse; font: 14px system-ui, sans-serif; width: 100%; max-width: 900px; margin: 8px 0; }
+th, td { border: 1px solid var(--g-line); padding: 4px 8px; text-align: left; }
+th { color: var(--g-gold); font-weight: 600; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; }
+td.bad { color: #ff8a7a; } td.ok { color: #9fe39a; } td.mid { color: #ffd166; }
+.sw { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; vertical-align: -1px; margin-right: 6px; }
+#mk-strip { position: fixed; left: 8px; bottom: 8px; z-index: 60; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: calc(100vw - 16px); padding: 4px 6px; background: rgba(20,10,4,.94); border: 1px dashed var(--ember); font: 600 11px system-ui, sans-serif; color: #ffb35a; }
+#mk-strip b { color: var(--ember); margin: 0 2px 0 6px; }
+#mk-strip b:first-child { margin-left: 0; }
+#mk-strip button { font: 600 11px system-ui, sans-serif; color: #f3d999; background: #1b120a; border: 1px solid rgba(224,112,42,.5); padding: 3px 7px; cursor: pointer; min-height: 26px; }
+#mk-strip button.on { background: var(--ember); color: #1a0f06; }
+html.mk-clean #mk-strip { display: none; }
+
+/* ===== stage (logical 1080 px high, scaled by transform) ===== */
+.wrap { position: relative; overflow: hidden; background: #000; }
+.wrap.cb-deut { filter: url(#f-deut); } .wrap.cb-prot { filter: url(#f-prot); } .wrap.cb-gray { filter: grayscale(1); }
+.stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; }
+.spr { position: absolute; width: auto; display: block; }
+.fl { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: row; align-items: center; justify-content: center; white-space: nowrap; font-family: "Palatino Linotype","Book Antiqua",Palatino,"Times New Roman",Georgia,serif; font-weight: 700; font-style: normal; font-variant-numeric: lining-nums; line-height: 1; }
+.fl > .row, .chip > .row { display: inline-flex; align-items: center; }
+.chip { position: relative; display: inline-flex; flex-direction: column; align-items: center; }
+.sep { display: inline-block; width: 3px; background: rgba(244,237,225,.55); margin: 0 14px; border-radius: 2px; box-shadow: 0 1px 3px #000; }
+.row { display: inline-flex; align-items: center; }
+.num { display: inline-grid; line-height: 1; padding: .04em .02em; }
+.num > span { grid-area: 1 / 1; white-space: nowrap; }
+.nb { paint-order: stroke fill; stroke-linejoin: round; }
+.nf { color: transparent; -webkit-text-fill-color: transparent; }
+.ic { display: block; object-fit: contain; flex: none; }
+.ico-slot { display: inline-flex; flex: none; }
+.plate { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: radial-gradient(circle at 50% 38%, #2b1d12, #120c07); flex: none; }
+.word { position: absolute; left: 50%; top: 100%; transform: translate(-50%, -22%); font-family: Cinzel, Georgia, serif; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; paint-order: stroke fill; font-style: normal; line-height: 1; padding-left: .14em; white-space: nowrap; }
+.fl { }
+.fl > .word, .fl > .row + .word { }
+.fl { position: absolute; }
+.cg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: radial-gradient(ellipse at center, rgba(224,112,42,.6), rgba(224,112,42,0) 70%); mix-blend-mode: screen; pointer-events: none; z-index: -1; }
+.fl.grp { gap: 0; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- Machado et al. 2009, severity 1.0, linear RGB -->
+    <filter id="f-deut" color-interpolation-filters="linearRGB"><feColorMatrix type="matrix" values="0.367322 0.860646 -0.227968 0 0  0.280085 0.672501 0.047413 0 0  -0.011820 0.042940 0.968881 0 0  0 0 0 1 0"/></filter>
+    <filter id="f-prot" color-interpolation-filters="linearRGB"><feColorMatrix type="matrix" values="0.152286 1.052583 -0.204868 0 0  0.114503 0.786281 0.099216 0 0  -0.003882 -0.048116 1.051998 0 0  0 0 0 1 0"/></filter>
+  </defs>
+</svg>
+<div class="page">
+<div class="intro">
+<h1>Floating damage numbers</h1>
+Ömer: "buradaki arayüze de bir mockup çalışalım mı. elementin iconu değil de damage rengine göre belki ayırt edilebilir örneğin."
+<p><b>Teşhis.</b> Bugün sayının rengi <b>vuruşun şiddeti</b> (sarı → turuncu → kırmızı, hasarın max HP'ye oranına göre), elementi ise sağdaki ayrı küçük ikon taşıyor. Bu yüzden kırmızı bir 22 ile yeşil bir yaprak yan yana duruyor: iki ayrı renk dili aynı yerde konuşuyor. Aynı sahne her varyantta aynı (altı element + fiziksel, 1 kritik, 1 şifa, 1 kalkan, 2 durum/zemin tiki, 1 Miss); alttaki çubuktan varyant, boyut, renk körlüğü ve arka plan değişir.</p>
+<p class="q">Sahnedeki sayılar sabit (hareketsiz, yükselişin ortasında donmuş). Sayı fontu oyundakiyle aynı: Palatino Linotype yığını (harici dosya yok); etiketler Cinzel.</p>
+</div>
+<div id="stages"></div>
+
+<div class="sec">
+<h2>Kontrast: renk, savaş arka planına karşı</h2>
+<p>Arka plan ölçümü: sayıların durduğu bant (kaynak görselin %18-%62 yüksekliği). <b>ember-road</b> ortalama parlaklık 0,079 (koyu); <b>proving-grounds-sunny-afternoon</b> 0,216 (aydınlık, en zor durum). Değerler WCAG kontrast oranı (dolgu rengi / arka plan ortalaması). Gerçek güvence, her sayıdaki koyu dış hattır: dolgu / dış hat oranı en sağdaki sütundur. Arka planın en parlak %10'unda (ember-road) kontrast yaklaşık yarıya iner, bu yüzden dış hat şart.</p>
+<table>
+<tr><th>Renk</th><th>Hex</th><th>ember-road</th><th>sunny</th><th>Dolgu / dış hat</th></tr>
+<tr><td><span class="sw" style="background:#ffe066"></span>Hasar düşük (sarı)</td><td>#ffe066</td><td class="n ok">6,22</td><td class="n mid">3,03</td><td class="n ok">14,4</td></tr>
+<tr><td><span class="sw" style="background:#ff9f43"></span>Hasar orta (turuncu)</td><td>#ff9f43</td><td class="n ok">3,97</td><td class="n bad">1,93</td><td class="n ok">9,2</td></tr>
+<tr><td><span class="sw" style="background:#ff4d4d"></span>Hasar yüksek (kırmızı)</td><td>#ff4d4d</td><td class="n bad">2,48</td><td class="n bad">1,21</td><td class="n ok">5,7</td></tr>
+<tr><td><span class="sw" style="background:#e8e2d0"></span>Physical</td><td>#e8e2d0</td><td class="n ok">6,26</td><td class="n mid">3,05</td><td class="n ok">14,5</td></tr>
+<tr><td><span class="sw" style="background:#ff7a1a"></span>Fire</td><td>#ff7a1a</td><td class="n mid">3,11</td><td class="n bad">1,51</td><td class="n ok">7,2</td></tr>
+<tr><td><span class="sw" style="background:#8fd8ff"></span>Ice</td><td>#8fd8ff</td><td class="n ok">5,19</td><td class="n bad">2,52</td><td class="n ok">12,0</td></tr>
+<tr><td><span class="sw" style="background:#7ed957"></span>Nature</td><td>#7ed957</td><td class="n ok">4,62</td><td class="n bad">2,25</td><td class="n ok">10,7</td></tr>
+<tr><td><span class="sw" style="background:#c6dbff"></span>Lightning</td><td>#c6dbff</td><td class="n ok">5,78</td><td class="n bad">2,81</td><td class="n ok">13,4</td></tr>
+<tr><td><span class="sw" style="background:#fff0a0"></span>Holy</td><td>#fff0a0</td><td class="n ok">7,04</td><td class="n mid">3,42</td><td class="n ok">16,3</td></tr>
+<tr><td><span class="sw" style="background:#b36bff"></span>Dark</td><td>#b36bff</td><td class="n bad">2,50</td><td class="n bad">1,21</td><td class="n mid">5,8</td></tr>
+<tr><td><span class="sw" style="background:#ffd23f"></span>Crit</td><td>#ffd23f</td><td class="n ok">5,62</td><td class="n bad">2,73</td><td class="n ok">13,0</td></tr>
+<tr><td><span class="sw" style="background:#7dff9b"></span>Heal</td><td>#7dff9b</td><td class="n ok">6,43</td><td class="n mid">3,13</td><td class="n ok">14,9</td></tr>
+<tr><td><span class="sw" style="background:#8fe3ff"></span>Shield</td><td>#8fe3ff</td><td class="n ok">5,64</td><td class="n bad">2,74</td><td class="n ok">13,1</td></tr>
+<tr><td><span class="sw" style="background:#9cab3c"></span>Poison / Wither tik</td><td>#9cab3c</td><td class="n mid">3,21</td><td class="n bad">1,56</td><td class="n ok">7,4</td></tr>
+<tr><td><span class="sw" style="background:#cfc7a0"></span>Miss</td><td>#cfc7a0</td><td class="n ok">4,76</td><td class="n bad">2,32</td><td class="n ok">11,0</td></tr>
+</table>
+<ul>
+<li>Koyu açıklar (Dark 2,50 / 1,21, Fire 3,11 / 1,51, kırmızı hasar 2,48 / 1,21) dolgu olarak zayıf; elementi renk yapınca bugünkü kırmızı hasarın sorununu Dark ve Fire de miras alır. Dış hat bunu telafi ediyor (hepsi ≥ 5,7); isterseniz Dark için biraz daha açık bir ton ayrı karardır.</li>
+<li>Aydınlık arka planda (sunny) hiçbir dolgu tek başına 3,5'i geçmiyor: sayıları taşıyan şey dış hat ve gölge.</li>
+</ul>
+</div>
+
+<div class="sec">
+<h2>Renk körlüğü: hangi renkler birbirine çöküyor</h2>
+<p>Sahnenin üstündeki "Renk körlüğü" düğmeleri (Deut. = deuteranopi, Prot. = protanopi, Gri = renksiz) SVG filtresiyle (Machado 2009) simüle eder; kendi gözünüzle bakın. Aşağıdaki sayılar CIE76 ΔE: yaklaşık 10'un altı zor ayırt edilir, 5'in altı pratikte aynı renk.</p>
+<table>
+<tr><th>Çift</th><th>Normal</th><th>Deut.</th><th>Prot.</th><th>Sonuç</th></tr>
+<tr><td>Ice ↔ Shield</td><td class="n bad">8</td><td class="n bad">5</td><td class="n bad">6</td><td>çöker (normal gözde bile yakın)</td></tr>
+<tr><td>Lightning ↔ Shield</td><td class="n mid">19</td><td class="n bad">4</td><td class="n bad">1</td><td>çöker</td></tr>
+<tr><td>Lightning ↔ Ice</td><td class="n mid">15</td><td class="n bad">9</td><td class="n bad">5</td><td>çöker</td></tr>
+<tr><td>Dark ↔ Arcane</td><td class="n mid">18</td><td class="n bad">10</td><td class="n bad">0</td><td>prot'ta aynı (arcane sahnede yok)</td></tr>
+<tr><td>Fire ↔ Hasar orta (turuncu)</td><td class="n mid">21</td><td class="n bad">11</td><td class="n bad">11</td><td>yakın (yalnız A'da çakışır)</td></tr>
+<tr><td>Nature ↔ Poison tik</td><td class="n ok">32</td><td class="n bad">11</td><td class="n bad">15</td><td>zayıf; sayı küçük ve ikonlu/kelimeli olduğu için tolere edilir</td></tr>
+<tr><td>Crit ↔ Hasar düşük (sarı)</td><td class="n mid">13</td><td class="n mid">12</td><td class="n mid">14</td><td>bugün de yakın; crit'i patlama ikonu + parıltı + boyut ayırıyor</td></tr>
+<tr><td>Heal ↔ Nature</td><td class="n mid">22</td><td class="n mid">21</td><td class="n mid">23</td><td>orta; heal her zaman "+" ile başlıyor, hasar başlamıyor</td></tr>
+<tr><td>Hasar sarı ↔ turuncu</td><td class="n ok">35</td><td class="n bad">14</td><td class="n mid">20</td><td>A'da şiddet kademesi renk körlüğünde zayıf (boyut yardımcı)</td></tr>
+<tr><td>Hasar turuncu ↔ kırmızı</td><td class="n ok">46</td><td class="n mid">20</td><td class="n ok">39</td><td>–</td></tr>
+<tr><td>Fire ↔ Nature</td><td class="n ok">98</td><td class="n mid">22</td><td class="n mid">22</td><td>orta; ateş-yaprak karışmaz ama yakınlaşır</td></tr>
+</table>
+<p><b>Düz sonuç.</b> Yalnız renk (C, E) renk körlüğünde ice/shield/lightning için yetmiyor. Kelime (B) ya da ikon şekli (A, D) elementi renkten bağımsız taşıyor. Crit her varyantta patlama ikonu, parıltı ve +9 px ile ayırt ediliyor; renk (altın) yalnız A ve D'de kritik rengi olarak kalıyor, B/C/E'de crit sayısı elementinin rengini taşır (holy crit'i altına çok yakın görünebilir).</p>
+</div>
+
+<div class="sec">
+<h2>Varsayımlar ve doğrulanamayanlar</h2>
+<ul>
+<li>Sahnede kullanılan elementler oyunda var: physical, fire, ice, nature, lightning, holy, dark (+ arcane, sahnede yok). Hepsi <code>data/battle-layout.json &gt; colors.element</code> içinde. Physical'ın ikonu yok (oyunda da yok). Lightning'in boyalı ikonu yok, oyunda kodla çizilen "bolt" kullanılıyor; bu taslakta onun yaklaşığı bir SVG.</li>
+<li>Sprite ekran boyu (310 px) tahmin; oyunda birimin kendi ölçeği var. Birim konumları gerçek slot ızgarası değil, sayılar çakışmasın diye açık aralıkta.</li>
+<li>Sayılar tek bir anda donmuş; gerçek oyunda 2 sn yükselip solar, "pop" ölçeği ve aynı hedefte şerit çakışma önleme (placeFloatClear) vardır.</li>
+<li>Varyant E'deki "çok elementli vuruş" oyunda iki ayrı damage olayı olarak gelir (her etki kendi olayını yollar); E bunları sunumda gruplar. Motor tarafında bir şey değişmez, ama gruplama için aynı skill'e ait olayları birlikte tanıma işi sunum katmanında gerekir (doğrulanmadı).</li>
+<li>Telefon alt sınırı (15 cihaz px, kelime 9 px) yalnız B-E'de, telefonda uygulanır (<code>&amp;fl=0</code> kapatır). A bugünkü oyun olduğu için alt sınırsız.</li>
+<li>Gerçek cihazda ve gerçek Phaser metin çizicide görünüm (gradyan üst ışık, dış hat) küçük farklar gösterebilir; bu taslak DOM ile yaklaşıklar.</li>
+</ul>
+</div>
+</div>
+
+<div id="mk-strip">
+  <b>Varyant</b>
+  <button data-k="v" data-v="a">A Now</button><button data-k="v" data-v="b">B Renk+kelime</button><button data-k="v" data-v="c">C Yalnız renk</button><button data-k="v" data-v="d">D Plaka</button><button data-k="v" data-v="e">E Parçalı</button><button data-k="v" data-v="all">Hepsi</button>
+  <b>Boyut</b>
+  <button data-k="z" data-v="169">16:9</button><button data-k="z" data-v="219">21:9</button><button data-k="z" data-v="ph">Telefon</button>
+  <b>Renk körlüğü</b>
+  <button data-k="cb" data-v="none">Normal</button><button data-k="cb" data-v="deut">Deut.</button><button data-k="cb" data-v="prot">Prot.</button><button data-k="cb" data-v="gray">Gri</button>
+  <b>Arka plan</b>
+  <button data-k="bg" data-v="ember">Ember road</button><button data-k="bg" data-v="sunny">Sunny</button>
+  <b>Tel. alt sınır</b>
+  <button data-k="fl" data-v="1">Açık</button><button data-k="fl" data-v="0">Kapalı</button>
+</div>
+<script src="damage-numbers/app.js"></script>
+</body>
+</html>

@@ -40,7 +40,7 @@ const AM_ROW = ['0.f1*3', '0.f2*5', '0.f3*5', '0.n0', '0.r*3'];
 describe('yeni tetik olayları: veri', () => {
   it('ağaçlar temiz derlenir, sürümler arttı (bedava respec), düğüm metinleri', () => {
     for (const c of ['mage', 'antimage']) expect(checkTreeFx(treeOf(c)!), c).toEqual([]);
-    expect(treeOf('mage')!.version).toBe(4);
+    expect(treeOf('mage')!.version).toBe(5);
     expect(treeOf('antimage')!.version).toBe(5);
     expect(treeOf('mage')!.nodes['3.fa']!.text).toMatch(/Stuns its target/);
     expect(treeOf('antimage')!.nodes['0.ma']!.name).toBe('Ready Reflexes');

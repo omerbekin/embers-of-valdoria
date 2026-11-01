@@ -124,9 +124,9 @@ describe('off-hand rules', () => {
     expect(dropAction({ kind: 'bag', uid: 'x', itemId: 'oak_shield' }, { kind: 'slot', heroId: 'h', slot: 'offhand' }, () => 'warrior').kind).toBe('equip');
   });
 
-  it('hero line: 7 slots, "Hands full" under a two-hander', () => {
+  it('hero line: 8 slots, "Hands full" under a two-hander', () => {
     const h = { id: 'h', class: 'warrior', level: 1, equipment: eq({ weapon: it_('dane_axe') }) };
-    expect(heroItemLine(h, null).text).toBe('Level 1 · 1/7 items');
+    expect(heroItemLine(h, null).text).toBe('Level 1 · 1/8 items');
     expect(heroItemLine(h, it_('oak_shield', 's')).text).toBe('Hands full');
   });
 

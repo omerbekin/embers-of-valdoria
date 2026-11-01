@@ -81,7 +81,7 @@ const PAUSED = { node: '5A', seed: 1, actions: [], turn: 0, hash: 'x', setup: 'x
 
 describe('kayıt sürümü (3.3): göç yok, alan yok = boş ağaç', () => {
   it('sefer v11 kaydı v12\'ye yüklenir: ağaç boş, puanlar aynen; dosya 12 olarak yeniden yazılır', () => {
-    expect(SAVE_VERSION).toBe(13);
+    expect(SAVE_VERSION).toBe(14);
     const { s } = camp(10);
     const kv = memoryKV();
     kv.setItem(SAVE_KEY, file(s, 11));
@@ -93,12 +93,12 @@ describe('kayıt sürümü (3.3): göç yok, alan yok = boş ağaç', () => {
     expect(got.roster.map((h) => [h.level, h.skillPoints, h.statPoints])).toEqual(s.roster.map((h) => [h.level, h.skillPoints, h.statPoints]));
     expect(got.roster.every((h) => h.skillPoints === pool(10))).toBe(true);
     expect(migrateSaves(kv)).toBe(true);
-    expect(JSON.parse(kv.getItem(SAVE_KEY)!).version).toBe(13);
+    expect(JSON.parse(kv.getItem(SAVE_KEY)!).version).toBe(14);
     expect(readSaves(kv).migrated).toBe(false);
   });
 
   it('Endless v6 kaydı v7\'ye yüklenir: ağaç boş, puanlar aynen (koşu birebir aynı)', () => {
-    expect(RUN_VERSION).toBe(7);
+    expect(RUN_VERSION).toBe(8);
     const run = leveledRun(newRun(5, ['warrior', 'defender', NO_TREE], 't'), 12);
     const got = parseRun(JSON.stringify({ version: 6, run }))!;
     expect(got).toEqual(run);

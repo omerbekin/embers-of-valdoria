@@ -18,6 +18,9 @@ import { itemCell } from './inventory';
 import { itemTipNodes } from './item-tip';
 import { confirmIn, heroTipExtra, openGear, type GearApi, type GearExt, type GearSource } from './gear-screen';
 import { uiSound, worldSound } from './ui-sound';
+import { dueScreenLessons } from '../tutorial/lessons';
+import { seenLessons } from '../tutorial/store';
+import { dismissLesson, showLesson } from './lesson-box';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -87,6 +90,8 @@ export interface LootHooks {
   gear: GearSource;
   /** Savaştan kazanılan XP (yalnızca gösterim; yoksa bölüm çıkmaz). Kahraman başına satır: portre, level, "+N XP" ve dolan bar. */
   xp?: LootXp[];
+  /** Sandık açılış sahnesi az önce aynı sesi çaldı (src/ui/chest-open.ts): açılış sesi tekrarlanmaz. */
+  quiet?: boolean;
   /** Ekran kapandı (alınmayanlar bırakıldı): çağıran devam eder. */
   onDone: () => void;
 }
@@ -110,7 +115,7 @@ export interface LootHandle {
 export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
   o.set(stashLoot(o.get()));
   let aborted = false;
-  worldSound('loot_reveal'); // sandık kapağı gıcırdar, içinde sikkeler kayar
+  if (!o.quiet) worldSound('loot_reveal'); // sandık kapağı gıcırdar, içinde sikkeler kayar
   let api: GearApi | null = null;
   let overlayEl: HTMLElement | null = null;
   const side = el('div', 'gr-panel gr-gear gr-ledger gr-loot');
@@ -129,6 +134,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     const before = new Set(o.get().inventory.map((i) => i.uid));
     o.set(takeLeftover(o.get(), index));
     uiSound('confirm');
+    dismissLesson('first_loot');
     if (equip) {
       const added = o.get().inventory.find((i) => !before.has(i.uid));
       if (added) api?.equip(equip.heroId, added.uid, equip.slot);
@@ -142,7 +148,10 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       o.set(takeLeftover(o.get(), 0));
       n++;
     }
-    if (n) uiSound('confirm');
+    if (n) {
+      uiSound('confirm');
+      dismissLesson('first_loot');
+    }
     if ((o.get().pendingLoot?.left?.length ?? 0) > 0) api?.flash('The bag is full. Make room first: drag an item to the trash.');
     api?.rerender();
   };
@@ -397,11 +406,17 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
   const close = openGear(root, o.gear, {
     ext,
     onClose: () => {
+      dismissLesson('first_loot');
       if (aborted) return;
       o.set(acknowledgeLoot(o.get()));
       o.onDone();
     },
   });
+  // İlk item: nasıl alınacağı (Ömer 2026-11-01); alınmayan item kaybolur
+  if (lootItems(o.get()).length) {
+    const due = dueScreenLessons('loot', {}, seenLessons())[0];
+    if (due) showLesson(due.id);
+  }
   return {
     close: () => api?.close(),
     abort: () => {

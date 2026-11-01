@@ -1,10 +1,10 @@
 /**
- * Debug menüsü > Campaign sekmesi: serbest dolaşım / devriye araçları (campaign-dev; roadmap 2.10). Reset replays (devriye sayaçları ve azalan
- * getiri baştan), Teleport (keşfedilmiş herhangi bir düğüme; kadro ve ilerleme aynen kalır, yol baştan kurulmaz). Sahne sınıflarını içe
+ * Debug menüsü > Campaign sekmesi: serbest dolaşım / devriye araçları (campaign-dev; roadmap 2.10). Reset replays (devriye sayaçları
+ * baştan), Teleport (keşfedilmiş herhangi bir düğüme; kadro ve ilerleme aynen kalır, yol baştan kurulmaz). Sahne sınıflarını içe
  * aktarmaz (Node testinde Phaser yok): haritayı anahtarla yeniden açar.
  */
 import type Phaser from 'phaser';
-import { debugResetReplays, debugRoamTeleport, discoveredNodes, getMap, isCleared, nextReplayMult, patrolAvailable, replayCount, visitedNodes } from '../campaign';
+import { debugResetReplays, debugRoamTeleport, discoveredNodes, getMap, isCleared, patrolAvailable, replayCount, visitedNodes } from '../campaign';
 import { current, setState, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
 import { CAMPAIGN_TAB } from './debug-campaign';
@@ -25,7 +25,7 @@ export function registerCampaignRoamDebug(game: Phaser.Game, debug: DebugMenu, t
     section: 'Progress',
     icon: 'clipboard',
     label: 'Reset replays',
-    hint: 'Free roaming: forget how many times each cleared stop was fought again (the next patrol pays the first replay rate again). Needs a loaded campaign.',
+    hint: 'Free roaming: forget how many times each cleared stop was fought again. Needs a loaded campaign.',
     run: () => {
       const s = current();
       if (!s) return;
@@ -51,7 +51,7 @@ export function registerCampaignRoamDebug(game: Phaser.Game, debug: DebugMenu, t
       const grid = document.createElement('div');
       grid.className = 'debug-grid';
       for (const n of map.nodes.filter((x) => seen.has(x.id) && x.id !== s.at)) {
-        const tag = isCleared(s, n.id) ? (patrolAvailable(s, n.id) ? ` · patrol ${Math.round(nextReplayMult(s, n.id) * 100)}%` : ' · cleared') : '';
+        const tag = isCleared(s, n.id) ? (patrolAvailable(s, n.id) ? ' · patrol' : ' · cleared') : '';
         grid.append(
           debugButton(`${n.id} ${n.name}${tag}`, () => {
             const now = current();

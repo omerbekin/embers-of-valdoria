@@ -49,7 +49,7 @@ describe('Mage / AM / Druid ağaç yenilemesi: veri', () => {
       for (const bar of t.mastery.bar) expect(bar.inactive, `${c} ${bar.name}`).toBeFalsy();
       expect(JSON.stringify(t.nodes)).not.toMatch(/Spell Echo|Mana Barrier|Mana Overflow/);
     }
-    expect(treeOf('mage')!.version).toBe(4);
+    expect(treeOf('mage')!.version).toBe(5);
     expect(treeOf('antimage')!.version).toBe(5);
     expect(treeOf('druid')!.version).toBe(2);
     // Mire: 'Slows on impact' kalktı (kök tarlası içindekine o an Slow veriyor)
@@ -93,11 +93,11 @@ describe('Mage / AM: tetikler savaşta', () => {
     return w;
   };
 
-  it('Mirage Veil (0.v): yakın dövüşçünün yanlarına da Burning Ground, saldıran Chilled', () => {
+  it('Mirage Veil (0.v): yakın dövüşçünün yanlarına da Burning Ground, saldıran Blinded', () => {
     const steps = ['0.f1*3', '0.f2*5', '0.f3*5', '0.n0', '0.r*3', '0.eb', '0.mb', '1.f1*3', '1.f2', '0.v'];
     const b = make({ 1: 'mage' }, { 1: 'warrior', 0: 'warrior', 2: 'warrior' }, { 1: { tree: tree('mage', steps) } });
     const w = hitMage(b, 'melee_attack');
-    expect(w.statuses.some((s) => s.kind === 'chilled')).toBe(true);
+    expect(w.statuses.find((s) => s.kind === 'blinded')?.turns).toBe(1);
     const cellsHit = (b as unknown as { ground: { ground: string; slots: number[] }[] }).ground.filter((g) => g.ground === 'burning').flatMap((g) => g.slots);
     expect(new Set(cellsHit)).toEqual(new Set([0, 1, 2]));
   });

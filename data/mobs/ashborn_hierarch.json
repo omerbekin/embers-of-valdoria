@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
+  "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim B (Sürünün çobanı). Kitte temel saldırı yazmıyordu: bugünkü Ember Toss kaldı. Burn the Field ve Last Ember çıktı.",
   "id": "ashborn_hierarch",
   "name": "The Ashborn Hierarch",
   "family": "ember_cult",
@@ -21,20 +21,25 @@
   "ai": "sniper",
   "skills": [
     "ember_toss",
-    "burn_the_field",
-    "long_sermon"
+    "long_sermon",
+    "fervour",
+    "kindle_the_nave"
   ],
   "passive": {
-    "id": "last_ember",
-    "name": "Last Ember",
+    "id": "shepherd_of_ash",
+    "name": "Shepherd of Ash",
     "icon": "flame",
-    "text": "If a hero kills this unit with a skill, the hero's cell becomes burning ground for 2 of the hero's turns. Deaths from ground or damage over time leave no ember.",
+    "text": "While an Ashborn ally lives, it takes 25% less damage.",
     "effect": {
-      "type": "lastEmber",
-      "ground": "burning",
-      "turns": 2,
-      "scale": "int",
-      "power": 0.35
+      "type": "shepherdOfAsh",
+      "takenMult": 0.75,
+      "families": [
+        "ember_cult"
+      ],
+      "names": [
+        "Pyre Witch",
+        "Cinder Knight"
+      ]
     }
   }
 }

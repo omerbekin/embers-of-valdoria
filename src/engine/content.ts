@@ -52,6 +52,20 @@ import thunderwrightMob from '../../data/mobs/thunderwright.json';
 import clanStormcallerMob from '../../data/mobs/clan_stormcaller.json';
 import gloamEelMob from '../../data/mobs/gloam_eel.json';
 import stormhornRamMob from '../../data/mobs/stormhorn_ram.json';
+// Harita 3 kit dilimi: ortak moblar ve palet moblar (maps-2-3.md 4.3)
+import snowWolfMob from '../../data/mobs/snow_wolf.json';
+import clanAxemanMob from '../../data/mobs/clan_axeman.json';
+import caveCrawlerMob from '../../data/mobs/cave_crawler.json';
+import clanSkaldMob from '../../data/mobs/clan_skald.json';
+import pyreWitchMob from '../../data/mobs/pyre_witch.json';
+import cinderKnightMob from '../../data/mobs/cinder_knight.json';
+import forgeGolemMob from '../../data/mobs/forge_golem.json';
+import wightMob from '../../data/mobs/wight.json';
+import rimeHoundMob from '../../data/mobs/rime_hound.json';
+import clanSlingerMob from '../../data/mobs/clan_slinger.json';
+import rimeWitchMob from '../../data/mobs/rime_witch.json';
+import hollowWardenMob from '../../data/mobs/hollow_warden.json';
+import moltenHoundMob from '../../data/mobs/molten_hound.json';
 import bridgeWarden from '../../data/bosses/bridge_warden.json';
 import ironMooring from '../../data/bosses/iron_mooring.json';
 import lordMorvane from '../../data/bosses/lord_morvane.json';
@@ -64,10 +78,13 @@ import lanternObject from '../../data/bosses/lantern.json';
 import hollowKing from '../../data/bosses/hollow_king.json';
 import hollowCrownLooks from '../../data/bosses/hollow-crown-looks.json';
 import snowfatherBoss from '../../data/bosses/snowfather.json';
+import hearthwardenBoss from '../../data/bosses/hearthwarden.json';
 import emberFirstHearthBoss from '../../data/bosses/ember_of_the_first_hearth.json';
 import forgeMasterGolemMob from '../../data/mobs/forge_master_golem.json';
 import packMotherMob from '../../data/mobs/pack_mother.json';
 import ashbornHierarchMob from '../../data/mobs/ashborn_hierarch.json';
+import pyreMatriarchMob from '../../data/mobs/pyre_matriarch.json';
+import cinderWardenMob from '../../data/mobs/cinder_warden.json';
 import mobRoadThug from '../../data/mobs/road_thug.json';
 import mobMoorRaider from '../../data/mobs/moor_raider.json';
 import mobBanditCrossbowman from '../../data/mobs/bandit_crossbowman.json';
@@ -237,14 +254,16 @@ export const bosses: Record<string, CombatantDef> = {
   // Harita 3 son bossu: GEÇİCİ görünüm kaydı (kit yok, inert; /vfx idle sprite denemesi 2026-10-29)
   hollow_king: buildDef(hollowKing as unknown as CombatantData, formulas),
   snowfather: buildDef(snowfatherBoss as unknown as CombatantData, formulas),
+  hearthwarden: buildDef(hearthwardenBoss as unknown as CombatantData, formulas),
   ember_of_the_first_hearth: buildDef(emberFirstHearthBoss as unknown as CombatantData, formulas),
   // Harita 3 kadrosu + yıldırım konseptleri: GEÇİCİ görünüm kayıtları (kit yok, inert, karşılaşmaya bağlı değil; /vfx idle sprite turu 2026-10-29)
   ...Object.fromEntries(hollowCrownLooks.units.map((u) => [u.id, buildDef(u as unknown as CombatantData, formulas)])),
 };
 
 const mobData: CombatantData[] = [
-  forgeMasterGolemMob, packMotherMob, ashbornHierarchMob,
+  forgeMasterGolemMob, packMotherMob, ashbornHierarchMob, pyreMatriarchMob, cinderWardenMob,
   clanVaulterMob, shardwalkerMob, hollowDelverMob, gloamstalkerMob, cinderleaperMob, slagcartGolemMob, thunderwrightMob, clanStormcallerMob, gloamEelMob, stormhornRamMob,
+  snowWolfMob, clanAxemanMob, caveCrawlerMob, clanSkaldMob, pyreWitchMob, cinderKnightMob, forgeGolemMob, wightMob, rimeHoundMob, clanSlingerMob, rimeWitchMob, hollowWardenMob, moltenHoundMob,
   mobRoadThug,
   mobMoorRaider,
   mobBanditCrossbowman,

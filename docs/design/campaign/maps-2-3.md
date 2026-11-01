@@ -586,7 +586,7 @@ Harita 2 adım 1'in aynı kalıbı: `data/campaign/hollow-crown.json` (86 durak 
 | Slagcart Golem | Shield Bash, Slag Charge (sıra telgrafı, hasar + 2 tur Burning, sonra Cooling) | hc_63, hc_74, elit hc_65 | sprite shieldwarden, sanat Gatestone Slam |
 | Thunderwright | Anvil Strike (Shocked), Ring the Anvil (en ağır + 2 zıplama), pasif Iron Draws the Bolt | hc_29, hc_36; Hollow adıyla hc_43, hc_44 | idle kendi; poz/VFX/ses yer tutucu |
 | Clan Stormcaller | Fork, Rolling Thunder, pasif Eye of the Storm | hc_13, hc_26 | idle kendi; poz/VFX/ses yer tutucu |
-| Gloam Eel | Gloam Bite (suda Live Water; Darkness'ta Thunderflash), Lunge, pasif Slick | hc_45, hc_46, hc_47 | idle kendi; poz/VFX/ses yer tutucu |
+| Gloam Eel | Gloam Bite (suda Live Water; Darkness'ta yalnız hedef sudayken Thunderflash, Ömer 2026-11-01), Lunge, pasif Slick | hc_45, hc_46, hc_47 | idle kendi; poz/VFX/ses yer tutucu |
 | Stormhorn Ram | Shield Bash, Headlong (şeritteki ilk kahraman, bir sıra geri), pasif Stormhide | hc_9, hc_22 | idle kendi; poz/VFX/ses yer tutucu |
 
 Kararlar:
@@ -604,3 +604,52 @@ Kararlar:
 - **E4 The Long Sermon (The Ashborn Hierarch, hc_61):** Round tabanlı: başladığı Round + 2 tam Round, 3. Round başında biter. Süresince turu yanar, eylem yapamaz. Bozan yalnız hasar (Ömer): her hasar sayılır (tikler dahil), eşik maxHp'nin %25'i. Bozulunca Staggered (yalnız `turns` modu), bekleme bitince yeniden vaaz edebilir. Tamamlanınca savaş sonuna dek Burning zeminin hasarı Ashborn için aynı miktar şifa olur. "Ashborn" = `ember_cult` ailesi + Pyre Witch, Cinder Knight, Hierarch adları (kadro yer tutucu sınıflarla geldiği için).
 - **E5 Storm in the Chimney (The Ember of the First Hearth, hc_ember):** %30 fazında `swapSkills` flare -> flare_storm. Live Water ve Urn suyunun iletmesi zaten şimşek kuralıydı. hc_ember karşılaşmasına Urn eklendi (dokunuşun çalışması için). Oyuncu tarafı YZ'si Urn'ü şimşekli düşman varken kahramanların durduğu satıra dökmekten kaçınır.
 - **E6 The King Hears (The Hollow King, hc_hollow_king):** hc_hollow_king'e Noise (`wake_the_halls`) eklendi. Dolum başına kuralın Warden'ı + King ayaktaysa bedava Call the Vault'un Warden'ı: iki Warden. `maxRises` 2 ve `maxAlive` 4 tavandır. Call the Vault ayrıca normal skill (bekleme 4).
+
+## Harita 3 ortak ve palet mob kitleri: uygulama kararları (kit dilimi, 2026-11-01; bayrak kapalı, sayılar PROVİZYON, sim yok)
+4.3 tablosundaki 7 ortak mob ve 6 palet mob gerçek kitle `data/mobs` altında (`tests/map3-kits.test.ts`, `tests/map3-mana.test.ts`). **Karşılaşmalara bağlanmadı:** `hollow-crown-encounters.json` hâlâ eski yer tutucu sınıfları kullanır. 7 mobun geçici görünüm kaydı silindi, idle çizimleri aynen kullanılır; palet mobları taban çizimde (boya yok).
+
+| Mob | Skill'ler | Pasif |
+|---|---|---|
+| Snow Wolf | Frost Bite (temel, Chilled), Rend | Pack Tactics |
+| Clan Axeman | Axe (temel), Cleave (ön sıra) | Highland Fury: her zaman Chilled + Frozen bağışık; can %50 altında +%20 |
+| Cave Crawler | Mandible (temel), Skitter (ignoreReach) | Blind Hunger: hep en yakın hedef; Darkness'ta +%25 |
+| Clan Skald | Sling Stone (temel), Mock (Staggered), Chant (tüm dostlar 2 tur Haste) | War-Chant: tur başı aynı sıra dostlara 1 tur Haste |
+| Pyre Witch | Pyre Bolt (temel), Spread the Flame (Burning hücreden artı şekliyle 2 tur) | Kindling: Burning hücre başına +%5, en çok +%20 |
+| Cinder Knight | Brand (temel + Burning), Hold the Gate | Searing Rebuke |
+| Forge Golem | Hammer (temel), Vent (bir şerit, ateş) | Furnace Core: ölünce hücresi + 4 komşu 2 tur Burning |
+| Wight | Gnaw (temel), Feast | Grave Cold: skill vuruşu 1 tur Chilled, dondurmaz |
+| Rime Hound | Rime Bite (temel, Chilled), Run Down | Blood Scent |
+| Clan Slinger | Sling Stone (temel), Ice Shot (Chilled) | Cut and Run |
+| Rime Witch | Ice Shard (temel), Sodden Hex (2 tur Soaked) | Hoarfrost: Soaked kahraman tur başında 1 tur Chilled, dondurmaz |
+| Hollow Warden | Gatestone Slam (temel), Rockfall | Hollow: Darkness'ta alınan hasar -%25 |
+| Molten Hound | Scorch Bite (temel), Run Down + 2 tur Burning zemin | Blood Scent |
+
+Kararlar:
+- **Frozen kuralı:** Frost Bite, Rime Bite ve Ice Shot skill atışıdır: zaten Chilled hedefi dondurur. Grave Cold ve Hoarfrost pasif kaynağıdır: yalnız Chilled verir (kaynak türü taşımaz).
+- **Mana (open-questions 466):** L30'da 5-6 kullanım. Paylaşılan skill'in bedeli Harita 1-2 mobunu da değiştireceği için bu moblar kendi kopyasını alır (`snow_rend`, `knight_hold_gate`, `wight_feast`, `rime_run_down`, `hollow_rockfall`, `molten_run_down`; 4. dilimden `shard_pike_thrust`, `cinder_rend`, `gloam_lunge`); oyuncu aynı adı görür, `ai.scoreCost` eski bedel. Bedelsiz skill'ler bedelsiz kaldı.
+- **Spread the Flame:** `anchorGround` alanı: yalnız Burning hücreye atılır, alan içinde kahraman olmalı (genel alan kuralı), hasar yok, yalnız kahraman tahtası.
+- **Furnace Core:** Burning zemin golemin kendi tahtasına düşer; genel zemin kuralıyla kendi tarafına işlemez. Kindling onu sayar.
+- **Açık varsayımlar:** `open-questions.md` sonundaki `Q-NEW`.
+
+## Harita 3 elit ve boss kitleri: uygulama kararları (Ömer seçimi 2026-11-01; bayrak kapalı, sayılar PROVİZYON, sim yok)
+Seçilen 9 kit, `tests/map3-elites.test.ts`. Mana: temel saldırı bedelsiz, kalanı L30'da 5-6 kullanım (`tests/map3-mana.test.ts`).
+
+| Birim | Pasif / dokunuş | Skill'ler |
+|---|---|---|
+| Pack-Mother (B) | Pack Rotation | Frost Fang (Chilled, Chilled ise Frozen), Snowdrift (işaretli 2x2 Chill Ground), Throat Leap (her sıra, Bleeding) |
+| Pyre Matriarch (A) | Greater Kindling (Burning hücre başına +%5, tavansız) | Pyre Bolt, Stoke (işaretli 2x2 Burning), Spread the Flame |
+| Forge-Master Golem (B) | Overheat; ölünce iki kat Furnace Core (4 tur, iki kat güç) | Sledge (Sunder), Reforge (golem, maks canın %20'si), Rivet Plate (dosta kalkan) |
+| Ashborn Hierarch (B) | Shepherd of Ash (Ashborn dost yaşarken %25 az hasar) | Ember Toss, The Long Sermon, Fervour (dosta 2 tur Ash Surge), Kindle the Nave (vaaz bitince kendi sırası Burning) |
+| Cinder Warden (B) | Tempering | Searing Bash (Burning), Hold the Gate (2 tur taunt + Fortified), Slag Wall (işaretli sütun Burning) |
+| Snowfather (A) | Thundersnow; Frostbound (Chilled / Frozen kahraman başına +%6) | Icy Grasp, Avalanche (işaretli sütun, ağır), Roar (hepsi 1 tur Slow), ulti Whiteout |
+| Hollow King (A) | The King Hears; Hollow Crown (Hollow dost ölünce sonraki turu 2 eylem) | Kingsmaul (hücreye Cave-in işareti), Call the Vault, Decree of Stone (dostlara Fortified), ulti Bring Down the Hall (3 hücre kalıcı) |
+| Hearthwarden (A) | Forge-Heat (her Round başı işaretli sıra, sonraki Round Burning) | Hammerfall, Quench (Burning söner, hücre başına şifa), Forge Chains (Slow + Burning), ulti Temper the Crown (tüm tahta, güvenli hücre yok) |
+| Ember of the First Hearth (A) | Storm in the Chimney; Everburning (Burning hücre başına %3 az; belgedeki düz %50 yerine) | Flare, Cinder Storm (X, Burning), Breathe (sıra Burning), ulti The First Fire (tüm tahta 3 tur Burning) |
+
+- **Karşılaşma bağı:** `hc_50`, `hc_79`, `hc_hearthwarden` yer tutucu sınıftaydı (Morwen, Cinder Gatewarden, Drowned Queen); kitli sınıfa bağlandı. Cinder Gatewarden Harita 1'de de kullanıldığı için dokunulmadı: Warden ayrı `data/mobs/cinder_warden.json`. Statlar eski yer tutucudan kopya (Matriarch: Pyre Witch statları + Morwen canı).
+- **Bosslar Frozen tutmaz:** genel boss cc bağışıklığı.
+- **Hollow Crown** yalnız turns modunda (test modunda tur yok). Biriktirmez: sonraki tur tek ek eylem. Hollow = görünen ad Hollow Warden / Runecaller / Delver.
+- **Cave-in skill'leri:** tavan Kingsmaul 3, ulti 5 kapalı hücre; kahramana yer bırakma kuralı aynı. Atan, işareti görenlerin Round'daki son eylemiyse çöküş bir Round sonraya kalır (uyarısız düşmesin).
+- **Kindle the Nave:** vaaz bitmeden kullanılamaz. Şifayı vaaz kuralı yapar (Burning içindeki Ashborn iyileşir), Ashborn olmayan dost yanar.
+- **Quench:** iki tahtadaki tüm Burning söner; yangın yoksa atılamaz. Şifa hücre başına maks canın %2'si.
+- **Forge-Heat:** Heat kuralı gibi içinde birim olan sıra seçer; Hearthwarden ölürse işaret yanmaz.

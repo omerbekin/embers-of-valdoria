@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
+  "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim A (Ölülerin kralı). Statlar eski yer tutucu sınıfın kopyası.",
   "id": "hollow_king",
   "name": "The Hollow King",
   "spriteId": "hollow_king",
@@ -24,19 +24,26 @@
   "ai": "bridge_warden",
   "skills": [
     "kingsmaul",
-    "call_the_vault"
+    "call_the_vault",
+    "decree_of_stone",
+    "bring_down_the_hall"
   ],
   "touch": {
     "type": "kingHears",
     "skill": "call_the_vault"
   },
   "passive": {
-    "id": "the_king_hears",
-    "name": "The King Hears",
+    "id": "hollow_crown",
+    "name": "Hollow Crown",
     "icon": "skull",
-    "text": "Each time your Noise counter fills, the King calls the vault for free and one more Hollow Warden rises.",
+    "text": "When a Hollow ally dies, the King takes two actions on his next turn.",
     "effect": {
-      "type": "touchLabel"
+      "type": "hollowCrown",
+      "names": [
+        "Hollow Warden",
+        "Hollow Runecaller",
+        "Hollow Delver"
+      ]
     }
   },
   "boss": {
@@ -44,7 +51,8 @@
     "firstBanner": "Who walks in my halls?",
     "phases": [],
     "notes": [
-      "Noise matters here. Critical hits, explosions and area skills fill the counter; each time it fills a Hollow Warden rises, and the King calls another for free."
+      "Noise matters here. Critical hits, explosions and area skills fill the counter; each time it fills a Hollow Warden rises, and the King calls another for free.",
+      "Hollow Crown: each Hollow ally you kill gives the King a second action on his next turn. Time your kills. Kingsmaul marks a cell: it collapses at the start of the next Round."
     ],
     "passives": [
       {
@@ -52,6 +60,12 @@
         "name": "The King Hears",
         "icon": "skull",
         "text": "Each time your Noise counter fills, the King calls the vault for free and one more Hollow Warden rises."
+      },
+      {
+        "id": "hollow_crown",
+        "name": "Hollow Crown",
+        "icon": "skull",
+        "text": "When a Hollow ally dies, the King takes two actions on his next turn."
       }
     ]
   }

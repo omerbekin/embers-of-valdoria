@@ -4,6 +4,7 @@ import { BAG_SIZE, ITEMS, canEquip, itemDef, makeItem, rollLoot, rollRareDrop, t
 import { CONFIG } from './data';
 import { chapterOf, nodeIlvl } from './power';
 import { rngFor } from './seed';
+import { noDropSlots, slotLocks } from './slots';
 import type { CampaignState, Hero, LootDrop } from './types';
 
 /** Kayıt alanının varsayılanı. */
@@ -46,6 +47,7 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     party: party.map((h) => ({ class: h.class, equipment: h.equipment })),
     replay,
     pity: t.lootState.rarePity,
+    rules: { locks: slotLocks(t), banned: noDropSlots(t.mapId) },
   });
   // Küçük sandık (cadının bedelli seçenekleri, Ömer 2026-10-12): aynı zardan yalnızca ilk N item + sabit altın
   // Hazine içeriği (Harita 1 cepleri): itemsDelta standart sayıya göre (yalnız eksiltir; zar aynı, ilk N item kalır)
@@ -178,7 +180,8 @@ export function treasureGiftRarity(t: Pick<CampaignState, 'seed' | 'mapId'>, nod
 export function grantGift(t: CampaignState, nodeId: string, party: Hero[], tag: string, rarity: RarityId = 'common', slots?: string[]): LootDrop | null {
   const ilvl = Math.max(1, nodeIlvl(t.mapId, nodeId));
   const rng = rngFor(t.seed, t.mapId, nodeId, 'gift', tag);
-  const all = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (!d.family || party.some((h) => canEquip(h.class, d))));
+  const banned = noDropSlots(t.mapId);
+  const all = ITEMS.items.filter((d) => d.rarity !== 'legendary' && !banned.includes(d.slot) && d.ilvl <= ilvl && (!d.family || party.some((h) => canEquip(h.class, d))));
   // Yuva süzgeci (Monk's Isle relic = offhand; M-L): takımın taşıyabildiği o yuvada item yoksa süzgeçsiz
   const slotted = slots?.length ? all.filter((d) => slots.includes(d.slot) && party.some((h) => canEquip(h.class, d))) : [];
   const bases = slotted.length ? slotted : all;

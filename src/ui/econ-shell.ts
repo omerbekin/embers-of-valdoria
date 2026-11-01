@@ -16,6 +16,7 @@ import { iconUrl } from './dom-icons';
 import { ItemTip } from './item-tip';
 import { avatarUrl } from './character-panel';
 import { bandTipHtml } from './band-tip';
+import { attachBandTip, reasonSpec } from './band-tip-attach';
 import { tipOn as fadeIn, tipOff as fadeOut } from './tip-vis';
 import { woundBandSpec } from './wound-ui';
 import { woundRules } from '../campaign';
@@ -33,7 +34,7 @@ export function button(cls: string, text: string, run: () => void, why?: string 
   b.type = 'button';
   if (why) {
     b.disabled = true;
-    b.title = why;
+    attachBandTip(b, reasonSpec(text, why));
     b.setAttribute('aria-description', why);
   }
   b.addEventListener('click', () => {

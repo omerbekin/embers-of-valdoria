@@ -3,7 +3,7 @@
 // Oyun kuralları (campaign.md 2.3; src/campaign/state.ts moveOptions / travelRoutes / startPatrol) aynen çağrılır; burada yalnızca oyuncunun kararları:
 // - Yeni düğümde kaybedince aynı savaşı `retries` (2) kez daha dener (yenilgi = son kayda dönüş: savaşa giren takım birebir aynı, seed değişir).
 // - Yine kaybederse son kayda (o düğüme yürümeden önceki duruma) döner ve `grindStep` (1) kasma savaşı yapar, sonra düğümü bir kez dener
-//   (kas -> dene döngüsü). Kasma yeri: en verimli temizlenmiş tekrar oynanabilir düğüm (pickFarm; puan = beklenen XP x sıradaki ödül oranı x
+//   (kas -> dene döngüsü). Kasma yeri: en verimli temizlenmiş tekrar oynanabilir düğüm (pickFarm; puan = beklenen XP x
 //   tahmini kazanma şansı). Kaybedilen kasma savaşı bedelsizdir (son kayda dönüş) ama savaş sayılır.
 // - O düğüm için `wallCap` kasma savaşından sonra hâlâ geçemezse DUVAR: koşu orada biter (onWall 'force' = zorla geçilir, ölçüm sürer).
 //   Kasma yeri hiç yoksa (ör. Ashford sonrası ilk savaş, tutorial) kasma yerine düz tekrar; 1 + retries + wallCap denemede geçemezse duvar (farmsız).
@@ -18,7 +18,7 @@
 // - Level farmı (Ömer 2026-10-26; open-questions 425): sıradaki yeni düğümden önce fark = düğüm level - aktif takımın ort. level'ı (Inn'dekiler hariç)
 //   iki tipte de 2'yi aşarsa (ortalama 3 -> 2, Ömer 2026-10-27) farm: (1) ulaşılabilir, hiç gidilmemiş, rotada olmayan savaşlı düğüm (yan dal; ilk zaferin XP / loot /
 //   altını): elit / savaşlı hazine / savaşlı olay fark <= 1 iken ve önce (getiri), normal savaş fark eşik içindeyse; aynı sınıfta en yüksek level'lı; kaybedilirse son kayda dönülür, o düğüm atlanır (duvar sayılmaz); (2) yan dal yoksa
-//   devriye: en az tekrarlanmış (XP çarpanı en yüksek), sonra level'ı en yüksek, farkı eşik içinde kalan düğüm. Fark eşiğe inince ya da hedef başına
+//   devriye: level'ı en yüksek, farkı eşik içinde kalan düğüm. Fark eşiğe inince ya da hedef başına
 //   LEVEL_FARM_CAP (6) farm savaşında devam. Rota aynı kalır; duvar / kasma kuralları ayrı sayılır.
 // - Kamp (tek seçim, simCampChoice): yaralı varsa Tend, ort. can %60 altıysa Rest, yoksa Sharpen (takılı en değerli item), olmazsa Train (en düşük level).
 // - Demirci (demircili temizlenmiş kasaba varsa, her yola çıkışta): önce Combine (Ömer 2026-10-26: Common'lar girmez; torbada 3+ Uncommon+ item:
@@ -64,8 +64,6 @@ import {
   battleOutcomeOf,
   pickHero,
   recruit,
-  replayCount,
-  replayMult,
   rngFor,
   roamOpen,
   shuffle,
@@ -444,7 +442,7 @@ export function expectedXp(s: CampaignState, nodeId: string): number {
 
 /**
  * Kasma yeri (VARSAYIM, open-questions): yola çıkılabilir durumda gidilebilen temizlenmiş tekrar oynanabilir düğümler arasında
- * puan = beklenen XP (expectedXp) x sıradaki devriyenin ödül oranı (replay.xp) x bu koşudaki kazanma tahmini ((zafer + 1) / (savaş + 2)) en yüksek olan.
+ * puan = beklenen XP (expectedXp) x bu koşudaki kazanma tahmini ((zafer + 1) / (savaş + 2)) en yüksek olan.
  */
 export function pickFarm(s: CampaignState, record?: Map<string, { w: number; n: number }>): string | null {
   if (!roamOpen(s) || nextStep(s).kind !== 'move') return null;
@@ -455,7 +453,7 @@ export function pickFarm(s: CampaignState, record?: Map<string, { w: number; n: 
   for (const id of clearedNodes(s)) {
     if (!canReplay(map, node(map, id)) || (id !== s.at && !reach.has(id))) continue;
     const r = record?.get(id) ?? { w: 0, n: 0 };
-    const score = expectedXp(s, id) * replayMult(replayCount(s, id) + 1) * ((r.w + 1) / (r.n + 2));
+    const score = expectedXp(s, id) * ((r.w + 1) / (r.n + 2));
     if (score > bestScore) {
       bestScore = score;
       best = id;
@@ -524,23 +522,20 @@ function pickSideNode(s: CampaignState, route: string[], skip: Set<string>, gap:
   return best;
 }
 
-/** Level farmı (2): devriye; en az tekrarlanmış (XP çarpanı en yüksek), sonra level'ı en yüksek, farkı eşik içinde kalan temizlenmiş düğüm. */
+/** Level farmı (2): devriye; level'ı en yüksek, farkı eşik içinde kalan temizlenmiş düğüm (Ömer 2026-11-01: XP kesintisi yok, tekrar sayısı seçimi etkilemez). */
 function pickLevelPatrol(s: CampaignState, gap: number): string | null {
   if (!roamOpen(s) || nextStep(s).kind !== 'move') return null;
   const map = getMap(s.mapId);
   const reach = travelRoutes(s);
   const lv = teamLevel(s);
   let best: string | null = null;
-  let bm = -1;
   let bl = -Infinity;
   for (const id of clearedNodes(s)) {
     if (!canReplay(map, node(map, id)) || (id !== s.at && !reach.has(id))) continue;
     const l = nodeLevel(s.mapId, id);
     if (l - lv > gap) continue;
-    const m = replayMult(replayCount(s, id) + 1);
-    if (m > bm + 1e-9 || (Math.abs(m - bm) < 1e-9 && l > bl)) {
+    if (l > bl) {
       best = id;
-      bm = m;
       bl = l;
     }
   }

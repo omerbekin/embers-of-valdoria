@@ -189,6 +189,9 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   brann_vigil: { mob: 'inquisition_brother', mode: 'ally', at: 'ground', impact: 3, size: 240, hex: '#ffcf5a' },
   blessed_salt: { mob: 'salt_chaplain', mode: 'bolt', at: 'hit', impact: 2, size: 240, hex: '#ffcf5a' },
   salted_ground: { mob: 'salt_chaplain', mode: 'center', at: 'ground', impact: 3, size: 330, hex: '#fff4c8' },
+  // Risen Skeleton: KENDI efektleri (Ömer onayı 2026-11-01; öncesinde kahraman iskeletinden ödünç artOf)
+  grave_strike: { mob: 'risen_skeleton', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  grave_sweep: { mob: 'risen_skeleton', mode: 'melee', at: 'hit', impact: 3, size: 240 },
   sodden_strike: { mob: 'risen_drowned', mode: 'melee', at: 'hit', impact: 3, size: 230 },
   riptide_slash: { mob: 'risen_drowned', mode: 'melee', at: 'hit', impact: 3, size: 230 },
   // Harita 2 yaygin mob skilleri: KENDI efektleri (2026-10-27, art-pipeline; her skill kendi ikonuna uyan sheet; ödünç artOf yok, tests/map2-leaders.test.ts, map2-commons.test.ts)

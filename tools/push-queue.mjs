@@ -82,6 +82,7 @@ const AUTO_ON = !E2E || ENVV.EOV_AUTO_SHIP_MIN !== undefined;
 const WT_CACHE = (ENVV.EOV_WT_CACHE_S !== undefined ? Number(ENVV.EOV_WT_CACHE_S) : 60) * 1000;
 const WT_FILES = join(GAME, '.git', 'push-queue.wtfiles.json');
 const SIMS = join(GAME, '.git', 'push-queue-sims');
+const NOTES_DIR = join(GAME, '.git', 'push-queue-notes');
 const SIM_LIMIT = 15 * 60000;
 const RETEST_LIMIT = 15 * 60000;
 // Üretilen kayıtlar: elle çözülmez, gönderimde yeniden üretilir (Ömer 2026-10-31; dal düşmesinin baş sebebiydi)
@@ -183,12 +184,96 @@ const mergeNotes = (into, add) => { for (const [h, items] of Object.entries(add)
 const hasNotes = (n) => Object.values(n ?? {}).some((v) => v.length);
 // İç iş işareti yalnız girdide hiç not yoksa (Ömer 2026-10-31): önceki ready'den not kalmışsa sürüm alır, "HAZIR (iç)" yazmaz
 const setInternal = (e, want) => { if (want && !hasNotes(e.notes)) e.internal = true; else delete e.internal; };
-// patch-notes testinin sınırları testten önce (Ömer 2026-10-31): toplu gönderim 20 dk test sonunda bu sınırda durmuştu
-function checkNoteLimits(groups) {
-  const lines = Object.values(groups).flat();
-  const long = lines.filter((l) => l.length > 140);
-  if (lines.length <= 8 && !long.length) return;
-  throw new Error(`sürüm notu sınırı aşıldı, test koşmadı, hiçbir şey gönderilmedi: ${lines.length} satır (en çok 8)${long.length ? `; 140 karakteri geçen ${long.length} satır: ${long.map((l) => l.slice(0, 40)).join(' | ')}` : ''}. Düzeltme: notes <oturum> --fixes "..."`);
+// Sürüm notu gönderimi durdurmaz (Ömer 2026-11-01): sınırlar tests/patch-notes.test.ts ile aynı, not testlerden önce kendiliğinden düzenlenir.
+// Yalnız ayıklar, cümle yazmaz ya da cümle kesmez, yanlış bilgi üretemez; giremeyenin tam metni commit açıklamasında ve NOTES_DIR'de kalır
+const NOTE_MAX_LINES = 8;
+const NOTE_MAX_CHARS = 140;
+const NOTE_BANNED = /\.(ts|json|js|css|png|webp|md)\b|src\/|data\/|mockup|golden|sim:|\bv\d|commit/i;
+const NOTE_HEADS = ['New', 'Changes', 'Fixes'];
+const NOTE_STOP = new Set(['the', 'a', 'an', 'of', 'to', 'in', 'on', 'for', 'and', 'or', 'is', 'are', 'now', 'with', 'at', 'by', 'your']);
+const noteKey = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}%+]+/gu, ' ').trim();
+const noteFits = (s) => s.length <= NOTE_MAX_CHARS && s.trim().length > 5 && !NOTE_BANNED.test(s);
+// Uzun satır tam cümlelerine ayrılır; zamirle başlayan cümle öncekinden ayrılmaz, yoksa öznesiz kalır
+function splitNote(line) {
+  if (line.length <= NOTE_MAX_CHARS) return { keep: noteFits(line) ? [line] : [], cut: noteFits(line) ? [] : [line] };
+  const parts = [];
+  for (const s of line.split(/(?<=[.!?])\s+(?=[A-Z])/)) {
+    const prev = parts[parts.length - 1];
+    if (prev && (/^(It|Its|They|Their|This|These|That|Those|He|She|Also|Then|However|But|And|Instead)\b/.test(s) || /\b(e\.g|i\.e|vs|St|Dr|Mr|Mrs|No)\.$/.test(prev[prev.length - 1]))) prev.push(s);
+    else parts.push([s]);
+  }
+  const keep = [];
+  const cut = [];
+  for (const p of parts) {
+    if (noteFits(p.join(' '))) keep.push(p.join(' '));
+    else if (p.length > 1 && noteFits(p[0])) { keep.push(p[0]); cut.push(p.slice(1).join(' ')); }
+    else cut.push(p.join(' '));
+  }
+  return { keep, cut };
+}
+function nearDupNote(a, b) {
+  const words = (s) => noteKey(s).split(' ').filter((w) => !NOTE_STOP.has(w));
+  const x = new Set(words(a));
+  const y = new Set(words(b));
+  if (x.size < 4 || y.size < 4) return false;
+  const nums = (s) => [...s].filter((w) => /\d/.test(w)).sort().join();
+  if (nums(x) !== nums(y)) return false;
+  const both = [...x].filter((w) => y.has(w)).length;
+  return both / (x.size + y.size - both) >= 0.8;
+}
+// entries: hazır girdiler. Dönen groups oyuncuya gider; dropped giremeyen satırlar, sayılan = oyuncu notunda "Plus N more" ile söylenir
+function composeNotes(entries) {
+  const seen = new Set();
+  const dropped = [];
+  const lists = [];
+  for (const e of entries) {
+    const list = [];
+    for (const h of NOTE_HEADS) for (const item of e.notes?.[h] ?? []) {
+      const { keep, cut } = splitNote(item);
+      for (const text of cut) dropped.push({ sid: e.sid, h, text, why: text.length > NOTE_MAX_CHARS ? 'uzun' : 'iç terim ya da çok kısa', counted: true });
+      for (const text of keep) {
+        const k = noteKey(text);
+        if (!seen.has(k)) { seen.add(k); list.push({ sid: e.sid, h, text }); }
+      }
+    }
+    lists.push(list);
+  }
+  const size = () => lists.reduce((n, l) => n + l.length, 0);
+  if (size() > NOTE_MAX_LINES) {
+    const kept = [];
+    for (const l of lists) for (let i = 0; i < l.length; i++) {
+      if (kept.some((k) => nearDupNote(k.text, l[i].text))) { dropped.push({ ...l[i], why: 'başka satırın tekrarı', counted: false }); l.splice(i--, 1); }
+      else kept.push(l[i]);
+    }
+  }
+  const counted = () => dropped.filter((d) => d.counted).length;
+  const room = () => (counted() + (size() > NOTE_MAX_LINES ? 1 : 0) ? NOTE_MAX_LINES - 1 : NOTE_MAX_LINES);
+  // Her sohbetten sırayla: taşma tek sohbetin satırlarını silmesin
+  const picked = [];
+  const limit = room();
+  for (let i = 0; picked.length < limit && lists.some((l) => l.length > i); i++) for (const l of lists) if (l[i] && picked.length < limit) picked.push(l[i]);
+  for (const l of lists) for (const it of l) if (!picked.includes(it)) dropped.push({ ...it, why: 'satır sınırı', counted: true });
+  const groups = {};
+  for (const h of NOTE_HEADS) { const items = picked.filter((p) => p.h === h).map((p) => p.text); if (items.length) groups[h] = items; }
+  const n = counted();
+  if (n) {
+    const h = groups.Fixes ? 'Fixes' : Object.keys(groups).pop() ?? 'Fixes';
+    (groups[h] ??= []).push(picked.length ? `Plus ${n} more ${n === 1 ? 'change' : 'changes'}.` : `${n} ${n === 1 ? 'change' : 'changes'} in this update.`);
+  }
+  return { groups, dropped };
+}
+// Sohbet notu daha yazarken öğrenir; gönderimi yine durdurmaz
+function warnNotes(who, notes) {
+  const bad = Object.values(notes).flat().flatMap((l) => splitNote(l).cut);
+  if (bad.length) console.log(`Uyarı: şu kısım oyuncu notuna giremez (en çok ${NOTE_MAX_CHARS} karakterlik tam cümle, dosya adı ya da iç terim yok), gönderim yine durmaz: ${bad.map((b) => `"${b.slice(0, 70)}"`).join(' | ')}. Kısası için: notes ${who} --fixes "..."`);
+}
+const noteCommitBody = (comp) => (comp.dropped.length ? `\n\nNot in the in-game list:\n${comp.dropped.map((d) => `- [${d.h}] ${d.text}`).join('\n')}` : '');
+function reportTrimmedNotes(version, comp) {
+  if (!version || !comp.dropped.length) return;
+  mkdirSync(NOTES_DIR, { recursive: true });
+  const file = join(NOTES_DIR, `${version}.json`);
+  writeFileSync(file, JSON.stringify({ version, shown: comp.groups, notShown: comp.dropped.map((d) => ({ session: short(d.sid), heading: d.h, text: d.text, why: d.why })) }, null, 2) + '\n');
+  notice(`${version} sürüm notu otomatik düzenlendi, gönderim durmadı. Oyuncu notuna girmeyen ${comp.dropped.length} satır: ${comp.dropped.map((d) => `${short(d.sid)}: "${d.text.slice(0, 60)}" (${d.why})`).join(' | ')}. Tam metin: commit açıklaması ve ${file}`);
 }
 const readStdin = () => { try { return JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { return {}; } };
 
@@ -201,6 +286,7 @@ const RULES = (sid, mode, auto) =>
     : `Kendin GitHub'a gönderme. İş bitip doğrulanınca \`node tools/push-queue.mjs ready ${short(sid)} --fixes "<oyuncuya yönelik İngilizce satır>"\` çalıştır; ` +
       (auto ? `daha önce bir gönderim olursa ona katılır; yoksa ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle gider.` : 'ilk gönderimle gider.')) +
   ` Oyuncunun göreceği bir şey değişmediyse (yalnız docs/ ya da araç) satır yazma, \`--internal\` ver (sürüm notuna girmez).` +
+  ` Not: tek iş tek tırnak, en çok ${NOTE_MAX_CHARS} karakter; bir gönderimde ${NOTE_MAX_LINES} satırı aşanı kuyruk kendisi ayıklar, gönderim durmaz.` +
   ` Diğer sohbetlere mesaj atma.`;
 
 function hookPrompt() {
@@ -379,6 +465,8 @@ function statusText(q) {
     for (const f of e.files) lines.push('     ' + f);
     for (const [h, items] of Object.entries(e.notes ?? {})) for (const it of items) lines.push(`     [${h}] ${it}`);
   }
+  const comp = composeNotes(Object.entries(q.sessions).filter(([, e]) => e.ready && !e.lastError).map(([sid, e]) => ({ ...e, sid })));
+  if (comp.dropped.length) lines.push(`Sıradaki gönderimin oyuncu notu kendiliğinden düzenlenecek: ${Object.values(comp.groups).flat().join(' / ')}`);
   const u = unclaimed(q);
   if (u.length) lines.push(`Sahipsiz değişiklikler (hiçbir sohbete ait değil, gönderilmez): ${u.join(', ')}`);
   if (q.cutover) lines.push(`Worktree modu açık (${q.cutover.legacy.length} eski akış sohbeti).`);
@@ -487,8 +575,8 @@ async function push(trigger, args) {
     if (q.cutover) return await pushIntegrated(picked, trigger, { dry, forced, started });
     const files = [...new Set(picked.flatMap((e) => e.files))];
     const changed = files.filter((f) => execSync(`git --no-optional-locks status --porcelain -- "${f}"`, { encoding: 'utf8' }).trim());
-    const groups = {};
-    for (const e of picked) mergeNotes(groups, e.notes);
+    const comp = composeNotes(picked);
+    const groups = comp.groups;
     if (trigger === 'eod') {
       const u = unclaimed(q);
       if (u.length) { log(`!! Sahipsiz değişiklikler: ${u.join(', ')}`); if (!dry) notice(`Gece kontrolü: hiçbir sohbete ait olmayan değişiklikler var, gönderilmediler: ${u.join(', ')}. Bunlar hangi işe ait, söylersen kuyruğa eklerim.`); }
@@ -500,7 +588,6 @@ async function push(trigger, args) {
     }
     // Oyuncuya görünen satır yoksa (yalnız --internal girdiler) sürüm ve patch notes ALMAZ
     if (!hasNotes(groups) && !picked.every((e) => e.internal)) throw new Error('patch notes satırı yok (ready/push --fixes "..." ya da --internal)');
-    checkNoteLimits(groups);
 
     // Aynı dosya dışarıda kalan bir sohbette de değiştiyse ayrılamaz, beraber gider
     for (const [sid, e] of Object.entries(q.sessions)) {
@@ -513,6 +600,7 @@ async function push(trigger, args) {
     log(`> ${version ?? 'Sürümsüz iç güncelleme'} hazırlanıyor: ${picked.map((e) => `${short(e.sid)}/${e.mode}`).join(', ')} · ${changed.length} dosya${dry ? ' (deneme)' : ''}`);
     const shipped = await shipClean(version, groups, changed, dry);
     if (dry) return log('> Deneme bitti, kuyruk olduğu gibi kaldı.'), 0;
+    try { reportTrimmedNotes(version, comp); } catch (e) { log(`!! sürüm notu kaydı: ${firstLine(e)}`); }
 
     withQueue((qq) => {
       for (const e of picked) {
@@ -1822,10 +1910,10 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
         }
         return 0;
       }
-      const groups = {};
-      for (const e of live) mergeNotes(groups, e.notes);
+      const comp = composeNotes(live);
+      const groups = comp.groups;
       if (!hasNotes(groups) && !live.every((e) => e.internal)) throw new Error('patch notes satırı yok (ready/push --fixes "..." ya da --internal)');
-      checkNoteLimits(groups);
+      if (comp.dropped.length) log(`> Sürüm notu otomatik düzenlendi: oyuncu notunda ${Object.values(groups).flat().length} satır, giremeyen ${comp.dropped.length} satır commit açıklamasına yazılıyor.`);
       for (const [sid, e] of Object.entries(readQueue().sessions)) {
         if (picked.some((p) => p.sid === sid)) continue;
         const both = e.files.filter((f) => I.legacyFiles.includes(f));
@@ -1842,7 +1930,7 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
       paths.push(...numberOpenQuestions(scratch));
       if (paths.length) gx(scratch, ['add', '--', ...paths.filter((p) => existsSync(join(scratch, p)))]);
       const summary = version ? `${version}: ${Object.values(groups).flat()[0]}` : `Internal: docs/tools update (${I.changed.length} files)`;
-      const message = `${summary}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`;
+      const message = `${summary}${noteCommitBody(comp)}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`;
       let sha = commitTree(gx(scratch, ['write-tree']), base, message);
       gx(scratch, ['reset', '-q', '--soft', sha]);
       ps(`New-Item -ItemType Junction -Path '${join(scratch, 'node_modules')}' -Target '${join(GAME, 'node_modules')}' | Out-Null`);
@@ -1893,6 +1981,7 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
       log(`> Commit ${sha.slice(0, 7)}`);
 
       // Buradan sonrası gönderimi geri almaz: her adımın hatası yalnız bildirim olur
+      try { reportTrimmedNotes(version, comp); } catch (e) { log(`!! sürüm notu kaydı: ${firstLine(e)}`); }
       try { advanceMain(sha, I.legacyFiles); } catch (e) { log(`!! main: ${firstLine(e)}`); }
       for (const e of [...live, ...quiet]) {
         const r = wtOf(readQueue(), e.sid);
@@ -1987,22 +2076,22 @@ const main = {
       mergeNotes(e.notes, notes);
       setInternal(e, internal);
       scheduleAutoShip(q);
+      warnNotes(args[0], notes);
       const when = !q.cutover ? 'İlk gönderimle gider.'
         : q.autoShipAt ? `Otomatik gönderim ${clock(q.autoShipAt)}, daha önce bir gönderim olursa ona katılır.` : 'Süren gönderim bitince sıradaki otomatik gönderime girer.';
       console.log(`Hazır (${e.mode}, ${rec ? rec.branch : e.files.length + ' dosya'}). ${when}`);
     });
     try { autoShipKick(); } catch {}
   },
-  // Hazır girdinin sürüm notunu değiştirir (eklemez); toplu gönderimde 8 satıra indirmek için
+  // Hazır girdinin sürüm notunu değiştirir (eklemez); isteğe bağlı, düzenlenmeyen not da gönderimi durdurmaz
   notes: () => withQueue((q) => {
     const { notes } = parseNotes(args.slice(1));
     if (!hasNotes(notes)) throw new Error('kullanım: notes <oturum> --fixes "..." [--changes "..."] [--new "..."]');
     const e = entry(q, findSid(q, args[0]));
     e.notes = notes;
     delete e.internal;
-    // Not sınırı hatası sürüm notuyla düzelir (test koşmamıştı): bu bir yeniden deneme döngüsü değil, girdiler yeniden uygun olur
-    for (const o of Object.values(q.sessions)) if (o.lastError?.includes('sürüm notu sınırı')) delete o.lastError;
     scheduleAutoShip(q);
+    warnNotes(args[0], notes);
     console.log(`Not satırı: ${Object.values(notes).flat().length}.`);
   }),
   // Ömer'in konuştuğu tek sohbet (Ömer 2026-11-01); off kaldırır, raporlar yine ilk gelen sohbete gider

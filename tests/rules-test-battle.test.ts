@@ -13,7 +13,7 @@ describe('Objective test savaşları (debug)', () => {
     for (const mode of ['turns', 'test'] as const)
       it(`${t.kind} / ${mode}: kurulur ve biter`, () => {
         const b = build(7, mode, t.kind);
-        if (!['thunder_iron', 'rod', 'rolling', 'temper'].includes(t.kind) && !t.kind.startsWith('mob_')) expect(b.rules).toBeTruthy(); // bunlarda koşul yok (mob mekaniği)
+        if (!['thunder_iron', 'rod', 'rolling', 'temper'].includes(t.kind) && !t.kind.startsWith('mob_') && !t.kind.startsWith('kit_')) expect(b.rules).toBeTruthy(); // bunlarda koşul yok (mob mekaniği)
         if (t.kind === 'totem') expect(b.objectiveUnits()).toHaveLength(1);
         if (t.kind === 'deck' || t.kind === 'mixed') expect(b.combatants.filter((c) => b.isBlocked(c.slot))).toEqual([]);
         let i = 0;

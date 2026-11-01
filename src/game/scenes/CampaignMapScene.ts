@@ -59,6 +59,7 @@ import {
   suspendedOf,
   PAUSED_BROKEN,
   moveTo,
+  slotOpenedNote,
   newCampaign,
   nextStep,
   node,
@@ -77,8 +78,6 @@ import {
   clearedProgress,
   edgeEither,
   neighbors,
-  nextReplayMult,
-  replayMult,
   patrolAvailable,
   patrolRetreatNote,
   woundRules,
@@ -197,6 +196,7 @@ import { isGameMenuOpen, setGameMenuOpen } from '../../ui/game-menu';
 import type { MapMenuState } from '../session-flow';
 import { campaignGearSource, openGearScreen, showHandover } from '../../ui/gear-screen';
 import { openLootScreen, sampleLootXp, type LootXp } from '../../ui/loot-screen';
+import { chestDropOf, chestWasPlayed, playChestOpen } from '../../ui/chest-open';
 import { mountCampHud, type CampHud } from '../../ui/camp-hud';
 import { showLevelBanner } from '../../ui/level-banner';
 import { statPointsBetween } from '../../progression/levels';
@@ -933,14 +933,14 @@ export class CampaignMapScene extends Phaser.Scene {
     return null;
   }
 
-  /** Şeridin alt satırı (yalnızca bulunulan / gidilebilir / üstüne gelinen düğümde görünür): tür · alt başlık, devriye yüzdesi, yenilen koruma. */
+  /** Şeridin alt satırı (yalnızca bulunulan / gidilebilir / üstüne gelinen düğümde görünür): tür · alt başlık, devriye, yenilen koruma. */
   private labelSub(n: MapNode, v: NodeVis): string {
     if (v === 'goal') return '';
     const done = this.doneLook(n.id, v);
     // seçim noktası = ana yolda birden çok çıkış (cebe sapan yol seçim sayılmaz); cep düğümü 'optional' yazar
     const choice = mainOutgoing(this.map, n.id).length > 1 && !done ? '  ·  choice' : '';
     const parts = [`${n.subtitle}${n.optional ? '  ·  optional' : ''}${choice}`];
-    if (done && patrolAvailable(this.s, n.id)) parts.push(`Patrol ${Math.round(nextReplayMult(this.s, n.id) * 100)}% XP`);
+    if (done && patrolAvailable(this.s, n.id)) parts.push('Patrol');
     const guard = this.guardDefeated(n, v);
     if (guard) parts.push(`${guard} defeated`);
     // M-J / M-K: deniz yolu kilidi, Caravel kapısı, Caravel'in şu anki yeri
@@ -1123,7 +1123,7 @@ export class CampaignMapScene extends Phaser.Scene {
     }
     // Geçilen düğüm belirgin soluk (tik yok; Ömer 2026-10-28: yapılan / yapılmayan farkı net olsun)
     if (done) body.setAlpha(0.5);
-    // Devriye (serbest dolaşım, roadmap 2.10): temizlenmiş savaş düğümünde küçük döngü simgesi (yüzde şeritte: "Patrol 60%")
+    // Devriye (serbest dolaşım, roadmap 2.10): temizlenmiş savaş düğümünde küçük döngü simgesi (şeritte: "Patrol")
     const patrol = doneRaw && patrolAvailable(this.s, n.id);
     if (patrol) {
       const lg = this.add.graphics();
@@ -2309,8 +2309,8 @@ export class CampaignMapScene extends Phaser.Scene {
       blurb = n.type === 'town' ? townBlurb(n) : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : n.type === 'rest' ? (CONFIG.texts['camp'] ?? 'Make camp once: rest, tend a wound, sharpen a blade or train.') : n.type === 'merchant' ? 'Odo the Peddler sells gear and buys yours.' : '';
     const after = vis === 'goal' ? [] : outgoing(this.map, id).map((a) => node(this.map, a));
     const then = after.map((a) => `${a.name} (${TYPE_LABEL[a.type]})`).join(' or ');
-    // Devriye: temizlenmiş savaş düğümüne dönülünce aynı düşmanlar, ödül azalan getiriyle (sıradaki oynanışın yüzdesi)
-    if (patrol) blurb = `Patrols return here. Full gold and items, ${Math.round(nextReplayMult(s, id) * 100)}% of the first victory's XP, no Valor.`;
+    // Devriye: temizlenmiş savaş düğümüne dönülünce aynı düşmanlar, tam ödül (Valor hariç)
+    if (patrol) blurb = 'Patrols return here. Full gold, items and XP, no Valor.';
     return { kind, state, foes, leader: leaderName, then, next: after.map((a) => ({ name: a.name, type: a.type })), blurb, faces };
   }
 
@@ -2349,7 +2349,7 @@ export class CampaignMapScene extends Phaser.Scene {
             : '';
       const chain = depth ? diveChainLine(depth.dive ?? 0) : null;
       const company = patrol || depth ? undefined : companyCard(enc);
-      return { ...(company ? { company } : {}), ...(patrol ? { title: 'Fight the patrol?', ...this.patrolCard(id) } : side ? { info: { text: side } } : {}), ...(chain ? { chain } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
+      return { ...(company ? { company } : {}), ...(patrol ? { title: 'Fight the patrol?', ...this.patrolCard() } : side ? { info: { text: side } } : {}), ...(chain ? { chain } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
     }
     const t = PLACE_CARD[n.type];
     return { ...(t ? { title: t.title, actionLabel: t.action } : {}), ...(lockInfo ? { info: { text: lockInfo } } : {}), ...(f.blurb ? { fallback: { text: f.blurb } } : {}) };
@@ -2532,7 +2532,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const loop = this.add.graphics();
     drawLoopIcon(loop, -w + 32, py);
     root.add(loop);
-    root.add(fitW(elBody(this, -w + 52, py, `Patrol ${Math.round(replayMult(1) * 100)}% XP: cleared, fight again`, 17, EL.TXT, false).setOrigin(0, 0.5), w - 70));
+    root.add(fitW(elBody(this, -w + 52, py, 'Patrol: cleared, fight again', 17, EL.TXT, false).setOrigin(0, 0.5), w - 70));
     const sy = py + 32;
     const sk = this.add.graphics();
     sk.fillStyle(0x1a0c08, 1).fillCircle(-w + 32, sy, 11.5).lineStyle(1.6, 0xb8402f, 0.9).strokeCircle(-w + 32, sy, 11.5);
@@ -2712,6 +2712,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!root || this.pausedBlocks()) return;
     if (legendaryPreviewWanted()) setState(grantAllLegendaries(this.s)); // ?legendary=1 önizlemesi (madde 296)
     for (const h of this.s.roster) this.gearSeen.set(h.id, h.level); // Gear'ın parlaması söner
+    dismissLesson('gear_equip'); // Gear açıldı: yönlendirme bitti, sürükleme dersi aşağıda sürer
     this.syncCampHud();
     openGearScreen(root, {
       get: () => this.s,
@@ -2747,7 +2748,24 @@ export class CampaignMapScene extends Phaser.Scene {
         sessionStorage.removeItem('eov.debugLootXp');
         dbgXp = sampleLootXp(activeHeroes(s).map((x) => ({ id: x.id, class: x.class, level: x.level, xp: x.xp, fallen: isFallen(x) })), (c) => content.classes[c]?.name ?? c);
       }
+      // Sandık (Ömer 2026-11-01): dokununca tam ekran açılış sahnesi, sonra LOOT ekranı; yenilemede sahne atlanır, ödül kayıttadır
+      const chestDrop = dbgXp ? null : chestDropOf(s);
+      if (chestDrop) {
+        const ch = playChestOpen(root, {
+          drop: chestDrop,
+          get: () => this.s,
+          set: (x) => setState(x),
+          onClaimed: () => {
+            this.renderHud();
+            this.advance();
+          },
+          onOpenLoot: () => this.advance(),
+        });
+        this.events.once('shutdown', () => ch.abort());
+        return true;
+      }
       const h = openLootScreen(root, {
+        quiet: chestWasPlayed(s),
         ...(dbgXp ? { xp: dbgXp } : {}),
         get: () => this.s,
         set: (x) => setState(x),
@@ -3469,7 +3487,7 @@ export class CampaignMapScene extends Phaser.Scene {
     w = openCompanyWindow(root, {
       size: 1,
       cards: offer.map((id) => this.mwCard(id, this.joinTag())),
-      ...(sug ? { suggest: { hero: sug.hero, label: CONFIG.companySuggest.label, line: sug.line } } : {}),
+      ...(sug ? { suggest: { heroes: sug.heroes, label: CONFIG.companySuggest.label, line: sug.line } } : {}),
       tutorial: new Set(),
       title: h.label,
       sub: CONFIG.texts.townRecruit ?? CONFIG.texts.volunteer ?? '',
@@ -3836,17 +3854,16 @@ export class CampaignMapScene extends Phaser.Scene {
     this.launchBattle();
   }
 
-  /** Devriye kartı içeriği (Ömer 2026-10-27: italik cümle yerine etiketler): PATROL · <sıradaki oynanışın XP yüzdesi> · FULL LOOT · NO VALOR + düz geri çekilme notu. */
-  private patrolCard(id: string): { tags: PatrolTags; info: { text: string; plain: true } } {
-    const pct = Math.round(nextReplayMult(this.s, id) * 100);
-    return { tags: [{ text: 'Patrol' }, { text: `${pct}% XP`, tone: 'gold' }, { text: 'Full loot' }, { text: 'No Valor', tone: 'dim' }], info: { text: patrolRetreatNote(), plain: true } };
+  /** Devriye kartı içeriği (Ömer 2026-10-27: italik cümle yerine etiketler): PATROL · FULL LOOT · NO VALOR + düz geri çekilme notu. */
+  private patrolCard(): { tags: PatrolTags; info: { text: string; plain: true } } {
+    return { tags: [{ text: 'Patrol' }, { text: 'Full loot' }, { text: 'No Valor', tone: 'dim' }], info: { text: patrolRetreatNote(), plain: true } };
   }
 
   /** "Fight the patrol?" kartı: "Start battle?" kartının aynısı, bilgi satırı devriye ödülünü yazar (sıradaki oynanışın yüzdesi). */
   private confirmPatrol(id: string, go: () => void): void {
     const enc = nodeEncounter(node(this.map, id), this.s);
     if (!enc) return;
-    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(enc).groups, ...this.patrolCard(id), onGo: go });
+    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(enc).groups, ...this.patrolCard(), onGo: go });
   }
 
   /**
@@ -4259,7 +4276,9 @@ export class CampaignMapScene extends Phaser.Scene {
     const route = [from, ...(travelRoute(this.s, to) ?? [to])];
     this.directAt = null;
     this.pendingFight = null;
-    this.update2(moveTo(this.s, to));
+    const moved = moveTo(this.s, to);
+    const opened = slotOpenedNote(this.s, moved); // yuva açan düğüm (Reedgate: Trinket): varışta tek satır bildirim
+    this.update2(moved);
     this.tip?.destroy(true);
     this.tip = null;
     const fresh = !isCleared(this.s, to);
@@ -4273,6 +4292,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.walk(route, () => {
       this.arrival = null;
       this.refresh(true);
+      if (opened) this.toast(opened);
       const region = node(this.map, to).region;
       const banner = region !== before;
       if (banner) this.regionBanner(region);
@@ -4532,7 +4552,7 @@ export class CampaignMapScene extends Phaser.Scene {
       // Tutorial'da oynanan sınıflar (veda ettiler; yine seçilebilir): "Played in the tutorial" notu
       tutorial: new Set(joining ? [] : session.tutorialClasses),
       ...(joining ? { noLeader: true, title: CONFIG.texts['companyJoinTitle'] ?? 'Choose a companion', sub: CONFIG.texts['companyJoinSub'] ?? '' } : {}),
-      ...(sug ? { suggest: { hero: sug.hero, label: CONFIG.companySuggest.label, line: sug.line } } : {}),
+      ...(sug ? { suggest: { heroes: sug.heroes, label: CONFIG.companySuggest.label, line: sug.line } } : {}),
       toast: (m) => this.toast(m),
       naming: CONFIG.companyName,
       onSetOut: (picks, leader, name) => this.commit(setCompanyName(formCompany(this.s, picks, leader), name)),

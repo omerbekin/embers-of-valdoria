@@ -556,7 +556,7 @@ export const ITEM_ICONS: Record<string, Draw> = {
 };
 
 /** Yuva -> varsayılan ikon. */
-export const SLOT_ICON: Readonly<Record<string, string>> = { weapon: 'axe', offhand: 'shield', helm: 'helm', armor: 'mail', gloves: 'gloves', boots: 'boots', trinket: 'amulet' };
+export const SLOT_ICON: Readonly<Record<string, string>> = { weapon: 'axe', offhand: 'shield', helm: 'helm', armor: 'mail', gloves: 'gloves', boots: 'boots', ring: 'ring', trinket: 'amulet' };
 
 /** Silah ailesi (data/items.json > weaponFamilies) -> ikon. */
 export const FAMILY_ICON: Readonly<Record<string, string>> = { axes: 'axe', maces: 'mace', hammers: 'mace', bows: 'bow', daggers: 'dagger', staves: 'staff', charms: 'charms' };
@@ -582,7 +582,7 @@ export const ITEM_ICON_LABEL: Readonly<Record<string, string>> = {
   gloves: 'Gloves',
   boots: 'Boots',
   amulet: 'Trinket',
-  ring: 'Trinket: ring (item icon)',
+  ring: 'Ring',
 };
 
 export const ITEM_ICON_NAMES: readonly string[] = Object.keys(ITEM_ICONS);

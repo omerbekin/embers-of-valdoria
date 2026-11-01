@@ -46,7 +46,7 @@
   border: 0;
   cursor: pointer;
   text-align: left;
-  transition: color 0.15s;
+  transition: color var(--m-card-hover, 170ms);
 }
 
 .pn-head .el-dia {
@@ -69,7 +69,7 @@
   font-size: 16px;
   color: var(--el-muted);
   transform: rotate(-90deg);
-  transition: transform 0.18s var(--el-ease);
+  transition: transform var(--m-card-hover, 170ms) var(--el-ease);
 }
 
 .pn-rel.open .pn-chev {

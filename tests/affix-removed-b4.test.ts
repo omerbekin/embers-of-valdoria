@@ -116,8 +116,8 @@ describe('eski kayıt: göç', () => {
       st.roster[0]!.equipment.trinket = old('w1', 'copper_ring', [{ id: 'c_xp', q: 0.5 }]);
       st.suspended = suspendedStub(st.at);
     });
-    expect(worn.roster[0]!.equipment.trinket!.uid).toBe('w1');
-    expect(worn.roster[0]!.equipment.trinket!.rolls!.affixes.map((a) => a.id)).not.toContain('c_xp');
+    expect(worn.roster[0]!.equipment.ring!.uid).toBe('w1'); // Copper Ring artık Ring yuvasında (2026-11-01)
+    expect(worn.roster[0]!.equipment.ring!.rolls!.affixes.map((a) => a.id)).not.toContain('c_xp');
     expect(worn.suspended).toBeUndefined();
   });
 
@@ -129,7 +129,7 @@ describe('eski kayıt: göç', () => {
     expect(bag.suspended).toBeDefined();
     const heroes = run.heroes.map((h, i) => (i === 0 ? { ...h, equipment: { ...h.equipment, trinket: old('t1', 'copper_ring', [{ id: 'c_gold', q: 0.5 }]) } } : h));
     const worn = parseRun(JSON.stringify({ version: 7, run: { ...run, heroes, suspended } }))!;
-    expect(worn.heroes[0]!.equipment.trinket!.rolls!.affixes.map((a) => a.id)).not.toContain('c_gold');
+    expect(worn.heroes[0]!.equipment.ring!.rolls!.affixes.map((a) => a.id)).not.toContain('c_gold');
     expect(worn.suspended).toBeUndefined();
   });
 });

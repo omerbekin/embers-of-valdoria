@@ -12,6 +12,7 @@ import mwData from '../../data/map-window.json';
 import { addBustWeapons, avatarUrlOf, bustHtml } from './hero-bust';
 import { lockInput, unlockInput } from './input-lock';
 import { mountCloseButton } from './nav-close';
+import { attachBandTip, reasonSpec } from './band-tip-attach';
 
 export type MwTone = 'info' | 'gain' | 'heal' | 'loss' | 'dim';
 export type MwIcon = 'gold' | 'gear' | 'bag' | 'rest' | 'hp' | 'sword' | 'str' | 'dex' | 'int' | 'luck' | 'check';
@@ -183,7 +184,7 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   const paras = `<div class="mw-txt">${o.paras.map((p) => `<p>${esc(p)}</p>`).join('')}${o.chain ? `<p class="mw-chain">${esc(o.chain)}</p>` : ''}</div>`;
   const chipBlock = o.chips?.length ? `${o.chipsCap ? `<h3 class="mw-cap">${esc(o.chipsCap)}</h3>` : ''}${chipsHtml(o.chips, body?.k !== 'plates')}` : '';
   const acts = o.acts.length
-    ? `<div class="mw-acts">${o.acts.map((a, i) => `<button type="button" class="el-btn${a.primary ? ' primary ready' : ''}" data-act="${i}"${a.needPick ? ` disabled title="${esc(a.needPick)}"` : ''}>${esc(a.label)}</button>`).join('')}</div>`
+    ? `<div class="mw-acts">${o.acts.map((a, i) => `<button type="button" class="el-btn${a.primary ? ' primary ready' : ''}" data-act="${i}"${a.needPick ? ' disabled' : ''}>${esc(a.label)}</button>`).join('')}</div>`
     : '';
   const inner = `<div class="mw-scroll"><div class="mw-body">${paras}${chipBlock}${bodyHtml(body)}${acts}</div></div>`;
   const defs = '<svg width="0" height="0" style="position:absolute"><defs><radialGradient id="mw-disc" cx="50%" cy="42%" r="65%"><stop offset="0" stop-color="#4a3622"/><stop offset=".7" stop-color="#1c130b"/><stop offset="1" stop-color="#0d0805"/></radialGradient></defs></svg>';
@@ -232,7 +233,8 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
       const b = actBtns[i];
       if (b && a.needPick) {
         b.disabled = !picked;
-        b.title = picked ? '' : a.needPick;
+        // pasif nedeni A Band ipucu (ilk kurulumda bağlanır; ipucu üretici seçime bakar)
+        if (!b.dataset['bt']) attachBandTip(b, () => (picked ? null : reasonSpec(a.label, a.needPick!)));
       }
     });
   };

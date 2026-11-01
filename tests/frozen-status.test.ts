@@ -241,6 +241,15 @@ describe('Frozen: zemin', () => {
     shot(b, t);
     expect(has(t, 'chilled')).toBe(false);
   });
+
+  it('ağaç düğümünden gelen Chilled de Burning zeminde tutmaz (istisna yok)', () => {
+    const b = make(P, E);
+    const t = of(b, 'drowned');
+    const mage = of(b, 'mage');
+    b.debugPlaceGround(mage.uid, 'burning', t.board, [t.slot], 3);
+    (b as unknown as { addStatus(c: Combatant, s: object, e: () => void): void }).addStatus(t, { kind: 'chilled', turns: 1, source: mage.uid, origin: 'tree' }, () => {});
+    expect(has(t, 'chilled')).toBe(false);
+  });
 });
 
 describe('Frozen: ateş', () => {

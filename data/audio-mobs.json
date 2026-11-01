@@ -224,7 +224,132 @@
     "headlong": {
       "cast": "mobHeadlongCast",
       "hit": "mobHeadlongHit"
-    }
+    },
+    "shard_pike_thrust": {
+      "cast": "mobShardPikeThrustCast",
+      "hit": "mobShardPikeThrustHit"
+    },
+    "cinder_rend": {
+      "cast": "mobCinderRendCast",
+      "hit": "mobCinderRendHit"
+    },
+    "gloam_lunge": {
+      "cast": "mobGloamLungeCast",
+      "hit": "mobGloamLungeHit"
+    },
+    "frost_bite": {
+      "cast": "mobFrostBiteCast",
+      "hit": "mobFrostBiteHit"
+    },
+    "snow_rend": {
+      "cast": "mobSnowRendCast",
+      "hit": "mobSnowRendHit"
+    },
+    "clan_axe": {
+      "cast": "mobClanAxeCast",
+      "hit": "mobClanAxeHit"
+    },
+    "cleave": {
+      "cast": "mobCleaveCast",
+      "hit": "mobCleaveHit"
+    },
+    "mandible": {
+      "cast": "mobMandibleCast",
+      "hit": "mobMandibleHit"
+    },
+    "skitter": {
+      "cast": "mobSkitterCast",
+      "hit": "mobSkitterHit"
+    },
+    "mock": {
+      "cast": "mobMockCast",
+      "hit": "mobMockHit"
+    },
+    "chant": {
+      "cast": "mobChantCast",
+      "hit": "mobChantHit"
+    },
+    "pyre_bolt": {
+      "cast": "mobPyreBoltCast",
+      "hit": "mobPyreBoltHit"
+    },
+    "spread_the_flame": {
+      "cast": "mobSpreadTheFlameCast",
+      "hit": "mobSpreadTheFlameHit"
+    },
+    "cinder_brand": {
+      "cast": "mobCinderBrandCast",
+      "hit": "mobCinderBrandHit"
+    },
+    "knight_hold_gate": {
+      "cast": "mobKnightHoldGateCast",
+      "hit": "mobKnightHoldGateHit"
+    },
+    "forge_hammer": {
+      "cast": "mobForgeHammerCast",
+      "hit": "mobForgeHammerHit"
+    },
+    "vent": {
+      "hit": "mobVentHit"
+    },
+    "wight_feast": {
+      "cast": "mobWightFeastCast",
+      "hit": "mobWightFeastHit"
+    },
+    "rime_bite": {
+      "cast": "mobRimeBiteCast",
+      "hit": "mobRimeBiteHit"
+    },
+    "rime_run_down": {
+      "cast": "mobRimeRunDownCast",
+      "hit": "mobRimeRunDownHit"
+    },
+    "ice_shot": {
+      "cast": "mobIceShotCast",
+      "hit": "mobIceShotHit"
+    },
+    "ice_shard": {
+      "cast": "mobIceShardCast",
+      "hit": "mobIceShardHit",
+      "roles": {
+        "flameRoar": "none"
+      }
+    },
+    "sodden_hex": {
+      "cast": "mobSoddenHexCast",
+      "hit": "mobSoddenHexHit"
+    },
+    "hollow_rockfall": {
+      "cast": "mobHollowRockfallCast",
+      "hit": "mobHollowRockfallHit"
+    },
+    "molten_run_down": {
+      "cast": "mobMoltenRunDownCast",
+      "hit": "mobMoltenRunDownHit"
+    },
+    "frost_fang": { "cast": "mobFrostFangCast", "hit": "mobFrostFangHit" },
+    "snowdrift": { "hit": "mobSnowdriftHit" },
+    "throat_leap": { "cast": "mobThroatLeapCast", "hit": "mobThroatLeapHit" },
+    "matriarch_stoke": { "cast": "mobMatriarchStokeCast", "hit": "mobMatriarchStokeHit" },
+    "sledge": { "cast": "mobSledgeCast", "hit": "mobSledgeHit" },
+    "reforge": { "cast": "mobReforgeCast", "hit": "mobReforgeHit" },
+    "rivet_plate": { "cast": "mobRivetPlateCast", "hit": "mobRivetPlateHit" },
+    "fervour": { "cast": "mobFervourCast", "hit": "mobFervourHit" },
+    "kindle_the_nave": { "cast": "mobKindleTheNaveCast", "hit": "mobKindleTheNaveHit" },
+    "searing_bash": { "cast": "mobSearingBashCast", "hit": "mobSearingBashHit" },
+    "warden_hold_gate": { "cast": "mobWardenHoldGateCast", "hit": "mobWardenHoldGateHit" },
+    "slag_wall": { "hit": "mobSlagWallHit" },
+    "avalanche": { "cast": "mobAvalancheCast", "hit": "mobAvalancheHit" },
+    "roar": { "cast": "mobRoarCast", "hit": "mobRoarHit" },
+    "decree_of_stone": { "cast": "mobDecreeOfStoneCast", "hit": "mobDecreeOfStoneHit" },
+    "bring_down_the_hall": { "cast": "mobBringDownTheHallCast", "hit": "mobBringDownTheHallHit" },
+    "hammerfall": { "cast": "mobHammerfallCast", "hit": "mobHammerfallHit" },
+    "quench": { "cast": "mobQuenchCast", "hit": "mobQuenchHit" },
+    "forge_chains": { "cast": "mobForgeChainsCast", "hit": "mobForgeChainsHit" },
+    "temper_the_crown": { "cast": "mobTemperTheCrownCast", "hit": "mobTemperTheCrownHit" },
+    "cinder_storm": { "hit": "mobCinderStormHit" },
+    "breathe": { "hit": "mobBreatheHit" },
+    "the_first_fire": { "cast": "mobTheFirstFireCast", "hit": "mobTheFirstFireHit" }
   },
   "sfx": {
     "mobShivSlip": {
@@ -25828,6 +25953,6961 @@
           "decay": 0.05,
           "gain": 0.3,
           "at": 0.004
+        }
+      ]
+    },
+    "mobShardPikeThrustCast": {
+      "label": "Pike Thrust: windup",
+      "desc": "Placeholder: copy of Pike Thrust: lunge",
+      "gain": 1.315,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 255,
+          "f1": 1105,
+          "q": 0.8,
+          "attack": 0.08,
+          "decay": 0.14,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2040,
+          "f1": 2720,
+          "q": 4,
+          "attack": 0.04,
+          "decay": 0.08,
+          "gain": 0.2,
+          "at": 0.06
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 90,
+          "f1": 50,
+          "attack": 0.002,
+          "decay": 0.08,
+          "gain": 0.4
+        }
+      ]
+    },
+    "mobShardPikeThrustHit": {
+      "label": "Pike Thrust: hit",
+      "desc": "Placeholder: copy of Pike Thrust: impact",
+      "gain": 0.927,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 156,
+          "f1": 66,
+          "attack": 0.002,
+          "decay": 0.12,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1800,
+          "f1": 450,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.06,
+          "gain": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1800,
+          "f1": 1080,
+          "q": 1.3,
+          "attack": 0.01,
+          "decay": 0.18,
+          "gain": 0.7,
+          "at": 0.07,
+          "tremHz": 36,
+          "tremDepth": 0.85
+        }
+      ]
+    },
+    "mobCinderRendCast": {
+      "label": "Rend: windup",
+      "desc": "Placeholder: copy of Rend: lunge",
+      "gain": 3.462,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 839,
+          "f1": 629.25,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.489,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 773,
+          "f1": 579.75,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.496,
+          "at": 0.052
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 538,
+          "f1": 403.5,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.494,
+          "at": 0.091
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 592,
+          "f1": 444,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.514,
+          "at": 0.139
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1400,
+          "f1": 1000,
+          "q": 1.2,
+          "attack": 0.02,
+          "decay": 0.12,
+          "gain": 0.45,
+          "at": 0.05
+        }
+      ]
+    },
+    "mobCinderRendHit": {
+      "label": "Rend: hit",
+      "desc": "Placeholder: copy of Rend: tear",
+      "gain": 1.911,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1800,
+          "f1": 900,
+          "q": 1.3,
+          "attack": 0.005,
+          "decay": 0.12,
+          "gain": 0.8,
+          "tremHz": 38,
+          "tremDepth": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 700,
+          "f1": 175,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2000,
+          "f1": 1000,
+          "q": 1.3,
+          "attack": 0.005,
+          "decay": 0.12,
+          "gain": 0.75,
+          "at": 0.13,
+          "tremHz": 42,
+          "tremDepth": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 650,
+          "f1": 162.5,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.55,
+          "at": 0.13
+        }
+      ]
+    },
+    "mobGloamLungeCast": {
+      "label": "Lunge: windup",
+      "desc": "Placeholder: copy of Lunge: uncoil",
+      "gain": 1.63,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 160,
+          "f1": 720,
+          "q": 0.7,
+          "attack": 0.18,
+          "decay": 0.26,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 720,
+          "f1": 320,
+          "q": 0.9,
+          "attack": 0.05,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 400,
+          "f1": 160,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.3,
+          "gain": 0.3,
+          "at": 0.05,
+          "tremHz": 14,
+          "tremDepth": 0.6
+        }
+      ]
+    },
+    "mobGloamLungeHit": {
+      "label": "Lunge: hit",
+      "desc": "Placeholder: copy of Lunge: slam",
+      "gain": 0.685,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 114.4,
+          "f1": 44,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 422.4,
+          "f1": 264,
+          "q": 1.8,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1584,
+          "f1": 396,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1144,
+          "f1": 1012,
+          "q": 6,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.3,
+          "at": 0.004
+        }
+      ]
+    },
+    "mobFrostBiteCast": {
+      "label": "Frost Bite: windup",
+      "desc": "Placeholder: copy of Bite: snarl",
+      "gain": 1.042,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.42,
+          "attack": 0.03,
+          "release": 0.12,
+          "volume": 0.55,
+          "f0Start": 95,
+          "f0Peak": 120,
+          "f0End": 85,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 600,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 950,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.7,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.45,
+            "center": 1500,
+            "q": 0.8
+          },
+          "drive": 4,
+          "raspHz": 32,
+          "raspDepth": 0.75,
+          "lowpass": 2200,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobFrostBiteHit": {
+      "label": "Frost Bite: hit",
+      "desc": "Placeholder: copy of Bite: snap",
+      "gain": 1.139,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2900,
+          "f1": 2175,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2300,
+          "f1": 1725,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.6,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.8,
+          "at": 0.01
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 140,
+          "f1": 60,
+          "attack": 0.002,
+          "decay": 0.1,
+          "gain": 0.6,
+          "at": 0.01
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 500,
+          "q": 1.5,
+          "attack": 0.005,
+          "decay": 0.1,
+          "gain": 0.4,
+          "at": 0.04
+        }
+      ]
+    },
+    "mobSnowRendCast": {
+      "label": "Rend: windup",
+      "desc": "Placeholder: copy of Rend: lunge",
+      "gain": 3.462,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 839,
+          "f1": 629.25,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.489,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 773,
+          "f1": 579.75,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.496,
+          "at": 0.052
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 538,
+          "f1": 403.5,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.494,
+          "at": 0.091
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 592,
+          "f1": 444,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.514,
+          "at": 0.139
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1400,
+          "f1": 1000,
+          "q": 1.2,
+          "attack": 0.02,
+          "decay": 0.12,
+          "gain": 0.45,
+          "at": 0.05
+        }
+      ]
+    },
+    "mobSnowRendHit": {
+      "label": "Rend: hit",
+      "desc": "Placeholder: copy of Rend: tear",
+      "gain": 1.911,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1800,
+          "f1": 900,
+          "q": 1.3,
+          "attack": 0.005,
+          "decay": 0.12,
+          "gain": 0.8,
+          "tremHz": 38,
+          "tremDepth": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 700,
+          "f1": 175,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2000,
+          "f1": 1000,
+          "q": 1.3,
+          "attack": 0.005,
+          "decay": 0.12,
+          "gain": 0.75,
+          "at": 0.13,
+          "tremHz": 42,
+          "tremDepth": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 650,
+          "f1": 162.5,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.55,
+          "at": 0.13
+        }
+      ]
+    },
+    "mobClanAxeCast": {
+      "label": "Axe: windup",
+      "desc": "Placeholder: copy of Billhook: swing",
+      "gain": 1.461,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 300,
+          "f1": 1300,
+          "q": 0.8,
+          "attack": 0.08,
+          "decay": 0.14,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2400,
+          "f1": 3200,
+          "q": 4,
+          "attack": 0.04,
+          "decay": 0.08,
+          "gain": 0.2,
+          "at": 0.06
+        }
+      ]
+    },
+    "mobClanAxeHit": {
+      "label": "Axe: hit",
+      "desc": "Placeholder: copy of Billhook: snag",
+      "gain": 0.927,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 130,
+          "f1": 55,
+          "attack": 0.002,
+          "decay": 0.12,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1500,
+          "f1": 375,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.06,
+          "gain": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1500,
+          "f1": 900,
+          "q": 1.3,
+          "attack": 0.01,
+          "decay": 0.18,
+          "gain": 0.7,
+          "at": 0.07,
+          "tremHz": 36,
+          "tremDepth": 0.85
+        }
+      ]
+    },
+    "mobCleaveCast": {
+      "label": "Cleave: windup",
+      "desc": "Placeholder: copy of Toll Sweep: sweep",
+      "gain": 1.63,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 200,
+          "f1": 900,
+          "q": 0.7,
+          "attack": 0.18,
+          "decay": 0.26,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 400,
+          "q": 0.9,
+          "attack": 0.05,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 500,
+          "f1": 200,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.3,
+          "gain": 0.3,
+          "at": 0.05,
+          "tremHz": 14,
+          "tremDepth": 0.6
+        }
+      ]
+    },
+    "mobCleaveHit": {
+      "label": "Cleave: hit",
+      "desc": "Placeholder: copy of Toll Sweep: hits",
+      "gain": 0.724,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 120,
+          "f1": 50,
+          "attack": 0.002,
+          "decay": 0.14,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1600,
+          "f1": 400,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.06,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2200,
+          "f1": 1400,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.4
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 110,
+          "f1": 48,
+          "attack": 0.002,
+          "decay": 0.14,
+          "gain": 0.8,
+          "at": 0.09
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1400,
+          "f1": 350,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.06,
+          "gain": 0.7,
+          "at": 0.09
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2000,
+          "f1": 1300,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.35,
+          "at": 0.09
+        }
+      ]
+    },
+    "mobMandibleCast": {
+      "label": "Mandible: windup",
+      "desc": "Placeholder: copy of Gnaw: hiss",
+      "gain": 1.128,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.4,
+          "attack": 0.02,
+          "release": 0.12,
+          "volume": 0.3,
+          "f0Start": 140,
+          "f0Peak": 150,
+          "f0End": 120,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 300,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 2200,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2900,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 1,
+            "gain": 0,
+            "detune": 0
+          },
+          "noise": {
+            "gain": 1,
+            "center": 3600,
+            "q": 0.8
+          },
+          "drive": 2.5,
+          "raspHz": 25,
+          "raspDepth": 0.8,
+          "lowpass": 4500,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobMandibleHit": {
+      "label": "Mandible: hit",
+      "desc": "Placeholder: copy of Gnaw: crunch",
+      "gain": 2.135,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1647,
+          "f1": 1235.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.018,
+          "gain": 0.537,
+          "at": 0.008
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1735,
+          "f1": 1301.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.018,
+          "gain": 0.577,
+          "at": 0.045
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1774,
+          "f1": 1330.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.018,
+          "gain": 0.494,
+          "at": 0.106
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1374,
+          "f1": 1030.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.018,
+          "gain": 0.509,
+          "at": 0.149
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1606,
+          "f1": 1204.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.018,
+          "gain": 0.519,
+          "at": 0.194
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1955,
+          "f1": 1466.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.018,
+          "gain": 0.595,
+          "at": 0.225
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 900,
+          "f1": 225,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.7,
+          "at": 0.02
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 800,
+          "f1": 200,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.6,
+          "at": 0.12
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 120,
+          "f1": 60,
+          "attack": 0.002,
+          "decay": 0.08,
+          "gain": 0.4,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobSkitterCast": {
+      "label": "Skitter: windup",
+      "desc": "Placeholder: copy of Run Down: sprint",
+      "gain": 3.116,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 755,
+          "f1": 566,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.489,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 696,
+          "f1": 522,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.496,
+          "at": 0.052
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 484,
+          "f1": 363,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.494,
+          "at": 0.091
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 533,
+          "f1": 400,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.514,
+          "at": 0.139
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1260,
+          "f1": 900,
+          "q": 1.2,
+          "attack": 0.02,
+          "decay": 0.12,
+          "gain": 0.45,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 692,
+          "f1": 519,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.327,
+          "at": 0.156
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 792,
+          "f1": 594,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.324,
+          "at": 0.182
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 472,
+          "f1": 354,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.343,
+          "at": 0.229
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 455,
+          "f1": 341,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.331,
+          "at": 0.267
+        }
+      ]
+    },
+    "mobSkitterHit": {
+      "label": "Skitter: hit",
+      "desc": "Placeholder: copy of Run Down: tackle",
+      "gain": 0.685,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 104,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 384,
+          "f1": 240,
+          "q": 1.8,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1440,
+          "f1": 360,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1040,
+          "f1": 920,
+          "q": 6,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.3,
+          "at": 0.004
+        }
+      ]
+    },
+    "mobMockCast": {
+      "label": "Mock: windup",
+      "desc": "Placeholder: copy of Sand in the Eyes: fling",
+      "gain": 1.032,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 500,
+          "f1": 1600,
+          "q": 0.8,
+          "attack": 0.07200000000000001,
+          "decay": 0.08800000000000001,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 4200,
+          "f1": 3000,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.12,
+          "gain": 0.35,
+          "at": 0.08
+        }
+      ]
+    },
+    "mobMockHit": {
+      "label": "Mock: hit",
+      "desc": "Placeholder: copy of Sand in the Eyes: spray",
+      "gain": 0.839,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3800,
+          "f1": 2600,
+          "q": 0.7,
+          "attack": 0.005,
+          "decay": 0.45,
+          "gain": 0.6,
+          "tremHz": 33,
+          "tremDepth": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2400,
+          "f1": 1500,
+          "q": 1.2,
+          "attack": 0.01,
+          "decay": 0.3,
+          "gain": 0.4
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3585,
+          "f1": 2688.75,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.008,
+          "gain": 0.273,
+          "at": 0.021
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 4140,
+          "f1": 3105,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.008,
+          "gain": 0.319,
+          "at": 0.053
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 4174,
+          "f1": 3130.5,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.008,
+          "gain": 0.264,
+          "at": 0.101
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3012,
+          "f1": 2259,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.008,
+          "gain": 0.322,
+          "at": 0.136
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 4831,
+          "f1": 3623.25,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.008,
+          "gain": 0.263,
+          "at": 0.177
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3889,
+          "f1": 2916.75,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.008,
+          "gain": 0.298,
+          "at": 0.213
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3825,
+          "f1": 2868.75,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.008,
+          "gain": 0.342,
+          "at": 0.257
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 4935,
+          "f1": 3701.25,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.008,
+          "gain": 0.246,
+          "at": 0.297
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3114,
+          "f1": 2335.5,
+          "q": 4,
+          "attack": 0.001,
+          "decay": 0.008,
+          "gain": 0.275,
+          "at": 0.323
+        }
+      ]
+    },
+    "mobChantCast": {
+      "label": "Chant: windup",
+      "desc": "Placeholder: copy of Iron Decree: seal",
+      "gain": 0.475,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 86,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 570,
+          "f1": 361,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.7
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 81,
+          "f1": 36,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 1,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 532,
+          "f1": 342,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.7,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3200,
+          "f1": 2600,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.25,
+          "gain": 0.25,
+          "at": 0.06
+        }
+      ]
+    },
+    "mobChantHit": {
+      "label": "Chant: hit",
+      "desc": "Placeholder: copy of Iron Decree: command",
+      "gain": 0.972,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.9,
+          "attack": 0.02,
+          "release": 0.2,
+          "volume": 0.7,
+          "f0Start": 86.1,
+          "f0Peak": 114.8,
+          "f0End": 75.44,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 600,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 950,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.5,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.3,
+            "center": 2400,
+            "q": 0.8
+          },
+          "drive": 3.6,
+          "raspHz": 24,
+          "raspDepth": 0.55,
+          "lowpass": 2800,
+          "echo": {
+            "delay": 0.1,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobPyreBoltCast": {
+      "label": "Pyre Bolt: windup",
+      "desc": "Placeholder: copy of Ember Toss: flick",
+      "gain": 1.807,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 600,
+          "f1": 1800,
+          "q": 0.8,
+          "attack": 0.06300000000000001,
+          "decay": 0.07700000000000001,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1600,
+          "f1": 600,
+          "q": 0.7,
+          "attack": 0.02,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.04
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2186,
+          "f1": 1639.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.281,
+          "at": 0.043
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1728,
+          "f1": 1296,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.235,
+          "at": 0.11
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3122,
+          "f1": 2341.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.261,
+          "at": 0.163
+        }
+      ]
+    },
+    "mobPyreBoltHit": {
+      "label": "Pyre Bolt: hit",
+      "desc": "Placeholder: copy of Ember Toss: burst",
+      "gain": 0.695,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 100,
+          "f1": 45,
+          "attack": 0.002,
+          "decay": 0.16,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 2400,
+          "f1": 400,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.25,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 2800,
+          "f1": 2800,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.3,
+          "gain": 0.3,
+          "at": 0.03,
+          "tremHz": 47,
+          "tremDepth": 0.95
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3171,
+          "f1": 2378.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.336,
+          "at": 0.042
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2267,
+          "f1": 1700.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.294,
+          "at": 0.131
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1984,
+          "f1": 1488,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.293,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2856,
+          "f1": 2142,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.322,
+          "at": 0.267
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2318,
+          "f1": 1738.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.301,
+          "at": 0.346
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2417,
+          "f1": 1812.75,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.326,
+          "at": 0.403
+        }
+      ]
+    },
+    "mobSpreadTheFlameCast": {
+      "label": "Spread the Flame: windup",
+      "desc": "Placeholder: copy of Burn the Ground: pour",
+      "gain": 2.419,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 500,
+          "f1": 300,
+          "q": 0.8,
+          "attack": 0.03,
+          "decay": 0.4,
+          "gain": 0.8,
+          "tremHz": 9,
+          "tremDepth": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 700,
+          "q": 2,
+          "attack": 0.04,
+          "decay": 0.35,
+          "gain": 0.35,
+          "at": 0.05,
+          "tremHz": 9,
+          "tremDepth": 0.9
+        }
+      ]
+    },
+    "mobSpreadTheFlameHit": {
+      "label": "Spread the Flame: hit",
+      "desc": "Placeholder: copy of Burn the Ground: ignite",
+      "gain": 0.87,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 90,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.3,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1800,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.6,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 500,
+          "f1": 700,
+          "q": 0.8,
+          "attack": 0.15,
+          "decay": 0.6,
+          "gain": 0.45,
+          "at": 0.1,
+          "tremHz": 11,
+          "tremDepth": 0.5
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2408,
+          "f1": 1806,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.271,
+          "at": 0.111
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2531,
+          "f1": 1898.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.219,
+          "at": 0.217
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1669,
+          "f1": 1251.75,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.219,
+          "at": 0.315
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2117,
+          "f1": 1587.75,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.29,
+          "at": 0.413
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2399,
+          "f1": 1799.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.236,
+          "at": 0.52
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3019,
+          "f1": 2264.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.253,
+          "at": 0.619
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2427,
+          "f1": 1820.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.24,
+          "at": 0.716
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2298,
+          "f1": 1723.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.252,
+          "at": 0.812
+        }
+      ]
+    },
+    "mobCinderBrandCast": {
+      "label": "Brand: windup",
+      "desc": "Placeholder: copy of Scorch Bite: snarl",
+      "gain": 0.938,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.42,
+          "attack": 0.03,
+          "release": 0.12,
+          "volume": 0.55,
+          "f0Start": 80.75,
+          "f0Peak": 102,
+          "f0End": 72.25,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 600,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 950,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.7,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.45,
+            "center": 1500,
+            "q": 0.8
+          },
+          "drive": 4,
+          "raspHz": 32,
+          "raspDepth": 0.75,
+          "lowpass": 2200,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3000,
+          "f1": 3600,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.3,
+          "gain": 0.2,
+          "at": 0.05
+        }
+      ]
+    },
+    "mobCinderBrandHit": {
+      "label": "Brand: hit",
+      "desc": "Placeholder: copy of Scorch Bite: bite",
+      "gain": 1.025,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2900,
+          "f1": 2175,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2300,
+          "f1": 1725,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.6,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.8,
+          "at": 0.01
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 140,
+          "f1": 60,
+          "attack": 0.002,
+          "decay": 0.1,
+          "gain": 0.6,
+          "at": 0.01
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 500,
+          "q": 1.5,
+          "attack": 0.005,
+          "decay": 0.1,
+          "gain": 0.4,
+          "at": 0.04
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3008,
+          "f1": 2256,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.157,
+          "at": 0.057
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2706,
+          "f1": 2030,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.189,
+          "at": 0.121
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2885,
+          "f1": 2164,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.217,
+          "at": 0.185
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2045,
+          "f1": 1534,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.187,
+          "at": 0.252
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2335,
+          "f1": 1751,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.187,
+          "at": 0.311
+        }
+      ]
+    },
+    "mobKnightHoldGateCast": {
+      "label": "Hold the Gate: windup",
+      "desc": "Placeholder: copy of Hold the Gate: shield slam",
+      "gain": 0.441,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 77,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 595,
+          "f1": 170,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.14,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 425,
+          "f1": 306,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2303,
+          "f1": 2118,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.208,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2236,
+          "f1": 2057,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.218,
+          "at": 0.083
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1838,
+          "f1": 1691,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.193,
+          "at": 0.12
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2218,
+          "f1": 2040,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.185,
+          "at": 0.147
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 80,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobKnightHoldGateHit": {
+      "label": "Hold the Gate: hit",
+      "desc": "Placeholder: copy of Hold the Gate: roar",
+      "gain": 1.032,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.7,
+          "attack": 0.012,
+          "release": 0.12,
+          "volume": 0.7,
+          "f0Start": 120,
+          "f0Peak": 140,
+          "f0End": 96,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 450,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 800,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0.05,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.3,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.25,
+            "center": 2400,
+            "q": 0.8
+          },
+          "drive": 3,
+          "raspHz": 22,
+          "raspDepth": 0.4,
+          "lowpass": 3000,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobForgeHammerCast": {
+      "label": "Hammer: windup",
+      "desc": "Placeholder: copy of Gatestone Slam: heave",
+      "gain": 2.663,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 300,
+          "f1": 450,
+          "q": 0.8,
+          "attack": 0.08,
+          "decay": 0.3,
+          "gain": 0.9,
+          "tremHz": 18,
+          "tremDepth": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 700,
+          "q": 2,
+          "attack": 0.06,
+          "decay": 0.25,
+          "gain": 0.4,
+          "at": 0.03,
+          "tremHz": 25,
+          "tremDepth": 0.8
+        }
+      ]
+    },
+    "mobForgeHammerHit": {
+      "label": "Hammer: hit",
+      "desc": "Placeholder: copy of Gatestone Slam: slam",
+      "gain": 0.627,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 70,
+          "f1": 32,
+          "attack": 0.002,
+          "decay": 0.4,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 160,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.35,
+          "gain": 0.95
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 400,
+          "f1": 250,
+          "q": 1.2,
+          "attack": 0.001,
+          "decay": 0.2,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1272,
+          "f1": 954,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.02,
+          "gain": 0.268,
+          "at": 0.057
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1307,
+          "f1": 980.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.02,
+          "gain": 0.234,
+          "at": 0.106
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1951,
+          "f1": 1463.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.02,
+          "gain": 0.282,
+          "at": 0.15
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2447,
+          "f1": 1835.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.02,
+          "gain": 0.283,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1614,
+          "f1": 1210.5,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.02,
+          "gain": 0.253,
+          "at": 0.257
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2378,
+          "f1": 1783.5,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.02,
+          "gain": 0.257,
+          "at": 0.311
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1724,
+          "f1": 1293,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.02,
+          "gain": 0.233,
+          "at": 0.349
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2055,
+          "f1": 1541.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.02,
+          "gain": 0.224,
+          "at": 0.403
+        }
+      ]
+    },
+    "mobVentHit": {
+      "label": "Vent: hit",
+      "desc": "Placeholder: copy of Kiln Smoke: billow",
+      "gain": 0.788,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 400,
+          "f1": 250,
+          "q": 0.7,
+          "attack": 0.15,
+          "decay": 0.7,
+          "gain": 0.9,
+          "tremHz": 6,
+          "tremDepth": 0.4
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3000,
+          "f1": 4200,
+          "q": 0.7,
+          "attack": 0.1,
+          "decay": 0.6,
+          "gain": 0.35,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 600,
+          "q": 1,
+          "attack": 0.1,
+          "decay": 0.5,
+          "gain": 0.3,
+          "at": 0.1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2291,
+          "f1": 1718.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.146,
+          "at": 0.207
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3143,
+          "f1": 2357.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.195,
+          "at": 0.383
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1866,
+          "f1": 1399.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.167,
+          "at": 0.535
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3140,
+          "f1": 2355,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.143,
+          "at": 0.716
+        }
+      ]
+    },
+    "mobWightFeastCast": {
+      "label": "Feast: windup",
+      "desc": "Placeholder: copy of Feast: hungry growl",
+      "gain": 1.463,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.6,
+          "attack": 0.04,
+          "release": 0.15,
+          "volume": 0.5,
+          "f0Start": 78,
+          "f0Peak": 90,
+          "f0End": 70,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 600,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 950,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.6,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.35,
+            "center": 1100,
+            "q": 0.8
+          },
+          "drive": 3,
+          "raspHz": 18,
+          "raspDepth": 0.85,
+          "lowpass": 1600,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobWightFeastHit": {
+      "label": "Feast: hit",
+      "desc": "Placeholder: copy of Feast: tear",
+      "gain": 1.835,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1600,
+          "f1": 700,
+          "q": 1.2,
+          "attack": 0.005,
+          "decay": 0.16,
+          "gain": 0.8,
+          "tremHz": 34,
+          "tremDepth": 0.85
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1300,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.002,
+          "decay": 0.12,
+          "gain": 0.7,
+          "at": 0.02
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 500,
+          "f1": 900,
+          "q": 3,
+          "attack": 0.04,
+          "decay": 0.16,
+          "gain": 0.4,
+          "at": 0.18
+        }
+      ]
+    },
+    "mobRimeBiteCast": {
+      "label": "Rime Bite: windup",
+      "desc": "Placeholder: copy of Scorch Bite: snarl",
+      "gain": 0.938,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.42,
+          "attack": 0.03,
+          "release": 0.12,
+          "volume": 0.55,
+          "f0Start": 80.75,
+          "f0Peak": 102,
+          "f0End": 72.25,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 600,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 950,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.7,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.45,
+            "center": 1500,
+            "q": 0.8
+          },
+          "drive": 4,
+          "raspHz": 32,
+          "raspDepth": 0.75,
+          "lowpass": 2200,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3000,
+          "f1": 3600,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.3,
+          "gain": 0.2,
+          "at": 0.05
+        }
+      ]
+    },
+    "mobRimeBiteHit": {
+      "label": "Rime Bite: hit",
+      "desc": "Placeholder: copy of Scorch Bite: bite",
+      "gain": 1.025,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2900,
+          "f1": 2175,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2300,
+          "f1": 1725,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.6,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.8,
+          "at": 0.01
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 140,
+          "f1": 60,
+          "attack": 0.002,
+          "decay": 0.1,
+          "gain": 0.6,
+          "at": 0.01
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 500,
+          "q": 1.5,
+          "attack": 0.005,
+          "decay": 0.1,
+          "gain": 0.4,
+          "at": 0.04
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3008,
+          "f1": 2256,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.157,
+          "at": 0.057
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2706,
+          "f1": 2030,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.189,
+          "at": 0.121
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2885,
+          "f1": 2164,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.217,
+          "at": 0.185
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2045,
+          "f1": 1534,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.187,
+          "at": 0.252
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2335,
+          "f1": 1751,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.187,
+          "at": 0.311
+        }
+      ]
+    },
+    "mobRimeRunDownCast": {
+      "label": "Run Down: windup",
+      "desc": "Placeholder: copy of Run Down: sprint",
+      "gain": 3.116,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 755,
+          "f1": 566,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.489,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 696,
+          "f1": 522,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.496,
+          "at": 0.052
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 484,
+          "f1": 363,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.494,
+          "at": 0.091
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 533,
+          "f1": 400,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.514,
+          "at": 0.139
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1260,
+          "f1": 900,
+          "q": 1.2,
+          "attack": 0.02,
+          "decay": 0.12,
+          "gain": 0.45,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 692,
+          "f1": 519,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.327,
+          "at": 0.156
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 792,
+          "f1": 594,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.324,
+          "at": 0.182
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 472,
+          "f1": 354,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.343,
+          "at": 0.229
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 455,
+          "f1": 341,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.331,
+          "at": 0.267
+        }
+      ]
+    },
+    "mobRimeRunDownHit": {
+      "label": "Run Down: hit",
+      "desc": "Placeholder: copy of Run Down: tackle",
+      "gain": 0.685,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 104,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 384,
+          "f1": 240,
+          "q": 1.8,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1440,
+          "f1": 360,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1040,
+          "f1": 920,
+          "q": 6,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.3,
+          "at": 0.004
+        }
+      ]
+    },
+    "mobIceShotCast": {
+      "label": "Ice Shot: windup",
+      "desc": "Placeholder: copy of Bolt: crossbow loose",
+      "gain": 0.939,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3200,
+          "f1": 2400,
+          "q": 6,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.6
+        },
+        {
+          "type": "pluck",
+          "f": 95,
+          "fb": 0.55,
+          "bright": 1200,
+          "duration": 0.1,
+          "gain": 0.8,
+          "at": 0.02
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 140,
+          "f1": 70,
+          "attack": 0.002,
+          "decay": 0.07,
+          "gain": 0.7,
+          "at": 0.02
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 600,
+          "q": 1.2,
+          "attack": 0.001,
+          "decay": 0.06,
+          "gain": 0.5,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobIceShotHit": {
+      "label": "Ice Shot: hit",
+      "desc": "Placeholder: copy of Bolt: impact",
+      "gain": 0.884,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 170,
+          "f1": 80,
+          "attack": 0.002,
+          "decay": 0.08,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1500,
+          "f1": 375,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.06,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 750,
+          "f1": 520,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.6,
+          "at": 0.008
+        }
+      ]
+    },
+    "mobIceShardCast": {
+      "label": "Ice Shard: windup",
+      "desc": "Placeholder: copy of Brine Lash: water whip",
+      "gain": 0.668,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 400,
+          "f1": 1500,
+          "q": 0.7,
+          "attack": 0.15,
+          "decay": 0.15,
+          "gain": 0.5
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 1500,
+          "f1": 1500,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.02,
+          "gain": 0.8,
+          "at": 0.22
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2500,
+          "f1": 1800,
+          "q": 1,
+          "attack": 0.002,
+          "decay": 0.04,
+          "gain": 0.5,
+          "at": 0.22
+        }
+      ]
+    },
+    "mobIceShardHit": {
+      "label": "Ice Shard: hit",
+      "desc": "Placeholder: copy of Brine Lash: wet strike",
+      "gain": 0.695,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 3500,
+          "f1": 700,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.9
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 120,
+          "f1": 55,
+          "attack": 0.002,
+          "decay": 0.1,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 2500,
+          "f1": 2500,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.35,
+          "gain": 0.4,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobSoddenHexCast": {
+      "label": "Sodden Hex: windup",
+      "desc": "Placeholder: copy of Tide Dirge: drowned hum",
+      "gain": 1.744,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 1.1,
+          "attack": 0.15,
+          "release": 0.35,
+          "volume": 0.45,
+          "f0Start": 92,
+          "f0Peak": 98,
+          "f0End": 86,
+          "peakAt": 0.35,
+          "vibratoHz": 4,
+          "vibratoDepth": 0.02,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 320,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 650,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2300,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 1,
+            "gain": 0,
+            "detune": 0
+          },
+          "noise": {
+            "gain": 0.08,
+            "center": 1800,
+            "q": 0.8
+          },
+          "drive": 1.2,
+          "raspHz": 6,
+          "raspDepth": 0.15,
+          "lowpass": 1200,
+          "echo": {
+            "delay": 0.25,
+            "feedback": 0.4,
+            "mix": 0.32
+          }
+        },
+        {
+          "type": "voice",
+          "duration": 1,
+          "attack": 0.18,
+          "release": 0.35,
+          "volume": 0.3,
+          "f0Start": 69,
+          "f0Peak": 73,
+          "f0End": 64,
+          "peakAt": 0.35,
+          "vibratoHz": 4,
+          "vibratoDepth": 0.02,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 320,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 650,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2300,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 1,
+            "gain": 0,
+            "detune": 0
+          },
+          "noise": {
+            "gain": 0.05,
+            "center": 1800,
+            "q": 0.8
+          },
+          "drive": 1.2,
+          "raspHz": 6,
+          "raspDepth": 0.15,
+          "lowpass": 1000,
+          "echo": {
+            "delay": 0.25,
+            "feedback": 0.4,
+            "mix": 0.32
+          },
+          "at": 0.1
+        }
+      ]
+    },
+    "mobSoddenHexHit": {
+      "label": "Sodden Hex: hit",
+      "desc": "Placeholder: copy of Tide Dirge: cold surge",
+      "gain": 1.664,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 400,
+          "q": 1,
+          "attack": 0.06,
+          "decay": 0.4,
+          "gain": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1600,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.3,
+          "gain": 0.5,
+          "at": 0.05
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 90,
+          "f1": 42,
+          "attack": 0.002,
+          "decay": 0.15,
+          "gain": 0.4,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobHollowRockfallCast": {
+      "label": "Rockfall: windup",
+      "desc": "Placeholder: copy of Rockfall: rumble",
+      "gain": 3.719,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 220,
+          "f1": 160,
+          "q": 0.8,
+          "attack": 0.12,
+          "decay": 0.45,
+          "gain": 1,
+          "tremHz": 11,
+          "tremDepth": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 904,
+          "f1": 678,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.223,
+          "at": 0.114
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1325,
+          "f1": 993.75,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.243,
+          "at": 0.204
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1115,
+          "f1": 836.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.256,
+          "at": 0.308
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1215,
+          "f1": 911.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.295,
+          "at": 0.406
+        }
+      ]
+    },
+    "mobHollowRockfallHit": {
+      "label": "Rockfall: hit",
+      "desc": "Placeholder: copy of Rockfall: impact",
+      "gain": 0.676,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 85,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.22,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1300,
+          "f1": 325,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.8
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 95,
+          "f1": 42,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 0.85,
+          "at": 0.11
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1100,
+          "f1": 275,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.1,
+          "gain": 0.7,
+          "at": 0.11
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 78,
+          "f1": 36,
+          "attack": 0.002,
+          "decay": 0.24,
+          "gain": 0.9,
+          "at": 0.23
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.75,
+          "at": 0.23
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1871,
+          "f1": 1403.25,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.298,
+          "at": 0.1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2765,
+          "f1": 2073.75,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.295,
+          "at": 0.152
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2611,
+          "f1": 1958.25,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.238,
+          "at": 0.204
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1658,
+          "f1": 1243.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.283,
+          "at": 0.241
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1810,
+          "f1": 1357.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.243,
+          "at": 0.299
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2857,
+          "f1": 2142.75,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.259,
+          "at": 0.359
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2238,
+          "f1": 1678.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.269,
+          "at": 0.411
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1723,
+          "f1": 1292.25,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.238,
+          "at": 0.451
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1986,
+          "f1": 1489.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.291,
+          "at": 0.514
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1541,
+          "f1": 1155.75,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.277,
+          "at": 0.569
+        }
+      ]
+    },
+    "mobMoltenRunDownCast": {
+      "label": "Run Down: windup",
+      "desc": "Placeholder: copy of Run Down: sprint",
+      "gain": 3.116,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 755,
+          "f1": 566,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.489,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 696,
+          "f1": 522,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.496,
+          "at": 0.052
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 484,
+          "f1": 363,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.494,
+          "at": 0.091
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 533,
+          "f1": 400,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.514,
+          "at": 0.139
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1260,
+          "f1": 900,
+          "q": 1.2,
+          "attack": 0.02,
+          "decay": 0.12,
+          "gain": 0.45,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 692,
+          "f1": 519,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.327,
+          "at": 0.156
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 792,
+          "f1": 594,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.324,
+          "at": 0.182
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 472,
+          "f1": 354,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.343,
+          "at": 0.229
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 455,
+          "f1": 341,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.331,
+          "at": 0.267
+        }
+      ]
+    },
+    "mobMoltenRunDownHit": {
+      "label": "Run Down: hit",
+      "desc": "Placeholder: copy of Run Down: tackle",
+      "gain": 0.685,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 104,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 384,
+          "f1": 240,
+          "q": 1.8,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1440,
+          "f1": 360,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1040,
+          "f1": 920,
+          "q": 6,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.3,
+          "at": 0.004
+        }
+      ]
+    },
+    "mobFrostFangCast": {
+      "label": "Frost Fang: cast",
+      "desc": "Placeholder: copy of Frost Bite",
+      "gain": 1.042,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.42,
+          "attack": 0.03,
+          "release": 0.12,
+          "volume": 0.55,
+          "f0Start": 95,
+          "f0Peak": 120,
+          "f0End": 85,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 600,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 950,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.7,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.45,
+            "center": 1500,
+            "q": 0.8
+          },
+          "drive": 4,
+          "raspHz": 32,
+          "raspDepth": 0.75,
+          "lowpass": 2200,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobFrostFangHit": {
+      "label": "Frost Fang: hit",
+      "desc": "Placeholder: copy of Frost Bite",
+      "gain": 1.139,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2900,
+          "f1": 2175,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2300,
+          "f1": 1725,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.6,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.8,
+          "at": 0.01
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 140,
+          "f1": 60,
+          "attack": 0.002,
+          "decay": 0.1,
+          "gain": 0.6,
+          "at": 0.01
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 500,
+          "q": 1.5,
+          "attack": 0.005,
+          "decay": 0.1,
+          "gain": 0.4,
+          "at": 0.04
+        }
+      ]
+    },
+    "mobSnowdriftHit": {
+      "label": "Snowdrift: hit",
+      "desc": "Placeholder: copy of Whiteout",
+      "gain": 0.695,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 100,
+          "f1": 45,
+          "attack": 0.002,
+          "decay": 0.16,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 2400,
+          "f1": 400,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.25,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 2800,
+          "f1": 2800,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.3,
+          "gain": 0.3,
+          "at": 0.03,
+          "tremHz": 47,
+          "tremDepth": 0.95
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3171,
+          "f1": 2378.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.336,
+          "at": 0.042
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2267,
+          "f1": 1700.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.294,
+          "at": 0.131
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1984,
+          "f1": 1488,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.293,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2856,
+          "f1": 2142,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.322,
+          "at": 0.267
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2318,
+          "f1": 1738.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.301,
+          "at": 0.346
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2417,
+          "f1": 1812.75,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.326,
+          "at": 0.403
+        }
+      ]
+    },
+    "mobThroatLeapCast": {
+      "label": "Throat Leap: cast",
+      "desc": "Placeholder: copy of Lunge",
+      "gain": 1.63,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 160,
+          "f1": 720,
+          "q": 0.7,
+          "attack": 0.18,
+          "decay": 0.26,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 720,
+          "f1": 320,
+          "q": 0.9,
+          "attack": 0.05,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 400,
+          "f1": 160,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.3,
+          "gain": 0.3,
+          "at": 0.05,
+          "tremHz": 14,
+          "tremDepth": 0.6
+        }
+      ]
+    },
+    "mobThroatLeapHit": {
+      "label": "Throat Leap: hit",
+      "desc": "Placeholder: copy of Lunge",
+      "gain": 0.685,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 114.4,
+          "f1": 44,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 422.4,
+          "f1": 264,
+          "q": 1.8,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1584,
+          "f1": 396,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1144,
+          "f1": 1012,
+          "q": 6,
+          "attack": 0.001,
+          "decay": 0.05,
+          "gain": 0.3,
+          "at": 0.004
+        }
+      ]
+    },
+    "mobMatriarchStokeCast": {
+      "label": "Stoke: cast",
+      "desc": "Placeholder: copy of Burn the Field",
+      "gain": 2.177,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 450,
+          "f1": 270,
+          "q": 0.8,
+          "attack": 0.03,
+          "decay": 0.4,
+          "gain": 0.8,
+          "tremHz": 9,
+          "tremDepth": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 810,
+          "f1": 630,
+          "q": 2,
+          "attack": 0.04,
+          "decay": 0.35,
+          "gain": 0.35,
+          "at": 0.05,
+          "tremHz": 9,
+          "tremDepth": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 380,
+          "f1": 220,
+          "q": 0.8,
+          "attack": 0.05,
+          "decay": 0.45,
+          "gain": 0.4,
+          "at": 0.1,
+          "tremHz": 7,
+          "tremDepth": 0.8
+        }
+      ]
+    },
+    "mobMatriarchStokeHit": {
+      "label": "Stoke: hit",
+      "desc": "Placeholder: copy of Burn the Field",
+      "gain": 0.783,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 81,
+          "f1": 36,
+          "attack": 0.002,
+          "decay": 0.3,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1620,
+          "f1": 270,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.6,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 450,
+          "f1": 630,
+          "q": 0.8,
+          "attack": 0.15,
+          "decay": 0.6,
+          "gain": 0.45,
+          "at": 0.1,
+          "tremHz": 11,
+          "tremDepth": 0.5
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2167,
+          "f1": 1625,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.271,
+          "at": 0.111
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2278,
+          "f1": 1708,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.219,
+          "at": 0.217
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1502,
+          "f1": 1127,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.219,
+          "at": 0.315
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1905,
+          "f1": 1429,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.29,
+          "at": 0.413
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2159,
+          "f1": 1619,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.236,
+          "at": 0.52
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2717,
+          "f1": 2038,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.253,
+          "at": 0.619
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2184,
+          "f1": 1638,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.24,
+          "at": 0.716
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2068,
+          "f1": 1551,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.252,
+          "at": 0.812
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2472,
+          "f1": 1854,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.191,
+          "at": 0.865
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3133,
+          "f1": 2350,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.143,
+          "at": 0.948
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2710,
+          "f1": 2033,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.179,
+          "at": 1.035
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1914,
+          "f1": 1436,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.146,
+          "at": 1.104
+        }
+      ]
+    },
+    "mobSledgeCast": {
+      "label": "Sledge: cast",
+      "desc": "Placeholder: copy of Iron Maul",
+      "gain": 1.334,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 160,
+          "f1": 600,
+          "q": 0.8,
+          "attack": 0.203,
+          "decay": 0.248,
+          "gain": 0.9
+        },
+        {
+          "type": "voice",
+          "duration": 0.3,
+          "attack": 0.03,
+          "release": 0.2,
+          "volume": 0.5,
+          "f0Start": 110,
+          "f0Peak": 105,
+          "f0End": 95,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 300,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 870,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2240,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0,
+            "detune": 0
+          },
+          "noise": {
+            "gain": 0.2,
+            "center": 2400,
+            "q": 0.8
+          },
+          "drive": 3,
+          "raspHz": 20,
+          "raspDepth": 0.4,
+          "lowpass": 2200,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.2,
+            "mix": 0.12
+          },
+          "at": 0.05
+        }
+      ]
+    },
+    "mobSledgeHit": {
+      "label": "Sledge: hit",
+      "desc": "Placeholder: copy of Iron Maul",
+      "gain": 0.68,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 100,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.3,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 200,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.15,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 700,
+          "q": 4,
+          "attack": 0.002,
+          "decay": 0.05,
+          "gain": 0.3
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2508,
+          "f1": 1806,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.018,
+          "gain": 0.328,
+          "at": 0.043
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2125,
+          "f1": 1530,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.269,
+          "at": 0.094
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2719,
+          "f1": 1958,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.016,
+          "gain": 0.291,
+          "at": 0.128
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2359,
+          "f1": 1698,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.325,
+          "at": 0.155
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2571,
+          "f1": 1851,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.017,
+          "gain": 0.336,
+          "at": 0.197
+        }
+      ]
+    },
+    "mobReforgeCast": {
+      "label": "Reforge: cast",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 0.441,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 77,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 595,
+          "f1": 170,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.14,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 425,
+          "f1": 306,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2303,
+          "f1": 2118,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.208,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2236,
+          "f1": 2057,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.218,
+          "at": 0.083
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1838,
+          "f1": 1691,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.193,
+          "at": 0.12
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2218,
+          "f1": 2040,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.185,
+          "at": 0.147
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 80,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobReforgeHit": {
+      "label": "Reforge: hit",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 1.032,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.7,
+          "attack": 0.012,
+          "release": 0.12,
+          "volume": 0.7,
+          "f0Start": 120,
+          "f0Peak": 140,
+          "f0End": 96,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 450,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 800,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0.05,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.3,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.25,
+            "center": 2400,
+            "q": 0.8
+          },
+          "drive": 3,
+          "raspHz": 22,
+          "raspDepth": 0.4,
+          "lowpass": 3000,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobRivetPlateCast": {
+      "label": "Rivet Plate: cast",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 0.441,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 77,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 595,
+          "f1": 170,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.14,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 425,
+          "f1": 306,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2303,
+          "f1": 2118,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.208,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2236,
+          "f1": 2057,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.218,
+          "at": 0.083
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1838,
+          "f1": 1691,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.193,
+          "at": 0.12
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2218,
+          "f1": 2040,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.185,
+          "at": 0.147
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 80,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobRivetPlateHit": {
+      "label": "Rivet Plate: hit",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 1.032,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.7,
+          "attack": 0.012,
+          "release": 0.12,
+          "volume": 0.7,
+          "f0Start": 120,
+          "f0Peak": 140,
+          "f0End": 96,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 450,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 800,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0.05,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.3,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.25,
+            "center": 2400,
+            "q": 0.8
+          },
+          "drive": 3,
+          "raspHz": 22,
+          "raspDepth": 0.4,
+          "lowpass": 3000,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobFervourCast": {
+      "label": "Fervour: cast",
+      "desc": "Placeholder: copy of Chant",
+      "gain": 0.475,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 86,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 570,
+          "f1": 361,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.7
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 81,
+          "f1": 36,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 1,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 532,
+          "f1": 342,
+          "q": 1.5,
+          "attack": 0.001,
+          "decay": 0.08,
+          "gain": 0.7,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3200,
+          "f1": 2600,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.25,
+          "gain": 0.25,
+          "at": 0.06
+        }
+      ]
+    },
+    "mobFervourHit": {
+      "label": "Fervour: hit",
+      "desc": "Placeholder: copy of Chant",
+      "gain": 0.972,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.9,
+          "attack": 0.02,
+          "release": 0.2,
+          "volume": 0.7,
+          "f0Start": 86.1,
+          "f0Peak": 114.8,
+          "f0End": 75.44,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 600,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 950,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.5,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.3,
+            "center": 2400,
+            "q": 0.8
+          },
+          "drive": 3.6,
+          "raspHz": 24,
+          "raspDepth": 0.55,
+          "lowpass": 2800,
+          "echo": {
+            "delay": 0.1,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobKindleTheNaveCast": {
+      "label": "Kindle the Nave: cast",
+      "desc": "Placeholder: copy of Burn the Field",
+      "gain": 2.177,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 450,
+          "f1": 270,
+          "q": 0.8,
+          "attack": 0.03,
+          "decay": 0.4,
+          "gain": 0.8,
+          "tremHz": 9,
+          "tremDepth": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 810,
+          "f1": 630,
+          "q": 2,
+          "attack": 0.04,
+          "decay": 0.35,
+          "gain": 0.35,
+          "at": 0.05,
+          "tremHz": 9,
+          "tremDepth": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 380,
+          "f1": 220,
+          "q": 0.8,
+          "attack": 0.05,
+          "decay": 0.45,
+          "gain": 0.4,
+          "at": 0.1,
+          "tremHz": 7,
+          "tremDepth": 0.8
+        }
+      ]
+    },
+    "mobKindleTheNaveHit": {
+      "label": "Kindle the Nave: hit",
+      "desc": "Placeholder: copy of Burn the Field",
+      "gain": 0.783,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 81,
+          "f1": 36,
+          "attack": 0.002,
+          "decay": 0.3,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1620,
+          "f1": 270,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.6,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 450,
+          "f1": 630,
+          "q": 0.8,
+          "attack": 0.15,
+          "decay": 0.6,
+          "gain": 0.45,
+          "at": 0.1,
+          "tremHz": 11,
+          "tremDepth": 0.5
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2167,
+          "f1": 1625,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.271,
+          "at": 0.111
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2278,
+          "f1": 1708,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.219,
+          "at": 0.217
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1502,
+          "f1": 1127,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.219,
+          "at": 0.315
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1905,
+          "f1": 1429,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.29,
+          "at": 0.413
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2159,
+          "f1": 1619,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.236,
+          "at": 0.52
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2717,
+          "f1": 2038,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.253,
+          "at": 0.619
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2184,
+          "f1": 1638,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.24,
+          "at": 0.716
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2068,
+          "f1": 1551,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.252,
+          "at": 0.812
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2472,
+          "f1": 1854,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.191,
+          "at": 0.865
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3133,
+          "f1": 2350,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.143,
+          "at": 0.948
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2710,
+          "f1": 2033,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.179,
+          "at": 1.035
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1914,
+          "f1": 1436,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.146,
+          "at": 1.104
+        }
+      ]
+    },
+    "mobSearingBashCast": {
+      "label": "Searing Bash: cast",
+      "desc": "Placeholder: copy of Brand",
+      "gain": 0.938,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.42,
+          "attack": 0.03,
+          "release": 0.12,
+          "volume": 0.55,
+          "f0Start": 80.75,
+          "f0Peak": 102,
+          "f0End": 72.25,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 600,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 950,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.7,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.45,
+            "center": 1500,
+            "q": 0.8
+          },
+          "drive": 4,
+          "raspHz": 32,
+          "raspDepth": 0.75,
+          "lowpass": 2200,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3000,
+          "f1": 3600,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.3,
+          "gain": 0.2,
+          "at": 0.05
+        }
+      ]
+    },
+    "mobSearingBashHit": {
+      "label": "Searing Bash: hit",
+      "desc": "Placeholder: copy of Brand",
+      "gain": 1.025,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2900,
+          "f1": 2175,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2300,
+          "f1": 1725,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.6,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.8,
+          "at": 0.01
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 140,
+          "f1": 60,
+          "attack": 0.002,
+          "decay": 0.1,
+          "gain": 0.6,
+          "at": 0.01
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 500,
+          "q": 1.5,
+          "attack": 0.005,
+          "decay": 0.1,
+          "gain": 0.4,
+          "at": 0.04
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3008,
+          "f1": 2256,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.157,
+          "at": 0.057
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2706,
+          "f1": 2030,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.189,
+          "at": 0.121
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2885,
+          "f1": 2164,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.217,
+          "at": 0.185
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2045,
+          "f1": 1534,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.187,
+          "at": 0.252
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2335,
+          "f1": 1751,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.187,
+          "at": 0.311
+        }
+      ]
+    },
+    "mobWardenHoldGateCast": {
+      "label": "Hold the Gate: cast",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 0.441,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 77,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 595,
+          "f1": 170,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.14,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 425,
+          "f1": 306,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2303,
+          "f1": 2118,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.208,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2236,
+          "f1": 2057,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.218,
+          "at": 0.083
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1838,
+          "f1": 1691,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.193,
+          "at": 0.12
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2218,
+          "f1": 2040,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.185,
+          "at": 0.147
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 80,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobWardenHoldGateHit": {
+      "label": "Hold the Gate: hit",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 1.032,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.7,
+          "attack": 0.012,
+          "release": 0.12,
+          "volume": 0.7,
+          "f0Start": 120,
+          "f0Peak": 140,
+          "f0End": 96,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 450,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 800,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0.05,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.3,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.25,
+            "center": 2400,
+            "q": 0.8
+          },
+          "drive": 3,
+          "raspHz": 22,
+          "raspDepth": 0.4,
+          "lowpass": 3000,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobSlagWallHit": {
+      "label": "Slag Wall: hit",
+      "desc": "Placeholder: copy of Vent",
+      "gain": 0.788,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 400,
+          "f1": 250,
+          "q": 0.7,
+          "attack": 0.15,
+          "decay": 0.7,
+          "gain": 0.9,
+          "tremHz": 6,
+          "tremDepth": 0.4
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3000,
+          "f1": 4200,
+          "q": 0.7,
+          "attack": 0.1,
+          "decay": 0.6,
+          "gain": 0.35,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 600,
+          "q": 1,
+          "attack": 0.1,
+          "decay": 0.5,
+          "gain": 0.3,
+          "at": 0.1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2291,
+          "f1": 1718.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.146,
+          "at": 0.207
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3143,
+          "f1": 2357.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.195,
+          "at": 0.383
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1866,
+          "f1": 1399.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.167,
+          "at": 0.535
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3140,
+          "f1": 2355,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.143,
+          "at": 0.716
+        }
+      ]
+    },
+    "mobAvalancheCast": {
+      "label": "Avalanche: cast",
+      "desc": "Placeholder: copy of Rockfall",
+      "gain": 3.719,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 220,
+          "f1": 160,
+          "q": 0.8,
+          "attack": 0.12,
+          "decay": 0.45,
+          "gain": 1,
+          "tremHz": 11,
+          "tremDepth": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 904,
+          "f1": 678,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.223,
+          "at": 0.114
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1325,
+          "f1": 993.75,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.243,
+          "at": 0.204
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1115,
+          "f1": 836.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.256,
+          "at": 0.308
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1215,
+          "f1": 911.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.295,
+          "at": 0.406
+        }
+      ]
+    },
+    "mobAvalancheHit": {
+      "label": "Avalanche: hit",
+      "desc": "Placeholder: copy of Rockfall",
+      "gain": 0.676,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 85,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.22,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1300,
+          "f1": 325,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.8
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 95,
+          "f1": 42,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 0.85,
+          "at": 0.11
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1100,
+          "f1": 275,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.1,
+          "gain": 0.7,
+          "at": 0.11
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 78,
+          "f1": 36,
+          "attack": 0.002,
+          "decay": 0.24,
+          "gain": 0.9,
+          "at": 0.23
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.75,
+          "at": 0.23
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1871,
+          "f1": 1403.25,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.298,
+          "at": 0.1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2765,
+          "f1": 2073.75,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.295,
+          "at": 0.152
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2611,
+          "f1": 1958.25,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.238,
+          "at": 0.204
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1658,
+          "f1": 1243.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.283,
+          "at": 0.241
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1810,
+          "f1": 1357.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.243,
+          "at": 0.299
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2857,
+          "f1": 2142.75,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.259,
+          "at": 0.359
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2238,
+          "f1": 1678.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.269,
+          "at": 0.411
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1723,
+          "f1": 1292.25,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.238,
+          "at": 0.451
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1986,
+          "f1": 1489.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.291,
+          "at": 0.514
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1541,
+          "f1": 1155.75,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.277,
+          "at": 0.569
+        }
+      ]
+    },
+    "mobRoarCast": {
+      "label": "Roar: cast",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 0.441,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 77,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 595,
+          "f1": 170,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.14,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 425,
+          "f1": 306,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2303,
+          "f1": 2118,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.208,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2236,
+          "f1": 2057,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.218,
+          "at": 0.083
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1838,
+          "f1": 1691,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.193,
+          "at": 0.12
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2218,
+          "f1": 2040,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.185,
+          "at": 0.147
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 80,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobRoarHit": {
+      "label": "Roar: hit",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 1.032,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.7,
+          "attack": 0.012,
+          "release": 0.12,
+          "volume": 0.7,
+          "f0Start": 120,
+          "f0Peak": 140,
+          "f0End": 96,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 450,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 800,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0.05,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.3,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.25,
+            "center": 2400,
+            "q": 0.8
+          },
+          "drive": 3,
+          "raspHz": 22,
+          "raspDepth": 0.4,
+          "lowpass": 3000,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobDecreeOfStoneCast": {
+      "label": "Decree of Stone: cast",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 0.441,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 77,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.18,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 595,
+          "f1": 170,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.14,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 425,
+          "f1": 306,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2303,
+          "f1": 2118,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.208,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2236,
+          "f1": 2057,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.218,
+          "at": 0.083
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1838,
+          "f1": 1691,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.193,
+          "at": 0.12
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2218,
+          "f1": 2040,
+          "q": 7,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.185,
+          "at": 0.147
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 80,
+          "f1": 40,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobDecreeOfStoneHit": {
+      "label": "Decree of Stone: hit",
+      "desc": "Placeholder: copy of Hold the Gate",
+      "gain": 1.032,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.7,
+          "attack": 0.012,
+          "release": 0.12,
+          "volume": 0.7,
+          "f0Start": 120,
+          "f0Peak": 140,
+          "f0End": 96,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 450,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 800,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0.05,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.3,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.25,
+            "center": 2400,
+            "q": 0.8
+          },
+          "drive": 3,
+          "raspHz": 22,
+          "raspDepth": 0.4,
+          "lowpass": 3000,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        }
+      ]
+    },
+    "mobBringDownTheHallCast": {
+      "label": "Bring Down the Hall: cast",
+      "desc": "Placeholder: copy of Rockfall",
+      "gain": 3.719,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 220,
+          "f1": 160,
+          "q": 0.8,
+          "attack": 0.12,
+          "decay": 0.45,
+          "gain": 1,
+          "tremHz": 11,
+          "tremDepth": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 904,
+          "f1": 678,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.223,
+          "at": 0.114
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1325,
+          "f1": 993.75,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.243,
+          "at": 0.204
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1115,
+          "f1": 836.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.256,
+          "at": 0.308
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1215,
+          "f1": 911.25,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.295,
+          "at": 0.406
+        }
+      ]
+    },
+    "mobBringDownTheHallHit": {
+      "label": "Bring Down the Hall: hit",
+      "desc": "Placeholder: copy of Rockfall",
+      "gain": 0.676,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 85,
+          "f1": 38,
+          "attack": 0.002,
+          "decay": 0.22,
+          "gain": 1
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1300,
+          "f1": 325,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.8
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 95,
+          "f1": 42,
+          "attack": 0.002,
+          "decay": 0.2,
+          "gain": 0.85,
+          "at": 0.11
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1100,
+          "f1": 275,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.1,
+          "gain": 0.7,
+          "at": 0.11
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 78,
+          "f1": 36,
+          "attack": 0.002,
+          "decay": 0.24,
+          "gain": 0.9,
+          "at": 0.23
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.12,
+          "gain": 0.75,
+          "at": 0.23
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1871,
+          "f1": 1403.25,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.298,
+          "at": 0.1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2765,
+          "f1": 2073.75,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.295,
+          "at": 0.152
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2611,
+          "f1": 1958.25,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.238,
+          "at": 0.204
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1658,
+          "f1": 1243.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.283,
+          "at": 0.241
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1810,
+          "f1": 1357.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.243,
+          "at": 0.299
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2857,
+          "f1": 2142.75,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.259,
+          "at": 0.359
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2238,
+          "f1": 1678.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.269,
+          "at": 0.411
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1723,
+          "f1": 1292.25,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.238,
+          "at": 0.451
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1986,
+          "f1": 1489.5,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.291,
+          "at": 0.514
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1541,
+          "f1": 1155.75,
+          "q": 2.5,
+          "attack": 0.001,
+          "decay": 0.015,
+          "gain": 0.277,
+          "at": 0.569
+        }
+      ]
+    },
+    "mobHammerfallCast": {
+      "label": "Hammerfall: cast",
+      "desc": "Placeholder: copy of Kingsmaul",
+      "gain": 1.807,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 600,
+          "f1": 1800,
+          "q": 0.8,
+          "attack": 0.06300000000000001,
+          "decay": 0.07700000000000001,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1600,
+          "f1": 600,
+          "q": 0.7,
+          "attack": 0.02,
+          "decay": 0.2,
+          "gain": 0.5,
+          "at": 0.04
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2186,
+          "f1": 1639.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.281,
+          "at": 0.043
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1728,
+          "f1": 1296,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.235,
+          "at": 0.11
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3122,
+          "f1": 2341.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.261,
+          "at": 0.163
+        }
+      ]
+    },
+    "mobHammerfallHit": {
+      "label": "Hammerfall: hit",
+      "desc": "Placeholder: copy of Kingsmaul",
+      "gain": 0.695,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 100,
+          "f1": 45,
+          "attack": 0.002,
+          "decay": 0.16,
+          "gain": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 2400,
+          "f1": 400,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.25,
+          "gain": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 2800,
+          "f1": 2800,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.3,
+          "gain": 0.3,
+          "at": 0.03,
+          "tremHz": 47,
+          "tremDepth": 0.95
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3171,
+          "f1": 2378.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.336,
+          "at": 0.042
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2267,
+          "f1": 1700.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.294,
+          "at": 0.131
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1984,
+          "f1": 1488,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.293,
+          "at": 0.2
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2856,
+          "f1": 2142,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.322,
+          "at": 0.267
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2318,
+          "f1": 1738.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.301,
+          "at": 0.346
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2417,
+          "f1": 1812.75,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.326,
+          "at": 0.403
+        }
+      ]
+    },
+    "mobQuenchCast": {
+      "label": "Quench: cast",
+      "desc": "Placeholder: copy of Sodden Hex",
+      "gain": 1.744,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 1.1,
+          "attack": 0.15,
+          "release": 0.35,
+          "volume": 0.45,
+          "f0Start": 92,
+          "f0Peak": 98,
+          "f0End": 86,
+          "peakAt": 0.35,
+          "vibratoHz": 4,
+          "vibratoDepth": 0.02,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 320,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 650,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2300,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 1,
+            "gain": 0,
+            "detune": 0
+          },
+          "noise": {
+            "gain": 0.08,
+            "center": 1800,
+            "q": 0.8
+          },
+          "drive": 1.2,
+          "raspHz": 6,
+          "raspDepth": 0.15,
+          "lowpass": 1200,
+          "echo": {
+            "delay": 0.25,
+            "feedback": 0.4,
+            "mix": 0.32
+          }
+        },
+        {
+          "type": "voice",
+          "duration": 1,
+          "attack": 0.18,
+          "release": 0.35,
+          "volume": 0.3,
+          "f0Start": 69,
+          "f0Peak": 73,
+          "f0End": 64,
+          "peakAt": 0.35,
+          "vibratoHz": 4,
+          "vibratoDepth": 0.02,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 320,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 650,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2300,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 1,
+            "gain": 0,
+            "detune": 0
+          },
+          "noise": {
+            "gain": 0.05,
+            "center": 1800,
+            "q": 0.8
+          },
+          "drive": 1.2,
+          "raspHz": 6,
+          "raspDepth": 0.15,
+          "lowpass": 1000,
+          "echo": {
+            "delay": 0.25,
+            "feedback": 0.4,
+            "mix": 0.32
+          },
+          "at": 0.1
+        }
+      ]
+    },
+    "mobQuenchHit": {
+      "label": "Quench: hit",
+      "desc": "Placeholder: copy of Sodden Hex",
+      "gain": 1.664,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 400,
+          "q": 1,
+          "attack": 0.06,
+          "decay": 0.4,
+          "gain": 0.7
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1600,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.3,
+          "gain": 0.5,
+          "at": 0.05
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 90,
+          "f1": 42,
+          "attack": 0.002,
+          "decay": 0.15,
+          "gain": 0.4,
+          "at": 0.02
+        }
+      ]
+    },
+    "mobForgeChainsCast": {
+      "label": "Forge Chains: cast",
+      "desc": "Placeholder: copy of Brand",
+      "gain": 0.938,
+      "layers": [
+        {
+          "type": "voice",
+          "duration": 0.42,
+          "attack": 0.03,
+          "release": 0.12,
+          "volume": 0.55,
+          "f0Start": 80.75,
+          "f0Peak": 102,
+          "f0End": 72.25,
+          "peakAt": 0.35,
+          "vibratoHz": 5,
+          "vibratoDepth": 0.015,
+          "jitterHz": 9,
+          "jitterDepth": 0.01,
+          "formants": [
+            {
+              "f": 600,
+              "q": 6,
+              "g": 1
+            },
+            {
+              "f": 950,
+              "q": 8,
+              "g": 0.6
+            },
+            {
+              "f": 2500,
+              "q": 10,
+              "g": 0.25
+            }
+          ],
+          "formantRise": 0,
+          "growl": {
+            "octave": 0.5,
+            "gain": 0.7,
+            "detune": 12
+          },
+          "noise": {
+            "gain": 0.45,
+            "center": 1500,
+            "q": 0.8
+          },
+          "drive": 4,
+          "raspHz": 32,
+          "raspDepth": 0.75,
+          "lowpass": 2200,
+          "echo": {
+            "delay": 0.12,
+            "feedback": 0.25,
+            "mix": 0.15
+          }
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3000,
+          "f1": 3600,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.3,
+          "gain": 0.2,
+          "at": 0.05
+        }
+      ]
+    },
+    "mobForgeChainsHit": {
+      "label": "Forge Chains: hit",
+      "desc": "Placeholder: copy of Brand",
+      "gain": 1.025,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2900,
+          "f1": 2175,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2300,
+          "f1": 1725,
+          "q": 5,
+          "attack": 0.001,
+          "decay": 0.012,
+          "gain": 0.6,
+          "at": 0.012
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1200,
+          "f1": 300,
+          "q": 0.7,
+          "attack": 0.001,
+          "decay": 0.07,
+          "gain": 0.8,
+          "at": 0.01
+        },
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 140,
+          "f1": 60,
+          "attack": 0.002,
+          "decay": 0.1,
+          "gain": 0.6,
+          "at": 0.01
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 500,
+          "q": 1.5,
+          "attack": 0.005,
+          "decay": 0.1,
+          "gain": 0.4,
+          "at": 0.04
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3008,
+          "f1": 2256,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.157,
+          "at": 0.057
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2706,
+          "f1": 2030,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.189,
+          "at": 0.121
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2885,
+          "f1": 2164,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.217,
+          "at": 0.185
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2045,
+          "f1": 1534,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.187,
+          "at": 0.252
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2335,
+          "f1": 1751,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.187,
+          "at": 0.311
+        }
+      ]
+    },
+    "mobTemperTheCrownCast": {
+      "label": "Temper the Crown: cast",
+      "desc": "Placeholder: copy of Pyre of Morvane",
+      "gain": 3.347,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 187,
+          "f1": 136,
+          "q": 0.8,
+          "attack": 0.12,
+          "decay": 0.45,
+          "gain": 1,
+          "tremHz": 11,
+          "tremDepth": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 768,
+          "f1": 576,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.223,
+          "at": 0.114
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1126,
+          "f1": 845,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.243,
+          "at": 0.204
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 948,
+          "f1": 711,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.256,
+          "at": 0.308
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1033,
+          "f1": 775,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.295,
+          "at": 0.406
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 500,
+          "f1": 300,
+          "q": 0.8,
+          "attack": 0.2,
+          "decay": 0.6,
+          "gain": 0.4,
+          "at": 0.2,
+          "tremHz": 9,
+          "tremDepth": 0.9
+        }
+      ]
+    },
+    "mobTemperTheCrownHit": {
+      "label": "Temper the Crown: hit",
+      "desc": "Placeholder: copy of Pyre of Morvane",
+      "gain": 0.783,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 72,
+          "f1": 32,
+          "attack": 0.002,
+          "decay": 0.3,
+          "gain": 0.84
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1440,
+          "f1": 240,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.6,
+          "gain": 0.945
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 400,
+          "f1": 560,
+          "q": 0.8,
+          "attack": 0.15,
+          "decay": 0.6,
+          "gain": 0.473,
+          "at": 0.1,
+          "tremHz": 11,
+          "tremDepth": 0.5
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1926,
+          "f1": 1445,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.285,
+          "at": 0.111
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2025,
+          "f1": 1519,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.23,
+          "at": 0.217
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1335,
+          "f1": 1001,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.23,
+          "at": 0.315
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1694,
+          "f1": 1270,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.305,
+          "at": 0.413
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1919,
+          "f1": 1439,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.248,
+          "at": 0.52
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2415,
+          "f1": 1811,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.266,
+          "at": 0.619
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1942,
+          "f1": 1456,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.252,
+          "at": 0.716
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1838,
+          "f1": 1379,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.265,
+          "at": 0.812
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 900,
+          "f1": 250,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.7,
+          "gain": 0.5,
+          "at": 0.05,
+          "tremHz": 10,
+          "tremDepth": 0.6
+        }
+      ]
+    },
+    "mobCinderStormHit": {
+      "label": "Cinder Storm: hit",
+      "desc": "Placeholder: copy of Dragon's Breath",
+      "gain": 0.709,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 500,
+          "f1": 313,
+          "q": 0.7,
+          "attack": 0.15,
+          "decay": 0.7,
+          "gain": 0.9,
+          "tremHz": 6,
+          "tremDepth": 0.4
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3750,
+          "f1": 5250,
+          "q": 0.7,
+          "attack": 0.1,
+          "decay": 0.6,
+          "gain": 0.35,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1125,
+          "f1": 750,
+          "q": 1,
+          "attack": 0.1,
+          "decay": 0.5,
+          "gain": 0.3,
+          "at": 0.1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2864,
+          "f1": 2148,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.146,
+          "at": 0.207
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3929,
+          "f1": 2947,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.195,
+          "at": 0.383
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2333,
+          "f1": 1749,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.167,
+          "at": 0.535
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3925,
+          "f1": 2944,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.143,
+          "at": 0.716
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 700,
+          "f1": 300,
+          "q": 0.8,
+          "attack": 0.08,
+          "decay": 0.5,
+          "gain": 0.5,
+          "tremHz": 13,
+          "tremDepth": 0.6
+        }
+      ]
+    },
+    "mobBreatheHit": {
+      "label": "Breathe: hit",
+      "desc": "Placeholder: copy of Vent",
+      "gain": 0.788,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 400,
+          "f1": 250,
+          "q": 0.7,
+          "attack": 0.15,
+          "decay": 0.7,
+          "gain": 0.9,
+          "tremHz": 6,
+          "tremDepth": 0.4
+        },
+        {
+          "type": "noise",
+          "filter": "highpass",
+          "f0": 3000,
+          "f1": 4200,
+          "q": 0.7,
+          "attack": 0.1,
+          "decay": 0.6,
+          "gain": 0.35,
+          "at": 0.05
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 900,
+          "f1": 600,
+          "q": 1,
+          "attack": 0.1,
+          "decay": 0.5,
+          "gain": 0.3,
+          "at": 0.1
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2291,
+          "f1": 1718.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.146,
+          "at": 0.207
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3143,
+          "f1": 2357.25,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.195,
+          "at": 0.383
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1866,
+          "f1": 1399.5,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.167,
+          "at": 0.535
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 3140,
+          "f1": 2355,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.143,
+          "at": 0.716
+        }
+      ]
+    },
+    "mobTheFirstFireCast": {
+      "label": "The First Fire: cast",
+      "desc": "Placeholder: copy of Pyre of Morvane",
+      "gain": 3.347,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 187,
+          "f1": 136,
+          "q": 0.8,
+          "attack": 0.12,
+          "decay": 0.45,
+          "gain": 1,
+          "tremHz": 11,
+          "tremDepth": 0.6
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 768,
+          "f1": 576,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.223,
+          "at": 0.114
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1126,
+          "f1": 845,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.243,
+          "at": 0.204
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 948,
+          "f1": 711,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.256,
+          "at": 0.308
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1033,
+          "f1": 775,
+          "q": 2,
+          "attack": 0.001,
+          "decay": 0.03,
+          "gain": 0.295,
+          "at": 0.406
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 500,
+          "f1": 300,
+          "q": 0.8,
+          "attack": 0.2,
+          "decay": 0.6,
+          "gain": 0.4,
+          "at": 0.2,
+          "tremHz": 9,
+          "tremDepth": 0.9
+        }
+      ]
+    },
+    "mobTheFirstFireHit": {
+      "label": "The First Fire: hit",
+      "desc": "Placeholder: copy of Pyre of Morvane",
+      "gain": 0.783,
+      "layers": [
+        {
+          "type": "tone",
+          "wave": "sine",
+          "f0": 72,
+          "f1": 32,
+          "attack": 0.002,
+          "decay": 0.3,
+          "gain": 0.84
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 1440,
+          "f1": 240,
+          "q": 0.7,
+          "attack": 0.01,
+          "decay": 0.6,
+          "gain": 0.945
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 400,
+          "f1": 560,
+          "q": 0.8,
+          "attack": 0.15,
+          "decay": 0.6,
+          "gain": 0.473,
+          "at": 0.1,
+          "tremHz": 11,
+          "tremDepth": 0.5
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1926,
+          "f1": 1445,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.285,
+          "at": 0.111
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2025,
+          "f1": 1519,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.23,
+          "at": 0.217
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1335,
+          "f1": 1001,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.23,
+          "at": 0.315
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1694,
+          "f1": 1270,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.305,
+          "at": 0.413
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1919,
+          "f1": 1439,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.248,
+          "at": 0.52
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 2415,
+          "f1": 1811,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.266,
+          "at": 0.619
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1942,
+          "f1": 1456,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.252,
+          "at": 0.716
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "f0": 1838,
+          "f1": 1379,
+          "q": 3,
+          "attack": 0.001,
+          "decay": 0.014,
+          "gain": 0.265,
+          "at": 0.812
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "f0": 900,
+          "f1": 250,
+          "q": 0.7,
+          "attack": 0.05,
+          "decay": 0.7,
+          "gain": 0.5,
+          "at": 0.05,
+          "tremHz": 10,
+          "tremDepth": 0.6
         }
       ]
     }

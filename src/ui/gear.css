@@ -4276,6 +4276,38 @@ html.short .gr-ledger .gr-bag-head {
   flex: none;
 }
 
+/* Tüccar: üst kısım sabit, yalnızca mal listesi kayar (Ömer 2026-11-01). Panel kaymaz; ad + kese, alt yazı, konuşma, sekmeler, "Wares" satırı
+   + yenileme ve (seçiliyse) Buy düğmesi yerinde kalır; .gr-shopscroll (mallar + satış kutusu / geri alım listesi) kalan yüksekliği doldurup kendi içinde kayar.
+   Demirci (.bs-smith) bu sınıfı taşımaz, eski bütün-panel kaymasında kalır. */
+.gr-pair > .gr-panel.gr-gear.gr-ledger.gr-shop.gr-fixhead {
+  overflow: hidden;
+}
+
+.gr-fixhead > .gr-shoppane.gr-shopfix {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.gr-shopfix > .gr-shopscroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: calc(12 * var(--u));
+  /* hover'daki hafif yükselme / parıltı kırpılmasın; çubuk plakaların üstüne binmesin */
+  padding: 3px 6px 3px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+}
+
+.gr-shopscroll > * {
+  flex-shrink: 0;
+}
+
 /* ganimet alanı */
 .gr-loot-gain {
   display: flex;

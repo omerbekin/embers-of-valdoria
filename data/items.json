@@ -33,6 +33,11 @@
       "weight": 0.8
     },
     {
+      "id": "ring",
+      "name": "Ring",
+      "weight": 0.8
+    },
+    {
       "id": "trinket",
       "name": "Trinket",
       "weight": 0.8
@@ -352,6 +357,7 @@
       "text": "+{0} Max MP",
       "slots": [
         "helm",
+        "ring",
         "trinket",
         "boots"
       ],
@@ -372,6 +378,7 @@
       "name": "HP regen",
       "text": "+{0} HP per turn",
       "slots": [
+        "ring",
         "trinket",
         "armor",
         "offhand"
@@ -392,6 +399,7 @@
       "name": "MP regen",
       "text": "+{0} MP per turn",
       "slots": [
+        "ring",
         "trinket",
         "gloves"
       ],
@@ -413,6 +421,7 @@
       "text": "+{0}% Shield power",
       "slots": [
         "offhand",
+        "ring",
         "trinket"
       ],
       "desc": "Every shield you give, to yourself or an ally, is stronger.",
@@ -434,6 +443,7 @@
       "name": "DoT damage",
       "text": "+{0}% damage over time",
       "slots": [
+        "ring",
         "trinket",
         "weapon"
       ],
@@ -689,6 +699,7 @@
       "text": "+{0} Speed",
       "slots": [
         "boots",
+        "ring",
         "trinket"
       ],
       "icon": "spd",
@@ -789,6 +800,7 @@
       "text": "{l0} MP cost",
       "slots": [
         "helm",
+        "ring",
         "trinket"
       ],
       "needs": "mp",
@@ -851,6 +863,7 @@
       "text": "Start battles {0}% into your turn",
       "slots": [
         "boots",
+        "ring",
         "trinket"
       ],
       "icon": "initiative",
@@ -1040,6 +1053,7 @@
       "text": "+{0} MP when your skill kills an enemy",
       "slots": [
         "gloves",
+        "ring",
         "trinket"
       ],
       "needs": "mp",
@@ -1061,6 +1075,7 @@
       "text": "Heal {0}% of Max HP when your skill kills an enemy",
       "slots": [
         "armor",
+        "ring",
         "trinket"
       ],
       "icon": "killHeal",
@@ -1156,6 +1171,7 @@
       "slots": [
         "weapon",
         "gloves",
+        "ring",
         "trinket"
       ],
       "desc": "All damage of your skills.",
@@ -1199,6 +1215,7 @@
       "slots": [
         "boots",
         "gloves",
+        "ring",
         "trinket"
       ],
       "icon": "spd",
@@ -1314,6 +1331,7 @@
       "text": "{m0} elemental damage",
       "slots": [
         "weapon",
+        "ring",
         "trinket"
       ],
       "desc": "Fire, ice, holy, arcane, lightning, nature and dark damage of your skills.",
@@ -1364,6 +1382,7 @@
       "text": "+{0}% damage over time, your debuffs last {1} turn longer",
       "slots": [
         "weapon",
+        "ring",
         "trinket"
       ],
       "desc": "Stuns do not last longer.",
@@ -1422,6 +1441,7 @@
       "text": "{m0} Max MP, +{1} MP per turn",
       "slots": [
         "helm",
+        "ring",
         "trinket"
       ],
       "needs": "mp",
@@ -1449,6 +1469,7 @@
       "name": "Support power",
       "text": "+{0}% healing and shields given",
       "slots": [
+        "ring",
         "trinket",
         "offhand"
       ],
@@ -1478,6 +1499,7 @@
       "name": "Summon mastery",
       "text": "Your summons get {m0} HP and power",
       "slots": [
+        "ring",
         "trinket",
         "weapon"
       ],
@@ -1500,6 +1522,7 @@
       "text": "{m0} Rage gained, +{1} MP per turn",
       "slots": [
         "helm",
+        "ring",
         "trinket"
       ],
       "icon": "rage",
@@ -1638,6 +1661,7 @@
       "slots": [
         "helm",
         "gloves",
+        "ring",
         "trinket"
       ],
       "desc": "Only skills with a cooldown; ultimates are not affected.",
@@ -2172,6 +2196,24 @@
       "ilvl": 10
     },
     {
+      "id": "great_mace",
+      "name": "Great Mace",
+      "slot": "weapon",
+      "family": "maces",
+      "grip": "two",
+      "rarity": "common",
+      "ilvl": 4
+    },
+    {
+      "id": "long_hafted_mace",
+      "name": "Long-Hafted Mace",
+      "slot": "weapon",
+      "family": "maces",
+      "grip": "two",
+      "rarity": "rare",
+      "ilvl": 10
+    },
+    {
       "id": "war_hammer",
       "name": "War Hammer",
       "icon": "mace",
@@ -2531,8 +2573,7 @@
       "id": "copper_ring",
       "name": "Copper Ring",
       "icon": "ring",
-      "kindName": "Ring",
-      "slot": "trinket",
+      "slot": "ring",
       "rarity": "common",
       "ilvl": 4,
       "main": "c_mp"
@@ -2555,8 +2596,8 @@
     },
     {
       "id": "pilgrims_token",
-      "name": "Pilgrim's Token",
-      "slot": "trinket",
+      "name": "Pilgrim's Band",
+      "slot": "ring",
       "rarity": "uncommon",
       "ilvl": 8,
       "main": "c_mpregen"
@@ -3182,7 +3223,7 @@
     "treasurePerMember": 0.5,
     "smartSlotChance": 0.5, "gripWeight": { "two": 2.5 },
     "usableWeaponChance": 0.8,
-    "_repeat": "Ömer 2026-10-20 ekonomi formu: devriye (tekrar) zaferi altın/item düşüşü ve nadirlik tavanı ilk zaferle aynı; yalnızca XP azalır (campaign.json > replay.xp). Elit/sandık ilk zafer garantisi (minItems) yalnızca ilk zaferde.",
+    "_repeat": "Ömer 2026-10-20 ekonomi formu: devriye (tekrar) zaferi altın/item düşüşü ve nadirlik tavanı ilk zaferle aynı; XP de tam (Ömer 2026-11-01). Elit/sandık ilk zafer garantisi (minItems) yalnızca ilk zaferde.",
     "repeat": [
       {
         "items": 1,

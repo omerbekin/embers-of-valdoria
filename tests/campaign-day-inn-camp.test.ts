@@ -200,7 +200,20 @@ describe('kamp (bir kez, tek seçim)', () => {
     expect(heroById(useCamp(s, { kind: 'tend', heroId: id }), id)!.wounds).toBe(2 - CONFIG.camp.tendWounds);
   });
 
-  it('Train: bir kahramana o noktadaki normal savaş payının yarısı kadar XP', () => {
+  it('Train: takım sayısına bölünmez, tek kahramanla aynı XP', () => {
+    const s = at('river', 'rest');
+    const team = activeHeroes(s);
+    const level = team[0]!.level;
+    for (const h of team) h.level = level;
+    const h = team[0]!;
+    const solo = clone(s);
+    solo.active = solo.active.map((id) => (id === h.id ? id : ''));
+    expect(activeHeroes(solo)).toHaveLength(1);
+    expect(team.length).toBeGreaterThan(1);
+    expect(campTrainXp(s, h.id)).toBe(campTrainXp(solo, h.id));
+  });
+
+  it('Train: bir kahramana o noktadaki normal savaş toplamının yarısı kadar XP', () => {
     const s = at('river', 'rest');
     const h = activeHeroes(s)[0]!;
     const xp = campTrainXp(s, h.id);

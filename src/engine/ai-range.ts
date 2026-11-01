@@ -9,6 +9,7 @@ import type { Battle } from './battle';
 import { previewForTargets } from './preview';
 import { FOE_TARGETS } from './range';
 import type { Combatant, SkillDef } from './types';
+import { scoredMpCost } from './ai-value';
 import type { AiValueConfig, ValueContext } from './ai-value';
 
 /** ai.ts'ten gelen bağımlılıklar (karar bağlamı ve paylaşılan hesaplar); döngüsel içe aktarma yok. */
@@ -108,7 +109,7 @@ function potentialFrom(battle: Battle, actor: Combatant, slot: number, memo: Hit
     const pool = inReach.length > 0 ? inReach : battle.living(foe).filter((c) => c.board === foe).slice(0, 1);
     const hits = pool.map((c) => expectedHit(battle, memo, actor, sk.id, c));
     const v = sk.target === 'single_enemy' ? Math.max(0, ...hits) : hits.reduce((a, b) => a + b, 0);
-    best = Math.max(best, v - (sk.cost.resource === 'mp' ? sk.cost.amount * 0.5 : 0));
+    best = Math.max(best, v - (sk.cost.resource === 'mp' ? scoredMpCost(sk) * 0.5 : 0));
   }
   return best;
 }

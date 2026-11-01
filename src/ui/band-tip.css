@@ -596,3 +596,28 @@ html.compact .bt {
 .bt.nw .bt-ht {
   min-width: max-content;
 }
+
+/* attachBandTip (band-tip-attach.ts): gerçek denetimlerin üstünde açılan A Band balonu. Fare üstüne gelince açılır, dokunma sabitler. */
+.bt-pop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--m-tooltip, 140ms), visibility 0s var(--m-tooltip, 140ms);
+}
+.bt-pop.on {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--m-tooltip, 140ms);
+}
+html.reduced-motion .bt-pop,
+html.reduced-motion .bt-pop.on {
+  transition: none;
+}
+/* pasif düğme fareyi yutar (ipucu açılamaz): olaylar üst kaba geçer, ipucu oradan dinler */
+button:disabled[data-bt] {
+  pointer-events: none;
+}

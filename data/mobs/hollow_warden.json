@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Stonebound Warden; palet YOK, stonebound_warden çizimi.",
+  "id": "hollow_warden",
+  "name": "Hollow Warden",
+  "family": "undead",
+  "spriteId": "stonebound_warden",
+  "color": "#6f7a86",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Hollow · Tank",
+  "attributes": {
+    "str": 24,
+    "int": 8,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 30,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 130
+  },
+  "ai": "aggressive",
+  "skills": [
+    "gatestone_slam",
+    "hollow_rockfall"
+  ],
+  "passive": {
+    "id": "hollow",
+    "name": "Hollow",
+    "icon": "bulwark",
+    "text": "In Darkness it takes 25% less damage.",
+    "effect": {
+      "type": "hollow",
+      "darkTakenMult": 0.75
+    }
+  }
+}

@@ -132,7 +132,7 @@ describe('kalkan bloğu: motor', () => {
   it('maç kaydı ve savaş günlüğü: "BLOCKED" / "(blocked)"', () => {
     for (let seed = 1; seed <= 100; seed++) {
       const b = make({ 0: 'cutthroat' }, { 0: 'defender' }, { 0: shield(0.3) }, seed);
-      const log = new CombatLog({ unit: (uid: string) => ({ name: uid, side: uid.startsWith('party') ? 'party' : 'enemy' }), skill: (id: string) => id, status: (id: string) => id, ground: (id: string) => id, globalKind: () => 'rest' });
+      const log = new CombatLog({ unit: (uid: string) => ({ name: uid, side: uid.startsWith('party') ? 'party' : 'enemy' }), skill: (id: string) => id, status: (id: string) => id, ground: (id: string) => id, globalKind: () => 'rest', cause: () => '', rowOf: () => 0 });
       const events: BattleEvent[] = [];
       b.on((e) => {
         events.push(e);

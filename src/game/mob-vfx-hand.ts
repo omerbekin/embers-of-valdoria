@@ -133,6 +133,8 @@ const DROWNED_REACH_STANDIN: Readonly<Record<string, string>> = {
   wyrm_lash: 'toll_sweep',
   wyrm_surge: 'burn_the_ground',
   wyrm_swallow: 'bite',
+  grave_strike: 'halberd_chop',
+  grave_sweep: 'toll_sweep',
 };
 
 const BASE: Readonly<Record<string, MobHandVfx>> = {

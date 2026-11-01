@@ -8,8 +8,10 @@ import { STACK_FORM } from '../engine/tree-hooks';
 import type { Element } from '../engine/types';
 
 /** 6 yuva (karar 1). Sıra veridekiyle aynı. */
-export const SLOT_IDS = ['weapon', 'offhand', 'helm', 'armor', 'gloves', 'boots', 'trinket'] as const;
+export const SLOT_IDS = ['weapon', 'offhand', 'helm', 'armor', 'gloves', 'boots', 'ring', 'trinket'] as const;
 export type SlotId = (typeof SLOT_IDS)[number];
+/** Kilitli yuvalar ve kısa nedenleri (Ömer 2026-11-01: Trinket seferde Reedgate'te açılır; kaynak src/campaign/slots.ts, Endless'ta boş). */
+export type SlotLocks = Partial<Record<SlotId, string>>;
 
 export const RARITY_IDS = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
 export type RarityId = (typeof RARITY_IDS)[number];
@@ -169,7 +171,7 @@ export interface ItemDef {
   grip?: Grip;
   /** Silah tipi (Ömer 2026-10-27); yoksa ailesinin `type`ı. Yalnızca ailenin tipinden farklıysa yazılır (Arming Sword: sword). */
   type?: WeaponType;
-  /** Item ekranlarındaki tür adı, yuva adından farklıysa (Copper Ring: "Ring"; yuvası Trinket kalır). */
+  /** Item ekranlarındaki tür adı, yuva adından farklıysa (yuva adının yerine). */
   kindName?: string;
   /** Varsayılan nadirlik (örnek kendi nadirliğini taşır: ItemRoll.rarity). Legendary taban yalnızca Legendary olur. */
   rarity: RarityId;
@@ -889,7 +891,7 @@ export function equipInto(equipment: EquipMap, inst: ItemInstance, slot: SlotId)
  * Takma planı + kurallar (sefer, Endless, Gear sürükle-bırak): seviye şartı (`o.level`; verilmezse denetlenmez), sınıf / aile, yuva uyumu, ikinci el kapalı
  * mı, kahraman başına 1 Legendary (çıkacak item'ler sayılmaz). `slot` verilmezse defaultEquipSlot. Hata mesajı ya da plan. Torba yeri çağıranın işidir (displaced torbaya döner).
  */
-export function planEquip(classId: string, equipment: EquipMap, inst: ItemInstance, slot?: SlotId, o: { level?: number } = {}): EquipPlan | { error: string } {
+export function planEquip(classId: string, equipment: EquipMap, inst: ItemInstance, slot?: SlotId, o: { level?: number; locks?: SlotLocks } = {}): EquipPlan | { error: string } {
   const d = itemDef(inst.id);
   if (!d) return { error: `Unknown item: ${inst.id}` };
   // Seviye şartı (x6, Ömer 2026-10-17): kahramanın seviyesi item seviyesi - 3'ten düşükse takılamaz (sefer / Endless / arayüz seviyeyi HEP verir;
@@ -899,6 +901,7 @@ export function planEquip(classId: string, equipment: EquipMap, inst: ItemInstan
   // Ana el boşken silah ikinci ele girmez (Ömer 2026-10-14): ikinci ele bırakılan / "Off-hand" ile takılan hançer de ana ele gider
   const at = slot === 'offhand' && offhandWeapon(d) && !equipment.weapon ? 'weapon' : (slot ?? defaultEquipSlot(equipment, d));
   if (!fitsSlot(d, at)) return { error: `${d.name} does not go in the ${slotDef(at)?.name ?? at} slot` };
+  if (o.locks?.[at]) return { error: `${slotDef(at)?.name ?? at} slot: ${o.locks[at]}` };
   if (at === 'offhand') {
     const w = offhandBlocker(equipment);
     if (w) return { error: offhandBlockedMsg(w) };
@@ -941,6 +944,22 @@ export function migrateOffhand(equipment: EquipMap | null | undefined, overflow?
   if (equipment.offhand && overflow) overflow.push(equipment.offhand);
   equipment.offhand = w;
   equipment.weapon = null;
+  return 1;
+}
+
+/**
+ * Kayıt taşıma (Ömer 2026-11-01, Ring ve Trinket ayrı yuva): eski kayıtta `trinket` yuvasındaki Ring item'i (Copper Ring, Pilgrim's Band) `ring` yuvasına geçer.
+ * `ring` doluysa taşınan item `overflow`a eklenir, çağıran torbaya koyar (torba sınırı aşılabilir, item kaybolmaz). Tanımı olmayan item'e dokunmaz.
+ * Yerinde değiştirir; taşınan item sayısı. Her okumada çalışabilir (idempotent).
+ */
+export function migrateRingSlot(equipment: EquipMap | null | undefined, overflow: ItemInstance[]): number {
+  if (!equipment || typeof equipment !== 'object') return 0;
+  const inst = equipment.trinket;
+  const d = inst && typeof inst === 'object' && typeof inst.id === 'string' ? itemDef(inst.id) : undefined;
+  if (!inst || d?.slot !== 'ring') return 0;
+  if (equipment.ring) overflow.push(inst);
+  else equipment.ring = inst;
+  equipment.trinket = null;
   return 1;
 }
 

@@ -187,10 +187,10 @@ describe('A5 görev akışları ve ödül', () => {
     expect(nextStep(drown).kind).toBe('move');
   });
 
-  it('Cutthroat: Pay (altın, savaşsız) tam ödül; Settle (ilk 3 tur ultimate yok) + 40 altın', () => {
+  it('Cutthroat: Pay (altın, savaşsız) tam ödül; Settle (ilk 3 tur ultimate yok) + 70 altın', () => {
     const s = { ...jump('cutthroat_debt'), gold: 100 };
     const paid = chooseEvent(s, 'pay');
-    expect(paid.gold).toBe(40);
+    expect(paid.gold).toBe(20);
     expect(holder(paid, 'cutthroat').quests).toEqual(['cutthroat_debt']);
     expect(() => chooseEvent({ ...s, gold: 10 }, 'pay')).toThrow('Not enough gold');
     const fight = chooseEvent(s, 'settle');
@@ -201,7 +201,7 @@ describe('A5 görev akışları ve ödül', () => {
       expect(plan.units.party[fight.active.indexOf(id)]?.startCooldowns?.[ult], h.class).toBe(4);
     }
     const won = win(fight);
-    expect(won.gold).toBe(140);
+    expect(won.gold).toBe(170);
     expect(holder(won, 'cutthroat').quests).toEqual(['cutthroat_debt']);
   });
 
@@ -214,11 +214,11 @@ describe('A5 görev akışları ve ödül', () => {
     const again = moveTo(away, 'dr93');
     expect(nextStep(again)).toMatchObject({ kind: 'event', event: 'dr_quest_table' });
     const staked = chooseEvent(again, 'stake');
-    expect(staked.gold).toBe(60);
+    expect(staked.gold).toBe(20);
     expect(canWithdraw(staked)).toBe(false); // bahis konuldu: savaş kilitli (olay savaşı)
     expect(battlePlan(staked).rules?.blocked).toEqual([9, 10, 11]);
     const won = win(staked);
-    expect(won.gold).toBe(140);
+    expect(won.gold).toBe(180);
     expect(holder(won, 'gambler').quests).toEqual(['gambler_table']);
   });
 

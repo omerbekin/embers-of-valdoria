@@ -2,6 +2,25 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.9.10.12",
+      "date": "2026-11-01",
+      "groups": [
+        {
+          "heading": "Fixes",
+          "items": [
+            "Chests now open in a full-screen scene: light columns per item, then Take all. Risen Skeletons have their own look.",
+            "Mage's Mirage Veil now Blinds the attacker; Mage's Blizzard hits softer; Vesper's bells hit harder and she is tougher",
+            "Hit flashes are now semi-transparent. Summon Treant no longer makes the Druid rise out of the ground.",
+            "Combat Log now names the source of damage and healing from passives and hazards, and says which way a unit moved.",
+            "Gear now has separate Ring and Trinket slots; Trinket opens at Reedgate. New two-handed maces: Great Mace and Long-Hafted Mace.",
+            "Merchant: wares scroll under a fixed header. Battle: hover ground to read its effect. Disabled buttons now say why.",
+            "Ice ground and fire now put each other out, and holy fire burning poison lifts Poisoned from allies there.",
+            "Plus 2 more changes."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.10.11",
       "date": "2026-11-01",
       "groups": [

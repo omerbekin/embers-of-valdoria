@@ -9,6 +9,7 @@ import { battleTrack, phaseTrack, sceneMusic, type MusicTrack } from '../../ui/m
 import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-layout';
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
+import { planGroundBadges, groundTurnsText, groundCardText, type GroundBadgeIn } from '../ground-badges';
 import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, TREE_SECTION, describeStat, groundReactionHint, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
 import type { AreaStage, BattleEvent, BattleMode, Combatant, PushDir, SkillDef, SkillModeSet, StatKind, Teams, TargetPreview } from '../../engine';
 import { type DamageTags } from '../float-text';
@@ -43,6 +44,7 @@ import { splitPreviewStatuses } from '../preview-format';
 import { kitTextBand } from '../hud-kit';
 import type { BattleEffect } from '../battle-effects';
 import { CombatLog } from '../combat-log';
+import { causeName } from '../log-cause';
 import { skillTags, UNBLOCKABLE_COLOR } from '../../ui/skill-tags';
 import { lockedSkillText } from '../../ui/skill-lock';
 import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../../engine/unblockable';
@@ -79,6 +81,7 @@ import type { CellTone } from '../cell-style';
 import { boardBounds, cellCenter } from '../shape-geometry';
 import { alphaOpaque, pickCellAt, type PickSprite } from '../pick-cell';
 import type { Pt } from '../shape-geometry';
+import { buildGroundTip, groundsOnCell, groundTipKeyOf } from '../../ui/ground-tip';
 import { cellKey, corpseMarkPos, corpseTip, empoweredLine, summonPreviewLine, visibleCorpseMarks } from '../corpse-marks';
 import type { CorpseState } from '../corpse-marks';
 import { createCorpseMarker } from '../corpse-marker';
@@ -303,6 +306,9 @@ export class BattleScene extends Phaser.Scene {
   /** Dokunmatik uzun basma sayacı ve 'bu basış seçim jestiydi' bayrağı (bırakınca skill seçmesin). */
   private pressTimer?: Phaser.Time.TimerEvent;
   private longPressFired = false;
+  /** Ground tip (src/ui/ground-tip.ts): key of the ground tip on screen ('' = none); infoBusy = another flow owns the info plaque. */
+  private groundTipKey = '';
+  private infoBusy = false;
   /** Ultimate kullanan birim: ilk skill vuruşunda ekran titremesi + zemin çatlağı oynar (A1). */
   private ultHitBy: string | null = null;
   /** U7: düşen kahramanın üstündeki "Revive · N" düğmeleri (uid -> düğme + durum anahtarı). */
@@ -512,6 +518,7 @@ export class BattleScene extends Phaser.Scene {
     this.applyDebugTiming();
     this.bindSkillHotkeys();
     this.bindUnitSelect();
+    this.bindGroundTip();
     for (const c of this.battle.combatants) if (!c.removed) this.addView(c); // dalgalı savaş: önceki dalganın savaştan çıkmış düşmanı çizilmez (devamda)
     releasePoseSources(this); // atlaslar pişti: gövde / silah kaynak dokuları bellekte tutulmaz (telefon belleği; src/game/pose-rig.ts)
     this.syncCorpsesNow();
@@ -652,8 +659,8 @@ export class BattleScene extends Phaser.Scene {
         }
         list.push({ id: st.kind, left: st.turns, icon: art.name, owner: art.owner, color: def?.color ?? fallback[1]!, text: max > 1 && st.stacks ? `x${st.stacks}` : String(st.turns), debuff: def?.type === 'debuff', turns: !(max > 1 && st.stacks) });
       }
-      for (const g of this.battle.ground) {
-        if (g.board !== c.board || !g.slots.includes(c.slot) || g.sourceSide === c.side) continue;
+      // Zemin rozeti: verdiği durum görünüyorsa kendi rozeti yok (ad durumun EFFECTS satırında "from ..."; src/game/ground-badges.ts)
+      for (const g of this.underfootGrounds(c, this.statusesShown(c)).badges) {
         const def = content.grounds[g.ground];
         list.push({ id: `ground:${g.ground}`, left: g.turns, icon: paintedOr('ground', g.ground, def?.icon ?? 'flame'), color: def?.color ?? '#ffffff', text: String(g.turns), debuff: true, turns: true });
       }
@@ -954,6 +961,61 @@ export class BattleScene extends Phaser.Scene {
     });
     this.input.on('pointerup', cancelPress);
     this.events.once('shutdown', cancelPress);
+  }
+
+  // --- Ground tip: mouse hover / touch long press on a cell with ground effects shows their names + effects (display only). A unit on the cell keeps its own
+  // card (side panel); this one uses the info plaque, so it never covers a click. It yields to any tip another flow placed (aiming, move, revive, corpse). ---
+
+  private bindGroundTip(): void {
+    this.groundTipKey = '';
+    this.infoBusy = false;
+    let hideTimer: Phaser.Time.TimerEvent | undefined;
+    const cellUnder = (ptr: Phaser.Input.Pointer): { board: 'party' | 'enemy'; slot: number } | null => {
+      const p = worldXY(this, ptr);
+      if (p.y >= layout.commandPanel.y) return null;
+      for (const board of ['party', 'enemy'] as const) {
+        const slots = this.slotsOf(board);
+        const body = this.boardBody(board, { w: layout.spriteBox.width, h: layout.spriteBox.height });
+        const b = boardBounds(slots, body);
+        if (p.x < b.x0 || p.x > b.x1 || p.y < b.y0 || p.y > b.y1) continue;
+        const slot = pickCellAt(slots, content.GRID.lanes, p.x, p.y, this.pickSprites(board), body);
+        if (slot !== null) return { board, slot };
+      }
+      return null;
+    };
+    const show = (cell: { board: 'party' | 'enemy'; slot: number } | null): void => {
+      const list = cell ? groundsOnCell(this.battle.ground, cell.board, cell.slot) : [];
+      if (!list.length) {
+        if (this.groundTipKey) this.hideInfoTip();
+        return;
+      }
+      const key = groundTipKeyOf(list);
+      if (key === this.groundTipKey || this.infoBusy || this.unitTipKey.startsWith('corpse:')) return;
+      const tip = buildGroundTip(list, content.grounds, (d) => this.texUrl(ensureIcon(this, d.icon, d.color, true)));
+      if (!tip) return;
+      this.hud?.showContextTip(tip, { top: true, many: list.length > 2 });
+      this.groundTipKey = key;
+    };
+    this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      if (ptr.wasTouch) return;
+      // next frame: the aiming flows' own cell hover (zones) has run, so infoBusy is current
+      this.time.delayedCall(0, () => show(cellUnder(ptr)));
+    });
+    // Touch: not while aiming (cell zones up); a long press on a cell shows it, any later touch hides it
+    this.input.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
+      if (!ptr.wasTouch) return;
+      hideTimer?.remove(false);
+      if (this.groundTipKey) this.hideInfoTip();
+      if (this.cellZones.length > 0) return;
+      const start = worldXY(this, ptr);
+      hideTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
+        const now = worldXY(this, ptr);
+        if (!ptr.isDown || this.cellZones.length > 0 || Math.hypot(now.x - start.x, now.y - start.y) > LONG_PRESS_SLOP) return;
+        show(cellUnder(ptr));
+        if (this.groundTipKey) hideTimer = this.time.delayedCall(4000, () => this.groundTipKey && this.hideInfoTip());
+      });
+    });
+    this.events.once('shutdown', () => hideTimer?.remove(false));
   }
 
   /** Was this pointer event part of a selection gesture (Ctrl/Cmd held, or a finished long press)? Then it must not also pick a target. */
@@ -2069,16 +2131,23 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** A small dark plaque with a line of text (reason / hint) above the board. */
-  private shapeLabel(x: number, y: number, text: string, hex: number): Phaser.GameObjects.Container {
+  private shapeLabel(x: number, y: number, text: string, hex: number, sub?: string): Phaser.GameObjects.Container {
     // Tasarım kiti etiketi: koyu zemin, ince renkli çerçeve, Cinzel yazı (köşesiz)
     const t = elText(this, 0, 0, text, 19, `#${hex.toString(16).padStart(6, '0')}`, { em: 0.04, upper: false }).setOrigin(0.5);
-    const w = t.width + 28;
-    const h = t.height + 12;
+    // İkinci satır (isteğe bağlı): kısa sonuç yazısı, küçük ve soluk; kutu iki satırı da sarar (hücre genişliğini aşmaz: en çok ~5 kelime)
+    const subSize = document.documentElement.classList.contains('short') ? 18 : 14; // telefon: kanvas küçülür, 14 okunmaz
+    const s2 = sub ? elText(this, 0, 0, sub, subSize, '#e8dcc8', { em: 0.02, upper: false }).setOrigin(0.5) : undefined;
+    const w = Math.max(t.width, s2?.width ?? 0) + 28;
+    const h = t.height + (s2 ? s2.height - 2 : 0) + 12;
+    if (s2) {
+      t.setY(-h / 2 + 6 + t.height / 2);
+      s2.setY(h / 2 - 6 - s2.height / 2);
+    }
     const bg = this.add.graphics();
     bg.fillStyle(0x0c0806, 0.92).fillRect(-w / 2, -h / 2, w, h);
     bg.lineStyle(1, hex, 0.85).strokeRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1);
     const px = Math.max(w / 2 + 8, Math.min(W - w / 2 - 8, x));
-    return this.add.container(px, y, [bg, t]);
+    return this.add.container(px, y, s2 ? [bg, t, s2] : [bg, t]);
   }
 
   /** Whirlwind-like skills (melee, everyone in reach): the front row the skill will sweep is shown as affected plates. */
@@ -2095,13 +2164,16 @@ export class BattleScene extends Phaser.Scene {
    * Zemin tepkimesi önizlemesi (Ömer 2026-10-27): skill'in bırakacağı zemin bu hücrede tepkiyecekse plakanın altında sonucun adı (tasarım kiti
    * etiketi, sonucun zemin rengiyle çerçeveli). Alan plakalarıyla birlikte silinir (areaTop).
    */
-  private showReactionMarks(list: Array<{ board: 'party' | 'enemy'; slot: number; reaction: string; label: string }>): void {
+  private showReactionMarks(list: Array<{ board: 'party' | 'enemy'; slot: number; reaction: string; label: string; result?: string }>): void {
     if (!list.length) return;
     const top = this.areaTop ?? this.add.container(0, 0, []).setDepth(3550);
     this.areaTop = top;
     for (const r of list) {
       const c = cellCenter(this.slotsOf(r.board), r.slot);
-      top.add(this.shapeLabel(c.x, c.y + 38, r.label, color(reactionColor(r.reaction))));
+      const label = this.shapeLabel(c.x, c.y + 38, r.label, color(reactionColor(r.reaction)), r.result);
+      // Ön alt sıra: iki satırlı etiket alt panele binmesin
+      label.y = Math.min(label.y, layout.commandPanel.y - label.getBounds().height / 2 - 4);
+      top.add(label);
     }
   }
 
@@ -2856,6 +2928,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** Bağlam ipucu (hücre, ceset, yürüme, diriltme adımları): alt çubuğun hemen üstünde, ortada. */
   private placeInfoTip(tip: Tip): void {
+    this.infoBusy = true;
+    this.groundTipKey = '';
     this.hud?.showContextTip(tip);
   }
 
@@ -2948,6 +3022,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private hideInfoTip(): void {
+    this.infoBusy = false;
+    this.groundTipKey = '';
     this.hud?.hideContextTip();
   }
 
@@ -2997,6 +3073,7 @@ export class BattleScene extends Phaser.Scene {
     const blockBreak = this.battle.unitBlockBreak(c);
     if (blockBreak > 0) grid.push({ iconUrl: blockIconUrl(), label: 'BREAK', value: `${Math.round(blockBreak * 100)}%` });
     const effects: UnitCard['effects'] = [];
+    const { statusSource: groundSrc, badges: groundOnly } = this.underfootGrounds(c, c.statuses);
     for (const st of c.statuses) {
       const sd = content.statuses[st.kind];
       // rozet ikonu: birimin üstündeki rozetle aynı (statusBadge; sınıfa özgü durum sahibinin çizimi)
@@ -3007,11 +3084,16 @@ export class BattleScene extends Phaser.Scene {
         name: sd?.name ?? st.kind,
         color: sd?.color ?? colors.targetHighlight,
         turns: `${st.turns} turn${st.turns === 1 ? '' : 's'}`,
-        text: statusCardText(sd),
+        text: groundSrc.has(st.kind) ? `${statusCardText(sd)} (from ${groundSrc.get(st.kind)})` : statusCardText(sd),
         ...(iconUrl ? { iconUrl } : {}),
         ...(sd?.type ? { debuff: sd.type === 'debuff' } : {}),
         ...(maxStacks > 1 && st.stacks ? { stacks: st.stacks } : {}),
       });
+    }
+    // Durum vermeyen (ya da verdiği durum görünmeyen) zemin: kendi satırı (ad, kalan tur, kısa açıklama), rozetiyle aynı liste
+    for (const g of groundOnly) {
+      const gd = content.grounds[g.ground];
+      effects.push({ name: g.name, color: gd?.color ?? colors.muted, turns: groundTurnsText(g.turns), text: groundCardText(gd), debuff: true });
     }
     if (c.shield > 0) effects.push({ name: 'Shield', color: colors.shield, turns: String(c.shield), text: 'Absorbs damage before HP' });
     if (c.magicShield > 0) effects.push({ name: 'Magic shield', color: colors.magicShield, turns: String(c.magicShield), text: 'Absorbs magic damage before HP' });
@@ -3220,6 +3302,14 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** Ekranda gösterilecek durumlar: olaylar oynarken gösterilen anlık görüntü, yoksa canlı durum. */
+  /** Birimin altındaki düşman zeminleri (dostun bıraktığı rozetlenmez) ve rozet planı: rozet listesi ile birim kartı aynı kaynağı kullanır. */
+  private underfootGrounds(c: Combatant, shown: Combatant['statuses']): ReturnType<typeof planGroundBadges> & { all: GroundBadgeIn[] } {
+    const all: GroundBadgeIn[] = this.battle.ground
+      .filter((g) => g.board === c.board && g.slots.includes(c.slot) && g.sourceSide !== c.side)
+      .map((g) => ({ id: g.id, ground: g.ground, name: content.grounds[g.ground]?.name ?? g.ground, turns: g.turns, grants: this.battle.groundGrants(g).map((x) => x.kind) }));
+    return { ...planGroundBadges(all, shown, (k) => content.grounds[k]?.name ?? k), all };
+  }
+
   private statusesShown(c: Combatant): Combatant['statuses'] {
     return this.shownStatuses?.get(c.uid) ?? c.statuses;
   }
@@ -5079,6 +5169,8 @@ export class BattleScene extends Phaser.Scene {
         status: (id) => content.statuses[id]?.name ?? id,
         ground: (id) => content.grounds[id]?.name ?? id,
         globalKind: (id) => this.battle.globalDef(id)?.kind ?? id,
+        cause: causeName,
+        rowOf: (slot) => this.battle.rowOf(slot),
       },
       this.localSide,
     );

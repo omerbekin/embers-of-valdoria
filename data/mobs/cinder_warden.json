@@ -1,0 +1,43 @@
+{
+  "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim B (Tavlanan kapı). Cinder Gatewarden Harita 1 mobu olduğu için ayrı dosya; statlar onun kopyası. Kendi çizimi; skill sanatı ödünç.",
+  "id": "cinder_warden",
+  "name": "The Cinder Warden",
+  "family": "guardians",
+  "spriteId": "cinder_warden",
+  "spriteScale": 1.15,
+  "color": "#6b4a2e",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Elite · Gate",
+  "attributes": {
+    "str": 28,
+    "int": 8,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 34,
+  "magicArmor": 10,
+  "blockChance": 0.2,
+  "overrides": {
+    "hp": 150
+  },
+  "ai": "mob_tank",
+  "skills": [
+    "searing_bash",
+    "warden_hold_gate",
+    "slag_wall"
+  ],
+  "passive": {
+    "id": "tempering",
+    "name": "Tempering",
+    "icon": "flame",
+    "text": "Changes stance on each of its turns. Red-hot: immune to Fire, weak to Ice and water. Quenched: Armor halved, and Fire makes it Red-hot again.",
+    "effect": {
+      "type": "tempering",
+      "hot": "tempered_red_hot",
+      "cold": "tempered_quenched",
+      "waterTaken": 1.5
+    }
+  }
+}

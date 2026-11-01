@@ -1,0 +1,37 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Fen Witchling; palet YOK, fen_witchling çizimi.",
+  "id": "rime_witch",
+  "name": "Rime Witch",
+  "family": "hexes",
+  "spriteId": "fen_witchling",
+  "color": "#8fc0dc",
+  "logo": "rune",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Hex · Caster",
+  "attributes": {
+    "str": 10,
+    "int": 8,
+    "dex": 6,
+    "luck": 26
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "ai": "hexer",
+  "skills": [
+    "ice_shard",
+    "sodden_hex"
+  ],
+  "passive": {
+    "id": "hoarfrost",
+    "name": "Hoarfrost",
+    "icon": "blizzard",
+    "text": "While this witch lives, a Soaked hero becomes Chilled at the start of each of its turns. This never freezes.",
+    "effect": {
+      "type": "hoarfrost",
+      "wet": "soaked",
+      "status": "chilled",
+      "turns": 1
+    }
+  }
+}

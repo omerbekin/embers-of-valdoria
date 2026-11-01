@@ -1008,7 +1008,10 @@ export class BattleHud {
   // ------------------------------------------------------------------ bağlam ipucu (hücre: yürü, ceset, diriltme...)
 
   /** Hücre / ceset ipuçları: alt çubuğun hemen üstünde, ortada (boş yere gelince gösterilmez). */
-  showContextTip(t: TipContent): void {
+  showContextTip(t: TipContent, place?: { top: boolean; many?: boolean }): void {
+    // Zemin ipucu (top): sıra göstergesinin altında, üzerine gelinen hücreyi kapatmaz
+    this.ctip.classList.toggle('at-top', !!place?.top);
+    this.ctip.classList.toggle('at-many', !!place?.many);
     this.ctip.innerHTML = tipHtml(t);
     tipOn(this.ctip);
     this.root.classList.add('ctx');

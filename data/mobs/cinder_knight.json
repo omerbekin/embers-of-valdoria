@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Komşu: cinder_gatewarden. Kendi çizimi.",
+  "id": "cinder_knight",
+  "name": "Cinder Knight",
+  "family": "ember_cult",
+  "spriteId": "cinder_knight",
+  "color": "#3a3532",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Ashborn · Tank",
+  "attributes": {
+    "str": 28,
+    "int": 8,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 30,
+  "magicArmor": 10,
+  "overrides": {
+    "hp": 140
+  },
+  "ai": "mob_tank",
+  "skills": [
+    "cinder_brand",
+    "knight_hold_gate"
+  ],
+  "passive": {
+    "id": "searing_rebuke",
+    "name": "Searing Rebuke",
+    "icon": "bash",
+    "text": "When a melee skill hits this unit with physical damage, 45% of the damage its armor blocked is dealt back to the attacker as physical damage.",
+    "effect": {
+      "type": "rebuke",
+      "ratio": 0.45
+    }
+  }
+}

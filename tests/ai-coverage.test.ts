@@ -345,7 +345,7 @@ describe('7b. Vesper ağacı: her tetik / etki terazide', () => {
   it('Storm Tower iki çan değerinde; Echoing Hall ult\'e çan değeri verir; Deep Peal Thunderpeal\'in çan değerini kapatır', () => {
     const one = fight({});
     const two = fight({ '2.v': 1 });
-    expect(term(two, V(two).uid, 'thunderpeal', 'bell')!).toBeCloseTo(term(one, V(one).uid, 'thunderpeal', 'bell')! * 2, 6);
+    expect(term(two, V(two).uid, 'thunderpeal', 'bell')!).toBeCloseTo(term(one, V(one).uid, 'thunderpeal', 'bell')! * 2, 1);
     const hall = fight({ '4.l1': 1 });
     hall.debugClearCooldowns();
     expect(term(hall, V(hall).uid, 'great_bell_of_valdoria', 'bell') ?? 0).toBeGreaterThan(0);

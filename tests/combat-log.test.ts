@@ -14,6 +14,8 @@ const names: LogNames = {
   status: (id) => ({ wound: 'Wounded' })[id] ?? id,
   ground: (id) => ({ poison: 'Poison' })[id] ?? id,
   globalKind: (id) => id,
+  cause: (id) => ({ 'paladin:0.f1': 'Wrathful Glow', divine_light: 'Divine Light', lifesteal: 'Lifesteal' })[id] ?? '',
+  rowOf: (slot) => Math.floor(slot / 3),
 };
 const ev = (e: object) => e as BattleEvent;
 const text = (log: CombatLog, i = 0) => log.entries()[i]!.parts.map((p) => p.t).join('');
@@ -79,5 +81,70 @@ describe('combat log (HUD > Battle info)', () => {
     expect(lines).toContain('Cutthroat used smoke_bomb on Hexer · blinded, Warrior · blinded');
     expect(lines).toContain('Hexer took 5 from wither');
     expect(lines.join('|')).not.toContain('+6');
+  });
+
+  const dmg = (o: object) => ev({ type: 'damage', source: 'c', target: 'a', amount: 2, absorbed: 0, hpAfter: 50, shieldAfter: 0, magicShieldAfter: 0, crit: false, ...o });
+
+  // Ömer 2026-11-01: "EMBER ACOLYTE took 2 from" satırı boş bitiyordu: kaynak adı olmayan durum hasarı.
+  it('damage names its cause; an unnamed one has no dangling "from"', () => {
+    const log = new CombatLog(names);
+    log.push(dmg({ origin: 'status', cause: 'divine_light' }));
+    expect(text(log)).toBe('Cutthroat took 2 from Divine Light');
+    log.push(dmg({ origin: 'status' }));
+    expect(text(log)).toBe('Cutthroat took 2');
+    log.push(dmg({ origin: 'status', cause: 'unknown_id' }));
+    expect(text(log)).toBe('Cutthroat took 2');
+    log.push(dmg({ origin: 'ground', amount: 0, absorbed: 3, cause: 'divine_light' }));
+    expect(text(log)).toBe('Cutthroat took 3 from Divine Light');
+  });
+
+  it('inside an action: a named source gets its own line, plain skill damage still folds', () => {
+    const log = new CombatLog(names);
+    log.push(ev({ type: 'skillUsed', actor: 'c', skill: 'whirl', targets: ['a'] }));
+    log.push(dmg({ amount: 9, origin: 'skill' }));
+    log.push(dmg({ origin: 'status', cause: 'paladin:0.f1' }));
+    log.push(dmg({ amount: 1, origin: 'status' }));
+    log.push(dmg({ amount: 5, origin: 'skill' }));
+    const lines = log.entries().map((x) => x.parts.map((p) => p.t).join(''));
+    expect(lines).toEqual(['Cutthroat took 2 from Wrathful Glow', 'Warrior used Whirlwind on Cutthroat · 15']);
+  });
+
+  it('heal names its cause; lifesteal folds into the own action, plain regen stays out', () => {
+    const heal = (o: object) => ev({ type: 'heal', source: 'c', target: 'c', amount: 8, hpAfter: 50, crit: false, ...o });
+    const log = new CombatLog(names);
+    log.push(heal({ cause: 'divine_light' }));
+    expect(text(log)).toBe('Warrior healed +8 from Divine Light');
+    log.push(heal({}));
+    expect(text(log)).toBe('Warrior healed +8');
+    log.push(heal({ cause: 'dark_bond' }));
+    expect(text(log)).toBe('Warrior healed +8 (Dark Bond)');
+    log.push(ev({ type: 'skillUsed', actor: 'c', skill: 'whirl', targets: ['a'] }));
+    log.push(dmg({ amount: 9, origin: 'skill' }));
+    log.push(heal({ amount: 3, cause: 'lifesteal' }));
+    expect(text(log)).toBe('Warrior used Whirlwind on Cutthroat · 9, Warrior · +3');
+    log.push(heal({ amount: 4, target: 'b', cause: 'divine_light' }));
+    expect(text(log)).toBe('Hexer healed +4 from Divine Light');
+    log.push(heal({ amount: 2, target: 'b', cause: 'lifesteal' }));
+    expect(text(log)).toBe('Hexer healed +2 from Lifesteal');
+    const n = log.entries().length;
+    log.push(heal({ amount: 1 }), { regen: true });
+    expect(log.entries().length).toBe(n);
+  });
+
+  it('Move says the direction (slot row 0 = front); pushes do not touch the line', () => {
+    const moved = (from: number, to: number, o: object = {}) => {
+      const log = new CombatLog(names);
+      log.push(ev({ type: 'globalUsed', actor: 'c', id: 'move' }));
+      log.push(ev({ type: 'moved', actor: 'c', from, to, ...o }));
+      return text(log);
+    };
+    expect(moved(3, 0)).toBe('Warrior moved forward');
+    expect(moved(3, 7)).toBe('Warrior moved back');
+    expect(moved(3, 5)).toBe('Warrior moved sideways');
+    expect(moved(3, 0, { actor: 'a' })).toBe('Warrior moved');
+    expect(moved(3, 0, { cause: 'hook' })).toBe('Warrior moved');
+    const log = new CombatLog(names);
+    log.push(ev({ type: 'skillUsed', actor: 'a', skill: 'venom_edge', targets: ['c'] }));
+    expect(log.push(ev({ type: 'moved', actor: 'a', from: 3, to: 0, advance: true, cause: 'x' }))).toBe(false);
   });
 });

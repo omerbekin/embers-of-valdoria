@@ -1,7 +1,8 @@
 // Sefer ekipmanı (saf; her işlem YENİ durum döndürür): torba, kuşanma, çıkarma, altın ve kahramanın savaş gücü.
 // Aşama 0 temeli (roadmap 1.4); loot / tüccar / ekranlar Aşama 1. Kurallar: docs/design/progression/items.md.
-import { BAG_SIZE, bestMoves, FALLEN_GEAR_MSG, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, planMoveEquipped, loadout, promoteOffhand, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
+import { BAG_SIZE, bestMoves, FALLEN_GEAR_MSG, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, planMoveEquipped, loadout, promoteOffhand, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId, type SlotLocks } from '../progression';
 import { clone, heroById, isFallen } from './state';
+import { slotLocks } from './slots';
 import { rngFor } from './seed';
 import type { CampaignState, Hero } from './types';
 
@@ -24,8 +25,8 @@ export function addItem(s: CampaignState, itemId: string): { state: CampaignStat
 }
 
 /** Kahraman bu item'i (verilen yuvaya; yoksa varsayılan yuvaya) takabilir mi (yuva, silah ailesi, ikinci el, Legendary)? Hata nedeni ya da null. */
-export function equipError(hero: Hero, item: ItemInstance, slot?: SlotId): string | null {
-  const p = planEquip(hero.class, hero.equipment, item, slot, { level: hero.level });
+export function equipError(hero: Hero, item: ItemInstance, slot?: SlotId, locks?: SlotLocks): string | null {
+  const p = planEquip(hero.class, hero.equipment, item, slot, { level: hero.level, ...(locks ? { locks } : {}) });
   return isPlanError(p) ? p.error : null;
 }
 
@@ -41,7 +42,7 @@ export function equipItem(s: CampaignState, heroId: string, uid: string, slot?: 
   const idx = s.inventory.findIndex((it) => it.uid === uid);
   if (idx < 0) throw new Error(`Item not in the bag: ${uid}`);
   const item = s.inventory[idx]!;
-  const plan = planEquip(hero.class, hero.equipment, item, slot, { level: hero.level });
+  const plan = planEquip(hero.class, hero.equipment, item, slot, { level: hero.level, locks: slotLocks(s) });
   if (isPlanError(plan)) throw new Error(plan.error);
   if (plan.displaced.length && s.inventory.length - 1 + (plan.replaced ? 1 : 0) + plan.displaced.length > BAG_SIZE)
     throw new Error(`Bag is full: no room for ${plan.displaced.map((x) => itemDef(x.id)?.name ?? x.id).join(', ')}`);
@@ -74,6 +75,8 @@ export function moveEquipped(s: CampaignState, heroId: string, from: SlotId, to:
   const hero = heroById(s, heroId);
   if (!hero) throw new Error(`Unknown hero: ${heroId}`);
   if (isFallen(hero)) throw new Error(FALLEN_GEAR_MSG);
+  const locked = slotLocks(s)[to];
+  if (locked) throw new Error(locked);
   const plan = planMoveEquipped(hero.class, hero.equipment, from, to);
   if ('error' in plan) throw new Error(plan.error);
   if (!bagHasRoom(s, plan.toBag.length)) throw new Error('Bag is full');
@@ -120,7 +123,7 @@ export function equipBest(s: CampaignState, heroIds?: string[]): CampaignState {
   for (const id of ids) {
     const h = heroById(t, id);
     if (!h || isFallen(h)) continue; // düşmüş kahramanın ekipmanı değişmez (arayüz ve sim aynı; Ömer 2026-10-18)
-    for (const m of bestMoves(h, t.inventory)) {
+    for (const m of bestMoves(h, t.inventory, undefined, slotLocks(t))) {
       try {
         t = equipItem(t, id, m.uid, m.slot);
       } catch {

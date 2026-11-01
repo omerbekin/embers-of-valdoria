@@ -42,7 +42,7 @@ describe('skill verisi', () => {
         expect(s.cost.ofCurrent, `${key} ofCurrent`).toBeGreaterThan(0);
         expect(s.cost.ofCurrent, `${key} ofCurrent`).toBeLessThan(1);
       }
-      if (!s.thunderRod && !s.rollingThunder && !s.longSermon && !s.callVault && s.id !== 'thundersnow') expect(s.effects.length).toBeGreaterThan(0); // Harita 3: işi skill alanında, etki listesi boş
+      if (!s.thunderRod && !s.rollingThunder && !s.longSermon && !s.callVault && !s.caveIn && !s.quench && !s.kindleNave && s.id !== 'thundersnow') expect(s.effects.length).toBeGreaterThan(0); // Harita 3: işi skill alanında, etki listesi boş
       // Yarım turn (madde 240): 0 < turnCost <= 1; turnCost < 1 skill'ler üst üste kullanılamasın diye cooldown >= 2 (sömürü koruması)
       if (s.turnCost !== undefined) {
         expect(s.turnCost, `${key} turnCost`).toBeGreaterThan(0);
@@ -86,7 +86,8 @@ describe('skill verisi', () => {
             break;
           case 'heal':
             expect(ATTRIBUTES, `${key} scale`).toContain(e.scale);
-            expect(e.power).toBeGreaterThan(0);
+            if (e.maxHpRatio !== undefined) expect(e.maxHpRatio).toBeGreaterThan(0); // Reforge: maks canın oranı
+            else expect(e.power).toBeGreaterThan(0);
             break;
           case 'hot':
             expect(ATTRIBUTES, `${key} scale`).toContain(e.scale);
@@ -176,7 +177,7 @@ describe('skill verisi', () => {
             expect(e.turns).toBeGreaterThan(0);
             expect(ATTRIBUTES).toContain(e.scale);
             // Gücü 0 yalnızca su zemininde (Flooded; Harita 2 Call the Tide / Surge: hasarsız su, maps-2-3.md)
-            if (content.grounds[e.ground]?.quenches) expect(e.power).toBeGreaterThanOrEqual(0);
+            if (content.grounds[e.ground]?.quenches || e.ground === 'storm') expect(e.power).toBeGreaterThanOrEqual(0); // storm = Chill Ground: yalnız Chilled, Snowdrift hasarsız
             else expect(e.power).toBeGreaterThan(0);
             break;
           case 'selfDamage':
@@ -578,7 +579,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    const base = ['ring_the_anvil', 'fork', 'storm_test_bolt', 'storm_test_iron', 'storm_test_row', 'arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground', 'toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria', 'ice_crater'];
+    const base = ['hollow_rockfall', 'ring_the_anvil', 'fork', 'storm_test_bolt', 'storm_test_iron', 'storm_test_row', 'arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground', 'toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria', 'ice_crater'];
     // Pose Tester kopyaları (pt_<id>, gizli debug): sınıf skill'lerinin kopyası, aynı hareket
     const copies = base.filter((id) => content.skills[`pt_${id}`]).map((id) => `pt_${id}`);
     expect(copies.length).toBeGreaterThan(0);

@@ -11,6 +11,7 @@ import { rngFor } from './seed';
 import { activeHeroes, clone, closeShop, complete, expectStep, mapOf, nextStep, shopKey } from './state';
 import { node } from './graph';
 import { shopSlotWeight } from './reach';
+import { noDropSlots } from './slots';
 import { marketPriceMult, marketRerollMult, withRarityFloor } from './hollow-crown';
 import type { CampaignShop, CampaignState, MerchantStall, ShopWare } from './types';
 
@@ -55,7 +56,8 @@ function fillShelves(s: CampaignState, nodeId: string, o: { level: number; rerol
   const ilvl = Math.max(1, nodeIlvl(s.mapId, nodeId)); // nadirlik zarı düğümün item seviyesinde kalır
   const ceiling = shopCeiling(s.mapId, nodeId);
   const team = activeHeroes(s).length ? activeHeroes(s) : s.roster;
-  const all = ITEMS.items.filter((d) => d.rarity !== 'legendary' && (!team.length || team.some((h) => canEquip(h.class, d))));
+  const banned = noDropSlots(s.mapId); // Harita 1: Trinket rafa çıkmaz
+  const all = ITEMS.items.filter((d) => d.rarity !== 'legendary' && !banned.includes(d.slot) && (!team.length || team.some((h) => canEquip(h.class, d))));
   const bases = all.filter((d) => d.ilvl <= ceiling);
   const out = new Map<number, ShopWare>();
   const used = new Set<string>(o.taken ?? []);

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Battle Simplify Mockup</title>
+<!--
+  Taslak (ui-dev, 2026-11-01). Oyun kodu DEGIL. pending-fixes.md madde 38: savas ekrani okunurlugu, mevcut sistem sadelestirilecek.
+  Adres: #now | #a | #b | #c   &z=169 | 219 | ph   &x=1 (gercek boyut %100)   &clean (cubuk + not gizli)   &boxes (etiket kutulari)   &nopin (sabit ipucu gizli)
+  Ornek: battle-simplify.html#a&z=ph&clean
+  band-tip.css = src/ui/band-tip.css kopyasi; fontlar, sanat, ikonlar oyundan (battle-simplify/img).
+-->
+<link rel="stylesheet" href="battle-simplify/band-tip.css" />
+<link rel="stylesheet" href="battle-simplify/sim.css" />
+</head>
+<body>
+<div id="bar"></div>
+<div id="view"><div id="frame"><div id="stage"></div></div></div>
+<div id="legend"></div>
+<div id="notes"></div>
+<script>window.__simAuto = false;</script>
+<script src="battle-simplify/sim.js"></script>
+<script src="battle-simplify/notes.js"></script>
+<script>window.__simInit();</script>
+</body>
+</html>

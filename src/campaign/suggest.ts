@@ -1,5 +1,5 @@
 /**
- * Yoldaş önerisi (Ömer 2026-11-01): "Choose a companion" penceresinde takımın eksik rolüne göre tek kahraman önerilir. Saf mantık (Phaser/DOM yok, rastgelelik yok).
+ * Yoldaş önerisi (Ömer 2026-11-01): "Choose a companion" penceresinde takımın eksik rolünü dolduran kahramanların hepsi önerilir. Saf mantık (Phaser/DOM yok, rastgelelik yok).
  * Roller (ön saf > arka saf > takımı besleyen) ve metinler data/campaign/campaign.json > companySuggest. Öneri seçimi zorlamaz: pencere başka kahramanı serbestçe seçtirir.
  */
 import { CONFIG } from './data';
@@ -7,8 +7,8 @@ import { activeHeroes } from './state';
 import type { CampaignState, CompanySuggestCfg, SuggestRole } from './types';
 
 export interface CompanySuggestion {
-  /** Önerilen sınıf id'si. */
-  hero: string;
+  /** Önerilen sınıf id'leri (Ömer 2026-11-01: birden çok olabilir; sıra havuz sırası). */
+  heroes: string[];
   /** Doldurduğu eksik rol. */
   role: SuggestRole;
   /** İpucunun altın satırı (gerekçe). */
@@ -24,7 +24,7 @@ export interface SuggestAt {
 
 /**
  * Takım (sınıf id'leri) + aday havuzu (pencerenin sunduğu sınıflar, öncelik sırasıyla) + düğüm -> öneri ya da null.
- * Takımdaki ilk eksik rolün (cfg.order) kahramanı: havuzda o rolü sayan, takımda olmayan ilk sınıf. O rolün adayı havuzda yoksa sıradaki eksik role bakılır.
+ * Takımdaki ilk eksik rolün (cfg.order) kahramanları: havuzda o rolü sayan, takımda olmayan tüm sınıflar. O rolün adayı havuzda yoksa sıradaki eksik role bakılır.
  * Üç rol da doluysa, düğüm listede değilse (King's Bridge) ya da eski kayıtta null.
  */
 export function suggestCompanion(team: string[], pool: string[], at: SuggestAt, cfg: CompanySuggestCfg = CONFIG.companySuggest): CompanySuggestion | null {
@@ -32,8 +32,8 @@ export function suggestCompanion(team: string[], pool: string[], at: SuggestAt, 
   const have = new Set<SuggestRole>(team.flatMap((c) => cfg.roles[c] ?? []));
   for (const role of cfg.order) {
     if (have.has(role)) continue;
-    const hero = pool.find((c) => !team.includes(c) && (cfg.roles[c] ?? []).includes(role));
-    if (hero) return { hero, role, line: cfg.lines[role] };
+    const heroes = pool.filter((c) => !team.includes(c) && (cfg.roles[c] ?? []).includes(role));
+    if (heroes.length) return { heroes, role, line: cfg.lines[role] };
   }
   return null;
 }

@@ -98,15 +98,11 @@ html.reduced-motion .ec-hp i.ghost, html.reduced-motion .ec-hp i.ghost::after { 
 .bs-bar { display: flex; height: max(18px, calc(28 * var(--u))); border: 1px solid var(--g-line2); background: rgba(8,6,4,.8); overflow: hidden; }
 .bs-bar i { display: flex; align-items: center; justify-content: center; font: 600 max(11px, calc(16 * var(--u))) var(--g-disp); color: #fff; letter-spacing: .06em; text-shadow: 0 1px 2px #000; min-width: 0; }
 
-@media (max-width: 980px) {
-  .ec-grid2 { grid-template-columns: 1fr; }
-  .ec-cards4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 640px) {
-  .ec-cards4 { grid-template-columns: 1fr; }
-  .ec-hero { flex-wrap: wrap; }
-  .ec-act { flex-direction: row; align-items: center; width: 100%; justify-content: flex-end; }
-}
+html.compact .ec-grid2 { grid-template-columns: 1fr; }
+html.compact .ec-cards4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html.short .ec-cards4 { grid-template-columns: 1fr; }
+html.short .ec-hero { flex-wrap: wrap; }
+html.short .ec-act { flex-direction: row; align-items: center; width: 100%; justify-content: flex-end; }
 html.reduced-motion .ec-hero, html.reduced-motion .ec-card { transition: none; }
 .ec-head-ico { width: max(30px, calc(52 * var(--u))); height: max(30px, calc(52 * var(--u))); object-fit: contain; flex: none; }
 .bs-tab-ico { width: max(20px, calc(30 * var(--u))); height: max(20px, calc(30 * var(--u))); object-fit: contain; }

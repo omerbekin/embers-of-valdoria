@@ -1342,6 +1342,17 @@
   transition: opacity 0.16s, transform 0.2s var(--ease);
 }
 
+/* Zemin ipucu: sıra göstergesinin altında, hücreleri kapatmaz; telefonda okunur boyda (çok zeminli hücrede ekrana sığsın diye büyümez) */
+.bh-ctip.at-top {
+  top: 170px;
+  bottom: auto;
+}
+
+html.short .bh-ctip.at-top:not(.at-many) {
+  zoom: 1.6;
+  top: 106px;
+}
+
 /* --- global eylemler: skill'lerin hemen sağında dikey sütun --- */
 .bh-globs {
   position: absolute;

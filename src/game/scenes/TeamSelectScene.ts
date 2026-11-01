@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { motion } from '../../ui/motion';
 import { menuMusic } from '../../ui/music';
 import { classLogoName } from '../../ui/misc-icons';
 import type { UiSoundKind } from '../../ui/ui-sound';
@@ -915,8 +916,8 @@ export class TeamSelectScene extends Phaser.Scene {
       if (this.drag?.moved) return;
       tv.hover = true;
       this.styleTile(tv);
-      this.tweens.add({ targets: lift, y: -6, duration: 250, ease: easeOut });
-      this.tweens.add({ targets: shadow, alpha: 1, duration: 250 });
+      this.tweens.add({ targets: lift, y: -motion('card').lift, duration: motion('card').hoverMs, ease: easeOut });
+      this.tweens.add({ targets: shadow, alpha: 1, duration: motion('card').hoverMs });
       this.zoomImg(img, 1.06, size);
       this.showInfo(id);
     });
@@ -939,8 +940,8 @@ export class TeamSelectScene extends Phaser.Scene {
     zone.on('pointerout', () => {
       tv.hover = false;
       this.styleTile(tv);
-      this.tweens.add({ targets: lift, y: 0, duration: 250, ease: easeOut });
-      this.tweens.add({ targets: shadow, alpha: 0, duration: 250 });
+      this.tweens.add({ targets: lift, y: 0, duration: motion('card').hoverMs, ease: easeOut });
+      this.tweens.add({ targets: shadow, alpha: 0, duration: motion('card').hoverMs });
       this.zoomImg(img, 1, size);
       if (this.tip?.key.startsWith('badge:')) this.hideTip();
     });

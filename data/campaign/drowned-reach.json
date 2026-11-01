@@ -40,7 +40,7 @@
     "faction": {
       "shopWeights": {
         "order": { "armor": 3, "offhand": 3 },
-        "guild": { "weapon": 3, "trinket": 3 }
+        "guild": { "weapon": 3, "ring": 3, "trinket": 3 }
       }
     }
   },
@@ -266,6 +266,7 @@
       "id": "dr12",
       "type": "town",
       "name": "Reedgate",
+      "opensSlot": "trinket",
       "subtitle": "Town · Inn, Smith, Recruits, Trade",
       "lore": "A reed-thatched village at the head of the marsh, where the river slows and the ferrymen gather.",
       "region": "I",

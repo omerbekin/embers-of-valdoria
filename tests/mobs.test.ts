@@ -38,9 +38,9 @@ describe('data/mobs yükleyicisi', () => {
   });
 
   it('mob kuralları: 2 skill (birkaçında 3); 1. skill bedelsiz ve bekleme süresiz temel saldırı, diğerleri bekleme süreli', () => {
-    const KIT_PENDING = ['forge_master_golem', 'pack_mother']; // Harita 3 5. dilim: yalnız dokunuş + temel saldırı, kit Ömer'in seçim sayfasından geçecek
+    const FOUR = ['ashborn_hierarch']; // Harita 3 elit kiti: seçilen 3 skill + bedelsiz temel saldırı
     for (const m of mobs) {
-      expect(KIT_PENDING.includes(m.id) ? [1] : [2, 3], m.id).toContain(m.skills.length);
+      expect(FOUR.includes(m.id) ? [4] : [2, 3], m.id).toContain(m.skills.length);
       const [basic, ...rest] = m.skills.map((id) => content.skills[id]!);
       expect(basic!.cost.amount, `${m.id} ${basic!.id}`).toBe(0);
       expect(basic!.cooldown ?? 0, `${m.id} ${basic!.id}`).toBe(0);

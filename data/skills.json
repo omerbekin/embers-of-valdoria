@@ -244,7 +244,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.81,
+        "power": 0.7,
         "element": "ice"
       }
     ],
@@ -9250,7 +9250,7 @@
     ]
   },
   "grave_strike": {
-    "_not": "Sefer mobu skill'i (campaign-dev 2026-10-28, Ömer onayı, open-questions 448): Risen Skeleton temel saldırısı (Bone Strike ile aynı: STR 0,828). Çizim / ikon / VFX artOf ile kahraman iskeletinden; sesler mobun kendi kaydı (audio-mobs.json, Skeleton class seslerinin kopyası). Sayılar PROVİZYON (balance.json > _skeleton).",
+    "_not": "Sefer mobu skill'i (campaign-dev 2026-10-28, Ömer onayı, open-questions 448): Risen Skeleton temel saldırısı (Bone Strike ile aynı: STR 0,828). İkon / VFX kendi sanatı (assets/mob-icons/grave_strike, assets/mob-vfx/risen_skeleton/grave_strike; Ömer onayı 2026-11-01); sesler mobun kendi kaydı (audio-mobs.json, Skeleton class seslerinin kopyası). Sayılar PROVİZYON (balance.json > _skeleton).",
     "id": "grave_strike",
     "name": "Grave Strike",
     "icon": "bone",
@@ -9272,11 +9272,10 @@
     "vfx": "bonestrike",
     "sfx": [
       "rustySlash"
-    ],
-    "artOf": "skeleton_strike"
+    ]
   },
   "grave_sweep": {
-    "_not": "Sefer mobu skill'i (campaign-dev 2026-10-28, Ömer onayı, open-questions 448): Risen Skeleton ikinci skill'i (Bone Slash ile aynı: STR 0,648, dik sıçrama x1, bekleme 3). Çizim / ikon / VFX artOf ile kahraman iskeletinden; sesler mobun kendi kaydı (audio-mobs.json, Skeleton class seslerinin kopyası). Sayılar PROVİZYON (balance.json > _skeleton).",
+    "_not": "Sefer mobu skill'i (campaign-dev 2026-10-28, Ömer onayı, open-questions 448): Risen Skeleton ikinci skill'i (Bone Slash ile aynı: STR 0,648, dik sıçrama x1, bekleme 3). İkon / VFX kendi sanatı (assets/mob-icons/grave_sweep, assets/mob-vfx/risen_skeleton/grave_sweep; Ömer onayı 2026-11-01); sesler mobun kendi kaydı (audio-mobs.json, Skeleton class seslerinin kopyası). Sayılar PROVİZYON (balance.json > _skeleton).",
     "id": "grave_sweep",
     "name": "Grave Sweep",
     "icon": "boneslash",
@@ -9305,8 +9304,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "skeleton_slash"
+    ]
   },
   "toll": {
     "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon / vfx / ses YER TUTUCU (var olanlardan ödünç; yeni sanat yok). Toll: tüm düşmanlara küçük kutsal hasar, çan çalar (ringsBell).",
@@ -9329,7 +9327,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.28,
+        "power": 0.44,
         "element": "holy",
         "bell": true
       }
@@ -9363,7 +9361,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.6,
+        "power": 0.72,
         "element": "lightning",
         "bell": true
       },
@@ -9398,7 +9396,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.8,
+        "power": 1.02,
         "element": "holy",
         "bell": true
       },
@@ -9437,7 +9435,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.3,
+        "power": 0.46,
         "element": "holy",
         "bell": true,
         "powerPerBell": 0.025
@@ -9446,7 +9444,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.2,
+        "power": 0.31,
         "element": "lightning",
         "bell": true,
         "powerPerBell": 0.025
@@ -9920,12 +9918,13 @@
     ]
   },
   "gloam_bite": {
-    "_not": "Gloam Eel temel saldırı: kendisi Flooded hücredeyken Live Water tetikler; Darkness'ta Thunderflash. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf eel_bite sahibinden.",
+    "_not": "Gloam Eel temel saldırı: kendisi Flooded hücredeyken Live Water tetikler; Thunderflash yalnız Darkness'ta ve hedef sudayken (Ömer 2026-11-01). Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf eel_bite sahibinden.",
     "id": "gloam_bite",
     "name": "Gloam Bite",
     "target": "single_enemy",
     "thunder": {
-      "liveFrom": "flooded"
+      "liveFrom": "flooded",
+      "flashWet": true
     },
     "cost": {
       "resource": "mp",
@@ -10047,6 +10046,7 @@
     "id": "whiteout",
     "name": "Whiteout",
     "target": "all_enemies",
+    "global": true,
     "whiteout": {
       "rounds": 1,
       "darkness": {
@@ -10059,7 +10059,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 0
+      "amount": 14
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 4,
     "motion": "cast",
@@ -10098,7 +10101,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 0
+      "amount": 20
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 5,
     "motion": "cast",
@@ -10172,6 +10178,24 @@
     "id": "kingsmaul",
     "name": "Kingsmaul",
     "target": "single_enemy",
+    "caveIn": {
+      "rule": {
+        "id": "kingsmaul",
+        "name": "Kingsmaul",
+        "text": "Marked cells collapse at the start of the next Round. Anyone standing there takes damage and is Slowed, and the cell stays closed for the rest of the battle.",
+        "everyRounds": 0,
+        "cells": 1,
+        "boards": [
+          "party"
+        ],
+        "damageRatio": 0.1,
+        "status": "slow",
+        "statusTurns": 2,
+        "maxClosed": 3,
+        "aimAtUnits": true
+      },
+      "onTarget": true
+    },
     "cost": {
       "resource": "mp",
       "amount": 0
@@ -10206,7 +10230,10 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 0
+      "amount": 23
+    },
+    "ai": {
+      "scoreCost": 10
     },
     "cooldown": 4,
     "motion": "cast",
@@ -10218,5 +10245,1700 @@
       "chainDrag",
       "anchorImpact"
     ]
+  },
+  "shard_pike_thrust": {
+    "_not": "Shardwalker: pike_thrust kopyası, kendi mana bedeli (open-questions 466 kuralı: L30'da 5-6 kullanımda ilk kez mana yetmez; pike_thrust Harita 1-2 moblarıyla paylaşıldığı için bedeli orada değişmez). ai.scoreCost = eski bedel. Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf pike_thrust sahibinden.",
+    "id": "shard_pike_thrust",
+    "name": "Pike Thrust",
+    "target": "single_enemy",
+    "range": 2,
+    "cost": {
+      "resource": "mp",
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 5
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "reach": 1,
+    "fx": "#b0a090",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.8,
+        "ignoreDefense": 0.25
+      }
+    ],
+    "icon": "clover",
+    "vfx": "bonethrow",
+    "sfx": [
+      "chainTether",
+      "boneImpact"
+    ],
+    "artOf": "pike_thrust"
+  },
+  "cinder_rend": {
+    "_not": "Cinderleaper: rend kopyası, kendi mana bedeli (open-questions 466 kuralı: L30'da 5-6 kullanımda ilk kez mana yetmez; rend Harita 1-2 moblarıyla paylaşıldığı için bedeli orada değişmez). ai.scoreCost = eski bedel. Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf rend sahibinden.",
+    "id": "cinder_rend",
+    "name": "Rend",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 11
+    },
+    "ai": {
+      "scoreCost": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#a02a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.6
+      },
+      {
+        "type": "status",
+        "status": "wound",
+        "turns": 2
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "rend"
+  },
+  "gloam_lunge": {
+    "_not": "Gloam Eel: lunge kopyası, kendi mana bedeli (open-questions 466 kuralı: L30'da 5-6 kullanımda ilk kez mana yetmez; lunge Harita 1-2 moblarıyla paylaşıldığı için bedeli orada değişmez). ai.scoreCost = eski bedel. Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf lunge sahibinden.",
+    "id": "gloam_lunge",
+    "name": "Lunge",
+    "target": "single_enemy",
+    "range": 3,
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "ignoreReach": true,
+    "fx": "#6f7a3a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "lunge",
+    "ai": {
+      "scoreCost": 5
+    }
+  },
+  "frost_bite": {
+    "_not": "Snow Wolf temel saldırı: Bite + Chilled. Skill atışı: zaten Chilled hedefi dondurur (Frozen kuralı). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "frost_bite",
+    "name": "Frost Bite",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#9fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.8
+      },
+      {
+        "type": "status",
+        "status": "chilled",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "bite"
+  },
+  "snow_rend": {
+    "_not": "Snow Wolf: Rend kopyası, kendi mana bedeli (open-questions 466; rend Harita 1 ile paylaşılır). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "snow_rend",
+    "name": "Rend",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#a02a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.6
+      },
+      {
+        "type": "status",
+        "status": "wound",
+        "turns": 2
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "rend"
+  },
+  "clan_axe": {
+    "_not": "Clan Axeman temel saldırı: STR fiziksel. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "clan_axe",
+    "name": "Axe",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#8a7a5a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.95
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "clover",
+    "vfx": "bonethrow",
+    "sfx": [
+      "chainTether",
+      "boneImpact"
+    ],
+    "artOf": "billhook"
+  },
+  "cleave": {
+    "_not": "Clan Axeman: ön sıraya yakın dövüş alan vuruşu (menzil anchor'ı ön dolu sıraya bağlar). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "cleave",
+    "name": "Cleave",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#b0a090",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.55
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 6
+    },
+    "icon": "whirlwind",
+    "vfx": "whirlwind",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "toll_sweep"
+  },
+  "mandible": {
+    "_not": "Cave Crawler temel saldırı: STR fiziksel. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "mandible",
+    "name": "Mandible",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#b8b4a2",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.85
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "gnaw"
+  },
+  "skitter": {
+    "_not": "Cave Crawler: ignoreReach. Blind Hunger gereği yine en yakın hedefe gider; değeri kendi ön sırası doluyken de vurabilmek. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "skitter",
+    "name": "Skitter",
+    "target": "single_enemy",
+    "range": 3,
+    "cooldown": 3,
+    "motion": "melee",
+    "ignoreReach": true,
+    "fx": "#8a8574",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 9
+    },
+    "ai": {
+      "scoreCost": 5
+    },
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "run_down"
+  },
+  "mock": {
+    "_not": "Clan Skald: tek hedef, Staggered (sonraki eylemini kaybeder). Hasar yok. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "mock",
+    "name": "Mock",
+    "target": "single_enemy",
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#d9c9a3",
+    "effects": [
+      {
+        "type": "status",
+        "status": "staggered",
+        "turns": 1
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 15
+    },
+    "ai": {
+      "scoreCost": 6
+    },
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "sand_in_the_eyes"
+  },
+  "chant": {
+    "_not": "Clan Skald: tüm dostlar 2 tur Haste. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "chant",
+    "name": "Chant",
+    "target": "all_allies",
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#c9b37a",
+    "effects": [
+      {
+        "type": "status",
+        "status": "haste",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 20
+    },
+    "ai": {
+      "scoreCost": 10
+    },
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "iron_decree"
+  },
+  "pyre_bolt": {
+    "_not": "Pyre Witch temel saldırı: INT ateş. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "pyre_bolt",
+    "name": "Pyre Bolt",
+    "target": "single_enemy",
+    "motion": "cast",
+    "fx": "#ff7a1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.9,
+        "element": "fire"
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "ember_toss"
+  },
+  "spread_the_flame": {
+    "_not": "Pyre Witch: yalnız Burning hücreye atılır (anchorGround); o hücre ve dört komşusu 2 tur Burning. Hasar yok. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "spread_the_flame",
+    "name": "Spread the Flame",
+    "target": "area_enemies",
+    "area": {
+      "shape": "plus"
+    },
+    "anchorGround": "burning",
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#ff4d1a",
+    "effects": [
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.35
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 30
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "icon": "meteor",
+    "vfx": "meteor",
+    "sfx": [
+      "meteorWhistle",
+      "bigBoom",
+      "fireCrackle"
+    ],
+    "artOf": "burn_the_ground"
+  },
+  "cinder_brand": {
+    "_not": "Cinder Knight temel saldırı: STR fiziksel + 2 tur Burning. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "cinder_brand",
+    "name": "Brand",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#e0702a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "str",
+        "power": 0.12,
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "scorch_bite"
+  },
+  "knight_hold_gate": {
+    "_not": "Cinder Knight: Hold the Gate kopyası (var olan taunt + Fortified), kendi mana bedeli (open-questions 466). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "knight_hold_gate",
+    "name": "Hold the Gate",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 18
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#e07a3a",
+    "effects": [
+      {
+        "type": "taunt",
+        "turns": 2,
+        "breakRatio": 0.25,
+        "allyDamageMult": 0.8
+      },
+      {
+        "type": "status",
+        "status": "fortify",
+        "turns": 1,
+        "self": true
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "hold_the_gate"
+  },
+  "forge_hammer": {
+    "_not": "Forge Golem temel saldırı: STR fiziksel. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "forge_hammer",
+    "name": "Hammer",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#a8583a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.95
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "tremor2",
+    "vfx": "tremor2",
+    "sfx": [
+      "plateCreak",
+      "heaveGrunt",
+      "shieldPlant",
+      "groundHeave"
+    ],
+    "artOf": "gatestone_slam"
+  },
+  "vent": {
+    "_not": "Forge Golem: bir şerit boyunca ateş; yeni kural yok, durum ya da zemin bırakmaz. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "vent",
+    "name": "Vent",
+    "target": "area_enemies",
+    "area": {
+      "shape": "column",
+      "stages": "row"
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#d0603a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "str",
+        "power": 0.6,
+        "element": "fire"
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 15
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "icon": "ashbrand",
+    "vfx": "ashbrand",
+    "sfx": [
+      "emberHiss"
+    ],
+    "artOf": "kiln_smoke"
+  },
+  "wight_feast": {
+    "_not": "Wight: Feast kopyası, kendi mana bedeli (open-questions 466). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "wight_feast",
+    "name": "Feast",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "ai": {
+      "scoreCost": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#d9d4c0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.3
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "feast"
+  },
+  "rime_bite": {
+    "_not": "Rime Hound temel saldırı: hasar + Chilled. Skill atışı: zaten Chilled hedefi dondurur. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "rime_bite",
+    "name": "Rime Bite",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#9fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      },
+      {
+        "type": "status",
+        "status": "chilled",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "scorch_bite"
+  },
+  "rime_run_down": {
+    "_not": "Rime Hound: Run Down kopyası, kendi mana bedeli (open-questions 466). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "rime_run_down",
+    "name": "Run Down",
+    "target": "single_enemy",
+    "range": 3,
+    "cost": {
+      "resource": "mp",
+      "amount": 9
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "ignoreReach": true,
+    "fx": "#8a6a5a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "run_down",
+    "ai": {
+      "scoreCost": 5
+    }
+  },
+  "ice_shot": {
+    "_not": "Clan Slinger: DEX buz + Chilled. Skill atışı: zaten Chilled hedefi dondurur. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "ice_shot",
+    "name": "Ice Shot",
+    "target": "single_enemy",
+    "cooldown": 3,
+    "motion": "ranged",
+    "fx": "#9fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.7,
+        "element": "ice"
+      },
+      {
+        "type": "status",
+        "status": "chilled",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "ai": {
+      "scoreCost": 6
+    },
+    "icon": "arrow",
+    "vfx": "arrowshot",
+    "sfx": [
+      "bowTwang",
+      "arrowWhoosh",
+      "arrowThunk"
+    ],
+    "artOf": "crossbow_bolt"
+  },
+  "ice_shard": {
+    "_not": "Rime Witch temel saldırı: LUCK buz. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "ice_shard",
+    "name": "Ice Shard",
+    "target": "single_enemy",
+    "motion": "cast",
+    "fx": "#9fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "luck",
+        "power": 0.7,
+        "element": "ice"
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "brine_lash"
+  },
+  "sodden_hex": {
+    "_not": "Rime Witch: tek hedef 2 tur Soaked; Hoarfrost bunu okur. Ad belgede \"sonra\" diye açık kalmıştı. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "sodden_hex",
+    "name": "Sodden Hex",
+    "target": "single_enemy",
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#5fa8c8",
+    "effects": [
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "icon": "bonethrow",
+    "vfx": "bonethrow",
+    "sfx": [
+      "boneSpin",
+      "boneImpact"
+    ],
+    "artOf": "tide_dirge"
+  },
+  "hollow_rockfall": {
+    "_not": "Hollow Warden: Rockfall kopyası, kendi mana bedeli (open-questions 466). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "hollow_rockfall",
+    "name": "Rockfall",
+    "target": "area_enemies",
+    "range": 4,
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 18
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 4,
+    "motion": "sky",
+    "shot": true,
+    "skyFx": "fist",
+    "fx": "#9a9488",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.5
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 2
+      }
+    ],
+    "icon": "rootsmash",
+    "vfx": "rootfall",
+    "sfx": [
+      "woodCreak",
+      "woodSmash",
+      "rootsRumble",
+      "leafRustle"
+    ],
+    "artOf": "rockfall"
+  },
+  "molten_run_down": {
+    "_not": "Molten Hound: Run Down + hedef hücresine 2 tur Burning zemin. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "molten_run_down",
+    "name": "Run Down",
+    "target": "single_enemy",
+    "range": 3,
+    "cost": {
+      "resource": "mp",
+      "amount": 9
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "ignoreReach": true,
+    "fx": "#8a6a5a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "str",
+        "power": 0.2
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "run_down",
+    "ai": {
+      "scoreCost": 5
+    }
+  },
+  "frost_fang": {
+    "_not": "Pack-Mother temel saldırı: hasar + Chilled; skill atışı, zaten Chilled hedefi dondurur. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "frost_fang",
+    "name": "Frost Fang",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#9fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      },
+      {
+        "type": "status",
+        "status": "chilled",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "frost_bite"
+  },
+  "snowdrift": {
+    "_not": "Pack-Mother: önceden işaretli 2x2 Chill Ground, hasar yok; Chilled kahraman içinde kalırsa zemin düşüşü dondurur (genel kural). Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "snowdrift",
+    "name": "Snowdrift",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#dfefff",
+    "effects": [
+      {
+        "type": "ground",
+        "ground": "storm",
+        "turns": 2,
+        "scale": "int",
+        "power": 0
+      }
+    ],
+    "icon": "blizzard",
+    "vfx": "blizzard",
+    "sfx": [
+      "iceCrack",
+      "hailPatter"
+    ],
+    "artOf": "whiteout"
+  },
+  "throat_leap": {
+    "_not": "Pack-Mother: her sıraya ulaşır, 2 tur Bleeding. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "throat_leap",
+    "name": "Throat Leap",
+    "target": "single_enemy",
+    "global": true,
+    "ignoreReach": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 2
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#b02a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1
+      },
+      {
+        "type": "dot",
+        "status": "bleeding",
+        "scale": "str",
+        "power": 0.2,
+        "turns": 2
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "gloam_lunge"
+  },
+  "matriarch_stoke": {
+    "_not": "Pyre Matriarch: önceden işaretli 2x2 Burning, hasar yok. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "matriarch_stoke",
+    "name": "Stoke",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#ff4d1a",
+    "effects": [
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.35
+      }
+    ],
+    "icon": "meteor",
+    "vfx": "meteor",
+    "sfx": [
+      "meteorWhistle",
+      "bigBoom",
+      "fireCrackle"
+    ],
+    "artOf": "burn_the_field"
+  },
+  "sledge": {
+    "_not": "Forge-Master Golem temel saldırı: hasar + 2 tur Sunder. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "sledge",
+    "name": "Sledge",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#9a8a6a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.6,
+        "bonusScale": [
+          {
+            "stat": "armor",
+            "pct": 0.1
+          }
+        ]
+      },
+      {
+        "type": "status",
+        "status": "sunder",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "anchorsmash",
+    "vfx": "anchorsmash",
+    "sfx": [
+      "chainDrag",
+      "anchorImpact"
+    ],
+    "artOf": "iron_maul"
+  },
+  "reforge": {
+    "_not": "Forge-Master Golem: bir golem maks canının %20si onarılır; kendisi hariç. Golem = görünen ad (yer tutucu sınıflı kadro). Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "reforge",
+    "name": "Reforge",
+    "target": "single_ally",
+    "global": true,
+    "excludeSelf": true,
+    "allyNames": [
+      "Forge Golem",
+      "Slagcart Golem"
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 15
+    },
+    "ai": {
+      "scoreCost": 6
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#d0a060",
+    "effects": [
+      {
+        "type": "heal",
+        "scale": "str",
+        "power": 0,
+        "maxHpRatio": 0.2
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "hold_the_gate"
+  },
+  "rivet_plate": {
+    "_not": "Forge-Master Golem: bir dosta STR kalkan. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "rivet_plate",
+    "name": "Rivet Plate",
+    "target": "single_ally",
+    "global": true,
+    "excludeSelf": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 15
+    },
+    "ai": {
+      "scoreCost": 6
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#9a8a6a",
+    "effects": [
+      {
+        "type": "shield",
+        "scale": "str",
+        "power": 0.6
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "knight_hold_gate"
+  },
+  "fervour": {
+    "_not": "Ashborn Hierarch: bir dosta 2 tur Ash Surge (süre taşıyanın turu bitince düşer). Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "fervour",
+    "name": "Fervour",
+    "target": "single_ally",
+    "global": true,
+    "excludeSelf": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 20
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#e2b04a",
+    "effects": [
+      {
+        "type": "status",
+        "status": "ash_surge",
+        "turns": 2
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "chant"
+  },
+  "kindle_the_nave": {
+    "_not": "Ashborn Hierarch: vaaz bittikten sonra kendi sırası 2 tur Burning; Ashborn dostlar E4 kuralıyla iyileşir. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "kindle_the_nave",
+    "name": "Kindle the Nave",
+    "target": "self",
+    "kindleNave": {
+      "ground": "burning",
+      "turns": 2,
+      "scale": "int",
+      "power": 0.35
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 20
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#ff4d1a",
+    "effects": [],
+    "icon": "meteor",
+    "vfx": "meteor",
+    "sfx": [
+      "meteorWhistle",
+      "bigBoom",
+      "fireCrackle"
+    ],
+    "artOf": "burn_the_field"
+  },
+  "searing_bash": {
+    "_not": "Cinder Warden temel saldırı: hasar + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "searing_bash",
+    "name": "Searing Bash",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#e0702a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.6,
+        "bonusScale": [
+          {
+            "stat": "armor",
+            "pct": 0.05
+          }
+        ]
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "str",
+        "power": 0.12,
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "cinder_brand"
+  },
+  "warden_hold_gate": {
+    "_not": "Cinder Warden: Hold the Gate kopyası (taunt + Fortified), kendi mana bedeli. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "warden_hold_gate",
+    "name": "Hold the Gate",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 14
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#e07a3a",
+    "effects": [
+      {
+        "type": "taunt",
+        "turns": 2,
+        "breakRatio": 0.25,
+        "allyDamageMult": 0.8
+      },
+      {
+        "type": "status",
+        "status": "fortify",
+        "turns": 1,
+        "self": true
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "hold_the_gate"
+  },
+  "slag_wall": {
+    "_not": "Cinder Warden: önceden işaretli sütun, 2 tur Burning, hasar yok. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "slag_wall",
+    "name": "Slag Wall",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "column"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 14
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#d0603a",
+    "effects": [
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "str",
+        "power": 0.3
+      }
+    ],
+    "icon": "ashbrand",
+    "vfx": "ashbrand",
+    "sfx": [
+      "emberHiss"
+    ],
+    "artOf": "vent"
+  },
+  "avalanche": {
+    "_not": "Snowfather: önceden işaretli sütun, ağır fiziksel. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "avalanche",
+    "name": "Avalanche",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "column"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 14
+    },
+    "ai": {
+      "scoreCost": 10
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#dfefff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.2
+      }
+    ],
+    "icon": "rootsmash",
+    "vfx": "rootfall",
+    "sfx": [
+      "woodCreak",
+      "woodSmash",
+      "rootsRumble",
+      "leafRustle"
+    ],
+    "artOf": "hollow_rockfall"
+  },
+  "roar": {
+    "_not": "Snowfather: tüm kahramanlar 1 tur Slow. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "roar",
+    "name": "Roar",
+    "target": "all_enemies",
+    "global": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 14
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#cfe0ee",
+    "effects": [
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "knight_hold_gate"
+  },
+  "decree_of_stone": {
+    "_not": "Hollow King: tüm dostlar 1 tur Fortified. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "decree_of_stone",
+    "name": "Decree of Stone",
+    "target": "all_allies",
+    "cost": {
+      "resource": "mp",
+      "amount": 23
+    },
+    "ai": {
+      "scoreCost": 10
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#9aa8b8",
+    "effects": [
+      {
+        "type": "status",
+        "status": "fortify",
+        "turns": 1
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "knight_hold_gate"
+  },
+  "bring_down_the_hall": {
+    "_not": "Hollow King ulti: 3 hücre işaretlenir, sonraki Round başı çöker, savaş boyunca kapalı. Tavan maxClosed 5. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "bring_down_the_hall",
+    "name": "Bring Down the Hall",
+    "target": "self",
+    "caveIn": {
+      "rule": {
+        "id": "bring_down_the_hall",
+        "name": "Bring Down the Hall",
+        "text": "Marked cells collapse at the start of the next Round. Anyone standing there takes damage and is Slowed, and the cell stays closed for the rest of the battle.",
+        "everyRounds": 0,
+        "cells": 3,
+        "boards": [
+          "party"
+        ],
+        "damageRatio": 0.1,
+        "status": "slow",
+        "statusTurns": 2,
+        "maxClosed": 5,
+        "aimAtUnits": true
+      }
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 23
+    },
+    "ai": {
+      "scoreCost": 6
+    },
+    "cooldown": 5,
+    "motion": "cast",
+    "fx": "#9a9488",
+    "effects": [],
+    "icon": "rootsmash",
+    "vfx": "rootfall",
+    "sfx": [
+      "woodCreak",
+      "woodSmash",
+      "rootsRumble",
+      "leafRustle"
+    ],
+    "artOf": "hollow_rockfall"
+  },
+  "hammerfall": {
+    "_not": "Hearthwarden temel saldırı: tek hedef, ağır. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "hammerfall",
+    "name": "Hammerfall",
+    "target": "single_enemy",
+    "motion": "cast",
+    "fx": "#b0501c",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 1
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "anchorsmash",
+    "vfx": "anchorsmash",
+    "sfx": [
+      "chainDrag",
+      "anchorImpact"
+    ],
+    "artOf": "kingsmaul"
+  },
+  "quench": {
+    "_not": "Hearthwarden: iki tahtadaki tüm Burning hücreler söner, hücre başına maks canın %2si şifa. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "quench",
+    "name": "Quench",
+    "target": "self",
+    "quench": {
+      "ground": "burning",
+      "healRatio": 0.02
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#9fd8ff",
+    "effects": [],
+    "icon": "bonethrow",
+    "vfx": "bonethrow",
+    "sfx": [
+      "boneSpin",
+      "boneImpact"
+    ],
+    "artOf": "sodden_hex"
+  },
+  "forge_chains": {
+    "_not": "Hearthwarden: tek hedef, 2 tur Slow + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "forge_chains",
+    "name": "Forge Chains",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#e0702a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.6,
+        "element": "fire"
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 2
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "int",
+        "power": 0.12,
+        "turns": 2
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "cinder_brand"
+  },
+  "temper_the_crown": {
+    "_not": "Hearthwarden ulti: telgraflı tüm kahraman tahtası, güvenli hücre yok, ateş + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "temper_the_crown",
+    "name": "Temper the Crown",
+    "target": "all_enemies",
+    "global": true,
+    "telegraph": {
+      "kind": "area",
+      "wholeBoard": true
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 22
+    },
+    "ai": {
+      "scoreCost": 12
+    },
+    "cooldown": 5,
+    "motion": "cast",
+    "fx": "#ff4d1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.8,
+        "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.2
+      }
+    ],
+    "icon": "judgebeam",
+    "vfx": "judgment",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam",
+      "fireCrackle"
+    ],
+    "artOf": "pyre_of_morvane"
+  },
+  "cinder_storm": {
+    "_not": "Ember: X şekli ateş + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "cinder_storm",
+    "name": "Cinder Storm",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "x"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 13
+    },
+    "ai": {
+      "scoreCost": 12
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#ff5a1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "str",
+        "power": 0.5,
+        "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "str",
+        "power": 0.25
+      }
+    ],
+    "icon": "ashbrand",
+    "vfx": "ashbrand",
+    "sfx": [
+      "emberHiss"
+    ],
+    "artOf": "dragons_breath"
+  },
+  "breathe": {
+    "_not": "Ember: bir sıra 2 tur Burning, hasar yok. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "breathe",
+    "name": "Breathe",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 13
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#ff7a1a",
+    "effects": [
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "str",
+        "power": 0.25
+      }
+    ],
+    "icon": "ashbrand",
+    "vfx": "ashbrand",
+    "sfx": [
+      "emberHiss"
+    ],
+    "artOf": "vent"
+  },
+  "the_first_fire": {
+    "_not": "Ember ulti: tüm kahraman tahtası 3 tur Burning, hasar yok. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "the_first_fire",
+    "name": "The First Fire",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "rect",
+      "rows": 4,
+      "cols": 3,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 13
+    },
+    "ai": {
+      "scoreCost": 12
+    },
+    "cooldown": 5,
+    "motion": "cast",
+    "fx": "#ff4d1a",
+    "effects": [
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 3,
+        "scale": "str",
+        "power": 0.25
+      }
+    ],
+    "icon": "judgebeam",
+    "vfx": "judgment",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam",
+      "fireCrackle"
+    ],
+    "artOf": "pyre_of_morvane"
   }
 }

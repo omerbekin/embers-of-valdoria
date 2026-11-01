@@ -13,7 +13,14 @@ export interface LogNames {
   ground(id: string): string;
   /** Global eylemin türü (rest | skip | move). */
   globalKind(id: string): string;
+  /** Olayın `cause` kimliğinin okunur adı (düğüm, pasif, durum, zemin, skill, mekanik); bilinmiyorsa '' (kimlik oyuncuya gösterilmez). */
+  cause(id: string): string;
+  /** Hücrenin sırası (0 = ön): Move satırının yönü. */
+  rowOf(slot: number): number;
 }
+
+/** Birimin kendi vuruşundan gelen emme şifaları: açık eylemin sahibine geliyorsa satırına "+N" olarak katılır, ayrı satır almaz. */
+const OWN_HIT_HEALS = new Set(['lifesteal', 'leech', 'bloodletter', 'vampiric_bite']);
 
 interface Hit {
   uid: string;
@@ -32,6 +39,8 @@ interface Action {
   verb: LogPart[];
   hits: Hit[];
   notes: string[];
+  /** Move eylemi: gelen 'moved' olayı satıra yönü yazar. */
+  moving?: boolean;
 }
 
 const MAX = 80;
@@ -87,8 +96,16 @@ export class CombatLog {
         const verb = kind === 'rest' ? ' rested' : kind === 'skip' ? ' skipped the turn' : kind === 'move' ? ' moved' : kind === 'valor' ? ' spent Valor' : ` used ${e.id}`;
         // Crown Surge: "called Ash Surge" (skill adı vurgulu)
         const v = kind === 'surge' ? [{ t: ' called ' }, { t: this.names.skill(e.id), k: 'sk' as const }] : [{ t: verb }];
-        this.cur = { round: this.round, actor: e.actor, verb: v, hits: [], notes: [] };
+        this.cur = { round: this.round, actor: e.actor, verb: v, hits: [], notes: [], ...(kind === 'move' ? { moving: true } : {}) };
         this.done.push(this.cur);
+        return true;
+      }
+      case 'moved': {
+        // Move eyleminin yönü (sıra 0 = ön; aynı sırada şerit değişimi = sideways). İtme ve diğer zorla yer değiştirmeler satır almaz.
+        if (!this.cur?.moving || e.actor !== this.cur.actor || e.cause) return false;
+        const d = this.names.rowOf(e.to) - this.names.rowOf(e.from);
+        this.cur.verb = [{ t: d < 0 ? ' moved forward' : d > 0 ? ' moved back' : ' moved sideways' }];
+        this.cur.moving = false;
         return true;
       }
       case 'damage': {
@@ -97,10 +114,13 @@ export class CombatLog {
           else this.line([this.who(e.target), { t: ' escaped a lethal blow by luck', k: 'n' }]);
           return true;
         }
-        if (e.origin === 'ground' || (e.origin === 'status' && !this.cur)) {
-          const src = e.origin === 'ground' ? this.names.ground(e.ground ?? '') : this.names.status(e.status ?? '');
-          this.line([this.who(e.target), { t: ' took ' }, { t: String(e.amount + e.absorbed), k: 'dm' }, { t: ` from ${src}` }]);
-          return true;
+        // Adı olan zemin / durum / pasif hasarı kendi satırını alır (açık eylem sürse de; eylem satırı açık kalır); adsız olan eylem yoksa "X took 2"
+        if (e.origin === 'ground' || e.origin === 'status') {
+          const src = e.ground ? this.names.ground(e.ground) : e.status ? this.names.status(e.status) : e.cause ? this.names.cause(e.cause) : '';
+          if (src || !this.cur) {
+            this.line([this.who(e.target), { t: ' took ' }, { t: String(e.amount + e.absorbed), k: 'dm' }, ...(src ? [{ t: ` from ${src}` }] : [])]);
+            return true;
+          }
         }
         if (e.origin === 'self') return false;
         if (!this.cur) return false;
@@ -127,8 +147,11 @@ export class CombatLog {
         return true;
       case 'heal': {
         if (e.amount <= 0) return false;
-        if (this.cur && e.cause !== 'dark_bond') this.hit(e.target).heal += e.amount;
-        else this.line([this.who(e.target), { t: ' healed ' }, { t: `+${e.amount}`, k: 'hl' }, ...(e.cause === 'dark_bond' ? [{ t: ' (Dark Bond)' }] : [])]);
+        const bond = e.cause === 'dark_bond';
+        const src = e.cause && !bond ? this.names.cause(e.cause) : '';
+        // Adsız şifa (skill'in kendisi) ve eylem sahibinin kendi vuruşundan emmesi eylem satırına katılır; adı olan şifa kendi satırını alır
+        if (this.cur && !bond && (!src || (OWN_HIT_HEALS.has(e.cause!) && e.target === this.cur.actor))) this.hit(e.target).heal += e.amount;
+        else this.line([this.who(e.target), { t: ' healed ' }, { t: `+${e.amount}`, k: 'hl' }, ...(bond ? [{ t: ' (Dark Bond)' }] : src ? [{ t: ` from ${src}` }] : [])]);
         return true;
       }
       case 'status': {

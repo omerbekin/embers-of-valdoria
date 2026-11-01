@@ -335,7 +335,7 @@ describe('Undead: lifesteal (veriden), Dark Bond', () => {
     const ev = act(b, sk, 'skeleton_strike', at(b, 'enemy', 0).uid);
     const want = Math.max(1, Math.round(ofType(ev, 'damage')[0]!.amount * LIFESTEAL));
     expect(ofType(ev, 'heal').map((h) => [h.target, h.amount, h.cause])).toEqual([
-      [u.uid, want, undefined],
+      [u.uid, want, 'vampiric_bite'],
       [w.uid, Math.round(want * bondEffect.ratio), 'dark_bond'],
     ]);
   });

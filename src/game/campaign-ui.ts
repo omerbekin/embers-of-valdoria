@@ -1,6 +1,6 @@
 import { textRes } from './stage-view';
 import Phaser from 'phaser';
-import { TYPE } from '../ui/motion';
+import { TYPE, motion } from '../ui/motion';
 import { content } from '../engine';
 import { classAvatar, classLogoBadge } from './menu-ui';
 import { FULL_W, FULL_X0 } from '../ui/viewport';
@@ -183,12 +183,12 @@ export function classCard(
     zone.on('pointerover', () => {
       hover = true;
       draw();
-      scene.tweens.add({ targets: c, y: cy - 4, duration: 200, ease: EL.EASE });
+      scene.tweens.add({ targets: c, y: cy - motion('card').lift, duration: motion('card').hoverMs, ease: EL.EASE });
     });
     zone.on('pointerout', () => {
       hover = false;
       draw();
-      scene.tweens.add({ targets: c, y: cy, duration: 200, ease: EL.EASE });
+      scene.tweens.add({ targets: c, y: cy, duration: motion('card').hoverMs, ease: EL.EASE });
     });
     c.add(zone);
   }

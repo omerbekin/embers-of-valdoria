@@ -16,7 +16,7 @@
     "luck": 8
   },
   "primary": "int",
-  "armor": 14,
+  "armor": 22,
   "magicArmor": 0,
   "ai": "vesper",
   "skills": [
@@ -29,10 +29,10 @@
     "id": "pealing_bells",
     "name": "Pealing Bells",
     "icon": "divine",
-    "text": "Every Toll or Thunderpeal you ring makes your bells 5% stronger for the rest of the battle (no limit).",
+    "text": "Every Toll or Thunderpeal you ring makes your bells 7% stronger for the rest of the battle (no limit).",
     "effect": {
       "type": "pealingBells",
-      "perBell": 0.05
+      "perBell": 0.07
     }
   }
 }

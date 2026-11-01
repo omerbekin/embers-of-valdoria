@@ -77,7 +77,7 @@ export const WORLD_AUDIO = {
 /** Item malzemesi -> ses (saf; testli): silah ailesi / yuva. Kalkan, balta, gürz, hançer, miğfer = çelik; yay, asa = ahşap; tılsım = kumaş; zırh/eldiven/çizme = deri; takı = zincir. */
 export function itemSoundKind(d: { slot: string; family?: string | undefined } | null | undefined): WorldSoundKind {
   if (!d) return 'item_leather';
-  if (d.slot === 'trinket') return 'item_jewel';
+  if (d.slot === 'trinket' || d.slot === 'ring') return 'item_jewel';
   if (d.slot === 'weapon' || d.slot === 'offhand') {
     if (d.family === 'bows' || d.family === 'staves') return 'item_wood';
     if (d.family === 'charms') return 'item_cloth';

@@ -84,23 +84,23 @@ describe('zemin tepkimeleri: motor', () => {
     expect(at(b, 'enemy', 1)[0]!.turns).toBe(1); // yalnızca tepkimenin hücresi
   });
 
-  it('3b Purified, Withering durumunu kutsal ateşin sahibinin hücredeki dostlarından siler; düşmandan silmez (Ömer 2026-10-28, 445)', () => {
-    expect(R.purge!.cleanse).toEqual(['wither']);
+  it('3b Purified, Poisoned durumunu kutsal ateşin sahibinin hücredeki dostlarından siler; düşmandan silmez (Withering artık silinmez) (Ömer 2026-10-28, 445)', () => {
+    expect(R.purge!.cleanse).toEqual(['poisoned']);
     const { b, me } = mk();
     // kendi tahtamda kutsal ateş (sahibi ben), üstümde Withering; düşman zehir atar -> Purified -> benden silinir
     place(b, me.uid, 'holy_fire', 'party', [0]);
-    expect(b.debugAddStatus(me.uid, 'wither').ok).toBe(true);
+    expect(b.debugAddStatus(me.uid, 'poisoned').ok).toBe(true);
     place(b, 'enemy-0', 'poison', 'party', [0]);
     expect(reactions(b).map((e) => e.reaction)).toEqual(['purge']);
-    expect(me.statuses.some((s) => s.kind === 'wither')).toBe(false);
-    expect(b.log.some((e) => e.type === 'statusEnd' && e.target === me.uid && e.status === 'wither' && e.dispelled)).toBe(true);
+    expect(me.statuses.some((s) => s.kind === 'poisoned')).toBe(false);
+    expect(b.log.some((e) => e.type === 'statusEnd' && e.target === me.uid && e.status === 'poisoned' && e.dispelled)).toBe(true);
     // düşman tahtasında benim kutsal ateşim: hücredeki düşmanın Withering'i kalır
     const t = mk();
     place(t.b, t.me.uid, 'holy_fire', 'enemy', [0]);
-    expect(t.b.debugAddStatus('enemy-0', 'wither').ok).toBe(true);
+    expect(t.b.debugAddStatus('enemy-0', 'poisoned').ok).toBe(true);
     place(t.b, t.me.uid, 'poison', 'enemy', [0]);
     expect(reactions(t.b).map((e) => e.reaction)).toEqual(['purge']);
-    expect(t.b.get('enemy-0')!.statuses.some((s) => s.kind === 'wither')).toBe(true);
+    expect(t.b.get('enemy-0')!.statuses.some((s) => s.kind === 'poisoned')).toBe(true);
   });
 
   it('4 Fed (Poison -> Holy Fire): zehir tükenir, kutsal ateş o hücrede %50 fazla vurur', () => {
@@ -164,6 +164,28 @@ describe('zemin tepkimeleri: motor', () => {
     }
   });
 
+  it('7b Quenched (Ice <-> Burning): ikisi söner, hücre su olur; her iki sıra; önizleme ve YZ aynı veriyi okur', () => {
+    expect(R.quenched!.setup).toContain('ice_ground');
+    for (const order of [['ice_ground', 'burning'], ['burning', 'ice_ground']] as const) {
+      const { b, me } = mk();
+      place(b, me.uid, order[0], 'enemy', [0]);
+      place(b, me.uid, order[1], 'enemy', [0]);
+      expect(reactions(b).map((e) => e.reaction)).toEqual(['quenched']);
+      expect(typesAt(b, 'enemy', 0)).toEqual(['flooded']);
+    }
+    // YZ ve önizleme motorun tepkime tablosunu okur (hardcode yok): ice + burning tablodan 'quenched' döner
+    const { b } = mk();
+    expect(b.groundReactionFor('ice_ground', 'burning')?.id).toBe('quenched');
+    expect(b.groundReactionFor('burning', 'ice_ground')?.id).toBe('quenched');
+  });
+
+  it('7c her tepkimenin önizleme sonucu (result) kısa: en çok 5 kelime', () => {
+    for (const [id, d] of Object.entries(R)) {
+      expect(d.result, id).toBeTruthy();
+      expect(d.result!.split(/\s+/).length, id).toBeLessThanOrEqual(5);
+    }
+  });
+
   it('8 Spread (su <-> zehir): zehir suya bağlı tüm su hücrelerine yayılır, su kalır', () => {
     {
       const { b, me } = mk();
@@ -219,7 +241,7 @@ describe('zemin tepkimeleri: motor', () => {
     // önizleme: Judgment su olan düşman hücresinde "Evaporates"
     const p = mk('test');
     place(p.b, p.me.uid, 'flooded', 'enemy', [0]);
-    expect(p.b.groundReactionPreview('party-1', 'judgment', 0, 'enemy')).toEqual([{ board: 'enemy', slot: 0, reaction: 'evaporate', label: R.evaporate!.label }]);
+    expect(p.b.groundReactionPreview('party-1', 'judgment', 0, 'enemy')).toEqual([{ board: 'enemy', slot: 0, reaction: 'evaporate', label: R.evaporate!.label, result: R.evaporate!.result }]);
     // debug düğmeleri: Holy water birimin kendi tahtasında doğar, Evaporates karşı taraftan
     const d = mk();
     expect(d.b.debugGroundReaction(d.me.uid, 'holy_water').ok).toBe(true);
@@ -264,7 +286,7 @@ describe('zemin tepkimeleri: motor', () => {
     const p = mk('test');
     place(p.b, p.me.uid, 'flooded', 'party', [0]);
     const prev = p.b.groundReactionPreview('party-1', 'judgment', 0, 'party');
-    expect(prev).toContainEqual({ board: 'party', slot: 0, reaction: 'holy_water_ground', label: R.holy_water_ground!.label });
+    expect(prev).toContainEqual({ board: 'party', slot: 0, reaction: 'holy_water_ground', label: R.holy_water_ground!.label, result: R.holy_water_ground!.result });
     // debug düğmesi: birimin kendi tahtasında doğar
     const d = mk();
     expect(d.b.debugGroundReaction(d.me.uid, 'holy_water_ground').ok).toBe(true);

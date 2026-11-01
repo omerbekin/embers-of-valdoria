@@ -96,6 +96,8 @@ export interface MapNode {
   merchant?: boolean;
   /** Tüccar stok boyutu (yoksa campaign.json > merchant.size). Kasabalar (T1): Ashford küçük, Valdren Keep büyük. */
   merchantSize?: number;
+  /** Bu düğüme varınca açılan item yuvası (Reedgate: Trinket; src/campaign/slots.ts). */
+  opensSlot?: SlotId;
   /** Kasabaya girişte bir kez oynayan hikâye sahnesi (events.json > stories; T5, yalnızca metin). */
   story?: string;
   /** Kasaba ekranı (Ömer 2026-10-12): tam ekran arka plan + tıklanabilir yerler (src/campaign/town.ts, src/game/town-screen.ts). */
@@ -230,6 +232,8 @@ export interface MapRegion {
 
 export interface CampaignMap {
   id: string;
+  /** Bu haritada düşmeyen, tüccarda ve hediyede çıkmayan item yuvaları (Harita 1: Trinket). */
+  noDropSlots?: SlotId[];
   title: string;
   subtitle: string;
   blurb: string;
@@ -269,7 +273,7 @@ export interface CampaignMap {
 }
 
 import type { StatusKind, UnitModifiers, UnitTier } from '../engine/types';
-import type { Equipment, ItemInstance, ItemRoll } from '../progression/items';
+import type { Equipment, ItemInstance, ItemRoll, SlotId } from '../progression/items';
 import type { KillRecord, LevelUp, StatAlloc } from '../progression/levels';
 import type { TreeAlloc } from '../progression/skill-tree';
 
@@ -432,11 +436,6 @@ export interface CampaignConfig {
   inn: { healPerDay: number; woundsPerDay: number };
   /** Gün (Ömer 2026-10-26): `completionsPerDay` tamamlama (ilk zafer ya da devriye zaferi) = 1 gün. */
   days: { completionsPerDay: number };
-  /**
-   * Serbest dolaşım / devriye (roadmap 2.2-2.3 A; campaign.json > replay): `xp[i]` = düğümün i. yeniden oynanışında XP çarpanı (0 = ilk zafer,
-   * son değer taban). Altın ve item çarpanı items.json > loot.repeat'tedir (aynı sayılar). Yoksa yeniden oynama XP'si tam.
-   */
-  replay?: { xp: number[] };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
   merchant: { size: number; /** Geçen gün başına yenilenen raf (Ömer 2026-10-31). */ restockPerDay?: number; /** Yenileme tabanı; bedel = rerollCost + rerollPerLevel x aktif takımın ortalama level'ı (Ömer 2026-10-24). */ rerollCost: number; rerollPerLevel?: number; /** Fiyat = priceBase[nadirlik] x (1 + pricePerIlvl x item seviyesi); satış yarısı (Ömer 2026-10-26, src/campaign/merchant.ts > campaignPrice). */ priceBase: Record<string, number>; pricePerIlvl: number; buybackSize: number };
   /** Kasaba ekranı yerleşimi (1920x1080 birim): kahraman boyu, ayak çizgisi (H oranı; telefonda alt yazıya yer kalsın diye feetYPhone), kahramanlar arası, yer etiketi yazı boyu (masaüstü / telefon). */
@@ -485,7 +484,7 @@ export interface Hero {
    * düğümünde silinir; harita geçişinde taşınır. İsteğe bağlı alan (kayıt sürümü değişmez); eski kayıtta yok = 0.
    */
   taint?: number;
-  /** Takılı item'ler: 6 yuva (weapon, helm, armor, gloves, boots, trinket), boş = null. Güce çevrimi: src/progression/loadout.ts. */
+  /** Takılı item'ler: 8 yuva (weapon, offhand, helm, armor, gloves, boots, ring, trinket), boş = null. Güce çevrimi: src/progression/loadout.ts. */
   equipment: Equipment;
   /**
    * Kişisel hız zarı (Ömer 2026-10-24, Natural pace): kalıcı çarpan [1 - spdVariance, 1 + spdVariance] (loadout.ts > heroSpeedRoll; seed + id).
@@ -621,6 +620,8 @@ export interface CampaignState {
    * (tutorial kahramanı, Ashford vedası; data.ts > mapFor). Kahraman seçilmemiş eski kayıt seçimde yeni yapıya geçer.
    */
   soloStart?: true;
+  /** Debug'ın ilerlemeden bağımsız açtığı yuvalar (normalde kilit ilerlemeden türer: src/campaign/slots.ts). */
+  openSlots?: SlotId[];
   /**
    * Oyuncunun verdiği bölük adı (Ömer 2026-11-01, D4; "Form your company" kutusu): haritadaki "Your party" başlığının ve kayıt kartındaki kısa
    * başlığın yerine geçer. İsteğe bağlı alan (kayıt sürümü değişmez): yok / boş = ad yok; geçersizse okunurken atılır (state.ts > cleanCompanyName).

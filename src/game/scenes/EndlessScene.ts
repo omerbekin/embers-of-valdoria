@@ -981,7 +981,7 @@ export class EndlessScene extends Phaser.Scene {
     // Yara (Ömer 2026-10-19): en küçük işlevsel gösterim, sağlık satırının altında (yara arayüzü mockup'tan seçilecek)
     if (woundCount(h) > 0) this.add2(this.note(cx, top + 228, woundsLine(woundCount(h), endlessWoundRules()), 18, '#d88a7e').setOrigin(0.5, 0));
     SLOT_IDS.forEach((slot, k) => {
-      const y = top + 250 + k * 32; // 7 yuva (ikinci el 2026-10-12) 480'lik panele sığar
+      const y = top + 250 + k * 28; // 8 yuva (Ring ve Trinket 2026-11-01) 480'lik panele sığar
       const inst = h.equipment[slot];
       const d = inst ? viewDef(itemDef(inst.id), inst.rolls) : undefined;
       this.add2(this.note(cx - w / 2 + 26, y, slotDef(slot).name, 20, C.dim));

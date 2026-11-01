@@ -16,9 +16,42 @@ Sahip: Item Design sohbeti. Form: https://claude.ai/artifact/4NRvdHvZtQZEesdVuYU
 
 - **T1:** Ring kalıcı güç verir (ana stat, MP, regen, hasar). Trinket koşullu güç verir (savaş başı, öldürme, düşük can, destek). Yeni kural yok, mevcut affixler paylaşılır.
 - **T2:** Cursed item'ler 1.0 sonrasına kaldı.
-- **T3 (2026-11-01 güncel):** Yuvalar Ring ve Trinket, ayrı Kolye yuvası yok. Bugünkü item'lerin görselleri yeniden hazırlanıp Ring olarak düzenlenir, uygun olanlar Trinket'te kullanılır. Hangisinin nereye gideceği dağılım formunda: https://claude.ai/artifact/M3NZHgxKLbjCAuLpp9SC3g. Eski kayıtlardaki takılar aynı kurala göre taşınır, hiçbir item kaybolmaz.
+- **T3 (2026-11-01 güncel):** Yuvalar Ring ve Trinket, ayrı Kolye yuvası yok. Bugünkü item'lerin görselleri yeniden hazırlanıp Ring olarak düzenlenir, uygun olanlar Trinket'te kullanılır. Liste aşağıda, "Ring ve Trinket dağılımı". Eski kayıtlardaki takılar aynı kurala göre taşınır, hiçbir item kaybolmaz.
 - **T4:** Fazladan yuvanın gücü ölçülür, mob can ve hasarıyla telafi edilir.
-- **T5 (yeni kural onaylı):** Yuva baştan açık değil, seferde Harita 2'de bir yerde açılır; yer dağılım formunda bekliyor. Harita 1'de Trinket düşmez, tüccarda da çıkmaz. Endless'ta yuva baştan açıktır.
+- **T5 (yeni kural onaylı):** Yuva baştan açık değil, seferde Harita 2'de Reedgate'te açılır. Harita 1'de Trinket düşmez, tüccarda da çıkmaz. Endless'ta yuva baştan açıktır.
+
+## Seçilen set bonusları (2026-11-01, yeni kural onaylı, sayılar örnek)
+
+- **Ashguard Vigil:** Banked Coals. Ömer'in notu: yediğin hasar 3 turda sana degen olarak işler.
+- **Raven's Shroud:** Unseen.
+- **Conclave of Embers:** The Conclave Answers.
+- **Gallows Pact:** Hangman's Rope.
+- **Kingsfall Regalia:** Royal Command.
+- **Wayfarer's Oath:** Road Hound.
+
+## Set kuralları, 2. tur (2026-11-01; S5'in boss kısmının yerine geçer)
+
+- **Parça eşiği:** 2 + 3 + 4. 2 parça ortak stat, 3 parça pasif büyütme, 4 parça eşsiz kural. 3 parçalı nötr setlerde 2 parça ortak stat, 3 parça eşsiz kural (Ömer onayı 2026-11-01).
+- **Yuvalar:** Sınıf setleri Helm, Armor, Gloves, Boots. Kingsfall Helm, Armor, Ring. Wayfarer Boots, Gloves, Ring.
+- **Boss set düşürmez.** Boss tek seferlik, hikâye ağırlığıyla kalır. Set elitlerden ve o haritanın normal savaşlarından düşer.
+- **Harita başına 2 set.** Harita 1 setleri geride kalırsa Temper ile yükseltilir.
+
+| Set | Harita | Düşüren elit |
+|---|---|---|
+| Ashguard Vigil | Valdoria | Deserters' Camp |
+| Kingsfall Regalia | Valdoria | Black Cathedral |
+| Gallows Pact | Drowned Reach | Hag's Island |
+| Raven's Shroud | Drowned Reach | The Wrecker's Hall |
+| Conclave of Embers | The Hollow Crown | Hierarch's Pulpit |
+| Wayfarer's Oath | The Hollow Crown | Oathkeeper's Court |
+
+## Ring ve Trinket dağılımı (2026-11-01)
+
+- **Ring:** Copper Ring, Pilgrim's Band (Pilgrim's Token'ın yeni adı ve çizimi).
+- **Trinket:** Saint's Medal, Ashen Locket, Rabbit's Foot, Wolf-Tooth Charm, Flashpowder Locket, Clapper of the Sunken Bell, Heart of the Forge.
+- **Yer:** Trinket yuvası Reedgate'te açılır.
+- **Yeni tabanlar:** Maces ailesine iki çift el: Great Mace (Common, ilvl 4, bakır görünüm kalır), Long-Hafted Mace (Rare, ilvl 10).
+- **Çekiç ikonları:** War Hammer, Horseman's Hammer, Templar's Hammer kendi çizimlerini alır (Ömer 2026-11-01).
 
 ## Bekleyen kararlardan gelenler (2026-11-01)
 

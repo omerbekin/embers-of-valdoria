@@ -12,6 +12,7 @@ export * from './solo-start';
 export * from './suggest';
 export * from './save';
 export * from './power';
+export * from './slots';
 export * from './gear';
 export * from './loot';
 export * from './merchant';

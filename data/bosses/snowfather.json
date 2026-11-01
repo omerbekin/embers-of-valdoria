@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
+  "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim A (Isınma dersi). Statlar eski yer tutucu sınıfın kopyası.",
   "id": "snowfather",
   "name": "The Snowfather",
   "spriteId": "snowfather",
@@ -24,6 +24,8 @@
   "ai": "bridge_warden",
   "skills": [
     "icy_grasp",
+    "avalanche",
+    "roar",
     "whiteout"
   ],
   "touch": {
@@ -34,12 +36,17 @@
     "iron": 0.5
   },
   "passive": {
-    "id": "thundersnow_touch",
-    "name": "Thundersnow",
-    "icon": "bolt",
-    "text": "Below half HP, at the start of each Round a marked lane on your side is struck by lightning at the start of the next Round. Heavier armor draws more of the bolt.",
+    "id": "frostbound",
+    "name": "Frostbound",
+    "icon": "blizzard",
+    "text": "Deals 6% more damage for each hero who is Chilled or Frozen.",
     "effect": {
-      "type": "touchLabel"
+      "type": "frostbound",
+      "statuses": [
+        "chilled",
+        "frozen"
+      ],
+      "perUnit": 0.06
     }
   },
   "boss": {
@@ -58,7 +65,8 @@
     ],
     "notes": [
       "Below half HP a lane on your side glows: lightning lands there at the start of the next Round. Step out of the lane.",
-      "Whiteout darkens the board for a short while: your heroes reach only as deep as the light allows. A lightning strike in the dark lights the board (Thunderflash)."
+      "Whiteout darkens the board for a short while: your heroes reach only as deep as the light allows. A lightning strike in the dark lights the board (Thunderflash).",
+      "Frostbound: he deals more damage for each Chilled or Frozen hero. Keep your side thawed, and leave a lane marked by Avalanche."
     ],
     "passives": [
       {
@@ -72,6 +80,12 @@
         "name": "Thundersnow",
         "icon": "bolt",
         "text": "Below half HP, a marked lane is struck by lightning each Round. Heavier armor draws more of the bolt."
+      },
+      {
+        "id": "frostbound",
+        "name": "Frostbound",
+        "icon": "blizzard",
+        "text": "Deals 6% more damage for each hero who is Chilled or Frozen."
       }
     ]
   }

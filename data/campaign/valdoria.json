@@ -1,6 +1,8 @@
 {
   "_not": "Valdoria sefer haritası (docs/design/campaign/campaign.md v5, 3.4). label = above: etiket plakası rozetin üstünde (komşu düğümle çakışmasın diye); pos = arka planın (assets/campaign/valdoria-bg.webp, 1672x941) oranı (x, y), rozet merkezi. Seçim/birleşme noktaları graftan çıkar (çıkış > 1 / giriş > 1). Savaşlı düğüm = encounter alanı olan düğüm. A1-x (Ömer kararı 2026-10-11; docs/design/campaign/valdoria-2x.md 10.5): eğitim batıda tırmanır, Ashford -> King's Bridge arası yeni orta bölüm, Riverside Camp (rest: ücretsiz dinlenme + altınla diriltme) ve Forward Camp (merchant: Odo). Eski düğümler id'lerini korur, yeni düğümler anlamlı id alır. HARİTA 1 YENİDEN ÇİZİM (Ömer onayı 2026-10-22, docs/design/campaign/map-1-rework.md): yeni görsel (kaynak assets/source/maps-1/valdoria-map-v2.png -> assets/campaign/valdoria-bg.webp, 1672x941), tüm pos değerleri ona göre (mockup maps-2-3.html#v0); 33 düğüm, bölgeler 10/11/12; eski id ve kenarlar korundu, yeni: hills, hoard, shrine, wagons, hamlet, deserters. optional: true = cep (çıkmaz dal; rota / seçim noktası / K1 sayılmaz). Kenar style: tüm yollar solid, yalnız cep yolları dashed. ctrl = elle kavis kontrol noktası (görsel oranı). Geniş (21:9) görsel: backgroundWide (yeni çizimin geniş sürümü, Ömer onayı 2026-10-22; eski çizimin geniş görseli kaldırılmıştı).",
   "id": "valdoria",
+  "_noDropSlots": "Ömer 2026-11-01 (item-design-plan T5): bu haritada bu yuvanın item'leri düşmez, tüccarda ve hediyede çıkmaz.",
+  "noDropSlots": ["trinket"],
   "title": "VALDORIA",
   "subtitle": "Campaign Map",
   "blurb": "From Mill Road to Castle Morvane: 34 stops, 6 choice points, 22 stops per run.",

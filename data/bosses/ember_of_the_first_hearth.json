@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 3 5. dilim (maps-2-3.md, E dokunuşları): yalnız dokunuşu çalıştıran en küçük kit, TAM KİT DEĞİL (kit Ömer'in seçim sayfasından geçer). Statlar eski yer tutucu sınıfın kopyası (karşılaşma gücü değişmesin), PROVİZYON. Görünüş hollow-crown-looks kaydından.",
+  "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim A (Söndürme yarışı). Everburning hücre başına %3 (Ömer; belgedeki düz %50 yerine). Statlar eski yer tutucu sınıfın kopyası.",
   "id": "ember_of_the_first_hearth",
   "name": "The Ember of the First Hearth",
   "spriteId": "ember_of_the_first_hearth",
@@ -23,7 +23,10 @@
   },
   "ai": "bridge_warden",
   "skills": [
-    "flare"
+    "flare",
+    "cinder_storm",
+    "breathe",
+    "the_first_fire"
   ],
   "boss": {
     "where": "burns at the First Hearth",
@@ -43,7 +46,8 @@
       }
     ],
     "notes": [
-      "At 30% HP the storm comes down the chimney: Flare becomes lightning and every lightning hit can spread through water, even the water of the Tidewater Urn. Think twice before tipping it."
+      "At 30% HP the storm comes down the chimney: Flare becomes lightning and every lightning hit can spread through water, even the water of the Tidewater Urn. Think twice before tipping it.",
+      "Everburning: it takes less damage for each Burning cell. The Urn puts cells out, but use it before the storm comes: below 30% HP water conducts lightning."
     ],
     "passives": [
       {
@@ -57,7 +61,24 @@
         "name": "Storm in the Chimney",
         "icon": "bolt",
         "text": "At 30% HP Flare turns to lightning. Water on the board conducts it too, Tidewater Urn included."
+      },
+      {
+        "id": "everburning",
+        "name": "Everburning",
+        "icon": "flame",
+        "text": "Every Burning cell on the battlefield (both sides) makes it take 3% less damage."
       }
     ]
+  },
+  "passive": {
+    "id": "everburning",
+    "name": "Everburning",
+    "icon": "flame",
+    "text": "Every Burning cell on the battlefield (both sides) makes it take 3% less damage.",
+    "effect": {
+      "type": "crownOfSalt",
+      "ground": "burning",
+      "perCell": 0.03
+    }
   }
 }

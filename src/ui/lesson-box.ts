@@ -2,6 +2,7 @@ import './lesson-box.css';
 import { MENTOR, TUTORIAL, lessonById, lessonPages, lessonWhisperText, type LessonVars } from '../tutorial/lessons';
 import { isLessonSeen, markLessonSeen, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 import { uiSound } from './ui-sound';
+import { offsetIn } from './item-tip';
 
 /**
  * Mentor kutusu (sefer tutorial'ı; docs/design/tutorial.md): portreli kısa diyalog kartı (kit: el-panel corners, Cinzel başlık, Garamond
@@ -100,6 +101,28 @@ function setSpot(c: NonNullable<typeof current>, on: boolean): void {
   }
 }
 
+/**
+ * Harita penceresi (olay, hazine, dinlenme) ortada açıkken kart üstteki şeritte pencerenin başlığına biniyordu (Ömer 2026-11-01, 2000x1354 ve telefon):
+ * kart pencerenin içine, başlık bloğunun hemen altına yerleşir (sanat şeridi ve metin üstünde durur, başlık ve etiketler açık kalır); genişliği
+ * pencerenin içine sığar. Pencere yoksa ya da kart alttaysa satır içi konum silinir (varsayılan şerit). Yalnızca yerleşim.
+ */
+function dockToWindow(wrap: HTMLElement): void {
+  const hd = wrap.classList.contains('bottom') ? null : document.querySelector<HTMLElement>('.mw-win .mw-hd, .mw-win .mw-hd2');
+  const panel = hd?.closest<HTMLElement>('.mw-panel') ?? null;
+  const host = document.getElementById('ui-root');
+  if (!hd || !panel || !host) {
+    wrap.style.removeProperty('top');
+    wrap.style.removeProperty('left');
+    wrap.style.removeProperty('max-width');
+    return;
+  }
+  const a = offsetIn(hd, host);
+  const b = offsetIn(panel, host);
+  wrap.style.top = `${Math.round(a.y + hd.offsetHeight + 6)}px`;
+  wrap.style.left = `${Math.round(b.x + 10)}px`;
+  wrap.style.maxWidth = `${panel.offsetWidth - 20}px`;
+}
+
 function removeCurrent(c: NonNullable<typeof current>): void {
   window.clearInterval(c.timer);
   clearFocus();
@@ -164,6 +187,7 @@ function render(p: Pending): void {
       target.scrollIntoView({ block: 'nearest' }); // kaydırılan panelde görünür olsun (Gear statları)
     }
     if (current?.p === p && current.spot) placeSpot(current.spot, target);
+    dockToWindow(wrap);
   };
   const timer = window.setInterval(paint, 250);
   current = { p, root: wrap, timer, spot: null };

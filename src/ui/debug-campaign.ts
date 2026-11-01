@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { CINEMATIC_IDS, CONFIG, autoResolve, acknowledgeLoot, advanceDay, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, debugRequireFormation, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { CINEMATIC_IDS, CONFIG, debugOpenSlot, autoResolve, acknowledgeLoot, advanceDay, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, debugRequireFormation, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -478,13 +478,14 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     },
   });
   // LOOT ekranı (Ömer 2026-10-18): kazanılan savaş / sandık sonrası ortak envanterin yanında ganimet alanı
-  const dropLoot = (fullBag: boolean): void => {
+  const dropLoot = (fullBag: boolean, kind: 'elite' | 'treasure' = 'elite'): void => {
     let s = ensureState();
     if (!s.roster.length) s = debugTeleport(s, getMap(s.mapId).nodes.find((n) => n.type === 'town')?.id ?? s.at);
     setState(s);
     if (fullBag) for (let i = 0; i < BAG_SIZE && bagHasRoom(current()!); i++) giveItem();
     const t = JSON.parse(JSON.stringify(current()!)) as CampaignState;
-    grantLoot(t, t.at, 'elite', activeHeroes(t));
+    grantLoot(t, t.at, kind, activeHeroes(t));
+    sessionStorage.removeItem('eov.chestPlayed');
     setState(t);
     reload();
   };
@@ -516,6 +517,15 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     label: 'Open Loot screen',
     hint: 'Grant an elite drop at this stop and open the Loot screen on the map: drag the items into the bag or a hero slot (or tap them), or leave them. Gold shows there too',
     run: () => dropLoot(false),
+  });
+  debug.register({
+    id: 'campaign.chest',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'dice',
+    label: 'Open chest scene',
+    hint: 'Grant a chest drop and play the full-screen chest opening: tap to open, tap again to skip ahead, Take all takes everything and closes the scene (Loot screen only if the bag is full)',
+    run: () => dropLoot(false, 'treasure'),
   });
   debug.register({
     id: 'campaign.loot-xp',
@@ -632,6 +642,18 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     hint: 'Put all 10 Legendary items into the bag (they do not drop yet). Also: add ?legendary=1 to the address and open Gear',
     run: () => {
       setState(grantAllLegendaries(ensureState()));
+      document.dispatchEvent(new CustomEvent('gear:refresh'));
+    },
+  });
+  debug.register({
+    id: 'campaign.open-trinket',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'burst',
+    label: 'Unlock Trinket slot',
+    hint: 'Opens the Trinket slot now, without reaching Reedgate. Map 1 still does not drop or sell Trinkets',
+    run: () => {
+      setState(debugOpenSlot(ensureState(), 'trinket'));
       document.dispatchEvent(new CustomEvent('gear:refresh'));
     },
   });

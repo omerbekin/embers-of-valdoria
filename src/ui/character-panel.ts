@@ -478,7 +478,7 @@ function fallenBanner(hero: HoverHero): HTMLElement | null {
 }
 
 /** Yuva plakası etiketleri (Ömer 2026-10-18, Gear > Hero "A · iki sütun satır plakaları"). */
-const PLATE_LABEL: Record<string, string> = { weapon: 'Weapon', offhand: 'Offhand', helm: 'Head', armor: 'Chest', gloves: 'Hands', boots: 'Feet', trinket: 'Ring' };
+const PLATE_LABEL: Record<string, string> = { weapon: 'Weapon', offhand: 'Offhand', helm: 'Head', armor: 'Chest', gloves: 'Hands', boots: 'Feet', ring: 'Ring', trinket: 'Trinket' };
 
 const fmtNum = (n: number): string => (Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10));
 
@@ -550,7 +550,7 @@ export function itemPlate(inst: ItemInstance, heroClass: string | undefined, ext
   return cell;
 }
 
-/** Sınıf başlığı (çerçevesiz "Level N Sınıf" yazısı; silah ailesi kutuları kalktı, Ömer 2026-10-31) + 7 yuva plakası. */
+/** Sınıf başlığı (çerçevesiz "Level N Sınıf" yazısı; silah ailesi kutuları kalktı, Ömer 2026-10-31) + 8 yuva plakası. */
 function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
   const head = el('div', 'gr-sec gr-class-sec');
   head.append(el('span', 'gp-chip cls plain', `Level ${hero.level} ${className(hero.class)}`));
@@ -575,6 +575,23 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     const d = inst ? itemDef(inst.id) : undefined;
     // İkinci el (2026-10-12): çift el / yay / tılsım takılıyken kapalı görünür (bırakılırsa planEquip açık mesaj verir)
     const blocked = k === 'offhand' && !inst && !!blocker;
+    // Kilitli yuva (seferde Trinket, Reedgate'e kadar): etkisiz plaka + kısa neden; bırakma hedefi değil, bırakılan item yerine döner
+    const lockReason = !inst ? hero.locks?.[k] : undefined;
+    if (lockReason) {
+      const lockedCell = el('button', `gr-slot gr-plate empty locked gr-slot-${k}`);
+      lockedCell.type = 'button';
+      lockedCell.setAttribute('aria-disabled', 'true');
+      lockedCell.setAttribute('aria-label', `${PLATE_LABEL[k] ?? k}: ${lockReason}`);
+      lockedCell.style.setProperty('--rc', '#5b4a33');
+      lockedCell.dataset['band'] = JSON.stringify({ kind: 'Locked', title: PLATE_LABEL[k] ?? k, accent: '#9a8a6a', lines: [{ text: lockReason }], noKeywords: true });
+      const lockIco = el('span', 'gp-ico');
+      lockIco.append(emptySlotIcon(k));
+      const lockTxt = el('div', 'gr-slot-text gp-tx');
+      lockTxt.append(plateLabel(k), el('div', 'gr-slot-name', 'Locked'), el('div', 'gr-slot-sub', lockReason));
+      lockedCell.append(lockIco, lockIcon(), lockTxt);
+      slots.append(lockedCell);
+      continue;
+    }
     const cell = el('button', `gr-slot gr-plate${inst ? '' : ' empty'}${blocked ? ' blocked' : ''} gr-slot-${k}`);
     cell.type = 'button';
     cell.style.setProperty('--rc', inst && d ? instanceColor(inst) : '#5b4a33');

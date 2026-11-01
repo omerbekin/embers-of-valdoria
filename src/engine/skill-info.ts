@@ -268,6 +268,28 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `Your skills that hit an enemy standing on ${groundName(e.ground)} ground also inflict ${cap(e.status)} for ${turnsText(e.turns)}.`;
     case 'eyeOfStorm':
       return "Allies in this unit's lane ignore the storm: its Chill Ground does not touch them and they suffer no ranged penalty. Ends when this unit falls.";
+    case 'blindHunger':
+      return `Always goes for the nearest hero. In Darkness it deals ${pct(e.darkBonus)} more damage.`;
+    case 'highlandFury':
+      return `Immune to Chilled and Frozen. Below ${pct(e.below)} HP it deals ${pct(e.bonus)} more damage.`;
+    case 'warChant':
+      return `At the start of its turn, allies in its row gain ${cap(e.status)} for ${turnsText(e.turns)}.`;
+    case 'kindling':
+      return `Deals ${pct(e.perCell)} more damage for each ${groundName(e.ground)} cell on the field${e.max !== undefined ? `, up to ${pct(e.max)}` : ''}.`;
+    case 'frostbound':
+      return `Deals ${pct(e.perUnit)} more damage for each hero who is ${e.statuses.map(cap).join(' or ')}.`;
+    case 'hollowCrown':
+      return 'When a Hollow ally dies, this unit takes two actions on its next turn.';
+    case 'shepherdOfAsh':
+      return `While an Ashborn ally lives, it takes ${pct(1 - e.takenMult)} less damage.`;
+    case 'furnaceCore':
+      return `When it dies, its cell and the cells around it become ${groundName(e.ground)} for ${turnsText(e.turns)}.`;
+    case 'graveCold':
+      return `Its skill hits make the target ${cap(e.status)} for ${turnsText(e.turns)}. This never freezes.`;
+    case 'hoarfrost':
+      return `While this witch lives, a ${cap(e.wet)} hero becomes ${cap(e.status)} at the start of each of its turns. This never freezes.`;
+    case 'hollow':
+      return `In Darkness it takes ${pct(1 - e.darkTakenMult)} less damage.`;
     case 'stormhide':
       return 'A hero that hits this unit with a melee skill is Shocked. If that hero stands in water, it is Stunned instead.';
     case 'touchLabel':
@@ -464,7 +486,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       }
       if (e.bonusFromShield) add(`+${pct(e.bonusFromShield.ratio)} of your shield${e.bonusFromShield.consume ? ' (consumed)' : ''}`, element);
     } else if (e.type === 'heal') {
-      add(`Heal ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.healPowerMult))})${who}`);
+      if (e.maxHpRatio !== undefined) add(`Heals ${pct(e.maxHpRatio)} of the target's max HP${who}`);
+      else add(`Heal ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.healPowerMult))})${who}`);
       if (e.missingHpBonus) add(`Heals more the lower the ally's health: up to ${moreText(e.missingHpBonus)}`);
     } else if (e.type === 'revive') {
       add(`Choose a fallen ally, then choose an empty cell on your side: it rises there with ${pct(e.hpRatio)} HP and ${pct(e.mpRatio)} MP (even if something now stands on its corpse)`);
@@ -645,6 +668,12 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     else if (rr.kind === 'laneFirst') add('Charges down a lane: only hits the first hero in that lane');
     else add('Always starts on the hero with the most Armor');
   }
+  if (skill.allyNames) add(`Only on: ${skill.allyNames.join(', ')}`);
+  if (skill.caveIn) add(skill.caveIn.onTarget ? "The target's cell collapses at the start of the next Round and stays closed. Anyone there takes damage and is Slowed" : `${skill.caveIn.rule.cells} cells collapse at the start of the next Round and stay closed. Anyone there takes damage and is Slowed`);
+  if (skill.quench) add(`Puts out every ${defs.grounds?.[skill.quench.ground]?.name ?? skill.quench.ground} cell on the field and heals ${pct(skill.quench.healRatio)} of its max HP for each`);
+  if (skill.kindleNave) add(`Only after the sermon is done. Its own row becomes ${defs.grounds?.[skill.kindleNave.ground]?.name ?? skill.kindleNave.ground}: Ashborn allies there heal, others burn`);
+  if (skill.anchorGround) add(`Cast only on a cell with ${defs.grounds?.[skill.anchorGround]?.name ?? skill.anchorGround}: it spreads to the cells right next to it`);
+  if (skill.thunder?.flashWet) add('In Darkness it lights the field only when the target stands in water');
   if (skill.thunder?.liveFrom) add(`Sets water alive only while this unit stands on ${defs.grounds?.[skill.thunder.liveFrom]?.name ?? skill.thunder.liveFrom}`);
   if (skill.effects.some((e) => e.type === 'ground' && e.whenOpened)) add('Leaves the ground only when its special reach was used');
   if (skill.effects.some((e) => e.type === 'push' && e.fixedDir)) add('Pushes the target one row back');

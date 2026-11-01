@@ -1,0 +1,42 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Komşu: slagcart_golem. Kendi çizimi. Forgeborn: Slagcart emsali, aile guardians, rol metni Forgeborn (yeni aile kuralı yok).",
+  "id": "forge_golem",
+  "name": "Forge Golem",
+  "family": "guardians",
+  "spriteId": "forge_golem",
+  "spriteScale": 0.97,
+  "color": "#4a4440",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Forgeborn · Golem",
+  "attributes": {
+    "str": 27,
+    "int": 8,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 28,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 130
+  },
+  "ai": "aggressive",
+  "skills": [
+    "forge_hammer",
+    "vent"
+  ],
+  "passive": {
+    "id": "furnace_core",
+    "name": "Furnace Core",
+    "icon": "flame",
+    "text": "When it dies, its cell and the cells around it become Burning Ground for 2 turns.",
+    "effect": {
+      "type": "furnaceCore",
+      "ground": "burning",
+      "turns": 2,
+      "scale": "str",
+      "power": 0.2
+    }
+  }
+}

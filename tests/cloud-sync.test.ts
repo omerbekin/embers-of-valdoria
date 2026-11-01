@@ -322,6 +322,7 @@ describe('anahtar listesi anlık görüntüsü (yeni eov.* anahtarı bilinçli k
   const NEVER_SYNC = [
     'eov.assetVersions',
     'eov.battleSpeed',
+    'eov.chestPlayed', // aynı sandığın sahnesi yeniden oynamasın (sessionStorage), ilerleme değil
     'eov.cloud.backup.v1',
     'eov.cloud.v1', // bulut istemcisinin senkron meta'sı (src/cloud/cloud.ts), yalnızca girişliyken
     'eov.cloud.tombstones.v1', // paketin `tombstones` alanıyla taşınır, anahtar olarak değil

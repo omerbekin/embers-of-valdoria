@@ -6,7 +6,7 @@ import { clampValor } from '../engine/valor';
 import type { EndlessRun, ScoreEntry } from './data';
 import { validSuspended } from './replay';
 import { cleanCarry } from './carry';
-import { migrateItemRolls, migrateOffhand, migrateRemovedAffixes, migrateRollsX2, promoteOffhand, stripUnusable } from '../progression/items';
+import { migrateItemRolls, migrateOffhand, migrateRemovedAffixes, migrateRingSlot, migrateRollsX2, promoteOffhand, stripUnusable } from '../progression/items';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
@@ -27,7 +27,7 @@ export const SCORES_KEY = 'eov.endless.scores.v1';
  * (`summons`). Sürüm 1-2 okunurken bu alanlar yok (= tam MP, temiz başlangıç: eski kural bir kez daha) ve yarım savaş atılır (savaş kurulumu
  * değişti: dalga arası cooldown sıfırlama; dalga baştan başlar). Ara verme (ödül / tüccar / kalıntı / kamp) aşaması aynen sürer.
  */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8; // 8: Ring ve Trinket ayrı yuva (2026-11-01): eski sürüm `ring` alanını okuyamazdı, sürüm artışı eski bulut paketinden item kaybını önler
 /*
  * 7: Skill ağacı (Moments; plan docs/design/skill-tree-implementation.md 3.3, Faz 1b): kahraman başına isteğe bağlı `tree` (onaylı dağılım),
  * `freeRespec` ve `treeReset` (sefer kaydıyla aynı alanlar). Göç yok: sürüm 1-6 okunurken alan yok = boş ağaç, puanlar aynen; her okumada onarım
@@ -70,7 +70,7 @@ export function parseRun(raw: string | null): EndlessRun | null {
   try {
     const data = JSON.parse(raw) as { version?: number; run?: EndlessRun };
     const r = data?.run;
-    if (![1, 2, 3, 4, 5, 6, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
+    if (![1, 2, 3, 4, 5, 6, 7, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
     if (data.version === 1) {
       migrateRollsX2(r);
       delete r.suspended;
@@ -143,6 +143,8 @@ export function parseRun(raw: string | null): EndlessRun | null {
     // İkinci el yuvası (2026-10-12): silah yuvasındaki kalkan ikinci ele geçer (sürüm artmaz; idempotent); ikinci el doluysa oradaki torbaya
     const overflow: NonNullable<EndlessRun['bag']> = [];
     for (const h of r.heroes) if (migrateOffhand(h.equipment, overflow) && !h.equipment.weapon) delete h.equipment.weapon;
+    // 2026-11-01 Ring ve Trinket ayrı yuva (Endless'ta ikisi de baştan açık): Ring item'i `ring` yuvasına; boşalan yuva silinir (Endless'ta boş yuva = alan yok)
+    for (const h of r.heroes) if (migrateRingSlot(h.equipment, overflow)) delete h.equipment.trinket;
     // 2026-10-28 (Ömer): sınıfın artık takamadığı item (örn. war_maul hammers ailesine geçti, Warrior kullanamaz) torbaya döner; boşalan yuva
     // silinir (Endless'ta boş yuva = alan yok); kurulum değiştiği için yarım savaş atılır (dalga baştan)
     let stripped = 0;

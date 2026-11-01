@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Crossbowman; palet YOK, bandit_crossbowman çizimi.",
+  "id": "clan_slinger",
+  "name": "Clan Slinger",
+  "family": "bandits",
+  "spriteId": "bandit_crossbowman",
+  "color": "#5f6b4a",
+  "logo": "bow",
+  "frontPriority": 8,
+  "range": 6,
+  "role": "Hillclan · Ranged",
+  "attributes": {
+    "str": 10,
+    "int": 6,
+    "dex": 26,
+    "luck": 6
+  },
+  "armor": 10,
+  "magicArmor": 0,
+  "ai": "sniper",
+  "skills": [
+    "sling_stone",
+    "ice_shot"
+  ],
+  "passive": {
+    "id": "cut_and_run",
+    "name": "Cut and Run",
+    "icon": "shrouded",
+    "text": "Once per battle, the first time HP drops below 50%: Shrouded for 1 turn and a speed boost until the next turn (like Skip Turn).",
+    "effect": {
+      "type": "cutAndRun",
+      "below": 0.5,
+      "status": "shrouded",
+      "turns": 1,
+      "speedBoost": 1
+    }
+  }
+}

@@ -60,6 +60,9 @@ describe('bağlar ve kapı', () => {
     expect(cls('hc_snowfather', 'The Snowfather')).toBe('snowfather');
     expect(cls('hc_ember', 'The Ember of the First Hearth')).toBe('ember_of_the_first_hearth');
     expect(cls('hc_hollow_king', 'The Hollow King')).toBe('hollow_king');
+    expect(cls('hc_50', 'The Pyre Matriarch')).toBe('pyre_matriarch');
+    expect(cls('hc_79', 'The Cinder Warden')).toBe('cinder_warden');
+    expect(cls('hc_hearthwarden', 'The Hearthwarden')).toBe('hearthwarden');
     expect(ENCOUNTERS['hc_hollow_king']!.noise).toBe('wake_the_halls');
     expect(ENCOUNTERS['hc_ember']!.device).toBe('tidewater_urn');
     expect(content.bosses['hollow_king']!.inert).toBeFalsy();
@@ -114,7 +117,7 @@ describe('E1 Overheat', () => {
       expect(b.useSkill(mage.uid, 'fire_bolt', g.uid).ok).toBe(true);
       expect(g.heat).toBe(GOLEM.fireHit);
       if (mode === 'test') {
-        b.useSkill(g.uid, 'iron_maul', at(b, 'party', 0).uid);
+        b.useSkill(g.uid, 'sledge', at(b, 'party', 0).uid);
         expect(g.heat).toBe(GOLEM.fireHit + GOLEM.perAction);
       }
       const before = g.heat!;
@@ -136,10 +139,10 @@ describe('E1 Overheat', () => {
       b.debugHeat(g.uid, 2);
       expect(g.heat).toBe(0); // Vent sürerken donuk
       if (mode === 'test') {
-        expect(b.canUse(g.uid, 'iron_maul').ok).toBe(false);
+        expect(b.canUse(g.uid, 'sledge').ok).toBe(false);
         nextRound(b);
         expect(g.statuses.some((s) => s.kind === GOLEM.status)).toBe(false);
-        expect(b.canUse(g.uid, 'iron_maul').ok).toBe(true);
+        expect(b.canUse(g.uid, 'sledge').ok).toBe(true);
       } else {
         for (let i = 0; i < 40 && g.statuses.some((s) => s.kind === GOLEM.status); i++) b.skipTurn();
         expect(g.statuses.some((s) => s.kind === GOLEM.status)).toBe(false);
@@ -279,7 +282,7 @@ describe('E3 Pack Rotation', () => {
       w.hp = 10;
       m.hp = 20;
       turnOf(b, m.uid);
-      const r = b.useSkill(m.uid, 'bite', b.combatants.find((c) => c.side === 'party' && c.slot === 0)!.uid);
+      const r = b.useSkill(m.uid, 'frost_fang', b.combatants.find((c) => c.side === 'party' && c.slot === 0)!.uid);
       expect(r.ok).toBe(true);
       const heals = r.ok ? r.events.filter((e) => e.type === 'heal' && e.cause === 'pack_rotation') : [];
       expect(heals.map((e) => (e.type === 'heal' ? [e.target, e.amount] : []))).toEqual([[w.uid, Math.max(1, Math.round(w.maxHp * 0.05))]]);
@@ -375,14 +378,15 @@ describe('E5 Storm in the Chimney', () => {
     it(`[${mode}] %30 altında Flare şimşeğe döner, Urn YZ si kaçınır`, () => {
       const b = make({ 1: 'ember_of_the_first_hearth' }, mode, { 0: 'warrior', 3: 'warrior', 7: 'mage' }, { device: 'tidewater_urn' });
       const e = at(b, 'enemy', 1);
-      expect(e.skills).toEqual(['flare']);
+      expect(e.skills).toContain('flare');
       expect(b.thunderSkillsOf('enemy')).toHaveLength(0);
       const mage = at(b, 'party', 7);
       e.hp = Math.ceil(e.maxHp * 0.3) + 1;
       turnOf(b, mage.uid);
       mage.mp = mage.maxMp;
       b.useSkill(mage.uid, 'fire_bolt', e.uid);
-      expect(e.skills).toEqual(['flare_storm']);
+      expect(e.skills).toContain('flare_storm');
+      expect(e.skills).not.toContain('flare');
       expect(b.thunderSkillsOf('enemy')).toHaveLength(1);
       const r = b.useSkill(e.uid, 'flare_storm', at(b, 'party', 0).uid);
       if (mode === 'test') expect(r.ok).toBe(true);

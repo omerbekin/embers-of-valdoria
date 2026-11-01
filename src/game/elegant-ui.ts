@@ -349,7 +349,8 @@ export function elButton(
   fitLabel();
   const lift = scene.add.container(0, 0, icon ? [plate, icon, text] : [plate, text]);
   const zone = scene.add.zone(0, 0, w + 16, Math.max(h + 12, EL.HIT - 6)).setInteractive({ useHandCursor: true });
-  if (o.touch) growTouchZone(scene, zone, w + 16, Math.max(h + 12, EL.HIT - 6), o.touch === true ? {} : o.touch);
+  // Varsayılan: telefonda yükseklik >= 44 gerçek px (genişlik en çok 8 birim büyür, yan yana düğmeler çakışmasın); düğme kendi `touch`ını verirse o geçerli.
+  growTouchZone(scene, zone, w + 16, Math.max(h + 12, EL.HIT - 6), o.touch === undefined ? { maxExtraW: 8 } : o.touch === true ? {} : o.touch);
   root.add([breath, lift, zone]);
   let ready = o.ready ?? !primary;
   let hover = false;

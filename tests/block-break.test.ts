@@ -25,7 +25,7 @@ const physEffect = () => {
 };
 
 /** Beklenen liste: görselinde ya da kitinde kalkan olan moblar (docs/design/open-questions.md, Block Break varsayımları). */
-const SHIELD_MOBS: Record<string, number> = { risen_skeleton: 0.15, drowned_knight: 0.15, inquisition_brother: 0.15, deserter_captain: 0.15, guild_enforcer_bastion: 0.18, thane_of_the_deep: 0.18, shieldwarden: 0.2, cinder_gatewarden: 0.2, sworn_guard: 0.2 };
+const SHIELD_MOBS: Record<string, number> = { risen_skeleton: 0.15, drowned_knight: 0.15, inquisition_brother: 0.15, deserter_captain: 0.15, guild_enforcer_bastion: 0.18, thane_of_the_deep: 0.18, shieldwarden: 0.2, cinder_gatewarden: 0.2, cinder_warden: 0.2, sworn_guard: 0.2 };
 
 describe('Block Break: motor kuralı', () => {
   it('doğrudan çıkarma: Block - Block Break, en az 0; tavan yok', () => {

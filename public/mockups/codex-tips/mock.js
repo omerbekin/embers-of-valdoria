@@ -178,7 +178,12 @@
   function render() {
     bar(); fit(); tipEl = null; S.pin = null;
     stage.innerHTML = '<span class="size-tag">' + (S.size === 'phone' ? '844x390 (html.short)' : S.size) + '</span>' + shell();
-    if (S.v !== 'now') wire();
+    if (S.v !== 'now') {
+      wire();
+      // A ve B yalnız ipucunda ayrılıyor: örnek ipucu açık gelir, yoksa düğmeler çalışmıyor sanılıyor (Ömer 2026-11-01)
+      var sample = stage.querySelector('[data-bt^="target"], [data-bt^="reach"], [data-bt^="rar"]');
+      if (sample) sample.click();
+    }
   }
   document.addEventListener('click', function (e) {
     var b = e.target.closest('#mk-bar button'); if (!b) return;

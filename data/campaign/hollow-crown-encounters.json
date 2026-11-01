@@ -804,7 +804,7 @@
     "condition": "darkness",
     "units": [
       {
-        "class": "hedge_witch_morwen",
+        "class": "pyre_matriarch",
         "name": "The Pyre Matriarch",
         "tier": "elite",
         "mods": {
@@ -1383,7 +1383,7 @@
     "condition": "heat",
     "units": [
       {
-        "class": "cinder_gatewarden",
+        "class": "cinder_warden",
         "name": "The Cinder Warden",
         "tier": "elite",
         "mods": {
@@ -1552,7 +1552,7 @@
     "name": "The Hearthwarden",
     "units": [
       {
-        "class": "drowned_queen",
+        "class": "hearthwarden",
         "slot": 4,
         "name": "The Hearthwarden",
         "tier": "boss",

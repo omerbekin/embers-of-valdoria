@@ -381,7 +381,9 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         if (blocked.length > 0) e.immune = [...(e.immune ?? []), ...blocked];
         e.statuses = [...(e.statuses ?? []), `Random: ${effect.options.map((o) => battle.statusDef(o.status)?.name ?? o.status).join(' / ')}${blocked.length > 0 ? ` (immune to ${blocked.join(', ')})` : ''}`];
       } else if (effect.type === 'heal') {
-        const r = healRange(actor.stats, effect.scale, pw(effect.power, actor.stats.healPowerMult), f);
+        // Reforge: sabit oran, zar yok
+        const fixed = effect.maxHpRatio !== undefined ? Math.max(1, Math.round(target.maxHp * effect.maxHpRatio)) : undefined;
+        const r = fixed !== undefined ? { min: fixed, max: fixed, avg: fixed } : healRange(actor.stats, effect.scale, pw(effect.power, actor.stats.healPowerMult), f);
         const missing = target.maxHp - target.hp;
         // missingHpBonus (Radiance): motorla aynı çarpan (hedefin şu anki eksik can oranı)
         const low0 = missingHpHealMult(effect.missingHpBonus, target.hp, target.maxHp);

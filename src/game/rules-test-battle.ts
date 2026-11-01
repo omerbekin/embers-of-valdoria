@@ -2,7 +2,7 @@
 // Saf veri kurucusu: oyuncu tarafı rastgele 4 sınıf, düşman tarafı Harita 2 mobları; kural Teams.rules ile gider (sefer kaydına dokunmaz).
 import { content, type BattleMode, type Teams } from '../engine';
 
-export type RulesTestKind = 'tide' | 'storm' | 'urn' | 'survive' | 'totem' | 'hold' | 'deck' | 'mixed' | 'blizzard' | 'heat' | 'cavein' | 'caveheavy' | 'darkness' | 'lantern' | 'thunder_tide' | 'thunder_urn' | 'thunder_iron' | 'thunder_dark' | 'thunder_ice' | 'eye' | 'rod' | 'rolling' | 'encased' | 'noise' | 'temper' | 'mob_vaulter' | 'mob_shardwalker' | 'mob_delver' | 'mob_gloamstalker' | 'mob_cinderleaper' | 'mob_slagcart' | 'mob_thunderwright' | 'mob_stormcaller' | 'mob_eel' | 'mob_ram';
+export type RulesTestKind = 'tide' | 'storm' | 'urn' | 'survive' | 'totem' | 'hold' | 'deck' | 'mixed' | 'blizzard' | 'heat' | 'cavein' | 'caveheavy' | 'darkness' | 'lantern' | 'thunder_tide' | 'thunder_urn' | 'thunder_iron' | 'thunder_dark' | 'thunder_ice' | 'eye' | 'rod' | 'rolling' | 'encased' | 'noise' | 'temper' | 'mob_vaulter' | 'mob_shardwalker' | 'mob_delver' | 'mob_gloamstalker' | 'mob_cinderleaper' | 'mob_slagcart' | 'mob_thunderwright' | 'mob_stormcaller' | 'mob_eel' | 'mob_ram' | 'kit_wolf' | 'kit_axeman' | 'kit_crawler' | 'kit_skald' | 'kit_witch' | 'kit_knight' | 'kit_golem' | 'kit_wight' | 'kit_rime_hound' | 'kit_slinger' | 'kit_rime_witch' | 'kit_hollow' | 'kit_molten';
 
 /** Debug düğmeleri (oyun içi metin İngilizce): tür, etiket, ipucu. */
 export const RULES_TESTS: ReadonlyArray<{ kind: RulesTestKind; label: string; hint: string }> = [
@@ -38,8 +38,21 @@ export const RULES_TESTS: ReadonlyArray<{ kind: RulesTestKind; label: string; hi
   { kind: 'mob_slagcart', label: 'Slagcart Golem', hint: 'It marks a row, then charges along it next turn (damage + 2 turns of Burning). The turn after that it is Cooling: no action, Armor 0. Hit it then.' },
   { kind: 'mob_thunderwright', label: 'Thunderwright', hint: 'A Warrior and a Paladin are in your party. Anvil Strike Shocks. Ring the Anvil starts on the most armored hero and jumps to the next two; lightning gains damage from Armor.' },
   { kind: 'mob_stormcaller', label: 'Clan Stormcaller', hint: 'Tide: Fork Stuns a hero who is Soaked or stands in water, and pushes back a dry one. Rolling Thunder sends a token through the turn bar.' },
-  { kind: 'mob_eel', label: 'Gloam Eel', hint: 'Black Water (Darkness + Tide): its bite sets water alive only while the eel stands in water. In the dark every bite also flashes the field (Thunderflash).' },
+  { kind: 'mob_eel', label: 'Gloam Eel', hint: 'Black Water (Darkness + Tide): its bite sets water alive only while the eel stands in water. In the dark a bite on a hero in water also flashes the field (Thunderflash).' },
   { kind: 'mob_ram', label: 'Stormhorn Ram', hint: 'Hit it with a melee skill and your hero is Shocked. Headlong: it charges a lane and pushes the first hero one row back.' },
+  { kind: 'kit_wolf', label: 'Snow Wolf', hint: 'Frost Bite makes a hero Chilled; a second bite freezes. Pack Tactics: stronger with wolves in the same row.' },
+  { kind: 'kit_axeman', label: 'Clan Axeman', hint: 'Blizzard: it stays free of Chilled and Frozen. Below half HP it hits 20% harder. Cleave hits your front row.' },
+  { kind: 'kit_crawler', label: 'Cave Crawler', hint: 'Darkness: it always goes for the nearest hero and deals 25% more damage.' },
+  { kind: 'kit_skald', label: 'Clan Skald', hint: 'Allies in its row gain Haste each turn. Chant hastes all allies. Mock costs a hero the next action.' },
+  { kind: 'kit_witch', label: 'Pyre Witch', hint: 'Ember Acolytes set the ground on fire. Spread the Flame widens a Burning cell; Kindling adds damage for each Burning cell.' },
+  { kind: 'kit_knight', label: 'Cinder Knight', hint: 'Brand burns its target. Hold the Gate draws attacks. Searing Rebuke hurts melee attackers.' },
+  { kind: 'kit_golem', label: 'Forge Golem', hint: 'Vent burns a whole lane. When it dies, its cell and the cells around it burn for 2 turns.' },
+  { kind: 'kit_wight', label: 'Wight', hint: 'Its skill hits give Chilled, and never freeze.' },
+  { kind: 'kit_rime_hound', label: 'Rime Hound', hint: 'Rime Bite makes a hero Chilled; a second bite freezes. Run Down reaches any row.' },
+  { kind: 'kit_slinger', label: 'Clan Slinger', hint: 'Ice Shot makes a hero Chilled, and freezes one already Chilled.' },
+  { kind: 'kit_rime_witch', label: 'Rime Witch', hint: 'Sodden Hex soaks a hero; a Soaked hero becomes Chilled at the start of each turn, and never freezes.' },
+  { kind: 'kit_hollow', label: 'Hollow Warden', hint: 'Darkness: it takes 25% less damage until the field is lit.' },
+  { kind: 'kit_molten', label: 'Molten Hound', hint: 'Run Down leaves Burning Ground under its target.' },
   { kind: 'lantern', label: 'Darkness + Lantern', hint: 'Darkness with a Lantern on your side: the field stays lit until enemies break it' },
 ];
 
@@ -103,6 +116,19 @@ export function rulesTestBattleData(seed: number, mode: BattleMode, kind: RulesT
       mob_stormcaller: { id: 'drowned', rules: { condition: 'tide' }, back: { 6: 'clan_stormcaller', 8: 'clan_stormcaller' } },
       mob_eel: { id: 'gloam_eel', rules: { condition: 'dark_tide' } },
       mob_ram: { id: 'stormhorn_ram', rules: {} },
+      kit_wolf: { id: 'snow_wolf', rules: {} },
+      kit_axeman: { id: 'clan_axeman', rules: { condition: 'blizzard' } },
+      kit_crawler: { id: 'cave_crawler', rules: { condition: 'darkness' } },
+      kit_skald: { id: 'clan_axeman', rules: {}, back: { 6: 'clan_skald', 8: 'clan_slinger' } },
+      kit_witch: { id: 'drowned', rules: {}, back: { 6: 'pyre_witch', 8: 'ember_acolyte' } },
+      kit_knight: { id: 'cinder_knight', rules: {} },
+      kit_golem: { id: 'forge_golem', rules: {}, back: { 6: 'pyre_witch' } },
+      kit_wight: { id: 'wight', rules: {} },
+      kit_rime_hound: { id: 'rime_hound', rules: {} },
+      kit_slinger: { id: 'drowned', rules: {}, back: { 6: 'clan_slinger', 8: 'clan_slinger' } },
+      kit_rime_witch: { id: 'drowned', rules: {}, back: { 6: 'rime_witch', 8: 'rime_witch' } },
+      kit_hollow: { id: 'hollow_warden', rules: { condition: 'darkness' } },
+      kit_molten: { id: 'molten_hound', rules: {} },
     };
     const s = SET[kind]!;
     Object.assign(enemyAt, { 0: s.id, 2: s.id }, s.back);
@@ -162,13 +188,16 @@ export function bossTestBattleData(seed: number, mode: BattleMode, kind: BossTes
   };
 }
 
-export type TouchTestKind = 'golem' | 'snowfather' | 'pack' | 'hierarch' | 'ember' | 'king';
+export type TouchTestKind = 'golem' | 'snowfather' | 'pack' | 'hierarch' | 'ember' | 'king' | 'matriarch' | 'warden' | 'hearthwarden';
 export const TOUCH_TESTS: ReadonlyArray<{ kind: TouchTestKind; label: string; hint: string }> = [
   { kind: 'golem', label: 'Overheat (Golem)', hint: 'Forge-Master Golem: every action fills the Heat bar, fire fills it faster, ice and water drain it. Full bar: Vent, it loses a turn with 0 Armor. Units tab has Heat +2' },
   { kind: 'snowfather', label: 'Thundersnow', hint: 'The Snowfather: use Set HP below 50%. Each Round a lane is marked and struck the next Round. Whiteout darkens the board; a bolt lights it' },
   { kind: 'pack', label: 'Pack Rotation', hint: 'The Pack-Mother with 3 wolves: hurt a front wolf, at the next Round it swaps with a healthier one behind. Her attacks heal wounded wolves 5%' },
   { kind: 'hierarch', label: 'The Long Sermon', hint: 'The Ashborn Hierarch on a Heat field: a 3-Round sermon. Enough damage staggers it; Silence and Stun do not. If it finishes, Burning ground heals the Ashborn' },
   { kind: 'ember', label: 'Storm in the Chimney', hint: 'The Ember with the Tidewater Urn: use Set HP below 30%. Flare turns to lightning and Urn water conducts it' },
+  { kind: 'matriarch', label: 'Greater Kindling', hint: 'The Pyre Matriarch: Stoke marks 2x2 cells that burn, Spread the Flame widens them. She deals 5% more damage for each Burning cell on the field' },
+  { kind: 'warden', label: 'Cinder Warden', hint: 'The Cinder Warden: Tempering swaps stance each turn. Hold the Gate draws attacks. Slag Wall marks a lane that burns' },
+  { kind: 'hearthwarden', label: 'Forge-Heat + Quench', hint: 'The Hearthwarden: a row is marked each Round and burns the next. Quench puts out every Burning cell and heals her for each. Temper the Crown burns your whole side' },
   { kind: 'king', label: 'The King Hears', hint: 'The Hollow King with Noise on: each fill raises a Warden and the King calls one more for free. Units tab has Noise +5' },
 ];
 
@@ -182,6 +211,9 @@ export function touchTestBattleData(seed: number, mode: BattleMode, kind: TouchT
     pack: { at: { 1: 'pack_mother', 0: 'grey_wolf', 3: 'grey_wolf', 4: 'grey_wolf' }, units: { 1: { tier: 'elite', displayName: 'The Pack-Mother' } } },
     hierarch: { at: { 7: 'ashborn_hierarch', 6: 'pitch_boiler', 0: 'cinderleaper' }, units: { 7: { tier: 'elite', displayName: 'The Ashborn Hierarch' }, 6: { displayName: 'Pyre Witch' } }, rules: { condition: 'heat' } },
     ember: { at: { 1: 'ember_of_the_first_hearth' }, units: { 1: boss('ember_of_the_first_hearth', 3) }, rules: { device: 'tidewater_urn' } },
+    matriarch: { at: { 7: 'pyre_matriarch', 6: 'ember_acolyte', 8: 'ember_acolyte', 1: 'ash_hound' }, units: { 7: { tier: 'elite', displayName: 'The Pyre Matriarch' } }, rules: { condition: 'darkness' } },
+    warden: { at: { 1: 'cinder_warden', 0: 'cinder_knight', 2: 'cinder_knight', 7: 'pyre_witch' }, units: { 1: { tier: 'elite', displayName: 'The Cinder Warden' } }, rules: { condition: 'heat' } },
+    hearthwarden: { at: { 4: 'hearthwarden', 0: 'forge_golem', 2: 'forge_golem' }, units: { 4: boss('hearthwarden', 1.65) } },
     king: { at: { 4: 'hollow_king', 0: 'stonebound_warden', 2: 'stonebound_warden', 7: 'deep_runecaller' }, units: { 4: boss('hollow_king', 2.4), 0: { displayName: 'Hollow Warden' }, 2: { displayName: 'Hollow Warden' }, 7: { displayName: 'Hollow Runecaller' } }, rules: { condition: 'darkness', noise: 'wake_the_halls' } },
   };
   const set = SETS[kind];
