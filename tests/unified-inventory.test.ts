@@ -38,10 +38,15 @@ describe('Ortak envanter (Gear, v3 Ledger)', () => {
     expect(gear).toContain("if (bagOnly) return undefined;");
   });
 
-  it('Sheet stat kutuları (Ömer 2026-10-31): + / − düğmesi yok; dokun = +1, sağ tık / basılı tut = o statın bekleyen puanları geri', () => {
+  it('Sheet stat kutuları (Ömer 2026-11-01): + / − / Confirm / Reset ve bekleyen puan yok; basılı tut = 1 puan hemen, sağ tık menüsü yok', () => {
     expect(panel).not.toContain("'sh-pmb'");
-    expect(panel).toContain('onClear');
+    expect(panel).not.toContain('onClear');
+    expect(panel).not.toContain('onConfirm');
+    expect(panel).not.toContain('onReset');
+    expect(panel).not.toContain("'Confirm'");
+    expect(panel).toContain('onSpend');
     expect(panel).toContain("'contextmenu'");
     expect(gearCss).not.toContain('sh-pmb');
+    expect(gearCss).not.toContain('has-pend');
   });
 });

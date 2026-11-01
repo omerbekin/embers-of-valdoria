@@ -81,6 +81,20 @@ export function hitChance(attacker: Pick<Stats, 'accuracy'>, defender: Pick<Stat
   return Math.min(formulas.hit.max, Math.max(0, attacker.accuracy - defender.evasion));
 }
 
+/** Bonus olmayan durumların ortak (değişmez) sonucu. */
+const NO_LEVEL_GAP = { accuracy: 0, crit: 0 } as const;
+
+/**
+ * Level farkı saldırı bonusu (Ömer 2026-11-01): saldıranın level'ı hedefinkinden yüksekse fark başına isabet ve kritik şansı (0-1 ölçeğinde yüzde puanı).
+ * Fark 0, saldıran daha düşük ya da iki taraftan birinin level'ı yoksa bonus 0; düşük level'lıya ceza yok. Saf; rastgele sayı tüketmez.
+ */
+export function levelGapBonus(attackerLevel: number | undefined, targetLevel: number | undefined, formulas: Formulas): { readonly accuracy: number; readonly crit: number } {
+  if (attackerLevel === undefined || targetLevel === undefined || attackerLevel <= targetLevel) return NO_LEVEL_GAP;
+  const gap = attackerLevel - targetLevel;
+  const g = formulas.hit.levelGap;
+  return { accuracy: Math.round(gap * g.accuracyPerLevel * 10000) / 10000, crit: Math.round(gap * g.critPerLevel * 10000) / 10000 };
+}
+
 /**
  * Bir vuruşun üç sonucu, TEK zardan (r): r < hit şansı = 'hit'; hit şansı <= r < accuracy = 'dodge' (hedefin kaçınması yüzünden: accuracy yeterdi,
  * evasion düşürdü); r >= accuracy = 'miss' (saldıranın isabeti yetmedi). Olasılıklar: dodge = accuracy - hit şansı, miss = 1 - accuracy.

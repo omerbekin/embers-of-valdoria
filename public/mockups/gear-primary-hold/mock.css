@@ -1,0 +1,95 @@
+/* Gear: primary stat gosterimi + basili tutarak puan verme mockup'i. Gercek Gear CSS'i real.css (oyundan kopya); bu dosya yalniz cubuk, sahne ve A/B/C varyantlari. */
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('fonts/Cinzel-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('fonts/Cinzel-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('fonts/EBGaramond-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('fonts/EBGaramond-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+html, body { margin: 0; height: 100%; overflow: hidden; background: #050403; }
+#mk-bar {
+  position: fixed; left: 0; right: 0; top: 0; height: 48px; z-index: 100; box-sizing: border-box;
+  display: flex; align-items: center; gap: 5px; padding: 2px 8px; overflow-x: auto;
+  background: #0d0a07; border-bottom: 1px solid rgba(217, 178, 106, 0.3);
+  font: 600 12px Cinzel, Georgia, serif; letter-spacing: 0.06em; color: #d9c8a2;
+}
+#mk-bar button {
+  flex: none; min-height: 44px; min-width: 44px; padding: 0 12px; box-sizing: border-box;
+  background: rgba(30, 22, 14, 0.8); border: 1px solid rgba(217, 178, 106, 0.3); border-radius: 0;
+  color: #d9c8a2; font: 600 12px Cinzel, Georgia, serif; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+  transition: color 0.18s, border-color 0.18s, background 0.18s;
+}
+#mk-bar button:hover { border-color: #f3d999; color: #f3d999; }
+#mk-bar button.on { border-color: #f3d999; color: #f3d999; background: rgba(224, 112, 42, 0.18); }
+#mk-bar .sep { flex: none; width: 1px; align-self: stretch; margin: 6px 4px; background: rgba(217, 178, 106, 0.3); }
+#mk-note { position: fixed; left: 0; right: 0; top: 48px; z-index: 99; box-sizing: border-box; min-height: 40px; padding: 5px 10px; background: #0d0a07; border-bottom: 1px solid rgba(217, 178, 106, 0.18); font: 400 14px/1.2 'EB Garamond', Georgia, serif; color: #cdb88d; }
+#mk-note b { color: #f3d999; font-weight: 600; }
+#mk-view { position: fixed; left: 0; right: 0; top: 90px; bottom: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+#mk-stage { position: relative; flex: none; overflow: hidden; background: #050403; transform-origin: 50% 50%; }
+#mk-stage .gr-overlay { position: absolute; inset: 0; z-index: 1; }
+#mk-stage .gr-panel { width: min(100%, calc(1200 * var(--u))); height: auto !important; min-height: 0 !important; }
+.mk-tabs { display: flex; align-items: center; gap: calc(16 * var(--u)); }
+.mk-title { font: 600 max(14px, calc(30 * var(--u))) var(--g-disp); letter-spacing: 0.2em; text-transform: uppercase; color: var(--g-gold); }
+.mk-tab { font: 600 max(11px, calc(18 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-dim); padding: 0 calc(10 * var(--u)); }
+.mk-tab.on { color: var(--g-gold); border-bottom: 1px solid var(--g-gold); }
+.mk-pts { display: none; }
+
+/* ---- ortak: tutma ilerlemesi --h (0-1), JS surer; kutu ikonu halkasi icin sarmalayici */
+.sh-tile { position: relative; touch-action: none; }
+.sh-tile.holding { transform: scale(0.985); }
+.sh-tile.nope { border-color: rgba(232, 128, 106, 0.6); }
+.sh-tile .mk-ico { position: relative; display: inline-flex; flex: none; }
+.sh-tile .mk-ring { position: absolute; inset: -5px; width: calc(100% + 10px); height: calc(100% + 10px); pointer-events: none; opacity: 0; }
+.sh-tile .mk-dia, .sh-tile .mk-sp, .sh-tile .mk-plus { display: none; }
+.sh-tile .sh-n { display: inline-block; }
+.sh-tile.done .sh-n { animation: mk-bump 0.42s ease-out; }
+@keyframes mk-bump { 0% { transform: scale(1); } 40% { transform: scale(1.22); } 100% { transform: scale(1); } }
+.sh-tile .sh-t-top, .sh-tile .sh-t-bot { position: relative; z-index: 2; }
+
+/* ---- NOW: mevcut gorunum (real.css .sh-row.p) ---- */
+
+/* ---- A "Crest": primary yalniz kucuk kor elmas (kutu otekilerle ayni); tutunca kutu alttan yukari dolar ---- */
+.v-a .sh-tile { overflow: hidden; }
+.v-a .sh-tile::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; transform-origin: 50% 100%; transform: scaleY(var(--h, 0));
+  background: linear-gradient(0deg, rgba(224, 112, 42, 0.55), rgba(255, 179, 90, 0.16)); transition: opacity 0.3s; }
+.v-a .sh-tile.done::before { opacity: 0; }
+.v-a .sh-tile.mk-p .mk-dia { display: block; position: absolute; z-index: 3; top: calc(7 * var(--u)); right: calc(8 * var(--u)); width: max(6px, calc(9 * var(--u))); height: max(6px, calc(9 * var(--u)));
+  transform: rotate(45deg); background: var(--g-ember); box-shadow: 0 0 0 1px var(--g-ember2), 0 0 6px rgba(224, 112, 42, 0.6); }
+.v-a .sh-tile.done { animation: mk-ping-a 0.46s ease-out; }
+@keyframes mk-ping-a { 0% { box-shadow: 0 0 0 0 rgba(243, 217, 153, 0.6); } 100% { box-shadow: 0 0 0 calc(10 * var(--u)) rgba(243, 217, 153, 0); } }
+.v-a .sh-tile.done .mk-dia { animation: mk-dia-flash 0.46s ease-out; }
+@keyframes mk-dia-flash { 0% { transform: rotate(45deg) scale(1); } 40% { transform: rotate(45deg) scale(1.9); } 100% { transform: rotate(45deg) scale(1); } }
+
+/* ---- B "Rail": primary = ince kor ray altta + altin ad; tutunca ray soldan saga dolar, bitince +1 yukari suzulur ---- */
+.v-b .sh-tile.mk-p::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(224, 112, 42, 0.7); z-index: 1; }
+.v-b .sh-tile.mk-p .sh-k { color: var(--g-gold); }
+.v-b .sh-tile::after { content: ''; position: absolute; left: 0; bottom: 0; height: max(3px, calc(4 * var(--u))); width: calc(var(--h, 0) * 100%); z-index: 2; pointer-events: none;
+  background: linear-gradient(90deg, var(--g-ember), #ffd76a); box-shadow: 0 0 8px rgba(255, 179, 90, 0.7); transition: opacity 0.3s; }
+.v-b .sh-tile.done::after { opacity: 0; }
+.v-b .sh-tile.done { animation: mk-edge-b 0.46s ease-out; }
+@keyframes mk-edge-b { 0% { border-color: #ffd76a; } 100% { border-color: var(--g-line2); } }
+.v-b .sh-tile .mk-plus { display: block; position: absolute; z-index: 4; right: calc(12 * var(--u)); top: 0; font: 600 var(--sh-fs) var(--g-disp); color: #ffd76a; text-shadow: 0 0 6px rgba(255, 179, 90, 0.8); opacity: 0; pointer-events: none; }
+.v-b .sh-tile.done .mk-plus { animation: mk-rise 0.55s ease-out; }
+@keyframes mk-rise { 0% { opacity: 0; transform: translateY(6px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(calc(-24 * var(--u))); } }
+
+/* ---- C "Brackets": primary = dort kose isareti; tutunca ikonun cevresindeki halka 360 derece dolar, bitince kor kivilcimlar ---- */
+.v-c .sh-tile.mk-p::before { content: ''; position: absolute; inset: 3px; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(var(--g-gold), var(--g-gold)) 0 0 / 10px 1px no-repeat, linear-gradient(var(--g-gold), var(--g-gold)) 0 0 / 1px 10px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) 100% 0 / 10px 1px no-repeat, linear-gradient(var(--g-gold), var(--g-gold)) 100% 0 / 1px 10px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) 0 100% / 10px 1px no-repeat, linear-gradient(var(--g-gold), var(--g-gold)) 0 100% / 1px 10px no-repeat,
+    linear-gradient(var(--g-gold), var(--g-gold)) 100% 100% / 10px 1px no-repeat, linear-gradient(var(--g-gold), var(--g-gold)) 100% 100% / 1px 10px no-repeat; }
+.v-c .sh-tile .mk-ring { opacity: 1; }
+.v-c .sh-tile .mk-ring circle { fill: none; stroke-width: 2.4; }
+.v-c .sh-tile .mk-ring .bg { stroke: rgba(217, 178, 106, 0.18); }
+.v-c .sh-tile .mk-ring .fg { stroke: #ffb35a; stroke-linecap: butt; stroke-dasharray: 100; stroke-dashoffset: calc(100 - var(--h, 0) * 100); transform: rotate(-90deg); transform-origin: 50% 50%; filter: drop-shadow(0 0 2px rgba(255, 179, 90, 0.8)); }
+.v-c .sh-tile.done .mk-ring { animation: mk-ring-c 0.46s ease-out; }
+@keyframes mk-ring-c { 0% { transform: scale(1); } 40% { transform: scale(1.25); filter: drop-shadow(0 0 6px #ffd76a); } 100% { transform: scale(1); } }
+.v-c .sh-tile .mk-sp { display: block; position: absolute; z-index: 4; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2px; background: #ffb35a; transform: rotate(45deg); opacity: 0; pointer-events: none; }
+.v-c .sh-tile .mk-ico .mk-sp { left: 50%; top: 50%; }
+.v-c .sh-tile.done .mk-sp { animation: mk-spark 0.46s ease-out; }
+@keyframes mk-spark { 0% { opacity: 1; transform: translate(0, 0) rotate(45deg); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(45deg) scale(0.4); } }
+
+@media (prefers-reduced-motion: reduce) { .sh-tile, .sh-tile * { animation: none !important; transition: none !important; } }
+
+/* telefon: kutuda ikon gizli (oyunun kendi kurali) => C'de halka yerine alttaki ilerleme rayi */
+html.short .v-c .sh-tile::after { content: ''; position: absolute; left: 0; bottom: 0; height: 3px; width: calc(var(--h, 0) * 100%); z-index: 2; pointer-events: none; background: linear-gradient(90deg, var(--g-ember), #ffd76a); box-shadow: 0 0 8px rgba(255, 179, 90, 0.7); transition: opacity 0.3s; }
+html.short .v-c .sh-tile.done::after { opacity: 0; }

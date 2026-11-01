@@ -467,7 +467,7 @@
       "id": "first_stat_point",
       "group": "On the Road",
       "title": "Your First Stat Point",
-      "text": "When a hero first has a stat point, I point at their main stat. Take it or choose your own; nothing is final until you press Confirm.",
+      "text": "When a hero first has a stat point, I point at their main stat. Take it, or hold any stat box to spend the point yourself; it is placed the moment the bar fills.",
       "trigger": {
         "gate": "first_point"
       }

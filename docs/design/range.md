@@ -19,7 +19,7 @@ Kaynak: karar sayfası https://claude.ai/artifact/SrUJshshUCjRpyRkwcPykC (db `ra
 ## Kural ayrıntıları
 - **AoE:** menzil hedeflenen merkez hücreye bakar; alanın kenarı menzil dışına taşabilir.
 - **Taunt:** yalnızca taunt eden menzildeyse zorlar; değilse saldıran menzildeki diğer hedefleri seçebilir.
-- **Menzilde hedef yoksa:** skill gri olur; birim Move ile yaklaşır ya da başka skill seçer. YZ menzile girmek için konum almayı öğrenir.
+- **Menzilde hedef yoksa:** skill gri olur; birim Move ile yaklaşır ya da başka skill seçer. YZ menzile girmek için konum almayı öğrenir. Ömer 2026-11-01: yakın dövüşçü YZ, kendinden başka şu an vurabilen dost yoksa saldırı erişimini kaybedecek şekilde geri çekilmez; geride kaldıysa riske bakmadan menzile döner (Skip atıp beklemez). Vuran başka dost varken yaralıyken geri çekilebilir. Her iki tarafın YZ'si için geçerli.
 - **Gösterge:** skill kartında "Range N" + skill seçilince ulaşılabilen düşman hücreleri parlar (ulaşılamayanlar soluk).
 
 ## Uygulama sırası

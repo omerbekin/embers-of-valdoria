@@ -1394,6 +1394,31 @@ html.short .gr-slot-sub {
   transition: opacity 0.12s;
 }
 
+/* Karşılaştırma (Ömer 2026-11-01, Gear Hero çantası): çanta item'inin yanında kahramanın aynı yuvada giydiği item, ikinci kart + köşede "EQUIPPED" */
+.item-tip.duo {
+  display: flex;
+  align-items: flex-start;
+  gap: max(8px, calc(14 * var(--u)));
+  width: auto;
+}
+
+.item-tip.duo > .it-card {
+  flex: none;
+  width: max(288px, calc(450 * var(--u)));
+}
+
+.it-eqtag {
+  position: absolute;
+  top: max(6px, calc(10 * var(--u)));
+  left: max(8px, calc(12 * var(--u)));
+  z-index: 1;
+  font: 600 max(9px, calc(13 * var(--u))) var(--g-disp);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--g-gold, #d9b26a);
+  text-shadow: 0 1px 2px #000;
+}
+
 .it-card {
   --rl: color-mix(in srgb, var(--rc, #d9b26a) 52%, #fff);
   position: relative;
@@ -1875,6 +1900,48 @@ html.short .gr-slot-sub {
 html.short .item-tip {
   width: min(594px, 96%);
   font-size: 12px;
+}
+
+html.short .item-tip.duo {
+  width: 98%;
+  gap: 6px;
+}
+
+html.short .item-tip.duo > .it-card {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  grid-template-columns: 44% minmax(0, 1fr);
+}
+
+/* iki kart telefonda dar: başlık sütunu sığsın diye madalya ve yazılar küçülür */
+html.short .item-tip.duo .it-head {
+  padding: 3px 4px;
+}
+
+html.short .item-tip.duo .it-medal {
+  width: 30px;
+  padding: 2px;
+}
+
+html.short .item-tip.duo .it-name {
+  margin-top: 1px;
+  font-size: 11px;
+}
+
+html.short .item-tip.duo .it-rule {
+  margin: 2px 14%;
+}
+
+html.short .item-tip.duo .it-big strong {
+  font-size: 1.35em;
+}
+
+html.short .it-eqtag {
+  top: 3px;
+  left: 5px;
+  font-size: 8px;
+  letter-spacing: 0.14em;
 }
 
 html.short .it-card {
@@ -3753,6 +3820,49 @@ html.short .gr-lvl + .gr-sec {
 .gr-ms-pts b {
   font-family: var(--g-disp);
   color: var(--g-text, #f1e4c8);
+}
+/* "Go to skill tree": kutusuz Cinzel yazı düğmesi, üstte / altta ince altın çizgi; metin soldaki listeyle (ikon / ad) aynı hizada */
+.gr-ms-go {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: max(44px, calc(56 * var(--u)));
+  margin-top: calc(4 * var(--u));
+  padding: 0;
+  font: 600 max(13px, calc(20 * var(--u))) var(--g-disp);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--g-text, #f1e4c8);
+  background: none;
+  border: 0;
+  border-top: 1px solid rgba(217, 178, 106, 0.4);
+  border-bottom: 1px solid rgba(217, 178, 106, 0.4);
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+}
+.gr-ms-go span {
+  transition: transform 0.18s;
+}
+.gr-ms-go i {
+  font-style: normal;
+  color: var(--g-gold);
+  transition: transform 0.18s;
+}
+.gr-ms-go:hover {
+  color: #ffd76a;
+  border-color: rgba(217, 178, 106, 0.75);
+}
+html.short .gr-ms-go {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.gr-ms-go:hover span {
+  transform: translateX(3px);
+}
+.gr-ms-go:hover i {
+  transform: translateX(-3px);
 }
 .gr-ms-cap {
   margin-top: calc(8 * var(--u));
@@ -5790,11 +5900,6 @@ html.short .sh-foot.idle {
   transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
-.sh-row.sh-tile.p {
-  border-color: rgba(224, 112, 42, 0.7);
-  border-left-width: 1px;
-  padding-left: calc(10 * var(--u));
-}
 
 .sh-t-top,
 .sh-t-bot {
@@ -5839,11 +5944,6 @@ html.short .sh-foot.idle {
   transform: translateY(-2px);
   border-color: var(--g-gold);
   box-shadow: 0 0 10px rgba(217, 178, 106, 0.3);
-}
-
-.sh-tile.has-pend {
-  cursor: pointer;
-  border-color: var(--hot);
 }
 
 .sh-tile:focus-visible {
@@ -5930,24 +6030,139 @@ html.short .sh-foot.idle {
   color: #8fc7c0;
 }
 
+/* Primary stat (Ömer 2026-11-01, mockup gear-primary-hold B "Ray"): kutu otekilerle ayni; adi altin, kutunun altinda ince kor ray. Dolgu, kalin yazi, parlayan rakam yok. */
 .sh-row.p {
-  background: linear-gradient(90deg, rgba(224, 112, 42, 0.2), rgba(224, 112, 42, 0.04));
-  border-left: 2px solid var(--hot);
-  padding-left: calc(0.4em - 2px);
+  position: relative;
+}
+
+.sh-row.p::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: rgba(224, 112, 42, 0.7);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sh-row.p .sh-k {
+  color: var(--g-gold);
 }
 
 .sh-row.p.off {
   filter: saturate(0.35);
 }
 
-.sh-row.p .sh-k {
-  color: #f3e6c4;
-  font-weight: 600;
+/* Basili tutarak puan verme (B Ray): --h (0-1) JS'ten (src/ui/stat-hold.ts); sureler data/ui-motion.json > statHold (--m-hold-*) */
+.sh-tile {
+  position: relative;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.sh-row.p .sh-n {
-  color: #fff0c4;
-  text-shadow: 0 0 8px rgba(224, 112, 42, 0.6);
+.sh-tile.holding {
+  transform: scale(0.985);
+}
+
+.sh-tile.nope {
+  border-color: rgba(232, 128, 106, 0.6);
+}
+
+.sh-tile .sh-t-top,
+.sh-tile .sh-t-bot {
+  position: relative;
+  z-index: 2;
+}
+
+.sh-tile .sh-n {
+  display: inline-block;
+}
+
+.sh-tile.done .sh-n {
+  animation: sh-bump var(--m-hold-bump, 420ms) ease-out;
+}
+
+@keyframes sh-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.sh-tile::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: max(3px, calc(4 * var(--u)));
+  width: calc(var(--h, 0) * 100%);
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--g-ember), #ffd76a);
+  box-shadow: 0 0 8px rgba(255, 179, 90, 0.7);
+  transition: opacity 0.3s;
+}
+
+.sh-tile.done::after {
+  opacity: 0;
+}
+
+.sh-tile.done {
+  animation: sh-edge var(--m-hold-done, 480ms) ease-out;
+}
+
+@keyframes sh-edge {
+  0% {
+    border-color: #ffd76a;
+  }
+  100% {
+    border-color: var(--g-line2);
+  }
+}
+
+.sh-tile .sh-plus {
+  position: absolute;
+  z-index: 4;
+  right: calc(12 * var(--u));
+  top: 0;
+  font: 600 var(--sh-fs) var(--g-disp);
+  color: #ffd76a;
+  text-shadow: 0 0 6px rgba(255, 179, 90, 0.8);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sh-tile.done .sh-plus {
+  animation: sh-rise var(--m-hold-rise, 550ms) ease-out;
+}
+
+@keyframes sh-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(-24 * var(--u)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sh-tile,
+  .sh-tile * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 .sh-row.drop-ok {

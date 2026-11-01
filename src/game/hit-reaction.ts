@@ -100,3 +100,9 @@ export function hitOrder<E extends { type: string; target?: string }>(events: re
   const i = same.indexOf(e);
   return i < 0 ? { hitIndex: 0, hitCount: 1 } : { hitIndex: i, hitCount: same.length };
 }
+
+/** Bu kullanım birden çok hedefe mi vuruyor (hasar, dodge, block, miss): öyleyse hedefler arası bekleme kısa olur; tek hedefe çok vuruşun ritmi değişmez. */
+export function hitsManyTargets(events: readonly { type: string; target?: string }[]): boolean {
+  const targets = new Set(events.filter((x) => x.type === 'damage' || x.type === 'dodge' || x.type === 'block' || x.type === 'miss').map((x) => x.target));
+  return targets.size > 1;
+}

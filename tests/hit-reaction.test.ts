@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import layout from '../data/battle-layout.json';
-import { HIT_REACTION as C, hitOrder, hitReaction, hitTier } from '../src/game/hit-reaction';
+import { HIT_REACTION as C, hitOrder, hitReaction, hitsManyTargets, hitTier } from '../src/game/hit-reaction';
 
 /** Darbe tepkisi kademeleri (Ömer 2026-10-14: "1 hasar ile 50 hasar aynı animasyonu oynuyor"). Yalnızca sunum. */
 const hp = 1000;
@@ -67,6 +67,13 @@ describe('hit reaction tiers', () => {
     expect(calm.shake).toBeNull();
     expect(calm.dust).toBe(false);
     expect(calm.tier).toBe('heavy');
+  });
+
+  it('hitsManyTargets: only a use that hits more than one target gets the short gap', () => {
+    expect(hitsManyTargets([{ type: 'damage', target: 'a' }, { type: 'damage', target: 'a' }])).toBe(false);
+    expect(hitsManyTargets([{ type: 'damage', target: 'a' }, { type: 'dodge', target: 'b' }])).toBe(true);
+    expect(hitsManyTargets([{ type: 'damage', target: 'a' }, { type: 'status', target: 'b' }])).toBe(false);
+    expect(layout.animation.aoeHitGapMs).toBeLessThan(layout.animation.hitGapMs);
   });
 
   it('hitOrder counts hits on the same target within a skill use', () => {

@@ -3,11 +3,10 @@ import { Battle, content, type BattleMode, type ItemEffects, type Teams, type Un
 import { affixFit } from '../src/progression/affix-fit';
 import { affixLines } from '../src/progression/item-text';
 import { ITEMS, affixDef, affixValues, validateItems, type ItemInstance } from '../src/progression/items';
-import { itemGoldBonus, itemWoundSoft, itemXpBonus, loadout, partyGoldMult } from '../src/progression/loadout';
+import { itemWoundSoft, loadout } from '../src/progression/loadout';
 import { applyWounds, woundHpFactor } from '../src/progression/wounds';
-import { waveXp } from '../src/endless/run';
 
-// 17 yeni affix (c_res_light: Ömer 2026-10-26) (Ömer onayı 2026-10-26, form econ/main): veri eşlemesi (loadout) + motor kancaları. Sayılar provizyon; testler yalnızca
+// Yeni affix'ler (c_res_light: Ömer 2026-10-26) (Ömer onayı 2026-10-26, form econ/main; c_gold ve c_xp 2026-11-01'de kalktı: affix-removed-b4.test.ts): veri eşlemesi (loadout) + motor kancaları. Sayılar provizyon; testler yalnızca
 // kuralı denetler (deterministik: debug iska kapalı, test modu).
 
 const cells = (u: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');
@@ -18,18 +17,17 @@ const make = (party: Record<number, string>, enemies: Record<number, string>, un
 const fx = (e: ItemEffects, extra: UnitSetup = {}): UnitSetup => ({ ...extra, itemEffects: e });
 const at = (b: Battle, side: 'party' | 'enemy', slot: number) => b.combatants.find((c) => c.side === side && c.slot === slot && !c.summoned)!;
 const warriorAttack = content.classes.warrior!.skills[0]!;
-const NEW = ['c_lightning', 'c_res_fire', 'c_res_ice', 'c_res_holy', 'c_res_dark', 'c_res_nature', 'c_res_light', 'c_gold', 'c_xp', 'b_front', 'b_back', 'b_thorns', 'b_tier_def', 'b_wound_soft', 'a_column', 'a_pierce', 'a_steady'];
+const NEW = ['c_lightning', 'c_res_fire', 'c_res_ice', 'c_res_holy', 'c_res_dark', 'c_res_nature', 'c_res_light', 'b_front', 'b_back', 'b_thorns', 'b_tier_def', 'b_wound_soft', 'a_column', 'a_pierce', 'a_steady'];
 /** Tek affix'li örnek (ilvl 10, orta zar). */
 const inst = (base: string, affix: string, uid = 'x'): ItemInstance => ({ uid, id: base, rolls: { rarity: 'common', ilvl: 10, affixes: [{ id: affix, q: 0.5 }] } });
 const v = (affix: string, i = 0) => affixValues(affix, 10, 0.5)[i]!;
 
 describe('yeni affix verisi', () => {
-  it('17 affix veride, kademe ve yuvalar doğru, doğrulayıcı temiz, yuva başına en çok 3 yuva', () => {
+  it('15 affix veride, kademe ve yuvalar doğru, doğrulayıcı temiz, yuva başına en çok 3 yuva', () => {
     for (const id of NEW) expect(affixDef(id), id).toBeDefined();
-    expect(validateItems().filter((e) => /affix (c_lightning|c_res|c_gold|c_xp|b_front|b_back|b_thorns|b_tier_def|b_wound_soft|a_column|a_pierce|a_steady)/.test(e))).toEqual([]);
+    expect(validateItems().filter((e) => /affix (c_lightning|c_res|b_front|b_back|b_thorns|b_tier_def|b_wound_soft|a_column|a_pierce|a_steady)/.test(e))).toEqual([]);
     expect(ITEMS.affixDefs.c_res_fire!.slots).toEqual(['helm', 'armor', 'offhand']);
     expect(ITEMS.affixDefs.a_steady!.slots).toEqual(['gloves', 'boots']);
-    expect(ITEMS.affixDefs.c_gold!.slots).toEqual(['trinket']);
   });
 
   it('ipucu metni şablondan (bonus yazım kuralı: direnç ayrı çarpan): "Takes 13% less Fire damage", "Each wound lowers your Max HP X% less" (yara başına düşen puan: 20 içinden)', () => {
@@ -49,31 +47,15 @@ describe('yeni affix verisi', () => {
 });
 
 describe('loadout eşlemesi (yeni hedefler)', () => {
-  it('res:<element> -> itemEffects.elemResist; prog:gold / xp / woundSoft -> sonuç alanları; fx kancaları', () => {
-    const l = loadout({ class: 'warrior', equipment: { helm: inst('leather_coif', 'c_res_fire', 'h'), armor: inst('padded_gambeson', 'c_res_fire', 'a'), trinket: inst('copper_ring', 'c_gold', 't') } });
+  it('res:<element> -> itemEffects.elemResist; prog:woundSoft -> sonuç alanı; fx kancaları', () => {
+    const l = loadout({ class: 'warrior', equipment: { helm: inst('leather_coif', 'c_res_fire', 'h'), armor: inst('padded_gambeson', 'c_res_fire', 'a') } });
     expect(l.itemEffects?.elemResist?.fire).toBeCloseTo(1 - (1 - v('c_res_fire') / 100) ** 2, 4); // "×0.87" iki kaynak ÇARPILIR (2026-10-27)
-    expect(l.goldBonus).toBeCloseTo(v('c_gold') / 100, 6);
-    expect(loadout({ class: 'warrior' }).goldBonus).toBeUndefined();
-    const src = { class: 'warrior', equipment: { helm: inst('leather_coif', 'c_xp', 'h'), armor: inst('padded_gambeson', 'b_wound_soft', 'a'), gloves: inst('work_gloves', 'a_steady', 'g') } };
-    expect(itemXpBonus(src)).toBeCloseTo(v('c_xp') / 100, 6);
+    const src = { class: 'warrior', equipment: { armor: inst('padded_gambeson', 'b_wound_soft', 'a'), gloves: inst('work_gloves', 'a_steady', 'g') } };
     expect(itemWoundSoft(src)).toBeCloseTo(v('b_wound_soft') * 0.05, 6); // yazı puan (20 içinden), etki oran
     expect(loadout(src).itemEffects?.steadyDamage).toBeCloseTo(v('a_steady') / 100, 6);
     const w = loadout({ class: 'warrior', equipment: { weapon: { uid: 'w', id: 'woodcutters_axe', rolls: { rarity: 'common', ilvl: 10, affixes: [{ id: 'c_lightning', q: 0.5 }, { id: 'a_pierce', q: 0.5 }] } } } });
     expect(w.modifiers?.elemDamageAdd?.lightning).toBeCloseTo(v('c_lightning') / 100, 6);
     expect(w.itemEffects?.pierceBehind).toBeCloseTo(v('a_pierce') / 100, 6);
-  });
-
-  it('altın: takımın toplamı çarpan; XP yalnızca takan (Endless dalga XP\'si)', () => {
-    const rich = { class: 'warrior', equipment: { trinket: inst('copper_ring', 'c_gold', 't') } };
-    expect(itemGoldBonus(rich)).toBeGreaterThan(0);
-    expect(partyGoldMult([rich, rich, { class: 'mage' }])).toBeCloseTo(1 + 2 * itemGoldBonus(rich), 4);
-    expect(partyGoldMult([{ class: 'mage' }])).toBe(1);
-    const heroes = [
-      { id: 'a', class: 'warrior', level: 1, equipment: { helm: inst('leather_coif', 'c_xp', 'h') } },
-      { id: 'b', class: 'warrior', level: 1, equipment: {} },
-    ] as never;
-    const xp = waveXp({ heroes }, 3, { units: [{ heroId: 'a' }, { heroId: 'b' }], kills: 3 } as never);
-    expect(xp.a).toBe(Math.round(xp.b! * (1 + v('c_xp') / 100)));
   });
 
   it('yara yumuşatma: yara başına kayıp soften oranı az; verilmezse eskisiyle aynı', () => {

@@ -6,13 +6,14 @@ import { strongMpSkill } from '../src/tutorial/situations';
 import { _resetTutorialMemory, isLessonSeen, markLessonSeen, resetTutorials } from '../src/tutorial/store';
 
 // Savaş içi tutorial akışı (src/game/battle-tutorial.ts; docs/design/tutorial.md): Mill Road zorunlu adımları (1. karar: sıra çubuğu ->
-// saldırı -> Hit Chance -> hedef; 2. karar: en güçlü MP skill'i -> hedef -> "Skills and MP"), sonraki savaşta kararda en çok bir durum dersi.
+// saldırı -> hedef (Hit Chance Whisper'ı yanında); 2. karar: en güçlü MP skill'i -> hedef -> "Skills and MP"), sonraki savaşta kararda en çok bir durum dersi.
 // Mentor kutusu (DOM) taklit edilir: yalnızca hangi kartın / dersin hangi seçeneklerle açıldığı denetlenir.
 
 type Card = { title: string; text: string; focus?: string; awaitText?: string; spotlight?: boolean };
 const box = vi.hoisted(() => ({
   cards: [] as Array<{ card: Card; onClose?: () => void; handle: { done: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> } }>,
   lessons: [] as Array<{ id: string; o: Record<string, unknown> }>,
+  dismissed: [] as string[],
 }));
 
 vi.mock('../src/ui/lesson-box', async () => {
@@ -29,7 +30,9 @@ vi.mock('../src/ui/lesson-box', async () => {
     return true;
   },
   showMentorLine: () => true,
-  dismissLesson: () => undefined,
+  dismissLesson: (id: string) => {
+    box.dismissed.push(id);
+  },
   closeAllLessons: () => undefined,
   nudgeLesson: () => undefined,
   onLessonsTurnedOff: () => () => undefined,
@@ -56,14 +59,13 @@ function setup() {
   return { b, uid, toMage };
 }
 const enemy = (b: Battle, uid: string, skill: string) => b.validTargets(uid, skill)[0]!.uid;
-/** Hit Chance kartının "Got it"i. */
-const closeHitChance = () => (box.lessons.find((l) => l.id === 'hit_preview')!.o.onClose as () => void)();
 
 beforeEach(() => {
   _resetTutorialMemory();
   resetTutorials();
   box.cards.length = 0;
   box.lessons.length = 0;
+  box.dismissed.length = 0;
 });
 
 describe('Mill Road zorunlu adımları', () => {
@@ -84,19 +86,20 @@ describe('Mill Road zorunlu adımları', () => {
     expect(tut.allowGlobal()).toBe(false);
     expect(tut.allowSkill(basic)).toBe(true);
     tut.onSkillSelected(basic);
-    // Hit Chance: saldırı seçildi, kart kapanmadan vuruş çözülemez
+    // Hit Chance Whisper'ı akışı bekletmez: hedef adımı aynı anda açılır (bekleyen onClose yok), diğer girdiler kilitli kalır
     expect(box.lessons.map((l) => l.id)).toEqual(['hit_preview']);
-    expect(tut.forced).toBe('next');
-    expect(tut.allowPerform(basic)).toBe(false);
-    expect(tut.allowGlobal()).toBe(false);
-    closeHitChance();
+    expect(box.lessons[0]!.o['onClose']).toBeUndefined();
     expect(tut.forced).toBe('target');
+    expect(tut.allowGlobal()).toBe(false);
+    expect(tut.allowSkill(me.skills[1]!)).toBe(false);
+    expect(tut.allowPerform(me.skills[1]!)).toBe(false);
     expect(box.cards.at(-1)!.card.title).toBe('Choosing a Target');
     expect(box.cards.at(-1)!.card.spotlight).toBeUndefined(); // hedef adımı: düşmanlar karartılmaz
     expect(tut.allowPerform(basic)).toBe(true);
     expect(b.useSkill(uid, basic, enemy(b, uid, basic)).ok).toBe(true);
     tut.onPerformed(basic);
     expect(tut.forced).toBeNull();
+    expect(box.dismissed).toContain('hit_preview'); // Whisper vuruşla birlikte kalkar
 
     // 2. karar
     me = toMage();
@@ -120,7 +123,7 @@ describe('Mill Road zorunlu adımları', () => {
     expect(box.lessons.at(-1)).toEqual({ id: 'skills_mp', o: expect.objectContaining({ force: true, skill: mp }) });
   });
 
-  it('Warrior: Hit Chance ilk vuruştan önce; Rage skill’i ve diğer düğmeler o sırada kilitli; sonraki savaşta tekrar çıkmaz', () => {
+  it('Warrior: Hit Chance ilk vuruştan önce, vuruşu bekletmez; Rage skill’i kilitli kalır; sonraki savaşta tekrar çıkmaz', () => {
     const teams: Teams = { party: cells({ 1: 'warrior' }), enemies: cells({ 1: 'warrior' }) };
     const b = new Battle(content.battleSetup('random-battle', 3, 'turns', teams, false));
     b.debug.damageMult = 0;
@@ -138,9 +141,7 @@ describe('Mill Road zorunlu adımları', () => {
     expect(isLessonSeen('hit_preview')).toBe(false);
     tut.onSkillSelected(basic);
     expect(isLessonSeen('hit_preview')).toBe(true);
-    expect(tut.allowPerform(basic)).toBe(false);
     expect(tut.allowPerform(rageSkill)).toBe(false);
-    closeHitChance();
     expect(tut.allowPerform(basic)).toBe(true);
 
     const later = new BattleTutorial(RAVEN, () => b);
@@ -168,7 +169,6 @@ describe('Mill Road zorunlu adımları', () => {
     tut.onPlayerTurn(me);
     box.cards.find((c) => c.card.title === 'The Turn Bar')!.onClose!();
     tut.onSkillSelected(me.skills[0]!);
-    closeHitChance();
     b.useSkill(uid, me.skills[0]!, enemy(b, uid, me.skills[0]!));
     tut.onPerformed(me.skills[0]!);
     me = toMage();

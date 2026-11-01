@@ -6,7 +6,7 @@ import { clampValor } from '../engine/valor';
 import type { EndlessRun, ScoreEntry } from './data';
 import { validSuspended } from './replay';
 import { cleanCarry } from './carry';
-import { migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, stripUnusable } from '../progression/items';
+import { migrateItemRolls, migrateOffhand, migrateRemovedAffixes, migrateRollsX2, promoteOffhand, stripUnusable } from '../progression/items';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
@@ -92,6 +92,9 @@ export function parseRun(raw: string | null): EndlessRun | null {
       delete r.suspended;
       migrateItemRolls(r); // eski stat zarları -> en yakın affix biçimi (okunurken de instanceRoll onarır; asla çökmez)
     }
+    // Kaldırılmış affix (karar B4; sürüm artmaz, idempotent): takılı item değiştiyse kurulum değişti, yarım savaş atılır
+    if (migrateRemovedAffixes(r.heroes) > 0) delete r.suspended;
+    migrateRemovedAffixes(r);
     if (!isNum(r.seed) || !isNum(r.wave) || r.wave < 1 || !isNum(r.gold) || !isNum(r.nextItem)) return null;
     if (!['ready', 'relic', 'reward', 'shop', 'over'].includes(r.phase)) return null;
     if (!Array.isArray(r.heroes) || !r.heroes.length) return null;

@@ -5,6 +5,8 @@
  * üretir; davranış (seçme, hedefleme, kısayol) savaşta HUD'ın kendisinde, Gear'da yok.
  */
 
+import { lockBadgeHtml } from './skill-lock';
+
 export const escHtml = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const img = (url: string, cls = 'bh-ico') => (url ? `<img class="${cls}" src="${url}" alt="" draggable="false" >` : '');
 
@@ -82,6 +84,8 @@ export interface SkillPlateView {
   enabled: boolean;
   selected: boolean;
   ult: boolean;
+  /** Kilitli skill: ikonun üstünde kilit simgesi. */
+  locked?: boolean;
   /** Yetersiz kaynak: bu türdeki bedel çipi kırmızı olur ("Not enough MP / Rage / HP"). */
   lack?: 'mp' | 'rage' | 'hp';
 }
@@ -102,7 +106,7 @@ export function skillPlateHtml(s: SkillPlateView, tipInner: string): string {
   const tag = s.ult ? '<span class="bp-tag"><span class="full">Ultimate</span><span class="short">Ult</span></span>' : '';
   return `<div class="bp ${s.ult ? 'ult' : ''} ${s.wait > 0 ? 'cdn' : ''} ${s.selected ? 'sel' : ''} ${s.enabled ? '' : 'off'}" data-skill="${escHtml(s.id)}">
           ${tag}${s.key !== undefined ? `<span class="bp-key">${s.key}</span>` : ''}
-          <div class="bp-ico">${img(s.iconUrl)}${s.wait > 0 ? `<span class="cdv">${s.wait}</span>` : ''}</div>
+          <div class="bp-ico">${img(s.iconUrl)}${s.wait > 0 && !s.locked ? `<span class="cdv">${s.wait}</span>` : ''}${s.locked ? lockBadgeHtml() : ''}</div>
           <span class="bp-nm">${escHtml(s.name)}</span>
           <div class="bp-chips">${chips}</div>
           <div class="bh-sktip bh-panel bh-corners">${tipInner}</div>

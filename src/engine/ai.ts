@@ -1305,14 +1305,13 @@ function settleBlocks(battle: Battle, skill: SkillDef, o: Option): void {
  */
 function curseValue(battle: Battle, actor: Combatant, skill: SkillDef, previews: ReturnType<typeof previewForTargets>, o: Option, profile: AiProfile): void {
   const share = profile.omenValueShare ?? 0.85;
-  const baseCrit = battle.effectiveStats(actor).critChance;
   const cm = actor.stats.critMult;
   const killMin = battle.formulas.hit.aiKillMin;
   for (const p of previews) {
     const target = battle.get(p.uid);
     if (!target || target.side === actor.side) continue;
     // Kritik lanet ihtimali = bu vuruşun kritik şansı (skill'in critBonus'u dahil: Jinx; madde 260)
-    const crit = p.damage ? p.damage.critChance : baseCrit;
+    const crit = p.damage ? p.damage.critChance : battle.effectiveStats(actor, battle.levelGap(actor, target).crit).critChance;
     const h = p.damage ? p.damage.hitChance : 1;
     const left = Math.max(0, target.hp - (p.damage?.hpLoss ?? 0));
     const label = unitLabel(target);
@@ -1394,7 +1393,7 @@ function passBlock(battle: Battle, attacker: Combatant, victim: Combatant, sk: S
 function hitGain(battle: Battle, attacker: Combatant, victim: Combatant, eva: number): number {
   const a = battle.effectiveStats(attacker);
   const v = battle.effectiveStats(victim);
-  const after = hitChance({ accuracy: a.accuracy }, { evasion: Math.max(0, v.evasion - eva) }, battle.formulas);
+  const after = hitChance({ accuracy: a.accuracy + battle.levelGap(attacker, victim).accuracy }, { evasion: Math.max(0, v.evasion - eva) }, battle.formulas); // önizlemenin hitChance'i level farkını içerir: aynı ölçü
   let top = 0;
   for (const id of attacker.skills) {
     const sk = battle.skill(id, attacker);
@@ -1411,7 +1410,7 @@ function hitLossRaw(battle: Battle, attacker: Combatant, victim: Combatant, accD
   const f = battle.formulas;
   const a = battle.effectiveStats(attacker);
   const v = battle.effectiveStats(victim);
-  const after = hitChance({ accuracy: Math.max(0, a.accuracy + accDelta) }, { evasion: Math.max(0, v.evasion + evaDelta) }, f);
+  const after = hitChance({ accuracy: Math.max(0, a.accuracy + accDelta + battle.levelGap(attacker, victim).accuracy) }, { evasion: Math.max(0, v.evasion + evaDelta) }, f);
   let top = 0;
   for (const id of attacker.skills) {
     const sk = battle.skill(id, attacker);
@@ -1434,7 +1433,7 @@ function hitCritLoss(battle: Battle, attacker: Combatant, victim: Combatant, acc
   if (cached !== undefined) return cached;
   const f = battle.formulas;
   const a = battle.effectiveStats(attacker);
-  const after = hitChance({ accuracy: Math.max(0, a.accuracy + accDelta) }, battle.effectiveStats(victim), f);
+  const after = hitChance({ accuracy: Math.max(0, a.accuracy + accDelta + battle.levelGap(attacker, victim).accuracy) }, battle.effectiveStats(victim), f);
   const cm = attacker.stats.critMult;
   let top = 0;
   for (const id of attacker.skills) {
@@ -3573,10 +3572,10 @@ function treeTriggerValue(ctx: ValueContext, o: Option): { own: number; retaliat
     // Vesper ağacı: skill'in çaldığı her çan 'bellRung' kancalarını işletir (Long Echo, Quickening Peal)
     const rung = bellsOfSkill(o.skill);
     if (rung) own += trigEventValue(ctx, actor, { on: 'bellRung' }, rung, o);
-    const crit = battle.effectiveStats(actor).critChance;
     for (const [uid, d] of Object.entries(o.dmgBy)) {
       const t = battle.get(uid);
       if (!t || t.side === actor.side || d <= 0) continue;
+      const crit = battle.effectiveStats(actor, battle.levelGap(actor, t).crit).critChance;
       const h = previewHitChance(o, t);
       const amount = h > 0 ? d / h : d;
       own += trigEventValue(ctx, actor, { on: 'hit', target: t, skill: sid, amount, castTargets: cast }, h, o);

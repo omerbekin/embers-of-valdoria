@@ -14,6 +14,7 @@
     "sim": "tsx src/sim/cli.ts",
     "sim:campaign": "tsx src/sim/campaign-cli.ts",
     "sim:endless": "tsx src/sim/endless-cli.ts",
+    "sim:affix": "tsx src/sim/affix-measure.ts",
     "diag:pull": "node cloudflare/scripts/diag-pull.mjs",
     "release": "node tools/release.mjs",
     "codemap": "node tools/codemap.mjs",

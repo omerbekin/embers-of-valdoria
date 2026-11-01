@@ -44,6 +44,7 @@ import { kitTextBand } from '../hud-kit';
 import type { BattleEffect } from '../battle-effects';
 import { CombatLog } from '../combat-log';
 import { skillTags, UNBLOCKABLE_COLOR } from '../../ui/skill-tags';
+import { lockedSkillText } from '../../ui/skill-lock';
 import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../../engine/unblockable';
 import { blockIconUrl } from '../../ui/stat-tips';
 import { skillTargetLabel } from '../../ui/skill-target-label';
@@ -62,7 +63,7 @@ import { CODE_SFX, SHARED_KEY, onVersionsChange, ownerOfSkill, ownerOfUnit, stat
 import { statusBadge } from '../art-registry';
 import { EVENT_FX, eventContextSkill, selectEventFx } from '../event-fx';
 import { UsageRecorder, type SkillUsage } from '../skill-usage';
-import { HIT_REACTION, hitOrder, hitReaction, type HitReaction } from '../hit-reaction';
+import { HIT_REACTION, hitOrder, hitReaction, hitsManyTargets, type HitReaction } from '../hit-reaction';
 import { perfLite } from '../../ui/perf-mode';
 import type { VfxCtx } from '../vfx';
 import { HazeTracker, hazeStatuses } from '../linger-haze';
@@ -128,6 +129,8 @@ export interface BattleSceneData {
   weapons?: { items?: Record<string, WeaponItem>; picks?: Record<string, WeaponPick> };
   /** Sefer tutorial bağlamı (src/game/battle-tutorial.ts, docs/design/tutorial.md): düğüm dersleri, ilk savaşın zorunlu adımları, yenilgi ipucu. */
   tutorial?: BattleLessonCtx;
+  /** Kilitli skill'in ipucundaki açılış yeri (uid 'party-i' -> skill id -> kısa metin; sefer verisinden, solo-start.ts > soloUnlockHints). Dalga kilitleri motordan okunur. */
+  lockHints?: Record<string, Record<string, string>>;
   /**
    * Birim level'ları (yalnızca sunum; levels.md): ad plakasında küçük "Lv N". enemy = tüm düşmanların level'ı (karşılaşma / dalga seviyesi),
    * party = uid ('party-0'...) -> kahraman level'ı. Verilmezse (Quick Battle / multiplayer) level yazılmaz. Çağrılara yazılmaz.
@@ -240,6 +243,8 @@ export class BattleScene extends Phaser.Scene {
   /** Birim level'ları (BattleSceneData.levels; yalnızca sunum). */
   private unitLevels: BattleSceneData['levels'] = undefined;
   private crownInfo: BattleSceneData['crown'] = undefined;
+  /** Kilitli skill ipucu metinleri (BattleSceneData.lockHints). */
+  private lockHints: BattleSceneData['lockHints'] = undefined;
   private ignoreRange = false;
   /** Bu ekranda oynayan insanın tarafı: tek oyunculuda daima 'party'; multiplayer'da katılan 'enemy' (sağ). */
   localSide: 'party' | 'enemy' = 'party';
@@ -366,6 +371,7 @@ export class BattleScene extends Phaser.Scene {
     this.mp = data.mp;
     this.weapons = data.weapons;
     this.unitLevels = data.levels;
+    this.lockHints = data.lockHints;
     this.crownInfo = data.crown;
     this.ignoreRange = !data.mp && !data.campaign && !!data.ignoreRange;
     this.localSide = data.mp?.localSide ?? 'party';
@@ -2876,7 +2882,9 @@ export class BattleScene extends Phaser.Scene {
     if (this.battle.mode === 'turns' && (skill.cooldown ?? 0) > 0) meta.push({ icon: ensureIcon(this, uiIconName('cooldown'), UI_COLOR, false), text: info.cooldown, hex: colors.muted });
     if (this.battle.mode === 'turns' && info.initialCooldown && !actor.summoned) rows.push([info.initialCooldown, colors.muted]);
     const wait = this.battle.mode === 'turns' ? (actor.cooldowns[skill.id] ?? 0) : 0;
-    if (wait > 0) rows.push([`Ready in ${wait} turn${wait > 1 ? 's' : ''}`, colors.targetHighlight]);
+    // Kilit bekleme süresinden önce gelir: kilitli skill süresi bitince de açılmaz
+    if (actor.lockedSkills?.includes(skill.id)) rows.push([lockedSkillText(actor, skill.id, this.lockHints?.[actor.uid]), colors.targetHighlight]);
+    else if (wait > 0) rows.push([`Ready in ${wait} turn${wait > 1 ? 's' : ''}`, colors.targetHighlight]);
     else {
       // Why the button is pale (turn / battle state reasons are obvious and stay silent): no MP, out of reach, 'No target with room behind it' (Backstab), 'No fallen ally' / 'Corpse was consumed' ...
       const can = this.battle.canUse(actor.uid, skill.id);
@@ -3246,6 +3254,13 @@ export class BattleScene extends Phaser.Scene {
     return r;
   }
 
+  /** Vuruş olayından sonraki bekleme: birden çok hedefli kullanımda kısa (hedefler neredeyse aynı anda yer), diğerlerinde olağan. */
+  private hitGap(e: BattleEvent): number {
+    const usage = this.currentUsage;
+    const many = !!usage && usage.events.includes(e) && hitsManyTargets(usage.events);
+    return slow(many ? layout.animation.aoeHitGapMs : layout.animation.hitGapMs);
+  }
+
   private async playEvent(e: BattleEvent): Promise<void> {
     if (!this.scene.isActive()) return;
     // Aşamalı alan skill'i: aşama olayları vfx o aşamayı açana kadar bekler (vfx aşamadan habersizse beklemez)
@@ -3327,7 +3342,7 @@ export class BattleScene extends Phaser.Scene {
           target.setHp(e.hpAfter, true, ratio);
           target.setShield(e.shieldAfter, e.magicShieldAfter);
         }
-        await this.wait(slow(90));
+        await this.wait(this.hitGap(e));
         return;
       }
       case 'dodge':
@@ -3335,7 +3350,7 @@ export class BattleScene extends Phaser.Scene {
         await this.passHitGate();
         this.presentStatuses(e);
         this.views.get(e.target)?.dodge();
-        await this.wait(slow(90));
+        await this.wait(this.hitGap(e));
         return;
       case 'daze':
         // Daze (hammer implicit, Ömer 2026-10-27): small "Dazed" text above the TARGET; its turn comes later (turn bar refreshes on the next turn)
@@ -3348,14 +3363,14 @@ export class BattleScene extends Phaser.Scene {
         this.presentStatuses(e);
         this.views.get(e.target)?.block();
         playSfx(this, 'shieldBlock', SHARED_KEY);
-        await this.wait(slow(90));
+        await this.wait(this.hitGap(e));
         return;
       case 'miss':
         // Accuracy: the ATTACKER misses (pale "MISS" above the attacker); the target does not react
         await this.passHitGate();
         this.presentStatuses(e);
         this.views.get(e.source)?.missText();
-        await this.wait(slow(90));
+        await this.wait(this.hitGap(e));
         return;
       case 'rage': {
         const view = this.views.get(e.actor);
@@ -5242,6 +5257,7 @@ export class BattleScene extends Phaser.Scene {
         cost: this.skillCostChips(actor, skill),
         wait,
         enabled: this.playerCanAct && this.battle.canUse(actor.uid, skillId).ok,
+        ...(actor.side === this.localSide && actor.lockedSkills?.includes(skillId) ? { locked: true } : {}),
         selected: this.selected?.actor === actor.uid && this.selected.skill === skill.id && this.playerCanAct,
         ult: idx === 3,
         ...this.skillLack(actor, skill),

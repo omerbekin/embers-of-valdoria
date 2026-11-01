@@ -838,7 +838,7 @@ export interface UnitSetup {
   startShield?: number;
   startMagicShield?: number;
   startShieldHooks?: ShieldHook[];
-  /** Birimin level'ı (sefer / Endless kahramanı; Combatant.level). Çağrılar çağıranın level'ını alır. Verilmezse L1. */
+  /** Birimin level'ı (sefer / Endless kahramanı ve düşmanı; Combatant.level). Çağrılar çağıranın level'ını alır. Verilmezse level yok: level farkı bonusu 0 (Quick Battle, multiplayer). */
   level?: number;
   /** Çağrıların türediği temel statlar (item HARİÇ; Stats.summonBase). Verilmezse birimin son temel statları (QB: sınıf tabanı; düşman: level büyümesi dahil). */
   summonBase?: Attributes;
@@ -1611,7 +1611,12 @@ export interface Formulas {
     evasionMax: number;
   };
   /** İsabet kontrolü: hit şansı = accuracy - evasion, [0, max] arasına sıkıştırılır (%0 olabilir). aiKillMin: yapay zekanın "öldürür" sayması için gereken en az hit şansı. */
-  hit: { max: number; aiKillMin: number };
+  hit: {
+    max: number;
+    aiKillMin: number;
+    /** Level farkı saldırı bonusu (Ömer 2026-11-01): fark başına isabet ve kritik şansı (0-1 ölçeğinde yüzde puanı; stats.ts > levelGapBonus). */
+    levelGap: { accuracyPerLevel: number; critPerLevel: number };
+  };
   /**
    * Rage (Warrior): her hasar veren ve İSABET eden vuruşta kazanç = min(perHitCap, hitBase + perHpPercent x vurulan hasarın hedefin maks canına yüzdesi).
    * Bir skill kullanımında (tüm vuruşlar bittikten sonra) toplam kazanç: her hedefe yapılan vuruşların kazancı toplanır, EN YÜKSEK hedefin toplamı alınır
@@ -2083,7 +2088,7 @@ export interface Combatant {
   lifespan: number | undefined;
   ai: string | undefined;
   passive?: PassiveDef;
-  /** Birimin level'ı (UnitSetup.level; verilmezse tanımsız = L1). Çağrı, çağıranın level'ını alır (Ömer 2026-10-18). */
+  /** Birimin level'ı (UnitSetup.level; verilmezse tanımsız: arayüzde L1, level farkı bonusu yok). Çağrı, çağıranın level'ını alır (Ömer 2026-10-18). */
   level?: number;
   /** Bu birimi çağıran birim (çağrılanlarda). */
   owner?: string;

@@ -163,6 +163,7 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     // Güç katmanı (item; ileride level/ağaç) + can taşıma
     // Güç: item (loadout) + kalıntılar (koşu boyu; kalkan / ilk eylem / düşünce şifa kancaları + kritik / zırh ekleri)
     const setup: UnitSetup = withRelics({ ...loadoutSetup(h, { effects: ITEMS.effectRules.endless, mode: 'endless' }) }, run.relics, cfg); // Epic etkileri: madde 292 (c)
+    setup.level = h.level ?? 1; // level farkı bonusu (Ömer 2026-11-01): L1 kahraman da level'lı sayılır (loadoutSetup L1'i yazmaz)
     // Hero's Feast (boss ödülü): kalan dalgalarda maks can çarpanı (item güçlendirmesiyle birleşir)
     if (run.blessing && run.blessing.waves > 0 && run.blessing.hpMult !== 1)
       setup.modifiers = { ...(setup.modifiers ?? {}), hpMult: r3((setup.modifiers?.hpMult ?? 1) * run.blessing.hpMult) };
@@ -218,8 +219,7 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     for (const u of list) {
       cells[u.slot] = u.class;
       const mods = withEnemyLevel(combineMods(u.mods, scale), u.class, enemyLevel);
-      const setup: UnitSetup = { ...(mods ? { modifiers: mods } : {}), ...(u.name ? { displayName: u.name } : {}), ...(u.tier ? { tier: u.tier } : {}) };
-      if (Object.keys(setup).length) units[u.slot] = setup;
+      units[u.slot] = { level: enemyLevel, ...(mods ? { modifiers: mods } : {}), ...(u.name ? { displayName: u.name } : {}), ...(u.tier ? { tier: u.tier } : {}) }; // level: level farkı bonusu
     }
     return { cells, units, names: [...list].sort((a, b) => a.slot - b.slot).map((u) => unitName(u.class, u.name)) };
   };
@@ -241,7 +241,7 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     const units: Record<number, UnitSetup> = {};
     cells.forEach((c, slot) => {
       const mods = c ? withEnemyLevel(scale ? { ...scale } : undefined, c, enemyLevel) : undefined;
-      if (mods) units[slot] = { modifiers: mods };
+      if (c) units[slot] = { level: enemyLevel, ...(mods ? { modifiers: mods } : {}) }; // level: level farkı bonusu
     });
     return { cells, units, names: cells.filter(Boolean).map((c) => unitName(c)) };
   };

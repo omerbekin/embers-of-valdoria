@@ -6,7 +6,7 @@ import cfg from '../../data/ui-motion.json';
 import { onReducedMotionChange, reducedMotion } from './motion-pref';
 import { uiSound } from './ui-sound';
 
-export type MotionPreset = 'screen' | 'modal' | 'panel' | 'toast' | 'tooltip' | 'card' | 'result' | 'wave' | 'lootXp' | 'endlessTab' | 'mapRegion' | 'cinematic';
+export type MotionPreset = 'screen' | 'modal' | 'panel' | 'toast' | 'tooltip' | 'card' | 'result' | 'wave' | 'lootXp' | 'endlessTab' | 'mapRegion' | 'cinematic' | 'statHold';
 
 /** Başlık ölçeği (oyun birimi; data/ui-motion.json > type). */
 export const TYPE = cfg.type;
@@ -46,6 +46,10 @@ export function applyMotionCss(): void {
     root.style.setProperty('--m-card-stagger', v(cfg.card.staggerMs));
     root.style.setProperty('--m-card-delay', v(cfg.card.delayMs));
     root.style.setProperty('--m-card-rise', `${r ? 0 : cfg.card.rise}px`);
+    root.style.setProperty('--m-hold-done', v(cfg.statHold.doneMs));
+    root.style.setProperty('--m-hold-bump', v(cfg.statHold.bumpMs));
+    root.style.setProperty('--m-hold-rise', v(cfg.statHold.riseMs));
+    root.style.setProperty('--m-hold-nope', v(cfg.statHold.nopeMs));
     root.style.setProperty('--m-ease', cfg.ease.css);
     root.style.setProperty('--m-dim', String(cfg.dim.modal));
     root.classList.toggle('reduced-motion', r);

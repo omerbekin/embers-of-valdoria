@@ -293,7 +293,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     // İsabet: durum ekleri (Blinded/Shrouded) dahil geçerli stat'lar, gerçek vuruşla aynı
     // Blok (Ömer 2026-10-18): kalkanlı hedef fiziksel vuruşu bloklayabilir; bloklanan vuruş iska gibi (hasar ve ek etki yok)
     // Ağaç sureHit: isabet zarı yok (blok yine olabilir)
-    const hit = (tm?.sureHit ? 1 : hitChance(battle.hitStats(actor, skill), stats, f)) * (1 - battle.blockChance(actor, target, effect, skill));
+    const hit = (tm?.sureHit ? 1 : hitChance(battle.hitStats(actor, skill, target), stats, f)) * (1 - battle.blockChance(actor, target, effect, skill));
     const p = pool(target);
     // Bu hasarı emebilecek havuz: büyü hasarını iki kalkan da, fizikseli yalnızca genel kalkan emer
     const soak = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
@@ -315,7 +315,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       hpLossMin: (prev?.hpLossMin ?? 0) + loss(r.min),
       hpLossMax: (prev?.hpLossMax ?? 0) + loss(r.max),
       lethal: null,
-      critChance: noCrit ? 0 : effect.guaranteedCrit ? 1 : battle.effectiveStats(actor, effect.critBonus ?? 0).critChance, // critBonus: Jinx
+      critChance: noCrit ? 0 : effect.guaranteedCrit ? 1 : battle.effectiveStats(actor, (effect.critBonus ?? 0) + battle.levelGap(actor, target).crit).critChance, // critBonus: Jinx; level farkı bonusu gerçek vuruşla aynı
       critMax: (prev?.critMax ?? 0) + (sureC || noCrit ? r.max : actor.treeHooks ? Math.round(critR(hi).max) * (again > 0 ? 2 : 1) : Math.round(r.max * actor.stats.critMult)),
       ...(actor.treeHooks ? { critMult: cmult } : {}),
       hitChance: hit,
@@ -472,7 +472,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
             status: spec.status,
             statusName: battle.statusDef(spec.status)?.name ?? spec.status,
             turns: spec.turns,
-            ...(r ? { damage: { min: r.min, max: r.max, avg: r.avg, critChance: battle.effectiveStats(actor).critChance, critMax: Math.round(r.max * actor.stats.critMult) } } : {}),
+            ...(r ? { damage: { min: r.min, max: r.max, avg: r.avg, critChance: battle.effectiveStats(actor, battle.levelGap(actor, target).crit).critChance, critMax: Math.round(r.max * actor.stats.critMult) } } : {}),
           };
         }
       } else if (effect.type === 'taunt') {

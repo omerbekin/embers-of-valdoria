@@ -536,6 +536,35 @@ export function legacyRoll(d: ItemDef, old: unknown, uid: string, classId?: stri
   return { rarity, affixes };
 }
 
+/**
+ * Oyundan kaldırılan affix'ler ve kademeleri (tanımları veride yok, kademe burada kalır). Ömer 2026-11-01, karar B4: Gold find, Experience.
+ * Bu listede olmayan bilinmeyen affix eskisi gibi atılır (sanitizeRoll).
+ */
+const REMOVED_AFFIX_TIER: ReadonlyMap<string, AffixTier> = new Map<string, AffixTier>([['c_gold', 'C'], ['c_xp', 'C']]);
+
+const hasRemovedAffix = (r: ItemRoll): boolean => r.affixes.some((a) => typeof a?.id === 'string' && REMOVED_AFFIX_TIER.has(a.id));
+
+/**
+ * Kaldırılmış affix yerine aynı kademe ve yuva havuzundan yenisi (seed'li: aynı örnek = aynı sonuç): sırası ve değer zarı (q) korunur, item'de zaten
+ * olan affix gelmez; havuz boşsa affix düşer. Kaldırılmış affix yoksa aynı nesne döner.
+ */
+function replaceRemovedAffixes(d: ItemDef, r: ItemRoll, seed: string): ItemRoll {
+  if (!hasRemovedAffix(r)) return r;
+  const rng = new Rng(hashSeed(`${seed}|${d.id}|removed`));
+  const used = new Set(r.affixes.map((a) => a?.id));
+  const affixes = r.affixes.flatMap((a): AffixRoll[] => {
+    const tier = typeof a?.id === 'string' ? REMOVED_AFFIX_TIER.get(a.id) : undefined;
+    if (!tier) return [a];
+    const pool = tierPool(tier, d.slot).filter((id) => !used.has(id));
+    if (!pool.length) return [];
+    const id = pool[rng.int(0, pool.length - 1)]!;
+    used.add(id);
+    const x = rollChoice(id, rng);
+    return [{ id, q: a.q, ...(x ? { x } : {}) }];
+  });
+  return { ...r, affixes };
+}
+
 /** Zar nesnesini doğrular / onarır: bilinmeyen affix'ler atılır, q [0,1]'e sıkıştırılır, nadirlik tabana göre sıkıştırılır. Bozuksa null. */
 function sanitizeRoll(d: ItemDef, r: ItemRoll): ItemRoll | null {
   const affixes = r.affixes
@@ -551,7 +580,7 @@ export function instanceRoll(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
   const d = itemDef(inst.id);
   if (!d) return { affixes: [] };
   if (isItemRoll(inst.rolls)) {
-    const ok = sanitizeRoll(d, inst.rolls);
+    const ok = sanitizeRoll(d, replaceRemovedAffixes(d, inst.rolls, inst.uid ?? inst.id));
     if (ok) return ok;
   }
   return legacyRoll(d, inst.rolls, inst.uid ?? inst.id, classId);
@@ -1181,6 +1210,38 @@ export function migrateItemRolls(root: unknown): number {
     }
     const heroClass = typeof rec.class === 'string' && rec.equipment && typeof rec.equipment === 'object' ? rec.class : undefined;
     for (const [k, v] of Object.entries(rec)) walk(v, k === 'equipment' ? heroClass : undefined);
+  };
+  walk(root);
+  return n;
+}
+
+/**
+ * Kaldırılmış affix göçü (Ömer 2026-11-01, karar B4; sürüm artmaz, her okumada, idempotent): kayıt ağacındaki yeni biçimli zarlarda kaldırılmış affix'in yerine
+ * `replaceRemovedAffixes` yazılır. Örnekte sonuç okunurken `instanceRoll`ın ürettiğiyle aynıdır; uid'siz teklif / Spoils zarları da burada sabitlenir ki
+ * alınınca değişmesin. Değişen kayıt sayısını döndürür.
+ */
+export function migrateRemovedAffixes(root: unknown): number {
+  let n = 0;
+  const fixed = (id: unknown, rolls: unknown, seed: string): unknown => {
+    const d = typeof id === 'string' ? itemDef(id) : undefined;
+    if (!d || !isItemRoll(rolls) || !hasRemovedAffix(rolls)) return rolls;
+    n++;
+    return replaceRemovedAffixes(d, rolls, seed);
+  };
+  const walk = (o: unknown): void => {
+    if (Array.isArray(o)) {
+      for (const x of o) walk(x);
+      return;
+    }
+    if (!o || typeof o !== 'object') return;
+    const rec = o as Record<string, unknown>;
+    if (typeof rec.uid === 'string' && typeof rec.id === 'string' && isItemRoll(rec.rolls)) rec.rolls = fixed(rec.id, rec.rolls, rec.uid);
+    else if (typeof rec.itemId === 'string' && isItemRoll(rec.rolls)) rec.rolls = fixed(rec.itemId, rec.rolls, `offer|${rec.itemId}|${typeof rec.heroId === 'string' ? rec.heroId : ''}`);
+    if (Array.isArray(rec.left) && Array.isArray(rec.leftRolls)) {
+      const left = rec.left as unknown[];
+      rec.leftRolls = (rec.leftRolls as unknown[]).map((r, i) => fixed(left[i], r, `left|${String(left[i])}|${i}`));
+    }
+    for (const v of Object.values(rec)) walk(v);
   };
   walk(root);
   return n;

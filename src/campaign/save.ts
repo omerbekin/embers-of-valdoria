@@ -8,7 +8,7 @@ import { pitOf } from './pit';
 import { oathDef } from './oath';
 import { sanitizeHeroQuests } from './quests';
 import { boonIds } from './side-content';
-import { emptyEquipment, itemDef, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, stripUnusable, type ItemInstance } from '../progression/items';
+import { emptyEquipment, itemDef, migrateItemRolls, migrateOffhand, migrateRemovedAffixes, migrateRollsX2, promoteOffhand, SLOT_IDS, stripUnusable, type ItemInstance } from '../progression/items';
 import { classes, statuses, valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
@@ -537,6 +537,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
     if (parsed.version === 2 || parsed.version === 3) migrateRollsX2(parsed.slots);
     // Affix göçü (sürüm 5): eski stat zarları -> en yakın affix biçimi (okunurken de instanceRoll onarır; asla çökmez)
     if (scaled) migrateItemRolls(parsed.slots);
+    migrateRemovedAffixesInSaves(parsed.slots);
     const file = empty();
     file.counter = counter;
     let corrupt = false;
@@ -579,6 +580,22 @@ export function migrateStarterWeapons(slots: unknown): number {
     }
   }
   return n;
+}
+
+/**
+ * Kaldırılmış affix göçü (karar B4; sürüm artmaz, idempotent): her kayıttaki zarlar `migrateRemovedAffixes` ile onarılır. Takılı item'i değişen
+ * kahramanı olan kaydın duraklatılmış savaşı atılır (kurulum değişti, migrateStarterWeapons ile aynı kural). Bozuk girdiler atlanır (çökmez).
+ */
+function migrateRemovedAffixesInSaves(slots: unknown[]): void {
+  for (const sd of slots as Array<Partial<SlotData> | null>) {
+    if (!sd || typeof sd !== 'object' || !Array.isArray(sd.saves)) continue;
+    for (const e of sd.saves as Array<Partial<SaveEntry> | null>) {
+      const st = e && typeof e === 'object' ? e.state : undefined;
+      if (!st || typeof st !== 'object') continue;
+      if (migrateRemovedAffixes(st.roster) > 0) delete (st as { suspended?: unknown }).suspended;
+      migrateRemovedAffixes(st);
+    }
+  }
 }
 
 /** Eski haritanın seferleri: kayıtlar silinir, yuva (mod, zorluk, tarihler) kalır, `mapChanged` işaretlenir. */

@@ -41,6 +41,30 @@ export function soloSkillStage(s: SoloState, hero: Pick<Hero, 'class' | 'leader'
   return out;
 }
 
+/**
+ * Liderin kilitli skill'lerinin açılış yeri, HUD ipucu için (Ömer 2026-11-01): skill id -> kısa metin. Veriden türer (soloStart.stages sırası):
+ * skill'i açan ilk sonraki düğüm; açılmadan önce bu savaşın dalgasında açılıyorsa "Unlocks in wave N" (dalga 1 tabanlı). Kilit yoksa boş.
+ * `nameOf`: düğüm id -> oyuncunun gördüğü ad.
+ */
+export function soloUnlockHints(s: SoloState, hero: Pick<Hero, 'class' | 'leader'>, nodeId: string, nameOf: (nodeId: string) => string): Record<string, string> {
+  const stage = soloSkillStage(s, hero, nodeId);
+  if (!stage) return {};
+  const order = soloSkillOrder(hero.class);
+  const stages = CONFIG.soloStart.stages;
+  const keys = Object.keys(stages);
+  const out: Record<string, string> = {};
+  for (const id of stage.locked) {
+    if (stage.onWave?.skills.includes(id)) {
+      out[id] = `Unlocks in wave ${stage.onWave.wave + 1}`;
+      continue;
+    }
+    const idx = order.indexOf(id);
+    const next = keys.slice(keys.indexOf(nodeId) + 1).find((k) => (stages[k]!.wave?.open ?? stages[k]!.open) > idx);
+    if (next) out[id] = `Unlocks at ${nameOf(next)}`;
+  }
+  return out;
+}
+
 /** Düğümün yeni sefer çarpanı (takım boyu + Harita 1 eğrisi; yalnız yeni sefer, ilk harita); yoksa undefined. */
 export function soloEnemyScale(s: Pick<CampaignState, 'soloStart' | 'mapId'>, nodeId: string): UnitMods | undefined {
   if (!s.soloStart || s.mapId !== CONFIG.maps[0]) return undefined;

@@ -13,7 +13,7 @@ import { isUnblockableHit } from './unblockable';
 import { mergeRefreshStrongest, statusStackMode, statusStrength } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
-import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
+import { levelGapBonus, applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
 import type { Attribute, Attributes, BrandSpec, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect, PushDir } from './types';
 import { advanceTurn, predictQueue, snapCounter, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
 import { bellsOfSkill, condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, manaShieldPay, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
@@ -5794,12 +5794,12 @@ export class Battle {
     if (preRolled && !skill.telegraph) {
       for (const t of targets) {
         if (t.side === actor.side || t.hp <= 0) continue;
-        const o = hitOutcome(this.hitStats(actor, skill), this.effectiveStats(t), f, this.rng.next());
+        const o = hitOutcome(this.hitStats(actor, skill, t), this.effectiveStats(t), f, this.rng.next());
         if (o === 'hit') {
           hit.add(t.uid);
           this.castInfo?.landed.add(t.uid);
-          // Faz 2c (Eye of Ruin): hasar kalksa da kritik zarı atılır (kritik isabet critStacks verir: "3 on a crit")
-          if (rollCrit(this.effectiveStats(actor), this.rng).crit) critHit.add(t.uid);
+          // Faz 2c (Eye of Ruin): hasar kalksa da kritik zarı atılır (kritik isabet critStacks verir: "3 on a crit"); level farkı bonusu vuruşla aynı
+          if (rollCrit(this.effectiveStats(actor, this.levelGap(actor, t).crit), this.rng).crit) critHit.add(t.uid);
         } else {
           emit({ type: o, source: actor.uid, target: t.uid });
           this.noteMiss(actor, t);
@@ -7831,7 +7831,7 @@ export class Battle {
     // İsabet/kaçınma: durum ekleri (Blinded/Shrouded) dahil geçerli stat'lar (effectiveStats); hit şansı [0, hit.max]
     // `sure`: isabet zarı YOK (Drain Field onEmpty hasarı; zar da tüketilmez, debug iska zorlaması uygulanmaz). Ağaç sureHit aynı (blok yine olabilir)
     const noRoll = sure || !!treeMods?.sureHit;
-    let outcome: ReturnType<typeof hitOutcome> = noRoll ? 'hit' : hitOutcome(this.hitStats(actor, this.castingSkill), this.effectiveStats(target), f, this.rng.next());
+    let outcome: ReturnType<typeof hitOutcome> = noRoll ? 'hit' : hitOutcome(this.hitStats(actor, this.castingSkill, target), this.effectiveStats(target), f, this.rng.next());
     if (noRoll) outcome = 'hit';
     else if (this.debug.dodge === 'always') outcome = 'dodge';
     else if (this.debug.miss === 'always') outcome = 'miss';
@@ -7840,7 +7840,7 @@ export class Battle {
     if (outcome !== 'hit' && !noRoll && effFlag(actor, 'rerollMiss') && !actor.rerollUsed && this.debug.dodge === 'auto' && this.debug.miss === 'auto') {
       actor.rerollUsed = true;
       emit({ type: 'passive', actor: actor.uid, passive: 'last_coin', name: 'The Last Coin' });
-      outcome = hitOutcome(this.hitStats(actor, this.castingSkill), this.effectiveStats(target), f, this.rng.next());
+      outcome = hitOutcome(this.hitStats(actor, this.castingSkill, target), this.effectiveStats(target), f, this.rng.next());
     }
     if (outcome !== 'hit') {
       emit({ type: outcome, source: actor.uid, target: target.uid });
@@ -7888,9 +7888,9 @@ export class Battle {
     const base = rollDamage(this.attackStats(actor), targetStats, spec, f, this.rng);
     // Garantili kritik (Backstab): kritik zarı ATILMAZ, kritik çarpanı uygulanır (debug 'never' yine kapatır; Jinxed bunu bozmaz: madde Ö5).
     // Kritik şansı durum ekleriyle (Jinxed, Omen Misfortune) geçerli değerdir (effectiveStats).
-    // critBonus (Jinx): bu skill'in vuruşunda kritik şansına ek (generic)
+    // critBonus (Jinx): bu skill'in vuruşunda kritik şansına ek (generic); level farkı bonusu da aynı ek (Ömer 2026-11-01)
     // Ağaç noCrit: kritik olamaz (zar atılmaz; guaranteedCrit'i de bozar)
-    const rolled = treeMods?.noCrit ? { crit: false } : effect.guaranteedCrit ? { crit: true } : rollCrit(this.effectiveStats(actor, effect.critBonus ?? 0), this.rng);
+    const rolled = treeMods?.noCrit ? { crit: false } : effect.guaranteedCrit ? { crit: true } : rollCrit(this.effectiveStats(actor, (effect.critBonus ?? 0) + this.levelGap(actor, target).crit), this.rng);
     const crit = this.debug.crit === 'auto' ? rolled.crit : this.debug.crit === 'always';
     if (crit && info?.center && actor.treeHooks) this.centerCritN++; // Faz 5a (X Marks the Throat): bu kullanımda merkez kritikleri
     // Shell (Harita 2 Salt Crab): bu kritik kabuğu kırar (bu vuruş hâlâ kabuklu zırha çarpar; sonrakiler normal zırha)
@@ -9046,7 +9046,10 @@ export class Battle {
     const rule = this.setup.rules?.noise;
     if (!rule || !rule.sides.includes(actor.side)) return 0;
     let p = this.isAreaSkill(skill.id, actor) ? rule.points.area : 0;
-    if (skill.effects.some((e) => e.type === 'damage')) p += this.effectiveStats(actor).critChance * rule.points.crit;
+    if (skill.effects.some((e) => e.type === 'damage')) {
+      const t = targetUid ? this.get(targetUid) : undefined;
+      p += this.effectiveStats(actor, t ? this.levelGap(actor, t).crit : 0).critChance * rule.points.crit;
+    }
     if (skill.effects.some((e) => e.type === 'ground') || skill.thunder) {
       const n = this.groundReactionPreview(actor.uid, skill.id, anchor, board, targetUid).filter((x) => rule.reactions.includes(x.reaction)).length;
       p += n * rule.points.explosion;
@@ -9822,11 +9825,19 @@ export class Battle {
     return ra && skill && (ra.motions.includes(skill.motion) || (ra.shots === true && skill.shot === true)) ? ra.delta : 0;
   }
 
-  /** Vuruşun isabet zarında saldıranın stat'ları: effectiveStats + koşulun skill'e göre isabet eki (Storm). Koşul yoksa effectiveStats aynen. */
-  hitStats(actor: Combatant, skill: SkillDef | null | undefined): Combatant['stats'] {
+  /**
+   * Level farkı saldırı bonusu (Ömer 2026-11-01; formulas.json > hit.levelGap): yalnızca düşmana vururken. Gerçek vuruş, önizleme ve YZ aynı değeri okur.
+   * Level'ı olmayan birimde (Quick Battle, multiplayer) 0. Saf.
+   */
+  levelGap(attacker: Combatant, target: Combatant): { readonly accuracy: number; readonly crit: number } {
+    return levelGapBonus(attacker.side === target.side ? undefined : attacker.level, target.level, this.setup.formulas);
+  }
+
+  /** Vuruşun isabet zarında saldıranın stat'ları: effectiveStats + koşulun skill'e göre isabet eki (Storm) + `target` verilirse level farkı bonusu. Ek yoksa effectiveStats aynen. */
+  hitStats(actor: Combatant, skill: SkillDef | null | undefined, target?: Combatant): Combatant['stats'] {
     const st = this.effectiveStats(actor);
     const raw = this.conditionAccuracy(skill);
-    const d = raw !== 0 && this.eyeCarrier(actor.side, actor.board, actor.slot) ? 0 : raw; // B1: Eye of the Storm cezayı keser
+    const d = (raw !== 0 && this.eyeCarrier(actor.side, actor.board, actor.slot) ? 0 : raw) + (target ? this.levelGap(actor, target).accuracy : 0); // B1: Eye of the Storm cezayı keser
     return d === 0 ? st : { ...st, accuracy: Math.max(0, Math.round((st.accuracy + d) * 10000) / 10000) };
   }
 

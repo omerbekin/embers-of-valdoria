@@ -2,7 +2,6 @@
 // Zar: hash(seed, harita, düğüm, 'loot', tür, oynama sayısı): yenilgi/deneme sayısı ve Retreat loot'u DEĞİŞTİRMEZ (save-scum yok, items.md 3.4).
 import { BAG_SIZE, ITEMS, canEquip, itemDef, makeItem, rollLoot, rollRareDrop, type ItemInstance, type LootKind, type RarityId } from '../progression';
 import { CONFIG } from './data';
-import { partyGoldMult } from '../progression/loadout';
 import { chapterOf, nodeIlvl } from './power';
 import { rngFor } from './seed';
 import type { CampaignState, Hero, LootDrop } from './types';
@@ -57,11 +56,6 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     res.forClass.length = Math.min(res.forClass.length, cap);
   }
   if (opts?.gold !== undefined) res.gold = opts.gold;
-  // c_gold affix'i (Ömer 2026-10-26): savaş altını x (1 + savaşa giren kahramanların toplam bonusu); sandık / hazine altını değişmez
-  else if (kind !== 'treasure' && res.gold > 0) {
-    const gm = partyGoldMult(party);
-    if (gm !== 1) res.gold = Math.round(res.gold * gm);
-  }
   t.lootState.rarePity = res.pity;
   t.lootState.clears[key] = replay + 1;
   // Ortak nadir düşüş (madde 297): kazanılan her savaşta bir zar (sandık değil); düşüşsüz zafer sayacı kayıtta

@@ -51,7 +51,8 @@ import { clearBagMenus, installBagMenuDismiss, visibleByKind, type BagBarOpts, t
 import { itemTipNodes, type ItemTipAction, type ItemTipHero } from './item-tip';
 import type { DragSource, DropAction, DropTarget } from './gear-drop';
 import { attachItemInteractions } from './item-drag';
-import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, heroFallen, heroItemLine } from './gear-hover';
+import { goToTreeButton } from './gear-tree-link';
+import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, equippedAgainst, heroFallen, heroItemLine } from './gear-hover';
 import { heroOath, oathMinusText, oathPlusText } from '../campaign/oath';
 import { heroQuests, questBonusLine } from '../campaign/quests';
 import { boonList, respecHeroTree, respecTreeBlocked } from '../campaign';
@@ -342,8 +343,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   /** Sekme: Hero (yuvalar + torba) / Sheet (statlar + skill ağacı). Level Up "Spend points" Sheet ile açar. */
   let tab: 'hero' | 'sheet' | 'tree' = o.view === 'char' ? 'sheet' : o.view === 'tree' ? 'tree' : 'hero';
   let firstPoint: FirstPointCoach | null = null;
-  /** Bekleyen stat puanları (Sheet; Confirm kaynağa yazar, kahraman değişince silinir). */
-  let pending: StatAlloc = {};
+  /** Az önce basılı tutularak verilen stat puanı (Sheet; yeniden çizimde "+1" animasyonu için bir kez okunur). */
+  let justSpent: { attr: Attribute; focus: boolean } | undefined;
   let shakeUid = '';
   let flashText = '';
   let curStats: Stats | null = null;
@@ -433,7 +434,11 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       // tüccar torbasında satış fiyatı ("sells for")
       const state = kind === 'bag' && ext?.price ? { ...(base ?? {}), sellFor: ext.price(inst) } : base;
       // yer imleri yalnızca portre: her kahramana etkisi ipucunda (karşılaştırma)
-      return itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst, true) : [], state);
+      const nodes = itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst, true) : [], state);
+      // Gear Hero çantası (Ömer 2026-11-01): seçili kahramanın aynı yuvada giydiği item ikinci kart olarak yanında (tüccar / ganimet / ödül torbası: ext var, eklenmez)
+      const worn = kind === 'bag' && hero && !ext && !bagOnly ? equippedAgainst(hero, inst) : null;
+      if (worn && hero) nodes.push(...itemTipNodes(worn.item, hero.class, [], { ...(affixContext(hero, worn.item, worn.slot) ?? {}), level: hero.level, equipped: true }));
+      return nodes;
     },
     // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; kuşanma / çıkarma buradan ya da sürükle-bırakla)
     tipActions: (key) => {
@@ -520,7 +525,6 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   const finalClose = (): void => {
     if (closing) return;
-    flushPending();
     closing = true;
     window.clearTimeout(toastTimer);
     unmountX();
@@ -538,7 +542,6 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   const setTab = (k: 'hero' | 'sheet' | 'tree'): void => {
     if (k === tab) return;
-    flushPending();
     tab = k;
     bagMenu = null;
     renderAll();
@@ -605,17 +608,13 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     }
     renderAll();
   };
-  /** Bekleyen (onaysız) stat puanlarını sessizce onaylar: sekme / kahraman değişince ya da pencere kapanınca puan kaybolmasın (playtest B2). */
-  const flushPending = (): void => {
-    const add = pending;
-    if (!src.allocate || !Object.values(add).some((n) => (n ?? 0) > 0)) return;
+  /** Stat puanı: 1 puan HEMEN işlenir ve kaydedilir (onay / bekleyen puan yok; Ömer 2026-11-01). Mevcut `src.allocate` (kayıt şeması ve kural aynı). */
+  const spendPoint = (k: Attribute, viaKey: boolean): void => {
     const h = curHero();
-    pending = {};
-    if (!h) return;
-    apply(() => src.allocate!(h.id, add), () => {
-      uiSound('confirm');
-      showToast('Stat points confirmed.', true);
-    });
+    if (!h || !src.allocate) return;
+    justSpent = { attr: k, focus: viaKey };
+    apply(() => src.allocate!(h.id, { [k]: 1 }), () => uiSound('confirm'));
+    justSpent = undefined;
   };
   /** Çift tık / çift dokunuşla çıkarma: kısa toka şakırtısı ('snap'), malzeme sesi yerine (Ömer 2026-10-16). */
   const quickUnequip = (hid: string, slot: SlotId): void => {
@@ -634,7 +633,6 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const d = inst ? itemDef(inst.id) : undefined;
     if (!h || !inst || !d) return;
     if (heroFallen(h)) return fallenWarn();
-    if (targetHero !== heroId) flushPending();
     heroId = targetHero;
     if (!canEquip(h.class, d)) {
       const fam = ITEMS.weaponFamilies.find((f) => f.id === d.family);
@@ -741,20 +739,17 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         hero: () => curHero(),
         tree: treeTab.coach,
         stat: {
-          free: () => Math.max(0, (curHero()?.statPoints ?? 0) - Object.values(pending).reduce((t, n) => t + (n ?? 0), 0)),
-          pending: () => Object.values(pending).reduce((t, n) => t + (n ?? 0), 0),
-          pendingOf: (k) => pending[k as Attribute] ?? 0,
+          free: () => Math.max(0, curHero()?.statPoints ?? 0),
+          pending: () => 0, // bekleyen stat puanı yok (Ömer 2026-11-01): puan hemen işlenir
+          pendingOf: () => 0,
           canTake: (k) => {
             const h = curHero();
             if (!h || !src.allocate) return false;
-            const now: StatAlloc = { ...(h.alloc ?? {}) };
-            for (const [a, n] of Object.entries(pending)) now[a as Attribute] = (now[a as Attribute] ?? 0) + (n ?? 0);
-            return canAddPoint(h.class, now, k as Attribute);
+            return canAddPoint(h.class, { ...(h.alloc ?? {}) }, k as Attribute);
           },
           take: (k) => {
-            pending = { ...pending, [k as Attribute]: (pending[k as Attribute] ?? 0) + 1 };
-            uiSound('select');
-            renderAll();
+            // "Take it": Garrick'in önerisi 1 puanı hemen işler (düğmeye basmak zaten bilinçli; basılı tutma gerekmez)
+            spendPoint(k as Attribute, false);
           },
           node: (k) => leafL.querySelector<HTMLElement>(`.sh-row[data-stat="${k}"]`),
           head: () => leafR.querySelector<HTMLElement>('.gr-tree-head'),
@@ -813,8 +808,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     sheetBtn.querySelectorAll('.gr-pt').forEach((x) => x.remove());
     // Harcanmamış stat puanı rozeti (Ömer 2026-10-23): bekleyen (henüz onaylanmamış) puanlar düşülür; her render'da (+ / − / Reset / Confirm) tazelenir
     if (src.allocate && !bagOnly) {
-      const spent = Object.values(pending).reduce((t, n) => t + (n ?? 0), 0);
-      const free = (hero?.statPoints ?? 0) - spent;
+      const free = hero?.statPoints ?? 0;
       if (free > 0) sheetBtn.append(badge(free, 'st', 'Stat points to spend'));
     }
     if (treeOn) treeTab.syncButton(tab === 'tree', hero?.skillPoints ?? 0);
@@ -836,10 +830,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       heroMarks({
         heroes: src.heroes(),
         heroId,
-        focus: focusInst(),
-        spent: (id) => (id === heroId && src.allocate && !bagOnly ? Object.values(pending).reduce((t, n) => t + (n ?? 0), 0) : 0),
         onHero: (id) => {
-          if (id !== heroId) flushPending();
           heroId = id;
           renderAll();
         },
@@ -857,38 +848,15 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       focus: focusInst(),
       ...(hero && (hero.hpRatio !== undefined || hero.alive === false) ? { hpRatio: hero.alive === false ? 0 : (hero.hpRatio ?? 1) } : {}),
       onHero: (id) => {
-        if (id !== heroId) flushPending();
         heroId = id;
         renderAll();
       },
       ...(src.allocate
         ? {
             level: {
-              pending,
-              onAdd: (k: Attribute) => {
-                pending = { ...pending, [k]: (pending[k] ?? 0) + 1 };
-                uiSound('select');
-                renderAll();
-              },
-              onClear: (k: Attribute) => {
-                if (!pending[k]) return;
-                pending = { ...pending };
-                delete pending[k];
-                uiSound('select');
-                renderAll();
-              },
+              onSpend: (k: Attribute, viaKey?: boolean) => spendPoint(k, !!viaKey),
               onBlocked: (msg: string) => showToast(msg),
-              onReset: () => {
-                pending = {};
-                renderAll();
-              },
-              onConfirm: () => {
-                const h = curHero();
-                if (!h) return;
-                const add = pending;
-                pending = {};
-                apply(() => src.allocate!(h.id, add), () => uiSound('confirm'));
-              },
+              ...(justSpent ? { justSpent } : {}),
             },
           }
         : {}),
@@ -954,6 +922,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const pts = el('div', 'gr-ms-pts');
     pts.append(el('b', '', String(used)), document.createTextNode(` / ${pool} points spent`));
     box.append(pts);
+    // Ağaç sekmesine kısayol (Ömer 2026-11-01): aynı kahramanla Tree sekmesi; kutusuz Cinzel yazı, ince altın çizgiler, 44 px+ dokunma hedefi
+    if (treeOn) box.append(goToTreeButton(() => setTab('tree')));
     const picked = Object.entries(hero.tree?.r ?? {}).filter(([, n]) => n > 0);
     box.append(el('div', 'gr-ms-cap', `Active nodes · ${picked.length}`));
     const list = el('div', 'gr-ms-list');

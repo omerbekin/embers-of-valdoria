@@ -1,0 +1,103 @@
+/* Codex tooltip mockup. Gercek Codex CSS real.css (wiki.css kopyasi); bu dosya cubuk, sahne, kabuk ve ipucu katmani. */
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('fonts/Cinzel-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('fonts/Cinzel-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('fonts/EBGaramond-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('fonts/EBGaramond-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+:root {
+  --el-txt: #d9c8a2; --el-on: #f3d999; --el-muted: #a8977a; --el-dim: #7d705a; --el-note: #cdb88d; --el-bad: #e8806a;
+  --el-ember: #e0702a; --el-ember2: #ffb35a; --el-gold: #d9b26a;
+  --el-line1: rgba(217, 178, 106, 0.16); --el-line2: rgba(217, 178, 106, 0.3); --el-line3: rgba(217, 178, 106, 0.55);
+  --el-display: Cinzel, Georgia, serif; --el-body: 'EB Garamond', Georgia, serif;
+  --m-card-hover: 170ms; --m-card-lift: 4px; --m-ease: cubic-bezier(0.33, 1, 0.68, 1);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #050403; font-style: normal; }
+button { font-style: normal; }
+
+/* ---- mockup cubugu ---- */
+#mk-bar { position: fixed; left: 0; right: 0; top: 0; height: 48px; z-index: 100; display: flex; align-items: center; gap: 5px; padding: 2px 8px; overflow-x: auto;
+  background: #0d0a07; border-bottom: 1px solid rgba(217, 178, 106, 0.3); font: 600 12px Cinzel, Georgia, serif; letter-spacing: 0.06em; color: #d9c8a2; }
+#mk-bar button { flex: none; min-height: 44px; min-width: 44px; padding: 0 12px; background: rgba(30, 22, 14, 0.8); border: 1px solid rgba(217, 178, 106, 0.3); border-radius: 0;
+  color: #d9c8a2; font: 600 12px Cinzel, Georgia, serif; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: color .17s, border-color .17s, background .17s; }
+#mk-bar button:hover { border-color: #f3d999; color: #f3d999; }
+#mk-bar button.on { border-color: #f3d999; color: #f3d999; background: rgba(224, 112, 42, 0.18); }
+#mk-bar .sep { flex: none; width: 1px; align-self: stretch; margin: 6px 4px; background: rgba(217, 178, 106, 0.3); }
+#mk-bar .lbl { flex: none; color: #7d705a; padding: 0 2px; }
+#mk-note { position: fixed; left: 0; right: 0; top: 48px; z-index: 99; min-height: 36px; padding: 5px 10px; background: #0d0a07; border-bottom: 1px solid rgba(217, 178, 106, 0.18);
+  font: 400 14px/1.25 'EB Garamond', Georgia, serif; color: #cdb88d; }
+#mk-note b { color: #f3d999; font-weight: 600; }
+#mk-view { position: fixed; left: 0; right: 0; top: 86px; bottom: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+#mk-stage { position: relative; flex: none; overflow: hidden; background: #0d0a07; transform-origin: 50% 50%; color: var(--el-txt); font: 400 max(13px, calc(21 * var(--u))) / 1.3 var(--el-body); }
+#mk-stage .size-tag { position: absolute; right: 6px; top: 4px; z-index: 5; font: 600 10px Cinzel, serif; letter-spacing: .12em; color: #7d705a; pointer-events: none; }
+:root { --el-sh: 0 2px 4px rgba(12, 8, 5, 0.95); --el-glow: 0 0 14px rgba(240, 140, 40, 0.85); --el-ease: cubic-bezier(0.33, 1, 0.68, 1); --el-num: 'Palatino Linotype', Georgia, serif; }
+#mk-stage { --gu: var(--u); }
+
+/* ---- Codex kabugu (kabaca .wk-overlay.cx + .cx-body) ---- */
+.cm { position: absolute; inset: 0; background: #0d0a07; display: flex; flex-direction: column; color: var(--el-txt); }
+.cm-top { flex: none; display: flex; align-items: center; justify-content: center; position: relative; height: max(44px, calc(112 * var(--u))); }
+.cm-back { position: absolute; left: max(6px, calc(40 * var(--u))); top: 50%; translate: 0 -50%; width: 44px; height: 44px; display: grid; place-items: center; background: none; border: 1px solid var(--el-line2); color: var(--el-on); font: 600 18px Cinzel, serif; }
+.cm-title { font: 600 max(18px, calc(34 * var(--u))) var(--el-display); letter-spacing: .3em; text-transform: uppercase; color: var(--el-on); }
+.cm-body { flex: 1; min-height: 0; display: grid; grid-template-columns: max(150px, calc(380 * var(--u))) max(180px, calc(470 * var(--u))) minmax(0, 1fr); gap: max(10px, calc(40 * var(--u)));
+  margin: 0 max(8px, calc(64 * var(--u))) max(8px, calc(46 * var(--u))); }
+.cm-side, .cm-list { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.cm-side .cx-navrow, .cm-list .cx-row { flex: none; }
+.cm-art { min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 6px; scrollbar-width: thin; scrollbar-color: rgba(217, 178, 106, .3) transparent; }
+.cm-tabs { display: none; }
+.cm .cx-art { padding-bottom: 40px; }
+.cx-art h3.cx-h3 { font: 600 max(11px, calc(15 * var(--u))) var(--el-display); letter-spacing: .2em; text-transform: uppercase; color: var(--el-gold); margin: max(12px, calc(26 * var(--u))) 0 max(4px, calc(8 * var(--u))); padding-bottom: 3px; border-bottom: 1px solid var(--el-line1); }
+.cx-art h3.cx-h3:first-child { margin-top: 0; }
+.cm-skills { display: block; }
+
+/* tiklanabilir bilgi etiketleri: imlec, odak halkasi, 44 px dokunma (telefon) */
+[data-tip] { cursor: help; outline: none; }
+[data-tip].pin { box-shadow: inset 0 -1px 0 var(--el-on); }
+.cx-tag[data-tip], .cx-attr[data-tip], .cx-rarity[data-tip] { min-height: 32px; }
+.cx-ref[data-tip] { cursor: pointer; }
+
+/* telefon (html.short): ustte sekmeler, orta sutun yok, makale iki sutun */
+.short .cm-top { height: 50px; justify-content: flex-start; padding-left: 58px; gap: 10px; }
+.short .cm-title { font-size: 15px; letter-spacing: .2em; flex: none; }
+.short .cm-back { left: 4px; }
+.short .cm-tabs { display: flex; gap: 2px; overflow-x: auto; flex: 1; min-width: 0; padding-right: 6px; scrollbar-width: none; }
+.short .cm-tabs button { flex: none; min-height: 44px; padding: 0 12px; background: none; border: 0; border-bottom: 1px solid transparent; color: var(--el-muted); font: 600 11px Cinzel, serif; letter-spacing: .1em; text-transform: uppercase; }
+.short .cm-tabs button.on { color: var(--el-on); border-bottom-color: var(--el-ember); }
+.short .cm-body { grid-template-columns: 1fr; margin: 0 8px 4px; }
+.short .cm-side, .short .cm-list { display: none; }
+.short .cm-art { padding-right: 0; }
+.short .cm-split { display: grid; grid-template-columns: minmax(250px, 0.9fr) minmax(0, 1.4fr); gap: 14px; align-items: start; }
+.short .cx-attrs { gap: 0 14px; }
+.short .cx-attr { min-height: 44px; }
+.short .cx-tag[data-tip], .short .cx-ref[data-tip], .short .cx-tag.q { min-height: 44px; }
+.short .cx-skill-link { min-height: 44px; }
+.short .cx-rarity { min-width: 64px; min-height: 44px; }
+.wide .cm-skills { display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(40 * var(--u)); }
+.wide .cm-skills > .cx-skill { align-items: flex-start; }
+
+/* ---- ipucu katmani ---- */
+.cm-tipwrap { position: absolute; z-index: 30; pointer-events: none; opacity: 0; translate: 0 6px; transition: opacity 140ms ease-out, translate 140ms ease-out; }
+.cm-tipwrap.show { opacity: 1; translate: 0 0; }
+.cm-tipwrap .bt { --bu: var(--u); }
+.cm-tipwrap.dock { left: 50%; translate: -50% 6px; }
+.cm-tipwrap.dock.show { translate: -50% 0; }
+.bt-body .ex { color: #a8977a; }
+.bt-chip.free { white-space: nowrap; }
+/* kare ikon altlik: oyundaki medalyon icinde .ico arka plan boyutu */
+
+/* mevcut: .cx-tag.q ::after kutusu zaten real.css icinde (data-tip); title= yerel balonu tarayicidan gelir */
+@media (prefers-reduced-motion: reduce) { .cm-tipwrap { transition: none !important; } }
+
+/* gercek telefon penceresi (yukseklik < 520): cubuk ve not sayfayla birlikte kayar, sahne 1:1 */
+html.small, html.small body { height: auto; overflow: auto; }
+html.small #mk-bar, html.small #mk-note { position: static; }
+html.small #mk-view { position: relative; top: auto; bottom: auto; height: var(--vh, 390px); overflow: hidden; display: block; }
+html.small #mk-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0 !important; }
+
+/* #...&clean = cubuk ve not gizli (yalniz sahne; ekran goruntusu icin) */
+html.clean #mk-bar, html.clean #mk-note { display: none; }
+html.clean #mk-view { top: 0; }
+.short .cx-attrs { gap: 0 8px; }
+.short .cx-attr { font-size: 14px; gap: 4px; }
+.short .cx-attr small { font-size: 9px; letter-spacing: .06em; }
+.short [data-bt], .short .cx-ref { min-height: 44px; min-width: 44px; }
+.short .cx-rarity { min-height: 44px; }

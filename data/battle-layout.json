@@ -472,7 +472,9 @@
     "cameraShakeRatio": 0.25,
     "hpGhostDelayMs": 350,
     "hpGhostBaseMs": 350,
-    "hpGhostPerLevelMs": 900
+    "hpGhostPerLevelMs": 900,
+    "hitGapMs": 90,
+    "aoeHitGapMs": 50
   },
   "fontFamily": "\"Trebuchet MS\", system-ui, sans-serif",
   "colors": {
@@ -491,6 +493,7 @@
     "hpFill": "#5cc46b",
     "hpFillEnemy": "#e0574a",
     "mpFill": "#4f8cff",
+    "mpGhost": "#bcd8ff",
     "taintedMp": "#8a5ab8",
     "speedFill": "#e8a317",
     "speedFull": "#fff0a0",

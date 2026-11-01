@@ -6,7 +6,7 @@ import { closeAllLessons, dismissLesson, nudgeLesson, onLessonsTurnedOff, showCa
 
 /**
  * Savaş içi tutorial yöneticisi (sefer savaşı; BattleScene çağırır, kurallar saf src/tutorial/lessons.ts, docs/design/tutorial.md).
- * - İlk savaş (Mill Road): açılış sözü + zorunlu adımlar. 1. karar: sıra çubuğu -> saldırı düğmesi -> Hit Chance -> hedef; 2. karar (f_mp_skill): kahramanın
+ * - İlk savaş (Mill Road): açılış sözü + zorunlu adımlar. 1. karar: sıra çubuğu -> saldırı düğmesi -> hedef (Hit Chance Whisper'ı yanında); 2. karar (f_mp_skill): kahramanın
  *   en güçlü MP skill'i parlar, oyuncu onu bir hedefe kullanır, ardından "Skills and MP" dersi burada gösterilir (kullanılabilir MP skill'i
  *   yoksa adım sessizce atlanır). Adım bitmeden başka girdi kabul edilmez (`allowSkill` / `allowGlobal` / `allowPerform`); ayar kapalıysa ya
  *   da "Don't show again" basılırsa serbest kalır.
@@ -178,6 +178,7 @@ export class BattleTutorial {
   /** Oyuncu bir eylem yaptı (skill hedefe gitti). */
   onPerformed(skillId?: string): void {
     if (this.phase === 'target') {
+      dismissLesson(HIT_CHANCE); // Whisper: oyuncu eylem yapınca hemen kalkar
       const mp = this.mpStep ? this.stepSkill : null;
       this.finishStep();
       // "Skills and MP" burada (Ömer 2026-10-14, f_mp_skill): kullanılan skill artık beklemede / MP harcandı
@@ -263,18 +264,9 @@ export class BattleTutorial {
 
   /** Sıradaki zorunlu adımı açar; kalmadıysa serbest kalır. */
   private nextStep(): void {
-    // Hit Chance (Ömer 2026-10-31): ilk saldırı seçilince, hedef adımından önce. Mill Road'da durum dersi çıkmadığı için aksi halde ikinci savaşa
-    // kalıyordu. Kart kapanana kadar vuruş kilitli (phase 'next'); hedefin üstündeki sayılar bu sırada görülebilir.
-    if (this.steps[0]?.forced === 'target' && !seenLessons().has(HIT_CHANCE)) {
-      this.setPhase('next');
-      const shown = showLesson(HIT_CHANCE, {
-        force: true,
-        onClose: () => {
-          if (this.phase === 'next') this.nextStep();
-        },
-      });
-      if (shown) return;
-    }
+    // Hit Chance (Ömer 2026-10-31): ilk saldırı seçilince, hedef adımıyla birlikte. Mill Road'da durum dersi çıkmadığı için aksi halde ikinci savaşa
+    // kalıyordu. Whisper olduğu için (C6 B) girdi beklemez: solmasını beklemek zorunlu akışı 7,6 sn kilitliyordu (tıklamalar sessizce düşüyordu).
+    if (this.steps[0]?.forced === 'target' && !seenLessons().has(HIT_CHANCE)) showLesson(HIT_CHANCE, { force: true });
     const l = this.steps.shift();
     if (!l || !l.forced) {
       this.setPhase(null);

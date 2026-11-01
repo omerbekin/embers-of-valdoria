@@ -468,7 +468,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Levels',
     icon: 'team',
     label: 'Open stat allocation',
-    hint: 'Open Gear on the Sheet tab (level, XP bar, stat points: drag the point stone onto a stat or tap +)',
+    hint: 'Open Gear on the Sheet tab (level, XP bar, stat points: hold a Main stat box to spend a point, or drag the point stone onto it)',
     run: () => {
       const s = ensureState();
       if (!s.roster.length) setState(debugTeleport(s, getMap(s.mapId).nodes.find((n) => n.type === 'town')?.id ?? s.at));
@@ -806,7 +806,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Tutorial',
     icon: 'book',
     label: 'Garrick ribbon (stat point)',
-    hint: 'Same for Gear > Sheet: the ribbon glows the main stat. Open the map first. Needs tutorials on.',
+    hint: 'Same for Gear > Sheet: the ribbon glows the main stat; Take it places 1 point at once (no Confirm). Open the map first. Needs tutorials on.',
     run: firstPoint('stat'),
   });
   debug.register({

@@ -2601,6 +2601,41 @@ html.short .bh-right.stacked .bh-pl-ico {
   opacity: 0.45;
 }
 
+/* kilit simgesi: sönük ikonun üstünde ortalı (kilitli skill; açılış metni ipucunda) */
+.bp-lock {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: 62%;
+  height: 62%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9));
+}
+
+/* simge dosyası yokken sade yer tutucu: küçük asma kilit (gövde + kulp) */
+.bp-lock.ph {
+  width: 34%;
+  height: 28%;
+  background: #c9ab62;
+  border: 1px solid #1a110a;
+  border-radius: 2px;
+}
+
+.bp-lock.ph::before {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: -70%;
+  height: 80%;
+  border: 2px solid #c9ab62;
+  border-bottom: 0;
+  border-radius: 40% 40% 0 0;
+}
+
 .bp.cdn .bp-nm,
 .bp.off .bp-nm {
   color: var(--muted);
@@ -2816,6 +2851,11 @@ html.short .bp {
 html.short .bp-ico {
   width: 76px;
   height: 76px;
+}
+
+html.short .bp-lock:not(.ph) {
+  width: 74%;
+  height: 74%;
 }
 
 html.short .bp-key {

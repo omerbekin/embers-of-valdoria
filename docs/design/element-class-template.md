@@ -11,7 +11,7 @@
 - Anti-Mage’in Drain Field ve Void Strike skill’leri Elektrik temalı (Ömer 2026-10-11).
 - Kan yalnızca AĞIR KRİTİK FİZİKSEL vuruşlarda çıkar (Ömer 2026-10-11).
 - Şimdilik skill art’ı (ikon/vfx/ses) değişmez; sistem uygulanınca su/elektrik temasına göre yenilenir (Ömer 2026-10-11).
-- Archer özel okları: AÇIK (cevap bekliyor).
+- Archer bu planda YOK (Ömer 2026-11-01: fikirlerden çıkarıldı); özel ok, yağ ve ikinci elektrik kaynağı önerileri kapandı.
 - Sıra: item sistemi bitince bu sistem (Ömer 2026-10-11).
 
 ## 2. Elementler
@@ -26,7 +26,7 @@
 | Elektrik | Sarsar; ıslak hedefi sersemletir, sıvıyı ve buharı “yüklü” yapar. | Karar (Anti-Mage) |
 | Buhar | Hasar türü değil, BULUT. Su + ateşten doğar; elektrikle yüklü bulut olur. | Taslak |
 | Zehir | Zemin (Undead’de zaten var). Ateşle patlar. | Taslak |
-| Yağ | Zemin; üstündekini yavaşlatır, ateşle yangına döner. Yalnız Archer önerisinde. | Taslak (Archer AÇIK) |
+| Yağ | Zemin; üstündekini yavaşlatır, ateşle yangına döner. Tek kaynağı Archer önerisiydi, o kapandı (2026-11-01): şu an veren sınıf yok. | Taslak, kaynaksız |
 | Kutsal | Kutsar; yangını kutsal ateşe, suyu kutsal suya çevirir. | Taslak |
 | Karanlık | Lanetler; kutsal ateşi lanetli ateşe çevirir. | Taslak |
 | Arcane | Saf büyü; zemin/hal etkileşimi yok (Mana Barrier, Spell Ward, Mana Steal). | Mevcut |
@@ -124,27 +124,6 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 - (S12) Sıçratma kaç kareye (yalnız sağ-sol-ön-arka mı)?
 - (S13) Guard’lanan müttefik ıslakken gelen elektriği Defender mı yer?
 
-### Archer — DEX — Fiziksel + Yağ + Elektrik
-
-**Element kimliği:** Özel oklar (AÇIK): yağ ve elektrik taşıyan uzak menzil kurulumcusu; öneri Pitch Rain + Shock Arrow.
-
-| Skill | Şu anki element | Önerilen element | Uyguladığı durum | Tetiklediği / tükettiği etkileşim | Değişiklik | Pasifle ilişkisi |
-|---|---|---|---|---|---|---|
-| Quick Shot | Fiziksel | Fiziksel | Haste (kendine, mevcut) | Yok | yok | Sharpshooter ile ilgisiz |
-| Piercing Arrow | Fiziksel | AÇIK: öneri Elektrik (Shock Arrow) | Shocked; ıslaksa Stunned | Tüketir: hat boyunca ıslak hedefleri sersemletir; su/kan zemini → yüklü zemin | rework | Sharpshooter: arka sıradaki ıslak büyücülere daha güçlü |
-| Arrow Rain | Fiziksel | AÇIK: öneri Yağ (Pitch Rain) | Yağ zemini → Slow | Kurar: yağ + ateş = yangın (Mage, Paladin) | rework | Yok |
-| Aimed Shot | Fiziksel | Fiziksel (+Kan) | Ağır kritikte kan | Kurar: kan zemini | küçük | Sharpshooter: uzak hedefte ağır kritik daha olası |
-
-**Takım sinerjisi:**
-- Mage Fire Bolt / Meteor: yağı yangına çevirir.
-- Druid: ıslattığı hedefi Shock Arrow sersemletir.
-- Anti-Mage ile ikinci elektrik kaynağı (seçilirse).
-
-**Açık sorular:**
-- (S14) Archer özel okları hangisi: A) Pitch Rain + Shock Arrow, B) yalnız Pitch Rain, C) Archer saf fiziksel kalsın?
-- (S15) Elektrik iki sınıfta (Anti-Mage + Archer) mı olsun, yalnız Anti-Mage’de mi?
-- (S16) Yağ 1. aşamaya girer mi?
-
 ### Cutthroat — DEX — Fiziksel + Zehir
 
 **Element kimliği:** Zehir ve duman: zehirli bıçakla patlamaya hazırlık yapar, takımın hallerinden beslenen fırsatçı.
@@ -196,7 +175,7 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 
 **Takım sinerjisi:**
 - Druid: ıslak hedef → Blizzard ile Frozen, Fire Bolt ile buhar.
-- Cutthroat / Undead / Archer: zehir ve yağ zeminini patlatır.
+- Cutthroat / Undead: zehir zeminini patlatır.
 - Paladin: Meteor’un yanan zeminini kutsal ateşe çevirir.
 
 **Açık sorular:**
@@ -296,7 +275,7 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 | Raise Dead | — | — | İskelet: Bone Strike / Bone Slash (fiziksel) | İskeletin ağır kritiği hedefte kan bırakır (iskeletin kendisi kansız) | yok | Vampiric Bite |
 
 **Takım sinerjisi:**
-- Mage / Archer-yağ: zehir zeminini patlatır.
+- Mage: zehir zeminini patlatır.
 - Cutthroat ile ortak zehir alanı.
 - Hexer ile karanlık ortaklığı.
 
@@ -311,7 +290,6 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | Warrior | ● | ● |  |  |  |  |  |  |  |  |  |  |  |
 | Defender | ● | ○ |  | ✦ | ○ |  |  |  |  |  |  |  |  |
-| Archer | ● | ○ |  |  |  | ○ |  |  | ○ |  |  |  |  |
 | Cutthroat | ● | ○ |  |  |  |  |  | ● |  |  |  |  |  |
 | Gambler | ● | ● | ○ | ○ | ○ | ○ |  |  |  |  |  |  |  |
 | Mage |  | ✦ | ● | ● | ✦ |  | ✦ | ✦ | ✦ |  |  | ○ |  |
@@ -324,7 +302,7 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 **Kurulum → tetik zincirleri (her sınıfın en az bir ortağı var):**
 - Druid ıslatır → Mage Blizzard dondurur (Frozen) / Anti-Mage sersemletir (Stunned) / Mage Fire Bolt buharlaştırır.
 - Warrior / Gambler kan döker → Mage buz zemini yapar / Anti-Mage yükler; Defender kanı yayar.
-- Cutthroat / Undead zehir bırakır, Archer yağ döker (açık) → Mage patlatır / yakar.
+- Cutthroat / Undead zehir bırakır → Mage patlatır / yakar.
 - Mage yanan zemin bırakır → Paladin kutsal ateşe çevirir → Hexer lanetli ateşe çevirir.
 - Mage buhar yaratır → Anti-Mage yüklü bulut yapar.
 - Mage dondurur → Defender buzu kırar (**[ÖNERİ]**).
@@ -344,9 +322,9 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 11. **Defender:** Frozen hedefi kırmak ekstra hasar verir mi, yoksa yalnız donmayı mı bitirir?
 12. **Defender:** Sıçratma kaç kareye (yalnız sağ-sol-ön-arka mı)?
 13. **Defender:** Guard’lanan müttefik ıslakken gelen elektriği Defender mı yer?
-14. **Archer:** Archer özel okları hangisi: A) Pitch Rain + Shock Arrow, B) yalnız Pitch Rain, C) Archer saf fiziksel kalsın?
-15. **Archer:** Elektrik iki sınıfta (Anti-Mage + Archer) mı olsun, yalnız Anti-Mage’de mi?
-16. **Archer:** Yağ 1. aşamaya girer mi?
+14. **Archer:** KAPANDI (Ömer 2026-11-01, Archer plandan çıktı).
+15. **Archer:** KAPANDI (elektrik yalnız Anti-Mage'de).
+16. **Archer:** KAPANDI (yağın kaynağı kalmadı).
 17. **Cutthroat:** Opportunist listesine element halleri (Wet, Chilled, Shocked) eklensin mi?
 18. **Cutthroat:** Venom Edge zehir zemini bıraksın mı, Wound yeterli mi?
 19. **Gambler:** Card Trick havuzuna element halleri girsin mi, yoksa “şans” kimliği sade mi kalsın?

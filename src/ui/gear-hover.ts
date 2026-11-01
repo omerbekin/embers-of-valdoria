@@ -24,6 +24,7 @@ import {
   SLOT_IDS,
   type Equipment,
   type ItemInstance,
+  type SlotId,
 } from '../progression';
 
 export interface HoverHero {
@@ -68,6 +69,23 @@ export interface HeroLine {
   text: string;
   tone: 'idle' | 'up' | 'down' | 'mixed' | 'none' | 'no';
   parts: HeroLinePart[];
+}
+
+/**
+ * Çanta item'inin kuşanılırsa gireceği yuvadaki mevcut item (Gear Hero çantası, item ipucunun yanındaki "EQUIPPED" kartı; Ömer 2026-11-01).
+ * Yuva eşlemesi `defaultEquipSlot` tabanlı (karşılaştırma satırı, çift tık, sürükle-bırak da bunu kullanır): tek yuvalı parçalar kendi yuvasına; tek ve çift el silah
+ * ana elle karşılaştırılır, tek el silah takılınca ikinci ele gidecek olsa bile (ikinci eldeki kalkan kartta gösterilmez).
+ * Yuva boşsa (ya da item'in tanımı yoksa) null: ikinci kart çıkmaz.
+ */
+export function equippedAgainst(h: HoverHero, inst: ItemInstance | null | undefined): { slot: SlotId; item: ItemInstance } | null {
+  const d = inst ? itemDef(inst.id) : undefined;
+  if (!inst || !d) return null;
+  let slot = defaultEquipSlot(h.equipment, d);
+  // tek el silah ikinci el boş diye o yuvaya gidecekse bile oyuncu ana eldekiyle karşılaştırmak ister
+  if (slot === 'offhand' && d.slot !== 'offhand' && !h.equipment.offhand) slot = 'weapon';
+  const item = h.equipment[slot];
+  // aynı örnek zaten takılıysa (yuva kaynağı) karşılaştırılacak başka bir şey yok
+  return item && item.uid !== inst.uid ? { slot, item } : null;
 }
 
 /** Dolu yuva sayısı / toplam yuva ("2/7"; kahraman ipucunda elmas sırası). */

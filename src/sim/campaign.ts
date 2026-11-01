@@ -263,6 +263,14 @@ export interface CampaignSimOptions {
   onBattle?: (nodeId: string, state: CampaignState) => void;
   /** Ölçülen harita (--map; varsayılan Harita 1). Sonraki haritada önceki haritalar aynı seed'le önce oynanır (simMapChain), sayaçlar yalnız hedefin. */
   map?: string;
+  /**
+   * Ölçüm araçları (affix-measure.ts): hazır başlangıç durumu (koşunun rotası verilir; önceki haritalar oynanmaz, seferin bir dilimi ölçülür),
+   * durdurma koşulu (her adımdan önce), kamp seçimi (yoksa simCampChoice), koşu sonu okuma.
+   */
+  startState?: (seed: number, route: string[]) => CampaignState;
+  stopWhen?: (s: CampaignState) => boolean;
+  campChoice?: (s: CampaignState) => CampChoice;
+  onRunEnd?: (s: CampaignState) => void;
 }
 
 /** Toplanabilir (paralel parçalar birleştirilebilir) sayaçlar. */
@@ -364,7 +372,7 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
 
 function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
   // Zincir (--map): hedef Harita 1 değilse önceki haritalar aynı seed'le önce oynanır; onların düğüm / loot sayaçları atılır (scratch).
-  const chain = simMapChain(o.map ?? CONFIG.maps[0]!);
+  const chain = o.startState ? [o.map ?? CONFIG.maps[0]!] : simMapChain(o.map ?? CONFIG.maps[0]!);
   const chainRoutes = chain.map((id) => allRoutes(getMap(id)));
   let map = getMap(chain[0]!);
   const maxAttempts = o.maxAttempts ?? 10;
@@ -410,6 +418,7 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
     const routes = chainRoutes[phase]!;
     route = routes[(i + (o.routeOffset ?? 0)) % routes.length]!;
     label = routeLabel(map, route);
+    if (o.startState) s = o.startState(seed, route);
     if (phase > 0) {
       if (stuck && !(o.continueOnStuck ?? true)) {
         res.carry!.attempted++;
@@ -428,6 +437,7 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
     }
     while (true) {
       if (stuck && !(o.continueOnStuck ?? true)) break;
+      if (o.stopWhen?.(s)) break;
       const step = nextStep(s);
       if (step.kind === 'complete') break;
       switch (step.kind) {
@@ -508,7 +518,7 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
         }
         case 'rest':
           // Kamp (Ömer 2026-10-26: tek seçim): simCampChoice (Tend / Rest / Sharpen / Train)
-          s = useCamp(s, simCampChoice(s));
+          s = useCamp(s, o.campChoice ? o.campChoice(s) : simCampChoice(s));
           break;
         case 'merchant':
           // tüccar: vekil alışveriş yapmaz (Ömer 2026-10-11, madde 305)
@@ -526,6 +536,7 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
     }
     }
     if (skip) continue;
+    o.onRunEnd?.(s);
     const ra = (res.routes[label] ??= { runs: 0, completed: 0, defeats: 0 });
     res.runs++;
     ra.runs++;

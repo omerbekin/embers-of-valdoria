@@ -11,7 +11,7 @@
 
 ## Form kuralı
 - Sohbetlerden gelen açık soruları tek tek sormaz, **tek açık formda** toplar: seçenekler, önerisi ilk sırada, not alanı, Ömer "seçtim" der. Biçim: hafızadaki selection-pages ve decision-forms kuralları.
-- Her soruda hangi sohbetten geldiği, neyi engellediği yazar. Mockup ve sanat seçimlerinde link forma konur.
+- Her soruda hangi sohbetten geldiği, neyi engellediği yazar. Mockup ve sanat seçimlerinde ekran görüntüleri forma konur; link yalnız ek olarak verilir, gönderimden önce açılmaz. Sohbet görselleri dosya olarak Koordinatör'e yollar.
 - "seçtim" sonrası cevapları db'den okur, kararı aynı turda sahibine iletir, kaydı günceller.
 - Acil ve tek satırlık soru (bir gönderimi ya da işi durduruyor) doğrudan sohbette sorulur.
 - Yeni mekanik, stat, kaynak ya da kural önerisi forma açık soru olarak girer, hiçbir sohbet sormadan eklemez.

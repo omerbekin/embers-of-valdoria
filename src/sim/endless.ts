@@ -53,6 +53,10 @@ export interface EndlessSimOptions {
   carryFormation?: boolean;
   /** Valor (Ömer 2026-10-13): false = savaşta kullanılmaz, savaş dışı diriltme yok (Valor öncesi karşılaştırma; CLI VALOR=off). */
   valor?: ValorSimMode;
+  /** Ölçüm araçları (affix-measure.ts): sabit takım (yoksa simTeam), koşu başı düzenleme (başlangıç dalgası, level, sabit takım item'leri), koşu sonu okuma. */
+  classes?: string[];
+  setupRun?: (run: EndlessRun) => EndlessRun;
+  onRunEnd?: (run: EndlessRun) => void;
 }
 
 /** Tek dalganın kaydı (kısa alan adları: yüzlerce koşu JSON ile süreçler arası taşınır). */
@@ -158,9 +162,10 @@ function simulateEndlessRuns(o: EndlessSimOptions): EndlessSimResult {
   const res: EndlessSimResult = { gear, relics, player, maxWave, runs: [] };
   for (let i = 0; i < o.runs; i++) {
     const seed = (o.firstSeed ?? 1) + i;
-    const classes = simTeam(seed, cfg.partySize);
+    const classes = o.classes ?? simTeam(seed, cfg.partySize);
     const rng = new Rng(seed * 104729 + 3);
     let run = newRun(seed, classes, '2026-01-01T00:00:00.000Z', cfg);
+    if (o.setupRun) run = o.setupRun(run);
     const waves: WaveRec[] = [];
     const drops: Array<[number, number]> = [];
     const note = (itemId: string, rolls: unknown) => {
@@ -224,6 +229,7 @@ function simulateEndlessRuns(o: EndlessSimOptions): EndlessSimResult {
         } else run = leaveShop(run);
       } else break;
     }
+    o.onRunEnd?.(run);
     res.runs.push({ seed, classes, reached: capped ? maxWave + 1 : run.wave, capped, relics: [...(run.relics ?? [])], gearScore: gearScore(run), waves, drops });
   }
   return res;

@@ -20,6 +20,7 @@ import {
   getMap,
   leaderOf,
   soloSkillStage,
+  soloUnlockHints,
   isFallen,
   node,
   claimSlot,
@@ -96,6 +97,17 @@ export const session = {
 };
 
 /** Tek kişilik başlangıç: bu savaşın başında liderin yeni açılan skill'leri (Garrick'in cümlesi). */
+/** Tek kişilik başlangıç: kilitli skill'in HUD ipucundaki "ne zaman açılır" metni (uid 'party-i' -> skill id -> metin). */
+function leaderLockHints(st: CampaignState, nodeId: string, heroOrder: string[]): Record<string, Record<string, string>> {
+  const out: Record<string, Record<string, string>> = {};
+  heroOrder.forEach((id, i) => {
+    const h = st.roster.find((x) => x.id === id);
+    const hints = h ? soloUnlockHints(st, h, nodeId, (n) => node(getMap(st.mapId), n).name) : {};
+    if (Object.keys(hints).length) out[`party-${i}`] = hints;
+  });
+  return out;
+}
+
 function leaderUnlocks(st: CampaignState, nodeId: string): string[] {
   const lead = leaderOf(st);
   return lead ? (soloSkillStage(st, lead, nodeId)?.fresh ?? []) : [];
@@ -328,6 +340,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     // Savaş arka planı (karşılaşma > düğüm > bölge; dosya yoksa savaşın varsayılanı): King's Bridge = kings-bridge
     ...(plan.background ? { background: plan.background } : {}),
     // Tutorial bağlamı (docs/design/tutorial.md): düğüm / bölge dersleri, Bölüm III yenilgi ipucu (bu düğümdeki yenilgi sayısı)
+    ...(Object.keys(leaderLockHints(st, plan.nodeId, plan.heroOrder)).length ? { lockHints: leaderLockHints(st, plan.nodeId, plan.heroOrder) } : {}),
     tutorial: { node: plan.nodeId, region: node(getMap(st.mapId), plan.nodeId).region, encounter: plan.encounterId, defeats: session.attempts.get(st.at) ?? 0, unlocks: leaderUnlocks(st, plan.nodeId) },
     campaign: {
       resultActions: (victory, battle) => resultActions(game, plan, victory, battle),

@@ -1571,3 +1571,18 @@ Sayıların tamamı PROVİZYON; sim sonraki turda (madde 427 notu). Metinler tas
 
 ## 485. Yoldaş önerisi (Suggested): varsayımlar (ui-dev, 2026-11-01; Ömer seçimi A, banner yok, altın 2. satır)
 Yer Ashford ve Valdren kışlası. Öncelik ön saf > arka saf > takımı besleyen (Ömer). Rol eşlemesi (campaign.json > companySuggest, varsayım): Warrior, Defender ön saf; Paladin ön saf + besleyen; Archer, Mage, Vesper, Hexer arka saf; Druid, AM besleyen; Cutthroat, Undead, Gambler rolsüz, önerilmez. Defender'ın Close Ranks'ı ve Undead'in Dark Bond'u besleyen sayılmadı (yalnız can, can yenileme, kalkan). Aday sunulan havuzda yoksa sıradaki eksik role geçilir. Valdren'in kışla dışı "volunteer" kartı öneri almaz.
+
+## 486. Gold find / Experience kalkınca eski item'ler: varsayımlar (engine-dev, 2026-11-01; karar B4)
+Yeni affix aynı kademe ve yuva havuzundan uid'den seed'li gelir (Ömer). Varsayımlar: eski affix'in değer zarı (q) ve sırası korunur (item'in şansı değişmesin); havuz sınıfa göre ağırlıklanmaz, tekdüze çekilir; takılı item'i değişen kahramanı olan kaydın duraklatılmış savaşı atılır (kurulum değişti, eski göçlerle aynı kural), yalnız torbadaki item değiştiyse savaş kalır; kayıt sürümü artmaz, göç her okumada çalışır ve ikinci geçişte iş yapmaz. **Soru:** bunlar uygun mu?
+## 487. Affix ölçüm aracı: varsayımlar (balance-tester, 2026-11-01; item-design-plan adım 1, B1)
+Araç `npm run sim:affix`. Kahraman tipleri: ön Warrior, arka Mage, destek Paladin, sabit yoldaş Archer; üç tipe de yaramayan affix (Dark, Arcane, Nature, Lightning, DoT, Shield power, Summon) ona yarayan ilk sınıfta 'yedek' satırı olarak ölçülür.
+- **Varsayım, ortam:** seferin ve Endless'ın tamamı değil, ilvl'e denk dilim oynanır (sefer 8 savaş, Endless 10 dalga). Sefer ilvl 30 oyunda kapalı Harita 3'te.
+- **Varsayım, temel takım:** Uncommon, item seviyesi ilvl x 0,35, level x 0,8. Harita 1 ve 2 sonundaki gerçek vekil takımdan okundu; Harita 3 ve Endless için aynı oran varsayıldı.
+- **Varsayım, ölçü:** güç puanı = savaş başına takımın savaş sonu ortalama canı, kayıp 0. Gold find ve Experience ekonomi satırıdır, IP sıralamasına girmez.
+
+## 488. Level farkı saldırı bonusu: varsayımlar (engine-dev, 2026-11-01)
+1. **Yüzde puanı:** +%2 Accuracy, accuracy'ye eklenen 0,02'dir (çarpan değil); evasion sonra düşer, hit şansı yine [0, %100]. Yeni tavan yok. Kritik +%1 de 0,01 puandır, mevcut [0, 1] kırpması geçerli.
+2. **Kapsam:** yalnızca hasar skill'inin doğrudan vuruşu (ve `treeHitRoll` ön zarı). Doom, DoT / zemin tiki ve şifa kritiği bonus almaz. Telgraf ve zarsız vuruşta isabet zarı yok, kritik zarı bonusu alır.
+3. **Yalnız düşmana:** aynı taraftaki birime vuruşta bonus yok.
+4. **Çağrı:** çağıranın level'ını alır (mevcut kural), dolayısıyla bonusu da alır; sahibi olmayan hazır çağrı karşılaşmanın level'ını alır.
+5. **Jinxed:** kritik eki toplama girer, Jinxed'in -1'i pratikte kritiği yine kapatır (çok yüksek kritik + büyük farkta %0'ın üstüne çıkabilir, Jinx'in critBonus'uyla aynı davranış).

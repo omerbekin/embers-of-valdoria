@@ -1,0 +1,101 @@
+/* Gear: Ring + Trinket yuvalari mockup'i. Gercek Gear CSS'i real.css (oyundan kopya); bu dosya yalniz cubuk, sahne ve A/B/C yerlesimleri. */
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('fonts/Cinzel-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('fonts/Cinzel-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('fonts/EBGaramond-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('fonts/EBGaramond-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+html, body { margin: 0; height: 100%; overflow: hidden; background: #050403; }
+#mk-bar {
+  position: fixed; left: 0; right: 0; top: 0; height: 48px; z-index: 100; box-sizing: border-box;
+  display: flex; align-items: center; gap: 5px; padding: 2px 8px; overflow-x: auto;
+  background: #0d0a07; border-bottom: 1px solid rgba(217, 178, 106, 0.3);
+  font: 600 12px Cinzel, Georgia, serif; letter-spacing: 0.06em; color: #d9c8a2;
+}
+#mk-bar button {
+  flex: none; min-height: 44px; min-width: 44px; padding: 0 12px; box-sizing: border-box;
+  background: rgba(30, 22, 14, 0.8); border: 1px solid rgba(217, 178, 106, 0.3); border-radius: 0;
+  color: #d9c8a2; font: 600 12px Cinzel, Georgia, serif; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+  transition: color 0.18s, border-color 0.18s, background 0.18s;
+}
+#mk-bar button:hover:not(:disabled) { border-color: #f3d999; color: #f3d999; }
+#mk-bar button.on { border-color: #f3d999; color: #f3d999; background: rgba(224, 112, 42, 0.18); }
+#mk-bar button:disabled { opacity: 0.35; cursor: default; }
+#mk-bar .sep { flex: none; width: 1px; align-self: stretch; margin: 6px 4px; background: rgba(217, 178, 106, 0.3); }
+#mk-note { position: fixed; left: 0; right: 0; top: 48px; z-index: 99; box-sizing: border-box; min-height: 40px; padding: 5px 10px; background: #0d0a07; border-bottom: 1px solid rgba(217, 178, 106, 0.18); font: 400 14px/1.2 'EB Garamond', Georgia, serif; color: #cdb88d; }
+#mk-note b { color: #f3d999; font-weight: 600; }
+#mk-view { position: fixed; left: 0; right: 0; top: 90px; bottom: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+#mk-stage { position: relative; flex: none; overflow: hidden; background: #050403; transform-origin: 50% 50%; }
+#mk-stage .gr-overlay { position: absolute; inset: 0; }
+
+/* Hero sayfasi: yuva bolgesi kayma yapmaz (oyundaki gibi) */
+.mk-tabs-dead { pointer-events: none; }
+
+/* ---------- B "Jewelry bar": 6 plaka ustte, takilar altta ince ayiricinin altinda alcak plakalar ---------- */
+.mk-jbar { flex: none; display: flex; flex-direction: column; gap: calc(8 * var(--u)); margin-top: calc(10 * var(--u)); }
+html.short .mk-jbar { gap: 4px; margin-top: 4px; }
+.mk-jdiv { position: relative; height: 1px; background: linear-gradient(90deg, transparent, var(--g-edge) 15%, var(--g-edge) 85%, transparent); }
+.mk-jdiv::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(6px, calc(9 * var(--u))); height: max(6px, calc(9 * var(--u))); transform: translate(-50%, -50%) rotate(45deg); background: #130d07; border: 1px solid var(--g-gold); }
+.mk-jrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(16 * var(--u)); }
+html.short .mk-jrow { gap: 8px; }
+.mk-jrow .gr-slot.gr-plate { min-height: max(48px, calc(64 * var(--u))); height: auto; overflow: hidden; }
+.mk-jrow .gp-ico { width: max(40px, calc(52 * var(--u))); height: max(40px, calc(52 * var(--u))); }
+.mk-jrow .gp-l2 { display: none; }
+html.short .mk-jrow .gr-slot.gr-plate { min-height: 44px; }
+html.short .mk-jrow .gp-ico { width: 38px; height: 38px; }
+html.short .mk-jrow .gr-slot.gr-plate .gr-slot-name { font-size: 10px; }
+/* B'de ana izgara 3 satir: .gr-slots zaten kalan yuksekligi paylasir */
+
+/* ---------- C "Header tiles": takilar sinif satirinin sagina ikon karolari ---------- */
+.mk-tiles { margin-left: auto; display: flex; gap: calc(12 * var(--u)); }
+html.short .mk-tiles { gap: 6px; }
+.mk-tile { position: relative; flex: none; display: grid; place-items: center; box-sizing: border-box; width: max(48px, calc(72 * var(--u))); height: max(48px, calc(72 * var(--u))); padding: 0; cursor: pointer;
+  background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--rc) 30%, transparent), rgba(8, 6, 4, 0.8) 78%);
+  border: 1px solid color-mix(in srgb, var(--rc) 65%, rgba(217, 178, 106, 0.3));
+  box-shadow: inset 0 0 max(8px, calc(18 * var(--u))) color-mix(in srgb, var(--rc) 16%, transparent), 0 0 0 2px rgba(8, 6, 4, 0.6);
+  transition: border-color 0.17s, transform 0.17s; }
+html.short .mk-tile { width: 44px; height: 44px; }
+.mk-tile .gr-svg { width: 82%; height: 82%; object-fit: contain; }
+.mk-tile.empty { border: 1px dashed var(--g-line2); background: rgba(8, 6, 4, 0.5); box-shadow: none; }
+.mk-tile:hover:not(.locked) { border-color: color-mix(in srgb, var(--rc) 85%, white); transform: translateY(-2px); }
+.mk-tile.empty:hover:not(.locked) { border-color: var(--g-gold); }
+.mk-tile .gp-hint { right: auto; left: 0; }
+.mk-tile i.mk-cap { position: absolute; left: 0; right: 0; bottom: 1px; text-align: center; font: 600 max(7px, calc(10 * var(--u))) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: var(--g-dim); pointer-events: none; font-style: normal; }
+html.short .mk-tile i.mk-cap { display: none; }
+.mk-tile.on { border-color: var(--rc, var(--g-gold)); box-shadow: inset 0 0 0 1px var(--rc, var(--g-gold)), 0 0 calc(14 * var(--u)) color-mix(in srgb, var(--rc, #f08c28) 55%, transparent); }
+.gr-dragging .mk-tile.drop-ok { border-style: solid; border-color: var(--drag-rc, var(--g-gold)); box-shadow: inset 0 0 0 1px var(--drag-rc, var(--g-gold)), 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--drag-rc, #f08c28) 55%, transparent); }
+.gr-dragging .mk-tile.drop-ok .gp-hint { display: block; }
+.gr-dragging .mk-tile.drop-no { opacity: 0.38; }
+.mk-tile.locked { cursor: not-allowed; filter: saturate(0.35) brightness(0.8); }
+.mk-tile .gr-lock { position: absolute; right: 3px; top: 3px; width: max(12px, calc(20 * var(--u))); height: max(12px, calc(20 * var(--u))); color: #e6dcc6; opacity: 0.9; pointer-events: none; }
+.mk-tile .gr-lock svg { width: 100%; height: 100%; }
+.mk-tile .gp-hint::after { content: 'Equip'; }
+.mk-tile:not(.empty) .gp-hint::after { content: 'Swap'; }
+
+/* kilitli plaka: kilit simgesi + soluk "Locked" */
+.gr-slot.gr-plate.locked { filter: saturate(0.35) brightness(0.85); }
+.gr-slot.gr-plate.locked:hover { border-color: var(--g-line2); }
+.gr-slot.gr-plate.locked .gr-slot-name { color: #8a7d66; }
+
+/* sabitlenmis A Band ipucu (dokunma): zemine dokununca kapanir */
+.gr-tip.pinned { pointer-events: auto; }
+
+/* sekmeler etkisiz (yalniz Hero sayfasi gosterilir) */
+.mk-deadtab { pointer-events: none; }
+
+/* secili item (dokunma): uygun yuvalar gorunur, surukleme gibi */
+.mk-selecting .gr-slot.drop-ok .gp-hint { display: block; }
+.mk-selecting .gr-slot.gr-plate.drop-ok { border-style: solid; box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.5); }
+.mk-selecting .gr-slot.gr-plate.drop-no, .mk-selecting .mk-tile.drop-no { opacity: 0.45; }
+.mk-selecting .mk-tile.drop-ok { border-style: solid; border-color: var(--g-gold); }
+.mk-selecting .mk-tile.drop-ok .gp-hint { display: block; }
+
+/* ---------- telefon sigdirma (yalniz A/B/C; "Now" bugunku kirpilmayi oldugu gibi gosterir) ----------
+   844x390'da sol sayfa bugun 3 satir plaka kadar (4. satir kirpiliyor). Yuvalarin hepsi gorunsun diye skill plakalarinin
+   bedel cipleri telefonda gizlenir (ad + ikon kalir) ve bosluk biraz sikilir. */
+html.short .mk-fit .gr-lskills .pl-chips { display: none; }
+html.short .mk-fit .gr-lskills .gr-skillbar { padding-top: 4px; }
+html.short .mk-fit .gr-lskills { padding-top: 4px; }
+html.short .mk-fit .gr-ledger .gr-leaf-hero > .gr-slots, html.short .mk-fit .gr-slots { gap: 2px 8px; }
+
+/* mockup: pencere acilis animasyonu yok (ekran goruntusu ve olcum icin; oyunda data/ui-motion.json > modal gecerli) */
+.mk-ov, .mk-ov .gr-panel { animation: none !important; }

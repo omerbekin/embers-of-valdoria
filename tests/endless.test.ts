@@ -146,7 +146,8 @@ describe('endless: dalga planı -> savaş', () => {
     for (const u of Object.values(plan.units.party)) expect(u.modifiers?.weaponMult).toBeUndefined();
     const bare = wavePlan({ ...fresh(), heroes: fresh().heroes.map((h) => ({ ...h, equipment: {} })) });
     for (const u of Object.values(bare.units.party)) expect(u.modifiers?.weaponMult).toBeLessThan(1); // silahsız: daha az hasar
-    expect(plan.units.enemies).toEqual({});
+    // düşmanda güçlendirme yok; yalnızca level (level farkı bonusu, Ömer 2026-11-01)
+    for (const u of Object.values(plan.units.enemies)) expect(u).toEqual({ level: plan.enemyLevel });
     const foes = plan.enemies.filter(Boolean);
     expect(foes).toHaveLength(enemyCount(1));
     expect(new Set(foes).size).toBe(enemyCount(1));

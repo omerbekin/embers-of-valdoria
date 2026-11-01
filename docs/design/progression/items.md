@@ -1,5 +1,7 @@
 # Item (eşya) sistemi: tasarım belgesi (TASLAK / ÖNERİ)
 
+> **Ömer 2026-11-01:** Trinket yuvası, affix dağılımı ve dengesi, set kararları için geçerli belge `item-design-plan.md`. Çelişki varsa o belge geçerlidir.
+
 > **Durum: AŞAMA 1 + YENİDEN YAPILANMA (Ömer onayı 2026-10-10, bölüm 1.3a).** Nadirlik = stat sayısı + güç, yuva ana statı + izinli ekler, seed'li stat zarları (kayda yazılır), Epic etki kancası (etkiler henüz seçilmedi: `item-effects.md`). Kodda: 52 item (`data/items.json`), loot `src/progression/loot.ts`, güç katmanı `loadout.ts` (zarlı değerler: `instanceStats`), Equip best `equip.ts`, primary uyarısı `primary.ts`, seferde loot `src/campaign/loot.ts`, Gear ekranı, Spoils / Ashford teslim kartı, düşman telafisi (`power-budget.json`). Sapmalar madde 280 ve 290'da. Sayılar PROVİZYON (balance-tester).
 >
 > Hazırlayan: content-designer (Opus). Kaynaklar: `docs/design/future-ideas.md` (Item satırları), `docs/design/campaign/campaign.md` (v5), `docs/balance.md` (bantlar + sefer dengesi), `docs/design/combat.md` (Savaş kurulum seçenekleri, hasar ölçekleme kuralı), `data/classes/*.json`, `data/formulas.json`, `src/engine/stats.ts`.
@@ -162,7 +164,7 @@ Bu bölüm 1.3'ün "ek stat satırı (affix)" sütununun ve 1.6'nın MVP kısmı
   - Heart of the Forge'un şifa oranı %10 -> %6.
   - Blinding Opener yalnızca o vuruşun kendi alanındaki hedeflere ve en çok 3 düşmana işler.
 - **Recovery:** zaferde yalnızca takan ve sağ kalan kahramana; sefer can taşımasına (`victoryHeal` üstüne) eklenir; Endless'ta can ve MP'ye.
-- **Kayıt göçü:** eski item'ler (eski stat zarlı) en yakın yeni biçime çevrilir. Eski statlara karşılık gelen affix'ler tercih edilir, eksik affix'ler uid'den seed'li çekilir; hiçbir durumda çökmez.
+- **Kayıt göçü:** eski item'ler (eski stat zarlı) en yakın yeni biçime çevrilir. Eski statlara karşılık gelen affix'ler tercih edilir, eksik affix'ler uid'den seed'li çekilir; hiçbir durumda çökmez. Oyundan kaldırılan affix (2026-11-01: Gold find, Experience) aynı kademe ve yuva havuzundan seed'li yenisiyle değişir, sırası ve değer zarı korunur.
 
 ### 1.4 Item seviyesi (ilvl) ve bölüm kademesi
 

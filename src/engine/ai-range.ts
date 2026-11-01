@@ -148,6 +148,8 @@ export function bestMoveRange(battle: Battle, actor: Combatant, mv: RangeMoveCon
   const close = attacks.some((s) => battle.rangeOf(actor, s) <= 1);
   const fragile = !close && ratio(actor) < Math.min(1, mv.retreatHpRatio * 2);
   const wounded = ratio(actor) < mv.retreatHpRatio;
+  // Ömer 2026-11-01: yakın dövüşçü, kendinden başka şu an vurabilen dost yoksa saldırı erişimini bırakıp geri çekilmez; geride kaldıysa riske bakmadan menzile döner
+  const lastHitter = close && !battle.living(actor.side).some((c) => c.uid !== actor.uid && c.board === actor.board && canActFrom(battle, c, c.slot));
   const neighbors = (slot: number) => battle.living(actor.side).filter((c) => c.uid !== actor.uid && c.board === actor.board && Math.abs(battle.rowOf(c.slot) - battle.rowOf(slot)) + Math.abs(battle.laneOf(c.slot) - battle.laneOf(slot)) <= 1).length;
   // Bitişik dost sayısı çok olan, sonra öne yakın, sonra küçük yuva
   const pickSlot = (slots: number[]): number => [...slots].sort((a, b) => neighbors(b) - neighbors(a) || battle.rowOf(a) - battle.rowOf(b) || a - b)[0]!;
@@ -158,8 +160,8 @@ export function bestMoveRange(battle: Battle, actor: Combatant, mv: RangeMoveCon
     const now = incomingAt(battle, actor, actor.slot, memo);
     if (now >= mv.minAvoidShare * actor.hp) {
       const safer = free.map((s) => ({ s, inc: incomingAt(battle, actor, s, memo) })).filter((x) => x.inc < now);
-      const keepActing = canActNow ? safer.filter((x) => canActFrom(battle, actor, x.s, usable)) : safer;
-      const pool = keepActing.length > 0 ? keepActing : safer;
+      const keepActing = canActNow || lastHitter ? safer.filter((x) => canActFrom(battle, actor, x.s, usable)) : safer;
+      const pool = keepActing.length > 0 || lastHitter ? keepActing : safer;
       if (pool.length > 0) {
         const low = Math.min(...pool.map((x) => x.inc));
         const slot = pickSlot(pool.filter((x) => x.inc <= low + 1e-9).map((x) => x.s));
@@ -179,7 +181,7 @@ export function bestMoveRange(battle: Battle, actor: Combatant, mv: RangeMoveCon
       let top: { slot: number; potential: number; risk: number } | null = null;
       for (const s of into) {
         const potential = potentialFrom(battle, actor, s, memo);
-        const risk = incomingAt(battle, actor, s, memo) * (deps.vc.advanceRiskShare ?? 0.5) * (1 - ratio(actor));
+        const risk = lastHitter ? 0 : incomingAt(battle, actor, s, memo) * (deps.vc.advanceRiskShare ?? 0.5) * (1 - ratio(actor));
         const v = potential - risk;
         const tv = top ? top.potential - top.risk : -Infinity;
         // eşitlikte: uzak birim (yakın saldırısı yok) EN DERİN hücreyi, yakın dövüşçü öndekini seçer (range.md: uzaklar geride, önde savaşanlar önde)

@@ -122,7 +122,7 @@ describe('kalıntı etkileri', () => {
     const plan = wavePlan(fresh());
     for (const u of Object.values(plan.units.party)) {
       // örtük fx (balta zırh delme, çekiç Daze; Ömer 2026-10-27) itemEffects'e gider; kalıntı alanı yok
-      expect(Object.keys(u).filter((k) => k !== 'itemEffects')).toEqual(['modifiers']);
+      expect(Object.keys(u).filter((k) => k !== 'itemEffects' && k !== 'level')).toEqual(['modifiers']); // level: level farkı bonusu
       expect(u.modifiers?.weaponMult).toBeUndefined();
     }
   });

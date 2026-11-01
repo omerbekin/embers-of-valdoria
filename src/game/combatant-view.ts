@@ -128,6 +128,7 @@ export class CombatantView {
   private readonly hpBox: Phaser.GameObjects.Container;
   private readonly hpFill: Phaser.GameObjects.Rectangle;
   private readonly hpGhost: Phaser.GameObjects.Rectangle;
+  private readonly mpGhost: Phaser.GameObjects.Rectangle;
   private readonly mpFill: Phaser.GameObjects.Rectangle;
   private readonly mpBack: Phaser.GameObjects.Rectangle;
   /** Ley Brand: MP çubuğunun gösterdiği maks (taint olayıyla değişir; motorun canlı durumu oynatmadan önde olabilir). */
@@ -271,6 +272,11 @@ export class CombatantView {
       .rectangle(0, mpY, hpBar.width, hpBar.mpHeight, KIT.back, 0.92)
       .setStrokeStyle(1, KIT.gold, 0.4)
       .setVisible(combatant.maxMp > 0));
+    // Hayalet çubuk: can çubuğundakiyle aynı, mana düşünce bir süre eski seviyede kalıp yavaşça iner
+    this.mpGhost = scene.add
+      .rectangle(-hpBar.width / 2, mpY, hpBar.width, hpBar.mpHeight, color(colors.mpGhost))
+      .setOrigin(0, 0.5)
+      .setVisible(combatant.maxMp > 0);
     this.mpFill = scene.add
       .rectangle(-hpBar.width / 2, mpY, hpBar.width, hpBar.mpHeight, color(colors.mpFill))
       .setOrigin(0, 0.5)
@@ -380,6 +386,7 @@ export class CombatantView {
       this.sprite,
       this.hpBox,
       mpBack,
+      this.mpGhost,
       this.mpFill,
       this.speedBox,
       this.shieldFill,
@@ -397,7 +404,7 @@ export class CombatantView {
       this.selFrame,
     ]);
     this.container.setDepth(y); // öndeki sıra arkadakinin üstünde çizilir
-    this.overlayParts = [this.hpBox, mpBack, this.mpFill, this.speedBox, this.shieldFill, this.blockBack, this.blockFill, this.touchBack, this.touchFill, this.magicShieldFill, this.statusBox, this.sealBox, name, ...tierBadge, this.marker, this.footRing, this.selFrame] as Array<Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha>;
+    this.overlayParts = [this.hpBox, mpBack, this.mpGhost, this.mpFill, this.speedBox, this.shieldFill, this.blockBack, this.blockFill, this.touchBack, this.touchFill, this.magicShieldFill, this.statusBox, this.sealBox, name, ...tierBadge, this.marker, this.footRing, this.selFrame] as Array<Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha>;
     this.setHp(combatant.hp, false);
     this.setMp(combatant.mp, false);
     this.setShield(combatant.shield, combatant.magicShield, false);
@@ -530,7 +537,29 @@ export class CombatantView {
 
   setMp(mp: number, animate = true): void {
     if (this.mpMax <= 0) return;
-    this.tweenWidth(this.mpFill, hpBar.width * Math.max(0, mp / this.mpMax), animate);
+    const target = hpBar.width * Math.max(0, mp / this.mpMax);
+    if (!animate) {
+      this.mpFill.width = target;
+      this.mpGhost.width = target;
+      return;
+    }
+    this.scene.tweens.killTweensOf([this.mpFill, this.mpGhost]);
+    if (target < this.mpFill.width - 0.5) {
+      // Can çubuğuyla aynı iniş: şiddeti kaybedilen manadan gelir (büyük kayıpta hayalet daha uzun kalır)
+      const level = hitLevel((this.mpFill.width - target) / hpBar.width);
+      this.mpGhost.width = Math.max(this.mpGhost.width, this.mpFill.width);
+      this.scene.tweens.add({ targets: this.mpFill, width: target, duration: slow(140), ease: 'Quad.easeOut' });
+      this.scene.tweens.add({
+        targets: this.mpGhost,
+        width: target,
+        delay: timing.hpGhostDelayMs * (1 + level),
+        duration: timing.hpGhostBaseMs + timing.hpGhostPerLevelMs * level,
+        ease: 'Quad.easeIn',
+      });
+    } else {
+      this.mpGhost.width = target;
+      this.scene.tweens.add({ targets: this.mpFill, width: target, duration: 250, ease: 'Quad.easeOut' });
+    }
   }
 
   /** Ley Brand tainted mana: MP çubuğu havuzla görünür (soluk mor dolgu) ya da havuz bitince gizlenir (maxMp 0). */
@@ -538,9 +567,11 @@ export class CombatantView {
     this.mpMax = maxMp;
     const show = maxMp > 0;
     this.mpBack.setVisible(show);
+    this.mpGhost.setVisible(show);
     this.mpFill.setVisible(show);
     this.mpFill.setFillStyle(color(tainted ? colors.taintedMp : colors.mpFill));
-    if (show) this.tweenWidth(this.mpFill, hpBar.width * Math.max(0, mp / maxMp), false);
+    this.scene.tweens.killTweensOf([this.mpFill, this.mpGhost]);
+    if (show) this.setMp(mp, false);
   }
 
   /**

@@ -194,6 +194,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     if (!h || !entrants.has(h.id)) return;
     // Güç toplama katmanı (temel + item; ileride level/ağaç): hiçbir şey takılı değilse boş => birim bugünküyle aynı
     const setup: UnitSetup = caps.unitMods ? loadoutSetup(h, { mode: 'campaign' }) : {};
+    if (caps.unitMods) setup.level = h.level; // level farkı bonusu (Ömer 2026-11-01): L1 kahraman da level'lı sayılır (loadoutSetup L1'i yazmaz)
     if (boons) {
       const m = mergeMods(setup.modifiers, boons);
       if (m) setup.modifiers = m;
@@ -248,6 +249,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
       // Görünüş (yalnızca sunum): özel çizim (`sprite`; Harita 2 elit / boss, Hex Totem) ya da seed'li mob varyasyonu (src/campaign/mob-looks.ts)
       const look = u.sprite ?? mobLook(u, seed, wave);
       const setup: UnitSetup = {
+        level: enemyLevel, // level farkı bonusu (Ömer 2026-11-01)
         ...(mods ? { modifiers: mods } : {}),
         ...(u.name ? { displayName: u.name } : {}),
         ...(look ? { spriteId: look } : {}),

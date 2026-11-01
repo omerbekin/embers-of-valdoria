@@ -60,6 +60,8 @@ export interface ItemTipState {
   sellFor?: number;
   /** Oransal örtüğün seçili kahramandaki gerçek sonucu, soluk ("(120 → 130)"; Ömer 2026-10-27; loadout.ts > implicitResultHint). */
   implicitHint?: string;
+  /** Karşılaştırma kartı: kahramanın o yuvada giydiği item (Gear Hero çantası; Ömer 2026-11-01): köşede küçük "EQUIPPED" etiketi. */
+  equipped?: boolean;
 }
 
 /**
@@ -217,9 +219,10 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
   const d = itemDef(inst.id);
   if (!d) return [];
   const color = instanceColor(inst);
-  const card = el('div', 'it-card');
+  const card = el('div', `it-card${state?.equipped ? ' eq' : ''}`);
   card.style.setProperty('--rc', color);
   const base = instanceBaseLines(inst);
+  if (state?.equipped) card.append(el('span', 'it-eqtag', 'Equipped'));
 
   // ---- başlık
   const head = el('div', 'it-head');
@@ -310,6 +313,7 @@ export class ItemTip {
   show(key: string, nodes: HTMLElement[], clientX: number, clientY: number): void {
     if (!nodes.length) return this.hide();
     if (key !== this.key || this.isPinned) this.box.replaceChildren(...nodes);
+    this.markDuo(nodes);
     this.setPinned(false);
     this.key = key;
     this.reveal();
@@ -340,6 +344,7 @@ export class ItemTip {
     const card = nodes[0]?.classList.contains('it-card') ? nodes[0] : null;
     if (card) card.append(...acts);
     this.box.replaceChildren(...(card ? nodes : [...nodes, ...acts]));
+    this.markDuo(nodes);
     this.key = key;
     this.setPinned(true);
     this.reveal();
@@ -376,6 +381,10 @@ export class ItemTip {
       this.box.style.overflowY = 'auto';
     }
     return this.box.offsetHeight;
+  }
+  /** İki kart yan yana (çanta item'i + kuşanılmış karşılaştırma kartı): kutu genişliği kartlardan gelir (gear.css .item-tip.duo). */
+  private markDuo(nodes: HTMLElement[]): void {
+    this.box.classList.toggle('duo', nodes.filter((n) => n.classList.contains('it-card')).length > 1);
   }
   private setPinned(on: boolean): void {
     this.isPinned = on;

@@ -24,7 +24,9 @@
   },
   "hit": {
     "max": 1,
-    "aiKillMin": 0.5
+    "aiKillMin": 0.5,
+    "_levelGap": "Level farkı saldırı bonusu (Ömer 2026-11-01): level'ı yüksek saldıran, level'ı düşük düşmana vururken fark başına accuracyPerLevel isabet (accuracy'ye yüzde puanı olarak eklenir, evasion ondan sonra düşer) ve critPerLevel kritik şansı (yüzde puanı) alır. Fark 0, saldıran daha düşük ya da iki taraftan birinin level'ı yoksa (Quick Battle, multiplayer) bonus yok; ceza yok. Kod: stats.ts > levelGapBonus, battle.ts > levelGap.",
+    "levelGap": { "accuracyPerLevel": 0.02, "critPerLevel": 0.01 }
   },
   "rage": {
     "max": 50,

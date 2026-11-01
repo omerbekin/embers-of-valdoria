@@ -88,6 +88,8 @@ export interface HudSkill {
   enabled: boolean;
   selected: boolean;
   ult: boolean;
+  /** Kilitli skill (kilit simgesi; açılış metni ipucunda). */
+  locked?: boolean;
   /** Yetersiz kaynak türü (bekleme sürerken de verilir; plaka o bedel çipini kırmızı gösterir). */
   lack?: 'mp' | 'rage' | 'hp';
   tip: TipContent;

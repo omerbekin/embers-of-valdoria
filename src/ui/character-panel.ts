@@ -6,6 +6,8 @@
  * denetçisinde (`data-drop`, `data-drag`, `data-tip`, `data-stat`, `data-skill`). Görünüm: src/ui/gear.css. Oyun içi metinler İngilizce.
  */
 import { content } from '../engine';
+import { createHold } from './stat-hold';
+import { MOTION } from './motion';
 import { heroSkillIconUrl } from './evolve-icon';
 import type { EvolveSource } from '../progression/skill-tree-evolve';
 import type { Stats } from '../engine';
@@ -92,21 +94,20 @@ export interface CharacterView {
   level?: LevelPanel;
 }
 
-/** Stat puanı dağıtımı: bekleyen (onaylanmamış) puanlar ekranın elinde; Confirm kaynağa yazar. */
+/**
+ * Stat puanı dağıtımı (Ömer 2026-11-01): Confirm / Reset / bekleyen puan YOK. Puanlı kahramanda stat kutusunu BASILI TUTMAK (`HOLD_TIMES.holdMs`)
+ * 1 puanı hemen işler ve kaydeder (`onSpend`); erken bırakmak puan vermez. Kısa tık / hover o statın 1 puanla ne kadar artıracağını gösterir (harcamaz).
+ */
 export interface LevelPanel {
-  pending: StatAlloc;
-  /** Stat kutusuna dokunma / tıklama: +1 puan (Ömer 2026-10-31; + ve − düğmeleri kalktı). */
-  onAdd: (k: Attribute) => void;
-  /** Sağ tık / mobilde basılı tutma: o stata bu oturumda verilmiş, henüz Confirm edilmemiş puanların TÜMÜNÜ geri alır. */
-  onClear: (k: Attribute) => void;
+  /** Tutma doldu ya da puan taşı bırakıldı: o stata 1 puan hemen işlenir ve kaydedilir. */
+  onSpend: (k: Attribute, viaKey?: boolean) => void;
   /** Puan verilemeyen statta dokunuş: nedenini söyler (toast). */
   onBlocked?: (msg: string) => void;
-  onReset: () => void;
-  onConfirm: () => void;
+  /** Az önce puan verilen stat: yeniden çizimden sonra "+1" süzülür, rakam büyüyüp küçülür (tek seferlik). `focus` = klavyeyle verildi, odak kutuya döner. */
+  justSpent?: { attr: Attribute; focus: boolean };
 }
 
 const ATTR_IDS: Attribute[] = ['str', 'dex', 'int', 'luck'];
-const pendingCount = (p: StatAlloc): number => ATTR_IDS.reduce((t, k) => t + (p[k] ?? 0), 0);
 
 /** Sheet'te tam stat adları (Ömer 2026-10-18, stats-panels A · Band): kısaltma yok; ipuçları `data-stat` kimliğiyle aynı kalır. */
 const FULL_NAME: Record<string, string> = {
@@ -116,11 +117,11 @@ const FULL_NAME: Record<string, string> = {
 
 /**
  * Level bloğu (Ömer 2026-10-18, Sheet A · Band): "LEVEL 3" altın başlık + XP değeri sağda, ince altın çerçeveli XP çubuğu; altında yeşil
- * "N skill points saved" çipi ve (puan ekranında) elmas madalyonlu stat puanı satırı + Reset / Confirm. Madalyon sürüklenebilir (fare + dokunma):
- * bir stat satırına bırakılınca ya da satırdaki + ile o stata bir puan gider (bekleyen; Confirm yazar). Kural (temel stat diğer üçünün toplamını
- * aşamaz) + düğmesini kapatır ve satırı bırakma hedefi yapmaz. Puan satırı puan yokken de görünmez olarak yer tutar (altı kaymaz).
+ * "N skill points saved" çipi ve (puan ekranında) elmas madalyonlu stat puanı satırı. Madalyon sürüklenebilir (fare + dokunma):
+ * bir stat kutusuna bırakılınca o stata bir puan hemen işlenir (onay yok; Ömer 2026-11-01). Kural (temel stat diğer üçünün toplamını
+ * aşamaz) kutuyu kapatır ve bırakma hedefi yapmaz. Puan satırı puan yokken de görünmez olarak yer tutar (altı kaymaz).
  */
-function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: string | null, foot?: HTMLElement): HTMLElement[] {
+function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: string | null): HTMLElement[] {
   const level = hero.level ?? 1;
   const need = xpToNext(level);
   const xp = hero.xp ?? 0;
@@ -135,75 +136,160 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
   fill.style.width = `${need > 0 ? Math.min(100, Math.round((xp / need) * 100)) : 100}%`;
   bar.append(fill);
   const out: HTMLElement[] = [head, bar];
-  const pend = lv ? pendingCount(lv.pending) : 0;
-  const free = (hero.statPoints ?? 0) - pend;
+  const free = hero.statPoints ?? 0;
   if (lv) {
     const under = el('div', 'sh-under');
     if (lv) {
-      const idle = free <= 0 && pend <= 0;
+      const idle = free <= 0;
       const row = el('span', `sh-ptr${idle ? ' idle' : ''}`);
       if (idle) row.setAttribute('aria-hidden', 'true');
       const medal = el('span', `sh-medal${free > 0 ? '' : ' empty'}`);
       medal.append(el('span', '', String(free)));
-      medal.title = 'Drag onto a stat, or tap a Main stat';
+      medal.title = 'Hold a Main stat, or drag this onto one';
       if (free > 0) medal.dataset['ptdrag'] = '1';
       row.append(medal, el('span', 'sh-tx', free > 0 ? `stat point${free === 1 ? '' : 's'} to spend` : 'All points placed'));
       under.append(row);
     }
-    if (foot) under.append(foot); // Reset / Confirm puan satırında (Ömer 2026-10-31)
     // skill puanı çipi kaldırıldı (Ömer 2026-10-22)
     out.push(under);
   }
-  if (lv && pend > 0 && primaryLost) out.push(el('div', 'sh-warn', primaryLost));
+  if (lv && primaryLost) out.push(el('div', 'sh-warn', primaryLost));
   return out;
 }
 
 /**
- * Stat kutusu hareketleri (Ömer 2026-10-31): tıklama / dokunma = `onTap` (true dönerse yutulur: ipucu sabitlenmez; false = olağan ipucu kuralı);
- * sağ tık ya da dokunmatikte basılı tutma = `onUndo`. Basılı tutma +1 üretmez (ardından gelen tıklama yutulur); tarayıcı menüsü açılmaz.
+ * 1 puanlık önizleme (Ömer 2026-11-01): kutuya hover / kısa tık o statın 1 puanla DİĞER değerleri kaç artırdığını gösterir. Bugünkü bekleyen-puan
+ * görünümüyle AYNI: satırların `.sh-d` yeşil/kırmızı farkı + `data-delta` (stat ipucu okur); fark hesabı eskisiyle aynı (puanlı ve puansız `heroPanel`
+ * farkı, 4 ondalık). DOM üstünde yapılır, yeniden çizim yok (tutma sürerken kutu yok olmasın). Fare gidince / başka yere dokununca silinir.
  */
-export const HOLD_MS = 450;
-function attachAllocGestures(row: HTMLElement, onTap: () => boolean, onUndo: () => void): void {
-  let timer = 0;
-  let held = false;
-  let from: { x: number; y: number } | null = null;
-  const stop = (): void => {
-    window.clearTimeout(timer);
-    timer = 0;
-    from = null;
+export function pointDiff(hero: HoverHero, attr: Attribute): Array<{ id: string; text: string; dir: 'up' | 'down' }> {
+  const after = heroPanel({ ...hero, alloc: mergeAlloc(hero.alloc, { [attr]: 1 }) });
+  const before = heroPanel(hero);
+  const out: Array<{ id: string; text: string; dir: 'up' | 'down' }> = [];
+  after.forEach((x, i) => {
+    const d = Math.round((x.value - (before[i]?.value ?? x.value)) * 10000) / 10000;
+    if (d !== 0) out.push({ id: x.id, text: `${d > 0 ? '+' : ''}${fmtPanel({ value: d, fmt: x.fmt })}`, dir: d > 0 ? 'up' : 'down' });
+  });
+  return out;
+}
+
+/** Puan var ama stat kuralı engelliyse açıklama (tutma dolmaz, puan gitmez; `levels.ts > allocBlocked` kuralı: temel stat diğer üçünün toplamını aşamaz). */
+export function baseCapReason(cls: string, alloc: StatAlloc, attr: Attribute, name: string): string {
+  const base = baseAttrs(cls, alloc);
+  const others = base ? ATTR_IDS.reduce((t, k) => t + base[k], 0) - (base[attr] ?? 0) : 0;
+  return `Cannot add to ${name}: a base stat can never exceed the other three added together${base ? ` (${name} ${base[attr]}, the others total ${others})` : ''}.`;
+}
+
+let clearPreviewFn: (() => void) | null = null;
+function clearPointPreview(): void {
+  clearPreviewFn?.();
+  clearPreviewFn = null;
+}
+function showPointPreview(row: HTMLElement, hero: HoverHero, attr: Attribute): void {
+  clearPointPreview();
+  const scope = row.closest<HTMLElement>('.sh');
+  if (!scope) return;
+  const touched: HTMLElement[] = [];
+  for (const d of pointDiff(hero, attr)) {
+    for (const node of scope.querySelectorAll<HTMLElement>(`[data-stat="${d.id}"]`)) {
+      const dEl = node.querySelector<HTMLElement>('.sh-d');
+      if (!dEl || dEl.textContent) continue; // zaten fark gösteriyor (odak item'i): ona dokunma
+      dEl.textContent = d.text;
+      dEl.className = `sh-d ${d.dir}`;
+      node.dataset['delta'] = d.text;
+      node.dataset['dir'] = d.dir;
+      touched.push(node);
+    }
+  }
+  const outside = (e: Event): void => {
+    if (!row.contains(e.target as Node)) clearPointPreview();
   };
+  document.addEventListener('pointerdown', outside, true);
+  clearPreviewFn = () => {
+    document.removeEventListener('pointerdown', outside, true);
+    for (const node of touched) {
+      const dEl = node.querySelector<HTMLElement>('.sh-d');
+      if (dEl) {
+        dEl.textContent = '';
+        dEl.className = 'sh-d';
+      }
+      delete node.dataset['delta'];
+      delete node.dataset['dir'];
+    }
+  };
+}
+
+/**
+ * Stat kutusu hareketleri (Ömer 2026-11-01, mockup gear-primary-hold B "Ray"): BASILI TUTMA (fare / dokunma / Enter-Space) `hold` sayacını sürer;
+ * ray `--h` ile soldan sağa dolar, dolunca `onSpend`. Erken bırakma, imleç kutudan çıkması, işaretçi iptali ya da odak kaybı geri sarar (puan yok).
+ * Kısa tık / dokunuş ve fare hover'ı `onPreview(true)` ile 1 puanlık önizlemeyi açar (harcamaz); fare gidince, başka yere dokununca kapanır.
+ * Tutarken sayfa kaydırması (touch-action), metin seçimi (user-select) ve uzun dokunma menüsü (contextmenu) araya girmez.
+ */
+function attachHoldSpend(row: HTMLElement, o: { canStart: () => boolean; onRefuse: () => void; onSpend: (viaKey: boolean) => void; onPreview: (on: boolean) => void; swallowClick: () => boolean }): void {
+  let viaKey = false;
+  const hold = createHold({
+    canStart: o.canStart,
+    onProgress: (p) => row.style.setProperty('--h', p.toFixed(4)),
+    onHolding: (on) => row.classList.toggle('holding', on),
+    onRefuse: () => {
+      row.classList.add('nope');
+      window.setTimeout(() => row.classList.remove('nope'), MOTION.statHold.nopeMs);
+      o.onRefuse();
+    },
+    onDone: () => o.onSpend(viaKey),
+  });
   row.addEventListener('pointerdown', (e) => {
-    held = false;
-    if (e.pointerType === 'mouse') return;
-    from = { x: e.clientX, y: e.clientY };
-    timer = window.setTimeout(() => {
-      held = true;
-      timer = 0;
-      onUndo();
-    }, HOLD_MS);
+    if (e.button > 0) return;
+    viaKey = false;
+    if (o.canStart()) {
+      try {
+        row.setPointerCapture(e.pointerId);
+      } catch {
+        /* yakalama yok */
+      }
+    }
+    o.onPreview(true);
+    hold.down();
   });
+  row.addEventListener('pointerenter', (e) => {
+    if (e.pointerType === 'mouse') o.onPreview(true);
+  });
+  row.addEventListener('pointerleave', (e) => {
+    if (e.pointerType === 'mouse') {
+      o.onPreview(false);
+      hold.up(); // yakalama varken imleç dışarı çıkarsa da geri sarar (aşağıdaki sınır denetimi)
+    }
+  });
+  // Yakalanmış işaretçi kutu dışına çıkınca pointerleave gelmez: sınır denetimi
   row.addEventListener('pointermove', (e) => {
-    if (from && Math.hypot(e.clientX - from.x, e.clientY - from.y) > 10) stop();
+    if (!hold.holding()) return;
+    const r = row.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) hold.up();
   });
-  for (const t of ['pointerup', 'pointercancel', 'pointerleave'] as const) row.addEventListener(t, stop);
+  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) row.addEventListener(t, () => hold.up());
   row.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!held) onUndo();
   });
+  row.addEventListener('dragstart', (e) => e.preventDefault());
   row.addEventListener('click', (e) => {
-    if (held) {
-      held = false;
-      e.stopPropagation();
-      return;
-    }
-    if (onTap()) e.stopPropagation();
+    // Kısa tık puan harcamaz; önizleme açık kalır. Puan varken dokunmatikte stat ipucunu sabitlemesin diye yutulur; puan yokken olağan ipucu kuralı (bugünkü gibi).
+    if (o.swallowClick()) e.stopPropagation();
   });
   row.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) {
       e.preventDefault();
-      onTap();
-    }
+      viaKey = true;
+      o.onPreview(true);
+      hold.down();
+    } else if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+  });
+  row.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') hold.up();
+  });
+  row.addEventListener('blur', () => {
+    hold.up();
+    o.onPreview(false);
   });
 }
 
@@ -258,9 +344,8 @@ export interface CharacterRender {
 
 /** Seçili kahramanın hesapları (bekleyen puanlar dahil): statlar, fark sütunu, odak item takılırsa statlar. */
 interface HeroCalc {
-  /** Bekleyen puanlar eklenmiş kahraman. */
+  /** Seçili kahraman. */
   hero: HoverHero;
-  pending: StatAlloc;
   allocNow: StatAlloc;
   freePts: number;
   stats: Stats | null;
@@ -270,27 +355,19 @@ interface HeroCalc {
 }
 
 function calcHero(v: CharacterView, hero0: HoverHero): HeroCalc {
-  // Level puanları (bekleyen dahil): statlar ve skill sayıları dağıtım sonrası değerlerle; fark sütunu bekleyen puanların etkisini gösterir
-  const pending = v.level?.pending ?? {};
-  const pend = pendingCount(pending);
-  const committed = hero0;
-  const allocNow = mergeAlloc(hero0.alloc, pending);
-  const hero = pend ? { ...hero0, alloc: allocNow } : hero0;
-  const freePts = (hero.statPoints ?? 0) - pend;
+  // Bekleyen puan yok (Ömer 2026-11-01): puan hemen işlenir; fark sütunu yalnızca odak item'ini gösterir (1 puanlık önizleme hover'da, DOM üzerinde: `pointPreview`)
+  const allocNow = hero0.alloc ?? {};
+  const hero = hero0;
+  const freePts = hero.statPoints ?? 0;
   const stats = heroStats(hero);
   const fd = v.focus ? itemDef(v.focus.id) : undefined;
   const focusSlot = fd ? defaultEquipSlot(hero.equipment, fd) : undefined;
   const usableFocus = v.focus && fd && focusSlot && !isPlanError(planEquip(hero.class, hero.equipment, v.focus, focusSlot)) && hero.equipment[focusSlot]?.uid !== v.focus.uid ? v.focus : null;
-  const pendDiff = (): Array<[string, number]> => {
-    const a = heroPanel(hero);
-    const b = heroPanel(committed);
-    return a.map((x, i) => [x.id, Math.round((x.value - (b[i]?.value ?? x.value)) * 10000) / 10000] as [string, number]).filter(([, d]) => d !== 0);
-  };
-  const diff = new Map(usableFocus && focusSlot ? equipDiff(hero, usableFocus, focusSlot).map((x) => [x.id, x.delta] as [string, number]) : pend ? pendDiff() : []);
+  const diff = new Map(usableFocus && focusSlot ? equipDiff(hero, usableFocus, focusSlot).map((x) => [x.id, x.delta] as [string, number]) : []);
   const after = usableFocus && focusSlot ? heroStats({ ...hero, equipment: equipInto(hero.equipment, usableFocus, focusSlot).equipment as typeof hero.equipment }) : null;
-  const lostTo = pend && stats && !stats.primaryActive && stats.primary ? stats.primary : null;
+  const lostTo = v.level?.justSpent && stats && !stats.primaryActive && stats.primary ? stats.primary : null;
   const primaryLost = lostTo ? `${PRIMARY_BONUS_NAME[lostTo]} turns off while another base stat is above ${lostTo.toUpperCase()}.` : null;
-  return { hero, pending, allocNow, freePts, stats, after, diff, primaryLost };
+  return { hero, allocNow, freePts, stats, after, diff, primaryLost };
 }
 
 /** Kahraman kartları (tüccarın Character sekmesi): portre + ad + üstüne gelinen item'in etkisi. */
@@ -320,11 +397,18 @@ function heroCards(v: CharacterView, heroId: string | undefined): HTMLElement {
   return list;
 }
 
+/** Yer imi ipucunun alt satırı (Ömer 2026-11-01): item karşılaştırması YOK; yalnızca düşmüş işareti, aksi hâlde olağan satır (ipucu kutusu onu göstermez). */
+export function heroMarkHint(h: HoverHero): { sub: string; tone: string } {
+  if (heroFallen(h)) return { sub: FALLEN_MARK, tone: 'no' };
+  const line = heroItemLine(h, null);
+  return { sub: line.text, tone: line.tone };
+}
+
 /**
  * Defterin sol kenarındaki kahraman yer imleri (Ömer 2026-10-18, ortak envanter v3 "Ledger"): yalnızca portre; harcanmamış stat puanı rozeti;
- * bırakma hedefi (`data-drop`); üstüne gelince / uzun basınca ipucu: ad + üstüne gelinen item'in o kahramana etkisi (`data-hint`).
+ * bırakma hedefi (`data-drop`); üstüne gelince / uzun basınca ipucu: ad + kahramana ait kısa bilgi (`data-hint`; item karşılaştırması yok, Ömer 2026-11-01).
  */
-export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' | 'onHero'> & { spent?: (id: string) => number }): HTMLElement {
+export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'onHero'> & { spent?: (id: string) => number }): HTMLElement {
   const box = el('div', 'gr-marks');
   for (const h of v.heroes) {
     const dead = heroFallen(h);
@@ -332,10 +416,11 @@ export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' |
     b.type = 'button';
     b.dataset['hero'] = h.id;
     b.dataset['drop'] = `hero:${h.id}`;
-    const line = heroItemLine(h, v.focus);
+    // Karşılaştırma YOK (Ömer 2026-11-01): item seçiliyken / üstündeyken de portre kartı item'siz hâliyle kalır ("+4 ARM" satırı yok); item etkisi item ipucunda
+    const mark = heroMarkHint(h);
     b.dataset['hint'] = className(h.class);
-    b.dataset['hintSub'] = dead ? FALLEN_MARK : line.text;
-    b.dataset['hintTone'] = dead ? 'no' : line.tone;
+    b.dataset['hintSub'] = mark.sub;
+    b.dataset['hintTone'] = mark.tone;
     // Hero band ipucu (Ömer 2026-10-18): portre madalyonu, Lv büyük değer, Items k/7 elmas sırası
     b.dataset['hintKind'] = 'Hero';
     b.dataset['hintLv'] = String(h.level);
@@ -554,7 +639,7 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
  * `vitals` verilirse HP / MP değeri "93 / 150" (can oranı kahramanın şu anki canı; mana hep dolu).
  */
 function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number }): HTMLElement[] {
-  const { hero, pending, allocNow, freePts, diff } = c;
+  const { hero, allocNow, freePts, diff } = c;
   const primary = c.stats?.primary;
   const rowsById = new Map<string, HTMLElement>();
   for (const p of heroPanel(hero)) {
@@ -623,39 +708,32 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
       row.dataset['delta'] = dText;
       row.dataset['dir'] = dv > 0 ? 'up' : 'down';
     }
-    // Temel stat kutusu (Ömer 2026-10-31): dokun / tıkla = +1 puan; sağ tık / basılı tut = o statın bekleyen puanlarının TÜMÜ geri. + ve − düğmesi yok.
+    // Temel stat kutusu (Ömer 2026-11-01): BASILI TUT = 1 puan hemen işlenir (ray dolar); kısa tık / hover = 1 puanlık önizleme (harcamaz). + / − / Confirm / Reset yok.
     if (attr && v.level) {
       const lv = v.level;
-      const mine = pending[attr] ?? 0;
-      const active = freePts > 0 || mine > 0;
+      const active = freePts > 0;
       if (active) row.dataset['attr'] = attr;
       const can = freePts > 0 && canAddPoint(hero.class, allocNow, attr);
       if (can) row.classList.add('can-add');
-      if (mine > 0) row.classList.add('has-pend');
       row.tabIndex = 0;
       row.setAttribute('role', 'button');
-      const why = (): string => {
-        const base = baseAttrs(hero.class, allocNow);
-        const others = base ? ATTR_IDS.reduce((t, k) => t + base[k], 0) - (base[attr] ?? 0) : 0;
-        return `Cannot add to ${name}: a base stat can never exceed the other three added together${base ? ` (${name} ${base[attr]}, the others total ${others})` : ''}.`;
-      };
-      attachAllocGestures(
-        row,
-        () => {
-          if (can) {
-            lv.onAdd(attr);
-            return true;
-          }
-          if (freePts > 0) {
-            lv.onBlocked?.(why());
-            return true;
-          }
-          return false; // puan yok: olağan stat ipucu kuralı (dokunma sabitler)
+      row.append(el('span', 'sh-plus', '+1'));
+      if (lv.justSpent?.attr === attr) {
+        row.classList.add('done');
+        window.setTimeout(() => row.classList.remove('done'), MOTION.statHold.doneMs);
+        if (lv.justSpent.focus) window.setTimeout(() => row.isConnected && row.focus({ preventScroll: true }), 0);
+      }
+      const why = (): string => baseCapReason(hero.class, allocNow, attr, name);
+      attachHoldSpend(row, {
+        canStart: () => can,
+        onRefuse: () => {
+          if (freePts > 0) lv.onBlocked?.(why());
         },
-        () => {
-          if (mine > 0) lv.onClear(attr);
-        },
-      );
+        onSpend: (viaKey) => lv.onSpend(attr, viaKey),
+        // Puan yokken ya da kural engelliyken önizleme yok (bugünkü gibi: yalnızca olağan stat ipucu)
+        onPreview: (on) => (on && can ? showPointPreview(row, hero, attr) : clearPointPreview()),
+        swallowClick: () => freePts > 0,
+      });
     }
     rowsById.set(p.id, row);
   }
@@ -689,29 +767,13 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
 /** Sheet: level bloğu + ayırıcı + çubuklar + MAIN / ATTACK / DEFENSE + tavan notu; puan taşı sürüklemesi `host` üstünde. Tek kap (`.sh`). */
 function sheetNodes(c: HeroCalc, v: CharacterView, host: HTMLElement, vitals?: { hpRatio: number }): HTMLElement[] {
   const sh = el('div', 'sh');
-  let foot: HTMLElement | undefined;
-  if (v.level) {
-    // Reset / Confirm panelin sağ altında (Ömer 2026-10-23); puan yokken görünmez yer tutar (sayfa kaymaz)
-    const lvl = v.level;
-    const pend = pendingCount(lvl.pending);
-    foot = el('div', `sh-foot${pend > 0 ? '' : ' idle'}`);
-    if (pend <= 0) foot.setAttribute('aria-hidden', 'true');
-    const reset = el('button', 'sh-btn', 'Reset');
-    reset.type = 'button';
-    reset.disabled = pend <= 0;
-    reset.addEventListener('click', lvl.onReset);
-    const ok = el('button', 'sh-btn primary', 'Confirm');
-    ok.type = 'button';
-    ok.disabled = pend <= 0;
-    ok.addEventListener('click', lvl.onConfirm);
-    foot.append(reset, ok);
-  }
-  sh.append(...levelBlock(c.hero, v.level, c.primaryLost, foot), el('div', 'sh-dv'), ...statGroups(c, v, vitals));
+  clearPointPreview();
+  sh.append(...levelBlock(c.hero, v.level, c.primaryLost), el('div', 'sh-dv'), ...statGroups(c, v, vitals));
   if (v.level) {
     const lv = v.level;
     const h = c.hero;
     attachPointDrag(host, (k) => {
-      if (c.freePts > 0 && canAddPoint(h.class, c.allocNow, k)) lv.onAdd(k);
+      if (c.freePts > 0 && canAddPoint(h.class, c.allocNow, k)) lv.onSpend(k);
     });
   }
   const extraCaps = cappedExtras(c.hero);
