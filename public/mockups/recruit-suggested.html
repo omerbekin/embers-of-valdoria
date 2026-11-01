@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Recruit: Suggested companion</title>
+<!-- TASLAK (ui-dev, 2026-11-01). Oyun kodu DEGIL. Tutorial turu 2, 3C: tek kahramanla baslayan seferde (Ashford) katilacak yoldas secimi = oyundaki
+     "Choose a companion" penceresi (src/ui/company-window.ts, noLeader, size 1; kural: serbest secim). Yeni olan tek sey: bir "Suggested" onerisi.
+     Adres: #a | #b | #c  &s=empty|picked (bos yuva / onerilen secili)  &clean = mockup seridi gizli.
+     A: ust serit (pencerenin ustunde ayri onerilen serit)   B: listenin ilk ve vurgulu karti + altinda tek cumle gerekce
+     C: yan panel (takimin eksigine gore yazilan kisa gerekce).  Gercek oyun CSS'i: css/*.css (src/ui kopyalari); ham gorseller form-company-v2'den. -->
+<link rel="stylesheet" href="recruit-suggested/css/elegant.css">
+<link rel="stylesheet" href="recruit-suggested/css/band-tip.css">
+<link rel="stylesheet" href="recruit-suggested/css/map-window.css">
+<link rel="stylesheet" href="recruit-suggested/css/company-window.css">
+<style>
+@font-face{font-family:Cinzel;font-weight:400 900;font-display:swap;src:url(recruit-suggested/fonts/Cinzel-normal-latin.woff2) format('woff2')}
+@font-face{font-family:'EB Garamond';font-weight:400 800;font-display:swap;src:url(recruit-suggested/fonts/EBGaramond-normal-latin.woff2) format('woff2')}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#070504;color:#d9c8a2;font-family:'EB Garamond',Georgia,serif;user-select:none;-webkit-user-select:none}
+button,input{font:inherit;color:inherit}
+#bg{position:fixed;inset:0;background:#0c0806 url(recruit-suggested/bg.webp) center/cover no-repeat}
+.mw{--g-disp:Cinzel,Georgia,serif;--g-body:'EB Garamond',Georgia,serif}
+/* ---- ortak: bust2 (onceden kirpilmis bust gorselleri) ---- */
+.mw-card .pt img.bust2{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block}
+.cw-card.pop,.cw-slot .cw-card{animation:mw-card-in 240ms ease-out both}
+.cw-pc{touch-action:none}
+.cw-pc img{object-position:50% 12%}
+/* ---- ipucu / bildirim ---- */
+.tipwrap{position:absolute;z-index:55;pointer-events:none;opacity:0;transition:opacity 140ms ease-out}
+.tipwrap.on{opacity:1}
+.cw-count em{font-style:normal;color:var(--g-dim);margin-left:calc(16 * var(--u));font-size:.8em}
+
+/* ---- oneri etiketi (ortak): kucuk Cinzel yazi, kor elmas YOK ---- */
+.rs-tag{font:600 max(9px,calc(15 * var(--u))) var(--g-disp);letter-spacing:.2em;text-transform:uppercase;color:var(--g-gold);white-space:nowrap}
+.rs-kick{font:600 max(9px,calc(16 * var(--u))) var(--g-disp);letter-spacing:.22em;text-transform:uppercase;color:var(--g-dim);display:flex;align-items:center;gap:.7em}
+.rs-kick::before{content:'';width:max(5px,calc(8 * var(--u)));height:max(5px,calc(8 * var(--u)));border:1px solid rgba(217,178,106,.8);transform:rotate(45deg);flex:none}
+.rs-pcw{position:relative;flex:none}
+.rs-pcw .rs-tag{position:absolute;left:0;right:0;top:calc(-22 * var(--u));text-align:center}
+.cw-pc.sug{border-color:rgba(243,217,153,.8)}
+.rs-reason{font:400 max(12px,calc(22 * var(--u)))/1.28 var(--g-body);color:#cdb88d;margin:0}
+.rs-reason b{font-weight:600;color:var(--g-gold)}
+.rs-ghost.el-btn{min-height:max(44px,calc(54 * var(--u)));font-size:max(12px,calc(19 * var(--u)));padding-left:max(14px,calc(28 * var(--u)));padding-right:max(14px,calc(28 * var(--u)));flex:none}
+.rs-ghost.el-btn:disabled{opacity:.5;cursor:default}
+
+/* ============ A: ust serit ============ */
+.v-a .rs-rib{position:absolute;left:calc(70 * var(--u));right:calc(70 * var(--u));top:calc(134 * var(--u));height:calc(92 * var(--u));display:flex;align-items:center;gap:calc(26 * var(--u));padding:0 calc(22 * var(--u)) 0 calc(9 * var(--u));
+  background:linear-gradient(90deg,rgba(243,217,153,.07),rgba(12,9,6,.5) 70%);border:1px solid var(--g-line2);box-shadow:0 0 0 3px rgba(8,6,4,.7)}
+.v-a .rs-rib .pf{flex:none;width:calc(74 * var(--u));height:calc(74 * var(--u));overflow:hidden;border:1px solid rgba(243,217,153,.6);background:#120c08}
+.v-a .rs-rib .pf img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block}
+.v-a .rs-rib .tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:calc(5 * var(--u))}
+.v-a .rs-rib .row{display:flex;align-items:baseline;gap:calc(18 * var(--u))}
+.v-a .rs-rib .nmx{font:600 max(13px,calc(26 * var(--u))) var(--g-disp);letter-spacing:.1em;text-transform:uppercase;color:var(--acl)}
+.v-a .cw-body{top:calc(240 * var(--u))}
+.v-a .cw-slots{padding-top:calc(34 * var(--u))}
+.v-a .cw-slot{width:calc(240 * var(--u));height:calc(322 * var(--u))}
+.v-a .cw-pc.sug{box-shadow:0 0 0 3px rgba(8,6,4,.75),0 0 calc(16 * var(--u)) rgba(243,217,153,.2)}
+
+/* ============ B: listenin ilk, vurgulu karti ============ */
+.v-b .cw-slots{padding-top:calc(36 * var(--u))}
+.v-b .cw-slot{width:calc(250 * var(--u));height:calc(330 * var(--u))}
+.v-b .cw-strip{margin-bottom:calc(64 * var(--u));align-items:flex-end}
+.v-b .cw-strip>.rs-pcw .cw-pc{width:calc(170 * var(--u));height:calc(128 * var(--u))}
+.v-b .cw-strip>.cw-pc,.v-b .cw-strip .rs-others .cw-pc{width:calc(112 * var(--u))}
+.v-b .cw-pc .nm{font-size:max(9px,calc(13 * var(--u)));letter-spacing:.04em}
+.v-b .rs-others{display:flex;gap:calc(9 * var(--u));margin-left:calc(26 * var(--u));padding-left:calc(26 * var(--u));position:relative}
+.v-b .rs-others::before{content:'';position:absolute;left:0;top:calc(4 * var(--u));bottom:calc(4 * var(--u));width:1px;background:var(--g-line2)}
+.v-b .rs-first .cw-pc{border-color:var(--g-gold);box-shadow:0 0 0 3px rgba(8,6,4,.75),0 0 calc(22 * var(--u)) rgba(243,217,153,.28)}
+.v-b .rs-first .cw-pc .nm{font-size:max(11px,calc(19 * var(--u)));color:var(--g-gold)}
+.v-b .rs-cap{position:absolute;left:0;top:calc(100% + 14 * var(--u));width:calc(760 * var(--u));margin:0;display:flex;gap:.7em;align-items:flex-start}
+.v-b .rs-cap::before{content:'';flex:none;width:max(5px,calc(8 * var(--u)));height:max(5px,calc(8 * var(--u)));border:1px solid rgba(217,178,106,.8);transform:rotate(45deg);margin-top:.5em}
+
+/* ============ C: yan panel ============ */
+.v-c .cw-slots{align-items:flex-start;gap:calc(64 * var(--u));padding-top:calc(36 * var(--u))}
+.v-c .rs-side{position:relative;width:calc(760 * var(--u));height:calc(390 * var(--u));flex:none;display:flex;flex-direction:column;padding:calc(22 * var(--u)) calc(30 * var(--u)) calc(22 * var(--u));gap:calc(14 * var(--u));
+  background:linear-gradient(180deg,rgba(30,22,14,.55),rgba(10,7,5,.55));border:1px solid var(--g-line2);box-shadow:0 0 0 3px rgba(8,6,4,.75)}
+.v-c .rs-side .hd{display:flex;align-items:center;gap:1em}
+.v-c .rs-side .hd::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--g-line2),transparent)}
+.v-c .rs-have{display:flex;align-items:center;gap:calc(18 * var(--u))}
+.v-c .rs-have .pf{flex:none;width:calc(64 * var(--u));height:calc(64 * var(--u));overflow:hidden;border:1px solid var(--g-line2);background:#120c08}
+.v-c .rs-have .pf img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block}
+.v-c .rs-have .t{display:flex;flex-direction:column;gap:calc(2 * var(--u));min-width:0}
+.v-c .rs-have b{font:600 max(11px,calc(21 * var(--u))) var(--g-disp);letter-spacing:.1em;text-transform:uppercase;color:#cdb88d}
+.v-c .rs-have span{font:400 max(11px,calc(19 * var(--u))) var(--g-body);color:var(--g-dim)}
+.v-c .rs-gap{margin-left:auto;flex:none}
+.v-c .rs-rule{height:1px;background:linear-gradient(90deg,transparent,var(--g-line2) 12%,var(--g-line2) 88%,transparent);position:relative;margin:calc(2 * var(--u)) 0}
+.v-c .rs-rule::after{content:'';position:absolute;left:50%;top:-4px;width:7px;height:7px;border:1px solid rgba(217,178,106,.75);background:#140e09;transform:translateX(-50%) rotate(45deg)}
+.v-c .rs-pick{flex:1;min-height:0;display:flex;gap:calc(26 * var(--u));align-items:stretch}
+.v-c .rs-pick .pf{flex:none;width:calc(150 * var(--u));overflow:hidden;border:1px solid rgba(243,217,153,.6);background:#120c08}
+.v-c .rs-pick .pf img{width:100%;height:100%;object-fit:cover;object-position:50% 10%;display:block}
+.v-c .rs-pick .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:calc(10 * var(--u))}
+.v-c .rs-pick .nmx{font:600 max(13px,calc(30 * var(--u))) var(--g-disp);letter-spacing:.1em;text-transform:uppercase;color:var(--acl)}
+.v-c .rs-pick .go{margin-top:auto;display:flex;justify-content:flex-end}
+.v-c .cw-pc.sug{box-shadow:0 0 0 3px rgba(8,6,4,.75),0 0 calc(16 * var(--u)) rgba(243,217,153,.2)}
+
+/* ============ telefon (html.short) ============ */
+html.short .cw-sub{top:calc(86 * var(--u))}
+html.short .cw-pc{height:max(44px,calc(100 * var(--u)));width:max(44px,calc(140 * var(--u)))}
+html.short .rs-pcw .rs-tag{top:-13px;font-size:8px;letter-spacing:.12em}
+html.short .cw-strip{margin-bottom:26px}
+html.short .cw-body{bottom:calc(130 * var(--u) + 26px)}
+html.short.v-c .rs-have .t span{display:none}
+html.short.v-c .rs-have .pf{width:max(26px,calc(46 * var(--u)));height:max(26px,calc(46 * var(--u)))}
+html.short .v-a .cw-body,html.short.v-a .cw-body{top:calc(280 * var(--u))}
+html.short.v-a .cw-sub{top:calc(80 * var(--u))}
+html.short.v-a .rs-rib{top:calc(126 * var(--u));height:max(48px,calc(84 * var(--u)));padding-left:calc(6 * var(--u));gap:12px}
+html.short.v-a .rs-rib .pf{width:max(36px,calc(66 * var(--u)));height:max(36px,calc(66 * var(--u)))}
+html.short.v-a .rs-rib .tx{gap:1px}
+html.short.v-a .rs-rib .row{gap:10px}
+html.short.v-a .rs-rib .rs-reason{font-size:10px;line-height:1.15}
+html.short.v-a .rs-rib .nmx{font-size:11px}
+html.short.v-a .rs-rib .rs-kick{font-size:8px}
+html.short.v-a .cw-slots{padding-top:calc(30 * var(--u))}
+html.short.v-b .cw-slot{min-height:calc(270 * var(--u))}
+html.short.v-a .cw-slot{min-height:calc(250 * var(--u))}
+html.short.v-b .rs-cap{font-size:10px;width:max-content;max-width:calc(100vw - 80px);top:calc(100% + 12px)}
+html.short.v-b .cw-strip>.rs-pcw .cw-pc{width:max(62px,calc(210 * var(--u)))}
+html.short.v-b .rs-first .cw-pc .nm{font-size:9px;top:calc(100% + 4px)}
+html.short.v-b .cw-strip{margin-bottom:46px;align-items:flex-start}
+html.short.v-b .rs-others{margin-left:calc(8 * var(--u));padding-left:calc(14 * var(--u));gap:calc(24 * var(--u))}
+html.short.v-b .cw-strip .rs-others .cw-pc{width:max(44px,calc(124 * var(--u)))}
+html.short.v-c .cw-slots{gap:calc(30 * var(--u));padding-top:calc(54 * var(--u));align-items:flex-start}
+html.short.v-c .rs-side{width:calc(900 * var(--u));height:auto;min-height:calc(320 * var(--u));gap:6px;padding:8px 12px}
+html.short.v-c .rs-have .pf{width:max(28px,calc(56 * var(--u)));height:max(28px,calc(56 * var(--u)))}
+html.short.v-c .rs-have b,html.short.v-c .rs-have span{font-size:9px}
+html.short.v-c .rs-pick{gap:10px}
+html.short.v-c .rs-pick .pf{width:max(52px,calc(128 * var(--u)))}
+html.short.v-c .rs-pick .nmx{font-size:11px}
+html.short.v-c .rs-pick .rs-reason{font-size:10px;line-height:1.15}
+html.short.v-c .rs-side .hd{font-size:8px}
+html.short.v-c .rs-have b{white-space:nowrap}
+html.short.v-c .rs-have .t{flex:none}
+html.short.v-c .rs-gap{font-size:9px;min-height:0;padding:2px 6px}
+html.short.v-c .rs-pick .mw-chips{display:none}
+html.short.v-c .rs-pick{position:relative;min-height:46px}
+html.short.v-c .rs-pick .go{position:absolute;right:0;top:0;margin:0}
+html.short.v-c .rs-pick .nmx,html.short.v-c .rs-pick .rs-reason{padding-right:158px}
+html.short.v-c .rs-pick .rs-reason{line-height:1.1;font-size:9.5px}
+html.short.v-c .cw-slots{padding-top:calc(30 * var(--u))}
+html.short.v-c .rs-rule{margin:0}
+html.short.v-c .cw-slot{width:calc(300 * var(--u));min-height:calc(190 * var(--u));height:calc(300 * var(--u))}
+html.short.v-c .rs-pick .t{gap:3px}
+html.short.v-c .rs-side .rs-ghost.el-btn{min-height:44px}
+
+/* ---- mockup seridi (oyun disi; sol alt, kucuk) ---- */
+#mk{position:fixed;left:10px;bottom:8px;z-index:90;display:flex;flex-wrap:wrap;align-items:center;gap:4px;max-width:calc(100vw - 20px);padding:3px 8px;background:rgba(12,9,6,.9);border:1px dashed #e0702a;font:400 12px 'EB Garamond',serif;color:#a8977a}
+#mk .k{font:600 9px Cinzel,serif;letter-spacing:.24em;color:#e0702a;margin-right:6px}
+#mk button{background:none;border:0;border-bottom:1px solid transparent;padding:2px 9px;min-height:24px;cursor:pointer;font:600 12px Cinzel,serif;letter-spacing:.14em;color:#a8977a}
+#mk button:hover{color:#f3d999}#mk button.on{color:#f3d999;border-color:rgba(217,178,106,.55)}
+#mk .n{margin-left:8px;color:#a8977a;max-width:640px}
+#mk .sep{width:1px;height:16px;background:rgba(224,112,42,.5);margin:0 4px}
+#mk .tg{min-width:24px;padding:0 4px}
+#mk.min .more{display:none}
+html.clean #mk{display:none}
+html.short #mk .n{display:none}
+html.reduced-motion *{animation:none!important}
+</style></head>
+<body>
+<div id="bg"></div>
+<div id="app"></div>
+<div id="mk"><span class="k">MOCKUP</span><span class="more"><button data-v="a">A Banner</button><button data-v="b">B First card</button><button data-v="c">C Side panel</button></span><span class="sep more"></span><span class="more"><button data-s="empty">Empty</button><button data-s="picked">Picked</button></span><span class="n more" id="mknote"></span><button class="tg" id="tg" title="Hide or show this bar">&#8942;</button></div>
+<script src="recruit-suggested/data.js"></script>
+<script>
+(()=>{
+'use strict';
+const BY=Object.fromEntries(window.CLASSES.map(c=>[c.id,c]));
+/* sirasi oyundaki sinif sirasi (companyChoices); onerilen kahraman TASLAK: tek Warrior ile baslayan sefer icin Archer (soru: Omer'e) */
+const ORDER=['warrior','defender','archer','cutthroat','mage','druid','paladin','undead','antimage','gambler','hexer'];
+const HAVE='warrior', SUG='archer', LV='Joins at Lv 4';
+const NOTES={
+  a:'A: ayri ust serit. Oneri pencerenin ustunde, kendi seridinde; liste ve yuva aynen. Gerekce tek cumle.',
+  b:'B: oneri listenin ILK ve buyuk, vurgulu karti; altinda tek cumle gerekce. Yuva ve pencere aynen.',
+  c:'C: yan panel. Yuvanin yaninda "takiminin eksigi" + oneri + gerekce. Liste aynen.'
+};
+const REASON={
+  a:'Your Warrior fights up close. An Archer covers the back row.',
+  b:'Covers the back row your Warrior cannot reach.',
+  c:'An Archer shoots from the back row while your Warrior holds the front.'
+};
+const q={}; location.hash.replace(/^#/,'').split('&').forEach((t,i)=>{const k=t.split('=');if(i===0)q.v=k[0];else q[k[0]]=k[1]===undefined?true:decodeURIComponent(k[1]);});
+const V=['a','b','c'].includes(q.v)?q.v:'a';
+if(q.clean)document.documentElement.classList.add('clean');
+const st={sel:q.s==='picked'?SUG:null};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lighten=h=>`color-mix(in srgb, ${h} 55%, #fff)`;
+const app=document.getElementById('app');
+let wrap,tipEl=null,drag=null;
+
+/* ---- yerlesim: oyundaki gibi --gu = ekran yuksekligi/1080 px, html.short <=520 ---- */
+function fit(){
+  const s=innerHeight/1080,de=document.documentElement;
+  de.style.setProperty('--gu',s+'px');
+  de.classList.toggle('short',innerHeight<=520);de.classList.toggle('compact',innerHeight<=720);
+  de.classList.remove('v-a','v-b','v-c');de.classList.add('v-'+V);
+}
+function chips(c){return `<div class="cw-chips"><span class="cw-chip role" title="${esc(c.role)}">${esc(c.role)}</span><span class="cw-chip stat"><img src="recruit-suggested/img/stat/${c.primary}.webp" alt="" draggable="false">${c.primary.toUpperCase()}</span></div>`;}
+function cardHtml(c){
+  return `<button type="button" class="mw-card cw-card sel" data-id="${c.id}" style="--i:0;--ac:${c.color};--acl:${lighten(c.color)}"><div class="pt"><img class="bust2" src="recruit-suggested/img/bust/${c.id}.webp" alt="" draggable="false"><img class="em" src="recruit-suggested/img/cls/${c.id}.webp" alt="" draggable="false"></div><span class="nm">${esc(c.name)}</span>${chips(c)}<span class="tut"><i></i>${LV}</span></button>`;
+}
+function pcHtml(id,extra=''){const c=BY[id];return `<button type="button" class="cw-pc${id===SUG?' sug':''}" data-id="${id}" style="--i:${ORDER.indexOf(id)}"><img src="recruit-suggested/img/av/${c.spriteId||id}.webp" alt="" draggable="false"><span class="dm"></span><span class="nm">${esc(c.name)}</span></button>`;}
+const CROWN='';
+function build(){
+  const sg=BY[SUG],hv=BY[HAVE];
+  const strip=()=>{
+    if(V==='b'){
+      const others=ORDER.filter(i=>i!==SUG).map(i=>pcHtml(i)).join('');
+      return `<div class="cw-strip" data-drop="pool"><div class="rs-pcw rs-first"><span class="rs-tag">Suggested</span>${pcHtml(SUG)}<p class="rs-reason rs-cap">${esc(REASON.b)}</p></div><div class="rs-others">${others}</div></div>`;
+    }
+    return `<div class="cw-strip" data-drop="pool">${ORDER.map(i=>i===SUG?`<div class="rs-pcw"><span class="rs-tag">Suggested</span>${pcHtml(i)}</div>`:pcHtml(i)).join('')}</div>`;
+  };
+  const slot=`<div class="cw-slot" data-drop="slot" data-i="0"><span class="cw-ord"></span><div class="cw-empty"></div></div>`;
+  const rib=V==='a'?`<div class="rs-rib" style="--acl:${lighten(sg.color)}"><span class="pf"><img src="recruit-suggested/img/av/${SUG}.webp" alt=""></span><div class="tx"><span class="rs-kick">Suggested</span><div class="row"><span class="nmx">${esc(sg.name)}</span><p class="rs-reason">${esc(REASON.a)}</p></div></div><button type="button" class="el-btn rs-ghost" data-pick>Pick ${esc(sg.name)}</button></div>`:'';
+  const side=V==='c'?`<div class="rs-side" style="--acl:${lighten(sg.color)}"><div class="hd rs-kick">Suggested for your company</div>
+      <div class="rs-have"><span class="pf"><img src="recruit-suggested/img/av/${HAVE}.webp" alt=""></span><div class="t"><b>${esc(hv.name)} &middot; you lead</b><span>${esc(hv.role)} &middot; front row</span></div><span class="mw-chip dim rs-gap">No ranged attacker yet</span></div>
+      <div class="rs-rule"></div>
+      <div class="rs-pick"><span class="pf"><img src="recruit-suggested/img/av/${SUG}.webp" alt=""></span><div class="t"><span class="nmx">${esc(sg.name)}</span><div class="mw-chips"><span class="mw-chip info">${esc(sg.role)}</span><span class="mw-chip gain"><img src="recruit-suggested/img/stat/${sg.primary}.webp" alt="">${sg.primary.toUpperCase()}</span></div><p class="rs-reason">${esc(REASON.c)}</p><div class="go"><button type="button" class="el-btn rs-ghost" data-pick>Pick ${esc(sg.name)}</button></div></div></div></div>`:'';
+  app.innerHTML=`<div class="mw cw mw-in"><div class="mw-scrim"></div><div class="cw-win"><i class="cw-cn tl"></i><i class="cw-cn tr"></i><i class="cw-cn bl"></i><i class="cw-cn br"></i>
+    <h1 class="cw-ttl"><i></i><span>Choose a companion</span><i></i></h1>
+    <p class="cw-sub">Choose one hero to walk north with you. You still lead the company.</p>${rib}
+    <div class="cw-body"><div class="cw-slots">${slot}${side}</div>${strip()}</div>
+    <div class="cw-foot"><div class="cw-count"></div><div class="cw-acts"><button type="button" class="el-btn primary" data-go>Set out</button></div></div></div></div>`;
+  wrap=app.firstElementChild;
+  wrap.querySelectorAll('.cw-pc').forEach(bind);
+  wrap.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>{st.sel=SUG;sync();}));
+  wrap.querySelector('[data-go]').addEventListener('click',()=>{if(st.sel)flash('Mockup: the company sets out with '+BY[st.sel].name+'.');});
+  setTimeout(()=>wrap.classList.remove('mw-in'),1300);
+}
+/* ---- ipucu (A Band, hover) ---- */
+function tipHtml(c){
+  return `<div class="bt" style="--ac:${c.color}"><div class="bt-head"><span class="bt-medal por" style="background-image:url(recruit-suggested/img/av/${c.id}.webp)"></span><div class="bt-ht"><div class="bt-kind">${esc(c.role)}</div><div class="bt-title">${esc(c.name)}</div></div><div class="bt-aside"><div class="bt-big">${c.primary.toUpperCase()}<small>Primary</small></div></div></div><div class="bt-div"></div><div class="bt-body"><div class="bt-ln"><span class="dia"></span><div class="tx">${esc(c.blurb)}</div></div></div></div>`;
+}
+function hideTip(){tipEl&&tipEl.remove();tipEl=null;}
+function showTip(target,id){
+  hideTip();const c=BY[id];if(!c)return;
+  const t=document.createElement('div');t.className='tipwrap';t.innerHTML=tipHtml(c);wrap.append(t);tipEl=t;
+  const r=target.getBoundingClientRect(),w=wrap.getBoundingClientRect(),tw=t.offsetWidth,th=t.offsetHeight;
+  const x=Math.max(8,Math.min(w.width-tw-8,r.left-w.left+r.width/2-tw/2));let y=r.top-w.top-th-14;if(y<8)y=r.bottom-w.top+14;
+  t.style.left=x+'px';t.style.top=y+'px';requestAnimationFrame(()=>t.classList.add('on'));
+}
+function hover(el,id){
+  el.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!drag)showTip(el,id);});
+  el.addEventListener('pointerleave',hideTip);el.addEventListener('focus',()=>showTip(el,id));el.addEventListener('blur',hideTip);
+}
+/* ---- secim: tek yuva; yeni dokunus oncekinin yerine gecer, secili olana tekrar dokunmak kaldirir ---- */
+function tap(id){st.sel=st.sel===id?null:id;sync();}
+function dropTo(id,t){if(t==='slot')st.sel=id;else if(st.sel===id)st.sel=null;sync();}
+function bind(el){
+  const id=el.dataset.id;hover(el,id);
+  el.addEventListener('pointerdown',e=>{
+    if(e.button>0)return;
+    const s0={id,x:e.clientX,y:e.clientY,moved:false,pid:e.pointerId,ghost:null};
+    const move=ev=>{
+      if(ev.pointerId!==s0.pid)return;
+      if(!s0.moved&&Math.hypot(ev.clientX-s0.x,ev.clientY-s0.y)>8){
+        s0.moved=true;hideTip();const g=document.createElement('div');g.className='cw-ghost';g.style.backgroundImage=`url(recruit-suggested/img/av/${id}.webp)`;wrap.append(g);s0.ghost=g;drag=s0;
+        wrap.querySelectorAll('[data-drop]').forEach(d=>d.classList.add('drop-can'));
+      }
+      if(s0.moved){s0.ghost.style.left=ev.clientX+'px';s0.ghost.style.top=ev.clientY+'px';const t=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-drop]');wrap.querySelectorAll('.drop-over').forEach(d=>d!==t&&d.classList.remove('drop-over'));t&&t.classList.add('drop-over');}
+    };
+    const up=ev=>{
+      if(ev.pointerId!==s0.pid)return;
+      removeEventListener('pointermove',move);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+      if(s0.moved){const t=ev.type==='pointercancel'?null:document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-drop]');s0.ghost.remove();wrap.querySelectorAll('[data-drop]').forEach(d=>d.classList.remove('drop-can','drop-over'));drag=null;if(t)dropTo(id,t.dataset.drop);}
+      else if(ev.type==='pointerup')tap(id);
+    };
+    addEventListener('pointermove',move);addEventListener('pointerup',up);addEventListener('pointercancel',up);
+  });
+  el.addEventListener('click',e=>{if(e.detail===0)tap(id);});
+}
+let shown='__';
+function sync(){
+  const id=st.sel,slot=wrap.querySelector('.cw-slot');
+  wrap.querySelectorAll('.cw-pc').forEach(e=>e.classList.toggle('sel',e.dataset.id===id));
+  if(shown!==id){
+    shown=id;slot.querySelector('.cw-card')?.remove();
+    slot.querySelector('.cw-empty').style.display=id?'none':'';
+    if(id){slot.insertAdjacentHTML('beforeend',cardHtml(BY[id]));const el=slot.querySelector('.cw-card');bind(el);}
+  }
+  const ord=slot.querySelector('.cw-ord');
+  ord.className='cw-ord '+(id?'on':'empty');ord.innerHTML='<b>1</b>';
+  wrap.querySelector('.cw-count').innerHTML=`${id?1:0} / 1 chosen`;
+  const go=wrap.querySelector('[data-go]');go.disabled=!id;go.classList.toggle('ready',!!id);go.title=id?'':'Pick one companion first.';
+  wrap.querySelectorAll('[data-pick]').forEach(b=>{const on=id===SUG;b.disabled=on;b.textContent=on?BY[SUG].name+' chosen':'Pick '+BY[SUG].name;});
+}
+let ft=0;
+function flash(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText="position:fixed;left:50%;top:calc(var(--gu,1px)*44);transform:translateX(-50%);z-index:70;padding:10px 26px;background:rgba(18,12,8,.97);border:1px solid rgba(217,178,106,.42);box-shadow:0 0 0 3px rgba(8,6,4,.7);font:400 max(13px,calc(22*var(--gu,1px))) 'EB Garamond',serif;color:#f3d999;transition:opacity .25s";document.body.append(t);}
+  t.textContent=m;t.style.opacity=1;clearTimeout(ft);ft=setTimeout(()=>t.style.opacity=0,2200);}
+/* ---- mockup seridi ---- */
+const mk=document.getElementById('mk');
+function drawBar(){
+  mk.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===V));
+  mk.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===(q.s==='picked'?'picked':'empty')));
+  document.getElementById('mknote').textContent=NOTES[V]+' NOT: oneri HANGI kahramani secer sorusu acik (burada tek Warrior icin Archer yer tutucu).';
+}
+mk.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.id==='tg'){mk.classList.toggle('min');return;}
+  const v=b.dataset.v||V,s=b.dataset.s||(q.s==='picked'?'picked':'empty');
+  location.hash='#'+v+'&s='+s+(q.clean?'&clean':'');location.reload();
+});
+if(innerHeight<=520)mk.classList.add('min');
+fit();build();drawBar();sync();
+addEventListener('resize',()=>{fit();});
+})();
+</script>
+</body></html>
