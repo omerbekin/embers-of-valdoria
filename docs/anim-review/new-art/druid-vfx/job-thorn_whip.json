@@ -1,0 +1,18 @@
+{
+  "name": "druid-thorn_whip",
+  "outDir": "docs/anim-review/new-art/druid-vfx/thorn_whip",
+  "rules": "docs/anim-review/new-art/druid-vfx/PROMPT.md",
+  "maxRounds": 4,
+  "threshold": 8,
+  "pages": [
+    {
+      "id": "04-thorn-whip",
+      "task": "Subject: \"Thorn Whip\" lash landing on a target, strongly left-to-right: a thick green thorny vine whip (oak green #62d04b/#2c7a2b, white thorns, a few oak leaves, dark outline) snapping across the cell from the upper left to the middle right. Frame 1: the vine tip curls in from the upper left, S-curved. Frames 2-3: the vine stretches into a fast diagonal arc, speed streaks. Frame 4: the crack: tip hits the centre-right, bright white-green flash star and a puff of air. Frames 5-6: the vine lies across with ripple wave, thorns bristle, torn leaves and green-white sparks burst outward. Frames 7-8: the vine retracts and fades toward the upper left, sparks and leaves fade; frame 8 faint remnant. Nature only, no water, no blood. The impact point stays at the same place (centre-right) from frame 4 on.",
+      "refs": [
+        "assets/sprites/druid/idle.png"
+      ],
+      "checkRules": "- Exactly 2:1, 4 columns x 2 rows, 8 equal cells; NO grid lines/borders/numbers/text.\n- Background really transparent (no black, no magenta residue, no dark halo, no black rectangle); corners and cell borders transparent.\n- Every frame fully inside its cell with transparent margin; no content crossing cell borders; no empty frame.\n- Frames form one smooth animation: same centre/size logic between neighbours, no sudden jump, frame 1 visible, frame 8 fading remnant.\n- One bold readable subject per frame, hand-painted medieval style, no neon/sci-fi/purple/noise, no characters, no text.\n- Reads as a thorny green vine whip lash (nature), clear crack/impact flash at frame 4, retraction after; no water, no blood, no character.\n- Impact point constant from frame 4; vine thick and bold, not thin noise.",
+      "file": "04-thorn-whip.raw.png"
+    }
+  ]
+}

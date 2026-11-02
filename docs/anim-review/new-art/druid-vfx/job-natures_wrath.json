@@ -1,0 +1,18 @@
+{
+  "name": "druid-natures_wrath",
+  "outDir": "docs/anim-review/new-art/druid-vfx/natures_wrath",
+  "rules": "docs/anim-review/new-art/druid-vfx/PROMPT.md",
+  "maxRounds": 4,
+  "threshold": 8,
+  "pages": [
+    {
+      "id": "03-wrath-surge",
+      "task": "Subject: \"Nature's Wrath\" erupting from ONE grid cell (centred, base on the lower middle of the cell, height about 90% of the cell). Nature + flood: thick gnarled oak roots and thorny vines burst up out of cracked soil while a surge of pale green-blue water (#a8e8dc/#7fd6e8, white foam) gushes up around them as a rising wave. Frame 1: ground cracks with a bulging mound and first spray of water. Frames 2-3: roots and thorny vines shoot up, water wave rises with foam crest. Frames 4-5: peak: tall tangled roots, thorns, a big curling water surge with flying droplets and oak leaves. Frames 6-8: roots sink back, water splashes down and spreads, last frame low foam, cracked soil and a few leaves. Roots dark bark brown (#6b4423/#8c5a2b) with green moss and white thorns; water clearly the second element, translucent.",
+      "refs": [
+        "assets/sprites/druid/idle.png"
+      ],
+      "checkRules": "- Exactly 2:1, 4 columns x 2 rows, 8 equal cells; NO grid lines/borders/numbers/text.\n- Background really transparent (no black, no magenta residue, no dark halo, no black rectangle); corners and cell borders transparent.\n- Every frame fully inside its cell with transparent margin; no content crossing cell borders; no empty frame.\n- Frames form one smooth animation: same centre/size logic between neighbours, no sudden jump, frame 1 visible, frame 8 fading remnant.\n- One bold readable subject per frame, hand-painted medieval style, no neon/sci-fi/purple/noise, no characters, no text.\n- Both elements readable: bark-brown roots/thorns AND pale green-blue water surge with foam; not fire, not lava.\n- Eruption builds to a peak at frames 4-5 then recedes; base stays anchored at the same ground point in all frames.",
+      "file": "03-wrath-surge.raw.png"
+    }
+  ]
+}

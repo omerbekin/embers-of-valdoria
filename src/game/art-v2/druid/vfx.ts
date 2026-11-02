@@ -812,7 +812,7 @@ function grovePlot(c: VfxCtx, k: VfxKit, slot: unknown): Pt | undefined {
 const summonroots: V2Vfx = async (c, k) => {
   const a = c.actor;
   const { used } = useEvents(c);
-  c.sfx('woodCreak');
+  c.sfx('rootRise');
   a.play('cast');
   const st = staffTop(a);
   const halo = lifeLight(c, k, st.x, st.y, 30, 30, 0xe6e89a, 0, k.DEPTH + 32);
@@ -821,7 +821,7 @@ const summonroots: V2Vfx = async (c, k) => {
   leafFall(c, k, st.x, st.y, 3, { spread: 20, fall: [90, 160], dur: [700, 1000], size: [18, 24] });
   await k.wait(c.scene, k.slow(260));
   // asa toprağa saplanır
-  c.sfx('rootsRumble');
+  c.sfx('soilHeave');
   c.scene.tweens.add({ targets: a.container, y: a.container.y + 6, scaleY: 0.97, duration: k.slow(70), yoyo: true, hold: k.slow(90), ease: 'Quad.easeIn' });
   const f = k.feet(a);
   const plant = { x: f.x - facing(a) * spriteW(a) * 0.3, y: f.y };
@@ -1105,13 +1105,354 @@ const vinesnare: V2Vfx = (c, k) =>
     await k.wait(c.scene, k.slow(500));
   }, c.actor);
 
+// ---------------------------------------------------------------------------------------------------------------- KENDİ ÇİZİMLERİ (2026-11-02)
+
+/*
+  Ömer 2026-11-02: Druid'in efektleri kendi çizim sheet'leriyle (Terra çizdi, Sol kontrol etti; kaynaklar assets/source/druid-vfx, içe aktarma
+  `node tools/import-class-vfx.mjs druid`) ve su + şifa temasıyla yeniden kuruldu. Eski kod çizimi efektler (yukarıdaki thornwhip, vines, ...) YEDEK
+  kalır: sheet yüklenemezse onlar oynar. Zamanlama (vuruş / hasar anı) eskisiyle aynı yerde: playUntilHit'li efektlerde hit() aynı noktada.
+  Su = soluk yeşil-mavi, şifa = yumuşak altın-yeşil, doğa = meşe yeşili / kabuk / toprak.
+    rejuvenate   (Healing Rain)  01-healing-rain (+ zeminde 02-healing-pool, src/game/vfx.ts groundArea)
+    vines        (Nature's Wrath) 03-wrath-surge
+    thornwhip                    04-thorn-whip
+    summon_treant                05-treant-rise
+    rootfall     (Root Smash)    06-root-fist
+    vinesnare                    07-vine-snare, 08-root-lash
+*/
+const SH = {
+  rain: 'druid/01-healing-rain',
+  pool: 'druid/02-healing-pool', // zemin havuzu: groundArea (src/game/vfx.ts) çizer; burada yağmurla birlikte önceden yüklenir, zemin doğduğunda hazır olsun
+  surge: 'druid/03-wrath-surge',
+  whip: 'druid/04-thorn-whip',
+  rise: 'druid/05-treant-rise',
+  fist: 'druid/06-root-fist',
+  snare: 'druid/07-vine-snare',
+  lash: 'druid/08-root-lash',
+} as const;
+const WATER = ['#f0fdff', '#a8e8dc', '#7fd6e8'];
+
+/** Sheet'leri yükler; hepsi hazırsa true (değilse çağıran eski kod çizimine döner). */
+async function sheetsOk(c: VfxCtx, k: VfxKit, ids: string[]): Promise<boolean> {
+  await k.sheetsReady(c.scene, ids);
+  return ids.every((id) => c.scene.textures.exists(`vfxsheet:${id}`));
+}
+
+/** Hücrenin ekrandaki genişliği (px). */
+const cellW = (c: VfxCtx, k: VfxKit, slot: number): number => {
+  const q = k.quadOf(c.board, slot, 1);
+  return Math.max(...q.map((p) => p.x)) - Math.min(...q.map((p) => p.x));
+};
+
+/** Sheet'teki "vuruş noktası" (kare oranı) ve boyut; sheet gelince ölçüldü (docs/anim-review/notes/<id>.md). */
+const WHIP = { size: 380, ix: 0.8, iy: 0.65, tx: 0.07, ty: 0.15, fps: 14, hitFrame: 3 };
+
+/**
+ * Healing Rain (rejuvenate, tek hücre, boş dost hücresi de olur): Druid avucuna nefes verir; avuçtan soluk yeşil-mavi bir su damlası-ışığı hücreye
+ * süzülür, hücreye kendi çizimi şifa yağmuru yağar (su damlaları, altın-yeşil şifa parıltısı, yerde halkalar). Hücrede kalan zemin
+ * `healing_rain` kendi su havuzunu döndürür (src/game/vfx.ts). Anlık şifa yağmurun değdiği anda (eskisiyle aynı: tohum varınca).
+ */
+const rejuvenateRain: V2Vfx = async (c, k) => {
+  if (!(await sheetsOk(c, k, [SH.rain, SH.pool]))) return rejuvenate(c, k);
+  const a = c.actor;
+  c.sfx('healRainDrops');
+  a.play('cast');
+  const h = leafHand(a);
+  glowAt(c, k, h.x, h.y, 90, 420, k.DEPTH + 30, 0xa8e8dc);
+  await k.wait(c.scene, k.slow(160));
+  const spots: Pt[] = c.targets.length ? c.targets.map((t) => k.feet(t)) : c.centerPos ? [c.centerPos] : c.cells.slice(0, 1);
+  await Promise.all(
+    spots.map(async (f) => {
+      const self = c.targets.length === 1 && c.targets[0] === a;
+      const orb = c.scene.add.image(h.x, h.y, greenGlowTex(c, k)).setDisplaySize(64, 64).setDepth(k.DEPTH + 40).setBlendMode(k.Phaser.BlendModes.ADD).setTint(0x8fdcff);
+      await k.travel(c.scene, orb, { x: f.x, y: f.y - 8 }, self ? 260 : 360, {
+        arc: self ? 60 : 90,
+        trail: (x, y) => k.burst(c.scene, x, y, { colors: WATER, n: 1, speed: [5, 40], gravity: 160, life: [300, 520], size: [4, 7] }),
+        trailEvery: 30,
+      });
+      orb.destroy();
+      c.sfx('healChime');
+      const S = 300;
+      glowAt(c, k, f.x, f.y - 6, 130, 520, k.FLOOR_FX + 5, 0xd8f59a);
+      const rain = k.sheet(c.scene, SH.rain, f.x, f.y + 4, { size: S, depth: k.DEPTH + 36 });
+      if (rain) c.scene.tweens.add({ targets: rain, alpha: 0, delay: k.slow(520), duration: k.slow(260), ease: 'Sine.easeIn' });
+      await k.sheetDone(rain);
+      await k.wait(c.scene, k.slow(120));
+    }),
+  );
+  a.play('idle');
+};
+
+/** Hücredeki Nature's Wrath patlaması: kendi çizimi kökler + su seli; oradaki düşmanlar havaya kalkar, ıslanır (Soaked). */
+function wrathCellSheet(c: VfxCtx, k: VfxKit, slot: number, victims: CombatantView[], big: boolean): void {
+  const mid = k.cellMid(c.board, slot);
+  const S = Math.max(240, cellW(c, k, slot) * 1.25);
+  k.sheet(c.scene, SH.surge, mid.x, mid.y + 16, { size: S * (big ? 1 : 0.92), depth: k.DEPTH + 28 });
+  soilBurst(c, k, mid, big ? 0.9 : 0.7);
+  k.burst(c.scene, mid.x, mid.y - 20, { colors: WATER, n: 8, speed: [80, 260], angle: [-Math.PI * 0.95, -Math.PI * 0.05], gravity: 600, life: [300, 600], size: [4, 8] });
+  for (const t of victims) {
+    c.scene.tweens.add({ targets: t.container, y: t.container.y - 16, duration: k.slow(110), yoyo: true, ease: 'Quad.easeOut' });
+    const p = k.spot(t);
+    k.burst(c.scene, p.x, p.y, { colors: ['#a8e8dc', '#7fd6e8', '#f0fdff', '#62d04b'], n: 8, speed: [80, 260], gravity: 500, life: [300, 600], size: [5, 9] });
+  }
+}
+
+/** Nature's Wrath (vines, rect 2x3, aşamalı): akış eskisiyle aynı (köklü sırtlar hücrelere koşar, aşama 0'da hit()); hücre patlaması kök + su seli sheet'i. */
+const vinesSurge: V2Vfx = (c, k) =>
+  k.playUntilHit(async (hit) => {
+    if (!(await sheetsOk(c, k, [SH.surge]))) return vines(c, k);
+    const a = c.actor;
+    c.sfx('soilHeave');
+    a.play('cast');
+    c.scene.tweens.add({ targets: a.container, y: a.container.y + 6, scaleY: 0.96, duration: k.slow(110), yoyo: true, hold: k.slow(60) });
+    glowAt(c, k, staffTop(a).x, staffTop(a).y, 90, 400, k.DEPTH + 30, 0xa8e8dc);
+    await k.wait(c.scene, k.slow(170));
+    c.sfx('rootSnap');
+    k.shake(c.scene, 120, 0.004);
+    soilBurst(c, k, { x: a.container.x - facing(a) * spriteW(a) * 0.36, y: a.container.y - 4 }, 0.6);
+    const stages = c.stages?.length ? c.stages : [{ slots: c.slots ?? [], cells: c.cells, targets: c.targets }];
+    const root = { x: a.container.x + facing(a) * 30, y: a.container.y - 4 };
+    const fades: Array<(d: number) => void> = [];
+    let prev: number[] = [];
+    for (const [si, st] of stages.entries()) {
+      const runs = st.slots.map((slot) => {
+        const to = k.cellMid(c.board, slot);
+        const fromSlot = prev.length ? prev.reduce((b, s) => (Math.hypot(k.cellMid(c.board, s).x - to.x, k.cellMid(c.board, s).y - to.y) < Math.hypot(k.cellMid(c.board, b).x - to.x, k.cellMid(c.board, b).y - to.y) ? s : b)) : null;
+        const from = fromSlot === null ? root : k.cellMid(c.board, fromSlot);
+        const dist = Math.hypot(to.x - from.x, to.y - from.y);
+        const rr = rootRidge(c, k, from, to, Math.max(180, dist / (si === 0 ? 2.6 : 1.7)), si === 0 ? 12 : 10);
+        fades.push(rr.fade);
+        return { slot, done: rr.done };
+      });
+      if (si > 0) c.sfx('soilHeave');
+      await Promise.all(
+        runs.map(async (r, i) => {
+          await r.done;
+          wrathCellSheet(c, k, r.slot, st.targets.filter((t) => t.combatant.slot === r.slot), si === 0);
+          if (i === 0) {
+            c.sfx('waterSurge');
+            k.shake(c.scene, 130, si === 0 ? 0.005 : 0.004);
+          }
+        }),
+      );
+      await k.wait(c.scene, k.slow(80));
+      c.releaseStage(si);
+      if (si === 0) hit();
+      prev = st.slots;
+      if (si < stages.length - 1) await k.wait(c.scene, k.slow(200));
+    }
+    a.play('idle');
+    for (const fd of fades) fd(500);
+    await k.wait(c.scene, k.slow(500));
+  }, c.actor);
+
+/**
+ * Thorn Whip: eski zamanlama korunur (hazırlık ~0,2 sn, şak ~0,42 sn'de); şaklayan diken kamçı kendi çizimi sheet'tir (vuruş karesi hedefe oturur,
+ * düşman tarafında aynalanır). Wound tuttuysa hedefte kan damlar.
+ */
+const thornwhipSheet: V2Vfx = async (c, k) => {
+  if (!(await sheetsOk(c, k, [SH.whip]))) return thornwhip(c, k);
+  const a = c.actor;
+  a.play('attack');
+  c.sfx('thornWhoosh');
+  const { after } = useEvents(c);
+  await Promise.all(
+    c.targets.map(async (t) => {
+      const dir = t.container.x >= a.container.x ? 1 : -1;
+      const H0 = staffTop(a);
+      const P = k.spot(t);
+      glowAt(c, k, H0.x, H0.y, 70, 360, k.DEPTH + 30, 0xb8f090);
+      leafSpray(c, k, H0, 3, { spread: 50, up: 40, size: 20 });
+      const lead = (WHIP.hitFrame / WHIP.fps) * 1000; // sheet'in şak karesine kadar süre
+      await k.wait(c.scene, k.slow(Math.max(0, 420 - lead)));
+      // kamçının kuyruk ucu asa tepesinde, değme noktası hedefte: sheet döndürülüp ölçeklenir (dönme noktası = değme noktası)
+      const tail = { x: dir > 0 ? WHIP.tx : 1 - WHIP.tx, y: WHIP.ty };
+      const v = { x: ((dir > 0 ? WHIP.ix : 1 - WHIP.ix) - tail.x) * WHIP.size, y: (WHIP.iy - tail.y) * WHIP.size };
+      const D = { x: P.x - H0.x, y: P.y - H0.y };
+      const sc = Math.min(1.7, Math.max(0.6, Math.hypot(D.x, D.y) / Math.hypot(v.x, v.y)));
+      const rot = Math.atan2(D.y, D.x) - Math.atan2(v.y, v.x);
+      const spr = k.sheet(c.scene, SH.whip, P.x, P.y, { size: WHIP.size * sc, fps: WHIP.fps, flipX: dir < 0, rotation: rot, origin: [dir > 0 ? WHIP.ix : 1 - WHIP.ix, WHIP.iy], depth: k.DEPTH + 40 });
+      await k.wait(c.scene, k.slow(lead));
+      c.sfx('thornSnap');
+      glowAt(c, k, P.x, P.y, 120, 260, k.DEPTH + 55, 0xffffff);
+      k.hit(c.scene, P.x, P.y, LEAF, 1.1);
+      leafSpray(c, k, P, 5, { spread: 130, up: 80 });
+      k.shake(c.scene, 100, 0.004);
+      c.scene.tweens.add({ targets: t.container, x: t.container.x + dir * 14, duration: k.slow(50), yoyo: true });
+      if (after.some((e) => e['type'] === 'status' && e['status'] === 'wound' && e['target'] === t.combatant.uid)) {
+        for (let i = 0; i < 6; i++) {
+          void k.wait(c.scene, k.slow(140 + i * 110)).then(() => {
+            k.burst(c.scene, P.x + k.rnd(-spriteW(t) * 0.2, spriteW(t) * 0.2), P.y + k.rnd(-t.h * 0.15, t.h * 0.15), { colors: BLOOD, n: 1, speed: [10, 30], angle: [Math.PI * 0.4, Math.PI * 0.6], gravity: 500, life: [400, 600], size: [5, 8] });
+          });
+        }
+      }
+      c.sfx('leafRustle');
+      await k.wait(c.scene, k.slow(170)); // hasar rakamı şak parlamasının hemen ardından (sheet kalanını kendi oynar)
+      void spr;
+    }),
+  );
+  a.play('idle');
+};
+
+/**
+ * Summon Treant (olay): kendi çizimi toprak yarılması + yükselen kökler (sheet; üst yarısı Treant'ın arkasında, alt yarısı önünde); Treant eskisi gibi
+ * topraktan büyüyerek çıkar, yaşayan ışık nefes alır, yaprak düşer, ağır adımla oturur. Skill kısmı (summonroots) eskisi gibi kalır.
+ */
+const summon_treantSheet: V2Vfx = async (c, k) => {
+  const v = c.targets[0];
+  if (!v) return;
+  if (!(await sheetsOk(c, k, [SH.rise]))) return summon_treant(c, k);
+  const home = v.home;
+  const f = { x: home.x, y: home.y - 2 };
+  const W = Math.max(140, Math.min(220, v.w * 1.0));
+  const H = v.h;
+  v.container.setAlpha(0);
+  c.sfx('soilHeave');
+  k.shake(c.scene, 420, 0.002);
+  const S = W * 2.0;
+  k.sheet(c.scene, SH.rise, f.x, f.y + 6, { size: S, fps: 5.5, wrap: { unit: v.container.depth } });
+  await k.wait(c.scene, k.slow(500));
+  c.sfx('rootRise');
+  k.shake(c.scene, 200, 0.005);
+  const glow = lifeLight(c, k, f.x, f.y - H * 0.45, W * 0.7, H * 0.9, 0xd6e27a, 0, v.container.depth - 3);
+  c.scene.tweens.add({ targets: glow, alpha: 0.42, displayWidth: W * 1.4, duration: k.slow(700), ease: 'Sine.easeInOut', yoyo: true, hold: k.slow(500) });
+  const mask = c.scene.make.graphics({ x: 0, y: 0 }, false);
+  mask.fillStyle(0xffffff).fillRect(home.x - 500, home.y - 1200, 1000, 1204);
+  v.container.setMask(mask.createGeometryMask()).setAlpha(1);
+  const ui = v.container.list.filter((ch) => ch !== v.sprite) as unknown as Array<Phaser.GameObjects.Components.Alpha & Phaser.GameObjects.GameObject>;
+  const uiAlpha = ui.map((ch) => ch.alpha);
+  ui.forEach((ch) => ch.setAlpha(0));
+  const sx = v.container.scaleX;
+  const sy = v.container.scaleY;
+  const start = home.y + H * 0.7;
+  v.container.setY(start).setScale(sx * 0.8, sy * 0.7);
+  v.sprite.setTint(0x4a3826);
+  let leaves = false;
+  let chips = 0;
+  const KF: Array<[number, number]> = [[0, 0], [0.3, 0.42], [0.38, 0.45], [0.7, 0.86], [0.78, 0.88], [1, 1]];
+  await k.counter(c.scene, k.slow(1250), (u) => {
+    let i = 0;
+    while (i < KF.length - 2 && u > KF[i + 1]![0]) i++;
+    const [u0, p0] = KF[i]!;
+    const [u1, p1] = KF[i + 1]!;
+    const t = clamp01((u - u0) / Math.max(0.001, u1 - u0));
+    const p = p0 + (p1 - p0) * (1 - (1 - t) ** 2);
+    v.container.setY(start + (home.y - start) * p);
+    v.container.setScale(sx * (0.8 + 0.2 * p), sy * (0.7 + 0.3 * p));
+    v.sprite.setTint(mixHex(0x4a3826, 0xffffff, clamp01((p - 0.2) / 0.8) ** 1.3));
+    if (u * 1250 > chips) {
+      chips += 140;
+      const top = home.y - H * p;
+      particles(c, k, v.container.depth + 3, 900, Array.from({ length: 3 }, () => ({ x: f.x + k.rnd(-v.w * 0.3, v.w * 0.3), y: top + k.rnd(0, H * 0.3), vx: k.rnd(-160, 160), vy: k.rnd(-220, -60), g: 1300, drag: 0.5, life: k.rnd(500, 800), age: 0, size: k.rnd(2, 5), col: 0x6b4423 })));
+    }
+    if (!leaves && p > 0.62) {
+      leaves = true;
+      c.sfx('thud');
+      leafFall(c, k, f.x, home.y - H * 0.9, 9, { spread: v.w * 0.4, fall: [H * 0.6, H * 0.95], dur: [1400, 2200], delay: [0, 700], floor: f.y + 6 });
+    }
+  });
+  v.container.setPosition(home.x, home.y).setScale(sx, sy).clearMask(true);
+  v.sprite.clearTint();
+  ui.forEach((ch, i) => c.scene.tweens.add({ targets: ch, alpha: uiAlpha[i] ?? 1, duration: k.slow(260) }));
+  k.shake(c.scene, 180, 0.006);
+  c.scene.tweens.add({ targets: v.container, scaleY: sy * 0.96, scaleX: sx * 1.03, duration: k.slow(70), yoyo: true, ease: 'Quad.easeOut' });
+  particles(c, k, v.container.depth + 2, 900, clods(k, f.x, f.y, 10, { speed: [80, 220], spread: W * 0.35, size: [2, 6], floorY: f.y + 8 }));
+  billow(c, k, f.x, f.y + 6, { n: 6, spread: W * 0.6, size: [70, 120], rise: [10, 40], life: [2000, 2800], tint: [0xa88e6c, 0xb8a07c], alpha: 0.4, depth: v.container.depth + 2, drift: 20, grow: 2.2 });
+  fadeOut(c, k, glow, 600, 700);
+  await k.wait(c.scene, k.slow(160));
+};
+
+/**
+ * Treant - Root Smash: Treant kolunu toprağa gömer, kök sırtı hedefe koşar; hedefin tepesine GÖKTEN kök yumruğu iner (kendi çizimi sheet: iniş kareleri sırt
+ * koşarken oynar, değme karesi sırtın vardığı anda). Değme: hedef havalanır, toprak/kıymık/yaprak, sarsıntı; yumruk toprağa çekilir.
+ */
+const FIST = { size: 560, ix: 0.5, iy: 0.94, fps: 11, hitFrame: 3 };
+const rootfallFist: V2Vfx = async (c, k) => {
+  const t = c.targets[0];
+  if (!t) return;
+  if (!(await sheetsOk(c, k, [SH.fist]))) return rootfall(c, k);
+  const a = c.actor;
+  const dir = t.container.x >= a.container.x ? 1 : -1;
+  const slam = await treantSlam(c, k);
+  const f = k.feet(t);
+  c.sfx('rootFistFall');
+  const lead = (FIST.hitFrame / FIST.fps) * 1000;
+  const ridge = rootRidge(c, k, slam, { x: f.x - dir * 10, y: f.y }, Math.max(260, lead), 14);
+  const fist = k.sheet(c.scene, SH.fist, f.x, f.y + 4, { size: FIST.size, fps: FIST.fps, origin: [FIST.ix, FIST.iy], flipX: dir < 0, depth: t.container.depth + 2 });
+  // gökten iner: sheet'in kendi inişine ek olarak yukarıdan düşer, değme karesinde yerine oturur
+  if (fist) {
+    fist.y -= 150;
+    c.scene.tweens.add({ targets: fist, y: fist.y + 150, duration: k.slow(lead), ease: 'Quad.easeIn' });
+  }
+  await k.wait(c.scene, k.slow(lead));
+  await ridge.done;
+  ridge.fade(400);
+  c.sfx('rootFistSlam');
+  const p = k.spot(t);
+  k.hit(c.scene, p.x, p.y + t.h * 0.2, BARK, 1.4);
+  soilBurst(c, k, f, 1.3);
+  c.scene.tweens.add({ targets: t.container, y: t.container.y - 46, duration: k.slow(120), ease: 'Quad.easeOut', yoyo: true, hold: k.slow(60) });
+  for (let i = 0; i < 6; i++) {
+    const sp = k.v2Sprite(c, i % 2 ? 'dryleaf' : 'oakleaf', '#62d04b', f.x, f.y - 60, 22, k.DEPTH + 45).setRotation(k.rnd(0, 6));
+    c.scene.tweens.add({ targets: sp, x: f.x + k.rnd(-150, 150), y: f.y - 60 - k.rnd(40, 140), rotation: sp.rotation + k.rnd(-5, 5), alpha: 0, duration: k.slow(700), ease: 'Quad.easeOut', onComplete: () => sp.destroy() });
+  }
+  k.shake(c.scene, 140, 0.007);
+  void k.wait(c.scene, k.slow(180)).then(() => {
+    c.scene.tweens.add({ targets: t.container, scaleY: 0.9, scaleX: 1.06, duration: k.slow(70), yoyo: true });
+    k.dustCloud(c.scene, f.x, f.y, { n: 6, spread: 90, rise: 40, size: [30, 54], tint: 0x8a6a3a });
+  });
+  await k.sheetDone(fist);
+  a.play('idle');
+};
+
+/**
+ * Treant - Vine Snare (rect 2x2): Treant kolunu toprağa gömer; kök zinciri mobtan moba sıçrar (kendi çizimi kök kamçısı yere yakın uçar), her mobun
+ * bacaklarını kendi çizimi kök sarmalı sarıp sıkar; sıkma karesi hasar anıdır (hit). Yere bağlanan (Rooted) mobda sarmal aynı oynar, oyunun Rooted
+ * sarması stun boyunca kalır.
+ */
+export const vinesnareChain: V2Vfx = (c, k) =>
+  k.playUntilHit(async (hit) => {
+    if (!(await sheetsOk(c, k, [SH.snare, SH.lash]))) return vinesnare(c, k);
+    const a = c.actor;
+    const slots = c.slots?.length ? c.slots : c.targets.map((t) => t.combatant.slot);
+    const slam = await treantSlam(c, k, 0.9);
+    c.sfx('rootCoilCreak');
+    // mobtan moba: sıçrama sırası = Treant'a yakından uzağa
+    const stops = slots.map((slot) => ({ slot, p: k.cellMid(c.board, slot) })).sort((x, y) => Math.hypot(x.p.x - slam.x, x.p.y - slam.y) - Math.hypot(y.p.x - slam.x, y.p.y - slam.y));
+    let from: Pt = slam;
+    const coils: Array<Promise<void>> = [];
+    for (const [i, s] of stops.entries()) {
+      const dx = s.p.x - from.x;
+      const dy = s.p.y - from.y;
+      const dist = Math.hypot(dx, dy);
+      const lash = k.sheet(c.scene, SH.lash, from.x, from.y + 6, { size: 260, loop: true, depth: k.FLOOR_FX + 40, rotation: Math.atan2(dy, dx) });
+      await k.counter(c.scene, k.slow(Math.max(110, dist / 1.5)), (u) => lash?.setPosition(from.x + dx * u, from.y + 6 + dy * u));
+      lash?.destroy();
+      if (i === 0) c.sfx('rootCoilCreak');
+      const S = Math.max(230, cellW(c, k, s.slot) * 1.15);
+      const coil = k.sheet(c.scene, SH.snare, s.p.x, s.p.y + 16, { size: S, wrap: { unit: (c.targets.find((t) => t.combatant.slot === s.slot) ?? a).container.depth } });
+      coils.push(k.sheetDone(coil));
+      soilBurst(c, k, s.p, 0.5);
+      for (const t of c.targets.filter((u) => u.combatant.slot === s.slot)) c.scene.tweens.add({ targets: t.container, y: t.container.y + 6, duration: k.slow(80), yoyo: true, hold: k.slow(120) });
+      from = s.p;
+    }
+    await k.wait(c.scene, k.slow(260)); // son sarmal sıkıyor: hasar rakamları o an
+    c.sfx('rootCinch');
+    for (const s of stops) void k.ring(c.scene, s.p.x, s.p.y + 10, { r: 70, flat: 0.5, n: 16, colors: ['#ffffff', '#a8f08a', '#62d04b'], dur: 260, size: 8 });
+    k.shake(c.scene, 110, 0.004);
+    hit();
+    a.play('idle');
+    await Promise.all(coils);
+    await k.wait(c.scene, k.slow(150));
+  }, c.actor);
+
 export const VFX: Record<string, V2Vfx> = {
-  thornwhip,
-  vines,
-  rejuvenate,
+  thornwhip: thornwhipSheet,
+  vines: vinesSurge,
+  rejuvenate: rejuvenateRain,
   summonroots,
   // olay efekti (docs/design/art-v2.md > 3.1): Treant doğuşu
-  summon_treant,
-  rootfall,
+  summon_treant: summon_treantSheet,
+  rootfall: rootfallFist,
+  // Vine Snare: yeni sheet'ler (07/08) oyun içi 7/10 kaldı (geçme çizgisi 8); yeniden çizilene kadar eski kod efekti oynar (2026-11-02)
   vinesnare,
 };

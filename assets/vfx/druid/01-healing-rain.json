@@ -1,0 +1,27 @@
+{
+  "slug": "01-healing-rain",
+  "title": "Healing Rain: pale green-blue rain with a soft healing glow on a cell",
+  "source": "assets/source/druid-vfx/01-healing-rain.png",
+  "frames": 8,
+  "fps": 10,
+  "duration_ms": 800,
+  "frame_size": [
+    320,
+    320
+  ],
+  "sheet_size": [
+    1280,
+    640
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 0,
+  "pivot": [
+    160,
+    301
+  ],
+  "align": "ground"
+}

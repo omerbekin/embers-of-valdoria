@@ -1,0 +1,8 @@
+Reference images are for style/material and character look only; do not draw the characters themselves.
+
+Common brief (Druid VFX, Embers of Valdoria): 2D medieval fantasy RPG battle VFX SPRITE SHEET.
+LAYOUT (strict): one single image, exactly 2:1 aspect ratio (example 1774x887), 4 columns x 2 rows, 8 frames, read left to right, top to bottom. Equal cells. NO grid lines, border, frame numbers, text, labels, watermark. Each frame stays fully inside its own cell with a transparent margin; nothing crosses a cell border; all four image corners transparent.
+BACKGROUND: real transparent PNG (alpha). If the tool cannot give transparency: one flat #FF00FF magenta over the whole image, no gradient, no texture, no shadow, no checkerboard. NEVER a black background, never a dark halo or black rectangle.
+EFFECT ONLY: no character, no hand, no staff, no scenery tile.
+STYLE: hand-painted medieval fantasy, matching the Druid (gnarled oak staff, green leaf, bark, soil) and the Treant (mossy oak trunk, thick root fingers, amber eyes) references. Clean, one bold subject, no noise, no sci-fi, no neon, no purple, no floating runes. Water = pale green-blue (#a8e8dc, #7fd6e8, white highlights); healing glow = soft gold-green (#d8f59a, #fff3b0); nature = oak green (#62d04b, #2c7a2b), bark brown (#6b4423, #8c5a2b), soil. Bright readable shapes that pop on a dark battlefield.
+FLOW: the 8 frames are one continuous animation. Neighbouring frames differ by a small step: same objects at the same size and palette, no sudden jump, no empty frame, same centre. Frame 1 is already visible, frame 8 is a clear fading remnant, not a sudden cut.

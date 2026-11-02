@@ -11,6 +11,7 @@
 // değen küçük kırıntılar (komşu karenin taşması) silinir. Hizalama sheet başına (SHEETS > align):
 //   keep    kare kendi yerinde (kesilen hücrenin ortası karenin ortası): çizimin kendi hareketi korunur (patlama, mühür, kesik)
 //   center  alfa ağırlık merkezi karenin ortasına (uçan / döngü sheet'leri: mermi ve ruh tutamı yerinde kalır, kod taşır)
+// Ek seçenek `clean: <0-254>`: alfa bu değerin altı silinir, üstü yeniden ölçeklenir (çizim aracının macenta çıkarma halesi / sis lekesi).
 //   ground  içeriğin tabanı sabit taban çizgisine, taban bandının yatay ortası karenin ortasına (zemin efektleri: ayak çizgisine oturur)
 // Siyah çerçeve / ızgara çizgisi / numara yok; alfa korunur. Çıktı karesi FRAME px (kare küçültülür).
 import { createRequire } from 'node:module';
@@ -37,6 +38,16 @@ const CLASSES = {
     { src: '04-cracked-bell', out: '04-cracked-bell', title: 'Cracked Bell: cracked bronze bell falls and splits', align: 'keep', fps: 14 }, // tur 5 çizimi: kare boyları tutarlı, ölçek düzeltmesi gerekmedi
     { src: '05-great-bell', out: '05-great-bell', title: 'Great Bell of Valdoria: colossal bell swings and strikes', align: 'keep', fps: 9, frame: 440, scale: { 4: 0.92, 5: 0.92, 6: 0.92, 7: 0.92 }, shift: { 4: [0, 10], 5: [0, 10], 6: [0, 10], 7: [0, 10] } }, // ekranda 700 px: 320 kare fazla iri piksel olurdu
     { src: '06-great-bell-burst', out: '06-great-bell-burst', title: 'Great Bell of Valdoria: holy column with lightning on a cell', align: 'ground', fps: 14 },
+  ],
+  druid: [
+    { src: '01-healing-rain', out: '01-healing-rain', title: 'Healing Rain: pale green-blue rain with a soft healing glow on a cell', align: 'ground', fps: 10, clean: 90 },
+    { src: '02-healing-pool', out: '02-healing-pool', title: 'Healing Rain ground: shallow rain pool (loop)', align: 'keep', fps: 8, clean: 80 },
+    { src: '03-wrath-surge', out: '03-wrath-surge', title: "Nature's Wrath: roots and a water surge erupt from a cell", align: 'ground', fps: 10, clean: 80 },
+    { src: '04-thorn-whip', out: '04-thorn-whip', title: 'Thorn Whip: thorny vine lash', align: 'keep', fps: 14, clean: 80 },
+    { src: '05-treant-rise', out: '05-treant-rise', title: 'Summon Treant: earth splits, mossy roots rise', align: 'ground', fps: 7, clean: 80 },
+    { src: '06-root-fist', out: '06-root-fist', title: 'Root Smash: root fist slams down', align: 'ground', fps: 11, clean: 80 },
+    { src: '07-vine-snare', out: '07-vine-snare', title: 'Vine Snare: root coil cinches', align: 'ground', fps: 10, clean: 80 },
+    { src: '08-root-lash', out: '08-root-lash', title: 'Vine Snare: root lash (flight loop)', align: 'center', fps: 16, clean: 80 },
   ],
   undead: [
     { src: '01-grave-shard-fly', out: '01-bone-throw-fly', title: 'Bone Throw: grave shard (flight loop)', align: 'center', fps: 16 },
@@ -120,6 +131,11 @@ function cutCell(data, W, x0, y0, x1, y1) {
   return { px, w, h, removed };
 }
 
+/** Yarı saydam sis / anahtar rengi artığı (macenta çıkarma halesi) temizliği: alfa `lo` altı 0, üstü yeniden ölçeklenir (SHEETS > clean). */
+function cleanAlpha(px, lo) {
+  for (let i = 3; i < px.length; i += 4) px[i] = px[i] <= lo ? 0 : Math.round(((px[i] - lo) * 255) / (255 - lo));
+}
+
 function stats(px, w, h) {
   let sa = 0, sx = 0, sy = 0, n = 0, x0 = w, y0 = h, x1 = -1, y1 = -1, dark = 0;
   const rows = new Float64Array(h);
@@ -183,7 +199,11 @@ for (const s of list) {
     const xs = [0];
     for (let c = 1; c < 4; c++) xs.push(emptiestLine((x) => filled(0, 0, ya, yb, true, x), Math.round((W * c) / 4 - W * 0.06), Math.round((W * c) / 4 + W * 0.06), Math.round((W * c) / 4)));
     xs.push(W);
-    for (let c = 0; c < 4; c++) cells.push(cutCell(data, W, xs[c], ya, xs[c + 1], yb));
+    for (let c = 0; c < 4; c++) {
+      const cell = cutCell(data, W, xs[c], ya, xs[c + 1], yb);
+      if (s.clean) cleanAlpha(cell.px, s.clean);
+      cells.push(cell);
+    }
   }
   // her karenin dayanağı (hücre pikseli) ve karede oturacağı yer (kesir); kare kenarı hiçbir karede içerik taşmayacak kadar büyük seçilir
   const fx = 0.5;

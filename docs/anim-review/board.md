@@ -106,3 +106,9 @@ Süreç ve not formatı: README.md. İşini bitiren taraf "Durum" ve "Son" sütu
 | Cracked Bell · `cracked_bell` | Vesper (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (3. kontrol; 2 yeni Terra turu, tur 7 kullanıldı); küçük: kare 24-29 çan ~20 px yukarı çekiliyor, yarıların alt ağızı fazla bütün (notes/cracked_bell.md). |
 | Great Bell of Valdoria · `great_bell_of_valdoria` | Vesper (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI; çan sönerken konum sıçraması ve çağırma bağlantısı zayıf (notes/great_bell_of_valdoria.md). |
 | Grave Sweep · `grave_sweep` | Risen Skeleton | tamam | 2026-11-01 · Codex | Tur 3 kontrolü: parlama yok; vuruş, akış ve iki zeminde okunurluk uygun. |
+| Healing Rain · `rejuvenate` | Druid (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI; zemin havuzu ve telefon boyutu doğrulanmadı (notes/rejuvenate.md). |
+| Nature's Wrath · `natures_wrath` | Druid (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI; sönüş soluk (notes/natures_wrath.md). |
+| Thorn Whip · `thorn_whip` | Druid (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (2. tur); hasar gecikmesi küçük (notes/thorn_whip.md). |
+| Summon Treant · `summon_treant` | Druid (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (notes/summon_treant.md). |
+| Root Smash · `root_smash` | Treant | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (2. tur); yumruk boğumları belirsiz (notes/root_smash.md). |
+| Vine Snare · `vine_snare` | Treant | açık | 2026-11-02 · Claude | Sol oyun içi 7/10 KALDI (sheet 07 yeniden çizildi, 4 Terra turu 5/10; oyun içi 7 ve 7); kamçı ayrı okunmuyor, halkalar yığılı (notes/vine_snare.md). |

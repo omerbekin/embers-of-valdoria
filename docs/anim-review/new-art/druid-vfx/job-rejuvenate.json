@@ -1,0 +1,27 @@
+{
+  "name": "druid-rejuvenate",
+  "outDir": "docs/anim-review/new-art/druid-vfx/rejuvenate",
+  "rules": "docs/anim-review/new-art/druid-vfx/PROMPT.md",
+  "maxRounds": 4,
+  "threshold": 8,
+  "pages": [
+    {
+      "id": "01-healing-rain",
+      "task": "Subject: \"Healing Rain\", a druid's healing rain falling on ONE grid cell (centred, about 85% of cell width and height). Water + healing: pale green-blue (#a8e8dc/#7fd6e8) rain streaks and round droplets with white highlights, plus soft gold-green healing sparkles (#d8f59a) and a few tiny oak leaves. No cloud object, no sky; just falling rain in the cell column. Frame 1: first few droplets and streaks high in the cell, faint soft glow low. Frames 2-4: rain thickens, streaks fall through the whole cell height, splashes with small crown shapes appear at the bottom, gold-green glow blooms at the bottom centre. Frames 5-6: peak: dense rain, wide soft glow pool at ground level with ripple rings, sparkles rising. Frames 7-8: rain thins, ripple rings and sparkles fade, last frame faint droplets and glow remnant. The middle stays fairly see-through so a creature behind remains readable.",
+      "refs": [
+        "assets/sprites/druid/idle.png"
+      ],
+      "checkRules": "- Exactly 2:1, 4 columns x 2 rows, 8 equal cells; NO grid lines/borders/numbers/text.\n- Background really transparent (no black, no magenta residue, no dark halo, no black rectangle); corners and cell borders transparent.\n- Every frame fully inside its cell with transparent margin; no content crossing cell borders; no empty frame.\n- Frames form one smooth animation: same centre/size logic between neighbours, no sudden jump, frame 1 visible, frame 8 fading remnant.\n- One bold readable subject per frame, hand-painted medieval style, no neon/sci-fi/purple/noise, no characters, no text.\n- Reads as WATER (pale green-blue streaks/droplets) with a soft gold-green healing glow; not fire, not blood, not poison.\n- Rain falls downward, builds, peaks, fades; splash/ripple at the bottom; centre stays see-through.",
+      "file": "01-healing-rain.raw.png"
+    },
+    {
+      "id": "02-healing-pool",
+      "task": "Subject: \"Healing Rain ground\", a SEAMLESS LOOP of a shallow pool of rain water lying on the ground, seen at a slight top-down perspective as a wide soft ellipse filling about 90% of the cell width and 60% of the cell height, centred, sitting in the lower-middle of the cell. Pale green-blue translucent water (#7fd6e8 body, #a8e8dc rim, white glints), a few slowly widening ripple rings, tiny falling droplets that make small rings, and a few drifting soft gold-green sparkles (#d8f59a). The 8 frames loop: frame 8 flows straight into frame 1 (ripples move on, sparkles drift), the ellipse outline itself stays identical in all frames. Soft translucent edge, no hard outline, no black.",
+      "refs": [
+        "assets/sprites/druid/idle.png"
+      ],
+      "checkRules": "- Exactly 2:1, 4 columns x 2 rows, 8 equal cells; NO grid lines/borders/numbers/text.\n- Background really transparent (no black, no magenta residue, no dark halo, no black rectangle); corners and cell borders transparent.\n- Every frame fully inside its cell with transparent margin; no content crossing cell borders; no empty frame.\n- Frames form one smooth animation: same centre/size logic between neighbours, no sudden jump, frame 1 visible, frame 8 fading remnant.\n- One bold readable subject per frame, hand-painted medieval style, no neon/sci-fi/purple/noise, no characters, no text.\n- Same pool ellipse outline/size/position in all frames (loop-safe); only ripples, glints and sparkles move; frame 8 -> frame 1 continuous.\n- Reads as translucent shallow water with healing sparkles; creatures behind remain readable; not an opaque disc.",
+      "file": "02-healing-pool.raw.png"
+    }
+  ]
+}

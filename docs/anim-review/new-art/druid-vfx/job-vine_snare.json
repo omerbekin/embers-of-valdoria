@@ -1,0 +1,27 @@
+{
+  "name": "druid-vine_snare",
+  "outDir": "docs/anim-review/new-art/druid-vfx/vine_snare",
+  "rules": "docs/anim-review/new-art/druid-vfx/PROMPT.md",
+  "maxRounds": 4,
+  "threshold": 8,
+  "pages": [
+    {
+      "id": "07-vine-snare",
+      "task": "Subject: \"Vine Snare\" root coil around a creature's legs. ONE cell, centred in the lower middle. Do NOT draw the creature: leave the middle open. Frame 1: thick oak-root tips (bark #6b4423/#8c5a2b with moss green and white thorns) burst from the soil on both sides. Frames 2-3: the roots spiral up and loop around an invisible central column about 40% of cell width and 55% of cell height tall, in a tight helix, back strands slightly darker. Frames 4-5: the coils cinch tight with small shock lines and a few torn leaves, green-white flash on the squeeze. Frames 6-7: they hold, thorns bristling. Frame 8: the coil loosens and fades into soil specks. The central column stays hollow/see-through, only the roots in front/behind the column.",
+      "refs": [
+        "assets/sprites/treant/idle.png"
+      ],
+      "checkRules": "- Exactly 2:1, 4 columns x 2 rows, 8 equal cells; NO grid lines/borders/numbers/text.\n- Background really transparent (no black, no magenta residue, no dark halo, no black rectangle); corners and cell borders transparent.\n- Every frame fully inside its cell with transparent margin; no content crossing cell borders; no empty frame.\n- Frames form one smooth animation: same centre/size logic between neighbours, no sudden jump, frame 1 visible, frame 8 fading remnant.\n- One bold readable subject per frame, hand-painted medieval style, no neon/sci-fi/purple/noise, no characters, no text.\n- Reads as root-vine coils spiralling and cinching around an EMPTY central column (no creature drawn); thorny, bark-brown with moss; helix stays centred and same size from frame 3.\n- Central column see-through so a mob behind remains visible.",
+      "file": "07-vine-snare.raw.png"
+    },
+    {
+      "id": "08-root-lash",
+      "task": "Subject: \"Vine Snare chain\": a LOOPING flying piece: a short thick root-vine lash (about 70% of cell width, bark #6b4423/#8c5a2b with moss green, white thorns, tiny oak leaves) travelling horizontally to the right, drawn centred in the cell, head on the right (pointed thorn tip), tail trailing with a leaf or two. The 8 frames loop: the vine undulates like a snake (wave moves along the body), the object stays centred and the same size in every frame; frame 8 flows into frame 1. No water.",
+      "refs": [
+        "assets/sprites/treant/idle.png"
+      ],
+      "checkRules": "- Exactly 2:1, 4 columns x 2 rows, 8 equal cells; NO grid lines/borders/numbers/text.\n- Background really transparent (no black, no magenta residue, no dark halo, no black rectangle); corners and cell borders transparent.\n- Every frame fully inside its cell with transparent margin; no content crossing cell borders; no empty frame.\n- Frames form one smooth animation: same centre/size logic between neighbours, no sudden jump, frame 1 visible, frame 8 fading remnant.\n- One bold readable subject per frame, hand-painted medieval style, no neon/sci-fi/purple/noise, no characters, no text.\n- Same centred position and size in all 8 frames; only the wave of the body and leaves change (loop-safe); head clearly on the right.",
+      "file": "08-root-lash.raw.png"
+    }
+  ]
+}

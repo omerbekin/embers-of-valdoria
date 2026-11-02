@@ -1,0 +1,14 @@
+{
+  "07-vine-snare": {
+    "rounds": 4,
+    "pass": false,
+    "bestRound": 4,
+    "score": 6
+  },
+  "08-root-lash": {
+    "rounds": 2,
+    "pass": true,
+    "bestRound": 2,
+    "score": 8
+  }
+}

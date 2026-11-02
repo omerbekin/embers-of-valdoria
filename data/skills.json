@@ -600,9 +600,8 @@
     ],
     "vfx": "thornwhip",
     "sfx": [
-      "whipWind",
-      "whipCrack",
-      "leafRustle"
+      "thornWhoosh",
+      "thornSnap"
     ]
   },
   "rejuvenate": {
@@ -642,8 +641,8 @@
     ],
     "vfx": "rejuvenate",
     "sfx": [
-      "chimeHeal",
-      "leafRustle"
+      "healRainDrops",
+      "healChime"
     ]
   },
   "summon_treant": {
@@ -668,8 +667,8 @@
     ],
     "vfx": "summonroots",
     "sfx": [
-      "woodCreak",
-      "rootsRumble",
+      "soilHeave",
+      "rootRise",
       "thud"
     ]
   },
@@ -708,9 +707,9 @@
     ],
     "vfx": "vines",
     "sfx": [
-      "rootsRumble",
-      "leafRustle",
-      "thud"
+      "soilHeave",
+      "rootSnap",
+      "waterSurge"
     ]
   },
   "taunt": {
@@ -943,6 +942,8 @@
     "vfx": "rootfall",
     "sfx": [
       "woodCreak",
+      "rootFistFall",
+      "rootFistSlam",
       "woodSmash",
       "rootsRumble",
       "leafRustle"
@@ -985,6 +986,8 @@
     "vfx": "vinesnare",
     "sfx": [
       "woodCreak",
+      "rootCoilCreak",
+      "rootCinch",
       "vineLash",
       "rootGrip"
     ]

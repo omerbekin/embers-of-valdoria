@@ -19,7 +19,8 @@ import { chromium } from 'playwright';
 import sharp from 'sharp';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const VIEW = { width: 1600, height: 900 };
+// CAP_VIEW=WxH (ör. 1720x720 = 21:9, 844x390 = telefon) ve CAP_SUFFIX=-219: farklı ekran boyutunda yakalama, çıktı klasörüne ek ad
+const VIEW = process.env.CAP_VIEW ? { width: +process.env.CAP_VIEW.split('x')[0], height: +process.env.CAP_VIEW.split('x')[1] } : { width: 1600, height: 900 };
 const DT = 1000 / 60;
 const MAX_STEPS = 600; // en çok 10 sn oyun zamanı
 const TAIL = 30; // VFX bittikten sonra yakalanan ekran karesi
@@ -104,7 +105,7 @@ async function waitIdle(page, ms = 30000) {
 }
 
 async function captureSkill(page, skill) {
-  const out = join(ROOT, 'docs', 'anim-review', 'captures', skill);
+  const out = join(ROOT, 'docs', 'anim-review', 'captures', skill + (process.env.CAP_SUFFIX ?? ''));
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
   await page.evaluate(() => window.__game.loop.wake());

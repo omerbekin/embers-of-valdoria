@@ -885,8 +885,8 @@ const GROUND_LOOK: Record<string, GroundLook> = {
   // Zemin tepkimeleri (Ömer 2026-10-27; yer tutucu görünüm, mevcut dillerden): Sanctified Flame = daha parlak kutsal ateş, Holy Water = soluk mavi
   // şifa ışığı (Holy Ground ayrıntısı), Ice = buz mavisi soğuk yüzey (Flooded Planks parıltısı)
   sanctified_flame: { base: [0xd8a848, 0.4], mid: [0xfff2c0, 0.64], rim: [0xfff0b8, 0.36], edge: [0xffe08a, 0.86], shadow: [0x24180a, 0.28] },
-  // Healing Rain (Ömer 2026-11-01; YER TUTUCU, görsel rework başka sohbette): yumuşak yeşil-mavi şifa suyu
-  healing_rain: { base: [0x4f9a86, 0.3], mid: [0xc8f7e0, 0.46], rim: [0xa8ecd0, 0.3], edge: [0x8fe0c0, 0.76], shadow: [0x081812, 0.22] },
+  // Healing Rain (Ömer 2026-11-02, su ve şifa): hücrede kendi çizimi sığ yağmur havuzu döner (assets/vfx/druid/02-healing-pool); burada yalnız altındaki soluk yeşil-mavi su rengi
+  healing_rain: { base: [0x3f8ea4, 0.28], mid: [0xbdeeee, 0.4], rim: [0x9fe0e6, 0.28], edge: [0x8adcea, 0.72], shadow: [0x061418, 0.22] },
   holy_water: { base: [0x6f93b0, 0.3], mid: [0xe6f4ff, 0.5], rim: [0xc8e6ff, 0.32], edge: [0xa8d4f2, 0.78], shadow: [0x0a1218, 0.22] },
   // Ice (Ömer 2026-10-29: Chill Ground'dan açıkça daha katı): koyu-parlak buz levhası, güçlü kenar ışığı
   ice_ground: { base: [0x5f93b6, 0.56], mid: [0xeaf8ff, 0.5], rim: [0xffffff, 0.5], edge: [0xe2f6ff, 0.95], shadow: [0x061018, 0.34] },
@@ -959,6 +959,18 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
   const box = scene.add.container(0, 0, [img, fx, edge]).setDepth(30);
   const alive = () => box.active && box.scene !== undefined;
   const me: GroundEntry = { key: `${groundId}:${board}`, board, slots, redraw: () => undefined };
+  // Healing Rain: her hücreye kendi çizimi sığ su havuzu döngüsü (sheet inince yüklenir; yüklenemezse yalnız altındaki renk kalır)
+  if (groundId === 'healing_rain') {
+    const POOL = 'druid/02-healing-pool';
+    void ensureVfxSheets(scene, [POOL]).then(() => {
+      if (!alive()) return;
+      for (const k of cells) {
+        const w = Math.max(...k.q.map((p) => p.x)) - Math.min(...k.q.map((p) => p.x));
+        const spr = vfxSheet(scene, POOL, k.m.x, k.m.y, { size: w * 0.8, loop: true, from: Math.floor(k.ph) % 8, alpha: 0.9, depth: 30 });
+        if (spr) box.add(spr);
+      }
+    });
+  }
   let grow = 0; // 0..1 dolma ilerlemesi
   let edgeK = 0;
   let live = false;
@@ -1212,6 +1224,8 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
             fx.fillStyle(0xfff0c8, 0.07 * env).fillPoints([quadAt(q, 0.08 + wob, v0), quadAt(q, 0.92 + wob, v0), quadAt(q, 0.92 - wob, v1), quadAt(q, 0.08 - wob, v1)], true);
           }
         }
+      } else if (groundId === 'healing_rain') {
+        // Healing Rain: hareket sheet'te (üstteki havuz döngüsü)
       } else if (healing) {
         // Holy Ground: hücrenin içinden yavaşça yükselen küçük ışık zerreleri (krem / soluk yeşil) + ortada tek, yavaş nabız atan yumuşak ışık
         const pulse = 0.5 + 0.5 * Math.sin(t * 1.6 + k.ph);
