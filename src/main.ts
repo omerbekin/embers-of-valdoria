@@ -17,6 +17,7 @@ import { GameMenu, isGameMenuOpen } from './ui/game-menu';
 import { lockInput, onInputLockChange, unlockInput } from './ui/input-lock';
 import { createFullscreenButton } from './ui/fullscreen';
 import { installViewport, parseRotateMode } from './ui/viewport';
+import { installPhoneButtons } from './ui/phone-buttons';
 import { installContextMenuBlock, installPhaserButtonFilter } from './ui/right-click';
 import { installStage, setStageMetrics } from './game/stage';
 import { installPerfMode } from './game/perf-apply';
@@ -127,6 +128,7 @@ installLoopGuard(game.loop as unknown as Parameters<typeof installLoopGuard>[0])
 // Sağ tık: tarayıcı bağlam menüsü kapalı (metin girişleri hariç); Phaser'a yalnızca sol tuş (savaşta sağ da) ulaşır (src/ui/right-click.ts)
 installContextMenuBlock();
 installPhaserButtonFilter(game);
+installPhoneButtons(); // telefon: 36 px görünür düğme, >= 44 px dokunma alanı (ui/phone-buttons.ts)
 
 mp.attachGame(game);
 // Hata raporu: sahne geçişleri iz olarak (scene.start), raporda etkin sahne ve doku belleği; ilk açılışta bir kez bildirim (Send error reports, varsayılan Off)

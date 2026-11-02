@@ -11,7 +11,7 @@ describe('yüzen yazı stili', () => {
     expect(dmg.strokeThickness).toBeGreaterThanOrEqual(5);
     expect(dmg.shadow.offsetY).toBeGreaterThan(0);
     expect(floatStyle('miss', 46, '#cfc7a0').fontStyle).not.toContain('italic');
-    expect(floatStyle('dodge', 46, '#9ad1ff').fontStyle).not.toContain('italic');
+    expect(floatStyle('dodge', 46, '#b7c4ff').fontStyle).not.toContain('italic');
   });
 
   it('puntoyu korur, çok küçükte 14 px altına inmez', () => {

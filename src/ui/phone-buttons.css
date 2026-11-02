@@ -1,0 +1,24 @@
+/* Telefon düğme kuralı (Ömer 2026-11-02): html.short (<= 520 px) üzerinde her çerçeveli düğmenin GÖRÜNEN yüksekliği 36 px;
+   tasarım (çerçeve, elmaslar, yazı) aynı kalır. Dokunma alanı >= 44 px: src/ui/phone-buttons.ts (çerçevenin 4 px dışına dokunuşu düğmeye yönlendirir).
+   Masaüstü (16:9, 21:9) etkilenmez. Phaser ikizi: src/game/elegant-ui.ts > elButton (PHONE_BTN_PX).
+   Dokunmayanlar: nav-btn (30 px çerçeve, 44 hit), bb-item / gm-row (çerçevesiz liste satırı), st-step (çerçevesiz), bh-sk / bh-gl (sahne ölçekli). */
+html.short .el-btn,
+html.short .el-btn.primary,
+html.short .el-btn.sm,
+html.short .el-btn.danger,
+html.short .gr-btn,
+html.short .gr-btn.sm,
+html.short .gr-btn.primary,
+html.short .gr-btn.danger,
+html.short .gr-tab,
+html.short .ct-b,
+html.short .bs-tab,
+html.short .gr-chip,
+html.short .bb-trigger,
+html.short .gr-bag-head .gr-chip {
+  box-sizing: border-box !important;
+  min-height: 36px !important;
+  height: 36px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}

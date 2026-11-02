@@ -311,6 +311,9 @@ export interface ElButton {
   shake(): void;
 }
 
+/** Telefonda her çerçeveli düğmenin görünen yüksekliği (gerçek px); DOM karşılığı src/ui/phone-buttons.css. */
+export const PHONE_BTN_PX = 36;
+
 /**
  * Çerçeveli düğme. primary (START BATTLE dili): 84 px, Cinzel 30, iki yanda elmas; hazır değilken soluk, hazırken altın + nefes alan kor.
  * secondary (Random both dili): 56 px, Cinzel 21, ince soluk çerçeve, içi boş elmaslar. Genişlik verilmezse yazıya göre (`minLabel` en uzun yazı).
@@ -328,7 +331,9 @@ export function elButton(
   const probe = elText(scene, 0, 0, o.minLabel && o.minLabel.length > label.length ? o.minLabel : label, size, EL.DIM, { em });
   const w = o.w ?? Math.ceil(probe.width + (primary ? 112 : 80));
   probe.destroy();
-  const h = o.h ?? (primary ? 84 : 56);
+  // Telefon (html.short, Ömer 2026-11-02): görünen çerçeve her düğmede 36 gerçek piksel; dokunma alanı growTouchZone ile >= 44 kalır.
+  const phoneH = document.documentElement.classList.contains('short') ? Math.ceil(PHONE_BTN_PX / (stageView.cssScale > 0 ? stageView.cssScale : 1)) : 0;
+  const h = phoneH || (o.h ?? (primary ? 84 : 56));
   const root = scene.add.container(0, 0);
   const breath = scene.add.image(0, 0, ensureGlow(scene)).setTint(EL.EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(w * 1.35, h * 2.6).setAlpha(0);
   const plate = scene.add.graphics();

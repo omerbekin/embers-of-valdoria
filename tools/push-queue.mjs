@@ -263,6 +263,16 @@ function composeNotes(entries) {
   return { groups, dropped };
 }
 // Sohbet notu daha yazarken öğrenir; gönderimi yine durdurmaz
+// wiki-assets her sheet sahibinin aslını assets/source/<sahip>-vfx altında ister; ready bu klasörü eklemez, test 30 dk sonra kırmızı çıkar (druid-vfx, vesper-vfx)
+function warnUntrackedSources(rec) {
+  try {
+    const out = gx(rec.path, ['ls-files', '--others', '--exclude-standard', '--', 'assets/source']);
+    const dirs = [...new Set(out.split('\n').map((f) => f.split('/')[2]).filter((d) => d && /-(vfx|icons)$/.test(d)))]
+      .filter((d) => !gx(rec.path, ['ls-files', '--', `assets/source/${d}`])); // klasör git'te zaten varsa (yalnız tek dosya takipsiz) test düşmez
+    if (dirs.length) console.log(`UYARI: git'te takipsiz kaynak klasörü: ${dirs.map((d) => `assets/source/${d}`).join(', ')}. Eklemezsen tam test (wiki-assets) 30 dakika sonra kırmızı çıkar ve gönderim durur. Çözüm: git -C ${rec.path} add ${dirs.map((d) => `assets/source/${d}`).join(' ')} ; commit ; ready'yi yeniden ver.`);
+  } catch {}
+}
+
 function warnNotes(who, notes) {
   const bad = Object.values(notes).flat().flatMap((l) => splitNote(l).cut);
   if (bad.length) console.log(`Uyarı: şu kısım oyuncu notuna giremez (en çok ${NOTE_MAX_CHARS} karakterlik tam cümle, dosya adı ya da iç terim yok), gönderim yine durmaz: ${bad.map((b) => `"${b.slice(0, 70)}"`).join(' | ')}. Kısası için: notes ${who} --fixes "..."`);
@@ -2077,6 +2087,7 @@ const main = {
     if (rec) {
       if (withWtLock(rec, () => wtAutocommit(rec, Object.values(notes).flat()[0]), 20000) === undefined) throw new Error('Kopya şu an eşitleniyor, birkaç saniye sonra yeniden çalıştır.');
       pin = revOf(`refs/heads/${rec.branch}`);
+      warnUntrackedSources(rec);
     }
     withQueue((q) => {
       const e = entry(q, findSid(q, args[0]));
