@@ -1055,7 +1055,10 @@ function deployLive(scratch, version) {
   const cfMods = join(GAME, 'cloudflare', 'node_modules');
   if (existsSync(cfMods)) ps(`New-Item -ItemType Junction -Path '${join(scratch, 'cloudflare', 'node_modules')}' -Target '${cfMods}' | Out-Null`);
   let live = false;
-  for (let i = 1; i <= 2 && !live; i++) {
+  // Hata hep wrangler'ın Cloudflare API isteğinde (api.cloudflare.com / dash.cloudflare.com yetki yenileme) kesilen geçici ağ hatası; art arda iki deneme aynı kesintiye denk geliyordu, bu yüzden 4 deneme ve aralarda bekleme (Ömer 2026-11-02, Koordinatör)
+  const waits = [0, 20, 60, 120];
+  for (let i = 1; i <= waits.length && !live; i++) {
+    if (waits[i - 1]) { log(`> ${waits[i - 1]} sn bekleniyor (ağ kesintisi olabilir)`); Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, waits[i - 1] * 1000); }
     log(`> Canlı site yayını (deneme ${i}): ${CMD.deploy}`);
     try { execSync(CMD.deploy, { cwd: scratch, stdio: 'inherit' }); live = true; } catch (e) { log(`!! Canlı yayın denemesi ${i} başarısız: ${e.message.split('\n')[0]}`); }
   }
@@ -1068,7 +1071,7 @@ function deployLive(scratch, version) {
     } catch {}
   }
   if (live) log(`> ${version} canlıda: https://embersofvaldoria.com/`);
-  else notice(`${version} GitHub'a gitti ama canlı siteye (embersofvaldoria.com) yayın iki denemede de başarısız oldu; elle npm run deploy:cf gerekiyor.`);
+  else notice(`${version} GitHub'a gitti ama canlı siteye (embersofvaldoria.com) yayın dört denemede de başarısız oldu; elle npm run deploy:cf gerekiyor.`);
 }
 // Önce node_modules bağlantısı silinir, yoksa worktree silinirken gerçek node_modules boşalır (2026-10-18 olayı)
 function removeScratch(scratch) {

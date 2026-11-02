@@ -74,6 +74,8 @@ export interface AffixDef {
   desc?: string;
   /** Yalnızca bu yuvalarda (yoksa her yuvada). */
   slots?: SlotId[];
+  /** Bu item seviyesinden önce çekilmez (Block break: kalkanlı düşmanın çok olduğu Harita 3'e kadar çıkmaz; Ömer 2026-11-02). Eski örnekler etkilenmez. */
+  minIlvl?: number;
   /** Equip best sınıf uyumu ipucu: element:<x> | element:magic | mp | shield | dot | debuff | support | summon | melee | ranged. */
   needs?: string;
   /** Satır ikonu ipucu (stat ikonu adı ya da element:<x>). */
@@ -359,7 +361,7 @@ export const affixAllowed = (id: string, slot: SlotId): boolean => {
 };
 
 /** Kademenin bu yuvada çekilebilecek affix'leri (veri sırasıyla). */
-export const tierPool = (tier: AffixTier, slot: SlotId): string[] => Object.keys(ITEMS.affixDefs).filter((id) => ITEMS.affixDefs[id]!.tier === tier && affixAllowed(id, slot));
+export const tierPool = (tier: AffixTier, slot: SlotId, ilvl?: number): string[] => Object.keys(ITEMS.affixDefs).filter((id) => ITEMS.affixDefs[id]!.tier === tier && affixAllowed(id, slot) && (ilvl === undefined || !(ITEMS.affixDefs[id]!.minIlvl! > ilvl)));
 
 /** Çekiliş grubundaki affix -> grup adı (items.json > affixRules.drawGroups). */
 const DRAW_GROUP_OF: ReadonlyMap<string, string> = new Map(Object.entries(ITEMS.affixRules?.drawGroups ?? {}).flatMap(([g, ids]) => ids.map((id): [string, string] => [id, g])));
@@ -453,7 +455,7 @@ export function rollItem(d: ItemDef, rng: IntRng, o: RollOptions = {}): ItemRoll
       let id: string | undefined;
       if (i === 0 && mains.length) id = mains.length > 1 ? mains[rng.int(0, mains.length - 1)] : mains[0];
       if (!id) {
-        const pool = tierPool(tier, d.slot).filter((a) => !used.has(a));
+        const pool = tierPool(tier, d.slot, o.ilvl ?? d.ilvl).filter((a) => !used.has(a));
         if (!pool.length) return;
         id = drawAffix(pool, rng, tier, o.forClass);
       }
@@ -562,7 +564,7 @@ export function legacyRoll(d: ItemDef, old: unknown, uid: string, classId?: stri
     let id: string | undefined = i === 0 ? mains[0] : undefined;
     if (!id) id = oldKeys.map((k) => LEGACY_AFFIX[k]?.[tier]).find((a): a is string => !!a && !used.has(a) && affixAllowed(a, d.slot));
     if (!id) {
-      const pool = tierPool(tier, d.slot).filter((a) => !used.has(a));
+      const pool = tierPool(tier, d.slot, d.ilvl).filter((a) => !used.has(a));
       if (!pool.length) return;
       id = drawAffix(pool, rng);
     }
@@ -591,7 +593,7 @@ function replaceRemovedAffixes(d: ItemDef, r: ItemRoll, seed: string): ItemRoll 
   const affixes = r.affixes.flatMap((a): AffixRoll[] => {
     const tier = typeof a?.id === 'string' ? REMOVED_AFFIX_TIER.get(a.id) : undefined;
     if (!tier) return [a];
-    const pool = tierPool(tier, d.slot).filter((id) => !used.has(id));
+    const pool = tierPool(tier, d.slot, r.ilvl ?? d.ilvl).filter((id) => !used.has(id));
     if (!pool.length) return [];
     const id = drawAffix(pool, rng);
     used.add(id);
@@ -692,7 +694,7 @@ const midIP = (id: string, ilvl: number, mult = 1): number => {
 
 /** Kademenin bu yuvadaki ortalama orta IP'si (zarlanacak affix'in beklenen değeri). */
 const tierMeanIP = (tier: AffixTier, slot: SlotId, ilvl: number): number => {
-  const entries = drawEntries(tierPool(tier, slot)); // çekiliş girdileriyle aynı ağırlık (direnç tek girdi, D2)
+  const entries = drawEntries(tierPool(tier, slot, ilvl)); // çekiliş girdileriyle aynı ağırlık (direnç tek girdi, D2)
   return entries.length ? entries.reduce((s, e) => s + e.reduce((t, id) => t + midIP(id, ilvl), 0) / e.length, 0) / entries.length : 0;
 };
 

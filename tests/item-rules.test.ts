@@ -181,12 +181,12 @@ describe('affix zarları', () => {
     expect(rollItem(itemDef('turnshoes')!, new Rng(3), { rarity: 'legendary' }).rarity).toBe('epic');
   });
 
-  it('Immunity tek durum zarlar (Stun, Slow, Silence...); tur sayısı 2, seviyeyle biraz artar', () => {
+  it('Immunity tek durum zarlar (Stun, Slow, Silence...); tur sayısı 3, seviyeyle biraz artar', () => {
     const crown = itemDef('crown_of_the_ashen_king')!;
     const a = rolledAffixes({ id: crown.id, rolls: rollItem(crown, new Rng(9)) }).find((x) => x.id === 'a_immunity')!;
     expect(ITEMS.affixDefs.a_immunity!.choices).toContain(a.x);
-    expect(affixValues('a_immunity', 5, 0.3)).toEqual([2]);
-    expect(affixValues('a_immunity', 30, 0.3)[0]).toBeGreaterThan(2);
+    expect(affixValues('a_immunity', 5, 0.3)).toEqual([3]); // Ömer 2026-11-02 denge: taban 2 -> 3 tur
+    expect(affixValues('a_immunity', 30, 0.3)[0]).toBeGreaterThan(3);
   });
 
   it('güç katmanı zarı kullanır: affix eşlemesi motor alanlarına (ek, çarpan, kanca, element, ana stat)', () => {
@@ -272,15 +272,15 @@ describe('zarlar kayıtta: sefer ve Endless', () => {
 describe('nadirliğe göre zar tabanı (Ömer 2026-10-11)', () => {
   it('yüksek nadirlik aralığın üst kısmından zarlar; tavan aynı; aralık nadirliğe göre; eski zar korunur', () => {
     const floors = ITEMS.affixRules.rollFloorByRarity!;
-    expect(floors).toEqual({ common: 0, uncommon: 0.25, rare: 0.375, epic: 0.5, legendary: 0.625 });
+    expect(floors).toEqual({ common: 0, uncommon: 0.1, rare: 0.2, epic: 0.3, legendary: 0.4 });
     const d = itemDef('riveted_mail')!;
     for (const r of ['common', 'uncommon', 'rare', 'epic'] as const)
       for (let i = 0; i < 200; i++) for (const a of rollItem(d, new Rng(i), { rarity: r }).affixes) expect(a.q).toBeGreaterThanOrEqual(floors[r]!);
-    // Epic aralığı: alt uç = q 0,5 değeri, üst uç Common'la aynı
+    // Epic aralığı: alt uç = q 0,3 değeri (Ömer 2026-11-02: Common ±25, Legendary -5/+25), üst uç Common'la aynı
     const p = ITEMS.affixDefs.c_hp!.parts[0]!;
     const epic = rolledAffixes({ id: d.id, rolls: { rarity: 'epic', affixes: [{ id: 'c_hp', q: 1 }] } })[0]!;
     const common = rolledAffixes({ id: d.id, rolls: { rarity: 'common', affixes: [{ id: 'c_hp', q: 1 }] } })[0]!;
-    expect(epic.ranges[0]).toEqual([partRange(p, d.ilvl, 0.5)[0], common.ranges[0]![1]]);
+    expect(epic.ranges[0]).toEqual([partRange(p, d.ilvl, 0.3)[0], common.ranges[0]![1]]);
     // kayıtlı eski zar (taban altında) değerini korur, aralık onu da gösterir
     const old = rolledAffixes({ id: d.id, rolls: { rarity: 'epic', affixes: [{ id: 'c_hp', q: 0 }] } })[0]!;
     expect(old.values[0]).toBe(partRange(p, d.ilvl)[0]);
@@ -325,5 +325,13 @@ describe('Anti-Mage yalnız hançer (Ömer 2026-10-27)', () => {
     expect(axes.some((d) => canEquip('antimage', d))).toBe(false);
     expect(canEquip('antimage', ITEMS.items.find((d) => d.family === 'daggers')!)).toBe(true);
     expect(axes.every((d) => canEquip('warrior', d))).toBe(true);
+  });
+});
+
+describe('Block break map gate', () => {
+  it('does not drop before item level 21 (Map 3) and is back from there (Ömer 2026-11-02)', () => {
+    expect(tierPool('B', 'weapon', 20)).not.toContain('b_blockbreak');
+    expect(tierPool('B', 'weapon', 21)).toContain('b_blockbreak');
+    expect(tierPool('B', 'weapon')).toContain('b_blockbreak');
   });
 });

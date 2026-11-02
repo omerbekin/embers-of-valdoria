@@ -60,7 +60,9 @@ describe('motor: toplamsal ekler (UnitModifiers)', () => {
     const inst = { uid: 'i1', id: 'hawkeye_gloves', rolls: roll };
     const r = loadout({ class: 'gambler', equipment: { ...emptyEquipment(), gloves: inst } });
     const v = (id: string, i = 0) => r.affixes.find((a) => a.id === id)!.values[i]!;
-    expect(r.modifiers).toMatchObject({ accuracyAdd: v('c_acc') / 100, evasionAdd: v('c_eva') / 100, critMultAdd: v('a_keen', 1) / 100 });
+    expect(r.modifiers!.accuracyAdd).toBeCloseTo(v('c_acc') / 100, 9);
+    expect(r.modifiers!.evasionAdd).toBeCloseTo(v('c_eva') / 100, 9);
+    expect(r.modifiers!.critMultAdd).toBeCloseTo(v('a_keen', 1) / 100, 9);
     expect(r.modifiers!.critAdd).toBeCloseTo(Math.min(ITEMS.caps.crit, v('b_crit') + v('a_keen')) / 100, 6); // tavanlı
   });
 });

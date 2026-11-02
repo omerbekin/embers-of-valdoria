@@ -218,7 +218,7 @@ export function reforgeChoices(inst: ItemInstance, index: number): string[] {
   const def = cur ? affixDef(cur.id) : undefined;
   if (!d || !cur || !def) return [];
   const others = new Set(roll.affixes.filter((_, i) => i !== index).map((a) => a.id));
-  return tierPool(def.tier, d.slot).filter((id) => !others.has(id));
+  return tierPool(def.tier, d.slot, roll.ilvl ?? d.ilvl).filter((id) => !others.has(id));
 }
 
 /**

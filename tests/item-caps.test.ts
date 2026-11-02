@@ -72,7 +72,7 @@ describe('Motorun gizli sınırları veride (Ömer 2026-10-13, itemfix m4)', () 
     expect(ITEMS.caps).toMatchObject({ initiative: 99, armorPen: 100, magicPen: 100, damageTaken: 90 });
     expect(ITEMS.caps).not.toHaveProperty('block'); // Block tavanı kalktı (Ömer 2026-10-31, #17)
     expect(ITEM_HOOK_CAPS).toEqual({ initiative: 0.99, armorPen: 1, magicPen: 1, damageTaken: 0.9 });
-    const eq = { ...emptyEquipment(), boots: { uid: 'b', id: 'turnshoes', rolls: roll([['b_initiative', 1]], 30) }, trinket: { uid: 't', id: 'copper_ring', rolls: roll([['b_initiative', 1]], 30) } };
+    const eq = { ...emptyEquipment(), boots: { uid: 'b', id: 'turnshoes', rolls: roll([['b_initiative', 1]], 60) }, trinket: { uid: 't', id: 'copper_ring', rolls: roll([['b_initiative', 1]], 60) } }; // Quick start %30 at ilvl 30 (Ömer 2026-11-02): two max rolls reach the cap from ilvl ~50
     const r = loadout({ class: 'archer', equipment: eq });
     expect(r.itemEffects!.startCharge).toBe(0.99);
     expect(r.capped).toContain('initiative');

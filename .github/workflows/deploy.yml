@@ -15,7 +15,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Yalnız public/mockups altını değiştiren push'ta npm test atlanır (Ömer 2026-11-02). Ek güvence: bir önceki commit bu iş akışında BAŞARILI koşmuş olmalı;
+  # iptal edilmiş, kırmızı ya da hiç koşmamış bir önceki commit varsa (süren oyun yayınını iptal eden mockup push'u dahil) tam test koşar. Her hata tam teste düşer.
+  scope:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      mode: ${{ steps.scope.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          mode=full
+          if [ "$EVENT" = push ] && [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            files=$(git diff --name-only "$BEFORE" "$SHA" || echo x)
+            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qv '^public/mockups/'; then
+              n=$(gh api "repos/$REPO/actions/workflows/deploy.yml/runs?head_sha=$BEFORE&status=success" --jq '.total_count' || echo 0)
+              if [ "${n:-0}" -gt 0 ]; then mode=mockup; fi
+            fi
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "Kapsam: $mode"
+
   build:
+    needs: scope
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +58,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
+      - if: ${{ needs.scope.outputs.mode != 'mockup' }}
+        run: npm test
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
@@ -34,6 +69,8 @@ jobs:
   # Harita 2-3 test kopyası (dal maps-2-3) /maps23/ altına, ana derlemeyle paralel.
   # Kırmızıysa yalnızca bu kısım yayınlanmaz; ana site ve iş akışı etkilenmez.
   maps:
+    needs: scope
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -45,7 +82,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
+      - if: ${{ needs.scope.outputs.mode != 'mockup' }}
+        run: npm test
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
@@ -53,7 +91,7 @@ jobs:
           path: dist
 
   assemble:
-    needs: [build, maps]
+    needs: [scope, build, maps]
     if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:

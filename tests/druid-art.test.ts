@@ -33,6 +33,11 @@ describe('Druid ve Treant efektleri kendi sheet ve sesleriyle çalar', () => {
     }
   });
 
+  it('Treant kaybolma olay efekti druid/vfx.ts içinde kayıtlı; ölme efekti ertelendi (7/10), bağlı değil', () => {
+    expect(VFX_V2.druid!['summonvanish_treant']).toBeTypeOf('function');
+    expect(VFX_V2.druid!['summondeath_treant']).toBeUndefined();
+  });
+
   it('yeni sesler skill listesinde, v2 dosyasından çözülür ve data/audio.json ile aynı tarif', () => {
     for (const [id, want] of Object.entries(SKILLS)) {
       const s = content.skills[id]!;

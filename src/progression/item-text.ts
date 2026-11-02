@@ -38,7 +38,8 @@ import {
 } from './items';
 import { capOf, loadout, loadoutSetup, type LoadoutSource } from './loadout';
 
-const fmt = (x: number) => (Number.isInteger(x) ? String(x) : String(Math.round(x * 10) / 10));
+// En çok 2 ondalık (adım 0,25 / 0,75 / 0,05 tam görünür; Ömer 2026-11-02, düz Speed 0,75 eskiden "0,8" yazılıyordu)
+const fmt = (x: number) => (Number.isInteger(x) ? String(x) : String(Math.round(x * 100) / 100));
 const ATTR_NAME: Record<string, string> = { str: 'STR', dex: 'DEX', int: 'INT', luck: 'LUCK' };
 
 /** Satırın stat ikonu / ipucu kimliği (Gear paneli ve stat-tips kimlikleri; yoksa affix'in kendi ikonu). */

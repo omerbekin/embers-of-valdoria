@@ -160,7 +160,7 @@ describe('Block Break affix (b_blockbreak)', () => {
     for (let i = 0; i < 4000; i++) {
       const d = ITEMS.items[i % ITEMS.items.length]!;
       if (d.rarity === 'legendary') continue;
-      const roll = rollItem(d, rng, { rarity: 'epic' });
+      const roll = rollItem(d, rng, { rarity: 'epic', ilvl: 21 });
       if (roll.affixes.some((a) => a.id === 'b_blockbreak')) seen.add(d.slot);
     }
     expect([...seen].sort()).toEqual(['gloves', 'weapon']);

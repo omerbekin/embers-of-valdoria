@@ -208,6 +208,70 @@ function rootCoil(c: VfxCtx, k: VfxKit, t: CombatantView, hold: number, rooted: 
   });
 }
 
+
+/**
+ * Vine Snare: hedefin bacak hizasında 4 ayrı, kısa, koyu kök halkası (kodla çizilir). Halkalar zeminden yukarı sırayla belirir, birimin arkasında
+ * kalan yarı koyu, önde kalan yarı kabuk renginde; sıkarken yarıçap daralır ve yeşil-beyaz bir parıltı geçer, tutar, aşağıdan çözülüp solar.
+ */
+function rootRings(c: VfxCtx, k: VfxKit, t: CombatantView, hold: number): void {
+  const back = c.scene.add.graphics().setDepth(t.container.depth - 1);
+  const front = c.scene.add.graphics().setDepth(t.container.depth + 2);
+  const cx = t.container.x;
+  const base = t.container.y - 6;
+  const N = 3;
+  const step = Math.max(28, t.h * 0.14);
+  const W = Math.max(30, spriteW(t) * 0.3);
+  const ph = k.rnd(0, 6);
+  const ring = (g: Phaser.GameObjects.Graphics, i: number, rx: number, a: number, flash: number, half: 'back' | 'front'): void => {
+    const y = base - i * step;
+    const a0 = half === 'front' ? 0 : Math.PI;
+    const a1 = a0 + Math.PI;
+    const th = half === 'front' ? 10 : 7;
+    const pts = (r: number): Array<[number, number]> => Array.from({ length: 17 }, (_, j) => { const ang = a0 + ((a1 - a0) * j) / 16; return [cx + Math.cos(ang) * r, y + Math.sin(ang) * r * 0.4]; });
+    g.lineStyle(th + 3, 0x20120a, a).beginPath();
+    pts(rx).forEach(([x, yy], j) => (j ? g.lineTo(x, yy) : g.moveTo(x, yy)));
+    g.strokePath();
+    g.lineStyle(th, half === 'front' ? (i % 2 ? 0x6b4423 : 0x5a3a1e) : 0x3a2412, a).beginPath();
+    pts(rx).forEach(([x, yy], j) => (j ? g.lineTo(x, yy) : g.moveTo(x, yy)));
+    g.strokePath();
+    if (half === 'front') {
+      g.lineStyle(3, 0x2c5a24, a * 0.9).beginPath();
+      pts(rx - 1).forEach(([x, yy], j) => (j ? g.lineTo(x, yy - 3) : g.moveTo(x, yy - 3)));
+      g.strokePath();
+      for (let j = 2; j < 16; j += 5) {
+        const [x, yy] = pts(rx)[j]!;
+        g.fillStyle(0xd9d2c0, a).fillTriangle(x - 3, yy - 3, x + 3, yy - 3, x + (j % 2 ? 2 : -2), yy - 10);
+      }
+      if (flash > 0) {
+        g.lineStyle(6, 0xcfffc0, flash * a).beginPath();
+        pts(rx).forEach(([x, yy], j) => (j ? g.lineTo(x, yy - 4) : g.moveTo(x, yy - 4)));
+        g.strokePath();
+      }
+    }
+    void ph;
+  };
+  const draw = (grow: number, squeeze: number, fade: number, flash: number): void => {
+    back.clear();
+    front.clear();
+    for (let i = 0; i < N; i++) {
+      const own = Math.min(1, Math.max(0, grow * (N + 1) - i));
+      if (own <= 0) continue;
+      const rx = W * (1 + 0.12 * Math.sin(i * 1.7)) * squeeze * (0.6 + 0.4 * own);
+      const a = Math.min(1, own * 1.4) * fade;
+      ring(back, i, rx, a, flash, 'back');
+      ring(front, i, rx, a, flash, 'front');
+    }
+  };
+  void k.counter(c.scene, k.slow(240), (u) => draw(u, 1, 1, 0), 'Quad.easeOut').then(async () => {
+    c.scene.tweens.add({ targets: t.container, scaleX: 0.95, scaleY: 0.97, duration: k.slow(80), yoyo: true });
+    await k.counter(c.scene, k.slow(160), (u) => draw(1, 1 - 0.2 * Math.sin(u * Math.PI), 1, Math.sin(u * Math.PI)));
+    await k.wait(c.scene, k.slow(hold));
+    await k.counter(c.scene, k.slow(260), (u) => draw(1, 1 + 0.1 * u, 1 - u, 0), 'Quad.easeIn');
+    back.destroy();
+    front.destroy();
+  });
+}
+
 // ---------------------------------------------------------------------------------------------------------------- THORN WHIP
 
 /**
@@ -1424,13 +1488,13 @@ export const vinesnareChain: V2Vfx = (c, k) =>
       const dx = s.p.x - from.x;
       const dy = s.p.y - from.y;
       const dist = Math.hypot(dx, dy);
-      const lash = k.sheet(c.scene, SH.lash, from.x, from.y + 6, { size: 260, loop: true, depth: k.FLOOR_FX + 40, rotation: Math.atan2(dy, dx) });
-      await k.counter(c.scene, k.slow(Math.max(110, dist / 1.5)), (u) => lash?.setPosition(from.x + dx * u, from.y + 6 + dy * u));
+      const lash = k.sheet(c.scene, SH.lash, from.x, from.y + 6, { size: 340, loop: true, depth: k.DEPTH + 30, rotation: Math.atan2(dy, dx) });
+      await k.counter(c.scene, k.slow(Math.max(240, dist / 1.2)), (u) => lash?.setPosition(from.x + dx * u, from.y + 6 + dy * u));
       lash?.destroy();
       if (i === 0) c.sfx('rootCoilCreak');
-      const S = Math.max(230, cellW(c, k, s.slot) * 1.15);
-      const coil = k.sheet(c.scene, SH.snare, s.p.x, s.p.y + 16, { size: S, wrap: { unit: (c.targets.find((t) => t.combatant.slot === s.slot) ?? a).container.depth } });
-      coils.push(k.sheetDone(coil));
+      // sarmal sheet (07) yerine kodla çizilen kök halkaları (rootCoil: bacak hizası, koyu kabuk): hedef başına, kamçı sheet'iyle (08) birlikte
+      for (const t of c.targets.filter((u) => u.combatant.slot === s.slot)) rootRings(c, k, t, 380);
+      coils.push(k.wait(c.scene, k.slow(240 + 160 + 380 + 260)));
       soilBurst(c, k, s.p, 0.5);
       for (const t of c.targets.filter((u) => u.combatant.slot === s.slot)) c.scene.tweens.add({ targets: t.container, y: t.container.y + 6, duration: k.slow(80), yoyo: true, hold: k.slow(120) });
       from = s.p;
@@ -1445,6 +1509,191 @@ export const vinesnareChain: V2Vfx = (c, k) =>
     await k.wait(c.scene, k.slow(150));
   }, c.actor);
 
+
+// ---------------------------------------------------------------------------------------------------------------- TREANT: ÖLME / KAYBOLMA
+
+const BARK_HEX = [0x6b4423, 0x8c5a2b, 0x4a2e1a, 0x3a2412];
+const LEAF_HEX = [0xa8f08a, 0x62d04b, 0x2c7a2b];
+
+/** Köşeli kabuk/kök parçası: yay çizerek uçar, toprağa düşüp batar (kare değil çokgen, dönerek). */
+function barkChunk(c: VfxCtx, k: VfxKit, x: number, y: number, o: { vx: number; vy: number; floor: number; size: number; col: number; depth: number; life?: number }): void {
+  const g = c.scene.add.graphics().setDepth(o.depth);
+  const n = 3 + Math.floor(k.rnd(0, 2));
+  const pts = Array.from({ length: n }, (_, i) => {
+    const ang = (i / n) * Math.PI * 2 + k.rnd(-0.4, 0.4);
+    const r = o.size * k.rnd(0.5, 1);
+    return [Math.cos(ang) * r, Math.sin(ang) * r * 0.7] as [number, number];
+  });
+  g.fillStyle(o.col, 1).lineStyle(2, 0x1a100a, 1).beginPath().moveTo(pts[0]![0], pts[0]![1]);
+  for (const [px, py] of pts.slice(1)) g.lineTo(px, py);
+  g.closePath().fillPath().strokePath();
+  g.setPosition(x, y);
+  const life = o.life ?? k.rnd(700, 1100);
+  const spin = k.rnd(-6, 6);
+  let vy = o.vy;
+  let vx = o.vx;
+  let last = 0;
+  void k.counter(c.scene, k.slow(life), (u) => {
+    const dt = Math.min(0.05, (u * life - last) / 1000);
+    last = u * life;
+    vy += 1500 * dt;
+    g.x += vx * dt;
+    g.y = Math.min(o.floor, g.y + vy * dt);
+    if (g.y >= o.floor) vx *= 0.8;
+    g.rotation += spin * dt;
+    g.setAlpha(u > 0.7 ? (1 - u) / 0.3 : 1);
+    if (u >= 1) g.destroy();
+  });
+}
+
+/**
+ * Treant ölür (summondeath_treant; actor = targets[0] = ölen Treant, sonra sahne birimi düşürür): gövde titrer ve kararır, merkezden dallanan yeşil
+ * ışıklı çatlaklar yayılır, kabuk/kök parçaları savrulur; gövde zemin çizgisinin altına, su gibi toprağa BATAR (zemin çizgisinde kesilir) ve altta koyu
+ * ıslak toprak yayılır (damla yok). Boyuttan bağımsız: ölçüler birimin v.w / v.h değerinden gelir (sprite kare boyutu değişse de çalışır).
+ */
+export const summondeath_treant: V2Vfx = async (c, k) => {
+  const v = c.targets[0];
+  if (!v) return;
+  const home = v.home;
+  const W = Math.max(90, v.w);
+  const H = Math.max(120, v.h);
+  const fx = home.x;
+  const fy = home.y - 2;
+  const sx = v.container.scaleX;
+  const sy = v.container.scaleY;
+  const ui = v.container.list.filter((ch) => ch !== v.sprite) as unknown as Array<Phaser.GameObjects.Components.Alpha>;
+  ui.forEach((ch) => ch.setAlpha(0));
+  c.sfx('rootRise');
+  // 1) titreme + merkezden dallanan çatlaklar
+  const cr = c.scene.add.graphics().setDepth(v.container.depth + 3);
+  const hub = { x: fx, y: fy - H * 0.5 };
+  const lines: Array<Array<[number, number]>> = [];
+  for (let i = 0; i < 5; i++) {
+    const ang = (i / 5) * Math.PI * 2 + k.rnd(-0.3, 0.3);
+    let x = hub.x;
+    let y = hub.y;
+    const main: Array<[number, number]> = [[x, y]];
+    for (let s = 0; s < 4; s++) {
+      x += Math.cos(ang + k.rnd(-0.5, 0.5)) * W * 0.1;
+      y += Math.sin(ang + k.rnd(-0.5, 0.5)) * H * 0.085;
+      main.push([x, y]);
+      if (s === 1) {
+        const br: Array<[number, number]> = [[x, y]];
+        let bx = x;
+        let by = y;
+        const ba = ang + (i % 2 ? 0.9 : -0.9);
+        for (let q = 0; q < 2; q++) {
+          bx += Math.cos(ba + k.rnd(-0.4, 0.4)) * W * 0.07;
+          by += Math.sin(ba + k.rnd(-0.4, 0.4)) * H * 0.06;
+          br.push([bx, by]);
+        }
+        lines.push(br);
+      }
+    }
+    lines.push(main);
+  }
+  leafFall(c, k, fx, fy - H * 0.85, 6, { spread: W * 0.35, fall: [H * 0.5, H * 0.9], dur: [800, 1200], delay: [100, 500], floor: fy + 6 });
+  let chips = 0;
+  await k.counter(c.scene, k.slow(420), (u) => {
+    v.container.setX(home.x + Math.sin(u * 60) * (2 + 4 * u));
+    v.sprite.setTint(mixHex(0xffffff, 0x6b4a30, u));
+    cr.clear();
+    for (const ln of lines) {
+      const n = Math.max(1, Math.round(ln.length * clamp01(u * 1.4)));
+      for (const [w, col, al] of [[10, 0x0c0604, 1], [2, 0xb6f08a, 0.6]] as Array<[number, number, number]>) {
+        cr.lineStyle(w, col, al).beginPath().moveTo(ln[0]![0], ln[0]![1]);
+        for (let s = 1; s < n; s++) cr.lineTo(ln[s]![0], ln[s]![1]);
+        cr.strokePath();
+      }
+    }
+    if (u * 420 > chips) {
+      chips += 110;
+      for (let i = 0; i < 2; i++) barkChunk(c, k, fx + k.rnd(-W * 0.3, W * 0.3), fy - k.rnd(H * 0.2, H * 0.8), { vx: k.rnd(-120, 120), vy: k.rnd(-140, -20), floor: fy + k.rnd(0, 8), size: k.rnd(5, 8), col: BARK_HEX[Math.floor(k.rnd(0, BARK_HEX.length))]!, depth: v.container.depth + 3 });
+    }
+  });
+  // 2) çöküş: gövde zemin çizgisinde kesilerek toprağa batar, parçalar savrulur, ıslak koyu toprak yayılır
+  c.sfx('thud');
+  k.shake(c.scene, 220, 0.004);
+  const wet = c.scene.add.ellipse(fx, fy + 4, W * 0.2, W * 0.07, 0x3a2a1c, 0.8).setDepth(k.FLOOR_FX + 4).setAlpha(0);
+  c.scene.tweens.add({ targets: wet, alpha: 1, displayWidth: W * 0.8, displayHeight: W * 0.26, duration: k.slow(900), ease: 'Sine.easeOut' });
+  fadeOut(c, k, wet, 1200, 400);
+  const pool = c.scene.add.ellipse(fx, fy + 4, W * 0.3, W * 0.1, 0x2e2014, 0.62).setDepth(k.FLOOR_FX + 3).setAlpha(0);
+  c.scene.tweens.add({ targets: pool, alpha: 1, displayWidth: W * 1.3, displayHeight: W * 0.42, duration: k.slow(800), ease: 'Sine.easeOut' });
+  const rim = c.scene.add.ellipse(fx, fy + 4, W * 0.3, W * 0.1).setStrokeStyle(3, 0x4a3524, 0.9).setFillStyle(0, 0).setDepth(k.FLOOR_FX + 4);
+  c.scene.tweens.add({ targets: rim, alpha: 0, displayWidth: W * 1.55, displayHeight: W * 0.52, duration: k.slow(900), ease: 'Quad.easeOut' });
+  for (let i = 0; i < 16; i++)
+    barkChunk(c, k, fx + k.rnd(-W * 0.3, W * 0.3), fy - k.rnd(H * 0.1, H * 0.85), { vx: k.rnd(-260, 260), vy: k.rnd(-380, -60), floor: fy + k.rnd(0, 10), size: k.rnd(9, 16), col: i % 4 === 0 ? LEAF_HEX[Math.floor(k.rnd(0, 3))]! : BARK_HEX[Math.floor(k.rnd(0, BARK_HEX.length))]!, depth: v.container.depth + 3 });
+  const mask = c.scene.make.graphics({ x: 0, y: 0 }, false);
+  mask.fillStyle(0xffffff).fillRect(fx - 600, fy - 1400, 1200, 1400 + 4);
+  v.container.setMask(mask.createGeometryMask());
+  await k.counter(c.scene, k.slow(1300), (u) => {
+    const q = u * u * (3 - 2 * u) * 0.6 + u * u * 0.4;
+    v.container.setPosition(home.x + Math.sin(u * 40) * 3 * (1 - u), home.y + H * 1.0 * q);
+    v.container.setScale(sx * (1 + 0.1 * q), sy * (1 - 0.15 * q));
+    v.sprite.setTint(mixHex(0x6b4a30, 0x2a1c12, u));
+    v.container.setAlpha(1 - clamp01((u - 0.85) / 0.15));
+    cr.setPosition(0, v.container.y - home.y).setAlpha(1 - clamp01(u * 1.6));
+  }, 'Quad.easeIn');
+  v.container.clearMask(true);
+  v.container.setAlpha(0).setScale(sx, sy).setPosition(home.x, home.y);
+  v.sprite.clearTint();
+  mask.destroy();
+  cr.destroy();
+  fadeOut(c, k, pool, 0, 450);
+  await k.wait(c.scene, k.slow(480));
+};
+
+/**
+ * Treant kaybolur (summonvanish_treant; süresi doldu): gövde yaprak ve kabuk kıvılcımlarıyla çözülür. Üstten alta doğru, düz çizgiyle değil tırtıklı
+ * (her şerit farklı seviyede) solar; yerinden sarı-yeşil ışık kıvılcımları, köşeli kabuk kıymıkları ve yapraklar yükselir. Boyuttan bağımsız (v.w / v.h).
+ */
+const summonvanish_treant: V2Vfx = async (c, k) => {
+  const v = c.targets[0];
+  if (!v) return;
+  const home = v.home;
+  const W = Math.max(90, v.w);
+  const H = Math.max(120, v.h);
+  const fx = home.x;
+  const fy = home.y - 2;
+  const ui = v.container.list.filter((ch) => ch !== v.sprite) as unknown as Array<Phaser.GameObjects.Components.Alpha>;
+  ui.forEach((ch) => ch.setAlpha(0));
+  c.sfx('rootRise');
+  const glow = lifeLight(c, k, fx, fy - H * 0.5, W * 0.9, H * 1.05, 0xd6e27a, 0, v.container.depth - 1);
+  c.scene.tweens.add({ targets: glow, alpha: 0.4, duration: k.slow(300), yoyo: true, hold: k.slow(400) });
+  fadeOut(c, k, glow, 800, 500);
+  const mask = c.scene.make.graphics({ x: 0, y: 0 }, false);
+  v.container.setMask(mask.createGeometryMask());
+  const STRIPS = 40;
+  const noise = Array.from({ length: STRIPS }, () => k.rnd(-0.3, 0.3));
+  let sp = 0;
+  leafFall(c, k, fx, fy - H * 0.8, 7, { spread: W * 0.3, fall: [H * 0.35, H * 0.65], dur: [600, 900], delay: [0, 300], size: [14, 20], floor: fy + 6 });
+  await k.counter(c.scene, k.slow(1000), (u) => {
+    const base = fy - H * 1.4 + H * 1.75 * u;
+    mask.clear().fillStyle(0xffffff);
+    const sw = 1200 / STRIPS;
+    for (let i = 0; i < STRIPS; i++) {
+      const cut = base + (noise[i]! + Math.sin(u * 9 + i) * 0.04) * H;
+      mask.fillRect(fx - 600 + i * sw, cut, sw + 1, 1500);
+    }
+    v.sprite.setTint(mixHex(0xffffff, 0xd6e27a, u * 0.6));
+    if (u * 1000 > sp) {
+      sp += 60;
+      for (let i = 0; i < 3; i++) {
+        const px = fx + k.rnd(-W * 0.38, W * 0.38);
+        const py = Math.max(fy - H, Math.min(fy, base + k.rnd(-H * 0.5, H * 0.3)));
+        if (i < 2) barkChunk(c, k, px, py, { vx: k.rnd(-90, 90), vy: k.rnd(-120, -10), floor: fy + 4, size: k.rnd(5, 9), col: BARK_HEX[Math.floor(k.rnd(0, BARK_HEX.length))]!, depth: v.container.depth + 3, life: 600 });
+        else
+          particles(c, k, v.container.depth + 3, 900, [{ x: px, y: py, vx: k.rnd(-110, 110), vy: k.rnd(-190, -40), g: -30, drag: 0.4, life: k.rnd(400, 900), age: 0, size: k.rnd(3, 6), col: LEAF_HEX[Math.floor(k.rnd(0, 3))]!, ph: k.rnd(0, 6) }], { add: true });
+      }
+    }
+  });
+  v.container.clearMask(true);
+  v.container.setAlpha(0);
+  v.sprite.clearTint();
+  mask.destroy();
+  await k.wait(c.scene, k.slow(500));
+};
+
 export const VFX: Record<string, V2Vfx> = {
   thornwhip: thornwhipSheet,
   vines: vinesSurge,
@@ -1452,6 +1701,8 @@ export const VFX: Record<string, V2Vfx> = {
   summonroots,
   // olay efekti (docs/design/art-v2.md > 3.1): Treant doğuşu
   summon_treant: summon_treantSheet,
+  // summondeath_treant (yukarıda, export) Sol 7/10: ertelendi, bağlı DEĞİL (v1 koda düşer); 8/10 olunca buraya eklenir
+  summonvanish_treant,
   rootfall: rootfallFist,
   // Vine Snare: yeni sheet'ler (07/08) oyun içi 7/10 kaldı (geçme çizgisi 8); yeniden çizilene kadar eski kod efekti oynar (2026-11-02)
   vinesnare,

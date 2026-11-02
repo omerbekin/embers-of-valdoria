@@ -102,7 +102,7 @@
     "sellRatio": 0.5
   },
   "rolls": {
-    "spread": 0.15
+    "spread": 0.25
   },
   "_affixes": "Affix tanımları (Ömer onayı 2026-10-11, items.md 1.3b). tier C/B/A; text: {0}/{1} = parça değerleri, {x} = zarlanan seçim, {primary} = sınıfın ana statı. parts[]: base + perIlvl x ilvl (x affixRules.power), step = yuvarlama adımı, ip = 1 birimin Item Points değeri (değer/fiyat/Equip best), to = motor eşlemesi (mod:<UnitModifiers alanı> toplanır, mult:<alan> 1 + toplam, fx:<ItemEffects alanı>, elem:<element|*>, attr:primary|all, res:<element> = element direnci (ItemEffects.elemResist), prog:recovery|gold|xp|woundSoft), scale = yüzde -> oran (0,01). fixed = zar ve seviye yok; floor = aşağı yuvarlanır; noRoll = zar yok; noPower = affixRules.power işlemez (iri adımlı: ana stat, tüm statlar, hız, Immunity). slots = yalnızca bu yuvalarda rastgele çekilir (yuva kimliği, Ömer 2026-10-13 itemfix: bkz. _itemfix; slots yoksa her yuvada). needs = Equip best'in sınıf uyumu ipucu (element:<x>, element:magic, mp, shield, dot, debuff, support, summon, melee = temel saldırısı yakın dövüş, ranged = yakın dövüş olmayan hasar skill'i var). affixRules.rollFloorByRarity (Ömer 2026-10-11): nadirliğe göre zarın aralıktaki alt sınırı (oran; tavan aynı): Common tüm aralık, Uncommon üst %75, Rare %62,5, Epic %50, Legendary %37,5. Yalnızca yeni zarlar. affixRules.classFit (Ömer 2026-10-11): rastgele affix çekilirken item kimin için zarlandıysa ona yarayan affix'ler (needs uyumu) `weight` kat ağırlıklı, yalnızca `tiers` kademelerinde (C).",
   "_itemfix": "Ömer 2026-10-13 (form itemfix): (1) YUVA KİMLİĞİ: her stat yalnızca 2-3 yuvada rastgele çıkar (affixDefs[].slots). Weapon = element/fiziksel hasar, kritik hasarı, delme, elit/boss hasarı (+ isabet, DoT, Keenness, Elemental, Potency, Summon); Off-hand kalkan = Armor, Shield power, Magic armor (+ HP regen, resist, auralar, Global defense, Max HP %, Support); Helm = HP, MP, debuff direnci (+ Armor, Magic armor, MP cost, Mana/Resource mastery); Armor = Armor, HP, Magic armor, auralar (+ HP regen, resist); Gloves = isabet, kritik şansı, can çalma (+ kaçınma, MP regen, Keenness, hasar, hız %); Boots = hız, kaçınma, Quick start (+ HP, MP, hız %); Trinket = HP/MP regen, şifa ve kalkan gücü, DoT, çağrı gücü (+ MP, MP cost, hız, Quick start, hasar, Elemental, Potency, Mana/Resource). Genel A affix'leri (Primary, All attributes, Recovery, Swift ultimate, Immunity, Endurance) her yuvada. Hançer ikinci elde silah havuzunu kullanır. Ana affix (main) tabanın örtük statıdır, havuzdan muaftır; Legendary'nin sabit affix'leri de muaf. Kalkanların ana affix'i Armor (main), yeni tabanlar Iron Buckler (Common), Kite Shield of the Stag (Rare), Warden's Pavise (Epic). (2) TEK ITEM TAVANI DOLDURMAZ: c_acc 1/0,17 -> 0,6/0,1 (adım 0,25), b_crit 2,4/0,4 -> 1,5/0,25, a_keen kritik 1,92/0,32 -> 1,2/0,2, b_speed 1/0,04 -> 0,7/0,03 (adım 0,25), b_mpcost 4,8/0,8 -> 3/0,5, a_recovery 3,84/0,64 -> 1,6/0,27: tavan artık 2-3 kaynakla dolar. (3) DEĞERLEME (yalnızca ip): c_shield ve c_dot 0,15 -> 0,2, a_allattr 1,25 -> 3, a_support 0,08 -> 0,12 (her parça), a_potency tur 1 -> 3. (7) DENGE: yuva kimliği boşa giden zarları azalttığı için item'ler Endless'ta güçlendi (ilk boss %58 -> %63); telafi için affixRules.power 1,5 -> 1,4 (tüm affix değerleri ~%7 düşük, Endless hedefleri yeniden bantta). (6) Sıfır aralık: adımlar küçüldü (c_mp 5 -> 2, c_hpregen 0,5 -> 0,25, c_mpregen 1 -> 0,25, a_primary 2 -> 1, a_allattr 2 -> 0,5, a_mana / a_resource MP regen 1 -> 0,5). Ayrıntı: docs/design/open-questions.md madde (itemfix).",
@@ -112,10 +112,10 @@
     "power": 1.6,
     "rollFloorByRarity": {
       "common": 0,
-      "uncommon": 0.25,
-      "rare": 0.375,
-      "epic": 0.5,
-      "legendary": 0.625
+      "uncommon": 0.1,
+      "rare": 0.2,
+      "epic": 0.3,
+      "legendary": 0.4
     },
     "classFit": {
       "weight": 2,
@@ -193,7 +193,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.25,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.4,
           "to": "elem:physical",
           "scale": 0.01
@@ -214,7 +214,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.25,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.4,
           "to": "elem:fire",
           "scale": 0.01
@@ -235,7 +235,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.25,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.4,
           "to": "elem:ice",
           "scale": 0.01
@@ -256,7 +256,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.25,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.4,
           "to": "elem:holy",
           "scale": 0.01
@@ -277,7 +277,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.25,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.4,
           "to": "elem:arcane",
           "scale": 0.01
@@ -298,7 +298,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.25,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.4,
           "to": "elem:nature",
           "scale": 0.01
@@ -319,7 +319,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.25,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.4,
           "to": "elem:dark",
           "scale": 0.01
@@ -339,7 +339,7 @@
         {
           "base": 0.6,
           "perIlvl": 0.1,
-          "step": 0.25,
+          "step": 0.1,
           "ip": 0.6,
           "to": "mod:accuracyAdd",
           "scale": 0.01
@@ -359,7 +359,7 @@
         {
           "base": 1,
           "perIlvl": 0.17,
-          "step": 0.5,
+          "step": 0.25,
           "ip": 0.6,
           "to": "mod:evasionAdd",
           "scale": 0.01
@@ -441,8 +441,8 @@
       "icon": "shield",
       "parts": [
         {
-          "base": 4,
-          "perIlvl": 0.67,
+          "base": 8,
+          "perIlvl": 1.34,
           "step": 1,
           "ip": 0.2,
           "to": "mod:shieldPowerAdd",
@@ -464,8 +464,8 @@
       "icon": "dot",
       "parts": [
         {
-          "base": 4,
-          "perIlvl": 0.67,
+          "base": 8,
+          "perIlvl": 1.34,
           "step": 1,
           "ip": 0.2,
           "to": "mod:dotPowerAdd",
@@ -486,7 +486,7 @@
         {
           "base": 1,
           "perIlvl": 0.1,
-          "step": 0.5,
+          "step": 0.25,
           "ip": 0.4,
           "to": "fx:blockChance",
           "scale": 0.01
@@ -507,7 +507,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.25,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.4,
           "to": "elem:lightning",
           "scale": 0.01
@@ -661,7 +661,7 @@
         {
           "base": 2,
           "perIlvl": 0.3,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.2,
           "to": "fx:healReceived",
           "scale": 0.01
@@ -680,7 +680,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.25,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.3,
           "to": "mod:critAdd",
           "scale": 0.01
@@ -699,7 +699,7 @@
         {
           "base": 12,
           "perIlvl": 2,
-          "step": 5,
+          "step": 2.5,
           "ip": 0.06,
           "to": "mod:critMultAdd",
           "scale": 0.01
@@ -719,7 +719,7 @@
         {
           "base": 0.7,
           "perIlvl": 0.03,
-          "step": 0.25,
+          "step": 0.05,
           "ip": 4,
           "to": "mod:spdAdd",
           "noPower": true
@@ -840,7 +840,7 @@
         {
           "base": 1.44,
           "perIlvl": 0.24,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.5,
           "to": "fx:leech",
           "scale": 0.01
@@ -879,9 +879,9 @@
       "icon": "initiative",
       "parts": [
         {
-          "base": 7.2,
-          "perIlvl": 1.2,
-          "step": 5,
+          "base": 7,
+          "perIlvl": 0.4,
+          "step": 1,
           "ip": 0.1,
           "to": "fx:startCharge",
           "scale": 0.01
@@ -1009,7 +1009,7 @@
         {
           "base": 1.2,
           "perIlvl": 0.2,
-          "step": 1,
+          "step": 0.5,
           "ip": 0.5,
           "to": "prog:woundSoft",
           "scale": 0.05
@@ -1053,7 +1053,7 @@
         {
           "base": 2,
           "perIlvl": 0.3,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.3,
           "to": "fx:startShieldRatio",
           "scale": 0.01
@@ -1075,7 +1075,7 @@
         {
           "base": 1,
           "perIlvl": 0.15,
-          "step": 1,
+          "step": 0.5,
           "ip": 0.4,
           "to": "fx:killMp"
         }
@@ -1093,8 +1093,8 @@
       "parts": [
         {
           "base": 1,
-          "perIlvl": 0.15,
-          "step": 0.5,
+          "perIlvl": 0.1,
+          "step": 0.25,
           "ip": 0.4,
           "to": "fx:killHeal",
           "scale": 0.01
@@ -1124,6 +1124,7 @@
       "tier": "B",
       "name": "Block break",
       "text": "{0}% Block break",
+      "minIlvl": 21,
       "slots": [
         "weapon",
         "gloves"
@@ -1135,7 +1136,7 @@
         {
           "base": 1.5,
           "perIlvl": 0.2,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.25,
           "to": "fx:blockBreak",
           "scale": 0.01
@@ -1200,7 +1201,7 @@
         {
           "base": 1.92,
           "perIlvl": 0.32,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.5,
           "to": "mod:damageAdd",
           "scale": 0.01
@@ -1221,7 +1222,7 @@
         {
           "base": 1.92,
           "perIlvl": 0.32,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.5,
           "to": "fx:damageTakenReduce",
           "scale": 0.01
@@ -1240,8 +1241,8 @@
       "icon": "spd",
       "parts": [
         {
-          "base": 1.92,
-          "perIlvl": 0.2,
+          "base": 1.5,
+          "perIlvl": 0.12,
           "step": 0.5,
           "ip": 0.5,
           "to": "mult:spdMult",
@@ -1282,7 +1283,7 @@
         {
           "base": 1.92,
           "perIlvl": 0.32,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.5,
           "to": "fx:auraDamage",
           "scale": 0.01
@@ -1302,7 +1303,7 @@
         {
           "base": 1.92,
           "perIlvl": 0.32,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.5,
           "to": "fx:adjacentGuard",
           "scale": 0.01
@@ -1367,7 +1368,7 @@
         {
           "base": 2.13,
           "perIlvl": 0.36,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.45,
           "to": "elem:*",
           "scale": 0.01
@@ -1387,7 +1388,7 @@
         {
           "base": 1.2,
           "perIlvl": 0.2,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.25,
           "to": "mod:critAdd",
           "scale": 0.01
@@ -1395,7 +1396,7 @@
         {
           "base": 9.6,
           "perIlvl": 1.6,
-          "step": 5,
+          "step": 2.5,
           "ip": 0.05,
           "to": "mod:critMultAdd",
           "scale": 0.01
@@ -1415,8 +1416,8 @@
       "icon": "dot",
       "parts": [
         {
-          "base": 4,
-          "perIlvl": 0.6,
+          "base": 8,
+          "perIlvl": 1.2,
           "step": 1,
           "ip": 0.12,
           "to": "mod:potencyAdd",
@@ -1444,18 +1445,14 @@
       "desc": "One debuff, rolled on the item, cannot land on you in your first turns of each battle.",
       "icon": "immunity",
       "choices": [
-        "stun",
         "slow",
-        "silence",
         "blinded",
-        "wound",
-        "jinxed",
-        "staggered"
+        "wound"
       ],
       "parts": [
         {
-          "base": 2,
-          "perIlvl": 0.0834,
+          "base": 3,
+          "perIlvl": 0.1,
           "step": 1,
           "ip": 1,
           "to": "fx:earlyImmunity",
@@ -1615,7 +1612,7 @@
         {
           "base": 1.92,
           "perIlvl": 0.32,
-          "step": 0.5,
+          "step": 1,
           "ip": 0.5,
           "to": "fx:columnGuard",
           "scale": 0.01
@@ -1633,8 +1630,8 @@
       "icon": "pen",
       "parts": [
         {
-          "base": 15,
-          "perIlvl": 1,
+          "base": 25,
+          "perIlvl": 1.5,
           "step": 1,
           "ip": 0.1,
           "to": "fx:pierceBehind",
@@ -1656,7 +1653,7 @@
         {
           "base": 1,
           "perIlvl": 0.17,
-          "step": 0.5,
+          "step": 0.25,
           "ip": 1,
           "to": "fx:steadyDamage",
           "scale": 0.01
@@ -1676,8 +1673,8 @@
       "icon": "manaShield",
       "parts": [
         {
-          "base": 3.5,
-          "perIlvl": 0.6,
+          "base": 1.5,
+          "perIlvl": 0.3,
           "step": 1,
           "ip": 0.25,
           "to": "fx:manaShield",

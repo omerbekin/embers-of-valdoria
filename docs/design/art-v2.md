@@ -103,7 +103,7 @@ oynatma `BattleScene.runEventFx`.
 | `withertick` | `hexer/vfx.ts` (hazır) | Wither tiki | `targets` = taşıyan |
 | `guardshare` | `defender/vfx.ts` (hazır) | Guard payı korumacıya geçti (damage.redirected) | `actor` = korumacı, `targets[0]` = korunan dost (bulunursa); anında çözülür |
 
-**Undead'de `corpsedrain` + `summon_skeleton`, Druid'de `summon_treant` var** (2026-10-09, gerçekçi doğuş: toprak yarılır, çağrı maskeyle topraktan yükselir; ölüm/kaybolma adları henüz yok, v1'e düşer). Galeri önizlemesi (`debugCastSkill`) tahtada yer yoksa çağıranın en öndeki dostunu, Raise Dead'de ceset yoksa en arkadaki düşmanı düşürür ki doğuş ve ceset emme görünsün.
+**Undead'de `corpsedrain` + `summon_skeleton`, Druid'de `summon_treant` var** (2026-10-09, gerçekçi doğuş: toprak yarılır, çağrı maskeyle topraktan yükselir; ölüm/kaybolma: `summonvanish_treant` (yaprak/kabuk kıvılcımıyla çözülür) 2026-11-02 eklendi, `druid/vfx.ts`, kodla çizilir; `summondeath_treant` kodda hazır ama Sol 7/10 olduğu için ertelendi, bağlı değil, v1'e düşer). Galeri önizlemesi (`debugCastSkill`) tahtada yer yoksa çağıranın en öndeki dostunu, Raise Dead'de ceset yoksa en arkadaki düşmanı düşürür ki doğuş ve ceset emme görünsün.
 Sahne ayrıca şunları kendisi gösterir (efekte gerek yok): yüzen yazılar `+1 Omen` / `+2 Omen!` / `DOOM` / küçük Wither rakamı,
 Omen mühür yuvaları, `Dispelled: Haste`, `-8 MP`, `+3 MP`, kalkan kancası parlaması + (v2 seçiliyse) `wardLock` / `domeLock` sesi.
 
