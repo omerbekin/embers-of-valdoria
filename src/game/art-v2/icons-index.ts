@@ -16,6 +16,7 @@ import * as mage from './mage/icons';
 import * as paladin from './paladin/icons';
 import * as shared from './shared/icons';
 import * as undead from './undead/icons';
+import * as vesper from './vesper/icons';
 import * as warrior from './warrior/icons';
 
-export const ICONS_V2: Readonly<Record<string, ClassIconsV2>> = { antimage, aoe_tester, archer, cutthroat, defender, druid, gambler, hexer, mage, paladin, shared, undead, warrior };
+export const ICONS_V2: Readonly<Record<string, ClassIconsV2>> = { antimage, aoe_tester, archer, cutthroat, defender, druid, gambler, hexer, mage, paladin, shared, undead, vesper, warrior };

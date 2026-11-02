@@ -68,7 +68,7 @@ describe('Vesper kendi efekti ve sesiyle oynar (Ömer 2026-11-01: ödünç kalma
     expect(tail('thunderPeal')).toBeGreaterThan(tail('tollStrike'));
   });
 
-  it('kendi sheet\'leri diskte ve efekt dosyasında; sürüm seçicide efekt + ses, ikon hâlâ ödünç', () => {
+  it('kendi sheet\'leri diskte ve efekt dosyasında; sürüm seçicide efekt + ses + ikon', () => {
     const src = readFileSync(join(ROOT, 'src/game/art-v2/vesper/vfx.ts'), 'utf8');
     for (const name of OWN_SHEETS) {
       for (const ext of ['png', 'webp', 'json']) expect(existsSync(join(ROOT, 'assets/vfx/vesper', `${name}.${ext}`)), `${name}.${ext}`).toBe(true);
@@ -77,6 +77,6 @@ describe('Vesper kendi efekti ve sesiyle oynar (Ömer 2026-11-01: ödünç kalma
     expect(versionKeys()).toContain('vesper');
     expect(inScope('vesper', 'vfx')).toBe(true);
     expect(inScope('vesper', 'sfx')).toBe(true);
-    expect(inScope('vesper', 'icon')).toBe(false);
+    expect(inScope('vesper', 'icon')).toBe(true);
   });
 });

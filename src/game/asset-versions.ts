@@ -29,7 +29,7 @@ export const VERSION_EXCLUDED: readonly string[] = ['cutthroat', 'storm_tester',
 export const ICONS_ALWAYS_V2: readonly string[] = ['cutthroat'];
 
 /** Kapsamı kısıtlı anahtarlar: yalnızca listelenen türler v2 olabilir (Shared: animasyonu yok). Defender 2026-10-10'dan beri tam kapsamda. */
-export const V2_SCOPE: Readonly<Record<string, readonly ArtKind[]>> = { [SHARED_KEY]: ['icon', 'sfx'], vesper: ['vfx', 'sfx'] }; // Vesper (2026-11-01): kendi efekt + ses dosyası var; ikonları hâlâ ödünç (v1)
+export const V2_SCOPE: Readonly<Record<string, readonly ArtKind[]>> = { [SHARED_KEY]: ['icon', 'sfx'], vesper: ['icon', 'vfx', 'sfx'] }; // Vesper: kendi ikon (2026-11-02), efekt + ses dosyası var; ödünç yok
 
 /**
  * Skill verisinde görünmeyen ama koddan çalan sesler (sahibine göre). summonFx/corpseDrainFx (src/game/vfx.ts) ve global eylemler

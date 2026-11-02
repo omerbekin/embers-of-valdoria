@@ -7,10 +7,10 @@ import { elementIcon } from '../src/ui/skill-tags';
 import { content } from '../src/engine';
 
 // Boyalı oyun ikonları (Ömer 2026-10-10; 60 ikon, skill ikonları hariç): assets/misc-icons/<grup>/<ad>.png, ad '<grup>:<ad>' -> art-registry.
-describe('Oyun ikonları: 134 boyalı görsel, eski kodla çizilen yedek korunur', () => {
+describe('Oyun ikonları: 135 boyalı görsel, eski kodla çizilen yedek korunur', () => {
   it('beklenen her ikonun 128 ve 64 piksellik dosyası var; fazladan dosya yok', () => {
     const ids = MISC_GROUPS.flatMap((g) => MISC_ICONS[g].map((n) => miscIconName(g, n)));
-    expect(ids).toHaveLength(134);
+    expect(ids).toHaveLength(135);
     for (const id of ids) {
       expect(MISC_IMAGE_FILES[id], `${id} yok`).toBeTruthy();
       expect(MISC_IMAGE_FILES[id]!.small, `${id}: small/ yok`).not.toBe(MISC_IMAGE_FILES[id]!.url);
@@ -47,7 +47,6 @@ describe('Oyun ikonları: 134 boyalı görsel, eski kodla çizilen yedek korunur
   it('sınıf logoları: her seçilebilir sınıfın (Geometer hariç) boyalı amblemi; çağrılar verideki logoyu korur', () => {
     for (const def of Object.values(content.classes)) {
       if (def.testOnly) expect(classLogoName(def)).toBe(def.logo); // test class'ları (Geometer, Pose Tester I/II): verideki logo
-      else if (def.id === 'vesper') expect(classLogoName(def)).toBe(def.logo); // Vesper: boyalı amblem yok (yer tutucu, yeni sanat yok)
       else expect(classLogoName(def), def.id).toBe(`class:${def.id}`);
     }
     for (const def of Object.values(content.summons)) expect(classLogoName(def)).toBe(def.logo);

@@ -16,6 +16,8 @@ import { isDiagNoticeOpen, openDiagNotice } from '../diag/diag-notice';
 import { pageVisible, PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, setSettingsPage, settingsPage, stepPage } from './settings-pages';
 import { accountApi, accountShown, isOnline } from '../cloud/ui/api';
 import { ACCOUNT_SOON_LINE, accountLine } from '../cloud/ui/account-text';
+import { mergeRecord } from './cursor-theme';
+import { mountCursorPanel } from './cursor-settings';
 
 /**
  * Oyun içi ayarlar ekranı (sefer > Menu (Esc) > Settings, savaş / takım seçimi > Menu (Esc) > Settings). Ömer 2026-10-08: ana menünün SOL
@@ -55,7 +57,8 @@ export function loadVolume(): number {
 
 function saveVolume(volume: number): void {
   try {
-    window.localStorage.setItem(KEY, stepRecord('volume', volume));
+    // imleç alanları (cursor, cursorSize) silinmesin: mevcut kayıtla birleştir
+    window.localStorage.setItem(KEY, mergeRecord(window.localStorage.getItem(KEY), stepRecord('volume', volume)));
   } catch {
     // saklama kapalıysa (gizli pencere vb.) sessizce geç
   }
@@ -86,7 +89,7 @@ export class SettingsScreen {
   private open = false;
   private onBack: (() => void) | undefined;
   /** Sayfa başına satırlar (SETTINGS_PAGES sırası). */
-  private readonly rows: Record<SettingsPageKey, SettingsRow[]> = { sound: [], gameplay: [], display: [], privacy: [], account: [] };
+  private readonly rows: Record<SettingsPageKey, SettingsRow[]> = { sound: [], gameplay: [], display: [], ui: [], privacy: [], account: [] };
   private readonly pages = new Map<SettingsPageKey, HTMLElement>();
   private readonly cats = new Map<SettingsPageKey, HTMLElement>();
   /** Sayfanın altındaki kısa not (Replay onayı, iPhone tam ekran ipucu, Copy log / Error reports onayı). */
@@ -307,6 +310,7 @@ export class SettingsScreen {
           }
         }
       }
+      if (pg.key === 'ui') mountCursorPanel(page); // imleç seçimi + boyut + canlı önizleme (src/ui/cursor-settings.ts)
       if (pg.key === 'privacy') {
         // Raporlar açıkken rapor kimliği (kısa; KVKK başvurusunda raporları bulmak için)
         const idLine = el('div', 'st-line st-id', reportIdLine(diagReportId()));
@@ -348,8 +352,10 @@ export class SettingsScreen {
   /** Klavye: açıkken oyunun kısayollarına gitmez (debug kısayolu ve üstte açık Info penceresi hariç). */
   private onKey(e: KeyboardEvent): void {
     if (!this.open || e.key === '`' || e.key === 'F2' || isDiagNoticeOpen()) return;
-    e.stopImmediatePropagation();
     const k = e.key;
+    // UI sayfasında odak imleç plakalarında / boyut düğmelerindeyse ok, Enter ve Boşluk kendi düğmelerine gider (Esc / Tab yine burada)
+    if (this.page === 'ui' && k !== 'Escape' && k !== 'Tab' && e.target instanceof Element && e.target.closest('.cur-panel')) return;
+    e.stopImmediatePropagation();
     const rows = this.rows[this.page];
     const row = this.zone === 'row' ? rows[this.sel] : undefined;
     const up = k === 'ArrowUp' || k === 'w' || k === 'W';
@@ -368,6 +374,13 @@ export class SettingsScreen {
         e.preventDefault();
         uiSound('tab');
         this.showPage(stepPage(this.page, up ? -1 : 1, accountShown()));
+      } else if (this.page === 'ui' && (k === 'ArrowRight' || k === 'Enter')) {
+        e.preventDefault();
+        const first = this.pages.get('ui')?.querySelector<HTMLElement>('.cur-plate.on, .cur-plate');
+        if (first) {
+          this.zone = 'row';
+          first.focus();
+        }
       } else if (rows.length && (k === 'ArrowRight' || ((k === 'Enter' || k === ' ') && !onButton))) {
         e.preventDefault();
         this.zone = 'row';

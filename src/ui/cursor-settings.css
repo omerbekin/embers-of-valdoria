@@ -1,0 +1,354 @@
+/* Settings > UI sayfası (imleç; src/ui/cursor-settings.ts). Kit değişkenleri src/ui/elegant.css; ölçüler oyun birimiyle (--gu), dokunma hedefi >= 44 px. */
+.cur-panel {
+  --u: var(--gu, 1px);
+  padding: 0 12px 10px 0;
+  font: max(15px, calc(22 * var(--u))) / 1.3 var(--el-body);
+  color: var(--el-txt);
+}
+
+.cur-sec {
+  margin: calc(18 * var(--u)) 0 8px;
+  padding-bottom: 5px;
+  font: 600 max(12px, calc(17 * var(--u))) var(--el-display);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(236, 200, 130, 0.95);
+  border-bottom: 1px solid rgba(217, 178, 106, 0.22);
+}
+
+.cur-panel > .cur-sec:first-child {
+  margin-top: 0;
+}
+
+.cur-line {
+  margin: 8px 0 0;
+  color: var(--el-muted);
+  text-shadow: 0 1px 0 #0c0805;
+}
+
+.cur-plates {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cur-plate {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 56px;
+  padding: 6px 0 8px;
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.6), rgba(12, 9, 6, 0.7));
+  border: 1px solid var(--el-line1);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.cur-plate:hover,
+.cur-plate:focus-visible {
+  border-color: var(--el-line3);
+}
+
+.cur-plate.on {
+  border-color: var(--el-gold);
+  background: linear-gradient(180deg, rgba(60, 40, 18, 0.7), rgba(20, 14, 8, 0.8));
+}
+
+.cur-plate.on::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: var(--el-ember);
+  box-shadow: 0 0 0 1px var(--el-ember2), 0 0 8px rgba(240, 140, 40, 0.6);
+}
+
+.cur-plate-art svg {
+  display: block;
+}
+
+.cur-plate-name {
+  font: 600 max(9px, calc(11 * var(--u))) var(--el-display);
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.15;
+  color: var(--el-txt);
+}
+
+.cur-plate.on .cur-plate-name {
+  color: var(--el-on);
+}
+
+.cur-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cur-step {
+  all: unset;
+  box-sizing: border-box;
+  width: 48px;
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: bold max(22px, calc(36 * var(--u))) var(--el-display);
+  color: var(--el-on);
+  text-shadow: 0 2px 0 #0c0805;
+  border: 1px solid var(--el-line2);
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.7), rgba(12, 9, 6, 0.8));
+  cursor: pointer;
+}
+
+.cur-step:hover:not(:disabled),
+.cur-step:focus-visible {
+  border-color: var(--el-line3);
+}
+
+.cur-step:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.cur-step:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cur-size-val {
+  min-width: 3.6em;
+  text-align: center;
+  font: bold max(16px, calc(30 * var(--u))) var(--el-display);
+  color: var(--el-on);
+  text-shadow: 0 0 3px #0c0805, 0 2px 0 #0c0805;
+}
+
+.cur-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  margin-top: 6px;
+  border-bottom: 1px solid var(--el-line1);
+}
+
+.cur-toggle-name {
+  font: 600 max(11px, calc(17 * var(--u))) var(--el-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--el-txt);
+}
+
+.cur-toggle-btn {
+  all: unset;
+  box-sizing: border-box;
+  min-width: 64px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: bold max(14px, calc(26 * var(--u))) var(--el-display);
+  color: var(--el-on);
+  border: 1px solid var(--el-line2);
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.7), rgba(12, 9, 6, 0.8));
+  cursor: pointer;
+}
+
+.cur-toggle-btn:hover,
+.cur-toggle-btn:focus-visible {
+  border-color: var(--el-line3);
+}
+
+.cur-toggle-btn[aria-checked='false'] {
+  color: var(--el-muted);
+}
+
+.cur-chip.off,
+.cur-tile.off {
+  opacity: 0.45;
+}
+
+.cur-strips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cur-strip {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  gap: 4px;
+  min-height: 96px;
+  padding: 10px 6px 8px;
+  border: 1px solid var(--el-line2);
+}
+
+.cur-strip.dk {
+  background: #15110c;
+}
+
+.cur-strip.br {
+  background: #e9e0cc;
+}
+
+.cur-chip,
+.cur-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cur-chip-art {
+  display: flex;
+  align-items: flex-end;
+  min-height: 44px;
+}
+
+.cur-chip-art svg,
+.cur-tile-art svg {
+  display: block;
+  overflow: visible;
+}
+
+.cur-chip-name {
+  font: 600 max(9px, calc(13 * var(--u))) var(--el-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--el-muted);
+}
+
+.cur-strip.br .cur-chip-name {
+  color: #4a3a22;
+}
+
+.cur-big {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.cur-tile {
+  padding: 8px 4px;
+  background: #15110c;
+  border: 1px solid var(--el-line1);
+}
+
+.cur-try {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.cur-z {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  background: linear-gradient(90deg, #15110c 50%, #e9e0cc 50%);
+  border: 1px solid var(--el-line2);
+}
+
+.cur-z.def {
+  cursor: default;
+}
+
+.cur-z.hov {
+  cursor: pointer;
+}
+
+.cur-z.dis {
+  cursor: not-allowed;
+}
+
+.cur-z-name {
+  padding: 3px 8px;
+  font: 600 max(10px, calc(14 * var(--u))) var(--el-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--el-on);
+  background: rgba(12, 8, 5, 0.85);
+  border: 1px solid var(--el-line1);
+}
+
+/* Ana menü Settings: Phaser sayfa başlığının altında DOM kutusu (acc-host ile aynı konum) */
+.cur-host {
+  --u: var(--gu, 1px);
+  position: fixed;
+  left: calc(var(--el, 0px) + var(--menu-x, 140px) + 430 * var(--u));
+  top: calc(var(--et, 0px) + 312 * var(--u));
+  width: calc(790 * var(--u));
+  max-width: calc(var(--stage-w, 100vw) - var(--el, 0px) - var(--er, 0px) - var(--menu-x, 140px) - 430 * var(--u) - 16px);
+  max-height: calc(var(--stage-h, 100dvh) - var(--et, 0px) - var(--eb, 0px) - 340 * var(--u));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  z-index: 6;
+  animation: el-m-fade var(--m-panel, 160ms) var(--m-ease, ease-out) both;
+}
+
+.cur-host::-webkit-scrollbar {
+  display: none;
+}
+
+/* Telefon (html.short): kutu kategori sütununun sağında, kayar; yalın ve sıkı */
+html.short .cur-host {
+  width: auto;
+  right: calc(var(--er, 0px) + 12px);
+  top: calc(var(--et, 0px) + 312 * var(--u) + 6px);
+  max-height: calc(var(--stage-h, 100dvh) - var(--et, 0px) - var(--eb, 0px) - 312 * var(--u) - 14px);
+}
+
+html.short .cur-panel .cur-sec {
+  margin-top: 10px;
+}
+
+html.short .cur-strip {
+  min-height: 70px;
+  padding: 6px 2px;
+}
+
+html.short .cur-plate-art svg {
+  width: 40px;
+  height: 40px;
+}
+
+html.short .cur-plates {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+html.short .cur-plate-name {
+  font-size: 9px;
+}
+
+/* Oyun içi DOM Settings sayfasında panel satır girintisinde */
+.st-page .cur-panel {
+  margin-left: calc(30 * var(--u));
+  max-height: calc(var(--stage-h, 100dvh) - var(--et, 0px) - var(--eb, 0px) - 340 * var(--u));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.st-page .cur-panel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Telefonda sütunun kendisi kayar */
+html.short .st-page .cur-panel {
+  max-height: none;
+  overflow: visible;
+}

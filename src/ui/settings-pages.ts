@@ -3,7 +3,7 @@
  * (`src/ui/settings.ts`) aynı listeyi çizer: solda kategori sütunu (seçili olanın önünde kor elması), sağda o kategorinin satırları.
  * Son seçilen kategori oturum boyunca hatırlanır (sayfa yenilenince Sound). Saf modül: DOM / Phaser yok (`tests/settings-pages.test.ts`).
  */
-export type SettingsPageKey = 'sound' | 'gameplay' | 'display' | 'privacy' | 'account';
+export type SettingsPageKey = 'sound' | 'gameplay' | 'display' | 'ui' | 'privacy' | 'account';
 
 /** Satır kimlikleri: her ekran kendi çizimini bu kimliğe bağlar (yeni ayar = buraya + iki çizici). */
 export type SettingsItemKey = 'master' | 'music' | 'sfx' | 'ui' | 'speed' | 'motion' | 'tutorials' | 'perf' | 'fps' | 'fullscreen' | 'reports' | 'copyLog' | 'info' | 'account';
@@ -19,6 +19,8 @@ export const SETTINGS_PAGES: readonly SettingsPage[] = [
   { key: 'gameplay', label: 'Gameplay', items: ['speed', 'motion', 'tutorials'] },
   // Fullscreen eski Gameplay bölümündeydi; görüntüyle ilgili olduğu için burada (API yoksa satır çizilmez)
   { key: 'display', label: 'Display', items: ['perf', 'fps', 'fullscreen'] },
+  // UI (Ömer 2026-11-02): imleç seçimi + boyutu + canlı önizleme; satır listesi yok, sayfa tek DOM parçasıdır (src/ui/cursor-settings.ts)
+  { key: 'ui', label: 'UI', items: [] },
   { key: 'privacy', label: 'Privacy', items: ['reports', 'copyLog', 'info'] },
   // Hesap / bulut kaydı (accounts-plan.md Faz 1d): ana menüde tam sayfa (src/cloud/ui/account-page.ts), oyun içinde salt okunur satır
   // (OAuth sayfayı yönlendirir). Giriş yoksa (Pages, sunucu kapalı: isLoginAvailable false) kategori hiç görünmez.

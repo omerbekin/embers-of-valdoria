@@ -27,6 +27,7 @@ import { debugState } from './game/debug-state';
 import { menuStyle } from './ui/menu-style';
 import { whenMenuFontsReady } from './ui/menu-fonts';
 import './style.css';
+import { installCursorTheme } from './ui/cursor-theme';
 import { markBootReady, setBootProgress, whenBootReady } from './ui/boot-loader';
 import { installContextLossNotice } from './ui/context-loss';
 import { attachDiagGame, diagNoticed, installDiag, logEvent, report } from './diag/diag';
@@ -40,6 +41,8 @@ let gameRef: Phaser.Game | null = null;
 
 // Hata raporu (opt-in, varsayılan kapalı; src/diag/, docs/arch/diagnostics.md): iz halkası + önceki oturumun çökme denetimi en başta
 installDiag();
+// Oyun imleci (Ömer 2026-11-02; src/ui/cursor-theme.ts): kılıç / mızrak / hançer / ok, tuval dahil her yerde; dokunmatikte yok
+installCursorTheme();
 installStaleBuildReload();
 // Bulut kaydı (src/cloud/cloud.ts): ?auth= dönüşünü işler ve adresi temizler; girişsiz oyuncuda ağ çağrısı yok. Buluttan yerele yazım yalnızca ana menüde.
 // Pencereleri (giriş hatası, ilk girişte ad, çakışma, yeni sürüm; src/cloud/ui/cloud-ui.ts) init'ten ÖNCE dinlemeye başlar: ?auth= olayı init sırasında yayılır.

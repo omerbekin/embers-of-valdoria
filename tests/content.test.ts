@@ -18,7 +18,7 @@ const ATTRIBUTES = ['str', 'int', 'dex', 'luck'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const PLACEHOLDER_SPRITE_CLASSES: string[] = [];
 /** Kendi görseli henüz çizilmemiş, başka bir class'ın sprite'ını GEÇİCİ kullanan class'lar (class id -> ödünç spriteId). Görsel gelince listeden çıkar. */
-const BORROWED_SPRITE_CLASSES: Record<string, string> = { vesper: 'mage' }; // başka class'ın görselini ödünç alan class'lar (Vesper 2026-10-28: yer tutucu Mage görseli, yeni sanat yok)
+const BORROWED_SPRITE_CLASSES: Record<string, string> = {}; // başka class'ın görselini ödünç alan class'lar (Vesper 2026-11-02'de kendi görseline geçti)
 const everyone = { ...content.classes, ...content.summons, ...content.bosses, ...content.mobs }; // boss (data/bosses) ve mob (data/mobs) tanımları da şemaya tabi
 
 describe('skill verisi', () => {

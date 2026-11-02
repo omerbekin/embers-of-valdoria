@@ -1,8 +1,8 @@
 {
-  "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md): batık katedral çan kulesinin bekçisi; arka sıra ALAN hasarcısı, savaş uzadıkça güçlenir; şifa YOK. Görünüş yönü A (Bronze Abbess: beyaz-altın cüppeli yaşlı başrahibe, sırtında zincirli yeşil bronz çan, çanın demir tokmağı asası); savaş gövdesi kendi pozları (vesper_v2; poses.json > classAliases, 2026-11-01), sprite / avatar hâlâ Mage yer tutucusu; renk ve logo kendisinin. Statlar PROVİZYON (Mage'den türetildi, sim yok).",
+  "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md): batık katedral çan kulesinin bekçisi; arka sıra ALAN hasarcısı, savaş uzadıkça güçlenir; şifa YOK. Görünüş yönü A (Bronze Abbess: beyaz-altın cüppeli yaşlı başrahibe, sırtında zincirli yeşil bronz çan, çanın demir tokmağı asası); savaş gövdesi kendi pozları (vesper_v2; poses.json > classAliases, 2026-11-01), sprite, avatar, skill/pasif ikonları ve sınıf logosu kendisinin (2026-11-02, Ömer 'şimdilik' onayı; assets/sprites/vesper, assets/avatars/vesper.png, assets/icons-v2/vesper, assets/misc-icons/class/vesper.png); ödünç görsel yok. Statlar PROVİZYON (Mage'den türetildi, sim yok).",
   "id": "vesper",
   "name": "Vesper",
-  "spriteId": "mage",
+  "spriteId": "vesper",
   "color": "#b8873a",
   "logo": "divine",
   "role": "Bell Caster",
@@ -28,7 +28,7 @@
   "passive": {
     "id": "pealing_bells",
     "name": "Pealing Bells",
-    "icon": "divine",
+    "icon": "holy",
     "text": "Every Toll or Thunderpeal you ring makes your bells 7% stronger for the rest of the battle (no limit).",
     "effect": {
       "type": "pealingBells",

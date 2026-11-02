@@ -25,6 +25,7 @@ import { GOLD } from '../ui-frame';
 import { mp, MP_SCENE } from '../mp-client';
 import { addLogo, hasLogo, preloadLogo } from '../branding';
 import { loadVolume, setSettingsVolume } from '../../ui/settings';
+import { mountCursorPanel } from '../../ui/cursor-settings';
 import { VOLUME_STEPS, volumeLabel } from '../../ui/volume-steps';
 import { DISPLAY_VERSION } from '../../ui/display-version';
 import { SPEED_STEPS, battleSpeed, battleSpeedLabel, onBattleSpeedChange, setBattleSpeed, speedAt, speedIndex } from '../../ui/battle-speed';
@@ -1384,6 +1385,7 @@ export class MainMenuScene extends Phaser.Scene {
           break;
       }
     }
+    if (key === 'ui') this.mountCursorPage();
     let y = this.panelTop + 30;
     if (key === 'privacy') {
       box.add(this.noteText(this.panelX + 34, y, PRIVACY_LINE, 22, '#a8977a').setOrigin(0, 0.5));
@@ -1399,6 +1401,20 @@ export class MainMenuScene extends Phaser.Scene {
     if (instant) return;
     box.setAlpha(0);
     this.tweens.add({ targets: box, alpha: 1, duration: 160, ease: 'Cubic.easeOut' });
+  }
+
+  /** Settings > UI: imleç seçimi + boyut + önizleme (src/ui/cursor-settings.ts; oyun içi DOM Settings ile aynı parça), sayfa başlığının altında DOM kutusu. */
+  private mountCursorPage(): void {
+    const host = document.createElement('div');
+    host.className = 'cur-host';
+    host.setAttribute('role', 'region');
+    host.setAttribute('aria-label', 'UI');
+    (document.getElementById('ui-root') ?? document.body).append(host);
+    const page = mountCursorPanel(host);
+    this.panelOffs.push(() => {
+      page.destroy();
+      host.remove();
+    });
   }
 
   /** Settings > Account: DOM sayfası (src/cloud/ui/account-page.ts, ayrı kod parçası) sayfa başlığının altına; sayfa / panel kapanınca kalkar. */

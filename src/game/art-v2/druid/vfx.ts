@@ -1547,100 +1547,163 @@ function barkChunk(c: VfxCtx, k: VfxKit, x: number, y: number, o: { vx: number; 
 }
 
 /**
- * Treant ölür (summondeath_treant; actor = targets[0] = ölen Treant, sonra sahne birimi düşürür): gövde titrer ve kararır, merkezden dallanan yeşil
- * ışıklı çatlaklar yayılır, kabuk/kök parçaları savrulur; gövde zemin çizgisinin altına, su gibi toprağa BATAR (zemin çizgisinde kesilir) ve altta koyu
- * ıslak toprak yayılır (damla yok). Boyuttan bağımsız: ölçüler birimin v.w / v.h değerinden gelir (sprite kare boyutu değişse de çalışır).
+ * Treant ölür (summondeath_treant; actor = targets[0] = ölen Treant, sonra sahne birimi düşürür): çatlak çizgisi YOK; gövde sprite'ı kendi dokusundan kesilen
+ * büyük parçalara (baş/dallar, iki kol, gövde, bacaklar) ayrılır: parçalar önce titreyip aralanır, sonra yere düşer ve zemin çizgisinde toprağa gömülür.
+ * Söğüt yaprakları savrulur, yeşilden sarıya solar ve yere dökülür; gövdedeki ince su akıntısı çizgisi toprağa çekilir (damla yok); altta düzensiz, yırtık
+ * kenarlı koyu ıslak toprak yayılır. Boyuttan bağımsız: parça sınırları sprite karesinin oranlarıdır, ölçüler v.sprite'tan okunur.
  */
 export const summondeath_treant: V2Vfx = async (c, k) => {
   const v = c.targets[0];
   if (!v) return;
   const home = v.home;
+  const sp = v.sprite;
   const W = Math.max(90, v.w);
-  const H = Math.max(120, v.h);
   const fx = home.x;
   const fy = home.y - 2;
-  const sx = v.container.scaleX;
-  const sy = v.container.scaleY;
-  const ui = v.container.list.filter((ch) => ch !== v.sprite) as unknown as Array<Phaser.GameObjects.Components.Alpha>;
+  const Hs = Math.max(120, sp.displayHeight);
+  const key = sp.texture.key;
+  const frame = sp.frame.name;
+  const fw = sp.frame.width;
+  const fh = sp.frame.height;
+  const ui = v.container.list.filter((ch) => ch !== sp) as unknown as Array<Phaser.GameObjects.Components.Alpha>;
   ui.forEach((ch) => ch.setAlpha(0));
   c.sfx('rootRise');
-  // 1) titreme + merkezden dallanan çatlaklar
-  const cr = c.scene.add.graphics().setDepth(v.container.depth + 3);
-  const hub = { x: fx, y: fy - H * 0.5 };
-  const lines: Array<Array<[number, number]>> = [];
-  for (let i = 0; i < 5; i++) {
-    const ang = (i / 5) * Math.PI * 2 + k.rnd(-0.3, 0.3);
-    let x = hub.x;
-    let y = hub.y;
-    const main: Array<[number, number]> = [[x, y]];
-    for (let s = 0; s < 4; s++) {
-      x += Math.cos(ang + k.rnd(-0.5, 0.5)) * W * 0.1;
-      y += Math.sin(ang + k.rnd(-0.5, 0.5)) * H * 0.085;
-      main.push([x, y]);
-      if (s === 1) {
-        const br: Array<[number, number]> = [[x, y]];
-        let bx = x;
-        let by = y;
-        const ba = ang + (i % 2 ? 0.9 : -0.9);
-        for (let q = 0; q < 2; q++) {
-          bx += Math.cos(ba + k.rnd(-0.4, 0.4)) * W * 0.07;
-          by += Math.sin(ba + k.rnd(-0.4, 0.4)) * H * 0.06;
-          br.push([bx, by]);
-        }
-        lines.push(br);
-      }
+  // parçalar: [x, y, w, h] sprite karesi oranı; sep = aralanma yönü
+  const DEFS: Array<{ r: [number, number, number, number]; sepX: number; sepY: number; tilt: number; delay: number }> = [
+    { r: [0, 0, 1, 0.3], sepX: 0.03, sepY: -0.08, tilt: 0.22, delay: 0 },
+    { r: [0, 0.3, 0.3, 0.4], sepX: -0.16, sepY: 0.02, tilt: -0.3, delay: 140 },
+    { r: [0.7, 0.3, 0.3, 0.4], sepX: 0.16, sepY: 0.02, tilt: 0.3, delay: 260 },
+    { r: [0.3, 0.3, 0.4, 0.4], sepX: -0.03, sepY: 0.03, tilt: -0.12, delay: 380 },
+    { r: [0, 0.7, 0.5, 0.3], sepX: -0.1, sepY: 0.04, tilt: -0.2, delay: 480 },
+    { r: [0.5, 0.7, 0.5, 0.3], sepX: 0.1, sepY: 0.04, tilt: 0.2, delay: 620 },
+  ];
+  const pieces = DEFS.map((d) => {
+    const img = c.scene.add.sprite(sp.x, sp.y, key, frame).setOrigin(sp.originX, sp.originY).setScale(sp.scaleX, sp.scaleY).setFlipX(sp.flipX);
+    img.setCrop(d.r[0] * fw, d.r[1] * fh, d.r[2] * fw, d.r[3] * fh);
+    v.container.add(img);
+    const bottom = d.r[1] + d.r[3]; // kesit tabanı (kare oranı)
+    return { img, d, x0: sp.x, y0: sp.y, fall: (1 - bottom) * Hs, drift: (d.sepX >= 0 ? 1 : -1) * k.rnd(0.12, 0.3) * W };
+  });
+  sp.setVisible(false);
+  // su akıntısı: gövde boyunca ince açık çizgi; sonra yere çekilir
+  const wat = c.scene.add.graphics().setDepth(v.container.depth + 3);
+  const wTop = fy - Hs * 0.78;
+  const drawWater = (from: number, alpha: number, t: number): void => {
+    wat.clear();
+    if (alpha <= 0 || from >= fy) return;
+    for (const [w, col, al] of [[3, 0x6fb6e8, 0.7], [1, 0xf2fbff, 0.95]] as Array<[number, number, number]>) {
+      wat.lineStyle(w, col, al * alpha).beginPath().moveTo(fx + Math.sin(from * 0.05 + t) * 1.2 + Math.sin(from * 0.032) * 9, from);
+      for (let y = from; y <= fy; y += 6) wat.lineTo(fx + Math.sin(y * 0.05 + t) * 1.2 + Math.sin(y * 0.032) * 9, y);
+      wat.strokePath();
     }
-    lines.push(main);
+  };
+  // yapraklar: söğüt (ince uzun), yeşilden sarıya solar, yere dökülür
+  const leaves = Array.from({ length: 20 }, () => ({
+    x: fx + k.rnd(-W * 0.45, W * 0.45), y: fy - Hs * k.rnd(0.6, 0.95), start: k.rnd(0, 500), dur: k.rnd(600, 950), sway: k.rnd(14, 30), ph: k.rnd(0, 6), len: k.rnd(14, 22),
+    land: fy + k.rnd(0, 12), drift: k.rnd(-40, 40),
+  }));
+  const lg = c.scene.add.graphics().setDepth(v.container.depth + 4);
+  const drawLeaves = (t: number): void => {
+    lg.clear();
+    for (const l of leaves) {
+      const u = clamp01((t - l.start) / l.dur);
+      if (t < l.start) continue;
+      const fade = clamp01((t - l.start - l.dur - 150) / 300);
+      if (fade >= 1) continue;
+      const sw = Math.sin(u * 7 + l.ph);
+      const x = l.x + l.drift * u + sw * l.sway * (1 - u);
+      const y = l.y + (l.land - l.y) * u * u * (3 - 2 * u);
+      const ang = u < 1 ? sw * 0.9 + 1.2 : 0.2 * Math.sin(l.ph);
+      const col = mixHex(0x7fb84e, 0xdcc653, clamp01((t - l.start) / (l.dur + 300)));
+      const flat = u < 1 ? 0.55 + 0.45 * Math.abs(Math.cos(u * 7 + l.ph)) : 0.4;
+      const ca = Math.cos(ang);
+      const sa = Math.sin(ang);
+      const pts: Array<[number, number]> = [[-l.len / 2, 0], [0, -2.6 * flat], [l.len / 2, 0], [0, 2.6 * flat]];
+      lg.fillStyle(col, 1 - fade).beginPath();
+      pts.forEach(([px, py], i) => {
+        const X = x + px * ca - py * sa;
+        const Y = y + px * sa + py * ca;
+        if (i) lg.lineTo(X, Y);
+        else lg.moveTo(X, Y);
+      });
+      lg.closePath().fillPath();
+    }
+  };
+  // düzensiz, yırtık kenarlı ıslak toprak
+  const blob = (rx: number, jit: number): Array<[number, number]> => Array.from({ length: 26 }, (_, i) => {
+    const a = (i / 26) * Math.PI * 2;
+    const r = rx * (1 - jit + k.rnd(0, jit * 2)) * (i % 3 ? 0.95 : 1.12);
+    return [Math.cos(a) * r, Math.sin(a) * r * 0.3] as [number, number];
+  });
+  const poolPts = blob(W * 0.85, 0.5);
+  const pool = c.scene.add.graphics({ x: fx, y: fy + 4 }).setDepth(k.FLOOR_FX + 3).setAlpha(0);
+  pool.fillStyle(0x1f150c, 0.85).beginPath();
+  poolPts.forEach(([px, py], i) => (i ? pool.lineTo(px, py) : pool.moveTo(px, py)));
+  pool.closePath().fillPath();
+  pool.fillStyle(0x6a5030, 0.35).beginPath();
+  blob(W * 0.4, 0.3).forEach(([px, py], i) => (i ? pool.lineTo(px * 0.9, py * 0.9) : pool.moveTo(px * 0.9, py * 0.9)));
+  pool.closePath().fillPath();
+  pool.lineStyle(2, 0x3a281a, 0.8).beginPath();
+  poolPts.forEach(([px, py], i) => (i ? pool.lineTo(px, py) : pool.moveTo(px, py)));
+  pool.closePath().strokePath();
+  for (let i = 0; i < 14; i++) {
+    const a = k.rnd(0, 6.28);
+    const r = k.rnd(0.2, 0.7) * W;
+    pool.fillStyle(i % 3 ? 0xc9b84a : 0x7fb84e, 0.85).fillEllipse(Math.cos(a) * r, Math.sin(a) * r * 0.3, k.rnd(7, 11), k.rnd(2.5, 4));
   }
-  leafFall(c, k, fx, fy - H * 0.85, 6, { spread: W * 0.35, fall: [H * 0.5, H * 0.9], dur: [800, 1200], delay: [100, 500], floor: fy + 6 });
+  pool.setScale(0.3, 0.3);
+  const lip = c.scene.add.graphics({ x: fx, y: fy + 2 }).setDepth(v.container.depth + 2).setAlpha(0);
+  for (let i = 0; i < 9; i++) lip.fillStyle(i % 2 ? 0x2a1c12 : 0x3b2a1a, 1).fillEllipse((i - 4) * W * 0.13, k.rnd(-2, 3), k.rnd(W * 0.2, W * 0.3), k.rnd(9, 15));
+  // 1) titreme: parçalar aralanır, kabuk kıymıkları sıçrar
   let chips = 0;
-  await k.counter(c.scene, k.slow(420), (u) => {
-    v.container.setX(home.x + Math.sin(u * 60) * (2 + 4 * u));
-    v.sprite.setTint(mixHex(0xffffff, 0x6b4a30, u));
-    cr.clear();
-    for (const ln of lines) {
-      const n = Math.max(1, Math.round(ln.length * clamp01(u * 1.4)));
-      for (const [w, col, al] of [[10, 0x0c0604, 1], [2, 0xb6f08a, 0.6]] as Array<[number, number, number]>) {
-        cr.lineStyle(w, col, al).beginPath().moveTo(ln[0]![0], ln[0]![1]);
-        for (let s = 1; s < n; s++) cr.lineTo(ln[s]![0], ln[s]![1]);
-        cr.strokePath();
-      }
+  const T1 = 600;
+  await k.counter(c.scene, k.slow(T1), (u) => {
+    drawLeaves(u * T1);
+    drawWater(wTop, 1, u * 10);
+    for (const p of pieces) {
+      p.img.setPosition(p.x0 + p.d.sepX * W * u + Math.sin(u * 60 + p.d.delay) * (1.5 + 3 * u), p.y0 + p.d.sepY * Hs * u);
+      p.img.setRotation(p.d.tilt * 0.5 * u);
+      p.img.setTint(mixHex(0xffffff, 0x6b4a30, u));
     }
-    if (u * 420 > chips) {
+    if (u * T1 > chips) {
       chips += 110;
-      for (let i = 0; i < 2; i++) barkChunk(c, k, fx + k.rnd(-W * 0.3, W * 0.3), fy - k.rnd(H * 0.2, H * 0.8), { vx: k.rnd(-120, 120), vy: k.rnd(-140, -20), floor: fy + k.rnd(0, 8), size: k.rnd(5, 8), col: BARK_HEX[Math.floor(k.rnd(0, BARK_HEX.length))]!, depth: v.container.depth + 3 });
+      for (let i = 0; i < 2; i++) barkChunk(c, k, fx + k.rnd(-W * 0.3, W * 0.3), fy - k.rnd(Hs * 0.2, Hs * 0.8), { vx: k.rnd(-120, 120), vy: k.rnd(-140, -20), floor: fy + k.rnd(0, 8), size: k.rnd(5, 8), col: BARK_HEX[Math.floor(k.rnd(0, BARK_HEX.length))]!, depth: v.container.depth + 3 });
     }
   });
-  // 2) çöküş: gövde zemin çizgisinde kesilerek toprağa batar, parçalar savrulur, ıslak koyu toprak yayılır
+  // 2) parçalar düşer, toprağa gömülür; yapraklar dökülür, su çekilir, toprak yayılır
   c.sfx('thud');
   k.shake(c.scene, 220, 0.004);
-  const wet = c.scene.add.ellipse(fx, fy + 4, W * 0.2, W * 0.07, 0x3a2a1c, 0.8).setDepth(k.FLOOR_FX + 4).setAlpha(0);
-  c.scene.tweens.add({ targets: wet, alpha: 1, displayWidth: W * 0.8, displayHeight: W * 0.26, duration: k.slow(900), ease: 'Sine.easeOut' });
-  fadeOut(c, k, wet, 1200, 400);
-  const pool = c.scene.add.ellipse(fx, fy + 4, W * 0.3, W * 0.1, 0x2e2014, 0.62).setDepth(k.FLOOR_FX + 3).setAlpha(0);
-  c.scene.tweens.add({ targets: pool, alpha: 1, displayWidth: W * 1.3, displayHeight: W * 0.42, duration: k.slow(800), ease: 'Sine.easeOut' });
-  const rim = c.scene.add.ellipse(fx, fy + 4, W * 0.3, W * 0.1).setStrokeStyle(3, 0x4a3524, 0.9).setFillStyle(0, 0).setDepth(k.FLOOR_FX + 4);
-  c.scene.tweens.add({ targets: rim, alpha: 0, displayWidth: W * 1.55, displayHeight: W * 0.52, duration: k.slow(900), ease: 'Quad.easeOut' });
-  for (let i = 0; i < 16; i++)
-    barkChunk(c, k, fx + k.rnd(-W * 0.3, W * 0.3), fy - k.rnd(H * 0.1, H * 0.85), { vx: k.rnd(-260, 260), vy: k.rnd(-380, -60), floor: fy + k.rnd(0, 10), size: k.rnd(9, 16), col: i % 4 === 0 ? LEAF_HEX[Math.floor(k.rnd(0, 3))]! : BARK_HEX[Math.floor(k.rnd(0, BARK_HEX.length))]!, depth: v.container.depth + 3 });
+  c.scene.tweens.add({ targets: pool, alpha: 1, scaleX: 1, scaleY: 1, duration: k.slow(900), ease: 'Sine.easeOut' });
+  for (let i = 0; i < 14; i++) barkChunk(c, k, fx + k.rnd(-W * 0.3, W * 0.3), fy - k.rnd(Hs * 0.1, Hs * 0.85), { vx: k.rnd(-220, 220), vy: k.rnd(-320, -60), floor: fy + k.rnd(0, 10), size: k.rnd(8, 14), col: BARK_HEX[Math.floor(k.rnd(0, BARK_HEX.length))]!, depth: v.container.depth + 3 });
   const mask = c.scene.make.graphics({ x: 0, y: 0 }, false);
-  mask.fillStyle(0xffffff).fillRect(fx - 600, fy - 1400, 1200, 1400 + 4);
+  mask.fillStyle(0xffffff).fillRect(fx - 700, fy - 1500, 1400, 1500 + 4);
   v.container.setMask(mask.createGeometryMask());
-  await k.counter(c.scene, k.slow(1300), (u) => {
-    const q = u * u * (3 - 2 * u) * 0.6 + u * u * 0.4;
-    v.container.setPosition(home.x + Math.sin(u * 40) * 3 * (1 - u), home.y + H * 1.0 * q);
-    v.container.setScale(sx * (1 + 0.1 * q), sy * (1 - 0.15 * q));
-    v.sprite.setTint(mixHex(0x6b4a30, 0x2a1c12, u));
-    v.container.setAlpha(1 - clamp01((u - 0.85) / 0.15));
-    cr.setPosition(0, v.container.y - home.y).setAlpha(1 - clamp01(u * 1.6));
-  }, 'Quad.easeIn');
+  const T2 = 1500;
+  await k.counter(c.scene, k.slow(T2), (u) => {
+    const t = u * T2;
+    drawLeaves(T1 + t);
+    drawWater(wTop + (fy - wTop) * clamp01(t / 900), 1 - clamp01((t - 700) / 300), 4 + u * 10);
+    for (const p of pieces) {
+      const tt = t - p.d.delay;
+      const fu = clamp01(tt / 520);
+      const su = clamp01((tt - 520) / 650);
+      p.img.setPosition(p.x0 + p.d.sepX * W + p.drift * fu, p.y0 + p.d.sepY * Hs + p.fall * fu * fu + Hs * 0.55 * su * su);
+      p.img.setRotation(p.d.tilt * (0.5 + 1.6 * fu));
+      p.img.setTint(mixHex(0x6b4a30, 0x2a1c12, su));
+      p.img.setAlpha(1 - clamp01((su - 0.85) / 0.15));
+      lip.setAlpha(clamp01(t / 900));
+    }
+  });
   v.container.clearMask(true);
-  v.container.setAlpha(0).setScale(sx, sy).setPosition(home.x, home.y);
-  v.sprite.clearTint();
+  for (const p of pieces) p.img.destroy();
+  sp.setVisible(true).clearTint();
+  v.container.setAlpha(0);
   mask.destroy();
-  cr.destroy();
+  wat.destroy();
+  c.scene.tweens.add({ targets: lip, alpha: 0, duration: k.slow(450), onComplete: () => lip.destroy() });
   fadeOut(c, k, pool, 0, 450);
-  await k.wait(c.scene, k.slow(480));
+  await k.counter(c.scene, k.slow(520), (u) => drawLeaves(T1 + T2 + u * 520));
+  lg.destroy();
 };
 
 /**
@@ -1701,7 +1764,7 @@ export const VFX: Record<string, V2Vfx> = {
   summonroots,
   // olay efekti (docs/design/art-v2.md > 3.1): Treant doğuşu
   summon_treant: summon_treantSheet,
-  // summondeath_treant (yukarıda, export) Sol 7/10: ertelendi, bağlı DEĞİL (v1 koda düşer); 8/10 olunca buraya eklenir
+  // summondeath_treant (yukarıda, export) Sol 7/10 (parça tabanlı sürüm, 4 tur): ertelendi, bağlı DEĞİL (v1 koda düşer); 8/10 olunca buraya eklenir
   summonvanish_treant,
   rootfall: rootfallFist,
   // Vine Snare: yeni sheet'ler (07/08) oyun içi 7/10 kaldı (geçme çizgisi 8); yeniden çizilene kadar eski kod efekti oynar (2026-11-02)

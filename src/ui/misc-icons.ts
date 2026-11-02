@@ -17,7 +17,7 @@ export const MISC_ICONS: Record<MiscGroup, readonly string[]> = {
   ground: ['poison', 'burning', 'holy_fire', 'flooded_planks', 'flooded', 'holy_ground', 'quaking_ground', 'field_of_shafts', 'root_field', 'storm', 'hall_of_silence', 'lingering_rain', 'sanctified_flame', 'holy_water', 'ice_ground'],
   relic: ['ember_of_valdren', 'pilgrims_bell', 'whetstone_of_ashford', 'banner_of_the_bridge', 'last_rites', 'iron_oath'],
   emblem: ['heal', 'feast'],
-  class: ['warrior', 'defender', 'paladin', 'archer', 'cutthroat', 'antimage', 'mage', 'druid', 'undead', 'hexer', 'gambler'],
+  class: ['warrior', 'defender', 'paladin', 'archer', 'cutthroat', 'antimage', 'mage', 'druid', 'undead', 'hexer', 'gambler', 'vesper'],
   node: ['battle', 'elite', 'boss', 'event', 'town', 'treasure', 'rest', 'merchant', 'start'],
   smith: ['temper_stone', 'combine', 'reroll'],
   town: ['inn'],

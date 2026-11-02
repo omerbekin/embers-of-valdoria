@@ -9,11 +9,12 @@ const read = (f: string): string => readFileSync(new URL(`../${f}`, import.meta.
 // (src/ui/settings-pages.ts), ana menü sütunu ve oyun içi DOM ekranı aynısını çizer.
 describe('Settings sayfaları', () => {
   it('kategoriler ve satırlar istenen sırada', () => {
-    expect(SETTINGS_PAGES.map((p) => p.label)).toEqual(['Sound', 'Gameplay', 'Display', 'Privacy', 'Account']);
+    expect(SETTINGS_PAGES.map((p) => p.label)).toEqual(['Sound', 'Gameplay', 'Display', 'UI', 'Privacy', 'Account']);
     const labels = (k: Parameters<typeof pageOf>[0]) => pageOf(k).items.map((i) => SETTINGS_LABELS[i]);
     expect(labels('sound')).toEqual(['Master Volume', 'Music', 'Sound Effects', 'UI Sounds']);
     expect(labels('gameplay')).toEqual(['Battle Speed', 'Reduced Motion', 'Tutorials']);
     expect(labels('display')).toEqual(['Performance Mode', 'Show FPS', 'Fullscreen']);
+    expect(labels('ui')).toEqual([]); // UI sayfası tek DOM parçasıdır (imleç; src/ui/cursor-settings.ts)
     expect(labels('privacy')).toEqual(['Error Reports', 'Copy Log', 'Privacy Info']);
     expect(labels('account')).toEqual(['Account']);
     expect(PRIVACY_LINE.length).toBeLessThan(90);
@@ -47,8 +48,8 @@ describe('Settings sayfaları', () => {
     expect(pageVisible('account', false)).toBe(false);
     expect(pageVisible('account', true)).toBe(true);
     expect(pageVisible('privacy', false)).toBe(true);
-    expect(visiblePages(false).map((p) => p.key)).toEqual(['sound', 'gameplay', 'display', 'privacy']);
-    expect(visiblePages(true).map((p) => p.key)).toEqual(['sound', 'gameplay', 'display', 'privacy', 'account']);
+    expect(visiblePages(false).map((p) => p.key)).toEqual(['sound', 'gameplay', 'display', 'ui', 'privacy']);
+    expect(visiblePages(true).map((p) => p.key)).toEqual(['sound', 'gameplay', 'display', 'ui', 'privacy', 'account']);
   });
 
   it('Account: ana menü DOM sayfasını kurar, oyun içi salt okunur satır; giriş yokken kategori gizli', () => {
