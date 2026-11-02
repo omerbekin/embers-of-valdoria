@@ -27,7 +27,7 @@ export interface AiValueConfig {
   /** Harita 3 4. dilim mob kitleri (ai.ts > mobKitValue). Yoksa 0. */
   mobKit?: { exposure: number; diveSafe: number; spentTurn: number; coolTurn: number; coolArmor: number; reach: number; stormhide: number; stagger: number; furnace: number; chant: number; fury: number; lightDark: number; kindle: number; graveCold: number; hoarfrost: number };
   /** Harita 3 boss / elit dokunuşları (ai.ts > bossTouchValue). Yoksa 0. */
-  bossTouch?: { heat: number; whiteout: number; sermon: number; sermonTurn: number; sermonBreak: number; packHeal: number; packKill: number; vault: number; frostbound: number; caveMark: number; fervour: number; everburn: number; quench: number; nave: number; crown: number; shepherd: number; douse: number };
+  bossTouch?: { heat: number; whiteout: number; sermon: number; sermonTurn: number; sermonBreak: number; packHeal: number; packKill: number; vault: number; frostbound: number; caveMark: number; fervour: number; everburn: number; quench: number; nave: number; crown: number; shepherd: number; douse: number; command: number; ranks: number; oath: number; coreBurn: number };
   /** Harita 3 imza mekanikleri (ai.ts > signatureValue, rodChoice). Yoksa 0. */
   signature?: { wake: number; chip: number; rodRounds: number; rollShare: number; reheat: number; eyeKill: number; noiseRise: number; toppleRounds: number; toppleShare: number };
   /** Frozen (ai.ts > frostValue): tur değeri payları. */

@@ -9,6 +9,7 @@ import { tipOn, tipOff } from './tip-vis';
 import { navSvg } from './nav-icons';
 import { rectToLocal } from './formation-board-rules';
 import { bandRichHtml, bandTipHtml, type BandChip, type BandTipSpec } from './band-tip';
+import { MOTION } from './motion';
 
 /**
  * SAVAŞ HUD'ı (Ömer 2026-10-09, taslak public/mockups/battle-hud.html?v=2 "Slim bar, sheet rises"): DOM katmanı, oyun biriminde çizilir ve
@@ -267,12 +268,6 @@ const img = (url: string, cls = 'bh-ico', extra = '') => (url ? `<img class="${c
 /** Nötr başlık renkleri (krem / altın): vurgu sayılmaz, ipucu altın kalır; renkli başlık (uyarı, seçili hücre) vurgu olur. */
 const NEUTRAL_TITLE = new Set(['#d9c8a2', '#f3d999', '#e8e2d0', '#f4ede1', '#ffffff']);
 
-/** "Strength 32" -> "Strength <b>32</b>" (primary çipinde sayı altın). */
-const primaryLabelHtml = (name: string): string => {
-  const m = /^(.*?)s*(d+)$/.exec(name);
-  return m ? `${esc(m[1]!)} <b>${esc(m[2]!)}</b>` : esc(name);
-};
-
 /** Skill ipucu çipleri V2 (Ömer 2026-10-20): menzil / bedel / bekleme yalnızca ikon + sayı; tam anlam üstüne gelince ("Range 6", "Costs 14 MP", "Cooldown: 2 turns"). */
 function tagChip(g: NonNullable<TipContent['tags']>[number]): BandChip {
   const rg = g.kind === 'range' ? rangeChipOf(g.text) : null;
@@ -351,6 +346,9 @@ export class BattleHud {
   private readonly ftip: HTMLDivElement;
   private readonly ctip: HTMLDivElement;
   private readonly cards: Record<Side, HTMLDivElement>;
+  /** Kartın kayan içi ve yanındaki stat paneli (kabın kalıcı çocukları: yenileme iç kaydırmayı başa atmaz). */
+  private readonly cardSc: Record<Side, HTMLDivElement>;
+  private readonly cardStats: Record<Side, HTMLDivElement>;
   private model: HudModel = { actor: null, skills: [], globals: [], turnLabel: '' };
   private queue: HudQueueCell[] | null = null;
   private testLabel = '';
@@ -371,6 +369,12 @@ export class BattleHud {
   private readonly cardTips = new Map<string, TipContent | (() => TipContent)>();
   private hover: Partial<Record<Side, UnitCard>> = {};
   private pins: Partial<Record<Side, UnitCard>> = {};
+  /** Stat paneli açık mı (tarafa göre). Yalnızca o tarafta sabit kart varken true (renderCards düzeltir). */
+  private statsOpen: Partial<Record<Side, boolean>> = {};
+  /** Sabit kart portre tıklamasıyla mı sabitlendi (panel kapanınca sabit de kalkar, kart eski hover hâline döner). */
+  private statsPinned: Partial<Record<Side, boolean>> = {};
+  /** Hover bitince kartı portreye ulaşılabilsin diye kısa süre tutan zamanlayıcı (data/ui-motion.json > unitCard.holdMs). */
+  private readonly holdTimers: Partial<Record<Side, number>> = {};
   private readonly offDoc: () => void;
   private hidden = false;
   /** Valor mangalları (sefer / Endless; global sütunun hemen sağında, alt çubukta). Yoksa gizli. */
@@ -411,6 +415,9 @@ export class BattleHud {
     this.ftip = el('div', 'bh-ftip bh-panel');
     this.ctip = el('div', 'bh-ctip bh-panel bh-corners');
     this.cards = { party: el('div', 'bh-card party'), enemy: el('div', 'bh-card enemy') };
+    this.cardSc = { party: el('div', 'bh-card-sc'), enemy: el('div', 'bh-card-sc') };
+    this.cardStats = { party: el('div', 'bh-cstats'), enemy: el('div', 'bh-cstats') };
+    for (const side of ['party', 'enemy'] as const) this.cards[side].append(this.cardSc[side], this.cardStats[side]);
     this.root.append(this.band, this.turn, this.turnLbl, this.waveLbl, this.goalLbl, this.actorBox, this.pasBox, this.skillBox, this.globBox, this.valorBox, this.rightSlot, this.cards.party, this.cards.enemy, this.ctip, this.ftip);
     parent.append(this.root);
 
@@ -456,6 +463,8 @@ export class BattleHud {
 
   destroy(): void {
     this.offDoc();
+    window.clearTimeout(this.holdTimers.party);
+    window.clearTimeout(this.holdTimers.enemy);
     this.valorMeter?.destroy();
     this.root.remove();
   }
@@ -604,11 +613,11 @@ export class BattleHud {
     const chips: BandChip[] = [];
     if (a.role) chips.push({ text: a.role });
     if (a.primary) chips.push({ text: `${a.primary.name} primary`, ...(a.primary.iconUrl ? { icon: a.primary.iconUrl } : {}), tone: 'ac', color: '#ffb98a' });
-    // Alt çubuk karakter bloğu (B · Icon first): rol + primary çipleri
+    // Alt çubuk karakter bloğu (B · Icon first): rol çipi; primary stat aşağıdaki vurgulu karoda (Ömer 2026-11-01: rozet tekrar ediyordu)
     if (a.taint) chips.push({ text: `Ashen Taint ×${a.taint}`, color: '#c9b8f0' });
     const rowChips =
       (a.role ? `<span class="bh-chip">${esc(a.role)}</span>` : '') +
-      (a.taint ? `<span class="bh-chip taint"><b>Ashen Taint ×${a.taint}</b></span>` : a.primary ? `<span class="bh-chip hot">${img(a.primary.iconUrl)}${primaryLabelHtml(a.primary.name)} primary</span>` : '');
+      (a.taint ? `<span class="bh-chip taint"><b>Ashen Taint ×${a.taint}</b></span>` : '');
     const sheet = bandTipHtml({
       kind: 'Character',
       title: a.name,
@@ -867,10 +876,68 @@ export class BattleHud {
 
   /** Fareyle üstüne gelinen birim (null = bıraktı). Sabitlenmiş kart o tarafta öncelikli; diğer taraf etkilenmez. */
   hoverCard(card: UnitCard | null, side?: Side): void {
-    if (card) this.hover[card.enemy ? 'enemy' : 'party'] = card;
-    else if (side) delete this.hover[side];
-    else this.hover = {};
+    if (card) {
+      const s: Side = card.enemy ? 'enemy' : 'party';
+      window.clearTimeout(this.holdTimers[s]);
+      this.hover[s] = card;
+    } else if (side) {
+      this.releaseHover(side);
+      return;
+    } else {
+      window.clearTimeout(this.holdTimers.party);
+      window.clearTimeout(this.holdTimers.enemy);
+      this.hover = {};
+    }
     this.renderCards();
+  }
+
+  /** Hover bitti: kart holdMs daha durur (fare portreye gidebilsin); fare portrenin üstündeyse beklemeye devam eder. */
+  private releaseHover(side: Side): void {
+    window.clearTimeout(this.holdTimers[side]);
+    if (!this.hover[side]) return;
+    this.holdTimers[side] = window.setTimeout(() => {
+      if (this.cards[side].querySelector('.bh-av:hover')) {
+        this.releaseHover(side);
+        return;
+      }
+      delete this.hover[side];
+      this.renderCards();
+    }, MOTION.unitCard.holdMs);
+  }
+
+  /**
+   * Portreye / panelin okuna tıklama: stat paneli açılır / kapanır. Hover kartında açmak kartı mevcut sabitleme kuralıyla sabitler
+   * (X, Esc, boş yere tık kapatır); bu sabit panelle birlikte kalkar. Telefonda iki panel sığmaz: açılan diğerini kapatır.
+   */
+  private toggleStats(side: Side): void {
+    this.hideTip();
+    if (this.statsOpen[side]) {
+      this.closeStats(side);
+    } else {
+      const other: Side = side === 'enemy' ? 'party' : 'enemy';
+      if (this.statsOpen[other] && document.documentElement.classList.contains('short')) this.closeStats(other);
+      const h = this.hover[side];
+      if (h) {
+        window.clearTimeout(this.holdTimers[side]);
+        this.statsPinned[side] = true;
+        this.pins[side] = h;
+        delete this.hover[side];
+        this.cb.onPinChange?.();
+      }
+      this.statsOpen[side] = true;
+    }
+    this.renderCards();
+  }
+
+  private closeStats(side: Side): void {
+    this.statsOpen[side] = false;
+    const p = this.pins[side];
+    if (!this.statsPinned[side] || !p) return;
+    this.statsPinned[side] = false;
+    delete this.pins[side];
+    if (!this.hover[side]) this.hover[side] = p; // fare hâlâ portrede olabilir: kart hover kuralına döner
+    this.releaseHover(side);
+    this.cb.onPinChange?.();
   }
 
   /** Birime tıklama: o tarafta kart sabitlenir; aynı birime yeniden tıklamak sabiti kaldırır. true = sabitlendi. */
@@ -922,6 +989,13 @@ export class BattleHud {
     for (const side of ['party', 'enemy'] as const) {
       const el = this.cards[side];
       const card = this.hover[side] ?? this.pins[side];
+      // Sabit kalktıysa (X, Esc, boş yere tık, sağ tık, birim öldü) panel de kapanır
+      if (!this.pins[side]) {
+        this.statsOpen[side] = false;
+        this.statsPinned[side] = false;
+      }
+      const statsOn = !!this.statsOpen[side] && !!card && !this.hidden;
+      if (el.classList.contains('stats') !== statsOn) el.classList.toggle('stats', statsOn);
       // yalnızca değişen öznitelik / içerik yazılır (kartlar birkaç karede bir yenilenir; kapalı kart boşta her seferinde DOM'a yazılıyordu)
       if (!card || this.hidden) {
         if (this.tipEl && el.contains(this.tipEl)) this.hideTip();
@@ -932,10 +1006,13 @@ export class BattleHud {
       const pinned = this.pins[side]?.uid === card.uid;
       for (const k of [...this.cardTips.keys()]) if (k.startsWith(`k:${side}:`)) this.cardTips.delete(k);
       card.skills?.forEach((s, i) => this.cardTips.set(`k:${side}:${i}`, s.tip));
-      // aynı birimin kartı yenilenince (can, bekleme...) iç kaydırma yerinde kalır (innerHTML yeniden yazımı başa atardı)
-      const keep = el.dataset['uid'] === card.uid ? (el.firstElementChild?.scrollTop ?? 0) : 0;
-      if (this.put(el, this.cardHtml(card, pinned)) && keep > 0 && el.firstElementChild) el.firstElementChild.scrollTop = keep;
-      if (el.dataset['uid'] !== card.uid) el.dataset['uid'] = card.uid;
+      // aynı birimin kartı yenilenince (can, bekleme...) iç kaydırma yerinde kalır; kaydırma kabı kalıcı, yalnızca içi yazılır
+      this.put(this.cardSc[side], this.cardHtml(card, pinned, statsOn));
+      this.put(this.cardStats[side], this.statsHtml(card));
+      if (el.dataset['uid'] !== card.uid) {
+        el.dataset['uid'] = card.uid;
+        this.cardSc[side].scrollTop = 0;
+      }
       if (!el.classList.contains('on')) el.classList.add('on');
       if (el.classList.contains('pin') !== pinned) el.classList.toggle('pin', pinned);
     }
@@ -943,29 +1020,22 @@ export class BattleHud {
 
   /**
    * Sabitlenen / üstüne gelinen birim kartı = "B · Band + Rows" (Ömer 2026-10-18, taslak public/mockups/stats-panels.html): ortak A-Band bileşeni
-   * (src/ui/band-tip.ts): başlıkta ad + Lv, üstte ALLY / ENEMY satırı, rol + primary çipleri; gövde: HP / MP / Rage, MAIN / ATTACK / DEFENSE,
-   * aktif buff / debuff'lar, skill satırları (ikon · ad · hedef · bedel · bekleme), pasif; alt çubuk yalnızca sabitliyken.
+   * (src/ui/band-tip.ts): başlıkta ad + Lv, üstte ALLY / ENEMY satırı, rol + primary çipleri; gövde (Ömer 2026-11-01, mockup unit-card.html A):
+   * HP / MP / Rage, Buffs, Debuffs, Passive, Skills (ikon · ad · hedef · bedel · bekleme), seçili skill'in önizlemesi; alt çubuk yalnızca sabitliyken.
+   * Statlar portreye tıklayınca açılan panelde (statsHtml).
    */
-  private cardHtml(c: UnitCard, pinned: boolean): string {
+  private cardHtml(c: UnitCard, pinned: boolean, statsOn: boolean): string {
     const side: Side = c.enemy ? 'enemy' : 'party';
-    const lab = (t: string) => `<div class="bh-cl">${esc(t)}</div>`;
+    const lab = (t: string, cls = '') => `<div class="bh-cl${cls ? ` ${cls}` : ''}">${esc(t)}</div>`;
     const div = '<div class="bt-div"></div>';
     const bar = (kind: 'hp' | 'mp' | 'rage', iconUrl: string, b: { value: number; max: number }) =>
       `<div class="bh-cb ${kind}"><div class="bh-cb-v">${img(iconUrl)}<b>${b.value}</b><span class="of">/ ${b.max}</span></div><div class="bh-bar ${kind}${kind === 'hp' && c.enemy ? ' en' : ''}"><i style="width:${pct(b.value, b.max)}"></i></div></div>`;
     const bars = [bar('hp', c.hpIcon ?? '', c.hp), c.mp ? bar('mp', c.mpIcon ?? '', c.mp) : '', c.rage ? bar('rage', c.rageIcon ?? '', c.rage) : ''].join('');
-    // Üç sütun: MAIN = dört attribute; ATTACK / DEFENSE = karttaki ızgara etiketlerine göre (azalma yüzdesi teal, hizalı)
-    const ATTACK = new Set(['CRIT', 'SPD', 'ACC', 'CDMG', 'DMG']);
-    const row = (icon: string, label: string, value: string, color?: string, small?: string, pri = false, slot = false) =>
-      `<div class="bh-sr${pri ? ' pri' : ''}">${img(icon)}<span class="k">${esc(label)}</span><span class="n" style="${color ? `color:${color}` : ''}">${esc(value)}</span>${small ? `<span class="rd">${esc(small)}</span>` : slot ? '<span class="rd"></span>' : ''}</div>`;
-    const col = (title: string, rows: string) => `<div class="bh-sc">${lab(title)}${rows}</div>`;
-    const cols = `<div class="bh-scols">${col('Main', c.attrs.map((s) => row(s.iconUrl, s.label, s.value, s.color, undefined, !!s.primary)).join(''))}${col('Attack', c.grid.filter((g) => ATTACK.has(g.label)).map((g) => row(g.iconUrl, g.label, g.value, g.color, g.small)).join(''))}${col('Defense', c.grid.filter((g) => !ATTACK.has(g.label)).map((g) => row(g.iconUrl, g.label, g.value, g.color, g.small, false, true)).join(''))}</div>`;
     // Aktif buff / debuff'lar (ayrı bölüm): ikon, ad, yığın, kalan tur; altında kısa açıklama
-    const fx = c.effects
-      .map(
-        (e) =>
-          `<div class="bh-e ${e.debuff ? 'bad' : ''}" style="--c:${e.color}">${e.iconUrl ? img(e.iconUrl, 'bh-ico bh-e-ico') : '<i class="bh-e-dia"></i>'}<b>${esc(e.name)}${e.stacks ? `<span class="st">x${e.stacks}</span>` : ''}</b><em>${esc(e.turns)}</em>${e.text ? `<span class="d">${esc(e.text)}</span>` : ''}</div>`,
-      )
-      .join('');
+    const fxRow = (e: UnitCard['effects'][number]) =>
+      `<div class="bh-e ${e.debuff ? 'bad' : ''}" style="--c:${e.color}">${e.iconUrl ? img(e.iconUrl, 'bh-ico bh-e-ico') : '<i class="bh-e-dia"></i>'}<b>${esc(e.name)}${e.stacks ? `<span class="st">x${e.stacks}</span>` : ''}</b><em>${esc(e.turns)}</em>${e.text ? `<span class="d">${esc(e.text)}</span>` : ''}</div>`;
+    const buffs = c.effects.filter((e) => !e.debuff).map(fxRow).join('');
+    const debuffs = c.effects.filter((e) => e.debuff).map(fxRow).join('');
     // Skill satırları: ikon · ad · hedef · bedel · bekleme (bedel / bekleme sütunları hizalı)
     const sks = (c.skills ?? [])
       .map((s, i) => {
@@ -986,7 +1056,14 @@ export class BattleHud {
     const chips: BandChip[] = [];
     if (c.role) chips.push({ text: c.role });
     if (c.primary) chips.push({ text: `${c.primary.name} primary`, ...(c.primary.iconUrl ? { icon: c.primary.iconUrl } : {}), tone: 'ac', color: '#ffb98a' });
-    const body = [`<div class="bh-cbars">${bars}</div>`, div, cols, fx ? `${div}<div class="bh-csec">${lab('Effects')}<div class="bh-eff">${fx}</div></div>` : '', sks ? `${div}<div class="bh-csec">${lab('Skills')}<div class="bh-csl">${sks}</div></div>` : '', pas ? `${div}<div class="bh-csec">${lab('Passive')}${pas}</div>` : '', pv].join('');
+    const body = [
+      `<div class="bh-cbars">${bars}</div>`,
+      buffs ? `${div}<div class="bh-csec">${lab('Buffs', 'good')}<div class="bh-eff">${buffs}</div></div>` : '',
+      debuffs ? `${div}<div class="bh-csec">${lab('Debuffs', 'bad')}<div class="bh-eff">${debuffs}</div></div>` : '',
+      pas ? `${div}<div class="bh-csec">${lab('Passive')}${pas}</div>` : '',
+      sks ? `${div}<div class="bh-csec">${lab('Skills')}<div class="bh-csl">${sks}</div></div>` : '',
+      pv,
+    ].join('');
     const html = bandTipHtml({
       kind: `${c.tag ? `${c.tag.text} · ` : ''}${c.enemy ? 'Enemy' : 'Ally'}`,
       title: c.name,
@@ -1002,7 +1079,22 @@ export class BattleHud {
     // Sabit kartta sağ üst X (Ömer 2026-10-19: telefonda Esc yok); kaydırma kabının dışında, dokunma hedefi en az 44 gerçek piksel
     const x = pinned ? `<button type="button" class="bh-card-x" data-unpin="${side}" aria-label="Close card" title="Close">${navSvg('close')}</button>` : '';
     // X başlık satırının İÇİNDE (dikey ortalı, kenardan eşit pay); "Lv" için sağda yer ayrılır (battle-hud.css > .bh-card.pin .bt-head)
-    return `<div class="bh-card-sc">${x ? html.replace('<div class="bt-head">', `<div class="bt-head">${x}`) : html}</div>`;
+    // Portre = stat paneli düğmesi (üstünde STATS etiketi); en az 44 gerçek piksel (battle-hud.css > .bh-av)
+    const framed = html.replace(/<span class="bt-medal por"[^>]*><\/span>/, (m) => `<button type="button" class="bh-av" data-stats="${side}" aria-expanded="${statsOn}" aria-label="${statsOn ? 'Hide stats' : 'Show stats'}">${m}<span class="bh-av-l">Stats</span></button>`);
+    return x ? framed.replace('<div class="bt-head">', `<div class="bt-head">${x}`) : framed;
+  }
+
+  /** Kartın yanına açılan stat paneli (mockup unit-card.html A): tek sütun MAIN / ATTACK / DEFENSE; başlıkta kapatma oku. Statlar eski kart ızgarasıyla aynı. */
+  private statsHtml(c: UnitCard): string {
+    const side: Side = c.enemy ? 'enemy' : 'party';
+    // ATTACK / DEFENSE = karttaki ızgara etiketlerine göre (azalma yüzdesi teal, hizalı)
+    const ATTACK = new Set(['CRIT', 'SPD', 'ACC', 'CDMG', 'DMG']);
+    const row = (icon: string, label: string, value: string, color?: string, small?: string, pri = false) =>
+      `<div class="bh-sr${pri ? ' pri' : ''}">${img(icon)}<span class="k">${esc(label)}</span><span class="n" style="${color ? `color:${color}` : ''}">${esc(value)}</span><span class="rd">${small ? esc(small) : ''}</span></div>`;
+    const col = (title: string, rows: string) => `<div class="bh-sc"><div class="bh-cl">${esc(title)}</div>${rows}</div>`;
+    const body = `<div class="bh-scol">${col('Main', c.attrs.map((s) => row(s.iconUrl, s.label, s.value, s.color, undefined, !!s.primary)).join(''))}${col('Attack', c.grid.filter((g) => ATTACK.has(g.label)).map((g) => row(g.iconUrl, g.label, g.value, g.color, g.small)).join(''))}${col('Defense', c.grid.filter((g) => !ATTACK.has(g.label)).map((g) => row(g.iconUrl, g.label, g.value, g.color, g.small)).join(''))}</div>`;
+    const x = `<button type="button" class="bh-cstats-x" data-stats="${side}" aria-label="Close stats"></button>`;
+    return bandTipHtml({ kind: c.name, title: 'Stats', bodyHtml: body }).replace('<div class="bt-head">', `<div class="bt-head">${x}`);
   }
 
   // ------------------------------------------------------------------ bağlam ipucu (hücre: yürü, ceset, diriltme...)
@@ -1038,6 +1130,11 @@ export class BattleHud {
 
   private onClick(e: MouseEvent): void {
     const target = e.target as HTMLElement;
+    const st = target.closest<HTMLElement>('[data-stats]');
+    if (st) {
+      this.toggleStats(st.dataset['stats'] as Side);
+      return;
+    }
     const un = target.closest<HTMLElement>('[data-unpin]');
     if (un) {
       const side = un.dataset['unpin'] as Side;
@@ -1106,8 +1203,11 @@ export class BattleHud {
     let y = side === 'right' || side === 'beside' ? ey + eh / 2 - th / 2 : ey - th - 12;
     if (card) {
       // Birim kartının skill satırı: ipucu kartın yanında, tahtaya doğru (dost kartı solda: sağına; düşman kartı sağda: soluna)
-      const { x: cl, w: cw } = rectToLocal(card.getBoundingClientRect(), rr, this.root.offsetWidth, rot);
-      x = card.classList.contains('enemy') ? cl - tw - 16 : cl + cw + 16;
+      // Stat paneli açıksa ipucu panelin de dışında
+      const edge = card.classList.contains('stats') ? (card.querySelector<HTMLElement>('.bh-cstats .bt') ?? card) : card;
+      const { x: cl, w: cw } = rectToLocal(edge.getBoundingClientRect(), rr, this.root.offsetWidth, rot);
+      const { x: ol, w: ow } = rectToLocal(card.getBoundingClientRect(), rr, this.root.offsetWidth, rot);
+      x = card.classList.contains('enemy') ? Math.min(cl, ol) - tw - 16 : Math.max(cl + cw, ol + ow) + 16;
     }
     if (y < 10 && side === 'above') y = ey + eh + 12;
     x = Math.max(12, Math.min(this.viewW - tw - 12, x));

@@ -1,0 +1,40 @@
+{
+  "_not": "Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim B (Cold order). Statlar eski yer tutucu Morvane Halberdier kopyası. Kendi idle çizimi; skill sanatı ödünç.",
+  "id": "frozen_standard_bearer",
+  "name": "The Frozen Standard-Bearer",
+  "family": "morvane_army",
+  "spriteId": "frozen_standard_bearer",
+  "spriteScale": 1.15,
+  "color": "#8fb0c8",
+  "logo": "helm",
+  "frontPriority": 0,
+  "range": 2,
+  "role": "Elite · Frostbound Legion",
+  "attributes": {
+    "str": 26,
+    "int": 4,
+    "dex": 10,
+    "luck": 4
+  },
+  "armor": 20,
+  "magicArmor": 6,
+  "ai": "aggressive",
+  "skills": [
+    "standard_pole",
+    "cold_command",
+    "frost_banner"
+  ],
+  "passive": {
+    "id": "frozen_ranks",
+    "name": "Frozen Ranks",
+    "icon": "shield",
+    "text": "While it stands, all allies take 12% less damage with one other living ally in their row (24% less with a full row) and cannot be Chilled. It shares the cover, but it can be Chilled and Frozen itself.",
+    "effect": {
+      "type": "frozenRanks",
+      "perAlly": 0.12,
+      "immune": [
+        "chilled"
+      ]
+    }
+  }
+}

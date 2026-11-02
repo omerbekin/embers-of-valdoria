@@ -31,6 +31,7 @@ import type { AssetSection } from './assets/sections';
 import { wikiFiles } from './files';
 import { familyGlyph, slotGlyph } from './slot-glyphs';
 import { itemDefIcon } from '../ui/item-icon-dom';
+import { attachBandTip } from '../ui/band-tip-attach';
 import { applyVariantFiles } from '../game/sprite-variants';
 import './wiki.css';
 import { seenLessons } from '../tutorial/store';
@@ -57,10 +58,25 @@ const lineColor = (kind: string | undefined): string | undefined =>
  * Oyun ikonu (canlı sürüm bağlı: debug > Versions değişince yeniden çizilir). `owner` verilmezse class logosu sahibini, diğer adlar
  * Shared sürümünü izler (Shared v2'de olmayan ad v1'e düşer). `zoom`: tıklayınca büyütür.
  */
+/** Codex ipucu (A Band, Ömer 2026-11-01 varyant A): yerel title= yerine; fare üstünde açılır, dokunma sabitler. Metin = eski title metni. */
+function tip<T extends HTMLElement>(el: T, title: string, line?: string | null): T {
+  attachBandTip(el, line ? { title, lines: [{ text: line }], noKeywords: true } : { title });
+  if (!el.hasAttribute('aria-label') && !el.textContent?.trim()) el.setAttribute('aria-label', line ? `${title}. ${line}` : title);
+  return el;
+}
+
+/** `h` + ipucu: ipucu başlığı ve (varsa) tek satır; denetim `props` ile kurulur. */
+const hv = (title: string, line: string | null, ...a: Parameters<typeof h>): HTMLElement => tip(h(...a), title, line);
+
+/** Açık Codex ipuçlarını kaldırır (madde / liste yeniden çizilince eski denetime bağlı sabit ipucu asılı kalmasın). */
+function clearTips(): void {
+  document.querySelectorAll('body > .bt-pop').forEach((p) => p.remove());
+}
+
 function pic(name: string, accent: string, cls: string, owner?: string | null, zoom = false): HTMLImageElement {
   const img: HTMLImageElement = h('img', { class: `${cls} pixelated`, attrs: { alt: '', draggable: 'false' } });
   if (zoom) {
-    img.title = `${name} (click to enlarge)`;
+    tip(img, `${name} (click to enlarge)`);
     img.classList.add('zoom');
     img.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -74,7 +90,7 @@ function statusPic(id: string, icon: string, color: string, cls: string, zoom = 
   const img: HTMLImageElement = h('img', { class: `${cls} pixelated`, attrs: { alt: '', draggable: 'false' } });
   if (zoom) {
     img.classList.add('zoom');
-    img.title = `${icon} (click to enlarge)`;
+    tip(img, `${icon} (click to enlarge)`);
     img.addEventListener('click', (e) => {
       e.stopPropagation();
       openLightbox(img.src, icon, true);
@@ -111,7 +127,7 @@ function thumb(t: CodexThumb, cls: string): HTMLElement {
 
 /** AOE şekil şeması: herhangi RxC mini ızgara (savaştaki hücre plakası diliyle); boyalı hücreler vurulur, beyaz çerçeveli hücre imlecin gösterdiği (anchor) hücredir. */
 function shapeGrid(m: MiniShape): HTMLElement {
-  const grid = h('div', { class: 'wk-shape', style: { '--cols': String(m.cols) }, title: `Shape preview: the painted cells are hit; the white-framed cell is the one you point at${m.cells.some((c) => c.hits && c.hits > 1) ? '; the center cell is struck twice (x2)' : ''}` }, ...m.cells.map((c) => h('span', { class: `wk-sc${c.on ? ' on' : ''}${c.on && c.stage && c.stage > 1 ? ` s${Math.min(3, c.stage)}` : ''}${c.anchor ? ' anchor' : ''}${c.hits && c.hits > 1 ? ' hits' : ''}`, ...(c.hits && c.hits > 1 ? { attrs: { 'data-hits': `x${c.hits}` } } : {}) })));
+  const grid = hv('Shape preview', `The painted cells are hit; the white-framed cell is the one you point at${m.cells.some((c) => c.hits && c.hits > 1) ? '; the center cell is struck twice (x2)' : ''}`, 'div', { class: 'wk-shape', style: { '--cols': String(m.cols) } }, ...m.cells.map((c) => h('span', { class: `wk-sc${c.on ? ' on' : ''}${c.on && c.stage && c.stage > 1 ? ` s${Math.min(3, c.stage)}` : ''}${c.anchor ? ' anchor' : ''}${c.hits && c.hits > 1 ? ' hits' : ''}`, ...(c.hits && c.hits > 1 ? { attrs: { 'data-hits': `x${c.hits}` } } : {}) })));
   return m.note ? h('span', { class: 'wk-shape-wrap' }, h('span', { class: 'wk-shape-note', text: m.note }), grid) : grid;
 }
 
@@ -217,7 +233,8 @@ export class WikiPanel {
     this.articleCol = h('article', { class: 'el-panel corners cx-article', attrs: { 'aria-live': 'polite' } });
     this.wideCol = h('div', { class: 'el-panel cx-wide', attrs: { hidden: '' } }, ...this.nav.flatMap((n) => (n.kind === 'asset' ? [n.asset.root] : [])));
 
-    const back = h('button', { class: 'nav-btn el-back cx-back', attrs: { type: 'button', 'aria-label': 'Back', title: 'Back' }, on: { click: () => this.setOpen(false) } });
+    const back = h('button', { class: 'nav-btn el-back cx-back', attrs: { type: 'button', 'aria-label': 'Back' }, on: { click: () => this.setOpen(false) } });
+    tip(back, 'Back');
     back.innerHTML = navSvg('back'); // ortak geri ikonu (src/ui/nav-icons.ts)
     const body = h('div', { class: 'cx-body' }, h('aside', { class: 'cx-side' }, searchBox, navEl), this.listCol, this.articleCol, this.wideCol);
     this.overlay = h('div', { class: 'wk-overlay cx', attrs: { hidden: '', role: 'dialog', 'aria-label': 'Codex' } },
@@ -248,6 +265,7 @@ export class WikiPanel {
   }
 
   setOpen(open: boolean): void {
+    clearTips();
     if (open === this.opened) return;
     this.opened = open;
     this.overlay.hidden = !open;
@@ -330,7 +348,7 @@ export class WikiPanel {
     for (const [name, list] of byGroup) {
       const els = list.map((e) => {
         const el = def.layout === 'tiles'
-          ? h('button', { class: 'cx-tile', attrs: { type: 'button' }, style: { '--g': e.thumb.kind === 'portrait' ? this.primaryColor(e.id) : GOLD }, title: e.sub, on: { click: () => this.select(sec, e.id) } }, thumb(e.thumb, 'cx-tilepic'), h('span', { class: 'cx-tilename', text: e.title }))
+          ? hv(e.sub, null, 'button', { class: 'cx-tile', attrs: { type: 'button' }, style: { '--g': e.thumb.kind === 'portrait' ? this.primaryColor(e.id) : GOLD }, on: { click: () => this.select(sec, e.id) } }, thumb(e.thumb, 'cx-tilepic'), h('span', { class: 'cx-tilename', text: e.title }))
           : h('button', { class: 'cx-row', attrs: { type: 'button' }, on: { click: () => this.select(sec, e.id) } }, thumb(e.thumb, 'cx-rowpic'), h('b', { text: e.title }), h('small', { text: e.sub === name ? '' : e.sub }));
         items.set(e.id, el);
         return el;
@@ -377,6 +395,7 @@ export class WikiPanel {
 
   /** Orta sütunu süzgece göre günceller; seçim süzgeçten düştüyse görünen ilk maddeye geçer ve madde panelini çizer. */
   private renderList(sec: CodexSectionId, force = false): void {
+    clearTips();
     const view = this.listView(sec);
     if (this.listBody.firstChild !== view.root) this.listBody.replaceChildren(view.root);
     const def = CODEX_SECTIONS.find((s) => s.id === sec)!;
@@ -438,6 +457,7 @@ export class WikiPanel {
   // ---------------------------------------------------------------- madde paneli
 
   private renderArticle(sec: CodexSectionId, id: string | null): void {
+    clearTips();
     this.articleCol.dataset['key'] = `${sec}:${id}`;
     this.articleCol.scrollTop = 0;
     if (!id) {
@@ -478,19 +498,19 @@ export class WikiPanel {
   /** Skill bağlantı çipi (ikon + ad). */
   private skillRef(r: WikiSkillRef): HTMLElement {
     const s = this.skills.get(r.id);
-    return h('button', { class: 'cx-ref', attrs: { type: 'button' }, title: s ? `${r.name} (${s.owner.name})` : r.name, on: { click: () => this.go('skills', r.id) } }, skillPic(r, s?.accent ?? GOLD, 'cx-ico small'), h('span', { text: r.name }));
+    return hv(s ? `${r.name} (${s.owner.name})` : r.name, null, 'button', { class: 'cx-ref', attrs: { type: 'button' }, on: { click: () => this.go('skills', r.id) } }, skillPic(r, s?.accent ?? GOLD, 'cx-ico small'), h('span', { text: r.name }));
   }
 
   private statusRef(id: string): HTMLElement | null {
     const s = this.statuses.get(id);
     if (!s) return null;
-    return h('button', { class: `cx-ref ${s.type}`, attrs: { type: 'button' }, style: { '--c': s.color }, title: s.text, on: { click: () => this.go('statuses', id) } }, statusPic(s.id, s.icon, s.color, 'cx-ico small'), h('span', { text: s.name }));
+    return hv(s.name, s.text, 'button', { class: `cx-ref ${s.type}`, attrs: { type: 'button' }, style: { '--c': s.color }, on: { click: () => this.go('statuses', id) } }, statusPic(s.id, s.icon, s.color, 'cx-ico small'), h('span', { text: s.name }));
   }
 
   private groundRef(id: string): HTMLElement | null {
     const g = this.grounds.get(groundEntryId(id));
     if (!g) return null;
-    return h('button', { class: 'cx-ref', attrs: { type: 'button' }, style: { '--c': g.color }, title: g.text, on: { click: () => this.go('statuses', groundEntryId(id)) } }, pic(paintedOr('ground', g.id, g.icon), g.color, 'cx-ico small', SHARED_KEY), h('span', { text: g.name }));
+    return hv(g.name, g.text, 'button', { class: 'cx-ref', attrs: { type: 'button' }, style: { '--c': g.color }, on: { click: () => this.go('statuses', groundEntryId(id)) } }, pic(paintedOr('ground', g.id, g.icon), g.color, 'cx-ico small', SHARED_KEY), h('span', { text: g.name }));
   }
 
   private unitRef(id: string): HTMLElement | null {
@@ -516,15 +536,15 @@ export class WikiPanel {
           h('div', { class: 'cx-rarities' }, ...a.gear.rarities.map((r) => h('div', { class: 'cx-rarity', style: { '--c': r.color } }, h('span', { class: 'cx-slotbox' }, slotGlyph('trinket', r.color)), h('span', { text: r.name })))))
       : null;
     const legend = a.legendaries?.length
-      ? h('div', { class: 'cx-slots cx-legend' }, ...a.legendaries.map((d) => h('div', { class: 'cx-rarity cx-legend-item', style: { '--c': d.color }, title: d.name }, h('span', { class: 'cx-slotbox' }, itemDefIcon(d, d.slot, d.color, 'cx-slot-svg')), h('span', { text: d.name }))))
+      ? h('div', { class: 'cx-slots cx-legend' }, ...a.legendaries.map((d) => hv(d.name, null, 'div', { class: 'cx-rarity cx-legend-item', style: { '--c': d.color } }, h('span', { class: 'cx-slotbox' }, itemDefIcon(d, d.slot, d.color, 'cx-slot-svg')), h('span', { text: d.name }))))
       : null;
     return h('div', {}, articleHead(articlePortrait(a) ? portrait(articlePortrait(a)!, 'cx-bigportrait') : pic(a.icon, a.accent, 'cx-ico head', a.owner, true), a.title, a.group), gear, legend, ...this.blocks(a.blocks), shapes);
   }
 
   /** Skill kartı çipleri V2 (src/ui/skill-chips.ts): menzil / bedel / bekleme ikon + sayı, tam anlam balonda; sayıya inmeyenler eski yazılı çip. */
   private skillNumChips(s: WikiSkill): Array<HTMLElement | null> {
-    const q = (icon: string, color: string, num: string, tip: string): HTMLElement =>
-      h('span', { class: 'cx-tag q', attrs: { 'data-tip': tip, 'aria-label': tip, tabindex: '0' } }, pic(icon, color, 'cx-ico q'), h('b', { text: num }));
+    const q = (icon: string, color: string, num: string, tipText: string): HTMLElement =>
+      hv(tipText, null, 'span', { class: 'cx-tag q', attrs: { tabindex: '0', 'aria-label': tipText } }, pic(icon, color, 'cx-ico q'), h('b', { text: num }));
     const rg = rangeChipOf(s.rangeLabel);
     const cost = costChipOf(s.cost);
     const cd = cooldownChipOf(s.cooldown);
@@ -537,15 +557,15 @@ export class WikiPanel {
 
   private skillBody(s: WikiSkill, withName: boolean): HTMLElement {
     const meta = h('div', { class: 'cx-meta' },
-      h('span', { class: 'cx-tag', text: s.range, title: 'Melee: reaches the front rows only. Ranged: reaches anyone. Support: targets an ally. Self: only the caster.' }),
-      h('span', { class: 'cx-tag strong', text: s.targetBadge, title: s.targetText }),
+      hv(s.range, 'Melee: reaches the front rows only. Ranged: reaches anyone. Support: targets an ally. Self: only the caster.', 'span', { class: 'cx-tag', text: s.range }),
+      hv(s.targetBadge, s.targetText, 'span', { class: 'cx-tag strong', text: s.targetBadge }),
       s.shape ? shapeGrid(s.shape) : null,
       ...this.skillNumChips(s),
       s.initialCooldown ? h('span', { class: 'cx-tag warn', text: s.initialCooldown }) : null);
     const applies = [...s.statuses.map((id) => this.statusRef(id)), ...s.grounds.map((id) => this.groundRef(id))].filter((x): x is HTMLElement => !!x);
     return h('div', { class: 'cx-skill-body' },
       withName
-        ? h('div', { class: 'cx-skill-name' }, h('button', { class: 'cx-skill-link', attrs: { type: 'button' }, title: 'Open in Skills', on: { click: () => this.go('skills', s.id) } }, h('b', { text: s.slot ? `${s.slot}. ${s.name}` : s.name })), ...s.elements.map(elementTag))
+        ? h('div', { class: 'cx-skill-name' }, hv('Open in Skills', null, 'button', { class: 'cx-skill-link', attrs: { type: 'button' }, on: { click: () => this.go('skills', s.id) } }, h('b', { text: s.slot ? `${s.slot}. ${s.name}` : s.name })), ...s.elements.map(elementTag))
         : s.elements.length ? h('div', { class: 'cx-skill-name' }, ...s.elements.map(elementTag)) : null,
       meta,
       h('ul', { class: 'cx-lines' }, ...s.lines.map((t, i) => h('li', { text: t, style: lineColor(s.kinds[i]) ? { color: lineColor(s.kinds[i])! } : {} }))),
@@ -554,14 +574,14 @@ export class WikiPanel {
 
   private unitArticle(u: WikiUnit): HTMLElement {
     const pri = u.primary ? h('span', { class: 'cx-pri', style: { color: PRIMARY_COLOR[u.primary] ?? GOLD }, text: u.primary.toUpperCase() }) : null;
-    const sprite = u.spriteUrl ? h('img', { class: 'cx-fullsprite', attrs: { src: u.spriteUrl, alt: `${u.name} (full body)`, loading: 'lazy', draggable: 'false' }, title: `${u.name} (click to enlarge)`, on: { click: () => openLightbox(u.spriteUrl!, `${u.name} (full body)`) } }) : null;
+    const sprite = u.spriteUrl ? hv(`${u.name} (click to enlarge)`, null, 'img', { class: 'cx-fullsprite', attrs: { src: u.spriteUrl, alt: `${u.name} (full body)`, loading: 'lazy', draggable: 'false' }, on: { click: () => openLightbox(u.spriteUrl!, `${u.name} (full body)`) } }) : null;
     const head = h('div', { class: 'cx-unithead' },
       articleHead(portrait(portraitOf(u), 'cx-bigportrait'), u.name,
         u.role || (u.kind === 'summon' ? 'Summon' : ''), pri ? ' · ' : null, pri,
-        h('span', { class: 'cx-headtags' }, pic(classLogoName(u), u.color, 'cx-ico small', ownerOfUnit(u.id), true), chip(u.kind === 'class' ? (u.melee ? 'Melee' : 'Ranged') : 'Summon'), u.testOnly ? h('span', { class: 'cx-tag test', text: 'Test', title: 'Test class: left out of random teams; add it by hand in team selection' }) : null)),
+        h('span', { class: 'cx-headtags' }, pic(classLogoName(u), u.color, 'cx-ico small', ownerOfUnit(u.id), true), chip(u.kind === 'class' ? (u.melee ? 'Melee' : 'Ranged') : 'Summon'), u.testOnly ? hv('Test class', 'Left out of random teams; add it by hand in team selection', 'span', { class: 'cx-tag test', text: 'Test' }) : null)),
       sprite);
     const attrs = h('div', { class: 'cx-attrs' }, ...u.attributes.map((a) =>
-      h('div', { class: `cx-attr${a.primary ? ' primary' : ''}`, title: a.primary ? `${a.label} ${a.value} (primary)` : `${a.label} ${a.value}` }, pic(a.icon, a.color, 'cx-ico small'), h('small', { text: a.label }), h('b', { text: String(a.value) }))));
+      hv(a.primary ? `${a.label} ${a.value} (primary)` : `${a.label} ${a.value}`, null, 'div', { class: `cx-attr${a.primary ? ' primary' : ''}` }, pic(a.icon, a.color, 'cx-ico small'), h('small', { text: a.label }), h('b', { text: String(a.value) }))));
     const bonus = u.primary && u.primaryBonus
       ? h('div', { class: 'cx-bonus' }, pic(statIconName(u.primary), STAT_COLOR[u.primary], 'cx-ico small'), h('div', {}, h('b', { text: `${u.primaryBonus.name}` }), h('span', { class: 'cx-dim', text: ` ${u.primaryBonus.detail}` }), h('div', { class: 'cx-note', text: u.primaryBonus.text })))
       : null;

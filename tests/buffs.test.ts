@@ -151,6 +151,28 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
     expect(hasStatus(b, victim, 'stun')).toBe(false);
   });
 
+  // Ömer 2026-11-01: DoT ile ölen birimin üstünde "Skipped" yazıyordu; iki taraf da aynı yoldan geçer
+  it.each([
+    ['düşman', 'enemy-1', false],
+    ['kahraman', 'party-1', false],
+    ['sersem düşman', 'enemy-1', true],
+    ['sersem kahraman', 'party-1', true],
+  ])('tur başında DoT ile ölen %s için turnSkipped olayı yok', (_who, victim, stunned) => {
+    const b = grid(cells({ 0: 'warrior', 1: 'warrior' }), cells({ 0: 'warrior', 1: 'warrior' }), 'turns', 3);
+    const v = b.get(victim)!;
+    v.hp = 1;
+    v.statuses.push({ kind: 'wither', turns: 3, source: v.uid, amount: 50 });
+    if (stunned) v.statuses.push({ kind: 'stun', turns: 1, source: 'x' });
+    const events: BattleEvent[] = [];
+    for (let i = 0; i < 8 && v.hp > 0; i++) {
+      const r = b.skipTurn();
+      if (r.ok) events.push(...r.events);
+    }
+    expect(v.hp).toBe(0);
+    expect(ofType(events, 'turnStart').some((e) => e.actor === victim)).toBe(true); // ölü birimin turu buraya kadar geliyor
+    expect(ofType(events, 'turnSkipped').filter((e) => e.actor === victim)).toEqual([]);
+  });
+
   it('Charge: vurduğu düşmanı sersemletir (tur sayısı veriden)', () => {
     const b = calm(grid(cells({ 0: 'warrior' }), cells({ 0: 'mage' })));
     act(b, 'party-0', 'charge', 'enemy-0');

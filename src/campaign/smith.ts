@@ -22,6 +22,7 @@ import {
   itemDef,
   ITEMS,
   levelRequirement,
+  drawAffix,
   makeItem,
   RARITY_IDS,
   rollDropBase,
@@ -207,7 +208,8 @@ export function reforgeBlocked(s: CampaignState, uid: string, index: number, cfg
 
 /**
  * Yeni affix'in çekileceği havuz: aynı kademe, bu yuvada çıkabilen, item'in DİĞER affix'lerinde olmayan. Değişen affix'in kendisi havuzda kalır
- * (Ömer 2026-10-18, karar 364: "Aynısı da olabilir"): aynı affix yeni bir değerle gelebilir.
+ * (Ömer 2026-10-18, karar 364: "Aynısı da olabilir"): aynı affix yeni bir değerle gelebilir. Havuz dışı kalmış eski affix (2026-11-01 dağılımı)
+ * listede yoktur: geri çıkmaz, yerine bu yuvanın güncel havuzundan biri gelir.
  */
 export function reforgeChoices(inst: ItemInstance, index: number): string[] {
   const d = itemDef(inst.id);
@@ -229,8 +231,7 @@ export function reforgeItem(s: CampaignState, uid: string, index: number, cfg: B
   const f = findItem(s, uid)!;
   const n = Math.max(0, Math.floor(f.inst.reforges ?? 0));
   const rng = rngFor(s.seed, 'reforge', uid, n);
-  const pool = reforgeChoices(f.inst, index);
-  const id = pool[rng.int(0, pool.length - 1)]!;
+  const id = drawAffix(reforgeChoices(f.inst, index), rng); // direnç tek girdi (D2); sınıf ağırlığı Reforge'da yok, eskisi gibi
   const ch = affixDef(id)?.choices;
   const x = ch?.length ? ch[rng.int(0, ch.length - 1)] : undefined;
   const floor = rollFloor('epic');

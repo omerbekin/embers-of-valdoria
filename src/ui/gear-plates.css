@@ -496,24 +496,30 @@ html.compact .gr-ledger .gr-leaf-hero > .gr-slots {
   gap: 4px 8px;
 }
 
-/* yatay telefon: 8 yuva 2 sütunda 4 satır tutup son satır sayfanın altında kırpılıyordu; kaydırmasız kuralı + 44px hedef için 3 sütun (2026-11-01) */
+/* yatay telefon, seçilen yerleşim A (Ömer 2026-11-01, "alt kısım gizli"): 8 yuva 2 sütun x 4 satır, 44px'lik plakalar, tam ad + en çok 1 affix.
+   4 satırın sığması için skill plakalarının bedel çipleri gizlenir (ad + ikon kalır; çipler skill ipucunda ve Tree sekmesinde) ve boşluk sıkılır. */
 html.short .gr-ledger .gr-leaf-hero > .gr-slots {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-rows: 44px;
-  gap: 4px 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(44px, 1fr);
+  gap: 2px 8px;
 }
 
-/* telefonda kilit nedeni plakaya sığmıyor: dokununca çıkan ipucunda yazar */
+html.short .gr-ledger .gr-lskills .pl-chips {
+  display: none;
+}
+
+html.short .gr-ledger .gr-lskills .gr-skillbar,
+html.short .gr-ledger .gr-lskills {
+  padding-top: 4px;
+}
+
+/* kilit nedeni plakaya sığmıyor: dokununca çıkan ipucunda yazar */
 html.short .gr-ledger .gr-leaf-hero .gr-slot.locked .gr-lock {
   top: auto;
   bottom: 3px;
 }
 
 html.short .gr-ledger .gr-leaf-hero .gr-slot.locked .gr-slot-sub {
-  display: none;
-}
-
-html.short .gr-ledger .gr-leaf-hero .gp-aff {
   display: none;
 }
 

@@ -1,0 +1,46 @@
+{
+  "_not": "Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim A (War-chief). Statlar eski yer tutucu Bandit Chief kopyası. Tek pasif yuvası: Highland Fury + War-Chant aynı pasifte (chant). Kendi idle çizimi; skill sanatı ödünç.",
+  "id": "clan_chief_brannoc",
+  "name": "Clan Chief Brannoc",
+  "family": "bandits",
+  "spriteId": "clan_chief_brannoc",
+  "spriteScale": 1.15,
+  "color": "#5a4632",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Elite · War-chief",
+  "attributes": {
+    "str": 30,
+    "int": 6,
+    "dex": 12,
+    "luck": 4
+  },
+  "armor": 20,
+  "magicArmor": 6,
+  "ai": "aggressive",
+  "skills": [
+    "great_axe",
+    "rally_the_clan",
+    "skullsplitter"
+  ],
+  "passive": {
+    "id": "war_chant_highland_fury",
+    "name": "War-Chant and Highland Fury",
+    "icon": "roar",
+    "text": "Immune to Chilled and Frozen. Below 50% HP it deals 20% more damage. At the start of its turn, allies in its row gain Haste for 1 turn.",
+    "effect": {
+      "type": "highlandFury",
+      "below": 0.5,
+      "bonus": 0.2,
+      "immune": [
+        "chilled",
+        "frozen"
+      ],
+      "chant": {
+        "status": "haste",
+        "turns": 1
+      }
+    }
+  }
+}

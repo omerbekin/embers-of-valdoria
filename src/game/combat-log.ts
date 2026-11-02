@@ -41,6 +41,8 @@ interface Action {
   notes: string[];
   /** Move eylemi: gelen 'moved' olayı satıra yönü yazar. */
   moving?: boolean;
+  /** Skill eylemi: skill'in adı (can bedeli satırı). */
+  skill?: string;
 }
 
 const MAX = 80;
@@ -86,8 +88,14 @@ export class CombatLog {
       }
       case 'skillUsed': {
         this.close();
-        this.cur = { round: this.round, actor: e.actor, verb: [{ t: ' used ' }, { t: this.names.skill(e.skill), k: 'sk' }], hits: [], notes: [] };
+        this.cur = { round: this.round, actor: e.actor, verb: [{ t: ' used ' }, { t: this.names.skill(e.skill), k: 'sk' }], hits: [], notes: [], skill: this.names.skill(e.skill) };
         this.done.push(this.cur);
+        return true;
+      }
+      case 'resource': {
+        // Skill'in can bedeli (Wail of the Dead); MP bedeli satır almaz
+        if (e.resource !== 'hp' || e.amount <= 0 || !this.cur?.skill || e.actor !== this.cur.actor) return false;
+        this.line([this.who(e.actor), { t: ' took ' }, { t: String(e.amount), k: 'dm' }, { t: ` from ${this.cur.skill}` }]);
         return true;
       }
       case 'globalUsed': {
@@ -122,8 +130,14 @@ export class CombatLog {
             return true;
           }
         }
-        if (e.origin === 'self') return false;
-        if (!this.cur) return false;
+        // Kişinin kendine verdiği hasar (skill bedeli, ağaç bedeli, bahis kaybı) ve açık eylemin sahibinden gelmeyen vuruş (karşı saldırı, telgraf, ağaç tetiği) kendi satırını alır
+        if (e.origin === 'self' || !this.cur || e.source !== this.cur.actor) {
+          const total = e.amount + e.absorbed;
+          if (total <= 0) return false;
+          const from = (e.cause ? this.names.cause(e.cause) : '') || (e.source !== e.target ? (this.names.unit(e.source)?.name ?? '') : '');
+          this.line([this.who(e.target), { t: ' took ' }, { t: e.crit ? `${total} crit` : String(total), k: e.crit ? 'cr' : 'dm' }, ...(from ? [{ t: ` from ${from}` }] : [])]);
+          return true;
+        }
         const h = this.hit(e.target);
         h.dmg += e.amount + e.absorbed;
         h.crit ||= e.crit;

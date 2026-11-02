@@ -174,7 +174,7 @@
     "name": "Clan Chief Brannoc",
     "units": [
       {
-        "class": "bandit_chief",
+        "class": "clan_chief_brannoc",
         "name": "Clan Chief Brannoc",
         "tier": "elite",
         "mods": {
@@ -195,7 +195,8 @@
         "slot": 0
       },
       {
-        "class": "clan_vaulter",
+        "class": "moor_raider",
+        "name": "Clan Axeman",
         "slot": 2
       }
     ]
@@ -308,7 +309,7 @@
     "name": "The Frozen Standard-Bearer",
     "units": [
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_standard_bearer",
         "name": "The Frozen Standard-Bearer",
         "tier": "elite",
         "mods": {
@@ -325,7 +326,8 @@
         "slot": 0
       },
       {
-        "class": "shardwalker",
+        "class": "morvane_halberdier",
+        "name": "Frozen Halberdier",
         "slot": 2
       },
       {
@@ -508,7 +510,7 @@
     "name": "The Oathkeeper",
     "units": [
       {
-        "class": "thane_of_the_deep",
+        "class": "oathkeeper",
         "name": "The Oathkeeper",
         "tier": "elite",
         "mods": {

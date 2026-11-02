@@ -17,8 +17,9 @@ export interface RegenTarget {
   readonly h: number;
 }
 
-export function playRegenTick(scene: Phaser.Scene, view: RegenTarget, which: 'hp' | 'mp', amount: number): void {
-  if (amount <= 0 || !view.container.active) return;
+/** `bonus`: toplamda skill HoT'u var, yazı bonus renginde; olayın bildirdiği +0 da (tam candaki HoT) yazılır, düz yenilenmede +0 olayı zaten yok. */
+export function playRegenTick(scene: Phaser.Scene, view: RegenTarget, which: 'hp' | 'mp', amount: number, bonus = false): void {
+  if ((amount <= 0 && !bonus) || !view.container.active) return;
   const hpY = -view.h - hpBar.offsetY;
   const mpY = hpY + hpBar.height / 2 + hpBar.mpHeight / 2 + 3;
   const y = which === 'hp' ? hpY : mpY;
@@ -36,7 +37,7 @@ export function playRegenTick(scene: Phaser.Scene, view: RegenTarget, which: 'hp
       fontFamily: FLOAT_SERIF,
       fontSize: `${cfg.chipPx}px`,
       fontStyle: 'bold',
-      color: which === 'hp' ? cfg.hpChip : cfg.mpChip,
+      color: bonus ? cfg.hotChip : which === 'hp' ? cfg.hpChip : cfg.mpChip,
       stroke: '#120b06',
       strokeThickness: Math.max(3, Math.round(cfg.chipPx / 6)),
     })

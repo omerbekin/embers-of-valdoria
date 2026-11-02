@@ -62,6 +62,7 @@ import { skillMiniGrid } from './shape-diagram';
 import { passiveTip, skillTip } from './gear-skills';
 import { skillCostAmount } from '../engine/cost';
 import type { SkillDef } from '../engine';
+import { attachBandTip } from './band-tip-attach';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -145,7 +146,7 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
       if (idle) row.setAttribute('aria-hidden', 'true');
       const medal = el('span', `sh-medal${free > 0 ? '' : ' empty'}`);
       medal.append(el('span', '', String(free)));
-      medal.title = 'Hold a Main stat, or drag this onto one';
+      attachBandTip(medal, { title: 'Stat points', sub: 'Hold a Main stat, or drag this onto one' });
       if (free > 0) medal.dataset['ptdrag'] = '1';
       row.append(medal, el('span', 'sh-tx', free > 0 ? `stat point${free === 1 ? '' : 's'} to spend` : 'All points placed'));
       under.append(row);
@@ -440,7 +441,7 @@ export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'onHero'>
     const open = Math.max(0, (h.statPoints ?? 0) - (v.spent?.(h.id) ?? 0)) + (h.skillPoints ?? 0);
     if (open > 0) {
       const pt = el('span', 'gr-pt sk', String(open));
-      pt.title = 'Unspent stat and skill points';
+      attachBandTip(pt, { title: 'Unspent stat and skill points' });
       b.append(pt);
     }
     box.append(b);
@@ -449,7 +450,7 @@ export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'onHero'>
 }
 
 /** Boş yuvanın simgesi: boyalı simge (assets/ui-icons/slots, ~%36 opak) varsa o, yoksa eski soluk gölge simge. */
-function emptySlotIcon(k: SlotId): HTMLImageElement {
+export function emptySlotIcon(k: SlotId): HTMLImageElement {
   const url = slotIconUrl(k);
   if (!url) return itemIcon(undefined, k, 1.3);
   const img = el('img', 'gr-svg gr-slot-ico');
@@ -504,7 +505,7 @@ function plateMain(inst: ItemInstance): HTMLElement | null {
 }
 
 /** Plakanın üst etiketi: yuva ikonu + yuva adı. */
-function plateLabel(k: SlotId): HTMLElement {
+export function plateLabel(k: SlotId): HTMLElement {
   const lbl = el('div', 'gp-lbl');
   const lurl = slotIconUrl(k);
   if (lurl) {
@@ -717,7 +718,7 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
     if (p.capped) {
       row.classList.add('capped');
       const cap = el('span', 'sh-cap', 'max');
-      cap.title = 'Capped: extra from items is wasted';
+      attachBandTip(cap, { title: 'Capped', sub: 'Extra from items is wasted' });
       row.append(cap);
     }
     if (!attr) row.append(dEl);

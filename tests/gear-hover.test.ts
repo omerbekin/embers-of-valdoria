@@ -52,10 +52,12 @@ describe('hero card line while an item is hovered', () => {
     expect(heroItemLine(hero('warrior'), null)).toEqual(idleHeroLine(hero('warrior')));
     expect(idleHeroLine(hero('warrior')).text).toBe('Level 1 · 0/8 items');
   });
-  it("a weapon of a foreign family: \"Can't use <family>\"", () => {
+  it("a weapon the hero cannot use names the item's own type", () => {
     const l = heroItemLine(hero('mage'), inst('woodcutters_axe'));
     expect(l.tone).toBe('no');
-    expect(l.text).toBe("Can't use Axes & Swords");
+    expect(l.text).toBe("Can't use Axes");
+    expect(heroItemLine(hero('paladin'), inst('emberbrand')).text).toBe("Can't use Swords");
+    expect(heroItemLine(hero('mage'), inst('kite_shield')).text).toBe("Can't use Shields");
   });
   it('an empty slot gains stats: green "+N STAT" parts (at most two)', () => {
     const l = heroItemLine(hero('warrior'), inst('leather_coif'));

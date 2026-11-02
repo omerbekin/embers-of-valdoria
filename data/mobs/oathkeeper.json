@@ -1,0 +1,42 @@
+{
+  "_not": "Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim B (Judge). Thane of the Deep gelişmişi, statlar Thane kopyası; thane_of_the_deep değişmedi. Deep Hoard yok, Shield Wall yerine Verdict. Kendi idle çizimi; skill sanatı ödünç.",
+  "id": "oathkeeper",
+  "name": "The Oathkeeper",
+  "family": "guardians",
+  "spriteId": "oathkeeper",
+  "spriteScale": 1.12,
+  "color": "#8a8a80",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Elite · Guardian",
+  "attributes": {
+    "str": 28,
+    "int": 14,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 8,
+  "magicArmor": 0,
+  "blockChance": 0.18,
+  "overrides": {
+    "hp": 125
+  },
+  "ai": "mob_tank",
+  "skills": [
+    "pick_of_the_deep",
+    "oath_of_stone",
+    "verdict"
+  ],
+  "passive": {
+    "id": "stone_oath",
+    "name": "Stone Oath",
+    "icon": "shield",
+    "text": "Whenever an ally dies (not a summon), it permanently gains +6 armor and +6 magic armor.",
+    "effect": {
+      "type": "stoneOath",
+      "armor": 6,
+      "magicArmor": 6
+    }
+  }
+}

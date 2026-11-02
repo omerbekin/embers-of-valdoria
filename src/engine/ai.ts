@@ -1979,8 +1979,9 @@ function kitPassiveValue(ctx: ValueContext, o: Option, cfg: NonNullable<AiValueC
     const pe = u.passive?.effect;
     const kill = o.killP[u.uid] ?? 0;
     if (pe?.type === 'furnaceCore' || (u.touch?.type === 'overheat' && u.touch.core)) v -= cfg.furnace * kill * sum(battle.fighting(u.side).filter((a) => a.passive?.effect.type === 'kindling').map((a) => ctx.turnValue(a)));
-    if (pe?.type === 'warChant') {
-      const haste = (battle.statusDef(pe.status)?.speedMult ?? 1) - 1;
+    const chant = pe?.type === 'warChant' ? pe : pe?.type === 'highlandFury' ? pe.chant : undefined;
+    if (chant) {
+      const haste = (battle.statusDef(chant.status)?.speedMult ?? 1) - 1;
       v += cfg.chant * kill * haste * sum(battle.fighting(u.side).filter((a) => a.uid !== u.uid && a.board === u.board && battle.rowOf(a.slot) === battle.rowOf(u.slot)).map((a) => ctx.turnValue(a)));
     }
     if (pe?.type === 'highlandFury') {
@@ -2028,6 +2029,14 @@ function eliteKitValue(ctx: ValueContext, o: Option, cfg: NonNullable<AiValueCon
     if (mult <= 1) continue;
     for (const t of o.targets) if (t.side === actor.side && t.hp > 0 && !t.statuses.some((s) => s.kind === e.status)) v += cfg.fervour * (mult - 1) * e.turns * ctx.turnValue(t);
   }
+  // Cold Command, Rally the Clan: komutan pasifli elitin dosta verdiği hız; zaten taşıyana boşa
+  if (own?.type === 'frozenRanks' || (own?.type === 'highlandFury' && own.chant)) {
+    for (const e of skill.effects) {
+      if (e.type !== 'status' || e.self) continue;
+      const fast = (battle.statusDef(e.status)?.speedMult ?? 1) - 1;
+      for (const t of o.targets) if (fast > 0 && t.side === actor.side && t.hp > 0 && !t.statuses.some((s) => s.kind === e.status)) v += cfg.command * fast * e.turns * ctx.turnValue(t);
+    }
+  }
   // Everburning: kendi yangın hücresi kendini korur (yeni hücre başına)
   if (own?.type === 'crownOfSalt' && o.cells?.length && skill.effects.some((e) => e.type === 'ground' && e.ground === own.ground)) {
     const fresh = o.cells.filter((s) => !battle.ground.some((g) => g.ground === own.ground && g.board === foeBoard && g.slots.includes(s))).length;
@@ -2047,9 +2056,20 @@ function eliteKitValue(ctx: ValueContext, o: Option, cfg: NonNullable<AiValueCon
   for (const u of foes) {
     const kill = o.killP[u.uid] ?? 0;
     if (kill <= 0) continue;
+    // Forge-Master Golem: ölünce ateş öldürenin tarafına düşer; o hücrelerdeki birimler bedel
+    const core = u.touch?.type === 'overheat' ? u.touch.core : undefined;
+    if (core?.onFoeBoard) {
+      const cells = battle.touchingSlots([u.slot]);
+      v -= cfg.coreBurn * kill * sum(battle.fighting(actor.side).filter((a) => a.board === actor.side && cells.includes(a.slot)).map((a) => ctx.turnValue(a)));
+    }
+    // Frozen Ranks: taşıyan düşünce tüm dostların sıra koruması ve Chilled bağışıklığı biter
+    const ue = u.passive?.effect;
+    if (ue?.type === 'frozenRanks') v += cfg.ranks * kill * ue.perAlly * sum(battle.fighting(u.side).filter((a) => a.uid !== u.uid).map((a) => battle.rowMatesOf(a) * ctx.turnValue(a)));
     for (const a of battle.fighting(u.side)) {
       if (a.uid === u.uid) continue;
       const pe = a.passive?.effect;
+      // Stone Oath: öldürmek Oathkeeper'a kalıcı zırh verir
+      if (pe?.type === 'stoneOath') v -= cfg.oath * kill * ctx.turnValue(a);
       // Hollow Crown: öldürmek krala eylem verir (zaten taşıyorsa ek bedel yok)
       if (pe?.type === 'hollowCrown' && !a.crownAction && pe.names.includes(u.displayName ?? u.name)) v -= cfg.crown * kill * ctx.turnValue(a);
       // Shepherd of Ash: son Ashborn düşünce korunma biter

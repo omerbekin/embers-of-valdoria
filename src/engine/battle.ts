@@ -561,6 +561,26 @@ export class Battle {
 
   /** Bone Ward (YM10, mob pasifi boneWard): kendi tarafında canlı bir çağrı varken alınan TÜM hasar çarpanı (1 - reduce); yoksa 1. */
   passiveTakenMult(target: Combatant, type?: 'physical' | 'magic'): number {
+    return this.ownPassiveTakenMult(target, type) * this.frozenRanksTakenMult(target);
+  }
+
+  /** Frozen Ranks geniş (The Frozen Standard-Bearer): taşıyan yaşarken kendisi dahil tüm dostlara Close Ranks; birimin kendi Close Ranks'ı varsa iki kez sayılmaz. Taşıyan yoksa 1. */
+  private frozenRanksTakenMult(target: Combatant): number {
+    const e = this.frozenRanksOf(target);
+    if (!e || target.passive?.effect.type === 'closeRanks') return 1;
+    return Math.max(0, 1 - e.perAlly * this.rowMatesOf(target));
+  }
+
+  /** Bu birimin tarafındaki canlı Frozen Ranks taşıyanının etkisi (taşıyan ölünce biter). Saf. */
+  private frozenRanksOf(c: Pick<Combatant, 'side'>): Extract<PassiveEffect, { type: 'frozenRanks' }> | undefined {
+    for (const a of this.combatants) {
+      const e = a.passive?.effect;
+      if (e?.type === 'frozenRanks' && a.side === c.side && a.hp > 0) return e;
+    }
+    return undefined;
+  }
+
+  private ownPassiveTakenMult(target: Combatant, type?: 'physical' | 'magic'): number {
     const e = target.passive?.effect;
     // Slick Hide (Weir-Wyrm): Flooded hücredeyken alınan fiziksel hasar x physicalTakenMult
     if (e?.type === 'slickHide') return type === 'physical' && target.hp > 0 && this.onGround(target, e.ground) ? e.physicalTakenMult : 1;
@@ -2020,7 +2040,10 @@ export class Battle {
             const t: Combatant = cur;
             done.add(t.uid);
             for (let k = 0; k < Math.max(1, a.hits ?? 1) && t.hp > 0 && owner.hp > 0; k++) {
+              const prevCause = this.hitCause;
+              this.hitCause = h.node;
               const r = this.strike(owner, t, eff, emit, a.strike * s, false);
+              this.hitCause = prevCause;
               // Faz 5c (Returning Cards): isabet eden ek vuruş skill'in durum zarını yeniden atar (yeni, bağımsız zar)
               const rs = a.rollStatus && r.landed ? def.effects.find((e) => e.type === 'randomStatus') : undefined;
               if (rs && rs.type === 'randomStatus') this.rollRandomStatus(owner, t, def, rs, emit);
@@ -2127,7 +2150,7 @@ export class Battle {
         const loss = Math.max(0, Math.min(rec.hp - 1, Math.round(this.trigBase(owner, rec, a.of ?? 'maxHp', ev, h) * a.hpLoss * s)));
         if (loss <= 0) continue;
         rec.hp -= loss;
-        emit({ type: 'damage', source: owner.uid, target: rec.uid, amount: loss, absorbed: 0, hpAfter: rec.hp, shieldAfter: rec.shield, magicShieldAfter: rec.magicShield, crit: false, origin: 'self' });
+        emit({ type: 'damage', source: owner.uid, target: rec.uid, amount: loss, absorbed: 0, hpAfter: rec.hp, shieldAfter: rec.shield, magicShieldAfter: rec.magicShield, crit: false, origin: 'self', cause: h.node });
       } else if (a.cooldown !== undefined) {
         const ids = this.trigCdIds(rec, a.cd ?? h.skill ?? 'event', ev);
         for (const id of ids) {
@@ -2455,7 +2478,7 @@ export class Battle {
   }
 
   /** Hücre kümesi + dört yönden değen hücreler (sıralı). */
-  private touchingSlots(slots: readonly number[]): number[] {
+  touchingSlots(slots: readonly number[]): number[] {
     const { rows, lanes } = this.setup.formulas.formation;
     const out = new Set(slots);
     for (const s of slots) {
@@ -3527,8 +3550,9 @@ export class Battle {
     const hoard = pe?.type === 'deepHoard' && c.hp > 0 ? Math.round(c.mp * pe.mpRatio) : 0;
     // Faz 5a: ağaç zırh ekleri (aura büyü zırhı, guard zırhı); ağaçsızda hesaplanmaz (0)
     const tb = this.treeArmorOn ? this.treeArmorBonus(c) : null;
-    const bonus = this.auraArmor(c) + anchors * (anchor?.armorAdd ?? 0) + (c.patience ?? 0) + hoard + (tb?.armor ?? 0);
-    const magicBonus = anchors * (anchor?.magicArmorAdd ?? 0) + hoard + (tb?.magic ?? 0);
+    const oath = pe?.type === 'stoneOath' ? c.shares ?? 0 : 0; // Stone Oath: ölen dost başına kalıcı
+    const bonus = this.auraArmor(c) + anchors * (anchor?.armorAdd ?? 0) + (c.patience ?? 0) + hoard + (tb?.armor ?? 0) + (pe?.type === 'stoneOath' ? oath * pe.armor : 0);
+    const magicBonus = anchors * (anchor?.magicArmorAdd ?? 0) + hoard + (tb?.magic ?? 0) + (pe?.type === 'stoneOath' ? oath * pe.magicArmor : 0);
     let acc = 0;
     // Faz 2c (Sunder): durumun zırh çarpanı (statuses.json armorMult + ağaç statusPotency); yoksa 1
     // Shell (Harita 2 Salt Crab): ilk kritik vuruşu yiyene kadar zırh çarpanı
@@ -4055,7 +4079,10 @@ export class Battle {
         // Unblockable (src/engine/unblockable.ts): telgraf çözülmesi zarsızdır ve bloklanamaz; bayrak açıkça verilir (strike'ta castingSkill yok)
         const hit = isUnblockableHit(skill, effect) ? { ...effect, unblockable: true } : effect;
         victims.forEach((v, i) => {
+          const prevCause = this.hitCause;
+          this.hitCause = t.skill;
           if (v.hp > 0 && this.strike(src, v, hit, emit, 1, i === 0, true).landed) boltHit.add(v.uid);
+          this.hitCause = prevCause;
         });
       } else if (effect.type === 'ground') {
         this.placeGround(src, effect, t.board, cells, emit);
@@ -4160,6 +4187,11 @@ export class Battle {
     const full = c as Partial<Combatant>;
     // Highland Fury: Chilled ve Frozen tutmaz
     if (full.passive?.effect.type === 'highlandFury' && full.passive.effect.immune.includes(kind)) return true;
+    // Frozen Ranks geniş: dostlar `immune` durumlarını almaz; selfImmune yoksa taşıyanın kendisi alır (Chilled olabilir, donabilir)
+    if (full.side) {
+      const ranks = this.frozenRanksOf(full as Pick<Combatant, 'side'>);
+      if (ranks?.immune.includes(kind) && (ranks.selfImmune || full.passive?.effect.type !== 'frozenRanks')) return true;
+    }
     if (full.treeHooks && full.uid && this.rulesOf(full as Combatant, 'immune').some((h) => h.statuses?.includes(kind))) return true;
     // Madde 272: isabet/kritik düşüren debuff'lar (Blinded, Jinxed) da (ccImmunity.accuracyCrit)
     const blockable = !!d.cc || (!!this.setup.formulas.ccImmunity?.accuracyCrit && isAccuracyCritDebuff(d));
@@ -6267,6 +6299,7 @@ export class Battle {
             sourceStat: actor.stats[effect.scale],
             power: effect.power,
             ...(effect.permanent ? { permanent: true } : {}),
+            ...(effect.holdsOwnTurn ? { ownTurn: 'pending' as const } : {}),
             ...(this.treeUnits ? { age: 0 } : {}),
           };
           // Faz 4c (ağaç): gücü 0 olan zemin hasar vermez (yalnızca durum), tur başı ek durumlar, hücre başına güç (merkez / üst üste)
@@ -6333,7 +6366,7 @@ export class Battle {
           if (amount > 0) {
             if (this.castInfo && this.castPaid?.uid === actor.uid) this.castInfo.hpPaid += amount;
             actor.hp -= amount;
-            emit({ type: 'damage', source: actor.uid, target: actor.uid, amount, absorbed: 0, hpAfter: actor.hp, shieldAfter: actor.shield, magicShieldAfter: actor.magicShield, crit: false, origin: 'self' });
+            emit({ type: 'damage', source: actor.uid, target: actor.uid, amount, absorbed: 0, hpAfter: actor.hp, shieldAfter: actor.shield, magicShieldAfter: actor.magicShield, crit: false, origin: 'self', cause: skill.id });
           }
           break;
         }
@@ -6373,7 +6406,7 @@ export class Battle {
                 this.treeProc(actor.uid, rb.node);
                 const lost = old.hp;
                 old.hp = 0;
-                emit({ type: 'damage', source: actor.uid, target: old.uid, amount: lost, absorbed: 0, hpAfter: 0, shieldAfter: old.shield, magicShieldAfter: old.magicShield, crit: false, origin: 'self' });
+                emit({ type: 'damage', source: actor.uid, target: old.uid, amount: lost, absorbed: 0, hpAfter: 0, shieldAfter: old.shield, magicShieldAfter: old.magicShield, crit: false, origin: 'self', cause: rb.node });
                 this.announceIfDead(old, emit);
               }
             }
@@ -6646,7 +6679,7 @@ export class Battle {
     if (parts.main > 0) {
       if (bet.resource === 'hp') {
         actor.hp -= parts.main;
-        emit({ type: 'damage', source: actor.uid, target: actor.uid, amount: parts.main, absorbed: 0, hpAfter: actor.hp, shieldAfter: actor.shield, magicShieldAfter: actor.magicShield, crit: false, origin: 'self' });
+        emit({ type: 'damage', source: actor.uid, target: actor.uid, amount: parts.main, absorbed: 0, hpAfter: actor.hp, shieldAfter: actor.shield, magicShieldAfter: actor.magicShield, crit: false, origin: 'self', ...(this.castingSkill ? { cause: this.castingSkill.id } : {}) });
       } else {
         actor.mp -= parts.main;
         emit({ type: 'resource', actor: actor.uid, resource: 'mp', amount: parts.main, after: actor.mp });
@@ -6655,7 +6688,7 @@ export class Battle {
     const hpLost = Math.min(parts.hp, actor.hp - 1);
     if (hpLost > 0) {
       actor.hp -= hpLost;
-      emit({ type: 'damage', source: actor.uid, target: actor.uid, amount: hpLost, absorbed: 0, hpAfter: actor.hp, shieldAfter: actor.shield, magicShieldAfter: actor.magicShield, crit: false, origin: 'self' });
+      emit({ type: 'damage', source: actor.uid, target: actor.uid, amount: hpLost, absorbed: 0, hpAfter: actor.hp, shieldAfter: actor.shield, magicShieldAfter: actor.magicShield, crit: false, origin: 'self', ...(this.castingSkill ? { cause: this.castingSkill.id } : {}) });
     }
     if (this.trigOn) this.trig([actor], { on: 'bust', amount: stake, resource: bet.resource === 'hp' ? 'hp' : 'mp', ...(this.castingSkill && this.castingActor === actor ? { skill: this.castingSkill.id } : {}) }, emit);
     return m.lose;
@@ -6971,6 +7004,12 @@ export class Battle {
     let skipThisTurn = actor.statuses.some((st) => this.statusDef(st.kind)?.skipTurn);
     const restDef = skipThisTurn ? actor.statuses.map((st) => this.statusDef(st.kind)).filter((d) => d?.skipTurn) : [];
     const rest = restDef.length && restDef.every((d) => !d?.cc) ? restDef[0]?.name : undefined; // Slagcart: Cooling sersemlik sayılmaz
+    // Pyre Bolt (holdsOwnTurn): bırakanın turu bitti, tik almadan kalkar
+    for (const g of [...this.ground]) {
+      if (g.ownTurn !== 'open') continue;
+      this.ground.splice(this.ground.indexOf(g), 1);
+      emit({ type: 'groundEnd', id: g.id });
+    }
     // GENEL ZEMİN KURALI (Ömer 2026-10-29): önce zemin durumları güncel (giriş/çıkış), sonra zemin kaynaklı durumlar BİR kez tikler (hasar: zeminin
     // gücü ve elementi; Hallowed: şifa). Flooded Planks (directTick) kendi küçük hasarını doğrudan vurur (istisna).
     this.syncGroundStatuses(emit);
@@ -6979,6 +7018,10 @@ export class Battle {
     for (const g of [...this.ground]) {
       if (g.envUntilRound !== undefined) continue; // ortam zemini (Tide): süresi savaş turuyla (startRound)
       const src = this.get(g.tickOn ?? g.source);
+      if ((g.tickOn ?? g.source) === actor.uid && g.ownTurn === 'pending' && g.turns <= 1 && src && src.hp > 0) {
+        g.ownTurn = 'open'; // süresi doldu ama bırakan bu turunda hâlâ görür (Spread the Flame); sonraki tur başında kalkar
+        continue;
+      }
       if ((g.tickOn ?? g.source) === actor.uid) {
         if (!g.permanent) g.turns--;
         if (g.age !== undefined) g.age++;
@@ -7086,8 +7129,9 @@ export class Battle {
       for (const c of wet) this.applyHeal(actor, c, Math.max(1, Math.round(c.maxHp * st.ratio)), false, emit, actor.passive!.id);
     }
     // War-Chant (Clan Skald): kendi tur başında aynı sıradaki dostlar kısa Haste
-    const wc = actor.passive?.effect;
-    if (wc?.type === 'warChant' && actor.hp > 0 && !skipThisTurn) {
+    const wcp = actor.passive?.effect;
+    const wc = wcp?.type === 'warChant' ? wcp : wcp?.type === 'highlandFury' ? wcp.chant : undefined; // Clan Chief Brannoc: Highland Fury + War-Chant
+    if (wc && actor.hp > 0 && !skipThisTurn) {
       const row = this.living(actor.side).filter((c) => c.uid !== actor.uid && !c.inert && c.board === actor.board && this.rowOf(c.slot) === this.rowOf(actor.slot));
       if (row.length) emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
       for (const c of row) this.addStatus(c, { kind: wc.status, turns: wc.turns, source: actor.uid }, emit, actor.passive!.id);
@@ -7129,7 +7173,7 @@ export class Battle {
         if (this.trigOn) this.trig([actor], { on: 'passiveHeal', target: hurt, subject: hurt, amount: dlHealed }, emit);
       }
       // Faz 5a C5 smite: yalnızca ağaç kopyasında (smite alanı); ağaçsızda yok
-      if (dl.smite && actor.hp > 0 && !this.winner) this.passiveSmite(actor, dl.scale, dl.smite, dlHealedAmt, emit);
+      if (dl.smite && actor.hp > 0 && !this.winner) this.passiveSmite(actor, dl.scale, dl.smite, dlHealedAmt, emit, dlHealedAmt !== null);
     }
     // Telgraflar (Breaking Span, Ash Brand, Fall): sahibinin tur başında, eylemlerinden ÖNCE çözülür (adalet kuralı sağlanmadıysa ertelenir)
     if (actor.hp > 0 && this.telegraphs.length > 0) {
@@ -7164,7 +7208,7 @@ export class Battle {
     emit({ type: 'turnStart', actor: next.uid, queue: this.turnQueue(), ...(barTokens ? { bar: this.turnBar(this.setup.formulas.turn.queueLength + barTokens) } : {}) });
     const spent = this.telegraphSpent.delete(actor.uid) || (!!actor.underground && this.mode === 'turns') || !!actor.sermon; // E4: vaaz turu yer // Undermine, Slagcart: çözülme turu yer; adalet kuralıyla ertelenen dalış da yerin altında bekler
     if (skipThisTurn) {
-      emit({ type: 'turnSkipped', actor: actor.uid, stunned: actor.hp > 0 && !rest, ...(rest ? { rest } : {}) });
+      if (actor.hp > 0) emit({ type: 'turnSkipped', actor: actor.uid, stunned: !rest, ...(rest ? { rest } : {}) }); // tur başında ölen (DoT) için "Skipped" yazısı yok
       this.actionsLeft.delete(actor.uid); // sersemlik tüm turu (ek eylemler dahil) yer
       this.finishAction(actor, emit);
     } else if (spent) {
@@ -7184,7 +7228,7 @@ export class Battle {
   /** Faz 5a (Chain of Light): birimin son smite parametreleri. */
   private readonly lastSmite = new Map<string, { scale: Attribute; sm: NonNullable<Extract<PassiveEffect, { type: 'divineLight' }>['smite']>; healed: number | null }>();
 
-  private passiveSmite(actor: Combatant, scale: Attribute, sm: NonNullable<Extract<PassiveEffect, { type: 'divineLight' }>['smite']>, healed: number | null, emit: Emit): void {
+  private passiveSmite(actor: Combatant, scale: Attribute, sm: NonNullable<Extract<PassiveEffect, { type: 'divineLight' }>['smite']>, healed: number | null, emit: Emit, announced = false): void {
     this.lastSmite.set(actor.uid, { scale, sm, healed });
     const foes = this.living(opposite(actor.side)).filter((c) => !c.inert);
     const target = [...foes].sort((x, y) => x.hp - y.hp || x.slot - y.slot)[0];
@@ -7203,7 +7247,8 @@ export class Battle {
     }
     const dmg = this.tickDamage('holy', 'magic', Math.round(amount), target);
     if (dmg <= 0) return;
-    emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
+    // Şifa bu turda pasifin adını yazdıysa ya da bu vuruş bir smite'ın içinden geliyorsa (Chain of Light) ad ikinci kez çıkmaz
+    if (!announced && !this.smiting) emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
     this.smiting = true;
     try {
       this.applyHit(actor, target, dmg, 'magic', false, emit, false, { origin: 'status', element: 'holy', damageType: 'magic', cause: actor.passive!.id });
@@ -7877,6 +7922,9 @@ export class Battle {
     else this.addStatus(r, { kind: pick.status, turns: pick.turns, source: actor.uid }, emit);
   }
 
+  /** Eylem dışı vuruşun kaynağı (ağaç tetiği, telgraf çözülmesi): yalnız günlük için olaya `cause` olarak yazılır. */
+  private hitCause: string | undefined;
+
   private strike(actor: Combatant, target: Combatant, effect: DamageEffect, emit: Emit, powerMult: number, extras: boolean, sure = false, info?: HitInfo): { landed: boolean; crit?: boolean } {
     if (target.underground) return { landed: false }; // Undermine: yerin altında
     const f = this.setup.formulas;
@@ -7970,7 +8018,7 @@ export class Battle {
     const guard = target.statuses.find((s) => s.kind === 'guard') ?? (this.treeUnits ? this.positionalGuard(target) : undefined);
     const guardian = guard ? this.get(guard.source) : undefined;
     let hpLoss: number;
-    const meta: HitMeta = { origin: 'skill', element: effect.element ?? 'physical', damageType: effect.damageType };
+    const meta: HitMeta = { origin: 'skill', element: effect.element ?? 'physical', damageType: effect.damageType, ...(this.hitCause ? { cause: this.hitCause } : {}) };
     // Oathkeeper's Bulwark (interceptLethal): ölümcül vuruş, yan komşu dosttaki taşıyana gider (savaşta bir kez); hedefe bu vuruştan hiçbir şey olmaz
     const pool = (type: string) => target.hp + target.shield + (type === 'magic' ? target.magicShield : 0);
     if (target.hp > 0 && total >= pool(effect.damageType)) {
@@ -8702,7 +8750,7 @@ export class Battle {
       const g: GroundEffect = {
         id: `g${this.groundCount++}`,
         ground: core.ground,
-        board: c.board,
+        board: 'onFoeBoard' in core && core.onFoeBoard ? opposite(c.side) : c.board, // Forge-Master Golem: karşı tahtada aynı hücre + komşuları
         slots: this.touchingSlots([c.slot]),
         turns: core.turns,
         source: c.uid,
@@ -8732,6 +8780,12 @@ export class Battle {
       a.shares = (a.shares ?? 0) + 1;
       emit({ type: 'passive', actor: a.uid, passive: a.passive!.id, name: a.passive!.name });
       if (this.statusDef(e.status)) this.addStatus(a, { kind: e.status, turns: e.turns, source: a.uid }, emit, a.passive!.id);
+    }
+    // Stone Oath (The Oathkeeper): çağrı olmayan bir dost ölünce kalıcı zırh + büyü zırhı (sayaç effectiveStats'ta okunur)
+    if (!c.summoned && !c.inert) for (const a of this.living(c.side)) {
+      if (a.passive?.effect.type !== 'stoneOath' || a === c) continue;
+      a.shares = (a.shares ?? 0) + 1;
+      emit({ type: 'passive', actor: a.uid, passive: a.passive.id, name: a.passive.name });
     }
     // Crown of Ash (YM23, boss pasifi): çağrı olmayan bir dost ölünce maks canın oranı kadar süreli kalkan (katman yığılır)
     if (!c.summoned && !c.inert) for (const a of this.living(c.side)) {

@@ -146,6 +146,53 @@ describe('Faz 5b: savaşta tetiklenme (class başına en az bir düğüm)', () =
     expect(run({ '0.ea': 1, '0.ma': 1 })).toBe(2);
   });
 
+  // Ömer 2026-11-01: ağaçtan hasar alan Divine Light tur başında iki kez adını yazıyordu (şifa + smite); etki aynı, yazı tek
+  describe('Divine Light adı tur başında bir kez', () => {
+    const names = (evs: BattleEvent[], c: Combatant): number => evs.filter((e) => e.type === 'passive' && e.actor === c.uid && e.passive === c.passive!.id).length;
+    const healed = (evs: BattleEvent[], c: Combatant): boolean => evs.some((e) => e.type === 'heal' && e.source === c.uid);
+    const smote = (evs: BattleEvent[], c: Combatant): boolean => evs.some((e) => e.type === 'damage' && e.source === c.uid);
+
+    it('şifa ve smite aynı turda: ad bir kez, ikisi de işler', () => {
+      const b = make({ 0: 'paladin', 3: 'warrior' }, { 0: 'warrior' }, withTree(0, only('paladin', { '0.f1': 1 })), 11, 'turns');
+      if (b.currentActor === P(b)) expect(b.skipTurn().ok).toBe(true);
+      P(b, 3).hp = Math.max(1, P(b, 3).hp - 40);
+      untilTurn(b, P(b));
+      const evs = nextTurn(b, P(b));
+      expect(healed(evs, P(b)) && smote(evs, P(b))).toBe(true);
+      expect(names(evs, P(b))).toBe(1);
+    });
+
+    it('yaralı dost yok, yalnız smite: ad yine bir kez', () => {
+      const b = make({ 0: 'paladin' }, { 0: 'warrior' }, withTree(0, only('paladin', { '0.f1': 1 })), 11, 'turns');
+      for (const c of b.combatants) c.hp = c.maxHp;
+      const evs = nextTurn(b, P(b));
+      expect(healed(evs, P(b))).toBe(false);
+      expect(smote(evs, P(b))).toBe(true);
+      expect(names(evs, P(b))).toBe(1);
+    });
+
+    it('ağaçsız Paladin: şifa adı bir kez', () => {
+      const b = make({ 0: 'paladin', 3: 'warrior' }, { 0: 'warrior' }, {}, 11, 'turns');
+      if (b.currentActor === P(b)) expect(b.skipTurn().ok).toBe(true);
+      P(b, 3).hp = Math.max(1, P(b, 3).hp - 40);
+      untilTurn(b, P(b));
+      const evs = nextTurn(b, P(b));
+      expect(healed(evs, P(b))).toBe(true);
+      expect(names(evs, P(b))).toBe(1);
+    });
+
+    it('Chain of Light iki kez vurur: ad bir kez', () => {
+      const b = make({ 0: 'paladin' }, { 0: 'warrior', 1: 'warrior', 2: 'warrior' }, withTree(0, only('paladin', { '0.ea': 1, '0.ma': 1 })), 11, 'turns');
+      P(b).stats = { ...P(b).stats, int: P(b).stats.int * 4 };
+      E(b, 0).hp = 1;
+      E(b, 1).hp = 2;
+      E(b, 2).hp = 3;
+      const evs = nextTurn(b, P(b));
+      expect([E(b, 0), E(b, 1), E(b, 2)].filter((c) => c.hp <= 0).length).toBe(2);
+      expect(names(evs, P(b))).toBe(1);
+    });
+  });
+
   it('Archer Brittle Point: Piercing Arrow ilk 2 düşmanda durur, Sunder zırhı %40 düşürür', () => {
     const b = make({ 0: 'archer' }, { 0: 'defender', 3: 'defender', 6: 'defender' }, withTree(0, only('archer', { '2.ea': 1, '2.fa': 1 })));
     tough(E(b, 0), E(b, 3), E(b, 6));

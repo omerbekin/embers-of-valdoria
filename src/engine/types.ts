@@ -107,8 +107,8 @@ export type PassiveEffect =
    */
   /** Blind Hunger (Cave Crawler): tek hedefli skill yalnız en yakın hedefe (validTargets); Darkness'ta verilen hasar x(1 + darkBonus). */
   | { type: 'blindHunger'; darkBonus: number }
-  /** Highland Fury (Clan Axeman): `immune` durumları tutmaz; can `below` altındayken verilen hasar x(1 + bonus). */
-  | { type: 'highlandFury'; below: number; bonus: number; immune: string[] }
+  /** Highland Fury (Clan Axeman): `immune` durumları tutmaz; can `below` altındayken verilen hasar x(1 + bonus). `chant`: Clan Chief Brannoc, tek pasif yuvasında War-Chant da taşır. */
+  | { type: 'highlandFury'; below: number; bonus: number; immune: string[]; chant?: { status: StatusKind; turns: number } }
   /** War-Chant (Clan Skald): kendi tur başında aynı sıradaki dostlara `turns` tur `status`. */
   | { type: 'warChant'; status: StatusKind; turns: number }
   /** Kindling (Pyre Witch): iki tahtadaki her `ground` hücresi için verilen hasar +perCell, en çok +max. Greater Kindling (The Pyre Matriarch): `max` yok, tavansız. */
@@ -119,6 +119,10 @@ export type PassiveEffect =
   | { type: 'graveCold'; status: StatusKind; turns: number }
   /** Hoarfrost (Rime Witch): yaşadıkça `wet` durumundaki düşman kendi tur başında `turns` tur `status` alır (atış sayılmaz, dondurmaz). */
   | { type: 'hoarfrost'; wet: string; status: StatusKind; turns: number }
+  /** Frozen Ranks geniş (The Frozen Standard-Bearer): taşıyan yaşarken tüm dostlar Close Ranks (`perAlly`) alır ve `immune` durumları tutmaz; taşıyan `selfImmune` yoksa bağışık değildir. */
+  | { type: 'frozenRanks'; perAlly: number; immune: string[]; selfImmune?: boolean }
+  /** Stone Oath (The Oathkeeper): çağrı olmayan her dost ölümü kalıcı +armor ve +magicArmor (sayaç Combatant.shares). */
+  | { type: 'stoneOath'; armor: number; magicArmor: number }
   /** Hollow (Hollow Warden): Darkness'ta alınan TÜM hasar x darkTakenMult. */
   | { type: 'hollow'; darkTakenMult: number }
   /*
@@ -365,7 +369,7 @@ export type BossTouch =
   /**
    * E1 Overheat: Heat çubuğu `max`; her eylem `perAction`, ateş vuruşu `fireHit` doldurur; buz ve su vuruşu `coolHit` boşaltır. Dolunca Vent: `status` (`ventTurns` tur), çubuk sıfırlanır.
    */
-  | { type: 'overheat'; max: number; perAction: number; fireHit: number; coolHit: number; status: string; ventTurns: number; /** Forge-Master Golem: ölünce kendi hücresi ve komşuları zemin (Furnace Core'un yolu). */ core?: { ground: string; turns: number; scale: Attribute; power: number } }
+  | { type: 'overheat'; max: number; perAction: number; fireHit: number; coolHit: number; status: string; ventTurns: number; /** Forge-Master Golem: ölünce kendi hücresi ve komşuları zemin (Furnace Core'un yolu); onFoeBoard: zemin karşı tahtadaki aynı hücrelere düşer. */ core?: { ground: string; turns: number; scale: Attribute; power: number; onFoeBoard?: boolean } }
   /** E2 Thundersnow: can oranı `below` altındayken her Round başı rastgele sütun işaretlenir, sonraki Round başı `skill` iner: `ratio` x tahta ortalama canı + `iron` x hedef Armor (büyü). */
   | { type: 'thundersnow'; below: number; skill: string; ratio: number; iron: number }
   /** E3 Pack Rotation: her Round başı en yaralı `pack` birimi, arkasındaki daha sağlam biriyle yer değiştirir; taşıyanın hasar skill'i yaralı `pack` birimlerini maks canın `healRatio`'su kadar iyileştirir. */
@@ -1304,6 +1308,8 @@ export interface ShieldHook {
 /** `area_any` hedefli skill'lerde de aynı alan: etki yalnızca alandaki o taraftaki birimlere (kullanıcıya göre dost/düşman) uygulanır (Smoke Bomb). */
 export type SkillEffect = SkillEffectKind & {
   side?: 'allies' | 'enemies';
+  /** Zemin etkisi (Pyre Bolt): süresi dolarken bırakanın turu boyunca durur, tik vermeden sonraki tur başında kalkar (GroundEffect.ownTurn). */
+  holdsOwnTurn?: boolean;
   /**
    * Skill ağacı (Faz 2a+; Gore Wheel, plan 10a): durum etkisi hasardan ÖNCE işler: hedef başına ilk vuruş isabet edince (blok / Lucky Escape
    * öncesi) hasar hesaplanmadan uygulanır, aynı vuruş ve koşullar onu görür. Yalnızca 'status' etkisinde; ağaç ekler, skills.json'da yok.
@@ -1943,6 +1949,8 @@ export interface GroundEffect {
   tickOn?: string;
   /** Skill ağacı: süresiz zemin (süre azalmaz; bırakan ölünce yine biter). */
   permanent?: boolean;
+  /** Pyre Bolt (holdsOwnTurn): 'pending' süresi dolarken bırakanın turu başında 'open' olur, o tur boyunca durur; sonraki tur başında tik vermeden kalkar. */
+  ownTurn?: 'pending' | 'open';
   /** Skill ağacı: konduğundan beri geçen sayaç turu (koşul groundAgeAtLeast; yalnızca ağaçlı savaşta artar). */
   age?: number;
   /** Faz 4c: hücre başına güç çarpanı (Fire on Fire, Molten Core), tur başı ek durumlar, tik hasarı yok (yalnızca durum veren zemin), üst üste kuralı (aynı türden daha güçlü zemin hücredeyse tiklemez; ağacın doğurduğu zemin). */

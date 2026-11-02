@@ -1,5 +1,5 @@
 {
-  "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md): batık katedral çan kulesinin bekçisi; arka sıra ALAN hasarcısı, savaş uzadıkça güçlenir; şifa YOK. Görünüş yönü A (Bronze Abbess: beyaz-altın cüppeli yaşlı başrahibe, sırtında zincirli yeşil bronz çan, çanın demir tokmağı asası); şimdilik görünüş yer tutucu (Mage sprite / avatar / v2 poz gövdesi; poses.json > classAliases); renk ve logo kendisinin. Statlar PROVİZYON (Mage'den türetildi, sim yok).",
+  "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md): batık katedral çan kulesinin bekçisi; arka sıra ALAN hasarcısı, savaş uzadıkça güçlenir; şifa YOK. Görünüş yönü A (Bronze Abbess: beyaz-altın cüppeli yaşlı başrahibe, sırtında zincirli yeşil bronz çan, çanın demir tokmağı asası); savaş gövdesi kendi pozları (vesper_v2; poses.json > classAliases, 2026-11-01), sprite / avatar hâlâ Mage yer tutucusu; renk ve logo kendisinin. Statlar PROVİZYON (Mage'den türetildi, sim yok).",
   "id": "vesper",
   "name": "Vesper",
   "spriteId": "mage",

@@ -43,8 +43,8 @@ body:has(.co-ov) .tut-wrap {
 }
 .co-col {
   position: relative;
-  flex: 0 1 max(calc(340 * var(--u)), 300px);
-  min-width: 0;
+  flex: 0 1 max(calc(400 * var(--u)), 300px);
+  min-width: min(100%, 220px);
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -75,13 +75,23 @@ body:has(.co-ov) .tut-wrap {
   width: 100%;
   will-change: transform, opacity;
 }
-.co-fit {
-  flex: none;
-  width: max(calc(340 * var(--u)), 300px);
-  transform-origin: 50% 0;
+/* gerçek Gear item plakası (character-panel.ts > itemPlate); boyut --u ile, dönüşümle küçültme yok */
+.co-plate .gr-plate {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  cursor: help;
+  box-shadow: inset 0 0 max(14px, calc(30 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 22%, transparent), 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 max(6px, calc(14 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 35%, transparent);
 }
-.co-plate .it-card {
-  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 max(4px, calc(8 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 28%, transparent), inset 0 0 max(14px, calc(30 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 16.5%, transparent);
+.co-row.many {
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: calc(14 * var(--u)) calc(20 * var(--u));
+}
+.co-row.many .co-col {
+  flex: 0 1 max(calc(340 * var(--u)), 300px);
+  align-items: flex-start;
+  align-self: flex-start;
 }
 .co-gold {
   position: relative;
@@ -244,6 +254,18 @@ html.short .co-chest {
   height: calc(204 * var(--u));
 }
 html.short .co-ov {
-  padding-top: 40px;
+  padding-top: 48px;
   padding-bottom: 22px;
+}
+
+/* Take all uçuşu: köşe hedefinde kısa halka (gerçek Gear düğmesi bulunamazsa) */
+.co-pulse-ring {
+  position: fixed;
+  z-index: 19;
+  width: max(36px, calc(80 * var(--gu, 1px)));
+  height: max(36px, calc(80 * var(--gu, 1px)));
+  border-radius: 50%;
+  border: 2px solid #f3d999;
+  box-shadow: 0 0 14px rgba(240, 140, 40, 0.7);
+  pointer-events: none;
 }

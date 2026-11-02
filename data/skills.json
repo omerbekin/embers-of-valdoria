@@ -9271,6 +9271,7 @@
     ],
     "vfx": "bonestrike",
     "sfx": [
+      "boneSlashWhoosh",
       "rustySlash"
     ]
   },
@@ -10223,7 +10224,7 @@
     "name": "Call the Vault",
     "target": "self",
     "callVault": {
-      "unit": "stonebound_warden",
+      "unit": "hollow_warden",
       "name": "Hollow Warden",
       "slot": 1,
       "maxAlive": 4
@@ -10350,7 +10351,7 @@
     }
   },
   "frost_bite": {
-    "_not": "Snow Wolf temel saldırı: Bite + Chilled. Skill atışı: zaten Chilled hedefi dondurur (Frozen kuralı). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "_not": "Snow Wolf temel saldırı: Bite + %35 Chilled (Ömer 2026-11-01, sim sonrası gözden geçirilecek). Zar tutarsa skill atışı: zaten Chilled hedefi dondurur; tutmazsa durum değişmez. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
     "id": "frost_bite",
     "name": "Frost Bite",
     "target": "single_enemy",
@@ -10366,7 +10367,8 @@
       {
         "type": "status",
         "status": "chilled",
-        "turns": 2
+        "turns": 2,
+        "chance": 0.35
       }
     ],
     "cost": {
@@ -10601,7 +10603,7 @@
     "artOf": "iron_decree"
   },
   "pyre_bolt": {
-    "_not": "Pyre Witch temel saldırı: INT ateş. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "_not": "Pyre Witch temel saldırı: INT ateş + hedefin hücresinde 1 tur Burning zemin (Ömer 2026-11-01). holdsOwnTurn: zemin atanın sonraki turu bitene dek görünür, kendi Spread the Flame kaynağı olur. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
     "id": "pyre_bolt",
     "name": "Pyre Bolt",
     "target": "single_enemy",
@@ -10614,6 +10616,14 @@
         "scale": "int",
         "power": 0.9,
         "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 1,
+        "scale": "int",
+        "power": 0.2,
+        "holdsOwnTurn": true
       }
     ],
     "cost": {
@@ -11940,5 +11950,242 @@
       "fireCrackle"
     ],
     "artOf": "pyre_of_morvane"
+  },
+  "great_axe": {
+    "_not": "Clan Chief Brannoc temel saldırı. Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "great_axe",
+    "name": "Great Axe",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#b0703a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "chiefs_cleaver"
+  },
+  "rally_the_clan": {
+    "_not": "Clan Chief Brannoc: seçilen dost sırasına 2 tur Haste (alan area_any, etki yalnız dostlara). Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "rally_the_clan",
+    "name": "Rally the Clan",
+    "target": "area_any",
+    "global": true,
+    "area": {
+      "shape": "row"
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#c9b37a",
+    "effects": [
+      {
+        "type": "status",
+        "status": "haste",
+        "turns": 2,
+        "side": "allies"
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "iron_decree"
+  },
+  "skullsplitter": {
+    "_not": "Clan Chief Brannoc: tek hedef + 2 tur Sunder. Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "skullsplitter",
+    "name": "Skullsplitter",
+    "target": "single_enemy",
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#9a8a6a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.35
+      },
+      {
+        "type": "status",
+        "status": "sunder",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "ai": {
+      "scoreCost": 4
+    },
+    "icon": "anchorsmash",
+    "vfx": "anchorsmash",
+    "sfx": [
+      "chainDrag",
+      "anchorImpact"
+    ],
+    "artOf": "sledge"
+  },
+  "standard_pole": {
+    "_not": "The Frozen Standard-Bearer temel saldırı. Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "standard_pole",
+    "name": "Standard Pole",
+    "target": "single_enemy",
+    "motion": "melee",
+    "fx": "#9fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.9
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "halberd_chop"
+  },
+  "cold_command": {
+    "_not": "The Frozen Standard-Bearer: bir dosta 2 tur Haste (kendine atılmaz). Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "cold_command",
+    "name": "Cold Command",
+    "target": "single_ally",
+    "global": true,
+    "excludeSelf": true,
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#9fd8ff",
+    "effects": [
+      {
+        "type": "status",
+        "status": "haste",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "ai": {
+      "scoreCost": 4
+    },
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "fervour"
+  },
+  "frost_banner": {
+    "_not": "The Frozen Standard-Bearer: önceden işaretli 2x2 Chill Ground, hasar yok (Snowdrift kopyası). Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "frost_banner",
+    "name": "Frost Banner",
+    "target": "area_enemies",
+    "global": true,
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "ai": {
+      "scoreCost": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#dfefff",
+    "effects": [
+      {
+        "type": "ground",
+        "ground": "storm",
+        "turns": 2,
+        "scale": "int",
+        "power": 0
+      }
+    ],
+    "icon": "blizzard",
+    "vfx": "blizzard",
+    "sfx": [
+      "iceCrack",
+      "hailPatter"
+    ],
+    "artOf": "snowdrift"
+  },
+  "verdict": {
+    "_not": "The Oathkeeper: tek hedef + 2 tur Sunder, ek koşul yok. Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "id": "verdict",
+    "name": "Verdict",
+    "target": "single_enemy",
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#9fb0c4",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.9
+      },
+      {
+        "type": "status",
+        "status": "sunder",
+        "turns": 2
+      }
+    ],
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "ai": {
+      "scoreCost": 6
+    },
+    "icon": "anchorsmash",
+    "vfx": "anchorsmash",
+    "sfx": [
+      "chainDrag",
+      "anchorImpact"
+    ],
+    "artOf": "pick_of_the_deep"
   }
 }

@@ -8,7 +8,8 @@ import { animKey, characterTexture, type AnimName } from './assets';
 import { MobPosePlayer, mobPoseIdleAnim, mobPoseKey, setupMobPose, type MobPoseDef } from './mob-poses';
 import { debugState } from './debug-state';
 import { formatHit, hitColor } from './hit-format';
-import { type DamageTags, FLOAT_ICON_TINT, damagePaintedIcon, floatStyle, floatTimes, placeFloatClear, rowLayout, type FloatKind } from './float-text';
+import { hpLossSwing } from './hp-preview';
+import { type DamageTags, FLOAT_ICON_TINT, damageNumberHex, floatStyle, floatTimes, placeFloatClear, rowLayout, type FloatKind } from './float-text';
 import { ensureIcon } from './icons';
 import { SHARED_KEY } from './asset-versions';
 import { tierStyle, unitName } from './unit-label';
@@ -1708,17 +1709,15 @@ export class CombatantView {
   }
 
   /**
-   * Hasar sayısı: vuruş şiddetiyle büyür ve sarıdan kırmızıya döner; kritikte altın renk, daha iri ve rakamın solunda patlama ikonu;
-   * hasarın elementi/kaynağı varsa rakamın sağında küçük element ikonu (ateş, buz, zehir...). Üst üste binmez.
+   * Hasar sayısı: vuruş şiddetiyle büyür (şiddet yalnızca boyutla), rengi hasarın elementidir (Ömer 2026-11-01, "Yalnız renk": element ikonu ve kelime yok);
+   * kritikte daha iri ve rakamın solunda patlama ikonu. Üst üste binmez.
    */
   damageText(amount: number, ratio: number, crit = false, tags: DamageTags = {}): void {
     const level = damageNumberLevel(ratio);
     const px = Math.round(timing.damageNumberMinPx + timing.damageNumberSpanPx * level) + (crit ? timing.damageNumberCritBonusPx : 0); // boyutlar data/battle-layout.json > animation
-    const icon = damagePaintedIcon({ ...tags, crit });
-    this.floatText(String(amount), crit ? colors.crit : damageColor(level), px, true, {
+    this.floatText(String(amount), damageNumberHex(tags, colors.element), px, true, {
       kind: crit ? 'crit' : 'damage',
       ...(crit ? { leftIcon: paintedOr('fx', 'crit', 'burst') } : {}),
-      ...(icon ? { rightIcon: icon } : {}),
     });
   }
 
@@ -1804,9 +1803,14 @@ export class CombatantView {
 
     if (p.damage) {
       const d = p.damage;
-      if (d.hpLoss > 0) {
-        const newFrac = Math.max(0, (this.combatant.hp - d.hpLoss) / this.combatant.maxHp);
-        segment(this.hpBox, -W / 2 + newFrac * W, this.hpY, (curFrac - newFrac) * W, hpBar.height - 4, colors.previewDamage);
+      if (d.hpLossMax > 0) {
+        // Parlayan parça canın sağ ucuna sabit; sol ucu en az ile en çok hasar arasında gidip gelir (isabet ettiğinde geçerli değerler: dodge/blok yok)
+        const swing = hpLossSwing(this.combatant.hp, this.combatant.maxHp, d.hpLossMin, d.hpLossMax);
+        const r = this.scene.add.rectangle(-W / 2 + curFrac * W, this.hpY, Math.max(2, swing.maxWidth * W), hpBar.height - 4, color(colors.previewDamage), 0.85).setOrigin(1, 0.5);
+        this.hpBox.add(r);
+        this.previewItems.push(r);
+        if (swing.minScale < 1) this.scene.tweens.add({ targets: r, scaleX: { from: 1, to: swing.minScale }, duration: 520, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 });
+        else this.scene.tweens.add({ targets: r, alpha: 0.35, duration: 380, yoyo: true, repeat: -1 });
       }
       const range = d.min === d.max ? '' : `${d.min}-${d.max}`;
       const blocked = d.absorbed > 0 ? `${range ? ' ' : ''}(${d.absorbed} blocked)` : '';

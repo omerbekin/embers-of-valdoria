@@ -1028,6 +1028,19 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
     has(W.origin('tests/fixtures/golden/items.json'), 'regen');
     has(W.origin('tests/fixtures/golden/quick.json'), 'regen');
   },
+  'golden: iki dal golden a dokunmasa da birlesince yeniden uretilir': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a'); const b = W.open(B, 'b');
+    for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
+    fakeGolden(W, 'quick.json', 'items.json');
+    W.wput(a, 'src/a.ts', 'export const a = 41;\n');
+    W.wput(b, 'src/b.ts', 'export const b = 42;\n');
+    W.ready(A); W.ready(B);
+    W.push(A);
+    ok(goldenRuns(W) === 1, 'iki dal birleşince üretildi: ' + goldenRuns(W));
+    has(W.origin('tests/fixtures/golden/quick.json'), 'regen');
+    ok(W.origin('src/a.ts') && W.origin('src/b.ts'), 'ikisi de gitti');
+  },
   'golden + gercek cakisma dal duser': (W) => {
     W.upstream('tests/fixtures/golden/campaign.json', 'base\n');
     W.cutover();

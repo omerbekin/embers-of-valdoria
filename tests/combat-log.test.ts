@@ -20,6 +20,48 @@ const names: LogNames = {
 const ev = (e: object) => e as BattleEvent;
 const text = (log: CombatLog, i = 0) => log.entries()[i]!.parts.map((p) => p.t).join('');
 
+describe('combat log: hits outside an action and self damage', () => {
+  const dmg = (e: object) => ev({ type: 'damage', absorbed: 0, hpAfter: 10, shieldAfter: 0, magicShieldAfter: 0, crit: false, origin: 'skill', ...e });
+
+  it('a skill hit with no open action gets a line: by cause, else by attacker', () => {
+    const log = new CombatLog(names);
+    log.push(dmg({ source: 'a', target: 'b', amount: 7, cause: 'paladin:0.f1' }));
+    expect(text(log)).toBe('Hexer took 7 from Wrathful Glow');
+    log.push(dmg({ source: 'a', target: 'b', amount: 5, crit: true }));
+    expect(text(log)).toBe('Hexer took 5 crit from Cutthroat');
+  });
+
+  it("another unit's hit during an action (counter) stays off the action's line", () => {
+    const log = new CombatLog(names);
+    log.push(ev({ type: 'skillUsed', actor: 'a', skill: 'venom_edge', targets: ['b'] }));
+    log.push(dmg({ source: 'a', target: 'b', amount: 9 }));
+    log.push(dmg({ source: 'b', target: 'a', amount: 3 }));
+    log.push(dmg({ source: 'a', target: 'c', amount: 4 }));
+    expect(text(log, 0)).toBe('Cutthroat took 3 from Hexer');
+    expect(text(log, 1)).toBe('Cutthroat used Venom Edge on Hexer · 9, Warrior · 4');
+  });
+
+  it('self damage gets its own line; without a cause it just says took', () => {
+    const log = new CombatLog(names);
+    log.push(ev({ type: 'skillUsed', actor: 'c', skill: 'whirl', targets: ['a'] }));
+    log.push(dmg({ source: 'c', target: 'c', amount: 6, origin: 'self', cause: 'paladin:0.f1' }));
+    expect(text(log, 0)).toBe('Warrior took 6 from Wrathful Glow');
+    log.push(dmg({ source: 'c', target: 'c', amount: 2, origin: 'self' }));
+    expect(text(log, 0)).toBe('Warrior took 2');
+    expect(text(log, 2)).toBe('Warrior used Whirlwind');
+  });
+
+  it('an HP cost names the skill; an MP cost and a hit with no damage add nothing', () => {
+    const log = new CombatLog(names);
+    log.push(ev({ type: 'skillUsed', actor: 'c', skill: 'whirl', targets: [] }));
+    expect(log.push(ev({ type: 'resource', actor: 'c', resource: 'mp', amount: 5, after: 1 }))).toBe(false);
+    expect(log.push(ev({ type: 'resource', actor: 'c', resource: 'hp', amount: 0, after: 1 }))).toBe(false);
+    expect(log.push(dmg({ source: 'a', target: 'c', amount: 0 }))).toBe(false);
+    log.push(ev({ type: 'resource', actor: 'c', resource: 'hp', amount: 8, after: 20 }));
+    expect(text(log, 0)).toBe('Warrior took 8 from Whirlwind');
+  });
+});
+
 describe('combat log (HUD > Battle info)', () => {
   it('one line per action: actor, skill, target, damage and statuses', () => {
     const log = new CombatLog(names);

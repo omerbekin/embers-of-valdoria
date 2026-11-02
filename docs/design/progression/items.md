@@ -131,16 +131,22 @@ Bu bölüm 1.3'ün "ek stat satırı (affix)" sütununun ve 1.6'nın MVP kısmı
   - Eski 11 Epic etkisi kalktı; Epic gücünü yalnızca A affix'inden alır.
   - Might kalktı; "Global damage %" artık bir A affix'i.
   - Legendary etkileri duruyor.
-- **Yuva kimliği (Ömer 2026-10-13, form itemfix; eski "yuva sınırları"nın yerine; open-questions madde 314):** her stat yalnızca 2-3 yuvada rastgele çıkar (`items.json > affixDefs[].slots`):
-  - Weapon: element / fiziksel hasar, kritik hasarı, zırh / büyü delme, elit-boss hasarı (+ isabet, DoT, Keenness, Elemental, Potency, Summon, Global damage). Hançer ikinci elde silah havuzunu kullanır.
-  - Off-hand (kalkan): Armor (ana affix), Block (yalnızca kalkan, 2026-10-18), Shield power, Magic armor (+ HP regen, debuff direnci, auralar, Global defense, Max HP %, Support).
-  - Helm: HP, MP, debuff direnci (+ Armor, Magic armor, MP cost, Mana / Resource mastery, Global defense, Max HP %).
-  - Armor: Armor, HP, Magic armor, auralar (+ HP regen, debuff direnci, Global defense, Max HP %).
-  - Gloves: isabet, kritik şansı, can çalma (+ kaçınma, MP regen, Keenness, Global damage, Speed %).
-  - Boots: hız, kaçınma, Quick start (+ HP, MP, Speed %).
-  - Trinket: HP / MP regen, şifa ve kalkan gücü, DoT, çağrı gücü (+ MP, MP cost, hız, Quick start, Global damage, Elemental, Potency, Mana / Resource).
-  - Genel A affix'leri her yuvada: Primary, All attributes, Recovery, Swift ultimate, Immunity, Endurance.
-  - Ana affix tabanın örtük statıdır, havuzdan muaf (Studded Gauntlets / Hobnailed Boots: Armor). Legendary'nin sabit affix'leri de muaf.
+- **Yuva kimliği (Ömer 2026-11-01, item-design-plan.md D1 D2 D3 D4; 2026-10-13 itemfix tablosunun yerine):** bir affix yalnız tablodaki yuvada rastgele çıkar (`items.json > affixDefs[].slots`). "Direnç" = 6 element direnci (`c_res_*`).
+  | Yuva | C | B | A |
+  |---|---|---|---|
+  | Weapon | Physical, Fire, Ice, Holy, Arcane, Nature, Dark, Lightning, Accuracy, DoT | Crit damage, Elite-boss hasarı, Armor pen, Magic pen, Front, Back, Executioner, Armor shred, Block break | Primary, Global damage, Elemental, Keenness, Potency, Summon, Pierce, Overflow |
+  | Off-hand | Armor, HP regen, Shield power, Block, Direnç | Magic armor, Debuff resistance, Thorns, Ready shield | Global defense, Max HP %, Guard aura, Support, Column, Immunity |
+  | Helm | Armor, Max HP, Max MP, Healing received, Direnç | Magic armor, MP cost, Debuff resistance, Elite-boss savunması, Yara yumuşatma | Primary, Global defense, Max HP %, Swift ultimate, Immunity, Mana, Resource, Mana shield, Fluid |
+  | Armor | Armor, Max HP, HP regen, Healing received, Direnç | Magic armor, Debuff resistance, Thorns, Elite-boss savunması, Yara yumuşatma, Ready shield, Victor's breath | All attributes, Global defense, Max HP %, Damage aura, Guard aura, Recovery, Endurance, Column, Mana shield |
+  | Gloves | Accuracy, Evasion, MP regen, Armor, DoT | Crit chance, Life leech, Mana leech, Executioner, Soul harvest, Block break | Global damage, Speed %, Keenness, Steady, Fluid |
+  | Boots | Max HP, Evasion, Max MP, Armor, HP regen | Speed, Quick start, Debuff resistance, Yara yumuşatma | All attributes, Speed %, Recovery, Endurance, Steady |
+  | Ring | Max MP, MP regen, HP regen | Speed, MP cost | Primary, All attributes, Global damage, Elemental, Mana, Resource, Summon, Speed % |
+  | Trinket | Shield power, DoT, Healing received | Quick start, Soul harvest, Victor's breath, Ready shield | Support, Potency, Immunity, Endurance, Recovery, Fluid, Swift ultimate |
+  - Ring ile Trinket artık havuz paylaşmaz: Ring kalıcı güç, Trinket koşullu güç (T1).
+  - Eskiden her yuvada çıkan 6 A affix (Primary, All attributes, Recovery, Swift ultimate, Immunity, Endurance) 2-3 yuvada (D3).
+  - **Direnç tek çekiliş (D2, `affixRules.drawGroups`):** havuzda 6 direnç tek girdi sayılır; önce "direnç" çıkar, sonra element tekdüze seçilir. Bu kural yeni zar, eski kayıt onarımı ve Reforge'da aynıdır (`items.ts > drawAffix`). Aynı affix iki kez gelmez; item'de bir direnç varken girdi kalan 5 üyeyle sürer.
+  - **Eski item'ler:** tablo dışı kalan affix'li item affix'ini korur, göç ve yeniden zar yok. Temper dokunmaz; Reforge o satırı değiştirirse yerine güncel havuzdan gelir, eski affix geri çıkmaz.
+  - Ana affix tabanın örtük statıdır, havuzdan muaf (Trinket'te Max MP, MP regen ya da HP regen ana affix olabilir). Legendary'nin sabit affix'leri de muaf.
 - **Havuzlar (Ömer'in seçimi):**
   - C: Armor, Max HP, Physical / Fire / Ice / Holy / Arcane / Nature / Dark damage %, Accuracy, Evasion, Max MP, HP regen, MP regen, Shield power %, DoT damage %, Block % (yalnızca kalkan; Ömer 2026-10-18).
   - B: Crit chance, Crit damage, Speed, Magic armor, Damage vs elite & boss %, Armor penetration %, Magic penetration %, MP cost -%, Life leech %, Quick start, Debuff resistance (debuff'tan tamamen kaçınma şansı).
@@ -425,7 +431,7 @@ IP kontrolü: `slotWeight x B(ilvl) x rarityMult` (±%10). Stat IP'leri 1.5 tabl
 - Endless: elit / boss kartlarının eski "en az Rare / en az Epic" tabanı kalktı (yerine kayma); kart sayısı (2) ve seviye eki (+5 / +10) aynen. Zarlanan nadirlikte yükseltme yoksa bir alt nadirlik denenir.
 - Sefer: boss / hazine "en az bir Rare" ve Rare pity (3.3) KALDIRILDI (Ömer 2026-10-11); nadirliği yalnızca tablo belirler.
 - Endless: örneğin item seviyesi dalganın seviyesi (+ elit / boss eki; Ömer 2026-10-11): katalog tavanını aşar, affix değerleri doğrusal büyümeye devam eder. Legendary nadir düşüşü de en az dalga seviyesinde.
-- Rastgele C affix'i, item kimin için zarlandıysa ona yarayanlara hafif ağırlıklı (`affixRules.classFit`: 2 kat; dışlayıcı değil; Ömer 2026-10-11). Seferde silah düşüşü ailesini kullanan takım üyesi için zarlanır.
+- Rastgele C, B ve A affix'i, item kimin için zarlandıysa ona yarayanlara hafif ağırlıklı (`affixRules.classFit`: 2 kat; dışlayıcı değil, hiçbir affix kapanmaz; Ömer 2026-10-11, B ve A 2026-11-01 D4). `needs` alanı olmayan affix her sınıfa uyar sayılır. Seferde silah düşüşü ailesini kullanan takım üyesi için zarlanır; silah dışı sefer düşüşünde sınıf verilmez, ağırlık işlemez (tüccar, hediye, Combine ve Endless sınıf verir).
 - Nadirliğe göre zar tabanı (`affixRules.rollFloorByRarity`, Ömer 2026-10-11): yüksek nadirlik aralığın üst kısmından zarlar, tavan aynı.
 - **Denge düğmesi:** daha az yüksek nadirlik = daha az item gücü; Endless bandında kalmak için `affixRules.power` 1 -> 1,5 (iri adımlı ana stat, tüm statlar, hız ve Immunity tur sayısına işlemez: `noPower`).
 

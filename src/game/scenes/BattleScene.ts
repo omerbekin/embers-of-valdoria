@@ -100,7 +100,7 @@ import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { backgroundPlacement, battleBackground } from '../battle-background';
 import { playLuckyEscape, prewarmLuckyEscape } from '../lucky-escape-fx';
 import { playRegenTick } from '../regen-fx';
-import { betweenTurnEvents, regenTickEvents } from '../regen-ticks';
+import { betweenTurnEvents, hpTickPlan, regenTickEvents, type HpChip } from '../regen-ticks';
 import { BattleTutorial, CAN_MISS_LESSON, PROTECTED_LESSON } from '../battle-tutorial';
 import { SkillChoicePanel, SkillChoicePrompt, type SkillChoiceCard } from '../../ui/skill-choice';
 import { TUTORIAL, type BattleLessonCtx } from '../../tutorial/lessons';
@@ -991,7 +991,7 @@ export class BattleScene extends Phaser.Scene {
       }
       const key = groundTipKeyOf(list);
       if (key === this.groundTipKey || this.infoBusy || this.unitTipKey.startsWith('corpse:')) return;
-      const tip = buildGroundTip(list, content.grounds, (d) => this.texUrl(ensureIcon(this, d.icon, d.color, true)));
+      const tip = buildGroundTip(list, content.grounds, (d) => this.texUrl(ensureIcon(this, paintedOr('ground', list[0]!.ground, d.icon), d.color, true)));
       if (!tip) return;
       this.hud?.showContextTip(tip, { top: true, many: list.length > 2 });
       this.groundTipKey = key;
@@ -3098,8 +3098,8 @@ export class BattleScene extends Phaser.Scene {
     if (c.shield > 0) effects.push({ name: 'Shield', color: colors.shield, turns: String(c.shield), text: 'Absorbs damage before HP' });
     if (c.magicShield > 0) effects.push({ name: 'Magic shield', color: colors.magicShield, turns: String(c.magicShield), text: 'Absorbs magic damage before HP' });
     const fed = empoweredLine(c.empowered);
-    if (fed) effects.push({ name: fed.tone === 'empowered' ? 'Empowered' : 'Unfed', color: fed.tone === 'empowered' ? '#c58bff' : colors.muted, turns: '', text: fed.text });
-    for (const tag of c.tags) for (const [el, m] of Object.entries(f.weaknesses[tag] ?? {})) effects.push({ name: `Weak to ${el}`, color: colors.element[el as keyof typeof colors.element] ?? colors.muted, turns: `+${Math.round((m - 1) * 100)}%`, text: `Takes more ${el} damage` });
+    if (fed) effects.push({ name: fed.tone === 'empowered' ? 'Empowered' : 'Unfed', color: fed.tone === 'empowered' ? '#c58bff' : colors.muted, turns: '', text: fed.text, ...(fed.tone === 'empowered' ? {} : { debuff: true }) });
+    for (const tag of c.tags) for (const [el, m] of Object.entries(f.weaknesses[tag] ?? {})) effects.push({ name: `Weak to ${el}`, color: colors.element[el as keyof typeof colors.element] ?? colors.muted, turns: `+${Math.round((m - 1) * 100)}%`, text: `Takes more ${el} damage`, debuff: true });
     if (c.summoned && c.lifespan !== undefined) effects.push({ name: 'Summoned', color: colors.muted, turns: `${c.lifespan} left`, text: `Leaves after ${c.lifespan} more turn${c.lifespan === 1 ? '' : 's'}` });
     // Skill'ler (Ömer 2026-10-16): kalan cooldown artık her skill satırında (eski "Cooldowns" etki satırı kaldırıldı)
     const turns = this.battle.mode === 'turns';
@@ -3247,6 +3247,9 @@ export class BattleScene extends Phaser.Scene {
 
   /** Tur başı yenilenme tikleri (yüzen sayı yerine çubuk parıltısı; regen-ticks.ts) ve onları bulmak için son eylemden beri gelen olaylar. */
   private regenTicks = new WeakSet<object>();
+  /** Çubuk yanında toplanan skill HoT tikleri (regenTicks'ten ayrı: bunlar günlüğe yazılmaya devam eder) ve grubun son olayına düşen yazı. */
+  private hotTicks = new WeakSet<object>();
+  private hpChips = new WeakMap<object, HpChip>();
   /** Sıradaki birimin tur başına ait olaylar (savaş günlüğü bunları eylemin satırına katmaz). */
   private betweenTurns = new WeakSet<object>();
   private sinceAction: BattleEvent[] = [];
@@ -3258,7 +3261,11 @@ export class BattleScene extends Phaser.Scene {
         const c = this.battle.get(uid);
         return c ? { hpRegen: c.stats.hpRegen ?? 0, mpRegen: c.stats.mpRegen + effList(c, 'turnMp').reduce((t, x) => t + x.v.mp, 0) } : undefined;
       };
-      for (const r of regenTickEvents(this.sinceAction, e, statsOf)) this.regenTicks.add(r);
+      const regen = regenTickEvents(this.sinceAction, e, statsOf);
+      for (const r of regen) this.regenTicks.add(r);
+      const hpPlan = hpTickPlan(this.sinceAction, e, regen);
+      for (const r of hpPlan.hot) this.hotTicks.add(r);
+      for (const [r, chip] of hpPlan.chips) this.hpChips.set(r, chip);
       for (const r of betweenTurnEvents(this.sinceAction, e)) this.betweenTurns.add(r);
     }
     if (e.type === 'skillUsed' || e.type === 'globalUsed' || e.type === 'turnStart' || e.type === 'turnSkipped') this.sinceAction = [];
@@ -3402,7 +3409,7 @@ export class BattleScene extends Phaser.Scene {
         if (target && witherTick && e.amount > 0) {
           const ratio = e.amount / target.combatant.maxHp;
           target.hit(this.hitReactionFor(e, target));
-          target.floatText(String(e.amount), content.statuses['wither']?.color ?? '#9cab3c', 38, false, { kind: 'damage', rightIcon: 'poison' });
+          target.floatText(String(e.amount), content.statuses['wither']?.color ?? '#9cab3c', 38, false, { kind: 'damage' });
           target.setHp(e.hpAfter, true, ratio);
           target.setShield(e.shieldAfter, e.magicShieldAfter);
         } else if (target) {
@@ -3508,9 +3515,10 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'heal': {
         const target = this.views.get(e.target);
-        if (this.regenTicks.has(e)) {
-          // Turn-start regen never floats: the bar pulses and a small muted "+N" sits beside it (regen-fx.ts)
-          if (target) playRegenTick(this, target, 'hp', e.amount);
+        if (this.regenTicks.has(e) || this.hotTicks.has(e)) {
+          // Tur başı yenilenme + skill HoT yüzmez: çubuk parlar, yanında tek toplam "+N" (HoT varsa bonus rengi); yazı grubun son olayında (regen-ticks.ts > hpTickPlan)
+          const chip = this.hpChips.get(e);
+          if (target && chip) playRegenTick(this, target, 'hp', chip.amount, chip.bonus);
           target?.setHp(e.hpAfter);
           return;
         }

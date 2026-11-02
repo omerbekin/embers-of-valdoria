@@ -2,8 +2,6 @@
 Ömer 2026-10-31: bu kanal artık hem not alır hem düzeltir; biten satır listeden silinir, biçimi ya da kuralı Ömer'in seçeceği satırlar soru olarak kalır.
 | # | Tarih | Konu | Not / yön |
 |---|---|---|---|
-| 37 | 2026-10-31 | Dış inceleme: geçici takım anlatımı | Kasabada ilk iki kahramanın ayrılması emek kaybı gibi hissettiriyor (raporda). Form 5. |
-| 38 | 2026-10-31 | Savaş ekranı okunurluğu | Ömer: mockup A/B/C iptal, yeni yerleşim istemiyor. Mevcut sistem sadeleştirilecek: Ömer 2026-11-01 önce görselli seçenek istedi, mockup UI-UX Design'da; uygulayacak sohbeti seçimden sonra Koordinatör söyler. Ölçüm (agent, 2026-10-31): 1920'de alt şerit yazıları 10-15 px, telefonda 5-10 px; bir birimin adı başka birimin çubuğuna biniyor. |
 
 ## Ömer'in form kararları (2026-10-31, artifact XHRQTLgNCTRgrZJPAKqaKE, db kararlar/main)
 - #25 hedef yazıları: a. '-14  85%', altında yazısız durum ikonları; yalnız %50 ve üstü ihtimaller görünür.

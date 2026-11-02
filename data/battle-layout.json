@@ -241,7 +241,7 @@
     "damageNumberMs": 2000,
     "floatFadeMs": 200,
     "regenTick": {
-      "_not": "Tur başı yenilenme (Ömer 2026-10-11, taslak A): yüzen sayı yok; çubuk parlar (pulseMs), sağında soluk küçük yazı (chipPx punto, chipGap çubuktan uzaklık, chipSplit can/MP satırının dikey ayrımı, chipMs ömür, chipDrift yukarı kayma, chipAlpha soluk opaklık). src/game/regen-fx.ts",
+      "_not": "Tur başı yenilenme (Ömer 2026-10-11, taslak A): yüzen sayı yok; çubuk parlar (pulseMs), sağında soluk küçük yazı (chipPx punto, chipGap çubuktan uzaklık, chipSplit can/MP satırının dikey ayrımı, chipMs ömür, chipDrift yukarı kayma, chipAlpha soluk opaklık, hotChip skill HoT'u da içeren can toplamının bonus rengi; Ömer 2026-11-01). src/game/regen-fx.ts",
       "pulseMs": 650,
       "chipPx": 26,
       "chipGap": 8,
@@ -252,6 +252,7 @@
       "hpGlow": "#8ff0a8",
       "mpGlow": "#7fb0ff",
       "hpChip": "#a9d9b0",
+      "hotChip": "#ffd27a",
       "mpChip": "#9fb8e6"
     },
     "luckyEscape": {

@@ -86,6 +86,53 @@ describe('combat log sources (real engine)', () => {
     expect(b.useGlobal(me.uid, 'move_tile', 0).ok).toBe(true);
     expect(logOf(b, b.log.slice(from))).toContain(`${me.name} moved forward`);
   });
+
+  // Ömer 2026-11-01: eylem dışı skill hasarı ve kişinin kendine verdiği hasar da yazsın
+  it("a skill's HP cost gets its own line", () => {
+    const b = make({ 0: 'undead' }, { 0: 'warrior' }, {});
+    const me = P(b);
+    b.debugClearCooldowns();
+    runTo(b, me);
+    const from = b.log.length;
+    expect(b.useSkill(me.uid, 'wail_of_the_dead', undefined, E(b).slot, 'enemy').ok).toBe(true);
+    const lines = logOf(b, b.log.slice(from));
+    expect(lines.join('|')).toMatch(new RegExp(`${me.name} took \\d+ from ${content.skills.wail_of_the_dead!.name}`));
+  });
+
+  it('a lost HP bet names the skill', () => {
+    let seen = false;
+    for (let seed = 1; seed < 40 && !seen; seed++) {
+      const b = make({ 0: 'gambler' }, { 0: 'warrior' }, {}, seed);
+      const me = P(b);
+      b.debugClearCooldowns();
+      runTo(b, me);
+      const from = b.log.length;
+      expect(b.useSkill(me.uid, 'high_stakes', E(b).uid).ok).toBe(true);
+      const evs = b.log.slice(from);
+      if (!evs.some((e) => e.type === 'passive' && e.passive === 'gamble_lose')) continue;
+      seen = true;
+      expect(logOf(b, evs).join('|')).toMatch(new RegExp(`${me.name} took \\d+ from High Stakes`));
+    }
+    expect(seen).toBe(true);
+  });
+
+  it('a telegraph resolving at turn start names the skill, not the previous action', () => {
+    const teams: Teams = {
+      party: cells({ 0: 'warrior', 3: 'warrior' }),
+      enemies: cells({ 1: 'bridge_warden', 3: 'iron_mooring', 5: 'iron_mooring' }),
+      units: { enemies: { 1: { tier: 'boss', displayName: 'The Bridge Warden', modifiers: { actionsPerTurn: 2 } } } },
+    };
+    const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, 3, 'turns', teams, false));
+    const w = b.combatants.find((c) => c.defId === 'bridge_warden')!;
+    for (let i = 0; i < 60 && b.currentUid !== w.uid; i++) b.skipTurn();
+    expect(b.useSkill(w.uid, 'breaking_span', undefined, 3).ok).toBe(true);
+    b.skipTurn();
+    const from = b.log.length;
+    for (let i = 0; i < 60 && b.currentUid !== w.uid; i++) b.skipTurn();
+    const evs = b.log.slice(from);
+    expect(evs.some((e) => e.type === 'telegraphResolve')).toBe(true);
+    expect(logOf(b, evs).join('|')).toMatch(new RegExp(`took \\d+( crit)? from ${content.skills.breaking_span!.name}`));
+  });
 });
 
 describe('combat log sources (guards)', () => {

@@ -26,11 +26,11 @@
     "id": "grave_cold",
     "name": "Grave Cold",
     "icon": "blizzard",
-    "text": "Its skill hits make the target Chilled for 1 turn. This never freezes.",
+    "text": "Its skill hits make the target Chilled for 2 turns. This never freezes.",
     "effect": {
       "type": "graveCold",
       "status": "chilled",
-      "turns": 1
+      "turns": 2
     }
   }
 }

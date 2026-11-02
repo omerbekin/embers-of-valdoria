@@ -98,7 +98,6 @@ export const LEGENDARY_LIMIT_MSG = 'Only one Legendary per hero';
 
 export interface WeaponFamilyDef {
   id: string;
-  name: string;
   classes: string[];
   /** Silahın ana affix adayları (hasar türü; Ömer 2026-10-11): örnek oluşurken biri seçilir (kimin için zarlandıysa onun elementi önce). */
   mains: string[];
@@ -115,6 +114,8 @@ export type WeaponType = (typeof WEAPON_TYPES)[number];
 /** Tipin güç / hız profili (items.json > weaponTypes). */
 export interface WeaponTypeDef {
   name: string;
+  /** Çoğul ad (yoksa ad + s: Sword -> Swords; Staff -> Staves). */
+  plural?: string;
   /** Silah gücü çarpanı (yoksa 1). */
   power?: number;
   /** Hız cezası, yüzde (5 = "5% less Speed" = ×0,95; mult:spdMult gibi çarpılır, kişisel hız zarından ÖNCE). */
@@ -210,7 +211,7 @@ export interface ItemsData {
   rolls: { spread: number };
   /** power = tüm affix değerlerinin ortak çarpanı (denge düğmesi). */
   /** power = tüm affix değerlerinin ortak çarpanı (denge düğmesi); rollFloorByRarity = nadirliğe göre zarın aralıktaki alt sınırı (0-1). */
-  affixRules: { power: number; rollFloorByRarity?: Partial<Record<RarityId, number>>; classFit?: { weight: number; tiers: AffixTier[] } };
+  affixRules: { power: number; rollFloorByRarity?: Partial<Record<RarityId, number>>; classFit?: { weight: number; tiers: AffixTier[] }; drawGroups?: Record<string, string[]> };
   affixDefs: Record<string, AffixDef>;
   effects: Record<string, EffectDef>;
   effectRules: { stack: boolean; endless: boolean };
@@ -351,7 +352,7 @@ export function affixIP(id: string, values: number[]): number {
   return Math.round(a.parts.reduce((s, p, i) => s + (values[i] ?? 0) * p.ip, 0) * 1000) / 1000;
 }
 
-/** Bu affix bu yuvada RASTGELE çekilebilir mi (yuva kimliği, Ömer 2026-10-13 itemfix: her stat 2-3 yuvada; items.json > affixDefs[].slots). */
+/** Bu affix bu yuvada RASTGELE çekilebilir mi (yuva kimliği; güncel tablo Ömer 2026-11-01 D1 D3, items.json > affixDefs[].slots). */
 export const affixAllowed = (id: string, slot: SlotId): boolean => {
   const a = affixDef(id);
   return !!a && (!a.slots || a.slots.includes(slot));
@@ -359,6 +360,30 @@ export const affixAllowed = (id: string, slot: SlotId): boolean => {
 
 /** Kademenin bu yuvada çekilebilecek affix'leri (veri sırasıyla). */
 export const tierPool = (tier: AffixTier, slot: SlotId): string[] => Object.keys(ITEMS.affixDefs).filter((id) => ITEMS.affixDefs[id]!.tier === tier && affixAllowed(id, slot));
+
+/** Çekiliş grubundaki affix -> grup adı (items.json > affixRules.drawGroups). */
+const DRAW_GROUP_OF: ReadonlyMap<string, string> = new Map(Object.entries(ITEMS.affixRules?.drawGroups ?? {}).flatMap(([g, ids]) => ids.map((id): [string, string] => [id, g])));
+
+/**
+ * Havuzun çekiliş girdileri (Ömer 2026-11-01, karar D2): grubun havuzda kalan üyeleri TEK girdi olur (6 element direnci = bir "direnç" hakkı), diğer
+ * affix'ler kendi girdisidir. Sıra veri sırası; grup ilk üyesinin yerinde durur.
+ */
+export function drawEntries(pool: readonly string[]): string[][] {
+  const groups = new Map<string, string[]>();
+  const out: string[][] = [];
+  for (const id of pool) {
+    const g = DRAW_GROUP_OF.get(id);
+    const hit = g ? groups.get(g) : undefined;
+    if (hit) {
+      hit.push(id);
+      continue;
+    }
+    const entry = [id];
+    if (g) groups.set(g, entry);
+    out.push(entry);
+  }
+  return out;
+}
 
 // ------------------------------------------------------------ sınıf ipuçları (ana affix seçimi, Equip best)
 
@@ -430,7 +455,7 @@ export function rollItem(d: ItemDef, rng: IntRng, o: RollOptions = {}): ItemRoll
       if (!id) {
         const pool = tierPool(tier, d.slot).filter((a) => !used.has(a));
         if (!pool.length) return;
-        id = pickFitWeighted(pool, tier, o.forClass, rng);
+        id = drawAffix(pool, rng, tier, o.forClass);
       }
       used.add(id);
       push(id);
@@ -440,20 +465,29 @@ export function rollItem(d: ItemDef, rng: IntRng, o: RollOptions = {}): ItemRoll
 }
 
 /**
- * Rastgele affix seçimi (Ömer 2026-10-11): kimin için zarlandıysa ona yarayan affix'ler HAFİF ağırlıklı (items.json > affixRules.classFit:
- * `weight` kat, yalnızca `tiers` kademelerinde; ör. C'de 2 kat). Dışlayıcı değil; sınıf yoksa tekdüze (tek rng.int).
+ * Havuzdan TEK affix çeker; bütün rastgele çekiliş yolları (yeni zar, eski kayıt onarımı, Reforge) buradan geçer. Önce girdi seçilir (`drawEntries`:
+ * direnç tek girdi, D2), girdi grupsa üyesi tekdüze seçilir. Havuz boş olmamalı.
+ * Sınıf ağırlığı (Ömer 2026-10-11; 2026-11-01 D4: B ve A'ya da): kimin için zarlandıysa ona yarayan girdiler HAFİF ağırlıklı (items.json >
+ * affixRules.classFit: `weight` kat, yalnızca `tiers` kademelerinde). Dışlayıcı değil (her girdinin ağırlığı en az 1); sınıf yoksa tekdüze.
  */
-function pickFitWeighted(pool: string[], tier: AffixTier, forClass: string | undefined, rng: IntRng): string {
+export function drawAffix(pool: readonly string[], rng: IntRng, tier?: AffixTier, forClass?: string): string {
+  const entries = drawEntries(pool);
   const cf = ITEMS.affixRules?.classFit;
-  const w = cf && forClass && cf.tiers.includes(tier) ? Math.max(1, Math.round(cf.weight)) : 1;
-  if (w === 1) return pool[rng.int(0, pool.length - 1)]!;
-  const weights = pool.map((id) => (affixFit(forClass!, { id, def: affixDef(id)! }) >= 1 ? w : 1));
-  let x = rng.int(0, weights.reduce((a, b) => a + b, 0) - 1);
-  for (let i = 0; i < pool.length; i++) {
-    x -= weights[i]!;
-    if (x < 0) return pool[i]!;
+  const w = cf && forClass && tier && cf.tiers.includes(tier) ? Math.max(1, Math.round(cf.weight)) : 1;
+  let entry = entries[entries.length - 1]!;
+  if (w === 1) entry = entries[rng.int(0, entries.length - 1)]!;
+  else {
+    const weights = entries.map((e) => (e.some((id) => affixFit(forClass!, { id, def: affixDef(id)! }) >= 1) ? w : 1));
+    let x = rng.int(0, weights.reduce((a, b) => a + b, 0) - 1);
+    for (let i = 0; i < entries.length; i++) {
+      x -= weights[i]!;
+      if (x < 0) {
+        entry = entries[i]!;
+        break;
+      }
+    }
   }
-  return pool[pool.length - 1]!;
+  return entry.length > 1 ? entry[rng.int(0, entry.length - 1)]! : entry[0]!;
 }
 
 /** Geriye dönük ad (eski API): örnek zarları. */
@@ -530,7 +564,7 @@ export function legacyRoll(d: ItemDef, old: unknown, uid: string, classId?: stri
     if (!id) {
       const pool = tierPool(tier, d.slot).filter((a) => !used.has(a));
       if (!pool.length) return;
-      id = pool[rng.int(0, pool.length - 1)]!;
+      id = drawAffix(pool, rng);
     }
     used.add(id);
     push(id);
@@ -559,7 +593,7 @@ function replaceRemovedAffixes(d: ItemDef, r: ItemRoll, seed: string): ItemRoll 
     if (!tier) return [a];
     const pool = tierPool(tier, d.slot).filter((id) => !used.has(id));
     if (!pool.length) return [];
-    const id = pool[rng.int(0, pool.length - 1)]!;
+    const id = drawAffix(pool, rng);
     used.add(id);
     const x = rollChoice(id, rng);
     return [{ id, q: a.q, ...(x ? { x } : {}) }];
@@ -567,7 +601,10 @@ function replaceRemovedAffixes(d: ItemDef, r: ItemRoll, seed: string): ItemRoll 
   return { ...r, affixes };
 }
 
-/** Zar nesnesini doğrular / onarır: bilinmeyen affix'ler atılır, q [0,1]'e sıkıştırılır, nadirlik tabana göre sıkıştırılır. Bozuksa null. */
+/**
+ * Zar nesnesini doğrular / onarır: bilinmeyen affix'ler atılır, q [0,1]'e sıkıştırılır, nadirlik tabana göre sıkıştırılır. Bozuksa null.
+ * Yuva havuzuna BAKILMAZ (Ömer 2026-11-01): dağılım değişince havuz dışı kalan affix'li eski item affix'ini korur.
+ */
 function sanitizeRoll(d: ItemDef, r: ItemRoll): ItemRoll | null {
   const affixes = r.affixes
     .filter((a): a is AffixRoll => !!a && typeof a === 'object' && typeof a.id === 'string' && !!affixDef(a.id))
@@ -655,8 +692,8 @@ const midIP = (id: string, ilvl: number, mult = 1): number => {
 
 /** Kademenin bu yuvadaki ortalama orta IP'si (zarlanacak affix'in beklenen değeri). */
 const tierMeanIP = (tier: AffixTier, slot: SlotId, ilvl: number): number => {
-  const pool = tierPool(tier, slot);
-  return pool.length ? pool.reduce((s, id) => s + midIP(id, ilvl), 0) / pool.length : 0;
+  const entries = drawEntries(tierPool(tier, slot)); // çekiliş girdileriyle aynı ağırlık (direnç tek girdi, D2)
+  return entries.length ? entries.reduce((s, e) => s + e.reduce((t, id) => t + midIP(id, ilvl), 0) / e.length, 0) / entries.length : 0;
 };
 
 /**
@@ -703,6 +740,30 @@ export function weaponTypeOf(d: Partial<TypeSrc>): WeaponType | undefined {
 
 /** Tipin güç / hız profili (yoksa undefined). */
 export const weaponTypeDef = (t: WeaponType | undefined): WeaponTypeDef | undefined => (t ? ITEMS.weaponTypes?.[t] : undefined);
+
+/** Item'in tip adı (TEK KAYNAK: tooltip, kullanamama uyarısı, aile adı): `kindName`, kalkan, ya da silah tipinin adı ("Sword"). Zırh gibi tipsiz yuvada undefined. */
+export function itemKindName(d: ItemDef): string | undefined {
+  return d.kindName ?? (d.slot === 'offhand' ? 'Shield' : weaponTypeDef(weaponTypeOf(d))?.name);
+}
+
+/** Tip adının çoğulu ("Swords", "Staves"). */
+export function itemKindPlural(d: ItemDef): string | undefined {
+  const td = d.kindName ? undefined : weaponTypeDef(weaponTypeOf(d));
+  if (td) return td.plural ?? `${td.name}s`;
+  const kind = itemKindName(d);
+  return kind ? `${kind}s` : undefined;
+}
+
+/** Ailenin adı, içindeki item'lerin tip adlarından ("Axes & Swords"; varsayılan tip önce). Veride elle yazılmış ad yok. */
+export function familyName(id: string): string {
+  const first = weaponTypeDef(ITEMS.weaponFamilies.find((f) => f.id === id)?.type);
+  const names = first ? [first.plural ?? `${first.name}s`] : [];
+  for (const d of ITEMS.items) {
+    const kind = d.family === id ? itemKindPlural(d) : undefined;
+    if (kind && !names.includes(kind)) names.push(kind);
+  }
+  return names.join(' & ');
+}
 
 /** Çift el YAKIN DÖVÜŞ silahı mı (grip two + twoHandMelee.types; asa ve yay değil)? */
 export function isTwoHandMelee(d: Partial<TypeSrc>): boolean {
@@ -799,6 +860,12 @@ export const levelReqMsg = (req: number): string => `Requires Level ${req}`;
 
 /** Sınıfın kullanabildiği silah aileleri (karar 2). */
 export const classWeaponFamilies = (classId: string): string[] => ITEMS.weaponFamilies.filter((f) => f.classes.includes(classId)).map((f) => f.id);
+
+/** Sınıf bu item'i neden takamaz: yalnız belirli sınıfların item'i ya da tipin adı ("Paladin cannot use Swords"). `nameOf`: sınıf kimliğinin okunur adı. */
+export function cannotUseText(classId: string, d: ItemDef, nameOf: (classId: string) => string = (c) => c): string {
+  if (d.usableBy && !d.usableBy.includes(classId)) return `${d.name} can only be used by ${d.usableBy.map(nameOf).join(', ')}`;
+  return `${nameOf(classId)} cannot use ${itemKindPlural(d) ?? slotDef(d.slot)?.name ?? 'this item'}`;
+}
 
 /** Bu sınıf bu item'i takabilir mi? Ailesi olan item (silah, kalkan) yalnızca o aileyi kullanan sınıfa; diğerleri herkese. */
 export function canEquip(classId: string, d: ItemDef): boolean {
@@ -897,7 +964,7 @@ export function planEquip(classId: string, equipment: EquipMap, inst: ItemInstan
   // Seviye şartı (x6, Ömer 2026-10-17): kahramanın seviyesi item seviyesi - 3'ten düşükse takılamaz (sefer / Endless / arayüz seviyeyi HEP verir;
   // verilmezse yalnızca kural testi: denetlenmez)
   if (o.level !== undefined && !meetsLevel(o.level, inst)) return { error: levelReqMsg(instanceLevelReq(inst)) };
-  if (!canEquip(classId, d)) return { error: d.usableBy && !d.usableBy.includes(classId) ? `${d.name} can only be used by ${d.usableBy.join(', ')}` : `${classId} cannot use ${d.family ?? d.slot}` };
+  if (!canEquip(classId, d)) return { error: cannotUseText(classId, d) };
   // Ana el boşken silah ikinci ele girmez (Ömer 2026-10-14): ikinci ele bırakılan / "Off-hand" ile takılan hançer de ana ele gider
   const at = slot === 'offhand' && offhandWeapon(d) && !equipment.weapon ? 'weapon' : (slot ?? defaultEquipSlot(equipment, d));
   if (!fitsSlot(d, at)) return { error: `${d.name} does not go in the ${slotDef(at)?.name ?? at} slot` };
@@ -1048,6 +1115,14 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     });
   }
   for (const t of TIER_IDS) for (const s of SLOT_IDS) if (!tierPool(t, s).length) errors.push(`tier ${t}: no affix allowed on ${s}`);
+  const grouped = new Set<string>();
+  for (const [g, ids] of Object.entries(data.affixRules?.drawGroups ?? {})) {
+    if (new Set(ids.map((id) => data.affixDefs[id]?.tier)).size !== 1 || ids.some((id) => !data.affixDefs[id])) errors.push(`drawGroup ${g}: members must be known affixes of one tier`);
+    for (const id of ids) {
+      if (grouped.has(id)) errors.push(`drawGroup ${g}: ${id} is already in a group`);
+      grouped.add(id);
+    }
+  }
   // Zar hiç boş kalmasın (itemfix): her taban, ana affix'i dışında en az bir C daha çekebilmeli (Uncommon+; taban nadirlikten bağımsız Epic olabilir)
   for (const d of data.items)
     if (d.rarity !== 'legendary' && !Object.entries(data.affixDefs).some(([id, a]) => a.tier === 'C' && (!a.slots || a.slots.includes(d.slot)) && !(d.main ? [d.main] : (data.weaponFamilies.find((f) => f.id === d.family)?.mains ?? [])).includes(id)))

@@ -73,6 +73,8 @@ export interface BandTipSpec {
   lines?: PhLine[];
   sections?: PhSection[];
   foot?: string;
+  /** Alt bilgi çubuğu yazı rengi (uyarı: kırmızımsı / kor); yoksa açık altın. */
+  footHex?: string;
   width?: number;
   /** Tüm ölçüler bu çarpanla (telefonda büyük dokunma okunurluğu). */
   scale?: number;
@@ -391,7 +393,7 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
   // --- alt bilgi çubuğu
   let h = y;
   if (spec.foot) {
-    const ft = scene.add.text(px + Math.round(18 * s), 0, spec.foot, { fontFamily: BODY_FONT, fontSize: `${Math.round(18 * s)}px`, color: '#ffd99a', wordWrap: { width: w - px * 2 - Math.round(18 * s) } }).setResolution(textRes()).setOrigin(0, 0.5);
+    const ft = scene.add.text(px + Math.round(18 * s), 0, spec.foot, { fontFamily: BODY_FONT, fontSize: `${Math.round(18 * s)}px`, color: spec.footHex ?? '#ffd99a', wordWrap: { width: w - px * 2 - Math.round(18 * s) } }).setResolution(textRes()).setOrigin(0, 0.5);
     const fhh = ft.height + Math.round(14 * s);
     const fg = scene.add.graphics();
     fg.fillStyle(0x000000, 0.24).fillRect(0, y, w, fhh).lineStyle(1, EL.GOLD, 0.16).lineBetween(0, y, w, y);

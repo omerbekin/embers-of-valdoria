@@ -610,14 +610,14 @@ Kararlar:
 
 | Mob | Skill'ler | Pasif |
 |---|---|---|
-| Snow Wolf | Frost Bite (temel, Chilled), Rend | Pack Tactics |
+| Snow Wolf | Frost Bite (temel, %35 Chilled), Rend | Pack Tactics |
 | Clan Axeman | Axe (temel), Cleave (ön sıra) | Highland Fury: her zaman Chilled + Frozen bağışık; can %50 altında +%20 |
 | Cave Crawler | Mandible (temel), Skitter (ignoreReach) | Blind Hunger: hep en yakın hedef; Darkness'ta +%25 |
 | Clan Skald | Sling Stone (temel), Mock (Staggered), Chant (tüm dostlar 2 tur Haste) | War-Chant: tur başı aynı sıra dostlara 1 tur Haste |
-| Pyre Witch | Pyre Bolt (temel), Spread the Flame (Burning hücreden artı şekliyle 2 tur) | Kindling: Burning hücre başına +%5, en çok +%20 |
+| Pyre Witch | Pyre Bolt (temel, hedef hücresi 1 tur Burning), Spread the Flame (Burning hücreden artı şekliyle 2 tur) | Kindling: Burning hücre başına +%5, en çok +%20 |
 | Cinder Knight | Brand (temel + Burning), Hold the Gate | Searing Rebuke |
 | Forge Golem | Hammer (temel), Vent (bir şerit, ateş) | Furnace Core: ölünce hücresi + 4 komşu 2 tur Burning |
-| Wight | Gnaw (temel), Feast | Grave Cold: skill vuruşu 1 tur Chilled, dondurmaz |
+| Wight | Gnaw (temel), Feast | Grave Cold: skill vuruşu 2 tur Chilled, dondurmaz |
 | Rime Hound | Rime Bite (temel, Chilled), Run Down | Blood Scent |
 | Clan Slinger | Sling Stone (temel), Ice Shot (Chilled) | Cut and Run |
 | Rime Witch | Ice Shard (temel), Sodden Hex (2 tur Soaked) | Hoarfrost: Soaked kahraman tur başında 1 tur Chilled, dondurmaz |
@@ -625,7 +625,7 @@ Kararlar:
 | Molten Hound | Scorch Bite (temel), Run Down + 2 tur Burning zemin | Blood Scent |
 
 Kararlar:
-- **Frozen kuralı:** Frost Bite, Rime Bite ve Ice Shot skill atışıdır: zaten Chilled hedefi dondurur. Grave Cold ve Hoarfrost pasif kaynağıdır: yalnız Chilled verir (kaynak türü taşımaz).
+- **Frozen kuralı:** Frost Bite (zar tutunca), Rime Bite ve Ice Shot skill atışıdır: zaten Chilled hedefi dondurur. Grave Cold ve Hoarfrost pasif kaynağıdır: yalnız Chilled verir (kaynak türü taşımaz).
 - **Mana (open-questions 466):** L30'da 5-6 kullanım. Paylaşılan skill'in bedeli Harita 1-2 mobunu da değiştireceği için bu moblar kendi kopyasını alır (`snow_rend`, `knight_hold_gate`, `wight_feast`, `rime_run_down`, `hollow_rockfall`, `molten_run_down`; 4. dilimden `shard_pike_thrust`, `cinder_rend`, `gloam_lunge`); oyuncu aynı adı görür, `ai.scoreCost` eski bedel. Bedelsiz skill'ler bedelsiz kaldı.
 - **Spread the Flame:** `anchorGround` alanı: yalnız Burning hücreye atılır, alan içinde kahraman olmalı (genel alan kuralı), hasar yok, yalnız kahraman tahtası.
 - **Furnace Core:** Burning zemin golemin kendi tahtasına düşer; genel zemin kuralıyla kendi tarafına işlemez. Kindling onu sayar.
@@ -637,8 +637,8 @@ Seçilen 9 kit, `tests/map3-elites.test.ts`. Mana: temel saldırı bedelsiz, kal
 | Birim | Pasif / dokunuş | Skill'ler |
 |---|---|---|
 | Pack-Mother (B) | Pack Rotation | Frost Fang (Chilled, Chilled ise Frozen), Snowdrift (işaretli 2x2 Chill Ground), Throat Leap (her sıra, Bleeding) |
-| Pyre Matriarch (A) | Greater Kindling (Burning hücre başına +%5, tavansız) | Pyre Bolt, Stoke (işaretli 2x2 Burning), Spread the Flame |
-| Forge-Master Golem (B) | Overheat; ölünce iki kat Furnace Core (4 tur, iki kat güç) | Sledge (Sunder), Reforge (golem, maks canın %20'si), Rivet Plate (dosta kalkan) |
+| Pyre Matriarch (A) | Greater Kindling (Burning hücre başına +%5, tavansız) | Pyre Bolt (1 tur Burning), Stoke (işaretli 2x2 Burning), Spread the Flame |
+| Forge-Master Golem (B) | Overheat; ölünce kahraman tarafına iki kat Furnace Core (4 tur, iki kat güç) | Sledge (Sunder), Reforge (golem, maks canın %20'si), Rivet Plate (dosta kalkan) |
 | Ashborn Hierarch (B) | Shepherd of Ash (Ashborn dost yaşarken %25 az hasar) | Ember Toss, The Long Sermon, Fervour (dosta 2 tur Ash Surge), Kindle the Nave (vaaz bitince kendi sırası Burning) |
 | Cinder Warden (B) | Tempering | Searing Bash (Burning), Hold the Gate (2 tur taunt + Fortified), Slag Wall (işaretli sütun Burning) |
 | Snowfather (A) | Thundersnow; Frostbound (Chilled / Frozen kahraman başına +%6) | Icy Grasp, Avalanche (işaretli sütun, ağır), Roar (hepsi 1 tur Slow), ulti Whiteout |
@@ -653,3 +653,19 @@ Seçilen 9 kit, `tests/map3-elites.test.ts`. Mana: temel saldırı bedelsiz, kal
 - **Kindle the Nave:** vaaz bitmeden kullanılamaz. Şifayı vaaz kuralı yapar (Burning içindeki Ashborn iyileşir), Ashborn olmayan dost yanar.
 - **Quench:** iki tahtadaki tüm Burning söner; yangın yoksa atılamaz. Şifa hücre başına maks canın %2'si.
 - **Forge-Heat:** Heat kuralı gibi içinde birim olan sıra seçer; Hearthwarden ölürse işaret yanmaz.
+
+## Harita 3 elit seçimleri ve kural değişiklikleri: uygulama kararları (Ömer seçimi 2026-11-01; bayrak kapalı, sayılar PROVİZYON, sim yok)
+`tests/map3-picks.test.ts`, mana `tests/map3-mana.test.ts`. Varsayımlar: `open-questions.md` sonundaki `Q-NEW`.
+
+| Birim | Düğüm ve kadro | Pasif | Skill'ler |
+|---|---|---|---|
+| Clan Chief Brannoc (A, War-chief) | hc_12 Chief's Hall: Clan Skald + 2 Clan Axeman | War-Chant + Highland Fury | Great Axe (bedelsiz), Rally the Clan (bir dost sırası, 2 tur Haste), Skullsplitter (Sunder) |
+| The Frozen Standard-Bearer (B, Cold order) | hc_18 Standard Hill: 2 Frozen Halberdier + Frozen Crossbowman | Frozen Ranks geniş: tüm dostlar Close Ranks + Chilled bağışık; taşıyan Frozen'a bağışık değil | Standard Pole (bedelsiz), Cold Command (bir dost, 2 tur Haste), Frost Banner (işaretli 2x2 Chill Ground) |
+| The Oathkeeper (B, Judge) | hc_35 Oathkeeper's Court: 2 Stonebound Warden + Deep Runecaller | Stone Oath: her dost ölümü kalıcı +6 zırh, +6 büyü zırhı; Deep Hoard yok | Pick of the Deep, Oath of Stone (ikisi aynen), Verdict (Sunder, ek koşul yok) |
+
+- **Forge-Master Golem:** iki kat Furnace Core kahraman tarafına düşer (4 tur, iki kat güç). **Varsayım:** kahraman tahtasında aynı numaralı hücre + dört komşusu, bugünkü şekil. Düz Forge Golem aynen.
+- **Frost Bite:** %35 Chilled (PROVİZYON, ileride sim sonrası gözden geçirilecek). Donma zara bağlı; zar tutmazsa durum değişmez. Rime Bite ve Ice Shot aynen.
+- **Grave Cold:** 2 tur Chilled, dondurmaz.
+- **Pyre Bolt:** hedefin hücresine 1 tur Burning zemin (Witch ve Matriarch). Süre dolarken cadının o turu boyunca durur (`holdsOwnTurn`), Spread the Flame kendi Bolt'undan atılabilir; kahraman tek tik yer.
+- **Değişmeyenler (Ömer teyidi):** Kingsmaul adalet kuralı ve her vuruşta işaret, Hierarch'ın Ember Toss'u, Forge Golem Furnace Core davranışı, Sodden Hex adı.
+- **hc_12 / hc_18 yer tutucu:** eşlikçiler belgedeki adlarla yer tutucu sınıfta. Clan Vaulter ve Shardwalker bu iki düğümden çıktı.

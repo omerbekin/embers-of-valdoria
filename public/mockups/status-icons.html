@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Status and Ground Icons</title>
+<style>
+@font-face { font-family: Cinzel; font-weight: 400 900; font-display: swap; src: url('status-icons/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: swap; src: url('status-icons/EBGaramond-normal-latin.woff2') format('woff2'); }
+* { box-sizing: border-box; }
+:root { --g-text:#d9c8a2; --g-dim:#a8977a; --g-gold:#f3d999; --g-line:rgba(217,178,106,.16); --g-line2:rgba(217,178,106,.3); --g-disp:Cinzel,Georgia,serif; --g-body:'EB Garamond',Georgia,serif; }
+html,body { margin:0; background:#0c0907; color:var(--g-text); font-family:var(--g-body); font-style:normal; font-size:17px; }
+body { padding:0 16px 40px; max-width:1100px; margin:0 auto; }
+h1 { font:600 20px var(--g-disp); letter-spacing:.14em; text-transform:uppercase; color:var(--g-gold); margin:18px 0 4px; }
+h2 { font:600 15px var(--g-disp); letter-spacing:.14em; text-transform:uppercase; color:var(--g-gold); margin:26px 0 8px; border-bottom:1px solid var(--g-line2); padding-bottom:6px; }
+.lead { color:var(--g-dim); margin:0 0 6px; }
+.row { display:flex; flex-wrap:wrap; gap:10px 24px; align-items:center; padding:10px 12px; margin:6px 0; background:#16110d; border:1px solid var(--g-line); }
+.nm { flex:1 1 220px; min-width:200px; }
+.nm b { font:600 14px var(--g-disp); letter-spacing:.1em; text-transform:uppercase; color:var(--g-gold); display:block; }
+.nm span { color:var(--g-dim); font-size:14px; }
+.nm p { margin:4px 0 0; font-size:15px; }
+.pair { display:flex; gap:18px; flex-wrap:wrap; }
+.cell em { font:600 11px var(--g-disp); letter-spacing:.14em; text-transform:uppercase; color:var(--g-dim); font-style:normal; display:block; margin-bottom:4px; }
+.sz { display:flex; gap:14px; align-items:flex-end; }
+img.px { image-rendering:pixelated; }
+</style></head><body>
+<h1>Status and Ground Icons</h1>
+<p class="lead">20 approved icons are installed in the game. The 4 redrawn icons below wait for review.</p>
+<h2>Redrawn after review (4) - not installed yet</h2>
+<p class="lead">Each row: the previous new version and the redrawn version, at 34 px and 128 px. Exposed, Overreached and Weakened now each have their own hue: crimson, gold, slate blue.</p>
+<div class="row">
+ <div class="nm"><b>Weakened</b><span>weakened: a sagging cracked sword, slate blue</span><p>Deals less damage (strength depends on the source)</p></div>
+ <div class="pair"><div class="cell"><em>Previous new</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_weakened.webp" alt=""><img width="128" height="128" src="status-icons/new_status_weakened.webp" alt=""></div></div>
+ <div class="cell"><em>Redrawn</em><div class="sz"><img width="34" height="34" src="status-icons/redo_status_weakened.webp" alt=""><img width="128" height="128" src="status-icons/redo_status_weakened.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Cooling</b><span>cooling: cold black slag with frost, no flame</span><p>Skips its next turn and has 100% less Armor until then</p></div>
+ <div class="pair"><div class="cell"><em>Previous new</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_cooling.webp" alt=""><img width="128" height="128" src="status-icons/new_status_cooling.webp" alt=""></div></div>
+ <div class="cell"><em>Redrawn</em><div class="sz"><img width="34" height="34" src="status-icons/redo_status_cooling.webp" alt=""><img width="128" height="128" src="status-icons/redo_status_cooling.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Exposed</b><span>exposed: an opened crimson breastplate</span><p>Takes 15% more damage</p></div>
+ <div class="pair"><div class="cell"><em>Previous new</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_exposed.webp" alt=""><img width="128" height="128" src="status-icons/new_status_exposed.webp" alt=""></div></div>
+ <div class="cell"><em>Redrawn</em><div class="sz"><img width="34" height="34" src="status-icons/redo_status_exposed.webp" alt=""><img width="128" height="128" src="status-icons/redo_status_exposed.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Overreached</b><span>overreached: an overstretched golden fist</span><p>Takes 25% more damage until its next turn</p></div>
+ <div class="pair"><div class="cell"><em>Previous new</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_overreached.webp" alt=""><img width="128" height="128" src="status-icons/new_status_overreached.webp" alt=""></div></div>
+ <div class="cell"><em>Redrawn</em><div class="sz"><img width="34" height="34" src="status-icons/redo_status_overreached.webp" alt=""><img width="128" height="128" src="status-icons/redo_status_overreached.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Colour check</b><span>exposed, overreached, weakened together at 34 px</span></div>
+ <div class="pair"><div class="cell"><em>Previous new</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_exposed.webp" alt=""><img width="34" height="34" src="status-icons/new_status_overreached.webp" alt=""><img width="34" height="34" src="status-icons/new_status_weakened.webp" alt=""></div></div>
+ <div class="cell"><em>Redrawn</em><div class="sz"><img width="34" height="34" src="status-icons/redo_status_exposed.webp" alt=""><img width="34" height="34" src="status-icons/redo_status_overreached.webp" alt=""><img width="34" height="34" src="status-icons/redo_status_weakened.webp" alt=""></div></div></div>
+</div>
+<h1 style="margin-top:34px">Previous list</h1>
+<h2>Statuses (14)</h2>
+<div class="row">
+ <div class="nm"><b>Frozen</b><span>frozen (today: blizzard)</span><p>Skips its next turn. Fire damage thaws it at once</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_frozen.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_frozen.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_frozen.webp" alt=""><img width="128" height="128" src="status-icons/new_status_frozen.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Shaken</b><span>shaken (today: blinded)</span><p>Accuracy -10% (the toll still rings)</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_shaken.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_shaken.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_shaken.webp" alt=""><img width="128" height="128" src="status-icons/new_status_shaken.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Branded</b><span>branded (today: manaburn)</span><p>Ley Brand: MP costs are higher and each MP skill burns extra mana; a unit with no mana holds tainted mana it cannot spend. Mana burned or stolen from it hurts, Mana Steal and Void Strike hit it harder, and leftover tainted mana bursts when the Brand runs out</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_branded.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_branded.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_branded.webp" alt=""><img width="128" height="128" src="status-icons/new_status_branded.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Exposed</b><span>exposed (today: overextended)</span><p>Takes 15% more damage</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_exposed.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_exposed.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_exposed.webp" alt=""><img width="128" height="128" src="status-icons/new_status_exposed.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Sunder</b><span>sunder (today: guardian)</span><p>20% less Armor</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_sunder.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_sunder.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_sunder.webp" alt=""><img width="128" height="128" src="status-icons/new_status_sunder.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Weakened</b><span>weakened (today: overextended)</span><p>Deals less damage (strength depends on the source)</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_weakened.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_weakened.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_weakened.webp" alt=""><img width="128" height="128" src="status-icons/new_status_weakened.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Burning</b><span>burning (today: flame)</span><p>Takes fire damage at the start of each of its turns</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_burning.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_burning.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_burning.webp" alt=""><img width="128" height="128" src="status-icons/new_status_burning.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Fleet</b><span>fleet (today: boot)</span><p>Evasion +10% (on the move)</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_fleet.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_fleet.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_fleet.webp" alt=""><img width="128" height="128" src="status-icons/new_status_fleet.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Ash Surge</b><span>ash_surge (today: flame)</span><p>Deals 30% more damage (the Crown's ash)</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_ash_surge.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_ash_surge.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_ash_surge.webp" alt=""><img width="128" height="128" src="status-icons/new_status_ash_surge.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Shocked</b><span>shocked (today: bolt)</span><p>Struck by lightning and pushed back on the turn bar</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_shocked.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_shocked.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_shocked.webp" alt=""><img width="128" height="128" src="status-icons/new_status_shocked.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Red-hot</b><span>tempered_red_hot (today: flame)</span><p>Immune to Fire damage, takes 50% more Ice damage and 50% more damage from water skills. Changes stance on its turn</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_tempered_red_hot.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_tempered_red_hot.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_tempered_red_hot.webp" alt=""><img width="128" height="128" src="status-icons/new_status_tempered_red_hot.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Quenched</b><span>tempered_quenched (today: droplet)</span><p>50% less Armor. Fire damage makes it Red-hot again. Changes stance on its turn</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_tempered_quenched.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_tempered_quenched.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_tempered_quenched.webp" alt=""><img width="128" height="128" src="status-icons/new_status_tempered_quenched.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Overreached</b><span>overreached (today: overextended)</span><p>Takes 25% more damage until its next turn</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_overreached.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_overreached.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_overreached.webp" alt=""><img width="128" height="128" src="status-icons/new_status_overreached.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Cooling</b><span>cooling (today: flame)</span><p>Skips its next turn and has 100% less Armor until then</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_status_cooling.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_status_cooling.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_status_cooling.webp" alt=""><img width="128" height="128" src="status-icons/new_status_cooling.webp" alt=""></div></div></div>
+</div>
+<h2>Grounds (10)</h2>
+<div class="row">
+ <div class="nm"><b>Holy Ground</b><span>holy_ground (today: radiance)</span><p>Allies of the caster standing here are Hallowed: they heal at the start of their turn. Harms no one.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_holy_ground.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_holy_ground.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_holy_ground.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_holy_ground.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Quaking Ground</b><span>quaking_ground (today: tremor2)</span><p>Enemies standing here are Slowed (30% less Speed) while in the cell and take physical damage at the start of their turn.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_quaking_ground.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_quaking_ground.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_quaking_ground.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_quaking_ground.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Field of Shafts</b><span>field_of_shafts (today: arrows)</span><p>Enemies standing here are Slowed (30% less Speed) while in the cell and take physical damage at the start of their turn.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_field_of_shafts.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_field_of_shafts.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_field_of_shafts.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_field_of_shafts.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Root Field</b><span>root_field (today: roots)</span><p>Enemies standing here are Slowed (30% less Speed) while in the cell and take nature damage at the start of their turn. Fire burns the roots away.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_root_field.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_root_field.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_root_field.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_root_field.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Chill Ground</b><span>storm (today: blizzard)</span><p>Enemies standing here are Chilled (20% less Speed, 10% less Evasion) while in the cell and take ice damage at the start of their turn.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_storm.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_storm.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_storm.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_storm.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Hall of Silence</b><span>hall_of_silence (today: drainfield)</span><p>Enemies starting their turn here lose 15% of their max MP. Those at 0 MP are Silenced while in the cell and cannot use MP skills.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_hall_of_silence.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_hall_of_silence.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_hall_of_silence.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_hall_of_silence.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Lingering Rain</b><span>lingering_rain (today: arrows)</span><p>Enemies standing here are Bleeding: they take physical damage at the start of their turn.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_lingering_rain.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_lingering_rain.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_lingering_rain.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_lingering_rain.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Sanctified Flame</b><span>sanctified_flame (today: holy)</span><p>Enemies standing here are Seared: they take holy damage at the start of their turn. Made by Burning Ground and Holy Fire merging; stronger than either.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_sanctified_flame.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_sanctified_flame.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_sanctified_flame.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_sanctified_flame.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Holy Water</b><span>holy_water (today: radiance)</span><p>Allies of whoever made it, standing here, are Hallowed: they heal at the start of their turn. Harms no one and does not soak.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_holy_water.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_holy_water.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_holy_water.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_holy_water.webp" alt=""></div></div></div>
+</div>
+<div class="row">
+ <div class="nm"><b>Ice</b><span>ice_ground (today: blizzard)</span><p>Enemies standing here are Slowed (30% less Speed) while in the cell. Deals no damage.</p></div>
+ <div class="pair"><div class="cell"><em>Today</em><div class="sz"><img class="px" width="34" height="34" src="status-icons/old_ground_ice_ground.webp" alt=""><img class="px" width="128" height="128" src="status-icons/old_ground_ice_ground.webp" alt=""></div></div>
+ <div class="cell"><em>New</em><div class="sz"><img width="34" height="34" src="status-icons/new_ground_ice_ground.webp" alt=""><img width="128" height="128" src="status-icons/new_ground_ice_ground.webp" alt=""></div></div></div>
+</div>
+</body></html>

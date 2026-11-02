@@ -76,7 +76,6 @@ import drownedQueen from '../../data/bosses/drowned_queen.json';
 import hexTotem from '../../data/bosses/hex_totem.json';
 import lanternObject from '../../data/bosses/lantern.json';
 import hollowKing from '../../data/bosses/hollow_king.json';
-import hollowCrownLooks from '../../data/bosses/hollow-crown-looks.json';
 import snowfatherBoss from '../../data/bosses/snowfather.json';
 import hearthwardenBoss from '../../data/bosses/hearthwarden.json';
 import emberFirstHearthBoss from '../../data/bosses/ember_of_the_first_hearth.json';
@@ -85,6 +84,9 @@ import packMotherMob from '../../data/mobs/pack_mother.json';
 import ashbornHierarchMob from '../../data/mobs/ashborn_hierarch.json';
 import pyreMatriarchMob from '../../data/mobs/pyre_matriarch.json';
 import cinderWardenMob from '../../data/mobs/cinder_warden.json';
+import clanChiefBrannocMob from '../../data/mobs/clan_chief_brannoc.json';
+import frozenStandardBearerMob from '../../data/mobs/frozen_standard_bearer.json';
+import oathkeeperMob from '../../data/mobs/oathkeeper.json';
 import mobRoadThug from '../../data/mobs/road_thug.json';
 import mobMoorRaider from '../../data/mobs/moor_raider.json';
 import mobBanditCrossbowman from '../../data/mobs/bandit_crossbowman.json';
@@ -256,12 +258,10 @@ export const bosses: Record<string, CombatantDef> = {
   snowfather: buildDef(snowfatherBoss as unknown as CombatantData, formulas),
   hearthwarden: buildDef(hearthwardenBoss as unknown as CombatantData, formulas),
   ember_of_the_first_hearth: buildDef(emberFirstHearthBoss as unknown as CombatantData, formulas),
-  // Harita 3 kadrosu + yıldırım konseptleri: GEÇİCİ görünüm kayıtları (kit yok, inert, karşılaşmaya bağlı değil; /vfx idle sprite turu 2026-10-29)
-  ...Object.fromEntries(hollowCrownLooks.units.map((u) => [u.id, buildDef(u as unknown as CombatantData, formulas)])),
 };
 
 const mobData: CombatantData[] = [
-  forgeMasterGolemMob, packMotherMob, ashbornHierarchMob, pyreMatriarchMob, cinderWardenMob,
+  forgeMasterGolemMob, packMotherMob, ashbornHierarchMob, pyreMatriarchMob, cinderWardenMob, clanChiefBrannocMob, frozenStandardBearerMob, oathkeeperMob,
   clanVaulterMob, shardwalkerMob, hollowDelverMob, gloamstalkerMob, cinderleaperMob, slagcartGolemMob, thunderwrightMob, clanStormcallerMob, gloamEelMob, stormhornRamMob,
   snowWolfMob, clanAxemanMob, caveCrawlerMob, clanSkaldMob, pyreWitchMob, cinderKnightMob, forgeGolemMob, wightMob, rimeHoundMob, clanSlingerMob, rimeWitchMob, hollowWardenMob, moltenHoundMob,
   mobRoadThug,

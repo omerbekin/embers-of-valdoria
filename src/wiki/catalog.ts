@@ -21,7 +21,7 @@ import { OATHS, OATH_DATA, oathMinusText, oathPlusText } from '../campaign/oath'
 import { SURGE, surgeResetPrice, taintHpLossPct } from '../campaign/surge';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine, fillValues } from '../progression/item-text';
-import { ITEMS as ITEM_DATA, TIER_IDS, partBonusForm, type BonusForm, affixDef, gripOf, GRIP_NAME, implicitValues, isTwoHandMelee, levelRequirement, weaponPowerOf, WEAPON_TYPES, type Grip } from '../progression/items';
+import { ITEMS as ITEM_DATA, TIER_IDS, partBonusForm, type BonusForm, affixDef, gripOf, GRIP_NAME, implicitValues, isTwoHandMelee, levelRequirement, weaponPowerOf, weaponTypeDef, familyName, WEAPON_TYPES, type Grip } from '../progression/items';
 import { dropChances } from '../progression/drop';
 import { RARE } from '../progression/rare';
 import endlessJson from '../../data/endless.json';
@@ -1177,8 +1177,11 @@ export function battleRulesArticle(): WikiArticle {
       `Burrowers: an enemy that dives underground cannot be targeted and nothing reaches it, and a crack marks a hero's cell. It bursts out on its next turn. Move away and it comes up for nothing and loses its next action.`,
       `Charges: an enemy can mark a whole row and run along it on its next turn. Leave the row to avoid it. After the charge it is ${content.statuses['cooling']?.name ?? 'Cooling'}: ${content.statuses['cooling']?.text ?? ''}.`,
       `Highland and deep foes: a Cave Crawler always goes for the nearest hero and bites harder in Darkness. A Clan Axeman cannot be Chilled or Frozen and hits harder once below half HP. A Clan Skald gives Haste to allies in its row each turn and its Mock costs a hero the next action. A Hollow Warden takes less damage in Darkness: bring light.`,
-      `Cold touches: a Wight's hits and a Rime Witch's hold on Soaked heroes give Chilled but never freeze. A Frost Bite, Rime Bite or Ice Shot on a hero who is already Chilled does freeze.`,
-      `Fire foes: a Pyre Witch hits harder for each Burning cell on the field and can spread a Burning cell to the cells next to it. A Forge Golem leaves Burning Ground on its cell and the cells around it when it dies.`,
+      `Cold touches: a Wight's hits and a Rime Witch's hold on Soaked heroes give Chilled but never freeze. A Rime Bite or Ice Shot on a hero who is already Chilled does freeze. Frost Bite only sometimes gives Chilled; when it does, it freezes a hero who is already Chilled.`,
+      `Frozen Ranks: while the Frozen Standard-Bearer stands, his allies cannot be Chilled and take less damage with allies in their row. He can be Chilled and Frozen himself.`,
+      `Stone Oath: each ally that dies gives the Oathkeeper more armor and magic armor for the rest of the battle.`,
+      `War-chief: Clan Chief Brannoc gives Haste to allies in his row each turn, cannot be Chilled or Frozen, and hits harder once below half HP.`,
+      `Fire foes: a Pyre Witch hits harder for each Burning cell on the field, her Pyre Bolt leaves the target's cell Burning for a turn, and she can spread a Burning cell to the cells next to it. A Forge Golem leaves Burning Ground on its cell and the cells around it when it dies. A Forge-Master Golem drops a stronger fire on your side instead.`,
       `Hollow Crown leaders: when a Hollow ally dies, the Hollow King takes two actions on his next turn. Kingsmaul marks the target's cell, and Bring Down the Hall marks three: marked cells collapse at the start of the next Round and stay closed for the rest of the battle.`,
       `Forge-Heat and Quench: the Hearthwarden marks a row each Round and it burns the next Round. Quench puts out every Burning cell on the field and heals her for each one, so put the fire out first.`,
       `Everburning: the Ember of the First Hearth takes 3% less damage for each Burning cell on the field. Water from the Tidewater Urn puts cells out.`,
@@ -1203,7 +1206,7 @@ export function battleRulesArticle(): WikiArticle {
 
 /** Item'ler (madde 280; sayılar data/items.json'dan): yuvalar, nadirlik, silah aileleri, loot, primary uyarısı. */
 function itemsArticle(): WikiArticle {
-  const gear = { slots: itemsJson.slots.map((x) => ({ id: x.id, name: x.name })), rarities: itemsJson.rarities.map((x) => ({ id: x.id, name: x.name, color: x.color })), families: itemsJson.weaponFamilies.map((x) => ({ id: x.id, name: x.name })) };
+  const gear = { slots: itemsJson.slots.map((x) => ({ id: x.id, name: x.name })), rarities: itemsJson.rarities.map((x) => ({ id: x.id, name: x.name, color: x.color })), families: itemsJson.weaponFamilies.map((x) => ({ id: x.id, name: familyName(x.id) })) };
   return { ...itemsArticleBody(), gear };
 }
 
@@ -1314,9 +1317,9 @@ function affixArticle(): WikiArticle {
     p('Every item carries affixes in three tiers. A Common item has one C affix, Uncommon two C, Rare adds a B, Epic adds an A; a Legendary has C, C, B, A and its own effect. The same affix never appears twice on one item.'),
     list(
       ...TIER_IDS.map((t) => `${tierName[t]}: ${Object.values(ITEM_DATA.affixDefs).filter((a) => a.tier === t).length} affixes.`),
-      'An affix\'s range grows with item level only (the table shows the middle of the range at item level 10); a higher rarity rolls in the upper part of that range (see Items and gear). Every slot has its own identity (see the Slots column): weapons roll elemental and physical damage, crit damage, penetration and damage to elites; shields roll armor, shield power and magic armor; helms roll HP, MP and debuff resistance; body armor rolls armor, HP, magic armor and auras; gloves roll accuracy, crit chance, life leech and mana leech; boots roll speed, evasion and quick start; rings and trinkets roll HP and MP regeneration, healing and shield power, damage over time and summon power. Some general affixes (primary attribute, all attributes, recovery, swift ultimate, immunity, endurance) can appear anywhere. The first affix of an item comes from its base and can be outside the pool of its slot (Studded Gauntlets carry Armor).',
+      'An affix\'s range grows with item level only (the table shows the middle of the range at item level 10); a higher rarity rolls in the upper part of that range (see Items and gear). Every slot has its own identity (see the Slots column): weapons roll elemental and physical damage, accuracy, crit damage, penetration and attack rules; shields roll armor, block, shield power, resistances and guard effects; helms roll HP, MP, armor, resistances and mana effects; body armor rolls armor, HP, resistances, magic armor and auras; gloves roll accuracy, evasion, crit chance, leech and kill rewards; boots roll HP, evasion, speed and quick start; rings give lasting power (MP, regeneration, speed, attributes, damage); trinkets give conditional power (start of battle, kills, low HP, support). The general affixes (primary attribute, all attributes, recovery, swift ultimate, immunity, endurance) each appear on two or three slots. The first affix of an item comes from its base and can be outside the pool of its slot (a Trinket can carry Max MP this way). An item you already own keeps its affixes even if they are no longer in the pool of that slot.',
       'Debuff resistance is a small chance that a debuff does not land at all. Immunity names one debuff that cannot land in your first turns of each battle (resistance is not rolled then).',
-      'Elemental resistance lowers the damage you take from that element: hits, damage over time and burning ground alike.',
+      'Elemental resistance lowers the damage you take from that element: hits, damage over time and burning ground alike. The six resistances count as one option when an affix is rolled: first resistance comes up, then its element is chosen.',
       'The front row is the foremost row that still has a living enemy; every enemy behind it is in the back row. Your column is the line of cells in front of and behind you. Your basic attack is your first skill. Thorns hurts an enemy who hits you with a melee skill.',
       `More slot affixes: ${ROUND2_AFFIXES.filter((id) => ITEM_DATA.affixDefs[id]).map((id) => `${ITEM_DATA.affixDefs[id]!.name.toLowerCase()} (${(ITEM_DATA.affixDefs[id]!.slots ?? []).map((x) => itemsJson.slots.find((sl) => sl.id === x)?.name ?? x).join(', ')})`).join(', ')}. Armor shred, Mana shield and Overflow are explained under Item effects in battle.`,
     ),
@@ -1411,7 +1414,7 @@ function gripText(): string {
   const shields = ITEM_DATA.items.filter((d) => d.slot === 'offhand');
   const who = (fam: string | undefined) => (ITEM_DATA.weaponFamilies.find((f) => f.id === fam)?.classes ?? []).map((c) => content.classes[c]?.name ?? c).join(', ');
   const offFams = ITEM_DATA.weaponFamilies.filter((f) => f.offhand);
-  return `Grip and the Off-hand slot: every weapon is one-handed, two-handed, a bow or a charm. A hero with a one-handed weapon (or no weapon) can also fill the Off-hand slot with a shield (${shields.map((d) => d.name).join(', ')}; ${who(shields[0]?.family)}) or a second ${offFams.map((f) => f.name.toLowerCase().replace(/s$/, '')).join(' / ')} (${offFams.map((f) => who(f.id)).join(', ')}). Two-handed weapons, bows and charms need both hands: equipping one sends the off-hand item back to the bag (if the bag is full, make room first). An off-hand item adds its affixes like any other slot. Two-handed: ${names('two')}. Bows: ${names('bow')}. Charms: ${names('charm')}. Everything else is one-handed.`;
+  return `Grip and the Off-hand slot: every weapon is one-handed, two-handed, a bow or a charm. A hero with a one-handed weapon (or no weapon) can also fill the Off-hand slot with a shield (${shields.map((d) => d.name).join(', ')}; ${who(shields[0]?.family)}) or a second ${offFams.map((f) => weaponTypeDef(f.type)?.name.toLowerCase()).join(' / ')} (${offFams.map((f) => who(f.id)).join(', ')}). Two-handed weapons, bows and charms need both hands: equipping one sends the off-hand item back to the bag (if the bag is full, make room first). An off-hand item adds its affixes like any other slot. Two-handed: ${names('two')}. Bows: ${names('bow')}. Charms: ${names('charm')}. Everything else is one-handed.`;
 }
 
 /** Kalkan bloğu (Ömer 2026-10-18; 2026-10-31 Block Break + kalkanlı moblar): kural metni, sayılar veriden (kalkan tabanları, c_block, mob değerleri). */
@@ -1491,7 +1494,7 @@ function weaponPowerText(): string[] {
 
 function itemsArticleBody(): WikiArticle {
   const L = itemsJson.loot;
-  const fams = itemsJson.weaponFamilies.map((x) => `${x.name} (${x.classes.map((c) => content.classes[c]?.name ?? c).join(', ')})`).join('; ');
+  const fams = itemsJson.weaponFamilies.map((x) => `${familyName(x.id)} (${x.classes.map((c) => content.classes[c]?.name ?? c).join(', ')})`).join('; ');
   return article('items', 'Campaign', 'Items and gear', 'ui:gear', [
     p(`Heroes in the campaign and in Endless wear gear in ${itemsJson.slots.length} slots: ${itemsJson.slots.map((x) => x.name).join(', ')}. In the campaign the Trinket slot opens at Reedgate on The Drowned Reach, and Trinkets do not drop or sell on the first map; in Endless both Ring and Trinket are open from the start. Items carry affixes: stats, damage bonuses and small rules (see Item affixes). They never add flat damage: weapons multiply it through their power. Quick Battle and multiplayer do not use items (every hero counts as holding their class's starter weapon).`),
     list(

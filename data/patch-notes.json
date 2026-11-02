@@ -2,6 +2,25 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.9.10.14",
+      "date": "2026-11-02",
+      "groups": [
+        {
+          "heading": "Fixes",
+          "items": [
+            "Chest items now show as real item plates and fly to your bag on Take all. Risen Skeleton's Grave Strike has a clearer sound.",
+            "Vesper now has her own battle poses and holds a staff. Bone Slash's hit glow no longer shows stepped edges.",
+            "A unit killed by poison, burn or other damage over time no longer shows Skipped as it dies.",
+            "Gear affixes now fit their slot better: Ring and Trinket roll different stats, and resistances appear less often.",
+            "Battle: damage numbers now use the element's colour. The hero bar no longer repeats the primary stat.",
+            "Paladin's Divine Light now shows its name once at the start of the turn, even when it also deals damage from the skill tree.",
+            "Enemy hover: HP bar preview swings between min and max damage. Clearer tips in Codex, Endless and Gear; Gear fits 8 slots.",
+            "Plus 4 more changes."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.10.13",
       "date": "2026-11-02",
       "groups": [

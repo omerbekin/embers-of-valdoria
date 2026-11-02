@@ -196,3 +196,20 @@ export function damageIconKind(t: DamageTags): string | null {
   }
   return t.element ? (ELEMENT_ICON[t.element] ?? null) : null;
 }
+
+/** Zemin / durum hasarının element anahtarı (Ömer 2026-11-01, "Yalnız renk": sayı element renginde; renkler data/battle-layout.json > colors.element). */
+const GROUND_ELEMENT: Record<string, string> = { poison: 'nature', burning: 'fire', holy_fire: 'holy' };
+const STATUS_ELEMENT: Record<string, string> = { poison: 'nature', burn: 'fire', burning: 'fire' };
+
+/**
+ * Hasar rakamının rengi: elementin rengi (ikon da kelime de yok; şiddet yalnızca boyutla). Zemin / durum tiki kendi elementini alır
+ * (yanma = ateş, zehir = doğa), element yoksa fiziksel renk. `elementColors` = data/battle-layout.json > colors.element.
+ */
+export function damageNumberHex(t: DamageTags, elementColors: Record<string, string>): string {
+  const src = damageSourceKind(t);
+  let el: string | undefined;
+  if (src === 'ground' && t.ground) el = GROUND_ELEMENT[t.ground];
+  else if (src === 'status' && t.statusId) el = STATUS_ELEMENT[t.statusId];
+  el ??= t.element ?? 'physical';
+  return elementColors[el] ?? elementColors['physical'] ?? '#e8e2d0';
+}

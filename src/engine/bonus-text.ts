@@ -54,4 +54,4 @@ export type AdditiveKey = keyof typeof ADDITIVE_LABEL;
  * Ayrı çarpan veren pasif türleri (battle.ts > passiveDealtMult / passiveTakenMult / mireSpeedMult / effectiveStats, spec.ts > damageSpecFor):
  * açıklamaları "×" yazar (tests/bonus-text.test.ts kilitler; Codex "How bonuses combine" listesi).
  */
-export const MULT_PASSIVES = ['rage', 'longshot', 'bonusVsStatus', 'grudge', 'packTactics', 'sharesOfDead', 'bloodScent', 'boneWard', 'flockShield', 'closeRanks', 'mireBound', 'shell'] as const;
+export const MULT_PASSIVES = ['rage', 'longshot', 'bonusVsStatus', 'grudge', 'packTactics', 'sharesOfDead', 'bloodScent', 'boneWard', 'flockShield', 'closeRanks', 'frozenRanks', 'mireBound', 'shell'] as const;

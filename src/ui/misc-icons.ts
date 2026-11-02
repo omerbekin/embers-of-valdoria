@@ -11,10 +11,10 @@ export type MiscGroup = (typeof MISC_GROUPS)[number];
 
 /** Beklenen tüm ikonlar (kesim aracının hücre haritasıyla aynı; test ve Codex listesi). */
 export const MISC_ICONS: Record<MiscGroup, readonly string[]> = {
-  status: ['slow', 'haste', 'wound', 'stun', 'fortify', 'blessed', 'blinded', 'shrouded', 'dark_bond', 'omen', 'wither', 'jinxed', 'abyssal_fury', 'silence', 'overextended', 'staggered', 'ash_brand', 'anchored', 'doom', 'spellbound', 'saltbound', 'soaked', 'chilled', 'poisoned', 'searing', 'bleeding', 'hallowed', 'ley_thread', 'shredded'],
+  status: ['slow', 'haste', 'wound', 'stun', 'fortify', 'blessed', 'blinded', 'shrouded', 'dark_bond', 'omen', 'wither', 'jinxed', 'abyssal_fury', 'silence', 'overextended', 'staggered', 'ash_brand', 'anchored', 'doom', 'spellbound', 'saltbound', 'soaked', 'chilled', 'poisoned', 'searing', 'bleeding', 'hallowed', 'ley_thread', 'shredded', 'frozen', 'shaken', 'branded', 'sunder', 'fleet', 'burning', 'ash_surge', 'shocked', 'tempered_red_hot', 'tempered_quenched', 'cooling', 'weakened', 'exposed', 'overreached'],
   fx: ['crit', 'corpse', 'barrier', 'difficulty', 'chapter_strength'],
   element: ['fire', 'ice', 'holy', 'arcane', 'nature', 'dark'],
-  ground: ['poison', 'burning', 'holy_fire', 'flooded_planks', 'flooded'],
+  ground: ['poison', 'burning', 'holy_fire', 'flooded_planks', 'flooded', 'holy_ground', 'quaking_ground', 'field_of_shafts', 'root_field', 'storm', 'hall_of_silence', 'lingering_rain', 'sanctified_flame', 'holy_water', 'ice_ground'],
   relic: ['ember_of_valdren', 'pilgrims_bell', 'whetstone_of_ashford', 'banner_of_the_bridge', 'last_rites', 'iron_oath'],
   emblem: ['heal', 'feast'],
   class: ['warrior', 'defender', 'paladin', 'archer', 'cutthroat', 'antimage', 'mage', 'druid', 'undead', 'hexer', 'gambler'],

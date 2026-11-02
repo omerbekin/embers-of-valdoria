@@ -69,9 +69,16 @@ describe('yuva ve item dağılımı', () => {
     expect(itemSubtitle(itemDef('copper_ring')!)).toContain('Ring');
   });
 
-  it('trinket\'e izinli her affix ring\'e de izinli; her kademede havuz dolu', () => {
-    for (const id of Object.keys(ITEMS.affixDefs)) if (affixAllowed(id, 'trinket')) expect(affixAllowed(id, 'ring'), id).toBe(true);
-    for (const t of ['C', 'B', 'A'] as const) expect(tierPool(t, 'ring').sort()).toEqual(tierPool(t, 'trinket').sort());
+  it('Ring ve Trinket havuzları ayrı (Ömer 2026-11-01 T1, D1: Ring kalıcı, Trinket koşullu güç); her kademede havuz dolu', () => {
+    for (const t of ['C', 'B', 'A'] as const) {
+      expect(tierPool(t, 'ring').length, t).toBeGreaterThan(0);
+      expect(tierPool(t, 'trinket').length, t).toBeGreaterThan(0);
+      expect(tierPool(t, 'ring').sort(), t).not.toEqual(tierPool(t, 'trinket').sort());
+    }
+    expect(affixAllowed('b_speed', 'ring')).toBe(true);
+    expect(affixAllowed('b_speed', 'trinket')).toBe(false);
+    expect(affixAllowed('b_killheal', 'trinket')).toBe(true);
+    expect(affixAllowed('b_killheal', 'ring')).toBe(false);
     const r = rollItem(itemDef('copper_ring')!, new Rng(1), { rarity: 'epic', ilvl: 12 });
     expect(r).toBeTruthy();
   });

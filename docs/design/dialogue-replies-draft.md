@@ -1,6 +1,6 @@
 # Diyalog cevapları taslağı (Ömer görecek, oyuna henüz GİRMEDİ)
 
-Durum: 2026-10-31 Ömer aşağıdaki 7 taslağı aynen onayladı, `data/` içinde `"reply"` olarak var. Lore soruları açık kaldı (iki warden, başka kurtulan). Sonuncu tablodaki 6 seçeneğe de Ömer'in Form 7 onayıyla (2026-10-31) cevap eklendi, metinleri `data/` içinde.
+Durum: 2026-10-31 Ömer aşağıdaki 7 taslağı aynen onayladı, `data/` içinde `"reply"` olarak var. Lore sorularından başka kurtulan açık (Ömer 2026-11-01: açık kalsın); iki warden yaşıyor. Sonuncu tablodaki 6 seçeneğe de Ömer'in Form 7 onayıyla (2026-10-31) cevap eklendi, metinleri `data/` içinde.
 
 Görünüşü: oyuncu seçeneği seçer, NPC bu kısa cevabı söyler, altta tek "Continue" olur, ondan sonra sıradaki replik gelir. Beğeni sayısı ve hediye değişmez. `reply` olmayan seçeneklerde akış bugünkü gibidir.
 
@@ -14,7 +14,7 @@ Taranan hikâyeler (8, 3 harita): ash_on_the_wind, the_wardens_oath, dr_the_ferr
 | ash_on_the_wind | 1 | "Did anyone else get out?" | "'Praise to the Ash Lord. The embers will rise.' Over and over. They're coming this way, past the moor. What will you do?" | "Not that I saw. I ran, and all I could hear behind me was the singing." |
 | the_wardens_oath | 1 | "Every guardian has a weakness. Tell us what you've seen." | "And if you fall on that bridge, who carries word back to me?" | "What I have seen, I will tell to those who mean to come back." |
 | dr_the_ferryman | 1 | "Who else crosses this river, besides us?" | "The water, same as the rest of us. Thirty years I've poled this ferry, and the river never ran backwards till this spring. Now the tide comes up as far as Reedgate, and some nights it brings the drowned with it. They climb the bank and stand there in the reeds, looking east. Will you still go on?" | "Few enough, since the monks shut the road. You'd do better to ask what they're afraid of." |
-| dr_weir_warden | 1 | "What became of the two you pulled out?" | "Because something under the sea is reaching for what you carry. My gates have held the marsh for twenty years, and this spring they groan every night. If the weir goes, Eelwick goes under with it. Will you clear the gap, or only pass through it?" | "They are not your concern. Why the water's rising is." |
+| dr_weir_warden | 1 | "What became of the two you pulled out?" | "Because something under the sea is reaching for what you carry. My gates have held the marsh for twenty years, and this spring they groan every night. If the weir goes, Eelwick goes under with it. Will you clear the gap, or only pass through it?" | "Alive, and neither will go near the water again. You'd do better to ask why it's rising." |
 | hc_old_ketil | 1 | "Tell us about the hill clans." | "The clans, the wolves, and Morvane's lost legion in the ice. And under it all the dwarves, if they still live. Will you still go?" | "Their mountain, they call it. Strangers pay to walk it, in silver or in blood." |
 | hc_loremaster_dunwe | 1 | "Tell us of the Stone Oath." | "At the bottom is the First Hearth, and the first king who would not leave it. Whatever you do there, do it once. Will you?" | "Every dwarf of Kharduin swore it, and their names are cut into the hall walls. An oath cut there is never uncut." |
 
@@ -22,7 +22,7 @@ Nereden geldiği (yeni bilgi yok): Ketil cevabı Harita 3'teki klan yol parası 
 
 ## Lore soruları
 
-1. **dr_weir_warden, kurtarılan iki warden yaşıyor mu?** Metin yalnızca "I pulled two of them out of the water" diyor. Taslak bu yüzden soruyu geçiştiriyor. Yaşıyorlarsa daha doğrudan bir cevap olur: "Alive, and neither will go near the water again. You'd do better to ask why it's rising."
+1. **dr_weir_warden, kurtarılan iki warden yaşıyor mu?** Ömer 2026-11-01: yaşıyorlar; cevap yukarıdaki tabloda ve `data/` içinde güncellendi.
 2. **ash_on_the_wind, başka kurtulan var mı?** Metin söylemiyor. Taslak "Not that I saw" diyerek açık bırakıyor (kesin bilgi eklemiyor). Kesin bir şey istersen söyle.
 
 ## Cevap gerekmeyenler (soru var ama sonraki replik zaten cevaplıyor)

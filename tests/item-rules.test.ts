@@ -3,6 +3,11 @@ import { Rng } from '../src/engine';
 import { activeHeroes, applyBattle, debugTeleport, latestSave, memoryKV, newCampaign, normalizeState, pickHero, writeSave, type CampaignState } from '../src/campaign';
 import {
   ITEMS,
+  cannotUseText,
+  familyName,
+  itemKindName,
+  itemKindPlural,
+  itemSubtitle,
   canEquip,
   affixAllowed,
   affixLines,
@@ -59,7 +64,7 @@ describe('nadirlik = affix sayısı', () => {
     expect(ITEMS.rarities.some((r) => 'mult' in r)).toBe(false);
   });
 
-  it('yuva kimliği (Ömer 2026-10-13, itemfix): her stat 2-3 yuvada; genel A affix\'leri her yerde; zarlar havuz dışına çıkmaz', () => {
+  it('yuva kimliği (tam tablo affix-distribution.test.ts, Ömer 2026-11-01 D1 D3); zarlar havuz dışına çıkmaz', () => {
     const only = (id: string, slots: string[]) => {
       for (const s of SLOT_IDS) expect(affixAllowed(id, s), `${id} ${s}`).toBe(slots.includes(s));
     };
@@ -70,17 +75,13 @@ describe('nadirlik = affix sayısı', () => {
     only('a_keen', ['weapon', 'gloves']);
     only('c_acc', ['gloves', 'weapon']);
     only('c_eva', ['boots', 'gloves']);
-    only('c_shield', ['offhand', 'ring', 'trinket']);
+    only('c_shield', ['offhand', 'trinket']);
     only('c_block', ['offhand']);
     only('b_blockbreak', ['weapon', 'gloves']);
-    only('b_speed', ['boots', 'ring', 'trinket']);
-    only('b_initiative', ['boots', 'ring', 'trinket']);
-    for (const id of ['a_auradmg', 'a_auradef']) only(id, ['armor', 'offhand']);
-    for (const id of ['a_primary', 'a_allattr', 'a_recovery', 'a_ultcd', 'a_immunity', 'a_endure']) only(id, [...SLOT_IDS]);
-    // rastgele affix'ler en çok 3 yuvada (genel A affix'leri hariç); Ring + Trinket aynı havuzu paylaştığı için tek yuva sayılır (2026-11-01)
-    for (const [id, a] of Object.entries(ITEMS.affixDefs)) if (a.slots) expect(a.slots.filter((s) => s !== 'ring').length, id).toBeLessThanOrEqual(3);
-    // Trinket'e izin verilen her affix Ring'e de izinli
-    for (const [id, a] of Object.entries(ITEMS.affixDefs)) if (a.slots?.includes('trinket')) expect(a.slots, id).toContain('ring');
+    only('b_speed', ['boots', 'ring']);
+    only('b_initiative', ['boots', 'trinket']);
+    only('a_auradmg', ['armor']);
+    only('a_auradef', ['armor', 'offhand']);
     // her yuvada her kademe için seçenek var; zar hiç boş kalmaz
     for (const s of SLOT_IDS) for (const t of ['C', 'B', 'A'] as const) expect(tierPool(t, s).length, `${t} ${s}`).toBeGreaterThanOrEqual(t === 'C' ? 3 : 2);
     // 1000 zar: rastgele affix'ler yuva havuzunda (ana affix tabanın örtük statı, havuzdan muaf), aynı affix iki kez olmaz, Epic hep 4 affix
@@ -121,7 +122,7 @@ describe('nadirlik = affix sayısı', () => {
     d.rarities[2]!.tiers = ['C', 'B'];
     // yuvanın havuzunda ana affix dışında C kalmazsa zar boş kalırdı: yakalanır
     d.items.push({ id: 'f', name: 'F', slot: 'gloves', rarity: 'common', ilvl: 2, main: 'c_acc' });
-    d.affixDefs = { ...d.affixDefs, c_eva: { ...d.affixDefs.c_eva!, slots: ['boots'] }, c_mpregen: { ...d.affixDefs.c_mpregen!, slots: ['trinket'] } };
+    d.affixDefs = { ...d.affixDefs, c_eva: { ...d.affixDefs.c_eva!, slots: ['boots'] }, c_mpregen: { ...d.affixDefs.c_mpregen!, slots: ['trinket'] }, c_armor: { ...d.affixDefs.c_armor!, slots: ['armor'] }, c_dot: { ...d.affixDefs.c_dot!, slots: ['weapon'] } };
     const errs = validateItems(d).join(' | ');
     expect(errs).toMatch(/item f: its slot pool has no second C affix/);
     expect(errs).toMatch(/item a: needs a C main affix/);
@@ -284,6 +285,37 @@ describe('nadirliğe göre zar tabanı (Ömer 2026-10-11)', () => {
     const old = rolledAffixes({ id: d.id, rolls: { rarity: 'epic', affixes: [{ id: 'c_hp', q: 0 }] } })[0]!;
     expect(old.values[0]).toBe(partRange(p, d.ilvl)[0]);
     expect(old.ranges[0]![0]).toBe(old.values[0]);
+  });
+});
+
+// Ömer 2026-11-01: "Paladin cannot use Axes & Swords" eski, elle yazılmış aile adıydı; uyarı ve liste item'in tip adından gelir
+describe('item tip adları tek kaynaktan', () => {
+  const withFamily = ITEMS.items.filter((d) => d.family);
+
+  it('her item: uyarı, tooltip ile aynı tipi söyler (kullanamayan her sınıf için)', () => {
+    const plural: Record<string, string> = { Sword: 'Swords', Axe: 'Axes', Mace: 'Maces', Hammer: 'Hammers', Dagger: 'Daggers', Bow: 'Bows', Staff: 'Staves', Charm: 'Charms', Shield: 'Shields' };
+    expect(withFamily.length).toBeGreaterThan(20);
+    for (const d of withFamily) {
+      const kind = itemKindName(d)!;
+      expect(itemSubtitle(d), d.id).toContain(kind);
+      expect(itemKindPlural(d), d.id).toBe(plural[kind]);
+      for (const cls of ['warrior', 'paladin', 'mage', 'archer', 'cutthroat', 'gambler']) {
+        if (canEquip(cls, d) || d.usableBy) continue;
+        expect(cannotUseText(cls, d), d.id).toBe(`${cls} cannot use ${plural[kind]}`);
+      }
+    }
+  });
+
+  it('yalnız belirli sınıfın item\'i kimin kullanacağını söyler; tipsiz yuva yuvanın adını', () => {
+    const only = ITEMS.items.find((d) => d.usableBy)!;
+    const other = ['warrior', 'mage'].find((c) => !only.usableBy!.includes(c))!;
+    expect(cannotUseText(other, only, (c) => c.toUpperCase())).toBe(`${only.name} can only be used by ${only.usableBy!.map((c) => c.toUpperCase()).join(', ')}`);
+    expect(itemKindName(ITEMS.items.find((d) => d.slot === 'armor')!)).toBeUndefined();
+  });
+
+  it('aile adı veride yazmaz, item tiplerinden çıkar', () => {
+    for (const f of ITEMS.weaponFamilies) expect('name' in f, f.id).toBe(false);
+    expect(ITEMS.weaponFamilies.map((f) => familyName(f.id))).toEqual(['Axes & Swords', 'Maces & Shields', 'Hammers', 'Bows', 'Daggers', 'Staves', 'Charms']);
   });
 });
 

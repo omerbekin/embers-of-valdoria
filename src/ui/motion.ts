@@ -39,6 +39,7 @@ export function applyMotionCss(): void {
     root.style.setProperty('--m-modal-out', v(cfg.modal.outMs));
     root.style.setProperty('--m-modal-rise', `${r ? 0 : cfg.modal.rise}px`);
     root.style.setProperty('--m-panel', v(cfg.panel.ms));
+    root.style.setProperty('--m-panel-offset', `${r ? 0 : cfg.panel.offset}px`);
     root.style.setProperty('--m-tooltip', v(cfg.tooltip.inMs));
     root.style.setProperty('--m-card-hover', v(cfg.card.hoverMs));
     root.style.setProperty('--m-card-lift', `${r ? 0 : cfg.card.lift}px`);

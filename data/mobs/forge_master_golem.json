@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim B (Tamirci usta). Furnace Core iki kat: 4 tur, tik gücü x2 (dokunuşun core alanı).",
+  "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim B (Tamirci usta). Furnace Core iki kat: 4 tur, tik gücü x2 (dokunuşun core alanı); Ömer 2026-11-01: kahraman tahtasına, aynı hücre + komşuları.",
   "id": "forge_master_golem",
   "name": "Forge-Master Golem",
   "family": "bandits",
@@ -39,14 +39,15 @@
       "ground": "burning",
       "turns": 4,
       "scale": "str",
-      "power": 0.4
+      "power": 0.4,
+      "onFoeBoard": true
     }
   },
   "passive": {
     "id": "overheat",
     "name": "Overheat",
     "icon": "flame",
-    "text": "Every action fills its Heat bar. Fire hits fill it faster; ice hits and water skills drain it. When the bar is full it must Vent: it loses its next turn and has 0 Armor until then. When it dies, its cell and the cells around it burn for 4 turns.",
+    "text": "Every action fills its Heat bar. Fire hits fill it faster; ice hits and water skills drain it. When the bar is full it must Vent: it loses its next turn and has 0 Armor until then. When it dies, the same cell on your side and the cells around it burn for 4 turns.",
     "effect": {
       "type": "touchLabel"
     }

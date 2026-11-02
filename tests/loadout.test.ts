@@ -148,8 +148,8 @@ describe('sefer ekipmanı: torba, kuşanma, altın', () => {
     expect(s.inventory).toHaveLength(2);
     expect(s.roster.find((x) => x.id === h.id)!.equipment.boots).toBeNull();
     r = addItem(s, 'woodcutters_axe');
-    if (mage) expect(() => equipItem(r.state, mage.id, r.item.uid)).toThrow(/cannot use axes/);
-    if (antimage) expect(() => equipItem(r.state, antimage.id, r.item.uid)).toThrow(/cannot use axes/);
+    if (mage) expect(() => equipItem(r.state, mage.id, r.item.uid)).toThrow(/cannot use Axes/);
+    if (antimage) expect(() => equipItem(r.state, antimage.id, r.item.uid)).toThrow(/cannot use Axes/);
     if (warriorish) expect(equipItem(r.state, warriorish.id, r.item.uid).roster.find((x) => x.id === warriorish.id)!.equipment.weapon?.id).toBe('woodcutters_axe');
     expect(() => addItem(s, 'nope')).toThrow();
     expect(addGold(addGold({ ...s, gold: 0 }, 50), -80).gold).toBe(0);

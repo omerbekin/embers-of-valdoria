@@ -104,9 +104,25 @@ const glowTex = (c: VfxCtx, k: VfxKit): string =>
     return { c: d < 0.25 ? '#ffffff' : d < 0.55 ? '#e8e0f0' : '#c8b8e0', a: (1 - d) ** 1.4 };
   });
 
+/** Basamaksız ışıma: softTexture alfası 6 kademe + NEAREST olduğundan büyütülünce hedefin yanında basamaklı soluk daire görünüyordu (Bone Slash, Ömer 2026-11-01). */
+const smoothGlowTex = (c: VfxCtx, k: VfxKit): string => {
+  const key = 'v2undead:glowsmooth';
+  if (c.scene.textures.exists(key)) return key;
+  const tex = c.scene.textures.createCanvas(key, 128, 128);
+  if (!tex) return key;
+  const ctx = tex.getContext();
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  for (let i = 0; i <= 10; i++) g.addColorStop(i / 10, `rgba(232,224,240,${(1 - i / 10) ** 1.4})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  tex.refresh();
+  tex.setFilter(k.Phaser.Textures.FilterMode.LINEAR);
+  return key;
+};
+
 /** Bir noktada kısa ADD ışıması (varsayılan nekrotik mor). */
-function glowAt(c: VfxCtx, k: VfxKit, x: number, y: number, size: number, life: number, depth = k.DEPTH + 30, tint = 0xb36bff): Img {
-  const img = c.scene.add.image(x, y, glowTex(c, k)).setDisplaySize(size, size).setDepth(depth).setBlendMode(k.Phaser.BlendModes.ADD).setTint(tint);
+function glowAt(c: VfxCtx, k: VfxKit, x: number, y: number, size: number, life: number, depth = k.DEPTH + 30, tint = 0xb36bff, tex = glowTex(c, k)): Img {
+  const img = c.scene.add.image(x, y, tex).setDisplaySize(size, size).setDepth(depth).setBlendMode(k.Phaser.BlendModes.ADD).setTint(tint);
   c.scene.tweens.add({ targets: img, alpha: 0, scaleX: img.scaleX * 1.4, scaleY: img.scaleY * 1.4, duration: k.slow(life), ease: 'Quad.easeOut', onComplete: () => img.destroy() });
   return img;
 }
@@ -885,7 +901,7 @@ const boneslash: V2Vfx = async (c, k) => {
   const knock = (u: CombatantView, s = 1): void => {
     c.scene.tweens.add({ targets: u.container, x: u.container.x + dir * 14 * s, duration: k.slow(55), yoyo: true });
     const p = k.spot(u);
-    glowAt(c, k, p.x, p.y, 110 * s, 220, k.DEPTH + 42, 0xd9c8ff);
+    glowAt(c, k, p.x, p.y, 110 * s, 220, k.DEPTH + 42, 0xd9c8ff, smoothGlowTex(c, k));
   };
   await k.wait(c.scene, k.slow(sides.length ? 60 : 85));
   c.sfx('boneSlashHit');

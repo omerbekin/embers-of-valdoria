@@ -107,6 +107,7 @@
   "_affixes": "Affix tanımları (Ömer onayı 2026-10-11, items.md 1.3b). tier C/B/A; text: {0}/{1} = parça değerleri, {x} = zarlanan seçim, {primary} = sınıfın ana statı. parts[]: base + perIlvl x ilvl (x affixRules.power), step = yuvarlama adımı, ip = 1 birimin Item Points değeri (değer/fiyat/Equip best), to = motor eşlemesi (mod:<UnitModifiers alanı> toplanır, mult:<alan> 1 + toplam, fx:<ItemEffects alanı>, elem:<element|*>, attr:primary|all, res:<element> = element direnci (ItemEffects.elemResist), prog:recovery|gold|xp|woundSoft), scale = yüzde -> oran (0,01). fixed = zar ve seviye yok; floor = aşağı yuvarlanır; noRoll = zar yok; noPower = affixRules.power işlemez (iri adımlı: ana stat, tüm statlar, hız, Immunity). slots = yalnızca bu yuvalarda rastgele çekilir (yuva kimliği, Ömer 2026-10-13 itemfix: bkz. _itemfix; slots yoksa her yuvada). needs = Equip best'in sınıf uyumu ipucu (element:<x>, element:magic, mp, shield, dot, debuff, support, summon, melee = temel saldırısı yakın dövüş, ranged = yakın dövüş olmayan hasar skill'i var). affixRules.rollFloorByRarity (Ömer 2026-10-11): nadirliğe göre zarın aralıktaki alt sınırı (oran; tavan aynı): Common tüm aralık, Uncommon üst %75, Rare %62,5, Epic %50, Legendary %37,5. Yalnızca yeni zarlar. affixRules.classFit (Ömer 2026-10-11): rastgele affix çekilirken item kimin için zarlandıysa ona yarayan affix'ler (needs uyumu) `weight` kat ağırlıklı, yalnızca `tiers` kademelerinde (C).",
   "_itemfix": "Ömer 2026-10-13 (form itemfix): (1) YUVA KİMLİĞİ: her stat yalnızca 2-3 yuvada rastgele çıkar (affixDefs[].slots). Weapon = element/fiziksel hasar, kritik hasarı, delme, elit/boss hasarı (+ isabet, DoT, Keenness, Elemental, Potency, Summon); Off-hand kalkan = Armor, Shield power, Magic armor (+ HP regen, resist, auralar, Global defense, Max HP %, Support); Helm = HP, MP, debuff direnci (+ Armor, Magic armor, MP cost, Mana/Resource mastery); Armor = Armor, HP, Magic armor, auralar (+ HP regen, resist); Gloves = isabet, kritik şansı, can çalma (+ kaçınma, MP regen, Keenness, hasar, hız %); Boots = hız, kaçınma, Quick start (+ HP, MP, hız %); Trinket = HP/MP regen, şifa ve kalkan gücü, DoT, çağrı gücü (+ MP, MP cost, hız, Quick start, hasar, Elemental, Potency, Mana/Resource). Genel A affix'leri (Primary, All attributes, Recovery, Swift ultimate, Immunity, Endurance) her yuvada. Hançer ikinci elde silah havuzunu kullanır. Ana affix (main) tabanın örtük statıdır, havuzdan muaftır; Legendary'nin sabit affix'leri de muaf. Kalkanların ana affix'i Armor (main), yeni tabanlar Iron Buckler (Common), Kite Shield of the Stag (Rare), Warden's Pavise (Epic). (2) TEK ITEM TAVANI DOLDURMAZ: c_acc 1/0,17 -> 0,6/0,1 (adım 0,25), b_crit 2,4/0,4 -> 1,5/0,25, a_keen kritik 1,92/0,32 -> 1,2/0,2, b_speed 1/0,04 -> 0,7/0,03 (adım 0,25), b_mpcost 4,8/0,8 -> 3/0,5, a_recovery 3,84/0,64 -> 1,6/0,27: tavan artık 2-3 kaynakla dolar. (3) DEĞERLEME (yalnızca ip): c_shield ve c_dot 0,15 -> 0,2, a_allattr 1,25 -> 3, a_support 0,08 -> 0,12 (her parça), a_potency tur 1 -> 3. (7) DENGE: yuva kimliği boşa giden zarları azalttığı için item'ler Endless'ta güçlendi (ilk boss %58 -> %63); telafi için affixRules.power 1,5 -> 1,4 (tüm affix değerleri ~%7 düşük, Endless hedefleri yeniden bantta). (6) Sıfır aralık: adımlar küçüldü (c_mp 5 -> 2, c_hpregen 0,5 -> 0,25, c_mpregen 1 -> 0,25, a_primary 2 -> 1, a_allattr 2 -> 0,5, a_mana / a_resource MP regen 1 -> 0,5). Ayrıntı: docs/design/open-questions.md madde (itemfix).",
   "_affixBalance": "Ömer 2026-11-01 (karar B4): c_gold ve c_xp item'lerden kaldırıldı, eski kayıtta aynı kademe ve yuva havuzundan yeniden çekilir (items.ts > REMOVED_AFFIX_TIER); aşağıdaki sayıları tarihçedir. Ömer 2026-10-26 (form econ/main, 16 yeni affix; sayılar PROVİZYON, sim bekliyor): C c_lightning (c_fire kalıbı), c_res_fire/ice/holy/dark/nature/light (light = Lightning resistance, motor elementi lightning; holy ayrı kalır) (miğfer/zırh/kalkan; base 3 + 0,5/ilvl, ip 0,2; skill vuruşu + DoT/zemin tiki + Doom; toplam mevcut damageTaken sınırında, yeni tavan yok;), c_gold (takı; base 2 + 0,3/ilvl, ip 0,25; savaşa giren kahramanların toplamı savaş altınına çarpılır, sandık altını hariç; Endless altın kartına da), c_xp (miğfer/takı; base 3 + 0,5/ilvl, ip 0,15; yalnızca takanın savaş XP'si, Endless dalga XP'si dahil). B b_front / b_back (silah; b_tier kalıbı; ön sıra = hedef tarafının canlı en ön sırası, arka = gerisi), b_thorns (zırh/kalkan; base 6 + 1/ilvl, ip 0,12; yakın dövüş skill vuruşunda hedefe düşen hasarın oranı zırhsız döner), b_tier_def (zırh/miğfer; b_tier aynası), b_wound_soft (zırh/miğfer; base 6 + 1/ilvl, ip 0,1; yara başına maks can kaybı bu oran az, toplam en çok %100). A a_column (zırh/kalkan; a_auradef kalıbı, aynı şeritteki dostlar, taşıyan hariç), a_pierce (silah; base 15 + 1/ilvl, ip 0,1; temel saldırı = sınıfın ilk skill'i, isabet ettiği her düşmanın arkasındaki en yakın düşmana bu güç oranıyla ayrı vuruş), a_steady (eldiven/çizme; yığın başına base 1 + 0,17/ilvl, ip 1; Move olmayan her eylem 1 yığın, en çok 3, Move sıfırlar). Ömer 2026-10-12 (Endless item dengesi p4): a_primary ip 0,75 -> 2 (1 ana stat puanı gerçekte ~2 IP; Equip best ve fiyat artık doğru tartar), b_speed ip 2,75 -> 4 (hız çok değerli), a_speedpct perIlvl 0,32 -> 0,2 (yüksek seviyede hız % çok hızlı büyüyordu). Güç değişen tek affix a_speedpct; diğer ikisi yalnızca değerleme.",
+  "_affixDistribution": "Ömer 2026-11-01 (item-design-plan.md, D1 D2 D3 D4; sayılara dokunulmadı, değerler adım 4): affixDefs[].slots yuva kimliği tablosunu birebir uygular (D1). Her yuvada çıkan 6 A affix (a_primary, a_allattr, a_recovery, a_ultcd, a_immunity, a_endure) artık 2-3 yuvada (D3; 2026-10-13 'her yuvada' kararının yerine). affixRules.drawGroups: 6 element direnci havuzda tek girdi sayılır, önce 'direnç' çıkar sonra element seçilir (D2). classFit 2 kat ağırlık C'den B ve A'ya yayıldı, hiçbir affix kapanmaz (D4). Havuz dışı kalan affix'li eski item'ler affix'lerini korur, göç yok.",
   "affixRules": {
     "power": 1.6,
     "rollFloorByRarity": {
@@ -119,7 +120,19 @@
     "classFit": {
       "weight": 2,
       "tiers": [
-        "C"
+        "C",
+        "B",
+        "A"
+      ]
+    },
+    "drawGroups": {
+      "resistance": [
+        "c_res_fire",
+        "c_res_ice",
+        "c_res_holy",
+        "c_res_dark",
+        "c_res_nature",
+        "c_res_light"
       ]
     }
   },
@@ -129,9 +142,11 @@
       "name": "Armor",
       "text": "+{0} Armor",
       "slots": [
-        "armor",
         "offhand",
-        "helm"
+        "helm",
+        "armor",
+        "gloves",
+        "boots"
       ],
       "icon": "armor",
       "parts": [
@@ -357,9 +372,8 @@
       "text": "+{0} Max MP",
       "slots": [
         "helm",
-        "ring",
-        "trinket",
-        "boots"
+        "boots",
+        "ring"
       ],
       "needs": "mp",
       "icon": "mp",
@@ -378,10 +392,10 @@
       "name": "HP regen",
       "text": "+{0} HP per turn",
       "slots": [
-        "ring",
-        "trinket",
+        "offhand",
         "armor",
-        "offhand"
+        "boots",
+        "ring"
       ],
       "icon": "hpRegen",
       "parts": [
@@ -399,9 +413,8 @@
       "name": "MP regen",
       "text": "+{0} MP per turn",
       "slots": [
-        "ring",
-        "trinket",
-        "gloves"
+        "gloves",
+        "ring"
       ],
       "needs": "mp",
       "icon": "mpRegen",
@@ -421,7 +434,6 @@
       "text": "+{0}% Shield power",
       "slots": [
         "offhand",
-        "ring",
         "trinket"
       ],
       "desc": "Every shield you give, to yourself or an ally, is stronger.",
@@ -443,9 +455,9 @@
       "name": "DoT damage",
       "text": "+{0}% damage over time",
       "slots": [
-        "ring",
-        "trinket",
-        "weapon"
+        "weapon",
+        "gloves",
+        "trinket"
       ],
       "desc": "Your Burning and Wither deal more damage each turn.",
       "needs": "dot",
@@ -640,7 +652,8 @@
       "text": "+{0}% healing received",
       "slots": [
         "helm",
-        "armor"
+        "armor",
+        "trinket"
       ],
       "desc": "Heals you receive are stronger, life leech included. Your HP per turn is not.",
       "icon": "healReceived",
@@ -699,8 +712,7 @@
       "text": "+{0} Speed",
       "slots": [
         "boots",
-        "ring",
-        "trinket"
+        "ring"
       ],
       "icon": "spd",
       "parts": [
@@ -800,8 +812,7 @@
       "text": "{l0} MP cost",
       "slots": [
         "helm",
-        "ring",
-        "trinket"
+        "ring"
       ],
       "needs": "mp",
       "icon": "mpCost",
@@ -863,7 +874,6 @@
       "text": "Start battles {0}% into your turn",
       "slots": [
         "boots",
-        "ring",
         "trinket"
       ],
       "icon": "initiative",
@@ -883,9 +893,10 @@
       "name": "Debuff resistance",
       "text": "{0}% chance to resist a debuff",
       "slots": [
-        "helm",
         "offhand",
-        "armor"
+        "helm",
+        "armor",
+        "boots"
       ],
       "desc": "A debuff an enemy puts on you has this chance not to land at all.",
       "icon": "resist",
@@ -988,8 +999,9 @@
       "name": "Scarred hide",
       "text": "Each wound lowers your Max HP {0}% less",
       "slots": [
+        "helm",
         "armor",
-        "helm"
+        "boots"
       ],
       "desc": "Each wound takes this much less of your max HP while you wear it.",
       "icon": "wound",
@@ -1032,7 +1044,8 @@
       "text": "Start battles with a shield of {0}% Max HP",
       "slots": [
         "offhand",
-        "armor"
+        "armor",
+        "trinket"
       ],
       "desc": "Shield power does not change it.",
       "icon": "shield",
@@ -1053,7 +1066,6 @@
       "text": "+{0} MP when your skill kills an enemy",
       "slots": [
         "gloves",
-        "ring",
         "trinket"
       ],
       "needs": "mp",
@@ -1075,7 +1087,6 @@
       "text": "Heal {0}% of Max HP when your skill kills an enemy",
       "slots": [
         "armor",
-        "ring",
         "trinket"
       ],
       "icon": "killHeal",
@@ -1135,6 +1146,11 @@
       "tier": "A",
       "name": "Primary attribute",
       "text": "+{0} {primary}",
+      "slots": [
+        "weapon",
+        "helm",
+        "ring"
+      ],
       "desc": "Adds to the wearer's primary attribute (STR, DEX, INT or LUCK).",
       "icon": "primary",
       "parts": [
@@ -1152,6 +1168,11 @@
       "tier": "A",
       "name": "All attributes",
       "text": "+{0} STR, DEX, INT and LUCK",
+      "slots": [
+        "armor",
+        "boots",
+        "ring"
+      ],
       "icon": "allattr",
       "parts": [
         {
@@ -1171,8 +1192,7 @@
       "slots": [
         "weapon",
         "gloves",
-        "ring",
-        "trinket"
+        "ring"
       ],
       "desc": "All damage of your skills.",
       "icon": "damage",
@@ -1213,10 +1233,9 @@
       "name": "Speed %",
       "text": "{m0} Speed",
       "slots": [
-        "boots",
         "gloves",
-        "ring",
-        "trinket"
+        "boots",
+        "ring"
       ],
       "icon": "spd",
       "parts": [
@@ -1256,8 +1275,7 @@
       "name": "Battle aura",
       "text": "Allies beside you deal {m0} damage",
       "slots": [
-        "armor",
-        "offhand"
+        "armor"
       ],
       "icon": "auraDamage",
       "parts": [
@@ -1295,6 +1313,11 @@
       "tier": "A",
       "name": "Recovery",
       "text": "Recover {0}% HP and MP after each battle",
+      "slots": [
+        "armor",
+        "boots",
+        "trinket"
+      ],
       "desc": "Only the wearer recovers. Fallen heroes do not.",
       "icon": "recovery",
       "parts": [
@@ -1312,6 +1335,10 @@
       "tier": "A",
       "name": "Swift ultimate",
       "text": "Ultimate ready 1 turn sooner",
+      "slots": [
+        "helm",
+        "trinket"
+      ],
       "desc": "Your ultimate's starting cooldown is 1 turn shorter. Does not grow with item level.",
       "icon": "ultimate",
       "parts": [
@@ -1331,8 +1358,7 @@
       "text": "{m0} elemental damage",
       "slots": [
         "weapon",
-        "ring",
-        "trinket"
+        "ring"
       ],
       "desc": "Fire, ice, holy, arcane, lightning, nature and dark damage of your skills.",
       "needs": "element:magic",
@@ -1382,7 +1408,6 @@
       "text": "+{0}% damage over time, your debuffs last {1} turn longer",
       "slots": [
         "weapon",
-        "ring",
         "trinket"
       ],
       "desc": "Stuns do not last longer.",
@@ -1411,6 +1436,11 @@
       "tier": "A",
       "name": "Immunity",
       "text": "Immune to {x} for your first {0} turns",
+      "slots": [
+        "offhand",
+        "helm",
+        "trinket"
+      ],
       "desc": "One debuff, rolled on the item, cannot land on you in your first turns of each battle.",
       "icon": "immunity",
       "choices": [
@@ -1441,8 +1471,7 @@
       "text": "{m0} Max MP, +{1} MP per turn",
       "slots": [
         "helm",
-        "ring",
-        "trinket"
+        "ring"
       ],
       "needs": "mp",
       "icon": "mp",
@@ -1469,9 +1498,8 @@
       "name": "Support power",
       "text": "+{0}% healing and shields given",
       "slots": [
-        "ring",
-        "trinket",
-        "offhand"
+        "offhand",
+        "trinket"
       ],
       "needs": "support",
       "icon": "heal",
@@ -1499,9 +1527,8 @@
       "name": "Summon mastery",
       "text": "Your summons get {m0} HP and power",
       "slots": [
-        "ring",
-        "trinket",
-        "weapon"
+        "weapon",
+        "ring"
       ],
       "needs": "summon",
       "icon": "summon",
@@ -1522,8 +1549,7 @@
       "text": "{m0} Rage gained, +{1} MP per turn",
       "slots": [
         "helm",
-        "ring",
-        "trinket"
+        "ring"
       ],
       "icon": "rage",
       "parts": [
@@ -1548,6 +1574,11 @@
       "tier": "A",
       "name": "Endurance",
       "text": "+{0}% Lucky Escape chance; takes {l1} damage below 30% HP",
+      "slots": [
+        "armor",
+        "boots",
+        "trinket"
+      ],
       "desc": "Lucky Escape: once per battle, a lethal hit may miss you entirely.",
       "icon": "luck",
       "parts": [
@@ -1661,7 +1692,6 @@
       "slots": [
         "helm",
         "gloves",
-        "ring",
         "trinket"
       ],
       "desc": "Only skills with a cooldown; ultimates are not affected.",
@@ -1717,7 +1747,6 @@
     {
       "id": "axes",
       "type": "axe",
-      "name": "Axes & Swords",
       "classes": [
         "warrior"
       ],
@@ -1729,7 +1758,6 @@
     {
       "id": "maces",
       "type": "mace",
-      "name": "Maces & Shields",
       "classes": [
         "defender",
         "paladin",
@@ -1743,7 +1771,6 @@
     {
       "id": "hammers",
       "type": "hammer",
-      "name": "Hammers",
       "classes": [
         "defender",
         "paladin"
@@ -1756,7 +1783,6 @@
     {
       "id": "bows",
       "type": "bow",
-      "name": "Bows",
       "classes": [
         "archer"
       ],
@@ -1767,7 +1793,6 @@
     {
       "id": "daggers",
       "type": "dagger",
-      "name": "Daggers",
       "offhand": true,
       "classes": [
         "cutthroat",
@@ -1781,7 +1806,6 @@
     {
       "id": "staves",
       "type": "staff",
-      "name": "Staves",
       "classes": [
         "mage",
         "druid",
@@ -1798,7 +1822,6 @@
     {
       "id": "charms",
       "type": "charm",
-      "name": "Charms",
       "classes": [
         "gambler",
         "hexer"
@@ -1855,7 +1878,8 @@
       "name": "Bow"
     },
     "staff": {
-      "name": "Staff"
+      "name": "Staff",
+      "plural": "Staves"
     },
     "charm": {
       "name": "Charm"

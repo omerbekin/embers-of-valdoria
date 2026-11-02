@@ -5,7 +5,6 @@ import type { AiTrace } from '../src/engine/ai';
 import type { BattleMode, Combatant, Side, Teams } from '../src/engine';
 import { RULES_TESTS } from '../src/game/rules-test-battle';
 import { buildMechanics } from '../src/wiki/catalog';
-import looks from '../data/bosses/hollow-crown-looks.json';
 import enc from '../data/campaign/hollow-crown-encounters.json';
 
 const cells = (at: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => at[i] ?? '');
@@ -49,7 +48,7 @@ describe.each(MODES)('%s modu', (mode) => {
     expect(b.useSkill(m.uid, skill, h.uid).ok).toBe(true);
     expect(has(h, 'frozen')).toBe(true); // ikinci skill atışı
   };
-  it('Snow Wolf: Frost Bite skill atışı: Chilled, zaten Chilled ise Frozen', () => freezes('snow_wolf', 'frost_bite'));
+  // Frost Bite zarı (%35) ve donma: tests/map3-picks.test.ts
   it('Rime Hound: Rime Bite aynı kural', () => freezes('rime_hound', 'rime_bite'));
   it('Clan Slinger: Ice Shot aynı kural', () => freezes('clan_slinger', 'ice_shot'));
 
@@ -402,11 +401,6 @@ describe('içerik', () => {
       expect(JSON.stringify(m.skills.map((s) => content.skills[s]!.effects)), id).not.toMatch(/omen|dark_bond/);
       for (const s of m.skills) expect(classSkills.has(s), `${id} ${s}`).toBe(false);
     }
-  });
-  it('görünüm kayıtlarından 7 mob çıktı, elit / bosslar kaldı', () => {
-    const ids = looks.units.map((u) => u.id);
-    for (const id of SEVEN) expect(ids, id).not.toContain(id);
-    expect(ids).toContain('clan_chief_brannoc');
   });
   it('kendi çizimleri kullanılır; palet mobları taban çizimde', () => {
     for (const id of SEVEN) expect(content.mobs[id]!.spriteId, id).toBe(id);

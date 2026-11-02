@@ -18,7 +18,7 @@ Sahip: Item Design sohbeti. Form: https://claude.ai/artifact/4NRvdHvZtQZEesdVuYU
 - **T2:** Cursed item'ler 1.0 sonrasına kaldı.
 - **T3 (2026-11-01 güncel):** Yuvalar Ring ve Trinket, ayrı Kolye yuvası yok. Bugünkü item'lerin görselleri yeniden hazırlanıp Ring olarak düzenlenir, uygun olanlar Trinket'te kullanılır. Liste aşağıda, "Ring ve Trinket dağılımı". Eski kayıtlardaki takılar aynı kurala göre taşınır, hiçbir item kaybolmaz.
 - **T4:** Fazladan yuvanın gücü ölçülür, mob can ve hasarıyla telafi edilir.
-- **T5 (yeni kural onaylı):** Yuva baştan açık değil, seferde Harita 2'de Reedgate'te açılır. Harita 1'de Trinket düşmez, tüccarda da çıkmaz. Endless'ta yuva baştan açıktır.
+- **T5 (yeni kural onaylı):** Yuva baştan açık değil, seferde Harita 2'de Reedgate'te açılır. Harita 1'de Trinket düşmez, tüccarda da çıkmaz. Harita 2'de Reedgate'ten önce düşebilir, yuva açılana kadar çantada bekler (Ömer 2026-11-01). Endless'ta yuva baştan açıktır.
 
 ## Seçilen set bonusları (2026-11-01, yeni kural onaylı, sayılar örnek)
 
@@ -62,7 +62,7 @@ Sahip: Item Design sohbeti. Form: https://claude.ai/artifact/4NRvdHvZtQZEesdVuYU
 
 ## Affix dağılımı
 
-- **D1:** Yuva kimlikleri formdaki tablodaki gibi; tam tablo adım 3'te Ömer'in onayına gelir.
+- **D1:** Yuva kimlikleri formdaki tablodaki gibi; tam tablo Ömer onayıyla uygulandı (2026-11-01, `data/items.json > affixDefs`), Battle aura Off-hand'den çıktı. Çift el ağırlığı 2,5 kaldı (Ömer 2026-11-01).
 - **D2:** 6 element direnci tek çekiliş hakkı: önce "direnç" çıkar, sonra element seçilir.
 - **D3:** Her yuvada çıkan 6 A affix (Primary, All attributes, Recovery, Swift ultimate, Immunity, Endurance) 2-3 yuvaya iner. Ömer'in 2026-10-13 "her yuvada" kararının yerine geçer.
 - **D4:** Sınıfa uygun affix ağırlığı (2 kat) B ve A kademelerine de yayılır, hiçbir affix tamamen kapanmaz.

@@ -1,0 +1,63 @@
+/* Kasaba karti taslagi: yalniz yeni parcalar. Olculer oyun birimiyle: calc(N * var(--u)). */
+#mk-note { padding: 4px 10px; min-height: 0; font-size: 13.5px; }
+#mk-note div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.55; }
+#mk-note div.on { opacity: 1; }
+#mk-note div.on b { color: #f3d999; }
+@media (max-width: 900px) { #mk-note div:not(.on) { display: none; } #mk-note div { white-space: normal; } }
+
+.tc-town .sbc-card, #mk-stage .sbc-card.tc { border-top: 3px solid var(--g-ember); }
+#mk-stage .sbc-card.tc { width: max(min(calc(100% - 20px), 340px), calc(620 * var(--u))); }
+#mk-stage .sbc-card.tc.wide { width: max(min(calc(100% - 20px), 440px), calc(760 * var(--u))); }
+.tc .tc-first { margin: 0; font: max(12px, calc(19 * var(--u))) var(--g-body); color: var(--g-text); }
+.tc .tc-first b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); margin-right: 0.6em; }
+.tc .tc-hint { margin: 0; font: 400 max(12px, calc(20 * var(--u))) / 1.25 var(--g-body); color: var(--g-dim); }
+.tc .tc-flag { display: flex; align-items: center; gap: max(6px, calc(10 * var(--u))); padding: max(3px, calc(7 * var(--u))) max(7px, calc(12 * var(--u))); border-left: 2px solid var(--g-ember); background: rgba(224, 112, 42, 0.1); font: max(12px, calc(19 * var(--u))) var(--g-body); color: #ffd9a0; }
+.tc .tc-flag::before { content: ''; flex: none; width: max(5px, calc(8 * var(--u))); height: max(5px, calc(8 * var(--u))); transform: rotate(45deg); background: var(--g-ember); }
+
+/* A: hizmet plakalari */
+.tc-svc { display: flex; gap: max(5px, calc(10 * var(--u))); }
+.tc-svc > button { flex: 1 1 0; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: max(5px, calc(10 * var(--u))); padding: max(3px, calc(8 * var(--u))) max(6px, calc(12 * var(--u))); text-align: left; cursor: default; color: inherit;
+  background: rgba(8, 6, 4, 0.55); border: 1px solid var(--g-line2); position: relative; transition: border-color var(--m-card-hover), box-shadow var(--m-card-hover); }
+.tc-svc > button:hover, .tc-svc > button:focus-visible, .tc-svc > button.pin { outline: none; border-color: var(--g-gold); box-shadow: 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.25); }
+.tc-svc img { width: max(20px, calc(40 * var(--u))); height: max(20px, calc(40 * var(--u))); object-fit: contain; flex: none; }
+.tc-svc b { display: block; font: 600 max(10px, calc(17 * var(--u))) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: var(--g-gold); }
+.tc-svc i { display: block; font-style: normal; font: max(10px, calc(16 * var(--u))) var(--g-body); color: var(--g-dim); }
+
+/* B: kartpostal + kadro */
+.tc-post { position: relative; margin: calc(max(8px, calc(20 * var(--u))) * -1) calc(max(12px, calc(26 * var(--u))) * -1) 0; height: max(64px, calc(170 * var(--u))); background: #120c08 center 52% / cover no-repeat; border-bottom: 1px solid var(--g-line2); }
+.tc-post::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12, 9, 6, 0) 35%, rgba(14, 10, 7, 0.96) 100%); }
+.tc-post .over { position: absolute; left: max(12px, calc(26 * var(--u))); right: 12px; bottom: max(4px, calc(10 * var(--u))); z-index: 2; display: flex; align-items: flex-end; gap: max(8px, calc(14 * var(--u))); }
+.tc-post .over .tx { min-width: 0; }
+.tc-co { display: flex; flex-direction: column; gap: max(4px, calc(8 * var(--u))); }
+.tc-lab { display: block; font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); }
+.tc-hero { display: flex; align-items: center; gap: max(6px, calc(12 * var(--u))); min-height: max(30px, calc(52 * var(--u))); }
+.tc-hero .face { flex: none; width: max(28px, calc(52 * var(--u))); height: max(28px, calc(52 * var(--u))); background: #120c08 center / cover; border: 1px solid var(--g-line2); }
+.tc-hero .nm { flex: none; width: max(64px, calc(120 * var(--u))); font: 600 max(10px, calc(16 * var(--u))) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: var(--g-text); }
+.tc-hero .bar { flex: 1; min-width: 0; height: max(5px, calc(9 * var(--u))); background: rgba(8, 6, 4, 0.8); border: 1px solid var(--g-line2); }
+.tc-hero .bar i { display: block; height: 100%; background: linear-gradient(180deg, #6fae4a, #3f7a2b); }
+.tc-hero .bar.low i { background: linear-gradient(180deg, #d8663a, #a63a1c); }
+.tc-hero .m { flex: none; font: max(11px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); white-space: nowrap; }
+.tc-hero .m em { font-style: normal; color: #ffd9a0; }
+.tc-hero.inn { opacity: 0.95; }
+.tc-hero.inn .face { border-color: var(--g-ember); }
+
+/* C: kisa kart, rozetler */
+.tc-chips { display: flex; flex-wrap: wrap; gap: max(4px, calc(8 * var(--u))); }
+.tc-chips .sbc-tag { display: inline-flex; align-items: center; gap: max(4px, calc(7 * var(--u))); cursor: default; }
+.tc-chips .sbc-tag img { width: max(14px, calc(24 * var(--u))); height: max(14px, calc(24 * var(--u))); object-fit: contain; }
+.tc-chips .sbc-tag:hover, .tc-chips .sbc-tag:focus-visible, .tc-chips .sbc-tag.pin { outline: none; border-color: var(--g-gold); color: var(--g-gold); }
+.tc-c { display: flex; gap: max(10px, calc(20 * var(--u))); align-items: stretch; }
+.tc-c .l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: max(6px, calc(12 * var(--u))); }
+.tc-c .r { flex: none; display: flex; flex-direction: column; justify-content: flex-end; }
+
+/* kisa ekran */
+html.short .sbc-card.tc { padding: 8px 12px; gap: 5px; }
+html.short .tc-post { height: 46px; }
+html.short .tc .tc-hint, html.short .tc .tc-first, html.short .tc .tc-flag { font-size: 12px; }
+html.short .tc-hero { min-height: 28px; }
+html.short .tc-hero .face { width: 26px; height: 26px; }
+html.short .tc-svc > button { padding: 3px 7px; }
+html.short .tc-lore-ph { display: none; }
+html.short .sbc-card.tc .sbc-info { display: block; -webkit-line-clamp: 2; font-size: 12px; }
+html.short #mk-stage .sbc-card.tc { width: min(calc(100% - 20px), 470px); }
+html.short #mk-stage .sbc-card.tc.wide { width: min(calc(100% - 20px), 500px); }

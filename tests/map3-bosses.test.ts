@@ -422,6 +422,7 @@ describe('E6 The King Hears', () => {
       const cd = { ...k.cooldowns };
       b.debugNoise(b.noiseState()!.rule.goal);
       expect(b.combatants.length - n0).toBe(2);
+      expect(b.combatants.slice(n0).map((c) => c.defId)).toEqual(['hollow_warden', 'hollow_warden']); // kitli sınıf (Ömer c27)
       expect(k.cooldowns).toEqual(cd); // bedava: bekleme yok
     });
 
@@ -441,7 +442,7 @@ describe('E6 The King Hears', () => {
       expect(b.useSkill(k.uid, 'call_the_vault').ok).toBe(true);
       expect(b.combatants.length).toBe(n0 + 1);
       const name = content.skills['call_the_vault']!.callVault!.name;
-      expect(b.combatants.some((c) => c.displayName === name)).toBe(true);
+      expect(b.combatants.some((c) => c.displayName === name && c.defId === 'hollow_warden')).toBe(true);
     });
   }
 

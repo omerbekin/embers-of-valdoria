@@ -7552,6 +7552,668 @@
           "src": "defender-v2/two-handed.png"
         }
       }
+    },
+    "vesper_v2": {
+      "dir": "vesper-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "axes": {
+          "point": {
+            "angle": -20
+          }
+        },
+        "maces": {
+          "point": {
+            "angle": -20
+          }
+        },
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          },
+          "idle1": {
+            "dx": 6,
+            "dy": 42
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          },
+          "main:idle1": {
+            "angle": 60
+          },
+          "main:step1": {
+            "angle": 60
+          },
+          "main:guard1": {
+            "angle": 60
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 380,
+        "h": 405,
+        "footX": 190,
+        "footY": 399
+      },
+      "figure": {
+        "w": 291,
+        "h": 379
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 192,
+            "y": 138,
+            "angle": 15.78
+          },
+          "offhand": {
+            "x": 302,
+            "y": 179,
+            "angle": 10
+          },
+          "box": {
+            "x": 38,
+            "y": 20,
+            "w": 291,
+            "h": 379
+          },
+          "src": "vesper-v2/narrow.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 189,
+            "y": 143,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 313,
+            "y": 213,
+            "angle": 10
+          },
+          "box": {
+            "x": 48,
+            "y": 19,
+            "w": 281,
+            "h": 380
+          },
+          "src": "vesper-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 145,
+            "y": 136,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 348,
+            "y": 150,
+            "angle": 20
+          },
+          "box": {
+            "x": 38,
+            "y": 19,
+            "w": 336,
+            "h": 380
+          },
+          "src": "vesper-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 141,
+            "y": 24,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 322,
+            "y": 211,
+            "angle": 20
+          },
+          "box": {
+            "x": 52,
+            "y": 11,
+            "w": 293,
+            "h": 388
+          },
+          "src": "vesper-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 354,
+            "y": 101,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 339,
+            "y": 201,
+            "angle": -10
+          },
+          "box": {
+            "x": 60,
+            "y": 22,
+            "w": 314,
+            "h": 377
+          },
+          "src": "vesper-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 214,
+            "y": 143,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 307,
+            "y": 227,
+            "angle": 10
+          },
+          "box": {
+            "x": 49,
+            "y": 22,
+            "w": 273,
+            "h": 377
+          },
+          "src": "vesper-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 242,
+            "y": 155,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 277,
+            "y": 227,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 62,
+            "y": 20,
+            "w": 248,
+            "h": 379
+          },
+          "src": "vesper-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 98,
+            "y": 214,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 315,
+            "y": 228,
+            "angle": 90
+          },
+          "box": {
+            "x": 77,
+            "y": 28,
+            "w": 254,
+            "h": 371
+          },
+          "src": "vesper-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 167,
+            "y": 144,
+            "angle": 16.5
+          },
+          "offhand": {
+            "x": 348,
+            "y": 102,
+            "angle": 0
+          },
+          "box": {
+            "x": 39,
+            "y": 20,
+            "w": 331,
+            "h": 379
+          },
+          "src": "vesper-v2/narrow.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 150,
+            "y": 22,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 229,
+            "y": 142,
+            "angle": 20
+          },
+          "box": {
+            "x": 50,
+            "y": 6,
+            "w": 259,
+            "h": 393
+          },
+          "src": "vesper-v2/narrow.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 196,
+            "y": 148,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 209,
+            "y": 113,
+            "angle": 80
+          },
+          "box": {
+            "x": 38,
+            "y": 19,
+            "w": 269,
+            "h": 380
+          },
+          "src": "vesper-v2/narrow.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 127,
+            "y": 223,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 350,
+            "y": 75,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 38,
+            "y": 22,
+            "w": 332,
+            "h": 377
+          },
+          "src": "vesper-v2/narrow.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 211,
+            "y": 148,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 211,
+            "y": 148,
+            "angle": 40
+          },
+          "box": {
+            "x": 51,
+            "y": 22,
+            "w": 253,
+            "h": 377
+          },
+          "src": "vesper-v2/narrow.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 244,
+            "y": 171,
+            "angle": -25
+          },
+          "offhand": {
+            "x": 244,
+            "y": 171,
+            "angle": -25
+          },
+          "box": {
+            "x": 14,
+            "y": 27,
+            "w": 296,
+            "h": 372
+          },
+          "src": "vesper-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 264,
+            "y": 165,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 264,
+            "y": 165,
+            "angle": 125
+          },
+          "box": {
+            "x": 40,
+            "y": 27,
+            "w": 283,
+            "h": 372
+          },
+          "src": "vesper-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 224,
+            "y": 43,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 224,
+            "y": 43,
+            "angle": -10
+          },
+          "box": {
+            "x": 47,
+            "y": 18,
+            "w": 267,
+            "h": 381
+          },
+          "src": "vesper-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 309,
+            "y": 121,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 309,
+            "y": 121,
+            "angle": 90
+          },
+          "box": {
+            "x": 43,
+            "y": 25,
+            "w": 282,
+            "h": 374
+          },
+          "src": "vesper-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 235,
+            "y": 163,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 235,
+            "y": 163,
+            "angle": -100
+          },
+          "box": {
+            "x": 27,
+            "y": 23,
+            "w": 274,
+            "h": 376
+          },
+          "src": "vesper-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 276,
+            "y": 165,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 276,
+            "y": 165,
+            "angle": 90
+          },
+          "box": {
+            "x": 34,
+            "y": 22,
+            "w": 277,
+            "h": 377
+          },
+          "src": "vesper-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 276,
+            "y": 179,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 276,
+            "y": 179,
+            "angle": 90
+          },
+          "box": {
+            "x": 51,
+            "y": 25,
+            "w": 275,
+            "h": 374
+          },
+          "src": "vesper-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 223,
+            "y": 159,
+            "angle": 15
+          },
+          "offhand": {
+            "x": 223,
+            "y": 159,
+            "angle": 15
+          },
+          "box": {
+            "x": 52,
+            "y": 16,
+            "w": 256,
+            "h": 383
+          },
+          "src": "vesper-v2/narrow.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 105,
+            "y": 37,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 344,
+            "y": 106,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 38,
+            "y": 24,
+            "w": 321,
+            "h": 375
+          },
+          "src": "vesper-v2/narrow.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 209,
+            "y": 119,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 209,
+            "y": 119,
+            "angle": 150
+          },
+          "box": {
+            "x": 28,
+            "y": 30,
+            "w": 289,
+            "h": 369
+          },
+          "src": "vesper-v2/narrow.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 271,
+            "y": 202,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 353,
+            "y": 121,
+            "angle": 100
+          },
+          "box": {
+            "x": 12,
+            "y": 40,
+            "w": 358,
+            "h": 359
+          },
+          "src": "vesper-v2/two-handed.png"
+        }
+      }
     }
   },
   "weapons": {
@@ -8012,7 +8674,7 @@
     "pose_tester_9": "antimage_v2",
     "pose_tester_10": "gambler_v2",
     "pose_tester_11": "hexer_v2",
-    "vesper": "mage_v2"
+    "vesper": "vesper_v2"
   },
   "braceSkills": [],
   "gripArt": {

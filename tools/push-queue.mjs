@@ -1721,8 +1721,9 @@ function integrate(base, picked, gone, dry) {
     contrib.add(e.sid);
     cur = commitTree(r.tree, cur, rec.branch);
   }
-  // Birden çok dal golden değiştirdiyse çakışma olmasa da birleşmiş davranış kayıtları bayatlatır
-  return { commit: cur, owners, contrib, legacyFiles, changed: [...owners.keys()], regenGolden: goldenConflict || goldenBranches > 1 };
+  // Birden çok dal golden değiştirdiyse çakışma olmasa da birleşmiş davranış kayıtları bayatlatır; birden çok dal birleşiyorsa hiçbiri golden'a dokunmasa bile
+  // birleşik kod başka kayıtları (quick, comps) değiştirebilir (Ömer 2026-11-02, 0.9.10.13 öncesi 5 sohbetlik gönderim bu yüzden durdu): kayıtlar yeniden üretilir, fark rapora yazılır
+  return { commit: cur, owners, contrib, legacyFiles, changed: [...owners.keys()], regenGolden: goldenConflict || goldenBranches > 1 || contrib.size > 1 };
 }
 
 // Kırmızı dosyaların tek sahibi: her dosyanın tam bir sahibi yoksa belirsizdir (null)
@@ -2094,6 +2095,13 @@ const main = {
     warnNotes(args[0], notes);
     console.log(`Not satırı: ${Object.values(notes).flat().length}.`);
   }),
+  // Kırmızıyla durmuş hazır girdileri sohbetten yeni ready istemeden yeniden uygun yapar (kırmızının sebebi araçta ya da başka işte çözüldüyse; Koordinatör kullanır)
+  retry: () => withQueue((q) => {
+    let n = 0;
+    for (const e of Object.values(q.sessions)) if (e.ready && e.lastError) { delete e.lastError; n++; }
+    scheduleAutoShip(q);
+    console.log(`${n} girdi yeniden uygun.`);
+  }),
   // Ömer'in konuştuğu tek sohbet (Ömer 2026-11-01); off kaldırır, raporlar yine ilk gelen sohbete gider
   coordinator: () => withQueue((q) => {
     if (args[0] === 'off') { delete q.coordinator; console.log('Koordinatör kaldırıldı.'); return; }
@@ -2114,7 +2122,7 @@ const main = {
   push: async () => process.exit(background('push', args) ? 0 : await push(args[0], args.slice(1))),
   eod: async () => process.exit(background('eod', args) ? 0 : await push('eod', args)),
 }[cmd];
-if (!main) { console.error('Komut: status | mode | add | ready | notes | push | eod | doctor | drop | cutover | wt-open | wt-close | legacy-merged'); process.exit(1); }
+if (!main) { console.error('Komut: status | mode | add | ready | notes | retry | push | eod | doctor | drop | cutover | wt-open | wt-close | legacy-merged'); process.exit(1); }
 try { await main(); } catch (e) {
   // Hook'lar açık kalır: iç hata hiçbir araç çağrısını engellemez
   if (cmd.startsWith('hook-')) { try { appendFileSync(LOG, `[${new Date().toISOString()}] !! ${cmd} iç hata: ${firstLine(e)}\n`); } catch {} process.exit(0); }

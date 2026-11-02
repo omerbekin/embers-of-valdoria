@@ -107,3 +107,85 @@ html.reduced-motion .ec-hero, html.reduced-motion .ec-card { transition: none; }
 .ec-head-ico { width: max(30px, calc(52 * var(--u))); height: max(30px, calc(52 * var(--u))); object-fit: contain; flex: none; }
 .bs-tab-ico { width: max(20px, calc(30 * var(--u))); height: max(20px, calc(30 * var(--u))); object-fit: contain; }
 .ec-wtip{cursor:help}
+
+/* --- Kamp > Sharpen: "once kahraman" (Omer 2026-11-02, taslak public/mockups/sharpen.html A) --- */
+/* dar sekme seridi: baslik satirinda, kartlarin yerine */
+.ct { flex: none; display: flex; gap: calc(10 * var(--u)); align-items: center; order: 3; flex-basis: 100%; }
+.ct-b { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 calc(18 * var(--u)); font: 600 max(12px, calc(19 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-text); background: rgba(8,6,4,.7); border: 1px solid var(--g-line2); transition: border-color .2s, color .2s, box-shadow .2s; }
+.ct-b img { width: max(20px, calc(30 * var(--u))); height: max(20px, calc(30 * var(--u))); object-fit: contain; }
+.ct-b i { width: max(20px, calc(30 * var(--u))); text-align: center; font: 700 max(14px, calc(22 * var(--u))) var(--g-disp); color: var(--g-gold); }
+.ct-b:hover:not(:disabled) { border-color: rgba(243,217,153,.85); color: var(--g-gold); }
+.ct-b.on { border-color: var(--g-gold); color: var(--g-gold); box-shadow: inset 0 0 14px rgba(240,140,40,.25), 0 0 10px rgba(240,140,40,.25); }
+.ct-b:disabled { opacity: .45; cursor: default; }
+.ec-body.ec-sharp { overflow: hidden; }
+.ec-panel.sharp { height: 100%; max-height: calc(1000 * var(--u)); }
+.ec-panel.sharp .ec-body.ec-sharp { flex: 1 1 0; }
+.a-grid { flex: 1 1 0; min-height: 0; display: grid; gap: calc(16 * var(--u)) calc(20 * var(--u)); grid-template-columns: calc(360 * var(--u)) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "rail plates" "rail detail"; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(217,178,106,.4) transparent; padding-right: 6px; }
+.a-rail { grid-area: rail; display: flex; flex-direction: column; gap: calc(12 * var(--u)); min-width: 0; }
+.a-plates { grid-area: plates; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(12 * var(--u)) calc(16 * var(--u)); align-content: start; }
+.a-plates .gr-slot.gr-plate { width: 100%; text-align: left; cursor: pointer; }
+.a-plates .gr-slot.gr-plate.empty { cursor: default; }
+.a-detail { grid-area: detail; min-width: 0; }
+.ec-hero.sm { min-height: 44px; padding: 3px 6px 3px 3px; gap: 6px; cursor: pointer; }
+.ec-face.bag { background-size: 70%; background-position: 50% 50%; background-repeat: no-repeat; }
+.gp-why { color: #e0907a; font: max(11px, calc(16 * var(--u))) var(--g-body); }
+.ar { color: var(--g-gold); margin: 0 .25em; }
+.df { white-space: nowrap; } .df s { text-decoration: none; color: var(--g-dim); } .df b { color: #9fd88a !important; font: 700 1em var(--g-body) !important; }
+.gp-l2 .to, .dt .to { color: #9fd88a !important; }
+.dt { min-width: 0; display: flex; flex-direction: column; gap: calc(12 * var(--u)); padding: calc(16 * var(--u)) calc(18 * var(--u)); background: rgba(8,6,4,.5); border: 1px solid var(--g-line2); }
+.dt-head { display: flex; align-items: center; gap: calc(16 * var(--u)); min-width: 0; }
+.dt .gp-ico.big { flex: none; display: grid; place-items: center; width: max(48px, calc(120 * var(--u))); height: max(48px, calc(120 * var(--u))); background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--rc) 30%, transparent), rgba(8,6,4,.8) 78%); border: 1px solid color-mix(in srgb, var(--rc) 65%, transparent); }
+.dt .gp-ico.big img { width: 86%; height: 86%; object-fit: contain; }
+.dt-who { min-width: 0; }
+.dt-name { font: 600 max(14px, calc(30 * var(--u))) var(--g-disp); letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 52%, #fff); line-height: 1.15; }
+.dt-sub { font: max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); }
+.dt-il { display: block; font: 600 max(14px, calc(30 * var(--u))) var(--g-disp); letter-spacing: .06em; color: var(--g-dim); margin-top: calc(4 * var(--u)); white-space: nowrap; }
+.dt-il b { color: var(--g-gold); font-weight: 600; }
+.dt-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: calc(6 * var(--u)); }
+.dt-rows li { font: max(13px, calc(23 * var(--u)))/1.25 var(--g-body); color: #cdbf9c; padding-left: 1.1em; position: relative; }
+.dt-rows li::before { content: '\25C6'; position: absolute; left: 0; top: .2em; font-size: .6em; color: color-mix(in srgb, var(--rc) 52%, #fff); }
+.dt-rows li.same { color: #7f735f; }
+.dt-rows li.chg { color: var(--g-text); }
+.dt-rows li .tg { font: 600 .62em var(--g-disp); letter-spacing: .14em; color: #7f735f; text-transform: uppercase; margin-left: .6em; }
+.dt-rows li.chg .tg { color: #9fd88a; }
+.dt-foot { display: flex; flex-direction: column; gap: calc(6 * var(--u)); }
+.dt-foot:empty { display: none; }
+.dt-req, .dt-note { font: max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); }
+.dt-req .to { color: var(--g-gold) !important; }
+.dt-block { font: 600 max(12px, calc(20 * var(--u))) var(--g-body); color: #e0907a; }
+
+/* telefon (html.short): gercek px, dokunma >= 44; sayfa kaymaz, yalniz plaka alani kayar */
+html.short .ec-panel.sharp { width: 100%; padding: 8px 12px; gap: 6px; }
+html.short .ec-panel.sharp .ec-head { gap: 8px; flex-wrap: nowrap; }
+html.short .ec-panel.sharp .gr-title { font-size: 20px; }
+html.short .ct { flex: 1; min-width: 0; justify-content: center; gap: 6px; order: 0; flex-basis: auto; }
+html.short .ct-b { padding: 0 10px; font-size: 11px; letter-spacing: .06em; gap: 5px; }
+html.short .ct-b img { width: 20px; height: 20px; } html.short .ct-b i { width: 20px; font-size: 13px; }
+html.short .ec-sharp { gap: 6px; padding: 2px 4px 2px 0; }
+html.short .ec-sharp .ec-foot { padding-top: 6px; gap: 8px; flex-wrap: nowrap; }
+html.short .ec-sharp .ec-foot .ec-note { display: none; }
+html.short .ec-sharp .ec-foot .ec-why { flex: 1; min-width: 0; font-size: 11px; }
+html.short .ec-sharp .gr-btn { padding: 0 16px; font-size: 12px; }
+html.short .a-grid { grid-template-columns: 92px minmax(0, 1fr) 240px; grid-template-rows: minmax(0, 1fr); grid-template-areas: "rail plates detail"; gap: 8px; }
+html.short .a-plates, html.short .a-detail { overflow-y: auto; overflow-x: hidden; min-height: 0; scrollbar-width: thin; }
+html.short .a-grid { overflow: hidden; }
+html.short .a-rail { display: grid; grid-template-columns: repeat(2, 44px); grid-auto-rows: 44px; gap: 4px; align-content: start; }
+html.short .a-rail .ec-hero { padding: 0; min-height: 44px; height: 44px; overflow: hidden; }
+html.short .a-rail .ec-face { width: 100%; height: 100%; border: 0; }
+html.short .a-rail .ec-ht { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 1px; background: rgba(8,6,4,.78); }
+html.short .a-rail .ec-hn { font-size: 8px; text-align: center; letter-spacing: 0; }
+html.short .a-rail .ec-hm { display: none; }
+html.short .a-plates { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; align-content: start; }
+html.short .a-plates .gr-slot.gr-plate { min-height: 44px; }
+html.short .dt { padding: 8px 10px; gap: 6px; }
+html.short .dt .gp-ico.big { width: 44px; height: 44px; }
+html.short .dt-name { font-size: 12px; } html.short .dt-sub { font-size: 10px; } html.short .dt-il { font-size: 12px; margin-top: 0; }
+html.short .dt-rows { gap: 3px; } html.short .dt-rows li { font-size: 11px; }
+html.short .dt-req, html.short .dt-note, html.short .dt-block { font-size: 10px; }
+html.reduced-motion .ct-b { transition: none; }
+.gr-slot.gr-plate.dim { opacity: .5; }
+/* ayrinti paneli: genis ekranda sol baslik, sag satirlar (mockup dt.wide); telefonda ustuste */
+html:not(.short) .dt { flex-direction: row; align-items: center; gap: calc(28 * var(--u)); }
+html:not(.short) .dt .dt-l { flex: none; width: calc(560 * var(--u)); display: flex; flex-direction: column; gap: calc(6 * var(--u)); }
+html:not(.short) .dt .dt-r { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(10 * var(--u)); }
+html.short .dt .dt-r { display: flex; flex-direction: column; gap: 4px; }

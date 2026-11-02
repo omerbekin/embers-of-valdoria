@@ -1,12 +1,12 @@
 // Character sayfasının kahraman listesi: üstüne gelinen / seçili item'in her kahramana etkisi (saf; testli: tests/gear-hover.test.ts).
 // Ömer 2026-10-11 (g1): "Usable by" ayrı blok değil; kahraman kartının alt satırı ("Level 1 · 4/6 items") item üstündeyken o kahramanın
-// kullanabilirlik / fark özetine döner ("+4 ARM · -2 HP", "Can't use Axes"); item yokken eski satır geri gelir.
+// kullanabilirlik / fark özetine döner ("+4 ARM · -2 HP", "Can't use Swords"); item yokken eski satır geri gelir.
 import type { StatAlloc } from '../progression/levels';
 import type { TreeAlloc } from '../progression/skill-tree';
 import type { WoundCfg } from './wound-ui';
 import { FALLEN_GEAR_MSG, FALLEN_GEAR_SHORT } from '../progression/equip';
 import {
-  ITEMS,
+  itemKindPlural,
   affixDiff,
   canEquip,
   equipDiff,
@@ -107,7 +107,7 @@ export function idleHeroLine(h: HoverHero): HeroLine {
 const MAX_PARTS = 2;
 
 /**
- * Item'in kahramana etkisi. Sıra: kullanamaz ("Can't use Axes" / "Can't use") → Legendary sınırı → (seviye şartı: "Requires Level X" + fark) → stat paneli farkları (en büyük ikisi) →
+ * Item'in kahramana etkisi. Sıra: kullanamaz ("Can't use Swords" / "Can't use") → Legendary sınırı → (seviye şartı: "Requires Level X" + fark) → stat paneli farkları (en büyük ikisi) →
  * panelde görünmeyen affix farkı (element hasarı, delme...) → "No stat change". `inst` yoksa olağan satır.
  */
 export function heroItemLine(h: HoverHero, inst: ItemInstance | null | undefined): HeroLine {
@@ -115,8 +115,8 @@ export function heroItemLine(h: HoverHero, inst: ItemInstance | null | undefined
   const d = itemDef(inst.id);
   if (!d) return idleHeroLine(h);
   if (!canEquip(h.class, d)) {
-    const fam = d.family ? ITEMS.weaponFamilies.find((f) => f.id === d.family)?.name : undefined;
-    const text = fam ? `Can't use ${fam}` : "Can't use";
+    const kind = d.usableBy ? undefined : itemKindPlural(d);
+    const text = kind ? `Can't use ${kind}` : "Can't use";
     return { text, tone: 'no', parts: [{ text }] };
   }
   // Aynı item zaten takılı (yuvadaki örneğin kendisi): fark yok

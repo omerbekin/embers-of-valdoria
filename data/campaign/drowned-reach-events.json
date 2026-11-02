@@ -490,7 +490,7 @@
           "text": "\"Good. You think. Most who go down there only swing. Six of my wardens went to mend the broken weir last spring, and I pulled two of them out of the water. The wyrm holds the gap now, and every tide it grows fatter. Do you know why the water's rising?\"",
           "choices": [
             { "label": "\"Tell us. We'd rather know than guess.\"", "likes": true },
-            { "label": "\"What became of the two you pulled out?\"", "likes": true, "reply": "\"They are not your concern. Why the water's rising is.\"" },
+            { "label": "\"What became of the two you pulled out?\"", "likes": true, "reply": "\"Alive, and neither will go near the water again. You'd do better to ask why it's rising.\"" },
             { "label": "\"Water rises. That's what it does.\"" }
           ]
         },

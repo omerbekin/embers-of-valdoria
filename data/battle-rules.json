@@ -67,7 +67,7 @@
   },
   "noise": {
     "_not": "C5 Wake the Halls (maps-2-3.md; Harita 3 Deep Halls; karşılaşma alanı noise: anahtar). sides tarafının kritiği, reactions patlaması ve alan skill'i sayacı points kadar doldurur; goal dolunca sayaç sıfırlanır, unit kalkar (tercih edilen hücre doluysa en yakın boş), en çok maxRises kez. İleride Hollow King'in bedava çağrısı Battle.noiseFull kancasına bağlanacak (kit yazılmadı). Sayılar PROVİZYON.",
-    "wake_the_halls": { "name": "Noise", "text": "These halls are not empty, and they are listening. Critical hits, explosions and area skills of your party make Noise. When the counter fills, a Hollow Warden rises from the dark.", "goal": 10, "sides": ["party"], "points": { "crit": 1, "explosion": 2, "area": 1 }, "reactions": ["explosion", "shatter"], "maxRises": 2, "unit": { "class": "stonebound_warden", "name": "Hollow Warden", "slot": 1 } }
+    "wake_the_halls": { "name": "Noise", "text": "These halls are not empty, and they are listening. Critical hits, explosions and area skills of your party make Noise. When the counter fills, a Hollow Warden rises from the dark.", "goal": 10, "sides": ["party"], "points": { "crit": 1, "explosion": 2, "area": 1 }, "reactions": ["explosion", "shatter"], "maxRises": 2, "unit": { "class": "hollow_warden", "name": "Hollow Warden", "slot": 1 } }
   },
   "lanterns": {
     "_not": "M-F Lantern: oyuncu tarafında duran kırılabilir nesne (data/bosses/lantern.json, inert birim, düşman vurabilir, sıra almaz). Ayaktayken Darkness kısıtı kalkar. slot: tercih edilen hücre (doluysa en yakın açık); hpRatio: maks can = oyuncu tarafının ortalama maks canının oranı. Sayılar PROVİZYON."

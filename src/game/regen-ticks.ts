@@ -55,6 +55,58 @@ export function regenTickEvents(recent: readonly BattleEvent[], turnStart: Battl
   return out;
 }
 
+/** Can değiştirmeyen tur başı olayları: toplamı bozmaz, can satırı grubunu kesmez. Listede olmayan her olay (hasar, başka şifa, ölüm...) keser. */
+const SUM_TRANSPARENT = new Set<BattleEvent['type']>(['status', 'statusEnd', 'groundEnd', 'shield', 'manaBurn', 'mpRegen', 'passive']);
+
+/** Can çubuğunun yanındaki tek yazı: `amount` grubun toplamı, `bonus` grupta skill HoT'u var (ek bonus rengi). */
+export interface HpChip {
+  amount: number;
+  bonus: boolean;
+}
+
+export interface HpTickPlan {
+  /** Yüzen sayı yerine çubuk yanında gösterilecek skill HoT tikleri (günlüğe yazılmaya DEVAM eder; `regen` bayrağı almaz). */
+  hot: Set<BattleEvent>;
+  /** Her grubun SON olayı -> yazısı; gruptaki diğer olaylar yalnızca çubuğu günceller. */
+  chips: Map<BattleEvent, HpChip>;
+}
+
+/**
+ * Ömer 2026-11-01: skill'den gelen tur bazlı şifa (durum 'regen', olay cause 'regen') düz yenilenmenin üstüne eklenip can çubuğunun sağında
+ * tek "+N" olur, bonus renginde. Motor sırası: HoT tikleri -> (yalnız durum / MP / kalkan olayları) -> düz yenilenme, hepsi aynı turnStart
+ * çağrısında. Toplam yalnız ARALARINDA can değiştiren olay olmayan ardışık tikleri kapsar; kesilirse her grup kendi yazısını alır.
+ * Kritik HoT tiki gruba girmez (yüzen kritik sayı olarak kalır ve grubu keser): açık soru, Combat Design'a soruldu.
+ * `regen`: aynı turnStart için regenTickEvents sonucu.
+ */
+export function hpTickPlan(recent: readonly BattleEvent[], turnStart: BattleEvent & { type: 'turnStart' }, regen: ReadonlySet<BattleEvent>): HpTickPlan {
+  const plan: HpTickPlan = { hot: new Set(), chips: new Map() };
+  if (turnStart.extra) return plan;
+  const uid = turnStart.actor;
+  let from = recent.length - 1;
+  for (; from >= 0; from--) if (WINDOW_STOP.has(recent[from]!.type)) break;
+  let last: BattleEvent | null = null;
+  let chip: HpChip = { amount: 0, bonus: false };
+  const flush = () => {
+    if (last) plan.chips.set(last, chip);
+    last = null;
+    chip = { amount: 0, bonus: false };
+  };
+  for (let i = from + 1; i < recent.length; i++) {
+    const e = recent[i]!;
+    if (e.type === 'heal' && regen.has(e)) {
+      last = e;
+      chip.amount += e.amount;
+    } else if (e.type === 'heal' && e.target === uid && e.cause === 'regen' && !e.crit) {
+      plan.hot.add(e);
+      last = e;
+      chip.amount += e.amount;
+      chip.bonus = true;
+    } else if (!SUM_TRANSPARENT.has(e.type)) flush();
+  }
+  flush();
+  return plan;
+}
+
 /**
  * Tur arası olaylar (savaş günlüğü için; Ömer 2026-10-11 hata: Smoke Bomb satırına sıradaki birimin tur başı "+6" can yenilenmesi karıştı):
  * motor eylemin sonuçlarından hemen sonra, AYNI çağrıda sıradaki birimin (X) tur başını işler ve turnStart'ı en son yayar. turnStart gelince

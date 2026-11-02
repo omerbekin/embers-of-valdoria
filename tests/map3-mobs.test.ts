@@ -410,9 +410,9 @@ describe('YZ mekaniği kullanır', () => {
 describe('yerleşim', () => {
   const nodes = Object.entries(ENC).filter(([k]) => k !== '_not');
   const withMob = (id: string) => nodes.filter(([, n]) => n.units?.some((u) => u.class === id)).map(([k]) => k).sort();
-  it('melee moblar seçilen düğümlerde (bölgede 2 düğüm + 1 elit; Delver elitsiz)', () => {
-    expect(withMob('clan_vaulter')).toEqual(['hc_12', 'hc_4', 'hc_6']);
-    expect(withMob('shardwalker')).toEqual(['hc_16', 'hc_18', 'hc_19']);
+  it('melee moblar seçilen düğümlerde (bölgede 2 düğüm + 1 elit; Delver elitsiz; Vaulter ve Shardwalker elitsiz: hc_12 ve hc_18 kadrosu Ömer seçimi 2026-11-01)', () => {
+    expect(withMob('clan_vaulter')).toEqual(['hc_4', 'hc_6']);
+    expect(withMob('shardwalker')).toEqual(['hc_16', 'hc_19']);
     expect(withMob('hollow_delver')).toEqual(['hc_47', 'hc_53']);
     expect(withMob('gloamstalker')).toEqual(['hc_45', 'hc_50', 'hc_55']);
     expect(withMob('cinderleaper')).toEqual(['hc_59', 'hc_61', 'hc_64']);

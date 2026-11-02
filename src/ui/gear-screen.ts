@@ -24,7 +24,7 @@ import {
   affixContext,
   canEquip,
   itemDef,
-  ITEMS,
+  cannotUseText,
   primaryCheck,
   type AffixLine,
   type Equipment,
@@ -58,6 +58,7 @@ import { heroOath, oathMinusText, oathPlusText } from '../campaign/oath';
 import { heroQuests, questBonusLine } from '../campaign/quests';
 import { boonList, respecHeroTree, respecTreeBlocked, slotLocks } from '../campaign';
 import { bandTipHtml } from './band-tip';
+import { attachBandTip } from './band-tip-attach';
 import { tipOn, tipOff } from './tip-vis';
 import { canAddPoint } from '../progression/levels';
 import { createTreeTab, treeNodeIconUrl, treeNodeSheetTip } from './tree-tab';
@@ -641,10 +642,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     if (heroFallen(h)) return fallenWarn();
     heroId = targetHero;
     if (!canEquip(h.class, d)) {
-      const fam = ITEMS.weaponFamilies.find((f) => f.id === d.family);
       shakeUid = uid;
       uiSound('error');
-      flashText = `${className(h.class)} cannot use ${fam?.name ?? 'this weapon'}.`;
+      flashText = `${cannotUseText(h.class, d, className)}.`;
       renderAll();
       return;
     }
@@ -704,7 +704,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     ico.draggable = false;
     ico.src = k === 'hero' ? iconUrl(uiIconName('gear')) : statIconUrl('str');
     if (ico.src) b.prepend(ico);
-    b.title = k === 'hero' ? 'Hero (Tab)' : 'Sheet (Tab)';
+    attachBandTip(b, { title: k === 'hero' ? 'Hero' : 'Sheet', sub: 'Shortcut: Tab' });
     tabsBox.append(b);
     return b;
   });
@@ -800,7 +800,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   const badge = (n: number, cls: string, tip: string): HTMLElement => {
     const b = el('span', `gr-pt ${cls}`, String(n));
-    b.title = tip;
+    attachBandTip(b, { title: tip });
     return b;
   };
   function renderHead(): void {
@@ -827,7 +827,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     if (!ext?.hideGold) {
       gold.append(document.createTextNode(String(src.gold())));
       withUiIcon(gold, 'gold');
-      gold.title = 'Gold';
+      attachBandTip(gold, { title: 'Gold' });
     }
   }
   function renderMarks(): void {

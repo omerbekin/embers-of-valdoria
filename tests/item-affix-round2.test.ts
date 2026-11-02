@@ -32,14 +32,14 @@ describe('affix turu 2: veri', () => {
     for (const id of NEW) expect(affixDef(id), id).toBeDefined();
     expect(validateItems().filter((e) => NEW.some((id) => e.includes(`affix ${id}`)))).toEqual([]);
     const want: Record<string, { tier: string; slots: string[]; mid: number; needs?: string }> = {
-      c_healrecv: { tier: 'C', slots: ['helm', 'armor'], mid: 8 },
+      c_healrecv: { tier: 'C', slots: ['helm', 'armor', 'trinket'], mid: 8 },
       b_execute: { tier: 'B', slots: ['weapon', 'gloves'], mid: 12 },
-      b_startshield: { tier: 'B', slots: ['offhand', 'armor'], mid: 8 },
-      b_killmp: { tier: 'B', slots: ['gloves', 'ring', 'trinket'], mid: 4, needs: 'mp' },
-      b_killheal: { tier: 'B', slots: ['armor', 'ring', 'trinket'], mid: 4 },
+      b_startshield: { tier: 'B', slots: ['offhand', 'armor', 'trinket'], mid: 8 },
+      b_killmp: { tier: 'B', slots: ['gloves', 'trinket'], mid: 4, needs: 'mp' },
+      b_killheal: { tier: 'B', slots: ['armor', 'trinket'], mid: 4 },
       b_shred: { tier: 'B', slots: ['weapon'], mid: 5 },
       a_manashield: { tier: 'A', slots: ['armor', 'helm'], mid: 15, needs: 'mp' },
-      a_cdchance: { tier: 'A', slots: ['helm', 'gloves', 'ring', 'trinket'], mid: 12 },
+      a_cdchance: { tier: 'A', slots: ['helm', 'gloves', 'trinket'], mid: 12 },
       a_overkill: { tier: 'A', slots: ['weapon'], mid: 40 },
     };
     for (const [id, w] of Object.entries(want)) {

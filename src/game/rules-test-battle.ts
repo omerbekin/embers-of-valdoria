@@ -188,7 +188,7 @@ export function bossTestBattleData(seed: number, mode: BattleMode, kind: BossTes
   };
 }
 
-export type TouchTestKind = 'golem' | 'snowfather' | 'pack' | 'hierarch' | 'ember' | 'king' | 'matriarch' | 'warden' | 'hearthwarden';
+export type TouchTestKind = 'golem' | 'snowfather' | 'pack' | 'hierarch' | 'ember' | 'king' | 'matriarch' | 'warden' | 'hearthwarden' | 'brannoc' | 'bearer' | 'oathkeeper';
 export const TOUCH_TESTS: ReadonlyArray<{ kind: TouchTestKind; label: string; hint: string }> = [
   { kind: 'golem', label: 'Overheat (Golem)', hint: 'Forge-Master Golem: every action fills the Heat bar, fire fills it faster, ice and water drain it. Full bar: Vent, it loses a turn with 0 Armor. Units tab has Heat +2' },
   { kind: 'snowfather', label: 'Thundersnow', hint: 'The Snowfather: use Set HP below 50%. Each Round a lane is marked and struck the next Round. Whiteout darkens the board; a bolt lights it' },
@@ -198,6 +198,9 @@ export const TOUCH_TESTS: ReadonlyArray<{ kind: TouchTestKind; label: string; hi
   { kind: 'matriarch', label: 'Greater Kindling', hint: 'The Pyre Matriarch: Stoke marks 2x2 cells that burn, Spread the Flame widens them. She deals 5% more damage for each Burning cell on the field' },
   { kind: 'warden', label: 'Cinder Warden', hint: 'The Cinder Warden: Tempering swaps stance each turn. Hold the Gate draws attacks. Slag Wall marks a lane that burns' },
   { kind: 'hearthwarden', label: 'Forge-Heat + Quench', hint: 'The Hearthwarden: a row is marked each Round and burns the next. Quench puts out every Burning cell and heals her for each. Temper the Crown burns your whole side' },
+  { kind: 'brannoc', label: 'Clan Chief Brannoc', hint: 'Clan Chief Brannoc with a Skald and 2 Axemen: his row gains Haste each turn, Rally the Clan hastes a row, Skullsplitter gives Sunder. He cannot be Chilled or Frozen' },
+  { kind: 'bearer', label: 'Frozen Ranks', hint: 'The Frozen Standard-Bearer: while he stands, his allies cannot be Chilled and take less damage in a full row. He can be Chilled and Frozen himself. Kill him and the rest lose it' },
+  { kind: 'oathkeeper', label: 'Stone Oath', hint: 'The Oathkeeper: each ally that dies gives him +6 armor and +6 magic armor for the rest of the battle. Verdict gives Sunder' },
   { kind: 'king', label: 'The King Hears', hint: 'The Hollow King with Noise on: each fill raises a Warden and the King calls one more for free. Units tab has Noise +5' },
 ];
 
@@ -213,6 +216,9 @@ export function touchTestBattleData(seed: number, mode: BattleMode, kind: TouchT
     ember: { at: { 1: 'ember_of_the_first_hearth' }, units: { 1: boss('ember_of_the_first_hearth', 3) }, rules: { device: 'tidewater_urn' } },
     matriarch: { at: { 7: 'pyre_matriarch', 6: 'ember_acolyte', 8: 'ember_acolyte', 1: 'ash_hound' }, units: { 7: { tier: 'elite', displayName: 'The Pyre Matriarch' } }, rules: { condition: 'darkness' } },
     warden: { at: { 1: 'cinder_warden', 0: 'cinder_knight', 2: 'cinder_knight', 7: 'pyre_witch' }, units: { 1: { tier: 'elite', displayName: 'The Cinder Warden' } }, rules: { condition: 'heat' } },
+    brannoc: { at: { 1: 'clan_chief_brannoc', 0: 'clan_axeman', 2: 'clan_axeman', 7: 'clan_skald' }, units: { 1: { tier: 'elite', displayName: 'Clan Chief Brannoc' } } },
+    bearer: { at: { 1: 'frozen_standard_bearer', 0: 'morvane_halberdier', 2: 'morvane_halberdier', 7: 'bandit_crossbowman' }, units: { 1: { tier: 'elite', displayName: 'The Frozen Standard-Bearer' }, 0: { displayName: 'Frozen Halberdier' }, 2: { displayName: 'Frozen Halberdier' }, 7: { displayName: 'Frozen Crossbowman' } }, rules: { condition: 'blizzard' } },
+    oathkeeper: { at: { 1: 'oathkeeper', 0: 'stonebound_warden', 2: 'stonebound_warden', 7: 'deep_runecaller' }, units: { 1: { tier: 'elite', displayName: 'The Oathkeeper' } } },
     hearthwarden: { at: { 4: 'hearthwarden', 0: 'forge_golem', 2: 'forge_golem' }, units: { 4: boss('hearthwarden', 1.65) } },
     king: { at: { 4: 'hollow_king', 0: 'stonebound_warden', 2: 'stonebound_warden', 7: 'deep_runecaller' }, units: { 4: boss('hollow_king', 2.4), 0: { displayName: 'Hollow Warden' }, 2: { displayName: 'Hollow Warden' }, 7: { displayName: 'Hollow Runecaller' } }, rules: { condition: 'darkness', noise: 'wake_the_halls' } },
   };

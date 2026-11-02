@@ -271,7 +271,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'blindHunger':
       return `Always goes for the nearest hero. In Darkness it deals ${pct(e.darkBonus)} more damage.`;
     case 'highlandFury':
-      return `Immune to Chilled and Frozen. Below ${pct(e.below)} HP it deals ${pct(e.bonus)} more damage.`;
+      return `Immune to Chilled and Frozen. Below ${pct(e.below)} HP it deals ${pct(e.bonus)} more damage.${e.chant ? ` At the start of its turn, allies in its row gain ${cap(e.chant.status)} for ${turnsText(e.chant.turns)}.` : ''}`;
     case 'warChant':
       return `At the start of its turn, allies in its row gain ${cap(e.status)} for ${turnsText(e.turns)}.`;
     case 'kindling':
@@ -282,6 +282,10 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return 'When a Hollow ally dies, this unit takes two actions on its next turn.';
     case 'shepherdOfAsh':
       return `While an Ashborn ally lives, it takes ${pct(1 - e.takenMult)} less damage.`;
+    case 'frozenRanks':
+      return `While it stands, all allies take ${lessText(e.perAlly)} damage with one other living ally in their row (${lessText(e.perAlly * 2)} with a full row) and cannot be ${e.immune.map(cap).join(' or ')}. It shares the cover, but it can be ${e.immune.map(cap).join(' or ')} and Frozen itself.`;
+    case 'stoneOath':
+      return `Whenever an ally dies (not a summon), it permanently gains +${e.armor} armor and +${e.magicArmor} magic armor.`;
     case 'furnaceCore':
       return `When it dies, its cell and the cells around it become ${groundName(e.ground)} for ${turnsText(e.turns)}.`;
     case 'graveCold':
@@ -823,6 +827,8 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       return fixed('Armor per turn', `+${e.armor} (max +${e.max})`);
     case 'deepHoard':
       return num('Armor at full MP', Math.round(stats.mp * e.mpRatio), 'shield');
+    case 'stoneOath':
+      return fixed('Armor per death', `+${e.armor}`);
     case 'wardEtcher':
       return fixed('Shield per MP', `x${e.perMp}`);
     case 'mireBound':

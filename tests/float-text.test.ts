@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import layout from '../data/battle-layout.json';
-import { ELEMENT_ICON, FLOAT_SERIF, damageIconKind, damageSourceKind, floatStyle, floatTimes, lighten, placeFloat, placeFloatClear, floatRiseAt, rowLayout } from '../src/game/float-text';
+import { ELEMENT_ICON, FLOAT_SERIF, damageIconKind, damageNumberHex, damageSourceKind, floatStyle, floatTimes, lighten, placeFloat, placeFloatClear, floatRiseAt, rowLayout } from '../src/game/float-text';
 import { isIconKind } from '../src/ui/icon-kinds';
 
 describe('yüzen yazı stili', () => {
@@ -124,5 +124,20 @@ describe('çakışmasız yüzen yazı yığınlaması', () => {
       for (const l of live) expect(overlapsEver({ offset: off, px: 52, age: 0 }, l)).toBe(false);
       live.push({ offset: off, px: 52, age: 0 });
     }
+  });
+});
+
+describe('hasar rakamı rengi (Yalnız renk, 2026-11-01)', () => {
+  const el = { physical: '#e8e2d0', fire: '#ff7a1a', ice: '#8fd8ff', nature: '#7ed957', holy: '#fff0a0' };
+  it('element rengi; element yoksa fiziksel', () => {
+    expect(damageNumberHex({ element: 'ice' }, el)).toBe('#8fd8ff');
+    expect(damageNumberHex({}, el)).toBe('#e8e2d0');
+    expect(damageNumberHex({ element: 'unknown' }, el)).toBe('#e8e2d0');
+  });
+  it('zemin / durum tiki kendi elementini alır', () => {
+    expect(damageNumberHex({ origin: 'ground', ground: 'burning', element: 'fire' }, el)).toBe('#ff7a1a');
+    expect(damageNumberHex({ origin: 'ground', ground: 'poison' }, el)).toBe('#7ed957');
+    expect(damageNumberHex({ origin: 'status', statusId: 'burn' }, el)).toBe('#ff7a1a');
+    expect(damageNumberHex({ origin: 'status', statusId: 'wound' }, el)).toBe('#e8e2d0');
   });
 });

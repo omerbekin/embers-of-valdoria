@@ -13,7 +13,11 @@ import { stashLoot, type CampaignState } from '../campaign';
 import { instanceColor, instanceRarity, rarityIndex, type ItemInstance } from '../progression';
 import { chestClaim, chestKey, chestPlan, ChestFlow, CHEST_TIMING } from './chest-flow';
 import { iconUrl } from './dom-icons';
+import { attachItemInteractions, type ItemInteractions } from './item-drag';
+import { itemPlate } from './character-panel';
 import { itemTipNodes } from './item-tip';
+import { clientToLocal } from './formation-board-rules';
+import { MOTION } from './motion';
 import { lootItems } from './loot-screen';
 import { reducedMotion } from './motion-pref';
 import { hasUiImage, uiIconName } from './ui-icons';
@@ -21,6 +25,11 @@ import { uiSound, worldSound } from './ui-sound';
 
 const EASE = 'cubic-bezier(0.33, 1, 0.68, 1)';
 const SESSION_KEY = 'eov.chestPlayed';
+/** "Take all" uçuşu: toplam ~0.7 sn (item başına FLY_MS, aralarında en çok FLY_GAP_MS; toplam FLY_TOTAL_MS'yi geçmez). Eğri data/ui-motion.json > ease.css. */
+const FLY_MS = 460;
+const FLY_GAP_MS = 90;
+const FLY_TOTAL_MS = 760;
+const FLY_EASE = MOTION.ease.css;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -101,7 +110,7 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
   const ov = el('div', 'co-ov');
   ov.setAttribute('role', 'dialog');
   ov.setAttribute('aria-label', 'Chest');
-  const row = el('div', 'co-row');
+  const row = el('div', items.length > 6 ? 'co-row many' : 'co-row');
   const cols: HTMLElement[] = [];
   const beams: HTMLElement[] = [];
   const plates: HTMLElement[] = [];
@@ -111,9 +120,12 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
     col.style.setProperty('--rc', step.color);
     const beam = el('div', `co-beam${step.big ? ' big' : ''}`);
     const plate = el('div', 'co-plate');
-    const fit = el('div', 'co-fit');
-    fit.append(...itemTipNodes(inst));
-    plate.append(fit);
+    // gerçek Gear item plakası (character-panel.ts > itemPlate); ipucu item-drag.ts denetçisinden (data-tip), sürükleme yok
+    const cell = itemPlate(inst, undefined);
+    cell.tabIndex = -1; // klavyede Enter/Space plakada değil, Take all kısayolunda kalır
+    cell.dataset['tip'] = `chest:${i}`;
+    plate.append(cell);
+    plate.style.pointerEvents = 'none'; // görünene dek ipucu / dokunuş almaz
     col.append(beam, plate);
     row.append(col);
     cols.push(col);
@@ -246,6 +258,7 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
       beam.style.opacity = st.big ? '0.8' : '0.6';
       plate.style.opacity = '1';
       plate.style.transform = 'none';
+      plate.style.pointerEvents = '';
       anim(beam, [{ opacity: 0, transform: 'scaleY(0.05)' }, { opacity: 1, transform: 'scaleY(1)', offset: 0.3 }, { opacity: st.big ? 0.8 : 0.6, transform: 'scaleY(1)' }], { duration: 1100 });
       anim(plate, [{ opacity: 0, transform: `translateY(${220 * U}px) scale(0.3)` }, { opacity: 1, transform: `translateY(${-14 * U}px) scale(1.03)`, offset: 0.75 }, { opacity: 1, transform: 'none' }], { duration: 600 });
       if (st.big) burst(3, 'rgba(190, 120, 255, 0.7)', true);
@@ -266,27 +279,18 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
     for (const b of beams) b.style.opacity = '0';
   };
   hideUntilShown();
-  /** Plaka kendi boyunda kalır; satıra sığmıyorsa (kısa ekran) bütün olarak küçülür, kesilmez. */
-  const fitPlates = (): void => {
-    const room = row.clientHeight - 4;
-    if (room < 40) return; // yerleşim henüz oturmadı
-    for (const pl of plates) {
-      const fit = pl.firstElementChild as HTMLElement;
-      fit.style.transform = '';
-      const h = fit.offsetHeight;
-      const w = fit.offsetWidth;
-      const kw = w > 0 && pl.clientWidth > 0 ? pl.clientWidth / w : 1;
-      const k = h > 0 && room > 0 ? Math.min(1, room / h, kw) : 1;
-      fit.style.transform = k < 1 ? `scale(${k})` : '';
-      pl.style.height = `${Math.round(h * k)}px`;
-    }
-  };
-  fitPlates();
-  // satır boyu değişince (pencere / kısa ekran sınıfı sonradan oturur) yeniden sığdır
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitPlates()) : null;
-  ro?.observe(row);
-  const onResize = (): void => fitPlates();
-  window.addEventListener('resize', onResize);
+  const ix: ItemInteractions = attachItemInteractions({
+    overlay: ov,
+    panel: row,
+    sourceOf: () => null,
+    targetOf: () => null,
+    classOf: () => undefined,
+    tipNodes: (key) => {
+      const inst = key.startsWith('chest:') ? items[Number(key.slice(6))] : undefined;
+      return inst ? itemTipNodes(inst) : [];
+    },
+    onDrop: () => {},
+  });
 
   const runAll = (): void => {
     fast = true;
@@ -307,6 +311,65 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
     for (const s of pending) timers.push(window.setTimeout(() => !dead && doStep(s), s.at));
   };
 
+  /** "Take all" uçuşunun bitiş anı (ms); `flyToBag` hesaplar. */
+  let flyEnd = 0;
+  /**
+   * Plakalar ve altın torbaya uçar (Gear düğmesi; ekranda yoksa sağ alt köşe), sırayla, varışta hedef bir kez atar.
+   * Uçuş yapılamadıysa (hedef ölçülemedi) false döner: sahne eskisi gibi söner.
+   */
+  const flyToBag = (): boolean => {
+    const rotated = document.documentElement.classList.contains('rotated');
+    const ovr = ov.getBoundingClientRect();
+    const w = ov.offsetWidth;
+    if (!w || !ovr.width) return false;
+    const toLocal = (cx: number, cy: number): { x: number; y: number } => clientToLocal(cx, cy, ovr, w, rotated);
+    const btn = document.querySelector<HTMLElement>('.camp-hud:not(.off) .camp-gear');
+    const br = btn?.getBoundingClientRect();
+    const real = !!br && br.width > 0 && br.height > 0;
+    const tc = real && br ? toLocal(br.left + br.width / 2, br.top + br.height / 2) : { x: ov.offsetWidth - Math.max(30, 60 * U), y: ov.offsetHeight - Math.max(30, 60 * U) };
+    const flyers: HTMLElement[] = [];
+    if (gold > 0 || stones > 0) flyers.push(goldLine);
+    flyers.push(...plates);
+    const n = flyers.length;
+    const gap = n > 1 ? Math.min(FLY_GAP_MS, (FLY_TOTAL_MS - FLY_MS) / (n - 1)) : 0;
+    flyEnd = Math.round(FLY_MS + gap * (n - 1)) + 20;
+    flyers.forEach((f, i) => {
+      const r = f.getBoundingClientRect();
+      const c = toLocal(r.left + r.width / 2, r.top + r.height / 2);
+      const dx = tc.x - c.x;
+      const dy = tc.y - c.y;
+      f.getAnimations().forEach((x) => x.cancel());
+      f.style.opacity = '1';
+      f.style.transform = 'none';
+      f.animate(
+        [
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${dx * 0.12}px, ${dy * 0.12 - 18 * U}px) scale(1.04)`, opacity: 1, offset: 0.18 },
+          { transform: `translate(${dx}px, ${dy}px) scale(0.1)`, opacity: 0.1 },
+        ],
+        { duration: FLY_MS, delay: gap * i, easing: FLY_EASE, fill: 'both' }
+      );
+    });
+    // sahne geri kalanı (ışık, sandık, düğme, perde) uçuşla birlikte söner
+    const fade = { duration: Math.round(flyEnd * 0.7), easing: 'linear', fill: 'forwards' as const };
+    for (const n2 of [...beams, chest, take, ...Array.from(ov.querySelectorAll<HTMLElement>('.co-vig'))]) n2.animate([{ opacity: getComputedStyle(n2).opacity }, { opacity: 0 }], fade);
+    ov.animate([{ backgroundColor: 'rgba(6, 4, 3, 0.9)' }, { backgroundColor: 'rgba(6, 4, 3, 0)' }], fade);
+    // varış: hedefte küçük atış (son plaka indiği an)
+    window.setTimeout(() => {
+      let target = btn && real ? btn : null;
+      if (!target) {
+        target = el('div', 'co-pulse-ring');
+        target.style.left = `${tc.x}px`;
+        target.style.top = `${tc.y}px`;
+        root.append(target);
+      }
+      const ring = target;
+      const a = ring.animate(ring === btn ? [{ transform: 'scale(1)' }, { transform: 'scale(1.18)', offset: 0.4 }, { transform: 'scale(1)' }] : [{ transform: 'translate(-50%,-50%) scale(0.4)', opacity: 0.9 }, { transform: 'translate(-50%,-50%) scale(1.6)', opacity: 0 }], { duration: 320, easing: EASE });
+      if (ring !== btn) a.onfinish = () => ring.remove();
+    }, flyEnd - 120);
+    return true;
+  };
+
   const leave = (): void => {
     if (!flow.finish()) return;
     const r = chestClaim(o.get(), items.length > 0);
@@ -318,12 +381,17 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
       dead = true;
       ov.remove();
       document.removeEventListener('keydown', onKey, true);
-      window.removeEventListener('resize', onResize);
-      ro?.disconnect();
+      ix.destroy();
       if (claimedAll) o.onClaimed();
       else o.onOpenLoot();
     };
     uiSound('confirm');
+    ix.hideTips();
+    if (claimedAll && !fast && !reduced && flyToBag()) {
+      // ödül zaten alındı (yukarıda); uçuş yalnızca gösteri: bitişi zamanlayıcı kapatır (animasyon bitişine bağlı değil)
+      window.setTimeout(done, flyEnd);
+      return;
+    }
     if (reduced || !ov.animate) return done();
     const a = ov.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: EASE, fill: 'forwards' });
     a.onfinish = done;
@@ -357,8 +425,7 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
       for (const t of timers) window.clearTimeout(t);
       window.clearInterval(countTimer);
       document.removeEventListener('keydown', onKey, true);
-      window.removeEventListener('resize', onResize);
-      ro?.disconnect();
+      ix.destroy();
       ov.remove();
     },
   };
