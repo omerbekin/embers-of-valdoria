@@ -147,7 +147,7 @@ describe('motor kancaları', () => {
     expect(r.log.some((e) => e.type === 'passive' && e.passive === 'thorns')).toBe(false);
   });
 
-  it('Piercing blows: temel saldırı arkadaki düşmana da vurur; başka skill ve kancasız birim vurmaz', () => {
+  it('Piercing blows: temel saldırı ve tek hedefli skill arkadaki düşmana da vurur; alan skill\'i ve kancasız birim vurmaz', () => {
     const run = (setup: UnitSetup, skill = warriorAttack) => {
       const b = make({ 0: 'warrior' }, { 0: 'defender', 3: 'mage' }, { 0: setup });
       b.debug.dodge = 'never';
@@ -160,7 +160,19 @@ describe('motor kancaları', () => {
     expect(hit.passive).toBe(true);
     expect(hit.lost).toBeGreaterThan(0);
     expect(run({})).toEqual({ lost: 0, passive: false });
-    const other = content.classes.warrior!.skills.slice(1).find((id) => content.skills[id]!.target === 'single_enemy' && content.skills[id]!.effects.some((e) => e.type === 'damage') && !content.skills[id]!.initialCooldown);
-    if (other) expect(run(fx({ pierceBehind: 0.5 }), other).passive).toBe(false);
+    const single = content.classes.warrior!.skills.slice(1).find((id) => content.skills[id]!.target === 'single_enemy' && content.skills[id]!.effects.some((e) => e.type === 'damage') && !content.skills[id]!.initialCooldown);
+    expect(single).toBeDefined();
+    expect(run(fx({ pierceBehind: 0.5 }), single!).passive).toBe(true);
+    // Zincir skill'i (tek hedef seçer ama falloff taşır): vurmaz
+    const chain = make({ 0: 'druid' }, { 0: 'defender', 3: 'mage' }, { 0: fx({ pierceBehind: 0.5 }) });
+    chain.debug.dodge = 'never';
+    chain.useSkill(at(chain, 'party', 0).uid, 'vine_snare', at(chain, 'enemy', 0).uid, 0);
+    expect(chain.log.some((e) => e.type === 'passive' && e.passive === 'piercing_blows')).toBe(false);
+    // Alan skill'i (temel saldırı değil): yalnız kendi alanı
+    const area = make({ 0: 'mage' }, { 0: 'defender', 3: 'mage' }, { 0: fx({ pierceBehind: 0.5 }) });
+    area.debug.dodge = 'never';
+    const areaSkill = content.classes.mage!.skills.slice(1).find((id) => content.skills[id]!.target === 'area_enemies' && content.skills[id]!.effects.some((e) => e.type === 'damage') && !content.skills[id]!.initialCooldown)!;
+    area.useSkill(at(area, 'party', 0).uid, areaSkill, undefined, 0);
+    expect(area.log.some((e) => e.type === 'passive' && e.passive === 'piercing_blows')).toBe(false);
   });
 });

@@ -66,6 +66,8 @@ import clanSlingerMob from '../../data/mobs/clan_slinger.json';
 import rimeWitchMob from '../../data/mobs/rime_witch.json';
 import hollowWardenMob from '../../data/mobs/hollow_warden.json';
 import moltenHoundMob from '../../data/mobs/molten_hound.json';
+import hollowRunecallerMob from '../../data/mobs/hollow_runecaller.json';
+import ashbornAcolyteMob from '../../data/mobs/ashborn_acolyte.json';
 import bridgeWarden from '../../data/bosses/bridge_warden.json';
 import ironMooring from '../../data/bosses/iron_mooring.json';
 import lordMorvane from '../../data/bosses/lord_morvane.json';
@@ -265,7 +267,7 @@ export const bosses: Record<string, CombatantDef> = {
 const mobData: CombatantData[] = [
   forgeMasterGolemMob, packMotherMob, ashbornHierarchMob, pyreMatriarchMob, cinderWardenMob, clanChiefBrannocMob, frozenStandardBearerMob, frozenHalberdierMob, frozenCrossbowmanMob, oathkeeperMob,
   clanVaulterMob, shardwalkerMob, hollowDelverMob, gloamstalkerMob, cinderleaperMob, slagcartGolemMob, thunderwrightMob, clanStormcallerMob, gloamEelMob, stormhornRamMob,
-  snowWolfMob, clanAxemanMob, caveCrawlerMob, clanSkaldMob, pyreWitchMob, cinderKnightMob, forgeGolemMob, wightMob, rimeHoundMob, clanSlingerMob, rimeWitchMob, hollowWardenMob, moltenHoundMob,
+  snowWolfMob, clanAxemanMob, caveCrawlerMob, clanSkaldMob, pyreWitchMob, cinderKnightMob, forgeGolemMob, wightMob, rimeHoundMob, clanSlingerMob, rimeWitchMob, hollowWardenMob, moltenHoundMob, hollowRunecallerMob, ashbornAcolyteMob,
   mobRoadThug,
   mobMoorRaider,
   mobBanditCrossbowman,

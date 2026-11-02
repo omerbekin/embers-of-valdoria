@@ -5,7 +5,7 @@ import { lessText, moreText, multText } from './bonus-text';
 import { bonusScaleRaw } from './spec';
 import { bellsOfSkill } from './tree-hooks';
 import { rangeEnabled, rangeLabel } from './range';
-import { applySummonerScale, applySummonVariant, attributePower, outgoingDamageMult } from './stats';
+import { applySummonerScale, applySummonVariant, attributePower, dotOutgoingMult, outgoingDamageMult } from './stats';
 import type { UrnRule, AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
 
 /** Skill'in oyuncuya gösterilen genel bilgileri (tooltip). Metinler İngilizce (oyun içi arayüz). */
@@ -624,7 +624,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.noTransferOnKill) add('Every Omen on the target is spent; if this kills it, nothing passes on (Ill Omen does not trigger)');
     } else if (e.type === 'dot') {
       const def = defs.statuses?.[e.status];
-      add(`Damage over time: ${def?.name ?? e.status} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.dotPowerMult))}) ${def?.dot?.element ?? ''} damage at the start of each of its turns (cannot miss or crit; recasting renews it)`.replace('  ', ' '), def?.dot?.element);
+      add(`Damage over time: ${def?.name ?? e.status} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, dotOutgoingMult(stats)))}) ${def?.dot?.element ?? ''} damage at the start of each of its turns (cannot miss or crit; recasting renews it)`.replace('  ', ' '), def?.dot?.element);
     } else if (e.type === 'bond') {
       const name = defs.statuses?.dark_bond?.name ?? 'Dark Bond';
       add(`${name} for ${e.turns} of your turns: whenever you heal from life steal, the bonded ally heals ${e.ratio === 1 ? 'the same amount' : `${pct(e.ratio)} of it`} (you still heal fully; at full HP you steal nothing, so nothing is shared)`);
@@ -760,7 +760,7 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
     else if (e.type === 'ground' && e.power > 0) num(`${defs.grounds?.[e.ground]?.name ?? 'Ground'} / turn`, raw(e.scale, e.power), defs.grounds?.[e.ground]?.heal ? 'heal' : defs.grounds?.[e.ground]?.element);
     else if (e.type === 'dot') {
       const def = defs.statuses?.[e.status];
-      num(`${def?.name ?? e.status} / turn`, raw(e.scale, withMult(e.power, stats.dotPowerMult)), def?.dot?.element);
+      num(`${def?.name ?? e.status} / turn`, raw(e.scale, withMult(e.power, dotOutgoingMult(stats))), def?.dot?.element);
     } else if (e.type === 'omen') {
       const def = defs.statuses?.[e.status ?? 'omen'];
       const detonates = skill.effects.some((x) => x.type === 'detonate' && x.status === (e.status ?? 'omen'));

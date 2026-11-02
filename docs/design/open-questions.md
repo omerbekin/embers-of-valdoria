@@ -1666,6 +1666,7 @@ Sayılar PROVİZYON, sim yok, bayrak kapalı. Belgede açık olmayan yerlerde en
 5. **Zemin rozeti:** zemin durum veriyorsa ve o durum görünüyorsa zeminin kendi rozeti çizilmez; durumun EFFECTS satırına "(from <Zemin adı>)" eklenir. Durum vermeyen zeminin kendi EFFECTS satırı var; zemin verisinde açıklama metni olmadığından kısa genel cümle kullanıldı ("Fire ground underfoot", şifa zemini için ayrı). İstenirse zemin başına gerçek metin eklenir.
 6. **Aynı durumu veren iki zemin:** durum görünüyorsa ikisinin de rozeti gizlenir; "from" en güçlü zeminin adını gösterir.
 
+## 510. Affix dağılımı (adım 3): varsayımlar ve sınıf ağırlığı boşlukları (content-designer, Item Design 2026-11-01)
 ## 503. Harita 3 seçimleri (Brannoc, Standard-Bearer, Oathkeeper, kural değişiklikleri): varsayımlar (campaign-dev 2026-11-01)
 Sayılar PROVİZYON, sim yok, bayrak kapalı. En dar yorum:
 1. **Çift Furnace Core yerleşimi:** kahraman tahtasında aynı numaralı hücre (aynayı bu verir) + dört komşusu, bugünkü şekil. Düz Forge Golem değişmedi.

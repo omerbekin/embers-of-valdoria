@@ -2103,6 +2103,22 @@ const main = {
     warnNotes(args[0], notes);
     console.log(`Not satırı: ${Object.values(notes).flat().length}.`);
   }),
+  // Dalın yalnız belirli bir commit'e kadarını hazır yapar (çalışma ağacındaki yarım iş mühre girmez; ready ağacın tamamını commit'ler). sha dalın atası olmalı.
+  seal: () => withQueue((q) => {
+    const rec = wtOf(q, findSid(q, args[0]));
+    if (!rec) throw new Error('kullanım: seal <oturum> <commit> [--internal | --fixes "..."]; yalnız worktree sohbetleri');
+    const sha = revOf(args[1] ?? 'HEAD', rec.path);
+    if (!isAncestor(sha, revOf(`refs/heads/${rec.branch}`))) throw new Error(`${args[1]} ${rec.branch} dalının ucuna kadar olan bir commit değil`);
+    const { notes } = parseNotes(args.slice(2));
+    const internal = args.includes('--internal');
+    if (!hasNotes(notes) && !internal) throw new Error('en az bir satır: --fixes "..." ya da --internal');
+    const e = entry(q, findSid(q, args[0]));
+    e.ready = true; delete e.lastError; e.readySha = sha;
+    mergeNotes(e.notes, notes);
+    setInternal(e, internal);
+    scheduleAutoShip(q);
+    console.log(`Hazır (${e.mode}, ${rec.branch}), mühür ${sha.slice(0, 8)}; çalışma ağacındaki sonrası gitmez.`);
+  }),
   // Kırmızıyla durmuş hazır girdileri sohbetten yeni ready istemeden yeniden uygun yapar (kırmızının sebebi araçta ya da başka işte çözüldüyse; Koordinatör kullanır)
   retry: () => withQueue((q) => {
     let n = 0;
@@ -2130,7 +2146,7 @@ const main = {
   push: async () => process.exit(background('push', args) ? 0 : await push(args[0], args.slice(1))),
   eod: async () => process.exit(background('eod', args) ? 0 : await push('eod', args)),
 }[cmd];
-if (!main) { console.error('Komut: status | mode | add | ready | notes | retry | push | eod | doctor | drop | cutover | wt-open | wt-close | legacy-merged'); process.exit(1); }
+if (!main) { console.error('Komut: status | mode | add | ready | notes | retry | seal | push | eod | doctor | drop | cutover | wt-open | wt-close | legacy-merged'); process.exit(1); }
 try { await main(); } catch (e) {
   // Hook'lar açık kalır: iç hata hiçbir araç çağrısını engellemez
   if (cmd.startsWith('hook-')) { try { appendFileSync(LOG, `[${new Date().toISOString()}] !! ${cmd} iç hata: ${firstLine(e)}\n`); } catch {} process.exit(0); }

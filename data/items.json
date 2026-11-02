@@ -1405,12 +1405,12 @@
     "a_potency": {
       "tier": "A",
       "name": "Potency",
-      "text": "+{0}% damage over time, your debuffs last {1} turn longer",
+      "text": "Your damage over time is {0}% stronger, your debuffs last {1} turn longer",
       "slots": [
         "weapon",
         "trinket"
       ],
-      "desc": "Stuns do not last longer.",
+      "desc": "A separate multiplier on top of Increased damage and DoT damage. Stuns do not last longer.",
       "needs": "debuff",
       "icon": "dot",
       "parts": [
@@ -1419,7 +1419,7 @@
           "perIlvl": 0.6,
           "step": 1,
           "ip": 0.12,
-          "to": "mod:dotPowerAdd",
+          "to": "mod:potencyAdd",
           "scale": 0.01
         },
         {
@@ -1625,11 +1625,11 @@
     "a_pierce": {
       "tier": "A",
       "name": "Piercing blows",
-      "text": "Your basic attacks also hit the enemy behind for {0}% damage",
+      "text": "Your basic attacks and single-target skills also hit the enemy behind for {0}% damage",
       "slots": [
         "weapon"
       ],
-      "desc": "Your basic attack is your first skill. The enemy behind is the nearest one in the same column, behind the one you hit.",
+      "desc": "Works with your basic attack and every single-target damage skill. Chain, area and telegraphed skills do not trigger it (an area basic attack does). The enemy behind is the nearest one in the same column, behind the one you hit.",
       "icon": "pen",
       "parts": [
         {

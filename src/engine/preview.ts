@@ -5,7 +5,7 @@ import { burnAmountFor, castBurnAmount, emptyProcApplies } from './mana-burn';
 import { skillCostPay } from './cost';
 import { damageSpecFor, type DamageEffect } from './spec';
 import { slotOfTileUid } from './battle';
-import { attributePower, hitChance } from './stats';
+import { attributePower, dotOutgoingMult, hitChance } from './stats';
 import type { Combatant, GroundEffect, OnAbsorbSpec, PushDir, Side, SkillDef, SkillEffect } from './types';
 import { manaShieldPay } from './tree-hooks';
 import type { HitInfo, TreeQuery } from './tree-hooks';
@@ -484,7 +484,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const e = entry(target.uid);
         e.statuses = [...(e.statuses ?? []), `Guard ${effect.turns} turns`];
       } else if (effect.type === 'dot') {
-        const amount = Math.round(attributePower(actor.stats, effect.scale, f) * pw(effect.power, actor.stats.dotPowerMult));
+        const amount = Math.round(attributePower(actor.stats, effect.scale, f) * effect.power * dotOutgoingMult(actor.stats));
         const old = target.statuses.find((s) => s.kind === effect.status)?.amount ?? 0;
         const perTick = battle.dotTickDamage(effect.status, Math.max(amount, old), target);
         entry(target.uid).dot = { status: effect.status, perTick, turns: effect.turns, total: perTick * effect.turns };

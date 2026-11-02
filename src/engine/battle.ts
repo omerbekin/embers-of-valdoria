@@ -13,7 +13,7 @@ import { isUnblockableHit } from './unblockable';
 import { mergeRefreshStrongest, statusStackMode, statusStrength } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
-import { levelGapBonus, applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
+import { levelGapBonus, applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, dotOutgoingMult, hitOutcome, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
 import type { Attribute, Attributes, BrandSpec, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect, PushDir } from './types';
 import { advanceTurn, predictQueue, snapCounter, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
 import { bellsOfSkill, condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, manaShieldPay, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
@@ -2111,7 +2111,7 @@ export class Battle {
         if (def.dot) {
           const scale = (a.stat ?? def.dot.scale) as Attribute | undefined;
           const power = a.power ?? def.dot.power;
-          if (scale && power) st.amount = Math.round(attributePower(owner.stats, scale, f) * power);
+          if (scale && power) st.amount = Math.round(attributePower(owner.stats, scale, f) * power * dotOutgoingMult(owner.stats));
         }
         this.addStatus(rec, st, emit, h.node);
       } else if (a.removeStatus !== undefined) {
@@ -6388,8 +6388,7 @@ export class Battle {
         }
         case 'dot': {
           // Karakter üstü DoT (Wither): miktar uygulama anında sabitlenir; yeniden uygulanınca süre max(kalan, yeni), büyük miktar (ve kaynağı) kalır
-          const dm = actor.stats.dotPowerMult; // DoT damage / Potency (affix): yoksa güç aynen
-          const amount = Math.round(attributePower(actor.stats, effect.scale, f) * (dm !== undefined && dm !== 1 ? effect.power * dm : effect.power));
+          const amount = Math.round(attributePower(actor.stats, effect.scale, f) * effect.power * dotOutgoingMult(actor.stats));
           for (const r of this.damageBefore(skill, effect) ? ts.filter((c) => hit.has(c.uid)) : ts.filter(gated)) {
             if (r.hp <= 0) continue;
             // Faz 2c: ağaçlı kullanıcıda DoT durumu da durum kancasından geçer (Fog of Ill Luck: Wither'e büyüklük eki); miktar skill'in
@@ -6521,9 +6520,9 @@ export class Battle {
         this.announceIfDead(other, emit);
       }
     }
-    // Delici vuruş (a_pierce, Ömer 2026-10-26): temel saldırı (sınıfın ilk skill'i) isabet ettiği her düşmanın arkasındaki en yakın düşmana da vurur
+    // Delici vuruş (a_pierce, Ömer 2026-10-26; tek hedefli skill'ler 2026-11-02): temel saldırı (sınıfın ilk skill'i) ve tek hedefli hasar skill'i (zincir değil) isabet ettiği her düşmanın arkasındaki en yakın düşmana da vurur
     const pierce = effNum(actor, 'pierceBehind');
-    if (!debug && pierce && echoEffect && !skill.telegraph && skill.id === actor.skills[0] && hit.size > 0 && actor.hp > 0) {
+    if (!debug && pierce && echoEffect && !skill.telegraph && (skill.id === actor.skills[0] || (skill.target === 'single_enemy' && !skill.area && echoEffect.falloff === undefined)) && hit.size > 0 && actor.hp > 0) {
       const struck = new Set(targets.map((c) => c.uid));
       for (const uid of [...hit]) {
         const t = this.get(uid);
@@ -7357,7 +7356,7 @@ export class Battle {
     const dot = this.statusDef(kind)?.dot;
     // Faz 2c: skill'in DoT etkisinin miktarı (extra.amount) önce; yoksa statuses.json > dot ortak değeri (Burning)
     if (extra?.amount !== undefined) st.amount = extra.amount;
-    else if (dot?.scale && dot.power) st.amount = Math.round(attributePower(actor.stats, dot.scale, this.setup.formulas) * dot.power);
+    else if (dot?.scale && dot.power) st.amount = Math.round(attributePower(actor.stats, dot.scale, this.setup.formulas) * dot.power * dotOutgoingMult(actor.stats));
     this.addStatus(r, st, emit, cause);
     if (tm) this.treeProcAll(actor.uid, tm.nodes);
     if (kind === 'silence' && r.side !== actor.side && this.castInfo && this.castPaid?.uid === actor.uid && r.statuses.some((x) => x.kind === 'silence')) this.castInfo.silenced++;
@@ -8163,7 +8162,7 @@ export class Battle {
     // Emberbrand (onHitDot): isabet eden vuruş hedefe DoT bırakır (miktar uygulamada sabitlenir; yenisi süreyi max(kalan, yeni) yapar, büyük miktar kalır)
     for (const { v: burn, src } of effList(actor, 'onHitDot')) {
       if (!(hpLoss > 0 && target.hp > 0 && this.statusDef(burn.status))) continue;
-      const amount = Math.max(1, Math.round(attributePower(this.attackStats(actor), effect.scale, f) * burn.power * (actor.stats.dotPowerMult ?? 1)));
+      const amount = Math.max(1, Math.round(attributePower(this.attackStats(actor), effect.scale, f) * burn.power * dotOutgoingMult(actor.stats)));
       this.addStatus(target, { kind: burn.status as Status['kind'], turns: burn.turns, source: actor.uid, amount }, emit, 'emberbrand'); // en güçlü miktar addStatus'ta kalır
       if (src === 'tree') this.fxProc(actor, 'onHitDot');
     }
@@ -8411,7 +8410,7 @@ export class Battle {
       emit({ type: 'passive', actor: actor.uid, passive: 'serrated_edge', name: 'Serrated Edge' });
       for (const cs of fx.critStatuses) {
         if (!this.statusDef(cs.status) || target.hp <= 0) continue;
-        const amount = cs.power ? Math.max(1, Math.round(attributePower(this.attackStats(actor), effect.scale, this.setup.formulas) * cs.power * (actor.stats.dotPowerMult ?? 1))) : undefined;
+        const amount = cs.power ? Math.max(1, Math.round(attributePower(this.attackStats(actor), effect.scale, this.setup.formulas) * cs.power * dotOutgoingMult(actor.stats))) : undefined;
         this.addStatus(target, { kind: cs.status as Status['kind'], turns: cs.turns, source: actor.uid, ...(amount !== undefined ? { amount } : {}) }, emit, 'serrated_edge');
       }
     }
@@ -8717,8 +8716,7 @@ export class Battle {
       // Faz 2c: Slow ağaçla kaldırılabilir (Black Mold); Wither'in ayrı süresi dotTurns (Deep Rot; yoksa turns)
       if (e.status && this.statusDef(e.status)) this.addStatus(killer, { kind: e.status, turns: e.turns, source: d.uid }, emit, d.passive!.id);
       if (this.statusDef(e.dot)?.dot) {
-        const dm = d.stats.dotPowerMult; // DoT damage / Potency (affix): skill DoT'larıyla aynı
-        const amount = Math.round(attributePower(d.stats, e.scale, f) * (dm !== undefined && dm !== 1 ? e.power * dm : e.power));
+        const amount = Math.round(attributePower(d.stats, e.scale, f) * e.power * dotOutgoingMult(d.stats));
         this.addStatus(killer, { kind: e.dot, turns: e.dotTurns ?? e.turns, source: d.uid, amount }, emit, d.passive!.id);
       }
     }

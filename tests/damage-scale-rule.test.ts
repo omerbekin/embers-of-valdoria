@@ -7,6 +7,8 @@ import type { Attribute } from '../src/engine';
 // Aksi belirtilen (ölçeksiz) hasar benzeri etkiler AÇIKÇA burada gerekçeyle listelenir.
 const SCALE_EXCEPTIONS: { skill: string; effect: string; reason: string }[] = [
   { skill: 'mana_burn', effect: 'manaBurn', reason: 'Sabit MP yakma/çalma; can hasarı değil, kaynak etkisi.' },
+  { skill: 'hollow_rune_spark', effect: 'manaBurn', reason: 'Hollow Runecaller: isabet başına sabit 3 MP yakma' },
+  { skill: 'hollow_glyph', effect: 'manaBurn', reason: 'Hollow Runecaller: hücre başına sabit 6 MP yakma (Glyph of Breaking ile aynı)' },
   { skill: 'glyph_of_breaking', effect: 'manaBurn', reason: 'Deep Runecaller (mob-plan.md 2.3): hücre başına sabit 6 MP yakma; can hasarı değil, kaynak etkisi.' },
   { skill: 'drain_field', effect: 'brand', reason: 'Ley Brand (Ömer 2026-10-27, open-questions 444): hasarı kaybedilen / kalan MP ile orantılı (burnDamagePct, explodePct); stat ölçeği yok, kaynak etkisi.' },
 ];

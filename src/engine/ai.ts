@@ -6,7 +6,7 @@ import { betStakeParts } from './gamble';
 import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
 import { bellsOfSkill, manaShieldNeed, type TriggerAction } from './tree-hooks';
-import { armorReduction, attributePower, hitChance } from './stats';
+import { armorReduction, attributePower, dotOutgoingMult, hitChance } from './stats';
 import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet, StatusDef } from './types';
 import { capBurn, castBurnAmount, groundBurnAmount } from './mana-burn';
 import { isHealSkillGround, DEFAULT_VALUE, ValueContext, coverageOf, pAtLeast, scoredMpCost, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
@@ -1964,6 +1964,9 @@ function kitPassiveValue(ctx: ValueContext, o: Option, cfg: NonNullable<AiValueC
     for (const t of foes) {
       // Mock: eylem kaybı; zaten Staggered hedefe boşa gider (yalnız Staggered: diğer untilResolved durumları Harita 1-2'de başka değerlenir)
       if (e.status === 'staggered' && !t.statuses.some((s) => s.kind === e.status)) v += cfg.stagger * ctx.turnValue(t) * previewHitChance(o, t);
+      // Hollow Glyph: Sunder'ın zırh açığı; zaten Sunder'lı hedefe boşa gider. Yalnız mob (kahraman ağaç skill'leri kendi değerini taşır).
+      const armorMult = battle.statusDef(e.status)?.armorMult;
+      if (battle.isMobUnit(actor) && armorMult !== undefined && armorMult > 0 && armorMult < 1 && !t.statuses.some((s) => s.kind === e.status) && !battle.statusBlocked(t, e.status)) v += cfg.sunder * (1 - armorMult) * ctx.turnValue(actor) * previewHitChance(o, t);
       // Sodden Hex + Hoarfrost: her tur Chilled kaynağı
       if (own?.type === 'hoarfrost' && e.status === own.wet && !t.statuses.some((s) => s.kind === own.wet) && !battle.statusBlocked(t, own.status)) v += cfg.hoarfrost * ctx.turnValue(t) * previewHitChance(o, t);
     }
@@ -3754,7 +3757,7 @@ function trigActionWorth(ctx: ValueContext, owner: Combatant, a: TriggerAction, 
       if (def.dot) {
         const scale = (a.stat ?? def.dot.scale) as Attribute | undefined;
         const power = a.power ?? def.dot.power;
-        if (scale && power) v -= Math.min(rec.hp, battle.dotTickDamage(a.status, Math.round(attributePower(owner.stats, scale, f) * power), rec) * Math.min(a.turns ?? 1, ctx.vc.horizon)) * (a.chance ?? 1);
+        if (scale && power) v -= Math.min(rec.hp, battle.dotTickDamage(a.status, Math.round(attributePower(owner.stats, scale, f) * power * dotOutgoingMult(owner.stats)), rec) * Math.min(a.turns ?? 1, ctx.vc.horizon)) * (a.chance ?? 1);
       }
     }
   } else if (a.rage !== undefined) {
@@ -3920,7 +3923,7 @@ function strikeSideTerms(ctx: ValueContext, profile: AiProfile, o: Option, add: 
         const e = g.passive?.effect;
         if (e?.type !== 'naturesGrudge' || g.side !== t.side || g.summoned || (g.hp <= 0 && g !== t)) continue;
         if (e.status) c -= statusEffectWorth(ctx, actor, e.status, Math.min(e.turns, ctx.vc.horizon));
-        if (battle.statusDef(e.dot)?.dot) c += Math.min(actor.hp, battle.dotTickDamage(e.dot, Math.round(attributePower(g.stats, e.scale, battle.formulas) * e.power), actor) * Math.min(e.dotTurns ?? e.turns, ctx.vc.horizon));
+        if (battle.statusDef(e.dot)?.dot) c += Math.min(actor.hp, battle.dotTickDamage(e.dot, Math.round(attributePower(g.stats, e.scale, battle.formulas) * e.power * dotOutgoingMult(g.stats)), actor) * Math.min(e.dotTurns ?? e.turns, ctx.vc.horizon));
       }
       if (c > 0) add('grudge', -c * p * cov.grudgeShare);
     }

@@ -47,6 +47,7 @@ export const ADDITIVE_LABEL = {
   healPowerAdd: 'Healing given',
   shieldPowerAdd: 'Shields given',
   dotPowerAdd: 'Damage over time',
+  potencyAdd: 'Potency',
 } as const;
 export type AdditiveKey = keyof typeof ADDITIVE_LABEL;
 

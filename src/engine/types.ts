@@ -69,8 +69,10 @@ export interface Stats extends Attributes {
   healPowerMult?: number;
   /** Verdiği skill kalkanı çarpanı (Shield power, Support power). */
   shieldPowerMult?: number;
-  /** Uyguladığı karakter üstü DoT (Wither, Burning) miktarı çarpanı (DoT damage, Potency). */
+  /** Uyguladığı karakter üstü DoT (Wither, Burning) miktarı: DoT damage. Hesap stats.ts > dotOutgoingMult. */
   dotPowerMult?: number;
+  /** Potency: DoT toplamının üstüne ayrı çarpan (stats.ts > dotOutgoingMult). */
+  potencyMult?: number;
   /**
    * Kişisel hız zarı (Ömer 2026-10-24, "Natural pace"): birimin SON hızına (Dex, item, spdAdd/spdMult sonrası) uygulanmış çarpan
    * [1 - spdVariance, 1 + spdVariance]; `spd` bu zarla çarpılıp yuvarlanmış değerdir. Yalnızca ipucu bilgisi (stat-info.ts); yoksa zar yok.
@@ -627,8 +629,10 @@ export interface UnitModifiers {
   healPowerAdd?: number;
   /** Verdiği kalkan gücüne ek -> Stats.shieldPowerMult. */
   shieldPowerAdd?: number;
-  /** Uyguladığı DoT gücüne ek -> Stats.dotPowerMult. */
+  /** DoT damage -> Stats.dotPowerMult. */
   dotPowerAdd?: number;
+  /** Potency -> Stats.potencyMult. */
+  potencyAdd?: number;
 }
 
 /**
@@ -760,7 +764,7 @@ export interface ItemEffects {
   tierDamageTakenReduce?: number;
   /** Sütun koruması (a_column): aynı tahtada aynı şeritteki (sütun) DOSTLAR bu oran az hasar alır (taşıyan hariç; birden çok kaynakta en yükseği). */
   columnGuard?: number;
-  /** Delici vuruş (a_pierce): temel saldırı (sınıfın ilk skill'i) isabet ettiği her hedefin arkasındaki en yakın düşmana da bu güç oranıyla vurur. */
+  /** Delici vuruş (a_pierce): temel saldırı (sınıfın ilk skill'i) ve tek hedefli hasar skill'i, isabet ettiği her hedefin arkasındaki en yakın düşmana da bu güç oranıyla vurur. */
   pierceBehind?: number;
   /** Sabit duruş (a_steady): üst üste Move yapılmayan eylem başına (en çok 3) verilen skill hasarı bu oran fazla. */
   steadyDamage?: number;

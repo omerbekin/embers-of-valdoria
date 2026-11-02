@@ -181,7 +181,7 @@ const ATTRS: Attribute[] = ['str', 'int', 'dex', 'luck'];
 /** UnitModifiers'ın toplamsal ekleri (madde 280). */
 export const ADDITIVE = ['hpAdd', 'mpAdd', 'spdAdd', 'critAdd', 'critMultAdd', 'accuracyAdd', 'evasionAdd', 'hpRegenAdd', 'mpRegenAdd'] as const;
 /** Affix ekleri (Ömer 2026-10-11): Stats'taki çarpanlara (1 + ek) ya da Lucky Escape şansına eklenir. */
-export const AFFIX_ADD = ['surviveAdd', 'damageAdd', 'healPowerAdd', 'shieldPowerAdd', 'dotPowerAdd'] as const;
+export const AFFIX_ADD = ['surviveAdd', 'damageAdd', 'healPowerAdd', 'shieldPowerAdd', 'dotPowerAdd', 'potencyAdd'] as const;
 
 /** Güçlendirmenin statları/görseli değiştiren bir alanı var mı (yoksa tanım aynen kullanılır). */
 export function hasUnitModifiers(mods: UnitModifiers | undefined): boolean {
@@ -274,6 +274,7 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
   if (mods.healPowerAdd) stats.healPowerMult = r4(1 + mods.healPowerAdd);
   if (mods.shieldPowerAdd) stats.shieldPowerMult = r4(1 + mods.shieldPowerAdd);
   if (mods.dotPowerAdd) stats.dotPowerMult = r4(1 + mods.dotPowerAdd);
+  if (mods.potencyAdd) stats.potencyMult = r4(1 + mods.potencyAdd);
   const elem = Object.entries(mods.elemDamageAdd ?? {}).filter(([, v]) => v);
   if (elem.length) stats.elemDamageMult = Object.fromEntries(elem.map(([k, v]) => [k, r4(1 + v!)]));
   return { ...def, attributes, stats, ...(mods.spriteScale !== undefined ? { spriteScale: mods.spriteScale } : {}) };
@@ -343,6 +344,14 @@ export function applySummonVariant(def: CombatantDef, variant: keyof SummonVaria
  */
 export function outgoingDamageMult(stats: Pick<Stats, 'damageMult' | 'elemDamageMult' | 'weaponMult'>, element: Element | undefined): number {
   return (stats.damageMult ?? 1) * (stats.weaponMult ?? 1) * (stats.elemDamageMult?.[element ?? 'physical'] ?? 1);
+}
+
+/**
+ * DoT miktarı çarpanı (Ömer 2026-11-02): (1 + Increased damage + DoT damage) x (1 + Potency). Silah ve element çarpanı girmez. Çarpan yoksa TAM 1.
+ * Motor, önizleme, skill yazısı ve YZ aynı fonksiyonu kullanır.
+ */
+export function dotOutgoingMult(stats: Pick<Stats, 'damageMult' | 'dotPowerMult' | 'potencyMult'>): number {
+  return ((stats.damageMult ?? 1) + (stats.dotPowerMult ?? 1) - 1) * (stats.potencyMult ?? 1);
 }
 
 /** Bir özelliğin skill gücü: değer x katsayı (hasar, şifa ve kalkan için). */

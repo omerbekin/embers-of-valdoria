@@ -376,8 +376,8 @@ Tür: B savaş, E elit, S boss, T kasaba, Tr hazine (g = korunan), Ev olay, R di
 | **Frozen Halberdier** | Frostbound Legion (Undead) | gelişmiş Morvane Halberdier | ön | **Frozen Ranks**: Close Ranks + Chill bağışık | Halberd Chop + Pike Thrust |
 | **Frozen Crossbowman** | Frostbound Legion | gelişmiş Crossbowman | arka | Frozen Ranks | Bolt + Ice Bolt |
 | **Hollow Warden** | Hollow (Undead cüce) | gelişmiş Stonebound Warden (undead palet) | ön, tank | **Hollow**: Darkness'ta aldığı hasar -%25 | Gatestone Slam + Rockfall |
-| **Hollow Runecaller** | Hollow | gelişmiş Deep Runecaller | arka | Ward-Etcher | Rune Spark + Glyph |
-| **Ashborn Acolyte** | Ashborn (Ember Cult) | gelişmiş Ember Acolyte | arka | Last Ember | Ember Toss + Burn the Ground |
+| **Hollow Runecaller** | Hollow | gelişmiş Deep Runecaller | arka | Ward-Etcher | Rune Spark (+3 MP yakar) + Glyph (+2 tur Sunder) |
+| **Ashborn Acolyte** | Ashborn (Ember Cult) | gelişmiş Ember Acolyte | arka | Last Ember | Ember Toss (+2 tur Burning durumu) + Burn the Ground (vuruş güçlü, zemin aynı) |
 | **Pyre Witch** | Ashborn | YENİ | arka, caster | **Kindling**: tahtadaki her Burning hücre için +%5 hasar (en çok +%20; Ömer kararı: MP sürümü değil) | Pyre Bolt + Spread the Flame (bir Burning hücreden komşulara yayar) |
 | **Cinder Knight** | Ashborn | YENİ | ön, tank | Searing Rebuke | Brand (tek + Burning) + Hold the Gate |
 | **Molten Hound** | Beasts | gelişmiş Ash Hound | ön | Blood Scent | Scorch Bite + Run Down (zemin Burning bırakır) |

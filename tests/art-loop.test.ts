@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error saf JS aracı, tür dosyası yok
 import * as loop from '../tools/codex/art-loop.mjs';
@@ -11,6 +12,7 @@ const L = loop as {
   solArgs: (dir: string, imgs: string[], out: string) => string[];
 };
 
+const ROOT = resolve('kok');
 const page = { id: 'a', task: 't', checkRules: 'k' };
 const job = { name: 'x', outDir: 'docs/out', pages: [page, { ...page, id: 'b', maxRounds: 2, refs: ['r.png'] }] };
 
@@ -49,13 +51,13 @@ describe('art-loop (saf kısımlar)', () => {
     expect(L.pickBest([])).toBeNull();
   });
   it('plan: tur sayısı, zincir ve yollar', () => {
-    const p = L.buildPlan({ ...job, chainPrevious: true, maxRounds: 3 }, 'C:/kok');
+    const p = L.buildPlan({ ...job, chainPrevious: true, maxRounds: 3 }, ROOT);
     expect(p.rel).toBe('docs/out');
     expect(p.threshold).toBe(8);
     expect(p.pages[0]!).toMatchObject({ maxRounds: 3, chainFrom: null });
     expect(p.pages[1]!).toMatchObject({ maxRounds: 2, chainFrom: 'a' });
-    expect(p.pages[1]!.checkRefs[0]!.replace(/\\/g, '/')).toBe('C:/kok/r.png');
-    expect(L.buildPlan(job, 'C:/kok').pages[1]!.chainFrom).toBeNull();
+    expect(p.pages[1]!.checkRefs[0]!).toBe(resolve(ROOT, 'r.png')); // platformdan bağımsız: kök her sistemde mutlak
+    expect(L.buildPlan(job, ROOT).pages[1]!.chainFrom).toBeNull();
   });
   it('Terra ve Sol ayrı model ve kipte', () => {
     expect(L.terraArgs('R', 'H', ['x.png'])).toEqual(expect.arrayContaining(['gpt-6.1-terra', 'workspace-write', '-i', 'x.png']));

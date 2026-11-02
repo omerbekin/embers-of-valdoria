@@ -1,0 +1,24 @@
+{
+  "_not": "Harita 3 (maps-2-3.md: gelişmiş Ember Acolyte; Combat Design 2026-11-02, Ömer seçimi). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. Zemin gücü Ember Acolyte ile aynı: Kindling yığını büyümesin (Campaign uyarısı). Sayılar PROVİZYON. GÖRSEL: YER TUTUCU spriteId 'ember_acolyte' (kendi çizimi Campaign'in çizim ajanında).",
+  "id": "ashborn_acolyte",
+  "name": "Ashborn Acolyte",
+  "family": "ember_cult",
+  "spriteId": "ember_acolyte",
+  "color": "#b8402a",
+  "logo": "wizhat",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Ashborn · Caster",
+  "attributes": { "str": 10, "int": 30, "dex": 6, "luck": 4 },
+  "armor": 8,
+  "magicArmor": 4,
+  "ai": "sniper",
+  "skills": ["ashborn_ember_toss", "ashborn_burn_the_ground"],
+  "passive": {
+    "id": "last_ember",
+    "name": "Last Ember",
+    "icon": "flame",
+    "text": "If a hero kills this unit with a skill, the hero's cell becomes burning ground for 2 of the hero's turns. Deaths from ground or damage over time leave no ember.",
+    "effect": { "type": "lastEmber", "ground": "burning", "turns": 2, "scale": "int", "power": 0.35 }
+  }
+}

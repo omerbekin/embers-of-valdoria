@@ -12176,5 +12176,83 @@
       "chainDrag",
       "anchorImpact"
     ]
+  },
+  "hollow_rune_spark": {
+    "_not": "Hollow Runecaller temel saldırısı (Combat Design 2026-11-02): Rune Spark'ın güçlüsü + az mana yakma. YER TUTUCU sanat: artOf 'rune_spark'. Sayılar PROVİZYON.",
+    "id": "hollow_rune_spark",
+    "name": "Rune Spark",
+    "target": "single_enemy",
+    "cost": { "resource": "mp", "amount": 0 },
+    "motion": "cast",
+    "fx": "#7fd0ff",
+    "effects": [
+      { "type": "damage", "damageType": "magic", "scale": "int", "power": 0.85, "element": "lightning" },
+      { "type": "manaBurn", "amount": 3 }
+    ],
+    "icon": "voidstrike",
+    "vfx": "voidstrike",
+    "sfx": ["voidPulse", "implode"],
+    "artOf": "rune_spark"
+  },
+  "hollow_glyph": {
+    "_not": "Hollow Runecaller alan skill'i (Combat Design 2026-11-02): Glyph of Breaking'in güçlüsü + 2 tur Sunder (Hollow Warden'ın fiziksel vuruşuna yol açar). Bedel L30'da 5-6 kullanım (tests/map3-mana.test.ts). YER TUTUCU sanat: artOf 'glyph_of_breaking'. Sayılar PROVİZYON.",
+    "id": "hollow_glyph",
+    "name": "Glyph of Breaking",
+    "target": "area_enemies",
+    "area": { "shape": "plus" },
+    "cost": { "resource": "mp", "amount": 30 },
+    "ai": { "scoreCost": 10 },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "void",
+    "fx": "#5ab8e8",
+    "effects": [
+      { "type": "damage", "damageType": "magic", "scale": "int", "power": 0.5, "element": "arcane" },
+      { "type": "manaBurn", "amount": 6 },
+      { "type": "status", "status": "sunder", "turns": 2 }
+    ],
+    "icon": "drainfield",
+    "vfx": "drainfield",
+    "sfx": ["voidSuction", "voidPulse", "energySlurp"],
+    "artOf": "glyph_of_breaking"
+  },
+  "ashborn_ember_toss": {
+    "_not": "Ashborn Acolyte temel saldırısı (Combat Design 2026-11-02): Ember Toss'un güçlüsü + 2 tur Burning durumu; zemin bırakmaz, Kindling'i büyütmez. YER TUTUCU sanat: artOf 'ember_toss'. Sayılar PROVİZYON.",
+    "id": "ashborn_ember_toss",
+    "name": "Ember Toss",
+    "target": "single_enemy",
+    "cost": { "resource": "mp", "amount": 0 },
+    "motion": "cast",
+    "fx": "#ff7a1a",
+    "effects": [
+      { "type": "damage", "damageType": "magic", "scale": "int", "power": 0.95, "element": "fire" },
+      { "type": "dot", "status": "burning", "scale": "int", "power": 0.12, "turns": 2 }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": ["flameIgnite", "flameRoar", "fireBlast"],
+    "artOf": "ember_toss"
+  },
+  "ashborn_burn_the_ground": {
+    "_not": "Ashborn Acolyte alan skill'i (Combat Design 2026-11-02): Burn the Ground'un vuruşu güçlü, zemin gücü aynı (0,35). Bedel L30'da 5-6 kullanım (tests/map3-mana.test.ts). YER TUTUCU sanat: artOf 'burn_the_ground'. Sayılar PROVİZYON.",
+    "id": "ashborn_burn_the_ground",
+    "name": "Burn the Ground",
+    "target": "area_enemies",
+    "area": { "shape": "rect", "rows": 2, "cols": 2 },
+    "cost": { "resource": "mp", "amount": 30 },
+    "ai": { "scoreCost": 8 },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "meteor",
+    "skyCenter": true,
+    "fx": "#ff4d1a",
+    "effects": [
+      { "type": "damage", "damageType": "magic", "scale": "int", "power": 0.35, "element": "fire" },
+      { "type": "ground", "ground": "burning", "turns": 2, "scale": "int", "power": 0.35 }
+    ],
+    "icon": "meteor",
+    "vfx": "meteor",
+    "sfx": ["meteorWhistle", "bigBoom", "fireCrackle"],
+    "artOf": "burn_the_ground"
   }
 }

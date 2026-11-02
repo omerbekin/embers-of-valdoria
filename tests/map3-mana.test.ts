@@ -33,7 +33,7 @@ function usesBeforeDry(id: string): number | null {
 const MAP3 = ['clan_vaulter', 'shardwalker', 'hollow_delver', 'gloamstalker', 'cinderleaper', 'slagcart_golem', 'thunderwright', 'clan_stormcaller', 'gloam_eel', 'stormhorn_ram', 'snow_wolf', 'clan_axeman', 'cave_crawler', 'clan_skald', 'pyre_witch', 'cinder_knight', 'forge_golem', 'wight', 'rime_hound', 'clan_slinger', 'rime_witch', 'hollow_warden', 'molten_hound'];
 
 /** Seçilen 9 elit ve boss kiti: temel saldırı bedelsiz, kalanı aynı kural. */
-const KITS = ['pack_mother', 'pyre_matriarch', 'forge_master_golem', 'ashborn_hierarch', 'cinder_warden', 'snowfather', 'hollow_king', 'hearthwarden', 'ember_of_the_first_hearth', 'clan_chief_brannoc', 'frozen_standard_bearer', 'oathkeeper', 'frozen_halberdier', 'frozen_crossbowman'];
+const KITS = ['hollow_runecaller', 'ashborn_acolyte', 'pack_mother', 'pyre_matriarch', 'forge_master_golem', 'ashborn_hierarch', 'cinder_warden', 'snowfather', 'hollow_king', 'hearthwarden', 'ember_of_the_first_hearth', 'clan_chief_brannoc', 'frozen_standard_bearer', 'oathkeeper', 'frozen_halberdier', 'frozen_crossbowman'];
 
 describe('Harita 3 elit ve boss manası, L30', () => {
   it.each(KITS)('%s: 5-6 kullanımda biter, ilk skill bedelsiz', (id) => {
