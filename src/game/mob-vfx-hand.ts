@@ -140,6 +140,10 @@ const DROWNED_REACH_STANDIN: Readonly<Record<string, string>> = {
 // Harita 3 Hollow Crown (2026-11-02): test paneli (Hand-coded) için en yakın el yapımı efekt; gerçek savaş kendi sheet'ini oynar
 const HOLLOW_CROWN_STANDIN: Readonly<Record<string, string>> = {
   anvil_strike: 'shield_bash',
+  ashborn_burn_the_ground: 'burn_the_ground',
+  ashborn_ember_toss: 'ember_toss',
+  hollow_glyph: 'glyph_of_breaking',
+  hollow_rune_spark: 'rune_spark',
   avalanche: 'burn_the_ground',
   breathe: 'burn_the_ground',
   bring_down_the_hall: 'burn_the_ground',

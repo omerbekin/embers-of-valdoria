@@ -146,6 +146,8 @@ HEADS = {
     'hollow_delver': (452, 0, 380),
     'slagcart_golem': (560, 0, 420),
     'clan_vaulter': (583, 62, 300),
+    'hollow_runecaller': (585, 60, 290),
+    'ashborn_acolyte': (500, 0, 270),
     # /Harita 3 kadrosu
     'pit_champion_gorr': (412, 0, 300),  # 2026-10-27 kendi çizimi (önceden Bandit Chief)
     'inquisitor_captain_vell': (400, 40, 275),  # 2026-10-27 kendi çizimi (önceden Oathsworn Brother)

@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 (maps-2-3.md: gelişmiş Deep Runecaller; Combat Design 2026-11-02, Ömer seçimi). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. Ad 'Hollow Runecaller': Hollow Crown tetiği ada bakar (hollow_king.json). Sayılar PROVİZYON. GÖRSEL: YER TUTUCU spriteId 'deep_runecaller' (kendi çizimi Campaign'in çizim ajanında).",
+  "_not": "Harita 3 (maps-2-3.md: gelişmiş Deep Runecaller; Combat Design 2026-11-02, Ömer seçimi). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. Ad 'Hollow Runecaller': Hollow Crown tetiği ada bakar (hollow_king.json). Sayılar PROVİZYON. GÖRSEL: kendi çizimi (2026-11-02).",
   "id": "hollow_runecaller",
   "name": "Hollow Runecaller",
   "family": "undead",
-  "spriteId": "deep_runecaller",
+  "spriteId": "hollow_runecaller",
   "color": "#5f86a8",
   "logo": "rune",
   "frontPriority": 7,

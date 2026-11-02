@@ -30,7 +30,7 @@ const ICON_SRC = 'assets/source/mob-icons';
 const ICON_OUT = 'assets/mob-icons';
 /** Mob ikonu olmayan sayfalarin cikti klasoru (durum ikonlari oyunda misc-icons/status adiyla bulunur). */
 /** Zemini de saf siyah olan sayfalar: karanlik bant bulma hucre ile ayirgaci ayiramaz; sabit 2x2 izgara (kenar 12, ayirac 20 px). */
-const FIXED_GRID_SHEETS = new Set([...Object.keys({}).concat(['map3_clan_a','map3_clan_b','map3_clan_c','map3_storm','map3_storm2','map3_wolf_a','map3_wolf_b','map3_frozen_a','map3_frozen_b','map3_witch_a','map3_witch_b','map3_ash_a','map3_ash_b','map3_warden_a','map3_forge_a','map3_forge_b','map3_hollow_a','map3_hollow_b','map3_misc_a','map3_misc_b','map3_hearth_a','map3_hearth_b','map3_king_a','map3_snow_a','map3_snow_b'].map((n) => n + '-sheet')), 'status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet', 'map2_commons_a-sheet', 'map2_commons_b-sheet', 'map2_commons_c-sheet', 'map2_commons_d-sheet', 'map2_wave2_a-sheet', 'map2_wave2_b-sheet', 'map2_wave2_c-sheet', 'map2_wave2_d-sheet', 'map2_wave2_e-sheet', 'map2_passives_a-sheet', 'map2_passives_b-sheet']);
+const FIXED_GRID_SHEETS = new Set([...Object.keys({}).concat(['map3_clan_a','map3_clan_b','map3_clan_c','map3_storm','map3_storm2','map3_wolf_a','map3_wolf_b','map3_frozen_a','map3_frozen_b','map3_witch_a','map3_witch_b','map3_ash_a','map3_ash_b','map3_warden_a','map3_forge_a','map3_forge_b','map3_hollow_a','map3_hollow_b','map3_misc_a','map3_misc_b','map3_hearth_a','map3_hearth_b','map3_king_a','map3_snow_a','map3_snow_b','map3_new_a'].map((n) => n + '-sheet')), 'status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet', 'map2_commons_a-sheet', 'map2_commons_b-sheet', 'map2_commons_c-sheet', 'map2_commons_d-sheet', 'map2_wave2_a-sheet', 'map2_wave2_b-sheet', 'map2_wave2_c-sheet', 'map2_wave2_d-sheet', 'map2_wave2_e-sheet', 'map2_passives_a-sheet', 'map2_passives_b-sheet']);
 const ICON_SHEET_OUT = { 'status2-sheet': 'assets/misc-icons/status' };
 const VFX_SRC = 'assets/source/mob-vfx';
 const VFX_OUT = 'assets/mob-vfx';
@@ -133,6 +133,7 @@ const ICON_SHEETS = {
   'map3_king_a-sheet': ['call_the_vault', 'decree_of_stone', 'bring_down_the_hall', 'hollow_crown'],
   'map3_snow_a-sheet': ['icy_grasp', 'avalanche', 'roar', 'whiteout'],
   'map3_snow_b-sheet': ['frostbound', null, null, null],
+  'map3_new_a-sheet': ['hollow_rune_spark', 'hollow_glyph', 'ashborn_ember_toss', 'ashborn_burn_the_ground'],
 };
 
 /** Zemine oturan (alt hizalı) vfx sheet'leri: '<mob>-<skill>'. Geri kalanı ortalanır (vuruş/mermi). */
@@ -152,6 +153,8 @@ const GROUND = new Set([
   'frozen_standard_bearer-cold_command',
   'frozen_standard_bearer-frost_banner',
   'hollow_delver-undermine',
+  'hollow_runecaller-hollow_glyph',
+  'ashborn_acolyte-ashborn_burn_the_ground',
   'hollow_warden-hollow_rockfall',
   'pack_mother-snowdrift',
   'pyre_matriarch-matriarch_stoke',

@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 (maps-2-3.md: gelişmiş Ember Acolyte; Combat Design 2026-11-02, Ömer seçimi). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. Zemin gücü Ember Acolyte ile aynı: Kindling yığını büyümesin (Campaign uyarısı). Sayılar PROVİZYON. GÖRSEL: YER TUTUCU spriteId 'ember_acolyte' (kendi çizimi Campaign'in çizim ajanında).",
+  "_not": "Harita 3 (maps-2-3.md: gelişmiş Ember Acolyte; Combat Design 2026-11-02, Ömer seçimi). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. Zemin gücü Ember Acolyte ile aynı: Kindling yığını büyümesin (Campaign uyarısı). Sayılar PROVİZYON. GÖRSEL: kendi çizimi (2026-11-02).",
   "id": "ashborn_acolyte",
   "name": "Ashborn Acolyte",
   "family": "ember_cult",
-  "spriteId": "ember_acolyte",
+  "spriteId": "ashborn_acolyte",
   "color": "#b8402a",
   "logo": "wizhat",
   "frontPriority": 7,

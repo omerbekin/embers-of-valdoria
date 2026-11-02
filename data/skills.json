@@ -12178,7 +12178,7 @@
     ]
   },
   "hollow_rune_spark": {
-    "_not": "Hollow Runecaller temel saldırısı (Combat Design 2026-11-02): Rune Spark'ın güçlüsü + az mana yakma. YER TUTUCU sanat: artOf 'rune_spark'. Sayılar PROVİZYON.",
+    "_not": "Hollow Runecaller temel saldırısı (Combat Design 2026-11-02): Rune Spark'ın güçlüsü + az mana yakma. Sayılar PROVİZYON.",
     "id": "hollow_rune_spark",
     "name": "Rune Spark",
     "target": "single_enemy",
@@ -12191,11 +12191,10 @@
     ],
     "icon": "voidstrike",
     "vfx": "voidstrike",
-    "sfx": ["voidPulse", "implode"],
-    "artOf": "rune_spark"
+    "sfx": ["voidPulse", "implode"]
   },
   "hollow_glyph": {
-    "_not": "Hollow Runecaller alan skill'i (Combat Design 2026-11-02): Glyph of Breaking'in güçlüsü + 2 tur Sunder (Hollow Warden'ın fiziksel vuruşuna yol açar). Bedel L30'da 5-6 kullanım (tests/map3-mana.test.ts). YER TUTUCU sanat: artOf 'glyph_of_breaking'. Sayılar PROVİZYON.",
+    "_not": "Hollow Runecaller alan skill'i (Combat Design 2026-11-02): Glyph of Breaking'in güçlüsü + 2 tur Sunder (Hollow Warden'ın fiziksel vuruşuna yol açar). Bedel L30'da 5-6 kullanım (tests/map3-mana.test.ts). Sayılar PROVİZYON.",
     "id": "hollow_glyph",
     "name": "Glyph of Breaking",
     "target": "area_enemies",
@@ -12213,11 +12212,10 @@
     ],
     "icon": "drainfield",
     "vfx": "drainfield",
-    "sfx": ["voidSuction", "voidPulse", "energySlurp"],
-    "artOf": "glyph_of_breaking"
+    "sfx": ["voidSuction", "voidPulse", "energySlurp"]
   },
   "ashborn_ember_toss": {
-    "_not": "Ashborn Acolyte temel saldırısı (Combat Design 2026-11-02): Ember Toss'un güçlüsü + 2 tur Burning durumu; zemin bırakmaz, Kindling'i büyütmez. YER TUTUCU sanat: artOf 'ember_toss'. Sayılar PROVİZYON.",
+    "_not": "Ashborn Acolyte temel saldırısı (Combat Design 2026-11-02): Ember Toss'un güçlüsü + 2 tur Burning durumu; zemin bırakmaz, Kindling'i büyütmez. Sayılar PROVİZYON.",
     "id": "ashborn_ember_toss",
     "name": "Ember Toss",
     "target": "single_enemy",
@@ -12230,11 +12228,10 @@
     ],
     "icon": "fireball",
     "vfx": "fireball",
-    "sfx": ["flameIgnite", "flameRoar", "fireBlast"],
-    "artOf": "ember_toss"
+    "sfx": ["flameIgnite", "flameRoar", "fireBlast"]
   },
   "ashborn_burn_the_ground": {
-    "_not": "Ashborn Acolyte alan skill'i (Combat Design 2026-11-02): Burn the Ground'un vuruşu güçlü, zemin gücü aynı (0,35). Bedel L30'da 5-6 kullanım (tests/map3-mana.test.ts). YER TUTUCU sanat: artOf 'burn_the_ground'. Sayılar PROVİZYON.",
+    "_not": "Ashborn Acolyte alan skill'i (Combat Design 2026-11-02): Burn the Ground'un vuruşu güçlü, zemin gücü aynı (0,35). Bedel L30'da 5-6 kullanım (tests/map3-mana.test.ts). Sayılar PROVİZYON.",
     "id": "ashborn_burn_the_ground",
     "name": "Burn the Ground",
     "target": "area_enemies",
@@ -12252,7 +12249,6 @@
     ],
     "icon": "meteor",
     "vfx": "meteor",
-    "sfx": ["meteorWhistle", "bigBoom", "fireCrackle"],
-    "artOf": "burn_the_ground"
+    "sfx": ["meteorWhistle", "bigBoom", "fireCrackle"]
   }
 }

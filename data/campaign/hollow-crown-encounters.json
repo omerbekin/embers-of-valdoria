@@ -547,7 +547,7 @@
         "slot": 0
       },
       {
-        "class": "deep_runecaller",
+        "class": "hollow_runecaller",
         "name": "Hollow Runecaller",
         "slot": 7
       }
@@ -607,12 +607,12 @@
     "name": "Shaft Head",
     "units": [
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn Acolyte",
         "slot": 7
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn Acolyte",
         "slot": 6
       },
@@ -665,7 +665,7 @@
         "name": "Hollow Thunderwright"
       },
       {
-        "class": "deep_runecaller",
+        "class": "hollow_runecaller",
         "name": "Hollow Runecaller",
         "slot": 7
       }
@@ -779,12 +779,12 @@
     "condition": "darkness",
     "units": [
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn Acolyte",
         "slot": 7
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn Acolyte",
         "slot": 6
       },
@@ -816,12 +816,12 @@
         "slot": 7
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 6
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 8
       },
@@ -898,7 +898,7 @@
         "slot": 2
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 7
       }
@@ -924,7 +924,7 @@
         "slot": 7
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 6
       }
@@ -950,7 +950,7 @@
         "slot": 2
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 7
       }
@@ -971,7 +971,7 @@
         "slot": 0
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 7
       },
@@ -1073,12 +1073,12 @@
         "slot": 0
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 7
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 6
       },
@@ -1172,17 +1172,17 @@
     "condition": "heat",
     "units": [
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 7
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 6
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 8
       },
@@ -1239,7 +1239,7 @@
         "slot": 2
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 7
       }
@@ -1290,7 +1290,7 @@
         "slot": 2
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 7
       }
@@ -1332,12 +1332,12 @@
     "condition": "heat",
     "units": [
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 7
       },
       {
-        "class": "ember_acolyte",
+        "class": "ashborn_acolyte",
         "name": "Ashborn",
         "slot": 6
       },
@@ -1543,7 +1543,7 @@
         "name": "Hollow Warden"
       },
       {
-        "class": "deep_runecaller",
+        "class": "hollow_runecaller",
         "slot": 7,
         "name": "Hollow Runecaller"
       }
