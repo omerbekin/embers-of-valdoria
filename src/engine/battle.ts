@@ -4724,7 +4724,7 @@ export class Battle {
     if (!this.inRange(actor, this.skill(skillId, actor)!, b, anchorSlot)) return { cells, targets, valid: false, reason: 'Out of range' };
     if (!this.anchorGroundOk(this.skill(skillId, actor)!, b, anchorSlot)) return { cells, targets, valid: false, reason: 'Needs a burning cell' };
     if (targets.length > 0 || this.emptyOwnAnchor(actor, skillId, b)) return { cells, targets, valid: true };
-    if (this.isAnyBoardArea(skillId, actor)) return { cells, targets, valid: false, reason: b === actor.side ? 'No ally in the area' : 'No enemy in the area' };
+    if (this.isAnyBoardArea(skillId, actor)) return { cells, targets, valid: false, reason: b === actor.side ? 'No ally in the area' : this.skill(skillId, actor)!.effects.every((e) => e.side === 'allies') ? 'Only on your side' : 'No enemy in the area' };
     const inShape = this.livingByDepth(opposite(actor.side)).some((c) => c.board === b && cells.includes(c.slot));
     return { cells, targets, valid: false, reason: inShape ? (this.rangeOn ? 'No target in range' : 'No target in reach') : 'No enemy in the area' };
   }

@@ -3950,7 +3950,7 @@ export class CampaignMapScene extends Phaser.Scene {
       else if (h.action === 'recruit') spots.push({ h, verb: v, ico: icon('node', 'battle'), kind: 'Town · Recruits', lines: [h.note ?? CONFIG.texts['townRecruit'] ?? ''] });
       else spots.push({ h, verb: v, ico: icon('node', 'battle'), kind: 'Town', lines: [v ? `${v[0]!.toUpperCase()}${v.slice(1)}.` : h.label] });
     }
-    const services = spots.map((p) => ({ name: p.h.action === 'smith' ? 'Smith' : p.h.label, verb: p.verb, ...(p.ico ? { icon: p.ico } : {}), tip: { kind: p.kind, title: p.h.action === 'smith' ? 'Smith' : p.h.label, ...(p.ico ? { icon: p.ico } : {}), lines: p.lines.filter(Boolean).map((text) => ({ text })) } }));
+    const services = spots.map((p) => ({ name: p.h.action === 'smith' ? 'Blacksmith' : p.h.label, verb: p.verb, ...(p.ico ? { icon: p.ico } : {}), tip: { kind: p.kind, title: p.h.action === 'smith' ? 'Smith' : p.h.label, ...(p.ico ? { icon: p.ico } : {}), lines: p.lines.filter(Boolean).map((text) => ({ text })) } }));
     const rec = (n.scene?.hotspots ?? []).find((x) => x.action === 'recruit' && hotspotOffered(n, x, this.s));
     return { services, flags: townCardFlags(this.s, id, rec?.label ?? null) };
   }

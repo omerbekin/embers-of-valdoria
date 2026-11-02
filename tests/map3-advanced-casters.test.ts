@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content, explainChoice } from '../src/engine';
-import type { AiTrace } from '../src/engine/ai';
+import { unitLabel, type AiTrace } from '../src/engine/ai';
 import { rangeOn } from './range-helpers';
 
 /** Gelişmiş Harita 3 büyücüleri (Combat Design 2026-11-02): Hollow Runecaller, Ashborn Acolyte. Yalnız var olan etkiler; YZ Sunder terimi yeni. */
@@ -19,6 +19,7 @@ function make(mob: string, mode: 'turns' | 'test' = 'turns', extra: Record<numbe
   return { b, m, h };
 }
 const has = (u: { statuses: { kind: string }[] }, s: string) => u.statuses.some((x) => x.kind === s);
+const m3Full = 100000; // tek vuruşta ölmeyecek can
 
 describe('kit', () => {
   it.each([['hollow_runecaller', 'rune_spark', 'glyph_of_breaking'], ['ashborn_acolyte', 'ember_toss', 'burn_the_ground']])('%s: taban kitten güçlü, imza mekaniği yok', (id, baseA, baseB) => {
@@ -76,6 +77,32 @@ describe('YZ', () => {
   it.each([['hollow_runecaller', 'hollow_rune_spark'], ['ashborn_acolyte', 'ashborn_ember_toss']])('%s: temel saldırı aday listesinde', (mob, skill) => {
     const { b, m } = make(mob, 'test');
     expect((explainChoice(b, m.uid, content.aiConfig)?.candidates ?? []).some((c) => c.skill === skill)).toBe(true);
+  });
+  const withKit = (over: Record<string, number>) => ({ ...content.aiConfig.value!, mobKit: { ...content.aiConfig.value!.mobKit!, ...over } });
+  it('Ward-Etcher: MP bedelli skill kalkan değeri kazanır, bedelsiz temel saldırı kazanmaz', () => {
+    const score = (mob: string, skill: string, wardEtch: number) => {
+      const { b, m } = make(mob, 'test', { 0: 'hollow_warden' });
+      m.mp = m.maxMp;
+      b.debugClearCooldowns();
+      const list = (explainChoice(b, m.uid, content.aiConfig, { value: withKit({ wardEtch }) })?.candidates ?? []).filter((c) => c.skill === skill);
+      expect(list.length).toBeGreaterThan(0);
+      return Math.max(...list.map((c) => c.score ?? 0));
+    };
+    expect(score('hollow_runecaller', 'hollow_glyph', 0.15)).toBeGreaterThan(score('hollow_runecaller', 'hollow_glyph', 0));
+    expect(score('hollow_runecaller', 'hollow_rune_spark', 0.15)).toBe(score('hollow_runecaller', 'hollow_rune_spark', 0));
+  });
+  it('Last Ember: kahraman öldüreceği Acolyte\'a vurmanın bedelini görür; can yüksekken bedel yok', () => {
+    const score = (hp: number, lastEmber: number) => {
+      const { b, m, h } = make('ashborn_acolyte', 'test', { 0: 'warrior' });
+      m.hp = hp;
+      m.maxHp = Math.max(m.maxHp, hp);
+      const all = explainChoice(b, h.uid, content.aiConfig, { value: withKit({ lastEmber }) })?.candidates ?? [];
+      const list = all.filter((c) => c.hits.includes(unitLabel(m)));
+      expect(list.length).toBeGreaterThan(0);
+      return Math.max(...list.map((c) => c.score ?? 0));
+    };
+    expect(score(1, 0.5)).toBeLessThan(score(1, 0));
+    expect(score(m3Full, 0.5)).toBe(score(m3Full, 0));
   });
   it('Ember Toss\'un Burning\'i hamle değerine girer', () => {
     const { b, m } = make('ashborn_acolyte', 'test');

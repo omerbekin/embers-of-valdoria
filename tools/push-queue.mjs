@@ -482,7 +482,8 @@ function statusText(q) {
   if (q.cutover) lines.push(`Worktree modu açık (${q.cutover.legacy.length} eski akış sohbeti).`);
   for (const r of Object.values(q.worktrees ?? {})) lines.push(`Worktree ${r.sid}: ${r.branch} · port ${r.port} · ${r.path}`);
   if (q.mainBlocked?.length) lines.push(`Yerel main geride: ${q.mainBlocked.slice(0, 10).join(', ')}`);
-  if (q.autoShipAt) lines.push(`Otomatik gönderim planlı: ${clock(q.autoShipAt)}.`);
+  if (q.autoHold) lines.push('Otomatik gönderim KAPALI (hold on); yalnız elle push.');
+  else if (q.autoShipAt) lines.push(`Otomatik gönderim planlı: ${clock(q.autoShipAt)}.`);
   if (q.sim?.running) lines.push(`Denge simi koşuyor: ${q.sim.running.version}.`);
   return lines.join('\n');
 }
@@ -1506,6 +1507,7 @@ const addNotice = (q, text) => (q.notices ??= []).push(`[${new Date().toLocaleSt
 // withQueue içinde çağrılır. Gönderim sürerken bakılmaz: bitince kendisi çağırır (seçilenler o sırada hâlâ "hazır" görünür)
 function scheduleAutoShip(q, quiet) {
   if (!q.cutover || shipLive()) return;
+  if (q.autoHold) { delete q.autoShipAt; delete q.autoShipPid; return; } // `hold on`: otomatik gönderim kapalı, yalnız elle push (Ömer 2026-11-02)
   const list = Object.values(q.sessions).filter(autoEligible);
   if (list.length) {
     if (q.autoShipAt) return;
@@ -1526,7 +1528,7 @@ function spawnBg(argv) {
 }
 // Planın vakti geçtiyse başlatır; zamanlayıcı ölmüşse yenisini açar. Kuyruk kilidi dışında çağrılır
 function autoShipKick(q = readQueue()) {
-  if (!AUTO_ON || !q.autoShipAt) return;
+  if (!AUTO_ON || !q.autoShipAt || q.autoHold) return;
   if (Date.now() >= q.autoShipAt) return void spawnBg(['auto-ship']);
   if (q.autoShipPid && pidAlive(q.autoShipPid)) return;
   const pid = spawnBg(['auto-wait']);
@@ -1534,7 +1536,8 @@ function autoShipKick(q = readQueue()) {
 }
 async function autoWait() {
   for (;;) {
-    const at = readQueue().autoShipAt;
+    const cur = readQueue();
+    const at = cur.autoHold ? 0 : cur.autoShipAt;
     if (!at) return 0;
     if (Date.now() >= at) return autoShipRun();
     sleep(Math.min(at - Date.now(), 30000));
@@ -1543,6 +1546,7 @@ async function autoWait() {
 // Planı kuyruk kilidi altında alan süreç gönderir: zamanlayıcı ile kanca yarışsa da tek gönderim başlar; kilidi başka gönderim tutuyorsa push onu bekler
 async function autoShipRun() {
   const go = withQueue((q) => {
+    if (q.autoHold) { delete q.autoShipAt; delete q.autoShipPid; return false; }
     if (!q.autoShipAt || Date.now() < q.autoShipAt) return false;
     delete q.autoShipAt;
     delete q.autoShipPid;
@@ -2118,6 +2122,12 @@ const main = {
     console.log(`Not satırı: ${Object.values(notes).flat().length}.`);
   }),
   // Dalın yalnız belirli bir commit'e kadarını hazır yapar (çalışma ağacındaki yarım iş mühre girmez; ready ağacın tamamını commit'ler). sha dalın atası olmalı.
+  // hold on|off: otomatik gönderimi kapatır/açar (kalıcı, yeniden başlatmada da geçerli); elle push etkilenmez
+  hold: () => withQueue((q) => {
+    const on = args[0] !== 'off';
+    if (on) { q.autoHold = true; delete q.autoShipAt; delete q.autoShipPid; } else { delete q.autoHold; scheduleAutoShip(q); }
+    console.log(on ? 'Otomatik gönderim KAPALI; hazır işler kuyrukta bekler, yalnız elle push gönderir.' : 'Otomatik gönderim açık.');
+  }),
   seal: () => withQueue((q) => {
     const rec = wtOf(q, findSid(q, args[0]));
     if (!rec) throw new Error('kullanım: seal <oturum> <commit> [--internal | --fixes "..."]; yalnız worktree sohbetleri');
@@ -2160,7 +2170,7 @@ const main = {
   push: async () => process.exit(background('push', args) ? 0 : await push(args[0], args.slice(1))),
   eod: async () => process.exit(background('eod', args) ? 0 : await push('eod', args)),
 }[cmd];
-if (!main) { console.error('Komut: status | mode | add | ready | notes | retry | seal | push | eod | doctor | drop | cutover | wt-open | wt-close | legacy-merged'); process.exit(1); }
+if (!main) { console.error('Komut: status | mode | add | ready | notes | retry | seal | hold | push | eod | doctor | drop | cutover | wt-open | wt-close | legacy-merged'); process.exit(1); }
 try { await main(); } catch (e) {
   // Hook'lar açık kalır: iç hata hiçbir araç çağrısını engellemez
   if (cmd.startsWith('hook-')) { try { appendFileSync(LOG, `[${new Date().toISOString()}] !! ${cmd} iç hata: ${firstLine(e)}\n`); } catch {} process.exit(0); }

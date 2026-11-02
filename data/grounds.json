@@ -264,9 +264,9 @@
     "frozen": {
       "label": "Frozen",
       "result": "Water freezes to ice",
-      "text": "Chill freezes water into Ice: enemies standing on it are Slowed until they leave it; the water is gone.",
+      "text": "Chill or Ice freezes water into Ice: enemies standing on it are Slowed until they leave it; the water is gone.",
       "setup": ["flooded", "healing_rain"],
-      "trigger": ["storm"],
+      "trigger": ["storm", "ice_ground"],
       "either": true,
       "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 }
     },

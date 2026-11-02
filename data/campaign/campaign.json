@@ -57,7 +57,8 @@
       "name": "Hard",
       "ai": "hard",
       "text": "Enemies play their best and are tougher.",
-      "enemy": { "hpMult": 1.09, "powerMult": 1.09 },
+      "_enemy": "Ömer 2026-11-03: Hard mobları genel +%2-3 (1,09 -> 1,12, can + güç); Ward-Etcher + Last Ember YZ değerinden sonra normal Medium-Hard farkı 4,98'e inmişti.",
+      "enemy": { "hpMult": 1.12, "powerMult": 1.12 },
       "enemyTier": { "elite": { "hpMult": 0.82 }, "boss": { "hpMult": 1.14, "powerMult": 1.07 } },
       "eliteEscort": { "hpMult": 1.12, "powerMult": 1.12 }
     }

@@ -1343,6 +1343,18 @@
   transform: none;
 }
 
+/* Telefon, stat paneli açıkken (battle-hud.ts > placeAboveStats): bağlam ipucu panelin ÜSTÜNDE, üst şeritte (sıra çubuğunun solunda); konum/genişlik satır içi yazılır */
+.bh-ctip.above-stats {
+  bottom: auto;
+  transform: none;
+}
+
+.bh-ctip.above-stats .bt {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
 /* çerçeve (.bt) kapla aynı genişlikte: kartın .bt'siyle aynı kural */
 .bh-ctip.at-top .bt {
   width: 100%;

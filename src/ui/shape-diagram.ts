@@ -80,7 +80,9 @@ export function skillMiniGrid(skill: SkillDef, formation: ShapeFormation): MiniS
   if (skill.target !== 'area_enemies' && skill.target !== 'area_any') return null;
   const grid = shapeMiniGrid(skill.area, formation);
   if (!grid) return null;
-  return skill.target === 'area_any' ? { ...grid, note: EITHER_SIDE_NOTE } : grid;
+  if (skill.target !== 'area_any') return grid;
+  // Yalnız dost etkili area_any (Healing Rain) karşı tahtaya atılamaz
+  return { ...grid, note: skill.effects.every((e) => e.side === 'allies') ? 'your side' : EITHER_SIDE_NOTE };
 }
 
 /** Düz metin gösterimi (test / erişilebilirlik): satır başına bir dize, '#' = kapsanan, 'A' = kapsanan anchor, 'X' = çift vuruşlu anchor (×2), '+' = kapsanmayan anchor, '.' = boş. */

@@ -1975,6 +1975,8 @@ function kitPassiveValue(ctx: ValueContext, o: Option, cfg: NonNullable<AiValueC
     const slow = 1 - (battle.statusDef(own.status)?.speedMult ?? 1);
     for (const t of foes) if (!t.statuses.some((s) => s.kind === own.status) && !battle.statusBlocked(t, own.status) && !battle.statusRefused(t, own.status)) v += cfg.graveCold * slow * ctx.turnValue(t) * previewHitChance(o, t);
   }
+  // Ward-Etcher: MP bedelli skill dosta büyü kalkanı verir (motor: Battle.wardEtch)
+  if (own?.type === 'wardEtcher' && skill.cost.resource === 'mp' && skill.cost.amount > 0) v += cfg.wardEtch * own.perMp * skill.cost.amount;
   if (own?.type === 'kindling' && o.cells?.length) {
     for (const e of skill.effects) {
       if (e.type !== 'ground' || e.ground !== own.ground) continue;
@@ -1987,6 +1989,8 @@ function kitPassiveValue(ctx: ValueContext, o: Option, cfg: NonNullable<AiValueC
   for (const u of foes) {
     const pe = u.passive?.effect;
     const kill = o.killP[u.uid] ?? 0;
+    // Last Ember: skill'le öldüren kendi hücresinde yanan zemin bulur; çıkıp kaçabildiği için tam bedel değil
+    if (pe?.type === 'lastEmber' && kill > 0) v -= cfg.lastEmber * kill * battle.groundTickDamage(pe.ground, Math.round(attributePower(u.stats, pe.scale, battle.formulas) * pe.power), actor) * Math.min(pe.turns, ctx.vc.horizon);
     if (pe?.type === 'furnaceCore' || (u.touch?.type === 'overheat' && u.touch.core)) v -= cfg.furnace * kill * sum(battle.fighting(u.side).filter((a) => a.passive?.effect.type === 'kindling').map((a) => ctx.turnValue(a)));
     const chant = pe?.type === 'warChant' ? pe : pe?.type === 'highlandFury' ? pe.chant : undefined;
     if (chant) {
@@ -2458,7 +2462,7 @@ function brandFoeValue(ctx: ValueContext, eff: Extract<SkillDef['effects'][numbe
 /**
  * Ley Thread (Ömer 2026-10-29): Mana Steal'in bıraktığı ipliğin değeri. Kullanıcının iplik eki taşıyan Brand skill'i (Ley Brand) bir sonraki turunda hazırsa
  * (cooldown <= 1, MP + yenilenme bedeli karşılıyor) her iplik alacak düşman için: iplikli Brand değeri - ipliksiz Brand değeri (brandFoeValue; ufukla
- * sınırlı süre + 2x bedel yakımı) x isabet x hayatta kalma x threadShare (Brand'in gerçekten o düşmana atılma payı). Hedefte iplik zaten varsa 0
+ * sınırlı süre + threadBurnMult kat bedel yakımı) x isabet x hayatta kalma x threadShare (Brand'in gerçekten o düşmana atılma payı; fark negatifse 0). Hedefte iplik zaten varsa 0
  * (yeniden çekmek süreyi tazeler, eki büyütmez). Brand hazır değilse 0: sabit öncelik yok.
  */
 function threadValue(ctx: ValueContext, o: Option, w: BrandWeights): number {

@@ -148,7 +148,7 @@
       "id": "hc5",
       "type": "town",
       "name": "Hearthstead",
-      "subtitle": "Town · Inn, Smith, Recruits, Trade",
+      "subtitle": "Town · Inn, Blacksmith, Recruits, Trade",
       "lore": "A mountain village of stone and smoke, the last place on the road where strangers are still let in.",
       "region": "I",
       "pos": [
@@ -517,7 +517,7 @@
       "id": "hc30",
       "type": "town",
       "name": "Kharduin, the Last Hall",
-      "subtitle": "City · Inn, Smith, Barracks, Trade",
+      "subtitle": "City · Inn, Blacksmith, Barracks, Trade",
       "lore": "The Last Hall of the dwarves, lit by forges that have burned without pause since the founding.",
       "region": "III",
       "pos": [

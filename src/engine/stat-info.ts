@@ -150,7 +150,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         title: `HP regen ${Math.round(stats.hpRegen)}`,
         lines: [
           `Restores ${Math.round(stats.hpRegen)} HP at the start of each of its own turns`,
-          `Comes from Strength: +${num(a.hpRegenPerStr)} per point. You have ${stats.str} STR.`,
+          `+${num(a.hpRegenPerStr)} per point. You have ${stats.str} STR.`,
         ],
       };
     case 'mpRegen':

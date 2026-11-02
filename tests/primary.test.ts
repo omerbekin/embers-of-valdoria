@@ -171,6 +171,14 @@ describe('Str: düz can yenilenmesi, Int: MP yenilenmesi (turns modu)', () => {
     expect(mk(undefined, { str: 0, int: 20, dex: 0, luck: 0 }).hpRegen).toBe(0);
   });
 
+  // Ömer 2026-11-02 (strtext B): kutu ve "Comes from Strength:" öneki yok, düz "+N per point. You have N STR."
+  it('HP regen ipucu: "+N per point. You have N STR." (gerçek değerlerle)', () => {
+    const st = mk(undefined, { str: 29, int: 0, dex: 0, luck: 0 });
+    const info = describeStat('hpRegen', st, f);
+    expect(info.lines.at(-1)).toMatch(/^\+[\d.]+ per point\. You have 29 STR\.$/);
+    expect(info.lines.join(' ')).not.toContain('Comes from Strength');
+  });
+
   it("class'larda sabit mpRegen alanı yok: her class'ın mpRegen'i Int'inden türer", () => {
     for (const def of classes) {
       expect(def.stats.mpRegen, def.id).toBe(Math.round(def.attributes.int * f.attributes.mpRegenPerInt));

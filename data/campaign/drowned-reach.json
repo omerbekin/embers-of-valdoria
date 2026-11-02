@@ -267,7 +267,7 @@
       "type": "town",
       "name": "Reedgate",
       "opensSlot": "trinket",
-      "subtitle": "Town · Inn, Smith, Recruits, Trade",
+      "subtitle": "Town · Inn, Blacksmith, Recruits, Trade",
       "lore": "A reed-thatched village at the head of the marsh, where the river slows and the ferrymen gather.",
       "region": "I",
       "pos": [
@@ -385,7 +385,7 @@
       "id": "dr16",
       "type": "town",
       "name": "Eelwick",
-      "subtitle": "Town · Inn, Smith, Recruits, Trade",
+      "subtitle": "Town · Inn, Blacksmith, Recruits, Trade",
       "lore": "A town on stilts above the brackish water, smelling of smoke, salt and eel-oil.",
       "region": "II",
       "pos": [
@@ -616,7 +616,7 @@
       "id": "dr28",
       "type": "town",
       "name": "Saltmere",
-      "subtitle": "City · Inn, Smith, Recruits, Trade",
+      "subtitle": "City · Inn, Blacksmith, Recruits, Trade",
       "lore": "The harbour city at the river mouth, grey stone and grey sea, its half-sunken cathedral leaning over the docks.",
       "region": "III",
       "pos": [
@@ -1058,7 +1058,7 @@
       "id": "dr54",
       "type": "town",
       "name": "Fisher's Landing",
-      "subtitle": "Town · Inn, Smith, Recruits, Trade",
+      "subtitle": "Town · Inn, Blacksmith, Recruits, Trade",
       "lore": "A fishing village with a long jetty, where boats leave for the islands when the weather allows.",
       "region": "IV",
       "pos": [

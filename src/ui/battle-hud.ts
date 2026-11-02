@@ -284,6 +284,17 @@ function metaBare(m: NonNullable<TipContent['meta']>[number]): BandChip | null {
 }
 
 /** TipContent -> "A - Band" ipucu tarifi (içerik aynı; yalnızca görünüm: src/ui/band-tip.ts). */
+/**
+ * Telefonda stat paneli açıkken alt orta bağlam ipucunun yeri (Ömer 2026-11-02): panelin ÜSTÜNDE, üst şeridin boş sol bölümünde (sıra çubuğunun soluna kadar).
+ * Tüm değerler aynı birimde (HUD birimi). Şerit [stripL, stripR]; ipucu şerit genişliğinde (en çok maxW), boyu ölçülür; alt kenarı panelin üstünden gap yukarıda biter,
+ * ekranın üstüne minTop'tan fazla çıkmaz (sığmazsa üstte kalır, panele biner; ölçü raporda).
+ */
+export function ctipAboveStatsPlace(a: { panelTop: number; stripL: number; stripR: number; minTop: number; gap: number; maxW: number; heightAt: (w: number) => number }): { left: number; top: number; width: number } {
+  const width = Math.max(1, Math.min(a.maxW, a.stripR - a.stripL));
+  const h = a.heightAt(width);
+  return { left: a.stripL, width, top: Math.max(a.minTop, a.panelTop - a.gap - h) };
+}
+
 export function tipToBand(t: TipContent): BandTipSpec {
   const tagColor = t.tags?.find((g) => g.color)?.color;
   const titleAccent = t.titleColor && !NEUTRAL_TITLE.has(t.titleColor.toLowerCase()) ? t.titleColor : undefined;
@@ -1151,9 +1162,11 @@ export class BattleHud {
     const tip = this.ctip;
     if (!this.tipTopOn) {
       this.releaseCardCap();
+      if (this.placeAboveStats()) return;
       if (!tip.classList.contains('at-top') && tip.style.left) tip.style.cssText = '';
       return;
     }
+    this.clearAboveStats();
     const phone = document.documentElement.classList.contains('short');
     const gap = phone ? 4 : 8;
     const shown = (s: Side) => this.cards[s].classList.contains('on') && !(s === 'party' && this.root.classList.contains('sheet-open'));
@@ -1185,6 +1198,58 @@ export class BattleHud {
       if (st.style.maxHeight !== cap) st.style.maxHeight = cap;
       this.statsCapped = side;
     } else this.releaseStatsCap();
+  }
+
+  /** Alt orta bağlam ipucunu stat panelinin üstüne alma işareti (above-stats) kaldırılır; satır içi yer silinir. */
+  private clearAboveStats(): void {
+    const tip = this.ctip;
+    if (!tip.classList.contains('above-stats')) return;
+    tip.classList.remove('above-stats');
+    tip.style.cssText = '';
+  }
+
+  /**
+   * Telefon (html.short) + stat paneli açık + alt orta bağlam ipucu görünür: ipucu panelin üstüne taşınır (üst şeritte, sıra çubuğunun solunda),
+   * böylece ikisi de okunur. Panelin üstü ölçülür (içerik boyuna uyar). Panel kapanınca ya da koşul bozulunca eski alt orta yerine döner. true = yerleştirildi.
+   */
+  private placeAboveStats(): boolean {
+    const tip = this.ctip;
+    const sides = (['party', 'enemy'] as const).filter((s) => this.cards[s].classList.contains('stats'));
+    if (!document.documentElement.classList.contains('short') || !sides.length || !tip.classList.contains('on') || tip.classList.contains('at-top')) {
+      this.clearAboveStats();
+      return false;
+    }
+    const rr = this.root.getBoundingClientRect();
+    const k = rr.width / this.root.offsetWidth || 1; // gerçek px / HUD birimi
+    let panelTop = Infinity;
+    for (const s of sides) {
+      const p = this.cardStats[s];
+      panelTop = Math.min(panelTop, (p.querySelector('.bt') ?? p).getBoundingClientRect().top);
+    }
+    // şeridin sağ sınırı: sıra çubuğu ya da "your turn" yazısı (hangisi daha soldaysa) - 6 px
+    let right = rr.right;
+    for (const e of [this.turn, this.turnLbl]) {
+      const r = e.getBoundingClientRect();
+      if (r.width > 0) right = Math.min(right, r.left);
+    }
+    const u = (px: number) => (px - rr.top) / k;
+    tip.classList.add('above-stats');
+    const place = ctipAboveStatsPlace({
+      panelTop: u(panelTop),
+      stripL: 8 / k,
+      stripR: (right - rr.left - 6) / k,
+      minTop: 2 / k,
+      gap: 4 / k,
+      maxW: 1100,
+      heightAt: (w) => {
+        tip.style.width = `${w}px`;
+        return tip.offsetHeight;
+      },
+    });
+    tip.style.left = `${place.left}px`;
+    tip.style.width = `${place.width}px`;
+    tip.style.top = `${place.top}px`;
+    return true;
   }
 
   // ------------------------------------------------------------------ olaylar

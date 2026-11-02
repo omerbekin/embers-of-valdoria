@@ -304,6 +304,16 @@ describe('zemin tepkimeleri: motor', () => {
     expect(b.log.some((e) => e.type === 'status' && e.target === 'enemy-0' && e.status === 'slow')).toBe(true);
   });
 
+  it('10b Frozen (su <-> Ice): Ice de suyu dondurur (Ömer 2026-11-03), iki sırada da', () => {
+    for (const order of [['flooded', 'ice_ground'], ['ice_ground', 'flooded']] as const) {
+      const { b, me } = mk();
+      place(b, me.uid, order[0], 'enemy', [0]);
+      place(b, me.uid, order[1], 'enemy', [0]);
+      expect(reactions(b).map((e) => e.reaction)).toEqual(['frozen']);
+      expect(typesAt(b, 'enemy', 0)).toEqual(['ice_ground']);
+    }
+  });
+
   it('11 Frozen solid (Chill Ground üstüne Chill Ground): Ice olur, Chill kalkar; tek tepkime', () => {
     const { b, me } = mk();
     expect(content.grounds.storm!.name).toBe('Chill Ground');

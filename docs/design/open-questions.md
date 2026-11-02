@@ -1751,3 +1751,8 @@ Sayılar PROVİZYON, sim yok, bayrak kapalı. En dar yorum:
 - Varsayım: "B'deki açıklama" = bu iki satır. Genel kural olarak A'nın sınırı 60 yerine 70 yapıldı (`src/ui/skill-tip-rule.ts > MOD_MAX`); tüm skill'ler için geçerli, Ley Brand'e özel durum yok.
 - Ömer başka bir şeyi kastettiyse (ör. B'nin sütunlu düzeni yalnız bu skill'de) söylenince değişir.
 - Not: "More" düğmesi savaştaki skill düğmesi ve Gear'daki skill ipucunda tıklanır; kartın yanındaki yüzen ipucunda düğme yok, tam metin hep açık.
+
+
+## 512. Ley Thread yakımı 1,5 kalır
+
+**Karar (Ömer 2026-11-02):** `threadBurnMult` 1,5 kalır; 0,5 uygulanmadı. 0.9.10.6 yakımı zaten indirmişti (madde 469), 0,5 ikinci indirim olur ve iplik yakımı ipliksizin altına düşürürdü (ödenen bedelin 0,25'i, ipliksiz 0,5).

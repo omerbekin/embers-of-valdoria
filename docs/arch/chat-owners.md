@@ -1,15 +1,14 @@
-# Sohbet sahipleri
+# Alanlar
 
-Açık sohbetler ve alanları (Ömer 2026-10-31). Yeni konuya başlamadan bak; iş başka sohbetin alanına ya da dosyalarına giriyorsa kendin yapma, o sohbete `SendMessage` ile devret (adı `ListAgents`'ta), Koordinatör'e tek satır söyle.
+Ömer 2026-11-02: alt sohbetler kapandı, tek sohbet Lead (`docs/arch/lead.md`). İş alana göre agente verilir; agent `docs/arch/areas/<dosya>` okuyarak başlar. Eski sohbet adları hafızada ve belgelerde geçerse bu alanları kastediyor.
 
-**Koordinatör (Ömer 2026-11-01):** Ömer yalnız "Koordinatör" sohbetiyle konuşur, işi o dağıtır, kuralları `docs/arch/coordinator.md`. Kopyası yoktur, dosya değiştirmez.
-
-| Sohbet | Kopya | Alan |
+| Alan (eski sohbet) | Dosya | Kapsam |
 |---|---|---|
-| Character Design | vesper-tree | karakter tasarımı, tek karakterin yetenek ağacı ve sayıları |
-| Campaign | campaign | sefer, Map 3, kasabalar |
-| Character vfx | character-vfx | karakter efektleri |
-| Item Design | item-design | yeni itemler, item türleri, item dengesi ve reworkleri, affixler |
-| Minor Fixes | minor-fixes | küçük ve sahipsiz işler |
-| Combat Design | combat-design | genel savaş kuralları: etkiler, durumlar, buff ve debufflar, turlar, genel denge, savaşla ilgili yeni ve değişen mekanikler |
-| UI-UX Design | ui-ux-design | mevcut arayüzlerin elden geçirilmesi, yeni arayüz tasarımı, kullanıcı deneyimi |
+| Character Design | character-design.md | karakter tasarımı, tek karakterin yetenek ağacı ve sayıları |
+| Campaign | campaign.md | sefer, Map 3, kasabalar |
+| Character vfx | character-vfx.md | karakter efektleri |
+| Item Design | item-design.md | yeni itemler, item türleri, item dengesi ve reworkleri, affixler |
+| Minor Fixes | minor-fixes.md | küçük ve sahipsiz işler |
+| Combat Design | combat-design.md | genel savaş kuralları: etkiler, durumlar, buff ve debufflar, turlar, genel denge, savaşla ilgili mekanikler |
+| UI-UX Design | ui-ux.md | mevcut arayüzlerin elden geçirilmesi, yeni arayüz tasarımı, kullanıcı deneyimi |
+| Gönderim | push-queue.md | gönderim kuyruğu ve yayın |
