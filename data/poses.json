@@ -827,6 +827,11 @@
             "angle": -20
           }
         },
+        "hammers": {
+          "point": {
+            "angle": -20
+          }
+        },
         "staves": {
           "idle2": {
             "angle": 40,
@@ -8324,6 +8329,43 @@
         "ornate"
       ]
     },
+    "hammers": {
+      "length": 205,
+      "edge": {
+        "horseman": "left"
+      },
+      "looks": {
+        "warhammer": {
+          "w": 143,
+          "h": 400,
+          "grip": {
+            "x": 71,
+            "y": 320
+          }
+        },
+        "horseman": {
+          "w": 211,
+          "h": 400,
+          "grip": {
+            "x": 72,
+            "y": 320
+          }
+        },
+        "templar": {
+          "w": 169,
+          "h": 420,
+          "grip": {
+            "x": 84,
+            "y": 336
+          }
+        }
+      },
+      "order": [
+        "warhammer",
+        "horseman",
+        "templar"
+      ]
+    },
     "daggers": {
       "length": 125,
       "looks": {
@@ -8593,12 +8635,32 @@
             "x": 81,
             "y": 338
           }
+        },
+        "greatmace": {
+          "w": 124,
+          "h": 520,
+          "grip": {
+            "x": 62,
+            "y": 406
+          },
+          "length": 360
+        },
+        "longhafted": {
+          "w": 88,
+          "h": 540,
+          "grip": {
+            "x": 43,
+            "y": 421
+          },
+          "length": 400
         }
       },
       "order": [
         "maul",
         "hammer",
-        "warmaul"
+        "warmaul",
+        "greatmace",
+        "longhafted"
       ]
     },
     "greatswords": {
@@ -8621,7 +8683,6 @@
   },
   "itemArt": {
     "arming_sword": "swords",
-    "emberbrand": "swords",
     "greatsword": "greatswords"
   },
   "familyArt": {
@@ -8632,7 +8693,7 @@
     "bows": "bows",
     "charms": "charms",
     "shield": "shields",
-    "hammers": "maces"
+    "hammers": "hammers"
   },
   "rarityLook": {
     "common": 0,
@@ -8695,6 +8756,11 @@
     "gamblers_last_coin": "coin",
     "greataxe": "greataxe",
     "greatsword": "greatsword",
-    "war_maul": "warmaul"
+    "war_maul": "warmaul",
+    "war_hammer": "warhammer",
+    "horsemans_hammer": "horseman",
+    "templars_hammer": "templar",
+    "great_mace": "greatmace",
+    "long_hafted_mace": "longhafted"
   }
 }

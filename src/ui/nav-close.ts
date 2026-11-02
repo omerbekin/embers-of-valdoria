@@ -5,6 +5,7 @@
  * Her X'li pencere bunu kullanır (ayrı konum yazılmaz).
  */
 import { navSvg, type NavIcon } from './nav-icons';
+import { attachBandTip } from './band-tip-attach';
 
 let open = 0;
 
@@ -35,7 +36,7 @@ export function mountCloseButton(host: HTMLElement, onClose: () => void, label =
   b.type = 'button';
   b.className = 'nav-btn settings-toggle close-toggle';
   b.innerHTML = navSvg(icon);
-  b.title = label;
+  attachBandTip(b, { title: label });
   b.setAttribute('aria-label', label);
   b.addEventListener('click', () => onClose());
   host.append(b);

@@ -471,52 +471,60 @@ export function openCamp(
     const sharp = kind === 'sharpen' && !used;
     body.classList.toggle('ec-sharp', sharp);
     sh.panel.classList.toggle('sharp', sharp);
+    // Tend wounds / Train secilince de kartlar dar seride iner (Omer 2026-11-02); Rest hedef istemez, kartlarda kalir
+    const narrow = !used && (kind === 'tend' || kind === 'train');
+    sh.panel.classList.toggle('strip', sharp || narrow);
     if (sharp) return renderSharpen(s);
-    const fire = el('div', 'ec-fire');
     const ico = miscImage('node:rest')?.url;
-    if (ico) {
-      const im = el('img');
-      im.src = ico;
-      im.alt = '';
-      im.draggable = false;
-      fire.append(im);
+    if (narrow) sh.head.insertBefore(campTabs(s), sh.head.querySelector('.ec-sub'));
+    else {
+      const fire = el('div', 'ec-fire');
+      if (ico) {
+        const im = el('img');
+        im.src = ico;
+        im.alt = '';
+        im.draggable = false;
+        fire.append(im);
+      }
+      fire.append(el('p', 'ec-rule', CONFIG.texts['camp'] ?? 'Make camp once. Choose one.'));
+      body.append(fire);
     }
-    fire.append(el('p', 'ec-rule', CONFIG.texts['camp'] ?? 'Make camp once. Choose one.'));
-    body.append(fire);
     const chapel = chapelRow(s);
     if (chapel) body.append(chapel);
     if (used) return renderUsed(s, used);
 
-    const cards = el('div', 'ec-cards4');
-    for (const c of CAMP_CARDS) {
-      const why = cardWhy(s, c.kind);
-      const b = el('button', `ec-card${kind === c.kind ? ' on' : ''}`);
-      b.type = 'button';
-      b.disabled = !!why;
-      if (why) attachBandTip(b, reasonSpec(c.name, why));
-      const ic = el('span', 'ec-card-ico');
-      if (c.kind === 'rest' && ico) {
-        const im = el('img');
-        im.src = ico;
-        im.alt = '';
-        ic.append(im);
-      } else if (c.kind === 'sharpen') {
-        const im = el('img');
-        im.src = TEMPER_STONE_ICON;
-        im.alt = '';
-        ic.append(im);
-      } else ic.textContent = c.kind === 'tend' ? '+' : c.kind === 'train' ? 'XP' : '';
-      b.append(ic, el('h4', '', c.name), el('p', '', cardDesc(c.kind, s)), el('small', '', why ?? TARGET_HINT[c.kind]));
-      b.addEventListener('click', () => {
-        kind = kind === c.kind ? null : c.kind;
-        target = '';
-        rail = '';
-        uiSound('select');
-        render();
-      });
-      cards.append(b);
+    if (!narrow) {
+      const cards = el('div', 'ec-cards4');
+      for (const c of CAMP_CARDS) {
+        const why = cardWhy(s, c.kind);
+        const b = el('button', `ec-card${kind === c.kind ? ' on' : ''}`);
+        b.type = 'button';
+        b.disabled = !!why;
+        if (why) attachBandTip(b, reasonSpec(c.name, why));
+        const ic = el('span', 'ec-card-ico');
+        if (c.kind === 'rest' && ico) {
+          const im = el('img');
+          im.src = ico;
+          im.alt = '';
+          ic.append(im);
+        } else if (c.kind === 'sharpen') {
+          const im = el('img');
+          im.src = TEMPER_STONE_ICON;
+          im.alt = '';
+          ic.append(im);
+        } else ic.textContent = c.kind === 'tend' ? '+' : c.kind === 'train' ? 'XP' : '';
+        b.append(ic, el('h4', '', c.name), el('p', '', cardDesc(c.kind, s)), el('small', '', why ?? TARGET_HINT[c.kind]));
+        b.addEventListener('click', () => {
+          kind = kind === c.kind ? null : c.kind;
+          target = '';
+          rail = '';
+          uiSound('select');
+          render();
+        });
+        cards.append(b);
+      }
+      body.append(cards);
     }
-    body.append(cards);
 
     // hedef bolumu
     if (kind === 'tend' || kind === 'train') {

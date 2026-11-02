@@ -267,11 +267,24 @@ describe('Altıncı tur: düğüm cevapları', () => {
     expect(healed(me)).toBe(0);
   });
 
-  it('Druid Thin Sap: anlık şifa ve yenilenme (tur başı şifa) ikisi de yarıya', () => {
+  it('Druid Thin Sap: tüm dostlar; anlık şifa ve zemin ikisi de yarıya; zemin her dostun altında', () => {
     const base = content.skills.rejuvenate!.effects as unknown as Eff[];
     const e = effs(only('druid', { '3.fa': 1 }), 'rejuvenate');
     expect(e.find((x) => x.type === 'heal')!.power).toBeCloseTo(base.find((x) => x.type === 'heal')!.power! * 0.5, 9);
-    expect(e.find((x) => x.type === 'hot')!.power).toBeCloseTo(base.find((x) => x.type === 'hot')!.power! * 0.5, 9);
+    expect(e.find((x) => x.type === 'ground')!.power).toBeCloseTo(base.find((x) => x.type === 'ground')!.power! * 0.5, 9);
+    const b = make({ 0: 'druid', 1: 'warrior', 5: 'mage' }, { 0: 'warrior' }, withTree(0, only('druid', { '3.fa': 1 })));
+    const me = P(b);
+    me.hp = 10;
+    P(b, 1).hp = 10;
+    P(b, 5).hp = 10;
+    cast(b, me, 'rejuvenate');
+    for (const s of [0, 1, 5]) {
+      expect(P(b, s).hp).toBeGreaterThan(10);
+      expect(P(b, s).statuses.some((x) => x.kind === 'hallowed')).toBe(true);
+    }
+    const rain = b.ground.filter((g) => g.ground === 'healing_rain');
+    expect(rain.flatMap((g) => g.slots).sort((x, y) => x - y)).toEqual([0, 1, 5]);
+    expect(rain.every((g) => g.board === 'party')).toBe(true);
   });
 
   it('Cutthroat Carving Arc: zincirdeki her kesik (isabet edince) Wound verir', () => {

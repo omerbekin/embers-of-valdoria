@@ -95,7 +95,7 @@ function gripProblem(pl: ItemPlacement, fistR: number, tol: number): string | nu
 describe('Tek el silah elde (sap yumruktan geçer)', () => {
   it('tutuş takımlı her sınıfta tek el ailelerinin her karede yumruk sapı ortasından kavrar, sap iki yanda görünür', () => {
     const families = Object.entries(POSES.weapons).filter(([, f]) => !f.hold || f.hold === 'one');
-    expect(families.map(([n]) => n).sort()).toEqual(['axes', 'daggers', 'maces', 'swords']);
+    expect(families.map(([n]) => n).sort()).toEqual(['axes', 'daggers', 'hammers', 'maces', 'swords']);
     const bad: string[] = [];
     for (const [id, def] of Object.entries(POSES.classes)) {
       if (!def.grips) continue;

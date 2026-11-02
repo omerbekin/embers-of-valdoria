@@ -885,6 +885,8 @@ const GROUND_LOOK: Record<string, GroundLook> = {
   // Zemin tepkimeleri (Ömer 2026-10-27; yer tutucu görünüm, mevcut dillerden): Sanctified Flame = daha parlak kutsal ateş, Holy Water = soluk mavi
   // şifa ışığı (Holy Ground ayrıntısı), Ice = buz mavisi soğuk yüzey (Flooded Planks parıltısı)
   sanctified_flame: { base: [0xd8a848, 0.4], mid: [0xfff2c0, 0.64], rim: [0xfff0b8, 0.36], edge: [0xffe08a, 0.86], shadow: [0x24180a, 0.28] },
+  // Healing Rain (Ömer 2026-11-01; YER TUTUCU, görsel rework başka sohbette): yumuşak yeşil-mavi şifa suyu
+  healing_rain: { base: [0x4f9a86, 0.3], mid: [0xc8f7e0, 0.46], rim: [0xa8ecd0, 0.3], edge: [0x8fe0c0, 0.76], shadow: [0x081812, 0.22] },
   holy_water: { base: [0x6f93b0, 0.3], mid: [0xe6f4ff, 0.5], rim: [0xc8e6ff, 0.32], edge: [0xa8d4f2, 0.78], shadow: [0x0a1218, 0.22] },
   // Ice (Ömer 2026-10-29: Chill Ground'dan açıkça daha katı): koyu-parlak buz levhası, güçlü kenar ışığı
   ice_ground: { base: [0x5f93b6, 0.56], mid: [0xeaf8ff, 0.5], rim: [0xffffff, 0.5], edge: [0xe2f6ff, 0.95], shadow: [0x061018, 0.34] },
@@ -934,7 +936,7 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
   const burning = groundId === 'burning';
   const poison = groundId === 'poison';
   const flooded = groundId === 'flooded_planks';
-  const healing = groundId === 'holy_ground' || groundId === 'holy_water';
+  const healing = groundId === 'holy_ground' || groundId === 'holy_water' || groundId === 'healing_rain';
   const chill = groundId === 'storm'; // Chill Ground
   const cells = slots.map((s, i) => ({ s, q: quadOf(board, s, 1), m: cellMid(board, s), ph: i * 1.7 + rnd(0, 6) }));
   const first = cells[0]!.m;

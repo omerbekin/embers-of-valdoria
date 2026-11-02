@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: mire_ghoul. YER TUTUCU görünüm: çizimi yok, mire_ghoul sprite'ı.",
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: mire_ghoul. Kendi çizimi var (Codex 2026-11-02).",
   "id": "gloamstalker",
   "name": "Gloamstalker",
   "family": "undead",
-  "spriteId": "mire_ghoul",
+  "spriteId": "gloamstalker",
   "color": "#4f4a66",
   "logo": "skull",
   "frontPriority": 1,

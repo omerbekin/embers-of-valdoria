@@ -23,13 +23,13 @@ export const SHARED_KEY = 'shared';
 export type ArtKind = 'icon' | 'vfx' | 'sfx';
 
 /** Yeniden tasarım kapsamı dışındaki class'lar (Ömer: Cutthroat tamamen kapsam dışı). Sürüm seçicide görünmez, hep v1. */
-export const VERSION_EXCLUDED: readonly string[] = ['cutthroat', 'vesper', 'storm_tester', 'rod_tester', 'eye_tester', 'temper_tester']; // Vesper (2026-10-28): gövdesi kendi pozları (2026-11-01), ikon/vfx/ses hâlâ ödünç, kendi v2 dosyası yok; hep v1
+export const VERSION_EXCLUDED: readonly string[] = ['cutthroat', 'storm_tester', 'rod_tester', 'eye_tester', 'temper_tester'];
 
 /** Sürüm seçicide görünmeyen ama İKONLARI her zaman v2 (boyalı) olan anahtarlar: Cutthroat (2026-10-18; animasyon/ses v1'de kalır). */
 export const ICONS_ALWAYS_V2: readonly string[] = ['cutthroat'];
 
 /** Kapsamı kısıtlı anahtarlar: yalnızca listelenen türler v2 olabilir (Shared: animasyonu yok). Defender 2026-10-10'dan beri tam kapsamda. */
-export const V2_SCOPE: Readonly<Record<string, readonly ArtKind[]>> = { [SHARED_KEY]: ['icon', 'sfx'] };
+export const V2_SCOPE: Readonly<Record<string, readonly ArtKind[]>> = { [SHARED_KEY]: ['icon', 'sfx'], vesper: ['vfx', 'sfx'] }; // Vesper (2026-11-01): kendi efekt + ses dosyası var; ikonları hâlâ ödünç (v1)
 
 /**
  * Skill verisinde görünmeyen ama koddan çalan sesler (sahibine göre). summonFx/corpseDrainFx (src/game/vfx.ts) ve global eylemler

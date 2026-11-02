@@ -1,0 +1,31 @@
+{
+  "slug": "throat_leap",
+  "title": "pack mother throat leap",
+  "frames": 8,
+  "fps": 12,
+  "duration_ms": 667,
+  "frame_size": [
+    256,
+    256
+  ],
+  "sheet_size": [
+    1024,
+    512
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 6,
+  "anchor": "center",
+  "pivot": [
+    128,
+    128
+  ],
+  "content_px": [
+    244,
+    205
+  ],
+  "source": "assets/source/mob-vfx/pack_mother-throat_leap.png"
+}

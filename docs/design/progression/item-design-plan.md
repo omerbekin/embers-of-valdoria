@@ -93,3 +93,6 @@ Altı set de yapılacak: Ashguard Vigil, Raven's Shroud, Conclave of Embers, Gal
 - Ashguard Vigil, Raven's Shroud: bonusların gücü artar.
 - Gallows Pact: Hexer'in bonusu değişir.
 - Kingsfall Regalia, Wayfarer's Oath: 3 parça bonusu değişir. Ömer: "tamamlanmış setler oyunda hiç olmayan eşsiz özellikler vermeli". Bu, sınıf setlerine de uygulanıp uygulanmayacağı 2. turda sorulur; önceki "set yalnızca pasif ve kaynak sayılarını büyütür" kuralı bununla birlikte yeniden yazılır.
+
+## Affix dengesi, 1. tur sayıları (Ömer 2026-11-02): hazırlandı, gönderimden geri tutuldu
+Speed % / Quick start / Mana shield / Victor's breath kısılması ve Piercing blows / Immunity yükseltmesi hazırdı (yama: Item Design scratchpad affix-round1.patch), Ömer silah işinden ayırdı. Min-max aralığı kararı ve sim sonrası uygulanır.

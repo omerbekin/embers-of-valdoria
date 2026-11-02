@@ -101,4 +101,8 @@ Süreç ve not formatı: README.md. İşini bitiren taraf "Durum" ve "Son" sütu
 | Bone Slash (iki hedef) · `bone_slash_wide` | Skeleton (Undead çağrısı) | tamam | 2026-10-31 · Codex | Tur 5 kontrolü: iki hedef kesiliyor; dönüş kesiği yan hedefe ulaşıyor, beyaz parlama ortak motor efekti. |
 | Smoke Bomb · `smoke_bomb` | Cutthroat (sınıf) | ekle | 2026-10-31 · Claude | Terra 6.1 ile çizildi: new-art/smoke_bomb/ (varış + uçuş). Ömer görmeden oyuna kurulmuyor, Codex yeniden çizmesin. |
 | Grave Strike · `grave_strike` | Risen Skeleton | tamam | 2026-11-01 · Codex | Tur 3 kontrolü: parlama yok; vuruş, akış ve iki zeminde okunurluk uygun. |
+| Toll · `toll` | Vesper (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (asa ucu ışığı + küçük hedef halkası sonrası); küçük not: kaynak halkası biraz büyük (notes/toll.md). |
+| Thunderpeal · `thunderpeal` | Vesper (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI; küçük not: çan-şimşek geçişi (notes/thunderpeal.md). |
+| Cracked Bell · `cracked_bell` | Vesper (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (3. kontrol; 2 yeni Terra turu, tur 7 kullanıldı); küçük: kare 24-29 çan ~20 px yukarı çekiliyor, yarıların alt ağızı fazla bütün (notes/cracked_bell.md). |
+| Great Bell of Valdoria · `great_bell_of_valdoria` | Vesper (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI; çan sönerken konum sıçraması ve çağırma bağlantısı zayıf (notes/great_bell_of_valdoria.md). |
 | Grave Sweep · `grave_sweep` | Risen Skeleton | tamam | 2026-11-01 · Codex | Tur 3 kontrolü: parlama yok; vuruş, akış ve iki zeminde okunurluk uygun. |

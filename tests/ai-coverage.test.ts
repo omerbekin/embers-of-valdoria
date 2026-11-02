@@ -3,7 +3,7 @@
  * terazide. Her mekanik için terim olması gerektiğinde sıfırdan farklı, olmaması gerektiğinde yok. Ağırlıklar data/ai.json > value.aiCov (PROVİZYON).
  */
 import { describe, expect, it } from 'vitest';
-import { Battle, content, explainChoice, previewSkill } from '../src/engine';
+import { Battle, chooseAction, content, explainChoice, previewSkill } from '../src/engine';
 import type { AiConfig, Combatant, CombatantDef, Teams, UnitSetup } from '../src/engine';
 import { aiCoverageInternals as AC } from '../src/engine/ai';
 import { DEFAULT_VALUE, ValueContext, coverageOf } from '../src/engine/ai-value';
@@ -90,6 +90,17 @@ describe('1. zemin konumlanması (genel zemin kuralı)', () => {
     const plain = AC.statusEffectWorth(ctx, me, 'soaked', 1);
     me.statuses.push({ kind: 'burning', turns: 2, source: E(b).uid, amount: 30 } as Combatant['statuses'][number]);
     expect(AC.statusEffectWorth(ctx, me, 'soaked', 1)).toBeGreaterThan(plain);
+  });
+
+  it('Nature\'s Wrath Soaked: ateşçi dost varken kontrol değeri düşer (kendi takımına zarar), ateşsiz takımda bedel yok', () => {
+    const b = arena([['druid', 4], ['mage', 5]], [['warrior', 0], ['warrior', 1]]);
+    const noFire = arena([['druid', 4], ['archer', 5]], [['warrior', 0], ['warrior', 1]]);
+    const soaked = b.statusDef('soaked')!;
+        const ctx = ctxOf(b, P(b));
+    expect(b.combatants.filter((c) => c.side === 'enemy').reduce((a, c) => a + AC.ownElementLoss(ctx, c, soaked, 2), 0)).toBeGreaterThan(0);
+    expect(AC.ownElementLoss(ctxOf(noFire, P(noFire)), E(noFire), soaked, 2)).toBe(0);
+    const control = (x: Battle) => Math.max(...cand(x, P(x).uid, 'natures_wrath').map((c) => c.terms?.control ?? 0));
+    expect(control(b)).toBeLessThan(control(noFire));
   });
 
   it('kendi DoT / zemin tiki bir sonraki turumuzdan önceki tehlikeye girer', () => {
@@ -419,5 +430,103 @@ describe('7b. Vesper ağacı: her tetik / etki terazide', () => {
       return -(term(b, V(b).uid, 'toll', 'cost') ?? 0);
     };
     expect(cost(5)).toBeLessThan(cost(4));
+  });
+});
+
+describe('YZ: Healing Rain (Ömer 2026-11-01)', () => {
+  const setup = () => {
+    const b = arena([['druid', 0], ['warrior', 1], ['warrior', 2]], [['warrior', 0]], 'turns');
+    b.debug.dodge = 'never';
+    for (const c of b.combatants) { c.stats.hpRegen = 0; c.maxHp = 2000; c.hp = 2000; c.statuses = []; }
+    for (let i = 0; i < 40 && b.currentUid !== P(b).uid; i++) b.skipTurn();
+    P(b).mp = P(b).maxMp;
+    P(b).cooldowns = {};
+    return b;
+  };
+  const rainAt = (b: Battle, slot: number) => cand(b, P(b).uid, 'rejuvenate').find((c) => c.center === slot && c.board === 'own');
+  const foeBoard = (b: Battle) => cand(b, P(b).uid, 'rejuvenate').filter((c) => c.board === 'foe');
+
+  it('yaralı dosta değer verir ve atar; düşman tahtası aday değil', () => {
+    const b = setup();
+    const hurt = P(b, 1);
+    hurt.hp = 300;
+    expect(foeBoard(b)).toEqual([]);
+    expect(rainAt(b, hurt.slot)!.score!).toBeGreaterThan(0);
+    expect(chooseAction(b, P(b).uid, ai)).toMatchObject({ skillId: 'rejuvenate' });
+    const pick = chooseAction(b, P(b).uid, ai)!;
+    expect(pick.targetUid ?? pick.slot).toBe(pick.targetUid ? hurt.uid : hurt.slot);
+  });
+
+  it('boş hücre: yaralı dost varken ondan düşük; herkes tam canken atılmaz', () => {
+    const b = setup();
+    P(b, 1).hp = 300;
+    const empty = rainAt(b, 5);
+    if (empty) expect(empty.score!).toBeLessThan(rainAt(b, 1)!.score!);
+    const full = setup();
+    expect(chooseAction(full, P(full).uid, ai)?.skillId).not.toBe('rejuvenate');
+  });
+
+  it('kendi Burning Ground\'unun üstüne yağmur: söndürme kazancı (zemin terimi artar)', () => {
+    const groundTerm = (burn: boolean) => {
+      const b = setup();
+      const a = P(b, 1);
+      a.hp = 1000;
+      if (burn) { b.debugPlaceGround(E(b).uid, 'burning', 'party', [1], 3); a.hp = 1000; }
+      return rainAt(b, 1)!.terms?.ground ?? 0;
+    };
+    expect(groundTerm(true)).toBeGreaterThan(groundTerm(false));
+  });
+
+  it('düşman zehrinin üstüne yağmur: su ağındaki dosta zehir akar, tepkime eksi', () => {
+    const b = setup();
+    b.debugPlaceGround(P(b).uid, 'healing_rain', 'party', [1], 3); // dost 1 yağmurda
+    b.debugPlaceGround(E(b).uid, 'poison', 'party', [2], 3); // zehir bitişik hücrede, dost 2 üstünde
+    expect(b.get(P(b, 1).uid)!.statuses.some((s) => s.kind === 'poisoned')).toBe(false);
+    P(b, 2).hp = 1000;
+    expect(rainAt(b, 2)!.terms?.reaction ?? 0).toBeLessThan(0);
+    // Aynı dost, zehirsiz hücre: tepkime yok
+    const clean = setup();
+    clean.debugPlaceGround(P(clean).uid, 'healing_rain', 'party', [1], 3);
+    P(clean, 2).hp = 1000;
+    expect(rainAt(clean, 2)!.terms?.reaction ?? 0).toBe(0);
+  });
+
+  it('Chill Ground üstüne yağmur: buza döner, tik sayılmaz', () => {
+    const heal = (chill: boolean) => {
+      const b = setup();
+      P(b, 1).hp = 300;
+      if (chill) b.debugPlaceGround(E(b).uid, 'storm', 'party', [1], 3);
+      P(b, 1).hp = 300;
+      return rainAt(b, 1)!.terms?.heal ?? 0;
+    };
+    expect(heal(true)).toBeLessThan(heal(false));
+  });
+
+  it('Thin Sap (tüm dostlar) adayı atanır ve zemini sayılır; ham şifa değeri zemini de katar', () => {
+    const raw = JSON.parse(JSON.stringify(treeOf('druid')!)) as TreeData;
+    for (const k of Object.keys(raw.nodes)) if (k !== '3.fa') raw.nodes[k]!.fx = null;
+    raw.mastery.bar.forEach((x) => (x.fx = null));
+    const t = compileTree(raw, { v: raw.version, r: { '3.fa': 1 } })!;
+    const b = withTrees({ 0: 'druid', 1: 'warrior' }, { 0: 'warrior' }, { party: { 0: { tree: t } } });
+    P(b, 1).hp = Math.round(P(b, 1).maxHp * 0.3);
+    P(b).hp = Math.round(P(b).maxHp * 0.3);
+    P(b).mp = P(b).maxMp;
+    const c = cand(b, P(b).uid, 'rejuvenate');
+    expect(c.length).toBe(1);
+    expect(c[0]!.terms?.heal ?? 0).toBeGreaterThan(0);
+  });
+});
+
+describe('YZ: Soaked Burning söndürür (Ömer 2026-11-01)', () => {
+  it('düşmanın üstündeki Burning\'i söndürmek bedel: cleansedDotLoss, tik x kalan tur', () => {
+    const b = arena([['druid', 0]], [['warrior', 0]]);
+    const foe = E(b);
+    const ctx = ctxOf(b, P(b));
+    const soaked = b.statusDef('soaked')!;
+    expect(AC.cleansedDotLoss(ctx, foe, soaked)).toBe(0);
+    foe.statuses.push({ kind: 'burning', turns: 2, source: P(b).uid, amount: 30 } as Combatant['statuses'][number]);
+    expect(AC.cleansedDotLoss(ctx, foe, soaked)).toBeGreaterThan(0);
+    const slow = b.statusDef('slow')!;
+    expect(AC.cleansedDotLoss(ctx, foe, slow)).toBe(0);
   });
 });

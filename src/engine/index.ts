@@ -9,7 +9,7 @@ export { MatchLog, DEFAULT_MAX_CHARS as MATCH_LOG_MAX_CHARS } from './match-log'
 export type { MatchLogMeta, MatchLogOptions, MoveRecord, UnitSnap } from './match-log';
 export { advanceTurn, predictQueue, turnProgress } from './turn-order';
 export type { TurnSlot } from './turn-order';
-export { damageRange, healRange, missingHpHealMult, rollCrit, rollDamage, rollHeal, rollHit, rollHitOutcome, shieldAmount } from './formulas';
+export { damageRange, damageVariance, healRange, missingHpHealMult, rollCrit, rollDamage, rollHeal, rollHit, rollHitOutcome, shieldAmount } from './formulas';
 export type { DamageSpec, Range } from './formulas';
 export { battleSummary } from './battle-summary';
 export { addValor, brazierFill, canReviveOutside, clampValor, valorEarned, type ValorTier } from './valor';

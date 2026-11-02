@@ -1,6 +1,6 @@
 # Vesper: tasarım dökümanı (UYGULANDI: motor + veri, TASLAK değerler, 2026-10-28)
 
-> **Durum:** engine-dev / content-designer (Opus), 2026-10-28; open-questions madde 451. Tüm sayılar **PROVİZYON** (Mage'den türetildi, sim YOK; Ömer her sim'i onaylar). Skill ağacı **Ömer onaylı (2026-10-31), sayıları provizyon**. Sanat **yer tutucu** (Mage gövdesi; yeni görsel üretilmedi). `tests/balance-checks.ts > PENDING_BALANCE` içinde.
+> **Durum:** engine-dev / content-designer (Opus), 2026-10-28; open-questions madde 451. Tüm sayılar **PROVİZYON** (Mage'den türetildi, sim YOK; Ömer her sim'i onaylar). Skill ağacı **Ömer onaylı (2026-10-31), sayıları provizyon**. Efekt ve ses kendi (2026-11-01); ikon, logo, avatar ödünç. `tests/balance-checks.ts > PENDING_BALANCE` içinde.
 > Ad / id: brifte "Bellwarden" idi, Ömer kararıyla **Vesper**, id `vesper` (Blood Warden ile karışmasın; o başka sohbetin tasarımı, dokunulmadı).
 
 ## 1. Kimlik
@@ -20,7 +20,7 @@
 
 Arketip: batık bir katedralin çan kulesinin bekçisi. Çan sesi = **holy**, gök gürültüsü = **lightning**. Arka sıradan ALAN hasarı veren, savaş uzadıkça güçlenen büyücü. Şifa YOK.
 
-**Yer tutucu sanat (yeni sanat yok):** sprite `mage` (`spriteId`), v2 poz gövdesi `mage_v2` (`data/poses.json > classAliases`), avatar / büst Mage yedeği, logo `divine` (boyalı amblem yok), ikonlar `radiance` / `bolt` / `judgehammer` / `divine`, efektler `judgment` / `hammerfall`, sesler var olan kayıtlar (lightSwell, hammerSlam, bigBoom, earthCrack, hammerWhoosh, choirAh). Sürüm seçicide yok (`asset-versions.ts > VERSION_EXCLUDED`): kendi v2 dosyası olmadığı için hep v1.
+**Sanat durumu (2026-11-01):** gövde kendi pozları (`vesper_v2`). Efektler kendi: `src/game/art-v2/vesper/vfx.ts`, sheet'ler `assets/vfx/vesper/` (çizen Terra 6.1, kontrol eden Sol 6.1; notlar `docs/anim-review/notes/toll.md`, `thunderpeal.md`, `cracked_bell.md`, `great_bell_of_valdoria.md`). Sesler kendi: `data/audio-v2/vesper.json` (bronz çan kısmi sesleri, gök gürültüsü; Ömer henüz dinlemedi). **Hâlâ ödünç:** ikonlar `radiance` / `bolt` / `judgehammer` / `divine`, logo `divine`, savaş dışı sprite `mage`, avatar / büst Mage yedeği (Ömer bu işte istemedi). Sürüm seçicide efekt + ses satırı var, ikon kapsam dışı (`asset-versions.ts > V2_SCOPE`).
 
 ## 2. Kit
 
@@ -34,10 +34,10 @@ Arketip: batık bir katedralin çan kulesinin bekçisi. Çan sesi = **holy**, g�
 
 | Skill | Hedef | Element | Güç (INT) | MP | Bekleme | Ek | Çan çalar? |
 |---|---|---|---|---|---|---|---|
-| **Toll** | tüm düşmanlar | holy | 0,44 | 4 | yok | - | evet |
-| **Thunderpeal** | bir düşman SIRASI (`area_enemies`, şekil row) | lightning | 0,72 | 12 | 2 | Blinded 1 tur | evet |
-| **Cracked Bell** | tek düşman | holy | 1,02 | 10 | 3 | %30 Stun 1 tur | hayır |
-| **Great Bell of Valdoria** (ult) | tüm düşmanlar | holy 0,46 + lightning 0,31 | çan başına her biri +0,025 INT | 22 | 4 (ilk bekleme 2) | - | hayır |
+| **Toll** | tüm düşmanlar | holy | 0,467 | 4 | yok | - | evet |
+| **Thunderpeal** | bir düşman SIRASI (`area_enemies`, şekil row) | lightning | 0,764 | 12 | 2 | Blinded 1 tur | evet |
+| **Cracked Bell** | tek düşman | holy | 1,083 | 10 | 3 | %30 Stun 1 tur | hayır |
+| **Great Bell of Valdoria** (ult) | tüm düşmanlar | holy 0,488 + lightning 0,329 | çan başına her biri +0,025 INT | 22 | 4 (ilk bekleme 2) | - | hayır |
 
 Değerler 2026-11-01 denge turunun geçici sonucu (Ömer onayına kadar); önceki 0,28 / 0,60 / 0,80 / 0,30 + 0,20. Hasar ve zırh artışları 28,9 olan kazanma oranını 45,3'e çıkardı (`open-questions.md`, "Mage ve Vesper denge turu").
 

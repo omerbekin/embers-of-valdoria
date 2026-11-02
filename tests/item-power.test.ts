@@ -91,7 +91,8 @@ describe('veri ve formül', () => {
     expect(charm).toBeGreaterThan(one);
     expect(charm).toBeLessThan(two);
     // nadirlik taban gücünü değiştirmez; kalkan / zırh güç taşımaz (x4)
-    expect(weaponPowerOf(itemDef('emberbrand')!, L)).toBe(one); // Emberbrand kılıç tipinde
+    expect(weaponPowerOf(itemDef('emberbrand')!, L)).toBe(weaponPowerOf(itemDef('woodcutters_axe')!, L)); // Emberbrand balta tipinde (Ömer 2026-11-02)
+    expect(weaponPowerOf(itemDef('emberbrand')!, L)).toBeGreaterThan(one);
     expect(weaponPowerOf(itemDef('oak_shield')!, L)).toBe(0);
   });
 
@@ -397,6 +398,19 @@ describe('çift el yakın dövüş tabanları: Greataxe, Greatsword, War Maul (�
     expect(maul.family).toBe('hammers');
     for (const c of ['defender', 'paladin']) expect(canEquip(c, maul), c).toBe(true);
     for (const c of ['warrior', 'archer']) expect(canEquip(c, maul), c).toBe(false);
+    // Avenger's Maul da çift el ÇEKİÇ (Ömer 2026-11-02): aynı sınıflar, War Maul ile aynı güç, Daze örtüğü
+    const avenger = itemDef('avengers_maul')!;
+    expect(avenger.family).toBe('hammers');
+    expect(avenger.grip).toBe('two');
+    for (const c of ['defender', 'paladin']) expect(canEquip(c, avenger), c).toBe(true);
+    for (const c of ['warrior', 'archer']) expect(canEquip(c, avenger), c).toBe(false);
+    expect(weaponPowerOf(avenger, 20)).toBe(weaponPowerOf(maul, 20));
+    expect(implicitDefOf(avenger)!.name).toBe(implicitDefOf(maul)!.name);
+    // Emberbrand balta örtüğü alır (armor pen), sabit b_crit affix'i durur
+    const ember = itemDef('emberbrand')!;
+    expect(ember.type).toBeUndefined();
+    expect(implicitDefOf(ember)!.parts[0]!.to).toBe('fx:armorPen');
+    expect(ember.affixes).toContain('b_crit');
   });
 
   it('her Legendary dışı nadirlikte zarlanır (Common..Epic) ve sefer loot\'unda düşer', () => {

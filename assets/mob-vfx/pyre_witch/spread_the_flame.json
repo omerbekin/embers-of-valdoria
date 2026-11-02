@@ -1,0 +1,31 @@
+{
+  "slug": "spread_the_flame",
+  "title": "pyre witch spread the flame",
+  "frames": 8,
+  "fps": 12,
+  "duration_ms": 667,
+  "frame_size": [
+    256,
+    256
+  ],
+  "sheet_size": [
+    1024,
+    512
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 6,
+  "anchor": "bottom",
+  "pivot": [
+    128,
+    250
+  ],
+  "content_px": [
+    244,
+    219
+  ],
+  "source": "assets/source/mob-vfx/pyre_witch-spread_the_flame.png"
+}

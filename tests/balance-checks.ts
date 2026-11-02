@@ -21,7 +21,8 @@ import { balance, simulate, skillCategory, skillShare, ultReadyRate, winRate } f
 // 2026-10-30: AM reworkü (Instinct + Ley Thread) ve Void Strike / Mana Steal / Ley Brand kısmaları sonrası 2 x 1000'de %54,1-54,4, 5000'de %56,2-56,3 (sınırda): Ömer kararı bekliyor.
 // 2026-10-31: ondalık hız + Vesper ağacı sonrası Druid seed 300001'de %56,02 (bant 56): Ömer kararıyla geçici muaf, kanallar birleşince yapılacak denge turunda bakılacak.
 // 2026-10-31: Ley Brand kısması (castBurnPct 0,5, threadBurnMult 1,5) sonrası Undead 5000'de %56,5 (bant %56). Ömer: karakter dengesi başka sohbette, bu değerlere dokunulmuyor.
-export const PENDING_BALANCE: readonly string[] = ['paladin', 'mage', 'vesper', 'antimage', 'undead', 'druid'];
+// 2026-11-02: Healing Rain + denge kararları sonrası Undead 2 x 5000'de %51,6 / %50,5 -> çıkarıldı. Druid %57,3 / %58,1: Ömer kararı bekliyor.
+export const PENDING_BALANCE: readonly string[] = ['paladin', 'mage', 'vesper', 'antimage', 'druid'];
 
 /**
  * BANDI BEKLEYEN SKILL'LER (kullanım payı / ultimate oranı): Ömer onayı bekleyen yeniden tasarım önerisi olanlar; ölçülür, uyarı yazılır.

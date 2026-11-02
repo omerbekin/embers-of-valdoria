@@ -821,6 +821,7 @@ export class Battle {
     return {
       damageType: doom.damageType,
       scale: doom.scale,
+      element: doom.element,
       power: doom.powerPerStack * power * weak,
       extra: 0,
       takenMultiplier: (target.summoned ? f.summon.damageTakenMultiplier : 1) * this.damageTakenMult(target, undefined, undefined, undefined, doom.element),
@@ -2610,7 +2611,11 @@ export class Battle {
         if (skill.target === 'area_any' && e.side && (e.side === 'allies') !== (gb === actor.side)) continue;
         const info = this.shapePreviewCells(actorUid, skillId, anchor, gb);
         if (!info.valid) continue;
-        slots = e.treeWide === 'touch' ? this.touchingSlots(info.cells) : info.cells;
+        slots = this.groundWideSlots(e, info.cells);
+      } else if (this.allyGroundSpread(actor, skill, this.living(actor.side))) {
+        // Thin Sap: alan yok, her dostun hücresine (gerçek yerleştirmenin ikizi: cast > 'ground')
+        gb = actor.side;
+        slots = this.groundWideSlots(e, this.allyGroundSpread(actor, skill, this.living(actor.side))!);
       } else {
         const t = targetUid ? this.get(targetUid) : undefined;
         if (!t || skill.target !== 'single_enemy') continue;
@@ -2635,6 +2640,36 @@ export class Battle {
       for (const s of res.shatters) if (!out.some((o) => o.board === s.board && o.slot === s.slot)) out.push({ board: s.board, slot: s.slot, reaction: s.reaction, label: s.label, ...(this.groundReactionDef(s.reaction)?.result ? { result: this.groundReactionDef(s.reaction)!.result! } : {}) });
     }
     return out;
+  }
+
+  /**
+   * `from` hücresindeki suya 4 yönden bağlı su hücreleri (tepkime suyu: Flooded + Healing Rain; `extra`: henüz konmamış su hücreleri, YZ). `from` su değilse boş. Saf.
+   */
+  reactionWaterNetwork(board: Side, from: number, extra: readonly number[] = []): number[] {
+    const water = new Set([...this.ground.filter((w) => w.board === board && this.countsAsWater(w)).flatMap((w) => w.slots), ...extra]);
+    if (!water.has(from)) return [];
+    const seen = new Set([from]);
+    const queue = [from];
+    while (queue.length) {
+      const s = queue.shift()!;
+      for (const n of this.touchingSlots([s])) {
+        if (seen.has(n) || !water.has(n)) continue;
+        seen.add(n);
+        queue.push(n);
+      }
+    }
+    return [...seen];
+  }
+
+  /** Etkinin zemini hangi hücrelere iner: Sea of Fire / Spreading Roots (treeWide 'touch') dokunan hücreleri de katar. Saf (motor + önizleme + YZ). */
+  groundWideSlots(e: { treeWide?: 'touch' }, slots: readonly number[]): number[] {
+    return e.treeWide === 'touch' ? this.touchingSlots(slots) : [...slots];
+  }
+
+  /** Bu ağaçlı skill alansız, tüm dostlara gidiyor ve zemin bırakıyorsa zemin dostların hücrelerine iner (Thin Sap). Saf. */
+  allyGroundSpread(actor: Combatant, skill: SkillDef, targets: readonly Combatant[]): number[] | null {
+    if (skill.target !== 'all_allies' || !this.treeUnits || !actor.skillDefs?.[skill.id]) return null;
+    return targets.filter((c) => c.hp > 0 && c.board === actor.side).map((c) => c.slot).sort((x, y) => x - y);
   }
 
   /** Zeminin bir hücredeki tik tutarı (hücre çarpanı dahil; hasarsız zeminde 0). */
@@ -2692,19 +2727,8 @@ export class Battle {
 
   /** Su + zehir: zehir, `from` hücresindeki suya 4 yönden bağlı tüm su hücrelerine (aynı tahta) yayılır; zaten aynı türden zemin olan hücre atlanır. */
   private spreadAlongWater(g: GroundEffect, from: number, emit: Emit): void {
-    const water = new Set(this.ground.filter((w) => w.board === g.board && this.isWater(w)).flatMap((w) => w.slots));
-    if (!water.has(from)) return;
-    const seen = new Set([from]);
-    const queue = [from];
-    while (queue.length) {
-      const s = queue.shift()!;
-      for (const n of this.touchingSlots([s])) {
-        if (seen.has(n) || !water.has(n)) continue;
-        seen.add(n);
-        queue.push(n);
-      }
-    }
-    const add = [...seen].filter((s) => !g.slots.includes(s) && !this.ground.some((o) => o !== g && o.board === g.board && o.ground === g.ground && o.slots.includes(s)));
+    const seen = this.reactionWaterNetwork(g.board, from);
+    const add = seen.filter((s) => !g.slots.includes(s) && !this.ground.some((o) => o !== g && o.board === g.board && o.ground === g.ground && o.slots.includes(s)));
     if (!add.length || !this.ground.includes(g)) return;
     emit({ type: 'groundEnd', id: g.id });
     g.slots = [...g.slots, ...add].sort((x, y) => x - y);
@@ -2909,11 +2933,7 @@ export class Battle {
       }
       return;
     }
-    for (const k of this.statusDef(kind)?.cleanses ?? []) {
-      if (!c.statuses.some((s) => s.kind === k)) continue;
-      c.statuses = c.statuses.filter((s) => s.kind !== k);
-      emit({ type: 'statusEnd', target: c.uid, status: k as Status['kind'] });
-    }
+    this.applyCleanses(c, kind, emit);
     const st: Status = { kind: kind as Status['kind'], turns: Math.max(1, g.turns), source, ...(w.amount > 0 ? { amount: w.amount } : {}), fromGround: g.id, groundKind: g.ground, cause, ...(cur ? { held: cur } : {}) };
     c.statuses = c.statuses.filter((s) => s !== cur);
     c.statuses.push(st);
@@ -2923,6 +2943,19 @@ export class Battle {
       this.trig([c], { on: 'statusGained', target: src ?? c, subject: c, ...(src ? { source: src } : {}), status: st.kind, statusSource: source }, emit);
       if (src) this.trig([src], { on: 'statusApplied', target: c, subject: c, source: src, status: st.kind, statusSource: source }, emit);
       if (this.statusDef(kind)?.type === 'buff') this.trigAll({ on: 'enemyBuffed', target: c, subject: c, status: st.kind }, emit, (u) => u.side !== c.side);
+    }
+  }
+
+  /**
+   * Durumun temizlediği durumlar (statuses.json > cleanses; Soaked: Burning) birimden kalkar. TEK yol (Ömer 2026-11-01): zemin de skill / mob / ağaç da
+   * buradan geçer; durum gerçekten tutarsa çağrılır (bağışıklık, direnç reddi temizlemez). RNG tüketmez. Zemin Burning'i Soaked sürerken geri gelmez
+   * (grantGroundStatus); Soaked bitince birim hâlâ Burning zemindeyse yeniden alır.
+   */
+  private applyCleanses(c: Combatant, kind: string, emit: Emit): void {
+    for (const k of this.statusDef(kind)?.cleanses ?? []) {
+      if (!c.statuses.some((s) => s.kind === k)) continue;
+      c.statuses = c.statuses.filter((s) => s.kind !== k);
+      emit({ type: 'statusEnd', target: c.uid, status: k as Status['kind'] });
     }
   }
 
@@ -4187,6 +4220,8 @@ export class Battle {
     const full = c as Partial<Combatant>;
     // Highland Fury: Chilled ve Frozen tutmaz
     if (full.passive?.effect.type === 'highlandFury' && full.passive.effect.immune.includes(kind)) return true;
+    // Frozen Ranks (Frozen Halberdier, Crossbowman): kendi Close Ranks'ı + bağışıklık; taşıyan ölse de kalır
+    if (full.passive?.effect.type === 'closeRanks' && full.passive.effect.immune?.includes(kind)) return true;
     // Frozen Ranks geniş: dostlar `immune` durumlarını almaz; selfImmune yoksa taşıyanın kendisi alır (Chilled olabilir, donabilir)
     if (full.side) {
       const ranks = this.frozenRanksOf(full as Pick<Combatant, 'side'>);
@@ -6279,13 +6314,15 @@ export class Battle {
           const single = centerSlot === undefined && skill.target === 'single_enemy' ? ts[0] : undefined;
           // Faz 5a (Banshee's Toll; yalnızca ağaçla hedefi değişen skill): alansız çok hedefli kullanımda zemin hedeflerin hücrelerine
           const spread = centerSlot === undefined && !single && this.treeUnits && actor.skillDefs?.[skill.id] && (skill.target === 'all_enemies' || skill.target === 'random_enemies') ? ts.filter((c) => c.board === opposite(actor.side)).map((c) => c.slot).sort((x, y) => x - y) : null;
-          if (centerSlot === undefined && !single && !spread?.length) break;
+          // Thin Sap (Healing Rain): tüm dostlara giden biçimde zemin her dostun hücresine, kendi tahtaya
+          const allySpread = centerSlot === undefined ? this.allyGroundSpread(actor, skill, ts) : null;
+          if (centerSlot === undefined && !single && !spread?.length && !allySpread?.length) break;
           // area_any (D11 Radiance): zemin alanın atıldığı tahtaya; `side` o tahtanın tarafına uymuyorsa konmaz (dost zemini yalnızca kendi tahtana)
-          const groundBoard: Side = single ? single.board : skill.target === 'area_any' && areaBoard ? areaBoard : opposite(actor.side);
+          const groundBoard: Side = single ? single.board : allySpread?.length ? actor.side : skill.target === 'area_any' && areaBoard ? areaBoard : opposite(actor.side);
           if (skill.target === 'area_any' && effect.side && (effect.side === 'allies') !== (groundBoard === actor.side)) break;
-          const slots0 = single ? [single.slot] : spread?.length ? spread : (group.cells ?? this.areaCells(skillId, centerSlot!, groundBoard, actorUid));
+          const slots0 = single ? [single.slot] : allySpread?.length ? allySpread : spread?.length ? spread : (group.cells ?? this.areaCells(skillId, centerSlot!, groundBoard, actorUid));
           // Faz 5a (Sea of Fire): alanın dört yönden değdiği hücreler de (aynı tahta)
-          const slots = effect.treeWide === 'touch' ? this.touchingSlots(slots0) : slots0;
+          const slots = this.groundWideSlots(effect, slots0);
           const g: GroundEffect = {
             id: `g${this.groundCount++}`,
             ground: effect.ground,
@@ -7576,6 +7613,7 @@ export class Battle {
     // Genel zemin kuralı (Ömer 2026-10-29): birimde aynı türden ZEMİN kaynaklı örnek varsa üst üste binmez, güçlü olan geçer. Skill örneği daha
     // güçlüyse zemin örneğinin yerine geçer (bitince birim hâlâ zemindeyse zemin yeniden verir); değilse zemin örneğinin altında bekler (held: süresi
     // işler, birim zeminden çıkınca kalan süresiyle döner).
+    this.applyCleanses(target, status.kind, emit); // Soaked hangi yoldan gelirse gelsin Burning'i söndürür (Ömer 2026-11-01)
     const perSource = status.kind === 'regen' || status.kind === 'dark_bond';
     const grounded = perSource ? undefined : target.statuses.find((s) => s.kind === status.kind && s.fromGround);
     let heldUnder = false;
@@ -10284,6 +10322,11 @@ export class Battle {
     return (g.envUntilRound !== undefined && !!g.soak) || !!this.setup.grounds?.[g.ground]?.soak;
   }
 
+  /** Tepkime ağı ve söndürme için su mu: gerçek su ya da ıslatmayan su (grounds.json > water: Healing Rain). Saf. */
+  private countsAsWater(g: GroundEffect): boolean {
+    return this.isWater(g) || !!this.setup.grounds?.[g.ground]?.water;
+  }
+
   /** Çevre etkisi (söndürme) + zemin durumlarının eşitlenmesi; kurallı savaşta her eylem sonunda, kuralsızda da eylem sonunda çalışır. */
   private settleWater(emit: Emit): void {
     this.applyEnvironment(emit);
@@ -10291,7 +10334,7 @@ export class Battle {
 
   /** Su hücresindeki listelenen zeminler söner (grounds.json > quenches); ardından zemin durumları (Soaked dahil) hücrelere göre eşitlenir. */
   private applyEnvironment(emit: Emit): void {
-    for (const w of this.ground.filter((g) => this.isWater(g))) {
+    for (const w of this.ground.filter((g) => this.countsAsWater(g))) {
       const quench = this.setup.grounds?.[w.ground]?.quenches;
       if (!quench?.length) continue;
       for (const g of [...this.ground]) {

@@ -240,7 +240,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `Whenever an ally dies (not a summon), gain ${cap(e.status === 'fortify' ? 'fortified' : e.status)} for ${turnsText(e.turns)}, and your damage grows until the end of battle (${moreText(e.perDeath)} after one death, ${moreText(e.perDeath * 2)} after two, and so on).`;
     // Bölge III mob / boss pasifleri (YM20-YM23; mob-plan.md 10.5)
     case 'closeRanks':
-      return `You take ${lessText(e.perAlly)} damage from every source with one other living ally in your row (${lessText(e.perAlly * 2)} with a full row).`;
+      return `You take ${lessText(e.perAlly)} damage from every source with one other living ally in your row (${lessText(e.perAlly * 2)} with a full row)${e.immune?.length ? ` and cannot be ${e.immune.map(cap).join(' or ')}` : ''}.`;
     case 'bloodScent':
       return `Deal ${moreText(e.bonus)} damage to targets below ${pct(e.below)} HP.`;
     case 'moltenShed':
@@ -452,6 +452,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} + ${parts} (${total})${times > 1 ? ` x${times}` : ''}${who}`, element);
         if (e.bonusScale.some((b) => b.stat === 'armor')) add('Uses your current armor, aura bonus included');
       } else add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${damageAmount(e, stats, formulas)})${times > 1 ? ` x${times}` : ''}${who}`, element);
+      // Elemente özel sapma (formulas.damage.elementVariance: şimşek): vuruş karttaki sayının çok altına ya da üstüne düşebilir
+      if (formulas.damage.elementVariance?.[element] !== undefined) add(`Each hit rolls within plus or minus ${pct(formulas.damage.elementVariance[element]!)} of this`, element);
       if (e.ignoreDefense) add(`Ignores ${pct(e.ignoreDefense)} of armor`);
       if (e.lifesteal) add(`Heals you for ${pct(e.lifesteal)} of damage dealt`);
       if (e.bonusVsTag) add(`${multText(e.bonusVsTag.multiplier)} damage vs ${e.bonusVsTag.tag}`);

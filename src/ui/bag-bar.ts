@@ -6,6 +6,7 @@
  */
 import './bag-bar.css';
 import { ITEMS, itemDef } from '../progression';
+import { attachBandTip, reasonSpec } from './band-tip-attach';
 
 export interface BagKind {
   id: string;
@@ -109,7 +110,7 @@ export function bagBarEls(o: BagBarOpts): HTMLElement[] {
     t.dataset['tut'] = 'best'; // mentor dersi vurgusu (data/tutorial.json > gear)
     t.setAttribute('aria-haspopup', 'menu');
     t.setAttribute('aria-expanded', String(o.open === 'best'));
-    t.title = 'Equip the best items';
+    attachBandTip(t, { title: 'Equip best', sub: 'Equip the best items' });
     wrap.append(t);
     if (o.open === 'best') {
       const m = document.createElement('div');
@@ -124,7 +125,7 @@ export function bagBarEls(o: BagBarOpts): HTMLElement[] {
           it.run();
         });
         r.setAttribute('role', 'menuitem');
-        if (it.title) r.title = it.title;
+        if (it.title) attachBandTip(r, reasonSpec(it.label, it.title));
         m.append(r);
       }
       wrap.append(m);
@@ -141,7 +142,7 @@ export function bagBarEls(o: BagBarOpts): HTMLElement[] {
   k.setAttribute('aria-label', active ? 'Item type filter (active)' : 'Item type filter');
   k.setAttribute('aria-haspopup', 'menu');
   k.setAttribute('aria-expanded', String(o.open === 'kinds'));
-  k.title = 'Show item types';
+  attachBandTip(k, { title: 'Item types', sub: 'Show item types' });
   wrap.append(k);
   if (o.open === 'kinds') {
     const m = document.createElement('div');

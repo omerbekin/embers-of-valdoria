@@ -67,6 +67,25 @@ describe.each(MODES)('%s modu', (mode) => {
     });
   });
 
+  describe('Frozen Halberdier ve Crossbowman (hc_18)', () => {
+    const SET = { 1: 'frozen_standard_bearer', 0: 'frozen_halberdier', 2: 'frozen_halberdier', 7: 'frozen_crossbowman' };
+    it('kendi Frozen Ranks: Chilled tutmaz, sıra koruması birikmez, taşıyan ölünce de kalır', () => {
+      const b = make(SET, mode);
+      const bearer = at(b, 'enemy', 1);
+      const hal = at(b, 'enemy', 0);
+      const bow = at(b, 'enemy', 7);
+      expect(b.statusBlocked(hal, 'chilled')).toBe(true);
+      expect(b.statusBlocked(bow, 'chilled')).toBe(true);
+      const per = content.mobs['frozen_halberdier']!.passive!.effect as { perAlly: number };
+      expect(b.passiveTakenMult(hal, 'physical')).toBeCloseTo(1 - per.perAlly * 2, 5);
+      bearer.hp = 0;
+      expect(b.statusBlocked(hal, 'chilled')).toBe(true);
+      expect(b.statusBlocked(bow, 'chilled')).toBe(true);
+      expect(b.statusBlocked(hal, 'frozen')).toBe(false);
+      expect(describePassive(hal.passive!, content.mobs['frozen_halberdier']!.stats, content.formulas)).toContain('cannot be Chilled');
+    });
+  });
+
   describe('The Frozen Standard-Bearer', () => {
     const SET = { 1: 'frozen_standard_bearer', 0: 'morvane_halberdier', 2: 'rime_hound', 7: 'bandit_crossbowman' };
     it('Frozen Ranks: dostlar Chilled tutmaz, taşıyan tutar ve donar; taşıyan ölünce biter', () => {
@@ -329,6 +348,10 @@ describe('YZ', () => {
     if (passive.type === 'highlandFury' && saved) passive.chant = saved;
     expect(withChant).toBeGreaterThan(without);
   });
+  it('Frozen Halberdier: Chop yoksa Pike Thrust kopyasını atar', () => {
+    const c = pickIn({ 1: 'frozen_standard_bearer', 0: 'frozen_halberdier', 2: 'frozen_halberdier' }, 0, (_, u) => lock(u, 'halberd_chop'));
+    expect(c?.skillId).toBe('frozen_pike_thrust');
+  });
   it('Cold Command Haste almamış dosta', () => {
     const c = pickIn({ 1: 'frozen_standard_bearer', 0: 'morvane_halberdier', 2: 'morvane_halberdier' }, 1, (_, u) => lock(u, 'frost_banner'));
     expect(c?.skillId).toBe('cold_command');
@@ -357,6 +380,8 @@ describe('YZ', () => {
     ['clan_chief_brannoc', { 1: 'clan_chief_brannoc', 0: 'clan_axeman', 2: 'clan_axeman', 7: 'clan_skald' }, ['great_axe', 'rally_the_clan', 'skullsplitter']],
     ['frozen_standard_bearer', { 1: 'frozen_standard_bearer', 0: 'morvane_halberdier', 2: 'morvane_halberdier', 7: 'bandit_crossbowman' }, ['standard_pole', 'cold_command', 'frost_banner']],
     ['oathkeeper', { 1: 'oathkeeper', 0: 'stonebound_warden', 2: 'stonebound_warden', 7: 'deep_runecaller' }, ['pick_of_the_deep', 'oath_of_stone', 'verdict']],
+    ['frozen_halberdier', { 1: 'frozen_standard_bearer', 0: 'frozen_halberdier', 2: 'frozen_halberdier', 7: 'frozen_crossbowman' }, ['halberd_chop']],
+    ['frozen_crossbowman', { 1: 'frozen_standard_bearer', 0: 'frozen_halberdier', 2: 'frozen_halberdier', 7: 'frozen_crossbowman' }, ['crossbow_bolt', 'ice_shot']],
     ['pyre_witch', { 6: 'pyre_witch', 1: 'cinder_knight' }, ['pyre_bolt', 'spread_the_flame']],
   ] as [string, Record<number, string>, string[]][])('%s imzalarını gerçek savaşta atar', (id, enemies, need) => {
     const seen = uses(enemies, id);
@@ -374,7 +399,17 @@ describe('içerik', () => {
     expect(cls('hc_35', 'The Oathkeeper')).toBe('oathkeeper');
     expect(names('hc_12')).toEqual(['Clan Axeman', 'Clan Axeman', 'Clan Chief Brannoc', 'Clan Skald']);
     expect(names('hc_18')).toEqual(['Frozen Crossbowman', 'Frozen Halberdier', 'Frozen Halberdier', 'The Frozen Standard-Bearer']);
-    expect(ENCOUNTERS['hc_35']!.units.map((u) => u.class).sort()).toEqual(['deep_runecaller', 'oathkeeper', 'stonebound_warden', 'stonebound_warden']);
+    // eşlikçiler kendi sınıfında (Ömer 2026-11-02); hc_12 sprite yerine kendi kiti, hc_18 yer tutucunun statı ve çizimi
+    expect(ENCOUNTERS['hc_12']!.units.map((u) => u.class).sort()).toEqual(['clan_axeman', 'clan_axeman', 'clan_chief_brannoc', 'clan_skald']);
+    expect(ENCOUNTERS['hc_18']!.units.map((u) => u.class).sort()).toEqual(['frozen_crossbowman', 'frozen_halberdier', 'frozen_halberdier', 'frozen_standard_bearer']);
+    for (const [id, was] of [['frozen_halberdier', 'morvane_halberdier'], ['frozen_crossbowman', 'bandit_crossbowman']] as const) {
+      const d = content.mobs[id]!;
+      const p = content.mobs[was]!;
+      expect(d.spriteId, id).toBe(id); // kendi çizimi (2026-11-02); yer tutucunun statları aynı kalır
+      expect(d.attributes, id).toEqual(p.attributes);
+      expect(d.stats, id).toEqual(p.stats);
+    }
+    expect(ENCOUNTERS['hc_35']!.units.map((u) => u.class).sort()).toEqual(['deep_runecaller', 'oathkeeper', 'shardwalker', 'stonebound_warden']);
   });
   it('kendi idle çizimi; pasif ve skill metni okunur, "support" yok; ilk skill bedelsiz', () => {
     for (const id of THREE) {

@@ -133,8 +133,13 @@ async function captureSkill(page, skill) {
     document.querySelector('.vb-panel')?.classList.add('min'); // panel kareyi örtmesin
     window.__game.loop.sleep();
     window.__capT = performance.now();
-    document.querySelector('.vb-main').click();
   });
+  // önceki (ilk) atışın kuyruğu yük altında oyun saati geride kaldığında yakalamaya sızıyordu: oyun saatini 4 sn ilerleterek temizle, sonra atışı başlat
+  await page.evaluate((dt) => {
+    const g = window.__game;
+    for (let i = 0; i < Math.round(4000 / dt); i++) { window.__capT += dt; g.step(window.__capT, dt); }
+    document.querySelector('.vb-main').click();
+  }, DT);
   const frames = [];
   let lastHash = '';
   let seen = false;

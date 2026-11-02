@@ -43,7 +43,7 @@ const MIGRATED: Record<string, { owner: string; area: Record<string, unknown> }>
 /** Madde 220'den sonra doğrudan şekil modeliyle eklenen alan skill'leri (migrasyon değil): Cutthroat Saltire Cut (x) ve Smoke Bomb (area_any), Druid Vine Snare. */
 const ownedByMob = (id: string) => Object.values(content.mobs).some((m) => m.skills.includes(id)) || Object.values(content.summons).some((m) => m.skills.includes(id));
 const ownedByBoss = (id: string) => Object.values(content.bosses).some((b) => b.skills.includes(id));
-const ADDED_LATER = ['x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind', 'thunderpeal']; // withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376); thunderpeal: Vesper (row, 2026-10-28)
+const ADDED_LATER = ['rejuvenate', 'x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind', 'thunderpeal']; // withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376); thunderpeal: Vesper (row, 2026-10-28)
 
 describe('rect: tüm boyutlar 1x1 .. 4x3 (rows = sıra, cols = şerit), iki tahta, her anchor', () => {
   for (let R = 1; R <= fm.rows; R++)
@@ -171,7 +171,9 @@ describe('aşamalı vuruş: savaşta olay akışı', () => {
 
   it('aşamalı = aşamasız: aynı seed, aynı hedefler, hedef başına AYNI hasar (toplam değişmez); önizleme de aynı', () => {
     for (const [id, anchor] of [['natures_wrath', 0], ['natures_wrath', 4], ['piercing_arrow', 7], ['wail_of_the_dead', 4]] as const) {
-      const sk = content.skills[id]!;
+      // Nature's Wrath'in Soaked zarı aşamalar arasına girer: burada ölçülen hasar sırası, o yüzden yalnız hasar etkisiyle karşılaştırılır
+      const sk0 = content.skills[id]!;
+      const sk: SkillDef = id === 'natures_wrath' ? { ...sk0, effects: sk0.effects.filter((e) => e.type === 'damage') } : sk0;
       const flat: SkillDef = { ...sk, area: { ...sk.area!, stages: undefined } };
       const owner = MIGRATED[id]!.owner;
       for (let seed = 1; seed <= 15; seed++) {
@@ -180,7 +182,7 @@ describe('aşamalı vuruş: savaşta olay akışı', () => {
           for (const c of b.combatants) c.hp = c.maxHp = 5000;
           return b;
         };
-        const a = mk();
+        const a = mk(sk);
         const f = mk(flat);
         const pa = previewSkill(a, 'party-0', id, undefined, anchor);
         const pf = previewSkill(f, 'party-0', id, undefined, anchor);

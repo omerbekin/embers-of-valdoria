@@ -132,6 +132,7 @@ import {
   rulesFor,
   type Hero,
   arrivalStepLines,
+  townCardFlags,
   joinLevel,
   temporaryCompany,
   setCompanyName,
@@ -211,7 +212,8 @@ import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation } from '../camp
 import { openSlotBrowser, type SlotBrowser } from '../campaign-slots-ui';
 import { ensureIcon } from '../icons';
 import { hasUiImage, uiIconName } from '../../ui/ui-icons';
-import { hasMiscImage } from '../../ui/misc-icons';
+import { hasMiscImage, miscIconName } from '../../ui/misc-icons';
+import { miscImage } from '../icon-image-files';
 import { WORLD_AUDIO, worldSound } from '../../ui/ui-sound';
 import { mapSceneTrack, sceneMusic } from '../../ui/music';
 import { MIN_TOUCH_PX, touchUnits } from '../touch-hit';
@@ -236,7 +238,7 @@ import { MIN_TOUCH_PX, touchUnits } from '../touch-hit';
 
 /** Savaşsız düğüm kartı: başlık + birincil eylem (eski pencerelerdeki fiiller). */
 const PLACE_CARD: Partial<Record<NodeType, { title: string; action: string }>> = {
-  town: { title: 'Enter town?', action: 'Enter' },
+  town: { title: 'Enter town?', action: 'Enter town' },
   rest: { title: 'Make camp?', action: 'Rest' },
   merchant: { title: 'Visit the merchant?', action: 'Trade' },
   treasure: { title: 'Open the chest?', action: 'Open' },
@@ -2376,6 +2378,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const o = this.cardInfoFor(id);
     const info = o.info ?? startCardInfo(n.lore, o.fallback?.text ? o.fallback : undefined);
     const unreachable = this.nodeFacts(id).state === 'Ahead' || this.nodeFacts(id).state === 'Your goal';
+    const town = n.type === 'town' ? this.townCardParts(id) : undefined; // önizleme de sabit kartla aynı A görünümü (plakalar + haber satırları)
     this.nodeTip = openStartBattle(root, {
       ...(o.title ? { title: o.title } : {}),
       ...(o.actionLabel ? { actionLabel: o.actionLabel } : {}),
@@ -2389,6 +2392,7 @@ export class CampaignMapScene extends Phaser.Scene {
       ...(info ? { info } : {}),
       ...(o.tags ? { tags: o.tags } : {}),
       ...(o.company ? { company: o.company } : {}),
+      ...(town ? { services: town.services, ...(town.flags.length ? { flags: town.flags } : {}) } : {}),
       ...this.firstSteps(id),
       preview: true,
       ...(unreachable ? { note: 'Not reachable yet' } : {}),
@@ -3923,17 +3927,35 @@ export class CampaignMapScene extends Phaser.Scene {
   private confirmPlace(id: string, go: () => void): void {
     const n = node(this.map, id);
     const t = PLACE_CARD[n.type] ?? { title: 'Continue?', action: 'Continue' };
-    // Kasaba kartı (karar 364): lore yerine dinlenme kuralı (2026-10-26: kasaba iyileştirmez, Inn)
-    const info = n.type === 'town' ? { text: this.townArrivalNote() } : undefined;
-    this.nodeCard(id, { title: t.title, actionLabel: t.action, fallback: { text: this.nodeFacts(id).blurb }, ...(info ? { info } : {}), onGo: go });
+    // Kasaba kartı (Ömer 2026-11-02, taslak town-card A): lore + kasabanın yerleri plaka (kural satırı Inn plakasının ipucunda; "Towns do not heal you" satırı kalktı)
+    const town = n.type === 'town' ? this.townCardParts(id) : undefined;
+    this.nodeCard(id, { title: t.title, actionLabel: t.action, fallback: { text: this.nodeFacts(id).blurb }, ...(town ?? {}), onGo: go });
   }
 
-  /** Kasaba kartının dinlenme satırı (Ömer 2026-10-26): kasaba iyileştirmez; yorgun kahramanlar Inn'de dinlenir (campaign.json > texts.townRest). */
-  private townArrivalNote(): string {
-    return CONFIG.texts['townRest'] ?? 'Leave tired heroes at the inn: they heal a little each day.';
+  /**
+   * Kasaba kartının yer plakaları ve haber satırları (taslak town-card A). Plakalar townBlurb ile aynı kaynaktan (kasabada gerçekten sunulan
+   * yerler); ipucu A Band. Kural/koşul eklemez: haber satırlarının koşulları src/campaign/arrival.ts > townCardFlags.
+   */
+  private townCardParts(id: string): { services: NonNullable<Parameters<typeof openStartBattle>[1]['services']>; flags: string[] } {
+    const n = node(this.map, id);
+    const icon = (g: 'node' | 'town' | 'smith', name: string): string | undefined => miscImage(miscIconName(g, name))?.url;
+    const rule = CONFIG.texts['townRest'] ?? 'Leave tired heroes at the inn: they heal a little each day.';
+    const spots: Array<{ h: TownHotspot; verb: string; ico: string | undefined; kind: string; lines: string[] }> = [];
+    const smith = smithHotspot(n);
+    if (smith) spots.push({ h: smith, verb: TOWN_VERB.smith ?? '', ico: icon('smith', 'temper_stone'), kind: 'Town', lines: ['Forge your gear.'] });
+    for (const h of (n.scene?.hotspots ?? []).filter((x) => x.action !== 'leave' && x.action !== 'story' && hotspotOffered(n, x))) {
+      const v = TOWN_VERB[h.action] ?? '';
+      if (h.action === 'inn') spots.push({ h, verb: v, ico: icon('town', 'inn'), kind: 'Town · Rest', lines: [rule] });
+      else if (h.action === 'trade') spots.push({ h, verb: v, ico: icon('node', 'merchant'), kind: 'Town · Trade', lines: [CONFIG.texts['townTrade'] ?? 'Buy and sell gear.'] });
+      else if (h.action === 'recruit') spots.push({ h, verb: v, ico: icon('node', 'battle'), kind: 'Town · Recruits', lines: [h.note ?? CONFIG.texts['townRecruit'] ?? ''] });
+      else spots.push({ h, verb: v, ico: icon('node', 'battle'), kind: 'Town', lines: [v ? `${v[0]!.toUpperCase()}${v.slice(1)}.` : h.label] });
+    }
+    const services = spots.map((p) => ({ name: p.h.action === 'smith' ? 'Smith' : p.h.label, verb: p.verb, ...(p.ico ? { icon: p.ico } : {}), tip: { kind: p.kind, title: p.h.action === 'smith' ? 'Smith' : p.h.label, ...(p.ico ? { icon: p.ico } : {}), lines: p.lines.filter(Boolean).map((text) => ({ text })) } }));
+    const rec = (n.scene?.hotspots ?? []).find((x) => x.action === 'recruit' && hotspotOffered(n, x, this.s));
+    return { services, flags: townCardFlags(this.s, id, rec?.label ?? null) };
   }
 
-  private nodeCard(id: string, o: { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; /** Lore'un yerine geçen bilgi satırı (devriye). */ info?: { text: string; plain?: boolean }; tags?: PatrolTags; company?: CompanyCard; /** Düğme yerine düz not. */ note?: string; onGo: () => void }): void {
+  private nodeCard(id: string, o: { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; /** Lore'un yerine geçen bilgi satırı (devriye). */ info?: { text: string; plain?: boolean }; tags?: PatrolTags; company?: CompanyCard; services?: NonNullable<Parameters<typeof openStartBattle>[1]['services']>; flags?: string[]; /** Düğme yerine düz not. */ note?: string; onGo: () => void }): void {
     const root = document.getElementById('ui-root');
     const n = node(this.map, id);
     if (!root) return;
@@ -3962,6 +3984,8 @@ export class CampaignMapScene extends Phaser.Scene {
       ...(info ? { info } : {}),
       ...(o.tags ? { tags: o.tags } : {}),
       ...(o.company ? { company: o.company } : {}),
+      ...(o.services ? { services: o.services } : {}),
+      ...(o.flags?.length ? { flags: o.flags } : {}),
       ...this.firstSteps(id),
       ...(o.note ? { note: o.note } : {}),
       ...(instant ? { instant: true } : {}),
@@ -4216,6 +4240,11 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Kartın "First" satırı (playtest H3 / H2): varışta önce gelen kadro adımları; varsa düğme "Continue" (sürpriz yok). */
   private firstSteps(id: string): { first?: string[]; actionLabel?: string } {
     if (this.s.patrol === id) return {};
+    // Kasaba kartı (Ömer 2026-11-02): ilk ziyarette de düğme "Enter town" (aynı yer); gezgin önerisi haber satırında olduğundan First'ta tekrarlanmaz
+    if (node(this.map, id).type === 'town') {
+      const lines = arrivalStepLines(this.s, id, { skipRecruit: true });
+      return lines.length ? { first: lines } : {};
+    }
     const first = arrivalStepLines(this.s, id);
     return first.length ? { first, actionLabel: 'Continue' } : {};
   }

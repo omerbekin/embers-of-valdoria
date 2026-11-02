@@ -85,7 +85,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.66,
+        "power": 0.627,
         "element": "holy"
       }
     ],
@@ -606,10 +606,17 @@
     ]
   },
   "rejuvenate": {
+    "_not": "Oyuncuya görünen ad Healing Rain (Ömer 2026-11-01; iç id rejuvenate kaldı: kayıt, ağaç, ikon, efekt). Judgment kalıbı: tek hücre, area_any + emptyOwn, her etki side: allies; düşman tahtasında geçerli hücre çıkmaz. Anlık şifa INT 0,675 + 3 tur Healing Rain zemini INT 0,225/tur. Sim yok.",
     "id": "rejuvenate",
-    "name": "Rejuvenate",
+    "name": "Healing Rain",
     "icon": "rejuvenate",
-    "target": "single_ally",
+    "target": "area_any",
+    "area": {
+      "shape": "rect",
+      "rows": 1,
+      "cols": 1,
+      "emptyOwn": true
+    },
     "cost": {
       "resource": "mp",
       "amount": 12
@@ -621,13 +628,16 @@
       {
         "type": "heal",
         "scale": "int",
-        "power": 0.675
+        "power": 0.675,
+        "side": "allies"
       },
       {
-        "type": "hot",
+        "type": "ground",
+        "ground": "healing_rain",
+        "turns": 3,
         "scale": "int",
         "power": 0.225,
-        "turns": 3
+        "side": "allies"
       }
     ],
     "vfx": "rejuvenate",
@@ -689,6 +699,11 @@
         "scale": "int",
         "power": 0.64,
         "element": "nature"
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 1
       }
     ],
     "vfx": "vines",
@@ -714,7 +729,7 @@
       {
         "type": "taunt",
         "turns": 2,
-        "breakRatio": 0.25,
+        "breakRatio": 0.3,
         "allyDamageMult": 0.9
       }
     ],
@@ -1180,11 +1195,11 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.21,
+        "power": 0.221,
         "bonusScale": [
           {
             "stat": "armor",
-            "pct": 0.1
+            "pct": 0.105
           }
         ]
       },
@@ -1290,7 +1305,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "luck",
-        "power": 0.7,
+        "power": 0.735,
         "repeatChance": 0.25
       }
     ],
@@ -1317,7 +1332,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "luck",
-        "power": 1.023,
+        "power": 1.074,
         "bet": {
           "resource": "hp",
           "ratio": 0.15,
@@ -1352,7 +1367,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "luck",
-        "power": 0.605
+        "power": 0.635
       },
       {
         "type": "randomStatus",
@@ -1399,7 +1414,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "luck",
-        "power": 0.921,
+        "power": 0.967,
         "bet": {
           "resource": "mp",
           "ratio": 1,
@@ -3030,6 +3045,11 @@
         "scale": "int",
         "power": 0.02,
         "element": "nature"
+      },
+      {
+        "type": "status",
+        "status": "soaked",
+        "turns": 1
       }
     ],
     "vfx": "vines",
@@ -3043,11 +3063,17 @@
     "note": "Pose test: plays the Overhead Strike pose."
   },
   "pt_rejuvenate": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Rejuvenate kopyası; gerçek efekt/ses/hedef (artOf rejuvenate), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Healing Rain kopyası; gerçek efekt/ses/hedef (artOf rejuvenate), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_rejuvenate",
-    "name": "Rejuvenate",
+    "name": "Healing Rain",
     "icon": "rejuvenate",
-    "target": "single_ally",
+    "target": "area_any",
+    "area": {
+      "shape": "rect",
+      "rows": 1,
+      "cols": 1,
+      "emptyOwn": true
+    },
     "cost": {
       "resource": "mp",
       "amount": 0
@@ -3058,13 +3084,16 @@
       {
         "type": "heal",
         "scale": "int",
-        "power": 0.02
+        "power": 0.02,
+        "side": "allies"
       },
       {
-        "type": "hot",
+        "type": "ground",
+        "ground": "healing_rain",
+        "turns": 3,
         "scale": "int",
         "power": 0.02,
-        "turns": 3
+        "side": "allies"
       }
     ],
     "vfx": "rejuvenate",
@@ -3753,6 +3782,7 @@
     "icon": "bone",
     "vfx": "bonestrike",
     "sfx": [
+      "hammerWhoosh",
       "rustySlash"
     ],
     "artOf": "skeleton_strike"
@@ -3791,8 +3821,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "skeleton_slash"
+    ]
   },
   "crossbow_bolt": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Bandit Crossbowman temel saldırısı: savunmanın %25'ini yok sayar. Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
@@ -3820,8 +3849,7 @@
       "bowTwang",
       "arrowWhoosh",
       "arrowThunk"
-    ],
-    "artOf": "quick_shot"
+    ]
   },
   "ember_toss": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Ember Cult temel saldırısı (Fire Bolt'un zayıfı). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
@@ -3849,8 +3877,7 @@
       "flameIgnite",
       "flameRoar",
       "fireBlast"
-    ],
-    "artOf": "fire_bolt"
+    ]
   },
   "burn_the_ground": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Ember Cult imza skill'i: 2x2 alana küçük hasar + 2 tur yanan zemin (Meteor'un zemin kısmı). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
@@ -3896,8 +3923,7 @@
       "meteorWhistle",
       "bigBoom",
       "fireCrackle"
-    ],
-    "artOf": "meteor"
+    ]
   },
   "shield_bash": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Guardians temel saldırısı: STR + zırhtan bonus (Fist Crush'ın bonusScale armor'ı). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
@@ -3931,8 +3957,7 @@
       "heaveGrunt",
       "gauntletDrop",
       "gauntletCrush"
-    ],
-    "artOf": "fist_crush"
+    ]
   },
   "hold_the_line": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Guardians imza skill'i: Taunt kopyası. Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4143,8 +4168,7 @@
     "sfx": [
       "darkChant",
       "boneImpact"
-    ],
-    "artOf": "evil_eye"
+    ]
   },
   "marsh_glow": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Will-o'-Wisp imza skill'i: bir dosta şifa + 3 tur HoT (Rejuvenate'in zayıfı). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4179,8 +4203,7 @@
     "sfx": [
       "chimeHeal",
       "leafRustle"
-    ],
-    "artOf": "rejuvenate"
+    ]
   },
   "gnaw": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Undead (Ghoul, Drowned) temel saldırısı: hasar + 2 tur Wound. Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4211,8 +4234,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "venom_edge"
+    ]
   },
   "feast": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Ghoul imza skill'i: güçlü tek vuruş. Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4311,8 +4333,7 @@
     "sfx": [
       "chainTether",
       "boneImpact"
-    ],
-    "artOf": "jinx"
+    ]
   },
   "peat_smoke": {
     "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Moor Raider imza skill'i: 2x2 alana küçük STR hasarı + 2 tur Blinded. YER TUTUCU sanat: ikon/vfx/ses artOf 'smoke_bomb' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4464,6 +4485,7 @@
     "icon": "ashbrand",
     "vfx": "ashbrand",
     "sfx": [
+      "flameIgnite",
       "emberHiss"
     ],
     "artOf": "ash_brand"
@@ -4499,8 +4521,7 @@
       "heaveGrunt",
       "shieldPlant",
       "groundHeave"
-    ],
-    "artOf": "tremor_slam"
+    ]
   },
   "rockfall": {
     "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Stonebound Warden imza skill'i: bir sıraya STR fiziksel + 2 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'root_smash' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4543,8 +4564,7 @@
       "woodSmash",
       "rootsRumble",
       "leafRustle"
-    ],
-    "artOf": "root_smash"
+    ]
   },
   "pick_of_the_deep": {
     "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Thane of the Deep temel saldırısı: STR fiziksel + zırhın %6'sı (bonusScale armor; Deep Hoard ile MP doluyken sert). YER TUTUCU sanat: ikon/vfx/ses artOf 'anchor_smash' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4576,8 +4596,7 @@
     "sfx": [
       "chainDrag",
       "anchorImpact"
-    ],
-    "artOf": "anchor_smash"
+    ]
   },
   "oath_of_stone": {
     "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Thane of the Deep: kendine 2 tur taunt + 1 tur Fortified. YER TUTUCU sanat: ikon/vfx/ses artOf 'taunt' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4611,8 +4630,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "taunt"
+    ]
   },
   "rune_spark": {
     "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Deep Runecaller temel saldırısı: INT lightning büyü (element 2026-10-25 arcane -> lightning, Ömer; hasar aynı). YER TUTUCU sanat: ikon/vfx/ses artOf 'void_strike' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4639,8 +4657,7 @@
     "sfx": [
       "voidPulse",
       "implode"
-    ],
-    "artOf": "void_strike"
+    ]
   },
   "glyph_of_breaking": {
     "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Deep Runecaller imza skill'i: artı şekline INT arcane + isabet eden her hedefte 6 MP yakma (Bölge II'de MP yakan TEK aktif). YER TUTUCU sanat: ikon/vfx/ses artOf 'drain_field' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
@@ -4680,8 +4697,7 @@
       "voidSuction",
       "voidPulse",
       "energySlurp"
-    ],
-    "artOf": "drain_field"
+    ]
   },
   "cauldron_splash": {
     "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Hedge Witch Morwen temel saldırısı: LUCK karanlık büyü + 2 tur Wither (LUCK 0,08). YER TUTUCU sanat: ikon/vfx/ses artOf 'withering_curse' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
@@ -5482,8 +5498,7 @@
       "armorRun",
       "axeSwing",
       "axeChop"
-    ],
-    "artOf": "chiefs_cleaver"
+    ]
   },
   "pike_thrust": {
     "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Morvane Halberdier imza skill'i: menzil +1 sıra, STR fiziksel, zırhın %25'ini yok sayar. YER TUTUCU sanat: ikon/vfx/ses artOf 'billhook' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
@@ -5585,8 +5600,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "bite"
+    ]
   },
   "run_down": {
     "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Ash Hound imza skill'i: her sıraya ulaşır (ignoreReach), STR fiziksel + 1 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'rend' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
@@ -5781,6 +5795,7 @@
     "icon": "ashbrand",
     "vfx": "ashbrand",
     "sfx": [
+      "flameIgnite",
       "emberHiss"
     ],
     "artOf": "kiln_smoke"
@@ -6074,8 +6089,7 @@
     "sfx": [
       "boneSpin",
       "boneImpact"
-    ],
-    "artOf": "dirge"
+    ]
   },
   "pitch_pot": {
     "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): corsair_slinger: tek hücre: hafif ateş vuruşu + 2 tur Burning ground (Tide suyunda söner: grounds.json flooded quenches). YER TUTUCU sanat: ikon/vfx/ses artOf 'ember_toss' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
@@ -6211,8 +6225,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "bite"
+    ]
   },
   "lunge": {
     "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): weir_eel: menzil/ön sıra sınırı yok (ignoreReach), arka sıraya uzanır; STR fiziksel tek hedef. YER TUTUCU sanat: ikon/vfx/ses artOf 'run_down' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
@@ -6241,8 +6254,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "run_down"
+    ]
   },
   "lament": {
     "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): siren: temel saldırı, LUCK büyü (dark) tek hedef + 1 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'ravens_peck' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
@@ -8029,6 +8041,7 @@
     "icon": "bone",
     "vfx": "bonestrike",
     "sfx": [
+      "fistWhoosh",
       "rustySlash"
     ]
   },
@@ -8127,6 +8140,7 @@
     "icon": "bone",
     "vfx": "bonestrike",
     "sfx": [
+      "hammerWhoosh",
       "rustySlash"
     ]
   },
@@ -8787,6 +8801,7 @@
     "icon": "ashbrand",
     "vfx": "ashbrand",
     "sfx": [
+      "flameIgnite",
       "emberHiss"
     ]
   },
@@ -9214,6 +9229,7 @@
     ],
     "vfx": "bonestrike",
     "sfx": [
+      "swordWhoosh",
       "rustySlash"
     ]
   },
@@ -9308,8 +9324,9 @@
     ]
   },
   "toll": {
-    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon / vfx / ses YER TUTUCU (var olanlardan ödünç; yeni sanat yok). Toll: tüm düşmanlara küçük kutsal hasar, çan çalar (ringsBell).",
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Toll: tüm düşmanlara küçük kutsal hasar, çan çalar (ringsBell).",
     "id": "toll",
+    "vfx": "judgment",
     "name": "Toll",
     "icon": "radiance",
     "target": "all_enemies",
@@ -9328,20 +9345,20 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.44,
+        "power": 0.467,
         "element": "holy",
         "bell": true
       }
     ],
-    "vfx": "judgment",
     "sfx": [
-      "lightSwell",
-      "hammerSlam"
+      "tollStrike",
+      "tollWave"
     ]
   },
   "thunderpeal": {
-    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon / vfx / ses YER TUTUCU (var olanlardan ödünç; yeni sanat yok). Thunderpeal: tek düşman sırası (row) şimşek hasarı + 1 tur Blinded, bekleme 2, çan çalar.",
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Thunderpeal: tek düşman sırası (row) şimşek hasarı + 1 tur Blinded, bekleme 2, çan çalar.",
     "id": "thunderpeal",
+    "vfx": "judgment",
     "name": "Thunderpeal",
     "icon": "bolt",
     "target": "area_enemies",
@@ -9362,7 +9379,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.72,
+        "power": 0.764,
         "element": "lightning",
         "bell": true
       },
@@ -9372,15 +9389,15 @@
         "turns": 1
       }
     ],
-    "vfx": "judgment",
     "sfx": [
-      "bigBoom",
-      "earthCrack"
+      "thunderPeal",
+      "thunderCrack"
     ]
   },
   "cracked_bell": {
-    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon / vfx / ses YER TUTUCU (var olanlardan ödünç; yeni sanat yok). Cracked Bell: tek hedef kutsal hasar + %30 şansla 1 tur Stun, bekleme 3; çan sayacını ARTIRMAZ ama Pealing Bells ile güçlenir.",
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Cracked Bell: tek hedef kutsal hasar + %30 şansla 1 tur Stun, bekleme 3; çan sayacını ARTIRMAZ ama Pealing Bells ile güçlenir.",
     "id": "cracked_bell",
+    "vfx": "hammerfall",
     "name": "Cracked Bell",
     "icon": "judgehammer",
     "target": "single_enemy",
@@ -9397,7 +9414,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 1.02,
+        "power": 1.083,
         "element": "holy",
         "bell": true
       },
@@ -9408,15 +9425,15 @@
         "chance": 0.3
       }
     ],
-    "vfx": "hammerfall",
     "sfx": [
-      "hammerWhoosh",
-      "hammerSlam"
+      "crackedBellFall",
+      "crackedBellHit"
     ]
   },
   "great_bell_of_valdoria": {
-    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon / vfx / ses YER TUTUCU (var olanlardan ödünç; yeni sanat yok). Ultimate: tüm düşmanlara kutsal + şimşek; her iki hasar bu savaşta çalınan her çan için +powerPerBell güç alır (ve Pealing Bells çarpanı). Bekleme 4, ilk bekleme 2. Kendisi çan sayacını artırmaz.",
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Ultimate: tüm düşmanlara kutsal + şimşek; her iki hasar bu savaşta çalınan her çan için +powerPerBell güç alır (ve Pealing Bells çarpanı). Bekleme 4, ilk bekleme 2. Kendisi çan sayacını artırmaz.",
     "id": "great_bell_of_valdoria",
+    "vfx": "judgment",
     "name": "Great Bell of Valdoria",
     "icon": "divine",
     "target": "all_enemies",
@@ -9436,7 +9453,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.46,
+        "power": 0.488,
         "element": "holy",
         "bell": true,
         "powerPerBell": 0.025
@@ -9445,17 +9462,16 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.31,
+        "power": 0.329,
         "element": "lightning",
         "bell": true,
         "powerPerBell": 0.025
       }
     ],
-    "vfx": "judgment",
     "sfx": [
-      "lightSwell",
-      "bigBoom",
-      "choirAh"
+      "greatBellDescend",
+      "greatBellToll",
+      "greatBellThunder"
     ],
     "ai": {
       "reserveMp": 2
@@ -9611,8 +9627,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "lunge"
+    ]
   },
   "shardwalk": {
     "_not": "Shardwalker temel saldırı: Chilled hedefe her sıradan, yoksa normal yakın dövüş. Chilled uygulamaz, Frozen tetiklemez. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf run_down sahibinden.",
@@ -9644,8 +9659,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "run_down"
+    ]
   },
   "undermine": {
     "_not": "Hollow Delver: yere dalar, çatlak telgrafı; sonraki turunda fırlar. Boşsa Staggered. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf wyrm_swallow sahibinden.",
@@ -9690,8 +9704,7 @@
       "stoneCrack",
       "timberSplinter",
       "riverBurst"
-    ],
-    "artOf": "wyrm_swallow"
+    ]
   },
   "dark_step": {
     "_not": "Gloamstalker temel saldırı: Darkness sürerken her sıraya; aydınlıkta normal yakın dövüş. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf hamstring sahibinden.",
@@ -9721,8 +9734,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "hamstring"
+    ]
   },
   "through_the_flame": {
     "_not": "Cinderleaper temel saldırı: yanan hedefe ya da Burning zemindekine her sıradan, hücreye 1 tur Burning zemin; yanan yoksa normal vuruş. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf scorch_bite sahibinden.",
@@ -9764,8 +9776,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "scorch_bite"
+    ]
   },
   "slag_charge": {
     "_not": "Slagcart Golem: sıra telgrafı, sonraki turunda koşu (orta hasar + 2 tur Burning), sonra Cooling (oynamaz, zırh 0). Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf gatestone_slam sahibinden.",
@@ -9813,8 +9824,7 @@
       "heaveGrunt",
       "shieldPlant",
       "groundHeave"
-    ],
-    "artOf": "gatestone_slam"
+    ]
   },
   "anvil_strike": {
     "_not": "Thunderwright temel saldırı: Shocked verir. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf shield_bash sahibinden.",
@@ -9847,8 +9857,7 @@
       "heaveGrunt",
       "gauntletDrop",
       "gauntletCrush"
-    ],
-    "artOf": "shield_bash"
+    ]
   },
   "ring_the_anvil": {
     "_not": "Thunderwright: şimşek en ağır zırhlıdan başlar, sıradaki iki zırhlıya zıplar. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses storm_test kalıbı (bolt, judgment, bigBoom); ses kendi kopyası.",
@@ -9948,8 +9957,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "eel_bite"
+    ]
   },
   "headlong": {
     "_not": "Stormhorn Ram: şeritte koşar, şeridin ilk kahramanına vurur ve bir sıra geri iter. Harita 3 4. dilim (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf run_down sahibinden.",
@@ -9986,8 +9994,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "run_down"
+    ]
   },
   "thundersnow": {
     "_not": "Harita 3 5. dilim (maps-2-3.md): dokunuşu çalıştıran en küçük skill; sanat YER TUTUCU, sayılar PROVİZYON. E2: birim listesinde yok, touch.skill üstünden iner; şimşek kurallarını taşır.",
@@ -10038,8 +10045,8 @@
     "icon": "blizzard",
     "vfx": "blizzard",
     "sfx": [
-      "iceCrack",
-      "hailPatter"
+      "hailPatter",
+      "iceCrack"
     ]
   },
   "whiteout": {
@@ -10078,8 +10085,8 @@
     "icon": "blizzard",
     "vfx": "blizzard",
     "sfx": [
-      "iceCrack",
-      "hailPatter"
+      "hailPatter",
+      "iceCrack"
     ]
   },
   "long_sermon": {
@@ -10171,6 +10178,7 @@
     "icon": "bolt",
     "vfx": "judgment",
     "sfx": [
+      "flameIgnite",
       "bigBoom"
     ]
   },
@@ -10278,8 +10286,40 @@
     "sfx": [
       "chainTether",
       "boneImpact"
+    ]
+  },
+  "frozen_pike_thrust": {
+    "_not": "Frozen Halberdier: pike_thrust kopyası, kendi mana bedeli (open-questions 466 kuralı: L30'da 5-6 kullanım; pike_thrust ve shard_pike_thrust bedeliyle 17 ve 11 kullanım çıkıyor, paylaşılan bedel değişmez). ai.scoreCost = eski bedel. Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf pike_thrust sahibinden.",
+    "id": "frozen_pike_thrust",
+    "name": "Pike Thrust",
+    "target": "single_enemy",
+    "range": 2,
+    "cost": {
+      "resource": "mp",
+      "amount": 11
+    },
+    "ai": {
+      "scoreCost": 5
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "reach": 1,
+    "fx": "#b0a090",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.8,
+        "ignoreDefense": 0.25
+      }
     ],
-    "artOf": "pike_thrust"
+    "icon": "clover",
+    "vfx": "bonethrow",
+    "sfx": [
+      "chainTether",
+      "boneImpact"
+    ]
   },
   "cinder_rend": {
     "_not": "Cinderleaper: rend kopyası, kendi mana bedeli (open-questions 466 kuralı: L30'da 5-6 kullanımda ilk kez mana yetmez; rend Harita 1-2 moblarıyla paylaşıldığı için bedeli orada değişmez). ai.scoreCost = eski bedel. Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf rend sahibinden.",
@@ -10314,8 +10354,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "rend"
+    ]
   },
   "gloam_lunge": {
     "_not": "Gloam Eel: lunge kopyası, kendi mana bedeli (open-questions 466 kuralı: L30'da 5-6 kullanımda ilk kez mana yetmez; lunge Harita 1-2 moblarıyla paylaşıldığı için bedeli orada değişmez). ai.scoreCost = eski bedel. Sayılar PROVİZYON, sim yok. YER TUTUCU sanat: ikon/vfx/ses artOf lunge sahibinden.",
@@ -10345,7 +10384,6 @@
       "daggerDraw",
       "twinSlice"
     ],
-    "artOf": "lunge",
     "ai": {
       "scoreCost": 5
     }
@@ -10381,8 +10419,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "bite"
+    ]
   },
   "snow_rend": {
     "_not": "Snow Wolf: Rend kopyası, kendi mana bedeli (open-questions 466; rend Harita 1 ile paylaşılır). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10417,8 +10454,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "rend"
+    ]
   },
   "clan_axe": {
     "_not": "Clan Axeman temel saldırı: STR fiziksel. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10444,8 +10480,7 @@
     "sfx": [
       "chainTether",
       "boneImpact"
-    ],
-    "artOf": "billhook"
+    ]
   },
   "cleave": {
     "_not": "Clan Axeman: ön sıraya yakın dövüş alan vuruşu (menzil anchor'ı ön dolu sıraya bağlar). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10479,8 +10514,7 @@
       "armorRun",
       "axeSwing",
       "axeChop"
-    ],
-    "artOf": "toll_sweep"
+    ]
   },
   "mandible": {
     "_not": "Cave Crawler temel saldırı: STR fiziksel. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10506,8 +10540,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "gnaw"
+    ]
   },
   "skitter": {
     "_not": "Cave Crawler: ignoreReach. Blind Hunger gereği yine en yakın hedefe gider; değeri kendi ön sırası doluyken de vurabilmek. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10539,8 +10572,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "run_down"
+    ]
   },
   "mock": {
     "_not": "Clan Skald: tek hedef, Staggered (sonraki eylemini kaybeder). Hasar yok. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10569,8 +10601,7 @@
     "sfx": [
       "fistWhoosh",
       "smokePuff"
-    ],
-    "artOf": "sand_in_the_eyes"
+    ]
   },
   "chant": {
     "_not": "Clan Skald: tüm dostlar 2 tur Haste. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10599,8 +10630,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "iron_decree"
+    ]
   },
   "pyre_bolt": {
     "_not": "Pyre Witch temel saldırı: INT ateş + hedefin hücresinde 1 tur Burning zemin (Ömer 2026-11-01). holdsOwnTurn: zemin atanın sonraki turu bitene dek görünür, kendi Spread the Flame kaynağı olur. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10636,8 +10666,7 @@
       "flameIgnite",
       "flameRoar",
       "fireBlast"
-    ],
-    "artOf": "ember_toss"
+    ]
   },
   "spread_the_flame": {
     "_not": "Pyre Witch: yalnız Burning hücreye atılır (anchorGround); o hücre ve dört komşusu 2 tur Burning. Hasar yok. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10673,8 +10702,7 @@
       "meteorWhistle",
       "bigBoom",
       "fireCrackle"
-    ],
-    "artOf": "burn_the_ground"
+    ]
   },
   "cinder_brand": {
     "_not": "Cinder Knight temel saldırı: STR fiziksel + 2 tur Burning. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10708,8 +10736,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "scorch_bite"
+    ]
   },
   "knight_hold_gate": {
     "_not": "Cinder Knight: Hold the Gate kopyası (var olan taunt + Fortified), kendi mana bedeli (open-questions 466). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10745,8 +10772,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "hold_the_gate"
+    ]
   },
   "forge_hammer": {
     "_not": "Forge Golem temel saldırı: STR fiziksel. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10774,8 +10800,7 @@
       "heaveGrunt",
       "shieldPlant",
       "groundHeave"
-    ],
-    "artOf": "gatestone_slam"
+    ]
   },
   "vent": {
     "_not": "Forge Golem: bir şerit boyunca ateş; yeni kural yok, durum ya da zemin bırakmaz. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10808,9 +10833,9 @@
     "icon": "ashbrand",
     "vfx": "ashbrand",
     "sfx": [
+      "flameIgnite",
       "emberHiss"
-    ],
-    "artOf": "kiln_smoke"
+    ]
   },
   "wight_feast": {
     "_not": "Wight: Feast kopyası, kendi mana bedeli (open-questions 466). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10841,8 +10866,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "feast"
+    ]
   },
   "rime_bite": {
     "_not": "Rime Hound temel saldırı: hasar + Chilled. Skill atışı: zaten Chilled hedefi dondurur. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10874,8 +10898,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "scorch_bite"
+    ]
   },
   "rime_run_down": {
     "_not": "Rime Hound: Run Down kopyası, kendi mana bedeli (open-questions 466). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10910,7 +10933,6 @@
       "daggerDraw",
       "twinSlice"
     ],
-    "artOf": "run_down",
     "ai": {
       "scoreCost": 5
     }
@@ -10950,8 +10972,7 @@
       "bowTwang",
       "arrowWhoosh",
       "arrowThunk"
-    ],
-    "artOf": "crossbow_bolt"
+    ]
   },
   "ice_shard": {
     "_not": "Rime Witch temel saldırı: LUCK buz. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -10979,8 +11000,7 @@
       "flameIgnite",
       "flameRoar",
       "fireBlast"
-    ],
-    "artOf": "brine_lash"
+    ]
   },
   "sodden_hex": {
     "_not": "Rime Witch: tek hedef 2 tur Soaked; Hoarfrost bunu okur. Ad belgede \"sonra\" diye açık kalmıştı. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11009,8 +11029,7 @@
     "sfx": [
       "boneSpin",
       "boneImpact"
-    ],
-    "artOf": "tide_dirge"
+    ]
   },
   "hollow_rockfall": {
     "_not": "Hollow Warden: Rockfall kopyası, kendi mana bedeli (open-questions 466). Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11053,8 +11072,7 @@
       "woodSmash",
       "rootsRumble",
       "leafRustle"
-    ],
-    "artOf": "rockfall"
+    ]
   },
   "molten_run_down": {
     "_not": "Molten Hound: Run Down + hedef hücresine 2 tur Burning zemin. Harita 3 kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11096,7 +11114,6 @@
       "daggerDraw",
       "twinSlice"
     ],
-    "artOf": "run_down",
     "ai": {
       "scoreCost": 5
     }
@@ -11131,8 +11148,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "frost_bite"
+    ]
   },
   "snowdrift": {
     "_not": "Pack-Mother: önceden işaretli 2x2 Chill Ground, hasar yok; Chilled kahraman içinde kalırsa zemin düşüşü dondurur (genel kural). Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11173,8 +11189,7 @@
     "sfx": [
       "iceCrack",
       "hailPatter"
-    ],
-    "artOf": "whiteout"
+    ]
   },
   "throat_leap": {
     "_not": "Pack-Mother: her sıraya ulaşır, 2 tur Bleeding. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11213,8 +11228,7 @@
     "sfx": [
       "daggerDraw",
       "twinSlice"
-    ],
-    "artOf": "gloam_lunge"
+    ]
   },
   "matriarch_stoke": {
     "_not": "Pyre Matriarch: önceden işaretli 2x2 Burning, hasar yok. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11256,8 +11270,7 @@
       "meteorWhistle",
       "bigBoom",
       "fireCrackle"
-    ],
-    "artOf": "burn_the_field"
+    ]
   },
   "sledge": {
     "_not": "Forge-Master Golem temel saldırı: hasar + 2 tur Sunder. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11294,8 +11307,7 @@
     "sfx": [
       "chainDrag",
       "anchorImpact"
-    ],
-    "artOf": "iron_maul"
+    ]
   },
   "reforge": {
     "_not": "Forge-Master Golem: bir golem maks canının %20si onarılır; kendisi hariç. Golem = görünen ad (yer tutucu sınıflı kadro). Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11331,8 +11343,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "hold_the_gate"
+    ]
   },
   "rivet_plate": {
     "_not": "Forge-Master Golem: bir dosta STR kalkan. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11363,8 +11374,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "knight_hold_gate"
+    ]
   },
   "fervour": {
     "_not": "Ashborn Hierarch: bir dosta 2 tur Ash Surge (süre taşıyanın turu bitince düşer). Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11395,8 +11405,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "chant"
+    ]
   },
   "kindle_the_nave": {
     "_not": "Ashborn Hierarch: vaaz bittikten sonra kendi sırası 2 tur Burning; Ashborn dostlar E4 kuralıyla iyileşir. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11426,8 +11435,7 @@
       "meteorWhistle",
       "bigBoom",
       "fireCrackle"
-    ],
-    "artOf": "burn_the_field"
+    ]
   },
   "searing_bash": {
     "_not": "Cinder Warden temel saldırı: hasar + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11467,8 +11475,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "cinder_brand"
+    ]
   },
   "warden_hold_gate": {
     "_not": "Cinder Warden: Hold the Gate kopyası (taunt + Fortified), kendi mana bedeli. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11504,8 +11511,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "hold_the_gate"
+    ]
   },
   "slag_wall": {
     "_not": "Cinder Warden: önceden işaretli sütun, 2 tur Burning, hasar yok. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11541,9 +11547,9 @@
     "icon": "ashbrand",
     "vfx": "ashbrand",
     "sfx": [
+      "flameIgnite",
       "emberHiss"
-    ],
-    "artOf": "vent"
+    ]
   },
   "avalanche": {
     "_not": "Snowfather: önceden işaretli sütun, ağır fiziksel. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11582,8 +11588,7 @@
       "woodSmash",
       "rootsRumble",
       "leafRustle"
-    ],
-    "artOf": "hollow_rockfall"
+    ]
   },
   "roar": {
     "_not": "Snowfather: tüm kahramanlar 1 tur Slow. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11613,8 +11618,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "knight_hold_gate"
+    ]
   },
   "decree_of_stone": {
     "_not": "Hollow King: tüm dostlar 1 tur Fortified. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11643,8 +11647,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "knight_hold_gate"
+    ]
   },
   "bring_down_the_hall": {
     "_not": "Hollow King ulti: 3 hücre işaretlenir, sonraki Round başı çöker, savaş boyunca kapalı. Tavan maxClosed 5. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11686,8 +11689,7 @@
       "woodSmash",
       "rootsRumble",
       "leafRustle"
-    ],
-    "artOf": "hollow_rockfall"
+    ]
   },
   "hammerfall": {
     "_not": "Hearthwarden temel saldırı: tek hedef, ağır. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11713,8 +11715,7 @@
     "sfx": [
       "chainDrag",
       "anchorImpact"
-    ],
-    "artOf": "kingsmaul"
+    ]
   },
   "quench": {
     "_not": "Hearthwarden: iki tahtadaki tüm Burning hücreler söner, hücre başına maks canın %2si şifa. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11741,8 +11742,7 @@
     "sfx": [
       "boneSpin",
       "boneImpact"
-    ],
-    "artOf": "sodden_hex"
+    ]
   },
   "forge_chains": {
     "_not": "Hearthwarden: tek hedef, 2 tur Slow + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11786,8 +11786,7 @@
       "boneSlashWhoosh",
       "boneSlashHit",
       "boneSlashCrack"
-    ],
-    "artOf": "cinder_brand"
+    ]
   },
   "temper_the_crown": {
     "_not": "Hearthwarden ulti: telgraflı tüm kahraman tahtası, güvenli hücre yok, ateş + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11831,8 +11830,7 @@
       "hammerWhoosh",
       "hammerSlam",
       "fireCrackle"
-    ],
-    "artOf": "pyre_of_morvane"
+    ]
   },
   "cinder_storm": {
     "_not": "Ember: X şekli ateş + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11872,9 +11870,9 @@
     "icon": "ashbrand",
     "vfx": "ashbrand",
     "sfx": [
+      "flameIgnite",
       "emberHiss"
-    ],
-    "artOf": "dragons_breath"
+    ]
   },
   "breathe": {
     "_not": "Ember: bir sıra 2 tur Burning, hasar yok. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11908,8 +11906,7 @@
     "vfx": "ashbrand",
     "sfx": [
       "emberHiss"
-    ],
-    "artOf": "vent"
+    ]
   },
   "the_first_fire": {
     "_not": "Ember ulti: tüm kahraman tahtası 3 tur Burning, hasar yok. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11948,8 +11945,7 @@
       "hammerWhoosh",
       "hammerSlam",
       "fireCrackle"
-    ],
-    "artOf": "pyre_of_morvane"
+    ]
   },
   "great_axe": {
     "_not": "Clan Chief Brannoc temel saldırı. Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -11976,8 +11972,7 @@
       "armorRun",
       "axeSwing",
       "axeChop"
-    ],
-    "artOf": "chiefs_cleaver"
+    ]
   },
   "rally_the_clan": {
     "_not": "Clan Chief Brannoc: seçilen dost sırasına 2 tur Haste (alan area_any, etki yalnız dostlara). Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -12011,8 +12006,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "iron_decree"
+    ]
   },
   "skullsplitter": {
     "_not": "Clan Chief Brannoc: tek hedef + 2 tur Sunder. Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -12047,8 +12041,7 @@
     "sfx": [
       "chainDrag",
       "anchorImpact"
-    ],
-    "artOf": "sledge"
+    ]
   },
   "standard_pole": {
     "_not": "The Frozen Standard-Bearer temel saldırı. Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -12075,8 +12068,7 @@
       "armorRun",
       "axeSwing",
       "axeChop"
-    ],
-    "artOf": "halberd_chop"
+    ]
   },
   "cold_command": {
     "_not": "The Frozen Standard-Bearer: bir dosta 2 tur Haste (kendine atılmaz). Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -12107,8 +12099,7 @@
     "sfx": [
       "shieldBang",
       "battleRoar"
-    ],
-    "artOf": "fervour"
+    ]
   },
   "frost_banner": {
     "_not": "The Frozen Standard-Bearer: önceden işaretli 2x2 Chill Ground, hasar yok (Snowdrift kopyası). Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -12149,8 +12140,7 @@
     "sfx": [
       "iceCrack",
       "hailPatter"
-    ],
-    "artOf": "snowdrift"
+    ]
   },
   "verdict": {
     "_not": "The Oathkeeper: tek hedef + 2 tur Sunder, ek koşul yok. Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
@@ -12185,7 +12175,6 @@
     "sfx": [
       "chainDrag",
       "anchorImpact"
-    ],
-    "artOf": "pick_of_the_deep"
+    ]
   }
 }

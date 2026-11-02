@@ -368,6 +368,12 @@ export class BattleHud {
   /** Birim kartı skill satırlarının ipuçları (setModel'in temizlediği `tips`ten ayrı: kart HTML'i değişmeden kalabilir). */
   private readonly cardTips = new Map<string, TipContent | (() => TipContent)>();
   private hover: Partial<Record<Side, UnitCard>> = {};
+  /** Zemin ipucu yüzünden kaydırma kutusu kısaltılan kart tarafı (placeTipTop). */
+  private capped: Side | null = null;
+  /** Görünen bağlam ipucu zemin ipucu mu (at-top). */
+  private tipTopOn = false;
+  /** Zemin ipucu yüzünden kısaltılan stat paneli tarafı (placeTipTop). */
+  private statsCapped: Side | null = null;
   private pins: Partial<Record<Side, UnitCard>> = {};
   /** Stat paneli açık mı (tarafa göre). Yalnızca o tarafta sabit kart varken true (renderCards düzeltir). */
   private statsOpen: Partial<Record<Side, boolean>> = {};
@@ -870,6 +876,7 @@ export class BattleHud {
       this.rightSlot.style.width = `${Math.max(0, W - rx - EDGE)}px`;
     }
     this.cards.enemy.style.left = `${W - (phone ? 760 : 500) - 22}px`; // kart genişliği: battle-hud.css > .bh-card
+    this.placeTipTop();
   }
 
   // ------------------------------------------------------------------ birim kartları
@@ -1016,6 +1023,7 @@ export class BattleHud {
       if (!el.classList.contains('on')) el.classList.add('on');
       if (el.classList.contains('pin') !== pinned) el.classList.toggle('pin', pinned);
     }
+    this.placeTipTop();
   }
 
   /**
@@ -1104,14 +1112,79 @@ export class BattleHud {
     // Zemin ipucu (top): sıra göstergesinin altında, üzerine gelinen hücreyi kapatmaz
     this.ctip.classList.toggle('at-top', !!place?.top);
     this.ctip.classList.toggle('at-many', !!place?.many);
+    this.tipTopOn = !!place?.top;
     this.ctip.innerHTML = tipHtml(t);
-    tipOn(this.ctip);
+    tipOn(this.ctip); // önce görünür (display: none iken ölçü 0 olur), sonra yerleşir
+    this.placeTipTop();
     this.root.classList.add('ctx');
   }
 
   hideContextTip(): void {
     tipOff(this.ctip);
     this.root.classList.remove('ctx');
+    this.tipTopOn = false;
+    this.releaseCardCap();
+  }
+
+  /** Zemin ipucu kart için kısalttıysa kaydırma kutusunun üst sınırı kaldırılır (CSS'teki --lim sınırına döner). */
+  private releaseCardCap(): void {
+    this.releaseStatsCap();
+    if (!this.capped) return;
+    this.cardSc[this.capped].style.maxHeight = '';
+    this.capped = null;
+  }
+
+  /** Stat paneli (kartın yanı) ipucunun üst kenarında biter: panel kartın 5 px içine girer, ipucuna binmesin; sığmazsa panel kayar. */
+  private releaseStatsCap(): void {
+    if (!this.statsCapped) return;
+    this.cardStats[this.statsCapped].style.maxHeight = '';
+    this.statsCapped = null;
+  }
+
+  /**
+   * Zemin ipucunun (at-top) yeri (Ömer 2026-11-02): birim kartının hemen altı, kartla aynı sol kenar ve aynı genişlik, küçük boşlukla (8; telefonda 4).
+   * Kart: üstüne gelinen birimin kartı; yoksa görünen düşman kartı; yoksa görünen dost kartı; kart yoksa ipucu düşman kartının üst yuvasında tek başına durur.
+   * Kart + ipucu alt çubuğa (--lim, battle-hud.css > .bh-card) girecekse kartın kaydırma kutusu kısalır (kaydırır), ipucu tam görünür.
+   * Kartın boyu değişince (renderCards) ya da ekran değişince (place) yeniden çağrılır. Diğer bağlam ipuçları (alt orta) bundan etkilenmez.
+   */
+  private placeTipTop(): void {
+    const tip = this.ctip;
+    if (!this.tipTopOn) {
+      this.releaseCardCap();
+      if (!tip.classList.contains('at-top') && tip.style.left) tip.style.cssText = '';
+      return;
+    }
+    const phone = document.documentElement.classList.contains('short');
+    const gap = phone ? 4 : 8;
+    const shown = (s: Side) => this.cards[s].classList.contains('on') && !(s === 'party' && this.root.classList.contains('sheet-open'));
+    // üstüne gelinen birimin kartı; yoksa görünen düşman kartı; yoksa görünen dost kartı; hiçbiri yoksa düşman kartının üst yuvası
+    const side: Side = this.hover.enemy && shown('enemy') ? 'enemy' : this.hover.party && shown('party') ? 'party' : shown('enemy') ? 'enemy' : shown('party') ? 'party' : 'enemy';
+    const card = this.cards[side];
+    const has = shown(side);
+    const ct = card.offsetTop;
+    tip.style.left = `${card.offsetLeft}px`;
+    tip.style.width = `${card.offsetWidth}px`;
+    const tipH = tip.offsetHeight;
+    let top = ct;
+    if (has) {
+      const sc = this.cardSc[side];
+      const lim = parseFloat(getComputedStyle(card).getPropertyValue('--lim')) || 896;
+      const natural = sc.scrollHeight - 22; // kartın doğal boyu (kaydırma kutusunun 11 px payları dışarıda)
+      const avail = Math.max(120, lim - ct - tipH - gap);
+      const h = Math.min(natural, avail);
+      if (this.capped && this.capped !== side) this.releaseCardCap();
+      const cap = natural > avail ? `${avail + 22}px` : '';
+      if (sc.style.maxHeight !== cap) sc.style.maxHeight = cap;
+      this.capped = cap ? side : null;
+      top = ct + h + gap;
+    } else this.releaseCardCap();
+    tip.style.top = `${top}px`;
+    if (has && card.classList.contains('stats')) {
+      const st = this.cardStats[side];
+      const cap = `${Math.max(200, top - ct + 14)}px`; // panel (üstü kartın 8 px üstünde, altında 8 px pay) ipucunun üst kenarında biter
+      if (st.style.maxHeight !== cap) st.style.maxHeight = cap;
+      this.statsCapped = side;
+    } else this.releaseStatsCap();
   }
 
   // ------------------------------------------------------------------ olaylar

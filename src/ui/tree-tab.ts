@@ -14,6 +14,7 @@ import { check, counter, rowSpent, ultSpent, ultArm, treeNodes, type TreeNode } 
 import { skillCostAmount } from '../engine/cost';
 import type { SkillDef } from '../engine';
 import { bandTipEl, type BandChip, type BandTipSpec } from './band-tip';
+import { attachBandTip } from './band-tip-attach';
 import { gearSkillRows, passiveTip, skillTip, classSkills } from './gear-skills';
 import { escHtml } from './skill-bar';
 import { skillIconName } from './mob-icons';
@@ -170,7 +171,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   button.type = 'button';
   button.className = 'gr-tab';
   button.setAttribute('role', 'tab');
-  button.title = 'Tree';
+  attachBandTip(button, { title: 'Tree', sub: 'Spend skill points' });
   const ico = document.createElement('img');
   ico.className = 'gr-tab-ico';
   ico.alt = '';

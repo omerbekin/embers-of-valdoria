@@ -124,13 +124,17 @@ describe('can çubuğu toplamı (HoT + yenilenme)', () => {
     expect(log.entries().at(-1)!.parts.map((x) => x.t).join('')).toBe('Druid healed +5 from Regeneration');
   });
   it('gerçek savaşta: toplamlar işaretlenen olayların toplamına eşit, HoT tikleri bu birimin kendi tikleri', () => {
-    const teams = { party: ['warrior', 'druid', 'defender', 'paladin'], enemies: ['warrior', 'mage', 'gambler', 'hexer'] };
+    // 2026-11-02: Rejuvenate artık zemin (Healing Rain) bıraktığı için kahramanlarda HoT yok; gerçek HoT kaynağı Marsh Light'ın Fen Glimmer'ı.
+    // YZ onu bu dizilimde seçmediği için, kullanılabildiği her turda yaralı dosta elle atılır; gerisi YZ.
+    const teams = { party: ['warrior', 'marsh_light', 'defender', 'marsh_light'], enemies: ['warrior', 'mage', 'gambler', 'hexer'] };
     let hotSeen = 0;
     for (const seed of [11, 12, 13, 14]) {
       const b = new Battle(content.battleSetup('random-battle', seed, 'turns', teams, false));
       for (let n = 0; n < 300 && !b.winner; n++) {
         const uid = b.currentActor?.uid;
         if (!uid) break;
+        const hurt = b.combatants.find((c) => c.side === 'party' && c.hp > 0 && c.hp < c.maxHp);
+        if (hurt && b.applyChoice(uid, { skillId: 'fen_glimmer', targetUid: hurt.uid }).ok) continue;
         if (!b.applyChoice(uid, chooseAction(b, uid, content.aiConfig)).ok) break;
       }
       const statsOf = (uid: string) => {

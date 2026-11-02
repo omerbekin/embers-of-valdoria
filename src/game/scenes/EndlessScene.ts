@@ -75,6 +75,7 @@ import { ensureIcon } from '../icons';
 import { hasUiImage, uiIconName, type UiIconKind } from '../../ui/ui-icons';
 import { paintedOr } from '../../ui/misc-icons';
 import { onStageResize, stageView } from '../stage';
+import { touchUnits } from '../touch-hit';
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { groupColor, sortByPrimary } from '../class-order';
@@ -122,6 +123,47 @@ const LOOK = {
   card: { top: 262, h: 630, maxW: 440, gap: 40, cta: 86, medal: 54 },
 } as const;
 const C = LOOK.color;
+
+/**
+ * Telefon (html.short) yardımcısı, ÖDÜL ekranı: sahne ~0,36 küçüldüğü için ikincil yazı ~7 gerçek piksele düşüyordu. `phoneBoost()` çizim
+ * başına BİR kez okunur (yeniden ölçeklenince yeniden çizilir); masaüstünde `PH_OFF` hiçbir şeyi değiştirmez.
+ */
+const PHONE = {
+  /** En küçük gerçek piksel: ikincil yazı / en küçük etiket (kicker, USABLE BY). */
+  textPx: 11.5,
+  smallPx: 9.5,
+  /** Ad satırı, ikincil yazıya göre bu kadar büyük (hiyerarşi korunsun). */
+  nameBump: 4,
+  /** Kart kutusu (üst, yükseklik, en çok genişlik): geniş telefon sahnesinde kartlar daha geniş; alt kenar View bag dokunma alanından önce biter. */
+  card: { top: 268, h: 672, maxW: 560, medal: 40 },
+  /** Kartların iki yanda bırakacağı boşluk (sahne birimi). */
+  edge: 90,
+  /** Stat satırı aralığı (yazı büyüyünce) ve harf aralığı (kicker / USABLE BY). */
+  rowPitch: 40,
+  em: 0.1,
+  /** Alt başlık şeridi: koyu mürekkep + ince altın çizgi. */
+  strip: { padX: 36, h: 52, alpha: 0.82 },
+  /** Telefonda ödül ekranı düğmesi: genişlik ve yükseklik çarpanı (yazı büyüdü). */
+  btnW: 1.5,
+  btnH: 1.35,
+  /** Telefonda düğme ve stat satırı ipucu alanı en az bu kadar gerçek piksel. */
+  touchPx: 44,
+  /** Kahraman satırı (iyileştirme kartı) en yüksek satır. */
+  healRowMax: 70,
+  /** Epic / legendary etki satırı telefonda en çok kaç satıra sarılır. */
+  effectLines: 2,
+  /** Alt başlığın tek satır yüksekliği (sarılınca ek yükseklik buna göre). */
+  subLineH: 40,
+} as const;
+
+interface Ph {
+  on: boolean;
+  /** Sahne birimi yazı boyutu: telefonda en az `textPx` (ya da `small` ise `smallPx`) gerçek piksel. */
+  fs(size: number, small?: boolean): number;
+  /** Masaüstü değeri / telefon değeri. */
+  pick<T>(desk: T, phone: T): T;
+}
+const PH_OFF: Ph = { on: false, fs: (n) => n, pick: (d) => d };
 /**
  * Takım seçimi + dizilim ekranı (Ömer 2026-10-10): solda kadro kartları, sağda 4 sıra x 3 şerit ızgara (ön sıra sağda, düşmana bakar;
  * seferin Formation penceresiyle aynı düzen). 1920x1080 birimi; telefonda okunur olsun diye yazılar en az ~17.
@@ -182,6 +224,9 @@ export class EndlessScene extends Phaser.Scene {
   /** Ödül ekranının açık DOM torbası (View bag; Ömer 2026-10-11) ve kapanınca kartların soldan geri gelme animasyonu. */
   private rewardBag: (() => void) | null = null;
   private cardsFromBag = false;
+  /** Telefon yardımcısı (yalnız ödül / item seçimi çizerken kurulur; renderNow sıfırlar) ve onun çizildiği ölçek (yeniden ölçekleme denetimi). */
+  private ph: Ph = PH_OFF;
+  private phDrawn = '';
   /** Açık iki seçenekli item kartı (ödül kartının dizini; Ömer 2026-10-18, TUR 1 madde 13). Yoksa null. */
   private itemPick: number | null = null;
   /** Gear ekranı (DOM) açık mı. */
@@ -310,7 +355,10 @@ export class EndlessScene extends Phaser.Scene {
       const hide = this.gearOpen || !!this.rewardBag || isValorReviveOpen() || otherDialogOpen();
       if (this.valorMeter.el.hidden !== hide) this.valorMeter.el.hidden = hide;
     });
-    onStageResize(this, () => this.layoutStage());
+    onStageResize(this, () => {
+      this.layoutStage();
+      if (this.view === 'reward' && this.phoneKey() !== this.phDrawn) this.render();
+    });
     this.renderNow();
   }
 
@@ -449,16 +497,17 @@ export class EndlessScene extends Phaser.Scene {
     const n = opts.length;
     this.heading(T.itemPickTitle, T.itemPickSub(n));
     const gap = 60;
-    const w = Math.min(520, (1760 - (n - 1) * gap) / n);
+    const w = this.cardWidth(n, gap, this.ph.pick(520, PHONE.card.maxW));
     opts.forEach((o, i) => {
       const d = viewDef(itemDef(o.itemId), o.rolls);
       if (!d) return;
       const accent = hexNum(rarityColor(d));
       this.choiceCard({ index: i, cx: CX + (i - (n - 1) / 2) * (w + gap), w, rich: !!special, accent, tint: EndlessScene.TINT.item, kicker: T.kickerItem(special), take: () => this.actTakeReward(run, index, i), rarity: true }, (k) => {
-        const m = medallion(this, itemEmblem(this, d, rarityColor(d)), accent, LOOK.card.medal, { rich: !!special });
-        m.setPosition(k.cx, k.top + LOOK.card.medal + 18);
+        const R = this.cardBox().medal;
+        const m = medallion(this, itemEmblem(this, d, rarityColor(d)), accent, R, { rich: !!special });
+        m.setPosition(k.cx, k.top + R + 18);
         k.add(m);
-        this.itemCardBody(run, d, k, k.top + LOOK.card.medal * 2 + 52, o.heroId, o.rolls);
+        this.itemCardBody(run, d, k, k.top + R * 2 + this.ph.pick(52, 26), o.heroId, o.rolls);
         this.sellTag(sellValue({ id: d.id, ...(o.rolls ? { rolls: o.rolls } : {}) }), k.x1 - 18, k.top + 6, k.add);
       });
     });
@@ -552,6 +601,34 @@ export class EndlessScene extends Phaser.Scene {
 
   // ============================================================ görünüm döngüsü
 
+  /** Telefon durumu + ölçek anahtarı (değişirse ödül ekranı yeniden çizilir). */
+  private phoneKey(): string {
+    return document.documentElement.classList.contains('short') ? `p${(stageView.cssScale > 0 ? stageView.cssScale : 1).toFixed(2)}` : 'd';
+  }
+
+  private phoneBoost(): Ph {
+    this.phDrawn = this.phoneKey();
+    if (this.phDrawn === 'd') return PH_OFF;
+    const cs = stageView.cssScale > 0 ? stageView.cssScale : 1;
+    return {
+      on: true,
+      fs: (n, small) => Math.max(n, Math.ceil((small ? PHONE.smallPx : PHONE.textPx) / cs)),
+      pick: (_d, p) => p,
+    };
+  }
+
+  /** Seçim kartı kutusu: masaüstünde LOOK.card, telefonda PHONE.card. */
+  private cardBox(): { top: number; h: number; maxW: number; medal: number } {
+    const desk: { top: number; h: number; maxW: number; medal: number } = LOOK.card;
+    return this.ph.on ? PHONE.card : desk;
+  }
+
+  /** Kart genişliği: kart sayısına ve (telefonda geniş) sahneye uyar. */
+  private cardWidth(n: number, gap: number, maxW: number): number {
+    const room = this.ph.on ? Math.min(2560, stageView.right - stageView.left) - PHONE.edge * 2 : 1760;
+    return Math.min(maxW, (room - (n - 1) * gap) / n);
+  }
+
   private layoutStage(): void {
     if (this.bg) {
       const k = Math.max(stageView.viewW / this.bg.width, H / this.bg.height);
@@ -588,6 +665,7 @@ export class EndlessScene extends Phaser.Scene {
     this.pickFx = null;
     this.pickRemoveText = null;
     this.cards = [];
+    this.ph = PH_OFF;
     this.hideTip();
     this.closeConfirm();
     this.root.removeAll(true);
@@ -1072,25 +1150,27 @@ export class EndlessScene extends Phaser.Scene {
     if (!run?.offer) return this.go('title');
     const kind = waveKind(run.stats.cleared);
     const special = kind === 'normal' ? null : kind;
+    this.ph = this.phoneBoost();
     if (this.itemPick !== null && this.drawItemPick(run, this.itemPick, special)) return;
     this.itemPick = null;
     this.heading(T.rewardTitle, T.rewardSub(run.stats.cleared, special));
     // Kart genişliği kart sayısına uyar (normal 3, elit/boss 4)
     const n = run.offer.length;
-    const w = Math.min(LOOK.card.maxW, (1760 - (n - 1) * LOOK.card.gap) / n);
+    const w = this.cardWidth(n, LOOK.card.gap, this.cardBox().maxW);
     run.offer.forEach((card, i) => this.rewardCard(run, card, i, CX + (i - (n - 1) / 2) * (w + LOOK.card.gap), w, special));
     // Nadir düşüş duyurusu (madde 297): altın-turuncu parlayan satır. Torba doluyken düştüyse BEKLER: yer açılınca "Take", alınmadan devam = kaybolur
     const rd = run.rareDrop && run.rareDrop.wave === run.stats.cleared ? run.rareDrop : undefined;
     const rare = rd ? itemDef(rd.itemId) : undefined;
     if (rd && rare) {
-      const t = this.add2(this.note(CX, LOOK.card.top - 34, rd.pending ? T.rareDropWaiting(rare.name) : T.rareDrop(rare.name), 26, '#f0a830', false).setOrigin(0.5, 1));
+      const t = this.add2(this.note(CX, this.cardBox().top - 34, rd.pending ? T.rareDropWaiting(rare.name) : T.rareDrop(rare.name), this.ph.fs(26), '#f0a830', false).setOrigin(0.5, 1));
       this.tweens.add({ targets: t, alpha: { from: 0.35, to: 1 }, scale: { from: 1.12, to: 1 }, duration: 520, yoyo: true, repeat: 2, ease: 'Sine.easeInOut', onComplete: () => t.setAlpha(1).setScale(1) });
     }
     // Torba: ödül seçerken açılır (Gear: at / tak; Ömer 2026-10-10); bekleyen nadir düşüş için Take (yer varsa)
     const bagN = bagOf(run).length;
     const max = endlessBagSize();
-    this.button(rd?.pending ? CX - 230 : CX, 1000, 300, `View bag · ${bagN}/${max}`, () => this.actViewBag(), { icon: this.uiTex('bag') });
-    if (rd?.pending && rare) this.button(CX + 230, 1000, 380, T.takeRare(rare.name), () => this.actTakeRare(), { primary: true, enabled: bagN < max });
+    const bx = this.ph.pick(230, 330);
+    this.button(rd?.pending ? CX - bx : CX, 1000, 300, `View bag · ${bagN}/${max}`, () => this.actViewBag(), { icon: this.uiTex('bag') });
+    if (rd?.pending && rare) this.button(CX + bx, 1000, 380, T.takeRare(rare.name), () => this.actTakeRare(), { primary: true, enabled: bagN < max });
     // Torbadan dönüş: kartlar soldaki küçük ikon yerlerinden kendi yerlerine büyüyerek gelir
     if (this.cardsFromBag) {
       this.cardsFromBag = false;
@@ -1167,7 +1247,8 @@ export class EndlessScene extends Phaser.Scene {
     o: { index: number; cx: number; w: number; rich: boolean; accent: number; tint: number; kicker: string; take: () => void; rarity?: boolean; blocked?: string | null },
     draw: (k: CardCtx) => void,
   ): void {
-    const { top, h } = LOOK.card;
+    // Telefon yalnızca ödül / item seçimi (ph kuruluyken) kart kutusunu büyütür; kalıntı kartları masaüstü ölçüsünde kalır
+    const { top, h } = this.cardBox();
     const c = this.add2(this.add.container(o.cx, top + h / 2));
     // Engelli kart (Ömer 2026-10-10: torba doluyken item ödülü alınmaz): soluk, altta kısa ipucu; dokunuş = hata sesi + ipucu
     if (o.blocked) {
@@ -1193,14 +1274,18 @@ export class EndlessScene extends Phaser.Scene {
     tint.fillGradientStyle(o.tint, o.tint, o.tint, o.tint, 0.1, 0.1, 0.02, 0.02).fillRect(x0 + 1, top + 1, o.w - 2, h - 2);
     const hl = at(this.add.graphics());
     // Üst satır: küçük Cinzel başlık (elit / boss / kalıntı kartında kor rengi) + iki yanda sönen çizgi
-    const kick = at(elText(this, o.cx, top + 26, o.kicker, 16, o.rich ? '#f0a860' : C.dim, { em: 0.22 }).setOrigin(0.5));
-    const orn = at(this.add.graphics());
-    const half = kick.width / 2 + 14;
-    fadeLine(orn, o.cx - half - 60, o.cx - half, top + 26, EL.GOLD, 0.5, 'in');
-    fadeLine(orn, o.cx + half, o.cx + half + 60, top + 26, EL.GOLD, 0.5, 'out');
+    // Telefon: yazı büyür (en az ~9,5 gerçek px), harf aralığı daralır, süs çizgileri düşer (yer yok); sığmazsa fitText küçültür
+    const kick = at(elText(this, o.cx, top + this.ph.pick(26, 30), o.kicker, this.ph.fs(16, true), o.rich ? '#f0a860' : C.dim, { em: this.ph.pick(0.22, PHONE.em) }).setOrigin(0.5));
+    if (this.ph.on) fitText(kick, o.w - 24);
+    else {
+      const orn = at(this.add.graphics());
+      const half = kick.width / 2 + 14;
+      fadeLine(orn, o.cx - half - 60, o.cx - half, top + 26, EL.GOLD, 0.5, 'in');
+      fadeLine(orn, o.cx + half, o.cx + half + 60, top + 26, EL.GOLD, 0.5, 'out');
+    }
     // `addTop`: kartın dokunma alanının ÜSTÜNE (stat satırlarının ipucu alanları); kart alanından önce eklenirse ipucu çalışmaz
     const late: Phaser.GameObjects.GameObject[] = [];
-    draw({ cx: o.cx, w: o.w, top: top + 48, bottom: top + h - 22, x0, x1: x0 + o.w, add: (obj) => at(obj as Phaser.GameObjects.Image), addTop: (obj) => late.push(obj) });
+    draw({ cx: o.cx, w: o.w, top: top + this.ph.pick(48, 52), bottom: top + h - 22, x0, x1: x0 + o.w, add: (obj) => at(obj as Phaser.GameObjects.Image), addTop: (obj) => late.push(obj) });
     // Bütün kart: dokunma alanı (en üstte)
     const zone = at(this.add.zone(o.cx, top + h / 2, o.w, h).setInteractive({ useHandCursor: true }));
     for (const obj of late) at(obj as Phaser.GameObjects.Zone);
@@ -1239,8 +1324,8 @@ export class EndlessScene extends Phaser.Scene {
       // Kart soluk (ad ve statlar okunur: atmaya değer mi?); ipucu altta "Usable by" satırının üstünde koyu şeritte, tam opak
       c.setAlpha(0.5);
       const y = top + h - 62;
-      this.add2(this.add.rectangle(o.cx, y, o.w - 8, 64, 0x0b0806, 0.86).setStrokeStyle(1, 0xe8806a, 0.35));
-      this.add2(this.note(o.cx, y, o.blocked, 22, '#f09a80', false).setOrigin(0.5, 0.5).setWordWrapWidth(o.w - 40).setAlign('center'));
+      this.add2(this.add.rectangle(o.cx, y, o.w - 8, this.ph.pick(64, 120), 0x0b0806, 0.86).setStrokeStyle(1, 0xe8806a, 0.35));
+      this.add2(this.note(o.cx, y, o.blocked, this.ph.fs(22), '#f09a80', false).setOrigin(0.5, 0.5).setWordWrapWidth(o.w - 40).setAlign('center'));
     }
   }
 
@@ -1266,22 +1351,30 @@ export class EndlessScene extends Phaser.Scene {
     add: (o: Phaser.GameObjects.GameObject) => void,
     addTop: (o: Phaser.GameObjects.GameObject) => void,
     stats: () => { now: Stats; after: Stats | null } | null,
+    zoneH?: number,
+    maxW?: number,
   ): number {
     // Affix satırı (Ömer 2026-10-11): kademe etiketi (C / B / A) + ikon + zarlanmış değer + aralık: "B  +6% Crit chance (5–7)"
-    const tag = elText(this, 0, cy, line.tier, Math.round(size * 0.72), TIER_COLOR[line.tier], { em: 0.06, weight: '700' }).setOrigin(0, 0.5);
+    const tag = elText(this, 0, cy, line.tier, Math.round(size * (this.ph.on ? 0.9 : 0.72)), TIER_COLOR[line.tier], { em: 0.06, weight: '700' }).setOrigin(0, 0.5);
     const t = this.note(0, cy, chipText(line), size, C.stat, false).setOrigin(0, 0.5);
     const ic = line.stat ? statIcon(line.stat) : null;
     const isz = Math.round(size * 1.05);
     const gap = ic ? 8 : 0;
     const tw = tag.width + 10;
-    const w = tw + (ic ? isz + gap : 0) + t.width;
+    let w = tw + (ic ? isz + gap : 0) + t.width;
+    // Telefonda büyüyen yazı kart genişliğine sığmazsa yalnızca yazı kısmı küçülür (en az ~9,5 gerçek px'e kadar; yoksa taşmaz diye üstte kalır)
+    if (maxW && w > maxW) {
+      const fixed = w - t.width;
+      t.setScale(Math.max(0.5, (maxW - fixed) / t.width));
+      w = fixed + t.width * t.scaleX;
+    }
     const x0 = align === 'center' ? x - w / 2 : x;
     tag.setX(x0);
     add(tag);
     if (ic) add(this.add.image(x0 + tw + isz / 2, cy, ensureIcon(this, ic.kind, ic.color, false)).setDisplaySize(isz, isz));
     t.setX(x0 + tw + (ic ? isz + gap : 0));
     add(t);
-    addTop(this.tipZoneFor(line, x0 + w / 2, cy, w + 12, size + 14, stats));
+    addTop(this.tipZoneFor(line, x0 + w / 2, cy, w + 12, zoneH ?? size + 14, stats));
     return w;
   }
 
@@ -1317,21 +1410,28 @@ export class EndlessScene extends Phaser.Scene {
     const col = '#f0a860';
     const dia = 12;
     const t = this.note(0, cy, text, size, col, true).setOrigin(0, 0.5);
+    // Telefon: yazı büyüdü, tek satıra sığmaz; en çok PHONE.effectLines satıra sarılır (üstten hizalı), hâlâ sığmazsa "…" + ipucu (tam metin)
+    const wrapped = this.ph.on;
+    if (wrapped) t.setOrigin(0, 0).setY(cy - size * 0.55).setWordWrapWidth(maxW - dia - 4, true).setAlign('center');
     let cut = false;
-    while (t.width > maxW - dia - 4 && t.text.length > 4) {
+    while ((wrapped ? t.getWrappedText().length > PHONE.effectLines : t.width > maxW - dia - 4) && t.text.length > 4) {
       t.setText(`${t.text.slice(0, -2).trimEnd()}…`);
       cut = true;
     }
     const w = dia + t.width;
     const x0 = align === 'center' ? x - w / 2 : x;
     const g = this.add.graphics();
-    g.fillStyle(EL.EMBER, 0.9).fillPoints(diamondPts(x0 + 4, cy, 4), true);
+    g.fillStyle(EL.EMBER, 0.9).fillPoints(diamondPts(x0 + 4, wrapped ? t.y + size * 0.6 : cy, 4), true);
     add(g);
     t.setX(x0 + dia);
+    // add() kartın yerel koordinatına kaydırır: ipucu alanının yerini önce hesapla
+    const ty = t.y;
     add(t);
     if (!cut) return;
     const [name, ...rest] = text.split(': ');
-    const z = this.add.zone(x0 + w / 2, cy, w, size + 14).setInteractive();
+    // Telefon: alan en az 44 gerçek piksel; yalnızca aşağı büyür (üstteki stat satırlarının alanını ezmesin)
+    const zh = wrapped ? Math.max(t.height + 8, touchUnits(PHONE.touchPx)) : size + 14;
+    const z = this.add.zone(x0 + w / 2, wrapped ? ty - 4 + zh / 2 : cy, w, zh).setInteractive();
     const show = () => {
       this.hideTip();
       const tip = bandTip(this, { accent: col, title: name ?? text, lines: rest.length ? [{ text: rest.join(': ') }] : [], width: 440 });
@@ -1351,7 +1451,8 @@ export class EndlessScene extends Phaser.Scene {
 
   private rewardCard(run: EndlessRun, card: RewardCard, index: number, cx: number, w: number, special: 'elite' | 'boss' | null): void {
     const rich = !!special;
-    const R = LOOK.card.medal;
+    const R = this.cardBox().medal;
+    const ph = this.ph;
     const kicker = card.kind === 'item' ? (itemOptions(card).length > 1 ? `${T.kickerItem(special)} · ${T.itemCardChoice(itemOptions(card).length)}` : T.kickerItem(special)) : card.kind === 'gold' ? T.kickerGold(special) : card.kind === 'feast' ? T.kickerFeast : card.kind === 'revive' ? T.kickerRevive : card.kind === 'xp' ? T.kickerXp : T.kickerHeal(special);
     const d = card.kind === 'item' ? viewDef(itemDef(card.itemId), card.rolls) : undefined;
     const accent = d ? hexNum(rarityColor(d)) : card.kind === 'gold' ? 0xecc878 : card.kind === 'feast' ? 0xf0b860 : card.kind === 'revive' ? 0x9ad08a : card.kind === 'xp' ? 0x8fb0d8 : 0xd96a5a;
@@ -1361,36 +1462,36 @@ export class EndlessScene extends Phaser.Scene {
       const m = medallion(this, emblem, accent, R, { rich });
       m.setPosition(k.cx, k.top + R + 18);
       k.add(m);
-      const y = k.top + R * 2 + 52;
+      const y = k.top + R * 2 + ph.pick(52, 26);
       if (card.kind === 'item' && d) this.itemCardBody(run, d, k, y, card.heroId, card.rolls);
       else if (card.kind === 'gold') {
         k.add(elText(this, k.cx, y + 12, `+${card.amount}`, 52, EL.ON, { em: 0.04, weight: '700' }).setOrigin(0.5));
-        k.add(this.label(k.cx, y + 52, 'GOLD', 18, C.dim).setOrigin(0.5, 0));
-        k.add(this.note(k.cx, y + 96, cardText(card), 21, C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - 60).setAlign('center'));
-        k.add(this.note(k.cx, k.bottom - 30, T.purse(run.gold, run.gold + card.amount), 20, C.accent).setOrigin(0.5, 0));
+        k.add(this.label(k.cx, y + ph.pick(52, 62), 'GOLD', ph.fs(18, true), C.dim).setOrigin(0.5, 0));
+        k.add(this.note(k.cx, y + ph.pick(96, 112), cardText(card), ph.fs(21), C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - ph.pick(60, 48)).setAlign('center'));
+        k.add(this.note(k.cx, k.bottom - ph.pick(30, 46), T.purse(run.gold, run.gold + card.amount), ph.fs(20), C.accent).setOrigin(0.5, 0));
       } else if (card.kind === 'heal' || card.kind === 'feast') {
         const big = card.kind === 'heal' ? `+${Math.round(card.ratio * 100)}%` : T.fullHealth;
         k.add(elText(this, k.cx, y + 12, big, card.kind === 'heal' ? 48 : 34, EL.ON, { em: 0.04, weight: '700' }).setOrigin(0.5));
-        const text = this.note(k.cx, y + 48, cardText(card), 20, C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - 56).setAlign('center');
+        const text = this.note(k.cx, y + 48, cardText(card), ph.fs(20), C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - ph.pick(56, 44)).setAlign('center');
         k.add(text);
         this.healRows(run, card.kind === 'heal' ? card.ratio : 1, k, y + 48 + text.height + 16);
       } else if (card.kind === 'xp') {
         // Veteran's Lesson (Ömer 2026-10-20): büyük oran + kart metni
         k.add(elText(this, k.cx, y + 12, `+${Math.round(card.ratio * 100)}%`, 48, EL.ON, { em: 0.04, weight: '700' }).setOrigin(0.5));
-        k.add(this.label(k.cx, y + 52, 'XP', 18, C.dim).setOrigin(0.5, 0));
-        k.add(this.note(k.cx, y + 96, cardText(card), 21, C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - 60).setAlign('center'));
+        k.add(this.label(k.cx, y + ph.pick(52, 62), 'XP', ph.fs(18, true), C.dim).setOrigin(0.5, 0));
+        k.add(this.note(k.cx, y + ph.pick(96, 112), cardText(card), ph.fs(21), C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - ph.pick(60, 48)).setAlign('center'));
       } else if (card.kind === 'revive') {
         // Düşmüş kahraman: portre + ad, "0% → 50%" (Ömer 2026-10-10 takip)
         const hero = run.heroes.find((h) => h.id === card.heroId);
         const def = hero ? content.classes[hero.class] : undefined;
         const name = hero ? className(hero.class) : '';
-        k.add(fitText(elText(this, k.cx, y + 12, T.revive(name), 30, EL.ON, { em: 0.04, weight: '700' }).setOrigin(0.5), k.w - 40));
+        k.add(fitText(elText(this, k.cx, y + 12, T.revive(name), ph.fs(30), EL.ON, { em: 0.04, weight: '700' }).setOrigin(0.5), k.w - 40));
         if (def) {
-          k.add(this.add.rectangle(k.cx, y + 96, 88, 88, EL.INK, 0.9).setStrokeStyle(1, EL.GOLD, EL.LINE.a2));
-          k.add(classAvatar(this, def, k.cx, y + 96, 84));
+          k.add(this.add.rectangle(k.cx, y + ph.pick(96, 92), 88, 88, EL.INK, 0.9).setStrokeStyle(1, EL.GOLD, EL.LINE.a2));
+          k.add(classAvatar(this, def, k.cx, y + ph.pick(96, 92), 84));
         }
-        k.add(this.note(k.cx, y + 156, cardText(card), 20, C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - 56).setAlign('center'));
-        k.add(this.note(k.cx, k.bottom - 30, T.healPreview(0, card.ratio), 20, C.accent).setOrigin(0.5, 0));
+        k.add(this.note(k.cx, y + ph.pick(156, 152), cardText(card), ph.fs(20), C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - ph.pick(56, 44)).setAlign('center'));
+        k.add(this.note(k.cx, k.bottom - ph.pick(30, 46), T.healPreview(0, card.ratio), ph.fs(20), C.accent).setOrigin(0.5, 0));
       }
       // Item kartı: sağ üst köşede satış değeri + küçük piksel sikke
       if (d && card.kind === 'item') this.sellTag(sellValue({ id: d.id, ...(card.rolls ? { rolls: card.rolls } : {}) }), k.x1 - 18, k.top + 6, k.add);
@@ -1399,9 +1500,11 @@ export class EndlessScene extends Phaser.Scene {
 
   /** "Sell: 55" + küçük piksel sikke (sağa yaslı; `right` = sağ kenar, `y` = dikey orta). */
   private sellTag(gold: number, right: number, y: number, add: (o: Phaser.GameObjects.GameObject) => void): void {
-    const coin = this.add.image(right - 11, y, purseEmblem(this)).setDisplaySize(24, 24);
+    const fs = this.ph.fs(18);
+    const ic = this.ph.pick(24, fs);
+    const coin = this.add.image(right - ic / 2 + 1, y, purseEmblem(this)).setDisplaySize(ic, ic);
     add(coin);
-    add(this.note(right - 28, y, T.sell(gold), 18, C.accent).setOrigin(1, 0.5));
+    add(this.note(right - ic - 4, y, T.sell(gold), fs, C.accent).setOrigin(1, 0.5));
   }
 
   /**
@@ -1411,16 +1514,16 @@ export class EndlessScene extends Phaser.Scene {
   private usableRow(run: EndlessRun, d: ItemDef, cx: number, y: number, add: (o: Phaser.GameObjects.GameObject) => void, o: { label?: boolean; av?: number; maxW?: number } = {}): void {
     const av = o.av ?? 40;
     if (o.label !== false) {
-      add(elText(this, cx, y, T.usableBy, 14, C.dim, { em: 0.22 }).setOrigin(0.5));
-      y += 22 + av / 2;
+      add(elText(this, cx, y, T.usableBy, this.ph.fs(14, true), C.dim, { em: this.ph.pick(0.22, PHONE.em) }).setOrigin(0.5));
+      y += this.ph.pick(22, 32) + av / 2;
     }
     if (d.slot !== 'weapon') {
-      add(this.note(cx, y, T.anyHero, 20, C.sub, true).setOrigin(0.5));
+      add(this.note(cx, y, T.anyHero, this.ph.fs(20), C.sub, true).setOrigin(0.5));
       return;
     }
     const ok = run.heroes.filter((h) => canEquip(h.class, d));
     if (!ok.length) {
-      add(fitText(this.note(cx, y, T.noOneCanWield, 20, C.warn, true).setOrigin(0.5), o.maxW ?? 400));
+      add(fitText(this.note(cx, y, T.noOneCanWield, this.ph.fs(20), C.warn, true).setOrigin(0.5), o.maxW ?? 400));
       return;
     }
     const gap = 10;
@@ -1436,30 +1539,42 @@ export class EndlessScene extends Phaser.Scene {
 
   /** Item kartı gövdesi: ad (nadirlik rengi), tür, statlar; altta "Usable by" satırı. */
   private itemCardBody(run: EndlessRun, d: ItemDef, k: CardCtx, y: number, heroId?: string, rolls?: ItemRolls): void {
-    k.add(fitText(this.label(k.cx, y - 8, d.name, 26, rarityColor(d)).setOrigin(0.5, 0), k.w - 40));
+    const ph = this.ph;
+    k.add(fitText(this.label(k.cx, y - ph.pick(8, 14), d.name, ph.fs(26) + ph.pick(0, PHONE.nameBump), rarityColor(d)).setOrigin(0.5, 0), k.w - 40));
     // Alt başlık: örneğin seviyesi + (silahta) taban gücü (Item Güçlendirme 2026-10-17)
     const ilvl = rolls?.ilvl ?? d.ilvl;
     const pw = d.slot === 'weapon' ? ` · Power ${weaponPowerOf(d, ilvl)}` : '';
-    k.add(fitText(this.note(k.cx, y + 30, `${itemSubtitle(d, clampRarity(d, rolls?.rarity), ilvl)}${pw}`, 19, C.dim, true).setOrigin(0.5, 0), k.w - 40));
+    const sub = this.note(k.cx, y + ph.pick(30, 40), `${itemSubtitle(d, clampRarity(d, rolls?.rarity), ilvl)}${pw}`, ph.fs(19), C.dim, true).setOrigin(0.5, 0);
+    // Telefon: uzun alt başlık (Legendary Sword · One-handed · Item level 10 · Power 56) küçülmez, kart genişliğinde ortalı 2 satıra sarılır
+    if (ph.on) sub.setWordWrapWidth(k.w - 40, true).setAlign('center');
+    k.add(ph.on ? sub : fitText(sub, k.w - 40));
+    const subExtra = ph.on ? Math.max(0, sub.height - PHONE.subLineH) : 0;
     // Stat satırları: ikon + yazı (Gear kartı gibi); üstüne gelince / dokununca açıklama, kartın önerdiği kahraman için önce -> sonra
     const hero = heroId ? heroOf(run, heroId) : undefined;
-    let ly = y + 70 + 15;
-    for (const r of itemStatRows(d, rolls, run, heroId).slice(0, 4)) {
-      this.statChip(r, k.cx, ly, 23, 'center', k.add, k.addTop, () => this.tipStats(hero, d, rolls));
-      ly += 31;
+    let ly = y + ph.pick(85, 106) + subExtra;
+    const rows = itemStatRows(d, rolls, run, heroId).slice(0, 4);
+    const pitch = ph.pick(31, PHONE.rowPitch);
+    // Telefon: tek satırda ipucu alanı 44 gerçek piksele çıkar; üst üste satırlarda komşuyu ezmesin diye satır aralığı kadar (birleşik)
+    const zoneH = ph.on ? (rows.length === 1 ? touchUnits(PHONE.touchPx) : pitch) : undefined;
+    for (const r of rows) {
+      this.statChip(r, k.cx, ly, ph.fs(23), 'center', k.add, k.addTop, () => this.tipStats(hero, d, rolls), zoneH, k.w - 24);
+      ly += pitch;
     }
     // Legendary etkisi (Gear kartıyla aynı metin: progression effectLine): statların altında ayrı, vurgulu tek satır; sığmazsa kısaltılır + ipucu
     const fx = effectLine(d);
-    if (fx) this.effectNote(fx, k.cx, ly + 4, k.w - 48, 21, 'center', k.add, k.addTop);
-    this.usableRow(run, d, k.cx, k.bottom - 78, k.add, { maxW: k.w - 40 });
+    if (fx) this.effectNote(fx, k.cx, ly + ph.pick(4, 12), k.w - 48, ph.fs(21), 'center', k.add, k.addTop);
+    this.usableRow(run, d, k.cx, k.bottom - ph.pick(78, 76), k.add, { maxW: k.w - 40 });
   }
 
   /** İyileştirme kartındaki kahraman satırları: avatar + ad + ince can çubuğu + "80% → 100%". Kalan yüksekliğe sığar (4 ve üstü kahraman). */
   private healRows(run: EndlessRun, ratio: number, k: { cx: number; w: number; bottom: number; x0: number; add: (o: Phaser.GameObjects.GameObject) => void }, y0: number): void {
     const n = run.heroes.length;
     if (!n) return;
-    const rowH = Math.max(24, Math.min(46, (k.bottom - y0) / n));
+    const rowH = Math.max(24, Math.min(this.ph.pick(46, PHONE.healRowMax), (k.bottom - y0) / n));
     const av = Math.max(20, rowH - 10);
+    // Telefon: yazı en az ~11 gerçek px; sağdaki "80% → 100%" için daha çok yer ayrılır
+    const fz = this.ph.on ? this.ph.fs(19) : Math.min(19, rowH * 0.5);
+    const reserve = this.ph.pick(120, 210);
     const left = k.x0 + 30;
     const right = k.x0 + k.w - 30;
     run.heroes.forEach((hh, i) => {
@@ -1473,15 +1588,15 @@ export class EndlessScene extends Phaser.Scene {
         k.add(classAvatar(this, def, left + av / 2, cy, av));
       }
       const nameX = left + av + 12;
-      k.add(fitText(this.note(nameX, cy - 2, className(hh.class), Math.min(19, rowH * 0.5), C.dim).setOrigin(0, 1), right - nameX - 120));
+      k.add(fitText(this.note(nameX, cy - 2, className(hh.class), fz, C.dim).setOrigin(0, 1), right - nameX - reserve));
       // ince çubuk: şimdiki can + iyileşecek kısım (açık)
-      const bw = right - nameX - 118;
+      const bw = right - nameX - reserve + 2;
       const g = this.add.graphics();
       g.fillStyle(EL.INK, 0.85).fillRect(nameX, cy + 3, bw, 5);
       g.fillStyle(0x7fb85a, 0.35).fillRect(nameX, cy + 3, bw * to, 5);
       g.fillStyle(0x7fb85a, 0.95).fillRect(nameX, cy + 3, bw * Math.max(0, hh.hpRatio), 5);
       k.add(g);
-      k.add(this.note(right, cy, dead ? T.fallen : T.healPreview(hh.hpRatio, to), Math.min(19, rowH * 0.5), to > hh.hpRatio ? C.text : C.dim).setOrigin(1, 0.5));
+      k.add(this.note(right, cy, dead ? T.fallen : T.healPreview(hh.hpRatio, to), fz, to > hh.hpRatio ? C.text : C.dim).setOrigin(1, 0.5));
     });
   }
 
@@ -1580,7 +1695,17 @@ export class EndlessScene extends Phaser.Scene {
   /** Altın degradeli Cinzel başlık + süs çizgileri (kit: elHeading) ve EB Garamond italik alt yazı. */
   private heading(title: string, sub?: string): void {
     this.add2(elHeading(this, CX, LOOK.headingY, title, 46));
-    if (sub) this.add2(this.note(CX, LOOK.subY - 14, sub, 25, C.sub, true).setOrigin(0.5));
+    if (!sub) return;
+    const y = LOOK.subY - 14;
+    const t = this.note(CX, y, sub, this.ph.fs(25), this.ph.pick(C.sub, C.bright), true).setOrigin(0.5);
+    if (this.ph.on) {
+      // Telefon: koyu mürekkep şeridi + ince altın çizgi (diğer ipuçları gibi); yazı arka planda kaybolmasın
+      const w = t.width + PHONE.strip.padX * 2;
+      const g = this.add2(this.add.graphics());
+      g.fillStyle(EL.INK, PHONE.strip.alpha).fillRect(CX - w / 2, y - PHONE.strip.h / 2, w, PHONE.strip.h);
+      g.lineStyle(1, EL.GOLD, EL.LINE.a3).strokeRect(CX - w / 2 + 0.5, y - PHONE.strip.h / 2 + 0.5, w - 1, PHONE.strip.h - 1);
+    }
+    this.add2(t);
   }
 
   /** EB Garamond açıklama yazısı (kit: elBody). */
@@ -1609,7 +1734,16 @@ export class EndlessScene extends Phaser.Scene {
         if (!enabled) return b.shake();
         run();
       },
-      { kind: o.primary ? 'primary' : 'secondary', w, h: o.h ?? (o.primary ? 76 : 60), size: o.size ?? (o.primary ? 24 : 19), ready: enabled, ...(o.icon ? { icon: o.icon } : {}) },
+      {
+        kind: o.primary ? 'primary' : 'secondary',
+        w: this.ph.on ? Math.round(w * PHONE.btnW) : w,
+        h: o.h ?? (o.primary ? 76 : 60) * (this.ph.on ? PHONE.btnH : 1),
+        size: o.size ?? this.ph.fs(o.primary ? 24 : 19),
+        ready: enabled,
+        ...(o.icon ? { icon: o.icon } : {}),
+        // Telefon: dokunma alanı en az 44 gerçek piksel (görünüm aynı kalır; yalnızca dikey büyür)
+        ...(this.ph.on ? { touch: { minPx: PHONE.touchPx, maxExtraW: 0 } } : {}),
+      },
     );
     b.root.setPosition(cx, cy);
     this.add2(b.root);

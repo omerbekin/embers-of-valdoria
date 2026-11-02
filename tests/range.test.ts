@@ -48,12 +48,13 @@ describe('mesafe kuralı (range.ts > cellDistance)', () => {
     expect(skillRangeFor(content.skills.charge!, R('warrior'), F)).toBe(SR('charge'));
     expect(skillRangeFor(content.skills.fist_crush!, R('defender'), F)).toBe(Infinity);
     expect(skillRangeFor(content.skills.shield_wall ?? content.skills.taunt!, R('defender'), F)).toBe(Infinity);
-    expect(skillRangeFor(content.skills.rejuvenate!, R('druid'), F)).toBe(Infinity);
+    expect(skillRangeFor(content.skills.spell_ward!, R('antimage'), F)).toBe(Infinity);
+    expect(skillRangeFor(content.skills.rejuvenate!, R('druid'), F)).toBe(R('druid')); // Healing Rain hücreye düşer (area_any): sahibin menzili
     expect(skillRangeFor(content.skills.close_ranks!, R('defender'), F)).toBe(SR('close_ranks'));
     const on = { range: { enabled: true, default: 1 } };
     expect(rangeLabel(content.skills.fire_bolt!, R('mage'), on)).toBe(`Range ${R('mage')}`);
     expect(rangeLabel(content.skills.fist_crush!, R('defender'), on)).toBe('Global');
-    expect(rangeLabel(content.skills.rejuvenate!, R('druid'), on)).toBe('');
+    expect(rangeLabel(content.skills.spell_ward!, R('antimage'), on)).toBe('');
     expect(rangeLabel(content.skills.fire_bolt!, R('mage'), { range: { enabled: false, default: 1 } })).toBe('');
   });
 
@@ -149,7 +150,7 @@ describe('savaşta menzil (validTargets / canUse / useSkill / önizleme)', () =>
       const far = at(b, 'party', slotAt(g + 1, 2));
       expect(b.targetProblem(d.uid, 'close_ranks', far.uid)).toBe('Out of range');
     }
-    // Rejuvenate (range'siz dost skill'i): en arkaya da ulaşır
+    // Healing Rain (kendi tahtası, sahibin menzili; tahta içi mesafe en çok 3): en arkaya da ulaşır
     const r = mk({ [slotAt(0)]: 'druid', [slotAt(ROWS - 1)]: 'mage' }, { [slotAt(0)]: 'warrior' });
     expect(uids(r.validTargets(at(r, 'party', slotAt(0)).uid, 'rejuvenate'))).toHaveLength(2);
   });

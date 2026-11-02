@@ -1,6 +1,6 @@
 {
   "class": "druid",
-  "version": 2,
+  "version": 3,
   "picked": {
     "rows": [
       "b",
@@ -30,7 +30,7 @@
     },
     {
       "skill": "rejuvenate",
-      "name": "Rejuvenate",
+      "name": "Healing Rain",
       "karma": "B"
     }
   ],
@@ -90,7 +90,7 @@
       {
         "at": 20,
         "name": "Deep Spring",
-        "text": "Rejuvenate heals 15% more (both the first heal and its regeneration).",
+        "text": "Healing Rain heals 15% more (both the first heal and its ground).",
         "src": "B:V3:bar4",
         "fx": [
           {
@@ -103,7 +103,7 @@
           },
           {
             "k": "skill",
-            "sel": "hot",
+            "sel": "ground:healing_rain",
             "f": "power",
             "op": "pct",
             "v": 0.15,
@@ -932,7 +932,7 @@
     },
     "3.f1": {
       "name": "Tender Sap",
-      "text": "Rejuvenate heals 4% more per rank.",
+      "text": "Healing Rain's first heal heals 4% more per rank (the ground is not affected).",
       "src": "B:V3:3.f1",
       "fx": [
         {
@@ -947,12 +947,12 @@
     },
     "3.f2": {
       "name": "Long Bloom",
-      "text": "Rejuvenate's regeneration heals 4% more per rank.",
+      "text": "Healing Rain's ground heals 4% more per rank.",
       "src": "B:V3:3.f2",
       "fx": [
         {
           "k": "skill",
-          "sel": "hot",
+          "sel": "ground:healing_rain",
           "f": "power",
           "op": "pct",
           "v": 0.04,
@@ -962,7 +962,7 @@
     },
     "3.f3": {
       "name": "Soft Hands",
-      "text": "Rejuvenate heals 6% more per rank on an ally below 50% HP.",
+      "text": "Healing Rain's first heal heals 6% more per rank on an ally below 50% HP (the ground is not affected).",
       "src": "B:V3:3.f3",
       "fx": [
         {
@@ -979,7 +979,7 @@
     },
     "3.n0": {
       "name": "Overflowing Cup",
-      "text": "Healing from Rejuvenate beyond full HP becomes a shield of the same size.",
+      "text": "Healing from Healing Rain's first heal beyond full HP becomes a shield of the same size (the ground's healing does not).",
       "src": "B:V3:3.n0",
       "new": true,
       "approved": true,
@@ -1010,25 +1010,19 @@
     },
     "3.ea": {
       "name": "Spreading Roots",
-      "text": "Rejuvenate's regeneration also lands on allies next to the target at half strength.",
+      "text": "Healing Rain's ground also covers every cell touching its cell.",
       "src": "B:V3:3.ea",
       "fx": [
         {
           "k": "hook",
-          "h": "trigger",
-          "on": "skillUse",
-          "do": [
-            {
-              "hot": 0.5,
-              "to": "neighbors"
-            }
-          ]
+          "h": "target",
+          "groundWide": "touch"
         }
       ]
     },
     "3.eb": {
       "name": "Emergency Bloom",
-      "text": "Rejuvenate heals 25% more on an ally below 30% HP.",
+      "text": "Healing Rain's first heal heals 25% more on an ally below 30% HP (the ground is not affected).",
       "src": "B:V3:3.eb",
       "fx": [
         {
@@ -1044,7 +1038,7 @@
     },
     "3.ma": {
       "name": "Grove Bloom",
-      "text": "Rejuvenate's first heal also lands on every ally in the target's row.",
+      "text": "Healing Rain's first heal also lands on every ally in the target's row (only when the rain falls on an ally).",
       "src": "B:V3:3.ma",
       "fx": [
         {
@@ -1063,7 +1057,7 @@
     },
     "3.fa": {
       "name": "Thin Sap",
-      "text": "Rejuvenate heals every ally, but each heal is 50% lower and its cooldown is 4.",
+      "text": "Healing Rain heals every ally and leaves its ground under each of them, but each heal and each ground is 50% weaker and its cooldown is 4.",
       "src": "B:V3:3.fa",
       "fx": [
         {
@@ -1080,7 +1074,7 @@
         },
         {
           "k": "skill",
-          "sel": "hot",
+          "sel": "ground:healing_rain",
           "f": "power",
           "op": "pct",
           "v": -0.5
@@ -1096,13 +1090,26 @@
     },
     "3.fb": {
       "name": "Desperate Sap",
-      "text": "Rejuvenate's regeneration lands all at once, +25%, but its cooldown is 4.",
+      "text": "Healing Rain leaves no ground, its first heal is 125% stronger, but its cooldown is 4.",
       "src": "B:V3:3.fb",
       "fx": [
         {
-          "k": "replaceEffect",
-          "sel": "hot",
-          "collapse": 1.25
+          "k": "removeEffect",
+          "sel": "ground"
+        },
+        {
+          "k": "skill",
+          "sel": "heal",
+          "f": "power",
+          "op": "pct",
+          "v": 1.25
+        },
+        {
+          "k": "hook",
+          "h": "target",
+          "area": {
+            "emptyOwn": false
+          }
         },
         {
           "k": "skill",
@@ -1115,30 +1122,23 @@
     },
     "3.mb": {
       "name": "Lifebloom",
-      "text": "When Rejuvenate's regeneration ends, the ally heals once more for the first heal's amount.",
+      "text": "Healing Rain's first heal heals 50% more on an ally already standing in Healing Rain (the ground's own healing is not affected).",
       "src": "B:V3:3.mb",
       "fx": [
         {
           "k": "hook",
-          "h": "trigger",
-          "on": "statusEnd",
-          "status": "regen",
-          "mine": true,
-          "end": "expired",
-          "fromSkill": "rejuvenate",
-          "do": [
-            {
-              "heal": 1,
-              "of": "firstHeal",
-              "to": "target"
-            }
-          ]
+          "h": "heal",
+          "on": "healDealt",
+          "when": {
+            "targetOnGround": "healing_rain"
+          },
+          "mul": 0.5
         }
       ]
     },
     "3.v": {
       "name": "Verdant Link",
-      "text": "Rejuvenate now links two allies: the target and your lowest-HP ally each get the full heal and regeneration.",
+      "text": "Healing Rain now links two allies: the rain also falls on your lowest-HP other ally, with the full heal and ground.",
       "src": "B:V3:3.v",
       "fx": [
         {

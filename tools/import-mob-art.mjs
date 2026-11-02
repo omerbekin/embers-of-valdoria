@@ -30,7 +30,7 @@ const ICON_SRC = 'assets/source/mob-icons';
 const ICON_OUT = 'assets/mob-icons';
 /** Mob ikonu olmayan sayfalarin cikti klasoru (durum ikonlari oyunda misc-icons/status adiyla bulunur). */
 /** Zemini de saf siyah olan sayfalar: karanlik bant bulma hucre ile ayirgaci ayiramaz; sabit 2x2 izgara (kenar 12, ayirac 20 px). */
-const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet', 'map2_commons_a-sheet', 'map2_commons_b-sheet', 'map2_commons_c-sheet', 'map2_commons_d-sheet', 'map2_wave2_a-sheet', 'map2_wave2_b-sheet', 'map2_wave2_c-sheet', 'map2_wave2_d-sheet', 'map2_wave2_e-sheet', 'map2_passives_a-sheet', 'map2_passives_b-sheet']);
+const FIXED_GRID_SHEETS = new Set([...Object.keys({}).concat(['map3_clan_a','map3_clan_b','map3_clan_c','map3_storm','map3_storm2','map3_wolf_a','map3_wolf_b','map3_frozen_a','map3_frozen_b','map3_witch_a','map3_witch_b','map3_ash_a','map3_ash_b','map3_warden_a','map3_forge_a','map3_forge_b','map3_hollow_a','map3_hollow_b','map3_misc_a','map3_misc_b','map3_hearth_a','map3_hearth_b','map3_king_a','map3_snow_a','map3_snow_b'].map((n) => n + '-sheet')), 'status2-sheet', 'reaver_archer-sheet', 'map2_captain-sheet', 'map2_commons_a-sheet', 'map2_commons_b-sheet', 'map2_commons_c-sheet', 'map2_commons_d-sheet', 'map2_wave2_a-sheet', 'map2_wave2_b-sheet', 'map2_wave2_c-sheet', 'map2_wave2_d-sheet', 'map2_wave2_e-sheet', 'map2_passives_a-sheet', 'map2_passives_b-sheet']);
 const ICON_SHEET_OUT = { 'status2-sheet': 'assets/misc-icons/status' };
 const VFX_SRC = 'assets/source/mob-vfx';
 const VFX_OUT = 'assets/mob-vfx';
@@ -107,10 +107,66 @@ const ICON_SHEETS = {
   'map2_passives_a-sheet': ['slick_hide', 'crown_of_salt', 'deathless_champion', 'hired_steel'],
   'map2_passives_b-sheet': ['heresy_remembered', 'queens_lure', 'greater_salt_tears', 'for_the_crowd'],
   'map2_harbor-sheet':['chain_shot', 'harpoon_line', 'vane_rally', 'high_tide'],
+  // Harita 3 Hollow Crown (2026-11-02, Codex imagegen, siyah zemin 2x2): kendi skill/pasif ikonlari (artOf odunc ikonunun yerine)
+  'map3_clan_a-sheet': ['clan_axe', 'cleave', 'highland_fury', 'pole_vault'],
+  'map3_clan_b-sheet': ['mock', 'chant', 'war_chant', 'ice_shot'],
+  'map3_clan_c-sheet': ['great_axe', 'rally_the_clan', 'skullsplitter', 'war_chant_highland_fury'],
+  'map3_storm-sheet': ['fork', 'rolling_thunder', 'eye_of_the_storm', 'anvil_strike'],
+  'map3_storm2-sheet': ['ring_the_anvil', 'iron_draws_the_bolt', 'headlong', 'stormhide'],
+  'map3_wolf_a-sheet': ['frost_fang', 'snowdrift', 'throat_leap', 'pack_rotation'],
+  'map3_wolf_b-sheet': ['frost_bite', 'snow_rend', 'rime_bite', 'rime_run_down'],
+  'map3_frozen_a-sheet': ['frozen_pike_thrust', 'standard_pole', 'cold_command', 'frost_banner'],
+  'map3_frozen_b-sheet': ['frozen_ranks', 'shardwalk', 'shard_pike_thrust', 'hoarfrost'],
+  'map3_witch_a-sheet': ['ice_shard', 'sodden_hex', 'pyre_bolt', 'spread_the_flame'],
+  'map3_witch_b-sheet': ['matriarch_stoke', 'greater_kindling', 'kindling', 'fervour'],
+  'map3_ash_a-sheet': ['long_sermon', 'kindle_the_nave', 'shepherd_of_ash', 'through_the_flame'],
+  'map3_ash_b-sheet': ['cinder_rend', 'cinder_brand', 'knight_hold_gate', 'searing_bash'],
+  'map3_warden_a-sheet': ['warden_hold_gate', 'slag_wall', 'tempering', 'forge_hammer'],
+  'map3_forge_a-sheet': ['vent', 'furnace_core', 'sledge', 'reforge'],
+  'map3_forge_b-sheet': ['rivet_plate', 'overheat', 'slag_charge', 'molten_run_down'],
+  'map3_hollow_a-sheet': ['undermine', 'hollow_rockfall', 'hollow', 'dark_step'],
+  'map3_hollow_b-sheet': ['gloam_bite', 'gloam_lunge', 'verdict', 'stone_oath'],
+  'map3_misc_a-sheet': ['mandible', 'skitter', 'blind_hunger', 'wight_feast'],
+  'map3_misc_b-sheet': ['grave_cold', 'flare', 'cinder_storm', 'breathe'],
+  'map3_hearth_a-sheet': ['the_first_fire', 'everburning', 'hammerfall', 'quench'],
+  'map3_hearth_b-sheet': ['forge_chains', 'temper_the_crown', 'forge_heat', 'kingsmaul'],
+  'map3_king_a-sheet': ['call_the_vault', 'decree_of_stone', 'bring_down_the_hall', 'hollow_crown'],
+  'map3_snow_a-sheet': ['icy_grasp', 'avalanche', 'roar', 'whiteout'],
+  'map3_snow_b-sheet': ['frostbound', null, null, null],
 };
 
 /** Zemine oturan (alt hizalı) vfx sheet'leri: '<mob>-<skill>'. Geri kalanı ortalanır (vuruş/mermi). */
 const GROUND = new Set([
+  'hearthwarden-temper_the_crown',
+  'ashborn_hierarch-long_sermon',
+  'ashborn_hierarch-fervour',
+  'ashborn_hierarch-kindle_the_nave',
+  'cinder_knight-knight_hold_gate',
+  'cinder_warden-warden_hold_gate',
+  'cinder_warden-slag_wall',
+  'clan_chief_brannoc-rally_the_clan',
+  'clan_skald-chant',
+  'forge_golem-vent',
+  'forge_master_golem-reforge',
+  'forge_master_golem-rivet_plate',
+  'frozen_standard_bearer-cold_command',
+  'frozen_standard_bearer-frost_banner',
+  'hollow_delver-undermine',
+  'hollow_warden-hollow_rockfall',
+  'pack_mother-snowdrift',
+  'pyre_matriarch-matriarch_stoke',
+  'pyre_witch-spread_the_flame',
+  'slagcart_golem-slag_charge',
+  'ember_of_the_first_hearth-cinder_storm',
+  'ember_of_the_first_hearth-breathe',
+  'ember_of_the_first_hearth-the_first_fire',
+  'hearthwarden-quench',
+  'hollow_king-call_the_vault',
+  'hollow_king-decree_of_stone',
+  'hollow_king-bring_down_the_hall',
+  'snowfather-avalanche',
+  'snowfather-roar',
+  'snowfather-whiteout',
   'bandit_crossbowman-scatter_quarrels',
   'censer_monk-consecrate',
   'charcoal_burner-kiln_smoke',
@@ -352,7 +408,7 @@ async function importIcons() {
       for (let x = 0; x < W; x += 2) d += dark(x, y) ? 1 : 0;
       return d / Math.ceil(W / 2);
     });
-    const fixed = (n) => [[12, n / 2 - 10], [n / 2 + 10, n - 13]];
+    const fixed = (n) => [[12, Math.floor(n / 2) - 10], [Math.ceil(n / 2) + 10, n - 13]];
     const cols = FIXED_GRID_SHEETS.has(sheet) ? fixed(W) : spans(colF);
     const rows = FIXED_GRID_SHEETS.has(sheet) ? fixed(H) : spans(rowF);
     if (cols.length !== 2 || rows.length !== 2) throw new Error(`${sheet}: 2x2 ızgara bulunamadı`);

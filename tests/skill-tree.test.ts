@@ -290,13 +290,13 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
   const taunt = (a: TreeAlloc) => skillOf(compileTree(D, a), 'taunt').effects[0] as unknown as { breakRatio: number; allyDamageMult: number; turns: number };
   const toR = ['2.f1*3', '2.f2*5', '2.f3*2', '2.n0', '2.r*3']; // sayaç 14: edge ile 15 (Tier IV)
   const dv = (id: string, i = 0) => (D.nodes[id]!.fx![i] as unknown as { v: number }).v; // düğüm sayısı veriden (denge turunda değişebilir)
-  const bellow3 = 0.25 + 3 * dv('2.f1'); // temel 0,25 + Bellow 3 rank
+  const bellow3 = 0.3 + 3 * dv('2.f1'); // temel 0,3 + Bellow 3 rank
   const roarRatio = dv('2.fb', 2) + 3 * dv('2.f1'); // Hollow Roar tabanı + Bellow 3 rank
 
   it('Bellow 3 rank -> breakRatio 0,34; Rally Cry 3 -> allyDamageMult 0,84; temel tanım değişmez', () => {
     expect(taunt(build(D, L, ['2.f1*3'])).breakRatio).toBeCloseTo(bellow3, 9);
     expect(taunt(build(D, L, toR)).allyDamageMult).toBeCloseTo(0.9 + 3 * dv('2.r'), 9);
-    expect((skills.taunt!.effects[0] as unknown as { breakRatio: number }).breakRatio).toBe(0.25);
+    expect((skills.taunt!.effects[0] as unknown as { breakRatio: number }).breakRatio).toBe(0.3);
   });
 
   it('Hollow Roar + Bellow -> 0,24 (Ömer 2026-10-22: %15 Bellow\'un üstüne eklenir; op base); Ironbound Oath (set 0) Bellow\'u siler', () => {

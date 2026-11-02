@@ -15,6 +15,7 @@ import { VFX as hexer } from './hexer/vfx';
 import { VFX as mage } from './mage/vfx';
 import { VFX as paladin } from './paladin/vfx';
 import { VFX as undead } from './undead/vfx';
+import { VFX as vesper } from './vesper/vfx';
 import { VFX as warrior } from './warrior/vfx';
 
-export const VFX_V2: Readonly<Record<string, Record<string, V2Vfx>>> = { antimage, aoe_tester, archer, defender, druid, gambler, hexer, mage, paladin, undead, warrior };
+export const VFX_V2: Readonly<Record<string, Record<string, V2Vfx>>> = { antimage, aoe_tester, archer, defender, druid, gambler, hexer, mage, paladin, undead, vesper, warrior };

@@ -34,6 +34,20 @@
     "status": "hallowed",
     "heal": true
   },
+  "healing_rain": {
+    "_not": "Healing Rain (Druid, Ömer 2026-11-01): ŞİFA zemini + su. Durum yeni değil: Hallowed (regen statuses.json'da tanımlı değil, addStatus / tur tikinde id'ye bağlı dalları var; Hallowed genel zemin yolundan geçiyor). water: true = tepkime ve söndürmede su sayılır (spread, frozen, holy_water, holy_water_ground, evaporate; zehir bağlantılı yağmur hücrelerine akar), ama Soaked VERMEZ, yalnız dostu iyileştirir; Live Water / Shocked (conductingCells) ve isWaterSkill bunu su saymaz (soak'a bakar).",
+    "name": "Healing Rain",
+    "text": "Allies standing here are Hallowed: they heal at the start of their turn. This rain is water: it puts out Burning Ground and reacts with other grounds as water does, but it does not soak. Harms no one.",
+    "color": "#7dff9b",
+    "element": "nature",
+    "icon": "rejuvenate",
+    "status": "hallowed",
+    "heal": true,
+    "water": true,
+    "quenches": [
+      "burning"
+    ]
+  },
   "flooded_planks": {
     "name": "Flooded Planks",
     "text": "Enemies standing here take physical damage at the start of their turn and are Soaked: 50% less fire damage, 10% less Speed.",
@@ -211,7 +225,7 @@
       "label": "Spreads",
       "result": "Poison spreads in water",
       "text": "Poison meets water: the poison flows into every water cell connected to it; the water stays.",
-      "setup": ["flooded"],
+      "setup": ["flooded", "healing_rain"],
       "trigger": ["poison"],
       "either": true,
       "spread": ["poison"]
@@ -220,7 +234,7 @@
       "label": "Holy water",
       "result": "Heals allies here",
       "text": "Holy fire and water on the caster's own side become Holy Water: it heals the caster's allies standing in it at the start of each of their turns and harms no one.",
-      "setup": ["flooded"],
+      "setup": ["flooded", "healing_rain"],
       "trigger": ["holy_fire", "sanctified_flame"],
       "either": true,
       "board": "own",
@@ -231,7 +245,7 @@
       "label": "Holy water",
       "result": "Heals allies here",
       "text": "Holy ground and water on the caster's own side become Holy Water: it heals the caster's allies standing in it at the start of each of their turns and harms no one.",
-      "setup": ["flooded"],
+      "setup": ["flooded", "healing_rain"],
       "trigger": ["holy_ground"],
       "either": true,
       "board": "own",
@@ -241,17 +255,17 @@
       "label": "Evaporates",
       "result": "Water boils away",
       "text": "Holy fire and water on the enemy's side: the holy fire boils the water away and burns there as usual.",
-      "setup": ["flooded"],
+      "setup": ["flooded", "healing_rain"],
       "trigger": ["holy_fire", "sanctified_flame"],
       "either": true,
       "board": "foe",
-      "remove": ["flooded"]
+      "remove": ["flooded", "healing_rain"]
     },
     "frozen": {
       "label": "Frozen",
       "result": "Water freezes to ice",
       "text": "Chill freezes water into Ice: enemies standing on it are Slowed until they leave it; the water is gone.",
-      "setup": ["flooded"],
+      "setup": ["flooded", "healing_rain"],
       "trigger": ["storm"],
       "either": true,
       "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 }

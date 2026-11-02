@@ -2240,7 +2240,7 @@
     {
       "id": "war_hammer",
       "name": "War Hammer",
-      "icon": "mace",
+      "icon": "hammer",
       "slot": "weapon",
       "family": "hammers",
       "grip": "one",
@@ -2250,7 +2250,7 @@
     {
       "id": "horsemans_hammer",
       "name": "Horseman's Hammer",
-      "icon": "mace",
+      "icon": "hammer",
       "slot": "weapon",
       "family": "hammers",
       "grip": "one",
@@ -2260,7 +2260,7 @@
     {
       "id": "templars_hammer",
       "name": "Templar's Hammer",
-      "icon": "mace",
+      "icon": "hammer",
       "slot": "weapon",
       "family": "hammers",
       "grip": "one",
@@ -2652,7 +2652,6 @@
     },
     {
       "id": "emberbrand",
-      "type": "sword",
       "name": "Emberbrand",
       "slot": "weapon",
       "family": "axes",
@@ -2667,7 +2666,7 @@
         "a_primary"
       ],
       "effect": "ember_burn",
-      "flavor": "A blade forged in the last fire of Old Valdoria. It never quite cools."
+      "flavor": "An axe forged in the last fire of Old Valdoria. Its edge never quite cools."
     },
     {
       "id": "mantle_of_valdren",
@@ -2961,7 +2960,7 @@
       "id": "avengers_maul",
       "name": "Avenger's Maul",
       "slot": "weapon",
-      "family": "maces",
+      "family": "hammers",
       "grip": "two",
       "rarity": "legendary",
       "ilvl": 21,

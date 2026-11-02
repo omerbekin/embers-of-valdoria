@@ -51,7 +51,7 @@ describe('Mage / AM / Druid ağaç yenilemesi: veri', () => {
     }
     expect(treeOf('mage')!.version).toBe(5);
     expect(treeOf('antimage')!.version).toBe(5);
-    expect(treeOf('druid')!.version).toBe(2);
+    expect(treeOf('druid')!.version).toBe(3);
     // Mire: 'Slows on impact' kalktı (kök tarlası içindekine o an Slow veriyor)
     expect(JSON.stringify(treeOf('druid')!.nodes['2.fa']!.fx)).not.toMatch(/"slow"/);
   });

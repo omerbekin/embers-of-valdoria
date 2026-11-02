@@ -629,7 +629,7 @@
     },
     "2.f1": {
       "name": "Bellow",
-      "text": "Taunt breaks after 2% more of your max HP lost per rank (25% → 31%).",
+      "text": "Taunt breaks after 2% more of your max HP lost per rank (30% → 36%).",
       "src": "A:V1:2.f1",
       "fx": [
         {

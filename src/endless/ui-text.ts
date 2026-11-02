@@ -73,7 +73,7 @@ export const UI_TEXT = {
   itemPickTitle: 'Choose an Item',
   itemPickSub: (n: number) => (n === 2 ? 'Keep one of these two. The other is left behind.' : `Keep one of these ${n}. The others are left behind.`),
   itemPickBack: 'Back to rewards',
-  itemCardChoice: (n: number) => `Choose 1 of ${n}`,
+  itemCardChoice: (n: number) => `${n} items`,
   purse: (from: number, to: number) => `Purse ${from} → ${to}`,
   fullHealth: 'FULL HEALTH',
   kickerRevive: 'Revival',

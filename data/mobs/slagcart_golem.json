@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: shieldwarden. YER TUTUCU görünüm: çizimi yok, shieldwarden sprite'ı.",
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: shieldwarden. Kendi çizimi var (Codex 2026-11-02).",
   "id": "slagcart_golem",
   "name": "Slagcart Golem",
   "family": "guardians",
-  "spriteId": "shieldwarden",
+  "spriteId": "slagcart_golem",
   "color": "#a8583a",
   "logo": "bulwark",
   "frontPriority": 0,

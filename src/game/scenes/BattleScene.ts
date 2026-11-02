@@ -46,6 +46,7 @@ import type { BattleEffect } from '../battle-effects';
 import { CombatLog } from '../combat-log';
 import { causeName } from '../log-cause';
 import { skillTags, UNBLOCKABLE_COLOR } from '../../ui/skill-tags';
+import { foldSkillRows, type FoldRow } from '../../ui/skill-tip-rule';
 import { lockedSkillText } from '../../ui/skill-lock';
 import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../../engine/unblockable';
 import { blockIconUrl } from '../../ui/stat-tips';
@@ -2944,6 +2945,8 @@ export class BattleScene extends Phaser.Scene {
       const hint = e.type === 'ground' ? groundReactionHint(e.ground, content.groundReactions, content.grounds) : null;
       if (hint && !rows.some((r) => r[0] === hint)) rows.push([hint, colors.muted]);
     }
+    // Duruma bağlı satırlar (bekleme, kilit, neden kullanılamıyor, çağrı): A kuralıyla katlanmaz, kısa ve tam metinde aynen görünür (src/ui/skill-tip-rule.ts)
+    const extra: Array<[string, string?]> = [];
     const meta: InfoMeta[] = [];
     const costNow = skillCostAmount(skill.cost, actor); // proportional costs (Wail of the Dead: 20% of current HP) show the real amount right now
     const ratio = isRatioCost(skill.cost);
@@ -2954,24 +2957,26 @@ export class BattleScene extends Phaser.Scene {
       meta.push({ icon: ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false), text: ratio ? `${costNow} ${skill.cost.resource.toUpperCase()} (${skillCostLabel(skill.cost)})` : info.cost, hex: colors.text });
     } else meta.push({ text: info.cost, hex: colors.muted });
     if (this.battle.mode === 'turns' && (skill.cooldown ?? 0) > 0) meta.push({ icon: ensureIcon(this, uiIconName('cooldown'), UI_COLOR, false), text: info.cooldown, hex: colors.muted });
-    if (this.battle.mode === 'turns' && info.initialCooldown && !actor.summoned) rows.push([info.initialCooldown, colors.muted]);
+    if (this.battle.mode === 'turns' && info.initialCooldown && !actor.summoned) extra.push([info.initialCooldown, colors.muted]);
     const wait = this.battle.mode === 'turns' ? (actor.cooldowns[skill.id] ?? 0) : 0;
     // Kilit bekleme süresinden önce gelir: kilitli skill süresi bitince de açılmaz
-    if (actor.lockedSkills?.includes(skill.id)) rows.push([lockedSkillText(actor, skill.id, this.lockHints?.[actor.uid]), colors.targetHighlight]);
-    else if (wait > 0) rows.push([`Ready in ${wait} turn${wait > 1 ? 's' : ''}`, colors.targetHighlight]);
+    if (actor.lockedSkills?.includes(skill.id)) extra.push([lockedSkillText(actor, skill.id, this.lockHints?.[actor.uid]), colors.targetHighlight]);
+    else if (wait > 0) extra.push([`Ready in ${wait} turn${wait > 1 ? 's' : ''}`, colors.targetHighlight]);
     else {
       // Why the button is pale (turn / battle state reasons are obvious and stay silent): no MP, out of reach, 'No target with room behind it' (Backstab), 'No fallen ally' / 'Corpse was consumed' ...
       const can = this.battle.canUse(actor.uid, skill.id);
-      if (!can.ok && can.reason !== "Not this unit's turn" && can.reason !== 'Battle is over' && can.reason !== 'Unit is dead' && can.reason !== 'On cooldown') rows.push([can.reason, colors.lethal]);
+      if (!can.ok && can.reason !== "Not this unit's turn" && can.reason !== 'Battle is over' && can.reason !== 'Unit is dead' && can.reason !== 'On cooldown') extra.push([can.reason, colors.lethal]);
     }
     // Raise Dead: which corpse it would eat right now, and what comes out (the summon appears on your own side: no target to pick)
     const sp = this.battle.summonPreview(actor.uid, skill.id);
     const summonLine = summonPreviewLine(sp, sp.corpse ? (this.battle.get(sp.corpse.uid)?.name ?? null) : null);
-    if (this.battle.needsCorpseChoice(actor.uid, skill.id) && sp.unit) rows.push([`You choose the corpse to consume: empowered ${sp.unit.name} (HP ${sp.unit.stats.hp})`, '#c58bff'], ['Step 1: pick a corpse, step 2: pick the cell (Esc goes back)', colors.muted]);
-    else if (summonLine) rows.push([summonLine.text, summonLine.tone === 'empowered' ? '#c58bff' : colors.muted]);
-    const tip = this.makeInfo(info.name, colors.text, undefined, rows, 'Skill', meta, skillMiniGrid(skill, content.formulas.formation));
-    // Ağaçtan gelen satırlar (kahraman o düğümü aldıysa) altta ayrı bölümde; skill'in kendi satırları yukarıda aynı kalır
-    if (info.treeLines?.length) tip.rows.push({ text: TREE_SECTION, section: true }, ...info.treeLines.map((l, i) => ({ text: l, ...(kindColor(info.treeKinds?.[i]) ? { color: kindColor(info.treeKinds?.[i])! } : {}) })));
+    if (this.battle.needsCorpseChoice(actor.uid, skill.id) && sp.unit) extra.push([`You choose the corpse to consume: empowered ${sp.unit.name} (HP ${sp.unit.stats.hp})`, '#c58bff'], ['Step 1: pick a corpse, step 2: pick the cell (Esc goes back)', colors.muted]);
+    else if (summonLine) extra.push([summonLine.text, summonLine.tone === 'empowered' ? '#c58bff' : colors.muted]);
+    const tip = this.makeInfo(info.name, colors.text, undefined, [], 'Skill', meta, skillMiniGrid(skill, content.formulas.formation));
+    // Skill ipucu A (Ömer 2026-11-02): kısa satırlar + "More" altında tam metin; ağaçtan gelen satırlar (kahraman o düğümü aldıysa) tam metnin sonunda ayrı bölümde
+    const asRow = ([text, color]: [string, string?]): FoldRow => ({ text, ...(color ? { color } : {}) });
+    const treeRows: FoldRow[] = info.treeLines?.length ? [{ text: TREE_SECTION, section: true }, ...info.treeLines.map((l, i) => ({ text: l, ...(kindColor(info.treeKinds?.[i]) ? { color: kindColor(info.treeKinds?.[i])! } : {}) }))] : [];
+    tip.rows = foldSkillRows(rows.map(asRow), extra.map(asRow), treeRows);
     tip.iconUrl = this.skillIconUrl(actor, skill);
     // Hedef türü · element · Melee / Ranged (ortak kaynak: src/ui/skill-tags.ts; Codex ve takım seçimiyle aynı)
     tip.tags = skillTags(skill).map((g) => ({ text: g.text, kind: g.kind, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: this.texUrl(ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false)) } : {}) }));

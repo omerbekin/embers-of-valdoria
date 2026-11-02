@@ -4,6 +4,7 @@
 //
 //   node tools/import-class-vfx.mjs undead            içe aktar (sonra: node tools/webp-assets.mjs)
 //   node tools/import-class-vfx.mjs undead --check    yalnızca ölç (yazmaz)
+//   node tools/import-class-vfx.mjs vesper --only 04-cracked-bell   yalnız bu sheet
 //
 // ChatGPT sheet'leri tam ızgaralı değildir (1774x887 = 443,5 px kare; satırlar arası boşluk ortada değil, içerik bölme çizgisini
 // geçebilir). Bu yüzden kesim çizgileri sabit ızgaradan değil, beklenen çizginin çevresindeki EN BOŞ satır / sütundan seçilir; kare kenarına
@@ -20,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sharp = createRequire(join(ROOT, 'package.json'))('sharp');
 
-const FRAME = 320;
+const DEFAULT_FRAME = 320;
 /** Zemin efektlerinde içerik tabanının kare yüksekliğindeki yeri (pivot y). */
 const GROUND_BASE = 0.94;
 
@@ -28,6 +29,14 @@ const CLASSES = {
   cutthroat: [
     { src: '01-smoke-bomb', out: '01-smoke-bomb', title: 'Smoke Bomb: clay bomb bursts into a low smoke bank', align: 'ground', fps: 11, shift: { 0: [-32, 0] } }, // s1'in bombası s2'nin kırılma noktasına (ground hizası bombayı 32 px sağa atıyordu)
     { src: '02-smoke-bomb-fly', out: '02-smoke-bomb-fly', title: 'Smoke Bomb: spinning clay bomb (flight loop)', align: 'center', fps: 16 },
+  ],
+  vesper: [
+    { src: '01-toll-ring', out: '01-toll-ring', title: 'Toll: holy sound ring', align: 'keep', fps: 18 },
+    { src: '02-thunder-bell', out: '02-thunder-bell', title: 'Thunderpeal: spectral bell turning to thunder', align: 'keep', fps: 15 },
+    { src: '03-thunder-bolt', out: '03-thunder-bolt', title: 'Thunderpeal: lightning bolt on a cell', align: 'ground', fps: 17 },
+    { src: '04-cracked-bell', out: '04-cracked-bell', title: 'Cracked Bell: cracked bronze bell falls and splits', align: 'keep', fps: 14 }, // tur 5 çizimi: kare boyları tutarlı, ölçek düzeltmesi gerekmedi
+    { src: '05-great-bell', out: '05-great-bell', title: 'Great Bell of Valdoria: colossal bell swings and strikes', align: 'keep', fps: 9, frame: 440, scale: { 4: 0.92, 5: 0.92, 6: 0.92, 7: 0.92 }, shift: { 4: [0, 10], 5: [0, 10], 6: [0, 10], 7: [0, 10] } }, // ekranda 700 px: 320 kare fazla iri piksel olurdu
+    { src: '06-great-bell-burst', out: '06-great-bell-burst', title: 'Great Bell of Valdoria: holy column with lightning on a cell', align: 'ground', fps: 14 },
   ],
   undead: [
     { src: '01-grave-shard-fly', out: '01-bone-throw-fly', title: 'Bone Throw: grave shard (flight loop)', align: 'center', fps: 16 },
@@ -44,7 +53,8 @@ const CLASSES = {
 
 const cls = process.argv[2];
 const CHECK = process.argv.includes('--check');
-const list = CLASSES[cls];
+const ONLY = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1].split(',') : null; // yalnız bu kaynaklar (ör. --only 04-cracked-bell)
+const list = CLASSES[cls]?.filter((s) => !ONLY || ONLY.includes(s.src));
 if (!list) {
   console.error(`kullanım: node tools/import-class-vfx.mjs <${Object.keys(CLASSES).join('|')}> [--check]`);
   process.exit(1);
@@ -155,6 +165,7 @@ const outDir = join(ROOT, 'assets', 'vfx', cls);
 if (!CHECK) mkdirSync(outDir, { recursive: true });
 const report = [];
 for (const s of list) {
+  const FRAME = s.frame ?? DEFAULT_FRAME;
   const file = join(ROOT, 'assets', 'source', `${cls}-vfx`, `${s.src}.png`);
   const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const W = info.width;
@@ -213,7 +224,14 @@ for (const s of list) {
         }
         c.px.copy(canvas, (ty * side + tx) * 4, (y * c.w + x) * 4, (y * c.w + x) * 4 + 4);
       }
-    const resized = await sharp(canvas, { raw: { width: side, height: side, channels: 4 } }).resize(FRAME, FRAME, { kernel: 'lanczos3' }).raw().toBuffer();
+    // kare ölçeği (SHEETS > scale: { kareNo: oran }, oran <= 1): çizimde büyüyen kareyi komşularının boyuna getirir; karenin yatay ortası ve alt kenarı sabit kalır
+    const sc = s.scale?.[i] ?? 1;
+    const inner = Math.round(FRAME * sc);
+    const scaled = await sharp(canvas, { raw: { width: side, height: side, channels: 4 } }).resize(inner, inner, { kernel: 'lanczos3' }).raw().toBuffer();
+    const resized = Buffer.alloc(FRAME * FRAME * 4);
+    const ox = Math.round((FRAME - inner) / 2);
+    const oy = FRAME - inner;
+    for (let y = 0; y < inner; y++) scaled.copy(resized, ((oy + y) * FRAME + ox) * 4, y * inner * 4, (y + 1) * inner * 4);
     // kare kaydırma (SHEETS > shift: { kareNo: [dx, dy] }, çıktı pikseli): hizalamanın bozduğu tek kareyi yerine koyar; dışarı taşan saydam kabul edilir
     const [dx, dy] = s.shift?.[i] ?? [0, 0];
     const small = Buffer.alloc(resized.length);

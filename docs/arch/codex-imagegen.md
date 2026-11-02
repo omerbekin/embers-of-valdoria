@@ -26,3 +26,6 @@ Liste: `[{ "out": "...", "prompt": "...", "refs": ["..."] }]`. Hedef varsa atlan
 
 ## Model
 `tools/codex/run.mjs` her `exec` çağrısında `gpt-6.1-terra` (Terra 6.1) kullanır (Ömer 2026-10-31); `-m` verilirse o geçerli.
+
+## Terra çizer / Sol kontrol eder döngüsü
+Çok sayfalı, kontrollü sanat işleri için genel araç: `tools/codex/art-loop.mjs`, belge `docs/arch/codex-art-loop.md`.

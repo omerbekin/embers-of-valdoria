@@ -1,0 +1,41 @@
+{
+  "_not": "tools/make-poses-v2.mjs --class=vesper: el tohumları (sayfa koordinatı; main = silah eli, resimde soldaki kol; off = öteki el). Gözle okundu 2026-11-01. Sayfalardaki tüm hücreler sağa bakar; siluet karşılaştırması sırttaki çan yüzünden yanılıp aynaladığı için hepsi noMirror.",
+  "noMirror": ["idle1", "step1", "slash1", "overhead1", "thrust1", "spin1a", "spin1b", "spin1c", "guard1", "raise", "channel", "point", "idle2", "step2", "slash2", "overhead2", "thrust2", "spin2a", "spin2b", "spin2c", "guard2", "throw", "hit", "kneel"],
+  "seeds": {
+    "idle1": { "main": [205, 113], "off": [298, 177] },
+    "step1": { "main": [568, 118], "off": [675, 178] },
+    "slash1": { "main": [925, 112], "off": [1100, 124] },
+    "overhead1": { "main": [1295, 15], "off": [1450, 176] },
+    "thrust1": { "main": [325, 412], "off": [312, 498] },
+    "spin1a": { "main": [602, 450], "off": [682, 522] },
+    "spin1b": { "main": [1002, 460], "off": [1032, 522] },
+    "spin1c": { "main": [1250, 510], "off": [1437, 522] },
+    "guard1": { "main": [215, 768], "off": [332, 742] },
+    "raise": { "main": [518, 688], "off": [625, 785] },
+    "channel": { "main": [950, 785], "off": [1025, 700] },
+    "point": { "main": [1272, 850], "off": [1465, 728] },
+    "idle2": { "main": [238, 135], "off": [238, 135] },
+    "step2": { "main": [645, 140], "off": [645, 140] },
+    "slash2": { "main": [1025, 135], "off": [1025, 135] },
+    "overhead2": { "main": [1375, 30], "off": [1375, 30] },
+    "thrust2": { "main": [325, 425], "off": [325, 425] },
+    "spin2a": { "main": [645, 462], "off": [645, 462] },
+    "spin2b": { "main": [1035, 465], "off": [1035, 465] },
+    "spin2c": { "main": [1412, 475], "off": [1412, 475] },
+    "guard2": { "main": [250, 785], "off": [250, 785] },
+    "throw": { "main": [512, 690], "off": [708, 738] },
+    "hit": { "main": [935, 790], "off": [935, 790] },
+    "kneel": { "main": [1397, 825], "off": [1468, 755] }
+  },
+  "narrowSeeds": {
+    "idle1": { "main": [297, 112], "off": [392, 147] },
+    "idle2": { "main": [785, 120], "off": [785, 120] },
+    "guard1": { "main": [1232, 118], "off": [1388, 82] },
+    "guard2": { "main": [313, 470], "off": [313, 470] },
+    "raise": { "main": [742, 352], "off": [810, 455] },
+    "channel": { "main": [1272, 460], "off": [1283, 430] },
+    "point": { "main": [240, 855], "off": [432, 728] },
+    "throw": { "main": [702, 695], "off": [908, 755] },
+    "hit": { "main": [1295, 766], "off": [1295, 766] }
+  }
+}

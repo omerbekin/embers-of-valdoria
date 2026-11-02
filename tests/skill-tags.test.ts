@@ -49,7 +49,7 @@ describe('skill etiket satırı, menzil AÇIK (range.md): "Range N" / "Global" s
     expect(tags('charge').at(-1)).toBe(`Range ${content.skills.charge!.range}`);
     expect(tags('fist_crush').at(-1)).toBe('Global');
     expect(tags('close_ranks').at(-1)).toBe(`Range ${content.skills.close_ranks!.range}`);
-    expect(skillTags(content.skills.rejuvenate!).some((t) => t.kind === 'range')).toBe(false);
+    expect(skillTags(content.skills.spell_ward!).some((t) => t.kind === 'range')).toBe(false);
     for (const s of Object.values(content.skills)) expect(skillTags(s).some((t) => t.kind === 'range'), s.id).toBe(rangeLabel(s, content.ownerRangeOf(s.id), content.formulas) !== '');
   });
 });

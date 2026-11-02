@@ -43,6 +43,26 @@ describe('unusable equipped gear goes back to the bag on load', () => {
     expect(again.inventory.filter((i) => i.uid === 'i90')).toHaveLength(1);
   });
 
+  // Ömer 2026-11-02: Avenger's Maul maces -> hammers; Warrior'ın elindeki kayıtta çantaya döner, yuva boş kalır
+  it("Avenger's Maul: Warrior loses it to the bag (campaign + stripUnusable), Paladin keeps it", () => {
+    expect(canEquip('warrior', itemDef('avengers_maul')!)).toBe(false);
+    const eq: Record<string, ItemInstance | null> = { weapon: { uid: 'a', id: 'avengers_maul' } };
+    const spill: ItemInstance[] = [];
+    expect(stripUnusable('warrior', eq, spill)).toEqual(['weapon']);
+    expect(eq.weapon).toBeNull();
+    expect(spill.map((x) => x.uid)).toEqual(['a']);
+    const ok: Record<string, ItemInstance | null> = { weapon: { uid: 'b', id: 'avengers_maul' } };
+    expect(stripUnusable('paladin', ok, spill)).toEqual([]);
+    expect(ok.weapon?.uid).toBe('b');
+
+    const s = pickHero(newCampaign({ mode: 'normal', seed: 7, campaignId: 'c7' }), 'warrior');
+    const raw = JSON.parse(JSON.stringify(s)) as { roster: Array<{ equipment: Record<string, unknown> }>; inventory: unknown[] };
+    raw.roster[0]!.equipment.weapon = { uid: 'i92', id: 'avengers_maul' };
+    const back = normalizeState(raw)!;
+    expect(back.roster[0]!.equipment.weapon).toBeNull();
+    expect(back.inventory.filter((i) => i.uid === 'i92')).toHaveLength(1);
+  });
+
   it('campaign: full bag still receives the item (load never loses items, like the off-hand migration)', () => {
     const s = pickHero(newCampaign({ mode: 'normal', seed: 7, campaignId: 'c7' }), 'warrior');
     const raw = JSON.parse(JSON.stringify(s)) as { roster: Array<{ equipment: Record<string, unknown> }>; inventory: unknown[] };

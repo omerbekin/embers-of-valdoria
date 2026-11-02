@@ -7,9 +7,9 @@ import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './
 import { previewForTargets } from './preview';
 import { bellsOfSkill, manaShieldNeed, type TriggerAction } from './tree-hooks';
 import { armorReduction, attributePower, hitChance } from './stats';
-import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet } from './types';
+import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet, StatusDef } from './types';
 import { capBurn, castBurnAmount, groundBurnAmount } from './mana-burn';
-import { DEFAULT_VALUE, ValueContext, coverageOf, pAtLeast, scoredMpCost, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
+import { isHealSkillGround, DEFAULT_VALUE, ValueContext, coverageOf, pAtLeast, scoredMpCost, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
 
 export type { AiDifficulty, AiDifficultyConfig, AiValueConfig } from './ai-value';
 
@@ -719,6 +719,8 @@ function skillOptions(battle: Battle, actor: Combatant, skillId: string, profile
       // X şekli: anchor'daki birim hitsAtCenter kez vurulur (önizleme/değer buna göre)
       const center = targets.find((c) => c.board === board && c.slot === slot);
       const o = evaluate(battle, actor, skill, targets, occupant?.uid, profile, board === foeSide(actor) ? cells : undefined, center?.uid, undefined, slot);
+      // Kendi tahtana bırakılan zemin (Holy Ground, Healing Rain): tepkime, söndürme, dokunan hücreler; anlık şifa ve tik önizlemeden
+      if (activeCtx && anyBoard && board === actor.side && skill.effects.some((e) => e.type === 'ground')) groundCreationValue(battle, actor, skill, o, cells, board, slot);
       o.anchorSlot = slot;
       o.cells = cells;
       if (anyBoard) o.board = board;
@@ -1149,7 +1151,9 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
   // Tek hedefli skill'de (D7, Tainted Bait) zemin hedefin hücresine konur
   const groundCells = areaCells ?? (skill.target === 'single_enemy' && targets[0] && targets[0].side !== actor.side ? [targets[0].slot] : undefined);
   // YZ kapsamı (2026-10-29): bağlam varken gerçek tik + durum yan etkileri + tepkimeler (groundCreationValue); bağlamsız (eski yol) kaba tahmin
-  if (groundCells && activeCtx && skill.effects.some((e) => e.type === 'ground')) {
+  const allySpread = activeCtx && skill.effects.some((e) => e.type === 'ground') ? battle.allyGroundSpread(actor, skill, targets) : null;
+  if (allySpread?.length) groundCreationValue(battle, actor, skill, o, allySpread, actor.side);
+  else if (groundCells && activeCtx && skill.effects.some((e) => e.type === 'ground')) {
     groundCreationValue(battle, actor, skill, o, groundCells, skill.target === 'single_enemy' && targets[0] ? targets[0].board : foeSide(actor), anchor);
   } else if (groundCells) {
     const cells = new Set(groundCells);
@@ -1822,6 +1826,8 @@ function controlValue(ctx: ValueContext, o: Option): number {
       if (def.blocksMpSkills && t.side !== actor.side) v += p * (ctx.vc.debuffShare?.silence ?? 1) * ctx.silenceDenial(t, t.mp, turns);
       // Mire-Bound (YM7): durum, yaşayan bir dost cadının mireBound durumuysa hedefi yavaşlatır (Saltbound); değer Slow ile aynı ölçü (en güçlü cadı)
       if (t.side !== actor.side) {
+        // Soaked: kendi takımımızın ateşi hedefe yarıya iner ve üstündeki Burning söner (ikisi de bizim bedelimiz).
+        v -= p * (ownElementLoss(ctx, t, def, own) + cleansedDotLoss(ctx, t, def));
         let mire = 1;
         for (const a of battle.living(actor.side)) {
           const pe = a.passive?.effect;
@@ -1859,7 +1865,7 @@ function controlValue(ctx: ValueContext, o: Option): number {
         const foes = battle.living(t.side);
         const healPerTurn = foes.reduce((a, f) => a + Math.max(0, ...f.skills.map((id) => {
           const sk = battle.skill(id, f);
-          return sk ? sum(sk.effects.map((e) => (e.type === 'heal' ? attributePower(f.stats, e.scale, battle.formulas) * e.power : e.type === 'hot' ? attributePower(f.stats, e.scale, battle.formulas) * e.power * e.turns : 0))) : 0;
+          return sk ? skillRawHeal(battle, sk, f) : 0;
         })), 0) / Math.max(1, foes.length);
         v += p * (1 - def.healTakenMult) * healPerTurn * own * ctx.vc.contributionShare;
       }
@@ -3413,13 +3419,18 @@ function incomingOf(ctx: ValueContext, u: Combatant): number {
   return s;
 }
 
+/** Skill'in ham şifa gücü: anlık şifa + hot x tur + şifa skill'inin zemini x tur (Healing Rain). */
+function skillRawHeal(battle: Battle, sk: SkillDef, f: Combatant): number {
+  return sum(sk.effects.map((e) => (e.type === 'heal' ? attributePower(f.stats, e.scale, battle.formulas) * e.power : e.type === 'hot' || isHealSkillGround(battle, sk, e) ? attributePower(f.stats, e.scale, battle.formulas) * e.power * e.turns : 0)));
+}
+
 /** Birimin takımının tur başına ham şifa gücü (şifacıların en iyi şifası / takım sayısı); Wound / Poisoned bedeli için. */
 function teamHealPerTurn(ctx: ValueContext, side: Side): number {
   const battle = ctx.battle;
   const team = battle.living(side);
   const per = team.reduce((a, f) => a + Math.max(0, ...f.skills.map((id) => {
     const sk = battle.skill(id, f);
-    return sk ? sum(sk.effects.map((e) => (e.type === 'heal' ? attributePower(f.stats, e.scale, battle.formulas) * e.power : e.type === 'hot' ? attributePower(f.stats, e.scale, battle.formulas) * e.power * e.turns : 0))) : 0;
+    return sk ? skillRawHeal(battle, sk, f) : 0;
   })), 0);
   return (per / Math.max(1, team.length)) * ctx.vc.contributionShare;
 }
@@ -3454,6 +3465,42 @@ function statusEffectWorth(ctx: ValueContext, u: Combatant, kind: string, k: num
   for (const c of def.cleanses ?? []) {
     const st = u.statuses.find((s) => s.kind === c);
     if (st) v += battle.statusTickDamage(u, st) * Math.min(Math.max(1, st.turns), Math.max(1, Math.ceil(k)));
+  }
+  return v;
+}
+
+/**
+ * Düşmana konan durumun bizim hasarımıza bedeli (Soaked: ateş -%50): `t`ye yöneleceği tahmin edilen dostlarımızın vuruşu x kitindeki o elementli saldırı payı
+ * x kaybolan oran. Dost başka elementle de vurabiliyorsa pay kadar sayılır; o elementi olmayan takımda 0.
+ */
+function ownElementLoss(ctx: ValueContext, t: Combatant, def: StatusDef, k: number): number {
+  if (!def.elementTakenMult) return 0;
+  const battle = ctx.battle;
+  let v = 0;
+  for (const i of ctx.ownIntents()) {
+    if (!i.focus.includes(t.uid)) continue;
+    const a = battle.get(i.foe);
+    if (!a) continue;
+    const attacks = a.skills.map((id) => battle.skill(id, a)).filter((sk): sk is SkillDef => !!sk && sk.effects.some((e) => e.type === 'damage'));
+    if (!attacks.length) continue;
+    for (const [el, m] of Object.entries(def.elementTakenMult)) {
+      if (m === undefined || m >= 1) continue;
+      const share = attacks.filter((sk) => sk.effects.some((e) => e.type === 'damage' && (e.element ?? 'physical') === el)).length / attacks.length;
+      v += (1 - m) * share * (i.hit / i.focus.length) * k;
+    }
+  }
+  return v;
+}
+
+/**
+ * Düşmana konan durumun söndürdüğü DoT'un bedeli (Soaked: Burning): `t`nin üstündeki o durumun kalan tikleri (statusEffectWorth'un cleanses satırıyla aynı ölçü,
+ * ufukla sınırlı). Dosta konan Soaked'ın kazancı için ayrı terim yok: dost hedefli durum değeri bu makinede yalnız hız / Stun için var, Soaked'ı saymıyor.
+ */
+function cleansedDotLoss(ctx: ValueContext, t: Combatant, def: StatusDef): number {
+  let v = 0;
+  for (const c of def.cleanses ?? []) {
+    const st = t.statuses.find((s) => s.kind === c);
+    if (st) v += ctx.battle.statusTickDamage(t, st) * Math.min(Math.max(1, st.turns), ctx.vc.horizon);
   }
   return v;
 }
@@ -3564,25 +3611,50 @@ function groundCreationValue(battle: Battle, actor: Combatant, skill: SkillDef, 
   const ctx = activeCtx;
   if (!ctx) return;
   const cov = coverageOf(ctx.vc);
-  const cells = new Set(groundCells);
   const reactions = battle.groundReactionPreview(actor.uid, skill.id, anchor, board, o.targetUid);
   for (const e of skill.effects) {
     if (e.type !== 'ground') continue;
+    if (skill.target === 'area_any' && e.side && (e.side === 'allies') !== (board === actor.side)) continue; // bu tahtaya inmeyen zemin (Judgment)
     const amount = Math.round(attributePower(actor.stats, e.scale, battle.formulas) * e.power);
     const heal = battle.isHealGround(e.ground); // şifa zemininin tiki önizlemede hot olarak sayıldı: yalnızca durum yan etkileri
+    const wide = new Set(battle.groundWideSlots(e, groundCells));
+    const eaten = (slot: number) => {
+      const rx = reactions.find((r) => r.board === board && r.slot === slot);
+      return !!rx && reactionEatsTrigger(battle.groundReactionDef(rx.reaction), e.ground);
+    };
     for (const u of battle.combatants) {
-      if (u.hp <= 0 || u.inert || u.board !== board || !cells.has(u.slot)) continue;
-      const rx = reactions.find((r) => r.board === board && r.slot === u.slot);
-      if (rx && reactionEatsTrigger(battle.groundReactionDef(rx.reaction), e.ground)) continue;
+      if (u.hp <= 0 || u.inert || u.board !== board || !wide.has(u.slot)) continue;
+      // Önizlemenin hot saydığı hedef: tiki iki kez sayılmaz. Dokunan hücredeki dost (Spreading Roots) önizlemede yok: tiki burada
+      const previewed = heal && o.targets.includes(u);
+      if (eaten(u.slot)) {
+        // Tepkime zemini yiyorsa (yağmur Chill Ground'da buza döner) önizlemenin saydığı tik de yok
+        if (previewed && o.healBy[u.uid]) {
+          const lost = Math.min(o.healBy[u.uid]!, battle.groundTickHeal(amount, u) * e.turns);
+          o.heal -= lost;
+          o.healBy[u.uid]! -= lost;
+        }
+        continue;
+      }
       const left = Math.max(0, u.hp - (o.dmgBy[u.uid] ?? 0));
       const parts = { tick: 0 };
-      const w = groundUnitWorth(ctx, u, e.ground, heal ? 0 : amount, e.turns, actor.side, { ...(e.statuses?.length && actor.treeHooks ? { statuses: e.statuses } : {}), left, parts });
+      const w = groundUnitWorth(ctx, u, e.ground, previewed ? 0 : amount, e.turns, actor.side, { ...(e.statuses?.length && actor.treeHooks ? { statuses: e.statuses } : {}), left, parts });
       if (w === 0) continue;
       // Ayrıştırma: düşmandaki tik hasarı damage'a (baskı / öldürme ölçüsü), geri kalan groundFx
       const dmg = u.side !== actor.side ? parts.tick : 0;
       if (dmg > 0) o.damage += dmg;
       const rest = (u.side === actor.side ? w : -w) - dmg;
       if (rest !== 0) o.groundFx = (o.groundFx ?? 0) + rest;
+    }
+    // Islatmayan su (Healing Rain) hücredeki Burning Ground'u söndürür: içindekinin kazancı. Flooded'da aynı değer Soaked'ın cleanses satırından geliyor.
+    const gd = battle.groundDef(e.ground);
+    if (gd?.quenches?.length && !gd.soak) {
+      for (const c of battle.combatants) {
+        if (c.hp <= 0 || c.inert || c.board !== board || !wide.has(c.slot) || eaten(c.slot)) continue;
+        const put = (g: GroundEffect) => g.board === board && g.slots.includes(c.slot) && gd.quenches!.includes(g.ground);
+        if (!battle.ground.some(put)) continue;
+        const gain = cellWorth(ctx, c, board, c.slot, put) - cellWorth(ctx, c, board, c.slot);
+        o.groundFx = (o.groundFx ?? 0) + (c.side === actor.side ? gain : -gain);
+      }
     }
   }
   // Tepkimeler (hücre başına bir kez)
@@ -3608,6 +3680,25 @@ function groundCreationValue(battle: Battle, actor: Combatant, skill: SkillDef, 
         for (const c of battle.combatants) {
           if (c.hp <= 0 || c.board !== r.board || c.side === actor.side) continue;
           if (Math.abs(battle.rowOf(c.slot) - battle.rowOf(r.slot)) + Math.abs(battle.laneOf(c.slot) - battle.laneOf(r.slot)) === 1) v += hit(c, Math.round(raw * adj));
+        }
+      }
+    }
+    // Spreads (zehir + su): sıvı bağlı su hücrelerine akar; oradakiler onun etkisini alır (kendi suya attığın yağmur dostunu zehirleyebilir, düşmanın suyuna attığın zehir ağı vurur)
+    if (def.spread?.length) {
+      const fromSetup = !!setup && def.spread.includes(setup.ground);
+      const liquid = fromSetup ? setup : def.spread.includes(trig.ground) ? trig : undefined;
+      if (liquid) {
+        const placed = battle.groundWideSlots(trig, groundCells);
+        const placedWater = !def.spread.includes(trig.ground) ? placed : [];
+        const amt = fromSetup ? cellAmt(setup) : trigAmt;
+        const turns = fromSetup ? setup.turns : trig.turns;
+        const side = fromSetup ? setup.sourceSide : actor.side;
+        for (const s of battle.reactionWaterNetwork(r.board, r.slot, placedWater)) {
+          if (s === r.slot || (!fromSetup && placed.includes(s)) || battle.ground.some((g) => g.board === r.board && g.ground === liquid.ground && g.slots.includes(s))) continue;
+          for (const c of battle.combatants) {
+            if (c.hp <= 0 || c.inert || c.board !== r.board || c.slot !== s) continue;
+            v += (c.side === actor.side ? 1 : -1) * groundUnitWorth(ctx, c, liquid.ground, amt, turns, side);
+          }
         }
       }
     }
@@ -3965,4 +4056,4 @@ function dispelBuffValue(ctx: ValueContext, profile: AiProfile, o: Option): numb
 }
 
 /** Testler için (tests/ai-coverage.test.ts): kapsam yardımcıları; oyun kodu kullanmaz. */
-export const aiCoverageInternals = { cellWorth, cellDelta, statusEffectWorth, groundUnitWorth, stayTicks, groundMove };
+export const aiCoverageInternals = { cellWorth, cellDelta, statusEffectWorth, ownElementLoss, cleansedDotLoss, groundUnitWorth, stayTicks, groundMove };

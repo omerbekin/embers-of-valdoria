@@ -15,6 +15,8 @@ import { encounterUnit } from '../engine/content';
 import { ownerOfUnit } from '../game/asset-versions';
 import { miscImage } from '../game/icon-image-files';
 import { bindIcon } from './dom-icons';
+import { attachBandTip } from './band-tip-attach';
+import type { BandTipSpec } from './band-tip';
 import { lockInput, unlockInput } from './input-lock';
 import { mountCloseButton } from './nav-close';
 import { classLogoName, miscIconName } from './misc-icons';
@@ -63,6 +65,12 @@ export interface StartBattleOpts {
    * sürprizi kalmaz. Düğme yazısını sahne seçer (actionLabel "Continue").
    */
   first?: string[];
+  /**
+   * Kasaba kartı (taslak town-card, seçenek A "Hizmetler", Ömer 2026-11-02): kasabanın yerleri plaka olarak (ad + fiil); üstüne gelince / dokununca
+   * A Band ipucu (`tip`). Yalnız görünüm: eylemleri kasaba ekranı yapar. `flags` = ember çizgili kısa haber satırları ("A recruit waits at the Barracks").
+   */
+  services?: Array<{ name: string; verb: string; icon?: string; tip: BandTipSpec }>;
+  flags?: string[];
   /**
    * Kararan zemine dokunuş (playtest U8, tek tıkla hızlı yolculuk): zeminin yerel CSS pikseli verilir; true dönerse sahne dokunuşu kullandı
    * (ör. başka bir düğüme yürüdü), kart onCancel çağrılmadan bırakılır. Yoksa / false ise eskisi gibi vazgeç.
@@ -150,6 +158,20 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
   if (tags.length) card.append(el('div', 'sbc-tags', tags.map((t) => `<span class="sbc-tag${t.tone ? ` ${t.tone}` : ''}">${esc(t.text)}</span>`).join('')));
   const info = co ? { who: 'Their cause', text: co.cause, quote: false, plain: false } : o.info;
   if (info) card.append(el('p', `sbc-info${info.quote ? ' quote' : ''}${info.plain ? ' plain' : ''}`, `${info.who ? `<b>${esc(info.who)}</b> ` : ''}${info.quote ? `“${esc(info.text)}”` : esc(info.text)}`));
+  const tipOffs: Array<() => void> = [];
+  if (o.services?.length) {
+    card.classList.add('tc', 'wide');
+    card.querySelector('.sbc-info')?.classList.add('tc-lore-ph');
+    const row = el('div', 'tc-svc');
+    for (const sv of o.services) {
+      const b = el('button', '', `${sv.icon ? `<img src="${esc(sv.icon)}" alt="" draggable="false">` : ''}<span><b>${esc(sv.name)}</b><i>${esc(sv.verb)}</i></span>`);
+      b.type = 'button';
+      tipOffs.push(attachBandTip(b, sv.tip));
+      row.append(b);
+    }
+    card.append(row);
+  }
+  for (const f of o.flags ?? []) card.append(el('div', 'tc-flag', esc(f)));
   if (o.first?.length) card.append(el('p', 'sbc-then sbc-first', `<b>First</b> ${o.first.map((t) => esc(t)).join(' ')}`));
   if (o.then?.length) card.append(el('p', 'sbc-then', `<b>Then</b> ${o.then.map((t) => `${esc(t.name)} <span class="k">${esc(t.kind)}</span>`).join(' <i>or</i> ')}`));
   const preview = !!o.preview;
@@ -173,6 +195,7 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
   const close = (): void => {
     if (done) return;
     done = true;
+    for (const off of tipOffs) off();
     unmountX();
     wrap.remove();
     if (!preview) unlockInput('start-battle');

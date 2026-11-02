@@ -59,7 +59,11 @@
     "k": 60
   },
   "damage": {
+    "_not": "elementVariance: elemente özel hasar sapması (Ömer 2026-11-01: şimşek ±%50, ortalama aynı; iki taraf da). Listede olmayan element `variance` kullanır. Tek yol: src/engine/formulas.ts > damageVariance.",
     "variance": 0.1,
+    "elementVariance": {
+      "lightning": 0.5
+    },
     "minDamage": 1
   },
   "heal": {

@@ -1,7 +1,12 @@
 // "Tooltip = A Band" (Ömer 2026-10-18) için ortak metin ayrıştırıcı (saf; DOM ve Phaser aynı kuralı kullanır; testli: tests/band-tip.test.ts).
 // Açıklama satırındaki oyun metni DEĞİŞMEZ; yalnızca parçalara bölünür: anahtar kelime (vurgu rengi), rakam (altın), fark parantezi (yeşil / kırmızı).
 
-export type RichKind = 'k' | 'n' | 'up' | 'down';
+export type RichKind = 'k' | 'n' | 'up' | 'down' | 'd';
+
+/** Skill ipucu A (Ömer 2026-11-02): bu bölüm satırı, ipucunun KISA satırlarını (üstü) TAM satırlardan (altı, "More" ile açılır) ayırır. */
+export const MORE_MARK = '\u0001more';
+/** Satır içi işaret (yalnızca skill ipucu kısa satırları üretir): [[k|Etiket]] = vurgu rengi, [[d|yazı]] = soluk. */
+const MARK = /\[\[([kd])\|(.*?)\]\]/g;
 export interface RichSeg {
   text: string;
   kind?: RichKind;
@@ -31,6 +36,14 @@ function numberSegs(text: string, out: RichSeg[]): void {
 /** Satırı parçalara böler. `keyword: false` = etiket aramaz (yalnızca rakam / fark). */
 export function richSegs(line: string, keyword = true): RichSeg[] {
   const out: RichSeg[] = [];
+  if (line.includes('[[')) {
+    const parts = line.split(MARK);
+    for (let i = 0; i < parts.length; i += 3) {
+      if (parts[i]) out.push(...richSegs(parts[i]!, false));
+      if (i + 2 < parts.length) out.push({ text: parts[i + 2]!, kind: parts[i + 1] === 'k' ? 'k' : 'd' });
+    }
+    return out;
+  }
   let body = line;
   if (keyword) {
     const l = splitLabel(line);

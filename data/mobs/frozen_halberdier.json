@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 3 hc_18 eşlikçisi (maps-2-3.md; Ömer 2026-11-02). Sayılar PROVİZYON, sim yok; bayrak kapalı. Statlar yer tutucu Morvane Halberdier kopyası, kendi çizimi var (Codex 2026-11-02). Kit belgeden: Halberd Chop (bedelsiz) + Pike Thrust (kopya frozen_pike_thrust: var olan iki bedelle L30 kullanımı 17 ve 11, kural 5-6; etki aynı).",
+  "id": "frozen_halberdier",
+  "name": "Frozen Halberdier",
+  "family": "morvane_army",
+  "spriteId": "frozen_halberdier",
+  "color": "#7a3a2a",
+  "logo": "helm",
+  "frontPriority": 0,
+  "range": 2,
+  "role": "Frostbound Legion · Line",
+  "attributes": {
+    "str": 26,
+    "int": 4,
+    "dex": 10,
+    "luck": 4
+  },
+  "armor": 20,
+  "magicArmor": 6,
+  "ai": "aggressive",
+  "skills": [
+    "halberd_chop",
+    "frozen_pike_thrust"
+  ],
+  "passive": {
+    "id": "frozen_ranks",
+    "name": "Frozen Ranks",
+    "icon": "shield",
+    "text": "Takes 12% less damage with one other living ally in its row, 24% less with two, and cannot be Chilled.",
+    "effect": {
+      "type": "closeRanks",
+      "perAlly": 0.12,
+      "immune": [
+        "chilled"
+      ]
+    }
+  }
+}

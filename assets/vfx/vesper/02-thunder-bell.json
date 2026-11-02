@@ -1,0 +1,27 @@
+{
+  "slug": "02-thunder-bell",
+  "title": "Thunderpeal: spectral bell turning to thunder",
+  "source": "assets/source/vesper-vfx/02-thunder-bell.png",
+  "frames": 8,
+  "fps": 15,
+  "duration_ms": 533,
+  "frame_size": [
+    320,
+    320
+  ],
+  "sheet_size": [
+    1280,
+    640
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 0,
+  "pivot": [
+    160,
+    160
+  ],
+  "align": "keep"
+}

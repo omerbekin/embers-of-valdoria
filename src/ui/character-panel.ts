@@ -60,6 +60,7 @@ import { iconUrl } from './dom-icons';
 import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
 import { skillMiniGrid } from './shape-diagram';
 import { passiveTip, skillTip } from './gear-skills';
+import { foldSkillRows } from './skill-tip-rule';
 import { skillCostAmount } from '../engine/cost';
 import type { SkillDef } from '../engine';
 import { attachBandTip } from './band-tip-attach';
@@ -886,6 +887,11 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null, evo
   } else meta.push({ text: t.meta[0] ?? 'Free', color: COLORS.muted });
   if ((skill.cooldown ?? 0) > 0) meta.push({ iconUrl: iconUrl(uiIconName('cooldown'), UI_COLOR), text: `${skill.cooldown} turns`, color: COLORS.muted });
   const shape = skillMiniGrid(skill, content.formulas.formation);
+  // Skill ipucu A (Ömer 2026-11-02): kısa satırlar + "More" altında tam metin (src/ui/skill-tip-rule.ts); ağaç bölümü ve ilk bekleme satırı katlanmaz
+  const tipRows = t.rows.map((r) => ({ text: r.text, ...(tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}), ...(r.section ? { section: true } : {}) }));
+  const treeAt = tipRows.findIndex((r) => 'section' in r);
+  const cut = treeAt < 0 ? tipRows.length : treeAt;
+  const isInitCd = (r: { text: string }): boolean => /^Opens on cooldown/.test(r.text);
   return {
     title: t.title,
     titleColor: COLORS.text,
@@ -893,7 +899,7 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null, evo
     iconUrl: heroSkillIconUrl(evo, skill),
     meta,
     tags: skillTags(skill).map((g) => ({ text: g.text, kind: g.kind, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: iconUrl(g.icon, g.color ?? '#e8e2d0') } : {}) })),
-    rows: t.rows.map((r) => ({ text: r.text, ...(tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}), ...(r.section ? { section: true } : {}) })),
+    rows: foldSkillRows(tipRows.slice(0, cut).filter((r) => !isInitCd(r)), tipRows.slice(0, cut).filter(isInitCd), tipRows.slice(cut)),
     ...(shape ? { shape } : {}),
   };
 }
@@ -969,6 +975,11 @@ function showFloatTip(bar: HTMLElement, cell: HTMLElement): void {
   const tip = src.cloneNode(true) as HTMLElement;
   (tip.style as CSSStyleDeclaration & { zoom: string }).zoom = String(hudScale());
   wrap.append(tip);
+  // "More" düğmesine ulaşılabilsin: fare ipucunun üstüne geçince ipucu kalır, ikisinden de çıkınca kapanır
+  wrap.addEventListener('pointerleave', (e) => {
+    const into = e.relatedTarget instanceof Element ? e.relatedTarget : null;
+    if (!(into && floatTipFor?.contains(into))) hideFloatTip();
+  });
   host.append(wrap);
   const hr = host.getBoundingClientRect();
   const cr = cell.getBoundingClientRect();
@@ -981,6 +992,15 @@ function showFloatTip(bar: HTMLElement, cell: HTMLElement): void {
   y = Math.max(M, Math.min(hr.height - tr.height - M, y));
   wrap.style.left = `${Math.round(x)}px`;
   wrap.style.top = `${Math.round(y)}px`;
+  // "More": zemin kapatma tıklamasına gitmez; ipucu büyüyünce alt kenarı ekranda kalır
+  wrap.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const b = (e.target as Element).closest('.bt-morebtn');
+    if (!b) return;
+    b.closest('.bt')?.classList.toggle('open');
+    const h = wrap.getBoundingClientRect().height;
+    wrap.style.top = `${Math.round(Math.max(M, Math.min(hr.height - h - M, wrap.offsetTop)))}px`;
+  });
   floatTip = wrap;
   floatTipFor = cell;
 }
@@ -1059,7 +1079,7 @@ export function skillBar(classId: string, stats: Stats, after: Stats | null, evo
     if (e.pointerType === 'touch') return;
     const into = e.relatedTarget instanceof Element ? e.relatedTarget : null;
     const cell = (e.target as HTMLElement).closest<HTMLElement>('.gr-pl');
-    if (cell && !(into && cell.contains(into))) hideFloatTip();
+    if (cell && !(into && (cell.contains(into) || floatTip?.contains(into)))) hideFloatTip();
   });
   // Dokunmatik: dokunuş açıklamayı açar / kapatır (savaştaki uzun basmanın yerine; Gear'da skill seçilmez)
   bar.addEventListener('click', (e) => {

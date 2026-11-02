@@ -912,8 +912,10 @@ async function weaponsV2(data) {
   }
   for (const [family, looks] of Object.entries(seen)) {
     const f = w[family];
-    f.order = looks;
-    f.looks = Object.fromEntries(looks.map((l) => [l, f.looks[l]]));
+    // sayfada olmayan görünümler korunur: tek görsel olarak doğrudan assets/weapons'a konanlar (Ömer 2026-11-02: mauls/greatmace, mauls/longhafted; hammers ailesi bu araçta hiç yok)
+    const extra = (f.order ?? []).filter((l) => !looks.includes(l) && f.looks[l]);
+    f.order = [...looks, ...extra];
+    f.looks = Object.fromEntries(f.order.map((l) => [l, f.looks[l]]));
   }
   console.log(`${Object.values(seen).flat().length} weapon looks -> ${WOUT}/<family>/<look>.png + small/`);
 }

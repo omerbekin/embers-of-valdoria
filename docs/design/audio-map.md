@@ -104,3 +104,16 @@ söner ve zafer / yenilgi stingeri çalar (Endless zaferinde kamp müziğine ge�
 ## Eksik / sonraya
 
 - Level-up anı oyunda henüz yok (XP verilmiyor); ses tasarlanmadı.
+
+## Vesper (2026-11-01, `data/audio-v2/vesper.json`)
+
+Ömer: "ödünç kalmasın; sesleri de kendisi olsun". Hepsi WebAudio tarifi. Çan: gerçek bronz çan kısmi sesleri (hum 0,5 / prime 1 / tierce 1,19 / quint 1,51 / nominal 2 / uyumsuz üstler), çift kısmilerle yavaş dalgalanma, üstler çabuk, hum en son söner; ağır tokmak darbesi + vuruş gürültüsü. Tepe ölçümü yapıldı, **Ömer henüz dinlemedi**.
+
+| Skill | Sesler | Gerçek karşılığı | Tepe | Süre (-60 dB) |
+|---|---|---|---:|---:|
+| Toll | `tollStrike`, `tollWave` | orta boy çan (prime 233 Hz), kısa; havada yayılan ses dalgası | 0,42 / 0,24 | 0,7 sn / 0,2 sn |
+| Thunderpeal | `thunderPeal`, `thunderCrack` | alçak çan (155 Hz) + elektrik çıtırtısı; çatırtı + yırtılma + yuvarlanan gök gürültüsü | 0,50 / 0,72 | 0,9 sn / 1,2 sn |
+| Cracked Bell | `crackedBellFall`, `crackedBellHit` | inen çanın havası + zincir; çatlak metal: boğuk, titreyen kenarlar, yarılma, kırıklar | 0,30 / 0,72 | 0,3 sn / 0,3 sn |
+| Great Bell of Valdoria | `greatBellDescend`, `greatBellToll`, `greatBellThunder` | zincir ve hava; en derin çan (prime 103 Hz, hum 51 Hz) + dev tokmak + taş salon kuyruğu; alçak gök gürültüsü | 0,34 / 0,80 / 0,70 | 0,8 sn / 2,8 sn / 1,4 sn |
+
+Aynı tarifler `skills.json > sfx` denetimi için `data/audio.json` içinde de durur (v1 anahtarlarına dokunulmadı, yalnız yeni ad eklendi); sürüm seçicide v1 seçilirse genel hareketle başta çalar.

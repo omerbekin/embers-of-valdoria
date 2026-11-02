@@ -1,0 +1,38 @@
+{
+  "_not": "Harita 3 hc_18 eşlikçisi (maps-2-3.md; Ömer 2026-11-02). Sayılar PROVİZYON, sim yok; bayrak kapalı. Statlar yer tutucu Bandit Crossbowman kopyası, kendi çizimi var (Codex 2026-11-02). Kit belgede Bolt + Ice Bolt; Ice Bolt adında skill yok, en yakın var olan Ice Shot (Chilled) kullanıldı (Q-NEW).",
+  "id": "frozen_crossbowman",
+  "name": "Frozen Crossbowman",
+  "family": "morvane_army",
+  "spriteId": "frozen_crossbowman",
+  "color": "#7a6a4a",
+  "logo": "bow",
+  "frontPriority": 8,
+  "range": 6,
+  "role": "Frostbound Legion · Ranged",
+  "attributes": {
+    "str": 10,
+    "int": 6,
+    "dex": 26,
+    "luck": 6
+  },
+  "armor": 10,
+  "magicArmor": 0,
+  "ai": "sniper",
+  "skills": [
+    "crossbow_bolt",
+    "ice_shot"
+  ],
+  "passive": {
+    "id": "frozen_ranks",
+    "name": "Frozen Ranks",
+    "icon": "shield",
+    "text": "Takes 12% less damage with one other living ally in its row, 24% less with two, and cannot be Chilled.",
+    "effect": {
+      "type": "closeRanks",
+      "perAlly": 0.12,
+      "immune": [
+        "chilled"
+      ]
+    }
+  }
+}

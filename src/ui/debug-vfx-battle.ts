@@ -130,9 +130,11 @@ const CLASS_TESTS: ReadonlyArray<{ key: string; skill: string; caster: string; l
   { key: 'bone_slash_wide', skill: 'skeleton_slash', caster: 'skeleton', dummy2Slot: 2, label: 'Bone Slash (two targets: side lane too)', keepAfter: true, track: ['bone_slash'] },
   // Cutthroat sheet'i (2026-11-01; assets/vfx/cutthroat/, sürüm seçicinin dışında, v1 efekti vfx.ts > smokebomb oynatır)
   { key: 'smoke_bomb', skill: 'smoke_bomb', caster: 'cutthroat' },
-  // Vesper'ın kendi gövdesi (2026-11-01); efektleri hâlâ Paladin'den ödünç
-  { key: 'toll', skill: 'toll', caster: 'vesper', label: 'Toll (Vesper body, borrowed effect)' },
-  { key: 'cracked_bell', skill: 'cracked_bell', caster: 'vesper', label: 'Cracked Bell (Vesper body, borrowed effect)' },
+  // Vesper'ın kendi efektleri (2026-11-01; assets/vfx/vesper/, art-v2/vesper/vfx.ts); Thunderpeal ve Great Bell ikinci kuklayla (sıra / tüm tahta)
+  { key: 'toll', skill: 'toll', caster: 'vesper', label: 'Toll', dummy2Slot: 2 },
+  { key: 'thunderpeal', skill: 'thunderpeal', caster: 'vesper', label: 'Thunderpeal (row: two targets)', dummy2Slot: 2, track: ['thunder'] },
+  { key: 'cracked_bell', skill: 'cracked_bell', caster: 'vesper', label: 'Cracked Bell' },
+  { key: 'great_bell_of_valdoria', skill: 'great_bell_of_valdoria', caster: 'vesper', label: 'Great Bell of Valdoria', dummy2Slot: 10, track: ['great_bell'] },
 ];
 /** Tüm mob skill'leri, sahibine göre gruplu (MOB_VFX_SPECS sırası; aynı mob'un skill'leri yan yana). */
 function testSkills(): TestSkill[] {

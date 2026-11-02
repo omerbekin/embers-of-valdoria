@@ -282,7 +282,7 @@
       "burning"
     ],
     "dispellable": false,
-    "text": "Takes 50% less Fire damage and has 10% less Speed; Burning is put out. Lasts while standing in water"
+    "text": "Takes 50% less Fire damage and has 10% less Speed. Puts out Burning at once. In water it lasts while standing there"
   },
   "spellbound": {
     "_not": "Harita 2 (Ömer onayı 2026-10-25, Omen formu): mobların Omen yerine verdiği durum (Siren Lure; Drowned Queen Lament). Taşıyan kahramanın bir sonraki skill'i %25 zayıf (hasar ya da şifa); skill'i kullanınca düşer (endsOnOwnSkill), kullanmazsa sıradaki turunun sonunda biter (tickAtTurnEnd). YALNIZ MOBLAR VERİR (kahraman sınıfları değil: tests/mob-passives-map2.test.ts). Sayı PROVİZYON.",

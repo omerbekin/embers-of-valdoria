@@ -59,7 +59,7 @@ describe('Druid ağacı fx (Faz 2b)', () => {
     expect(bar.name).toBe('Deep Spring');
     const rj = b.skill('rejuvenate', P(b))!.effects;
     const heal = rj.find((e) => e.type === 'heal') as { power: number };
-    const hot = rj.find((e) => e.type === 'hot') as { power: number; turns: number };
+    const hot = rj.find((e) => e.type === 'ground') as { power: number; turns: number };
     expect(hot.turns).toBe(3);
     expect(heal.power).toBeCloseTo(0.675 * (1 + 3 * v(T.nodes['3.f1']!.fx![0])) * (1 + v(bar.fx![0])), 6);
     expect(hot.power).toBeCloseTo(0.225 * (1 + 5 * v(T.nodes['3.f2']!.fx![0])) * (1 + v(bar.fx![1])), 6);
@@ -104,5 +104,15 @@ describe('Druid ağacı fx (Faz 2b)', () => {
     });
     expect(b.get(target)!.statuses.some((s) => s.kind === 'stun')).toBe(true);
     expect(b.treeProcs().some((p) => p.node === 'druid:2.mb')).toBe(true);
+  });
+
+  it('Nature\'s Wrath alandaki düşmanları 1 tur Soaked yapar; süre skill\'den gelir, suya bağlı değildir', () => {
+    const { b, target } = landed((seed) => {
+      const b = make({ 0: 'druid' }, { 0: 'warrior' }, {}, seed);
+      return { b, evs: cast(b, P(b).uid, 'natures_wrath', E0(b).uid), target: E0(b).uid };
+    });
+    const soaked = b.get(target)!.statuses.find((s) => s.kind === 'soaked')!;
+    expect(soaked.turns).toBe(1);
+    expect(soaked.fromGround).toBeUndefined();
   });
 });

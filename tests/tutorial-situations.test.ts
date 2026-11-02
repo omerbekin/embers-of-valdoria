@@ -121,7 +121,11 @@ describe('yeni durumlar (Ömer 2026-10-14)', () => {
   it('Hit Chance: düşmana hasar veren skill seçilince; dost skillinde yok. Helping Allies: dost seçen skill', () => {
     const { b, uid } = battleAt({ 1: 'druid', 2: 'warrior' }, { 1: 'warrior' }, 1);
     expect(selectSituations(b, uid, 'thorn_whip').find((x) => x.when === 'preview')?.skill).toBe('thorn_whip');
-    const heal = whens(selectSituations(b, uid, 'rejuvenate'));
+    const rain = whens(selectSituations(b, uid, 'rejuvenate')); // Healing Rain hücreye düşer: alan dersi
+    expect(rain).toContain('area');
+    expect(rain).not.toContain('preview');
+    const am = battleAt({ 1: 'antimage', 2: 'warrior' }, { 1: 'warrior' }, 1);
+    const heal = whens(selectSituations(am.b, am.uid, 'spell_ward'));
     expect(heal).toContain('ally');
     expect(heal).not.toContain('preview');
   });

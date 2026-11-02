@@ -1,20 +1,20 @@
 {
-  "_not": "Harita 3 karşılaşmaları (campaign-dev 2026-10-29; maps-2-3.md 4.2, iskelet adımı). YER TUTUCU: Harita 3 mobları henüz yok; belgedeki her birim var olan bir mobla, belgedeki adıyla (name) oynanır: Snow Wolf = grey_wolf, Rime Hound / Molten Hound = ash_hound, Cave Crawler = salt_crab, Clan Axeman = moor_raider, Clan Slinger / Frozen Crossbowman = bandit_crossbowman, Clan Skald = censer_monk, Rime Witch = fen_witchling, Frost-light / Deep-light = will_o_wisp, Wight = ghoul, Frozen Halberdier = morvane_halberdier, Hollow Warden = stonebound_warden, Hollow Runecaller = deep_runecaller, Blind Eel = weir_eel, Ashborn (Acolyte) = ember_acolyte, Pyre Witch = pitch_boiler, Cinder Knight = sworn_guard, Forge Golem = shieldwarden. Elitler (tier elite, can 1,7 / güç 1,1 / stat 1,15; Harita 2 iskeleti kalıbı): Pack-Mother = grey_wolf, Brannoc = bandit_chief, Frozen Standard-Bearer = morvane_halberdier, Oathkeeper = thane_of_the_deep, Pyre Matriarch = hedge_witch_morwen, Forge-Master Golem = guild_enforcer_bastion, Ashborn Hierarch = ember_hierophant, Cinder Warden = cinder_gatewarden. Bosslar: Snowfather = bridge_warden (dev, mooring yok), Hollow King = lord_morvane, Hearthwarden = drowned_queen, Ember = weir_wyrm (dev, tek). 4. dilim: 10 mob (clan_vaulter, shardwalker, hollow_delver, gloamstalker, cinderleaper, slagcart_golem, thunderwright, clan_stormcaller, gloam_eel, stormhorn_ram) kendi kitleriyle yerleşti (maps-2-3.md); kalan yer tutucu birimler hâlâ var olan mob. Düşman level'ı bölüm 3 rampasından (L21-30, ilk 3 durak L20). Dalgalar var olan ekleme kuralıyla. Sayılar PROVİZYON, sim ölçümü YOK.",
+  "_not": "Harita 3 karşılaşmaları (campaign-dev 2026-10-29; maps-2-3.md 4.2, iskelet adımı; sınıf bağları 2026-11-02 güncellendi). Belgedeki adla gelen her birim kendi Harita 3 sınıfında: Snow Wolf = snow_wolf, Clan Axeman = clan_axeman, Clan Slinger = clan_slinger, Clan Skald = clan_skald, Cave Crawler = cave_crawler, Wight = wight, Rime Hound = rime_hound, Molten Hound = molten_hound, Rime Witch = rime_witch, Hollow Warden = hollow_warden, Pyre Witch = pyre_witch, Cinder Knight = cinder_knight, Forge Golem = forge_golem, Frozen Halberdier = frozen_halberdier, Frozen Crossbowman = frozen_crossbowman; 10 melee/şimşek mobu (clan_vaulter, shardwalker, hollow_delver, gloamstalker, cinderleaper, slagcart_golem, thunderwright, clan_stormcaller, gloam_eel, stormhorn_ram) kendi kitleriyle. Hâlâ var olan Harita 1-2 mobu (belgede de 'aynen' ya da kit yok): Frost-light / Deep-light = will_o_wisp, Blind Eel = weir_eel, Ashborn (Acolyte) = ember_acolyte, Hollow Runecaller ve adsız Gatehouse / Oathkeeper Court kadrosu = deep_runecaller / stonebound_warden. Elitler (tier elite, can 1,7 / güç 1,1 / stat 1,15; Harita 2 iskeleti kalıbı): Pack-Mother, Brannoc, Frozen Standard-Bearer, Oathkeeper, Pyre Matriarch, Forge-Master Golem, Ashborn Hierarch, Cinder Warden kendi sınıflarında. Bosslar: Snowfather, Hollow King, Hearthwarden, Ember kendi sınıflarında. Düşman level'ı bölüm 3 rampasından (L21-30, ilk 3 durak L20). Dalgalar var olan ekleme kuralıyla. Sayılar PROVİZYON, sim ölçümü YOK.",
   "hc_1": {
     "name": "Hearthstead Road",
     "units": [
       {
-        "class": "grey_wolf",
+        "class": "snow_wolf",
         "name": "Snow Wolf",
         "slot": 1
       },
       {
-        "class": "grey_wolf",
+        "class": "snow_wolf",
         "name": "Snow Wolf",
         "slot": 0
       },
       {
-        "class": "grey_wolf",
+        "class": "snow_wolf",
         "name": "Snow Wolf",
         "slot": 2
       }
@@ -24,7 +24,7 @@
     "name": "Frozen Falls",
     "units": [
       {
-        "class": "fen_witchling",
+        "class": "rime_witch",
         "name": "Rime Witch",
         "slot": 7
       },
@@ -34,12 +34,12 @@
         "slot": 6
       },
       {
-        "class": "grey_wolf",
+        "class": "snow_wolf",
         "name": "Snow Wolf",
         "slot": 1
       },
       {
-        "class": "grey_wolf",
+        "class": "snow_wolf",
         "name": "Snow Wolf",
         "slot": 0
       }
@@ -49,7 +49,7 @@
     "name": "Trapper's Line",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "clan_axeman",
         "name": "Clan Axeman",
         "slot": 1
       },
@@ -58,7 +58,7 @@
         "slot": 0
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "clan_slinger",
         "name": "Clan Slinger",
         "slot": 7
       }
@@ -68,7 +68,7 @@
     "name": "The Pinewall",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "clan_axeman",
         "name": "Clan Axeman",
         "slot": 1
       },
@@ -77,12 +77,12 @@
         "slot": 0
       },
       {
-        "class": "censer_monk",
+        "class": "clan_skald",
         "name": "Clan Skald",
         "slot": 7
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "clan_slinger",
         "name": "Clan Slinger",
         "slot": 6
       }
@@ -104,17 +104,16 @@
         "slot": 1
       },
       {
-        "class": "grey_wolf",
-        "name": "Snow Wolf",
+        "class": "clan_vaulter",
         "slot": 0
       },
       {
-        "class": "grey_wolf",
+        "class": "snow_wolf",
         "name": "Snow Wolf",
         "slot": 2
       },
       {
-        "class": "grey_wolf",
+        "class": "snow_wolf",
         "name": "Snow Wolf",
         "slot": 4
       }
@@ -125,7 +124,7 @@
     "caveIn": "cave_in",
     "units": [
       {
-        "class": "ash_hound",
+        "class": "rime_hound",
         "name": "Rime Hound",
         "slot": 1
       },
@@ -134,12 +133,12 @@
         "slot": 0
       },
       {
-        "class": "fen_witchling",
+        "class": "rime_witch",
         "name": "Rime Witch",
         "slot": 7
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "clan_slinger",
         "name": "Clan Slinger",
         "slot": 6
       }
@@ -149,12 +148,12 @@
     "name": "Ice Cave",
     "units": [
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 1
       },
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 0
       },
@@ -185,17 +184,17 @@
         "slot": 1
       },
       {
-        "class": "censer_monk",
+        "class": "clan_skald",
         "name": "Clan Skald",
         "slot": 7
       },
       {
-        "class": "moor_raider",
+        "class": "clan_axeman",
         "name": "Clan Axeman",
         "slot": 0
       },
       {
-        "class": "moor_raider",
+        "class": "clan_axeman",
         "name": "Clan Axeman",
         "slot": 2
       }
@@ -205,12 +204,12 @@
     "name": "The Cairns",
     "units": [
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 1
       },
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 0
       },
@@ -230,22 +229,22 @@
     "name": "Glacier Foot",
     "units": [
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_halberdier",
         "name": "Frozen Halberdier",
         "slot": 1
       },
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_halberdier",
         "name": "Frozen Halberdier",
         "slot": 0
       },
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 2
       },
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 4
       }
@@ -256,7 +255,7 @@
     "name": "Crevasse Field",
     "units": [
       {
-        "class": "ash_hound",
+        "class": "rime_hound",
         "name": "Rime Hound",
         "slot": 1
       },
@@ -281,24 +280,24 @@
     "name": "The Frozen Legion",
     "units": [
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_halberdier",
         "name": "Frozen Halberdier",
         "slot": 1
       },
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_halberdier",
         "name": "Frozen Halberdier",
         "slot": 0,
         "encased": true
       },
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_halberdier",
         "name": "Frozen Halberdier",
         "slot": 2,
         "encased": true
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "frozen_crossbowman",
         "name": "Frozen Crossbowman",
         "slot": 7
       }
@@ -321,17 +320,17 @@
         "slot": 1
       },
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_halberdier",
         "name": "Frozen Halberdier",
         "slot": 0
       },
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_halberdier",
         "name": "Frozen Halberdier",
         "slot": 2
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "frozen_crossbowman",
         "name": "Frozen Crossbowman",
         "slot": 7
       }
@@ -342,12 +341,12 @@
     "name": "Ice Chapel",
     "units": [
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 1
       },
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 0
       },
@@ -356,7 +355,7 @@
         "slot": 2
       },
       {
-        "class": "fen_witchling",
+        "class": "rime_witch",
         "name": "Rime Witch",
         "slot": 7
       }
@@ -367,12 +366,12 @@
     "name": "Serac Maze",
     "units": [
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 1
       },
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 0
       },
@@ -381,7 +380,7 @@
         "slot": 2
       },
       {
-        "class": "ash_hound",
+        "class": "rime_hound",
         "name": "Rime Hound",
         "slot": 4
       }
@@ -392,17 +391,17 @@
     "name": "Frostbite Ridge",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "clan_axeman",
         "name": "Clan Axeman",
         "slot": 1
       },
       {
-        "class": "moor_raider",
+        "class": "clan_axeman",
         "name": "Clan Axeman",
         "slot": 0
       },
       {
-        "class": "fen_witchling",
+        "class": "rime_witch",
         "name": "Rime Witch",
         "slot": 7
       },
@@ -417,17 +416,17 @@
     "name": "The Gate Road",
     "units": [
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_halberdier",
         "name": "Frozen Halberdier",
         "slot": 1
       },
       {
-        "class": "morvane_halberdier",
+        "class": "frozen_halberdier",
         "name": "Frozen Halberdier",
         "slot": 0
       },
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 2
       },
@@ -465,17 +464,17 @@
     "condition": "darkness",
     "units": [
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 1
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 0
       },
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 2
       }
@@ -485,22 +484,22 @@
     "name": "Old Mine",
     "units": [
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 1
       },
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 0
       },
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 2
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 4
       }
@@ -525,7 +524,7 @@
         "slot": 0
       },
       {
-        "class": "stonebound_warden",
+        "class": "shardwalker",
         "slot": 2
       },
       {
@@ -539,7 +538,7 @@
     "caveIn": "cave_in_heavy",
     "units": [
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 1
       },
@@ -558,22 +557,22 @@
     "name": "The Undercroft",
     "units": [
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 1
       },
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 0
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 2
       },
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 4
       }
@@ -583,17 +582,17 @@
     "name": "Fungus Cavern",
     "units": [
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 1
       },
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 0
       },
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 2
       },
@@ -618,7 +617,7 @@
         "slot": 6
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 1
       }
@@ -628,17 +627,17 @@
     "name": "Rune Vault",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 1
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 0
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 2
       }
@@ -651,12 +650,12 @@
     "lantern": "lantern",
     "units": [
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 1
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 0
       },
@@ -677,12 +676,12 @@
     "condition": "darkness",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 1
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 0
       },
@@ -699,7 +698,7 @@
     "condition": "darkness",
     "units": [
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 1
       },
@@ -755,7 +754,7 @@
     "condition": "darkness",
     "units": [
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 1
       },
@@ -790,12 +789,12 @@
         "slot": 6
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 8
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 1
       }
@@ -827,7 +826,7 @@
         "slot": 8
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 1
       },
@@ -842,12 +841,12 @@
     "condition": "darkness",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 1
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 0
       }
@@ -860,12 +859,12 @@
     "caveIn": "cave_in_heavy",
     "units": [
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 1
       },
       {
-        "class": "salt_crab",
+        "class": "cave_crawler",
         "name": "Cave Crawler",
         "slot": 0
       },
@@ -874,7 +873,7 @@
         "slot": 2
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 4
       }
@@ -885,7 +884,7 @@
     "condition": "darkness",
     "units": [
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 1
       },
@@ -894,7 +893,7 @@
         "slot": 0
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 2
       },
@@ -910,17 +909,17 @@
     "condition": "darkness",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 1
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 0
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 7
       },
@@ -936,17 +935,17 @@
     "condition": "heat",
     "units": [
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 1
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 0
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 2
       },
@@ -962,12 +961,12 @@
     "condition": "heat",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 1
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 0
       },
@@ -987,17 +986,17 @@
     "condition": "heat",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 1
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 0
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 7
       }
@@ -1019,7 +1018,7 @@
         "slot": 7
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 6
       },
@@ -1028,7 +1027,7 @@
         "slot": 0
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 1
       }
@@ -1043,17 +1042,17 @@
         "slot": 1
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 0
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 2
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 7
       }
@@ -1064,12 +1063,12 @@
     "condition": "heat",
     "units": [
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 1
       },
       {
-        "class": "ghoul",
+        "class": "wight",
         "name": "Wight",
         "slot": 0
       },
@@ -1106,7 +1105,7 @@
         "slot": 1
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 0
       },
@@ -1115,7 +1114,7 @@
         "slot": 2
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 4
       }
@@ -1126,17 +1125,17 @@
     "condition": "heat",
     "units": [
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 1
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 0
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 2
       }
@@ -1147,22 +1146,22 @@
     "condition": "heat",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 1
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 0
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 7
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 6
       }
@@ -1188,12 +1187,12 @@
         "slot": 8
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 4
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 1
       }
@@ -1204,17 +1203,17 @@
     "condition": "heat",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 1
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 0
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 2
       }
@@ -1225,17 +1224,17 @@
     "condition": "heat",
     "units": [
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 1
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 0
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 2
       },
@@ -1251,22 +1250,22 @@
     "condition": "heat",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 1
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 0
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 7
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 2
       }
@@ -1277,7 +1276,7 @@
     "condition": "heat",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 1
       },
@@ -1286,7 +1285,7 @@
         "slot": 0
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 2
       },
@@ -1302,27 +1301,27 @@
     "condition": "heat",
     "units": [
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 1
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 0
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 2
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 4
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 7
       }
@@ -1343,17 +1342,17 @@
         "slot": 6
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 8
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 4
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 1
       }
@@ -1364,17 +1363,17 @@
     "condition": "heat",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 1
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 0
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 2
       }
@@ -1396,17 +1395,17 @@
         "slot": 1
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 0
       },
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 2
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 7
       }
@@ -1417,22 +1416,22 @@
     "condition": "heat",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "cinder_knight",
         "name": "Cinder Knight",
         "slot": 1
       },
       {
-        "class": "pitch_boiler",
+        "class": "pyre_witch",
         "name": "Pyre Witch",
         "slot": 7
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "name": "Forge Golem",
         "slot": 0
       },
       {
-        "class": "ash_hound",
+        "class": "molten_hound",
         "name": "Molten Hound",
         "slot": 2
       }
@@ -1442,22 +1441,22 @@
     "name": "Clan Steading",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "clan_axeman",
         "name": "Clan Axeman",
         "slot": 1
       },
       {
-        "class": "moor_raider",
+        "class": "clan_axeman",
         "name": "Clan Axeman",
         "slot": 0
       },
       {
-        "class": "censer_monk",
+        "class": "clan_skald",
         "name": "Clan Skald",
         "slot": 7
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "clan_slinger",
         "name": "Clan Slinger",
         "slot": 6
       }
@@ -1467,12 +1466,12 @@
     "name": "The Broken Lift",
     "units": [
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 1
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "name": "Hollow Warden",
         "slot": 0
       },
@@ -1506,12 +1505,12 @@
         }
       },
       {
-        "class": "ash_hound",
+        "class": "rime_hound",
         "slot": 0,
         "name": "Rime Hound"
       },
       {
-        "class": "ash_hound",
+        "class": "rime_hound",
         "slot": 2,
         "name": "Rime Hound"
       }
@@ -1534,12 +1533,12 @@
         }
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "slot": 0,
         "name": "Hollow Warden"
       },
       {
-        "class": "stonebound_warden",
+        "class": "hollow_warden",
         "slot": 2,
         "name": "Hollow Warden"
       },
@@ -1565,12 +1564,12 @@
         }
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "slot": 0,
         "name": "Forge Golem"
       },
       {
-        "class": "shieldwarden",
+        "class": "forge_golem",
         "slot": 2,
         "name": "Forge Golem"
       }

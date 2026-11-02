@@ -215,6 +215,11 @@ const ratio = (c: Combatant) => (c.maxHp > 0 ? c.hp / c.maxHp : 0);
 const foeSideOf = (c: Combatant) => (c.side === 'party' ? 'enemy' : 'party');
 const ATTACK_TARGETS = ['single_enemy', 'area_enemies', 'all_enemies', 'random_enemies', 'everyone'];
 
+/** Saf şifa skill'inin zemini (Healing Rain; hasar etkisi yok): ham şifa gücünde hot gibi sayılır. Judgment'ın Holy Ground'u (hasarlı skill) bu ölçüye eskisi gibi girmez. */
+export function isHealSkillGround(battle: Battle, skill: SkillDef, e: SkillDef['effects'][number]): e is Extract<SkillDef['effects'][number], { type: 'ground' }> {
+  return e.type === 'ground' && battle.isHealGround(e.ground) && skill.effects.some((x) => x.type === 'heal') && !skill.effects.some((x) => x.type === 'damage');
+}
+
 /**
  * Skill'in tek kullanımlık HAM değeri (zırhsız, kritiksiz): hasar/şifa stat x güç toplamı, tur şifası x tur, kalkan x 0,5.
  * `u` verilirse (YZ kapsamı 2026-10-29) hasar etkileri birimin sınıf pasifi çarpanıyla (Berserker eksik can, Sharpshooter sıra, Pealing Bells çan + powerPerBell).
@@ -227,7 +232,7 @@ export function skillRawValue(battle: Battle, stats: Combatant['stats'], skill: 
       const bellPow = u && e.powerPerBell && (u.bells ?? 0) > 0 ? e.powerPerBell * (u.bells ?? 0) : 0;
       v += (attributePower(stats, e.scale, battle.formulas) * (e.power + bellPow) + bonusScaleRaw(e.bonusScale, stats) * (stats.spellPowerMult ?? 1)) * m;
     } else if (e.type === 'heal') v += attributePower(stats, e.scale, battle.formulas) * e.power;
-    else if (e.type === 'hot') v += attributePower(stats, e.scale, battle.formulas) * e.power * e.turns;
+    else if (e.type === 'hot' || isHealSkillGround(battle, skill, e)) v += attributePower(stats, e.scale, battle.formulas) * e.power * e.turns; // şifa skill'inin zemini (Healing Rain) hot gibi
     else if (e.type === 'shield') v += attributePower(stats, e.scale, battle.formulas) * e.power * 0.5;
   }
   return v;

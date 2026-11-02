@@ -331,6 +331,22 @@ export const ITEM_ICONS: Record<string, Draw> = {
     p.rect(13.8, 13.2, 4.4, 1.4, 'a');
   },
 
+  /** Hammers: savaş çekici (dikdörtgen demir baş, düz vuruş yüzleri, meşe sap; nadirlik: boyun bileziği). Boyalı görseli olmayan çekicin yedeği. */
+  hammer: (g) => {
+    const p = pen(g, { deg: 40, s: 0.9, tx: 1, ty: 1.5 });
+    p.stroke(16, 12, 16, 30.5, 'b', 2.3);
+    for (let y = 23.5; y <= 29.5; y += 1.5) p.line(14.8, y, 17.2, y + 0.6, 'k', 0.5);
+    p.disc(16, 30.8, 1.6, 'm');
+    // baş
+    p.rect(6, 3, 20, 9.6, 'd');
+    p.rect(6, 3, 20, 3.2, 'l');
+    p.rect(6, 3, 2.4, 9.6, 'm');
+    p.rect(23.6, 3, 2.4, 9.6, 'm');
+    p.line(6.8, 3.8, 6.8, 11.8, 'w', 0.5);
+    p.rect(14.2, 1.2, 3.6, 2, 'm');
+    p.rect(13.8, 12.6, 4.4, 1.6, 'a');
+  },
+
   /** Oak shield: çelik kenarlı, tahta kaplamalı meşe kalkan; ortada demir umbo, nadirlik renkli boya şeridi. */
   shield: (g) => {
     const top = 2.4;
@@ -559,7 +575,7 @@ export const ITEM_ICONS: Record<string, Draw> = {
 export const SLOT_ICON: Readonly<Record<string, string>> = { weapon: 'axe', offhand: 'shield', helm: 'helm', armor: 'mail', gloves: 'gloves', boots: 'boots', ring: 'ring', trinket: 'amulet' };
 
 /** Silah ailesi (data/items.json > weaponFamilies) -> ikon. */
-export const FAMILY_ICON: Readonly<Record<string, string>> = { axes: 'axe', maces: 'mace', hammers: 'mace', bows: 'bow', daggers: 'dagger', staves: 'staff', charms: 'charms' };
+export const FAMILY_ICON: Readonly<Record<string, string>> = { axes: 'axe', maces: 'mace', hammers: 'hammer', bows: 'bow', daggers: 'dagger', staves: 'staff', charms: 'charms' };
 
 /** Ödül kartı türü -> ikon. */
 export const REWARD_ICON = { gold: 'gold', heal: 'draught', feast: 'feast' } as const;
@@ -583,6 +599,7 @@ export const ITEM_ICON_LABEL: Readonly<Record<string, string>> = {
   boots: 'Boots',
   amulet: 'Trinket',
   ring: 'Ring',
+  hammer: 'Weapon: hammer',
 };
 
 export const ITEM_ICON_NAMES: readonly string[] = Object.keys(ITEM_ICONS);

@@ -66,7 +66,7 @@ export function mountPalette(cat: Catalog): SectionApi {
       goldHost.append(...Object.entries(GOLD).map(([name, v]) => sw({ name, hex: hex(v) }, 'gold frame')));
       fontHost.append(
         searchable(h('div', { class: 'font-card' }, h('div', { class: 'small muted', text: 'Serif (SERIF): class names, headings' }), h('div', { class: 'font-sample', style: { 'font-family': SERIF }, text: 'Paladin - Warrior - Treant 0123456789' }), h('div', { class: 'mono small muted', text: SERIF })), 'font serif heading'),
-        searchable(h('div', { class: 'font-card' }, h('div', { class: 'small muted', text: 'System sans (menus, debug)' }), h('div', { class: 'font-sample', style: { 'font-family': 'system-ui, sans-serif' }, text: 'Fireball - Rejuvenate - Meteor 0123456789' }), h('div', { class: 'mono small muted', text: 'system-ui, sans-serif' })), 'font system sans menu'),
+        searchable(h('div', { class: 'font-card' }, h('div', { class: 'small muted', text: 'System sans (menus, debug)' }), h('div', { class: 'font-sample', style: { 'font-family': 'system-ui, sans-serif' }, text: 'Fireball - Healing Rain - Meteor 0123456789' }), h('div', { class: 'mono small muted', text: 'system-ui, sans-serif' })), 'font system sans menu'),
       );
       refresh();
     });

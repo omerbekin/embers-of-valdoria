@@ -1332,15 +1332,33 @@
   transition: opacity 0.16s, transform 0.2s var(--ease);
 }
 
-/* Zemin ipucu: sıra göstergesinin altında, hücreleri kapatmaz; telefonda okunur boyda (çok zeminli hücrede ekrana sığsın diye büyümez) */
+/* Zemin ipucu (Ömer 2026-11-02): birim kartının hemen altında, kartla aynı sol kenar ve aynı genişlik; konum ve genişlik battle-hud.ts > placeTipTop
+   satır içi yazar (kart yoksa düşman kartının üst yuvasında durur). Alt çubuğa girmez: sığmazsa kartın kaydırma kutusu kısalır, ipucu tam okunur kalır. */
 .bh-ctip.at-top {
-  top: 170px;
   bottom: auto;
+  transform: translate(0, 6px);
 }
 
-html.short .bh-ctip.at-top:not(.at-many) {
-  zoom: 1.6;
-  top: 106px;
+.bh-ctip.at-top.on {
+  transform: none;
+}
+
+/* çerçeve (.bt) kapla aynı genişlikte: kartın .bt'siyle aynı kural */
+.bh-ctip.at-top .bt {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+/* telefon: zemin ipucu kart genişliğinde (760); yazı karttakiyle aynı gerçek-px boy (zoom yok); çok zeminli hücrede (at-many) sığsın diye küçük boy kalır */
+html.short .bh-ctip.at-top:not(.at-many) .bt {
+  --fs: calc(10 * var(--rp));
+  --fs-s: calc(9 * var(--rp));
+  --bu: 1px;
+}
+
+html.short .bh-ctip.at-top:not(.at-many) .bt-title {
+  font-size: calc(13 * var(--rp));
 }
 
 /* --- global eylemler: skill'lerin hemen sağında dikey sütun --- */
@@ -1465,9 +1483,13 @@ html.short .bh-ctip.at-top:not(.at-many) {
 
 /* --- birim kartı: düşman sağda, dost solda; her tarafta biri sabitlenebilir --- */
 /* "B · Band + Rows" (Ömer 2026-10-18, taslak stats-panels.html): çerçeve ortak A-Band bileşeninin (.bt, src/ui/band-tip.ts); kart yalnızca konum ve kaydırma. */
+/* --ct = kartın üst kenarı; --lim = kart içeriğinin alt sınırı (alt çubuğun üst kenarı 910, kaydırma kutusunun 11 px payı da içinde kalsın diye 896).
+   --ct: sıra çubuğunun (alt kenarı 110) altı + stat panelinin 8 px payı + 8 px boşluk = 126; sol kartın üstündeki dalga etiketi 117'de biter. */
 .bh-card {
+  --ct: 126px;
+  --lim: 896px;
   position: absolute;
-  top: 172px;
+  top: var(--ct);
   left: 22px;
   width: 500px;
   opacity: 0;
@@ -1485,9 +1507,9 @@ html.short .bh-ctip.at-top:not(.at-many) {
   transition: opacity 0.18s, transform 0.22s var(--ease);
 }
 
-/* Kart alt çubuğa (üst kenarı 910) taşmaz; iç kutu kayar, köşe elmasları / halka kesilmesin ve 1 px taşıp kaydırma çubuğu çıkarmasın diye 11 px pay (negatif kenar boşluğu geri alır) */
+/* Kart alt çubuğa (üst kenarı 910) taşmaz (--lim); iç kutu kayar, köşe elmasları / halka kesilmesin ve 1 px taşıp kaydırma çubuğu çıkarmasın diye 11 px pay (negatif kenar boşluğu geri alır) */
 .bh-card-sc {
-  max-height: 710px;
+  max-height: calc(var(--lim) - var(--ct) + 22px);
   margin: -11px;
   padding: 11px;
   overflow-y: auto;
@@ -1626,7 +1648,7 @@ html.short .bh-ctip.at-top:not(.at-many) {
   z-index: 1;
   box-sizing: border-box;
   width: 346px;
-  max-height: 726px;
+  max-height: calc(var(--lim) - var(--ct) + 8px);
   padding: 8px;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -3229,12 +3251,8 @@ html.short .bh-plink {
 
 /* telefon: birim kartı (B · Band + Rows) tek sütun satırlar; üst çubuğun (sıra çubuğu + Menu, ~140 birim) altından alt bandın (910) üstüne kadar; içi kayar */
 html.short .bh-card {
-  top: 150px;
+  --ct: 150px;
   width: 760px;
-}
-
-html.short .bh-card-sc {
-  max-height: 740px;
 }
 
 html.short .bh-card .bt {
@@ -3270,7 +3288,6 @@ html.short .bh-av-l {
 
 html.short .bh-cstats {
   width: calc(180 * var(--rp) + 16px);
-  max-height: 756px;
 }
 
 html.short .bh-scol {

@@ -621,3 +621,92 @@ html.reduced-motion .bt-pop.on {
 button:disabled[data-bt] {
   pointer-events: none;
 }
+
+/* Skill ipucu A (Ömer 2026-11-02; taslak skill-tips-2 #a): kısa satırlar + "More" düğmesi; .open = tam metin kısanın yerini alır */
+.bt .bt-d {
+  color: var(--bt-dim, #a8977a);
+  font-weight: 500;
+}
+
+.bt-short,
+.bt-full {
+  display: contents;
+}
+
+.bt:not(.open) .bt-full,
+.bt.open .bt-short {
+  display: none;
+}
+
+.bt-morerow {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 max(12px, calc(18 * var(--bu))) max(8px, calc(10 * var(--bu)));
+}
+
+.bt-morebtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  min-height: max(34px, calc(44 * var(--rp, 1px)));
+  padding: 0 1.1em;
+  background: rgba(30, 22, 14, 0.9);
+  border: 1px solid var(--bt-line2);
+  color: #e0702a;
+  font: 600 max(11px, calc(13 * var(--bu))) var(--bt-disp);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.bt-morebtn:hover {
+  border-color: #e0702a;
+  background: rgba(224, 112, 42, 0.16);
+}
+
+.bt-morebtn .dia {
+  width: 0.55em;
+  height: 0.55em;
+  transform: rotate(45deg);
+  background: #e0702a;
+}
+
+.bt-morebtn .l,
+.bt.open .bt-morebtn .m {
+  display: none;
+}
+
+.bt.open .bt-morebtn .l {
+  display: inline;
+}
+
+/* savaş HUD'ında skill ipucu tıklanabilir (More); boşluk köprüsü: fare skill düğmesinden ipucuna geçerken ipucu kapanmasın */
+.bh-sktip .bt {
+  pointer-events: auto;
+}
+
+.bh-sktip:has(> .bt .bt-morebtn)::before {
+  display: block;
+  content: '';
+  position: absolute;
+  inset: -20px 0;
+  pointer-events: auto;
+}
+
+/* tıklanamayan kaplarda (kart yanı yüzen ipucu, bağlam ipucu) düğme yok: tam metin hep açık */
+.bh-ftip .bt-morerow,
+.bh-ctip .bt-morerow {
+  display: none;
+}
+
+.bh-ftip .bt .bt-full,
+.bh-ctip .bt .bt-full {
+  display: contents;
+}
+
+.bh-ftip .bt .bt-short,
+.bh-ctip .bt .bt-short {
+  display: none;
+}

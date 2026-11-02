@@ -67,6 +67,7 @@ export function damageSpecFor(
   return {
     damageType: effect.damageType,
     scale: effect.scale,
+    ...(effect.element ? { element: effect.element } : {}),
     power: ((effect.powerPerRage ? effect.power + effect.powerPerRage * Math.max(0, rageSpent ?? actor.rage ?? 0) : effect.power) + (effect.powerPerBell && bells > 0 ? effect.powerPerBell * bells : 0)) * mult,
     ...(bonus ? { bonus } : {}),
     ...(ignore ? { ignoreDefense: ignore } : {}),

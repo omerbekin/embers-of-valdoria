@@ -56,7 +56,7 @@ describe('hero card line while an item is hovered', () => {
     const l = heroItemLine(hero('mage'), inst('woodcutters_axe'));
     expect(l.tone).toBe('no');
     expect(l.text).toBe("Can't use Axes");
-    expect(heroItemLine(hero('paladin'), inst('emberbrand')).text).toBe("Can't use Swords");
+    expect(heroItemLine(hero('paladin'), inst('emberbrand')).text).toBe("Can't use Axes");
     expect(heroItemLine(hero('mage'), inst('kite_shield')).text).toBe("Can't use Shields");
   });
   it('an empty slot gains stats: green "+N STAT" parts (at most two)', () => {

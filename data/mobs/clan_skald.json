@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Komşu: bandit_crossbowman. Kendi çizimi. Temel saldırı Sling Stone (corsair_slinger ile ortak): belgedeki iki skill de bekleme süreli, mob kuralı bedelsiz temel saldırı ister.",
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı; hc_12'ye bağlı (Ömer 2026-11-02), diğer düğümler yer tutucuda. Komşu: bandit_crossbowman. Kendi çizimi. Temel saldırı Sling Stone (corsair_slinger ile ortak): belgedeki iki skill de bekleme süreli, mob kuralı bedelsiz temel saldırı ister.",
   "id": "clan_skald",
   "name": "Clan Skald",
   "family": "bandits",

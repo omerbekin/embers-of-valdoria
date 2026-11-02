@@ -10,7 +10,8 @@ export function dismissOnBackdrop(overlay: HTMLElement, panel: HTMLElement | ((t
     if (!(t instanceof Node)) return false;
     if (t instanceof Element && t.closest('.nav-btn')) return true;
     // Panelin dışında ama örtünün çocuğu olan açık ipuçları (skill ağacı önizlemesi + / − düğmeleri) zemin sayılmaz
-    if (t instanceof Element && t.closest('.tt-tip')) return true;
+    // (skill ipucunun "More" düğmesi de: Gear'ın yüzen skill ipucu örtünün çocuğu, panelin dışında)
+    if (t instanceof Element && (t.closest('.tt-tip') || t.closest('.gr-sktip-fl'))) return true;
     return typeof panel === 'function' ? panel(t) : panel.contains(t);
   };
   let downOutside = false;

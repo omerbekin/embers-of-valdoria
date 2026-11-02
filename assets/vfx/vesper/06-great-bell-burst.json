@@ -1,0 +1,27 @@
+{
+  "slug": "06-great-bell-burst",
+  "title": "Great Bell of Valdoria: holy column with lightning on a cell",
+  "source": "assets/source/vesper-vfx/06-great-bell-burst.png",
+  "frames": 8,
+  "fps": 14,
+  "duration_ms": 571,
+  "frame_size": [
+    320,
+    320
+  ],
+  "sheet_size": [
+    1280,
+    640
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 0,
+  "pivot": [
+    160,
+    301
+  ],
+  "align": "ground"
+}

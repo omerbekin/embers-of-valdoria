@@ -137,7 +137,7 @@ describe('birim skill katmanı (aynı id)', () => {
     const roarRatio = (roar.skills!.taunt!.effects[0] as unknown as { breakRatio: number }).breakRatio; // Hollow Roar + Bellow 3 (veriden)
     expect(roarRatio).toBeCloseTo((D.nodes['2.fb']!.fx![2] as unknown as { v: number }).v + 3 * (D.nodes['2.f1']!.fx![0] as unknown as { v: number }).v, 9);
     expect(st(d1!.uid).breakAt).toBe(Math.max(1, Math.round(d1!.maxHp * roarRatio)));
-    expect(st(d2!.uid).breakAt).toBe(Math.max(1, Math.round(d2!.maxHp * 0.25)));
+    expect(st(d2!.uid).breakAt).toBe(Math.max(1, Math.round(d2!.maxHp * 0.3)));
     expect(st(d2!.uid).allyMult).toBe(0.9);
     expect(b.skill('taunt', d1!.uid)!.cost.amount).toBe((D.nodes['2.fb']!.fx![0] as unknown as { v: number }).v);
   });

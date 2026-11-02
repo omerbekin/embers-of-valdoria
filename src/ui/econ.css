@@ -155,17 +155,17 @@ html.reduced-motion .ec-hero, html.reduced-motion .ec-card { transition: none; }
 .dt-block { font: 600 max(12px, calc(20 * var(--u))) var(--g-body); color: #e0907a; }
 
 /* telefon (html.short): gercek px, dokunma >= 44; sayfa kaymaz, yalniz plaka alani kayar */
-html.short .ec-panel.sharp { width: 100%; padding: 8px 12px; gap: 6px; }
-html.short .ec-panel.sharp .ec-head { gap: 8px; flex-wrap: nowrap; }
-html.short .ec-panel.sharp .gr-title { font-size: 20px; }
+html.short .ec-panel.strip { width: 100%; padding: 8px 12px; gap: 6px; }
+html.short .ec-panel.strip .ec-head { gap: 8px; flex-wrap: nowrap; }
+html.short .ec-panel.strip .gr-title { font-size: 20px; }
 html.short .ct { flex: 1; min-width: 0; justify-content: center; gap: 6px; order: 0; flex-basis: auto; }
 html.short .ct-b { padding: 0 10px; font-size: 11px; letter-spacing: .06em; gap: 5px; }
 html.short .ct-b img { width: 20px; height: 20px; } html.short .ct-b i { width: 20px; font-size: 13px; }
 html.short .ec-sharp { gap: 6px; padding: 2px 4px 2px 0; }
-html.short .ec-sharp .ec-foot { padding-top: 6px; gap: 8px; flex-wrap: nowrap; }
-html.short .ec-sharp .ec-foot .ec-note { display: none; }
-html.short .ec-sharp .ec-foot .ec-why { flex: 1; min-width: 0; font-size: 11px; }
-html.short .ec-sharp .gr-btn { padding: 0 16px; font-size: 12px; }
+html.short .ec-panel.strip .ec-foot { padding-top: 6px; gap: 8px; flex-wrap: nowrap; }
+html.short .ec-panel.strip .ec-foot .ec-note { display: none; }
+html.short .ec-panel.strip .ec-foot .ec-why { flex: 1; min-width: 0; font-size: 11px; }
+html.short .ec-panel.strip .gr-btn { padding: 0 16px; font-size: 12px; }
 html.short .a-grid { grid-template-columns: 92px minmax(0, 1fr) 240px; grid-template-rows: minmax(0, 1fr); grid-template-areas: "rail plates detail"; gap: 8px; }
 html.short .a-plates, html.short .a-detail { overflow-y: auto; overflow-x: hidden; min-height: 0; scrollbar-width: thin; }
 html.short .a-grid { overflow: hidden; }

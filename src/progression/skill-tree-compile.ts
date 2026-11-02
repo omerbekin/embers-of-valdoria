@@ -1137,7 +1137,8 @@ function applyTarget(fx: Extract<TreeFx, { h: 'target' }>, acc: Acc, def: SkillD
     const d = needDef();
     if (fx.groundWide !== 'touch') throw new TreeFxError('groundWide must be "touch"');
     const gs = d.effects.filter((e) => e.type === 'ground') as Array<Extract<SkillEffect, { type: 'ground' }>>;
-    if (!gs.length) throw new TreeFxError(`${d.id} leaves no ground`);
+    // Hoşgörülü derleme: birlikte alınan başka düğüm zemini kaldırdıysa (Desperate Sap) sessizce atlanır
+    if (!gs.length && !acc.lenient) throw new TreeFxError(`${d.id} leaves no ground`);
     for (const g of gs) g.treeWide = 'touch';
   }
   if (fx.overflow !== undefined) {

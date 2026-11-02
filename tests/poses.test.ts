@@ -156,8 +156,34 @@ describe('silah görseli seçimi (aile + nadirlik + tutuş + ikinci el)', () => 
     expect(weaponFor('warrior', { id: 'dane_axe', family: 'axes', rarity: 'epic', grip: 'two' })).toEqual({ family: 'axes', look: 'ornate', glow: POSES.rarityGlow['epic'] });
     // 'Axes & Swords' ailesindeki kılıçlar kılıç görseli alır
     expect(weaponFor('warrior', { id: 'arming_sword', family: 'axes', rarity: 'rare' })).toEqual({ family: 'swords', look: 'engraved', glow: POSES.rarityGlow['rare'] });
-    expect(weaponFor('warrior', { id: 'emberbrand', family: 'axes', rarity: 'legendary' })).toEqual({ family: 'swords', look: 'ornate', glow: POSES.rarityGlow['legendary'] });
+    // Emberbrand balta (Ömer 2026-11-02): itemArt eşlemesi yok, aileden balta görseli
+    expect(POSES.itemArt['emberbrand']).toBeUndefined();
+    expect(weaponFor('warrior', { id: 'emberbrand', family: 'axes', rarity: 'legendary' })).toEqual({ family: 'axes', look: 'ornate', glow: POSES.rarityGlow['legendary'] });
   }));
+
+  it('çekiç ve çift el topuzların kendi el çizimi (Ömer 2026-11-02): item başına tek görünüm, nadirlik yalnızca ton', () => {
+    const pt = 'pose_tester_2';
+    const at = (id: string, rarity: 'common' | 'uncommon' | 'rare' | 'epic') => weaponFor(pt, weaponItem({ uid: id, id, rolls: { rarity, affixes: [] } }))!;
+    const cases = [
+      ['war_hammer', 'hammers', 'warhammer', undefined],
+      ['horsemans_hammer', 'hammers', 'horseman', undefined],
+      ['templars_hammer', 'hammers', 'templar', undefined],
+      ['great_mace', 'mauls', 'greatmace', 'two'],
+      ['long_hafted_mace', 'mauls', 'longhafted', 'two'],
+    ] as const;
+    for (const [id, family, look, grip] of cases)
+      for (const r of ['common', 'uncommon', 'rare', 'epic'] as const) {
+        const w = at(id, r);
+        expect(w, `${id} ${r}`).toMatchObject({ family, look });
+        expect(w.grip, id).toBe(grip);
+        expect(w.tone, `${id} ${r}`).toBe(r === 'rare' ? undefined : r);
+      }
+    // yeni görünümler mauls sırasının sonunda: nadirlik dizini kayan olmaz (Avenger's Maul, War Maul aynen)
+    expect(POSES.weapons['mauls']!.order.slice(0, 3)).toEqual(['maul', 'hammer', 'warmaul']);
+    expect(weaponFor(pt, weaponItem(inst('avengers_maul')))).toEqual({ family: 'mauls', look: 'warmaul', glow: POSES.rarityGlow['legendary'], grip: 'two' });
+    expect(POSES.weapons['hammers']!.hold).toBeUndefined();
+    expect(validatePoses()).toEqual([]);
+  });
 
   it('silahsız: sınıfın varsayılan silahı; gürzler artık kendi görseli; pozsuz sınıf: null (v1 çizimi)', () => v1(() => {
     expect(weaponFor('warrior', null)).toEqual(POSES.classes['warrior']!.defaultWeapon);
@@ -465,7 +491,7 @@ describe('balta ağzı / çekiç yüzü öne bakar (Ömer 2026-10-13 "Warrior ba
   it('tüm v2 gövdelerde, tüm pozlarda: baş yukarıdayken ve elde sarkarken ağız öne (düşmana) bakar', () => {
     for (const id of v2) {
       const def = POSES.classes[id]!;
-      for (const [family, grip] of [['axes', 'one'], ['greataxes', 'two'], ['mauls', 'two']] as const) {
+      for (const [family, grip] of [['axes', 'one'], ['hammers', 'one'], ['greataxes', 'two'], ['mauls', 'two']] as const) {
         const fam = POSES.weapons[family]!;
         for (const [look, side] of Object.entries(fam.edge ?? {}))
           for (const pose of gripFrames(def, grip)) {
@@ -489,9 +515,9 @@ describe('balta ağzı / çekiç yüzü öne bakar (Ömer 2026-10-13 "Warrior ba
 
 describe('hazır tutuş: ağızlı silah YUKARI ve hafif öne (Ömer 2026-10-13 "tek elli kılıç böyle mi tutulur"; hançer istisna: ucu öne)', () => {
   const v2 = Object.entries(POSES.classes).filter(([, d]) => d.grips);
-  it('tek el: axes / swords / maces idle1, step1, guard1 açısı 15..50 (yukarı-öne); daggers 40..90 (ucu öne-yukarı)', () => {
+  it('tek el: axes / swords / maces / hammers idle1, step1, guard1 açısı 15..50 (yukarı-öne); daggers 40..90 (ucu öne-yukarı)', () => {
     for (const [id, def] of v2)
-      for (const family of ['axes', 'swords', 'maces', 'daggers'])
+      for (const family of ['axes', 'swords', 'maces', 'hammers', 'daggers'])
         for (const pose of ['idle1', 'step1', 'guard1']) {
           const look = POSES.weapons[family]!.order[0]!;
           const pl = itemPlacement(def, pose, { family, look }, 'main')!;

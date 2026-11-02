@@ -410,9 +410,16 @@ describe('YZ mekaniği kullanır', () => {
 describe('yerleşim', () => {
   const nodes = Object.entries(ENC).filter(([k]) => k !== '_not');
   const withMob = (id: string) => nodes.filter(([, n]) => n.units?.some((u) => u.class === id)).map(([k]) => k).sort();
-  it('melee moblar seçilen düğümlerde (bölgede 2 düğüm + 1 elit; Delver elitsiz; Vaulter ve Shardwalker elitsiz: hc_12 ve hc_18 kadrosu Ömer seçimi 2026-11-01)', () => {
-    expect(withMob('clan_vaulter')).toEqual(['hc_4', 'hc_6']);
-    expect(withMob('shardwalker')).toEqual(['hc_16', 'hc_19']);
+  it('melee moblar seçilen düğümlerde (bölgede 2 düğüm + 1 elit; Delver elitsiz; Vaulter elit hc_7, Shardwalker elit hc_35: Ömer 2026-11-02, hc_12 ve hc_18 kadrosu değişmez)', () => {
+    expect(withMob('clan_vaulter')).toEqual(['hc_4', 'hc_6', 'hc_7']);
+    expect(withMob('shardwalker')).toEqual(['hc_16', 'hc_19', 'hc_35']);
+    // hc_7'de iki kurt farklı sırada kalır: Pack Rotation çalışır
+    const wolves = ENC['hc_7']!.units.filter((u) => u.class === 'snow_wolf').map((u) => (u as unknown as { slot: number }).slot);
+    expect(wolves).toEqual([2, 4]);
+    for (const k of ['hc_7', 'hc_35']) {
+      expect(ENC[k]!.units.length, k).toBe(4);
+      expect(ENC[k]!.units.filter((u) => u.tier === 'elite').length, k).toBe(1);
+    }
     expect(withMob('hollow_delver')).toEqual(['hc_47', 'hc_53']);
     expect(withMob('gloamstalker')).toEqual(['hc_45', 'hc_50', 'hc_55']);
     expect(withMob('cinderleaper')).toEqual(['hc_59', 'hc_61', 'hc_64']);
@@ -432,8 +439,9 @@ describe('yerleşim', () => {
       if (ids.includes('gloamstalker')) expect(content.battleRulesData.conditions[n.condition!]?.darkness, k).toBeTruthy();
     }
   });
-  it('Shardwalker Blizzard ya da Chilled kaynağıyla çıkar', () => {
-    for (const k of withMob('shardwalker')) expect(ENC[k]!.condition).toBe('blizzard');
+  it('Shardwalker ortak düğümlerde Blizzard ile çıkar; elit hc_35 Chilled kaynaksız (açık soru, Q-NEW 2026-11-02)', () => {
+    for (const k of withMob('shardwalker').filter((x) => x !== 'hc_35')) expect(ENC[k]!.condition).toBe('blizzard');
+    expect(ENC['hc_35']!.condition).toBeUndefined();
   });
   it('hc_46 hem karanlık hem su; 3. dilim bağları (hc_17, Noise) yerinde', () => {
     const c = content.battleRulesData.conditions['dark_tide']!;

@@ -56,7 +56,7 @@ describe('genel zemin kuralı: veri', () => {
   it('eşleme: her zeminin ana durumu (status / su: soak) statuses.json\'da tanımlı', () => {
     const want: Record<string, string> = {
       burning: 'burning', storm: 'chilled', ice_ground: 'slow', flooded: 'soaked', quaking_ground: 'slow', field_of_shafts: 'slow', root_field: 'slow',
-      poison: 'poisoned', holy_fire: 'searing', sanctified_flame: 'searing', lingering_rain: 'bleeding', flooded_planks: 'soaked', holy_ground: 'hallowed', holy_water: 'hallowed',
+      poison: 'poisoned', holy_fire: 'searing', sanctified_flame: 'searing', lingering_rain: 'bleeding', flooded_planks: 'soaked', holy_ground: 'hallowed', holy_water: 'hallowed', healing_rain: 'hallowed',
     };
     for (const [g, s] of Object.entries(want)) {
       const def = content.grounds[g]!;

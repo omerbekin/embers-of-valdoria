@@ -14,6 +14,8 @@ export interface DamageSpec {
   takenMultiplier?: number;
   /** Hibrit ölçek eki (damage.bonusScale): ham can-eşdeğer miktar, skill gücü çarpanları uygulanmış; skill gücü çarpanı (spellPowerMult) ayrıca çarpar. */
   bonus?: number;
+  /** Vuruşun elementi (yalnız sapma için: formulas.damage.elementVariance; hasar çarpanları zaten spec.ts'te işlendi). */
+  element?: string;
 }
 
 export interface Range {
@@ -32,9 +34,19 @@ function baseDamage(attacker: Stats, defender: Stats, spec: DamageSpec, formulas
   return raw * (1 - armorReduction(armor, formulas)) * (spec.takenMultiplier ?? 1);
 }
 
+/**
+ * Bu vuruşun sapması: elemente özel değer (şimşek ±%50) yoksa genel değer. Zar, önizleme aralığı ve YZ öldürme ihtimali (önizlemeden okur) TEK bu yoldan geçer.
+ * Sapma simetrik olduğu için ortalama değişmez; yalnız taban hasar minDamage'a çok yakınsa alt kırpma ortalamayı çok az yukarı iter.
+ */
+export function damageVariance(spec: Pick<DamageSpec, 'element'>, formulas: Pick<Formulas, 'damage'>): number {
+  const own = spec.element !== undefined ? formulas.damage.elementVariance?.[spec.element] : undefined;
+  return own ?? formulas.damage.variance;
+}
+
 /** Hasarın alabileceği en düşük, en yüksek ve ortalama değer (kritik hariç). Rastgelelik kullanmaz. */
 export function damageRange(attacker: Stats, defender: Stats, spec: DamageSpec, formulas: Formulas): Range {
-  const { variance, minDamage } = formulas.damage;
+  const variance = damageVariance(spec, formulas);
+  const { minDamage } = formulas.damage;
   const base = baseDamage(attacker, defender, spec, formulas);
   const clamp = (v: number) => Math.max(minDamage, Math.round(v));
   return { min: clamp(base * (1 - variance)), max: clamp(base * (1 + variance)), avg: clamp(base) };
@@ -42,7 +54,8 @@ export function damageRange(attacker: Stats, defender: Stats, spec: DamageSpec, 
 
 /** Zar atılmış hasar (±sapma, kritik HARİÇ; kritik ayrıca rollCrit ile son çarpan olarak uygulanır). */
 export function rollDamage(attacker: Stats, defender: Stats, spec: DamageSpec, formulas: Formulas, rng: Rng): number {
-  const { variance, minDamage } = formulas.damage;
+  const variance = damageVariance(spec, formulas);
+  const { minDamage } = formulas.damage;
   const base = baseDamage(attacker, defender, spec, formulas);
   return Math.max(minDamage, Math.round(base * (1 + (rng.next() * 2 - 1) * variance)));
 }

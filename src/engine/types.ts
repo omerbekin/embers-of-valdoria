@@ -252,7 +252,7 @@ export type PassiveEffect =
    * Bölge III mob / boss pasifleri (YM20-YM23, campaign-dev 2026-10-17; mob-plan.md 10.5). Var olan kancaların yeni kullanıcıları.
    */
   /** YM20 Close Ranks: aynı tahtada aynı SIRADAKİ (row) her diğer canlı (sıra alan) dost için alınan TÜM hasar x(1 - perAlly) (toplamsal: 2 dostta 1 - 2 x perAlly). */
-  | { type: 'closeRanks'; perAlly: number }
+  | { type: 'closeRanks'; perAlly: number; /** Frozen Ranks (hc_18 eşlikçileri): bu durumlar da tutmaz */ immune?: string[] }
   /** YM21 Blood Scent: hedefin canı maks canın `below` oranının ALTINDAYKEN verilen hasar x(1 + bonus). */
   | { type: 'bloodScent'; below: number; bonus: number }
   /**
@@ -1680,7 +1680,8 @@ export interface Formulas {
   scaling: Record<Attribute, number>;
   /** Zırh azalması = armor / (armor + k). */
   armor: { k: number };
-  damage: { variance: number; minDamage: number };
+  /** elementVariance: elemente özel sapma (şimşek ±%50); yoksa `variance` (formulas.ts > damageVariance). */
+  damage: { variance: number; elementVariance?: Record<string, number>; minDamage: number };
   heal: { variance: number; minHeal: number };
   /** Menzil (docs/design/range.md): `default` = verisinde `range` olmayan birimin taban menzili. */
   range?: { enabled?: boolean; default: number };
@@ -1878,6 +1879,8 @@ export interface GroundDef {
   heal?: boolean;
   /** Harita 2 (M-B Flooded): bu zeminin hücrelerindeki listelenen zeminler söner (Flooded -> Burning ground); sönen hücreye yenisi de tutmaz. */
   quenches?: string[];
+  /** true: ıslatmayan su (Healing Rain): tepkimede bağlantı ve söndürmede su sayılır, Soaked vermez; Live Water / isWaterSkill `soak`a bakar. */
+  water?: boolean;
   /**
    * Harita 2 (M-B, Ömer 2026-10-27): su zemini; hücresindeki HER birim (yardımcı nesne hariç) `soak` durumunu (Soaked) alır; çevre etkisi (direnç
    * zarı yok). Genel zemin kuralı (2026-10-29): Soaked suda kaldıkça sürer, sudan çıkınca o an kalkar (eski soakTurns kalktı).

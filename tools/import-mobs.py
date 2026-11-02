@@ -136,6 +136,16 @@ HEADS = {
     'hearthwarden': (153, 0, 212),
     'ember_of_the_first_hearth': (249, 0, 219),
     'snowfather': (150, 0, 217),
+    # Harita 3 tamamlama (2026-11-02, Codex imagegen; magenta zemin key-chroma ile saydam, sağa bakar)
+    'shardwalker': (618, 0, 330),
+    'frozen_halberdier': (389, 140, 300),
+    'frozen_crossbowman': (338, 0, 280),
+    'clan_slinger': (719, 71, 300),
+    'cinderleaper': (879, 31, 330),
+    'gloamstalker': (616, 0, 330),
+    'hollow_delver': (452, 0, 380),
+    'slagcart_golem': (560, 0, 420),
+    'clan_vaulter': (583, 62, 300),
     # /Harita 3 kadrosu
     'pit_champion_gorr': (412, 0, 300),  # 2026-10-27 kendi çizimi (önceden Bandit Chief)
     'inquisitor_captain_vell': (400, 40, 275),  # 2026-10-27 kendi çizimi (önceden Oathsworn Brother)

@@ -407,13 +407,23 @@ describe('içerik', () => {
     expect(content.mobs['wight']!.spriteId).toBe('ghoul');
     expect(content.mobs['rime_hound']!.spriteId).toBe('ash_hound');
     expect(content.mobs['molten_hound']!.spriteId).toBe('ash_hound');
-    expect(content.mobs['clan_slinger']!.spriteId).toBe('bandit_crossbowman');
+    expect(content.mobs['clan_slinger']!.spriteId).toBe('clan_slinger'); // kendi çizimi (2026-11-02)
     expect(content.mobs['rime_witch']!.spriteId).toBe('fen_witchling');
     expect(content.mobs['hollow_warden']!.spriteId).toBe('stonebound_warden');
   });
-  it('karşılaşmalar değişmedi: bu moblar henüz hiçbir düğümde değil', () => {
-    const text = JSON.stringify(enc);
-    for (const id of [...SEVEN, ...SIX]) expect(text, id).not.toContain(`"class":"${id}"`);
+  it('13 mob karşılaşmalara bağlı: belgedeki adla gelen her birim kendi sınıfında (Ömer 2026-11-02); yer tutucu sınıf adı taşımaz', () => {
+    const nodes = Object.entries(enc as unknown as Record<string, { units?: { class: string; name?: string }[] }>).filter(([k]) => k !== '_not');
+    const units = nodes.flatMap(([, n]) => n.units ?? []);
+    for (const id of [...SEVEN, ...SIX]) {
+      const name = content.mobs[id]!.name;
+      const named = units.filter((u) => u.name === name);
+      expect(named.length, id).toBeGreaterThan(0);
+      for (const u of named) expect(u.class, `${id}: ${name}`).toBe(id);
+    }
+    // eski yer tutucu sınıflar bu adlarla kalmaz
+    const stand = new Set(['Snow Wolf', 'Clan Axeman', 'Clan Slinger', 'Frozen Crossbowman', 'Frozen Halberdier', 'Cave Crawler', 'Clan Skald', 'Rime Witch', 'Wight', 'Rime Hound', 'Molten Hound', 'Hollow Warden', 'Pyre Witch', 'Cinder Knight', 'Forge Golem']);
+    const ids = new Set<string>([...SEVEN, ...SIX, 'frozen_halberdier', 'frozen_crossbowman', 'clan_axeman']);
+    for (const u of units) if (u.name && stand.has(u.name)) expect(ids.has(u.class), `${u.name} -> ${u.class}`).toBe(true);
   });
   it('pasif metni ve oyun içi metin sade; yasak kelime yok', () => {
     for (const id of [...SEVEN, ...SIX]) {

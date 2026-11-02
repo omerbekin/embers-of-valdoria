@@ -449,32 +449,32 @@ describe('Druid: tur bazlı şifa ve çağrı süresi', () => {
     skipUntil(b, druid.uid);
     target.stats.hpRegen = 0; // Str can yenilenmesi bu ölçümü bozmasın
     target.hp = 20;
-    target.turnCounter = -1000; // hedefin kendi turu bu eylemin hemen ardından gelmesin: ilk şifa tek başına ölçülsün (ondalık hızda sıra kayabilir)
     const events = act(b, druid.uid, 'rejuvenate', target.uid);
-    // hemen bir başlangıç şifası (tur başına x tik sayısı) verir; asıl tur bazlı şifa sonraki turlarda gelir
-    const initial = ofType(events, 'heal');
+    // hemen bir başlangıç şifası (tur başına x tik sayısı) verir; zemin tikleri hedefin tur başında gelir (hedefin sırası hemen geldiyse aynı olay listesinde)
+    const initial = ofType(events, 'heal').filter((e) => e.cause !== 'healing_rain');
     expect(initial).toHaveLength(1);
-    expect(initial[0]!.amount).toBeGreaterThan(Math.round(attributePower(druid.stats, 'int', content.formulas) * (content.skills.rejuvenate!.effects.find((e) => e.type === 'hot') as { power: number }).power) * 2);
-    expect(ofType(events, 'status')[0]).toMatchObject({ target: target.uid, status: 'regen', turns: 3 });
-    const perTurn = Math.round(attributePower(druid.stats, 'int', content.formulas) * (content.skills.rejuvenate!.effects.find((e) => e.type === 'hot') as { power: number }).power);
+    expect(initial[0]!.amount).toBeGreaterThan(Math.round(attributePower(druid.stats, 'int', content.formulas) * (content.skills.rejuvenate!.effects.find((e) => e.type === 'ground') as { power: number }).power) * 2);
+    expect(b.ground.some((g) => g.ground === 'healing_rain' && g.board === target.board && g.slots.includes(target.slot))).toBe(true);
+    expect(target.statuses.some((s) => s.kind === 'hallowed')).toBe(true);
+    const perTurn = Math.round(attributePower(druid.stats, 'int', content.formulas) * (content.skills.rejuvenate!.effects.find((e) => e.type === 'ground') as { power: number }).power);
 
-    const ticks: number[] = [];
+    const ticks: number[] = ofType(events, 'heal').filter((e) => e.cause === 'healing_rain').map((e) => e.amount);
     let ended = false;
     for (let i = 0; i < 400 && !ended; i++) {
       const r = b.skipTurn();
       if (!r.ok) break;
       for (const e of r.events) {
         if (e.type === 'heal' && e.target === target.uid && e.source === druid.uid) ticks.push(e.amount);
-        if (e.type === 'statusEnd' && e.status === 'regen' && e.target === target.uid) ended = true;
+        if (e.type === 'statusEnd' && e.status === 'hallowed' && e.target === target.uid) ended = true;
       }
     }
     expect(ended).toBe(true);
     expect(ticks).toEqual([perTurn, perTurn, perTurn]); // tam 3 tik
     expect(target.hp).toBe(Math.min(target.maxHp, 20 + initial[0]!.amount + perTurn * 3)); // başlangıç şifası + 3 tik
-    expect(target.statuses.some((s) => s.kind === 'regen')).toBe(false);
+    expect(target.statuses.some((s) => s.kind === 'hallowed')).toBe(false);
   });
 
-  it('tur bazlı şifa kritik zarını her tikte ayrı atar (kritik açıkken tik büyür)', () => {
+  it('Healing Rain zemin tiki kritik zarı atmaz (zemin şifası kuralı; eski hot atıyordu), anlık şifa atar', () => {
     const b = make(TDR, { mode: 'turns' });
     const druid = unit(b, 'party', 'druid');
     Object.assign(druid.stats, { critChance: 1, critMult: 2 });
@@ -489,8 +489,8 @@ describe('Druid: tur bazlı şifa ve çağrı süresi', () => {
       const r = b.skipTurn();
       if (r.ok) for (const e of r.events) if (e.type === 'heal' && e.target === target.uid && e.source === druid.uid) heals.push(e.amount);
     }
-    const perTurn = Math.round(attributePower(druid.stats, 'int', content.formulas) * (content.skills.rejuvenate!.effects.find((e) => e.type === 'hot') as { power: number }).power);
-    expect(heals.slice(1)).toEqual([perTurn * 2, perTurn * 2, perTurn * 2]); // ilk eleman başlangıç şifası, sonrası tikler
+    const perTurn = Math.round(attributePower(druid.stats, 'int', content.formulas) * (content.skills.rejuvenate!.effects.find((e) => e.type === 'ground') as { power: number }).power);
+    expect(heals.slice(1)).toEqual([perTurn, perTurn, perTurn]); // ilk eleman başlangıç şifası, sonrası tikler
   });
 
   it('Summon Treant: çağrılan birim 3 turunu oynar ve sonra sahneden kalkar (despawn)', () => {
@@ -681,10 +681,11 @@ describe('class verisi: yeni sınıflar ve dizilim', () => {
     expect(content.classes.antimage!.skills).toEqual(['mana_burn', 'drain_field', 'spell_ward', 'void_strike']);
   });
 
-  it('Druid: Rejuvenate tur bazlı (hot), Summon Treant 3 tur kalır', () => {
-    expect(content.skills.rejuvenate!.effects.find((e) => e.type === 'hot')).toMatchObject({ type: 'hot', turns: 3 });
+  it('Druid: Healing Rain şifa + 3 turluk zemin, Summon Treant 3 tur kalır', () => {
+    expect(content.skills.rejuvenate!.name).toBe('Healing Rain');
+    expect(content.skills.rejuvenate!.effects.find((e) => e.type === 'ground')).toMatchObject({ ground: 'healing_rain', turns: 3 });
     // başlangıç şifası: tur başına şifa x tik sayısı
-    const hotE = content.skills.rejuvenate!.effects.find((e) => e.type === 'hot') as { power: number; turns: number };
+    const hotE = content.skills.rejuvenate!.effects.find((e) => e.type === 'ground') as { power: number; turns: number };
     const healE = content.skills.rejuvenate!.effects.find((e) => e.type === 'heal') as { power: number };
     expect(healE.power).toBeCloseTo(hotE.power * hotE.turns, 3);
     expect(content.skills.summon_treant!.effects[0]).toMatchObject({ type: 'summon', lifespan: 3 });
@@ -743,7 +744,7 @@ describe('Taunt: %25 can kaybedilince biter', () => {
     const d = unit(b, 'party', 'defender');
     act(b, d.uid, 'taunt');
     const st = d.statuses.find((s) => s.kind === 'taunt')!;
-    expect(st.breakAt).toBe(Math.round(d.maxHp * 0.25));
+    expect(st.breakAt).toBe(Math.round(d.maxHp * 0.3));
   });
 
   it('eşik dolunca taunt silinir (statusEnd broken); öncesinde sürer', () => {

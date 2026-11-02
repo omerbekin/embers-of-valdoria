@@ -77,12 +77,12 @@ describe('Faz 2c: veri', () => {
     const dr = only('druid', { '3.fb': 1 }, 3)!;
     const rj = dr.skills!.rejuvenate!;
     expect(rj.cooldown).toBe(4);
-    expect(rj.effects.some((e) => e.type === 'hot')).toBe(false);
+    expect(rj.effects.some((e) => e.type === 'ground')).toBe(false);
     const heals = rj.effects.filter((e) => e.type === 'heal') as { power: number }[];
-    expect(heals.length).toBe(2);
-    // Deep Spring artık süre değil HoT gücü (%) verir: toplanmadan önce HoT'a uygulanır, ilk şifaya çift sayılmaz.
-    const barHot = (treeOf('druid')!.mastery.bar[3]!.fx![1] as unknown as { v: number }).v;
-    expect(heals[1]!.power).toBeCloseTo(0.225 * 3 * 1.25 * (1 + barHot), 5);
+    expect(heals.length).toBe(1);
+    // Desperate Sap: zemin yok, ilk şifa %125 güçlü. Deep Spring'in zemin yaması hoşgörülü atlanır, ilk şifa çarpanı kalır.
+    const barHeal = (treeOf('druid')!.mastery.bar[3]!.fx![0] as unknown as { v: number }).v;
+    expect(heals[0]!.power).toBeCloseTo(0.675 * 2.25 * (1 + barHeal), 5);
   });
 
   it('Whiteout (needs Driving Snow): Blizzard Blind şansı x2, süre 2', () => {

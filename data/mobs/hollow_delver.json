@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: stonebound_warden. YER TUTUCU görünüm: çizimi yok, stonebound_warden sprite'ı.",
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: stonebound_warden. Kendi çizimi var (Codex 2026-11-02).",
   "id": "hollow_delver",
   "name": "Hollow Delver",
   "family": "guardians",
-  "spriteId": "stonebound_warden",
+  "spriteId": "hollow_delver",
   "color": "#7a7468",
   "logo": "bulwark",
   "frontPriority": 0,

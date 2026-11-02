@@ -529,22 +529,22 @@ describe('Faz 4c: tek tek boşluklar', () => {
     expect(burst[0]!.type === 'damage' && burst[0]!.amount + burst[0]!.absorbed).toBe(Math.round(sum * 0.5));
   });
 
-  it('Lifebloom: Rejuvenate yenilenmesi bitince dost ilk şifa kadar bir kez daha iyileşir', () => {
+  it('Lifebloom: Healing Rain ilk şifası zaten yağmurdaki dosta %50 güçlü; zeminin kendi tiki güçlenmez', () => {
     const b = make({ 0: 'druid', 1: 'warrior' }, { 0: 'mage' }, withTree(0, only('druid', { '3.mb': 1 })), 11, 'turns');
     const me = P(b);
     const ally = P(b, 1);
     ally.maxHp = 9999;
     ally.hp = 100;
-    const evs = cast(b, me, 'rejuvenate', ally);
-    const first = evs.find((e) => e.type === 'heal' && e.target === ally.uid && e.source === me.uid);
-    const reg = ally.statuses.find((s) => s.kind === 'regen');
-    expect(reg?.first).toBe(first && first.type === 'heal' ? first.amount : -1);
-    expect(reg?.fromSkill).toBe('rejuvenate');
-    reg!.turns = 1;
-    const t = nextTurn(b, ally);
-    const bloom = t.filter((e) => e.type === 'heal' && e.target === ally.uid && e.cause === 'druid:3.mb');
-    expect(bloom.length).toBe(1);
-    expect(bloom[0]!.type === 'heal' && bloom[0]!.amount).toBe(reg!.first);
+    const amountOf = (evs: BattleEvent[]) => evs.filter((e) => e.type === 'heal' && e.target === ally.uid && e.source === me.uid && e.cause !== 'healing_rain').reduce((s, e) => s + (e.type === 'heal' ? e.amount : 0), 0);
+    const dry = amountOf(cast(b, me, 'rejuvenate', ally));
+    b.debugClearCooldowns();
+    const wet = amountOf(cast(b, me, 'rejuvenate', ally));
+    expect(wet).toBeCloseTo(dry * 1.5, -1);
+    expect(wet).toBeGreaterThan(dry);
+    const perTurn = b.ground.find((g) => g.ground === 'healing_rain')!.amount;
+    const tick = nextTurn(b, ally).filter((e) => e.type === 'heal' && e.target === ally.uid && e.cause === 'healing_rain');
+    expect(tick.length).toBe(1);
+    expect(tick[0]!.type === 'heal' && tick[0]!.amount).toBe(perTurn);
   });
 
   // Ömer 2026-10-29 Mage reworkü: bu düğüm(ler) pasif (inactive; Spell Echo / Mana Barrier kitten çıktı). Düğüm yeniden tasarlanınca test açılır.

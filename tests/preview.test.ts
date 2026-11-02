@@ -231,8 +231,8 @@ describe('önizleme: şifa, kalkan, tur bazlı şifa, mana yakma, durumlar', () 
     expect(p.hot).toBeDefined();
     expect(p.heal?.avg).toBe(5); // başlangıç şifası da var (eksik canla sınırlı)
     expect(p.hot!.turns).toBe(3);
-    expect(p.hot!.perTurn).toBe(Math.round(attributePower(druid.stats, 'int', content.formulas) * (content.skills.rejuvenate!.effects.find((e) => e.type === 'hot') as { power: number }).power));
-    expect(p.hot!.total).toBe(5); // eksik can 5 ile sınırlı
+    expect(p.hot!.perTurn).toBe(Math.round(attributePower(druid.stats, 'int', content.formulas) * (content.skills.rejuvenate!.effects.find((e) => e.type === 'ground') as { power: number }).power));
+    expect(p.hot!.total).toBe(0); // eksik can 5'i anlık şifa kapatır: zemine kalan yok (önizleme toplamı eksik canla sınırlı)
   });
 
   it('mana yakma önizlemesi hedefin elindeki manayla sınırlı', () => {
@@ -304,7 +304,11 @@ describe('skill açıklaması (tooltip)', () => {
 
   it('şifa, tur bazlı şifa, kalkan, büyü kalkanı, çağrı, taunt, guard, mana yakma açıklanır', () => {
     expect(text('lay_on_hands')).toContain('Heal 250% INT');
-    expect(text('rejuvenate')).toContain('per turn for 3 turns');
+    expect(text('rejuvenate')).toContain('Heal 68% INT');
+    const rain = describeSkill(content.skills.rejuvenate!, stats, f, content.summons, { statuses: content.statuses, grounds: content.grounds }).lines.join('\n');
+    expect(rain).toContain('Leaves Healing Rain on the area (your side only) for 3 turns');
+    expect(rain).toContain('allies standing there are Hallowed');
+    expect(rain).toContain('healing at the start of each of their turns');
     expect(text('shield_wall')).toContain('Shield 110% STR');
     expect(text('spell_ward')).toContain('Magic shield');
     expect(text('summon_treant')).toContain('Summons Treant');

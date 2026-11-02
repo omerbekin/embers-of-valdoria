@@ -578,8 +578,8 @@ Harita 2 adım 1'in aynı kalıbı: `data/campaign/hollow-crown.json` (86 durak 
 
 | Mob | Kit | Düğümler | Yer tutucu |
 |---|---|---|---|
-| Clan Vaulter | Billhook, Pole Vault (yalnız en öndeki dolu sıranın arkası; Overreached: aldığı hasar +%25, sonraki turuna kadar) | hc_4, hc_6, elit hc_12 | sprite moor_raider, sanat Lunge |
-| Shardwalker | Shardwalk (Chilled hedefe her sıra; yoksa normal; Chilled vermez), Pike Thrust | hc_16, hc_19, elit hc_18 | sprite morvane_halberdier, sanat Run Down |
+| Clan Vaulter | Billhook, Pole Vault (yalnız en öndeki dolu sıranın arkası; Overreached: aldığı hasar +%25, sonraki turuna kadar) | hc_4, hc_6, elit hc_7 (Ömer 2026-11-02) | sprite moor_raider, sanat Lunge |
+| Shardwalker | Shardwalk (Chilled hedefe her sıra; yoksa normal; Chilled vermez), Pike Thrust | hc_16, hc_19, elit hc_35 (Ömer 2026-11-02; Bölge II'de boş elit yok) | sprite morvane_halberdier, sanat Run Down |
 | Hollow Delver | Gatestone Slam, Undermine (dalar, çatlak, sonraki turunda fırlar; boşsa Staggered) | hc_47, hc_53 (elit yok, aşağıda) | sprite stonebound_warden, sanat Swallow |
 | Gloamstalker | Dark Step (Darkness'ta her sıra), Hamstring | hc_45, hc_55, elit hc_50 | sprite mire_ghoul, sanat Hamstring |
 | Cinderleaper | Through the Flame (Burning ya da Burning zemin: her sıra, 1 tur zemin), Rend | hc_59, hc_64, elit hc_61 | sprite ember_acolyte, sanat Scorch Bite |
@@ -606,7 +606,7 @@ Kararlar:
 - **E6 The King Hears (The Hollow King, hc_hollow_king):** hc_hollow_king'e Noise (`wake_the_halls`) eklendi. Dolum başına kuralın Warden'ı + King ayaktaysa bedava Call the Vault'un Warden'ı: iki Warden. `maxRises` 2 ve `maxAlive` 4 tavandır. Call the Vault ayrıca normal skill (bekleme 4).
 
 ## Harita 3 ortak ve palet mob kitleri: uygulama kararları (kit dilimi, 2026-11-01; bayrak kapalı, sayılar PROVİZYON, sim yok)
-4.3 tablosundaki 7 ortak mob ve 6 palet mob gerçek kitle `data/mobs` altında (`tests/map3-kits.test.ts`, `tests/map3-mana.test.ts`). **Karşılaşmalara bağlanmadı:** `hollow-crown-encounters.json` hâlâ eski yer tutucu sınıfları kullanır. 7 mobun geçici görünüm kaydı silindi, idle çizimleri aynen kullanılır; palet mobları taban çizimde (boya yok).
+4.3 tablosundaki 7 ortak mob ve 6 palet mob gerçek kitle `data/mobs` altında (`tests/map3-kits.test.ts`, `tests/map3-mana.test.ts`). **Karşılaşmalara bağlandı (2026-11-02):** `hollow-crown-encounters.json`'da belgedeki adla gelen her birim bu sınıflarda (Snow Wolf, Clan Axeman, Cave Crawler, Clan Skald, Pyre Witch, Cinder Knight, Forge Golem, Wight, Rime Hound, Clan Slinger, Rime Witch, Hollow Warden, Molten Hound; ayrıca Clan Slinger / Frozen Halberdier / Frozen Crossbowman); Frost-light, Deep-light, Blind Eel, Ashborn ve Hollow Runecaller yer tutucuda kalır (belgede 'aynen' ya da kit yok). 7 mobun geçici görünüm kaydı silindi, idle çizimleri aynen kullanılır; palet mobları taban çizimde (boya yok).
 
 | Mob | Skill'ler | Pasif |
 |---|---|---|
@@ -661,11 +661,14 @@ Seçilen 9 kit, `tests/map3-elites.test.ts`. Mana: temel saldırı bedelsiz, kal
 |---|---|---|---|
 | Clan Chief Brannoc (A, War-chief) | hc_12 Chief's Hall: Clan Skald + 2 Clan Axeman | War-Chant + Highland Fury | Great Axe (bedelsiz), Rally the Clan (bir dost sırası, 2 tur Haste), Skullsplitter (Sunder) |
 | The Frozen Standard-Bearer (B, Cold order) | hc_18 Standard Hill: 2 Frozen Halberdier + Frozen Crossbowman | Frozen Ranks geniş: tüm dostlar Close Ranks + Chilled bağışık; taşıyan Frozen'a bağışık değil | Standard Pole (bedelsiz), Cold Command (bir dost, 2 tur Haste), Frost Banner (işaretli 2x2 Chill Ground) |
-| The Oathkeeper (B, Judge) | hc_35 Oathkeeper's Court: 2 Stonebound Warden + Deep Runecaller | Stone Oath: her dost ölümü kalıcı +6 zırh, +6 büyü zırhı; Deep Hoard yok | Pick of the Deep, Oath of Stone (ikisi aynen), Verdict (Sunder, ek koşul yok) |
+| The Oathkeeper (B, Judge) | hc_35 Oathkeeper's Court: Stonebound Warden + Shardwalker + Deep Runecaller (Ömer 2026-11-02) | Stone Oath: her dost ölümü kalıcı +6 zırh, +6 büyü zırhı; Deep Hoard yok | Pick of the Deep, Oath of Stone (ikisi aynen), Verdict (Sunder, ek koşul yok) |
 
 - **Forge-Master Golem:** iki kat Furnace Core kahraman tarafına düşer (4 tur, iki kat güç). **Varsayım:** kahraman tahtasında aynı numaralı hücre + dört komşusu, bugünkü şekil. Düz Forge Golem aynen.
 - **Frost Bite:** %35 Chilled (PROVİZYON, ileride sim sonrası gözden geçirilecek). Donma zara bağlı; zar tutmazsa durum değişmez. Rime Bite ve Ice Shot aynen.
 - **Grave Cold:** 2 tur Chilled, dondurmaz.
 - **Pyre Bolt:** hedefin hücresine 1 tur Burning zemin (Witch ve Matriarch). Süre dolarken cadının o turu boyunca durur (`holdsOwnTurn`), Spread the Flame kendi Bolt'undan atılabilir; kahraman tek tik yer.
+- **Değişmeyenler (Ömer 2026-11-02):** Pyre Bolt `holdsOwnTurn` kalır; Standard-Bearer Chilled olur ve donar; Oathkeeper taban zırhı aynı.
 - **Değişmeyenler (Ömer teyidi):** Kingsmaul adalet kuralı ve her vuruşta işaret, Hierarch'ın Ember Toss'u, Forge Golem Furnace Core davranışı, Sodden Hex adı.
-- **hc_12 / hc_18 yer tutucu:** eşlikçiler belgedeki adlarla yer tutucu sınıfta. Clan Vaulter ve Shardwalker bu iki düğümden çıktı.
+- **hc_12 / hc_18 eşlikçileri (Ömer 2026-11-02):** gerçek sınıflara bağlandı: hc_12 `clan_skald`, `clan_axeman`; hc_18 yeni `frozen_halberdier` (Halberd Chop, Pike Thrust kopyası `frozen_pike_thrust`, bedel 11), `frozen_crossbowman` (Bolt, Ice Shot: belgedeki Ice Bolt skill'i yok). İkisinin statı ve çizimi eski yer tutucu kopyası; pasif Frozen Ranks = Close Ranks + Chilled bağışık (`closeRanks.immune`), taşıyan ölünce de kalır. Diğer düğümler de sonradan bağlandı (aşağı: 2026-11-02 bağ notu). Clan Vaulter ve Shardwalker bu iki düğümden çıktı.
+- **Vaulter ve Shardwalker elit düğümleri (Ömer 2026-11-02):** Vaulter `hc_7` Wolf Den (Bölge I'in tek boş eliti; slot 0'daki kurdun yerine, kalan kurtlar slot 2 ve 4: Pack Rotation çalışır, Snow Wolf sıra bonusu kalkar). Shardwalker `hc_35` Oathkeeper's Court (Bölge II'nin tek eliti hc_18; en yakın boş elit, hc_16 ve hc_19'dan 11 adım; slot 2'deki Warden'ın yerine). hc_35'te Chilled kaynağı yok; Chilled kaynağı olan tek başka elit hc_7 (Frost Fang), ama ikinci mob orada Pack Rotation'ı bitirirdi. Soru: `open-questions.md` son `Q-NEW`.
+- **Sınıf bağı (2026-11-02):** kalan yer tutucu sınıflar gerçek Harita 3 sınıflarına geçti; adetler, slotlar, tier'lar, görünen adlar, düğüm zorluğu aynı (sayılar PROVİZYON). Bağlanmayanlar: `will_o_wisp` (Frost-light / Deep-light, belgede 'aynen palet'), `weir_eel` (Blind Eel, 'aynen'), `ember_acolyte` (Ashborn Acolyte: `data/mobs` altında dosyası yok), `deep_runecaller` (Hollow Runecaller: dosya yok), adsız `stonebound_warden` / `deep_runecaller` (hc_29, hc_35 Oathkeeper kadrosu, Ömer 2026-11-02 kararı), `thunderwright` Hollow adıyla aynen.

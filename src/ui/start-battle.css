@@ -116,3 +116,35 @@ html.short .sbc-card.nofoes .sbc-info { -webkit-line-clamp: 2; font-size: 12px; 
 /* Yan karşılaşma uyarısı (Ömer 2026-10-27, side-danger.ts): "Stronger than the road ahead" + amber / kızıl etiket; satır metni okunur renkte */
 .sbc-chain { margin: 0; font: 500 max(11px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sbc-threat.side .ln { color: var(--g-text); }
+
+/* Kasaba kartı (Ömer 2026-11-02, taslak town-card A): hizmet plakaları + haber satırı; ipucu A Band */
+.sbc-card.tc { border-top: 3px solid var(--g-ember); }
+.sbc-card.tc.wide { width: max(min(calc(100% - 20px), 440px), calc(760 * var(--u))); }
+.sbc-card .tc-flag { display: flex; align-items: center; gap: max(6px, calc(10 * var(--u))); padding: max(3px, calc(7 * var(--u))) max(7px, calc(12 * var(--u))); border-left: 2px solid var(--g-ember); background: rgba(224, 112, 42, 0.1); font: max(12px, calc(19 * var(--u))) var(--g-body); color: #ffd9a0; }
+.sbc-card .tc-flag::before { content: ''; flex: none; width: max(5px, calc(8 * var(--u))); height: max(5px, calc(8 * var(--u))); transform: rotate(45deg); background: var(--g-ember); }
+/* A: hizmet plakalari */
+.sbc-card .tc-svc { display: flex; gap: max(5px, calc(10 * var(--u))); }
+.sbc-card .tc-svc > button { flex: 1 1 0; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: max(5px, calc(10 * var(--u))); padding: max(3px, calc(8 * var(--u))) max(6px, calc(12 * var(--u))); text-align: left; cursor: default; color: inherit;
+  background: rgba(8, 6, 4, 0.55); border: 1px solid var(--g-line2); position: relative; transition: border-color var(--m-card-hover), box-shadow var(--m-card-hover); }
+.sbc-card .tc-svc > button:hover, .sbc-card .tc-svc > button:focus-visible, .sbc-card .tc-svc > button.pin { outline: none; border-color: var(--g-gold); box-shadow: 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.25); }
+.sbc-card .tc-svc img { width: max(20px, calc(40 * var(--u))); height: max(20px, calc(40 * var(--u))); object-fit: contain; flex: none; }
+.sbc-card .tc-svc b { display: block; font: 600 max(10px, calc(17 * var(--u))) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: var(--g-gold); }
+.sbc-card .tc-svc i { display: block; font-style: normal; font: max(10px, calc(16 * var(--u))) var(--g-body); color: var(--g-dim); }
+
+html.short .sbc-card .tc-flag { font-size: 12px; }
+html.short .sbc-card .tc-svc > button { padding: 3px 7px; }
+html.short .tc-lore-ph { display: none; }
+html.short .sbc-card.tc.wide { width: min(calc(100% - 20px), 500px); }
+.sbc-card .tc-svc span { min-width: 0; }
+.sbc-card .tc-svc b, .sbc-card .tc-svc i { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.short .sbc-card .tc-svc { gap: 4px; }
+html.short .sbc-card .tc-svc > button { gap: 4px; padding: 3px 5px; }
+html.short .sbc-card .tc-svc img { width: 18px; height: 18px; }
+html.short .sbc-card .tc-svc b { letter-spacing: 0.03em; font-size: 10px; }
+html.short .sbc-card .tc-svc i { font-size: 11px; }
+/* 4 plaka yan yana (Valdren): ad iki satıra bölünebilir, dar kartta harf aralığı küçülür */
+.sbc-card .tc-svc b { white-space: normal; letter-spacing: 0.05em; }
+.sbc-card .tc-svc img { width: max(16px, calc(32 * var(--u))); height: max(16px, calc(32 * var(--u))); }
+html.short .sbc-card .tc-svc img { width: 18px; height: 18px; }
+.sbc-card .tc-svc > button { padding-left: max(4px, calc(8 * var(--u))); padding-right: max(3px, calc(6 * var(--u))); gap: max(4px, calc(7 * var(--u))); }
+.sbc-card .tc-svc b { letter-spacing: 0.03em; text-overflow: clip; }

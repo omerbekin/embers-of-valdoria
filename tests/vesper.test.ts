@@ -326,7 +326,7 @@ function treed(r: Record<string, number>, enemies: Record<number, string>, allie
   const tree = setupFor(r);
   const setup = content.battleSetup('random-battle', 3, mode, { party: cells({ 7: 'vesper', ...allies }), enemies: cells(enemies), units: { party: tree ? { 7: { tree } } : {}, enemies: {} } }, false);
   // Hasar zarı kapalı: oranlar tam okunur
-  const b = new Battle({ ...setup, formulas: { ...setup.formulas, damage: { ...setup.formulas.damage, variance: 0 } } });
+  const b = new Battle({ ...setup, formulas: { ...setup.formulas, damage: { ...setup.formulas.damage, variance: 0, elementVariance: {} } } });
   b.freeMp = true;
   b.debug.crit = 'never';
   for (const c of b.combatants) {

@@ -473,15 +473,16 @@ describe('Faz 5a: ek sözlük (hitsEach, merkez kritikleri, tekrar sırası, ta�
     expect(has(P(b, 1), 'fortify')).toBe(true);
   });
 
-  it('Spreading Roots: Rejuvenate yenilenmesi hedefin komşularına yarı güçte', () => {
+  it('Spreading Roots: Healing Rain zemini dokunan hücreleri de kaplar, oradakiler de Hallowed', () => {
     const b = make({ 0: 'druid', 1: 'warrior', 2: 'warrior', 4: 'warrior', 5: 'warrior' }, { 0: 'warrior' }, withTree(0, only('druid', { '3.ea': 1 })));
     const me = P(b);
     cast(b, me, 'rejuvenate', P(b, 1));
-    const regen = (c: Combatant) => c.statuses.find((s) => s.kind === 'regen') as { amount?: number } | undefined;
+    const regen = (c: Combatant) => c.statuses.find((s) => s.kind === 'hallowed') as { amount?: number } | undefined;
     const full = regen(P(b, 1))!.amount!;
-    expect(regen(P(b, 2))!.amount).toBe(Math.round(full / 2));
+    expect(regen(P(b, 2))!.amount).toBe(full);
     expect(regen(P(b, 4))).toBeTruthy();
     expect(regen(P(b, 5))).toBeUndefined();
+    expect(b.ground.find((g) => g.ground === 'healing_rain')!.slots).toEqual(expect.arrayContaining([0, 1, 2, 4]));
   });
 
   it('Spendthrift: Rest yarı MP verir; Loaded Dice 6 MP', () => {

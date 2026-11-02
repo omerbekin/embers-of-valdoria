@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { legacyBlank } from './legacy-start';
+import audioMobs from '../data/audio-mobs.json';
 import { Battle, chooseAction, content } from '../src/engine';
 import { applyUnitModifiers } from '../src/engine/stats';
 import { enemyLevelAttrAdd } from '../src/progression/levels';
@@ -61,7 +62,7 @@ describe('data/mobs yükleyicisi', () => {
       expect(src, `${id} artOf ${s.artOf}`).toBeDefined();
       expect(s.icon, id).toBe(src.icon);
       expect(s.vfx, id).toBe(src.vfx);
-      expect(s.sfx, id).toEqual(src.sfx);
+      if (!(id in audioMobs.skills)) expect(s.sfx, id).toEqual(src.sfx); // kendi mob sesi olan skill (audio-mobs.json) ödünç sesi taşımaz
     }
   });
 

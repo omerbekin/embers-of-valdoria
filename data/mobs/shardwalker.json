@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: morvane_halberdier. YER TUTUCU görünüm: çizimi yok, morvane_halberdier sprite'ı.",
+  "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: morvane_halberdier. Kendi çizimi var (Codex 2026-11-02).",
   "id": "shardwalker",
   "name": "Shardwalker",
   "family": "undead",
-  "spriteId": "morvane_halberdier",
+  "spriteId": "shardwalker",
   "color": "#8fc0dc",
   "logo": "helm",
   "frontPriority": 1,

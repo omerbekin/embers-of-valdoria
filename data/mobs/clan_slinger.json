@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Crossbowman; palet YOK, bandit_crossbowman çizimi.",
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Crossbowman; kendi çizimi var.",
   "id": "clan_slinger",
   "name": "Clan Slinger",
   "family": "bandits",
-  "spriteId": "bandit_crossbowman",
+  "spriteId": "clan_slinger",
   "color": "#5f6b4a",
   "logo": "bow",
   "frontPriority": 8,
