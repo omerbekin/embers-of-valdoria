@@ -20,5 +20,6 @@ describe('zemin rozeti', () => {
     expect(groundTurnsText(3)).toBe('3 turns');
     expect(groundCardText({ element: 'fire' })).toBe('Fire ground underfoot');
     expect(groundCardText({ heal: true })).toContain('Heals');
+    expect(groundCardText({ text: 'Arcane silence.', element: 'fire' })).toBe('Arcane silence.');
   });
 });

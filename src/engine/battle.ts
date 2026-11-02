@@ -9552,6 +9552,11 @@ export class Battle {
     emit({ type: 'sermonEnd', actor: c.uid, outcome: 'done' });
   }
 
+  /** Sefer mobu ya da boss mu (kahraman sınıfı değil)? Saf. */
+  isMobUnit(c: Pick<Combatant, 'defId' | 'boss'>): boolean {
+    return !!this.setup.units[c.defId]?.family || !!c.boss;
+  }
+
   private inFlock(c: Pick<Combatant, 'name' | 'displayName' | 'defId'>, cfg: { families: string[]; names: string[] }): boolean {
     const family = this.setup.units[c.defId]?.family;
     return (!!family && cfg.families.includes(family)) || cfg.names.includes(c.displayName ?? c.name);

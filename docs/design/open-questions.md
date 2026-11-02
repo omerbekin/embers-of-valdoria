@@ -1664,3 +1664,11 @@ Sayılar PROVİZYON, sim yok, bayrak kapalı. Belgede açık olmayan yerlerde en
 4. **Önizleme sonucu:** her tepkimeye `result` (en çok 5 kelime) eklendi; hedeflemede ad altında küçük ikinci satır. Live Water için `result` kodda sabit ("Arcs through all water"). Tepkime sayıları değişmedi.
 5. **Zemin rozeti:** zemin durum veriyorsa ve o durum görünüyorsa zeminin kendi rozeti çizilmez; durumun EFFECTS satırına "(from <Zemin adı>)" eklenir. Durum vermeyen zeminin kendi EFFECTS satırı var; zemin verisinde açıklama metni olmadığından kısa genel cümle kullanıldı ("Fire ground underfoot", şifa zemini için ayrı). İstenirse zemin başına gerçek metin eklenir.
 6. **Aynı durumu veren iki zemin:** durum görünüyorsa ikisinin de rozeti gizlenir; "from" en güçlü zeminin adını gösterir.
+
+## 499. Dolu mana eğilimi: düşmanlar manalı skile daha kolay yöneliyor (combat-design, 2026-11-01)
+
+**Karar:** Ömer (Koordinatör formu): "karakterler" = düşmanlar; yalnız yapay zekâ, yeni oyun kuralı yok, oyuncu kararı değişmez. Skill ödendikten sonra MP oranı `manaSurplusFrom` (0,3) üstündeyse, mana tam doluya yaklaştıkça skorda MP bedeli silinir ve brüt değerin en çok `manaSurplusShare` (0,6) payı eklenir (`data/ai.json`, `ai.ts > scoreOption`). VARSAYIM: formdaki "düşman, sim ve otomatik savaş" yerine yalnız mob ve bosslara işler; kahraman sınıfları (düşman tarafındakiler, sim vekili, otomatik savaş) değişmez. Bütün YZ'ye açıkken Jinx kullanım payı %26 ile denge bandını (en çok %25) aşıyordu; sorun da yalnız düşmanlardı.
+
+**Ölçüm (yaklaşık 1000 sefer savaşı, Harita 1-2, Medium, 12 koşu; düşman birimleri, önce -> sonra):** mana yeterken manalı skill seçimi %21,6 -> %44,3; hamlelerde manalı pay %16,9 -> %28,2; savaş sonu mana %86,9 -> %76,4. Karşılaştırma: mana ve bekleme bedelini tamamen silmek seçimi yalnız %29,8'e çıkarıyordu; sebep manalı skillerin anlık hasarının çoğunlukla düşük olması.
+
+**Varsayımlar ve sınır:** Düşman birimi savaşta ortalama yaklaşık 3 hamle yapıyor ve manalı skillerin çoğunda bekleme süresi var; bu yüzden mana çubuğu eğilimle bile görünür biçimde boşalmaz. Düşman kazanma oranı ve sefer dengesi bu küçük ölçümde değerlendirilmedi; sefer simi koşulmadı (Ömer Harita 2 boss simine "bekle" dedi).

@@ -20,7 +20,7 @@ function setup(): Battle {
 
 function decide(b: Battle) {
   const trace: AiTrace = { options: [], reserves: [], steps: [] };
-  const choice = chooseAction(b, 'enemy-0', content.aiConfig, trace, { value: { tauntPull: 0 } });
+  const choice = chooseAction(b, 'enemy-0', content.aiConfig, trace, { value: { tauntPull: 0, manaSurplusFrom: 1 } }); // dolu mana eğilimi kapalı: burada yalnız bedel ölçülür
   return { choice, options: trace.options };
 }
 

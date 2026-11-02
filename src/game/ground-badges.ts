@@ -50,8 +50,10 @@ export function groundTurnsText(turns: number): string {
   return `${turns} turn${turns === 1 ? '' : 's'}`;
 }
 
-/** Durum vermeyen zeminin EFFECTS satırı açıklaması (veride zemin metni yok: elementten kısa cümle; şifa zemini ayrı). */
-export function groundCardText(def: { element?: string; heal?: boolean } | undefined): string {
+/** Durum vermeyen zeminin EFFECTS satırı açıklaması: grounds.json `text`; metni olmayan zeminde elementten kısa cümle (şifa zemini ayrı). */
+export function groundCardText(def: { text?: string; element?: string; heal?: boolean } | undefined): string {
+  const text = def?.text?.trim();
+  if (text) return text;
   if (def?.heal) return 'Heals its caster\'s allies standing here';
   const el = def?.element ? `${def.element.charAt(0).toUpperCase()}${def.element.slice(1)} ground` : 'Ground effect';
   return `${el} underfoot`;

@@ -50,6 +50,10 @@ export interface AiValueConfig {
   protectShare: number;
   /** Cooldown bedeli: skill'in brüt değeri x cooldown x bu pay (ultimate'a küçük bekleme bedeli, madde 254 K5). */
   cooldownCostShare: number;
+  /** Dolu mana eğilimi: ödeme sonrası MP oranı bu değerin üstündeyse manalı skill değer kazanır. */
+  manaSurplusFrom: number;
+  /** Dolu mana eğilimi: MP tam doluyken brüt değere eklenen pay (manaSurplusFrom'da 0'a iner). */
+  manaSurplusShare: number;
   /** Kontrol (durum) terimlerinin çarpanı. */
   controlWeight: number;
   /**
@@ -198,6 +202,8 @@ export const DEFAULT_VALUE: AiValueConfig = {
   shieldRounds: 2,
   protectShare: 0.5,
   cooldownCostShare: 0.03,
+  manaSurplusFrom: 0.3,
+  manaSurplusShare: 0.6,
   controlWeight: 1,
   decidedMargin: 0.5,
   reserveValueShare: 0.85,

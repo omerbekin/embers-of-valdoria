@@ -1709,6 +1709,12 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
   // Spell Echo (Mage pasifi): hasar skill'i şansla cooldown'a girmez: bedel x (1 - şans)
   const echo = actor.passive?.effect.type === 'spellEcho' && o.skill.effects.some((e) => e.type === 'damage') ? actor.passive.effect.chance : 0;
   if (cd > 0 && gross > 0) add('cooldown', -gross * cd * vc.cooldownCostShare * (1 - echo));
+  // Dolu mana boşa gider (Ömer 2026-11-01, yalnız moblar): ödemeden sonra MP oranı manaSurplusFrom üstündeyse MP bedeli silinir ve skill brüt değerinin bir payını kazanır; oyun kuralı değil, yalnız YZ eğilimi
+  const paidMp = o.skill.cost.resource === 'mp' && !battle.freeMp ? o.skill.cost.amount : 0;
+  if (paidMp > 0 && gross > 0 && actor.maxMp > 0 && battle.isMobUnit(actor)) {
+    const fullness = Math.min(1, Math.max(0, ((actor.mp - paidMp) / actor.maxMp - vc.manaSurplusFrom) / (1 - vc.manaSurplusFrom)));
+    if (fullness > 0) add('manaSurplus', fullness * (o.cost + gross * vc.manaSurplusShare));
+  }
   // Sabit can bedeli / can bahsi: canı düşükken (minHpRatioForHpCost altı) yalnızca öldürüyorsa
   if (o.hpCost && ratio(actor) < profile.minHpRatioForHpCost && o.kills.length === 0) t.cost = (t.cost ?? 0) - gross;
   o.terms = Object.fromEntries(Object.entries(t).map(([k, v]) => [k, r2(v)]));
