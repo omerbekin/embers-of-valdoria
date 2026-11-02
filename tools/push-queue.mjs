@@ -1049,6 +1049,14 @@ function deployLive(scratch, version) {
     log(`> Canlı site yayını (deneme ${i}): ${CMD.deploy}`);
     try { execSync(CMD.deploy, { cwd: scratch, stdio: 'inherit' }); live = true; } catch (e) { log(`!! Canlı yayın denemesi ${i} başarısız: ${e.message.split('\n')[0]}`); }
   }
+  // wrangler dosyaları yükleyip alan adı kaydına kadar ilerleyip yine de hata koduyla çıkabiliyor (0.9.10.15): site gerçekten bu derlemeyi sunuyorsa başarısız sayılmaz (Ömer 2026-11-02)
+  if (!live) {
+    try {
+      const mine = /assets\/main-[\w-]+\.js/.exec(readFileSync(join(scratch, 'dist', 'index.html'), 'utf8'))?.[0];
+      const served = /assets\/main-[\w-]+\.js/.exec(execSync('curl -s -L -m 30 https://embersofvaldoria.com/', { encoding: 'utf8', maxBuffer: 1 << 24 }))?.[0];
+      if (mine && mine === served) { live = true; log(`> Wrangler hata kodu verdi ama canlı site bu derlemeyi sunuyor (${mine}), başarılı sayıldı.`); }
+    } catch {}
+  }
   if (live) log(`> ${version} canlıda: https://embersofvaldoria.com/`);
   else notice(`${version} GitHub'a gitti ama canlı siteye (embersofvaldoria.com) yayın iki denemede de başarısız oldu; elle npm run deploy:cf gerekiyor.`);
 }

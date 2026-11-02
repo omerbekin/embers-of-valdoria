@@ -3268,7 +3268,7 @@ export class BattleScene extends Phaser.Scene {
       };
       const regen = regenTickEvents(this.sinceAction, e, statsOf);
       for (const r of regen) this.regenTicks.add(r);
-      const hpPlan = hpTickPlan(this.sinceAction, e, regen);
+      const hpPlan = hpTickPlan(this.sinceAction, e, regen, (cause) => this.battle.isHealGround(cause));
       for (const r of hpPlan.hot) this.hotTicks.add(r);
       for (const [r, chip] of hpPlan.chips) this.hpChips.set(r, chip);
       for (const r of betweenTurnEvents(this.sinceAction, e)) this.betweenTurns.add(r);
@@ -3521,7 +3521,7 @@ export class BattleScene extends Phaser.Scene {
       case 'heal': {
         const target = this.views.get(e.target);
         if (this.regenTicks.has(e) || this.hotTicks.has(e)) {
-          // Tur başı yenilenme + skill HoT yüzmez: çubuk parlar, yanında tek toplam "+N" (HoT varsa bonus rengi); yazı grubun son olayında (regen-ticks.ts > hpTickPlan)
+          // Tur başı yenilenme + skill HoT + şifa zemini tiki yüzmez: çubuk parlar, yanında tek toplam "+N" (HoT varsa bonus rengi); yazı grubun son olayında (regen-ticks.ts > hpTickPlan)
           const chip = this.hpChips.get(e);
           if (target && chip) playRegenTick(this, target, 'hp', chip.amount, chip.bonus);
           target?.setHp(e.hpAfter);

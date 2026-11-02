@@ -117,6 +117,51 @@ describe('can çubuğu toplamı (HoT + yenilenme)', () => {
     expect(p.chips.size).toBe(0);
     expect(planFor([hot(5)], 'p1', true).chips.size).toBe(0);
   });
+  describe('şifa zemini (Ömer 2026-11-02)', () => {
+    const isG = (c: string) => c === 'healing_rain' || c === 'holy_ground';
+    const plan = (recent: BattleEvent[], actor = 'p1') => {
+      const t = ts(actor);
+      return hpTickPlan(recent, t, regenTickEvents(recent, t, () => stats), isG);
+    };
+    const gh = (amount: number, over: Partial<BattleEvent & { type: 'heal' }> = {}) => heal(amount, { source: 'p2', cause: 'healing_rain', ...over });
+    it('yalnız zemin şifası: çubuk yanında tek +N, bonus, yüzen sayı yok', () => {
+      const g = gh(6);
+      const p = plan([g]);
+      expect(p.hot.has(g)).toBe(true);
+      expect(p.chips.get(g)).toEqual({ amount: 6, bonus: true });
+    });
+    it('zemin + düz yenilenme tek toplam', () => {
+      const g = gh(6);
+      const r = heal(2);
+      const p = plan([g, r]);
+      expect(p.chips.size).toBe(1);
+      expect(p.chips.get(r)).toEqual({ amount: 8, bonus: true });
+    });
+    it('zemin + skill HoT + yenilenme tek toplam', () => {
+      const g = gh(6);
+      const h = hot(5);
+      const r = heal(2);
+      const p = plan([h, g, r]);
+      expect(p.chips.size).toBe(1);
+      expect(p.chips.get(r)).toEqual({ amount: 13, bonus: true });
+    });
+    it('başka birimin zemin şifası, kritik ve zemin olmayan cause yüzen kalır', () => {
+      const other = gh(6, { target: 'p2' });
+      const crit = gh(6, { crit: true });
+      const lifesteal = gh(6, { cause: 'lifesteal' });
+      const p = plan([other, crit, lifesteal]);
+      expect(p.hot.size).toBe(0);
+      expect(p.chips.size).toBe(0);
+    });
+    it('arada hasar varsa grup kesilir', () => {
+      const g = gh(6);
+      const dmg = { type: 'damage', source: 'e1', target: 'p1', amount: 4, hpAfter: 90, crit: false } as unknown as BattleEvent;
+      const r = heal(2);
+      const p = plan([g, dmg, r]);
+      expect(p.chips.get(g)).toEqual({ amount: 6, bonus: true });
+      expect(p.chips.get(r)).toEqual({ amount: 2, bonus: false });
+    });
+  });
   it('savaş günlüğü HoT satırını yazmaya devam eder (regen bayrağı almaz)', () => {
     const log = new CombatLog({ unit: () => ({ name: 'Druid', side: 'party' }), skill: (s) => s, status: (s) => s, ground: (s) => s, cause: () => 'Regeneration', globalKind: (s) => s, rowOf: () => 0 });
     // Sahne HoT için yalnız `between` geçirir, `regen` düz yenilenmeye kalır

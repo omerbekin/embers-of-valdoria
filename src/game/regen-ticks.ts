@@ -75,10 +75,17 @@ export interface HpTickPlan {
  * Ömer 2026-11-01: skill'den gelen tur bazlı şifa (durum 'regen', olay cause 'regen') düz yenilenmenin üstüne eklenip can çubuğunun sağında
  * tek "+N" olur, bonus renginde. Motor sırası: HoT tikleri -> (yalnız durum / MP / kalkan olayları) -> düz yenilenme, hepsi aynı turnStart
  * çağrısında. Toplam yalnız ARALARINDA can değiştiren olay olmayan ardışık tikleri kapsar; kesilirse her grup kendi yazısını alır.
+ * Ömer 2026-11-02: şifa ZEMİNİ tiki (Healing Rain, Holy Ground; olay cause = zemin kimliği, `isHealGround` ile tanınır, motor groundStatusTicks) da
+ * aynı toplama girer ve bonus renginde sayılır; ayrı yüzen şifa sayısı çıkmaz. Başkasının zemin şifası yüzen kalır.
  * Kritik HoT tiki gruba girmez (yüzen kritik sayı olarak kalır ve grubu keser): açık soru, Combat Design'a soruldu.
  * `regen`: aynı turnStart için regenTickEvents sonucu.
  */
-export function hpTickPlan(recent: readonly BattleEvent[], turnStart: BattleEvent & { type: 'turnStart' }, regen: ReadonlySet<BattleEvent>): HpTickPlan {
+export function hpTickPlan(
+  recent: readonly BattleEvent[],
+  turnStart: BattleEvent & { type: 'turnStart' },
+  regen: ReadonlySet<BattleEvent>,
+  isHealGround?: (cause: string) => boolean,
+): HpTickPlan {
   const plan: HpTickPlan = { hot: new Set(), chips: new Map() };
   if (turnStart.extra) return plan;
   const uid = turnStart.actor;
@@ -96,7 +103,7 @@ export function hpTickPlan(recent: readonly BattleEvent[], turnStart: BattleEven
     if (e.type === 'heal' && regen.has(e)) {
       last = e;
       chip.amount += e.amount;
-    } else if (e.type === 'heal' && e.target === uid && e.cause === 'regen' && !e.crit) {
+    } else if (e.type === 'heal' && e.target === uid && !e.crit && (e.cause === 'regen' || (!!e.cause && !!isHealGround?.(e.cause)))) {
       plan.hot.add(e);
       last = e;
       chip.amount += e.amount;
