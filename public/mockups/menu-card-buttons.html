@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>Menu Card Buttons</title>
+<!-- Taslak (ui-dev). Oyun kodu DEGIL. Ana menu Campaign karti dugmeleri: 3 varyant x 3 ekran boyutu. -->
+<style>
+@font-face{font-family:Cinzel;font-weight:400 900;src:url(menu-card-buttons/Cinzel-normal-latin.woff2) format('woff2')}
+@font-face{font-family:'EB Garamond';font-weight:400 800;src:url(menu-card-buttons/EBGaramond-normal-latin.woff2) format('woff2')}
+:root{--gold:#d9b26a;--gold-dim:rgba(217,178,106,.4);--ember:#f0a040;--txt:#e9dcc0;--muted:#cdb88d}
+*{box-sizing:border-box}
+body{margin:0;background:#120d08;color:var(--txt);font:16px/1.5 'EB Garamond',Georgia,serif;padding:16px}
+h1{font:600 20px Cinzel,serif;letter-spacing:.08em;margin:0 0 8px;text-transform:uppercase}
+.intro{max-width:900px;color:var(--muted);margin-bottom:16px}
+.intro b{color:var(--txt)}
+label{font-size:14px;color:var(--muted);cursor:pointer}
+.variant{margin:28px 0 40px;padding-top:16px;border-top:1px solid var(--gold-dim)}
+.variant h2{font:600 18px Cinzel,serif;letter-spacing:.1em;margin:0 0 4px;color:var(--gold)}
+.note{margin:8px 0 14px;color:var(--muted);max-width:900px}
+.row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.fig .cap{font:600 11px Cinzel,serif;letter-spacing:.14em;color:var(--muted);margin-bottom:4px;text-transform:uppercase}
+.frame{overflow:hidden;border:1px solid #3a2c1a;position:relative;background:#0c0805}
+.stage{position:absolute;left:0;top:0;height:1080px;transform-origin:0 0;
+  background:radial-gradient(ellipse at 50% 30%,#2a1c10 0,#120b06 70%);
+  --bh:56px;--hit:56px;--fT:50px;--fS:26px;--fA:23px;--fN:20px}
+.stage.phone{--bh:83px;--hit:122px;--fT:56px;--fS:32px;--fA:32px;--fN:28px}
+.card{position:absolute;top:252px;width:460px;height:640px;overflow:hidden;background:#241a11}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.92}
+.card::before{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,7,4,0) 30%,rgba(10,7,4,.95) 100%)}
+.card::after{content:'';position:absolute;inset:0;z-index:4;pointer-events:none;border:1px solid var(--gold-dim);box-shadow:inset 0 0 0 2.5px rgba(27,18,10,.9)}
+.card .t{position:absolute;left:0;right:0;z-index:2;text-align:center;font:700 var(--fT) Cinzel,serif;letter-spacing:.04em;text-transform:uppercase;color:var(--txt);text-shadow:0 2px 6px #000}
+.card .s{position:absolute;left:0;right:0;z-index:2;text-align:center;font:400 var(--fS) 'EB Garamond',serif;color:var(--muted);text-shadow:0 2px 4px #000}
+.act{position:relative;display:inline-flex;align-items:center;justify-content:center;height:var(--bh);padding:0 22px;
+  font:600 var(--fA) Cinzel,serif;letter-spacing:.14em;text-transform:uppercase;color:var(--txt);text-shadow:0 2px 4px #000;white-space:nowrap}
+.act::after{content:'';position:absolute;left:-6px;right:-6px;top:50%;height:var(--hit);transform:translateY(-50%)}
+.touch .act::after{outline:2px dashed #5ec8ff;background:rgba(94,200,255,.12)}
+.act.p{color:#fff3d6}
+.act .d,.dia{width:.42em;height:.42em;background:var(--ember);transform:rotate(45deg);margin:0 .7em;box-shadow:0 0 8px var(--ember);flex:none;display:inline-block}
+.act.dim{color:var(--muted)}
+.sep{width:1px;height:calc(var(--bh)*.5);background:var(--gold-dim);flex:none}
+.hair{position:absolute;left:30px;right:30px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.55;z-index:2}
+.sz{position:absolute;z-index:5}
+.sz .act{padding:0 18px;font-size:var(--fN);color:var(--muted)}
+.strip{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center}
+.under{position:absolute;display:flex;align-items:center;justify-content:center;border-top:1px solid var(--gold-dim);border-bottom:1px solid var(--gold-dim);background:linear-gradient(90deg,transparent,rgba(217,178,106,.07),transparent)}
+</style>
+</head>
+<body>
+<h1>Menu Card Buttons</h1>
+<div class="intro">
+<b>Sorun:</b> telefonda (844x390) Campaign kartındaki 3 çerçeveli düğme kutu gibi sıkışıyor, NEW / LOAD neredeyse kare, başlığa yapışık; Quick Battle / Multiplayer kartları ise başlık + tek satır alt yazı. Gerçek kart boyu 460x640 (sahne 1920x1080), kart sanatı ve fontlar (Cinzel 600, EB Garamond, italik yok) gerçek dosyalar. Telefonda düğme yüksekliği 30 gerçek px, dokunma alanı 44+ px.<br>
+Mavi kesikli alan = dokunma alanı. <label><input type="checkbox" id="tc"> dokunma alanlarını göster</label>
+</div>
+<div id="root"></div>
+<script>
+const CARDS=[{id:'campaign',name:'Campaign',img:'campaign.webp'},{id:'qb',name:'Quick Battle',img:'quick-battle.webp',line:'Pick two teams'},{id:'mp',name:'Multiplayer',img:'multiplayer.webp',line:'Fight a friend online'}];
+const SIZES=[{k:'169',label:'16:9 (1920x1080, ölçek 0.30)',w:1920,s:0.30},{k:'219',label:'21:9 (2580x1080, ölçek 0.30)',w:2580,s:0.30},{k:'phone',label:'Telefon 844x390 (gerçek px)',w:2337,s:390/1080}];
+const D='<i class="d"></i>';
+const ROW='<span class="act dim">New</span><span class="sep"></span><span class="act dim">Load</span><span class="sep"></span><span class="act p">'+D+'Continue'+D+'</span>';
+function cardHtml(v,c,x){
+  const imgs='<img src="menu-card-buttons/'+c.img+'" alt="">';
+  const title='<div class="t" style="top:510px">'+c.name+'</div>';
+  let inner;
+  if(c.id!=='campaign'){
+    inner=imgs+title+'<div class="s" style="top:568px">'+c.line+'</div>';
+  } else if(v==='A'){
+    inner=imgs+title+'<div class="hair" style="top:568px"></div><div class="strip" style="left:0;right:0;top:570px;height:var(--bh)">'+ROW+'</div>';
+  } else if(v==='B'){
+    inner=imgs+title+'<div class="s" style="top:568px">Continue the march on Valdoria</div>';
+  } else {
+    inner=imgs+title+'<div class="s" style="top:568px;color:#fff3d6"><i class="dia" style="margin:0 .6em 0 0;vertical-align:middle"></i>Continue &middot; Ashford, Act 1</div>'+
+      '<div class="sz" style="left:8px;top:10px"><span class="act">New</span></div><div class="sz" style="right:8px;top:10px"><span class="act">Load</span></div>';
+  }
+  return '<div class="card" style="left:'+x+'px">'+inner+'</div>';
+}
+function stage(v,size){
+  const cw=460,gap=46,total=3*cw+2*gap,x0=(size.w-total)/2;
+  let h=CARDS.map((c,i)=>cardHtml(v,c,x0+i*(cw+gap))).join('');
+  if(v==='B') h+='<div class="under" style="left:'+x0+'px;top:906px;width:'+cw+'px;height:var(--bh)">'+ROW+'</div>';
+  return h;
+}
+const NOTES={
+A:['A · Yazı düğmeleri kartın içinde','Çerçeve yok: NEW · LOAD · ◆CONTINUE◆ tek satır, üstte ince altın çizgi; başlık diğer kartlarla aynı yükseklikte. Artı: sade, tutarlı, birincil en sağda. Eksi: alt yazı satırı yok, kart dibi hâlâ biraz yoğun.'],
+B:['B · Kart diğerleri gibi, düğmeler kartın ALTINDA ince şerit','Kart başlık + tek satır alt yazı (diğerleriyle birebir); eylemler kartın altında ince çizgili şeritte. Artı: kart temiz, düğmeler nefes alır. Eksi: Campaign bir şerit kadar uzar (telefonda 322+44=366 px, sığar).'],
+C:['C · Kartın kendisi Continue, NEW / LOAD köşede küçük','Alt yazı birincil eylem + kayıt bilgisi (◆ Continue · Ashford, Act 1), kartın tamamına dokunmak Continue; NEW sol üst, LOAD sağ üst küçük yazı. Artı: en temiz, kayıt bilgisi görünür. Eksi: Continue ayrı düğme gibi görünmez; kayıt yoksa kart = New olur (mevcut davranış).']};
+const root=document.getElementById('root');
+['A','B','C'].forEach(function(v){
+  const sec=document.createElement('section');sec.className='variant';
+  const figs=SIZES.map(function(sz){
+    const fw=sz.k==='phone'?844:sz.w*sz.s, fh=sz.k==='phone'?390:1080*sz.s;
+    return '<div class="fig"><div class="cap">'+sz.label+'</div><div class="frame" style="width:'+fw+'px;height:'+fh+'px"><div class="stage '+(sz.k==='phone'?'phone':'')+'" style="width:'+sz.w+'px;transform:scale('+sz.s+')">'+stage(v,sz)+'</div></div></div>';
+  }).join('');
+  sec.innerHTML='<h2>'+NOTES[v][0]+'</h2><div class="row">'+figs+'</div><div class="note">'+NOTES[v][1]+'</div>';
+  root.appendChild(sec);
+});
+document.getElementById('tc').addEventListener('change',function(e){document.body.classList.toggle('touch',e.target.checked)});
+</script>
+</body>
+</html>
