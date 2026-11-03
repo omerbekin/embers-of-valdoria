@@ -14,16 +14,14 @@ Genel savaş kuralları, durumlar, buff/debuff, tur akışı, genel denge, sava�
 - İmza mekanikleri (Omen, Dark Bond) moblara verilmez. Mob mana havuzuna dokunulmaz.
 - Sim izinsiz koşulmaz. Makine yükü: tam test yalnız ready öncesi, tek seferde.
 
-## Dalın durumu (`chat/combat-design`, 2026-11-02; ready verilmedi)
-- **Ley Thread:** `f4a63a4a` 0,5 içerir, `8057a7e7` 1,5'e geri aldı (Ömer kararı). Dal ucunda 1,5; yeniden geri alma gerekmez.
-- **Ward-Etcher + Last Ember YZ:** kod ve testler bitti, ready verilemedi: yavaş testte `tests/campaign-difficulty.test.ts` kırmızı (normal: Medium %89,0, Hard %84,1, fark 4,98, eşik 5). Sebep araştırılmadı; bu YZ işi mi main mi bilinmiyor.
-- **Golden:** birleşmiş kodla yeniden kaydedildi (main'deki 0.9.10.25 dahil).
+## Durum (0.9.10.26)
+- **Ley Thread:** 1,5 (Ömer kararı).
+- **Ward-Etcher + Last Ember YZ:** main'de. Difficulty testini 4,98 farkla kırmızıya düşürmüştü, Hard mobları 1,09 -> 1,12 ile çözüldü (Ömer 2026-11-03).
+- **Ice:** Ice zemini de suyu dondurur (`grounds.json > frozen`). Hall of Silence bugünkü gibi kalır (Ömer 2026-11-03).
 - **Ward farkı, yalnız değerler açık/kapalı:** Quick, comps, Endless, items aynı. Campaign 147 savaşın 55'i aynı, 76'sı farklı başlangıçlı, 90'ı olay farklı. Harita 2 ayrımı yapılmadı. Karar örnekleri: Deep Runecaller Rune Spark yerine Glyph of Breaking; Gambler skill seçimi; All In, Holy Strike, Root Smash hedefi.
 
 ## Açık işler
-1. **Madde 469 sim bekliyor:** `castBurnPct` 0,5 ve `threadBurnMult` 1,5 "PROVİZYON, sim bekliyor" notuyla duruyor. Ömer 2026-11-02: iplik katı 1,5 kalır, 0,5 uygulanmaz.
-2. **Set bonus kuralları:** başlanmadı, Item Design verisi bekleniyor. Pilotlar Ashguard Vigil + Wayfarer's Oath. Kuralları bu alan, veri ve yazıyı Item Design tarafı yapar.
-3. **Piercing değeri:** ilvl 20'de değer 0,88, ip 0,1; 300 savaşlık ölçümde tek affix için güçlü çıktı. Değer ve ip sorusunu Ömer'e Koordinatör soruyordu.
+2. **Set bonus kuralları:** pilot kurallar motorda, bayrak kapalı (Banked Coals, Road Hound; `battle.ts > bankCoal, applyCoalTicks, spawnSetHounds`). Açık: sayıların sim ölçümü. Ayrıntı item-design-plan.md "Motor adımı".
 
 ## Tuzaklar
 - Kaynak dosyalar CRLF: `\n` çapalı betikler tutmaz; tek satır çapa ya da Edit kullan.

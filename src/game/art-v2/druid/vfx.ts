@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Druid - SÜRÜM 2 SKILL ANİMASYONLARI. Kılavuz: docs/design/art-v2.md
  *
  * Görsel dil (assets/sprites/druid/idle.png): budaklı meşe asası (dikenli sarmaşık asanın tepesinden doğar), avuçta ışıyan yeşil yaprak
@@ -1482,23 +1482,33 @@ export const vinesnareChain: V2Vfx = (c, k) =>
     c.sfx('rootCoilCreak');
     // mobtan moba: sıçrama sırası = Treant'a yakından uzağa
     const stops = slots.map((slot) => ({ slot, p: k.cellMid(c.board, slot) })).sort((x, y) => Math.hypot(x.p.x - slam.x, x.p.y - slam.y) - Math.hypot(y.p.x - slam.x, y.p.y - slam.y));
-    let from: Pt = slam;
     const coils: Array<Promise<void>> = [];
-    for (const [i, s] of stops.entries()) {
-      const dx = s.p.x - from.x;
-      const dy = s.p.y - from.y;
+    // her hedefe Treant'tan AYRI kamçı (Treant'a yakın olan önce, 200 ms arayla): kamçı doğrudan Treant'tan hedefe uçar, hedefler arası sıçrama yok
+    const trips = stops.map(async (s, i) => {
+      await k.wait(c.scene, k.slow(i * 300));
+      const lane = (i % 2 ? 1 : -1) * 22; // iki kamçı farklı yükseklikte uçar: yollar üst üste binmez
+      const dx = s.p.x - slam.x;
+      const dy = s.p.y - slam.y;
       const dist = Math.hypot(dx, dy);
-      const lash = k.sheet(c.scene, SH.lash, from.x, from.y + 6, { size: 340, loop: true, depth: k.DEPTH + 30, rotation: Math.atan2(dy, dx) });
-      await k.counter(c.scene, k.slow(Math.max(240, dist / 1.2)), (u) => lash?.setPosition(from.x + dx * u, from.y + 6 + dy * u));
+      const lash = k.sheet(c.scene, SH.lash, slam.x, slam.y + 6 + lane, { size: 360, loop: true, depth: k.DEPTH + 30, rotation: Math.atan2(dy, dx) });
+      await k.counter(c.scene, k.slow(Math.max(260, dist / 1.2)), (u) => lash?.setPosition(slam.x + dx * u, slam.y + 6 + lane * (1 - u) + dy * u - Math.sin(u * Math.PI) * 26));
       lash?.destroy();
       if (i === 0) c.sfx('rootCoilCreak');
-      // sarmal sheet (07) yerine kodla çizilen kök halkaları (rootCoil: bacak hizası, koyu kabuk): hedef başına, kamçı sheet'iyle (08) birlikte
+      // sarmal sheet (07) yerine kodla çizilen kök halkaları (rootCoil: bacak hizası, koyu kabuk): hedef başına
       for (const t of c.targets.filter((u) => u.combatant.slot === s.slot)) rootRings(c, k, t, 380);
-      coils.push(k.wait(c.scene, k.slow(240 + 160 + 380 + 260)));
+      coils.push(
+        (async () => {
+          await k.wait(c.scene, k.slow(240 + 160 + 380 + 120));
+          // sonda halkalar ufalanır: koyu toprak ve kabuk kırıntıları bacak hizasından düşer
+          for (let n = 0; n < 16; n++) barkChunk(c, k, s.p.x + k.rnd(-30, 30), s.p.y - k.rnd(0, 40), { vx: k.rnd(-110, 110), vy: k.rnd(-220, -50), floor: s.p.y + 8, size: k.rnd(5, 9), col: BARK_HEX[Math.floor(k.rnd(0, BARK_HEX.length))]!, depth: k.DEPTH + 28, life: k.rnd(450, 700) });
+          soilBurst(c, k, s.p, 1);
+          await k.wait(c.scene, k.slow(420));
+        })(),
+      );
       soilBurst(c, k, s.p, 0.5);
       for (const t of c.targets.filter((u) => u.combatant.slot === s.slot)) c.scene.tweens.add({ targets: t.container, y: t.container.y + 6, duration: k.slow(80), yoyo: true, hold: k.slow(120) });
-      from = s.p;
-    }
+    });
+    await Promise.all(trips);
     await k.wait(c.scene, k.slow(260)); // son sarmal sıkıyor: hasar rakamları o an
     c.sfx('rootCinch');
     for (const s of stops) void k.ring(c.scene, s.p.x, s.p.y + 10, { r: 70, flat: 0.5, n: 16, colors: ['#ffffff', '#a8f08a', '#62d04b'], dur: 260, size: 8 });
@@ -1568,35 +1578,82 @@ export const summondeath_treant: V2Vfx = async (c, k) => {
   const ui = v.container.list.filter((ch) => ch !== sp) as unknown as Array<Phaser.GameObjects.Components.Alpha>;
   ui.forEach((ch) => ch.setAlpha(0));
   c.sfx('rootRise');
-  // parçalar: [x, y, w, h] sprite karesi oranı; sep = aralanma yönü
-  const DEFS: Array<{ r: [number, number, number, number]; sepX: number; sepY: number; tilt: number; delay: number }> = [
-    { r: [0, 0, 1, 0.3], sepX: 0.03, sepY: -0.08, tilt: 0.22, delay: 0 },
-    { r: [0, 0.3, 0.3, 0.4], sepX: -0.16, sepY: 0.02, tilt: -0.3, delay: 140 },
-    { r: [0.7, 0.3, 0.3, 0.4], sepX: 0.16, sepY: 0.02, tilt: 0.3, delay: 260 },
-    { r: [0.3, 0.3, 0.4, 0.4], sepX: -0.03, sepY: 0.03, tilt: -0.12, delay: 380 },
-    { r: [0, 0.7, 0.5, 0.3], sepX: -0.1, sepY: 0.04, tilt: -0.2, delay: 480 },
-    { r: [0.5, 0.7, 0.5, 0.3], sepX: 0.1, sepY: 0.04, tilt: 0.2, delay: 620 },
+  // parçalar: sprite karesinden TIRTIKLI kenarlı çokgenlerle kesilir (komşu parçalar aynı kesit çizgisini paylaşır); sep = aralanma yönü
+  // kesitler: h1 = boyun/omuz (y .3), h2 = göğüs/karın (y .5), h3 = bel (y .7), v1/v2 = kolların iç kenarı (x .3/.7), v3 = bacak arası (x .5)
+  const zig = (id: number, t: number): number => (Math.sin(t * 41 + id * 5.1) + Math.sin(t * 97 + id * 2.3) * 0.7 + Math.sin(t * 173 + id) * 0.35) * 0.014;
+  type Side = number | null; // kesit kimliği; null = kare kenarı (düz)
+  const DEFS: Array<{ r: [number, number, number, number]; s: [Side, Side, Side, Side]; sepX: number; sepY: number; tilt: number; delay: number }> = [
+    { r: [0, 0, 1, 0.3], s: [null, 1, null, null], sepX: 0.08, sepY: -0.06, tilt: 0.5, delay: 0 }, // baş + dallar
+    { r: [0, 0.3, 0.3, 0.4], s: [1, 3, null, 4], sepX: -0.22, sepY: 0.02, tilt: -0.5, delay: 60 }, // sol kol
+    { r: [0.7, 0.3, 0.3, 0.4], s: [1, 3, 5, null], sepX: 0.22, sepY: 0.02, tilt: 0.5, delay: 120 }, // sağ kol
+    { r: [0.3, 0.3, 0.4, 0.2], s: [1, 2, 4, 5], sepX: -0.12, sepY: -0.03, tilt: -0.34, delay: 180 }, // göğüs
+    { r: [0.3, 0.5, 0.4, 0.2], s: [2, 3, 4, 5], sepX: 0.13, sepY: 0.05, tilt: 0.3, delay: 240 }, // karın
+    { r: [0, 0.7, 0.5, 0.3], s: [3, null, null, 6], sepX: -0.14, sepY: 0.04, tilt: -0.3, delay: 300 }, // sol bacak
+    { r: [0.5, 0.7, 0.5, 0.3], s: [3, null, 6, null], sepX: 0.14, sepY: 0.04, tilt: 0.3, delay: 370 }, // sağ bacak
   ];
-  const pieces = DEFS.map((d) => {
-    const img = c.scene.add.sprite(sp.x, sp.y, key, frame).setOrigin(sp.originX, sp.originY).setScale(sp.scaleX, sp.scaleY).setFlipX(sp.flipX);
-    img.setCrop(d.r[0] * fw, d.r[1] * fh, d.r[2] * fw, d.r[3] * fh);
+  const fImg = sp.frame.source.image as CanvasImageSource;
+  const cutX = sp.frame.cutX;
+  const cutY = sp.frame.cutY;
+  const texKeys: string[] = [];
+  const pieces = DEFS.map((d, di) => {
+    const [x0, y0, w0, h0] = d.r;
+    const x1 = x0 + w0;
+    const y1 = y0 + h0;
+    const N = 18;
+    const poly: Array<[number, number]> = [];
+    const edge: Array<Array<[number, number]>> = [[], [], [], []]; // üst, alt, sol, sağ (yalnız kesit kenarları; koyu çizgi için)
+    for (let i = 0; i <= N; i++) {
+      const x = x0 + (w0 * i) / N;
+      const p: [number, number] = [x, y0 + (d.s[0] === null ? 0 : zig(d.s[0], x))];
+      poly.push(p);
+      if (d.s[0] !== null) edge[0]!.push(p);
+    }
+    for (let i = 0; i <= N; i++) {
+      const y = y0 + (h0 * i) / N;
+      const p: [number, number] = [x1 + (d.s[3] === null ? 0 : zig(d.s[3], y)), y];
+      poly.push(p);
+      if (d.s[3] !== null) edge[3]!.push(p);
+    }
+    for (let i = N; i >= 0; i--) {
+      const x = x0 + (w0 * i) / N;
+      const p: [number, number] = [x, y1 + (d.s[1] === null ? 0 : zig(d.s[1], x))];
+      poly.push(p);
+      if (d.s[1] !== null) edge[1]!.push(p);
+    }
+    for (let i = N; i >= 0; i--) {
+      const y = y0 + (h0 * i) / N;
+      const p: [number, number] = [x0 + (d.s[2] === null ? 0 : zig(d.s[2], y)), y];
+      poly.push(p);
+      if (d.s[2] !== null) edge[2]!.push(p);
+    }
+    const tk = `treantdeath:${key}:${frame}:${di}:${c.scene.time.now}`;
+    const cv = c.scene.textures.createCanvas(tk, fw, fh)!;
+    const ctx = cv.getContext();
+    ctx.save();
+    ctx.beginPath();
+    poly.forEach(([px, py], i) => (i ? ctx.lineTo(px * fw, py * fh) : ctx.moveTo(px * fw, py * fh)));
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(fImg, cutX, cutY, fw, fh, 0, 0, fw, fh);
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.strokeStyle = '#1a100a';
+    ctx.lineWidth = Math.max(2, fw * 0.012);
+    ctx.lineJoin = 'round';
+    for (const e of edge) {
+      if (e.length < 2) continue;
+      ctx.beginPath();
+      e.forEach(([px, py], i) => (i ? ctx.lineTo(px * fw, py * fh) : ctx.moveTo(px * fw, py * fh)));
+      ctx.stroke();
+    }
+    cv.refresh();
+    texKeys.push(tk);
+    const img = c.scene.add.sprite(sp.x, sp.y, tk).setOrigin(sp.originX, sp.originY).setScale(sp.scaleX, sp.scaleY).setFlipX(sp.flipX);
     v.container.add(img);
     const bottom = d.r[1] + d.r[3]; // kesit tabanı (kare oranı)
     return { img, d, x0: sp.x, y0: sp.y, fall: (1 - bottom) * Hs, drift: (d.sepX >= 0 ? 1 : -1) * k.rnd(0.12, 0.3) * W };
   });
   sp.setVisible(false);
-  // su akıntısı: gövde boyunca ince açık çizgi; sonra yere çekilir
-  const wat = c.scene.add.graphics().setDepth(v.container.depth + 3);
-  const wTop = fy - Hs * 0.78;
-  const drawWater = (from: number, alpha: number, t: number): void => {
-    wat.clear();
-    if (alpha <= 0 || from >= fy) return;
-    for (const [w, col, al] of [[3, 0x6fb6e8, 0.7], [1, 0xf2fbff, 0.95]] as Array<[number, number, number]>) {
-      wat.lineStyle(w, col, al * alpha).beginPath().moveTo(fx + Math.sin(from * 0.05 + t) * 1.2 + Math.sin(from * 0.032) * 9, from);
-      for (let y = from; y <= fy; y += 6) wat.lineTo(fx + Math.sin(y * 0.05 + t) * 1.2 + Math.sin(y * 0.032) * 9, y);
-      wat.strokePath();
-    }
-  };
   // yapraklar: söğüt (ince uzun), yeşilden sarıya solar, yere dökülür
   const leaves = Array.from({ length: 20 }, () => ({
     x: fx + k.rnd(-W * 0.45, W * 0.45), y: fy - Hs * k.rnd(0.6, 0.95), start: k.rnd(0, 500), dur: k.rnd(600, 950), sway: k.rnd(14, 30), ph: k.rnd(0, 6), len: k.rnd(14, 22),
@@ -1635,9 +1692,15 @@ export const summondeath_treant: V2Vfx = async (c, k) => {
     const r = rx * (1 - jit + k.rnd(0, jit * 2)) * (i % 3 ? 0.95 : 1.12);
     return [Math.cos(a) * r, Math.sin(a) * r * 0.3] as [number, number];
   });
-  const poolPts = blob(W * 0.85, 0.5);
+  const ph1 = k.rnd(0, 6.28);
+  const ph2 = k.rnd(0, 6.28);
+  const poolPts: Array<[number, number]> = Array.from({ length: 48 }, (_, i) => {
+    const a = (i / 48) * Math.PI * 2;
+    const r = W * 0.85 * (1 + 0.16 * Math.sin(3 * a + ph1) + 0.1 * Math.sin(5 * a + ph2) + 0.05 * Math.sin(11 * a + ph1));
+    return [Math.cos(a) * r, Math.sin(a) * r * 0.3];
+  });
   const pool = c.scene.add.graphics({ x: fx, y: fy + 4 }).setDepth(k.FLOOR_FX + 3).setAlpha(0);
-  pool.fillStyle(0x1f150c, 0.85).beginPath();
+  pool.fillStyle(0x1f150c, 0.72).beginPath();
   poolPts.forEach(([px, py], i) => (i ? pool.lineTo(px, py) : pool.moveTo(px, py)));
   pool.closePath().fillPath();
   pool.fillStyle(0x6a5030, 0.35).beginPath();
@@ -1656,10 +1719,9 @@ export const summondeath_treant: V2Vfx = async (c, k) => {
   for (let i = 0; i < 9; i++) lip.fillStyle(i % 2 ? 0x2a1c12 : 0x3b2a1a, 1).fillEllipse((i - 4) * W * 0.13, k.rnd(-2, 3), k.rnd(W * 0.2, W * 0.3), k.rnd(9, 15));
   // 1) titreme: parçalar aralanır, kabuk kıymıkları sıçrar
   let chips = 0;
-  const T1 = 600;
+  const T1 = 420;
   await k.counter(c.scene, k.slow(T1), (u) => {
     drawLeaves(u * T1);
-    drawWater(wTop, 1, u * 10);
     for (const p of pieces) {
       p.img.setPosition(p.x0 + p.d.sepX * W * u + Math.sin(u * 60 + p.d.delay) * (1.5 + 3 * u), p.y0 + p.d.sepY * Hs * u);
       p.img.setRotation(p.d.tilt * 0.5 * u);
@@ -1682,7 +1744,6 @@ export const summondeath_treant: V2Vfx = async (c, k) => {
   await k.counter(c.scene, k.slow(T2), (u) => {
     const t = u * T2;
     drawLeaves(T1 + t);
-    drawWater(wTop + (fy - wTop) * clamp01(t / 900), 1 - clamp01((t - 700) / 300), 4 + u * 10);
     for (const p of pieces) {
       const tt = t - p.d.delay;
       const fu = clamp01(tt / 520);
@@ -1699,7 +1760,7 @@ export const summondeath_treant: V2Vfx = async (c, k) => {
   sp.setVisible(true).clearTint();
   v.container.setAlpha(0);
   mask.destroy();
-  wat.destroy();
+  for (const tk of texKeys) c.scene.textures.remove(tk);
   c.scene.tweens.add({ targets: lip, alpha: 0, duration: k.slow(450), onComplete: () => lip.destroy() });
   fadeOut(c, k, pool, 0, 450);
   await k.counter(c.scene, k.slow(520), (u) => drawLeaves(T1 + T2 + u * 520));
@@ -1764,9 +1825,10 @@ export const VFX: Record<string, V2Vfx> = {
   summonroots,
   // olay efekti (docs/design/art-v2.md > 3.1): Treant doğuşu
   summon_treant: summon_treantSheet,
-  // summondeath_treant (yukarıda, export) Sol 7/10 (parça tabanlı sürüm, 4 tur): ertelendi, bağlı DEĞİL (v1 koda düşer); 8/10 olunca buraya eklenir
+  // Treant ölme: parçalara ayrılan gövde, Sol oyun içi 8/10 GECTI (2026-11-03, notes/treant_death.md)
+  summondeath_treant,
   summonvanish_treant,
   rootfall: rootfallFist,
-  // Vine Snare: yeni sheet'ler (07/08) oyun içi 7/10 kaldı (geçme çizgisi 8); yeniden çizilene kadar eski kod efekti oynar (2026-11-02)
+  // Vine Snare: vinesnareChain (07/08 + ayrı kamçılar) oyun içi 7/10 kaldı (3 tur, 2026-11-03; geçme çizgisi 8); bağlı DEĞİL, eski kod efekti oynar
   vinesnare,
 };

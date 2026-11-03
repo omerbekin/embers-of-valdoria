@@ -407,7 +407,7 @@ export function describeRage(f: Formulas): string[] {
 function summonUnitFor(unit: CombatantDef | undefined, stats: Stats, formulas: Formulas): CombatantDef | undefined {
   if (!unit?.summonerScale) return unit;
   const base = stats.summonBase ?? { str: stats.str, int: stats.int, dex: stats.dex, luck: stats.luck };
-  return applySummonerScale(unit, base, formulas);
+  return applySummonerScale(unit, base, formulas, stats.primary);
 }
 
 export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas, units: Record<string, CombatantDef> = {}, defs: EffectDefs = {}, ownerRange?: number): SkillInfo {
@@ -529,7 +529,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (unit && sc) {
         const key = (Object.keys(sc.attributes) as Attribute[])[0];
         const what = key ? `${ATTRIBUTE_NAME[key]} and HP` : 'HP';
-        add(`The ${unit.name} grows with you: its ${what} come from your ${ATTRIBUTE_NAME[sc.from]} (items not counted) and it has your level`);
+        add(`The ${unit.name} grows with you: its ${what} come from your ${sc.from === 'primary' ? 'primary stat' : ATTRIBUTE_NAME[sc.from]} (items not counted) and it has your level`);
       }
     } else if (e.type === 'manaBurn') {
       // Madde 260: sabit miktar ya da hedefin maks MP'sinin yüzdesi (pctMax)

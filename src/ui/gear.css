@@ -1576,6 +1576,29 @@ html.short .gr-slot-sub {
   min-width: 0;
 }
 
+:is(.it-card, .mw-stats) .it-set {
+  margin: var(--gap, 7px) 0 2px;
+  padding: 4px 10px;
+  border-left: 2px solid rgba(120, 214, 140, 0.65);
+  background: linear-gradient(90deg, rgba(120, 214, 140, 0.08), transparent);
+}
+
+:is(.it-card, .mw-stats) .it-set strong {
+  display: block;
+  font: 600 0.8em var(--g-disp);
+  color: #a6e6b4;
+}
+
+:is(.it-card, .mw-stats) .it-set-row {
+  opacity: 0.55;
+  font-size: 0.92em;
+}
+
+:is(.it-card, .mw-stats) .it-set-row.on {
+  opacity: 1;
+  color: #d8f3dd;
+}
+
 :is(.it-card, .mw-stats) .it-effect {
   margin: var(--gap, 7px) 0 2px;
   padding: 4px 10px;
@@ -2041,6 +2064,11 @@ html.short .it-face {
 }
 
 html.short .it-effect {
+  padding: 1px 6px;
+  margin: 2px 0;
+}
+
+html.short .it-set {
   padding: 1px 6px;
   margin: 2px 0;
 }

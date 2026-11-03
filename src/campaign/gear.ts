@@ -1,6 +1,7 @@
 // Sefer ekipmanı (saf; her işlem YENİ durum döndürür): torba, kuşanma, çıkarma, altın ve kahramanın savaş gücü.
 // Aşama 0 temeli (roadmap 1.4); loot / tüccar / ekranlar Aşama 1. Kurallar: docs/design/progression/items.md.
 import { BAG_SIZE, bestMoves, FALLEN_GEAR_MSG, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, planMoveEquipped, loadout, promoteOffhand, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId, type SlotLocks } from '../progression';
+import { SET_ITEMS } from '../progression/sets';
 import { clone, heroById, isFallen } from './state';
 import { slotLocks } from './slots';
 import { rngFor } from './seed';
@@ -145,6 +146,18 @@ export function grantAllLegendaries(s: CampaignState): CampaignState {
     if (have.has(id)) continue;
     const uid = `i${t.nextItemId++}`;
     t.inventory.push(makeItem(id, uid, rngFor(t.seed, 'item', uid)));
+  }
+  return t;
+}
+
+/** Debug: pilot setlerin tüm parçalarını torbaya koyar (setsEnabled kapalıyken de: bonuslar parçayla çalışır, düşüş ve Codex bayrakla). Torba sınırı yok; zarlı; seviye = taban ilvl. */
+export function grantPilotSets(s: CampaignState): CampaignState {
+  const have = new Set([...s.inventory.map((i) => i.id), ...s.roster.flatMap((h) => SLOT_IDS.map((k) => h.equipment[k]?.id))]);
+  const t = clone(s);
+  for (const d of SET_ITEMS) {
+    if (have.has(d.id)) continue;
+    const uid = `i${t.nextItemId++}`;
+    t.inventory.push(makeItem(d.id, uid, rngFor(t.seed, 'item', uid)));
   }
   return t;
 }

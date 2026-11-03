@@ -321,7 +321,7 @@ describe('zorluk (provizyon)', () => {
 });
 
 describe('Harita 2 eğrisi (campaign.json > mapEnemyScale)', () => {
-  it('her düğüm ve grup gerçek; bossta can şişirilmez; Harita 1 ve Harita 3 çarpan almaz', () => {
+  it('her düğüm ve grup gerçek; bossta can şişirilmez; Harita 1 çarpan almaz, Harita 3 kendi eğrisinde', () => {
     const map = getMap(DROWNED_REACH);
     const { nodes, groups } = CONFIG.mapEnemyScale[DROWNED_REACH]!;
     for (const [id, g] of Object.entries(nodes)) {
@@ -331,7 +331,7 @@ describe('Harita 2 eğrisi (campaign.json > mapEnemyScale)', () => {
     for (const n of map.nodes.filter((x) => x.type === 'elite' || x.type === 'boss')) expect(nodes[n.id], n.id).toBeTruthy();
     expect(groups[nodes['dr82']!]!.hpMult!).toBeLessThanOrEqual(1); // Throne of Brine savaşları zaten uzun
     expect(mapEnemyScale('valdoria', '9')).toBeUndefined();
-    expect(Object.keys(CONFIG.mapEnemyScale)).toEqual([DROWNED_REACH]);
+    expect(Object.keys(CONFIG.mapEnemyScale).sort()).toEqual([DROWNED_REACH, 'hollow-crown'].sort());
   });
 
   it('eski ve yeni kayıt Harita 2 de aynı çarpanı alır; çarpan düşman kurulumuna gerçekten biner', () => {

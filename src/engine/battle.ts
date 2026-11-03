@@ -13,7 +13,7 @@ import { isUnblockableHit } from './unblockable';
 import { mergeRefreshStrongest, statusStackMode, statusStrength } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
-import { levelGapBonus, applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, dotOutgoingMult, hitOutcome, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
+import { levelGapBonus, applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, dotOutgoingMult, hitOutcome, patchedPassive, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
 import type { Attribute, Attributes, BrandSpec, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect, PushDir } from './types';
 import { advanceTurn, predictQueue, snapCounter, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
 import { bellsOfSkill, condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, manaShieldPay, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
@@ -408,6 +408,7 @@ export class Battle {
       if (c.boss.phases?.length) c.phase = 1;
       this.refreshAnchored(c);
     }
+    const hounds = this.spawnSetHounds(); // Road Hound (Wayfarer's Oath): savaş başı, battleStart kaydından önce (her iki modda)
     // Head Start (YM15, mob pasifi): savaş başında Skip Turn gibi hız desteği (ilk turuna kadar); yalnızca turns modunda
     const headStart = this.mode === 'turns' ? this.combatants.filter((c) => c.hp > 0 && c.passive?.effect.type === 'headStart') : [];
     for (const c of headStart) {
@@ -419,6 +420,7 @@ export class Battle {
     this.record({ type: 'battleStart', seed: this.seed, combatants: this.combatants.map(cloneCombatant) });
     if (this.waveCount > 1) this.record({ type: 'waveStart', index: 0, total: this.waveCount, combatants: [], removed: [], queue: [] });
     for (const c of headStart) this.record({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
+    for (const h of hounds) this.record({ type: 'passive', actor: h.owner!, passive: 'road_hound', name: h.name });
     // Karşılaşma koşulu (Tide): ilk dalganın başında su basar
     if (setup.rules) this.waveBeganForRules((e) => this.record(e));
     // Faz 4a: tetik / C4 kancası taşıyan birimler (yalnızca ağaçlı savaş) ve savaş başı tetiği
@@ -3711,6 +3713,82 @@ export class Battle {
   }
 
   /** Anchored rozeti: yığın = canlı yardımcı sayısı (0'da kalkar). Kural (zırh eki) effectiveStats'ta; bu yalnızca bilgi. */
+  /**
+   * Road Hound (Wayfarer's Oath 3 parça; Ömer 2026-11-03): taşıyanın yanındaki boş hücreye (öndeki sıra önce) bir köpek; yalnızca kurucudan çağrılır, savaşta yeniden gelmez.
+   * Yanında boş hücre yoksa köpek gelmez. Statlar sahibin item hariç primary'sinden (summonDefFor).
+   */
+  private spawnSetHounds(): Combatant[] {
+    const out: Combatant[] = [];
+    for (const owner of [...this.combatants]) {
+      const unit = owner.itemEffects?.roadHound?.unit;
+      const baseDef = unit ? this.setup.units[unit] : undefined;
+      if (!baseDef || owner.hp <= 0 || owner.summoned) continue;
+      const near = this.freeSlots(owner.board).filter((s) => Math.abs(this.rowOf(s) - this.rowOf(owner.slot)) + Math.abs(this.laneOf(s) - this.laneOf(owner.slot)) === 1);
+      const spot = near.sort((a, b) => this.rowOf(a) - this.rowOf(b) || a - b)[0];
+      if (spot === undefined) continue;
+      const hound = createCombatant(this.summonDefFor(owner, baseDef, undefined), owner.side, spot, `${owner.side}-s${this.summonCount++}`);
+      rollSpeed(hound, this.seed, this.setup.formulas);
+      hound.board = owner.board;
+      hound.owner = owner.uid;
+      if (owner.level !== undefined) hound.level = owner.level;
+      hound.summoned = true;
+      dropUnusedMana(hound, this.setup.skills);
+      this.combatants.push(hound);
+      out.push(hound);
+    }
+    return out;
+  }
+
+  /** Bekleyen kor toplamı (rozet, önizleme, YZ). */
+  coalPending(c: Combatant): number {
+    return (c.coals ?? []).reduce((sum, b) => sum + b.rest, 0);
+  }
+
+  /** Banked Coals rozeti: bekleyen toplam (stacks); bitince kalkar (refreshAnchored kalıbı). */
+  private refreshCoalBadge(c: Combatant, emit: Emit): void {
+    const n = c.hp > 0 ? this.coalPending(c) : 0;
+    const st = c.statuses.find((s) => s.kind === 'banked_coals');
+    if (n <= 0) {
+      if (st) {
+        c.statuses = c.statuses.filter((s) => s !== st);
+        emit({ type: 'statusEnd', target: c.uid, status: 'banked_coals' });
+      }
+      return;
+    }
+    if (st) st.stacks = n;
+    else c.statuses.push({ kind: 'banked_coals', turns: 1, source: c.uid, stacks: n });
+    emit({ type: 'status', target: c.uid, status: 'banked_coals', turns: 1, source: c.uid, stacks: n });
+  }
+
+  /** Banked Coals (Ashguard Vigil 4 parça): düşman skill vuruşunun payı ertelenir; anında kalan döner. Tikler yeniden ertelenmez (origin 'status'). */
+  private bankCoal(actor: Combatant, target: Combatant, amount: number, type: 'physical' | 'magic', meta: HitMeta, emit: Emit): number {
+    const bank = target.itemEffects?.bankedCoals;
+    if (!bank || meta.origin !== 'skill' || actor.side === target.side || amount <= 0) return amount;
+    const banked = Math.floor(amount * bank.share);
+    if (banked <= 0) return amount;
+    (target.coals ??= []).push({ left: bank.ticks, per: Math.round(banked / bank.ticks), rest: banked, source: actor.uid, type, ...(meta.element ? { element: meta.element } : {}) });
+    this.refreshCoalBadge(target, emit);
+    return amount - banked;
+  }
+
+  /**
+   * Kor tikleri (taşıyanın kendi tur başı; test modunda eylem sonu): her vuruşun kendi sırası, son tik kalanın tamamı. Fortified / Blessed düşmez (tickDamage'dan geçmez),
+   * kalkan ve Lucky Escape DoT gibi çalışır, öldürebilir. Sıfır tik olay üretmez.
+   */
+  private applyCoalTicks(actor: Combatant, emit: Emit): void {
+    if (!actor.coals?.length) return;
+    for (const b of [...actor.coals]) {
+      if (actor.hp <= 0) break;
+      const tick = b.left <= 1 ? b.rest : Math.min(b.rest, b.per);
+      b.left--;
+      b.rest -= tick;
+      if (b.left <= 0 || b.rest <= 0) actor.coals = actor.coals.filter((x) => x !== b);
+      if (tick > 0) this.applyHit(this.get(b.source) ?? actor, actor, tick, b.type, false, emit, false, { origin: 'status', ...(b.element ? { element: b.element } : {}), damageType: b.type, cause: 'banked_coals' });
+    }
+    this.refreshCoalBadge(actor, emit);
+    this.announceIfDead(actor, emit);
+  }
+
   private refreshAnchored(owner: Combatant, emit?: Emit): void {
     if (!owner.boss?.anchor || !this.statusDef('anchored')) return;
     const n = owner.hp > 0 ? this.anchorsOf(owner).length : 0;
@@ -4880,7 +4958,7 @@ export class Battle {
    */
   summonDefFor(actor: Combatant, baseDef: CombatantDef, empowered: boolean | undefined): CombatantDef {
     const f = this.setup.formulas;
-    const scaled = applySummonerScale(baseDef, summonerAttrs(actor), f);
+    const scaled = applySummonerScale(baseDef, summonerAttrs(actor), f, actor.stats.primary);
     const variantDef = empowered === undefined ? scaled : applySummonVariant(scaled, empowered ? 'fed' : 'unfed', f);
     // Summon mastery (item affix, Ömer 2026-10-11): çağrının maks canı ve skill gücü; yoksa tanım aynen
     const sp = effNum(actor, 'summonPower');
@@ -6812,6 +6890,7 @@ export class Battle {
     // Karşılaşma kuralları: test modunda savaş turu eylemle sayılır (turns modunda advance sayar); su hücresine girene Soaked, suya düşen ateş söner
     if (this.mode === 'test' && this.hazards.length) this.boltTestTick(emit); // C1: test modunda belirteç eylemle ilerler
     if (actor.temper && this.mode === 'test' && actor.hp > 0) this.temperFlip(actor, emit); // C6: test modunda tur başı yok, eylem sonunda
+    if (this.mode === 'test') this.applyCoalTicks(actor, emit); // Banked Coals: test modunda tur başı yok, eylem sonunda
     if (actor.heat !== undefined) this.heatAfterAction(actor, emit); // E1: her gerçek eylem Heat doldurur
     if (this.setup.rules) {
       if (this.mode === 'test') this.noteRound(actor, emit);
@@ -7086,6 +7165,7 @@ export class Battle {
       if (this.trigOn && src !== actor) this.trig([src], { on: 'dotTick', target: actor, subject: actor, status: st.kind, amount: lost }, emit);
       this.announceIfDead(actor, emit);
     }
+    this.applyCoalTicks(actor, emit); // Banked Coals: DoT'lardan hemen sonra
     // Yığılan durumun süresi (Omen, madde Ö2): taşıyanın tur başında 1 azalır; dolunca yığın sayısı kadar Doom patlar (burstOnExpire; snapshot ile).
     // DoT tikinden SONRA, yenilenmeden ÖNCE; taşıyan zemin/DoT tikinde öldüyse patlamaz (Ill Omen ölümde yığını zaten geçirdi)
     for (const st of [...actor.statuses]) {
@@ -8470,6 +8550,7 @@ export class Battle {
     }
     // Faz 4a C4 (bigHit, Stand Firm): düşman skill vuruşu maks canın eşiğini aşarsa indirilir (yalnızca kancalı hedefte)
     if (this.healOn && target.treeHooks && meta.origin === 'skill' && actor.side !== target.side && amount > 0) amount = this.bigHitCut(target, actor, amount);
+    if (target.itemEffects?.bankedCoals) amount = this.bankCoal(actor, target, amount, type, meta, emit); // Banked Coals: zırhtan sonraki hasarın payı ertelenir
     // Luck-primary Lucky Escape (madde 258): kalkanlardan sonra kalan hasar canı bitirecekse, savaş başına bir kez şansla vuruş TAMAMEN
     // yok sayılır: can ve kalkan değişmez, kalkan kancaları/taunt sayacı/lifesteal gibi yan etkiler işlemez (seed'li RNG; zar yalnızca ölümcülse atılır).
     // Faz 5a (Through the Guard): saldıranın pierce kuralı kalkanı yok sayar (yalnızca skill vuruşu)
@@ -8727,6 +8808,10 @@ export class Battle {
     if (c.hp > 0 || this.announcedDead.has(c.uid) || c.lifespan === 0) return;
     this.announcedDead.add(c.uid);
     if (c.taint !== undefined) this.dropTaint(c, emit, 'removed'); // Ley Brand: ölen birimin tainted mana havuzu
+    if (c.coals?.length) {
+      c.coals = []; // Banked Coals: ölenin korları söner (diriltilen sıfırdan başlar)
+      this.refreshCoalBadge(c, emit);
+    }
     if (this.treeUnits) {
       this.diedAt.set(c.uid, this.treeClock);
       const caster = this.castPaid ? this.get(this.castPaid.uid) : undefined;
@@ -10698,6 +10783,7 @@ function buildSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, ui
     if (own.length) c.skillDefs = Object.fromEntries(own);
   }
   if (tr?.passive && c.passive && tr.passive.id === c.passive.id) c.passive = tr.passive;
+  if (unit.passivePatch && c.passive) c.passive = patchedPassive(c.passive, unit.passivePatch); // set bonusu: ağaçla gelen değerin üstüne
   if (unit.evolved?.length) c.evolved = unit.evolved.filter((id) => c.skills.includes(id)); // yalnızca sunum (ikon animasyonu)
   // Faz 8: skill biçim seçimleri (birimin skill listesindekiler)
   if (tr?.modes) {
@@ -10758,6 +10844,7 @@ function cloneCombatant(c: Combatant): Combatant {
     ...(c.unlockOnWave ? { unlockOnWave: { wave: c.unlockOnWave.wave, skills: [...c.unlockOnWave.skills] } } : {}),
     cooldowns: { ...c.cooldowns },
     statuses: c.statuses.map((s) => ({ ...s, ...(s.held ? { held: { ...s.held } } : {}) })),
+    ...(c.coals ? { coals: c.coals.map((b) => ({ ...b })) } : {}),
     ...(c.shieldHooks ? { shieldHooks: c.shieldHooks.map((h) => ({ ...h, onAbsorb: { ...h.onAbsorb } })) } : {}),
   };
 }

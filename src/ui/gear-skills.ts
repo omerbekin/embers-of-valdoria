@@ -7,7 +7,8 @@
  */
 import { content } from '../engine';
 import { TREE_SECTION, describePassive, describeSkill, passiveNumbers, skillNumbers, type SkillInfo, type SkillNumber } from '../engine/skill-info';
-import type { PassiveDef, SkillDef, Stats } from '../engine';
+import { patchedPassive } from '../engine/stats';
+import type { PassiveDef, PassivePatch, SkillDef, Stats } from '../engine';
 import { diffText, mergeLine } from './stat-tips';
 
 /** Ekranda gösterilen sayı: şimdiki değer, item takılırsa yeni değer ve fark (fark 0 ise after / diff yok). */
@@ -87,8 +88,9 @@ export function passiveRow(passive: PassiveDef, stats: Stats, after: Stats | nul
 }
 
 /** Kahramanın tüm skill satırları: standart sıra = pasif (varsa) EN BAŞTA, sonra skill'ler (Ömer 2026-10-18). */
-export function gearSkillRows(classId: string, stats: Stats, after: Stats | null = null): GearSkillRow[] {
-  const { skills, passive } = classSkills(classId);
+export function gearSkillRows(classId: string, stats: Stats, after: Stats | null = null, passivePatch?: PassivePatch): GearSkillRow[] {
+  const { skills, passive: rawPassive } = classSkills(classId);
+  const passive = rawPassive && patchedPassive(rawPassive, passivePatch); // set bonusu (Ashguard Vigil 3 parça)
   const rows = skills.map((s) => skillRow(s, stats, after));
   if (passive) rows.unshift(passiveRow(passive, stats, after));
   return rows;

@@ -22,12 +22,90 @@ Sahip: Item Design sohbeti. Form: https://claude.ai/artifact/4NRvdHvZtQZEesdVuYU
 
 ## Seçilen set bonusları (2026-11-01, yeni kural onaylı, sayılar örnek)
 
-- **Ashguard Vigil:** Banked Coals. Ömer'in notu: yediğin hasar 3 turda sana degen olarak işler.
+- **Ashguard Vigil:** Banked Coals. Son kural aşağıda, "Set Pilot son seçimleri".
 - **Raven's Shroud:** Unseen.
 - **Conclave of Embers:** The Conclave Answers.
 - **Gallows Pact:** Hangman's Rope.
 - **Kingsfall Regalia:** Royal Command.
 - **Wayfarer's Oath:** Road Hound.
+
+## Set Pilot son seçimleri (Ömer 2026-11-03)
+
+**Sayılar ölçülmedi.** Hiçbiri simde denenmedi; motor gelince ölçülür. Veri `data/items.json > sets`. `setsEnabled` kapalı, oyuncu görmez.
+
+### Ashguard Vigil
+
+Parçalar: Ashguard Helm, Ashguard Hauberk, Ashguard Gauntlets, Ashguard Greaves.
+
+| Parça | Bonus |
+|---|---|
+| 2 | +3 Armor, +2 Magic Armor |
+| 3, Warrior | Berserker `perHpPercent` 0,4 → 0,5 |
+| 3, Defender | Bulwark Aura `pct` 0,4 → 0,5 |
+| 3, Paladin | Divine Light `power` 0,27 → 0,32 |
+| 4 | Banked Coals |
+
+Banked Coals:
+
+- Armor sonrası hasarın yarısı bankalanır.
+- Her vuruşun kendi 3 turluk eşit tiki olur. Örnek: 40 hasar = 20 hemen, 6,7 x 3.
+- Tikler toplanır, süre sıfırlanmaz.
+- Köz hasarının türü vuruştan gelir.
+- Fortified ve Blessed köz hasarını azaltmaz.
+- Köz öldürebilir.
+
+### Wayfarer's Oath
+
+Parçalar: Milestone Boots, Drover's Gloves, Drover's Signet.
+
+| Parça | Bonus |
+|---|---|
+| 2 | Tur başına +0,75 can |
+| 3 | Road Hound |
+
+Road Hound:
+
+| Değer | Sayı |
+|---|---|
+| Can | 2,0 x takanın ana statı |
+| Hasar | 0,5 x takanın ana statı |
+| Hız | 17 |
+| YZ | `aggressive` |
+
+- Ana stat item hariç sayılır (Skeleton ve Treant kuralı).
+- Her çağrı gibi x2 hasar alır (`formulas.summon.damageTakenMultiplier`).
+
+### Motor adımı (yapıldı, bayrak kapalı; dal agent/sets-engine)
+
+Kod: `src/progression/sets.ts`, `data/items.json > setItems` (parçalar), `battle.ts > bankCoal / applyCoalTicks / spawnSetHounds`. `setsEnabled` false; parçalar yalnızca Debug > Campaign > Give pilot sets ile gelir, bonuslar parçayla çalışır. Bayrak düşüşü ve Codex yazısını açar.
+
+**Banked Coals**
+
+- Düşman skill vuruşunda zırhtan sonraki hasarın `bankShare`i aşağı yuvarlanır, kalan anında. 40 hasar: 20 + 7, 7, 6.
+- Tik taşıyanın kendi tur başında, DoT'lardan hemen sonra; `test` modunda eylem sonunda. Her tik yuvarlanır, kalan son tikte.
+- DoT, zemin, kendi hasarı ertelenmez. Tik kalkana düşer, Lucky Escape çalışır, Fortified / Blessed düşmez, öldürebilir. Ölünce korlar söner.
+- Rozet durumu `banked_coals`: bekleyen toplam (stacks), silinmez.
+
+**Road Hound**
+
+- `data/summons/road_hound.json` (görünüş Grey Wolf, zırh 6 / 0, Skeleton gibi). `summonerScale.from: primary`, `damage` eklendi.
+- Kurucuda, her iki modda: taşıyanın bitişiğindeki boş hücre (öndeki sıra önce), bir tane, savaşta geri gelmez. Boş hücre yoksa gelmez.
+- Kayıtlı set birimi `content.setSummons`, skill listesi Codex'te bayrak kapalıyken gizli.
+
+**Düşüş (`rollRareDrop`, `setPools`)**
+
+- Boss ve Endless yok. Asıl düşüren elit: `split.set`. Diğer düğüm: Legendary dalı x `setOfLegendary` (0,5), harita havuzundan. Takımda (roster) takacak sınıf yoksa o sınıf seti düşmez.
+
+**Yapılmayan**
+
+- Equip best set bonusunu değerlemez; hover tooltip'inin (floatTip) pasif metni yamayı göstermez, çubuk ipucu gösterir.
+- Kalan 4 set, Sadak; `setsEnabled` açmak ve sayıların ölçümü (sim) Ömer'in onayıyla.
+
+**İki set**
+
+- Set item'leri katalogda yok: affix (C, C, B), ilvl, ikon, çizim.
+- Düşüş oranları ölçülmedi.
+- Takılı parça sayımı, ipucu satırları, YZ değerlemesi yok.
 
 ## Set kuralları, 2. tur (2026-11-01; S5'in boss kısmının yerine geçer)
 

@@ -6,6 +6,7 @@ export * from './loot';
 export * from './equip';
 export * from './item-text';
 export * from './rare';
+export * from './sets';
 export * from './drop';
 export * from './affix-fit';
 export * from './weapon';

@@ -190,7 +190,7 @@ export function reforgePrice(inst: ItemInstance, cfg: BlacksmithConfig = SMITH):
 
 /** Reforge edilebilecek affix sıraları (ana affix = 0 hariç); Epic değilse boş. */
 export function reforgeSlots(inst: ItemInstance): number[] {
-  if (instanceRarity(inst) !== 'epic' || !itemDef(inst.id)) return [];
+  if (instanceRarity(inst) !== 'epic' || !itemDef(inst.id) || itemDef(inst.id)!.set) return [];
   return instanceRoll(inst).affixes.map((_, i) => i).filter((i) => i > 0);
 }
 
@@ -198,6 +198,7 @@ export function reforgeSlots(inst: ItemInstance): number[] {
 export function reforgeBlocked(s: CampaignState, uid: string, index: number, cfg: BlacksmithConfig = SMITH): string | null {
   const f = findItem(s, uid);
   if (!f || !itemDef(f.inst.id)) return 'Unknown item';
+  if (itemDef(f.inst.id)!.set) return 'Set items cannot be reforged';
   if (instanceRarity(f.inst) !== 'epic') return 'Only Epic items can be reforged';
   if (!reforgeSlots(f.inst).includes(index)) return 'The main property cannot be reforged';
   if (!reforgeChoices(f.inst, index).length) return 'No property of this tier fits';

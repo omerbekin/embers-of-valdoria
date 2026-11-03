@@ -4,7 +4,7 @@ Sahip (eski): Campaign sohbeti. Kapsam: sefer haritaları, düğümler/karşıla
 
 ## Kurallar
 - Harita 3 (Hollow Crown) bayrağı KAPALI: `data/campaign/campaign.json > mapFlags > hollow-crown`. Açmayı yalnız Ömer söyler; açılış değişikliği ayrı tutulur, ready'ye girmez.
-- Harita 3 sayıları PROVİZYON, hiç sim ölçülmedi. Mob kuralı: ilk skill bedava, diğerleri L30'da 5-6 kullanımda MP bitirir (`tests/map3-mana.test.ts`).
+- Harita 3 çarpanları `campaign.json > mapEnemyScale["hollow-crown"]`, 2 tur simle ayarlı (2026-11-03). Mob kuralı: ilk skill bedava, diğerleri L30'da 5-6 kullanımda MP bitirir (`tests/map3-mana.test.ts`).
 - Yeni kural/stat/mekanik: önce Ömer'e sor (Lead üzerinden). Motor kuralı ve zor denge işi Combat/Character Design alanına gider.
 - "Tamamla" = ödünç yok: kendi sprite, ikon, VFX, ses. Harita 3'te artık hiçbir skill'de `artOf` yok.
 - Kitlere her yeni skill için YZ değerlemesi (`data/ai.json > mobKit`) + test eklenir.
@@ -16,9 +16,9 @@ Sahip (eski): Campaign sohbeti. Kapsam: sefer haritaları, düğümler/karşıla
 - Ses: Harita 3'te ödünç ses yok; seviyeler ÖLÇÜLMEDİ (medyan ~0,127 RMS; yöntem `docs/arch/sims-and-deploy.md` ve sessiz tarayıcı betiği).
 
 ## Açık işler
-1. Harita 2 boss ayarı: ilk deneme %78-90 (hedef %30-50), bitirme %66 (hedef %60-75), boss kasma 3,12 (hedef 3-4). Karar: ayar turu B; Weir Mouth hasar +%30 ile başla, sonra Gallows/Throne; en çok 2 tur, `campaign.json > mapEnemyScale["drowned-reach"]` (dr26/dr66/dr82).
-2. hc_12 gücü simi (96) ve Harita 3 simi (300): Ömer onayladı, makine boşalınca tek sim; sim `--map=hollow-crown` desteği yoksa minimal eklenecek.
-3. Sim sonrası bekleyen sayılar: Oathkeeper zırhı, Rime Bite/Ice Shot chill şansı, Frost Bite cooldown, Reedgate Trinket sayıları.
+1. Harita 2 boss ayarı 2 turla bitti (Lead 2026-11-03; hasar Weir Mouth 1,79, Gallows 1,45, Throne 1,75). Sonuç 300 savaş: ilk deneme %59 / %64 / %52 (hedef %30-50), bitirme %57,4 (hedef %60-75, hata payı ±6), boss kasma 2,80. İki hedef çelişiyor: boss sertleşince bitirme düşüyor. Çözüm boss hasarından değil, düğümlere yayılmış duvarlardan gelir.
+2. Harita 3 simi (300, 2. tur): bitirme %62,2, boss kasma 3,30, ilk deneme boss %62 / %78 / %70 / %87, hc_12 %91 civarı. Son iki boss hâlâ kolay; Harita 3'e 300 koşudan 135'i ulaşıyor.
+3. Oathkeeper zırhı, Rime Bite/Ice Shot chill şansı, Frost Bite cooldown, Reedgate Trinket: sim bunları ayrı göstermedi, eğri çarpanla tutuldu; değiştirilmedi.
 4. Gözle/kulakla doğrulama yapılmadı: 78 VFX konum/boyut (`data/battle-layout.json > animation.mobVfx.skills`), ses seviyeleri, yeni haritada düğümlerin yola oturması.
 5. Harita 3'ü açmadan önce: yeni oyuncu haritaya ulaşıyor mu, kayıt/ilerleme, 3 ekran boyutu, tutarlılık, tam test. Karar Ömer'in.
 

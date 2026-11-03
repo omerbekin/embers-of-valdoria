@@ -7,10 +7,11 @@
 import { classes, formulas } from '../engine/content';
 import { applyUnitModifiers, speedRoll, speedText } from '../engine/stats';
 import { STACK_FORM, stackValues, type StackForm } from '../engine/tree-hooks';
-import type { Attribute, Attributes, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
+import type { Attribute, Attributes, Element, ItemEffects, PassivePatch, UnitModifiers, UnitSetup } from '../engine/types';
 import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, weaponSpeedPenalties, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
 import { equippedWeaponPower, weaponMultFor } from './weapon';
 import { LEVELS, heroGrowthMult, type StatAlloc } from './levels';
+import { setContribution } from './sets';
 import type { TreeAlloc } from './skill-tree';
 import { treeSetupFor } from './skill-tree-compile';
 import { evolvedSkillIds } from './skill-tree-evolve';
@@ -35,6 +36,8 @@ export interface LoadoutResult {
   modifiers?: UnitModifiers;
   /** Motora giden affix kancaları + Legendary etkileri; yoksa undefined. */
   itemEffects?: ItemEffects;
+  /** Set bonusunun pasif yaması (Ashguard Vigil 3 parça); yoksa undefined. */
+  passivePatch?: PassivePatch;
   /** Savaş sonrası toparlanma oranı (Recovery affix'i; 0-1; yalnızca takan). */
   recovery: number;
   /** Yara yumuşatma (b_wound_soft; oran 0-1, yalnızca > 0 iken): yaraların maks can kaybı bu oran az (src/progression/wounds.ts). */
@@ -200,6 +203,10 @@ export function loadout(src: LoadoutSource): LoadoutResult {
       a.def.parts.forEach((p, i) => applyPart(p.to, a.values[i] ?? 0, p.scale ?? 1, { mods, fx, ...(primary ? { primary } : {}), acc, ...(a.x ? { x: a.x } : {}), ...(p.below !== undefined ? { below: p.below } : {}), ...(p.form ? { form: p.form } : {}) }));
     }
   }
+  // Set bonusları (Ömer 2026-11-03, sets.ts): düz stat ekleri tavanlardan önce toplanır, kurallar itemEffects'e
+  const setPart = setContribution(src.equipment, src.class);
+  for (const [k, v] of Object.entries(setPart.mods)) mods[k] = ((mods[k] as number | undefined) ?? 0) + v;
+  Object.assign(fx, setPart.effects);
   // Taban örtük statları (Item Güçlendirme x3/x4: hançer kritik, tılsım hız; kalkan blok şansı (Ömer 2026-10-18, taban başına sabit); zarsız, tavanlara dahil)
   for (const slot of ['weapon', 'offhand'] as const) {
     const inst = src.equipment?.[slot];
@@ -256,6 +263,7 @@ export function loadout(src: LoadoutSource): LoadoutResult {
   return {
     ...(Object.keys(mods).length ? { modifiers: mods as UnitModifiers } : {}),
     ...(Object.keys(effects).length ? { itemEffects: effects } : {}),
+    ...(setPart.passivePatch ? { passivePatch: setPart.passivePatch } : {}),
     recovery: r4(acc.recovery),
     ...(acc.woundSoft > 0 ? { woundSoft: r4(Math.min(1, acc.woundSoft)) } : {}),
     affixes: all,
@@ -271,7 +279,7 @@ export function loadout(src: LoadoutSource): LoadoutResult {
  * İpucu bağlamı (Ömer 2026-10-13, itemcaps): örnek kahramanın `slot`una takılıyken (takılı değilse takılmış varsayılır; verilmezse varsayılan
  * yuva) hangi affix'leri etkisiz (sıra numarası) ve kahramanın hangi tavanlı statları dolu. Kahraman takamıyorsa null.
  */
-export function affixContext(src: LoadoutSource, inst: ItemInstance, slot?: SlotId): { inactive: Set<number>; capped: Set<CapKey>; implicitHint?: string } | null {
+export function affixContext(src: LoadoutSource, inst: ItemInstance, slot?: SlotId): { inactive: Set<number>; capped: Set<CapKey>; implicitHint?: string; setEquipment?: Partial<Equipment> } | null {
   const d = itemDef(inst.id);
   if (!d || !canEquip(src.class, d)) return null;
   const eq = (src.equipment ?? {}) as Equipment;
@@ -280,7 +288,8 @@ export function affixContext(src: LoadoutSource, inst: ItemInstance, slot?: Slot
   const l = loadout({ ...src, equipment });
   const inactive = new Set(l.inactive.filter((k) => k.startsWith(`${at}:`)).map((k) => Number(k.slice(at.length + 1))));
   const implicitHint = implicitResultHint(src.class, l.modifiers, d, instanceIlvl(inst));
-  return { inactive, capped: new Set(l.capped), ...(implicitHint ? { implicitHint } : {}) };
+  // Set sayacı: item takılı sayılır (slot verilmediyse varsayılan yuvada); ipucu 2/4 gibi yazar
+  return { inactive, capped: new Set(l.capped), ...(implicitHint ? { implicitHint } : {}), ...(d.set ? { setEquipment: equipment } : {}) };
 }
 
 /** Oransal örtüğün (mult:) gösterdiği stat ve biçimi (Ömer 2026-10-27: ipucunda gerçek sonuç "(120 → 130)"). */
@@ -395,7 +404,7 @@ export function summonBaseOf(src: LoadoutSource): Attributes | undefined {
  * `mode`: skill ağacının modu (sefer 'campaign', Endless 'endless'); verilmezse ağaç YOK (arayüz önizlemeleri, golden kayıtlar, QB). Ağaç ancak
  * _rules.json ana şalteri + mod bayrağı açıksa (ya da debug odaklı kurulum açıksa) `tree` olarak eklenir (skill-tree-compile.ts > treeSetupFor).
  */
-export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean; mode?: TreeMode } = {}): Pick<UnitSetup, 'modifiers' | 'itemEffects' | 'level' | 'summonBase' | 'tree' | 'evolved'> {
+export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean; mode?: TreeMode } = {}): Pick<UnitSetup, 'modifiers' | 'itemEffects' | 'passivePatch' | 'level' | 'summonBase' | 'tree' | 'evolved'> {
   const l = loadout(src);
   let fx = l.itemEffects;
   if (fx && o.effects === false) {
@@ -413,5 +422,5 @@ export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean; mode?: 
   const level = Math.floor(src.level ?? 1);
   const tree = o.mode ? treeSetupFor(src, o.mode) : undefined;
   const evolved = o.mode ? evolvedSkillIds(src, o.mode) : []; // yalnızca sunum: evolve onaylı skill'ler (ikon animasyonu)
-  return { ...(l.modifiers ? { modifiers: l.modifiers } : {}), ...(fx ? { itemEffects: fx } : {}), ...(level > 1 ? { level } : {}), ...(differs ? { summonBase: base } : {}), ...(tree ? { tree } : {}), ...(evolved.length ? { evolved } : {}) };
+  return { ...(l.modifiers ? { modifiers: l.modifiers } : {}), ...(fx ? { itemEffects: fx } : {}), ...(l.passivePatch ? { passivePatch: l.passivePatch } : {}), ...(level > 1 ? { level } : {}), ...(differs ? { summonBase: base } : {}), ...(tree ? { tree } : {}), ...(evolved.length ? { evolved } : {}) };
 }

@@ -312,7 +312,7 @@ describe('class ve çağrı verisi', () => {
   });
 
   it('her skill en az bir karakter tarafından kullanılıyor', () => {
-    const used = new Set(Object.values(everyone).flatMap((d) => [...d.skills, ...(d.touch?.type === 'thundersnow' ? [d.touch.skill] : []), ...(d.boss?.phases ?? []).flatMap((p) => Object.values(p.swapSkills ?? {}))])); // Harita 3: dokunuş ve faz skill'leri
+    const used = new Set(Object.values({ ...everyone, ...content.setSummons }).flatMap((d) => [...d.skills, ...(d.touch?.type === 'thundersnow' ? [d.touch.skill] : []), ...(d.boss?.phases ?? []).flatMap((p) => Object.values(p.swapSkills ?? {}))])); // Harita 3: dokunuş ve faz skill'leri
     for (const id of Object.keys(content.skills)) if (!content.skills[id]!.retired) expect(used.has(id), id).toBe(true); // emekli: Mana Barrier (2026-10-29)
   });
 

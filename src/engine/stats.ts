@@ -1,4 +1,4 @@
-import type { Attribute, Attributes, CombatantData, CombatantDef, Element, Formulas, Stats, SummonVariants, UnitModifiers } from './types';
+import type { Attribute, Attributes, CombatantData, CombatantDef, Element, Formulas, PassiveDef, PassivePatch, Stats, SummonVariants, UnitModifiers } from './types';
 
 /** Primary bonusu aktif mi: primary stat, dört statın en yükseğine eşit veya üstündeyse (eşitlik dahil). */
 export function isPrimaryActive(attrs: Attributes, primary: Attribute | undefined): boolean {
@@ -290,15 +290,41 @@ export function variantMult(def: CombatantDef, variant: keyof SummonVariants | u
  * çağıranın `from` statından türer (bkz. SummonerScale), diğer türevler (MP, hız, kritik...) formüllerle yeniden hesaplanır; dosyadaki diğer
  * overrides korunur. Kural ya da çağıran statı yoksa tanım aynen döner. Varyant (applySummonVariant) ve Summon mastery bundan SONRA uygulanır.
  */
-export function applySummonerScale(def: CombatantDef, summoner: Attributes | undefined, formulas: Formulas): CombatantDef {
+/**
+ * Pasifin yamalı kopyası (set bonusu; saf): `patch.field` yolundaki sayıya delta eklenir. Pasif eşleşmezse ya da alan sayı değilse aynen döner.
+ * Metin alanı değişmez: gösterilen sayılar skill-info > describePassive ile effect'ten üretilir.
+ */
+export function patchedPassive(p: PassiveDef, patch: PassivePatch | undefined): PassiveDef {
+  if (!patch || p.id !== patch.passive) return p;
+  const effect = JSON.parse(JSON.stringify(p.effect)) as Record<string, unknown>;
+  const path = patch.field.split('.');
+  let at = effect;
+  for (const k of path.slice(0, -1)) {
+    const next = at[k];
+    if (!next || typeof next !== 'object') return p;
+    at = next as Record<string, unknown>;
+  }
+  const key = path[path.length - 1]!;
+  const cur = at[key];
+  if (typeof cur !== 'number') return p;
+  at[key] = Math.round((cur + patch.delta) * 1000) / 1000;
+  return { ...p, effect: effect as unknown as PassiveDef['effect'] };
+}
+
+/** Primary'si olmayan çağıran için (mob, hazır çağrı) en yüksek temel stat. */
+const highestAttribute = (a: Attributes): Attribute => ATTRS.reduce((best, k) => ((a[k] ?? 0) > (a[best] ?? 0) ? k : best), ATTRS[0]!);
+
+export function applySummonerScale(def: CombatantDef, summoner: Attributes | undefined, formulas: Formulas, primary?: Attribute): CombatantDef {
   const sc = def.summonerScale;
   if (!sc || !summoner) return def;
-  const src = summoner[sc.from] ?? 0;
+  const src = summoner[sc.from === 'primary' ? (primary ?? highestAttribute(summoner)) : sc.from] ?? 0;
   const attributes: Attributes = { ...def.attributes };
   for (const k of ATTRS) {
     const r = sc.attributes[k];
     if (r !== undefined) attributes[k] = Math.max(0, Math.round(src * r));
   }
+  // Hasar doğrudan kaynaktan (Road Hound): güç 1, STR ölçekli skill; formül STR ölçeği (scaling.str) burada geri alınır
+  if (sc.damage !== undefined) attributes.str = Math.round((src * sc.damage * 1000) / (formulas.scaling.str || 1)) / 1000;
   const overrides: Partial<Stats> = { ...(def.overrides ?? {}), hp: Math.max(1, Math.round(src * sc.hp)) };
   if (sc.hpRegen !== undefined) overrides.hpRegen = Math.round(src * sc.hpRegen * 10000) / 10000;
   const stats = deriveStats(

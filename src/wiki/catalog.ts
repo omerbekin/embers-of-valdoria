@@ -24,6 +24,7 @@ import { affixMidText, effectLine, fillValues } from '../progression/item-text';
 import { ITEMS as ITEM_DATA, TIER_IDS, partBonusForm, type BonusForm, affixDef, gripOf, GRIP_NAME, implicitValues, isTwoHandMelee, levelRequirement, weaponPowerOf, weaponTypeDef, familyName, WEAPON_TYPES, type Grip } from '../progression/items';
 import { dropChances } from '../progression/drop';
 import { RARE } from '../progression/rare';
+import { SETS, setTip } from '../progression/sets';
 import endlessJson from '../../data/endless.json';
 import levelsJson from '../../data/levels.json';
 import { BATTLE_SPEEDS } from '../ui/battle-speed';
@@ -216,8 +217,10 @@ export interface WikiFiles {
 // ---------------------------------------------------------------- skill'ler
 
 // test skill'leri (Geometer shape_*, Pose Tester pt_*) Codex'te yok: yalnızca debug menüsünde (src/gallery/catalog.ts > isTestSkill)
-const allSkills = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id })).filter((s) => !isTestSkill(s.id) && !s.retired); // emekli skill (Mana Barrier, 2026-10-29) Codex'te yok
-const unitDefs = (): Record<string, CombatantDef> => ({ ...content.classes, ...content.summons, ...content.bosses, ...content.mobs });
+/** Set birimlerinin skill'leri (Road Hound): setsEnabled kapalıyken Codex'te yok. */
+export const hiddenSetSkill = (id: string): boolean => !RARE.setsEnabled && Object.values(content.setSummons).some((d) => d.skills.includes(id));
+const allSkills = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id })).filter((s) => !isTestSkill(s.id) && !s.retired && !hiddenSetSkill(s.id)); // emekli skill (Mana Barrier, 2026-10-29) Codex'te yok
+const unitDefs = (): Record<string, CombatantDef> => ({ ...content.classes, ...content.summons, ...content.setSummons, ...content.bosses, ...content.mobs });
 const effectDefs = () => ({ statuses: content.statuses, grounds: content.grounds, skills: content.skills });
 
 /** Skill'in sahibine ait stat (açıklamadaki "(123)" gibi hesaplanmış sayılar için); sahibi yoksa ilk class. */
@@ -360,7 +363,7 @@ export function buildClasses(files: WikiFiles): WikiUnit[] {
 }
 
 export function buildSummons(files: WikiFiles): WikiUnit[] {
-  return Object.values(content.summons).map((d) => buildUnit('summon', d, files));
+  return Object.values({ ...content.summons, ...(RARE.setsEnabled ? content.setSummons : {}) }).map((d) => buildUnit('summon', d, files));
 }
 
 // ---------------------------------------------------------------- makaleler
@@ -988,6 +991,7 @@ export function buildMechanics(): WikiArticle[] {
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
+      ...(RARE.setsEnabled ? [setsArticle()] : []),
       endlessArticle(),
     );
   }
@@ -1209,6 +1213,18 @@ export function battleRulesArticle(): WikiArticle {
 function itemsArticle(): WikiArticle {
   const gear = { slots: itemsJson.slots.map((x) => ({ id: x.id, name: x.name })), rarities: itemsJson.rarities.map((x) => ({ id: x.id, name: x.name, color: x.color })), families: itemsJson.weaponFamilies.map((x) => ({ id: x.id, name: familyName(x.id) })) };
   return { ...itemsArticleBody(), gear };
+}
+
+/** Set item'leri (Ömer 2026-11-03; veriden): düşüş kuralları + her setin parçaları ve eşikleri. setsEnabled kapalıyken Codex listesinde yok. */
+export function setsArticle(): WikiArticle {
+  const blocks = SETS.flatMap((s) => [
+    p(`${s.name}: ${s.pieceNames.join(', ')}. Found in ${s.map}; ${s.dropper} drops it most often.${s.kind === 'class' ? ' Only the classes named below can wear it.' : ''}`),
+    list(...(setTip({ set: s.id })?.rows.map((r) => r.text) ?? [])),
+  ]);
+  return article('set-items', 'Campaign', 'Set items', cx('mech_legendary', 'burst'), [
+    p('Set items are Epic pieces with three fixed affixes whose values still roll. Wearing 2, 3 or 4 different pieces of one set gives its bonuses. They cannot be reforged or combined, but they can be tempered. Bosses and Endless never drop them.'),
+    ...blocks,
+  ]);
 }
 
 /** Legendary item'ler (madde 296; veriden): her biri adı, yuvası, kimin taşıyabileceği ve benzersiz etkisi. */
@@ -1645,7 +1661,7 @@ export function statusItemSources(statusId: string): string[] {
 
 export function buildWikiStatuses(): WikiStatus[] {
   const skills = allSkills();
-  return buildStatuses().map((s: StatusEntry) => {
+  return buildStatuses().filter((s) => RARE.setsEnabled || s.id !== 'banked_coals').map((s: StatusEntry) => { // Banked Coals set bonusu: bayrak kapalıyken Codex'te yok
     const usedBySkills = skills.filter((k) => skillStatusIds(k).includes(s.id)).map(skillRefOf);
     const usedByItems = statusItemSources(s.id);
     return { id: s.id, name: s.name, type: s.type, icon: s.icon, color: s.color, text: s.text, usedBy: s.usedBy.map((u) => u.name), usedBySkills, usedByItems, search: searchText(s.name, s.type, s.text, ...s.usedBy.map((u) => u.name), ...usedBySkills.map((u) => u.name), ...usedByItems) };

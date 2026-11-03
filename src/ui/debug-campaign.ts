@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { CINEMATIC_IDS, CONFIG, debugOpenSlot, autoResolve, acknowledgeLoot, advanceDay, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, debugRequireFormation, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { CINEMATIC_IDS, CONFIG, debugOpenSlot, autoResolve, acknowledgeLoot, advanceDay, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, grantPilotSets, debugTeleport, debugWinNode, debugRequireFormation, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -633,6 +633,18 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       hint: `Put a random ${r} item (any item level) into the bag`,
       run: () => giveItem(r),
     });
+  debug.register({
+    id: 'campaign.give-sets',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'burst',
+    label: 'Give pilot sets',
+    hint: "Put all Ashguard Vigil and Wayfarer's Oath pieces into the bag (they do not drop yet)",
+    run: () => {
+      setState(grantPilotSets(ensureState()));
+      document.dispatchEvent(new CustomEvent('gear:refresh'));
+    },
+  });
   debug.register({
     id: 'campaign.give-legendaries',
     tab: CAMPAIGN_TAB,

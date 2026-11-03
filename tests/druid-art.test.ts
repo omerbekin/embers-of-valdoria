@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+﻿import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import audio from '../data/audio.json';
@@ -33,9 +33,9 @@ describe('Druid ve Treant efektleri kendi sheet ve sesleriyle çalar', () => {
     }
   });
 
-  it('Treant kaybolma olay efekti druid/vfx.ts içinde kayıtlı; ölme efekti ertelendi (7/10), bağlı değil', () => {
+  it('Treant kaybolma olay efekti druid/vfx.ts içinde kayıtlı; ölme efekti de kayıtlı (Sol 8/10)', () => {
     expect(VFX_V2.druid!['summonvanish_treant']).toBeTypeOf('function');
-    expect(VFX_V2.druid!['summondeath_treant']).toBeUndefined();
+    expect(VFX_V2.druid!['summondeath_treant']).toBeTypeOf('function');
   });
 
   it('yeni sesler skill listesinde, v2 dosyasından çözülür ve data/audio.json ile aynı tarif', () => {

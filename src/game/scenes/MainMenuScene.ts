@@ -1237,7 +1237,8 @@ export class MainMenuScene extends Phaser.Scene {
     }
     if (login && accountApi().cloudEnabled()) void accountApi().checkLoginAvailable().then((ok) => !ok && this.accountGone());
     // Gizli debug girişinin yedeği (src/ui/debug-gesture.ts): kategori sütununun altında küçük, soluk "Developer tools"
-    const dev = elBody(this, COL_X, L.top + this.catRows.length * L.rowH + 50, 'Developer tools', 26, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
+    // Account satırıyla 6 satırda alt kenara (1080) yapışıyordu: en çok 1036'ya kadar iner (satırların altına sığar, 66'lık dokunma alanı da ekran içinde kalır)
+    const dev = elBody(this, COL_X, Math.min(L.top + this.catRows.length * L.rowH + 50, 1036), 'Developer tools', 26, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
     dev.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-10, -(66 - dev.height) / 2, dev.width + 20, 66), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
     dev.on('pointerover', () => dev.setColor(EL.NOTE));
     dev.on('pointerout', () => dev.setColor('rgba(168,151,122,0.55)'));

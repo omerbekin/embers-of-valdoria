@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, applySummonerScale, content } from '../src/engine';
-import type { BattleEvent, BattleMode, Combatant, UnitSetup } from '../src/engine';
+import type { Attribute, BattleEvent, BattleMode, Combatant, UnitSetup } from '../src/engine';
 import { loadoutSetup, summonBaseOf } from '../src/progression/loadout';
 import { LEVELS, statPointsAt } from '../src/progression/levels';
 
@@ -66,7 +66,7 @@ describe('savaşta çağrı (iki mod)', () => {
       for (const cls of ['undead', 'druid']) {
         const { summon, owner } = summonWith(cls, undefined, mode);
         const scale = content.summons[UNIT_OF[cls]!]!.summonerScale!;
-        const src = owner.stats[scale.from];
+        const src = owner.stats[(scale.from as Attribute)];
         const key = Object.keys(scale.attributes)[0] as 'str' | 'int';
         // Raise Dead cesetsiz: beslenmemiş varyant (x unfed mult)
         const mult = cls === 'undead' ? content.summons.skeleton!.variants!.unfed.mult : 1;
@@ -84,13 +84,13 @@ describe('savaşta çağrı (iki mod)', () => {
     const pts = statPointsAt(5);
     for (const cls of ['undead', 'druid']) {
       const scale = content.summons[UNIT_OF[cls]!]!.summonerScale!;
-      const src = { class: cls, level: 5, alloc: { [scale.from]: pts } };
+      const src = { class: cls, level: 5, alloc: { [(scale.from as Attribute)]: pts } };
       const setup = loadoutSetup(src);
       expect(setup.level).toBe(5);
       const l1 = summonWith(cls).summon;
       const l5 = summonWith(cls, setup).summon;
-      const base = content.classes[cls]!.attributes[scale.from] + pts * LEVELS.statPerPoint;
-      expect(summonBaseOf(src)![scale.from]).toBe(base);
+      const base = content.classes[cls]!.attributes[(scale.from as Attribute)] + pts * LEVELS.statPerPoint;
+      expect(summonBaseOf(src)![(scale.from as Attribute)]).toBe(base);
       const mult = cls === 'undead' ? content.summons.skeleton!.variants!.unfed.mult : 1;
       expect(l5.maxHp, cls).toBe(Math.max(1, Math.round(Math.round(base * scale.hp) * mult)));
       expect(l5.maxHp).toBeGreaterThan(l1.maxHp);
@@ -102,7 +102,7 @@ describe('savaşta çağrı (iki mod)', () => {
 
   it('item statları çağrıya GEÇMEZ (q3): item eki çağıranı güçlendirir, summonBase verilince çağrı L1 ile aynı', () => {
     for (const cls of ['undead', 'druid']) {
-      const from = content.summons[UNIT_OF[cls]!]!.summonerScale!.from;
+      const from = content.summons[UNIT_OF[cls]!]!.summonerScale!.from as Attribute;
       const l1 = summonWith(cls).summon;
       const withItem = summonWith(cls, { modifiers: { attrAdd: { [from]: 20 } }, summonBase: { ...content.classes[cls]!.attributes } });
       expect(withItem.owner.stats[from]).toBe(content.classes[cls]!.attributes[from] + 20);

@@ -20,7 +20,7 @@ export const UNIT_FX_KEYS = [
   'debuffAvoid', 'potencyTurns', 'auraDamage', 'damageTakenReduce', 'lowHpReduce', 'ultCdReduce', 'earlyImmunity', 'summonPower', 'rageGain',
   'retortStatus', 'critStatuses', 'killRush', 'lastStand', 'openerStatus', 'restBlessing', 'vengeance', 'tierStatus',
   'elemResist', 'thorns', 'frontRowDamage', 'backRowDamage', 'tierDamageTakenReduce', 'columnGuard', 'pierceBehind', 'steadyDamage',
-  'healReceived', 'executeDamage', 'killMp', 'killHeal', 'armorShred', 'manaShield', 'cdChance', 'overkillSpill',
+  'healReceived', 'executeDamage', 'killMp', 'killHeal', 'armorShred', 'manaShield', 'cdChance', 'overkillSpill', 'bankedCoals', 'roadHound',
 ] as const satisfies readonly (keyof ItemEffects)[];
 type MissingKey = Exclude<keyof ItemEffects, (typeof UNIT_FX_KEYS)[number]>;
 const _allKeys: [MissingKey] extends [never] ? true : MissingKey = true;

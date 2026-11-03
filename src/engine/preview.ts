@@ -26,6 +26,8 @@ export interface TargetPreview {
     avg: number;
     /** Kalkanın emeceği ortalama miktar. */
     absorbed: number;
+    /** Banked Coals: ertelenen pay (ortalama; hedef taşıyıcıysa). hpLoss ve absorbed anında kalan kısımdan hesaplıdır. */
+    banked?: number;
     /** Cana ulaşacak hasar (ortalama / en az / en çok), hedefin mevcut canıyla sınırlı. */
     hpLoss: number;
     hpLossMin: number;
@@ -298,12 +300,15 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     // Bu hasarı emebilecek havuz: büyü hasarını iki kalkan da, fizikseli yalnızca genel kalkan emer
     const soak = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
     // Mana kalkanı: kalkanlardan sonra kalanın oranı MP'den (MP yettiğince), gerçek vuruşla aynı yardımcı
+    // Banked Coals: düşman vuruşunda payı ertelenir (motorla aynı yuvarlama)
+    const coalShare = target.side !== actor.side ? (target.itemEffects?.bankedCoals?.share ?? 0) : 0;
+    const coalNow = (v: number) => v - Math.floor(v * coalShare);
     const loss = (v: number) => {
-      const rest = Math.max(0, v - soak);
+      const rest = Math.max(0, coalNow(v) - soak);
       return Math.min(p.hp, rest - manaShieldPay(target, rest, p.mp));
     };
     const hpLoss = loss(r.avg);
-    const absorbed = Math.min(soak, r.avg);
+    const absorbed = Math.min(soak, coalNow(r.avg));
     const e = entry(target.uid);
     const prev = e.damage;
     e.damage = {
@@ -311,6 +316,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       max: (prev?.max ?? 0) + r.max,
       avg: (prev?.avg ?? 0) + r.avg,
       absorbed: (prev?.absorbed ?? 0) + absorbed,
+      ...(coalShare ? { banked: (prev?.banked ?? 0) + (r.avg - coalNow(r.avg)) } : {}),
       hpLoss: (prev?.hpLoss ?? 0) + hpLoss,
       hpLossMin: (prev?.hpLossMin ?? 0) + loss(r.min),
       hpLossMax: (prev?.hpLossMax ?? 0) + loss(r.max),
@@ -323,7 +329,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       splash: prev ? prev.splash && splash : splash,
     };
     // Sonraki etkiler için havuzları güncelle (magic: önce büyü kalkanı)
-    let rest = r.avg;
+    let rest = coalNow(r.avg);
     if (effect.damageType === 'magic') {
       const a = Math.min(p.magicShield, rest);
       p.magicShield -= a;

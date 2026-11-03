@@ -39,6 +39,7 @@ import undead from '../../data/classes/undead.json';
 import warrior from '../../data/classes/warrior.json';
 import skeleton from '../../data/summons/skeleton.json';
 import treant from '../../data/summons/treant.json';
+import roadHound from '../../data/summons/road_hound.json';
 // Harita 2 Tide Caller'ın Rise from the Deep çağrısı (Skeleton ile aynı statlar, kendi kit; content-designer 2026-10-27, open-questions 446)
 import risenDrowned from '../../data/summons/risen_drowned.json';
 // Harita 3 4. dilim moblari (maps-2-3.md)
@@ -231,6 +232,14 @@ export const classes: Record<string, CombatantDef> = Object.fromEntries(
 export const randomPool: string[] = Object.keys(classes).filter((id) => !classes[id]!.testOnly);
 /** Oyuncunun takım seçiminde seçebileceği class id'leri (test class'ları dahil; `hidden` olanlar hariç). */
 export const selectableClasses: string[] = Object.keys(classes).filter((id) => !classes[id]!.hidden);
+
+/**
+ * Set bonusunun getirdiği birimler (Road Hound; Ömer 2026-11-03): `summons`tan ayrı, çünkü skill ile çağrılmaz ve setsEnabled kapalıyken Codex'te görünmez.
+ * Savaş birim listesinde vardır (units).
+ */
+export const setSummons: Record<string, CombatantDef> = {
+  road_hound: buildDef(roadHound as unknown as CombatantData, formulas),
+};
 
 /** Class olmayan, yalnızca skill ile çağrılan birimler. */
 export const summons: Record<string, CombatantDef> = {
@@ -860,7 +869,7 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     grounds,
     groundReactions,
     formulas,
-    units: { ...classes, ...summons, ...bosses, ...mobs },
+    units: { ...classes, ...summons, ...setSummons, ...bosses, ...mobs },
     maxSlots: def.slots,
   };
 }
@@ -870,6 +879,6 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
  * Sahibi yoksa ya da menzili tanımsızsa undefined (describeSkill varsayılanı kullanır).
  */
 export function ownerRangeOf(skillId: string): number | undefined {
-  for (const pool of [classes, summons, bosses, mobs]) for (const def of Object.values(pool)) if (def?.skills.includes(skillId)) return def.range;
+  for (const pool of [classes, summons, setSummons, bosses, mobs]) for (const def of Object.values(pool)) if (def?.skills.includes(skillId)) return def.range;
   return undefined;
 }

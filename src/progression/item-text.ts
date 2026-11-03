@@ -37,6 +37,7 @@ import {
   type SlotId,
 } from './items';
 import { capOf, loadout, loadoutSetup, type LoadoutSource } from './loadout';
+import { setTip } from './sets';
 
 // En çok 2 ondalık (adım 0,25 / 0,75 / 0,05 tam görünür; Ömer 2026-11-02, düz Speed 0,75 eskiden "0,8" yazılıyordu)
 const fmt = (x: number) => (Number.isInteger(x) ? String(x) : String(Math.round(x * 100) / 100));
@@ -211,6 +212,8 @@ export function instanceLines(inst: Pick<ItemInstance, 'id'> & { uid?: string; r
   if (!d) return [];
   const lines = affixLines(inst, classId).map((l) => affixLineText(l));
   const fx = effectLine(d);
+  const set = setTip(d, classId);
+  if (set) lines.push(set.title, ...set.rows.map((r) => r.text));
   return fx ? [...lines, fx] : lines;
 }
 
@@ -252,7 +255,7 @@ export function itemLines(d: ItemDef, rarity: RarityId = d.rarity): string[] {
     return `[${a.tier}] ${affixText({ def: a, values: a.parts.map((p) => partValue(p, d.ilvl, 0.5, affixBoost(d, id))) })}`;
   };
   const out: string[] = [];
-  if (d.rarity === 'legendary' && d.affixes) for (const id of d.affixes) out.push(mid(id) ?? id);
+  if ((d.rarity === 'legendary' || d.set) && d.affixes) for (const id of d.affixes) out.push(mid(id) ?? id);
   else {
     const tiers = rarityDef(rarity === 'legendary' ? 'epic' : rarity).tiers;
     const mains = d.family ? (ITEMS.weaponFamilies.find((f) => f.id === d.family)?.mains ?? []) : d.main ? [d.main] : [];

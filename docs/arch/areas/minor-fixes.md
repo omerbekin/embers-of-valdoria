@@ -18,7 +18,7 @@ Son durum: 2026-11-02. Liste `docs/design/pending-fixes.md` (tablo boş; altınd
 ## Açık / bekleyen
 - Castle Gate: KAPANDI, görsel zaten güncel (sürüm notunda var). Yeniden üretilen görsel oyuna alınmadı (geçici klasörde).
 - Emberbrand tür/görsel uyumsuzluğu → Item Design. Çekiç/gürz ikon + isim tutarsızlığı → Item Design.
-- Ley Thread / ikinci mana yakma → Combat Design (tahtada Ley 0,5 kararlı).
+- Ley Thread / ikinci mana yakma → Combat Design (Ley 1,5, Ömer'in son kararı).
 - `assets/source/ui-icons/ring-slot.png` izlenmeyen dosya, bu alana ait değil; commit'e sokma.
 
 ## Tuzaklar

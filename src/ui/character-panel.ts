@@ -10,7 +10,9 @@ import { createHold } from './stat-hold';
 import { MOTION } from './motion';
 import { heroSkillIconUrl } from './evolve-icon';
 import type { EvolveSource } from '../progression/skill-tree-evolve';
-import type { Stats } from '../engine';
+import { patchedPassive } from '../engine/stats';
+import { loadout } from '../progression/loadout';
+import type { PassivePatch, Stats } from '../engine';
 import {
   SLOT_IDS,
   classUsesOffhand,
@@ -804,7 +806,7 @@ function sheetNodes(c: HeroCalc, v: CharacterView, host: HTMLElement, vitals?: {
 function skillsNode(hero: HoverHero, stats: Stats, after: Stats | null): HTMLElement {
   const sk = el('div', 'gr-skills');
   sk.append(el('div', 'gr-sec', 'Skills'));
-  sk.append(skillBar(hero.class, stats, after, hero));
+  sk.append(skillBar(hero.class, stats, after, hero, loadout(hero).passivePatch));
   return sk;
 }
 
@@ -1006,10 +1008,10 @@ function showFloatTip(bar: HTMLElement, cell: HTMLElement): void {
 }
 
 /** Bir skill / pasifin ortak ipucu içeriği (Gear skill çubuğuyla aynı); `key` = 'passive' ya da skill kimliği; yoksa ''. */
-function skillTipHtmlFor(classId: string, stats: Stats, key: string, evo?: EvolveSource): string {
+function skillTipHtmlFor(classId: string, stats: Stats, key: string, evo?: EvolveSource, passivePatch?: PassivePatch): string {
   const def = content.classes[classId];
   if (key === 'passive') {
-    const p = def?.passive;
+    const p = def?.passive && patchedPassive(def.passive, passivePatch); // set bonusu: skill çubuğuyla aynı değer
     if (!p || !def) return '';
     const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), badge: 'Passive', rows: passiveTip(p, stats, null).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
     return colorDiffs(tipHtml(tip));
@@ -1019,8 +1021,8 @@ function skillTipHtmlFor(classId: string, stats: Stats, key: string, evo?: Evolv
 }
 
 /** Dizilim kartı gibi Gear dışı yerler için: skill / pasif ipucunu `anchor` satırının üstünde (sığmazsa altında) açar; ekran içinde kalır. */
-export function showHeroSkillTip(anchor: HTMLElement, classId: string, stats: Stats, key: string, evo?: EvolveSource): void {
-  const html = skillTipHtmlFor(classId, stats, key, evo);
+export function showHeroSkillTip(anchor: HTMLElement, classId: string, stats: Stats, key: string, evo?: EvolveSource, passivePatch?: PassivePatch): void {
+  const html = skillTipHtmlFor(classId, stats, key, evo, passivePatch);
   const host = document.getElementById('ui-root');
   if (!html || !host) return;
   hideFloatTip();
@@ -1049,17 +1051,17 @@ export function hideHeroSkillTip(): void {
 }
 
 /** Gear / Character sayfasının skill çubuğu: savaştaki hücreler (seçim / kısayol / devre dışı yok) + pasif madalyonu; tooltip hücrenin üstünde. */
-export function skillBar(classId: string, stats: Stats, after: Stats | null, evo?: EvolveSource): HTMLElement {
+export function skillBar(classId: string, stats: Stats, after: Stats | null, evo?: EvolveSource, passivePatch?: PassivePatch): HTMLElement {
   const bar = el('div', 'gr-skillbar');
   const def = content.classes[classId];
-  const rows = gearSkillRows(classId, stats, after);
+  const rows = gearSkillRows(classId, stats, after, passivePatch);
   const skillRows = rows.filter((r) => !r.passive);
   // Ulti: veride ayrı bir işaret yok; savaş HUD'ıyla aynı kural: 4. skill yuvası (battle-hud / SkillCellView.ult).
   // Giriş animasyonu yalnızca ilk açılışta: ekranda zaten bir skill çubuğu varsa (yeniden çizim: item üstüne gelme, kahraman / sekme değişimi) yanıp sönmez.
   const intro = typeof document !== 'undefined' && !document.querySelector('.gr-skillbar');
   const html = rows.map((r, idx) => {
     if (r.passive && def?.passive) {
-      const p = def.passive;
+      const p = patchedPassive(def.passive, passivePatch);
       const ico = iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId));
       const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: ico, badge: 'Passive', rows: passiveTip(p, stats, after).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
       return plateHtml('pas', 'passive', p.name, ico, '', numsHtml(r), colorDiffs(tipHtml(tip)), blurbOf(passiveTip(p, stats, null), true), bigNumsHtml(r), idx, intro);

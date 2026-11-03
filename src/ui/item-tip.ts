@@ -4,6 +4,8 @@
  * değer + zar aralığı), Legendary etkisi, değer. Gear, tüccar ve ödül torbası aynı bileşeni kullanır. Oyun içi metinler İngilizce.
  */
 import { ITEMS, TIER_COLOR, affixCapKeys, affixDef, affixLines, capOf, effectLine, instanceBaseLines, instanceColor, instanceSubtitle, itemDef, itemValue, levelReqMsg, type CapKey, type ItemInstance } from '../progression';
+import { setTip } from '../progression/sets';
+import type { Equipment } from '../progression/items';
 import { tipOn, tipOff } from './tip-vis';
 import { clientToLocal } from './formation-board-rules';
 import { statIconUrl } from './stat-tips';
@@ -60,6 +62,8 @@ export interface ItemTipState {
   sellFor?: number;
   /** Oransal örtüğün seçili kahramandaki gerçek sonucu, soluk ("(120 → 130)"; Ömer 2026-10-27; loadout.ts > implicitResultHint). */
   implicitHint?: string;
+  /** Set parçası: kahramanın (item takılı sayılmış) kuşanması; set bloğunda sayaç ve etkin satırlar (loadout.ts > affixContext). */
+  setEquipment?: Partial<Equipment>;
   /** Karşılaştırma kartı: kahramanın o yuvada giydiği item (Gear Hero çantası; Ömer 2026-11-01): köşede küçük "EQUIPPED" etiketi. */
   equipped?: boolean;
 }
@@ -106,6 +110,13 @@ function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unkn
     const box = el('div', 'it-effect');
     if (i > 0) box.append(el('strong', '', fx.slice(0, i)), el('span', '', fx.slice(i + 1).trim()));
     else box.append(el('span', '', fx));
+    out.push(box);
+  }
+  const set = setTip(d, classId, state?.setEquipment);
+  if (set) {
+    const box = el('div', 'it-set');
+    box.append(el('strong', '', set.title));
+    for (const r of set.rows) box.append(el('div', r.on ? 'it-set-row on' : 'it-set-row', r.text));
     out.push(box);
   }
   const base = instanceBaseLines(inst);

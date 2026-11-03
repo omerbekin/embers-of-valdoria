@@ -640,6 +640,10 @@ export interface UnitModifiers {
  * verilmezse birim bugünküyle birebir aynı. Sayılar data/items.json > effects'ten (güç katmanı çevirir).
  */
 export interface ItemEffects {
+  /** Banked Coals (Ashguard Vigil 4 parça; items.json > sets): düşman skill vuruşunun `share`i `ticks` taşıyıcı turuna ertelenir. */
+  bankedCoals?: { share: number; ticks: number };
+  /** Road Hound (Wayfarer's Oath 3 parça): savaş başında bu birimden bir tane, taşıyıcının yanında; savaşta yeniden gelmez. */
+  roadHound?: { unit: string };
   /** Opening Ward: savaş başında maks canın bu oranı kalkan (UnitSetup.startShieldRatio ile toplanır). */
   startShieldRatio?: number;
   /** Mana Spring: birimin kendi kritik vuruşunda bu kadar MP (maks'ı aşmaz). */
@@ -824,6 +828,8 @@ export interface UnitSetup {
   fallAllyHealRatio?: number;
   /** Epic item özel etkileri (madde 292; yalnızca güç katmanı `src/progression/loadout.ts` verir; QB / MP / düşmanlar vermez). */
   itemEffects?: ItemEffects;
+  /** Set bonusunun pasif yaması (Ashguard Vigil 3 parça; güç katmanı verir). */
+  passivePatch?: PassivePatch;
   /**
    * Skill ağacının DERLENMİŞ hâli (docs/design/skill-tree-implementation.md 4.1; yalnızca güç katmanı verir: src/progression/skill-tree-compile.ts).
    * Motor ağaç biçimini bilmez; yalnızca yamalı tanımları kullanır. Verilmezse birim bugünküyle birebir aynı.
@@ -994,11 +1000,31 @@ export interface SummonVariant {
  * Dosyadaki taban statlar L1 çağıranın verdiği değerdir (çağıransız hazır çağrı, ör. sefer Risen Skeleton, onları kullanır). Varyant (fed/unfed) ve
  * Summon mastery bunun ÜSTÜNE uygulanır.
  */
+/** Set bonusunun pasif yaması (Ashguard Vigil 3 parça): pasifin `field` alanına (effect içinde, noktalı yol) `delta` eklenir; ağaçla gelen değerin üstüne. */
+export interface PassivePatch {
+  passive: string;
+  field: string;
+  delta: number;
+}
+
+/** Banked Coals'ta bir vuruşun ertelenen kısmı: `left` tik kaldı, her tik `per`, son tik kalanın tamamı (toplam tam çıkar). */
+export interface CoalBurn {
+  left: number;
+  per: number;
+  rest: number;
+  source: string;
+  type: 'physical' | 'magic';
+  element?: Element;
+}
+
 export interface SummonerScale {
-  from: Attribute;
+  /** Hangi stat: bir temel stat ya da 'primary' (çağıranın sınıf primary'si, item hariç; Road Hound). */
+  from: Attribute | 'primary';
   attributes: Partial<Attributes>;
   hp: number;
   hpRegen?: number;
+  /** Hasar = kaynak x bu: skill güç 1 + STR ölçekliyken STR buradan yazılır (yuvarlanmadan, 3 ondalık; Road Hound). */
+  damage?: number;
 }
 
 /**
@@ -1742,7 +1768,7 @@ export type Side = 'party' | 'enemy';
  * `laneFirst`: yalnız şeridindeki ilk kahramana (Headlong). `heaviest`: yalnız en yüksek Armor'lu kahramana, eşitlikte küçük yuva (Ring the Anvil; sonrası splash.pattern 'armor').
  */
 export type ReachRule = { kind: 'status'; statuses: string[]; ground?: string } | { kind: 'dark' } | { kind: 'backRows' } | { kind: 'laneFirst' } | { kind: 'heaviest' };
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'shaken' | 'frozen' | 'overreached' | 'cooling';
+export type StatusKind = 'banked_coals' | 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'shaken' | 'frozen' | 'overreached' | 'cooling';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -2178,6 +2204,8 @@ export interface Combatant {
   defBlock?: number;
   /** Epic item özel etkileri (UnitSetup.itemEffects; madde 292). */
   itemEffects?: ItemEffects;
+  /** Banked Coals: bekleyen korlar (vuruş başına ayrı; battle.ts > applyCoalTicks). */
+  coals?: CoalBurn[];
   /** Second Wind bu savaşta kullanıldı. */
   secondWindUsed?: boolean;
   /** Thrifty: ilk skill kullanıldı (sonrakiler normal bedel). */

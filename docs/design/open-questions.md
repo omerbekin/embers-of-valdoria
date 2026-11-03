@@ -1756,3 +1756,19 @@ Sayılar PROVİZYON, sim yok, bayrak kapalı. En dar yorum:
 ## 512. Ley Thread yakımı 1,5 kalır
 
 **Karar (Ömer 2026-11-02):** `threadBurnMult` 1,5 kalır; 0,5 uygulanmadı. 0.9.10.6 yakımı zaten indirmişti (madde 469), 0,5 ikinci indirim olur ve iplik yakımı ipliksizin altına düşürürdü (ödenen bedelin 0,25'i, ipliksiz 0,5).
+
+## 513. Pilot set motoru: planın boş bıraktığı yerler
+
+**Varsayım (motor adımı 2026-11-03, `setsEnabled` kapalı):** Lead'in kararları dışında en basit seçim alındı. Değiştirmek için söylenmesi yeterli.
+
+1. Ashguard parçalarını yalnızca Warrior, Defender, Paladin takar (3 parça satırı olan sınıflar).
+2. Parça affix'leri elle seçildi (C, C, B): Helm armor + HP + Resilience, Hauberk armor + HP + Thorns, Gauntlets armor + accuracy + Leech, Greaves armor + HP + Wound soft; Boots evasion + regen + Speed, Gloves accuracy + evasion + Crit, Signet regen + MP + MP cost.
+3. Ertelenen pay aşağı yuvarlanır, tek kalan puan anında vurur (41 hasar: 21 + 20).
+4. Yalnızca düşman skill vuruşu ertelenir: DoT, zemin, kendi hasarı değil.
+5. Kor tiki kalkana düşer ve Lucky Escape çalışır (DoT gibi). Ölünce korlar söner.
+6. `test` modunda tik taşıyanın eylemi sonunda (tur başı yok).
+7. Dropper olmayan elit normal savaş oranını alır. Set oranı = Legendary dalı x 0,5, aynı isabet zarında; Valdoria'da Legendary çarpanı 0,5 olduğundan set de o oranla düşer.
+8. Sınıf seti süzgeci tüm roster'a bakar (aktif takım değil).
+9. Road Hound: Grey Wolf görünüşü, zırh 6 / büyü zırhı 0 (Skeleton), öndeki sıradan başlayarak bitişik boş hücre; boş hücre yoksa o savaş gelmez.
+10. Bonuslar debug'la verilen parçada bayrak kapalıyken de çalışır; bayrak düşüşü ve Codex'i açar.
+11. Equip best set bonusunu değerlemez.

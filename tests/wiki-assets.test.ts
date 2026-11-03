@@ -151,7 +151,7 @@ describe('Wiki > Assets: ortak katalog (src/gallery/catalog.ts)', () => {
   it('tüm durumlar ve zeminler listelenir (Wiki > Statuses & Grounds ile aynı veri)', () => {
     expect(catalog.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).sort());
     expect(catalog.grounds.map((g) => g.id).sort()).toEqual(Object.keys(content.grounds).sort());
-    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).sort());
+    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => id !== 'banked_coals').sort()); // Banked Coals: setsEnabled kapalıyken gizli
   });
 });
 

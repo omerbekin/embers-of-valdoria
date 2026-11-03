@@ -183,6 +183,8 @@ export interface ItemDef {
   main?: string;
   /** Legendary: dört sabit affix (C, C, B, A). */
   affixes?: string[];
+  /** Set parçası: items.json > sets kimliği (setItems listesi; bkz. src/progression/sets.ts). Sabit affix'ler `affixes`'te. */
+  set?: string;
   /** Legendary: sabit affix'lerden birinin değer çarpanı (affix id -> çarpan, 1-3; Ömer 2026-10-12, zayıf Legendary'lerin en zayıf statı). */
   boost?: Record<string, number>;
   /** İsteğe bağlı ikon adı (src/game/item-icons.ts > ITEM_ICONS); yoksa silah ailesinin / yuvanın ikonu. */
@@ -241,6 +243,8 @@ export interface ItemsData {
   affixes: unknown[];
   uniques: unknown[];
   sets: unknown[];
+  /** Set parçaları (Ömer 2026-11-03 pilot): ana katalogdan ayrı; havuzlara girmez, yalnızca nadir düşüşün set dalı ve debug verir. */
+  setItems?: ItemDef[];
   traits: Record<string, unknown>;
 }
 
@@ -302,7 +306,7 @@ export const emptyEquipment = (): Equipment => Object.fromEntries(SLOT_IDS.map((
 /** Torba kapasitesi (items.json > bag; 30). */
 export const BAG_SIZE = ITEMS.bag;
 
-const byId = new Map(ITEMS.items.map((d) => [d.id, d]));
+const byId = new Map([...ITEMS.items, ...(ITEMS.setItems ?? [])].map((d) => [d.id, d]));
 export const itemDef = (id: string): ItemDef | undefined => byId.get(id);
 
 export const slotDef = (id: SlotId): SlotDef => ITEMS.slots.find((s) => s.id === id)!;
@@ -418,6 +422,7 @@ export interface RollOptions {
 /** Nadirliği tabana göre sıkıştırır: Legendary taban -> Legendary; diğer taban en çok Epic. */
 export function clampRarity(d: ItemDef, r: RarityId | undefined): RarityId {
   if (d.rarity === 'legendary') return 'legendary';
+  if (d.set) return d.rarity; // set parçası kendi nadirliğiyle (Epic) gelir
   const want = r && (RARITY_IDS as readonly string[]).includes(r) ? r : d.rarity;
   return want === 'legendary' ? 'epic' : want;
 }
@@ -440,7 +445,7 @@ export function rollItem(d: ItemDef, rng: IntRng, o: RollOptions = {}): ItemRoll
     const x = rollChoice(id, rng);
     affixes.push({ id, q: rollQ(rng, rollFloor(rarity)), ...(x ? { x } : {}) });
   };
-  if (rarity === 'legendary' && d.affixes?.length) {
+  if ((rarity === 'legendary' || d.set) && d.affixes?.length) {
     for (const id of d.affixes) push(id);
   } else {
     const tiers = rarityDef(rarity).tiers;
@@ -549,7 +554,7 @@ export function legacyRoll(d: ItemDef, old: unknown, uid: string, classId?: stri
     const x = rollChoice(id, rng);
     affixes.push({ id, q: 0.5, ...(x ? { x } : {}) });
   };
-  if (rarity === 'legendary' && d.affixes?.length) {
+  if ((rarity === 'legendary' || d.set) && d.affixes?.length) {
     for (const id of d.affixes) push(id);
     return { rarity, affixes };
   }
@@ -1084,6 +1089,19 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
   const errors: string[] = [];
   const slotIds = data.slots.map((s) => s.id);
   if (slotIds.join() !== SLOT_IDS.join()) errors.push(`slots must be ${SLOT_IDS.join(', ')}`);
+  // Set parçaları (Ömer 2026-11-03): adı ve yuvası sete uyar, Epic, sabit C + C + B, affix o yuvada çıkabilir
+  const setDefs = (data.sets ?? []) as Array<{ id: string; slots: string[]; pieceNames: string[] }>;
+  for (const s of setDefs) {
+    const pieces = (data.setItems ?? []).filter((d) => d.set === s.id);
+    if (pieces.map((d) => d.name).join() !== s.pieceNames.join()) errors.push(`set ${s.id}: pieces must match pieceNames`);
+    if (pieces.map((d) => d.slot).join() !== s.slots.join()) errors.push(`set ${s.id}: piece slots must match slots`);
+    for (const d of pieces) {
+      if (d.rarity !== 'epic') errors.push(`set item ${d.id}: must be epic`);
+      const tiers = (d.affixes ?? []).map((id) => data.affixDefs[id]?.tier);
+      if (tiers.join() !== 'C,C,B') errors.push(`set item ${d.id}: affixes must be C, C, B`);
+      for (const id of d.affixes ?? []) if (data.affixDefs[id]?.slots && !data.affixDefs[id]!.slots!.includes(d.slot)) errors.push(`set item ${d.id}: ${id} cannot roll on ${d.slot}`);
+    }
+  }
   for (const s of data.slots) if (!(s.weight > 0) || !s.name) errors.push(`slot ${s.id}: bad weight/name`);
   if (data.rarities.map((r) => r.id).join() !== RARITY_IDS.join()) errors.push(`rarities must be ${RARITY_IDS.join(', ')}`);
   data.rarities.forEach((r, i) => {

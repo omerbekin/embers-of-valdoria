@@ -87,3 +87,32 @@ describe('Legendary boost (Ömer 2026-10-12, Endless item dengesi p5)', () => {
     expect(errs).toMatch(/only Legendary items carry a boost/);
   });
 });
+
+describe('Set pilot data (Ömer 2026-11-01 plan, 2026-11-03 picks; no engine yet)', () => {
+  it('iki pilot set tanımlı, eşikler ve yuvalar plana uyar, set item\'i katalogda yok (ulaşılamaz)', () => {
+    const [a, w] = ITEMS.sets as Array<{ id: string; kind: string; slots: string[]; thresholds: number[]; pieceNames: unknown[] }>;
+    const sets = [a!, w!];
+    expect(sets.map((s) => s.id)).toEqual(['ashguard_vigil', 'wayfarers_oath']);
+    expect(a!.slots).toEqual(['helm', 'armor', 'gloves', 'boots']);
+    expect(a!.thresholds).toEqual([2, 3, 4]);
+    expect(w!.slots).toEqual(['boots', 'gloves', 'ring']);
+    expect(w!.thresholds).toEqual([2, 3]);
+    for (const s of sets) expect(s.pieceNames.length).toBe(s.slots.length);
+    expect(ITEMS.items.some((i) => /ashguard|wayfarer/i.test(i.id))).toBe(false);
+  });
+
+  it('Ömer\'in son pilot seçimleri veride; setsEnabled kapalı', () => {
+    const [a, w] = ITEMS.sets as Array<{ pieceNames: string[]; bonuses: Record<string, Record<string, unknown>> }>;
+    expect(a!.pieceNames).toEqual(['Ashguard Helm', 'Ashguard Hauberk', 'Ashguard Gauntlets', 'Ashguard Greaves']);
+    expect(a!.bonuses['2']!.mods).toEqual({ armorAdd: 3, magicArmorAdd: 2 });
+    expect(a!.bonuses['3']!.byClass).toEqual({
+      warrior: { passive: 'berserker', field: 'rageOnHurt.perHpPercent', from: 0.4, to: 0.5 },
+      defender: { passive: 'bulwark_aura', field: 'pct', from: 0.4, to: 0.5 },
+      paladin: { passive: 'divine_light', field: 'power', from: 0.27, to: 0.32 },
+    });
+    expect(a!.bonuses['4']).toMatchObject({ rule: 'banked_coals', bankShare: 0.5, ticks: 3, stacking: 'perHit', damageType: 'inherit', ignoresStatuses: ['fortified', 'blessed'], canKill: true });
+    expect(w!.pieceNames).toEqual(['Milestone Boots', "Drover's Gloves", "Drover's Signet"]);
+    expect(w!.bonuses['2']!.mods).toEqual({ hpRegenAdd: 0.75 });
+    expect(w!.bonuses['3']).toMatchObject({ rule: 'road_hound', hpPerPrimary: 2, damagePerPrimary: 0.5, spd: 17, ai: 'aggressive', primaryExcludesItems: true });
+  });
+});

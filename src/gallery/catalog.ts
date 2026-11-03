@@ -38,6 +38,7 @@ export interface Owner {
 export function skillOwner(skillId: string): Owner {
   for (const def of Object.values(content.classes)) if (!def.testOnly && def.skills.includes(skillId)) return { kind: 'class', id: def.id, name: def.name }; // test mobları sahip sayılmaz (Rolling Thunder: Clan Stormcaller)
   for (const def of Object.values(content.summons)) if (def.skills.includes(skillId)) return { kind: 'summon', id: def.id, name: def.name };
+  for (const def of Object.values(content.setSummons)) if (def.skills.includes(skillId)) return { kind: 'summon', id: def.id, name: def.name };
   for (const def of Object.values(content.bosses)) if (def.skills.includes(skillId)) return { kind: 'boss', id: def.id, name: def.name };
   // Harita 3: birim listesinde olmayan dokunuş ve faz skill'leri (Thundersnow, son faz Flare)
   for (const def of Object.values(content.bosses)) if ((def.touch?.type === 'thundersnow' && def.touch.skill === skillId) || def.boss?.phases?.some((p) => p.swapSkills && Object.values(p.swapSkills).includes(skillId))) return { kind: 'boss', id: def.id, name: def.name };

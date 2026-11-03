@@ -93,3 +93,9 @@
 
 ## Harita 3 boss / elit dokunuşları (5. dilim, engine-dev 2026-10-31; maps-2-3.md E1-E6)
 Birim verisinde `touch` alanı (`BossTouch`: overheat, thundersnow, packRotation, kingHears), pasiften ayrı (ileride gelecek kit pasifi yer bulsun); oyuncuya metni `touchLabel` pasifi gösterir. Skill alanları `whiteout`, `longSermon`, `callVault`; faz alanı `swapSkills`. Bütün kurallar `battle.ts` içinde "Harita 3 boss / elit dokunuşları" bölümünde, Round başı tek giriş `touchesForRound`. Thundersnow `kind: 'strike'` hazard'ı (`landStrike` şimşek kurallarına `boltLanded` ile girer). Darkness okuması tek yerde: `darkRule()` (savaş koşulu ya da süren Whiteout). Noise kancası `noiseFull` -> `kingHears`. Taşıyan yoksa olay yok, RNG tüketimi yok (golden değişmez). YZ: `ai.ts > bossTouchValue`, `ai.json > value.bossTouch`; Urn bedeli `urnChoice` + `thunderHero`. Debug: Setup > Map 3 boss touches, Units > Heat +2.
+
+## Set kuralları (pilot, `setsEnabled` kapalı)
+
+- `UnitSetup.itemEffects.bankedCoals`: düşman skill vuruşunda pay `Combatant.coals`a (`bankCoal`, applyHit içinde bigHitCut'tan sonra); `applyCoalTicks` tur başında DoT'lardan sonra, `test` modunda finishAction'da. Rozet `banked_coals`. Önizleme `damage.banked`, YZ `ai.ts > setRuleValue` + `value.setRules`.
+- `UnitSetup.itemEffects.roadHound`: `spawnSetHounds` kurucuda (battleStart'tan önce), `content.setSummons`. `SummonerScale.from: 'primary'`, `damage`.
+- `UnitSetup.passivePatch`: `stats.ts > patchedPassive`, ağaç pasifinden sonra (Ashguard 3 parça).

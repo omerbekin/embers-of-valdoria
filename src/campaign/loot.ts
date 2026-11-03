@@ -1,7 +1,9 @@
 // Seferde loot'un duruma yazılması (saf; durumu YERİNDE değiştirir, çağıran klonlamış olmalı: state.ts > applyBattle / completeSimple).
 // Zar: hash(seed, harita, düğüm, 'loot', tür, oynama sayısı): yenilgi/deneme sayısı ve Retreat loot'u DEĞİŞTİRMEZ (save-scum yok, items.md 3.4).
 import { BAG_SIZE, ITEMS, canEquip, itemDef, makeItem, rollLoot, rollRareDrop, type ItemInstance, type LootKind, type RarityId } from '../progression';
-import { CONFIG } from './data';
+import { RARE } from '../progression/rare';
+import { setDropPools } from '../progression/sets';
+import { CONFIG, getMap } from './data';
 import { chapterOf, nodeIlvl } from './power';
 import { rngFor } from './seed';
 import { noDropSlots, slotLocks } from './slots';
@@ -64,7 +66,7 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
   const rare: string[] = [];
   let rareIndex = -1; // nadir düşüşün res.items içindeki sırası (düğümün item seviyesinde zarlanır)
   if (kind !== 'treasure') {
-    const rr = rollRareDrop({ rng: rngFor(t.seed, t.mapId, nodeId, 'rare', kind, replay), kind, misses: t.lootState.rareMisses ?? 0, chapter: chapterOf(t.mapId).chapter });
+    const rr = rollRareDrop({ rng: rngFor(t.seed, t.mapId, nodeId, 'rare', kind, replay), kind, misses: t.lootState.rareMisses ?? 0, chapter: chapterOf(t.mapId).chapter, ...(RARE.setsEnabled ? { setPools: setDropPools(chapterOf(t.mapId).name, getMap(t.mapId).nodes.find((n) => n.id === nodeId)?.name, t.roster.map((h) => h.class)) } : {}) });
     t.lootState.rareMisses = rr.misses;
     if (rr.item) {
       rareIndex = res.items.length;

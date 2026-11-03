@@ -230,6 +230,7 @@ new GameMenu(document.getElementById('ui-root')!, {
   onOpen: () => {
     debugState.uiPaused = true;
     battleNow()?.applyDebugTiming();
+    battleNow()?.dismissGroundTip();
   },
   onClose: () => {
     debugState.uiPaused = false;

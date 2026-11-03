@@ -108,6 +108,10 @@
   },
   "_mapEnemyScale": "Harita bazlı düşman çarpanı (Ömer 2026-11-01 eğrisi; docs/balance.md). soloStart.enemyScale ile aynı yapı (groups + nodes) ama kayıt türünden bağımsız: Harita 2 eski ve yeni kayıtta aynı olduğu için ikisi de aynı çarpanı alır (src/campaign/solo-start.ts > mapEnemyScale). Yalnız mob canı ve hasarı. Sayılar sim ile ayarlandı; bossta can şişirilmez, hasar tercih edilir (Throne of Brine savaşları zaten uzun).",
   "mapEnemyScale": {
+    "hollow-crown": {
+      "groups": {"nI":{"hpMult":1.2,"powerMult":1.2},"eI":{"hpMult":1.2,"powerMult":1.45},"nII":{"hpMult":1.3,"powerMult":1.3},"eII":{"hpMult":1.2,"powerMult":1.55},"nIII":{"hpMult":1.4,"powerMult":1.4},"eIII":{"hpMult":1.2,"powerMult":1.65},"nIV":{"hpMult":1.4,"powerMult":1.4},"eIV":{"hpMult":1.2,"powerMult":1.7},"nV":{"hpMult":1.4,"powerMult":1.4},"eV":{"hpMult":1.2,"powerMult":1.75},"nVI":{"hpMult":1.45,"powerMult":1.45},"eVI":{"hpMult":1.2,"powerMult":1.8},"bossHollow":{"hpMult":1,"powerMult":1.25},"bossThrone":{"hpMult":1,"powerMult":1.9},"bossHearth":{"hpMult":1,"powerMult":2.7},"bossEmber":{"hpMult":1,"powerMult":2.9},"nSoft":{"hpMult":1.15,"powerMult":1.15},"nMid":{"hpMult":1.3,"powerMult":1.3},"ePyre":{"hpMult":1.2,"powerMult":1.4}},
+      "nodes": {"hc1":"nI","hc3":"nI","hc4":"nI","hc6":"nI","hc7":"eI","hc9":"nI","hc10":"nI","hc12":"eI","hc13":"nI","hc15":"nII","hc16":"nII","hc17":"nII","hc18":"eII","hc19":"nII","hc22":"nII","hc24":"bossHollow","hc26":"nII","hc27":"nII","hc29":"nIII","hc32":"nIII","hc34":"nIII","hc35":"eIII","hc36":"nIII","hc37":"nIII","hc39":"nIII","hc41":"nMid","hc42":"nIII","hc43":"nMid","hc44":"nIV","hc45":"nSoft","hc46":"nIV","hc47":"nIV","hc49":"nSoft","hc50":"ePyre","hc51":"bossThrone","hc52":"nIV","hc53":"nIV","hc55":"nIV","hc56":"nIV","hc58":"nV","hc59":"nV","hc60":"nV","hc61":"eV","hc63":"nV","hc64":"nSoft","hc65":"eV","hc66":"nV","hc68":"nV","hc69":"nSoft","hc70":"nV","hc72":"nSoft","hc73":"nVI","hc74":"nVI","hc76":"nMid","hc77":"nSoft","hc79":"eVI","hc81":"nVI","hc84":"bossHearth","hc85":"bossEmber"}
+    },
     "drowned-reach": {
       "groups": {
         "n070": { "hpMult": 0.7, "powerMult": 0.7 },
@@ -131,13 +135,13 @@
         "n120": { "hpMult": 1.2, "powerMult": 1.2 },
         "bishop": { "hpMult": 1, "powerMult": 1.15 },
         "champion": { "hpMult": 1, "powerMult": 1.3 },
-        "gallowsCove": { "hpMult": 1, "powerMult": 1.25 },
+        "gallowsCove": { "hpMult": 1, "powerMult": 1.45 },
         "hag": { "hpMult": 1.2, "powerMult": 1.4 },
         "harborFort": { "hpMult": 1.2, "powerMult": 1.6 },
         "sirenRock": { "hpMult": 1.2, "powerMult": 1.55 },
-        "throne": { "hpMult": 0.9, "powerMult": 1.45 },
+        "throne": { "hpMult": 0.9, "powerMult": 1.75 },
         "tollhouse": { "hpMult": 1, "powerMult": 1.05 },
-        "weirMouth": { "hpMult": 1, "powerMult": 1.38 },
+        "weirMouth": { "hpMult": 1, "powerMult": 1.79 },
         "wreckerHall": { "hpMult": 1, "powerMult": 1.1 }
       },
       "nodes": {"dr1": "n112", "dr3": "n110", "dr4": "n110", "dr5": "n112", "dr7": "tollhouse", "dr8": "n115", "dr9": "n105", "dr10": "n110", "dr13": "n073", "dr14": "n105", "dr17": "n070", "dr18": "hag", "dr19": "n103", "dr20": "n090", "dr21": "n105", "dr24": "n080", "dr25": "n108", "dr26": "weirMouth", "dr27": "n095", "dr30": "n090", "dr32": "harborFort", "dr33": "n090", "dr34": "n090", "dr35": "n100", "dr36": "n095", "dr37": "n095", "dr40": "n105", "dr41": "n092", "dr42": "n100", "dr43": "n115", "dr44": "n108", "dr47": "n086", "dr48": "n094", "dr50": "wreckerHall", "dr51": "n120", "dr53": "n112", "dr55": "n105", "dr57": "n108", "dr58": "n105", "dr60": "n105", "dr62": "n115", "dr63": "n100", "dr64": "n105", "dr65": "sirenRock", "dr66": "gallowsCove", "dr68": "n120", "dr70": "n108", "dr71": "n115", "dr72": "n120", "dr73": "n112", "dr74": "bishop", "dr76": "n103", "dr77": "n104", "dr78": "n097", "dr79": "champion", "dr81": "n096", "dr82": "throne", "dr84": "n110", "dr85": "n108", "dr86": "n108", "dr87": "n110", "dr88": "n100", "dr89": "n108", "dr91": "n095"}

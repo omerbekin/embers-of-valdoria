@@ -7,6 +7,7 @@ import { MISC_IMAGE_FILES } from '../src/game/icon-image-files';
 import { CODEX_SECTIONS, codexEntries, filterEntries, groundEntryId, keepSelection, portraitOf, stepSelection, WEAKNESS_TABLE_ID } from '../src/wiki/codex';
 import { SLOT_GLYPH } from '../src/wiki/slot-glyphs';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
+import { RARE } from '../src/progression/rare';
 import itemsJson from '../data/items.json';
 
 // Sayfadaki import.meta.glob ile aynı biçim (yol -> url)
@@ -114,5 +115,9 @@ describe('Codex düzeni (sol menü + liste + madde)', () => {
     // bir durum adı, onu uygulayan skill'i de bulur
     const stun = wiki.statuses.find((s) => s.id === 'stun');
     if (stun?.usedBySkills[0]) expect(filterEntries(entries.statuses, stun.usedBySkills[0].name).some((e) => e.id === 'stun')).toBe(true);
+  });
+  it('Banked Coals durumu setsEnabled kapalıyken Codex listesinde yok', () => {
+    const wiki = buildWiki(files());
+    expect(wiki.statuses.some((s) => s.id === 'banked_coals')).toBe(RARE.setsEnabled);
   });
 });

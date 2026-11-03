@@ -10,3 +10,6 @@ KALAN KUSUR: mobtan moba kök kamçısı hâlâ ayrı okunmuyor, sarmal bacak s�
 ## Tur 3 · Claude + Codex · sheet 07 yeniden çizim · 2026-11-02
 Sheet 07 yeni brief'le yeniden çizdirildi (koyu kabuk, dar halkalar, bacak hizası, bej yok): job-vine_snare2.json, 4 Terra/Sol turu, en iyi tur 3 = 5/10 KALDI (Sol: hücre sınırı taşması, yükseklik %49). Ham puan eskisinden (6) düşük ama oyunda görünüşü daha koyu ve alçak olduğu için içe aktarıldı (assets/source/druid-vfx/07-vine-snare.png). Eski sheet scratch'te yedekli; kod yedeği (eski çizimle) vinesnare() duruyor.
 Oyun içi: sarmal ölçeği 1.15 hücre (en az 230 px), sıkma anında her hücrede yeşil-beyaz halka eklendi. Sol: 7/10 KALDI (iki kez). Kalan kusur: kök kamçısı hedefler arasında ayrı okunmuyor (test düzeninde iki mob yan yana), halkalar üst üste yığılmış dal gibi, sonda ufalanma zayıf. 8'e ulaşılamadı; efekt "açık" bırakıldı.
+
+## Tur 4-6 · Claude + Codex (Sol) · oyun içi · 2026-11-03
+vinesnareChain: her hedefe ayrı kamçı (şeritli, 300 ms arayla), halkalar sonda kabuk kırıntısı + toprakla ufalanma. Sol oyun içi 7/10 KALDI üç kez (ingame/vine_snare7..9): kalın kamçı gövdeleri kesişince yığın, halkalar ahşap kelepçe gibi, ufalanma okunmuyor. Bağlı DEĞİL; eski vinesnare oynuyor. Sheet 07 yeni çizim gerekir (Terra ham 5/10 idi).

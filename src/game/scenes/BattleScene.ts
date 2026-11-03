@@ -444,7 +444,8 @@ export class BattleScene extends Phaser.Scene {
     const lanternRule = this.teams?.rules?.lantern; // M-F Lantern: kuralın kurduğu nesne takım listesinde yok, görseli ayrıca iner
     const lanternId = typeof lanternRule === 'string' ? lanternRule : lanternRule?.id;
     const lanternSprite = lanternId ? content.bosses[content.battleRulesData.lanterns[lanternId]?.unit ?? '']?.spriteId : undefined;
-    const sprites = cells ? battleSpriteIds([...cells, ...(units ?? []).map((u) => u.spriteId), ...(lanternSprite ? [lanternSprite] : [])]) : undefined;
+    const hasHound = Object.values(this.teams?.units?.party ?? {}).some((u) => !!u?.itemEffects?.roadHound); // Road Hound (set bonusu) görünüşü
+    const sprites = cells ? battleSpriteIds([...cells, ...(units ?? []).map((u) => u.spriteId), ...(lanternSprite ? [lanternSprite] : []), ...(hasHound ? [content.setSummons.road_hound!.spriteId] : [])]) : undefined;
     preloadAssets(this, { backgrounds: [this.backgroundChoice()], items: false, ...(sprites ? { sprites, avatars: sprites } : {}) }); // yalnızca bu savaşın arka planı (src/game/assets.ts > arka plan belleği)
     releaseTextures(this, (key) => BATTLE_DROP.some((p) => key.startsWith(p)));
     // poz kütüphanesi: takımda pozlu sınıf varsa onun pozları (rastgele takımda hepsi; şimdilik yalnızca Warrior denemesi)
@@ -1131,6 +1132,11 @@ export class BattleScene extends Phaser.Scene {
   galleryCell: number | null = null;
   /** Birim araçlarının uygulandığı birim (yoksa aktif birim). */
   debugUnitUid: string | null = null;
+
+  /** Menu / Settings açılınca fareyle açılmış zemin ipucu kalmasın (DOM örtü pointermove'u yutar, ipucu kendiliğinden kapanmaz). */
+  dismissGroundTip(): void {
+    if (this.groundTipKey) this.hideInfoTip();
+  }
 
   /** Debug: animasyon hızı / atlama / duraklatma (tween ve zamanlayıcılar). */
   applyDebugTiming(): void {

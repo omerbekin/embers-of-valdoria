@@ -1630,8 +1630,8 @@
       "icon": "pen",
       "parts": [
         {
-          "base": 25,
-          "perIlvl": 1.5,
+          "base": 15,
+          "perIlvl": 0.9,
           "step": 1,
           "ip": 0.1,
           "to": "fx:pierceBehind",
@@ -3263,7 +3263,47 @@
   "bases": [],
   "affixes": [],
   "uniques": [],
-  "sets": [],
+  "sets": [
+    {
+      "id": "ashguard_vigil", "name": "Ashguard Vigil", "kind": "class", "map": "Valdoria", "dropper": "Deserters' Camp",
+      "slots": ["helm", "armor", "gloves", "boots"],
+      "pieceNames": ["Ashguard Helm", "Ashguard Hauberk", "Ashguard Gauntlets", "Ashguard Greaves"],
+      "thresholds": [2, 3, 4],
+      "bonuses": {
+        "2": { "mods": { "armorAdd": 3, "magicArmorAdd": 2 } },
+        "3": { "byClass": {
+          "warrior": { "passive": "berserker", "field": "rageOnHurt.perHpPercent", "from": 0.4, "to": 0.5 },
+          "defender": { "passive": "bulwark_aura", "field": "pct", "from": 0.4, "to": 0.5 },
+          "paladin": { "passive": "divine_light", "field": "power", "from": 0.27, "to": 0.32 }
+        } },
+        "4": { "rule": "banked_coals", "name": "Banked Coals", "bankShare": 0.5, "ticks": 3, "stacking": "perHit", "damageType": "inherit", "ignoresStatuses": ["fortified", "blessed"], "canKill": true,
+          "note": "Half of damage after armor is banked; each hit has its own even 3-turn tick (40 dmg: 20 now, 6.7 x3); ticks sum and do not reset. Coal damage type is inherited from the hit." }
+      },
+      "_status": "Omer's final picks 2026-11-03; numbers unmeasured. Unreachable: no items, no engine, setsEnabled false. Open engine fields: docs/design/progression/item-design-plan.md."
+    },
+    {
+      "id": "wayfarers_oath", "name": "Wayfarer's Oath", "kind": "neutral", "map": "The Hollow Crown", "dropper": "Oathkeeper's Court",
+      "slots": ["boots", "gloves", "ring"],
+      "pieceNames": ["Milestone Boots", "Drover's Gloves", "Drover's Signet"],
+      "thresholds": [2, 3],
+      "bonuses": {
+        "2": { "mods": { "hpRegenAdd": 0.75 } },
+        "3": { "rule": "road_hound", "name": "Road Hound", "hpPerPrimary": 2.0, "damagePerPrimary": 0.5, "spd": 17, "ai": "aggressive", "primaryExcludesItems": true,
+          "note": "Primary is the wearer's class primary without items (same rule as Skeleton/Treant). Takes x2 damage like every summon (formulas.summon.damageTakenMultiplier)." }
+      },
+      "_status": "Omer's final picks 2026-11-03; numbers unmeasured. Unreachable: no items, no summon file, no engine, setsEnabled false. Open engine fields: docs/design/progression/item-design-plan.md."
+    }
+  ],
+  "_setItems": "Set parçaları (Ömer 2026-11-03 pilot; motor adımı): ana katalogdan AYRI liste, böylece items havuzları (loot, tüccar, Codex) değişmez; yalnızca nadir düşüş dalı (setsEnabled) ve debug verir. Epic, sabit üç affix (C, C, B), zarlı değer; seviye düğümden gelir, buradaki ilvl önizleme tabanı. Ashguard yalnızca Warrior / Defender / Paladin takar.",
+  "setItems": [
+    { "id": "ashguard_helm", "name": "Ashguard Helm", "slot": "helm", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_hp", "b_resil"] },
+    { "id": "ashguard_hauberk", "name": "Ashguard Hauberk", "slot": "armor", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_hp", "b_thorns"] },
+    { "id": "ashguard_gauntlets", "name": "Ashguard Gauntlets", "slot": "gloves", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_acc", "b_leech"] },
+    { "id": "ashguard_greaves", "name": "Ashguard Greaves", "slot": "boots", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_hp", "b_wound_soft"] },
+    { "id": "milestone_boots", "name": "Milestone Boots", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_eva", "c_hpregen", "b_speed"] },
+    { "id": "drovers_gloves", "name": "Drover's Gloves", "slot": "gloves", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_acc", "c_eva", "b_crit"] },
+    { "id": "drovers_signet", "name": "Drover's Signet", "slot": "ring", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_hpregen", "c_mp", "b_mpcost"] }
+  ],
   "traits": {},
   "_legendary": "Legendary (Ömer onayı 2026-10-10, madde 296): el yapımı benzersiz item, dört sabit affix (C, C, B, A; 2026-10-11) + 1 benzersiz etki. Kahraman başına EN FAZLA 1 Legendary (Gear: 'Only one Legendary per hero'). boost = sabit bir affix'in değer çarpanı (Ömer 2026-10-12, p5: zayıf beş Legendary'nin en zayıf statı; aynı seviyedeki Epic'in ~%10-35 üstü): Crown of the Ashen King a_immunity x2, Helm of the Last Stand a_endure x1,75, Watchman's Boots a_support x1,75, The Gambler's Last Coin ve Bones of the Quarry c_acc x1,25 (bu ikisini asıl a_primary değerlemesi yükseltti). usableBy = yalnızca bu sınıflar takabilir (silah ailesine ek). minChapter = hangi bölümde ortaya çıkabilir (Valdoria = 1: Emberbrand, Mantle of Valdren ve Pilgrim's Road Boots; Ömer 2026-10-10). Normal loot zarı Legendary vermez (loot.legendaryChance = 0); Legendary YALNIZCA ortak nadir düşüş zarından (rareDrop, madde 297) ve Endless tüccarının nadir malından gelir. Seviye (Ömer 2026-10-12): Legendary'nin TABAN SEVİYESİ YOK; düştüğü yerin item seviyesinde zarlanır (sefer: düğümün item seviyesi; Endless: dalganın seviye tavanı ilvlCap, nadir düşüş ve tüccarın nadir malı). Kataloğdaki ilvl yalnızca önizleme / debug değeridir, nerede çıkabileceğini belirlemez (uygunluk yalnızca minChapter ve legendaryFromWave). Önizleme: ?legendary=1 ya da debug > Give all Legendaries.",
   "_rareDrop": "Ortak nadir düşüş (Ömer onayı 2026-10-10, madde 297): her kazanılan savaşta BİR zar (sefer ve Endless; karşılaşmaya bağlı değil). chance = savaş türüne göre taban (normal %1, elit %3, boss %6) + pityPerMiss x düşüşsüz zafer sayısı (+%0,5; düşüşte sıfırlanır; sayaç kayıtta) + Endless'ta perWave x max(0, dalga - perWaveFrom) (Ömer 2026-10-12, p5: artış yalnızca geç dalgalarda, 15. dalgadan sonra dalga başına +%0,2; 20. dalga +%1, 30. +%3, 40. +%5; eskiden her dalga +%0,1). İsabette split: set parçası %75 (set item'leri YOK: setsEnabled false iken bu dal hiçbir şey vermez, sayaç sıfırlanmaz) / Legendary %25 (chapterLegendaryMult ile; Valdoria x0,5). Havuz: minChapter <= bölüm (Valdoria: Emberbrand, Mantle of Valdren, Pilgrim's Road Boots); Endless'ta legendaryFromWave'den (11) itibaren hepsi. Akıllı loot YOK: tekdüze seçim, sınıf ağırlığı yok, sahip olunan tekrar düşebilir. Düşen Legendary düştüğü yerin item seviyesinde zarlanır, taban seviyesi alt sınır değildir (sefer düğüm ilvl'si, Endless ilvlCap; Ömer 2026-10-12). Endless tüccarı: merchant.fromWave'den itibaren her ziyarette merchant.chance ihtimalle bir nadir mal, fiyat değer x priceMult. Torba dolu: özel koruma yok (normal akış).",
@@ -3279,6 +3319,8 @@
       "legendary": 0.25
     },
     "setsEnabled": false,
+    "_setOfLegendary": "Set payı (Ömer planı 2026-11-03: 'normal savaş ve elitte Legendary'nin yarısı'): dropper olmayan düğümde set dalı = Legendary dalı x bu oran, haritanın havuzundan. Dropper elitte split.set kullanılır. Bossta ve Endless'ta set yok.",
+    "setOfLegendary": 0.5,
     "chapterLegendaryMult": {
       "1": 0.5
     },

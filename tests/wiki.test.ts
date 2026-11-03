@@ -3,7 +3,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
-import { battleRulesArticle, buildWiki, drownedReachArticle, drownedReachShown, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
+import { battleRulesArticle, buildWiki, hiddenSetSkill, drownedReachArticle, drownedReachShown, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
 import { UI_ICONS } from '../src/ui/dom-icons';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
 import { ITEMS, itemDef, weaponPowerOf } from '../src/progression';
@@ -84,7 +84,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
   it('tüm skill listelenir; ad, hedef rozeti, bedel, cooldown ve açıklaması boş değildir', () => {
     // test class'larının (Geometer, Pose Tester'lar) skill'leri Codex'te yok: yalnızca debug menüsünde
     const testOf = new Set(Object.values(content.classes).filter((c) => c.testOnly).flatMap((c) => c.skills));
-    expect(wiki.skills.map((s) => s.id).sort()).toEqual(Object.keys(content.skills).filter((id) => !testOf.has(id) && !content.skills[id]!.retired).sort()); // emekli skill (Mana Barrier, 2026-10-29) Codex'te yok
+    expect(wiki.skills.map((s) => s.id).sort()).toEqual(Object.keys(content.skills).filter((id) => !testOf.has(id) && !content.skills[id]!.retired && !hiddenSetSkill(id)).sort()); // emekli skill (Mana Barrier, 2026-10-29) Codex'te yok
     for (const s of wiki.skills) {
       expect(s.name, s.id).not.toBe('');
       expect(s.targetBadge, s.id).not.toBe('');
@@ -97,7 +97,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
   });
 
   it('tüm durumlar ve zeminler ikon, renk ve açıklamayla listelenir', () => {
-    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).sort());
+    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => id !== 'banked_coals').sort()); // Banked Coals: setsEnabled kapalıyken gizli
     expect(wiki.grounds.map((g) => g.id).sort()).toEqual(Object.keys(content.grounds).sort());
     for (const s of wiki.statuses) {
       expect(s.icon).not.toBe('');

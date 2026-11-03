@@ -233,6 +233,8 @@ export interface Option {
   heal: number;
   selfHeal: number;
   shield: number;
+  /** Banked Coals: hedeflerin erteleyeceği beklenen hasar (setRuleValue). */
+  coalBanked?: number;
   /** Yakılacak toplam mana ve mana yakılan hedef sayısı. */
   burn: number;
   burnTargets: number;
@@ -1065,12 +1067,14 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
       }
       // Beklenen hasar isabet şansıyla çarpılır. Öldürme İHTİMALİ (O2): isabet x P(hasar zarı >= can + emecek kalkan), kritik dalı dahil
       const exp = (p.damage.hpLoss + p.damage.absorbed) * p.damage.hitChance;
+      if (p.damage.banked) o.coalBanked = (o.coalBanked ?? 0) + p.damage.banked * p.damage.hitChance; // Banked Coals: ertelenen pay (setRuleValue)
       o.damage += exp;
       o.dmgBy[target.uid] = (o.dmgBy[target.uid] ?? 0) + exp;
       if (target.side !== actor.side) {
         const magic = skill.effects.some((e) => e.type === 'damage' && e.damageType === 'magic');
         // Mana kalkanı (a_manashield): canı bitirmek için gereken hasar MP payıyla artar (motorla aynı yardımcı)
-        const need = manaShieldNeed(target, target.hp, target.mp) + target.shield + (magic ? target.magicShield : 0);
+        // Banked Coals: vuruşun yalnızca anında kalan payı canı indirir, öldürmek için ham hasar o oranda büyük olmalı
+        const need = (manaShieldNeed(target, target.hp, target.mp) + target.shield + (magic ? target.magicShield : 0)) / (1 - (target.itemEffects?.bankedCoals?.share ?? 0));
         const d = p.damage;
         const cm = d.critMult ?? actor.stats.critMult; // skill ağacı critDmgMul (kancasızda tanımsız)
         const c = Math.max(0, Math.min(1, d.critChance));
@@ -1875,7 +1879,28 @@ function controlValue(ctx: ValueContext, o: Option): number {
       }
     }
   }
-  return v + darknessValue(ctx, o) + frostValue(ctx, o) + thunderValue(ctx, o) + signatureValue(ctx, o) + mobKitValue(ctx, o) + bossTouchValue(ctx, o);
+  return v + darknessValue(ctx, o) + frostValue(ctx, o) + thunderValue(ctx, o) + signatureValue(ctx, o) + mobKitValue(ctx, o) + bossTouchValue(ctx, o) + setRuleValue(ctx, o);
+}
+
+/**
+ * Set kurallarının hamle değeri (can-eşdeğer; ai.json > value.setRules; taşıyan yoksa 0): bekleyen koru zaten canından çok olan düşmana vurmak kısmen boşa,
+ * kendi taşıyıcının bekleyen korunu karşılayan şifa / kalkan ek değerlidir.
+ */
+function setRuleValue(ctx: ValueContext, o: Option): number {
+  const cfg = ctx.vc.setRules;
+  if (!cfg) return 0;
+  let v = cfg.coalDelay * (o.coalBanked ?? 0); // ertelenen hasar da gelecek hasardır
+  for (const [uid, dmg] of Object.entries(o.dmgBy)) {
+    const t = ctx.battle.get(uid);
+    if (!t || t.side === ctx.actor.side || !t.coals?.length) continue;
+    if (ctx.battle.coalPending(t) >= t.hp) v -= cfg.coalDoomed * dmg;
+  }
+  for (const t of ctx.battle.living(ctx.actor.side)) {
+    if (!t.coals?.length) continue;
+    const given = (o.healBy[t.uid] ?? 0) + (o.shieldBy[t.uid] ?? 0);
+    if (given > 0) v += cfg.coalCover * Math.min(ctx.battle.coalPending(t), given);
+  }
+  return v;
 }
 
 /**

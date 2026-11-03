@@ -1,0 +1,34 @@
+{
+  "id": "road_hound",
+  "name": "Road Hound",
+  "spriteId": "grey_wolf",
+  "color": "#8c8c8c",
+  "logo": "roar",
+  "frontPriority": 8,
+  "range": 1,
+  "_not": "Wayfarer's Oath 3 parça (Ömer 2026-11-03): savaş başında sahibin yanında bir köpek, savaşta yeniden gelmez. Can ve hasar sahibin item HARİÇ primary'sinden (hp 2,0 x primary; hasar 0,5 x primary = str; güç 1 skill). Hız 17, aggressive, x2 hasar alır (her çağrı gibi). Yeni çizim yok: Grey Wolf görünüşü. Taban statlar L1 sahibin (primary 40) değeri; zırh Skeleton'la aynı. Sayılar data/items.json > sets ile eşit (test).",
+  "attributes": {
+    "str": 20,
+    "int": 0,
+    "dex": 0,
+    "luck": 0
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 80,
+    "mp": 0,
+    "spd": 17,
+    "hpRegen": 0
+  },
+  "summonerScale": {
+    "from": "primary",
+    "attributes": {},
+    "hp": 2,
+    "damage": 0.5
+  },
+  "ai": "aggressive",
+  "skills": [
+    "road_hound_bite"
+  ]
+}

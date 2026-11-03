@@ -208,6 +208,16 @@
     "untilResolved": true,
     "text": "Bursts at the start of the Warden's next turn: fire damage to this unit and everyone right next to it. Can be dispelled."
   },
+  "banked_coals": {
+    "_not": "Banked Coals (Ashguard Vigil 4 parça; Ömer 2026-11-03): bekleyen kor toplamı (stacks) için bilgi rozeti; tikler motor kuralıdır (battle.ts > applyCoalTicks). Sayılar data/items.json > sets.",
+    "name": "Banked Coals",
+    "type": "buff",
+    "icon": "flame",
+    "color": "#d9702a",
+    "dispellable": false,
+    "untilResolved": true,
+    "text": "Banked damage from enemy skills burns away over the coming turns"
+  },
   "anchored": {
     "_not": "Bridge Warden: canlı Iron Mooring sayısı (stacks); zırh eki motor kuralıdır (boss.anchor). Bilgi rozeti.",
     "name": "Anchored",

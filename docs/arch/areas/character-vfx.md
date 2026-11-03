@@ -21,8 +21,8 @@ Sınıf/hero skill efektleri (sheet, kod efekti, ses), sınıf görselleri (port
 - Alt ajan raporları bayat gelebilir: log/git ile doğrula.
 
 ## Açık işler
-- Treant ölme (`summondeath_treant`, druid/vfx.ts): kod hazır, Sol 7/10, haritaya bağlı DEĞİL (eski v1 oynuyor). Yeni AB3 sprite ile bir tur daha. Notlar: `docs/anim-review/new-art/druid-vfx/ingame/treant_death7-sol-*.md`.
-- Vine Snare: eski `vinesnare` oynuyor; yeni sheet 07/08 7/10 (`vinesnareChain` bağlı değil), yeniden çizim.
+- Treant ölme (`summondeath_treant`, druid/vfx.ts): 8/10, bağlı. Gerçek savaşta öldürerek ve 21:9 + telefonda bakılmadı.
+- Vine Snare: eski `vinesnare` oynuyor; `vinesnareChain` 7/10, bağlı değil. Yeni sheet 07 çizimi gerekiyor; Sol notu: ip gövdeleri kesişimde yığılıyor, halkalar ahşap kelepçe gibi, ufalanma okunmuyor.
 - Işıma taraması: `softTexture` + NEAREST glow (kademeli ışıma) tüm efektlerde; Bone Slash `smoothGlowTex` ile düzeltildi. Yarım düzeltmeler (Anti-Mage, Druid, Hexer, Mage, Undead, `src/game/vfx.ts`) DOĞRULANMADI, `wip/character-vfx-glow` dalında (c7728642); taramayı oradan ya da sıfırdan, sırayla yap.
 - Bakılmadı: Treant AB3 savaşta (kafa okunurluğu, dış çizgi), 21:9 ve telefon (844x390) savaş ekranları, Druid efektleri telefonda, Vesper sesleri (ölçüldü, dinlenmedi) ve ölme efekti, Thunderpeal üst kenarı (yalnız önizleme).
 - `docs/anim-review/new-art/vesper-art/portre.png` oyunda kullanılmıyor (yalnız avatar).

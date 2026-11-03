@@ -1,4 +1,4 @@
-# Animasyon incelemesi: durum tablosu
+﻿# Animasyon incelemesi: durum tablosu
 
 Süreç ve not formatı: README.md. İşini bitiren taraf "Durum" ve "Son" sütununu günceller.
 
@@ -112,5 +112,5 @@ Süreç ve not formatı: README.md. İşini bitiren taraf "Durum" ve "Son" sütu
 | Summon Treant · `summon_treant` | Druid (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (notes/summon_treant.md). |
 | Root Smash · `root_smash` | Treant | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (2. tur); yumruk boğumları belirsiz (notes/root_smash.md). |
 | Vine Snare · `vine_snare` | Treant | açık | 2026-11-02 · Claude | Sol oyun içi 7/10 KALDI (sheet 07 yeniden çizildi, 4 Terra turu 5/10; oyun içi 7 ve 7); kamçı ayrı okunmuyor, halkalar yığılı (notes/vine_snare.md). |
-| Treant Death · `summondeath_treant` | Treant (Druid) | ertelendi | 2026-11-02 · Claude | Kodla çizim, Sol oyun içi 7/10 (6 tur): çatlak sarmaşık gibi, gövde bütün iniyor; kod hazır ama bağlı değil, v1'e düşer (notes/treant_death.md). |
+| Treant Death · `summondeath_treant` | Treant (Druid) | tamam | 2026-11-03 · Claude | Parçalı gövde, Sol oyun içi 8/10 GECTI (tur 9); eski: Sol 7/10 (6 tur): çatlak sarmaşık gibi, gövde bütün iniyor; kod hazır ama bağlı değil, v1'e düşer (notes/treant_death.md). |
 | Treant Vanish · `summonvanish_treant` | Treant (Druid) | tamam | 2026-11-02 · Claude | Kodla çizim, Sol oyun içi 8/10 GECTI; düz kesim hâlâ sert (notes/treant_death.md). |

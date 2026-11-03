@@ -5,6 +5,7 @@
  */
 import { content } from '../engine';
 import { heroStats, type LoadoutSource } from '../progression';
+import { loadout } from '../progression/loadout';
 import { avatarUrl, hideHeroSkillTip, showHeroSkillTip } from './character-panel';
 import { statBandSpec, statTip } from './stat-tips';
 import { gearSkillRows } from './gear-skills';
@@ -85,7 +86,7 @@ export function boardTips(sourceOf: (id: string) => BoardHeroSource | undefined)
     showSkill: (anchor, heroId, key) => {
       const h = sourceOf(heroId);
       const stats = h ? heroStats(h) : null;
-      if (h && stats) showHeroSkillTip(anchor, h.class, stats, key, h);
+      if (h && stats) showHeroSkillTip(anchor, h.class, stats, key, h, loadout(h).passivePatch);
     },
     hideSkill: () => hideHeroSkillTip(),
     stat: (heroId, attr) => {
