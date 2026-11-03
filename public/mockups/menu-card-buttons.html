@@ -11,7 +11,7 @@
 @font-face{font-family:'EB Garamond';font-weight:400 800;src:url(menu-card-buttons/EBGaramond-normal-latin.woff2) format('woff2')}
 :root{--gold:#d9b26a;--gold-dim:rgba(217,178,106,.4);--ember:#f0a040;--txt:#e9dcc0;--muted:#cdb88d}
 *{box-sizing:border-box}
-body{margin:0;background:#120d08;color:var(--txt);font:16px/1.5 'EB Garamond',Georgia,serif;padding:16px}
+html{overflow-x:hidden}body{margin:0;overflow-x:hidden;background:#120d08;color:var(--txt);font:16px/1.5 'EB Garamond',Georgia,serif;padding:16px;max-width:100vw}
 h1{font:600 20px Cinzel,serif;letter-spacing:.08em;margin:0 0 8px;text-transform:uppercase}
 .intro{max-width:900px;color:var(--muted);margin-bottom:16px}
 .intro b{color:var(--txt)}
@@ -19,11 +19,13 @@ label{font-size:14px;color:var(--muted);cursor:pointer}
 .variant{margin:28px 0 40px;padding-top:16px;border-top:1px solid var(--gold-dim)}
 .variant h2{font:600 18px Cinzel,serif;letter-spacing:.1em;margin:0 0 4px;color:var(--gold)}
 .note{margin:8px 0 14px;color:var(--muted);max-width:900px}
-.row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.row{display:flex;flex-direction:column;gap:20px;align-items:flex-start}
+.fig{width:100%}.frame{max-width:100%}
 .fig .cap{font:600 11px Cinzel,serif;letter-spacing:.14em;color:var(--muted);margin-bottom:4px;text-transform:uppercase}
 .frame{overflow:hidden;border:1px solid #3a2c1a;position:relative;background:#0c0805}
 .stage{position:absolute;left:0;top:0;height:1080px;transform-origin:0 0;
-  background:radial-gradient(ellipse at 50% 30%,#2a1c10 0,#120b06 70%);
+  background:linear-gradient(rgba(10,7,4,.2),rgba(10,7,4,.2)),url(menu-card-buttons/foreground.webp),url(menu-card-buttons/middle.webp),url(menu-card-buttons/far.webp),url(menu-card-buttons/sky.webp);
+  background-size:auto 1080px;background-position:center;background-repeat:no-repeat;
   --bh:56px;--hit:56px;--fT:50px;--fS:26px;--fA:23px;--fN:20px}
 .stage.phone{--bh:83px;--hit:122px;--fT:56px;--fS:32px;--fA:32px;--fN:28px}
 .card{position:absolute;top:252px;width:460px;height:640px;overflow:hidden;background:#241a11}
@@ -41,6 +43,9 @@ label{font-size:14px;color:var(--muted);cursor:pointer}
 .act.dim{color:var(--muted)}
 .sep{width:1px;height:calc(var(--bh)*.5);background:var(--gold-dim);flex:none}
 .hair{position:absolute;left:30px;right:30px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.55;z-index:2}
+.strip .act,.under .act{padding:0 10px;letter-spacing:.06em;font-size:var(--fR)}
+.strip .act .d,.under .act .d{margin:0 .4em}
+.stage{--fR:21px}.stage.phone{--fR:21px}
 .sz{position:absolute;z-index:5}
 .sz .act{padding:0 18px;font-size:var(--fN);color:var(--muted)}
 .strip{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center}
@@ -48,15 +53,15 @@ label{font-size:14px;color:var(--muted);cursor:pointer}
 </style>
 </head>
 <body>
-<h1>Menu Card Buttons</h1>
+<h1 lang="en">Menu Card Buttons</h1>
 <div class="intro">
 <b>Sorun:</b> telefonda (844x390) Campaign kartındaki 3 çerçeveli düğme kutu gibi sıkışıyor, NEW / LOAD neredeyse kare, başlığa yapışık; Quick Battle / Multiplayer kartları ise başlık + tek satır alt yazı. Gerçek kart boyu 460x640 (sahne 1920x1080), kart sanatı ve fontlar (Cinzel 600, EB Garamond, italik yok) gerçek dosyalar. Telefonda düğme yüksekliği 30 gerçek px, dokunma alanı 44+ px.<br>
-Mavi kesikli alan = dokunma alanı. <label><input type="checkbox" id="tc"> dokunma alanlarını göster</label>
+Sayfa dar ekranda otomatik küçülür. Mavi kesikli alan = dokunma alanı. <label><input type="checkbox" id="tc"> dokunma alanlarını göster</label>
 </div>
 <div id="root"></div>
 <script>
 const CARDS=[{id:'campaign',name:'Campaign',img:'campaign.webp'},{id:'qb',name:'Quick Battle',img:'quick-battle.webp',line:'Pick two teams'},{id:'mp',name:'Multiplayer',img:'multiplayer.webp',line:'Fight a friend online'}];
-const SIZES=[{k:'169',label:'16:9 (1920x1080, ölçek 0.30)',w:1920,s:0.30},{k:'219',label:'21:9 (2580x1080, ölçek 0.30)',w:2580,s:0.30},{k:'phone',label:'Telefon 844x390 (gerçek px)',w:2337,s:390/1080}];
+const SIZES=[{k:'169',label:'16:9 (1920x1080)',w:1920,s:0.30},{k:'219',label:'21:9 (2580x1080)',w:2580,s:0.30},{k:'phone',label:'Telefon 844x390 (geniş ekranda gerçek px, dar ekranda küçültülür)',w:2337,s:390/1080}];
 const D='<i class="d"></i>';
 const ROW='<span class="act dim">New</span><span class="sep"></span><span class="act dim">Load</span><span class="sep"></span><span class="act p">'+D+'Continue'+D+'</span>';
 function cardHtml(v,c,x){
@@ -86,15 +91,29 @@ A:['A · Yazı düğmeleri kartın içinde','Çerçeve yok: NEW · LOAD · ◆CO
 B:['B · Kart diğerleri gibi, düğmeler kartın ALTINDA ince şerit','Kart başlık + tek satır alt yazı (diğerleriyle birebir); eylemler kartın altında ince çizgili şeritte. Artı: kart temiz, düğmeler nefes alır. Eksi: Campaign bir şerit kadar uzar (telefonda 322+44=366 px, sığar).'],
 C:['C · Kartın kendisi Continue, NEW / LOAD köşede küçük','Alt yazı birincil eylem + kayıt bilgisi (◆ Continue · Ashford, Act 1), kartın tamamına dokunmak Continue; NEW sol üst, LOAD sağ üst küçük yazı. Artı: en temiz, kayıt bilgisi görünür. Eksi: Continue ayrı düğme gibi görünmez; kayıt yoksa kart = New olur (mevcut davranış).']};
 const root=document.getElementById('root');
+const MAXW={'169':900,'219':1100,'phone':844};
 ['A','B','C'].forEach(function(v){
   const sec=document.createElement('section');sec.className='variant';
   const figs=SIZES.map(function(sz){
-    const fw=sz.k==='phone'?844:sz.w*sz.s, fh=sz.k==='phone'?390:1080*sz.s;
-    return '<div class="fig"><div class="cap">'+sz.label+'</div><div class="frame" style="width:'+fw+'px;height:'+fh+'px"><div class="stage '+(sz.k==='phone'?'phone':'')+'" style="width:'+sz.w+'px;transform:scale('+sz.s+')">'+stage(v,sz)+'</div></div></div>';
+    return '<div class="fig" data-w="'+sz.w+'" data-k="'+sz.k+'"><div class="cap">'+sz.label+'</div><div class="frame"><div lang="en" class="stage '+(sz.k==='phone'?'phone':'')+'" style="width:'+sz.w+'px">'+stage(v,sz)+'</div></div></div>';
   }).join('');
   sec.innerHTML='<h2>'+NOTES[v][0]+'</h2><div class="row">'+figs+'</div><div class="note">'+NOTES[v][1]+'</div>';
   root.appendChild(sec);
 });
+function fit(){
+  document.querySelectorAll('.fig').forEach(function(f){
+    const w=+f.dataset.w,k=f.dataset.k;
+    const avail=Math.min(f.parentElement.clientWidth,MAXW[k]);
+    const crop=avail<700; // dar ekranda yalnızca kartların olduğu orta bölge gösterilir
+    const vis=crop?1560:w;
+    const s=avail/vis;
+    const fr=f.querySelector('.frame');
+    fr.style.width=avail+'px';fr.style.height=(1080*s)+'px';
+    const st=f.querySelector('.stage');st.style.transform='scale('+s+')';st.style.left=(crop?-(w-vis)/2*s:0)+'px';
+    f.querySelector('.cap').dataset.s=s.toFixed(2);
+  });
+}
+fit();addEventListener('resize',fit);
 document.getElementById('tc').addEventListener('change',function(e){document.body.classList.toggle('touch',e.target.checked)});
 </script>
 </body>
