@@ -312,7 +312,7 @@ export interface ElButton {
 }
 
 /** Telefonda her çerçeveli düğmenin görünen yüksekliği (gerçek px); DOM karşılığı src/ui/phone-buttons.css. */
-export const PHONE_BTN_PX = 36;
+export const PHONE_BTN_PX = 30;
 
 /**
  * Çerçeveli düğme. primary (START BATTLE dili): 84 px, Cinzel 30, iki yanda elmas; hazır değilken soluk, hazırken altın + nefes alan kor.

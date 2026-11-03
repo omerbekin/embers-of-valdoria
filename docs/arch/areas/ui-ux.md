@@ -4,7 +4,7 @@ Alan: mevcut arayüzlerin elden geçirilmesi, yeni arayüz tasarımı, kullanıc
 
 ## Kurallar
 - UI isteği akışı: Sonnet mockup (3 ekran boyu, gerçek görünüm) → Pages/localhost linki → Ömer seçer → uygula. Mockup tam boy doğrudan sayfa, seçenek başına hash (`#a`, `#1`), tıklama/hover gerektirmez. Mockup ayrı commit, kodla aynı commit'e girmez.
-- Üç ekran boyu: 16:9, 21:9, telefon 844x390 (`html.short`). Dokunma alanı >= 44 px; telefonda görünen düğme yüksekliği 36 px (`src/ui/phone-buttons.css`, `.ts` tık yönlendirme). Arayüzde italik yok, yazılar İngilizce.
+- Üç ekran boyu: 16:9, 21:9, telefon 844x390 (`html.short`). Dokunma alanı >= 44 px; telefonda görünen düğme yüksekliği 30 px (Ömer 2026-11-03, eskiden 36) (`src/ui/phone-buttons.css`, `.ts` tık yönlendirme). Arayüzde italik yok, yazılar İngilizce.
 - Ip uçları: yerel `title=` değil `attachBandTip` (`src/ui/band-tip-attach.ts`). Skill ipucu kısa görünüm satır sınırı 70 karakter (`src/ui/skill-tip-rule.ts`).
 - Ömer onayı olmadan yeni mekanik/stat yok; motor kuralı ve kayıt şeması Combat Design'ın.
 
@@ -14,7 +14,7 @@ Alan: mevcut arayüzlerin elden geçirilmesi, yeni arayüz tasarımı, kullanıc
 - Oyun imleci: 8 imleç + System, 4 hâl (normal/tıklanabilir/basılı/yasak), uç (5,3), hat 110,4°; Ayarlar > UI (seçim, boyut %75-200, Press change, önizleme). Kod: `src/ui/cursor-theme.ts`, `cursor-settings.ts`. Ayar anahtarı `eov.settings.v1` (`cursor`, `cursorSize`, `cursorPress`).
 
 ## Açık işler
-- Gönderim sonrası Pages kontrolü: kart üst konumu 126/150, durum ikonları, zemin ipucu, hasar renkleri, 36 px düğmeler, üç ekran boyu, Ayarlar > UI. Skill ipucunda More tek tıkta genişlemiyor şüphesi (tekrar denenmedi).
+- Gönderim sonrası Pages kontrolü: kart üst konumu 126/150, durum ikonları, zemin ipucu, hasar renkleri, 30 px düğmeler, üç ekran boyu, Ayarlar > UI. Skill ipucunda More tek tıkta genişlemiyor şüphesi (tekrar denenmedi).
 - Gear halka/trinket yerleşimi mockup'ı (`public/mockups/gear-ring-trinket.html`) Item Design'ın slot işi main'e girince.
 - Kama imlecinde basılıyken çizim ucu tıklama noktasını 1-2 px aşar (Ömer kabul etti).
 - Ana menü Ayarlar'da "Developer tools" bağlantısı alt kenara yakın (Account ile ölçülmedi). Ayarlar'ın savaş/sefer içinden açılan gerçek hâli denenmedi.

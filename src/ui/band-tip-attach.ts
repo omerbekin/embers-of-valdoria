@@ -30,7 +30,14 @@ export function placeBandTip(anchor: Box, tip: { w: number; h: number }, host: B
   return { x: x - host.left, y: y - host.top };
 }
 
-const hostOf = (target: HTMLElement): HTMLElement => (target.closest('.el-modal, .gr-overlay, .camp-hud') as HTMLElement | null) ?? document.body;
+/** Etkin eylem denetimi mi (düğme / sekme; pasif değil)? Saf-DOM okuma. Dokunuşta bunların ipucu açılmaz, dokunuş eylemi yapar. */
+export function isActionControl(el: HTMLElement): boolean {
+  if ((el as HTMLButtonElement).disabled || el.getAttribute('aria-disabled') === 'true') return false;
+  const role = el.getAttribute('role');
+  return el.tagName === 'BUTTON' || role === 'button' || role === 'tab';
+}
+
+const hostOf =(target: HTMLElement): HTMLElement => (target.closest('.el-modal, .gr-overlay, .camp-hud') as HTMLElement | null) ?? document.body;
 
 /**
  * `target` için A Band ipucu bağlar. `src` bir spec ya da (her açılışta çağrılan) üretici; üretici null dönerse ipucu açılmaz.
@@ -91,6 +98,9 @@ export function attachBandTip(target: HTMLElement, src: BandTipSource, o: { host
   const onClick = (e: MouseEvent): void => {
     const touch = (e as PointerEvent).pointerType ? (e as PointerEvent).pointerType !== 'mouse' : false;
     if (!touch || !alive() || !inside(e)) return;
+    // Dokunmada ETKİN düğme / sekme yalnızca çalışır (Ömer 2026-11-03): ipucu açılmaz (içeriği örter, açık kalır). İpucu fareyle üstüne gelince
+    // (masaüstü) ya da pasif denetimde ("neden") ve düğme olmayan rozet / bilgi öğelerinde dokununca açılmayı sürdürür.
+    if (isActionControl(target)) return;
     if (pinned) hide();
     else {
       show();

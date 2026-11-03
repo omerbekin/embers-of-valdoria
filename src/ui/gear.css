@@ -6599,7 +6599,7 @@ html.short .sh-cols {
 }
 
 html.short .sh-two .sh-row {
-  min-height: 15px;
+  min-height: 19px; /* Main kutuları 44 -> 30: boşalan yer Attack / Defense satırlarına */
 }
 
 html.short .sh {
@@ -6616,6 +6616,29 @@ html.short .sh-row.sh-tile {
   padding-top: 0;
   padding-bottom: 0;
   align-content: center;
+  min-height: 30px; /* Ömer 2026-11-03: Main kutuları telefonda düğme boyunda (30 px), 44'ten küçüldü */
+  position: relative;
+}
+
+/* görünmez dokunma alanı: kutu 30 px, dokunma >= 44 px (üst / alttan 8 px taşar (28 + 16 = 44); ::after dolu çubuğa ayrılı) */
+.sh-tile .sh-hit {
+  display: none;
+}
+
+html.short .sh-tile .sh-hit {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  bottom: -8px;
+  z-index: 3;
+  background: transparent;
+}
+
+html.short .sh-tile .sh-cap {
+  position: relative;
+  z-index: 4; /* "max" etiketinin ipucu dokunma alanının üstünde kalsın */
 }
 
 html.short .sh-tile .sh-n {

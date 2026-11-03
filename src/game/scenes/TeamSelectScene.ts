@@ -8,6 +8,8 @@ import { skillTags } from '../../ui/skill-tags';
 import { content, describePassive, describeSkill, describeStat, skillCostLabel, placementHintText, placementHintTitle } from '../../engine';
 import type { CombatantDef, PlacementHint, Teams } from '../../engine';
 import { hintBadge, hintColor } from '../formation-hint-ui';
+import { reachTipParts } from '../formation-reach-tip';
+import { boardRangeUi } from '../../ui/formation-board-data';
 import { backgroundExists, backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { ensureIcon, ensureSkillIcon } from '../icons';
 import { ownerOfUnit } from '../asset-versions';
@@ -626,7 +628,12 @@ export class TeamSelectScene extends Phaser.Scene {
   private buildActions(): void {
     const w = this.startUi?.w ?? 380;
     const root = this.add.container(0, 0).setDepth(30);
-    let top = START.cy - START.h / 2;
+    // Gerçek düğme boyu (telefonda elButton yüksekliği 36 gerçek pikselden gelir, START.h / RANDOM_BOTH.h değil): konum gerçek boya göre
+    const cs = stageView.cssScale > 0 ? stageView.cssScale : 1;
+    const short = document.documentElement.classList.contains('short');
+    const startH = this.startUi?.h ?? START.h;
+    const gap = short ? Math.ceil(12 / cs) : RANDOM_BOTH.gap; // telefonda iki çerçeve arası en az 12 gerçek piksel
+    let top = START.cy - startH / 2;
     if (!this.mp) {
       const rb = elButton(
         this,
@@ -637,13 +644,13 @@ export class TeamSelectScene extends Phaser.Scene {
         },
         { kind: 'secondary', w, h: RANDOM_BOTH.h, isBusy: () => !!this.drag?.moved, touch: { growY: 'up' } }, // alt komşusu START: yalnızca yukarı büyür
       );
-      const cy = top - RANDOM_BOTH.gap - RANDOM_BOTH.h / 2;
+      const cy = top - gap - rb.h / 2;
       rb.root.setY(cy);
       root.add(rb.root);
-      top = cy - RANDOM_BOTH.h / 2;
+      top = cy - rb.h / 2;
     }
-    // Durum yazısı: bloğun sağ kenarına yaslı, alttan yukarı büyür (iki uyarı iki satır)
-    this.status = this.gar(w / 2 + 2, top - 12, '', 20, NOTE).setOrigin(1, 1).setAlign('right').setLineSpacing(-2);
+    // Durum yazısı: bloğun sağ kenarına yaslı, alttan yukarı büyür (iki uyarı iki satır); telefonda çerçeveyle arası en az 8 gerçek piksel
+    this.status = this.gar(w / 2 + 2, top - (short ? Math.ceil(8 / cs) : 12), '', 20, NOTE).setOrigin(1, 1).setAlign('right').setLineSpacing(-2);
     root.add(this.status);
     this.actions = root;
   }
@@ -1182,13 +1189,18 @@ export class TeamSelectScene extends Phaser.Scene {
       this.tweens.add({ targets: x, alpha: 0.9, duration: 180 });
       this.zoomImg(img, 1.06, CELL - 4);
       this.showInfo(def.id);
-      if (hint) {
+      // Menzil göstergesi: Sefer Formation hover kutusuyla aynı kural (formation-reach-tip.ts); menzil kapalıysa eski ipucu
+      const reach = this.editable(side) ? reachTipParts(def.name, def.id, i, hint) : null;
+      if (reach) {
+        const m = body.getWorldTransformMatrix();
+        this.showTip(`reach:${side}:${i}`, { kind: 'Current position', title: `${def.name} · ${reach.rowLabel}`, accent: reach.accent, chips: reach.chips, lines: reach.lines, ...(reach.foot ? { foot: reach.foot, footHex: reach.footHex } : {}), width: 440 }, { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL });
+      } else if (hint) {
         const m = body.getWorldTransformMatrix();
         this.showTip(`hint:${side}:${i}`, { title: placementHintTitle(hint), accent: hintColor(hint), lines: [{ text: placementHintText(def.name, hint) }], width: 420 }, { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL });
       }
     });
     zone.on('pointerout', () => {
-      if (hint) this.hideTip();
+      if (hint || boardRangeUi()) this.hideTip();
       drawFrame(false);
       this.tweens.add({ targets: x, alpha: 0, duration: 180 });
       this.zoomImg(img, 1, CELL - 4);

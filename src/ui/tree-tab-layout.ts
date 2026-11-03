@@ -121,16 +121,18 @@ function hitBoxes(pos: Record<string, Pt>, wGoal: number, hGoal: number): Record
 export function buildCols(o: ColsIn, rules: TreeRules): ColsLayout {
   const { W, H, short } = o;
   const labW = short ? 30 : 84;
-  const hh = short ? 30 : clamp(Math.round(H * 0.15), 66, 100);
-  const ultH = short ? 56 : clamp(Math.round(H * 0.19), 100, 150);
+  // telefon (Ömer 2026-11-03): daha küçük başlık / düğüm, ult bandına nefes payı (etiketler ağaçla çakışmasın)
+  const hh = short ? 26 : clamp(Math.round(H * 0.15), 66, 100);
+  const ultH = short ? 62 : clamp(Math.round(H * 0.19), 100, 150);
   const cw = (W - labW) / 4;
   const spans = tierSpans(rules);
   const rowsN = spans.reduce((m, t) => Math.max(m, t.n0 + t.n), 0);
   const pitch = Math.min(104, (H - hh - ultH) / rowsN);
   const k = clamp(pitch / 52, 0.5, 1.35);
   // düğümler tier sırasına sığar (dar sırada büyük evolve / notable komşu sıraya ya da ult çizgisine taşmasın)
-  const fit = (kind: KindLetter, cap: number): number => px(Math.min(BASE[kind] * k, pitch * cap));
-  const sz = { F: fit('F', 0.9), E: fit('E', 0.9), B: fit('B', 1), N: fit('N', 0.95), V: fit('V', 0.92) };
+  const sc = short ? 0.82 : 1; // telefonda düğümler daha küçük (sıralar arası boşluk açılır)
+  const fit = (kind: KindLetter, cap: number): number => px(Math.min(BASE[kind] * k * sc, pitch * cap * sc));
+  const sz = { F: fit('F', 0.9), E: fit('E', 0.9), B: fit('B', 1), N: fit('N', 0.95), V: fit('V', short ? 0.68 : 0.92) };
   const yk = (n: number): number => hh + pitch * (n + 0.5);
   const colX = [0, 1, 2, 3].map((i) => labW + cw * i);
   const pos: Record<string, Pt> = {};

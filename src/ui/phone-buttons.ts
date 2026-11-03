@@ -1,7 +1,7 @@
 import './phone-buttons.css';
 
 /**
- * Telefonda (html.short) çerçeveli düğmeler 36 px görünür (phone-buttons.css); dokunma alanı yine >= 44 px kalmalı.
+ * Telefonda (html.short) çerçeveli düğmeler 30 px görünür (phone-buttons.css); dokunma alanı yine >= 44 px kalmalı.
  * Çerçeve çizimine dokunmadan (::before/::after elmaslarla dolu) bunu tek yerden çözer: boş yere (düğme dışı) yapılan bir tıklama,
  * en çok 44 px'e genişletilmiş bir düğme kutusunun içine düşüyorsa o düğmeye yönlendirilir. Üstte başka bir öğe varsa (pencere, ipucu) yönlendirmez.
  */

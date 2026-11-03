@@ -739,6 +739,7 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
       row.tabIndex = 0;
       row.setAttribute('role', 'button');
       row.append(el('span', 'sh-plus', '+1'));
+      row.append(el('span', 'sh-hit')); // telefonda görünür kutu 30 px, dokunma alanı >= 44 px (gear.css > html.short .sh-hit)
       if (lv.justSpent?.attr === attr) {
         row.classList.add('done');
         window.setTimeout(() => row.classList.remove('done'), MOTION.statHold.doneMs);

@@ -6,6 +6,7 @@ import { sceneMusic } from '../../ui/music';
 import layout from '../../../data/battle-layout.json';
 import { content, placementHintText, primaryBonusInfo } from '../../engine';
 import { hintBadge, hintColor } from '../formation-hint-ui';
+import { reachTipParts } from '../formation-reach-tip';
 import type { CombatantDef } from '../../engine/types';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
 import { isInputLocked } from '../../ui/input-lock';
@@ -939,7 +940,14 @@ export class EndlessScene extends Phaser.Scene {
       lines,
     };
     if (def.primary) spec.sub = `Primary: ${def.primary.toUpperCase()} · ${primaryBonusInfo(def.primary, content.formulas, true).name}`;
-    if (chips.length) spec.chips = chips;
+    // Menzil göstergesi: Sefer Formation hover kutusuyla aynı kural (formation-reach-tip.ts); yalnızca yerleşmiş kahramanda
+    const reach = slot >= 0 ? reachTipParts(def.name, id, slot, hint) : null;
+    if (reach) {
+      spec.accent = reach.accent;
+      const extra = reach.chips.filter((c) => c.text.startsWith('Enemy rows hit'));
+      spec.chips = [...chips, ...extra];
+      spec.lines = [...reach.lines, ...lines];
+    } else if (chips.length) spec.chips = chips;
     if (hint) {
       spec.foot = placementHintText(def.name, hint);
       spec.footHex = hintColor(hint);

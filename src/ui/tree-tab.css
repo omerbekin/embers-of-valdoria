@@ -221,6 +221,9 @@ html.short .gt-ts b em { display: none; }
 .gt-barw.slim .gt-mk::before { top: -26px; height: 44px; }
 .gt-barw.slim .gt-mk em { top: -16px; left: -14px; width: 28px; font-size: 9px; }
 .gt-barw.slim .gt-mk i { left: -5px; top: -5px; width: 10px; height: 10px; border-width: 1px; }
+/* telefon: Evolve düğümünün dış halkası küçük, ult etiketleriyle çakışmasın (Ömer 2026-11-03) */
+html.short .gt-nd.k-v::before { width: calc(var(--s) * .7071 + 8px); height: calc(var(--s) * .7071 + 8px); }
+html.short .gt-nd.k-v::after { width: 4px; height: 4px; transform: translate(-50%, calc(-50% - var(--s) * .5 - 5px)) rotate(45deg); }
 html.short .gt-tools { display: flex; align-items: center; gap: 8px; flex: none; min-width: 0; padding-bottom: 2px; }
 html.short .gt-tools .gt-barw { flex: 1 1 0; min-width: 0; }
 html.short .gt-tools .gt-acts.gt-inbar { flex: none; margin: 0; padding: 0; border: 0; }
@@ -421,8 +424,8 @@ html.short .gc-arm b { font-size: 9px; }
 .gc-upts b { color: var(--g-gold); }
 .gc-upts.full b { color: #ffb35a; }
 html.short .gc-upts { font-size: 10px; }
-html.short .gt-tools .gt-acts .sh-btn { min-height: 44px; }
-html.short .gt-tools { min-height: 44px; }
+html.short .gt-tools .gt-acts .sh-btn { min-height: 30px; } /* Ömer 2026-11-03: telefon düğmesi 30 px (dokunma alanı phone-buttons.ts) */
+html.short .gt-tools { min-height: 30px; }
 html.short .gt-tools .gt-acts, html.short .gt-tools .gt-acts .sh-acts { flex-wrap: nowrap; }
 html.short .gt-tools .gt-acts .sh-ptr { flex: none; }
 html.short .gt-tools .gt-acts .sh-acts { display: flex; align-items: center; flex: none; max-width: none; }
