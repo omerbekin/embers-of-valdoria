@@ -3,7 +3,7 @@
 Sahip (eski): Campaign sohbeti. Kapsam: sefer haritaları, düğümler/karşılaşmalar, mob kitleri (Harita 2-3), elit/boss, kasaba/harita sanatı, mob sesleri, sefer dengesi.
 
 ## Kurallar
-- Harita 3 (Hollow Crown) bayrağı KAPALI: `data/campaign/campaign.json > mapFlags > hollow-crown`. Açmayı yalnız Ömer söyler; açılış değişikliği ayrı tutulur, ready'ye girmez.
+- Harita 3 (Hollow Crown) AÇIK (Ömer: "hepsi bitince aç"; Lead 2026-11-03): `data/campaign/campaign.json > mapFlags > hollow-crown`.
 - Harita 3 çarpanları `campaign.json > mapEnemyScale["hollow-crown"]`, 2 tur simle ayarlı (2026-11-03). Mob kuralı: ilk skill bedava, diğerleri L30'da 5-6 kullanımda MP bitirir (`tests/map3-mana.test.ts`).
 - Yeni kural/stat/mekanik: önce Ömer'e sor (Lead üzerinden). Motor kuralı ve zor denge işi Combat/Character Design alanına gider.
 - "Tamamla" = ödünç yok: kendi sprite, ikon, VFX, ses. Harita 3'te artık hiçbir skill'de `artOf` yok.
@@ -20,7 +20,7 @@ Sahip (eski): Campaign sohbeti. Kapsam: sefer haritaları, düğümler/karşıla
 2. Harita 3 simi (300, 2. tur): bitirme %62,2, boss kasma 3,30, ilk deneme boss %62 / %78 / %70 / %87, hc_12 %91 civarı. Son iki boss hâlâ kolay; Harita 3'e 300 koşudan 135'i ulaşıyor.
 3. Oathkeeper zırhı, Rime Bite/Ice Shot chill şansı, Frost Bite cooldown, Reedgate Trinket: sim bunları ayrı göstermedi, eğri çarpanla tutuldu; değiştirilmedi.
 4. Gözle/kulakla doğrulama yapılmadı: 78 VFX konum/boyut (`data/battle-layout.json > animation.mobVfx.skills`), ses seviyeleri, yeni haritada düğümlerin yola oturması.
-5. Harita 3'ü açmadan önce: yeni oyuncu haritaya ulaşıyor mu, kayıt/ilerleme, 3 ekran boyutu, tutarlılık, tam test. Karar Ömer'in.
+5. Açılış kontrolü geçti: Harita 2 sonundan geçiş, kayıt + yeniden yükleme, haritanın sonu, build. Bakılmadı: gerçek savaşlar (yürüyüş otomatik çözüldü), Kharduin, haritanın tamamında düğüm-yol hizası. Telefonda Hearthstead'de Barracks ve Old Ketil yazıları hafif üst üste biniyor.
 
 ## Tuzaklar
 - Push-queue yama notu: en çok 8 satır, satır başı 140 karakter; aşan not gönderimi sessizce durdurur.

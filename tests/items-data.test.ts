@@ -73,9 +73,6 @@ describe('Legendary boost (Ömer 2026-10-12, Endless item dengesi p5)', () => {
       for (const L of [20, 40]) {
         // affix gücü karşılaştırılır: taban değeri (silah gücü / örtük stat; Item Güçlendirme 2026-10-17) tutuşa göre değişir, iki yandan da düşülür
         const epic = Math.max(...ITEMS.items.filter((x) => x.slot === d.slot && x.rarity !== 'legendary').map((x) => itemIP(x, 'epic', L) - baseIP(x, L)));
-        // Bilinen açık (Ömer 2026-11-02, affix dengesi): Legendary'nin sabit affix değerleri 3. tur adım/zar sayılarıyla Epic'in 1,05 payının altına indi;
-        // kural gevşetilmedi, yalnızca bu iki silah çifti (40. seviye: 35,6 ve 36,0 > 36,02 gerekir) son denge turuna (plan adım 7: Legendary yeniden dengesi) kadar muaf. Başka çift bu listeye girmez.
-        if (L === 40 && (id === 'gamblers_last_coin' || id === 'bones_of_the_quarry')) continue;
         expect(itemIP(d, 'legendary', L) - baseIP(d, L), `${id} L${L}`).toBeGreaterThan(epic * 1.05);
       }
     }

@@ -2781,7 +2781,7 @@
         "a_primary"
       ],
       "boost": {
-        "c_acc": 1.25
+        "c_acc": 1.352
       },
       "effect": "last_coin",
       "flavor": "Heads, you live. Tails, you flip again."
@@ -2987,7 +2987,7 @@
         "a_primary"
       ],
       "boost": {
-        "c_acc": 1.25
+        "c_acc": 1.257
       },
       "effect": "huntersmark",
       "flavor": "Cast them at the strongest foe, and they always land on its name."

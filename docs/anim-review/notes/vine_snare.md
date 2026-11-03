@@ -13,3 +13,6 @@ Oyun içi: sarmal ölçeği 1.15 hücre (en az 230 px), sıkma anında her hücr
 
 ## Tur 4-6 · Claude + Codex (Sol) · oyun içi · 2026-11-03
 vinesnareChain: her hedefe ayrı kamçı (şeritli, 300 ms arayla), halkalar sonda kabuk kırıntısı + toprakla ufalanma. Sol oyun içi 7/10 KALDI üç kez (ingame/vine_snare7..9): kalın kamçı gövdeleri kesişince yığın, halkalar ahşap kelepçe gibi, ufalanma okunmuyor. Bağlı DEĞİL; eski vinesnare oynuyor. Sheet 07 yeni çizim gerekir (Terra ham 5/10 idi).
+
+## Tur 7 · Claude + Codex (Terra/Sol) · sheet 07 yeni çizim (ince sarmaşık, net ufalanma) · 2026-11-03
+job-vine_snare3.json, 3 tur, en iyi tur 3 = 5/10 KALDI (vine_snare3/). 8 çizgisine ulaşılmadı: BAĞLANMADI, eski vinesnare oynuyor, assets/source ve assets/vfx değişmedi.

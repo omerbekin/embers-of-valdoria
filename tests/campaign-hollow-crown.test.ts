@@ -141,8 +141,9 @@ describe('The Hollow Crown: harita verisi', () => {
 });
 
 describe('Harita 2 -> 3 geçişi (M-Q)', () => {
-  it('bayrak kapalı (veri): Harita 2 sonu aynı kalır, "Continue" yok', () => {
-    expect(CONFIG.mapFlags?.[HOLLOW_CROWN]?.enabled).toBe(false);
+  it('bayrak kapalı: Harita 2 sonu aynı kalır, "Continue" yok', () => {
+    expect(CONFIG.mapFlags?.[HOLLOW_CROWN]?.enabled).toBe(true); // Harita 3 açık (Ömer 2026-11-03)
+    setMapOverride(HOLLOW_CROWN, false);
     expect(mapEnabled(HOLLOW_CROWN)).toBe(false);
     const done = finishMap2();
     expect(done.mapId).toBe(DROWNED_REACH);
