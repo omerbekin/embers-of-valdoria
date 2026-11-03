@@ -105,14 +105,8 @@
   gap: 34px;
 }
 
-.fbw-btns .el-btn {
-  width: 330px;
-  font-size: 19px;
-}
-
-.fbw-btns .el-btn.primary {
-  height: 72px;
-  font-size: 24px;
+.fbw-btns .el-btn.dlg {
+  width: calc(var(--btn-dlg-w) / var(--btn-k));
 }
 
 /* ================= tahta ================= */
@@ -788,9 +782,7 @@
 }
 
 .fb-details {
-  width: 230px;
-  min-height: 46px;
-  font-size: 16px;
+  width: calc(var(--btn-dlg-w) / var(--btn-k));
 }
 
 /* ================= hücre hover kutusu (Band dili) ================= */
@@ -855,13 +847,9 @@ html.short .fbw-btns {
   justify-content: flex-start;
 }
 
-html.short .fbw-btns .el-btn,
-html.short .fbw-btns .el-btn.primary {
-  width: auto;
-  min-width: 200px;
-  height: 78px;
-  padding: 0 28px;
-  font-size: 22px;
+html.short .fbw-btns .el-btn.dlg {
+  width: calc(var(--btn-dlg-w) / var(--btn-k));
+  padding: 0 8px;
 }
 
 html.short .fbw-btns .el-btn.primary {
@@ -1014,9 +1002,8 @@ html.short .fb-vlbl {
 }
 
 html.short .fb-details {
-  width: 260px;
-  min-height: 78px;
-  font-size: 20px;
+  width: calc(var(--btn-dlg-w) / var(--btn-k));
+  padding: 0 8px;
 }
 
 html.short .fb-tip .bt-title {

@@ -563,7 +563,7 @@
     "maxArmor": 40
   },
   "statusIcon": {
-    "_not": "Savaş durum rozetleri (can çubuğunun iki yanı). Masaüstü: size boyunda, buff solda / debuff sağda, satırda 4. TELEFON (html.short / html.compact; Ömer 2026-10-11, taslak B): rozetler phoneSize boyunda (844x390'da ~15 gerçek px), ÖNCELİK sırasıyla (önce debuff'lar, sonra buff'lar; grup içinde phonePriority sırası, listede olmayan sona, eşitlikte az tur önce) sağ 1, sol 1, sağ 2... yuvalarına konur; komşu birimin çubuğuna / adına / gövdesine / rozetine çarpan yuva kullanılmaz; sığmayanlar +N sayacında (sayaç da bir yuva kaplar; düğme değil, ayrıntı yan panelde). src/game/badge-layout.ts > solvePhoneBadges. gapBar = çubukla ilk rozet arası, gapItem = rozetler arası, margin = engellerle en az boşluk, phonePerSide = taraf başına en çok yuva. Zemin etkisi kimliği ground:<id>, zırh aurası armorAura.",
+    "_not": "Savaş durum rozetleri (can çubuğunun iki yanı). Masaüstü: size boyunda, buff solda / debuff sağda, satırda 4. TELEFON (html.short / html.compact; Ömer 2026-10-11, taslak B): rozetler phoneSize boyunda (844x390'da ~15 gerçek px), taraf SABİT: buff'lar HEP solda, debuff'lar HEP sağda (Ömer 2026-11-03), her tarafta phonePriority sırasıyla (listede olmayan sona, eşitlikte girdi sırası) çubuktan dışa yuvalara konur; komşu birimin çubuğuna / adına / gövdesine / rozetine çarpan yuva kullanılmaz; sığmayanlar +N sayacında (sayaç da bir yuva kaplar; düğme değil, ayrıntı yan panelde). src/game/badge-layout.ts > solvePhoneBadges. gapBar = çubukla ilk rozet arası, gapItem = rozetler arası, margin = engellerle en az boşluk, phonePerSide = taraf başına en çok yuva. Zemin etkisi kimliği ground:<id>, zırh aurası armorAura.",
     "size": 28,
     "gapBar": 8,
     "gapItem": 6,

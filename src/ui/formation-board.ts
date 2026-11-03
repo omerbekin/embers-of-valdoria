@@ -17,7 +17,7 @@ import { lockInput, unlockInput } from './input-lock';
 import type { BandTipSpec } from './band-tip';
 import { uiSound } from './ui-sound';
 import { NAV_BTN } from './nav-icons';
-import { LANES, ROWS, clientToLocal, dropOnCell, fitAccent, fitOfHint, previewMove, reachBarHtml, reachRows, reachText, rowName, rowOfCell, tapCell, type BoardSel, type Fit } from './formation-board-rules';
+import { LANES, ROWS, clientToLocal, dropOnCell, fitOfHint, previewMove, reachBandSpec, reachRows, rowName, rowOfCell, tapCell, type BoardSel, type Fit } from './formation-board-rules';
 
 export type BoardAttr = 'str' | 'dex' | 'int' | 'luck';
 
@@ -220,7 +220,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     const tiles = ORDER.map((k) => `<div class="fb-tile ${f.primary === k ? 'p' : ''}" data-attr="${k}">${img(o.icons[k])}<div class="tx"><span class="n">${num(f.attr[k])}</span><span class="k">${NAMES[k]}</span></div></div>`).join('');
     const pas = f.passive ? `<div class="fb-srow pas" data-skill="passive"><div class="fb-ico sm sk" style="--is:44px">${img(f.passive.icon)}</div><div class="pn">${esc(f.passive.name)}</div><span class="fb-ptag">Passive</span></div>` : '';
     const sk = f.skills.map((s) => `<div class="fb-srow ${s.cost.kind === 'rage' ? 'rg' : ''}${s.ult ? ' ult' : ''}" data-skill="${esc(s.id ?? s.name)}">${s.ult ? '<span class="fb-utag">Ultimate</span>' : ''}<div class="fb-ico sm sk" style="--is:44px">${img(s.icon)}</div><div class="pn">${esc(s.name)}</div>${costChip(s.cost)}</div>`).join('');
-    const foot = o.details ? '<div class="fb-foot"><button type="button" class="el-btn fb-details" data-act="details">Hero details</button></div>' : '<div class="fb-foot"></div>';
+    const foot = o.details ? '<div class="fb-foot"><button type="button" class="el-btn dlg fb-details" data-act="details">Hero details</button></div>' : '<div class="fb-foot"></div>';
     return `${head}${bars}<div class="fb-tiles">${tiles}</div><div class="fb-sl">Skills</div><div class="fb-srows">${pas}${sk}</div>${foot}`;
   };
 
@@ -262,12 +262,9 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     const here = cells[cell] === who.id;
     const fit = here ? fitOfHint(o.hintsFor(cells.slice())[cell]) : fitAt(who.id, cell);
     const n = reachRows(who.range, rowOfCell(cell));
-    const accent = fitAccent(n, fit);
-    const bars = reachBarHtml(n);
-    const lines = [{ text: reachText(n), ...(n <= 0 ? { color: '#ffb7a6' } : {}) }, ...(fit === 'weak' ? [{ text: 'Exposed in front', color: '#f3d08a' }] : [])];
     const el = document.createElement('div');
     el.className = 'fb-tip';
-    el.innerHTML = bandTipHtml({ accent, kind: here ? 'Current position' : 'If moved here', title: `${who.name} · ${rowName(rowOfCell(cell))}`, ...(who.avatar ? { icon: who.avatar, iconShape: 'round' as const } : {}), lines, bodyHtml: bars, noKeywords: true });
+    el.innerHTML = bandTipHtml(reachBandSpec({ name: who.name, ...(who.avatar ? { avatar: who.avatar } : {}), cell, here, n, fit }));
     root.append(el);
     const p = cellPos(cell);
     const tw = el.offsetWidth;
@@ -506,7 +503,7 @@ export function openFormationWindow(o: FormationWindowOpts): FormationWindow {
   pos.className = 'fbw-pos';
   const win = document.createElement('div');
   win.className = 'fbw-win el-modal-panel';
-  win.innerHTML = `<div class="fbw-ttl">${esc(o.title ?? 'Formation')}</div><div class="fbw-sub">${esc(o.subtitle ?? 'The front row faces the enemy.')}</div><div class="fbw-body"></div><div class="fbw-btns">${o.back ? '<button type="button" class="el-btn" data-act="back">Back</button>' : ''}<button type="button" class="el-btn" data-act="auto">Auto arrange</button><button type="button" class="el-btn primary" data-act="done">${esc(o.doneLabel ?? 'Done')}</button></div>`;
+  win.innerHTML = `<div class="fbw-ttl">${esc(o.title ?? 'Formation')}</div><div class="fbw-sub">${esc(o.subtitle ?? 'The front row faces the enemy.')}</div><div class="fbw-body"></div><div class="fbw-btns">${o.back ? '<button type="button" class="el-btn dlg" data-act="back">Back</button>' : ''}<button type="button" class="el-btn dlg" data-act="auto">Auto arrange</button><button type="button" class="el-btn primary dlg" data-act="done">${esc(o.doneLabel ?? 'Done')}</button></div>`;
   pos.append(win);
   overlay.append(pos);
   host.append(overlay);
@@ -521,20 +518,23 @@ export function openFormationWindow(o: FormationWindowOpts): FormationWindow {
     const gu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gu')) || 1;
     if (document.documentElement.classList.contains('short')) {
       // telefon yatay: pencere kısa ekrana göre yeniden düzenlenir (formation-board.css > html.short) ve ekranı doldurur (yazılar okunur kalsın)
-      // Sağ üstteki tam ekran + Menu/X ikon sırası pencerenin köşesine (Done) binmesin: pencere o sütunun SOLUNDA kalır (dar kenar boşluğu solda).
       const cs = getComputedStyle(document.documentElement);
       const k = parseFloat(cs.getPropertyValue('--nav-k')) || 1;
       const er = parseFloat(cs.getPropertyValue('--er')) || 0;
-      const reserve = er + (NAV_BTN.edge * 2 + NAV_BTN.hit * 2 + NAV_BTN.gap) * k;
-      const margin = 6;
-      const availW = Math.max(120, overlay.clientWidth - reserve - margin);
+      const el = parseFloat(cs.getPropertyValue('--el')) || 0;
+      // Pencere görünen sahnenin TAM ortasında (Ömer 2026-11-03): sağ üstteki tam ekran düğmesi (yalnızca o kalır, X / Menu pencere açıkken gizli)
+      // kadar pay iki yandan da bırakılır, böylece pencere simetrik kalır ve düğmeye binmez.
+      const side = Math.max(er, el) + (NAV_BTN.edge + NAV_BTN.hit) * k + 4;
+      const availW = Math.max(120, overlay.clientWidth - 2 * side);
       const sc = Math.min(availW / SHORT_W, (overlay.clientHeight * 0.97) / SHORT_H) || gu;
       pos.style.transform = `translate(-50%, -50%) scale(${sc})`;
-      pos.style.left = `${margin + (SHORT_W * sc) / 2 + Math.max(0, availW - SHORT_W * sc) / 2}px`;
+      pos.style.setProperty('--btn-k', String(sc));
+      pos.style.left = `${el + (overlay.clientWidth - el - er) / 2}px`;
       pos.style.top = '50%';
       return;
     }
     pos.style.transform = `translate(-50%, -50%) scale(${gu})`;
+    pos.style.setProperty('--btn-k', String(gu));
     pos.style.left = '50%';
     pos.style.top = `calc(50% - ${10 * gu}px)`; // pencere 120..940: merkezi 530 (sahne ortası 540)
   };

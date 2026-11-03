@@ -22,3 +22,55 @@ html.short .gr-bag-head .gr-chip {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
+
+/* Çift çerçeve düzeltmesi (Ömer 2026-11-03): 36 -> 30'a inince yalnızca iç çerçeve küçülüyordu; dış halka (3 px koyu gölge), alta düşen büyük gölge "plakası"
+   (0 14px 30px) ve 12 px kor elmaslar eski boyda kalıp çerçevenin dışında ikinci bir kutu gibi görünüyordu. Telefonda hepsi 30 px düğmeyle orantılı küçülür
+   (masaüstü aynı). Phaser ikizi: elegant-ui.ts > elButton (phoneH ile ölçeklenen halka / elmas). */
+html.short .el-btn,
+html.short .el-btn.primary {
+  box-shadow: 0 0 0 2px rgba(12, 8, 5, 0.8);
+}
+
+html.short .el-btn.primary.ready:not(:disabled) {
+  animation-name: el-breathe-short;
+}
+
+@keyframes el-breathe-short {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(12, 8, 5, 0.8), 0 0 0 rgba(224, 112, 42, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(12, 8, 5, 0.8), 0 0 14px rgba(224, 112, 42, 0.32);
+  }
+}
+
+html.short .el-btn.primary::before,
+html.short .el-btn.primary::after {
+  width: 9px;
+  height: 9px;
+  margin-top: -5px;
+  box-shadow: 0 0 0 1px var(--el-ember2), 0 0 8px rgba(240, 140, 40, 0.8);
+}
+
+html.short .el-btn.primary::before {
+  left: -6px;
+}
+
+html.short .el-btn.primary::after {
+  right: -6px;
+}
+
+html.short .el-btn.primary:disabled::before,
+html.short .el-btn.primary:disabled::after {
+  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.35);
+}
+
+/* Diyalog eylemi grubu telefonda (ölçekli pencerede de gerçek 30 px): genel 30 px kuralının !important'ı jeton formülüyle (30 / kabın ölçeği) yer değiştirir. */
+html.short .el-btn.dlg,
+html.short .el-btn.primary.dlg,
+html.short .el-btn.sm.dlg,
+html.short .el-btn.sm.primary.dlg {
+  height: calc(var(--btn-dlg-h) / var(--btn-k)) !important;
+  min-height: calc(var(--btn-dlg-h) / var(--btn-k)) !important;
+}

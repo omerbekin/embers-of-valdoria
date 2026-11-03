@@ -100,7 +100,7 @@ html.reduced-motion .ec-hp i.ghost, html.reduced-motion .ec-hp i.ghost::after { 
 
 html.compact .ec-grid2 { grid-template-columns: 1fr; }
 html.compact .ec-cards4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-html.short .ec-cards4 { grid-template-columns: 1fr; }
+html.short .ec-cards4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 html.short .ec-hero { flex-wrap: wrap; }
 html.short .ec-act { flex-direction: row; align-items: center; width: 100%; justify-content: flex-end; }
 html.reduced-motion .ec-hero, html.reduced-motion .ec-card { transition: none; }
@@ -189,3 +189,39 @@ html:not(.short) .dt { flex-direction: row; align-items: center; gap: calc(28 * 
 html:not(.short) .dt .dt-l { flex: none; width: calc(560 * var(--u)); display: flex; flex-direction: column; gap: calc(6 * var(--u)); }
 html:not(.short) .dt .dt-r { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(10 * var(--u)); }
 html.short .dt .dt-r { display: flex; flex-direction: column; gap: 4px; }
+
+/* ===== Telefon (html.short; Ömer 2026-11-03): masaüstü gibi iki sütun + sıkı kahraman satırı; sığmayan pencere tüm sahneyi kaplar (.ec-pfull, openShell({ phoneFull })) ===== */
+html.short .ec-grid2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+html.short .ec-col { gap: 5px; }
+html.short .ec-lab { font-size: 10px; letter-spacing: .12em; padding-bottom: 2px; }
+html.short .ec-rule { font-size: 12px; line-height: 1.25; }
+html.short .ec-hero { flex-wrap: nowrap; min-height: 44px; padding: 3px 6px 3px 3px; gap: 6px; }
+html.short .ec-face { width: 36px; height: 36px; }
+html.short .ec-ht { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 1px 6px; }
+html.short .ec-hn { flex: 0 1 auto; font-size: 12px; }
+html.short .ec-hm { font-size: 11px; gap: 5px; }
+html.short .ec-ht > .ec-hp { flex-basis: 100%; height: 5px; order: 5; }
+html.short .ec-ht > .ec-hp ~ .ec-hm { flex-basis: 100%; order: 6; }
+html.short .ec-heal { font-size: 11px; order: 7; flex-basis: 100%; }
+html.short .ec-act { flex-direction: column; align-items: flex-end; width: auto; gap: 2px; }
+html.short .ec-why { font-size: 10px; }
+html.short .ec-empty { min-height: 44px; font-size: 11px; }
+html.short .ec-pfull.ec-ov { padding: calc(var(--nav-edge-k, 6px) + var(--et, 0px)) 6px 6px; align-items: stretch; }
+html.short .ec-panel.ec-pfull { width: 100%; max-width: none; height: 100%; max-height: none; padding: 7px 10px 8px; gap: 6px; }
+html.short .ec-pfull .ec-head { min-height: 30px; padding-right: calc(2 * var(--nav-hit-k, 44px) + var(--nav-gap-k, 16px) + 8px); gap: 10px; flex-wrap: nowrap; }
+html.short .ec-pfull .gr-title { font-size: 17px; }
+html.short .ec-pfull .ec-body { gap: 8px; }
+html.short .ec-pfull .ec-foot { gap: 8px; flex-wrap: nowrap; }
+html.short .ec-pfull .ec-foot .ec-note { font-size: 11px; }
+
+/* Camp telefonda (Ömer 2026-11-03): 4 kart yan yana, sıkı; açıklama kısa, her şey kaydırmasız sığar */
+html.short .ec-cards4 { gap: 6px; }
+html.short .ec-card { padding: 6px 8px; gap: 3px; min-height: 0; }
+html.short .ec-card-ico { width: 28px; height: 28px; font-size: 13px; }
+html.short .ec-card h4 { font-size: 11px; letter-spacing: .06em; }
+html.short .ec-card p { font-size: 11px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+html.short .ec-card small { font-size: 10px; line-height: 1.15; }
+html.short .ec-pfull .ec-heros { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+html.short .ec-fire img { width: 28px; height: 28px; }
+html.short .ec-pfull .ec-chapel { padding: 6px 10px; gap: 8px; }
+html.short .ec-pfull .ec-prev { padding: 5px 10px; font-size: 12px; }

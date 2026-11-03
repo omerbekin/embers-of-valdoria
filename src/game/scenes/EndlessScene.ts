@@ -6,7 +6,7 @@ import { sceneMusic } from '../../ui/music';
 import layout from '../../../data/battle-layout.json';
 import { content, placementHintText, primaryBonusInfo } from '../../engine';
 import { hintBadge, hintColor } from '../formation-hint-ui';
-import { reachTipParts } from '../formation-reach-tip';
+import { hideReachTip, reachTipOn, showReachTip } from '../reach-tip-dom';
 import type { CombatantDef } from '../../engine/types';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
 import { isInputLocked } from '../../ui/input-lock';
@@ -940,14 +940,7 @@ export class EndlessScene extends Phaser.Scene {
       lines,
     };
     if (def.primary) spec.sub = `Primary: ${def.primary.toUpperCase()} · ${primaryBonusInfo(def.primary, content.formulas, true).name}`;
-    // Menzil göstergesi: Sefer Formation hover kutusuyla aynı kural (formation-reach-tip.ts); yalnızca yerleşmiş kahramanda
-    const reach = slot >= 0 ? reachTipParts(def.name, id, slot, hint) : null;
-    if (reach) {
-      spec.accent = reach.accent;
-      const extra = reach.chips.filter((c) => c.text.startsWith('Enemy rows hit'));
-      spec.chips = [...chips, ...extra];
-      spec.lines = [...reach.lines, ...lines];
-    } else if (chips.length) spec.chips = chips;
+    if (chips.length) spec.chips = chips;
     if (hint) {
       spec.foot = placementHintText(def.name, hint);
       spec.footHex = hintColor(hint);
@@ -960,8 +953,17 @@ export class EndlessScene extends Phaser.Scene {
    * (kadro kartından açıldıysa kartın bulunduğu yarının karşı yarısında, parmak ve kart açık kalır).
    */
   private showHeroTip(id: string, box: { x: number; y: number; w: number; h: number }, col: number): void {
-    const spec = this.heroTipSpec(id);
+    this.showHeroTipBand(id, box, col);
+    // Dizilimdeki (yerleşmiş) kahraman: sınıf ipucuna EK olarak Sefer Formation hover kutusuyla AYNI DOM menzil kutusu (reach-tip-dom.ts); içerik kaybı yok
+    const idx = this.draft.classes.indexOf(id);
+    const slot = this.tipHero?.src === 'g' && idx >= 0 ? this.draft.slots[idx] ?? -1 : -1;
+    const def = content.classes[id];
+    if (slot >= 0 && def && reachTipOn()) showReachTip(this, this.input.activePointer, { name: def.name, classId: id, cell: slot, hint: content.placementHintsFor(this.draft.classes, this.draft.slots)[idx], rect: box });
+  }
+
+  private showHeroTipBand(id: string, box: { x: number; y: number; w: number; h: number }, col: number): void {
     this.hideTip();
+    const spec = this.heroTipSpec(id);
     if (!spec) return;
     const tip = bandTip(this, spec);
     this.tip = tip.container;
@@ -1098,6 +1100,7 @@ export class EndlessScene extends Phaser.Scene {
   }
 
   private hideTip(): void {
+    hideReachTip();
     this.tip?.destroy();
     this.tip = null;
     this.tipOwner = null;

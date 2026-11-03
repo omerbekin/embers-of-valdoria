@@ -32,7 +32,7 @@ import { uiSound } from './ui-sound';
  * `onChange` her durum degisiminde (kayit icin) cagrilir.
  */
 export function openInn(root: HTMLElement, get: () => CampaignState, set: (s: CampaignState) => void, o: { town: string; townId: string; onClose?: () => void }): () => void {
-  const sh = openShell(root, { label: 'Inn', title: 'Inn', sub: o.town, lock: 'inn', closable: () => true, onClosed: () => o.onClose?.() });
+  const sh = openShell(root, { label: 'Inn', title: 'Inn', sub: o.town, lock: 'inn', closable: () => true, onClosed: () => o.onClose?.(), phoneFull: true });
   const body = sh.body;
   sh.head.prepend(iconImg(INN_ICON, 'ec-head-ico'));
 

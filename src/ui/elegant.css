@@ -16,6 +16,14 @@
      .el-dia [.hollow]              kor elmas (satır içi)
 */
 :root {
+  /* ORTAK DÜĞME BOY GRUPLARI (Ömer 2026-11-03; tablo docs/design/ui-reference.md > "Düğme boy grupları"). Aynı işi gören düğmeler ekrana özel sayı değil bu
+     jetonlardan boy alır. --btn-k = düğmenin içinde durduğu ölçekli kabın ölçeği (Formation penceresi `.fbw-pos` yazar; yoksa 1): gerçek piksel = jeton. */
+  --btn-k: 1;
+  --btn-dlg-h: 48px; /* Diyalog eylemi: pencere / diyalog alt-üst şeridi (Auto arrange, Done, Hero details, onay düğmeleri) */
+  --btn-dlg-w: 240px; /* Diyalog eylemi, sırada duran düğmenin en az genişliği */
+  --btn-dlg-fs: 19px;
+  --btn-cmp-h: 44px; /* Kompakt / satır içi: .el-btn.sm, kart içi eylemler */
+  --btn-tab-h: 44px; /* Sekme: .gr-tab, .bs-tab */
   --el-txt: #d9c8a2;
   --el-on: #f3d999;
   --el-muted: #a8977a;
@@ -172,6 +180,25 @@
   50% {
     box-shadow: 0 0 0 3px rgba(12, 8, 5, 0.8), 0 14px 30px rgba(0, 0, 0, 0.55), 0 0 34px rgba(224, 112, 42, 0.32);
   }
+}
+
+/* Diyalog eylemi grubu (.el-btn.dlg): tek boy, tek yazı boyu; masaüstünde jeton, telefonda 30 px (jetonlar html.short'ta değişir) */
+html.short {
+  --btn-dlg-h: 30px;
+  --btn-dlg-w: 150px;
+  --btn-dlg-fs: 11px;
+  --btn-cmp-h: 30px;
+  --btn-tab-h: 30px;
+}
+
+.el-btn.dlg,
+.el-btn.primary.dlg,
+.el-btn.sm.dlg,
+.el-btn.sm.primary.dlg {
+  box-sizing: border-box;
+  height: calc(var(--btn-dlg-h) / var(--btn-k));
+  min-height: calc(var(--btn-dlg-h) / var(--btn-k));
+  font-size: calc(var(--btn-dlg-fs) / var(--btn-k));
 }
 
 /* --- Kutusuz yazı düğmesi --- */

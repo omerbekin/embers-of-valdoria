@@ -8,7 +8,7 @@ import { skillTags } from '../../ui/skill-tags';
 import { content, describePassive, describeSkill, describeStat, skillCostLabel, placementHintText, placementHintTitle } from '../../engine';
 import type { CombatantDef, PlacementHint, Teams } from '../../engine';
 import { hintBadge, hintColor } from '../formation-hint-ui';
-import { reachTipParts } from '../formation-reach-tip';
+import { hideReachTip, reachTipOn, showReachTip } from '../reach-tip-dom';
 import { boardRangeUi } from '../../ui/formation-board-data';
 import { backgroundExists, backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { ensureIcon, ensureSkillIcon } from '../icons';
@@ -706,6 +706,8 @@ export class TeamSelectScene extends Phaser.Scene {
     const cs = stageView.cssScale > 0 ? stageView.cssScale : 1;
     const fs = (base: number, minPx: number): number => Math.max(base, Math.ceil(minPx / cs));
     const hit = touchUnits(48);
+    // Telefon (html.short): şerit sola yaslı ve sıkı gruplanır (ad -> statlar -> skill'ler normal aralıkla); dokunma kutuları komşuya taşmaz
+    const short = document.documentElement.classList.contains('short');
     let x = x0 + 12;
     // Avatar (üstüne gelince class özeti: türev statlar, pasif, skill'ler)
     const av = this.add.graphics();
@@ -723,11 +725,11 @@ export class TeamSelectScene extends Phaser.Scene {
     czone.on('pointerover', () => !this.drag?.moved && this.showTip(`class:${def.id}`, this.classTip(def), { x: x0 + 12, y: INFO.top + 6, w: 72 + 26 + nameW, h: 80 }));
     czone.on('pointerout', () => this.hideTip());
     root.add(czone);
-    x += Math.max(nameW, 210) + 26;
+    x += (short ? nameW : Math.max(nameW, 210)) + 26;
     // Statlar (V2 Calm): kutusuz, aralarında ince ayraç, altında stat renginde kısa çizgi; ana stat ember elmaslı
     const sg = this.add.graphics();
     root.add(sg);
-    const STAT_PAD = 20;
+    const STAT_PAD = short ? 12 : 20;
     const LINE_MAX = 56; // yalnızca görsel oran (değer/30, çubuğa kırpılır); oyun kuralı değil
     ATTRS.forEach((k, n) => {
       const pri = def.primary === k;
@@ -756,7 +758,7 @@ export class TeamSelectScene extends Phaser.Scene {
       root.add([ic, lb, v, z]);
       x += STAT_PAD * 2;
     });
-    x += 34 - STAT_PAD * 2 + 20;
+    x += short ? 12 : 34 - STAT_PAD * 2 + 20;
     // Pasif (en başta, yuvarlak, ayrı) + skill'ler (48 px kutular, bedel köşe rozeti, ulti ember parıltılı)
     const boxes: Array<{ key: string; icon: string; cost: string; ult: boolean; tip: () => TipSpec }> = def.skills
       .map((sid, idx) => ({ sk: content.skills[sid], idx }))
@@ -809,7 +811,7 @@ export class TeamSelectScene extends Phaser.Scene {
         t.setPosition(30 - bw / 2, 19);
         parts.push(pg, t);
       }
-      const z = this.add.zone(0, 0, Math.max(58, hit + 8), Math.max(64, hit)).setInteractive();
+      const z = this.add.zone(0, 0, short ? 70 : Math.max(58, hit + 8), Math.max(64, hit)).setInteractive();
       parts.push(z);
       box.add(parts);
       z.on('pointerover', () => {
@@ -824,7 +826,7 @@ export class TeamSelectScene extends Phaser.Scene {
         this.hideTip();
       });
       root.add(box);
-      x += 48 + Math.max(12, hit - 48 + 8);
+      x += 48 + (short ? 22 : Math.max(12, hit - 48 + 8));
       if (passive) {
         x += 6;
         sg.lineStyle(1, GOLDC, 0.3).lineBetween(x, -20, x, 20);
@@ -1183,24 +1185,23 @@ export class TeamSelectScene extends Phaser.Scene {
       const p = worldXY(this, ptr);
       if (this.editable(side)) this.drag = { kind: 'cell', id: def.id, side, from: i, sx: p.x, sy: p.y, moved: false, over: null };
     });
-    zone.on('pointerover', () => {
+    zone.on('pointerover', (ptr: Phaser.Input.Pointer) => {
       if (this.drag?.moved) return;
       drawFrame(true);
       this.tweens.add({ targets: x, alpha: 0.9, duration: 180 });
       this.zoomImg(img, 1.06, CELL - 4);
       this.showInfo(def.id);
-      // Menzil göstergesi: Sefer Formation hover kutusuyla aynı kural (formation-reach-tip.ts); menzil kapalıysa eski ipucu
-      const reach = this.editable(side) ? reachTipParts(def.name, def.id, i, hint) : null;
-      if (reach) {
-        const m = body.getWorldTransformMatrix();
-        this.showTip(`reach:${side}:${i}`, { kind: 'Current position', title: `${def.name} · ${reach.rowLabel}`, accent: reach.accent, chips: reach.chips, lines: reach.lines, ...(reach.foot ? { foot: reach.foot, footHex: reach.footHex } : {}), width: 440 }, { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL });
+      // Menzil kutusu: Sefer Formation hover kutusuyla AYNI DOM bileşeni (reach-tip-dom.ts); menzil kapalıysa eski ipucu. Dokunma: açar ve sabitler.
+      const m = body.getWorldTransformMatrix();
+      if (this.editable(side) && reachTipOn()) {
+        this.hideTip(true);
+        showReachTip(this, ptr, { name: def.name, classId: def.id, cell: i, hint, rect: { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL } });
       } else if (hint) {
-        const m = body.getWorldTransformMatrix();
         this.showTip(`hint:${side}:${i}`, { title: placementHintTitle(hint), accent: hintColor(hint), lines: [{ text: placementHintText(def.name, hint) }], width: 420 }, { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL });
       }
     });
-    zone.on('pointerout', () => {
-      if (hint || boardRangeUi()) this.hideTip();
+    zone.on('pointerout', (ptr: Phaser.Input.Pointer) => {
+      if (!(ptr.wasTouch && this.editable(side) && reachTipOn()) && (hint || boardRangeUi())) this.hideTip();
       drawFrame(false);
       this.tweens.add({ targets: x, alpha: 0, duration: 180 });
       this.zoomImg(img, 1, CELL - 4);
@@ -1325,6 +1326,7 @@ export class TeamSelectScene extends Phaser.Scene {
   }
 
   private hideTip(now = false): void {
+    hideReachTip();
     this.tipTimer?.remove();
     const kill = () => {
       this.tip?.container.destroy();

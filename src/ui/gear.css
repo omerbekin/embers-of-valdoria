@@ -4008,6 +4008,30 @@ html.short .gr-ledger .gr-title {
   font-size: 17px;
 }
 
+/* Telefon üst şerit (Ömer 2026-11-03): GEAR / sekmeler / altın / X TEK dikey eksende (X düğmesi (44 px dokunma alanı, üstten 6 px) merkezi 28 px,
+   şerit de aynı merkeze oturur) ve şerit ince (30 px) ki Skill Tree'ye daha çok yükseklik kalsın. */
+html.short .gr-panel.gr-ledger {
+  padding-top: 7px;
+}
+
+html.short .gr-ledger > .gr-lhead {
+  box-sizing: border-box;
+  height: 30px;
+  min-height: 30px;
+  align-items: center;
+}
+
+html.short .gr-ledger > .gr-lhead .gr-headtabs {
+  align-self: center;
+  align-items: center;
+  height: 30px;
+}
+
+html.short .gr-ledger > .gr-lhead .gr-headtabs .gr-tab {
+  min-height: 30px;
+  margin-bottom: 0;
+}
+
 html.short .gr-ledger .gr-tab {
   font-size: 11px !important;
   letter-spacing: 0.14em;

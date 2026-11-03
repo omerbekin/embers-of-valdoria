@@ -5,6 +5,8 @@
  * Dizilim ipucunun KURALI motorda kalır (src/engine/formation-hints.ts); burası yalnızca onun sonucunu renge / metne çevirir.
  */
 
+import type { BandTipSpec } from './band-tip';
+
 /** Izgara: 4 sıra x 3 şerit; hücre = sıra * 3 + şerit (sıra 0 = ön, düşmana bakar). */
 export const LANES = 3;
 export const ROWS = 4;
@@ -118,4 +120,21 @@ export function rectToLocal(
   const s = w / Math.max(1, offsetW) || 1;
   if (rotated) return { x: (r.top - root.top) / s, y: (root.right - r.right) / s, w: (r.bottom - r.top) / s, h: (r.right - r.left) / s };
   return { x: (r.left - root.left) / s, y: (r.top - root.top) / s, w: (r.right - r.left) / s, h: (r.bottom - r.top) / s };
+}
+
+/**
+ * Hücre hover kutusunun A Band içeriği ("CURRENT POSITION / ADI · 3RD ROW", menzil cümlesi, "Enemy rows hit" çubuğu). TEK kaynak: Sefer Formation
+ * (formation-board.ts) ve Quick Battle / Multiplayer / Endless takım seçimi (src/ui/reach-tip-dom.ts) aynı spec'i çizer.
+ */
+export function reachBandSpec(o: { name: string; avatar?: string; cell: number; here: boolean; n: number; fit: Fit }): BandTipSpec {
+  const lines = [{ text: reachText(o.n), ...(o.n <= 0 ? { color: '#ffb7a6' } : {}) }, ...(o.fit === 'weak' ? [{ text: 'Exposed in front', color: '#f3d08a' }] : [])];
+  return {
+    accent: fitAccent(o.n, o.fit),
+    kind: o.here ? 'Current position' : 'If moved here',
+    title: `${o.name} · ${rowName(rowOfCell(o.cell))}`,
+    ...(o.avatar ? { icon: o.avatar, iconShape: 'round' as const } : {}),
+    lines,
+    bodyHtml: reachBarHtml(o.n),
+    noKeywords: true,
+  };
 }

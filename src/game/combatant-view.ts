@@ -1,3 +1,4 @@
+import { desktopBadgeSlots } from './badge-layout';
 import { textRes } from './stage-view';
 import Phaser from 'phaser';
 import { reducedMotion } from '../ui/motion-pref';
@@ -116,6 +117,8 @@ const damageColor = (level: number) => (level < 0.34 ? colors.damage : level < 0
 export const armorProminence = (armor: number) => Math.min(1, Math.max(0, armor / layout.armorIcon.maxArmor));
 
 /** Sahnedeki tek bir karakter: sprite (veya placeholder), isim, can / MP çubuğu, kalkan çubukları, zırh ve durum ikonları. */
+type SidePlan = { slots: Array<{ dir: -1 | 1; i: number }>; shown: number; more: number };
+
 export class CombatantView {
   readonly container: Phaser.GameObjects.Container;
   /** Ölüm animasyonu bitti: birim sahnede görünmez (diriltme hedefi olarak hayalet gösterilebilir). */
@@ -708,29 +711,26 @@ export class CombatantView {
     const gapBar = layout.statusIcon.gapBar;
     const gapItem = layout.statusIcon.gapItem;
     const hourglass = ensureIcon(this.scene, 'hourglass', '#d9c9a3', false);
-    // Buffs on the left of the HP bar, debuffs (and harmful ground effects) on the right; `perRow` per row (desktop 4, phone one row)
-    for (const debuff of [false, true]) {
-      badges
-        .filter((bd) => bd.debuff === debuff)
-        .forEach((bd, i) => {
-          const dir = debuff ? 1 : -1;
-          const size = debuff ? sizes.right : sizes.left; // telefonda büyüyen rozet (badge-layout.ts): yazı ve kum saati de aynı oranda
-          const k = size / layout.statusIcon.size;
-          const cx = dir * (hpBar.width / 2 + gapBar + size / 2 + (i % perRow) * (size + gapItem));
-          const cy = Math.floor(i / perRow) * (size + 4) + (size - layout.statusIcon.size) / 2; // büyüyen rozet aşağı uzar (üst kenar yerinde: adın altında)
-          const icon = this.scene.add.image(cx, cy, ensureIcon(this.scene, bd.icon, bd.color, false, bd.owner ?? SHARED_KEY)).setDisplaySize(size, size); // durum/zemin rozeti: sahibi (sınıfa özgü durum) ya da Shared sürümü
-          const label = this.scene.add.text(cx + size / 2, cy + size / 2, bd.text, numStyle(Math.round(18 * k), bd.color)).setOrigin(1, 0.5);
-          this.statusBox.add([icon, label]);
-          if (bd.turns) this.statusBox.add(this.scene.add.image(label.x - label.width - 8 * k, label.y, hourglass).setDisplaySize(15 * k, 15 * k));
-        });
-    }
+    // Buffs on the left of the HP bar, debuffs (and harmful ground effects) on the right; `perRow` per row (desktop 4, phone one row); badge-layout.ts > desktopBadgeSlots
+    const slots = desktopBadgeSlots(badges.map((bd) => bd.debuff), perRow);
+    badges.forEach((bd, n) => {
+      const { dir, col, row } = slots[n]!;
+      const size = dir === 1 ? sizes.right : sizes.left; // telefonda büyüyen rozet (badge-layout.ts): yazı ve kum saati de aynı oranda
+      const k = size / layout.statusIcon.size;
+      const cx = dir * (hpBar.width / 2 + gapBar + size / 2 + col * (size + gapItem));
+      const cy = row * (size + 4) + (size - layout.statusIcon.size) / 2; // büyüyen rozet aşağı uzar (üst kenar yerinde: adın altında)
+      const icon = this.scene.add.image(cx, cy, ensureIcon(this.scene, bd.icon, bd.color, false, bd.owner ?? SHARED_KEY)).setDisplaySize(size, size); // durum/zemin rozeti: sahibi (sınıfa özgü durum) ya da Shared sürümü
+      const label = this.scene.add.text(cx + size / 2, cy + size / 2, bd.text, numStyle(Math.round(18 * k), bd.color)).setOrigin(1, 0.5);
+      this.statusBox.add([icon, label]);
+      if (bd.turns) this.statusBox.add(this.scene.add.image(label.x - label.width - 8 * k, label.y, hourglass).setDisplaySize(15 * k, 15 * k));
+    });
   }
 
   /**
    * TELEFON rozetleri (Ömer 2026-10-11, taslak B; plan src/game/badge-layout.ts > solvePhoneBadges): öncelik sırasındaki ilk `plan.shown` durum
    * planın yuvalarında, kalanı sonraki yuvada "+N" sayacı (rozetle aynı boy ve kit dili: koyu madalyon + ince altın halka; düğme değil).
    */
-  setPhoneBadges(badges: Array<{ icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>, plan: { size: number; slots: Array<{ dir: -1 | 1; i: number }>; shown: number; more: number }): void {
+  setPhoneBadges(badges: Array<{ icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>, plan: { size: number; left: SidePlan; right: SidePlan }): void {
     this.statusBox.removeAll(true);
     const { size } = plan;
     const k = size / layout.statusIcon.size;
@@ -739,24 +739,31 @@ export class CombatantView {
     const hourglass = ensureIcon(this.scene, 'hourglass', '#d9c9a3', false);
     const cy = size / 2 - layout.statusIcon.size / 2; // üst kenar masaüstü rozetinin üst kenarında, büyük rozet aşağı uzar (badge-layout.ts > slotRect)
     const cxOf = (s: { dir: -1 | 1; i: number }) => s.dir * (hpBar.width / 2 + gapBar + size / 2 + s.i * (size + gapItem));
-    plan.slots.slice(0, plan.shown).forEach((slot, n) => {
-      const bd = badges[n];
-      if (!bd) return;
-      const cx = cxOf(slot);
-      const icon = this.scene.add.image(cx, cy, ensureIcon(this.scene, bd.icon, bd.color, false, bd.owner ?? SHARED_KEY)).setDisplaySize(size, size);
-      const label = this.scene.add.text(cx + size / 2, cy + size / 2, bd.text, numStyle(Math.round(18 * k), bd.color)).setOrigin(1, 0.5);
-      this.statusBox.add([icon, label]);
-      if (bd.turns) this.statusBox.add(this.scene.add.image(label.x - label.width - 8 * k, label.y, hourglass).setDisplaySize(15 * k, 15 * k));
-    });
-    const last = plan.slots[plan.shown];
-    if (plan.more > 0 && last) {
-      const cx = cxOf(last);
-      const r = size * 0.46;
-      const g = this.scene.add.graphics();
-      g.fillStyle(0x0c0906, 0.92).fillCircle(cx, cy, r);
-      g.lineStyle(2, 0xd9b26a, 0.8).strokeCircle(cx, cy, r);
-      const t = this.scene.add.text(cx, cy, `+${plan.more}`, { fontFamily: DISPLAY_FONT, fontSize: `${Math.round(size * 0.48)}px`, fontStyle: '700', color: '#f3d999' }).setOrigin(0.5).setResolution(textRes());
-      this.statusBox.add([g, t]);
+    // Buff'lar HEP solda, debuff'lar HEP sağda (Ömer 2026-11-03); `badges` öncelik sırasında
+    for (const debuff of [false, true]) {
+      const side = debuff ? plan.right : plan.left;
+      badges
+        .filter((bd) => bd.debuff === debuff)
+        .slice(0, side.shown)
+        .forEach((bd, n) => {
+          const slot = side.slots[n];
+          if (!slot) return;
+          const cx = cxOf(slot);
+          const icon = this.scene.add.image(cx, cy, ensureIcon(this.scene, bd.icon, bd.color, false, bd.owner ?? SHARED_KEY)).setDisplaySize(size, size);
+          const label = this.scene.add.text(cx + size / 2, cy + size / 2, bd.text, numStyle(Math.round(18 * k), bd.color)).setOrigin(1, 0.5);
+          this.statusBox.add([icon, label]);
+          if (bd.turns) this.statusBox.add(this.scene.add.image(label.x - label.width - 8 * k, label.y, hourglass).setDisplaySize(15 * k, 15 * k));
+        });
+      const last = side.slots[side.shown];
+      if (side.more > 0 && last) {
+        const cx = cxOf(last);
+        const r = size * 0.46;
+        const g = this.scene.add.graphics();
+        g.fillStyle(0x0c0906, 0.92).fillCircle(cx, cy, r);
+        g.lineStyle(2, 0xd9b26a, 0.8).strokeCircle(cx, cy, r);
+        const t = this.scene.add.text(cx, cy, `+${side.more}`, { fontFamily: DISPLAY_FONT, fontSize: `${Math.round(size * 0.48)}px`, fontStyle: '700', color: '#f3d999' }).setOrigin(0.5).setResolution(textRes());
+        this.statusBox.add([g, t]);
+      }
     }
   }
 

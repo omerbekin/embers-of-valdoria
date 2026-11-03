@@ -515,7 +515,8 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(64px + var(--et)) calc(16px + var(--er)) calc(16px + var(--eb)) calc(16px + var(--el));
+  /* alt pay üstle AYNI (Ömer 2026-11-03: pencere görünen sahnenin tam ortasında; üst pay Back / Menu satırı için, alt da aynı ki panel dikeyde kaymasın) */
+  padding: calc(64px + var(--et)) calc(16px + var(--er)) calc(64px + var(--eb)) calc(16px + var(--el));
   background: rgba(5, 3, 2, 0.45); /* oyun içi Menu: sahne hafifçe görünsün (Ömer 2026-10-14) */
   color: var(--g-text);
   z-index: 20; /* hikâye şeridi, Gear gibi 19 katmanlı pencerelerin üstünde */
@@ -1178,8 +1179,8 @@ html.short .st-dev {
 
 /* Kısa sahne (yatay telefon): daha sıkı; 5 madde + başlık her zaman sığar (satır 44 px = dokunma alanı) */
 html.short .gm-overlay {
-  padding-top: calc(50px + var(--et));
-  padding-bottom: calc(8px + var(--eb));
+  padding-top: calc(10px + var(--et));
+  padding-bottom: calc(10px + var(--eb));
 }
 
 html.short .gm-box {

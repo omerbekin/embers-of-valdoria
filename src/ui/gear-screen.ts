@@ -731,7 +731,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   boonsEl.addEventListener('pointerenter', (e) => {
     if (e.pointerType === 'mouse') showBoons();
   });
-  boonsEl.addEventListener('pointerleave', hideBoons);
+  boonsEl.addEventListener('pointerleave', (e) => {
+    if (e.pointerType === 'mouse') hideBoons();
+  });
   boonsEl.addEventListener('click', () => showBoons());
   if (bagOnly) tabsBox.hidden = true;
   // Tree sekmesi (Faz 3b; src/ui/tree-tab.ts): yalnızca ağaç şalteri açıkken, çift pencerede (tüccar / ganimet) yok
@@ -918,6 +920,17 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   /** Sheet sağ sayfası (ağaç sekmesi kapalıyken): kahramanın mastery özeti, harcanan / toplam puan ve aktif node'lar (playtest B6). */
   let nodeTip: HTMLElement | null = null;
+  // Dokunmayla açılan Gear ipuçları (Active nodes satırı, Blessings) boş yere / başka yere dokununca kapanır (Ömer 2026-11-03; kendi satırına / düğmesine
+  // dokunuş tıklamayla yeniden açar; ipucunun kendisine dokunuş kapatmaz).
+  overlay.addEventListener(
+    'pointerdown',
+    (e) => {
+      const t = e.target instanceof Element ? e.target : null;
+      if (nodeTip && !t?.closest('.gr-ms-row') && !nodeTip.contains(t)) tipOff(nodeTip);
+      if (boonTip && !t?.closest('.gr-boons') && !boonTip.contains(t)) tipOff(boonTip);
+    },
+    true,
+  );
   function masterySummary(hero: GearHero | undefined): HTMLElement {
     const box = el('div', 'gr-tree gr-mastery');
     if (!hero) return box;
@@ -964,7 +977,10 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       row.addEventListener('pointerenter', (e) => {
         if (e.pointerType === 'mouse') show();
       });
-      row.addEventListener('pointerleave', () => nodeTip && tipOff(nodeTip));
+      // dokunmada pointerleave parmak kalkınca hemen gelir (ipucu tıklamadan önce kapanır / tıklamayla hep yeniden açılırdı): yalnızca fare
+      row.addEventListener('pointerleave', (e) => {
+        if (e.pointerType === 'mouse' && nodeTip) tipOff(nodeTip);
+      });
       row.addEventListener('click', show);
       list.append(row);
     }

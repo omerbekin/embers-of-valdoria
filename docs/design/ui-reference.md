@@ -30,3 +30,16 @@ Ana mantık: `ui-design-language.md` (2026-10-18). Görsel dil: CLAUDE.md > Tasa
 | **Küçük kit parçaları** | `elPanel`, `elHeading`, `elStatus`, `placeElTip` (Phaser ipucu konumu; kutu `bandTip`, Tooltip = A Band satırı), `elToast`, `elBadge`, `elText/elBody`, `fitW`; savaş HUD'ı `src/game/hud-kit.ts` | Renkler `EL` sabitlerinden; sayı koda gömülmez. | Tüm Phaser ekranları |
 
 - **Whisper** (`src/ui/lesson-box.ts > showWhisper`): sıra çubuğu altında portre + ad + tek cümle, dokunmayı engellemez, kendiliğinden solar. **Garrick şeridi** (`src/ui/first-point.ts`): ekranın başlık satırında öneri + iki düğme; önerilen öğe `.fp-glow`.
+
+## Düğme boy grupları (Ömer 2026-11-03)
+Aynı işi gören düğmeler ekrana özel sayı değil ortak jetondan boy alır (`src/ui/elegant.css > :root`, telefon değerleri `html.short`; `--btn-k` = düğmenin durduğu ölçekli kabın ölçeği, Formation penceresi `.fbw-pos` yazar, yoksa 1). Telefon kuralı: görünen yükseklik 30 px, dokunma >= 44 px (`phone-buttons.css`).
+
+| Grup | Jeton | Masaüstü | Telefon | Nerede |
+|---|---|---|---|---|
+| Diyalog eylemi (`.el-btn.dlg`) | `--btn-dlg-h` / `--btn-dlg-w` / `--btn-dlg-fs` | 48 px / en az 240 px / 19 px | 30 px / 150 px / 11 px | Formation penceresi (Back, Auto arrange, Done, Hero details), `el-dialog` düğmeleri |
+| Birincil eylem | `.el-btn.primary` (+ `.dlg` diyalogda) | 60 px, elmaslı | 30 px, elmaslar da küçülür (`phone-buttons.css`) | Fight / Start / Begin, sahne ana eylemi |
+| Kompakt / satır içi | `--btn-cmp-h` | 44 px (`.el-btn.sm`) | 30 px | kart içi eylemler |
+| Sekme | `--btn-tab-h` | 44 px (`.gr-tab`, `.bs-tab`) | 30 px | Gear / tüccar sekmeleri |
+
+Yeni diyalog düğmesi `el-btn dlg` sınıfını alır; kendi yükseklik / genişlik yazılmaz. Compact ve Tab jetonları tanımlı, ilgili CSS'ler sırayla jetona taşınır (şimdilik yalnızca Diyalog eylemi taşındı).
+

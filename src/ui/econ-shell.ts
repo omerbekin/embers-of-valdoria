@@ -97,11 +97,11 @@ export interface Shell {
  * Kabuğu `root`'a kurar. `closable()` her kapatma denemesinde sorulur (kamp seçimi yapılmadıkça kapanmaz). Esc kendi başına kapatır ya da yutar.
  * `onClosed` kapanma bitince bir kez çağrılır.
  */
-export function openShell(root: HTMLElement, o: { label: string; title: string; sub?: string; lock: string; closable: () => boolean; onClosed: () => void; wide?: boolean }): Shell {
-  const overlay = el('div', 'gr-overlay el-modal ec-ov');
+export function openShell(root: HTMLElement, o: { label: string; title: string; sub?: string; lock: string; closable: () => boolean; onClosed: () => void; wide?: boolean; /** Telefonda (html.short) pencere tüm sahneyi kaplar: içerik kısa ekrana sığmıyorsa ortak seçenek (Inn, Camp; econ.css > .ec-pfull). */ phoneFull?: boolean }): Shell {
+  const overlay = el('div', `gr-overlay el-modal ec-ov${o.phoneFull ? ' ec-pfull' : ''}`);
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', o.label);
-  const panel = el('div', `gr-panel el-modal-panel ec-panel${o.wide ? ' wide' : ''}`);
+  const panel = el('div', `gr-panel el-modal-panel ec-panel${o.wide ? ' wide' : ''}${o.phoneFull ? ' ec-pfull' : ''}`);
   const head = el('div', 'gr-head ec-head');
   head.append(el('div', 'gr-title', o.title));
   if (o.sub) head.append(el('span', 'ec-sub', o.sub));

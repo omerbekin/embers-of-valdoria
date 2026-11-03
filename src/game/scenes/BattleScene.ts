@@ -621,14 +621,14 @@ export class BattleScene extends Phaser.Scene {
   private badgeMemo: { key: string; plans: Map<string, PhoneBadgePlan> } | null = null;
 
   /** Telefon boyutunda (html.short / html.compact) birim başına rozet planı (taslak B); masaüstünde null (bugünkü düzen). Girdi değişmedikçe yeniden çözülmez. */
-  private phoneBadgePlans(units: Array<{ view: CombatantView; count: number }>): Map<string, PhoneBadgePlan> | null {
+  private phoneBadgePlans(units: Array<{ view: CombatantView; left: number; right: number }>): Map<string, PhoneBadgePlan> | null {
     const cls = document.documentElement.classList;
     if (!cls.contains('short') && !cls.contains('compact')) return null;
     const si = layout.statusIcon;
     const input = units.map(({ view }) => ({ id: view.combatant.uid, left: 0, right: 0, ...view.badgeGeometry() }));
-    const counts = new Map(units.map(({ view, count }) => [view.combatant.uid, count]));
+    const counts = new Map(units.map(({ view, left, right }) => [view.combatant.uid, { left, right }]));
     // anahtar geometriyi de içerir: yazı tipi geç yüklenip ad genişliği değişince yeniden çözülür
-    const key = JSON.stringify(input.map((u) => [u.id, counts.get(u.id), u.parts.map((p) => [p.x0, p.y0, p.x1, p.y1].map(Math.round))]));
+    const key = JSON.stringify(input.map((u) => [u.id, JSON.stringify(counts.get(u.id)), u.parts.map((p) => [p.x0, p.y0, p.x1, p.y1].map(Math.round))]));
     if (this.badgeMemo?.key === key) return this.badgeMemo.plans;
     const plans = solvePhoneBadges(input, counts, { size: si.phoneSize, gapBar: si.gapBar, gapItem: si.gapItem, margin: si.margin, perSide: si.phonePerSide, top: si.size / 2 });
     this.badgeMemo = { key, plans };
@@ -674,7 +674,7 @@ export class BattleScene extends Phaser.Scene {
     // Telefon (taslak B, Ömer 2026-10-11): öncelikli rozetler + "+N" sayacı, hiçbir şeye binmez (src/game/badge-layout.ts); masaüstünde bugünkü düzen
     const prio = layout.statusIcon.phonePriority as string[];
     const sorted = new Map(lists.map(({ c, list }) => [c.uid, sortByPriority(list.map((b) => ({ ...b, hourglass: b.turns, turns: b.left })), prio)]));
-    const plans = this.phoneBadgePlans(lists.map(({ view, c }) => ({ view, count: sorted.get(c.uid)!.length })));
+    const plans = this.phoneBadgePlans(lists.map(({ view, c }) => ({ view, left: sorted.get(c.uid)!.filter((b) => !b.debuff).length, right: sorted.get(c.uid)!.filter((b) => b.debuff).length })));
     for (const { view, c, list, seals } of lists) {
       const plan = plans?.get(c.uid) ?? null;
       const key = JSON.stringify([list, seals, plan]);

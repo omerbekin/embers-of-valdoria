@@ -123,7 +123,7 @@ export function openElDialog(opts: ElDialogOpts, root: HTMLElement = document.ge
     const row = el('div', 'eld-foot');
     buttons = new Map();
     all = content.buttons.map((b) => {
-      const btn = el('button', `el-btn sm${b.kind === 'primary' ? ' primary' : b.kind === 'danger' ? ' danger' : ''}`, b.label);
+      const btn = el('button', `el-btn sm dlg${b.kind === 'primary' ? ' primary' : b.kind === 'danger' ? ' danger' : ''}`, b.label);
       btn.type = 'button';
       btn.disabled = busy || !!b.disabled;
       btn.addEventListener('click', () => {

@@ -208,7 +208,7 @@ export function openCamp(
   let rail = '';
   let done = false;
   const used0 = (): CampChoice['kind'] | null => campUsed(get());
-  const sh = openShell(root, { label: 'Camp', title: 'Camp', sub: o.name, lock: 'camp', closable: () => true, onClosed: () => o.onClose?.(done || !!used0()), wide: true });
+  const sh = openShell(root, { label: 'Camp', title: 'Camp', sub: o.name, lock: 'camp', closable: () => true, onClosed: () => o.onClose?.(done || !!used0()), wide: true, phoneFull: true });
   const body = sh.body;
 
   const choice = (): CampChoice | null => {
