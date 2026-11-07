@@ -16,6 +16,7 @@ import type { SkillDef } from '../engine';
 import { bandTipEl, type BandChip, type BandTipSpec } from './band-tip';
 import { attachBandTip } from './band-tip-attach';
 import { gearSkillRows, passiveTip, skillTip, classSkills } from './gear-skills';
+import { nextPointLines, treePatchedSkill } from './skill-tree-preview';
 import { escHtml } from './skill-bar';
 import { skillIconName } from './mob-icons';
 import { evolveNodeIconUrl, heroSkillIconUrl, nodeArtUrl, SAVE_TREE_MODE } from './evolve-icon';
@@ -25,7 +26,7 @@ import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import { iconUrl } from './dom-icons';
 import { uiIconName } from './ui-icons';
 import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
-import { className } from './character-panel';
+import { blurbOf, className } from './character-panel';
 import { reducedMotion } from './motion-pref';
 import { uiSound } from './ui-sound';
 import type { HoverHero } from './gear-hover';
@@ -46,6 +47,7 @@ import {
   stripState,
   treeTabEnabled,
   type TreeSession,
+  perRankTotal,
 } from './tree-tab-model';
 import { buildCols, deadStub, link, type ColsLayout, type Hit } from './tree-tab-layout';
 
@@ -347,15 +349,14 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   function plateData(h: TreeTabHero, tree: TreeData): PlateData[] {
     const stats = heroStats(h);
     if (!stats) return [];
-    const list = gearSkillRows(tree.class, stats);
+    const list = gearSkillRows(tree.class, stats, null, undefined, (x) => treePatchedSkill(h, x));
     if (list.length !== rules.rows + 1) return [];
-    const descOf = (tip: { rows: { text: string }[] }): string => tip.rows.map((x) => x.text).join(' · ');
     return list.map((r) => {
       if (r.passive) {
         const p = content.classes[tree.class]?.passive;
-        return { chips: '', nums: numsHtml(r.numbers), desc: p ? descOf(passiveTip(p, stats)) : '' };
+        return { chips: '', nums: numsHtml(r.numbers), desc: p ? blurbOf(passiveTip(p, stats), true) : '' };
       }
-      return { chips: chipsHtml(r.skill!, stats), nums: numsHtml(r.numbers), desc: descOf(skillTip(r.skill!, stats)) };
+      return { chips: chipsHtml(r.skill!, stats), nums: numsHtml(r.numbers), desc: blurbOf(skillTip(r.skill!, stats), false) };
     });
   }
   const numsHtml = (nums: Array<{ label: string; text: string; times?: number }>): string =>
@@ -398,16 +399,22 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     if (st.st === 'dir') chips.push({ text: st.block?.code === 'ultArm' ? 'Other ult path chosen' : 'Other direction chosen', tone: 'warn' });
     if (st.st === 'new') chips.push({ text: 'Awaiting approval', tone: 'warn' });
     const lines: string[] = [info.text];
+    // Biriken toplam (Ömer 2026-11-07): "X% per rank" düğümlerinde şu anki toplam ve (puan varsa) sonraki rank
+    const nowTxt = nd.max > 1 && st.rank > 0 ? perRankTotal(info.text, st.rank) : null;
+    const nextTxt = nd.max > 1 && st.rank < nd.max && !st.block ? perRankTotal(info.text, st.rank + 1) : null;
+    if (nowTxt) lines.push(`Now (rank ${st.rank}): ${nowTxt}`);
+    if (nextTxt) lines.push(`Next rank (${st.rank + 1}): ${nextTxt}`);
     if (st.inert) lines.push('Not active yet: you can take it, but the battle engine does not apply it yet.');
     const spec: BandTipSpec = {
       ...(accent ? { accent } : {}),
       kind: nd.arm ? `Ult ${KN[nd.kind]} · ${row.name}` : `${KN[nd.kind]} · ${row.name}`,
       title: info.name,
-      icon: row.icon,
+      // notable düğümün kendi görseli ipucunda (Ömer 2026-11-07); görseli olmayan notable satırın skill ikonuna döner (nodeIcon)
+      icon: nd.kind === 'notable' ? nodeIcon(nd) || row.icon : row.icon,
       value: '1',
       valueLabel: nd.max > 1 ? 'POINT / RANK' : 'POINT',
       chips,
-      lines: lines.map((text) => ({ text })),
+      lines: lines.map((text) => ({ text, ...(text.startsWith('Next rank (') ? { color: '#8fe39a' } : {}), ...(text.startsWith('Now (rank') ? { color: '#f3d999' } : {}) })),
     };
     const el = bandTipEl(spec);
     let f: HTMLElement;
@@ -434,16 +441,23 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const kind = r.kind === 'ult' ? 'Ultimate' : r.kind === 'pas' ? 'Passive' : 'Skill';
     const chips: BandChip[] = [{ text: kind, tone: 'ac' }];
     const lines: string[] = [];
+    const lineColor: Record<string, string> = {};
+    const sections = new Set<string>();
     if (stats && r.skill) {
-      const t = skillTip(r.skill, stats);
+      const pk = treePatchedSkill({ class: s.tree.class, level: s.level, tree: effective(s) }, r.skill);
+      const t = skillTip(pk, stats, null, nextPointLines(s.tree, s.level, effective(s), r.skill.id, stats, rules));
       for (const m of t.meta) chips.push({ text: m, ...(m === 'Free' ? { tone: 'ok' as const } : /^RAGE/.test(m) ? { tone: 'warn' as const } : {}) });
-      for (const x of t.rows) lines.push(x.text);
+      for (const x of t.rows) {
+        lines.push(x.text);
+        if (x.color) lineColor[x.text] = x.color;
+        if (x.section) sections.add(x.text);
+      }
     } else if (stats && r.kind === 'pas') {
       const p = content.classes[s.tree.class]?.passive;
       if (p) for (const x of passiveTip(p, stats).rows) lines.push(x.text);
     }
     if (r.kind === 'ult') chips.push({ text: `Ult points ${ultSpent(effective(s), rules)} / ${rules.ult.max}` });
-    const spec: BandTipSpec = { accent: r.kind === 'pas' ? '#6fb0a8' : r.kind === 'ult' ? '#e0702a' : '#d9b26a', kind: `${kind} · ${className(s.tree.class)}`, title: r.name, icon: r.icon, value: String(rowSpent(effective(s), i)), valueLabel: 'POINTS', chips, lines: lines.map((text) => ({ text })) };
+    const spec: BandTipSpec = { accent: r.kind === 'pas' ? '#6fb0a8' : r.kind === 'ult' ? '#e0702a' : '#d9b26a', kind: `${kind} · ${className(s.tree.class)}`, title: r.name, icon: r.icon, value: String(rowSpent(effective(s), i)), valueLabel: 'POINTS', chips, lines: lines.map((text) => ({ text, ...(lineColor[text] ? { color: lineColor[text] } : {}), ...(sections.has(text) ? { section: true } : {}) })) };
     return bandTipEl(spec);
   }
 
@@ -525,6 +539,11 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       }
     }
     y = Math.max(8, Math.min(vh - h - 8, y));
+    // sabit tam ekran düğmesi (sağ üst, z 30) ipucunun sağ üstündeki değeri (POINTS) örtmesin: örtüşüyorsa ipucu düğmenin altına iner
+    const fs = document.querySelector('.settings-toggle.fullscreen-toggle')?.getBoundingClientRect();
+    if (fs && fs.width > 0 && sr.left + x < fs.right && sr.left + x + w > fs.left && sr.top + y < fs.bottom + 4 && sr.top + y + h > fs.top) {
+      y = Math.min(Math.max(y, fs.bottom + 4 - sr.top), Math.max(8, vh - h - 8));
+    }
     tip.style.left = `${x}px`;
     tip.style.top = `${y}px`;
   }

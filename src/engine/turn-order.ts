@@ -4,7 +4,7 @@ import type { Side } from './types';
 /**
  * Sayaç (ATB benzeri) sıra sistemi, saf fonksiyonlar halinde.
  * Her tikte herkesin sayacı SPD kadar dolar; eşiğe ulaşan oynar, oynayınca sayacından eşik düşer
- * (taşan kısım korunur, yani hızlı karakter daha sık oynar). Rastgelelik yok: aynı durum = aynı sıra.
+ * (taşan kısım korunur, yani hızlı karakter daha sık oynar). Aynı durum = aynı sıra (tur başına hız zarı saf hash, bkz. TurnSlot.respeed).
  *
  * ONDALIK HIZ (Ömer 2026-10-31): sayaç hesabı `turn.counterStep` (0,001) katlarında TAM SAYIYLA yapılır, sonuç aynı ondalığın tek karşılığı olan
  * sayıya çevrilir. Böylece kayan nokta artığı birikmez: eşik atlanmaz, eşit sayaçlar gerçekten eşit kalır, iki istemci (lockstep) aynı sayıyı görür.
@@ -25,6 +25,11 @@ export interface TurnSlot {
    * tahmin (predictQueue), birim bir kez oynadıktan sonra spd'yi buna döndürür.
    */
   baseSpd?: number;
+  /**
+   * Tur başına hız zarı (Ömer 2026-11-07): birimin `k` tur sonraki hızı (k = 1: şu anki turunu bitirince; desteksiz, o turun zarıyla).
+   * Verilirse tahmin, birim her oynadığında spd'yi buna çevirir (baseSpd'nin yerine); böylece sıra çubuğu gerçek sırayla aynı kalır.
+   */
+  respeed?: (k: number) => number;
   /** Harita 3 C1 sıra çubuğu belirteci: tahminde bir kez öne gelir, sonra listeden çıkar (oynamaz, sayacı düşmez, eşitlik tarafını değiştirmez). */
   once?: boolean;
 }
@@ -66,6 +71,7 @@ export const tieSideAfter = (side: Side): Side => (side === 'party' ? 'enemy' : 
  * Ölüm/çağrı gibi gelecek olayları bilemez; her olaydan sonra yeniden hesaplanır.
  * `currentCost`: şu anki aktörün bu eyleminin turn bedeli (1 = tam turn; 0,5 = yarım turn skill: sayacından eşiğin yarısı düşer, sonraki
  * sırası yarı sürede gelir). Sonraki tahmini turlar tam turn sayılır.
+ * Tur başına hız zarı: `respeed`li yuva her tahmini turundan sonra o turun hızını alır (zar saf hash olduğu için gelecek turlar bilinir).
  */
 export function predictQueue(
   slots: TurnSlot[],
@@ -79,10 +85,23 @@ export function predictQueue(
   const queue: string[] = [];
   const current = currentUid ? copy.find((s) => s.uid === currentUid) : undefined;
   let tieSide = firstSide;
+  const played = new Map<TurnSlot, number>(); // tahminde bitirilen tur sayısı (respeed için)
+  const finish = (s: TurnSlot): void => {
+    if (s.respeed) {
+      const k = (played.get(s) ?? 0) + 1;
+      played.set(s, k);
+      s.spd = s.respeed(k);
+      s.baseSpd = undefined;
+    } else if (s.baseSpd !== undefined) {
+      s.spd = s.baseSpd; // Skip Turn desteği oynadığı turla biter
+      s.baseSpd = undefined;
+    }
+  };
   if (current) {
     queue.push(current.uid);
     current.counter = snapCounter(current.counter - threshold * currentCost);
     tieSide = tieSideAfter(current.side);
+    if (current.respeed) finish(current); // şu anki aktör: bu turu bitince yeni zar (motor: turn sonu nextPace)
   }
   while (queue.length < count) {
     const next = advanceTurn(copy, threshold, tieSide);
@@ -94,10 +113,7 @@ export function predictQueue(
     }
     next.counter = snapCounter(next.counter - threshold);
     tieSide = tieSideAfter(next.side);
-    if (next.baseSpd !== undefined) {
-      next.spd = next.baseSpd; // Skip Turn desteği oynadığı turla biter
-      next.baseSpd = undefined;
-    }
+    finish(next);
   }
   return queue;
 }

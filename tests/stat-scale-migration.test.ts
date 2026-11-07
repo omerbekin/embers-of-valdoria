@@ -18,7 +18,7 @@ describe('x2 stat ölçeği: veri ve kayıt göçü', () => {
     expect(f.armor.k).toBe(60);
     expect(f.turn.threshold).toBe(200);
     expect(f.attributes.hpPerStr).toBe(3);
-    expect(f.attributes.mpPerInt).toBe(1);
+    expect(f.attributes.mpPerInt).toBe(0.2);
     expect(f.attributes.dexPerEvasionStep).toBe(10);
     expect(f.scaling).toEqual({ str: 1, dex: 1, int: 1, luck: 1 }); // skill güçleri veride yarıya indi, ölçek çarpanı aynı
   });

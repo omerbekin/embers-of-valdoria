@@ -125,7 +125,7 @@ export function heroItemLine(h: HoverHero, inst: ItemInstance | null | undefined
   const slot = defaultEquipSlot(h.equipment, d);
   const plan = planEquip(h.class, h.equipment, inst, slot, h.locks ? { locks: h.locks } : {});
   if (isPlanError(plan)) {
-    const text = plan.error === LEGENDARY_LIMIT_MSG ? plan.error : offhandBlocker(h.equipment) && slot === 'offhand' ? 'Hands full' : plan.error;
+    const text = plan.error === LEGENDARY_LIMIT_MSG ? plan.error : offhandBlocker(h.equipment, h.class) && slot === 'offhand' ? 'Hands full' : plan.error;
     return { text, tone: 'no', parts: [{ text }] };
   }
   const diffs = equipDiff(h, inst, slot)

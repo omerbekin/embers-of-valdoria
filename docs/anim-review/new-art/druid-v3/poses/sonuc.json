@@ -1,0 +1,74 @@
+{
+  "slash2": {
+    "rounds": 3,
+    "pass": false,
+    "bestRound": 2,
+    "score": 7
+  },
+  "spin1a": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "spin1b": {
+    "rounds": 2,
+    "pass": true,
+    "bestRound": 2,
+    "score": 8
+  },
+  "spin1c": {
+    "rounds": 3,
+    "pass": false,
+    "bestRound": 3,
+    "score": 7
+  },
+  "spin2a": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 9
+  },
+  "spin2b": {
+    "rounds": 2,
+    "pass": true,
+    "bestRound": 2,
+    "score": 9
+  },
+  "spin2c": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 9
+  },
+  "step1": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 9
+  },
+  "step2": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "throw": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 9
+  },
+  "thrust1": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 9
+  },
+  "thrust2": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 9
+  }
+}

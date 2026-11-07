@@ -52,7 +52,8 @@ describe('Ley Thread: veri ve metin', () => {
     const ms = describeSkill(content.skills.mana_burn!, P(st).stats, content.formulas, content.summons, defs).lines.join(' ');
     expect(ms).toContain('Ley Thread');
     const lb = describeSkill(content.skills.drain_field!, P(st).stats, content.formulas, content.summons, defs).lines.join(' ');
-    expect(lb).toContain('On an enemy with Ley Thread, the Brand lasts 2 turns longer and burns 50% more extra MP per cast; the Ley Thread is used up');
+    expect(lb).not.toContain('Ley Thread');
+    expect(ms).toContain('On a target with Ley Thread, Ley Brand lasts 2 turns longer and burns 50% more extra MP per cast; the thread is used up');
   });
 });
 

@@ -341,7 +341,7 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 8
     },
     "cooldown": 3,
     "motion": "sky",
@@ -794,7 +794,7 @@
       },
       {
         "type": "manaBurn",
-        "amount": 10,
+        "amount": 8,
         "gainRatio": 0.5
       },
       {
@@ -824,7 +824,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 12
     },
     "cooldown": 3,
     "motion": "sky",
@@ -891,12 +891,12 @@
   "spell_ward": {
     "id": "spell_ward",
     "name": "Spell Ward",
-    "_not": "Madde 240 (Ömer): artık dosta ya da kendine atılır (single_ally, excludeSelf YOK). Büyü kalkanı Int x 0,3 + kalan MP x 0,6 AYNEN. Kalkan bir skill vuruşunu emdiği HER darbede (madde 241) saldıranın MP'sinden burnMana yakar ve saldıranın üstünde buff varsa dispelChance ihtimalle RASTGELE bir buff'ını siler. Yer etkisi tiki tetiklemez. Sayılar PROVİZYON.",
+    "_not": "Madde 240 (Ömer): artık dosta ya da kendine atılır (single_ally, excludeSelf YOK). Büyü kalkanı Int x 0,75 (Ömer 2026-11-08, 0,6 sonra 0,75: kalan MP payı kaldırıldı, güç INT'e kaydı; eskisi Int x 0,15 + kalan MP x 0,6). Kalkan bir skill vuruşunu emdiği HER darbede (madde 241) saldıranın MP'sinden burnMana yakar ve saldıranın üstünde buff varsa dispelChance ihtimalle RASTGELE bir buff'ını siler. Yer etkisi tiki tetiklemez. Sayılar PROVİZYON.",
     "icon": "spellward",
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 16
+      "amount": 12
     },
     "cooldown": 4,
     "motion": "cast",
@@ -905,9 +905,8 @@
       {
         "type": "shield",
         "scale": "int",
-        "power": 0.15,
+        "power": 0.75,
         "shieldType": "magic",
-        "bonusPerMana": 0.6,
         "onAbsorb": {
           "burnMana": 8,
           "dispelChance": 0.25
@@ -5615,13 +5614,13 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.75
+        "power": 0.78
       },
       {
         "type": "dot",
         "status": "burning",
         "scale": "str",
-        "power": 0.12,
+        "power": 0.125,
         "turns": 2
       }
     ],
@@ -5641,8 +5640,9 @@
     "range": 3,
     "cost": {
       "resource": "mp",
-      "amount": 5
+      "amount": 24
     },
+    "_cost": "Ömer 2026-11-07: bedel 24 MP (önce 5; Ash Hound MP havuzu 32, savaş başına bir kez), hasar gücü 0,7 -> 0,63 (-%10).",
     "cooldown": 3,
     "motion": "melee",
     "ignoreReach": true,
@@ -5652,7 +5652,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.7
+        "power": 0.63
       },
       {
         "type": "status",
@@ -9355,7 +9355,7 @@
     ]
   },
   "toll": {
-    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Toll: tüm düşmanlara küçük kutsal hasar, çan çalar (ringsBell).",
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar kesin (Ömer 2026-11-08: PROVİZYON kaldırıldı; başta Mage'den türetilmişti: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Toll: tüm düşmanlara küçük kutsal hasar, çan çalar (ringsBell).",
     "id": "toll",
     "vfx": "judgment",
     "name": "Toll",
@@ -9387,7 +9387,7 @@
     ]
   },
   "thunderpeal": {
-    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Thunderpeal: tek düşman sırası (row) şimşek hasarı + 1 tur Blinded, bekleme 2, çan çalar.",
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar kesin (Ömer 2026-11-08: PROVİZYON kaldırıldı; başta Mage'den türetilmişti: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Thunderpeal: tek düşman sırası (row) şimşek hasarı + 1 tur Blinded, bekleme 2, çan çalar.",
     "id": "thunderpeal",
     "vfx": "judgment",
     "name": "Thunderpeal",
@@ -9426,7 +9426,7 @@
     ]
   },
   "cracked_bell": {
-    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Cracked Bell: tek hedef kutsal hasar + %30 şansla 1 tur Stun, bekleme 3; çan sayacını ARTIRMAZ ama Pealing Bells ile güçlenir.",
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar kesin (Ömer 2026-11-08: PROVİZYON kaldırıldı; başta Mage'den türetilmişti: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Cracked Bell: tek hedef kutsal hasar + %50 şansla 1 tur Stun (Ömer 2026-11-08: güç 1,083 -> 1,15, Stun %30 -> %50), bekleme 3; çan sayacını ARTIRMAZ ama Pealing Bells ile güçlenir.",
     "id": "cracked_bell",
     "vfx": "hammerfall",
     "name": "Cracked Bell",
@@ -9445,7 +9445,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 1.083,
+        "power": 1.15,
         "element": "holy",
         "bell": true
       },
@@ -9453,7 +9453,7 @@
         "type": "status",
         "status": "stun",
         "turns": 1,
-        "chance": 0.3
+        "chance": 0.5
       }
     ],
     "sfx": [
@@ -9462,7 +9462,7 @@
     ]
   },
   "great_bell_of_valdoria": {
-    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar PROVİZYON (Mage'den türetildi: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor; sim yok). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Ultimate: tüm düşmanlara kutsal + şimşek; her iki hasar bu savaşta çalınan her çan için +powerPerBell güç alır (ve Pealing Bells çarpanı). Bekleme 4, ilk bekleme 2. Kendisi çan sayacını artırmaz.",
+    "_not": "Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md). Sayılar kesin (Ömer 2026-11-08: PROVİZYON kaldırıldı; başta Mage'den türetilmişti: fire_bolt 1,02 / blizzard 0,77 bekleme 2 / meteor). İkon ödünç (yeni ikon yok); efekt ve ses Vesper'ın kendi (2026-11-01: art-v2/vesper/vfx.ts, data/audio-v2/vesper.json). Ultimate: tüm düşmanlara kutsal + şimşek; her iki hasar bu savaşta çalınan her çan için +powerPerBell güç alır (ve Pealing Bells çarpanı). Bekleme 4, ilk bekleme 2. Kendisi çan sayacını artırmaz.",
     "id": "great_bell_of_valdoria",
     "vfx": "judgment",
     "name": "Great Bell of Valdoria",
@@ -9502,7 +9502,8 @@
     "sfx": [
       "greatBellDescend",
       "greatBellToll",
-      "greatBellThunder"
+      "greatBellThunder",
+      "greatBellImpact"
     ],
     "ai": {
       "reserveMp": 2
@@ -10098,7 +10099,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 11
     },
     "ai": {
       "scoreCost": 10
@@ -10140,7 +10141,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 20
+      "amount": 16
     },
     "ai": {
       "scoreCost": 10
@@ -10270,7 +10271,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 23
+      "amount": 18
     },
     "ai": {
       "scoreCost": 10
@@ -10622,7 +10623,7 @@
     ],
     "cost": {
       "resource": "mp",
-      "amount": 15
+      "amount": 13
     },
     "ai": {
       "scoreCost": 6
@@ -10651,7 +10652,7 @@
     ],
     "cost": {
       "resource": "mp",
-      "amount": 20
+      "amount": 17
     },
     "ai": {
       "scoreCost": 10
@@ -10722,7 +10723,7 @@
     ],
     "cost": {
       "resource": "mp",
-      "amount": 30
+      "amount": 23
     },
     "ai": {
       "scoreCost": 8
@@ -10776,7 +10777,7 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 18
+      "amount": 17
     },
     "ai": {
       "scoreCost": 8
@@ -11073,7 +11074,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 18
+      "amount": 17
     },
     "ai": {
       "scoreCost": 8
@@ -11278,7 +11279,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 8
     },
     "ai": {
       "scoreCost": 8
@@ -11385,7 +11386,7 @@
     "excludeSelf": true,
     "cost": {
       "resource": "mp",
-      "amount": 15
+      "amount": 7
     },
     "ai": {
       "scoreCost": 6
@@ -11416,7 +11417,7 @@
     "excludeSelf": true,
     "cost": {
       "resource": "mp",
-      "amount": 20
+      "amount": 16
     },
     "ai": {
       "scoreCost": 8
@@ -11451,7 +11452,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 20
+      "amount": 16
     },
     "ai": {
       "scoreCost": 8
@@ -11515,7 +11516,7 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 12
     },
     "ai": {
       "scoreCost": 8
@@ -11558,7 +11559,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 12
     },
     "ai": {
       "scoreCost": 8
@@ -11596,7 +11597,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 11
     },
     "ai": {
       "scoreCost": 10
@@ -11629,7 +11630,7 @@
     "global": true,
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 11
     },
     "ai": {
       "scoreCost": 8
@@ -11658,7 +11659,7 @@
     "target": "all_allies",
     "cost": {
       "resource": "mp",
-      "amount": 23
+      "amount": 18
     },
     "ai": {
       "scoreCost": 10
@@ -11704,7 +11705,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 23
+      "amount": 18
     },
     "ai": {
       "scoreCost": 6
@@ -11759,7 +11760,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 22
+      "amount": 16
     },
     "ai": {
       "scoreCost": 8
@@ -11782,7 +11783,7 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 22
+      "amount": 16
     },
     "ai": {
       "scoreCost": 8
@@ -11831,7 +11832,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 22
+      "amount": 16
     },
     "ai": {
       "scoreCost": 12
@@ -11874,7 +11875,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 13
+      "amount": 11
     },
     "ai": {
       "scoreCost": 12
@@ -11916,7 +11917,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 13
+      "amount": 11
     },
     "ai": {
       "scoreCost": 8
@@ -11953,7 +11954,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 13
+      "amount": 11
     },
     "ai": {
       "scoreCost": 12
@@ -12027,7 +12028,7 @@
     ],
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 11
     },
     "ai": {
       "scoreCost": 8
@@ -12196,7 +12197,7 @@
     ],
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 8
     },
     "ai": {
       "scoreCost": 6
@@ -12230,7 +12231,7 @@
     "name": "Glyph of Breaking",
     "target": "area_enemies",
     "area": { "shape": "plus" },
-    "cost": { "resource": "mp", "amount": 30 },
+    "cost": { "resource": "mp", "amount": 23 },
     "ai": { "scoreCost": 10 },
     "cooldown": 3,
     "motion": "sky",
@@ -12267,7 +12268,7 @@
     "name": "Burn the Ground",
     "target": "area_enemies",
     "area": { "shape": "rect", "rows": 2, "cols": 2 },
-    "cost": { "resource": "mp", "amount": 30 },
+    "cost": { "resource": "mp", "amount": 23 },
     "ai": { "scoreCost": 8 },
     "cooldown": 3,
     "motion": "sky",

@@ -6,6 +6,8 @@ import { bonusScaleRaw } from './spec';
 import { bellsOfSkill } from './tree-hooks';
 import { rangeEnabled, rangeLabel } from './range';
 import { applySummonerScale, applySummonVariant, attributePower, dotOutgoingMult, outgoingDamageMult } from './stats';
+/** Test skill'leri (Pose Tester pt_*, Geometer shape_*): başka skill'in ipucuna satır eklemez. */
+const isTestSkillId = (id: string): boolean => /^(pt|shape)_/.test(id);
 import type { UrnRule, AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
 
 /** Skill'in oyuncuya gösterilen genel bilgileri (tooltip). Metinler İngilizce (oyun içi arayüz). */
@@ -126,8 +128,8 @@ const scaled = (stats: Stats, scale: Attribute, power: number, formulas: Formula
 type DamageEffect = Extract<SkillEffect, { type: 'damage' }>;
 /** Hasar etkisinin sayısı; hibrit ölçekte (bonusScale) ana + ek (kartın gösterdiği statlarla; savaşta aura zırhı da eklenir). */
 const damageAmount = (e: DamageEffect, stats: Stats, formulas: Formulas): number => {
-  // Item affix'leri (Global / element hasarı; motorun damageSpecFor çarpanıyla aynı): çarpan yoksa ifade birebir eskisi
-  const out = outgoingDamageMult(stats, e.element);
+  // Hasar havuzu (Global / element hasarı + ağacın "+% power" payı; motorun damageSpecFor çarpanıyla aynı): çarpan yoksa ifade birebir eskisi
+  const out = outgoingDamageMult(stats, e.element, 0, e.powerAdd ?? 0);
   const power = out !== 1 ? e.power * out : e.power;
   if (!e.bonusScale?.length) return scaled(stats, e.scale, power, formulas);
   const bonus = bonusScaleRaw(e.bonusScale, stats);
@@ -151,7 +153,7 @@ export interface EffectDefs {
   statuses?: Record<string, StatusDef>;
   grounds?: Record<string, GroundDef>;
   /** Skill adları (Ley Brand işareti: markSkills adla yazılır); yoksa genel ifade. */
-  skills?: Record<string, { name: string }>;
+  skills?: Record<string, { name: string; effects?: SkillEffect[] }>;
 }
 
 /** Pasifin oyuncuya gösterilen açıklaması; değerler sahibinin stat'larından hesaplanır. */
@@ -327,6 +329,10 @@ export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas, v
   if (def.kind === 'rod') {
     lines.push('Only a hero standing next to the rod (in front, behind, above or below it) can do this', 'The cell opens again and the rod draws no more lightning', 'Uses your turn');
     return { id: def.id, name: def.name, icon: def.icon, target: 'The rod beside you', targetBadge: 'Rod', cost: 'Free', summary: def.text, lines, turnsOnly: false };
+  }
+  if (def.kind === 'command') {
+    lines.push('Pick a living ally: they take a turn right after yours', 'Their own next turn still comes as usual', 'Uses your turn', 'Once per battle (Kingsfall Regalia)');
+    return { id: def.id, name: def.name, icon: def.icon, target: 'An ally', targetBadge: 'Ally', cost: 'Free', summary: def.text, lines, turnsOnly: false };
   }
   if (def.kind === 'urn') {
     // M-N3 Tidewater Urn: sayılar savaşın Urn kuralından (battle-rules.json > devices)
@@ -548,22 +554,12 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       const def = defs.statuses?.['branded'];
       const el = e.element ?? 'arcane';
       add(`Brands every enemy in the area for ${e.turns} turn${e.turns > 1 ? 's' : ''}${def ? ` (${def.name})` : ''}; it cannot miss`);
-      add(`An enemy with no mana gains tainted mana equal to ${pct(e.taintPct)} of its max HP${e.centerTaintMul ? ` (${pct(e.centerTaintMul)} more on the centre enemy)` : ''}, starting full; it cannot spend it, and it is gone when the Brand ends`);
-      add(`An enemy with mana pays ${pct(e.costMult - 1)} more MP for its skills (rounded up)`);
-      add(`Mana burned or stolen from a Branded enemy also deals ${el} damage equal to ${pct(e.burnDamagePct)} of the mana lost (cannot miss or crit; magic armor applies)`, el);
-      add(`When the Brand runs out, leftover tainted mana bursts for ${el} damage equal to ${pct(e.explodePct)} of it`, el);
-      // Ömer 2026-10-29: bedel yakımı + işaret (sade ifade: 'X% more')
-      if (e.castBurnPct) add(`When a Branded enemy uses a skill that costs MP, it also loses extra MP equal to ${pct(e.castBurnPct)} of the MP it paid (or all it has left); this counts as burned mana and hurts it too`, el);
-      if (e.markDamagePct && e.markSkills?.length) {
-        const names = e.markSkills.map((id) => defs.skills?.[id]?.name).filter((n): n is string => !!n);
-        add(`${names.length === e.markSkills.length ? names.join(' and ') : 'Your marked skills'} deal${names.length === 1 ? 's' : ''} ${pct(e.markDamagePct)} more damage to Branded enemies`);
-      }
-      // Ley Thread (Ömer 2026-10-29): Mana Steal'in ipliği bu Brand'de tüketilir
-      if (e.threadTurns || (e.threadBurnMult && e.threadBurnMult !== 1)) {
-        const th = defs.statuses?.['ley_thread']?.name ?? 'Ley Thread';
-        const parts = [...(e.threadTurns ? [`lasts ${e.threadTurns} turn${e.threadTurns > 1 ? 's' : ''} longer`] : []), ...(e.castBurnPct && e.threadBurnMult && e.threadBurnMult !== 1 ? [`burns ${e.threadBurnMult === 2 ? 'twice as much' : e.threadBurnMult > 1 ? `${pct(e.threadBurnMult - 1)} more` : `${pct(e.threadBurnMult)} as much`} extra MP per cast`] : [])];
-        if (parts.length) add(`On an enemy with ${th}, the Brand ${parts.join(' and ')}; the ${th} is used up`);
-      }
+      // Ömer 2026-11-07: madde 2 özetlendi; MP maddeleri (bedel artışı + bedel yakımı) ve arcane maddeleri (yakım hasarı + patlama) birleşti, sayılar aynen
+      add(`An enemy with no mana gains tainted mana: ${pct(e.taintPct)} of its max HP${e.centerTaintMul ? ` (${pct(e.centerTaintMul)} more on the centre enemy)` : ''}, full, unspendable, gone when the Brand ends`);
+      if (e.castBurnPct) add(`An enemy with mana pays ${pct(e.costMult - 1)} more MP for its skills (rounded up) and loses extra MP equal to ${pct(e.castBurnPct)} of the MP it paid (or all it has left); that counts as burned mana and hurts it too`, el);
+      else add(`An enemy with mana pays ${pct(e.costMult - 1)} more MP for its skills (rounded up)`);
+      add(`Mana burned or stolen from a Branded enemy deals ${el} damage equal to ${pct(e.burnDamagePct)} of the mana lost (cannot miss or crit; magic armor applies); when the Brand runs out, leftover tainted mana bursts for ${pct(e.explodePct)} of it`, el);
+      // Ömer 2026-11-07: işaret (markDamagePct) ve Ley Thread satırları Mana Steal / Void Strike'ın kendi ipucuna taşındı (aşağıda, brandPartnerLines)
       if (e.silenceOnEmpty) add(`A Branded enemy whose mana reaches 0 is ${defs.statuses?.silence?.name ?? 'Silenced'} for ${e.silenceOnEmpty} turn${e.silenceOnEmpty > 1 ? 's' : ''}`);
       if (e.spread) add('When a Brand runs out, it leaps once to an unbranded enemy next to its bearer with a fresh Brand');
       add('Casting it again refreshes the Brand but does not refill tainted mana');
@@ -620,6 +616,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       const doom = def?.doom;
       if (doom) add(`Then Doom strikes at once with every Omen on the target, with ${multText(e.mult)} power: ${pct(doom.powerPerStack * e.mult)} ${ATTRIBUTE_NAME[doom.scale]} (${raw(doom.scale, doom.powerPerStack * e.mult)}) ${doom.element} damage per Omen; it cannot miss but can crit`, doom.element);
       else add(`Detonates ${e.status} with ${multText(e.mult)} power`);
+      if (doom?.bonusPerExtraTurn) add(`Effects that would lengthen an Omen add +${pct(doom.bonusPerExtraTurn)} Doom damage per turn instead`, doom.element);
       add('On a miss nothing happens: the Omens stay');
       if (e.noTransferOnKill) add('Every Omen on the target is spent; if this kills it, nothing passes on (Ill Omen does not trigger)');
     } else if (e.type === 'dot') {
@@ -704,6 +701,16 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   // Oranlı bedel (Wail of the Dead: mevcut canın %20'si): açıklama satırı; başlık skillCostLabel
   // Bedelin kendisi başlıkta (skillCostLabel: "All RAGE (min 30)" / "20% of current HP"); satırda yalnızca başlıkta olmayan kural
   if (!skill.cost.spendAll && isRatioCost(skill.cost)) add(`Rounded, at least 1${skill.cost.resource === 'hp' ? '; it can never bring you below 1 HP' : ''}`);
+  // Ley Brand ortakları (Ömer 2026-11-07): Brand'in işaretlediği skill'ler ve Ley Thread bırakan skill kendi ipucunda kendi satırını taşır
+  for (const [otherId, other] of Object.entries(defs.skills ?? {})) {
+    const br = other.effects?.find((x): x is Extract<SkillEffect, { type: 'brand' }> => x.type === 'brand');
+    if (!br || otherId === skill.id || isTestSkillId(otherId)) continue;
+    if (br.markDamagePct && br.markSkills?.includes(skill.id)) add(`Deals ${pct(br.markDamagePct)} more damage to enemies Branded by ${other.name}`);
+    if (skill.effects.some((x) => x.type === 'status' && x.status === 'ley_thread') && (br.threadTurns || (br.threadBurnMult && br.threadBurnMult !== 1))) {
+      const parts = [...(br.threadTurns ? [`lasts ${br.threadTurns} turn${br.threadTurns > 1 ? 's' : ''} longer`] : []), ...(br.castBurnPct && br.threadBurnMult && br.threadBurnMult !== 1 ? [`burns ${br.threadBurnMult === 2 ? 'twice as much' : br.threadBurnMult > 1 ? `${pct(br.threadBurnMult - 1)} more` : `${pct(br.threadBurnMult)} as much`} extra MP per cast`] : [])];
+      if (parts.length) add(`On a target with ${defs.statuses?.['ley_thread']?.name ?? 'Ley Thread'}, ${other.name} ${parts.join(' and ')}; the thread is used up`);
+    }
+  }
   if (skill.note) add(skill.note); // serbest not (Pose Tester: oynattığı poz)
   const initialTurns = Math.min(formulas.cooldown?.maxInitial ?? 0, Math.floor(skill.initialCooldown ?? 0));
   return {

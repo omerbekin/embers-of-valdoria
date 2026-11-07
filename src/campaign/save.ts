@@ -1,4 +1,5 @@
 import { woundCount } from '../progression/wounds';
+import { normalizeLedger } from './ledger';
 import { normalizeSurge, taintOf } from './surge';
 import { CONFIG, MAPS, mapFor } from './data';
 import { findNode } from './graph';
@@ -14,8 +15,9 @@ import { classes, statuses, valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
-import { normalizeSpdRoll } from '../progression/loadout';
+import { dropLegacySpdRoll } from '../progression/loadout';
 import { clampValor } from '../engine/valor';
+import { normalizeSupplies } from './supplies';
 import type { CampaignMode, CampaignShop, CampaignState, Difficulty, Hero, MerchantStall, ShopWare } from './types';
 
 /**
@@ -210,10 +212,10 @@ function upgradeState(s: CampaignState): void {
         }
       // 2026-10-28 (Ömer): sınıfın artık takamadığı item (örn. war_maul hammers ailesine geçti, Warrior kullanamaz) torbaya döner; yarım savaş atılır
       if (stripUnusable(h.class, eq, overflow).length) stripped = true;
-      promoteOffhand(eq); // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
+      promoteOffhand(eq, h.class); // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
       const out = { ...h, equipment: eq };
       normalizeLevelFields(out); // level / XP / puanlar (sürüm 9; bozuk değer varsayılana, hiçbir şey geri alınmaz)
-      if (typeof s.seed === 'number') normalizeSpdRoll(out, s.seed); // kişisel hız zarı (Ömer 2026-10-24; sürüm artmaz, idempotent)
+      dropLegacySpdRoll(out); // eski kalıcı hız zarı kalktı (Ömer 2026-11-07: hız her tur zarlanır); sürüm artmaz, idempotent
       normalizeTree(out); // skill ağacı (sürüm 12): bozuk dağılım bedava iade + treeReset, skillPoints = havuz - harcanan, veri değiştiyse freeRespec
       return out;
   };
@@ -273,6 +275,11 @@ function upgradeState(s: CampaignState): void {
   if (pl !== undefined && !(pl && typeof pl.node === 'string' && Array.isArray(pl.items) && typeof pl.gold === 'number' && (pl.left === undefined || (Array.isArray(pl.left) && pl.left.every((x) => typeof x === 'string')))))
     delete (s as { pendingLoot?: unknown }).pendingLoot;
   s.gold = typeof s.gold === 'number' && Number.isFinite(s.gold) && s.gold >= 0 ? s.gold : 0;
+  // Sefer defteri (Ömer 2026-11-07 endstats; isteğe bağlı alanlar, sürüm değişmez): yok = 0, bozuk değer atılır
+  if (s.stats && typeof s.stats === 'object') {
+    s.stats = { ...s.stats };
+    normalizeLedger(s.stats);
+  }
   // Duraklatılmış savaş (Ömer 2026-10-14; isteğe bağlı alan, sürüm değişmez): bozuksa ya da başka düğümünse atılır (savaş baştan başlar)
   if (s.suspended !== undefined && !(validCampaignSuspended(s.suspended) && s.suspended.node === s.at)) delete (s as { suspended?: unknown }).suspended;
   // Zorunlu Formation kapısı (Ömer 2026-10-17; isteğe bağlı alan): bozuksa atılır; geçerliliği upgradeRecruitTiming'de (eski kayıt takılmaz)
@@ -333,6 +340,10 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   for (const h of [...s.roster, ...(s.reserve ?? []), ...(s.inn ?? []).map((x) => x.hero)]) if (h && typeof h === 'object') sanitizeHeroQuests(h);
   upgradeRoam(s);
   upgradeRecruitTiming(s);
+  // Malzemeler (isteğe bağlı alan, sürüm değişmez; Ömer 2026-11-07): bozuk / bilinmeyen atılır, eski kayıtta yok
+  const sup = normalizeSupplies(s.supplies);
+  if (sup) s.supplies = sup;
+  else delete (s as { supplies?: unknown }).supplies;
   return s;
 }
 
@@ -810,13 +821,17 @@ function stableJson(x: unknown): string {
 
 /**
  * Son kayıttan beri kaydedilmemiş ilerleme var mı (sefer haritası ◂ Back uyarısı, Ömer 2026-10-12). Ironman her adımda kendiliğinden
- * kaydettiği için hiçbir zaman true değildir. Görülen ipuçları (`tipsSeen`) ilerleme sayılmaz. Yuvada bu seferin kaydı yoksa true.
+ * kaydettiği için hiçbir zaman true değildir. Görülen ipuçları (`tipsSeen`) ve oynama süresi (`stats.playMs`) ilerleme sayılmaz. Yuvada bu seferin kaydı yoksa true.
  */
 export function hasUnsavedProgress(kv: KV | null, s: CampaignState): boolean {
   if (s.mode === 'ironman') return false;
   const last = latestSave(kv, s.slot);
   if (!last || last.campaignId !== s.campaignId) return true;
-  const strip = (x: CampaignState) => ({ ...x, tipsSeen: [] });
+  // Oynama süresi (stats.playMs, endstats) her durum değişiminde artar: ilerleme sayılmaz
+  const strip = (x: CampaignState) => {
+    const { playMs: _p, ...stats } = x.stats;
+    return { ...x, tipsSeen: [], stats };
+  };
   return stableJson(strip(last.state)) !== stableJson(strip(s));
 }
 

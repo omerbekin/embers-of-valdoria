@@ -1,7 +1,7 @@
 // Endless koşu durumu ve kuralları (saf; her fonksiyon yeni durum döner, girdiyi değiştirmez). Sayılar data/endless.json'dan.
 import { classes } from '../engine/content';
 import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, levelRequirement, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, planMoveEquipped, promoteOffhand, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
-import { heroSpeedRoll, itemRecovery } from '../progression/loadout';
+import { itemRecovery } from '../progression/loadout';
 import { rollDropRarity } from '../progression/drop';
 import { bestMoves, FALLEN_GEAR_MSG } from '../progression/equip';
 import { RARE, legendaryPool, rollRareDrop } from '../progression/rare';
@@ -48,7 +48,7 @@ export function newRun(seed: number, classIds: string[], startedAt = new Date().
       // + başlangıç ikinci eli (Ömer 2026-10-23: Defender / Paladin kalkan, Cutthroat / Anti-Mage ikinci hançer); boş yuvalar kayda yazılmaz (bugünkü biçim)
       const eq = starterEquipment(c, id);
       const equipment = Object.fromEntries(Object.entries(eq).filter(([, v]) => v)) as EndlessHero['equipment'];
-      return { id, class: c, hpRatio: 1, level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {}, equipment, slot: cells[i]!, spdRoll: heroSpeedRoll(seed, id) };
+      return { id, class: c, hpRatio: 1, level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {}, equipment, slot: cells[i]! };
     }),
     gold: 0,
     stats: { cleared: 0, turns: 0, kills: 0 },
@@ -459,7 +459,7 @@ const defIn = (catalog: ItemDef[], id: string): ItemDef | undefined => catalog.f
 /** Kahramanın o yuvadaki item'inin IP'si (boş = 0). Hançer iki yuvaya da girer: zayıf olanı; ikinci el kapalıysa (çift el) kalkan önerilmez (Infinity). */
 function slotIP(h: EndlessHero, d: ItemDef, catalog: ItemDef[]): number {
   const ipOf = (k: SlotId): number => {
-    if (k === 'offhand' && offhandBlocker(h.equipment)) return Infinity;
+    if (k === 'offhand' && offhandBlocker(h.equipment, h.class)) return Infinity;
     const cur = h.equipment[k];
     const cd = cur ? defIn(catalog, cur.id) : undefined;
     if (!cur || !cd) return 0;
@@ -733,7 +733,7 @@ export function unequipToBag(run: EndlessRun, heroId: string, slot: SlotId, cfg:
   s.bag = [...bagOf(s), h.equipment[slot]!];
   const eq = { ...h.equipment };
   delete eq[slot];
-  if (promoteOffhand(eq)) delete eq.offhand; // ana el çıkınca ikinci eldeki hançer ana ele geçer
+  if (promoteOffhand(eq, h.class)) delete eq.offhand; // ana el çıkınca ikinci eldeki hançer ana ele geçer
   h.equipment = eq;
   return s;
 }

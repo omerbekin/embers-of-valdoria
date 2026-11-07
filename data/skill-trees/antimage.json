@@ -153,7 +153,7 @@
     },
     "0.f2": {
       "name": "Taut Thread",
-      "text": "Your skills deal 3% more damage per rank to enemies with a Ley Thread.",
+      "text": "Your skills deal 3% increased damage per rank to enemies with a Ley Thread.",
       "src": "B:V3:0.f2",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -446,7 +446,7 @@
     },
     "1.r": {
       "name": "Bare Steel",
-      "text": "Mana Steal deals 2% more damage per rank against enemies with no buffs.",
+      "text": "Mana Steal deals 2% increased damage per rank against enemies with no buffs.",
       "src": "B:V5:1.r",
       "fx": [
         {

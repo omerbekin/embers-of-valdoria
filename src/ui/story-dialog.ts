@@ -51,10 +51,10 @@ export interface StoryDialogHandle {
 }
 
 const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-/** Düz tırnak -> kıvrık; hikâye unsurları (yer / kişi adı) kısa atıf olarak italik (tek istisna). */
+/** Düz tırnak -> kıvrık; hikâye unsurları (yer / kişi adı) kısa atıf olarak vurgulu renk (italik yok). */
 const curl = (s: string): string => s.replace(/^"/, '“').replace(/"/g, '”').replace(/(^|[\s“])'/g, '$1‘').replace(/'/g, '’');
 const LORE = /(Charwood|Ash Lord)/g;
-const text = (s: string): string => esc(curl(s)).replace(LORE, '<em class="sd-lore">$1</em>');
+const text = (s: string): string => esc(curl(s)).replace(LORE, '<span class="sd-lore">$1</span>');
 
 export const speakerPortraitId = (speaker: string): string => speaker.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 

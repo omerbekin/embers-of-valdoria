@@ -19,3 +19,5 @@ Ana oturum ya da balance-tester (Opus) değeri değiştirdikten sonra sana "kü�
 
 ## Haiku brief şablonu (Ömer 2026-10-29; scout, gate-check, text-qa, frame-check)
 Her brief 5 satır taşır: 1) Görev (tek cümle), 2) Girdi (dosya yolu/komut), 3) Çıktı formatı (tablo/JSON/hata listesi), 4) Yazma yeri (yalnızca scratchpad), 5) Yasak (karar, düzeltme, yorum, yeni mekanik). Sim'den önce Ömer'e sorulur. Ana oturum kritik sonucu (deploy, build, sayılar) bir kez örnekler.
+
+**Sim ve ses (Ömer 2026-11-07, ZORUNLU):** sim, denge ölçümü ve sefer koşusu headless CLI ile çalışır (`npx tsx src/sim/...`, `npm run sim*`); bunun için oyun tarayıcıda AÇILMAZ. Tarayıcı gerçekten gerekiyorsa oyunun sesi ASLA açılmaz: her sekmede ilk iş `localStorage.setItem('eov.settings.v1', JSON.stringify({volume:0, steps:20})); location.reload()`, ardından `Phaser.GAMES[0].sound.mute = true`. Ses ayarına, volume değerine ya da mute'a dokunan hiçbir adım atılmaz; iş bitince açtığın sekmeyi kapat.

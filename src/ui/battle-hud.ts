@@ -36,6 +36,8 @@ export interface TipMeta {
   iconUrl?: string;
   text: string;
   color?: string;
+  /** Etkiyle temel değere göre arttı (kırmızı) / azaldı (yeşil): bedel ve bekleme çipleri. */
+  dir?: 'up' | 'down';
 }
 export interface MiniShapeLike {
   cols: number;
@@ -91,6 +93,10 @@ export interface HudSkill {
   ult: boolean;
   /** Kilitli skill (kilit simgesi; açılış metni ipucunda). */
   locked?: boolean;
+  /** Susturulmuş: MP bedelli skill kapalı ("Silenced" yazısı, sönük). */
+  silenced?: boolean;
+  /** Düşman turu: plaka okunur kalır (sönük değil), tıklanmaz. */
+  foe?: boolean;
   /** Yetersiz kaynak türü (bekleme sürerken de verilir; plaka o bedel çipini kırmızı gösterir). */
   lack?: 'mp' | 'rage' | 'hp';
   tip: TipContent;
@@ -105,6 +111,8 @@ export interface HudGlobal {
   ready?: boolean;
   /** Görünmez yer tutucu (bu birimde olmayan global eylem, ör. düşmanda Valor Revive): sütun genişliği birimden birime değişmesin. */
   placeholder?: boolean;
+  /** Düşman turu: satır okunur kalır (sönük değil), tıklanmaz. */
+  foe?: boolean;
   tip: TipContent;
 }
 /**
@@ -217,10 +225,13 @@ export interface UnitCard {
   grid: Array<{ iconUrl: string; label: string; value: string; small?: string; color?: string }>;
   /** Üstteki aktif buff / debuff'lar: ikon (rozetle aynı), ad, kalan tur, yığın. */
   effects: Array<{ name: string; color: string; turns: string; text: string; iconUrl?: string; debuff?: boolean; stacks?: number }>;
-  passive: { name: string; text: string; iconUrl?: string } | null;
+  /** `live`: biriken pasifin şu anki toplamı (Pealing Bells: çalınan çan + hasar, Berserker: şu anki hasar bonusu...). */
+  passive: { name: string; text: string; iconUrl?: string; live?: string } | null;
   preview: { iconUrl: string; skill: string; hit?: string; amount?: string; note?: string } | null;
   /** Birimin skill'leri (Ömer 2026-10-16): ikon, ad, kısa hedef/şekil, bedel, cooldown; satıra dokununca / gelince skill tooltip'i. */
   skills?: CardSkill[];
+  /** Stat paneli satırının açıklaması (hover): anahtar = ana stat türü ya da ızgara etiketi (ARM, EVA...); işlev açılınca üretilir. */
+  statTip?: (key: string) => TipContent | null;
 }
 export interface CardSkill {
   id: string;
@@ -229,8 +240,11 @@ export interface CardSkill {
   /** Kısa hedef / şekil (src/ui/skill-target-label.ts). */
   target: string;
   cost: TipMeta | null;
-  /** Temel cooldown (0 = yok). */
+  /** Etkin cooldown (0 = yok); `cdDir` temel değere göre artış / azalış. */
   cd: number;
+  cdDir?: 'up' | 'down';
+  /** Susturulmuş (MP bedelli skill): satır kilitli gibi sönük, bekleme sütununda "Silenced". */
+  silenced?: boolean;
   /** Kalan cooldown (0 = hazır). */
   wait: number;
   /** Kum saati ikonu (skill düğmesinin cooldown çipiyle aynı). */
@@ -253,6 +267,8 @@ export const HUD_SKILL_SLOTS = 4;
 export const HUD_PLATE_W = 132;
 export const HUD_PLATE_W_PHONE = 146;
 export const HUD_PLATE_GAP = 8;
+/** Dokunmatik uzun basma süresi (ms): alt soldaki karakter / düşman sayfası. */
+const OPEN_PRESS_MS = 450;
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 /**
@@ -277,9 +293,9 @@ function tagChip(g: NonNullable<TipContent['tags']>[number]): BandChip {
 function metaBare(m: NonNullable<TipContent['meta']>[number]): BandChip | null {
   const icon = m.iconUrl ? { icon: m.iconUrl } : {};
   const cd = cooldownChipOf(m.text);
-  if (cd) return { text: '', num: cd.num, bare: true, tone: 'v', ...icon, tip: cd.tip };
+  if (cd) return { text: '', num: cd.num, bare: true, tone: 'v', ...icon, tip: cd.tip, ...(m.dir ? { dir: m.dir } : {}) };
   const cost = m.iconUrl ? costChipOf(m.text) : null;
-  if (cost) return { text: '', num: cost.num, bare: true, tone: 'v', ...icon, tip: cost.tip, ...(m.color && cost.res === 'rage' ? { color: m.color } : {}) };
+  if (cost) return { text: '', num: cost.num, bare: true, tone: 'v', ...icon, tip: cost.tip, ...(m.dir ? { dir: m.dir } : {}), ...(m.color && cost.res === 'rage' ? { color: m.color } : {}) };
   return null;
 }
 
@@ -354,6 +370,8 @@ export class BattleHud {
   /** Dokunmatik uzun basma (skill açıklaması). */
   private pressTimer = 0;
   private pressFired = false;
+  /** Dokunmatik uzun basma: alt soldaki karakter / düşman sayfasını açar (sağ tıkın eşi). */
+  private openTimer = 0;
   private readonly ftip: HTMLDivElement;
   private readonly ctip: HTMLDivElement;
   private readonly cards: Record<Side, HTMLDivElement>;
@@ -443,9 +461,20 @@ export class BattleHud {
     this.root.addEventListener('pointerover', (e) => this.onOver(e));
     this.root.addEventListener('pointerout', (e) => this.onOut(e));
     this.root.addEventListener('click', (e) => this.onClick(e));
+    // Karakter / düşman sayfası: sağ tık ya da dokunmatik uzun basma (sol tık / dokunuş açmaz)
+    this.root.addEventListener('contextmenu', (e) => {
+      if (!(e.target as HTMLElement).closest('.bh-opener')) return;
+      e.preventDefault();
+      this.setOpen(!this.open);
+    });
     this.root.addEventListener('pointerdown', (e) => {
       if (e.pointerType !== 'touch') return;
-      const sk = (e.target as HTMLElement).closest<HTMLElement>('.bp[data-skill]');
+      if ((e.target as HTMLElement).closest('.bh-opener')) {
+        window.clearTimeout(this.openTimer);
+        this.openTimer = window.setTimeout(() => this.setOpen(!this.open), OPEN_PRESS_MS);
+        return;
+      }
+      const sk =(e.target as HTMLElement).closest<HTMLElement>('.bp[data-skill]');
       if (!sk) return;
       this.pressFired = false;
       window.clearTimeout(this.pressTimer);
@@ -455,6 +484,7 @@ export class BattleHud {
       }, 420);
     });
     const endPress = () => {
+      window.clearTimeout(this.openTimer);
       window.clearTimeout(this.pressTimer);
       this.skillBox.querySelectorAll('.bp.tip').forEach((x) => x.classList.remove('tip'));
     };
@@ -737,7 +767,7 @@ export class BattleHud {
           .map((x) =>
             x.placeholder
               ? `<div class="bh-gl ph" aria-hidden="true">${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`
-              : `<div class="bh-gl ${x.enabled ? '' : 'off'} ${x.active ? 'on' : ''} ${x.ready ? 'ready' : ''}" data-global="${esc(x.id)}" ${this.reg(`g:${x.id}`, x.tip)}>${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`,
+              : `<div class="bh-gl ${x.foe ? 'foe' : x.enabled ? '' : 'off'} ${x.active ? 'on' : ''} ${x.ready ? 'ready' : ''}" data-global="${esc(x.id)}" ${this.reg(`g:${x.id}`, x.tip)}>${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`,
           )
           .join('')}</div>`
       : '';
@@ -1024,6 +1054,11 @@ export class BattleHud {
       const pinned = this.pins[side]?.uid === card.uid;
       for (const k of [...this.cardTips.keys()]) if (k.startsWith(`k:${side}:`)) this.cardTips.delete(k);
       card.skills?.forEach((s, i) => this.cardTips.set(`k:${side}:${i}`, s.tip));
+      for (const k of [...this.cardTips.keys()]) if (k.startsWith(`s:${side}:`)) this.cardTips.delete(k);
+      if (card.statTip) {
+        const st = card.statTip;
+        for (const key of [...card.attrs.map((a) => a.kind), ...card.grid.map((g) => g.label)]) this.cardTips.set(`s:${side}:${key}`, () => st(key) ?? { title: key, rows: [] });
+      }
       // aynı birimin kartı yenilenince (can, bekleme...) iç kaydırma yerinde kalır; kaydırma kabı kalıcı, yalnızca içi yazılır
       this.put(this.cardSc[side], this.cardHtml(card, pinned, statsOn));
       this.put(this.cardStats[side], this.statsHtml(card));
@@ -1060,14 +1095,16 @@ export class BattleHud {
       .map((s, i) => {
         const hg = img(s.cdIconUrl ?? '');
         const cost = s.cost
-          ? `<span class="bt-chip${/^RAGE/i.test(s.cost.text) ? ' rg' : ''}">${img(s.cost.iconUrl ?? '')}<span class="n">${esc(s.cost.text.replace(/^RAGE /, ''))}</span></span>`
+          ? `<span class="bt-chip${/^RAGE/i.test(s.cost.text) ? ' rg' : ''}${s.cost.dir ? ` ${s.cost.dir}` : ''}">${img(s.cost.iconUrl ?? '')}<span class="n">${esc(s.cost.text.replace(/^RAGE /, ''))}</span></span>`
           : '<span class="bt-chip free">Free</span>';
-        const cd = s.wait > 0 ? `<span class="bt-chip wait">${hg}<span class="n">${s.wait}</span>/${s.cd}</span>` : s.cd > 0 ? `<span class="bt-chip">${hg}<span class="n">${s.cd}</span></span>` : '';
-        return `<div class="bh-cs${s.wait > 0 ? ' cool' : ''}" data-tip="k:${side}:${i}">${img(s.iconUrl, 'bh-ico bh-cs-ico')}<span class="n">${esc(s.name)}</span><span class="t">${esc(s.target)}</span><span class="c">${cost}</span><span class="d">${cd}</span></div>`;
+        const dirCls = s.cdDir ? ` ${s.cdDir}` : '';
+        const cd = s.wait > 0 ? `<span class="bt-chip wait${dirCls}">${hg}<span class="n">${s.wait}</span>/<span class="of">${s.cd}</span></span>` : s.cd > 0 ? `<span class="bt-chip${dirCls}">${hg}<span class="n">${s.cd}</span></span>` : '';
+        const sil = s.silenced ? '<span class="bt-chip sil">Silenced</span>' : '';
+        return `<div class="bh-cs${s.wait > 0 || s.silenced ? ' cool' : ''}" data-tip="k:${side}:${i}">${img(s.iconUrl, 'bh-ico bh-cs-ico')}<span class="n">${esc(s.name)}</span><span class="t">${esc(s.target)}</span><span class="c">${cost}</span><span class="d">${sil || cd}</span></div>`;
       })
       .join('');
     const pas = c.passive
-      ? `<div class="bh-cpas">${c.passive.iconUrl ? img(c.passive.iconUrl, 'bh-ico bh-cpas-ico') : ''}<div class="tx"><b>${esc(c.passive.name)}</b><span>${bandRichHtml(c.passive.text, undefined, false)}</span></div></div>`
+      ? `<div class="bh-cpas">${c.passive.iconUrl ? img(c.passive.iconUrl, 'bh-ico bh-cpas-ico') : ''}<div class="tx"><b>${esc(c.passive.name)}</b><span>${bandRichHtml(c.passive.text, undefined, false)}</span>${c.passive.live ? `<span class="live">${bandRichHtml(c.passive.live, undefined, false)}</span>` : ''}</div></div>`
       : '';
     const pv = c.preview
       ? `<div class="bh-pv">${img(c.preview.iconUrl)}<b>${esc(c.preview.skill)}</b>${c.preview.hit ? `<span class="r">${esc(c.preview.hit)}<em> to hit</em></span>` : ''}${c.preview.amount ? `<span>${esc(c.preview.amount)}</span>` : ''}${c.preview.note ? `<em class="n">${esc(c.preview.note)}</em>` : ''}</div>`
@@ -1108,10 +1145,10 @@ export class BattleHud {
     const side: Side = c.enemy ? 'enemy' : 'party';
     // ATTACK / DEFENSE = karttaki ızgara etiketlerine göre (azalma yüzdesi teal, hizalı)
     const ATTACK = new Set(['CRIT', 'SPD', 'ACC', 'CDMG', 'DMG']);
-    const row = (icon: string, label: string, value: string, color?: string, small?: string, pri = false) =>
-      `<div class="bh-sr${pri ? ' pri' : ''}">${img(icon)}<span class="k">${esc(label)}</span><span class="n" style="${color ? `color:${color}` : ''}">${esc(value)}</span><span class="rd">${small ? esc(small) : ''}</span></div>`;
+    const row = (icon: string, label: string, value: string, color?: string, small?: string, pri = false, key = label) =>
+      `<div class="bh-sr${pri ? ' pri' : ''}"${c.statTip ? ` data-tip="s:${side}:${esc(key)}"` : ''}>${img(icon)}<span class="k">${esc(label)}</span><span class="n" style="${color ? `color:${color}` : ''}">${esc(value)}</span><span class="rd">${small ? esc(small) : ''}</span></div>`;
     const col = (title: string, rows: string) => `<div class="bh-sc"><div class="bh-cl">${esc(title)}</div>${rows}</div>`;
-    const body = `<div class="bh-scol">${col('Main', c.attrs.map((s) => row(s.iconUrl, s.label, s.value, s.color, undefined, !!s.primary)).join(''))}${col('Attack', c.grid.filter((g) => ATTACK.has(g.label)).map((g) => row(g.iconUrl, g.label, g.value, g.color, g.small)).join(''))}${col('Defense', c.grid.filter((g) => !ATTACK.has(g.label)).map((g) => row(g.iconUrl, g.label, g.value, g.color, g.small)).join(''))}</div>`;
+    const body = `<div class="bh-scol">${col('Main', c.attrs.map((s) => row(s.iconUrl, s.label, s.value, s.color, undefined, !!s.primary, s.kind)).join(''))}${col('Attack', c.grid.filter((g) => ATTACK.has(g.label)).map((g) => row(g.iconUrl, g.label, g.value, g.color, g.small)).join(''))}${col('Defense', c.grid.filter((g) => !ATTACK.has(g.label)).map((g) => row(g.iconUrl, g.label, g.value, g.color, g.small)).join(''))}</div>`;
     const x = `<button type="button" class="bh-cstats-x" data-stats="${side}" aria-label="Close stats"></button>`;
     return bandTipHtml({ kind: c.name, title: 'Stats', bodyHtml: body }).replace('<div class="bt-head">', `<div class="bt-head">${x}`);
   }
@@ -1306,7 +1343,6 @@ export class BattleHud {
       return;
     }
     const tp = target.closest<HTMLElement>('[data-tip]');
-    const inSheet = !!target.closest('.bh-sheet');
     // Dokunmatik: stata dokununca açıklama açılır / kapanır
     if (tp && (e as PointerEvent).pointerType === 'touch') {
       if (this.tipEl === tp && this.tipPinned) this.hideTip();
@@ -1315,11 +1351,7 @@ export class BattleHud {
         this.tipPinned = true;
       }
     }
-    if (inSheet) return;
-    if (target.closest('[data-open]')) {
-      this.setOpen(!this.open);
-      return;
-    }
+    // Karakter / düşman sayfası (alt sol) yalnızca sağ tıkla ya da dokunmatik uzun basmayla açılır / kapanır (Ömer 2026-11-07); sol tık / dokunuş açmaz
   }
 
   private showTip(el: HTMLElement): void {

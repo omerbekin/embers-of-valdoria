@@ -1,6 +1,8 @@
 // Harita 2 yan içerik: B5 The Fighting Pit (Saltmere) ve A4 Hero Oath (Saltspray Shrine). maps-2-3.md 9; open-questions 429.
+import { existsSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  CONFIG,
   DROWNED_REACH,
   ENCOUNTERS,
   EVENTS,
@@ -80,6 +82,19 @@ describe('The Fighting Pit: veri', () => {
   });
 });
 
+describe('The Fighting Pit: arka plan', () => {
+  it('her kademe savaşı kendi arena arka planını kullanır (rıhtım değil) ve dosyası var', () => {
+    let s = enterPit(atSaltmere());
+    for (const t of PITS['saltmere_pit']!.tiers) {
+      expect(ENCOUNTERS[t.encounter]!.background, t.encounter).toBe('saltmere-pit');
+      expect(battlePlan(s).background, t.encounter).toBe('saltmere-pit');
+      s = applyBattle(s, outcome(s, true, () => 1));
+      if (s.pit && s.pit.wins < PITS['saltmere_pit']!.tiers.length) s = fightPit(s);
+    }
+    expect(existsSync('assets/backgrounds/saltmere-pit.webp')).toBe(true);
+  });
+});
+
 describe('The Fighting Pit: kurallar', () => {
   it('giriş -> kademe savaşı (tek dalga), zafer: şifa yok, altın + rekor, kademe arası; çıkış kazanılanları korur', () => {
     let s = atSaltmere();
@@ -132,7 +147,7 @@ describe('The Fighting Pit: kurallar', () => {
       s = applyBattle(s, outcome(s, true, () => 0.9));
       if (i === 2) {
         expect(s.pendingLoot?.kind).toBe('treasure');
-        expect(s.pendingLoot?.gold).toBe(PITS['saltmere_pit']!.tiers[2]!.gold);
+        expect(s.pendingLoot?.gold).toBe(Math.round(PITS['saltmere_pit']!.tiers[2]!.gold * (CONFIG.mapLootScale?.['drowned-reach']?.gold ?? 1))); // Harita 2 altın ölçeği (2026-11-07)
         delete s.pendingLoot;
       }
     }
@@ -141,7 +156,7 @@ describe('The Fighting Pit: kurallar', () => {
     expect(() => fightPit(s)).toThrow();
   });
 
-  it('yenilgi / pes: koşu biter, o kademe ödülsüz, düşen ayaktaki kahraman yaralı kalkar, önceki ödüller kalır', () => {
+  it('yenilgi / pes: koşu biter, o kademe ödülsüz, düşen ayaktaki kahraman düşmüş kalır ve yara alır, önceki ödüller kalır', () => {
     let s = enterPit(atSaltmere(13));
     s = applyBattle(s, outcome(s, true, () => 0.7));
     const gold1 = s.gold;
@@ -152,7 +167,7 @@ describe('The Fighting Pit: kurallar', () => {
     expect(lost.pitBest).toEqual({ dr28: 1 });
     expect(lost.stats.defeats).toBe(s.stats.defeats + 1);
     const [first, ...rest] = activeHeroes(lost);
-    expect(first!.alive).toBe(true);
+    expect(first!.alive).toBe(false); // Ömer 2026-11-07: otomatik kalkma yok, düşen düşmüş kalır (+1 yara)
     expect(first!.wounds).toBe((activeHeroes(s)[0]!.wounds ?? 0) + 1);
     for (const h of rest) expect(h.hpRatio).toBe(0.3);
     expect(nextStep(lost).kind).toBe('town');

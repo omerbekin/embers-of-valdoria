@@ -35,6 +35,8 @@ export interface PoseDef {
   fingers?: string;
   /** Açık (avucu açık) el: point / throw. Büyü / fırlatılan şeyin çıkış noktası (CombatantView.castPoint), eşya o elde değilse. */
   open?: 'main' | 'off';
+  /** SIRT bağlama noktası (Ömer 2026-11-07): sadece yay tutuşunda takılı okluk burada, gövdenin ARKASINDA çizilir (x, y = omuz arkası; açı = yaslanma, 0 = dik). */
+  backMount?: { x: number; y: number; angle: number };
 }
 export interface PoseClassDef {
   dir: string;
@@ -97,7 +99,7 @@ export interface WeaponFamilyArt {
   /** Silah boyu (gövde tuvali pikseli; v1 Warrior figür ölçeği, sınıfın weaponScale'i ile çarpılır). */
   length: number;
   /** Ailenin tutuşu (debug silah seçici ve görseli seçerken): two / bow / charm; offhand = yalnızca ikinci el (kalkan). Yoksa tek el. */
-  hold?: Grip | 'offhand';
+  hold?: Grip | 'offhand' | 'back';
   /** El açısından bağımsız DİK çizilir (kalkan: önden görünüm). */
   upright?: boolean;
   /**
@@ -151,6 +153,8 @@ export interface WeaponPick {
   tone?: string;
   grip?: Grip;
   offhand?: { family: string; look: string; tone?: string };
+  /** Sırtta taşınan okluk (yalnızca yay tutuşu; `PoseDef.backMount`): ikinci el eşyası (okluk) item'inden. */
+  quiver?: { family: string; look: string; tone?: string };
 }
 
 /** Gerçek sınıflar v2 gövdesiyle mi (varsayılan: evet). Kapalıyken eski görünüm: tek idle görseli + kod hareketi (Warrior v1 pozları). */
@@ -173,7 +177,7 @@ export const poseNames = (classId: string): string[] => Object.keys(poseClass(cl
 
 /** Kimlik (ör. '<aile>.<görünüm>.<ışıltı>'): pişmiş doku anahtarı. */
 export const weaponKey = (w: WeaponPick): string =>
-  `${w.family}.${w.look}${w.tone ? `~${w.tone}` : ''}${w.glow ? `.${w.glow.replace('#', '')}` : ''}${w.grip && w.grip !== 'one' ? `.${w.grip}` : ''}${w.offhand ? `+${w.offhand.family}.${w.offhand.look}${w.offhand.tone ? `~${w.offhand.tone}` : ''}` : ''}`;
+  `${w.family}.${w.look}${w.tone ? `~${w.tone}` : ''}${w.glow ? `.${w.glow.replace('#', '')}` : ''}${w.grip && w.grip !== 'one' ? `.${w.grip}` : ''}${w.offhand ? `+${w.offhand.family}.${w.offhand.look}${w.offhand.tone ? `~${w.offhand.tone}` : ''}` : ''}${w.quiver ? `^${w.quiver.look}${w.quiver.tone ? `~${w.quiver.tone}` : ''}` : ''}`;
 
 /** Bu sınıfta kullanılacak poz takımının tutuşu: kendi takımı varsa o, yoksa gripFallback, yoksa 'one'. Takımsız sınıfta verilen. */
 export function poseGrip(def: PoseClassDef, grip: Grip | undefined): Grip {
@@ -215,7 +219,7 @@ export const gripBlocksOffhand = (grip: Grip | undefined): boolean => grip === '
 export function weaponFor(
   classId: string,
   item: { id: string; family?: string; rarity?: string; grip?: string } | null | undefined,
-  off?: { id: string; family?: string; rarity?: string; shield?: boolean } | null,
+  off?: { id: string; family?: string; rarity?: string; shield?: boolean; quiver?: boolean } | null,
 ): WeaponPick | null {
   const def = poseClass(classId);
   if (!def) return null;
@@ -225,6 +229,9 @@ export function weaponFor(
   if (def.grips && grip !== 'one') out.grip = grip;
   // ikinci el yalnızca tek el silahla (ya da silahsız); görseli olan aile çizilir (kalkan / hançer görseli gelene dek yok: veri yolu hazır)
   const offArt = def.grips && off && !gripBlocksOffhand(grip) ? artPick({ ...off, ...(off.shield ? { family: 'shield' } : {}) }) : null;
+  // okluk (ikinci el yuvasında, yalnızca yay tutuşunda): ikinci el eşyası değil, sırtta çizilir
+  const quiverArt = def.grips && off?.quiver && grip === 'bow' ? artPick(off) : null;
+  if (quiverArt && quiverArt.family === 'quivers') out.quiver = { family: quiverArt.family, look: quiverArt.look, ...(quiverArt.tone ? { tone: quiverArt.tone } : {}) };
   if (offArt) out.offhand = { family: offArt.family, look: offArt.look, ...(offArt.tone ? { tone: offArt.tone } : {}) };
   return out;
 }
@@ -361,7 +368,7 @@ export function poseBounds(def: PoseClassDef, name: string, w: WeaponPick | null
 export interface ItemPlacement {
   family: string;
   look: string;
-  slot: 'main' | 'off';
+  slot: 'main' | 'off' | 'back';
   hand: 'main' | 'off';
   x: number;
   y: number;
@@ -417,6 +424,36 @@ export function itemPlacement(def: PoseClassDef, name: string, item: { family: s
   };
 }
 
+/**
+ * Sırttaki okluğun yerleşimi (`PoseDef.backMount` + `itemPoses.quivers`: dx / dy / scale / angle / hidden). Pozun bağlama noktası yoksa
+ * ya da okluk yok / gizliyse null. Gövdenin arkasında çizilir (`back`); ayna yok (okluk simetrik değil ama atlas düşman tarafında tümden aynalanır).
+ */
+export function quiverPlacement(def: PoseClassDef, name: string, q: { family: string; look: string }): ItemPlacement | null {
+  const m = def.poses[name]?.backMount;
+  const fam = POSES.weapons[q.family];
+  const look = fam?.looks[q.look];
+  if (!m || !fam || !look || def.poses[name]?.hidden) return null;
+  const o = itemOverride(def, q.family, name, 'off');
+  if (o.hidden) return null;
+  return {
+    family: q.family,
+    look: q.look,
+    slot: 'back',
+    hand: 'main',
+    x: m.x + (o.dx ?? 0),
+    y: m.y + (o.dy ?? 0),
+    hx: m.x,
+    hy: m.y,
+    angle: o.angle ?? m.angle,
+    k: weaponScale(fam, look, def) * (o.scale ?? 1),
+    flip: !!o.flip,
+    back: true,
+    w: look.w,
+    h: look.h,
+    grip: look.grip,
+  };
+}
+
 /** Ağzı öne çevirmek için ayna gerekir mi (`WeaponFamilyArt.edge`; yalnızca v2 gövdeler). */
 export const edgeFlip = (def: PoseClassDef, fam: WeaponFamilyArt, look: string, angle: number): boolean => {
   const e = fam.edge?.[look];
@@ -442,6 +479,8 @@ export function poseItems(def: PoseClassDef, name: string, w: WeaponPick | null)
     const off = itemPlacement(def, name, w.offhand, 'off');
     if (off) out.push(off);
   }
+  const quiver = w.quiver && w.grip === 'bow' ? quiverPlacement(def, name, w.quiver) : null;
+  if (quiver) out.push(quiver);
   return out;
 }
 
@@ -490,7 +529,7 @@ export function drawPoseComposite(
   def: PoseClassDef,
   name: string,
   body: Src,
-  weapon: { img: Src; pick: WeaponPick; offImg?: Src | null } | null,
+  weapon: { img: Src; pick: WeaponPick; offImg?: Src | null; quiverImg?: Src | null } | null,
   glowPx = 0,
   fingers: Src | null = null,
 ): void {
@@ -499,13 +538,13 @@ export function drawPoseComposite(
   const { w: CW, h: CH } = def.canvas;
   const items = weapon ? poseItems(def, name, weapon.pick) : [];
   const draw = (pl: ItemPlacement) => {
-    const img = pl.slot === 'main' ? weapon?.img : weapon?.offImg;
+    const img = pl.slot === 'main' ? weapon?.img : pl.slot === 'back' ? weapon?.quiverImg : weapon?.offImg;
     if (!img) return;
     ctx.save();
     ctx.translate(pl.x, pl.y);
     ctx.rotate((pl.angle * Math.PI) / 180);
     ctx.scale(pl.flip ? -pl.k : pl.k, pl.k);
-    if (weapon?.pick.glow && glowPx > 0) {
+    if (weapon?.pick.glow && glowPx > 0 && pl.slot !== 'back') {
       ctx.shadowColor = weapon.pick.glow;
       ctx.shadowBlur = glowPx;
     }

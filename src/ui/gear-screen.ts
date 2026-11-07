@@ -56,7 +56,8 @@ import { goToTreeButton } from './gear-tree-link';
 import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, equippedAgainst, heroFallen, heroItemLine } from './gear-hover';
 import { heroOath, oathMinusText, oathPlusText } from '../campaign/oath';
 import { heroQuests, questBonusLine } from '../campaign/quests';
-import { boonList, respecHeroTree, respecTreeBlocked, slotLocks } from '../campaign';
+import { boonList, respecHeroTree, respecTreeBlocked, slotLocks, supplyList, supplyText, useSupply } from '../campaign';
+import { supplyIconSvg } from './supply-icons';
 import { bandTipHtml } from './band-tip';
 import { attachBandTip } from './band-tip-attach';
 import { tipOn, tipOff } from './tip-vis';
@@ -117,8 +118,6 @@ export interface GearHero {
   woundCfg?: WoundCfg;
   /** Düşmüş kahraman (can 0 gösterilir). */
   alive?: boolean;
-  /** Kişisel hız zarı (Ömer 2026-10-24): Sheet'teki Speed savaştakiyle aynı olsun diye (LoadoutSource.spdRoll). */
-  spdRoll?: number;
   /** A4 Hero Oath (sefer): yemin adı + artı / eksi metni (Gear sınıf satırında küçük çip, ipucu A Band). */
   oath?: { name: string; plus: string; minus: string };
   /** A5 Personal Quests (sefer): unvanlar + bonus satırları (karakter kartında adın altında). */
@@ -153,6 +152,10 @@ export interface GearSource {
   respecTree?(heroId: string): void;
   /** A1 Wayshrine nimetleri (takımın tek listesi; sefer). Yoksa / boşsa başlıkta görünmez. */
   blessings?(): Array<{ name: string; effect: string }>;
+  /** Savaş dışı malzemeler (Ömer 2026-11-07; sefer): eldekiler + kullanım. Yoksa şerit görünmez. */
+  supplies?(): Array<{ id: string; name: string; text: string; count: number }>;
+  /** Malzemeyi kahramana kullanır; engel varsa Error (iletisi toast). */
+  useSupply?(id: string, heroId: string): void;
 }
 
 /** Seferin kaynağı: CampaignState üzerinden (davranış eskisiyle birebir). */
@@ -189,6 +192,8 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
         return setHeroTree(x, heroId, alloc);
       }),
     blessings: () => boonList(get()),
+    supplies: () => supplyList(get()).map((x) => ({ id: x.def.id, name: x.def.name, text: supplyText(x.def), count: x.count })),
+    useSupply: (id, heroId) => apply((x) => useSupply(x, id, heroId)),
     respecTree: (heroId) =>
       apply((x) => {
         const why = respecTreeBlocked(x, heroId);
@@ -269,6 +274,21 @@ export interface GearExt {
 
 /** Telefon mu (kısa sahne; src/ui/viewport.ts html.short): Character ve Inventory ayrı tam ekran + geçiş düğmesi. */
 export const phoneLayout = (): boolean => document.documentElement.classList.contains('short');
+
+/**
+ * Karşılaştırma kartı (Ömer 2026-11-07: her item ipucunun ALTINDA, kuşanılmış item): çanta / tüccar / ganimet / demirci. `preferred` verilirse yalnızca o kahramanın
+ * aynı yuvadaki item'i; yoksa (ganimet / ödül torbasında seçili kahraman yok) item'i kullanabilen ve o yuvası dolu ilk kahraman, kartta adıyla.
+ */
+export function equippedTipNodes(heroes: GearHero[], inst: ItemInstance, preferred?: GearHero | null): HTMLElement[] {
+  const d = itemDef(inst.id);
+  if (!d) return [];
+  const cands = preferred ? [preferred] : heroes.filter((h) => canEquip(h.class, d));
+  for (const h of cands) {
+    const w = equippedAgainst(h, inst);
+    if (w) return itemTipNodes(w.item, h.class, [], { ...(affixContext(h, w.item, w.slot) ?? {}), level: h.level, equipped: true, ...(preferred ? {} : { equippedBy: className(h.class) }) });
+  }
+  return [];
+}
 
 /** Item ipucunun telefondaki ek satırları: her kahramana etkisi (masaüstünde kahraman kartlarında görünür). */
 export function heroTipExtra(heroes: GearHero[], inst: ItemInstance, always = false): ItemTipHero[] {
@@ -442,8 +462,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       // yer imleri yalnızca portre: her kahramana etkisi ipucunda (karşılaştırma)
       const nodes = itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst, true) : [], state);
       // Gear Hero çantası (Ömer 2026-11-01): seçili kahramanın aynı yuvada giydiği item ikinci kart olarak yanında (tüccar / ganimet / ödül torbası: ext var, eklenmez)
-      const worn = kind === 'bag' && hero && !ext && !bagOnly ? equippedAgainst(hero, inst) : null;
-      if (worn && hero) nodes.push(...itemTipNodes(worn.item, hero.class, [], { ...(affixContext(hero, worn.item, worn.slot) ?? {}), level: hero.level, equipped: true }));
+      if (kind === 'bag' && hero && !bagOnly) nodes.push(...equippedTipNodes(src.heroes(), inst, hero));
       return nodes;
     },
     // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; kuşanma / çıkarma buradan ya da sürükle-bırakla)
@@ -465,7 +484,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         const acts: ItemTipAction[] = [{ label: ok ? `Equip · ${className(hero.class)}` : slotLock && fam ? slotLock : fam && inst ? levelReqMsg(instanceLevelReq(inst)) : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid, d ? (fitsSlot(d, 'offhand') && d.slot === 'weapon' ? 'weapon' : undefined) : undefined) }];
         // Tek el hançer: ikinci ele de (ana elde tek el silah varken)
         // ana el boşken "Off-hand" yok (hançer zaten ana ele gider, Ömer 2026-10-14)
-        if (ok && d && d.slot === 'weapon' && fitsSlot(d, 'offhand') && hero.equipment.weapon) acts.push({ label: 'Off-hand', disabled: !!offhandBlocker(hero.equipment), run: () => tryEquip(hero.id, uid, 'offhand') });
+        if (ok && d && d.slot === 'weapon' && fitsSlot(d, 'offhand') && hero.equipment.weapon) acts.push({ label: 'Off-hand', disabled: !!offhandBlocker(hero.equipment, hero.class, d), run: () => tryEquip(hero.id, uid, 'offhand') });
         acts.push(...(ext?.bagActions?.(uid) ?? []));
         return acts;
       }
@@ -987,6 +1006,36 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     box.append(list);
     return box;
   }
+  /** Malzeme şeridi (Ömer 2026-11-07): torbanın altında; dokun = seçili kahramana kullan (savaş dışı; harita dahil). */
+  function suppliesStrip(): HTMLElement | null {
+    const list = src.supplies?.() ?? [];
+    if (!list.length || bagOnly) return null;
+    const row = el('div', 'gr-supplies');
+    row.append(el('div', 'gr-sec', 'Supplies'));
+    const cells = el('div', 'gr-supply-row');
+    for (const sp of list) {
+      const b = el('button', 'gr-supply');
+      b.type = 'button';
+      const ic = el('span', 'gr-supply-ic');
+      ic.innerHTML = supplyIconSvg(sp.id);
+      b.append(ic, el('span', 'gr-supply-n', `${sp.count}`));
+      attachBandTip(b, () => ({ title: sp.name, sub: curHero() ? `Tap to use on ${className(curHero()!.class)}` : 'Pick a hero first', lines: [{ text: sp.text }] }));
+      b.addEventListener('click', () => {
+        const h = curHero();
+        if (!h) return showToast('Pick a hero first');
+        try {
+          src.useSupply?.(sp.id, h.id);
+          flashText = `${sp.name} used on ${className(h.class)}`;
+        } catch (e) {
+          flashText = (e as Error).message;
+        }
+        renderAll();
+      });
+      cells.append(b);
+    }
+    row.append(cells);
+    return row;
+  }
   function renderRight(): void {
     clearBagMenus(overlay);
     if (tab === 'tree' && treeOn) return treeTab.render(leafR);
@@ -1047,6 +1096,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     shakeUid = '';
     if (!bag.length) inv.append(el('div', 'gr-card-empty', src.emptyText ?? 'The bag is empty.'));
     leafR.replaceChildren(inv);
+    const sup = suppliesStrip();
+    if (sup) leafR.append(sup);
     const g = leafR.querySelector<HTMLElement>('.gr-bag');
     if (g) {
       snapBagRows(g);

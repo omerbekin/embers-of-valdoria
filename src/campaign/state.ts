@@ -5,13 +5,14 @@ import { rngFor, shuffle } from './seed';
 import { nextMapId } from './map-flags';
 import { SLOT_IDS, canEquip, itemDef } from '../progression/items';
 import { starterEquipment } from '../progression/weapon';
-import { heroSpeedRoll, itemRecovery } from '../progression/loadout';
-import { fallAfterVictory, healWounds, valorClearWounds, woundCount, woundsLine, type WoundRules } from '../progression/wounds';
+import { itemRecovery } from '../progression/loadout';
+import { healWounds, valorClearWounds, woundCount, woundsLine, type WoundRules } from '../progression/wounds';
 import { emptyLootState, grantGift, grantItem, grantLoot, treasureGiftRarity } from './loot';
 import { leaveMerchant } from './merchant';
 import { valorRules } from '../engine/content';
 import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
 import { applyXp, battleXp, fixedXp, fixedXpNode, joinLevel } from './xp';
+import { countFallen, earnGold } from './ledger';
 import { LEVELS, campaignMaxLevel, nodeXpMult, setLevel, splitXp } from '../progression/levels';
 import { nodeLevel } from './power';
 import { freeTemperItem, freeTemperPreview } from './smith';
@@ -259,7 +260,6 @@ function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutor
     alloc: {},
     // Item Güçlendirme x5 (Ömer 2026-10-17): her kahraman sınıfının Common başlangıç silahıyla gelir
     equipment: starterEquipment(classId, id),
-    spdRoll: heroSpeedRoll(s.seed, id), // kişisel hız zarı (Ömer 2026-10-24): kalıcı
   };
   if (o.reserve) s.reserve = [...(s.reserve ?? []), hero]; // kışla-yedek kuralı (joinHero): dizilime girmez
   else {
@@ -267,7 +267,8 @@ function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutor
     place(s, hero);
   }
   if (o.join) {
-    const level = joinLevel(s, [id]);
+    // Ömer 2026-11-07: tutorial katılımı (yeni seferde 2. kahraman, Ashford) L1 gelir; sonraki katılımlar takım ortalamasında
+    const level = s.soloStart && s.mapId === CONFIG.maps[0] && s.roster.length === 2 ? 1 : joinLevel(s, [id]);
     if (level > 1) setLevel(hero, level, LEVELS, campaignMaxLevel());
   }
   return hero;
@@ -358,7 +359,7 @@ export function valorWoundHealBlocked(s: CampaignState, heroId: string): string 
   return null;
 }
 
-/** Savaş dışında (harita) Valor ile 1 yara sil: woundHeal.outsideCost Valor. Can oranı aynı kalır (maks can büyür; VARSAYIM open-questions 423). */
+/** Savaş dışında (harita) Valor ile 1 yara sil: woundHeal.outsideCost Valor. Can oranı korunur (maks can büyür; VARSAYIM open-questions 423) ve üstüne woundHeal.hpRatio eklenir (Ömer 2026-11-07). */
 export function healWoundWithValor(s: CampaignState, heroId: string): CampaignState {
   const why = valorWoundHealBlocked(s, heroId);
   if (why) throw new Error(why);
@@ -368,6 +369,9 @@ export function healWoundWithValor(s: CampaignState, heroId: string): CampaignSt
   const w = woundCount(h) - 1;
   if (w > 0) h.wounds = w;
   else delete h.wounds;
+  // Ömer 2026-11-07: yara silme ayrıca maks canın woundHeal.hpRatio payı kadar can verir (en çok tam can)
+  const heal = clamp01(valorRules.woundHeal?.hpRatio ?? 0);
+  if (heal > 0) h.hpRatio = Math.round(clamp01(h.hpRatio + heal) * 1000) / 1000;
   return t;
 }
 
@@ -845,7 +849,7 @@ export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
     if (c.heal) h.hpRatio = Math.round(clamp01(h.hpRatio + c.heal) * 1000) / 1000;
   }
   const small = !!c.chest && c.chestItems !== undefined; // küçük sandık: altın sandığın kartında
-  if (!small) t.gold += c.gold ?? 0;
+  if (!small) earnGold(t, c.gold ?? 0);
   if (c.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t), small ? { maxItems: c.chestItems!, gold: c.gold ?? 0 } : undefined);
   if (c.gift) grantGift(t, t.at, activeHeroes(t), `choice-${c.id}`, c.gift.rarity ?? 'common', c.gift.slots); // Monk's Isle relic (M-L)
   if (c.faction && !t.faction) t.faction = c.faction; // M-L: bir kez, geri alınmaz
@@ -874,7 +878,7 @@ function winEventBattle(t: CampaignState): void {
   const ec = t.eventChoice!;
   const n = node(mapOf(t), t.at);
   const c = EVENTS[n.event ?? '']?.choices?.find((x) => x.id === ec.choice);
-  if (c?.win?.gold) t.gold += c.win.gold;
+  if (c?.win?.gold) earnGold(t, c.win.gold);
   if (c?.win?.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t));
   if (c?.quest) grantQuest(t, c.quest); // A5: görev savaşı kazanıldı (unvan + bonus)
   delete ec.battle;
@@ -1025,6 +1029,19 @@ export function victoryHealFor(rules: CampaignRules, nodeType: MapNode['type']):
   return rules.victoryHeal;
 }
 
+/**
+ * Zafer şifası level farkına göre (Ömer 2026-11-07): düğüm level'ı >= takım ortalaması ise `base`; her eksik level
+ * `victoryHealScale.perLevelBelow` (normal) / `elitePerLevelBelow` (elit, -%10) / `bossPerLevelBelow` (boss, -%20) düşürür, en az `min`
+ * (Ömer 2026-11-07 healelite; elit / boss alanı yoksa o tür ölçeğe girmez). Sonuç en çok 3 ondalık.
+ */
+export function scaledVictoryHeal(rules: CampaignRules, base: number, nodeLvl: number, partyAvgLevel: number, nodeType: MapNode['type'] = 'battle'): number {
+  const sc = rules.victoryHealScale;
+  if (!sc) return base;
+  const per = nodeType === 'boss' ? (sc.bossPerLevelBelow ?? 0) : nodeType === 'elite' ? (sc.elitePerLevelBelow ?? 0) : sc.perLevelBelow;
+  const below = Math.max(0, partyAvgLevel - nodeLvl);
+  return Math.round(Math.max(Math.min(sc.min, base), base - per * below) * 1000) / 1000;
+}
+
 /** Sefer yara kuralı (campaign.json > rules.wounds). */
 export const woundRules = (): WoundRules => CONFIG.rules.wounds;
 
@@ -1032,24 +1049,21 @@ export const woundRules = (): WoundRules => CONFIG.rules.wounds;
 export const heroWoundsLine = (h: Hero): string => woundsLine(woundCount(h), woundRules());
 
 /**
- * Savaşın SONUNDA hâlâ düşmüş kahramanlar (YERİNDE; zafer ve devriyeden geri çekilme aynı kural): savaşa ayakta girmişse yarası lethal'ın
- * altındaysa riseRatio canla kalkar ve +1 yara; değilse ceset. Savaşa ceset girip kalkmamışsa ceset kalır (yeni yara yok). Dönen: kalkanlar.
+ * Savaşın SONUNDA hâlâ düşmüş kahramanlar (YERİNDE; zafer ve devriyeden geri çekilme aynı kural). Ömer 2026-11-07: savaş sonrası OTOMATİK
+ * DİRİLTME KALKTI: düşen kahraman düşmüş (ceset, can 0) kalır; savaşa ayakta girmişse +1 yara alır (lethal'da durur), savaşa ceset girmişse yara
+ * eklenmez. Kalkma yalnızca Valor (savaş içi / dışı), Paladin ya da Revive Ally item'i ile. Dönen küme hep boş (eski "kalkanlar" arayüzü için duruyor).
  */
 function settleFallen(t: CampaignState, units: BattleOutcome['units'], rules: WoundRules): Set<string> {
   const risen = new Set<string>();
   for (const u of units) {
     const h = heroById(t, u.heroId);
     if (!h || (u.alive && u.hpRatio > 0)) continue;
-    const r = isFallen(h) ? ({ corpse: true, wounds: woundCount(h) } as const) : fallAfterVictory(woundCount(h), rules);
-    if (r.corpse) {
-      h.hpRatio = 0;
-      h.alive = false;
-    } else {
-      h.hpRatio = Math.round(r.hpRatio * 1000) / 1000;
-      h.alive = true;
-      risen.add(h.id);
-    }
-    if (r.wounds > 0) h.wounds = r.wounds;
+    const was = isFallen(h);
+    if (!was) countFallen(t); // sefer defteri (endstats)
+    const wounds = was ? woundCount(h) : Math.min(woundCount(h) + 1, Math.max(1, rules.lethal));
+    h.hpRatio = 0;
+    h.alive = false;
+    if (wounds > 0) h.wounds = wounds;
   }
   return risen;
 }
@@ -1085,7 +1099,12 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   if (step.dive) return winDive(t, outcome, step.encounter);
   // M-K The Black Caravel: crossing düğümünde ama elit savaşı (şifa, Valor, loot elit gibi)
   const nodeType: MapNode['type'] = step.caravel ? 'elite' : node(mapOf(t), t.at).type;
-  const heal = victoryHealFor(rules, nodeType);
+  let heal = victoryHealFor(rules, nodeType);
+  {
+    const lv = t.roster.filter((h) => outcome.units.some((u) => u.heroId === h.id)).map((h) => h.level);
+    if (lv.length) heal = scaledVictoryHeal(rules, heal, nodeLevel(t.mapId, t.at), lv.reduce((a, b) => a + b, 0) / lv.length, nodeType);
+  }
+  t.lastVictoryHeal = { node: t.at, ratio: heal };
   // Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): yaşayanlar düğüm türünün zafer şifasını alır; savaş SONUNDA hâlâ düşmüş
   // olan kahraman %10 canla yaralı kalkar (lethal yaralıysa ceset). Savaşa ceset girip kalkmayan ceset kalır.
   valorHealWounds(t, outcome.valorRevived);
@@ -1164,7 +1183,7 @@ function grantDiveChests(t: CampaignState, from: number, to: number): void {
     if (!c) continue;
     c.gifts.forEach((r, i) => grantGift(t, t.at, activeHeroes(t), `dive-${d}-${i}`, r));
     if (c.gold > 0) {
-      t.gold += c.gold;
+      earnGold(t, c.gold);
       if (t.pendingLoot?.node === t.at) t.pendingLoot = { ...t.pendingLoot, gold: t.pendingLoot.gold + c.gold };
       else t.pendingLoot = { node: t.at, kind: 'treasure', items: [], gold: c.gold };
     }
@@ -1596,12 +1615,11 @@ export function cancelPatrol(s: CampaignState): CampaignState {
 export const patrolRetreatMaxLoss = (): number => 0;
 
 /** Devriye kartının geri çekilme notu (haritadaki "Fight the patrol?" kartı; İngilizce). */
-export const patrolRetreatNote = (): string => 'Retreating keeps lost health; fallen heroes rise wounded.';
+export const patrolRetreatNote = (): string => 'Retreating keeps lost health; fallen heroes stay down until revived.';
 
 /** Devriyeden geri çekilme onayı (savaş menüsü > Retreat): oyuncuya bedeli açıkça yazar. */
 export const patrolRetreatConfirm = (): string => {
-  const w = woundRules();
-  return `Retreat from the patrol? The patrol is called off and you may move on. Health lost in this fight stays lost. Fallen heroes rise with ${Math.round(w.riseRatio * 100)}% health and a wound; a hero who already has ${w.lethal} wounds dies.`;
+  return `Retreat from the patrol? The patrol is called off and you may move on. Health lost in this fight stays lost. Heroes who fall stay down and gain a wound; Valor, a Paladin or a Revive Ally item can raise them.`;
 };
 
 /**
@@ -1932,7 +1950,7 @@ function winPit(t: CampaignState, outcome: BattleOutcome, rules: CampaignRules):
     }
     const fought = outcome.units.map((u) => heroById(t, u.heroId)).filter((h): h is Hero => !!h);
     if (tier.chest) grantLoot(t, p.node, 'treasure', fought.length ? fought : activeHeroes(t), { gold: tier.gold, tag: `pit${index + 1}` });
-    else t.gold += tier.gold;
+    else earnGold(t, tier.gold);
     t.pitBest = { ...(t.pitBest ?? {}), [p.node]: index + 1 };
   }
   if (t.valor !== undefined) t.valor = addValor(valorRules, outcome.valorLeft ?? t.valor, 0);

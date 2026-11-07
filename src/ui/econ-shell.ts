@@ -85,7 +85,8 @@ export interface Shell {
   head: HTMLElement;
   body: HTMLElement;
   /** Plakaya ipucu bağlar: `nodes()` item ipucu düğümlerini verir (boş = ipucu yok). */
-  tipOn(target: HTMLElement, key: string, nodes: () => HTMLElement[]): void;
+  /** `touchPin: false` = dokunmatikte ipucu sabitlenmez (ekranda zaten ayrıntı paneli var; ör. kamp Sharpen). */
+  tipOn(target: HTMLElement, key: string, nodes: () => HTMLElement[], opts?: { touchPin?: boolean }): void;
   /** Yara noktalarına A Band yara ipucu bağlar (yara sayısı + etkisi; mevcut yara metinlerinden). Yarasızsa bağlamaz. */
   woundTip(target: HTMLElement, wounds: number): void;
   close(): void;
@@ -121,7 +122,7 @@ export function openShell(root: HTMLElement, o: { label: string; title: string; 
     head,
     body,
     syncClose: () => undefined,
-    tipOn(target, key, nodes) {
+    tipOn(target, key, nodes, opts) {
       const show = (x: number, y: number): void => tip.show(key, nodes(), x, y);
       target.addEventListener('pointerenter', (e) => {
         if (e.pointerType === 'mouse') show(e.clientX, e.clientY);
@@ -133,6 +134,7 @@ export function openShell(root: HTMLElement, o: { label: string; title: string; 
         if (e.pointerType === 'mouse') tip.hide();
       });
       target.addEventListener('click', (e) => {
+        if (opts?.touchPin === false) return;
         if ((e as PointerEvent).pointerType && (e as PointerEvent).pointerType !== 'mouse') tip.pin(key, nodes(), target);
       });
     },
@@ -191,6 +193,19 @@ export function openShell(root: HTMLElement, o: { label: string; title: string; 
   };
   document.addEventListener('keydown', onKey, true);
   dismissOnBackdrop(overlay, panel, () => sh.close());
+  // Sabitlenmiş (dokunmayla açılan) item ipucu: ipucunun / kaynak öğenin DIŞINA dokunmak kapatır (telefonda açık kalıp sağdaki ayrıntıyı örtüyordu; Ömer 2026-11-07)
+  overlay.addEventListener(
+    'pointerdown',
+    (e) => {
+      const t = e.target as Element | null;
+      // yara bandı ipucu (dokunmayla açılan): kendi hedefi dışına dokunmak kapatır
+      if (band?.classList.contains('on') && !(t && (band.contains(t) || t.closest('.ec-wtip')))) fadeOut(band);
+      if (!tip.pinned) return;
+      if (t && (tip.box.contains(t) || t.closest('.gr-slot, .gr-item, [data-tip]'))) return;
+      tip.hide();
+    },
+    true,
+  );
   let unmountX: (() => void) | null = null;
   const syncX = (): void => {
     const want = o.closable();

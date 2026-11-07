@@ -64,6 +64,15 @@
     "turns": 3,
     "text": "Call on the Crown of Ash: your whole party deals more damage for a while, and you end your turn."
   },
+  "royal_command": {
+    "_not": "Royal Command (Kingsfall Regalia 3 parça; Ömer seçimi 2026-11-07 R-Y): yalnızca set kuralını (ItemEffects.allyTurn) taşıyan kahraman görür ve kullanır; savaşta bir kez. Seçilen canlı dost hemen bir tur oynar (turns modu); o turun sonunda dostun sayacı düşmez. Test modunda sıra yok: hak harcanır. İkon YER TUTUCU (warcry, ödünç). YZ: data/ai.json > global.command.",
+    "id": "royal_command",
+    "name": "Royal Command",
+    "icon": "warcry",
+    "kind": "command",
+    "target": "ally",
+    "text": "Command an ally to act at once: they take an extra turn right after yours. Once per battle; ends your turn."
+  },
   "salt_surge": {
     "_not": "Salt Surge (C9 a): Drowned Queen yenilince açılır (crown-surge.json > salt.unlock). Takımın her yaşayan birimine maks canın shieldRatio oranı kalkan, shieldTurns tur (Ömer 2026-10-27: 3, eski 2; var olan süreli kalkan dili: kendi tur başında azalır). Taint Ash ile aynı. Sayılar PROVİZYON.",
     "id": "salt_surge",

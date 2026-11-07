@@ -369,6 +369,8 @@ export interface CampaignRules {
   eliteVictoryHeal?: number;
   /** Boss zaferi: YAŞAYANLAR bu orana iyileşir (yara silmez; düşenler wounds kuralıyla). */
   bossVictoryHeal: number;
+  /** Zafer şifası level farkına göre azalır (Ömer 2026-11-07): düğüm level'ı takım ortalamasının altındaki her level için perLevelBelow (normal) / elitePerLevelBelow / bossPerLevelBelow düşer, en az min. */
+  victoryHealScale?: { perLevelBelow: number; elitePerLevelBelow?: number; bossPerLevelBelow?: number; min: number };
   /** Yara kuralı (Ömer 2026-10-19; src/progression/wounds.ts). */
   wounds: WoundRules;
   maxSaves: { normal: number; ironman: number };
@@ -400,12 +402,19 @@ export interface CampaignConfig {
   rules: CampaignRules;
   /** Tek kişilik sefer başlangıcı (src/campaign/solo-start.ts). */
   soloStart: {
+    /**
+     * Ömer 2026-11-07 (tutxp): tutorial düğümlerinin (Ashford öncesi, yalnız yeni sefer, ilk harita) savaş XP çarpanı: düğüm id -> çarpan (yazılmayan 1).
+     * Lider L1 başlar, Ashford'a L2 varır; özel level verme kuralı yok, yalnız XP miktarı ayarlı.
+     */
+    xpScale?: Record<string, number>;
     skillOrder: Record<string, string[]>;
     stages: Record<string, { open: number; wave?: { index: number; open: number } }>;
     enemyScale: { groups: Record<string, UnitMods>; nodes: Record<string, string> };
   };
   /** Harita eğrisi çarpanı: harita id -> soloStart.enemyScale ile aynı yapı, kayıt türünden bağımsız (solo-start.ts > mapEnemyScale). */
   mapEnemyScale: Record<string, { groups: Record<string, UnitMods>; nodes: Record<string, string> }>;
+  /** Harita bazlı düşüş ölçeği (Ömer 2026-11-07): harita id -> { items, gold } çarpanı; yazılmayan harita 1. */
+  mapLootScale?: Record<string, { items?: number; gold?: number }>;
   /** Eski kayıtların harita farkı: harita id -> düğüm id -> alanlar (null = alan yok; data.ts > mapFor). */
   legacyStart: Record<string, Record<string, Record<string, unknown>>>;
   starterPool: string[];
@@ -487,11 +496,6 @@ export interface Hero {
   /** Takılı item'ler: 8 yuva (weapon, offhand, helm, armor, gloves, boots, ring, trinket), boş = null. Güce çevrimi: src/progression/loadout.ts. */
   equipment: Equipment;
   /**
-   * Kişisel hız zarı (Ömer 2026-10-24, Natural pace): kalıcı çarpan [1 - spdVariance, 1 + spdVariance] (loadout.ts > heroSpeedRoll; seed + id).
-   * Eski kayıtta yok: okunurken aynı fonksiyonla tamamlanır (sürüm artmaz).
-   */
-  spdRoll?: number;
-  /**
    * A5 Personal Quests: bitirdiği görevlerin id'leri (data/campaign/quests.json): unvan + seferlik pasif eki (quests.ts). İsteğe bağlı alan (kayıt
    * sürümü değişmez; bilinmeyen / başka sınıfın id'si okunurken atılır). Haritalar arası kahramanla taşınır.
    */
@@ -543,7 +547,8 @@ export interface CampaignState {
   done: string[];
   /** Görülen tutorial ipuçları (düğüm id). */
   tipsSeen: string[];
-  stats: { victories: number; defeats: number };
+  /** goldEarned / playMs / fallen: sefer defteri (Ömer 2026-11-07 endstats; isteğe bağlı, sürüm değişmez, eski kayıt 0; ledger.ts). */
+  stats: { victories: number; defeats: number; goldEarned?: number; playMs?: number; fallen?: number };
   nextHeroId: number;
   /** Sefer torbası (takılı olmayan item'ler; kapasite items.json > bag = 30). */
   inventory: ItemInstance[];
@@ -551,6 +556,8 @@ export interface CampaignState {
   gold: number;
   /** Temper taşı (Ömer 2026-10-26; boss / elit ilk zaferinden düşer, demircide Temper bedeli; src/campaign/loot.ts, smith.ts). Eski kayıtta yok = 0. */
   temperStones?: number;
+  /** Savaş dışı malzemeler (Ömer 2026-11-07; data/consumables.json, src/campaign/supplies.ts): id -> adet. Eski kayıtta yok = boş. */
+  supplies?: Record<string, number>;
   /** Sıradaki item örneği numarası (uid 'i<n>'). */
   nextItemId: number;
   /**
@@ -586,6 +593,8 @@ export interface CampaignState {
   merchantStock?: Record<string, MerchantStall>;
   /** Son düşüş: haritada "Spoils" kartı olarak gösterilir, onaylanınca silinir (`acknowledgeLoot`). */
   pendingLoot?: LootDrop;
+  /** Son kazanılan savaşın gerçek zafer şifası oranı (level farkı ölçeğiyle; haritadaki toparlanma notu bunu gösterir). */
+  lastVictoryHeal?: { node: string; ratio: number };
   /** Açık tüccar (merchant düğümü; Ömer 2026-10-11): tezgâh, bu ziyaretin geri alım listesi, yenileme sayısı. Düğümden ayrılınca silinir. */
   shop?: CampaignShop;
   /**
@@ -757,6 +766,8 @@ export interface LootDrop {
   gift?: boolean;
   /** Bu düşüşte gelen Temper taşı (boss / elit ilk zaferi; Spoils kartında satır). Yoksa 0. */
   stones?: number;
+  /** Bu düşüşte gelen malzeme(ler) { id: adet } (Spoils kartında satır). */
+  supplies?: Record<string, number>;
 }
 
 /** Teslim kaydı: kimden (ayrılan kahramanlar), hangi item'ler (torbadaki uid'ler), hangi düğümde. */

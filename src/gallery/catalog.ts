@@ -558,12 +558,12 @@ export interface ItemArtEntry {
 
 /** assets/items altındaki HER görsel (yeni dosya kendiliğinden listelenir) + görseli olmayan item'ler (piksel ikona düşenler). */
 export function buildItemArt(): { art: ItemArtEntry[]; missing: string[] } {
-  const items = itemsJson.items as Array<{ id: string; name: string; slot: string }>;
+  const items = [...itemsJson.items, ...(itemsJson.setItems ?? [])] as Array<{ id: string; name: string; slot: string }>; // set parçaları da (boyalı çizimleri var)
   const art = Object.entries(ITEM_IMAGE_FILES).map(([itemId, url]) => {
     const d = items.find((i) => i.id === itemId);
     return { itemId, name: d?.name ?? '', slot: d?.slot ?? '', url };
   });
-  const missing = items.filter((i) => !ITEM_IMAGE_FILES[i.id]).map((i) => i.name);
+  const missing = (itemsJson.items as Array<{ id: string; name: string }>).filter((i) => !ITEM_IMAGE_FILES[i.id]).map((i) => i.name);
   return { art, missing };
 }
 

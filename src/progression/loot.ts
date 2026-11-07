@@ -21,6 +21,8 @@ export interface LootInput {
   rules?: DropSlotRules;
   /** Eski Rare pity sayacı: 2026-10-11'den beri kullanılmaz (Ömer: pity ve "en az bir Rare" kalktı, nadirliği tablo belirler); aynen döner. */
   pity?: number;
+  /** Harita bazlı düşüş ölçeği (Ömer 2026-11-07, Harita 2 altını fazla): beklenen item sayısı ve altın çarpanı; yoksa 1. */
+  scale?: { items?: number; gold?: number };
 }
 
 /** Düşüşün yuva kuralları (Ömer 2026-11-01): `locks` = akıllı yuva bunları hedeflemez; `banned` = bu yuvanın item'i hiç düşmez (Harita 1'de Trinket). Endless'ta boş. */
@@ -60,7 +62,7 @@ function weakestSlot(rng: Rng, party: LootInput['party'], rules: DropSlotRules |
     for (const k of open) {
       if (rules?.locks?.[k]) continue; // kilitli yuva boş sayılmaz: akıllı seçim oraya item aramaz
       // İkinci el: sınıf kullanamıyorsa ya da çift el silah kapatıyorsa "boş yuva" sayılmaz
-      if (k === 'offhand' && (!classUsesOffhand(h.class) || offhandBlocker(h.equipment ?? {}))) continue;
+      if (k === 'offhand' && (!classUsesOffhand(h.class) || offhandBlocker(h.equipment ?? {}, h.class))) continue;
       const inst = h.equipment?.[k];
       const ip = inst && itemDef(inst.id) ? instanceIP(inst) : 0;
       if (ip < best) {
@@ -108,7 +110,9 @@ export function rollLoot(o: LootInput): LootResult {
   const n = Math.max(1, o.party.length);
   const expected = o.kind === 'treasure' ? L.treasureBase + L.treasurePerMember * n : L.perPartyMember[o.kind] * n;
   // Sefer düşüşü %35 az (Ömer 2026-10-18, TUR 1 madde 8; items.json > loot.dropMult); garanti tabanı (minItems) aynen
-  let count = roundChance(rng, expected * rep.items * (L.dropMult ?? 1));
+  let count = roundChance(rng, expected * rep.items * (L.dropMult ?? 1) * (o.scale?.items ?? 1));
+  // Sandıklar (kind treasure, tüm haritalar) Ömer 2026-11-07: items.json > loot.treasureItemsDelta kadar az item (en az 1 kalır)
+  if (o.kind === 'treasure' && L.treasureItemsDelta) count = Math.max(1, count + Math.min(0, L.treasureItemsDelta));
   if (first) count = Math.max(count, L.minItems[o.kind] ?? 0);
   const families = partyFamilies(o.party);
   const cap = rIdx(rep.maxRarity);
@@ -126,7 +130,7 @@ export function rollLoot(o: LootInput): LootResult {
     rarities.push(RARITY_IDS[r]!);
     forClass.push(pick.forClass);
   }
-  const gold = Math.round((L.gold[o.kind] ?? 0) * Math.max(1, o.ilvl) * rep.gold);
+  const gold = Math.round((L.gold[o.kind] ?? 0) * Math.max(1, o.ilvl) * rep.gold * (o.scale?.gold ?? 1));
   return { items, rarities, forClass, gold, pity: o.pity ?? 0 };
 }
 
@@ -144,9 +148,12 @@ export function rollDropBase(rng: Rng, party: LootInput['party'], ilvl: number, 
   const slot = rng.next() < L.smartSlotChance ? weakestSlot(rng, party, rules, open) : open[rng.int(0, open.length - 1)]!;
   let family: string | undefined;
   if (slot === 'weapon' || slot === 'offhand') {
-    // İkinci el (2026-10-12): yalnızca ikinci el item'i olan aileler (kalkan: Maces & Shields, hançer)
-    const all = ITEMS.weaponFamilies.map((f) => f.id).filter((f) => slot === 'weapon' || ITEMS.items.some((d) => d.family === f && d.rarity !== 'legendary' && fitsSlot(d, 'offhand')));
-    const fams = families.filter((f) => all.includes(f));
+    // İkinci el (2026-10-12; 2026-11-07 türler): ikinci el türleri (kalkan, sadak, küre, kitap, fener, emanet) + ikinci el silahı aileleri (hançer, el baltası)
+    const ids = slot === 'weapon' ? ITEMS.weaponFamilies.map((f) => f.id) : [...ITEMS.weaponFamilies.map((f) => f.id), ...(ITEMS.offhandKinds ?? []).map((k) => k.id)];
+    const all = ids.filter((f) => ITEMS.items.some((d) => d.family === f && d.rarity !== 'legendary' && fitsSlot(d, slot)));
+    // Ana el yuvasında yalnızca partide ana elde takabilen biri olan aileler "kullanılabilir" sayılır (Warrior hançer / el baltasını yalnız ikinci elde takar)
+    const mainOk = (f: string) => slot !== 'weapon' || party.some((h) => ITEMS.weaponFamilies.find((x) => x.id === f)?.classes.includes(h.class));
+    const fams = families.filter((f) => all.includes(f) && mainOk(f));
     const usable = fams.length && rng.next() < L.usableWeaponChance ? fams : all;
     family = usable[rng.int(0, usable.length - 1)];
   }

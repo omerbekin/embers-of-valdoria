@@ -10,6 +10,8 @@ import { TREE_RULES, treeOf, type TreeMode, type TreeRules } from './skill-tree-
 /** Ağacı olan kahramanın bu işte gereken kısmı (sefer Hero'su / Endless kahramanı bu şekle uyar). */
 export interface EvolveSource {
   class: string;
+  /** Yalnızca skill ipucundaki sonraki-puan önizlemesi için (yoksa 1). */
+  level?: number | undefined;
   tree?: TreeAlloc | undefined;
 }
 

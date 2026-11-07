@@ -7,11 +7,12 @@ import { Battle, content, type BattleEvent, type BattleMode, type Combatant, typ
 import { checkTreeFx, compileTree, treeOf } from '../src/progression';
 import type { TreeData } from '../src/progression/skill-tree-data';
 import { buildMechanics } from '../src/wiki/catalog';
+import { noPace } from './pace-helpers';
 
 const cells = (u: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');
 const make = (party: Record<number, string>, enemies: Record<number, string>, units: Record<number, UnitSetup> = {}, mode: BattleMode = 'turns'): Battle => {
   const teams: Teams = { party: cells(party), enemies: cells(enemies), units: { party: units, enemies: {} } };
-  const b = new Battle(content.battleSetup('random-battle', 11, mode, teams, false));
+  const b = new Battle(noPace(content.battleSetup('random-battle', 11, mode, teams, false)));
   b.debug.crit = 'never';
   b.debug.dodge = 'never';
   for (const c of b.combatants) {

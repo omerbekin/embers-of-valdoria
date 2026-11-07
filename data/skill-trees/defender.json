@@ -394,7 +394,7 @@
     },
     "1.f2": {
       "name": "Shockwave",
-      "text": "Tremor Slam has 6% more power per rank against enemies already Slowed.",
+      "text": "Tremor Slam has 6% increased power per rank against enemies already Slowed.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -1099,7 +1099,7 @@
     },
     "4.u2": {
       "name": "Bitter Knuckles",
-      "text": "Fist Crush deals 12% more damage against enemies that hit you since your last turn.",
+      "text": "Fist Crush deals 12% increased damage against enemies that hit you since your last turn.",
       "src": "B:V4:4.u2",
       "fx": [
         {
@@ -1153,7 +1153,7 @@
     },
     "4.r2": {
       "name": "Heavier Fall",
-      "text": "Fist Crush deals 1% more damage for each 2 points of your armor above 40.",
+      "text": "Fist Crush deals 1% increased damage for each 2 points of your armor above 40.",
       "src": "B:V5:4.u2",
       "fx": [
         {
@@ -1206,7 +1206,7 @@
     },
     "4.d2": {
       "name": "Can Opener",
-      "text": "Fist Crush deals 1% more damage per point of the target's armor.",
+      "text": "Fist Crush deals 1% increased damage per point of the target's armor.",
       "src": "B:V5:4.d2",
       "fx": [
         {

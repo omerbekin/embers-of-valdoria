@@ -64,9 +64,19 @@ export function attachBandTip(target: HTMLElement, src: BandTipSource, o: { host
     const p = placeBandTip(a, { w: pop.offsetWidth, h: pop.offsetHeight }, h, view);
     pop.style.left = `${p.x}px`;
     pop.style.top = `${p.y}px`;
+    // Fare kıpırdamadan denetim gizlenirse (ör. Esc menüsü Valor ölçeğini `hidden` yapar) ipucu asılı kalmasın: açıkken görünürlük yoklanır.
+    if (watch === 0) watch = window.setInterval(() => {
+      if (!target.isConnected || target.closest('[hidden]') || target.getClientRects().length === 0) hide();
+    }, 200);
   };
+  let watch = 0;
   const hide = (): void => {
     pinned = false;
+    over = false;
+    if (watch !== 0) {
+      window.clearInterval(watch);
+      watch = 0;
+    }
     if (pop) tipOff(pop);
   };
   // Pasif düğme fareyi yutar (pointer-events none): o zaman hedef dikdörtgenine bakılır.

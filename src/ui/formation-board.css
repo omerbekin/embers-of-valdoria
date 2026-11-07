@@ -463,20 +463,23 @@
   object-fit: contain;
 }
 
+/* küçük (skill satırı) ikon: köşe elmasları ikonun boyuyla ölçeklenir (Ömer 2026-11-07; telefonda 32 px ikonda 7 px elmas fazla büyüktü) */
 .fb-ico.sm::before,
 .fb-ico.sm::after {
-  width: 7px;
-  height: 7px;
+  width: max(4px, 12.5%);
+  height: auto;
+  aspect-ratio: 1;
+  box-sizing: border-box;
 }
 
 .fb-ico.sm::before {
-  left: -4px;
-  top: -4px;
+  left: -6.5%;
+  top: -6.5%;
 }
 
 .fb-ico.sm::after {
-  right: -4px;
-  bottom: -4px;
+  right: -6.5%;
+  bottom: -6.5%;
 }
 
 .fb-chd {

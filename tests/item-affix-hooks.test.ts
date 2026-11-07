@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { giveManaBarrier } from './mage-legacy-helpers';
-import { Battle, content, previewSkill, rolledSpeed, skillCostAmount, type BattleEvent, type BattleMode, type ItemEffects, type Teams, type UnitModifiers, type UnitSetup } from '../src/engine';
+import { Battle, content, previewSkill, roundSpeed, skillCostAmount, type BattleEvent, type BattleMode, type ItemEffects, type Teams, type UnitModifiers, type UnitSetup } from '../src/engine';
 import { skillNumbers } from '../src/engine/skill-info';
 import { damageSpecFor } from '../src/engine/spec';
 
@@ -58,9 +58,8 @@ describe('affix statları: skill sayıları (motor = skill-info = önizleme)', (
   it('Hız % ve maks MP %: türetilmiş değerin üstüne çarpan', () => {
     const plain = make({ 0: 'mage' }, { 0: 'warrior' }).combatants[0]!;
     const fast = make({ 0: 'mage' }, { 0: 'warrior' }, { 0: mod({ spdMult: 1.5, mpMult: 1.5 }) }).combatants[0]!;
-    // Kişisel hız zarı (Ömer 2026-10-24): çarpan türetilmiş hıza, zar SON hıza (aynı uid = aynı zar)
-    expect(fast.stats.spdRoll).toBe(plain.stats.spdRoll);
-    expect(fast.stats.spd).toBe(rolledSpeed(content.classes.mage!.stats.spd * 1.5, fast.stats.spdRoll!, f));
+    // Tur başına hız zarı (Ömer 2026-11-07) statta değil, savaşın sıra hızında (speedOf): stat = türetilmiş hız x çarpan
+    expect(fast.stats.spd).toBe(roundSpeed(content.classes.mage!.stats.spd * 1.5, f));
     expect(fast.stats.spd).toBeGreaterThan(plain.stats.spd);
     expect(fast.maxMp).toBe(Math.round(plain.maxMp * 1.5));
   });
@@ -100,11 +99,11 @@ describe('affix kancaları (ItemEffects)', () => {
   });
 
   it('Life leech: isabet eden vuruşun düşürdüğü canın oranı şifa (cause leech)', () => {
-    const b = make({ 0: 'warrior' }, { 0: 'defender' }, { 0: fx({ leech: 0.5 }, { startHpRatio: 0.3 }) });
+    const b = make({ 0: 'warrior' }, { 0: 'defender' }, { 0: fx({ leech: 0.5 }, { startHpRatio: 0.3, modifiers: { spdMult: 3 } }) }); // hızlı: ilk sıra warrior'da (tur zarından bağımsız)
     b.debug.dodge = 'never';
     b.useSkill('party-0', warriorAttack, 'enemy-0');
     expect(b.log.some((e) => e.type === 'heal' && e.cause === 'leech' && e.target === 'party-0' && e.amount > 0)).toBe(true);
-    const plain = make({ 0: 'warrior' }, { 0: 'defender' }, { 0: { startHpRatio: 0.3 } });
+    const plain = make({ 0: 'warrior' }, { 0: 'defender' }, { 0: { startHpRatio: 0.3, modifiers: { spdMult: 3 } } });
     plain.debug.dodge = 'never';
     plain.useSkill('party-0', warriorAttack, 'enemy-0');
     expect(plain.log.some((e) => e.type === 'heal' && e.cause === 'leech')).toBe(false);

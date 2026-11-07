@@ -19,6 +19,7 @@ import {
   restAtCamp,
   reviveWithValor,
   victoryHealFor,
+  scaledVictoryHeal,
   type CampaignState,
   type KV,
 } from '../src/campaign';
@@ -64,20 +65,35 @@ describe('sefer: zafer sonrası', () => {
     expect(victoryHealFor(r, 'battle')).toBe(0.25);
     expect(victoryHealFor(r, 'elite')).toBe(0.5);
     expect(victoryHealFor(r, 'boss')).toBe(1);
+    // Ömer 2026-11-07: normal düğümde şifa level farkıyla düşer; L30 kahraman L1 düğümde en alt sınırı (%10) alır
     const s = maxed(at('moor')); // Battle
     const out = win(s, [], 0.4);
-    for (const h of activeHeroes(out)) expect(h.hpRatio).toBeCloseTo(0.4 + 0.25, 5);
+    for (const h of activeHeroes(out)) expect(h.hpRatio).toBeCloseTo(0.4 + CONFIG.rules.victoryHealScale!.min, 5);
+    expect(out.lastVictoryHeal).toEqual({ node: 'moor', ratio: CONFIG.rules.victoryHealScale!.min });
   });
 
-  it('savaşı düşmüş bitiren %10 canla 1 yara alır; yaralar birikir; 3 yaralı yine düşerse ceset; savaşta kalkan yara almaz', () => {
+  it('level ölçeği: düğüm >= takım ortalaması %25; her eksik level -5 puan; en az %10; elit -10 / boss -20 puan', () => {
+    const r = CONFIG.rules;
+    expect(r.victoryHealScale).toEqual({ perLevelBelow: 0.05, elitePerLevelBelow: 0.1, bossPerLevelBelow: 0.2, min: 0.1 });
+    const heal = (node: number, avg: number) => scaledVictoryHeal(r, 0.25, node, avg);
+    expect([heal(5, 5), heal(7, 5), heal(4, 5), heal(3, 5), heal(2, 5), heal(1, 9)]).toEqual([0.25, 0.25, 0.2, 0.15, 0.1, 0.1]);
+    expect(heal(4, 4.5)).toBe(0.225); // kesirli ortalama: 0,5 level = -2,5 puan
+    // healelite (Ömer 2026-11-07): elit %50 her eksik level -10 puan, boss %100 her eksik level -20 puan; ikisinde de en az %10
+    const elite = (node: number, avg: number) => scaledVictoryHeal(r, 0.5, node, avg, 'elite');
+    expect([elite(5, 5), elite(6, 5), elite(4, 5), elite(2, 5), elite(1, 9)]).toEqual([0.5, 0.5, 0.4, 0.2, 0.1]);
+    const boss = (node: number, avg: number) => scaledVictoryHeal(r, 1, node, avg, 'boss');
+    expect([boss(8, 8), boss(9, 8), boss(7, 8), boss(5, 8), boss(1, 9)]).toEqual([1, 1, 0.8, 0.4, 0.1]);
+  });
+
+  it('savaşı düşmüş bitiren OTOMATİK kalkmaz (Ömer 2026-11-07): düşmüş kalır ve 1 yara alır; yaralar birikir, üst sınırda durur; savaşta kalkan yara almaz', () => {
     let s = maxed(at('moor'));
     const id = activeHeroes(s)[0]!.id;
     for (let n = 1; n <= W.lethal; n++) {
       const t = win({ ...s, done: s.done.filter((k) => k !== 'moor:battle') }, [id]);
-      expect(hero(t, id)).toMatchObject({ alive: true, hpRatio: W.riseRatio, wounds: n });
-      s = t;
+      expect(hero(t, id)).toMatchObject({ alive: false, hpRatio: 0, wounds: n });
+      s = setHero(t, id, { alive: true, hpRatio: 1 }); // kaldırıldı (Valor / Paladin / item); yaralar kalır
     }
-    // 3 yaralı: bir daha düşerse ceset (yaralar kalır), sonraki savaşa ceset girer
+    // 3 yaralı: bir daha düşerse yine düşmüş (yara sayısı lethal'ı aşmaz), sonraki savaşa ceset girer
     const dead = win({ ...s, done: s.done.filter((k) => k !== 'moor:battle') }, [id]);
     expect(hero(dead, id)).toMatchObject({ alive: false, hpRatio: 0, wounds: W.lethal });
     expect(battlePlan(debugTeleportKeep(dead, 'moor')).units.party[dead.active.indexOf(id)]?.startDead).toBe('revivable');
@@ -88,21 +104,26 @@ describe('sefer: zafer sonrası', () => {
   });
 
   it('boss tam şifası yara silmez; yaralı kalkan da tam canla kalkar (Ömer 2026-10-31); başka düğümde level atlasa da riseRatio', () => {
-    const s0 = maxed(at('9'));
+    // healelite (Ömer 2026-11-07): boss şifası takım düğümün üstündeyse düşer; tam şifa için takım düğüm level'ında / altında (L1)
+    const low = at('9');
+    const s0 = { ...low, roster: low.roster.map((h) => ({ ...h, level: 1, xp: 0 })) };
     const [a, b] = activeHeroes(s0);
     const s = setHero(s0, a!.id, { wounds: 2 });
     const t = win(s, [b!.id], 0.2);
     expect(hero(t, a!.id)).toMatchObject({ hpRatio: 1, wounds: 2 });
-    expect(hero(t, b!.id)).toMatchObject({ alive: true, hpRatio: 1, wounds: 1 });
+    // L30 takım boss'ta en alt sınırı (%10) alır
+    const hi = win(setHero(maxed(at('9')), a!.id, { wounds: 2 }), [], 0.2);
+    expect(hero(hi, a!.id).hpRatio).toBeCloseTo(0.2 + CONFIG.rules.victoryHealScale!.min, 5);
+    expect(hero(t, b!.id)).toMatchObject({ alive: false, hpRatio: 0, wounds: 1 }); // boss'ta da otomatik kalkma yok
     // 3 yaralı boss'ta da düşerse ceset kalır
     const lethal = win(setHero(s0, b!.id, { wounds: W.lethal }), [b!.id], 0.2);
     expect(hero(lethal, b!.id)).toMatchObject({ alive: false, hpRatio: 0, wounds: W.lethal });
-    // level atlayan düşmüş: yine riseRatio
+    // level atlayan düşmüş: yine düşmüş kalır
     const lv = at('moor');
     const c = activeHeroes(lv)[0]!;
     const up = win(setHero(lv, c.id, { level: 1, xp: 10 ** 6 }), [c.id]);
     expect(hero(up, c.id).level).toBeGreaterThan(1);
-    expect(hero(up, c.id).hpRatio).toBe(W.riseRatio);
+    expect(hero(up, c.id)).toMatchObject({ alive: false, hpRatio: 0 });
   });
 
   it('Valor cesedi kaldırır (savaş dışında 4, savaşta 6) ve 1 yara siler (Ömer 2026-10-20; hepsini değil)', () => {
@@ -144,7 +165,7 @@ describe('sefer: zafer sonrası', () => {
     expect(hero(t, b!.id).wounds).toBe(2);
     // 3 yaralı Valor ile kalkıp yeniden düşerse: önce 1 yara silinir (2), sonra düşüş: %10 + 3 yara (ceset değil)
     const fell = applyBattle(s, { victory: true, units: units.map((u) => (u.heroId === a!.id ? { ...u, hpRatio: 0, alive: false } : u)), valorRevived: { [a!.id]: 1 } });
-    expect(hero(fell, a!.id)).toMatchObject({ alive: true, hpRatio: W.riseRatio, wounds: 3 });
+    expect(hero(fell, a!.id)).toMatchObject({ alive: false, hpRatio: 0, wounds: 3 });
   });
 
   it('yaralar savaş kurulumunda maks canı düşürür (motor saf; 2 yara = -%40)', () => {
@@ -298,7 +319,7 @@ describe('wound tooltip content (V1 Scar + dots)', () => {
     expect(d.maxHp).toBe('Max HP 56 of 140');
     expect(d.maxed).toBe(true);
     expect(d.lines.join(' ')).toContain('20%');
-    expect(d.lines.some((l) => /corpse/.test(l))).toBe(true);
+    expect(d.lines.some((l) => /Falling in battle adds a wound/.test(l))).toBe(true);
     expect(d.foot).toBe('Camp rest does not heal wounds.');
   });
   it('one wound is singular, not maxed, and 0 wounds has no tip', () => {

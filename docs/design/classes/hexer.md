@@ -107,6 +107,13 @@ Neden "en fazla 3 tur, yenilenmeyen, sonunda patlayan" (Ö2): Hexer'in hızı 8,
 | Tetik | (a) Omen yığını 3'e ulaştığı AN, otomatik (x1; Ö1); (b) Omen süresi dolunca, yığındaki Omen sayısı kadar (x1; Ö2); (c) Doom Mark skill'i (yığın kaç olursa olsun, x1,5; Ö10) |
 | Hasar | **LUCK x 0,6 x tüketilen Omen sayısı x çarpan** (otomatik: x1; Doom Mark: **x1,5**) |
 | Örnek (Luck 14) | Otomatik 3 Omen: 14 x 0,6 x 3 = **25,2 ham**; süre bitiminde 1 / 2 Omen: **8,4 / 16,8 ham**; Doom Mark ile 3 Omen: **37,8 ham** |
+
+**Uzatma yerine Doom bonusu (Ömer 2026-11-07, "doomun süresi uzamasın, süresini artıran her tur +%25 damage versin"; `statuses.json > omen.doom.bonusPerExtraTurn: 0.25`):**
+- Omen'in süresi HİÇ uzamaz (4 tur ve `refreshOnStack` kuralı aynen). Omen'e tur ekleyecek her etki (bugün `extendStatus`, ileride debuff süresi uzatan her şey) süre yerine `Status.extraTurns` sayacını artırır.
+- Doom çarpanı x (1 + extraTurns x 0,25). Bu Omen'in her Doom'una işler: süre bitimi, 3 yığında anında Doom, Doom Mark (`triggerDoom` içinde, `Battle.doomExtraMult`). Önizleme ve YZ aynı çarpanı görür.
+- Kısaltmalar (Resilience, Iron Will, ağaç shorten) aynen çalışır, ceza yok.
+- Ill Omen: sayaç geçen Omen'le gider (yeni örnekte taşınır; hedefte yığın varsa büyük olan kalır).
+- Bugün Omen'e tur ekleyebilen tek kaynak: Gambler ağacı "Let It Ride" (`extendStatus: '*'`, Jackpot'ta rütbe başına %10 ihtimalle hedefteki bir debuff'a +1 tur; takımda Hexer varsa Omen'e düşebilir: +%25 Doom). Potency (`potencyTurns`) ve Unyielding yığılan durumu atlar.
 | Tür / element | büyü (magic) / `dark`; büyü zırhı ve büyü kalkanı uygulanır |
 | İsabet zarı | **YOK** (lanet zaten tuttu; Doom kaçınılmaz) |
 | Kritik | **VAR**: Hexer'in kritik şansıyla (Luck) ayrı zar (b'de snapshot kritik şansı, zar patlama anında seed'li rng ile). Doğal: "kıyamet bazen daha korkunç gelir" |

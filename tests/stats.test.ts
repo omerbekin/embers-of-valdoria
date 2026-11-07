@@ -23,7 +23,7 @@ describe('4 temel özellik ve türev stat\'lar', () => {
   it('Strength can verir, Intelligence mana verir, Dexterity hız verir', () => {
     const s = stats({ str: 20, int: 30, dex: 8 });
     expect(s.hp).toBe(f.attributes.hpBase + f.attributes.hpPerStr * 20);
-    expect(s.mp).toBe(f.attributes.mpBase + f.attributes.mpPerInt * 30);
+    expect(s.mp).toBe(Math.round(f.attributes.mpBase + f.attributes.mpPerInt * 30));
     expect(s.spd).toBe(roundSpeed(f.attributes.spdBase + f.attributes.spdPerDex * 8, f));
   });
 

@@ -38,7 +38,7 @@ export const PENDING_SKILLS: Readonly<Record<string, string>> = {
   // 2026-10-29: Vesper yeni, değerler PROVİZYON; Toll payı %19,8 (bant %20). Vesper sim'inde bakılacak.
   // 2026-10-29: Ley Brand bedel yakımı + işaret (castBurnPct 0,75, markDamagePct 0,4) sonrası AM hamlelerinin ~%39'u; YZ değeri yüksek, sim turunda bakılacak.
   drain_field: 'Ley Brand yeni kurallar sonrası pay ~%39 (2026-10-29), YZ değeri ayarı bekliyor',
-  spell_ward: 'Ley Brand payı arttı, Spell Ward %6,7 (bant %8) (2026-10-29), Ley Brand YZ ayarıyla bakılacak',
+  // 2026-11-08: Spell Ward INT x 0,75 + 12 MP sonrası pay %9,6-9,8 (bant %8-25) -> listeden çıkarıldı.
   toll: 'Vesper PROVİZYON değerler (2026-10-29), sim bekliyor',
   // 2026-10-31: Ley Brand kısması sonrası Thunderpeal payı %35,1-35,2 (bant %35, gürültü sınırı). Karakter dengesi başka sohbette.
   thunderpeal: 'Ley Brand kısması sonrası pay %35,2 (2026-10-31), karakter dengesi sohbetinde bakılacak',

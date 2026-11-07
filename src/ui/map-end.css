@@ -1,0 +1,68 @@
+/* Harita 1 bitiş ekranı (src/ui/map-end.ts; taslak public/mockups/map1-end.html #v=a "Ledger"). Ölçüler oyun birimiyle: calc(N * var(--u)). İtalik yok. */
+.mend {
+  --u: var(--gu, 1px);
+  --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217, 178, 106, 0.42); --g-line: rgba(217, 178, 106, 0.16); --g-line2: rgba(217, 178, 106, 0.3);
+  --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: Cinzel, Georgia, 'Palatino Linotype', serif; --g-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  --f0: max(10px, calc(18 * var(--u))); --f1: max(11px, calc(22 * var(--u))); --f2: max(12px, calc(26 * var(--u))); --f3: max(14px, calc(34 * var(--u))); --f4: max(18px, calc(52 * var(--u)));
+  position: fixed; inset: 0; z-index: 19; color: var(--g-text); font-family: var(--g-body); font-style: normal; background: #000;
+}
+.me-bg { position: absolute; inset: 0; background: center / cover no-repeat; }
+.me-bg::after { content: ''; position: absolute; inset: 0; background: rgba(5, 3, 2, 0.66); }
+.me-panel {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(92%, calc(1320 * var(--u))); max-height: 96%; box-sizing: border-box; overflow: hidden auto;
+  padding: calc(34 * var(--u)) calc(50 * var(--u)) calc(30 * var(--u)); display: flex; flex-direction: column; gap: calc(18 * var(--u));
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.97), rgba(12, 9, 6, 0.97)); border: 1px solid var(--g-edge);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.7), 0 calc(18 * var(--u)) calc(40 * var(--u)) rgba(0, 0, 0, 0.6);
+  animation: me-rise var(--m-modal-in, 260ms) ease-out both;
+}
+@keyframes me-rise { from { opacity: 0; transform: translate(-50%, calc(-50% + 14px)); } to { opacity: 1; transform: translate(-50%, -50%); } }
+html.reduced-motion .me-panel { animation: none; }
+.me-sub { font: 600 var(--f0) var(--g-disp); letter-spacing: 0.3em; text-transform: uppercase; color: var(--g-ember2); text-align: center; }
+.me-t { margin: 0; text-align: center; font: 600 var(--f4) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; background: linear-gradient(180deg, #fbe7b0, #e6c27a 55%, #b88a42); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9)); }
+.me-story { margin: 0; text-align: center; font: var(--f2) var(--g-body); color: #cdb88d; line-height: 1.25; }
+.me-rule { height: 1px; border: 0; margin: 0; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.55), transparent); }
+.me-stats { display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); gap: calc(14 * var(--u)); }
+.me-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: calc(12 * var(--u)) calc(10 * var(--u)); border: 1px solid var(--g-line2); background: rgba(20, 14, 9, 0.75); min-width: 0; }
+.me-stat b { font: 600 var(--f3) var(--g-disp); color: var(--g-gold); letter-spacing: 0.06em; }
+.me-stat span { font: 600 var(--f0) var(--g-disp); letter-spacing: 0.18em; text-transform: uppercase; color: var(--g-dim); text-align: center; }
+.me-row2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: calc(30 * var(--u)); align-items: start; }
+.me-h { font: 600 var(--f0) var(--g-disp); letter-spacing: 0.22em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); padding-bottom: 4px; margin-bottom: calc(10 * var(--u)); border-bottom: 1px solid var(--g-line); }
+.me-heroes { display: flex; gap: calc(18 * var(--u)); justify-content: center; }
+.me-hero { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.me-hero .face { position: relative; width: calc(104 * var(--u)); height: calc(104 * var(--u)); min-width: 44px; min-height: 44px; border: 1px solid var(--g-line2); box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.7); background: #120c08; }
+.me-hero .face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.me-hero .lv { white-space: nowrap; position: absolute; right: -1px; bottom: -1px; padding: 0 6px; background: rgba(12, 9, 6, 0.94); border: 1px solid var(--g-line2); font: 600 var(--f0) var(--g-disp); letter-spacing: 0.08em; color: var(--g-gold); }
+.me-hero .nm { font: 600 var(--f0) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-text); }
+.me-loot { display: flex; flex-direction: column; gap: calc(6 * var(--u)); }
+.me-it { display: flex; align-items: center; gap: calc(12 * var(--u)); min-width: 0; }
+.me-it .tile { flex: none; display: grid; place-items: center; width: calc(64 * var(--u)); height: calc(64 * var(--u)); min-width: 34px; min-height: 34px; background: #120c08; border: 1px solid var(--g-line2); }
+.me-it .tile img { width: 86%; height: 86%; object-fit: contain; }
+.me-it .nm { font: 600 var(--f1) var(--g-disp); letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-gold); line-height: 1.1; }
+.me-it .tg { font: var(--f0) var(--g-body); color: var(--g-dim); }
+.me-foot { display: flex; align-items: center; gap: calc(24 * var(--u)); border-top: 1px solid var(--g-line2); padding-top: calc(16 * var(--u)); }
+.me-tease { flex: 1; min-width: 0; display: flex; align-items: center; gap: calc(22 * var(--u)); }
+.me-tease .art { flex: none; width: calc(240 * var(--u)); height: calc(120 * var(--u)); min-width: 100px; min-height: 50px; background: center / cover no-repeat; border: 1px solid var(--g-edge); }
+.me-tease .tx { flex: 1; min-width: 0; }
+.me-tease .nm { font: 600 var(--f2) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-gold); }
+.me-tease p { margin: 0; font: var(--f1) var(--g-body); color: var(--g-dim); line-height: 1.25; }
+.me-acts { flex: none; display: flex; gap: calc(16 * var(--u)); align-items: center; }
+.me-acts .el-btn { min-height: 44px; font-size: max(13px, calc(22 * var(--u))); padding-left: max(18px, calc(34 * var(--u))); padding-right: max(18px, calc(34 * var(--u))); }
+
+/* telefon yatay (html.short): her şey bir ekrana sığar; hikâye iki satır, teaser resmi ve portre adları gizli */
+html.short .me-panel { padding: 8px 16px; gap: 4px; width: 96%; }
+html.short .me-t { font-size: 20px; }
+html.short .me-story { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+html.short .me-rule, html.short .me-h { display: none; }
+html.short .me-stat { padding: 3px; }
+html.short .me-stat b { font-size: 14px; }
+html.short .me-row2 { gap: 12px; }
+html.short .me-hero .face { width: 56px; height: 56px; }
+html.short .me-hero .nm { display: none; }
+html.short .me-heroes { gap: 10px; }
+html.short .me-loot { gap: 2px; }
+html.short .me-it .tile { width: 34px; height: 34px; }
+html.short .me-it .tg { display: none; }
+html.short .me-it .nm { font-size: 11px; }
+html.short .me-tease .art { display: none; }
+html.short .me-tease p { display: none; }
+html.short .me-foot { padding-top: 5px; gap: 10px; }

@@ -62,7 +62,7 @@ export function valorTip(valor: number, where: 'battle' | 'map' | 'camp', rules:
     `In battle, ${rules.revive.battleCost} embers (the gold notch) raise a fallen ally with ${Math.round(rules.revive.hpRatio * 100)}% HP. It uses the turn.`,
     `Outside battle a revive costs only ${rules.revive.outsideCost} embers.`,
     // Valor ile yara silme (Ömer 2026-10-26): yalnız sefer haritasında
-    ...(where === 'map' && rules.woundHeal ? [`On the map, ${rules.woundHeal.outsideCost} embers also heal one wound of a living hero.`] : []),
+    ...(where === 'map' && rules.woundHeal ? [`On the map, ${rules.woundHeal.outsideCost} embers also heal one wound of a living hero${woundHpText(rules)}.`] : []),
   ];
   if (where === 'battle') rows.push(ready ? 'Use Revive next to Rest / Skip / Move.' : `Not enough for a revive yet (${rules.revive.battleCost} needed).`);
   else rows.push(valor >= rules.revive.outsideCost ? 'Tap the braziers to revive a fallen hero.' : `A revive needs ${rules.revive.outsideCost} embers.`);
@@ -100,7 +100,6 @@ export class ValorMeter {
   private raf = 0;
   private queue: number[] = [];
   private stepAt = 0;
-  private tipEl: HTMLElement | null = null;
   private destroyed = false;
 
   constructor(private readonly o: MeterOptions = {}) {
@@ -148,14 +147,12 @@ export class ValorMeter {
     if (o.onClick) {
       this.el.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.hideTip();
         o.onClick!();
       });
       this.el.addEventListener('mouseup', (e) => e.preventDefault());
     }
     if (o.selfTip) {
-      this.el.addEventListener('pointerenter', (e) => e.pointerType !== 'touch' && this.showTip());
-      this.el.addEventListener('pointerleave', () => this.hideTip());
+      attachBandTip(this.el, () => this.bandSpec());
     }
     this.paint();
   }
@@ -188,34 +185,15 @@ export class ValorMeter {
   destroy(): void {
     this.destroyed = true;
     cancelAnimationFrame(this.raf);
-    this.hideTip();
     this.el.remove();
   }
 
-  showTip(): void {
-    if (this.tipEl || !this.o.where) return;
+  /** Harita / Endless: Gear ve Formation ile aynı A Band ipucu (Ömer 2026-11-03); kısayol V ipucunda yazar. */
+  private bandSpec(): BandTipSpec | null {
+    if (!this.o.where) return null;
     const t = valorTip(this.value, this.o.where);
-    const tip = document.createElement('div');
-    tip.className = 'el-tip vl-tip';
-    const b = document.createElement('b');
-    b.textContent = t.title;
-    tip.append(b);
-    for (const r of t.rows) {
-      const d = document.createElement('div');
-      d.textContent = r;
-      tip.append(d);
-    }
-    document.body.append(tip);
-    const r = this.el.getBoundingClientRect();
-    const tw = tip.offsetWidth;
-    tip.style.left = `${Math.max(8, Math.min(window.innerWidth - tw - 8, r.left))}px`;
-    tip.style.top = `${r.bottom + 8}px`;
-    this.tipEl = tip;
-  }
-
-  hideTip(): void {
-    this.tipEl?.remove();
-    this.tipEl = null;
+    const [first, ...rest] = t.rows;
+    return { title: t.title, ...(first ? { sub: first } : {}), lines: rest.map((text) => ({ text })), ...(this.o.where !== 'battle' ? { foot: 'Key: V opens Valor' } : {}) };
   }
 
   private paint(): void {
@@ -300,7 +278,13 @@ export function woundHealOutcome(heal: ((heroId: string) => string | null) | und
 
 export function woundHealButton(h: Pick<ValorWoundedHero, 'name' | 'blocked'>, cost: number | null): { label: string; disabled: boolean; tip: string } | null {
   if (cost === null) return null;
-  return { label: `Heal wound · ${cost}`, disabled: h.blocked !== null, tip: h.blocked ?? `Spend ${cost} embers to heal one wound of ${h.name}.` };
+  return { label: `Heal wound · ${cost}`, disabled: h.blocked !== null, tip: h.blocked ?? `Spend ${cost} embers to heal one wound of ${h.name}${woundHpText(valorRules)}.` };
+}
+
+/** Heal wound can eki metni (Ömer 2026-11-07, woundHeal.hpRatio): ' and restore 25% of their max HP' ya da boş. */
+export function woundHpText(rules: Pick<ValorRules, 'woundHeal'>): string {
+  const r = rules.woundHeal?.hpRatio ?? 0;
+  return r > 0 ? ` and restore ${Math.round(r * 100)}% of their max HP` : '';
 }
 
 export interface ValorReviveOptions {
@@ -591,7 +575,7 @@ export function openValorRevive(o: ValorReviveOptions): void {
       return;
     }
     e.stopImmediatePropagation();
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' || (e.key.toLowerCase() === 'v' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat)) { // V tekrar: aç / kapat
       e.preventDefault();
       finish();
     }

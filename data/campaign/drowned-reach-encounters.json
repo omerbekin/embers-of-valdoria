@@ -2607,6 +2607,7 @@
   },
   "dr_pit_1": {
     "name": "Pit Brawlers",
+    "background": "saltmere-pit",
     "units": [
       {
         "class": "dock_rat",
@@ -2638,6 +2639,7 @@
   },
   "dr_pit_2": {
     "name": "Corsair Pair",
+    "background": "saltmere-pit",
     "units": [
       {
         "class": "corsair_cutlass",
@@ -2670,6 +2672,7 @@
   },
   "dr_pit_3": {
     "name": "Beasts of the Pit",
+    "background": "saltmere-pit",
     "units": [
       {
         "class": "salt_crab",
@@ -2711,6 +2714,7 @@
   },
   "dr_pit_4": {
     "name": "The Wreckers' Crew",
+    "background": "saltmere-pit",
     "units": [
       {
         "class": "reef_wrecker",
@@ -2752,6 +2756,7 @@
   },
   "dr_pit_5": {
     "name": "The Pit Champion",
+    "background": "saltmere-pit",
     "units": [
       {
         "class": "pit_champion_gorr",

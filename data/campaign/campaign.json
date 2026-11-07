@@ -34,12 +34,13 @@
   },
   "_townScreen": "Kasaba ekranı (Ömer 2026-10-12): tam ekran kasaba görseli, takım alttaki açık alanda durur (ayak çizgisi feetY x 1080), kahraman boyu ve aralığı 1920x1080 biriminde; yer etiketleri telefonda (html.short/compact) büyür. Yerler valdoria.json > nodes[].scene.",
   "townScreen": { "heroHeight": 250, "feetY": 0.9, "feetYPhone": 0.86, "gap": 230, "labelSize": 21, "labelSizePhone": 34, "recruitBadge": { "size": 0.78, "pulseMs": 1100, "pulseScale": 1.14, "bandY": 138, "bandYPhone": 150 } },
-  "_rules": "Can ve ölüm reworkü (Ömer 2026-10-19, docs/design/hp-death-rework.md; sefer ve Endless aynı kural): zafer şifası yalnızca YAŞAYANLARA, düğüm türüne göre: normal victoryHeal %25, elit eliteVictoryHeal %50, boss bossVictoryHeal tam (boss şifası yara SİLMEZ). Kazanılan savaşın SONUNDA hâlâ düşmüş olan kahraman wounds.riseRatio (%25; Ömer 2026-10-26, eski %10) canla kalkar ve 1 Yara alır (savaşta Valor / Resurrection / Raise Dead ile kalkan yara almaz; zafer şifası almaz). Her yara maks canı wounds.maxHpLoss (%20) düşürür, TOPLAMSAL (3 yara = -%60; VARSAYIM open-questions 369); savaş kurulumunda UnitModifiers.hpMult / hpAdd ile (src/progression/wounds.ts). wounds.lethal (3) yaralı kahraman bir kazanılan savaşı daha düşmüş bitirirse CESET olur (sonraki savaşa ölü girer; Valor kaldırır, yaraları kalır). Yarayı Inn (günde 1), kampın Tend wounds seçeneği (1), harita geçişi (hepsi) ve savaş dışı Valor (valor.json > woundHeal, 2026-10-26) siler (Ömer 2026-10-26: eski kasaba dinlenmesi ve ilk varış yara silmesi kalktı; kampın Rest seçeneği yara silmez). MP her savaşta dolu (sefer zaten taşımıyordu).",
+  "_rules": "Can ve ölüm reworkü (Ömer 2026-10-19, docs/design/hp-death-rework.md; sefer ve Endless aynı kural): zafer şifası yalnızca YAŞAYANLARA, düğüm türüne göre: normal victoryHeal %25, elit eliteVictoryHeal %50, boss bossVictoryHeal tam (boss şifası yara SİLMEZ). Kazanılan savaşın SONUNDA hâlâ düşmüş olan kahraman wounds.riseRatio (%25; Ömer 2026-10-26, eski %10) canla kalkar ve 1 Yara alır (savaşta Valor / Resurrection / Raise Dead ile kalkan yara almaz; zafer şifası almaz). Her yara maks canı wounds.maxHpLoss (%20) düşürür, TOPLAMSAL (3 yara = -%60; VARSAYIM open-questions 369); savaş kurulumunda UnitModifiers.hpMult / hpAdd ile (src/progression/wounds.ts). wounds.lethal (3) yaralı kahraman bir kazanılan savaşı daha düşmüş bitirirse CESET olur (sonraki savaşa ölü girer; Valor kaldırır, yaraları kalır). Yarayı Inn (günde 1), kampın Tend wounds seçeneği (1), harita geçişi (hepsi) ve savaş dışı Valor (valor.json > woundHeal, 2026-10-26) siler (Ömer 2026-10-26: eski kasaba dinlenmesi ve ilk varış yara silmesi kalktı; kampın Rest seçeneği yara silmez). MP her savaşta dolu (sefer zaten taşımıyordu). victoryHealScale (Ömer 2026-11-07): düğüm level'ı takım ortalamasının altındaki her level için zafer şifası düşer: normal perLevelBelow -0,05, elit elitePerLevelBelow -0,1, boss bossPerLevelBelow -0,2 (healelite); hepsinde en az min 0,1.",
   "rules": {
     "carryHp": true,
     "victoryHeal": 0.25,
     "eliteVictoryHeal": 0.5,
     "bossVictoryHeal": 1.0,
+    "victoryHealScale": { "perLevelBelow": 0.05, "elitePerLevelBelow": 0.1, "bossPerLevelBelow": 0.2, "min": 0.1 },
     "wounds": { "riseRatio": 0.25, "maxHpLoss": 0.2, "lethal": 3 },
     "maxSaves": { "normal": 5, "ironman": 1 },
     "slots": 3
@@ -65,6 +66,8 @@
   },
   "_soloStart": "Tek kişilik sefer başlangıcı (Ömer 2026-11-01; docs/design/tutorial.md > Yeni sefer başlangıcı). Yalnız YENİ seferler (kayıtta soloStart: true); eski kayıtlar legacyStart ile eski yapıda sürer. skillOrder: ilk kahramanın skill açılış sırası, ilk eleman temel saldırı. stages: düğüm -> ilk kaç skill açık (open), wave: o dalga başlarken kaçı açık. Yalnız düğüm ilk kez kazanılana kadar ve yalnız lider için; devriye kilitsiz (src/campaign/solo-start.ts). Defender'da Taunt ve Close Ranks, Paladin'de Resurrection tek başına işe yaramaz: tek kişide işe yarayan skill öne alındı. enemyScale: Ashford ile King's Bridge arası düğümlere bu seferdeki takım boyuna göre çarpan (party2 = Valdren öncesi 2 kişi, party3 = Valdren sonrası 3 kişi; eski denge 3 ve 4 kişiye göreydi). enemyScale sayıları 2026-11-01 sim turlarıyla ayarlandı (docs/balance.md); kalan sayılar PROVİZYON. HARİTA 1 EĞRİSİ (Ömer 2026-11-01, balance-tester, 1. yön denemesi): eski kayıt encounters.json'daki aynı karşılaşmayı oynadığı için eğri bu tablodan ayarlanır; King's Bridge sonrası düğümler de buraya girer (eski kayıt bunları görmez). Iron Pass ve Charcoal Camp sertleşir (Valdren girişi biraz zor); Grave Field, St. Brann's ve Black Cathedral yumuşar (kasma işe yarasın: Grave Field ve Pilgrim Road kasma yeri olarak %29-40 zaferdeydi); Ashen Plain, Siege Line, Thornwood yumuşar (kasma yeri %8-24 zaferdeydi); Ember Road yumuşar (duvar %13); Riverhead ve Gate of Cinders sertleşir, Castle Morvane güçlenir (boss ilk deneme hedefi %30-50; %84'tü). 2. tur (96 koşu): tek kişi Cairn Hill %51 ve Brackenridge %71 olduğu için bu ikisi yumuşadı; Iron Pass, Ember Road, Gate of Cinders biraz geri alındı; King's Bridge ve Castle Morvane duvar yüzünden yumuşadı. 3. tur (300 koşu; normal düğümler bandın üstündeydi): Iron Pass, Charcoal Camp, Grave Field, Pilgrim Road, St. Brann's, Siege Line, Ember Road, Burnt Hamlet, Riverhead, Gate of Cinders sertleşir, Castle Morvane güçlenir. 4. tur (Ömer main'i oynadı: King's Bridge %34 kolay, 2. kasaba sonrası biraz kolaylaşsın): yumuşatma geri alındı, sim yüzdesi hedefleri Grave ~85, Pilgrim ~88, St. Brann's ~75, Cathedral ~62, Bridge %45-50, Ashen ~85, Siege ~82, Thornwood ~75, Ember ~84, Hamlet ~88, Riverhead ~92, Gate ~86, Castle ~45-55 (sim yüzdesi oyuncu yüzdesi değildir).",
   "soloStart": {
+    "_xpScale": "Ömer 2026-11-07 (tutxp): tutorial savaş XP çarpanı (düğüm id -> çarpan; yalnız yeni sefer, ilk harita, src/campaign/xp.ts > battleXp). Lider L1 başlar, Ashford'a tam L2 varır (L2 = 20 XP, L3 = 81 XP). Ham XP (dalga bonusu 40 dahil): Mill Road 12, Ravenwood 76, Ruined Watchtower 140; çarpanla 12 / 6 / 35 = 53 (L2, 33/61). Level elitte atlanır. Özel level verme kuralı (eliteLevelUp) kaldırıldı.",
+    "xpScale": { "2": 0.08, "3": 0.25 },
     "skillOrder": {
       "warrior": ["melee_attack", "whirlwind", "charge", "headsmans_blow"],
       "defender": ["tremor_slam", "fist_crush", "taunt", "close_ranks"],
@@ -76,6 +79,7 @@
       "2": { "open": 2, "wave": { "index": 1, "open": 3 } },
       "3": { "open": 4 }
     },
+    "_tune0911": "0.9.11 elit/boss ayarı (balance-tester 2026-11-07; Ömer hedefi: Harita 1 elit ilk deneme 0.9.10.30 ölçümünün 5 puan altı, boss 3-4 denemede; mana 0.9.11 = mpPerInt 0,2 / mpRegenPerInt 0,15). Yalnız can/güç: cathedral güç 0,85 -> 0,5 (can 1,0625 Ömer seçimi aynı), thornwood 1/1 -> 0,88/0,88, bridge güç 0,84 -> 0,78, castle güç 1,23 -> 1,18. Ölçüm Medium/Medium 120 sefer seed 7001 (test): 0.9.10.30 elit 66,7 / boss 43,3; ayar öncesi (yeni mana) elit 21,7 / boss 23,8; sonra elit 60,0 (Cathedral 58,3, Thornwood 61,7) / boss 35,0 (King's Bridge 35,8, Castle Morvane 34,2), normal 78,3, bitirme %43,3. İkinci tur (Ömer 2026-11-07: elit bandı 57-65, elit biraz zor; Harita 3 mob skill bedelleri düştü, bu da Harita 1'i biraz kolaylaştırdı): cathedral güç 0,5 -> 0,54, thornwood güç 0,88 -> 0,92 (can aynı). Bedel düşüşü sonrası ayar öncesi: test elit 65,8 / 300 sefer seed 1 elit 67,8. Sonra test (120 / 7001): elit 59,2 (Cathedral 51,7, Thornwood 66,7), boss 30,4, normal 78,1, bitirme %41,7; 300 sefer seed 1: elit 61,7 (Cathedral 56,8, Thornwood 66,7), boss 32,7 (King's Bridge 32,3, Castle Morvane 33,0), normal 78,8, bitirme %40,7. Boss verisi değişmedi.",
     "enemyScale": {
       "groups": {
         "party2": { "hpMult": 0.72, "powerMult": 0.72 },
@@ -84,29 +88,32 @@
         "ironPass": { "hpMult": 0.93, "powerMult": 0.93 },
         "charcoal": { "hpMult": 1.1, "powerMult": 1.1 },
         "party3": { "hpMult": 0.8, "powerMult": 0.8 },
-        "grave": { "hpMult": 0.81, "powerMult": 0.81 },
-        "pilgrim": { "hpMult": 0.84, "powerMult": 0.84 },
-        "abbey": { "hpMult": 0.82, "powerMult": 0.82 },
-        "cathedral": { "hpMult": 0.82, "powerMult": 0.82 },
-        "bridge": { "hpMult": 0.79, "powerMult": 0.84 },
-        "ashenPlain": { "hpMult": 1.05, "powerMult": 1.05 },
-        "siegeLine": { "hpMult": 1.04, "powerMult": 1.04 },
-        "thornwood": { "hpMult": 1, "powerMult": 1 },
-        "emberRoad": { "hpMult": 0.92, "powerMult": 0.92 },
-        "hamlet": { "hpMult": 1.04, "powerMult": 1.04 },
+        "party3b": { "hpMult": 0.82, "powerMult": 0.82 },
+        "party3c": { "hpMult": 0.84, "powerMult": 0.84 },
+        "grave": { "hpMult": 0.85, "powerMult": 0.85 },
+        "pilgrim": { "hpMult": 0.88, "powerMult": 0.88 },
+        "abbey": { "hpMult": 0.87, "powerMult": 0.87 },
+        "cathedral": { "hpMult": 1.0625, "powerMult": 0.54 },
+        "bridge": { "hpMult": 0.79, "powerMult": 0.78 },
+        "ashenPlain": { "hpMult": 0.97, "powerMult": 0.97 },
+        "siegeLine": { "hpMult": 1, "powerMult": 1 },
+        "thornwood": { "hpMult": 0.88, "powerMult": 0.92 },
+        "emberRoad": { "hpMult": 0.95, "powerMult": 0.95 },
+        "hamlet": { "hpMult": 1.02, "powerMult": 1.02 },
         "riverhead": { "hpMult": 1.03, "powerMult": 1.03 },
-        "gate": { "hpMult": 1, "powerMult": 1.18 },
-        "castle": { "hpMult": 1, "powerMult": 1.23 }
+        "gate": { "hpMult": 1, "powerMult": 1.12 },
+        "castle": { "hpMult": 1, "powerMult": 1.18 }
       },
       "nodes": {
         "moor": "party2", "hills": "hills", "hoard": "party2", "cairn": "cairn", "5B": "ironPass", "charcoal": "charcoal",
-        "6B": "party3", "6A": "party3", "5A": "party3", "shrine": "party3", "grave": "grave", "pilgrim": "pilgrim", "8A": "abbey", "8C": "cathedral",
+        "6B": "party3", "6A": "party3b", "5A": "party3b", "shrine": "party3c", "grave": "grave", "pilgrim": "pilgrim", "8A": "abbey", "8C": "cathedral",
         "9": "bridge",
         "10": "ashenPlain", "11B": "siegeLine", "thorn": "thornwood", "road": "emberRoad", "hamlet": "hamlet", "head": "riverhead", "gate": "gate", "12": "castle"
       }
     }
   },
   "_mapEnemyScale": "Harita bazlı düşman çarpanı (Ömer 2026-11-01 eğrisi; docs/balance.md). soloStart.enemyScale ile aynı yapı (groups + nodes) ama kayıt türünden bağımsız: Harita 2 eski ve yeni kayıtta aynı olduğu için ikisi de aynı çarpanı alır (src/campaign/solo-start.ts > mapEnemyScale). Yalnız mob canı ve hasarı. Sayılar sim ile ayarlandı; bossta can şişirilmez, hasar tercih edilir (Throne of Brine savaşları zaten uzun).",
+  "mapLootScale": { "drowned-reach": { "items": 0.88, "gold": 0.88 } },
   "mapEnemyScale": {
     "hollow-crown": {
       "groups": {"nI":{"hpMult":1.2,"powerMult":1.2},"eI":{"hpMult":1.2,"powerMult":1.45},"nII":{"hpMult":1.3,"powerMult":1.3},"eII":{"hpMult":1.2,"powerMult":1.55},"nIII":{"hpMult":1.4,"powerMult":1.4},"eIII":{"hpMult":1.2,"powerMult":1.65},"nIV":{"hpMult":1.4,"powerMult":1.4},"eIV":{"hpMult":1.2,"powerMult":1.7},"nV":{"hpMult":1.4,"powerMult":1.4},"eV":{"hpMult":1.2,"powerMult":1.75},"nVI":{"hpMult":1.45,"powerMult":1.45},"eVI":{"hpMult":1.2,"powerMult":1.8},"bossHollow":{"hpMult":1,"powerMult":1.25},"bossThrone":{"hpMult":1,"powerMult":1.9},"bossHearth":{"hpMult":1,"powerMult":2.7},"bossEmber":{"hpMult":1,"powerMult":2.9},"nSoft":{"hpMult":1.15,"powerMult":1.15},"nMid":{"hpMult":1.3,"powerMult":1.3},"ePyre":{"hpMult":1.2,"powerMult":1.4}},
@@ -220,7 +227,7 @@
     "townSwap": "Swords for hire wait at the barracks. Your company stays at four: whoever joins takes someone's place, and the one who steps aside waits here.",
     "townSwapReserve": "Your reserves wait at the barracks. Whoever joins takes someone's place, and the one who steps aside waits here.",
     "townSwapOut": "Who steps aside? They keep their gear and wait at these barracks until you call them back.",
-    "complete": "The Ash Curse is broken. Valdoria is free again.",
+    "complete": "The Ash Curse is broken. Valdoria is free again. Ash settles over the roads, and the villages light their hearths once more. In the vault beneath Castle Morvane the crown lies unbroken, its embers still glowing.",
     "stepRecruit": "A wanderer offers to join you: choose one companion.",
     "stepFarewell": "Your escort stays behind here. Their levels and spent points leave with them; their gear goes into your bag.",
     "stepCompany": "Form your company.",

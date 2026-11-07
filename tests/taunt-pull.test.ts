@@ -76,7 +76,7 @@ describe('Bölge I düşman YZ ayarı (enemyAi)', () => {
     const p1 = plan('moor');
     expect(p1.enemyAi).toEqual({ pressureShare: 0.125 });
     expect(p1.enemyAi!.pressureShare).toBeLessThan(content.aiConfig.value!.pressureShare!);
-    expect(plan('6A').enemyAi).toBeUndefined();
+    expect(plan('5A').enemyAi).toBeUndefined();
   });
 
   it('opts.value baskı terimini düşürür', () => {

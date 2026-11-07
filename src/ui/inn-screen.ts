@@ -1,6 +1,6 @@
 /**
  * Inn ekrani (Omer 2026-10-26, taslak public/mockups/economy-ui.html bolum 2 A "iki sutun"): solda Inn'deki kahramanlar ("Fully healed in N days" +
- * Take back), sagda yoldaki takim (Leave here + bos yuvalar), altta yedekler (kisla; yalniz bilgi). Kural saf: src/campaign/state.ts (innGuests,
+ * Take back), sagda yoldaki takim (Rest + bos yuvalar), altta yedekler (kisla; yalniz bilgi). Kural saf: src/campaign/state.ts (innGuests,
  * innLeaveBlocked, leaveAtInn, innTakeBlocked, takeFromInn). Engelliyse dugme pasif, neden ipucunda ve altinda yazili. Italik yok; oyun metni Ingilizce.
  */
 import {
@@ -103,7 +103,7 @@ export function openInn(root: HTMLElement, get: () => CampaignState, set: (s: Ca
     for (const h of team) {
       const why = innLeaveBlocked(s, h.id);
       const a = el('div', 'ec-act');
-      a.append(button('', 'Leave here', () => act(() => leaveAtInn(get(), h.id), 'buy'), why));
+      a.append(button('', 'Rest', () => act(() => leaveAtInn(get(), h.id), 'buy'), why));
       if (why) a.append(el('span', 'ec-why', why));
       right.append(heroRow(h, '', [], a));
     }

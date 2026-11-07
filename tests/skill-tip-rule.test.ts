@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { foldSkillRows } from '../src/ui/skill-tip-rule';
+import { compactRow, foldSkillRows } from '../src/ui/skill-tip-rule';
 import { MORE_MARK, richSegs } from '../src/ui/band-rich';
 
 const judgment = [
@@ -12,29 +12,31 @@ const judgment = [
   'Ground reactions: Purified (with Poison), Holy water (with Flooded)',
 ].map((text) => ({ text }));
 
-describe('skill tip rule A', () => {
-  it('Judgment: equal values merge, grounds are one line each, full text behind More', () => {
+describe('skill tip rule (no More)', () => {
+  it('Judgment: equal values merge, grounds are one line each, rules + merged reactions follow, no More row', () => {
     const rows = foldSkillRows(judgment);
-    const i = rows.findIndex((r) => r.text === MORE_MARK);
-    expect(rows.slice(0, i).map((r) => r.text)).toEqual([
+    expect(rows.some((r) => r.text === MORE_MARK)).toBe(false);
+    const t = rows.map((r) => r.text);
+    expect(t.slice(0, 3)).toEqual([
       '[[k|Damage / Heal]] 30% INT (8) [[d|·]] [[d|enemies / allies]]',
       '[[k|Holy Fire]] [[d|(enemy side)]] [[d|·]] 2 turns [[d|·]] 38% INT (10) per turn',
       '[[k|Holy Ground]] [[d|(your side)]] [[d|·]] 2 turns [[d|·]] 38% INT (10) per turn',
     ]);
-    const full = rows.slice(i + 1).map((r) => r.text);
-    expect(full).toHaveLength(6);
-    expect(full[5]).toBe('Ground reactions: Purified (with Poison), Fed (with Poison), Holy water (with Flooded)');
+    expect(t).toHaveLength(5);
+    expect(t[4]).toBe('Ground reactions: Purified (with Poison), Fed (with Poison), Holy water (with Flooded)');
   });
-  it('Ley Brand: first line + the two short numeric rule lines (wording of mockup B)', () => {
-    const lines = [
-      'Brands every enemy in the area for 3 turns (Branded); it cannot miss',
-      'An enemy with no mana gains tainted mana equal to 20% of its max HP, starting full; it cannot spend it, and it is gone when the Brand ends',
-      'An enemy with mana pays 50% more MP for its skills (rounded up)',
-      'Mana Steal and Void Strike deal 40% more damage to Branded enemies',
-    ].map((text) => ({ text }));
-    const rows = foldSkillRows(lines);
-    const i = rows.findIndex((r) => r.text === MORE_MARK);
-    expect(rows.slice(0, i).map((r) => r.text)).toEqual([lines[0]!.text, lines[2]!.text, lines[3]!.text]);
+  it('long rows lose filler (rounded up) only; rule notes and numbers stay', () => {
+    const row = { text: 'An enemy with mana pays 50% more MP for its skills (rounded up) and loses extra MP equal to 50% of the MP it paid (or all it has left); it cannot miss or crit (ignores armor)' };
+    const out = compactRow(row).text;
+    expect(out).not.toContain('(rounded up)');
+    expect(out).toContain('(or all it has left)');
+    expect(out).toContain('cannot miss or crit');
+    expect(out.match(/\d+%/g)).toEqual(['50%', '50%']);
+    expect(compactRow({ text: 'Damage 38% STR (10) x2' }).text).toBe('Damage 38% STR (10) x2');
+  });
+  it('Fist Crush: both lines show, nothing hidden', () => {
+    const rows = foldSkillRows([{ text: 'Damage 71% STR + 5% Armor (14)' }, { text: 'Uses your current armor, aura bonus included' }]);
+    expect(rows.map((r) => r.text)).toEqual(['Damage 71% STR + 5% Armor (14)', 'Uses your current armor, aura bonus included']);
   });
   it('simple skill stays untouched, no More', () => {
     expect(foldSkillRows([{ text: 'Damage 38% STR (10) x2' }]).map((r) => r.text)).toEqual(['[[k|Damage]] 38% STR (10) x2']);

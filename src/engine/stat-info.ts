@@ -31,12 +31,6 @@ const pct = (v: number, digits = 0) => `${(v * 100).toFixed(digits)}%`;
 const num = (v: number) => (Number.isInteger(v) ? String(v) : String(Number(v.toFixed(3))));
 const num1 = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1).replace(/\.0$/, ''));
 
-/** Kişisel hız zarının sapması (+6% / -4% / ±0%; tam yüzdeye yuvarlanır). */
-export function paceText(roll: number): string {
-  const p = Math.round((roll - 1) * 100);
-  return p > 0 ? `+${p}%` : p < 0 ? `-${-p}%` : '±0%';
-}
-
 /** Bir stat'ın ne işe yaradığını ve şu anki etkisini anlatan tooltip metni (İngilizce). */
 export function describeStat(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
   const info = describeStatBase(kind, stats, f);
@@ -129,8 +123,6 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         title: `Speed ${speedText(stats.spd, f)}`,
         lines: [
           `Comes from Dexterity (+${num(a.spdPerDex)} per point)`,
-          // Kişisel hız zarı (Ömer 2026-10-24): birimin sapması; zar yoksa (sınıf kartı, wiki örneği) satır yok
-          ...(stats.spdRoll !== undefined ? [`Natural pace: ${Math.round(stats.spdRoll * 100) === 100 ? 'normal' : multText(Math.round(stats.spdRoll * 100) / 100)} Speed`] : []),
           'Decides how soon the unit acts: higher speed means more turns',
         ],
       };

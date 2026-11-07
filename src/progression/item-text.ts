@@ -258,7 +258,7 @@ export function itemLines(d: ItemDef, rarity: RarityId = d.rarity): string[] {
   if ((d.rarity === 'legendary' || d.set) && d.affixes) for (const id of d.affixes) out.push(mid(id) ?? id);
   else {
     const tiers = rarityDef(rarity === 'legendary' ? 'epic' : rarity).tiers;
-    const mains = d.family ? (ITEMS.weaponFamilies.find((f) => f.id === d.family)?.mains ?? []) : d.main ? [d.main] : [];
+    const mains = d.main ? [d.main] : d.family ? (ITEMS.weaponFamilies.find((f) => f.id === d.family)?.mains ?? []) : [];
     tiers.forEach((t, i) => {
       if (i === 0 && mains.length === 1) out.push(mid(mains[0]!) ?? mains[0]!);
       else if (i === 0 && mains.length > 1) out.push(`[C] One of: ${mains.map((m) => affixDef(m)?.name ?? m).join(', ')}`);
@@ -269,12 +269,12 @@ export function itemLines(d: ItemDef, rarity: RarityId = d.rarity): string[] {
   return fx ? [...out, fx] : out;
 }
 
-/** Tutuş notu (2026-10-12; "Off-hand too" 2026-10-23'te kaldırıldı): "One-handed" / "Two-handed" / kalkanda "Off-hand"; yay ve tılsımda boş (adı zaten söyler). */
+/** Tutuş notu (2026-10-12; "Off-hand too" 2026-10-23'te kaldırıldı): "One-handed" / "Two-handed" / ikinci elde "Off-hand"; yay "Two-handed" (2026-11-07: yay çift el, yalnız Sadak alır). */
 export function gripNote(d: ItemDef): string {
   if (d.slot === 'offhand') return 'Off-hand';
   const g = gripOf(d);
   if (g === 'one') return 'One-handed';
-  if (g === 'two') return 'Two-handed';
+  if (g === 'two' || g === 'bow') return 'Two-handed';
   return '';
 }
 

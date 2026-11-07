@@ -1,0 +1,2 @@
+GECTI
+PUAN: 8

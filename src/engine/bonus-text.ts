@@ -3,6 +3,9 @@
 // - AYRI ÇARPAN (diğer bonuslarla çarpılan) bonus, CÜMLE biçiminde (Ömer 2026-10-27, silah tipleri formu; oyunun her yerinde): "20% more damage";
 //   1'in altındaysa "20% less damage"; alınan hasar "Takes 4% less Holy damage". "×1.2" ASLA yazılmaz (durumlar, pasifler, element hasarı, kritik...).
 // Hesap yazıya uyar (2026-10-27): ayrı "×" kaynaklar ÇARPILIR (tree-hooks.ts > STACK_FORM), bir düğümün rank'ları tek çarpanda toplanır, "+%" yazılanlar toplanır.
+// Hasar havuzu (Ömer 2026-11-07, P1): vuruş hasarına giren tüm yüzde bonuslar (item Global/element/sıra/aura/duruş/bitirici/Giantslayer, ağaç "+% power" ve
+// koşullu hasar düğümleri) TOPLAMSAL yazılır ("+X% damage" / "X% increased"). "more" yalnız gerçek çarpanlarda kalır: silah gücü, kritik,
+// Evolve (.v) düğümü, sınıf imza pasifi, Hunter's Mark (Dex primary, Ömer 2026-11-07), Surge, hedefteki zayıflık / alınan hasar durumları; eksi değerler "less" (ayrı çarpan).
 
 /** Çarpanın sayısı: en çok 3 ondalık, sondaki sıfırlar atılır (1.25, 0.7, 1.875). */
 const trim = (v: number): string => String(Number(v.toFixed(3)));

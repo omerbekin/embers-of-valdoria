@@ -10,13 +10,13 @@ const cells = (): string[] => {
 };
 
 describe('formation board kuralları (Formation A)', () => {
-  it('kahramana dokunmak seçer; seçiliyken başka kahramana dokunmak yer değiştirir', () => {
+  it('kahramana dokunmak yalnızca seçer; seçiliyken başka kahramana dokunmak yer DEĞİŞTİRMEZ', () => {
     const a = tapCell(cells(), { sel: '', moved: '' }, 1);
     expect(a.st.sel).toBe('warrior');
     expect(a.move).toBeUndefined();
     const b = tapCell(cells(), a.st, 10);
-    expect(b.move).toEqual({ id: 'warrior', cell: 10 });
-    expect(b.st).toEqual({ sel: '', moved: 'warrior' });
+    expect(b.move).toBeUndefined();
+    expect(b.st.sel).toBe('undead');
   });
 
   it('seçili kahramana yeniden dokunmak seçimi kaldırır', () => {
@@ -24,10 +24,10 @@ describe('formation board kuralları (Formation A)', () => {
     expect(r.st.sel).toBe('');
   });
 
-  it('seçiliyken boş hücreye dokunmak taşır ve seçimi kaldırır', () => {
+  it('seçiliyken boş hücreye dokunmak TAŞIMAZ (yalnızca sürükle-bırak taşır)', () => {
     const r = tapCell(cells(), { sel: 'warrior', moved: '' }, 4);
-    expect(r.move).toEqual({ id: 'warrior', cell: 4 });
-    expect(r.st).toEqual({ sel: '', moved: 'warrior' });
+    expect(r.move).toBeUndefined();
+    expect(r.st.sel).toBe('');
   });
 
   it('seçim yokken boş hücreye dokunmak hiçbir şey yapmaz', () => {

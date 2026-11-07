@@ -44,10 +44,9 @@ describe('ondalık hız: değerler', () => {
     expect(f.turn.counterStep).toBeLessThanOrEqual(STEP);
   });
 
-  it('15 hız + Heavy Bronze (veriden -%10) = 13,5; kişisel zar sonra uygulanır', () => {
+  it('15 hız + Heavy Bronze (veriden -%10) = 13,5; tur zarı savaşta sonra uygulanır', () => {
     expect(heavyBronze).toBe(-0.1);
     expect(applyUnitModifiers(withSpd(15), { spdMult: 1 + heavyBronze }, f).stats.spd).toBe(13.5);
-    expect(applyUnitModifiers(withSpd(15), { spdMult: 1 + heavyBronze, spdRoll: 1.02 }, f).stats.spd).toBe(rolledSpeed(13.5, 1.02, f));
     expect(rolledSpeed(13.5, 1.02, f)).toBe(13.77);
   });
 
@@ -168,7 +167,7 @@ describe('ondalık hız: kayıt ve gösterim', () => {
     const before = heroStats(s.roster[0]!)!.spd;
     expect(JSON.stringify(s)).not.toContain('"spd"');
     const old = JSON.parse(JSON.stringify(s)) as typeof s;
-    for (const h of old.roster) delete h.spdRoll; // zarsız eski kayıt
+    for (const h of old.roster) (h as { spdRoll?: number }).spdRoll = 1.04; // eski kalıcı zarlı kayıt (Ömer 2026-11-07: zar kalktı, alan yok sayılır)
     const back = normalizeState(old)!;
     expect(heroStats(back.roster[0]!)!.spd).toBe(before);
     expect(before).toBe(Number(before.toFixed(3)));

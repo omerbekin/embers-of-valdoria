@@ -12,8 +12,11 @@ const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i)
 const ofType = <T extends BattleEvent['type']>(events: BattleEvent[], type: T) => events.filter((e): e is Extract<BattleEvent, { type: T }> => e.type === type);
 
 /** Hücre listeli savaş; kritik kapalı, isabet tam, kaçınma yok. */
-function mk(party: Record<number, string>, enemies: Record<number, string>, mode: BattleMode = 'test', seed = 1): Battle {
-  const b = new Battle(content.battleSetup('random-battle', seed, mode, { party: cells(party), enemies: cells(enemies) }, false));
+function mk(party: Record<number, string>, enemies: Record<number, string>, mode: BattleMode = 'test', seed = 1, pace = true): Battle {
+  const setup = content.battleSetup('random-battle', seed, mode, { party: cells(party), enemies: cells(enemies) }, false);
+  // pace false: tur başına hız zarı kapalı (Ömer 2026-11-07; Skip Turn hız hesabı birebir ölçülsün diye)
+  if (!pace) setup.formulas = { ...setup.formulas, attributes: { ...setup.formulas.attributes, spdVariance: 0 } };
+  const b = new Battle(setup);
   for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0 });
   return b;
 }
@@ -26,7 +29,7 @@ function until(b: Battle, uid: string): void {
 
 describe('global skill verisi', () => {
   it('rest, skip_turn, move_tile tanımlı; class skill tablosundan (content.skills) ayrı; her class hâlâ tam 4 skill', () => {
-    expect(Object.keys(G).sort()).toEqual(['ash_surge', 'move_tile', 'rest', 'salt_surge', 'skip_turn', 'thunder_rod_topple', 'tidewater_urn', 'valor_revive']);
+    expect(Object.keys(G).sort()).toEqual(['ash_surge', 'move_tile', 'rest', 'royal_command', 'salt_surge', 'skip_turn', 'thunder_rod_topple', 'tidewater_urn', 'valor_revive']);
     for (const id of Object.keys(G)) expect(content.skills[id], id).toBeUndefined();
     for (const [id, def] of Object.entries(content.classes)) {
       expect(def.skills, id).toHaveLength(4);
@@ -117,7 +120,7 @@ describe('Skip Turn', () => {
   };
   /** Aktör yavaş (spd 10), diğerleri hızlı (spd 100): skip sonrası başkalarının araya girmesi garanti (hız stat'ı sıra hesabında canlı okunur). */
   const mkSlow = (seed = 1, party: Record<number, string> = { 0: 'warrior', 1: 'mage' }, enemies: Record<number, string> = { 0: 'archer', 1: 'defender' }) => {
-    const b = mk(party, enemies, 'turns', seed);
+    const b = mk(party, enemies, 'turns', seed, false);
     const actor = b.currentUid!;
     for (const c of b.combatants) c.stats.spd = c.uid === actor ? 10 : 100;
     return { b, actor };
@@ -157,7 +160,7 @@ describe('Skip Turn', () => {
     expect(b.speedBoostOf(actor)).toBe(0);
     b.useGlobal(actor, 'skip_turn');
     expect(b.speedBoostOf(actor)).toBe(bonus);
-    expect(b.speedOf(c)).toBe(Math.round(c.stats.spd * (1 + bonus)));
+    expect(b.speedOf(c)).toBe(roundSpeed(c.stats.spd * (1 + bonus), content.formulas));
     const boosted = ticksToTurn(b, actor);
     const normal = Math.ceil((TH - c.turnCounter) / baseSpd);
     expect(boosted).toBe(Math.ceil((TH - c.turnCounter) / (baseSpd * (1 + bonus))));
@@ -257,6 +260,7 @@ describe('Skip Turn', () => {
     const mkWith = (bonus: number) => {
       const setup = content.battleSetup('random-battle', 1, 'turns', { party: cells({ 0: 'warrior', 1: 'mage' }), enemies: cells({ 0: 'archer', 1: 'defender' }) }, false);
       setup.globalSkills = { ...setup.globalSkills!, skip_turn: { ...setup.globalSkills!.skip_turn!, speedBonus: bonus } };
+      setup.formulas = { ...setup.formulas, attributes: { ...setup.formulas.attributes, spdVariance: 0 } }; // tur zarı kapalı: hız birebir
       const b = new Battle(setup);
       const actor = b.currentUid!;
       b.useGlobal(actor, 'skip_turn');

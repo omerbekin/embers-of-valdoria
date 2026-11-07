@@ -1,0 +1,51 @@
+{
+ "name": "druid-v3-abc",
+ "outDir": "docs/anim-review/new-art/druid-v3",
+ "rules": "docs/anim-review/new-art/druid-v3/PROMPT.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle-a",
+   "file": "idle-a.png",
+   "refs": [
+    "assets/poses/druid-v2/idle1.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/idle1.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "task": "Redraw the DRUID body, idle pose, nature-mage identity, strictly medieval, bold readable. Image 1 = pose/scale/framing reference (the current Druid; keep EXACT same pose, proportions, canvas, feet position, size). Image 2 = the old green hooded Archer; the Druid must clearly differ from it and from a russet/ochre bare-headed Archer. Empty hands (fists as in ref), no staff or weapon, real transparent background, no glow. Save at same canvas size as image 1 (566x452). CONCEPT: Bone-and-antler shaman: antler crown or horned skull headpiece (head not hooded), bone beads and talismans, pale hide wrap, ash-grey and bone-white with rust-red paint, tribal markings.",
+   "checkRules": "- Image 1 of check set is the new draw; others are refs (old Druid pose, Archer).\n- Same pose, scale, framing, foot position as the old Druid ref.\n- Clearly a nature-mage druid; concept matches its brief and is distinct in content from other druid variants.\n- Clearly different from the new Archer and from the old green hooded Archer.\n- Hands empty, no staff/weapon.\n- Real transparent/flat background, no checkerboard, no halo, no noise.\n- Strictly medieval, one bold readable character, clean."
+  },
+  {
+   "id": "idle-b",
+   "file": "idle-b.png",
+   "refs": [
+    "assets/poses/druid-v2/idle1.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/idle1.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "task": "Redraw the DRUID body, idle pose, nature-mage identity, strictly medieval, bold readable. Image 1 = pose/scale/framing reference (the current Druid; keep EXACT same pose, proportions, canvas, feet position, size). Image 2 = the old green hooded Archer; the Druid must clearly differ from it and from a russet/ochre bare-headed Archer. Empty hands (fists as in ref), no staff or weapon, real transparent background, no glow. Save at same canvas size as image 1 (566x452). CONCEPT: Stone-and-moss sage: elderly wise druid, long grey beard, robes in slate grey and earthy brown, moss and lichen patches on shoulders, carved stone amulet, bare head with leaf circlet.",
+   "checkRules": "- Image 1 of check set is the new draw; others are refs (old Druid pose, Archer).\n- Same pose, scale, framing, foot position as the old Druid ref.\n- Clearly a nature-mage druid; concept matches its brief and is distinct in content from other druid variants.\n- Clearly different from the new Archer and from the old green hooded Archer.\n- Hands empty, no staff/weapon.\n- Real transparent/flat background, no checkerboard, no halo, no noise.\n- Strictly medieval, one bold readable character, clean."
+  },
+  {
+   "id": "idle-c",
+   "file": "idle-c.png",
+   "refs": [
+    "assets/poses/druid-v2/idle1.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/idle1.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "task": "Redraw the DRUID body, idle pose, nature-mage identity, strictly medieval, bold readable. Image 1 = pose/scale/framing reference (the current Druid; keep EXACT same pose, proportions, canvas, feet position, size). Image 2 = the old green hooded Archer; the Druid must clearly differ from it and from a russet/ochre bare-headed Archer. Empty hands (fists as in ref), no staff or weapon, real transparent background, no glow. Save at same canvas size as image 1 (566x452). CONCEPT: Winter northern druid: heavy white fur mantle, pale blue and frost-silver robes, frost-rimed leather, braided white hair, rune-carved bone clasps, cold and stern.",
+   "checkRules": "- Image 1 of check set is the new draw; others are refs (old Druid pose, Archer).\n- Same pose, scale, framing, foot position as the old Druid ref.\n- Clearly a nature-mage druid; concept matches its brief and is distinct in content from other druid variants.\n- Clearly different from the new Archer and from the old green hooded Archer.\n- Hands empty, no staff/weapon.\n- Real transparent/flat background, no checkerboard, no halo, no noise.\n- Strictly medieval, one bold readable character, clean."
+  }
+ ]
+}

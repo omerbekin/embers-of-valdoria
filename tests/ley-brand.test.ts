@@ -48,7 +48,7 @@ describe('Ley Brand: veri', () => {
     expect(sk.name).toBe('Ley Brand');
     expect(sk.area).toMatchObject({ rows: 3, cols: 3 });
     expect(sk.range).toBe(4);
-    expect(sk.cost.amount).toBe(14);
+    expect(sk.cost.amount).toBe(12); // Ömer 2026-11-08 (0.9.11): 14 -> 12
     expect(sk.cooldown).toBe(3);
     expect(sk.effects.some((e) => e.type === 'manaBurn')).toBe(false);
     expect(BRAND.turns).toBe(3);
@@ -358,7 +358,14 @@ describe('Ley Brand: işaret (markDamagePct)', () => {
   it('açıklama: bedel yakımı ve "X% more damage" (adlarla)', () => {
     const info = describeSkill(content.skills.drain_field!, P(make({ 0: 'mage' })).stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds, skills: content.skills });
     const text = JSON.stringify(info);
-    expect(text).toContain(`Mana Steal and Void Strike deal ${Math.round(BRAND.markDamagePct! * 100)}% more damage to Branded enemies`);
+    const pctM = Math.round(BRAND.markDamagePct! * 100);
+    expect(text).not.toContain('more damage to Branded');
+    for (const id of ['mana_burn', 'void_strike']) {
+      const own = describeSkill(content.skills[id]!, P(make({ 0: 'mage' })).stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds, skills: content.skills });
+      expect(JSON.stringify(own)).toContain(`Deals ${pctM}% more damage to enemies Branded by Ley Brand`);
+      // test skill'i (pt_drain_field) da Brand taşır: satır YALNIZ BİR kez çıkar
+      expect(JSON.stringify(own).split('more damage to enemies Branded by').length - 1).toBe(1);
+    }
     expect(text).toContain(`extra MP equal to ${Math.round(BRAND.castBurnPct! * 100)}% of the MP it paid`);
   });
 });

@@ -390,6 +390,7 @@ describe('Hollow Crown (yalnız turns: test modunda tur yok)', () => {
     const units = { 0: { displayName: 'Hollow Warden' }, 2: { displayName: 'Hollow Warden' } };
     const b = make({ 4: 'hollow_king', 0: 'hollow_warden', 2: 'hollow_warden', 8: 'wight' }, 'turns', HEROES, undefined, units);
     const k = at(b, 'enemy', 4);
+    if (b.currentUid === k.uid) b.skipTurn(); // kral şu anki aktörse sıra ondan geçsin (tur başına hız zarı sırayı seed'e göre değiştirir)
     b.debugKill(at(b, 'enemy', 8).uid);
     expect(k.crownAction).toBeUndefined();
     b.debugKill(at(b, 'enemy', 0).uid);

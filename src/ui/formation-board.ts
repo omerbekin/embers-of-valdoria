@@ -107,11 +107,11 @@ const DRAG_PX = 10;
 
 const NAMES: Record<BoardAttr, string> = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence', luck: 'Luck' };
 const ORDER: BoardAttr[] = ['str', 'dex', 'int', 'luck'];
-const HOW = 'Click a hero to select it, then click an empty cell to move it there. With a hero selected, click another hero to swap places, or drag a hero onto another hero. Hover a cell to see how far the selected hero reaches from there.';
-const HOW_PLAIN = 'Click a hero to select it, then click an empty cell to move it there. With a hero selected, click another hero to swap places, or drag a hero onto another hero.';
+const HOW = 'Drag a hero onto an empty cell to move it, or onto another hero to swap places. Click a hero to select it, then hover a cell to see how far it reaches from there.';
+const HOW_PLAIN = 'Drag a hero onto an empty cell to move it, or onto another hero to swap places.';
 // dokunmatik (telefon): "Click / Hover" yerine dokunma dili
-const HOW_TOUCH = 'Tap a hero to select it, then tap an empty cell to move it there. With a hero selected, tap another hero to swap places, or drag a hero onto another hero. Tap a cell to see how far the selected hero reaches from there.';
-const HOW_PLAIN_TOUCH = 'Tap a hero to select it, then tap an empty cell to move it there. With a hero selected, tap another hero to swap places, or drag a hero onto another hero.';
+const HOW_TOUCH = 'Drag a hero onto an empty cell to move it, or onto another hero to swap places. Tap a hero to select it, then tap a cell to see how far it reaches from there.';
+const HOW_PLAIN_TOUCH = 'Drag a hero onto an empty cell to move it, or onto another hero to swap places.';
 const isTouchUi = (): boolean => (typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false);
 
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -378,10 +378,10 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
       return;
     }
     if (cell < 0 || cell !== d.slot) return;
+    // Dokunma / tıklama YALNIZCA seçer (menzil önizlemesi için); taşıma ve yer değiştirme yalnızca sürükle-bırak (Ömer 2026-11-07)
     const r = tapCell(o.cells(), st, cell);
     st.sel = r.st.sel;
     st.moved = r.st.moved;
-    if (r.move) doMove(r.move);
     redraw();
     if (e.pointerType === 'touch') {
       showTip(cell);

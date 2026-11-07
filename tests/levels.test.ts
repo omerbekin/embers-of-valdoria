@@ -245,7 +245,8 @@ describe('sefer: eğri hedefi ve kurallar', () => {
         expect(l).toBeLessThan(10);
       }
       // karar 364: Ashford sonrası ilk düğümler L1 (levels.json > rampStartSteps), L1 düşman az XP verir: bölüğün ilk level'ı 2. savaşta (ölçüm)
-      expect(ups[0]).toBeLessThanOrEqual(2);
+      // Ömer 2026-11-07 (tutxp): lider ilk level'ı ilk elitte (Ruined Watchtower, 3. savaş) alır, Ashford'a L2 varır (soloStart.xpScale)
+      expect(ups[0]).toBeLessThanOrEqual(3);
       const gaps = ups.slice(1).map((u, i) => u - ups[i]!);
       expect(gaps[0]!).toBeLessThanOrEqual(3); // ilk level'lar 2-3 savaşta (ölçüm: 2, 5)
     }
@@ -267,7 +268,7 @@ describe('sefer: eğri hedefi ve kurallar', () => {
     expect(acknowledgeLevelUps(won).levelUps).toBeUndefined();
     const fell = applyBattle(s, { victory: true, units: [{ heroId: h.id, hpRatio: 0, alive: false }] });
     expect(fell.roster[0]!.level).toBe(2); // düşen de XP alır (öldürme kaydı yok: hepsi düşmeden sayılır)
-    expect(fell.roster[0]).toMatchObject({ hpRatio: campaignJson.rules.wounds.riseRatio, alive: true, wounds: 1 });
+    expect(fell.roster[0]).toMatchObject({ hpRatio: 0, alive: false, wounds: 1 }); // otomatik kalkma yok (Ömer 2026-11-07)
   });
 
   it('öldürme kaydı: düştükten sonraki öldürmeler %50 (sonuçta kills)', () => {

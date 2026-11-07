@@ -386,7 +386,7 @@ describe('7b. Vesper ağacı: her tetik / etki terazide', () => {
     const b = fight({ '4.l3': 1 });
     const v = V(b);
     b.debugClearCooldowns();
-    v.mp = Math.round(v.maxMp * 0.5);
+    v.mp = v.maxMp - 5; // MP eksik ama Great Bell'e yeter (0.9.11 mana: havuzun yarısı bedele yetmiyordu)
     expect(term(b, v.uid, 'great_bell_of_valdoria', 'armedCost') ?? 0).toBeGreaterThan(0);
     (v.treeArmed ??= []).push('vesper:4.l3');
     expect(term(b, v.uid, 'great_bell_of_valdoria', 'armedCost') ?? 0).toBe(0);

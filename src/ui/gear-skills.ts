@@ -10,6 +10,7 @@ import { TREE_SECTION, describePassive, describeSkill, passiveNumbers, skillNumb
 import { patchedPassive } from '../engine/stats';
 import type { PassiveDef, PassivePatch, SkillDef, Stats } from '../engine';
 import { diffText, mergeLine } from './stat-tips';
+import { nextPointRows, type NextLine } from './skill-tree-preview';
 
 /** Ekranda gösterilen sayı: şimdiki değer, item takılırsa yeni değer ve fark (fark 0 ise after / diff yok). */
 export interface GearSkillNumber extends SkillNumber {
@@ -88,8 +89,9 @@ export function passiveRow(passive: PassiveDef, stats: Stats, after: Stats | nul
 }
 
 /** Kahramanın tüm skill satırları: standart sıra = pasif (varsa) EN BAŞTA, sonra skill'ler (Ömer 2026-10-18). */
-export function gearSkillRows(classId: string, stats: Stats, after: Stats | null = null, passivePatch?: PassivePatch): GearSkillRow[] {
-  const { skills, passive: rawPassive } = classSkills(classId);
+export function gearSkillRows(classId: string, stats: Stats, after: Stats | null = null, passivePatch?: PassivePatch, skillMap?: (s: SkillDef) => SkillDef): GearSkillRow[] {
+  const { skills: baseSkills, passive: rawPassive } = classSkills(classId);
+  const skills = skillMap ? baseSkills.map(skillMap) : baseSkills; // ağaç yamalı skill'ler (Ömer 2026-11-07)
   const passive = rawPassive && patchedPassive(rawPassive, passivePatch); // set bonusu (Ashguard Vigil 3 parça)
   const rows = skills.map((s) => skillRow(s, stats, after));
   if (passive) rows.unshift(passiveRow(passive, stats, after));
@@ -102,6 +104,8 @@ export interface GearSkillTipRow {
   kind?: SkillInfo['kinds'][number];
   /** Bölüm başlığı satırı ("From Skill Tree"). */
   section?: boolean;
+  /** Açık renk (sonraki ağaç puanı önizlemesi: yeşil). */
+  color?: string;
 }
 
 /** Skill / pasif tooltip'i (savaştaki skill tooltip'iyle aynı satırlar); `after` verilirse değişen sayılar "24 → 30 (+6)". */
@@ -114,7 +118,7 @@ export interface GearSkillTip {
   rows: GearSkillTipRow[];
 }
 
-export function skillTip(skill: SkillDef, stats: Stats, after: Stats | null = null): GearSkillTip {
+export function skillTip(skill: SkillDef, stats: Stats, after: Stats | null = null, nextPoint: NextLine[] = []): GearSkillTip {
   const f = content.formulas;
   const now = describeSkill(skill, stats, f, content.summons, effectDefs(), content.ownerRangeOf(skill.id));
   const next = after ? describeSkill(skill, after, f, content.summons, effectDefs(), content.ownerRangeOf(skill.id)) : null;
@@ -122,6 +126,8 @@ export function skillTip(skill: SkillDef, stats: Stats, after: Stats | null = nu
   if (now.initialCooldown) rows.push({ text: now.initialCooldown });
   // Ağaçtan gelen satırlar (varsa) altta ayrı bölümde; skill'in kendi satırları aynı kalır
   if (now.treeLines?.length) rows.push({ text: TREE_SECTION, section: true }, ...now.treeLines.map((l, i): GearSkillTipRow => ({ text: l, ...(now.treeKinds?.[i] ? { kind: now.treeKinds[i] } : {}) })));
+  // Sonraki ağaç puanı önizlemesi (Ömer 2026-11-07): yeşil, mevcut değerler olduğu gibi kalır
+  rows.push(...nextPointRows(nextPoint));
   const meta = [now.cost, ...((skill.cooldown ?? 0) > 0 ? [`Cooldown ${now.cooldown}`] : []), ...(now.turnCost ? [now.turnCost] : [])];
   return { title: now.name, badge: now.targetBadge, meta, rows };
 }

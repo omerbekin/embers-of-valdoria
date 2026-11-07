@@ -5,6 +5,7 @@ import {
   CONFIG,
   continueToMap,
   nextMapFor,
+  dayOf,
   EVENTS,
   STORIES,
   epilogueUnlocksValor,
@@ -44,6 +45,7 @@ import {
   briefingText,
   companyChoices,
   companySuggestionFor,
+  heroTraits,
   farewell,
   formCompany,
   getMap,
@@ -150,8 +152,11 @@ import {
   nodeEncounter,
   nodeLock,
   passable,
+  playTimeText,
 } from '../../campaign';
-import { instanceRarity } from '../../progression/items';
+import { RARITY_IDS, instanceRarity, itemDef, rarityDef } from '../../progression/items';
+import { itemDefIconUrl } from '../../ui/item-icon-dom';
+import { heroFace, mapEndArt, openMapEnd } from '../../ui/map-end';
 import { TUTORIAL, dueScreenLessons, firstPointRec, type FirstPointKind, type LessonScreen } from '../../tutorial/lessons';
 import { forgetLesson } from '../../tutorial/store';
 import { markLessonSeen, seenLessons, tutorialsOn } from '../../tutorial/store';
@@ -173,7 +178,7 @@ import { BAND_NAME, nodeThreat, threatLine } from '../../campaign/level-gap';
 import { diveChainLine, pitChainLine } from '../../campaign/chain-info';
 import { SIDE_DANGER_LINE, SIDE_DANGER_NAME, sideDanger } from '../../campaign/side-danger';
 import { DayCounter } from '../../ui/day-counter';
-import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
+import { openStartBattle, type SbBlock, type StartBattleHandle } from '../../ui/start-battle';
 import { openStoryDialog, type StoryDialogHandle } from '../../ui/story-dialog';
 import { dialogueAdvance, dialogueStart, type DialoguePage } from '../../campaign/dialogue-flow';
 import { playCinematic, type CinematicHandle } from '../../ui/cinematic';
@@ -285,6 +290,8 @@ type Arrival = { node: string; requested: boolean; action?: () => void };
 /** Düğüme göre göreli etiket dikdörtgeni. */
 type Side = 'below' | 'above' | 'right' | 'left' | 'belowR' | 'belowL' | 'aboveR' | 'aboveL';
 type Box = { x0: number; y0: number; x1: number; y1: number };
+/** Harita bitiş ekranındaki teaser cümleleri (sıradaki harita id'si -> cümle; yoksa haritanın intro'sunun ilk cümlesi). */
+const TEASERS: Record<string, string> = { 'drowned-reach': 'Beyond the drowned coast, the sea has taken a crown. Your company sails at dawn.' };
 const chainOpt = (c: string | null): { chain?: string } => (c ? { chain: c } : {});
 type LabelPlace = { x0: number; y0: number; w: number; h: number; sub: boolean; side: Side };
 /** Düğüm etiketi: `q` = kalıcı küçük ad (yalnızca masaüstü, bulunulan / gidilebilir olmayanlarda), `b` = ad + alt yazı şeridi (bulunulan / gidilebilir hep açık; diğerlerinde üstüne gelince / dokununca). */
@@ -364,7 +371,6 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Fare önizlemesi (sabitlenmemiş düğüm kartı; src/ui/start-battle.ts > preview). */
   private nodeTip: StartBattleHandle | null = null;
   private previewClosedFor: string | null = null;
-  private previewId: string | null = null;
   /** Dokunmatik uzun basış zamanlayıcısı; `longPressed` = bu basış kart gösterdi (bırakınca yürümez). */
   private pressTimer: Phaser.Time.TimerEvent | null = null;
   private longPressed = false;
@@ -372,6 +378,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private pendingFight: { node: string; delay: number } | null = null;
   /** Açık düğüm kartının konum yenileyicisi (yürürken kamera kayar; kart hedef düğümde kalır) ve son kamera imzası. */
   private cardPlace: (() => void) | null = null;
+  /** Açık düğüm kartının DOM kapatıcısı: sahne kapanınca kart ana menüde / savaşta asılı kalmasın. */
+  private cardClose: (() => void) | null = null;
   private cardCam = '';
   /** Yürüyüşte seçilen düğüm: kartın eylemine varıştan önce basıldıysa `requested` (yürüyüş atlanır, eylem varışta hemen çalışır). */
   private arrival: Arrival | null = null;
@@ -475,6 +483,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.events.once('shutdown', () => this.releaseFormationLock());
     const offLessons = onLessonsTurnedOff(() => this.releaseFormationLock()); // "Don't show again": kapı kalkar
     this.events.once('shutdown', offLessons);
+    this.events.once('shutdown', () => { this.cardClose?.(); this.cardClose = null; });
     this.events.once('shutdown', () => { this.nodeTip?.close(); this.nodeTip = null; }); // hover kartı ana menüde asılı kalmasın
     this.cameras.main.setBackgroundColor('#0b0705');
     this.world = this.add.container(0, 0);
@@ -654,7 +663,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private hotkey(e: KeyboardEvent): boolean {
     if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return false;
     const k = e.key.toLowerCase();
-    if (k !== 'c' && k !== 'f') return false;
+    if (k !== 'c' && k !== 'f' && k !== 'v') return false;
     const t = e.target as HTMLElement | null;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return false;
     if (debugState.uiPaused || isSettingsOpen() || this.menuOpen || this.slotBrowser || this.walking) return false;
@@ -663,6 +672,11 @@ export class CampaignMapScene extends Phaser.Scene {
       return true;
     }
     if (this.modal || isInputLocked() || otherDialogOpen() || document.querySelector('#ui-root .gr-overlay')) return false;
+    if (k === 'v') {
+      if (this.s.valor === undefined || isValorReviveOpen()) return false;
+      this.openValor();
+      return true;
+    }
     if (!activeHeroes(this.s).length || !this.canOpenSide()) return false;
     if (k === 'c' && this.formationLocked()) {
       this.nudgeFormationLock();
@@ -1240,8 +1254,7 @@ export class CampaignMapScene extends Phaser.Scene {
     });
     zone.on('pointerover', (p: Phaser.Input.Pointer) => {
       if (p.wasTouch || p.isDown || busy()) return;
-      setHover(true);
-      this.showNodeTip(n.id, p);
+      setHover(true); // Ömer 2026-11-07: fare önizleme kartı (ad / alt başlık) tamamen kaldırıldı; yalnız halka vurgusu kalır
     });
     zone.on('pointerout', () => {
       setHover(false);
@@ -1256,7 +1269,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const want = new Map<string, number>();
     for (const n of this.map.nodes) {
       const v = vis[n.id];
-      if (v === 'fog' || v === 'goal') want.set(n.id, v === 'goal' ? 0.3 : 0.5);
+      if (v === 'fog' || v === 'goal') want.set(n.id, v === 'goal' ? 0.42 : 0.72); // Ömer 2026-11-07: sis yoğunluğu arttı (0.5 -> 0.72, hedef 0.3 -> 0.42)
     }
     // Parçalar açık alanlardan itilir (src/game/fog-clouds.ts); yerleşim değiştiyse bulut yeniden kurulur
     const plans = new Map<string, ReturnType<typeof placePuffs>>();
@@ -1745,10 +1758,13 @@ export class CampaignMapScene extends Phaser.Scene {
     // işaretler HUD'sız güvenli alanda (sol sütun, üst bant, alt düğmeler; region-view.ts > overviewSafe)
     const safe = overviewSafe(this.frame, this.view1(), this.regionTarget(null).z * MAP_ZOOM.min, this.hudInsets());
     this.markers = overviewMarkers(this.map, (id) => this.P(id), (id) => widthOf.get(id) ?? 240, safe, scale, { W, H }, seenSet);
+    // Ömer 2026-11-07: kapalı bölgelerin noktaları gizlenir; yalnız sıradaki (ilk kilitli) bölgenin kilitli işareti görünür
+    const nextLocked = this.markers.find((mk) => mk.locked)?.id;
+    const shown = this.markers.filter((mk) => !mk.locked || mk.id === nextLocked);
     const m = motion('mapRegion');
     // ana yol (mockup mainRoad: koyu gölge + açık iz + ince koyu çekirdek, ortada yön oku)
     const road = this.add.graphics();
-    for (const seg of overviewRoad(this.markers)) {
+    for (const seg of overviewRoad(shown)) {
       const c = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(seg.a.x, seg.a.y), new Phaser.Math.Vector2(seg.c.x, seg.c.y), new Phaser.Math.Vector2(seg.b.x, seg.b.y));
       const pts = c.getPoints(40);
       for (const [w, col, a] of [[15, 0x060302, 0.32], [9, 0xeadcb4, 0.34], [3.4, 0x2a1d10, 0.3]] as const) {
@@ -1782,7 +1798,7 @@ export class CampaignMapScene extends Phaser.Scene {
       });
     }
     // bölge işaretleri
-    for (const mk of this.markers) {
+    for (const mk of shown) {
       if (mk.locked) {
         L.add(this.lockedMarker(mk, scale));
         continue;
@@ -1878,15 +1894,44 @@ export class CampaignMapScene extends Phaser.Scene {
       });
       return isEmptyMapPoint(w.x, w.y, spots.flat());
     };
+    // Komşu bölgenin bağlantı düğümünün AD etiketi / çevresi (Ömer 2026-11-07): tek tıkla o bölgeye geçilir (yalnız düğüm halkası değil)
+    const ghostRegionAt = (p: Phaser.Input.Pointer): string | null => {
+      if (!this.focus) return null;
+      const ui = this.uiPoint(p);
+      if (ui.x < stageView.left + (SIDE.left + SIDE.partyW) * (this.compact() ? COL_K : 1)) return null;
+      const w = this.cameras.main.getWorldPoint(p.x, p.y);
+      const rv = regionSets(this.map, this.focus, nodeVisibility(this.map, this.s, session.revealFog));
+      const r = 1.6 * Math.max(60, touchUnits(104, MIN_TOUCH_PX / (this.baseZoom * this.mapZoom)) / 2 + 8);
+      let best: { id: string; d: number } | null = null;
+      for (const id of rv.ghosts) {
+        const n = this.map.nodes.find((o) => o.id === id);
+        if (!n || n.region === this.focus || this.moves().includes(id) || this.travelTargets().has(id)) continue;
+        const c = this.P(id);
+        const slot = this.labelPlan.get(id);
+        const boxes = [slot?.b, slot?.q].filter((b): b is LabelPlace => !!b);
+        const inBox = boxes.some((b) => w.x >= c.x + b.x0 && w.x <= c.x + b.x0 + b.w && w.y >= c.y + b.y0 && w.y <= c.y + b.y0 + b.h);
+        const d = Math.hypot(w.x - c.x, w.y - c.y);
+        if (inBox || d <= r) {
+          if (!best || d < best.d) best = { id: n.region, d };
+        }
+      }
+      return best?.id ?? null;
+    };
+    let ghostDown: string | null = null;
     zone.on('pointerdown', (p: Phaser.Input.Pointer) => {
       armed = false;
+      ghostDown = null;
       if (p.button !== 0 || busy()) return;
       if (this.nodeTip) return this.hideNodeTip(); // açık ipucu: ilk dokunuş yalnız onu kapatır
-      armed = empty(p);
+      ghostDown = ghostRegionAt(p);
+      armed = !ghostDown && empty(p);
     });
     zone.on('pointerup', (p: Phaser.Input.Pointer) => {
       const ok = armed;
+      const gd = ghostDown;
       armed = false;
+      ghostDown = null;
+      if (gd && !this.drag.moved && !busy() && ghostRegionAt(p) === gd) return this.switchFocus(gd);
       if (!ok || this.drag.moved || busy() || !empty(p)) return;
       this.switchFocus(null);
     });
@@ -2320,7 +2365,38 @@ export class CampaignMapScene extends Phaser.Scene {
    * Düğüm kartı içeriği (önizleme ve ulaşılamayan düğüm): savaş düğümünde düşman portreleri + lore, diğerlerinde düğümün kendi bilgisi
    * (eski hover kartının blurb'ü); devriyede mevcut devriye metni.
    */
-  private cardInfoFor(id: string): { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { text: string }; info?: { text: string; plain?: boolean }; tags?: PatrolTags; chain?: string; company?: CompanyCard } {
+  /**
+   * Wayshrine ve Salvage Dive kart bölümleri (Ömer 2026-11-07, taslak node-views A): yalnız oyunun bugün gerçekten yaptığı ve bilinen şeyler
+   * (tür, derinlik, risk, nimet etkisi); sandık / ödül içeriği gösterilmez. Metinler eski tek satırın (cardInfoFor) aynı kuralları.
+   */
+  private sideBlocks(n: ReturnType<typeof node>, depth: number | null): { tag?: { text: string; em?: boolean }; blocks?: SbBlock[] } {
+    const sh = shrineOf(n);
+    if (sh) {
+      const earned = (this.s.boons ?? []).includes(n.shrine!);
+      const cut = sh.trial.indexOf(': ');
+      const carried = (this.s.boons ?? []).length;
+      return {
+        tag: earned ? { text: 'Blessing earned' } : { text: '1 Blessing', em: true },
+        blocks: [
+          { h: 'Blessing', r: 'Rest of the campaign', rows: [{ name: sh.name, txt: `${sh.effect}. Every hero, every battle.${earned ? ' Already earned.' : ''}` }] },
+          { h: 'Trial', rows: [{ name: cut > 0 ? sh.trial.slice(0, cut) : 'The trial', txt: cut > 0 ? sh.trial.slice(cut + 2) : sh.trial, icon: 'battle' }] },
+          ...(carried ? [{ h: 'Carried', rows: [{ name: `${carried} ${carried === 1 ? 'Blessing' : 'Blessings'}`, txt: 'Blessings you already carry stay active.', icon: 'rest' }] }] : []),
+        ],
+      };
+    }
+    const max = diveMax(n);
+    if (max < 2) return {};
+    const cur = depth ?? 1;
+    return {
+      tag: { text: `Depth ${cur} of ${max}` },
+      blocks: [
+        { h: 'Depth', r: `Depth ${cur} of ${max}`, ladder: Array.from({ length: max }, (_, i) => ({ name: `Depth ${i + 1}`, txt: i + 1 < cur ? 'Cleared' : i + 1 === cur ? 'Here' : 'Deeper', state: i + 1 < cur ? ('done' as const) : i + 1 === cur ? ('now' as const) : ('next' as const), icon: 'treasure' })) },
+        { h: 'Risk', after: true, rows: [cur >= 2 ? { name: 'If you fall here', txt: 'The last chest you found sinks.', icon: 'boss', bad: true } : { name: 'Going deeper', txt: 'Each depth is one more fight, with no healing between.', icon: 'boss', bad: true }] },
+      ],
+    };
+  }
+
+  private cardInfoFor(id: string): { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { text: string }; info?: { text: string; plain?: boolean }; tags?: PatrolTags; chain?: string; company?: CompanyCard; tag?: { text: string; em?: boolean }; blocks?: SbBlock[] } {
     const n = node(this.map, id);
     const f = this.nodeFacts(id);
     const vis = nodeVisibility(this.map, this.s, session.revealFog)[id];
@@ -2335,23 +2411,17 @@ export class CampaignMapScene extends Phaser.Scene {
       const depth = st?.kind === 'battle' && st.dive ? st : null;
       const g = foeGroups(depth ? depth.encounter : enc);
       // A1 Wayshrine: sınav kuralı + nimet; dalış düğümü: kısa kural (oyun içi metin)
-      const sh = shrineOf(n);
       const side = lockInfo
         ? lockInfo
         : oathSealedFor(n, this.s)
           ? OATH_SEALED_CARD
         : caravelHere
           ? `${caravelDef(this.map)!.name} lies here. Sail in and you must fight it. It moves one stop each time you move.`
-          : depth
-        ? `Depth ${depth.dive} of ${diveMax(n)}. If you fall here, the last chest you found sinks.`
-        : sh
-          ? `${sh.trial} Win the trial: ${sh.name} (${sh.effect}) for the rest of the campaign.${(this.s.boons ?? []).includes(n.shrine!) ? ' Already earned.' : ''}`
-          : diveMax(n) > 1 && !patrol
-            ? `Salvage Dive: after this fight you may dive up to ${diveMax(n) - 1} ${diveMax(n) - 1 === 1 ? 'depth' : 'depths'} deeper, one more fight each with no healing between, for better chests.`
-            : '';
+          : '';
+      const blk = !side && !patrol && !caravelHere ? this.sideBlocks(n, depth ? (depth.dive ?? 1) : null) : {};
       const chain = depth ? diveChainLine(depth.dive ?? 0) : null;
       const company = patrol || depth ? undefined : companyCard(enc);
-      return { ...(company ? { company } : {}), ...(patrol ? { title: 'Fight the patrol?', ...this.patrolCard() } : side ? { info: { text: side } } : {}), ...(chain ? { chain } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
+      return { ...(company ? { company } : {}), ...(patrol ? { title: 'Fight the patrol?', ...this.patrolCard() } : side ? { info: { text: side } } : {}), ...blk, ...(chain ? { chain } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
     }
     const t = PLACE_CARD[n.type];
     return { ...(t ? { title: t.title, actionLabel: t.action } : {}), ...(lockInfo ? { info: { text: lockInfo } } : {}), ...(f.blurb ? { fallback: { text: f.blurb } } : {}) };
@@ -2363,45 +2433,6 @@ export class CampaignMapScene extends Phaser.Scene {
     if (lock) return lock === 'ship' ? 'Needs a ship' : `Sink ${caravelDef(this.map)?.name ?? 'the ship'} first`;
     const st = this.nodeFacts(id).state;
     return st === 'Ahead' || st === 'Your goal' ? 'Not reachable yet' : st;
-  }
-
-  /**
-   * Fare önizlemesi (Ömer 2026-10-23, tek kart iki adım): üstüne gelince AYNI "Start battle?" kartı düğmesiz açılır (src/ui/start-battle.ts
-   * preview); tıklayınca sabitlenir (nodeCard), fare çekilince kapanır. Dokunmatikte açılmaz (ilk dokunuş kartı sabit açar).
-   */
-  private showNodeTip(id: string, p: Phaser.Input.Pointer): void {
-    this.hideNodeTip();
-    if (p.wasTouch || this.modal || nodeVisibility(this.map, this.s, session.revealFog)[id] === 'fog') return;
-    const root = document.getElementById('ui-root');
-    if (!root) return;
-    const n = node(this.map, id);
-    const o = this.cardInfoFor(id);
-    const info = o.info ?? startCardInfo(n.lore, o.fallback?.text ? o.fallback : undefined);
-    const unreachable = this.nodeFacts(id).state === 'Ahead' || this.nodeFacts(id).state === 'Your goal';
-    const town = n.type === 'town' ? this.townCardParts(id) : undefined; // önizleme de sabit kartla aynı A görünümü (plakalar + haber satırları)
-    this.nodeTip = openStartBattle(root, {
-      ...(o.title ? { title: o.title } : {}),
-      ...(o.actionLabel ? { actionLabel: o.actionLabel } : {}),
-      name: n.name,
-      subtitle: n.subtitle || TYPE_LABEL[n.type],
-      nodeType: n.type,
-      level: nodeLevel(this.s.mapId, id),
-      ...this.threatOpt(id),
-      ...(o.chain ? { chain: o.chain } : {}),
-      ...(o.foes ? { foes: o.foes } : {}),
-      ...(info ? { info } : {}),
-      ...(o.tags ? { tags: o.tags } : {}),
-      ...(o.company ? { company: o.company } : {}),
-      ...(town ? { services: town.services, ...(town.flags.length ? { flags: town.flags } : {}) } : {}),
-      ...this.firstSteps(id),
-      preview: true,
-      ...(unreachable ? { note: 'Not reachable yet' } : {}),
-      anchor: () => this.nodeCssPoint(id, root),
-      onFight: () => undefined,
-      onCancel: () => undefined,
-    });
-    this.previewId = id;
-    this.syncLabels();
   }
 
   /** Kartın tehlike satırı (level farkı bandı); savaşmayan / tutorial / savaşılmayan düğümde boş. */
@@ -2428,7 +2459,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.nodeTip.close();
     this.nodeTip = null;
     this.syncLabels();
-    this.previewClosedFor = this.previewId;
+    this.previewClosedFor = null;
     this.time.delayedCall(80, () => (this.previewClosedFor = null));
   }
 
@@ -3051,6 +3082,8 @@ export class CampaignMapScene extends Phaser.Scene {
         const nextMap = next ? getMap(next) : null;
         const end = this.map.complete;
         const lead = end?.text ?? CONFIG.texts.complete;
+        // Harita 1 bitiş ekranı (Ömer 2026-11-07, taslak map1-end A "Ledger"): kendi bitiş penceresi olmayan harita; diğerleri eski pencerede kalır
+        if (!end && document.getElementById('ui-root')) return this.mapEndCard(s, nextMap, this.endCardShown ? '' : (lead ?? ''));
         this.modal = openModal(this, this.ui, {
           title: end?.title ?? 'Valdoria Conquered',
           subtitle: nextMap ? 'Map Complete' : (end?.subtitle ?? 'Campaign Complete'),
@@ -3078,6 +3111,53 @@ export class CampaignMapScene extends Phaser.Scene {
         if (step.kind === 'battle' && this.arrangeNotice === s.at) this.showTip();
         return;
     }
+  }
+
+  /**
+   * Harita 1 bitiş ekranı (src/ui/map-end.ts). YALNIZ oyunun tuttuğu sayılar: kazanılan savaş, yenilgi, gün, eldeki altın. Tutulmayan (gösterilmez):
+   * toplam kazanılan altın, oynama süresi, düşen kahraman sayısı. En iyi item: kadronun taktığı + torbadaki item'ler, nadirliğe göre (sonra ilvl).
+   */
+  private mapEndCard(s: CampaignState, nextMap: ReturnType<typeof getMap> | null, story: string): void {
+    const root = document.getElementById('ui-root')!;
+    const team = activeHeroes(s);
+    const owned = [
+      ...team.flatMap((h) => Object.values(h.equipment).filter((i): i is NonNullable<typeof i> => !!i).map((i) => ({ i, who: content.classes[h.class]?.name ?? h.class }))),
+      ...s.inventory.map((i) => ({ i, who: '' })),
+    ].filter((x) => itemDef(x.i.id));
+    const rank = (x: (typeof owned)[number]): number => RARITY_IDS.indexOf(instanceRarity(x.i)) * 1000 + (x.i.rolls?.ilvl ?? itemDef(x.i.id)!.ilvl ?? 0);
+    const best = owned.sort((a, b) => rank(b) - rank(a)).slice(0, 3);
+    const teaserOf = (m: NonNullable<typeof nextMap>): string => TEASERS[m.id] ?? (m.intro ?? '').split(/(?<=[.!?])\s/)[0] ?? '';
+    const handle = openMapEnd(root, {
+      title: 'Valdoria Conquered',
+      subtitle: nextMap ? 'Map Complete' : 'Campaign Complete',
+      story,
+      stats: [
+        { label: 'Battles won', value: String(s.stats.victories) },
+        { label: 'Defeats', value: String(s.stats.defeats) },
+        { label: 'Days', value: String(dayOf(s)) },
+        { label: 'Gold on hand', value: s.gold.toLocaleString('en-US') },
+        // Sefer defteri (Ömer 2026-11-07 endstats; eski kayıtta 0'dan sayılır)
+        { label: 'Gold earned', value: (s.stats.goldEarned ?? 0).toLocaleString('en-US') },
+        { label: 'Play time', value: playTimeText(s.stats.playMs) },
+        { label: 'Heroes fallen', value: String(s.stats.fallen ?? 0) },
+      ],
+      heroes: team.map((h) => {
+        const face = heroFace(h.class);
+        return { name: content.classes[h.class]?.name ?? h.class, level: h.level, ...(face ? { face } : {}) };
+      }),
+      loot: best.map((x) => {
+        const d = itemDef(x.i.id)!;
+        return { name: d.name, tag: x.who ? `Worn by the ${x.who}` : 'In your bag', icon: itemDefIconUrl(d, d.slot), color: rarityDef(instanceRarity(x.i)).color };
+      }),
+      ...(nextMap ? { next: { name: titleCase(nextMap.title), ...(mapEndArt(`${nextMap.id}-bg`) ? { art: mapEndArt(`${nextMap.id}-bg`)! } : {}), teaser: teaserOf(nextMap) } } : {}),
+      buttons: nextMap
+        ? [{ label: `Continue to ${titleCase(nextMap.title)}`, primary: true, run: () => this.mapIntro(nextMap.id) }]
+        : [
+            { label: 'Stay on the map', run: () => this.closeModal() },
+            { label: 'Main Menu', primary: true, run: () => elGo(this, MENU_SCENE) },
+          ],
+    });
+    this.modal = { close: () => handle.close(), root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
   }
 
   /**
@@ -3182,6 +3262,18 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Aday kartının level etiketi (playtest D12, Ömer 2026-10-23): yoldaş takımın ortalama level'ında katılır (src/campaign/xp.ts > joinLevel). */
   private joinTag(): string {
     return `Joins at Lv ${joinLevel(this.s)}`;
+  }
+
+  /**
+   * Aday kartları + öneri (Ömer 2026-11-07): her kartın etiketi "Suggested · Front row · Physical damage · Joins at Lv N" (öneri yalnız companySuggest düğümlerinde);
+   * `lines` = doldurulan eksik rollerin açıklamaları (pencere metninin altına). Tüm işe alım ekranları (Barracks, boss, gönüllü) aynı kartı kullanır.
+   */
+  private recruitCards(ids: string[], extra?: (id: string) => string): { cards: MwCard[]; lines: string[] } {
+    const sug = companySuggestionFor(this.s, ids);
+    const groups = sug ? [{ heroes: sug.heroes, line: sug.line }, ...sug.also] : [];
+    const picked = new Set(groups.flatMap((g) => g.heroes));
+    const cards = ids.map((id) => this.mwCard(id, [picked.has(id) ? CONFIG.companySuggest.label : '', heroTraits(id), extra?.(id) ?? '', this.joinTag()].filter(Boolean).join(' · ')));
+    return { cards, lines: groups.map((g) => g.line) };
   }
 
   private mwCard(id: string, tag?: string): MwCard {
@@ -3478,41 +3570,30 @@ export class CampaignMapScene extends Phaser.Scene {
    */
   /** Kışla adayları (Ömer 2026-10-27): Ashford'daki "Form your company" penceresinin aynısı, tek seçim, lider yok; Not now / zemin kapatır. */
   private townRecruitModal(h: TownHotspot, offer: string[]): void {
-    const root = document.getElementById('ui-root');
-    if (!root) return;
-    this.closeModal();
-    let w: CompanyHandle | null = null;
-    const close = (): void => {
-      w?.close();
-      w = null;
-      this.modal = null;
-    };
-    const sug = companySuggestionFor(this.s, offer); // yoldaş önerisi (Valdren Keep kışlası; suggest.ts)
-    w = openCompanyWindow(root, {
-      size: 1,
-      cards: offer.map((id) => this.mwCard(id, this.joinTag())),
-      ...(sug ? { suggest: { heroes: sug.heroes, label: CONFIG.companySuggest.label, line: sug.line } } : {}),
-      tutorial: new Set(),
-      title: h.label,
-      sub: CONFIG.texts.townRecruit ?? CONFIG.texts.volunteer ?? '',
-      goLabel: 'Join us',
-      noLeader: true,
-      toast: (m) => this.toast(m),
-      onCancel: close,
-      onSetOut: ([chosen]) => {
-        if (!chosen) return;
-        setState(recruitInTown(this.s, chosen));
-        this.townSave(); // katılan kahraman kayda girsin (B1)
-        close();
-        this.town?.render();
-        this.renderHud();
-        this.toast(`${content.classes[chosen]?.name ?? chosen} joins your company`);
-      },
+    // Ömer 2026-11-07: Valdren Keep kışlası da Saltmere / Harbor City kışlasıyla aynı ekranı kullanır (C kartı, aday kartları, Choose / Not now)
+    const { cards, lines } = this.recruitCards(offer);
+    this.townWindow(h, {
+      paras: [...paragraphs(CONFIG.texts.townRecruit ?? CONFIG.texts.volunteer ?? ''), ...lines],
+      body: { k: 'cards', cards },
+      acts: [
+        { label: 'Not now', run: () => this.closeModal() },
+        {
+          label: 'Choose',
+          primary: true,
+          needPick: 'Pick who joins first.',
+          run: (chosen) => {
+            if (!chosen) return this.toast('Pick who joins first.');
+            setState(recruitInTown(this.s, chosen));
+            this.townSave(); // katılan kahraman kayda girsin (B1)
+            this.closeModal();
+            this.town?.render();
+            this.renderHud();
+            this.toast(`${content.classes[chosen]?.name ?? chosen} joins your company`);
+          },
+        },
+      ],
     });
-    this.events.once('shutdown', close);
-    this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
   }
-
 
   /**
    * Kamp (Ömer 2026-10-26, taslak economy-ui A): dört kart (Rest / Tend wounds / Sharpen / Train), BİR seçim; DOM ekran src/ui/camp-screen.ts.
@@ -3916,7 +3997,10 @@ export class CampaignMapScene extends Phaser.Scene {
     const enc = st?.kind === 'battle' ? st.encounter : encounterAt(this.map, this.s, n);
     if (!enc) return;
     const foes = foeGroups(enc);
-    this.nodeCard(id, { foes: foes.groups, fallback: foes.info, onGo: fight });
+    // Wayshrine / dalış bölümleri (Ömer 2026-11-07): bekleyen derinlik savaşı varsa o derinlik; caravel / korumalı yan savaşta yok
+    const dive = st?.kind === 'battle' && st.dive ? st.dive : null;
+    const blk = enc === nodeEncounter(n, this.s) || dive ? this.sideBlocks(n, dive) : {};
+    this.nodeCard(id, { foes: foes.groups, fallback: foes.info, ...blk, onGo: fight });
   }
 
   /**
@@ -3955,7 +4039,7 @@ export class CampaignMapScene extends Phaser.Scene {
     return { services, flags: townCardFlags(this.s, id, rec?.label ?? null) };
   }
 
-  private nodeCard(id: string, o: { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; /** Lore'un yerine geçen bilgi satırı (devriye). */ info?: { text: string; plain?: boolean }; tags?: PatrolTags; company?: CompanyCard; services?: NonNullable<Parameters<typeof openStartBattle>[1]['services']>; flags?: string[]; /** Düğme yerine düz not. */ note?: string; onGo: () => void }): void {
+  private nodeCard(id: string, o: { tag?: { text: string; em?: boolean }; blocks?: SbBlock[]; title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; /** Lore'un yerine geçen bilgi satırı (devriye). */ info?: { text: string; plain?: boolean }; tags?: PatrolTags; company?: CompanyCard; services?: NonNullable<Parameters<typeof openStartBattle>[1]['services']>; flags?: string[]; /** Düğme yerine düz not. */ note?: string; onGo: () => void }): void {
     const root = document.getElementById('ui-root');
     const n = node(this.map, id);
     if (!root) return;
@@ -3968,6 +4052,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const close = (): void => {
       card?.close();
       card = null;
+      this.cardClose = null;
       this.modal = null;
       this.cardPlace = null;
       this.syncLabels();
@@ -3981,6 +4066,8 @@ export class CampaignMapScene extends Phaser.Scene {
       level: nodeLevel(this.s.mapId, id),
       ...this.threatOpt(id),
       ...(o.foes ? { foes: o.foes } : {}),
+      ...(o.tag ? { tag: o.tag } : {}),
+      ...(o.blocks ? { blocks: o.blocks } : {}),
       ...(info ? { info } : {}),
       ...(o.tags ? { tags: o.tags } : {}),
       ...(o.company ? { company: o.company } : {}),
@@ -4014,6 +4101,7 @@ export class CampaignMapScene extends Phaser.Scene {
       onScrimTap: (x, y) => this.travelFromCard(id, root, x, y),
     });
     const handle = card;
+    this.cardClose = close;
     this.cardPlace = () => handle.place();
     this.cardCam = '';
     this.syncLabels();
@@ -4076,11 +4164,11 @@ export class CampaignMapScene extends Phaser.Scene {
       this.worldWindow(kind === 'hero' ? startNode.id : (byType('battle') ?? startNode.id), {
         type: kind === 'hero' ? 'start' : 'battle',
         kind: kind === 'hero' ? 'Journey' : 'Recruit',
-        title: kind === 'hero' ? 'Choose your hero' : 'A New Companion',
+        title: kind === 'hero' ? 'Choose your hero' : 'Barracks',
         paras: paragraphs(kind === 'hero' ? CONFIG.texts.intro : CONFIG.texts.recruitBefore),
         onDismiss: close,
         body: { k: 'cards', ...(kind === 'hero' ? { leader: true } : {}), cards: ids.filter((id) => content.classes[id]).map((id) => this.mwCard(id)) },
-        acts: [{ label: kind === 'hero' ? 'Begin the journey' : 'Join us', primary: true, needPick: 'Pick one first.', run: note('Debug: nothing happens.') }],
+        acts: [{ label: kind === 'hero' ? 'Begin the journey' : 'Choose', primary: true, needPick: 'Pick one first.', run: note('Debug: nothing happens.') }],
       });
     } else if (kind === 'event-fold') eventWindow('shepherds_fold', this.map.nodes.find((n) => n.event === 'shepherds_fold')?.id ?? this.s.at);
     else if (kind === 'event-witch') eventWindow('witchs_hut', this.map.nodes.find((n) => n.event === 'witchs_hut')?.id ?? this.s.at);
@@ -4137,7 +4225,7 @@ export class CampaignMapScene extends Phaser.Scene {
               body: { k: 'cards', cards: ['paladin', 'hexer', 'druid'].filter((id) => content.classes[id]).map((id) => this.mwCard(id)) },
               acts: [
                 { label: 'Not now', run: close },
-                { label: 'Join us', primary: true, needPick: 'Pick one companion first.', run: note('Debug: nothing happens.') },
+                { label: 'Choose', primary: true, needPick: 'Pick one companion first.', run: note('Debug: nothing happens.') },
               ],
             }
           : { paras: paragraphs(kind === 'hearth' ? CONFIG.texts.townRested : (hs.note ?? 'No one here seeks to join you.')), acts: [{ label: 'Close', primary: true, run: close }] };
@@ -4505,15 +4593,17 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Yeni yoldaş / gönüllü (A levha): aday kartları (büst + kısa açıklama), Join us sağda. */
   private recruitModal(step: Extract<NextStep, { kind: 'recruit' | 'volunteer' }>): void {
     const needArea = isAreaClass;
+    // Ömer 2026-11-07: "A New Companion" ekranı kalktı; boss / gönüllü katılımı Barracks ekranıyla aynı kartları (öneri, dizilim, hasar türü) ve "Choose" düğmesini kullanır
+    const rc = this.recruitCards(step.offer, (id) => (needArea(id) && node(this.map, step.node).recruit?.requireArea ? 'Area attacks' : ''));
     this.worldWindow(step.node, {
-      kind: 'Recruit',
+      kind: 'Barracks',
       place: node(this.map, step.node).name,
-      title: step.kind === 'volunteer' ? 'A Volunteer' : 'A New Companion',
-      paras: paragraphs(step.kind === 'volunteer' ? CONFIG.texts.volunteer : CONFIG.texts.recruitBefore),
-      body: { k: 'cards', cards: step.offer.map((id) => this.mwCard(id, [needArea(id) && node(this.map, step.node).recruit?.requireArea ? 'Area attacks' : '', this.joinTag()].filter(Boolean).join(' · '))) },
+      title: 'Barracks',
+      paras: [...paragraphs(step.kind === 'volunteer' ? CONFIG.texts.volunteer : CONFIG.texts.recruitBefore), ...rc.lines],
+      body: { k: 'cards', cards: rc.cards },
       acts: [
         {
-          label: 'Join us',
+          label: 'Choose',
           primary: true,
           needPick: 'Pick one companion first.',
           run: (chosen) => {
@@ -4581,7 +4671,7 @@ export class CampaignMapScene extends Phaser.Scene {
       // Tutorial'da oynanan sınıflar (veda ettiler; yine seçilebilir): "Played in the tutorial" notu
       tutorial: new Set(joining ? [] : session.tutorialClasses),
       ...(joining ? { noLeader: true, title: CONFIG.texts['companyJoinTitle'] ?? 'Choose a companion', sub: CONFIG.texts['companyJoinSub'] ?? '' } : {}),
-      ...(sug ? { suggest: { heroes: sug.heroes, label: CONFIG.companySuggest.label, line: sug.line } } : {}),
+      ...(sug ? { suggest: suggestOpt(sug, choices) } : {}),
       toast: (m) => this.toast(m),
       naming: CONFIG.companyName,
       onSetOut: (picks, leader, name) => this.commit(setCompanyName(formCompany(this.s, picks, leader), name)),
@@ -4589,6 +4679,14 @@ export class CampaignMapScene extends Phaser.Scene {
     this.events.once('shutdown', close);
     this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
   }
+}
+
+/** Yoldaş önerisi -> pencere seçeneği: tüm eksik roller (birden çok öneri) + her adayın dizilim / hasar türü satırı (Ömer 2026-11-07). */
+function suggestOpt(sug: NonNullable<ReturnType<typeof companySuggestionFor>>, ids: string[]): NonNullable<Parameters<typeof openCompanyWindow>[1]['suggest']> {
+  const groups = [{ heroes: sug.heroes, line: sug.line }, ...sug.also];
+  const why: Record<string, string[]> = {};
+  for (const g of groups) for (const h of g.heroes) (why[h] ??= []).push(g.line);
+  return { heroes: Object.keys(why), label: CONFIG.companySuggest.label, line: sug.line, why, traits: Object.fromEntries(ids.map((id) => [id, heroTraits(id)])) };
 }
 
 /** "THE DROWNED REACH" -> "The Drowned Reach" (düğme yazısı; harita başlığı veride büyük harf). */

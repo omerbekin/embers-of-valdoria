@@ -62,6 +62,7 @@ import { iconUrl } from './dom-icons';
 import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
 import { skillMiniGrid } from './shape-diagram';
 import { passiveTip, skillTip } from './gear-skills';
+import { nextPointLinesFor, treePatchedSkill } from './skill-tree-preview';
 import { foldSkillRows } from './skill-tip-rule';
 import { skillCostAmount } from '../engine/cost';
 import type { SkillDef } from '../engine';
@@ -573,7 +574,7 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
   const slots = el('div', 'gr-slots');
   const dead = heroFallen(hero);
   if (dead) slots.classList.add('gr-slots-locked');
-  const blocker = offhandBlocker(hero.equipment);
+  const blocker = offhandBlocker(hero.equipment, hero.class);
   for (const k of SLOT_IDS) {
     const inst = hero.equipment[k];
     const d = inst ? itemDef(inst.id) : undefined;
@@ -639,7 +640,7 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     txt.append(lbl, el('div', 'gr-slot-name', d ? d.name : 'Empty'));
     if (d && inst) {
       txt.append(plateL2(inst, hero.class));
-    } else if (k === 'offhand' && !classUsesOffhand(hero.class)) txt.append(el('div', 'gr-slot-sub', 'No shield or dagger'));
+    } else if (k === 'offhand' && !classUsesOffhand(hero.class)) txt.append(el('div', 'gr-slot-sub', 'No off-hand'));
     cell.append(ico);
     if (dead) cell.append(lockIcon());
     cell.append(txt);
@@ -879,7 +880,7 @@ function costChips(skill: SkillDef, stats: Stats): SkillCostChip[] {
 
 /** Savaş skill tooltip'inin içeriği (aynı düzen: ikon + ad, bedel / bekleme, etiketler, alan şekli, satırlar) + Gear farkları "a → b (+d)". */
 function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null, evo?: EvolveSource): TipContent {
-  const t = skillTip(skill, stats, after);
+  const t = skillTip(skill, stats, after, nextPointLinesFor(evo, skill.id, stats));
   // meta satırı savaşla aynı: bedel (Rage / MP / HP ikonuyla ya da "Free"), cooldown (kum saati)
   const meta: NonNullable<TipContent['meta']> = [];
   const amount = skillCostAmount(skill.cost, { hp: stats.hp, mp: stats.mp, rage: 0 } as never);
@@ -891,7 +892,7 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null, evo
   if ((skill.cooldown ?? 0) > 0) meta.push({ iconUrl: iconUrl(uiIconName('cooldown'), UI_COLOR), text: `${skill.cooldown} turns`, color: COLORS.muted });
   const shape = skillMiniGrid(skill, content.formulas.formation);
   // Skill ipucu A (Ömer 2026-11-02): kısa satırlar + "More" altında tam metin (src/ui/skill-tip-rule.ts); ağaç bölümü ve ilk bekleme satırı katlanmaz
-  const tipRows = t.rows.map((r) => ({ text: r.text, ...(tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}), ...(r.section ? { section: true } : {}) }));
+  const tipRows = t.rows.map((r) => ({ text: r.text, ...(r.color ? { color: r.color } : tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}), ...(r.section ? { section: true } : {}) }));
   const treeAt = tipRows.findIndex((r) => 'section' in r);
   const cut = treeAt < 0 ? tipRows.length : treeAt;
   const isInitCd = (r: { text: string }): boolean => /^Opens on cooldown/.test(r.text);
@@ -948,7 +949,7 @@ function bigNumsHtml(r: GearSkillRow): string {
 }
 
 /** Plakadaki tek satır açıklama: skill'de ilk ipucu satırı (parantez içi ayrıntı atılır), pasifte tam cümle. Tam metin hover ipucunda. */
-function blurbOf(tip: { rows: { text: string }[] }, passive: boolean): string {
+export function blurbOf(tip: { rows: { text: string }[] }, passive: boolean): string {
   const t = tip.rows[0]?.text ?? '';
   return passive ? t : t.replace(/\s*\([^)]*\)/g, '').trim();
 }
@@ -1017,7 +1018,7 @@ function skillTipHtmlFor(classId: string, stats: Stats, key: string, evo?: Evolv
     const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), badge: 'Passive', rows: passiveTip(p, stats, null).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
     return colorDiffs(tipHtml(tip));
   }
-  const skill = gearSkillRows(classId, stats, null).find((r) => r.skill?.id === key)?.skill;
+  const skill = gearSkillRows(classId, stats, null, undefined, (x) => treePatchedSkill(evo, x)).find((r) => r.skill?.id === key)?.skill;
   return skill ? colorDiffs(tipHtml(skillTipContent(skill, stats, null, evo))) : '';
 }
 
@@ -1055,7 +1056,7 @@ export function hideHeroSkillTip(): void {
 export function skillBar(classId: string, stats: Stats, after: Stats | null, evo?: EvolveSource, passivePatch?: PassivePatch): HTMLElement {
   const bar = el('div', 'gr-skillbar');
   const def = content.classes[classId];
-  const rows = gearSkillRows(classId, stats, after, passivePatch);
+  const rows = gearSkillRows(classId, stats, after, passivePatch, (x) => treePatchedSkill(evo, x));
   const skillRows = rows.filter((r) => !r.passive);
   // Ulti: veride ayrı bir işaret yok; savaş HUD'ıyla aynı kural: 4. skill yuvası (battle-hud / SkillCellView.ult).
   // Giriş animasyonu yalnızca ilk açılışta: ekranda zaten bir skill çubuğu varsa (yeniden çizim: item üstüne gelme, kahraman / sekme değişimi) yanıp sönmez.

@@ -1,0 +1,204 @@
+{
+ "name": "g-A",
+ "outDir": "docs/anim-review/new-art/archer-v3/g-set",
+ "rules": "docs/anim-review/new-art/archer-v3/g-set/PROMPT-g.md",
+ "maxRounds": 8,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "ready",
+   "file": "ready.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: READY stance: relaxed combat stance, weight slightly forward, LEFT arm hanging forward-low at hip height (fist at left side in front, where a bow would be held low), RIGHT arm relaxed near the belt, head up looking at the target. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: READY stance: relaxed combat stance, weight slightly forward, LEFT arm hanging forward-low at hip height (fist at left side in front, where a bow would be held low), RIGHT arm relaxed near the belt, head up looking at the target.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "nock",
+   "file": "nock.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: NOCK stage: LEFT arm extended forward at chest height gripping (fist), RIGHT hand brought to the chest in front of the sternum as if placing an arrow on the string, head turned toward the target, body side-on, weight forward. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: NOCK stage: LEFT arm extended forward at chest height gripping (fist), RIGHT hand brought to the chest in front of the sternum as if placing an arrow on the string, head turned toward the target, body side-on, weight forward.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "draw_half",
+   "file": "draw_half.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: HALF DRAW: LEFT arm fully extended forward at chest/shoulder height, RIGHT hand pulled back to the front of the chin/collarbone, elbow bent out and back, shoulders turning, eyes on target. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: HALF DRAW: LEFT arm fully extended forward at chest/shoulder height, RIGHT hand pulled back to the front of the chin/collarbone, elbow bent out and back, shoulders turning, eyes on target.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "draw_full",
+   "file": "draw_full.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: FULL DRAW at anchor: LEFT arm straight forward at shoulder height, RIGHT hand anchored at the cheek/corner of the mouth with elbow pulled back in line with the arrow, shoulders squared, one eye aiming, same stance as the old bow_shot. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: FULL DRAW at anchor: LEFT arm straight forward at shoulder height, RIGHT hand anchored at the cheek/corner of the mouth with elbow pulled back in line with the arrow, shoulders squared, one eye aiming, same stance as the old bow_shot.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "release",
+   "file": "release.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: RELEASE follow-through: LEFT arm still extended forward, RIGHT hand snapped back past the ear with fingers open, elbow high behind, slight recoil in torso, eyes on target. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: RELEASE follow-through: LEFT arm still extended forward, RIGHT hand snapped back past the ear with fingers open, elbow high behind, slight recoil in torso, eyes on target.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "reach_quiver",
+   "file": "reach_quiver.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/idle1.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: REACH TO QUIVER: RIGHT hand reaches up and back over the right shoulder (palm toward the upper back where a quiver opening would be, elbow raised high), LEFT arm hanging forward-low as if holding a bow low, head slightly turned, torso twisting, same stance. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: REACH TO QUIVER: RIGHT hand reaches up and back over the right shoulder (palm toward the upper back where a quiver opening would be, elbow raised high), LEFT arm hanging forward-low as if holding a bow low, head slightly turned, torso twisting, same stance.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "bow_shot",
+   "file": "bow_shot.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "bow_sky",
+   "file": "bow_sky.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_sky.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_sky.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "raise",
+   "file": "raise.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/raise.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/raise.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "idle2",
+   "file": "idle2.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/idle2.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/idle2.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "step1",
+   "file": "step1.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/step1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/step1.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "slash1",
+   "file": "slash1.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/slash1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/slash1.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "overhead1",
+   "file": "overhead1.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/overhead1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/overhead1.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props. ",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 8
+  }
+ ]
+}

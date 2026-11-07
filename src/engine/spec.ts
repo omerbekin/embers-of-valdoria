@@ -1,11 +1,17 @@
 import type { DamageSpec } from './formulas';
 import { statusCounts, statusCountsAny } from './status-count';
-import { outgoingDamageMult } from './stats';
+import { outgoingDamageMult, statDamageAdd } from './stats';
 import { ITEM_HOOK_CAPS } from './item-caps';
 import { effNum } from './tree-hooks';
 import type { BonusScale, Combatant, Formulas, SkillEffect, Stats } from './types';
 
 export type DamageEffect = Extract<SkillEffect, { type: 'damage' }>;
+
+/** Saldıranın hedefe verdiği hasar (Battle.dealtDamage): ayrı çarpanlar + hasar havuzuna giren pay (Ömer 2026-11-07, P1). */
+export interface DealtDamage {
+  mult: number;
+  add: number;
+}
 
 /**
  * Bir hasar etkisinin belirli bir hedefe karşı hesap girdisi: etiket bonusu, eksik mana ve kalkan ekleri,
@@ -20,8 +26,8 @@ export function damageSpecFor(
   powerMult = 1,
   extras = true,
   extraTaken = 1,
-  /** Saldıranın verdiği hasar çarpanı (Dex-primary Hunter's Mark: hedefinden hızlıysa 1 + hunterMark). */
-  dealtMult = 1,
+  /** Saldıranın verdiği hasar (Battle.dealtDamage: ayrı çarpan + havuz payı); düz sayı = yalnız ayrı çarpan (eski çağrılar). */
+  dealtMult: number | DealtDamage = 1,
   /** Saldıranın geçerli stat'ları (aura zırhı dahil; hibrit ölçek bonusScale bunlardan okunur). Verilmezse actor.stats. */
   attackerStats?: Combatant['stats'],
   /** powerPerRage (Headsman's Blow): harcanan Rage; verilmezse kullanıcının o anki Rage'i (önizleme/YZ: vuruştan önce). Motor vuruşta ödenen bedeli verir. */
@@ -55,8 +61,11 @@ export function damageSpecFor(
   // Pealing Bells (Vesper): çan vuruşu, bu savaşta çalınan her çan için x(1 + perBell); sayaç yoksa çarpan yok (determinizm)
   const bells = actor.bells ?? 0;
   if (effect.bell && pe?.type === 'pealingBells' && bells > 0) passiveMult *= 1 + pe.perBell * bells;
-  // Item affix'leri (Ömer 2026-10-11): Global damage x element hasarı; yoksa çarpılmaz (bugünkü savaşlar birebir aynı)
-  const out = outgoingDamageMult(actor.stats, element);
+  // Hasar havuzu (Ömer 2026-11-07, P1): silah gücü x (1 + Global damage + element + dealtDamage payı + ağaç "+% power"); yoksa çarpılmaz
+  const dealt = typeof dealtMult === 'number' ? { mult: dealtMult, add: 0 } : dealtMult;
+  const baked = effect.powerAdd ?? 0;
+  const out = outgoingDamageMult(actor.stats, element, dealt.add, baked);
+  const pool = Math.max(0, 1 + baked + statDamageAdd(actor.stats, element) + dealt.add);
   const mult = out !== 1 ? tagBonus * weak * powerMult * passiveMult * out : tagBonus * weak * powerMult * passiveMult;
   // Zırh / büyü zırhı delme (affix): skill'in kendi ignoreDefense'iyle çarpımsal birleşir
   const phys = effect.damageType === 'physical';
@@ -72,7 +81,8 @@ export function damageSpecFor(
     ...(bonus ? { bonus } : {}),
     ...(ignore ? { ignoreDefense: ignore } : {}),
     extra,
-    takenMultiplier: (target.summoned ? formulas.summon.damageTakenMultiplier : 1) * extraTaken * dealtMult, // Hunter's Mark tüm vuruşu (eklerle birlikte) çarpar
+    ...(pool !== 1 ? { pool } : {}),
+    takenMultiplier: (target.summoned ? formulas.summon.damageTakenMultiplier : 1) * extraTaken * dealt.mult, // ayrı çarpanlar tüm vuruşu (eklerle birlikte) çarpar
   };
 }
 

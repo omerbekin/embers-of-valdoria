@@ -179,6 +179,9 @@ describe('sefer: Retreat to Map savaşı duraklatır', () => {
     session.state = s;
     const before = JSON.stringify(s);
     retreatToMap();
-    expect(JSON.stringify(session.state)).toBe(before);
+    // oynama süresi (stats.playMs, endstats) durum değişiminde artabilir: ilerleme değil
+    const after = JSON.parse(JSON.stringify(session.state)) as typeof s;
+    delete after.stats.playMs;
+    expect(JSON.stringify(after)).toBe(before);
   });
 });

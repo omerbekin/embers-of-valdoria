@@ -16,7 +16,7 @@ Agent buradan başlar: `docs/design/progression/item-design-plan.md` (kararlar +
 ## Açık işler
 1. Piercing 15 / 0,9 uygulandı (Lead 2026-11-03; ilvl 30, 200 seed, sefer/Endless galibiyet katkısı: Hexer +1,0 / +2,3, Warrior +1,7 / +1,6, Druid sıfır).
 2. Potency ayrı ölçülmedi (DoT simi üçünü birlikte ölçtü; Hexer tek başına sıfırdan ayrışmadı).
-3. Set sistemi: 2 pilot oynanabilir (`src/progression/sets.ts`, `data/items.json > setItems`), `setsEnabled` kapalı; parçalar Debug > Give pilot sets. Ayrıntı item-design-plan.md "Motor adımı". Sıradaki: bayrağı açma + sim (Ömer onayı), kalan 4 set, Sadak ve Focus Orb (imza stat'larla), set çizimleri.
+3. Set sistemi: 2 pilot oynanabilir (`src/progression/sets.ts`, `data/items.json > setItems`), `setsEnabled` kapalı; parçalar Debug > Give pilot sets. Ayrıntı item-design-plan.md "Motor adımı". Lead 2026-11-07: altı set de veride (Kingsfall Regalia, Gallows Pact, Raven's Shroud, Conclave of Embers eklendi; 4./3. parça bonusu YALNIZ STAT, ödünleşmeli; adlı özel kurallar Unseen / Hangman's Rope / The Conclave Answers / Royal Command YAPILMADI, Ömer tasarımı bekliyor), Sadak + Focus Orb tabanları (`pairs`, imza stat'sız), Equip best set bonusunu tartar (`setBonusScore`, `setValue`). Sıradaki: Ömer'in kuralları, sim, bayrağı açma.
 4. Legendary 40. seviye iki silah çifti (gamblers_last_coin, bones_of_the_quarry) 1,05 payının altında; `tests/items-data.test.ts` muaf, son denge turunda (plan adım 7) düzelt.
 5. Ring yuvasında yalnız 2 item (Copper Ring, Pilgrim's Band); fazlası Ömer'in isteğine bağlı.
 6. Yeni silah çizimleri oyunda gerçek ekranda gözle doğrulanmadı (16:9, 21:9, telefon): Debug > Chars > Weapon art.

@@ -98,8 +98,23 @@ Kod: `src/progression/sets.ts`, `data/items.json > setItems` (parçalar), `battl
 
 **Yapılmayan**
 
-- Equip best set bonusunu değerlemez; hover tooltip'inin (floatTip) pasif metni yamayı göstermez, çubuk ipucu gösterir.
-- Kalan 4 set, Sadak; `setsEnabled` açmak ve sayıların ölçümü (sim) Ömer'in onayıyla.
+- Hover tooltip'inin (floatTip) pasif metni yamayı göstermez, çubuk ipucu gösterir.
+- `setsEnabled` açmak ve sayıların ölçümü (sim) Ömer'in onayıyla.
+
+### Kalan 4 set, Sadak, Focus Orb (Lead 2026-11-07, sayılar ÖLÇÜLMEDİ)
+
+- **Kingsfall Regalia** (nötr, Valdoria / Black Cathedral, Helm Armor Ring): 2 parça +12 Max HP +0,25 HP Regen; 3 parça +30 Max HP, +2 Armor, +2 Magic Armor, -0,5 Speed.
+- **Gallows Pact** (Gambler, Hexer; Drowned Reach / Hag's Island): 2 parça +4% Lucky Escape +2% Crit; 3 parça Hexer Ill Omen 2 -> 3 Omen, Gambler Double or Nothing %25 -> %30; 4 parça +20% Crit damage, +6% Lucky Escape, -20 Max HP.
+- **Raven's Shroud** (Cutthroat, Archer, Anti-Mage; Drowned Reach / The Wrecker's Hall): 2 parça +4% Evasion +3% Crit; 3 parça Opportunist %25 -> %30, Sharpshooter 0,05 -> 0,065 / sıra, Spellbreaker 0,10 -> 0,13; 4 parça +0,5 Speed, +6% Evasion, -3 Armor.
+- **Conclave of Embers** (Mage, Druid, Undead, Vesper; The Hollow Crown / Hierarch's Pulpit): 2 parça +12 Max MP +1 MP Regen; 3 parça Heat Mirage 0,361 -> 0,43, Nature's Grudge 0,15 -> 0,18, Vampiric Bite 0,5 -> 0,6, Pealing Bells 0,07 -> 0,085; 4 parça +20 Max MP, +1 MP Regen, -20 Max HP.
+- Adlı özel kurallar (Ömer 2026-11-07 seçimleri, set-rules-proposal B1-B4; sayılar `data/items.json` > sets, YZ payları `data/ai.json` > value.setRules / global.command):
+  - **Unseen** (Raven's Shroud 4, `dodgeCrit`): taşıyan bir vuruştan kaçınınca sonraki skill kullanımı kesin kritik (alan skill'inde her vuruş); kullanım bitince söner.
+  - **Hangman's Rope** (Gallows Pact 4, `escapeStatus`): Lucky Escape ölümcül vuruşu yok sayınca 1 tur Fortified.
+  - **The Conclave Answers** (Conclave of Embers 4, `counterAttack`): düşman taşıyana skill kullanınca taşıyan temel saldırısıyla (ilk skill, tek hedefli hasar) %50 güçte bedava karşılık verir; taşıyanın turları arasında 1 kez; menzil / ön sıra / taunt normal; sersem, buzda, yerin altında ya da Silence'ta (MP bedelli temel) karşılık yok.
+  - **Royal Command** (Kingsfall Regalia 3, `allyTurn`): savaşta bir kez global eylem: taşıyanın turu harcanır, seçilen dost hemen ek tur alır (sayacı değişmez). test modunda yalnız hak harcanır.
+- Eski not: başlangıçta yeni mekanik yoktu; yalnız mevcut stat anahtarları ve mevcut pasif alanları.
+- **Sadak / Focus Orb:** ikinci el item'i, `pairs` alanı (`bow` / `charm`), ailesi silahınki (bows / charms). Yay yalnız Sadak, tılsım yalnız Focus Orb, çift el hiçbirini almaz; uymayan ikinci el silah değişiminde torbaya çıkar. Sadak yalnız Archer, Focus Orb Gambler + Hexer. 4'er taban (Common -> Epic), örtük stat yok, Block affix'i çıkmaz. İmza affix'lerden **Spare Arrow** yapıldı (Ömer 2026-11-07 C1, `b_sparearrow`, B kademe, yalnız Sadak: `pairsOnly: bow`; 0 MP temel saldırının vuruşu %8-12 (ilvl 1 -> 41) şansla aynı hedefe bir kez daha, `fx:basicRepeat`); diğerleri (Long Fletching, Weighted Odds, Ill Portent, Grave Wick) YAPILMADI. Sırtta sadak çizimi (poz bağlantı noktası) yapılmadı.
+- **Equip best:** torba ya da ekipmanda set parçası varsa her set için "setin en iyi parçaları + kalanı açgözlü" planı denenir, toplam puan (yuva puanları + `setBonusScore`) yüksekse seçilir. Değerleme `items.json > setValue` (sınıf satırı 2,5 IP, kural 4 IP, statlar affix IP'leriyle), PROVIZYON.
 
 **İki set**
 

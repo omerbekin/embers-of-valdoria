@@ -77,7 +77,7 @@ Kural (items.md 1.7 ile uyum): item'ler **belirli bir skill'i** değiştirmez. B
 
 | Affix (in-game) | Kademe | Metin | Mekanik | Değer (ilvl 10, PROVİZYON) |
 |---|---|---|---|---|
-| **Spare Arrow** | B | "{0}% chance your free basic attack strikes again" | **[MEVCUT]** Loaded Dice'taki `repeatChance`; yeni olan: item'den 0 MP'li temel saldırıya eklenmesi **[YENİ KANCA, küçük]** | %8-12 |
+| **Spare Arrow** (YAPILDI 2026-11-07, `b_sparearrow` / `fx:basicRepeat`) | B | "{0}% chance your free basic attack strikes again" | **[MEVCUT]** Loaded Dice'taki `repeatChance`; yeni olan: item'den 0 MP'li temel saldırıya eklenmesi **[YENİ KANCA, küçük]** | %8-12 |
 | **Long Fletching** | C | "+{0}% damage per row of distance" | **[MEVCUT]** Archer pasifi Sharpshooter (`longshot.perRow` 0,08); affix bu sayıya ekler **[YENİ KANCA, küçük]** | +%1-1,5 / sıra |
 | **Steady Draw** | A | "+{0}% damage with skills that cost MP while Hasted" | **[YENİ MEKANİK]** (Quick Shot Haste veriyor: Haste sürerken MP'li skill'ler güçlenir) | +%10-14 |
 

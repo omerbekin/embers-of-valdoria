@@ -1,5 +1,6 @@
 // Seferde loot'un duruma yazılması (saf; durumu YERİNDE değiştirir, çağıran klonlamış olmalı: state.ts > applyBattle / completeSimple).
 // Zar: hash(seed, harita, düğüm, 'loot', tür, oynama sayısı): yenilgi/deneme sayısı ve Retreat loot'u DEĞİŞTİRMEZ (save-scum yok, items.md 3.4).
+import { earnGold } from './ledger';
 import { BAG_SIZE, ITEMS, canEquip, itemDef, makeItem, rollLoot, rollRareDrop, type ItemInstance, type LootKind, type RarityId } from '../progression';
 import { RARE } from '../progression/rare';
 import { setDropPools } from '../progression/sets';
@@ -7,7 +8,14 @@ import { CONFIG, getMap } from './data';
 import { chapterOf, nodeIlvl } from './power';
 import { rngFor } from './seed';
 import { noDropSlots, slotLocks } from './slots';
+import { rollSupplyDrop } from './supplies';
 import type { CampaignState, Hero, LootDrop } from './types';
+
+function mergeSupplies(a?: Record<string, number>, b?: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = { ...(a ?? {}) };
+  for (const [k, v] of Object.entries(b ?? {})) out[k] = (out[k] ?? 0) + v;
+  return out;
+}
 
 /** Kayıt alanının varsayılanı. */
 export const emptyLootState = (): CampaignState['lootState'] => ({ rarePity: 0, clears: {}, rareMisses: 0 });
@@ -49,6 +57,7 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     party: party.map((h) => ({ class: h.class, equipment: h.equipment })),
     replay,
     pity: t.lootState.rarePity,
+    ...(CONFIG.mapLootScale?.[t.mapId] ? { scale: CONFIG.mapLootScale[t.mapId]! } : {}),
     rules: { locks: slotLocks(t), banned: noDropSlots(t.mapId) },
   });
   // Küçük sandık (cadının bedelli seçenekleri, Ömer 2026-10-12): aynı zardan yalnızca ilk N item + sabit altın
@@ -59,7 +68,7 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     res.rarities.length = Math.min(res.rarities.length, cap);
     res.forClass.length = Math.min(res.forClass.length, cap);
   }
-  if (opts?.gold !== undefined) res.gold = opts.gold;
+  if (opts?.gold !== undefined) res.gold = Math.round(opts.gold * (CONFIG.mapLootScale?.[t.mapId]?.gold ?? 1));
   t.lootState.rarePity = res.pity;
   t.lootState.clears[key] = replay + 1;
   // Ortak nadir düşüş (madde 297): kazanılan her savaşta bir zar (sandık değil); düşüşsüz zafer sayacı kayıtta
@@ -94,11 +103,13 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
       leftRolls.push(rolled.rolls);
     }
   });
-  t.gold += res.gold;
+  earnGold(t, res.gold); // sefer defteri (endstats)
   // Temper taşı (Ömer 2026-10-26): yalnız boss / elit İLK zaferi (replay 0; devriye vermez); kendi seed'li zarı (loot ve savaş zarına dokunmaz)
   const stones = replay === 0 && (kind === 'boss' || kind === 'elite') ? rollTemperStones(rngFor(t.seed, t.mapId, nodeId, 'temper-stones', kind), kind) : 0;
   if (stones) t.temperStones = (t.temperStones ?? 0) + stones;
-  const drop: LootDrop = { node: nodeId, kind, items: items.map((i) => i.uid), gold: res.gold, ...(left.length ? { left, leftRolls } : {}), ...(rare.length ? { rare } : {}), ...(stones ? { stones } : {}) };
+  // Malzeme düşüşü (Ömer 2026-11-07): kendi seed'li zarı, yalnız ilk zafer / ilk sandık
+  const supplies = rollSupplyDrop(t, nodeId, kind, replay, opts?.tag);
+  const drop: LootDrop = { node: nodeId, kind, items: items.map((i) => i.uid), gold: res.gold, ...(Object.keys(supplies).length ? { supplies } : {}), ...(left.length ? { left, leftRolls } : {}), ...(rare.length ? { rare } : {}), ...(stones ? { stones } : {}) };
   // Aynı düğümde savaş + sandık (korunan hazine): tek kartta birleşir
   const prev = t.pendingLoot;
   if (prev && prev.node === nodeId) {
@@ -106,7 +117,7 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     const allRolls = [...(prev.left ?? []).map((_, i) => prev.leftRolls?.[i]), ...leftRolls];
     const allRare = [...(prev.rare ?? []), ...rare];
     const allStones = (prev.stones ?? 0) + stones;
-    t.pendingLoot = { node: nodeId, kind, items: [...prev.items, ...drop.items], gold: prev.gold + drop.gold, ...(allLeft.length ? { left: allLeft, leftRolls: allRolls } : {}), ...(allRare.length ? { rare: allRare } : {}), ...(allStones ? { stones: allStones } : {}) };
+    t.pendingLoot = { node: nodeId, kind, items: [...prev.items, ...drop.items], gold: prev.gold + drop.gold, ...(allLeft.length ? { left: allLeft, leftRolls: allRolls } : {}), ...(allRare.length ? { rare: allRare } : {}), ...(allStones ? { stones: allStones } : {}), ...(prev.supplies || drop.supplies ? { supplies: mergeSupplies(prev.supplies, drop.supplies) } : {}) };
   } else {
     // Önceki kart hiç kapatılmadıysa onun geride kalanları burada kaybolur (normal akışta kart her zaman önce kapanır)
     t.pendingLoot = drop;

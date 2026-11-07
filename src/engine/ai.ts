@@ -5,7 +5,7 @@ import { skillCostAmount, skillCostPay } from './cost';
 import { betStakeParts } from './gamble';
 import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
-import { bellsOfSkill, manaShieldNeed, type TriggerAction } from './tree-hooks';
+import { bellsOfSkill, effFirst, effFlag, manaShieldNeed, type TriggerAction } from './tree-hooks';
 import { armorReduction, attributePower, dotOutgoingMult, hitChance } from './stats';
 import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet, StatusDef } from './types';
 import { capBurn, castBurnAmount, groundBurnAmount } from './mana-burn';
@@ -109,6 +109,11 @@ export interface AiGlobalConfig {
    * minNetShare payı kadar AŞMALI ("açıkça değer"). Savaş belliyse (kazanılmış / dirilenle bile kaybediliyor) değer 0. Yoksa hiç denenmez.
    */
   valor?: { valueShare: number; minNetShare: number };
+  /**
+   * Royal Command (Kingsfall Regalia; global 'command'): değer = en değerli dostun tur değeri (ValueContext.turnValue) x valueShare; net = değer - şimdiki
+   * class hamlesi, net en az değer x minNetShare olmalı. Sersem dost aday değil. Yalnızca turns modunda. Yoksa hiç denenmez.
+   */
+  command?: { valueShare: number; minNetShare: number };
 }
 
 export interface AiConfig {
@@ -167,7 +172,7 @@ export interface AiChoice {
    * Kararın baskın değer terimi (etiket; seçim terazisi verir): kill (öldürme), heal (şifa/diriltme/kurtarma), summon, shield, taunt, guard, burn,
    * tactic (saf self-buff / kontrol), aoe (alan hasarı), damage (tek hedef hasar); 'fallback' kullanılmıyor; rest/skip/move: global skill kuralı.
    */
-  reason: AiPriority | 'fallback' | 'rest' | 'skip' | 'move' | 'urn' | 'rod';
+  reason: AiPriority | 'fallback' | 'rest' | 'skip' | 'move' | 'urn' | 'rod' | 'command';
   /** Seçilen adayın terazi puanı (can-eşdeğer); global skill kararlarında tanımsız. */
   score?: number;
 }
@@ -203,6 +208,9 @@ export interface GlobalTrace {
   /** Valor diriltmesi: en iyi aday (değer, net) ya da neden yok. */
   valor?: { target: string; slot: number; value: number; net: number } | null;
   valorBlocked?: string;
+  /** Royal Command: en iyi dost (değer, net) ya da neden yok. */
+  command?: { target: string; value: number; net: number } | null;
+  commandBlocked?: string;
   /** blocks: şimdiki hamle bu skill'i sonraki turda karşılanamaz kılıyor mu (MP/Rage); false ise pas bir şey kazandırmaz. */
   skipChecks?: Array<{ skill: string; futureValue: number; nowValue: number; needBelow: number; blocks: boolean; hit: boolean }>;
   skipNote?: string;
@@ -264,6 +272,8 @@ export interface Option {
   /** Bu saldırının bozacağı MP ayırmalarının en büyük değeri (puanı bunu geçen saldırı ertelenmez; madde 258). */
   reserveValue?: number;
   summon: boolean;
+  /** Ley Brand bedel yakımının kendine hasarı kullanıcıyı öldürür (Ömer 2026-11-07): kullanıcı ve çağrıları (bu hamlenin çağrısı dahil) ölür. */
+  castBurnLethal?: boolean;
   /** Ceset tüketen çağrı: true = şu an ceset var (beslenmiş/empowered), false = ceset yok (beslenmemiş/unfed); diğer seçeneklerde tanımsız. */
   empowered?: boolean;
   /** Çağrının tahmini değeri (can-eşdeğer): çağrılacak birimin (varyantı uygulanmış) en iyi ham skill hasarı x ömür x summonValueShare; çağrı değilse 0. */
@@ -1138,6 +1148,7 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
     // Ley Brand bedel yakımı (Ömer 2026-10-29): Branded kullanıcının MP skill'i ek MP yakar ve kendine hasar verir: bedele eklenir (MP + can ağırlığı)
     if (p.castBurn && target.uid === actor.uid) {
       o.cost += p.castBurn.mp * profile.mpCostWeight + p.castBurn.damage * profile.hpCostWeight;
+      if (p.castBurn.damage > 0 && p.castBurn.damage >= actor.hp + actor.shield + actor.magicShield) o.castBurnLethal = true; // değeri scoreOption > selfLoss
       if (o.notes.length < 6) o.notes.push(`Branded: cast burns ${p.castBurn.mp} MP, ${p.castBurn.damage} dmg to self`);
     }
   }
@@ -1585,6 +1596,8 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
       if (!f || p <= 0) continue;
       if (rules.killMinChance !== undefined && p < rules.killMinChance) continue; // Easy: yalnızca kesin öldürme
       add('kill', p * vc.killWeight * ctx.contribution(f) * ctx.resummonShare(f) * keep(f) * pulled(f));
+      // Çağıran ölünce çağrıları da ölür (Ömer 2026-11-07): onların kalan katkısı da öldürme değerine
+      if (f.side !== actor.side) add('summonsLost', p * vc.killWeight * ctx.summonsWorth(f, o.killP) * keep(f) * pulled(f));
       for (const i of ctx.hits) {
         if (i.foe !== uid || !i.before) continue;
         const a = get(i.target);
@@ -1659,9 +1672,12 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
       const pe = actor.passive?.effect;
       // Bone Ward (YM10, mob pasifi): tarafta çağrı yoksa yeni çağrı çağıranın aldığı hasarı azaltır: önlenen beklenen hasar (Fortify ile aynı ölçü)
       if (pe?.type === 'boneWard' && unit && battle.passiveTakenMult(actor) === 1) v += pe.reduce * (ctx.round.get(actor.uid) ?? 0) * Math.min(life, vc.horizon);
+      if (o.castBurnLethal) v = 0; // çağıran bedel yakımıyla ölür, çağrı da onunla ölür (Ömer 2026-11-07)
       o.summonValue = v;
       add('summon', v);
     }
+    // Ley Brand bedel yakımı kullanıcıyı öldürürse: kendi kalan katkısı + onunla ölecek çağrıları kayıp (Ömer 2026-11-07, Grave Chanter zinciri)
+    if (o.castBurnLethal) add('selfLoss', -vc.killWeight * (ctx.contribution(actor) + ctx.summonsWorth(actor)) * (1 - battle.luckyEscapeChance(actor.uid)));
     // Bağ / şifa yeniden çağrılabilir bir çağrıya gidiyorsa (aynı resummonShare): yerine yenisi gelebilecek birimi ayakta tutmanın değeri düşük
     const bondShare = o.bond > 0 && o.targets[0] ? ctx.resummonShare(o.targets[0]) : 1;
     add('bond', o.bond * bondShare);
@@ -1899,6 +1915,37 @@ function setRuleValue(ctx: ValueContext, o: Option): number {
     if (!t.coals?.length) continue;
     const given = (o.healBy[t.uid] ?? 0) + (o.shieldBy[t.uid] ?? 0);
     if (given > 0) v += cfg.coalCover * Math.min(ctx.battle.coalPending(t), given);
+  }
+  return v + setRuleRisks(ctx, o);
+}
+
+/**
+ * Set kurallarının (2026-11-07) düşmana vuruş bedeli (can-eşdeğer; ai.json > value.setRules; taşıyan hedef yoksa 0):
+ * Unseen = kaçınırsa taşıyanın sonraki saldırısı kesin kritik (iska payı x unseenGift x tur değeri), Hangman's Rope = ölümcül vuruşu Lucky Escape kurtarırsa
+ * Fortified (kurtarma olasılığı x ropeFortify x tur değeri), The Conclave Answers = taşıyanı hedeflemek bedava temel saldırı karşılığı doğurur
+ * (temel saldırının ham değeri x power x counterCost; karşılık hakkı ve menzil gerçek kuralla). Saf.
+ */
+function setRuleRisks(ctx: ValueContext, o: Option): number {
+  const cfg = ctx.vc.setRules;
+  if (!cfg) return 0;
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  let v = 0;
+  const seen = new Set<string>();
+  for (const t of o.targets) {
+    if (t.side === actor.side || seen.has(t.uid) || (!t.itemEffects && !t.treeFx)) continue;
+    seen.add(t.uid);
+    const dealt = o.dmgBy[t.uid] !== undefined;
+    if (dealt && (cfg.unseenGift ?? 0) > 0 && !t.unseenReady && effFlag(t, 'dodgeCrit')) v -= cfg.unseenGift! * (1 - previewHitChance(o, t)) * ctx.turnValue(t);
+    if (dealt && (cfg.ropeFortify ?? 0) > 0 && effFirst(t, 'escapeStatus')) {
+      const le = battle.luckyEscapeChance(t.uid);
+      if (le > 0 && le < 1) v -= cfg.ropeFortify! * (o.killP[t.uid] ?? 0) * (le / (1 - le)) * ctx.turnValue(t);
+    }
+    const ca = (cfg.counterCost ?? 0) > 0 ? effFirst(t, 'counterAttack') : undefined;
+    if (ca && (t.countersUsed ?? 0) < ca.perTurn && t.hp > 0) {
+      const basic = t.skills[0] ? battle.skill(t.skills[0], t) : undefined;
+      if (basic?.target === 'single_enemy' && battle.validTargets(t.uid, basic.id).some((c) => c.uid === actor.uid)) v -= cfg.counterCost! * ca.power * skillRawValue(battle, t.stats, basic, t);
+    }
   }
   return v;
 }
@@ -2478,7 +2525,11 @@ function brandFoeValue(ctx: ValueContext, eff: Extract<SkillDef['effects'][numbe
     const extra = Math.min(room, (Math.max(0, paid - avg) + burnPer) * casts);
     if (extra > 0) t += ctx.manaDenial(f, extra);
     const burnTotal = Math.min(room, burnPer * casts);
-    if (burnTotal > 0 && eff.burnDamagePct > 0) t += battle.tickDamage(el, 'magic', Math.round(burnTotal * eff.burnDamagePct), f);
+    const burnHurt = burnTotal > 0 && eff.burnDamagePct > 0 ? battle.tickDamage(el, 'magic', Math.round(burnTotal * eff.burnDamagePct), f) : 0;
+    t += burnHurt;
+    // Ömer 2026-11-07 (Ley Brand -> Grave Chanter zinciri): bedel yakımının hasarı düşmanı öldürecekse öldürme değeri (kalan katkı + onunla ölecek
+    // çağrıları); ihtimal = MP skill'i kullanma payı (castShare, en çok 1)
+    if (burnHurt > 0 && burnHurt >= f.hp + f.shield + f.magicShield) t += Math.min(1, w.castShare) * ctx.vc.killWeight * (ctx.contribution(f) + ctx.summonsWorth(f)) * (1 - battle.luckyEscapeChance(f.uid));
     if (f.mp > 0 && eff.burnDamagePct > 0) t += battle.tickDamage(el, 'magic', Math.round(f.mp * eff.burnDamagePct), f) * w.costShare;
   }
   return t;
@@ -3081,6 +3132,30 @@ function valorPlan(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: nu
 }
 
 /**
+ * Royal Command planı (global 'command', Kingsfall Regalia): sıra alan her dost için ek turun değeri = tur değeri x valueShare (en değerli dost: en çok
+ * hasar / iş çıkaran); sersem (skipTurn durumlu) dost aday değil. Net = değer - şimdiki hamle; net >= değer x minNetShare değilse aday yok. Saf.
+ */
+function commandPlan(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: number): { id?: string; plan: { target: string; value: number; net: number } | null; blocked?: string } {
+  const id = battle.globalSkillIds(actor.side).find((x) => battle.globalDef(x)?.kind === 'command');
+  if (!id) return { plan: null, blocked: 'no Royal Command in this battle' };
+  if (!g.command) return { id, plan: null, blocked: 'ai.json > global.command missing' };
+  if (battle.mode !== 'turns') return { id, plan: null, blocked: 'turn mode only' };
+  const can = battle.canUseGlobal(actor.uid, id);
+  if (!can.ok) return { id, plan: null, blocked: can.reason };
+  const ctx = activeCtx;
+  if (!ctx) return { id, plan: null, blocked: 'no value context' };
+  let best: { target: string; value: number; net: number } | null = null;
+  for (const a of battle.commandTargets(actor.uid)) {
+    if (a.statuses.some((st) => battle.statusDef(st.kind)?.skipTurn)) continue;
+    const value = ctx.turnValue(a) * g.command.valueShare;
+    const net = value - vNow;
+    if (net < value * g.command.minNetShare) continue;
+    if (!best || net > best.net + 1e-9) best = { target: a.uid, value, net };
+  }
+  return best ? { id, plan: best } : { id, plan: null, blocked: `no ally's extra turn clearly beats the class move (${r2(vNow)})` };
+}
+
+/**
  * Global skill kararı (Rest / Skip Turn / Move Tile); null = class hamlesi (ya da pas) kalır.
  * Madde 258 (Faz 3): sabit kapı yok; kazançlar class hamlesinin terazi puanıyla (öldürme, kurtarma, şifa terimleri dahil) kıyaslanır.
  * Tehlikede (can düşük ve gelen hasar büyük) dinlenme/bekleme denenmez; yalnızca geri çekilme (Move) olabilir.
@@ -3118,8 +3193,15 @@ function chooseGlobal(battle: Battle, actor: Combatant, profile: AiProfile, g: A
     trace.valor = valor.plan;
     if (valor.blocked) trace.valorBlocked = valor.blocked;
   }
+  // Royal Command (Kingsfall Regalia): taşıyan yoksa hiçbir şey hesaplanmaz
+  const command = actor.itemEffects?.allyTurn || actor.treeFx?.allyTurn ? commandPlan(battle, actor, g, vNow) : null;
+  if (trace && command) {
+    trace.command = command.plan;
+    if (command.blocked) trace.commandBlocked = command.blocked;
+  }
   const best = [
     ...(valor.plan && valor.plan.net > 0 ? [{ net: valor.plan.net, choice: { skillId: valor.id!, targetUid: valor.plan.target, slot: valor.plan.slot, reason: 'heal' } as AiChoice }] : []),
+    ...(command?.plan && command.plan.net > 0 ? [{ net: command.plan.net, choice: { skillId: command.id!, targetUid: command.plan.target, reason: 'command' } as AiChoice }] : []),
     ...(move && move.net > 0 ? [{ net: move.net, choice: { skillId: 'move_tile', slot: move.slot, targetUid: tileUid(move.slot), reason: 'move' } as AiChoice }] : []),
     ...(rest > 0 ? [{ net: rest, choice: { skillId: 'rest', reason: 'rest' } as AiChoice }] : []),
   ].sort((a, b) => b.net - a.net)[0];
@@ -3377,7 +3459,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
   const tag = (c: AiCandidate) => `${c.name}${c.target ? ` -> ${c.target}` : ''}${c.reviveSlot !== undefined ? ` @cell ${c.reviveSlot}` : ''}`;
   let why: string;
   if (!choice) why = 'No usable action: the turn is passed.';
-  else if (choice.reason === 'rest' || choice.reason === 'skip' || choice.reason === 'move' || choice.reason === 'urn' || choice.reason === 'rod') {
+  else if (choice.reason === 'rest' || choice.reason === 'skip' || choice.reason === 'move' || choice.reason === 'urn' || choice.reason === 'rod' || choice.reason === 'command') {
     why = `Global skill "${skillName(choice.skillId)}": ${trace.global?.outcome ?? choice.reason}. ${chosen ? `The class move would have been ${tag(chosen)} (score ${chosen.score}).` : 'No class move was available.'}`;
   } else {
     why = `Highest value (${choice.reason}): ${chosen ? `${tag(chosen)} score ${chosen.score} = ${termText(chosen.terms ?? {})}` : skillName(choice.skillId)}${runnerUp ? `; next best ${tag(runnerUp)} score ${runnerUp.score} = ${termText(runnerUp.terms ?? {})}` : ''}.`;

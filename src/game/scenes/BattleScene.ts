@@ -196,7 +196,7 @@ const SHIELD_LOCK_SFX: Record<string, string> = { spell_ward: 'wardLock', mana_b
  * (yalnızca Endless kampı), sefer haritası görselleri ve bulanık kopyaları, ana menü kartları / logo / katmanları / gölgesi.
  */
 const BATTLE_DROP = ['item-img:', 'campaign:', ...MENU_ONLY_TEXTURES];
-const GLOBAL_ACCENT: Record<string, string> ={ rest: '#9cc4ff', skip: '#e8dcc0', move: '#e8c47e', urn: '#7fc4d8', rod: '#7fc8ff' };
+const GLOBAL_ACCENT: Record<string, string> ={ rest: '#9cc4ff', skip: '#e8dcc0', move: '#e8c47e', urn: '#7fc4d8', rod: '#7fc8ff', command: '#e8c96a' };
 
 const { width: W, height: H, colors } = layout;
 
@@ -205,6 +205,7 @@ interface InfoMeta {
   icon?: string;
   text: string;
   hex: string;
+  dir?: 'up' | 'down';
 }
 
 /** Bilgi kutusu içeriği: DOM HUD'ın bağlam ipucu (src/ui/battle-hud.ts > showContextTip). */
@@ -755,7 +756,7 @@ export class BattleScene extends Phaser.Scene {
       view.setSpeed(shown);
       const c = this.battle.get(uid);
       if (c && c.hp > 0 && this.battle.mode === 'turns') {
-        const now = this.battle.speedOf(c);
+        const now = this.battle.statusSpeedOf(c); // tur başına hız zarı rozet açmaz: yalnızca Haste/Slow/Skip desteği
         view.setSpeedMood(now > c.stats.spd ? 'haste' : now < c.stats.spd ? 'slow' : null);
       } else view.setSpeedMood(null);
     }
@@ -2503,12 +2504,13 @@ export class BattleScene extends Phaser.Scene {
     const def = this.battle.globalDef(id);
     if (!actor || !def || !this.playerCanAct || !this.battle.canUseGlobal(actor.uid, id).ok) return;
     if (this.tut && !this.tut.allowGlobal()) return this.tut.blocked(); // ilk savaşın zorunlu adımı
-    if (def.kind === 'move' || def.kind === 'valor' || def.kind === 'urn') {
+    if (def.kind === 'move' || def.kind === 'valor' || def.kind === 'urn' || def.kind === 'command') {
       const same = this.moveMode?.id === id;
       if (this.moveMode) this.cancelMove();
       if (!same) {
         if (def.kind === 'move') this.startMove(actor);
         else if (def.kind === 'urn') this.startUrn(actor, id);
+        else if (def.kind === 'command') this.startCommand(actor, id);
         else this.startValor(actor, id);
       }
       return;
@@ -2580,6 +2582,47 @@ export class BattleScene extends Phaser.Scene {
       },
     });
     this.drawFlowStrip({ step: 'corpse', twoStep: false } as unknown as RaiseFlow, '', { step: 'Valor', text: 'Choose a fallen ally to raise (Esc cancels)' });
+  }
+
+  /**
+   * Royal Command (Kingsfall Regalia 3 parça, Ömer 2026-11-07 B4): yaşayan dostların hücreleri dost tonlu plaka; üstüne gelince kim ve ne olacağı,
+   * dokununca komut verilir (taşıyanın turu harcanır, dost hemen ek tur alır). Tekrar basmak ya da Esc iptal. Valor seçicisinin aynı parçaları.
+   */
+  private startCommand(actor: Combatant, id: string): void {
+    this.clearSelection();
+    this.moveMode = { actor: actor.uid, id };
+    this.refreshCommands();
+    const targets = this.battle.commandTargets(actor.uid);
+    const own = actor.side;
+    const turns = this.battle.mode === 'turns';
+    this.showBasePlates([{ board: own, specs: targets.map((c) => ({ slot: c.slot, state: 'selectable' as const, tone: 'ally' as const })) }]);
+    const at = (slot: number | null) => (slot === null ? undefined : targets.find((c) => c.slot === slot));
+    const icon = ensureIcon(this, globalIconName(this.battle.globalDef(id)!), GLOBAL_ACCENT.command!, true, SHARED_KEY);
+    this.bindCellZones([own], {
+      twoTap: false,
+      canPick: (_b, slot) => !!at(slot),
+      onHover: (b, slot) => {
+        const c = at(slot);
+        if (!c) {
+          this.clearAreaMarker();
+          this.hideInfoTip();
+          return;
+        }
+        this.showPlates(b, [{ slot: c.slot, state: 'ally' }]);
+        const rows: Array<[string, string?]> = [
+          [turns ? 'Takes an extra turn right after yours' : 'Gets the command (test mode: no turn order)', colors.heal],
+          ['Their turn meter does not change', colors.text],
+          ['Spends your turn. Once per battle', colors.muted],
+        ];
+        this.hideInfoTip();
+        this.placeInfoTip(this.makeInfo(unitName(c), colors.text, icon, rows, 'Command'));
+      },
+      onPick: (_b, slot) => {
+        const c = at(slot);
+        if (c) this.performGlobal(actor.uid, id, undefined, c.uid);
+      },
+    });
+    this.drawFlowStrip({ step: 'corpse', twoStep: false } as unknown as RaiseFlow, '', { step: 'Command', text: 'Choose an ally to act next (Esc cancels)' });
   }
 
   /**
@@ -2746,6 +2789,7 @@ export class BattleScene extends Phaser.Scene {
     else if (def.kind === 'move') rows.push(['Click, then pick an empty cell (Esc cancels)', colors.targetHighlight]);
     else if (def.kind === 'valor') rows.push(['Click, then pick a fallen ally (Esc cancels)', colors.targetHighlight]);
     else if (def.kind === 'urn') rows.push(['Click, then pick a row of your side (Esc cancels)', colors.targetHighlight]);
+    else if (def.kind === 'command') rows.push(['Click, then pick an ally (Esc cancels)', colors.targetHighlight]);
     if (def.kind === 'valor') rows.splice(1, 0, [`Valor now: ${this.battle.valorOf(actor.side) ?? 0} of ${this.battle.valorRules?.cap ?? 0}`, '#ffb35a']);
     // Crown Surge: çağıranın alacağı Taint (sefer verir; her kullanım bir öncekinden fazla)
     if (def.kind === 'surge' && this.crownInfo) {
@@ -2927,7 +2971,7 @@ export class BattleScene extends Phaser.Scene {
       titleColor,
       ...(iconKey ? { iconUrl: this.texUrl(iconKey) } : {}),
       ...(badge ? { badge } : {}),
-      meta: meta.map((m) => ({ ...(m.icon ? { iconUrl: this.texUrl(m.icon) } : {}), text: m.text, color: m.hex })),
+      meta: meta.map((m) => ({ ...(m.icon ? { iconUrl: this.texUrl(m.icon) } : {}), text: m.text, color: m.hex, ...(m.dir ? { dir: m.dir } : {}) })),
       rows: rows.map(([text, color]) => ({ text, ...(color ? { color } : {}) })),
       ...(shape ? { shape } : {}),
     };
@@ -2957,12 +3001,13 @@ export class BattleScene extends Phaser.Scene {
     const costNow = skillCostAmount(skill.cost, actor); // proportional costs (Wail of the Dead: 20% of current HP) show the real amount right now
     const ratio = isRatioCost(skill.cost);
     if (skill.cost.resource === 'rage' && costNow > 0) {
-      meta.push({ icon: ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false), text: `RAGE ${costNow}${ratio ? ` (${skillCostLabel(skill.cost)})` : ''}`, hex: RAGE_COLOR });
+      meta.push({ icon: ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false), text: `RAGE ${costNow}${ratio ? ` (${skillCostLabel(skill.cost)})` : ''}`, hex: RAGE_COLOR, ...(this.costDir(actor, skill) ? { dir: this.costDir(actor, skill)! } : {}) });
     } else if (costNow > 0) {
       const kind = skill.cost.resource === 'mp' ? 'mp' : 'hp';
-      meta.push({ icon: ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false), text: ratio ? `${costNow} ${skill.cost.resource.toUpperCase()} (${skillCostLabel(skill.cost)})` : info.cost, hex: colors.text });
+      meta.push({ icon: ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false), text: ratio ? `${costNow} ${skill.cost.resource.toUpperCase()} (${skillCostLabel(skill.cost)})` : costNow !== skill.cost.amount ? `${costNow} ${skill.cost.resource.toUpperCase()}` : info.cost, hex: colors.text, ...(this.costDir(actor, skill) ? { dir: this.costDir(actor, skill)! } : {}) });
     } else meta.push({ text: info.cost, hex: colors.muted });
-    if (this.battle.mode === 'turns' && (skill.cooldown ?? 0) > 0) meta.push({ icon: ensureIcon(this, uiIconName('cooldown'), UI_COLOR, false), text: info.cooldown, hex: colors.muted });
+    const cdEff = this.battle.cooldownFor(actor, skill);
+    if (this.battle.mode === 'turns' && cdEff > 0) meta.push({ icon: ensureIcon(this, uiIconName('cooldown'), UI_COLOR, false), text: cdEff === (skill.cooldown ?? 0) ? info.cooldown : `${cdEff} turns`, hex: colors.muted, ...(this.cooldownDir(actor, skill) ? { dir: this.cooldownDir(actor, skill)! } : {}) });
     if (this.battle.mode === 'turns' && info.initialCooldown && !actor.summoned) extra.push([info.initialCooldown, colors.muted]);
     const wait = this.battle.mode === 'turns' ? (actor.cooldowns[skill.id] ?? 0) : 0;
     // Kilit bekleme süresinden önce gelir: kilitli skill süresi bitince de açılmaz
@@ -3008,6 +3053,30 @@ export class BattleScene extends Phaser.Scene {
     return tip;
   }
 
+  /**
+   * Biriken pasifin şu anki toplamı (Ömer 2026-11-07): pasif metninin altında tek satır. Pealing Bells (çalınan çan x perBell), Berserker (eksik cana göre şu anki bonus),
+   * Stone Patience (biriken zırh). Biriken bir şey yoksa null.
+   */
+  private passiveLive(c: Combatant): string | null {
+    const e = c.passive?.effect;
+    if (!e) return null;
+    const p = (v: number): string => `${Math.round(v * 1000) / 10}%`;
+    if (e.type === 'pealingBells') return `Bells rung: ${c.bells ?? 0}, +${p(e.perBell * (c.bells ?? 0))} damage so far`;
+    if (e.type === 'rage') return `Right now: +${p(e.maxBonus * (c.maxHp > 0 ? 1 - c.hp / c.maxHp : 0))} damage (max +${p(e.maxBonus)})`;
+    if (e.type === 'stonePatience') return `Patience: +${c.patience ?? 0} armor (max ${e.max})`;
+    return null;
+  }
+
+  /** Birim kartı stat paneli satırının açıklaması (hover): ana stat / ızgara etiketi -> kit ipucu (formulas.json anlamları). */
+  private cardStatTip(c: Combatant, key: string): TipContent | null {
+    const byLabel: Record<string, StatKind> = { ARM: 'armor', EVA: 'evasion', SPD: 'spd', 'M.ARM': 'magicArmor', CRIT: 'critChance', ACC: 'accuracy' };
+    const kind = byLabel[key] ?? (MAIN_STATS.includes(key as StatKind) ? (key as StatKind) : null);
+    if (kind) return this.statTip(kind, c);
+    if (key === 'BLOCK') return this.makeInfo('Block', colors.text, undefined, [['Chance that a hit is blocked by the shield: a blocked hit deals no damage']]);
+    if (key === 'BREAK') return this.makeInfo('Block Break', colors.text, undefined, [['Lowers the block chance of the units it hits']]);
+    return null;
+  }
+
   /** Stat değeri (etiketsiz): "8", "11%", "x1.5", "2/t". */
   private statValue(kind: StatKind, s: Combatant['stats']): string {
     const text = statRowText(kind, s, STAT_LABEL);
@@ -3038,14 +3107,13 @@ export class BattleScene extends Phaser.Scene {
     this.hud?.hideContextTip();
   }
 
-  /** Fareyle üstüne gelinen birim: kendi tarafının kartı (düşman sağda, dost solda); diğer tarafın sabit kartı kapanmaz. */
+  /** Fareyle üstüne gelinen birim: yalnızca durum anahtarı tutulur (hover kartı yok; kart sağ tık / uzun basma ile sabitlenir). */
   private showUnitTip(view: CombatantView): void {
     const c = view.combatant;
     if (this.unitTipKey.startsWith('corpse:')) this.hideInfoTip();
     this.unitTipKey = `unit:${c.uid}`;
     this.hudHoverSide = c.side;
-    const card = this.buildCard(c.uid);
-    if (card) this.hud?.hoverCard(card);
+    // Ömer 2026-11-07: fareyle üstüne gelmek birim kartı AÇMAZ; kart yalnızca sağ tık / uzun basmayla (pinCardOf) açılır
   }
 
   private hideUnitTip(): void {
@@ -3126,8 +3194,10 @@ export class BattleScene extends Phaser.Scene {
         iconUrl: this.skillIconUrl(c, sk),
         target: skillTargetLabel(sk),
         cost: skillCostAmount(sk.cost, c) > 0 ? (chips[0] ?? null) : null,
-        cd: turns ? (sk.cooldown ?? 0) : 0,
+        cd: turns ? this.battle.cooldownFor(c, sk) : 0,
+        ...(turns && this.cooldownDir(c, sk) ? { cdDir: this.cooldownDir(c, sk)! } : {}),
         wait: turns ? (c.cooldowns[id] ?? 0) : 0,
+        ...(this.skillSilenced(c, sk) ? { silenced: true } : {}),
         cdIconUrl: hourglass,
         tip: () => this.skillTip(c, sk),
       });
@@ -3171,9 +3241,10 @@ export class BattleScene extends Phaser.Scene {
       primary: c.stats.primary ? { name: primaryName, iconUrl: icon(c.stats.primary) } : null,
       ...(c.summoned && c.level === undefined ? {} : { level: c.level ?? 1 }),
       attrs: MAIN_STATS.map((k) => this.hudStat(k, c, false)),
+      statTip: (key) => this.cardStatTip(c, key),
       grid,
       effects,
-      passive: c.passive ? { name: c.passive.name, text: describePassive(c.passive, c.stats, f), iconUrl: this.texUrl(ensureIcon(this, passiveIconName(c.passive, uiIconName('passive')), c.color, false, ownerOfUnit(c.defId))) } : null,
+      passive: c.passive ? { name: c.passive.name, text: describePassive(c.passive, c.stats, f), ...(this.passiveLive(c) ? { live: this.passiveLive(c)! } : {}), iconUrl: this.texUrl(ensureIcon(this, passiveIconName(c.passive, uiIconName('passive')), c.color, false, ownerOfUnit(c.defId))) } : null,
       preview,
       skills,
     };
@@ -3493,7 +3564,7 @@ export class BattleScene extends Phaser.Scene {
         const def = this.battle.globalDef(e.id);
         if (actor && def) {
           const who = `${actor.side !== this.localSide ? 'Enemy ' : ''}${unitName(actor)}`;
-          this.announce(def.kind === 'rest' ? `${who} uses Rest` : def.kind === 'skip' ? `${who} skips the turn` : def.kind === 'valor' ? `${who} spends Valor` : def.kind === 'surge' ? `${who} calls ${def.name}` : `${who} moves`);
+          this.announce(def.kind === 'rest' ? `${who} uses Rest` : def.kind === 'skip' ? `${who} skips the turn` : def.kind === 'valor' ? `${who} spends Valor` : def.kind === 'surge' ? `${who} calls ${def.name}` : def.kind === 'command' ? `${who} uses ${def.name}` : `${who} moves`);
         }
         if (def?.kind === 'surge' && actor) for (const c of this.battle.combatants) if (c.side === actor.side && c.hp > 0) this.views.get(c.uid)?.ring('#e2b04a', 0.9);
         if (def?.kind === 'rest') {
@@ -3667,6 +3738,12 @@ export class BattleScene extends Phaser.Scene {
             if (view.container.alpha < 1) this.tweens.add({ targets: view.container, alpha: 1, duration: slow(200) }); // efekt unuttuysa birim yine görünür
           } else await summonFx(this, e.combatant.defId, view, { ...(e.empowered !== undefined ? { empowered: e.empowered } : {}), ...(caster ? { caster } : {}) });
         }
+        return;
+      }
+      case 'command': {
+        const to = this.battle.get(e.target);
+        if (to) this.announce(`${unitName(to)} takes an extra turn`);
+        this.views.get(e.target)?.ring(GLOBAL_ACCENT.command!, 0.9);
         return;
       }
       case 'valor':
@@ -4995,7 +5072,9 @@ export class BattleScene extends Phaser.Scene {
   /** A short banner under the turn bar: who used what. */
   private announce(text: string, iconKey?: string): void {
     this.announceLayer?.destroy();
-    const label = elText(this, W / 2, 168, text, 32, EL.ON, { em: 0.06, upper: false }).setOrigin(0.5);
+    // Y sabit: sıra çubuğu + 'YOUR TURN' etiketinin (en çok ~150) altında, birimlerin ad plakasının (~480) üstünde; skill alanını örtmez
+    const AY = 232;
+    const label = elText(this, W / 2, AY, text, 32, EL.ON, { em: 0.06, upper: false }).setOrigin(0.5);
     const parts: Phaser.GameObjects.GameObject[] = [label];
     let span = label.width;
     // Skill simgesi 32 px, yazının SOLUNDA (A1, Ömer 2026-10-23); yazı ile birlikte ortalanır
@@ -5003,11 +5082,11 @@ export class BattleScene extends Phaser.Scene {
       const ICON = 32;
       const GAP = 12;
       span += ICON + GAP;
-      const icon = this.add.image(W / 2 - span / 2 + ICON / 2, 168, iconKey).setDisplaySize(ICON, ICON);
+      const icon = this.add.image(W / 2 - span / 2 + ICON / 2, AY, iconKey).setDisplaySize(ICON, ICON);
       label.setX(W / 2 - span / 2 + ICON + GAP + label.width / 2);
       parts.push(icon);
     }
-    const bg = kitTextBand(this, W / 2, 168, span + 260, 66);
+    const bg = kitTextBand(this, W / 2, AY, span + 260, 60);
     const layer = this.add.container(0, 0, [bg, ...parts]).setDepth(4100);
     this.announceLayer = layer;
     this.tweens.add({
@@ -5134,7 +5213,10 @@ export class BattleScene extends Phaser.Scene {
         if (p?.button === 2) return this.pinCardOf(view.combatant.uid); // sağ tık: yalnızca bilgi kartı, hedefleme / saldırı yok
         if (!p || !this.isSelectGesture(p)) this.onCombatantTap(view);
       },
-      () => this.onUnitOver(view),
+      // Dokunuş (simüle hover) kart açmaz: dokunmatikte yalnızca uzun basma sabitler (Ömer 2026-11-07); Phaser ilk argüman olarak işaretçiyi verir
+      ((p?: Phaser.Input.Pointer) => {
+        if (!p?.wasTouch) this.onUnitOver(view);
+      }) as () => void,
       () => this.onUnitOut(view),
     );
     this.views.set(c.uid, view);
@@ -5355,6 +5437,8 @@ export class BattleScene extends Phaser.Scene {
       notes,
     };
     const turns = this.battle.mode === 'turns';
+    // Düşman turu: skill ve global satırları okunur kalır (sönük değil), tıklanmaz
+    const foeView = this.battle.mode !== 'test' && actor.side !== this.localSide;
     const skills: HudSkill[] = [];
     actor.skills.forEach((skillId, idx) => {
       const skill = this.battle.skill(skillId, actor) ?? content.skills[skillId]; // skill ağacı: ipucu / bedel / cooldown yamalı sayıyla
@@ -5369,8 +5453,10 @@ export class BattleScene extends Phaser.Scene {
         wait,
         enabled: this.playerCanAct && this.battle.canUse(actor.uid, skillId).ok,
         ...(actor.side === this.localSide && actor.lockedSkills?.includes(skillId) ? { locked: true } : {}),
+        ...(this.skillSilenced(actor, skill) ? { silenced: true } : {}),
         selected: this.selected?.actor === actor.uid && this.selected.skill === skill.id && this.playerCanAct,
         ult: idx === 3,
+        ...(foeView ? { foe: true } : {}),
         ...this.skillLack(actor, skill),
         tip: this.skillTip(actor, skill),
       });
@@ -5378,7 +5464,9 @@ export class BattleScene extends Phaser.Scene {
     // summons never use global actions; on the foe's turn Rest / Skip / Move are hidden placeholders too (N1: they were shown on the enemy panel)
     // Crown Surge taç plakası sağ alanda (refreshCrown): global sütunda değil
     const notSurge = (id: string) => this.battle.globalDef(id)?.kind !== 'surge';
-    const own = actor.summoned || (this.battle.mode !== 'test' && actor.side !== this.localSide) ? [] : this.battle.globalSkillIds(actor.side).filter(notSurge);
+    // Royal Command: yalnızca tam Kingsfall Regalia taşıyanın çubuğunda (diğer dostlarda görünmez yer tutucu)
+    const mine = (id: string) => this.battle.globalDef(id)?.kind !== 'command' || this.battle.hasCommand(actor);
+    const own = actor.summoned ? [] : this.battle.globalSkillIds(actor.side).filter((id) => notSurge(id) && mine(id));
     const globals: HudGlobal[] = own.map((id) => {
           const g = this.battle.globalDef(id)!;
           const accent = GLOBAL_ACCENT[g.kind === 'skip' ? 'skip' : g.kind] ?? '#e8c47e';
@@ -5390,7 +5478,8 @@ export class BattleScene extends Phaser.Scene {
             iconUrl: g.kind === 'valor' ? brazierIconUrl((this.battle.valorOf(actor.side) ?? 0) >= (this.battle.valorRules?.revive.battleCost ?? Infinity)) : this.texUrl(ensureIcon(this, globalIconName(g), accent, false, SHARED_KEY)),
             enabled: this.playerCanAct && this.battle.canUseGlobal(actor.uid, id).ok,
             ready: g.kind === 'valor' && this.playerCanAct && this.battle.canUseGlobal(actor.uid, id).ok,
-            active: (g.kind === 'move' || g.kind === 'valor') && this.moveMode?.actor === actor.uid && this.moveMode.id === id,
+            active: (g.kind === 'move' || g.kind === 'valor' || g.kind === 'command') && this.moveMode?.actor === actor.uid && this.moveMode.id === id,
+            ...(foeView ? { foe: true } : {}),
             tip: this.globalTip(actor, id),
           };
         });
@@ -5407,7 +5496,7 @@ export class BattleScene extends Phaser.Scene {
       ? {
           name: actor.passive.name,
           iconUrl: hudActor.passive!.iconUrl,
-          tip: this.makeInfo(actor.passive.name, EL.ON, ensureIcon(this, passiveIconName(actor.passive, uiIconName('passive')), actor.color, false, ownerOfUnit(actor.defId)), [[describePassive(actor.passive, actor.stats, f), colors.text]], 'Passive'),
+          tip: this.makeInfo(actor.passive.name, EL.ON, ensureIcon(this, passiveIconName(actor.passive, uiIconName('passive')), actor.color, false, ownerOfUnit(actor.defId)), [[describePassive(actor.passive, actor.stats, f), colors.text], ...(this.passiveLive(actor) ? [[this.passiveLive(actor)!, '#9ee6a8'] as [string, string]] : [])], 'Passive'),
           lucky: null,
         }
       : null;
@@ -5433,6 +5522,31 @@ export class BattleScene extends Phaser.Scene {
     return {};
   }
 
+  /** Susturulmuş birimin MP bedelli skill'i mi (motor canUse kuralıyla aynı: statuses.json > blocksMpSkills)? */
+  private skillSilenced(actor: Combatant, skill: SkillDef): boolean {
+    return skill.cost.resource === 'mp' && skillCostAmount(skill.cost, actor) > 0 && this.battle.isSilenced(actor.uid);
+  }
+
+  /** Bedelin etkiyle (durum: Branded, item, ağaç) temel değere göre yönü: artış 'up' (kırmızı), azalış 'down' (yeşil), değişmedi null. */
+  private costDir(actor: Combatant, skill: SkillDef): 'up' | 'down' | null {
+    const base0 = content.skills[skill.id];
+    if (!base0) return null;
+    const now = skillCostAmount(skill.cost, actor);
+    if (now <= 0) return null;
+    // oranlı / hepsi bedeller kaynağa bağlı: temel = aynı birim, durumsuz (yalnızca Branded gibi etkiler fark yaratır)
+    const ratio = isRatioCost(base0.cost) || !!base0.cost.spendAll;
+    const base = ratio ? skillCostAmount(skill.cost, { ...actor, statuses: [] }) : skillCostAmount(base0.cost);
+    return now > base ? 'up' : now < base ? 'down' : null;
+  }
+
+  /** Etkin bekleme süresinin (boss fazı, ağaç) temel skill bekleme süresine göre yönü. */
+  private cooldownDir(actor: Combatant, skill: SkillDef): 'up' | 'down' | null {
+    const base = content.skills[skill.id]?.cooldown;
+    if (base === undefined) return null;
+    const now = this.battle.cooldownFor(actor, skill);
+    return now > base ? 'up' : now < base ? 'down' : null;
+  }
+
   /** Skill düğmesinin altındaki bedel / cooldown çipleri (ya da cooldown sürerken kalan bekleme). */
   private skillCostChips(actor: Combatant, skill: SkillDef): HudSkill['cost'] {
     const turns = this.battle.mode === 'turns';
@@ -5441,12 +5555,15 @@ export class BattleScene extends Phaser.Scene {
     // Soul Exchange (cost.hpFallback): MP yetmezse çip candan ödenecek miktarı gösterir (HP simgesi)
     const pay = skillCostPay(skill.cost, actor, undefined, this.battle.freeMp);
     const costNow = pay.amount;
-    if (costNow > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)), text: `RAGE ${costNow}`, color: RAGE_COLOR, kind: 'rage' });
+    const cdir = this.costDir(actor, skill);
+    const cdDir = turns ? this.cooldownDir(actor, skill) : null;
+    if (costNow > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)), text: `RAGE ${costNow}`, color: RAGE_COLOR, kind: 'rage', ...(cdir ? { dir: cdir } : {}) });
     else if (costNow > 0) {
       const kind = pay.resource === 'mp' ? 'mp' : 'hp';
-      out.push({ iconUrl: this.texUrl(ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false)), text: String(costNow), kind });
+      out.push({ iconUrl: this.texUrl(ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false)), text: String(costNow), kind, ...(cdir && pay.resource === skill.cost.resource ? { dir: cdir } : {}) });
     }
-    if (turns && (skill.cooldown ?? 0) > 0) out.push({ iconUrl: hourglass, text: String(skill.cooldown), color: colors.muted, kind: 'cd' });
+    const cdNow = this.battle.cooldownFor(actor, skill);
+    if (turns && cdNow > 0) out.push({ iconUrl: hourglass, text: String(cdNow), color: colors.muted, kind: 'cd', ...(cdDir ? { dir: cdDir } : {}) });
     return out;
   }
 

@@ -55,6 +55,7 @@ describe('H3 / H2: düğüm kartının "First" satırı', () => {
 describe('D6: zafer toparlanması notu ve Hillside Camp', () => {
   it('oran veriden (normal / elit / boss), metin yüzdeyi yazar', () => {
     const s = finish(debugTeleport(fresh(), '4'));
+    delete s.lastVictoryHeal; // gerçek (level ölçekli) oran değil, veri oranı (Ömer 2026-11-07 healelite)
     expect(victoryRecovery({ ...s, at: 'cairn' })).toBe(CONFIG.rules.victoryHeal);
     expect(victoryRecovery({ ...s, at: '3' })).toBe(CONFIG.rules.eliteVictoryHeal);
     expect(victoryRecovery({ ...s, at: '9' })).toBe(CONFIG.rules.bossVictoryHeal);

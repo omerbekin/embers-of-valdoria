@@ -670,6 +670,22 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     },
   });
   debug.register({
+    id: 'campaign.give-supplies',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'clover',
+    label: 'Give supplies',
+    hint: 'Add 2 of each out-of-combat supply (Healing Draught, Greater Healing Draught, Wound Salve, Revive Ally). Use them from the Gear screen on the selected hero',
+    run: () => {
+      void import('../campaign').then((m) => {
+        const t = JSON.parse(JSON.stringify(ensureState())) as CampaignState;
+        for (const d of m.SUPPLIES) m.addSupply(t, d.id, 2);
+        setState(t);
+        document.dispatchEvent(new CustomEvent('gear:refresh'));
+      });
+    },
+  });
+  debug.register({
     id: 'campaign.give-gold',
     tab: CAMPAIGN_TAB,
     section: 'Items',

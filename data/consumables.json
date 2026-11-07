@@ -1,0 +1,16 @@
+{
+  "_not": "Ömer 2026-11-07 (onaylı): savaş dışı tüketilebilir malzemeler (Supplies). Çanta kapasitesine girmez, kayıtta CampaignState.supplies (id -> adet). YALNIZCA sandık / loot düşüşlerinden gelir, satılmaz (tüccarda yok). Gear ekranından (harita dahil) seçili kahramana kullanılır; savaşta kullanılmaz, YZ'ye dokunmaz. SAYILAR PROVİZYON (Ömer vermedi): heal/revive oranları ve düşme şansları balance-tester/Lead ayarlar. heal = can oranı ekler (yaşayana); cureWound = 1 yara siler; revive = düşmüş kahramanı bu can oranıyla kaldırır (yara silmez). Sıra: Gear şeridinde görünür sıra.",
+  "items": [
+    { "id": "heal", "name": "Healing Draught", "text": "Restores {heal}% of a hero's max HP.", "heal": 0.4 },
+    { "id": "greater_heal", "name": "Greater Healing Draught", "text": "Restores {heal}% of a hero's max HP and cures a wound if the hero has one.", "heal": 0.8, "cureWound": true },
+    { "id": "cure_wound", "name": "Wound Salve", "text": "Cures one wound.", "cureWound": true },
+    { "id": "revive_ally", "name": "Revive Ally", "text": "Raises a fallen hero with {revive}% of their max HP.", "revive": 0.5 }
+  ],
+  "_drops": "Düşüş zarı (seed'li, kendi tuzu 'supply': loot/rare zarına dokunmaz), yalnız düğümün İLK zaferi / ilk sandığı (devriye vermez). chance = türün şansı; weights = hangisi (ağırlık). Ömer 2026-11-07 (revband): revive_ally ağırlığı her tabloda x2 (1/2/3/2 -> 2/4/6/4), chance aynı.",
+  "drops": {
+    "battle": { "chance": 0.08, "weights": { "heal": 5, "cure_wound": 3, "revive_ally": 2 } },
+    "elite": { "chance": 0.3, "weights": { "heal": 4, "cure_wound": 3, "revive_ally": 4, "greater_heal": 1 } },
+    "boss": { "chance": 0.6, "weights": { "heal": 2, "cure_wound": 3, "revive_ally": 6, "greater_heal": 3 } },
+    "treasure": { "chance": 0.4, "weights": { "heal": 4, "cure_wound": 3, "revive_ally": 4, "greater_heal": 1 } }
+  }
+}

@@ -7,6 +7,7 @@ import { installLegacySkills } from './legacy-skills';
 import { rangeOff, withOldLayout } from './range-helpers';
 import { giveManaOverflow } from './am-legacy-helpers';
 import { shapeCells } from '../src/engine/area-shape';
+import { noPace } from './pace-helpers';
 
 installLegacySkills();
 
@@ -14,7 +15,7 @@ type Teams = { party: string[]; enemies: string[] };
 
 /** Verilen takımlarla savaş. `calm`: kritik ve dodge kapalı (sayılar zara bağlı olmasın). */
 function make(teams: Teams, opts: { seed?: number; mode?: BattleMode; calm?: boolean } = {}): Battle {
-  const b = new Battle(content.battleSetup('first-battle', opts.seed ?? 1, opts.mode ?? 'test', teams));
+  const b = new Battle(noPace(content.battleSetup('first-battle', opts.seed ?? 1, opts.mode ?? 'test', teams)));
   if (opts.calm ?? true) for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0 });
   return b;
 }
@@ -557,8 +558,8 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
     const before = mage.mp;
     am.mp = 0;
     const events = act(b, am.uid, 'mana_burn', mage.uid);
-    expect(ofType(events, 'manaBurn')[0]).toMatchObject({ target: mage.uid, amount: 10, mpAfter: before - 10 });
-    expect(am.mp).toBe(5); // yaktığının %50'si kendine
+    expect(ofType(events, 'manaBurn')[0]).toMatchObject({ target: mage.uid, amount: 8, mpAfter: before - 8 }); // Ömer 2026-11-08: 10 -> 8
+    expect(am.mp).toBe(4); // yaktığının %50'si kendine
     expect(ofType(events, 'damage')).toHaveLength(1);
     mage.hp = mage.maxHp; // hasar yükselse de hedef ölmesin
     mage.mp = 4;
@@ -576,8 +577,10 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
       am.mp = mp;
       return ofType(act(b, am.uid, 'spell_ward', am.uid), 'shield')[0]!.amount; // madde 240: tek dost (kendisi dahil)
     };
-    const wardCost = content.skills.spell_ward!.cost.amount; // bedel veriden (2026-10-24 mana turu: 10 -> 16)
-    expect(shield(wardCost + 34)).toBeGreaterThan(shield(wardCost + 5));
+    const wardCost = content.skills.spell_ward!.cost.amount; // bedel veriden (2026-10-24 mana turu: 10 -> 16; 2026-11-08: 12)
+    // Ömer 2026-11-08: kalkan artık yalnız INT ile ölçeklenir (kalan MP payı kaldırıldı; ağaçta Deep Reserve geri ekleyebilir)
+    expect(shield(wardCost + 34)).toBe(shield(wardCost + 5));
+    expect(shield(wardCost + 5)).toBeGreaterThan(0);
     // Menzil (range.md onaylı tablo): Anti-Mage uzak sınıf, tüm skill'leri sınıf menzili (4); ön sıradan en arka sıraya ulaşır (0+3+1=4)
     const b = make(TA);
     const am = unit(b, 'party', 'antimage');

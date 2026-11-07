@@ -498,6 +498,10 @@ html.compact .bt {
 .bt-meta .bt-chip {
   padding: 0 0.5em;
   gap: 0.3em;
+  /* tüm künye çipleri (Free, hedef, element, menzil, bedel, bekleme) aynı yükseklik ve aynı dikey hizada (Ömer 2026-11-07) */
+  box-sizing: border-box;
+  height: calc(var(--ic) + 8px);
+  min-height: 1.7em;
 }
 
 .bt-chip.q {
@@ -520,15 +524,10 @@ html.compact .bt {
 
 .bt-chip[data-tip] {
   outline: none;
-  cursor: help;
+  cursor: default; /* tıklanabilir görünmez: yalnızca üstüne gelince balon (Ömer 2026-11-07) */
 }
 
-.bt-chip.q[data-tip]:focus {
-  border-color: rgba(243, 217, 153, 0.8);
-}
-
-.bt-chip[data-tip]:hover::after,
-.bt-chip[data-tip]:focus::after {
+.bt-chip[data-tip]:hover::after {
   content: attr(data-tip);
   position: absolute;
   z-index: 40;
@@ -682,18 +681,7 @@ button:disabled[data-bt] {
   display: inline;
 }
 
-/* savaş HUD'ında skill ipucu tıklanabilir (More); boşluk köprüsü: fare skill düğmesinden ipucuna geçerken ipucu kapanmasın */
-.bh-sktip .bt {
-  pointer-events: auto;
-}
-
-.bh-sktip:has(> .bt .bt-morebtn)::before {
-  display: block;
-  content: '';
-  position: absolute;
-  inset: -20px 0;
-  pointer-events: auto;
-}
+/* More düğmesi kalktı (Ömer 2026-11-07): skill ipucu tıklanmaz; fare skill çubuğundan çıkınca kapanır (ipucunun üstüne geçmek açık tutmaz) */
 
 /* tıklanamayan kaplarda (kart yanı yüzen ipucu, bağlam ipucu) düğme yok: tam metin hep açık */
 .bh-ftip .bt-morerow,

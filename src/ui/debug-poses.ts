@@ -31,6 +31,10 @@ const DEBUG_ITEMS: readonly (readonly [string, boolean, string])[] = [
   ['oak_shield', true, 'Off: Oak Shield'],
   ['oathkeepers_bulwark', true, 'Off: Bulwark'],
   ['misericorde', true, 'Off: Dagger'],
+  ['hide_quiver', true, 'Off: Hide Quiver (bow)'],
+  ['fletchers_quiver', true, "Off: Fletcher's Quiver (bow)"],
+  ['bodkin_quiver', true, 'Off: Bodkin Quiver (bow)'],
+  ['crow_feather_quiver', true, 'Off: Crow-Feather Quiver (bow)'],
 ];
 
 export interface PosesHost {
@@ -192,7 +196,7 @@ export function registerPosesPanel(debug: Pick<DebugMenu, 'registerPanel' | 'reg
 
       // görsel seçici: aile x görünüm (tutuş ailenin hold'u: büyük balta / gürz / asa çift el, yay, tılsım; kalkan yalnızca ikinci el)
       const weaponBtns = allWeapons()
-        .filter((w) => POSES.weapons[w.family]?.hold !== 'offhand')
+        .filter((w) => POSES.weapons[w.family]?.hold !== 'offhand' && POSES.weapons[w.family]?.hold !== 'back')
         .map((w) => {
           const hold = POSES.weapons[w.family]?.hold as Grip | undefined;
           return debugButton(`${w.family} ${w.look}`, () => {

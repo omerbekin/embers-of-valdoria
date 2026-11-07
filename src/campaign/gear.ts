@@ -67,7 +67,7 @@ export function unequipItem(s: CampaignState, heroId: string, slot: SlotId): Cam
   const h = heroById(t, heroId)!;
   t.inventory.push(h.equipment[slot]!);
   h.equipment[slot] = null;
-  promoteOffhand(h.equipment); // ana el çıkınca ikinci eldeki hançer ana ele geçer
+  promoteOffhand(h.equipment, h.class); // ana el çıkınca ikinci eldeki hançer ana ele geçer
   return t;
 }
 

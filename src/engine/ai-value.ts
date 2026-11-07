@@ -27,7 +27,7 @@ export interface AiValueConfig {
   /** Harita 3 4. dilim mob kitleri (ai.ts > mobKitValue). Yoksa 0. */
   mobKit?: { sunder: number; wardEtch: number; lastEmber: number; exposure: number; diveSafe: number; spentTurn: number; coolTurn: number; coolArmor: number; reach: number; stormhide: number; stagger: number; furnace: number; chant: number; fury: number; lightDark: number; kindle: number; graveCold: number; hoarfrost: number };
   /** Set kuralları (ai.ts > setRuleValue, Banked Coals; ai.json > value.setRules). Yoksa 0. */
-  setRules?: { coalDelay: number; coalDoomed: number; coalCover: number };
+  setRules?: { coalDelay: number; coalDoomed: number; coalCover: number; unseenGift?: number; ropeFortify?: number; counterCost?: number };
   /** Harita 3 boss / elit dokunuşları (ai.ts > bossTouchValue). Yoksa 0. */
   bossTouch?: { heat: number; whiteout: number; sermon: number; sermonTurn: number; sermonBreak: number; packHeal: number; packKill: number; vault: number; frostbound: number; caveMark: number; fervour: number; everburn: number; quench: number; nave: number; crown: number; shepherd: number; douse: number; command: number; ranks: number; oath: number; coreBurn: number };
   /** Harita 3 imza mekanikleri (ai.ts > signatureValue, rodChoice). Yoksa 0. */
@@ -76,6 +76,11 @@ export interface AiValueConfig {
    * (skill'i cooldown'dan çıkıyor, MP'si yetiyor) o çağrıyı öldürmenin/ona baskının değeri bu payla çarpılır; hedef seçimi çağırıcıya kayar. Yoksa 1 (eski davranış).
    */
   resummonShare?: number;
+  /**
+   * Çağıranı öldürmek çağrılarını da öldürür (battle.ts > announceIfDead; Ömer 2026-11-07, Ley Brand -> Grave Chanter zinciri): çağıranın öldürme
+   * değerine canlı çağrılarının kalan katkısı x bu pay eklenir (ValueContext.summonsWorth). Yoksa 1.
+   */
+  summonerKillShare?: number;
   /**
    * Tıkanma sinyali (2026-10-10): savaşın toplam tur sayısı (battle.turnsTaken) `stallTurns`'ü geçince sinyal 0'dan 1'e `stallRamp` turda yükselir
    * (saf, belirleyici; normal savaşlar ortalama ~37 turda biter, sinyal onlara dokunmaz). Sinyal arttıkça: çağrılar cooldown'dan bağımsız olarak
@@ -478,6 +483,16 @@ export class ValueContext {
   /** Kalan katkı: tur başına değer x ufuk içindeki tur sayısı. */
   contribution(u: Combatant, counter?: number): number {
     return this.turnValue(u) * this.turnsWithin(u, counter);
+  }
+
+  /**
+   * Çağıran ölünce onunla ölecek canlı çağrılarının kalan katkısı x vc.summonerKillShare (Ömer 2026-11-07). `killP`: aynı hamlede zaten ölmesi
+   * beklenen çağrının payı düşülür (çift sayım yok). Çağrısı yoksa 0. Saf.
+   */
+  summonsWorth(owner: Combatant, killP?: Record<string, number>): number {
+    let v = 0;
+    for (const s of this.battle.combatants) if (s.summoned && s.owner === owner.uid && s.hp > 0) v += this.contribution(s) * (1 - Math.min(1, killP?.[s.uid] ?? 0));
+    return v * (this.vc.summonerKillShare ?? 1);
   }
 
   /** Dostun bir sonraki turumuzdan önce gelecek beklenen hasarı canını + kalkanını geçiyor mu (tehlike, K2)? */

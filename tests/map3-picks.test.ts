@@ -357,9 +357,9 @@ describe('YZ', () => {
     expect(c?.skillId).toBe('cold_command');
   });
 
-  const uses = (enemies: Record<number, string>, carrier: string, rounds = 90): Set<string> => {
+  const uses = (enemies: Record<number, string>, carrier: string, rounds = 90, seeds = [1, 2, 3]): Set<string> => {
     const out = new Set<string>();
-    for (const seed of [1, 2, 3]) {
+    for (const seed of seeds) {
       const b = make(enemies, 'turns', HEROES, seed);
       for (const c of b.combatants) if (c.side === 'party') { c.maxHp *= 40; c.hp = c.maxHp; }
       for (const c of b.combatants) if (c.side === 'enemy') { c.maxHp *= 20; c.hp = c.maxHp; }
@@ -384,7 +384,8 @@ describe('YZ', () => {
     ['frozen_crossbowman', { 1: 'frozen_standard_bearer', 0: 'frozen_halberdier', 2: 'frozen_halberdier', 7: 'frozen_crossbowman' }, ['crossbow_bolt', 'ice_shot']],
     ['pyre_witch', { 6: 'pyre_witch', 1: 'cinder_knight' }, ['pyre_bolt', 'spread_the_flame']],
   ] as [string, Record<number, string>, string[]][])('%s imzalarını gerçek savaşta atar', (id, enemies, need) => {
-    const seen = uses(enemies, id);
+    // Pyre Witch: Spread yalnız yerde Burning varken; tur başına hız zarıyla (Ömer 2026-11-07) 1-3 seed'lerinde denk gelmiyor, 5 eklendi
+    const seen = uses(enemies, id, 90, id === 'pyre_witch' ? [1, 2, 3, 5] : [1, 2, 3]);
     for (const s of need) expect([...seen], `${id} ${s}`).toContain(s);
   }, 120000);
 });

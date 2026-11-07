@@ -73,11 +73,6 @@ export interface Stats extends Attributes {
   dotPowerMult?: number;
   /** Potency: DoT toplamının üstüne ayrı çarpan (stats.ts > dotOutgoingMult). */
   potencyMult?: number;
-  /**
-   * Kişisel hız zarı (Ömer 2026-10-24, "Natural pace"): birimin SON hızına (Dex, item, spdAdd/spdMult sonrası) uygulanmış çarpan
-   * [1 - spdVariance, 1 + spdVariance]; `spd` bu zarla çarpılıp yuvarlanmış değerdir. Yalnızca ipucu bilgisi (stat-info.ts); yoksa zar yok.
-   */
-  spdRoll?: number;
 }
 
 /** Pasif skill etkileri (her sınıfın 1 pasifi var; düz stat vermez, bir koşulda tetiklenir). */
@@ -612,11 +607,6 @@ export interface UnitModifiers {
   spdMult?: number;
   /** İsabet çarpanı (Ömer 2026-10-27, topuz örtüğü "6% more Accuracy"): toplam isabet (taban + accuracyAdd) x bu çarpan (%80 -> %84,8). Durum etkileri (Blinded) sonra eklenir. */
   accuracyMult?: number;
-  /**
-   * Kişisel hız zarı (Ömer 2026-10-24): kahramanın kalıcı çarpanı (Hero.spdRoll, güç katmanı verir); SON hıza (spdMult'tan sonra) uygulanır,
-   * roundSpeed ile yuvarlanır. Verilmezse savaş birime hash(seed, uid) zarını kendisi atar (stats.ts > speedRoll).
-   */
-  spdRoll?: number;
   /** Lucky Escape şansına ek (Endurance; primary'den bağımsız: Luck'ı olmayan da kazanır, toplam en çok 1). */
   surviveAdd?: number;
   /** Verilen tüm skill hasarına ek (0,05 = +%5) -> Stats.damageMult. */
@@ -644,6 +634,19 @@ export interface ItemEffects {
   bankedCoals?: { share: number; ticks: number };
   /** Road Hound (Wayfarer's Oath 3 parça): savaş başında bu birimden bir tane, taşıyıcının yanında; savaşta yeniden gelmez. */
   roadHound?: { unit: string };
+  /** Unseen (Raven's Shroud 4 parça; Ömer 2026-11-07 U-Y): düşman saldırısından kaçınınca (dodge) taşıyanın sonraki saldırısı (bir skill kullanımının vuruşları) kesin kritik. */
+  dodgeCrit?: boolean;
+  /** Hangman's Rope (Gallows Pact 4 parça; H-E): Lucky Escape ölümü engelleyince taşıyana `status` (`turns` tur). */
+  escapeStatus?: { status: string; turns: number };
+  /**
+   * The Conclave Answers (Conclave of Embers 4 parça; C-Y): düşman taşıyanı hedefleyen bir skill kullanınca taşıyan, temel saldırısıyla (ilk skill'i) bedava
+   * karşılık verir; hasarı x`power` (ayrı çarpan, "less"). Taşıyanın turları arasında en çok `perTurn` kez; temel saldırı o düşmana normal kurallarla ulaşmalı.
+   */
+  counterAttack?: { power: number; perTurn: number };
+  /** Royal Command (Kingsfall Regalia 3 parça; R-Y): savaşta bir kez taşıyan turunu harcayıp bir dosta hemen ek tur verir (global 'command'). */
+  allyTurn?: boolean;
+  /** Spare Arrow (Sadak imza affix'i; SA-E): 0 bedelli temel saldırının (ilk skill) her hedefe vuruşu bu ihtimalle bir kez daha (repeatChance'e eklenir). */
+  basicRepeat?: number;
   /** Opening Ward: savaş başında maks canın bu oranı kalkan (UnitSetup.startShieldRatio ile toplanır). */
   startShieldRatio?: number;
   /** Mana Spring: birimin kendi kritik vuruşunda bu kadar MP (maks'ı aşmaz). */
@@ -1118,6 +1121,11 @@ export type SkillEffectKind =
       /** Hasarın hangi temel özelliğe bağlı olduğu. */
       scale: Attribute;
       power: number;
+      /**
+       * Hasar havuzu (Ömer 2026-11-07, P1; yalnız ağaç derleyicisi yazar): `power`a işlenmiş ağaç "+X% power" toplamı (power = taban x (1 + powerAdd)).
+       * damageSpecFor bu payı Global damage / element / koşullu düğümlerle AYNI havuzda toplar (stats.ts > outgoingDamageMult). Yoksa 0.
+       */
+      powerAdd?: number;
       /** 0-1: hedefin zırhının yok sayılan kısmı. */
       ignoreDefense?: number;
       /** 0-1: verilen hasarın bu kadarı kullanıcıya şifa olur. */
@@ -1668,7 +1676,7 @@ export interface Formulas {
     spdMin?: number;
     /** Arayüzde gösterilen hızın adımı (0,01 = en çok 2 ondalık, sondaki sıfırlar yok; stats.ts > speedText). Motor hesabını etkilemez. */
     spdShowStep?: number;
-    /** Kişisel hız sapması (Ömer 2026-10-24): her birimin hızı [1 - v, 1 + v] çarpanıyla zarlanır (yoksa 0 = zar yok; stats.ts > speedRoll). */
+    /** Tur başına hız sapması (Ömer 2026-11-07): her birimin sıra hızı HER TURUNDA [1 - v, 1 + v] çarpanıyla yeniden zarlanır (yoksa 0 = zar yok; stats.ts > speedRoll, battle.ts > paceOf). */
     spdVariance?: number;
     critChanceBase: number;
     critChancePerLuck: number;
@@ -1778,6 +1786,11 @@ export interface DoomDef {
   element: Element;
   /** Süre dolunca patlayan Doom'un çarpanı (burstOnExpire; balans kolu, varsayılan 1). */
   expireMult: number;
+  /**
+   * Ömer 2026-11-07: Omen'in süresi UZAMAZ. Süreyi artıracak her tur (extendStatus vb.) bunun yerine bu kadar Doom hasarı ekler (0,25 = tur başına
+   * +%25; Status.extraTurns sayacı). Bu Omen'in her Doom'una işler (süre bitimi, 3 yığında anında, Doom Mark). Kısaltmalar aynen (ceza yok).
+   */
+  bonusPerExtraTurn?: number;
 }
 
 /** data/statuses.json girişi: veriyle tanımlı buff/debuff. */
@@ -2058,6 +2071,8 @@ export interface Status {
    * saldırıdan sonra düşmeme şansı. Yalnızca ağaçlı uygulayanın durumunda.
    */
   potency?: Record<string, number>;
+  /** Yığılan durum (Omen): süreye eklenmek yerine Doom bonusuna çevrilen tur sayısı (doom.bonusPerExtraTurn; yalnızca uzatma gelince yazılır). */
+  extraTurns?: number;
   /** Yığın (Omen) Ill Omen ile geçti: konakta geçmiş Omen var (koşul omenFromTransfer; yalnızca ağaçlı savaşta yazılır). */
   transferred?: boolean;
   /** DoT: bu örneğin şimdiye kadar tik sayısı (ölçek dotTickIndex; yalnızca ağaçlı savaşta yazılır). */
@@ -2181,6 +2196,8 @@ export interface Combatant {
   charge: number;
   /** Sıra sayacı: her tikte SPD kadar dolar, eşiğe ulaşınca oynar. */
   turnCounter: number;
+  /** Tur başına hız zarı (Ömer 2026-11-07): birimin bitirdiği tur sayısı (yoksa 0); zar = speedRoll(seed, paceKey(uid, paceTurn)), bkz. Battle.paceOf. */
+  paceTurn?: number;
   /** Beklemede olan skill'ler: skillId -> kalan tur (her kendi turunun başında 1 azalır). */
   cooldowns: Record<string, number>;
   /** Rage (yalnızca Rage'li class'ta; diğerlerinde tanımsız): mevcut değer ve üst sınır. Savaş başında 0. */
@@ -2217,6 +2234,14 @@ export interface Combatant {
   interceptUsed?: boolean;
   echoUsed?: boolean;
   extraTurnGranted?: boolean;
+  /** Unseen: kaçınmadan sonra kesin kritik hazır; `unseenSpent` = bu kullanımda harcandı (kullanım sonunda ikisi de silinir). */
+  unseenReady?: boolean;
+  unseenSpent?: boolean;
+  /** The Conclave Answers: taşıyanın son turundan beri verdiği karşılık sayısı. */
+  countersUsed?: number;
+  /** Royal Command: savaşta kullanıldı; `commandTurn` = bu tur bir dostun verdiği ek tur (sayaç düşmez). */
+  commandUsed?: boolean;
+  commandTurn?: boolean;
   spellCount?: number;
   /** Vesper: bu savaşta çalınan çan sayısı (`SkillDef.ringsBell`; yoksa 0). */
   bells?: number;
@@ -2431,6 +2456,8 @@ type BattleEventBody =
   | { type: 'revive'; source: string; target: string; hpAfter: number; mpAfter: number; slot?: number; from?: number; /** 'valor': global Valor diriltmesi (skill değil); 'rise': boss faz girişinde dostun kalkışı (BossPhaseDef.riseAllies). */ cause?: 'valor' | 'rise' }
   /** Valor harcandı (global valor_revive): taraf, harcanan, kalan. */
   | { type: 'valor'; side: Side; spent: number; after: number }
+  /** Royal Command (Kingsfall Regalia): `source` dostu `target`a hemen ek tur verdi (turns modunda sıradaki tur onun). */
+  | { type: 'command'; source: string; target: string }
   /** `cause`: kalkan kancası (ör. 'mana_barrier') verdiyse skill id'si; yoksa tur başı yenilenme / Rest / pasif. */
   | { type: 'mpRegen'; actor: string; amount: number; after: number; cause?: string }
   /** Rage değişimi (yalnızca Rage'li birim): delta + = kazanç (skill hasar verince; cause 'hurt' = Berserker: can kaybedince), - = bedel (Headsman's Blow: tüm Rage); after = yeni değer, max = üst sınır. */
@@ -2753,9 +2780,10 @@ export interface GlobalSkillDef {
    * surge: Crown Surge (Harita 2-3, map2-quests-surge.md C1; yalnızca BattleSetup.surge'de o tarafa verilen id'ler görünür, savaş başına TEK Surge):
    * tarafın yaşayan tüm birimlerine `status` (`turns`; Ash Surge) ve / veya maks canın `shieldRatio` oranı süreli kalkan (`shieldTurns`; Salt Surge).
    */
-  kind: 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge' | 'rod';
+  /** command: Royal Command (allyTurn taşıyanı; savaşta bir kez, canlı bir dosta hemen ek tur; target 'ally'). */
+  kind: 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'surge' | 'rod' | 'command';
   /** self: hedef yok; empty_tile: kendi tarafındaki boş (canlı olmayan) bir yuva seçilir; row: kendi tahtasında bir sıra (hücresiyle). */
-  target: 'self' | 'empty_tile' | 'dead_ally' | 'row';
+  target: 'self' | 'empty_tile' | 'dead_ally' | 'row' | 'ally';
   /** rest: kazanılan MP (maks MP'yi aşmaz). */
   mp?: number;
   /** skip: bir sonraki tura kadar hız desteği (1 = +%100: sayaç iki kat hızlı dolar; Haste/Slow ile toplamsal). */
@@ -2784,7 +2812,8 @@ export interface ValorRules {
   earn: { win: number; elite: number; boss: number; flawless: number };
   revive: { battleCost: number; outsideCost: number; hpRatio: number; mpRatio: number };
   /** Savaş dışı (sefer haritası) Valor ile yara silme: outsideCost Valor = yaşayan kahramanın 1 yarası (Ömer 2026-10-26). Yoksa kapalı. */
-  woundHeal?: { outsideCost: number };
+  /** hpRatio (Ömer 2026-11-07): yara silinince kahramanın can oranına eklenen pay (maks canın oranı, en çok 1). Yoksa 0. */
+  woundHeal?: { outsideCost: number; hpRatio?: number };
   campaign: { introNode: string; gift: number };
   endless: { start: number };
 }

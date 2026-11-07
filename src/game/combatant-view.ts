@@ -266,7 +266,7 @@ export class CombatantView {
     const hpOuter = scene.add.rectangle(0, this.hpY, hpBar.width + 6, hpBar.height + 6, 0x050302, 0.55);
     const hpBack = scene.add.rectangle(0, this.hpY, hpBar.width, hpBar.height, KIT.back, 0.92).setStrokeStyle(1, KIT.gold, 0.6);
     // Hayalet çubuk: can düşünce bir süre eski seviyede kalıp yavaşça iner (büyük vuruşta daha uzun ve belirgin)
-    this.hpGhost = scene.add.rectangle(-hpBar.width / 2, this.hpY, hpBar.width, hpBar.height, color('#ffd6a0')).setOrigin(0, 0.5);
+    this.hpGhost = scene.add.rectangle(-hpBar.width / 2, this.hpY, hpBar.width, hpBar.height, color('#ffd6a0')).setOrigin(0, 0.5).setAlpha(0);
     this.hpFill = scene.add
       .rectangle(-hpBar.width / 2, this.hpY, hpBar.width, hpBar.height, color(combatant.side === 'party' ? colors.hpFill : colors.hpFillEnemy))
       .setOrigin(0, 0.5);
@@ -280,6 +280,7 @@ export class CombatantView {
     this.mpGhost = scene.add
       .rectangle(-hpBar.width / 2, mpY, hpBar.width, hpBar.mpHeight, color(colors.mpGhost))
       .setOrigin(0, 0.5)
+      .setAlpha(0)
       .setVisible(combatant.maxMp > 0);
     this.mpFill = scene.add
       .rectangle(-hpBar.width / 2, mpY, hpBar.width, hpBar.mpHeight, color(colors.mpFill))
@@ -509,34 +510,39 @@ export class CombatantView {
     const target = hpBar.width * Math.max(0, hp / this.combatant.maxHp);
     if (!animate) {
       this.hpFill.width = target;
-      this.hpGhost.width = target;
+      this.hideNotch(this.hpGhost);
       return;
     }
     this.scene.tweens.killTweensOf([this.hpFill, this.hpGhost]);
     if (target < this.hpFill.width - 0.5) {
       const level = hitLevel(hitRatio);
-      this.hpGhost.width = Math.max(this.hpGhost.width, this.hpFill.width);
+      this.showNotch(this.hpGhost, target, this.hpFill.width);
       this.scene.tweens.add({ targets: this.hpFill, width: target, duration: slow(140), ease: 'Quad.easeOut' });
-      this.scene.tweens.add({
-        targets: this.hpGhost,
-        width: target,
-        delay: timing.hpGhostDelayMs * (1 + level),
-        duration: timing.hpGhostBaseMs + timing.hpGhostPerLevelMs * level,
-        ease: 'Quad.easeIn',
-      });
       if (level > 0.15) this.flashHpBar(level);
     } else {
-      this.hpGhost.width = target;
+      this.hideNotch(this.hpGhost);
       this.scene.tweens.add({ targets: this.hpFill, width: target, duration: 300, ease: 'Quad.easeOut' });
     }
+  }
+
+  /** Hafif çentik: kaybedilen kısım olduğu yerde solar (ileri-geri kayma yok). Can ve mana çubuğu ortak. */
+  private showNotch(r: Phaser.GameObjects.Rectangle, from: number, to: number): void {
+    this.scene.tweens.killTweensOf(r);
+    r.x = -hpBar.width / 2 + from;
+    r.width = Math.max(2, to - from);
+    r.setAlpha(0.8);
+    this.scene.tweens.add({ targets: r, alpha: 0, delay: 110, duration: slow(300), ease: 'Quad.easeOut' });
+  }
+
+  private hideNotch(r: Phaser.GameObjects.Rectangle): void {
+    this.scene.tweens.killTweensOf(r);
+    r.setAlpha(0);
   }
 
   private flashHpBar(level: number): void {
     const original = this.combatant.side === 'party' ? colors.hpFill : colors.hpFillEnemy;
     this.hpFill.setFillStyle(0xffffff);
     this.scene.time.delayedCall(60 + 120 * level, () => this.hpFill.setFillStyle(color(original)));
-    const amp = 3 + 14 * level;
-    this.scene.tweens.add({ targets: this.hpBox, x: { from: amp, to: 0 }, duration: 120 + 260 * level, ease: 'Bounce.easeOut' });
   }
 
   setMp(mp: number, animate = true): void {
@@ -544,24 +550,15 @@ export class CombatantView {
     const target = hpBar.width * Math.max(0, mp / this.mpMax);
     if (!animate) {
       this.mpFill.width = target;
-      this.mpGhost.width = target;
+      this.hideNotch(this.mpGhost);
       return;
     }
     this.scene.tweens.killTweensOf([this.mpFill, this.mpGhost]);
     if (target < this.mpFill.width - 0.5) {
-      // Can çubuğuyla aynı iniş: şiddeti kaybedilen manadan gelir (büyük kayıpta hayalet daha uzun kalır)
-      const level = hitLevel((this.mpFill.width - target) / hpBar.width);
-      this.mpGhost.width = Math.max(this.mpGhost.width, this.mpFill.width);
+      this.showNotch(this.mpGhost, target, this.mpFill.width);
       this.scene.tweens.add({ targets: this.mpFill, width: target, duration: slow(140), ease: 'Quad.easeOut' });
-      this.scene.tweens.add({
-        targets: this.mpGhost,
-        width: target,
-        delay: timing.hpGhostDelayMs * (1 + level),
-        duration: timing.hpGhostBaseMs + timing.hpGhostPerLevelMs * level,
-        ease: 'Quad.easeIn',
-      });
     } else {
-      this.mpGhost.width = target;
+      this.hideNotch(this.mpGhost);
       this.scene.tweens.add({ targets: this.mpFill, width: target, duration: 250, ease: 'Quad.easeOut' });
     }
   }

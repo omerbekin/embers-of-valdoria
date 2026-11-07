@@ -169,6 +169,11 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     const it = target.closest<HTMLElement>('[data-tip]');
     if (it) {
       const key = it.dataset['tip'] ?? '';
+      // satır içi açılan kart (ganimet kartı): yüzen ipucu fareyle gösterilmez
+      if (it.dataset['inlineTip']) {
+        setHover(key);
+        return;
+      }
       if (key !== itip.shownKey) itip.show(key, h.tipNodes(key), e.clientX, e.clientY);
       setHover(key);
       return;

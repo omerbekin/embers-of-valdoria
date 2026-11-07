@@ -1,0 +1,177 @@
+{
+ "outDir": "docs/anim-review/new-art/druid-v3/poses",
+ "rules": "docs/anim-review/new-art/druid-v3/PROMPT.md",
+ "maxRounds": 3,
+ "threshold": 8,
+ "name": "druid-poses-2",
+ "pages": [
+  {
+   "id": "slash2",
+   "file": "slash2.png",
+   "refs": [
+    "assets/poses/druid-v2/slash2.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/slash2.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"slash2\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "spin1a",
+   "file": "spin1a.png",
+   "refs": [
+    "assets/poses/druid-v2/spin1a.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/spin1a.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"spin1a\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "spin1b",
+   "file": "spin1b.png",
+   "refs": [
+    "assets/poses/druid-v2/spin1b.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/spin1b.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"spin1b\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "spin1c",
+   "file": "spin1c.png",
+   "refs": [
+    "assets/poses/druid-v2/spin1c.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/spin1c.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"spin1c\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "spin2a",
+   "file": "spin2a.png",
+   "refs": [
+    "assets/poses/druid-v2/spin2a.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/spin2a.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"spin2a\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "spin2b",
+   "file": "spin2b.png",
+   "refs": [
+    "assets/poses/druid-v2/spin2b.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/spin2b.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"spin2b\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "spin2c",
+   "file": "spin2c.png",
+   "refs": [
+    "assets/poses/druid-v2/spin2c.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/spin2c.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"spin2c\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "step1",
+   "file": "step1.png",
+   "refs": [
+    "assets/poses/druid-v2/step1.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/step1.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"step1\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "step2",
+   "file": "step2.png",
+   "refs": [
+    "assets/poses/druid-v2/step2.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/step2.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"step2\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "throw",
+   "file": "throw.png",
+   "refs": [
+    "assets/poses/druid-v2/throw.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/throw.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"throw\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "thrust1",
+   "file": "thrust1.png",
+   "refs": [
+    "assets/poses/druid-v2/thrust1.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/thrust1.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"thrust1\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "thrust2",
+   "file": "thrust2.png",
+   "refs": [
+    "assets/poses/druid-v2/thrust2.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/thrust2.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"thrust2\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  }
+ ]
+}

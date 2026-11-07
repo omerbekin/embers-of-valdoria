@@ -110,7 +110,7 @@ describe('sefer haritası: graf', () => {
     expect(map.edges.find((e) => e.from === '5B' && e.to === '7')?.ctrl).toEqual([0.3469, 0.1809]);
   });
 
-  it('96 rota (cepler rota değil), hepsi 22 durak ve finale ulaşır; her rotada 17 savaşlı durak (Burnt Hamlet kolunda 18)', () => {
+  it('96 rota (cepler rota değil), hepsi 22 durak ve finale ulaşır; her rotada 17 savaşlı durak (Burnt Hamlet kolunda 18; Witch Hut kolunda 16: zorunlu savaşı kalktı, Ömer 2026-11-07)', () => {
     const routes = allRoutes(map);
     expect(routes).toHaveLength(96);
     for (const r of routes) {
@@ -119,13 +119,13 @@ describe('sefer haritası: graf', () => {
       expect(r[r.length - 1]).toBe('12');
       expect(r.some((id) => isPocket(map, id)), r.join('-')).toBe(false);
       const battles = r.filter((id) => isBattleNode(node(map, id))).length;
-      expect(battles, r.join('-')).toBe(r.includes('hamlet') ? 18 : 17);
+      expect(battles, r.join('-')).toBe((r.includes('hamlet') ? 18 : 17) - (r.includes('6A') ? 1 : 0));
     }
   });
 
-  it("K1: her dalda en az bir savaş (Witch's Hut korunan olay, Ömer 2026-10-11) — tek bilinçli istisna Shepherd's Fold kolu; K2: hiçbir rotada 2den fazla savaşsız durak art arda yok", () => {
+  it("K1: her dalda en az bir savaş — iki bilinçli istisna: Shepherd's Fold kolu ve Witch's Hut kolu (zorunlu savaşı kalktı, Ömer 2026-11-07); K2: hiçbir rotada 2den fazla savaşsız durak art arda yok", () => {
     // Ember Road çatalı (Ömer 2026-10-22, map-1-rework.md 7.4): dinlenme (Shepherd's Fold) mi, savaş + XP (Burnt Hamlet) mi; cepler K1'e girmez
-    expect(k1Violations(map)).toEqual(['road -> fold']);
+    expect(k1Violations(map)).toEqual(['7 -> 6A', 'road -> fold']);
     for (const r of allRoutes(map)) expect(longestPeacefulRun(map, r), r.join('-')).toBeLessThanOrEqual(2);
   });
 });
@@ -189,8 +189,7 @@ describe('ilerleme: seçim noktası, serbest dolaşım, birleşme', () => {
     s = completeSimple(s, 'treasure');
     expect(nextStep(s)).toEqual({ kind: 'move', options: ['grave'], back: ['7'] });
     let a = playTo(fresh(), '6A', (o) => (o.includes('6A') ? '6A' : o[0]!));
-    expect(nextStep(a)).toEqual({ kind: 'battle', node: '6A', encounter: 'witchs_hut_guard' });
-    a = autoResolve(a);
+    // Ömer 2026-11-07: Witch's Hut'ın zorunlu savaşı (Hut Guardians) kalktı; olay doğrudan açılır, yalnızca 'Steal' seçeneği savaşır
     expect(nextStep(a)).toEqual({ kind: 'event', node: '6A', event: 'witchs_hut' });
     a = completeSimple(a, 'event');
     expect(nextStep(a).kind).toBe('move');
@@ -351,8 +350,8 @@ describe('can taşıma', () => {
     let s = maxed(playTo(legacyHero(9), '3')); // iki kişilik eski kayıt
     const [a, b] = s.roster;
     s = applyBattle(s, { victory: true, units: [{ heroId: a!.id, hpRatio: 0.5, alive: true }, { heroId: b!.id, hpRatio: 0, alive: false }] });
-    expect(s.roster[0]!.hpRatio).toBeCloseTo(0.5 + CONFIG.rules.eliteVictoryHeal!); // düğüm 3 elit: %50
-    expect(s.roster[1]).toMatchObject({ hpRatio: CONFIG.rules.wounds.riseRatio, alive: true, wounds: 1 }); // yaralı kalkar
+    expect(s.roster[0]!.hpRatio).toBeCloseTo(0.5 + CONFIG.rules.victoryHealScale!.min); // düğüm 3 elit %50; L50 takım düğümün çok üstünde: en alt sınır (healelite, Ömer 2026-11-07)
+    expect(s.roster[1]).toMatchObject({ hpRatio: 0, alive: false, wounds: 1 }); // düşen düşmüş kalır (otomatik kalkma yok, Ömer 2026-11-07) ve 1 yara alır
     // ceset olarak girip kalkmayan: ceset kalır, yeni yara yok, sonraki savaşa ceset girer
     s = { ...s, roster: s.roster.map((h) => (h.id === b!.id ? { ...h, hpRatio: 0, alive: false } : h)) };
     s = applyBattle({ ...s, done: s.done.filter((k) => !k.endsWith(':battle')) }, { victory: true, units: [{ heroId: a!.id, hpRatio: 0.5, alive: true }, { heroId: b!.id, hpRatio: 0, alive: false }] });
@@ -367,12 +366,12 @@ describe('can taşıma', () => {
     let s = playTo(legacyHero(11), '9');
     const team = activeHeroes(s);
     s = applyBattle(s, { victory: true, units: team.map((h, i) => ({ heroId: h.id, hpRatio: i === 0 ? 0 : 0.1, alive: i !== 0 })) });
-    expect(s.roster.find((h) => h.id === team[0]!.id)).toMatchObject({ hpRatio: CONFIG.rules.bossVictoryHeal, alive: true, wounds: 1 });
+    expect(s.roster.find((h) => h.id === team[0]!.id)).toMatchObject({ hpRatio: 0, alive: false, wounds: 1 }); // boss'ta da otomatik kalkma yok (Ömer 2026-11-07)
     expect(team.slice(1).every((h) => s.roster.find((x) => x.id === h.id)!.hpRatio === 1)).toBe(true);
     let t = playTo(legacyHero(11), '3');
     t = { ...t, roster: t.roster.map((h) => ({ ...h, level: 50, xp: 0 })) }; // XP level atlatmasın (tam iyileşme)
     t = applyBattle(t, { victory: true, units: t.roster.map((h) => ({ heroId: h.id, hpRatio: 0.1, alive: true })) });
-    expect(t.roster[0]!.hpRatio).toBeCloseTo(0.1 + CONFIG.rules.eliteVictoryHeal!); // düğüm 3 elit
+    expect(t.roster[0]!.hpRatio).toBeCloseTo(0.1 + CONFIG.rules.victoryHealScale!.min); // düğüm 3 elit; L50 takım: en alt sınır (healelite)
     const lost = applyBattle(t, { victory: false, units: [] });
     expect(lost.stats.defeats).toBe(1);
     expect(lost.roster).toEqual(t.roster);

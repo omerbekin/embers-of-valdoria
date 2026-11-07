@@ -448,7 +448,7 @@
       "id": "hp_carry",
       "group": "On the Road",
       "title": "Wounds Carry Over",
-      "text": "Wounds carry over between battles. A victory restores only {victoryHeal}% of each hero’s health.",
+      "text": "Wounds carry over between battles. A victory restores up to {victoryHeal}% of each hero’s health, less on easy fights.",
       "trigger": {
         "screen": "map",
         "minWins": 1

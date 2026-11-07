@@ -10,6 +10,7 @@ describe('Valor penceresi: Wounds düğmesi', () => {
     const b = woundHealButton({ name: 'Knight', blocked: 'Needs 3 Valor (you have 1)' }, cost)!;
     expect(b.disabled).toBe(true);
     expect(b.tip).toBe('Needs 3 Valor (you have 1)');
+    expect(woundHealButton({ name: 'Knight', blocked: null }, cost)!.tip).toBe('Spend 3 embers to heal one wound of Knight and restore 25% of their max HP.');
   });
   it('kural kapalıysa düğme yok', () => {
     expect(woundHealButton({ name: 'Knight', blocked: null }, null)).toBeNull();

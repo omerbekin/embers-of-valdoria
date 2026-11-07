@@ -67,6 +67,10 @@
   animation: bb-in 0.15s ease-out;
 }
 
+.bb-menu.still {
+  animation: none;
+}
+
 @keyframes bb-in {
   from {
     opacity: 0;

@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 2 (The Drowned Reach) olayları, hazineleri ve kasaba hikâyeleri (campaign-dev 2026-10-25, maps-2-3.md 3.2 / 3.4; oyun içi metin İngilizce). Biçim data/campaign/events.json ile aynı (events{} choices[] şablonu, treasures{}, stories{}); src/campaign/data.ts iki dosyayı birleştirir, anahtarlar dr_ önekli (çakışmasın). Faction (M-L: dr_guild_hall, dr_monks_isle), Charter a ship (M-J: dr_ferry_office) ve Lighthouse (M-M: dr_lantern_rock) kurallı (campaign-dev 2026-10-27, src/campaign/reach.ts): seçenek alanları faction / needFaction / charter / light / gift, olay alanı again. Ödül sayıları PROVİZYON.",
+  "_not": "Harita 2 (The Drowned Reach) olayları, hazineleri ve kasaba hikâyeleri (campaign-dev 2026-10-25, maps-2-3.md 3.2 / 3.4; oyun içi metin İngilizce). Biçim data/campaign/events.json ile aynı (events{} choices[] şablonu, treasures{}, stories{}); src/campaign/data.ts iki dosyayı birleştirir, anahtarlar dr_ önekli (çakışmasın). Faction (M-L: dr_guild_hall, dr_monks_isle), Charter a ship (M-J: dr_ferry_office) ve Lighthouse (M-M: dr_lantern_rock) kurallı (campaign-dev 2026-10-27, src/campaign/reach.ts): seçenek alanları faction / needFaction / charter / light / gift, olay alanı again. Ödül sayıları PROVİZYON. Ömer 2026-11-07 (m2gold): olay altın ödülleri %12 az, en yakın 5'e yuvarlı (Settle 70->60, river reavers 35->30, smugglers 45->40, wreckers' cut 50->45); Gambler bahsi 80 -> 75, ödül 160 -> 150 ('double your stake' doğru kalır; Ömer 2026-11-07). Sandık sabit altınları kodda mapLootScale ile zaten %12 az.",
   "events": {
     "dr_quest_registry": {
       "_not": "A5 Undead görevi (dr90). \"Let it drown\": görev ödülsüz kapanır (Ömer A5 = a).",
@@ -50,7 +50,7 @@
             "dr_92"
           ],
           "win": {
-            "gold": 70
+            "gold": 60
           },
           "quest": "cutthroat_debt",
           "result": "The collectors will not be collecting again. Your Cutthroat takes back the purse they came for, and a little more."
@@ -66,12 +66,12 @@
           "id": "stake",
           "label": "Lay the stake",
           "hint": "Your Gambler's quest. Win the throw, then win the fight: the house keeps its back row empty. Win: double your stake.",
-          "cost": 80,
+          "cost": 75,
           "battle": [
             "dr_93"
           ],
           "win": {
-            "gold": 160
+            "gold": 150
           },
           "quest": "gambler_table",
           "result": "The house loses for the first time in living memory. Your Gambler sweeps the purse off the table and leaves the dice behind."
@@ -98,7 +98,7 @@
           "label": "Help the farmers",
           "hint": "Fight the river reavers. Win: a chest and some gold.",
           "battle": ["dr_farm_raiders"],
-          "win": { "gold": 35, "chest": true },
+          "win": { "gold": 30, "chest": true },
           "result": "The reavers flee downriver without their plunder. The farmers press what they can spare into your hands."
         },
         {
@@ -152,7 +152,7 @@
           "label": "Refuse",
           "hint": "Fight the smugglers. Win: their chest and their gold.",
           "battle": ["dr_smugglers"],
-          "win": { "gold": 45, "chest": true },
+          "win": { "gold": 40, "chest": true },
           "result": "The smugglers' boats drift empty in the reeds. Their strongbox is yours."
         }
       ]
@@ -272,8 +272,8 @@
         {
           "id": "cut",
           "label": "Take the wreckers' cut",
-          "hint": "Take 50 gold and look the other way.",
-          "gold": 50,
+          "hint": "Take 45 gold and look the other way.",
+          "gold": 45,
           "result": "The purse is heavy. Behind you the sea takes the ship, and the wreckers take the rest."
         }
       ]

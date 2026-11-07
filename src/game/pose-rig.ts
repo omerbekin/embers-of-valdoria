@@ -55,7 +55,7 @@ export function preloadPoses(scene: Phaser.Scene, needs: readonly (PoseNeed | st
     if (!def) continue;
     const small = useSmall(def);
     for (const pose of gripFiles(def, pick?.grip)) add(poseBodyFrame(def.dir, pose, small));
-    for (const w of pick ? [pick, ...(pick.offhand ? [pick.offhand] : [])] : []) add(weaponFrame(w.family, w.look, small));
+    for (const w of pick ? [pick, ...(pick.offhand ? [pick.offhand] : []), ...(pick.quiver ? [pick.quiver] : [])] : []) add(weaponFrame(w.family, w.look, small));
   }
   return queued.size;
 }
@@ -75,7 +75,7 @@ function cropFrame(scene: Phaser.Scene, f: AtlasFrame, temp: HTMLCanvasElement[]
 }
 
 /** Bu sınıfın tüm gövde pozları ve verilen silahın görseli yüklü mü (değilse görünüm bugünkü tek sprite'a düşer). `free` geçici kesimleri bırakır. */
-function sources(scene: Phaser.Scene, def: PoseClassDef, pick: WeaponPick | null): { body: (pose: string) => CanvasImageSource; weapon: CanvasImageSource | null; off: CanvasImageSource | null; free: () => void } | null {
+function sources(scene: Phaser.Scene, def: PoseClassDef, pick: WeaponPick | null): { body: (pose: string) => CanvasImageSource; weapon: CanvasImageSource | null; off: CanvasImageSource | null; quiver: CanvasImageSource | null; free: () => void } | null {
   const small = useSmall(def);
   const temp: HTMLCanvasElement[] = [];
   const free = () => {
@@ -106,7 +106,8 @@ function sources(scene: Phaser.Scene, def: PoseClassDef, pick: WeaponPick | null
   };
   const weapon = pick ? tex(pick.family, pick.look, pick.tone) : null;
   const off = pick?.offhand ? tex(pick.offhand.family, pick.offhand.look, pick.offhand.tone) : null; // ikinci el (kalkan / hançer)
-  return { body: (pose) => bodies[pose]!, weapon, off, free };
+  const quiver = pick?.quiver ? tex(pick.quiver.family, pick.quiver.look, pick.quiver.tone) : null; // okluk (yay tutuşu, sırtta)
+  return { body: (pose) => bodies[pose]!, weapon, off, quiver, free };
 }
 
 /** Tonlanmış silah kaynakları ('<doku>~<ton>' -> tuval): pişirmede kaynak; releasePoseSources bırakır. */
@@ -289,7 +290,7 @@ function paintAtlas(W: number, H: number, items: readonly AtlasItem[], s: number
     ctx.rect(it.px, it.py, it.w, it.h);
     ctx.clip();
     ctx.setTransform(s, 0, 0, s, it.px - it.x0 * s, it.py - it.y0 * s);
-    drawPoseComposite(ctx, def, it.name, src.body(it.name), src.weapon && pick ? { img: src.weapon, pick, offImg: src.off } : null, glowPx, def.poses[it.name]?.fingers ? src.body(def.poses[it.name]!.fingers!) : null);
+    drawPoseComposite(ctx, def, it.name, src.body(it.name), src.weapon && pick ? { img: src.weapon, pick, offImg: src.off, quiverImg: src.quiver } : null, glowPx, def.poses[it.name]?.fingers ? src.body(def.poses[it.name]!.fingers!) : null);
     ctx.restore();
   }
   // Boş kare denetimi: tarayıcı tuval bellek sınırını aşınca bağlam verir ama çizmez (iOS Safari) -> saydam (görünmez) birim olmasın

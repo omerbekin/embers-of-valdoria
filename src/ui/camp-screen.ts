@@ -40,6 +40,7 @@ import { CAMP_CARDS, fillText, type CampCardKind } from './econ-model';
 import { TEMPER_STONE_ICON } from './temper-stone';
 import { miscImage } from '../game/icon-image-files';
 import { uiSound } from './ui-sound';
+import { ms } from './motion';
 
 /** Kartin aciklamasi: campaign.json > texts.camp* satirindan "Ad: " onegi atilarak ("Rest: every..." -> "Every..."). */
 function cardDesc(kind: CampCardKind, s: CampaignState): string {
@@ -207,8 +208,31 @@ export function openCamp(
   /** Sharpen sol ray secimi: kahraman id'si ya da 'bag' ('' = henuz secilmedi, varsayilan hesaplanir). */
   let rail = '';
   let done = false;
+  /** Onaylanan seçim: sonuç animasyonu oynarken bekler; ekran kapanınca (Done, X, Esc, zemin) sahneye bir kez verilir. */
+  let result: { before: CampaignState; next: CampaignState; c: CampChoice } | null = null;
+  let committed = false;
+  const timers: number[] = [];
+  const later = (fn: () => void, t: number): void => {
+    timers.push(window.setTimeout(fn, t));
+  };
   const used0 = (): CampChoice['kind'] | null => campUsed(get());
-  const sh = openShell(root, { label: 'Camp', title: 'Camp', sub: o.name, lock: 'camp', closable: () => true, onClosed: () => o.onClose?.(done || !!used0()), wide: true, phoneFull: true });
+  const sh = openShell(root, {
+    label: 'Camp',
+    title: 'Camp',
+    sub: o.name,
+    lock: 'camp',
+    closable: () => true,
+    onClosed: () => {
+      for (const t of timers) window.clearTimeout(t);
+      o.onClose?.(done || !!used0());
+      if (result && !committed) {
+        committed = true;
+        o.onUse(result.next);
+      }
+    },
+    wide: true,
+    phoneFull: true,
+  });
   const body = sh.body;
 
   const choice = (): CampChoice | null => {
@@ -240,12 +264,13 @@ export function openCamp(
     const c = choice();
     if (!c) return;
     try {
-      const next = useCamp(get(), c);
+      const before = get();
+      const next = useCamp(before, c);
       done = true;
+      result = { before, next, c };
       uiSound('buy');
       sh.syncClose();
-      sh.close();
-      o.onUse(next);
+      render(); // pencere hemen kapanmaz: sonuç oynar, sonra Done (Ömer 2026-11-07)
     } catch {
       uiSound('error');
       render();
@@ -301,6 +326,74 @@ export function openCamp(
     foot.append(button('', 'Gear', () => o.onGear()), button('primary', 'Leave', () => sh.close()));
     body.append(box, foot);
     void s;
+  }
+
+  /**
+   * Sonuç sahnesi (Ömer 2026-11-07): onaydan sonra pencere hemen kapanmaz; seçimin sonucu (Sharpen: item satırları eski → yeni, Rest: can çubukları dolar,
+   * Tend / Train: kahraman satırı) sırayla belirir, bitince "Done" görünür. Done / X / Esc / zemin kapatır (kapanınca durum sahneye verilir).
+   */
+  function renderResult(r: NonNullable<typeof result>): void {
+    const { before, next, c } = r;
+    sh.panel.classList.remove('sharp');
+    sh.panel.classList.add('strip', 'res');
+    body.classList.remove('ec-sharp');
+    const box = el('div', 'ec-res');
+    const title = { rest: 'Rested', tend: 'Wounds tended', sharpen: 'Sharpened', train: 'Trained' }[c.kind];
+    box.append(el('div', 'ec-res-title', title));
+    let steps = 1;
+    const heroRow = (h: Hero, text: string, bar?: { from: number; to: number }): HTMLElement => {
+      const row = el('div', 'ec-res-hero');
+      const idx = steps++;
+      row.style.setProperty('--i', String(idx));
+      const t = el('div', 'ec-ht');
+      t.append(el('div', 'ec-hn', className(h.class)));
+      if (bar) {
+        const b = hpBar(bar.from);
+        t.append(b);
+        const fill = b.querySelector<HTMLElement>('i:last-child');
+        if (fill) later(() => (fill.style.width = `${Math.round(bar.to * 100)}%`), ms(400) + idx * ms(120));
+      }
+      t.append(el('div', 'ec-hm', text));
+      row.append(heroFace(h.class), t);
+      return row;
+    };
+    if (c.kind === 'sharpen') {
+      const hit = items(before).find((x) => x.inst.uid === c.uid);
+      if (hit) {
+        const dt = sharpDetail(sharpInfo(before, hit.inst, hit.hero));
+        dt.querySelectorAll<HTMLElement>('.dt-rows li').forEach((li, i) => li.style.setProperty('--i', String(i + 1)));
+        steps = dt.querySelectorAll('.dt-rows li').length + 1;
+        box.append(dt);
+      }
+    } else if (c.kind === 'rest') {
+      const list = el('div', 'ec-res-list');
+      for (const h of before.roster) {
+        const now = next.roster.find((x) => x.id === h.id);
+        if (!now || !h.alive || h.hpRatio <= 0) continue;
+        list.append(heroRow(h, `${Math.round(h.hpRatio * 100)}% → ${Math.round(now.hpRatio * 100)}% HP`, { from: h.hpRatio, to: now.hpRatio }));
+      }
+      box.append(list);
+    } else {
+      const h = before.roster.find((x) => x.id === c.heroId);
+      const now = next.roster.find((x) => x.id === c.heroId);
+      if (h && now) {
+        const text = c.kind === 'tend' ? `Wounds ${woundCount(h)} → ${woundCount(now)}` : `+${campTrainXp(before, h.id)} XP${now.level > h.level ? ` · Level ${h.level} → ${now.level}` : ''}`;
+        const list = el('div', 'ec-res-list');
+        list.append(heroRow(h, text));
+        box.append(list);
+      }
+    }
+    body.append(box);
+    const foot = el('div', 'ec-foot');
+    const doneBtn = button('primary ec-res-done', 'Done', () => sh.close());
+    doneBtn.disabled = true;
+    foot.append(doneBtn);
+    body.append(foot);
+    // Done, animasyon bitince belirir (azaltılmış harekette hemen)
+    later(() => {
+      doneBtn.disabled = false;
+      doneBtn.classList.add('ready');
+    }, ms(700 + steps * 170));
   }
 
   function heroTarget(s: CampaignState, k: 'tend' | 'train', h: Hero): HTMLElement {
@@ -436,7 +529,8 @@ export function openCamp(
     const plates = el('div', 'a-plates');
     const mk = (info: SharpInfo): HTMLElement => {
       const p = sharpPlate(info, info.inst.uid === target);
-      sh.tipOn(p, `camp:${info.inst.uid}`, () => itemTipNodes(info.inst, info.hero?.class));
+      // dokunmatikte ipucu sabitlenmez: seçilen item'in ayrıntısı sağdaki panelde zaten açık (ipucu onu örtüyordu)
+      sh.tipOn(p, `camp:${info.inst.uid}`, () => itemTipNodes(info.inst, info.hero?.class), { touchPin: false });
       p.addEventListener('click', () => {
         target = info.inst.uid;
         uiSound('select');
@@ -467,6 +561,7 @@ export function openCamp(
     const s = get();
     body.replaceChildren();
     sh.head.querySelector('.ct')?.remove();
+    if (result) return renderResult(result);
     const used = used0();
     const sharp = kind === 'sharpen' && !used;
     body.classList.toggle('ec-sharp', sharp);
@@ -551,6 +646,7 @@ export function openCamp(
     close: () => sh.close(),
     destroy: () => {
       done = true;
+      result = null; // sahne kapanıyor: bekleyen sonuç sahneye verilmez
       sh.close();
     },
     refresh: () => render(),

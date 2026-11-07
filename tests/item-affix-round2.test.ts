@@ -60,10 +60,10 @@ describe('affix turu 2: veri', () => {
     expect(fxOf('armor', 'padded_gambeson', 'b_killheal').killHeal).toBeCloseTo(v('b_killheal') / 100, 6);
     expect(fxOf('armor', 'padded_gambeson', 'a_manashield').manaShield).toBeCloseTo(v('a_manashield') / 100, 6);
     expect(fxOf('helm', 'leather_coif', 'a_cdchance').cdChance).toBeCloseTo(v('a_cdchance') / 100, 6);
-    // Bitirici iki kaynakta ÇARPILIR ("more" yazımı)
+    // Bitirici hasar havuzunda (Ömer 2026-11-07, P1): kaynaklar toplanır, "+X%" yazılır
     const two = loadout({ class: 'warrior', equipment: { gloves: inst('work_gloves', 'b_execute', 'g'), helm: undefined } }).itemEffects!.executeDamage!;
     expect(two.below).toBe(0.3);
-    expect(affixLines(inst('work_gloves', 'b_execute'))[0]!.text).toBe(`${v('b_execute')}% more damage to enemies below 30% HP`);
+    expect(affixLines(inst('work_gloves', 'b_execute'))[0]!.text).toBe(`+${v('b_execute')}% damage to enemies below 30% HP`);
     expect(affixLines(inst('work_gloves', 'b_killmp'))[0]!.text).toBe(`+${v('b_killmp')} MP when your skill kills an enemy`);
   });
 

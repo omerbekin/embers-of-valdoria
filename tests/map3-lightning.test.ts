@@ -121,6 +121,7 @@ describe('A2 Live Water', () => {
     own.slot = 3;
     b.debugPlaceGround(tester(b).uid, 'flooded', 'party', [0, 1, 3], 9, 0);
     turnOf(b, tester(b).uid);
+    for (const u of [a, c, d, own]) u.stats = { ...u.stats, hpRegen: 0 }; // sıradaki tur başı yenilenmesi ölçümü bozmasın (sıra seed + tur zarına bağlı)
     const hp = new Map([a, c, d, own].map((u) => [u.uid, u.hp]));
     const arc = b.arcDamage(c);
     b.useSkill(tester(b).uid, 'storm_test_iron', a.uid);

@@ -7,6 +7,8 @@
  * (src/game/item-icons.ts > itemIconName: `icon` alanı > silah ailesi > yuva). Nadirlik parıltısı / çerçeve ekranın işidir.
  * Phaser'sız ve DOM'suz: Codex ve testler de buradan okur.
  */
+import { itemDef } from '../progression/items';
+
 const files = import.meta.glob('../../assets/items/*.{webp,png}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 /** item id -> görsel URL'si. */
@@ -19,9 +21,21 @@ export const ITEM_IMAGE_FILES: Readonly<Record<string, string>> = Object.fromEnt
 /** Görseli olan item kimlikleri (sıralı). */
 export const ITEM_IMAGE_IDS: readonly string[] = Object.keys(ITEM_IMAGE_FILES);
 
+/**
+ * Görselin kimliği: item'in kendi görseli, yoksa katalogdaki yer tutucu görseli (`art`: yeni tabanlar, 2026-11-07; çizim gelince kendi
+ * dosyası öne geçer). Görsel yoksa undefined.
+ */
+export function itemImageId(id: string | undefined): string | undefined {
+  if (!id) return undefined;
+  if (ITEM_IMAGE_FILES[id]) return id;
+  const art = itemDef(id)?.art;
+  return art && ITEM_IMAGE_FILES[art] ? art : undefined;
+}
+
 /** Item'in görsel ikonunun URL'si; görseli yoksa null (çağıran piksel ikona düşer). */
 export function itemImageUrl(d: { id?: string } | undefined | null): string | null {
-  return (d?.id && ITEM_IMAGE_FILES[d.id]) || null;
+  const id = itemImageId(d?.id);
+  return (id && ITEM_IMAGE_FILES[id]) || null;
 }
 
 /** Phaser doku anahtarı. */

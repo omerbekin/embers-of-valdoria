@@ -141,3 +141,19 @@ export function stripState(a: TreeAlloc, tier: string, rules: TreeRules = TREE_R
   const need = rules.tierNeed[tier] ?? 0;
   return { small: `Tier ${tier}`, pt: need === 0 ? 'open' : `${need} pts`, em: sp >= need ? '' : `${sp}/${need}`, lk: sp < need };
 }
+
+/**
+ * "per rank" düğüm metnini verilen rank için TOPLAMA çevirir (Ömer 2026-11-07): "you take 4% less damage per rank" + rank 3 -> "you take 12% less damage".
+ * Ölçeklenen sayı = "per rank"tan önceki SON sayı (eşikler "below 50% HP" aynen kalır). "per rank" yoksa ya da sayı bulunamazsa null. Saf.
+ */
+export function perRankTotal(text: string, rank: number): string | null {
+  if (rank < 1) return null;
+  const idx = text.search(/\s+per rank\b/);
+  if (idx < 0) return null;
+  const head = text.slice(0, idx);
+  const all = [...head.matchAll(/\d+(?:\.\d+)?/g)];
+  const last = all[all.length - 1];
+  if (!last || last.index === undefined) return null;
+  const v = Math.round(Number(last[0]) * rank * 1000) / 1000;
+  return head.slice(0, last.index) + String(v) + head.slice(last.index + last[0].length) + text.slice(idx).replace(/^\s+per rank\b/, '');
+}

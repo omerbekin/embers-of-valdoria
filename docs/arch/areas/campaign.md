@@ -4,7 +4,7 @@ Sahip (eski): Campaign sohbeti. Kapsam: sefer haritaları, düğümler/karşıla
 
 ## Kurallar
 - Harita 3 (Hollow Crown) AÇIK (Ömer: "hepsi bitince aç"; Lead 2026-11-03): `data/campaign/campaign.json > mapFlags > hollow-crown`.
-- Harita 3 çarpanları `campaign.json > mapEnemyScale["hollow-crown"]`, 2 tur simle ayarlı (2026-11-03). Mob kuralı: ilk skill bedava, diğerleri L30'da 5-6 kullanımda MP bitirir (`tests/map3-mana.test.ts`).
+- Harita 3 çarpanları `campaign.json > mapEnemyScale["hollow-crown"]`, 2 tur simle ayarlı (2026-11-03). Mob kuralı: ilk skill bedava, diğerleri L30'da 4-5 kullanımda MP bitirir (Ömer 2026-11-07, 0.9.11 manası; önce 5-6) (`tests/map3-mana.test.ts`).
 - Yeni kural/stat/mekanik: önce Ömer'e sor (Lead üzerinden). Motor kuralı ve zor denge işi Combat/Character Design alanına gider.
 - "Tamamla" = ödünç yok: kendi sprite, ikon, VFX, ses. Harita 3'te artık hiçbir skill'de `artOf` yok.
 - Kitlere her yeni skill için YZ değerlemesi (`data/ai.json > mobKit`) + test eklenir.

@@ -12,6 +12,8 @@ export interface DamageSpec {
   extra?: number;
   /** Hedefin aldığı hasar çarpanı (çağrılan birimler için 2). */
   takenMultiplier?: number;
+  /** Hasar havuzu (Ömer 2026-11-07, P1): bu vuruşun 1 + toplam "+X% damage" değeri (power'a işlenmiş; yoksa 1). Vuruş sonrası ağaç kancaları (Battle.lateDamage) havuza buradan katılır. */
+  pool?: number;
   /** Hibrit ölçek eki (damage.bonusScale): ham can-eşdeğer miktar, skill gücü çarpanları uygulanmış; skill gücü çarpanı (spellPowerMult) ayrıca çarpar. */
   bonus?: number;
   /** Vuruşun elementi (yalnız sapma için: formulas.damage.elementVariance; hasar çarpanları zaten spec.ts'te işlendi). */

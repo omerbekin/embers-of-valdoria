@@ -1,4 +1,4 @@
-import { textRes } from './stage-view';
+import { stageView, textRes } from './stage-view';
 import Phaser from 'phaser';
 import { TYPE, motion } from '../ui/motion';
 import { content } from '../engine';
@@ -61,7 +61,10 @@ export function openModal(
     dismissOnBackdrop?: boolean;
   },
 ): Modal {
-  const w = o.width ?? 980;
+  // Telefon (html.short): 1 oyun birimi ~0.36 CSS px; 25 birimlik metin ~9 px kalırdı (The Guild's Ledger). Pencere genişler, metin >= 13 CSS px olur.
+  const phone = document.documentElement.classList.contains('short');
+  const w = phone ? Math.max(o.width ?? 980, Math.min(FULL_W - 160, 1700)) : (o.width ?? 980);
+  const minSize = phone ? Math.max(14, Math.ceil(13 / Math.max(0.2, stageView.cssScale))) : 14;
   let closed = false;
   const root = scene.add.container(0, 0);
   layer.add(root);
@@ -71,8 +74,17 @@ export function openModal(
   const sub = o.subtitle ? elBody(scene, W / 2, 0, o.subtitle, 22, EL.MUTED, false, w - 140).setOrigin(0.5, 0).setAlign('center') : null;
   const text = o.text ? bodyText(scene, W / 2, 0, o.text, w - 140) : null;
   const buttons = o.buttons ?? [];
+  // Sabit yükseklikli pencerede uzun metin düğmenin altına taşmasın / son satır kesilmesin (Ömer 2026-11-07, The Guild's Ledger): pencere ekran sınırına kadar
+  // uzar, yine sığmazsa gövde yazısı sığana dek küçülür. `fit` pencereleri zaten içeriğe göre kurulur.
+  const need = () => 96 + (sub ? sub.height + 12 : 0) + (text ? text.height + 22 : 0) + (buttons.length ? 120 : 30);
+  const maxH = H - 60;
+  if (text && !o.fit) {
+    let size = Math.max(25, minSize);
+    if (size !== 25) text.setFontSize(size);
+    while (need() > maxH && size > minSize) text.setFontSize(--size);
+  }
   const contentH = (sub ? sub.height + 12 : 0) + (text ? text.height + 22 : 0);
-  const h = o.fit ? 96 + contentH + (buttons.length ? 120 : 30) : (o.height ?? 520);
+  const h = o.fit ? 96 + contentH + (buttons.length ? 120 : 30) : Math.min(maxH, Math.max(o.height ?? 520, text ? need() : 0));
   const x = W / 2 - w / 2;
   const y = o.y ?? H / 2 - h / 2;
   root.add(elPanel(scene, x, y, w, h, { corners: true, alpha: 0.97 }));

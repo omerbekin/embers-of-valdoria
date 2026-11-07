@@ -60,7 +60,16 @@ const CARET = 'M6 9l6 6 6-6';
 export function clearBagMenus(overlay: HTMLElement): void {
   overlay.querySelectorAll(':scope > .bb-menu').forEach((m) => m.remove());
 }
-function place(menu: HTMLElement, trigger: HTMLElement): void {
+/** Son yerleşen menünün türü + konumu: her seçimde ekran yeniden çizilir; açık kalan menü aynı yerde, animasyonsuz, boş kare olmadan geri konur (titreme / "pencere yeniden açılıyor", Ömer 2026-11-03). */
+let lastMenu: { kind: string; left: number; top: number } | null = null;
+function place(menu: HTMLElement, trigger: HTMLElement, kind: string): void {
+  const prev = lastMenu?.kind === kind ? lastMenu : null;
+  if (prev) {
+    menu.classList.add('still');
+    menu.style.left = `${prev.left}px`;
+    menu.style.top = `${prev.top}px`;
+    menu.style.visibility = 'visible';
+  }
   requestAnimationFrame(() => {
     const overlay = trigger.closest<HTMLElement>('.gr-overlay');
     if (!overlay || !trigger.isConnected) return;
@@ -79,6 +88,7 @@ function place(menu: HTMLElement, trigger: HTMLElement): void {
     menu.style.left = `${Math.round(left)}px`;
     menu.style.top = `${Math.round(top)}px`;
     menu.style.visibility = 'visible';
+    lastMenu = { kind, left: Math.round(left), top: Math.round(top) };
   });
 }
 
@@ -97,6 +107,7 @@ function btn(cls: string, text: string, onClick: () => void): HTMLButtonElement 
 /** Torba başlığına konacak düğmeler (soldan sağa). */
 export function bagBarEls(o: BagBarOpts): HTMLElement[] {
   const out: HTMLElement[] = [];
+  if (!o.open) lastMenu = null;
   if (o.filter) {
     const f = o.filter;
     out.push(btn(`gr-chip${f.on ? ' on' : ''}`, f.label, f.toggle));
@@ -129,7 +140,7 @@ export function bagBarEls(o: BagBarOpts): HTMLElement[] {
         m.append(r);
       }
       wrap.append(m);
-      place(m, t);
+      place(m, t, 'best');
     }
     out.push(wrap);
   }
@@ -160,7 +171,7 @@ export function bagBarEls(o: BagBarOpts): HTMLElement[] {
       m.append(r);
     }
     wrap.append(m);
-    place(m, k);
+    place(m, k, 'kinds');
   }
   out.push(wrap);
   return out;

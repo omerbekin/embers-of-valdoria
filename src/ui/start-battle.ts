@@ -25,7 +25,24 @@ import type { FoeGroup } from '../campaign/encounters';
 const avatars = import.meta.glob('../../assets/avatars/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const avatarUrl = (id: string): string | undefined => avatars[`../../assets/avatars/${id}.webp`];
 
+/** Kart bölümü (Ömer 2026-11-07, taslak node-views A "Anchored card"): başlık satırı + satırlar ya da basamak sırası. Ödül gösterilmez: yalnız bilinen (tür, derinlik, risk). */
+export interface SbBlock {
+  h: string;
+  /** Başlığın sağında sönük kısa değer ("Depth 2 of 3"). */
+  r?: string;
+  /** Satırlar: ad + açıklama; icon = düğüm türü (assets/misc-icons/node); bad = risk rengi. */
+  rows?: Array<{ name: string; txt: string; icon?: string; bad?: boolean }>;
+  /** Basamak sırası (dalış derinlikleri): yan yana kutular. */
+  ladder?: Array<{ name: string; txt: string; state: 'done' | 'now' | 'next'; icon?: string }>;
+  /** Düşman satırından sonra çizilir (Risk gibi). */
+  after?: boolean;
+}
+
 export interface StartBattleOpts {
+  /** Başlığın sağındaki hap ("Lv 12", "Elite", "Depth 2 of 3"); em = ember dolgulu (nimet). */
+  tag?: { text: string; em?: boolean };
+  /** Bölümler (Blessing / Trial / Depth / Risk ...). */
+  blocks?: SbBlock[];
   /** Artık gösterilmez (Ömer 2026-10-27: başlıkta "Start battle?" / "Enter town?" sorusu yok, başlık düğüm adı); çağıranlar için duruyor. */
   title?: string;
   /** Düğüm adı (kartın başlığı). */
@@ -136,17 +153,35 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
   const nl = el('i', 'sbc-notch l');
   const nr = el('i', 'sbc-notch r');
   const badge = miscImage(miscIconName('node', o.nodeType))?.url;
-  const head = el('div', 'sbc-head', `<div class="sbc-ntile">${badge ? `<img src="${badge}" alt="" draggable="false">` : ''}</div><div class="tx"><h2 class="sbc-t">${esc(o.name)}</h2><p class="sbc-sub"><b>${esc(o.subtitle)}</b></p></div>`);
+  const tier = (o.foes ?? []).some((f) => f.tier === 'boss') ? 'Boss' : (o.foes ?? []).some((f) => f.tier === 'elite') ? 'Elite' : '';
+  const tag = o.tag ?? (tier ? { text: tier, em: tier === 'Elite' } : undefined);
+  const head = el('div', 'sbc-head', `<div class="sbc-ntile">${badge ? `<img src="${badge}" alt="" draggable="false">` : ''}</div><div class="tx"><h2 class="sbc-t">${esc(o.name)}</h2><p class="sbc-sub"><b>${esc(o.subtitle)}</b></p></div>${tag ? `<span class="sbc-pill${tag.em ? ' em' : ''}">${esc(tag.text)}</span>` : ''}`);
   const foes = o.foes ?? [];
   if (!foes.length) card.classList.add('nofoes');
   card.append(nl, nr, head, el('hr', 'sbc-rule'));
   const co = o.company;
+  const nodeIco = (t?: string): string => {
+    const u = t ? miscImage(miscIconName('node', t))?.url : undefined;
+    return u ? `<span class="sbc-rt"><img src="${u}" alt="" draggable="false"></span>` : '';
+  };
+  const blockEl = (b: SbBlock): HTMLElement => {
+    const blk = el('div', `sbc-blk sbc-b-${b.h.toLowerCase().replace(/[^a-z]/g, '')}`, `<div class="sbc-h">${esc(b.h)}${b.r ? `<span class="r">${esc(b.r)}</span>` : ''}</div>`);
+    if (b.ladder?.length) {
+      blk.append(el('div', 'sbc-ladder', b.ladder.map((l) => `<div class="sbc-step ${l.state}">${nodeIco(l.icon)}<b>${esc(l.name)}</b><span>${esc(l.txt)}</span></div>`).join('')));
+    }
+    for (const r of b.rows ?? []) blk.append(el('div', `sbc-r${r.bad ? ' bad' : ''}`, `${nodeIco(r.icon)}<div><b>${esc(r.name)}</b><span>${esc(r.txt)}</span></div>`));
+    return blk;
+  };
+  for (const b of o.blocks ?? []) if (!b.after) card.append(blockEl(b));
   if (co) card.append(el('div', 'sbc-co', `${STAG_SVG}<div><b>${esc(co.name)}</b><span>${esc(co.line)}</span></div>`));
   if (foes.length) {
     const row = el('div', 'sbc-row');
     for (const f of foes) row.append(foeTile(f, o.level, !!co));
-    card.append(row);
+    const blk = el('div', 'sbc-blk', `<div class="sbc-h">Enemies<span class="r">Level ${o.level}</span></div>`);
+    blk.append(row);
+    card.append(blk);
   }
+  for (const b of o.blocks ?? []) if (b.after) card.append(blockEl(b));
   if (o.threat) {
     const t = o.threat;
     const mark = t.band === 'deadly' ? '☠' : t.band === 'danger' ? '!' : '';
@@ -175,7 +210,7 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
   if (o.first?.length) card.append(el('p', 'sbc-then sbc-first', `<b>First</b> ${o.first.map((t) => esc(t)).join(' ')}`));
   if (o.then?.length) card.append(el('p', 'sbc-then', `<b>Then</b> ${o.then.map((t) => `${esc(t.name)} <span class="k">${esc(t.kind)}</span>`).join(' <i>or</i> ')}`));
   const preview = !!o.preview;
-  const fight = el('button', 'el-btn primary ready', esc(o.actionLabel ?? 'Fight'));
+  const fight = el('button', 'el-btn primary ready dlg', esc(o.actionLabel ?? 'Fight'));
   fight.type = 'button';
   if (o.note && !preview) card.append(el('p', 'sbc-note', esc(o.note)));
   else if (!preview) {

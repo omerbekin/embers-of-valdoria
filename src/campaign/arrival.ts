@@ -50,7 +50,7 @@ export const temporaryCompany = (s: CampaignState): boolean => s.roster.some((h)
 
 /** Bulunulan düğümdeki zaferin toparlanma oranı (yaşayanlar, maks canın oranı): normal / elit / boss (rules.*VictoryHeal). */
 export function victoryRecovery(s: CampaignState): number {
-  return victoryHealFor(rulesFor(s), node(mapOf(s), s.at).type);
+  return (s.lastVictoryHeal?.node === s.at ? s.lastVictoryHeal.ratio : undefined) ?? victoryHealFor(rulesFor(s), node(mapOf(s), s.at).type);
 }
 
 /** Zafer toparlanması notu (texts.victoryRecovery, {pct}; tam şifada texts.victoryRecoveryFull). Oran 0 ise null. */

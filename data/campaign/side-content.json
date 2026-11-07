@@ -40,11 +40,11 @@
     }
   },
   "salvageDive": {
-    "_not": "B1: korunan hazinenin savaşı = 1. derinlik (sandığı düğümün kendi hazinesi). Her ek derinlik tek dalgalık bir savaş (arada şifa yok) + kendi sandığı: `chests[i]` = (i + 2). derinliğin sandığı, hediye item'leri düğümün item seviyesinde bu nadirliklerde (loot.ts > grantGift) + altın. Yüzeye çıkınca hepsi alınır; daha derinde yenilen takım son bulduğu sandığı kaybeder (öncekiler alınır).",
+    "_not": "B1: korunan hazinenin savaşı = 1. derinlik (sandığı düğümün kendi hazinesi). Her ek derinlik tek dalgalık bir savaş (arada şifa yok) + kendi sandığı: `chests[i]` = (i + 2). derinliğin sandığı, hediye item'leri düğümün item seviyesinde bu nadirliklerde (loot.ts > grantGift) + altın. Yüzeye çıkınca hepsi alınır; daha derinde yenilen takım son bulduğu sandığı kaybeder (öncekiler alınır). Ömer 2026-11-07 (m2gold): sandık altınları %12 az, en yakın 5'e yuvarlı (30 -> 25, 60 -> 55).",
     "maxDepth": 3,
     "chests": [
-      { "gifts": ["rare"], "gold": 30 },
-      { "gifts": ["rare", "epic"], "gold": 60 }
+      { "gifts": ["rare"], "gold": 25 },
+      { "gifts": ["rare", "epic"], "gold": 55 }
     ]
   }
 }

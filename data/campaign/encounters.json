@@ -290,23 +290,6 @@
       ] }
     ]
   },
-  "witchs_hut_guard": {
-    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,796 (düğümler aynı zorluğa çekildi).",
-    "name": "Hut Guardians",
-    "units": [
-      { "class": "drowned", "slot": 0, "mods": { "spdAdd": -2, "hpMult": 1.312, "powerMult": 1.107 } },
-      { "class": "drowned", "slot": 2, "mods": { "spdAdd": -2, "hpMult": 1.312, "powerMult": 1.107 } },
-      { "class": "fen_witchling", "slot": 7, "mods": { "hpMult": 1.312, "powerMult": 1.107 } }
-    ],
-    "waves": [
-      { "units": [
-        { "class": "drowned", "slot": 1, "mods": { "spdAdd": -2, "hpMult": 1.156, "powerMult": 1.156 } },
-        { "class": "will_o_wisp", "slot": 6, "mods": { "hpMult": 1.156, "powerMult": 1.156 } },
-        { "class": "fen_witchling", "slot": 7, "mods": { "hpMult": 1.156, "powerMult": 1.156 } },
-        { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.156, "powerMult": 1.156 } }
-      ] }
-    ]
-  },
   "morwen_duel": {
     "_not": "Witch's Hut olayının 'Steal' seçeneği (events.json > witchs_hut, battle listesinin ilki; mob-plan.md 3): lider düellosu. Sefer simi olay savaşlarını oynamaz; sayılar PROVİZYON.",
     "name": "Hedge Witch Morwen",

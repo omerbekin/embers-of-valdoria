@@ -276,7 +276,10 @@ describe('kalkan', () => {
   it('kalkan büyük hasarda tükenir, kalan hasar cana geçer', () => {
     const b = giveManaBarrier(newBattle());
     act(b, E_MAGE, 'mana_barrier', E_DRUID);
+    // 0.9.11 mana (mpPerInt 0,2): Mage havuzu iki Meteor'a yetmez; senaryo kalkanı ölçer, MP'yi elle doldur
+    b.get(MAGE)!.mp = b.get(MAGE)!.maxMp;
     act(b, MAGE, 'meteor', E_DRUID);
+    b.get(MAGE)!.mp = b.get(MAGE)!.maxMp;
     act(b, MAGE, 'meteor', E_DRUID);
     const druid = b.get(E_DRUID)!;
     expect(druid.shield).toBe(0);

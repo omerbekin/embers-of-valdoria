@@ -60,7 +60,7 @@ export interface AffixPart {
   noRoll?: boolean;
   /** affixRules.power bu parçaya işlemez (adımı iri olanlar: ana stat, tüm statlar, hız, Immunity tur sayısı). */
   noPower?: boolean;
-  /** fx alanı ham çarpan biçiminde (Π(1 + değer); tierDamageMult). */
+  /** fx alanı ham çarpan biçiminde; STACK_FORM 'pool' (tierDamageMult) ise hasar havuzuna toplanır (1 + değer), 'mult' ise Π(1 + değer). */
   form?: 'mult';
   /** lowHpReduce eşiği. */
   below?: number;
@@ -76,6 +76,10 @@ export interface AffixDef {
   slots?: SlotId[];
   /** Bu item seviyesinden önce çekilmez (Block break: kalkanlı düşmanın çok olduğu Harita 3'e kadar çıkmaz; Ömer 2026-11-02). Eski örnekler etkilenmez. */
   minIlvl?: number;
+  /** Yalnızca kalkanda anlamlı (Block): Sadak / Focus Orb zarlarında çıkmaz. */
+  shieldOnly?: boolean;
+  /** Yalnızca bu ikinci el türünde çekilir (offhandKinds id'si; Spare Arrow: yalnız Sadak `quivers`, Ömer 2026-11-07 C1). Başka türde ve item'i bilinmeyen havuzda çıkmaz. */
+  kindOnly?: string;
   /** Equip best sınıf uyumu ipucu: element:<x> | element:magic | mp | shield | dot | debuff | support | summon | melee | ranged. */
   needs?: string;
   /** Satır ikonu ipucu (stat ikonu adı ya da element:<x>). */
@@ -103,14 +107,34 @@ export interface WeaponFamilyDef {
   classes: string[];
   /** Silahın ana affix adayları (hasar türü; Ömer 2026-10-11): örnek oluşurken biri seçilir (kimin için zarlandıysa onun elementi önce). */
   mains: string[];
-  /** Ailenin TEK EL silahları ikinci el yuvasına da takılabilir (hançer; Ömer 2026-10-12). */
+  /** Ailenin TEK EL silahları ikinci el yuvasına da takılabilir (hançer, el baltası; Ömer 2026-10-12). */
   offhand?: boolean;
+  /** Bu sınıflar ailenin silahını YALNIZCA ikinci elde taşır (Ömer 2026-11-07: Warrior hançer / el baltası; ana ele takamaz). */
+  offhandClasses?: string[];
   /** Ailenin varsayılan silah tipi (Ömer 2026-10-27; taban `type` alanı ezer: Axes & Swords ailesinde kılıçlar `type: sword`). */
   type?: WeaponType;
 }
 
 /** Silah tipi (Ömer 2026-10-27, open-questions 443): örtük stat ve güç / hız profili tipe göre. */
-export const WEAPON_TYPES = ['sword', 'axe', 'mace', 'hammer', 'dagger', 'bow', 'staff', 'charm'] as const;
+export const WEAPON_TYPES = ['sword', 'axe', 'mace', 'hammer', 'dagger', 'bow', 'staff', 'charm', 'wand', 'rod', 'spear', 'hatchet', 'crossbow', 'longbow'] as const;
+
+/**
+ * İkinci el TÜRÜ (Ömer 2026-11-07, tutuş + ikinci el önerisi B): kalkan, sadak, odak küresi, kitap, fener, kutsal emanet. Türün sınıf listesi
+ * takma kısıtıdır (Warrior fener takamaz); ikinci el item'inin `family` alanı tür id'sidir. Alt tip = item'in `implicit` anahtarı (yoksa türün).
+ */
+export interface OffhandKindDef {
+  id: string;
+  /** Tür adı (tooltip, uyarı): "Shield", "Focus Orb". */
+  name: string;
+  plural?: string;
+  classes: string[];
+  /** Türün varsayılan örtük statı (implicits anahtarı; item `implicit` ile alt tipini seçer). */
+  implicit: string;
+  /** Yay tutuşu bu türü kapatmaz (Sadak: Ömer 2026-11-07 "quiver bir okçu için zorunluluk"). */
+  withBow?: boolean;
+  /** Yalnız kalkana özel affix'ler (shieldOnly: Block) bu türde çekilir. */
+  shield?: boolean;
+}
 export type WeaponType = (typeof WEAPON_TYPES)[number];
 
 /** Tipin güç / hız profili (items.json > weaponTypes). */
@@ -140,7 +164,7 @@ export interface WeaponPowerRules {
   base: number;
   perIlvl: number;
   step: number;
-  /** Tutuş çarpanı (tek el 1; çift el / yay ~1,35; tılsım arada). */
+  /** Tutuş çarpanı (tek el 1; çift el 1,45; yay 1,35). */
   grip: Record<Grip, number>;
   /** İkinci eldeki silahın (hançer) gücünün sayılan oranı. */
   offhandShare: number;
@@ -159,8 +183,11 @@ export interface ImplicitDef {
   parts: AffixPart[];
 }
 
-/** Silah tutuşu (Ömer 2026-10-12, future-ideas 'Silah ve tutuş kuralları'): tek el, çift el, yay, tılsım. */
-export const GRIP_IDS = ['one', 'two', 'bow', 'charm'] as const;
+/**
+ * Silah tutuşu (Ömer 2026-10-12; 2026-11-07 tılsım tek el oldu): tek el, çift el, yay. Yay çift eldir; ikinci elde yalnız Sadak'a izin verir
+ * (offhandKinds[].withBow). Eski 'charm' tutuşu kayıtta yazılı değildir (veriden okunur): göç gerekmez.
+ */
+export const GRIP_IDS = ['one', 'two', 'bow'] as const;
 export type Grip = (typeof GRIP_IDS)[number];
 
 /** Katalog item'i (taban): ad, yuva, aile, seviye, varsayılan nadirlik, ana affix. */
@@ -168,10 +195,14 @@ export interface ItemDef {
   id: string;
   name: string;
   slot: SlotId;
-  /** Silah ve kalkanda (karar 2: silah aileleri; kalkan = Maces & Shields, ikinci el yuvası). */
+  /** Silahta silah ailesi (weaponFamilies), ikinci el item'inde ikinci el TÜRÜ (offhandKinds: shields, quivers, orbs...; Ömer 2026-11-07). */
   family?: string;
-  /** Silah tutuşu (yalnızca silahta, zorunlu): one | two | bow | charm. two / bow / charm ikinci eli kapatır. */
+  /** Silah tutuşu (yalnızca silahta, zorunlu): one | two | bow. two ikinci eli kapatır; bow yalnızca Sadak'ı (withBow türü) açık bırakır. */
   grip?: Grip;
+  /** İkinci el alt tipi: örtük stat anahtarı (implicits; ör. buckler, tower_shield, grimoire). Yoksa türün varsayılanı. */
+  implicit?: string;
+  /** Yer tutucu boyalı ikon: kendi görseli (assets/items/<id>.webp) yoksa bu item'in görseli (yeni taban, çizim sonra). */
+  art?: string;
   /** Silah tipi (Ömer 2026-10-27); yoksa ailesinin `type`ı. Yalnızca ailenin tipinden farklıysa yazılır (Arming Sword: sword). */
   type?: WeaponType;
   /** Item ekranlarındaki tür adı, yuva adından farklıysa (yuva adının yerine). */
@@ -222,6 +253,8 @@ export interface ItemsData {
   /** Toplam tavanlar (yüzde ya da düz): kritik, isabet, kaçınma, hız; MP bedeli indirimi, debuff direnci. */
   caps: { crit: number; accuracy: number; evasion: number; spd: number; mpCost?: number; resist?: number; recovery?: number; aAffixCopies?: number };
   weaponFamilies: WeaponFamilyDef[];
+  /** İkinci el türleri (Ömer 2026-11-07): sınıf kısıtı + varsayılan örtük. */
+  offhandKinds: OffhandKindDef[];
   /** Silah taban gücü (Item Güçlendirme x1-x3, Ömer 2026-10-17; items.md 1.12). */
   weaponPower: WeaponPowerRules;
   /** Silah tiplerinin güç / hız profili (Ömer 2026-10-27). */
@@ -243,6 +276,8 @@ export interface ItemsData {
   affixes: unknown[];
   uniques: unknown[];
   sets: unknown[];
+  /** Equip best'in set bonusu değerlemesi (Item Points; yalnızca seçim, güç değil): sınıf satırı (3. parça) ve motor kuralı (4. parça) başına düz değer. Stat bonusları affix IP'lerinden. */
+  setValue?: { classRowIP: number; ruleIP: number };
   /** Set parçaları (Ömer 2026-11-03 pilot): ana katalogdan ayrı; havuzlara girmez, yalnızca nadir düşüşün set dalı ve debug verir. */
   setItems?: ItemDef[];
   traits: Record<string, unknown>;
@@ -256,6 +291,8 @@ export interface LootConfig {
   minItems: Record<LootKind, number>;
   treasureBase: number;
   treasurePerMember: number;
+  /** Sandık (hazine) item sayısına ek, negatif = eksik; en az 1 item kalır (Ömer 2026-11-07: -1). */
+  treasureItemsDelta?: number;
   smartSlotChance: number;
   usableWeaponChance: number;
   repeat: Array<{ items: number; gold: number; maxRarity: RarityId }>;
@@ -365,7 +402,19 @@ export const affixAllowed = (id: string, slot: SlotId): boolean => {
 };
 
 /** Kademenin bu yuvada çekilebilecek affix'leri (veri sırasıyla). */
-export const tierPool = (tier: AffixTier, slot: SlotId, ilvl?: number): string[] => Object.keys(ITEMS.affixDefs).filter((id) => ITEMS.affixDefs[id]!.tier === tier && affixAllowed(id, slot) && (ilvl === undefined || !(ITEMS.affixDefs[id]!.minIlvl! > ilvl)));
+export const tierPool = (tier: AffixTier, slot: SlotId, ilvl?: number, d?: Pick<ItemDef, 'slot' | 'family'>): string[] =>
+  Object.keys(ITEMS.affixDefs).filter((id) => {
+    const a = ITEMS.affixDefs[id]!;
+    const kind = d ? offhandKindOf(d) : undefined;
+    // shieldOnly (Block): kalkan dışındaki ikinci el türünde (Sadak, küre, kitap...) çıkmaz; item'i bilinmeyen havuzda çıkar (eski kural)
+    return a.tier === tier && affixAllowed(id, slot) && (ilvl === undefined || !(a.minIlvl! > ilvl)) && !(a.shieldOnly && kind && !kind.shield) && !(a.kindOnly && kind?.id !== a.kindOnly);
+  });
+
+/** İkinci el türü tanımı (items.json > offhandKinds). */
+export const offhandKindDef = (id: string | undefined): OffhandKindDef | undefined => (id ? ITEMS.offhandKinds?.find((k) => k.id === id) : undefined);
+
+/** İkinci el item'inin türü (yuvası offhand olan tabanda ailesi = tür id'si); silahta (hançer dahil) undefined. */
+export const offhandKindOf = (d: Pick<ItemDef, 'slot' | 'family'>): OffhandKindDef | undefined => (d.slot === 'offhand' ? offhandKindDef(d.family) : undefined);
 
 /** Çekiliş grubundaki affix -> grup adı (items.json > affixRules.drawGroups). */
 const DRAW_GROUP_OF: ReadonlyMap<string, string> = new Map(Object.entries(ITEMS.affixRules?.drawGroups ?? {}).flatMap(([g, ids]) => ids.map((id): [string, string] => [id, g])));
@@ -460,7 +509,7 @@ export function rollItem(d: ItemDef, rng: IntRng, o: RollOptions = {}): ItemRoll
       let id: string | undefined;
       if (i === 0 && mains.length) id = mains.length > 1 ? mains[rng.int(0, mains.length - 1)] : mains[0];
       if (!id) {
-        const pool = tierPool(tier, d.slot, o.ilvl ?? d.ilvl).filter((a) => !used.has(a));
+        const pool = tierPool(tier, d.slot, o.ilvl ?? d.ilvl, d).filter((a) => !used.has(a));
         if (!pool.length) return;
         id = drawAffix(pool, rng, tier, o.forClass);
       }
@@ -569,7 +618,7 @@ export function legacyRoll(d: ItemDef, old: unknown, uid: string, classId?: stri
     let id: string | undefined = i === 0 ? mains[0] : undefined;
     if (!id) id = oldKeys.map((k) => LEGACY_AFFIX[k]?.[tier]).find((a): a is string => !!a && !used.has(a) && affixAllowed(a, d.slot));
     if (!id) {
-      const pool = tierPool(tier, d.slot, d.ilvl).filter((a) => !used.has(a));
+      const pool = tierPool(tier, d.slot, d.ilvl, d).filter((a) => !used.has(a));
       if (!pool.length) return;
       id = drawAffix(pool, rng);
     }
@@ -598,7 +647,7 @@ function replaceRemovedAffixes(d: ItemDef, r: ItemRoll, seed: string): ItemRoll 
   const affixes = r.affixes.flatMap((a): AffixRoll[] => {
     const tier = typeof a?.id === 'string' ? REMOVED_AFFIX_TIER.get(a.id) : undefined;
     if (!tier) return [a];
-    const pool = tierPool(tier, d.slot, r.ilvl ?? d.ilvl).filter((id) => !used.has(id));
+    const pool = tierPool(tier, d.slot, r.ilvl ?? d.ilvl, d).filter((id) => !used.has(id));
     if (!pool.length) return [];
     const id = drawAffix(pool, rng);
     used.add(id);
@@ -750,13 +799,15 @@ export const weaponTypeDef = (t: WeaponType | undefined): WeaponTypeDef | undefi
 
 /** Item'in tip adı (TEK KAYNAK: tooltip, kullanamama uyarısı, aile adı): `kindName`, kalkan, ya da silah tipinin adı ("Sword"). Zırh gibi tipsiz yuvada undefined. */
 export function itemKindName(d: ItemDef): string | undefined {
-  return d.kindName ?? (d.slot === 'offhand' ? 'Shield' : weaponTypeDef(weaponTypeOf(d))?.name);
+  return d.kindName ?? (d.slot === 'offhand' ? (offhandKindOf(d)?.name ?? 'Shield') : weaponTypeDef(weaponTypeOf(d))?.name);
 }
 
 /** Tip adının çoğulu ("Swords", "Staves"). */
 export function itemKindPlural(d: ItemDef): string | undefined {
   const td = d.kindName ? undefined : weaponTypeDef(weaponTypeOf(d));
   if (td) return td.plural ?? `${td.name}s`;
+  const ok = d.kindName ? undefined : offhandKindOf(d);
+  if (ok) return ok.plural ?? `${ok.name}s`;
   const kind = itemKindName(d);
   return kind ? `${kind}s` : undefined;
 }
@@ -764,12 +815,13 @@ export function itemKindPlural(d: ItemDef): string | undefined {
 /** Ailenin adı, içindeki item'lerin tip adlarından ("Axes & Swords"; varsayılan tip önce). Veride elle yazılmış ad yok. */
 export function familyName(id: string): string {
   const first = weaponTypeDef(ITEMS.weaponFamilies.find((f) => f.id === id)?.type);
-  const names = first ? [first.plural ?? `${first.name}s`] : [];
+  const kind = offhandKindDef(id);
+  const names = first ? [first.plural ?? `${first.name}s`] : kind ? [kind.plural ?? `${kind.name}s`] : [];
   for (const d of ITEMS.items) {
     const kind = d.family === id ? itemKindPlural(d) : undefined;
     if (kind && !names.includes(kind)) names.push(kind);
   }
-  return names.join(' & ');
+  return names.length > 2 ? `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}` : names.join(' & ');
 }
 
 /** Çift el YAKIN DÖVÜŞ silahı mı (grip two + twoHandMelee.types; asa ve yay değil)? */
@@ -808,9 +860,12 @@ export const instanceWeaponPower = (inst: Pick<ItemInstance, 'id'> & { rolls?: u
   return d ? weaponPowerOf(d, instanceIlvl(inst)) : 0;
 };
 
-/** Tabanın örtük statı (x3, x4): kalkan (ikinci el yuvası) -> 'shield', silah -> TİPİNİN örtüğü (Ömer 2026-10-27). Yoksa undefined. */
-export function implicitDefOf(d: Partial<TypeSrc>): ImplicitDef | undefined {
-  const key = d.slot === 'offhand' ? 'shield' : weaponTypeOf(d);
+/**
+ * Tabanın örtük statı (x3, x4): ikinci el -> alt tipinin örtüğü (item `implicit`, yoksa türün varsayılanı; Ömer 2026-11-07 B tablosu),
+ * silah -> TİPİNİN örtüğü (Ömer 2026-10-27). Yoksa undefined.
+ */
+export function implicitDefOf(d: Partial<TypeSrc> & { implicit?: string }): ImplicitDef | undefined {
+  const key = d.slot === 'offhand' ? (d.implicit ?? offhandKindDef(d.family)?.implicit) : weaponTypeOf(d);
   return key ? ITEMS.implicits?.[key] : undefined;
 }
 
@@ -865,8 +920,30 @@ export const levelReqMsg = (req: number): string => `Requires Level ${req}`;
 
 // ------------------------------------------------------------ kuşanma kuralları
 
-/** Sınıfın kullanabildiği silah aileleri (karar 2). */
-export const classWeaponFamilies = (classId: string): string[] => ITEMS.weaponFamilies.filter((f) => f.classes.includes(classId)).map((f) => f.id);
+/**
+ * Sınıfın kullanabildiği silah aileleri ve ikinci el türleri (karar 2; Ömer 2026-11-07: tür sınıf kısıtı). Yalnız ikinci elde taşıdığı aile
+ * (offhandClasses: Warrior hançer) da sayılır; ana el kısıtı `offhandOnlyFor`.
+ */
+export const classWeaponFamilies = (classId: string): string[] => [
+  ...ITEMS.weaponFamilies.filter((f) => f.classes.includes(classId) || !!f.offhandClasses?.includes(classId)).map((f) => f.id),
+  ...(ITEMS.offhandKinds ?? []).filter((k) => k.classes.includes(classId)).map((k) => k.id),
+];
+
+/** Ailenin / ikinci el türünün sınıf listesi (yalnız ikinci elde taşıyanlar dahil). Bilinmeyen: boş. */
+export const familyClasses = (id: string | undefined): string[] => {
+  const f = ITEMS.weaponFamilies.find((x) => x.id === id);
+  return f ? [...f.classes, ...(f.offhandClasses ?? []).filter((c) => !f.classes.includes(c))] : (offhandKindDef(id)?.classes ?? []);
+};
+
+/** Bu sınıf bu silahı YALNIZCA ikinci elde taşıyabilir mi (ailesinin offhandClasses'ında, classes'ında değil; Warrior + hançer)? */
+export function offhandOnlyFor(classId: string, d: Pick<ItemDef, 'slot' | 'family'>): boolean {
+  if (d.slot !== 'weapon') return false;
+  const f = ITEMS.weaponFamilies.find((x) => x.id === d.family);
+  return !!f && !f.classes.includes(classId) && !!f.offhandClasses?.includes(classId);
+}
+
+/** canEquip + yuva: yalnız ikinci elde taşınan silah ana ele girmez. */
+export const canEquipIn = (classId: string, d: ItemDef, slot: SlotId): boolean => canEquip(classId, d) && !(slot === 'weapon' && offhandOnlyFor(classId, d));
 
 /** Sınıf bu item'i neden takamaz: yalnız belirli sınıfların item'i ya da tipin adı ("Paladin cannot use Swords"). `nameOf`: sınıf kimliğinin okunur adı. */
 export function cannotUseText(classId: string, d: ItemDef, nameOf: (classId: string) => string = (c) => c): string {
@@ -885,10 +962,20 @@ export function canEquip(classId: string, d: ItemDef): boolean {
 export const gripOf = (d: Pick<ItemDef, 'slot' | 'grip'>): Grip | undefined => (d.slot === 'weapon' ? (d.grip ?? 'one') : undefined);
 
 /** Tutuşun okunur adı (Codex / ipucu). */
-export const GRIP_NAME: Record<Grip, string> = { one: 'One-handed', two: 'Two-handed', bow: 'Bow (both hands)', charm: 'Charm (both hands)' };
+export const GRIP_NAME: Record<Grip, string> = { one: 'One-handed', two: 'Two-handed', bow: 'Bow (both hands)' };
 
-/** Bu silah ikinci eli kapatır mı (çift el, yay, tılsım)? */
+/** Bu silah ikinci eli kapatır mı (çift el, yay)? Yay yalnızca Sadak'ı (withBow türü) açık bırakır: `offhandCompatible`. */
 export const blocksOffhand = (d: Pick<ItemDef, 'slot' | 'grip'>): boolean => d.slot === 'weapon' && gripOf(d) !== 'one';
+
+/**
+ * İkinci el item'i bu ana el silahının yanında durabilir mi (Ömer 2026-11-07: ikinci eli yalnız çift el kapatır)? Ana el boş ya da tek el: her
+ * ikinci el; yay: yalnızca withBow türü (Sadak); çift el: hiçbiri.
+ */
+export function offhandCompatible(weapon: Pick<ItemDef, 'slot' | 'grip'> | undefined, off: Pick<ItemDef, 'slot' | 'family'>): boolean {
+  const g = weapon && weapon.slot === 'weapon' ? gripOf(weapon) : undefined;
+  if (!weapon || g === 'one') return true;
+  return g === 'bow' && !!offhandKindOf(off)?.withBow;
+}
 
 /** Bu item ikinci el yuvasına takılabilen bir silah mı (ailesi `offhand` olan tek el silah: hançer)? */
 export const offhandWeapon = (d: Pick<ItemDef, 'slot' | 'grip' | 'family'>): boolean =>
@@ -902,26 +989,33 @@ export const slotsFor = (d: Pick<ItemDef, 'slot' | 'grip' | 'family'>): SlotId[]
 
 type EquipMap = Partial<Record<SlotId, ItemInstance | null | undefined>>;
 
-/** Ana eldeki silah ikinci eli kapatıyor mu? Kapatıyorsa silahın tanımı, değilse undefined. */
-export function offhandBlocker(equipment: EquipMap): ItemDef | undefined {
+/**
+ * Ana eldeki silah ikinci eli kapatıyor mu? Kapatıyorsa silahın tanımı, değilse undefined. Çift el hep kapatır; yay, `classId` yaya uyan bir
+ * ikinci el türü (Sadak) takamıyorsa (ya da sınıf verilmediyse) kapatır. `cand` verilirse kapanış o item'e göre bakılır (offhandCompatible).
+ */
+export function offhandBlocker(equipment: EquipMap, classId?: string, cand?: ItemDef): ItemDef | undefined {
   const w = equipment.weapon;
   const d = w ? itemDef(w.id) : undefined;
-  return d && blocksOffhand(d) ? d : undefined;
+  if (!d || !blocksOffhand(d)) return undefined;
+  if (cand) return offhandCompatible(d, cand) ? undefined : d;
+  if (gripOf(d) === 'bow' && classId && (ITEMS.offhandKinds ?? []).some((k) => k.withBow && k.classes.includes(classId))) return undefined;
+  return d;
 }
 
 /** Sınıf ikinci el yuvasını hiç kullanabilir mi (kalkan ya da ikinci el silahı olan bir ailesi var mı)? */
 export const classUsesOffhand = (classId: string): boolean => ITEMS.items.some((d) => (d.slot === 'offhand' || offhandWeapon(d)) && canEquip(classId, d));
 
 /** İkinci el kapalıyken gösterilen mesaj. */
-export const offhandBlockedMsg = (w: Pick<ItemDef, 'name' | 'slot' | 'grip'>): string =>
-  `${w.name} is ${gripOf(w) === 'two' ? 'two-handed' : gripOf(w) === 'bow' ? 'a bow' : 'a charm'}: no hand free for an off-hand item`;
+export const offhandBlockedMsg = (w: Pick<ItemDef, 'name' | 'slot' | 'grip'>, _cand?: Pick<ItemDef, 'name' | 'slot' | 'family'>): string =>
+  gripOf(w) === 'bow' ? `${w.name} is a bow: only a quiver fits the off-hand` : `${w.name} is two-handed: no hand free for an off-hand item`;
 
 /**
  * Torbadan takılırken varsayılan yuva (tıklama / çift dokunma / "Equip"): kendi yuvası; tek el hançer ana el boşsa ana ele, ana elde tek el silah
- * varken ikinci el boşsa ikinci ele, yoksa ana elin yerine.
+ * varken ikinci el boşsa ikinci ele, yoksa ana elin yerine. `classId` yalnız ikinci elde taşıyorsa (Warrior hançer) hep ikinci el.
  */
-export function defaultEquipSlot(equipment: EquipMap, d: ItemDef): SlotId {
+export function defaultEquipSlot(equipment: EquipMap, d: ItemDef, classId?: string): SlotId {
   if (!offhandWeapon(d)) return d.slot;
+  if (classId && offhandOnlyFor(classId, d)) return 'offhand';
   if (!equipment.weapon) return 'weapon';
   if (!equipment.offhand && !offhandBlocker(equipment)) return 'offhand';
   return 'weapon';
@@ -931,11 +1025,12 @@ export function defaultEquipSlot(equipment: EquipMap, d: ItemDef): SlotId {
  * Ana el boşken ikinci eldeki silah (hançer) ana ele geçer (Ömer 2026-10-14: silah ana el boşken ikinci elde durmaz). Ana el çıkarılınca ve
  * kayıt okunurken çalışır; ekipmanı yerinde değiştirir (ikinci el null olur). Taşındıysa true.
  */
-export function promoteOffhand(equipment: EquipMap | null | undefined): boolean {
+export function promoteOffhand(equipment: EquipMap | null | undefined, classId?: string): boolean {
   if (!equipment || equipment.weapon) return false;
   const o = equipment.offhand;
   const d = o && typeof o === 'object' && typeof o.id === 'string' ? itemDef(o.id) : undefined;
   if (!o || !d || !offhandWeapon(d)) return false;
+  if (classId && offhandOnlyFor(classId, d)) return false; // Warrior'ın hançeri ana ele geçmez (yalnız ikinci el)
   equipment.weapon = o;
   equipment.offhand = null;
   return true;
@@ -954,7 +1049,8 @@ export function equipInto(equipment: EquipMap, inst: ItemInstance, slot: SlotId)
   const d = itemDef(inst.id);
   const eq: EquipMap = { ...equipment, [slot]: inst };
   const displaced: ItemInstance[] = [];
-  if (slot === 'weapon' && d && blocksOffhand(d) && equipment.offhand) {
+  const offDef = equipment.offhand ? itemDef(equipment.offhand.id) : undefined;
+  if (slot === 'weapon' && d && equipment.offhand && (!offDef || !offhandCompatible(d, offDef))) {
     displaced.push(equipment.offhand);
     eq.offhand = null;
   }
@@ -972,13 +1068,16 @@ export function planEquip(classId: string, equipment: EquipMap, inst: ItemInstan
   // verilmezse yalnızca kural testi: denetlenmez)
   if (o.level !== undefined && !meetsLevel(o.level, inst)) return { error: levelReqMsg(instanceLevelReq(inst)) };
   if (!canEquip(classId, d)) return { error: cannotUseText(classId, d) };
+  const offOnly = offhandOnlyFor(classId, d);
   // Ana el boşken silah ikinci ele girmez (Ömer 2026-10-14): ikinci ele bırakılan / "Off-hand" ile takılan hançer de ana ele gider
-  const at = slot === 'offhand' && offhandWeapon(d) && !equipment.weapon ? 'weapon' : (slot ?? defaultEquipSlot(equipment, d));
+  const at = !offOnly && slot === 'offhand' && offhandWeapon(d) && !equipment.weapon ? 'weapon' : (slot ?? defaultEquipSlot(equipment, d, classId));
+  if (offOnly && at === 'weapon') return { error: `${d.name} only goes in the off-hand for this hero` };
+  if (offOnly && !equipment.weapon) return { error: `${d.name} needs a weapon in the main hand` };
   if (!fitsSlot(d, at)) return { error: `${d.name} does not go in the ${slotDef(at)?.name ?? at} slot` };
   if (o.locks?.[at]) return { error: `${slotDef(at)?.name ?? at} slot: ${o.locks[at]}` };
   if (at === 'offhand') {
-    const w = offhandBlocker(equipment);
-    if (w) return { error: offhandBlockedMsg(w) };
+    const w = offhandBlocker(equipment, classId, d);
+    if (w) return { error: offhandBlockedMsg(w, d) };
   }
   const plan = equipInto(equipment, inst, at);
   const legend = SLOT_IDS.filter((k) => {
@@ -999,7 +1098,10 @@ export function legendaryConflict(equipment: EquipMap, d: ItemDef, slot: SlotId 
   if (d.rarity !== 'legendary') return null;
   for (const k of SLOT_IDS) {
     if (k === slot) continue;
-    if (k === 'offhand' && slot === 'weapon' && blocksOffhand(d)) continue;
+    if (k === 'offhand' && slot === 'weapon' && equipment.offhand) {
+      const od = itemDef(equipment.offhand.id);
+      if (!od || !offhandCompatible(d, od)) continue; // yeni silahın kapattığı ikinci el çıkacağı için sayılmaz
+    }
     const inst = equipment[k];
     if (inst && itemDef(inst.id)?.rarity === 'legendary') return LEGENDARY_LIMIT_MSG;
   }
@@ -1049,7 +1151,7 @@ export function stripUnusable(classId: string, equipment: EquipMap | null | unde
   for (const k of SLOT_IDS) {
     const inst = equipment[k];
     const d = inst && typeof inst === 'object' && typeof inst.id === 'string' ? itemDef(inst.id) : undefined;
-    if (!inst || !d || canEquip(classId, d)) continue;
+    if (!inst || !d || canEquipIn(classId, d, k)) continue;
     overflow.push(inst);
     equipment[k] = null;
     out.push(k);
@@ -1071,8 +1173,10 @@ export type BonusForm = 'add' | 'more' | 'less';
 // Yazı biçimi ile motordaki birleşme TEK tablodan (tree-hooks.ts > STACK_FORM; 2026-10-27: "×" yazılanlar çarpılarak birleşir, loadout.ts)
 export function partBonusForm(to: string): BonusForm {
   const [kind, key = ''] = to.split(':');
-  if (kind === 'elem' || kind === 'mult') return 'more';
+  // Hasar havuzu (Ömer 2026-11-07, P1): element hasarı ve vuruş hasarı fx'leri (sıra, aura, sabit duruş, bitirici, Giantslayer) "+X%" toplamsal
+  if (kind === 'mult') return 'more';
   if (kind === 'res') return 'less';
+  if (kind === 'elem') return 'add';
   const f = kind === 'fx' ? (STACK_FORM[key] ?? STACK_FORM[`${key}.reduce`] ?? STACK_FORM[`${key}.bonus`]) : undefined;
   if (f === 'mult' || f === 'more') return 'more';
   if (f === 'less') return 'less';
@@ -1087,6 +1191,7 @@ export function templateShowsPart(text: string, i: number, form: BonusForm): boo
 /** items.json doğrulaması (boş liste = geçerli). Test: tests/items-data.test.ts. */
 export function validateItems(data: ItemsData = ITEMS): string[] {
   const errors: string[] = [];
+  const kinds = data.offhandKinds ?? [];
   const slotIds = data.slots.map((s) => s.id);
   if (slotIds.join() !== SLOT_IDS.join()) errors.push(`slots must be ${SLOT_IDS.join(', ')}`);
   // Set parçaları (Ömer 2026-11-03): adı ve yuvası sete uyar, Epic, sabit C + C + B, affix o yuvada çıkabilir
@@ -1145,13 +1250,23 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
   }
   // Zar hiç boş kalmasın (itemfix): her taban, ana affix'i dışında en az bir C daha çekebilmeli (Uncommon+; taban nadirlikten bağımsız Epic olabilir)
   for (const d of data.items)
-    if (d.rarity !== 'legendary' && !Object.entries(data.affixDefs).some(([id, a]) => a.tier === 'C' && (!a.slots || a.slots.includes(d.slot)) && !(d.main ? [d.main] : (data.weaponFamilies.find((f) => f.id === d.family)?.mains ?? [])).includes(id)))
+    if (d.rarity !== 'legendary' && !Object.entries(data.affixDefs).some(([id, a]) => a.tier === 'C' && (!a.slots || a.slots.includes(d.slot)) && !(a.shieldOnly && !kinds.find((k) => k.id === d.family)?.shield && d.slot === 'offhand') && !(d.main ? [d.main] : (data.weaponFamilies.find((f) => f.id === d.family)?.mains ?? [])).includes(id)))
       errors.push(`item ${d.id}: its slot pool has no second C affix`);
   if (!Number.isInteger(data.bag) || data.bag <= 0) errors.push('bag: must be a positive integer');
   // Silah aileleri: sınıflar var olmalı, her oynanabilir sınıfın en az bir ailesi olmalı; ana affix'ler C kademesinde
   const famIds = data.weaponFamilies.map((f) => f.id);
   if (new Set(famIds).size !== famIds.length) errors.push('weaponFamilies: duplicate ids');
-  for (const f of data.weaponFamilies) for (const c of f.classes) if (!classes[c]) errors.push(`family ${f.id}: unknown class ${c}`);
+  for (const f of data.weaponFamilies) for (const c of [...f.classes, ...(f.offhandClasses ?? [])]) if (!classes[c]) errors.push(`family ${f.id}: unknown class ${c}`);
+  for (const f of data.weaponFamilies) if (f.offhandClasses && !f.offhand) errors.push(`family ${f.id}: offhandClasses needs an off-hand family`);
+  // İkinci el türleri (Ömer 2026-11-07): tekil id (silah ailesiyle de çakışmaz), ad, bilinen sınıflar, var olan örtük
+  const kindIds = kinds.map((k) => k.id);
+  if (new Set([...kindIds, ...famIds]).size !== kindIds.length + famIds.length) errors.push('offhandKinds: duplicate ids (also against weaponFamilies)');
+  for (const k of kinds) {
+    if (!k.name || !k.classes?.length) errors.push(`off-hand kind ${k.id}: needs a name and classes`);
+    for (const c of k.classes ?? []) if (!classes[c]) errors.push(`off-hand kind ${k.id}: unknown class ${c}`);
+    if (!data.implicits?.[k.implicit]) errors.push(`off-hand kind ${k.id}: unknown implicit ${k.implicit}`);
+  }
+  for (const [id, a] of Object.entries(data.affixDefs)) if (a.kindOnly !== undefined && !kindIds.includes(a.kindOnly)) errors.push(`affix ${id}: kindOnly must name an off-hand kind`);
   for (const f of data.weaponFamilies) {
     if (!f.mains?.length) errors.push(`family ${f.id}: needs main affixes`);
     for (const m of f.mains ?? []) if (data.affixDefs[m]?.tier !== 'C' || !affixElement(m)) errors.push(`family ${f.id}: main ${m} must be a C damage affix`);
@@ -1170,7 +1285,8 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     if (!(RARITY_IDS as readonly string[]).includes(d.rarity)) errors.push(`${at}: unknown rarity ${d.rarity}`);
     if (!Number.isInteger(d.ilvl) || d.ilvl < 1) errors.push(`${at}: ilvl must be a positive integer`);
     if (d.slot === 'weapon' && !famIds.includes(d.family ?? '')) errors.push(`${at}: weapon needs a known family`);
-    if (d.slot === 'offhand' && !famIds.includes(d.family ?? '')) errors.push(`${at}: an off-hand item (shield) needs a known family`);
+    if (d.slot === 'offhand' && !kindIds.includes(d.family ?? '')) errors.push(`${at}: an off-hand item needs a known off-hand kind (family = offhandKinds id)`);
+    if (d.implicit !== undefined && (d.slot !== 'offhand' || !data.implicits?.[d.implicit])) errors.push(`${at}: implicit is only for off-hand items and must name a known implicit`);
     if (d.slot !== 'weapon' && d.slot !== 'offhand' && d.family !== undefined) errors.push(`${at}: only weapons and shields have a family`);
     if (d.slot === 'weapon' && !(GRIP_IDS as readonly string[]).includes(d.grip ?? '')) errors.push(`${at}: weapon needs a grip (${GRIP_IDS.join(' | ')})`);
     if (d.slot !== 'weapon' && d.grip !== undefined) errors.push(`${at}: only weapons have a grip`);
@@ -1201,7 +1317,7 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     if (d.usableBy) for (const c of d.usableBy) if (!classes[c]) errors.push(`${at}: usableBy has unknown class ${c}`);
     if (d.minChapter !== undefined && (!Number.isInteger(d.minChapter) || d.minChapter < 1)) errors.push(`${at}: bad minChapter`);
     if (d.implicitBase !== undefined) {
-      const key = d.slot === 'offhand' ? 'shield' : d.slot === 'weapon' ? (d.type ?? data.weaponFamilies.find((fd) => fd.id === d.family)?.type) : undefined;
+      const key = d.slot === 'offhand' ? (d.implicit ?? kinds.find((k) => k.id === d.family)?.implicit) : d.slot === 'weapon' ? (d.type ?? data.weaponFamilies.find((fd) => fd.id === d.family)?.type) : undefined;
       const imp = key ? data.implicits?.[key] : undefined;
       if (!imp || !Array.isArray(d.implicitBase) || d.implicitBase.length > imp.parts.length || d.implicitBase.some((v) => !(typeof v === 'number' && v > 0))) errors.push(`${at}: implicitBase needs positive numbers for its base's implicit parts`);
     }
@@ -1226,7 +1342,7 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     if (d.slot === 'weapon' && !isType(d.type ?? data.weaponFamilies.find((fd) => fd.id === d.family)?.type)) errors.push(`item ${d.id}: weapon needs a type (its own or its family's)`);
   }
   for (const [k, imp] of Object.entries(data.implicits ?? {})) {
-    if (k !== 'shield' && !isType(k)) errors.push(`implicit ${k}: must be a weapon type or shield`);
+    if (!isType(k) && !kinds.some((kd) => kd.implicit === k) && !data.items.some((d) => d.implicit === k)) errors.push(`implicit ${k}: must be a weapon type or an off-hand kind / subtype implicit`);
     if (!imp.name || !/\{[ml]?0\}/.test(imp.text ?? '') || !imp.parts?.length) errors.push(`implicit ${k}: needs name, text with {0} and parts`);
     imp.parts?.forEach((p, i) => {
       if (!templateShowsPart(imp.text ?? '', i, partBonusForm(p.to))) errors.push(`implicit ${k}: part ${i} (${p.to}) breaks the bonus wording rule`);
@@ -1246,9 +1362,10 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     const d = data.items.find((x) => x.id === id);
     const w = data.items.find((x) => x.id === st?.classes?.[c]);
     const fam = d?.family ? data.weaponFamilies.find((f) => f.id === d.family) : undefined;
+    const kind = d?.slot === 'offhand' ? kinds.find((k) => k.id === d.family) : undefined;
     const offOk = d && (d.slot === 'offhand' || (d.slot === 'weapon' && (d.grip ?? 'one') === 'one' && !!fam?.offhand));
     if (!d || !offOk || d.rarity !== 'common') errors.push(`starter off-hand ${id} (${c}): must be a Common off-hand item`);
-    else if (d.family && !(fam?.classes.includes(c) ?? false)) errors.push(`starter off-hand ${id} (${c}): not usable by the class`);
+    else if (d.family && !((kind ? kind.classes : [...(fam?.classes ?? []), ...(fam?.offhandClasses ?? [])]).includes(c))) errors.push(`starter off-hand ${id} (${c}): not usable by the class`);
     if (!w || (w.grip ?? 'one') !== 'one') errors.push(`starter off-hand ${id} (${c}): the class's starter weapon must be one-handed`);
   }
   return errors;
@@ -1379,22 +1496,23 @@ export function planMoveEquipped(classId: string, equipment: EquipMap, from: Slo
   if (!a || !da) return { error: 'Nothing to move' };
   if (from === to) return { error: 'Same slot' };
   if (!fitsSlot(da, to)) return { error: `${da.name} does not go in the ${slotDef(to)?.name ?? to} slot` };
+  if (to === 'weapon' && offhandOnlyFor(classId, da)) return { error: `${da.name} only goes in the off-hand for this hero` };
   const b = equipment[to];
   const db = b ? itemDef(b.id) : undefined;
   const eq: EquipMap = { ...equipment, [from]: null, [to]: null };
   const toBag: ItemInstance[] = [];
   if (b && db) {
-    if (fitsSlot(db, from) && canEquip(classId, db)) eq[from] = b;
+    if (fitsSlot(db, from) && canEquipIn(classId, db, from)) eq[from] = b;
     else toBag.push(b);
   }
   if (to === 'offhand') {
     if (!eq.weapon) return { error: 'The main hand is empty: a weapon does not go in the off-hand' };
-    const w = offhandBlocker(eq);
+    const w = offhandBlocker(eq, classId, da);
     if (w) return { error: offhandBlockedMsg(w) };
   }
   const plan = equipInto(eq, a, to);
   toBag.push(...plan.displaced);
   const out = plan.equipment;
-  promoteOffhand(out);
+  promoteOffhand(out, classId);
   return { equipment: out, toBag };
 }

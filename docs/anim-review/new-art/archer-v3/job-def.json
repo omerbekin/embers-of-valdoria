@@ -1,0 +1,51 @@
+{
+ "name": "archer-v3-def",
+ "outDir": "docs/anim-review/new-art/archer-v3",
+ "rules": "docs/anim-review/new-art/archer-v3/PROMPT.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle-d",
+   "file": "idle-d.png",
+   "refs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "task": "Redraw the ARCHER body, idle pose. It must read as an ARCHER at first glance: agile and light. Light comfortable clothing (thin leather vest or short tunic, sleeveless or rolled sleeves, open range of motion), slim athletic build, archer's bracer on the LEFT forearm, 3-finger archer's glove on the RIGHT hand, thin belt, soft boots, light weight-forward stance, predatory hunter's gaze. NO armor, NO brigandine, NO quilting, NO cape, NO peasant/worker feel. NO hood (head uncovered), NO quiver/arrows/fletching on body, empty hands, no weapon, strictly medieval, palette must not be green/stone-moss (Druid). Image 1 = old Archer: keep its EXACT pose, agile forward-leaning stance, scale, canvas 584x454, feet position. Image 2 = Druid (must differ). Real transparent background. CONCEPT: Forest hunter: brown-rust leather vest over a linen shirt, hair in a ponytail, light stubble, tan leather bracer and glove.",
+   "checkRules": "- Image 1 is new draw; others refs (old Archer, Druid).\n- Reads as an ARCHER instantly: agile, light, slim athletic, weight forward.\n- Light clothing; NO armor/brigandine/quilting/cape; not peasant/worker.\n- Bracer on left forearm, 3-finger glove on right hand, thin belt, soft boots.\n- No hood, no quiver/arrows/fletching on body, hands empty, no weapon.\n- Palette not green/stone-moss; distinct from Druid.\n- Same pose, scale, feet position as old Archer ref; canvas ~584x454.\n- Real transparent/flat background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "idle-e",
+   "file": "idle-e.png",
+   "refs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "task": "Redraw the ARCHER body, idle pose. It must read as an ARCHER at first glance: agile and light. Light comfortable clothing (thin leather vest or short tunic, sleeveless or rolled sleeves, open range of motion), slim athletic build, archer's bracer on the LEFT forearm, 3-finger archer's glove on the RIGHT hand, thin belt, soft boots, light weight-forward stance, predatory hunter's gaze. NO armor, NO brigandine, NO quilting, NO cape, NO peasant/worker feel. NO hood (head uncovered), NO quiver/arrows/fletching on body, empty hands, no weapon, strictly medieval, palette must not be green/stone-moss (Druid). Image 1 = old Archer: keep its EXACT pose, agile forward-leaning stance, scale, canvas 584x454, feet position. Image 2 = Druid (must differ). Real transparent background. CONCEPT: Steppe/horse archer: short kaftan in sand and indigo, wrapped forearms, sash belt, soft boots, tied-back dark hair or topknot, lean face.",
+   "checkRules": "- Image 1 is new draw; others refs (old Archer, Druid).\n- Reads as an ARCHER instantly: agile, light, slim athletic, weight forward.\n- Light clothing; NO armor/brigandine/quilting/cape; not peasant/worker.\n- Bracer on left forearm, 3-finger glove on right hand, thin belt, soft boots.\n- No hood, no quiver/arrows/fletching on body, hands empty, no weapon.\n- Palette not green/stone-moss; distinct from Druid.\n- Same pose, scale, feet position as old Archer ref; canvas ~584x454.\n- Real transparent/flat background, no halo/noise. Strictly medieval, clean."
+  },
+  {
+   "id": "idle-f",
+   "file": "idle-f.png",
+   "refs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "task": "Redraw the ARCHER body, idle pose. It must read as an ARCHER at first glance: agile and light. Light comfortable clothing (thin leather vest or short tunic, sleeveless or rolled sleeves, open range of motion), slim athletic build, archer's bracer on the LEFT forearm, 3-finger archer's glove on the RIGHT hand, thin belt, soft boots, light weight-forward stance, predatory hunter's gaze. NO armor, NO brigandine, NO quilting, NO cape, NO peasant/worker feel. NO hood (head uncovered), NO quiver/arrows/fletching on body, empty hands, no weapon, strictly medieval, palette must not be green/stone-moss (Druid). Image 1 = old Archer: keep its EXACT pose, agile forward-leaning stance, scale, canvas 584x454, feet position. Image 2 = Druid (must differ). Real transparent background. CONCEPT: Young master marksman: thin dark-leather vest, rolled-sleeve cream linen shirt, a scarf at the neck (no cape), clean-shaven sharp eyes, slate and cream palette with leather accents.",
+   "checkRules": "- Image 1 is new draw; others refs (old Archer, Druid).\n- Reads as an ARCHER instantly: agile, light, slim athletic, weight forward.\n- Light clothing; NO armor/brigandine/quilting/cape; not peasant/worker.\n- Bracer on left forearm, 3-finger glove on right hand, thin belt, soft boots.\n- No hood, no quiver/arrows/fletching on body, hands empty, no weapon.\n- Palette not green/stone-moss; distinct from Druid.\n- Same pose, scale, feet position as old Archer ref; canvas ~584x454.\n- Real transparent/flat background, no halo/noise. Strictly medieval, clean."
+  }
+ ]
+}

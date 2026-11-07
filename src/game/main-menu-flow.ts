@@ -64,3 +64,24 @@ export function initialView(open: 'load' | 'new' | undefined, view: MenuView | u
   if (open) return 'play';
   return view ?? 'menu';
 }
+
+/** Endless en iyi dalga (yerel skor listesi `eov.endless.scores.v1` ham metninden; yoksa / bozuksa 0). Menü hafif kalsın diye endless/save.ts yüklenmez. */
+export function endlessBestWave(raw: string | null): number {
+  try {
+    const data = JSON.parse(raw ?? 'null') as { scores?: Array<{ wave?: unknown }> } | null;
+    return (data?.scores ?? []).reduce((a, e) => (typeof e?.wave === 'number' && Number.isFinite(e.wave) && e.wave > a ? e.wave : a), 0);
+  } catch {
+    return 0;
+  }
+}
+
+/** Kayıt zamanı kısa yazı ("just now", "5m ago", "2h ago", "3d ago"). */
+export function timeAgo(iso: string, now: number = Date.now()): string {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return '';
+  const m = Math.max(0, Math.floor((now - t) / 60000));
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  if (m < 48 * 60) return `${Math.floor(m / 60)}h ago`;
+  return `${Math.floor(m / 1440)}d ago`;
+}

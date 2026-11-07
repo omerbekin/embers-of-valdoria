@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { ensureGlow } from './menu-ui';
 import { EL } from './elegant-ui';
 import { ITEM_ICON_SIZE, REWARD_ICON, itemIconName, paintItemIcon } from './item-icons';
-import { ITEM_IMAGE_FILES, itemImageKey } from './item-icon-files';
+import { ITEM_IMAGE_FILES, itemImageId, itemImageKey } from './item-icon-files';
 import { ensureIcon } from './icons';
 import { hasUiImage, uiIconName } from '../ui/ui-icons';
 import { hasMiscImage, miscIconName } from '../ui/misc-icons';
@@ -31,9 +31,10 @@ function pixelTexture(scene: Phaser.Scene, name: string, accent?: string): strin
  * (src/game/assets.ts); henüz inmemişse bu çağrı piksel ikonu verir ve dosyayı kuyruğa ekler (sonraki çizimde görsel görünür).
  */
 export const itemEmblem = (scene: Phaser.Scene, d: { id?: string; slot: string; family?: string; icon?: string }, rarityColor: string): string => {
-  const url = d.id ? ITEM_IMAGE_FILES[d.id] : undefined;
-  if (url && d.id) {
-    const key = itemImageKey(d.id);
+  const art = itemImageId(d.id);
+  const url = art ? ITEM_IMAGE_FILES[art] : undefined;
+  if (url && art) {
+    const key = itemImageKey(art);
     if (scene.textures.exists(key)) return key;
     scene.load.image(key, url);
     if (!scene.load.isLoading()) scene.load.start();

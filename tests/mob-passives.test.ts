@@ -200,7 +200,7 @@ describe('YM7 Mire-Bound (Fen Witchling, Morwen)', () => {
     const plain = b.baseSpeedOf(w);
     expect(e.status).toBe('saltbound');
     b.debugAddStatus('party-0', e.status);
-    expect(b.baseSpeedOf(w)).toBe(Math.max(f.attributes.spdMin ?? 1, roundSpeed(w.stats.spd * e.speedMult, f)));
+    expect(b.baseSpeedOf(w)).toBe(Math.max(f.attributes.spdMin ?? 1, roundSpeed(w.stats.spd * e.speedMult * b.paceOf(w), f))); // x bu turun hız zarı
     b.debugKill('enemy-0', false);
     expect(b.baseSpeedOf(w)).toBeLessThan(plain); // Morwen hâlâ yaşıyor
     b.debugKill('enemy-1', false);

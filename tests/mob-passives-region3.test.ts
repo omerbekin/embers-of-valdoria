@@ -124,8 +124,8 @@ describe('YM23 Crown of Ash (Lord Morvane)', () => {
 });
 
 describe('D10-D12: yeni skill şekilleri var olan etkilerle', () => {
-  it('D10 Run Down (ignoreReach) arka sıraya ulaşır; Halberd Chop ulaşamaz; Pike Thrust menzil +1', () => {
-    const b = arena([['warrior', 1], ['mage', 7]], [['ash_hound', 1], ['morvane_halberdier', 0]]);
+  it('D10 Run Down arka sıraya ulaşır (şeridinin ön sırası boşsa; Ömer 2026-11-07); Halberd Chop ulaşamaz; Pike Thrust menzil +1', () => {
+    const b = arena([['warrior', 1], ['mage', 6]], [['ash_hound', 1], ['morvane_halberdier', 0]]);
     expect(b.validTargets('enemy-0', 'run_down').map((c) => c.uid)).toContain('party-1');
     expect(b.validTargets('enemy-1', 'halberd_chop').map((c) => c.uid)).not.toContain('party-1');
     expect(content.skills.pike_thrust!.reach).toBe(1);

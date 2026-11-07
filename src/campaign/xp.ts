@@ -1,6 +1,6 @@
 // Seferde level / XP (saf; Ömer 2026-10-17, docs/design/progression/levels.md). Kurallar src/progression/levels.ts; burası sefer durumuna yazar.
 import { summons } from '../engine/content';
-import { getMap } from './data';
+import { CONFIG, getMap } from './data';
 import { encounterWavesById } from './encounter-waves';
 import { node } from './graph';
 import { nodeLevel } from './power';
@@ -49,7 +49,17 @@ export function battleXp(t: CampaignState, outcome: BattleOutcome, encounterId: 
   const kills: KillRecord[] = outcome.kills ?? Array.from({ length: encounterEnemyCount(encounterId) }, () => ({ down: [] }));
   const n = node(getMap(t.mapId), t.at);
   const waves = Math.max(1, encounterWavesById(encounterId).length); // dalga bonusu (D7)
-  return splitXp({ heroes: heroes.map((h) => ({ id: h.id, level: h.level })), nodeLevel: nodeLevel(t.mapId, t.at), mult: nodeXpMult(n.type, LEVELS, true), kills, waves });
+  const scale = tutorialXpScale(t);
+  return splitXp({ heroes: heroes.map((h) => ({ id: h.id, level: h.level })), nodeLevel: nodeLevel(t.mapId, t.at), mult: nodeXpMult(n.type, LEVELS, true), kills, waves, scale });
+}
+
+/**
+ * Tutorial XP ayarı (Ömer 2026-11-07, tutxp; campaign.json > soloStart.xpScale): yeni seferin ilk haritasında Ashford öncesi düğümlerin savaş XP
+ * çarpanı. Lider L1 başlar, ilk kasabaya L2 varır. Özel level verme kuralı yok (eski eliteLevelUp kaldırıldı); Ashford katılımcısı L1 gelir (state.ts).
+ */
+function tutorialXpScale(t: CampaignState): number | undefined {
+  if (!t.soloStart || t.mapId !== CONFIG.maps[0]) return undefined;
+  return CONFIG.soloStart.xpScale?.[t.at];
 }
 
 /** Savaşsız olay / hazine düğümünün sabit XP'si: fixedEnemies düşmanlık XP x düğüm çarpanı (0,5), aktif takıma bölünür (düşmüşler fallenShare). */

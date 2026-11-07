@@ -47,11 +47,11 @@
         {
           "id": "pay",
           "label": "Pay her price",
-          "hint": "Pay 60 gold. She gives you two items from her chest and keeps the coins.",
+          "hint": "Pay 60 gold. She gives you an item from her chest and keeps the coins.",
           "cost": 60,
           "chest": true,
-          "chestItems": 2,
-          "result": "The witch weighs the coins, grins, and rummages in the chest. She tosses you two pieces. \"That's what your gold buys.\""
+          "chestItems": 1,
+          "result": "The witch weighs the coins, grins, and rummages in the chest. She tosses you a piece. \"That's what your gold buys.\""
         },
         {
           "id": "blood",
@@ -66,10 +66,9 @@
         {
           "id": "steal",
           "label": "Steal her ingredients",
-          "hint": "Fight the witch. Win: her chest and some gold.",
+          "hint": "Fight the witch herself. Win: her chest and 25 gold.",
           "battle": [
-            "morwen_duel",
-            "witchs_hut_guard"
+            "morwen_duel"
           ],
           "win": {
             "gold": 25,

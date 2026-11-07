@@ -39,14 +39,15 @@ import { openWiki } from '../../wiki/open';
 import { BODY_FONT, DISPLAY_FONT, menuStyle } from '../../ui/menu-style';
 import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { markBootReady, setBootProgress } from '../../ui/boot-loader';
-import { EL, elBack, elButton, elDiamond, elGlow, elGo, elScreenIn, elText, elBody } from '../elegant-ui';
+import { buildLedger, ledgerHeight, type Ledger, type LedgerRow } from '../menu-ledger';
+import { EL, elBack, elDiamond, elGlow, elGo, elScreenIn, elText, elBody } from '../elegant-ui';
 import { trackChunkLoad } from '../../ui/boot-loader';
 import { copyDiagLog, diagConsent, diagReportId, onDiagConsentChange, setDiagConsent } from '../../diag/diag';
 import { openDiagNotice } from '../../diag/diag-notice';
 import { PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, pageOf, pageVisible, setSettingsPage, settingsPage, stepPage } from '../../ui/settings-pages';
 import { accountApi, accountShown } from '../../cloud/ui/api';
 import type { LazySceneKey } from '../lazy-scenes';
-import { MAIN_ITEMS, backTarget, backdropFor, campaignButtons, initialView, moveSelection, type MenuItemKey, type MenuView } from '../main-menu-flow';
+import { MAIN_ITEMS, backTarget, backdropFor, campaignButtons, endlessBestWave, initialView, moveSelection, timeAgo, type MenuItemKey, type MenuView } from '../main-menu-flow';
 
 export interface MainMenuData {
   /** 'load': Load Game penceresi açık başlar (yenilgi sonrası "Load Game"); 'new': New Campaign penceresi. İkisi de Play kartlarının üstünde açılır. */
@@ -240,7 +241,8 @@ export class MainMenuScene extends Phaser.Scene {
   private back!: Phaser.GameObjects.Container;
   /** Sağ alttaki küçük sürüm yazısı (DISPLAY_VERSION). */
   private version: Phaser.GameObjects.Text | null = null;
-  private cards: Array<{ c: Phaser.GameObjects.Container; focus: (on: boolean, kb?: boolean) => void; run: () => void; toggle?: () => void }> = [];
+  private cards: Array<{ c: Phaser.GameObjects.Container; focus: (on: boolean, kb?: boolean) => void; run: () => void; toggle?: () => void; closeLedger?: () => void }> = [];
+  private outsideTapBound = false;
   private cardSel = 0;
   private cleanups: Array<() => void> = [];
   private promptOpen = false;
@@ -269,6 +271,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.pageBox = null;
     this.panelOffs = [];
     this.cards = [];
+    this.outsideTapBound = false;
     this.menuSel = 0;
     this.cardSel = 0;
     this.busyUntil = 0;
@@ -749,6 +752,23 @@ export class MainMenuScene extends Phaser.Scene {
   // ------------------------------------------------------------ Play: üç kart
 
   private buildCards(): void {
+    const touchOpen = new Map<number, Ledger | null>();
+    if (!this.outsideTapBound) {
+      this.outsideTapBound = true;
+      // Dokunmada kartların dışına dokunmak açık defteri kapatır
+      this.input.on('pointerdown', (p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
+        if (!p.wasTouch && !window.matchMedia?.('(pointer: coarse)').matches) return;
+        const inCard = over.some((o) => {
+          let n: Phaser.GameObjects.GameObject | null = o;
+          while (n) {
+            if (this.cards.some((k) => k.c === n)) return true;
+            n = (n as Phaser.GameObjects.GameObject & { parentContainer?: Phaser.GameObjects.Container }).parentContainer ?? null;
+          }
+          return false;
+        });
+        if (!inCard) this.cards.forEach((k) => k.closeLedger?.());
+      });
+    }
     const core = campaignCore;
     if (!core) return; // sefer çekirdeği gelince campaignCoreReady kurar
     const latest = core.latestSave(storage());
@@ -759,20 +779,45 @@ export class MainMenuScene extends Phaser.Scene {
     const art = (id: string) => (hasBackground(this, id) ? backgroundKey(id) : null);
     const camp = campaignButtons(!!latest, anySaves);
     const runCamp = (id: 'continue' | 'new' | 'load') => (id === 'continue' && latest ? this.loadSave(latest) : id === 'new' ? this.chooseSlot() : this.loadSlots());
+    // Defter satırları (Ömer 2026-11-07, Ledger): yalnız gerçek veri gösterilir
+    const hero = latest ? core.activeHeroes(latest.state) : [];
+    const lvl = hero.length ? Math.max(...hero.map((h) => h.level)) : 0;
+    const latestInfo = latest ? `${latest.summary.node}
+Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
+    const latestLine = latest ? `${latest.summary.node} · Lv ${lvl}` : '';
+    const nSaves = core.slotSummaries(storage()).reduce((a, x) => a + (x ? x.saveCount : 0), 0);
+    const campRows: LedgerRow[] = camp.map((b) => ({
+      id: b.id,
+      name: b.id === 'continue' ? 'Continue' : b.id === 'new' ? 'New campaign' : 'Load',
+      meta: b.id === 'continue' ? latestInfo : b.id === 'new' ? 'Start over' : anySaves ? `${nSaves} save${nSaves === 1 ? '' : 's'}` : 'No saves yet',
+      primary: b.primary,
+      enabled: b.enabled,
+      run: () => runCamp(b.id),
+    }));
+    const best = endlessBestWave(storage()?.getItem('eov.endless.scores.v1') ?? null);
+    const goQb = (endless: boolean) => {
+      this.setEndlessOn(endless);
+      elGo(this, endless ? ENDLESS_SCENE : 'TeamSelectScene');
+    };
+    const qbRows: LedgerRow[] = [
+      { id: 'qb', name: 'Quick Battle', meta: 'Pick two teams', primary: !this.endlessOn(), enabled: true, run: () => goQb(false) },
+      { id: 'endless', name: 'Endless', meta: best > 0 ? `Best wave ${best}` : 'No runs yet', primary: this.endlessOn(), enabled: true, run: () => goQb(true) },
+    ];
     const focusOf = (key: string | null): readonly [number, number] | null => {
       const id = key?.startsWith('bg:') ? key.slice(3) : key?.startsWith('card:') ? key.slice(5) : null;
       return (id && (layout.backgrounds.cardFocus as unknown as Record<string, [number, number]>)[id]) || null;
     };
     // Kart görselleri (Ömer 2026-10-10): assets/cards (Quick Battle gündüz / Endless mode açıkken alacakaranlık, Multiplayer ay ışığı);
     // dosya yoksa eski arena arka planları. Kart görseli (`card:`) kart için çizildi: daha az karartılır.
-    const specs: Array<{ name: string; art: string | null; altArt?: string | null; line?: string; endless?: boolean; buttons?: typeof camp; run: () => void }> = [
-      { name: 'Campaign', art: campaignArt, buttons: camp, run: () => runCamp(camp[0]!.id) },
+    const specs: Array<{ name: string; art: string | null; altArt?: string | null; line?: string; endless?: boolean; buttons?: typeof camp; rows?: LedgerRow[]; run: () => void }> = [
+      { name: 'Campaign', art: campaignArt, buttons: camp, rows: campRows, line: latest ? latestLine : 'Begin a new campaign', run: () => runCamp(camp[0]!.id) },
       {
         name: 'Quick Battle',
         art: cardArt(this, 'quick-battle') ?? art('proving-grounds-sunny-afternoon') ?? art('castle-hall'),
         altArt: cardArt(this, 'quick-battle-endless'),
         line: 'Pick two teams',
         endless: true,
+        rows: qbRows,
         run: () => (this.endlessOn() ? elGo(this, ENDLESS_SCENE) : elGo(this, 'TeamSelectScene')),
       },
       { name: 'Multiplayer', art: cardArt(this, 'multiplayer') ?? art('duelling-ring-moon') ?? art('kings-bridge'), line: 'Fight a friend online', run: () => this.setView('mp') },
@@ -846,7 +891,8 @@ export class MainMenuScene extends Phaser.Scene {
       };
       drawFrame(false);
       c.add(frame);
-      c.add(this.titleText(0, hh - (s.buttons ? 130 : 112), s.name, LOOK.cardTitle, 2, '700').setOrigin(0.5));
+      const titleObj = this.titleText(0, hh - 112, s.name, LOOK.cardTitle, 2, '700').setOrigin(0.5);
+      c.add(titleObj);
       // Kartın kendisi (görsel) birincil eylemi açar; Campaign'de kayıt varsa Continue, yoksa New (Ömer 2026-10-13). Düğmeler kendi
       // tıklarını alır (düğme şeridi aşağıda ayrıca dışlanır).
       const zone = this.add.zone(0, 0, CARD_W, CARD_H).setInteractive({ useHandCursor: true });
@@ -993,32 +1039,78 @@ export class MainMenuScene extends Phaser.Scene {
         place();
         if (coarse) slideTo(1);
       }
-      if (s.buttons) {
-        // Yan elmaslar dahil görsel genişlik: birincil w+30, ikincil w+14. Satır ortalanır; en dıştaki elmas çerçeveden >= 26px içeride,
-        // elmas uçları arası 22px (kart 460 geniş: 3 düğmede 146+80+80 -> sol/sağ boşluk ~26).
-        const gap = 22;
-        const inner = s.buttons.length > 2 ? { continue: 146, other: 80 } : { continue: 140, other: 140 };
-        const widths = s.buttons.map((b) => (b.id === 'continue' ? inner.continue : inner.other) + 8); // bw = w + 8
-        const exts = s.buttons.map((b, k) => widths[k]! - 8 + (b.primary ? 30 : 14)); // elmaslar dahil görsel genişlik
-        let bx = -(exts.reduce((a, b) => a + b, 0) + gap * (exts.length - 1)) / 2;
-        s.buttons.forEach((b, k) => {
-          const bw = widths[k]!;
-          const ext = exts[k]!;
-          // Tasarım kiti düğmesi (primary = Continue / ilk eylem, diğerleri secondary); pasif düğme soluk, dokununca sallanır
-          const btn = elButton(this, b.label, () => {
-            if (!this.ready()) return;
-            if (!b.enabled) return btn.shake();
-            runCamp(b.id);
-          }, { kind: b.primary ? 'primary' : 'secondary', w: bw - 8, h: b.primary ? 60 : 52, size: b.primary ? 20 : 17, ready: b.enabled, touch: { growY: 'up', maxW: bw + gap - 4, minPx: 48 } }); // kart düğmeleri: telefonda alan yukarı büyür
-          btn.root.setPosition(bx + ext / 2, hh - 64); // alt boşluk: birincil ~34px, ikincil ~38px
-          bx += ext + gap;
-          c.add(btn.root);
+      let ledger: Ledger | null = null;
+      let ledgerTop = Infinity; // yerel (sol-üst köşeli) y: bunun altı satır bölgesi
+      let setLedgerFocus: ((kb: boolean) => void) | null = null;
+      if (s.rows) {
+        // Defter (menu-ledger.ts): fare karta gelince / klavye odağında / dokunmada açılır; kapalıyken yalnız başlık + tek satır
+        const ledgerBottom = hh - 24;
+        const chev = this.add.graphics();
+        chev.lineStyle(2, EL.GOLD, 0.8).strokePoints([{ x: -9, y: -4 }, { x: 0, y: 4 }, { x: 9, y: -4 }], false);
+        chev.setPosition(0, hh - 20);
+        c.add(chev);
+        const closedTitleY = hh - 112;
+        const lh = ledgerHeight(s.rows);
+        ledgerTop = CARD_H - 24 - lh - 6; // yüksekliği kurulumda sabitle (telefonda ölçek değişse de başlık satırlarla çakışmasın)
+        ledger = buildLedger(this, CARD_W - 48, s.rows, () => this.ready(), (p) => {
+          const openTitleY = ledgerBottom - lh - 54;
+          titleObj.setY(closedTitleY + (openTitleY - closedTitleY) * p);
+          lineText?.setAlpha(1 - Math.min(1, p * 2.5));
+          chev.setAlpha(1 - Math.min(1, p * 3));
         });
+        ledger.root.setPosition(0, ledgerBottom);
+        c.add(ledger.root);
+        const lg = ledger;
+        const coarse = !!window.matchMedia?.('(pointer: coarse)').matches;
+        let cardHover = false;
+        let rowHover = false;
+        let kbFocus = false;
+        let leaveEv: Phaser.Time.TimerEvent | null = null;
+        const refresh = () => {
+          leaveEv?.remove(false);
+          leaveEv = null;
+          if (cardHover || rowHover || kbFocus) return lg.setOpen(true);
+          leaveEv = this.time.delayedCall(motion('endlessTab').leaveDelayMs, () => {
+            leaveEv = null;
+            if (!(cardHover || rowHover || kbFocus) && !tapOpen) lg.setOpen(false);
+          });
+        };
+        let tapOpen = false;
+        zone.on('pointerover', (p: Phaser.Input.Pointer) => {
+          if (coarse || p.wasTouch) return;
+          cardHover = true;
+          refresh();
+        });
+        zone.on('pointerout', () => {
+          cardHover = false;
+          refresh();
+        });
+        lg.onHover((over) => {
+          rowHover = over;
+          refresh();
+        });
+        setLedgerFocus = (kb) => {
+          kbFocus = kb;
+          refresh();
+        };
+        // Dokunma: karta dokununca açılır; açıkken boş yere / karta tekrar dokunmak kapatır
+        zone.on('pointerup', (p: Phaser.Input.Pointer, _lx: number, ly: number) => {
+          if (!(coarse || p.wasTouch)) return;
+          if (lg.isOpen() && ly >= ledgerTop) return; // satır bölgesi: satırlar kendi tıkını alır
+          tapOpen = !lg.isOpen();
+          lg.setOpen(tapOpen);
+          touchOpen.set(i, tapOpen ? lg : null);
+          if (tapOpen) {
+            for (const [j, o] of touchOpen) if (j !== i && o) { o.setOpen(false); touchOpen.set(j, null); }
+          }
+        });
+        if (!coarse) lg.setOpen(false, false);
       }
       const look = { lift: 0, zoom: 1 };
       let lookTw: Phaser.Tweens.Tween | null = null;
       const focus = (on: boolean, kb = false) => {
         tabFocus?.(on && kb);
+        setLedgerFocus?.(on && kb);
         drawFrame(on);
         this.tweens.killTweensOf(glow);
         this.tweens.add({ targets: glow, alpha: on ? 0.12 : 0, duration: 160 });
@@ -1045,12 +1137,12 @@ export class MainMenuScene extends Phaser.Scene {
       zone.on('pointerover', () => this.focusCard(i));
       // Düğmeli kartta (Campaign) düğme şeridi görsel tıkı sayılmaz (düğmeler arasındaki boşluğa / kenarına basış yanlışlıkla Continue
       // açmasın); şerit = düğme sırasının dokunma yüksekliği + pay.
-      const btnStrip = s.buttons ? CARD_H - 100 : Infinity;
-      zone.on('pointerup', (_p: Phaser.Input.Pointer, _lx: number, ly: number) => {
-        if (ly >= btnStrip) return;
+      zone.on('pointerup', (p: Phaser.Input.Pointer, _lx: number, ly: number) => {
+        if (ledger && (!!window.matchMedia?.('(pointer: coarse)').matches || p.wasTouch)) return; // dokunmada kart yalnız defteri açar / kapatır
+        if (ledger?.isOpen() && ly >= ledgerTop) return; // satır bölgesinde görsel tıkı sayılmaz
         if (this.ready()) s.run();
       });
-      this.cards.push({ c: outer, focus, run: s.run, toggle: toggleEndless ?? undefined });
+      this.cards.push({ c: outer, focus, run: s.run, toggle: toggleEndless ?? undefined, closeLedger: () => ledger?.setOpen(false) });
     });
   }
 

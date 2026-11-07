@@ -50,3 +50,21 @@ describe('ana menü akışı (taslak menu-flow.html, animasyon 1)', () => {
     expect(initialView(undefined, 'mp')).toBe('mp');
   });
 });
+
+describe('menu ledger info', () => {
+  it('endlessBestWave reads the best wave and ignores bad data', async () => {
+    const { endlessBestWave } = await import('../src/game/main-menu-flow');
+    expect(endlessBestWave(null)).toBe(0);
+    expect(endlessBestWave('nope')).toBe(0);
+    expect(endlessBestWave(JSON.stringify({ version: 1, scores: [{ wave: 4 }, { wave: 12 }, { wave: 'x' }] }))).toBe(12);
+  });
+  it('timeAgo is short and safe', async () => {
+    const { timeAgo } = await import('../src/game/main-menu-flow');
+    const now = Date.parse('2026-11-07T12:00:00Z');
+    expect(timeAgo('2026-11-07T11:59:50Z', now)).toBe('just now');
+    expect(timeAgo('2026-11-07T11:30:00Z', now)).toBe('30m ago');
+    expect(timeAgo('2026-11-07T09:00:00Z', now)).toBe('3h ago');
+    expect(timeAgo('2026-11-04T12:00:00Z', now)).toBe('3d ago');
+    expect(timeAgo('garbage', now)).toBe('');
+  });
+});

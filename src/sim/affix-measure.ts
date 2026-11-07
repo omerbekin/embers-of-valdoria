@@ -53,7 +53,6 @@ import {
   blocksOffhand,
   canEquip,
   gripOf,
-  heroSpeedRoll,
   itemDef,
   levelAt,
   rollItem,
@@ -226,7 +225,7 @@ export function campaignSliceState(seed: number, route: string[], team: string[]
   const s = newCampaign({ mode: 'normal', seed, mapId });
   s.roster = team.map((c, i) => {
     const id = `h${i + 1}`;
-    const hero: Hero = { id, class: c, hpRatio: 1, alive: true, ...(i === 0 ? { leader: true as const } : {}), level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {}, equipment: gear(i, baseKit(c, lagged(ilvl, o.kitRatio), o.kit, id)) as Equipment, spdRoll: heroSpeedRoll(seed, id) };
+    const hero: Hero = { id, class: c, hpRatio: 1, alive: true, ...(i === 0 ? { leader: true as const } : {}), level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {}, equipment: gear(i, baseKit(c, lagged(ilvl, o.kitRatio), o.kit, id)) as Equipment };
     setLevel(hero, level);
     return hero;
   });

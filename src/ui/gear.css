@@ -486,6 +486,23 @@
   box-shadow: 0 0 0 3px rgba(12, 8, 5, 0.8), 0 10px 24px rgba(0, 0, 0, 0.45);
 }
 
+/* Diyalog eylemi grubu (Ömer 2026-11-07): pencere / diyalog alt şeridindeki düğmeler ortak --btn-dlg-* jetonlarından boy alır (src/ui/elegant.css) */
+.gr-foot .gr-btn:not(.sm),
+.gr-confirm-row .gr-btn:not(.sm),
+.bs-act .gr-btn:not(.sm) {
+  box-sizing: border-box;
+  min-height: calc(var(--btn-dlg-h) / var(--btn-k));
+  min-width: calc(var(--btn-dlg-w) / var(--btn-k));
+  font-size: calc(var(--btn-dlg-fs) / var(--btn-k)) !important;
+}
+
+html.short .gr-foot .gr-btn:not(.sm),
+html.short .gr-confirm-row .gr-btn:not(.sm),
+html.short .bs-act .gr-btn:not(.sm) {
+  min-height: calc(var(--btn-dlg-h) / var(--btn-k)) !important;
+  height: calc(var(--btn-dlg-h) / var(--btn-k)) !important;
+}
+
 /* Küçük kartlar (Spoils / teslim) */
 .gr-mini {
   width: min(100%, calc(820 * var(--u)));
@@ -946,6 +963,14 @@ html.short .gr-slot-sub {
   -webkit-touch-callout: none;
 }
 
+/* Dikey dokunmatikte sahne CSS ile döner (html.rotated): mantıksal dikey kaydırma = fiziksel YATAY kaydırma. `pan-y` onu engelleyip torbayı kaydırılmaz yapıyordu
+   (Ömer 2026-11-07, telefonda torba kaymıyor, alınan item görünmüyor): döndürülmüşte iki eksen de serbest. */
+html.rotated .gr-item[data-drag],
+html.rotated .gr-slot[data-drag],
+html.rotated .gr-loot-tile.rb-tile {
+  touch-action: pan-x pan-y;
+}
+
 /* kuşanılamayan item'e çift tıklama / bırakma: kısa sallanma */
 .gr-item.shake {
   animation: gr-shake 0.36s;
@@ -1397,14 +1422,14 @@ html.short .gr-slot-sub {
 /* Karşılaştırma (Ömer 2026-11-01, Gear Hero çantası): çanta item'inin yanında kahramanın aynı yuvada giydiği item, ikinci kart + köşede "EQUIPPED" */
 .item-tip.duo {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column; /* Ömer 2026-11-07: kuşanılmış item hep üstteki kartın ALTINDA */
+  align-items: stretch;
   gap: max(8px, calc(14 * var(--u)));
-  width: auto;
 }
 
 .item-tip.duo > .it-card {
   flex: none;
-  width: max(288px, calc(450 * var(--u)));
+  width: 100%;
 }
 
 .it-eqtag {
@@ -1926,15 +1951,13 @@ html.short .item-tip {
 }
 
 html.short .item-tip.duo {
-  width: 98%;
   gap: 6px;
 }
 
 html.short .item-tip.duo > .it-card {
-  flex: 1 1 0;
+  flex: none;
   min-width: 0;
-  width: auto;
-  grid-template-columns: 44% minmax(0, 1fr);
+  width: 100%;
 }
 
 /* iki kart telefonda dar: başlık sütunu sığsın diye madalya ve yazılar küçülür */
@@ -4550,7 +4573,79 @@ html.short .gr-ledger .gr-bag-head {
   animation: none;
   text-align: left;
   cursor: grab;
-  touch-action: none;
+  touch-action: pan-y;
+}
+
+/* Ganimet kartı: kapalıyken tek satır (madalyon + ad); üstüne gelince envanter item ipucuyla AYNI kart addan aşağı açılır (Ömer 2026-11-07) */
+.gr-loot-tile.rb-tile {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  border-color: color-mix(in srgb, var(--rc, #d9b26a) 55%, rgba(217, 178, 106, 0.3));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rc, #d9b26a) 22%, rgba(8, 6, 4, 0.6)), rgba(8, 6, 4, 0.6));
+  box-shadow: inset 0 0 max(8px, calc(16 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 14%, transparent);
+  flex: none;
+}
+
+.gr-loot-tile .gr-loot-row {
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+  padding: calc(8 * var(--u)) calc(12 * var(--u));
+  min-width: 0;
+}
+
+.gr-loot-tile .gr-loot-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+  cursor: default;
+}
+
+.gr-loot-tile .gr-loot-more-in {
+  display: block;
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease 0.05s;
+}
+
+.gr-loot-tile:hover .gr-loot-more,
+.gr-loot-tile:focus-visible .gr-loot-more {
+  grid-template-rows: 1fr;
+}
+
+.gr-loot-tile:hover .gr-loot-more-in,
+.gr-loot-tile:focus-visible .gr-loot-more-in {
+  opacity: 1;
+}
+
+/* içerideki kart: ad + madalyon satırda zaten var, başlıkta tekrar etmez */
+.gr-loot-more .it-card {
+  box-shadow: none;
+  border-width: 1px 0 0;
+  text-align: left;
+}
+
+.gr-loot-more .it-head {
+  padding: max(6px, calc(10 * var(--u))) 10px max(6px, calc(8 * var(--u)));
+}
+
+.gr-loot-more .it-medal,
+.gr-loot-more .it-name {
+  display: none;
+}
+
+@media (hover: none) {
+  .gr-loot-tile .gr-loot-more {
+    display: none;
+  }
+}
+
+html.reduced-motion .gr-loot-tile .gr-loot-more,
+html.reduced-motion .gr-loot-tile .gr-loot-more-in {
+  transition: none;
 }
 
 .gr-loot-tile .gr-loot-sq {
@@ -5161,12 +5256,14 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
   box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--ac) 60%, transparent), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 34%, transparent);
 }
 
+/* köşe elmasları ikonun boyuyla ölçeklenir (Ömer 2026-11-07: Tree sekmesi / telefon plakalarında elmaslar ikona göre fazla büyüktü); %: .pl-ico'ya göre */
 .gr-pl .pl-ico::before,
 .gr-pl .pl-ico::after {
   content: '';
   position: absolute;
-  width: max(7px, calc(10 * var(--u)));
-  height: max(7px, calc(10 * var(--u)));
+  width: max(4px, 12.5%);
+  aspect-ratio: 1;
+  box-sizing: border-box;
   transform: rotate(45deg);
   background: #130d07;
   border: 1px solid var(--acl);
@@ -5174,13 +5271,13 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
 }
 
 .gr-pl .pl-ico::before {
-  left: -6px;
-  top: -6px;
+  left: -6.5%;
+  top: -6.5%;
 }
 
 .gr-pl .pl-ico::after {
-  right: -6px;
-  bottom: -6px;
+  right: -6.5%;
+  bottom: -6.5%;
 }
 
 .gr-pl .pl-ico img {
@@ -5492,7 +5589,8 @@ html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-chips {
   min-height: 0;
 }
 
-html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-ds {
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-ds,
+html:not(.short) .gr-ledger .gr-page .gt-body .gr-pl.hz .pl-ds {
   display: block;
   font: max(12px, calc(18 * var(--u))) / 1.28 var(--g-body);
   color: #cdbf9b;
@@ -5501,7 +5599,8 @@ html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-ds {
   text-overflow: ellipsis;
 }
 
-html:not(.short) .gr-ledger .gr-lskills .gr-pl.pas .pl-ds {
+html:not(.short) .gr-ledger .gr-lskills .gr-pl.pas .pl-ds,
+html:not(.short) .gr-ledger .gr-page .gt-body .gr-pl.hz.pas .pl-ds {
   white-space: normal;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -6683,3 +6782,65 @@ html.short .sh-tile .sh-n {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Sheet stat kutuları her boyda (Ömer 2026-11-07: "Intelligence" iki satıra düşüyor, Speed ve MP regen kesiliyor): ad TEK satır, kutu genişliğine göre küçülür;
+   Attack / Defense satırlarında ad kesilmez (satır yüksekliği yazıya göre uzar), değer sütunu hiç daralmaz. */
+.sh-tile .sh-k {
+  white-space: nowrap;
+  font-size: min(1em, calc(3.2cqw - 2px));
+}
+
+.sh-two .sh-row {
+  height: auto;
+  overflow: visible;
+}
+
+.sh-two .sh-k {
+  flex: 0 1 auto;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.sh-two .sh-n,
+.sh-two .sh-d {
+  flex: none;
+  white-space: nowrap;
+}
+
+.sh-two .sh-row {
+  line-height: 1.25;
+}
+
+/* Ganimetten torbaya yeni giren item: kısa parıltı (kaydırılıp görünür yapılır, loot-screen.ts > reveal) */
+.gr-item.gr-new {
+  animation: gr-new-pulse 1.6s ease-out 1;
+}
+
+@keyframes gr-new-pulse {
+  0%,
+  60% {
+    outline: 2px solid var(--g-gold, #d9b26a);
+    outline-offset: 1px;
+    box-shadow: 0 0 16px rgba(240, 180, 80, 0.7);
+  }
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 1px;
+    box-shadow: none;
+  }
+}
+
+html.reduced-motion .gr-item.gr-new {
+  animation: none;
+  outline: 2px solid var(--g-gold, #d9b26a);
+}
+
+
+/* Malzeme şeridi (Ömer 2026-11-07): torbanın altında, çerçevesiz ikon + adet; dokun = seçili kahramana kullan */
+.gr-supplies { padding: 6px 4px 2px; }
+.gr-supply-row { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
+.gr-supply { display: inline-flex; align-items: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 2px 8px 2px 4px; background: transparent; border: 1px solid transparent; border-radius: 22px; color: var(--el-txt, #ead9b0); font-family: 'Cinzel', serif; font-weight: 600; cursor: pointer; transition: border-color 0.18s, background 0.18s; }
+.gr-supply:hover, .gr-supply:focus-visible { border-color: rgba(243, 217, 153, 0.55); background: rgba(243, 217, 153, 0.08); outline: none; }
+.gr-supply-ic { display: inline-flex; width: 36px; height: 36px; }
+.gr-supply-ic svg { width: 100%; height: 100%; }
+.gr-supply-n { font-size: 16px; }

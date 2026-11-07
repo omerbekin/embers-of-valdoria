@@ -33,7 +33,7 @@ describe('yeni affix verisi', () => {
   it('ipucu metni şablondan (bonus yazım kuralı: direnç ayrı çarpan): "Takes 13% less Fire damage", "Each wound lowers your Max HP X% less" (yara başına düşen puan: 20 içinden)', () => {
     expect(affixLines(inst('leather_coif', 'c_res_fire'))[0]!.text).toBe(`Takes ${v('c_res_fire')}% less Fire damage`);
     expect(affixLines(inst('leather_coif', 'b_wound_soft'))[0]!.text).toBe(`Each wound lowers your Max HP ${v('b_wound_soft')}% less`);
-    expect(affixLines(inst('work_gloves', 'a_steady'))[0]!.text).toBe(`Each turn you don't move: ${v('a_steady')}% more damage, up to ${Number((3 * v('a_steady')).toFixed(2))}% more after 3 turns`);
+    expect(affixLines(inst('work_gloves', 'a_steady'))[0]!.text).toBe(`Each turn you don't move: +${v('a_steady')}% damage, up to +${Number((3 * v('a_steady')).toFixed(2))}% after 3 turns`); // hasar havuzu (2026-11-07)
   });
 
   it('Equip best uyumu: Thorns yakın dövüşçüye, Rearguard bane menzilliye tam; diğer yeni affix\'ler herkese', () => {

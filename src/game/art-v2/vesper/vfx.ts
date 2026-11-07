@@ -276,7 +276,7 @@ const great_bell_of_valdoria: V2Vfx = (c, k) =>
     swing?.destroy();
     const strike = k.sheet(c.scene, SH_GREAT, crown.x, crown.y, { ...placed, frames: [5, 6], fps: 7, keep: true });
     c.sfx('greatBellToll');
-    c.sfx('greatBellThunder');
+    c.sfx('greatBellThunder'); c.sfx('greatBellImpact');
     k.flash(c.scene, '#fff1c0', calm ? 0.12 : 0.34, 260);
     if (!calm) k.shake(c.scene, 520, 0.012);
     glow(c, k, mouth.x, mouth.y, 520, 520, 0xffe7a0, GREAT_DEPTH + 1);

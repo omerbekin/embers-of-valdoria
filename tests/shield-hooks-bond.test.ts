@@ -41,10 +41,11 @@ function until(b: Battle, uid: string): void {
 }
 
 describe('Spell Ward (Anti-Mage): dosta ya da kendine, kancalar', () => {
-  it('hedef türü single_ally, excludeSelf YOK: hem kendine hem dosta atılır; kalkan formülü aynı (Int x 0,3 + kalan MP x 0,6)', () => {
+  it('hedef türü single_ally, excludeSelf YOK: hem kendine hem dosta atılır; kalkan formülü Int x 0,75 (Ömer 2026-11-08, kalan MP payı yok)', () => {
     expect(S.spell_ward!.target).toBe('single_ally');
     expect(S.spell_ward!.excludeSelf).toBeUndefined();
-    expect(ward).toMatchObject({ scale: 'int', power: 0.15, shieldType: 'magic', bonusPerMana: 0.6 }); // x2 stat ölçeği: eski Int x 0,3
+    expect(ward).toMatchObject({ scale: 'int', power: 0.75, shieldType: 'magic' }); // Ömer 2026-11-08: güç kalan MP'den INT'e kaydı (0,6 sonra 0,75)
+    expect((ward as { bonusPerMana?: number }).bonusPerMana).toBeUndefined();
     expect(wardHook).toEqual({ burnMana: 8, dispelChance: 0.25 });
     const b = mk({ 0: 'warrior', 1: 'antimage' }, { 0: 'mage' });
     const am = at(b, 'party', 1);
@@ -398,12 +399,16 @@ describe('Undead: lifesteal (veriden), Dark Bond', () => {
 });
 
 describe('yarım turn (turnCost 0,5)', () => {
-  /** Eylemden sonra sayaç: c1 = c0 - eşik x turnCost + hız x tik (tik sayısı herkes için aynı; başka bir birimden çözülür). */
+  /**
+   * Eylemden sonra sayaç: c1 = c0 - eşik x turnCost + hız x tik (tik sayısı herkes için aynı; başka bir birimden çözülür).
+   * Aktörün hızı eylemden SONRA okunur: tur başına hız zarı (Ömer 2026-11-07) turu bitince yenilenir, sayaç yeni hızla dolar.
+   */
   function deducted(b: Battle, uid: string, skill: string, target?: string): number {
     const actor = b.get(uid)!;
     const other = b.combatants.find((c) => c.uid !== uid && c.hp > 0)!;
-    const [c0, o0, spd, ospd] = [actor.turnCounter, other.turnCounter, b.speedOf(actor), b.speedOf(other)];
+    const [c0, o0, ospd] = [actor.turnCounter, other.turnCounter, b.speedOf(other)];
     act(b, uid, skill, target);
+    const spd = b.speedOf(actor);
     const ticks = (other.turnCounter - o0) / ospd;
     return c0 + spd * ticks - actor.turnCounter;
   }

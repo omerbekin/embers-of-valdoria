@@ -5,7 +5,7 @@
 // sınıfta silahsız kahraman silah çarpanı < 1 alır (Item Güçlendirme 2026-10-17: başlangıç silahı sıfır noktası).
 // Affix eşlemesi veride (items.json > affixDefs[].parts[].to; Ömer onayı 2026-10-11, items.md 1.3b).
 import { classes, formulas } from '../engine/content';
-import { applyUnitModifiers, speedRoll, speedText } from '../engine/stats';
+import { applyUnitModifiers, speedText } from '../engine/stats';
 import { STACK_FORM, stackValues, type StackForm } from '../engine/tree-hooks';
 import type { Attribute, Attributes, Element, ItemEffects, PassivePatch, UnitModifiers, UnitSetup } from '../engine/types';
 import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, weaponSpeedPenalties, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
@@ -27,8 +27,6 @@ export interface LoadoutSource {
   alloc?: StatAlloc;
   /** Skill ağacı dağılımı (docs/design/skill-tree-implementation.md): sefer Hero / Endless kahramanının kayıttaki `tree` alanı (Faz 1b). Yalnızca `mode` verilip açıksa savaşa girer. */
   tree?: TreeAlloc;
-  /** Kişisel hız zarı (Ömer 2026-10-24): kahramanın kalıcı çarpanı (Hero / EndlessHero.spdRoll; heroSpeedRoll). Verilince her stat gösterimi ve savaş aynı hızı görür. */
-  spdRoll?: number;
 }
 
 export interface LoadoutResult {
@@ -129,7 +127,7 @@ function applyPart(to: string, v: number, scale: number, ctx: { mods: Bag; fx: B
     case 'elem': {
       const els: readonly Element[] = key === '*' ? MAGIC_ELEMENTS : [key as Element];
       const rec = ((ctx.mods.elemDamageAdd as Bag | undefined) ??= {}) as Bag;
-      for (const el of els) stack(rec, el, amt, 'more');
+      for (const el of els) add(rec, el, amt); // hasar havuzu (Ömer 2026-11-07, P1): "+X% Fire damage" toplanır
       break;
     }
     case 'attr': {
@@ -158,10 +156,10 @@ function applyPart(to: string, v: number, scale: number, ctx: { mods: Bag; fx: B
         const cur = ctx.fx.lowHpReduce as { below: number; reduce: number } | undefined;
         ctx.fx.lowHpReduce = { below: ctx.below ?? cur?.below ?? 0.3, reduce: cur ? stackValues('less', cur.reduce, amt) : amt };
       } else if (key === 'executeDamage') {
-        // Bitirici (b_execute, Ömer 2026-10-24): eşik parçadan (below), bonus "×" yazılır, kaynaklar çarpılır
+        // Bitirici (b_execute, Ömer 2026-10-24): eşik parçadan (below); bonus hasar havuzunda (Ömer 2026-11-07, P1), kaynaklar toplanır
         const cur = ctx.fx.executeDamage as { below: number; bonus: number } | undefined;
-        ctx.fx.executeDamage = { below: ctx.below ?? cur?.below ?? 0.3, bonus: cur ? stackValues('more', cur.bonus, amt) : amt };
-      } else if (ctx.form === 'mult') ctx.fx[key] = ((ctx.fx[key] as number | undefined) ?? 1) * (1 + amt);
+        ctx.fx.executeDamage = { below: ctx.below ?? cur?.below ?? 0.3, bonus: cur ? cur.bonus + amt : amt };
+      } else if (ctx.form === 'mult') ctx.fx[key] = STACK_FORM[key] === 'pool' ? ((ctx.fx[key] as number | undefined) ?? 1) + amt : ((ctx.fx[key] as number | undefined) ?? 1) * (1 + amt);
       else if (STACK_FORM[key]) stack(ctx.fx, key, amt, STACK_FORM[key]);
       else add(ctx.fx, key, amt);
       break;
@@ -255,8 +253,6 @@ export function loadout(src: LoadoutSource): LoadoutResult {
   if (grow.mp !== 1) mods.mpMult = ((mods.mpMult as number | undefined) ?? 1) * grow.mp;
   tidy(mods);
   tidy(fx);
-  // Kişisel hız zarı (Ömer 2026-10-24): son hıza en sonda uygulanır (applyUnitModifiers); 1 de yazılır ki savaş ayrıca zar atmasın
-  if (typeof src.spdRoll === 'number' && Number.isFinite(src.spdRoll)) mods.spdRoll = src.spdRoll;
   // Legendary etkileri (madde 296)
   const legend = equipmentEffects(src.equipment);
   const effects = { ...fx, ...(legend ?? {}) } as ItemEffects;
@@ -337,14 +333,11 @@ export function inactivePenalty(classId: string, equipment: Partial<Equipment>, 
 }
 
 /**
- * Kahramanın kalıcı kişisel hız zarı (Ömer 2026-10-24): sefer / Endless seed'i + kahraman id'sinden, deterministik (stats.ts > speedRoll).
- * Kahraman yaratılırken yazılır; eski kayıtta normalizasyon aynı fonksiyonla tamamlar (aynı kahraman = aynı zar).
+ * Kayıt onarımı (sürüm artmaz; her okumada, idempotent): eski kalıcı kişisel hız zarı (`spdRoll`, Ömer 2026-10-24) kaldırıldı (Ömer 2026-11-07:
+ * hız artık savaşta her tur ±spdVariance zarlanır, bkz. battle.ts > paceOf). Eski kayıttaki alan okunurken silinir; kayıt yine yüklenir.
  */
-export const heroSpeedRoll = (seed: number, heroId: string): number => speedRoll(seed, `hero:${heroId}`, formulas);
-
-/** Kayıt onarımı (sürüm artmaz; her okumada, idempotent): zarı olmayan / bozuk kahramana heroSpeedRoll yazılır, geçerli zar korunur. */
-export function normalizeSpdRoll(h: { id: string; spdRoll?: number }, seed: number): void {
-  if (typeof h.spdRoll !== 'number' || !Number.isFinite(h.spdRoll) || h.spdRoll <= 0) h.spdRoll = heroSpeedRoll(seed, h.id);
+export function dropLegacySpdRoll(h: object): void {
+  if ('spdRoll' in h) delete (h as { spdRoll?: unknown }).spdRoll;
 }
 
 /** Takılı item'lerin toparlanma oranı (Recovery affix'i; sefer / Endless savaş sonrası, yalnızca takan). */

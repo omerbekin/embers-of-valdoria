@@ -424,19 +424,9 @@ export class EndlessScene extends Phaser.Scene {
     this.setDraft(next, 'select');
   }
 
-  /** Izgara hücresine dokunma: önce kahramanı seç, sonra hücreye dokun (boşsa taşır, doluysa yer değiştirir); seçiliye yine dokunmak bırakır. */
-  private actTapCell(cell: number): void {
-    const here = draftClassAt(this.draft, cell);
-    if (!this.pickSel) {
-      if (!here) return;
-      this.pickSel = here;
-      uiSound('select');
-      return this.render();
-    }
-    const sel = this.pickSel;
+  /** Izgara hücresine dokunma (Ömer 2026-11-07): taşıma / yer değiştirme YALNIZCA sürükle-bırak; dokunuş yalnızca ipucunu açar (wireHeroTip), burada iş yok. */
+  private actTapCell(_cell: number): void {
     this.pickSel = '';
-    if (sel === here) return this.render();
-    this.setDraft(placeInDraft(this.draft, sel, ENDLESS.partySize, cell), 'select');
   }
 
   /** Sürükleyip bırakma: hücreye (ekle / taşı / yer değiştir) ya da kadroya (çıkar). */
@@ -573,6 +563,13 @@ export class EndlessScene extends Phaser.Scene {
       const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
       const run = endless.run;
       if (!typing && this.view === 'camp' && run && !gearLockReason(run) && !this.rewardBag && !isInputLocked() && !isSettingsOpen() && !otherDialogOpen()) this.actGear();
+      return;
+    }
+    // V = Valor (Ömer 2026-11-03, oyun geneli): kampta, başka pencere açık değilken
+    if ((e.key === 'v' || e.key === 'V') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      if (!typing && this.view === 'camp' && endless.run && this.valorMeter && !this.rewardBag && !isInputLocked() && !isSettingsOpen() && !otherDialogOpen() && !isValorReviveOpen()) this.openValor();
       return;
     }
     // Seçim kartları: 1-4 seçer, Enter alır, ←/→ dolaşır

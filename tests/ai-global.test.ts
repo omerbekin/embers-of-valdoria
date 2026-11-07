@@ -12,7 +12,7 @@ const g = ai.global!;
 const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i) => map[i] ?? '');
 // Valor diriltmesi (valor_revive) yalnızca Valor verilen savaşta (sefer / Endless): hızlı savaş benzeri bu testlerde yok
 // Tidewater Urn (tidewater_urn, M-N3) yalnızca Urn'lü karşılaşmada (tests/battle-rules-storm-urn.test.ts)
-const GLOBALS = Object.keys(content.globalSkills).filter((id) => content.globalSkills[id]!.kind !== 'valor' && content.globalSkills[id]!.kind !== 'urn' && content.globalSkills[id]!.kind !== 'rod' && content.globalSkills[id]!.kind !== 'surge');
+const GLOBALS = Object.keys(content.globalSkills).filter((id) => content.globalSkills[id]!.kind !== 'valor' && content.globalSkills[id]!.kind !== 'urn' && content.globalSkills[id]!.kind !== 'rod' && content.globalSkills[id]!.kind !== 'surge' && content.globalSkills[id]!.kind !== 'command'); // command: set eylemi (Kingsfall Regalia), rastgele takımda taşıyan yok
 
 /** Hücre listeli savaş; kritik kapalı, isabet tam, kaçınma yok; canlar en az 100 (sağlam birimler: kill kuralı karışmasın). */
 function mk(party: Record<number, string>, enemies: Record<number, string>, mode: BattleMode = 'turns', tweak?: (b: Battle) => void): Battle {

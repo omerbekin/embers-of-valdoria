@@ -32,9 +32,10 @@ export const speedMin = (formulas: Pick<Formulas, 'attributes'>): number => form
 export const speedText = (v: number, formulas: Pick<Formulas, 'attributes'>): string => String(snapToStep(v, formulas.attributes.spdShowStep ?? 0.01));
 
 /**
- * Kişisel hız zarı (Ömer 2026-10-24, "Natural pace"): `seed` + `key`ten (savaş seed'i + birim uid'i, ya da sefer/Endless seed'i + kahraman id'si)
- * türeyen çarpan, [1 - spdVariance, 1 + spdVariance] aralığında düzgün dağılımlı, 4 ondalık. Savaşın ana Rng akışını HİÇ tüketmez (diğer zarlar
- * aynı kalır). spdVariance yoksa / 0 ise 1 (zar yok).
+ * Tur başına hız sapması (Ömer 2026-11-07; eski kalıcı "Natural pace" zarının yerine): `seed` + `key`ten (savaş seed'i + `uid#turSırası`, bkz.
+ * paceKey) türeyen çarpan, [1 - spdVariance, 1 + spdVariance] aralığında düzgün dağılımlı, 4 ondalık. Hasarın vuruş başı ±%10'u gibi, her birimin
+ * hızı HER TURUNDA yeniden zarlanır. Saf hash: savaşın ana Rng akışını HİÇ tüketmez (diğer zarlar aynı kalır), sıra önizlemesi gelecek turların
+ * zarını önceden bilir. spdVariance yoksa / 0 ise 1 (zar yok).
  */
 export function speedRoll(seed: number, key: string, formulas: Pick<Formulas, 'attributes'>): number {
   const v = formulas.attributes.spdVariance ?? 0;
@@ -54,6 +55,9 @@ export function speedRoll(seed: number, key: string, formulas: Pick<Formulas, 'a
   const u = (h >>> 0) / 4294967296;
   return Math.round((1 - v + 2 * v * u) * 10000) / 10000;
 }
+
+/** Tur zarının anahtarı: birimin `turn`. turu (0 = savaşın ilk sırası; birim her turunu bitirince 1 artar). */
+export const paceKey = (uid: string, turn: number): string => `${uid}#${turn}`;
 
 /** Zarlanmış hız: SON hız x zar, spdStep'e yuvarlanır, alt sınır speedMin. Zar 1 ise hız aynen döner. */
 export function rolledSpeed(spd: number, roll: number, formulas: Pick<Formulas, 'attributes'>): number {
@@ -200,7 +204,6 @@ export function hasUnitModifiers(mods: UnitModifiers | undefined): boolean {
     nonOne(mods.mpMult) ||
     nonOne(mods.spdMult) ||
     nonOne(mods.accuracyMult) ||
-    nonOne(mods.spdRoll) ||
     nonOne(mods.weaponMult) ||
     AFFIX_ADD.some((k) => nonZero(mods[k])) ||
     Object.values(mods.elemDamageAdd ?? {}).some((v) => nonZero(v))
@@ -263,11 +266,6 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
   // İsabet çarpanı (Ömer 2026-10-27, topuz örtüğü): toplam isabete (taban + accuracyAdd) oransal
   if (mods.accuracyMult !== undefined && mods.accuracyMult !== 1) stats.accuracy = Math.max(0, r4(stats.accuracy * mods.accuracyMult));
   if (mods.spdMult !== undefined && mods.spdMult !== 1) stats.spd = Math.max(speedMin(formulas), roundSpeed(stats.spd * mods.spdMult, formulas));
-  // Kişisel hız zarı (Ömer 2026-10-24): SON hıza, en sonda (kahraman sayfası, item önizlemesi ve savaş aynı değeri görür)
-  if (mods.spdRoll !== undefined && mods.spdRoll !== 1) {
-    stats.spd = rolledSpeed(stats.spd, mods.spdRoll, formulas);
-    stats.spdRoll = mods.spdRoll;
-  }
   if (mods.surviveAdd) stats.surviveChance = Math.min(1, r4((stats.surviveChance ?? 0) + mods.surviveAdd));
   if (mods.damageAdd) stats.damageMult = r4(1 + mods.damageAdd);
   if (mods.weaponMult !== undefined && mods.weaponMult !== 1) stats.weaponMult = r4(Math.max(0, mods.weaponMult));
@@ -364,12 +362,22 @@ export function applySummonVariant(def: CombatantDef, variant: keyof SummonVaria
   return { ...def, attributes: { ...def.attributes, str: stats.str, int: stats.int }, stats };
 }
 
+/** Statların hasar havuzu payı (Global damage + element hasarı; ikisi de "+X%" toplamsal, Ömer 2026-11-07 P1). Yoksa TAM 0. */
+export function statDamageAdd(stats: Pick<Stats, 'damageMult' | 'elemDamageMult'>, element: Element | undefined): number {
+  return ((stats.damageMult ?? 1) - 1) + ((stats.elemDamageMult?.[element ?? 'physical'] ?? 1) - 1);
+}
+
 /**
- * Verilen skill hasarının item çarpanı (Global damage x silah gücü x element hasarı; Ömer 2026-10-11, silah 2026-10-17). Çarpan yoksa TAM 1 (çağıran 1'de ifadeyi değiştirmez).
- * Motor (damageSpecFor) ve skill-info aynı fonksiyonu kullanır.
+ * Verilen skill hasarının item / havuz çarpanı (Ömer 2026-10-11, silah 2026-10-17, havuz 2026-11-07 P1): silah gücü x (1 + havuz).
+ * Havuz = Global damage + element hasarı + `extraAdd` (dealtDamage: ağaç koşulları, sıra / bitirici / aura affix'leri)
+ * + `baked` (skill gücüne derleyicide işlenmiş ağaç "+X% power" payı, DamageEffect.powerAdd). `baked` güçte zaten (1 + baked) olarak
+ * durduğu için bölünür. Çarpan yoksa TAM 1 (çağıran 1'de ifadeyi değiştirmez). Motor (damageSpecFor) ve skill-info aynı fonksiyonu kullanır.
  */
-export function outgoingDamageMult(stats: Pick<Stats, 'damageMult' | 'elemDamageMult' | 'weaponMult'>, element: Element | undefined): number {
-  return (stats.damageMult ?? 1) * (stats.weaponMult ?? 1) * (stats.elemDamageMult?.[element ?? 'physical'] ?? 1);
+export function outgoingDamageMult(stats: Pick<Stats, 'damageMult' | 'elemDamageMult' | 'weaponMult'>, element: Element | undefined, extraAdd = 0, baked = 0): number {
+  const add = statDamageAdd(stats, element) + extraAdd;
+  const w = stats.weaponMult ?? 1;
+  if (!add) return w;
+  return w * (Math.max(0, 1 + baked + add) / (1 + baked));
 }
 
 /**

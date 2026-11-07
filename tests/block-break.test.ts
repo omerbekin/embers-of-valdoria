@@ -91,7 +91,7 @@ describe('kalkanlı moblar', () => {
   it('Block şansı veride, liste tam; değerler kalkan tabanı aralığında', () => {
     const got = Object.fromEntries(Object.values(content.mobs).filter((m) => m.blockChance).map((m) => [m.id, m.blockChance]));
     expect(got).toEqual(SHIELD_MOBS);
-    const bases = ITEMS.items.filter((d) => d.slot === 'offhand' && d.implicitBase?.length).map((d) => d.implicitBase![0]! / 100);
+    const bases = ITEMS.items.filter((d) => d.family === 'shields' && d.implicitBase?.length).map((d) => d.implicitBase![0]! / 100);
     for (const v of Object.values(SHIELD_MOBS)) {
       expect(v).toBeGreaterThanOrEqual(Math.min(...bases));
       expect(v).toBeLessThanOrEqual(Math.max(...bases));

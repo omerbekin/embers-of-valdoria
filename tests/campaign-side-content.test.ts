@@ -1,6 +1,7 @@
 // Harita 2 yan içerik (maps-2-3.md 9; open-questions 428): A1 Wayshrines (sınav + seferlik nimet) ve B1 Salvage Dive (derinlik + sandık).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+  CONFIG,
   applyBattle,
   battlePlan,
   boonIds,
@@ -234,7 +235,7 @@ describe('B1 Salvage Dive', () => {
     expect(t.dive).toBeUndefined();
     expect(nextStep(t).kind).toBe('move'); // hazine bitti
     // 1. derinliğin sandığı (Sea Cave: 15 altın + hediye) geldi, 2. derinliğin sandığı (30 altın) battı
-    expect(t.gold - g0).toBe(15);
+    expect(t.gold - g0).toBe(Math.round(15 * (CONFIG.mapLootScale?.['drowned-reach']?.gold ?? 1))); // Harita 2 altın ölçeği (2026-11-07)
     expect(t.inventory.length).toBeGreaterThan(bag0);
     expect(t.roster.find((h) => h.id === plan.heroOrder[1])!.hpRatio).toBe(0.3);
     expect(t.stats.defeats).toBe(s.stats.defeats + 1);

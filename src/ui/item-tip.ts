@@ -66,6 +66,8 @@ export interface ItemTipState {
   setEquipment?: Partial<Equipment>;
   /** Karşılaştırma kartı: kahramanın o yuvada giydiği item (Gear Hero çantası; Ömer 2026-11-01): köşede küçük "EQUIPPED" etiketi. */
   equipped?: boolean;
+  /** Karşılaştırma kartında kahraman adı ('Equipped · Warrior'): seçili kahraman yokken (ganimet / ödül torbası) kimin item'i olduğu görünsün. */
+  equippedBy?: string;
 }
 
 /**
@@ -233,7 +235,7 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
   const card = el('div', `it-card${state?.equipped ? ' eq' : ''}`);
   card.style.setProperty('--rc', color);
   const base = instanceBaseLines(inst);
-  if (state?.equipped) card.append(el('span', 'it-eqtag', 'Equipped'));
+  if (state?.equipped) card.append(el('span', 'it-eqtag', state.equippedBy ? `Equipped · ${state.equippedBy}` : 'Equipped'));
 
   // ---- başlık
   const head = el('div', 'it-head');

@@ -19,7 +19,7 @@ import { avatarUrl, itemPlate } from './character-panel';
 import { itemCell } from './inventory';
 import { itemTipBody, itemTipNodes, type ItemTipAction } from './item-tip';
 import { isDoubleTap } from './gear-drop';
-import { heroTipExtra, openGear, phoneLayout, type GearApi, type GearExt, type GearSource } from './gear-screen';
+import { equippedTipNodes, heroTipExtra, openGear, phoneLayout, type GearApi, type GearExt, type GearSource } from './gear-screen';
 import { affixContext } from '../progression';
 import odoFull from '../../assets/sprites/merchant/idle.png?url';
 
@@ -459,7 +459,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       if (!inst) return [];
       const hero = curHero();
       const state = hero ? { ...(affixContext(hero, inst) ?? {}), level: hero.level } : undefined;
-      return itemTipNodes(inst, hero?.class, heroTipExtra(src.heroes(), inst, true), state);
+      return [...itemTipNodes(inst, hero?.class, heroTipExtra(src.heroes(), inst, true), state), ...equippedTipNodes(src.heroes(), inst, hero)];
     },
     tipActions: (key) => {
       const i = key.indexOf(':');

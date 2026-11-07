@@ -13,7 +13,7 @@ export { damageRange, damageVariance, healRange, missingHpHealMult, rollCrit, ro
 export type { DamageSpec, Range } from './formulas';
 export { battleSummary } from './battle-summary';
 export { addValor, brazierFill, canReviveOutside, clampValor, valorEarned, type ValorTier } from './valor';
-export { accuracyOf, applySummonerScale, applySummonVariant, applyUnitModifiers, hasUnitModifiers, armorReduction, attributePower, buildDef, deriveStats, evasionOf, hitChance, hitOutcome, levelGapBonus, rolledSpeed, roundSpeed, speedMin, speedRoll, speedText, variantMult } from './stats';
+export { accuracyOf, applySummonerScale, applySummonVariant, applyUnitModifiers, hasUnitModifiers, armorReduction, attributePower, buildDef, deriveStats, evasionOf, hitChance, hitOutcome, levelGapBonus, paceKey, rolledSpeed, roundSpeed, speedMin, speedRoll, speedText, variantMult } from './stats';
 export type { HitOutcome } from './stats';
 export { damageSpecFor } from './spec';
 export { betMultipliers, betStake, betStakeParts } from './gamble';

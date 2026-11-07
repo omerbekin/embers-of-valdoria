@@ -1772,3 +1772,33 @@ Sayılar PROVİZYON, sim yok, bayrak kapalı. En dar yorum:
 9. Road Hound: Grey Wolf görünüşü, zırh 6 / büyü zırhı 0 (Skeleton), öndeki sıradan başlayarak bitişik boş hücre; boş hücre yoksa o savaş gelmez.
 10. Bonuslar debug'la verilen parçada bayrak kapalıyken de çalışır; bayrak düşüşü ve Codex'i açar.
 11. Equip best set bonusunu değerlemez.
+
+## 514. Savaş sonrası otomatik kalkma kalktı, malzemeler, Witch's Hut (2026-11-07, campaign-dev)
+Ömer onayı: (1) savaş sonunda düşmüş kahraman artık kalkmaz (sefer; Endless aynen kaldı): düşmüş kalır, ayakta girdiyse +1 yara (lethal'da durur). Kaldıranlar: Valor, Paladin, yeni Revive Ally. VARSAYIM: yara düşüşte verilir (kalkışta değil), yoksa yara kaynağı kalmaz.
+(2) Yeni savaş dışı malzemeler (data/consumables.json): Healing Draught, Greater Healing Draught (yara da siler), Wound Salve, Revive Ally; çantaya girmez (CampaignState.supplies), yalnız loot/sandıktan, satılmaz. VARSAYIM: dört madde (Ömer "stronger versions" dedi, Greater yalnız Heal için yapıldı); isimler, can oranları (%40/%80/%50) ve düşme şansları PROVİZYON. İkonlar GEÇİCİ satır içi SVG (src/ui/supply-icons.ts).
+(3) Witch's Hut: zorunlu Hut Guardians savaşı kalktı (encounter witchs_hut_guard silindi); olay doğrudan açılır, yalnız "Steal" savaşır (morwen_duel). Kural değişimi: K1 (her dalda en az 1 savaş) artık 2 bilinçli istisna: Shepherd's Fold ve Witch's Hut kolu; rota başına 17 savaş: 6A kolunda 16.
+(4) Kasaba ekranında takım ayakta durmaz; alt ortada "Party" düğmesi Gear'ı (lider) açar.
+
+## 515. Hız her tur ±%10 zarlanır, kalıcı "Natural pace" kalktı (2026-11-07, engine-dev)
+Ömer'in seçimi: hasarın vuruş başı ±%10'u gibi, hız da her tur ±%10 (`data/formulas.json > attributes.spdVariance` 0,1). Kalıcı kişisel zar (`spdRoll`) ve Speed ipucundaki "Natural pace" satırı kaldırıldı; eski kayıttaki alan okunurken silinir. Ayrıntı `docs/arch/battle-engine.md > Tur başına hız zarı`. Varsayımlar (Ömer'e soruldu):
+1. Zar "birimin turu" başına: birim turunu bitirince (yarım turn skill dahil) yenilenir; tur içi ek eylem (actionsPerTurn) yenilemez.
+2. Zar yalnız `turns` modunda; debug `test` modunda sıra olmadığı için zar 1.
+3. Hunter's Mark ("hedefinden hızlı") ve ağaç koşulu "faster than target" bu turun zarlı hızına bakar (sıra hızıyla aynı). Haste/Slow rozeti zarı saymaz.
+4. Speed ipucuna "her tur ±%10" açıklama satırı EKLENMEDİ (istenen yalnız satırın kalkmasıydı); Codex Mechanics metni güncellendi.
+
+## 516. Set kuralları B1-B4 + Spare Arrow varsayımları (2026-11-07)
+Ömer'in seçimleri (set-rules-proposal B1 U-Y, B2 H-E, B3 Y, B4 Y, C1 E) uygulandı; sayılar geçici, veride. Engine-dev'in varsaydıkları:
+1. Unseen: "sonraki vuruş" = taşıyanın sonraki skill kullanımı; alan / çok vuruşlu skill'de her vuruş kritik. Kesin kritik debug 'never' ile kapanır.
+2. The Conclave Answers: "temel saldırı" = birimin ilk skill'i ve tek hedefli hasar skill'i olmalı; düşmana normal kurallarla (menzil, ön sıra, taunt) ulaşamıyorsa karşılık yok. Hak taşıyanın kendi turunda yenilenir. Karşılık başka karşılık doğurmaz.
+3. Royal Command: taşıyanın turunu harcar; dostun ek turu tam turdur (tur başı etkileri işler) ama sırası (sayacı) azalmaz. test modunda sıra olmadığı için yalnız savaş hakkı harcanır. Multiplayer gönderiminde hedef dost henüz taşınmıyor (Valor gibi).
+4. Spare Arrow: yalnız 0 MP bedelli ilk skill; tekrar vuruş başınadır (Double Hit gibi), Double Hit şansına eklenir. Değer zarsız, ilvl 1'de %8, ilvl 41'de %12 (üstünde büyümeye devam eder).
+5. Royal Command ikonu geçici: mevcut "warcry" ikonu (kendi ikonu yok).
+
+## 517. Tutuş ve ikinci el türleri (2026-11-07) varsayımları
+Ömer 2026-11-07 seçimleri uygulandı (yay çift el + Sadak, tılsım tek el, yeni silah tipleri, altı ikinci el türü). Verilmeyen değerler PROVİZYON:
+1. Yeni silah tiplerinin örtükleri: Wand / Rod MP yenilenmesi (tılsımın eski örtüğü gibi), Spear %8 armor pen, Hatchet %5 armor pen, Crossbow %8 armor pen, Longbow yayla aynı (kritik hasarı). Wand / Rod güç çarpanı 1 (tek el kılıçla aynı).
+2. Alt tür örtükleri: Buckler %15 blok + %2 hız, Kite eski değerler (%15-20), Tower %20 blok + zırh; Hide Quiver isabet, Barbed Quiver armor pen; Scrying Orb MP yenilenmesi, Smoked Orb kritik şansı; Grimoire MP %, Prayer Book büyü zırhı + can yenilenmesi; Hooded Lantern isabet, Ember Lantern kritik hasarı; Reliquary can %, Stone Idol alınan hasar azalması.
+3. Gambler ve Hexer başlangıçta Common Focus Orb (Clouded Glass Orb) alır (2026-10-23 kuralı: tek el başlayan ve ikinci el kullanabilen sınıf ikinci el alır). Yalnız yeni kahraman / yeni koşu.
+4. Tılsım tek el: başlangıç hasarı aynı (katlama); yüksek seviyeli tılsımların başlangıca oranı biraz düşer (ilvl 10'da yaklaşık -%2,4).
+5. Maces ailesinin Uncommon tabanı yok (o yer kalkandı; nadirlik tabandan bağımsız zarlandığı için düşüş açığı yok).
+6. Warrior hançer / el baltasını yalnız ikinci elde takar; loot ana el yuvasında bunları Warrior için "kullanılabilir" saymaz.

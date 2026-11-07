@@ -90,3 +90,19 @@ import { skills } from '../src/engine/content';
 function content(id: string): string[] {
   return (skills[id]?.effects ?? []).map((e: { type: string }) => e.type);
 }
+
+describe('birden çok öneri + dizilim / hasar türü satırı (Ömer 2026-11-07)', () => {
+  it('eksik her rol için öneri döner: ilki heroes/role, kalanı also', () => {
+    const r = sug(['mage']); // ön saf ve besleyen eksik
+    expect(r?.role).toBe('front');
+    expect(r?.also.map((a) => a.role)).toEqual(['feed']);
+    expect(r?.also[0]?.heroes).toContain('druid');
+    expect(sug(['warrior', 'archer', 'druid'])).toBeNull();
+  });
+  it('heroTraits: dizilim satırı ve hasar türü kahramanın kitinden', async () => {
+    const { heroTraits } = await import('../src/campaign/suggest');
+    expect(heroTraits('warrior')).toBe('Front row · Physical damage');
+    expect(heroTraits('mage')).toBe('Back row · Magic damage');
+    expect(heroTraits('archer')).toBe('Back row · Physical damage');
+  });
+});

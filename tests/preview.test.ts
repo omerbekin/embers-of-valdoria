@@ -240,7 +240,7 @@ describe('önizleme: şifa, kalkan, tur bazlı şifa, mana yakma, durumlar', () 
     const b = testBattle(1, teams);
     const am = b.combatants.find((c) => c.side === 'party' && c.defId === 'antimage')!.uid;
     const target = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'warrior')!;
-    expect(previewSkill(b, am, 'mana_burn', target.uid)[0]!.burn).toBe(10);
+    expect(previewSkill(b, am, 'mana_burn', target.uid)[0]!.burn).toBe(8); // Ömer 2026-11-08: 10 -> 8
     target.mp = 3;
     expect(previewSkill(b, am, 'mana_burn', target.uid)[0]!.burn).toBe(3);
     const center = b.livingByDepth('enemy')[0]!;
@@ -316,7 +316,7 @@ describe('skill açıklaması (tooltip)', () => {
     expect(text('summon_treant')).not.toContain('Summons take'); // x2 hasar kuralı Codex Summons makalesinde
     expect(text('taunt')).toContain('must target you');
     expect(text('guard')).toContain(`take ${Math.round((content.skills.guard!.effects.find((e) => e.type === 'guard') as { share: number }).share * 100)}% of the damage`);
-    expect(text('mana_burn')).toContain('Steals 10 MP'); // Mana Steal: kısmen kendine geçer
+    expect(text('mana_burn')).toContain('Steals 8 MP'); // Ömer 2026-11-08: 10 -> 8; Mana Steal: kısmen kendine geçer
   });
 
   it('yakın dövüş skill\'leri menzil kuralını söyler; menzilli olanlar söylemez (menzil KAPALI: eski satır)', () => {

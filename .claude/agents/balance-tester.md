@@ -30,3 +30,5 @@ Sen bu oyunun denge test uzmanısın. Ömer kod okumaz; sonuçları sade Türkç
 
 ## Çıktı
 Türkçe düz yazı rapor: ne ölçtün, neyi neden değiştirdin (eski -> yeni değer), önce/sonra sınıf kazanma oranları tablosu, bilinen zayıf noktalar. Yaptığın varsayımları `docs/design/open-questions.md` dosyasına (sıradaki numarayla) ekle.
+
+**Sim ve ses (Ömer 2026-11-07, ZORUNLU):** sim, denge ölçümü ve sefer koşusu headless CLI ile çalışır (`npx tsx src/sim/...`, `npm run sim*`); bunun için oyun tarayıcıda AÇILMAZ. Tarayıcı gerçekten gerekiyorsa oyunun sesi ASLA açılmaz: her sekmede ilk iş `localStorage.setItem('eov.settings.v1', JSON.stringify({volume:0, steps:20})); location.reload()`, ardından `Phaser.GAMES[0].sound.mute = true`. Ses ayarına, volume değerine ya da mute'a dokunan hiçbir adım atılmaz; iş bitince açtığın sekmeyi kapat.

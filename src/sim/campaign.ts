@@ -18,6 +18,8 @@ import {
   autoResolve,
   autoValorRevive,
   healWoundWithValor,
+  supplyBlocked,
+  useSupply,
   valorWoundHealBlocked,
   valorWoundHealCost,
   battlePlan,
@@ -471,6 +473,7 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
           s = autoAllocateAll(s); // level puanları: oyuncu vekili ana stata dağıtır (levels.md)
           if (o.tree) s = { ...s, roster: autoTreeHeroes(s.roster, o.tree) }; // skill ağacı (Faz 6; --tree)
           if ((o.gear ?? 'best') === 'best') s = equipBest(s);
+          s = simUseSupplies(s); // eldeki malzemeler (savaş dışı; oyuncu arayüzüyle aynı kural)
           const party = activeHeroes(s);
           o.onBattle?.(step.node, s);
           agg.hpStartSum += party.reduce((a, h) => a + h.hpRatio, 0) / Math.max(1, party.length);
@@ -598,4 +601,21 @@ export function categoryFirstWin(r: CampaignSimResult, map: CampaignMap = getMap
   }
   const pct = (x: { n: number; w: number }) => (x.n ? (x.w / x.n) * 100 : 0);
   return { tutorial: pct(sum.tutorial), normal: pct(sum.normal), elite: pct(sum.elite), boss: pct(sum.boss) };
+}
+
+/**
+ * Bot, düğümler arasında eldeki malzemeleri kullanır (oyuncu arayüzüyle aynı `supplyBlocked` / `useSupply`):
+ * önce düşmüşü diriltir, sonra yara temizler, sonra canı düşüğü iyileştirir (can < %50; büyük iksir önce).
+ */
+export function simUseSupplies(s: CampaignState): CampaignState {
+  const ids = (): string[] => s.roster.map((h) => h.id);
+  const tryUse = (id: string, hid: string): void => {
+    if (!supplyBlocked(s, id, hid)) s = useSupply(s, id, hid);
+  };
+  const hero = (hid: string) => s.roster.find((x) => x.id === hid)!;
+  for (const hid of ids()) if (isFallen(hero(hid))) tryUse('revive_ally', hid);
+  for (const hid of ids()) if (!isFallen(hero(hid)) && woundCount(hero(hid)) > 0) tryUse('cure_wound', hid);
+  for (const id of ['greater_heal', 'heal'])
+    for (const hid of ids()) if (!isFallen(hero(hid)) && hero(hid).hpRatio < 0.5) tryUse(id, hid);
+  return s;
 }

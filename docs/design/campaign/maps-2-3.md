@@ -626,13 +626,13 @@ Kararlar:
 
 Kararlar:
 - **Frozen kuralı:** Frost Bite (zar tutunca), Rime Bite ve Ice Shot skill atışıdır: zaten Chilled hedefi dondurur. Grave Cold ve Hoarfrost pasif kaynağıdır: yalnız Chilled verir (kaynak türü taşımaz).
-- **Mana (open-questions 466):** L30'da 5-6 kullanım. Paylaşılan skill'in bedeli Harita 1-2 mobunu da değiştireceği için bu moblar kendi kopyasını alır (`snow_rend`, `knight_hold_gate`, `wight_feast`, `rime_run_down`, `hollow_rockfall`, `molten_run_down`; 4. dilimden `shard_pike_thrust`, `cinder_rend`, `gloam_lunge`); oyuncu aynı adı görür, `ai.scoreCost` eski bedel. Bedelsiz skill'ler bedelsiz kaldı.
+- **Mana (open-questions 466):** L30'da 4-5 kullanım (Ömer 2026-11-07, 0.9.11 manasıyla; önce 5-6). Paylaşılan skill'in bedeli Harita 1-2 mobunu da değiştireceği için bu moblar kendi kopyasını alır (`snow_rend`, `knight_hold_gate`, `wight_feast`, `rime_run_down`, `hollow_rockfall`, `molten_run_down`; 4. dilimden `shard_pike_thrust`, `cinder_rend`, `gloam_lunge`); oyuncu aynı adı görür, `ai.scoreCost` eski bedel. Bedelsiz skill'ler bedelsiz kaldı.
 - **Spread the Flame:** `anchorGround` alanı: yalnız Burning hücreye atılır, alan içinde kahraman olmalı (genel alan kuralı), hasar yok, yalnız kahraman tahtası.
 - **Furnace Core:** Burning zemin golemin kendi tahtasına düşer; genel zemin kuralıyla kendi tarafına işlemez. Kindling onu sayar.
 - **Açık varsayımlar:** `open-questions.md` sonundaki `Q-NEW`.
 
 ## Harita 3 elit ve boss kitleri: uygulama kararları (Ömer seçimi 2026-11-01; bayrak kapalı, sayılar PROVİZYON, sim yok)
-Seçilen 9 kit, `tests/map3-elites.test.ts`. Mana: temel saldırı bedelsiz, kalanı L30'da 5-6 kullanım (`tests/map3-mana.test.ts`).
+Seçilen 9 kit, `tests/map3-elites.test.ts`. Mana: temel saldırı bedelsiz, kalanı L30'da 4-5 kullanım (Ömer 2026-11-07; `tests/map3-mana.test.ts`).
 
 | Birim | Pasif / dokunuş | Skill'ler |
 |---|---|---|

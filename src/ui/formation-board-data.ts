@@ -9,6 +9,7 @@ import { loadout } from '../progression/loadout';
 import { avatarUrl, hideHeroSkillTip, showHeroSkillTip } from './character-panel';
 import { statBandSpec, statTip } from './stat-tips';
 import { gearSkillRows } from './gear-skills';
+import { treePatchedSkill } from './skill-tree-preview';
 import { iconUrl } from './dom-icons';
 import { heroSkillIconUrl } from './evolve-icon';
 import { uiIconName } from './ui-icons';
@@ -40,7 +41,7 @@ export function boardHero(h: BoardHeroSource): FormationBoardHero | null {
   const stats = heroStats(h);
   if (!def || !stats) return null;
   const plan = content.planUnitOf(h.class);
-  const rows = gearSkillRows(h.class, stats);
+  const rows = gearSkillRows(h.class, stats, null, undefined, (x) => treePatchedSkill(h, x));
   const passiveRow = rows.find((r) => r.passive);
   const p = def.passive;
   return {

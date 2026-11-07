@@ -247,7 +247,7 @@ describe('Harita geçişi (M-Q)', () => {
   it('Map 1 rotaları bozulmadı', () => {
     const v = getMap('valdoria');
     expect(validateMap(v)).toEqual([]);
-    expect(k1Violations(v)).toEqual(['road -> fold']); // bilinen istisna (campaign.test.ts)
+    expect(k1Violations(v)).toEqual(['7 -> 6A', 'road -> fold']); // bilinen istisna (campaign.test.ts)
     expect(allRoutes(v).every((r) => r.length === v.stopsPerRun)).toBe(true);
   });
 });

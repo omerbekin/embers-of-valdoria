@@ -229,9 +229,10 @@ describe('zemin tepkimeleri: motor', () => {
       expect(typesAt(b, 'enemy', 0)).toEqual(['holy_fire']);
       expect(at(b, 'enemy', 0)[0]!.amount).toBeGreaterThan(0);
       const start = b.log.length;
-      for (let i = 0; i < 20 && b.currentUid !== 'enemy-0'; i++) b.skipTurn();
-      b.skipTurn();
-      expect(b.log.slice(start).some((e) => e.type === 'damage' && e.target === 'enemy-0' && e.ground === 'holy_fire')).toBe(true);
+      // enemy-0'ın bir sonraki turu gelene dek pas (şu anki aktör o olabilir: sıra seed + tur başına hız zarına bağlı)
+      const burned = () => b.log.slice(start).some((e) => e.type === 'damage' && e.target === 'enemy-0' && e.ground === 'holy_fire');
+      for (let i = 0; i < 20 && !burned(); i++) b.skipTurn();
+      expect(burned()).toBe(true);
     }
     // düşman kendi tahtasına bırakırsa (kendi tahtası) yine Holy Water
     const t = mk();

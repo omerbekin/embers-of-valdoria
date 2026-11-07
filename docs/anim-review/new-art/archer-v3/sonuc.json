@@ -1,0 +1,20 @@
+{
+  "idle-d": {
+    "rounds": 4,
+    "pass": false,
+    "bestRound": 3,
+    "score": 7
+  },
+  "idle-e": {
+    "rounds": 4,
+    "pass": false,
+    "bestRound": 4,
+    "score": 6
+  },
+  "idle-f": {
+    "rounds": 4,
+    "pass": false,
+    "bestRound": 4,
+    "score": 6
+  }
+}

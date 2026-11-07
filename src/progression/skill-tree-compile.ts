@@ -5,7 +5,7 @@
 // `set` kendinden öncekileri ezer, sonrakiler onun üstüne biner; `base` (temel değeri değiştirir) TÜM yamalardan önce uygulanır. '+X% power' = op 'pct': anlamı _rules.json > percentRule (TEK yer; varsayılan 'mul').
 import { classes, formulas, grounds as GROUNDS, skills as SKILLS, statuses as STATUSES, summons as SUMMON_DEFS } from '../engine/content';
 import { areaDefProblem } from '../engine/area-shape';
-import { COND, COST_TARGET_CONDS, FX_THRESHOLD_FIELDS, HEAL_POINTS, mergeFxValue, fieldStackForm, STACK_FORM, stackTimes, MOD_SPEC, POTENCY_FIELDS, SCALE, SELF_CONDS, SELF_SCALES, SET_MODS, TRIGGER_BASES, TRIGGER_EVENTS, TRIGGER_TARGETS, UNIT_FX_KEYS, whenIsLate, type CondMod, type HealHook, type HookAt, type ModGroup, RULE_KINDS, type RuleHook, type RuleKind, type TreeHook, type TriggerAction, type TriggerEvent, type TriggerHook } from '../engine/tree-hooks';
+import { COND, COST_TARGET_CONDS, FX_THRESHOLD_FIELDS, HEAL_POINTS, mergeFxValue, fieldStackForm, isPoolDamage, STACK_FORM, stackTimes, MOD_SPEC, POTENCY_FIELDS, SCALE, SELF_CONDS, SELF_SCALES, SET_MODS, TRIGGER_BASES, TRIGGER_EVENTS, TRIGGER_TARGETS, UNIT_FX_KEYS, whenIsLate, type CondMod, type HealHook, type HookAt, type ModGroup, RULE_KINDS, type RuleHook, type RuleKind, type TreeHook, type TriggerAction, type TriggerEvent, type TriggerHook } from '../engine/tree-hooks';
 import type { ItemEffects, PassiveDef, RandomStatusOption, SkillDef, SkillEffect, SkillModeDef, SkillModeSet, TreeSetup } from '../engine/types';
 import { TREE_RULES, treeOf, type TreeData, type TreeFx, type TreeMode, type TreeRules } from './skill-tree-data';
 import { barReached, focusBuild, rankOf, spent, treeNodes, validate, type TreeAlloc } from './skill-tree';
@@ -187,7 +187,7 @@ function applyOp(cur: unknown, fx: Extract<TreeFx, { k: 'skill' | 'passive' | 's
  * Skill yaması (yerinde, kopya üzerinde). `lenient` (Faz 2c, compileTree): seçici hiçbir etkiye uymuyorsa (birlikte alınan başka düğüm o etkiyi
  * kaldırdı / değiştirdi) yama SESSİZCE atlanır; checkTreeFx katı kalır (hata).
  */
-function patchSkill(def: SkillDef, fx: Extract<TreeFx, { k: 'skill' }>, rank: number, rules: TreeRules, lenient = false): void {
+function patchSkill(def: SkillDef, fx: Extract<TreeFx, { k: 'skill' }>, rank: number, rules: TreeRules, lenient = false, node?: string): void {
   const { kind, targets } = resolve(def, fx.sel);
   if (!FX_FIELDS[kind]!.includes(fx.f)) throw new TreeFxError(`field "${fx.f}" is not patchable for selector "${fx.sel}"`);
   if (!targets.length) {
@@ -207,6 +207,23 @@ function patchSkill(def: SkillDef, fx: Extract<TreeFx, { k: 'skill' }>, rank: nu
       const parts = fx.f.split('.');
       const owner = parts.length > 1 ? (getPath(t, parts.slice(0, -1).join('.')) as Bag | undefined) : t;
       if (owner) delete owner[parts[parts.length - 1]!];
+    }
+    return;
+  }
+  // Hasar havuzu (Ömer 2026-11-07, P1): hasar etkisinin ARTI "+X% power" yamaları (Evolve hariç) birbirleriyle ve vuruştaki "+X% damage"
+  // kaynaklarıyla TOPLANIR. Güçte (1 + powerAdd) olarak tutulur (gücü okuyan her yol eski gibi bonuslu değeri görür), damageSpecFor havuzu
+  // bir kez çarpar (stats.ts > outgoingDamageMult). Eksi yüzde ("less"), mul / add / set ayrı kalır; set / base havuzu sıfırlar.
+  if (kind === 'damage' && fx.f === 'power') {
+    for (const t of targets) {
+      const S = typeof t.powerAdd === 'number' ? t.powerAdd : 0;
+      const n = fx.rank ? fx.v * rank : fx.v;
+      if (fx.op === 'pct' && rules.percentRule === 'mul' && isPoolDamage(node, n) && typeof t.power === 'number') {
+        t.power = r6(((t.power as number) / (1 + S)) * (1 + S + n));
+        t.powerAdd = r6(S + n);
+      } else {
+        t.power = applyOp(t.power, fx, rank, fx.f, rules);
+        if ((fx.op === 'set' || fx.op === 'base') && S) delete t.powerAdd;
+      }
     }
     return;
   }
@@ -553,7 +570,7 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
   switch (fx.k) {
     case 'skill': {
       const id = fx.skill ?? p.skill;
-      patchSkill(ownSkill(id), fx, p.rank, rules, acc.lenient);
+      patchSkill(ownSkill(id), fx, p.rank, rules, acc.lenient, p.label);
       return;
     }
     case 'stat': {

@@ -1,6 +1,6 @@
 # Vesper: tasarım dökümanı (UYGULANDI: motor + veri, TASLAK değerler, 2026-10-28)
 
-> **Durum:** engine-dev / content-designer (Opus), 2026-10-28; open-questions madde 451. Tüm sayılar **PROVİZYON** (Mage'den türetildi, sim YOK; Ömer her sim'i onaylar). Skill ağacı **Ömer onaylı (2026-10-31), sayıları provizyon**. Efekt ve ses kendi (2026-11-01); ikon, logo, avatar ödünç. `tests/balance-checks.ts > PENDING_BALANCE` içinde.
+> **Durum:** engine-dev / content-designer (Opus), 2026-10-28; open-questions madde 451. Sayılar **kesin** (Ömer 2026-11-08: PROVİZYON kaldırıldı; başta Mage'den türetilmişti; Ömer her sim'i onaylar). Skill ağacı **Ömer onaylı (2026-10-31), sayıları provizyon**. Efekt ve ses kendi (2026-11-01); ikon, logo, avatar ödünç. `tests/balance-checks.ts > PENDING_BALANCE` içinde.
 > Ad / id: brifte "Bellwarden" idi, Ömer kararıyla **Vesper**, id `vesper` (Blood Warden ile karışmasın; o başka sohbetin tasarımı, dokunulmadı).
 
 ## 1. Kimlik
@@ -36,7 +36,7 @@ Arketip: batık bir katedralin çan kulesinin bekçisi. Çan sesi = **holy**, g�
 |---|---|---|---|---|---|---|---|
 | **Toll** | tüm düşmanlar | holy | 0,467 | 4 | yok | - | evet |
 | **Thunderpeal** | bir düşman SIRASI (`area_enemies`, şekil row) | lightning | 0,764 | 12 | 2 | Blinded 1 tur | evet |
-| **Cracked Bell** | tek düşman | holy | 1,083 | 10 | 3 | %30 Stun 1 tur | hayır |
+| **Cracked Bell** | tek düşman | holy | 1,15 (2026-11-08, önce 1,083) | 10 | 3 | %50 Stun 1 tur (2026-11-08, önce %30) | hayır |
 | **Great Bell of Valdoria** (ult) | tüm düşmanlar | holy 0,488 + lightning 0,329 | çan başına her biri +0,025 INT | 22 | 4 (ilk bekleme 2) | - | hayır |
 
 Değerler 2026-11-01 denge turunun geçici sonucu (Ömer onayına kadar); önceki 0,28 / 0,60 / 0,80 / 0,30 + 0,20. Hasar ve zırh artışları 28,9 olan kazanma oranını 45,3'e çıkardı (`open-questions.md`, "Mage ve Vesper denge turu").
@@ -49,7 +49,7 @@ Değerler 2026-11-01 denge turunun geçici sonucu (Ömer onayına kadar); öncek
 ### YZ (`ai.json > vesper`)
 Kalkansız büyücü kalıbı; öncelikler kill / aoe / tactic / damage, `aoeMinTargets 2`, ult için `reserveMp 2`. YZ çan büyümesini DEĞERLENDİRİR: `ringsBell` skill'i, bir çanın sonraki çan vuruşlarına katacağı hasar kadar değer alır (`bell.horizon` 2 kendi turu, `discount` 0,7; `open-questions.md` "Vesper çan büyümesi" maddesi). Ağaç kancaları da terazidedir (`ai.ts > bellValue`, `treeTriggerValue`, `treeProcStatusValue`, `armedCostValue`).
 
-## 3. Skill ağacı (`data/skill-trees/vesper.json`, Ömer onaylı 2026-10-31, sayılar provizyon, sim yok)
+## 3. Skill ağacı (`data/skill-trees/vesper.json`, Ömer onaylı 2026-10-31, sayılar kesin 2026-11-08)
 
 Var olan ağaç yapısında (rows: pasif + 3 skill, ult, mastery). **Tüm düğümler çalışır** (`fx: null` kalmadı). 2026-10-31'de eklenen genel kancalar: tetik olayı `bellRung`, tetik eylemi `bell`, koşullar `selfBells` / `targetTier` / `targetLowestHp` / `targetFrontAtCast`, ölçek `selfBells`, tetik hedefi `rowBehind`, skill alanı `ringsBell` sayı olabilir (kaç çan), hedef yaması `bellOnly`, stat `spdMult`, Rage kancası `costMul`, yeni durum `shaken` (isabet düşürür, ikonu yer tutucu `blinded`).
 

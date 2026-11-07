@@ -5,7 +5,8 @@
   "earn": { "win": 1, "elite": 2, "boss": 3, "flawless": 0 },
   "_clearWounds": "Ömer 2026-10-20 (open-questions 369 cevabı 3): Valor diriltmesi (savaş dışında ceset kaldırma da, savaş içinde Valor ile kaldırma da) kahramanın yaralarından clearWounds tanesini siler (hepsini değil); Resurrection / Raise Dead skill'leri yara silmez. Sefer ve Endless.",
   "_woundHeal": "Ömer 2026-10-26 (YENİ mekanik, onaylı): savaş dışında (sefer haritası, savaşlar arası) Valor ile yara silme: outsideCost Valor = bir yaşayan kahramanın 1 yarası. Ceset (lethal yaralı ölü) bununla kalkmaz; ceset kuralı aynı (Valor diriltmesi revive.clearWounds siler). Endless'te YOK (VARSAYIM: Ömer haritada dedi). Kazanç aynı.",
-  "woundHeal": { "outsideCost": 3 },
+  "_woundHealHp": "Ömer 2026-11-07: Heal wound ayrıca yaralı kahramana maks canının hpRatio payı kadar can verir (can oranına eklenir, en çok tam can).",
+  "woundHeal": { "outsideCost": 3, "hpRatio": 0.25 },
   "revive": { "battleCost": 6, "outsideCost": 4, "hpRatio": 0.5, "mpRatio": 0.5, "clearWounds": 1 },
   "campaign": { "introNode": "7", "gift": 4 },
   "endless": { "start": 0 }

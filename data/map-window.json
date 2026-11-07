@@ -21,9 +21,9 @@
     "shepherds_fold.castle": { "tag": "Talk", "acc": "violet", "desc": "Hear what the shepherds know about the gate tower." },
     "shepherds_fold.bread": { "tag": "Gift", "acc": "gold", "desc": "Share your supplies. Tonight's rest heals everyone fully." },
     "shepherds_fold.rest": { "tag": "Free", "acc": "green", "desc": "Make camp as usual." },
-    "witchs_hut.pay": { "tag": "Gold", "acc": "gold", "desc": "She gives you one item from her chest and a few coins." },
-    "witchs_hut.blood": { "tag": "Blood", "acc": "red", "desc": "Every hero gives a drop of blood. No one dies." },
-    "witchs_hut.steal": { "tag": "Fight", "acc": "ember", "desc": "Fight the witch for her chest." },
+    "witchs_hut.pay": { "tag": "Gold", "acc": "gold", "desc": "Pay 60 gold. She gives you two items from her chest." },
+    "witchs_hut.blood": { "tag": "Blood", "acc": "red", "desc": "Every hero loses 20% HP. No one dies. One item and a few coins." },
+    "witchs_hut.steal": { "tag": "Fight", "acc": "ember", "desc": "Fight the witch herself. Win: her chest and 25 gold." },
     "witchs_hut.leave": { "tag": "Free", "acc": "dim", "desc": "Walk away with nothing." }
   }
 }

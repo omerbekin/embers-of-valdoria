@@ -41,7 +41,7 @@
 .sd-said { margin: 0; font: 400 max(14px, calc(30 * var(--u))) / 1.36 var(--g-body); color: var(--g-text); }
 .sd-nb { display: block; margin-top: .6em; font-size: .86em; color: #bfae8d; }
 /* italik YALNIZCA hikâye unsuruna (yer / kişi adı) kısa atıf */
-.sd-lore { font-style: italic; color: var(--g-gold); }
+.sd-lore { color: var(--g-gold); }
 
 /* cevap satırları: karo (elmas) işareti; hover'da yükselme (translate, giriş animasyonu transform kullanır) + ince altın kenar parlaması */
 .sd-choices { display: flex; flex-direction: column; border-left: 1px solid var(--g-line2); padding-left: max(10px, calc(30 * var(--u))); }

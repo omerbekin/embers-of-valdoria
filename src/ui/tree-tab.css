@@ -101,38 +101,38 @@ html.short .tt-tip .gt-ctl button { min-height: 44px; }
 .gt-nd { --s: var(--sF); position: absolute; transform: translate(-50%, -50%); flex: none; width: max(var(--s), var(--hw, var(--hit))); height: max(var(--s), var(--hh, var(--hit))); padding: 0; border: 0; background: none; cursor: pointer; color: inherit; -webkit-tap-highlight-color: transparent; z-index: 3; touch-action: manipulation; }
 .gt-nd.k-f { --s: var(--sF); } .gt-nd.k-e { --s: var(--sE); } .gt-nd.k-b { --s: var(--sB); } .gt-nd.k-n { --s: var(--sN); } .gt-nd.k-v { --s: var(--sV); }
 .gt-nd:focus-visible { outline: 1px dashed var(--g-gold); }
-.gt-nd .dm { position: absolute; left: 50%; top: 50%; width: calc(var(--s) * .7071); height: calc(var(--s) * .7071); transform: translate(-50%, -50%) rotate(45deg); overflow: hidden; border: 1.5px solid rgba(217, 178, 106, .3); background: #0d0806; transition: border-color .15s, box-shadow .15s, background .15s, opacity .15s; }
-.gt-nd .dm img { position: absolute; left: 50%; top: 50%; width: 146%; height: 146%; transform: translate(-50%, -50%) rotate(-45deg); object-fit: cover; display: block; filter: grayscale(.8) brightness(.45); transition: filter .15s; }
-.gt-nd.k-e .dm { width: var(--s); height: var(--s); border-radius: 50%; transform: translate(-50%, -50%); }
+.gt-nd .dm { position: absolute; left: 50%; top: 50%; width: var(--s); height: var(--s); transform: translate(-50%, -50%); border-radius: 50%; overflow: hidden; border: 1px solid rgba(217, 178, 106, .3); background: radial-gradient(circle, #1a120b, #0c0806 80%); transition: border-color .15s, box-shadow .15s, background .15s, opacity .15s; }
+.gt-nd .dm img { position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; transform: translate(-50%, -50%); object-fit: contain; display: block; filter: grayscale(.9) brightness(.55); opacity: .85; transition: filter .15s; }
 .gt-nd.k-e .dm::after { content: ''; position: absolute; left: 50%; top: 50%; width: 28%; height: 28%; transform: translate(-50%, -50%) rotate(45deg); background: rgba(217, 178, 106, .35); }
-.gt-nd.k-f .dm::after { content: ''; position: absolute; inset: 28%; background: rgba(217, 178, 106, .12); }
-.gt-nd.k-n .dm { border-width: 2px; box-shadow: 0 0 0 2px #080604, 0 0 0 3px rgba(217, 178, 106, .22); }
+.gt-nd.k-f .dm::after { content: ''; position: absolute; left: 50%; top: 50%; width: 24%; height: 24%; transform: translate(-50%, -50%) rotate(45deg); background: rgba(217, 178, 106, .22); }
 .gt-nd.k-b .drop { position: absolute; left: 50%; top: 50%; width: var(--s); height: calc(var(--s) * 1.18); transform: translate(-50%, -52%); overflow: visible; transition: filter .15s, opacity .15s; }
 .gt-nd.k-b .drop path.bd { fill: #14090a; stroke: var(--g-blood-d); stroke-width: 2.4; stroke-linejoin: round; transition: fill .15s, stroke .15s; }
 .gt-nd.k-b .drop path.bi { fill: none; stroke: rgba(198, 59, 59, .45); stroke-width: 2; stroke-linecap: round; }
-.gt-nd.k-v .dm { border: 2px solid rgba(243, 217, 153, .75); box-shadow: 0 0 0 2px #080604, 0 0 0 3px rgba(243, 217, 153, .32); }
-.gt-nd.k-v::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(var(--s) * .7071 + 18px); height: calc(var(--s) * .7071 + 18px); transform: translate(-50%, -50%) rotate(45deg); border: 1px solid rgba(243, 217, 153, .45); pointer-events: none; }
-.gt-nd.k-v::after { content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; transform: translate(-50%, calc(-50% - var(--s) * .5 - 11px)) rotate(45deg); background: #f3d999; pointer-events: none; box-shadow: 0 0 6px rgba(243, 217, 153, .8); }
-/* durumlar */
-.gt-nd.st-tlk { opacity: .4; } .gt-nd.st-xl { opacity: .32; } .gt-nd.st-xl .dm { border-style: dashed; } .gt-nd.st-rq { opacity: .78; }
-.gt-nd.st-av .dm { border-color: rgba(243, 217, 153, .9); } .gt-nd.st-av .dm img { filter: grayscale(.3) brightness(.75); }
-.gt-nd.st-part .dm, .gt-nd.st-max .dm { border-color: #e8cf8f; box-shadow: 0 0 0 2px #080604, 0 0 9px rgba(243, 217, 153, .4); background: linear-gradient(135deg, #7a5a28, #d9b26a); }
-.gt-nd.st-part .dm { background: linear-gradient(135deg, #3a2a12, #a8803a); }
-.gt-nd.st-part .dm img, .gt-nd.st-max .dm img { filter: none; }
+.gt-nd.k-v .dm { border: 1px solid rgba(243, 217, 153, .75); }
+.gt-nd.k-v::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(var(--s) + 12px); height: calc(var(--s) + 12px); transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--c); opacity: .7; pointer-events: none; }
+.gt-nd.k-v::after { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; transform: translate(-50%, calc(-50% - var(--s) * .5 - 9px)) rotate(45deg); background: var(--c); pointer-events: none; box-shadow: 0 0 6px var(--c); }
+.gt-nd.k-n::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(var(--s) + 8px); height: calc(var(--s) + 8px); transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--c); opacity: .55; pointer-events: none; }
+/* durumlar (Ring, Omer 2026-11-07: ince 1 px halka; durum = halka rengi + yumusak isik; kilitli = kesik halka) */
+.gt-nd { --c: rgba(217, 178, 106, .3); }
+.gt-nd.st-tlk { opacity: .4; } .gt-nd.st-xl { opacity: .32; } .gt-nd.st-rq { opacity: .78; }
+.gt-nd.st-tlk .dm, .gt-nd.st-xl .dm { border-style: dashed; }
+.gt-nd.st-av { --c: #f3d999; } .gt-nd.st-av .dm { border-color: rgba(243, 217, 153, .9); box-shadow: 0 0 6px rgba(243, 217, 153, .3); } .gt-nd.st-av .dm img { filter: brightness(.9) saturate(.85); opacity: 1; }
+.gt-nd.st-part, .gt-nd.st-max { --c: #ffe29a; }
+.gt-nd.st-part .dm, .gt-nd.st-max .dm { border-color: #ffe29a; border-width: 1.5px; box-shadow: 0 0 10px rgba(255, 190, 90, .55); background: radial-gradient(circle, #3a2812, #150e08 80%); }
+.gt-nd.st-part .dm { background: radial-gradient(circle, #2a1d0e, #120b07 80%); box-shadow: 0 0 7px rgba(255, 190, 90, .4); }
+.gt-nd.st-part .dm img, .gt-nd.st-max .dm img { filter: none; opacity: 1; }
 .gt-nd.k-e.st-part .dm::after, .gt-nd.k-e.st-max .dm::after { background: #fff4d6; }
-.gt-nd.k-n.st-max .dm { background: #1a1209; }
-.gt-nd.k-v.st-av .dm { border-color: #f3d999; }
-.gt-nd.k-v.st-max .dm { border-color: #f3d999; background: #1a1209; box-shadow: 0 0 0 2px #080604, 0 0 0 3px rgba(243, 217, 153, .6), 0 0 20px rgba(243, 217, 153, .6); }
-.gt-nd.k-v.st-xl .dm, .gt-nd.k-v.st-tlk .dm { border-color: rgba(243, 217, 153, .35); }
+.gt-nd.k-v.st-xl, .gt-nd.k-v.st-tlk { --c: rgba(243, 217, 153, .35); }
+.gt-nd.k-v.st-max .dm { box-shadow: 0 0 18px rgba(243, 217, 153, .6); }
 .gt-nd.k-b.st-av .drop path.bd { stroke: #d45050; fill: #2a1012; }
 .gt-nd.k-b.st-av .drop path.bi { stroke: rgba(230, 110, 110, .7); }
 .gt-nd.k-b.st-max .drop path.bd, .gt-nd.k-b.st-part .drop path.bd { fill: #8e1f27; stroke: #e0575a; }
 .gt-nd.k-b.st-max .drop path.bi, .gt-nd.k-b.st-part .drop path.bi { stroke: #ffd6d0; }
 .gt-nd.k-b.st-max .drop { filter: drop-shadow(0 0 7px rgba(198, 59, 59, .65)); }
-.gt-nd:hover .dm, .gt-nd.pin .dm { border-color: #fff4d6; }
+.gt-nd:hover, .gt-nd.pin { --c: #fff4d6; } .gt-nd:hover .dm, .gt-nd.pin .dm { border-color: #fff4d6; }
 .gt-nd.k-b:hover .drop path.bd, .gt-nd.k-b.pin .drop path.bd { stroke: #ff9a96; }
 /* BEKLEYEN (onaysiz) puan: kor halka; Confirm'e kadar yalniz plan */
-.gt-nd.pend .dm { border-color: #ffb35a; box-shadow: 0 0 0 2px #080604, 0 0 11px 1px rgba(255, 155, 58, .7); }
+.gt-nd.pend { --c: #ffb35a; } .gt-nd.pend .dm { border-color: #ffb35a; box-shadow: 0 0 11px 1px rgba(255, 155, 58, .7); }
 .gt-nd.pend.k-b .drop path.bd { stroke: #ffb35a; }
 .gt-nd.pend.k-b .drop { filter: drop-shadow(0 0 7px rgba(255, 155, 58, .7)); }
 /* DIGER YON secilmis (ea ya da eb): soluk + kilit + "Other direction chosen" ipucu */
@@ -222,8 +222,8 @@ html.short .gt-ts b em { display: none; }
 .gt-barw.slim .gt-mk em { top: -16px; left: -14px; width: 28px; font-size: 9px; }
 .gt-barw.slim .gt-mk i { left: -5px; top: -5px; width: 10px; height: 10px; border-width: 1px; }
 /* telefon: Evolve düğümünün dış halkası küçük, ult etiketleriyle çakışmasın (Ömer 2026-11-03) */
-html.short .gt-nd.k-v::before { width: calc(var(--s) * .7071 + 8px); height: calc(var(--s) * .7071 + 8px); }
-html.short .gt-nd.k-v::after { width: 4px; height: 4px; transform: translate(-50%, calc(-50% - var(--s) * .5 - 5px)) rotate(45deg); }
+html.short .gt-nd.k-v::before { width: calc(var(--s) + 8px); height: calc(var(--s) + 8px); }
+html.short .gt-nd.k-v::after { width: 4px; height: 4px; transform: translate(-50%, calc(-50% - var(--s) * .5 - 6px)) rotate(45deg); }
 html.short .gt-tools { display: flex; align-items: center; gap: 8px; flex: none; min-width: 0; padding-bottom: 2px; }
 html.short .gt-tools .gt-barw { flex: 1 1 0; min-width: 0; }
 html.short .gt-tools .gt-acts.gt-inbar { flex: none; margin: 0; padding: 0; border: 0; }
@@ -306,7 +306,7 @@ html:not(.short) .gt.q4 .gt-barw.slim .gt-mk em { font-size: 11px; }
 @keyframes q4-bloodring { 0% { opacity: .55; transform: translate(-50%, -50%) scale(.7); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); border-color: rgba(168, 28, 28, 0); } }
 @keyframes q4-blooddrip { 0% { opacity: 0; translate: 0 0; } 25% { opacity: .85; } 100% { opacity: 0; translate: 0 calc(var(--s) * .4); } }
 @keyframes q4-bloodfade { 0% { filter: brightness(.7) saturate(1.4); } 100% { filter: none; } }
-@keyframes q4-fill { 0% { filter: brightness(2.2) saturate(1.3); box-shadow: 0 0 0 2px #080604, 0 0 0 0 rgba(255, 179, 90, 0); } 40% { box-shadow: 0 0 0 2px #080604, 0 0 22px 6px rgba(255, 179, 90, .85); } 100% { filter: none; } }
+@keyframes q4-fill { 0% { filter: brightness(2.2) saturate(1.3); box-shadow: 0 0 0 0 rgba(255, 179, 90, 0); } 40% { box-shadow: 0 0 22px 6px rgba(255, 179, 90, .85); } 100% { filter: none; } }
 @keyframes q4-dropfill { 0% { filter: brightness(2) drop-shadow(0 0 16px rgba(255, 130, 100, .95)); scale: 1.12; } }
 @keyframes q4-ring { 0% { opacity: .95; transform: translate(-50%, -50%) scale(.6); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(2.1); border-color: rgba(255, 179, 90, 0); } }
 /* 2) yol cizgisi bir sonraki dugume dogru akar (yeni acilan yol); bekleyen yolda ember cizgileri yurur */
@@ -325,14 +325,14 @@ html:not(.short) .gt.q4 .gt-barw.slim .gt-mk em { font-size: 11px; }
 @keyframes q4-awake { 0% { opacity: .12; scale: .9; filter: brightness(1.9); } 60% { filter: brightness(1.3); } 100% { filter: none; } }
 /* 4) evolve: hazir olunca (acildi) ve alinca */
 .gt.q4 .gt-nd.k-v.st-av .dm { animation: q4-breathe 3.2s ease-in-out infinite; }
-@keyframes q4-breathe { 50% { box-shadow: 0 0 0 2px #080604, 0 0 0 3px rgba(243, 217, 153, .5), 0 0 16px rgba(243, 217, 153, .55); } }
+@keyframes q4-breathe { 50% { box-shadow: 0 0 16px rgba(243, 217, 153, .55); } }
 .gt.q4 .gt-nd.k-v.anim-evoready .fx { animation: q4-ring 1.1s var(--q-ease) 2; border-color: #f3d999; }
 .gt.q4 .gt-nd.k-v.anim-evoready::before { animation: q4-spin 1.2s var(--q-ease); }
 .gt.q4 .gt-nd.k-v.anim-evolve .fx { animation: q4-ring 1s var(--q-ease) 2; border-color: #f3d999; }
 .gt.q4 .gt-nd.k-v.anim-evolve::before { animation: q4-spin 1.3s var(--q-ease); }
 .gt.q4 .gt-nd.k-v.anim-evolve::after { animation: q4-spark-top 1.3s var(--q-ease); }
 .gt.q4 .gt-nd.k-v.anim-evolve .dm { animation: q4-fill 1s var(--q-ease); }
-@keyframes q4-spin { 0% { transform: translate(-50%, -50%) rotate(45deg) scale(1); } 50% { transform: translate(-50%, -50%) rotate(225deg) scale(1.28); border-color: #fff4d6; } 100% { transform: translate(-50%, -50%) rotate(405deg) scale(1); } }
+@keyframes q4-spin { 0% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.28); border-color: #fff4d6; } 100% { transform: translate(-50%, -50%) scale(1); } }
 @keyframes q4-spark-top { 40% { scale: 2.6; box-shadow: 0 0 16px rgba(255, 244, 214, .95); } }
 /* 5) bir yon secilince diger dal kisilir (cizgi + dugum yumusak soluklasir; dugum bir an kuculur) */
 .gt.q4 .gt-nd.anim-dim { animation: q4-dimin .6s var(--q-ease); }
@@ -340,17 +340,17 @@ html:not(.short) .gt.q4 .gt-barw.slim .gt-mk em { font-size: 11px; }
 /* 6) Confirm: bekleyen turuncu altina doner (halka + Mastery bar'da altin tarama); Reset / geri alma: turuncu soner */
 .gt.q4 .gt-nd.anim-confirm .fx { animation: q4-ring .8s var(--q-ease); border-color: #f3d999; }
 .gt.q4 .gt-nd.anim-confirm .dm { animation: q4-settle .7s var(--q-ease); }
-@keyframes q4-settle { 0% { box-shadow: 0 0 0 2px #080604, 0 0 16px 3px rgba(255, 155, 58, .9); } }
+@keyframes q4-settle { 0% { box-shadow: 0 0 16px 3px rgba(255, 155, 58, .9); } }
 .gt.q4 .gt-nd.anim-reset .dm { animation: q4-undo .5s var(--q-ease); }
-@keyframes q4-undo { 0% { box-shadow: 0 0 0 2px #080604, 0 0 14px 3px rgba(255, 155, 58, .8); scale: 1.18; } 100% { scale: 1; } }
+@keyframes q4-undo { 0% { box-shadow: 0 0 14px 3px rgba(255, 155, 58, .8); scale: 1.18; } 100% { scale: 1; } }
 .gt.q4.q4-confirm .gt-track::after { content: ''; position: absolute; top: -1px; bottom: -1px; left: 0; width: 30%; background: linear-gradient(90deg, transparent, rgba(255, 244, 214, .8), transparent); animation: q4-sweep .9s var(--q-ease); pointer-events: none; }
 @keyframes q4-sweep { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
 .gt.q4.q4-reset .gt-barw { animation: q4-soft .5s var(--q-ease); }
 @keyframes q4-soft { 0% { opacity: .5; } }
 /* 7) evolve dugumunun uzerine gelince kucuk animasyon (yer tutucu: donen elmas + kivilcimlar; gercek sanat sonra .evx icine gelir) */
 .gt.q4 .gt-nd.k-v::before { transition: transform .5s var(--q-ease), border-color .3s; }
-.gt.q4 .gt-nd.k-v:hover::before, .gt.q4 .gt-nd.k-v.pin::before { transform: translate(-50%, -50%) rotate(135deg) scale(1.14); border-color: rgba(255, 244, 214, .9); }
-.gt.q4 .gt-nd.k-v:hover .dm img, .gt.q4 .gt-nd.k-v.pin .dm img { transform: translate(-50%, -50%) rotate(-45deg) scale(1.1); filter: grayscale(.1) brightness(.9); }
+.gt.q4 .gt-nd.k-v:hover::before, .gt.q4 .gt-nd.k-v.pin::before { transform: translate(-50%, -50%) scale(1.12); border-color: rgba(255, 244, 214, .9); }
+.gt.q4 .gt-nd.k-v:hover .dm img, .gt.q4 .gt-nd.k-v.pin .dm img { transform: translate(-50%, -50%) scale(1.08); filter: grayscale(.1) brightness(.9); }
 .gt.q4 .gt-nd .evx { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
 .gt.q4 .gt-nd .evx i { position: absolute; left: 0; top: 0; width: 5px; height: 5px; background: #f3d999; box-shadow: 0 0 6px rgba(243, 217, 153, .85); opacity: 0; transform: translate(-50%, -50%) rotate(45deg); }
 .gt.q4 .gt-nd .evx i:nth-child(1) { --dx: 0px; --dy: calc(var(--s) * -.7); }
@@ -391,9 +391,6 @@ html.short .gt-body .gt-ulv { font-size: 8px; padding: 0 3px; }
 /* sutun basligi: skill plakasi yatay (ikon solda, ad + cipler ortada, puan sagda); renk/cerceve/kose elmaslari gear.css .gr-pl'den */
 .gt-body .gr-pl.hz { flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; padding: 4px 8px 4px 6px; box-sizing: border-box; overflow: hidden; --is: calc(100% - 4px); container-type: normal; }
 .gt-body .gr-pl.hz .pl-ico { width: auto; height: calc(100% - 4px); max-height: 64px; aspect-ratio: 1; }
-.gt-body .gr-pl.hz .pl-ico::before, .gt-body .gr-pl.hz .pl-ico::after { width: 7px; height: 7px; }
-.gt-body .gr-pl.hz .pl-ico::before { left: -4px; top: -4px; }
-.gt-body .gr-pl.hz .pl-ico::after { right: -4px; bottom: -4px; }
 .gt-body .gr-pl.hz .pl-bd { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .gt-body .gr-pl.hz .pl-hd { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .gt-body .gr-pl.hz .pl-nm { flex: 1 1 0; min-width: 0; min-height: 0; justify-content: flex-start; text-align: left; font-size: max(11px, calc(15 * var(--u))); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
@@ -401,12 +398,12 @@ html.short .gt-body .gt-ulv { font-size: 8px; padding: 0 3px; }
 .gt-body .gr-pl.hz .pl-tag { position: static; flex: none; transform: none; font-size: max(9px, calc(11 * var(--u))); padding: 0 .5em; line-height: 1.4; }
 /* Formation karti skill satirinin zemini + aciklama (uc satir; tamami ipucunda) */
 .gt-body .gr-pl.hz { background: linear-gradient(90deg, color-mix(in srgb, var(--ac) 12%, transparent), rgba(13, 9, 6, .9)); border: 1px solid color-mix(in srgb, var(--ac) 40%, transparent); }
-.gt-body .gr-pl.hz .pl-ds { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font: max(11px, calc(14 * var(--u))) / 1.2 var(--g-body); color: var(--g-dim); text-align: left; }
+/* açıklama biçimi: gear.css'te Hero skill listesiyle ORTAK kural (.pl-ds) */
 .gt-pts { flex: none; align-self: flex-end; text-align: right; font: 600 max(14px, calc(18 * var(--u))) var(--g-disp); color: var(--g-gold); line-height: 1; padding-bottom: 2px; }
 .gt-pts small { display: block; font: normal max(9px, calc(11 * var(--u))) var(--g-body); letter-spacing: .06em; text-transform: uppercase; color: var(--g-dim); text-align: right; }
 .gt-pts b.pd { color: #ffb35a; }
-html.short .gt-body .gr-pl.hz { gap: 5px; padding: 2px 4px; box-shadow: 0 0 0 2px rgba(8, 6, 4, .75); }
-html.short .gt-body .gr-pl.hz .pl-ico { height: calc(100% - 2px); }
+html.short .gt-body .gr-pl.hz { gap: 5px; padding: 1px 4px 1px 3px; box-shadow: 0 0 0 2px rgba(8, 6, 4, .75); }
+html.short .gt-body .gr-pl.hz .pl-ico { height: 100%; max-height: none; box-shadow: 0 0 0 1px rgba(8, 6, 4, .9); }
 html.short .gt-body .gr-pl.hz .pl-nm { font-size: 10px; letter-spacing: .02em; }
 html.short .gt-body .gr-pl.hz .pl-tag { display: none; }
 html.short .gt-pts { font-size: 13px; align-self: center; padding: 0; }

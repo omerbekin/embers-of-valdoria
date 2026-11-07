@@ -71,7 +71,7 @@ describe('veri ve formül', () => {
     expect(errs).toMatch(/implicit nope/);
   });
 
-  it('silah gücü = (base + perIlvl x ilvl) x tutuş x tip; çift el / yay tek elden güçlü, hançer zayıf, tılsım arada', () => {
+  it('silah gücü = (base + perIlvl x ilvl) x tutuş x tip; çift el / yay tek elden güçlü, hançer zayıf, tılsım tek el', () => {
     // Ömer 2026-10-27: kılıç düz (tip çarpanı 1); asa düz çift el (1,45), çift el yakın dövüş ayrıca x twoHandMelee.power (tests/weapon-types.test.ts)
     const sword = itemDef('arming_sword')!;
     for (const L of [1, 10, 30, 50]) expect(weaponPowerOf(sword, L)).toBe(snap(W.base + W.perIlvl * L));
@@ -88,8 +88,7 @@ describe('veri ve formül', () => {
     expect(bow).toBeGreaterThan(one);
     expect(staff).toBe(two); // x2: asa da güç taşır (çift el 1,45; yakın dövüş çarpanı YOK)
     expect(dagger).toBeLessThan(one);
-    expect(charm).toBeGreaterThan(one);
-    expect(charm).toBeLessThan(two);
+    expect(charm).toBe(one); // tılsım tek el (Ömer 2026-11-07)
     // nadirlik taban gücünü değiştirmez; kalkan / zırh güç taşımaz (x4)
     expect(weaponPowerOf(itemDef('emberbrand')!, L)).toBe(weaponPowerOf(itemDef('woodcutters_axe')!, L)); // Emberbrand balta tipinde (Ömer 2026-11-02)
     expect(weaponPowerOf(itemDef('emberbrand')!, L)).toBeGreaterThan(one);
@@ -105,7 +104,7 @@ describe('veri ve formül', () => {
     const dg = implicitDefOf(itemDef('rondel_dagger')!)!;
     expect(implicitValues(dg, 30)[0]!).toBeGreaterThan(implicitValues(dg, 1)[0]!);
     // Kalkan (Ömer 2026-10-18): taban blok şansı her kalkanda %15-20, item seviyesiyle DEĞİŞMEZ (items[].implicitBase)
-    const shields = ITEMS.items.filter((d) => d.slot === 'offhand');
+    const shields = ITEMS.items.filter((d) => d.family === 'shields');
     expect(shields.length).toBeGreaterThan(0);
     for (const d of shields) {
       const sh = implicitDefOf(d)!;
@@ -113,10 +112,11 @@ describe('veri ve formül', () => {
       expect(v, d.id).toBeGreaterThanOrEqual(15);
       expect(v, d.id).toBeLessThanOrEqual(20);
       expect(implicitValues(sh, 50, d)[0], d.id).toBe(v);
-      expect(instanceBaseLines(inst(d.id, 30)).block, d.id).toBe(v);
+      // alt türlü kalkan (Buckler / Tower, 2026-11-07): blok şansı iki parçalı örtük satırında yazar
+      if (sh.parts.length === 1) expect(instanceBaseLines(inst(d.id, 30)).block, d.id).toBe(v);
       expect(baseBlockChance(d, 40), d.id).toBe(v);
       expect(instanceBaseBlockChance(inst(d.id, 5)), d.id).toBe(v);
-      expect(instanceBaseLines(inst(d.id, 30)).implicit, d.id).toBeUndefined();
+      if (sh.parts.length === 1) expect(instanceBaseLines(inst(d.id, 30)).implicit, d.id).toBeUndefined();
     }
     // IP: taban değeri (güç + örtük - hız cezası) örneğin IP'sine eklenir
     const a = inst('woodcutters_axe', 30);
@@ -421,7 +421,7 @@ describe('çift el yakın dövüş tabanları: Greataxe, Greatsword, War Maul (�
       }
     const seen = new Map<string, Set<string>>();
     const party = [{ class: 'warrior' }, { class: 'defender' }, { class: 'paladin' }, { class: 'antimage' }];
-    for (let seed = 1; seed <= 4000 && NEW.some((id) => (seen.get(id)?.size ?? 0) < 4); seed++) {
+    for (let seed = 1; seed <= 20000 && NEW.some((id) => (seen.get(id)?.size ?? 0) < 4); seed++) {
       const res = rollLoot({ rng: new Rng(seed), kind: 'battle', chapter: 2, ilvl: 20, party }); // normal savaş: boss'un nadirlik tabanı Rare (TUR 1 madde 8)
       res.items.forEach((id, i) => {
         if (!(NEW as readonly string[]).includes(id)) return;

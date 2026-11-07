@@ -21,6 +21,7 @@ export const UNIT_FX_KEYS = [
   'retortStatus', 'critStatuses', 'killRush', 'lastStand', 'openerStatus', 'restBlessing', 'vengeance', 'tierStatus',
   'elemResist', 'thorns', 'frontRowDamage', 'backRowDamage', 'tierDamageTakenReduce', 'columnGuard', 'pierceBehind', 'steadyDamage',
   'healReceived', 'executeDamage', 'killMp', 'killHeal', 'armorShred', 'manaShield', 'cdChance', 'overkillSpill', 'bankedCoals', 'roadHound',
+  'dodgeCrit', 'escapeStatus', 'counterAttack', 'allyTurn', 'basicRepeat',
 ] as const satisfies readonly (keyof ItemEffects)[];
 type MissingKey = Exclude<keyof ItemEffects, (typeof UNIT_FX_KEYS)[number]>;
 const _allKeys: [MissingKey] extends [never] ? true : MissingKey = true;
@@ -32,13 +33,13 @@ void _allKeys;
  * Listede olmayan sayılar (şans, düz ek, "+%" yazılanlar) toplanır. Item affix'leri (loadout.ts), FARKLI ağaç düğümleri ve
  * item + ağaç kanalı (effNum / effMult) aynı tabloyu kullanır; bir düğümün rank'ları ise doğrusal toplanır (stackTimes). Nesne alanı: '<anahtar>.<alan>' (lowHpReduce.reduce); elemResist her element için 'less'.
  */
-export type StackForm = 'mult' | 'more' | 'less';
+export type StackForm = 'mult' | 'more' | 'less' | 'pool';
+/**
+ * Hasar havuzu (Ömer 2026-11-07, P1): vuruş hasarı yüzdeleri (ön / arka sıra, aura, sabit duruş, bitirici) biçimsiz = TOPLANIR; ham çarpan
+ * biçimli Giantslayer (tierDamageMult, 1 + v) 'pool': a + b - 1. Hepsi Battle.dealtDamage'de tek "+X% damage" havuzuna girer.
+ */
 export const STACK_FORM: Readonly<Record<string, StackForm>> = {
-  tierDamageMult: 'mult',
-  frontRowDamage: 'more',
-  backRowDamage: 'more',
-  auraDamage: 'more',
-  steadyDamage: 'more',
+  tierDamageMult: 'pool',
   summonPower: 'more',
   rageGain: 'more',
   damageTakenReduce: 'less',
@@ -47,12 +48,12 @@ export const STACK_FORM: Readonly<Record<string, StackForm>> = {
   columnGuard: 'less',
   mpCostReduce: 'less',
   'lowHpReduce.reduce': 'less',
-  'executeDamage.bonus': 'more',
   elemResist: 'less',
 };
 /** İki değeri biçimine göre birleştirir (biçimsizse toplar). */
 export function stackValues(form: StackForm | undefined, a: number, b: number): number {
   if (form === 'mult') return a * b;
+  if (form === 'pool') return a + b - 1;
   if (form === 'more') return (1 + a) * (1 + b) - 1;
   if (form === 'less') return 1 - (1 - a) * (1 - b);
   return a + b;
@@ -62,7 +63,7 @@ export function stackValues(form: StackForm | undefined, a: number, b: number): 
  * doğrusal; mult 1 + (v - 1) x n, more / less / biçimsiz v x n ("×1.06 per rank" 5 rank = ×1.30, "×0.96 per rank" 3 rank = ×0.88).
  */
 export function stackTimes(form: StackForm | undefined, v: number, n: number): number {
-  if (form === 'mult') return 1 + (v - 1) * n;
+  if (form === 'mult' || form === 'pool') return 1 + (v - 1) * n;
   return v * n;
 }
 /** Nesne biçimli etkinin sayısal alanının birleşme biçimi ('<anahtar>.<alan>' ya da tüm alanlar için '<anahtar>'). */
@@ -117,13 +118,22 @@ export function manaShieldNeed(c: FxHolder, hp: number, mp: number): number {
   return r;
 }
 
-/** Ham çarpan etkisi: kaynakların çarpımı; hiç kaynak yoksa undefined. */
+/**
+ * Hasar havuzu kuralı (Ömer 2026-11-07, P1; docs/design/combat.md > Hasar havuzu): yüzdelik hasar bonusları tek "+X% damage" havuzunda TOPLANIR,
+ * vuruşta bir kez çarpılır. Ayrı çarpan ("more") kalanlar: silah gücü, kritik, Evolve düğümleri, sınıf imza pasifi, Surge, hedefteki zayıflık
+ * durumları ve "less" (eksi) değerler. Düğüm kimliği '<class>:<anahtar>' (ör. 'warrior:1.v'; serbest kullanım '#free' eki alır).
+ */
+export const isEvolveNode = (node: string | undefined): boolean => !!node && /\.v(#.*)?$/.test(node);
+/** Bu ağaç güç değeri havuza mı girer (artı ve Evolve değil)? Eksi değer ("less") ve Evolve ayrı çarpan kalır. */
+export const isPoolDamage = (node: string | undefined, v: number): boolean => v > 0 && !isEvolveNode(node);
+
+/** Ham çarpan etkisi (1 = etkisiz): kaynaklar STACK_FORM'a göre ('pool': toplanır, a + b - 1; yoksa çarpılır); hiç kaynak yoksa undefined. */
 export function effMult(c: FxHolder, key: NumKey): number | undefined {
   const a = c.itemEffects?.[key] as number | undefined;
   const t = c.treeFx?.[key] as number | undefined;
   if (t === undefined) return a;
   if (a === undefined) return t;
-  return a * t;
+  return STACK_FORM[key] === 'pool' ? a + t - 1 : a * t;
 }
 
 /** Bayrak (kaynaklardan biri). */
@@ -204,7 +214,7 @@ export function mergeFxValue(key: string, prev: unknown, next: unknown): unknown
 /* ------------------------------------------------------------------ C1 koşullar ------------------------------------------------------------------ */
 
 /** Son eylem türü (Battle.lastKind; LastActionKind ile aynı değerler). */
-export type ActionKindLite = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'rod' | 'surge' | 'pass';
+export type ActionKindLite = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'urn' | 'rod' | 'surge' | 'command' | 'pass';
 
 /** Koşul değerlendiricilerinin savaştan okuduğu her şey (Battle uygular). Yeni koşul savaş verisi isterse buraya bir okuma eklenir. */
 export interface CondHost {
@@ -1293,7 +1303,15 @@ export interface TreeQuery {
 
 /** Hasar + durum grubunun birikimi (Battle.treeMods). */
 export interface TreeModAcc {
+  /**
+   * Toplam güç çarpanı = powerMore x (1 + powerAdd). Tek başına okuyan yollar (zemin, Doom, DoT, şifa, smite) bunu kullanır; vuruş yolu
+   * (Battle.dealtDamage) powerAdd'i hasar havuzuna katar, powerMore'u ayrı çarpar (Ömer 2026-11-07 P1, isPoolDamage).
+   */
   power: number;
+  /** Ayrı çarpan kısmı: Evolve düğümleri, "less" (eksi) kancalar, sınıf pasifi yamaları (Berserker maxBonus, Opportunist). */
+  powerMore: number;
+  /** Hasar havuzu kısmı ("+X% damage"): Evolve dışı ARTI powerMul kancaları (rank'lar ve düğümler toplanır). */
+  powerAdd: number;
   critBonus: number;
   ignoreDefense: number;
   lifesteal: number;
@@ -1315,4 +1333,4 @@ export interface TreeModAcc {
   permanent: boolean;
   nodes: string[];
 }
-export const newModAcc = (): TreeModAcc => ({ power: 1, critBonus: 0, ignoreDefense: 0, lifesteal: 0, lifestealMul: 1, guaranteedCrit: false, sureHit: false, noCrit: false, critDmg: 1, critMultAdd: 0, falloffAdd: 0, flat: 0, repeat: 0, drainMul: 1, drainAdd: 0, turns: 0, chance: 0, permanent: false, nodes: [] });
+export const newModAcc = (): TreeModAcc => ({ power: 1, powerMore: 1, powerAdd: 0, critBonus: 0, ignoreDefense: 0, lifesteal: 0, lifestealMul: 1, guaranteedCrit: false, sureHit: false, noCrit: false, critDmg: 1, critMultAdd: 0, falloffAdd: 0, flat: 0, repeat: 0, drainMul: 1, drainAdd: 0, turns: 0, chance: 0, permanent: false, nodes: [] });

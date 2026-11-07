@@ -3,7 +3,7 @@
  * gerçek donanımından birim uid'i ('party-i', i = planın heroOrder dizini) -> silah item'i { id, family, rarity }. BattleScene silah
  * görselini bundan seçer (`weaponFor`); boş yuvalı kahraman sınıfın varsayılan silahını taşır. Saf (Phaser yok).
  */
-import { itemDef, type ItemInstance } from '../progression/items';
+import { itemDef, offhandKindOf, type ItemInstance } from '../progression/items';
 import { POSES, poseClass, realPosesV2, weaponFor, type WeaponPick } from './poses';
 
 export interface WeaponItem {
@@ -13,7 +13,7 @@ export interface WeaponItem {
   /** Tutuş (items.json > grip): poz takımını seçer (tek el / çift el; yay ve tılsım şimdilik tek el takımı). */
   grip?: string;
   /** İkinci el yuvasındaki eşya (kalkan ya da ikinci hançer): ikinci el noktasında çizilir. */
-  offhand?: { id: string; family?: string; rarity?: string; shield?: boolean };
+  offhand?: { id: string; family?: string; rarity?: string; shield?: boolean; quiver?: boolean };
 }
 
 /** Item örneği -> silah bilgisi (örneğin kendi nadirliği varsa o, yoksa katalog nadirliği); silah değilse null. */
@@ -22,8 +22,21 @@ export function weaponItem(inst: ItemInstance | null | undefined): WeaponItem | 
   const d = itemDef(inst.id);
   if (!d || d.slot !== 'weapon') return null;
   const rarity = inst.rolls?.rarity ?? d.rarity;
-  return { id: d.id, ...(d.family ? { family: d.family } : {}), ...(rarity ? { rarity } : {}), ...(d.grip ? { grip: d.grip } : {}) };
+  // Çizimi henüz olmayan yeni silah aileleri (2026-11-07): yer tutucu olarak yakın ailenin çizimi + tutuşu (poz/silah çizimi ayrı sanat işi)
+  const stand = d.family ? POSE_STAND_IN[d.family] : undefined;
+  const grip = stand?.grip ?? d.grip;
+  return { id: d.id, ...(d.family ? { family: stand?.family ?? d.family } : {}), ...(rarity ? { rarity } : {}), ...(grip ? { grip } : {}) };
 }
+
+/** Yer tutucu çizim: görseli olmayan aile -> çizilecek aile + poz tutuşu (asa çizimi çift el takımıyla). Çizim gelince satır silinir. */
+export const POSE_STAND_IN: Readonly<Record<string, { family: string; grip?: string }>> = {
+  wands: { family: 'staves', grip: 'two' },
+  rods: { family: 'staves', grip: 'two' },
+  spears: { family: 'staves' },
+  hatchets: { family: 'axes' },
+  // tılsım item'de tek el oldu (Ömer 2026-11-07); poz çizimi kendi 'charm' tutuşunu korur
+  charms: { family: 'charms', grip: 'charm' },
+};
 
 /** İkinci el yuvasındaki item -> çizim bilgisi (kalkan: shield; ikinci hançer: silah ailesi); yoksa null. */
 export function offhandItem(inst: ItemInstance | null | undefined): WeaponItem['offhand'] | null {
@@ -31,7 +44,9 @@ export function offhandItem(inst: ItemInstance | null | undefined): WeaponItem['
   const d = itemDef(inst.id);
   if (!d) return null;
   const rarity = inst.rolls?.rarity ?? d.rarity;
-  return { id: d.id, ...(d.family ? { family: d.family } : {}), ...(rarity ? { rarity } : {}), ...(d.slot === 'offhand' ? { shield: true } : {}) };
+  // kalkan çizimi yalnız kalkan türünde; Sadak sırtta (quivers ailesi çizimi); kitap / fener / emanet / kürenin çizimi yok (sonra)
+  const kind = offhandKindOf(d)?.id;
+  return { id: d.id, ...(d.family ? { family: d.family } : {}), ...(rarity ? { rarity } : {}), ...(kind === 'shields' ? { shield: true } : {}), ...(kind === 'quivers' ? { quiver: true } : {}) };
 }
 
 /** heroOrder (motor sırası) + kahramanın silah yuvası -> { 'party-i': silah }. */

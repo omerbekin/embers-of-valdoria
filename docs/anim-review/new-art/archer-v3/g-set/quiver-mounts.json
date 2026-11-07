@@ -1,0 +1,85 @@
+{
+ "note": "x,y,angle in 584x454 canvas; same semantics as data/poses.json backMount (quiver grip point, angle clockwise deg). Initial values copied from old archer-v2 poses; tuned below.",
+ "poses": {
+  "idle1": {
+   "x": 219,
+   "y": 112,
+   "angle": -18
+  },
+  "ready": {
+   "x": 219,
+   "y": 112,
+   "angle": -18
+  },
+  "nock": {
+   "x": 206,
+   "y": 84,
+   "angle": -30
+  },
+  "draw_half": {
+   "x": 206,
+   "y": 84,
+   "angle": -30
+  },
+  "draw_full": {
+   "x": 206,
+   "y": 84,
+   "angle": -30
+  },
+  "release": {
+   "x": 206,
+   "y": 84,
+   "angle": -30
+  },
+  "reach_quiver": {
+   "x": 219,
+   "y": 112,
+   "angle": -18
+  },
+  "bow_shot": {
+   "x": 206,
+   "y": 84,
+   "angle": -30
+  },
+  "bow_sky": {
+   "x": 210,
+   "y": 143,
+   "angle": -55
+  },
+  "raise": {
+   "x": 205,
+   "y": 122,
+   "angle": -35
+  },
+  "step1": {
+   "x": 291,
+   "y": 90,
+   "angle": -18
+  },
+  "spin1a": {
+   "x": 322,
+   "y": 109,
+   "angle": -20
+  },
+  "spin1b": {
+   "x": 203,
+   "y": 120,
+   "angle": -20
+  },
+  "spin1c": {
+   "x": 217,
+   "y": 115,
+   "angle": -20
+  },
+  "guard1": {
+   "x": 225,
+   "y": 106,
+   "angle": -18
+  },
+  "channel": {
+   "x": 230,
+   "y": 111,
+   "angle": -18
+  }
+ }
+}

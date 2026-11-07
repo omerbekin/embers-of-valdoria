@@ -81,7 +81,7 @@
       {
         "at": 15,
         "name": "Crushing Weight",
-        "text": "Your skills deal 3% more damage to Stunned, Slowed or Staggered enemies.",
+        "text": "Your skills deal 3% increased damage to Stunned, Slowed or Staggered enemies.",
         "src": "B:V4:bar2",
         "fx": [
           {
@@ -413,7 +413,7 @@
     },
     "1.f2": {
       "name": "Notched Axe",
-      "text": "Double Strike's second hit has 4% more power per rank.",
+      "text": "Double Strike's second hit has 4% increased power per rank.",
       "src": "B:V1:1.f1",
       "fx": [
         {
@@ -447,7 +447,7 @@
     },
     "1.n0": {
       "name": "Gut Strike",
-      "text": "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for 8% more damage.",
+      "text": "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for 8% increased damage.",
       "src": "B:V1:1.n0",
       "fx": [
         {
@@ -523,7 +523,7 @@
     },
     "1.ma": {
       "name": "Hobble",
-      "text": "Double Strike on a Slowed target extends the Slow by 1 turn and deals 5% more damage.",
+      "text": "Double Strike on a Slowed target extends the Slow by 1 turn and deals 5% increased damage.",
       "src": "B:V4:1.mb",
       "fx": [
         {
@@ -607,7 +607,7 @@
     },
     "1.mb": {
       "name": "Butcher's Carve",
-      "text": "Each Double Strike hit deals 2% more damage for every turn of Wound left on the target.",
+      "text": "Each Double Strike hit deals 2% increased damage for every turn of Wound left on the target.",
       "src": "B:V1:1.ma",
       "fx": [
         {
@@ -694,7 +694,7 @@
     },
     "2.f3": {
       "name": "Hungry Arc",
-      "text": "Whirlwind has 6% more power per rank while you are below 50% HP.",
+      "text": "Whirlwind has 6% increased power per rank while you are below 50% HP.",
       "src": "A:V3:2.f3",
       "fx": [
         {
@@ -729,7 +729,7 @@
     },
     "2.r": {
       "name": "Red Arc",
-      "text": "Whirlwind has 2% more power per rank against Wounded enemies.",
+      "text": "Whirlwind has 2% increased power per rank against Wounded enemies.",
       "src": "A:V1:2.f2",
       "fx": [
         {
@@ -813,7 +813,7 @@
     },
     "2.fb": {
       "name": "Reaper's Spin",
-      "text": "Whirlwind deals 15% more damage to Wounded enemies, but no damage at all to enemies that are not Wounded.",
+      "text": "Whirlwind deals 15% increased damage to Wounded enemies, but no damage at all to enemies that are not Wounded.",
       "src": "A:V1:2.fa",
       "fx": [
         {
@@ -842,7 +842,7 @@
     },
     "2.mb": {
       "name": "Crimson Wheel",
-      "text": "Whirlwind deals 4% more damage to all enemies it hits for each Wounded enemy among its targets.",
+      "text": "Whirlwind deals 4% increased damage to all enemies it hits for each Wounded enemy among its targets.",
       "src": "A:V1:2.ma",
       "fx": [
         {
@@ -878,7 +878,7 @@
     },
     "3.f1": {
       "name": "Rolling Start",
-      "text": "Charge has 6% more power per rank against a target that has not acted yet this battle.",
+      "text": "Charge has 6% increased power per rank against a target that has not acted yet this battle.",
       "src": "A:V2:3.f2",
       "fx": [
         {
@@ -896,7 +896,7 @@
     },
     "3.f2": {
       "name": "Vengeful Run",
-      "text": "Charge has 6% more power per rank against the enemy that hit you last.",
+      "text": "Charge has 6% increased power per rank against the enemy that hit you last.",
       "src": "A:V3:3.r",
       "fx": [
         {
@@ -992,7 +992,7 @@
     },
     "3.ma": {
       "name": "Payback",
-      "text": "Charge on the enemy that hit you last deals 20% more damage and heals you for half of it.",
+      "text": "Charge on the enemy that hit you last deals 20% increased damage and heals you for half of it.",
       "src": "A:V3:3.ma",
       "fx": [
         {

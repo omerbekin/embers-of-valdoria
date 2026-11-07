@@ -11,7 +11,7 @@ import { instanceColor, itemDef, type ItemInstance } from '../progression';
 import { iconUrl } from './dom-icons';
 import { itemIcon } from './inventory';
 import { itemTipNodes } from './item-tip';
-import { heroTipExtra, openGear, type GearApi, type GearExt, type GearSource } from './gear-screen';
+import { equippedTipNodes, heroTipExtra, openGear, type GearApi, type GearExt, type GearSource } from './gear-screen';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -113,7 +113,7 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
       if (!key.startsWith('rw:')) return null;
       const t = h.tiles()[Number(key.slice(3))];
       if (!t) return [];
-      if (t.inst) return itemTipNodes(t.inst, undefined, heroTipExtra(src.heroes(), t.inst, true));
+      if (t.inst) return [...itemTipNodes(t.inst, undefined, heroTipExtra(src.heroes(), t.inst, true)), ...equippedTipNodes(src.heroes(), t.inst)];
       const out: HTMLElement[] = [el('b', 'it-name', t.title), el('div', 'it-sub', t.text)];
       if (t.blocked) out.push(el('div', 'it-no', t.blocked));
       return out;

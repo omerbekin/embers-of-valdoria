@@ -125,9 +125,10 @@
       "powerPerStack": 0.4,
       "damageType": "magic",
       "element": "dark",
-      "expireMult": 1
+      "expireMult": 1,
+      "bonusPerExtraTurn": 0.25
     },
-    "text": "At 3 Omens, Doom strikes. Each new Omen resets the 4-turn timer; when it runs out, the Omens burst into Doom. Misfortune: crit chance -3% per Omen"
+    "text": "At 3 Omens, Doom strikes. Each new Omen resets the 4-turn timer; when it runs out, the Omens burst into Doom. Effects that would lengthen an Omen add +25% Doom damage per turn instead. Misfortune: crit chance -3% per Omen"
   },
   "wither": {
     "name": "Withering",

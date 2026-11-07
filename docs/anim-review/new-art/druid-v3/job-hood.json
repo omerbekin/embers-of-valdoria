@@ -1,0 +1,21 @@
+{
+ "name": "druid-v3-hood",
+ "outDir": "docs/anim-review/new-art/druid-v3",
+ "rules": "docs/anim-review/new-art/druid-v3/PROMPT.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle-b-hood",
+   "file": "idle-b-hood.png",
+   "refs": [
+    "docs/anim-review/new-art/druid-v3/idle-b.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/druid-v3/idle-b.png"
+   ],
+   "task": "Image 1 = the chosen Druid (stone-moss sage). Redraw the SAME character, identical pose, scale, canvas 566x452, feet, face, long grey beard, moss shoulders, robe, belt, pouch, amulet and palette, but WITH A HOOD on the head (leaf circlet may show under or over the hood). Hood of coarse wool/felt in stone-moss grey-brown tones, with a few moss patches; it must NOT look like the old green hooded Archer (no clean forest-green ranger hood). Hands empty, no staff, strictly medieval, real transparent background. Save at 566x452.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the hoodless original.\n- Same character: face, grey beard, moss shoulders, robe, palette, amulet, pose, scale, feet, canvas.\n- Head now wears a hood of coarse wool/felt in stone-moss tones, not ranger-green.\n- Hands empty, no staff.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  }
+ ]
+}

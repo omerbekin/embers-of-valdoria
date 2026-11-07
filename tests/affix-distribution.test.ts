@@ -14,9 +14,9 @@ const TABLE: Record<SlotId, Record<AffixTier, string[]>> = {
     A: ['a_primary', 'a_gdmg', 'a_allelem', 'a_keen', 'a_potency', 'a_summon', 'a_pierce', 'a_overkill'],
   },
   offhand: {
-    C: ['c_armor', 'c_hpregen', 'c_shield', 'c_block', ...RES],
-    B: ['b_marmor', 'b_resil', 'b_thorns', 'b_startshield'],
-    A: ['a_gdef', 'a_hppct', 'a_auradef', 'a_support', 'a_column', 'a_immunity'],
+    C: ['c_armor', 'c_hpregen', 'c_shield', 'c_block', 'c_gravewick', ...RES],
+    B: ['b_marmor', 'b_resil', 'b_thorns', 'b_startshield', 'b_sparearrow', 'b_longfletching', 'b_weightedodds'], // b_sparearrow: yalnız Sadak (pairsOnly bow, Ömer 2026-11-07 C1)
+    A: ['a_gdef', 'a_hppct', 'a_auradef', 'a_support', 'a_column', 'a_immunity', 'a_illportent'],
   },
   helm: {
     C: ['c_armor', 'c_hp', 'c_mp', 'c_healrecv', ...RES],
@@ -65,7 +65,8 @@ describe('D1 + D3: yuva tablosu', () => {
   for (const slot of SLOT_IDS) {
     for (const tier of ['C', 'B', 'A'] as const) {
       it(`${slot} ${tier} havuzu tablodaki gibi`, () => {
-        expect([...tierPool(tier, slot)].sort()).toEqual([...TABLE[slot][tier]].sort());
+        // kindOnly affix'ler (Spare Arrow) yalnız o türdeki ikinci elin havuzunda: tablo iki havuzun birleşimi
+        expect([...new Set([...tierPool(tier, slot), ...(slot === 'offhand' ? ['quivers', 'orbs'].flatMap((family) => tierPool(tier, slot, undefined, { slot: 'offhand', family })) : [])])].sort()).toEqual([...TABLE[slot][tier]].sort());
       });
     }
   }

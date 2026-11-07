@@ -25,7 +25,7 @@ import {
   type CampaignState,
   type KV,
 } from '../src/campaign';
-import { ITEMS, affixAllowed, canEquip, emptyEquipment, gripOf, isTwoHandMelee, itemDef, itemSubtitle, makeItem, migrateRingSlot, rollDropBase, rollItem, rollLoot, rollRareDrop, SLOT_IDS, tierPool, type ItemInstance } from '../src/progression';
+import { ITEMS, affixAllowed, canEquip, canEquipIn, emptyEquipment, gripOf, isTwoHandMelee, itemDef, itemSubtitle, makeItem, migrateRingSlot, rollDropBase, rollItem, rollLoot, rollRareDrop, SLOT_IDS, tierPool, type ItemInstance } from '../src/progression';
 import { newRun } from '../src/endless/run';
 import { parseRun } from '../src/endless/save';
 import { heroItemCount, idleHeroLine } from '../src/ui/gear-hover';
@@ -342,7 +342,7 @@ describe('çift el topuzlar', () => {
     let one = 0;
     for (let i = 0; i < 60000; i++) {
       const d = rollDropBase(rng, party, 10)!.def;
-      if (d.slot === 'weapon' && canEquip('warrior', d)) {
+      if (d.slot === 'weapon' && canEquipIn('warrior', d, 'weapon')) { // ana el (2026-11-07: Warrior hançer / el baltasını yalnız ikinci elde takar)
         if (d.grip === 'two') two++;
         else one++;
       }

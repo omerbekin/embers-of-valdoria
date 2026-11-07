@@ -52,10 +52,10 @@ export function mountPoses(): SectionApi {
   const ids = poseClassIds();
   // ana el görselleri (kalkan yalnızca ikinci el), ailenin tutuşuyla (büyük balta / gürz / asa çift el takımını çizer)
   const weapons = allWeapons()
-    .filter((w) => POSES.weapons[w.family]?.hold !== 'offhand')
+    .filter((w) => POSES.weapons[w.family]?.hold !== 'offhand' && POSES.weapons[w.family]?.hold !== 'back')
     .map((w): WeaponPick => {
       const hold = POSES.weapons[w.family]?.hold;
-      return hold && hold !== 'one' && hold !== 'offhand' ? { ...w, grip: hold } : w;
+      return hold && hold !== 'one' && hold !== 'offhand' && hold !== 'back' ? { ...w, grip: hold } : w;
     });
   let weapon: WeaponPick = weapons[0]!;
   let glow = '';

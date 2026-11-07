@@ -84,7 +84,7 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 .sbc-foe.mem .sbc-face .cr svg { width: 80%; height: 80%; }
 
 .sbc-acts { display: flex; justify-content: flex-end; align-items: center; }
-.sbc-acts .el-btn { min-height: 44px; font-size: max(14px, calc(22 * var(--u))); padding-left: max(18px, calc(36 * var(--u))); padding-right: max(18px, calc(36 * var(--u))); }
+.sbc-acts .el-btn { min-height: calc(var(--btn-dlg-h) * 1.15); min-width: calc(var(--btn-dlg-w) * 1.1); font-size: calc(var(--btn-dlg-fs) * 1.15); padding-left: max(18px, calc(36 * var(--u))); padding-right: max(18px, calc(36 * var(--u))); }
 
 /* alttaki "Then" satırı ve düğmenin yerine geçen düz not (ember elması yok) */
 .sbc-then { margin: 0; font: max(12px, calc(19 * var(--u))) var(--g-body); color: var(--g-dim); line-height: 1.25; }
@@ -105,7 +105,9 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 /* kısa ekran (telefon yatay): sahneye sığsın; bilgi satırı gizlenir */
 html.short .sbc-card { padding: 8px 12px; gap: 5px; }
 html.short .sbc-acts .el-btn { padding-left: 16px; padding-right: 16px; letter-spacing: 0.06em; }
-html.short .sbc-card:not(.nofoes) .sbc-info, html.short .sbc-card:not(.nofoes) .sbc-then:not(.sbc-first) { display: none; }
+html.short .sbc-card:not(.nofoes) .sbc-then:not(.sbc-first) { display: none; }
+/* lore cümlesi telefonda da kalır (Ömer 2026-11-07): 2 satır, küçük punto */
+html.short .sbc-card .sbc-info { -webkit-line-clamp: 2; font-size: 12px; line-height: 1.2; }
 /* portresiz kart (savaşsız düğüm): lore satırı kısa ekranda da görünür, iki satırla sınırlı */
 html.short .sbc-card.nofoes .sbc-info { -webkit-line-clamp: 2; font-size: 12px; }
 
@@ -148,3 +150,33 @@ html.short .sbc-card .tc-svc i { font-size: 11px; }
 html.short .sbc-card .tc-svc img { width: 18px; height: 18px; }
 .sbc-card .tc-svc > button { padding-left: max(4px, calc(8 * var(--u))); padding-right: max(3px, calc(6 * var(--u))); gap: max(4px, calc(7 * var(--u))); }
 .sbc-card .tc-svc b { letter-spacing: 0.03em; text-overflow: clip; }
+
+/* Anchored card bölümleri (Ömer 2026-11-07, taslak node-views A): başlık hapı, bölüm başlığı + satırlar, dalış basamakları. Ödül yok: yalnız bilinen (tür, derinlik, risk). */
+.sbc-pill { margin-left: auto; flex: none; display: inline-flex; align-items: center; padding: 0 0.7em; height: 1.7em; font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.16em; text-transform: uppercase; color: var(--g-gold); background: rgba(12, 9, 6, 0.9); border: 1px solid var(--g-line2); white-space: nowrap; }
+.sbc-pill.em { color: #1a0f06; background: linear-gradient(180deg, var(--g-ember2), var(--g-ember)); border-color: transparent; }
+.sbc-blk { display: flex; flex-direction: column; gap: max(3px, calc(6 * var(--u))); }
+.sbc-h { display: flex; gap: 8px; align-items: center; padding-bottom: 4px; border-bottom: 1px solid var(--g-line); font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.22em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); }
+.sbc-h .r { margin-left: auto; letter-spacing: 0.06em; color: var(--g-dim); font-weight: 400; }
+.sbc-r { display: flex; gap: max(8px, calc(14 * var(--u))); align-items: center; padding: max(1px, calc(3 * var(--u))) 0; min-width: 0; }
+.sbc-r b { display: block; font: 600 max(11px, calc(18 * var(--u))) var(--g-disp); letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-gold); line-height: 1.1; }
+.sbc-r b + span { display: block; font: 400 max(12px, calc(19 * var(--u))) var(--g-body); color: var(--g-text); line-height: 1.2; }
+.sbc-r.bad b { color: #e8806a; }
+.sbc-rt { flex: none; display: grid; place-items: center; width: max(26px, calc(46 * var(--u))); height: max(26px, calc(46 * var(--u))); background: #120c08; border: 1px solid var(--g-line2); position: relative; }
+.sbc-rt::before { content: ''; position: absolute; inset: 12%; border-radius: 50%; background: #140e09; border: 1px solid rgba(217, 178, 106, 0.7); }
+.sbc-rt img { position: relative; width: 68%; height: 68%; object-fit: contain; }
+.sbc-ladder { display: flex; gap: max(4px, calc(8 * var(--u))); }
+.sbc-step { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: max(3px, calc(6 * var(--u))) 2px; border: 1px solid var(--g-line); text-align: center; opacity: 0.75; }
+.sbc-step.done { opacity: 0.6; }
+.sbc-step.now { border-color: var(--g-ember2); opacity: 1; }
+.sbc-step.now .sbc-rt { border-color: var(--g-ember2); box-shadow: 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.6); }
+.sbc-step b { font: 600 max(10px, calc(17 * var(--u))) var(--g-disp); letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-gold); line-height: 1.1; }
+.sbc-step span:not(.sbc-rt) { font: max(10px, calc(17 * var(--u))) var(--g-body); color: var(--g-dim); }
+html.short .sbc-pill { font-size: 9px; }
+html.short .sbc-h { padding-bottom: 1px; font-size: 9px; }
+html.short .sbc-rt { width: 24px; height: 24px; }
+html.short .sbc-r { padding: 0; }
+html.short .sbc-r b + span { font-size: 11px; }
+html.short .sbc-step { padding: 2px; gap: 0; }
+html.short .sbc-step .sbc-rt { display: none; }
+html.short .sbc-blk { gap: 2px; }
+html.short .sbc-b-carried { display: none; } /* telefonda sığsın: taşınan nimet sayısı kısa ekranda gizli */

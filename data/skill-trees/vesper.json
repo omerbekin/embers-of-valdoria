@@ -1,5 +1,5 @@
 {
-  "_not": "Ömer onayladı 2026-10-31, sayılar provizyon (sim yok). Vesper ağacı mevcut ağaçların yapısında (_rules.json rowShape); tüm düğümler çalışır. docs/design/classes/vesper.md.",
+  "_not": "Ömer onayladı 2026-10-31, sayılar kesin (Ömer 2026-11-08: provizyon kaldırıldı). Vesper ağacı mevcut ağaçların yapısında (_rules.json rowShape); tüm düğümler çalışır. docs/design/classes/vesper.md.",
   "class": "vesper",
   "version": 2,
   "picked": {
@@ -47,7 +47,7 @@
       {
         "at": 5,
         "name": "First Toll",
-        "text": "Your skills deal 4% more damage.",
+        "text": "Your skills deal 4% increased damage.",
         "src": "D:draft 2026-10-28",
         "fx": [
           {
@@ -111,7 +111,7 @@
       {
         "at": 25,
         "name": "Bell of Ages",
-        "text": "Your skills deal 6% more damage.",
+        "text": "Your skills deal 6% increased damage.",
         "src": "D:draft 2026-10-28",
         "fx": [
           {
@@ -447,7 +447,7 @@
     },
     "1.n0": {
       "name": "Funeral Toll",
-      "text": "Toll deals 25% more damage to enemies below half health.",
+      "text": "Toll deals 25% increased damage to enemies below half health.",
       "src": "D:draft 2026-10-28",
       "fx": [
         {
@@ -479,7 +479,7 @@
     },
     "1.ea": {
       "name": "Knell",
-      "text": "Toll deals 15% more damage to the enemy with the lowest health.",
+      "text": "Toll deals 15% increased damage to the enemy with the lowest health.",
       "src": "D:draft 2026-10-28",
       "fx": [
         {
@@ -705,7 +705,7 @@
     },
     "2.eb": {
       "name": "Single Bolt",
-      "text": "Thunderpeal hits only the centre cell, but deals 60% more damage.",
+      "text": "Thunderpeal hits only the centre cell, but deals 60% increased damage.",
       "src": "D:draft 2026-10-28",
       "fx": [
         {
@@ -926,7 +926,7 @@
     },
     "3.ma": {
       "name": "Toll for One",
-      "text": "Cracked Bell deals 30% more damage to elites and bosses.",
+      "text": "Cracked Bell deals 30% increased damage to elites and bosses.",
       "src": "D:draft 2026-10-28",
       "fx": [
         {
@@ -1134,7 +1134,7 @@
     },
     "4.d3": {
       "name": "Last Peal",
-      "text": "Great Bell deals 30% more damage to enemies below half health.",
+      "text": "Great Bell deals 30% increased damage to enemies below half health.",
       "src": "D:draft 2026-10-28",
       "fx": [
         {

@@ -1,13 +1,11 @@
 import Phaser from 'phaser';
-import { content } from '../engine';
-import { CONFIG, activeHeroes, hotspotOffered, idleStartFrame, hotspotRect, leaderOf, nextStep, partySpots, smithHotspot, townCover, townRecruitOffer, townScene, type CampaignState, type Cover, type MapNode, type TownHotspot } from '../campaign';
-import { animKey, characterTexture } from './assets';
-import { H, W, crown } from './campaign-ui';
+import { CONFIG, activeHeroes, hotspotOffered, hotspotRect, leaderOf, nextStep, smithHotspot, townCover, townRecruitOffer, townScene, type CampaignState, type Cover, type MapNode, type TownHotspot } from '../campaign';
+import { H, W } from './campaign-ui';
 import { checkpoint, setState } from './campaign-session';
 import { openBlacksmith } from '../ui/blacksmith-screen';
 import { openInn } from '../ui/inn-screen';
 import { worldSound } from '../ui/ui-sound';
-import { EL, elBody, elGlow, elText, fadeLine, vGradient } from './elegant-ui';
+import { EL, elBody, elButton, elGlow, elText, fadeLine, vGradient } from './elegant-ui';
 import { stageView } from './stage';
 import { growTouchZone } from './touch-hit';
 import { ensureIcon } from './icons';
@@ -181,7 +179,9 @@ export class TownScreen {
       plate.lineStyle(1.5, EL.ON_N, 0.45).strokeRoundedRect(W / 2 - txt.width / 2 - pad, by - txt.height / 2 - 6, txt.width + pad * 2, txt.height + 12, (txt.height + 12) / 2);
       this.root.add([plate, txt]);
     }
-    if (def) for (const h of def.hotspots) if (hotspotOffered(this.node, h, this.hooks.state())) this.addHotspot(h, cover); // dinlenmiş hikâyenin NPC'si yok
+    // Hikâye sahnesi şu an ekranın üstünde oynuyorsa hikâye NPC'sinin yeri çizilmez (Ömer 2026-11-07: telefonda yer panelin arkasında kalıyordu)
+    const storyOpen = nextStep(this.hooks.state()).kind === 'story';
+    if (def) for (const h of def.hotspots) if (hotspotOffered(this.node, h, this.hooks.state()) && !(storyOpen && h.action === 'story')) this.addHotspot(h, cover); // dinlenmiş hikâyenin NPC'si yok
     // Demirci (TUR 1 madde 7): yeri campaign.json > blacksmith.hotspots'ta (kasabanın kendi verisi değil)
     const smith = smithHotspot(this.node);
     if (def && smith && smith.rect[2] > smith.rect[0]) this.addHotspot(smith, cover);
@@ -253,7 +253,16 @@ export class TownScreen {
     const minX = stageView.left + pw / 2 + 12;
     const maxX = stageView.right - pw / 2 - 12;
     const lx = Phaser.Math.Clamp(r.x + r.w / 2, minX, maxX);
-    const ly = Math.max(150 + ph / 2, h.shape === 'arch' ? r.y - pad - ph / 2 - 10 : r.y + ph / 2 + 4); // kemerde etiket kapının üstünde
+    let ly = Math.max(150 + ph / 2, h.shape === 'arch' ? r.y - pad - ph / 2 - 10 : r.y + ph / 2 + 4); // kemerde etiket kapının üstünde
+    // Etiketler birbirine ve takımın durduğu alana binmez (Ömer 2026-11-07: Hearthstead telefonda Barracks / Old Ketil): önce takımın üstüne çıkar, sonra komşu plakadan kaçar
+    const party = this.partyBox();
+    const hits = (y: number): boolean => this.labelZones.some((o) => Math.abs(o.x - lx) < (o.w + pw) / 2 + 6 && Math.abs(o.y - y) < (o.h + ph) / 2 + 6);
+    const onParty = (y: number): boolean => !!party && Math.abs(lx - party.x) < (pw + party.w) / 2 && Math.abs(y - party.y) < (ph + party.h) / 2;
+    if (onParty(ly)) ly = Math.max(150 + ph / 2, (party?.y ?? ly) - (party!.h + ph) / 2 - 4);
+    for (let k = 0; k < 8 && hits(ly); k++) {
+      const up = ly - (ph + 8);
+      ly = up >= 150 + ph / 2 && !hits(up) ? up : ly + ph + 8;
+    }
     const plate = s.add.graphics();
     const drawPlate = (on: boolean): void => {
       plate.clear();
@@ -297,44 +306,35 @@ export class TownScreen {
     if (!reducedMotion()) s.tweens.add({ targets: c, scale: bd.pulseScale, duration: bd.pulseMs, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 
-  /** Takım: alttaki açık alanda ayakta (gerçek sprite ya da yer tutucu), adı ayaklarının altında, liderin üstünde taç. */
+  /** Party düğmesinin ekrandaki yeri (etiketler buna binmesin): merkez + boyut, ya da takımsızsa null. */
+  private partyBox(): { x: number; y: number; w: number; h: number } | null {
+    if (!activeHeroes(this.hooks.state()).length) return null;
+    const b = this.partyBtnRect();
+    return { x: W / 2, y: b.y, w: b.w, h: b.h };
+  }
+
+  private partyBtnRect(): { y: number; w: number; h: number } {
+    const phone = this.hooks.compact();
+    return { y: H * (phone ? 0.9 : 0.93), w: phone ? 300 : 260, h: phone ? 64 : 56 };
+  }
+
+  /**
+   * Takım kasabada ayakta durmaz (Ömer 2026-11-07): alt ortada "Party" düğmesi; dokununca takım penceresi (Gear, lider sekmesi) açılır.
+   * Düğme yalnızca alt ortadaki boş zemini kaplar; yer etiketleri partyBox() ile ondan kaçar.
+   */
   private addParty(): void {
-    const s = this.scene;
     const st = this.hooks.state();
     const team = activeHeroes(st);
-    const lead = leaderOf(st);
-    const cfg = CONFIG.townScreen;
-    const spots = partySpots(team.length, { cx: W / 2, feetY: H * (this.hooks.compact() ? cfg.feetYPhone : cfg.feetY), gap: cfg.gap });
-    team.forEach((hero, i) => {
-      const def = content.classes[hero.class];
-      if (!def) return;
-      const p = spots[i]!;
-      const id = `hero:${hero.id}`;
-      const shadow = s.add.ellipse(p.x, p.y - 4, cfg.heroHeight * 0.5, 26, 0x000000, 0.45);
-      const ring = s.add.ellipse(p.x, p.y - 4, cfg.heroHeight * 0.62, 34).setStrokeStyle(2, EL.ON_N, 0.85).setFillStyle(EL.EMBER2, 0.12).setAlpha(0);
-      this.root.add([shadow, ring]);
-      const tex = characterTexture(s, def.spriteId, def.color);
-      const frame = tex.real && s.textures.get(tex.key).has('0') ? '0' : undefined;
-      const spr = s.add.sprite(p.x, p.y, tex.key, frame).setOrigin(0.5, 1);
-      spr.setScale(cfg.heroHeight / spr.height);
-      const anim = tex.real ? animKey(def.spriteId, 'idle', s) : null;
-      if (anim && s.anims.exists(anim) && !reducedMotion()) spr.play({ key: anim, startFrame: idleStartFrame(i, s.anims.get(anim).getTotalFrames()) }); // tek kareli görselde 0 (0.7.7 Ashford donması)
-      this.root.add(spr);
-      const size = this.hooks.compact() ? 28 : 19;
-      const name = elText(s, p.x, p.y + 10, def.name, size, EL.TXT, { em: 0.1 }).setOrigin(0.5, 0);
-      this.root.add(name);
-      if (lead?.id === hero.id) this.root.add(crown(s, p.x, p.y - cfg.heroHeight - 14, 1.1));
-      const zone = s.add.zone(p.x - cfg.gap * 0.42, p.y - cfg.heroHeight, cfg.gap * 0.84, cfg.heroHeight + 10 + size * 1.4).setOrigin(0, 0).setInteractive({ useHandCursor: true });
-      this.root.add(zone);
-      this.painters.set(id, (on) => {
-        ring.setAlpha(on ? 1 : 0);
-        if (on) spr.setTint(0xfff3dc);
-        else spr.clearTint();
-        name.setColor(on ? EL.ON : EL.TXT);
-        elGlow(name, on);
-      });
-      this.bindTap(zone, id, () => this.hooks.hero(hero.id));
-    });
+    if (!team.length) return;
+    const r = this.partyBtnRect();
+    const open = (): void => {
+      if (this.busy()) return;
+      this.select(null);
+      this.hooks.hero((leaderOf(st) ?? team[0]!).id);
+    };
+    const btn = elButton(this.scene, 'Party', open, { kind: 'secondary', w: r.w, h: r.h, size: this.hooks.compact() ? 30 : 22, isBusy: () => this.busy(), touch: true });
+    btn.root.setPosition(W / 2, r.y);
+    this.root.add(btn.root);
   }
 
   /** Fare: üstüne gelince vurgu, tıklama eylem. Dokunmatik: ilk dokunuş seçer, aynı yere ikinci dokunuş eylem. */

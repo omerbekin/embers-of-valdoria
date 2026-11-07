@@ -59,7 +59,7 @@ describe('Archer ağacı fx (Faz 2b)', () => {
     expect(procs(tr.b, 'archer:1.fa')).toBe(1);
   });
 
-  it('Killing Shot (ult u1): canı %50 altındaki düşmana Aimed Shot x1,40, üstündekine çarpan yok', () => {
+  it('Killing Shot (ult u1): canı %50 altındaki düşmana Aimed Shot +%40 (hasar havuzu; Hunter Mark ayrı çarpan, Ömer 2026-11-07), üstündekine ek yok', () => {
     const run = (withTree: boolean, low: boolean) => {
       const b = make({ 0: 'archer' }, { 0: 'warrior' }, withTree ? { 0: { tree: tree(['4.u1'], 5) } } : {});
       if (low) E0(b).hp = Math.floor(E0(b).maxHp * 0.4);

@@ -92,8 +92,12 @@ function shatter(c: VfxCtx, k: VfxKit, x: number, y: number, n = 5): void {
   }
 }
 
-/** Bedenden sökülen mavi mana: damlalar fışkırır, sonra eğriyle `to()` noktasına çekilir; yolda mora döner. */
+/** Bu kullanımda hedef ıskaladı / kaçındı / blokladı mı (mana çekilmez, yalnız saldırı animasyonu oynar; Ömer 2026-11-07). */
+const avoidedBy = (c: VfxCtx, v: CombatantView): boolean => (c.usage?.events ?? []).some((e) => (e.type === 'miss' || e.type === 'dodge' || e.type === 'block') && e.target === v.combatant.uid);
+
+/** Bedenden sökülen mavi mana: damlalar fışkırır, sonra eğriyle `to()` noktasına çekilir; yolda mora döner. Iskalanan hedeften mana çekilmez. */
 function ripMana(c: VfxCtx, k: VfxKit, from: CombatantView, to: () => Pt, o: { n: number; dur: number; onAbsorb?: () => void; down?: boolean }): Promise<void> {
+  if (avoidedBy(c, from)) return Promise.resolve();
   const p = k.spot(from);
   const drops = Array.from({ length: o.n }, () => {
     const s = k.v2Sprite(c, 'bluedrop', ACCENT, p.x, p.y, k.rnd(22, 36), k.DEPTH + 34).setAlpha(0);
@@ -170,8 +174,11 @@ const manasteal: V2Vfx = async (c, k) => {
   const dir = t0.container.x >= c.actor.container.x ? 1 : -1;
   // yerinden atış (skills.json > viewMotion 'ranged'): koşmaz; küçük gümüş hançer elinden hedefe uçar, çarpınca mor boşluk efekti başlar
   await Promise.all(c.targets.map((t) => k.throwDagger(c, t)));
+  // Iskalanan / kaçınılan / bloklanan hedefte kesik, rün ve mana sökümü yok: yalnız hançer atılır
+  const hit = c.targets.filter((t) => !avoidedBy(c, t));
+  if (!hit.length) return;
   c.sfx('manaSizzle');
-  for (const t of c.targets) {
+  for (const t of hit) {
     const p = k.spot(t);
     void k.arcSlash(c.scene, p.x, p.y, { dir, colors: ['#ffffff', '#e3ccff', '#b872ff', '#9b59d0'], from: -1.1, to: 1.0, r: 110, dur: 150, size: 18 });
     void k.arcSlash(c.scene, p.x - dir * 8, p.y + 6, { dir, colors: ['#7d3fb0', '#5a2a9c'], from: -1.0, to: 0.9, r: 96, dur: 170, size: 10 });
@@ -192,7 +199,7 @@ const manasteal: V2Vfx = async (c, k) => {
   // geri dönüş + mana sökümü (arka planda)
   void k.wait(c.scene, k.slow(90)).then(() => {
     c.sfx('energySlurp');
-    for (const t of c.targets)
+    for (const t of hit)
       void ripMana(c, k, t, () => k.spot(c.actor), { n: 10, dur: 700, onAbsorb: () => k.burst(c.scene, c.actor.container.x, c.actor.container.y - c.actor.h * 0.5, { colors: VIOLET, n: 3, speed: [40, 160], gravity: 0, life: [200, 360], size: [4, 8] }) }).then(() => {
         const a = k.spot(c.actor);
         const g = glow(c, k, a.x, a.y, c.actor.w * 1.2, 0x9b59d0, 0.6, k.DEPTH + 20);
@@ -277,6 +284,7 @@ const drainfield: V2Vfx = async (c, k) => {
   let release: () => void = () => undefined;
   const firstSink = new Promise<void>((r) => (release = r));
   for (const t of c.targets) {
+    if (avoidedBy(c, t)) continue;
     const fp = k.feet(t);
     void ripMana(c, k, t, () => ({ x: fp.x, y: fp.y }), { n: 8, dur: 620, down: true, onAbsorb: () => {
       release();
@@ -286,7 +294,7 @@ const drainfield: V2Vfx = async (c, k) => {
     const fx = t.sprite.postFX?.addGlow(k.color('#b872ff'), 8, 0, false, 0.1, 16);
     if (fx) c.scene.tweens.add({ targets: fx, outerStrength: 0, duration: k.slow(1100), delay: k.slow(300), onComplete: () => t.sprite.postFX?.remove(fx) });
   }
-  if (!c.targets.length) release();
+  if (!c.targets.some((t) => !avoidedBy(c, t))) release();
   // kuyruk: tabletler kırılır, mühür söner
   void k.wait(c.scene, k.slow(720)).then(() => {
     for (const t of tabs.list) {

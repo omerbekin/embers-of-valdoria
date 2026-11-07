@@ -29,7 +29,7 @@ import {
   type CampaignState,
 } from '../campaign';
 import { affixDef, affixLines, instanceColor, instanceSubtitle, itemDef, type ItemInstance, type SlotId } from '../progression';
-import { campaignGearSource, openGear, type GearApi, type GearExt } from './gear-screen';
+import { campaignGearSource, equippedTipNodes, openGear, type GearApi, type GearExt } from './gear-screen';
 import { itemCell } from './inventory';
 import { itemTipNodes } from './item-tip';
 import { uiSound, worldSound } from './ui-sound';
@@ -418,7 +418,7 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     tipNodes: (key) => {
       if (!key.startsWith('smith:')) return null;
       const f = findItem(get(), key.slice(6));
-      return f ? itemTipNodes(f.inst, f.hero?.class) : [];
+      return f ? [...itemTipNodes(f.inst, f.hero?.class), ...(api?.hero() ? equippedTipNodes(get().roster, f.inst, api.hero()) : [])] : [];
     },
     tipActions: (key) => {
       if (!key.startsWith('smith:')) return null;

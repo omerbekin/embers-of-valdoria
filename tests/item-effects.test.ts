@@ -5,6 +5,7 @@ import { activeHeroes, addItem, debugTeleport, equipItem, latestSave, memoryKV, 
 import { ITEMS, effectLine, emptyEquipment, equipmentEffects, itemDef, itemLines, loadoutSetup, validateItems } from '../src/progression';
 import { newRun, wavePlan } from '../src/endless';
 import { itemStatLines } from '../src/endless/format';
+import { noPace } from './pace-helpers';
 
 
 // Item etkileri: eski Epic etkilerinin motor kancaları (genel; veride artık kullanılmıyor, Ömer 2026-10-11) + Legendary etkileri, metin, yığılmama, Endless yolu, kayıt.
@@ -13,7 +14,7 @@ const f = content.formulas;
 const cells = (u: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');
 const make = (party: Record<number, string>, enemies: Record<number, string>, units: Record<number, UnitSetup> = {}, enemyUnits: Record<number, UnitSetup> = {}, seed = 11): Battle => {
   const teams: Teams = { party: cells(party), enemies: cells(enemies), units: { party: units, enemies: enemyUnits } };
-  return new Battle(content.battleSetup('random-battle', seed, 'turns', teams, false));
+  return new Battle(noPace(content.battleSetup('random-battle', seed, 'turns', teams, false)));
 };
 const fx = (e: ItemEffects): UnitSetup => ({ itemEffects: e });
 const unit = (b: Battle, uid: string) => b.combatants.find((c) => c.uid === uid)!;

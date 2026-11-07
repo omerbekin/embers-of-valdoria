@@ -50,7 +50,7 @@ describe('Anti-Mage ağacı (Faz 2b)', () => {
       const pg = mpGain(cast(plain, 'mana_burn'), P0(plain).uid);
       const tg = mpGain(cast(tree, 'mana_burn'), P0(tree).uid);
       if (!pg) continue;
-      expect(pg).toBe(5);
+      expect(pg).toBe(4); // Ömer 2026-11-08: Mana Steal yakımı 10 -> 8, %50'si 4
       const per = (A.nodes['1.f1']!.fx![0] as { v: number }).v;
       expect(tg).toBe(Math.floor(pg * 2 * (0.5 + 3 * per) + 1e-9));
       return;

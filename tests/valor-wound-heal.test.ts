@@ -42,7 +42,7 @@ describe('Valor ile savaş dışı yara silme', () => {
     expect(COST).toBeLessThan(R.revive.outsideCost);
   });
 
-  it('bedeli harcar, 1 yara siler, can oranı aynı kalır; son yara silinince alan kalkar', () => {
+  it('bedeli harcar, 1 yara siler, can oranına woundHeal.hpRatio (%25) eklenir; son yara silinince alan kalkar', () => {
     const b = base();
     const id = activeHeroes(b)[0]!.id;
     const s = { ...withHero(b, id, { wounds: 2, hpRatio: 0.6 }), valor: 8 };
@@ -50,9 +50,11 @@ describe('Valor ile savaş dışı yara silme', () => {
     const h = t.roster.find((x) => x.id === id)!;
     expect(t.valor).toBe(8 - COST);
     expect(h.wounds).toBe(1);
-    expect(h.hpRatio).toBe(0.6);
+    expect(R.woundHeal!.hpRatio).toBe(0.25);
+    expect(h.hpRatio).toBe(0.85); // Ömer 2026-11-07: Heal wound %25 can da verir
     const u = healWoundWithValor(t, id);
     expect(u.roster.find((x) => x.id === id)!.wounds).toBeUndefined();
+    expect(u.roster.find((x) => x.id === id)!.hpRatio).toBe(1); // tam canı geçmez
     expect(u.valor).toBe(8 - 2 * COST);
     expect(s.roster.find((x) => x.id === id)!.wounds).toBe(2); // girdi değişmez
   });

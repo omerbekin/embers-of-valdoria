@@ -1,0 +1,51 @@
+{
+ "name": "archer-v3-abc",
+ "outDir": "docs/anim-review/new-art/archer-v3",
+ "rules": "docs/anim-review/new-art/archer-v3/PROMPT.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle-a",
+   "file": "idle-a.png",
+   "refs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "task": "Redraw the ARCHER body, idle pose, as a HEROIC marksman with the spirit of the old Archer: sharp gaze, expressive characterful face, hunter/tracker/master-archer bearing, rich but clean detail (leather vambrace, archer's glove, bracers). NOT a peasant, worker or plain tunic. Image 1 = pose/scale/framing/foot-position reference (keep EXACT same pose, proportions, canvas 584x454, feet same place, same size). Image 2 = the Druid; the Archer must clearly NOT resemble it. Hard rules: NO hood, head uncovered (cap/hat/braid ok); NO quiver, arrows or fletching on body; no green hooded ranger look; empty hands (fists as in ref), no weapons; strictly medieval; real transparent background. Save at 584x454. CONCEPT: Royal huntsman / forest officer: noble, dark crimson-and-ivory doublet with gold trim, short cape over one shoulder (not green), engraved leather vambraces, fine gloves, neat beard, keen eyes.",
+   "checkRules": "- Image 1 is the new draw; others are refs (old Archer, Druid).\n- NOT peasant-like: heroic, sharp-eyed, characterful, rich clean detail, master-archer bearing.\n- No hood (head uncovered; cap/hat ok); no quiver/arrows/fletching on body.\n- Clearly different from Druid and not a green hooded ranger.\n- Same pose, scale, framing, foot position as old Archer ref; canvas ~584x454.\n- Hands empty, no weapons.\n- Real transparent/flat background, no checkerboard, no halo, no shadow, no noise.\n- Strictly medieval, one bold readable character, clean."
+  },
+  {
+   "id": "idle-b",
+   "file": "idle-b.png",
+   "refs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "task": "Redraw the ARCHER body, idle pose, as a HEROIC marksman with the spirit of the old Archer: sharp gaze, expressive characterful face, hunter/tracker/master-archer bearing, rich but clean detail (leather vambrace, archer's glove, bracers). NOT a peasant, worker or plain tunic. Image 1 = pose/scale/framing/foot-position reference (keep EXACT same pose, proportions, canvas 584x454, feet same place, same size). Image 2 = the Druid; the Archer must clearly NOT resemble it. Hard rules: NO hood, head uncovered (cap/hat/braid ok); NO quiver, arrows or fletching on body; no green hooded ranger look; empty hands (fists as in ref), no weapons; strictly medieval; real transparent background. Save at 584x454. CONCEPT: Border scout / mercenary archer: weathered mismatched armor (worn brigandine, steel pauldron on one shoulder, chainmail sleeves), scar across the face, wind-torn dark grey-blue scarf at neck (no hood), rugged and battle-hardened.",
+   "checkRules": "- Image 1 is the new draw; others are refs (old Archer, Druid).\n- NOT peasant-like: heroic, sharp-eyed, characterful, rich clean detail, master-archer bearing.\n- No hood (head uncovered; cap/hat ok); no quiver/arrows/fletching on body.\n- Clearly different from Druid and not a green hooded ranger.\n- Same pose, scale, framing, foot position as old Archer ref; canvas ~584x454.\n- Hands empty, no weapons.\n- Real transparent/flat background, no checkerboard, no halo, no shadow, no noise.\n- Strictly medieval, one bold readable character, clean."
+  },
+  {
+   "id": "idle-c",
+   "file": "idle-c.png",
+   "refs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "checkRefs": [
+    "assets/poses/archer-v2/idle1.png",
+    "assets/poses/druid-v2/idle1.png"
+   ],
+   "task": "Redraw the ARCHER body, idle pose, as a HEROIC marksman with the spirit of the old Archer: sharp gaze, expressive characterful face, hunter/tracker/master-archer bearing, rich but clean detail (leather vambrace, archer's glove, bracers). NOT a peasant, worker or plain tunic. Image 1 = pose/scale/framing/foot-position reference (keep EXACT same pose, proportions, canvas 584x454, feet same place, same size). Image 2 = the Druid; the Archer must clearly NOT resemble it. Hard rules: NO hood, head uncovered (cap/hat/braid ok); NO quiver, arrows or fletching on body; no green hooded ranger look; empty hands (fists as in ref), no weapons; strictly medieval; real transparent background. Save at 584x454. CONCEPT: Master bowyer / tournament archer: elegant, slim, teal-and-cream fitted jerkin with embroidery, short braided hair or a feathered flat cap, polished leather bracers and glove, confident smirk.",
+   "checkRules": "- Image 1 is the new draw; others are refs (old Archer, Druid).\n- NOT peasant-like: heroic, sharp-eyed, characterful, rich clean detail, master-archer bearing.\n- No hood (head uncovered; cap/hat ok); no quiver/arrows/fletching on body.\n- Clearly different from Druid and not a green hooded ranger.\n- Same pose, scale, framing, foot position as old Archer ref; canvas ~584x454.\n- Hands empty, no weapons.\n- Real transparent/flat background, no checkerboard, no halo, no shadow, no noise.\n- Strictly medieval, one bold readable character, clean."
+  }
+ ]
+}

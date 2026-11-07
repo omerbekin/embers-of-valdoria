@@ -6,11 +6,12 @@ import type { BattleMode, Combatant, Side, Teams } from '../src/engine';
 import { RULES_TESTS } from '../src/game/rules-test-battle';
 import { buildMechanics } from '../src/wiki/catalog';
 import enc from '../data/campaign/hollow-crown-encounters.json';
+import { noPace } from './pace-helpers';
 
 const cells = (at: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => at[i] ?? '');
 const MODES: BattleMode[] = ['turns', 'test'];
 function make(rules: Teams['rules'], party: Record<number, string>, enemies: Record<number, string>, mode: BattleMode = 'test', seed = 5): Battle {
-  const b = new Battle(content.battleSetup('random-battle', seed, mode, { party: cells(party), enemies: cells(enemies), rules }, false));
+  const b = new Battle(noPace(content.battleSetup('random-battle', seed, mode, { party: cells(party), enemies: cells(enemies), rules }, false)));
   b.debug.dodge = 'never';
   b.debug.crit = 'never';
   return b;
@@ -100,10 +101,13 @@ describe.each(MODES)('%s modu', (mode) => {
     const s = at(b, 'enemy', 6);
     const h = at(b, 'party', 0);
     turnOf(b, s.uid);
-    expect(b.useSkill(s.uid, 'mock', h.uid).ok).toBe(true);
-    expect(has(h, 'staggered')).toBe(true);
+    const mock = b.useSkill(s.uid, 'mock', h.uid);
+    expect(mock.ok).toBe(true);
+    // olaydan: hedef hemen sıradaysa Staggered o turda harcanır (sıra seed + tur zarına bağlı)
+    expect(mock.ok && mock.events.some((e) => e.type === 'status' && e.target === h.uid && e.status === 'staggered')).toBe(true);
     s.cooldowns = {};
     if (mode === 'turns') turnOf(b, s.uid);
+    s.mp = s.maxMp; // 0.9.11 mana (mpPerInt 0,2): Mock + Chant aynı havuzdan çıkmaz; senaryo Chant'ın etkisini ölçer
     expect(b.useSkill(s.uid, 'chant').ok).toBe(true);
     expect(has(at(b, 'enemy', 0), 'haste')).toBe(true);
   });

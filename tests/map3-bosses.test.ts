@@ -350,7 +350,8 @@ describe('E4 The Long Sermon', () => {
       expect(h.sermon).toBeUndefined();
       expect(goal).toBeGreaterThan(0);
       expect(b.sermonDone('enemy')).toBe(false);
-      if (mode === 'turns') expect(h.statuses.some((s) => s.kind === 'staggered')).toBe(true);
+      // olaydan: boss hemen sıradaysa Staggered o turda harcanır (sıra seed + tur başına hız zarına bağlı)
+      if (mode === 'turns') expect(b.log.some((e) => e.type === 'status' && e.target === h.uid && e.status === 'staggered')).toBe(true);
     });
   }
 

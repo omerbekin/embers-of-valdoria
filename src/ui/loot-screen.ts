@@ -8,7 +8,8 @@
  */
 import { TEMPER_STONE_ICON } from './temper-stone';
 import './gear.css';
-import { acknowledgeLoot, stashLoot, takeLeftover, type CampaignState } from '../campaign';
+import { acknowledgeLoot, stashLoot, supplyDef, takeLeftover, type CampaignState } from '../campaign';
+import { supplyIconSvg } from './supply-icons';
 import { BAG_SIZE, instanceColor, itemDef, xpToNext, type ItemInstance } from '../progression';
 import { avatarUrl } from './character-panel';
 import { motion, ms } from './motion';
@@ -16,7 +17,7 @@ import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
 import { itemCell } from './inventory';
 import { itemTipNodes } from './item-tip';
-import { confirmIn, heroTipExtra, openGear, type GearApi, type GearExt, type GearSource } from './gear-screen';
+import { confirmIn, equippedTipNodes, heroTipExtra, openGear, type GearApi, type GearExt, type GearSource } from './gear-screen';
 import { uiSound, worldSound } from './ui-sound';
 import { dueScreenLessons } from '../tutorial/lessons';
 import { seenLessons } from '../tutorial/store';
@@ -122,6 +123,20 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
   const idxOf = (key: string): number => Number(key.replace('loot:', ''));
   const instAt = (i: number): ItemInstance | undefined => lootItems(o.get())[i];
   const bagFull = (): boolean => o.get().inventory.length >= BAG_SIZE;
+  /** Torbaya yeni giren item'i görünür yapar (telefonda 4 satır görünür; yeni item sıralamada aşağıda kalıp "gelmedi" gibi duruyordu): kaydırır ve kısa süre parlatır. */
+  const reveal = (uids: Set<string>): void => {
+    const root2 = overlayEl;
+    if (!root2 || !uids.size) return;
+    let first: HTMLElement | null = null;
+    for (const uid of uids) {
+      const cell = root2.querySelector<HTMLElement>(`.gr-bag [data-tip="bag:${uid}"]`);
+      if (!cell) continue;
+      cell.classList.add('gr-new');
+      first ??= cell;
+      window.setTimeout(() => cell.classList.remove('gr-new'), 1600);
+    }
+    first?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
 
   /** Bir item'i torbaya alır; (isteğe bağlı) kahramana kuşandırır. Hata: kısa uyarı. */
   const take = (index: number, equip?: { heroId: string; slot?: Parameters<GearApi['equip']>[2] }): boolean => {
@@ -140,9 +155,11 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       if (added) api?.equip(equip.heroId, added.uid, equip.slot);
     }
     api?.rerender();
+    reveal(new Set(o.get().inventory.map((i) => i.uid).filter((u) => !before.has(u))));
     return true;
   };
   const takeAll = (): void => {
+    const before = new Set(o.get().inventory.map((i) => i.uid));
     let n = 0;
     while ((o.get().pendingLoot?.left?.length ?? 0) > 0 && !bagFull()) {
       o.set(takeLeftover(o.get(), 0));
@@ -154,6 +171,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     }
     if ((o.get().pendingLoot?.left?.length ?? 0) > 0) api?.flash('The bag is full. Make room first: drag an item to the trash.');
     api?.rerender();
+    reveal(new Set(o.get().inventory.map((i) => i.uid).filter((u) => !before.has(u))));
   };
 
   // ---- XP satırları ----
@@ -326,6 +344,18 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       gain2.append(st);
       side.append(gain2);
     }
+    for (const [sid, n] of Object.entries(drop?.supplies ?? {})) {
+      // Malzeme (Ömer 2026-11-07): torbaya değil Supplies şeridine girer
+      const sd = supplyDef(sid);
+      if (!sd) continue;
+      const row = el('div', 'gr-loot-gold');
+      const ic = el('span', 'gr-supply-ic');
+      ic.innerHTML = supplyIconSvg(sid);
+      row.append(ic, document.createTextNode(`+${n} ${sd.name}`));
+      const gain3 = el('div', 'gr-loot-gain');
+      gain3.append(row);
+      side.append(gain3);
+    }
     if (xpBox) side.append(xpBox);
     const sec = el('div', 'gr-sec', `Items ${items.length}`);
     side.append(sec);
@@ -343,7 +373,16 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       medal.classList.add('gr-loot-sq');
       const lab = el('span', 'rb-label', d.name);
       lab.style.color = instanceColor(inst);
-      tile.append(medal, lab);
+      const row = el('span', 'gr-loot-row');
+      row.append(medal, lab);
+      tile.append(row);
+      // Fare üstüne gelince kart addan aşağı açılır (envanter item ipucuyla aynı kart); dokunmatikte tek dokunuş ipucunu sabitler
+      tile.dataset['inlineTip'] = '1';
+      const more = el('span', 'gr-loot-more');
+      const inner = el('span', 'gr-loot-more-in');
+      inner.append(...itemTipNodes(inst, undefined, heroTipExtra(o.gear.heroes(), inst, true)));
+      more.append(inner);
+      tile.append(more);
       const ri = rare.indexOf(inst.id);
       if (ri >= 0) {
         rare.splice(ri, 1);
@@ -383,7 +422,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     tipNodes: (key) => {
       if (!key.startsWith('loot:')) return null;
       const inst = instAt(idxOf(key));
-      return inst ? itemTipNodes(inst, undefined, heroTipExtra(o.gear.heroes(), inst, true)) : [];
+      return inst ? [...itemTipNodes(inst, undefined, heroTipExtra(o.gear.heroes(), inst, true)), ...equippedTipNodes(o.gear.heroes(), inst)] : [];
     },
     tipActions: (key) => {
       if (!key.startsWith('loot:')) return null;

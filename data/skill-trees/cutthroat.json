@@ -237,7 +237,7 @@
     },
     "0.ea": {
       "name": "Killer's Eye",
-      "text": "Your critical hits on Opportunist targets deal 15% more damage.",
+      "text": "Your critical hits on Opportunist targets deal 15% increased damage.",
       "src": "B:V3:0.ea",
       "fx": [
         {
@@ -299,7 +299,7 @@
     },
     "0.fa": {
       "name": "Glass Knife",
-      "text": "Your critical hits on Opportunist targets deal 30% more damage, but non-critical hits on them deal 15% less damage.",
+      "text": "Your critical hits on Opportunist targets deal 30% increased damage, but non-critical hits on them deal 15% less damage.",
       "src": "B:V3:0.fa",
       "fx": [
         {
@@ -503,7 +503,7 @@
     },
     "1.f1": {
       "name": "Balanced Blade",
-      "text": "Venom Edge has 6% more power per rank against Wounded targets.",
+      "text": "Venom Edge has 6% increased power per rank against Wounded targets.",
       "src": "B:V4:1.f1",
       "fx": [
         {
@@ -568,7 +568,7 @@
     },
     "1.r": {
       "name": "Honed Point",
-      "text": "Venom Edge has 3% more power per rank against targets below 50% HP.",
+      "text": "Venom Edge has 3% increased power per rank against targets below 50% HP.",
       "src": "B:V3:1.f1",
       "fx": [
         {
@@ -586,7 +586,7 @@
     },
     "1.ea": {
       "name": "Finishing Cut",
-      "text": "Venom Edge deals 40% more damage against targets below 30% HP.",
+      "text": "Venom Edge deals 40% increased damage against targets below 30% HP.",
       "src": "B:V3:1.ea",
       "fx": [
         {
@@ -650,7 +650,7 @@
     },
     "1.fa": {
       "name": "Butcher's Haste",
-      "text": "Venom Edge deals 35% more damage against targets below 50% HP, but 25% less against targets above it.",
+      "text": "Venom Edge deals 35% increased damage against targets below 50% HP, but 25% less against targets above it.",
       "src": "B:V3:1.fa",
       "fx": [
         {
@@ -774,7 +774,7 @@
     },
     "2.f2": {
       "name": "Scissor Bite",
-      "text": "Saltire Cut's second center hit has 6% more power per rank.",
+      "text": "Saltire Cut's second center hit has 6% increased power per rank.",
       "src": "B:V3:2.f3",
       "fx": [
         {
@@ -792,7 +792,7 @@
     },
     "2.f3": {
       "name": "Keen Pair",
-      "text": "Saltire Cut has 6% more power per rank against targets below 50% HP.",
+      "text": "Saltire Cut has 6% increased power per rank against targets below 50% HP.",
       "src": "B:V3:2.f1",
       "fx": [
         {
@@ -849,7 +849,7 @@
     },
     "2.ea": {
       "name": "Double Lunge",
-      "text": "Saltire Cut's center hits have 20% more power against targets below 50% HP.",
+      "text": "Saltire Cut's center hits have 20% increased power against targets below 50% HP.",
       "src": "B:V3:2.ea",
       "fx": [
         {
@@ -904,7 +904,7 @@
     },
     "2.fa": {
       "name": "Heavy Cross",
-      "text": "Saltire Cut's center hits deal 30% more damage, but its diagonal hits deal 50% less damage.",
+      "text": "Saltire Cut's center hits deal 30% increased damage, but its diagonal hits deal 50% less damage.",
       "src": "B:V3:2.fa",
       "fx": [
         {
@@ -1319,7 +1319,7 @@
     },
     "4.r2": {
       "name": "First Blood",
-      "text": "Backstab has 20% more power against targets at full HP.",
+      "text": "Backstab has 20% increased power against targets at full HP.",
       "src": "B:V3:4.l2",
       "fx": [
         {

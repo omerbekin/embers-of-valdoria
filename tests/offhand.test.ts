@@ -42,7 +42,7 @@ describe('grip data', () => {
     for (const id of ['dane_axe', 'avengers_maul', 'ash_staff', 'oak_staff', 'bone_staff', 'rune_staff', 'staff_of_the_last_ember']) expect(g(id), id).toBe('two');
     for (const id of ['woodcutters_axe', 'arming_sword', 'emberbrand', 'flanged_mace', 'morning_star', 'rondel_dagger', 'twin_stilettos', 'serrated_edge']) expect(g(id), id).toBe('one');
     for (const id of ['short_bow', 'hunting_bow', 'yew_longbow', 'windrunner_longbow']) expect(g(id), id).toBe('bow');
-    for (const id of ['worn_deck', 'loaded_bones', 'hex_doll', 'gamblers_last_coin', 'bones_of_the_quarry']) expect(g(id), id).toBe('charm');
+    for (const id of ['worn_deck', 'loaded_bones', 'hex_doll', 'gamblers_last_coin', 'bones_of_the_quarry']) expect(g(id), id).toBe('one'); // tılsım tek el (Ömer 2026-11-07)
     expect(itemDef('oak_shield')!.slot).toBe('offhand');
     expect(itemDef('oathkeepers_bulwark')!.slot).toBe('offhand');
     expect(itemSubtitle(itemDef('dane_axe')!)).toContain('Two-handed');
@@ -65,7 +65,7 @@ describe('grip data', () => {
 });
 
 describe('off-hand rules', () => {
-  it('shields: defender / paladin / warrior; daggers in the off-hand: cutthroat / antimage', () => {
+  it('shields: defender / paladin / warrior; daggers in the off-hand: cutthroat / antimage / warrior (off-hand only)', () => {
     const shield = itemDef('oak_shield')!;
     for (const c of ['defender', 'paladin', 'warrior']) expect(canEquip(c, shield), c).toBe(true);
     for (const c of ['mage', 'archer', 'cutthroat']) expect(canEquip(c, shield), c).toBe(false);
@@ -74,7 +74,7 @@ describe('off-hand rules', () => {
     expect(fitsSlot(itemDef('arming_sword')!, 'offhand')).toBe(false);
     expect(fitsSlot(itemDef('flanged_mace')!, 'offhand')).toBe(false);
     expect(isPlanError(planEquip('cutthroat', eq({ weapon: it_('misericorde') }), it_('rondel_dagger'), 'offhand'))).toBe(false);
-    expect(isPlanError(planEquip('warrior', eq({ weapon: it_('arming_sword') }), it_('rondel_dagger'), 'offhand'))).toBe(true);
+    expect(isPlanError(planEquip('warrior', eq({ weapon: it_('arming_sword') }), it_('rondel_dagger'), 'offhand'))).toBe(false); // Ömer 2026-11-07: Warrior hançeri yalnız ikinci elde
   });
 
   it('one-handed or empty main hand allows the off-hand; two-handed / bow / charm block it', () => {

@@ -501,7 +501,7 @@ describe('primary satırı (V1): sayılar formulas.json verisinden', () => {
   it('her statın kısa satırı veriden gelir; primary olmayanda yok', () => {
     const b = f.primaryBonus;
     const st = classes[0]!.stats;
-    const want = { str: `${Math.round(b.str.resilienceChance * 100)}%`, dex: `${Number((b.dex.hunterMarkMult * 100).toFixed(2))}% more`, int: `${Math.round(b.int.manaEchoChance * 100)}%`, luck: `${Math.round(b.luck.surviveChance * 100)}%` } as const;
+    const want = { str: `${Math.round(b.str.resilienceChance * 100)}%`, dex: `${Number((b.dex.hunterMarkMult * 100).toFixed(2))}% more damage`, int: `${Math.round(b.int.manaEchoChance * 100)}%`, luck: `${Math.round(b.luck.surviveChance * 100)}%` } as const;
     for (const k of ATTRS) {
       const on = describeStat(k, { ...st, primary: k, primaryActive: true }, f);
       expect(on.primaryLine).toContain(want[k]);

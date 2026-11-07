@@ -31,6 +31,8 @@
 .ec-heal { font: max(13px, calc(19 * var(--u))) var(--g-body); color: var(--g-ember2); }
 .ec-act { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: calc(6 * var(--u)); }
 .ec-act .gr-btn { min-height: 44px; }
+/* Rest / Take back / Join company ve Done (Ömer 2026-11-03): diyalog eylemi boyu (jeton; telefonda 30 px) */
+.ec-act .gr-btn, .ec-foot .gr-btn { box-sizing: border-box; min-height: calc(var(--btn-dlg-h) / var(--btn-k)); min-width: calc(var(--btn-dlg-w) / var(--btn-k)); font-size: calc(var(--btn-dlg-fs) / var(--btn-k)) !important; }
 .ec-hp { position: relative; height: max(8px, calc(13 * var(--u))); background: rgba(8,6,4,.8); border: 1px solid var(--g-line2); overflow: hidden; }
 .ec-hp i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(180deg, #6fae56, #3f7a35); }
 .ec-hp i.ghost { background: linear-gradient(180deg, rgba(159,216,138,.55), rgba(159,216,138,.25)); }
@@ -225,3 +227,28 @@ html.short .ec-pfull .ec-heros { grid-template-columns: repeat(2, minmax(0, 1fr)
 html.short .ec-fire img { width: 28px; height: 28px; }
 html.short .ec-pfull .ec-chapel { padding: 6px 10px; gap: 8px; }
 html.short .ec-pfull .ec-prev { padding: 5px 10px; font-size: 12px; }
+
+/* Kamp sonuç sahnesi (Ömer 2026-11-07): seçimden sonra pencere kapanmaz; satırlar sırayla belirir, bitince Done açılır (camp-screen.ts > renderResult) */
+.ec-res { display: flex; flex-direction: column; gap: calc(14 * var(--u)); min-height: 0; }
+.ec-res-title { font: 600 max(16px, calc(34 * var(--u))) var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: var(--g-gold); text-shadow: 0 0 18px rgba(240, 140, 40, .55); animation: ec-res-in .5s cubic-bezier(.33, 1, .68, 1) both; }
+.ec-res .dt { animation: ec-res-in .5s cubic-bezier(.33, 1, .68, 1) .1s both; }
+.ec-res .dt .gp-ico.big { animation: ec-res-shine 1.2s ease-out .2s both; }
+.ec-res .dt-rows li { opacity: 0; animation: ec-res-in .5s cubic-bezier(.33, 1, .68, 1) forwards; animation-delay: calc(.4s + var(--i, 1) * .17s); }
+.ec-res .dt-rows li .to, .ec-res .dt-il .to { animation: ec-res-flash 1.1s ease-out calc(.6s + var(--i, 1) * .17s) both; }
+.ec-res .dt-foot { animation: ec-res-in .5s ease .9s both; }
+.ec-res-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(430 * var(--u))), 1fr)); gap: calc(10 * var(--u)); }
+.ec-res-hero { display: flex; align-items: center; gap: calc(14 * var(--u)); padding: calc(10 * var(--u)) calc(14 * var(--u)); background: rgba(8, 6, 4, .5); border: 1px solid var(--g-line2); opacity: 0; animation: ec-res-in .5s cubic-bezier(.33, 1, .68, 1) forwards; animation-delay: calc(.2s + var(--i, 1) * .17s); }
+.ec-res-hero .ec-ht { flex: 1; min-width: 0; }
+.ec-res-hero .ec-hp i:last-child { transition: width 1s cubic-bezier(.33, 1, .68, 1); }
+.ec-res-hero .ec-hm { font: max(13px, calc(21 * var(--u))) var(--g-body); color: #9fd88a; }
+.ec-res-done:disabled { opacity: 0; pointer-events: none; }
+.ec-res-done.ready { animation: ec-res-in .45s cubic-bezier(.33, 1, .68, 1) both; }
+@keyframes ec-res-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes ec-res-shine { 0% { box-shadow: 0 0 0 rgba(240, 180, 80, 0); } 40% { box-shadow: 0 0 28px rgba(240, 180, 80, .8); } 100% { box-shadow: 0 0 0 rgba(240, 180, 80, 0); } }
+@keyframes ec-res-flash { 0% { text-shadow: 0 0 0 rgba(159, 216, 138, 0); } 35% { text-shadow: 0 0 14px rgba(159, 216, 138, .95); } 100% { text-shadow: 0 0 0 rgba(159, 216, 138, 0); } }
+html.reduced-motion .ec-res, html.reduced-motion .ec-res * { animation: none !important; opacity: 1 !important; transition: none !important; }
+html.short .ec-res { gap: 6px; }
+html.short .ec-res-title { font-size: 14px; }
+html.short .ec-res-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; }
+html.short .ec-res-hero { padding: 4px 8px; gap: 8px; }
+html.short .ec-res-hero .ec-hm { font-size: 11px; }

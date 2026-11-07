@@ -60,7 +60,7 @@ describe('set verisi ve katalog', () => {
   it('parçalar geçerli, ana katalogda ve bayrak kapalı', () => {
     expect(validateItems()).toEqual([]);
     expect(RARE.setsEnabled).toBe(false);
-    expect(SET_ITEMS).toHaveLength(ASH.slots.length + WAY.slots.length);
+    expect(SET_ITEMS).toHaveLength(SETS.reduce((n, x) => n + x.slots.length, 0));
     for (const d of SET_ITEMS) {
       expect(itemDef(d.id)).toBe(d);
       expect(ITEMS.items.includes(d)).toBe(false);
@@ -402,7 +402,7 @@ describe('set düşüşü', () => {
   it('havuz: dropper düğümü, harita, parti süzgeci', () => {
     expect(pools().dropper.map((d: ItemDef) => d.set)).toContain('ashguard_vigil');
     expect(setDropPools(ASH.map, 'Some Camp', ['warrior']).dropper).toEqual([]);
-    expect(setDropPools(ASH.map, ASH.dropper, ['mage']).map).toEqual([]); // Ashguard'ı takacak yok
+    expect(setDropPools(ASH.map, ASH.dropper, ['mage']).map.map((d: ItemDef) => d.set)).not.toContain('ashguard_vigil'); // Ashguard'ı takacak yok (Kingsfall nötr: herkese)
     expect(setDropPools(WAY.map, WAY.dropper, ['mage']).dropper.length).toBe(WAY.slots.length);
     expect(setDropPools('Nowhere', ASH.dropper, ['warrior']).map).toEqual([]);
   });

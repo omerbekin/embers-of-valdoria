@@ -1,8 +1,7 @@
-// Skill ipucu A kuralı (Ömer 2026-11-02, taslak public/mockups/skill-tips-2.html #a): describeSkill satırlarını KISA ipucuna katlar.
+// Skill ipucu kuralı (Ömer 2026-11-02 A, 2026-11-07: More kalktı): describeSkill satırlarını TEK parça kısa ipucuna toplar.
 // Eşit değerli Damage / Heal satırları tek satırda birleşir; her durum / zemin / zamanla hasar = "ad (taraf) · süre · sayı"; cümleler, kurallar,
-// zemin tepkimeleri ve uzun kural satırları "More" altındaki TAM metinde kalır (kısanın yerini alır). Saf: metni değiştirmez, yalnızca böler.
+// zemin tepkimeleri ve kurallar altta düz satır olarak kalır; uzun kural satırı sayıları korunarak kısaltılır (compactRow). Saf.
 // Not (varsayım, Q-NEW): sayı içeren kısa kural satırı sınırı 70 karakter (taslak A 60, B 70; "Ley Brand" açıklaması B'deki gibi görünsün diye B'nin sınırı).
-import { MORE_MARK } from './band-rich';
 
 export interface FoldRow {
   text: string;
@@ -16,7 +15,6 @@ const EFF_RE = new RegExp(String.raw`^(Damage|Heal|Magic shield|Shield|Heals you
 const PERTURN = /start of (each|every)|each of (its|their) turns|every turn/;
 const MOD_MAX = 70;
 const COND_MAX = 90;
-const MAX_LINES = 4;
 const SEP = ' [[d|·]] ';
 const turnsWord = (n: number): string => `${n} ${n === 1 ? 'turn' : 'turns'}`;
 
@@ -57,9 +55,25 @@ function mergeReactions(rows: FoldRow[]): FoldRow | null {
   return out.length ? { text: `Ground reactions: ${out.join(', ')}`, ...(rows[0]?.color ? { color: rows[0].color } : {}) } : null;
 }
 
+/** Bu uzunluktan sonra satır özetlenir (karakter). */
+const LONG_ROW = 100;
+
+/**
+ * Uzun satırdan yalnızca DOLGU not atılır ((rounded up) gibi); önemli kural notları (cannot miss or crit, ignores armor, cannot be dodged / blocked, unpurgeable...) ve
+ * tüm sayılar KALIR (Ömer 2026-11-07). Kısa satırlar aynen kalır. Saf.
+ */
+export function compactRow(r: FoldRow): FoldRow {
+  if (r.text.length <= LONG_ROW) return r;
+  const text = r.text
+    .replace(/\s*\(rounded(?: up| down)?\)/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return text === r.text ? r : { ...r, text };
+}
+
 /**
  * `rows`: describeSkill satırları (renkli; element rengi `color`), tepkime ipuçları dahil. `extra`: duruma bağlı satırlar (bekleme, kilit, neden kullanılamıyor...):
- * kısa ve tam metinde aynen görünür. Dönüş: BandLine satırları; katlanacak bir şey yoksa MORE_MARK da yoktur.
+ * aynen eklenir. Dönüş: BandLine satırları (More yok: tek parça ipucu).
  */
 export function foldSkillRows(rows: FoldRow[], extra: FoldRow[] = [], tree: FoldRow[] = []): FoldRow[] {
   const reacts = rows.filter((r) => /^Ground reactions: /.test(r.text));
@@ -69,7 +83,6 @@ export function foldSkillRows(rows: FoldRow[], extra: FoldRow[] = [], tree: Fold
   const mods: FoldRow[] = [];
   const rest: FoldRow[] = [];
   let cond: FoldRow | null = null;
-  let hidden = false; // kısa ipucunda gösterilmeyen bilgi var mı
   for (const r of main) {
     const e = EFF_RE.exec(r.text);
     const p = parsePer(r.text);
@@ -86,7 +99,6 @@ export function foldSkillRows(rows: FoldRow[], extra: FoldRow[] = [], tree: Fold
     } else if (p) {
       const v = VAL_RE.exec(p.clause);
       per.push({ name: p.name, side: p.side, turns: p.turns, val: v ? v[0] + (PERTURN.test(p.clause) ? ' per turn' : '') : '', ...(r.color ? { color: r.color } : {}) });
-      if (p.clause) hidden = true;
     } else if (/\d/.test(r.text) && r.text.length <= MOD_MAX && !/^(Needs|Cannot|Can also|Only from|Choose a|If you are not)/.test(r.text)) mods.push(r);
     else if (/^(Needs|Cannot|Can also|Only from|Choose a|If you are not)/.test(r.text) && !cond && r.text.length <= COND_MAX) cond = r;
     else rest.push(r);
@@ -102,23 +114,13 @@ export function foldSkillRows(rows: FoldRow[], extra: FoldRow[] = [], tree: Fold
   const head: FoldRow[] = [];
   for (const g of by.values()) {
     head.push({ text: `[[k|${g.labels.join(' / ')}]] ${g.val}${g.whos.length ? SEP + `[[d|${g.whos.join(' / ')}]]` : ''}`, ...(g.color ? { color: g.color } : {}) });
-    if (g.whos.length) hidden = true;
   }
   for (const p of per) {
     head.push({ text: `[[k|${p.name}]]${p.side ? ` [[d|(${p.side})]]` : ''}${SEP}${turnsWord(p.turns)}${p.val ? SEP + p.val : ''}`, ...(p.color ? { color: p.color } : {}) });
   }
   for (const m of mods) head.push(m);
-  if (cond || rest.length || reacts.length) hidden = true;
-  if (!head.length) {
-    const first = [...rest, ...(cond ? [cond] : []), ...mods].sort((a, b) => main.indexOf(a) - main.indexOf(b))[0];
-    if (first) head.push(first);
-  }
-  if (rest.length > 1 || cond) hidden = true;
-  const short = head.slice(0, MAX_LINES);
-  if (head.length > MAX_LINES) hidden = true;
-  // tam metin: özgün satırlar (tepkimeler tek satırda), sonra ağaç bölümü
+  // Ömer 2026-11-07: "More" düğmesi kalktı; ipucu tek parça, uzun satırlar sayıları kaybetmeden özetlenir (compactRow). Sıra: değer satırları, kurallar, zemin tepkimeleri.
   const mr = mergeReactions(reacts);
-  const full = [...main, ...(mr ? [mr] : [])];
-  if (!hidden && !tree.length) return [...short, ...extra];
-  return [...short, ...extra, { text: MORE_MARK, section: true }, ...full, ...extra, ...tree];
+  const body = [...head, ...rest.map(compactRow), ...(cond ? [compactRow(cond)] : []), ...(mr ? [compactRow(mr)] : [])];
+  return [...body, ...extra, ...tree];
 }

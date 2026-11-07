@@ -74,7 +74,9 @@ describe('item içeriği (Valdoria)', () => {
     for (const slot of ['weapon', 'helm', 'armor', 'gloves', 'boots', 'trinket'] as const)
       for (const r of ['common', 'uncommon', 'rare', 'epic'] as const)
         if (slot !== 'weapon' || r !== 'epic') expect(ch1.some((d) => d.slot === slot && d.rarity === r), `${slot} ${r}`).toBe(true);
-    for (const fam of ITEMS.weaponFamilies) for (const r of ['common', 'uncommon', 'rare'] as const) expect(ch1.some((d) => d.family === fam.id && d.rarity === r), `${fam.id} ${r}`).toBe(true);
+    // 2026-11-07: kalkanlar Maces ailesinden kendi türüne (shields) geçti; Maces'in Uncommon tabanı kalkandı (nadirlik tabandan bağımsız zarlanır, düşüş açığı yok)
+    for (const fam of [...ITEMS.weaponFamilies, ...(ITEMS.offhandKinds ?? [])])
+      for (const r of ['common', 'uncommon', 'rare'] as const) if (fam.id !== 'maces' || r !== 'uncommon') expect(ch1.some((d) => d.family === fam.id && d.rarity === r), `${fam.id} ${r}`).toBe(true);
     expect(ch1.filter((d) => d.rarity === 'legendary').map((d) => d.id)).toEqual(['emberbrand', 'mantle_of_valdren', 'pilgrims_road_boots']); // madde 296 (normal loot zarından düşmez)
     expect(ch1.filter((d) => d.rarity !== 'legendary').length).toBeGreaterThanOrEqual(40);
   });

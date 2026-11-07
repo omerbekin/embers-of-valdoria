@@ -4,12 +4,13 @@ import { Battle, content } from '../src/engine';
 import type { BattleEvent } from '../src/engine';
 import { installLegacySkill } from './legacy-skills';
 import { withOldLayout } from './range-helpers';
+import { noPace } from './pace-helpers';
 
 type Ev<T extends BattleEvent['type']> = Extract<BattleEvent, { type: T }>;
 const ofType = <T extends BattleEvent['type']>(events: BattleEvent[], type: T): Ev<T>[] => events.filter((e): e is Ev<T> => e.type === type);
 const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i) => map[i] ?? '');
 const grid = (party: string[], enemies: string[], mode: 'test' | 'turns' = 'test', seed = 1) => {
-  const b = new Battle(content.battleSetup('random-battle', seed, mode, { party, enemies }, false));
+  const b = new Battle(noPace(content.battleSetup('random-battle', seed, mode, { party, enemies }, false)));
   b.debugClearCooldowns(); // başlangıç cooldown'u (initialCooldown) bu testlerin konusu değil: skill'ler ilk turdan kullanılabilir
   return b;
 };

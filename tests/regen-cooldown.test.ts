@@ -168,7 +168,11 @@ describe('cooldown (bekleme süresi)', () => {
 
   it('test modunda cooldown yok: arka arkaya kullanılabilir', () => {
     const b = testBattle();
-    for (let i = 0; i < 2; i++) expect(b.useSkill('party-2', 'meteor', 'enemy-0').ok).toBe(true);
+    // 0.9.11 mana (mpPerInt 0,2): havuz iki Meteor'a yetmez; burada yalnız cooldown ölçülür, MP elle dolar
+    for (let i = 0; i < 2; i++) {
+      b.get('party-2')!.mp = b.get('party-2')!.maxMp;
+      expect(b.useSkill('party-2', 'meteor', 'enemy-0').ok).toBe(true);
+    }
     expect(b.get('party-2')!.cooldowns).toEqual({});
   });
 

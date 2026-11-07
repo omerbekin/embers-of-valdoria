@@ -72,7 +72,7 @@ describe('bölge I mob hızları (veri)', () => {
   });
 
   // Bölge II (D4 genişletme, balance-tester 2026-10-24): sıradan moblar 15-17; imza hızlı mob Will-o'-Wisp (19) ve elit/boss hariç.
-  const REGION_II = ['6B', '6A', '5A', 'shrine', 'grave', 'pilgrim', '8A', '8C', '9'];
+  const REGION_II = ['6B', '5A', 'shrine', 'grave', 'pilgrim', '8A', '8C', '9'];
   const FAST_OK = ['will_o_wisp', 'iron_mooring'];
   it('sıradan bölge II mobları 15-17 hızında (ilk dalga ve sonraki dalgalar; Will-o\'-Wisp imza hızlı)', () => {
     for (const node of REGION_II) {

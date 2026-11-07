@@ -250,10 +250,12 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
   const addDamage = (target: Combatant, base: DamageEffect, powerMult: number, splash: boolean, hitInfo?: HitInfo) => {
     // Skill ağacı C1 (Faz 2a): gerçek vuruşla aynı koşullu etki kopyası (kritik / zırh delme / lifesteal); güç dealtDamageMult'ta. Kancasızda aynı nesne
     const tq: TreeQuery = actor.treeHooks && hitInfo ? { hit: hitInfo } : {};
-    const effect = battle.treeEffect(actor, target, skill, base, tq);
+    const eff0 = battle.treeEffect(actor, target, skill, base, tq);
+    // Unseen (Raven's Shroud): hazırsa bu saldırı kesin kritik (gerçek vuruşla aynı: noCrit yine kapatır)
+    const effect = battle.unseenReady(actor) && !eff0.guaranteedCrit ? { ...eff0, guaranteedCrit: true } : eff0;
     const tm = actor.treeHooks ? battle.treeMods(actor, target, skill, base, tq) : null;
     const stats = battle.effectiveStats(target);
-    const specFor = (mult: number) => damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, battle.damageTakenMult(target, actor, effect.damageType, skill, effect.element ?? 'physical') * battle.flockMult(actor, target), battle.dealtDamageMult(actor, target, skill, effect, tq), effect.bonusScale ? battle.effectiveStats(actor) : undefined, undefined, effect.ironBolt ? stats.armor : undefined);
+    const specFor = (mult: number) => damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, battle.damageTakenMult(target, actor, effect.damageType, skill, effect.element ?? 'physical') * battle.flockMult(actor, target), battle.dealtDamage(actor, target, skill, effect, tq), effect.bonusScale ? battle.effectiveStats(actor) : undefined, undefined, effect.ironBolt ? stats.armor : undefined);
     // Ağaç: düz hasar (flatDamage) ve vuruş sonrası (hitIsCrit) kancaları gerçek vuruşla aynı sırada (çarpan, sonra düz ek); kancasızda aynı aralık
     const adj = (x: number, late: { mult: number; flat: number } | null) => (late || tm?.flat ? Math.round(x * (late?.mult ?? 1) + (tm?.flat ?? 0) + (late?.flat ?? 0)) : x);
     const lateN = actor.treeHooks ? battle.lateDamage(actor, target, skill, base, specFor(1), false, tq) : null;
@@ -279,7 +281,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       hi = Math.max(m.win, m.lose);
       ex = m.expected;
     }
-    const again = effect.repeatChance ?? 0;
+    const again = Math.min(1, (effect.repeatChance ?? 0) + battle.basicRepeatOf(actor, skill)); // Spare Arrow: temel saldırıya ek
     // Garantili kritik (Backstab): her vuruş kritik; aralık kritik çarpanıyla verilir (critChance 1)
     // Ağaç: kritik çarpanı (critDmgMul) ve noCrit; kancasızda actor.stats.critMult
     const cmult = actor.treeHooks ? battle.critMultFor(actor, target, skill, base, tq) : actor.stats.critMult;
@@ -473,7 +475,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const spec = effect.onEmpty;
         if (spec && emptyProcApplies(effect, target)) {
           const dmg: DamageEffect | undefined = spec.damage ? { type: 'damage', ...spec.damage } : undefined;
-          const r = dmg ? damageRange(battle.attackStats(actor), battle.effectiveStats(target), damageSpecFor(actor, target, dmg, f, 1, false, battle.damageTakenMult(target, actor, dmg.damageType, skill, dmg.element ?? 'physical'), battle.dealtDamageMult(actor, target, skill), dmg.bonusScale ? battle.effectiveStats(actor) : undefined), f) : undefined;
+          const r = dmg ? damageRange(battle.attackStats(actor), battle.effectiveStats(target), damageSpecFor(actor, target, dmg, f, 1, false, battle.damageTakenMult(target, actor, dmg.damageType, skill, dmg.element ?? 'physical'), battle.dealtDamage(actor, target, skill), dmg.bonusScale ? battle.effectiveStats(actor) : undefined), f) : undefined;
           if (battle.statusBlocked(target, spec.status)) e.immune = [...(e.immune ?? []), battle.statusDef(spec.status)?.name ?? spec.status];
           e.emptyProc = {
             chance: spec.chance,
@@ -602,7 +604,7 @@ function omenPreview(battle: Battle, actor: Combatant, skill: SkillDef, target: 
   const doomAt = (omens: number, sureCrit = false): DoomPreview | undefined => {
     const doom = def.doom;
     if (!doom || (!det && omens < max)) return undefined;
-    const mult = det ? det.mult : 1;
+    const mult = (det ? det.mult : 1) * battle.doomExtraMult(cur); // uzatma yerine Doom bonusu (bonusPerExtraTurn)
     const r = battle.doomRange(target, kind, omens, mult, actor.stats[doom.scale] * (actor.stats.spellPowerMult ?? 1)); // = Battle.doomStat
     if (!r) return undefined;
     const soak = doom.damageType === 'magic' ? p.magicShield + p.shield : p.shield;

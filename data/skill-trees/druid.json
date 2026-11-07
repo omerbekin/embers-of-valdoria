@@ -74,7 +74,7 @@
       {
         "at": 15,
         "name": "Tight Weave",
-        "text": "Nature's Wrath deals 3% more damage.",
+        "text": "Nature's Wrath deals 3% increased damage.",
         "src": "B:V4:bar3",
         "fx": [
           {
@@ -174,7 +174,7 @@
     },
     "0.f3": {
       "name": "Choking Grip",
-      "text": "Withering deals 6% more damage per rank on a Slowed enemy.",
+      "text": "Withering deals 6% increased damage per rank on a Slowed enemy.",
       "src": "B:V1:0.r",
       "fx": [
         {
@@ -257,7 +257,7 @@
     },
     "0.eb": {
       "name": "Gnawing Rot",
-      "text": "Nature's Grudge Withering grows each turn it ticks: 5% more, then 10% more, then 15% more and so on.",
+      "text": "Nature's Grudge Withering grows each turn it ticks: +5% damage, then +10%, then +15% and so on.",
       "src": "B:V1:0.eb",
       "fx": [
         {
@@ -389,7 +389,7 @@
     },
     "1.f1": {
       "name": "Hooked Barbs",
-      "text": "Thorn Whip deals 4% more damage per rank.",
+      "text": "Thorn Whip deals 4% increased damage per rank.",
       "src": "B:V5:1.f1",
       "fx": [
         {
@@ -419,7 +419,7 @@
     },
     "1.f3": {
       "name": "Charged Lash",
-      "text": "After you cast an MP skill, your next Thorn Whip deals 6% more damage per rank.",
+      "text": "After you cast an MP skill, your next Thorn Whip deals 6% increased damage per rank.",
       "src": "B:V5:1.f3",
       "fx": [
         {
@@ -437,7 +437,7 @@
     },
     "1.n0": {
       "name": "Whip Crack",
-      "text": "Thorn Whip deals 25% more damage to a target below 30% HP.",
+      "text": "Thorn Whip deals 25% increased damage to a target below 30% HP.",
       "src": "B:V5:1.n0",
       "fx": [
         {
@@ -529,7 +529,7 @@
     },
     "1.fa": {
       "name": "Wild Thorns",
-      "text": "Thorn Whip deals 15% more damage, but it can no longer crit.",
+      "text": "Thorn Whip deals 15% increased damage, but it can no longer crit.",
       "src": "B:V5:1.fa",
       "fx": [
         {
@@ -826,7 +826,7 @@
     },
     "2.fa": {
       "name": "Mire",
-      "text": "The root field lasts 4 turns and Nature's Wrath deals 15% more damage to enemies standing in it, but its cooldown is 3 → 5.",
+      "text": "The root field lasts 4 turns and Nature's Wrath deals 15% increased damage to enemies standing in it, but its cooldown is 3 → 5.",
       "src": "B:V4:2.fb",
       "fx": [
         {
@@ -1236,7 +1236,7 @@
     },
     "4.r1": {
       "name": "Heavy Boughs",
-      "text": "Root Smash deals 10% more damage.",
+      "text": "Root Smash deals 10% increased damage.",
       "src": "A:V2:4.l1",
       "fx": [
         {
@@ -1252,7 +1252,7 @@
     },
     "4.r2": {
       "name": "Heavy Smash",
-      "text": "Root Smash deals 12% more damage to Slowed or Stunned enemies.",
+      "text": "Root Smash deals 12% increased damage to Slowed or Stunned enemies.",
       "src": "A:V4:4.l2",
       "fx": [
         {

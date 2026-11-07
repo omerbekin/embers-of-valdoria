@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Battle, content, describeStat } from '../src/engine';
 
 /**
- * Ömer kararları (open-questions.md madde 212): tüm class'larda taban mana 30 (MP = 30 + 2 x INT), INT başına MP yenilenmesi ~0,33,
+ * Ömer kararları (open-questions.md madde 212): tüm class'larda aynı taban mana (Ömer 2026-11-07 / 0.9.11: MP = round(30 + 0,2 x INT), INT başına MP yenilenmesi 0,15),
  * Aimed Shot başlangıç cooldown'u 3 (2026-10-17), Resurrection 20 MP, Tremor Slam gücü 0,6. Sayılar veriden okunur; bu testler kararların veride durduğunu kilitler.
  */
 const f = content.formulas;
@@ -22,13 +22,12 @@ describe('mana ekonomisi', () => {
     }
   });
 
-  it('int başına mana artışı (mpPerInt): INT başına 1', () => {
-    expect(a.mpPerInt).toBe(1);
+  it('int başına mana artışı (mpPerInt): her 5 INT +1 MP (0,2; Ömer 2026-11-07 / 0.9.11, önce 1)', () => {
+    expect(a.mpPerInt).toBe(0.2);
   });
 
   it('INT başına MP yenilenmesi ~0,33 (eski 0,25\'ten arttı); yenilenme = round(INT x mpRegenPerInt)', () => {
-    expect(a.mpRegenPerInt).toBeGreaterThan(0.15);
-    expect(a.mpRegenPerInt).toBeLessThan(0.18);
+    expect(a.mpRegenPerInt).toBe(0.15); // Ömer 2026-11-07 (önce 0,165)
     for (const [id, def] of Object.entries(content.classes)) expect(def.stats.mpRegen, id).toBe(Math.round(def.attributes.int * a.mpRegenPerInt));
   });
 
@@ -42,7 +41,7 @@ describe('mana ekonomisi', () => {
 
   it('Gambler\'a ayrı mana azaltması yok (genel karar: yalnızca taban 30)', () => {
     const g = content.classes.gambler!;
-    expect(g.stats.mp).toBe(a.mpBase + a.mpPerInt * g.attributes.int);
+    expect(g.stats.mp).toBe(Math.round(a.mpBase + a.mpPerInt * g.attributes.int));
   });
 });
 

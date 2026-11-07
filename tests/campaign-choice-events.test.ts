@@ -40,7 +40,7 @@ function at(target: string, until: string): CampaignState {
 describe("Witch's Hut choice event", () => {
   const atHut = (): CampaignState => at('6A', 'event');
 
-  it('offers the four designed choices after the guard battle', () => {
+  it('offers the four designed choices (the hut opens directly, no guard battle)', () => {
     expect(eventChoices('witchs_hut').map((c) => c.id)).toEqual(['pay', 'blood', 'steal', 'leave']);
   });
 
@@ -49,17 +49,17 @@ describe("Witch's Hut choice event", () => {
     expect(() => chooseEvent({ ...s, gold: 10 }, 'pay')).toThrow(/gold/);
     const rich = { ...s, gold: 500, pendingLoot: undefined };
     const t = chooseEvent(rich, 'pay');
-    // İki item, altın yok (Ömer 2026-11-01 olay dengesi)
-    expect(t.inventory.length).toBe(rich.inventory.length + 2);
+    // Tek item, altın yok (Ömer 2026-11-01 olay dengesi; 2026-11-07 tüm sandıklar 1 item az)
+    expect(t.inventory.length).toBe(rich.inventory.length + 1);
     expect(t.pendingLoot?.kind).toBe('treasure');
-    expect(t.pendingLoot?.items.length).toBe(2);
+    expect(t.pendingLoot?.items.length).toBe(1);
     expect(t.gold).toBe(rich.gold - 60);
     expect(nextStep(t).kind).toBe('move');
   });
 
   it('Pay in blood takes 20% of current HP from every living hero, nobody dies, no gold spent', () => {
     let s = atHut();
-    s = { ...s, pendingLoot: undefined, roster: s.roster.map((h, i) => ({ ...h, hpRatio: i === 0 ? 0.001 : 0.5 })) };
+    s = { ...s, pendingLoot: undefined, roster: s.roster.map((h, i) => ({ ...h, xp: 0, hpRatio: i === 0 ? 0.001 : 0.5 })) }; // xp 0: olayın sabit XP'si level atlatıp tam iyileştirmesin (tutxp 2026-11-07)
     const t = chooseEvent(s, 'blood');
     expect(t.gold - (t.pendingLoot?.gold ?? 0)).toBe(s.gold);
     expect(t.pendingLoot?.items.length).toBe(1);

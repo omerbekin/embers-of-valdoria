@@ -61,7 +61,7 @@ export function woundTipData(wounds: number, r: WoundRules, opts: { baseHp?: num
   const heal = [town ? 'resting in a town clears all wounds.' : '', valor > 0 ? `A Valor revive clears ${valor}.` : ''].filter(Boolean);
   const lines = [`Each wound lowers max HP by ${Math.round(r.maxHpLoss * 100)}%.`];
   if (heal.length) lines.push(`Heal: ${heal.join(' ').replace(/^r/, 'R')}`);
-  if (maxed) lines.push(`Going down again in a won battle leaves a corpse.${valor > 0 ? ' Valor can raise it.' : ''}`);
+  if (maxed) lines.push('Falling in battle adds a wound, up to this maximum.');
   const out: WoundTipData = { title: `${n} ${n === 1 ? 'Wound' : 'Wounds'}`, value: `-${woundHpLossPct(n, r)}%`, valueLabel: 'max HP', maxed, lines };
   if (opts.baseHp !== undefined && opts.baseHp > 0) out.maxHp = `Max HP ${Math.max(1, Math.round(opts.baseHp * woundHpFactor(n, r)))} of ${Math.round(opts.baseHp)}`;
   if (town) out.foot = 'Camp rest does not heal wounds.';

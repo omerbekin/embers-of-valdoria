@@ -72,6 +72,8 @@ export type SkillChipKind = 'mp' | 'rage' | 'hp' | 'cd';
 
 export interface SkillPlateChip extends SkillCostChip {
   kind?: SkillChipKind;
+  /** Etkiyle (durum, boss fazı, item) temel değere göre arttı (kırmızı) / azaldı (yeşil). */
+  dir?: 'up' | 'down';
 }
 
 export interface SkillPlateView {
@@ -86,6 +88,10 @@ export interface SkillPlateView {
   ult: boolean;
   /** Kilitli skill: ikonun üstünde kilit simgesi. */
   locked?: boolean;
+  /** Susturulmuş (Silenced): MP bedelli skill kapalı; ikonun üstünde "Silenced" yazısı, plaka kilitli gibi sönük. */
+  silenced?: boolean;
+  /** Düşman turu: plaka yalnızca okunur (sönük 'off' görünümü yok, tıklanmaz); hazırlık bekleme sönüklüğü kalır. */
+  foe?: boolean;
   /** Yetersiz kaynak: bu türdeki bedel çipi kırmızı olur ("Not enough MP / Rage / HP"). */
   lack?: 'mp' | 'rage' | 'hp';
 }
@@ -96,7 +102,7 @@ function plateChip(c: SkillPlateChip, lack: SkillPlateView['lack']): string {
   const word = m && m[1] ? `<span class="w">${escHtml(m[1])}</span>` : '';
   const num = m ? `<b>${escHtml(m[2]!)}</b>` : `<b>${escHtml(c.text)}</b>`;
   const kind = c.kind ?? (/^RAGE/i.test(c.text) ? 'rage' : '');
-  const cls = [kind === 'rage' ? 'rage' : '', kind === 'cd' ? 'cd' : '', lack && kind === lack ? 'low' : ''].filter(Boolean).join(' ');
+  const cls = [kind === 'rage' ? 'rage' : '', kind === 'cd' ? 'cd' : '', lack && kind === lack ? 'low' : '', c.dir ?? ''].filter(Boolean).join(' ');
   return `<span class="bp-chip ${cls}">${img(c.iconUrl ?? '', 'bh-ico')}${word}${num}</span>`;
 }
 
@@ -104,9 +110,9 @@ function plateChip(c: SkillPlateChip, lack: SkillPlateView['lack']): string {
 export function skillPlateHtml(s: SkillPlateView, tipInner: string): string {
   const chips = s.cost.length ? s.cost.map((c) => plateChip(c, s.lack)).join('') : '<span class="bp-chip free">Free</span>';
   const tag = s.ult ? '<span class="bp-tag"><span class="full">Ultimate</span><span class="short">Ult</span></span>' : '';
-  return `<div class="bp ${s.ult ? 'ult' : ''} ${s.wait > 0 ? 'cdn' : ''} ${s.selected ? 'sel' : ''} ${s.enabled ? '' : 'off'}" data-skill="${escHtml(s.id)}">
+  return `<div class="bp ${s.ult ? 'ult' : ''} ${s.wait > 0 ? 'cdn' : ''} ${s.selected ? 'sel' : ''} ${s.foe ? 'foe' : s.enabled ? '' : 'off'}${s.silenced ? ' off' : ''}" data-skill="${escHtml(s.id)}">
           ${tag}${s.key !== undefined ? `<span class="bp-key">${s.key}</span>` : ''}
-          <div class="bp-ico">${img(s.iconUrl)}${s.wait > 0 && !s.locked ? `<span class="cdv">${s.wait}</span>` : ''}${s.locked ? lockBadgeHtml() : ''}</div>
+          <div class="bp-ico">${img(s.iconUrl)}${s.wait > 0 && !s.locked && !s.silenced ? `<span class="cdv">${s.wait}</span>` : ''}${s.locked ? lockBadgeHtml() : ''}${s.silenced && !s.locked ? '<span class="bp-sil">Silenced</span>' : ''}</div>
           <span class="bp-nm">${escHtml(s.name)}</span>
           <div class="bp-chips">${chips}</div>
           <div class="bh-sktip bh-panel bh-corners">${tipInner}</div>

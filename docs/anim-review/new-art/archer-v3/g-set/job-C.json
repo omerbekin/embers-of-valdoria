@@ -1,0 +1,94 @@
+{
+ "name": "g-C",
+ "outDir": "docs/anim-review/new-art/archer-v3/g-set",
+ "rules": "docs/anim-review/new-art/archer-v3/g-set/PROMPT-g.md",
+ "maxRounds": 8,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "draw_full-bow",
+   "file": "draw_full-bow.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "docs/anim-review/new-art/archer-v3/g-set/draw_full.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "docs/anim-review/new-art/archer-v3/g-set/draw_full.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: FULL DRAW at anchor: LEFT arm straight forward at shoulder height, RIGHT hand anchored at the cheek/corner of the mouth with elbow pulled back in line with the arrow, shoulders squared, one eye aiming, same stance as the old bow_shot. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. WITH BOW: paint a simple wooden medieval hunting longbow (string visible) held in the LEFT hand and the arrow (wooden shaft, grey fletching, steel bodkin head); right hand wears the three-finger glove, clearly visible on the string.  The LAST image is the approved bare version of this exact pose: keep body, face, costume and pose identical to it and only ADD the bow and arrow.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: FULL DRAW at anchor: LEFT arm straight forward at shoulder height, RIGHT hand anchored at the cheek/corner of the mouth with elbow pulled back in line with the arrow, shoulders squared, one eye aiming, same stance as the old bow_shot.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Bow in LEFT hand, string/arrow handled by RIGHT hand with clear three-finger glove; bow and arrow cleanly painted and readable.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "nock-bow",
+   "file": "nock-bow.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "docs/anim-review/new-art/archer-v3/g-set/nock.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "docs/anim-review/new-art/archer-v3/g-set/nock.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: NOCK stage: LEFT arm extended forward at chest height gripping (fist), RIGHT hand brought to the chest in front of the sternum as if placing an arrow on the string, head turned toward the target, body side-on, weight forward. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. WITH BOW: paint a simple wooden medieval hunting longbow (string visible) held in the LEFT hand and the arrow (wooden shaft, grey fletching, steel bodkin head); right hand wears the three-finger glove, clearly visible on the string.  The LAST image is the approved bare version of this exact pose: keep body, face, costume and pose identical to it and only ADD the bow and arrow.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: NOCK stage: LEFT arm extended forward at chest height gripping (fist), RIGHT hand brought to the chest in front of the sternum as if placing an arrow on the string, head turned toward the target, body side-on, weight forward.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Bow in LEFT hand, string/arrow handled by RIGHT hand with clear three-finger glove; bow and arrow cleanly painted and readable.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "draw_half-bow",
+   "file": "draw_half-bow.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "docs/anim-review/new-art/archer-v3/g-set/draw_half.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "docs/anim-review/new-art/archer-v3/g-set/draw_half.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: HALF DRAW: LEFT arm fully extended forward at chest/shoulder height, RIGHT hand pulled back to the front of the chin/collarbone, elbow bent out and back, shoulders turning, eyes on target. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. WITH BOW: paint a simple wooden medieval hunting longbow (string visible) held in the LEFT hand and the arrow (wooden shaft, grey fletching, steel bodkin head); right hand wears the three-finger glove, clearly visible on the string.  The LAST image is the approved bare version of this exact pose: keep body, face, costume and pose identical to it and only ADD the bow and arrow.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: HALF DRAW: LEFT arm fully extended forward at chest/shoulder height, RIGHT hand pulled back to the front of the chin/collarbone, elbow bent out and back, shoulders turning, eyes on target.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Bow in LEFT hand, string/arrow handled by RIGHT hand with clear three-finger glove; bow and arrow cleanly painted and readable.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "release-bow",
+   "file": "release-bow.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "docs/anim-review/new-art/archer-v3/g-set/release.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "docs/anim-review/new-art/archer-v3/g-set/release.png",
+    "assets/poses/archer-v2/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 (old archer) is ONLY a rough body-pose guide, never copy its costume, hood or quiver. Pose: RELEASE follow-through: LEFT arm still extended forward, RIGHT hand snapped back past the ear with fingers open, elbow high behind, slight recoil in torso, eyes on target. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. WITH BOW: paint a simple wooden medieval hunting longbow (string visible) held in the LEFT hand and the arrow (wooden shaft, grey fletching, steel bodkin head); right hand wears the three-finger glove, clearly visible on the string.  The LAST image is the approved bare version of this exact pose: keep body, face, costume and pose identical to it and only ADD the bow and arrow.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches this description: RELEASE follow-through: LEFT arm still extended forward, RIGHT hand snapped back past the ear with fingers open, elbow high behind, slight recoil in torso, eyes on target.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Bow in LEFT hand, string/arrow handled by RIGHT hand with clear three-finger glove; bow and arrow cleanly painted and readable.\n",
+   "maxRounds": 8
+  },
+  {
+   "id": "bow_shot-bow",
+   "file": "bow_shot-bow.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png",
+    "docs/anim-review/new-art/archer-v3/g-set/bow_shot.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/bow_shot.png",
+    "docs/anim-review/new-art/archer-v3/g-set/bow_shot.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. WITH BOW: paint a simple wooden medieval hunting longbow (string visible) held in the LEFT hand and the arrow (wooden shaft, grey fletching, steel bodkin head); right hand wears the three-finger glove, clearly visible on the string.  The LAST image is the approved bare version of this exact pose: keep body, face, costume and pose identical to it and only ADD the bow and arrow.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Bow in LEFT hand, string/arrow handled by RIGHT hand with clear three-finger glove; bow and arrow cleanly painted and readable.\n",
+   "maxRounds": 8
+  }
+ ]
+}

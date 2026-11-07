@@ -300,7 +300,8 @@ describe('Ana menü katmanlı sahnesi (assets/menu)', () => {
 describe('Item ikon görselleri (assets/items) bağlı; asılları assets/source/item-icons', () => {
   it('assets/items altındaki her görsel bir item e ait, oyunun listesinde ve Codex > Icons ta; görseli olmayan item piksel ikona düşer', async () => {
     const { ITEM_IMAGE_FILES, itemImageUrl } = await import('../src/game/item-icon-files');
-    const items = (await import('../data/items.json')).default.items as Array<{ id: string }>;
+    const json = (await import('../data/items.json')).default;
+    const items = [...json.items, ...json.setItems] as Array<{ id: string }>;
     const onDisk = readdirSync('assets/items').filter((f) => /\.(webp|png)$/.test(f)).map((f) => f.replace(/\.[^.]+$/, '')).sort();
     expect(onDisk.length).toBeGreaterThan(0);
     expect(Object.keys(ITEM_IMAGE_FILES).sort()).toEqual(onDisk);

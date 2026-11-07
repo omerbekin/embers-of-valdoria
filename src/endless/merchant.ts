@@ -110,7 +110,7 @@ export function ipGain(run: EndlessRun, heroId: string, d: ItemDef, catalog: Ite
   const hero = heroOf(run, heroId);
   if (!hero || !itemDef(d.id)) return 0;
   const slot = slotFor(hero.equipment, d);
-  if (slot === 'offhand' && offhandBlocker(hero.equipment)) return 0; // çift el silah ikinci eli kapatıyor
+  if (slot === 'offhand' && offhandBlocker(hero.equipment, hero.class, d)) return 0; // çift el silah ikinci eli kapatıyor
   const cur = hero.equipment[slot];
   // aynı A affix'i 2'den fazla item'de etkisiz kalırsa o değer sayılmaz (slotScore; Ömer 2026-10-13, itemcaps m2)
   const now = cur && defIn(catalog, cur.id) && itemDef(cur.id) ? slotScore(hero.class, hero.equipment, cur, slot) : 0;

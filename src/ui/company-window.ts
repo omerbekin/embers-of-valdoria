@@ -32,7 +32,15 @@ export interface CompanySpec {
   noLeader?: boolean;
   onCancel?: () => void;
   /** Öneri (Ömer 2026-11-01; campaign/suggest.ts): bu kahramanların portresi altında küçük `label`, ipucunun 2. satırı altın `line`. Seçimi zorlamaz. */
-  suggest?: { heroes: string[]; label: string; line: string };
+  suggest?: {
+    heroes: string[];
+    label: string;
+    line: string;
+    /** Ömer 2026-11-07: kahraman başına gerekçe satırları (birden çok öneri; yoksa `line`). */
+    why?: Record<string, string[]>;
+    /** Ömer 2026-11-07: kahraman başına "Front row · Physical damage" satırı (her aday kartının ipucunda). */
+    traits?: Record<string, string>;
+  };
 }
 export interface CompanyHandle {
   close(): void;
@@ -105,8 +113,9 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
     if (!c) return;
     // Öneri: önerilen kahramanın ipucunda 2. satır altın gerekçe (ilk satır açıklama kalır; başka satır / başka kahraman değişmez)
     const base = [...(c.blurb ? [{ text: c.blurb }] : []), ...(o.tutorial.has(id) ? [{ text: 'Played in the tutorial' }] : [])];
-    const why = o.suggest?.heroes.includes(id) ? [{ text: o.suggest.line, color: SUG_GOLD }] : [];
-    const lines = [...base.slice(0, 1), ...why, ...base.slice(1)];
+    const why = o.suggest?.heroes.includes(id) ? (o.suggest.why?.[id] ?? [o.suggest.line]).map((text) => ({ text, color: SUG_GOLD })) : [];
+    const trait = o.suggest?.traits?.[id] ? [{ text: o.suggest.traits[id]! }] : [];
+    const lines = [...base.slice(0, 1), ...trait, ...why, ...base.slice(1)];
     const av = avatarUrlOf(c.spriteId);
     const html = bandTipHtml({ accent: c.color, ...(c.role ? { kind: c.role } : {}), title: c.name, ...(av ? { icon: av, iconShape: 'portrait' as const } : {}), ...(c.stat ? { value: c.stat.toUpperCase(), valueLabel: 'Primary' } : {}), lines });
     const t = document.createElement('div');

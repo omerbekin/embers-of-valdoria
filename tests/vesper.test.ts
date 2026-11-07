@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, chooseAction, content, describePassive, describeSkill, rolledSpeed, roundSpeed } from '../src/engine';
+import { Battle, chooseAction, content, describePassive, describeSkill, roundSpeed } from '../src/engine';
 import type { BattleEvent, Combatant, CombatantDef } from '../src/engine';
 import { damageSpecFor, type DamageEffect } from '../src/engine/spec';
 import {
@@ -439,7 +439,7 @@ describe('Vesper ağacı: Pealing Bells satırı', () => {
     const c = vesper(treed({ '0.fb': 1 }, { 1: 'warrior' }));
     expect((c.passive!.effect as { perBell: number }).perBell).toBeCloseTo(pe.perBell + perBellOf('0.fb'), 6);
     expect(c.stats.spd).toBeLessThan(a.stats.spd);
-    expect(c.stats.spd).toBe(rolledSpeed(roundSpeed(content.classes.vesper!.stats.spd * (1 + fxOf('0.fb').find((f) => f.k === 'stat')!.v!), content.formulas), c.stats.spdRoll!, content.formulas)); // ondalık hız: -%10 tam uygulanır, sonra kişisel zar
+    expect(c.stats.spd).toBe(roundSpeed(content.classes.vesper!.stats.spd * (1 + fxOf('0.fb').find((f) => f.k === 'stat')!.v!), content.formulas)); // ondalık hız: -%10 tam uygulanır (tur zarı statta değil, sıra hızında)
   });
   it('Compline: dost düşünce çan çalar', () => {
     const b = treed({ '0.mb': 1 }, { 1: 'mage' }, { 10: 'warrior' });

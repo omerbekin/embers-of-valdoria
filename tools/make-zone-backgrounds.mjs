@@ -42,6 +42,7 @@ const FLOOR_SRC_Y = {
   'river-gorge': 595,
   'saltmarsh': 567, // 2026-10-27 yeniden çizim (temiz pixel art): çamur düzlüğünün başladığı çizgi
   'saltmere-docks': 580, // rıhtım kenar taşının dibi (yeniden çizim)
+  'saltmere-pit': 555, // Fighting Pit: halka duvarının dibi (2026-11-07, Ömer onayı bekliyor)
   'wreck-cliffs': 560, // kıyı çizgisi (yeniden çizim)
   'siren-rocks': 574, // deniz kenarı (yeniden çizim)
   'storm-deck': 625, // güverte korkuluğunun dibi
@@ -55,7 +56,7 @@ const FLOOR_SRC_Y = {
   'forge-heart': 578, // erimiş kanal kerb dibi
 };
 const HOLLOW = new Set(['snowline', 'glacier', 'kharduin', 'deep-halls', 'warrens', 'forge-heart']);
-const DROWNED = new Set(['river-gorge', 'saltmarsh', 'saltmere-docks', 'wreck-cliffs', 'siren-rocks', 'storm-deck', 'sunken-court']);
+const DROWNED = new Set(['river-gorge', 'saltmarsh', 'saltmere-docks', 'saltmere-pit', 'wreck-cliffs', 'siren-rocks', 'storm-deck', 'sunken-court']);
 
 const floors = {};
 for (const [id, fy] of Object.entries(FLOOR_SRC_Y)) {

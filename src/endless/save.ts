@@ -10,7 +10,7 @@ import { migrateItemRolls, migrateOffhand, migrateRemovedAffixes, migrateRingSlo
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
-import { normalizeSpdRoll } from '../progression/loadout';
+import { dropLegacySpdRoll } from '../progression/loadout';
 
 export interface KV {
   getItem(key: string): string | null;
@@ -103,8 +103,8 @@ export function parseRun(raw: string | null): EndlessRun | null {
     for (const h of r.heroes) normalizeLevelFields(h);
     // Skill ağacı (sürüm 7): bozuk dağılım bedava iade + treeReset, skillPoints = havuz - harcanan, veri değiştiyse freeRespec (sefer ile aynı kural)
     for (const h of r.heroes) normalizeTree(h);
-    // Kişisel hız zarı (Ömer 2026-10-24): eski kayıtta yok = koşu seed'i + id'den (sürüm artmaz, idempotent)
-    for (const h of r.heroes) normalizeSpdRoll(h, r.seed);
+    // Eski kalıcı hız zarı kalktı (Ömer 2026-11-07: hız savaşta her tur zarlanır): eski kayıttaki alan silinir (sürüm artmaz, idempotent)
+    for (const h of r.heroes) dropLegacySpdRoll(h);
     // Yara (sürüm 6): yok / bozuk = 0
     for (const h of r.heroes) {
       const n = woundCount(h);
@@ -154,7 +154,7 @@ export function parseRun(raw: string | null): EndlessRun | null {
     }
     if (stripped) delete r.suspended;
     // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
-    for (const h of r.heroes) if (promoteOffhand(h.equipment)) delete h.equipment.offhand;
+    for (const h of r.heroes) if (promoteOffhand(h.equipment, h.class)) delete h.equipment.offhand;
     if (overflow.length) r.bag = [...(r.bag ?? []), ...overflow];
     // Nadir düşüş (madde 297): sayaç sayı değilse 0; bozuk duyuru atılır
     if (r.rarePity !== undefined && (!isNum(r.rarePity) || r.rarePity < 0)) r.rarePity = 0;

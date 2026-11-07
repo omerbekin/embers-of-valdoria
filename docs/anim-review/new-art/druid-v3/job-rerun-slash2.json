@@ -1,0 +1,23 @@
+{
+ "name": "druid-rerun-slash2",
+ "outDir": "docs/anim-review/new-art/druid-v3/poses-rerun/slash2",
+ "rules": "docs/anim-review/new-art/druid-v3/PROMPT.md",
+ "maxRounds": 8,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "slash2",
+   "file": "slash2.png",
+   "refs": [
+    "assets/poses/druid-v2/slash2.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "checkRefs": [
+    "assets/poses/druid-v2/slash2.png",
+    "docs/anim-review/new-art/druid-v3/idle-b-hood.png"
+   ],
+   "task": "Image 1 = the OLD Druid pose \"slash2\" (exact pose reference). Image 2 = the NEW approved Druid look (hooded stone-moss sage: coarse grey-brown wool/felt hood with moss patches, long grey beard, moss-covered stone shoulders, grey-brown robe, belt, pouch, carved stone amulet, leaf circlet). Redraw image 1 with the new Druid look from image 2. Keep image 1 EXACTLY: pose, limb angles, body lean, fist/hand positions, scale, canvas 566x452 and foot positions (feet on identical pixels). The result must NOT look like the old green ranger: use the stone-moss palette and robe design of image 2. Hands/fists exactly where image 1 has them, empty fists unless image 1 holds something; do not paint any weapon or staff. Strictly medieval, real transparent background, no shadow/glow/halo. Save at 566x452. Previous attempts put both soles ~33px too high, head ~14px and hips ~29px too high, right boot 14px too left. Do NOT crop/shift the figure; keep the full-height lunge of image 1 with soles at the same y, torso lean, leg spread, knee/elbow angles and fists identical.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the old pose; image 3 is the approved look.\n- Same pose as image 2: limb angles, lean, fists, scale, canvas, feet positions.\n- Character matches image 3 (hooded stone-moss sage, grey beard, moss shoulders, grey-brown robe, amulet), NOT the old green ranger.\n- Empty fists, no weapon/staff painted.\n- Real transparent background, no halo/noise. Strictly medieval, clean."
+  }
+ ]
+}

@@ -182,7 +182,7 @@
     "c_phys": {
       "tier": "C",
       "name": "Physical damage",
-      "text": "{m0} Physical damage",
+      "text": "+{0}% Physical damage",
       "slots": [
         "weapon"
       ],
@@ -203,7 +203,7 @@
     "c_fire": {
       "tier": "C",
       "name": "Fire damage",
-      "text": "{m0} Fire damage",
+      "text": "+{0}% Fire damage",
       "slots": [
         "weapon"
       ],
@@ -224,7 +224,7 @@
     "c_ice": {
       "tier": "C",
       "name": "Ice damage",
-      "text": "{m0} Ice damage",
+      "text": "+{0}% Ice damage",
       "slots": [
         "weapon"
       ],
@@ -245,7 +245,7 @@
     "c_holy": {
       "tier": "C",
       "name": "Holy damage",
-      "text": "{m0} Holy damage",
+      "text": "+{0}% Holy damage",
       "slots": [
         "weapon"
       ],
@@ -266,7 +266,7 @@
     "c_arcane": {
       "tier": "C",
       "name": "Arcane damage",
-      "text": "{m0} Arcane damage",
+      "text": "+{0}% Arcane damage",
       "slots": [
         "weapon"
       ],
@@ -287,7 +287,7 @@
     "c_nature": {
       "tier": "C",
       "name": "Nature damage",
-      "text": "{m0} Nature damage",
+      "text": "+{0}% Nature damage",
       "slots": [
         "weapon"
       ],
@@ -308,7 +308,7 @@
     "c_dark": {
       "tier": "C",
       "name": "Dark damage",
-      "text": "{m0} Dark damage",
+      "text": "+{0}% Dark damage",
       "slots": [
         "weapon"
       ],
@@ -474,6 +474,7 @@
       ]
     },
     "c_block": {
+      "shieldOnly": true,
       "tier": "C",
       "name": "Block",
       "text": "+{0}% Block chance",
@@ -496,7 +497,7 @@
     "c_lightning": {
       "tier": "C",
       "name": "Lightning damage",
-      "text": "{m0} Lightning damage",
+      "text": "+{0}% Lightning damage",
       "slots": [
         "weapon"
       ],
@@ -749,7 +750,7 @@
     "b_tier": {
       "tier": "B",
       "name": "Damage vs elites",
-      "text": "{m0} damage to elites and bosses",
+      "text": "+{0}% damage to elites and bosses",
       "slots": [
         "weapon"
       ],
@@ -914,7 +915,7 @@
     "b_front": {
       "tier": "B",
       "name": "Vanguard bane",
-      "text": "{m0} damage to enemies in the front row",
+      "text": "+{0}% damage to enemies in the front row",
       "slots": [
         "weapon"
       ],
@@ -934,7 +935,7 @@
     "b_back": {
       "tier": "B",
       "name": "Rearguard bane",
-      "text": "{m0} damage to enemies in the back row",
+      "text": "+{0}% damage to enemies in the back row",
       "slots": [
         "weapon"
       ],
@@ -1019,7 +1020,7 @@
     "b_execute": {
       "tier": "B",
       "name": "Executioner",
-      "text": "{m0} damage to enemies below 30% HP",
+      "text": "+{0}% damage to enemies below 30% HP",
       "slots": [
         "weapon",
         "gloves"
@@ -1140,6 +1141,121 @@
           "ip": 0.25,
           "to": "fx:blockBreak",
           "scale": 0.01
+        }
+      ]
+    },
+    "b_sparearrow": {
+      "tier": "B",
+      "name": "Spare Arrow",
+      "text": "{0}% chance your free basic attack strikes again",
+      "slots": [
+        "offhand"
+      ],
+      "kindOnly": "quivers",
+      "desc": "Only your 0 MP basic attack can repeat: the same hit lands once more on the same target. It adds to other repeat chances.",
+      "needs": "ranged",
+      "icon": "spareArrow",
+      "parts": [
+        {
+          "base": 7.9,
+          "perIlvl": 0.1,
+          "step": 1,
+          "ip": 0.4,
+          "to": "fx:basicRepeat",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "b_longfletching": {
+      "tier": "B",
+      "name": "Long Fletching",
+      "text": "+{0}% damage to enemies in the back row",
+      "slots": [
+        "offhand"
+      ],
+      "kindOnly": "quivers",
+      "desc": "Quivers only. Every enemy standing behind the front row. Adds to Rearguard bane.",
+      "needs": "ranged",
+      "icon": "backRow",
+      "parts": [
+        {
+          "base": 4,
+          "perIlvl": 0.5,
+          "step": 1,
+          "ip": 0.25,
+          "to": "fx:backRowDamage",
+          "scale": 0.01,
+          "noPower": true
+        }
+      ]
+    },
+    "b_weightedodds": {
+      "tier": "B",
+      "name": "Weighted Odds",
+      "text": "{l0} MP cost",
+      "slots": [
+        "offhand"
+      ],
+      "kindOnly": "orbs",
+      "desc": "Focus Orbs only. Your skills cost less MP. Adds to MP cost.",
+      "needs": "mp",
+      "icon": "mpCost",
+      "parts": [
+        {
+          "base": 2.25,
+          "perIlvl": 0.375,
+          "step": 1,
+          "ip": 0.15,
+          "to": "fx:mpCostReduce",
+          "scale": 0.01,
+          "noPower": true
+        }
+      ]
+    },
+    "a_illportent": {
+      "tier": "A",
+      "name": "Ill Portent",
+      "text": "Your debuffs last {0} turn longer",
+      "slots": [
+        "offhand"
+      ],
+      "kindOnly": "orbs",
+      "desc": "Focus Orbs only. Stuns do not last longer. A Bad Omen never lasts longer: each turn it would gain adds +25% Doom damage instead. Adds to Potency.",
+      "needs": "debuff",
+      "icon": "dot",
+      "parts": [
+        {
+          "base": 1,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 3,
+          "to": "fx:potencyTurns",
+          "fixed": true
+        }
+      ]
+    },
+    "c_gravewick": {
+      "tier": "C",
+      "name": "Grave Wick",
+      "text": "+{0}% damage over time",
+      "slots": [
+        "offhand"
+      ],
+      "kindOnly": "orbs",
+      "desc": "Focus Orbs only. Your Burning and Wither deal more damage each turn. Adds to DoT damage.",
+      "needs": "dot",
+      "icon": "dot",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.2,
+          "to": "mod:dotPowerAdd",
+          "scale": 0.01,
+          "noPower": true
         }
       ]
     },
@@ -1274,7 +1390,7 @@
     "a_auradmg": {
       "tier": "A",
       "name": "Battle aura",
-      "text": "Allies beside you deal {m0} damage",
+      "text": "Allies beside you deal +{0}% damage",
       "slots": [
         "armor"
       ],
@@ -1356,7 +1472,7 @@
     "a_allelem": {
       "tier": "A",
       "name": "Elemental damage",
-      "text": "{m0} elemental damage",
+      "text": "+{0}% elemental damage",
       "slots": [
         "weapon",
         "ring"
@@ -1642,7 +1758,7 @@
     "a_steady": {
       "tier": "A",
       "name": "Steady stance",
-      "text": "Each turn you don't move: {m0} damage, up to {m0:3} after 3 turns",
+      "text": "Each turn you don't move: +{0}% damage, up to +{0:3}% after 3 turns",
       "slots": [
         "gloves",
         "boots"
@@ -1798,6 +1914,9 @@
       "mains": [
         "c_phys",
         "c_arcane"
+      ],
+      "offhandClasses": [
+        "warrior"
       ]
     },
     {
@@ -1807,7 +1926,9 @@
         "mage",
         "druid",
         "undead",
-        "vesper"
+        "vesper",
+        "gambler",
+        "hexer"
       ],
       "mains": [
         "c_fire",
@@ -1827,10 +1948,138 @@
         "c_phys",
         "c_dark"
       ]
+    },
+    {
+      "id": "wands",
+      "type": "wand",
+      "classes": [
+        "mage",
+        "undead"
+      ],
+      "mains": [
+        "c_fire",
+        "c_ice",
+        "c_nature",
+        "c_dark"
+      ]
+    },
+    {
+      "id": "rods",
+      "type": "rod",
+      "classes": [
+        "druid",
+        "vesper"
+      ],
+      "mains": [
+        "c_fire",
+        "c_ice",
+        "c_nature",
+        "c_dark"
+      ]
+    },
+    {
+      "id": "spears",
+      "type": "spear",
+      "classes": [
+        "cutthroat",
+        "antimage"
+      ],
+      "mains": [
+        "c_phys",
+        "c_arcane"
+      ]
+    },
+    {
+      "id": "hatchets",
+      "type": "hatchet",
+      "offhand": true,
+      "classes": [
+        "cutthroat",
+        "antimage"
+      ],
+      "offhandClasses": [
+        "warrior"
+      ],
+      "mains": [
+        "c_phys",
+        "c_arcane"
+      ]
+    }
+  ],
+  "_offhandKinds": "İkinci el türleri (Ömer 2026-11-07, öneri B; sınıf listesi geçici, Ömer formda onaylıyor): Shield (Buckler, Kite, Tower), Quiver (Hide, Barbed), Focus Orb (Scrying, Smoked), Tome (Grimoire, Prayer Book), Lantern (Hooded, Ember), Relic (Reliquary, Stone Idol). Censer yok. implicit = türün varsayılan alt tipi; withBow = yayla takılır (yalnız Sadak); shield = Block affix'i çekilir. Yeni tabanların 'art' alanı yer tutucu boyalı ikondur (çizim sonra).",
+  "offhandKinds": [
+    {
+      "id": "shields",
+      "name": "Shield",
+      "classes": [
+        "warrior",
+        "defender",
+        "paladin"
+      ],
+      "implicit": "shield",
+      "shield": true
+    },
+    {
+      "id": "quivers",
+      "name": "Quiver",
+      "classes": [
+        "archer"
+      ],
+      "implicit": "hide_quiver",
+      "withBow": true
+    },
+    {
+      "id": "orbs",
+      "name": "Focus Orb",
+      "classes": [
+        "mage",
+        "druid",
+        "undead",
+        "vesper",
+        "gambler",
+        "hexer"
+      ],
+      "implicit": "scrying_orb"
+    },
+    {
+      "id": "tomes",
+      "name": "Tome",
+      "classes": [
+        "mage",
+        "undead",
+        "hexer",
+        "paladin",
+        "druid"
+      ],
+      "implicit": "grimoire"
+    },
+    {
+      "id": "lanterns",
+      "name": "Lantern",
+      "classes": [
+        "vesper",
+        "mage",
+        "undead",
+        "gambler",
+        "cutthroat"
+      ],
+      "implicit": "hooded_lantern"
+    },
+    {
+      "id": "relics",
+      "name": "Relic",
+      "classes": [
+        "paladin",
+        "defender",
+        "druid",
+        "undead",
+        "vesper"
+      ],
+      "implicit": "reliquary"
     }
   ],
   "bag": 30,
-  "_grip": "Tutuş (Ömer onayı 2026-10-12, future-ideas 'Silah ve tutuş kuralları'): her silahın grip alanı one (tek el) | two (çift el) | bow (yay) | charm (tılsım). Tek el silahla (ya da silahsız) ikinci el yuvasına (offhand) KALKAN (slot offhand, Maces & Shields ailesi: defender, paladin, warrior) ya da ailesi offhand: true olan tek el silah (hançer: cutthroat, antimage) takılır. two / bow / charm ikinci eli kapatır: takılınca ikinci eldeki item torbaya döner (torba doluysa engellenir). Twin Stilettos artık sıradan tek el hançer (çift hançer = ikinci el yuvası). Kural kodu: src/progression/items.ts > gripOf / fitsSlot / planEquip.",
+  "_grip": "Tutuş (Ömer 2026-10-12; 2026-11-07 tutuş + ikinci el önerisi): grip one (tek el) | two (çift el) | bow (yay, çift el). İkinci eli YALNIZ çift el kapatır: two hepsini, bow Sadak (offhandKinds[].withBow) dışındakileri. Tılsım artık tek el (charm tutuşu silindi; kayıtta tutuş yazılı değil, göç yok). Yeni tipler: wand / rod (tek el, caster), spear (çift el, Cutthroat / Anti-Mage), hatchet (tek el, ikinci el silahı), crossbow / longbow (yay). İkinci el türleri offhandKinds: item'in family alanı tür id'si, implicit alanı alt tipi (örtük stat). Tür sınıf listesi takma kısıtıdır (Warrior fener takamaz; liste Ömer onayında, tek satır). weaponFamilies[].offhandClasses: o aileyi yalnız ikinci elde taşıyan sınıflar (Warrior hançer / el baltası). Kural kodu: src/progression/items.ts > offhandCompatible / offhandBlocker / planEquip.",
   "_itempower": "Item Güçlendirme (Ömer onayı, form 2026-10-13, onay 2026-10-17; items.md 1.12). weaponPower = silahın TABAN GÜCÜ (affix değil, zarsız): güç = (base + perIlvl x ilvl) x grip[tutuş] x family[aile] (yoksa 1), step adımına yuvarlanır. Hasar = stat x skill gücü x (1 + güç / 100) (x1, x2: asa ve tılsım dahil her silah; şifa / kalkan değil). Çift el ve yay tek elden ~%35 güçlü (ikinci eli kapatır), tılsım arada (ikinci eli kapatır, örtük hız), hançer zayıf (örtük kritik; ikinci elde gücünün offhandShare kadarı sayılır). KATLAMA (x5): her sınıfın başlangıç silahının gücü (starterWeapons, ilvl 1) o sınıfın sıfır noktasıdır: motora giden çarpan = (1 + güç/100) / (1 + başlangıç gücü/100); başlangıç silahıyla 1 (Quick Battle / MP bunu hiç vermez: bugünle birebir), silahsız < 1. ip = 1 güç puanının Item Points değeri (değer, fiyat, Equip best; 1 güç ~ %0,9 hasar ~ Global damage %1 = 0,5 IP). implicits = taban örtük statları (zarsız, seviyeyle büyür, affixRules.power işlemez): hançer kritik şansı, tılsım hız %, kalkan BLOK ŞANSI (x4, Ömer 2026-10-18: eskiden zırhtı; taban başına sabit %15-20, items[].implicitBase, item seviyesiyle değişmez; düşmanın fiziksel vuruşunu tamamen bloklar). Tavanlar (caps) örtük statları da kapsar. levelReq: takma şartı = max(min, ilvl - offset) (x6; seviye sistemi gelene kadar herkes L1). starterWeapons: sınıf başına Common başlangıç silahı (x5), ilvl = starterWeapons.ilvl. Sayılar İLK DEĞER (balance-tester son ayarı yapacak; hedef x8: iyi Endless koşusu item'lerden +6-10 dalga).",
   "_gripTwo": "Ömer 2026-10-19: çift el tutuş gücü 1,35 -> 1,45 (Equip best çift el silahları da seçebilsin); yay 1,35 aynı.",
   "weaponPower": {
@@ -1840,8 +2089,7 @@
     "grip": {
       "one": 1,
       "two": 1.45,
-      "bow": 1.35,
-      "charm": 1.15
+      "bow": 1.35
     },
     "offhandShare": 0.4,
     "ip": 0.45,
@@ -1880,6 +2128,24 @@
     },
     "charm": {
       "name": "Charm"
+    },
+    "wand": {
+      "name": "Wand"
+    },
+    "rod": {
+      "name": "Rod"
+    },
+    "spear": {
+      "name": "Spear"
+    },
+    "hatchet": {
+      "name": "Hatchet"
+    },
+    "crossbow": {
+      "name": "Crossbow"
+    },
+    "longbow": {
+      "name": "Longbow"
     }
   },
   "twoHandMelee": {
@@ -2054,6 +2320,354 @@
           "noPower": true
         }
       ]
+    },
+    "wand": {
+      "name": "Wellspring",
+      "text": "+{0} MP per turn",
+      "icon": "mpRegen",
+      "desc": "Wands carry a little extra MP regeneration.",
+      "parts": [
+        {
+          "base": 0.5,
+          "perIlvl": 0.05,
+          "step": 0.25,
+          "ip": 2,
+          "to": "mod:mpRegenAdd",
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "rod": {
+      "name": "Wellspring",
+      "text": "+{0} MP per turn",
+      "icon": "mpRegen",
+      "desc": "Rods carry a little extra MP regeneration.",
+      "parts": [
+        {
+          "base": 0.5,
+          "perIlvl": 0.05,
+          "step": 0.25,
+          "ip": 2,
+          "to": "mod:mpRegenAdd",
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "spear": {
+      "name": "Piercing point",
+      "text": "+{0}% Armor penetration",
+      "icon": "armor",
+      "desc": "Spears pierce armor: your physical hits ignore part of the target's armor.",
+      "parts": [
+        {
+          "base": 8,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.12,
+          "to": "fx:armorPen",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "hatchet": {
+      "name": "Biting edge",
+      "text": "+{0}% Armor penetration",
+      "icon": "armor",
+      "desc": "Hatchets bite through armor: your physical hits ignore part of the target's armor.",
+      "parts": [
+        {
+          "base": 5,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.12,
+          "to": "fx:armorPen",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "crossbow": {
+      "name": "Piercing bolt",
+      "text": "+{0}% Armor penetration",
+      "icon": "armor",
+      "desc": "Crossbow bolts pierce armor: your physical hits ignore part of the target's armor.",
+      "parts": [
+        {
+          "base": 8,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.12,
+          "to": "fx:armorPen",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "longbow": {
+      "name": "Deadly draw",
+      "text": "+{0}% Crit damage",
+      "icon": "critMult",
+      "desc": "Longbows carry a little extra crit damage.",
+      "parts": [
+        {
+          "base": 10,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.06,
+          "to": "mod:critMultAdd",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "buckler": {
+      "name": "Light block",
+      "text": "{0}% Block chance, {m1} Speed",
+      "icon": "block",
+      "desc": "A buckler can block an enemy's physical hit and keeps you quick. Spells, damage over time, burning ground and Backstab cannot be blocked.",
+      "parts": [
+        {
+          "base": 15,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.4,
+          "to": "fx:blockChance",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        },
+        {
+          "base": 2,
+          "perIlvl": 0,
+          "step": 0.5,
+          "ip": 0.5,
+          "to": "mult:spdMult",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "tower_shield": {
+      "name": "Heavy block",
+      "text": "{0}% Block chance, +{1} Armor",
+      "icon": "block",
+      "desc": "A tower shield blocks an enemy's physical hit more often and adds armor. Spells, damage over time, burning ground and Backstab cannot be blocked.",
+      "parts": [
+        {
+          "base": 20,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.4,
+          "to": "fx:blockChance",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        },
+        {
+          "base": 3,
+          "perIlvl": 0.5,
+          "step": 1,
+          "ip": 0.4,
+          "to": "mod:armorAdd",
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "hide_quiver": {
+      "name": "Steady aim",
+      "text": "{m0} Accuracy",
+      "icon": "accuracy",
+      "desc": "A hide quiver keeps your arrows straight: your accuracy is multiplied.",
+      "parts": [
+        {
+          "base": 5,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.5,
+          "to": "mult:accuracyMult",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "barbed_quiver": {
+      "name": "Barbed heads",
+      "text": "+{0}% Armor penetration",
+      "icon": "armor",
+      "desc": "Barbed arrowheads: your physical hits ignore part of the target's armor.",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.12,
+          "to": "fx:armorPen",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "scrying_orb": {
+      "name": "Clear sight",
+      "text": "+{0} MP per turn",
+      "icon": "mpRegen",
+      "desc": "A scrying orb gives a little extra MP regeneration.",
+      "parts": [
+        {
+          "base": 0.5,
+          "perIlvl": 0.05,
+          "step": 0.25,
+          "ip": 2,
+          "to": "mod:mpRegenAdd",
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "smoked_orb": {
+      "name": "Veiled sight",
+      "text": "+{0}% Crit chance",
+      "icon": "crit",
+      "desc": "A smoked orb carries a little extra crit chance.",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0,
+          "step": 0.5,
+          "ip": 0.3,
+          "to": "mod:critAdd",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "grimoire": {
+      "name": "Deep pages",
+      "text": "{m0} Max MP",
+      "icon": "mp",
+      "desc": "A grimoire deepens your mana: your max MP is multiplied.",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.06,
+          "to": "mult:mpMult",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "prayer_book": {
+      "name": "Vigil",
+      "text": "+{0} Magic armor, +{1} HP per turn",
+      "icon": "magicArmor",
+      "desc": "A prayer book wards against spells and slowly mends you.",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0.4,
+          "step": 1,
+          "ip": 0.25,
+          "to": "mod:magicArmorAdd",
+          "noRoll": true,
+          "noPower": true
+        },
+        {
+          "base": 0.25,
+          "perIlvl": 0.04,
+          "step": 0.25,
+          "ip": 2.5,
+          "to": "mod:hpRegenAdd",
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "hooded_lantern": {
+      "name": "Guiding light",
+      "text": "{m0} Accuracy",
+      "icon": "accuracy",
+      "desc": "A hooded lantern lights the way: your accuracy is multiplied.",
+      "parts": [
+        {
+          "base": 5,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.5,
+          "to": "mult:accuracyMult",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "ember_lantern": {
+      "name": "Ember glow",
+      "text": "+{0}% Crit damage",
+      "icon": "critMult",
+      "desc": "An ember lantern carries a little extra crit damage.",
+      "parts": [
+        {
+          "base": 8,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.06,
+          "to": "mod:critMultAdd",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "reliquary": {
+      "name": "Sacred bone",
+      "text": "{m0} Max HP",
+      "icon": "hp",
+      "desc": "A reliquary hardens you: your max HP is multiplied.",
+      "parts": [
+        {
+          "base": 5,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.4,
+          "to": "mult:hpMult",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "stone_idol": {
+      "name": "Old ward",
+      "text": "Takes {l0} damage",
+      "icon": "armor",
+      "desc": "A stone idol of the old spirits: you take a little less damage from every source.",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 0.5,
+          "to": "fx:damageTakenReduce",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
     }
   },
   "levelReq": {
@@ -2077,13 +2691,15 @@
       "vesper": "ash_staff"
     }
   },
-  "_starterOffhands": "Başlangıç ikinci el item'i (Ömer 2026-10-23): ikinci el yuvası boş başlayan ve başlangıç silahı tek el olan sınıflara sınıfına uygun Common ikinci el (Defender / Paladin kalkan, Cutthroat / Anti-Mage ikinci hançer). Yeni item yok, katalogdaki Common'lar; örnek seviyesi starterWeapons.ilvl. Silah katlaması (sıfır noktası) yalnızca ana el başlangıç silahıdır: ikinci hançerin güç payı küçük bir ek hasar verir. Warrior ikinci el almaz: başlangıç silahı çift el Greataxe oldu (Ömer 2026-10-23, open-questions 401; önceden tek el Woodcutter's Axe; katlama Greataxe'a göre: başlangıçla hasar aynı, eski kayıttaki Woodcutter's Axe artık ~x0,957). Yalnızca yeni sefer kahramanı / yeni Endless koşusu alır (eski kayıtlara göç yok, Ömer 2026-10-23).",
+  "_starterOffhands": "Başlangıç ikinci el item'i (Ömer 2026-10-23): ikinci el yuvası boş başlayan ve başlangıç silahı tek el olan sınıflara sınıfına uygun Common ikinci el (Defender / Paladin kalkan, Cutthroat / Anti-Mage ikinci hançer). Yeni item yok, katalogdaki Common'lar; örnek seviyesi starterWeapons.ilvl. Silah katlaması (sıfır noktası) yalnızca ana el başlangıç silahıdır: ikinci hançerin güç payı küçük bir ek hasar verir. Gambler / Hexer Focus Orb alır (2026-11-07: tılsım tek el oldu, aynı kural). Warrior ikinci el almaz: başlangıç silahı çift el Greataxe oldu (Ömer 2026-10-23, open-questions 401; önceden tek el Woodcutter's Axe; katlama Greataxe'a göre: başlangıçla hasar aynı, eski kayıttaki Woodcutter's Axe artık ~x0,957). Yalnızca yeni sefer kahramanı / yeni Endless koşusu alır (eski kayıtlara göç yok, Ömer 2026-10-23).",
   "starterOffhands": {
     "classes": {
       "defender": "iron_buckler",
       "paladin": "iron_buckler",
       "cutthroat": "rondel_dagger",
-      "antimage": "rondel_dagger"
+      "antimage": "rondel_dagger",
+      "gambler": "clouded_glass_orb",
+      "hexer": "clouded_glass_orb"
     }
   },
   "_items": "Katalog = taban item'ler (Ömer onayı 2026-10-11, items.md 1.3b): ad, yuva, silah ailesi, ilvl, ikon, varsayılan nadirlik ve ana C affix'i (main; silahta weaponFamilies[].mains listesinden örnek oluşurken seçilir). Diğer affix'ler örnek oluşurken kademesinin havuzundan çekilir. Legendary'nin dört affix'i (affixes) ve etkisi katalogda sabit; değerleri yine seviyeye göre zarlanır.",
@@ -2160,7 +2776,7 @@
       "name": "Iron Buckler",
       "icon": "shield",
       "slot": "offhand",
-      "family": "maces",
+      "family": "shields",
       "rarity": "common",
       "ilvl": 2,
       "main": "c_armor",
@@ -2173,7 +2789,7 @@
       "name": "Oak Tower Shield",
       "icon": "shield",
       "slot": "offhand",
-      "family": "maces",
+      "family": "shields",
       "rarity": "uncommon",
       "ilvl": 6,
       "main": "c_armor",
@@ -2186,7 +2802,7 @@
       "name": "Kite Shield of the Stag",
       "icon": "shield",
       "slot": "offhand",
-      "family": "maces",
+      "family": "shields",
       "rarity": "rare",
       "ilvl": 9,
       "main": "c_armor",
@@ -2199,13 +2815,88 @@
       "name": "Warden's Pavise",
       "icon": "shield",
       "slot": "offhand",
-      "family": "maces",
+      "family": "shields",
       "rarity": "epic",
       "ilvl": 10,
       "main": "c_armor",
       "implicitBase": [
         20
       ]
+    },
+    {
+      "id": "hide_quiver",
+      "name": "Hide Quiver",
+      "slot": "offhand",
+      "family": "quivers",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_phys"
+    },
+    {
+      "id": "fletchers_quiver",
+      "name": "Fletcher's Quiver",
+      "slot": "offhand",
+      "family": "quivers",
+      "rarity": "uncommon",
+      "ilvl": 8,
+      "main": "c_acc"
+    },
+    {
+      "id": "bodkin_quiver",
+      "name": "Bodkin Quiver",
+      "slot": "offhand",
+      "family": "quivers",
+      "implicit": "barbed_quiver",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_phys"
+    },
+    {
+      "id": "crow_feather_quiver",
+      "name": "Crow-Feather Quiver",
+      "slot": "offhand",
+      "family": "quivers",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_phys"
+    },
+    {
+      "id": "clouded_glass_orb",
+      "name": "Clouded Glass Orb",
+      "slot": "offhand",
+      "family": "orbs",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_mp"
+    },
+    {
+      "id": "fortune_tellers_orb",
+      "name": "Fortune-Teller's Orb",
+      "slot": "offhand",
+      "family": "orbs",
+      "implicit": "smoked_orb",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_phys"
+    },
+    {
+      "id": "hollow_eye_orb",
+      "name": "Hollow Eye Orb",
+      "slot": "offhand",
+      "family": "orbs",
+      "implicit": "smoked_orb",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_dark"
+    },
+    {
+      "id": "lantern_glass_orb",
+      "name": "Lantern-Glass Orb",
+      "slot": "offhand",
+      "family": "orbs",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_dark"
     },
     {
       "id": "morning_star",
@@ -2296,6 +2987,7 @@
       "name": "Yew Longbow of the Fox",
       "slot": "weapon",
       "family": "bows",
+      "type": "longbow",
       "grip": "bow",
       "rarity": "rare",
       "ilvl": 10
@@ -2368,7 +3060,7 @@
       "name": "Worn Deck",
       "slot": "weapon",
       "family": "charms",
-      "grip": "charm",
+      "grip": "one",
       "rarity": "common",
       "ilvl": 2
     },
@@ -2377,7 +3069,7 @@
       "name": "Loaded Bones",
       "slot": "weapon",
       "family": "charms",
-      "grip": "charm",
+      "grip": "one",
       "rarity": "uncommon",
       "ilvl": 6
     },
@@ -2386,7 +3078,7 @@
       "name": "Hex Doll of the Crow",
       "slot": "weapon",
       "family": "charms",
-      "grip": "charm",
+      "grip": "one",
       "rarity": "rare",
       "ilvl": 10
     },
@@ -2691,7 +3383,7 @@
       "id": "oathkeepers_bulwark",
       "name": "Oathkeeper's Bulwark",
       "slot": "offhand",
-      "family": "maces",
+      "family": "shields",
       "rarity": "legendary",
       "ilvl": 15,
       "minChapter": 2,
@@ -2716,6 +3408,7 @@
       "name": "Windrunner Longbow",
       "slot": "weapon",
       "family": "bows",
+      "type": "longbow",
       "grip": "bow",
       "rarity": "legendary",
       "ilvl": 16,
@@ -2770,7 +3463,7 @@
       "name": "The Gambler's Last Coin",
       "slot": "weapon",
       "family": "charms",
-      "grip": "charm",
+      "grip": "one",
       "rarity": "legendary",
       "ilvl": 16,
       "minChapter": 2,
@@ -2976,7 +3669,7 @@
       "name": "Bones of the Quarry",
       "slot": "weapon",
       "family": "charms",
-      "grip": "charm",
+      "grip": "one",
       "rarity": "legendary",
       "ilvl": 18,
       "minChapter": 3,
@@ -3008,6 +3701,683 @@
       ],
       "effect": "sunken_clapper",
       "flavor": "Forty years it rang for the drowned. It has not forgotten how."
+    },
+    {
+      "id": "birch_wand",
+      "name": "Birch Wand",
+      "slot": "weapon",
+      "family": "wands",
+      "grip": "one",
+      "rarity": "common",
+      "ilvl": 2,
+      "art": "ash_staff"
+    },
+    {
+      "id": "ember_tipped_wand",
+      "name": "Ember-Tipped Wand",
+      "slot": "weapon",
+      "family": "wands",
+      "grip": "one",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "art": "oak_staff"
+    },
+    {
+      "id": "rune_carved_wand",
+      "name": "Rune-Carved Wand",
+      "slot": "weapon",
+      "family": "wands",
+      "grip": "one",
+      "rarity": "rare",
+      "ilvl": 9,
+      "art": "rune_staff"
+    },
+    {
+      "id": "bone_wand",
+      "name": "Bone Wand of the Raven",
+      "slot": "weapon",
+      "family": "wands",
+      "grip": "one",
+      "rarity": "epic",
+      "ilvl": 10,
+      "art": "bone_staff"
+    },
+    {
+      "id": "hazel_rod",
+      "name": "Hazel Rod",
+      "slot": "weapon",
+      "family": "rods",
+      "grip": "one",
+      "rarity": "common",
+      "ilvl": 2,
+      "art": "ash_staff"
+    },
+    {
+      "id": "thornwood_rod",
+      "name": "Thornwood Rod",
+      "slot": "weapon",
+      "family": "rods",
+      "grip": "one",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "art": "oak_staff"
+    },
+    {
+      "id": "iron_shod_rod",
+      "name": "Iron-Shod Rod",
+      "slot": "weapon",
+      "family": "rods",
+      "grip": "one",
+      "rarity": "rare",
+      "ilvl": 9,
+      "art": "rune_staff"
+    },
+    {
+      "id": "rod_of_the_pale_moon",
+      "name": "Rod of the Pale Moon",
+      "slot": "weapon",
+      "family": "rods",
+      "grip": "one",
+      "rarity": "epic",
+      "ilvl": 10,
+      "art": "bone_staff"
+    },
+    {
+      "id": "boar_spear",
+      "name": "Boar Spear",
+      "slot": "weapon",
+      "family": "spears",
+      "grip": "two",
+      "rarity": "common",
+      "ilvl": 2,
+      "art": "oak_staff"
+    },
+    {
+      "id": "winged_spear",
+      "name": "Winged Spear",
+      "slot": "weapon",
+      "family": "spears",
+      "grip": "two",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "art": "oak_staff"
+    },
+    {
+      "id": "partisan",
+      "name": "Partisan",
+      "slot": "weapon",
+      "family": "spears",
+      "grip": "two",
+      "rarity": "rare",
+      "ilvl": 9,
+      "art": "rune_staff"
+    },
+    {
+      "id": "spear_of_the_wolf",
+      "name": "Spear of the Wolf",
+      "slot": "weapon",
+      "family": "spears",
+      "grip": "two",
+      "rarity": "epic",
+      "ilvl": 10,
+      "art": "rune_staff"
+    },
+    {
+      "id": "hand_hatchet",
+      "name": "Hand Hatchet",
+      "slot": "weapon",
+      "family": "hatchets",
+      "grip": "one",
+      "rarity": "common",
+      "ilvl": 2,
+      "art": "woodcutters_axe"
+    },
+    {
+      "id": "francisca",
+      "name": "Francisca",
+      "slot": "weapon",
+      "family": "hatchets",
+      "grip": "one",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "art": "woodcutters_axe"
+    },
+    {
+      "id": "bearded_hatchet",
+      "name": "Bearded Hatchet",
+      "slot": "weapon",
+      "family": "hatchets",
+      "grip": "one",
+      "rarity": "rare",
+      "ilvl": 9,
+      "art": "bearded_axe"
+    },
+    {
+      "id": "hatchet_of_the_lynx",
+      "name": "Hatchet of the Lynx",
+      "slot": "weapon",
+      "family": "hatchets",
+      "grip": "one",
+      "rarity": "epic",
+      "ilvl": 10,
+      "art": "bearded_axe"
+    },
+    {
+      "id": "light_crossbow",
+      "name": "Light Crossbow",
+      "slot": "weapon",
+      "family": "bows",
+      "type": "crossbow",
+      "grip": "bow",
+      "rarity": "common",
+      "ilvl": 2,
+      "art": "short_bow"
+    },
+    {
+      "id": "hunters_crossbow",
+      "name": "Hunter's Crossbow",
+      "slot": "weapon",
+      "family": "bows",
+      "type": "crossbow",
+      "grip": "bow",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "art": "hunting_bow"
+    },
+    {
+      "id": "arbalest",
+      "name": "Arbalest",
+      "slot": "weapon",
+      "family": "bows",
+      "type": "crossbow",
+      "grip": "bow",
+      "rarity": "rare",
+      "ilvl": 9,
+      "art": "yew_longbow"
+    },
+    {
+      "id": "windlass_crossbow",
+      "name": "Windlass Crossbow of the Hawk",
+      "slot": "weapon",
+      "family": "bows",
+      "type": "crossbow",
+      "grip": "bow",
+      "rarity": "epic",
+      "ilvl": 10,
+      "art": "windrunner_longbow"
+    },
+    {
+      "id": "elm_longbow",
+      "name": "Elm Longbow",
+      "slot": "weapon",
+      "family": "bows",
+      "type": "longbow",
+      "grip": "bow",
+      "rarity": "common",
+      "ilvl": 2,
+      "art": "yew_longbow"
+    },
+    {
+      "id": "war_longbow",
+      "name": "War Longbow",
+      "slot": "weapon",
+      "family": "bows",
+      "type": "longbow",
+      "grip": "bow",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "art": "yew_longbow"
+    },
+    {
+      "id": "ashen_longbow",
+      "name": "Ashen Longbow",
+      "slot": "weapon",
+      "family": "bows",
+      "type": "longbow",
+      "grip": "bow",
+      "rarity": "epic",
+      "ilvl": 10,
+      "art": "windrunner_longbow"
+    },
+    {
+      "id": "round_buckler",
+      "name": "Round Buckler",
+      "slot": "offhand",
+      "family": "shields",
+      "implicit": "buckler",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_armor",
+      "art": "iron_buckler"
+    },
+    {
+      "id": "studded_buckler",
+      "name": "Studded Buckler",
+      "slot": "offhand",
+      "family": "shields",
+      "implicit": "buckler",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_armor",
+      "art": "iron_buckler"
+    },
+    {
+      "id": "duelists_buckler",
+      "name": "Duelist's Buckler",
+      "slot": "offhand",
+      "family": "shields",
+      "implicit": "buckler",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_armor",
+      "art": "iron_buckler"
+    },
+    {
+      "id": "buckler_of_the_hart",
+      "name": "Buckler of the Hart",
+      "slot": "offhand",
+      "family": "shields",
+      "implicit": "buckler",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_armor",
+      "art": "iron_buckler"
+    },
+    {
+      "id": "plank_tower_shield",
+      "name": "Plank Tower Shield",
+      "slot": "offhand",
+      "family": "shields",
+      "implicit": "tower_shield",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_armor",
+      "art": "oak_shield"
+    },
+    {
+      "id": "iron_banded_tower",
+      "name": "Iron-Banded Tower Shield",
+      "slot": "offhand",
+      "family": "shields",
+      "implicit": "tower_shield",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_armor",
+      "art": "oak_shield"
+    },
+    {
+      "id": "great_pavise",
+      "name": "Great Pavise",
+      "slot": "offhand",
+      "family": "shields",
+      "implicit": "tower_shield",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_armor",
+      "art": "wardens_pavise"
+    },
+    {
+      "id": "tower_of_the_boar",
+      "name": "Tower Shield of the Boar",
+      "slot": "offhand",
+      "family": "shields",
+      "implicit": "tower_shield",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_armor",
+      "art": "wardens_pavise"
+    },
+    {
+      "id": "stitched_quiver",
+      "name": "Stitched Leather Quiver",
+      "slot": "offhand",
+      "family": "quivers",
+      "implicit": "hide_quiver",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_acc",
+      "art": "fletchers_quiver"
+    },
+    {
+      "id": "barbed_quiver",
+      "name": "Barbed Quiver",
+      "slot": "offhand",
+      "family": "quivers",
+      "implicit": "barbed_quiver",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_phys",
+      "art": "bodkin_quiver"
+    },
+    {
+      "id": "broadhead_quiver",
+      "name": "Broadhead Quiver",
+      "slot": "offhand",
+      "family": "quivers",
+      "implicit": "barbed_quiver",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_phys",
+      "art": "bodkin_quiver"
+    },
+    {
+      "id": "quiver_of_the_wasp",
+      "name": "Quiver of the Wasp",
+      "slot": "offhand",
+      "family": "quivers",
+      "implicit": "barbed_quiver",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_phys",
+      "art": "crow_feather_quiver"
+    },
+    {
+      "id": "seers_orb",
+      "name": "Seer's Orb",
+      "slot": "offhand",
+      "family": "orbs",
+      "implicit": "scrying_orb",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_mp",
+      "art": "clouded_glass_orb"
+    },
+    {
+      "id": "moonstone_orb",
+      "name": "Moonstone Orb",
+      "slot": "offhand",
+      "family": "orbs",
+      "implicit": "scrying_orb",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_mp",
+      "art": "lantern_glass_orb"
+    },
+    {
+      "id": "smoked_glass_orb",
+      "name": "Smoked Glass Orb",
+      "slot": "offhand",
+      "family": "orbs",
+      "implicit": "smoked_orb",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_dark",
+      "art": "hollow_eye_orb"
+    },
+    {
+      "id": "orb_of_the_veiled_eye",
+      "name": "Orb of the Veiled Eye",
+      "slot": "offhand",
+      "family": "orbs",
+      "implicit": "smoked_orb",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_dark",
+      "art": "hollow_eye_orb"
+    },
+    {
+      "id": "worn_grimoire",
+      "name": "Worn Grimoire",
+      "slot": "offhand",
+      "family": "tomes",
+      "implicit": "grimoire",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_mp",
+      "art": "worn_deck"
+    },
+    {
+      "id": "ashen_grimoire",
+      "name": "Ashen Grimoire",
+      "slot": "offhand",
+      "family": "tomes",
+      "implicit": "grimoire",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_fire",
+      "art": "worn_deck"
+    },
+    {
+      "id": "grimoire_of_cinders",
+      "name": "Grimoire of Cinders",
+      "slot": "offhand",
+      "family": "tomes",
+      "implicit": "grimoire",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_dark",
+      "art": "worn_deck"
+    },
+    {
+      "id": "grimoire_of_the_black_lake",
+      "name": "Grimoire of the Black Lake",
+      "slot": "offhand",
+      "family": "tomes",
+      "implicit": "grimoire",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_ice",
+      "art": "worn_deck"
+    },
+    {
+      "id": "pilgrims_psalter",
+      "name": "Pilgrim's Psalter",
+      "slot": "offhand",
+      "family": "tomes",
+      "implicit": "prayer_book",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_holy",
+      "art": "saints_medal"
+    },
+    {
+      "id": "book_of_hours",
+      "name": "Book of Hours",
+      "slot": "offhand",
+      "family": "tomes",
+      "implicit": "prayer_book",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_hpregen",
+      "art": "saints_medal"
+    },
+    {
+      "id": "illuminated_prayer_book",
+      "name": "Illuminated Prayer Book",
+      "slot": "offhand",
+      "family": "tomes",
+      "implicit": "prayer_book",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_holy",
+      "art": "saints_medal"
+    },
+    {
+      "id": "psalter_of_the_last_vigil",
+      "name": "Psalter of the Last Vigil",
+      "slot": "offhand",
+      "family": "tomes",
+      "implicit": "prayer_book",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_nature",
+      "art": "saints_medal"
+    },
+    {
+      "id": "hooded_lantern",
+      "name": "Hooded Lantern",
+      "slot": "offhand",
+      "family": "lanterns",
+      "implicit": "hooded_lantern",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_acc",
+      "art": "lantern_glass_orb"
+    },
+    {
+      "id": "watchmans_lantern",
+      "name": "Watchman's Lantern",
+      "slot": "offhand",
+      "family": "lanterns",
+      "implicit": "hooded_lantern",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_acc",
+      "art": "lantern_glass_orb"
+    },
+    {
+      "id": "shuttered_lantern",
+      "name": "Shuttered Lantern",
+      "slot": "offhand",
+      "family": "lanterns",
+      "implicit": "hooded_lantern",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_acc",
+      "art": "lantern_glass_orb"
+    },
+    {
+      "id": "lantern_of_the_long_road",
+      "name": "Lantern of the Long Road",
+      "slot": "offhand",
+      "family": "lanterns",
+      "implicit": "hooded_lantern",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_acc",
+      "art": "lantern_glass_orb"
+    },
+    {
+      "id": "ember_lantern",
+      "name": "Ember Lantern",
+      "slot": "offhand",
+      "family": "lanterns",
+      "implicit": "ember_lantern",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_fire",
+      "art": "lantern_glass_orb"
+    },
+    {
+      "id": "brazier_lantern",
+      "name": "Brazier Lantern",
+      "slot": "offhand",
+      "family": "lanterns",
+      "implicit": "ember_lantern",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_fire",
+      "art": "lantern_glass_orb"
+    },
+    {
+      "id": "pitch_lantern",
+      "name": "Pitch Lantern",
+      "slot": "offhand",
+      "family": "lanterns",
+      "implicit": "ember_lantern",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_dark",
+      "art": "lantern_glass_orb"
+    },
+    {
+      "id": "lantern_of_the_last_coal",
+      "name": "Lantern of the Last Coal",
+      "slot": "offhand",
+      "family": "lanterns",
+      "implicit": "ember_lantern",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_fire",
+      "art": "lantern_glass_orb"
+    },
+    {
+      "id": "bone_reliquary",
+      "name": "Bone Reliquary",
+      "slot": "offhand",
+      "family": "relics",
+      "implicit": "reliquary",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_hp",
+      "art": "pilgrims_token"
+    },
+    {
+      "id": "silver_reliquary",
+      "name": "Silver Reliquary",
+      "slot": "offhand",
+      "family": "relics",
+      "implicit": "reliquary",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_holy",
+      "art": "pilgrims_token"
+    },
+    {
+      "id": "saints_reliquary",
+      "name": "Saint's Reliquary",
+      "slot": "offhand",
+      "family": "relics",
+      "implicit": "reliquary",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_holy",
+      "art": "pilgrims_token"
+    },
+    {
+      "id": "reliquary_of_the_first_oath",
+      "name": "Reliquary of the First Oath",
+      "slot": "offhand",
+      "family": "relics",
+      "implicit": "reliquary",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_hp",
+      "art": "pilgrims_token"
+    },
+    {
+      "id": "stone_idol",
+      "name": "Stone Idol",
+      "slot": "offhand",
+      "family": "relics",
+      "implicit": "stone_idol",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_armor",
+      "art": "wolf_tooth"
+    },
+    {
+      "id": "moss_grown_idol",
+      "name": "Moss-Grown Idol",
+      "slot": "offhand",
+      "family": "relics",
+      "implicit": "stone_idol",
+      "rarity": "uncommon",
+      "ilvl": 6,
+      "main": "c_nature",
+      "art": "wolf_tooth"
+    },
+    {
+      "id": "barrow_idol",
+      "name": "Barrow Idol",
+      "slot": "offhand",
+      "family": "relics",
+      "implicit": "stone_idol",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_dark",
+      "art": "wolf_tooth"
+    },
+    {
+      "id": "idol_of_the_old_oak",
+      "name": "Idol of the Old Oak",
+      "slot": "offhand",
+      "family": "relics",
+      "implicit": "stone_idol",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_nature",
+      "art": "wolf_tooth"
     }
   ],
   "_effects": "Legendary etkileri (madde 296 + Ömer onayı 2026-10-11: 8 yeni). Eski 11 Epic etkisi kaldırıldı (Epic gücünü A affix'inden alır). hook = motor kancası (src/engine/types.ts > ItemEffects), value = sayılar (metindeki {turns}/{below}... bunlardan), ip = etkinin Item Points değeri. effectRules: stack = aynı etki iki item'den toplanmaz; endless = etkiler Endless'ta da aynı.",
@@ -3241,6 +4611,7 @@
     },
     "treasureBase": 2,
     "treasurePerMember": 0.5,
+    "treasureItemsDelta": -1,
     "smartSlotChance": 0.5, "gripWeight": { "two": 2.5 },
     "usableWeaponChance": 0.8,
     "_repeat": "Ömer 2026-10-20 ekonomi formu: devriye (tekrar) zaferi altın/item düşüşü ve nadirlik tavanı ilk zaferle aynı; XP de tam (Ömer 2026-11-01). Elit/sandık ilk zafer garantisi (minItems) yalnızca ilk zaferde.",
@@ -3292,8 +4663,69 @@
           "note": "Primary is the wearer's class primary without items (same rule as Skeleton/Treant). Takes x2 damage like every summon (formulas.summon.damageTakenMultiplier)." }
       },
       "_status": "Omer's final picks 2026-11-03; numbers unmeasured. Unreachable: no items, no summon file, no engine, setsEnabled false. Open engine fields: docs/design/progression/item-design-plan.md."
+    },
+    {
+      "id": "kingsfall_regalia", "name": "Kingsfall Regalia", "kind": "neutral", "map": "Valdoria", "dropper": "Black Cathedral",
+      "slots": ["helm", "armor", "ring"],
+      "pieceNames": ["Kingsfall Crown", "Kingsfall Mantle", "Kingsfall Signet"],
+      "thresholds": [2, 3],
+      "bonuses": {
+        "2": { "mods": { "hpAdd": 12, "hpRegenAdd": 0.25 } },
+        "3": { "mods": { "hpAdd": 30, "armorAdd": 2, "magicArmorAdd": 2, "spdAdd": -0.5 }, "rule": "royal_command", "name": "Royal Command" }
+      },
+      "_status": "Lead 2026-11-07 (Omer approved finishing sets). 3-piece: heavy regalia stats (sturdier and slower) + 'Royal Command' (Omer pick 2026-11-07 R-Y: once per battle the wearer spends its turn to give an ally an extra turn right away; global action royal_command, ai.json > global.command). Numbers unmeasured."
+    },
+    {
+      "id": "gallows_pact", "name": "Gallows Pact", "kind": "class", "map": "Drowned Reach", "dropper": "Hag's Island",
+      "slots": ["helm", "armor", "gloves", "boots"],
+      "pieceNames": ["Hangman's Hood", "Gallows Coat", "Gravedigger's Gloves", "Pallbearer's Boots"],
+      "thresholds": [2, 3, 4],
+      "bonuses": {
+        "2": { "mods": { "surviveAdd": 0.04, "critAdd": 0.02 } },
+        "3": { "byClass": {
+          "hexer": { "passive": "ill_omen", "field": "maxOnArrival", "from": 2, "to": 3 },
+          "gambler": { "passive": "double_or_nothing", "field": "chance", "from": 0.25, "to": 0.3 }
+        } },
+        "4": { "mods": { "critMultAdd": 0.2, "surviveAdd": 0.06, "hpAdd": -20 }, "rule": "hangmans_rope", "name": "Hangman's Rope", "status": "fortify", "turns": 1 }
+      },
+      "_status": "Lead 2026-11-07. 4-piece: bigger crits and escapes, less health + 'Hangman's Rope' (Omer pick 2026-11-07 H-E: Lucky Escape that saves the wearer gives Fortified 1 turn). Numbers unmeasured."
+    },
+    {
+      "id": "ravens_shroud", "name": "Raven's Shroud", "kind": "class", "map": "Drowned Reach", "dropper": "The Wrecker's Hall",
+      "slots": ["helm", "armor", "gloves", "boots"],
+      "pieceNames": ["Raven Hood", "Raven Mantle", "Raven Gloves", "Raven Boots"],
+      "thresholds": [2, 3, 4],
+      "bonuses": {
+        "2": { "mods": { "evasionAdd": 0.04, "critAdd": 0.03 } },
+        "3": { "byClass": {
+          "cutthroat": { "passive": "opportunist", "field": "bonus", "from": 0.25, "to": 0.3 },
+          "archer": { "passive": "sharpshooter", "field": "perRow", "from": 0.05, "to": 0.065 },
+          "antimage": { "passive": "spellbreaker_instinct", "field": "advance", "from": 0.1, "to": 0.13 }
+        } },
+        "4": { "mods": { "spdAdd": 0.5, "evasionAdd": 0.06, "armorAdd": -3 }, "rule": "unseen", "name": "Unseen" }
+      },
+      "_status": "Lead 2026-11-07. 4-piece: quicker and harder to hit, less armor + 'Unseen' (Omer pick 2026-11-07 U-Y: after a dodge the next attack is a sure crit; one ready crit at a time, spent by the next attack). Numbers unmeasured."
+    },
+    {
+      "id": "conclave_of_embers", "name": "Conclave of Embers", "kind": "class", "map": "The Hollow Crown", "dropper": "Hierarch's Pulpit",
+      "slots": ["helm", "armor", "gloves", "boots"],
+      "pieceNames": ["Ember Circlet", "Ember Robe", "Ember Mitts", "Ember Sandals"],
+      "thresholds": [2, 3, 4],
+      "bonuses": {
+        "2": { "mods": { "mpAdd": 12, "mpRegenAdd": 1 } },
+        "3": { "byClass": {
+          "mage": { "passive": "heat_mirage", "field": "power", "from": 0.361, "to": 0.43 },
+          "druid": { "passive": "natures_grudge", "field": "power", "from": 0.15, "to": 0.18 },
+          "undead": { "passive": "vampiric_bite", "field": "ratio", "from": 0.5, "to": 0.6 },
+          "vesper": { "passive": "pealing_bells", "field": "perBell", "from": 0.07, "to": 0.085 }
+        } },
+        "4": { "mods": { "mpAdd": 20, "mpRegenAdd": 1, "hpAdd": -20 }, "rule": "conclave_answers", "name": "The Conclave Answers", "power": 0.5, "perTurn": 1 }
+      },
+      "_status": "Lead 2026-11-07. 4-piece: deeper mana, less health + 'The Conclave Answers' (Omer pick 2026-11-07 C-Y: an enemy skill on the wearer is answered by a free basic attack at 50% power, once between the wearer's turns). Numbers unmeasured."
     }
   ],
+  "setValue": { "classRowIP": 2.5, "ruleIP": 4 },
+  "_setValue": "Lead 2026-11-07: Equip best set bonusunu bu sayılarla tartar (yalnızca seçim). Stat bonusu = affix IP birimleri (modIP); sınıf satırı (3. parça pasif yaması) ve motor kuralı (4. parça) düz değer. PROVIZYON, sim bekliyor.",
   "_setItems": "Set parçaları (Ömer 2026-11-03 pilot; motor adımı): ana katalogdan AYRI liste, böylece items havuzları (loot, tüccar, Codex) değişmez; yalnızca nadir düşüş dalı (setsEnabled) ve debug verir. Epic, sabit üç affix (C, C, B), zarlı değer; seviye düğümden gelir, buradaki ilvl önizleme tabanı. Ashguard yalnızca Warrior / Defender / Paladin takar.",
   "setItems": [
     { "id": "ashguard_helm", "name": "Ashguard Helm", "slot": "helm", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_hp", "b_resil"] },
@@ -3302,7 +4734,22 @@
     { "id": "ashguard_greaves", "name": "Ashguard Greaves", "slot": "boots", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_hp", "b_wound_soft"] },
     { "id": "milestone_boots", "name": "Milestone Boots", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_eva", "c_hpregen", "b_speed"] },
     { "id": "drovers_gloves", "name": "Drover's Gloves", "slot": "gloves", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_acc", "c_eva", "b_crit"] },
-    { "id": "drovers_signet", "name": "Drover's Signet", "slot": "ring", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_hpregen", "c_mp", "b_mpcost"] }
+    { "id": "drovers_signet", "name": "Drover's Signet", "slot": "ring", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_hpregen", "c_mp", "b_mpcost"] },
+    { "id": "kingsfall_crown", "name": "Kingsfall Crown", "slot": "helm", "rarity": "epic", "ilvl": 10, "set": "kingsfall_regalia", "affixes": ["c_armor", "c_hp", "b_marmor"] },
+    { "id": "kingsfall_mantle", "name": "Kingsfall Mantle", "slot": "armor", "rarity": "epic", "ilvl": 10, "set": "kingsfall_regalia", "affixes": ["c_armor", "c_hp", "b_resil"] },
+    { "id": "kingsfall_signet", "name": "Kingsfall Signet", "slot": "ring", "rarity": "epic", "ilvl": 10, "set": "kingsfall_regalia", "affixes": ["c_hpregen", "c_mpregen", "b_speed"] },
+    { "id": "hangmans_hood", "name": "Hangman's Hood", "slot": "helm", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_hp", "c_res_dark", "b_resil"] },
+    { "id": "gallows_coat", "name": "Gallows Coat", "slot": "armor", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_hp", "c_hpregen", "b_wound_soft"] },
+    { "id": "gravediggers_gloves", "name": "Gravedigger's Gloves", "slot": "gloves", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_dot", "c_acc", "b_crit"] },
+    { "id": "pallbearers_boots", "name": "Pallbearer's Boots", "slot": "boots", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_eva", "c_hp", "b_initiative"] },
+    { "id": "raven_hood", "name": "Raven Hood", "slot": "helm", "rarity": "epic", "ilvl": 18, "set": "ravens_shroud", "usableBy": ["cutthroat", "archer", "antimage"], "affixes": ["c_hp", "c_res_nature", "b_marmor"] },
+    { "id": "raven_mantle", "name": "Raven Mantle", "slot": "armor", "rarity": "epic", "ilvl": 18, "set": "ravens_shroud", "usableBy": ["cutthroat", "archer", "antimage"], "affixes": ["c_hp", "c_res_dark", "b_resil"] },
+    { "id": "raven_gloves", "name": "Raven Gloves", "slot": "gloves", "rarity": "epic", "ilvl": 18, "set": "ravens_shroud", "usableBy": ["cutthroat", "archer", "antimage"], "affixes": ["c_acc", "c_eva", "b_crit"] },
+    { "id": "raven_boots", "name": "Raven Boots", "slot": "boots", "rarity": "epic", "ilvl": 18, "set": "ravens_shroud", "usableBy": ["cutthroat", "archer", "antimage"], "affixes": ["c_eva", "c_hp", "b_speed"] },
+    { "id": "ember_circlet", "name": "Ember Circlet", "slot": "helm", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mp", "c_hp", "b_mpcost"] },
+    { "id": "ember_robe", "name": "Ember Robe", "slot": "armor", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_hp", "c_hpregen", "b_marmor"] },
+    { "id": "ember_mitts", "name": "Ember Mitts", "slot": "gloves", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mpregen", "c_acc", "b_manaleech"] },
+    { "id": "ember_sandals", "name": "Ember Sandals", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mp", "c_eva", "b_initiative"] }
   ],
   "traits": {},
   "_legendary": "Legendary (Ömer onayı 2026-10-10, madde 296): el yapımı benzersiz item, dört sabit affix (C, C, B, A; 2026-10-11) + 1 benzersiz etki. Kahraman başına EN FAZLA 1 Legendary (Gear: 'Only one Legendary per hero'). boost = sabit bir affix'in değer çarpanı (Ömer 2026-10-12, p5: zayıf beş Legendary'nin en zayıf statı; aynı seviyedeki Epic'in ~%10-35 üstü): Crown of the Ashen King a_immunity x2, Helm of the Last Stand a_endure x1,75, Watchman's Boots a_support x1,75, The Gambler's Last Coin ve Bones of the Quarry c_acc x1,25 (bu ikisini asıl a_primary değerlemesi yükseltti). usableBy = yalnızca bu sınıflar takabilir (silah ailesine ek). minChapter = hangi bölümde ortaya çıkabilir (Valdoria = 1: Emberbrand, Mantle of Valdren ve Pilgrim's Road Boots; Ömer 2026-10-10). Normal loot zarı Legendary vermez (loot.legendaryChance = 0); Legendary YALNIZCA ortak nadir düşüş zarından (rareDrop, madde 297) ve Endless tüccarının nadir malından gelir. Seviye (Ömer 2026-10-12): Legendary'nin TABAN SEVİYESİ YOK; düştüğü yerin item seviyesinde zarlanır (sefer: düğümün item seviyesi; Endless: dalganın seviye tavanı ilvlCap, nadir düşüş ve tüccarın nadir malı). Kataloğdaki ilvl yalnızca önizleme / debug değeridir, nerede çıkabileceğini belirlemez (uygunluk yalnızca minChapter ve legendaryFromWave). Önizleme: ?legendary=1 ya da debug > Give all Legendaries.",

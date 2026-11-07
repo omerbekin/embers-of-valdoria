@@ -189,7 +189,7 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
 
   it('devriyeden geri çekilme (Ömer 2026-10-19, hp-death-rework): devriye iptal, takım serbest; savaşta ne olduysa kalır (can kaybı, düşen yaralı / 3 yaralıysa ceset)', () => {
     expect(patrolRetreatConfirm()).toContain('stays lost');
-    expect(patrolRetreatConfirm()).toContain(`${Math.round(CONFIG.rules.wounds.riseRatio * 100)}% health and a wound`);
+    expect(patrolRetreatConfirm()).toContain('stay down and gain a wound'); // Ömer 2026-11-07: otomatik kalkma yok
     expect((CONFIG as unknown as Record<string, unknown>)['replay']).toBeUndefined(); // eski rastgele kayıp ve XP kesintisi verisi kalktı
     expect(patrolRetreatMaxLoss()).toBe(0);
     const base = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7', '6B');
@@ -213,9 +213,9 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
     const get = (id: string) => r.state.roster.find((h) => h.id === id)!;
     expect(get(a!.id)).toMatchObject({ hpRatio: 0.4, alive: true }); // can kaybı taşınır, şifa yok
     expect(get(a!.id).wounds).toBeUndefined();
-    expect(get(b!.id)).toMatchObject({ hpRatio: CONFIG.rules.wounds.riseRatio, alive: true, wounds: 1 }); // düşen yaralı kalkar
+    expect(get(b!.id)).toMatchObject({ hpRatio: 0, alive: false, wounds: 1 }); // düşen düşmüş kalır (otomatik kalkma yok, Ömer 2026-11-07) ve 1 yara alır
     expect(get(c!.id)).toMatchObject({ hpRatio: 0, alive: false, wounds: CONFIG.rules.wounds.lethal }); // 3 yaralı: ceset
-    expect(r.losses.find((l) => l.heroId === b!.id)?.wounded).toBe(true);
+    expect(r.losses.find((l) => l.heroId === b!.id)?.died).toBe(true);
     expect(r.losses.find((l) => l.heroId === c!.id)?.died).toBe(true);
     expect(r.state.gold).toBe(set.gold); // loot yok
     // savaş kaydı yoksa yalnızca devriye bırakılır

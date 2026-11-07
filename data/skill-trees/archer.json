@@ -197,7 +197,7 @@
     },
     "0.r": {
       "name": "Killing Distance",
-      "text": "Critical hits against targets 5+ rows away deal 5% more damage per rank.",
+      "text": "Critical hits against targets 5+ rows away deal 5% increased damage per rank.",
       "src": "A:V1:0.r",
       "fx": [
         {
@@ -680,7 +680,7 @@
     },
     "2.f2": {
       "name": "Weighted Head",
-      "text": "Piercing Arrow deals 6% more damage per rank against enemies with more Armor than you.",
+      "text": "Piercing Arrow deals 6% increased damage per rank against enemies with more Armor than you.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -740,7 +740,7 @@
     },
     "2.r": {
       "name": "Rivet Breaker",
-      "text": "Piercing Arrow deals 3% more damage per rank against Fortified or Blessed enemies.",
+      "text": "Piercing Arrow deals 3% increased damage per rank against Fortified or Blessed enemies.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -897,7 +897,7 @@
     },
     "3.f1": {
       "name": "Thick Volley",
-      "text": "Arrow Rain deals 4% more damage per rank.",
+      "text": "Arrow Rain deals 4% increased damage per rank.",
       "src": "A:V4:3.f1",
       "fx": [
         {
@@ -954,7 +954,7 @@
     },
     "3.f3": {
       "name": "Rear Volley",
-      "text": "Arrow Rain deals 6% more damage per rank to enemies in their back row.",
+      "text": "Arrow Rain deals 6% increased damage per rank to enemies in their back row.",
       "src": "A:V1:3.f3",
       "fx": [
         {
@@ -992,7 +992,7 @@
     },
     "3.r": {
       "name": "Stinging Shower",
-      "text": "Arrow Rain deals 2% more damage per rank for each Slowed enemy in its area.",
+      "text": "Arrow Rain deals 2% increased damage per rank for each Slowed enemy in its area.",
       "src": "A:V3:3.r",
       "fx": [
         {
@@ -1161,7 +1161,7 @@
     },
     "4.u1": {
       "name": "Killing Shot",
-      "text": "Aimed Shot deals 25% more damage against enemies below 50% HP.",
+      "text": "Aimed Shot deals 25% increased damage against enemies below 50% HP.",
       "src": "B:V5:4.u1",
       "fx": [
         {
@@ -1244,7 +1244,7 @@
     },
     "4.r3": {
       "name": "Next in Line",
-      "text": "If Aimed Shot kills, your next skill deals 35% more damage and cannot miss.",
+      "text": "If Aimed Shot kills, your next skill deals 35% increased damage and cannot miss.",
       "src": "B:V5:4.r3",
       "fx": [
         {
