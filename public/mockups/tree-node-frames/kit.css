@@ -1,0 +1,45 @@
+/* Mockup kit: real game look (Cinzel + EB Garamond, ember/gold palette, no italic). Mockup only, not game code. */
+@font-face { font-family: Cinzel; font-weight: 400 900; src: url(fonts/Cinzel-normal-latin.woff2) format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; src: url(fonts/EBGaramond-normal-latin.woff2) format('woff2'); }
+:root { --g-text:#d9c8a2; --g-dim:#a8977a; --g-gold:#f3d999; --g-gold2:#d9b26a; --g-ember:#e0702a; --g-ember2:#ffb35a; --g-bad:#e8806a; --g-good:#8fc58a;
+  --g-edge:rgba(217,178,106,.42); --g-line:rgba(217,178,106,.16); --g-line2:rgba(217,178,106,.3);
+  --disp:Cinzel,Georgia,'Palatino Linotype',serif; --body:'EB Garamond',Georgia,'Palatino Linotype',serif; }
+* { box-sizing: border-box; font-style: normal; }
+html, body { margin:0; height:100%; background:#000; overflow:hidden; color:var(--g-text); font-family:var(--body); }
+#bar { position:fixed; left:0; right:0; top:0; z-index:99; display:flex; flex-wrap:wrap; gap:6px 18px; align-items:center; justify-content:center; padding:6px 10px; background:#0c0906; border-bottom:1px solid var(--g-line2); }
+#bar .grp { display:flex; gap:4px; align-items:center; flex-wrap:wrap; }
+#bar .lab { font:600 11px var(--disp); letter-spacing:.18em; text-transform:uppercase; color:var(--g-dim); margin-right:4px; }
+#bar button { font:600 12px var(--disp); letter-spacing:.1em; text-transform:uppercase; color:var(--g-text); background:#140e09; border:1px solid var(--g-line2); padding:6px 12px; min-height:30px; cursor:pointer; }
+#bar button:hover { border-color:var(--g-gold2); color:var(--g-gold); }
+#bar button.on { color:var(--g-gold); border-color:var(--g-ember2); box-shadow:0 0 8px rgba(240,140,40,.45); }
+#fitbox { position:fixed; left:0; right:0; bottom:0; overflow:hidden; }
+#stage { position:absolute; left:0; top:0; transform-origin:0 0; overflow:hidden; background:#0a0705; --u:1px; }
+#stage.s-169 { width:1920px; height:1080px; } #stage.s-219 { width:2580px; height:1080px; }
+#stage.s-ph { width:844px; height:390px; --u:.4px; }
+#stage { --f0:max(10px,calc(18*var(--u))); --f1:max(11px,calc(22*var(--u))); --f2:max(12px,calc(26*var(--u))); --f3:max(14px,calc(34*var(--u))); --f4:max(18px,calc(52*var(--u))); }
+.t { font:600 var(--f3) var(--disp); letter-spacing:.14em; text-transform:uppercase; margin:0; background:linear-gradient(180deg,#fbe7b0,#e6c27a 55%,#b88a42); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.h { font:600 var(--f0) var(--disp); letter-spacing:.22em; text-transform:uppercase; color:rgba(217,178,106,.85); margin:0; padding-bottom:4px; border-bottom:1px solid var(--g-line); display:flex; gap:8px; align-items:center; }
+.h .r { margin-left:auto; letter-spacing:.06em; color:var(--g-dim); font-weight:400; }
+.p { font:400 var(--f1) var(--body); color:var(--g-text); margin:0; line-height:1.25; }
+.dim { color:var(--g-dim); } .em { color:var(--g-ember2); } .gold { color:var(--g-gold); } .bad { color:var(--g-bad); } .good { color:var(--g-good); }
+.panel { position:relative; background:linear-gradient(180deg,rgba(30,22,14,.97),rgba(12,9,6,.97)); border:1px solid var(--g-edge); box-shadow:0 0 0 3px rgba(8,6,4,.7),0 calc(18*var(--u)) calc(40*var(--u)) rgba(0,0,0,.6); }
+.btn { font:600 var(--f1) var(--disp); letter-spacing:.14em; text-transform:uppercase; color:var(--g-text); background:rgba(20,14,9,.9); border:1px solid var(--g-line2); padding:0 calc(26*var(--u)); height:max(30px,calc(56*var(--u))); display:inline-flex; align-items:center; justify-content:center; gap:.5em; cursor:pointer; white-space:nowrap; text-shadow:0 2px 4px rgba(12,8,5,.95); }
+.btn.pri { color:var(--g-gold); border:2px solid var(--g-gold2); position:relative; }
+.btn.pri::before, .btn.pri::after { content:''; position:absolute; top:50%; width:6px; height:6px; background:var(--g-ember); transform:translateY(-50%) rotate(45deg); box-shadow:0 0 0 1px var(--g-ember2),0 0 8px rgba(240,140,40,.7); }
+.btn.pri::before { left:-5px; } .btn.pri::after { right:-5px; }
+.btn img { width:1.3em; height:1.3em; object-fit:contain; }
+.tile { flex:none; display:grid; place-items:center; width:calc(var(--sz,84)*var(--u)); height:calc(var(--sz,84)*var(--u)); min-width:34px; min-height:34px; background:#120c08; border:1px solid var(--g-line2); position:relative; }
+.tile::before { content:''; position:absolute; inset:12%; border-radius:50%; background:#140e09; border:1px solid rgba(217,178,106,.7); }
+.tile img { position:relative; width:68%; height:68%; object-fit:contain; }
+.pill { display:inline-flex; align-items:center; gap:6px; padding:0 .7em; height:1.7em; font:600 var(--f0) var(--disp); letter-spacing:.16em; text-transform:uppercase; color:var(--g-gold); background:rgba(12,9,6,.9); border:1px solid var(--g-line2); white-space:nowrap; }
+.pill.em { color:#1a0f06; background:linear-gradient(180deg,var(--g-ember2),var(--g-ember)); border-color:transparent; }
+.rule { height:1px; border:0; margin:0; background:linear-gradient(90deg,transparent,rgba(217,178,106,.55),transparent); }
+.map { position:absolute; inset:0; background:#000 center/cover no-repeat; overflow:hidden; }
+.map::after { content:''; position:absolute; inset:0; background:rgba(5,3,2,.35); pointer-events:none; }
+.nd { position:absolute; transform:translate(-50%,-50%); width:max(28px,calc(64*var(--u))); height:max(28px,calc(64*var(--u))); border-radius:50%; background:#140e09; border:1px solid rgba(217,178,106,.7); display:grid; place-items:center; box-shadow:0 0 0 3px rgba(8,6,4,.6); z-index:2; }
+.nd img { width:72%; height:72%; object-fit:contain; }
+.nd.sel { border-color:var(--g-ember2); box-shadow:0 0 0 3px rgba(8,6,4,.6),0 0 calc(26*var(--u)) rgba(240,140,40,.85); z-index:5; }
+.nd.done { opacity:.7; }
+.nd .lab { position:absolute; top:110%; left:50%; transform:translateX(-50%); white-space:nowrap; padding:1px 8px; background:rgba(12,9,6,.88); border:1px solid var(--g-line2); font:600 var(--f0) var(--disp); letter-spacing:.1em; text-transform:uppercase; color:var(--g-gold); }
+.path { position:absolute; height:0; border-top:2px dotted rgba(243,217,153,.7); transform-origin:0 0; z-index:1; }
+.scrim { position:absolute; inset:0; background:rgba(5,3,2,.5); z-index:10; }

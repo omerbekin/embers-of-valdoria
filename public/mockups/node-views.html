@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Node Views (mockup)</title>
+<!--
+  NODE VIEWS taslagi (ui-mockup, 2026-11-07). Oyun kodu DEGIL. Her harita dugum turu icin ayri arayuz: Wayshrine, Dive (Sunken Chapel), Survivor, Battle, Elite, Event, Town.
+  Adres: #v=now|a|b|c &n=shrine|dive|survivor|battle|elite|event|town &s=169|219|ph
+    now  bugunku gorunum (yalniz ipucu kutusu; shrine + dive gercek metinler, digerleri kisa ipucu)
+    A    Anchored card: dugumun yaninda kucuk kart, harita acik, bolumler tek satir
+    B    Side dossier: sagdan tam boy yan sayfa, sanat basligi, buyuk satirlar, alt eylem cubugu
+    C    Scene window: ortada sahne penceresi, solda buyuk sanat, sagda metin, derinlik / secenekler yatay adimlar
+  Survivor dugumunun oyunda mekanigi yok: metinler yer tutucu (Placeholder).
+-->
+<link rel="stylesheet" href="node-views/kit.css" />
+<style>
+.row { display:flex; gap:calc(14*var(--u)); align-items:center; padding:calc(8*var(--u)) 0; min-width:0; }
+.row .tile { --sz:64; }
+.row .nm { font:600 var(--f1) var(--disp); letter-spacing:.06em; color:var(--g-gold); text-transform:uppercase; line-height:1.1; }
+.row .tx { font:var(--f1) var(--body); color:var(--g-text); line-height:1.2; }
+.row.done { opacity:.6; } .row.next { opacity:.75; }
+.row.now .tile { border-color:var(--g-ember2); box-shadow:0 0 calc(14*var(--u)) rgba(240,140,40,.6); }
+.glyph { width:62%; height:62%; transform:rotate(45deg) scale(.62); background:linear-gradient(135deg,#7a5a28,#e8cf8f); border:1px solid #fbe7b0; box-shadow:0 0 calc(12*var(--u)) rgba(240,140,40,.6); position:relative; }
+.foes { display:flex; gap:calc(14*var(--u)); padding:calc(8*var(--u)) 0; }
+.foe { position:relative; width:calc(112*var(--u)); height:calc(112*var(--u)); min-width:40px; min-height:40px; border:1px solid var(--g-line2); background:#120c08; box-shadow:0 0 0 2px rgba(8,6,4,.7); }
+.foe img { width:100%; height:100%; object-fit:cover; display:block; }
+.foe.elite { border-color:var(--g-ember); box-shadow:0 0 0 2px rgba(8,6,4,.7),0 0 calc(14*var(--u)) rgba(240,140,40,.55); }
+.foe .cnt { position:absolute; right:-1px; bottom:-1px; padding:0 5px; background:rgba(12,9,6,.92); border:1px solid var(--g-line2); font:600 var(--f0) var(--disp); color:var(--g-gold); }
+.foe .tag { position:absolute; left:50%; top:0; transform:translate(-50%,-55%); padding:0 7px; font:600 max(8px,calc(13*var(--u))) var(--g-disp,Cinzel); letter-spacing:.16em; color:#1a0f06; background:linear-gradient(180deg,var(--g-ember2),var(--g-ember)); font-family:var(--disp); }
+.ph-note { font:600 var(--f0) var(--disp); letter-spacing:.16em; color:var(--g-ember2); text-transform:uppercase; }
+.acts { display:flex; gap:calc(16*var(--u)); justify-content:flex-end; align-items:center; }
+
+/* NOW: tooltip */
+.now-tip { position:absolute; z-index:20; left:calc(var(--x) + 40px); top:var(--y); width:max(210px,calc(470*var(--u))); padding:calc(14*var(--u)) calc(18*var(--u)); background:rgba(12,9,6,.96); border:1px solid var(--g-edge); border-left:3px solid var(--g-ember); }
+.now-tip .nm { font:600 var(--f2) var(--disp); letter-spacing:.1em; text-transform:uppercase; color:var(--g-gold); margin-bottom:4px; }
+.now-tip .pill { margin-bottom:6px; }
+
+/* A: anchored card */
+.A-card { position:absolute; z-index:20; width:max(270px,calc(620*var(--u))); padding:calc(22*var(--u)) calc(26*var(--u)) calc(20*var(--u)); display:flex; flex-direction:column; gap:calc(10*var(--u)); }
+.A-card::before { content:''; position:absolute; left:calc(-9*var(--u)); top:calc(var(--ay,60)*1px); width:calc(16*var(--u)); height:calc(16*var(--u)); min-width:8px; min-height:8px; background:#1b130c; border-left:1px solid var(--g-edge); border-bottom:1px solid var(--g-edge); transform:rotate(45deg); }
+.A-card.flip::before { left:auto; right:calc(-9*var(--u)); transform:rotate(225deg); }
+.A-head { display:flex; gap:calc(16*var(--u)); align-items:center; }
+.A-head .tile { --sz:76; }
+.A-head .t { font-size:var(--f2); letter-spacing:.1em; }
+.A-head .sb { font:var(--f0) var(--disp); letter-spacing:.2em; color:var(--g-dim); text-transform:uppercase; }
+.A-head .pill { margin-left:auto; }
+.A-card .row { padding:calc(4*var(--u)) 0; } .A-card .row .tile { --sz:46; }
+.A-card .row.ladder { display:inline-flex; }
+.A-ladder { display:flex; gap:calc(8*var(--u)); }
+.A-ladder .row { flex:1; flex-direction:column; text-align:center; gap:2px; padding:calc(6*var(--u)) 2px; border:1px solid var(--g-line); }
+.A-ladder .row.now { border-color:var(--g-ember2); }
+.A-card .foes { padding:calc(4*var(--u)) 0; } .A-card .foe { width:calc(90*var(--u)); height:calc(90*var(--u)); }
+html.short .A-card { gap:3px; padding:8px 12px; } html.short .A-card .rule { display:none; } html.short .A-card .row .tile { --sz:34; } html.short .A-head .tile { --sz:40; }
+html.short .A-card .row .tx { font-size:11px; } html.short .A-card .acts { margin-top:2px; }
+
+/* B: side dossier */
+.B-side { position:absolute; right:0; top:0; bottom:0; width:max(300px,calc(700*var(--u))); z-index:20; display:flex; flex-direction:column; background:linear-gradient(180deg,rgba(26,19,12,.98),rgba(10,7,5,.98)); border-left:1px solid var(--g-edge); box-shadow:-18px 0 40px rgba(0,0,0,.55); }
+.B-art { position:relative; height:calc(300*var(--u)); flex:none; background:center/cover no-repeat; border-bottom:1px solid var(--g-edge); }
+.B-art::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(10,7,5,.1),rgba(10,7,5,.95)); }
+.B-art .in { position:absolute; left:calc(30*var(--u)); right:calc(30*var(--u)); bottom:calc(18*var(--u)); z-index:1; display:flex; gap:calc(18*var(--u)); align-items:flex-end; }
+.B-art .tile { --sz:92; } .B-art .t { font-size:var(--f3); } .B-art .sb { font:var(--f0) var(--disp); letter-spacing:.2em; color:var(--g-dim); text-transform:uppercase; }
+.B-art .pill { position:absolute; right:calc(24*var(--u)); top:calc(20*var(--u)); z-index:1; }
+.B-body { flex:1; min-height:0; padding:calc(18*var(--u)) calc(30*var(--u)); display:flex; flex-direction:column; gap:calc(14*var(--u)); overflow:hidden; }
+.B-body .lead { margin-bottom:2px; }
+.B-body .row .tile { --sz:70; }
+.B-foot { flex:none; padding:calc(18*var(--u)) calc(30*var(--u)); border-top:1px solid var(--g-line2); background:rgba(8,6,4,.6); }
+html.short .B-side { width:340px; } html.short .B-art { height:70px; } html.short .B-art .tile { --sz:44; } html.short .B-art .t { font-size:14px; }
+html.short .B-body { padding:6px 14px; gap:4px; } html.short .B-body .row { padding:2px 0; } html.short .B-body .row .tile { --sz:34; } html.short .B-body .lead { display:none; }
+html.short .B-foot { padding:6px 14px; } html.short .B-art .in { left:14px; right:14px; bottom:8px; }
+.s-219 .B-side { width:calc(760*var(--u)); }
+
+/* C: scene window */
+.C-win { position:absolute; z-index:20; left:50%; top:50%; transform:translate(-50%,-50%); width:min(94%,calc(1500*var(--u))); display:flex; flex-direction:column; }
+.C-main { display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); min-height:0; }
+.C-art { position:relative; background:center/cover no-repeat; min-height:calc(480*var(--u)); border-right:1px solid var(--g-edge); }
+.C-art::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(10,7,5,.15) 40%,rgba(10,7,5,.85)); }
+.C-art .tile { --sz:132; position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); z-index:1; box-shadow:0 0 calc(40*var(--u)) rgba(240,140,40,.5); }
+.C-art .cap { position:absolute; left:0; right:0; bottom:calc(20*var(--u)); z-index:1; text-align:center; font:var(--f0) var(--disp); letter-spacing:.24em; text-transform:uppercase; color:var(--g-gold); }
+.C-art .pill { position:absolute; left:calc(18*var(--u)); top:calc(18*var(--u)); z-index:1; }
+.C-txt { padding:calc(30*var(--u)) calc(40*var(--u)); display:flex; flex-direction:column; gap:calc(12*var(--u)); justify-content:center; }
+.C-txt .t { text-align:left; font-size:var(--f3); } .C-txt .sb { font:var(--f0) var(--disp); letter-spacing:.2em; color:var(--g-dim); text-transform:uppercase; }
+.C-steps { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:calc(14*var(--u)); }
+.C-steps .row { flex-direction:column; text-align:center; border:1px solid var(--g-line); padding:calc(10*var(--u)); background:rgba(20,14,9,.7); }
+.C-steps .row.now { border-color:var(--g-ember2); }
+.C-foot { border-top:1px solid var(--g-line2); padding:calc(18*var(--u)) calc(40*var(--u)); display:flex; gap:calc(20*var(--u)); align-items:center; background:rgba(8,6,4,.6); }
+.C-foot .note { flex:1; }
+html.short .C-win { width:96%; } html.short .C-art { min-height:0; } html.short .C-art .tile { --sz:70; top:40%; }
+html.short .C-txt { padding:8px 14px; gap:3px; } html.short .C-txt .row { padding:2px 0; } html.short .C-txt .row .tile { --sz:30; }
+html.short .C-foot { padding:6px 14px; } html.short .C-steps .row { padding:3px; gap:0; } html.short .C-steps .row .tile { --sz:30; } html.short .C-txt .rule, html.short .C-txt .h { display:none; }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="fitbox"><div id="stage"></div></div>
+<script src="node-views/kit.js"></script>
+<script>
+const I = (n) => `node-views/img/${n}.webp`;
+const NODES = {
+  shrine: { name: 'Wayshrine', title: 'Wayshrine of Stone', sub: 'The Drowned Reach', icon: 'node-event', bg: 'pilgrim-road', cap: 'Wayshrine', tag: '1 Blessing',
+    lead: 'A weathered shrine. Pass its trial and the blessing walks with your company.',
+    blocks: [
+      { h: 'Blessing', r: 'Every hero, every battle', rows: [{ name: 'Blessing of Stone', txt: '3% more max HP', glyph: 1 }] },
+      { h: 'Trial', rows: [{ name: 'Trial of the Two', txt: 'Only the two heroes standing furthest forward may fight.', ic: 'node-battle' }] },
+      { h: 'Carried', rows: [{ name: '1 Blessing', txt: 'Blessings you already carry stay active.', ic: 'node-rest' }] } ],
+    acts: [['Leave'], ['Start the trial', 1]], now: ['Blessing of Stone', '3% more max HP'] },
+  dive: { name: 'Sunken Chapel', title: 'Sunken Chapel', sub: 'Salvage Dive', icon: 'node-treasure', bg: 'sunken-court', cap: 'Depth 2 of 3', tag: 'Depth 2 of 3',
+    lead: 'Each depth holds one more fight and one more chest.',
+    blocks: [
+      { h: 'Depth', r: 'Depth 2 of 3', ladder: 1, rows: [
+        { name: 'Depth 1', txt: 'Chapel treasure', ic: 'chest-open', st: 'done', badge: 'Taken' },
+        { name: 'Depth 2', txt: 'Rare item, 30 gold', ic: 'chest-closed', st: 'now', badge: 'Here' },
+        { name: 'Depth 3', txt: 'Rare + epic item, 60 gold', ic: 'lock', st: 'next', badge: 'Deeper' } ] },
+      { h: 'Risk', rows: [{ name: 'If you fall here', txt: 'The last chest you found sinks. Earlier chests come up with you.', ic: 'node-boss', bad: 1 }] } ],
+    acts: [['Swim for the surface'], ['Dive deeper', 1]], now: ['Depth 2 of 3', 'If you fall here, the last chest you found sinks.'] },
+  survivor: { name: 'Survivor', title: 'Survivor', sub: 'Event', icon: 'node-event', bg: 'pilgrim-road', cap: 'A lone survivor', tag: 'Placeholder', ph: 1,
+    lead: 'Someone clings to the wreck and calls for help.',
+    blocks: [
+      { h: 'Encounter', rows: [{ name: 'A lone survivor', txt: 'Placeholder: who they are and what they ask of you.', ic: 'av-archer', img: 1 }] },
+      { h: 'Choice', rows: [{ name: 'Help them', txt: 'Placeholder outcome', ic: 'node-rest' }, { name: 'Leave them', txt: 'Placeholder outcome', ic: 'node-event' }] } ],
+    acts: [['Leave'], ['Help', 1]], now: ['Survivor', 'Event'] },
+  battle: { name: 'Battle', title: 'Drowned Patrol', sub: 'Battle', icon: 'node-battle', bg: 'wreck-cliffs', cap: 'Level 12', tag: 'Lv 12',
+    lead: 'A patrol blocks the causeway.',
+    blocks: [{ h: 'Enemies', r: 'Level 12', foes: [['drowned', 3], ['drowned_knight', 1], ['drowned', 2]] }], acts: [['Cancel'], ['Fight', 1]], now: ['Drowned Patrol', 'Battle'] },
+  elite: { name: 'Elite', title: 'Knight of the Deep', sub: 'Elite battle', icon: 'node-elite', bg: 'deep-halls', cap: 'Level 14', tag: 'Elite',
+    lead: 'A drowned champion and its retinue.',
+    blocks: [{ h: 'Enemies', r: 'Level 14', foes: [['drowned_knight', 1, 'elite'], ['drowned', 2], ['drowned', 2]] }], acts: [['Cancel'], ['Fight', 1]], now: ['Knight of the Deep', 'Elite battle'] },
+  event: { name: 'Event', title: 'Whispering Shore', sub: 'Event', icon: 'node-event', bg: 'saltmarsh', cap: 'Event', tag: 'Event', ph: 1,
+    lead: 'Placeholder story line for the event.',
+    blocks: [{ h: 'Choice', rows: [{ name: 'Investigate', txt: 'Placeholder outcome', ic: 'node-event' }, { name: 'Walk on', txt: 'Nothing happens.', ic: 'node-start' }] }], acts: [['Leave'], ['Investigate', 1]], now: ['Whispering Shore', 'Event'] },
+  town: { name: 'Town', title: 'Saltmere', sub: 'Town', icon: 'node-town', bg: 'saltmere-docks', cap: 'Town', tag: 'Safe',
+    lead: 'A safe harbour. No fight here.',
+    blocks: [{ h: 'Services', rows: [{ name: 'Merchant', txt: 'Buy and sell gear', ic: 'node-merchant' }, { name: 'Inn', txt: 'Rest and swap heroes', ic: 'node-rest' }, { name: 'Smith', txt: 'Reforge and repair', ic: 'node-town' }] }], acts: [['Leave'], ['Enter town', 1]], now: ['Saltmere', 'Town'] }
+};
+const e = (t, c, h) => { const d = document.createElement(t); if (c) d.className = c; if (h != null) d.innerHTML = h; return d; };
+const tile = (r) => r.glyph ? `<div class="tile"><div class="glyph"></div></div>` : r.img ? `<div class="tile" style="--sz:64"><img src="${I(r.ic)}" style="width:100%;height:100%;object-fit:cover;position:relative"></div>` : `<div class="tile"><img src="${I(r.ic.startsWith('node') || r.ic.startsWith('av') ? r.ic : r.ic)}"></div>`;
+const row = (r, o = {}) => `<div class="row ${r.st || ''} ${o.cls || ''}">${o.notile ? '' : tile(r)}<div><div class="nm ${r.bad ? 'bad' : ''}">${r.name}${r.badge && o.badge ? ` <span class="dim">${r.badge}</span>` : ''}</div><div class="tx ${r.bad ? '' : ''}">${r.txt}</div></div></div>`;
+const foes = (f) => `<div class="foes">${f.foes.map(([id, c, k]) => `<div class="foe ${k || ''}"><img src="${I(id)}">${c > 1 ? `<span class="cnt">x${c}</span>` : ''}${k === 'elite' ? '<span class="tag">ELITE</span>' : ''}</div>`).join('')}</div>`;
+const acts = (n, extra = '') => `<div class="acts">${extra}${n.acts.map(([l, p]) => `<div class="btn ${p ? 'pri' : ''}">${l}</div>`).join('')}</div>`;
+const blockHTML = (b, mode) => {
+  let body = '';
+  if (b.foes) body = foes(b);
+  else if (b.ladder && mode === 'A') body = `<div class="A-ladder">${b.rows.map((r) => `<div class="row ${r.st}"><div class="tile"><img src="${I(r.ic)}"></div><div class="nm">${r.name}</div><div class="tx dim">${r.txt}</div></div>`).join('')}</div>`;
+  else if (b.ladder && mode === 'C') body = `<div class="C-steps">${b.rows.map((r) => `<div class="row ${r.st}"><div class="tile"><img src="${I(r.ic)}"></div><div class="nm">${r.name}</div><div class="tx dim">${r.txt}</div><div class="pill ${r.st === 'now' ? 'em' : ''}">${r.badge}</div></div>`).join('')}</div>`;
+  else body = b.rows.map((r) => row(r, { badge: 1 })).join('');
+  return `<div class="blk"><div class="h">${b.h}${b.r ? `<span class="r">${b.r}</span>` : ''}</div>${body}</div>`;
+};
+const POS = { a: [34, 52], b: [28, 50], c: [50, 50], now: [38, 52] };
+function map(st, n, x, y) {
+  const m = e('div', 'map'); m.style.backgroundImage = `url(${I('drowned-reach-bg')})`;
+  const pts = [[x - 17, y + 12, 'node-battle', 1], [x, y, n.icon, 0, 1], [x + 20, y - 14, 'node-elite'], [x + 18, y + 22, 'node-treasure'], [x - 20, y - 20, 'node-town', 1]];
+  const W = stage_w(), H = stage_h();
+  [[0, 1], [1, 2], [1, 3], [4, 0]].forEach(([a, b]) => { const A = pts[a], B = pts[b], ax = A[0] / 100 * W, ay = A[1] / 100 * H, bx = B[0] / 100 * W, by = B[1] / 100 * H;
+    const p = e('div', 'path'); p.style.cssText = `left:${ax}px;top:${ay}px;width:${Math.hypot(bx - ax, by - ay)}px;transform:rotate(${Math.atan2(by - ay, bx - ax)}rad)`; m.appendChild(p); });
+  pts.forEach((p) => { const d = e('div', 'nd' + (p[4] ? ' sel' : '') + (p[3] ? ' done' : ''), `<img src="${I(p[2].startsWith('node') ? p[2] : 'node-' + p[2])}">`); d.style.left = p[0] + '%'; d.style.top = p[1] + '%'; if (p[4]) d.innerHTML += `<span class="lab">${n.name}</span>`; m.appendChild(d); });
+  return m;
+}
+const stage_w = () => document.getElementById('stage').offsetWidth, stage_h = () => document.getElementById('stage').offsetHeight;
+EOV.init({
+  variants: [['now', 'Now'], ['a', 'A Card'], ['b', 'B Dossier'], ['c', 'C Scene']],
+  groups: [{ key: 'n', label: 'Node', items: [['shrine', 'Wayshrine'], ['dive', 'Dive'], ['survivor', 'Survivor'], ['battle', 'Battle'], ['elite', 'Elite'], ['event', 'Event'], ['town', 'Town']] }],
+  render(st, stage) {
+    const n = NODES[st.n] || NODES.shrine, [x, y] = POS[st.v] || POS.a;
+    stage.appendChild(map(st, n, x, y));
+    if (st.v === 'now') {
+      const t = e('div', 'now-tip', `<div class="nm">${st.n === 'shrine' || st.n === 'dive' ? n.name : n.title}</div>${st.n === 'shrine' ? `<div class="pill em">1 Blessing</div><div class="p">${n.now[0]}</div><div class="p dim">${n.now[1]}</div>` : st.n === 'dive' ? `<div class="p gold">${n.now[0]}</div><div class="p dim">${n.now[1]}</div>` : `<div class="p dim">${n.now[1]}</div>`}`);
+      t.style.setProperty('--x', x + '%'); t.style.setProperty('--y', `calc(${y}% - 30px)`); t.style.left = `calc(${x}% + 44px)`; stage.appendChild(t); return;
+    }
+    const ph = n.ph ? '<span class="ph-note">Placeholder text</span>' : '';
+    if (st.v === 'a') {
+      stage.appendChild(e('div', 'scrim')).style.background = 'rgba(5,3,2,.25)';
+      const c = e('div', 'A-card panel');
+      c.innerHTML = `<div class="A-head"><div class="tile"><img src="${I(n.icon)}"></div><div><h2 class="t" style="margin:0">${n.title}</h2><div class="sb">${n.sub}</div></div><span class="pill ${st.n === 'shrine' ? 'em' : ''}">${n.tag}</span></div><hr class="rule">` +
+        n.blocks.map((b) => blockHTML(b, 'A')).join('') + `<hr class="rule">${acts(n, ph)}`;
+      c.style.left = `calc(${x}% + max(30px, 5%))`; c.style.top = '50%'; c.style.transform = 'translateY(-50%)'; stage.appendChild(c);
+      c.style.setProperty('--ay', c.offsetHeight / 2 - 8);
+    }
+    if (st.v === 'b') {
+      stage.appendChild(e('div', 'scrim')).style.background = 'linear-gradient(90deg,rgba(5,3,2,.05),rgba(5,3,2,.5))';
+      const s = e('div', 'B-side');
+      s.innerHTML = `<div class="B-art" style="background-image:url(${I(n.bg)})"><span class="pill ${st.n === 'shrine' ? 'em' : ''}">${n.tag}</span><div class="in"><div class="tile"><img src="${I(n.icon)}"></div><div><h2 class="t" style="margin:0">${n.title}</h2><div class="sb">${n.sub}</div></div></div></div>` +
+        `<div class="B-body"><p class="p dim lead">${n.lead}</p>${n.blocks.map((b) => blockHTML(b, 'B')).join('')}</div><div class="B-foot">${acts(n, ph)}</div>`;
+      stage.appendChild(s);
+    }
+    if (st.v === 'c') {
+      stage.appendChild(e('div', 'scrim')).style.background = 'rgba(5,3,2,.7)';
+      const w = e('div', 'C-win panel');
+      const lad = n.blocks.filter((b) => b.ladder), rest = n.blocks.filter((b) => !b.ladder);
+      w.innerHTML = `<div class="C-main"><div class="C-art" style="background-image:url(${I(n.bg)})"><span class="pill ${st.n === 'shrine' ? 'em' : ''}">${n.tag}</span><div class="tile"><img src="${I(n.icon)}"></div><div class="cap">${n.cap}</div></div>` +
+        `<div class="C-txt"><div class="sb">${n.sub}</div><h2 class="t">${n.title}</h2><p class="p dim">${n.lead}</p><hr class="rule">${rest.map((b) => blockHTML(b, 'C')).join('')}${lad.map((b) => blockHTML(b, 'C')).join('')}</div></div>` +
+        `<div class="C-foot"><div class="note">${ph}</div>${acts(n)}</div>`;
+      stage.appendChild(w);
+    }
+  }
+});
+</script>
+</body>
+</html>

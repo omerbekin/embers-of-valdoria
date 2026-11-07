@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Map 1 End (mockup)</title>
+<!--
+  MAP 1 BITIS EKRANI taslagi (ui-mockup, 2026-11-07). Oyun kodu DEGIL. Bugun: "VALDORIA CONQUERED", "Map Complete", tek cumle, "Continue to The Drowned Reach"; ici bos.
+  Adres: #v=a|b|c &s=169|219|ph
+    A  Ledger: ortada tek panel; ust: baslik + hikaye satiri; sonra 4 ozet kutusu, kadro (portre + level), en iyi 3 esya, altta teaser seridi + Continue
+    B  Two pages: sol sayfa = hikaye + sefer ozeti listesi + en iyi esya; sag sayfa = Drowned Reach teaser sahnesi (buyuk sanat, 2 cumle, Continue)
+    C  Roll call: kadro ana unsur: dort buyuk portre, her birinin level'i; ozet ve esyalar alt seritte; teaser ve Continue en altta
+  Sayilar ORNEK (gercekte sefer istatistiginden gelir). Hikaye cumlesi oyundaki mevcut metin; teaser cumlesi Drowned Reach bitis metninden turetildi.
+-->
+<link rel="stylesheet" href="map1-end/kit.css" />
+<style>
+#stage { background:#000; }
+.bg { position:absolute; inset:0; background:center/cover no-repeat; }
+.bg::after { content:''; position:absolute; inset:0; background:rgba(5,3,2,.66); }
+.sample { position:absolute; right:calc(14*var(--u)); bottom:calc(8*var(--u)); font:var(--f0) var(--body); color:rgba(168,151,122,.7); z-index:50; }
+.sub { font:600 var(--f0) var(--disp); letter-spacing:.3em; text-transform:uppercase; color:var(--g-ember2); text-align:center; }
+.story { font:var(--f2) var(--body); color:#cdb88d; text-align:center; line-height:1.25; margin:0; }
+.stat { display:flex; flex-direction:column; align-items:center; gap:2px; padding:calc(12*var(--u)) calc(10*var(--u)); border:1px solid var(--g-line2); background:rgba(20,14,9,.75); min-width:0; }
+.stat b { font:600 var(--f3) var(--disp); color:var(--g-gold); letter-spacing:.06em; display:flex; align-items:center; gap:6px; }
+.stat b img { width:1em; height:1em; }
+.stat span { font:600 var(--f0) var(--disp); letter-spacing:.18em; text-transform:uppercase; color:var(--g-dim); text-align:center; }
+.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(14*var(--u)); }
+.hero { position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+.hero .face { position:relative; width:calc(var(--hs,130)*var(--u)); height:calc(var(--hs,130)*var(--u)); min-width:44px; min-height:44px; border:1px solid var(--g-line2); box-shadow:0 0 0 2px rgba(8,6,4,.7); background:#120c08; }
+.hero .face img { width:100%; height:100%; object-fit:cover; display:block; }
+.hero .lv { white-space:nowrap; position:absolute; right:-1px; bottom:-1px; padding:0 6px; background:rgba(12,9,6,.94); border:1px solid var(--g-line2); font:600 var(--f0) var(--disp); letter-spacing:.08em; color:var(--g-gold); }
+.hero .nm { font:600 var(--f0) var(--disp); letter-spacing:.14em; text-transform:uppercase; color:var(--g-text); }
+.heroes { display:flex; gap:calc(26*var(--u)); justify-content:center; }
+.loot { display:flex; gap:calc(18*var(--u)); justify-content:center; }
+.it { display:flex; align-items:center; gap:calc(12*var(--u)); min-width:0; }
+.it .tile { --sz:84; } .it .nm { font:600 var(--f1) var(--disp); letter-spacing:.06em; text-transform:uppercase; color:var(--g-gold); line-height:1.1; } .it .tg { font:var(--f0) var(--body); color:var(--g-dim); }
+.tease { display:flex; align-items:center; gap:calc(22*var(--u)); }
+.tease .art { flex:none; width:calc(240*var(--u)); height:calc(120*var(--u)); min-width:100px; min-height:50px; background:center/cover no-repeat; border:1px solid var(--g-edge); }
+.tease .tx { flex:1; min-width:0; }
+.tease .nm { font:600 var(--f2) var(--disp); letter-spacing:.14em; text-transform:uppercase; color:var(--g-gold); }
+.pg { position:absolute; display:flex; flex-direction:column; gap:calc(16*var(--u)); }
+.list .li { display:flex; justify-content:space-between; align-items:baseline; padding:calc(8*var(--u)) 0; border-bottom:1px solid var(--g-line); }
+.list .li span { font:600 var(--f0) var(--disp); letter-spacing:.18em; text-transform:uppercase; color:var(--g-dim); }
+.list .li b { font:600 var(--f2) var(--disp); color:var(--g-gold); letter-spacing:.06em; display:flex; gap:6px; align-items:center; }
+.list .li b img { width:1em; height:1em; }
+.cta { display:flex; justify-content:center; }
+
+/* A */
+.A-p { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(92%,calc(1320*var(--u))); padding:calc(34*var(--u)) calc(50*var(--u)) calc(30*var(--u)); display:flex; flex-direction:column; gap:calc(18*var(--u)); z-index:5; }
+.A-p .t { text-align:center; font-size:var(--f4); }
+.A-p .row2 { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:calc(30*var(--u)); align-items:start; }
+.A-p .loot { flex-direction:column; gap:calc(6*var(--u)); align-items:stretch; }
+.A-p .it .tile { --sz:64; }
+.A-p .heroes { gap:calc(18*var(--u)); } .A-p .hero { --hs:104; }
+.A-p .foot { display:flex; align-items:center; gap:calc(24*var(--u)); border-top:1px solid var(--g-line2); padding-top:calc(16*var(--u)); }
+.s-ph .A-p { padding:8px 16px; gap:4px; width:96%; } .s-ph .A-p .t { font-size:20px; } .s-ph .A-p .story { display:none; } .s-ph .A-p .stat { padding:3px; } .s-ph .A-p .stat b { font-size:14px; }
+.s-ph .A-p .hero { --hs:112; } .s-ph .A-p .hero .nm { display:none; } .s-ph .A-p .it .tile { --sz:34; } .s-ph .A-p .it .tg { display:none; } .s-ph .A-p .row2 { gap:12px; } .s-ph .A-p .tease .art { display:none; } .s-ph .A-p .tease .tx .p { display:none; }
+.s-ph .A-p .foot { padding-top:5px; gap:10px; } .s-ph .A-p .it .nm { font-size:11px; } .s-ph .A-p .loot { gap:2px; } .s-ph .A-p .h { display:none; }
+
+/* B */
+.B-l { position:absolute; left:0; top:0; bottom:0; width:56%; padding:calc(54*var(--u)) calc(64*var(--u)); display:flex; flex-direction:column; gap:calc(18*var(--u)); z-index:5; background:linear-gradient(90deg,rgba(10,7,5,.97) 80%,rgba(10,7,5,.0)); }
+.B-l .t { font-size:var(--f4); text-align:left; }
+.B-l .story { text-align:left; } .B-l .sub { text-align:left; }
+.B-l .heroes { justify-content:flex-start; gap:calc(16*var(--u)); } .B-l .hero { --hs:88; }
+.B-r { position:absolute; right:0; top:0; bottom:0; width:48%; background:center/cover no-repeat; }
+.B-r::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(10,7,5,.85),rgba(10,7,5,.1) 40%,rgba(10,7,5,.1) 55%,rgba(10,7,5,.92) 100%); }
+.B-r .in { position:absolute; right:calc(56*var(--u)); left:calc(150*var(--u)); bottom:calc(54*var(--u)); z-index:2; display:flex; flex-direction:column; gap:calc(14*var(--u)); align-items:flex-end; text-align:right; }
+.B-r .in .t { font-size:var(--f4); }
+.s-219 .B-l { width:50%; } .s-219 .B-r { width:54%; }
+.B-l .it .tile { --sz:64; }
+.B-l .loot { flex-direction:column; align-items:stretch; gap:calc(6*var(--u)); }
+.s-ph .B-l { padding:10px 14px; gap:4px; width:58%; } .s-ph .B-l .t { font-size:19px; } .s-ph .B-l .story, .s-ph .B-l .h { display:none; } .s-ph .B-l .list .li { padding:2px 0; } .s-ph .B-l .list .li b { font-size:13px; }
+.s-ph .B-l .hero { --hs:105; } .s-ph .B-l .hero .nm { display:none; } .s-ph .B-l .it .tile { --sz:30; } .s-ph .B-l .loot { flex-direction:row; } .s-ph .B-l .it .tg, .s-ph .B-l .it .nm { display:none; }
+.s-ph .B-r .in { left:60px; right:14px; bottom:12px; gap:4px; } .s-ph .B-r .in .t { font-size:18px; } .s-ph .B-r .in .p { font-size:11px; }
+
+/* C */
+.C-top { position:absolute; left:0; right:0; top:calc(34*var(--u)); display:flex; flex-direction:column; gap:calc(8*var(--u)); align-items:center; z-index:5; }
+.C-top .t { font-size:var(--f4); }
+.C-roll { position:absolute; left:0; right:0; top:50%; transform:translateY(-52%); z-index:5; }
+.C-roll .heroes { gap:calc(56*var(--u)); } .C-roll .hero { --hs:200; gap:calc(8*var(--u)); } .C-roll .hero .nm { font-size:var(--f1); }
+.C-roll .hero .face { box-shadow:0 0 0 3px rgba(8,6,4,.7),0 0 calc(24*var(--u)) rgba(240,140,40,.25); }
+.C-roll .hero .lv { font-size:var(--f1); padding:0 10px; }
+.C-bot { position:absolute; left:0; right:0; bottom:0; z-index:6; padding:calc(26*var(--u)) calc(48*var(--u)) calc(22*var(--u)); background:linear-gradient(180deg,rgba(10,7,5,.0),rgba(10,7,5,.95) 26%); display:grid; grid-template-columns:auto 1fr; gap:calc(18*var(--u)) calc(40*var(--u)); align-items:center; }
+.C-bot .stats { grid-template-columns:repeat(4,auto); gap:calc(10*var(--u)); } .C-bot .stat { padding:calc(8*var(--u)) calc(16*var(--u)); white-space:nowrap; } .C-bot .stat span { white-space:nowrap; }
+.C-bot .loot { gap:calc(26*var(--u)); justify-content:flex-start; } .C-bot .it .tile { --sz:70; }
+.C-bot .nx { grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; gap:calc(24*var(--u)); border-top:1px solid var(--g-line2); padding-top:calc(14*var(--u)); }
+.s-ph .C-top { top:6px; gap:0; } .s-ph .C-top .t { font-size:20px; } .s-ph .C-top .story { display:none; } .s-ph .C-roll { top:48%; } .s-ph .C-roll .hero { --hs:190; gap:2px; } .s-ph .C-roll .heroes { gap:18px; } .s-ph .C-roll .hero .nm { font-size:10px; }
+.s-ph .C-bot { padding:6px 12px; gap:4px 10px; } .s-ph .C-bot .nx { padding-top:4px; } .s-ph .C-bot .nx .p { display:none; } .s-ph .C-bot .nx { justify-content:flex-end; } .s-ph .C-bot .stats { grid-template-columns:repeat(4,auto); gap:3px; } .s-ph .C-bot .stat { padding:1px 8px; flex-direction:row; gap:6px; } .s-ph .C-bot .stat b { font-size:12px; } .s-ph .C-bot .stat span { font-size:9px; letter-spacing:.08em; }
+.s-ph .C-bot .it .nm, .s-ph .C-bot .it .tg { display:none; } .s-ph .C-bot .it .tile { --sz:34; } .s-ph .C-bot .loot { gap:6px; }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="fitbox"><div id="stage"></div></div>
+<script src="map1-end/kit.js"></script>
+<script>
+const I = (n) => `map1-end/img/${n}.webp`;
+const STATS = [['Battles won', '38'], ['Gold earned', '2,140', 'gold'], ['Time played', '5h 42m'], ['Heroes fallen', '3']];
+const HEROES = [['warrior', 'Warrior', 14], ['mage', 'Mage', 13], ['archer', 'Archer', 12], ['paladin', 'Paladin', 12]];
+const LOOT = [['emberbrand', 'Emberbrand', 'Best find'], ['crown_of_the_ashen_king', 'Crown of the Ashen King', 'Boss drop'], ['brigandine', 'Brigandine', 'Worn by the Warrior']];
+const STORY = 'The Ash Curse is broken. Valdoria is free again.';
+const TEASE = 'Beyond the drowned coast, the sea has taken a crown. Your company sails at dawn.';
+const stats = () => `<div class="stats">${STATS.map(([l, v, ic]) => `<div class="stat"><b>${ic ? `<img src="${I(ic)}">` : ''}${v}</b><span>${l}</span></div>`).join('')}</div>`;
+const heroes = () => `<div class="heroes">${HEROES.map(([id, n, lv]) => `<div class="hero"><div class="face"><img src="${I('av-' + id)}"><span class="lv">Lv ${lv}</span></div><div class="nm">${n}</div></div>`).join('')}</div>`;
+const loot = (n = 3) => `<div class="loot">${LOOT.slice(0, n).map(([id, nm, tg]) => `<div class="it"><div class="tile"><img src="${I(id)}"></div><div><div class="nm">${nm}</div><div class="tg">${tg}</div></div></div>`).join('')}</div>`;
+const btn = () => `<div class="btn pri">Continue to The Drowned Reach</div>`;
+EOV.init({
+  variants: [['a', 'A Ledger'], ['b', 'B Two pages'], ['c', 'C Roll call']],
+  render(st, stage) {
+    const bg = `<div class="bg" style="background-image:url(${I('valdoria-bg')})"></div>`;
+    const ph = '<div class="sample">Sample numbers</div>';
+    if (st.v === 'a') stage.innerHTML = bg + `<div class="A-p panel"><div class="sub">Map Complete</div><h1 class="t" style="margin:0">Valdoria Conquered</h1><p class="story">${STORY}</p><hr class="rule">` +
+      stats() + `<div class="row2"><div><div class="h">Your company</div>${heroes()}</div><div><div class="h">Best loot</div>${loot()}</div></div>` +
+      `<div class="foot"><div class="tease"><div class="art" style="background-image:url(${I('drowned-reach-bg')})"></div><div class="tx"><div class="nm">The Drowned Reach</div><p class="p dim">${TEASE}</p></div></div>${btn()}</div></div>` + ph;
+    if (st.v === 'b') stage.innerHTML = bg + `<div class="B-r" style="background-image:url(${I('drowned-reach-bg')})"><div class="in"><div class="sub" style="text-align:right">Next</div><h2 class="t" style="margin:0">The Drowned Reach</h2><p class="p">${TEASE}</p>${btn()}</div></div>` +
+      `<div class="B-l"><div class="sub">Map Complete</div><h1 class="t" style="margin:0">Valdoria Conquered</h1><p class="story">${STORY}</p><div class="list">${STATS.map(([l, v, ic]) => `<div class="li"><span>${l}</span><b>${ic ? `<img src="${I(ic)}">` : ''}${v}</b></div>`).join('')}</div>` +
+      `<div class="h">Your company</div>${heroes()}<div class="h">Best loot</div>${loot()}</div>` + ph;
+    if (st.v === 'c') stage.innerHTML = bg + `<div class="C-top"><div class="sub">Map Complete</div><h1 class="t" style="margin:0">Valdoria Conquered</h1><p class="story">${STORY}</p></div><div class="C-roll">${heroes()}</div>` +
+      `<div class="C-bot">${stats()}${loot()}<div class="nx"><p class="p dim">Next: The Drowned Reach. ${TEASE}</p>${btn()}</div></div>` + ph;
+  }
+});
+</script>
+</body>
+</html>

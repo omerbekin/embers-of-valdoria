@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Tree Node Frames (mockup)</title>
+<!--
+  SKILL TREE DUGUM CERCEVELERI taslagi (ui-mockup, 2026-11-07). Oyun kodu DEGIL. Sorun: dugumler kucuk (36 / 54 / 70 px) ve kalin cerceve ikonu yiyor.
+  Adres: #v=now|a|b|c &set=warrior|mage|paladin &s=169|219|ph
+    now  bugunku elmas: 45 derece donuk kare, ikon %146 kirpilir, 1.5-2 px cerceve + 2 px bosluk halkasi
+    A    Hairline ring: yuvarlak, 1 px ince halka, ikon dairenin icinde tam; durum = halka rengi + kucuk isik
+    B    Open corners: kapali cerceve YOK, yalniz 4 kose ayraci; ikon kare ve kirpilmaz; durum = ayrac rengi + alt cizgi
+    C    Hex plate: altigen, ince iz, ikon altigenin icinde; keystone cift altigen; durum = iz rengi + dolgu
+  Her varyantta: buyutulmus durum matrisi (locked, available, taken x filler, notable, keystone) + gercek boyutta kucuk agac parcasi. Gercek agac ikonlari (assets/tree-icons).
+-->
+<link rel="stylesheet" href="tree-node-frames/kit.css" />
+<style>
+#stage { background:#090705; --z:2.2; --zr:1; }
+#stage.s-ph { --z:1.15; --zr:.78; }
+.wrap { position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:calc(40*var(--u)); padding:calc(40*var(--u)) calc(56*var(--u)); }
+.s-ph .wrap { padding:8px 14px; gap:14px; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); }
+.col { display:flex; flex-direction:column; gap:calc(18*var(--u)); min-width:0; min-height:0; }
+.s-ph .col { gap:5px; }
+.head { display:flex; align-items:baseline; gap:calc(20*var(--u)); flex-wrap:wrap; }
+.head .t { font-size:var(--f3); }
+.note { font:var(--f1) var(--body); color:var(--g-dim); margin:0; line-height:1.2; }
+.s-ph .note { font-size:11px; }
+.mx { display:grid; grid-template-columns:auto repeat(3,1fr); gap:calc(10*var(--u)); flex:1; min-height:0; }
+.mx .ch { font:600 var(--f0) var(--disp); letter-spacing:.2em; text-transform:uppercase; color:var(--g-dim); text-align:center; align-self:end; padding-bottom:4px; }
+.mx .rh { font:600 var(--f0) var(--disp); letter-spacing:.2em; text-transform:uppercase; color:var(--g-dim); align-self:center; writing-mode:vertical-rl; transform:rotate(180deg); }
+.s-ph .mx .rh { display:none; } .s-ph .mx { grid-template-columns:repeat(3,1fr); gap:4px; }
+.cell { display:grid; place-items:center; background:radial-gradient(circle at 50% 40%,#17100a,#0b0806 75%); border:1px solid var(--g-line); min-height:0; }
+.mini { position:relative; flex:1; min-height:0; background:radial-gradient(circle at 50% 40%,#17100a,#0b0806 75%); border:1px solid var(--g-line); }
+.mini svg { position:absolute; inset:0; width:100%; height:100%; }
+.mini svg line { stroke:rgba(217,178,106,.3); stroke-width:2; } .mini svg line.on { stroke:rgba(243,217,153,.85); }
+.mini .tn { position:absolute; transform:translate(-50%,-50%); }
+.lab { font:600 var(--f0) var(--disp); letter-spacing:.2em; text-transform:uppercase; color:var(--g-dim); }
+
+/* ---- node base ---- */
+.tn { --c:rgba(217,178,106,.3); position:relative; width:calc(var(--s)*var(--z)*1px); height:calc(var(--s)*var(--z)*1px); flex:none; }
+.mini .tn { --z:var(--zr); }
+.tn img { position:absolute; display:block; }
+.tn.st-lk { --c:rgba(217,178,106,.28); } .tn.st-av { --c:#f3d999; } .tn.st-tk { --c:#ffe29a; }
+
+/* ---- NOW: today's diamond ---- */
+[data-v=now] .tn .dm { position:absolute; left:50%; top:50%; width:calc(var(--s)*var(--z)*.7071px); height:calc(var(--s)*var(--z)*.7071px); transform:translate(-50%,-50%) rotate(45deg); overflow:hidden; border:calc(1.5px*var(--z)) solid rgba(217,178,106,.3); background:#120c08; }
+[data-v=now] .tn .dm img { left:50%; top:50%; width:146%; height:146%; transform:translate(-50%,-50%) rotate(-45deg); object-fit:cover; filter:grayscale(.8) brightness(.45); }
+[data-v=now] .tn.k-n .dm { border-width:calc(2px*var(--z)); box-shadow:0 0 0 calc(2px*var(--z)) #080604,0 0 0 calc(3px*var(--z)) rgba(217,178,106,.22); }
+[data-v=now] .tn.k-v .dm { border:calc(2px*var(--z)) solid rgba(243,217,153,.75); box-shadow:0 0 0 calc(2px*var(--z)) #080604,0 0 0 calc(3px*var(--z)) rgba(243,217,153,.32); }
+[data-v=now] .tn.k-v::before { content:''; position:absolute; left:50%; top:50%; width:calc(var(--s)*var(--z)*.7071px + 18px*var(--z)); height:calc(var(--s)*var(--z)*.7071px + 18px*var(--z)); transform:translate(-50%,-50%) rotate(45deg); border:1px solid rgba(243,217,153,.4); }
+[data-v=now] .tn.st-lk { opacity:.4; }
+[data-v=now] .tn.st-av .dm { border-color:rgba(243,217,153,.9); } [data-v=now] .tn.st-av .dm img { filter:grayscale(.3) brightness(.75); }
+[data-v=now] .tn.st-tk .dm { border-color:#e8cf8f; background:linear-gradient(135deg,#7a5a28,#d9b26a); box-shadow:0 0 0 calc(2px*var(--z)) #080604,0 0 calc(9px*var(--z)) rgba(243,217,153,.4); }
+[data-v=now] .tn.st-tk .dm img { filter:none; }
+[data-v=now] .tn.k-n.st-tk .dm { background:#1a1209; }
+
+/* ---- A: hairline ring ---- */
+[data-v=a] .tn .ring { position:absolute; inset:0; border-radius:50%; border:1px solid var(--c); background:radial-gradient(circle,#1a120b,#0c0806 80%); }
+[data-v=a] .tn img { left:50%; top:50%; width:94%; height:94%; transform:translate(-50%,-50%); object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.9)); }
+[data-v=a] .tn.st-lk .ring { border-style:dashed; } [data-v=a] .tn.st-lk img { filter:grayscale(.9) brightness(.55); opacity:.8; }
+[data-v=a] .tn.st-av img { filter:brightness(.9) saturate(.85); }
+[data-v=a] .tn.st-av .ring { box-shadow:0 0 calc(6px*var(--z)) rgba(243,217,153,.3); }
+[data-v=a] .tn.st-tk .ring { border-width:1.5px; box-shadow:0 0 calc(10px*var(--z)) rgba(255,190,90,.55); background:radial-gradient(circle,#3a2812,#150e08 80%); }
+[data-v=a] .tn.k-n::before { content:''; position:absolute; inset:calc(-4px*var(--z)); border-radius:50%; border:1px solid var(--c); opacity:.55; }
+[data-v=a] .tn.k-v::before { content:''; position:absolute; inset:calc(-6px*var(--z)); border-radius:50%; border:1px solid var(--c); opacity:.7; }
+[data-v=a] .tn.k-v::after { content:''; position:absolute; left:50%; top:calc(-9px*var(--z)); width:calc(6px*var(--z)); height:calc(6px*var(--z)); background:var(--c); transform:translate(-50%,-50%) rotate(45deg); box-shadow:0 0 calc(6px*var(--z)) var(--c); }
+
+/* ---- B: open corners ---- */
+[data-v=b] .tn .fr { position:absolute; inset:calc(-3px*var(--z)); pointer-events:none;
+  --l:calc(9px*var(--z)); --w:calc(1.5px*var(--z));
+  background:
+   linear-gradient(var(--c),var(--c)) 0 0/var(--l) var(--w) no-repeat, linear-gradient(var(--c),var(--c)) 0 0/var(--w) var(--l) no-repeat,
+   linear-gradient(var(--c),var(--c)) 100% 0/var(--l) var(--w) no-repeat, linear-gradient(var(--c),var(--c)) 100% 0/var(--w) var(--l) no-repeat,
+   linear-gradient(var(--c),var(--c)) 0 100%/var(--l) var(--w) no-repeat, linear-gradient(var(--c),var(--c)) 0 100%/var(--w) var(--l) no-repeat,
+   linear-gradient(var(--c),var(--c)) 100% 100%/var(--l) var(--w) no-repeat, linear-gradient(var(--c),var(--c)) 100% 100%/var(--w) var(--l) no-repeat; }
+[data-v=b] .tn img { inset:0; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 2px 2px rgba(0,0,0,.9)); }
+[data-v=b] .tn.st-lk img { filter:grayscale(1) brightness(.5); opacity:.75; }
+[data-v=b] .tn.st-av img { filter:brightness(.88) saturate(.8); }
+[data-v=b] .tn.st-tk img { filter:drop-shadow(0 0 calc(8px*var(--z)) rgba(255,170,70,.55)) drop-shadow(0 2px 2px rgba(0,0,0,.9)); }
+[data-v=b] .tn.st-tk::after { content:''; position:absolute; left:18%; right:18%; bottom:calc(-7px*var(--z)); height:calc(2px*var(--z)); background:linear-gradient(90deg,transparent,#ffb35a,transparent); box-shadow:0 0 calc(6px*var(--z)) rgba(240,140,40,.8); }
+[data-v=b] .tn.k-n .fr { inset:calc(-5px*var(--z)); --l:calc(12px*var(--z)); }
+[data-v=b] .tn.k-n::before { content:''; position:absolute; left:50%; bottom:calc(-11px*var(--z)); width:calc(5px*var(--z)); height:calc(5px*var(--z)); background:var(--c); transform:translate(-50%,0) rotate(45deg); }
+[data-v=b] .tn.k-v .fr { inset:calc(-7px*var(--z)); --l:calc(18px*var(--z)); --w:calc(2px*var(--z)); }
+[data-v=b] .tn.k-v::before { content:''; position:absolute; inset:calc(-3px*var(--z)); border:1px solid var(--c); opacity:.35; }
+[data-v=b] .tn.k-v::after { content:''; position:absolute; left:50%; top:calc(-13px*var(--z)); width:calc(6px*var(--z)); height:calc(6px*var(--z)); background:var(--c); transform:translate(-50%,-50%) rotate(45deg); box-shadow:0 0 calc(7px*var(--z)) var(--c); }
+[data-v=b] .tn.k-v.st-tk::after { bottom:auto; height:calc(6px*var(--z)); left:50%; right:auto; }
+
+/* ---- C: hex plate ---- */
+[data-v=c] .tn .hx { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+[data-v=c] .tn .hx polygon { fill:rgba(16,11,7,.78); stroke:var(--c); stroke-width:1.6; vector-effect:non-scaling-stroke; stroke-linejoin:round; }
+[data-v=c] .tn .hx polygon.o { fill:none; stroke-width:1; opacity:.55; }
+[data-v=c] .tn.st-lk .hx polygon { stroke-dasharray:3 3; }
+[data-v=c] .tn.st-tk .hx polygon:not(.o) { fill:rgba(120,82,30,.55); stroke-width:2; }
+[data-v=c] .tn.st-tk .hx { filter:drop-shadow(0 0 calc(7px*var(--z)) rgba(255,180,80,.55)); }
+[data-v=c] .tn img { left:50%; top:50%; width:76%; height:76%; transform:translate(-50%,-50%); object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.9)); }
+[data-v=c] .tn.st-lk img { filter:grayscale(.9) brightness(.55); opacity:.8; }
+[data-v=c] .tn.st-av img { filter:brightness(.9) saturate(.85); }
+[data-v=c] .tn.k-v .hx polygon:not(.o) { stroke-width:2.2; }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="fitbox"><div id="stage"></div></div>
+<script src="tree-node-frames/kit.js"></script>
+<script>
+const SIZE = { f: 36, n: 54, v: 70 }, HEX = '50,2 94,26 94,74 50,98 6,74 6,26';
+const NOTE = {
+  now: 'Today: a rotated square. The icon is cropped to the diamond and a 1.5 to 2 px frame sits on top.',
+  a: 'Round hairline ring (1 px). The whole icon sits inside the circle. State = ring colour and a small glow; notable gets an outer ring, keystone a ring and a top gem.',
+  b: 'No closed frame: four corner brackets only. The icon is square and never cropped. State = bracket colour; taken adds an ember underline.',
+  c: 'Hex plate with a thin trace. Locked = dashed. Taken = warm fill and glow. Notable = hex, keystone = double hex with heavier trace.'
+};
+function node(v, set, kind, state, n = 0, style = '') {
+  const src = `tree-node-frames/img/${set}-${kind === 'f' ? (n % 2 ? '1_ma' : '0_ma') : kind === 'n' ? (n % 3) + '_n0' : (n % 2) + '_v'}.webp`;
+  const sz = SIZE[kind];
+  const hx = v === 'c' ? `<svg class="hx" viewBox="0 0 100 100" preserveAspectRatio="none">${kind === 'v' ? `<polygon class="o" points="50,-6 100,22 100,78 50,106 0,78 0,22"/>` : ''}<polygon points="${HEX}"/></svg>` : '';
+  const inner = v === 'now' ? `<div class="dm"><img src="${src}"></div>` : v === 'a' ? `<i class="ring"></i><img src="${src}">` : v === 'b' ? `<i class="fr"></i><img src="${src}">` : `${hx}<img src="${src}">`;
+  return `<div class="tn k-${kind} st-${state}" style="--s:${sz};${style}">${inner}</div>`;
+}
+EOV.init({
+  variants: [['now', 'Now'], ['a', 'A Ring'], ['b', 'B Corners'], ['c', 'C Hex']],
+  groups: [{ key: 'set', label: 'Icons', items: [['warrior', 'Warrior'], ['mage', 'Mage'], ['paladin', 'Paladin']] }],
+  render(st, stage) {
+    const v = st.v, set = st.set || 'warrior', names = { now: 'Now: diamond', a: 'A: hairline ring', b: 'B: open corners', c: 'C: hex plate' };
+    const rows = [['f', 'Filler'], ['n', 'Notable'], ['v', 'Keystone']], cols = [['lk', 'Locked'], ['av', 'Available'], ['tk', 'Taken']];
+    let mx = `<div></div>` + cols.map((c) => `<div class="ch">${c[1]}</div>`).join('');
+    rows.forEach(([k, kn], i) => { mx += `<div class="rh">${kn}</div>` + cols.map(([s]) => `<div class="cell">${node(v, set, k, s, i)}</div>`).join(''); });
+    if (stage.classList.contains('s-ph')) mx = cols.map((c) => `<div class="ch">${c[1]}</div>`).join('') + rows.map(([k], i) => cols.map(([s]) => `<div class="cell">${node(v, set, k, s, i)}</div>`).join('')).join('');
+    // mini tree (percent positions; lines drawn as svg in a 100x100 non-scaled box)
+    const P = [[50, 12, 'v', 'tk', 0], [30, 30, 'n', 'tk', 0], [70, 30, 'n', 'av', 1], [18, 50, 'f', 'tk', 0], [42, 50, 'f', 'av', 1], [64, 50, 'f', 'lk', 0], [86, 50, 'f', 'lk', 1], [30, 70, 'n', 'av', 2], [74, 70, 'n', 'lk', 0], [50, 90, 'f', 'lk', 1]];
+    const L = [[0, 1, 1], [0, 2, 1], [1, 3, 1], [1, 4, 0], [2, 5, 0], [2, 6, 0], [4, 7, 0], [3, 7, 0], [7, 9, 0], [5, 8, 0], [8, 9, 0]];
+    const lines = L.map(([a, b, on]) => `<line class="${on ? 'on' : ''}" x1="${P[a][0]}%" y1="${P[a][1]}%" x2="${P[b][0]}%" y2="${P[b][1]}%"/>`).join('');
+    const mini = `<div class="mini"><svg>${lines}</svg>${P.map(([x, y, k, s, n]) => node(v, set, k, s, n, `left:${x}%;top:${y}%`)).join('')}</div>`;
+    stage.innerHTML = `<div class="wrap"><div class="col"><div class="head"><h2 class="t">${names[v]}</h2></div><p class="note">${NOTE[v]}</p><div class="mx">${mx}</div></div>` +
+      `<div class="col"><div class="head"><span class="lab">Real size, 1:1 with the game</span></div>${mini}<p class="note">Sizes: filler 36, notable 54, keystone 70 px, as in the game today.</p></div></div>`;
+  }
+});
+</script>
+</body>
+</html>
