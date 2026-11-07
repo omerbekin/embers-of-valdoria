@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>Menu Card Buttons 2</title>
+<style>
+@font-face{font-family:Cinzel;font-weight:400 900;src:url(menu-card-buttons-2/Cinzel-normal-latin.woff2) format('woff2')}
+@font-face{font-family:'EB Garamond';font-weight:400 800;src:url(menu-card-buttons-2/EBGaramond-normal-latin.woff2) format('woff2')}
+:root{--gold:#d9b26a;--gold-dim:rgba(217,178,106,.4);--ember:#f0a040;--txt:#e9dcc0;--muted:#cdb88d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#120d08;color:var(--txt);font:16px/1.4 'EB Garamond',Georgia,serif}
+#bar{height:44px;display:flex;gap:8px;align-items:center;padding:0 10px;border-bottom:1px solid #3a2c1a;white-space:nowrap;overflow:hidden}
+#bar .g{display:flex;gap:4px;align-items:center}
+#bar .sp{width:1px;height:22px;background:#3a2c1a;margin:0 6px}
+#bar button{font:600 12px Cinzel,serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:#1b130c;border:1px solid #3a2c1a;padding:6px 10px;cursor:pointer}
+#bar button.on{color:#fff3d6;border-color:var(--gold);background:#2a1d10}
+#note{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+#wrap{height:calc(100% - 44px);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#frame{position:relative;overflow:hidden;border:1px solid #3a2c1a;background:#0c0805;flex:none}
+#stage{position:absolute;left:0;top:0;height:1080px;transform-origin:0 0;
+  background:linear-gradient(rgba(10,7,4,.2),rgba(10,7,4,.2)),url(menu-card-buttons-2/foreground.webp),url(menu-card-buttons-2/middle.webp),url(menu-card-buttons-2/far.webp),url(menu-card-buttons-2/sky.webp);
+  background-size:auto 1080px;background-position:center;background-repeat:no-repeat;--k:1;--kt:1}
+#stage.phone{--k:1.7;--kt:1.2}
+.card{position:absolute;top:252px;width:460px;height:640px;overflow:hidden;background:#241a11}
+.card>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.92}
+.card::before{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,7,4,0) 25%,rgba(10,7,4,.96) 100%)}
+.card::after{content:'';position:absolute;inset:0;z-index:6;pointer-events:none;border:1px solid var(--gold-dim);box-shadow:inset 0 0 0 2.5px rgba(27,18,10,.9)}
+.col{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;flex-direction:column;align-items:center;padding:0 24px calc(26px*var(--k))}
+.t{font:700 calc(45px*var(--kt)) Cinzel,serif;letter-spacing:.04em;text-transform:uppercase;color:var(--txt);text-shadow:0 2px 6px #000;line-height:1.1;margin-bottom:calc(8px*var(--k))}
+.s{font:400 calc(26px*var(--kt)) "EB Garamond",serif;color:var(--muted);text-shadow:0 2px 4px #000}
+.dia{display:inline-block;width:.4em;height:.4em;background:var(--ember);transform:rotate(45deg);box-shadow:0 0 8px var(--ember);flex:none}
+button.x{all:unset;box-sizing:border-box;cursor:pointer}
+.now{display:flex;gap:10px;width:100%;margin-top:calc(14px*var(--k))}
+.now .fb{flex:1;height:calc(56px*var(--k));display:flex;align-items:center;justify-content:center;border:1px solid var(--gold-dim);background:rgba(20,13,7,.7);font:600 calc(20px*var(--k)) Cinzel,serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.now .fb.p{color:#fff3d6;border-color:var(--gold)}
+.led{width:100%;margin-top:calc(10px*var(--k));border-top:2px solid var(--gold);background:linear-gradient(180deg,rgba(60,42,22,.82),rgba(26,17,9,.9));box-shadow:0 6px 18px rgba(0,0,0,.6)}
+.row{display:flex;align-items:center;gap:12px;height:calc(58px*var(--k));padding:0 calc(16px*var(--k));border-bottom:1px solid rgba(217,178,106,.28);position:relative;transition:background .15s;cursor:pointer}
+.row:last-child{border-bottom:0}
+.row:hover{background:rgba(240,160,64,.16)}
+.row .n{font:600 calc(21px*var(--kt)) Cinzel,serif;letter-spacing:.08em;text-transform:uppercase;color:var(--txt);display:flex;align-items:center;gap:.6em;white-space:nowrap}
+.row .m{margin-left:auto;font:400 calc(20px*var(--kt)) "EB Garamond",serif;color:var(--muted);text-align:right;white-space:nowrap;line-height:1.15}
+.row.p{background:linear-gradient(90deg,rgba(240,160,64,.22),rgba(240,160,64,.04));height:calc(76px*var(--k))}
+.row.p .n{color:#fff3d6;font-size:calc(25px*var(--kt))}
+.row.p .m{color:#f3dfae}
+.seals{display:flex;align-items:flex-end;justify-content:center;gap:calc(22px*var(--k));width:100%;margin-top:calc(14px*var(--k))}
+.sealb{display:flex;flex-direction:column;align-items:center;gap:calc(8px*var(--k));cursor:pointer}
+.seal{position:relative;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .12s,filter .15s;
+  background:radial-gradient(circle at 36% 30%,#d65a3a 0,#a8281a 38%,#6e1209 78%,#4a0b06 100%);
+  box-shadow:inset 0 -4px 8px rgba(0,0,0,.45),inset 0 3px 5px rgba(255,170,130,.35);
+  clip-path:polygon(50% 0,60% 4%,72% 2%,80% 10%,92% 14%,96% 26%,100% 38%,97% 50%,100% 62%,94% 74%,90% 86%,78% 92%,68% 99%,56% 96%,44% 100%,32% 95%,20% 92%,10% 84%,5% 72%,0 60%,3% 48%,0 36%,6% 24%,12% 14%,24% 8%,36% 3%)}
+.seal::before{content:'';position:absolute;inset:14%;border-radius:50%;border:2px solid rgba(255,190,150,.4);box-shadow:inset 0 0 6px rgba(0,0,0,.5)}
+.seal svg{width:46%;height:46%;position:relative;fill:none;stroke:#f6cfae;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.sealb:hover .seal{transform:scale(.93) rotate(-3deg);filter:brightness(1.15)}
+.sealb.big .seal{width:calc(104px*var(--k));height:calc(104px*var(--k))}
+.sealb.sm .seal{width:calc(74px*var(--k));height:calc(74px*var(--k));background:radial-gradient(circle at 36% 30%,#8a6a3c 0,#5e4522 45%,#3a2810 100%)}
+.sealb .lb{font:600 calc(19px*var(--k)) Cinzel,serif;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-shadow:0 2px 4px #000}
+.sealb.big .lb{color:#fff3d6;font-size:calc(23px*var(--k))}
+.sealb .sub{font:400 calc(19px*var(--k)) 'EB Garamond',serif;color:var(--muted);margin-top:calc(-6px*var(--k));text-shadow:0 2px 4px #000}
+.pole{width:100%;display:flex;flex-direction:column;align-items:center;margin-top:calc(8px*var(--k))}
+.tab{width:calc(70px*var(--k));height:calc(30px*var(--k));display:flex;align-items:center;justify-content:center;margin-bottom:2px}
+.tab i{display:block;width:calc(14px*var(--k));height:calc(14px*var(--k));border-right:2px solid var(--gold);border-bottom:2px solid var(--gold);transform:rotate(45deg) translateY(-3px);transition:transform .35s}
+.pole.open .tab i{transform:rotate(-135deg) translateY(-3px)}
+.bn{width:100%;position:relative;color:#fff3d6;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:linear-gradient(180deg,#8f2a1c,#6a1a10);border-top:calc(4px*var(--k)) solid var(--gold);
+  clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 14px*var(--k)),0 100%);transition:filter .15s}
+.bn::after{content:'';position:absolute;inset:calc(8px*var(--k)) calc(10px*var(--k)) calc(18px*var(--k));border:1px dashed rgba(240,200,140,.45);pointer-events:none}
+.bn:hover{filter:brightness(1.2)}
+.bn.main{height:calc(92px*var(--k));flex-direction:column;gap:2px;padding-bottom:calc(10px*var(--k))}
+.bn.main b{font:700 calc(26px*var(--k)) Cinzel,serif;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:.6em}
+.bn.main span{font:400 calc(20px*var(--k)) 'EB Garamond',serif;color:#f3dfae}
+.fold{width:80%;overflow:hidden;max-height:0;transition:max-height .5s cubic-bezier(.2,.8,.3,1);display:flex;flex-direction:column;gap:calc(2px*var(--k))}
+.pole.open .fold{max-height:calc(200px*var(--k))}
+.bn.sub{height:calc(60px*var(--k));padding-bottom:calc(10px*var(--k));background:linear-gradient(180deg,#5b2a1a,#3e1a0f);font:600 calc(21px*var(--k)) Cinzel,serif;letter-spacing:.14em;text-transform:uppercase;flex:none;clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 10px*var(--k)),0 100%)}
+.bn.sub::after{inset:calc(6px*var(--k)) calc(8px*var(--k)) calc(14px*var(--k))}
+.bn.sub em{font:400 calc(18px*var(--k)) 'EB Garamond',serif;color:#e0c898;margin-left:.7em;letter-spacing:0;text-transform:none}
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="g" id="vs"></div><div class="sp"></div><div class="g" id="zs"></div>
+  <div id="note"></div>
+</div>
+<div id="wrap"><div id="frame"><div id="stage" lang="en"></div></div></div>
+<script>
+const IC={
+ c:'<svg viewBox="0 0 32 32"><path d="M8 6l16 10L8 26z"/></svg>',
+ n:'<svg viewBox="0 0 32 32"><path d="M16 5v22M5 16h22"/></svg>',
+ l:'<svg viewBox="0 0 32 32"><path d="M7 5h14l4 4v18H7zM11 5v7h9V5M11 27v-8h10v8"/></svg>'};
+const D='<i class="dia"></i>';
+const SIZES={'169':{w:1920,l:'16:9'},'219':{w:2580,l:'21:9'},'phone':{w:2337,l:'Phone 844x390'}};
+const VN={now:'Now',A:'A',B:'B',C:'C'};
+const NOTES={
+now:'Now: three framed buttons squeezed into the card (rejected).',
+A:'A · Save ledger: Continue is a tall highlighted entry showing the save (Ashford, Act 1, Lv 4). New and Load are ruled ledger lines with their own info. Whole row is the tap target.',
+B:'B · Wax seals: one big red Continue seal, two small bronze seals for New and Load, carved icons, labels underneath. Seal presses in on hover.',
+C:'C · Unfurling banner: the card shows a Continue pennant. The chevron unrolls New / Load pennants below it, click again to fold.'};
+let v='A', z='169';
+try{v=localStorage.getItem('mcb2v')||v;z=localStorage.getItem('mcb2z')||z}catch(e){}
+if(!VN[v])v='A';if(!SIZES[z])z='169';
+function campaignInner(){
+ if(v==='now') return '<div class="t">Campaign</div><div class="now"><div class="fb">New</div><div class="fb">Load</div><div class="fb p">Continue</div></div>';
+ if(v==='A') return '<div class="t">Campaign</div><div class="led">'+
+   '<div class="row p"><span class="n">'+D+'Continue</span><span class="m">Ashford, Act 1<br>Lv 4 &middot; 2h ago</span></div>'+
+   '<div class="row"><span class="n">New campaign</span><span class="m">Start over</span></div>'+
+   '<div class="row"><span class="n">Load</span><span class="m">3 saves</span></div></div>';
+ if(v==='B') return '<div class="t">Campaign</div><div class="seals">'+
+   '<div class="sealb sm"><div class="seal">'+IC.n+'</div><div class="lb">New</div></div>'+
+   '<div class="sealb big"><div class="seal">'+IC.c+'</div><div class="lb">Continue</div><div class="sub">Ashford, Act 1</div></div>'+
+   '<div class="sealb sm"><div class="seal">'+IC.l+'</div><div class="lb">Load</div></div></div>';
+ return '<div class="t">Campaign</div><div class="pole open" id="pole"><button class="x tab" id="tab" aria-label="Toggle"><i></i></button>'+
+   '<div class="bn main"><b>'+D+'Continue</b><span>Ashford, Act 1 &middot; Lv 4</span></div>'+
+   '<div class="fold"><div class="bn sub">New<em>fresh start</em></div><div class="bn sub">Load<em>3 saves</em></div></div></div>';
+}
+function render(){
+ const S=SIZES[z],st=document.getElementById('stage'),w=S.w;
+ st.className=z==='phone'?'phone':'';st.style.width=w+'px';
+ const cw=460,gap=46,x0=(w-(3*cw+2*gap))/2;
+ const other=[['Quick Battle','quick-battle.webp','Pick two teams'],['Multiplayer','multiplayer.webp','Fight a friend online']];
+ let h='<div class="card" style="left:'+x0+'px"><img src="menu-card-buttons-2/campaign.webp" alt=""><div class="col">'+campaignInner()+'</div></div>';
+ other.forEach(function(o,i){h+='<div class="card" style="left:'+(x0+(i+1)*(cw+gap))+'px"><img src="menu-card-buttons-2/'+o[1]+'" alt=""><div class="col"><div class="t">'+o[0]+'</div><div class="s">'+o[2]+'</div></div></div>';});
+ st.innerHTML=h;
+ const tab=document.getElementById('tab');
+ if(tab)tab.onclick=function(){document.getElementById('pole').classList.toggle('open')};
+ fit();
+ document.getElementById('note').textContent=NOTES[v];
+ document.querySelectorAll('#vs button').forEach(function(b){b.classList.toggle('on',b.dataset.v===v)});
+ document.querySelectorAll('#zs button').forEach(function(b){b.classList.toggle('on',b.dataset.z===z)});
+}
+function fit(){
+ const S=SIZES[z],wrap=document.getElementById('wrap');
+ const s=Math.min((wrap.clientWidth-4)/S.w,(wrap.clientHeight-4)/1080);
+ const fr=document.getElementById('frame');
+ fr.style.width=(S.w*s)+'px';fr.style.height=(1080*s)+'px';
+ document.getElementById('stage').style.transform='scale('+s+')';
+}
+['now','A','B','C'].forEach(function(k){const b=document.createElement('button');b.textContent=VN[k];b.dataset.v=k;b.onclick=function(){v=k;try{localStorage.setItem('mcb2v',k)}catch(e){}render()};document.getElementById('vs').appendChild(b)});
+Object.keys(SIZES).forEach(function(k){const b=document.createElement('button');b.textContent=SIZES[k].l;b.dataset.z=k;b.onclick=function(){z=k;try{localStorage.setItem('mcb2z',k)}catch(e){}render()};document.getElementById('zs').appendChild(b)});
+addEventListener('resize',fit);render();
+</script>
+</body>
+</html>
