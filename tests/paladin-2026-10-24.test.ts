@@ -72,14 +72,14 @@ describe('Paladin 2026-10-24: veri', () => {
     const j = content.skills.judgment!;
     expect(j).toMatchObject({ target: 'area_any', area: { shape: 'rect', rows: 1, cols: 1 }, cost: { resource: 'mp', amount: 16 }, cooldown: 3 });
     expect(j.effects).toEqual([
-      expect.objectContaining({ type: 'damage', damageType: 'magic', element: 'holy', scale: 'int', power: 0.3, side: 'enemies' }),
+      expect.objectContaining({ type: 'damage', damageType: 'magic', element: 'holy', scale: 'int', power: 0.315, side: 'enemies' }),
       expect.objectContaining({ type: 'heal', scale: 'int', power: 0.3, side: 'allies' }),
-      expect.objectContaining({ type: 'ground', ground: 'holy_fire', turns: 2, scale: 'int', power: 0.38, side: 'enemies' }),
+      expect.objectContaining({ type: 'ground', ground: 'holy_fire', turns: 2, scale: 'int', power: 0.399, side: 'enemies' }),
       expect.objectContaining({ type: 'ground', ground: 'holy_ground', turns: 2, scale: 'int', power: 0.38, side: 'allies' }),
     ]);
     expect(content.grounds.holy_ground).toMatchObject({ name: 'Holy Ground', heal: true });
     expect(content.skills.pt_judgment!.target).toBe('area_any');
-    expect(content.skills.radiance!.cost.amount).toBe(24);
+    expect(content.skills.radiance!.cost.amount).toBe(18); // 2026-11-08 Paladin mana turu: 24 -> 18
     const b = make({ 0: 'paladin' }, { 0: 'warrior' });
     for (let s = 0; s < content.CELL_COUNT; s++) {
       expect(b.areaCells('judgment', s, 'enemy')).toEqual([s]);
@@ -202,9 +202,9 @@ describe('Paladin 2026-10-24: Judgment ağaç düğümleri', () => {
     for (let s = 0; s < content.CELL_COUNT; s++) expect(b.areaCells('judgment', s, 'enemy', me.uid)).toEqual(want(s, false, true));
     const eff = b.skill('judgment', me.uid)!.effects;
     const g = eff.find((e) => e.type === 'ground' && e.ground === 'holy_fire') as { power: number };
-    expect(g.power).toBeCloseTo(0.38 * 0.7, 9);
+    expect(g.power).toBeCloseTo(0.399 * 0.7, 9);
     expect((eff.find((e) => e.type === 'ground' && e.ground === 'holy_ground') as { power: number }).power).toBeCloseTo(0.38 * 0.7, 9);
-    expect((eff.find((e) => e.type === 'damage') as { power: number }).power).toBeCloseTo(0.3 * 0.7, 9);
+    expect((eff.find((e) => e.type === 'damage') as { power: number }).power).toBeCloseTo(0.315 * 0.7, 9);
     expect((eff.find((e) => e.type === 'heal') as { power: number }).power).toBeCloseTo(0.3 * 0.7, 9);
   });
 

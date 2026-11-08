@@ -233,6 +233,8 @@ describe('dizilim: yakın dövüşçü sınıfı menzilden (range.md)', () => {
       expect(content.isMeleeClass('warrior')).toBe(true);
       expect(content.isMeleeClass('cutthroat')).toBe(true);
       expect(content.isMeleeClass('antimage')).toBe(false);
+      expect(content.isMeleeClass('skald')).toBe(true); // Ömer 2026-11-08: menzil 2 yakın dövüş grubu (range.meleeMax)
+      expect(content.isMeleeClass('paladin')).toBe(false); // menzil 4
       r.enabled = false;
       expect(content.isMeleeClass('antimage')).toBe(true); // eski kural: ilk skill (Mana Steal) melee
     } finally {

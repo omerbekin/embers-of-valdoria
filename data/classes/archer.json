@@ -28,7 +28,7 @@
     "id": "sharpshooter",
     "name": "Sharpshooter",
     "icon": "sharp",
-    "text": "",
+    "text": "The farther the target, the harder you hit: 5% more damage for every row of distance.",
     "effect": {
       "type": "longshot",
       "perRow": 0.05

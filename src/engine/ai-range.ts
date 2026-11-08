@@ -145,8 +145,9 @@ export function bestMoveRange(battle: Battle, actor: Combatant, mv: RangeMoveCon
   const attacks = rangedSkills(battle, actor);
   const usable = attacks.filter((s) => !blockedByCost(battle, actor, s));
   const canActNow = canActFrom(battle, actor, actor.slot, usable);
-  // "kırılgan" = yakın menzilli (<= 1) saldırısı yok VE canı eksik (tam canla geri çekilme yok)
-  const close = attacks.some((s) => battle.rangeOf(actor, s) <= 1);
+  // "kırılgan" = yakın menzilli (<= range.meleeMax, 2; Ömer 2026-11-08: Skald yakın dövüşçü) saldırısı yok VE canı eksik (tam canla geri çekilme yok)
+  const meleeMax = battle.formulas.range?.meleeMax ?? 2;
+  const close = attacks.some((s) => battle.rangeOf(actor, s) <= meleeMax);
   const fragile = !close && ratio(actor) < Math.min(1, mv.retreatHpRatio * 2);
   const wounded = ratio(actor) < mv.retreatHpRatio;
   // Ömer 2026-11-01: yakın dövüşçü, kendinden başka şu an vurabilen dost yoksa saldırı erişimini bırakıp geri çekilmez; geride kaldıysa riske bakmadan menzile döner

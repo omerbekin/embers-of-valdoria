@@ -1,4 +1,6 @@
 # Global arayüz kuralları (CLAUDE.md'den taşındı, metin birebir)
+> **Ne için / Güncel mi (2026-11-08):** her arayüz değişikliğinde geçerli global kurallar (tam metin). evet.
+
 
 Her arayüz değişikliğinde geçerli. Ayrıntı: ui-and-stage.md.
 
@@ -8,10 +10,8 @@ Her arayüz değişikliğinde geçerli. Ayrıntı: ui-and-stage.md.
 - **Sürükle-bırak (Ömer 2026-10-10):** yuva doldurulan HER arayüzde sürükle-bırak (fare + dokunma, bırakma hedefi vurgusu, gölge); dokunarak seçme de çalışır. **Yuvalar arası taşıma (Ömer 2026-10-23):** dolu bir yuvadaki öğe, onu kabul eden başka bir yuvaya sürüklenebilir (ör. main hand ↔ off hand); hedef doluysa ikisi yer değiştirir, hedefteki öğe kaynağa uymuyorsa çantaya döner.
 - **Üç ekran boyutu (Ömer 2026-10-27):** HER arayüz, mockup ve sahne/kasaba görseli 16:9 (1920x1080), 21:9 (2580x1080) ve telefon (yatay ~844x390, `html.short`) düşünülerek üretilir: kenara yaslanan öğeler, kırpılan görsel alanları ve hotspot'lar üçünde de görünür ve tıklanır kalır. Ajan brief'leri bunu yazar; doğrulama üç boyutta da ekran görüntüsüyle yapılır.
 
-## Kısa kurallar da dahil tam metin (eski CLAUDE.md satırları)
-
-- **Arayüz tasarım dili (ZORUNLU, Ömer 2026-10-18):** yeni arayüzün ana mantığı `docs/design/ui-design-language.md` (sade ve ferah, sınırları koru, bilgi hover'da, ortak parçalar: A Band ipucu, Gear item plakası, item ipucu v3, A Plates ve pasif 1. sırada, karakter kartı A).
-- **Arayüz referansı (ZORUNLU):** yeni ekran / pencere yazmadan önce `docs/design/ui-reference.md`; aynı işi gören parça varsa onu kullan, kopyalama.
+## Ek kurallar
+- Ana mantık `docs/design/ui-design-language.md`, parça referansı `docs/design/ui-reference.md` (ikisi ZORUNLU; yeni ekran/pencere öncesi oku, aynı işi gören parça varsa kopyalama).
 - Dokunmatik öncelikli girdi; fare ve klavye de çalışır. Dokunma hedefleri en az 44px (gerçek piksel).
 - **Kısa ekran:** CSS `html.short` (<=520px) / `html.compact` (<=720px) sınıflarını kullanır (@media döndürülmüş sahnede yanlış ölçer).
 - Yuva/hedef seçimi tek ortak hücre plakası dili (`shape-draw.ts` CellTile). Ana ekran dışı her sahne `lazy-scenes.ts` ile yüklenir (ayrıntı `docs/arch/sims-and-deploy.md` > Build).

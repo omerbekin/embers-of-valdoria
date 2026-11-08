@@ -68,7 +68,7 @@ describe('veri tutarlılığı', () => {
   });
   it('oynanabilir sınıfların hepsinin büst satırı ve blurb alanı var', () => {
     for (const [id, d] of Object.entries(content.classes)) {
-      if (d.hidden || d.testOnly || !d.blurb || d.id === 'vesper') continue; // Vesper: yer tutucu (kendi v2 pozu yok, eski avatar yedeği: Mage)
+      if (d.hidden || d.testOnly || !d.blurb || d.id === 'vesper' || d.id === 'skald') continue; // Vesper: yer tutucu (kendi v2 pozu yok, eski avatar yedeği: Mage); Thunder Skald (2026-11-07): yer tutucu Defender görünüşü, büst sanatı gelince satır
       expect((bust.classes as Record<string, unknown>)[id], `${id} büst`).toBeTruthy();
     }
   });

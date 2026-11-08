@@ -1874,7 +1874,8 @@
       "classes": [
         "defender",
         "paladin",
-        "warrior"
+        "warrior",
+        "skald"
       ],
       "mains": [
         "c_phys",
@@ -1886,7 +1887,8 @@
       "type": "hammer",
       "classes": [
         "defender",
-        "paladin"
+        "paladin",
+        "skald"
       ],
       "mains": [
         "c_phys",
@@ -2014,7 +2016,8 @@
       "classes": [
         "warrior",
         "defender",
-        "paladin"
+        "paladin",
+        "skald"
       ],
       "implicit": "shield",
       "shield": true
@@ -2688,7 +2691,8 @@
       "undead": "ash_staff",
       "gambler": "worn_deck",
       "hexer": "worn_deck",
-      "vesper": "ash_staff"
+      "vesper": "ash_staff",
+      "skald": "war_hammer"
     }
   },
   "_starterOffhands": "Başlangıç ikinci el item'i (Ömer 2026-10-23): ikinci el yuvası boş başlayan ve başlangıç silahı tek el olan sınıflara sınıfına uygun Common ikinci el (Defender / Paladin kalkan, Cutthroat / Anti-Mage ikinci hançer). Yeni item yok, katalogdaki Common'lar; örnek seviyesi starterWeapons.ilvl. Silah katlaması (sıfır noktası) yalnızca ana el başlangıç silahıdır: ikinci hançerin güç payı küçük bir ek hasar verir. Gambler / Hexer Focus Orb alır (2026-11-07: tılsım tek el oldu, aynı kural). Warrior ikinci el almaz: başlangıç silahı çift el Greataxe oldu (Ömer 2026-10-23, open-questions 401; önceden tek el Woodcutter's Axe; katlama Greataxe'a göre: başlangıçla hasar aynı, eski kayıttaki Woodcutter's Axe artık ~x0,957). Yalnızca yeni sefer kahramanı / yeni Endless koşusu alır (eski kayıtlara göç yok, Ömer 2026-10-23).",
@@ -2699,7 +2703,8 @@
       "cutthroat": "rondel_dagger",
       "antimage": "rondel_dagger",
       "gambler": "clouded_glass_orb",
-      "hexer": "clouded_glass_orb"
+      "hexer": "clouded_glass_orb",
+      "skald": "iron_buckler"
     }
   },
   "_items": "Katalog = taban item'ler (Ömer onayı 2026-10-11, items.md 1.3b): ad, yuva, silah ailesi, ilvl, ikon, varsayılan nadirlik ve ana C affix'i (main; silahta weaponFamilies[].mains listesinden örnek oluşurken seçilir). Diğer affix'ler örnek oluşurken kademesinin havuzundan çekilir. Legendary'nin dört affix'i (affixes) ve etkisi katalogda sabit; değerleri yine seviyeye göre zarlanır.",

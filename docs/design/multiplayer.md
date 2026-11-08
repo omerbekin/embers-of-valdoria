@@ -1,4 +1,6 @@
 # Multiplayer (iki oyunculu çevrimiçi Quick Battle)
+> **Ne için / Güncel mi (2026-11-08):** çevrimiçi Quick Battle: ağ, lobi, lockstep. sistem canlı; ilk sürüm notları 2026-10-08, kod src/net ve cloudflare/.
+
 
 Durum: ilk sürüm (multiplayer-dev, 2026-10-08). Kapsam yalnızca **Quick Battle**; sefer tek oyunculu kalır.
 Ömer kararları: signaling Ömer'in **Cloudflare** hesabında (ücretsiz plan) küçük bir Worker; kopma kuralı **60 saniye**.
@@ -48,7 +50,7 @@ Varsayımlar ve sorular: `open-questions.md` madde 268.
 - `src/net/` saf (Phaser/DOM yok, Node'da test edilir): `protocol.ts` (mesaj şeması + doğrulama), `lobby-code.ts`,
   `state-hash.ts`, `lockstep.ts`, `reconnect.ts` (60 sn durum makinesi), `session.ts` (lobi/takım/savaş/rövanş akışı),
   `transport.ts` (soyut taşıma + bellek içi loopback, gecikme ve kopma simülasyonu), `fake-opponent.ts` (debug sahte rakip).
-- Tarayıcıya özgü: `src/net/signaling.ts` (Worker WebSocket istemcisi), `src/net/webrtc-link.ts` (RTCPeerConnection),
+- Tarayıcıya özgü: `src/net/webrtc-link.ts` (Worker WebSocket istemcisi + RTCPeerConnection; eski `signaling.ts` ayrı dosya olarak yok; Worker tarafı `cloudflare/src/lobby-logic.ts`),
   `src/net/config.ts` (Worker adresi), `src/game/mp-client.ts` (oturumu sahnelere bağlar), `src/game/scenes/MultiplayerScene.ts`
   (lobi ekranı), `src/ui/mp-overlay.ts` (bağlantı/geri sayım/desync şeridi ve kod giriş kutusu), `src/ui/debug-mp.ts`.
 - Worker: `cloudflare/` (ayrı paket; oyunun derlemesine ve CI'ya girmez). Saf lobi kuralları `cloudflare/src/lobby-logic.ts`

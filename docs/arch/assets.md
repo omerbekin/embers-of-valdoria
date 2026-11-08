@@ -1,12 +1,14 @@
 # Asset, sanat ve ses
+> **Ne için / Güncel mi (2026-11-08):** sprite, poz, ikon, vfx, ses, müzik, yükleme ekranı kuralları ve araçları. evet; araç betikleri (tools/*) var, CLAUDE.md-den taşınan metin birebir.
 
-> CLAUDE.md'den taşındı (2026-10-14, birebir). Genel kurallar CLAUDE.md'de; bu belge görsel/ses ayrıntısıdır. Sprite, ikon, vfx, ses, müzik, yükleme ekranı, logo işinden önce oku; ayrıca `docs/design/art.md`, `docs/design/art-v2.md`, `docs/design/audio-map.md`. Ana ekran ikonu / logo / manifest ayrıntısı `docs/arch/ui-and-stage.md` > "Yatay ekran..." bölümündedir.
+
+> CLAUDE.md'den taşındı (2026-10-14, birebir). Genel kurallar CLAUDE.md'de; bu belge görsel/ses ayrıntısıdır. Sprite, ikon, vfx, ses, müzik, yükleme ekranı, logo işinden önce oku; ayrıca `docs/design/art-v2.md > Eski görsel rehber`, `docs/design/art-v2.md`, `docs/design/audio-map.md`. Ana ekran ikonu / logo / manifest ayrıntısı `docs/arch/ui-and-stage.md` > "Yatay ekran..." bölümündedir.
 
 ## Ses tasarım felsefesi
 - **Tasarım felsefesi: oyun medieval (ortaçağ) tarzında.** Görsel ve **ses** buna uyar. Sesler gerçeğe yakın olur: çan gibi "çin çin" çınlayan saf sinüs/titreşim sesleri YOK; gerçek hayattaki karşılıklarından yola çıkılır (yay kirişi "thwap", ok "fft" ve ahşap/et "thock", çelik-zırh çatırtısı, taş/toprak çatlaması, gerçek ateş çıtırtısı, insan korosu/nefesi). Ses = filtreli gürültü + alçak darbe (+ gerekirse gerilmiş tel ya da formantlı insan sesi). Her skill'in sesi, onu atarken kullanılan şeylerin gerçek örneklerine göre kurulur (`data/audio.json`; Warrior ve Druid sesleri Ömer'in beğendiği referanstır, dokunma).
 
 ## Asset kuralları
-- Pixel art, sabit palet (`docs/design/art.md`). Her karakter için sabit animasyon seti: `idle`, `attack`, `cast`, `hit`, `death` (+ `defend`).
+- Pixel art, sabit palet (`docs/design/art-v2.md > Eski görsel rehber`). Her karakter için sabit animasyon seti: `idle`, `attack`, `cast`, `hit`, `death` (+ `defend`).
 - Dosya adı: `assets/sprites/<id>/<animasyon>.png` (yatay sprite sheet). Gerçek sprite aynı isimle konunca placeholder'ın yerini otomatik alır.
 - Placeholder: class rengine boyalı basit blok karakter + sınıfı anlatan donanım, animasyon için basit hareket/yanıp sönme.
 - Gerçek sprite: `assets/sprites/<id>/idle.png` tek bir ayakta duran illüstrasyon olabilir (genişlik < 1,5 x yükseklik) ya da yatay sprite sheet. Ekranda `data/battle-layout.json` > `spriteBox` içine oranı korunarak sığdırılır. Karakter görselleri `tools/import-characters-v2.py` ile içe aktarılır; kaynaklar `assets/CREDITS.md`.

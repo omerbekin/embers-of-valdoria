@@ -1,0 +1,27 @@
+{
+  "slug": "06-stormcall-arc",
+  "title": "Stormcall: chain lightning arc between targets",
+  "source": "assets/source/skald-vfx/06-stormcall-arc.png",
+  "frames": 8,
+  "fps": 20,
+  "duration_ms": 400,
+  "frame_size": [
+    320,
+    320
+  ],
+  "sheet_size": [
+    1280,
+    640
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 0,
+  "pivot": [
+    160,
+    160
+  ],
+  "align": "keep"
+}

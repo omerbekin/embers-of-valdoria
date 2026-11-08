@@ -1,0 +1,400 @@
+{
+ "_not": "Thunder Skald (2026-11-08): tools/make-poses-v2.mjs --class=skald. Sayfalar sa\u011fa bakar; s\u0131rttaki davul y\u00fcz\u00fcnden y\u00f6n denetimi \u015fa\u015f\u0131yor, hepsi noMirror. Eller bo\u015f (silah\u0131 rig takar). Seed'ler g\u00f6zle okundu.",
+ "noMirror": [
+  "idle1",
+  "step1",
+  "slash1",
+  "overhead1",
+  "thrust1",
+  "spin1a",
+  "spin1b",
+  "spin1c",
+  "guard1",
+  "raise",
+  "channel",
+  "point",
+  "idle2",
+  "step2",
+  "slash2",
+  "overhead2",
+  "thrust2",
+  "spin2a",
+  "spin2b",
+  "spin2c",
+  "guard2",
+  "throw",
+  "hit",
+  "kneel"
+ ],
+ "seeds": {
+  "idle1": {
+   "main": [
+    178,
+    193
+   ],
+   "off": [
+    275,
+    185
+   ]
+  },
+  "step1": {
+   "main": [
+    527,
+    187
+   ],
+   "off": [
+    648,
+    178
+   ]
+  },
+  "slash1": {
+   "main": [
+    940,
+    122
+   ],
+   "off": [
+    1065,
+    165
+   ]
+  },
+  "overhead1": {
+   "main": [
+    1305,
+    15
+   ],
+   "off": [
+    1435,
+    185
+   ]
+  },
+  "thrust1": {
+   "main": [
+    328,
+    415
+   ],
+   "off": [
+    258,
+    510
+   ]
+  },
+  "spin1a": {
+   "main": [
+    478,
+    500
+   ],
+   "off": [
+    580,
+    512
+   ]
+  },
+  "spin1b": {
+   "main": [
+    985,
+    530
+   ],
+   "off": [
+    1005,
+    520
+   ]
+  },
+  "spin1c": {
+   "main": [
+    1220,
+    515
+   ],
+   "off": [
+    1455,
+    490
+   ]
+  },
+  "guard1": {
+   "main": [
+    180,
+    860
+   ],
+   "off": [
+    295,
+    725
+   ]
+  },
+  "raise": {
+   "main": [
+    495,
+    690
+   ],
+   "off": [
+    600,
+    800
+   ]
+  },
+  "channel": {
+   "main": [
+    845,
+    740
+   ],
+   "off": [
+    1085,
+    700
+   ]
+  },
+  "point": {
+   "main": [
+    1270,
+    865
+   ],
+   "off": [
+    1470,
+    735
+   ]
+  },
+  "idle2": {
+   "main": [
+    232,
+    185
+   ],
+   "off": [
+    232,
+    185
+   ]
+  },
+  "step2": {
+   "main": [
+    590,
+    185
+   ],
+   "off": [
+    590,
+    185
+   ]
+  },
+  "slash2": {
+   "main": [
+    1050,
+    142
+   ],
+   "off": [
+    1050,
+    142
+   ]
+  },
+  "overhead2": {
+   "main": [
+    1315,
+    22
+   ],
+   "off": [
+    1315,
+    22
+   ]
+  },
+  "thrust2": {
+   "main": [
+    310,
+    420
+   ],
+   "off": [
+    310,
+    420
+   ]
+  },
+  "spin2a": {
+   "main": [
+    480,
+    515
+   ],
+   "off": [
+    480,
+    515
+   ]
+  },
+  "spin2b": {
+   "main": [
+    912,
+    512
+   ],
+   "off": [
+    912,
+    512
+   ],
+   "back": true
+  },
+  "spin2c": {
+   "main": [
+    1450,
+    498
+   ],
+   "off": [
+    1450,
+    498
+   ]
+  },
+  "guard2": {
+   "main": [
+    218,
+    832
+   ],
+   "off": [
+    218,
+    832
+   ]
+  },
+  "throw": {
+   "main": [
+    672,
+    725
+   ],
+   "off": [
+    672,
+    725
+   ]
+  },
+  "hit": {
+   "main": [
+    1000,
+    830
+   ],
+   "off": [
+    1000,
+    830
+   ]
+  },
+  "kneel": {
+   "main": [
+    1205,
+    990
+   ],
+   "off": [
+    1205,
+    990
+   ]
+  },
+  "drum_a": {
+   "main": [
+    640,
+    525
+   ],
+   "off": [
+    845,
+    590
+   ],
+   "angle": 105
+  },
+  "drum_b": {
+   "main": [
+    240,
+    100
+   ],
+   "off": [
+    820,
+    520
+   ],
+   "angle": 25
+  },
+  "drum_take": {
+   "main": [
+    350,
+    110
+   ],
+   "off": [
+    880,
+    660
+   ],
+   "hidden": true
+  }
+ },
+ "narrowSeeds": {
+  "idle1": {
+   "main": [
+    252,
+    185
+   ],
+   "off": [
+    300,
+    200
+   ]
+  },
+  "idle2": {
+   "main": [
+    790,
+    177
+   ],
+   "off": [
+    790,
+    177
+   ]
+  },
+  "guard1": {
+   "main": [
+    1190,
+    185
+   ],
+   "off": [
+    1370,
+    62
+   ]
+  },
+  "guard2": {
+   "main": [
+    300,
+    430
+   ],
+   "off": [
+    300,
+    430
+   ]
+  },
+  "raise": {
+   "main": [
+    718,
+    350
+   ],
+   "off": [
+    805,
+    458
+   ]
+  },
+  "channel": {
+   "main": [
+    1150,
+    385
+   ],
+   "off": [
+    1375,
+    382
+   ]
+  },
+  "point": {
+   "main": [
+    250,
+    855
+   ],
+   "off": [
+    415,
+    740
+   ]
+  },
+  "throw": {
+   "main": [
+    848,
+    742
+   ],
+   "off": [
+    880,
+    740
+   ]
+  },
+  "hit": {
+   "main": [
+    1250,
+    800
+   ],
+   "off": [
+    1300,
+    750
+   ]
+  }
+ },
+ "overrideScale": {
+  "drum_b": 1.0
+ }
+}

@@ -45,8 +45,9 @@ describe('lightning elementi', () => {
   });
 
   it('kahraman yeteneklerinde lightning yok (yalnız mob)', () => {
+    // Thunder Skald (Ömer 2026-11-07): şimşek kahramanı (Hammer Spark payı, Thunder Strike, Stormcall)
     // Vesper (2026-10-28, Ömer brifi): Thunderpeal + Great Bell kahramanın ilk lightning skill'leri; diğer sınıflarda hâlâ yok
-    for (const c of Object.values(content.classes)) if (c.id !== 'vesper' && !c.testOnly) for (const id of c.skills) expect(skillElements(content.skills[id]!), `${c.id}/${id}`).not.toContain('lightning');
+    for (const c of Object.values(content.classes)) if (c.id !== 'vesper' && c.id !== 'skald' && !c.testOnly) for (const id of c.skills) expect(skillElements(content.skills[id]!), `${c.id}/${id}`).not.toContain('lightning');
   });
 
   it('mob ve tür etiketlerinde lightning nötr (x1): zayıflık tablosunda girdi yok', () => {

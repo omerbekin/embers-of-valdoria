@@ -86,6 +86,23 @@ export function damageSpecFor(
   };
 }
 
+/**
+ * Bölünmüş hasarın parçaları (damage.split, Thunder Skald Hammer Spark): split yoksa tek parça [etki, 1]; varsa
+ * [etkinin kendi türü (1 - share), split türü / elementi (share)]. Gerçek vuruş, önizleme ve ipucu aynı parçaları kullanır.
+ */
+export function splitParts(effect: DamageEffect): Array<{ effect: DamageEffect; share: number }> {
+  if (!effect.split) return [{ effect, share: 1 }];
+  const { split, ...base } = effect;
+  const s = Math.min(1, Math.max(0, split.share));
+  const second: DamageEffect = { ...base, damageType: split.damageType };
+  if (split.element) second.element = split.element;
+  else delete second.element;
+  return [
+    { effect: base, share: 1 - s },
+    { effect: second, share: s },
+  ];
+}
+
 /** Hibrit ölçek eki (damage.bonusScale): girişlerin toplamı = değer x pct (zırh / büyü zırhı / temel stat; çarpansız ham miktar). */
 export function bonusScaleRaw(entries: BonusScale[] | undefined, stats: Stats): number {
   if (!entries) return 0;

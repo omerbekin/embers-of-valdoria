@@ -64,7 +64,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
         const sk = content.skills[s.id]!;
         if (sk.motion === 'melee') expect(s.range, s.id).toBe('Melee');
         else if (sk.target === 'self') expect(s.range, s.id).toBe('Self');
-        else if (['single_ally', 'dead_ally', 'all_allies'].includes(sk.target)) expect(s.range, s.id).toBe('Support');
+        else if (['single_ally', 'dead_ally', 'all_allies', 'self_area'].includes(sk.target)) expect(s.range, s.id).toBe('Support');
         else expect(s.range, s.id).toBe('Ranged');
       }
     }
@@ -252,7 +252,7 @@ describe('Wiki: test class\'ı ve alan şekilleri', () => {
   });
 });
 
-describe('Codex boyalı ikonları (assets/misc-icons/codex, docs/design/art/codex-icons.md)', () => {
+describe('Codex boyalı ikonları (assets/misc-icons/codex, docs/archive/design/art/codex-icons.md)', () => {
   const all = [...wiki.gettingStarted, ...wiki.lessons, ...wiki.mechanics];
   const byId = (id: string) => all.find((a) => a.id === id)!;
 

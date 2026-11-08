@@ -1,4 +1,6 @@
 # Hata raporu (opt-in tanılama)
+> **Ne için / Güncel mi (2026-11-08):** opt-in hata raporu (varsayılan kapalı, anonim) ve Worker /diag. evet; npm run diag:pull ve deploy:cf var.
+
 
 > Ömer 2026-10-16 onayı. Kurallar değişmez: varsayılan KAPALI, anonim, yalnızca teknik veri, 30 gün, yalnızca ücretsiz Cloudflare. Varsayımlar: `docs/design/open-questions.md` madde 331.
 
@@ -19,7 +21,7 @@
 - **Debug > Data > Error reports** (`src/ui/debug-diag.ts`): Reports ON/OFF, View log, Copy log, Send test report (sunucu yanıtını yazar), Show notice, Fake error, Fake crash (yeniden yükleyince ~50 sn sonra çökme raporu).
 
 ## Worker (`cloudflare/`)
-- `POST /diag` (`src/index.ts > handleDiag`, saf kurallar `src/diag-logic.ts`, test `tests/diag.test.ts`): köken izni (`ALLOWED_ORIGINS`: embersofvaldoria.com, omerbekin.github.io, localhost), 32 KB, şema doğrulama (rapor yalnızca bilinen alanlardan yeniden kurulur, fazlası atılır), cihaz başına saatte 12 rapor (KV sayacı), anahtar `r:<sunucu ISO zamanı>:<rastgele>`, `expirationTtl` 30 gün. **IP (`CF-Connecting-IP`) ve `req.cf` okunmaz.** Okuma ucu YOK.
+- `POST /diag` (`cloudflare/src/index.ts > handleDiag`, saf kurallar `cloudflare/src/diag-logic.ts`, test `tests/diag.test.ts`): köken izni (`ALLOWED_ORIGINS`: embersofvaldoria.com, omerbekin.github.io, localhost), 32 KB, şema doğrulama (rapor yalnızca bilinen alanlardan yeniden kurulur, fazlası atılır), cihaz başına saatte 12 rapor (KV sayacı), anahtar `r:<sunucu ISO zamanı>:<rastgele>`, `expirationTtl` 30 gün. **IP (`CF-Connecting-IP`) ve `req.cf` okunmaz.** Okuma ucu YOK.
 - KV bağlaması `DIAG` (`wrangler.toml > [[kv_namespaces]]`), `run_worker_first` içinde `/diag`. Ücretsiz KV: günde 100.000 okuma, 1.000 yazma (rapor başına 2 yazma), 1 GB.
 - **Bir kez kurulum:** `npm --prefix cloudflare exec -- wrangler kv namespace create eov-diag` -> çıkan `id`'yi `cloudflare/wrangler.toml` içindeki `REPLACE_WITH_DIAG_KV_ID` yerine yaz -> `npm run deploy:cf`. (Yazılmazsa deploy hata verir.)
 - **Raporları okumak:** `npm run diag:pull` (en yeni 15 rapor, özet + son 12 iz), `npm run diag:pull -- --limit 50`, `-- --full` (tam JSON), `-- --kind previous_session_crashed`. Yerelde giriş yapılmış wrangler kullanır (`cloudflare/scripts/diag-pull.mjs`).

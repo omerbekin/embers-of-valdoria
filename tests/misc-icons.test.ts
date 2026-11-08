@@ -46,7 +46,7 @@ describe('Oyun ikonları: 135 boyalı görsel, eski kodla çizilen yedek korunur
 
   it('sınıf logoları: her seçilebilir sınıfın (Geometer hariç) boyalı amblemi; çağrılar verideki logoyu korur', () => {
     for (const def of Object.values(content.classes)) {
-      if (def.testOnly) expect(classLogoName(def)).toBe(def.logo); // test class'ları (Geometer, Pose Tester I/II): verideki logo
+      if (def.testOnly || def.id === 'skald') expect(classLogoName(def)).toBe(def.logo); // Thunder Skald (2026-11-07): boyalı amblem sanatla gelecek, şimdilik verideki logo; test class'ları (Geometer, Pose Tester I/II): verideki logo
       else expect(classLogoName(def), def.id).toBe(`class:${def.id}`);
     }
     for (const def of Object.values(content.summons)) expect(classLogoName(def)).toBe(def.logo);

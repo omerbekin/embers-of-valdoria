@@ -1194,7 +1194,7 @@ export class BattleScene extends Phaser.Scene {
     const caster = this.galleryActor;
     if (!skill || !caster) return 'No caster';
     if (b.winner) return 'Battle is over';
-    const ally = skill.target === 'self' || skill.target === 'single_ally' || skill.target === 'all_allies' || skill.target === 'dead_ally';
+    const ally = skill.target === 'self' || skill.target === 'single_ally' || skill.target === 'all_allies' || skill.target === 'dead_ally' || skill.target === 'self_area';
     const targetBoard = ally ? caster.side : caster.side === 'party' ? 'enemy' : 'party';
     if (skill.target === 'dead_ally') {
       // Needs a fallen ally: make one if there is none
@@ -2111,6 +2111,13 @@ export class BattleScene extends Phaser.Scene {
       const list = groups.get(c.board) ?? [];
       list.push({ slot: c.slot, state: hint ? 'selectable' : 'affected', tone });
       groups.set(c.board, list);
+    }
+    // self_area (War Drum): kullananın çevresindeki şeklin tamamı görünür; boş hücreler soluk, dostlar dolgulu
+    if (skill.target === 'self_area') {
+      const list = groups.get(actor.board) ?? [];
+      const taken = new Set(list.map((x) => x.slot));
+      for (const slot of this.battle.selfAreaCells(actorUid, skillId)) if (!taken.has(slot)) list.push({ slot, state: 'selectable', tone: 'ally' });
+      groups.set(actor.board, list);
     }
     this.showBasePlates([...groups.entries()].map(([board, specs]) => ({ board, specs })));
   }

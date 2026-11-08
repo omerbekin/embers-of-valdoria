@@ -1,10 +1,11 @@
 # D8 ekonomi önerisi (balance-tester 2026-10-24) — YALNIZCA ÖNERİ, veri değişmedi
+> **Ne için / Güncel mi (2026-11-08):** D8 ekonomi paketleri (fiyat, Temper, savaş altını). AÇIK öneri: Ömer paket seçmedi, veri değişmedi (open-questions-archive madde 409/4). Sayılar 2026-10-24 verisinden; seçimden önce yeniden hesaplanmalı (sonradan 153 kayıtlık item verisi ve Harita 2-3 geldi).
 
 Ömer: "her şeyi değerlendirip bir öneri ver, sonra karar verelim." Bu belge üç tutarlı paket sunar; **Paket 1 önerimdir.** Sayılar bugünkü veriden hesaplandı (sim değil; bölüm toplamları farmsız test yolculuğundan, elit / boss çarpanları dahil, sandık altını aynı); seçilen paket uygulanınca sefer sim'i ile ölçülür.
 
 ## 1. Bugün ne var (kararlar)
 - **Fiyat:** item'in fiyatı = 10 x gücü (IP). Nadirlik primi yok: aynı altına aynı güç (items.md 2.2). Satış = fiyatın yarısı. Bu sayı ileride Quick Battle / multiplayer "altın limitiyle itemleme" için de kullanılacak.
-- **Temper:** fiyat = 5,3 x item'in seviye başına ortalama değer artışı, seviyeyle hafif artar; Legendary 2 kat (open-questions 404, Ömer 2026-10-23).
+- **Temper:** fiyat = 5,3 x item'in seviye başına ortalama değer artışı, seviyeyle hafif artar; Legendary 2 kat (open-questions-archive 404, Ömer 2026-10-23).
 - **Savaş altını:** 4 x item seviyesi (elit 2 kat, boss 4 kat), korunan sandık 25 x item seviyesi.
 - **Altın hedefi:** hiç harcamayan, farm yapmayan oyuncu bölüm sonunda bir Legendary fiyatının %120'si kadar biriktirir (Ömer 2026-10-18). Bu hedef bugüne kadar hiç ölçülüp ayarlanmadı.
 - **Dinlenme:** kasabada ilk bedava, sonra 19 altın (bölüm 1). Respec 20 + 5 x level.
@@ -34,7 +35,7 @@
 - **Temper:** bugünkü formül kalır, çarpan 5,3 → 3,5 ve **tavan: bir Temper adımı item'in sat fiyatını geçmez.** Örnek: sat fiyatı 39 olan silahın Temper'i 94 → 39. Ucuz zırh / takı Temper'leri (7-20) neredeyse aynı.
 - **Savaş altını:** 4 x item seviyesi → **10 + 3 x item seviyesi** (elit / boss / sandık çarpanları aynı). Bölge I savaşları 12-16 → 19-22; son bölge 32-40 → 34-40.
 - **Bölüm sonu altını:** 640-860 → ~730-950 (+%10-14; artış çoğunlukla erken savaşlarda, son bölge ve boss'lar neredeyse aynı). Hedefin (~250-390) yine üstünde. **Öneri:** hedef "bölüm sonunda ~3 Legendary fiyatı" diye yeniden yazılsın (bugünkü gerçek duruma yakın) ya da hedef korunacaksa sandık altını azaltılsın (ayrı karar).
-- **Değişen eski kararlar:** kalkan bloğu güç tartısı (open-questions 247), Temper çarpanı + yeni tavan (404'e ek; formülün şekli aynı), savaş altını kuralı (items.md 2.2 "4 x ilvl"). **Korunan:** 10 x güç, nadirlik primi yok, QB/MP altın limiti kuralı.
+- **Değişen eski kararlar:** kalkan bloğu güç tartısı (open-questions-archive 247), Temper çarpanı + yeni tavan (404'e ek; formülün şekli aynı), savaş altını kuralı (items.md 2.2 "4 x ilvl"). **Korunan:** 10 x güç, nadirlik primi yok, QB/MP altın limiti kuralı.
 - **Neden önerim:** playtest'teki üç şikâyetin hepsini (küçük savaş ödülü, Temper > item, Buckler / Jerkin) çözüyor, "aynı altına aynı güç" ilkesi ve ileride gelecek QB/MP altın limiti bozulmuyor; en az değişiklik.
 
 ### Paket 2 — "Okunur fiyat tablosu" (playtest'in D8 önerisi, olduğu gibi)

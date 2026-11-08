@@ -1194,6 +1194,8 @@ const SH = {
   lash: 'druid/08-root-lash',
 } as const;
 const WATER = ['#f0fdff', '#a8e8dc', '#7fd6e8'];
+/** Sheet'ler 8 kare: kodla ara kare (3x, süre aynı) ile akıcı oynar (Ömer 2026-11-08: fps yüksek, takılma yok). */
+const IB = { method: 'crossfade+motion', sub: 3 };
 
 /** Sheet'leri yükler; hepsi hazırsa true (değilse çağıran eski kod çizimine döner). */
 async function sheetsOk(c: VfxCtx, k: VfxKit, ids: string[]): Promise<boolean> {
@@ -1208,7 +1210,9 @@ const cellW = (c: VfxCtx, k: VfxKit, slot: number): number => {
 };
 
 /** Sheet'teki "vuruş noktası" (kare oranı) ve boyut; sheet gelince ölçüldü (docs/anim-review/notes/<id>.md). */
-const WHIP = { size: 380, ix: 0.8, iy: 0.65, tx: 0.07, ty: 0.15, fps: 14, hitFrame: 3 };
+// thick: kalınlık çarpanı (Ömer 2026-11-08: 1. skill VFX %30 küçük). Boy sabit kaldığından ölçek 1.09x büyür: 0.62 x 1.09 ~ eskiye göre kalınlık 0.7 (Codex ölçümü 0.765 verdi, 0.7 -> 0.62).
+// reachPad: görünen sarmaşık ucu asa ucundan ~12 px kısa kalıyordu (Codex wide.png): kuyruk hedefi asa ucundan bu kadar öteye uzatır
+const WHIP = { size: 380, ix: 0.8, iy: 0.65, tx: 0.07, ty: 0.15, fps: 14, hitFrame: 3, thick: 0.62, reachPad: 12 };
 
 /**
  * Healing Rain (rejuvenate, tek hücre, boş dost hücresi de olur): Druid avucuna nefes verir; avuçtan soluk yeşil-mavi bir su damlası-ışığı hücreye
@@ -1237,7 +1241,7 @@ const rejuvenateRain: V2Vfx = async (c, k) => {
       c.sfx('healChime');
       const S = 300;
       glowAt(c, k, f.x, f.y - 6, 130, 520, k.FLOOR_FX + 5, 0xd8f59a);
-      const rain = k.sheet(c.scene, SH.rain, f.x, f.y + 4, { size: S, depth: k.DEPTH + 36 });
+      const rain = k.sheet(c.scene, SH.rain, f.x, f.y + 4, { size: S, depth: k.DEPTH + 36, inbetween: IB });
       if (rain) c.scene.tweens.add({ targets: rain, alpha: 0, delay: k.slow(520), duration: k.slow(260), ease: 'Sine.easeIn' });
       await k.sheetDone(rain);
       await k.wait(c.scene, k.slow(120));
@@ -1249,8 +1253,8 @@ const rejuvenateRain: V2Vfx = async (c, k) => {
 /** Hücredeki Nature's Wrath patlaması: kendi çizimi kökler + su seli; oradaki düşmanlar havaya kalkar, ıslanır (Soaked). */
 function wrathCellSheet(c: VfxCtx, k: VfxKit, slot: number, victims: CombatantView[], big: boolean): void {
   const mid = k.cellMid(c.board, slot);
-  const S = Math.max(240, cellW(c, k, slot) * 1.25);
-  k.sheet(c.scene, SH.surge, mid.x, mid.y + 16, { size: S * (big ? 1 : 0.92), depth: k.DEPTH + 28 });
+  const S = Math.max(240, cellW(c, k, slot) * 1.25) * 0.7; // Ömer 2026-11-08: 2. skill VFX %30 küçük
+  k.sheet(c.scene, SH.surge, mid.x, mid.y + 16, { size: S * (big ? 1 : 0.92), depth: k.DEPTH + 28, inbetween: IB });
   soilBurst(c, k, mid, big ? 0.9 : 0.7);
   k.burst(c.scene, mid.x, mid.y - 20, { colors: WATER, n: 8, speed: [80, 260], angle: [-Math.PI * 0.95, -Math.PI * 0.05], gravity: 600, life: [300, 600], size: [4, 8] });
   for (const t of victims) {
@@ -1330,11 +1334,12 @@ const thornwhipSheet: V2Vfx = async (c, k) => {
       await k.wait(c.scene, k.slow(Math.max(0, 420 - lead)));
       // kamçının kuyruk ucu asa tepesinde, değme noktası hedefte: sheet döndürülüp ölçeklenir (dönme noktası = değme noktası)
       const tail = { x: dir > 0 ? WHIP.tx : 1 - WHIP.tx, y: WHIP.ty };
-      const v = { x: ((dir > 0 ? WHIP.ix : 1 - WHIP.ix) - tail.x) * WHIP.size, y: (WHIP.iy - tail.y) * WHIP.size };
-      const D = { x: P.x - H0.x, y: P.y - H0.y };
+      const v = { x: ((dir > 0 ? WHIP.ix : 1 - WHIP.ix) - tail.x) * WHIP.size, y: (WHIP.iy - tail.y) * WHIP.size * WHIP.thick };
+      const D = { x: P.x - (H0.x - dir * WHIP.reachPad), y: P.y - H0.y };
       const sc = Math.min(1.7, Math.max(0.6, Math.hypot(D.x, D.y) / Math.hypot(v.x, v.y)));
       const rot = Math.atan2(D.y, D.x) - Math.atan2(v.y, v.x);
-      const spr = k.sheet(c.scene, SH.whip, P.x, P.y, { size: WHIP.size * sc, fps: WHIP.fps, flipX: dir < 0, rotation: rot, origin: [dir > 0 ? WHIP.ix : 1 - WHIP.ix, WHIP.iy], depth: k.DEPTH + 40 });
+      const spr = k.sheet(c.scene, SH.whip, P.x, P.y, { size: WHIP.size * sc, fps: WHIP.fps, inbetween: IB, flipX: dir < 0, rotation: rot, origin: [dir > 0 ? WHIP.ix : 1 - WHIP.ix, WHIP.iy], depth: k.DEPTH + 40 });
+      spr?.setScale(spr.scaleX, spr.scaleY * WHIP.thick);
       await k.wait(c.scene, k.slow(lead));
       c.sfx('thornSnap');
       glowAt(c, k, P.x, P.y, 120, 260, k.DEPTH + 55, 0xffffff);
@@ -1372,8 +1377,8 @@ const summon_treantSheet: V2Vfx = async (c, k) => {
   v.container.setAlpha(0);
   c.sfx('soilHeave');
   k.shake(c.scene, 420, 0.002);
-  const S = W * 2.0;
-  k.sheet(c.scene, SH.rise, f.x, f.y + 6, { size: S, fps: 5.5, wrap: { unit: v.container.depth } });
+  const S = W * 2.0 * 0.7; // Ömer 2026-11-08: 4. skill VFX %30 küçük
+  k.sheet(c.scene, SH.rise, f.x, f.y + 6, { size: S, fps: 8, inbetween: IB, wrap: { unit: v.container.depth } });
   await k.wait(c.scene, k.slow(500));
   c.sfx('rootRise');
   k.shake(c.scene, 200, 0.005);
@@ -1441,7 +1446,7 @@ const rootfallFist: V2Vfx = async (c, k) => {
   c.sfx('rootFistFall');
   const lead = (FIST.hitFrame / FIST.fps) * 1000;
   const ridge = rootRidge(c, k, slam, { x: f.x - dir * 10, y: f.y }, Math.max(260, lead), 14);
-  const fist = k.sheet(c.scene, SH.fist, f.x, f.y + 4, { size: FIST.size, fps: FIST.fps, origin: [FIST.ix, FIST.iy], flipX: dir < 0, depth: t.container.depth + 2 });
+  const fist = k.sheet(c.scene, SH.fist, f.x, f.y + 4, { size: FIST.size, fps: FIST.fps, inbetween: IB, origin: [FIST.ix, FIST.iy], flipX: dir < 0, depth: t.container.depth + 2 });
   // gökten iner: sheet'in kendi inişine ek olarak yukarıdan düşer, değme karesinde yerine oturur
   if (fist) {
     fist.y -= 150;

@@ -32,7 +32,10 @@
     "resurrection": "Resurrection is ready: alone it does nothing, but once you have companions it raises the fallen mid-battle.",
     "natures_wrath": "Nature's Wrath is yours now: roots tear through the two front enemy rows at once and leave them Soaked.",
     "rejuvenate": "Healing Rain is ready: call it down on your own cell. It heals you now and the rain keeps healing for three turns while you stay in it.",
-    "summon_treant": "Summon Treant is yours now, but it starts every battle on cooldown. Once it is up, it calls a treant to fight beside you for a few turns."
+    "summon_treant": "Summon Treant is yours now, but it starts every battle on cooldown. Once it is up, it calls a treant to fight beside you for a few turns.",
+    "thunder_strike": "Thunder Strike is yours now: call a bolt down on one enemy. Shocked pushes them back in the turn order.",
+    "war_drum": "War Drum is ready: beat it around your own cell and everyone beside you is Hasted for three turns.",
+    "stormcall": "Stormcall is yours now, but it starts every battle on cooldown. Once it is up, lightning leaps from one enemy to the most armored ones nearby and Shocks them all."
   },
   "_hitPulse": "C1 (Ömer 2026-11-01): 'It Can Miss' dersi açılınca hedeflerin üstünde isabet yüzdesinin kısa vurgusu (ms).",
   "hitPulseMs": 2600,

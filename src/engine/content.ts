@@ -33,6 +33,8 @@ import gambler from '../../data/classes/gambler.json';
 import hexer from '../../data/classes/hexer.json';
 // Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md): her zaman açık 12. class
 import vesper from '../../data/classes/vesper.json';
+// Thunder Skald (Ömer onayı 2026-11-07): STR şimşek kahramanı; War Drum (self_area), Hammer Spark (damage.split), pasif Conductor
+import skald from '../../data/classes/skald.json';
 import mage from '../../data/classes/mage.json';
 import paladin from '../../data/classes/paladin.json';
 import undead from '../../data/classes/undead.json';
@@ -202,6 +204,7 @@ const classData: Record<string, CombatantData> = {
   cutthroat,
   hexer,
   vesper,
+  skald,
   aoe_tester: aoeTester,
   storm_tester: stormTester,
   rod_tester: rodTester,
@@ -608,11 +611,15 @@ export function rollTeams(battleId: string, seed: number, sizes: TeamSizes = {})
 export const GRID = { rows: formulas.formation.rows, lanes: formulas.formation.lanes };
 export const CELL_COUNT = GRID.rows * GRID.lanes;
 
+/** Yakın dövüş grubunun üst menzili (formulas.json > range.meleeMax; yoksa 2). Sınıf / skill menzili buna kadar olan birim yakın dövüşçüdür. */
+export const meleeMaxRange = (): number => formulas.range?.meleeMax ?? 2;
+
 /** Yakın dövüş sınıfı mı (ilk skill'i melee)? Melee yalnızca ön sıradan vurabildiği için dizilimde önce onlar yerleşir. */
 export function isMeleeClass(id: string): boolean {
   const def = classes[id] ?? summons[id];
-  // Menzil açıkken (range.md) yakın dövüşçü = taban menzili <= 1 (Anti-Mage menzil 4: uzak sınıf gibi dizilir); kapalıyken eski kural (ilk skill melee)
-  if (formulas.range?.enabled) return (def?.range ?? formulas.range.default ?? 1) <= 1;
+  // Menzil açıkken (range.md) yakın dövüşçü = taban menzili <= range.meleeMax (2; Ömer 2026-11-08: Skald menzil 2 "uzatılmış yakın dövüşçü";
+  // Anti-Mage menzil 4: uzak sınıf gibi dizilir); kapalıyken eski kural (ilk skill melee)
+  if (formulas.range?.enabled) return (def?.range ?? formulas.range.default ?? 1) <= meleeMaxRange();
   return skills[def?.skills[0] ?? '']?.motion === 'melee';
 }
 

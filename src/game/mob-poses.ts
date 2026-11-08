@@ -39,7 +39,7 @@ export interface MobPoseSkill {
   target?: string;
 }
 
-const ALLY_TARGETS = new Set(['single_ally', 'dead_ally', 'all_allies', 'self']);
+const ALLY_TARGETS = new Set(['single_ally', 'dead_ally', 'all_allies', 'self', 'self_area']);
 const AREA_TARGETS = new Set(['area_enemies', 'area_any', 'all_enemies', 'everyone', 'random_enemies']);
 
 /**

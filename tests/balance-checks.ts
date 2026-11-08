@@ -23,6 +23,8 @@ import { balance, simulate, skillCategory, skillShare, ultReadyRate, winRate } f
 // 2026-10-31: Ley Brand kısması (castBurnPct 0,5, threadBurnMult 1,5) sonrası Undead 5000'de %56,5 (bant %56). Ömer: karakter dengesi başka sohbette, bu değerlere dokunulmuyor.
 // 2026-11-02: Healing Rain + denge kararları sonrası Undead 2 x 5000'de %51,6 / %50,5 -> çıkarıldı. Druid %57,3 / %58,1: Ömer kararı bekliyor.
 // 2026-11-02: 2 x 5000'de Paladin %48,1 / %49,4, Mage %50,7 / %49,7, Vesper %48,6 / %49,6, AM %47,3 / %49,3 -> Ömer kararıyla çıkarıldı. Druid muaf: görsel rework sonrası bakılacak.
+// 2026-11-07: skald = yeni class Thunder Skald (Ömer onayı), değerler PROVİZYON; sim Ömer onayıyla sonra.
+// 2026-11-08 Skald denge turu (Ömer onayı): 2 x 5000'de %48,9 / %51,3, skill payları bantta -> çıkarıldı.
 export const PENDING_BALANCE: readonly string[] = ['druid'];
 
 /**
@@ -50,6 +52,7 @@ export const PENDING_SKILLS: Readonly<Record<string, string>> = {
   taunt: 'YZ kapsam turu sonrası pay %14-15 (2026-10-30), Defender turunda bakılacak',
   tremor_slam: 'Taunt payı düşünce %46-47 (2026-10-30), Defender turunda bakılacak',
   quick_shot: 'YZ kapsam turu sonrası pay %46 (2026-10-30), Archer turunda bakılacak (Piercing Arrow ile birlikte)',
+  // 2026-11-08 Skald denge turu: Hammer Spark %24,0 / %24,5, Thunder Strike %24,7 / %24,8, War Drum %16,6 / %16,3 (bantta) -> çıkarıldı.
 };
 
 export function balanceSuite(label: string, firstSeed: number): void {

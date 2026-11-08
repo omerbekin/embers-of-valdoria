@@ -61,17 +61,17 @@ describe('Faz 5c: Paladin 2.n0 Soul Exchange', () => {
     ally.hp = 0;
     return { b, me, ally };
   };
-  it('etiket ve bedel: "16 MP or 25% of current HP"; MP yetiyorsa MP, yetmiyorsa mevcut canın %25\'i', () => {
+  it('etiket ve bedel: "14 MP or 25% of current HP" (2026-11-08: 16 -> 14); MP yetiyorsa MP, yetmiyorsa mevcut canın %25\'i', () => {
     const { b, me } = setup(true);
     const sk = b.skill('resurrection', me.uid)!;
     expect(sk.cost.hpFallback).toBe(0.25);
-    expect(skillCostLabel(sk.cost)).toBe('16 MP or 25% of current HP');
-    expect(skillCostLabel(content.skills.resurrection!.cost)).toBe('16 MP');
-    me.mp = 16;
-    expect(skillCostPay(sk.cost, me)).toEqual({ resource: 'mp', amount: 16 });
-    me.mp = 15;
+    expect(skillCostLabel(sk.cost)).toBe('14 MP or 25% of current HP');
+    expect(skillCostLabel(content.skills.resurrection!.cost)).toBe('14 MP');
+    me.mp = 14;
+    expect(skillCostPay(sk.cost, me)).toEqual({ resource: 'mp', amount: 14 });
+    me.mp = 13;
     expect(skillCostPay(sk.cost, me)).toEqual({ resource: 'hp', amount: Math.round(me.hp * 0.25), fallback: true });
-    expect(skillCostPay(sk.cost, me, undefined, true)).toEqual({ resource: 'mp', amount: 16 }); // Unlimited MP debug'ı
+    expect(skillCostPay(sk.cost, me, undefined, true)).toEqual({ resource: 'mp', amount: 14 }); // Unlimited MP debug'ı
   });
   it('ağaçsız: MP yetmezse kullanılamaz; ağaçlı: candan öder, MP aynen kalır, dost dirilir', () => {
     const plain = setup(false);
@@ -96,7 +96,7 @@ describe('Faz 5c: Paladin 2.n0 Soul Exchange', () => {
     const hp0 = me.hp;
     use(b, me, 'resurrection', ally);
     expect(me.hp).toBe(hp0);
-    expect(me.mp).toBe(me.maxMp - 16);
+    expect(me.mp).toBe(me.maxMp - 14);
     const r = setup(true);
     r.me.mp = 0;
     r.me.hp = 1;

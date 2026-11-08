@@ -5,6 +5,7 @@ import { skillCostAmount, skillCostPay } from './cost';
 import { betStakeParts } from './gamble';
 import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
+import { splitParts } from './spec';
 import { bellsOfSkill, effFirst, effFlag, manaShieldNeed, type TriggerAction } from './tree-hooks';
 import { armorReduction, attributePower, dotOutgoingMult, hitChance } from './stats';
 import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet, StatusDef } from './types';
@@ -1486,17 +1487,24 @@ function statusMitigation(battle: Battle, actor: Combatant, skill: SkillDef, tar
   for (const e of skill.effects) {
     if (e.type !== 'status' || e.self) continue;
     const def = battle.statusDef(e.status);
-    const acc = def?.accuracyDelta ?? 0;
-    const eva = def?.evasionDelta ?? 0;
-    const critD = def?.critDelta ?? 0;
-    if (acc >= 0 && eva <= 0 && critD >= 0) continue;
+    const acc0 = def?.accuracyDelta ?? 0;
+    const eva0 = def?.evasionDelta ?? 0;
+    const critD0 = def?.critDelta ?? 0;
+    // Ağaç statusPotency (Lingering Ears, Searing Flash, Hexer düğümleri) hedef başına gelir: kancalı aktörde tabanı nötr durum da sayılır (Wither'a isabet cezası)
+    if (acc0 >= 0 && eva0 <= 0 && critD0 >= 0 && !actor.treeHooks) continue;
     const chance = (e as { chance?: number }).chance ?? 1;
     for (const t of targets) {
       if (t.hp <= 0 || !battle.effectAppliesTo(skill, e, t, actor)) continue;
       if (battle.statusBlocked(t, e.status)) continue; // boss Blinded/Jinxed yemez (madde 272): isabet/kritik bozma değeri 0
+      const pot = actor.treeHooks ? battle.treeMods(actor, t, skill, e)?.potency : undefined;
+      const acc = acc0 + (pot?.accuracyDelta ?? 0);
+      const eva = eva0 + (pot?.evasionDelta ?? 0);
+      const critD = critD0 + (pot?.critDelta ?? 0);
+      if (acc >= 0 && eva <= 0 && critD >= 0) continue;
       const has = t.statuses.find((s) => s.kind === e.status);
-      // endsOnOwnAttack (Jinxed): yalnızca hedefin SONRAKİ saldırısı etkilenir (1 tur değer; zaten taşıyorsa 0)
-      const turns = def?.endsOnOwnAttack ? (has ? 0 : 1) : Math.max(0, e.turns - (has?.turns ?? 0));
+      // endsOnOwnAttack (Jinxed): yalnızca hedefin SONRAKİ saldırısı etkilenir (1 tur değer; zaten taşıyorsa 0); ağaç potency: ek saldırı (attacks) + düşmeme şansı (keepChance) beklentisi
+      const keep = Math.min(0.9, Math.max(0, pot?.keepChance ?? 0));
+      const turns = def?.endsOnOwnAttack ? (has ? 0 : Math.max(0, pot?.attacks ?? 0) + 1 / (1 - keep)) : Math.max(0, e.turns - (has?.turns ?? 0));
       if (turns <= 0) continue;
       if ((acc < 0 || critD < 0) && t.side !== actor.side) {
         const victims = battle.living(actor.side);
@@ -1702,7 +1710,7 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
     add('ground', o.groundFx ?? 0);
     add('reaction', o.reactionFx ?? 0);
     strikeSideTerms(ctx, profile, o, add);
-    add('setup', opportunistSetup(ctx, o));
+    add('setup', opportunistSetup(ctx, o) + conductorSetup(ctx, o));
     add('bell', bellValue(ctx, o));
     add('treeStatus', treeProcStatusValue(ctx, o));
     add('armedCost', armedCostValue(ctx, o));
@@ -1729,7 +1737,8 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
   }
   add('cost', -o.cost);
   // Ultimate'a küçük bekleme bedeli (K5): brüt değer x cooldown x pay (aynı işi bedava skill de yapıyorsa o kazanır)
-  const cd = battle.mode === 'turns' && !battle.noCooldowns ? (o.skill.cooldown ?? 0) : 0;
+  // Ağaç cast kancaları (cooldownDelta / cooldownSet: Peal of Ages) bu kullanımın cooldown'unu değiştirir: bedel o cooldown'la
+  const cd = battle.mode === 'turns' && !battle.noCooldowns ? battle.aiCastCooldown(actor, o.skill, o.skill.cooldown ?? 0) : 0;
   // Spell Echo (Mage pasifi): hasar skill'i şansla cooldown'a girmez: bedel x (1 - şans)
   const echo = actor.passive?.effect.type === 'spellEcho' && o.skill.effects.some((e) => e.type === 'damage') ? actor.passive.effect.chance : 0;
   if (cd > 0 && gross > 0) add('cooldown', -gross * cd * vc.cooldownCostShare * (1 - echo));
@@ -1754,7 +1763,7 @@ function reviveTerm(ctx: ValueContext, o: Option, add: (k: string, v: number) =>
   const slots = battle.reviveSlots(ctx.actor.uid, o.skill.id);
   if (slots.length === 0) return;
   const meleeRows = battle.rangeOn ? 1 : battle.formulas.formation.meleeRows;
-  const hasMelee = d.skills.some((id) => { const sk = battle.skill(id, d); return !!sk && (battle.rangeOn ? battle.rangeOf(d, sk) <= 1 : sk.motion === 'melee'); });
+  const hasMelee = d.skills.some((id) => { const sk = battle.skill(id, d); return !!sk && (battle.rangeOn ? battle.rangeOf(d, sk) <= (battle.formulas.range?.meleeMax ?? 2) : sk.motion === 'melee'); });
   // YZ kapsamı: Resurrection yenilenmesi (regen: maks canın oranı x tur, ufukla sınırlı) dönen cana eklenir
   const hp = Math.max(1, Math.round(d.maxHp * e.hpRatio)) + (e.regen ? Math.round(d.maxHp * e.regen.ratio) * Math.min(e.regen.turns, ctx.vc.horizon) : 0);
   const avgHit = ctx.intents.length > 0 ? ctx.intents.reduce((a, i) => a + i.hit, 0) / ctx.intents.length : 0;
@@ -1832,6 +1841,9 @@ function controlValue(ctx: ValueContext, o: Option): number {
         const delta = Math.abs(def.speedMult - 1) * own * tv;
         if ((def.speedMult < 1) === (t.side !== actor.side)) v += p * delta; // düşmanı yavaşlatmak / dostu hızlandırmak
       }
+      // Skald ağacı (Taut Skin, War Song, Battle Rhythm; 2026-11-08): dosta verilen buff'ın ağaç eki (statusPotency + "bu durumu taşıyan dostum daha
+      // az hasar alır" C4 kancası) statusEffectWorth farkıyla; kancasız birimde 0 (ifade aynı)
+      if (actor.treeHooks && t.side === actor.side && def.type === 'buff') v += p * treeBuffExtra(ctx, o.skill, t, se.status, se.turns, own);
       // Chilled kaçınma çarpanı (evasionMult < 1; madde 452): süre boyunca dostlarımızın (kullanan dahil: durum hedefin turlarıyla süre sayar) ona
       // isabet kazancı (noEvasion ile aynı ölçü: dost başına bir hedef, canlı düşman sayısına bölünür) x hedefin süre içindeki turları
       if (def.evasionMult !== undefined && def.evasionMult < 1 && t.side !== actor.side) {
@@ -3558,27 +3570,51 @@ function elementShare(ctx: ValueContext, u: Combatant, element: string): number 
 
 /**
  * Bir durumun `k` tur (tik eşdeğeri) boyunca birime değeri (artı = birim için iyi), DURUMUN TİKİ HARİÇ (tik çağıranda): sıra kaybı, hız, kaçınma
- * çarpanı, susturma, verilen / alınan hasar ve şifa çarpanları, element çarpanı, uygulandığı an sildiği durumlar (Soaked Burning'i söndürür).
+ * çarpanı, susturma, verilen / alınan hasar ve şifa çarpanları, element çarpanı, uygulandığı an sildiği durumlar (Soaked Burning'i söndürür),
+ * isabet / kritik cezası (Blinded, Shaken, Jinxed: taşıyanın vuruşlarındaki beklenen hasar azalması, hitLoss / hitCritLoss; statusMitigation'la
+ * aynı ölçü). `opt.pot`: ağaç statusPotency eki (uygulanacak örneğin büyüklüğü, statuses.json alanına düz ek; Lingering Ears, Searing Flash).
+ * `opt.noHitLoss`: isabet / kritik cezası çağıranda (statusMitigation) sayılıyor, burada sayılmaz.
  */
-function statusEffectWorth(ctx: ValueContext, u: Combatant, kind: string, k: number): number {
+function statusEffectWorth(ctx: ValueContext, u: Combatant, kind: string, k: number, opt?: { pot?: Readonly<Record<string, number>>; noHitLoss?: boolean }): number {
   const battle = ctx.battle;
   const def = battle.statusDef(kind);
   if (!def || k <= 0) return 0;
+  const pot = opt?.pot;
+  const add = (key: string) => pot?.[key] ?? 0;
+  const mult = (base: number | undefined, key: string) => (pot?.[key] !== undefined ? Math.max(0, (base ?? 1) + pot[key]!) : base);
+  const speedMult = mult(def.speedMult, 'speedMult');
+  const dealtMult = mult(def.damageDealtMult, 'damageDealtMult');
+  const takenMult = mult(def.damageTakenMult, 'damageTakenMult');
+  const healMult = mult(def.healTakenMult, 'healTakenMult');
+  const evaDelta = (def.evasionDelta ?? 0) + add('evasionDelta');
   const tv = ctx.turnValue(u);
   let v = 0;
   if (def.skipTurn) v -= tv * Math.min(1, k) + tv * Math.max(0, k - 1) * 0.5;
-  if (def.speedMult !== undefined && def.speedMult !== 1) v += (def.speedMult - 1) * k * tv;
-  if (def.damageDealtMult !== undefined && def.damageDealtMult !== 1) v += (def.damageDealtMult - 1) * k * tv;
+  if (speedMult !== undefined && speedMult !== 1) v += (speedMult - 1) * k * tv;
+  if (dealtMult !== undefined && dealtMult !== 1) v += (dealtMult - 1) * k * tv;
   const inc = incomingOf(ctx, u);
-  if (def.damageTakenMult !== undefined && def.damageTakenMult !== 1) v += (1 - def.damageTakenMult) * inc * k;
+  if (takenMult !== undefined && takenMult !== 1) v += (1 - takenMult) * inc * k;
   if (def.evasionMult !== undefined && def.evasionMult < 1) v -= (1 - def.evasionMult) * battle.effectiveStats(u).evasion * inc * k;
-  if (def.evasionDelta) v += def.evasionDelta * inc * k;
+  if (evaDelta) v += evaDelta * inc * k;
   if (def.elementTakenMult) for (const [el, m] of Object.entries(def.elementTakenMult)) if (m !== undefined && m !== 1) v += (1 - m) * inc * elementShare(ctx, u, el) * k;
-  if (def.healTakenMult !== undefined && def.healTakenMult < 1) v -= (1 - def.healTakenMult) * teamHealPerTurn(ctx, u.side) * k;
+  if (healMult !== undefined && healMult < 1) v -= (1 - healMult) * teamHealPerTurn(ctx, u.side) * k;
   if (def.blocksMpSkills && u.maxMp > 0) v -= (ctx.vc.debuffShare?.silence ?? 1) * ctx.silenceDenial(u, u.mp, Math.max(1, Math.round(k)));
   for (const c of def.cleanses ?? []) {
     const st = u.statuses.find((s) => s.kind === c);
     if (st) v += battle.statusTickDamage(u, st) * Math.min(Math.max(1, st.turns), Math.max(1, Math.ceil(k)));
+  }
+  // İsabet / kritik cezası (ağaç tetiklerinin verdiği Shaken / Blinded dahil): taşıyanın karşı taraftaki canlı birimlere en iyi saldırısının beklenen
+  // hasar azalması, birimlerin ORTALAMASI (her turda birine vurur) x tur. endsOnOwnAttack (Jinxed): yalnız sıradaki saldırı(lar): 1 + ek saldırı
+  // (potency attacks) ve düşmeme şansı (keepChance) beklentisi.
+  const acc = (def.accuracyDelta ?? 0) + add('accuracyDelta');
+  const critD = (def.critDelta ?? 0) + add('critDelta');
+  if (!opt?.noHitLoss && (acc < 0 || critD < 0)) {
+    const victims = battle.living(u.side === 'party' ? 'enemy' : 'party').filter((f) => !f.inert);
+    if (victims.length) {
+      const keep = Math.min(0.9, Math.max(0, add('keepChance')));
+      const turns = def.endsOnOwnAttack ? Math.min(1, k) * (Math.max(0, add('attacks')) + 1 / (1 - keep)) : k;
+      v -= (sum(victims.map((f) => (critD < 0 ? hitCritLoss(battle, u, f, acc, critD) : hitLoss(battle, u, f, acc, 0)))) / victims.length) * turns;
+    }
   }
   return v;
 }
@@ -3887,7 +3923,9 @@ function trigActionWorth(ctx: ValueContext, owner: Combatant, a: TriggerAction, 
     const amount = a.stat ? Math.round(attributePower(owner.stats, a.stat as Attribute, f) * (a.power ?? 0) * s) : 0;
     v += groundUnitWorth(ctx, rec, a.ground, amount, a.turns ?? 2, owner.side);
   } else if (a.cast !== undefined) {
-    v += (rec.side === owner.side ? 1 : -1) * ctx.turnValue(owner) * (a.power ?? 1);
+    // cast: değer SAHİBİN tarafına (alıcı için değil; işaret trigEventValue'da sahibin tarafından). Eskiden alıcı işareti burada da
+    // uygulanıyordu: düşman hedefli bedava büyü (Mage 1.mb `to: lowestHpEnemy`) eksi değer alıyordu (işaret iki kez).
+    v += ctx.turnValue(owner) * (a.power ?? 1);
   }
   return v;
 }
@@ -3957,6 +3995,16 @@ function treeTriggerValue(ctx: ValueContext, o: Option): { own: number; retaliat
       if (e.type !== 'status' || e.self) continue;
       for (const t of o.targets) if (t.hp > 0 && t.side !== actor.side) own += trigEventValue(ctx, actor, { on: 'statusApplied', target: t, status: e.status, skill: sid, castTargets: cast }, previewHitChance(o, t) * ((e as { chance?: number }).chance ?? 1), o);
     }
+    // Koşullu eklenen durumlar (cond addStatus; Skald Thunderclap / Thunder Anvil Stun'u -> Struck Senseless, Grounded Storm): ihtimal = isabet x şans
+    if (o.skill.effects.some((e) => e.type === 'damage') && actor.treeHooks.some((h) => h.h === 'trigger' && h.on === 'statusApplied')) {
+      for (const t of o.targets) {
+        if (t.hp <= 0 || t.side === actor.side) continue;
+        for (const s of battle.aiProcStatuses(actor, t, o.skill, o.targets)) {
+          if (battle.statusBlocked(t, s.status)) continue;
+          own += trigEventValue(ctx, actor, { on: 'statusApplied', target: t, status: s.status, skill: sid, castTargets: cast }, previewHitChance(o, t) * (1 - (o.killP[t.uid] ?? 0)) * (s.chance ?? 1), o);
+        }
+      }
+    }
     // Ley Brand bir Ley Thread'i tüketirse (önizlemenin threaded işareti) sahibin 'threadConsumed' tetikleri (AM 0.mb Snapping Thread)
     for (const [uid, br] of Object.entries(o.brandBy ?? {})) {
       const t = battle.get(uid);
@@ -3978,7 +4026,67 @@ function treeTriggerValue(ctx: ValueContext, o: Option): { own: number; retaliat
     if (!t || p <= 0 || t.side === actor.side || t.summoned) continue;
     for (const g of battle.living(t.side)) if (g !== t && g.treeHooks) ret += trigEventValue(ctx, g, { on: 'allyFell', target: t, subject: t, source: actor }, p, o);
   }
+  // 'enemyMissed' (2026-11-08; Vesper ıska çanı, Lost in the Snow, Counter Cut, Backlash...): saldırımız ıskalarsa (ıska + kaçınma = 1 - isabet)
+  // hedefin tarafındaki HER kancalı birimin tetiği bedel; skill'imizin düşmana verdiği durum bir dostun enemyMissed koşulunu açıyorsa kurulum değeri
+  for (const [uid, d] of Object.entries(o.dmgBy)) {
+    const t = battle.get(uid);
+    if (!t || t.side === actor.side || d <= 0) continue;
+    const miss = 1 - previewHitChance(o, t);
+    if (miss <= 0) continue;
+    for (const g of battle.living(t.side)) if (g.treeHooks) ret += trigEventValue(ctx, g, { on: 'enemyMissed', target: actor, subject: t, source: actor }, miss, o);
+  }
+  own += missSetupValue(ctx, o);
   return { own: own * cov.tree.triggerShare, retaliation: ret * cov.tree.retaliationShare };
+}
+
+/**
+ * enemyMissed kurulumu (YZ, 2026-11-08): skill düşmana bir durum veriyorsa (durum etkisi ya da ağaç proc'u) ve bizim taraftaki bir birimin
+ * 'enemyMissed' tetiği o durumu koşul olarak arıyorsa (Vesper: Blind'lı düşman ıskalayınca çan), durumun EKLEDİĞİ turlarda düşman her tur
+ * kurbanlarımızdan birine saldırır: tur x ortalama(kurban başı ıska ihtimali x tetik değeri). Iska ihtimali durumun accuracyDelta'sıyla
+ * (Blinded -%30) yeniden hesaplanır; koşulun görülmesi için hedefe değerlendirme süresince geçici durum konur (finally ile geri alınır).
+ */
+function missSetupValue(ctx: ValueContext, o: Option): number {
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const owners = battle.living(actor.side).filter((g) => g.treeHooks?.some((h) => h.h === 'trigger' && h.on === 'enemyMissed'));
+  if (!owners.length || !o.skill.effects.some((e) => e.type === 'damage' || e.type === 'status')) return 0;
+  const victims = battle.living(actor.side).filter((v) => !v.inert);
+  if (!victims.length) return 0;
+  const f = battle.formulas;
+  let v = 0;
+  for (const t of o.targets) {
+    if (t.hp <= 0 || t.side === actor.side) continue;
+    const p = previewHitChance(o, t) * (1 - (o.killP[t.uid] ?? 0));
+    if (p <= 0) continue;
+    const gives: Array<{ status: string; turns: number; chance: number }> = [];
+    for (const e of o.skill.effects) if (e.type === 'status' && !e.self && battle.effectAppliesTo(o.skill, e, t, actor)) gives.push({ status: e.status, turns: e.turns, chance: (e as { chance?: number }).chance ?? 1 });
+    if (actor.treeHooks?.length && o.skill.effects.some((e) => e.type === 'damage')) for (const s of battle.aiProcStatuses(actor, t, o.skill, o.targets)) gives.push({ status: s.status, turns: s.turns, chance: s.chance ?? 1 });
+    for (const g of gives) {
+      if (battle.statusBlocked(t, g.status as never)) continue;
+      const has = t.statuses.find((x) => x.kind === g.status);
+      const k = Math.min(Math.max(0, g.turns - (has?.turns ?? 0)), ctx.turnsWithin(t));
+      if (k <= 0) continue;
+      const acc = battle.statusDef(g.status)?.accuracyDelta ?? 0;
+      const a = battle.effectiveStats(t);
+      const probe = has ? null : { kind: g.status, turns: g.turns, source: actor.uid };
+      if (probe) t.statuses.push(probe as (typeof t.statuses)[number]);
+      try {
+        let per = 0;
+        for (const vic of victims) {
+          const miss = 1 - hitChance({ accuracy: Math.max(0, a.accuracy + (has ? 0 : acc) + battle.levelGap(t, vic).accuracy) }, battle.effectiveStats(vic), f);
+          if (miss <= 0) continue;
+          for (const ow of owners) per += trigEventValue(ctx, ow, { on: 'enemyMissed', target: t, subject: vic, source: t }, miss, o);
+        }
+        v += (per / victims.length) * k * p * g.chance;
+      } finally {
+        if (probe) {
+          const i = t.statuses.indexOf(probe as (typeof t.statuses)[number]);
+          if (i >= 0) t.statuses.splice(i, 1);
+        }
+      }
+    }
+  }
+  return v;
 }
 
 /**
@@ -4075,6 +4183,61 @@ function opportunistSetup(ctx: ValueContext, o: Option): number {
   return v * coverageOf(ctx.vc).opportunistShare;
 }
 
+/**
+ * Conductor kurulumu (Thunder Skald, 2026-11-07): skill düşmana pasifin durumlarından birini veriyorsa (Slow / Stun durum etkisi ya da thunder.shocks ile
+ * Shocked), Conductor'lı dostların (kullanan dahil) o hedefe en iyi saldırısının pasif elementindeki payı x bonus. Vuruşun kendi +bonus'u önizlemede
+ * (Battle.dealtDamage); bu yalnızca sonraki vuruşların değeri. Pay coverage.opportunistShare (aynı kavram: bir dostun durum bonusunu açmak).
+ */
+function conductorSetup(ctx: ValueContext, o: Option): number {
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const cond = battle.living(actor.side).filter((a) => !a.inert && a.passive?.effect.type === 'conductor');
+  if (!cond.length) return 0;
+  const gives: Array<{ status: string; turns: number; chance: number }> = [];
+  for (const e of o.skill.effects) if (e.type === 'status' && !e.self) gives.push({ status: e.status, turns: e.turns, chance: e.chance ?? 1 });
+  if (o.skill.thunder?.shocks) gives.push({ status: 'shocked', turns: 1, chance: 1 });
+  if (!gives.length) return 0;
+  let v = 0;
+  for (const t of o.targets) {
+    if (t.hp <= 0 || t.side === actor.side) continue;
+    const p = previewHitChance(o, t) * (1 - (o.killP[t.uid] ?? 0));
+    if (p <= 0) continue;
+    const foes = Math.max(1, battle.living(t.side).filter((f) => !f.inert).length);
+    for (const a of cond) {
+      const pe = a.passive!.effect as Extract<PassiveEffect, { type: 'conductor' }>;
+      if (t.statuses.some((s) => pe.statuses.includes(s.kind))) continue; // zaten açık
+      const g = gives.find((x) => pe.statuses.includes(x.status) && !battle.statusBlocked(t, x.status as never));
+      if (!g) continue;
+      v += (p * g.chance * pe.bonus * bestElementAttackAvg(battle, a, t, pe.element) * Math.min(1, g.turns)) / (a.uid === actor.uid ? 1 : foes);
+    }
+  }
+  return v * coverageOf(ctx.vc).opportunistShare;
+}
+
+/** Saldıranın kurbana en iyi saldırısının yalnız `element` payı (önizleme ortalaması x isabet x skill gücündeki element payı; split parçaları dahil). */
+function bestElementAttackAvg(battle: Battle, attacker: Combatant, victim: Combatant, element: string): number {
+  let top = 0;
+  for (const id of attacker.skills) {
+    const sk = battle.skill(id, attacker);
+    if (!sk || !ATTACK_TARGETS.includes(sk.target)) continue;
+    if (sk.cost.resource === 'mp' && attacker.mp < sk.cost.amount) continue;
+    if (sk.cost.resource === 'rage' && (attacker.rage ?? 0) < sk.cost.amount) continue;
+    let all = 0;
+    let own = 0;
+    for (const e of sk.effects) {
+      if (e.type !== 'damage') continue;
+      for (const part of splitParts(e)) {
+        all += e.power * part.share;
+        if ((part.effect.element ?? 'physical') === element) own += e.power * part.share;
+      }
+    }
+    if (own <= 0 || all <= 0) continue;
+    const d = previewForTargets(battle, attacker, id, [victim]).find((x) => x.uid === victim.uid)?.damage;
+    if (d) top = Math.max(top, d.avg * d.hitChance * (own / all));
+  }
+  return top;
+}
+
 /** Vesper çan büyümesi: ringsBell skill'i çan sayacını artırır (Storm Tower 2); değer çan başına aynı. */
 function bellValue(ctx: ValueContext, o: Option): number {
   return o.skill.ringsBell ? bellsOfSkill(o.skill) * oneBellWorth(ctx, ctx.actor) : 0;
@@ -4095,10 +4258,30 @@ function treeProcStatusValue(ctx: ValueContext, o: Option): number {
       const k = Math.min(Math.max(0, s.turns - (t.statuses.find((x) => x.kind === s.status)?.turns ?? 0)), ctx.turnsWithin(t));
       if (k <= 0) continue;
       const probe = { ...o.skill, effects: [{ type: 'status', status: s.status, turns: s.turns }] } as SkillDef;
-      v += (statusMitigation(battle, actor, probe, [t]) - statusEffectWorth(ctx, t, s.status, k)) * p * (s.chance ?? 1);
+      const pot = battle.treeMods(actor, t, probe, probe.effects[0])?.potency;
+      v += (statusMitigation(battle, actor, probe, [t]) - statusEffectWorth(ctx, t, s.status, k, { ...(pot ? { pot } : {}), noHitLoss: true })) * p * (s.chance ?? 1);
     }
   }
   return v * coverageOf(ctx.vc).tree.triggerShare;
+}
+
+/**
+ * Dosta konan buff'ın ağaç eki (Skald Taut Skin / War Song / Battle Rhythm): C1 statusPotency + sahibin "bu durumu taşıyan (mine) dost daha az / çok
+ * hasar alır" C4 damageTaken kancası, statusEffectWorth farkı olarak (taban buff değeri controlValue'da zaten). Kanca yoksa 0.
+ */
+function treeBuffExtra(ctx: ValueContext, skill: SkillDef, t: Combatant, status: string, turns: number, k: number): number {
+  const actor = ctx.actor;
+  const battle = ctx.battle;
+  const probe = { ...skill, effects: [{ type: 'status', status, turns }] } as SkillDef;
+  const pot: Record<string, number> = { ...(battle.treeMods(actor, t, probe, probe.effects[0])?.potency ?? {}) };
+  for (const h of actor.treeHooks ?? []) {
+    if (h.h !== 'heal' || h.on !== 'damageTaken' || h.status !== status || !h.mine || h.when || h.scale || !h.mul) continue;
+    const who = h.who ?? 'self';
+    if (who === 'foe' || (who === 'self' && t.uid !== actor.uid) || (who === 'ally' && t.uid === actor.uid)) continue;
+    pot.damageTakenMult = (pot.damageTakenMult ?? 0) + h.mul;
+  }
+  if (!Object.keys(pot).length) return 0;
+  return statusEffectWorth(ctx, t, status, k, { pot, noHitLoss: true }) - statusEffectWorth(ctx, t, status, k, { noHitLoss: true });
 }
 
 /** Bu skill'in silahladığı MP bedel koşullarının (CostCond.after; Bell of Kings) değeri: sıradaki kullanımda kurtarılan MP. */

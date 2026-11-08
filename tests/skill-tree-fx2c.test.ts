@@ -187,13 +187,13 @@ describe('Faz 2c: durum kancası (DoT, rastgele durum, boşalma durumu)', () => 
 describe('Faz 2c: Anti-Mage', () => {
   // 2026-10-27: eski Drain Field ağaç testi kaldırıldı (Ley Brand; yeni düğüm testleri tests/skill-tree-fx-leybrand.test.ts)
 
-  it('Deep Cut: Mana Steal düz 8 + maks MP\'nin %3 x rank\'ı yakar', () => {
+  it('Deep Cut: Mana Steal düz 7 + maks MP\'nin %3 x rank\'ı yakar', () => {
     seeds('Mana Steal isabet', (s) => {
       const b = make({ 0: 'antimage' }, { 0: 'mage' }, withTree(0, only('antimage', { '1.f3': 3 })), s);
       E(b).mp = E(b).maxMp;
       const ev = cast(b, P(b), 'mana_burn', E(b)).find((e) => e.type === 'manaBurn') as { amount: number } | undefined;
       if (!ev) return false;
-      expect(ev.amount).toBe(8 + Math.round(E(b).maxMp * 0.09)); // Ömer 2026-11-08: düz 10 -> 8
+      expect(ev.amount).toBe(7 + Math.round(E(b).maxMp * 0.09)); // Ömer 2026-11-08: düz 10 -> 8 -> 7
       return true;
     });
   });

@@ -8306,6 +8306,746 @@
           "src": "vesper-v2/two-handed.png"
         }
       }
+    },
+    "skald_v2": {
+      "dir": "skald-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "drum": [
+          "drum_a",
+          "drum_b",
+          "drum_a",
+          "drum_b"
+        ],
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "axes": {
+          "point": {
+            "angle": -20
+          }
+        },
+        "maces": {
+          "point": {
+            "angle": -20
+          }
+        },
+        "hammers": {
+          "point": {
+            "angle": -20
+          }
+        },
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "step1": {
+            "dx": -52,
+            "dy": 8
+          },
+          "slash1": {
+            "dx": -52,
+            "dy": 8
+          },
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          },
+          "idle1": {
+            "dx": -14,
+            "dy": 30
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          },
+          "main:idle1": {
+            "angle": 60
+          },
+          "main:step1": {
+            "angle": 60
+          },
+          "main:guard1": {
+            "angle": 60
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 402,
+        "h": 409,
+        "footX": 201,
+        "footY": 403
+      },
+      "figure": {
+        "w": 182,
+        "h": 378
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 158,
+            "y": 233,
+            "angle": 15.78
+          },
+          "offhand": {
+            "x": 214,
+            "y": 250,
+            "angle": 10
+          },
+          "box": {
+            "x": 88,
+            "y": 25,
+            "w": 182,
+            "h": 378
+          },
+          "src": "skald-v2/narrow.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 152,
+            "y": 226,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 298,
+            "y": 216,
+            "angle": 10
+          },
+          "box": {
+            "x": 21,
+            "y": 16,
+            "w": 291,
+            "h": 387
+          },
+          "src": "skald-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 179,
+            "y": 148,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 329,
+            "y": 200,
+            "angle": 20
+          },
+          "box": {
+            "x": 9,
+            "y": 21,
+            "w": 345,
+            "h": 382
+          },
+          "src": "skald-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 150,
+            "y": 19,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 306,
+            "y": 224,
+            "angle": 20
+          },
+          "box": {
+            "x": 45,
+            "y": 6,
+            "w": 286,
+            "h": 397
+          },
+          "src": "skald-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 361,
+            "y": 109,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 277,
+            "y": 223,
+            "angle": -10
+          },
+          "box": {
+            "x": 57,
+            "y": 34,
+            "w": 301,
+            "h": 369
+          },
+          "src": "skald-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 85,
+            "y": 211,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 208,
+            "y": 225,
+            "angle": 10
+          },
+          "box": {
+            "x": 25,
+            "y": 33,
+            "w": 295,
+            "h": 370
+          },
+          "src": "skald-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 233,
+            "y": 247,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 257,
+            "y": 235,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 45,
+            "y": 32,
+            "w": 257,
+            "h": 371
+          },
+          "src": "skald-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 48,
+            "y": 229,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 331,
+            "y": 199,
+            "angle": 90
+          },
+          "box": {
+            "x": 35,
+            "y": 33,
+            "w": 309,
+            "h": 370
+          },
+          "src": "skald-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 133,
+            "y": 232,
+            "angle": 16.5
+          },
+          "offhand": {
+            "x": 343,
+            "y": 88,
+            "angle": 0
+          },
+          "box": {
+            "x": 84,
+            "y": 24,
+            "w": 279,
+            "h": 379
+          },
+          "src": "skald-v2/narrow.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 140,
+            "y": 29,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 241,
+            "y": 155,
+            "angle": 20
+          },
+          "box": {
+            "x": 87,
+            "y": 15,
+            "w": 181,
+            "h": 388
+          },
+          "src": "skald-v2/narrow.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 84,
+            "y": 70,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 346,
+            "y": 67,
+            "angle": 80
+          },
+          "box": {
+            "x": 64,
+            "y": 27,
+            "w": 296,
+            "h": 376
+          },
+          "src": "skald-v2/narrow.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 156,
+            "y": 224,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 348,
+            "y": 90,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 87,
+            "y": 26,
+            "w": 280,
+            "h": 377
+          },
+          "src": "skald-v2/narrow.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 225,
+            "y": 222,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 225,
+            "y": 222,
+            "angle": 40
+          },
+          "box": {
+            "x": 91,
+            "y": 24,
+            "w": 175,
+            "h": 379
+          },
+          "src": "skald-v2/narrow.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 219,
+            "y": 224,
+            "angle": -25
+          },
+          "offhand": {
+            "x": 219,
+            "y": 224,
+            "angle": -25
+          },
+          "box": {
+            "x": 57,
+            "y": 23,
+            "w": 274,
+            "h": 380
+          },
+          "src": "skald-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 313,
+            "y": 172,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 313,
+            "y": 172,
+            "angle": 125
+          },
+          "box": {
+            "x": 23,
+            "y": 29,
+            "w": 319,
+            "h": 374
+          },
+          "src": "skald-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 145,
+            "y": 28,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 145,
+            "y": 28,
+            "angle": -10
+          },
+          "box": {
+            "x": 51,
+            "y": 11,
+            "w": 277,
+            "h": 392
+          },
+          "src": "skald-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 322,
+            "y": 106,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 322,
+            "y": 106,
+            "angle": 90
+          },
+          "box": {
+            "x": 67,
+            "y": 23,
+            "w": 273,
+            "h": 380
+          },
+          "src": "skald-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 84,
+            "y": 220,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 84,
+            "y": 220,
+            "angle": -100
+          },
+          "box": {
+            "x": 55,
+            "y": 29,
+            "w": 289,
+            "h": 374
+          },
+          "src": "skald-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 153,
+            "y": 218,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 153,
+            "y": 218,
+            "angle": 90
+          },
+          "box": {
+            "x": 6,
+            "y": 24,
+            "w": 342,
+            "h": 379
+          },
+          "src": "skald-v2/two-handed.png",
+          "back": true
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 333,
+            "y": 200,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 333,
+            "y": 200,
+            "angle": 90
+          },
+          "box": {
+            "x": 17,
+            "y": 34,
+            "w": 340,
+            "h": 369
+          },
+          "src": "skald-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 214,
+            "y": 123,
+            "angle": 15
+          },
+          "offhand": {
+            "x": 214,
+            "y": 123,
+            "angle": 15
+          },
+          "box": {
+            "x": 91,
+            "y": 25,
+            "w": 177,
+            "h": 378
+          },
+          "src": "skald-v2/narrow.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 292,
+            "y": 93,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 329,
+            "y": 90,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 76,
+            "y": 32,
+            "w": 272,
+            "h": 371
+          },
+          "src": "skald-v2/narrow.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 201,
+            "y": 160,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 260,
+            "y": 102,
+            "angle": 150
+          },
+          "box": {
+            "x": 80,
+            "y": 32,
+            "w": 242,
+            "h": 371
+          },
+          "src": "skald-v2/narrow.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 66,
+            "y": 395,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 66,
+            "y": 395,
+            "angle": 100
+          },
+          "box": {
+            "x": 30,
+            "y": 108,
+            "w": 342,
+            "h": 295
+          },
+          "src": "skald-v2/two-handed.png"
+        },
+        "drum_a": {
+          "anchor": {
+            "x": 243,
+            "y": 155,
+            "angle": 105
+          },
+          "offhand": {
+            "x": 297,
+            "y": 172,
+            "angle": 105
+          },
+          "box": {
+            "x": 108,
+            "y": 25,
+            "w": 201,
+            "h": 378
+          },
+          "src": "skald-v2/extra-drum_a.png"
+        },
+        "drum_b": {
+          "anchor": {
+            "x": 134,
+            "y": 47,
+            "angle": 25
+          },
+          "offhand": {
+            "x": 285,
+            "y": 156,
+            "angle": 25
+          },
+          "box": {
+            "x": 101,
+            "y": 25,
+            "w": 211,
+            "h": 378
+          },
+          "src": "skald-v2/extra-drum_b.png"
+        },
+        "drum_take": {
+          "anchor": {
+            "x": 155,
+            "y": 31,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 303,
+            "y": 185,
+            "angle": 0
+          },
+          "hidden": true,
+          "box": {
+            "x": 63,
+            "y": 25,
+            "w": 266,
+            "h": 378
+          },
+          "src": "skald-v2/extra-drum_take.png"
+        }
+      }
     }
   },
   "weapons": {
@@ -8872,7 +9612,8 @@
     "pose_tester_9": "antimage_v2",
     "pose_tester_10": "gambler_v2",
     "pose_tester_11": "hexer_v2",
-    "vesper": "vesper_v2"
+    "vesper": "vesper_v2",
+    "skald": "skald_v2"
   },
   "braceSkills": [],
   "gripArt": {

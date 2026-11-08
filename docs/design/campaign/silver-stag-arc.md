@@ -1,4 +1,5 @@
 # The Silver Stag Company: haritalar arası rakip bölük yayı
+> **Ne için / Güncel mi (2026-11-08):** Silver Stag rakip bölük yayı. ONAYLI (Ömer 2026-10-28), UYGULANMADI: yalnız Harita 1 Pilgrim Road karşılaşması var; Harita 2-3 görünüşleri veride yok.
 
 Durum: **ONAYLANDI (Ömer 2026-10-28), uygulanmadı.** Bölüm 7 > Kararlar. Harita 4/5 = B+C karışımı, S4 = cepte kalır, yay yan görevdir (bölüm 8). Açık: bölüm 8 > Sorular. (content-designer taslağı 2026-10-28.) Yalnızca hikâye planı; veri/kod yazılmadı. Oyun içi metinler İngilizce, açıklamalar Türkçe. Denge sayısı yok, yalnız level ve rol.
 

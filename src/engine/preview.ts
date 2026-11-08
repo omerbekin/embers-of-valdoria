@@ -3,7 +3,7 @@ import { damageRange, healRange, missingHpHealMult } from './formulas';
 import { betMultipliers, betStakeParts } from './gamble';
 import { burnAmountFor, castBurnAmount, emptyProcApplies } from './mana-burn';
 import { skillCostPay } from './cost';
-import { damageSpecFor, type DamageEffect } from './spec';
+import { damageSpecFor, splitParts, type DamageEffect } from './spec';
 import { slotOfTileUid } from './battle';
 import { attributePower, dotOutgoingMult, hitChance } from './stats';
 import type { Combatant, GroundEffect, OnAbsorbSpec, PushDir, Side, SkillDef, SkillEffect } from './types';
@@ -247,7 +247,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     return p;
   };
 
-  const addDamage = (target: Combatant, base: DamageEffect, powerMult: number, splash: boolean, hitInfo?: HitInfo) => {
+  const addDamage = (target: Combatant, base: DamageEffect, powerMult: number, splash: boolean, hitInfo?: HitInfo, blockOf?: DamageEffect) => {
     // Skill ağacı C1 (Faz 2a): gerçek vuruşla aynı koşullu etki kopyası (kritik / zırh delme / lifesteal); güç dealtDamageMult'ta. Kancasızda aynı nesne
     const tq: TreeQuery = actor.treeHooks && hitInfo ? { hit: hitInfo } : {};
     const eff0 = battle.treeEffect(actor, target, skill, base, tq);
@@ -297,7 +297,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     // İsabet: durum ekleri (Blinded/Shrouded) dahil geçerli stat'lar, gerçek vuruşla aynı
     // Blok (Ömer 2026-10-18): kalkanlı hedef fiziksel vuruşu bloklayabilir; bloklanan vuruş iska gibi (hasar ve ek etki yok)
     // Ağaç sureHit: isabet zarı yok (blok yine olabilir)
-    const hit = (tm?.sureHit ? 1 : hitChance(battle.hitStats(actor, skill, target), stats, f)) * (1 - battle.blockChance(actor, target, effect, skill));
+    const hit = (tm?.sureHit ? 1 : hitChance(battle.hitStats(actor, skill, target), stats, f)) * (1 - battle.blockChance(actor, target, blockOf ?? effect, skill)); // split: blok tüm vuruşa (ilk parçanın türü), gerçek vuruşla aynı
     const p = pool(target);
     // Bu hasarı emebilecek havuz: büyü hasarını iki kalkan da, fizikseli yalnızca genel kalkan emer
     const soak = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
@@ -382,7 +382,9 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const hiOf = (k: number): HitInfo | undefined => (actor.treeHooks ? { index: idx, ...(isC !== undefined ? { center: isC } : {}), ...(isC ? { centerHit: k + 1 } : {}), mpBefore: target.mp, ...(thrownHit ? { thrown: true } : {}) } : undefined);
         const fa = actor.treeHooks && effect.falloff ? (battle.treeMods(actor, target, skill, effect, { hit: hiOf(0)! })?.falloffAdd ?? 0) : 0;
         const fo = effect.falloff ? effect.falloff + fa : effect.falloff;
-        for (let k = 0; k < times; k++) addDamage(target, effect, (fo ? Math.pow(fo, idx) : 1) * (side ? skill.splash!.mult ?? 1 : 1), idx > 0 || k > 0, hiOf(k));
+        // Bölünmüş hasar (damage.split, Hammer Spark): parça başına ayrı tür / element, gerçek vuruşla aynı (ekler yalnız ilk parçada); split yoksa tek parça
+        const parts = splitParts(effect);
+        for (let k = 0; k < times; k++) for (let pi = 0; pi < parts.length; pi++) addDamage(target, parts[pi]!.effect, (fo ? Math.pow(fo, idx) : 1) * (side ? skill.splash!.mult ?? 1 : 1) * parts[pi]!.share, idx > 0 || k > 0 || pi > 0, hiOf(k), pi > 0 ? parts[0]!.effect : undefined);
       } else if (effect.type === 'randomStatus') {
         const e = entry(target.uid);
         const blocked = effect.options.filter((o) => battle.statusBlocked(target, o.status)).map((o) => battle.statusDef(o.status)?.name ?? o.status);

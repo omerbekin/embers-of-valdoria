@@ -858,7 +858,9 @@ export function buildMechanics(): WikiArticle[] {
     ], '#c0203a'),
     article('status-bonus', 'Special rules', 'Bonus damage against weakened targets', 'opportunist', [
       p('Some passives deal extra damage to a target that already suffers from certain statuses. The bonus multiplies every hit (a crit multiplies on top of it) and shows in the damage preview.'),
-      list(...Object.values(content.classes).filter((c) => c.passive?.effect.type === 'bonusVsStatus').map((c) => `${c.name}, ${c.passive!.name}: ${describePassive(c.passive!, c.stats, f)}`)),
+      list(...Object.values(content.classes).filter((c) => c.passive?.effect.type === 'bonusVsStatus' || c.passive?.effect.type === 'conductor').map((c) => `${c.name}, ${c.passive!.name}: ${describePassive(c.passive!, c.stats, f)}`)),
+      p('Some hits are split: part of the damage is physical and meets Armor, the rest is magic of an element and meets Magic armor. Both parts land as one hit with one hit roll and one crit roll; the tooltip and the preview show both numbers. A bonus for one element (such as Conductor for lightning) raises only that part.'),
+      p('Some skills affect an area around their user instead of a chosen cell: the shape is centred on the user and touches only allies inside it. The cells light up when the skill is picked, and one press casts it.'),
     ], '#c9a227'),
     article('push', 'Special rules', 'Pushes and crashes', 'blizzard', [
       p('Some skills push the enemy they hit one cell in a direction you choose: forward, back or along the row (never diagonally). After picking the target, pick the direction on the arrows around it.'),

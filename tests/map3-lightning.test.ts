@@ -30,7 +30,7 @@ const tester = (b: Battle): Combatant => at(b, 'enemy', 6);
 describe('etiket kapısı', () => {
   it('yalnız test skill\'leri etiketli: oyuncu ve sefer şimşek skill\'leri değişmedi', () => {
     const owners = Object.values(content.skills).filter((s) => s.thunder || s.effects.some((e) => e.type === 'damage' && e.ironBolt));
-    expect(owners.map((s) => s.id).sort()).toEqual(['anvil_strike', 'flare_storm', 'fork', 'gloam_bite', 'ring_the_anvil', 'rolling_thunder', 'storm_test_bolt', 'storm_test_iron', 'storm_test_row', 'thundersnow']); // 4. dilim moblarının şimşekleri + test
+    expect(owners.map((s) => s.id).sort()).toEqual(['anvil_strike', 'flare_storm', 'fork', 'gloam_bite', 'ring_the_anvil', 'rolling_thunder', 'storm_test_bolt', 'storm_test_iron', 'storm_test_row', 'stormcall', 'thunder_strike', 'thundersnow']); // Thunder Skald (Ömer 2026-11-07): Thunder Strike + Stormcall Shocked verir (thunder.shocks). 4. dilim moblarının şimşekleri + test
     expect(content.classes.storm_tester!.testOnly).toBe(true);
     for (const id of ['thunderpeal', 'great_bell_of_valdoria', 'bog_spark', 'wisp_spark', 'rune_spark']) expect(content.skills[id]?.thunder).toBeUndefined();
     expect(content.randomPool).not.toContain('storm_tester');

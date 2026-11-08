@@ -72,7 +72,8 @@
       "warrior": ["melee_attack", "whirlwind", "charge", "headsmans_blow"],
       "defender": ["tremor_slam", "fist_crush", "taunt", "close_ranks"],
       "paladin": ["holy_strike", "judgment", "radiance", "resurrection"],
-      "druid": ["thorn_whip", "natures_wrath", "rejuvenate", "summon_treant"]
+      "druid": ["thorn_whip", "natures_wrath", "rejuvenate", "summon_treant"],
+      "skald": ["hammer_spark", "thunder_strike", "war_drum", "stormcall"]
     },
     "stages": {
       "1": { "open": 1 },
@@ -165,9 +166,9 @@
       "9": { "recruit": null, "partyCap": null }
     }
   },
-  "starterPool": ["warrior", "defender", "paladin", "druid"],
-  "companyPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer", "vesper"],
-  "recruitPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer", "vesper"],
+  "starterPool": ["warrior", "skald", "paladin", "druid"],
+  "companyPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer", "vesper", "skald"],
+  "recruitPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer", "vesper", "skald"],
   "_companyName": "Bölük adı (Ömer 2026-11-01, D4): Form your company kutusu; max harf, Suggest'in hazır adları (İngilizce, medieval). Okuma kuralı src/campaign/state.ts > cleanCompanyName.",
   "companyName": {
     "max": 24,
@@ -195,7 +196,8 @@
       "antimage": ["feed"],
       "cutthroat": [],
       "undead": [],
-      "gambler": []
+      "gambler": [],
+      "skald": ["front"]
     }
   },
   "texts": {

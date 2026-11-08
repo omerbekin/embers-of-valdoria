@@ -3,7 +3,7 @@ import { STORIES, type DialogueStep } from '../src/campaign/data';
 import { dialogueAdvance, dialogueStart, type DialoguePage } from '../src/campaign/dialogue-flow';
 import { storyLiked, storyLikes } from '../src/campaign/state';
 
-/** Yalnız test verisi: gerçek metinler Ömer görmeden data'ya girmez (docs/design/dialogue-replies-draft.md). */
+/** Yalnız test verisi: gerçek metinler Ömer görmeden data'ya girmez (docs/archive/design/dialogue-replies-draft.md). */
 const steps: DialogueStep[] = [
   { text: 'First?', choices: [{ label: 'Kind', likes: true, reply: 'Reply to kind.' }, { label: 'Rude' }] },
   { text: 'Second?', choices: [{ label: 'Plain', likes: true }, { label: 'Blank', reply: '   ' }] },

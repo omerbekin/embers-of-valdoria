@@ -24,6 +24,11 @@ export function skillTargetLabel(skill: SkillLike): string {
       return 'all allies';
     case 'self':
       return 'self';
+    case 'self_area': {
+      // War Drum: kullanan merkezli şekil
+      const a = skill.area;
+      return a?.shape === 'rect' ? `${a.rows ?? 1}x${a.cols ?? 1} around` : 'around';
+    }
     case 'empty_tile':
       return 'cell';
     case 'area_enemies':

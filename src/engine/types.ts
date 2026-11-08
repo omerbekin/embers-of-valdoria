@@ -136,6 +136,11 @@ export type PassiveEffect =
   /** Harita 3 boss dokunuşları: yalnız etiket; kural CombatantData.touch ya da skill alanındadır, motor kancası yok. */
   | { type: 'touchLabel' }
   /**
+   * Conductor (Thunder Skald, Ömer 2026-11-07): `element` hasarı (Skald: yalnız şimşek parçası) hedefte `statuses`tan biri varsa ya da vuruşun skill'i
+   * bu durumlardan birini KENDİSİ veriyorsa (thunder.shocks = Shocked; status etkisi) x(1 + bonus). İkisi birden olsa da tek kez (vuruş başına en çok +bonus).
+   */
+  | { type: 'conductor'; element: Element; statuses: string[]; bonus: number }
+  /**
    * Tempering (Harita 3 C6): taşıyan her kendi turunda duruş değiştirir: `hot` durumu (statuses.json; elementTakenMult ateş 0, buz çarpanı) <-> `cold` durumu (armorMult).
    * `cold`'dayken ateş hasarı onu anında `hot`a döndürür. `waterTaken`: `hot`dayken ıslatan (su) skill'inin hasar çarpanı. Savaşa `hot` başlar.
    */
@@ -1068,7 +1073,11 @@ export type Element = 'physical' | 'fire' | 'ice' | 'holy' | 'dark' | 'nature' |
  * Hedef türleri. Eski `column_enemies` kaldırıldı (şerit = `area_enemies` + `area: { shape: 'column' }`); veride kalırsa veri doğrulaması
  * (skillAreaProblem, tests/content.test.ts) reddeder.
  */
-export type SkillTarget = 'empty_tile' | 'single_enemy' | 'all_enemies' | 'area_enemies' | 'area_any' | 'everyone' | 'random_enemies' | 'single_ally' | 'dead_ally' | 'all_allies' | 'self';
+/**
+ * `self_area` (Thunder Skald War Drum, Ömer 2026-11-07): kullananın KENDİ hücresi merkezli alan (skill.area, ör. rect 3x3), kendi tahtasında. Hedef seçimi yok
+ * (self gibi tek basışla); etkiler alandaki canlı dostlara (kullanan dahil). Menzil yok. Genel: başka skill'ler de aynı alanı kullanabilir.
+ */
+export type SkillTarget = 'empty_tile' | 'single_enemy' | 'all_enemies' | 'area_enemies' | 'area_any' | 'everyone' | 'random_enemies' | 'single_ally' | 'dead_ally' | 'all_allies' | 'self' | 'self_area';
 
 /**
  * Bahis (gamble): hasar etkisi atılmadan önce kullanıcı kaynağından (can ya da MP) bir miktarı BAHSE koyar ve bir zar atılır (seed'li RNG, skill başına bir kez).
@@ -1110,6 +1119,13 @@ export interface RandomStatusOption {
   weight: number;
   /** Skill ağacı Faz 8 (Stacked Deck / Double Deal; yalnızca derleyicinin kurduğu biçim kopyasında): bu durum yalnızca İLK hedefe işler (zar yine atılır). */
   firstOnly?: boolean;
+}
+
+/** Bölünmüş hasarın ikinci parçası (damage.split): gücün `share` payı (0-1), türü ve elementi. */
+export interface DamageSplit {
+  share: number;
+  damageType: 'physical' | 'magic';
+  element?: Element;
 }
 
 export type SkillEffectKind =
@@ -1171,6 +1187,12 @@ export type SkillEffectKind =
       bell?: boolean;
       /** Great Bell of Valdoria: bu savaşta çalınan her çan için güce eklenen pay (güç = power + powerPerBell x çan; powerPerRage kalıbı). */
       powerPerBell?: number;
+      /**
+       * Bölünmüş hasar (Thunder Skald Hammer Spark, Ömer 2026-11-07; genel): vuruşun gücünün `share` kadarı ayrı bir parça olarak `damageType` / `element`
+       * ile vurur (ör. büyü + şimşek: magicArmor'a çarpar), kalanı etkinin kendi türüyle (fiziksel: armor). TEK isabet / kritik zarı, iki hasar sayısı.
+       * Bkz. spec.ts > splitParts. Yoksa tek parça (ifade birebir eski).
+       */
+      split?: DamageSplit;
     }
   /**
    * Anlık şifa. `missingHpBonus` (isteğe bağlı, generic; Radiance 0,5): şifa HEDEF BAŞINA x (1 + missingHpBonus x hedefin eksik can oranı) çarpılır;
@@ -1722,7 +1744,8 @@ export interface Formulas {
   damage: { variance: number; elementVariance?: Record<string, number>; minDamage: number };
   heal: { variance: number; minHeal: number };
   /** Menzil (docs/design/range.md): `default` = verisinde `range` olmayan birimin taban menzili. */
-  range?: { enabled?: boolean; default: number };
+  /** meleeMax: yakın dövüş grubunun üst menzili (Ömer 2026-11-08: Skald menzil 2 yakın dövüşçü; yoksa 2). */
+  range?: { enabled?: boolean; default: number; meleeMax?: number };
   summon: { damageTakenMultiplier: number; /** Çağrı varyantı STR/INT yuvarlama adımı (yoksa 0,1). */ variantStatStep?: number };
   /** Tür etiketine (tags) göre element hassasiyeti: weaknesses[etiket][element] = alınan hasar çarpanı. */
   weaknesses: Record<string, Partial<Record<Element, number>>>;

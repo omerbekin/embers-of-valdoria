@@ -1,4 +1,6 @@
 # Menzil sistemi (KARAR, Ömer 2026-10-17)
+> **Ne için / Güncel mi (2026-11-08):** menzil sistemi kararı (Ömer 2026-10-17). karar canlı; uygulandı.
+
 
 Kaynak: karar sayfası https://claude.ai/artifact/SrUJshshUCjRpyRkwcPykC (db `range/main`). Amaç: arka sıranın engelsiz vurulmasını bitirmek; dizilim, Move ve öne çıkma riski anlam kazansın.
 
@@ -31,8 +33,9 @@ Kaynak: karar sayfası https://claude.ai/artifact/SrUJshshUCjRpyRkwcPykC (db `ra
 6. Sonra çağrılar (1 pasif + 2 aktif; "canlı kalkan" fikri pasif olarak).
 
 ## Onaylanan menzil tablosu (Ömer 2026-10-17, sayfa rangetable/main)
-- **Sınıf tabanı:** Warrior 1, Defender 1, Cutthroat 1, Paladin 4, Druid 5 (Ömer 2026-10-17 denge denemesi: 4 -> 5), Anti-Mage 4, Gambler 5, Undead 5, Hexer 5, Mage 6, Archer 6 (Ömer 2026-10-17: 7 -> 6 after the first range test; Archer was untouchable at depth 3, 71% QB win).
-- **Skill istisnaları:** Charge 4; Backstab **3** (Ömer: Cutthroat ön sırada olsun; ön sıradan zaten 3. sıraya ulaşır); Saltire Cut 3; Smoke Bomb 4 (**kendi tarafına atılırken de menzil 4**); Bone Throw 4; Drain Field **4** (merkez seçildiği için 2. sıradan bile en arkaya atar); **Mana Steal 4** (Ömer: Anti-Mage bu senaryoda uzak sınıf; tüm skill'leri 4); Treant skill'leri 4; Skeleton skill'leri 1. Rest / Skip Turn / Move / Valor Revive menzilsiz.
+- **Sınıf tabanı:** Warrior 1, Defender 1, Cutthroat 1, Paladin 4, Druid 5 (Ömer 2026-10-17 denge denemesi: 4 -> 5), Anti-Mage 4, Gambler 5, Undead 5, Hexer 5, Mage 6, Archer 6 (Ömer 2026-10-17: 7 -> 6 after the first range test; Archer was untouchable at depth 3, 71% QB win), **Skald 2** (Ömer 2026-11-08: "uzatılmış yakın dövüşçü", YAKIN DÖVÜŞ grubunda; 3 -> 2).
+- **Yakın dövüş grubu (Ömer 2026-11-08):** taban menzili <= 2 (`formulas.json > range.meleeMax`) olan sınıf/çağrı yakın dövüşçü sayılır: Warrior, Defender, Cutthroat, Skald. Otomatik dizilimde önce yerleşir, takım kartında "Melee", YZ'de yakın dövüşçü kuralları (aşağıdaki geri çekilme kuralı dahil). Range 2 moblar (teber / mızrak) da YZ'de bu gruba girer (Ömer 2026-11-08 onayladı: morvane_halberdier, frozen_halberdier, frozen_standard_bearer, sworn_guard).
+- **Skill istisnaları:** Charge 4; Backstab **3** (Ömer: Cutthroat ön sırada olsun; ön sıradan zaten 3. sıraya ulaşır); Saltire Cut 3; Smoke Bomb 4 (**kendi tarafına atılırken de menzil 4**); Bone Throw 4; Drain Field **4** (merkez seçildiği için 2. sıradan bile en arkaya atar); **Mana Steal 4** (Ömer: Anti-Mage bu senaryoda uzak sınıf; tüm skill'leri 4); Treant skill'leri 4; Skeleton skill'leri 1; **Stormcall 3** (Ömer 2026-11-08: Skald ultisi; Hammer Spark / Thunder Strike sınıf tabanı 2, War Drum kendi merkezli alan, menzilsiz). Rest / Skip Turn / Move / Valor Revive menzilsiz.
 - **Global:** Fist Crush, Radiance, Card Trick, Murder of Crows, Breaking Span, Fall of King's Bridge, Pyre of Morvane. Meteor / Blizzard / Arrow Rain Global DEĞİL.
 - **Dost skill'leri:** kısıt yok, **Guard hariç: Guard yalnızca yakındaki dostu korur (dost menzili 2; 2026-10-20 sonrası Close Ranks: seçilen dost menzil 2, onun sırasındaki dostlar menzilden bağımsız)** (Ömer: "şimdilik böyle, duruma göre değiştiririz"). Diğerleri sınırsız.
 - **Moblar:** arketip (yakın 1, teber/mızrak 2, okçu/arbalet 6, büyücü 5, kendine/dostuna menzilsiz) + istisnalar: Run Down 3, Burn the Field **5**, Peat Smoke 4, Rockfall 4, Drag Under 2, Chain Hook 4, Anchor Smash 2, Ashfall 6, Cinder Lash 5.
@@ -45,4 +48,4 @@ Kaynak: karar sayfası https://claude.ai/artifact/SrUJshshUCjRpyRkwcPykC (db `ra
 
 
 ## Dizilim ipuçları (Ömer 2026-10-18)
-- Dizilim ekranlarında (sefer Formation, Quick Battle, MP, Endless) uygunsuz hücredeki birime yalnızca ÖNERİ: `src/engine/formation-hints.ts` (kural formation-ai ile aynı), eşikler `data/ai.json > formationHints`. Varsayımlar: open-questions 349.
+- Dizilim ekranlarında (sefer Formation, Quick Battle, MP, Endless) uygunsuz hücredeki birime yalnızca ÖNERİ: `src/engine/formation-hints.ts` (kural formation-ai ile aynı), eşikler `data/ai.json > formationHints`. Varsayımlar: `open-questions-archive.md` madde 349.

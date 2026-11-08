@@ -11,7 +11,7 @@ import { Rng } from './rng';
 import { ITEM_HOOK_CAPS } from './item-caps';
 import { isUnblockableHit } from './unblockable';
 import { mergeRefreshStrongest, statusStackMode, statusStrength } from './status-stack';
-import { bonusScaleRaw, damageSpecFor, type DamageEffect, type DealtDamage } from './spec';
+import { bonusScaleRaw, damageSpecFor, splitParts, type DamageEffect, type DealtDamage } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
 import { levelGapBonus, applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, dotOutgoingMult, hitOutcome, paceKey, patchedPassive, roundSpeed, speedMin, speedRoll } from './stats';
 import type { Attribute, Attributes, BrandSpec, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect, PushDir } from './types';
@@ -1113,6 +1113,9 @@ export class Battle {
     // Mob pasifleri (YM14 Grudge, YM16 Pack Tactics, YM19 Shares of the Dead): giden hasar çarpanı; pasif yoksa 1 (ifade aynı)
     const pm = actor.passive ? this.passiveDealtMult(actor, target, skill) : 1;
     if (pm !== 1) m *= pm;
+    // Conductor (Thunder Skald, Ömer 2026-11-07): yalnız pasifin elementindeki parça (Hammer Spark'ın şimşek payı), hedefte Slow / Stun / Shocked varsa
+    // ya da vuruşun kendisi bunlardan birini veriyorsa (thunder.shocks, durum etkisi) ayrı çarpan x(1 + bonus); vuruş başına bir kez (çifte sayım yok)
+    if (actor.passive?.effect.type === 'conductor' && this.conductorApplies(actor, target, skill, effect)) m *= 1 + actor.passive.effect.bonus;
     // Altıncı tur (Weakened): saldıranın üstündeki "verilen hasar" durumları (statuses.json damageDealtMult / magicDealtMult + ağaç statusPotency); yoksa 1
     const wm = actor.statuses.length ? this.weakenedMult(actor, effect?.damageType ?? skill?.effects.find((e): e is DamageEffect => e.type === 'damage')?.damageType) : 1;
     if (wm !== 1) m *= wm;
@@ -1136,6 +1139,17 @@ export class Battle {
     // Hasar aurası (item affix auraDamage): yan komşu dosttan (en yükseği); havuza
     if (this.living(actor.side).some((a) => effNum(a, 'auraDamage') > 0)) add += this.auraDamageOf(actor);
     return { mult: m, add: Math.round(add * 1e9) / 1e9 };
+  }
+
+  /** Conductor pasifi bu vuruşa uygulanır mı: düşman hedef, etkinin elementi pasifinki, hedefte listedeki durum ya da skill o durumu veriyor (Shocked: thunder.shocks). */
+  conductorApplies(actor: Combatant, target: Combatant, skill?: SkillDef | null, effect?: DamageEffect): boolean {
+    const pe = actor.passive?.effect;
+    if (pe?.type !== 'conductor' || actor.side === target.side || (effect?.element ?? 'physical') !== pe.element) return false;
+    if (target.statuses.some((s) => statusCountsAny(s, pe.statuses))) return true;
+    if (!skill) return false;
+    // Shocked suda Stun'a döner: ikisi de listedeyse thunder.shocks yeter
+    if (skill.thunder?.shocks && (pe.statuses.includes('shocked') || pe.statuses.includes('stun'))) return true;
+    return skill.effects.some((e) => e.type === 'status' && !e.self && pe.statuses.includes(e.status));
   }
 
   /** dealtDamage'in tek sayısı (havuzsuz birime göre): mult x (1 + add). Testler ve kaba karşılaştırmalar; vuruş yolu dealtDamage'i kullanır. */
@@ -1321,18 +1335,29 @@ export class Battle {
     }
     if (actor.passive?.effect.type === 'pealingBells') emit({ type: 'passive', actor: actor.uid, passive: actor.passive.id, name: actor.passive.name });
   }
-  /** YZ (SALT OKUNUR): bu vuruşta tutacak C1 "durum ekle" kancaları (zarsız: procChance'lı kanca sayılmaz, seçicisi 'damage' olanlar). */
+  /** YZ (SALT OKUNUR): bu vuruşta tutacak C1 "durum ekle" kancaları (seçicisi 'damage' olanlar; zarsız: procChance'lı kanca şansı chance'a çarpılır, Skald Iron Drag 2026-11-08). */
   aiProcStatuses(actor: Combatant, target: Combatant, skill: SkillDef, cast: readonly Combatant[]): Array<{ status: string; turns: number; chance?: number }> {
     if (!actor.treeHooks?.length) return [];
     const prev = this.setCondTargets(cast);
     try {
-      return this.heldHooks(actor, target, skill, { groups: ['proc'] }).flatMap(({ h }) => {
+      return this.heldHooks(actor, target, skill, { groups: ['proc'], withChance: true }).flatMap(({ h }) => {
         const a = h.mod.addStatus;
-        return a && !a.self ? [{ status: a.status, turns: a.turns, ...(a.chance !== undefined ? { chance: a.chance } : {}) }] : [];
+        const chance = (a?.chance ?? 1) * (h.procChance ?? 1);
+        return a && !a.self ? [{ status: a.status, turns: a.turns, ...(a.chance !== undefined || h.procChance !== undefined ? { chance } : {}) }] : [];
       });
     } finally {
       this.setCondTargets(prev);
     }
+  }
+  /**
+   * YZ (SALT OKUNUR): bu kullanımın sonunda ağaç cast kancalarıyla (cooldownSet / cooldownDelta; Peal of Ages) çıkacak cooldown; kanca tutmazsa `base`.
+   * Gerçek yolla aynı formül (useSkill sonu); zarsız (procChance'lı kanca sayılmaz), kullanım sonucuna bakan koşullar önizlemede bilinmez.
+   */
+  aiCastCooldown(actor: Combatant, skill: SkillDef, base: number): number {
+    if (!actor.treeHooks?.length) return base;
+    const ch = this.sumHooks(actor, undefined, skill, 'cast');
+    if (ch.set.cooldownSet === undefined && !ch.sum.cooldownDelta) return base;
+    return Math.max(0, Math.round(ch.set.cooldownSet ?? base + (ch.sum.cooldownDelta ?? 0)));
   }
   /** Faz 2c izleme (yalnızca ağaçlı savaş): "her düşmana bir kez" kancalarının tetiklendiği hedefler ('uid|düğüm|hedef') ve Move'suz eylem serisi. */
   private readonly firedOnSet = new Set<string>();
@@ -1387,10 +1412,10 @@ export class Battle {
   }
 
   /**
-   * Tutan C1 kancaları (saf; `roll` true ise procChance'lı kancalar için zar atılır, false ise o kancalar SAYILMAZ). Süzgeç: bağlantı yeri, skill
+   * Tutan C1 kancaları (saf; `roll` true ise procChance'lı kancalar için zar atılır, false ise o kancalar SAYILMAZ; `withChance` (YZ) zarsız sayar). Süzgeç: bağlantı yeri, skill
    * kapsamı, değişiklik grubu, `late` (vuruş sonrası koşul) evresi ve seçici (damage / status / proc grupları etkiye bakar).
    */
-  private heldHooks(actor: Combatant, target: Combatant | undefined, skill: SkillDef | null | undefined, q: TreeQuery & { groups: readonly ModGroup[]; effect?: SkillEffect }): Array<{ h: CondHook; s: number }> {
+  private heldHooks(actor: Combatant, target: Combatant | undefined, skill: SkillDef | null | undefined, q: TreeQuery & { groups: readonly ModGroup[]; effect?: SkillEffect; withChance?: boolean }): Array<{ h: CondHook; s: number }> {
     const hooks = actor.treeHooks;
     if (!hooks) return [];
     const at = q.at ?? 'hit';
@@ -1408,13 +1433,13 @@ export class Battle {
         const sel = h.sel ?? defaultSel(h.mod);
         if (orig ? !selMatches(sel, orig, dIdx) : sel !== 'damage') continue;
       }
-      if (h.procChance !== undefined && !q.roll) continue;
+      if (h.procChance !== undefined && !q.roll && !q.withChance) continue; // withChance (YZ): zarsız dahil, şansı çağıran çarpar
       ctx ??= this.condCtx(actor, target, skill, q);
       ctx.node = h.node;
       if (!condHolds(h.when, ctx)) continue;
       const s = scaleOf(h.scale, ctx);
       if (!s) continue;
-      if (h.procChance !== undefined && !(this.rng.next() < h.procChance)) continue;
+      if (h.procChance !== undefined && q.roll && !(this.rng.next() < h.procChance)) continue;
       out.push({ h, s });
     }
     // Faz 4a: tetiğin verdiği geçici güç (TreeBuff) sanal C1 kancası gibi okunur (yalnızca vuruş noktası, vuruş öncesi evre; bekleyen sayılmaz)
@@ -4776,6 +4801,27 @@ export class Battle {
     return shapeCells(this.areaOf(skillId, actorUid)!, centerSlot, board, this.setup.formulas.formation);
   }
 
+  /**
+   * self_area skill'inin (War Drum) kapsadığı hücreler: kullananın KENDİ tahtasında, kendi hücresi merkezli `skill.area` şekli (boş hücreler dahil;
+   * arayüz alanı bununla çizer). self_area değilse ya da alan yoksa boş.
+   */
+  selfAreaCells(actorUid: string, skillId: string): number[] {
+    const actor = this.get(actorUid);
+    const skill = this.skill(skillId, actorUid);
+    if (!actor || skill?.target !== 'self_area' || !isShapeArea(skill.area)) return [];
+    const fm = this.setup.formulas.formation;
+    const a = skill.area;
+    if (a.shape === 'rect' && !a.flankH && !a.flankV) {
+      // Kare kullananın hücresinde ORTALANIR ve tahta kenarında kırpılır (köşedeki Skald yalnız komşularını kapsar; alan içeri kaymaz)
+      const r0 = Math.floor(actor.slot / fm.lanes) - Math.floor(((a.rows ?? 1) - 1) / 2);
+      const l0 = (actor.slot % fm.lanes) - Math.floor(((a.cols ?? 1) - 1) / 2);
+      const out: number[] = [];
+      for (let r = r0; r < r0 + (a.rows ?? 1); r++) for (let l = l0; l < l0 + (a.cols ?? 1); l++) if (r >= 0 && r < fm.rows && l >= 0 && l < fm.lanes) out.push(r * fm.lanes + l);
+      return out;
+    }
+    return shapeCells(a, actor.slot, actor.board, fm);
+  }
+
   /** Arayüz: imlecin durduğu hücreden motorun anchor hücresi (area-shape.cursorAnchorSlot; oyuncu tahtasında 2 derinlikli rect'te imleç = sol-alt köşe). */
   cursorAnchor(skillId: string, cursorSlot: number, board: Side, actorUid?: string): number {
     return this.isShapeSkill(skillId, actorUid) ? cursorAnchorSlot(this.areaOf(skillId, actorUid), cursorSlot, board, this.setup.formulas.formation) : cursorSlot;
@@ -5174,6 +5220,11 @@ export class Battle {
         return this.livingByDepth(actor.side).filter((c) => (!skill.excludeSelf || c.uid !== actor.uid) && !c.underground && (!skill.allyNames || this.debugCasting || skill.allyNames.includes(c.displayName ?? c.name)) && this.inRange(actor, skill, c.board, c.slot));
       case 'all_allies':
         return this.livingByDepth(actor.side);
+      case 'self_area': {
+        // War Drum (Ömer 2026-11-07): kullananın hücresi merkezli alan, kendi tahtasında; alandaki canlı dostlar (kullanan dahil)
+        const cells = new Set(this.selfAreaCells(actor.uid, skill.id));
+        return this.livingByDepth(actor.side).filter((c) => c.board === actor.board && cells.has(c.slot) && !c.underground);
+      }
       case 'dead_ally':
         // Düşmüş dostlar (çağrılar hariç); cesedi tüketildiyse (Raise Dead) diriltilemez. Madde 257: cesedin hücresinde canlı birim (ör. Skeleton) olması
         // ENGEL DEĞİL: Resurrection önce ölüyü, sonra kendi tarafında boş bir hücreyi seçer (reviveSlots); boş hücre yoksa canUse 'No free cell'.
@@ -8289,14 +8340,21 @@ export class Battle {
     }
     // Flock Shield (YM18): savaşta bir kez ilk isabet eden düşman skill vuruşu azalır; yoksa 1 (ifade aynı)
     const flock = this.flockMult(actor, target);
-    const spec = damageSpecFor(actor, target, effect, f, powerMult, extras, flock !== 1 ? this.damageTakenMult(target, actor, effect.damageType, this.castingSkill, effect.element ?? 'physical') * flock : this.damageTakenMult(target, actor, effect.damageType, this.castingSkill, effect.element ?? 'physical'), this.dealtDamage(actor, target, this.castingSkill, effect, tq), effect.bonusScale ? this.effectiveStats(actor) : undefined, this.castRage ?? undefined, effect.ironBolt ? this.effectiveStats(target).armor : undefined);
+    // Bölünmüş hasar (damage.split, Hammer Spark): her parça kendi türü / elementiyle ayrı belirtim; ilk parça etkinin kendisi (ekler ve ağaç ondan), split yoksa ifade birebir eski
+    const splitPs = effect.split ? splitParts(effect) : undefined;
+    const specOf = (e: DamageEffect, pm: number, ex: boolean) =>
+      damageSpecFor(actor, target, e, f, pm, ex, flock !== 1 ? this.damageTakenMult(target, actor, e.damageType, this.castingSkill, e.element ?? 'physical') * flock : this.damageTakenMult(target, actor, e.damageType, this.castingSkill, e.element ?? 'physical'), this.dealtDamage(actor, target, this.castingSkill, e, tq), e.bonusScale ? this.effectiveStats(actor) : undefined, this.castRage ?? undefined, e.ironBolt ? this.effectiveStats(target).armor : undefined);
+    const spec = splitPs ? specOf(splitPs[0]!.effect, powerMult * splitPs[0]!.share, extras) : specOf(effect, powerMult, extras);
     if (this.healOn) this.treeTakenMult(target, actor, effect.damageType, this.castingSkill, true); // C4 ölçümü (yalnızca gerçek vuruş)
     if (flock !== 1) {
       target.passiveUsed = true;
       emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
     }
     const targetStats = this.effectiveStats(target);
-    const base = rollDamage(this.attackStats(actor), targetStats, spec, f, this.rng);
+    const base0 = rollDamage(this.attackStats(actor), targetStats, spec, f, this.rng);
+    // Split: diğer parçalar ayrı zar (yalnız split skill'de; tek isabet / kritik zarı), toplam taban = parçaların toplamı
+    const partBases = splitPs ? [base0, ...splitPs.slice(1).map((p) => rollDamage(this.attackStats(actor), targetStats, specOf(p.effect, powerMult * p.share, false), f, this.rng))] : undefined;
+    const base = partBases ? partBases.reduce((a, b) => a + b, 0) : base0;
     // Garantili kritik (Backstab): kritik zarı ATILMAZ, kritik çarpanı uygulanır (debug 'never' yine kapatır; Jinxed bunu bozmaz: madde Ö5).
     // Kritik şansı durum ekleriyle (Jinxed, Omen Misfortune) geçerli değerdir (effectiveStats).
     // critBonus (Jinx): bu skill'in vuruşunda kritik şansına ek (generic); level farkı bonusu da aynı ek (Ömer 2026-11-01)
@@ -8385,6 +8443,24 @@ export class Battle {
       if (redirected > 0) {
         if (this.rollBlock(actor, guardian, effect, sure)) emit({ type: 'block', source: actor.uid, target: guardian.uid, guard: true });
         else this.applyHit(actor, guardian, this.guardShareCut(guardian, redirected, actor), effect.damageType, crit, emit, true, meta);
+      }
+    } else if (splitPs && partBases) {
+      // Split: toplam, parçaların taban payına göre bölünür; her parça kendi türü / elementiyle işler (büyü payını büyü kalkanı da emer).
+      // Lucky Escape ilk parçada vuruşun tamamını iptal eder; hedef düşerse kalan parça işlenmez
+      const sum = partBases.reduce((a, b) => a + b, 0);
+      let left = total;
+      hpLoss = 0;
+      lucky = false;
+      for (let i = 0; i < splitPs.length; i++) {
+        const pe = splitPs[i]!.effect;
+        const amt = i === splitPs.length - 1 ? left : sum > 0 ? Math.round((total * partBases[i]!) / sum) : Math.round(total / splitPs.length);
+        left -= amt;
+        if (amt <= 0 || (i > 0 && target.hp <= 0)) continue;
+        hpLoss += this.applyHit(actor, target, amt, pe.damageType, crit, emit, false, { ...meta, element: pe.element ?? 'physical', damageType: pe.damageType });
+        if (this.lastHitLucky) {
+          lucky = true;
+          break;
+        }
       }
     } else {
       hpLoss = this.applyHit(actor, target, total, effect.damageType, crit, emit, false, meta);

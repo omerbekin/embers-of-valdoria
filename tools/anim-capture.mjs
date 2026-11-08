@@ -78,6 +78,10 @@ async function openPage() {
   await page.addInitScript(() => {
     localStorage.setItem('eov.settings.v1', JSON.stringify({ volume: 0, steps: 20 }));
     localStorage.setItem('eov.diag.v1', JSON.stringify({ consent: false, noticed: true }));
+    // Phaser TweenManager süreyi Date.now()'dan alır (g.step'in delta'sından DEĞİL): elle adımlarken tween'ler duvar saatiyle (yükte ~2x hızlı) koşar, zamanlayıcı/anim adım saatiyle.
+    // Adımlama başlayınca Date.now() sanal saate bağlanır (window.__vdate, her adımda +dt): tween / zamanlayıcı / anim aynı saatte.
+    const realNow = Date.now.bind(Date);
+    Date.now = () => (window.__vdate === undefined ? realNow() : window.__vdate);
   });
   await page.goto(`${url}/?debug=1`, { timeout: 120000 }); // sunucu yoğunken (başka sohbetler) ilk yükleme 30 sn'yi aşabiliyor
   await page.waitForFunction(() => window.__game?.scene?.getScenes(true).length > 0, null, { timeout: 60000 });
@@ -120,7 +124,9 @@ async function captureSkill(page, skill) {
     return;
   }
   // panel girdisi anahtarı sheet adında geçmeyebilir (raise_dead_fed, dark_bond_far, bone_slash_wide): girdinin izlediği sheet adları
-  const tracked = [...new Set([...vfxKeys(skill), ...(await page.evaluate((s) => window.__vbh().track(s), skill))])];
+  // CAP_TRACK=healing_rain,healing_pool: skill id sheet adında geçmiyorsa (Druid rejuvenate -> 01-healing-rain) ek sheet adları
+  const extra = (process.env.CAP_TRACK ?? '').split(',').filter(Boolean);
+  const tracked = [...new Set([...vfxKeys(skill), ...extra, ...(await page.evaluate((s) => window.__vbh().track(s), skill))])];
   await page.waitForTimeout(300);
   await waitIdle(page, 30000); // savaş kurulur + ilk atış biter
   await page.waitForTimeout(400);
@@ -134,11 +140,12 @@ async function captureSkill(page, skill) {
     document.querySelector('.vb-panel')?.classList.add('min'); // panel kareyi örtmesin
     window.__game.loop.sleep();
     window.__capT = performance.now();
+    window.__vdate = Date.now();
   });
   // önceki (ilk) atışın kuyruğu yük altında oyun saati geride kaldığında yakalamaya sızıyordu: oyun saatini 4 sn ilerleterek temizle, sonra atışı başlat
   await page.evaluate((dt) => {
     const g = window.__game;
-    for (let i = 0; i < Math.round(4000 / dt); i++) { window.__capT += dt; g.step(window.__capT, dt); }
+    for (let i = 0; i < Math.round(4000 / dt); i++) { window.__capT += dt; window.__vdate += dt; g.step(window.__capT, dt); }
     document.querySelector('.vb-main').click();
   }, DT);
   const frames = [];
@@ -149,6 +156,7 @@ async function captureSkill(page, skill) {
     const info = await page.evaluate(([ks, dt]) => {
       const g = window.__game;
       window.__capT += dt;
+      window.__vdate += dt;
       g.step(window.__capT, dt);
       const sc = g.scene.getScenes(true).find((x) => x.sys.settings.key.toLowerCase().includes('battle'));
       const list = [];

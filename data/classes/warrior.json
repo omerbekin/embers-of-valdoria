@@ -16,7 +16,7 @@
   },
   "primary": "str",
   "resource": "rage",
-  "armor": 18,
+  "armor": 16,
   "magicArmor": 0,
   "ai": "aggressive",
   "skills": [

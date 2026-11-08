@@ -1,4 +1,5 @@
 # İlerleme Yol Haritası: item, level, skill ağacı, endless, QB/MP itemleme, sefer reworkü
+> **Ne için / Güncel mi (2026-11-08):** İlerleme yol haritası (item/level/skill ağacı/Endless/QB-MP/sefer reworkü). Kararlar (bölüm 6) CANLI; bölüm 1-5 planlama tarihçesi, aşamaların çoğu uygulandı (durum: `docs/arch/areas/item-design.md`, `campaign.md`). Açık: karar 7 (ücretli dinlenme / Fountain dolumu).
 
 Durum: **v2: kararlar alındı (bölüm 6, Ömer 2026-10-09); aşama 0 (ortak temel) uygulandı** (madde 278: `src/progression/`, `data/items.json`, `data/campaign/power-budget.json`, kayıt v3). Yazan: campaign-dev, 2026-10-09. Açık kalan: karar 7 (ücretli dinlenme / Fountain dolumu).
 

@@ -1,4 +1,6 @@
 # Debug menüsü, Codex / Wiki, Asset Gallery
+> **Ne için / Güncel mi (2026-11-08):** debug menüsü, Codex/Wiki, Asset Gallery kuralları. evet (CLAUDE.md-den taşınan metin; yollar doğrulandı).
+
 
 > CLAUDE.md'den taşındı (2026-10-14, birebir). Genel kurallar CLAUDE.md'de; bu belge ayrıntıdır. Debug aracı eklerken, Codex/Wiki içeriği ya da Assets/Legacy bölümlerine dokunurken oku.
 

@@ -134,19 +134,20 @@ describe('skill ağacı', () => {
     expect(1 - s.fx!.lowHpReduce!.reduce).toBeCloseTo(1 - 3 * per, 6);
   });
 
-  it('Vesper Toll: "+% power" düğümleri TOPLANIR (havuz payı powerAdd), Evolve ayrı çarpar, eksi ("less") ayrı çarpar', () => {
+  it('Vesper (ağaç v3): "+% power" düğümü havuza (powerAdd), Evolve ayrı çarpar, eksi ("less") ayrı çarpar', () => {
     const V = treeOf('vesper')!;
-    const base = content.skills.toll!.effects.find((e): e is DamageEffect => e.type === 'damage')!.power;
-    const toll = (r: Record<string, number>) => compileTree(V, { v: V.version, r })!.skills!.toll!.effects.find((e): e is DamageEffect => e.type === 'damage')!;
-    const t = toll({ '1.f1': 3, '1.f2': 5, '1.fa': 1 });
-    expect(t.powerAdd).toBeCloseTo(0.09 + 0.15 + 0.2, 9);
-    expect(t.power).toBeCloseTo(base * (1 + 0.44), 5); // eskiden 1.09 x 1.15 x 1.2
-    const ev = toll({ '1.f1': 3, '1.f2': 5, '1.fa': 1, '1.v': 1 });
-    expect(ev.powerAdd).toBeCloseTo(0.44, 9);
-    expect(ev.power).toBeCloseTo(base * 1.44 * 1.3, 5);
-    const less = toll({ '1.f1': 3, '1.fb': 1 });
-    expect(less.powerAdd).toBeCloseTo(0.09, 9);
-    expect(less.power).toBeCloseTo(base * 1.09 * 0.75, 5);
+    const pct = (k: string) => (V.nodes[k]!.fx as unknown as Array<{ k: string; f?: string; v?: number }>).find((x) => x.k === 'skill' && x.f === 'power')!.v!;
+    const dmgOf = (skill: string, r: Record<string, number>) => compileTree(V, { v: V.version, r })!.skills![skill]!.effects.find((e): e is DamageEffect => e.type === 'damage')!;
+    const base = (skill: string) => content.skills[skill]!.effects.find((e): e is DamageEffect => e.type === 'damage')!.power;
+    const heavy = dmgOf('cracked_bell', { '3.fb': 1 }); // Heavy Bronze +%40
+    expect(heavy.powerAdd).toBeCloseTo(pct('3.fb'), 9);
+    expect(heavy.power).toBeCloseTo(base('cracked_bell') * (1 + pct('3.fb')), 5);
+    const ev = dmgOf('cracked_bell', { '3.fb': 1, '3.v': 1 }); // + Sundered Bell (Evolve) ayrı çarpan
+    expect(ev.powerAdd).toBeCloseTo(pct('3.fb'), 9);
+    expect(ev.power).toBeCloseTo(base('cracked_bell') * (1 + pct('3.fb')) * (1 + pct('3.v')), 5);
+    const less = dmgOf('thunderpeal', { '2.fb': 1 }); // Blinding Storm -%30: havuza girmez
+    expect(less.powerAdd ?? 0).toBeCloseTo(0, 9);
+    expect(less.power).toBeCloseTo(base('thunderpeal') * (1 + pct('2.fb')), 5);
   });
 
   it('Cutthroat Venom Edge: koşullu +%35 havuza, Evolve x2 ayrı çarpan (dealtDamage)', () => {

@@ -1,4 +1,5 @@
 # Dalgalı savaşlar (AÇIK; Ömer'in cevapları 2026-10-19)
+> **Ne için / Güncel mi (2026-11-08):** Dalgalı savaşlar. CANLI: kural bölüm 0-1, şema bölüm 4 uygulandı (`data/waves.json`, `src/campaign/encounter-waves.ts`). Bölüm 2-3 (seçenekler, ilk bölme önerisi) TARİHÇE.
 
 > Ömer'in kuralı (2026-10-19): "Dalgalı savaşlar: düşmanlar tek seferde gelmeyecek; bir dalga kesilince yeni dalga gelecek, savaş başına ortalama 2-3 dalga.
 > Seferde tutorial'ın son haritasından itibaren, Endless'ta 6. dalgadan itibaren. Amaç: sefer savaşları düşmanları et duvarı yapmadan daha uzun sürsün.
@@ -8,7 +9,7 @@
 > **Ömer'in düzeltmesi (2026-10-19, 0.9.2 sonrası):** "Var olan mobları dalgalara böldünüz; 1-2 dalga mob EKLEMENİZ gerekiyordu. Çok zorlaşırsa
 > mob gücünü biraz düşürürüz." Bölme kuralı kalktı, yerine **ekleme kuralı** geldi (aşağıda bölüm 0). balance-tester'ın 0.9.2'de karşılaşmalara
 > elle yazdığı `waves` ve ek mobları geri alındı (`data/campaign/encounters.json` 1b6719a sürümüne döndü). Genel ölçek / XP ayarları
-> (`campaign.json > enemyScale`, `eliteEscort`, `levels.json > enemyXp.pow`) bölmeye göre yapılmıştı; ekleme kuralına göre yeniden ayarlandı (balance-tester 2026-10-19, open-questions 367; `balance.json > _waves2`).
+> (`campaign.json > enemyScale`, `eliteEscort`, `levels.json > enemyXp.pow`) bölmeye göre yapılmıştı; ekleme kuralına göre yeniden ayarlandı (balance-tester 2026-10-19, open-questions-archive 367; `balance.json > _waves2`).
 
 ## 0. Ömer'in cevapları (2026-10-19) ve uygulanışı
 

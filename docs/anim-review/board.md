@@ -106,11 +106,18 @@ Süreç ve not formatı: README.md. İşini bitiren taraf "Durum" ve "Son" sütu
 | Cracked Bell · `cracked_bell` | Vesper (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (3. kontrol; 2 yeni Terra turu, tur 7 kullanıldı); küçük: kare 24-29 çan ~20 px yukarı çekiliyor, yarıların alt ağızı fazla bütün (notes/cracked_bell.md). |
 | Great Bell of Valdoria · `great_bell_of_valdoria` | Vesper (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI; çan sönerken konum sıçraması ve çağırma bağlantısı zayıf (notes/great_bell_of_valdoria.md). |
 | Grave Sweep · `grave_sweep` | Risen Skeleton | tamam | 2026-11-01 · Codex | Tur 3 kontrolü: parlama yok; vuruş, akış ve iki zeminde okunurluk uygun. |
-| Healing Rain · `rejuvenate` | Druid (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI; zemin havuzu ve telefon boyutu doğrulanmadı (notes/rejuvenate.md). |
-| Nature's Wrath · `natures_wrath` | Druid (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI; sönüş soluk (notes/natures_wrath.md). |
-| Thorn Whip · `thorn_whip` | Druid (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (2. tur); hasar gecikmesi küçük (notes/thorn_whip.md). |
-| Summon Treant · `summon_treant` | Druid (sınıf) | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (notes/summon_treant.md). |
-| Root Smash · `root_smash` | Treant | tamam | 2026-11-02 · Claude | Sol oyun içi 8/10 GECTI (2. tur); yumruk boğumları belirsiz (notes/root_smash.md). |
-| Vine Snare · `vine_snare` | Treant | açık | 2026-11-02 · Claude | Sol oyun içi 7/10 KALDI (sheet 07 yeniden çizildi, 4 Terra turu 5/10; oyun içi 7 ve 7); kamçı ayrı okunmuyor, halkalar yığılı (notes/vine_snare.md). |
+| Healing Rain · `rejuvenate` | Druid (sınıf) | tamam | 2026-11-08 · Claude | Sol oyun içi 8/10 GECTI; zemin havuzu ve telefon boyutu doğrulanmadı (notes/rejuvenate.md). 2026-11-08 fps + konum ölçümü (notes/rejuvenate.md Tur N): 3x ara kare, ölçülü Codex kontrolü. |
+| Nature's Wrath · `natures_wrath` | Druid (sınıf) | tamam | 2026-11-08 · Claude | Sol oyun içi 8/10 GECTI; sönüş soluk (notes/natures_wrath.md). 2026-11-08 fps + konum ölçümü (notes/natures_wrath.md Tur N): 3x ara kare, ölçülü Codex kontrolü. |
+| Thorn Whip · `thorn_whip` | Druid (sınıf) | tamam | 2026-11-08 · Claude | Sol oyun içi 8/10 GECTI (2. tur); hasar gecikmesi küçük (notes/thorn_whip.md). 2026-11-08 fps + konum ölçümü (notes/thorn_whip.md Tur N): 3x ara kare, ölçülü Codex kontrolü. |
+| Summon Treant · `summon_treant` | Druid (sınıf) | tamam | 2026-11-08 · Claude | Sol oyun içi 8/10 GECTI (notes/summon_treant.md). 2026-11-08 fps + konum ölçümü (notes/summon_treant.md Tur N): 3x ara kare, ölçülü Codex kontrolü. |
+| Root Smash · `root_smash` | Treant | tamam | 2026-11-08 · Claude | Sol oyun içi 8/10 GECTI (2. tur); yumruk boğumları belirsiz (notes/root_smash.md). 2026-11-08 fps + konum ölçümü (notes/root_smash.md Tur N): 3x ara kare, ölçülü Codex kontrolü. |
+| Vine Snare · `vine_snare` | Treant | açık | 2026-11-08 · Claude | Sol oyun içi 7/10 KALDI (sheet 07 yeniden çizildi, 4 Terra turu 5/10; oyun içi 7 ve 7); kamçı ayrı okunmuyor, halkalar yığılı (notes/vine_snare.md). 2026-11-08 fps + konum ölçümü (notes/vine_snare.md Tur N): kod çizimi, sheet yok, konum tamam. |
 | Treant Death · `summondeath_treant` | Treant (Druid) | tamam | 2026-11-03 · Claude | Parçalı gövde, Sol oyun içi 8/10 GECTI (tur 9); eski: Sol 7/10 (6 tur): çatlak sarmaşık gibi, gövde bütün iniyor; kod hazır ama bağlı değil, v1'e düşer (notes/treant_death.md). |
 | Treant Vanish · `summonvanish_treant` | Treant (Druid) | tamam | 2026-11-02 · Claude | Kodla çizim, Sol oyun içi 8/10 GECTI; düz kesim hâlâ sert (notes/treant_death.md). |
+| Hammer Spark ? `hammer_spark` | Thunder Skald (s?n?f, v2) | tamam | 2026-11-08 ? Codex | Tur 3: dalga var???nda patlama ve hasar ba?l?yor; bekleme kalkm??. |
+| Thunder Strike · `thunder_strike` | Thunder Skald (sınıf, v2) | tamam | 2026-11-08 ? Codex | Y?ld?r?m hedefte, hasar ve s?n?? uygun; siyah kare veya z?plama yok. |
+| War Drum · `war_drum` | Thunder Skald (sınıf, v2) | tamam | 2026-11-08 ? Codex | ?? halka davulda, destek dalgas? sa?da; ak?? uygun. |
+| Stormcall ? `stormcall` | Thunder Skald (s?n?f, v2) | tamam | 2026-11-08 ? Codex | Tur 3: ayr?k kuklalar aras?nda zincir ve iki y?ld?r?m okunuyor. |
+| Hammer Spark · `hammer_spark` | Thunder Skald (yakın dövüş görünümü) | kontrol | 2026-11-08 · Claude | Yeniden yapıldı (Ömer: büyücü gibi durmasın): adım + ritimli iki vuruş (fiziksel, sonra şimşek çekiç başından hedefe). |
+| Thunder Strike · `thunder_strike` | Thunder Skald (yakın dövüş görünümü) | tamam | 2026-11-08 · Claude | Yeniden yapıldı: çekiç başında şimşek toplanır, çakışta çekiçten hedefe yay + gökten yıldırım. |
+| War Drum · `war_drum` | Thunder Skald (silahla çalma) | tamam | 2026-11-08 · Claude | Silah sapıyla 3 vuruş (drum_take, drum_a/b), vuruşlarda ses halkası + kıvılcım, son vuruşta zemin dalgası. |

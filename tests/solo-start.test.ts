@@ -45,7 +45,7 @@ import * as content from '../src/engine/content';
 import { fightPlan } from '../src/sim/campaign';
 import { TUTORIAL, openingLine } from '../src/tutorial/lessons';
 
-const STARTERS = ['warrior', 'defender', 'paladin', 'druid'];
+const STARTERS = ['warrior', 'skald', 'paladin', 'druid'];
 const fresh = (hero = 'warrior', seed = 7): CampaignState => pickHero(newCampaign({ mode: 'normal', seed }), hero);
 const roundTrip = (s: CampaignState): CampaignState => normalizeState(JSON.parse(JSON.stringify(s)))!;
 /** Yol üstündeki adımları oyuncu yerine çözerek düğüme yürür; hedefin ilk adımında durur. */

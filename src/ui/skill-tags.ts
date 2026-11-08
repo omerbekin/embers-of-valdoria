@@ -28,7 +28,7 @@ export const elementIcon = (id: string): string => paintedOr('element', id, ELEM
 export function skillRange(skill: SkillDef): SkillRange {
   if (skill.motion === 'melee') return 'Melee';
   if (skill.target === 'self') return 'Self';
-  if (skill.target === 'single_ally' || skill.target === 'dead_ally' || skill.target === 'all_allies') return 'Support';
+  if (skill.target === 'single_ally' || skill.target === 'dead_ally' || skill.target === 'all_allies' || skill.target === 'self_area') return 'Support';
   return 'Ranged';
 }
 

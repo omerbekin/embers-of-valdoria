@@ -1,4 +1,6 @@
 # Alan: UI-UX Design (2026-11-02)
+> **Ne için / Güncel mi (2026-11-08):** UI-UX alanı canlı durumu. evet.
+
 
 Alan: mevcut arayüzlerin elden geçirilmesi, yeni arayüz tasarımı, kullanıcı deneyimi. Agent buradan başlar: `docs/design/ui-design-language.md`, `docs/design/ui-reference.md`, `docs/arch/ui-and-stage.md`.
 
@@ -27,3 +29,10 @@ Alan: mevcut arayüzlerin elden geçirilmesi, yeni arayüz tasarımı, kullanıc
 - CRLF: dosyaları Edit ile değiştir; betikle satır eşleştirirken `\r` ayıkla. Tüm dosyayı HEAD'e geri alma (yalnız kendi parçanı).
 - Dev'de `__game`/`launchBattle` var, Pages üretim sürümünde yok; savaşı haritadan gerçek akışla başlat.
 - `assets/source/ui-icons/lock-sheet.png` takipsiz kalır (başka sohbetin sanatı), gönderim uyarısı verir.
+
+## Kararlar (hafızadan taşındı 2026-11-08)
+Tam metinler `~/.claude/projects/C--Users-Omer-Projects-embers-of-valdoria/memory/archive/2026-11-08/` (ui-ux-design-chat, ui-design-language).
+- UI dili tek yerde: `docs/design/ui-design-language.md` (Ömer "global"/"kural" deyince oraya eklenir). Lead'in çalışma özeti hafızada `art-rules`.
+- Eski formlar: future-ideas/ui-ux.md listesi formu 7yfz5rHUk46VfhHtF4Jyn4 (db picks/main) seçtim bekliyordu; genel UI taraması formu Sg5csUWQ4fnJkiBvNfu7Ha; imleç turları XVJ5TpEG8QuSGYnCcyg5tA, NSkZN2uZaNgvVb7xY5o2MF (Ömer Torch + Fleur'u beğendi; plan: bir varsayılan, diğerleri ayar; sonradan Ayarlar > UI imleci yapıldı); hasar rengi MqUmaQCphoY5z1VyTy9JB9, mobil düğmeler Wf1yPnLge2cfJecCZwpSRj, zemin ipucu NQWFKCjDEZDKvMDq1NicLi. Hangilerinin kapandığını `eov-forms-archive\classification.md` ile doğrula; yayına girmişi yeniden sorma.
+- Battle #38: Ömer üç savaş HUD seçeneğini reddetti ("alt bardaki arayüzüm çok iyi zaten"), alt bar aynen kalır, yeniden önerme. Telefonda regen çipi Regen rozetine biniyordu (2026-11-02, doğrula).
+- Mockup bir gönderimden önce açılmalıysa Artifact olarak düz hash (`#a-169`) ile yayınla; yerleşik tarayıcıda claude.ai oturumu yok, aynı dosyayı dev sunucuda kontrol et ve söyle. Yük altında tam `npm test` dinamik import testlerinde zaman aşar: `--testTimeout=300000` ile yeniden koş.

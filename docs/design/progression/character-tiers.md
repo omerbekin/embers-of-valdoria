@@ -1,4 +1,5 @@
 # Karakter tier'ları ve açılma (KONSEPT)
+> **Ne için / Güncel mi (2026-11-08):** Karakter kademeleri ve açılma. KONSEPT, uygulanmadı: `data/classes/` içinde tier/kilit alanı yok. Ömer kararları (bölüm 1) canlı, dağılım Claude taslağı ve onaysız. Alan: `docs/arch/areas/character-design.md`.
 
 Durum: **konsept, uygulanmadı** (2026-10-24). Ömer'in fikri, Claude'un taslak kararları. Uygulamaya geçmeden önce Ömer'le yeniden konuşulacak. Yeni mekanik içeren kısımlar (MP cost ve bütçe, Endless açılma eşikleri) **onaylanmış mekanik değil**.
 

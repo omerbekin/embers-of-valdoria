@@ -9,13 +9,18 @@ const VAL = { mapId: 'valdoria', nodeId: '7', soloStart: true };
 const sug = (team: string[], at = ASH, pool = POOL.filter((c) => !team.includes(c))) => suggestCompanion(team, pool, at, cfg);
 
 describe('yoldaş önerisi (suggest.ts)', () => {
+  it('Skald ön saf (Ömer 2026-11-08: yakın dövüş grubu, menzil 2)', () => {
+    expect(cfg.roles.skald).toEqual(['front']);
+    expect(classes.skald!.frontPriority).toBeLessThanOrEqual(2);
+    expect(sug(['archer'])?.heroes).toContain('skald');
+  });
   it('öncelik: ön saf > arka saf > takımı besleyen', () => {
     expect(sug(['archer'])?.role).toBe('front'); // hepsi eksik, ön saf önce
     expect(sug(['warrior'])?.role).toBe('back'); // ön saf var, arka saf eksik
     expect(sug(['warrior', 'archer'])?.role).toBe('feed');
     expect(sug(['warrior', 'archer'])?.heroes).toEqual(['druid', 'paladin', 'antimage']); // besleyenlerin hepsi, veri sırasında
-    expect(sug(['mage'])?.heroes).toEqual(['warrior', 'defender', 'paladin']); // aynı rolde birden çok aday: hepsi
-    expect(sug(['druid'])?.heroes).toEqual(['warrior', 'defender', 'paladin']); // Ömer'in örneği: Druid için tek ön saf Warrior değil
+    expect(sug(['mage'])?.heroes).toEqual(['warrior', 'defender', 'paladin', 'skald']); // aynı rolde birden çok aday: hepsi
+    expect(sug(['druid'])?.heroes).toEqual(['warrior', 'defender', 'paladin', 'skald']); // Ömer'in örneği: Druid için tek ön saf Warrior değil
     expect(sug(['warrior'])?.heroes).toEqual(['archer', 'mage', 'hexer', 'vesper']); // yalnız ilk eksik rol
   });
 
@@ -53,7 +58,7 @@ describe('yoldaş önerisi (suggest.ts)', () => {
     const solo = debugTeleport(newCampaign({ mode: 'normal', seed: 7 }), '4', 'druid');
     expect(nextStep(solo).kind).toBe('company');
     const pool = [...POOL].reverse().filter((c) => c !== 'druid'); // sunum sırası ters: veri sırası kazanır
-    expect(companySuggestionFor(solo, pool)).toMatchObject({ heroes: ['warrior', 'defender', 'paladin'], role: 'front' });
+    expect(companySuggestionFor(solo, pool)).toMatchObject({ heroes: ['warrior', 'defender', 'paladin', 'skald'], role: 'front' });
     const old = { ...solo };
     delete (old as { soloStart?: true }).soloStart;
     expect(companySuggestionFor(old, pool)).toBeNull();

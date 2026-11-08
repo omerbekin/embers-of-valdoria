@@ -1,4 +1,5 @@
 # Item Design planı ve kararlar (Ömer 2026-11-01)
+> **Ne için / Güncel mi (2026-11-08):** Item Design sırası, Trinket yuvası, set ve affix kararları. CANLI sahip; `items.md` ile çelişirse bu belge geçerli. Alan durumu: `docs/arch/areas/item-design.md`.
 
 Sahip: Item Design sohbeti. Form: https://claude.ai/artifact/4NRvdHvZtQZEesdVuYU4J2 (db `picks/main`). Bu belge `items.md` ile çelişirse bu belge geçerlidir; iş bitince `items.md` güncellenir.
 

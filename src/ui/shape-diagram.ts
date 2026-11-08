@@ -77,6 +77,11 @@ export function shapeMiniGrid(area: AreaDef | undefined, formation: ShapeFormati
 
 /** Skill'in şekil şeması: area_enemies ve iki tahtaya atılabilen area_any ('either side' notu ile); şekil skill'i değilse null. */
 export function skillMiniGrid(skill: SkillDef, formation: ShapeFormation): MiniShape | null {
+  // self_area (War Drum): kullanan merkezli şekil; anchor = kullananın hücresi (3x3'te ortada), kendi tarafı
+  if (skill.target === 'self_area') {
+    const g = shapeMiniGrid(skill.area, formation);
+    return g ? { ...g, note: 'around you' } : null;
+  }
   if (skill.target !== 'area_enemies' && skill.target !== 'area_any') return null;
   const grid = shapeMiniGrid(skill.area, formation);
   if (!grid) return null;

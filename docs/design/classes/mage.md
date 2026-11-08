@@ -8,6 +8,7 @@ Kit: **Fire Bolt, Blizzard, Ice Crater, Meteor** + pasif **Heat Mirage**. Fire B
 
 ### Frozen etkisi (Ömer 2026-10-31)
 - Buz atışı zaten Chilled olan düşmanı dondurur (1 tur kayıp), ateş çözer. Kural: `campaign/maps-2-3.md` M-D. Quick Battle ölçümü Mage %50,2 (5000 x 2, 2026-11-02); sefer ve Endless etkisi ölçülmedi.
+- Tek Mage Frozen (Ömer 2026-11-01, madde 506/2): tek Mage'de Frozen ağaç ödülüdür (Deep Freeze, Glacier Crater); Chilled / Ice Crater süresi uzatılmaz.
 
 ### Chilled (yeni durum)
 - "Chilled: 20% less Speed and 10% less Evasion" (`statuses.json > chilled`: speedMult 0,8, evasionMult 0,9). Buz mavisi (#9fe3ff).

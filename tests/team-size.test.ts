@@ -93,7 +93,9 @@ describe('takım boyutu: savaş kurulumu ve dizilim', () => {
           for (const sl of slots) perRow.set(Math.floor(sl / lanes), (perRow.get(Math.floor(sl / lanes)) ?? 0) + 1);
           defs.forEach((d, i) => {
             const row = Math.floor(slots[i]! / lanes);
-            const melee = content.isMeleeClass(d.id); // menzil açıkken taban menzili <= 1 (range.md), kapalıyken ilk skill melee
+            const melee = content.isMeleeClass(d.id); // menzil açıkken taban menzili <= range.meleeMax (2; range.md), kapalıyken ilk skill melee
+            // uzatılmış yakın dövüşçü (Skald, menzil 2; Ömer 2026-11-08) ulaştığı sırada (R - 1) önü dolu olmadan durabilir
+            if (melee && content.formulas.range?.enabled && row > 0 && row <= (content.classes[d.id]?.range ?? 1) - 1) return;
             if (melee) for (let r = 0; r < row; r++) expect(perRow.get(r) ?? 0, `n=${n} seed ${seed} ${d.id} satır ${row}`).toBe(lanes);
           });
         }

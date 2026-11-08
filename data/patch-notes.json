@@ -2,20 +2,70 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.9.11.2",
+      "date": "2026-11-08",
+      "groups": [
+        {
+          "heading": "Fixes",
+          "items": [
+            "Skald başlangıç + extended melee, Vesper Thunder After, denge, Anti-Mage Mana Steal/Spell Ward, belge temizliği"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.9.11.1",
+      "date": "2026-11-08",
+      "groups": [
+        {
+          "heading": "New",
+          "items": [
+            "Skald is now a starting hero in the Campaign. Defender joins later as a recruit."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Skald fights up close: new melee animations, reach 2 for its first skills and 3 for Stormcall.",
+            "Vesper: Thunder After now rings a bell when a Blinded enemy misses.",
+            "Anti-Mage: Mana Steal steals 7 MP and deals 5% less damage. Spell Ward cooldown is 3 turns.",
+            "Paladin, Warrior and Skald balance was retuned.",
+            "Druid effects are smoother and smaller."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Archer, Cutthroat and Undead passives now show their text."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.11",
       "date": "2026-11-08",
       "groups": [
         {
           "heading": "New",
           "items": [
-            "New Druid art.",
-            "Many new weapon and off-hand bases.",
-            "New off-hands: Quiver, Focus Orb, Tome, Lantern and Relic.",
-            "New weapon types: Wand, Rod, Spear, Hatchet, Crossbow and Longbow.",
-            "Every class can now use either a one-hand weapon with an off-hand or a two-hand weapon.",
-            "Gambler and Hexer now start with a Clouded Glass Orb.",
-            "Supplies: Healing Draught, Greater Healing Draught, Wound Salve and Revive Ally drop from battles and chests.",
-            "Plus 23 more changes."
+            "Gear update: new weapon types and off-hands. Every class can use a one-hand weapon with an off-hand or a two-hand weapon.",
+            "Supplies: healing draughts, Wound Salve and Revive Ally drop from battles and chests.",
+            "New Druid art, new off-hand affixes and a campaign ledger at the end of Map 1."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Mana rework: heroes and enemies run low on mana sooner. Many skill costs were adjusted.",
+            "Anti-Mage, Vesper and Hexer skills were retuned.",
+            "Speed now rolls every turn, and fallen heroes no longer rise on their own after a win.",
+            "Map 1 and Map 2 difficulty, loot and town events were retuned."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Phone, camp and barracks fixes."
           ]
         }
       ]
@@ -1148,17 +1198,53 @@
       "version": "0.9.5",
       "date": "2026-10-21",
       "groups": [
-        { "heading": "New", "items": ["Druid's new passive Nature's Grudge: when an ally falls, its killer is rooted with Slow and Wither for 3 turns", "Defender's Guard is now Close Ranks: for 3 turns, allies in the chosen row pass 50% of their damage to you", "Recruit cards show each hero with their weapon"] },
-        { "heading": "Changes", "items": ["Warrior: Rage builds slower, Whirlwind hits the first two enemy rows for less damage, Charge stuns for 2 turns (cooldown 4)", "Tremor Slam hits harder; Druids summon their Treant when it helps; area skills cover the same rows on both sides", "Skill tooltips are cleaner: a range icon replaces the text, MP and turns labels are gone; primary stat lines get a diamond", "Patrols give full gold and items, only XP is reduced; rests cost a little more; Medium elite escorts are a bit tougher", "Blacksmith: tap an equipped item on the right to work on it; each merchant greets you only on your first visit"] }
+        {
+          "heading": "New",
+          "items": [
+            "Druid's new passive Nature's Grudge: when an ally falls, its killer is rooted with Slow and Wither for 3 turns",
+            "Defender's Guard is now Close Ranks: for 3 turns, allies in the chosen row pass 50% of their damage to you",
+            "Recruit cards show each hero with their weapon"
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Warrior: Rage builds slower, Whirlwind hits the first two enemy rows for less damage, Charge stuns for 2 turns (cooldown 4)",
+            "Tremor Slam hits harder; Druids summon their Treant when it helps; area skills cover the same rows on both sides",
+            "Skill tooltips are cleaner: a range icon replaces the text, MP and turns labels are gone; primary stat lines get a diamond",
+            "Patrols give full gold and items, only XP is reduced; rests cost a little more; Medium elite escorts are a bit tougher",
+            "Blacksmith: tap an equipped item on the right to work on it; each merchant greets you only on your first visit"
+          ]
+        }
       ]
     },
     {
       "version": "0.9.4",
       "date": "2026-10-20",
       "groups": [
-        { "heading": "New", "items": ["Heroes who fall in a won battle get up at 10% HP with a Wound: -20% max HP each, wounds stack; town rest heals them", "Victory heals the party: 25% after normal fights, 50% after elites, full after bosses; MP refills every battle", "Valor revives a fallen hero and removes one Wound", "Multiplayer: war banners drop when a side is ready and both sides glow when the battle begins"] },
-        { "heading": "Changes", "items": ["On the campaign map your leader walks the road carrying a small pennant", "Endless follows the same wound rules; new elite card Veteran's Lesson gives every hero XP", "Campaign rebalance: fights after Ashford are tougher and more even, Ravenwood is gentler, Easy enemies are weaker"] },
-        { "heading": "Fixes", "items": ["Gear: a stat tooltip opened by a click now closes when the mouse moves away"] }
+        {
+          "heading": "New",
+          "items": [
+            "Heroes who fall in a won battle get up at 10% HP with a Wound: -20% max HP each, wounds stack; town rest heals them",
+            "Victory heals the party: 25% after normal fights, 50% after elites, full after bosses; MP refills every battle",
+            "Valor revives a fallen hero and removes one Wound",
+            "Multiplayer: war banners drop when a side is ready and both sides glow when the battle begins"
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "On the campaign map your leader walks the road carrying a small pennant",
+            "Endless follows the same wound rules; new elite card Veteran's Lesson gives every hero XP",
+            "Campaign rebalance: fights after Ashford are tougher and more even, Ravenwood is gentler, Easy enemies are weaker"
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Gear: a stat tooltip opened by a click now closes when the mouse moves away"
+          ]
+        }
       ]
     },
     {
@@ -1177,17 +1263,47 @@
       "version": "0.9.3",
       "date": "2026-10-19",
       "groups": [
-        { "heading": "New", "items": ["Rounds now bring extra reinforcement waves instead of splitting the enemy group; the leader comes in the last round", "New Valor screen with slowly burning braziers", "Stat tooltips show the primary stat bonus as one short line under the name", "New Victory and Defeat crests"] },
-        { "heading": "Changes", "items": ["Campaign and Endless rebalanced for reinforcement waves; heroes level a bit slower again", "Fainter footpath roads on the campaign map; Quick Battle hero hover shows a short description", "Better phone layout: larger buttons, readable save slots"] },
-        { "heading": "Fixes", "items": ["Deleting a save no longer reloads the whole Load Game page"] }
+        {
+          "heading": "New",
+          "items": [
+            "Rounds now bring extra reinforcement waves instead of splitting the enemy group; the leader comes in the last round",
+            "New Valor screen with slowly burning braziers",
+            "Stat tooltips show the primary stat bonus as one short line under the name",
+            "New Victory and Defeat crests"
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Campaign and Endless rebalanced for reinforcement waves; heroes level a bit slower again",
+            "Fainter footpath roads on the campaign map; Quick Battle hero hover shows a short description",
+            "Better phone layout: larger buttons, readable save slots"
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Deleting a save no longer reloads the whole Load Game page"
+          ]
+        }
       ]
     },
     {
       "version": "0.9.2.1",
       "date": "2026-10-19",
       "groups": [
-        { "heading": "Changes", "items": ["Quick Battle: calmer stat and skill bar for the selected hero"] },
-        { "heading": "Fixes", "items": ["The merchant's welcome card no longer slides off the left edge of the screen"] }
+        {
+          "heading": "Changes",
+          "items": [
+            "Quick Battle: calmer stat and skill bar for the selected hero"
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "The merchant's welcome card no longer slides off the left edge of the screen"
+          ]
+        }
       ]
     },
     {
@@ -1800,14 +1916,24 @@
       "version": "0.8.3.8",
       "date": "2026-10-17",
       "groups": [
-        { "heading": "New", "items": ["Every campaign enemy now has its own skill effects, and the Bridge Warden has new skill icons, effects and animations."] }
+        {
+          "heading": "New",
+          "items": [
+            "Every campaign enemy now has its own skill effects, and the Bridge Warden has new skill icons, effects and animations."
+          ]
+        }
       ]
     },
     {
       "version": "0.8.3.7",
       "date": "2026-10-17",
       "groups": [
-        { "heading": "Fixes", "items": ["The High Priest of the Undying fight plays normal battle music again; only boss fights have boss music."] }
+        {
+          "heading": "Fixes",
+          "items": [
+            "The High Priest of the Undying fight plays normal battle music again; only boss fights have boss music."
+          ]
+        }
       ]
     },
     {
@@ -2179,160 +2305,229 @@
       "version": "0.7.8.1",
       "date": "2026-10-14",
       "groups": [
-        { "heading": "Changes", "items": [
-          "Endless: the Revive reward card is gone; fallen heroes return with Valor, Resurrection or Raise Dead. Enemies grow a bit slower per wave."
-        ] },
-        { "heading": "Fixes", "items": [
-          "Endless: Retreat to Camp no longer restarts the wave; the battle stays paused and resumes where you left it."
-        ] }
+        {
+          "heading": "Changes",
+          "items": [
+            "Endless: the Revive reward card is gone; fallen heroes return with Valor, Resurrection or Raise Dead. Enemies grow a bit slower per wave."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Endless: Retreat to Camp no longer restarts the wave; the battle stays paused and resumes where you left it."
+          ]
+        }
       ]
     },
     {
       "version": "0.7.8",
       "date": "2026-10-14",
       "groups": [
-        { "heading": "New", "items": [
-          "Tutorial lessons now appear only when they matter, and point at the button to use right then.",
-          "Hits feel different by strength: light flinch, normal hit, or a heavy knockback with dust.",
-          "New painted Valor braziers, shown small at the top left next to Back."
-        ] },
-        { "heading": "Changes", "items": [
-          "Back, Menu and fullscreen are matching icon buttons in one row; fullscreen is available on every screen size.",
-          "Smaller tutorial box on phones; the first battles are easier.",
-          "Merchant and Gear screens fit phones: no overlap, full stat names, whole bag rows."
-        ] },
-        { "heading": "Fixes", "items": [
-          "Arriving at Ashford no longer freezes the game; stuck saves continue normally."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "Tutorial lessons now appear only when they matter, and point at the button to use right then.",
+            "Hits feel different by strength: light flinch, normal hit, or a heavy knockback with dust.",
+            "New painted Valor braziers, shown small at the top left next to Back."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Back, Menu and fullscreen are matching icon buttons in one row; fullscreen is available on every screen size.",
+            "Smaller tutorial box on phones; the first battles are easier.",
+            "Merchant and Gear screens fit phones: no overlap, full stat names, whole bag rows."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Arriving at Ashford no longer freezes the game; stuck saves continue normally."
+          ]
+        }
       ]
     },
     {
       "version": "0.7.7.1",
       "date": "2026-10-14",
       "groups": [
-        { "heading": "Fixes", "items": [
-          "The loading screen now turns sideways with the game when a phone is held upright."
-        ] }
+        {
+          "heading": "Fixes",
+          "items": [
+            "The loading screen now turns sideways with the game when a phone is held upright."
+          ]
+        }
       ]
     },
     {
       "version": "0.7.7",
       "date": "2026-10-13",
       "groups": [
-        { "heading": "New", "items": [
-          "New logo, app icon and loading screen.",
-          "Campaign tutorial: Commander Garrick teaches one thing at a time; turn it off in Settings or with Don't show again.",
-          "Codex Lessons: reread every tutorial lesson you have seen. Endless shows a short intro the first time.",
-          "Music for the map, town, battles, bosses and the Endless camp, plus parchment, book, coin, gear and battle horn sounds."
-        ] },
-        { "heading": "Changes", "items": [
-          "Heroes stand in a narrower stance, keep each item in the same hand and hold edged weapons point up.",
-          "Hands come down right after a skill lands instead of hanging in the air.",
-          "Fewer hint texts on screens; the Back button no longer shows an Esc tag."
-        ] },
-        { "heading": "Fixes", "items": [
-          "You can enter Ashford again after leaving it."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "New logo, app icon and loading screen.",
+            "Campaign tutorial: Commander Garrick teaches one thing at a time; turn it off in Settings or with Don't show again.",
+            "Codex Lessons: reread every tutorial lesson you have seen. Endless shows a short intro the first time.",
+            "Music for the map, town, battles, bosses and the Endless camp, plus parchment, book, coin, gear and battle horn sounds."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Heroes stand in a narrower stance, keep each item in the same hand and hold edged weapons point up.",
+            "Hands come down right after a skill lands instead of hanging in the air.",
+            "Fewer hint texts on screens; the Back button no longer shows an Esc tag."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "You can enter Ashford again after leaving it."
+          ]
+        }
       ]
     },
     {
       "version": "0.7.6",
       "date": "2026-10-13",
       "groups": [
-        { "heading": "New", "items": [
-          "Valor: wins light embers in two braziers; spend them to revive a fallen hero, in battle or between battles.",
-          "Heroes now fight with full animated poses and show the weapon they wield.",
-          "New moves: Cutthroat crosses both daggers for Saltire Cut; the Hexer pins her doll for Doom Mark; Archer aims high for Arrow Rain.",
-          "The three new shields have their own icons."
-        ] },
-        { "heading": "Changes", "items": [
-          "Campaign enemies hit harder to match Valor.",
-          "Endless: two foes every wave; each boss is tougher than the last.",
-          "Fire Bolt, Nature's Wrath and Void Strike cost 1 more MP.",
-          "Card Trick's cards are smaller."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "Valor: wins light embers in two braziers; spend them to revive a fallen hero, in battle or between battles.",
+            "Heroes now fight with full animated poses and show the weapon they wield.",
+            "New moves: Cutthroat crosses both daggers for Saltire Cut; the Hexer pins her doll for Doom Mark; Archer aims high for Arrow Rain.",
+            "The three new shields have their own icons."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Campaign enemies hit harder to match Valor.",
+            "Endless: two foes every wave; each boss is tougher than the last.",
+            "Fire Bolt, Nature's Wrath and Void Strike cost 1 more MP.",
+            "Card Trick's cards are smaller."
+          ]
+        }
       ]
     },
     {
       "version": "0.7.5",
       "date": "2026-10-13",
       "groups": [
-        { "heading": "New", "items": [
-          "New battle backgrounds for every campaign region, King's Bridge and the Castle Hall; new town art.",
-          "Campaign enemies have their own looks: thugs, crossbowmen, ember acolytes, fen witchlings, ghouls, shieldwardens, wisps and more.",
-          "Three new shields; Settings now has a separate Sound Effects volume.",
-          "Map: click a stop to march there; battles ask before they start; hover a stop to see who waits there."
-        ] },
-        { "heading": "Changes", "items": [
-          "Each gear slot now has its own kind of stats (weapons hit, armor protects, boots move, trinkets sustain).",
-          "Stats that reach their limit are marked MAX; only two copies of the same top-tier affix count.",
-          "Hexer: Doom takes 4 turns; skills hit harder and Doom a little softer; Doom Mark deals 10% more. Omens no longer jump on from a Doom kill.",
-          "Party picking uses the same drag-and-drop everywhere; the Codex no longer lists test characters."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "New battle backgrounds for every campaign region, King's Bridge and the Castle Hall; new town art.",
+            "Campaign enemies have their own looks: thugs, crossbowmen, ember acolytes, fen witchlings, ghouls, shieldwardens, wisps and more.",
+            "Three new shields; Settings now has a separate Sound Effects volume.",
+            "Map: click a stop to march there; battles ask before they start; hover a stop to see who waits there."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Each gear slot now has its own kind of stats (weapons hit, armor protects, boots move, trinkets sustain).",
+            "Stats that reach their limit are marked MAX; only two copies of the same top-tier affix count.",
+            "Hexer: Doom takes 4 turns; skills hit harder and Doom a little softer; Doom Mark deals 10% more. Omens no longer jump on from a Doom kill.",
+            "Party picking uses the same drag-and-drop everywhere; the Codex no longer lists test characters."
+          ]
+        }
       ]
     },
     {
       "version": "0.7.4",
       "date": "2026-10-12",
       "groups": [
-        { "heading": "New", "items": [
-          "Campaign battles now have their own backgrounds for every region of Valdoria.",
-          "Towns open as a full scene: visit the stall, the notice board, the locals and the campfire.",
-          "Menus are centered with icons."
-        ] },
-        { "heading": "Changes", "items": [
-          "Debug: Pose Tester skills now use fitting poses; spells and arrows leave from the weapon."
-        ] },
-        { "heading": "Fixes", "items": [
-          "New campaign setup no longer replays its animation on every click."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "Campaign battles now have their own backgrounds for every region of Valdoria.",
+            "Towns open as a full scene: visit the stall, the notice board, the locals and the campfire.",
+            "Menus are centered with icons."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Debug: Pose Tester skills now use fitting poses; spells and arrows leave from the weapon."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "New campaign setup no longer replays its animation on every click."
+          ]
+        }
       ]
     },
     {
       "version": "0.7.3",
       "date": "2026-10-12",
       "groups": [
-        { "heading": "New", "items": [
-          "Debug: 11 Pose Testers try every class's skills with the new poses and weapons.",
-          "New weapon art: maces, daggers, staves, bows, shields, charms, great axes and mauls."
-        ] },
-        { "heading": "Changes", "items": [
-          "A two-handed weapon shows a faded copy in the Off-hand slot.",
-          "Warrior's Rage now sits in line with HP and MP."
-        ] },
-        { "heading": "Fixes", "items": [
-          "Statuses like Omen now appear when the skill lands, not when it is cast."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "Debug: 11 Pose Testers try every class's skills with the new poses and weapons.",
+            "New weapon art: maces, daggers, staves, bows, shields, charms, great axes and mauls."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "A two-handed weapon shows a faded copy in the Off-hand slot.",
+            "Warrior's Rage now sits in line with HP and MP."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Statuses like Omen now appear when the skill lands, not when it is cast."
+          ]
+        }
       ]
     },
     {
       "version": "0.7.2",
       "date": "2026-10-12",
       "groups": [
-        { "heading": "New", "items": [
-          "New Off-hand slot: carry a shield or a second dagger next to a one-handed weapon.",
-          "Weapons now show whether they are one-handed, two-handed, a bow or a charm.",
-          "Valdren Keep: convince the commander and he shares how to beat the Bridge Warden."
-        ] },
-        { "heading": "Changes", "items": [
-          "Witch's Hut deals now give one item and a little gold.",
-          "Windy Moor, Iron Pass and Charcoal Camp fight a little harder; Hard is tougher."
-        ] },
-        { "heading": "Fixes", "items": [
-          "Gifts show as a Gift on the spoils card."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "New Off-hand slot: carry a shield or a second dagger next to a one-handed weapon.",
+            "Weapons now show whether they are one-handed, two-handed, a bow or a charm.",
+            "Valdren Keep: convince the commander and he shares how to beat the Bridge Warden."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Witch's Hut deals now give one item and a little gold.",
+            "Windy Moor, Iron Pass and Charcoal Camp fight a little harder; Hard is tougher."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Gifts show as a Gift on the spoils card."
+          ]
+        }
       ]
     },
     {
       "version": "0.7.1",
       "date": "2026-10-12",
       "groups": [
-        { "heading": "New", "items": [
-          "Campaign: new enemy families (bandits, Ember Cult, guardians, hexes, undead) on the roads from Windy Moor to Misty Marsh.",
-          "Witch's Hut and Shepherd's Fold now offer choices.",
-          "Towns have a merchant and a short story scene; talk to the charcoal burner in Ashford.",
-          "Codex: a new Enemies section."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "Campaign: new enemy families (bandits, Ember Cult, guardians, hexes, undead) on the roads from Windy Moor to Misty Marsh.",
+            "Witch's Hut and Shepherd's Fold now offer choices.",
+            "Towns have a merchant and a short story scene; talk to the charcoal burner in Ashford.",
+            "Codex: a new Enemies section."
+          ]
+        }
       ]
     },
     {
@@ -2356,20 +2551,29 @@
       "version": "0.6.14",
       "date": "2026-10-12",
       "groups": [
-        { "heading": "New", "items": [
-          "Campaign: fallen heroes stay down after battle; revive them at Rest camps or in town.",
-          "Towns now fully heal and revive your whole company for free.",
-          "Shepherd's Fold offers a rest after its event."
-        ] },
-        { "heading": "Changes", "items": [
-          "Campaign rebalanced: regular and elite enemies are weaker, heroes heal 25% after each win.",
-          "Legendary items now roll at the level of the place they drop.",
-          "Campaign map: tap a road to see it, tap again to march; road info sits under your party.",
-          "Gear slots show only the item name; touch: one tap opens an item, with Equip, Buy or Sell buttons."
-        ] },
-        { "heading": "Fixes", "items": [
-          "Old character art removed from the game files and the Codex."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "Campaign: fallen heroes stay down after battle; revive them at Rest camps or in town.",
+            "Towns now fully heal and revive your whole company for free.",
+            "Shepherd's Fold offers a rest after its event."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Campaign rebalanced: regular and elite enemies are weaker, heroes heal 25% after each win.",
+            "Legendary items now roll at the level of the place they drop.",
+            "Campaign map: tap a road to see it, tap again to march; road info sits under your party.",
+            "Gear slots show only the item name; touch: one tap opens an item, with Equip, Buy or Sell buttons."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Old character art removed from the game files and the Codex."
+          ]
+        }
       ]
     },
     {
@@ -2391,74 +2595,108 @@
       "version": "0.6.13",
       "date": "2026-10-11",
       "groups": [
-        { "heading": "New", "items": [
-          "Valdoria's map is redrawn and longer, with a Rest camp and a merchant stop on the road.",
-          "Rest camps heal your company for free; fallen heroes can be revived there for gold.",
-          "Zoom the campaign map with the mouse wheel or a pinch.",
-          "Debug: Pose Tester I and II try other classes' skills with the new poses."
-        ] },
-        { "heading": "Changes", "items": [
-          "The Gear skill bar now matches the battle skill bar.",
-          "Merchant: Wares and Character are tabs; Odo shows all stats of today's pick.",
-          "Old campaign saves must restart because the map changed."
-        ] },
-        { "heading": "Fixes", "items": [
-          "Combat log no longer mixes the next turn's healing or damage into the previous action."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "Valdoria's map is redrawn and longer, with a Rest camp and a merchant stop on the road.",
+            "Rest camps heal your company for free; fallen heroes can be revived there for gold.",
+            "Zoom the campaign map with the mouse wheel or a pinch.",
+            "Debug: Pose Tester I and II try other classes' skills with the new poses."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "The Gear skill bar now matches the battle skill bar.",
+            "Merchant: Wares and Character are tabs; Odo shows all stats of today's pick.",
+            "Old campaign saves must restart because the map changed."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Combat log no longer mixes the next turn's healing or damage into the previous action."
+          ]
+        }
       ]
     },
     {
       "version": "0.6.12",
       "date": "2026-10-11",
       "groups": [
-        { "heading": "New", "items": [
-          "The Warrior now moves through real poses: slashes, a spinning Whirlwind, a war cry.",
-          "The Warrior's weapon shows the sword or axe he has equipped.",
-          "Lucky Escape plays its own moment: the blow glances off and a lucky horseshoe flips.",
-          "Debug: a pose tester to try every Warrior pose and weapon."
-        ] },
-        { "heading": "Changes", "items": [
-          "Turn-start healing and mana no longer float over heads; the bars glow instead.",
-          "Battle numbers no longer overlap each other.",
-          "The in-game menu is a bit larger; the main menu music fades in gently."
-        ] },
-        { "heading": "Fixes", "items": [
-          "Fighters no longer float above the floor in the castle hall; battles use less memory."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "The Warrior now moves through real poses: slashes, a spinning Whirlwind, a war cry.",
+            "The Warrior's weapon shows the sword or axe he has equipped.",
+            "Lucky Escape plays its own moment: the blow glances off and a lucky horseshoe flips.",
+            "Debug: a pose tester to try every Warrior pose and weapon."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Turn-start healing and mana no longer float over heads; the bars glow instead.",
+            "Battle numbers no longer overlap each other.",
+            "The in-game menu is a bit larger; the main menu music fades in gently."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Fighters no longer float above the floor in the castle hall; battles use less memory."
+          ]
+        }
       ]
     },
     {
       "version": "0.6.11.1",
       "date": "2026-10-11",
       "groups": [
-        { "heading": "Fixes", "items": [
-          "Codex asset pages open about twice as fast.",
-          "Returning to the main menu no longer stutters while the music restarts.",
-          "Less background work on every screen, for smoother play on phones."
-        ] }
+        {
+          "heading": "Fixes",
+          "items": [
+            "Codex asset pages open about twice as fast.",
+            "Returning to the main menu no longer stutters while the music restarts.",
+            "Less background work on every screen, for smoother play on phones."
+          ]
+        }
       ]
     },
     {
       "version": "0.6.10",
       "date": "2026-10-11",
       "groups": [
-        { "heading": "New", "items": [
-          "Gear is split into a Character page and an Inventory page; the bag is the same everywhere.",
-          "Item tooltips follow the cursor, and hero cards show what an item would change for them.",
-          "Equip by dragging or double-clicking; drag to the trash to discard.",
-          "Odo welcomes you, and the reward screen has a View bag button.",
-          "Tap the version number to read these patch notes."
-        ] },
-        { "heading": "Changes", "items": [
-          "Rarer items roll stronger bonuses; Endless items keep growing with the wave.",
-          "Settings section titles are easier to tell apart."
-        ] }
+        {
+          "heading": "New",
+          "items": [
+            "Gear is split into a Character page and an Inventory page; the bag is the same everywhere.",
+            "Item tooltips follow the cursor, and hero cards show what an item would change for them.",
+            "Equip by dragging or double-clicking; drag to the trash to discard.",
+            "Odo welcomes you, and the reward screen has a View bag button.",
+            "Tap the version number to read these patch notes."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Rarer items roll stronger bonuses; Endless items keep growing with the wave.",
+            "Settings section titles are easier to tell apart."
+          ]
+        }
       ]
     },
     {
       "version": "0.6.7",
       "date": "2026-10-11",
-      "groups": [{ "heading": "Fixes", "items": ["Mana Steal no longer drains mana when the attack misses, is dodged or is saved by Lucky Escape."] }]
+      "groups": [
+        {
+          "heading": "Fixes",
+          "items": [
+            "Mana Steal no longer drains mana when the attack misses, is dodged or is saved by Lucky Escape."
+          ]
+        }
+      ]
     },
     {
       "version": "0.6.6",
@@ -2475,7 +2713,11 @@
         },
         {
           "heading": "Fixes",
-          "items": ["Status badges on phones no longer overlap: the most important ones come first, the rest show as +N.", "Clearer rarity frames on merchant cards.", "Smoother fade when leaving the in-game Menu."]
+          "items": [
+            "Status badges on phones no longer overlap: the most important ones come first, the rest show as +N.",
+            "Clearer rarity frames on merchant cards.",
+            "Smoother fade when leaving the in-game Menu."
+          ]
         }
       ]
     },
@@ -2483,8 +2725,20 @@
       "version": "0.6.3",
       "date": "2026-10-11",
       "groups": [
-        { "heading": "New", "items": ["Performance mode in Settings (Auto, On, Off) for slower phones.", "Show FPS option in Settings."] },
-        { "heading": "Changes", "items": ["Battles run much smoother, especially on phones.", "Switching between skills reacts faster."] }
+        {
+          "heading": "New",
+          "items": [
+            "Performance mode in Settings (Auto, On, Off) for slower phones.",
+            "Show FPS option in Settings."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Battles run much smoother, especially on phones.",
+            "Switching between skills reacts faster."
+          ]
+        }
       ]
     },
     {
@@ -2531,7 +2785,11 @@
       "groups": [
         {
           "heading": "New",
-          "items": ["Legendary items: one unique item per hero, with rare drops after victories.", "Painted art for every item, status and map icon.", "Endless: pick and arrange your company with drag and drop."]
+          "items": [
+            "Legendary items: one unique item per hero, with rare drops after victories.",
+            "Painted art for every item, status and map icon.",
+            "Endless: pick and arrange your company with drag and drop."
+          ]
         },
         {
           "heading": "Changes",
@@ -2557,7 +2815,12 @@
             "New art for the Campaign, Quick Battle and Multiplayer cards, and new Defender effects."
           ]
         },
-        { "heading": "Fixes", "items": ["Multiplayer: Rematch no longer blocks the other buttons and can be cancelled."] }
+        {
+          "heading": "Fixes",
+          "items": [
+            "Multiplayer: Rematch no longer blocks the other buttons and can be cancelled."
+          ]
+        }
       ]
     }
   ]

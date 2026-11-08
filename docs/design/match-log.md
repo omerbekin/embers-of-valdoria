@@ -1,4 +1,5 @@
 # Maç kaydı (Debug > Copy match data)
+> **Ne için / Güncel mi (2026-11-08):** Debug > Copy match data kaydı. CANLI: `src/engine/match-log.ts`, `ai.ts > explainChoice`, `src/ui/match-copy.ts` mevcut.
 
 Amaç: Ömer bir savaşı oynar/izler, **Debug > Copy match data** (ya da sonuç ekranındaki "Copy match data" bağlantısı) ile kaydı panoya kopyalar ve Claude'a yapıştırır. Claude her hamlenin NEDEN yapıldığını kayıttan cevaplar ("Warrior neden 3. turda Whirlwind yerine Double Strike kullandı?").
 

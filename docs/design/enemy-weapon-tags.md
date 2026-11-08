@@ -1,4 +1,5 @@
 # Düşman silah etiketi
+> **Ne için / Güncel mi (2026-11-08):** Düşman silah etiketi tasarımı. CANLI ama UYGULANMADI: `data/mobs/` içinde silah etiketi alanı yok, kod yok. Karar sahibi Combat Design; fikir günlüğü `future-ideas/combat.md`.
 
 **Durum:** yalnız tasarım, kod yok (Ömer 2026-11-01, Koordinatör formu). Sahibi Combat Design; arayüz kısmı yapım zamanı UI-UX Design'a devredilir.
 

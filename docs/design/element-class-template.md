@@ -1,4 +1,5 @@
 # Element / hal sistemi — sınıf şablonu (taslak)
+> **Ne için / Güncel mi (2026-11-08):** Element / hal sistemi ve sınıf şablonu. Yalnız PLAN (Ömer 2026-10-13: "ben söyleyene kadar değişiklik yapma"). Oyuna yalnız lightning hasar türü girdi (bölüm 1); haller, etkileşim tablosu ve sınıf şablonları uygulanmadı. Durum: `docs/arch/areas/combat-design.md`.
 
 > Durum: **TASARIM TASLAĞI, uygulanmadı.** Kaynak: `future-ideas.md` “Element ve hal sistemi” (2026-10-10) ve “Ömer’in yön kararları” (2026-10-11) satırları. Ömer’in kararları **Karar**, önceki taslakta sunulmuş ama tek tek onaylanmamış maddeler **Taslak**, bu belgede ilk kez önerilenler **[ÖNERİ]** olarak işaretli. Yeni mekanikler yalnızca öneridir; Ömer “evet” demeden uygulanmaz. Sayılar yok; önce kurallar netleşecek.
 
@@ -56,28 +57,28 @@
 | Kurulum (zeminde/hedefte olan) | Tetik (gelen) | Sonuç | Durum |
 |---|---|---|---|
 | Su | Ateş | Buhar bulutu (ıslaklık biter) | Taslak |
-| Su | Buz | Buz zemini (kayma) | **Karar (Ömer 2026-10-27):** Flooded + Storm (iki sıra) -> Ice zemini, üstündeki düşman tur başında Slow 1 tur; su kalkar (open-questions 445) |
+| Su | Buz | Buz zemini (kayma) | **Karar (Ömer 2026-10-27):** Flooded + Storm (iki sıra) -> Ice zemini, üstündeki düşman tur başında Slow 1 tur; su kalkar (open-questions-archive 445) |
 | Buz zemini | Ateş | Su zemini | Taslak |
-| Yanan zemin | Su / Buz | Söner | **Karar (Ömer 2026-10-27):** suda söner (eskisi gibi); Storm + Burning (iki sıra) ikisi de söner, hücre Flooded olur (open-questions 445) |
-| Zehir / Yağ zemini | Ateş | Patlama / yangın | **Karar (Ömer 2026-10-27), zehir:** Poison -> Burning = Explosion (hücre + komşulara anlık ateş hasarı, zehir kalkar, ateş kalır); ters sıra Burning -> Poison = Toxic smoke (Blinded 1 tur + bir zehir tiki, zehir buharlaşır). Yağ hâlâ taslak (open-questions 445) |
+| Yanan zemin | Su / Buz | Söner | **Karar (Ömer 2026-10-27):** suda söner (eskisi gibi); Storm + Burning (iki sıra) ikisi de söner, hücre Flooded olur (open-questions-archive 445) |
+| Zehir / Yağ zemini | Ateş | Patlama / yangın | **Karar (Ömer 2026-10-27), zehir:** Poison -> Burning = Explosion (hücre + komşulara anlık ateş hasarı, zehir kalkar, ateş kalır); ters sıra Burning -> Poison = Toxic smoke (Blinded 1 tur + bir zehir tiki, zehir buharlaşır). Yağ hâlâ taslak (open-questions-archive 445) |
 | Kan zemini | Buz | Buz zemini | Taslak |
 | Su / Kan zemini | Elektrik | Yüklü zemin (üstündekileri sarsar) | Taslak |
 | Buhar bulutu | Elektrik | Yüklü bulut | Taslak |
-| Yanan zemin | Kutsal | Kutsal ateş | **Karar (Ömer 2026-10-27):** Burning <-> Holy Fire (iki sıra) = Sanctified Flame (güçlünün %30 fazlası, uzun süre) (open-questions 445) |
+| Yanan zemin | Kutsal | Kutsal ateş | **Karar (Ömer 2026-10-27):** Burning <-> Holy Fire (iki sıra) = Sanctified Flame (güçlünün %30 fazlası, uzun süre) (open-questions-archive 445) |
 | Kutsal ateş | Karanlık | Lanetli ateş | Taslak |
-| Su zemini | Kutsal | Kutsal su | **Karar (Ömer 2026-10-27):** Flooded <-> Holy Fire = Holy Water (tetiği bırakanın dostlarına tur başı şifa, hasar yok) (open-questions 445) |
+| Su zemini | Kutsal | Kutsal su | **Karar (Ömer 2026-10-27):** Flooded <-> Holy Fire = Holy Water (tetiği bırakanın dostlarına tur başı şifa, hasar yok) (open-questions-archive 445) |
 | Wet hedef | Buz | Frozen | Taslak |
 | Wet hedef | Elektrik | Stunned | Taslak |
 | Su/kan/zehir zemini | Defender sarsıntısı | Sıvı komşu karelere sıçrar | Taslak |
 | Buz zemini / Frozen hedef | Ağır fiziksel darbe | Buz kırılır (zemin → su; Frozen biter) | **[ÖNERİ]** |
 | Yüklü zemin | Elektrik vuruşu | Akım zemin boyunca komşu ıslak hedeflere sıçrar | **[ÖNERİ]** |
 | Kutsal su | — | Üstünde duran müttefiğe küçük şifa | **[ÖNERİ]** |
-| Kutsal ateş | Zehir | Purified: zehir tutmaz, kutsal ateşin süresi o hücrede baştan başlar | **Karar (Ömer 2026-10-27)** (open-questions 445) |
-| Zehir zemini | Kutsal ateş | Fed: zehir tükenir, kutsal ateş o hücrede %50 fazla vurur | **Karar (Ömer 2026-10-27)** (open-questions 445) |
-| Kök zemini (Root Field) | Ateş (iki sıra) | Roots burn: kök yanar (Slow biter), anlık ateş hasarı, ateş kalır | **Karar (Ömer 2026-10-27)** (open-questions 445) |
-| Su zemini | Zehir (iki sıra) | Zehir suya bağlı tüm su hücrelerine yayılır, su kalır | **Karar (Ömer 2026-10-27)** (open-questions 445) |
+| Kutsal ateş | Zehir | Purified: zehir tutmaz, kutsal ateşin süresi o hücrede baştan başlar | **Karar (Ömer 2026-10-27)** (open-questions-archive 445) |
+| Zehir zemini | Kutsal ateş | Fed: zehir tükenir, kutsal ateş o hücrede %50 fazla vurur | **Karar (Ömer 2026-10-27)** (open-questions-archive 445) |
+| Kök zemini (Root Field) | Ateş (iki sıra) | Roots burn: kök yanar (Slow biter), anlık ateş hasarı, ateş kalır | **Karar (Ömer 2026-10-27)** (open-questions-archive 445) |
+| Su zemini | Zehir (iki sıra) | Zehir suya bağlı tüm su hücrelerine yayılır, su kalır | **Karar (Ömer 2026-10-27)** (open-questions-archive 445) |
 
-Zemin tepkimelerinin genel kuralı (Ömer 2026-10-27, uygulandı): hücredeki zemin kurulum, yeni bırakılan tetik; her ortak hücrede bir kez, tek sonuç; iki tarafın zeminleri de tepkir; etkinin sahibi tetiği bırakan. Veri `data/grounds.json > reactions`, sayılar provizyon (open-questions 445).
+Zemin tepkimelerinin genel kuralı (Ömer 2026-10-27, uygulandı): hücredeki zemin kurulum, yeni bırakılan tetik; her ortak hücrede bir kez, tek sonuç; iki tarafın zeminleri de tepkir; etkinin sahibi tetiği bırakan. Veri `data/grounds.json > reactions`, sayılar provizyon (open-questions-archive 445).
 
 ## 5. Sınıf şablonları
 

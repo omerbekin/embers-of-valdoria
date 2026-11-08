@@ -135,6 +135,11 @@ const CLASS_TESTS: ReadonlyArray<{ key: string; skill: string; caster: string; l
   { key: 'thunderpeal', skill: 'thunderpeal', caster: 'vesper', label: 'Thunderpeal (row: two targets)', dummy2Slot: 2, track: ['thunder'] },
   { key: 'cracked_bell', skill: 'cracked_bell', caster: 'vesper', label: 'Cracked Bell' },
   { key: 'great_bell_of_valdoria', skill: 'great_bell_of_valdoria', caster: 'vesper', label: 'Great Bell of Valdoria', dummy2Slot: 10, track: ['great_bell'] },
+  // Thunder Skald'ın kendi efektleri (2026-11-08; assets/vfx/skald/, art-v2/skald/vfx.ts); Stormcall ikinci / üçüncü kuklayla zincirler
+  { key: 'hammer_spark', skill: 'hammer_spark', caster: 'skald', label: 'Hammer Spark', track: ['hammer_charge', 'hammer_wave', 'hammer_impact', 'stormcall_arc'] },
+  { key: 'thunder_strike', skill: 'thunder_strike', caster: 'skald', label: 'Thunder Strike', track: ['hammer_charge', 'hammer_impact', 'stormcall_arc'] },
+  { key: 'war_drum', skill: 'war_drum', caster: 'skald', label: 'War Drum', track: ['drum_beat', 'drum_pulse'] },
+  { key: 'stormcall', skill: 'stormcall', caster: 'skald', label: 'Stormcall (chains to armored foes)', dummy2Slot: 9, track: ['hammer_charge', 'sky_bolt', 'stormcall_arc'] },
   // Druid ve Treant'ın kendi efektleri (2026-11-02; assets/vfx/druid/, art-v2/druid/vfx.ts)
   { key: 'rejuvenate', skill: 'rejuvenate', caster: 'druid', label: 'Healing Rain (Rejuvenate)', track: ['healing-rain', 'healing-pool'] },
   { key: 'natures_wrath', skill: 'natures_wrath', caster: 'druid', label: "Nature's Wrath", dummy2Slot: 2, track: ['wrath-surge'] },
@@ -149,7 +154,7 @@ function testSkills(): TestSkill[] {
     const def = content.skills[skill];
     const unit = content.bosses[s.mob] ?? content.mobs[s.mob];
     const t = def?.target;
-    const item: TestSkill = { key: skill, skill, label: def?.name ?? skill, mob: s.mob, mobName: unit?.name ?? s.mob, ally: t === 'single_ally' || t === 'all_allies' };
+    const item: TestSkill = { key: skill, skill, label: def?.name ?? skill, mob: s.mob, mobName: unit?.name ?? s.mob, ally: t === 'single_ally' || t === 'all_allies' || t === 'self_area' };
     const list = byMob.get(s.mob) ?? [];
     list.push(item);
     byMob.set(s.mob, list);
@@ -157,7 +162,7 @@ function testSkills(): TestSkill[] {
   const cls: TestSkill[] = CLASS_TESTS.filter((t) => content.skills[t.skill]).map((t) => {
     const unit = content.classes[t.caster] ?? content.summons[t.caster] ?? content.bosses[t.caster] ?? content.mobs[t.caster];
     const tgt = content.skills[t.skill]?.target;
-    const ally = tgt === 'single_ally' || tgt === 'all_allies';
+    const ally = tgt === 'single_ally' || tgt === 'all_allies' || tgt === 'self_area';
     return { key: t.key, skill: t.skill, label: t.label ?? content.skills[t.skill]?.name ?? t.skill, mob: t.caster, mobName: `${unit?.name ?? t.caster} (class effects)`, ally, ...(t.dummy ? { dummy: t.dummy } : {}), ...(t.dummySlot !== undefined ? { dummySlot: t.dummySlot } : {}), ...(t.pre ? { pre: t.pre } : {}), ...(t.casterHp !== undefined ? { casterHp: t.casterHp } : {}), ...(t.keepAfter ? { keepAfter: true } : {}), ...(t.dummy2Slot !== undefined ? { dummy2Slot: t.dummy2Slot } : {}), ...(t.allySlot !== undefined ? { allySlot: t.allySlot } : {}), ...(t.track ? { track: t.track } : {}) };
   });
   return [...byMob.values()].flat().concat(cls);

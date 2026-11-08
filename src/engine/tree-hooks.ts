@@ -600,9 +600,16 @@ export const COND: Record<string, (x: CondCtx, arg: unknown) => boolean | undefi
   eventAmount: (x, a) => cmp(x.amount, a),
 };
 
-/** Kullanımın hedef / isabet sayısı: kullanım sürerken hedef listesi (canlı), kullanım sonunda isabet edenler. */
+/**
+ * Kullanımın hedef / isabet sayısı: kullanım sürerken hedef listesi (canlı), kullanım sonunda isabet edenler. Dost hedefler isabet zarı atmaz:
+ * kullanım sonunda listedeki canlı dostlar da sayılır (Skald War Drum: Marching Beat / Full Chorus, 2026-11-08; düşman hedefli skill'de değişiklik yok).
+ */
 function castCount(x: CondCtx): number | undefined {
-  if (x.cast?.done) return x.cast.landed.size;
+  if (x.cast?.done) {
+    const side = x.self.side;
+    const allies = side ? (x.host?.castTargets() ?? []).filter((c) => c.side === side && c.hp > 0 && !x.cast!.landed.has(c.uid)).length : 0;
+    return x.cast.landed.size + allies;
+  }
   const list = x.host?.castTargets();
   return list ? list.filter((c) => c.hp > 0 || x.cast?.landed.has(c.uid)).length : undefined;
 }

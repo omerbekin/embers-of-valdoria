@@ -1,0 +1,40 @@
+{
+  "_not": "Thunder Skald (Ömer onayı 2026-11-07, ana kit: scratchpad thunder-skald-kit.md + Ömer seçimleri): çekiçle şimşek çağıran, davulla dostları hızlandıran orta sıra STR kahramanı. War Drum yeni hedef türü self_area (kendi hücresi merkezli 3x3), Hammer Spark bölünmüş hasar (damage.split), pasif Conductor (yalnız şimşek parçasına +%25). Görünüş YER TUTUCU: Defender sprite / avatar / v2 poz gövdesi (poses.json > classAliases), skill ikon / efekt / sesleri ödünç; renk ve logo kendisinin. Statlar PROVİZYON (sim yok), skill ağacı yok (puanlar birikir). Ömer 2026-11-08: Skald \"uzatılmış yakın dövüşçü\", YAKIN DÖVÜŞ grubunda: taban menzil 3 -> 2 (Hammer Spark / Thunder Strike 2), Stormcall skill istisnası 3; frontPriority 3 -> 2 (ön saf; Paladin ile aynı).",
+  "id": "skald",
+  "name": "Thunder Skald",
+  "spriteId": "defender",
+  "color": "#6fa8dc",
+  "logo": "warcry",
+  "role": "Storm Hammer",
+  "blurb": "Hammer-bearing storm singer whose war drum quickens every ally beside him.",
+  "frontPriority": 2,
+  "range": 2,
+  "attributes": {
+    "str": 24,
+    "int": 10,
+    "dex": 8,
+    "luck": 18
+  },
+  "primary": "str",
+  "armor": 12,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "hammer_spark",
+    "thunder_strike",
+    "war_drum",
+    "stormcall"
+  ],
+  "passive": {
+    "id": "conductor",
+    "name": "Conductor",
+    "icon": "judgebeam",
+    "text": "Your lightning deals 25% more damage to targets that are Slowed, Stunned or Shocked, or that your own hit Shocks, Slows or Stuns.",
+    "effect": {
+      "type": "conductor",
+      "element": "lightning",
+      "statuses": ["slow", "stun", "shocked"],
+      "bonus": 0.25
+    }
+  }
+}

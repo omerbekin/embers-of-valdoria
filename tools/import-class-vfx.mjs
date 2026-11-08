@@ -31,6 +31,15 @@ const CLASSES = {
     { src: '01-smoke-bomb', out: '01-smoke-bomb', title: 'Smoke Bomb: clay bomb bursts into a low smoke bank', align: 'ground', fps: 11, shift: { 0: [-32, 0] } }, // s1'in bombası s2'nin kırılma noktasına (ground hizası bombayı 32 px sağa atıyordu)
     { src: '02-smoke-bomb-fly', out: '02-smoke-bomb-fly', title: 'Smoke Bomb: spinning clay bomb (flight loop)', align: 'center', fps: 16 },
   ],
+  skald: [
+    { src: '01-drum-pulse', out: '01-drum-pulse', title: 'War Drum: ground shockwave ring with lightning threads', align: 'ground', fps: 13 },
+    { src: '02-drum-beat', out: '02-drum-beat', title: 'War Drum: sound rings off the drum skin', align: 'keep', fps: 18 },
+    { src: '03-hammer-wave', out: '03-hammer-wave', title: 'Hammer Spark: travelling shock crescent (loop)', align: 'keep', fps: 14 },
+    { src: '04-hammer-impact', out: '04-hammer-impact', title: 'Hammer Spark: half iron half lightning impact', align: 'keep', fps: 18 },
+    { src: '05-sky-bolt', out: '05-sky-bolt', title: 'Thunder Strike: lightning bolt hits the ground', align: 'ground', fps: 14 },
+    { src: '06-stormcall-arc', out: '06-stormcall-arc', title: 'Stormcall: chain lightning arc between targets', align: 'keep', fps: 20 },
+    { src: '07-hammer-charge', out: '07-hammer-charge', title: 'Lightning gathering around the hammer head', align: 'keep', fps: 11 },
+  ],
   vesper: [
     { src: '01-toll-ring', out: '01-toll-ring', title: 'Toll: holy sound ring', align: 'keep', fps: 18 },
     { src: '02-thunder-bell', out: '02-thunder-bell', title: 'Thunderpeal: spectral bell turning to thunder', align: 'keep', fps: 15 },

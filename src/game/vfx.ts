@@ -966,7 +966,7 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
       if (!alive()) return;
       for (const k of cells) {
         const w = Math.max(...k.q.map((p) => p.x)) - Math.min(...k.q.map((p) => p.x));
-        const spr = vfxSheet(scene, POOL, k.m.x, k.m.y, { size: w * 0.8, loop: true, from: Math.floor(k.ph) % 8, alpha: 0.9, depth: 30 });
+        const spr = vfxSheet(scene, POOL, k.m.x, k.m.y, { size: w * 0.8, loop: true, from: Math.floor(k.ph) % 8, alpha: 0.9, depth: 30, inbetween: { method: 'crossfade+motion', sub: 3 } });
         if (spr) box.add(spr);
       }
     });

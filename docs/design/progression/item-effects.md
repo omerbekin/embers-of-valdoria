@@ -1,4 +1,6 @@
 # Epic item özel etkileri: ÖNERİ LİSTESİ (Ömer seçecek)
+> **Ne için / Güncel mi (2026-11-08):** epic item özel etkileri öneri listesi. UYGULANDI (madde 292); tarihçe, geçerli veri data/items.json.
+
 
 > **Durum: UYGULANDI (Ömer seçimi 2026-10-10, madde 292).** Onaylanan 11 etki: 1 Opening Ward, 2 Mana Spring, 5 Second Wind, 6 Quick Start, 7 Steadfast, 8 Iron Will, 10 Giantslayer, 11 Warden's Oath, 12 Ember Heart, 13 Thrifty, 14 Bloodletter. **Reddedilen:** 3 First Strike, 4 Last Rites, 9 Keen Edge. Sayılar `data/items.json > effects` (metin, IP, motor kancası, değer); motor `UnitSetup.itemEffects` (`src/engine/types.ts > ItemEffects`), güç katmanı `src/progression/loadout.ts > equipmentEffects`. Kararlaştırılmamış 3 soru güvenli varsayılanla ve TEK veri anahtarıyla (`effectRules`): (a) etki IP'si Epic bütçesinin içinden (`ipFromBudget: true`), (b) aynı etki iki item'den toplanmaz, en yükseği (`stack: false`), (c) Endless'ta da aynı (`endless: true`).
 >

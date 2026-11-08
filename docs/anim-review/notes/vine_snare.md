@@ -16,3 +16,7 @@ vinesnareChain: her hedefe ayrı kamçı (şeritli, 300 ms arayla), halkalar son
 
 ## Tur 7 · Claude + Codex (Terra/Sol) · sheet 07 yeni çizim (ince sarmaşık, net ufalanma) · 2026-11-03
 job-vine_snare3.json, 3 tur, en iyi tur 3 = 5/10 KALDI (vine_snare3/). 8 çizgisine ulaşılmadı: BAĞLANMADI, eski vinesnare oynuyor, assets/source ve assets/vfx değişmedi.
+
+## Tur N · Claude · düzeltme (fps + konum) · 2026-11-08
+Ömer: "fps değerleri ve efektlerin durduğu yerler doğru değil, Codex yeterince dikkatli bakmamış". Yakalama aracı düzeltildi (tools/anim-capture.mjs): Phaser TweenManager süreyi Date.now()'dan alır, elle adımlamada tween'ler duvar saatiyle (yükte ~2x hızlı, yağmur sönüşü ve yumruk düşüşü yanlış kısa görünüyordu) koşuyordu; Date.now() adım saatine bağlandı. Önceki Druid yakalamaları (2026-11-02..) tween zamanlarında yanılıyordu. Oyundaki gerçek fps = sheet fps x ara kare / skillSlowdown (1.2); 8 kareli sheet 12-14 fps efektif oynuyordu (takılma): hepsine 3x kodla ara kare (IB, src/game/art-v2/druid/vfx.ts) eklendi, süre aynı.
+Kod çizimi (sheet bağlı değil, 07/08 hâlâ açık iş): sarmal iki hedefin ayaklarında, kök sırtı Treant ayağından başlıyor; fps ölçülecek sheet yok. Yakalama (clock düzeltmesinden sonra) ile görsel kontrol: konum tamam. Değişiklik yok.

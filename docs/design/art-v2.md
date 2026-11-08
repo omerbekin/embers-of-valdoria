@@ -1,4 +1,6 @@
 # Sanat Sürüm 2 (v2): ikon, skill animasyonu ve ses yeniden tasarımı — content-designer kılavuzu
+> **Ne için / Güncel mi (2026-11-08):** v2 ikon/skill animasyonu/ses yeniden tasarım kılavuzu (content-designer). kılavuz geçerli; sayı/durum listeleri tarihçe, güncel durum alan belgeleri (character-vfx.md) ve data/.
+
 
 Ömer kararı: tüm karakterlerin **ses, ikon ve skill animasyonları baştan yeniden tasarlanıyor** (iyileştirme değil, yeniden tasarım;
 en yüksek çözünürlük ve kalite). Eskiler (**v1**) DOKUNULMAZ ve korunur; Ömer debug > **Versions** sekmesinden karakter bazında
@@ -166,3 +168,12 @@ Altyapıyı uçtan uca kanıtlamak için Warrior'ın ilk skill'ine (Double Strik
 - `data/audio-v2/warrior.json`: `axeChop` (v1 adıyla, biraz daha pes kopya) ve `exampleClang` (v2'ye özgü yeni ad), `_example` notu.
 Testler örneğe bağlı DEĞİLDİR (kendi geçici içeriklerini enjekte eder); örneği silmek ya da üzerine yazmak hiçbir testi kırmaz.
 Örneği görmek için: debug > Versions > Warrior = v2, sonra Double Strike (ya da `gallery.html?embed=1&skill=melee_attack&ver=v2`).
+
+## Eski görsel rehber (eski art.md; palette.json henüz YOK, yalnız öneri)
+- Stil: pixel art, yandan görünüm.
+- Oyun çözünürlüğü **1920x1080 (HD)** (Ömer kararı, 2026-10-04). Karakterler ekranda yaklaşık 140x200 piksel yer kaplar (`data/battle-layout.json` > `characterSize`). Sprite kaynak boyutu açık soru (bkz. open-questions-archive 12).
+- Palet: tek sabit palet kullanılır (öneri: 32 renk; ilk iş Ömer onayıyla `assets/palette.json` oluşturulur).
+- Animasyon seti: `idle`, `attack`, `cast`, `hit`, `death`, `defend`. Hepsi yatay sprite sheet, kare başına sabit boyut.
+- Arka planlar: 1920x1080; oranı farklı görsel ekranı kaplayacak şekilde ölçeklenir, taşan kenar kırpılır. Dosya: `assets/backgrounds/<id>.jpg/png`. 2-3 katman parallax (opsiyonel).
+- Placeholder aşaması: class rengine boyalı basit blok karakter. Gerçek sprite aynı dosya adıyla gelince otomatik değişir.
+- UI: pixel fontlu, büyük dokunma hedefleri, yatay ekrana göre yerleşim.

@@ -1,4 +1,6 @@
 # Sefer tutorial'ı (mentor dersleri)
+> **Ne için / Güncel mi (2026-11-08):** sefer tutorial dersleri. canlı (src/tutorial); ders listesi için kod esas.
+
 
 Ömer onayı 2026-10-13; durum dersleri ve küçük kutu Ömer 2026-10-14. Ek dersler, MP adımı, spot ışığı, Replay: Ömer seçimi 2026-10-14. Varsayımlar: `open-questions.md` madde 319, 320, 325.
 
@@ -12,7 +14,7 @@
 ## Yeni sefer başlangıcı (Ömer 2026-11-01)
 Yalnız yeni seferlerde (kayıtta `soloStart: true`); eski kayıt eski yapıda sürer (`campaign.json > legacyStart`, `src/campaign/data.ts > mapFor`). Sayılar veride, hepsi PROVİZYON (`campaign.json > soloStart`, `src/campaign/solo-start.ts`).
 
-- **Tek kişiyle başla:** başlangıç havuzu Warrior, Defender, Paladin, Druid. Kahraman kalıcı: lider, level, puan ve ağaç kalır. Veda kartı, "Temporary company", `h.tutorial` ve Mill Road katılımı yok. **Skip tutorial yok.** Debug'daki atlamalar oyuncuya görünmez.
+- **Tek kişiyle başla:** başlangıç havuzu Warrior, Skald, Paladin, Druid (Ömer 2026-11-08: Skald girdi, Defender çıktı; Defender bölük/aday havuzunda). Kahraman kalıcı: lider, level, puan ve ağaç kalır. Veda kartı, "Temporary company", `h.tutorial` ve Mill Road katılımı yok. **Skip tutorial yok.** Debug'daki atlamalar oyuncuya görünmez.
 - **Katılımlar:** Ashford 1 kişi (12 sınıftan serbest, lider sabit, kadrodaki sınıf çıkmaz), Valdren Keep 1 (3 aday), King's Bridge boss zaferi 1 (3 aday). Takım: Ashford öncesi 1, sonra 2, Valdren sonrası 3, King's Bridge sonrası 4. Katılan katılım seviyesinde gelir, tüm skill'leri açıktır.
 - **Skill açılışı (yalnız ilk kahraman, ilk üç savaş, savaş ilk kazanılana kadar):** Mill Road yalnız temel saldırı; Ravenwood ikinci skill açık, üçüncü skill ikinci dalga gelince (`UnitSetup.unlockOnWave`) açılır; Ruined Watchtower hepsi açık. Sıra sınıfa göre veride (`soloStart.skillOrder`).
 - **Garrick'in cümlesi:** her açılışta bir kart (`tutorial.json > skillUnlocks`), skill başına bir kez, kayıt anahtarı `unlock:<skill>`, ders tavanına girmez. O kararın durum dersi sıradaki karara kalır, seçim dersi aynı kararda çıkabilir. Mill Road'un eski "Stronger Skills" adımı (`f_mp_skill`) kilitli skill'i seçmediği için kendiliğinden düşer.
@@ -23,7 +25,7 @@ Yalnız yeni seferlerde (kayıtta `soloStart: true`); eski kayıt eski yapıda s
 ## Akış
 | Yer | Ders | Ne zaman |
 |---|---|---|
-| I · Mill Road | Açılış sözü, The Turn Bar, Attacking, Hit Chance, Choosing a Target | İlk karar: ZORUNLU adımlar (Next -> saldırı düğmesi -> düşmana dokun; Ömer 2026-10-31: Hit Chance ilk vuruş çözülmeden önce, saldırı seçilince Whisper olarak çıkar, hedef adımını bekletmez). Savaş kaybedilemez (takımın tamamı, 2 kahramanla da). Ölçülen sıra: `tutorial-order.md`. |
+| I · Mill Road | Açılış sözü, The Turn Bar, Attacking, Hit Chance, Choosing a Target | İlk karar: ZORUNLU adımlar (Next -> saldırı düğmesi -> düşmana dokun; Ömer 2026-10-31: Hit Chance ilk vuruş çözülmeden önce, saldırı seçilince Whisper olarak çıkar, hedef adımını bekletmez). Savaş kaybedilemez (takımın tamamı, 2 kahramanla da). Ölçülen sıra: aşağıdaki "Tutorial sırası ölçümü" bölümü. |
 | I · Mill Road | Stronger Skills (`f_mp_skill`) + Skills and MP | İkinci karar: ZORUNLU; kahramanın şu an kullanılabilen en güçlü MP skill'i parlar, oyuncu onu kullanır; ardından Skills and MP burada gösterilir. Kullanılabilir MP skill'i yoksa adım sessizce atlanır. |
 | Her savaş (Mill Road hariç) | Durum dersleri (aşağıdaki tablo) | Durum ilk kez oluşunca |
 | I · Ravenwood (katılımdan sonra) | Zorunlu Formation (ipucu kartı "Arrange your formation...") | Yeni kahraman katılınca savaş beklemede; Formation düğmesi kor rengiyle parlar; Formation açılana kadar savaşa dokunmak savaşı BAŞLATMAZ ("Open Formation first." notu + ipucu kartı yeniden + parıltı çakar). Açılıp kapanınca parıltı söner, savaş normal (aşağıda Kurallar). |
@@ -96,3 +98,66 @@ Yalnız yeni seferlerde (kayıtta `soloStart: true`); eski kayıt eski yapıda s
 ## Gereken sanat
 - Mentor portresi (Garrick, yaşlı sınır komutanı; 256x256, diğer avatarlarla aynı stil): `assets/avatars/mentor.png`, sonra `data/tutorial.json > mentor.avatar = "mentor"`. Hazır (2026-10-14): asıl `assets/source/mentor/garrick.png`, yana bakan sürüm (öne bakan ilk deneme reddedildi).
 - (İsteğe bağlı) Codex > Lessons ikonu: şimdilik piksel `book`.
+
+## Tutorial sırası ölçümü (2026-10-31; eski tutorial-order.md)
+Dış test raporu üzerine ölçüldü (v0.9.10.4, Warrior, Medium, tutorial atlanmadı: "Rage ile vurduğum güçlü saldırı ilk savaşta ıskaladı, Hit Chance ikinci savaşta geldi"). Kurallar `tutorial.md`, içerik `data/tutorial.json`.
+
+### Nasıl ölçüldü
+- Gerçek oyun, 0.9.10.6 tabanı, yeni sefer: Normal, Medium, Warrior, tutorial atlanmadı; Mill Road'dan sonra Druid seçildi. Her açılan kutu sayfa içinden kaydedildi.
+- İlk saldırı elle yapıldı. Savaşların kalanını küçük bir test betiği oynadı: kartı hemen kapatır, kullanılabilen en yüksek yuvadaki skill'i seçer. Bu yüzden durumla açılan derslerin sırası oyuncunun seçimine göre biraz değişebilir.
+- "Karar" = oyuncunun o savaştaki kaçıncı hamlesi.
+
+### Ölçülen sıra (değişiklikten önce)
+"Önce / sonra": oyuncunun o bilgiye ihtiyaç duyduğu andan önce mi sonra mı.
+
+| # | id | Başlık | Yer | An | Tetik | Önce / sonra |
+|---|---|---|---|---|---|---|
+| 1 | (opening) | Mill Road | Mill Road | 1. karar | Açılış sözü | - |
+| 2 | turn_bar | The Turn Bar | Mill Road | 1. karar | Zorunlu | Önce |
+| 3 | attack | Attacking | Mill Road | 1. karar | Zorunlu | Önce |
+| 4 | target | Choosing a Target | Mill Road | 1. karar | Zorunlu, saldırı seçilince | Önce |
+| 5 | f_mp_skill | Stronger Skills | Mill Road | 2. karar | Zorunlu; Warrior'da Charge (en pahalı MP skill'i) | Önce |
+| 6 | skills_mp | Skills and MP | Mill Road | 2. karardan sonra | Kod, MP adımı bitince | Önce |
+| - | **kart yok** | Headsman's Blow (Rage) | Mill Road | 3. karar | Mill Road'da serbest; Rage bedeli olan 30'a ulaşmıştı | **Hiç anlatılmadı** |
+| 7 | hp_carry | Wounds Carry Over | Harita | Mill Road zaferi + katılım sonrası | İlk zafer | Önce |
+| 8 | formation_new_hero | A New Companion | Harita | Ravenwood'a dokununca | Kapı | Önce |
+| 9 | unit_card | Reading a Fighter | Ravenwood | 1. karar | `first` | Önce |
+| 10 | statuses | Statuses | Ravenwood | 2. karar | `status` | Yerinde |
+| 11 | ultimate | The Ultimate | Ravenwood | 3. karar (Druid) | `ultimate` | Yerinde |
+| 12 | hit_preview | **Hit Chance** | Ravenwood | **4. karar**, seferin 9. oyuncu hamlesi | `preview` | **Sonra** |
+| 13 | rows_reach | Rows and Reach | Ravenwood | 6. karar | `reach` | Sonra |
+| 14 | ally_target | Helping Allies | Ravenwood | 7. karar | `ally` | Sonra (iki iyileştirme yapılmıştı) |
+| 15 | area_shapes | Area Shapes | Ravenwood | 9. karar | `area` | Sonra (iki alan skill'i atılmıştı) |
+| 16 | node_types | Reading the Road | Harita | Ravenwood zaferinden sonra | `map` + görünen düğüm | Geç (elit düğüm bir önceki haritada da görünüyordu) |
+| 17 | gear | Gear (3 sayfa) | Gear | Gear ilk açılınca | Torbada item | Önce |
+| 18 | burning_ground | Burning Ground | Ruined Watchtower | 3. karar | `ground` | Yerinde |
+| 19 | ultimate | The Ultimate (tekrar) | Ruined Watchtower | 5. karar (Druid) | Eylem dersi tekrarı (betik Druid'in çağrısını kullanmadığı için) | Yerinde |
+
+Ruined Watchtower'ın sonuna kadar oynanmadı; kayıt iki düşmandan biri ölmüşken, ikincisinin canı 2'yken kesildi.
+
+### Veriyle fark
+`data/tutorial.json` dizisindeki sıra gösterim sırası değil, aynı anda birden çok ders hazırsa kullanılan önceliktir.
+
+- **Açılış sözü** ders dizisinde yok (`opening` alanı).
+- **Skills and MP** veride `spent` durumu; ölçümde Mill Road'da kod zorla açtı. `tutorial.md` bunu yazıyor, hata değil.
+- **Hit Chance** veride Statuses'tan önce, oyunda sonra. Sebep aşağıda.
+- **Wounds Carry Over** veride Towns ve Merchant'ın altında, oyunda ilk harita dersi. Diğerlerinin ekran koşulu henüz oluşmuyor.
+- **A New Companion** veride harita derslerinin sonunda, oyunda erken. Kapı oyunun kendisi açıyor.
+- **Reading the Road** hazır olduğu halde bir harita sonraya kaldı: ekranda aynı anda tek ders kuralı, Wounds Carry Over önce çıktı.
+
+### Hit Chance neden geç geldi
+Üç kural üst üste bindi. Üçü de tasarımda yazılı; bu bir kod hatası değil.
+
+1. **Mill Road'da durum dersi kapalı** (`situationLessonsIn`). Hit Chance durum dersi olduğu için ilk savaşta hiç çıkamıyordu. Rage skill'i ise 3. kararda serbest kullanılabiliyordu.
+2. **Karar başına tek ders.** Reading a Fighter, Statuses ve The Ultimate karar başında açılır. Hit Chance ancak skill'e basınca değerlendirilir, o kararda başka ders çıktıysa bekler. Bu yüzden veride önde olsa da Ravenwood'da üç karar geride kaldı.
+3. **Yalnızca düğmeye basınca tetiklenir.** Her turda temel saldırı zaten seçili gelir; oyuncu düğmeye basmadan düşmana dokunursa ders tetiklenmez (koddan, ölçümde bu yol denenmedi).
+
+Raporcunun gördüğü ıskalamayı bu oyunda görmedik: ilk vuruşun isabet şansı %87 gösteriyordu ve ıskalama olmadı. Sıra kısmı ise rapordakiyle aynı çıktı.
+
+### Değişiklik (Ömer: Hit Chance ilk savaşta)
+Mill Road 1. karar artık: The Turn Bar → Attacking → **Hit Chance** → Choosing a Target.
+
+- Kart saldırı düğmesine basılınca açılır, metin aynıdır, "Got it" basılana kadar vuruş kilitli kalır. Bu sırada düşmanın üstüne gelince sayılar görünür.
+- Saldırı adımı 1. kararda zorunlu olduğu için Rage skill'i de kartın ardından gelir.
+- Görülmüşse tekrar çıkmaz. Mill Road'u eski sürümde geçmiş oyuncu için durum tetiği (`preview`) yerinde kaldı.
+- Başka ders, metin ya da sıra değişmedi. Kod `src/game/battle-tutorial.ts > nextStep`.

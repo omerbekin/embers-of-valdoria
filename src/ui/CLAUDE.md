@@ -1,0 +1,14 @@
+# Arayüz kuralları (src/ui ve src/game; tam metin `docs/arch/ui-global-rules.md`, `docs/arch/ui-and-stage.md`)
+- **ZORUNLU:** yeni arayüz öncesi `docs/design/ui-design-language.md` ve `docs/design/ui-reference.md`; aynı işi gören parça varsa onu kullan, kopyalama.
+- **Tasarım kiti:** Cinzel 600 büyük harf + EB Garamond; **arayüzde italik YOK**; ince altın çizgi, kutusuz yazı düğmeleri. Kitler: `src/game/elegant-ui.ts`, `src/ui/elegant.css`, `src/game/hud-kit.ts`. Hareket TEK yerde `data/ui-motion.json` -> `src/ui/motion.ts`. Düğme sırası: ikinciller solda, BİRİNCİL EN SAĞDA.
+- **Geri / Menu:** kurulum/bilgi ekranında yalnızca sol üst Back, oyun içinde yalnızca sağ üst Menu (ikisi birlikte yok); konum `src/ui/nav-icons.ts > NAV_BTN`; yeni ekranda başka konum KULLANILMAZ. Tüm Menu'ler `src/ui/game-menu.ts`. Onay yalnızca ilerleme kaybolacaksa (`elConfirm`).
+- **Zemine dokununca kapanma:** `dismissOnBackdrop` / `elBackdropTap`; zorunlu seçim ve kayıp yaratan kartlar kapanmaz; onay pencerelerinde zemin = No.
+- **Sürükle-bırak:** yuva doldurulan HER arayüzde (fare + dokunma); yuvalar arası taşıma da.
+- Dokunmatik öncelikli; hedefler en az 44px.
+- **Üç ekran boyutu:** her arayüz/mockup/sahne 16:9 (1920x1080), 21:9 (2580x1080), telefon (~844x390, `html.short`); doğrulama üçünde ekran görüntüsüyle.
+- Kısa ekran: CSS `html.short` (<=520px) / `html.compact` (<=720px) (@media değil). Yuva seçimi ortak `shape-draw.ts` CellTile. Ana ekran dışı sahne `lazy-scenes.ts` ile yüklenir.
+- **Sahne:** 1920x1080 taban, geniş ekranda 2580'e kadar esner; `stageView`, `FULL_X0/FULL_W`, `worldXY`, `--er/--et/--eb/--el` (`src/game/stage.ts`, `src/ui/viewport.ts`). Yatay öncelikli.
+- Her ekran/özellik debug menüsünden tetiklenebilir: `src/ui/debug-tools.ts` içinde `debug.register(...)` (`docs/arch/debug-wiki.md`).
+- Sprite yoksa placeholder çiz; eksik asset oyunu çökertmemeli. Asset Gallery Wiki > Assets / Legacy (otomatik türetilir; test içeriği Codex'te HİÇ yok).
+- **Ses: medieval.** Çan gibi çınlayan saf sinüs YOK; Warrior ve Druid sesleri referanstır, dokunma (`docs/arch/assets.md`).
+- Alan kararları: `docs/arch/areas/ui-ux.md`.

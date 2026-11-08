@@ -1,4 +1,6 @@
 # Arayüz tasarım dili (2026 ekim, Ömer onaylı)
+> **Ne için / Güncel mi (2026-11-08):** arayüz tasarım dili (zorunlu). evet; yollar doğrulandı.
+
 
 Ömer 2026-10-18: "yeni yaptığımız bu tasarım diline oyunun geneli için kural olarak oluştur. Sonraki sessionlarda yeni arayüz yaparken ana mantık buradaki gibi olsun."
 

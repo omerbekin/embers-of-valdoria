@@ -1,6 +1,6 @@
 # Vesper: tasarım dökümanı (UYGULANDI: motor + veri, TASLAK değerler, 2026-10-28)
 
-> **Durum:** engine-dev / content-designer (Opus), 2026-10-28; open-questions madde 451. Sayılar **kesin** (Ömer 2026-11-08: PROVİZYON kaldırıldı; başta Mage'den türetilmişti; Ömer her sim'i onaylar). Skill ağacı **Ömer onaylı (2026-10-31), sayıları provizyon**. Efekt ve ses kendi (2026-11-01); ikon, logo, avatar ödünç. `tests/balance-checks.ts > PENDING_BALANCE` içinde.
+> **Durum:** engine-dev / content-designer (Opus), 2026-10-28; open-questions-archive madde 451. Sayılar **kesin** (Ömer 2026-11-08: PROVİZYON kaldırıldı; başta Mage'den türetilmişti; Ömer her sim'i onaylar). Skill ağacı **Ömer onaylı (2026-10-31), sayıları provizyon**. Efekt ve ses kendi (2026-11-01); ikon, logo, avatar ödünç. `tests/balance-checks.ts > PENDING_BALANCE` içinde.
 > Ad / id: brifte "Bellwarden" idi, Ömer kararıyla **Vesper**, id `vesper` (Blood Warden ile karışmasın; o başka sohbetin tasarımı, dokunulmadı).
 
 ## 1. Kimlik
@@ -49,16 +49,109 @@ Değerler 2026-11-01 denge turunun geçici sonucu (Ömer onayına kadar); öncek
 ### YZ (`ai.json > vesper`)
 Kalkansız büyücü kalıbı; öncelikler kill / aoe / tactic / damage, `aoeMinTargets 2`, ult için `reserveMp 2`. YZ çan büyümesini DEĞERLENDİRİR: `ringsBell` skill'i, bir çanın sonraki çan vuruşlarına katacağı hasar kadar değer alır (`bell.horizon` 2 kendi turu, `discount` 0,7; `open-questions.md` "Vesper çan büyümesi" maddesi). Ağaç kancaları da terazidedir (`ai.ts > bellValue`, `treeTriggerValue`, `treeProcStatusValue`, `armedCostValue`).
 
-## 3. Skill ağacı (`data/skill-trees/vesper.json`, Ömer onaylı 2026-10-31, sayılar kesin 2026-11-08)
+## 3. Skill ağacı (`data/skill-trees/vesper.json`, sürüm 3: yeniden kuruldu 2026-11-08)
 
-Var olan ağaç yapısında (rows: pasif + 3 skill, ult, mastery). **Tüm düğümler çalışır** (`fx: null` kalmadı). 2026-10-31'de eklenen genel kancalar: tetik olayı `bellRung`, tetik eylemi `bell`, koşullar `selfBells` / `targetTier` / `targetLowestHp` / `targetFrontAtCast`, ölçek `selfBells`, tetik hedefi `rowBehind`, skill alanı `ringsBell` sayı olabilir (kaç çan), hedef yaması `bellOnly`, stat `spdMult`, Rage kancası `costMul`, yeni durum `shaken` (isabet düşürür, ikonu yer tutucu `blinded`).
+- İlk ağaç Ömer onaylı 2026-10-31. 2026-11-08 Ömer: "çok generic". Ağaç aynı şekille yeniden yazıldı.
+- Mantık: `docs/design/classes/skill-tree-logic.md`. Her düğüm Vesper'in kendi skill'inin oynanışını değiştirir.
+- Yalnız mevcut fx kancaları. Sürüm 3 = kahramanlara bir kez bedava respec.
+- Sayılar sim bekler (Ömer onayıyla; öneri: 300'lük Endless + sefer simi).
+- Test: `tests/vesper.test.ts` (her düğüm), `tests/ai-coverage.test.ts` bölüm 7b (her tetik YZ'de).
 
-- **Pealing Bells:** perBell +%0,5/rank (2 düğüm), genel güç +%2/rank; Long Echo (ilk çan bir çan daha), Matins (savaşa 1 çanla), Quickening Peal (3 çanda bir erken tur), Deep Peal (yalnız Toll çalar, perBell artar), Angelus (5+ çanda çan skill'leri -2 MP), Fraying Rope (perBell artar, alınan hasar +%10), Heavy Bronze (perBell artar, hız -%10), Compline (müttefik düşünce çan), Cathedral Choir (evrim: çan başına kritik +%1).
-- **Toll:** güç +%3/rank (3), MP -1/rank, Cracked Rim (+%20 güç, +3 MP), Muffled Toll (bedava, -%25), evrim Death Knell (+%30, kesin isabet), Funeral Toll (%50 altı cana +%25), Knell (en düşük cana +%15), Wide Toll (ön sırayı Slow), Passing Bell (öldürme başına çan), Shaken Ranks (Shaken 1 tur).
-- **Thunderpeal:** güç +%3/rank (3), kritik +%2/rank, Blinded +1 tur, Stormbell (bekleme -1), Overcharged (+%25, bekleme +1), Dull Flash (-4 MP, Blind yok), Thunderstruck (%15 Stun), Forked Peal (arka sıraya yarı hasar), Single Bolt (tek hücre, +%60), Storm Tower (evrim: +%30, 2 çan).
-- **Cracked Bell:** güç +%3/rank (3), Stun şansı +%3/rank, Shatter (büyü zırhının %20'si yok), Brittle Bell (+%25, Stun yok), Gentle Ring (bekleme -1, -%20), Deafened (+Blind 1 tur), Ringing Skull (Stun tutunca çan), Shards (yan hücrelere yarı hasar), Toll for One (elit / boss +%30), Sundered Bell (evrim: +%30, Stun şansı 2 kat).
-- **Great Bell (ult):** +%8 güç (3 düğüm), çan başına +0,005 INT, Crown of Bells (Blind 1), -3 MP, ilk bekleme -1, bekleme -1, kritik +%10, Last Peal (%50 altı cana +%30), Echoing Hall (ult de çan çalar), Bell of Kings (ulttan sonraki Toll bedava).
-- **Mastery "Belltower Mastery":** 5 adım: +%4 hasar, Toll -1 MP, Tower Stance (savaşa 1 çanla başla; Matins ile 2 çan, üst sınır yok), perBell +%1, +%6 hasar.
+### Pealing Bells (çan ritmi)
+
+| Düğüm | Ad | Etki |
+|---|---|---|
+| f1 | Bronze Throat | Çan başı güç +%0,4/rank |
+| f2 | Counted Strokes | Her 4. çan 1 MP/rank |
+| f3 | Full Peal | 5+ çanda kritik +%2/rank |
+| n0 | Matins | Savaşa 1 çanla başla |
+| r | Prime | 3 çan ve altında +%4/rank hasar (savaş başı) |
+| ea | Quickening Peal | Her 3. çan tur %10 erken |
+| eb | Struck Bronze | Cracked Bell da çan çalar |
+| ma | Call to Prayer | Her 5. çan tüm cooldown'lar -1 |
+| fa | Racing Peal | Her 2. çan erken tur; çan başı güç -%1,5 |
+| fb | Cracked Throat | Cracked Bell 2 çan; Stun şansı yarı |
+| mb | Angelus | 8+ çanda üç skill -3 MP |
+| v | Cathedral Choir | Her 5. çan bedava Toll |
+
+### Toll (seri çalma, en zayıfı bitirme)
+
+| Düğüm | Ad | Etki |
+|---|---|---|
+| f1 | Steady Stroke | Art arda her Toll +%2/rank |
+| f2 | Ringing Ears | Shaken şansı %3/rank (1 tur) |
+| f3 | Dread Peal | Shaken'a +%4/rank |
+| n0 | Triple Peal | Her 3. Toll +1 çan |
+| r | Lingering Ears | Toll'un Shaken'ı isabeti -%2/rank daha düşürür |
+| ea | Unbroken Rope | 3. art arda Toll'dan itibaren herkese Shaken |
+| eb | Knell | En düşük cana +%15 |
+| ma | Endless Toll | 3. art arda Toll'dan itibaren Great Bell cooldown -1 |
+| fa | Hammered Rope | Seri başına +%6 (Steady Stroke yerine); serinin ilk Toll'u -%25 |
+| fb | Muffled Knell | En düşük cana +%40 (Knell yerine), öbürlerine -%15 |
+| mb | Passing Bell | Öldürme başına 1 çan |
+| v | Death Knell | +%25 güç; öldürürse kullanım başı bir bedava Toll |
+
+### Thunderpeal (Blind ve sıra)
+
+| Düğüm | Ad | Etki |
+|---|---|---|
+| f1 | Afterglare | Blind'lıya +%4/rank |
+| f2 | Crowded Row | Vurulan düşman başına +%2/rank |
+| f3 | Searing Flash | Blind isabeti -%2/rank daha düşürür |
+| n0 | Lingering Flash | Blind +1 tur |
+| r | Dazzled | Cracked Bell Blind'lıya +%4/rank |
+| ea | Forked Peal | Arka sıraya %50 hasar |
+| eb | Thunderstruck | Zaten Blind'lıya %30 Stun |
+| ma | Storm Front | 3 düşmana isabet +1 çan |
+| fa | Overcharged | Arka sıraya tam hasar; +6 MP |
+| fb | Blinding Storm | Thunderstruck %60; güç -%30 |
+| mb | White Flash | Blind'lıya kritik +%25 |
+| v | Storm Tower | Sıradaki tur başında aynı hücrelere %60 güçle ikinci gök gürültüsü (kendi çanı) |
+
+### Cracked Bell (Stun ve tek hedef)
+
+| Düğüm | Ad | Etki |
+|---|---|---|
+| f1 | Bronze Memory | Çan başı +%0,5/rank |
+| f2 | Jarring Note | Stun şansı +%3/rank |
+| f3 | Bell-Breaker | %50 üstü cana +%4/rank |
+| n0 | Ringing Skull | Stun tutunca 1 çan |
+| r | Aftershock | Stun tutunca 2 MP/rank |
+| ea | Resounding Crack | Stun tutunca Thunderpeal cooldown sıfır |
+| eb | Toll for One | Elit / boss +%25 |
+| ma | Death Bell | Stun tutunca %50 güçle bedava Toll |
+| fa | Brittle Bell | Stun kesin; cooldown 5 |
+| fb | Heavy Bronze | +%40 güç; Stun yok (Ringing Skull vb. susar) |
+| mb | Bell-Toll Verdict | Elit / boss'a çan başı +%3 |
+| v | Sundered Bell | +%30 güç; yanındakilere %50 hasar |
+
+### Great Bell of Valdoria (ult, tek kol)
+
+| Kol | 1 | 2 | 3 |
+|---|---|---|---|
+| u (çan) | Echoing Hall: çan çalar | Royal Peal: çan başı güç +0,01 | Peal of Ages: 10+ çanda cooldown -1 |
+| r (Blind) | Crown of Lightning: Blind 1 tur | Glaring Peal: Blind'lıya +%20 | Judgement Peal: iki vuruşun her biri Blind'lıya %30 Stun |
+| d (bitiriş) | Shaking Peal: Shaken 2 tur | Last Peal: %50 altı cana +%25 | Final Toll: öldürme başı çan + Cracked Bell cooldown sıfır |
+| l (tempo) | Tower Watch: ilk bekleme -1 | Bell of Kings: sonraki Toll bedava | Evensong: sonraki tur %30 erken |
+
+### Mastery "Belltower Mastery"
+
+| Adım | Ad | Etki |
+|---|---|---|
+| 5 | First Toll | Savaşın ilk Toll'u +1 çan |
+| 10 | Vigil | Dost düşünce 1 çan |
+| 15 | Thunder After | Blind'lı düşman ıskalayınca 1 çan (2026-11-08; önce: savaşın ilk Blind'ı 1 çan) |
+| 20 | Iron Rope | Çan başı güç +%1 |
+| 25 | Vespers' Hour | 10+ çanda Great Bell bir kez 3 çan |
+
+### Onay bekleyen öneriler (yapılmadı)
+
+| Öneri | Neden bekliyor |
+|---|---|
+| Blind'lı düşman ıskalayınca çan | UYGULANDI (Ömer 2026-11-08 onay; yer Lead kararı): Mastery 15 Thunder After artık "When a Blinded enemy misses, ring 1 bell." (`enemyMissed`, eski 'ilk Blind = 1 çan' kalktı). YZ değeri + testler var; sim bekliyor |
+| Thunderpeal'e `shocked` (yıldırım durumu) | Ömer 2026-11-08: HAYIR. Thunderpeal olduğu gibi kalır (Blind + çan) |
+| YZ: isabet düşüren durum (Shaken / Blinded) tetikle verilince değer | `statusEffectWorth` isabet etkisini saymıyor |
+| YZ: `cooldownDelta` (Peal of Ages) ve `statusPotency` (Lingering Ears, Searing Flash) | YZ'de ayrıca değerlenmiyor (Mage, Hexer ağaçlarında da aynı) |
 
 ## 4. Kampanya buluşması: dr19 Sunken Chapel (`drowned-reach.json`)
 

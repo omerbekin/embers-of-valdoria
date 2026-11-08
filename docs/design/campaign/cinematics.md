@@ -1,6 +1,7 @@
 # Sefer hikâye sahneleri ve Harita 1 final sinematiği (metinler)
+> **Ne için / Güncel mi (2026-11-08):** Sefer sahneleri metni ve Harita 1 finali. CANLI: veri `data/campaign/cinematics.json`, kod `src/campaign/cinematics.ts` var. Başlıktaki "METİN TASLAĞI" eskidir; metinler oyunda.
 
-Durum: METİN TASLAĞI (2026-10-23). Veri: `data/campaign/cinematics.json`. Kod bağlantısı VAR (2026-10-23; aşağıda "Oyundaki bağlantı"). Ömer'in kararları: form https://claude.ai/artifact/CprM9eeoVef4RYd2VH52Ro (db `picks/main`), 2026-10-21. Final sinematiğin video planı: `morvane-cinematic-video.md`.
+Durum: UYGULANDI (metin 2026-10-23; oyunda). Veri: `data/campaign/cinematics.json`. Kod bağlantısı VAR (2026-10-23; aşağıda "Oyundaki bağlantı"). Ömer'in kararları: form https://claude.ai/artifact/CprM9eeoVef4RYd2VH52Ro (db `picks/main`), 2026-10-21. Final sinematiğin video planı: `docs/archive/design/campaign/morvane-cinematic-video.md` (video promptları, kullanılmadı; oyunda hareketsiz kareler var).
 
 ## Kurallar
 

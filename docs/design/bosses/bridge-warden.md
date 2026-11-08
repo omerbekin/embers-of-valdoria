@@ -1,6 +1,8 @@
-# The Bridge Warden: King's Bridge boss tasarım dökümanı (TASLAK)
+# The Bridge Warden: King's Bridge boss tasarım dökümanı (UYGULANDI)
+> **Ne için / Güncel mi (2026-11-08):** Bridge Warden boss tasarımı. UYGULANDI; veri data/bosses/.
 
-> **Durum: UYGULANDI (engine-dev, 2026-10-08; open-questions madde 265, 269).** Ömer kararları bölüm 9 sonunda. Veri: `data/bosses/bridge_warden.json`, `data/bosses/iron_mooring.json`, `data/skills.json` (anchor_smash, breaking_span, chain_hook, ash_brand, fall_of_kings_bridge), `data/statuses.json` (overextended, staggered, ash_brand, anchored), `data/grounds.json` (flooded_planks), `data/ai.json` (profil bridge_warden, telegraph bloğu), `data/campaign/encounters.json > bridge_warden`. Motor: `src/engine/battle.ts` (telgraf, faz, Mooring, Stagger, Unyielding, çekme), YZ: `src/engine/ai.ts` (telegraphOptions, telegraphDodge, anchorValue). Testler: `tests/bridge-warden.test.ts`. **Bu belgedeki sayılar artık TASLAK değerdir; geçerli sayılar veri dosyalarındadır** (sim ayarı, bölüm 10).
+
+> **Durum: UYGULANDI (engine-dev, 2026-10-08; open-questions-archive madde 265, 269).** Ömer kararları bölüm 9 sonunda. Veri: `data/bosses/bridge_warden.json`, `data/bosses/iron_mooring.json`, `data/skills.json` (anchor_smash, breaking_span, chain_hook, ash_brand, fall_of_kings_bridge), `data/statuses.json` (overextended, staggered, ash_brand, anchored), `data/grounds.json` (flooded_planks), `data/ai.json` (profil bridge_warden, telegraph bloğu), `data/campaign/encounters.json > bridge_warden`. Motor: `src/engine/battle.ts` (telgraf, faz, Mooring, Stagger, Unyielding, çekme), YZ: `src/engine/ai.ts` (telegraphOptions, telegraphDodge, anchorValue). Testler: `tests/bridge-warden.test.ts`. **Bu belgedeki sayılar artık TASLAK değerdir; geçerli sayılar veri dosyalarındadır** (sim ayarı, bölüm 10).
 >
 > Ömer'in isteği: *"King's Bridge boss'una Paladin koymuşsun da damage atamıyor, 1k canı var, çok sıkıcı. Oraya bir boss tasarla ve tamamen yeni skill'leri ve yeni teması olsun. Mevcut karakterlerden ayrışsın."*
 >
@@ -212,14 +214,14 @@ Kurallar:
 ### 6.2 Yeni gerekenler
 | # | İş | Ayrıntı | Boyut |
 |---|---|---|---|
-| M1 | **Boss class kaydı** | `data/classes/bridge_warden.json` (gizli; `randomPool` ve takım seçiminde yok). Karşılaşma doğrulaması bugün sınıfların `randomPool` içinde olmasını istiyor: `bossClasses` istisnası. `overrides.hpRegen` (yeni) | S |
+| M1 | **Boss class kaydı** | `data/bosses/bridge_warden.json` (gizli; `randomPool` ve takım seçiminde yok). Karşılaşma doğrulaması bugün sınıfların `randomPool` içinde olmasını istiyor: `bossClasses` istisnası. `overrides.hpRegen` (yeni) | S |
 | M2 | **Telgraflı gecikmeli alan saldırısı** | Skill etkisi `{type:'telegraph', resolve:'casterNextTurn', area, effects:[...]}`: kullanılınca hücreler kaydedilir (`battle.telegraphs`), olay `telegraph {source, skill, cells, board, resolvesAt}`; sahibinin sonraki tur başında (zemin/DoT tiklerinden önce) çözülür, olay `telegraphResolve {hit, avoided}`; iptal olayı `telegraphCancel {cause}`. Sahip ölünce iptal. İki modda çalışmalı (test modunda: sahibinin bir sonraki eyleminden önce) | L |
 | M3 | Telgraf adalet kuralı | Çözülme, karşı taraftaki her canlı (sersem olmayan) birim en az bir kez oynamadan gerçekleşmez (gerekirse sahibin sonraki turuna ertelenir). Sıra çubuğu tahmini bunu gösterir | M |
 | M4 | **Birime bağlı telgraf** (Ash Brand) | Debuff `ash_brand` + çözülmede taşıyanın O ANKİ hücresi merkezli şekil; dispel/ölüm iptal eder | M |
 | M5 | **Keystone (güvenli hücre)** | Fall telgrafının `excludeCells: {perLane: 1, seeded}` kuralı; olayda `safeCells` | S |
 | M6 | **Yer değiştirme: çekme** | Etki `{type:'pull', to:'laneFront'}`: hedefi kendi şeridindeki en öndeki boş hücreye taşır; olay `moved {uid, from, to, cause}`; boss'lar `immuneDisplacement` | M |
 | M7 | **Faz sistemi** | Class/encounter verisinde `phases: [{ at: 0.66, actionsPerTurn, powerMult, armorMult, skillsAdd, skillsRemove, areaOverride:{breaking_span: rect 2x3}, onEnter:[...] }]`; faz kilidi (tek vuruş tek eşik); olay `phase {uid, phase, hpRatio}`; `actionsPerTurn` artık çalışma anında değişebilir | L |
-| M8 | **Bağlı yardımcı nesne** (Iron Mooring) | `data/summons/iron_mooring.json` + `inert: true` (sıra yok, eylem yok, şifa/kalkan almaz, savaş bitişini sayılmaz); `anchoredTo` bağı: canlı yardımcı başına sahibe zırh eki (aura), ölümde sahibe Stagger + bekleyen `breaking_span` iptali; faz III `onEnter: breakMoorings` | M |
+| M8 | **Bağlı yardımcı nesne** (Iron Mooring) | `data/bosses/iron_mooring.json` + `inert: true` (sıra yok, eylem yok, şifa/kalkan almaz, savaş bitişini sayılmaz); `anchoredTo` bağı: canlı yardımcı başına sahibe zırh eki (aura), ölümde sahibe Stagger + bekleyen `breaking_span` iptali; faz III `onEnter: breakMoorings` | M |
 | M9 | **Unyielding** | `ccResist: { stunToStagger: true, debuffDurationDelta: -1, immuneDisplacement: true }`; Stagger = sıradaki tek eylemi yakar | M |
 | M10 | Skill şartı `requiresAlly` | Chain Hook: `{ requiresAllyOf: 'iron_mooring' }` (YZ ve arayüz 'Needs a standing Mooring') | S |
 | M11 | **YZ: telgraf değeri (boss tarafı)** | Bölüm 5; `telegraphHitShare`, kombinasyon (Hook → Span hücresi) değeri | M |
@@ -267,7 +269,7 @@ Kurallar:
 
 Kafatası, mor, kemik YOK (Undead/Hexer'in). Altın yalnızca Keystone işaretinde.
 
-### 7.2 İkonlar (v2 kılavuzu: `src/game/art-v2/bridge_warden/icons.ts`, 128x128)
+### 7.2 İkonlar (128x128; güncel konum `src/game/pixel-icons.ts` (`wardenlogo`, `anchorsmash` ...); animasyonlar `src/game/vfx-warden.ts` ve `src/game/mob-vfx-hand/bridge.ts`)
 | İkon id | Ne |
 |---|---|
 | `wardenlogo` | Ortasında kor parlayan çatlak bir köprü kemeri |
@@ -293,7 +295,7 @@ Kafatası, mor, kemik YOK (Undead/Hexer'in). Altın yalnızca Keystone işaretin
 - **Faz geçişleri:** Faz II: göğüs çatlağından kor ışığı fışkırır, gözler turuncuya döner. Faz III: sırttaki kemer taşları dökülür (sprite'ın üstüne kodla kırık taş parçacıkları), çatlak genişler.
 - **Iron Mooring kırılması (~0,8 sn):** demir baba gıcırdayarak eğilir, zincir kopar ve suya düşer (sıçrama); Warden sendeler (Stagger yazısı).
 
-### 7.4 Sesler (`data/audio-v2/bridge_warden.json`; filtreli gürültü + alçak darbe + `voice`; ÇAN / çınlama YOK: "toll" teması olsa da çan sesi kullanılmaz)
+### 7.4 Sesler (güncel konum: sesler `data/audio.json` (örn. `anchorImpact`), skill-ses eşlemesi `data/audio-mobs.json`; filtreli gürültü + alçak darbe + `voice`; ÇAN / çınlama YOK: "toll" teması olsa da çan sesi kullanılmaz)
 | id | Gerçek karşılığı | Kullanım |
 |---|---|---|
 | `chainDrag` | Kalın paslı zincirin taş üstünde sürüklenmesi (düzensiz metal tıkırtı + taş sürtünmesi, 1-3 kHz bant gürültü darbeleri) | Chain Hook, Anchor Smash savuruşu, idle |
@@ -383,6 +385,6 @@ Animasyon seti: Warden için `idle` (tek görsel yeterli; zincir sallanması ve 
 
 **Kararlar (bölüm 9 kapandı):** (1) Tema A, ad **The Bridge Warden** (aynen). (2) Zincir babalarıyla: Warden + **2 Iron Mooring**. (3) Faz III sertliği (3 eylem + Fall of King's Bridge) uygun. (4)-(5) Boss'a girerken tam iyileşme kampı **YOK**: Warden canı 480 yerine **432** (%10 düşük). (6) Telgraflar **Warden'ın bir sonraki turunda** çözülür.
 
-**Sim ayarı (npm run sim:campaign ölçümü; ilk deneme kazanma):** STR 20 -> **25**; güç: Anchor Smash 1,3 -> **1,5**, Breaking Span 2,0 -> **2,6**, Chain Hook 0,8 -> **1,1**, Ash Brand 1,2 -> **1,6**, Fall 2,2 -> **2,8**; can 432 (Ömer), Mooring canı 55, zırh/büyü zırhı ekleri 5/5 aynen. Oyuncu vekili telgraftan kaçma bedeli `ai.json > telegraph.dodgeOpportunityShare` 1,0. Hard'da Warden'a boss rütbe eki (+%10 can/güç) UYGULANMAZ (`noTierMods`; ekle Hard ilk deneme ~%15 çıkıyordu); genel Hard eki (+%12 can, +%5 güç) uygulanır. Sonuçlar open-questions madde 269.
+**Sim ayarı (npm run sim:campaign ölçümü; ilk deneme kazanma):** STR 20 -> **25**; güç: Anchor Smash 1,3 -> **1,5**, Breaking Span 2,0 -> **2,6**, Chain Hook 0,8 -> **1,1**, Ash Brand 1,2 -> **1,6**, Fall 2,2 -> **2,8**; can 432 (Ömer), Mooring canı 55, zırh/büyü zırhı ekleri 5/5 aynen. Oyuncu vekili telgraftan kaçma bedeli `ai.json > telegraph.dodgeOpportunityShare` 1,0. Hard'da Warden'a boss rütbe eki (+%10 can/güç) UYGULANMAZ (`noTierMods`; ekle Hard ilk deneme ~%15 çıkıyordu); genel Hard eki (+%12 can, +%5 güç) uygulanır. Sonuçlar open-questions-archive madde 269.
 
-**Uygulama varsayımları (open-questions 269):** telgraf çözülmesi isabet zarı atmaz (uyarıldılar); Faz III'e girerken bekleyen Breaking Span iptal olur, yerini Fall alır (aynı anda tek alan telgrafı); Unyielding: debuff süresi kısaltması yığılan durumlara (Omen) uygulanmaz; Stagger/Ash Brand/Anchored durumları kuralla süren (untilResolved) durumlardır; telgraf adalet kuralı: kurulduğu an karşı tarafta canlı ve sersem olmayan her birim bir kez oynamadan çözülmez (ertelenir); oyuncu vekili art arda Move kuralına telgraf kaçışında takılmaz; Easy oyuncu vekili de telgraftan kaçar (yalnızca Move ile).
+**Uygulama varsayımları (open-questions-archive 269):** telgraf çözülmesi isabet zarı atmaz (uyarıldılar); Faz III'e girerken bekleyen Breaking Span iptal olur, yerini Fall alır (aynı anda tek alan telgrafı); Unyielding: debuff süresi kısaltması yığılan durumlara (Omen) uygulanmaz; Stagger/Ash Brand/Anchored durumları kuralla süren (untilResolved) durumlardır; telgraf adalet kuralı: kurulduğu an karşı tarafta canlı ve sersem olmayan her birim bir kez oynamadan çözülmez (ertelenir); oyuncu vekili art arda Move kuralına telgraf kaçışında takılmaz; Easy oyuncu vekili de telgraftan kaçar (yalnızca Move ile).

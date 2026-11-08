@@ -397,6 +397,7 @@ describe('Faz 5a: ek sözlük (hitsEach, merkez kritikleri, tekrar sırası, ta�
     const corner = (tree: boolean): number => {
       const b = make({ 0: 'cutthroat' }, xFoes, tree ? withTree(0, only('cutthroat', { '2.v': 1 })) : {});
       tank(b);
+      P(b).stats.dex *= 4; // vuruş başı tam sayı yuvarlaması oranı bozmasın (2026-11-08 Warrior zırhı 18 -> 15 sonrası 1,45 / 1,56)
       return previewSkill(b, P(b).uid, 'x_cut', undefined, 4, 'enemy').find((p) => p.uid === E(b, 0).uid)!.damage!.avg;
     };
     expect(corner(true) / corner(false)).toBeCloseTo((0.35 * 2) / 0.45, 1);

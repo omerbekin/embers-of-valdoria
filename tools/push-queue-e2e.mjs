@@ -955,12 +955,12 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
     W.cutover();
     const a = W.open(A, 'a'); const b = W.open(B, 'b');
     for (const s of [A, B]) W.hook('hook-prompt', { session_id: s, prompt: 'x' });
-    W.put('docs/arch/chat-owners.md', '| Sohbet | Kopya | Alan |\n|---|---|---|\n| Bizim Sohbet | b | her sey |\n');
+    W.put('docs/arch/lead.md', '| Sohbet | Kopya | Alan |\n|---|---|---|\n| Bizim Sohbet | b | her sey |\n');
     W.wput(b, 'src/a.ts', 'export const a = 3;\n');
     const cacheF = join(W.game, '.git', 'push-queue.wtfiles.json');
     const r = pre(W, A, join(a.path, 'src/a.ts'));
     ok(r.code === 0, 'çıkış 0');
-    has(r.out, 'ERKEN UYARI'); has(r.out, 'Bizim Sohbet'); has(r.out, 'chat-owners.md'); has(r.out, 'devret');
+    has(r.out, 'ERKEN UYARI'); has(r.out, 'Bizim Sohbet'); has(r.out, 'lead.md'); has(r.out, 'devret');
     hasNot(r.out, 'deny', 'engellememeli');
     has(r.out, '"hookEventName":"PreToolUse"');
     allow(pre(W, A, join(a.path, 'src/a.ts'))); // ikinci kez sessiz
@@ -1150,7 +1150,7 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
     const a = W.hook('hook-prompt', { session_id: A, prompt: 'x' }).out;
     const b = W.hook('hook-prompt', { session_id: B, prompt: 'x' }).out;
     for (const t of [a, b]) {
-      has(t, 'SendMessage'); has(t, 'ListAgents'); has(t, 'docs/arch/chat-owners.md'); has(t, 'otomatik gönderim');
+      has(t, 'SendMessage'); has(t, 'ListAgents'); has(t, 'docs/arch/lead.md'); has(t, 'otomatik gönderim');
       has(t, 'kendiliğinden eşitlenir');
       hasNot(t, 'mesaj atma'); hasNot(t, 'ilk kritik gönderimle');
     }
@@ -1159,7 +1159,7 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
     setQ(W, (q) => { q.sessions[B].rulesV = 1; });
     has(W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out, 'SendMessage');
     hasNot(W.hook('hook-prompt', { session_id: B, prompt: 'z' }).out, 'SendMessage');
-    const owners = readFileSync(join(dirname(TOOL), '..', 'docs', 'arch', 'chat-owners.md'), 'utf8');
+    const owners = readFileSync(join(dirname(TOOL), '..', 'docs', 'arch', 'lead.md'), 'utf8');
     for (const [n, k] of [['Character Design', 'vesper-tree'], ['Mekanik & Rework', 'mob-mana'], ['Campaign', 'campaign'], ['Character vfx', 'character-vfx'], ['Minor Fixes', 'minor-fixes']]) has(owners, `| ${n} | ${k} |`);
   },
   'ic is yalniz notsuz girdide': (W) => {

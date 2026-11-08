@@ -1,8 +1,9 @@
 # Harita 2: Personal Quests (A5) ve Crown Surge (C1) — uygulama taslağı
+> **Ne için / Güncel mi (2026-11-08):** Harita 2 Personal Quests (A5) ve Crown Surge (C1). Plan UYGULANDI: `data/campaign/quests.json`, `crown-surge.json`, `src/campaign/quests.ts`, `surge.ts`. "TASLAK / C1 karar bekliyor" satırları eskidir; Ömer kararları (1.6, bölüm 2) canlı.
 
-Durum: **TASLAK, Ömer seçimi bekliyor** (content-designer, 2026-10-27). Kaynak: `maps-2-3.md` bölüm 9 (A5 ve C1 onaylı, form 4Z6Qr7WCm3gVKKJDLLi4cE). Bu belge yalnızca plan; veri ve kod yazılmadı. Sayılar PROVİZYON (denge balance-tester'ın işi, sim ile). Oyun içi metinler İngilizce taslak.
+Durum: **UYGULANDI** (A5 ve C1; content-designer planı 2026-10-27). Kaynak: `maps-2-3.md` bölüm 9 (A5 ve C1 onaylı, form 4Z6Qr7WCm3gVKKJDLLi4cE). Plan olarak yazıldı, sonra yapıldı. Sayılar PROVİZYON (denge balance-tester'ın işi, sim ile). Oyun içi metinler İngilizce taslak.
 
-**A5 Harita 2 kısmı UYGULANDI (campaign-dev 2026-10-27, Ömer seçimleri aşağıda 1.6'da KARAR olarak; varsayımlar open-questions 431).** Veri `data/campaign/quests.json` + düğümler dr90-dr93 + dr56 seçeneği; kural `src/campaign/quests.ts`; test `tests/campaign-quests.test.ts`. C1 Crown Surge hâlâ karar bekliyor (bölüm 2).
+**A5 Harita 2 kısmı UYGULANDI (campaign-dev 2026-10-27, Ömer seçimleri aşağıda 1.6'da KARAR olarak; varsayımlar open-questions-archive 431).** Veri `data/campaign/quests.json` + düğümler dr90-dr93 + dr56 seçeneği; kural `src/campaign/quests.ts`; test `tests/campaign-quests.test.ts`. C1 Crown Surge de UYGULANDI: veri `data/campaign/crown-surge.json`, kural `src/campaign/surge.ts` (bölüm 2 karar kaydı olarak kalır).
 
 **Kural:** Belgede (maps-2-3.md) olmayan her şey aşağıda **SORU** olarak yazıldı, karar değil. Görev şekilleri yalnızca onaylı kalıpları kullanır: tek savaş, var olan olay seçimi (`choices[]`: `cost`, `battle`, `win`, `heal`), A1 sınav kuralları ("yalnız 2 kahramanla", "ilk 3 tur ultimate yok", "arka sıra boş") ve B3 hedefleri (Survive N Rounds, Break the Totem, Hold the Bridge). Hero signature kuralı korunur: Omen (Hexer) ve Dark Bond (Undead) yalnız kahraman mekaniği; aşağıdaki hiçbir düşmana verilmez, bonuslar yalnız o kahramanı güçlendirir.
 
@@ -151,7 +152,7 @@ Her bonus için iki alternatif var: **(a)** sınıfın var olan pasifinin sayıs
 ## 2. C1 Crown Surge
 
 ### 2.0 Durum (campaign-dev 2026-10-27): YAPILDI, sayılar provizyon
-Ömer'in seçimleri: C1 V1 (HUD taç plakası, eylemi harcar; V2 ulti barı YOK), C2 a, C3 a, C4 (üst sınır yok, her kullanım bir öncekinden pahalı: 1, 2, 3 ... Taint), C5 b (Chapel temizler), C6 a, C7 a, C8 a, C9 a, C10 (savaş başına tek Surge), C11 a (sim 427'den sonra), C12 a. Kurallar `data/campaign/crown-surge.json`, eylemler `data/global-skills.json > ash_surge / salt_surge`, kod `src/campaign/surge.ts` + motor global `surge` (`battle.ts > callSurge`). Varsayımlar ve açık sorular: open-questions 431. Codex: Mechanics > Campaign > Crown Surge and Ashen Taint. Debug: Battle > Team > Enable Crown Surge (her savaş, test savaşı dahil), Refill Crown Surge / Unlock Salt Surge / Add Ashen Taint / Clear Ashen Taint (sefer).
+Ömer'in seçimleri: C1 V1 (HUD taç plakası, eylemi harcar; V2 ulti barı YOK), C2 a, C3 a, C4 (üst sınır yok, her kullanım bir öncekinden pahalı: 1, 2, 3 ... Taint), C5 b (Chapel temizler), C6 a, C7 a, C8 a, C9 a, C10 (savaş başına tek Surge), C11 a (sim 427'den sonra), C12 a. Kurallar `data/campaign/crown-surge.json`, eylemler `data/global-skills.json > ash_surge / salt_surge`, kod `src/campaign/surge.ts` + motor global `surge` (`battle.ts > callSurge`). Varsayımlar ve açık sorular: open-questions-archive 431. Codex: Mechanics > Campaign > Crown Surge and Ashen Taint. Debug: Battle > Team > Enable Crown Surge (her savaş, test savaşı dahil), Refill Crown Surge / Unlock Salt Surge / Add Ashen Taint / Clear Ashen Taint (sefer).
 
 ### 2.1 Belgede yazanlar (onaylı)
 - Bölük Crown of Ash'i taşır. **Bölge başına 1 kez**, savaşta takım yeteneği **Crown Surge** kullanılır (örnek: takıma 2 tur +%30 hasar).
@@ -229,7 +230,7 @@ Ad önerisi (oyun içi): **Ash Surge** (Harita 2 boyunca tek) ve **Salt Surge** 
 - Debug: "Refill Crown Surge", "Add/Clear Ashen Taint".
 - Yeni ikon: taç düğmesi (Ash: kor rengi, Salt: deniz yeşili); VFX: tüm takımda kısa kor dalgası / su perdesi; ses: alçak kor gümlemesi / dalga. Ayrıntı sanat adımında.
 
-### 2.4 Ömer kararları 2026-10-27 (ikinci tur; campaign-dev, open-questions 449)
+### 2.4 Ömer kararları 2026-10-27 (ikinci tur; campaign-dev, open-questions-archive 449)
 1. **Chapel sayacı altınla sıfırlar, pahalı:** bedava Taint temizliği (varışta) kalır; Chapel'deyken oyuncu ayrıca altın ödeyip seferin Surge kullanım sayacını başa döndürebilir (sonraki Surge yine 1 Taint). Kamp seçimini harcamaz. Fiyat `crown-surge.json > reset.gold` (Harita 2: 400, düz; Ömer 2026-10-28 "kalsın": sayaçla artmaz; gerekçe 449). Arayüz: kamp ekranında, ateş satırının altında "Chapel" satırı + "Ease the Crown · 400" düğmesi (`src/ui/camp-screen.ts > chapelRow`). Kod `src/campaign/surge.ts > surgeResetPrice / surgeResetBlocked / resetSurgeUses`.
 2. **Hak yenilgide gitmez:** yenilgide (normal savaş, Dive, Pit) hak harcanmaz, Taint ve sayaç yazılmaz; tekrar denemede Surge yine var. Zafer ve devriyeden geri çekilme eskisi gibi harcar (Ömer 2026-10-28: geri çekilme için istisna yok).
 3. **Harita 2'de iki Chapel:** dr23 Tidewatch Tower -> **Tidewatch Chapel** (bölge II, ana yol; Ömer 2026-10-28, ilk öneri dr39 Beacon Quay idi, o eski adına döndü) + dr49 Cliff Chapel (bölge IV).

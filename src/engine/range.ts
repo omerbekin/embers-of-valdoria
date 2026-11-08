@@ -16,7 +16,7 @@ import type { Formulas, SkillDef, SkillTarget } from './types';
 export const rangeEnabled = (formulas: Pick<Formulas, 'range'>): boolean => !!formulas.range?.enabled;
 
 /** Hedef seçimi olmayan (menzilin anlamsız olduğu) türler. */
-export const NO_RANGE_TARGETS: readonly SkillTarget[] = ['self', 'all_allies', 'empty_tile'];
+export const NO_RANGE_TARGETS: readonly SkillTarget[] = ['self', 'all_allies', 'empty_tile', 'self_area'];
 /** Dost hedefli tek seçimli türler: yalnızca skill'in kendi range'i varsa kısıtlanır. */
 export const ALLY_TARGETS: readonly SkillTarget[] = ['single_ally', 'dead_ally'];
 /** Düşmanı hedefleyen türler (YZ konum alma). */

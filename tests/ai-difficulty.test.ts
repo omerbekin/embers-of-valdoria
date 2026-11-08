@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content, explainChoice, previewSkill } from '../src/engine';
 import type { AiConfig, AiDifficulty, BattleMode } from '../src/engine';
+import type { AiTrace } from '../src/engine/ai';
 import { DEFAULT_VALUE, ValueContext } from '../src/engine/ai-value';
 import { aiNoise, difficultyRules } from '../src/engine/ai';
 
@@ -117,7 +118,7 @@ describe('madde 258 Faz 2: mana yakmanın "engellenen hamle" değeri', () => {
       return x;
     };
     const b = ownTurn(mk({ 0: 'antimage' }, { 0: 'mage', 1: 'paladin', 3: 'druid' }, 'turns'));
-    for (const e of b.combatants.filter((c) => c.side === 'enemy')) e.mp = content.skills.radiance!.cost.amount - 4; // az MP (eskiden 16 = Radiance 20 - 4; bedel veriden, 2026-10-24 mana turu)
+    for (const e of b.combatants.filter((c) => c.side === 'enemy')) e.mp = 20; // az MP (eskiden Radiance bedeli - 4 = 20; 2026-11-08 Radiance 24 -> 18 sonrası sabit 20: Meteor 20 açık, Radiance bedeli testi bozmasın)
     const df = Math.max(...cand(b, 'party-0', 'mana_burn').map((c) => c.terms?.burn ?? 0));
     expect(df).toBeGreaterThan(0);
     // 2026-10-27: Ley Brand yakmaz; adayının değeri 'brand' terimindedir (taze hedefte pozitif). Mana Steal tek hedef ve az MP'de
@@ -213,8 +214,11 @@ describe('madde 258 Faz 5: zorluk seviyeleri', () => {
       const b = new Battle(content.battleSetup('random-battle', seed, 'turns'));
       for (let i = 0; i < 300 && !b.winner; i++) {
         const u = b.currentUid!;
-        const c = chooseAction(b, u, content.aiConfig, undefined, { difficulty: 'easy' });
-        expect(['move_tile', 'skip_turn']).not.toContain(c?.skillId ?? '');
+        const tr = { options: [], reserves: [], steps: [] } as unknown as AiTrace;
+        const c = chooseAction(b, u, content.aiConfig, tr, { difficulty: 'easy' });
+        // Menzil kuralı (ai.ts restWhenIdle): yapacak hamle yokken menzile girme Easy'de de var (2026-11-07: kısa menzilli Thunder Skald havuza girince görüldü)
+        if (c?.skillId === 'move_tile') expect(tr.global?.outcome ?? '').toMatch(/easy: nothing in range|dodge a pending warning/);
+        else expect(['move_tile', 'skip_turn']).not.toContain(c?.skillId ?? '');
         expect(b.applyChoice(u, c).ok).toBe(true);
       }
     }

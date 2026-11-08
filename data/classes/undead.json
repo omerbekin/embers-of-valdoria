@@ -26,7 +26,7 @@
     "id": "vampiric_bite",
     "name": "Vampiric Bite",
     "icon": "soul",
-    "text": "",
+    "text": "Heal for 50% of the damage you deal. Your Skeleton's hits heal you the same way.",
     "effect": {
       "type": "soulDrain",
       "ratio": 0.5

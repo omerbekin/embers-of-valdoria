@@ -245,7 +245,14 @@ export function areaDefProblem(area: unknown, formation: Pick<ShapeFormation, 'r
  */
 export function skillAreaProblem(skill: SkillDef, formation: Pick<ShapeFormation, 'rows' | 'lanes'>): string | null {
   if ((skill.target as string) === 'column_enemies') return 'column_enemies kaldırıldı: area_enemies + area {shape: "column"} kullanın';
-  if (!AREA_TARGETS.includes(skill.target)) return skill.area ? `area yalnızca area_enemies / area_any hedefinde kullanılır (${skill.target})` : null;
+  // self_area (War Drum): alan zorunlu, kullananın hücresi merkez; aşama / emptyOwn / çoklu tahta alanları yok
+  if (skill.target === 'self_area') {
+    const sp = areaDefProblem(skill.area, formation);
+    if (sp) return sp;
+    if (skill.area?.stages || skill.area?.emptyOwn) return 'self_area alanında stages / emptyOwn kullanılmaz';
+    return null;
+  }
+  if (!AREA_TARGETS.includes(skill.target)) return skill.area ? `area yalnızca area_enemies / area_any / self_area hedefinde kullanılır (${skill.target})` : null;
   const p = areaDefProblem(skill.area, formation);
   if (p) return p;
   if (skill.area?.emptyOwn && skill.target !== 'area_any') return 'area.emptyOwn yalnızca area_any hedefinde kullanılır';

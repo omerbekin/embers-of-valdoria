@@ -1,4 +1,6 @@
 # Ses haritası (2026-10-13)
+> **Ne için / Güncel mi (2026-11-08):** ses haritası: WebAudio sentezi, grup listesi. 2026-10-13 tarihli; liste için Codex > Assets > Sounds ve data/audio*.json esas.
+
 
 Tüm sesler WebAudio sentezidir (dosya yok). Ses felsefesi CLAUDE.md'de: gerçek karşılığından kurulur, çan / saf sinüs çınlaması yok.
 Codex > Assets > Sounds hepsini listeler ve çalar ("UI (menus)", "World & stingers", "Campaign enemies" grupları, en altta "Soundtracks").
@@ -76,9 +78,9 @@ ses / koro ~0,62, yumuşak ~0,44, ulti ~0,8; tarayıcıda kulak kontrolü öneri
 Warden kaynaklı listelerde (wyrm_*, chain_shot) yalnızca biri vuruşa bağlı, diğerleri sessiz (`skills.<id>.roles`); Powder Keg / Brine Lash'in uçuş isteği
 sessiz (uçuş sesi vuruşla üst üste binmesin).
 
-Harita 2 sıradan mobları (dock_rat, reef_hound, salt_hag, tide_caller, marsh_light, wreck_ghoul) + River Reaver / Cliff Crossbowman yeni skill'leri kendi tariflerinde (16 skill, 32 ses: ıslak halat / ağ, tuzlu dalga, bataklık kıvılcımı, midye kabuğu tırmığı, kanca, uçurumdan yaylım; open-questions 442); tepe tarayıcıda Harita 1 karşılığına eşitlendi.
+Harita 2 sıradan mobları (dock_rat, reef_hound, salt_hag, tide_caller, marsh_light, wreck_ghoul) + River Reaver / Cliff Crossbowman yeni skill'leri kendi tariflerinde (16 skill, 32 ses: ıslak halat / ağ, tuzlu dalga, bataklık kıvılcımı, midye kabuğu tırmığı, kanca, uçurumdan yaylım; open-questions-archive 442); tepe tarayıcıda Harita 1 karşılığına eşitlendi.
 
-Harita 2'de kalan son Harita 1 birimlerinin sürümleri (cinder_exile, pitch_boiler, sunken_dead, mire_ghoul, reed_witch, mudlark, inquisition_brother, salt_chaplain) + Tide Caller çağrısı risen_drowned kendi tariflerinde (18 skill, 33 ses: zift / katran, su sıçraması, çamur, saz hışırtısı, tuz kristali; open-questions 446); tepe tarayıcıda Harita 1 karşılığına (Risen Drowned: Skeleton class seslerine) eşitlendi.
+Harita 2'de kalan son Harita 1 birimlerinin sürümleri (cinder_exile, pitch_boiler, sunken_dead, mire_ghoul, reed_witch, mudlark, inquisition_brother, salt_chaplain) + Tide Caller çağrısı risen_drowned kendi tariflerinde (18 skill, 33 ses: zift / katran, su sıçraması, çamur, saz hışırtısı, tuz kristali; open-questions-archive 446); tepe tarayıcıda Harita 1 karşılığına (Risen Drowned: Skeleton class seslerine) eşitlendi.
 
 ## Müzik (`data/audio-music.json` + `data/audio-music-tracks.json`, motor `src/game/music.ts`, denetim `src/ui/music.ts > sceneMusic`)
 

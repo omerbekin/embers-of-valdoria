@@ -1139,7 +1139,7 @@
     },
     "3.v": {
       "name": "Crimson Covenant",
-      "text": "Dark Bond evolves: it no longer ends after 3 turns; it holds until one of you falls or you bind another.",
+      "text": "Dark Bond evolves: it no longer ends after 4 turns; it holds until one of you falls or you bind another.",
       "src": "A:V1:3.v",
       "fx": [
         {

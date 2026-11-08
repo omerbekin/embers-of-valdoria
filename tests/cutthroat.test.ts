@@ -444,10 +444,12 @@ describe('Cutthroat yapay zekası (assassin): bağlam ipuçları, determinizm', 
   }
 
   it('Backstab: arka saftaki (normal melee erişemeyen) hedefe seçilir; geçerli hedef yoksa seçilmez', () => {
-    const b = turnArena([['cutthroat', 0]], [['warrior', 0], ['mage', 4], ['warrior', 2]], ['venom_edge', 'backstab'])!;
+    // 2026-11-08: arka hedef Mage -> Archer (Warrior zırhı 18 -> 15 sonrası Mage'in Heat Mirage cezası ön Warrior'ı 0,4 puanla öne geçirdi;
+    // test arka safa erişimi ölçer, Heat Mirage tartısını değil)
+    const b = turnArena([['cutthroat', 0]], [['warrior', 0], ['archer', 4], ['warrior', 2]], ['venom_edge', 'backstab'])!;
     const ch = chooseAction(b, b.currentUid!, NO_GLOBAL);
     expect(ch?.skillId).toBe('backstab');
-    expect(b.get(ch!.targetUid!)!.defId).toBe('mage');
+    expect(b.get(ch!.targetUid!)!.defId).toBe('archer');
     // mage'in arkası dolu ve öndekilerin de: Backstab seçilemez
     const c = turnArena([['cutthroat', 0]], [['warrior', 0], ['warrior', 3], ['warrior', 6], ['warrior', 9]], ['venom_edge', 'backstab'])!;
     // 0,3,6: arkası dolu; 9: en arka -> geçerli hedef yok

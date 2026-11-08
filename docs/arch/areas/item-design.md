@@ -1,4 +1,6 @@
 # Alan: Item Design (yeni item, item tipi, item dengesi, rework, affix)
+> **Ne için / Güncel mi (2026-11-08):** item tasarımı alanı canlı durumu ve kararlar. evet.
+
 
 Agent buradan başlar: `docs/design/progression/item-design-plan.md` (kararlar + sıra; `items.md` ile çelişirse bu geçerli), veri `data/items.json`, kod `src/progression/items.ts`.
 
@@ -27,3 +29,11 @@ Agent buradan başlar: `docs/design/progression/item-design-plan.md` (kararlar +
 - Item/affix değişince goldenlar: `npx tsx tests/golden/record.ts`; iki kırmızı test seçim gerektirebilir (item-caps Quick start tavanı 60. seviyeye bağlı; endless-balance bandı, telafi `data/endless.json > scaling.hpPerWave`).
 - Tam `vitest run` yük altında 30 sn zaman aşımı verir; düşenleri tek başına yeniden koş.
 - Yeni stat/mekanik Ömer'e sorulmadan eklenmez; sayı/denge değişiminden önce Ömer sayılara bakar.
+
+## Kararlar (hafızadan taşındı 2026-11-08)
+Tam metinler `~/.claude/projects/C--Users-Omer-Projects-embers-of-valdoria/memory/archive/2026-11-08/` (dosya adı parantezde).
+- **Silah tipleri, karar 2026-10-27** (form 6yFJY5JwVrJLyMHhXE3PFs; uygulandı, open-q 443): örtükler Sword +crit şansı (+%1,5 +0,1/ilvl), Dagger hız, Axe zırh delme %8, Mace isabet %6 more, Bow +crit hasarı (+%10 +1/ilvl), Staff %8 more Max MP, Charm MP yenilenme, Hammer Daze (%15, hedef sırası %25 geri, boss yarım; 2H x1,67). Hammer Defender + Paladin için (Warrior DEĞİL), x1,05 güç / -%2 hız; War Maul 2H çekiç. Yayılım: sword x1,00, axe x1,10/-%5, mace x1,18/-%9. 2H yakın (staff/bow değil): güç x1,15 (grip 1,45 üstüne), örtük x1,67, -%5 hız. Kişisel hız zarı ±%5. Gösterim: toplanan "+X% Stat", oransal cümle "8% more Max MP", direnç "Takes 4% less Holy damage", ipucu takanın gerçek sonucunu gösterir (doğrulanmadı). Silah tipi kuralları düşmanlara uygulanmaz; yeni moblara Daze/zırh delme bireysel pasif olarak verilebilir. Açık: 3 çekiç tabanının kendi ikonu yoktu (sonradan çizildi mi doğrula). (weapon-types-form)
+- **Off-hand affix'leri sınıfa bağlı değil** (Ömer 2026-11-07: "bu offhandlere o classa özel özellik önerme. yarın bir gün farklı bir classa da bunu giyilebilir yapabiliriz"): yalnız genel kancalar; Sharpshooter, bahis, Omen, Wither vb. yok; tema item'e uyabilir. (offhand-not-class-bound)
+- **Tutuş + off-hand çeşidi** (Ömer 2026-11-07: "her karakter hem 1h + 1oh hem de 2h takabilmeli. mage, vesper vs bunları es geçme", "en az 2den kastım offhand çeşidi"): her sınıfa 1H+OH ve 2H yapı; her off-hand türü en az 2 alt tip, kendi örtüğüyle; Quiver ve Focus Orb dışında yeni büyücü off-hand'leri. O gün asa sınıflarının (Mage, Druid, Undead, Vesper) off-hand'i yoktu. (grip-and-offhand-variety)
+- **Eski Item Design sohbeti** (2026-11-01, kapandı): kolye yuvası YOK, yalnız Ring + Trinket; Ring yalnız Copper Ring + Pilgrim's Band; bosslar set düşürmez (elit + normal). Kararlar `docs/design/progression/item-design-plan.md`. (item-design-chat)
+- Taşınan hafıza: weapon-types-form, offhand-not-class-bound, grip-and-offhand-variety, item-design-chat.

@@ -1,4 +1,12 @@
 # Sefer (Campaign) Tasarımı: Valdoria
+> **Ne için / Güncel mi (2026-11-08):** Sefer sistemi tasarımı (veri modeli, kayıt, harita ekranı, karşılaşma). Sahip belge; MVP v5 kodlandı, sonra Harita 2-3, Endless ve kayıt sürümleri eklendi, başlıktaki "Aşama 1" durumu eski. Güncel alan durumu: `docs/arch/areas/campaign.md`; veri `data/campaign/`.
+
+## Güncel durum (2026-11-08)
+- **Harita 1-3:** Valdoria, The Drowned Reach, The Hollow Crown oynanır (`data/campaign/campaign.json > maps`; `mapFlags` ikisi de açık). Plan: `maps-2-3.md`.
+- **Endless:** kodlandı (`src/campaign/encounters.ts`, `encounter-waves.ts`, `hollow-crown.ts` vb. endless dalları; sim `npm run sim:endless`).
+- **Modlar:** Normal ve Ironman (`CampaignMode`, `src/campaign/types.ts`).
+- **Kayıt sürümü:** `SAVE_VERSION = 14` (`src/campaign/save.ts`; 2-13 geçişle okunur). Aşağıdaki şema (5.3) ilk sürümdür.
+- Alan belgesi: `docs/arch/areas/campaign.md`. Aşağıdaki metin ilk MVP tasarım kaydıdır.
 
 Durum: **v5; aşama 1 (MVP) KODLANDI (2026-10-07, madde 255):** `src/campaign/`, `data/campaign/`, `MainMenuScene`, `CampaignMapScene`, debug > Campaign, wiki > Campaign. Savaş bağlantısı engine-dev'in madde 251 arayüzüyle (güçlendirme, özel ad, rütbe, eksik canla başlama; yedek takımlar artık kullanılmıyor). Yazan: campaign-dev. v1: 2026-10-07; v2: aynı gün, Ömer'in cevapları ve iki yeni referansla; v3: Ömer'in v2 sorularına cevaplarıyla (can, Ironman, Ashford'da takım değişimi, Morvane görünürlüğü).
 
@@ -129,12 +137,12 @@ Bu bölüm yukarıdaki "Choice point: seçilen yol kilitlenir" ve 2.1'deki "kapa
 - **Durum ve kayıt:** `path` yürüyüş günlüğü (yolculukta aradaki düğümler dahil); yeni alanlar `visited`, `cleared`, `replays` (ve yalnızca duraklatılmış devriyede `patrol`). Kayıt sürümü 10: eski kayıtlarda `visited` / `cleared` path'ten türetilir. Her zaferden sonra otomatik kayıt (devriyeler dahil); yenilgi son kayda döner; yolculuk ve kasaba kayda sonraki zaferde girer.
 - **Arayüz:** temizlenmiş savaş düğümünde döngü simgesi ve "Patrol" yazısı, lejantta Patrol, sol altta "Cleared 9/26 · Chapter 1". Kod: `src/campaign/state.ts` (moveOptions, travelRoutes, startPatrol), `fog.ts`, `save.ts`; sahne `src/game/scenes/CampaignMapScene.ts`; debug `src/ui/debug-campaign-roam.ts` (Reset replays, Teleport); test `tests/campaign-roam.test.ts`.
 - **Savaştan çekilme (Ömer 2026-10-23):** Savaş düğümünde Fight'a basılmazsa kafile temizlenmiş komşular üzerinden ayrılabilir; düğüm temizlenmemiş kalır (`state.ts > canWithdraw`; sahnede gidilebilir komşular parlar, dokununca yürünür).
-- **Harita görünümü (Ömer 2026-10-23, mockup `public/mockups/maps-2-3.html`):** harita kafilenin bölgesine yakın açılır; üst ortadaki bölge adına dokunmak ya da en küçük yakınlaştırmadan da uzaklaşmak (− / tekerlek / sıkıştırma) bütün haritayı gösterir: yalnızca bölge işaretleri (madalyon + Roma rakamı, ad, "N stops · 1 boss") ve aralarında ana yol, düğümler gizli. Bir bölgeye dokunmak / yakınlaştırmak o bölgeye girer. Sis bulutları her görünümde yerinde kalır, yalnızca keşifle kalkar. Sağ alttaki eski bölge görünümü düğmesi kaldırıldı. Kod `src/game/region-view.ts`, test `tests/region-overview.test.ts`; varsayımlar open-questions madde 403.
-- Açık sorular / varsayımlar: open-questions madde 362.
+- **Harita görünümü (Ömer 2026-10-23, mockup `public/mockups/maps-2-3.html`):** harita kafilenin bölgesine yakın açılır; üst ortadaki bölge adına dokunmak ya da en küçük yakınlaştırmadan da uzaklaşmak (− / tekerlek / sıkıştırma) bütün haritayı gösterir: yalnızca bölge işaretleri (madalyon + Roma rakamı, ad, "N stops · 1 boss") ve aralarında ana yol, düğümler gizli. Bir bölgeye dokunmak / yakınlaştırmak o bölgeye girer. Sis bulutları her görünümde yerinde kalır, yalnızca keşifle kalkar. Sağ alttaki eski bölge görünümü düğmesi kaldırıldı. Kod `src/game/region-view.ts`, test `tests/region-overview.test.ts`; varsayımlar open-questions-archive madde 403.
+- Açık sorular / varsayımlar: open-questions-archive madde 362.
 
 ## 3. Valdoria haritası: veri modeli
 
-> **Güncel harita (2026-10-11): Valdoria A1-x** (`valdoria-2x.md` 10.5, open-questions 305). 26 düğüm, sefer başına 21 durak, 24 rota. Yeni düğüm türleri: `rest` (Riverside Camp: ücretsiz %50 iyileşme, altınla diriltme; `campaign.json > rest`) ve `merchant` (Forward Camp: Odo; `campaign.json > merchant`). Aşağıdaki 3.1-3.4 tabloları eski 17 düğümlük haritanın kaydıdır. K1'in tek istisnası: Witch's Hut kolu (madde 305).
+> **Güncel harita (2026-10-11): Valdoria A1-x** (`docs/archive/design/campaign/valdoria-2x.md` 10.5, open-questions-archive 305). 26 düğüm, sefer başına 21 durak, 24 rota. Yeni düğüm türleri: `rest` (Riverside Camp: ücretsiz %50 iyileşme, altınla diriltme; `campaign.json > rest`) ve `merchant` (Forward Camp: Odo; `campaign.json > merchant`). Aşağıdaki 3.1-3.4 tabloları eski 17 düğümlük haritanın kaydıdır. K1'in tek istisnası: Witch's Hut kolu (madde 305).
 
 ### 3.1 Düğümler (v2; konumlar v4)
 Konum: **yazısız arka planın** (`assets/campaign/valdoria-bg.webp`, 1672x941) oranı (x/1672, y/941), rozet merkezi. **Değişenler kalın.**
@@ -301,7 +309,7 @@ Sonuç (v5): **alt yol (5A-6A) 9 savaş, üst yol (5B-6B) 10 savaş.** Alt yolda
 - Seçim ve birleşme noktası veride işaretlenmez, graftan çıkar (çıkış > 1 / giriş > 1); testler sayıları (3 ve 3) doğrular.
 - Kenara isteğe bağlı `"path": [[x,y], ...]` ara noktaları; yoksa hafif kavisli eğri.
 - `partyCap` düğümde verilir ve o düğümden itibaren geçerlidir (bir sonraki `partyCap`'e kadar): Mill Road 1, Ravenwood 2, Ashford 3, Valdren Keep 4 (ayrılırken; `recruit.when`: `before` = düğüme varınca savaştan önce, `after` = düğümün savaşı kazanılınca (Mill Road), `leave` = düğümden çıkarken). 5. karakterin yeri açık (Ömer); geldiğinde ilgili düğüme `recruit` + `partyCap: 5` eklenir.
-- `data/campaign/campaign.json` (provizyon): `{ "maps": ["valdoria"], "rules": { "carryHp": true, "victoryHeal": 0.2, "reviveRatio": 0.2, "bossVictoryHeal": 1.0, "maxSaves": { "normal": 5, "ironman": 1 } }, "starterPool": ["warrior", "archer"] (Ömer 2026-10-14), "companyPool": [11 sınıf], "recruitPool": [11 sınıf] }` (11 = rastgele havuzdaki oynanabilir sınıflar, Hexer dahil, Geometer hariç). `victoryHeal` ileride zorluk seviyesine göre değişebilir (`rules` zorluk başına ayrı blok olabilir).
+- `data/campaign/campaign.json` (provizyon): `{ "maps": ["valdoria"], "rules": { "carryHp": true, "victoryHeal": 0.2, "reviveRatio": 0.2, "bossVictoryHeal": 1.0, "maxSaves": { "normal": 5, "ironman": 1 } }, "starterPool": ["warrior", "skald", "paladin", "druid"] (Ömer 2026-11-08; ilk hali warrior/archer 2026-10-14; skald companyPool ve recruitPool'da da), "companyPool": [11 sınıf], "recruitPool": [11 sınıf] }` (11 = rastgele havuzdaki oynanabilir sınıflar, Hexer dahil, Geometer hariç). `victoryHeal` ileride zorluk seviyesine göre değişebilir (`rules` zorluk başına ayrı blok olabilir).
 - `data/campaign/encounters.json` (bkz. 4), ileride `events.json`, `treasures.json`.
 
 ### 3.5 Görselde bulunan tutarsızlıklar (v1'den, güncel)
@@ -319,7 +327,7 @@ Sonuç (v5): **alt yol (5A-6A) 9 savaş, üst yol (5B-6B) 10 savaş.** Alt yolda
 
 ## 4. Takım: dinamik kadro, tutorial, lider
 
-> **Ömer 2026-11-01, yeni sefer başlangıcı:** yeni seferde tek kahramanla başlanır (Warrior, Defender, Paladin, Druid; kalıcı lider), katılımlar Ashford (serbest), Valdren Keep (3 aday), King's Bridge zaferi (3 aday). Takım 1 -> 2 -> 3 -> 4; veda ve Skip tutorial yok. Ayrıntı `docs/design/tutorial.md > Yeni sefer başlangıcı`. Aşağıdaki 4.1-4.3 eski yapıyı anlatır; bu yapı yalnız kayıtta `soloStart` olmayan eski seferlerde sürer (`campaign.json > legacyStart`).
+> **Ömer 2026-11-01, yeni sefer başlangıcı:** yeni seferde tek kahramanla başlanır (Warrior, Skald, Paladin, Druid; Defender 2026-11-08 başlangıçtan çıktı, bölük/aday havuzunda kalır; kalıcı lider), katılımlar Ashford (serbest), Valdren Keep (3 aday), King's Bridge zaferi (3 aday). Takım 1 -> 2 -> 3 -> 4; veda ve Skip tutorial yok. Ayrıntı `docs/design/tutorial.md > Yeni sefer başlangıcı`. Aşağıdaki 4.1-4.3 eski yapıyı anlatır; bu yapı yalnız kayıtta `soloStart` olmayan eski seferlerde sürer (`campaign.json > legacyStart`).
 
 ### 4.1 Tutorial (Bölge I: Mill Road -> Ashford Village)
 Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e taşınmış hâli):
@@ -336,7 +344,7 @@ Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e ta
 
 ### 4.2 İki takım: tutorial takımı ve asıl takım (Ömer kararı v3: "Ashford'da tutorial takımı gidecek")
 **Tutorial takımı (Mill Road -> Ashford, 1-2 kişi):**
-- **Başlangıç:** "Choose your hero": yalnızca **Warrior** ya da **Archer** (Ömer 2026-10-14; `campaign.json > starterPool`; open-questions 326). Haritada bu bölümde önde o yürür.
+- **Başlangıç:** "Choose your hero": **Warrior, Skald, Paladin** ya da **Druid** (Ömer 2026-11-08; eski hali Warrior/Archer 2026-10-14; `campaign.json > starterPool`). Haritada bu bölümde önde o yürür.
 - **Mill Road zaferinden sonra (Ömer 2026-10-27; eskiden Ravenwood'da savaştan önce):** 3 aday kart -> 1 seç (`recruit.when: "after"` Mill Road düğümünde). Takım 2. Adaylar ilk kahramana göre SABİT (çekiliş yok; Ömer 2026-10-14, `recruit.byFirstHero`): Warrior -> Druid / Undead / Gambler, Archer -> Anti-Mage / Cutthroat / Undead (iki listede de alan saldırılı sınıf var; bu durak alan saldırılarını öğretir). Ashford "Form your company" ve Valdren Keep adayı 11 sınıflık havuzdan (değişmedi).
 - Tutorial'da takım değiştirme yok (2 kişi, yedek yok).
 
@@ -376,7 +384,7 @@ Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e ta
 - ~~Savaşta düşen karakter: zaferden sonra can maks'ının %20'siyle kalkar.~~ **Ömer 2026-10-11 (madde 305), Endless gibi:** düşen kahraman zaferde KALKMAZ; ceset olarak taşınır, sonraki savaşlara cesedi girer (motor `startDead`). Savaştaki Resurrection, kasaba ya da dinlenme noktasında altınla kalkar (`campaign.json > rest`; Shepherd's Fold'da olaydan sonra da dinlenme var). Bütün takım düşerse yenilgi (aynı).
 - **Zafer sonrası toparlanma (Ömer kararı v3):** her zaferden sonra hayatta kalanlar can maks'ının **%20**'sini geri alır (`victoryHeal 0.2`). Zorluğa göre değiştirme altyapısı var (`campaign.json > difficulties.<x>.rules`, madde 264) ama kullanılmıyor: oranlar her zorlukta aynı. Sefer simülasyonu bu kuralın boss'larda bir "can sarmalı" yarattığını gösterdi (açık soru, madde 264).
 - **Büyük boss zaferi** (`type: boss`: King's Bridge; Castle Morvane haritayı bitirir): **tam iyileşme** (Ömer kararı v3, `bossVictoryHeal 1.0`). **Varsayım (2026-10-11, Endless ile aynı):** yalnızca yaşayanlar; düşenler kalkmaz. Elitlerden sonra tam iyileşme yok.
-- Kasaba (4, 7): ~~ücretsiz, herkes tam can ve düşenler de kalkar (Ömer 2026-10-11 denge paketi).~~ **Ömer 2026-10-18 (open-questions 363 / 364):** kasabaya İLK varış = o kasabanın bedava dinlenmesi (yaşayanlar tam can, düşmüşler kalkmaz); tekrar varışta şifa yok, ateş başı dinlenme ücretli (`campaign.json > rest.price`). Zafer şifası %35; seferin genel düşman ölçeği `campaign.json > enemyScale` (madde 305).
+- Kasaba (4, 7): ~~ücretsiz, herkes tam can ve düşenler de kalkar (Ömer 2026-10-11 denge paketi).~~ **Ömer 2026-10-18 (open-questions-archive 363 / 364):** kasabaya İLK varış = o kasabanın bedava dinlenmesi (yaşayanlar tam can, düşmüşler kalkmaz); tekrar varışta şifa yok, ateş başı dinlenme ücretli (`campaign.json > rest.price`). Zafer şifası %35; seferin genel düşman ölçeği `campaign.json > enemyScale` (madde 305).
 - **GÜN, INN, KAMP (Ömer 2026-10-26, form econ/main; kod `src/campaign/state.ts`, sayılar `campaign.json > days / inn / camp / rest`; yukarıdaki kasaba şifası maddesinin YERİNE):**
   - **Gün:** `CampaignState.day` 1'den başlar, `dayProgress` 0-1. Yalnız düğüm tamamlamayla ilerler: bir düğümün kendi savaşının ilk zaferi ya da devriye zaferi = 1 tamamlama; 2 tamamlama = 1 gün. Yürümek, kasaba / olay / kamp ziyareti, savaşsız hazine ve olay savaşı gün harcamaz (VARSAYIM: olay savaşı olay sayılır). Günle düşman güçlenmez. Harita geçişinde gün sürer. Tüccar rafları geçen gün başına 2 raf yenilenir (Ömer 2026-10-31; items.md 2.2). İleride görev süresi / günle açılma için.
   - **Kasaba iyileştirmez:** ilk varış bedava tam şifa + yara silme ve ücretli ateş başı (`rest.price`, `townRestPrice`) KALKTI. Harita geçişinde yaraların silinmesi kalır.
@@ -548,7 +556,7 @@ Hedef (ÖNERİ, Ömer onayı bekliyor): ilk denemede kazanma, oyuncu tarafı Med
 | Boss (9, 12) | %45-60 | %68 | %51 | %33 |
 | Seferi bitirme (10 denemede takılmadan) | | %79 | %61 | %39 |
 
-Medium düğüm başına: 1 %99, 2 %98, 3 %88, 5A %82, 5B %81, 6B %78, 8A %80, 8B %73, 8C %70, 9 %56, 10 %81, 11A %59, 11B %83, 12 %46. Rota bitirme %52-70 (elit sayısı arttıkça düşer). Bitirmeyi asıl düşüren, boss'lara düşük canla girilince "son kayıt"ın hep aynı kötü durumdan başlaması (bkz. `docs/balance.md > Sefer dengesi`, open-questions madde 264).
+Medium düğüm başına: 1 %99, 2 %98, 3 %88, 5A %82, 5B %81, 6B %78, 8A %80, 8B %73, 8C %70, 9 %56, 10 %81, 11A %59, 11B %83, 12 %46. Rota bitirme %52-70 (elit sayısı arttıkça düşer). Bitirmeyi asıl düşüren, boss'lara düşük canla girilince "son kayıt"ın hep aynı kötü durumdan başlaması (bkz. `docs/balance.md > Sefer dengesi`, open-questions-archive madde 264).
 
 ### 7.4 Zorluk seviyeleri (madde 256 + 264)
 Sefer başında seçilir, sonra değişmez. Tanım `campaign.json > difficulties`:
@@ -562,7 +570,7 @@ Sefer başında seçilir, sonra değişmez. Tanım `campaign.json > difficulties
 
 `enemy`/`enemyTier` karşılaşmanın kendi `mods`'u ile birleşir (çarpanlar çarpılır, zırh ekleri toplanır); `rules` bu zorlukta `victoryHeal`, `reviveRatio`, `bossVictoryHeal`'i değiştirebilir (altyapı hazır, kullanılmıyor). İleride loot vb. aynı yere eklenir. Hızlı savaşta zorluk yok (Medium).
 
-`eliteEscort` (Ömer 2026-10-19, open-questions 365 seçenek 3): ELİT düğümdeki rütbesiz eşlikçilere (elit lider ve boss hariç; `noTierMods` korumasına dokunmaz) `enemy`'nin üstüne eklenen zorluk eki; normal/boss düğüm ve Endless etkilenmez. Yalnızca Medium'da: can ve güç x1,12 (PROVİZYON); Easy/Hard'da yok (= 1).
+`eliteEscort` (Ömer 2026-10-19, open-questions-archive 365 seçenek 3): ELİT düğümdeki rütbesiz eşlikçilere (elit lider ve boss hariç; `noTierMods` korumasına dokunmaz) `enemy`'nin üstüne eklenen zorluk eki; normal/boss düğüm ve Endless etkilenmez. Yalnızca Medium'da: can ve güç x1,12 (PROVİZYON); Easy/Hard'da yok (= 1).
 
 ---|---|---|---|---|---|---|---|---|---|
 | Takım / düşman | 1 / 2w | 2 / 5w | 2 / 3 | 3 / 3 | 4 / 4-5 | 4 / dev | 4 / 4 | 4 / 5 | 4 / 5 |
@@ -610,3 +618,11 @@ Sefer başında seçilir, sonra değişmez. Tanım `campaign.json > difficulties
 ## 10. Ömer'e açık sorular (v5)
 
 Açık soru yok. Açık kalan tek konu: 5. karakterin ne zaman katılacağı (öneri: King's Bridge zaferi, Bölge III'e girerken).
+
+## 11. Ömer kararları (2026-11-08 doğrulama: bugünkü davranış = karar)
+
+- **Raiders' Hoard:** korunan hazine bilinçli zor kalır (çarpan 1,02; `encounters.json > hoard_guards`).
+- **"Hard fight" uyarısı:** eşik 1,3 / 2 (`campaign.json > sideDanger`), etiket "Hard fight"; şifasız zincir savaşlar (Pit, Dive) için toplam yük uyarısı yok.
+- **Olay ödülü:** sandıklı zafer (`win.chest`) standart sandık verir; küçük sandık alanı yok.
+- **Harita 2 eğrisi:** iyi oyuncu bitirme %58,6 kabul; Inn kuralı ve sim davranışı değişmez. Yan düğüm uyarısı Harita 2'de yalnız dr65'te.
+- **Thunder Skald:** Ömer 2026-11-08 "oyunun başından aktif" (ayrıntı `classes/skald.md`).

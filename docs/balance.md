@@ -135,7 +135,7 @@ Eski hedefi aşanlar (ilk deneme): boss The Weir Mouth 83,2 (55-60), Gallows Cov
 
 ## Dengesi / bandı bekleyenler (geçici muafiyet; normalde BOŞ)
 - `tests/balance-checks.ts > PENDING_BALANCE` (class bandı): **boş**. Hexer bu turda bantta (%48) olduğu için listeden çıkarıldı.
-- `tests/balance-checks.ts > PENDING_SKILLS` (skill bandı): **boş**. Whirlwind 2026-10-20 kısa süre listedeydi (pay %11); Ömer kararıyla ilk iki sıraya vuran rect 2x3 olunca (güç 0,5) pay %22, çıkarıldı (open-questions 376).
+- `tests/balance-checks.ts > PENDING_SKILLS` (skill bandı): **boş**. Whirlwind 2026-10-20 kısa süre listedeydi (pay %11); Ömer kararıyla ilk iki sıraya vuran rect 2x3 olunca (güç 0,5) pay %22, çıkarıldı (open-questions-archive 376).
 
 ## Sefer dengesi — 2026-10-08 (balance-tester, Opus; madde 264)
 
@@ -410,3 +410,21 @@ Tek kişilik başlangıç eğrisinden sonra `data/campaign/balance.json > target
   - Ölçüm: bedel düşüşü sonrası ayar öncesi test elit 65,8 / 300 sefer elit 67,8. Sonra test (120 / 7001) elit 59,2 (Cathedral 51,7, Thornwood 66,7) / boss 30,4 / normal 78,1 / bitirme %41,7; 300 sefer seed 1 elit 61,7 (Cathedral 56,8, Thornwood 66,7) / boss 32,7 (Bridge 32,3, Castle 33,0) / normal 78,8 / bitirme %40,7.
 - **Açık (Ömer'e):** hızlı savaş skill payında Anti-Mage mana_burn (temel) %47,4 / %47,6 (bant üstü 45; `tests/balance.test.ts`, `balance-b.test.ts`). Sebep 0.9.11 manası (Ice Crater 10 ile de %47,6; önceki ölçümde Ice Crater testi önce düştüğü için görünmüyordu). Çözüm kahraman verisi ister (AM skill bedeli); karar bekliyor. Ice Crater payı 8 MP ile %14,6 -> %22,2 (bantta).
 - **AM drain_field 14 -> 12 MP (Ömer onayı 2026-11-08, en ucuz temel dışı skill -2):** mana_burn payı %47,4 / %47,6 -> %47,3 / %47,5; hâlâ bant üstü (45). Başka değişiklik yapılmadı; karar bekliyor.
+
+## Paladin / Mage / Warrior turu (2026-11-08; Ömer onayı "Paladini kontrol et, Mage'i kontrol et"; Lead)
+- Ölçüm: test seed grupları (900001 / 300001), grup başına 5000 savaş, Skald havuzda (PENDING). 300 savaşlık 0.9.11 raporu gürültülü (sınıf başına ~130 savaş, ±4-5 puan).
+- **Mage:** sorun yok. 5000'de %49,1 / %50,0 (300'lük raporun %56,6'sı gürültü). Değişiklik yok.
+- **Paladin kök sebep:** 0.9.11 manası havuzu 56 -> 35 yaptı (INT 26 x 0,2), bedeller aynı kaldı (Radiance 24 + Resurrection 16 + Judgment 16 = eski havuzun tamamı). Rest payı %12,6 (en yüksek ikinci), Radiance seyrek. %43,4 / %45,3.
+- **Warrior:** Skald havuza girince %56,5 / %56,3 (Skald'a karşı %62-63; Skald zayıf ve muaf).
+- Değişiklikler (veri): Radiance MP 24 -> 18; Resurrection MP 16 -> 14; Warrior zırhı 18 -> 15; Double Strike güç 0,38 -> 0,36 (iki vuruş). Charge 0,675 -> 0,65 denendi, etkisiz, geri alındı. Judgment 16 aynı.
+- Sonuç (5000 x 2): Paladin %47,0 / %48,5; Warrior %54,8 / %55,2; Mage %50,6 / %49,6. Bant dışı (muaf olmayan) class / skill yok; AM mana_burn %44,9 (sınırda).
+
+## Paladin / Warrior / Skald turu (2026-11-08; Ömer kararları; Lead)
+- **Paladin:** Radiance 18 / Resurrection 14 MP kaldı. Judgment düşman hasarı +%5: anlık 0,3 -> 0,315, holy_fire zemini 0,38 -> 0,399. Şifa ve holy_ground aynı.
+- **Warrior:** 0.9.11 değerlerine geri (zırh 15 -> 18, Double Strike 0,36 -> 0,38). Ömer: şimdilik dokunulmaz. Sonuç %56,1 / %53,9: seed 900001'de bant üstü (Ömer'e raporlandı, ayar yok).
+- **Skald kök sebep:** 0.9.11 manası havuzu 32 yaptı (INT 10), bedeller 10 / 20 / 22. Rest payı %21,4 (en yüksek). War Drum %1,6: YZ, Stormcall'a MP saklamak için Drum yerine Rest seçiyordu (20 MP sonrası 18'lik Stormcall'a yetmiyordu). Hammer Spark bölünmesi ve Conductor sorun değil.
+- **Skald değişiklikleri (veri):** War Drum MP 20 -> 8, bekleme 5 -> 4, Haste 2 -> 3 tur; Thunder Strike MP 10 -> 6, bekleme 3 -> 4, güç 0,95 -> 0,85; Stormcall MP 22 -> 18, güç 1,1 -> 1,0; Hammer Spark güç 0,6 -> 0,57 (parça başı 0,285).
+- Ara ölçümler (1000, seed 1 / 50001): yalnız MP düşüşü %44,7-48,0, Drum %2,5-7,3; Haste 3 tur Skald'ı %54-59'a çıkardı, hasar kısmalarıyla dengelendi.
+- **Sonuç (5000 x 2, 900001 / 300001; AI-fix + Skald ağacı YZ'si dahil):** Skald %48,9 / %51,3; Hammer Spark %24,0 / %24,5, Thunder Strike %24,7 / %24,8, War Drum %16,6 / %16,3, Stormcall hazırken kullanım %99; Rest %11,3. Skald `PENDING_BALANCE` ve `PENDING_SKILLS`'ten çıktı.
+- Diğerleri: Undead 53,4 / 54,3; AM 53,5 / 52,1; Druid 52,4 / 52,9 (muaf); Hexer 50,8 / 51,9; Mage 48,7 / 50,4; Archer 48,0 / 48,8; Cutthroat 48,8 / 47,0; Paladin 48,5 / 46,9; Vesper 47,3 / 48,0; Gambler 47,4 / 46,6; Defender 46,2 / 45,8.
+- Açık: Warrior %56,1 (900001); AM Mana Steal %45,2 (300001, bant 45, önceden açık).

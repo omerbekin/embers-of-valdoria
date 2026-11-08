@@ -1,5 +1,8 @@
 # Skill ağacı fx kataloğu (11 class, 715 düğüm)
 
+> Ne için: düğümlerin fx alanı sınıflandırması (a/a*/b/c) ve yazım sırası; fx yamalanabilir alanlar için bakılır.
+> Güncel mi (2026-11-08): KISMEN: 2026-10-22 sınıflandırma anıdır, ağaçlar `data/skill-trees/*.json` ile yazıldı; bölüm 12-15 (toplam, sorular, faz önerisi) tarihçe. Gerçek fx: veri + `src/progression/skill-tree-compile.ts > FX_FIELDS`.
+
 Durum: **SINIFLANDIRMA** (fx yazılmadı; `data/` değişmedi). Hazırlayan: content-designer, 2026-10-22.
 Kaynak: `data/skill-trees/<class>.json` (11 class × (60 düğüm + 5 Mastery bar) = 715; 15'inin fx'i yazılı), `docs/design/skill-tree-implementation.md` (2.3 fx dili, 4.2 kanca aileleri, 4.4 / 4.5 örnekleri, 10a cevaplar), `data/skills.json`, `data/statuses.json`, `data/grounds.json`, `src/engine/types.ts > ItemEffects / SkillEffectKind / PassiveDef`, `src/progression/skill-tree-compile.ts > FX_FIELDS`.
 Amaç: engine-dev'in C1 koşul sözlüğünü ve C3-C6 kapsamını 11 class'a göre kurması; content-designer'ın fx yazım sırası.

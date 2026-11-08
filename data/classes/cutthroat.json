@@ -28,7 +28,7 @@
     "id": "opportunist",
     "name": "Opportunist",
     "icon": "opportunist",
-    "text": "",
+    "text": "Deal 25% more damage to targets suffering Wound, Slow, Stun or Wither.",
     "effect": {
       "type": "bonusVsStatus",
       "statuses": ["wound", "slow", "stun", "wither"],

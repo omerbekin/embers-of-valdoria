@@ -14,7 +14,8 @@ import mage from '../../../data/audio-v2/mage.json';
 import paladin from '../../../data/audio-v2/paladin.json';
 import shared from '../../../data/audio-v2/shared.json';
 import undead from '../../../data/audio-v2/undead.json';
+import skald from '../../../data/audio-v2/skald.json';
 import vesper from '../../../data/audio-v2/vesper.json';
 import warrior from '../../../data/audio-v2/warrior.json';
 
-export const AUDIO_V2 = { antimage, aoe_tester, archer, defender, druid, gambler, hexer, mage, paladin, shared, undead, vesper, warrior } as unknown as Readonly<Record<string, AudioFileV2>>;
+export const AUDIO_V2 = { antimage, aoe_tester, archer, defender, druid, gambler, hexer, mage, paladin, shared, skald, undead, vesper, warrior } as unknown as Readonly<Record<string, AudioFileV2>>;

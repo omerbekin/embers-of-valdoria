@@ -1183,8 +1183,8 @@ function branchHasWork(branch, target = ORIGIN_MAIN) {
 
 // Metin değişince artırılır: açık sohbetler bir sonraki istemde yeni kuralları görür
 const WT_RULES_V = 4;
-const COORD_WORKER = `[gönderim kuyruğu] KOORDİNATÖR DÜZENİ: Ömer artık yalnız "Koordinatör" sohbetiyle konuşur. Sana iş ondan gelir. Açık sorunu, karar isteğini, bitti raporunu, engelini SendMessage ile Koordinatör'e yaz: tek mesajda soru, seçenekler, önerin, mockup linki. Kendin form açma, kararı Koordinatör'ün formu alır. "BU SOHBETE RAPOR" notlarını da ona ilet. Ömer sana doğrudan yazarsa normal cevap ver, sonra Koordinatör'e tek satır söyle. Ayrıntı: docs/arch/coordinator.md`;
-const COORD_SELF = (s) => `[gönderim kuyruğu] Sen Koordinatörsün (oturum ${s}). Kuralların: docs/arch/coordinator.md. Gönderim raporları yalnız sana gelir.`;
+const COORD_WORKER = `[gönderim kuyruğu] KOORDİNATÖR DÜZENİ: Ömer artık yalnız "Koordinatör" sohbetiyle konuşur. Sana iş ondan gelir. Açık sorunu, karar isteğini, bitti raporunu, engelini SendMessage ile Koordinatör'e yaz: tek mesajda soru, seçenekler, önerin, mockup linki. Kendin form açma, kararı Koordinatör'ün formu alır. "BU SOHBETE RAPOR" notlarını da ona ilet. Ömer sana doğrudan yazarsa normal cevap ver, sonra Koordinatör'e tek satır söyle. Ayrıntı: docs/arch/lead.md`;
+const COORD_SELF = (s) => `[gönderim kuyruğu] Sen Koordinatörsün (oturum ${s}). Kuralların: docs/arch/lead.md. Gönderim raporları yalnız sana gelir.`;
 function wtRules(sid, e, rec, first) {
   const s = short(sid);
   const base = `[gönderim kuyruğu] oturum ${s} · mod: ${e.mode}${e.ready ? ' · hazır' : ''}`;
@@ -1196,7 +1196,7 @@ function wtRules(sid, e, rec, first) {
       ? `İş bitip doğrulanınca Ömer'e tek satır "GitHub'a gönderiyorum" de, teyit BEKLEME: node "${TOOL}" push ${s} --fixes "<oyuncuya yönelik İngilizce satır>" (arka planda, sonuç kuyruk raporunda); bitince 5000 + Pages linkini ver.`
       : `Kendin GitHub'a gönderme; iş bitip doğrulanınca: node "${TOOL}" ready ${s} --fixes "<oyuncuya yönelik İngilizce satır>"; daha önce bir gönderim olursa ona katılır; yoksa ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle gider.`) +
     ` Gönderime ready anındaki hâl girer, sonraki commit'lerin sonrakine kalır. Kopyan her istemde origin/main'e kendiliğinden eşitlenir; çakışma varsa yalnız uyarı görürsün. tests/fixtures/golden çakışmasını elle çözme, gönderim yeniden üretir.` +
-    ` Oyuncunun göreceği bir şey değişmediyse --internal ver. Yeni açık soru: docs/design/open-questions.md sonuna "## Q-NEW. Başlık" (numarayı gönderim verir). Agent'ların bu kopyada mutlak yolla çalışır; paralel olanlar için bu daldan: git -C "${rec.path}" worktree add "<game>/.claude/worktrees/agent-<ad>" -b agent/<ad> (isolation kullanma), bitince bu dala merge et. Gönderimden sonra dal yeni main'e taşınır. Sohbet işi tamamen bitince: node "${TOOL}" wt-close ${s}. Başka açık sohbetin konusuna ya da dosyalarına giren işi yapma: SendMessage ile o sohbete devret (adı ListAgents'ta), Ömer'e tek satır söyle; sana devredilen işi normal iş say. Yeni konuya başlamadan docs/arch/chat-owners.md oku.` +
+    ` Oyuncunun göreceği bir şey değişmediyse --internal ver. Yeni açık soru: docs/design/open-questions.md sonuna "## Q-NEW. Başlık" (numarayı gönderim verir). Agent'ların bu kopyada mutlak yolla çalışır; paralel olanlar için bu daldan: git -C "${rec.path}" worktree add "<game>/.claude/worktrees/agent-<ad>" -b agent/<ad> (isolation kullanma), bitince bu dala merge et. Gönderimden sonra dal yeni main'e taşınır. Sohbet işi tamamen bitince: node "${TOOL}" wt-close ${s}. Başka açık sohbetin konusuna ya da dosyalarına giren işi yapma: SendMessage ile o sohbete devret (adı ListAgents'ta), Ömer'e tek satır söyle; sana devredilen işi normal iş say. Yeni konuya başlamadan docs/arch/lead.md oku.` +
     (rec.name === 'minor-fixes' ? ` Sen küçük ve sahipsiz işlerin sohbetisin, iş Koordinatör'den gelir.` : '');
 }
 
@@ -1239,12 +1239,12 @@ function earlyWarning(q, sid, abs) {
   if (!who.length) return null;
   withQueue((qq) => { const e = entry(qq, sid); if (!(e.warnedWt ??= []).includes(rel)) e.warnedWt.push(rel); });
   const names = who.map((r) => `"${ownerName(r.name)}" (kopya chat-${r.name})`).join(', ');
-  return `[gönderim kuyruğu] ERKEN UYARI: ${rel} şu an ${names} sohbetinde de değişiyor. Bunu düzenlemek yerine işi o sohbete devret (SendMessage, sahip listesi: docs/arch/chat-owners.md), Ömer'e tek satır söyle.`;
+  return `[gönderim kuyruğu] ERKEN UYARI: ${rel} şu an ${names} sohbetinde de değişiyor. Bunu düzenlemek yerine işi o sohbete devret (SendMessage, sahip listesi: docs/arch/lead.md), Ömer'e tek satır söyle.`;
 }
 // Sahip listesindeki sohbet adı (| Sohbet | Kopya | Alan |); yoksa kopya adı
 function ownerName(copy) {
   try {
-    for (const line of readFileSync(join(GAME, 'docs', 'arch', 'chat-owners.md'), 'utf8').split(/\r?\n/)) {
+    for (const line of readFileSync(join(GAME, 'docs', 'arch', 'lead.md'), 'utf8').split(/\r?\n/)) {
       const c = line.split('|').map((x) => x.trim());
       if (c[2] === copy) return c[1];
     }

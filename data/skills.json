@@ -16,13 +16,13 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.38
+        "power": 0.35
       },
       {
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.38
+        "power": 0.35
       }
     ],
     "vfx": "doublestrike",
@@ -97,7 +97,7 @@
     ]
   },
   "radiance": {
-    "_not": "Ömer 2026-10-24 (open-questions 416): D11 tek hücre / Holy Ground sürümü geri alındı; 0.9.8 öncesi (b4c7a6b^) 'herkese' davranışı: tüm dostlara şifa (eksik cana göre +%50'ye kadar), tüm düşmanlara kutsal hasar, zemin yok. Bedel 24 (mana turu 2, madde 414) korundu.",
+    "_not": "Ömer 2026-10-24 (open-questions 416): D11 tek hücre / Holy Ground sürümü geri alındı; 0.9.8 öncesi (b4c7a6b^) 'herkese' davranışı: tüm dostlara şifa (eksik cana göre +%50'ye kadar), tüm düşmanlara kutsal hasar, zemin yok. Bedel 24 (mana turu 2, madde 414) korundu. 2026-11-08 Paladin turu (0.9.11 mana reworkü sonrası havuz 56 -> 35, Paladin 2 x 5000'de %43-45): bedel 24 -> 18.",
     "id": "radiance",
     "name": "Radiance",
     "icon": "radiance",
@@ -105,7 +105,7 @@
     "global": true,
     "cost": {
       "resource": "mp",
-      "amount": 24
+      "amount": 18
     },
     "cooldown": 4,
     "initialCooldown": 2,
@@ -134,7 +134,7 @@
     ]
   },
   "judgment": {
-    "_not": "Ömer 2026-10-24 (open-questions 416/8): tek hücre (rect 1x1), İKİ TAHTAYA da atılabilir (area_any; desen D11 Radiance). Düşman hücresine: anlık kutsal büyü hasarı (INT 0,35) + 2 tur Holy Fire zemini (INT 0,45/tur). Kendi hücrene: oradaki dosta anlık şifa (INT 0,35) + 2 tur Holy Ground şifa zemini (INT 0,45/tur, içinde tur başlatan dosta). Sayılar PROVİZYON (sim bekliyor).",
+    "_not": "Ömer 2026-10-24 (open-questions 416/8): tek hücre (rect 1x1), İKİ TAHTAYA da atılabilir (area_any; desen D11 Radiance). Düşman hücresine: anlık kutsal büyü hasarı (INT 0,35) + 2 tur Holy Fire zemini (INT 0,45/tur). Kendi hücrene: oradaki dosta anlık şifa (INT 0,35) + 2 tur Holy Ground şifa zemini (INT 0,45/tur, içinde tur başlatan dosta). Sayılar PROVİZYON (sim bekliyor). 2026-11-08 Ömer: düşman hasarı +%5 (anlık 0,3 -> 0,315, holy_fire 0,38 -> 0,399); şifa ve holy_ground aynı.",
     "id": "judgment",
     "name": "Judgment",
     "icon": "judgebeam",
@@ -159,7 +159,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.3,
+        "power": 0.315,
         "element": "holy",
         "side": "enemies"
       },
@@ -174,7 +174,7 @@
         "ground": "holy_fire",
         "turns": 2,
         "scale": "int",
-        "power": 0.38,
+        "power": 0.399,
         "side": "enemies"
       },
       {
@@ -739,7 +739,7 @@
     ]
   },
   "close_ranks": {
-    "_not": "Ömer 2026-10-20: Defender'da Guard'ın yerine. Seçilen dost + onun SIRASINDAKİ dostlar (splash 'row', Tremor Slam'ın row şekli; Defender hariç) 3 tur (her taşıyanın kendi turları, eski Guard sayımı) Guard alır: aldıkları hasarın %50'si Defender'a geçer (Guard makinesi; aktarılan pay Defender zırhıyla yeniden azalmaz; Defender ölünce aktarım durur; bir birimde tek Guard, yenisi eskisinin yerine geçer). Menzil 2 seçilen dosta bakar; yarım turn Guard'la aynı; cooldown 5 (Ömer: %35 değersizse %50 + cooldown 5); bedel 10 MP (Ömer 2026-10-20). İkon/vfx/ses Guard'ınki.",
+    "_not": "Ömer 2026-10-20: Defender'da Guard'ın yerine. Seçilen dost + onun SIRASINDAKİ dostlar (splash 'row', Tremor Slam'ın row şekli; Defender hariç) 3 tur (her taşıyanın kendi turları, eski Guard sayımı) Guard alır: aldıkları hasarın %50'si Defender'a geçer (Guard makinesi; aktarılan pay Defender zırhıyla yeniden azalmaz; Defender ölünce aktarım durur; bir birimde tek Guard, yenisi eskisinin yerine geçer). Menzil 2 seçilen dosta bakar; yarım turn Guard'la aynı; cooldown 5 (Ömer: %35 değersizse %50 + cooldown 5); bedel 8 MP (ilk yazım 10 MP idi; güncel değer cost.amount). İkon/vfx/ses Guard'ınki.",
     "id": "close_ranks",
     "name": "Close Ranks",
     "icon": "closeranks2",
@@ -789,12 +789,12 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.7,
+        "power": 0.665,
         "element": "arcane"
       },
       {
         "type": "manaBurn",
-        "amount": 8,
+        "amount": 7,
         "gainRatio": 0.5
       },
       {
@@ -898,7 +898,7 @@
       "resource": "mp",
       "amount": 12
     },
-    "cooldown": 4,
+    "cooldown": 3,
     "motion": "cast",
     "fx": "#b36bff",
     "effects": [
@@ -1114,7 +1114,7 @@
   },
 
   "headsmans_blow": {
-    "_not": "Warrior ultimate (Ömer 2026-10-17, wr1 Berserker; Abyssal Cry'ın yerine): yakın dövüş tek hedef, TÜM Rage'i harcar (en az 30; cost.spendAll). Güç = power + powerPerRage x harcanan Rage (30 Rage: 1,1 / 50 Rage: 1,5 STR), x(1 + executeBonus x hedefin eksik can oranı). Sayılar PROVİZYON (balance-tester). İkon YER TUTUCU (warcry). Animasyon 2026-10-23: vfx headsman (v2: art-v2/warrior/vfx.ts; kaldırış + kor dolumu, tek dikey iniş, zemin çatlağı), pozlar overhead -> slash; sesler mevcut Warrior sesleri (v2 furyCharge + abyssRumble ek katman).",
+    "_not": "Warrior ultimate (Ömer 2026-10-17, wr1 Berserker; Abyssal Cry'ın yerine): yakın dövüş tek hedef, TÜM Rage'i harcar (en az 30; cost.spendAll). Güç = power + powerPerRage x harcanan Rage (eksik can bonusu executeBonus 0.9.10.4'te Ömer kararıyla kaldırıldı). Sayılar PROVİZYON (balance-tester). İkon YER TUTUCU (warcry). Animasyon 2026-10-23: vfx headsman (v2: art-v2/warrior/vfx.ts; kaldırış + kor dolumu, tek dikey iniş, zemin çatlağı), pozlar overhead -> slash; sesler mevcut Warrior sesleri (v2 furyCharge + abyssRumble ek katman).",
     "id": "headsmans_blow",
     "name": "Headsman's Blow",
     "icon": "warcry",
@@ -1268,7 +1268,7 @@
     "target": "dead_ally",
     "cost": {
       "resource": "mp",
-      "amount": 16
+      "amount": 14
     },
     "cooldown": 5,
     "motion": "cast",
@@ -12282,5 +12282,80 @@
     "icon": "meteor",
     "vfx": "meteor",
     "sfx": ["meteorWhistle", "bigBoom", "fireCrackle"]
+  },
+  "hammer_spark": {
+    "_not": "Thunder Skald temel saldırı (Ömer 2026-11-07): toplam 0,60 STR, damage.split ile yarısı fiziksel (armor), yarısı büyü + şimşek (magicArmor); tek isabet / kritik zarı. 2026-11-08 Skald denge turu (Ömer onayı): güç 0,6 -> 0,57. YER TUTUCU sanat: ikon / efekt / ses Thunderwright Anvil Strike kalıbından.",
+    "id": "hammer_spark",
+    "name": "Hammer Spark",
+    "pose": ["overhead", "slash"], "viewMotion": "melee",
+    "icon": "fistcrush2",
+    "target": "single_enemy",
+    "cost": { "resource": "mp", "amount": 0 },
+    "motion": "ranged",
+    "fx": "#bfe3ff",
+    "effects": [
+      { "type": "damage", "damageType": "physical", "scale": "str", "power": 0.57, "split": { "share": 0.5, "damageType": "magic", "element": "lightning" } }
+    ],
+    "vfx": "fistcrush2",
+    "sfx": ["skaldHeave", "hammerThrow", "sparkCrack"]
+  },
+  "thunder_strike": {
+    "_not": "Thunder Skald (Ömer 2026-11-07): tek düşman şimşek + Shocked (thunder.shocks: sıra çubuğunda geri itme, suda Stun). 2026-11-08 Skald denge turu: MP 10 -> 6, bekleme 3 -> 4, güç 0,95 -> 0,85. YER TUTUCU sanat: storm_test kalıbı (bolt, judgment, bigBoom).",
+    "id": "thunder_strike",
+    "name": "Thunder Strike",
+    "pose": ["overhead", "slash"], "viewMotion": "melee",
+    "icon": "bolt",
+    "target": "single_enemy",
+    "thunder": { "shocks": true },
+    "cost": { "resource": "mp", "amount": 6 },
+    "cooldown": 4,
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#bfe3ff",
+    "effects": [
+      { "type": "damage", "damageType": "magic", "scale": "str", "power": 0.85, "element": "lightning" }
+    ],
+    "vfx": "judgment",
+    "sfx": ["skaldCall", "boltCrack"]
+  },
+  "war_drum": {
+    "_not": "Thunder Skald (Ömer 2026-11-07): YENİ hedef türü self_area: Skald'ın hücresi merkezli 3x3 kare (kendi tahtası); içindeki dostlar (kendisi dahil) 2 tur Haste. MP 20 / bekleme 5 (mana sonra ayarlanacak). 2026-11-08 Skald denge turu (0.9.11 manası, havuz 32): MP 20 -> 8, bekleme 5 -> 4, Haste 2 -> 3 tur. YER TUTUCU sanat: Clan Skald Chant kalıbı (taunt2).",
+    "id": "war_drum",
+    "name": "War Drum",
+    "pose": ["drum"], "viewMotion": "melee",
+    "icon": "taunt2",
+    "target": "self_area",
+    "area": { "shape": "rect", "rows": 3, "cols": 3 },
+    "cost": { "resource": "mp", "amount": 8 },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#9fc6ea",
+    "effects": [
+      { "type": "status", "status": "haste", "turns": 3 }
+    ],
+    "vfx": "taunt2",
+    "sfx": ["skaldChant", "drumThump", "drumRoll"]
+  },
+  "stormcall": {
+    "_not": "Thunder Skald ultimate (Ömer 2026-11-07): tek düşman şimşek, sonra en zırhlı iki düşmana zıplar (splash armor, falloff 0,75); her isabet Shocked. MP 22 / bekleme 5, ilk bekleme 2. 2026-11-08 Skald denge turu: MP 22 -> 18, güç 1,1 -> 1,0. Ömer 2026-11-08: Skald taban menzili 2 (yakın dövüş grubu), Stormcall skill istisnası menzil 3. YER TUTUCU sanat: Ring the Anvil kalıbı.",
+    "id": "stormcall",
+    "name": "Stormcall",
+    "pose": ["raise", "channel"],
+    "icon": "meteor",
+    "target": "single_enemy",
+    "range": 3,
+    "splash": { "pattern": "armor", "jumps": 2 },
+    "thunder": { "shocks": true },
+    "cost": { "resource": "mp", "amount": 18 },
+    "cooldown": 5,
+    "initialCooldown": 2,
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#bfe3ff",
+    "effects": [
+      { "type": "damage", "damageType": "magic", "scale": "str", "power": 1.0, "element": "lightning", "falloff": 0.75 }
+    ],
+    "vfx": "judgment",
+    "sfx": ["skaldStormSong", "stormRumble", "stormcallCrack"]
   }
 }

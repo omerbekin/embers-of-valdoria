@@ -125,7 +125,7 @@ describe('modifiers: güçlendirme / zayıflatma', () => {
       const teams: Teams = {
         party: cells({ 0: 'warrior' }),
         enemies: cells({ 0: 'warrior', 1: 'warrior' }),
-        units: { enemies: { 1: { modifiers: { hpMult: 2, statMult: 1.2, armorAdd: 10, powerMult: 1.5 } } } },
+        units: { enemies: { 1: { modifiers: { hpMult: 2, statMult: 1.2, armorAdd: 30, powerMult: 1.5 } } } }, // armorAdd 10 -> 30 (2026-11-08): Double Strike 0,36 + Warrior zırhı 15 sonrası 10 zırh farkı vuruş başı yuvarlamada kayboluyordu
       };
       const b = make(3, mode, teams);
       const plain = b.get('enemy-0')!;

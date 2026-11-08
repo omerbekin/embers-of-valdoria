@@ -91,6 +91,7 @@ export const POSE_TESTER_GEAR: Readonly<Record<string, readonly [string, string?
 export function classDefaultGear(classId: string): readonly [string, string?] | null {
   if (POSE_TESTER_GEAR[classId]) return POSE_TESTER_GEAR[classId]!;
   if (classId === 'vesper') return ['ash_staff']; // Pose Tester'ı yok; silahsızken kılıç yerine başlangıç asası (2026-11-01)
+  if (classId === 'skald') return ['war_hammer', 'iron_buckler']; // Thunder Skald: yer tutucu Defender gövdesi; silahsızken başlangıç çekici + kalkan (2026-11-07)
   if (!realPosesV2()) return null;
   const owner = `${classId}_v2`;
   const pt = Object.entries(POSES.classAliases ?? {}).find(([, o]) => o === owner)?.[0];

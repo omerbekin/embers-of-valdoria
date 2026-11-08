@@ -2,7 +2,7 @@ import { isShapeArea, RECT_CENTER_MIN, shapeBadge } from './area-shape';
 import { isRatioCost, skillCostLabel } from './cost';
 import { betMultipliers, betStake } from './gamble';
 import { lessText, moreText, multText } from './bonus-text';
-import { bonusScaleRaw } from './spec';
+import { bonusScaleRaw, splitParts } from './spec';
 import { bellsOfSkill } from './tree-hooks';
 import { rangeEnabled, rangeLabel } from './range';
 import { applySummonerScale, applySummonVariant, attributePower, dotOutgoingMult, outgoingDamageMult } from './stats';
@@ -52,6 +52,7 @@ export const TARGET_TEXT: Record<SkillTarget, string> = {
   random_enemies: 'Random enemies',
   self: 'Self',
   empty_tile: 'Empty cell',
+  self_area: 'Allies around you',
 };
 
 /** Sağ üst rozet için kısa hedef türü (tooltip düzeni). */
@@ -67,13 +68,21 @@ export const TARGET_BADGE: Record<SkillTarget, string> = {
   random_enemies: 'Random',
   self: 'Self',
   empty_tile: 'Empty Cell',
+  self_area: 'Around You',
 };
 
 /** Rozet metni: alan skill'inde şekil ("Row", "Column", "Block 2x3", "Cross"), rastgele skill'de hedef sayısı ("Random · 3") rozette yazar, açıklamada değil. */
 export function targetBadge(skill: SkillDef): string {
   if ((skill.target === 'area_enemies' || skill.target === 'area_any') && isShapeArea(skill.area)) return shapeBadge(skill.area);
   if (skill.target === 'random_enemies') return `${TARGET_BADGE.random_enemies} · ${skill.count ?? 3}`;
+  // self_area (War Drum): kullanıcı merkezli şekil ("Around You · Block 3x3")
+  if (skill.target === 'self_area' && isShapeArea(skill.area)) return `${TARGET_BADGE.self_area} · ${shapeBadge(skill.area)}`;
   return TARGET_BADGE[skill.target];
+}
+
+/** self_area (War Drum): kullanıcı merkezli şeklin hedef satırı; yalnız şekildeki dostlar etkilenir. */
+function selfAreaText(area: AreaDef): string {
+  return area.shape === 'rect' ? `You and allies within the ${area.rows ?? 1}x${area.cols ?? 1} square around you` : `You and allies in the ${shapeBadge(area)} around you`;
 }
 
 /** Şekil skill'inin sade açıklaması (hedef satırı). */
@@ -300,6 +309,11 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return 'A hero that hits this unit with a melee skill is Shocked. If that hero stands in water, it is Stunned instead.';
     case 'touchLabel':
       return passive.text;
+    case 'conductor': {
+      const names = e.statuses.map((s) => cap(s === 'slow' ? 'slowed' : s === 'stun' ? 'stunned' : s));
+      const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}` : (names[0] ?? '');
+      return `Your ${e.element} damage is ${moreText(e.bonus)} against targets that are ${list}, and on any hit that itself applies one of these. Only the ${e.element} part of a hit counts; at most once per hit.`;
+    }
     case 'ironDraws':
       return "This unit's lightning deals more damage to targets with more Armor.";
     case 'tempering':
@@ -457,6 +471,13 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const total = damageAmount(e, stats, formulas);
         add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} + ${parts} (${total})${times > 1 ? ` x${times}` : ''}${who}`, element);
         if (e.bonusScale.some((b) => b.stat === 'armor')) add('Uses your current armor, aura bonus included');
+      } else if (e.split) {
+        // Bölünmüş hasar (Hammer Spark): iki parça, her biri kendi rengiyle ve kendi zırhına karşı; tek vuruş (spec.ts > splitParts)
+        for (const p of splitParts(e)) {
+          const el = p.effect.element ?? 'physical';
+          add(`${pct(e.power * p.share)} ${ATTRIBUTE_NAME[e.scale]} as ${el} damage (${damageAmount({ ...p.effect, power: e.power * p.share }, stats, formulas)}), reduced by ${p.effect.damageType === 'magic' ? 'Magic armor' : 'Armor'}${times > 1 ? ` x${times}` : ''}${who}`, el);
+        }
+        add('Both parts land as a single hit: one hit roll, one crit roll');
       } else add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${damageAmount(e, stats, formulas)})${times > 1 ? ` x${times}` : ''}${who}`, element);
       // Elemente özel sapma (formulas.damage.elementVariance: şimşek): vuruş karttaki sayının çok altına ya da üstüne düşebilir
       if (formulas.damage.elementVariance?.[element] !== undefined) add(`Each hit rolls within plus or minus ${pct(formulas.damage.elementVariance[element]!)} of this`, element);
@@ -715,7 +736,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   const initialTurns = Math.min(formulas.cooldown?.maxInitial ?? 0, Math.floor(skill.initialCooldown ?? 0));
   return {
     name: skill.name,
-    target: (skill.target === 'area_enemies' || skill.target === 'area_any') && isShapeArea(skill.area) ? shapeText(skill.area) : skill.target === 'random_enemies' ? `${skill.count ?? 3} random enemies` : TARGET_TEXT[skill.target],
+    target: (skill.target === 'area_enemies' || skill.target === 'area_any') && isShapeArea(skill.area) ? shapeText(skill.area) : skill.target === 'self_area' && isShapeArea(skill.area) ? selfAreaText(skill.area) : skill.target === 'random_enemies' ? `${skill.count ?? 3} random enemies` : TARGET_TEXT[skill.target],
     targetBadge: targetBadge(skill),
     cost: skillCostLabel(skill.cost),
     cooldown: (skill.cooldown ?? 0) > 0 ? `${skill.cooldown} turns` : 'None',
@@ -759,7 +780,8 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
   };
   const raw = (scale: Attribute, power: number) => scaled(stats, scale, power, formulas);
   for (const { e, times } of groupEffects(skill)) {
-    if (e.type === 'damage') num('Damage', damageAmount(e, stats, formulas), e.element ?? 'physical', times);
+    if (e.type === 'damage' && e.split) for (const p of splitParts(e)) num(`${cap(p.effect.element ?? 'physical')} damage`, damageAmount({ ...p.effect, power: e.power * p.share }, stats, formulas), p.effect.element ?? 'physical', times);
+    else if (e.type === 'damage') num('Damage', damageAmount(e, stats, formulas), e.element ?? 'physical', times);
     else if (e.type === 'heal') num('Heal', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
     else if (e.type === 'hot') num('Heal / turn', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
     else if (e.type === 'shield') num(e.shieldType === 'magic' ? 'Magic shield' : 'Shield', raw(e.scale, withMult(e.power, stats.shieldPowerMult)), e.shieldType === 'magic' ? 'magicShield' : 'shield');
@@ -822,6 +844,8 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       return fixed('Life steal', pct(e.ratio));
     case 'bonusVsStatus':
       return fixed('Bonus', moreText(e.bonus));
+    case 'conductor':
+      return fixed(`${cap(e.element)} bonus`, moreText(e.bonus));
     case 'manaOverflow':
       return fixed(`Team MP per ${e.threshold} blocked`, `+${e.mana}`);
     case 'spellbreakerInstinct':

@@ -314,10 +314,10 @@ describe('eski kayıt: tutorial takım akışı (yeni sefer: tests/solo-start.te
     expect(s.active[before]).toBe('');
   });
 
-  it('takım ve aday havuzu 12 oynanabilir sınıf (Geometer yok; 2026-10-28 Vesper eklendi); başlangıç havuzu Warrior, Defender, Paladin, Druid (Ömer 2026-11-01)', () => {
-    expect(CONFIG.starterPool).toEqual(['warrior', 'defender', 'paladin', 'druid']);
+  it('takım ve aday havuzu 13 oynanabilir sınıf (Geometer yok; 2026-10-28 Vesper, 2026-11-08 Skald eklendi); başlangıç havuzu Warrior, Skald, Paladin, Druid (Ömer 2026-11-08: Defender çıktı)', () => {
+    expect(CONFIG.starterPool).toEqual(['warrior', 'skald', 'paladin', 'druid']);
     for (const pool of [CONFIG.companyPool, CONFIG.recruitPool]) {
-      expect(pool).toHaveLength(12);
+      expect(pool).toHaveLength(13);
       expect(pool).not.toContain('aoe_tester');
       for (const c of pool) expect(randomPool).toContain(c);
     }

@@ -1,6 +1,9 @@
 # Skill ağacı: MOMENTS şeması (Ömer seçimi 2026-10-21)
 
-2. turdaki 10 varyanttan (`skill-tree-mastery-v2.md`) Ömer **V6 Moments** yapısını seçti ve şunları istedi:
+> Ne için: ağaç ŞEKLİ ve kilit şeması (Moments, Ömer 2026-10-21).
+> Güncel mi (2026-11-08): EVET: şekil `data/skill-trees/_rules.json` ile aynı; eski sürümler (mastery, v2, structures, variants) arşivde. Düğüm içeriği kuralı: classes/skill-tree-logic.md.
+
+2. turdaki 10 varyanttan (`docs/archive/design/skill-tree-mastery-v2.md`) Ömer **V6 Moments** yapısını seçti ve şunları istedi:
 1. Moments olsun ama daha uzun: başa ekleme yapılacak. Mevcut başlangıç noktasının önünde (−1) bir **notable** (orta boy düğüm), onun önünde de **3 filler** olacak.
 2. Evolve öncesinde notable'ın yanındaki, devamı olmayan (dead end) düğümler **Blood Price** düğümleri olacak.
 3. Düğümlerin açılması yalnızca o satıra bağlı olmayacak: hangi skill'e verilirse verilsin yeterli puan toplanınca sıradaki kademe açılacak.

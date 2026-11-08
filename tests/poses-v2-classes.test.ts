@@ -12,7 +12,7 @@ const BASE = [
 ];
 const BOW = ['bow_shot', 'bow_sky'];
 /** Sınıfa özel ek pozlar (assets/source/poses/<id>-v2/extra-<poz>.png; tools/make-poses-v2.mjs). */
-const EXTRA: Record<string, string[]> = { cutthroat_v2: ['cross_cut'], hexer_v2: ['doll_stab'] };
+const EXTRA: Record<string, string[]> = { cutthroat_v2: ['cross_cut'], hexer_v2: ['doll_stab'], skald_v2: ['drum_a', 'drum_b', 'drum_take'] };
 const v2 = Object.entries(POSES.classes).filter(([id]) => id.endsWith('_v2'));
 
 describe('v2 sınıf gövdeleri (classes.*_v2)', () => {

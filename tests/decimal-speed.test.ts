@@ -6,7 +6,6 @@ import { newCampaign, pickHero } from '../src/campaign/state';
 import { normalizeState } from '../src/campaign/save';
 import { fmtPanel, heroPanel, heroStats } from '../src/progression/item-text';
 import { statRowText } from '../src/game/stat-columns';
-import vesperTree from '../data/skill-trees/vesper.json';
 
 // Ondalık hız (Ömer 2026-10-31): hız en çok 3 ondalık, ekranda en çok 2; sıra sayacı aynı çözünürlükte, kayan nokta artığı birikmez.
 
@@ -17,7 +16,8 @@ const withSpd = (spd: number): CombatantDef => {
   const d = content.classes.warrior!;
   return { ...d, stats: { ...d.stats, spd }, overrides: { ...(d.overrides ?? {}), spd } };
 };
-const heavyBronze = (vesperTree as unknown as { nodes: Record<string, { fx: Array<{ k: string; f?: string; v?: number }> }> }).nodes['0.fb']!.fx.find((x) => x.f === 'spdMult')!.v!;
+/** -%10 hız örneği (eski Vesper Heavy Bronze; ağaç v3'te 2026-11-08 kalktı, ondalık hız kuralı aynı). */
+const heavyBronze = -0.1;
 const slot = (uid: string, spd: number, counter = 0, side: 'party' | 'enemy' = 'party', s = 0): TurnSlot => ({ uid, side, slot: s, spd, counter });
 
 /** Battle'ı YZ ile sonuna kadar oynatır; olay dizisi + her adımın durum özeti. */
@@ -44,7 +44,7 @@ describe('ondalık hız: değerler', () => {
     expect(f.turn.counterStep).toBeLessThanOrEqual(STEP);
   });
 
-  it('15 hız + Heavy Bronze (veriden -%10) = 13,5; tur zarı savaşta sonra uygulanır', () => {
+  it('15 hız + -%10 hız çarpanı = 13,5; tur zarı savaşta sonra uygulanır', () => {
     expect(heavyBronze).toBe(-0.1);
     expect(applyUnitModifiers(withSpd(15), { spdMult: 1 + heavyBronze }, f).stats.spd).toBe(13.5);
     expect(rolledSpeed(13.5, 1.02, f)).toBe(13.77);

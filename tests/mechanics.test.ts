@@ -558,8 +558,8 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
     const before = mage.mp;
     am.mp = 0;
     const events = act(b, am.uid, 'mana_burn', mage.uid);
-    expect(ofType(events, 'manaBurn')[0]).toMatchObject({ target: mage.uid, amount: 8, mpAfter: before - 8 }); // Ömer 2026-11-08: 10 -> 8
-    expect(am.mp).toBe(4); // yaktığının %50'si kendine
+    expect(ofType(events, 'manaBurn')[0]).toMatchObject({ target: mage.uid, amount: 7, mpAfter: before - 7 }); // Ömer 2026-11-08: 10 -> 8 -> 7
+    expect(am.mp).toBe(3); // yaktığının %50'si kendine (7 -> 3, aşağı yuvarlanır)
     expect(ofType(events, 'damage')).toHaveLength(1);
     mage.hp = mage.maxHp; // hasar yükselse de hedef ölmesin
     mage.mp = 4;
@@ -716,7 +716,7 @@ describe('class verisi: yeni sınıflar ve dizilim', () => {
     const all = content.arrangeTeam(Object.keys(content.classes).filter((id) => !id.startsWith('pose_tester_'))); // Pose Tester'lar: gizli debug kopyaları
     const melee = all.filter((id) => content.isMeleeClass(id));
     expect(all.slice(0, melee.length)).toEqual(melee); // melee grubu en önde
-    expect(new Set(melee)).toEqual(new Set(content.formulas.range?.enabled ? ['defender', 'warrior', 'cutthroat'] : ['defender', 'warrior', 'antimage', 'cutthroat'])); // Cutthroat: Venom Edge yakın dövüş / menzil 1
+    expect(new Set(melee)).toEqual(new Set(content.formulas.range?.enabled ? ['defender', 'warrior', 'cutthroat', 'skald'] : ['defender', 'warrior', 'antimage', 'cutthroat'])); // Cutthroat: Venom Edge yakın dövüş / menzil 1; Skald menzil 2 (Ömer 2026-11-08: yakın dövüş grubu, range.meleeMax)
     // Defender (en yüksek zırh) en önde, Mage en arkada
     expect(content.classes[all[0]!]!.stats.armor).toBeGreaterThan(content.classes[all.at(-1)!]!.stats.armor);
   });
@@ -978,7 +978,7 @@ describe('Pasif skill\'ler', () => {
       expect(def.passive, id).toBeDefined();
       expect(def.passive!.name.length, id).toBeGreaterThan(0);
       expect(describePassive(def.passive!, def.stats, content.formulas).length, id).toBeGreaterThan(20); // açıklama değerleri de yazar
-      expect(['rage', 'divineLight', 'spellEcho', 'heatMirage', 'longshot', 'naturesGrudge', 'soulDrain', 'spellbreakerInstinct', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells', 'eyeOfStorm', 'tempering'], id).toContain(def.passive!.effect.type);
+      expect(['rage', 'divineLight', 'spellEcho', 'heatMirage', 'longshot', 'naturesGrudge', 'soulDrain', 'spellbreakerInstinct', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells', 'eyeOfStorm', 'tempering', 'conductor'], id).toContain(def.passive!.effect.type);
     }
   });
 
@@ -1223,6 +1223,8 @@ describe('Rastgele dizilimde yakın dövüş ön sıralarda', () => {
       cellsList.forEach((id, slot) => {
         if (!id || !meleeIds.has(id)) return;
         const row = Math.floor(slot / 3);
+        // Menzil açıkken uzatılmış yakın dövüşçü (Skald, menzil 2; Ömer 2026-11-08) ulaştığı sırada (R - 1) önü dolu olmadan durabilir: düşmanın ön sırasına ulaşır
+        if (content.formulas.range?.enabled && row <= (content.classes[id]!.range ?? 1) - 1 && row > 0) return;
         // Druid'li takımlarda ön sırada 1 hücre bilerek boş bırakılır (çağrılan melee için): orada 2 yeterli
         const front = cellsList.includes('druid') ? 2 : 3;
         for (let r = 0; r < row; r++) expect(perRow(r), `${label}: ${id} slot ${slot}`).toBeGreaterThanOrEqual(r === 0 ? front : 3);

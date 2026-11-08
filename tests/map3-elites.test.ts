@@ -532,8 +532,9 @@ describe('YZ', () => {
     ['snowfather', { 4: 'snowfather', 0: 'snow_wolf' }, ['avalanche', 'roar', 'whiteout']],
     ['hollow_king', { 4: 'hollow_king', 0: 'hollow_warden' }, ['kingsmaul', 'decree_of_stone', 'bring_down_the_hall']],
     ['hearthwarden', { 4: 'hearthwarden', 0: 'forge_golem' }, ['hammerfall', 'forge_chains', 'temper_the_crown', 'quench']],
-    ['ember_of_the_first_hearth', { 4: 'ember_of_the_first_hearth', 0: 'molten_hound' }, ['flare', 'cinder_storm', 'breathe', 'the_first_fire']],
+    ['ember_of_the_first_hearth', { 1: 'ember_of_the_first_hearth', 0: 'molten_hound' }, ['flare', 'cinder_storm', 'breathe', 'the_first_fire']],
   ] as [string, Record<number, string>, string[]][])('%s imzalarını atar', (id, enemies, need) => {
+    // Ember menzil 1: ön hücrede durur (Lead 2026-11-08: Warrior melee 0.35 sonrası arka hücreden Flare'e çıkmıyordu, YZ hatası değil)
     // Roar nadir ve yola duyarlı (30 seed'in yarısında bir kez): snowfather daha çok seed'le ölçülür
     const seen = uses(enemies, id, 90, undefined, id === 'snowfather' ? [1, 2, 3, 10, 11, 14] : undefined);
     for (const s of need) expect([...seen], `${id} ${s}`).toContain(s);

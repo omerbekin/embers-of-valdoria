@@ -12,13 +12,13 @@ import { UI_ICONS } from '../src/ui/dom-icons';
 import { STAT_COLOR, STAT_ICON, UI_ICON, STAT_LABEL } from '../src/ui/stat-icons';
 
 // Şema doğrulama: data/ altına eklenen her içerik burada denetlenir.
-const SKILL_TARGETS = ['single_enemy', 'all_enemies', 'area_enemies', 'area_any', 'everyone', 'random_enemies', 'single_ally', 'dead_ally', 'all_allies', 'self'];
+const SKILL_TARGETS = ['single_enemy', 'all_enemies', 'area_enemies', 'area_any', 'everyone', 'random_enemies', 'single_ally', 'dead_ally', 'all_allies', 'self', 'self_area'];
 const MOTIONS = ['melee', 'ranged', 'cast', 'sky', 'ground', 'whip'];
 const ATTRIBUTES = ['str', 'int', 'dex', 'luck'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const PLACEHOLDER_SPRITE_CLASSES: string[] = [];
 /** Kendi görseli henüz çizilmemiş, başka bir class'ın sprite'ını GEÇİCİ kullanan class'lar (class id -> ödünç spriteId). Görsel gelince listeden çıkar. */
-const BORROWED_SPRITE_CLASSES: Record<string, string> = {}; // başka class'ın görselini ödünç alan class'lar (Vesper 2026-11-02'de kendi görseline geçti)
+const BORROWED_SPRITE_CLASSES: Record<string, string> = { skald: 'defender' }; // Thunder Skald (2026-11-07): görünüş A seçildi, sanat gelene dek Defender; başka class'ın görselini ödünç alan class'lar (Vesper 2026-11-02'de kendi görseline geçti)
 const everyone = { ...content.classes, ...content.summons, ...content.bosses, ...content.mobs }; // boss (data/bosses) ve mob (data/mobs) tanımları da şemaya tabi
 
 describe('skill verisi', () => {
@@ -579,7 +579,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    const base = ['hollow_rockfall', 'hollow_glyph', 'ashborn_burn_the_ground', 'ring_the_anvil', 'fork', 'storm_test_bolt', 'storm_test_iron', 'storm_test_row', 'arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground', 'toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria', 'ice_crater'];
+    const base = ['hollow_rockfall', 'hollow_glyph', 'ashborn_burn_the_ground', 'ring_the_anvil', 'fork', 'storm_test_bolt', 'storm_test_iron', 'storm_test_row', 'arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field', 'tar_blaze', 'blessed_salt', 'salted_ground', 'toll', 'thunderpeal', 'cracked_bell', 'great_bell_of_valdoria', 'ice_crater', 'thunder_strike', 'stormcall'];
     // Pose Tester kopyaları (pt_<id>, gizli debug): sınıf skill'lerinin kopyası, aynı hareket
     const copies = base.filter((id) => content.skills[`pt_${id}`]).map((id) => `pt_${id}`);
     expect(copies.length).toBeGreaterThan(0);
