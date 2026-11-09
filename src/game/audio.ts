@@ -29,6 +29,8 @@ export interface ToneLayer extends LayerBase {
   filter?: FilterSpec;
   tremHz?: number;
   tremDepth?: number;
+  /** FM metal dokusu: modülatör frekansı = taşıyıcı x `ratio`, sapma = taşıyıcı x `index`; sapma `decay` sn içinde %2'ye iner (vuruşta parlak, sonra yumuşar). */
+  fm?: { ratio: number; index: number; decay: number };
 }
 
 export interface NoiseLayer extends LayerBase {
@@ -42,6 +44,8 @@ export interface NoiseLayer extends LayerBase {
   gain: number;
   tremHz?: number;
   tremDepth?: number;
+  /** Gürültü tamponunda başlangıç noktası (sn, 0..1). Yalnız `varySfxDef` rastgele verir: her çalışta başka gürültü tanesi. */
+  seek?: number;
 }
 
 export interface Formant {
@@ -90,6 +94,14 @@ export type Layer = ToneLayer | NoiseLayer | VoiceLayer | PluckLayer;
 export interface SfxDef {
   gain: number;
   layers: Layer[];
+  /**
+   * Her çalışta küçük rastgele sapma (yalnız çalarken, `playSfxDef`; ölçüm/önizleme sabit kalır). Ses tarafı, motor RNG'si değil.
+   * pitch: tüm frekanslara ortak ± oran; drift: katman başına ayrı ± oran (vuruş hızları değişir); time: katman başına ± sn kayma
+   * (0'daki katman kaymaz); level: katman başına ± kazanç oranı.
+   */
+  vary?: { pitch?: number; drift?: number; time?: number; level?: number };
+  /** Taş salon yankısı: paralel geri beslemeli gecikmeler (sn), her döngüde `damp` Hz alçak geçiren; `mix` ıslak sinyal kazancı. */
+  room?: { delays: number[]; feedback: number; damp: number; mix: number };
 }
 
 export const SFX = audioData.sfx as unknown as Record<string, SfxDef>;
@@ -151,6 +163,17 @@ function synthTone(ctx: BaseAudioContext, dest: AudioNode, l: ToneLayer, t: numb
   osc.type = l.wave;
   osc.frequency.setValueAtTime(l.f0, t);
   if (l.f1 !== l.f0) osc.frequency.exponentialRampToValueAtTime(l.f1, t + total);
+  if (l.fm) {
+    const mod = ctx.createOscillator();
+    mod.frequency.setValueAtTime(l.f0 * l.fm.ratio, t);
+    if (l.f1 !== l.f0) mod.frequency.exponentialRampToValueAtTime(l.f1 * l.fm.ratio, t + total);
+    const dev = ctx.createGain();
+    dev.gain.setValueAtTime(l.f0 * l.fm.index, t);
+    dev.gain.exponentialRampToValueAtTime(Math.max(0.01, l.f0 * l.fm.index * 0.02), t + Math.max(0.005, l.fm.decay));
+    mod.connect(dev).connect(osc.frequency);
+    mod.start(t);
+    mod.stop(t + total + 0.05);
+  }
   let node: AudioNode = osc;
   if (l.filter) {
     const f = ctx.createBiquadFilter();
@@ -181,7 +204,7 @@ function synthNoise(ctx: BaseAudioContext, dest: AudioNode, l: NoiseLayer, t: nu
   const trem = tremolo(ctx, t, t + total + 0.05, l.tremHz, l.tremDepth);
   if (trem) node = node.connect(trem);
   node.connect(envelope(ctx, t, l.attack, l.decay, l.gain)).connect(dest);
-  src.start(t);
+  src.start(t, l.seek ?? 0);
   src.stop(t + total + 0.05);
   return total;
 }
@@ -329,13 +352,55 @@ export function synthSfx(ctx: BaseAudioContext, dest: AudioNode, def: SfxDef, t0
   const out = ctx.createGain();
   out.gain.value = def.gain;
   out.connect(dest);
+  let tail = 0;
+  if (def.room) {
+    const r = def.room;
+    const wet = ctx.createGain();
+    wet.gain.value = r.mix / Math.max(1, r.delays.length);
+    wet.connect(dest);
+    for (const d of r.delays) {
+      const delay = ctx.createDelay(1);
+      delay.delayTime.value = d;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = r.damp;
+      lp.Q.value = -3; // rezonans yok: döngü kararlı
+      const fb = ctx.createGain();
+      fb.gain.value = r.feedback;
+      out.connect(delay);
+      delay.connect(lp).connect(fb).connect(delay);
+      delay.connect(wet);
+      // -60 dB'ye inene kadar geçen döngü sayısı x gecikme
+      tail = Math.max(tail, r.feedback > 0 ? (d * Math.log(0.001)) / Math.log(r.feedback) : d);
+    }
+  }
   let longest = 0;
   for (const layer of def.layers) {
     const t = t0 + (layer.at ?? 0);
     const d = layer.type === 'tone' ? synthTone(ctx, out, layer, t) : layer.type === 'noise' ? synthNoise(ctx, out, layer, t) : layer.type === 'pluck' ? synthPluck(ctx, out, layer, t) : synthVoice(ctx, out, layer, t);
     longest = Math.max(longest, (layer.at ?? 0) + d);
   }
-  return longest;
+  return longest + tail;
+}
+
+/** `def.vary` sapmasını uygular (saf: `rnd` 0..1). Tarifte `vary` yoksa aynı nesne döner. */
+export function varySfxDef(def: SfxDef, rnd: () => number): SfxDef {
+  const v = def.vary;
+  if (!v) return def;
+  const pm = (a = 0) => 1 + (rnd() * 2 - 1) * a;
+  const pitch = pm(v.pitch);
+  return {
+    ...def,
+    layers: def.layers.map((l) => {
+      const f = pitch * pm(v.drift);
+      const at = l.at ? Math.max(0, l.at + (rnd() * 2 - 1) * (v.time ?? 0)) : l.at;
+      const g = pm(v.level);
+      if (l.type === 'tone') return { ...l, at, f0: l.f0 * f, f1: l.f1 * f, gain: l.gain * g };
+      if (l.type === 'noise') return { ...l, at, f0: l.f0 * f, f1: l.f1 * f, gain: l.gain * g, seek: rnd() * 0.9 };
+      if (l.type === 'pluck') return { ...l, at, f: l.f * f, gain: l.gain * g };
+      return l;
+    }),
+  };
 }
 
 /** Sahibin v2 ses dosyasındaki tarif (seçimden bağımsız; wiki karşılaştırması). */
@@ -376,5 +441,5 @@ export function playSfxDef(ctx: AudioContext | undefined, def: SfxDef | undefine
   const master = ctx.createGain();
   master.gain.value = audioData.master * audioSettings.volume * audioSettings.sfx;
   master.connect(ctx.destination);
-  synthSfx(ctx, master, def);
+  synthSfx(ctx, master, varySfxDef(def, Math.random));
 }

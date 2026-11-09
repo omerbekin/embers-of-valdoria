@@ -1,11 +1,7 @@
-# Arayüz kuralları (src/ui ve src/game; tam metin `docs/arch/ui-global-rules.md`, `docs/arch/ui-and-stage.md`)
+# Arayüz kuralları (src/ui ve src/game)
+- **UI kuralının TEK sahibi `docs/arch/ui-global-rules.md`** (tasarım kiti: Cinzel + EB Garamond, arayüzde italik YOK; Back sol üst / Menu sağ üst `nav-icons.ts > NAV_BTN`; zemine dokununca kapanma; sürükle-bırak; üç ekran boyutu 16:9 / 21:9 / telefon). Sahne/HUD: `docs/arch/ui-and-stage.md`.
 - **ZORUNLU:** yeni arayüz öncesi `docs/design/ui-design-language.md` ve `docs/design/ui-reference.md`; aynı işi gören parça varsa onu kullan, kopyalama.
-- **Tasarım kiti:** Cinzel 600 büyük harf + EB Garamond; **arayüzde italik YOK**; ince altın çizgi, kutusuz yazı düğmeleri. Kitler: `src/game/elegant-ui.ts`, `src/ui/elegant.css`, `src/game/hud-kit.ts`. Hareket TEK yerde `data/ui-motion.json` -> `src/ui/motion.ts`. Düğme sırası: ikinciller solda, BİRİNCİL EN SAĞDA.
-- **Geri / Menu:** kurulum/bilgi ekranında yalnızca sol üst Back, oyun içinde yalnızca sağ üst Menu (ikisi birlikte yok); konum `src/ui/nav-icons.ts > NAV_BTN`; yeni ekranda başka konum KULLANILMAZ. Tüm Menu'ler `src/ui/game-menu.ts`. Onay yalnızca ilerleme kaybolacaksa (`elConfirm`).
-- **Zemine dokununca kapanma:** `dismissOnBackdrop` / `elBackdropTap`; zorunlu seçim ve kayıp yaratan kartlar kapanmaz; onay pencerelerinde zemin = No.
-- **Sürükle-bırak:** yuva doldurulan HER arayüzde (fare + dokunma); yuvalar arası taşıma da.
-- Dokunmatik öncelikli; hedefler en az 44px.
-- **Üç ekran boyutu:** her arayüz/mockup/sahne 16:9 (1920x1080), 21:9 (2580x1080), telefon (~844x390, `html.short`); doğrulama üçünde ekran görüntüsüyle.
+- Dokunmatik öncelikli; dokunma hedefi en az 44 px, telefonda (`html.short`) çerçeveli düğme görünen yüksekliği 30 px (`PHONE_BTN_PX`).
 - Kısa ekran: CSS `html.short` (<=520px) / `html.compact` (<=720px) (@media değil). Yuva seçimi ortak `shape-draw.ts` CellTile. Ana ekran dışı sahne `lazy-scenes.ts` ile yüklenir.
 - **Sahne:** 1920x1080 taban, geniş ekranda 2580'e kadar esner; `stageView`, `FULL_X0/FULL_W`, `worldXY`, `--er/--et/--eb/--el` (`src/game/stage.ts`, `src/ui/viewport.ts`). Yatay öncelikli.
 - Her ekran/özellik debug menüsünden tetiklenebilir: `src/ui/debug-tools.ts` içinde `debug.register(...)` (`docs/arch/debug-wiki.md`).

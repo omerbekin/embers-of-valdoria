@@ -1,3 +1,4 @@
+> **Ne için:** design/skill-tree-moments-variants arşivi; güncel değil.
 # Moments ağacı: class başına 5 varyant (Ömer isteği 2026-10-21 gece)
 
 Ömer: "Tüm classlar için class başına 5 mockup yapar mısın farklı skill ağacıyla. Hepsini bir mockupta buluşturursun."

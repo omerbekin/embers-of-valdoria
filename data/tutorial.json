@@ -18,7 +18,7 @@
       "druid": "You tended its orchards, and the roots here still answer you."
     }
   },
-  "_skillUnlocks": "Tek kişilik başlangıç (Ömer 2026-11-01): skill açılınca Garrick'in tek cümlesi (skill id -> metin; açılış sırası campaign.json > soloStart). Skill başına bir kez (eov.tutorial.v1 seen: unlock:<skill>), tavana girmez, kararda en çok bir ders kuralına uyar. initialCooldown'u olan skill 'is ready' demez, savaşa beklemede başladığını söyler (Ömer 2026-11-01). TASLAK, Ömer onaylayacak.",
+  "_skillUnlocks": "Tek kişilik başlangıç (Ömer 2026-11-01): skill açılınca Garrick'in tek cümlesi (skill id -> metin; açılış sırası campaign.json > soloStart). Skill başına bir kez (proto.tutorial.v1 seen: unlock:<skill>), tavana girmez, kararda en çok bir ders kuralına uyar. initialCooldown'u olan skill 'is ready' demez, savaşa beklemede başladığını söyler (Ömer 2026-11-01). TASLAK, Ömer onaylayacak.",
   "skillUnlockTitle": "A New Skill",
   "skillUnlocks": {
     "whirlwind": "Whirlwind is yours now: it cuts through the two front enemy rows at once, so save it for when they bunch up.",

@@ -52,7 +52,7 @@ import { leveledRun } from './level-helpers';
 /** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
 const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
-// Endless Lite (roadmap.md bölüm 3, open-questions madde 281): saf mantık testleri. Item kataloğu Item MVP ile değiştiği için testler
+// Endless Lite (docs/archive/design/progression/roadmap-2026-10.md bölüm 3, open-questions-archive madde 281): saf mantık testleri. Item kataloğu Item MVP ile değiştiği için testler
 // sabit item id'lerine değil, verilen küçük bir test kataloğuna dayanır.
 
 const PARTY = ['warrior', 'archer', 'mage', 'druid'];

@@ -1,66 +1,60 @@
-# Defender: tasarım dökümanı
+# Defender
 
-> Kaynak: `data/classes/defender.json`, `data/skills.json`, `data/skill-trees/defender.json` (sürüm 1), 2026-11-08. Ağaç mantığı: `skill-tree-logic.md`. Sayılar sim ile oturur; bu belge yazıldığı günün verisini anlatır.
-
-> **Erişim (Ömer 2026-11-08):** Defender artık sefer başlangıç kahramanı değil (yerine Skald girdi); `companyPool` ve `recruitPool`'da kalır, yani aday/bölük olarak gelir.
+> **Ne için / Güncel mi (2026-11-08):** Defender kahramanının kimlik, skill ve ağaç özeti. Sayılar `data/classes/defender.json`, `data/skills.json`, `data/statuses.json` ile birebir (veri değişince burası güncellenir). Çerçeve: `docs/design/classes.md`. Tarihçe arşivde (bölüm 6).
 
 ## 1. Kimlik
 
 | Alan | Değer |
 |---|---|
 | id / rol | `defender` / Tank |
-| Ön sıra önceliği, menzil | 0 (en önde), menzil 1 |
-| Stat (str / int / dex / luck) | 24 / 24 / 6 / 6, primary STR |
-| Zırh, can | 38 zırh, 0 büyü zırhı, can 140 (override) |
-| YZ | `tank` |
+| Ön sıra önceliği, menzil | 0, menzil 1 |
+| Stat (STR / INT / DEX / LUCK) | 24 / 24 / 6 / 6, ana stat STR (toplam 60) |
+| Zırh / büyü zırhı | 38 / 0, can 140 (override) |
+| YZ profili | `tank` (`data/ai.json > profiles.tank`) |
+| Pasif | **Bulwark Aura**: "You and the allies right next to you (front, back, left, right) gain bonus armor equal to 40% of your own armor." |
 
-- **Güçlü yan:** takımın en yüksek zırhı (38). Bulwark Aura yanındaki dostlara da zırh verir; Taunt ve Close Ranks hasarı kendine çeker.
-- **Zayıf yan:** kendi hasarı düşük, büyü zırhı yok. Kazanma oranı sınıflar arasında en altlardan (2026-11-08: %46,2 / %45,8).
+- Tank: önde durur, hasarı emer. Sınıf hasarı düşük, zırh ve kontrol (Slow, Taunt, Guard) işi yapar.
+- **Güçlü:** takımın en yüksek zırhı; Bulwark Aura yanındaki dostlara da zırh verir; Taunt ve Close Ranks hasarı kendine çeker.
+- **Zayıf:** kendi hasarı düşük, büyü zırhı yok; ölçümde alt sınıflardan.
+- Denge ölçümü: `docs/balance.md` (kopya yüzde yazılmaz).
+
+**Erişim (Ömer 2026-11-08):** Defender sefer başlangıç kahramanı değil (yerine Skald girdi); `companyPool` ve `recruitPool`'da kalır, aday/bölük olarak gelir.
 
 ## 2. Skill'ler
 
-| Skill | Ne yapar | MP / bekleme | Sayı |
-|---|---|---|---|
-| Tremor Slam | Hedef sırayı (row) vurur, Slow verir. Fiziksel, STR + zırh payı | 0 / yok | güç 0,221 + zırhın %10,5'i; Slow 2 tur |
-| Taunt | Kendine; düşmanları kendine vurmaya zorlar. Kaybedilen can eşiği geçince kırılır | 16 / 4 | 2 tur; kırılma 0,30 maks can; dostlara gelen hasar x0,9 |
-| Close Ranks | Seçilen dost + sırasındaki dostlar (Defender hariç) Guard alır: aldıkları hasarın yarısı Defender'a geçer | 8 / 5 | 3 tur, pay 0,5 |
-| Fist Crush (4. yuva, ult) | Gökten 3 rastgele düşmana yumruk, fiziksel | 22 / 4 (ilk bekleme 3) | güç 0,71 + zırhın %5'i |
+| Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
+|---|---|---|---|---|
+| Tremor Slam (`tremor_slam`) | Hedef sırayı (row) vurur, Slow verir. Fiziksel, STR + zırh payı | 0 / yok | sınıf (1) | hasar physical STR 0,221, bonusScale=[{stat:armor, pct:0.105}]; status: status=slow, turns=2; area={shape:row} |
+| Taunt (`taunt`) | Kendine; düşmanları kendine vurmaya zorlar. Kaybedilen can eşiği geçince kırılır | 16 / 4 | sınıf (1) | taunt: turns=2, breakRatio=0,3, allyDamageMult=0,9 |
+| Close Ranks (`close_ranks`) | Seçilen dost + sırasındaki dostlar (Defender hariç) Guard alır: aldıkları hasarın yarısı Defender'a geçer | 8 / 5 | 2 | guard: turns=3, share=0,5; splash={pattern:row}; turnCost=0,5 |
+| Fist Crush (`fist_crush`) | Gökten 3 rastgele düşmana yumruk, fiziksel | 22 / 4, ilk 3 | sınıf (1) | hasar physical STR 0,71, bonusScale=[{stat:armor, pct:0.05}]; count=3 |
 
-## 3. Pasif ve skill ağacı
+Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-defender.test.ts`) ve bu tablo birlikte güncellenir.
 
-### Pasif: Bulwark Aura
-"You and the allies right next to you (front, back, left, right) gain bonus armor equal to 40% of your own armor." (`armorAura`, pct 0,4, maxStacks 2). Metni veride var.
+## 3. Ağaç
 
-### Ağaç mantığı
-Class kimliği: **zırh ve hasar emmek**. Ağaç iki soruya bölünür: "ne kadar sıkı dururum" (aura, Close Ranks) ve "düşmanı nasıl yavaşlatıp kontrol ederim" (Tremor Slam, Taunt). Hasar ağacı değil; zırh payı, kalkan ve CC.
+Ağaç Defender'ı "zırh = güç" sınıfı yapar (zırh payı hasara ve kalkana döner): ne kadar sıkı dururum (aura, Close Ranks) ve düşmanı nasıl yavaşlatırım (Tremor Slam, Taunt). Koşulsuz "+%X hasar" yok.
 
-| Satır | Ana fikir | ea / eb yönü | Evrim (v) |
-|---|---|---|---|
-| Bulwark Aura | Duruş + aura büyüklüğü | **Rooted Stance** (hareket etmedikçe aura büyür; ma Unyielding: Stun'a ve çekmeye bağışık) / **Diagonal Guard** (çapraza da yayılır; mb Living Rampart). Kan: Anchored Stone (hiç hareket yok, aura +%50) / Pledged Plate (dostlara tam zırh, kendi zırhın -%30) | Fortress Aura: her turda aura kadar kalkan |
-| Tremor Slam | Slow + Stun zinciri | **Skull Rattler** (Slow'lu hedefe Stun şansı; ma Third Quake: her 3. vuruş Stun) / **Aftershock Ground** (sallanan zemin; mb Sinking Earth: zeminde tur başı hasar). Kan: Heavy Landing (Slow 3 tur ama zırh ölçeği yok) / Endless Tremor (zemin 4 tur, hasar -%40) | Earthsplitter: haç şekli, 3 tur Slow |
-| Taunt | Süre ve kırılma | **Stand Fast** (3 tur; ma Weathered the Storm: kırılmadan biterse Fortified) / **Brief Defiance** (bekleme 3; mb Refused to Fall: kırılınca bekleme -1 + kalkan). Kan: Ironbound Oath (kırılmaz, dost indirimi yok) / Hollow Roar (4 MP, bekleme 2, kırılma %10) | Bastion Cry: Taunt boyunca Fortified |
-| Close Ranks | Guard payı ve koruma | **Hold Their Weight** (pay %65; ma Final Shield: ölümcül vuruşu sen yersin) / **Shield Toss** (korunana kalkan; mb Steady Them: Stun/Slow temizler). Kan: Chained to Them (pay %80, Move ve Taunt yok) / Loose Chain (bekleme 3, pay %35) | Phalanx: hasar bütün Guard'lılar + sana eşit bölünür |
+Veri: `data/skill-trees/defender.json` (sürüm 1, bar "Rampart Mastery"). Düğüm adları; metinler için dosyaya bak. Şekil kuralı: `skill-tree-logic.md`.
 
-- Dolgu (f1-f3, r) hep skill'in kendi mekaniğine bağlı: Braced Stance (hareket etmediysen aura), Shockwave (Slow'lu hedefe güç), Second Breath (Taunt bitince can), Linked Plates (paylaşılan hasar azalır). Koşulsuz "+%X hasar" yok.
-- **Ult kolları (Fist Crush):** u = "bana vuranı cezalandır" (Payback Fist, Bitter Knuckles, Settle the Score); r = zırh ölçeği (Plated Gauntlet, Heavier Fall, Iron Meteor); d = zırhlı hedef avı (Plate Hunter, Can Opener, Breaker of Walls); l = döngü (Swift Iron bekleme 3, Pain Into Iron, Forge Again: öldürürse sıfırlanır). Tek kol seçilir.
-- **Mastery bar "Rampart Mastery":** 5 Iron Morning (ilk turda zırhın %10'u kadar kalkan), 10 First Tremor (ilk Slow +1 tur), 15 Formed Up (ilk Close Ranks bedava), 20 Fault Line (Stun biten düşman 1 tur Slow), 25 Last Wall Standing (dost ölünce 1 tur Fortified).
-- **Neden:** ağaç Defender'ı "zırh = güç" sınıfı yapar (zırh payı hasara ve kalkana döner); kimlik dışı yöne (saf hasar) itmez.
+- **Bulwark Aura (pasif):** dolgu Braced Stance, Drilled Ranks, Tight Formation, Weathered; anahtar Shield Brothers; yön A Rooted Stance (ödül Unyielding, uç Anchored Stone); yön B Diagonal Guard (ödül Living Rampart, uç Pledged Plate); evrim Fortress Aura. Anahtar: "At battle start, allies in Bulwark Aura gain a shield worth 5% of your max HP."
+- **Tremor Slam:** dolgu Deep Stomp, Shockwave, Ringing Earth, Fault Strike; anahtar Rolling Quake; yön A Skull Rattler (ödül Third Quake, uç Heavy Landing); yön B Aftershock Ground (ödül Sinking Earth, uç Endless Tremor); evrim Earthsplitter. Anahtar: "Tremor Slam also hits the row behind for 25% damage, without Slow."
+- **Taunt:** dolgu Bellow, Second Breath, Thick Skull, Rally Cry; anahtar Cover Them; yön A Stand Fast (ödül Weathered the Storm, uç Ironbound Oath); yön B Brief Defiance (ödül Refused to Fall, uç Hollow Roar); evrim Bastion Cry. Anahtar: "When an ally drops below 30% HP, Taunt's cooldown resets."
+- **Close Ranks:** dolgu Interlocked, Shield Chain, Linked Plates, Linked Shields; anahtar Second Chain; yön A Hold Their Weight (ödül Final Shield, uç Chained to Them); yön B Shield Toss (ödül Steady Them, uç Loose Chain); evrim Phalanx. Anahtar: "Close Ranks also guards the allies in your own row."
+- **Ult Fist Crush (tek kol seçilir):** u Payback Fist, Bitter Knuckles, Settle the Score; r Plated Gauntlet, Heavier Fall, Iron Meteor; d Plate Hunter, Can Opener, Breaker of Walls; l Swift Iron, Pain Into Iron, Forge Again.
+- **Bar Rampart Mastery:** 5 Iron Morning, 10 First Tremor, 15 Formed Up, 20 Fault Line, 25 Last Wall Standing.
 
-## 4. Ömer kararları
+## 4. YZ notları
 
-- 2026-10-17, madde 340: "Archer en derinde"; Archer, Close Ranks (Guard) menzili dışında kalabilir.
-- 2026-10-18, madde 350: Defender canı 145 -> 140 (t4 ölçümü, Defender 4 seed'de %55,9-56,6).
-- 2026-10-18, madde 350: "Defender'da puanlar INT yerine şansa gitsin": STR 26 -> 24, LUCK 4 -> 6.
-- 2026-10-18, madde 350: Defender zırhı 38 -> 36 (sonra 2026-11-03'te tekrar 38, aşağıya bak).
-- 2026-10-20, madde 375: Close Ranks, Guard'ın yerine geldi (pay %50, bekleme 5).
-- 2026-10-22, madde 398 (Faz 7 ikinci tur): "Defender Taunt b kolunu kırp".
-- 2026-10-23, madde 401: kampanya ve Endless varsayılanlarında Defender'ın ikinci eli dolu gelir (Iron Buckler, %15 blok, +2 zırh).
-- 2026-11-01, madde 506 (5): Taunt kırılma oranı 0,25 -> 0,30 (Ömer 5 puan seçti); Tremor Slam 0,221 + zırh payı 0,105.
-- 2026-11-03 (`docs/arch/areas/character-design.md`): Defender zırhı 38, Taunt kırılma 0,30.
+- Profil: `data/ai.json > profiles.tank`. Her yeni skill / ağaç tetiği YZ değeri + test ile gelir (`tests/ai-coverage.test.ts`).
 
-## 5. Açıklar
+## 5. Açık işler / kararlar
 
-- Pasif metni var; metinsiz pasif yok.
-- Close Ranks bedeli veri ve belgede 8 MP (madde 375 ilk yazımı 10 MP idi; skills.json `_not` metni hâlâ 10 diyor, bayat not).
-- Defender ölçümde en alt sınıflardan (%46,2 / %45,8; bant 44-56 içinde). Sayıya dokunulmadı.
-- Tutorial sınıf önerisi (Bellow + Strength) Ömer onayı bekliyor (madde 481).
+- Son hâl (Ömer): can override, zırh, Taunt kırılma oranı, Close Ranks payı ve beklemesi veride; ara değerler (zırh 38 -> 36 -> 38, can 145 -> 140) arşivde.
+- Close Ranks Guard'ın yerine geldi (Ömer 2026-10-20); Defender hariç dostlar Guard alır. `data/skills.json > close_ranks._not` metni 10 MP diyor, veri 8 MP: veri notu bayat, düzeltilmeli (veri işi).
+- Kampanya ve Endless varsayılanında Defender'ın ikinci eli dolu gelir (Iron Buckler; Ömer 2026-10-23).
+- Tutorial sınıf önerisi (Bellow + Strength) Ömer onayı bekliyor (arşiv madde 481).
+
+## 6. Tarihçe
+
+Eski tam belge (karar günlüğü, ara değerler, eski ağaç tabloları): `docs/archive/design/classes/defender.md`.

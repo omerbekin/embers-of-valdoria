@@ -20,7 +20,7 @@ interface BustRect {
   item?: { hand?: 'main' | 'off'; dx?: number; dy?: number; angle?: number };
 }
 
-const poses = import.meta.glob('../../assets/poses/*-v2/idle1.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const poses = import.meta.glob('../../assets/poses/*-v{2,3}/idle1.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const avatars = import.meta.glob('../../assets/avatars/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 /** Kısa ekran (alçak portre kutusu): kırpma üstünde boş pay olan (y < 0, uzun asa/kukuletalı) sınıflarda baş ~poz y=66'dan başlar. */
@@ -33,7 +33,9 @@ const RECTS = (bust as unknown as { classes: Record<string, BustRect> }).classes
 export function bustSource(classId: string): { url: string; rect: BustRect } | null {
   const rect = RECTS[classId];
   if (!rect) return null;
-  const url = poses[`../../assets/poses/${classId}-v2/${rect.pose}.webp`];
+  // gövde klasörü poz sınıfından (Archer v3: archer-v3); yoksa eski <sınıf>-v2 klasörü
+  const dir = poseClass(classId)?.dir ?? `${classId}-v2`;
+  const url = poses[`../../assets/poses/${dir}/${rect.pose}.webp`];
   return url ? { url, rect } : null;
 }
 

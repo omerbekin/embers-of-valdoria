@@ -1,54 +1,60 @@
 # Anti-Mage
 
-Sayılar: `data/classes/antimage.json`, `data/skills.json` (Ley Brand'in id'si `drain_field`), ağaç `data/skill-trees/antimage.json` (sürüm 5, "Warden's Mastery"). Çerçeve: `docs/design/classes.md`. Ağaç kuralı: `skill-tree-logic.md`. Son güncelleme 2026-11-08.
+> **Ne için / Güncel mi (2026-11-08):** Anti-Mage kahramanının kimlik, skill ve ağaç özeti. Sayılar `data/classes/antimage.json`, `data/skills.json`, `data/statuses.json` ile birebir (veri değişince burası güncellenir). Çerçeve: `docs/design/classes.md`. Tarihçe arşivde (bölüm 6).
 
 ## 1. Kimlik
-- **Mana Hunter**, menzil 4, ana stat INT. Statlar STR 8 / INT 26 / DEX 12 / LUCK 14. Zırh 12, büyü zırhı 40. Kadın, hançer fırlatır (savaşta hedefe koşmadan yerinden atar).
-- Fikir: düşmanın büyü gücünü yakar; düşman takımı MP harcayınca tur sırası öne kayar.
+
+| Alan | Değer |
+|---|---|
+| id / rol | `antimage` / Mana Hunter |
+| Ön sıra önceliği, menzil | 3.5, menzil 4 |
+| Stat (STR / INT / DEX / LUCK) | 8 / 26 / 12 / 14, ana stat INT (toplam 60) |
+| Zırh / büyü zırhı | 12 / 40 |
+| YZ profili | `antimage` (`data/ai.json > profiles.antimage`) |
+| Pasif | **Spellbreaker's Instinct**: "When an enemy uses a skill that costs MP on your team, your next turn comes 10% sooner (once per round)." |
+
+- Mana avcısı: kadın, hançer fırlatır (savaşta hedefe koşmadan yerinden atar). Düşmanın büyü gücünü yakar; düşman takımı MP harcayınca tur sırası öne kayar.
 - **Güçlü:** büyücü ve MP'li düşmana karşı çok güçlü; büyü zırhı yüksek; MP'siz düşmana da "tainted mana" ile hasar yazar; takımına kalkan taşır.
 - **Zayıf:** zırh düşük, fiziksel hasara açık; düz hasarı sınırlı, gücü damga + yakım zincirine bağlı.
-- Denge: %53,5 / %52,1 (2026-11-08), bant üstüne yakın; ek karar yok.
+- Denge ölçümü: `docs/balance.md` (kopya yüzde yazılmaz).
+
+Ley Brand'in skill id'si `drain_field` (Drain Field'ın yerine geldi, Ömer 2026-10-27); görsel ve ses Drain Field'ınki, durum ikonu yer tutucu, Instinct ikonu ödünç (overflow).
 
 ## 2. Skill'ler
-| Skill | Ne yapar | MP / bekleme | Sayı |
-|---|---|---|---|
-| Mana Steal (`mana_burn`) | Tek hedefe arcane büyü hasarı, MP yakar, yakılanın yarısını sana verir, 2 tur Ley Thread bırakır | 0 / yok | INT 0,665; yakım 7 MP; kazanç %50 (Ömer 2026-11-08: 0,7 / 8 -> 0,665 / 7) |
-| Ley Brand (`drain_field`) | 3x3 alandaki her düşmana 3 tur Branded. MP'siz düşman maks canının %20'si kadar tainted mana alır; MP'li düşmanın bedelleri 1,5 kat. Yakılan her MP hasar olur; süre bitince kalan tainted mana patlar | 12 / 3 | yakım hasarı ve patlama 0,49; Branded hedefe Mana Steal ve Void Strike +%40; Ley Thread'li hedefte Brand 2 tur uzun |
-| Spell Ward | Dosta ya da kendine büyü kalkanı; emdiği her darbede saldıranın MP'sini yakar, buff'ını silme şansı | 12 / 3 (Ömer 2026-11-08: 4 -> 3) | kalkan INT 0,75; yakım 8 MP; silme şansı %25 |
-| Void Strike (ult) | Tek hedefe büyük arcane hasar; hedefin eksik MP'si hasarı büyütür | 28 / 3, ilk bekleme 3 | INT 0,95 + eksik mana başına bonus |
 
-## 3. Pasif ve ağaç mantığı
-**Pasif Spellbreaker's Instinct (Ömer 2026-10-29, Mana Overflow'un yerine):** bir düşman Anti-Mage takımından birine MP ödediği bir skill atınca sıran %10 öne kayar; iki tur arasında en çok bir kez.
-
-Ağaç = "yak, işaretle, hızlan". Dört satır, her biri başka bir alt-oyun:
-
-| Satır | n0 (anahtar) | ea yönü | eb yönü | Evrim (v) |
+| Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
 |---|---|---|---|---|
-| Spellbreaker's Instinct | Long Thread: Ley Thread +1 tur | Quickened Instinct: ek %10 öne. Ödül Ready Reflexes (Fleet). Uç Hair Trigger (+%15, büyü hasarı +%10) | Twin Thread: yandaki düşmana da iplik. Ödül Snapping Thread (iplik tüketilince INT %25). Uç Thin Thread (iplik +2 tur, Mana Steal -%20) | Spellbreaker's Fury: +%5 öne, büyü isabeti sonrası sonraki skill +%20 |
-| Mana Steal | Prying Blade: hedefin bir buff'ını siler | Siphon Vein: MP kazancı %60. Ödül Drink Deep (can şifası). Uç Drained Dry (daha çok MP yakar, hasar yok) | Quickening Steal: hedef 0 MP'deyse en az MP'li dosta Haste. Ödül Tempo Thief. Uç Hurried Hands (yarım tur, 2 bekleme) | Spellsplitter: tüm buff'ları söker, her buff için +%8 hasar |
-| Ley Brand | Hush of the Brand: manası 0'a inen Branded düşman 1 tur Silence | Focused Brand: merkez hücre havuzu +%50. Ödül Lasting Brand (+1 tur). Uç Narrow Brand (yalnız merkez, havuz %40, bedel 2 kat) | Wider Brand: 3x4. Ödül Searing Grasp (maks MP'nin %15'ini yakar). Uç Thin Brand (-6 MP, 1 tur kısa) | Spreading Brand: Brand bitince yandaki Brand'siz düşmana bir kez sıçrar |
-| Spell Ward | Purging Ward: önce dostun tüm debuff'larını siler | Split Ward: en az MP'li dosta %25 ikinci kalkan. Ödül Second Ward. Uç Stretched Ward (tam güç, 18 MP) | Ward Taunt: kendine atınca tüm düşmanları Taunt. Ödül Bastion of Null (-%30 fiziksel). Uç Cloistered Ward (+%30, yalnız kendine) | Mirror Ward: emilen büyü darbesi %25 geri yansır |
+| Mana Steal (`mana_burn`) | Tek hedefe arcane büyü hasarı, MP yakar, yakılanın yarısını sana verir, 2 tur Ley Thread bırakır | 0 / yok | 4 | hasar magic/arcane INT 0,665; manaBurn: amount=7, gainRatio=0,5; status: status=ley_thread, turns=2 |
+| Ley Brand (`drain_field`) | 3x3 alandaki her düşmana 3 tur Branded. MP'siz düşman maks canının %20'si kadar tainted mana alır; MP'li düşmanın bedelleri 1,5 kat. Yakılan her MP hasar olur; süre bitince kalan tainted mana patlar | 12 / 3 | 4 | brand: turns=3, taintPct=0,2, costMult=1,5, burnDamagePct=0,49, explodePct=0,49, castBurnPct=0,5, markDamagePct=0,4, markSkills=[mana_burn, void_strike], threadTurns=2, threadBurnMult=1,5, element=arcane; area={shape:rect, rows:3, cols:3, anchor:bottom_left} |
+| Spell Ward (`spell_ward`) | Dosta ya da kendine büyü kalkanı; emdiği her darbede saldıranın MP'sini yakar, buff'ını silme şansı | 12 / 3 | sınıf (4) | shield: scale=int, power=0,75, shieldType=magic, onAbsorb={burnMana:8, dispelChance:0.25} |
+| Void Strike (`void_strike`) | Tek hedefe büyük arcane hasar; hedefin eksik MP'si hasarı büyütür | 28 / 3, ilk 3 | sınıf (4) | hasar magic/arcane INT 0,95, bonusPerMissingMana=1 |
 
-- **Neden böyle:** Anti-Mage tek şey yapar: düşmanın mana ekonomisini bozmak. Instinct satırı tempo, Mana Steal tek hedef MP hırsızlığı, Ley Brand alan baskısı, Spell Ward takım koruması. Ea / eb "geniş mi odaklı mı", "MP mi tempo mu" sorularını sorar.
-- **Ult kolları (Void Strike):** u = zayıflatma (Crippling Void, Spell Shatter, Void Shackle); r = takım ödülü (Opening for All, Shared Spoils, Feeding Frenzy); d = hız (Swift Void, Ready Blades, Threaded Void); l = buff hırsızlığı (Rallying Break, Turned Boons, Grand Theft).
-- **Bar (Warden's Mastery):** 5 Ready Stance (Instinct +%3), 10 Quick Fingers (Mana Steal buff'lı düşmandan +3 MP yakar), 15 Wide Basin (Brand'lenen düşman başına takıma 1 MP), 20 Warded Steps (kalkanlı dost -%2 fiziksel), 25 Void Focus (Void Strike -2 MP).
-- Her düğüm YZ değeri + testle gelir.
+Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-antimage.test.ts`) ve bu tablo birlikte güncellenir.
 
-## 4. Ömer kararları
-- **Ley Brand (Ömer 2026-10-27; open-questions-archive madde 444):**
-  - 2. skill, Drain Field'ın yerine; skill id `drain_field` AYNI kaldı. Aynı 3x3 alan, menzil 4, 3 tur bekleme; hasar ve isabet zarı yok. Alandaki her düşman 3 tur Branded. (MP o gün 14'tü, veri şimdi 12.)
-  - MP havuzu OLMAYAN düşman (maks MP 0) maks canının %20'si kadar tainted mana alır, dolu başlar. Harcayamaz, MP yenilenmesi almaz. Mana Steal çalar, Spell Ward yakar, Void Strike eksik manayı sayar. Brand bitince (süre, dispel, ölüm) havuz silinir.
-  - MP havuzu OLAN düşmanın MP bedelleri %50 daha yüksek (yukarı yuvarlanır); mana eklenmez. MP'si 0'da duran MP'li düşman tainted mana ALMAZ.
-  - Branded birimin yakılan / çalınan her MP'si, kaybedilen MP'nin %50'si kadar büyü hasarı verir (kaynak yakan; kritik ve isabet zarı yok, büyü zırhı işler). Veri şimdi 0,49.
-  - Süre doğal bitince kalan tainted mana'nın %50'si damgalayandan patlar (damgalayan ölmüş olsa da). Veri şimdi 0,49.
-  - Boss'lar da Branded olur (CC değil). Yeniden atış süreyi tazeler, havuzu doldurmaz.
-  - Silence artık skill'de yok; ağaçta Hush of the Brand düğümüyle geri geldi.
-  - Ağaç satırı sürüm 2'de bedava respec'le yazıldı (bugün sürüm 5). O günkü düğümler: Deep Taint, Searing Brand, Heavy Toll, Hush of the Brand, Bitter Burst, Focused Brand, Wider Brand, Lasting Brand, Narrow Brand, Thin Brand, Searing Grasp, Spreading Brand; bar Wide Basin. Hepsi bugünkü ağaçta durur.
-- **Ömer 2026-10-29:** Branded birim MP'li skill kullanınca ek MP yanar (castBurnPct); Mana Steal ve Void Strike Branded hedefe %40 fazla vurur (markDamagePct); Mana Steal 2 tur Ley Thread bırakır, Brand iplikli hedefte 2 tur uzun sürer ve yakım 1,5 katına çıkar, iplik tüketilir. Pasif Mana Overflow'dan Spellbreaker's Instinct'e çevrildi. 2026-11-02: castBurnPct 0,5 ve threadBurnMult 1,5 kesin.
-- **Spell Ward:** madde 240 (Ömer): dosta ya da kendine atılır. 2026-11-08: kalkan INT 0,75 (kalan MP payı kaldırıldı, güç INT'e kaydı).
-- Görsel / ses Drain Field'ınki; durum ikonu yer tutucu; Instinct ikonu ödünç (overflow).
+## 3. Ağaç
 
-## 5. Açıklar
-- Mana Steal veride 8 MP yakıyor; ağaç metinleri 10'u varsayıyor (Drained Dry: "15 instead of 10"). Düğüm metni ya da veri hizalanmalı.
-- Ağaçta Mana Overflow düğümlerinin `inactive` temizliği kontrol edilmedi.
-- Sayılar provizyon; ağaç sim ile oturmadı.
+Ağaç "yak, işaretle, hızlan": Instinct tempo, Mana Steal tek hedef MP hırsızlığı, Ley Brand alan baskısı, Spell Ward takım koruması.
+
+Veri: `data/skill-trees/antimage.json` (sürüm 5, bar "Warden's Mastery"). Düğüm adları; metinler için dosyaya bak. Şekil kuralı: `skill-tree-logic.md`.
+
+- **Spellbreaker's Instinct (pasif):** dolgu Keen Senses, Taut Thread, Thread Sense, Pull Taut; anahtar Long Thread; yön A Quickened Instinct (ödül Ready Reflexes, uç Hair Trigger); yön B Twin Thread (ödül Snapping Thread, uç Thin Thread); evrim Spellbreaker's Fury. Anahtar: "Ley Thread lasts 1 turn longer."
+- **Mana Steal:** dolgu Generous Cut, Deep Pockets, Deep Cut, Bare Steel; anahtar Prying Blade; yön A Siphon Vein (ödül Drink Deep, uç Drained Dry); yön B Quickening Steal (ödül Tempo Thief, uç Hurried Hands); evrim Spellsplitter. Anahtar: "Mana Steal removes one random buff from its target."
+- **Ley Brand:** dolgu Deep Taint, Searing Brand, Heavy Toll, Bitter Burst; anahtar Hush of the Brand; yön A Focused Brand (ödül Lasting Brand, uç Narrow Brand); yön B Wider Brand (ödül Searing Grasp, uç Thin Brand); evrim Spreading Brand. Anahtar: "A Branded enemy whose mana reaches 0 is Silenced for 1 turn."
+- **Spell Ward:** dolgu Layered Ward, Ward Mending, Deep Reserve, Shelter Echo; anahtar Purging Ward; yön A Split Ward (ödül Second Ward, uç Stretched Ward); yön B Ward Taunt (ödül Bastion of Null, uç Cloistered Ward); evrim Mirror Ward. Anahtar: "Spell Ward first removes every debuff from the warded ally."
+- **Ult Void Strike (tek kol seçilir):** u Crippling Void, Spell Shatter, Void Shackle; r Opening for All, Shared Spoils, Feeding Frenzy; d Swift Void, Ready Blades, Threaded Void; l Rallying Break, Turned Boons, Grand Theft.
+- **Bar Warden's Mastery:** 5 Ready Stance, 10 Quick Fingers, 15 Wide Basin, 20 Warded Steps, 25 Void Focus.
+
+## 4. YZ notları
+
+- Profil: `data/ai.json > profiles.antimage`. Her yeni skill / ağaç tetiği YZ değeri + test ile gelir (`tests/ai-coverage.test.ts`).
+
+## 5. Açık işler / kararlar
+
+- **Ley Brand kuralı (Ömer 2026-10-27 / 10-29, arşiv madde 444):** 3x3 alandaki her düşman Branded olur (boss dahil, CC değil), hasar ve isabet zarı yok. MP havuzu olmayan düşman maks canının bir payı kadar "tainted mana" alır (harcayamaz, yenilenme almaz; Mana Steal çalar, Spell Ward yakar, Void Strike eksik manayı sayar); MP'li düşmanın bedelleri 1,5 kat. Branded birimin yakılan / çalınan MP'sinin yarısı büyü hasarı olur; süre doğal bitince kalan tainted mana'nın yarısı damgalayandan patlar. Yeniden atış süreyi tazeler, havuzu doldurmaz. Silence skill'de yok, ağaçta (Hush of the Brand). Sayılar: `data/skills.json > drain_field`.
+- Mana Steal Ley Thread bırakır (2 tur): iplikli hedefte Brand 2 tur uzun, yakım 1,5 kat, iplik tüketilir; Branded hedefe Mana Steal ve Void Strike %40 fazla vurur (Ömer 2026-10-29; `castBurnPct`, `threadBurnMult`, `markDamagePct`). Spell Ward dosta ya da kendine atılır (madde 240).
+- **Açık (Lead kararı):** Drained Dry düğüm metni "burns 15 MP instead of 10" Mana Steal'in 10 MP yaktığını varsayar; veri 7 MP yakıyor. Düğüm metni ya da değer hizalanmalı.
+- Ağaçta Mana Overflow düğümlerinin `inactive` temizliği kontrol edilmedi. Ağaç sim ile oturmadı.
+
+## 6. Tarihçe
+
+Eski tam belge (karar günlüğü, ara değerler, eski ağaç tabloları): `docs/archive/design/classes/antimage.md`.

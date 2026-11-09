@@ -1,3 +1,4 @@
+> **Ne için:** design/classes-old arşivi; güncel değil.
 Kararlar sınıf belgelerine taşındı (2026-11-08): classes/warrior.md, paladin.md, antimage.md
 
 # Class'lar (TASLAK — Ömer'in vereceği çerçeveye göre yeniden yazılacak)

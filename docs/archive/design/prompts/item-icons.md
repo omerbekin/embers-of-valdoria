@@ -1,3 +1,4 @@
+> **Ne için:** design/prompts/item-icons arşivi; güncel değil.
 # Item ikonları: ChatGPT prompt'ları
 
 Oyundaki 52 item'in ikonları 7 sayfa halinde üretilecek; her sayfada 8 ikon (4 sütun x 2 satır, her hücre 256x256, toplam 1024x512). Tek sayfada 52 ikon istemek kaliteyi düşürür; 8'lik paketler en iyi sonucu verir.

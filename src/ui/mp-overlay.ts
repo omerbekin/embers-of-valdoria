@@ -63,8 +63,11 @@ export async function copyText(text: string): Promise<boolean> {
  * Lobi kodu giriş kutusu: kod ya da davet linki yazılır/yapıştırılır. `validate` geçerli kodu döner (geçersizse null).
  * Join'e basınca geçerli kod döner; Cancel / Esc null.
  */
+/** KVKK aydınlatması toplama anında (2026-10-25): bağlantı doğrudan kurulur, rakip IP adresini görebilir (public/privacy.html > Genel). */
+export const IP_NOTE = 'The other player can see your IP address while you play.';
+
 export function promptCode(validate: (text: string) => string | null): Promise<string | null> {
-  return promptText({ title: 'Join lobby', hint: 'Enter the 6-letter lobby code (or paste the invite link)', placeholder: 'ABC DEF', button: 'Join', maxLength: 200, code: true, error: 'That is not a valid lobby code', validate });
+  return promptText({ title: 'Join lobby', hint: 'Enter the 6-letter lobby code (or paste the invite link)', placeholder: 'ABC DEF', button: 'Join', maxLength: 200, code: true, error: 'That is not a valid lobby code', validate, note: IP_NOTE });
 }
 
 /** Oyuncu adı kutusu: harf/rakam/boşluk, 16 karakter; boş bırakılırsa ad silinir ('Player 1/2'). */
@@ -85,6 +88,8 @@ interface PromptOptions {
   code?: boolean;
   /** Boş sonuç geçerli ('' döner). */
   allowEmpty?: boolean;
+  /** Düğmelerin üstünde küçük not (Join: IP uyarısı). */
+  note?: string;
 }
 
 function promptText(o: PromptOptions): Promise<string | null> {
@@ -120,7 +125,14 @@ function promptText(o: PromptOptions): Promise<string | null> {
     cancel.className = 'mp-btn';
     cancel.textContent = 'Cancel';
     row.append(cancel, join);
-    box.append(title, hint, input, err, row);
+    box.append(title, hint, input, err);
+    if (o.note) {
+      const note = document.createElement('div');
+      note.className = 'mp-modal-hint mp-modal-note';
+      note.textContent = o.note;
+      box.append(note);
+    }
+    box.append(row);
     wrap.appendChild(box);
     root().appendChild(wrap);
     const done = (v: string | null) => {

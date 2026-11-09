@@ -1,3 +1,4 @@
+> **Ne için:** handoff/push-workflow-2026-10-29 arşivi; güncel değil.
 # Handoff: GitHub gönderim akışı → worktree'de çalışıp merge (2026-10-29)
 
 Ömer: "bu githuba atma sorunları artmaya başladı. ayrı bir worktreede çalışıp sonradan mergelemek belki daha faydalı

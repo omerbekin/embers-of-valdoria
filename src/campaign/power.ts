@@ -1,5 +1,5 @@
 // Sefer güç bütçesi (saf): bölüm, düğüm derinliği, beklenen oyuncu gücü, düşman ölçeği ve düğümün item seviyesi.
-// Veri: data/campaign/power-budget.json. Tasarım: docs/design/progression/roadmap.md 1.3, items.md 4.2-4.3.
+// Veri: data/campaign/power-budget.json. Tasarım: docs/archive/design/progression/roadmap-2026-10.md 1.3, items.md 4.2-4.3.
 import budgetJson from '../../data/campaign/power-budget.json';
 import { getMap } from './data';
 import { finalNode, forwardDistances, isBattleNode, outgoing, undirectedDistances } from './graph';

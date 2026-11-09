@@ -1,3 +1,4 @@
+> **Ne için:** design/art/skill-tree-icons-warrior arşivi; güncel değil.
 # Skill ağacı ikonları: Warrior (örnek set, Codex/ChatGPT promptları)
 
 content-designer, 2026-10-23. Durum: **Ömer'in stil onayını bekliyor.** Onaydan sonra aynı kalıp diğer 10 class'a uygulanır.

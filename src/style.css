@@ -1587,6 +1587,11 @@ html.compact:not(.short) .gm-row {
   color: #b9a27a;
   text-align: center;
 }
+.mp-modal-note {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  opacity: 0.85;
+}
 .mp-code-input {
   box-sizing: border-box;
   width: 100%;

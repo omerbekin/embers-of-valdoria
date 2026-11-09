@@ -1,4 +1,4 @@
-// Endless Lite (roadmap.md bölüm 3, aşama 1E): saf mantık. Ekran src/game/scenes/EndlessScene.ts, oturum src/game/endless-session.ts.
+// Endless Lite (docs/archive/design/progression/roadmap-2026-10.md bölüm 3, aşama 1E): saf mantık. Ekran src/game/scenes/EndlessScene.ts, oturum src/game/endless-session.ts.
 export * from './data';
 export * from './waves';
 export * from './run';

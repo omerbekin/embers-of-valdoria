@@ -1,11 +1,12 @@
 # Animasyon incelemesi: Codex + Claude ortak süreci
+> **Ne için / Güncel mi (2026-11-08):** Canlı iş listesi `board.md`; `tamam` durumu = kapandı. Süreç, durum sözlüğü ve klasör tablosu aşağıda.
 
 Skill VFX kare dizilerinin (sprite sheet) düzeltilmesi için ortak çalışma alanı. Codex izler ve not alır, Claude
 düzeltir; düzeltilemeyen dizi için Codex yeni dizi çizer, Claude ekler, Codex kontrol eder. İki taraf sohbet üzerinden
 değil, bu klasördeki dosyalar üzerinden haberleşir. Ömer yalnızca sırayı karşı tarafa söyler ("board'a bak").
 
 Kapsam (2026-10-28): yalnız skill efektleri. Karakter gövde animasyonları, silah tutuşu ve verimlilik sonra
-(docs/design/future-ideas.md, 2026-10-28 satırı).
+(`docs/design/future-ideas/vfx-art.md`, 2026-10-28 satırı).
 
 ## Klasör
 

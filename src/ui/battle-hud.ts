@@ -767,7 +767,7 @@ export class BattleHud {
           .map((x) =>
             x.placeholder
               ? `<div class="bh-gl ph" aria-hidden="true">${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`
-              : `<div class="bh-gl ${x.foe ? 'foe' : x.enabled ? '' : 'off'} ${x.active ? 'on' : ''} ${x.ready ? 'ready' : ''}" data-global="${esc(x.id)}" ${this.reg(`g:${x.id}`, x.tip)}>${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`,
+              : `<div class="bh-gl ${x.foe ? 'foe off' : x.enabled ? '' : 'off'} ${x.active ? 'on' : ''} ${x.ready ? 'ready' : ''}" data-global="${esc(x.id)}" ${this.reg(`g:${x.id}`, x.tip)}>${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`,
           )
           .join('')}</div>`
       : '';

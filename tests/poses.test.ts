@@ -388,7 +388,7 @@ describe('gerçek sınıflar v2 gövdeyle (Ömer 2026-10-13; debug > Characters 
 
   it('varsayılan v2: her oynanabilir sınıf kendi <id>_v2 gövdesi; çağrılar pozsuz; v1 seçiliyken eski görünüm', () => {
     expect(realPosesV2()).toBe(true);
-    for (const id of real) expect(poseClass(id), id).toBe(POSES.classes[`${id}_v2`]);
+    for (const id of real) expect(poseClass(id), id).toBe(POSES.classes[`${id}_v3`] ?? POSES.classes[`${id}_v2`]); // v3 gövde varsa o (Archer)
     for (const id of Object.keys(content.summons)) expect(poseClass(id), id).toBeNull();
     v1(() => {
       expect(poseClass('warrior')).toBe(POSES.classes['warrior']);

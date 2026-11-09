@@ -1,3 +1,4 @@
+> **Ne için:** design/skill-trees-grimdawn arşivi; güncel değil.
 # Sınıf ağaçları: Grim Dawn tarzı (ÖNERİ, 2026-10-12)
 
 > Ömer: “Grim Dawn tarzı sınıf skill ağaçlarını deneyelim. Skill’leri daha yaratıcı yap, biraz çerçevenin dışına çık.”

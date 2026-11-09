@@ -1,4 +1,5 @@
 # Embers of Valdoria Cloudflare Worker (oyun sitesi + lobi sunucusu)
+> **Ne için / Güncel mi (2026-11-08):** Yalnız Cloudflare kurulumu ve işletmesi. Günlük gönderim ("GitHub'a at" / "canlıya al") kuyruk üzerinden: `docs/arch/areas/push-queue.md`; yayın ve sim komutları: `docs/arch/sims-and-deploy.md`.
 
 Tek Worker, tek adres: **https://embersofvaldoria.com** (Cloudflare ücretsiz plan; ücretli hiçbir özellik kullanılmaz).
 
@@ -9,7 +10,7 @@ Tek Worker, tek adres: **https://embersofvaldoria.com** (Cloudflare ücretsiz pl
   akar. Oyundaki adres: `wss://embersofvaldoria.com/lobby` (`../data/multiplayer.json`). Tasarım: `../docs/design/multiplayer.md`.
 - GitHub Pages (https://omerbekin.github.io/embers-of-valdoria/) aynen sürer ve aynı lobiye bağlanır.
 
-## Kurulum adım adım (Ömer + koordinatör)
+## Kurulum adım adım (Ömer + Lead)
 
 Ön koşul: `embersofvaldoria.com` Cloudflare hesabında "Active" (ad sunucuları Cloudflare'i gösteriyor).
 Komutlar komut satırında, oyun klasöründe (`C:\Users\Omer\Projects\embers-of-valdoria\game`) çalıştırılır.
@@ -33,7 +34,7 @@ Komutlar komut satırında, oyun klasöründe (`C:\Users\Omer\Projects\embers-of
      GitHub Pages sürümü de aynı lobiye bağlanır.
    - Sunucuya ulaşılamazsa oyun "Cannot reach the multiplayer server" der (çökmez).
 
-Güncelleme: oyun ya da lobi kodu değişince yalnızca 4. adım (`npm run deploy:cf`) tekrarlanır.
+Güncelleme: oyun ya da lobi kodu değişince yalnızca 4. adım (`npm run deploy:cf`) tekrarlanır. Normal akışta bunu gönderim kuyruğu kendisi yapar (`docs/arch/areas/push-queue.md`).
 Canlı kayıt izlemek: `npm --prefix cloudflare run tail`.
 
 ## Ücretsiz plan sınırları (2026; güncel hali: https://developers.cloudflare.com/workers/platform/pricing/)

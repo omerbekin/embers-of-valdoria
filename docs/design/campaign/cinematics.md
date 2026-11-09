@@ -1,5 +1,5 @@
 # Sefer hikâye sahneleri ve Harita 1 final sinematiği (metinler)
-> **Ne için / Güncel mi (2026-11-08):** Sefer sahneleri metni ve Harita 1 finali. CANLI: veri `data/campaign/cinematics.json`, kod `src/campaign/cinematics.ts` var. Başlıktaki "METİN TASLAĞI" eskidir; metinler oyunda.
+> **Ne için / Güncel mi (2026-11-08):** Sefer sahneleri metni ve Harita 1 finali. CANLI: veri `data/campaign/cinematics.json`, kod `src/campaign/cinematics.ts` var. Metinler oyunda.
 
 Durum: UYGULANDI (metin 2026-10-23; oyunda). Veri: `data/campaign/cinematics.json`. Kod bağlantısı VAR (2026-10-23; aşağıda "Oyundaki bağlantı"). Ömer'in kararları: form https://claude.ai/artifact/CprM9eeoVef4RYd2VH52Ro (db `picks/main`), 2026-10-21. Final sinematiğin video planı: `docs/archive/design/campaign/morvane-cinematic-video.md` (video promptları, kullanılmadı; oyunda hareketsiz kareler var).
 
@@ -27,7 +27,7 @@ Durum: UYGULANDI (metin 2026-10-23; oyunda). Veri: `data/campaign/cinematics.jso
 - **Forward Camp arka planı:** düğümün kendi `battleBackground`'ı yok (bölge III varsayılanı `ashen-plain`); görev kuralı gereği `ember-road` seçildi.
 - **Morvane karşılaşması:** son satır "Everything in Valdoria kneels to the ash in the end. So will you." savaş açılışındaki "Kneel before the ash." bandına bağlanır (aynı cümleyi tekrar etmez).
 - **Kapanış kartı:** `campaign.json > texts.complete` ile birebir aynı.
-- `cin_*` görselleri/klipleri henüz yok; yoksa `castle-hall` / `ashen-plain` gibi bir yedek gösterilmesi bağlayan agent'ın işi.
+- `cin_*` görselleri `assets/cinematics/` altındadır (örn. `cin_kneel.webp`); eksik olanda `castle-hall` / `ashen-plain` gibi yedek gösterilmesi bağlayan agent'ın işi.
 
 ## Oyundaki bağlantı (campaign-dev 2026-10-23)
 

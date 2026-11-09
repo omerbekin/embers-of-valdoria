@@ -1,52 +1,58 @@
 # Warrior
 
-Sayılar: `data/classes/warrior.json`, `data/skills.json`, ağaç `data/skill-trees/warrior.json` (sürüm 1, "Iron Mastery"). Çerçeve: `docs/design/classes.md`. Ağaç kuralı: `skill-tree-logic.md`. Son güncelleme 2026-11-08.
+> **Ne için / Güncel mi (2026-11-08):** Warrior kahramanının kimlik, skill ve ağaç özeti. Sayılar `data/classes/warrior.json`, `data/skills.json`, `data/statuses.json` ile birebir (veri değişince burası güncellenir). Çerçeve: `docs/design/classes.md`. Tarihçe arşivde (bölüm 6).
 
 ## 1. Kimlik
-- **Melee Bruiser**, ön saf, menzil 1, ana stat STR. Statlar STR 26 / INT 12 / DEX 8 / LUCK 14. Zırh 16, büyü zırhı 0 (Ömer 2026-11-08: 18 -> 16). Kaynak: Rage.
-- Fikir: kalkansız, iki elli baltayla dalan, kanla beslenen savaşçı. Dalar, kan kaybeder, kanla geri döner ve bitirir.
+
+| Alan | Değer |
+|---|---|
+| id / rol | `warrior` / Melee Bruiser |
+| Ön sıra önceliği, menzil | 1, menzil 1 |
+| Stat (STR / INT / DEX / LUCK) | 26 / 12 / 8 / 14, ana stat STR (toplam 60) |
+| Zırh / büyü zırhı | 16 / 0, kaynak rage |
+| YZ profili | `aggressive` (`data/ai.json > profiles.aggressive`) |
+| Pasif | **Berserker**: "The lower your HP, the harder you hit: up to 80% more damage at the brink of death. Losing HP also gives Rage." |
+
+- Ön saf yakın dövüş bruiser: kalkansız, iki elli baltayla dalan, kanla beslenen savaşçı. Dalar, kan kaybeder, kanla geri döner ve bitirir.
 - **Güçlü:** canı düştükçe çok sert vurur; Rage ile tek dev darbe; Whirlwind ile can çalar.
 - **Zayıf:** büyü zırhı yok; gücü düşük cana bağlı, sağlam başlayan savaşta yavaş açılır; kontrolü (Slow, Stun) azdır, ağaç bunu doldurur.
-- Denge: Quick Battle ölçümünde bant üstü (%56,1 / %53,9, 2026-11-08). Ömer kararıyla ek nerf yok; yalnız zırh 16 ve Double Strike 0,35'e inildi (bu son hâl ölçülmedi). Ayrıntı `docs/balance.md`.
+- Denge ölçümü: `docs/balance.md` (kopya yüzde yazılmaz).
 
 ## 2. Skill'ler
-| Skill | Ne yapar | MP / bekleme | Sayı |
-|---|---|---|---|
-| Double Strike (`melee_attack`) | Tek hedefe iki fiziksel vuruş; Rage üretir | 0 / yok | STR 0,35 x 2 (Ömer 2026-11-08, eskisi 0,38) |
-| Whirlwind | İlk iki düşman sırasını süpürür (rect 2x3); verdiği hasarın bir kısmı can olur | 8 / 3 | STR 0,45, lifesteal %20 |
-| Charge | Arka sıradaki dahil tek hedefe atılır, hasar + Stun | 10 / 4 | STR 0,675, Stun 2 tur, menzil 4 |
-| Headsman's Blow (ult) | Tüm Rage'i (en az 30) harcayıp tek dev balta darbesi | 30+ Rage (hepsi) / 5, ilk bekleme 1 | STR 0,5 + 0,025 x harcanan Rage |
 
-Görsel: Headsman vfx'i v2'de (kaldırış + kor dolumu, dikey iniş, zemin çatlağı); ult ikonu yer tutucu (`warcry`).
-
-## 3. Pasif ve ağaç mantığı
-**Pasif Berserker:** canı azaldıkça en çok %80 fazla hasar; kaybedilen can da Rage verir (maks canın %1'i başına 0,4 Rage, vuruş başına en çok 15).
-
-Ağaç = "can düşük + Rage" kimliğinin her skill'e yayılması. Her satırda f1-f3 küçük koşullu ek, n0 anahtar davranış, ea / eb iki yön (biri alınca öbürü kilitlenir), ma / mb yönün ödülü, fa / fb bedelli uç, v evrim.
-
-| Satır | n0 (anahtar) | ea yönü | eb yönü | Evrim (v) |
+| Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
 |---|---|---|---|---|
-| Berserker | Iron Retort: canı %50 altına indiren ilk düşman Stun yer | Measured Mending: düşük canda gelen şifa fazla, yüksekte yarım. Ödül Red Line (üst şifa kalkana döner). Uç Grave Pact (düşük canda lifesteal, yüksekte -%15 hasar) | Stand Firm: canın %30+'ını alan vuruş %25 az vurur. Ödül Not Today (ölümcül vuruşta 1 can kalır). Uç Iron Will (Stun/Slow kısa, şifa -%20) | Undying Rage: %25 altında kritik olmayan vuruş canı 1'in altına indiremez, vuruş başına 10 Rage |
-| Double Strike | Gut Strike: ilk vuruş Wound açar, ikinci vuruş yaralıya +%8 | Hamstring: Slow. Ödül Hobble. Uç Crippling Pair (Slow 2 tur, -%15 hasar) | Deep Gash: Wound 4 tur. Ödül Butcher's Carve. Uç Third Cut (yaralıya üçüncü vuruş, kritik yok) | Skull and Knee: ilk vuruş Slow, ikinci Stun; 2 tur bekleme |
-| Whirlwind | Gore Wheel: vurduğu herkese Wound | Thirst: Wound'lu düşmandan lifesteal 2 kat. Ödül Blood Glut (fazla şifa Rage olur). Uç Glass Cyclone (lifesteal +%12, +%15 hasar alma) | Reaping Wind: her vurulandan Rage. Ödül Crimson Wheel. Uç Reaper's Spin (yaralıya +%15, yaralı olmayana hasar yok) | Exsanguinate: Wound'u koparıp +%20 hasar, çift lifesteal |
-| Charge | Roaring Charge: ilk Charge Rage'i en az 30'a çeker | Grudge Charge: son vuran düşmana fazladan Stun. Ödül Payback. Uç Martyr's Rush (herkesi Taunt eder, +%15 hasar alma) | Blood Up: dolu canlı hedefe +10 Rage. Ödül Into the Fire (Headsman 20 Rage'e iner). Uç Reckless Heat (20 Rage, Stun 1 tur) | Herald of Ruin: tuttuğun Rage başına +%1 güç, Stun bitince 10 Rage iade |
+| Double Strike (`melee_attack`) | Tek hedefe iki fiziksel vuruş; Rage üretir | 0 / yok | sınıf (1) | hasar physical STR 0,35; hasar physical STR 0,35 |
+| Whirlwind (`whirlwind`) | İlk iki düşman sırasını süpürür (rect 2x3); verdiği hasarın bir kısmı can olur | 8 / 3 | sınıf (1) | hasar physical STR 0,45, lifesteal=0,2; area={shape:rect, rows:2, cols:3, anchor:bottom_left} |
+| Charge (`charge`) | Arka sıradaki dahil tek hedefe atılır, hasar + Stun | 10 / 4 | 4 | hasar physical STR 0,675; status: status=stun, turns=2; ignoreFrontRow=true |
+| Headsman's Blow (`headsmans_blow`) | Tüm Rage'i (en az 30) harcayıp tek dev balta darbesi | 30 rage (hepsi) / 5, ilk 1 | sınıf (1) | hasar physical STR 0,5, powerPerRage=0,025 |
 
-- **Neden böyle:** Warrior'ın tek derdi "hayatta kalıp dolmak". Berserker satırı iki cevap sunar: düşük canda şifa / lifesteal ile yaşa (ea), ya da tek ağır vuruşu yutup ayakta kal (eb). Double Strike ve Whirlwind Wound ile ortak dil kurar (yaralı hedef = bonus). Charge Rage'i Headsman'a taşır.
-- **Ult kolları (Headsman's Blow):** u = can çalma (Feast, Gravedigger, Grave Robber); r = Stun (Ringing Headsman, Heavy Toll, Mercy Stroke); d = korunma (Grim Calm, Clean Slate, Executioner's Calm); l = korku / körlük (Dreadful Swing, Blinding Spray, Terror). Yalnız tek kol seçilir.
-- **Bar (Iron Mastery):** 5 Heavy Hand (ilk skill Slow), 10 Second Wind (%30 altına ilk düşüşte %8 şifa), 15 Crushing Weight (Stun / Slow / Staggered düşmana +%3), 20 Stubborn Heart (%25 altında tur başı %2 şifa), 25 Stagger Step (Stun'dan sonra sıra %30 erken, savaşta bir kez).
-- Toplam 60 düğüm (4 satır x 12 + ult 12), bar ayrı. Her düğüm YZ değeri + testle gelir (`skill-tree-logic.md`).
+Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-warrior.test.ts`) ve bu tablo birlikte güncellenir.
 
-## 4. Ömer kararları
-- **Berserker (Ömer onayı 2026-10-17, wr1; open-questions-archive madde 338):**
-  - Kalkansız, iki elli baltalı, kanla beslenen gözü kara savaşçı.
-  - Pasif: canı azaldıkça sert vurur (eski kural) ve can kaybettikçe Rage kazanır; Rage artık yalnızca vurarak gelmez.
-  - Double Strike aynı (Rage üretir). Charge aynı (arka sıraya atılma + Stun).
-  - Whirlwind: ilk iki düşman sırasını süpürür (ön sıra + arkasındaki; Ömer 2026-10-20, rect 2x3); verdiği hasarın bir kısmı Warrior'a can olarak döner. Ömer notu: skill'ler değiştirilmedi, Whirlwind'e ek yapıldı.
-  - Ult Headsman's Blow, Abyssal Cry'ın yerine: yakın dövüş tek hedef, bütün Rage'i (en az 30) tek darbeye harcar; hasar harcanan Rage'le ve hedefin eksik canıyla büyür ("şimdi 30 Rage ile mi vursam, 50'ye kadar bekleyip kafasını mı alsam?").
-  - Görsel / ses o gün yer tutucuydu (Headsman animasyonu 2026-10-23'te yapıldı); sayılar balance-tester'ın.
-- **2026-11-08 akşam:** zırh 16, Double Strike 0,35 (iki vuruş). Ömer "şimdilik değiştirme" demişti; bu son hâl ölçülmedi.
+## 3. Ağaç
 
-## 5. Açıklar
-- Headsman's Blow'un eski notu "30 Rage 1,1 / 50 Rage 1,5 STR" diyor; veri şimdi 0,5 + 0,025 x Rage (30 Rage = 1,25). Eski karardaki "hedefin eksik canıyla büyür" (executeBonus 0,6) 0.9.10.4'te (2d63cca8) kaldırıldı, powerPerRage 0,02 -> 0,025. **Ömer kararıydı, o gün not düşülmemişti (Ömer 2026-11-08 doğruladı: bugünkü haliyle kalır).** Headsman's Blow artık yalnız harcanan Rage ile büyür; motor desteği (`executeBonus`, spec.ts) ağaç düğümleri için duruyor.
-- Double Strike 0,35 x 2 ve zırh 16 için sim yok.
-- Düğüm sayıları tahmin; ağaç sim'i Ömer onayıyla.
+Ağaç "can düşük + Rage" kimliğini her skill'e yayar. Double Strike ve Whirlwind Wound ile ortak dil kurar (yaralı hedef = bonus); Charge Rage'i Headsman'a taşır.
+
+Veri: `data/skill-trees/warrior.json` (sürüm 1, bar "Iron Mastery"). Düğüm adları; metinler için dosyaya bak. Şekil kuralı: `skill-tree-logic.md`.
+
+- **Berserker (pasif):** dolgu Thick Hide, Grit, Shared Scars, Hardened; anahtar Iron Retort; yön A Measured Mending (ödül Red Line, uç Grave Pact); yön B Stand Firm (ödül Not Today, uç Iron Will); evrim Undying Rage. Anahtar: "The first enemy to drop you below 50% HP is Stunned for 1 turn."
+- **Double Strike:** dolgu Knee Cutter, Notched Axe, Hard Knocks, Bone Saw; anahtar Gut Strike; yön A Hamstring (ödül Hobble, uç Crippling Pair); yön B Deep Gash (ödül Butcher's Carve, uç Third Cut); evrim Skull and Knee. Anahtar: "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for 8% increased damage."
+- **Whirlwind:** dolgu Steady Spin, Spin Recovery, Hungry Arc, Red Arc; anahtar Gore Wheel; yön A Thirst (ödül Blood Glut, uç Glass Cyclone); yön B Reaping Wind (ödül Crimson Wheel, uç Reaper's Spin); evrim Exsanguinate. Anahtar: "Whirlwind Wounds every enemy it hits for 2 turns."
+- **Charge:** dolgu Rolling Start, Vengeful Run, War Gallop, Grim Momentum; anahtar Roaring Charge; yön A Grudge Charge (ödül Payback, uç Martyr's Rush); yön B Blood Up (ödül Into the Fire, uç Reckless Heat); evrim Herald of Ruin. Anahtar: "Your first Charge each battle raises your Rage to at least 30."
+- **Ult Headsman's Blow (tek kol seçilir):** u Headsman's Feast, Gravedigger, Grave Robber; r Ringing Headsman, Heavy Toll, Mercy Stroke; d Grim Calm, Clean Slate, Executioner's Calm; l Dreadful Swing, Blinding Spray, Terror.
+- **Bar Iron Mastery:** 5 Heavy Hand, 10 Second Wind, 15 Crushing Weight, 20 Stubborn Heart, 25 Stagger Step.
+
+## 4. YZ notları
+
+- Profil: `data/ai.json > profiles.aggressive`. Her yeni skill / ağaç tetiği YZ değeri + test ile gelir (`tests/ai-coverage.test.ts`).
+
+## 5. Açık işler / kararlar
+
+- Headsman's Blow yalnız harcanan Rage ile büyür (Ömer 2026-11-08 doğruladı: bugünkü haliyle kalır). Eski "hedefin eksik canıyla büyür" kuralı kaldırıldı; `executeBonus` motor desteği ağaç düğümleri için duruyor.
+- Berserker kararı (Ömer 2026-10-17): kalkansız iki elli balta; can kaybı Rage verir, Rage yalnız vurarak gelmez. Whirlwind ilk iki düşman sırasını süpürür (Ömer 2026-10-20).
+- Zırh ve Double Strike gücü 2026-11-08 akşamı indirildi (Ömer "şimdilik değiştirme" demişti); bu son hâl için sim yok.
+- Ağaç düğüm sayıları tahmin; ağaç sim'i Ömer onayıyla.
+
+## 6. Tarihçe
+
+Eski tam belge (karar günlüğü, ara değerler, eski ağaç tabloları): `docs/archive/design/classes/warrior.md`.

@@ -227,7 +227,7 @@
     "color": "#8a4a25",
     "dispellable": false,
     "untilResolved": true,
-    "text": "Each standing Iron Mooring gives +5 armor and +5 magic armor"
+    "text": "Each standing Iron Mooring gives +10 armor and +10 magic armor"
   },
   "burning": {
     "name": "Burning",

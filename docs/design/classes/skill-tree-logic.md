@@ -1,5 +1,7 @@
 # Skill ağacı mantığı (tüm class'lar)
 
+> **Ne için / Güncel mi (2026-11-08):** düğüme NE yazılacağının tasarım kuralı (CANLI sahip; 13 sınıfın ağacı bu kurala göre yazıldı). Nasıl yazılacağı (fx sözlüğü, yeni düğüm adımları): `../skill-tree-fx-reference.md`. Şekil ve kilit sayıları: `../skill-tree-moments.md` + `data/skill-trees/_rules.json`.
+
 Kaynak: mevcut ağaçlar (Warrior, Paladin, Mage, Hexer, Defender, Undead, Cutthroat) incelendi, 2026-11-08.
 Şekil ve kilit sayıları: `data/skill-trees/_rules.json`, `docs/design/skill-tree-moments.md`.
 Tarihçe (arşiv): `docs/archive/design/skill-tree-{structures,mastery,mastery-v2,moments-variants}.md`, `skill-trees-grimdawn.md`. Ömer kararları (2026-10-20/21): her düğüm 1 puan, puan = level − 1, evolve yerinde evrilir (yeni aktif skill yok), 1. evolve L25 / 2. evolve L40, ult tek kol (+ şekli, L5/L10/L15, evolve yok), Mastery bar sayacı ult'u saymaz; ağaçta genel stat düğümü yok (item = genel stat, set = pasif/kaynak sayısı).
@@ -32,6 +34,7 @@ Bu belge "düğüme ne yazılır" sorusunu cevaplar.
 | fa / fb | kan bedeli | 1 | Yönü uca taşır, karşılığında açık bir bedel; çıkmaz sokak |
 | v | evrim | 1 | Skill'in davranışı değişir (ayrı "more" çarpanı sayılır) |
 
+- Şema ve rank / tier / kilit değerleri: `../skill-tree-moments.md` bölüm 1-2, değer `data/skill-trees/_rules.json > rowShape`.
 - Sıra doğrusal: f1 > f2 > f3 > n0 > r > ea|eb > ma, fa | fb, mb > v.
 - Önceki düğüm hep alınmış olur. Sonraki düğüm ona güvenebilir.
 - fa ea'nın arkasında, fb eb'nin arkasında.
@@ -73,7 +76,8 @@ Bu belge "düğüme ne yazılır" sorusunu cevaplar.
 
 ## 8. Teknik kurallar
 
-- Mevcut fx kancaları kullanılır. Yeni kanca = yeni mekanik = Ömer'e sorulur.
+- Mevcut fx kancaları kullanılır: hangileri ve nasıl yazılacağı `../skill-tree-fx-reference.md`. Yeni kanca = yeni mekanik = Ömer'e sorulur.
+- **Düğümü eklerken adımlar** (tasarım kuralı bu belge -> veri `data/skill-trees/<sınıf>.json` -> fx `../skill-tree-fx-reference.md` -> YZ değeri `src/engine/ai.ts` -> test `tests/skill-tree-fx-<sınıf>.test.ts`, `tests/skill-tree-text.test.ts`, `tests/ai-coverage.test.ts` -> belge `classes/<sınıf>.md` bölüm 3): ayrıntı `../skill-tree-fx-reference.md` başındaki "Yeni düğüm eklemek için".
 - Her tetik YZ değeriyle ve testle gelir (`src/engine/ai.ts`, `tests/ai-coverage.test.ts`).
 - Oyun içi metin İngilizce, kısa: "Toll deals 15% more damage to ...".
 - Yüzde sonuçları en çok 3 ondalık.

@@ -1,5 +1,5 @@
 {
-  "_not": "Güç bütçesi (docs/design/progression/roadmap.md 1.3 + items.md 4.2-4.3; Ömer kararı 2026-10-09: item eğrisi +%15/+%30/+%45, düşman telafisi ~%80). Sayılar PROVİZYON (balance-tester). Kod: src/campaign/power.ts; test: tests/power-budget.test.ts.",
+  "_not": "Güç bütçesi (docs/archive/design/progression/roadmap-2026-10.md 1.3 + items.md 4.2-4.3; Ömer kararı 2026-10-09: item eğrisi +%15/+%30/+%45, düşman telafisi ~%80). Sayılar PROVİZYON (balance-tester). Kod: src/campaign/power.ts; test: tests/power-budget.test.ts.",
   "_model": "Oyuncunun BEKLENEN gücü (class temeline göre ek, 0,15 = +%15) sistem başına bölüm sonunda verilir; bölümün başı = önceki bölümün sonu (bölüm 1 başı = 0). Bölüm içinde düğümün derinliğine (başlangıçtan en kısa yol / finale en kısa yol) göre doğrusal artar. Düşman ölçeği = 1 + compensation x (yalnızca activeSystems'in beklenen gücü toplamı); karşılaşmanın hpMult ve powerMult'u bununla çarpılır (zorluk ekiyle aynı birleşme kuralı). Ölçek bölüm/düğüm seviyesine bağlıdır, oyuncunun gerçek ekipmanına DEĞİL (iyi loot / farm gerçekten kolaylaştırır).",
   "compensation": 0.8,
   "systems": ["item", "level", "tree"],

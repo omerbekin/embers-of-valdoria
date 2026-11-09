@@ -1,3 +1,4 @@
+> **Ne için:** design/campaign/valdoria-2x arşivi; güncel değil.
 # Valdoria x2: iki kat düğümlü sefer haritası (ŞABLON, Ömer onayı bekliyor)
 
 > **Durum: YALNIZCA ÖNERİ (campaign-dev, 2026-10-10).** Oyun verisi (`data/campaign/*.json`) DEĞİŞMEDİ. Görsel taslak (2026-10-10 itibarıyla TEK sayfa, varyant seçicili): `public/mockups/valdoria-map.html` (yayında `/embers-of-valdoria/mockups/valdoria-map.html`; eski `valdoria-2x.html` bunun 2. varyantı oldu ve silindi). Ayrıntı: bölüm 10 "Yayılmış varyantlar". Not: oyun artık x2 stat ölçeğinde (`formulas.json > statScale` 2, commit d3276ea); bu belgedeki sayılar oran / seviye olduğu için etkilenmez.

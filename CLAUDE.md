@@ -3,18 +3,17 @@ TypeScript + Phaser 3 + Vite, 2D pixel art, mobilde de oynanır. 4 kişilik tak�
 Bu dosya YALNIZ her sohbette gereken çekirdektir. Konu bilgisi aşağıdaki dizindeki belgededir; klasöre özel kurallar o klasörün `CLAUDE.md`'sindedir (`src/engine/`, `src/game/`, `src/ui/`, `data/`).
 
 ## Not nereye yazılır (Ömer 2026-11-08, ZORUNLU)
-- Ömer "unutma / not al / bundan sonra" dediği her kararı **o konunun sahibi belgeye** yazdır: alan durumu ve kararlar `docs/arch/areas/<alan>.md`, oyun kuralı `docs/design/...`, çalışma kuralı `docs/arch/lead.md` / `workflow-rules.md`. Hangi belge: `docs/arch/docs-map.md`.
-- Bu dosyaya yalnız her sohbette gereken kural girer. Hafızaya (MEMORY) yalnız Ömer'le çalışma biçimi; proje durumu girmez, belgeye bağlantı verilir.
-- Bir bilgi tek yerde durur; başka yerde yalnız bağlantı. Yeni belge açınca `docs-map.md`'ye satır ekle; eskiyen belge `docs/archive/`e taşınır, silinmez.
-- Agent brief'i ilgili alan belgesini okutarak başlar; agent iş bitince aynı belgenin durum/açık iş bölümünü günceller.
+- Ömer "unutma / not al / bundan sonra" dediği her kararı **o konunun sahibi belgeye** yazdır (sahiplik `docs/arch/docs-map.md`): alan durumu/kararlar `docs/arch/areas/<alan>.md`, oyun kuralı `docs/design/...`, çalışma kuralı `docs/arch/lead.md` / `workflow-rules.md`. Hafızaya (MEMORY) yalnız Ömer'le çalışma biçimi girer.
+- Bir bilgi tek yerde durur, başka yerde bağlantı. Yeni belge `docs-map.md`'ye satır alır; eskiyen belge `docs/archive/`e taşınır, silinmez. Bu dosyaya yalnız her sohbette gereken kural girer.
+- Agent brief'i alan belgesini okutarak başlar; agent bitince o belgenin durum/açık iş bölümünü günceller.
 
 ## Sahip ve çalışma biçimi
 - Ömer **kod okumaz/denetlemez**. Kalite: otomatik testler, debug menüsü, denge sim raporları.
 - Ömer ile iletişim **Türkçe**, sade dille. Görev sonunda: ne yapıldı, hangi ekranda nasıl görünmeli, ne test edilmeli.
 - Ömer'in çerçevesi `docs/design/`. Orada yazmayan tasarım kararını kendi kafana göre verme: varsayımı görev sonunda söyle ve `docs/design/open-questions.md`'ye ekle (worktree sohbetinde `## Q-NEW. Başlık`).
 - Küçük adımlar: her adım sonunda oynanabilir bir şey çıkmalı. Agent'lar isteği genişletmez; emin değilse sorar (Ömer 2026-10-17).
-- **Lead (2026-11-02):** Ömer > Lead > agentlar; agent, sim ve gönderim Ömer'in onayıyla. Kurallar, agent/model dağılımı: `docs/arch/lead.md`, `docs/arch/workflow-rules.md`.
-- **Sürüm ve yayın:** her paylaşım `data/patch-notes.json`'a oyuncu satırı alır (yoksa test kırmızı). "GitHub'a at" / "canlıya al" anlamı, kuyruk, worktree: `docs/arch/areas/push-queue.md`, `docs/arch/workflow-rules.md`.
+- **Lead (2026-11-02):** Ömer > Lead > agentlar. Lead kritik olmayan kararları kendi verir (2026-11-03); yeni mekanik/stat/kural, denge değeri ve her sim Ömer'e sorulur; gönderim Ömer'in sözüyle. Kurallar: `docs/arch/lead.md`, `docs/arch/workflow-rules.md`.
+- **Gönderim özeti** (tek sahip `docs/arch/areas/push-queue.md`): "GitHub'a at" / "canlıya al" = (1) `node tools/push-queue.mjs ready <oturum> --fixes "<oyuncu satırı, İngilizce, <=140 karakter>"` (metin AYNEN oyuncu sürüm notu olur ve sürümü artırır; `data/patch-notes.json` zaten yazıldıysa ya da yalnız docs/araç ise `--internal`); (2) `push <oturum> --bg`; (3) kuyruk temiz kopyada tam test+build yapar, 5000'i yeniler, `main`e push eder, canlıya alır. Sürüm numarası kuralı: `workflow-rules.md`.
 
 ## Teknik kararlar (değiştirmeden önce Ömer'e sor)
 - TypeScript (strict), Phaser 3, Vite, Vitest.
@@ -31,7 +30,7 @@ Bu dosya YALNIZ her sohbette gereken çekirdektir. Konu bilgisi aşağıdaki diz
 - Denge değişikliği `npm run sim` raporuna dayanır, tahmine değil.
 
 ## Komutlar
-- `npm run dev` (`--host`), `npm run build`, `npm test`, `npm run test:fast` / `test:slow` (`vitest.slow-list.ts`), `npm run sim` / `sim:campaign` / `sim:endless`, `npm run deploy:cf` (yalnız "canlıya al").
+- `npm run dev` (`--host`), `npm run build`, `npm test`, `npm run test:fast` / `test:slow` (`vitest.slow-list.ts`), `npm run sim` / `sim:campaign` / `sim:endless` / `sim:affix`, `npm run codemap`, `npm run diag:pull`, `npm run deploy:cf` (kuyruk çalıştırır). Gönderim: `tools/push-queue.mjs` (normal yol); `npm run release` kuyruk dışı elle yol.
 - **Tarayıcı testinde SES KAPALI (ZORUNLU):** yeni port/sekmede ilk iş `localStorage.setItem('eov.settings.v1', JSON.stringify({volume:0, steps:20})); location.reload()`. `proto.settings.v1` İŞE YARAMAZ.
 - Debug menüsü: ` veya F2, üç parmak dokunma, `?debug=1`.
 

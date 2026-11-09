@@ -1220,7 +1220,7 @@ const WHIP = { size: 380, ix: 0.8, iy: 0.65, tx: 0.07, ty: 0.15, fps: 14, hitFra
  * `healing_rain` kendi su havuzunu döndürür (src/game/vfx.ts). Anlık şifa yağmurun değdiği anda (eskisiyle aynı: tohum varınca).
  */
 const rejuvenateRain: V2Vfx = async (c, k) => {
-  if (!(await sheetsOk(c, k, [SH.rain, SH.pool]))) return rejuvenate(c, k);
+  if (!(await sheetsOk(c, k, [SH.rain]))) return rejuvenate(c, k);
   const a = c.actor;
   c.sfx('healRainDrops');
   a.play('cast');

@@ -3543,7 +3543,7 @@ html.short .bh-right.has-crown .bh-pl-t {
   display: none;
 }
 
-/* Düşman turu: skill plakaları ve Rest / Skip / Move satırları okunur kalır (sönük 'off' yok); yalnızca ipucu verir, eylem tetiklemez */
+/* Düşman turu: skill plakaları ve Rest / Skip / Move satırları sönük ('off') ve tıklanmaz; ipucu hover'da okunur */
 .bp.foe,
 .bh-gl.foe {
   cursor: help;

@@ -90,7 +90,7 @@ export interface SkillPlateView {
   locked?: boolean;
   /** Susturulmuş (Silenced): MP bedelli skill kapalı; ikonun üstünde "Silenced" yazısı, plaka kilitli gibi sönük. */
   silenced?: boolean;
-  /** Düşman turu: plaka yalnızca okunur (sönük 'off' görünümü yok, tıklanmaz); hazırlık bekleme sönüklüğü kalır. */
+  /** Düşman turu: plaka sönük ('off') ve tıklanmaz; imleç ipucu verir (hover ipucu okunur kalır). */
   foe?: boolean;
   /** Yetersiz kaynak: bu türdeki bedel çipi kırmızı olur ("Not enough MP / Rage / HP"). */
   lack?: 'mp' | 'rage' | 'hp';
@@ -110,7 +110,7 @@ function plateChip(c: SkillPlateChip, lack: SkillPlateView['lack']): string {
 export function skillPlateHtml(s: SkillPlateView, tipInner: string): string {
   const chips = s.cost.length ? s.cost.map((c) => plateChip(c, s.lack)).join('') : '<span class="bp-chip free">Free</span>';
   const tag = s.ult ? '<span class="bp-tag"><span class="full">Ultimate</span><span class="short">Ult</span></span>' : '';
-  return `<div class="bp ${s.ult ? 'ult' : ''} ${s.wait > 0 ? 'cdn' : ''} ${s.selected ? 'sel' : ''} ${s.foe ? 'foe' : s.enabled ? '' : 'off'}${s.silenced ? ' off' : ''}" data-skill="${escHtml(s.id)}">
+  return `<div class="bp ${s.ult ? 'ult' : ''} ${s.wait > 0 ? 'cdn' : ''} ${s.selected ? 'sel' : ''} ${s.foe ? 'foe off' : s.enabled ? '' : 'off'}${s.silenced ? ' off' : ''}" data-skill="${escHtml(s.id)}">
           ${tag}${s.key !== undefined ? `<span class="bp-key">${s.key}</span>` : ''}
           <div class="bp-ico">${img(s.iconUrl)}${s.wait > 0 && !s.locked && !s.silenced ? `<span class="cdv">${s.wait}</span>` : ''}${s.locked ? lockBadgeHtml() : ''}${s.silenced && !s.locked ? '<span class="bp-sil">Silenced</span>' : ''}</div>
           <span class="bp-nm">${escHtml(s.name)}</span>

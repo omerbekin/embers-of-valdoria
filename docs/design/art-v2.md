@@ -1,11 +1,10 @@
 # Sanat Sürüm 2 (v2): ikon, skill animasyonu ve ses yeniden tasarımı — content-designer kılavuzu
-> **Ne için / Güncel mi (2026-11-08):** v2 ikon/skill animasyonu/ses yeniden tasarım kılavuzu (content-designer). kılavuz geçerli; sayı/durum listeleri tarihçe, güncel durum alan belgeleri (character-vfx.md) ve data/.
+> **Ne için / Güncel mi (2026-11-08):** v2 ikon, skill animasyonu ve ses yazım kılavuzu (content-designer). §1-6 canlı teknik kılavuz; §7 kısa eski rehber. Hangi sınıfın v2'si bitti: `docs/arch/areas/character-vfx.md` ve `data/` (bu belgede durum listesi tutulmaz).
 
 
 Ömer kararı: tüm karakterlerin **ses, ikon ve skill animasyonları baştan yeniden tasarlanıyor** (iyileştirme değil, yeniden tasarım;
 en yüksek çözünürlük ve kalite). Eskiler (**v1**) DOKUNULMAZ ve korunur; Ömer debug > **Versions** sekmesinden karakter bazında
-v1 / v2 seçip karşılaştırır. Kapsam dışı: **Cutthroat** tamamen. **Defender** 2026-10-10'dan beri tam kapsamda: ikonları hazır PNG (bkz. 2.2),
-animasyonları hazır sprite sheet paketiyle (bkz. 3.4), sesleri kodla.
+v1 / v2 seçip karşılaştırır. Sınıf bazında kapsam durumu `docs/arch/areas/character-vfx.md`'de. Hazır PNG ikon örneği: 2.2, hazır sprite sheet örneği: 3.4 (Defender).
 
 ## 1. Dosya düzeni (her class kendi dosyalarında; başkasınınkine dokunma)
 
@@ -95,15 +94,15 @@ oynatma `BattleScene.runEventFx`.
 
 | Ad | Dosya | Ne zaman | `c` |
 |---|---|---|---|
-| `summon_skeleton` | `undead/vfx.ts` | Skeleton doğuşu (summon olayı) | `actor` = Undead (yoksa çağrı), `targets[0]` = yeni çağrı (görünmez başlar: efekt `riseFromGround(ms, n)` ya da `fadeIn()` ile GÖRÜNÜR yapmalı; unutursa sahne sonunda soldurarak gösterir), `c.event.empowered` beslenmiş mi (aura sahne tarafından yakılır), `c.usage` Raise Dead kullanımı |
+| `summon_skeleton` | `src/game/art-v2/undead/vfx.ts` | Skeleton doğuşu (summon olayı) | `actor` = Undead (yoksa çağrı), `targets[0]` = yeni çağrı (görünmez başlar: efekt `riseFromGround(ms, n)` ya da `fadeIn()` ile GÖRÜNÜR yapmalı; unutursa sahne sonunda soldurarak gösterir), `c.event.empowered` beslenmiş mi (aura sahne tarafından yakılır), `c.usage` Raise Dead kullanımı |
 | `corpsedrain` | `undead/vfx.ts` | Raise Dead ceset emme (corpseConsumed) | `actor` = Undead, `centerPos` = ceset hücresi, `c.event.uid` ölü birim |
 | `summondeath_skeleton` | `undead/vfx.ts` | Skeleton öldü | `actor = targets[0]` = ölen çağrı; efekt bitince sahne birimi düşürür (die) |
 | `summonvanish_skeleton` | `undead/vfx.ts` | Skeleton'un süresi doldu (despawn) | aynı; sonra sahne soldurur (vanish) |
-| `summon_treant`, `summondeath_treant`, `summonvanish_treant` | `druid/vfx.ts` | Treant için aynıları | aynı |
-| `doomburst` | `hexer/vfx.ts` (hazır) | otomatik Doom (yığın doldu / süre bitti; Doom Mark kendi efektinde) | `targets` = Doom yiyen, `actor` = Hexer; Promise sütun inince |
-| `omentransfer` | `hexer/vfx.ts` (hazır) | Ill Omen geçişi | `actor` = ölen, `targets` = alıcı |
-| `withertick` | `hexer/vfx.ts` (hazır) | Wither tiki | `targets` = taşıyan |
-| `guardshare` | `defender/vfx.ts` (hazır) | Guard payı korumacıya geçti (damage.redirected) | `actor` = korumacı, `targets[0]` = korunan dost (bulunursa); anında çözülür |
+| `summon_treant`, `summondeath_treant`, `summonvanish_treant` | `src/game/art-v2/druid/vfx.ts` | Treant için aynıları | aynı |
+| `doomburst` | `src/game/art-v2/hexer/vfx.ts` (hazır) | otomatik Doom (yığın doldu / süre bitti; Doom Mark kendi efektinde) | `targets` = Doom yiyen, `actor` = Hexer; Promise sütun inince |
+| `omentransfer` | `src/game/art-v2/hexer/vfx.ts` (hazır) | Ill Omen geçişi | `actor` = ölen, `targets` = alıcı |
+| `withertick` | `src/game/art-v2/hexer/vfx.ts` (hazır) | Wither tiki | `targets` = taşıyan |
+| `guardshare` | `src/game/art-v2/defender/vfx.ts` (hazır) | Guard payı korumacıya geçti (damage.redirected) | `actor` = korumacı, `targets[0]` = korunan dost (bulunursa); anında çözülür |
 
 **Undead'de `corpsedrain` + `summon_skeleton`, Druid'de `summon_treant` var** (2026-10-09, gerçekçi doğuş: toprak yarılır, çağrı maskeyle topraktan yükselir; ölüm/kaybolma: `summonvanish_treant` (yaprak/kabuk kıvılcımıyla çözülür) 2026-11-02 eklendi, `druid/vfx.ts`, kodla çizilir; `summondeath_treant` kodda hazır ama Sol 7/10 olduğu için ertelendi, bağlı değil, v1'e düşer). Galeri önizlemesi (`debugCastSkill`) tahtada yer yoksa çağıranın en öndeki dostunu, Raise Dead'de ceset yoksa en arkadaki düşmanı düşürür ki doğuş ve ceset emme görünsün.
 Sahne ayrıca şunları kendisi gösterir (efekte gerek yok): yüzen yazılar `+1 Omen` / `+2 Omen!` / `DOOM` / küçük Wither rakamı,
@@ -141,7 +140,7 @@ Kodla çizmek yerine hazır kare animasyonu da kullanılabilir:
 ## 4. Ses nasıl yazılır
 
 - Şema `data/audio.json` > `sfx` ile birebir aynı (`gain` + `layers`: `tone`, `noise`, `voice`, `pluck`). Ana ses seviyesi audio.json'dan.
-- Tasarım felsefesi değişmez (CLAUDE.md): medieval, gerçekçi; çan gibi çınlayan saf sinüs yok. Tepe 0,25-0,88, kırpma yok
+- Tasarım felsefesi değişmez (`audio-map.md` > ses felsefesi): medieval, gerçekçi; saf sinüs çınlaması yok. Tepe 0,25-0,88, kırpma yok
   (dalga biçimini OfflineAudioContext ile ölç: Wiki > Assets > Sounds'taki ölçüm koduyla aynı yöntem). Kulakla onayı Ömer verir.
 
 ## 5. Doğrulama
@@ -159,21 +158,9 @@ Kodla çizmek yerine hazır kare animasyonu da kullanılabilir:
 `tests/fixtures/v1-art-hashes.json` var olan her v1 ikonunun, efekt sprite'ının ve sesinin parmak izini tutar. v1'e yeni ad eklemek
 serbesttir; var olanı değiştirmek testi kırar (bilerek yapılırsa dosya güncellenir — Ömer'e sorulur).
 
-## 7. ÖRNEK (silinecek)
-
-Altyapıyı uçtan uca kanıtlamak için Warrior'ın ilk skill'ine (Double Strike) çok basit bir örnek kondu; hepsi
-`ÖRNEK (EXAMPLE)` yorumuyla işaretli. **Warrior'ın v2 tasarımcısı bunları siler ya da üzerine yazar:**
-- `src/game/art-v2/warrior/icons.ts`: `ICONS.sword` (128x128 kılıç) ve `SPRITES.example_spark` (96x96 parıltı),
-- `src/game/art-v2/warrior/vfx.ts`: `VFX.doublestrike` (v1 efektini oynatır + hedef üstünde v2 parıltı + `exampleClang` sesi),
-- `data/audio-v2/warrior.json`: `axeChop` (v1 adıyla, biraz daha pes kopya) ve `exampleClang` (v2'ye özgü yeni ad), `_example` notu.
-Testler örneğe bağlı DEĞİLDİR (kendi geçici içeriklerini enjekte eder); örneği silmek ya da üzerine yazmak hiçbir testi kırmaz.
-Örneği görmek için: debug > Versions > Warrior = v2, sonra Double Strike (ya da `gallery.html?embed=1&skill=melee_attack&ver=v2`).
-
-## Eski görsel rehber (eski art.md; palette.json henüz YOK, yalnız öneri)
-- Stil: pixel art, yandan görünüm.
-- Oyun çözünürlüğü **1920x1080 (HD)** (Ömer kararı, 2026-10-04). Karakterler ekranda yaklaşık 140x200 piksel yer kaplar (`data/battle-layout.json` > `characterSize`). Sprite kaynak boyutu açık soru (bkz. open-questions-archive 12).
-- Palet: tek sabit palet kullanılır (öneri: 32 renk; ilk iş Ömer onayıyla `assets/palette.json` oluşturulur).
-- Animasyon seti: `idle`, `attack`, `cast`, `hit`, `death`, `defend`. Hepsi yatay sprite sheet, kare başına sabit boyut.
-- Arka planlar: 1920x1080; oranı farklı görsel ekranı kaplayacak şekilde ölçeklenir, taşan kenar kırpılır. Dosya: `assets/backgrounds/<id>.jpg/png`. 2-3 katman parallax (opsiyonel).
-- Placeholder aşaması: class rengine boyalı basit blok karakter. Gerçek sprite aynı dosya adıyla gelince otomatik değişir.
-- UI: pixel fontlu, büyük dokunma hedefleri, yatay ekrana göre yerleşim.
+## 7. Eski görsel rehber (kısa)
+- Stil: pixel art, yandan görünüm. Oyun çözünürlüğü 1920x1080 (`data/battle-layout.json`); karakter boyutu `battle-layout.json > characterSize`.
+- Animasyon seti: `idle`, `attack`, `cast`, `hit`, `death`, `defend`; yatay sprite sheet, kare başına sabit boyut.
+- **Yüz oyun boyutunda okunur olmalı (Ömer 2026-11-08, Skald: "warriorda buna günlerce uğraştık"):** figür ~190 px boyda (baş ~25 px) iki göz, burun ve ağız seçilir; yüz izleyiciye 3/4 döner (iki göz görünür), ten saç/sakaldan açık ve sıcak, sakal ağzın altından başlar, saç/başlık/kürk yüze gölge düşürmez, yüzü saçtan ayıran koyu kontur. Kaynak: yazılı kural yoktu; Warrior v2 idle1 (`assets/poses/warrior-v2/idle1.png`) örnek alındı + Blood Warden istemi "Face clearly visible ... no helmet covering the eyes" (`docs/design/future-ideas/blood-warden-art.md`). Codex Sol kontrolüne "face readable at game size" maddesi girer. Silah/kalkan da yüzü örtmez: idle tek el silah açısı ağzı yüzün önünden geçirmeyecek şekilde seçilir (Warrior kaynağı `tools/make-poses-v2.mjs` NARROW_SEEDS idle1 yorumu "22° ağız yüzün önünden geçmez"); oyun içi ekran görüntüsünde kontrol edilir.
+- Arka planlar 1920x1080 (`assets/backgrounds/<id>.jpg/png`); oranı farklı görsel kırpılarak ölçeklenir.
+- Tam eski metin (palet önerisi, placeholder aşaması, silinen Warrior örneği): `docs/archive/design/art-v2-history.md`.

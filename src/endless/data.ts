@@ -1,4 +1,4 @@
-// Endless Lite verisi ve türleri (saf; Phaser/DOM yok). Tasarım: docs/design/progression/roadmap.md bölüm 3, varsayımlar open-questions madde 281.
+// Endless Lite verisi ve türleri (saf; Phaser/DOM yok). Tasarım: docs/archive/design/progression/roadmap-2026-10.md bölüm 3, varsayımlar open-questions-archive madde 281.
 import endlessJson from '../../data/endless.json';
 import encountersJson from '../../data/campaign/encounters.json';
 import type { Equipment, ItemInstance } from '../progression/items';

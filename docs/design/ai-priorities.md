@@ -1,7 +1,7 @@
-# Yapay zekanın tercih sıralaması (balans öncesi çalışma)
-> **Ne için / Güncel mi (2026-11-08):** YZ karar kuralları (K1-K14) ve uygulama durumu. CANLI sahip: bölüm 0 (Ömer kararları), 6-8 (kurallar, uygulama). Bölüm 1-5 ve 9 (2026-10-07 ölçümü, class bazlı eski davranış) `docs/archive/design/ai-priorities-history.md` içine taşındı (TARİHÇE): sayılar bugünkü `src/engine/ai.ts`/`ai-value.ts` ile eşleşmez, geçerli veri `data/ai.json`.
+# YZ karar kuralları
+> **Ne için / Güncel mi (2026-11-08):** YZ karar kuralları (K1-K14) ve uygulama durumu. Güncel. CANLI sahip: bölüm 0 (Ömer kararları), 6-8 (kurallar, durum). Bölüm 1-5 ve 9 (2026-10-07 ölçümü, class bazlı eski davranış) `docs/archive/design/ai-priorities-history.md` içine taşındı (TARİHÇE): sayılar bugünkü `src/engine/ai.ts`/`ai-value.ts` ile eşleşmez, geçerli veri `data/ai.json`.
 
-Durum: **v4 (2026-10-08): Faz 1-5 UYGULANDI (engine-dev, madde 257 + 258).** Madde 258: Faz 2 artığı (mana yakma "engellenen hamle", Dark Bond düzeltmesi), Faz 3 artığı (Rest/Skip/Move sabit kapısız terazide), Faz 5 zorluk seviyeleri, K14 (savaş belliyse diriltme 0), eski skill ipucu koşulları silindi. Ömer'in kararları (K11-K14) 0. bölümün sonunda; uygulama durumu 7. bölümde. v3: Faz 1-4 (madde 257). v2 (2026-10-07): kararlar işlendi, ölçüm balance-tester. Kalan açık sorular 8. bölümde ve `open-questions.md` madde 252 / 254 / 257.
+
 
 ## 0. Ömer kararları (2026-10-07) ve sonucu
 
@@ -39,21 +39,21 @@ Onlar `docs/archive/design/ai-priorities-history.md` içinde (2026-10-07 ölçü
 
 Her aday aynı birimde puanlanır: **can-eşdeğer net değer** = (bu hamleyle kazandığımız) - (kaybettiğimiz). Sabit öncelik sırası (kill > heal > ... > damage) KALKAR; `ai.json > priorities` listesi silinmez ama artık yalnızca açıklama/eşitlik bozucu olur. Önerim: "güçlü ama terazi içi öncelik" yerine **saf terazi + doğru değer terimleri**; öldürme, kurtarma ve diriltme ayrıcalığını sabit sıradan değil, değerlerinin büyüklüğünden alır (aşağıda). Böylece "neden bunu seçti" sorusunun cevabı her zaman tek sayıdır ve Copy match data'da okunur.
 
-| Değer terimi | Hesap (sade) | Bugün | Ayar |
-|---|---|---|---|
-| Hasar | beklenen hasar (isabet x ortalama, kalan canla sınırlı; alan skill'inde vurulanların toplamı) | var | — |
-| **Öldürme** | öldürme ihtimali x hedefin **kalan katkısı** (ufuk H tur boyunca beklenen hasarı/şifası/kontrolü) | yok (sabit "önce öldür") | K |
-| **Kurtarma** | dost "tehlikede" (bir sonraki turumuzdan önce ölecek beklenen hasar alıyor) ise: hamlenin ölüm ihtimalini düşürdüğü kadar x dostun kalan katkısı (+ canı) | yok | K |
-| Şifa / kalkan | gerçekten işe yarayacak miktar (fazla şifa sayılmaz; kalkan: emilmesi beklenen hasar) | var (kalkan x0,5 sabit) | K |
-| **Diriltme** | dirilen birimin kalan katkısı x hayatta kalma ihtimali + dönen can | yok (sabit "önce dirilt") | K + Soru P |
-| **Kontrol** (K8) | Stun = hedefin kaçırdığı hamlenin değeri x ihtimal; Slow/Haste = kaybedilen/kazanılan tur payı x birimin tur değeri; Wound = hedefin alacağı şifadaki beklenen azalma; Blinded/Shrouded/Jinxed = önlenen hasar (bugün var) | kısmen | K |
-| Taunt / Guard (K6) | 6.5 | yok | K |
-| Çağrı | çağrının KENDİ değeri (2026-10-21, open-questions-archive 377): ömrü boyunca (ufukla kısılmaz) beklenen saldırısı (en iyi skill'inin tur değeri x oynayacağı tur; üstüne çekeceği hasarla erken ölürse daha az; vurabileceği yuva yoksa 0, K7) + gövdesi: ömrü boyunca üstüne çekeceği düşman hasarı (canı + yenilenmesiyle sınırlı; ön sıranın önüne konup bir düşmanın erişimini dostlardan kesiyorsa o düşmanın tüm vuruşları, değilse erişimdeki hedeflerle eşit pay) x protectShare + çağırma yan etkisi (Bone Ward). Yuva: boş yuvalardan değeri en yüksek olan (eşitlikte varsayılan yuva) | kısmen | K |
-| Mana yakma | düşmanın o mana ile yapamayacağı hamlelerin değeri | sabit x0,6 | K |
-| Bedel | MP/can/cooldown'un gelecekteki fırsat bedeli | MP x ağırlık | J (ağırlıklar) |
-| **Sınıf ağırlıkları** (kimlik) | `ai.json` profilinde terim çarpanları: ör. Mage hasar 1,0 / destek 1,0; Paladin şifa/diriltme ağırlığı Soru P ile; Archer "en az can" eğilimi | yok | J |
+| Değer terimi | Hesap (sade) | Ayar |
+|---|---|---|
+| Hasar | beklenen hasar (isabet x ortalama, kalan canla sınırlı; alan skill'inde vurulanların toplamı) | — |
+| **Öldürme** | öldürme ihtimali x hedefin **kalan katkısı** (ufuk H tur boyunca beklenen hasarı/şifası/kontrolü) | K |
+| **Kurtarma** | dost "tehlikede" (bir sonraki turumuzdan önce ölecek beklenen hasar alıyor) ise: hamlenin ölüm ihtimalini düşürdüğü kadar x dostun kalan katkısı (+ canı) | K |
+| Şifa / kalkan | gerçekten işe yarayacak miktar (fazla şifa sayılmaz; kalkan: emilmesi beklenen hasar) | K |
+| **Diriltme** | dirilen birimin kalan katkısı x hayatta kalma ihtimali + dönen can | K + Soru P |
+| **Kontrol** (K8) | Stun = hedefin kaçırdığı hamlenin değeri x ihtimal; Slow/Haste = kaybedilen/kazanılan tur payı x birimin tur değeri; Wound = hedefin alacağı şifadaki beklenen azalma; Blinded/Shrouded/Jinxed = önlenen hasar (bugün var) | K |
+| Taunt / Guard (K6) | 6.5 | K |
+| Çağrı | çağrının KENDİ değeri (2026-10-21, open-questions-archive 377): ömrü boyunca (ufukla kısılmaz) beklenen saldırısı (en iyi skill'inin tur değeri x oynayacağı tur; üstüne çekeceği hasarla erken ölürse daha az; vurabileceği yuva yoksa 0, K7) + gövdesi: ömrü boyunca üstüne çekeceği düşman hasarı (canı + yenilenmesiyle sınırlı; ön sıranın önüne konup bir düşmanın erişimini dostlardan kesiyorsa o düşmanın tüm vuruşları, değilse erişimdeki hedeflerle eşit pay) x protectShare + çağırma yan etkisi (Bone Ward). Yuva: boş yuvalardan değeri en yüksek olan (eşitlikte varsayılan yuva) | K |
+| Mana yakma | düşmanın o mana ile yapamayacağı hamlelerin değeri | K |
+| Bedel | MP/can/cooldown'un gelecekteki fırsat bedeli | J (ağırlıklar) |
+| **Sınıf ağırlıkları** (kimlik) | `ai.json` profilinde terim çarpanları: ör. Mage hasar 1,0 / destek 1,0; Paladin şifa/diriltme ağırlığı Soru P ile; Archer "en az can" eğilimi | J |
 
-"Kalan katkı" ufku `ai.json`'da tek parametre (öneri: 2 kendi turu); zorluk seviyesi de bunu kullanır (6.7).
+"Kalan katkı" ufku `ai.json`'da tek parametre (`ai.json > value.horizon`, bugün 3 kendi turu); zorluk seviyesi de bunu kullanır (6.7).
 
 ### 6.2 Öldürme mi kurtarma mı (K2)
 
@@ -73,23 +73,11 @@ Guard değeri = korunan dosta Guard süresince gelecek beklenen hasarın aktarı
 
 ### 6.6 Dark Bond ve çağrılar (K10)
 
-Bağ değeri = bağ süresince Undead'in gerçekten çalabileceği can (beklenen vuruşlar x %35, Undead'in eksik canıyla sınırlı) x bağlanan birimin bu sürede o şifayı kullanabilmesi (eksik canı, beklenen alacağı hasar, kalan ömrü: çağrıda lifespan). Çağrıya yasak yok; çağrının katkısı büyükse ona kurulur. Aynı kural çağrıya Guard/şifa/Barrier için de geçerli. Ayar: K + J (`bondSelfFloor`/`bondHpFloor` küçültülür ya da kaldırılır).
+Bağ değeri = bağ süresince Undead'in gerçekten çalabileceği can (beklenen vuruşlar x Vampiric Bite oranı (`undead.json` > soulDrain.ratio), Undead'in eksik canıyla sınırlı) x bağlanan birimin bu sürede o şifayı kullanabilmesi (eksik canı, beklenen alacağı hasar, kalan ömrü: çağrıda lifespan). Çağrıya yasak yok; çağrının katkısı büyükse ona kurulur. Aynı kural çağrıya Guard/şifa/Barrier için de geçerli. Ayar: K + J (`bondSelfFloor`/`bondHpFloor` küçültülür ya da kaldırılır).
 
 ### 6.7 Zorluk: Easy / Medium / Hard (K9)
 
 Kural: YZ belirleyici kalır (CLAUDE.md). "Hata" rastgelelik değil, savaş seed'i + tur + birimden türeyen sabit bir sayıdır (aynı savaş = aynı hata); motorun RNG'sine dokunulmaz.
-
-| Davranış | Easy | Medium | Hard |
-|---|---|---|---|
-| Değer terazisi | var, ufuk 1 tur | var, ufuk 2 tur | var, ufuk 2-3 tur |
-| Seçim | en iyi 3 adaydan biri, değere yakın olanlar arasında (2.-3. en iyiyi ~%35 seçer) | en iyisi; değerleri %10 içindeki adaylar arasında sabit "kişilik" tercihi | her zaman en iyisi |
-| Kontrol etkileri, sinerji (Opportunist, Omen tamamlama) | sayılmaz | sayılır | sayılır |
-| Öldürme / kurtarma (6.2) | yalnızca kesin öldürme; kurtarma yok | var | var + takım planı |
-| Odak ateşi | yok (her birim kendi en iyisi) | can oranı en düşük (bugünkü) | takım düzeyinde: aynı turda ölecek hedefe fazladan vurmaz (overkill yok), DoT/Doom ile ölecek hedefi atlar |
-| Ultimate | gelir gelmez | terazi (6.4) | terazi + bir sonraki turdaki fırsatı bekleme (ör. 2+ Omen) |
-| Rest/Skip/Move | yalnızca MP bitince Rest | bugünkü kurallar | bugünkü + tehlike modeli |
-| Kullanım | sefer başı (Bölge I), tutorial | hızlı savaş varsayılanı, sefer orta | sefer sonu/boss, hızlı savaşta seçilebilir |
-
 Ayar: J (`ai.json > difficulty.easy|medium|hard`: ufuk, seçim payı, aç/kapa anahtarları) + K (seçim katmanı, takım odağı). Sim ve denge ölçümü **Medium** ile yapılır.
 
 **Uygulanan (madde 258):**
@@ -98,7 +86,7 @@ Ayar: J (`ai.json > difficulty.easy|medium|hard`: ufuk, seçim payı, aç/kapa a
 |---|---|---|---|
 | Ufuk | 1 tur | 3 tur (value.horizon) | 3 tur |
 | Seçim | puanı en iyinin en az %50'si olan en iyi 3 aday arasından %65 / %23 / %12 (belirleyici: savaş seed'i + oynanan tur + birim; motor RNG'si kullanılmaz) | en iyisi | en iyisi |
-| Kurtarma (save) / kontrol (Stun, Slow, Wound...) | 0 (`value.saveWeight 0`, `controlWeight 0`) | var | var |
+| Kurtarma (save) / kontrol (Stun, Slow, Wound...) | 0 (`difficulty.easy.value.saveWeight 0`, `controlWeight 0`; `killMinChance`, `focusFire`, `overkillShare`, `patience` de `difficulty.<seviye>.value` altında) | var | var |
 | Öldürme terimi | yalnızca öldürme ihtimali >= %90 (`killMinChance`) | ihtimal x katkı | ihtimal x katkı |
 | Odak ateşi | yok | can oranı (düşman tahmini) | + dostlarımızın da yöneleceği hedefe baskı x (1 + 0,3 x dost sayısı) (`focusFire`) |
 | Fazla vurmama | yok | yok | zaten ölecek hedef (tur başı Wither/zemin tiki ya da ondan önce oynayacak dostlarımızın tahmini vuruşları canını bitiriyor): hasar/öldürme/baskı değerinin %20'si (`overkillShare`, terim `overkill`) |
@@ -119,88 +107,27 @@ Ayar: J (`ai.json > difficulty.easy|medium|hard`: ufuk, seçim payı, aç/kapa a
 
 ### 6.9 Skeleton yerleşimi (K7) - motor/tasarım işi (engine-dev, ayrı)
 
-- YZ (ai.ts): Raise Dead'in Skeleton'ı vurabileceği (ön sıra / erişimdeki) bir yuva yoksa Raise Dead değeri 0: çağrılmaz.
-- Motor/tasarım: ön sıradaki dost ölünce o yuva bugün "ölü dosta ayrılmış" (Move ve çağrı giremez). Ömer: Skeleton bu cesedin ÜSTÜNE çağrılabilsin. Bu, `summonSlots` kuralını ve Resurrection ile ilişkiyi değiştirir: Soru S (8. bölüm). Arayüz: Raise Dead 2. adımında (yuva) bu hücre de seçilebilir; YZ ön sıradakini tercih eder.
+- UYGULANDI (K7 / K12): Raise Dead, vurabileceği yuva yoksa 0 değer alır (ai.ts); ön sıradaki dost ölünce ceset hücresine çağrı ve Move girebilir. Motor kuralı: `docs/arch/battle-engine.md`.
 
-### 6.10 Dolu mana eğilimi (Ömer 2026-11-01, Koordinatör formu; open-questions-archive madde 499)
+### 6.10 Dolu mana eğilimi (Ömer 2026-11-01, Ömer formu; open-questions-archive madde 499)
 
 - Yalnız düşman YZ'si, yeni oyun kuralı yok: skill ödendikten sonra MP oranı `manaSurplusFrom` (0,3) üstündeyse mana doldukça skorda MP bedeli silinir, brüt değerin en çok `manaSurplusShare` (0,6) payı eklenir (`data/ai.json`, `ai.ts > scoreOption`).
 
-## 7. Uygulama planı (engine-dev / balance)
+## 7. Uygulama durumu
 
-Uygulamaya HAZIR: K1, K2, K4-K10 net. Soru P (Paladin ölçütleri) yalnızca ağırlık/ufuk değerlerini etkiler: varsayılanla (ufuk 2 tur, diriltme ağırlığı 1,0) başlanabilir. Soru S yalnızca motor işini (Faz 4) etkiler.
-
-| Faz | İş | Dosya | Büyüklük | Bağımlılık |
-|---|---|---|---|---|
-| 1 | Değer çekirdeği: tek terazi (`pickClassOption` yeniden), "kalan katkı" tahmini (birimin en iyi hamle değeri x ufuk), öldürme ihtimali, tehlike modeli + kurtarma değeri (K2), alan skill'i vurulan toplamı, ultimate cooldown bedeli; `explainChoice`/`pickerView`/`noPickReason` ve match-log yeni terimlerle | ai.ts, ai.json (yeni alanlar: ufuk, ağırlıklar), match-log.md | **Büyük** (ai.ts'in seçim katmanı baştan; ai testlerinin çoğu yeniden yazılır) | — |
-| 2 | Değer terimleri: kontrol etkileri (K8), Taunt/Guard/fedakârlık (K6), şifa/kalkan/Barrier gerçek değer (K4), diriltme (Soru P varsayılanı), Dark Bond yeniden (K10), çağrı değeri + vurabilir yuva (K7), mana yakma, Opportunist hedefleri | ai.ts, ai.json | **Orta-büyük** | Faz 1 |
-| 3 | Global eylemler terazide: Rest/Skip/Move aynı birimle; "kırılgan" tanımı | ai.ts, ai.json | Küçük-orta | Faz 1 |
-| 4 | Skeleton'ın ölü dostun cesedi üstüne çağrılması (motor + Raise Dead arayüz akışı + wiki Mechanics) | battle.ts, raise-dead-flow.ts, combat.md | Orta | Soru S cevabı |
-| 5 | Zorluk Easy/Medium/Hard (seçim katmanı, belirleyici "hata", ayarlar menüsü + debug seçici, sefer düğümlerinde zorluk) | ai.ts, ai.json, ui, campaign verisi | Orta | Faz 1-2 |
-| 6 | Ölçüm ve balans: aynı seed'lerle önce/sonra sim; class oranları (Mage, Hexer); `tests/balance.test.ts` | balance-tester | Orta | Faz 1-3 |
-
-**Uygulama durumu (2026-10-08, madde 257):**
-- Faz 1 YAPILDI: tek terazi (`src/engine/ai-value.ts` + `ai.ts > scoreOption`), öldürme ihtimali (isabet x hasar zarı, kritik dalı), tehlike modeli + kurtarma (K2), alan skill'i vurulan toplamı, ultimate cooldown bedeli (`cooldownCostShare`), explainChoice / match-log tek sayı + terim dökümü. Profil `priorities` yalnızca etiket; skill `ai` ipuçlarının requires/anyOf koşulları seçimi engellemiyor (yalnızca `reserveMp` sürüyor). Geçici veri yamaları (Whirlwind minTargets, Taunt/Guard can kapısı) hiç uygulanmamıştı; gerek kalmadı.
-- Faz 2 YAPILDI (ilk sürüm): kontrol (Stun, Slow, Haste, Wound, Fortify; Blinded/Shrouded/Jinxed eskisi gibi mitigation), Taunt/Guard (yönlenen hasar + kurtarma - Defender riski; fedakârlık mümkün), kalkan = emilmesi beklenen, Mana Barrier temizleme = kaybedilecek tur değeri, diriltme (ufuk 3, tur sayacı 0, hücre seçimi), Dark Bond (tek hedef saldırının lifesteal'i, `bondSelfFloor 0.05`, `bondHpFloor 0.1`), çağrı (ufuktaki katkı x yuvada vurabilirlik + saldırı çekme + Verdant Blessing). Mana yakma değeri hâlâ eski basit hesap (yakılan MP x 0,6): "engellenen hamle" modeli sonraki iş.
-- Faz 3 KISMEN: Rest/Skip/Move teraziyle aynı puanı kullanıyor; "kırılgan" tanımı can eksikken (tam canla geri çekilme yok); geri çekilme kendini kurtarıyorsa kurtarma değeri ekleniyor. Global kurallar (eşikler) ai.json'da aynen.
-- Faz 4 YAPILDI: Skeleton (ve tüm çağrılar) ölü dostun ceset hücresine çağrılabilir; Resurrection iki adımlı (K12). Madde 258: Move da ceset hücresine girebilir.
-- **Madde 258 (2026-10-08):**
-  - Faz 2 artığı: mana yakma = "engellenen hamle" (`ValueContext.manaDenial`: hedefin ufuk x `manaHorizonMult` (2) turunda MP yüzünden yapamayacağı MP'li hamlelerin bedelsiz hamlesine göre fazladan değeri; tam sayılı kullanım planı, tur + MP + cooldown kısıtı). Drain Field, Mana Steal ve Spell Ward kancası (korunan dosta saldıracak büyücüler) bunu kullanır. Sonuç: MP'si bol ya da ucuz skill'le yetinebilen hedefte (Mage: Fire Bolt 5 MP, yenilenme 6/tur) yakma neredeyse değersiz; Drain Field kullanımı %2 (balans sorusu: PENDING_BALANCE). Dark Bond düzeltmesi: bağ süresince ikisinin de yiyeceği beklenen hasar çalınabilir/iyileşebilir pay açar (eskiden yalnızca şu anki eksik can; tam canlı Undead'in bağı ~0). Ölçüm (150 savaş, 519 aday): tahmin ort 10,7, gerçekleşebilir (sonraki 3 Undead turunda çaldığı can, dostun eksik canıyla sınırlı) ort 14,7; Dark Bond puanı ort 19 (bağ + tempo), seçilen hamle ort 49: düşük kullanım (%1) GERÇEKÇİ (bağ ~15 can, Wail/Bone Throw daha değerli). Jinx: puan ort 30, Evil Eye 40 (aynı Omen, 2 kat hasar, bedelsiz): %2 kullanım gerçekçi; Jinxed değeri doğru hesaplanıyor (hata bulunmadı).
-  - Faz 3 artığı: Rest/Skip/Move'un sabit kapısı (öldürücü/işlevsel class hamlesinde hiç denenmeme) kalktı; kazançları her zaman class hamlesinin terazi puanıyla kıyaslanır.
-  - Faz 5: zorluk seviyeleri (6.7 'Uygulanan' tablosu).
-  - K14: savaş belliyse diriltme 0 (`ValueContext.outcome`: tUs = düşmanın can+kalkanı / bizim tur başı beklenen hasarımız, tThem tersi; 'win' = tUs <= ufuk ve tUs <= 0,5 x tThem (dirilen HESABA KATILMADAN); 'loss' = aynısı ters yönde, dirilenin ufuk katkısı ve canı bize eklenmişken de; `value.decidedMargin` 0,5).
-  - Skill `ai` ipuçlarından eski requires/anyOf koşulları ve incomingShare/opportunityShare veriden SİLİNDİ; kalan: `reserveMp` (Meteor, Aimed Shot, Void Strike, Fist Crush, All In, Doom Mark) ve `reserveMinMpRatio` (All In 0,6). MP ayırma artık değerle: ayrılan skill'in puanı x `reserveValueShare` (0,85) bu saldırıdan büyükse ertelenir.
-  - Lucky Escape: ölüm ihtimali (1 - şans); Move ölü dostun ceset hücresine girebilir (madde 257 sorusu 1 kapandı).
+Faz 1-5 UYGULANDI (tek değer terazisi, kontrol / taunt / çağrı / diriltme terimleri, Rest-Skip-Move terazide, zorluk seviyeleri, K14). Faz 6 (balans ölçümü ve ayarı) YAPILMADI (balance-tester). Plan tablosu ve Faz notları: `docs/archive/design/ai-priorities-plan-and-questions.md`. Geçerli kurallar:
 - **Block ve Block Break (Ömer 2026-10-31, #17):** saldırı değeri ve hedef seçimi önizlemenin isabet şansından okur: isabet x (1 - (hedefin Block'u - saldıranın Block Break'i)). Kalkanlı mobların Block'u da buradan görünür. Isabet değiştiren debuff değerleri (`hitGain`, `hitLossRaw`, `hitCritLoss`) aynı Block payını kullanır. Test `tests/block-break.test.ts`.
 - **Skip Turn kuralı düzeltmesi (Ömer 2026-10-18, seçim sayfası):** Skip yalnızca beklemek gerçekten işe yarıyorsa seçilir: (a) yapacak değerli hamle yoksa, ya da (b) 1 tur sonra hazır olacak bir skill var, şimdiki hamle MP/Rage bedeliyle onu o turda karşılanamaz kılıyor (pas geçince yetiyor) VE şimdiki hamlenin değeri o skill'in değerinin `skip.worthlessShare` payından az. Şimdiki hamle skill'i engellemiyorsa (ör. 0 MP Holy Strike, Radiance'ın beklemesi aynı tur dolar) Skip düşünülmez: skill iki yolda da hazırdır, pas bir tur kaybettirir. Eski kural (b)'deki engel şartını aramıyordu; Paladin ~%11 Skip yapıyordu (çoğu Radiance beklemesi). Rest kuralı değişmedi. Maç kaydında skip satırı engel yoksa `current move does not block it` yazar. Etkisi sim ile ölçülecek.
-- Faz 6 (balans ölçümü/ayarı) YAPILMADI (balance-tester).
 
-Toplam: engine-dev için 3-4 ayrı görev (Faz 1, Faz 2+3, Faz 4, Faz 5); en riskli ve en büyük Faz 1. Önerim: Faz 1 ve 2'yi arka arkaya, her birinden sonra sim ile ölç (davranış büyük ölçüde değişeceği için sınıf oranları oynayacak; balans Faz 6'da).
+## 8. Açık sorular
 
-Bu belgenin önceki sürümündeki "yalnızca veri" önerileri (Whirlwind `minTargets`, Taunt/Guard can kapısı, `shieldBelowRatio 0.5`) terazi gelince GEREKSİZ; Faz 1 gecikirse geçici yama olarak kullanılabilir.
-
-## 8. Ömer'e kalan sorular
-
-Ömer'in ilk 10 soruya cevapları 0. bölümde. Kalanlar:
-
-### Soru P (yeniden kurgulandı): Paladin ve diğer şifacılar hangi ÖLÇÜTLERLE karar versin?
-
-Sabit sıra yok; YZ her seçeneğe bir değer verir, en büyüğünü seçer. Sizin karar vermeniz gereken, değerin hangi parçalarının ne kadar sayılacağı:
-
-| Seçenek | Değeri neyden gelir |
-|---|---|
-| Resurrection | dirilen birimin bundan sonra yapacakları (ufuk: kaç tur sayılır?) x tekrar ölmeme ihtimali + %30 can |
-| Radiance | gerçekten dolan can (fazla şifa sayılmaz) + düşmanlara hasar; ölmek üzere olan dostu kurtarıyorsa kurtarma değeri |
-| Judgment / Holy Strike | hasar (öldürüyorsa öldürülen düşmanın bundan sonra yapacakları) |
-
-Senaryolar (5v5, savaşın ortası; sayılar yaklaşık):
-- **A.** Warrior öldü. İki dost %60 canda, kimse ölmek üzere değil, 4 düşman sağlıklı. Resurrection mı (Warrior %30 canla geri döner, her turu ~25 hasar), Radiance mı (~36 şifa + ~60 hasar), Judgment mı (~40 hasar)?
-- **B.** İki dost kaldı: biri %15 canda ve sırada onu vuracak Archer var. Ölü bir Mage var. Radiance onu kurtarır; Resurrection Mage'i getirir ama %15'lik dost muhtemelen ölür.
-- **C.** Son düşman %20 canda, Holy Strike muhtemelen öldürür. Bir dost ölü. (Savaş bitince ölü dostun durumu: sefer kuralına göre %20 canla kalkıyor.)
-- **D.** Herkes tam canda, ölü bir Gambler var, 5 düşman sağlıklı: Resurrection mı Judgment mı?
-
-Seçenekler:
-- **(a) Kısa ufuk (2 tur):** dirilen/kurtarılan birimin yalnızca önümüzdeki 2 turu sayılır. Sonuç: A'da Radiance, B'de Radiance, C'de öldürme, D'de Resurrection ile Judgment başa baş (Gambler'ın 2 turu ~ Judgment).
-- **(b) Kalan savaş ufku:** savaşın tahmini kalan uzunluğu kadar (savaş başında uzun, sona doğru kısa). Sonuç: A ve D'de Resurrection (başlarda), B'de Radiance, C'de öldürme.
-- **(c) (a) + sizin ayarlayacağınız "diriltme ağırlığı"** (ör. 1,0 = nötr, 1,5 = Paladin diriltmeyi sever): Paladin kimliğini bir sayıyla ayarlarsınız; koşullar değişince yalnızca bu sayı değişir.
-- Ek alt soru: savaş bitmek üzereyken (C) diriltmenin değeri sıfır mı sayılsın? **KAPANDI (K14, madde 258): evet, diriltme savaşın galibini değiştirmeyecekse 0.**
-
-**Önerim: (b) + (c)**: ufuk savaşın kalan uzunluğuna göre (erken diriltme değerli, geç diriltme değersiz; C'de öldürme), üstüne ayarlanabilir ağırlık (başlangıç 1,0). Aynı ölçütler Druid (Rejuvenate), Mage (Mana Barrier) ve Anti-Mage (Spell Ward) için de kullanılır.
-
-### Soru S (KAPANDI, K12): Skeleton ölü dostun cesedinin üstüne çağrılınca o dost diriltilebilir mi?
-
-Ömer kararı: evet; Resurrection önce dostu, sonra BOŞ bir hücreyi seçer (aşağıdaki (c) seçeneğine yakın, hücreyi oyuncu seçer). Eski seçenekler kayıt için:
-
-- **(a)** Hayır, Skeleton orada durduğu sürece (ömrü 4 tur) Resurrection o dosta atılamaz; Skeleton ölünce/ömrü bitince yeniden diriltilebilir.
-- **(b)** Evet; diriltilen dost aynı yuvaya döner, Skeleton en yakın boş yuvaya itilir (yoksa yok olur).
-- **(c)** Evet; diriltilen dost en yakın boş yuvaya gelir.
-
-**Önerim: (a)** (kural basit, Undead "ölüyü kullanır" kimliğine uygun; YZ bunu terazide hesaba katar: dost tarafında canlı bir diriltici varsa o hücreyi kullanmanın bedeli olur).
-
-### Soru Z (küçük): Zorluk seçimi nerede?
-
-Hızlı savaşta oyuncu seçer (varsayılan Medium) ve seferde düğüm başına veride sabit mi (önerim: sefer başı Easy, Bölge II Medium, son bölge ve boss Hard), yoksa seferde de oyuncu genel bir zorluk seçip düğümler ona göre mi kayar?
+Yok: Soru P (Paladin ölçütleri) K11'le, Soru S (Skeleton / ceset) K12'yle, Soru Z (zorluk nerede) K13'le kapandı; eski metin arşivde.
 
 ## Boşuna çağrı ve tıkanma sinyali (2026-10-10, open-questions-archive madde 291)
 - **`value.resummonShare` (0,4):** çağrının tarafında onu ufuk içinde yeniden çağırabilecek canlı bir çağırıcı varsa, o çağrıya giden hasar / öldürme / baskı ve ona verilen şifa / Dark Bond bu payla sayılır (`futile` terimi). Hedef seçimi çağırıcıya kayar.
 - **Tıkanma sinyali (`value.stallTurns` 150, `stallRamp` 50, `stallFocus` 3):** savaşın toplam tur sayacından (`battle.turnsTaken`) türetilir, YZ saf kalır. Sinyal arttıkça çağrılar cooldown'dan bağımsız olarak kısmen değersizleşir, çağrı olmayan düşmana hasar/baskı ek ağırlık alır (`stall` terimi). Normal savaşlar (~37 tur) etkilenmez.
+
+## YZ'ye yeni değer terimi eklemek için
+Sıra: (1) terim `src/engine/ai-value.ts` (ya da `ai.ts`) içinde; (2) ayar `data/ai.json > value.<terim>` (`_not` alanına açıklama); (3) karar gerekçesi `ai.ts > explainChoice` ve `docs/design/match-log.md` satırı; (4) test `tests/ai-value.test.ts` / `tests/ai-coverage.test.ts` (yeni skill / durum / zemin / tetik için YZ değeri olmak ZORUNDA); (5) zorluk etkisi varsa `ai.json > difficulty`. Veri yolları ve terim adları `docs/arch/battle-engine.md` > Değişiklik reçetesi ile aynı.
+
+**Son eklenen YZ terimleri (hepsi `ai.ts` / `ai-value.ts`, ayar `ai.json > value`):** `thunderValue` / `thunderCellWorth` (`value.thunder`), `frostValue` (`value.frost`), `darknessValue` (`value.darkness`), `mobKitValue` ve `kitPassiveValue` (`value.mobKit`), `eliteKitValue` ve `bossTouchValue` (`value.bossTouch`), `signatureValue` / `rodChoice` (`value.signature`), `conductorSetup` (Skald conductor), `manaDenial` (mana yakma). **`enemyMissed` kurulumu** (2026-11-08; `ai.ts` içinde `enemyMissed` tetik değeri ve kurulum bloğu): saldırımız ıskalarsa hedefin tarafındaki kancalı birimlerin `enemyMissed` tetiği bedel olarak sayılır; skill düşmana, bir dostun `enemyMissed` koşulunu açan durum (ör. Blind) veriyorsa durumun eklediği turlar için kurulum değeri eklenir (Vesper ıska çanı, Counter Cut, Backlash).

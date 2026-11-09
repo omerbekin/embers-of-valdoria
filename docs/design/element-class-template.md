@@ -1,5 +1,5 @@
 # Element / hal sistemi — sınıf şablonu (taslak)
-> **Ne için / Güncel mi (2026-11-08):** Element / hal sistemi ve sınıf şablonu. Yalnız PLAN (Ömer 2026-10-13: "ben söyleyene kadar değişiklik yapma"). Oyuna yalnız lightning hasar türü girdi (bölüm 1); haller, etkileşim tablosu ve sınıf şablonları uygulanmadı. Durum: `docs/arch/areas/combat-design.md`.
+> **Ne için / Güncel mi (2026-11-08):** Element / hal sistemi ve sınıf şablonu. Yalnız PLAN (Ömer 2026-10-13: "ben söyleyene kadar değişiklik yapma"). Oyuna yalnız lightning hasar türü girdi (bölüm 1); haller, etkileşim tablosu ve sınıf şablonları uygulanmadı. Durum: `docs/arch/areas/combat-design.md`. §5 kit adları 2026-11-08 itibarıyla bugünkü kitlere göre güncellendi.
 
 > Durum: **TASARIM TASLAĞI, uygulanmadı.** Kaynak: `future-ideas.md` “Element ve hal sistemi” (2026-10-10) ve “Ömer’in yön kararları” (2026-10-11) satırları. Ömer’in kararları **Karar**, önceki taslakta sunulmuş ama tek tek onaylanmamış maddeler **Taslak**, bu belgede ilk kez önerilenler **[ÖNERİ]** olarak işaretli. Yeni mekanikler yalnızca öneridir; Ömer “evet” demeden uygulanmaz. Sayılar yok; önce kurallar netleşecek.
 
@@ -7,9 +7,10 @@
 
 - Sistem, maddenin hallerine ve fiziksel mantığa dayanır; soyut “işaret + bonus” kuralları yok (ilk taslak reddedildi, Ömer 2026-10-10). Örnek: “fiziksel Charge donmuş düşmanın stun’ını uzatır” gibi keyfi kural OLMAZ.
 - Elektrik kesin dahil (Ömer 2026-10-10).
-- **2026-10-25: lightning hasar türü oyuna girdi (yalnız hasar; haller hâlâ plan). Yeni mob planlamalarında lightning de kullanılacak.** Veride `element: "lightning"` (renk soluk mavi-beyaz `#c6dbff`, ikon kodla çizilen şimşek `bolt`); ilk kullanıcılar mob yetenekleri Spark (Will-o'-Wisp) ve Rune Spark (Deep Runecaller). Shocked, zemin/Wet tepkileri, Static Field yok; kahraman yeteneği lightning değil (Ömer 2026-10-25).
+- **2026-10-25: lightning hasar türü oyuna girdi (yalnız hasar; haller hâlâ plan). Yeni mob planlamalarında lightning de kullanılacak.** Veride `element: "lightning"` (renk soluk mavi-beyaz `#c6dbff`, ikon kodla çizilen şimşek `bolt`); ilk kullanıcılar mob yetenekleri Spark (Will-o'-Wisp) ve Rune Spark (Deep Runecaller). O gün Shocked, zemin/Wet tepkileri, Static Field yoktu; kahraman yeteneği lightning değildi (Ömer 2026-10-25). Bugünkü durum bir alttaki maddede.
+- **Bugünkü oyun durumu (2026-11-08):** lightning artık kahraman skill'lerinde de var (Skald: Hammer Spark, Thunder Strike, Stormcall; Vesper: Thunderpeal, Great Bell). `shocked` durumu var ama yalnız rozet + sıra çubuğunda geri itme (`data/statuses.json > shocked`, `formulas.json > thunder.pushback`); bu planın "Shocked + Wet = Stunned" tepkisi yok. Plandaki Wet oyunda `soaked` (Druid Nature's Wrath verir; ateş hasarını azaltır, Burning'i söndürür). `chilled` ve Frozen (Chilled'a buz atışı) Mage reworkünden beri oyunda (`campaign/maps-2-3.md` M-D); plandaki diğer haller ve etkileşim tablosu uygulanmadı.
 - Druid Su temalı; Rejuvenate → Healing Rain: EVET (Ömer 2026-10-11).
-- Anti-Mage’in Drain Field ve Void Strike skill’leri Elektrik temalı (Ömer 2026-10-11).
+- Anti-Mage’in Drain Field (bugün Ley Brand) ve Void Strike skill’leri Elektrik temalı (Ömer 2026-10-11); bugün ikisi de arcane, elektrik teması uygulanmadı.
 - Kan yalnızca AĞIR KRİTİK FİZİKSEL vuruşlarda çıkar (Ömer 2026-10-11).
 - Şimdilik skill art’ı (ikon/vfx/ses) değişmez; sistem uygulanınca su/elektrik temasına göre yenilenir (Ömer 2026-10-11).
 - Archer bu planda YOK (Ömer 2026-11-01: fikirlerden çıkarıldı); özel ok, yağ ve ikinci elektrik kaynağı önerileri kapandı.
@@ -30,7 +31,7 @@
 | Yağ | Zemin; üstündekini yavaşlatır, ateşle yangına döner. Tek kaynağı Archer önerisiydi, o kapandı (2026-11-01): şu an veren sınıf yok. | Taslak, kaynaksız |
 | Kutsal | Kutsar; yangını kutsal ateşe, suyu kutsal suya çevirir. | Taslak |
 | Karanlık | Lanetler; kutsal ateşi lanetli ateşe çevirir. | Taslak |
-| Arcane | Saf büyü; zemin/hal etkileşimi yok (Mana Barrier, Spell Ward, Mana Steal). | Mevcut |
+| Arcane | Saf büyü; zemin/hal etkileşimi yok (Spell Ward, Mana Steal, Ley Brand; Mana Barrier emekli). | Mevcut |
 | Doğa | Diken/kök; hal etkileşimi yok (Druid ve Treant). | Mevcut |
 
 ## 3. Haller (karakter üstü durumlar)
@@ -93,11 +94,11 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 | Double Strike | Fiziksel | Fiziksel (+Kan) | Ağır kritikte hedefin karesine kan zemini (karar) | Kurar: kan → buzla buz zemini, elektrikle yüklü zemin | küçük | Berserker: can azaldıkça daha sert vurur, ağır kritik daha sık |
 | Whirlwind | Fiziksel | Fiziksel (+Kan) | Ağır kritik olan her hedefte kan | Kurar: geniş kan alanı → Anti-Mage için büyük yüklü alan | küçük | Berserker ile aynı |
 | Charge | Fiziksel | Fiziksel | Stun (mevcut) | Yok: donmuş hedefe ekstra stun gibi keyfi kural yok (Ömer) | yok | — |
-| Abyssal Cry | — | — | Abyssal Fury (kendine, mevcut) | Yok | yok | Berserker ile zaten bağlı |
+| Headsman's Blow | Fiziksel | Fiziksel | Yok (Rage harcar, tek dev darbe) | Yok | yok | Berserker ile zaten bağlı |
 
 **Takım sinerjisi:**
 - Mage Blizzard: kan zemini → buz zemini, düşman kayar.
-- Anti-Mage Drain Field: kan zemini → yüklü zemin, üstündekiler sarsılır.
+- Anti-Mage Ley Brand: kan zemini → yüklü zemin, üstündekiler sarsılır.
 - Defender Tremor Slam: kanı komşu karelere sıçratıp alanı büyütür.
 
 **Açık sorular:**
@@ -112,7 +113,7 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 |---|---|---|---|---|---|---|
 | Tremor Slam | Fiziksel | Fiziksel (sarsıntı) | Slow (mevcut) | Taslak: su/kan/zehir zeminini komşu karelere sıçratır. **[ÖNERİ]** buz zeminini kırar (→ su, kayma biter) | küçük | Yok |
 | Taunt | — | — | Taunt (mevcut) | Yok | yok | Bulwark Aura ile ilgisiz |
-| Guard | — | — | Guard (mevcut) | Yok (Guard’lı müttefikin elektriğini Defender’ın yemesi açık soru) | yok | Bulwark Aura: yanındakiler zaten korunuyor |
+| Close Ranks | — | — | Guard (mevcut; seçilen dost + sırası) | Yok (Guard’lı müttefikin elektriğini Defender’ın yemesi açık soru) | yok | Bulwark Aura: yanındakiler zaten korunuyor |
 | Fist Crush | Fiziksel | Fiziksel (+Kan) | Ağır kritikte kan | **[ÖNERİ]** Frozen hedefe vurursa buz kırılır: Frozen biter | küçük | Yok |
 
 **Takım sinerjisi:**
@@ -169,10 +170,10 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 
 | Skill | Şu anki element | Önerilen element | Uyguladığı durum | Tetiklediği / tükettiği etkileşim | Değişiklik | Pasifle ilişkisi |
 |---|---|---|---|---|---|---|
-| Fire Bolt | Ateş | Ateş | **[ÖNERİ]** kısa Burning (ıslak değilse) | Tüketir: ıslak hedef → buhar; yağ/zehir zemini → yangın/patlama; buz zemini → su | küçük | Spell Echo: yeniden hazır → zinciri iki kez tetikler |
-| Blizzard | Buz | Buz | Chilled; ıslaksa Frozen | Tüketir: su/kan zemini → buz zemini; yanan zemini söndürür | küçük | Spell Echo |
-| Mana Barrier | Arcane | Arcane | Kalkan + debuff temizler (mevcut) | **[ÖNERİ]** temizlik Wet / Burning / Chilled / Shocked’ı da siler | yok | Yok |
-| Meteor | Ateş | Ateş | Yanan zemin (mevcut) | Tüketir: su → buhar; zehir/yağ → patlama/yangın. Kurar: Paladin için yanan zemin | yok | Spell Echo |
+| Fire Bolt | Ateş | Ateş | **[ÖNERİ]** kısa Burning (ıslak değilse) | Tüketir: ıslak hedef → buhar; yağ/zehir zemini → yangın/patlama; buz zemini → su | küçük | Heat Mirage: yakın vuran düşmanın hücresine yanan zemin bırakır; ateş + buz hasarına %10 direnç |
+| Blizzard | Buz | Buz | Chilled; ıslaksa Frozen | Tüketir: su/kan zemini → buz zemini; yanan zemini söndürür | küçük | Heat Mirage (aynı) |
+| Ice Crater | Buz | Buz | Chilled; hedefi 1 hücre iter (mevcut) | Tüketir: Chilled hedef → Frozen (uygulandı). Plan: su/kan zemini → buz zemini | yok | Heat Mirage: yakın vuran düşmanın hücresine yanan zemin |
+| Meteor | Ateş | Ateş | Yanan zemin (mevcut) | Tüketir: su → buhar; zehir/yağ → patlama/yangın. Kurar: Paladin için yanan zemin | yok | Heat Mirage (aynı) |
 
 **Takım sinerjisi:**
 - Druid: ıslak hedef → Blizzard ile Frozen, Fire Bolt ile buhar.
@@ -181,7 +182,7 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 
 **Açık sorular:**
 - (S20) Fire Bolt Burning durumu versin mi, yoksa ateş yalnız zemin ve dönüşüm mü yapsın?
-- (S21) Mana Barrier element hallerini de silsin mi?
+- (S21) Mana Barrier emekli (`retired: true`); Ice Crater yerine geldi. Soru artık geçersiz.
 
 ### Druid — INT — Su + Doğa
 
@@ -230,18 +231,18 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 
 | Skill | Şu anki element | Önerilen element | Uyguladığı durum | Tetiklediği / tükettiği etkileşim | Değişiklik | Pasifle ilişkisi |
 |---|---|---|---|---|---|---|
-| Mana Steal | Arcane | Arcane (ses notu elektrik cızırtısı; açık) | Mana çalma (mevcut) | Yok | yok | Mana Overflow ile ilgisiz |
-| Drain Field | — (mana yakma) | Elektrik (KARAR; taslak adı Static Field) | Shocked; ıslaksa Stunned | Tüketir: su/kan zemini → yüklü zemin; buhar → yüklü bulut | rework | Yok |
-| Spell Ward | Arcane | Arcane | Kalkan (mevcut) | **[ÖNERİ]** Wet / Shocked’ı da siler (dost ateşine karşı) | yok | Mana Overflow: büyü zırhı kimliği |
+| Mana Steal | Arcane | Arcane (ses notu elektrik cızırtısı; açık) | Mana çalma (mevcut) | Yok | yok | Spellbreaker’s Instinct ile ilgisiz |
+| Ley Brand (`drain_field`) | Arcane (damga, mana yakma) | Elektrik (KARAR; taslak adı Static Field) | Shocked; ıslaksa Stunned | Tüketir: su/kan zemini → yüklü zemin; buhar → yüklü bulut | rework | Yok |
+| Spell Ward | Arcane | Arcane | Kalkan (mevcut) | **[ÖNERİ]** Wet / Shocked’ı da siler (dost ateşine karşı) | yok | Spellbreaker’s Instinct: tempo kimliği (büyü zırhı sınıf verisinde) |
 | Void Strike | Arcane | Elektrik (KARAR) | Shocked; ıslaksa Stunned | Tüketir: ıslak hedef. **[ÖNERİ]** yüklü zeminde komşu ıslak hedeflere sıçrar | rework | Yok |
 
 **Takım sinerjisi:**
-- Druid: ıslattığı düşmanları Drain Field / Void Strike sersemletir.
+- Druid: ıslattığı düşmanları Ley Brand / Void Strike sersemletir.
 - Warrior / Gambler: kan zemini → yüklü zemin.
 - Mage: buhar bulutu → yüklü bulut.
 
 **Açık sorular:**
-- (S27) Drain Field’ın adı değişsin mi (Static Field)? Void Strike adı korunsun mu?
+- (S27) Ley Brand (eski Drain Field) adı Static Field olsun mu? Void Strike adı korunsun mu? (Ömer Ley Brand adını 2026-10-27 verdi; soru büyük olasılıkla kapandı, doğrulanmadı.)
 - (S28) Mana Steal da elektrik mi olsun?
 
 ### Hexer — LUCK — Karanlık
@@ -283,6 +284,12 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 **Açık sorular:**
 - (S31) Zehir patlaması kendi takımımızı da vurur mu (dost ateşi sorusuyla bağlı)?
 
+### Vesper, Skald, Archer (2026-11-08 eklendi; plana sonradan girdiler, onaysız)
+
+- **Vesper — INT — Kutsal + Şimşek:** Toll, Cracked Bell, Great Bell kutsal; Thunderpeal ve Great Bell'in ikinci satırı şimşek (Blinded verir). Ömer 2026-11-08: Thunderpeal'e `shocked` verilmez. Plan etkileşimi tanımlanmadı (kutsal ateş / yüklü zemin yok). Kit: `classes/vesper.md`.
+- **Skald — STR — Fiziksel + Şimşek:** Hammer Spark yarı fiziksel yarı şimşek bölünmüş vuruş; Thunder Strike ve Stormcall şimşek ve hedefi Shocked yapar (bugünkü Shocked yalnız rozet + sıra geri itme). Pasif Conductor yavaş / sersem / şoklu hedefe şimşek hasarını artırır. Plandaki "ıslak + elektrik = Stunned" tepkisi uygulanmadı. Kit: `classes/skald.md`.
+- **Archer — DEX — Fiziksel:** bu planda YOK (Ömer 2026-11-01: fikirlerden çıkarıldı).
+
 ## 6. Özet matris (sınıf × element)
 
 ● ana kimlik · ○ ikincil / kurar · ✦ tüketir / dönüştürür (tetikleyici)
@@ -299,6 +306,8 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 | Anti-Mage |  | ✦ |  |  | ✦ | ● | ✦ |  |  |  |  | ○ |  |
 | Hexer |  |  |  |  |  |  |  |  |  | ✦ | ● |  |  |
 | Undead | ○ |  |  |  |  |  |  | ● |  |  | ● |  |  |
+| Vesper |  |  |  |  |  | ● |  |  |  | ● |  |  |  |
+| Skald | ● |  |  |  |  | ● |  |  |  |  |  |  |  |
 
 **Kurulum → tetik zincirleri (her sınıfın en az bir ortağı var):**
 - Druid ıslatır → Mage Blizzard dondurur (Frozen) / Anti-Mage sersemletir (Stunned) / Mage Fire Bolt buharlaştırır.
@@ -330,13 +339,13 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 18. **Cutthroat:** Venom Edge zehir zemini bıraksın mı, Wound yeterli mi?
 19. **Gambler:** Card Trick havuzuna element halleri girsin mi, yoksa “şans” kimliği sade mi kalsın?
 20. **Mage:** Fire Bolt Burning durumu versin mi, yoksa ateş yalnız zemin ve dönüşüm mü yapsın?
-21. **Mage:** Mana Barrier element hallerini de silsin mi?
+21. **Mage:** KAPANDI (Mana Barrier emekli, Ice Crater yerine geldi).
 22. **Druid:** Healing Rain tek müttefik mi kalsın, “yağmur” adına uygun olarak alan mı olsun?
 23. **Druid:** Healing Rain müttefiği ıslatsın mı (yangına karşı koruma ama elektrik riski)?
 24. **Druid:** Nature’s Wrath su olsun mu (Druid’in düşmana yönelik tek su kaynağı)?
 25. **Paladin:** Kutsal su ne yapar (müttefiğe küçük şifa mı, ölümsüze hasar mı)?
 26. **Paladin:** Judgment var olan zemini dönüştürür mü, üstüne mi yazar?
-27. **Anti-Mage:** Drain Field’ın adı değişsin mi (Static Field)? Void Strike adı korunsun mu?
+27. **Anti-Mage:** Ley Brand adı (eski Drain Field) Static Field olsun mu? Void Strike adı korunsun mu? (büyük olasılıkla kapandı)
 28. **Anti-Mage:** Mana Steal da elektrik mi olsun?
 29. **Hexer:** Lanetli zemin ve lanetli ateş ne yapar?
 30. **Hexer:** Hexer zaten Omen ile karmaşık; element katkısı yalnız Withering Curse’te mi kalsın?

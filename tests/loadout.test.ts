@@ -23,7 +23,7 @@ import {
 import { emptyEquipment, implicitDefOf, implicitValues, ITEMS, itemDef, loadout, starterPower, starterWeapon, weaponSpeedPenalties } from '../src/progression';
 import { fightPlan } from '../src/sim/campaign';
 
-// Güç toplama katmanı (roadmap.md 1.1, madde 278): temel + item -> UnitSetup.modifiers. Boş yükleme = bugünkü savaş birebir.
+// Güç toplama katmanı (docs/archive/design/progression/roadmap-2026-10.md 1.1, madde 278): temel + item -> UnitSetup.modifiers. Boş yükleme = bugünkü savaş birebir.
 
 const f = content.formulas;
 

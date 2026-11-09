@@ -1,3 +1,4 @@
+> **Ne için:** design/art/skill-tree-icons-archer arşivi; güncel değil.
 # Skill ağacı ikonları: Archer (Codex/ChatGPT promptları)
 
 content-designer, 2026-10-23. Durum: **üretime hazır.** Warrior örnek seti Ömer'den stil onayı aldı; bu belge aynı kalıbı Archer'a uygular.

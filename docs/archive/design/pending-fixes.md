@@ -1,3 +1,4 @@
+> **Ne için:** design/pending-fixes arşivi; güncel değil.
 # Bekleyen düzeltmeler (Minor Fixes kanalı)
 Ömer 2026-10-31: bu kanal artık hem not alır hem düzeltir; biten satır listeden silinir, biçimi ya da kuralı Ömer'in seçeceği satırlar soru olarak kalır.
 | # | Tarih | Konu | Not / yön |

@@ -165,7 +165,9 @@ export const setRealPosesV2 = (on: boolean): void => {
 };
 export const realPosesV2 = (): boolean => realV2;
 /** Sınıfın kendi v2 gövdesi (classes.<id>_v2; gerçek oynanabilir sınıflar), yoksa null. */
-export const v2BodyOf = (classId: string): string | null => (POSES.classes[`${classId}_v2`] ? `${classId}_v2` : null);
+// Yeni çizim gövdesi (classes.<id>_v3, ör. Archer v3 2026-11-08) varsa o kazanır; _v2 silinmez, Pose Tester takma adı eskisinde kalır.
+export const v2BodyOf = (classId: string): string | null =>
+  POSES.classes[`${classId}_v3`] ? `${classId}_v3` : POSES.classes[`${classId}_v2`] ? `${classId}_v2` : null;
 
 /** Kütüphanenin asıl sahibi: takma ad (Pose Tester -> <sınıf>_v2), gerçek sınıfta kendi v2 gövdesi (v1 çizimi seçiliyse kendisi). */
 export const poseOwner = (classId: string): string => POSES.classAliases?.[classId] ?? (realV2 ? v2BodyOf(classId) : null) ?? classId;

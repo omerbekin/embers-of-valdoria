@@ -2,12 +2,12 @@
 > **Ne için / Güncel mi (2026-11-08):** debug menüsü, Codex/Wiki, Asset Gallery kuralları. evet (CLAUDE.md-den taşınan metin; yollar doğrulandı).
 
 
-> CLAUDE.md'den taşındı (2026-10-14, birebir). Genel kurallar CLAUDE.md'de; bu belge ayrıntıdır. Debug aracı eklerken, Codex/Wiki içeriği ya da Assets/Legacy bölümlerine dokunurken oku.
+> Genel kurallar CLAUDE.md'de; bu belge ayrıntıdır. Debug aracı eklerken, Codex/Wiki içeriği ya da Assets/Legacy bölümlerine dokunurken oku.
 
-## Asset Gallery (Wiki > Assets / Legacy) — kalite kuralı 7
+## Asset Gallery (Wiki > Assets / Legacy)
 7. **Asset Gallery artık Wiki > Assets / Legacy içinde** (Codex: ana menü > Codex ya da oyun içi Menu > Codex; dev derin bağlantı: `http://localhost:5173/?wiki=assets`; `gallery.html` ayrı sayfa DEĞİL, yalnızca wiki'nin gömdüğü animasyon sahnesi `?embed=1` + yönlendirme): yeni ses/ikon/animasyon(vfx)/karakter/skill/sprite eklenince orada kendiliğinden görünür (otomatik türetilir: `src/gallery/catalog.ts` ortak katalog + `src/wiki/assets/legacy-catalog.ts`; hiçbir yerde kullanılmayan ses/ikon/vfx ve class'sız sprite/avatar dosyaları Legacy'ye otomatik düşer (eski karakter sanatı 2026-10-12'de kaldırıldı), her öğede 'neden legacy' etiketi); özel bir alan eklendiyse Assets bölümlerini güncelle (`src/wiki/assets/`). **Test içeriği Codex'te HİÇ yok (Ömer 2026-10-13):** testOnly class'lar (Geometer, Pose Tester I-XI) ve skill'leri (shape_*, pt_*) class/skill listelerinde, Assets > Animations / Character art / Icons / Sounds'ta ve Legacy'de görünmez, yalnızca debug menüsündedir (`src/gallery/catalog.ts > isTestSkill`; yalnızca onların kullandığı ses/efekt/ikon Legacy'ye de düşmez). `tests/wiki-assets.test.ts` kapsamı denetler (tüm sesler, skill vfx/ikonları, class/çağrı sprite+avatar, diskte bağlantısız dosya kalmaması, Legacy kapsamı, wiki menü bölümleri).
 
-## Wiki / Codex — kalite kuralı 8
+## Wiki / Codex
 8. **Wiki / Codex (ana menü > Codex, oyun içi Menu > Codex; `src/wiki`):** içerik veriden türetilir; yeni mekanik/özel kural/pasif eklenince wiki'nin Mechanics bölümündeki metin güncel mi kontrol et (`src/wiki/catalog.ts`; `tests/wiki.test.ts` kapsamı denetler). Wiki açıkken savaş otomatik durur (`debugState.uiPaused`).
 
 ## Debug menüsü

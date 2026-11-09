@@ -1,0 +1,14 @@
+{
+  "idle1": {
+    "rounds": 3,
+    "pass": true,
+    "bestRound": 3,
+    "score": 9
+  },
+  "idle2": {
+    "rounds": 4,
+    "pass": false,
+    "bestRound": 3,
+    "score": 7
+  }
+}

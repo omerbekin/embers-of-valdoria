@@ -1,0 +1,249 @@
+{
+ "name": "g-E",
+ "outDir": "docs/anim-review/new-art/archer-v3/g-set",
+ "rules": "docs/anim-review/new-art/archer-v3/g-set/PROMPT-g.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "step1",
+   "file": "step1.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/step1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/step1.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Weapon hand positions must match Image 2 (the game draws the weapon at the right fist later). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/step1.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/step1.png docs/anim-review/new-art/archer-v3/g-set/step1.png assets/poses/archer-v2/step1.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "slash1",
+   "file": "slash1.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/slash1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/slash1.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Weapon hand positions must match Image 2 (the game draws the weapon at the right fist later). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/slash1.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/slash1.png docs/anim-review/new-art/archer-v3/g-set/slash1.png assets/poses/archer-v2/slash1.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "overhead1",
+   "file": "overhead1.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/overhead1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/overhead1.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Weapon hand positions must match Image 2 (the game draws the weapon at the right fist later). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/overhead1.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/overhead1.png docs/anim-review/new-art/archer-v3/g-set/overhead1.png assets/poses/archer-v2/overhead1.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "hit",
+   "file": "hit.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/hit.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/hit.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/hit.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/hit.png docs/anim-review/new-art/archer-v3/g-set/hit.png assets/poses/archer-v2/hit.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "kneel",
+   "file": "kneel.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/kneel.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/kneel.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/kneel.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/kneel.png docs/anim-review/new-art/archer-v3/g-set/kneel.png assets/poses/archer-v2/kneel.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "channel",
+   "file": "channel.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/channel.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/channel.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Weapon hand positions must match Image 2 (the game draws the weapon at the right fist later). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/channel.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/channel.png docs/anim-review/new-art/archer-v3/g-set/channel.png assets/poses/archer-v2/channel.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "point",
+   "file": "point.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/point.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/point.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Weapon hand positions must match Image 2 (the game draws the weapon at the right fist later). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/point.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/point.png docs/anim-review/new-art/archer-v3/g-set/point.png assets/poses/archer-v2/point.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "throw",
+   "file": "throw.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/throw.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/throw.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Weapon hand positions must match Image 2 (the game draws the weapon at the right fist later). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/throw.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/throw.png docs/anim-review/new-art/archer-v3/g-set/throw.png assets/poses/archer-v2/throw.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "guard2",
+   "file": "guard2.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/guard2.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/guard2.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/guard2.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/guard2.png docs/anim-review/new-art/archer-v3/g-set/guard2.png assets/poses/archer-v2/guard2.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "step2",
+   "file": "step2.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/step2.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/step2.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/step2.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/step2.png docs/anim-review/new-art/archer-v3/g-set/step2.png assets/poses/archer-v2/step2.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "slash2",
+   "file": "slash2.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/slash2.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/slash2.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/slash2.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/slash2.png docs/anim-review/new-art/archer-v3/g-set/slash2.png assets/poses/archer-v2/slash2.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "overhead2",
+   "file": "overhead2.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/overhead2.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/overhead2.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/overhead2.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/overhead2.png docs/anim-review/new-art/archer-v3/g-set/overhead2.png assets/poses/archer-v2/overhead2.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "thrust2",
+   "file": "thrust2.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/thrust2.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/thrust2.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/thrust2.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/thrust2.png docs/anim-review/new-art/archer-v3/g-set/thrust2.png assets/poses/archer-v2/thrust2.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "spin2a",
+   "file": "spin2a.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/spin2a.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/spin2a.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/spin2a.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/spin2a.png docs/anim-review/new-art/archer-v3/g-set/spin2a.png assets/poses/archer-v2/spin2a.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "spin2b",
+   "file": "spin2b.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/spin2b.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/spin2b.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/spin2b.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/spin2b.png docs/anim-review/new-art/archer-v3/g-set/spin2b.png assets/poses/archer-v2/spin2b.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  },
+  {
+   "id": "spin2c",
+   "file": "spin2c.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/spin2c.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png",
+    "assets/poses/archer-v2/spin2c.png"
+   ],
+   "task": "Draw the NEW ARCHER in this pose. Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically. Image 2 = pose reference (old archer): replicate its pose, limb positions and camera angle exactly, but drawn as the Image 1 character (no hood, no quiver, no arrows on body, old green hooded costume must NOT be used). Same pose as Image 2. Canvas 584x454, same scale as Image 1, feet at y~448, facing right, real transparent background. Strictly medieval. Hands empty, loosely clenched fists, no bow, no arrow, no props.  Two-handed / body pose: both hands empty fists in the same positions where Image 2 holds its weapon (the game draws the weapon later at those hands). AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/spin2c.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/spin2c.png docs/anim-review/new-art/archer-v3/g-set/spin2c.png assets/poses/archer-v2/spin2c.png  (it keys the background to real alpha, removes stray pixels, scales the figure to the pose reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script. If the raw output has the character cropped at the canvas edge, regenerate instead.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Pose matches Image 2 (limbs, angle, camera) closely.\n- No hood, no quiver or arrows on the body, no cape; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent/flat background, no halo/shadow.\n- Hands empty, no bow/arrow/props.\n",
+   "maxRounds": 4
+  }
+ ]
+}

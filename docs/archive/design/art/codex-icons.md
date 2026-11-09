@@ -1,3 +1,4 @@
+> **Ne için:** design/art/codex-icons arşivi; güncel değil.
 # Codex (wiki) ikonları: envanter ve Codex CLI promptları
 
 content-designer, 2026-10-23. Durum: **uygulandı (ui-dev, 2026-10-23)**: 33 ikon `assets/misc-icons/codex/` (grup `codex`, `tools/make-misc-icon.py` ile içe aktarıldı), Codex bağlantıları `src/wiki/codex.ts` (NAV_CODEX_ICON) ve `src/wiki/catalog.ts`. Aşağısı plan + promptlar.

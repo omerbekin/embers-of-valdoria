@@ -1,3 +1,4 @@
+> **Ne için:** design/skill-scaling-review arşivi; güncel değil.
 # Skill ölçek ve hasar türü incelemesi (content-designer, 2026-10-09)
 
 **Ömer'in sorusu:** "Animasyon, tema ve karakter kimliğine bakarak, karakterlerin statlarına dokunmadan, her skill büyü mü fiziksel mi olmalı, STR / DEX / INT / LUCK hangisiyle ölçeklenmeli? Belki toptan değiştiririz ama önce bir tablo yapalım, değer mi görelim."

@@ -1,3 +1,4 @@
+> **Ne için:** design/pose-coverage arşivi; güncel değil.
 # Pose coverage re-check (Pose Tester question)
 
 Question (Ömer): "If we fix the Pose Tester's problem poses, will we have a pose set that covers ALL characters?"

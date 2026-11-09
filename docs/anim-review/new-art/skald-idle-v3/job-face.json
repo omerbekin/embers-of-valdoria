@@ -1,0 +1,26 @@
+{
+ "name": "skald-idle-face",
+ "outDir": "docs/anim-review/new-art/skald-idle-v3/face",
+ "rules": "docs/anim-review/new-art/skald-idle-v3/PROMPT.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle1",
+   "file": "idle1.png",
+   "refs": ["docs/anim-review/new-art/skald-idle-v3/refs/skald-new-idle1-v1.png", "docs/anim-review/new-art/skald-idle-v3/refs/skald-old-idle1.png", "docs/anim-review/new-art/skald-idle-v3/refs/warrior-idle1-face-ref.png"],
+   "checkRefs": ["docs/anim-review/new-art/skald-idle-v3/refs/skald-new-idle1-v1.png", "docs/anim-review/new-art/skald-idle-v3/refs/warrior-idle1-face-ref.png"],
+   "task": "Image 1 = the current Skald idle (keep EXACTLY: pose, body, fists, legs, feet pixels, cloak, drum, clothes, canvas 402x409, scale, soles y~403). Image 2 = the Skald identity (grey hair, braided grey beard). Image 3 = the Warrior idle: copy ITS FACE READABILITY. PROBLEM: in image 1 the Skald's face disappears at game size (the figure is shown only ~190 px tall, the head ~25 px): the face is almost in profile, the skin has the same grey-beige value as hair and beard, the moustache/beard covers the mouth and the hair shadows the eyes. FIX ONLY THE HEAD: turn the face to a 3/4 view toward the viewer like image 3 (both eyes visible, nose and cheekbones clear), warm ruddy lit skin clearly lighter and warmer than the grey hair/beard, dark strong brows and clear dark eye shapes, a short moustache with the mouth visible, the braided beard starting BELOW the mouth and chin, hair swept back off the forehead and face (nothing casting shadow on the face), a crisp dark outline separating face from hair and beard. Head size and position stay the same (head top y~26). Same old Skald: weathered, older, grey. Real alpha, PNG 402x409.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the previous Skald idle (pose reference); image 3 is the Warrior face-readability reference.\n- Pose, body, fists, feet, cloak, drum, canvas 402x409 and scale identical to image 2 (only the head may change).\n- Face readable at game size: imagine the figure shrunk to ~190 px tall (head ~25 px): two eyes, nose and mouth must still read. Face in 3/4 view toward the viewer (both eyes visible), skin warm and clearly lighter than hair and beard, mouth visible, beard starts below the mouth, no hair or hood shadow over the eyes, clear dark outline around the face.\n- Same older grey-haired Skald with braided grey beard.\n- No weapon, no props. Real transparent background, no checkerboard, no halo."
+  },
+  {
+   "id": "idle2",
+   "file": "idle2.png",
+   "chainPrevious": true,
+   "refs": ["docs/anim-review/new-art/skald-idle-v3/refs/skald-new-idle2-v1.png", "docs/anim-review/new-art/skald-idle-v3/refs/warrior-idle1-face-ref.png"],
+   "checkRefs": ["docs/anim-review/new-art/skald-idle-v3/refs/skald-new-idle2-v1.png", "docs/anim-review/new-art/skald-idle-v3/refs/warrior-idle1-face-ref.png"],
+   "task": "Image 1 = the current Skald two-handed idle (keep EXACTLY: pose, body, joined fists, legs, feet pixels, cloak, drum, clothes, canvas 402x409, scale, soles y~403). Image 2 = the Warrior idle face-readability reference. The last image = the APPROVED fixed Skald idle1: give image 1 EXACTLY that head and face (3/4 face toward the viewer, both eyes visible, warm lit skin lighter than the grey hair/beard, dark brows and eyes, mouth visible, braided beard starting below the mouth, hair swept back off the face, crisp outline). Change only the head. Real alpha, PNG 402x409.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the previous Skald idle2 (pose reference); image 3 is the Warrior face-readability reference; a 4th image may be the approved fixed Skald idle1 (head must match it).\n- Pose, body, joined fists, feet, cloak, drum, canvas and scale identical to image 2 (only the head may change).\n- Face readable at game size (~190 px figure, head ~25 px): both eyes, nose and mouth read; 3/4 face toward viewer; warm skin clearly lighter than hair/beard; beard below the mouth; no shadow over the eyes.\n- Real transparent background, no checkerboard, no halo."
+  }
+ ]
+}

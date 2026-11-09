@@ -1,0 +1,26 @@
+{
+ "name": "skald-idle-v3",
+ "outDir": "docs/anim-review/new-art/skald-idle-v3",
+ "rules": "docs/anim-review/new-art/skald-idle-v3/PROMPT.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle1",
+   "file": "idle1.png",
+   "refs": ["docs/anim-review/new-art/skald-idle-v3/refs/skald-old-idle1.png", "docs/anim-review/new-art/skald-idle-v3/refs/paladin-template-idle1.png"],
+   "checkRefs": ["docs/anim-review/new-art/skald-idle-v3/refs/skald-old-idle1.png", "docs/anim-review/new-art/skald-idle-v3/refs/paladin-template-idle1.png"],
+   "task": "Image 1 = the Skald (exact character look: face, braided grey beard, fur cloak, drum on back, belt, bracers, boots, palette, style). Image 2 = the Paladin combat idle POSE template, already at the right canvas (402x409) and scale. Draw the Skald from image 1 in the EXACT pose of image 2: 3/4 front view turned to the right, legs apart, knees slightly bent, both clenched fists held in front of the chest (right fist lower-front at about x~114,y~181 as in image 2, the other fist higher and further right at about x~242,y~144), elbows out, ready combat stance. Fists empty (a weapon and shield are added later in code). Same body scale as image 2 (head top y~27, soles y~403), feet on the same pixels as image 2. Drum stays on the back (rim visible behind the shoulder), fur cloak hangs from the shoulders behind the body. Save PNG 402x409 with real alpha.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the Skald look reference; image 3 is the Paladin pose template.\n- Character identical to image 2 (face, braided grey beard, fur cloak, drum on back, tunic, belt, boots, palette).\n- Pose matches image 3: 3/4 front facing right, legs apart, knees slightly bent, both empty fists in front of chest at roughly the same pixels as image 3.\n- Canvas 402x409, same scale as image 3, soles at y~403.\n- No weapon, no shield, no props in hands.\n- Real transparent background, no checkerboard, no halo/shadow. Strictly medieval, clean."
+  },
+  {
+   "id": "idle2",
+   "file": "idle2.png",
+   "chainPrevious": true,
+   "refs": ["docs/anim-review/new-art/skald-idle-v3/refs/skald-old-idle1.png", "docs/anim-review/new-art/skald-idle-v3/refs/paladin-template-idle2.png"],
+   "checkRefs": ["docs/anim-review/new-art/skald-idle-v3/refs/skald-old-idle1.png", "docs/anim-review/new-art/skald-idle-v3/refs/paladin-template-idle2.png"],
+   "task": "Image 1 = the Skald look. Image 2 = the Paladin TWO-HANDED combat idle pose template (402x409, right scale). The last image (if given) is the approved new Skald idle1: keep exactly that rendering of the Skald. Draw the Skald in the EXACT pose of image 2: 3/4 front view turned right, legs apart, knees slightly bent, BOTH fists together in front of the belly/hip as if gripping one long two-handed haft (fists stacked around x~126,y~217 like image 2), slight forward lean. Fists empty (no weapon drawn). Same scale and feet pixels as image 2, soles y~403. Drum on the back, fur cloak behind. Save PNG 402x409 with real alpha.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the Skald look reference; image 3 is the Paladin two-handed pose template; a 4th image may be the new Skald idle1 (look must match it).\n- Character identical to the Skald references.\n- Pose matches image 3: 3/4 front facing right, legs apart, both empty fists together in front of the belly as on a two-handed haft.\n- Canvas 402x409, same scale as image 3, soles at y~403.\n- No weapon, no shield, no props.\n- Real transparent background, no checkerboard, no halo/shadow."
+  }
+ ]
+}

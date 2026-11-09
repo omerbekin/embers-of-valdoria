@@ -1,12 +1,12 @@
 # Arayüz tasarım dili (2026 ekim, Ömer onaylı)
-> **Ne için / Güncel mi (2026-11-08):** arayüz tasarım dili (zorunlu). evet; yollar doğrulandı.
+> **Ne için / Güncel mi (2026-11-08):** Arayüz tasarım dili (zorunlu): ana ilkeler, onaylı parçalar, mockup akışı. Doğru: arayüzde italik yok (bölüm 1, madde 5); `docs/arch/ui-and-stage.md` ile çelişirse bu belge geçerli. Parça dosyaları: `ui-reference.md`.
 
 
 Ömer 2026-10-18: "yeni yaptığımız bu tasarım diline oyunun geneli için kural olarak oluştur. Sonraki sessionlarda yeni arayüz yaparken ana mantık buradaki gibi olsun."
 
 Bu belge, 2026-10-18 günü onaylanan mockup turlarından çıkan ANA MANTIKTIR. Yeni bir ekran, pencere ya da ipucu yapan herkes, yazmadan önce bunu okur.
 - Hangi dosyanın / işlevin kullanılacağı: `ui-reference.md`.
-- Yazı tipi, renk, düğme sırası: CLAUDE.md > Tasarım kiti.
+- Yazı tipi, renk, düğme sırası: `docs/arch/ui-global-rules.md` (tam metin `docs/arch/ui-and-stage.md`).
 
 ## 1. Temel ilkeler
 
@@ -32,16 +32,16 @@ Bu belge, 2026-10-18 günü onaylanan mockup turlarından çıkan ANA MANTIKTIR.
 
 | Ne | Görünüm | Kaynak / mockup |
 |---|---|---|
-| İpucu / küçük bilgi kutusu | **A Band**: solda ikon, renkli başlık şeridi, sağda değer, çipler, elmaslı ayırıcı | `src/ui/band-tip.ts/.css`, `mockups/tooltips.html` A |
+| İpucu / küçük bilgi kutusu | **A Band**: solda ikon, renkli başlık şeridi, sağda değer, çipler, elmaslı ayırıcı | `src/ui/band-tip.ts/.css`, `public/mockups/tooltips.html` A |
 | Item satırı / şeridi / listesi | **Gear > Hero item plakası**: kare ikon, yuva etiketi, Cinzel ad, Power / iL / affix özeti, köşe elmasları. Ek bilgi (fiyat) plakanın içinde sağda; kim takar bilgisi plakada yok | `src/ui/gear-plates.css`, `character-panel.ts` |
 | Item önizlemesi | **Item ipucu v3**: madalyon ikon, nadirlik kurdelesi, iL, kademe etiketli satırlar, değer, kahraman satırları. Hover ile açılır | `src/ui/item-tip.ts` |
-| Skill listesi | **A Plates**. **Pasif HER ZAMAN 1. sırada** | `skill-bar.ts > skillPlateHtml`, `mockups/skills-block.html` A |
-| Karakter / kahraman kartı | **A**: portre, ad + sağda "Lv X", tek satır çipler, HP/MP çubukları, yalnızca 4 temel stat (STR / DEX / INT / LUCK, ana stat turuncu), skill'ler (pasif önce), pasif ayrı bölüm yok | `mockups/character-card.html` A, `mockups/formation.html` A |
+| Skill listesi | **A Plates**. **Pasif HER ZAMAN 1. sırada** | `skill-bar.ts > skillPlateHtml`, `public/mockups/skills-block.html` A |
+| Karakter / kahraman kartı | **A**: portre, ad + sağda "Lv X", tek satır çipler, HP/MP çubukları, yalnızca 4 temel stat (STR / DEX / INT / LUCK, ana stat turuncu), skill'ler (pasif önce), pasif ayrı bölüm yok | `public/mockups/character-card.html` A, `public/mockups/formation.html` A |
 | Evolve ikonu (skill) | Evolve düğümü ONAYLI skill'in ikonu o kayıtta HER yerde yavaş kor titremesi + altın kenar parıltısı (~2,6 sn döngü); evolve sanatı varsa ikon onunla değişir. Codex / Wiki ve Quick Battle sabit | `src/ui/evolve-icon.ts/.css`, `skill-tree-implementation.md > Evolve ikonu ve animasyonu` |
-| Stat listesi | Gear Sheet A | `mockups/stats-panels.html` |
+| Stat listesi | Gear Sheet A | `public/mockups/stats-panels.html` |
 | Izgara hücresi uygunluk | Seçili ya da sürüklenen birim için HER hücrede hafif renk (iyi / zayıf / ulaşamaz). Hover kutusu: "X · FRONT ROW", tek cümle, 4 parçalı çubuk | Formation A (ortak bileşen) |
-| Sefer haritası düğümleri | C çerçeveleri, biraz küçük; çift yol | `src/game/map-frames.ts`, `mockups/map-nodes.html` |
-| Sonuç ekranı | A (plaket, satır başına birim, özet şeridi) | `result-screen.ts`, `mockups/battle-result.html` |
+| Sefer haritası düğümleri | C çerçeveleri, biraz küçük; çift yol | `src/game/map-frames.ts`, `public/mockups/map-nodes.html` |
+| Sonuç ekranı | A (plaket, satır başına birim, özet şeridi) | `result-screen.ts`, `public/mockups/battle-result.html` |
 
 ## 3. Çalışma akışı
 

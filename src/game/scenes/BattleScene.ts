@@ -5444,7 +5444,7 @@ export class BattleScene extends Phaser.Scene {
       notes,
     };
     const turns = this.battle.mode === 'turns';
-    // Düşman turu: skill ve global satırları okunur kalır (sönük değil), tıklanmaz
+    // Düşman turu: skill ve global satırları sönük ('off') ve tıklanmaz (Ömer 2026-11-08: 0.9.11'de yanlışlıkla parlak yapılmıştı)
     const foeView = this.battle.mode !== 'test' && actor.side !== this.localSide;
     const skills: HudSkill[] = [];
     actor.skills.forEach((skillId, idx) => {

@@ -1,3 +1,4 @@
+> **Ne için:** design/dialogue-replies-draft arşivi; güncel değil.
 # Diyalog cevapları taslağı (Ömer görecek, oyuna henüz GİRMEDİ)
 
 Durum: 2026-10-31 Ömer aşağıdaki 7 taslağı aynen onayladı, `data/` içinde `"reply"` olarak var. Lore sorularından başka kurtulan açık (Ömer 2026-11-01: açık kalsın); iki warden yaşıyor. Sonuncu tablodaki 6 seçeneğe de Ömer'in Form 7 onayıyla (2026-10-31) cevap eklendi, metinleri `data/` içinde.

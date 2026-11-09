@@ -1,3 +1,4 @@
+> **Ne için:** design/skill-tree-mastery-v2 arşivi; güncel değil.
 # Skill ağacı v2: 10 GERÇEK varyant (2026-10-20)
 
 Ömer'in düzeltmesi (2026-10-20): "10 varyasyondan kastım skilleri değiştirmesiydi. Skill diziliminde de özgür bırakmıştım ama hepsi 5-1-3-orta büyük-evolve yapısında." Yani varyantlar **düğüm İÇERİĞİ** ve **DİZİLİŞ** bakımından farklı olmalı. Görsel sunum tek ve ortak (Classic görünüm). Yeni kural: **"Skiller tierla açılacak. Her skill her zaman verilemeyecek."** Düğümler tier'larla açılır, her düğüm her an alınamaz.

@@ -1,3 +1,4 @@
+> **Ne için:** arch/codex-art-loop arşivi; güncel değil.
 # Terra çizer / Sol kontrol eder döngüsü (`tools/codex/art-loop.mjs`)
 
 Genel sanat aracı (Ömer 2026-11-02; Vesper pozlarındaki deneme, `vesper-loop`, genelleştirildi). Terra (`gpt-6.1-terra`, workspace-write) çizer ve `outDir/NOTES.md`'ye not alır; Sol (`gpt-6.1-sol`, reasoning high, read-only) kontrol eder. İkisi AYRI süreçtir (Sol, Terra sandbox'ında açılamaz, Windows os error 5). Araç karar vermez: Sol ilk satıra `GECTI`/`KALDI`, ikinci satıra `PUAN: n` yazar; `PUAN >= eşik` (varsayılan 8, `--threshold` ya da iş dosyasında `threshold`) ya da `GECTI` = geçti. Ücretli API yok; kota/izin engelinde (Codex sıfırdan farklı çıkış, Sol'un ilk satırı karar değil) durur, NOTES.md'ye `DURDU:` yazar, aşmaya çalışmaz. VFX akışı (`/vfx`) ve `run.mjs`/`imagegen.mjs` bundan bağımsızdır.

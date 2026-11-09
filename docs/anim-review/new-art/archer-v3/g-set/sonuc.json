@@ -1,33 +1,14 @@
 {
-  "thrust1": {
+  "idle2b": {
     "rounds": 2,
     "pass": true,
     "bestRound": 2,
     "score": 8
   },
-  "spin1a": {
-    "rounds": 5,
-    "pass": true,
-    "bestRound": 5,
-    "score": 8
-  },
-  "spin1b": {
-    "rounds": 3,
-    "pass": true,
-    "bestRound": 3,
-    "score": 8
-  },
-  "spin1c": {
-    "rounds": 3,
-    "pass": true,
-    "bestRound": 3,
-    "score": 8
-  },
-  "guard1": {
-    "rounds": 2,
-    "pass": true,
-    "bestRound": 2,
-    "score": 8
-  },
-  "durdu": "Terra çıkış kodu 1 (kota ya da izin engeli olabilir, ayrıntı art-loop.log)"
+  "step2r": {
+    "rounds": 4,
+    "pass": false,
+    "bestRound": 4,
+    "score": 7
+  }
 }

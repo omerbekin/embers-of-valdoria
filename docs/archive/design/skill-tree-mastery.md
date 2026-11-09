@@ -1,3 +1,4 @@
+> **Ne için:** design/skill-tree-mastery arşivi; güncel değil.
 # Skill ağacı: MASTERY BAR tasarımı (Ömer çerçevesi 2026-10-20) + 10 mockup varyantı
 
 Önceki 10 yapı turundan (skill-tree-structures.md) Ömer 4. yapıyı (Mastery Bar) seçti ve çerçeveyi verdi. Bu belge o çerçeveyi doldurur. Sayılar PROVİZYON (balance-tester). Oyun içi metin İngilizce, notlar Türkçe. `[YENİ]` = motora yeni kural, Ömer onayı ister.

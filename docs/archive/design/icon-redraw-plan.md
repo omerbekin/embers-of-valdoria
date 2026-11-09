@@ -1,3 +1,4 @@
+> **Ne için:** design/icon-redraw-plan arşivi; güncel değil.
 # Sınıf ikonlarının ChatGPT ile yeniden çizimi: üretim planı (content-designer, 2026-10-18)
 
 Ömer'in isteği: "mevcut classların iconlarını komple chatgptye çizdirelim. hem skill hem karakter. warriorun da ultisi değişmişti. buna da yeni bir ulti iconu tasarlattır."

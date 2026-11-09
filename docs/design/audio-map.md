@@ -1,8 +1,8 @@
-# Ses haritası (2026-10-13)
-> **Ne için / Güncel mi (2026-11-08):** ses haritası: WebAudio sentezi, grup listesi. 2026-10-13 tarihli; liste için Codex > Assets > Sounds ve data/audio*.json esas.
+# Ses haritası
+> **Ne için / Güncel mi (2026-11-08):** Ses haritası: WebAudio sentezi, kaydırıcılar, dünya sesleri, müzik tablosu, Vesper sesleri. Tam ses listesi Codex > Assets > Sounds ve `data/audio*.json` (esas kaynak); Harita 3 mob sesleri ve Skald sesleri bu belgede ayrıca anlatılmaz.
 
 
-Tüm sesler WebAudio sentezidir (dosya yok). Ses felsefesi CLAUDE.md'de: gerçek karşılığından kurulur, çan / saf sinüs çınlaması yok.
+Tüm sesler WebAudio sentezidir (dosya yok). Ses felsefesi: gerçek karşılığından kurulur; saf sinüs çınlaması yok. Çan yalnız gerçek bronz kısmilerle (Vesper) kurulur; Bridge Warden'da çan sesi kullanılmaz.
 Codex > Assets > Sounds hepsini listeler ve çalar ("UI (menus)", "World & stingers", "Campaign enemies" grupları, en altta "Soundtracks").
 
 ## Kaydırıcılar (Settings > Sounds)
@@ -43,44 +43,9 @@ Codex > Assets > Sounds hepsini listeler ve çalar ("UI (menus)", "World & sting
 
 Item kaldırma (sürükleme başı) aynı malzeme sesini `itemPickupGain` ile kısık çalar. Settings ekranı açılıp kapanınca menü sesi `open` / `close` (parşömen) çalar.
 
-## Sefer düşmanı skill sesleri (`data/audio-mobs.json`, çalma `src/game/mob-sfx.ts`; Ömer 2026-10-16)
+## Sefer düşmanı skill sesleri (`data/audio-mobs.json`, çalma `src/game/mob-sfx.ts`)
 
-Bölge I-II'deki her mob skill'inin (50 skill, 98 ses) KENDİ sesi var; artık bir class'ın sesini ödünç almaz. Efekt (ödünç v1/v2 ya da mobun
-kendi sheet'i) eski ses adını ister (`c.sfx('axeChop')`); `roles` tablosu bunu role çevirir (cast = hazırlık / savurma / atış, travel = uçuş,
-hit = vuruş, none = sessiz; skill bazında `skills.<id>.roles` ezer) ve skill'in o roldeki sesi çalar. Aynı ses bir dökümde 90 ms'den sık çalmaz.
-Skill tabloda yoksa eski ödünç ses çalar (yedek; `skills.json > sfx` yedek olarak durur). Kaydırıcı: Sound Effects. Tepe 0,30-0,66 (vuruş ~0,6,
-savurma ~0,45, uçuş ~0,3, ilahi/fısıltı ~0,38), class skill sesleriyle aynı seviye. Codex > Assets > Sounds > "Campaign enemies" grubunda
-▶ ile dinlenir (kartta gerçek karşılığı ve kullanan skill yazar; "Play all in group" hepsini sırayla çalar).
-Örnekler: Billhook = demir kanca savrulması + kumaş takılması; Rockfall = gürleme, sonra sırayla taş düşmeleri + çakıl; Dirge = ağzı kapalı
-alçak mırıldanma (formantlı ses, sinüs değil); Holy Ember = buhurdan zinciri şıkırtısı + savrulma; Raven's Peck = çift karga gaklaması +
-kanat çırpışı ve gaga darbesi; Bite = kurt hırlaması + diş şaklaması.
-
-**Bölge III (campaign-dev 2026-10-17; mob-plan.md 10):** 14 yeni skill (Morvane Halberdier, Sworn Guard, Ash Hound, Cinder Gatewarden, Ember Hierophant,
-Drake Priest ve final boss Lord Morvane), 29 yeni ses; hepsi WebAudio tarifi, kayıtlı dosya yok. Her yeni ses tepe ölçümüyle eşitlenmiş bir Bölge I-II
-sesinin katmanlarından türetildi (frekans kaydırma + ek katman; kazanç şablondan, ek katmanda %10 kısık; tarayıcıda tepe ölçümü yapılmadı, kulak
-kontrolü önerilir). Örnekler: Halberd Chop = uzun sap savrulması + kalın balta vuruşu; Scorch Bite = dumanlı hırlama + diş şaklaması ve kor çıtırtısı;
-Hold the Gate = demir bantlı kalkan taşa vurulur + kalın "None pass the gate!" bağırışı; Cinder Lash = kor zincir kırbaç şaklaması + tıslama;
-Iron Decree = kızgın mühür basılması + Morvane'nin derin tek komutu; Pyre of Morvane = yer gürlemesi, sonra tüm alanı saran alev. Lord Morvane'ın
-sesleri de "Campaign enemies" grubunda (sahibi boss).
-
-**Harita 2 önderleri (content-designer 2026-10-27):** 9 elit (Hook, Salt Hag Mother, Bastion, Vell, Wrecker-Captain, Marrow, Siren Queen, Salt Bishop,
-Drowned Champion), Pit Champion "Gorr" ve 3 boss (Weir-Wyrm, Admiral Vane, Drowned Queen): 43 skill, 83 ses; her skill KENDİ tarifiyle (eski kopya /
-yer tutucu tarifler ve Bridge Warden'ın ödünç sesleri kalktı). Aileler aynı malzemeden ama her biri ayırt edilir: kanca ailesi (Gaff Strike = kısa demir
-kanca + yırtılma, Boarding Hook = ip ucunda dönen çatal kanca + ip gerilir, Debtor's Chain = zincir sarılır + asma kilit kapanır, Wrecker's Gaff = ıslak
-sırık + kaldıraç gıcırtısı, Harpoon Line = zıpkın + gerilen halat); pala ailesi (Black Cutlass = kınından çekme + tek kesik, Captain's Rake = ileri-geri iki
-savuruş, Cutlass Flurry = hızlı çift kesik, Drowned Greatsword = ağır ıslak savuruş + sıçrama); deniz büyüsü (Brine Curse = gargaralı lanet, Call the Tide /
-High Tide / Surge = yükselen dalga ve kırılış, Salt Circle = dökülen tuz + kristal çıtırtısı, Requiem of Salt / Lament of the Deep = alçak koro); siren
-sesleri formantlı kadın sesi (Queen's Lament = tiz ağıt, Grand Chorus = dört sesli akor, Siren's Call = nefesli iki notalık çağrı); Weir-Wyrm = kuyruk
-şaklaması, ağız açılırken gargaralı hırıltı + ısırma ve yutkunma, kükreme + bent yıkılışı; Admiral Vane = top atışı + zincir gülle vınlaması, "Fire!" +
-üç topluk yaylım, "All hands!" + tayfa tezahüratı; Gorr = demir yumruk, kalabalığın "Ohh!"u, göğüs yumruklama + adını haykıran kalabalık. Tepe ölçümü
-çevrimdışı JS taklidiyle, Bölge I-II seslerine göre ayarlı (aynı ölçekte Billhook 0,56 / 0,74): savuruş ~0,55, vuruş ~0,72, ağır vuruş ~0,78,
-ses / koro ~0,62, yumuşak ~0,44, ulti ~0,8; tarayıcıda kulak kontrolü önerilir. Mob sheet'i istek listesinin ilkini başta, kalanlarını vuruşta çalar:
-Warden kaynaklı listelerde (wyrm_*, chain_shot) yalnızca biri vuruşa bağlı, diğerleri sessiz (`skills.<id>.roles`); Powder Keg / Brine Lash'in uçuş isteği
-sessiz (uçuş sesi vuruşla üst üste binmesin).
-
-Harita 2 sıradan mobları (dock_rat, reef_hound, salt_hag, tide_caller, marsh_light, wreck_ghoul) + River Reaver / Cliff Crossbowman yeni skill'leri kendi tariflerinde (16 skill, 32 ses: ıslak halat / ağ, tuzlu dalga, bataklık kıvılcımı, midye kabuğu tırmığı, kanca, uçurumdan yaylım; open-questions-archive 442); tepe tarayıcıda Harita 1 karşılığına eşitlendi.
-
-Harita 2'de kalan son Harita 1 birimlerinin sürümleri (cinder_exile, pitch_boiler, sunken_dead, mire_ghoul, reed_witch, mudlark, inquisition_brother, salt_chaplain) + Tide Caller çağrısı risen_drowned kendi tariflerinde (18 skill, 33 ses: zift / katran, su sıçraması, çamur, saz hışırtısı, tuz kristali; open-questions-archive 446); tepe tarayıcıda Harita 1 karşılığına (Risen Drowned: Skeleton class seslerine) eşitlendi.
+Her mob skill'inin kendi sesi vardır (Bölge I-III, Harita 2 önderleri ve sıradan mobları); ödünç ses yalnız tabloda olmayan skill için yedektir. Efekt eski ses adını ister, `roles` tablosu bunu role çevirir (cast, travel, hit, none; `skills.<id>.roles` ezer). Tarifler ve tepe seviyeleri `data/audio-mobs.json`'dadır; Codex > Assets > Sounds > "Campaign enemies" grubunda ▶ ile dinlenir. Kaydırıcı: Sound Effects. Mob başına ses tarif paragrafları: `docs/archive/design/audio-map-mob-sounds.md`.
 
 ## Müzik (`data/audio-music.json` + `data/audio-music-tracks.json`, motor `src/game/music.ts`, denetim `src/ui/music.ts > sceneMusic`)
 
@@ -105,17 +70,29 @@ söner ve zafer / yenilgi stingeri çalar (Endless zaferinde kamp müziğine ge�
 
 ## Eksik / sonraya
 
-- Level-up anı oyunda henüz yok (XP verilmiyor); ses tasarlanmadı.
+- Level-up sesi tasarlanmadı.
 
-## Vesper (2026-11-01, `data/audio-v2/vesper.json`)
+## Vesper (sürüm 3, 2026-11-08, `data/audio-v2/vesper.json`)
 
-Ömer: "ödünç kalmasın; sesleri de kendisi olsun". Hepsi WebAudio tarifi. Çan: gerçek bronz çan kısmi sesleri (hum 0,5 / prime 1 / tierce 1,19 / quint 1,51 / nominal 2 / uyumsuz üstler), çift kısmilerle yavaş dalgalanma, üstler çabuk, hum en son söner; ağır tokmak darbesi + vuruş gürültüsü. Tepe ölçümü yapıldı, **Ömer henüz dinlemedi**.
+Ömer: "bip bop gibi tek düze ses olmasın". Hepsi WebAudio tarifi; motor (`src/game/audio.ts`) bunun için üç ek aldı: `tone.fm` (FM metal dokusu: uyumsuz oranlı modülatör, sapması vuruştan sonra hızla söner), `sfx.room` (taş salon yankısı: paralel geri beslemeli gecikmeler, her döngüde alçak geçiren) ve `sfx.vary` (yalnız oyunda çalarken: her çalışta ±%2,5 ortak perde, katman başına ±%0,3 kayma, ±4 ms zaman, ±%12 seviye, gürültü tamponunda rastgele başlangıç; ölçüm ve önizleme sabit kalır).
+
+- **Çan:** gerçek bronz kısmiler (hum 0,5 / prime 1 / tierce 1,183 / quint 1,506 / nominal 2 / superquint 2,66 / üst nominal 3,98 / 5,24 / 6,71 / 8,43). Her ana kısmi iki yakın frekansla çalar (0,3-3,7 Hz vuruş, dalgalanma). Metal dokusu FM (tierce, nominal, üstler) ve filtreli üçgen/testere; nominal ve üst nominalde dar bant gürültü rezonansı (nefes alan pırıltı). Üstler 0,1 sn içinde, hum en son söner. Saf sinüs yalnız birkaç kısmide.
+- **Tokmak:** parlak tiz gürültü tıkı (12 ms) + 5,2 → 1,9 kHz süzülen bant gürültü + kare dalga "tın" + tokmak gövdesinin alçak gümlemesi.
+- **Şimşek:** çatırtı patlağı + düzensiz 6-9 kıvılcım çıtırtısı + 6,5 kHz → 650 Hz yırtılma (38 Hz titreşim) + gümleme + iki yuvarlanan gök gürültüsü (5,7 / 3,4 Hz dalgalanma) + alt bas; uzak yankı.
+- **Toll (2. tur):** çan + tokmağın kendi kısa uyumsuz çınlaması (2,1 / 3,4 kHz FM) ve daha sert tık; alçak geçirenli testere + üçgen gövde (dolu); "yaşayan kuyruk": vuruştan sonra kabaran kısmiler (0,8-2,3 Hz dalgalanma) ve superquint / quint / 5,24 üstünde uzun dar rezonanslar; 5 gecikmeli taş salon yankısı daha duyulur. `tollWave` aynı çanın kısmilerini 9 Hz nabızlı havada taşır, aynı salon.
+- **Thunderpeal (2. tur):** Toll gibi zengin alçak çan (155 Hz) + `thunderCrack`'in şimşek dokusu (çatırtı, yırtılma, gürleme; kısık) + elektrik arkı (47 / 61 Hz vızıltı) + 9 düzensiz kıvılcım + çanın altında yuvarlanan alçak gürleme.
+- **Cracked Bell:** düşüş = yaklaşan hava + düzensiz zincir halkaları + rüzgârda titreyen çatlak vızıltısı. Vuruş (3. tur, v3b, Ömer: "çok iyi"; 1. tur "tiz osuruk gibi", 2. tur "hâlâ sade", 3. tur v3a "kötü"): tiz vızıltı yok (testere, FM, hızlı titreme yok). Boğuk, ağır, karanlık çatlak bronz (prime 128 Hz, 1,15 kHz alçak geçiren): temas + gövde gümlemesi + alt bas + yarılma; darbe anında ilk 70 ms'de 9 kısa kırık metal çatırtısı (1-2,4 kHz, tek tık); gövdede uyumsuz çatlak çan kısmileri (0,5 / 0,97 / 1,23 / 1,44 / 1,93 / 2,38 / 2,87 / 3,61, 3-8 Hz pürüzlü çift vuruş, perdesi aşağı sarkan kısmiler, 7-11 Hz hafif titreme) + hızla sarkan iki kırık üst kısmi; hafif düşük gürleme; ardından kum hışırtısı + 10 moloz tıkı.
+- **Great Bell:** en derin çan (prime 103 Hz, hum 51,5 Hz), ağır tokmak, en uzun kuyruk ve büyük salon yankısı; ayrıca daha derin ve uzun gök gürültüsü ve yere iniş (alt bas + taş gümlemesi + moloz tıkları).
+
+Tepe = çevrimdışı çizim, ana ses 0,8 dahil (Codex > Sounds ölçümüyle aynı yöntem; diğer sınıf sesleri ortanca 0,60, %90'ı 0,80 altında). Aynı anda çalanlar: Great Bell üçlüsü 0,85, Thunderpeal ikilisi 0,86 (kırpma yok). Tekdüzelik denetimi: her seste kısmi / gürültü bileşenleri zamanla değişir (çanlarda spektrum ağırlık merkezi 2,5 kHz → 0,3 kHz kayar), üç rastgele çalış birbirine benzemez (ilinti çoğunda 0,1-0,6). **Ömer dinledi, Vesper sesleri tamamı onaylı (2026-11-09), dokunulmaz:** Toll vuruş / dalga ve Thunderpeal iyi (2. tur), `thunderCrack` çok iyi, `crackedBellFall` iyi, Great Bell iyi, `crackedBellHit` v3b çok iyi.
 
 | Skill | Sesler | Gerçek karşılığı | Tepe | Süre (-60 dB) |
 |---|---|---|---:|---:|
-| Toll | `tollStrike`, `tollWave` | orta boy çan (prime 233 Hz), kısa; havada yayılan ses dalgası | 0,42 / 0,24 | 0,7 sn / 0,2 sn |
-| Thunderpeal | `thunderPeal`, `thunderCrack` | alçak çan (155 Hz) + elektrik çıtırtısı; çatırtı + yırtılma + yuvarlanan gök gürültüsü | 0,50 / 0,72 | 0,9 sn / 1,2 sn |
-| Cracked Bell | `crackedBellFall`, `crackedBellHit` | inen çanın havası + zincir; çatlak metal: boğuk, titreyen kenarlar, yarılma, kırıklar | 0,30 / 0,72 | 0,3 sn / 0,3 sn |
-| Great Bell of Valdoria | `greatBellDescend`, `greatBellToll`, `greatBellThunder` | zincir ve hava; en derin çan (prime 103 Hz, hum 51 Hz) + dev tokmak + taş salon kuyruğu; alçak gök gürültüsü | 0,34 / 0,80 / 0,70 | 0,8 sn / 2,8 sn / 1,4 sn |
+| Toll | `tollStrike`, `tollWave` | orta boy çan (prime 233 Hz) + taş oda; havada nabız gibi yayılan basınç dalgası + çanın havada çınlaması | 0,63 / 0,36 | 1,7 sn / 1,4 sn |
+| Thunderpeal | `thunderPeal`, `thunderCrack` | alçak çan (155 Hz) + elektrik vızıltısı ve kıvılcımlar; şimşek (yukarıdaki tarif) | 0,56 / 0,68 | 1,9 sn / 1,3 sn |
+| Cracked Bell | `crackedBellFall`, `crackedBellHit` | düşen çanın havası + zincir; kırık, boğuk, titreyen çan | 0,48 / 0,67 | 0,4 sn / 0,7 sn |
+| Great Bell of Valdoria | `greatBellDescend`, `greatBellToll`, `greatBellThunder`, `greatBellImpact` | ağır zincir + itilen hava; en derin çan; derin gök gürültüsü; yere iniş | 0,51 / 0,57 / 0,54 / 0,28 | 0,8 / 3,9 / 1,8 / 0,5 sn |
 
-Aynı tarifler `skills.json > sfx` denetimi için `data/audio.json` içinde de durur (v1 anahtarlarına dokunulmadı, yalnız yeni ad eklendi); sürüm seçicide v1 seçilirse genel hareketle başta çalar.
+Aynı tarifler `skills.json > sfx` denetimi için `data/audio.json` içinde de durur; sürüm seçicide v1 seçilirse genel hareketle başta çalar.
+
+Tarihçe: 2026-11-01 sürüm 1-2 (sinüs kısmileri; Ömer "bip bop, tekdüze" buldu) → 2026-11-08 sürüm 3 (FM + doku + yankı + çalış başına sapma) → aynı gün 2. tur: Toll / Thunderpeal zenginleşti, `crackedBellHit` boğuk ağır darbe oldu → 2026-11-09 3. tur: `crackedBellHit` dolu, karanlık çatlak bronz (v3b onaylı; v3a reddedildi); tüm Vesper sesleri onaylı.

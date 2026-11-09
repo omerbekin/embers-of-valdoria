@@ -1,0 +1,98 @@
+{
+  "step1": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "slash1": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "overhead1": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 9
+  },
+  "hit": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "kneel": {
+    "rounds": 2,
+    "pass": true,
+    "bestRound": 2,
+    "score": 8
+  },
+  "channel": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "point": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "throw": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "guard2": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 9
+  },
+  "step2": {
+    "rounds": 4,
+    "pass": false,
+    "bestRound": 4,
+    "score": 7
+  },
+  "slash2": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "overhead2": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "thrust2": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "spin2a": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "spin2b": {
+    "rounds": 1,
+    "pass": true,
+    "bestRound": 1,
+    "score": 8
+  },
+  "spin2c": {
+    "rounds": 4,
+    "pass": true,
+    "bestRound": 4,
+    "score": 9
+  }
+}

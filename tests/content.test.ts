@@ -18,7 +18,7 @@ const ATTRIBUTES = ['str', 'int', 'dex', 'luck'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const PLACEHOLDER_SPRITE_CLASSES: string[] = [];
 /** Kendi görseli henüz çizilmemiş, başka bir class'ın sprite'ını GEÇİCİ kullanan class'lar (class id -> ödünç spriteId). Görsel gelince listeden çıkar. */
-const BORROWED_SPRITE_CLASSES: Record<string, string> = { skald: 'defender' }; // Thunder Skald (2026-11-07): görünüş A seçildi, sanat gelene dek Defender; başka class'ın görselini ödünç alan class'lar (Vesper 2026-11-02'de kendi görseline geçti)
+const BORROWED_SPRITE_CLASSES: Record<string, string> = {}; // Skald 2026-11-08'de kendi görseline geçti; başka class'ın görselini ödünç alan class'lar (Vesper 2026-11-02'de kendi görseline geçti)
 const everyone = { ...content.classes, ...content.summons, ...content.bosses, ...content.mobs }; // boss (data/bosses) ve mob (data/mobs) tanımları da şemaya tabi
 
 describe('skill verisi', () => {

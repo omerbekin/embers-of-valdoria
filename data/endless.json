@@ -1,5 +1,5 @@
 {
-  "_not": "Endless Lite (roadmap.md bölüm 3, aşama 1E; open-questions madde 281). Art arda dalgalar, dalga arası 3 karttan 1 ödül, her 5 dalgada küçük dükkân, skor = ulaşılan dalga. Bütün sayılar PROVİZYON (balance-tester). Mantık: src/endless/ (saf), ekran: src/game/scenes/EndlessScene.ts.",
+  "_not": "Endless Lite (docs/archive/design/progression/roadmap-2026-10.md bölüm 3, aşama 1E; open-questions-archive madde 281). Art arda dalgalar, dalga arası 3 karttan 1 ödül, her 5 dalgada küçük dükkân, skor = ulaşılan dalga. Bütün sayılar PROVİZYON (balance-tester). Mantık: src/endless/ (saf), ekran: src/game/scenes/EndlessScene.ts.",
   "partySize": 4,
   "_enemyCount": "Dalga numarasına göre normal dalganın düşman sayısı: fromWave'den itibaren count. Denge (balance-tester 2026-10-09, npm run sim:endless): 4 kişilik takıma karşı eşit güçte 4 düşman ~%50, 3 düşman bile 3. dalgada taşınan canla ~%80'e düşüyordu; zorluk artık sayıdan değil dalga güçlenmesinden gelir: her dalgada 2 düşman (Ömer 2026-10-13 form valor2: 31. dalgadan sonra 3 düşmana geçiş bir duvardı, normal dalgalar ~%55 kazanılıyordu ve 40. dalgaya neredeyse kimse ulaşmıyordu; kaldırıldı, zorluk boss basamağından gelir).",
   "enemyCount": [

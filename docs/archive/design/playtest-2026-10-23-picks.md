@@ -1,3 +1,4 @@
+> **Ne için:** design/playtest-2026-10-23-picks arşivi; güncel değil.
 # Playtest 2026-10-23 — Ömer'in seçtiği öneriler (uygulama notu)
 
 Kaynak: Fable'ın built-in browser'da oynadığı Map 1 playtest'i (play-build 0.9.7.1, Normal/Medium, Defender · Mage · Paladin, 9 düğüm, 2 ölüm). Günlük: `docs/design/playtest-2026-10-23.md`. Seçim sayfası: https://claude.ai/artifact/NDmLkTncd4TBYynBfwnzno (db `playtest/main`).

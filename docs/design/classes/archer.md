@@ -1,56 +1,58 @@
-# Archer: tasarım dökümanı
+# Archer
 
-> Kaynak: `data/classes/archer.json`, `data/skills.json`, `data/skill-trees/archer.json` (sürüm 1), 2026-11-08. Ağaç mantığı: `skill-tree-logic.md`.
+> **Ne için / Güncel mi (2026-11-08):** Archer kahramanının kimlik, skill ve ağaç özeti. Sayılar `data/classes/archer.json`, `data/skills.json`, `data/statuses.json` ile birebir (veri değişince burası güncellenir). Çerçeve: `docs/design/classes.md`. Tarihçe arşivde (bölüm 6).
 
 ## 1. Kimlik
 
 | Alan | Değer |
 |---|---|
 | id / rol | `archer` / Marksman |
-| Ön sıra önceliği, menzil | 8 (en arka), menzil 6 |
-| Stat (str / int / dex / luck) | 13 / 13 / 26 / 8, primary DEX |
-| Zırh | 10 zırh, 0 büyü zırhı |
-| YZ | `sniper` |
+| Ön sıra önceliği, menzil | 8, menzil 6 |
+| Stat (STR / INT / DEX / LUCK) | 13 / 13 / 26 / 8, ana stat DEX (toplam 60) |
+| Zırh / büyü zırhı | 10 / 0 |
+| YZ profili | `sniper` (`data/ai.json > profiles.sniper`) |
+| Pasif | **Sharpshooter**: "The farther the target, the harder you hit: 5% more damage for every row of distance." |
 
-- **Güçlü yan:** en uzun menzil; hedef ne kadar uzaksa o kadar çok hasar (Sharpshooter). Quick Shot bedava ve Haste verir.
-- **Zayıf yan:** kırılgan, yakında zayıflar; MP'li skill'ler (Arrow Rain 16) sık atılamaz. Kazanma %48,0 / %48,8 (2026-11-08).
+- Nişancı: en arkada durur, uzaktan öldürür. En uzun menzil.
+- **Güçlü:** hedef ne kadar uzaksa o kadar çok hasar (Sharpshooter). Quick Shot bedava ve Haste verir.
+- **Zayıf:** kırılgan, yakında zayıflar; MP'li skill'ler (Arrow Rain) sık atılamaz.
+- Denge ölçümü: `docs/balance.md` (kopya yüzde yazılmaz).
 
 ## 2. Skill'ler
 
-| Skill | Ne yapar | MP / bekleme | Sayı |
-|---|---|---|---|
-| Quick Shot | Tek hedef, fiziksel DEX; kendine Haste | 0 / yok | güç 0,42; Haste 2 tur |
-| Piercing Arrow | Hedefin sütunu boyunca delip geçer, her düşmanda azalır | 3 / 2 | güç 0,605, düşüş 0,7 |
-| Arrow Rain | Gökten 3x3 alana ok yağmuru | 16 / 3 | güç 0,4 |
-| Aimed Shot (4. yuva, ult) | Tek hedef güçlü atış, zırhın yarısını yok sayar | 10 / 3 (ilk bekleme 3) | güç 1,455, ignoreDefense 0,5 |
+| Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
+|---|---|---|---|---|
+| Quick Shot (`quick_shot`) | Tek hedef, fiziksel DEX; kendine Haste | 0 / yok | sınıf (6) | hasar physical DEX 0,42; status: status=haste, turns=2, self=true |
+| Piercing Arrow (`piercing_arrow`) | Hedefin sütunu boyunca delip geçer, her düşmanda azalır | 3 / 2 | sınıf (6) | hasar physical DEX 0,605, falloff=0,7; area={shape:column, stages:row} |
+| Arrow Rain (`arrow_rain`) | Gökten 3x3 alana ok yağmuru | 16 / 3 | sınıf (6) | hasar physical DEX 0,4; area={shape:rect, rows:3, cols:3, anchor:bottom_left} |
+| Aimed Shot (`aimed_shot`) | Tek hedef güçlü atış, zırhın yarısını yok sayar | 10 / 3, ilk 3 | sınıf (6) | hasar physical DEX 1,455, ignoreDefense=0,5 |
 
-## 3. Pasif ve skill ağacı
+Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-archer.test.ts`) ve bu tablo birlikte güncellenir.
 
-### Pasif: Sharpshooter
-Etki `longshot`, hedefin her sıra uzaklığı için +%5 hasar (`perRow` 0,05). Veride `text` yazıldı (2026-11-08).
+## 3. Ağaç
 
-### Ağaç mantığı
-Class kimliği: **uzaktan öldürmek**. Ağaç iki şeye dallanır: duruş ve nişan (hareket etmemek, mesafeyi tutmak) ve ok yoluna göre iş (yavaşlatma, zırh delme, alan).
+Ağaç iki şeye dallanır: duruş ve nişan (hareket etmemek, mesafeyi tutmak) ve ok yoluna göre iş (yavaşlatma, zırh delme, alan). Menzil sınıfının bedeli "yakına gelince zayıf" olduğundan kontrol (Slow, Blind, Stun) mesafeyi korumayı ödüllendirir.
 
-| Satır | Ana fikir | ea / eb yönü | Evrim (v) |
-|---|---|---|---|
-| Sharpshooter | Mesafe = güç | **Patient Aim** (kimse vurmadıysa +kritik; ma Held Breath: Skip Turn ile garanti kritik) / **Long Pin** (5+ sıra uzakta Slow şansı; mb Range Keeper: yaklaşana bedava Quick Shot). Kan: Tunnel Vision (+%4/sıra, yakın -%25) / Exposed Perch (2 sıra fazla say, menzilli hasar +%12) | Dead Center: 4+ sıra uzaktakine ilk vuruş kesin kritik |
-| Quick Shot | Yavaşlat ve kör et | **Cut the Tendon** (Slow uzar; ma Hobbled: 2+ tur Slow'a Stun) / **For the Eyes** (kritte Blind; mb Blind Panic: Blind'lı hedef Jinxed). Kan: Leg Shot Only (hep Slow, Haste yok) / Gouging Arrow (hep 2 tur Blind, bekleme 2) | Maiming Shot: Slow, Slow'luya Blind, ikisi de varsa Stagger |
-| Piercing Arrow | Zırh deli, buff sök | **Sunder** (zırh -%20; ma Shattered Line: Aimed Shot, Sunder'lıda zırhı yok sayar) / **Strip Wards** (buff söker; mb Through the Guard: kalkan ve Fortified'ı yok sayar). Kan: Brittle Point (zırh -%40, 2. düşmanda durur) / Spent Quarrel (hepsini sök, bekleme 4) | Siege Bolt: tüm zırhı yok sayar, düşüş %10 |
-| Arrow Rain | Alan kontrolü | **Spent Arrows** (2 tur Slow zemin; ma Killing Field: Blind + DEX hasarı) / **Lingering Hail** (Bleeding yağmur; mb Sky Full of Shafts: Piercing düşüşsüz). Kan: Choking Rain (zemin 4 tur, vuruş -%40) / Endless Hail (4 tur, bekleme 5) | Arrow Storm: 4 sıra, 2 tur Bleeding |
+Veri: `data/skill-trees/archer.json` (sürüm 1, bar "Still Bow Mastery"). Düğüm adları; metinler için dosyaya bak. Şekil kuralı: `skill-tree-logic.md`.
 
-- **Ult kolları (Aimed Shot):** u = bitirici (Killing Shot, Heart Shot, Deathblow: düşük canlıya); r = öldürünce ödül (Trophy: sıfırla, Blood Rush: Haste, Next in Line); d = hız (Snap Shot, Quick Sight, Lightning Draw: iki atış); l = geri çekilme (Draw and Vanish: Fleet, Light Feet: Haste, Ghost Archer: Shrouded).
-- **Mastery bar "Still Bow Mastery":** 5 Still Hands (hareket etmediysen ilk skill +%3 kritik), 10 Knee Shots (Slow +1 tur), 15 Wide Nock (Piercing düşüş -%5), 20 Full Quiver (Arrow Rain -2 MP), 25 Plate Reader (Aimed Shot +%5 zırh yok sayma).
-- **Neden:** menzil sınıfının bedeli "yakına gelince zayıf" olduğu için ağaç, kontrolle (Slow, Blind, Stun) mesafeyi korumayı ödüllendirir.
+- **Sharpshooter (pasif):** dolgu Long Sight, Steady Feet, Gap in the Plate, Killing Distance; anahtar Eagle Eye; yön A Patient Aim (ödül Held Breath, uç Tunnel Vision); yön B Long Pin (ödül Range Keeper, uç Exposed Perch); evrim Dead Center. Anahtar: "Half of your Sharpshooter bonus is also added to your critical chance."
+- **Quick Shot:** dolgu Hock Shot, Practiced Release, Sting in the Eye, Spiteful Nock; anahtar Shot to the Knee; yön A Cut the Tendon (ödül Hobbled, uç Leg Shot Only); yön B For the Eyes (ödül Blind Panic, uç Gouging Arrow); evrim Maiming Shot. Anahtar: "Quick Shot critical hits always Slow the target for 2 turns."
+- **Piercing Arrow:** dolgu Tempered Point, Weighted Head, Narrow Bodkin, Rivet Breaker; anahtar Bodkin Point; yön A Sunder (ödül Shattered Line, uç Brittle Point); yön B Strip Wards (ödül Through the Guard, uç Spent Quarrel); evrim Siege Bolt. Anahtar: "Piercing Arrow ignores 15% of Armor, or 50% against enemies with more Armor than you."
+- **Arrow Rain:** dolgu Thick Volley, Scatter Shot, Rear Volley, Stinging Shower; anahtar Hobbling Hail; yön A Spent Arrows (ödül Killing Field, uç Choking Rain); yön B Lingering Hail (ödül Sky Full of Shafts, uç Endless Hail); evrim Arrow Storm. Anahtar: "Arrow Rain extends every Slow on the enemies it hits by 1 turn."
+- **Ult Aimed Shot (tek kol seçilir):** u Killing Shot, Heart Shot, Deathblow; r Trophy, Blood Rush, Next in Line; d Snap Shot, Quick Sight, Lightning Draw; l Draw and Vanish, Light Feet, Ghost Archer.
+- **Bar Still Bow Mastery:** 5 Still Hands, 10 Knee Shots, 15 Wide Nock, 20 Full Quiver, 25 Plate Reader.
 
-## 4. Ömer kararları
+## 4. YZ notları
 
-- 2026-10-14, madde 326 (arşiv): yeni oyunda yalnız Warrior ve Archer başlangıç kahramanı ("ranger" = Archer); Archer seçilirse Ravenwood adayları Anti-Mage / Cutthroat / Undead.
-- 2026-10-17, madde 340: "Archer en derinde"; dizilimde Archer en arkada, Guard menzili dışında kalabilir.
-- 2026-11-01, madde 481: tutorial sınıf önerisi Hock Shot + Dexterity (Ömer onayı bekliyor).
+- Profil: `data/ai.json > profiles.sniper`. Her yeni skill / ağaç tetiği YZ değeri + test ile gelir (`tests/ai-coverage.test.ts`).
 
-## 5. Açıklar
+## 5. Açık işler / kararlar
 
-- Sharpshooter pasif `text` alanı 2026-11-08de yazıldı (veri).
-- Aimed Shot bekleme önerisi (4 -> 3) arşivde tartışıldı; güncel veri 3. Karar tarihi bulunamadı.
-- Archer'a özel Ömer denge kararı yok; denge turlarında sayıya dokunulmadı (%48 civarı, bant içi).
+- Archer artık sefer başlangıç kahramanı değil: `starterPool` = warrior, skald, paladin, druid. Eski karar (madde 326, "yalnız Warrior ve Archer") geçersiz.
+- Dizilimde Archer en arkada, Close Ranks (Guard) menzili dışında kalabilir (Ömer 2026-10-17, madde 340).
+- Tutorial sınıf önerisi (Hock Shot + Dexterity) Ömer onayı bekliyor (arşiv madde 481).
+- Archer'a özel Ömer denge kararı yok.
+
+## 6. Tarihçe
+
+Eski tam belge (karar günlüğü, ara değerler, eski ağaç tabloları): `docs/archive/design/classes/archer.md`.

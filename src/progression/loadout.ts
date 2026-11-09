@@ -1,4 +1,4 @@
-// Güç toplama katmanı (roadmap.md 1.1; saf, Phaser/DOM yok): savaşa girerken bir kahramanın "class temeli + item'ler (+ ileride level, ağaç)"
+// Güç toplama katmanı (docs/archive/design/progression/roadmap-2026-10.md 1.1; saf, Phaser/DOM yok): savaşa girerken bir kahramanın "class temeli + item'ler (+ ileride level, ağaç)"
 // gücü TEK fonksiyonda toplanır ve motorun kapılarına (UnitSetup.modifiers + itemEffects) çevrilir. Sefer ve endless aynı fonksiyonu kullanır;
 // Quick Battle / multiplayer kullanmaz (Ömer kararı 2026-10-09: QB/MP dokunulmaz; QB kahramanı başlangıç silahını taşır sayılır, gücü katlanmış = 1).
 // Kural: başlangıç silahı olmayan (test) sınıfta hiçbir şey takılı değilse modifiers YOK (undefined) => savaş bugünküyle birebir aynı; oynanabilir

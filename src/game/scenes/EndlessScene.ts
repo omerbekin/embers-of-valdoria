@@ -199,7 +199,7 @@ interface CardCtx {
 /** Tüccar ekranında seçili öğe: tezgâhtaki mal (sıra), torbadaki item (uid) ya da geri alım satırı (sıra). */
 
 /**
- * Endless Lite ekranı (roadmap.md bölüm 3; open-questions madde 281). Görünümler: başlık (Continue / Resume / New Run / en iyi koşular), takım seçimi,
+ * Endless Lite ekranı (docs/archive/design/progression/roadmap-2026-10.md bölüm 3; open-questions madde 281). Görünümler: başlık (Continue / Resume / New Run / en iyi koşular), takım seçimi,
  * kamp (sıradaki dalga ya da yarım kalan savaşa devam), ödül kartları, dükkân, koşu sonu. Kurallar src/endless/ (saf), oturum
  * src/game/endless-session.ts, yazılar src/endless/ui-text.ts. Yapı: her görünüm `draw<Görünüm>()` içinde baştan çizilir; oyuncu eylemleri
  * `act*` yöntemlerinde (ekran düzeninden bağımsız); çizim yardımcıları (heading, note, label, button, panel, avatar, hpBar) ortak.

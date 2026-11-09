@@ -1,0 +1,22 @@
+{
+ "name": "g-G",
+ "outDir": "docs/anim-review/new-art/archer-v3/g-set",
+ "rules": "docs/anim-review/new-art/archer-v3/g-set/PROMPT-g.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle_bow",
+   "file": "idle_bow.png",
+   "refs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/archer-v3/idle-g.png"
+   ],
+   "task": "Draw the NEW ARCHER (Image 1 = EXACT character reference: copy face, beard, hair, costume, palette and rendering style identically) in a RELAXED IDLE stance for holding a bow at rest. Keep the legs, feet, stance width and camera angle of Image 1. Arms: his LEFT arm (the front arm, on the right side of the image, with the leather bracer) hangs relaxed straight DOWN along the front side of the body, elbow almost straight, fist loosely closed at upper-thigh height, slightly in front of the front thigh, knuckles facing the viewer (the game draws the bow in this fist later, pointing down). His RIGHT arm (gloved three-finger archer hand) is relaxed with the hand resting loosely near the back hip / belt. Shoulders relaxed, calm, head and face fully visible, looking right. Hands empty, no bow, no arrow, no quiver, no props. Canvas 584x454, facing right, real transparent background. Strictly medieval. AFTER generating: save the raw generator output as docs/anim-review/new-art/archer-v3/g-set/raw/idle_bow.png, then run exactly: python docs/anim-review/new-art/archer-v3/g-set/normalize.py docs/anim-review/new-art/archer-v3/g-set/raw/idle_bow.png docs/anim-review/new-art/archer-v3/g-set/idle_bow.png assets/poses/archer-v2/idle1.png  (keys background to real alpha, scales to the reference height, feet y=448, canvas 584x454). Never hand-resize; always use this script.",
+   "checkRules": "- Image 1 is the exact character ref: same face, short dark beard, hair, brown vest, olive scarf, cream sleeves, bracer on left forearm, three-finger glove on right hand, trousers, boots, palette. Any deviation fails.\n- Front (left, bracer) arm hangs DOWN relaxed with the fist at upper-thigh height in front of the thigh; the other hand rests near the back hip. A raised fist at chest level fails.\n- Legs/stance like Image 1; calm idle; face fully visible.\n- No hood, no quiver or arrows on the body, no cape, no bow; strictly medieval; clean noise-free style same as Image 1.\n- Canvas ~584x454, same character scale, feet near y=448; real transparent background, no halo/shadow, no stray pixels.\n",
+   "maxRounds": 5
+  }
+ ]
+}

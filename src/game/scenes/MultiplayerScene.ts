@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { menuMusic } from '../../ui/music';
 import { formatLobbyCode, normalizeLobbyCode } from '../../net/lobby-code';
 import { sanitizeName } from '../../net/protocol';
-import { copyText, openExternal, promptCode, promptName, showCopyBox, toast } from '../../ui/mp-overlay';
+import { IP_NOTE, copyText, openExternal, promptCode, promptName, showCopyBox, toast } from '../../ui/mp-overlay';
 import { DISCORD_APP_URL, inviteMessage, whatsappShareUrl } from '../../net/share-invite';
 import { preloadCampaignArt } from '../campaign-art';
 import { mapArt } from '../map-art';
@@ -60,10 +60,9 @@ export class MultiplayerScene extends Phaser.Scene {
   /** ◂ Back / Esc: bağlantı hatasından menüye, bağlanırken iptal, lobiden ayrıl, menüden ana menünün Play kartlarına (onaysız). */
   private back(): void {
     if (mp.state === 'error') {
+      // Hata ekranından Back: ayrı Multiplayer menüsü yerine ana menünün Play kartlarına (Host / Join orada, Ömer 2026-11-08)
       mp.state = 'idle';
       mp.error = '';
-      this.draw();
-      return;
     }
     if (mp.state === 'connecting') return mp.leave();
     if (mp.active) mp.leave();
@@ -107,7 +106,7 @@ export class MultiplayerScene extends Phaser.Scene {
     this.button(W / 2, y0 + 160, 560, 'Join lobby', () => void this.askCode(), false, ok);
     this.layer.add(this.kt(W / 2, y0 + 222, "Enter a friend's lobby code", 19, '#a8977a', { bold: false, stroke: 2 }).setOrigin(0.5));
     // KVKK aydınlatması toplama anında (2026-10-25): bağlantı doğrudan kurulur, rakip IP adresini görebilir (public/privacy.html > Genel)
-    if (ok) this.layer.add(this.kt(W / 2, y0 + 320, 'The other player can see your IP address while you play.', 19, '#a8977a', { bold: false, stroke: 2 }).setOrigin(0.5));
+    if (ok) this.layer.add(this.kt(W / 2, y0 + 320, IP_NOTE, 19, '#a8977a', { bold: false, stroke: 2 }).setOrigin(0.5));
   }
 
   /** "Name: X  [Change name]" satırı (ad isteğe bağlı; yalnızca rakibe gider). */
@@ -176,6 +175,8 @@ export class MultiplayerScene extends Phaser.Scene {
       L.add(this.kt(W / 2 - 430, y, who, 26, '#f3e4c4').setOrigin(0, 0.5));
       L.add(this.kt(W / 2 + 470, y, st, 26, hex).setOrigin(1, 0.5));
     });
+    // KVKK aydınlatması (2026-10-25; Ömer 2026-11-08: ayrı Multiplayer sütunu kalktı, uyarı lobide ve Join kutusunda)
+    L.add(this.kt(W / 2, 870, IP_NOTE, 17, '#a8977a', { bold: false, stroke: 2 }).setOrigin(0.5));
     if (mp.channelMode === 'relay') L.add(this.kt(W / 2, 648, 'Connected through the server (direct link was not possible)', 18, '#9cc4ff', { bold: false, stroke: 2 }).setOrigin(0.5));
     this.nameLine(W / 2, 1024);
     L.add(this.kt(W / 2, 836, s.connected ? 'Both players press Ready to choose teams (4 champions each).' : 'Share the code or the invite link with your friend.', 22, '#a8977a', { bold: false, stroke: 2 }).setOrigin(0.5));

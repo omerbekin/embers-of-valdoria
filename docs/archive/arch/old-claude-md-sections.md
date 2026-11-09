@@ -1,3 +1,4 @@
+> **Ne için:** arch/old-claude-md-sections arşivi; güncel değil.
 # Eski CLAUDE.md bölümleri (workflow-rules.md sonundan arşive taşındı, birebir)
 
 Güncel çekirdek: kök `CLAUDE.md`. Yalnız geçmiş.
@@ -51,4 +52,3 @@ Güncel çekirdek: kök `CLAUDE.md`. Yalnız geçmiş.
 ## Kapsam dışı (şimdilik)
 - Co-op ve sefer çok oyunculusu. (İki oyunculu çevrimiçi **Quick Battle** var: `docs/design/multiplayer.md`, `src/net/`, Worker `cloudflare/`; ağ katmanı yalnızca lockstep hamle gönderir, motor kuralı değişmez.)
 - Kayıtlı (gerçek) ses/müzik dosyaları; SFX ve müzik WebAudio sentezidir (ayrıntı `docs/arch/assets.md` > Ses ve müzik).
-

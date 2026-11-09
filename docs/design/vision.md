@@ -1,8 +1,8 @@
 # Embers of Valdoria: Vizyon
 
-> Onaylı 2026-11-08 (Ömer).
+> **Ne için / Güncel mi (2026-11-08):** oyunun tek sayfalık vizyonu: ne oyun, modlar, çekirdek, ilerleme, kapsam dışı. Ömer onaylı (2026-11-08).
 > Eski taslak (2026-10-08, "2 class dikey dilim"): `docs/archive/design/vision-2026-10-08.md`.
-> Sürüm: 0.9.11 (`package.json`). Detaylar ilgili belgelerde; burası tek sayfalık özet.
+> Sürüm numarası burada yazılmaz (sürekli eskir): `package.json` ve patch notes. Detaylar ilgili belgelerde; burası tek sayfalık özet.
 
 ## Ne bu oyun
 Yandan görünümlü, sıra tabanlı, taktiksel parti RPG'si. Pixel art, ortaçağ. Web'de oynanır; telefonda da.
@@ -23,7 +23,7 @@ Değişenler: "2 class dikey dilim" aşıldı (13 kahraman). "Co-op yok" kararı
 | Sefer (Campaign) | Tek oyunculu. Valdoria haritası, düğümler (savaş, elit, boss, olay, hazine, kasaba). Harita 1, 2 ve 3 (Hollow Crown) açık; Harita 4 ve 5 1.0 sonrası planda (`future-ideas/campaign.md`). Normal ve Ironman kayıt. | `campaign/campaign.md`, `campaign/maps-2-3.md` |
 | Tutorial | Sefer içinde: Mill Road + Garrick'in durum dersleri. Tek kahramanla başlanır. | `tutorial.md` |
 | Quick Battle | Takım seç, tek savaş. Herkes açık. Çevrimiçi 2 kişilik mod: lobi kodu/davet linki, lockstep, seed iki taraflı. | `multiplayer.md` |
-| Endless | Art arda dalgalar, dalga arası ödül kartı, 5 dalgada dükkân; skor = ulaşılan dalga. | `progression/roadmap.md` bölüm 3 |
+| Endless | Art arda dalgalar, dalga arası ödül kartı, 5 dalgada dükkân; skor = ulaşılan dalga. | `docs/archive/design/progression/roadmap-2026-10.md` bölüm 3 (arşiv), `waves.md` |
 
 ## Savaş çekirdeği
 - Tahta: her taraf 4 sıra x 3 şerit. Parti solda, düşman sağda.
@@ -32,7 +32,7 @@ Değişenler: "2 class dikey dilim" aşıldı (13 kahraman). "Co-op yok" kararı
 - Dalgalar: sefer Watchtower'dan, Endless 6. savaştan; ekranda "Round 2/3". (`waves.md`)
 - Durumlar, elementler, zeminler: Slow, Chilled, Frozen, Burning, Shocked, Wound, Stun, Omen ve daha fazlası. (`combat.md`, `data/statuses.json`)
 - 4 temel stat (STR, INT, DEX, LUCK); her sınıfın bir primary'si ve bonusu.
-- Kaynaklar: MP (INT'ten), Warrior'da Rage.
+- Kaynaklar: MP (INT'ten), Warrior'da Rage; Undead'in bazı skill'leri can harcar, Gambler can ve MP'yi bahse sokar. Kahraman listesi: `classes.md`.
 - Yapay zeka: sınıf ve mob başına profil. (`ai-priorities.md`)
 
 ## İlerleme
@@ -41,7 +41,7 @@ Değişenler: "2 class dikey dilim" aşıldı (13 kahraman). "Co-op yok" kararı
 | Level | Tavan L50; level başına 3 stat puanı + 1 skill puanı. (`progression/levels.md`) |
 | Skill ağacı | Sınıf başına bir ağaç; ağaç skill'in oynanışını değiştirir, genel stat vermez. (`classes/skill-tree-logic.md`) |
 | Item | Silah türleri, 1 el + off-hand ya da 2 el; zırh, tılsım, set, affix. (`progression/items.md`) |
-| Ekonomi | Altın, dükkân, kasaba, Valor korları. (`economy-d8-proposal.md`) |
+| Ekonomi | Altın, dükkân, kasaba, Valor korları. (`docs/archive/design/economy-d8-proposal.md`, arşiv) |
 | Kahraman açılışı | Seferde katılımla açılır; Quick Battle'da açık. Tier konsepti onaysız. (`progression/character-tiers.md`) |
 
 ## Sanat ve ses

@@ -1,4 +1,5 @@
 # Asset kaynakları
+> **Ne için / Güncel mi (2026-11-08):** Dış kaynaklı ve üretilmiş asset kaynak ve lisans kaydı. Sahip: `docs/arch/assets.md`; yeni dış kaynaklı asset buraya yazılır.
 
 | Dosya | Kaynak | Lisans |
 |---|---|---|
@@ -37,7 +38,7 @@ Kaynak: Ömer'in ChatGPT ile ürettirdiği iki Hexer görseli (1254x1254, arka p
 
 ## The Bridge Warden + Iron Mooring (2026-10-08 import; King's Bridge boss)
 
-Kaynak: Ömer'in ChatGPT ile ürettirdiği iki görsel (arka plan şeffaf; WebP'den PNG'ye çevrildi; prompt `docs/design/bosses/bridge-warden.md` 7.5). Lisans: Ömer'e ait.
+Kaynak: Ömer'in ChatGPT ile ürettirdiği iki görsel (arka plan şeffaf; WebP'den PNG'ye çevrildi; prompt `docs/archive/design/bosses/bridge-warden.md`). Lisans: Ömer'e ait.
 - Orijinaller: `source/characters-v2/bridge_warden.webp|png` (1254x1254, sağa bakar; sol kolda zincir, sağ elde çapa) ve `iron_mooring.webp|png` (1536x1024, zincir sola uzanır).
 - `sprites/bridge_warden/idle.png` (643x640) + `avatars/bridge_warden.png` (yüz ızgarası + göğüs çatlağı); `sprites/iron_mooring/idle.png` (924x640; genişlik < 1,5 x yükseklik, tek kare; yatay AYNALI: düşman tarafında çevrilince zincir önündeki Warden'a uzanır, `FLIP_SPRITE`) + `avatars/iron_mooring.png` (palamar başı + sarılı zincir). `tools/import-characters-v2.py --only bridge_warden|iron_mooring` ile üretildi (`HEADS`).
 
@@ -51,13 +52,16 @@ Kaynak: Ömer'in ChatGPT ile ürettirdiği 7 mob görseli (1024x1536; road_thug,
 - Adlı liderler kendi dosyası olmadan çizim paylaşır: Hedge Witch Morwen = `fen_witchling`, Thane of the Deep = `stonebound_warden` (`spriteScale` 1.12).
 
 ## Sefer haritası arka planı (campaign)
-Kaynak: Ömer'in ChatGPT ile ürettirdiği yazısız Valdoria haritası (`campaign/valdoria-bg.webp`, 1672x941, 16:9; referans: `docs/design/campaign/valdoria-map-reference.webp`, prompt `docs/design/campaign/campaign.md` 6.1). Lisans: Ömer'e ait. Harita sahnesi (`src/game/scenes/CampaignMapScene.ts`) ve ana menü arka planı olarak kullanılır; düğüm, yol, etiket ve sis üstüne kodla çizilir.
+Kaynak: Ömer'in ChatGPT ile ürettirdiği yazısız Valdoria haritası (`campaign/valdoria-bg.webp`, 1672x941, 16:9; referans: `docs/design/campaign/valdoria-map-reference.webp`, prompt `docs/archive/design/campaign/campaign-mvp-v5.md` 6.1). Lisans: Ömer'e ait. Harita sahnesi (`src/game/scenes/CampaignMapScene.ts`) ve ana menü arka planı olarak kullanılır; düğüm, yol, etiket ve sis üstüne kodla çizilir.
 
 Geniş sürüm (Ömer 2026-10-08, ChatGPT outpaint): `campaign/valdoria-bg-wide.webp` (1916x821, ~21:9). Eski 16:9 harita bu görselde `data/campaign/valdoria.json > backgroundWide.region` bölgesindedir (SIFT eşleştirmesiyle ölçüldü: ölçek 0,8202, dönme yok, ortalama hata ~1 px; düğüm konumları değişmedi). Ana menü, sefer haritası ve multiplayer zemininde kullanılır; 16:9'da eski haritanın tamamı görünür, ultrawide'da yanları da. Lisans: Ömer'e ait.
 
-Harita 1 yeniden çizim (Ömer onayı 2026-10-22, ChatGPT): kaynak `source/maps-1/valdoria-map-v2.png` (1672x940) -> `campaign/valdoria-bg.webp` (1672x941, kaplayarak ölçeklendi, WebP q86); düğüm konumları bu görsele göre (`docs/design/campaign/map-1-rework.md` 3b). Eski geniş görsel (`valdoria-bg-wide.webp`) eski çizime ait olduğu için kaldırıldı; geniş ekranda kenar dolgusu. Lisans: Ömer'e ait.
+Harita 1 yeniden çizim (Ömer onayı 2026-10-22, ChatGPT): kaynak `source/maps-1/valdoria-map-v2.png` (1672x940) -> `campaign/valdoria-bg.webp` (1672x941, kaplayarak ölçeklendi, WebP q86); düğüm konumları bu görsele göre (`docs/archive/design/campaign/map-1-rework.md` 3b). Eski geniş görsel (`valdoria-bg-wide.webp`) eski çizime ait olduğu için kaldırıldı; geniş ekranda kenar dolgusu. Lisans: Ömer'e ait.
 
 Yeni çizimin geniş sürümü (Ömer onayı 2026-10-22, ChatGPT): kaynak `source/maps-1/valdoria-map-v2-wide.png` (2193x940; ortası x=260..1931 piksel piksel `valdoria-map-v2.png`) -> `campaign/valdoria-bg-wide.webp` (2195x941, `valdoria-bg` ile aynı ölçek, WebP q86). 16:9 harita bu görselde `data/campaign/valdoria.json > backgroundWide.region` = x 261..1933 px, tam yükseklik (piksel karşılaştırmasıyla ölçüldü; düğüm konumları değişmedi). Lisans: Ömer'e ait.
 
 ## Item ikonları (`assets/items/<item-id>.webp`)
-Kaynak: Ömer'in ChatGPT ile ürettirdiği 7 ikon sayfası (`assets/source/item-icons/pack1-5.png`, `pack6.webp`, `pack7.webp`; prompt `docs/design/prompts/item-icons.md` Paket 1-7). `node tools/make-item-icons.mjs` ile kesilir (sahte damalı zemin temizlenir), 256x256 saydam WebP. `extra-a-belts-cloaks.png` ve `extra-b-packs-food.png` istenen paketler değil, item'e bağlı değil. Tek item yenilemek için `assets/source/item-icons/overrides/<item-id>.png|webp` konur (sayfa hücresinin önüne geçer). Geçici: pack5 hücre 4 = Studded Gauntlets, hücre 5 (zincir eldiven) = Archer's Bracer. Lisans: Ömer'e ait.
+Kaynak: Ömer'in ChatGPT ile ürettirdiği 7 ikon sayfası (`assets/source/item-icons/pack1-5.png`, `pack6.webp`, `pack7.webp`; prompt `docs/archive/design/prompts/item-icons.md` Paket 1-7). `node tools/make-item-icons.mjs` ile kesilir (sahte damalı zemin temizlenir), 256x256 saydam WebP. `extra-a-belts-cloaks.png` ve `extra-b-packs-food.png` istenen paketler değil, item'e bağlı değil. Tek item yenilemek için `assets/source/item-icons/overrides/<item-id>.png|webp` konur (sayfa hücresinin önüne geçer). Geçici: pack5 hücre 4 = Studded Gauntlets, hücre 5 (zincir eldiven) = Archer's Bracer. Lisans: Ömer'e ait.
+
+## 2026-10-23 sonrası sanat
+Kayıt 2026-10-22'de bitiyordu. Bu tarihten sonraki tüm sanat (Harita 2 ve 3 arka planları, Skald / Vesper / Mage / Druid yeni karakter ve VFX sanatı, kasaba görselleri, mob ve ikon paketleri) Ömer'e aittir (ChatGPT / Codex üretimi). Dış kaynaklı bir şey eklenirse buraya satır yazılır (`docs/arch/assets.md`). Ham kaynaklar `assets/source/<alan>/` altındadır (oyuna yüklenmez).

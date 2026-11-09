@@ -15,7 +15,6 @@ import { blurredTexture, edgeFillers, mapArt } from '../map-art';
 import { coverShift, focusCrop, placeArt } from '../wide-map';
 import layout from '../../../data/battle-layout.json';
 import { onStageResize, stageView, worldXY } from '../stage';
-import { growTouchZone } from '../touch-hit';
 import { FULL_W, FULL_X0, MENU_COL_X, menuColumnShift } from '../../ui/viewport';
 import type { Modal } from '../campaign-ui';
 import { storage } from '../kv-storage';
@@ -32,15 +31,14 @@ import { SPEED_STEPS, battleSpeed, battleSpeedLabel, onBattleSpeedChange, setBat
 import { openDebugMenu } from '../../ui/debug-entry';
 import { currentSupport, IOS_HINT, isStandalone, onFullscreenChange, toggleFullscreen } from '../../ui/fullscreen';
 import { isInputLocked, lockInput, unlockInput } from '../../ui/input-lock';
-import { promptCode, promptName } from '../../ui/mp-overlay';
+import { promptCode } from '../../ui/mp-overlay';
 import { normalizeLobbyCode } from '../../net/lobby-code';
-import { sanitizeName } from '../../net/protocol';
 import { openWiki } from '../../wiki/open';
 import { BODY_FONT, DISPLAY_FONT, menuStyle } from '../../ui/menu-style';
 import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { markBootReady, setBootProgress } from '../../ui/boot-loader';
 import { buildLedger, ledgerHeight, type Ledger, type LedgerRow } from '../menu-ledger';
-import { EL, elBack, elDiamond, elGlow, elGo, elScreenIn, elText, elBody } from '../elegant-ui';
+import { EL, elBack, elGo, elScreenIn, elText, elBody } from '../elegant-ui';
 import { trackChunkLoad } from '../../ui/boot-loader';
 import { copyDiagLog, diagConsent, diagReportId, onDiagConsentChange, setDiagConsent } from '../../diag/diag';
 import { openDiagNotice } from '../../diag/diag-notice';
@@ -148,6 +146,12 @@ const SHADOW_DARK = 'rgba(12,8,5,0.95)';
 /** Ana menünün açılışta istediği arka planlar (Play kartları; yedekleriyle). */
 /** Play kartları artık kendi görsellerini kullanır (assets/cards, src/game/card-art.ts): menü açılışında arena arka planı yüklenmez. */
 const MENU_BACKGROUNDS: string[] = [];
+/** Kart hover ışığının kaynağı (kart görselindeki ışık; kartın kesri) ve rengi: Campaign kale yangını, Quick Battle gökyüzü, Multiplayer ay. */
+const CARD_LIGHT: ReadonlyArray<{ x: number; y: number; tint: number }> = [
+  { x: 0.75, y: 0.12, tint: 0xe0702a },
+  { x: 0.5, y: 0.06, tint: 0xf0a040 },
+  { x: 0.8, y: 0.12, tint: 0x96b4ff },
+];
 /** Quick Battle kartındaki Endless mode anahtarı (localStorage). */
 const ENDLESS_TOGGLE_KEY = 'eov.qbEndless';
 const SHADOW_GLOW = 'rgba(240,140,40,0.85)';
@@ -241,7 +245,7 @@ export class MainMenuScene extends Phaser.Scene {
   private back!: Phaser.GameObjects.Container;
   /** Sağ alttaki küçük sürüm yazısı (DISPLAY_VERSION). */
   private version: Phaser.GameObjects.Text | null = null;
-  private cards: Array<{ c: Phaser.GameObjects.Container; focus: (on: boolean, kb?: boolean) => void; run: () => void; toggle?: () => void; closeLedger?: () => void }> = [];
+  private cards: Array<{ c: Phaser.GameObjects.Container; focus: (on: boolean, kb?: boolean) => void; run: () => void; rowMove?: (d: number) => void; toggle?: () => void; closeLedger?: () => void }> = [];
   private outsideTapBound = false;
   private cardSel = 0;
   private cleanups: Array<() => void> = [];
@@ -660,6 +664,8 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private setView(next: MenuView, instant = false): void {
+    // Ayrı Multiplayer sütunu kaldırıldı (Ömer 2026-11-08): Host / Join Multiplayer kartının defterinde; eski 'mp' isteği kartlara düşer
+    if (next === 'mp') next = 'play';
     const prev = this.view;
     if (prev === next && !instant) return;
     if (next !== 'menu' && next !== 'play') this.cameFrom = prev;
@@ -669,7 +675,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.tweenLook(next, instant);
     this.slideMenu(next === 'menu', instant);
     this.showCards(next === 'play', instant);
-    this.showPanel(next === 'settings' || next === 'mp' ? next : null, instant);
+    this.showPanel(next === 'settings' ? next : null, instant);
     this.showBack(next !== 'menu', instant);
     if (next === 'menu') this.selectMain(this.menuSel);
   }
@@ -803,6 +809,13 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
       { id: 'qb', name: 'Quick Battle', meta: 'Pick two teams', primary: !this.endlessOn(), enabled: true, run: () => goQb(false) },
       { id: 'endless', name: 'Endless', meta: best > 0 ? `Best wave ${best}` : 'No runs yet', primary: this.endlessOn(), enabled: true, run: () => goQb(true) },
     ];
+    // Multiplayer kartı defteri (Ömer 2026-11-08): ayrı Multiplayer sütunu yerine Host / Join; ad kayıtlı addır (değiştirme lobide),
+    // IP uyarısı Join kutusunda ve lobide (bağlantı o adımlarda kurulur)
+    const mpOk = !!mp.serverUrl();
+    const mpRows: LedgerRow[] = [
+      { id: 'host', name: 'Host', meta: mpOk ? 'Open a lobby, share the code' : 'Server not set up', primary: true, enabled: mpOk, run: () => mp.host() },
+      { id: 'join', name: 'Join', meta: mpOk ? "Enter a friend's code" : 'Server not set up', primary: false, enabled: mpOk, run: () => void this.askCode() },
+    ];
     const focusOf = (key: string | null): readonly [number, number] | null => {
       const id = key?.startsWith('bg:') ? key.slice(3) : key?.startsWith('card:') ? key.slice(5) : null;
       return (id && (layout.backgrounds.cardFocus as unknown as Record<string, [number, number]>)[id]) || null;
@@ -820,7 +833,7 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
         rows: qbRows,
         run: () => (this.endlessOn() ? elGo(this, ENDLESS_SCENE) : elGo(this, 'TeamSelectScene')),
       },
-      { name: 'Multiplayer', art: cardArt(this, 'multiplayer') ?? art('duelling-ring-moon') ?? art('kings-bridge'), line: 'Fight a friend online', run: () => this.setView('mp') },
+      { name: 'Multiplayer', art: cardArt(this, 'multiplayer') ?? art('duelling-ring-moon') ?? art('kings-bridge'), line: 'Fight a friend online', rows: mpRows, run: () => (mpOk ? mp.host() : undefined) },
     ];
     specs.forEach((s, i) => {
       const cx = W / 2 + (i - 1) * (CARD_W + CARD_GAP);
@@ -875,6 +888,21 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
         ctx.fillRect(0, 0, 4, 256);
       });
       c.add(this.add.image(0, 0, shadeKey).setDisplaySize(CARD_W, CARD_H));
+      // Hover ışığı (Ömer 2026-11-09, mockup B): görselin kendi ışık kaynağından (Campaign kale yangını, Quick Battle gökyüzü, Multiplayer ay)
+      // kartın içine çapraz yumuşak parıltı; kart sınırında kalır (doku kart boyunda), odakta belirir
+      const src = CARD_LIGHT[i] ?? CARD_LIGHT[0]!;
+      const lightKey = canvasTex(this, `mm-cardlight-${i}`, CARD_W / 2, CARD_H / 2, (ctx) => {
+        const sx = (CARD_W / 2) * src.x;
+        const sy = (CARD_H / 2) * src.y;
+        const g = ctx.createRadialGradient(sx, sy, 5, sx, sy, (CARD_W / 2) * 0.9);
+        g.addColorStop(0, 'rgba(255,255,255,0.42)');
+        g.addColorStop(0.5, 'rgba(255,255,255,0.12)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, CARD_W / 2, CARD_H / 2);
+      });
+      const cardLight = this.add.image(0, 0, lightKey).setDisplaySize(CARD_W, CARD_H).setTint(src.tint).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
+      c.add(cardLight);
       const glow = this.add.image(0, 0, ensureGlow(this)).setTint(0xf0a040).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDisplaySize(CARD_W * 1.5, CARD_H * 1.3);
       c.addAt(glow, 0);
       const frame = this.add.graphics();
@@ -899,145 +927,29 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
       c.add(zone);
       let lineText: Phaser.GameObjects.Text | null = null;
       if (s.line) c.add((lineText = (ELEGANT ? this.noteText(0, hh - 52, s.line, LOOK.cardLine - 2, '#cdb88d') : serif(this, 0, hh - 50, s.line, 24, '#cdb88d', { bold: false, stroke: 3 })).setOrigin(0.5)));
-      let tabFocus: ((kb: boolean) => void) | null = null;
       let toggleEndless: (() => void) | null = null;
       if (s.endless) {
-        // Endless sekmesi (Ömer 2026-10-18, taslak endless-toggle C): kartın üst kenarına asılı küçük sekme; fare kartın/sekmenin üstüne gelince
-        // karttan yukarı kayar, gidince geri girer. Açıkken (kapalı sekmeyle bile) kartın çerçevesi kor renginde yanar. Açıkken kart Endless'ı açar.
+        // Endless durumu (Ömer 2026-11-08: kartın üstündeki Endless sekmesi kaldırıldı; seçim artık defterdeki Quick Battle / Endless
+        // satırlarından ya da klavyede E'den). Açıkken kartın çerçevesi kor renginde yanar, görsel alacakaranlığa geçer, kart Endless'ı açar.
         const lineFor = () => (this.endlessOn() ? 'Endless waves - how far can you go?' : s.line!);
         lineText?.setText(lineFor());
-        const TAB_H = 52;
-        const tab = this.add.container(0, 0);
-        const tabGlow = this.add.image(0, 0, ensureGlow(this)).setTint(EMBER).setBlendMode(Phaser.BlendModes.ADD);
-        const plate = this.add.graphics();
-        const dOn = elDiamond(this, 7);
-        const dOff = elDiamond(this, 7, true);
-        const tabLabel = elText(this, 0, 0, 'Endless', 19, EL.TXT, { em: 0.16, pad: true }).setOrigin(0, 0.5);
-        const tabState = elBody(this, 0, 1, '', 19, EL.MUTED, false).setOrigin(0, 0.5);
-        const tabZone = this.add.zone(0, 0, 10, TAB_H).setInteractive({ useHandCursor: true });
-        const growTab = growTouchZone(this, tabZone, 10, TAB_H, { growY: 'up' }); // telefonda alan yukarı (kartın dışına) büyür; görünüm aynı
-        tab.add([tabGlow, plate, dOn, dOff, tabLabel, tabState, tabZone]);
-        c.addAt(tab, 0); // kartın görselinin ARKASINDA: gizliyken kartın içinde kalır
-        // Kartın kor çerçevesi (Endless açıkken sürekli; hover/odaktan bağımsız)
         const emberGlow = this.add.image(0, 0, ensureGlow(this)).setTint(EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(CARD_W * 1.4, CARD_H * 1.25);
         c.addAt(emberGlow, 0);
         const emberFrame = this.add.graphics();
         c.add(emberFrame);
-        let tabHover = false;
-        const drawTab = (hover: boolean) => {
-          const v = this.endlessOn();
-          dOn.setVisible(v);
-          dOff.setVisible(!v);
-          tabState.setText(v ? 'on' : 'off').setColor(v ? EL.ON : EL.MUTED);
-          tabLabel.setColor(hover || v ? EL.ON : EL.TXT);
-          elGlow(tabLabel, hover);
-          const tw = tabLabel.width - EL.PAD * 2;
-          const inner = 14 + 14 + tw + 12 + tabState.width;
-          const w = inner + 60;
-          const x0 = -inner / 2;
-          dOn.setPosition(x0 + 7, 0);
-          dOff.setPosition(x0 + 7, 0);
-          tabLabel.setX(x0 + 28 - EL.PAD);
-          tabState.setX(x0 + 28 + tw + 12);
-          growTab(w, TAB_H);
-          plate.clear();
-          plate.fillStyle(v ? 0x2a190d : 0x17100a, 1).fillRect(-w / 2, -TAB_H / 2, w, TAB_H);
-          plate.lineStyle(1, v || hover ? EL.ON_N : EL.GOLD, v || hover ? 1 : EL.LINE.a3).strokePoints([{ x: -w / 2 + 0.5, y: TAB_H / 2 }, { x: -w / 2 + 0.5, y: -TAB_H / 2 + 0.5 }, { x: w / 2 - 0.5, y: -TAB_H / 2 + 0.5 }, { x: w / 2 - 0.5, y: TAB_H / 2 }], false);
-          tabGlow.setDisplaySize(w * 1.7, TAB_H * 3).setAlpha(v ? 0.3 : 0);
-        };
         const drawEmber = () => {
           const v = this.endlessOn();
           emberGlow.setAlpha(v ? 0.22 : 0);
           emberFrame.clear();
           if (v) emberFrame.lineStyle(2, EMBER, 0.95).strokeRect(-hw + 1, -hh + 1, CARD_W - 2, CARD_H - 2);
         };
-        // Kayma: 0 = kartın içinde gizli, 1 = tamamen çıkmış. Sekmenin ortası gizliyken -hh+TAB_H/2, çıkınca -hh-TAB_H/2.
-        let slide = 0;
-        let slideTw: Phaser.Tweens.Tween | null = null;
-        const place = () => {
-          tab.setY(-hh + TAB_H / 2 - slide * TAB_H).setVisible(slide > 0.001);
-          if (tabZone.input) tabZone.input.enabled = slide > 0.5;
-        };
-        const slideTo = (to: number) => {
-          if (to === slide && !slideTw) return;
-          slideTw?.stop();
-          slideTw = null;
-          const m = motion('endlessTab');
-          const dur = to > slide ? m.inMs : m.outMs;
-          if (dur <= 0) {
-            slide = to;
-            place();
-            return;
-          }
-          const from = slide;
-          slideTw = this.tweens.addCounter({
-            from: 0,
-            to: 1,
-            duration: dur * Math.abs(to - from),
-            ease: 'Cubic.easeOut',
-            onUpdate: (tw) => {
-              if (!c.active) return void tw.stop(); // kartlar yenilendi
-              slide = from + (to - from) * (tw.getValue() ?? 1);
-              place();
-            },
-            onComplete: () => {
-              slide = to;
-              slideTw = null;
-              place();
-            },
-          });
-        };
-        const coarse = !!window.matchMedia?.('(pointer: coarse)').matches; // dokunmatik: fareyle gelme yok, sekme hep dışarıda
-        let cardHover = false;
-        let kbFocus = false;
-        let leaveEv: Phaser.Time.TimerEvent | null = null;
-        const refresh = () => {
-          const want = coarse || cardHover || tabHover || kbFocus;
-          leaveEv?.remove(false);
-          leaveEv = null;
-          if (want) return slideTo(1);
-          leaveEv = this.time.delayedCall(motion('endlessTab').leaveDelayMs, () => {
-            leaveEv = null;
-            if (!(cardHover || tabHover || kbFocus)) slideTo(0);
-          });
-        };
-        zone.on('pointerover', () => {
-          cardHover = true;
-          refresh();
-        });
-        zone.on('pointerout', () => {
-          cardHover = false;
-          refresh();
-        });
-        tabZone.on('pointerover', () => {
-          tabHover = true;
-          drawTab(true);
-          refresh();
-        });
-        tabZone.on('pointerout', () => {
-          tabHover = false;
-          drawTab(false);
-          refresh();
-        });
         toggleEndless = () => {
           this.setEndlessOn(!this.endlessOn());
           lineText?.setText(lineFor());
           showAlt(this.endlessOn(), true);
-          drawTab(tabHover);
           drawEmber();
         };
-        tabZone.on('pointerup', (_p: Phaser.Input.Pointer, _lx: number, _ly: number, ev: Phaser.Types.Input.EventData) => {
-          ev?.stopPropagation(); // kartın kendi tıklaması (Endless / takım seçimi) tetiklenmesin
-          if (this.ready()) toggleEndless?.();
-        });
-        tabFocus = (kb) => {
-          kbFocus = kb; // klavye odağı sekmeyi gösterir; fareyle odak değişince (kb=false) kapanır
-          refresh();
-        };
-        drawTab(false);
         drawEmber();
-        place();
-        if (coarse) slideTo(1);
       }
       let ledger: Ledger | null = null;
       let ledgerTop = Infinity; // yerel (sol-üst köşeli) y: bunun altı satır bölgesi
@@ -1109,11 +1021,12 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
       const look = { lift: 0, zoom: 1 };
       let lookTw: Phaser.Tweens.Tween | null = null;
       const focus = (on: boolean, kb = false) => {
-        tabFocus?.(on && kb);
         setLedgerFocus?.(on && kb);
+        if (!on || !kb) ledger?.select(-1); // klavye satır seçimi yalnız klavye odağında
         drawFrame(on);
-        this.tweens.killTweensOf(glow);
+        this.tweens.killTweensOf([glow, cardLight]);
         this.tweens.add({ targets: glow, alpha: on ? 0.12 : 0, duration: 160 });
+        this.tweens.add({ targets: cardLight, alpha: on ? 1 : 0, duration: on ? 260 : 200, ease: 'Sine.easeOut' });
         if (!ELEGANT) return;
         // Elegant: odaklanan kart hafif yükselir, görseli hafif yakınlaşır
         lookTw?.stop();
@@ -1142,7 +1055,14 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
         if (ledger?.isOpen() && ly >= ledgerTop) return; // satır bölgesinde görsel tıkı sayılmaz
         if (this.ready()) s.run();
       });
-      this.cards.push({ c: outer, focus, run: s.run, toggle: toggleEndless ?? undefined, closeLedger: () => ledger?.setOpen(false) });
+      // Klavye (Ömer 2026-11-09): yukarı/aşağı odaktaki kartın satırlarında dolaşır (hover gibi görünür), Enter seçili satırı çalıştırır
+      const rowMove = (d: number) => {
+        if (!ledger) return;
+        ledger.setOpen(true);
+        const cur = ledger.selected();
+        ledger.select(cur < 0 ? (d > 0 ? 0 : ledger.count - 1) : moveSelection(cur, d, ledger.count));
+      };
+      this.cards.push({ c: outer, focus, run: () => (ledger?.runSelected() ? undefined : s.run()), rowMove, toggle: toggleEndless ?? undefined, closeLedger: () => ledger?.setOpen(false) });
     });
   }
 
@@ -1171,7 +1091,7 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
 
   // ------------------------------------------------------------ Settings / Multiplayer sütunu
 
-  private showPanel(kind: 'settings' | 'mp' | null, instant: boolean): void {
+  private showPanel(kind: 'settings' | null, instant: boolean): void {
     const old = this.panel;
     this.panel = null;
     this.panelRows = [];
@@ -1194,14 +1114,8 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
     this.panelTop = settings ? SETTINGS_LAYOUT.top : LOOK.panelY0 - ROW_H / 2;
     this.panelRowH = settings ? SETTINGS_LAYOUT.rowH : ROW_H;
     this.panelX = COL_X;
-    p.add(this.titleText(COL_X, settings ? SETTINGS_LAYOUT.titleY : LOOK.titleY, settings ? 'Settings' : 'Multiplayer', LOOK.titleSize, 3).setOrigin(0, 0.5));
-    if (kind === 'settings') this.buildSettings(p);
-    else {
-      this.buildMultiplayer(p);
-      this.panelZone = 'row';
-      this.panelSel = 0;
-      this.selectPanel(0);
-    }
+    p.add(this.titleText(COL_X, SETTINGS_LAYOUT.titleY, 'Settings', LOOK.titleSize, 3).setOrigin(0, 0.5));
+    this.buildSettings(p);
     if (instant) return;
     p.setAlpha(0).setX(this.colX - 30);
     this.tweens.add({ targets: p, alpha: 1, x: this.colX, duration: 450, delay: 250, ease: 'Cubic.easeOut' });
@@ -1543,22 +1457,6 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
     return t;
   }
 
-  /** Multiplayer: mevcut lobi akışının ilk adımı (ad, Host, kodla Join). Lobi kurulmaya başlayınca MultiplayerScene devralır. */
-  private buildMultiplayer(p: Phaser.GameObjects.Container): void {
-    const ok = !!mp.serverUrl();
-    const name = this.valueText(PANEL_W - 6, 0, mp.names().local, TXT_ON).setOrigin(1, 0.5);
-    fitText(name, 260);
-    this.addPanelRow(p, 'Your name', () => void this.askName(name), { right: [name] });
-    this.addPanelRow(p, 'Host a lobby', () => mp.host(), { enabled: ok, right: [this.valueText(PANEL_W - 6, 0, 'Host', ok ? TXT_ON : '#7d705a').setOrigin(1, 0.5)] });
-    this.addPanelRow(p, 'Join with code', () => void this.askCode(), { enabled: ok, right: [this.valueText(PANEL_W - 6, 0, 'Join', ok ? TXT_ON : '#7d705a').setOrigin(1, 0.5)] });
-    // KVKK aydınlatması toplama anında (2026-10-25): bağlantı doğrudan kurulur, rakip IP adresini görebilir (public/privacy.html > Genel)
-    if (ok) p.add(this.noteText(COL_X, LOOK.panelY0 + 3 * ROW_H, 'The other player can see your IP address while you play.', 20, '#a8977a').setOrigin(0, 0.5));
-    if (!ok) {
-      p.add(this.valueText(COL_X, LOOK.panelY0 + 3 * ROW_H, 'Server not configured', '#e08a7a', ELEGANT ? 26 : 30).setOrigin(0, 0.5));
-      p.add(this.noteText(COL_X, LOOK.panelY0 + 3 * ROW_H + 44, 'The multiplayer server address has not been set up yet.', 20, '#a8977a').setOrigin(0, 0.5));
-    }
-  }
-
   /** DOM giriş kutusu açıkken sahne tıklama/tuş almaz. */
   private async withPrompt<T>(ask: () => Promise<T>): Promise<T> {
     this.promptOpen = true;
@@ -1568,14 +1466,6 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
     } finally {
       this.promptOpen = false;
       unlockInput('main-menu-prompt');
-    }
-  }
-
-  private async askName(label: Phaser.GameObjects.Text): Promise<void> {
-    const n = await this.withPrompt(() => promptName(mp.session?.localName ?? '', sanitizeName));
-    if (n !== null && this.scene.isActive()) {
-      mp.setName(n);
-      if (label.active) fitText(label.setScale(1).setText(mp.names().local), 260);
     }
   }
 
@@ -1605,7 +1495,14 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
       if (up || down) this.selectMain(moveSelection(this.menuSel, up ? -1 : 1, this.menuRows.length));
       else if (enter) this.pickMain(MAIN_ITEMS[this.menuSel]!.key);
     } else if (this.view === 'play') {
-      if (left || right || up || down) this.focusCard(moveSelection(this.cardSel, left || up ? -1 : 1, this.cards.length), true);
+      if (left || right) this.focusCard(moveSelection(this.cardSel, left ? -1 : 1, this.cards.length), true);
+      else if (up || down) {
+        const card = this.cards[this.cardSel];
+        if (card?.rowMove) {
+          this.focusCard(this.cardSel, true);
+          card.rowMove(up ? -1 : 1);
+        } else this.focusCard(moveSelection(this.cardSel, up ? -1 : 1, this.cards.length), true);
+      }
       else if (k === 'e' || k === 'E') this.cards[this.cardSel]?.toggle?.(); // Quick Battle odaktayken Endless anahtarı
       else if (enter) this.cards[this.cardSel]?.run();
     } else if (this.view === 'settings' && (this.panelZone === 'cat' || k === 'Tab')) {

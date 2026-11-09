@@ -1,0 +1,14 @@
+{
+  "idle2b": {
+    "rounds": 2,
+    "pass": true,
+    "bestRound": 2,
+    "score": 8
+  },
+  "step2r": {
+    "rounds": 4,
+    "pass": false,
+    "bestRound": 4,
+    "score": 7
+  }
+}

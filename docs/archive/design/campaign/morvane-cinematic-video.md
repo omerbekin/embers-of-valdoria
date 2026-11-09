@@ -1,3 +1,4 @@
+> **Ne için:** design/campaign/morvane-cinematic-video arşivi; güncel değil.
 # Lord Morvane final sinematiği: video promptları
 
 Durum: TASLAK (2026-10-21). Ömer'in seçimleri: hafif ipucu (Morvane sırrı açmaz; yalnızca taç kırılmaz ve korları hâlâ parlar), bölük lideri konuşur, yeni görsel. Seçim formu: https://claude.ai/artifact/CprM9eeoVef4RYd2VH52Ro (db `picks/main`).

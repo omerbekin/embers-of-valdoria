@@ -14,5 +14,5 @@
 *.woff2
 *.ttf
 
-# Geçmiş karar günlüğü (madde 1-329); güncel olan docs/design/open-questions.md
-/docs/design/open-questions-archive.md
+# Geçmiş karar günlüğü (madde 1-520); güncel olan docs/design/open-questions.md
+/docs/archive/design/open-questions-archive.md

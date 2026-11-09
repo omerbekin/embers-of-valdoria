@@ -1,59 +1,59 @@
-# Cutthroat: tasarım dökümanı
+# Cutthroat
 
-> Kaynak: `data/classes/cutthroat.json`, `data/skills.json`, `data/skill-trees/cutthroat.json` (sürüm 1), 2026-11-08. Ağaç mantığı: `skill-tree-logic.md`.
+> **Ne için / Güncel mi (2026-11-08):** Cutthroat kahramanının kimlik, skill ve ağaç özeti. Sayılar `data/classes/cutthroat.json`, `data/skills.json`, `data/statuses.json` ile birebir (veri değişince burası güncellenir). Çerçeve: `docs/design/classes.md`. Tarihçe arşivde (bölüm 6).
 
 ## 1. Kimlik
 
 | Alan | Değer |
 |---|---|
 | id / rol | `cutthroat` / Assassin |
-| Ön sıra önceliği, menzil | 3, menzil 1 (Saltire Cut ve Smoke Bomb kendi menzilini taşır) |
-| Stat (str / int / dex / luck) | 17 / 11 / 26 / 6, primary DEX |
-| Zırh | 10 zırh, 0 büyü zırhı |
-| YZ | `assassin` |
+| Ön sıra önceliği, menzil | 3, menzil 1 |
+| Stat (STR / INT / DEX / LUCK) | 17 / 11 / 26 / 6, ana stat DEX (toplam 60) |
+| Zırh / büyü zırhı | 10 / 0 |
+| YZ profili | `assassin` (`data/ai.json > profiles.assassin`) |
+| Pasif | **Opportunist**: "Deal 25% more damage to targets suffering Wound, Slow, Stun or Wither." |
 
-- **Güçlü yan:** yaralı, yavaş, sersem ya da zayıflamış hedefe +%25 hasar; Backstab ile arka sıraya bile garanti kritik.
-- **Zayıf yan:** kırılgan, işini durum koşullarına bağlıdır; Backstab için hedefin arkası açık olmalı. Kazanma %48,8 / %47,0 (2026-11-08).
+- Suikastçı: medieval haydut, hayvan teması yok, DEX ana stat, kırılgan ve hızlı.
+- **Güçlü:** durumlu (yaralı, yavaş, sersem, zayıflamış) hedefe fazla hasar (Opportunist); Backstab arka sıraya bile garanti kritik.
+- **Zayıf:** kırılgan, işini durum koşullarına bağlar; Backstab için hedefin arkası açık olmalı.
+- Denge ölçümü: `docs/balance.md` (kopya yüzde yazılmaz).
 
 ## 2. Skill'ler
 
-| Skill | Ne yapar | MP / bekleme | Sayı |
-|---|---|---|---|
-| Venom Edge | Yakın kesik, hedefi Wound'lar | 0 / yok | DEX güç 1,0; Wound 2 tur |
-| Saltire Cut | X şekli (merkez + 4 çapraz), merkez iki kez vurulur | 9 / 2 | güç 0,45; menzil 3 |
-| Smoke Bomb | 2x2 alan, iki tahtaya da atılır: düşman Blinded, dost Shrouded | 10 / 3 | 2 tur; menzil 4; hasar yok |
-| Backstab (4. yuva, ult) | Hedefin arkasına geçip sırtından sapla; her vuruş kritik, kalkanla bloklanmaz; hedefin arkası boş olmalı | 14 / 4 (ilk bekleme 3) | güç 1,525; menzil 3, ön sıra ve erişim sınırı yok |
+| Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
+|---|---|---|---|---|
+| Venom Edge (`venom_edge`) | Yakın kesik, hedefi Wound'lar | 0 / yok | sınıf (1) | hasar physical DEX 1; status: status=wound, turns=2 |
+| Saltire Cut (`x_cut`) | X şekli (merkez + 4 çapraz), merkez iki kez vurulur | 9 / 2 | 3 | hasar physical DEX 0,45; area={shape:x, hitsAtCenter:2} |
+| Smoke Bomb (`smoke_bomb`) | 2x2 alan, iki tahtaya da atılır: düşman Blinded, dost Shrouded | 10 / 3 | 4 | status: status=blinded, turns=2, side=enemies; status: status=shrouded, turns=2, side=allies; area={shape:rect, rows:2, cols:2, anchor:bottom_left} |
+| Backstab (`backstab`) | Hedefin arkasına geçip sırtından sapla; her vuruş kritik, kalkanla bloklanmaz; hedefin arkası boş olmalı | 14 / 4, ilk 3 | 3 | hasar physical DEX 1,525, guaranteedCrit=true, unblockable=true; ignoreFrontRow=true; requiresOpenBehind=true |
 
-## 3. Pasif ve skill ağacı
+Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-cutthroat.test.ts`) ve bu tablo birlikte güncellenir.
 
-### Pasif: Opportunist
-Etki `bonusVsStatus`: hedef Wound, Slow, Stun ya da Wither altındaysa +%25 hasar (0,25). Veride `text` yazıldı (2026-11-08).
+## 3. Ağaç
 
-### Ağaç mantığı
-Class kimliği: **zayıflamış hedefi bitirmek**. Ağaç iki soruyu yanıtlar: "hedefi nasıl Opportunist yaparım" (Wound, kan, düşük can) ve "kaçıp saklanarak nasıl yaşarım" (Shrouded, kaçınma, Smoke).
+Ağaç iki soruyu yanıtlar: hedefi nasıl Opportunist yaparım (Wound, kan, düşük can) ve kaçıp saklanarak nasıl yaşarım (Shrouded, kaçınma, Smoke). Düz hasar çarpanı yok.
 
-| Satır | Ana fikir | ea / eb yönü | Evrim (v) |
-|---|---|---|---|
-| Opportunist | Kritle ve kaçınmayla beslenen bonus | **Killer's Eye** (kritte +%15; ma Bloodletter: kritler Wound'lar) / **Counter Cut** (ıskalayana karşı kesik; mb Turned Blade). Kan: Glass Knife (kritte +%30 ama kritsizde -%15) / Reckless Grace (karşı kesik x2, Shrouded biter) | Assassin's Instinct: eksik cana göre büyüyen bonus |
-| Venom Edge | Düşük can bitirici | **Finishing Cut** (%30 altı +%40; ma Clean Kill: öldürünce MP + Backstab -1) / **Backhand Cut** (yandakine de, mb Carving Arc: 3 kesiğe kadar zincir). Kan: Butcher's Haste (%50 altı +%35, üstü -%25) / Thirsty Edge (öldürünce can, Wound yok) | Red Smile: %50 altı çift hasar + kesin kritik |
-| Saltire Cut | Merkez vuruş sayısı | **Double Lunge** (merkez +%20) / **Extra Knife** (3. merkez vuruşu; ma X Marks the Throat; mb Endless Knives). Kan: Heavy Cross (merkez +%30, çapraz -%50) / Spent Belt (4 merkez vuruşu, 14 MP) | Butcher's Cross: X'teki herkese iki kez, güç 0,35 |
-| Smoke Bomb | Kontrol ve kaçış | **Sulfur Cake** (Silence 2 tur; ma Lost in Smoke: Blind iken ıskalayan Stagger) / **Exposed in Smoke** (en düşük canlı Overextended; mb Shrapnel Shell: hasar + Wound). Kan: Sulfur Overload (-%45 isabet, dostu Shrouded yapmaz) / Hard Clay (rastgele düşmana Stun, Blind yok) | Brimstone Jar: Blind + Silence 2 tur, Slow 1 |
+Veri: `data/skill-trees/cutthroat.json` (sürüm 1, bar "Ghost Mastery"). Düğüm adları; metinler için dosyaya bak. Şekil kuralı: `skill-tree-logic.md`.
 
-- **Ult kolları (Backstab):** u = sonrası kaçış (Into the Smoke, Smoke Trail, Shadow Return: ekip Shrouded + Fleet); r = ilk bıçak (Early Knife bekleme 3 -> 1, First Blood, Opening Act); d = zırh deliciliği (Between the Plates, Sure Hand, Spine Splitter); l = menzil (Thrown Stiletto: arkası kapalı hedefe -%30 hasar, Weighted Stiletto, Death From Afar).
-- **Mastery bar "Ghost Mastery":** 5 Ash Cloak (Shrouded +1 tur), 10 Light Step (kaçınılan saldırı 2 MP), 15 Killer Instinct (%50 altı hedefe +%5 kritik), 20 Notched Blade (her öldürme kritik hasarı +%3), 25 Reaper's Due (ilk öldürme diğer bekleme sürelerini sıfırlar).
-- **Neden:** ağaç, pasifin "durumlu hedef" koşulunu besler ve Cutthroat'ı hem bitirici (Venom, Backstab) hem kaçan (Smoke, Shrouded) iki oyun tarzına ayırır; düz hasar çarpanı yok.
+- **Opportunist (pasif):** dolgu Cold Read, Vein Finder, Feinting Step, Missed Chance; anahtar Smell of Blood; yön A Killer's Eye (ödül Bloodletter, uç Glass Knife); yön B Counter Cut (ödül Turned Blade, uç Reckless Grace); evrim Assassin's Instinct. Anahtar: "Opportunist also counts any enemy below 40% HP, status or not."
+- **Venom Edge:** dolgu Balanced Blade, Seeking Tip, Twist the Knife, Honed Point; anahtar Coup de Grace; yön A Finishing Cut (ödül Clean Kill, uç Butcher's Haste); yön B Backhand Cut (ödül Carving Arc, uç Thirsty Edge); evrim Red Smile. Anahtar: "Venom Edge always crits against targets below 30% HP."
+- **Saltire Cut:** dolgu Crossed Crit, Scissor Bite, Keen Pair, Bloody Saltire; anahtar Finishing Cross; yön A Double Lunge (ödül X Marks the Throat, uç Heavy Cross); yön B Extra Knife (ödül Endless Knives, uç Spent Belt); evrim Butcher's Cross. Anahtar: "If Saltire Cut kills any enemy, its cooldown resets."
+- **Smoke Bomb:** dolgu Far Toss, Lungful of Ash, Gritty Ash, Coughing Fit; anahtar Choking Cloud; yön A Sulfur Cake (ödül Lost in Smoke, uç Sulfur Overload); yön B Exposed in Smoke (ödül Shrapnel Shell, uç Hard Clay); evrim Brimstone Jar. Anahtar: "Smoke Bomb on enemies also Silences them for 1 turn."
+- **Ult Backstab (tek kol seçilir):** u Into the Smoke, Smoke Trail, Shadow Return; r Early Knife, First Blood, Opening Act; d Between the Plates, Sure Hand, Spine Splitter; l Thrown Stiletto, Weighted Stiletto, Death From Afar.
+- **Bar Ghost Mastery:** 5 Ash Cloak, 10 Light Step, 15 Killer Instinct, 20 Notched Blade, 25 Reaper's Due.
 
-## 4. Ömer kararları
+## 4. YZ notları
 
-- Madde 225 (arşiv, tarih arşivde net değil): Cutthroat tasarım kararları: medieval haydut-suikastçı, hayvan teması yok, DEX primary, kırılgan-hızlı; Backstab arka hücre kuralı (ceset engellemez).
-- 2026-10-18, madde 350: Cutthroat STR 17 / INT 11 (can 81; ilk denemenin yarısı geri alındı).
-- 2026-10-22, madde 394 (20): Carving Arc'ta Wound zincirdeki her kesikte (isabet edince) uygulanır.
-- 2026-10-23, madde 401: kampanya ve Endless varsayılanlarında Cutthroat'ın ikinci eli dolu gelir.
-- 2026-10-27, madde 443: silah tipleri reworkü; Cutthroat hançeri kritik yerine başka bonus verir (ayrıntı maddede).
-- Madde 271 (arşiv): Blinded ve Jinxed CC sayılmaz (Cutthroat/Hexer karşı oyunu korunur); bu Ömer'e soru olarak sorulmuştu, cevabı bu belgede teyit edilmedi.
+- Profil: `data/ai.json > profiles.assassin`. Her yeni skill / ağaç tetiği YZ değeri + test ile gelir (`tests/ai-coverage.test.ts`).
 
-## 5. Açıklar
+## 5. Açık işler / kararlar
 
-- Opportunist pasif `text` alanı 2026-11-08de yazıldı (veri).
+- Backstab arka hücre kuralı: ceset engellemez (arşiv madde 225). Stat STR 17 / INT 11 (Ömer 2026-10-18, madde 350).
+- Carving Arc: Wound zincirdeki her kesikte, isabet edince uygulanır (Ömer 2026-10-22, madde 394).
+- Kampanya ve Endless varsayılanında ikinci el dolu gelir (Ömer 2026-10-23, madde 401). Silah tipleri reworkünde hançer kritik yerine başka bonus verir (madde 443; ayrıntı arşivde).
+- **Ömer'e açık soru:** Blinded ve Jinxed CC sayılır mı (arşiv madde 271)? Cevap teyit edilmedi.
 - Tutorial'da Cutthroat için sınıf önerisi yok.
-- Ölçümde bant alt yarısı (%47-48,8); sayıya dokunulmadı.
+
+## 6. Tarihçe
+
+Eski tam belge (karar günlüğü, ara değerler, eski ağaç tabloları): `docs/archive/design/classes/cutthroat.md`.

@@ -1,6 +1,7 @@
 # Karakter tier'ları ve açılma (KONSEPT)
 > **Ne için / Güncel mi (2026-11-08):** Karakter kademeleri ve açılma. KONSEPT, uygulanmadı: `data/classes/` içinde tier/kilit alanı yok. Ömer kararları (bölüm 1) canlı, dağılım Claude taslağı ve onaysız. Alan: `docs/arch/areas/character-design.md`.
 
+> Not: aşağıdaki dağılım tablosu ilk 9 karakteri kapsar; Skald, Vesper, Blood Warden vb. için tier satırı yok (Ömer'e sorulacak, uygulanmadı).
 Durum: **konsept, uygulanmadı** (2026-10-24). Ömer'in fikri, Claude'un taslak kararları. Uygulamaya geçmeden önce Ömer'le yeniden konuşulacak. Yeni mekanik içeren kısımlar (MP cost ve bütçe, Endless açılma eşikleri) **onaylanmış mekanik değil**.
 
 ## Ömer'in kararları
@@ -24,7 +25,7 @@ Durum: **konsept, uygulanmadı** (2026-10-24). Ömer'in fikri, Claude'un taslak 
 | T3 | Map 3 ortası | Undead | Karanlık büyü, Hexer'la sinerji. |
 | T3 | Map 3 sonu (gizli/opsiyonel) | Gambler | Risk ve şans; en oynak karakter. |
 
-Bağlantı: maps 2-3 planı onaylı ama 1.0 sonrası yapılacak (`docs/design/campaign/maps-2-3.md`). Şu an yalnızca map 1 var, bu yüzden tier sistemi o planla birlikte ele alınmalı. Açılma anı bir kurtarma savaşı ya da "misafir karakter" denemesi olabilir. Sefer takımı en fazla 4 kişilik.
+Bağlantı: Harita 1-3 oynanıyor (`docs/design/campaign/maps-2-3.md`); tier sistemi hâlâ uygulanmadı, açılma zamanları artık gerçek haritalara bağlanabilir. Açılma anı bir kurtarma savaşı ya da "misafir karakter" denemesi olabilir. Sefer takımı en fazla 4 kişilik.
 
 ## Endless (Claude taslağı)
 - Kendi ilerlemesini tutar, sefer save'inden bağımsızdır.

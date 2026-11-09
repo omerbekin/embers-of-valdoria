@@ -1,3 +1,4 @@
+> **Ne için:** design/balance-baseline-before-initcd arşivi; güncel değil.
 # Balans temeli: initialCooldown ve YZ bağlam değişikliğinden ÖNCE
 
 Kaynak: `npx tsx src/sim/cli.ts 3000 <seed>` (seed 1, 5001, 10001; her biri 3000 savaş), cooldown değişikliği (Aimed Shot / Meteor / All In 4->3), initialCooldown ve YZ bağlam mantığı uygulanmadan ÖNCE alındı. Sonraki balans ajanı bu dosyayla karşılaştırır. Kompozisyon listesi uzun olduğu için çıkarıldı (özeti: tüm koşularda 3 uç değer takım, ör. Anti-Mage + Gambler + Mage + ... %29).

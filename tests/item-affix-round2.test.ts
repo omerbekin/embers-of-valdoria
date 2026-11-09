@@ -4,7 +4,7 @@ import { affixLines } from '../src/progression/item-text';
 import { ITEMS, affixDef, affixValues, validateItems, type ItemInstance } from '../src/progression/items';
 import { loadout } from '../src/progression/loadout';
 
-// Yeni affix turu 2 (Ömer 2026-10-24, item-effects.md "Yeni affix turu 2"): 9 affix, veri eşlemesi (loadout) + motor kancaları. Sayılar provizyon;
+// Yeni affix turu 2 (Ömer 2026-10-24, docs/archive/design/progression/item-effects.md "Yeni affix turu 2"): 9 affix, veri eşlemesi (loadout) + motor kancaları. Sayılar provizyon;
 // testler kuralı denetler (iska kapalı; sayılar veriden).
 
 const cells = (u: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');

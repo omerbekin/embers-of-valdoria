@@ -1,16 +1,15 @@
 # Multiplayer (iki oyunculu çevrimiçi Quick Battle)
-> **Ne için / Güncel mi (2026-11-08):** çevrimiçi Quick Battle: ağ, lobi, lockstep. sistem canlı; ilk sürüm notları 2026-10-08, kod src/net ve cloudflare/.
+> **Ne için / Güncel mi (2026-11-08):** çevrimiçi Quick Battle: ağ, lobi, lockstep. Güncel; sistem canlı, kod `src/net` ve `cloudflare/`.
 
-
-Durum: ilk sürüm (multiplayer-dev, 2026-10-08). Kapsam yalnızca **Quick Battle**; sefer tek oyunculu kalır.
+Durum: canlı. Kapsam yalnızca **Quick Battle**; sefer tek oyunculu kalır.
 Ömer kararları: signaling Ömer'in **Cloudflare** hesabında (ücretsiz plan) küçük bir Worker; kopma kuralı **60 saniye**.
-Varsayımlar ve sorular: `open-questions.md` madde 268.
+Varsayımlar ve sorular: `docs/archive/design/open-questions-archive.md` madde 268.
 
 ## 1. Akış
 
 1. Ana menü > **Multiplayer** > **Host lobby** ya da **Join lobby**.
 2. Kurucu (host) lobi kurar: ekranda büyük **lobi kodu** (6 karakter), **Copy code** ve **Copy invite link** düğmeleri.
-   Davet linki: `https://omerbekin.github.io/embers-of-valdoria/?lobby=KOD` (oyunun açıldığı adres + `?lobby=KOD`).
+   Davet linki: oyunun açıldığı adres + `?lobby=KOD` (adres sabit değil; `src/net/lobby-code.ts > inviteLink` mevcut sayfa adresinden üretir).
    Altında paylaşım satırı (Ömer 2026-10-17): **Share** (yalnızca `navigator.share` olan tarayıcıda, çoğu telefon; sistem paylaşım
    menüsü), **WhatsApp** (`https://wa.me/?text=` + hazır mesaj, yeni sekme) ve **Discord** (Discord hazır mesaj linki desteklemez:
    mesaj panoya kopyalanır, `https://discord.com/app` yeni sekmede açılır, "Invite copied — paste it in Discord"; pano yoksa
@@ -176,34 +175,9 @@ görünür. Yalnızca doğrudan WebRTC kanalında gönderilir (`hello.name`, `na
   (ayrışma bir sonraki hamlenin `before` özetiyle yakalanır), yalnızca maçın son hamlesinde; kalp atışı 20 sn'de bir ve yanıtsız
   (`pong` yok), sessizlik payı 50 sn; oyuncu adı gönderilmez; catchup 25 hamlelik parçalar.
 
-### 9.2 Kota hesabı (ölçüm + varsayım)
+### 9.2 Kota
 
-**Ücretsiz plan sınırları (varsayım, Cloudflare belgesi 2025-2026; deploy öncesi https://developers.cloudflare.com/durable-objects/platform/pricing/
-ve /workers/platform/pricing/ ile teyit):** Workers 100.000 istek/gün. Durable Objects (yalnızca SQLite tabanlı, ücretsiz planda var):
-100.000 istek/gün, 13.000 GB-sn süre/gün, 5 GB depolama, satır okuma 5 milyon/gün, yazma 100.000/gün. WebSocket bağlantısı
-açmak 1 Worker + 1 DO isteği; gelen WebSocket mesajları 20'de 1 DO isteği sayılır (giden ücretsiz). Hibernation'da beklemek süre
-yazmaz. **Temkinli varsayım:** otomatik yanıtlanan ping'ler de gelen mesaj sayılır (belki saymıyor; saymıyorsa rakamlar daha iyi).
-Depolama: bağlanmada 1 okuma + 1 yazma (lobi kimlikleri), ayrılmada 1 yazma: sınırların çok altında.
-
-**Ölçüm:**
-- Doğrudan mod (iki sekme, yerel Worker, gerçek tarayıcı, `MP server traffic`): lobi kurma + katılma + savaş: kurucu 1 bağlantı +
-  ~4-8 mesaj, katılan 1 bağlantı + ~2-4 mesaj; kanal açılınca WebSocket kapandı, savaş boyunca sunucuya 0 mesaj. Debug ile bağlantı
-  koparılıp yeniden kurulunca kişi başı +1 bağlantı, +2-4 mesaj. (Gerçek internette STUN adayları yüzünden signaling mesajı biraz
-  artar: kişi başı ~5-10.)
-- Röle modu (`tests/multiplayer.test.ts > röle modu`, sahte saatle 10 dakikalık oturum, 34 hamlelik savaş): iki taraf toplam
-  **114 mesaj** (64'ü kalp atışı); aynı oturum doğrudan modda 1287 mesaj olurdu (2 sn'lik ping/pong; ama doğrudan modda bunlar
-  Worker'a gitmez). Gerçek tarayıcıda (iki sekme, Force relay) lobi + takım + 2 hamle: iki taraf toplam ~30 Worker mesajı.
-
-**Maç başına beklenen istek (iki oyuncu toplamı):**
-| | Worker isteği | DO isteği | Not |
-|---|---|---|---|
-| Doğrudan | 2 | 2 bağlantı + ~20 mesaj/20 = **~3** | rövanşlar sunucusuz; kopma başına +2/+2 |
-| Röle (10 dk maç, ~60 hamle) | 2 | 2 + (~60 hamle + ~120 ping (sunucu + oyun) + ~30 lobi/takım)/20 = **~13** | |
-| Lobide boşta bekleme | - | saatte ~180 ping/20 = **~9** | kurucu tek başına beklerken |
-
-**Günde kaç maç (ücretsiz):** doğrudan modda Worker sınırı 100.000/2 = **~50.000 maç**, DO sınırı 100.000/3 = **~33.000 maç**;
-tamamı röleye düşerse 100.000/13 = **~7.500 maç**. Süre (GB-sn) hibernation sayesinde sorun değil. Kota dolarsa o gün yeni lobi
-açılamaz; ücretsiz planda para çekilmez.
+Ücretsiz plan kota hesabı ve ölçümler (tarihçe): `docs/archive/design/multiplayer-quota.md`. Not: Worker bugün yalnız lobi (`lobby-logic.ts`, `index.ts`) değil, hesap / kayıt / tanı kodunu da (`auth.ts`, `save-logic.ts`, `diag-logic.ts`) barındırır; kapsamı `cloudflare/README.md`.
 
 ## 10. Kurulum adımları (özet; ayrıntı `cloudflare/README.md`)
 
@@ -220,3 +194,8 @@ açılamaz; ücretsiz planda para çekilmez.
 - **Latency**: 0 / 150 / 500 / 1500 ms gecikme simülasyonu. **Drop connection**: kanalı koparır (60 sn kuralını dener; sahte rakip
   10 sn sonra döner, "Fake opponent stays away" açıksa dönmez). **Simulate desync**: yerel durumu bozar. Data sekmesinde bağlantı
   durumu, rol, kod, hamle sayısı ve son özet görünür.
+
+## 12. Multiplayer'a yeni savaş mekaniği eklerken
+- Yeni savaş durumu Quick Battle'da değişiyorsa (yeni birim alanı, durum, zemin, sayaç) `src/net/state-hash.ts > stateHash` özetine eklenir; iki istemci aynı sonucu bulmalı (sayı metni, sıra sabit). Özette olmayan durum desync'i yakalamaz.
+- Mekanik yalnız sefer / Endless kuralıdır (dalga, harita kuralı, tehlike) ve Quick Battle'da çalışmıyorsa hash'e girmez; yine de kurulumun iki tarafta aynı çıktığı `tests/multiplayer.test.ts` ile denenir.
+- Rastgele sayı tüketen yeni kural iki istemcide aynı sırada tüketmeli (commit-reveal seed, bölüm 8.1); `tests/multiplayer.test.ts` bir savaşı iki istemcide oynatıp özetleri karşılaştırır.

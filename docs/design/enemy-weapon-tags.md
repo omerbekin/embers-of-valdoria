@@ -1,7 +1,7 @@
 # Düşman silah etiketi
 > **Ne için / Güncel mi (2026-11-08):** Düşman silah etiketi tasarımı. CANLI ama UYGULANMADI: `data/mobs/` içinde silah etiketi alanı yok, kod yok. Karar sahibi Combat Design; fikir günlüğü `future-ideas/combat.md`.
 
-**Durum:** yalnız tasarım, kod yok (Ömer 2026-11-01, Koordinatör formu). Sahibi Combat Design; arayüz kısmı yapım zamanı UI-UX Design'a devredilir.
+**Durum:** yalnız tasarım, kod yok (Ömer 2026-11-01, form cevabı). Sahibi Combat Design; arayüz kısmı yapım zamanı UI-UX Design'a devredilir.
 
 Fikir: düşman, kahraman silahlarındaki türe göre küçük bir özellik alır. Baltalı haydut ile hançerli haydut farklı hissettirir.
 
@@ -42,7 +42,7 @@ Etiket adı kendi adıyla görünür, kural silahınkiyle aynıdır. Yeni kural 
 
 ## Yapım öncesi açık sorular
 
-1. Hayalet ve büyücüler bu altı türden birini mi alır, yoksa kahramandaki Asa (Max MP) ve Tılsım (tur başına MP) da düşmana açılır mı? "Bütün moblar" seçildi, ama listede büyü silahı yok. Asa düşmanda mob mana dengesini (madde 466) değiştirir.
+1. Hayalet ve büyücüler bu altı türden birini mi alır, yoksa kahramandaki Asa (Max MP) ve Tılsım (tur başına MP) da düşmana açılır mı? "Bütün moblar" seçildi, ama listede büyü silahı yok. Asa düşmanda mob mana dengesini (arşiv madde 466, `docs/archive/design/open-questions-archive.md`) değiştirir.
 2. Boss ve adlı liderler: etiket onlara da yazılır mı, yoksa kendi pasifleri yeter mi?
 3. Tür mobun kendi dosyasında mı, ailesinde mi durur?
 

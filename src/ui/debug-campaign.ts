@@ -914,7 +914,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     },
   });
 
-  // Ana menü (Play kartları, Settings ve Multiplayer sütunları; src/game/scenes/MainMenuScene.ts)
+  // Ana menü (Play kartları, Settings sütunu; Multiplayer Host / Join kartın defterinde; src/game/scenes/MainMenuScene.ts)
   const openMenu = (view: 'menu' | 'play' | 'settings' | 'mp') => {
     const active = [...SCENES, 'MultiplayerScene'].find((k) => game.scene.isActive(k));
     if (active) (game.scene.getScene(active) as Phaser.Scene).scene.start('MainMenuScene', { view });
@@ -924,7 +924,6 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     ['menu', 'Main menu', 'frame', 'Open the main menu (Play · Settings · Codex)'],
     ['play', 'Play cards', 'sword', 'Open the main menu on the Play cards (Campaign · Quick Battle · Multiplayer)'],
     ['settings', 'Menu settings', 'gear', 'Open the main menu on its Settings column'],
-    ['mp', 'Menu multiplayer', 'team', 'Open the main menu on its Multiplayer column (name, Host, Join)'],
   ];
   for (const [view, label, icon, hint] of views) {
     debug.register({ id: `menu.${view}`, tab: CAMPAIGN_TAB, section: 'Main menu', icon, label, hint, run: () => openMenu(view) });

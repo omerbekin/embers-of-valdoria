@@ -959,18 +959,7 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
   const box = scene.add.container(0, 0, [img, fx, edge]).setDepth(30);
   const alive = () => box.active && box.scene !== undefined;
   const me: GroundEntry = { key: `${groundId}:${board}`, board, slots, redraw: () => undefined };
-  // Healing Rain: her hücreye kendi çizimi sığ su havuzu döngüsü (sheet inince yüklenir; yüklenemezse yalnız altındaki renk kalır)
-  if (groundId === 'healing_rain') {
-    const POOL = 'druid/02-healing-pool';
-    void ensureVfxSheets(scene, [POOL]).then(() => {
-      if (!alive()) return;
-      for (const k of cells) {
-        const w = Math.max(...k.q.map((p) => p.x)) - Math.min(...k.q.map((p) => p.x));
-        const spr = vfxSheet(scene, POOL, k.m.x, k.m.y, { size: w * 0.8, loop: true, from: Math.floor(k.ph) % 8, alpha: 0.9, depth: 30, inbetween: { method: 'crossfade+motion', sub: 3 } });
-        if (spr) box.add(spr);
-      }
-    });
-  }
+  // Healing Rain: zeminde halka/havuz yok, yalnız dolu hücre rengi (Ömer 2026-11-08)
   let grow = 0; // 0..1 dolma ilerlemesi
   let edgeK = 0;
   let live = false;
@@ -1225,7 +1214,7 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
           }
         }
       } else if (groundId === 'healing_rain') {
-        // Healing Rain: hareket sheet'te (üstteki havuz döngüsü)
+        // Healing Rain: yalnız dolu kare, ek çizim yok
       } else if (healing) {
         // Holy Ground: hücrenin içinden yavaşça yükselen küçük ışık zerreleri (krem / soluk yeşil) + ortada tek, yavaş nabız atan yumuşak ışık
         const pulse = 0.5 + 0.5 * Math.sin(t * 1.6 + k.ph);

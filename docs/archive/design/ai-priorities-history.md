@@ -1,3 +1,4 @@
+> **Ne için:** design/ai-priorities-history arşivi; güncel değil.
 # YZ tercih sıralaması: eski ölçüm bölümleri (tarihçe)
 
 > Taşındı 2026-11-08: `docs/design/ai-priorities.md` bölüm 1-5 ve 9 (2026-10-07 ölçümü, class bazlı eski davranış). Sayılar bugünkü `src/engine/ai.ts` / `ai-value.ts` ile eşleşmez; geçerli kural ve veri: `ai-priorities.md` bölüm 0, 6-8 ve `data/ai.json`.
@@ -220,4 +221,3 @@ Seferde (1-4 kişilik takımlar) en çok etkilenecekler: Undead (çağrısına b
 | Doom Mark öncesi Omen | 0: %31, 1: %33, 2: %36 |
 | Treant çağrısı | Druid'in ilk turunda (savaş turu 3-5) |
 | All In | ortalama savaş turu 29, %76 öldürme |
-

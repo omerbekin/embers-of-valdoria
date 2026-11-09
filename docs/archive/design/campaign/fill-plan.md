@@ -1,3 +1,4 @@
+> **Ne için:** design/campaign/fill-plan arşivi; güncel değil.
 # Valdoria haritasını doldurma planı (A1-x, 26 düğüm)
 
 > **Durum: TASARIM PLANI, revizyon 2 (content designer, 2026-10-12).** Kod, veri ya da commit değişmedi.

@@ -1,3 +1,4 @@
+> **Ne için:** design/campaign/map3-art-status arşivi; güncel değil.
 # Harita 3 (Hollow Crown) sanat durumu (2026-11-02)
 
 Kural (Ömer): tamam = hiçbir şey ödünç değil. Üretim: Codex imagegen (`tools/codex/imagegen.mjs`, tarayıcı açılmadı), en çok 2 paralel iş. Her sayfa gözle kontrol edildi; Codex bir kez yanlış görseli kopyaladı (paralel iş karışması: aynı md5), o ikisi silinip yeniden çizildi.

@@ -1,3 +1,4 @@
+> **Ne için:** design/art/skill-tree-icons-antimage arşivi; güncel değil.
 # Skill ağacı ikonları: Antimage (Codex/ChatGPT promptları)
 
 content-designer, 2026-10-23. Durum: **üretime hazır.** Warrior örnek seti Ömer'den stil onayı aldı; bu belge aynı kalıbı Antimage'e uygular.

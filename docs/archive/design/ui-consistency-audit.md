@@ -1,3 +1,4 @@
+> **Ne için:** design/ui-consistency-audit arşivi; güncel değil.
 # Arayüz tutarlılık denetimi (2026-10-10, ui-dev)
 
 Ömer'in isteği: "Bütün menülerin görünüşü ve davranışları, her ekranda menü düğmelerinin nerede durduğu ve bu yerleşimin mantıklı olup olmadığı, menüler arası tüm geçiş animasyonları: hepsi tutarlı, tek ortak yapı. Birebir kopya değil, ama farklı yerlerden kesilip yapıştırılmış gibi de durmasınlar."

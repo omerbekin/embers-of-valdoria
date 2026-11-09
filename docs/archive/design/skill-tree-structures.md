@@ -1,3 +1,4 @@
+> **Ne için:** design/skill-tree-structures arşivi; güncel değil.
 # Skill ağacı: 10 YAPI önerisi (mockup brief'i, 2026-10-20, ÖNERİ)
 
 Ömer'in çerçevesi (2026-10-20):

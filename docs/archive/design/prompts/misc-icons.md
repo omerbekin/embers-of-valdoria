@@ -1,3 +1,4 @@
+> **Ne için:** design/prompts/misc-icons arşivi; güncel değil.
 # Durum, element, zemin, relic, sınıf ve harita ikonları: ChatGPT prompt'ları
 
 Ömer 2026-10-10: skill ikonları hariç kodla çizilen tüm ikonlar ChatGPT ile boyanır. Limit az olduğu için 3 sayfa, her sayfada 20 ikon

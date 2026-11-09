@@ -1,3 +1,4 @@
+> **Ne için:** design/art arşivi; güncel değil.
 # Görsel Rehber
 
 - Stil: pixel art, yandan görünüm.

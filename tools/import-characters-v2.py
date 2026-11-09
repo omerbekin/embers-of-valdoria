@@ -17,9 +17,9 @@ MARGIN = 0.015
 # id: (cx, top, size)  -> içerik kutusunun sol-üstüne göre, orijinal (1254px) piksel; kare kafa+boyun kutusu
 HEADS = {
     'antimage': (318, 0, 275),  # 2026-10-18: yeni kadın Anti-Mage (antimage-v3-themes/final-idle-2.png); eskisi antimage-old-v2.png
-    'archer': (309, 0, 235),
+    'archer': (170, -12, 132),  # 2026-11-08: archer-v3 idle1 pozundan (yeni Archer, idle-g); eskisi archer-old-2026-11-03.png
     'defender': (500, 0, 250),
-    'druid':    (395, 25, 240),
+    'druid':    (168, -8, 145),  # 2026-11-08: druid-v2 idle1 pozundan (boyali figur); eskisi druid-old-2026-11-03.png
     'gambler': (282, 0, 315),
     'mage':     (380, 0, 270),
     'paladin':  (522, 0, 240),
@@ -27,6 +27,7 @@ HEADS = {
     'treant':   (543, 105, 400),
     'undead':   (403, 30, 280),
     'warrior': (623, 0, 265),
+    'skald': (135, -6, 140),  # 2026-11-08: skald-v2 yeni idle1 (3/4 savaş duruşu) pozundan; eski kaynak skald-v2/_old-2026-11-08/idle1.png
     'cutthroat': (550, 0, 285),
     'hexer': (375, 0, 290),
     # King's Bridge boss (2026-10-08): yüz (pas ızgaralı taş baş) + göğüs çatlağı (kor) birlikte

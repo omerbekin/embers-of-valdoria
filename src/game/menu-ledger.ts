@@ -5,9 +5,11 @@ import { EL, diamondPts, elBody, elDiamond, elGlow, elText, fitW } from './elega
 import { touchUnits } from './touch-hit';
 
 /**
- * Ana menü kart "defteri" (Ömer 2026-11-07, taslak menu-card-buttons-2 A "Ledger"): kartın altında satırlar; ilk satır öne çıkan eylem
- * (kayıt bilgisiyle), diğerleri kendi bilgisiyle. Satırlar kapalıyken gizli; fare kartın üstüne gelince / klavye odağında / dokunmada açılır.
- * Satırın tamamı dokunma alanı. Boyama oyunun mevcut dilinde (elButton plakası: koyu degrade, ince altın çizgi, kor elması); italik yok.
+ * Ana menü kart "defteri" (Ömer 2026-11-07, taslak menu-card-buttons-2 A "Ledger"; görünüm Ömer 2026-11-09 mockup B "kutusuz satırlar"):
+ * kartın altında satırlar; ilk satır öne çıkan eylem (kor elması), diğerleri kendi bilgisiyle. Satır plakası/kutusu YOK: satırların
+ * arkasında hafif kararma, aralarında uçları sönen ince altın çizgi; hover (ve klavye seçimi) = soldan kor ışık süpürmesi + elmas + yazı
+ * parlar. Üç kart (Campaign, Quick Battle, Multiplayer) aynı parçayı kullanır. Satırlar kapalıyken gizli; fare kartın üstüne gelince /
+ * klavye odağında / dokunmada açılır. Satırın tamamı dokunma alanı; italik yok.
  */
 export interface LedgerRow {
   id: string;
@@ -30,6 +32,12 @@ export interface Ledger {
   onHover(cb: (over: boolean) => void): void;
   /** Satırlar şu an dokunulabilir mi (açılış büyük ölçüde bitti). */
   active(): boolean;
+  /** Klavye seçimi: satır hover gibi görünür (-1 = yok). */
+  select(i: number): void;
+  selected(): number;
+  /** Seçili satırı çalıştırır (pasifse sallanır); seçim yoksa false. */
+  runSelected(): boolean;
+  readonly count: number;
 }
 
 const phone = (): boolean => document.documentElement.classList.contains('short');
@@ -39,8 +47,9 @@ export function ledgerHeight(rows: Array<{ primary: boolean }>): number {
 }
 
 function rowHeight(primary: boolean): number {
+  if (!phone()) return 60; // B: tüm satırlar eşit
   const base = primary ? 76 : 58;
-  return phone() ? Math.max(base, touchUnits(base)) : base;
+  return Math.max(base, touchUnits(base));
 }
 
 /** Kök (0,0) = defterin alt orta noktası; satırlar yukarı doğru dizilir. */
@@ -55,27 +64,36 @@ export function buildLedger(scene: Phaser.Scene, width: number, rows: LedgerRow[
   let tw: Phaser.Tweens.Tween | null = null;
   const items: Array<{ c: Phaser.GameObjects.Container; zone: Phaser.GameObjects.Zone; y: number }> = [];
   let yTop = -total;
+  // Satırların arkasında hafif kararma (okunurluk; kutu çizgisi yok): üstte 30 birimlik yumuşak giriş
+  const wash = scene.add.graphics();
+  wash.fillGradientStyle(0x0a0704, 0x0a0704, 0x0a0704, 0x0a0704, 0, 0, 0.55, 0.55).fillRect(-width / 2 - 24, -total - 30, width + 48, 30);
+  wash.fillGradientStyle(0x0a0704, 0x0a0704, 0x0a0704, 0x0a0704, 0.55, 0.55, 0.75, 0.75).fillRect(-width / 2 - 24, -total, width + 48, total);
+  root.add(wash);
+  let sel = -1;
+  const draws: Array<(on: boolean) => void> = [];
+  const hovered = new Set<number>();
+  const redraw = (i: number) => draws[i]?.(hovered.has(i) || sel === i);
   rows.forEach((r, i) => {
     const h = heights[i]!;
     const yc = yTop + h / 2;
     yTop += h;
     const c = scene.add.container(0, yc);
     const plate = scene.add.graphics();
-    const nameSize = small ? (r.primary ? 40 : 36) : r.primary ? 25 : 21;
+    const nameSize = small ? (r.primary ? 40 : 36) : 23;
     const metaSize = small ? 30 : 20;
     const nameColor = !r.enabled ? EL.DIM : r.primary ? EL.ON : EL.TXT;
-    const name = elText(scene, -width / 2 + 18, 0, r.name, nameSize, nameColor, { em: 0.08, pad: true }).setOrigin(0, 0.5);
-    const meta = elBody(scene, small ? -width / 2 + 18 : width / 2 - 18, 0, small ? r.meta.replace('\n', ' · ') : r.meta, metaSize, r.enabled ? (r.primary ? '#f3dfae' : EL.NOTE) : EL.DIM).setOrigin(small ? 0 : 1, 0.5).setAlign(small ? 'left' : 'right');
-    const dia = r.primary && r.enabled ? elDiamond(scene, 6) : null;
+    const metaColor = !r.enabled ? EL.DIM : EL.MUTED;
+    const textX = -width / 2 + 34;
+    const name = elText(scene, textX, 0, r.name, nameSize, nameColor, { em: 0.1, pad: true }).setOrigin(0, 0.5);
+    const meta = elBody(scene, small ? textX : width / 2 - 6, 0, r.meta.replace(/\n/g, ' · '), metaSize, metaColor).setOrigin(small ? 0 : 1, 0.5).setAlign(small ? 'left' : 'right');
+    const dia = elDiamond(scene, small ? 7 : 5);
     const nameW = () => (name.width - EL.PAD * 2) * name.scaleX;
-    const avail = width - 36 - (dia ? 22 : 0);
-    const textX = -width / 2 + 18 + (dia ? 22 : 0);
-    dia?.setPosition(-width / 2 + 24, small ? -h / 2 + h * 0.3 : 0);
+    const avail = width - 34 - 6;
+    dia.setPosition(-width / 2 + 14, small ? -h * 0.2 : 0);
     name.setX(textX - EL.PAD);
     if (small) {
       fitW(name, avail + EL.PAD * 2);
       name.setY(-h * 0.2);
-      meta.setX(textX);
       meta.setY(h * 0.22);
       fitW(meta, avail);
     } else {
@@ -85,40 +103,53 @@ export function buildLedger(scene: Phaser.Scene, width: number, rows: LedgerRow[
     const draw = (hover: boolean) => {
       plate.clear();
       const on = hover && r.enabled;
-      plate.fillGradientStyle(r.primary ? 0x2a1d10 : 0x1e160e, r.primary ? 0x2a1d10 : 0x1e160e, 0x0c0906, 0x0c0906, 0.94).fillRect(-width / 2, -h / 2, width, h);
-      if (r.primary && r.enabled) plate.fillGradientStyle(EL.EMBER, EL.EMBER, EL.EMBER, EL.EMBER, on ? 0.2 : 0.1, 0, on ? 0.2 : 0.1, 0).fillRect(-width / 2, -h / 2, width, h);
-      else if (on) plate.fillStyle(EL.EMBER, 0.14).fillRect(-width / 2, -h / 2, width, h);
-      plate.lineStyle(1, on ? EL.ON_N : EL.GOLD, on ? 0.9 : EL.LINE.a2).strokeRect(-width / 2 + 0.5, -h / 2 + 0.5, width - 1, h - 1);
-      if (i === 0) plate.lineStyle(2, r.enabled || !r.primary ? EL.GOLD : EL.GOLD, 0.9).lineBetween(-width / 2, -h / 2 + 1, width / 2, -h / 2 + 1);
+      // soldan kor ışık süpürmesi (yalnız hover / klavye seçimi)
+      if (on) plate.fillGradientStyle(EL.EMBER, EL.EMBER, EL.EMBER, EL.EMBER, 0.28, 0, 0.28, 0).fillRect(-width / 2, -h / 2 + 1, width, h - 2);
+      // alt ayırıcı: uçları sönen ince altın çizgi
+      const ly = h / 2;
+      const f = width * 0.15;
+      plate.fillGradientStyle(EL.GOLD, EL.GOLD, EL.GOLD, EL.GOLD, 0, 0.45, 0, 0.45).fillRect(-width / 2, ly, f, 1);
+      plate.fillStyle(EL.GOLD, 0.45).fillRect(-width / 2 + f, ly, width - 2 * f, 1);
+      plate.fillGradientStyle(EL.GOLD, EL.GOLD, EL.GOLD, EL.GOLD, 0.45, 0, 0.45, 0).fillRect(width / 2 - f, ly, f, 1);
+      dia.setVisible(on || (r.primary && r.enabled)).setAlpha(on ? 1 : 0.75).setScale(on ? 1.2 : 1);
       name.setColor(on ? EL.ON : nameColor);
+      meta.setColor(on ? '#f3dfae' : metaColor);
       elGlow(name, on);
     };
+    draws.push(draw);
     draw(false);
     const zone = scene.add.zone(0, 0, width, h).setInteractive({ useHandCursor: r.enabled });
-    c.add(dia ? [plate, dia, name, meta, zone] : [plate, name, meta, zone]);
+    c.add([plate, dia, name, meta, zone]);
     zone.on('pointerover', () => {
       if (progress < 0.6) return;
-      draw(true);
+      hovered.add(i);
+      redraw(i);
       if (r.enabled) uiSound('hover');
       hoverCbs.forEach((f) => f(true));
     });
     zone.on('pointerout', () => {
-      draw(false);
+      hovered.delete(i);
+      redraw(i);
       hoverCbs.forEach((f) => f(false));
     });
     zone.on('pointerup', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev?.stopPropagation(); // kartın kendi tıklaması tetiklenmesin
       if (progress < 0.6 || !ready()) return;
-      if (!r.enabled) {
-        scene.tweens.add({ targets: c, x: { from: -10, to: 0 }, duration: 260, ease: 'Bounce.easeOut' });
-        return;
-      }
-      uiSound(r.primary ? 'confirm' : 'select');
-      r.run();
+      fire(i);
     });
     root.add(c);
     items.push({ c, zone, y: yc });
   });
+  function fire(i: number): void {
+    const r = rows[i]!;
+    const it = items[i]!;
+    if (!r.enabled) {
+      scene.tweens.add({ targets: it.c, x: { from: -10, to: 0 }, duration: 260, ease: 'Bounce.easeOut' });
+      return;
+    }
+    uiSound(r.primary ? 'confirm' : 'select');
+    r.run();
+  }
   const apply = () => {
     items.forEach((it, i) => {
       // Satırlar alttan yukarı sırayla açılır (en alttaki ilk)
@@ -127,6 +158,7 @@ export function buildLedger(scene: Phaser.Scene, width: number, rows: LedgerRow[
       it.c.setAlpha(a).setY(it.y + (1 - a) * 22).setVisible(a > 0.001);
       if (it.zone.input) it.zone.input.enabled = progress >= 0.6;
     });
+    wash.setAlpha(Math.min(1, progress * 1.6)).setVisible(progress > 0.001);
     onProgress?.(progress);
   };
   apply();
@@ -136,6 +168,22 @@ export function buildLedger(scene: Phaser.Scene, width: number, rows: LedgerRow[
     isOpen: () => open,
     active: () => progress >= 0.6,
     onHover: (cb) => void hoverCbs.push(cb),
+    count: rows.length,
+    selected: () => sel,
+    select: (i) => {
+      const prev = sel;
+      sel = i >= 0 && i < rows.length ? i : -1;
+      if (prev !== sel) {
+        redraw(prev);
+        redraw(sel);
+        if (sel >= 0 && rows[sel]!.enabled) uiSound('hover');
+      }
+    },
+    runSelected: () => {
+      if (sel < 0 || progress < 0.6) return false;
+      fire(sel);
+      return true;
+    },
     setOpen: (want, animate = true) => {
       if (want === open && (!animate || tw === null)) return;
       open = want;

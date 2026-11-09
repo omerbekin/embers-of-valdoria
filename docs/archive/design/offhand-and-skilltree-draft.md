@@ -1,3 +1,4 @@
+> **Ne için:** design/offhand-and-skilltree-draft arşivi; güncel değil.
 # İkinci el nesneleri (yay / tılsım) ve Skill ağacı: TASLAK (ÖNERİ)
 
 Durum: **TASLAK, hiçbiri onaylı değil.** Tarih 2026-10-12. Yalnızca tasarım; kod, veri ve commit yok.

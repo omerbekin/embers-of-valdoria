@@ -1,3 +1,4 @@
+> **Ne için:** arch/accounts-plan arşivi; güncel değil.
 # Hesap / bulut kaydı planı (taslak, 2026-10-24)
 
 Durum: PLAN. Karar formu cevapları gelmeden kod yazılmaz. Karar formu: claude.ai/artifact/U2c3RLXcxBp8EoH8LRfpt6 (db doc `login/main` {picks, notes}).

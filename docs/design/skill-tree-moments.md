@@ -1,7 +1,8 @@
 # Skill ağacı: MOMENTS şeması (Ömer seçimi 2026-10-21)
 
 > Ne için: ağaç ŞEKLİ ve kilit şeması (Moments, Ömer 2026-10-21).
-> Güncel mi (2026-11-08): EVET: şekil `data/skill-trees/_rules.json` ile aynı; eski sürümler (mastery, v2, structures, variants) arşivde. Düğüm içeriği kuralı: classes/skill-tree-logic.md.
+> Güncel mi (2026-11-08): EVET: şekil `data/skill-trees/_rules.json` ile aynı; eski sürümler (mastery, v2, structures, variants) arşivde. Düğüm içeriği kuralı: classes/skill-tree-logic.md; fx dili: skill-tree-fx-reference.md; veri şeması ve motor: skill-tree-implementation.md.
+> **Şekil ve kilit tablosunun (satır şekli, tier / evolve / ult / bar sayıları) TEK sahibi bu belgedir;** diğer belgeler bağlantı verir. Değerin kendisi `data/skill-trees/_rules.json`. Bugün 13 sınıfın ağacı canlı (bölüm 7).
 
 2. turdaki 10 varyanttan (`docs/archive/design/skill-tree-mastery-v2.md`) Ömer **V6 Moments** yapısını seçti ve şunları istedi:
 1. Moments olsun ama daha uzun: başa ekleme yapılacak. Mevcut başlangıç noktasının önünde (−1) bir **notable** (orta boy düğüm), onun önünde de **3 filler** olacak.
@@ -58,20 +59,16 @@ Not: sayaç toplam olduğu için puanını dağıtan oyuncu da L25'te evolve aç
 ## 5. Düğüm türleri
 Filler (küçük, rank'lı) · Edge (küçük ama güçlü) · **Notable** (orta boy, ikonlu) · **Blood Price** (kazanç + bedel, notable'ın yanında dead end) · Evolve (büyük, altın).
 
-## 6. Varsayımlarım (Ömer onayı bekliyor)
+## 6. Varsayımlar (hepsi kararlandı)
 1. Madde 3'teki "sıradaki row" ifadesini **sıradaki tier sütunu** olarak okudum (WoW tarzı: ağaca toplam X puan verilince sıradaki sütun açılır). L40 hesabı ancak böyle tutuyor: ikinci satırın kademeleri birinci satırın puanıyla zaten açık olur.
 2. Sayaç: Ömer "aktif skill" dedi. **Ömer kararı (2026-10-21): pasif sayılır, ult sayılmaz** (pasife odaklanan oyuncu da evolve açabilir; ult ağacı sayaçtan ayrı).
 3. Ult'ta her düğüm 1 puan; ult'a en çok 3 puan verilir (Ömer 2026-10-21). **Ömer kararı (2026-10-22): tek kol**; bir kola puan verilince öbür üç kol kapanır (eski "kollar serbest" kuralının yerine). L5 / L10 / L15 kilitleri ve "iç düğüm gerek" kuralı aynı.
 4. Notable = orta boy düğüm (eski Major). Edge'ler (ea / eb) yerinde kaldı.
 5. Yeni 3 filler 3-5-5 rank; satır böylece 24 puana geliyor ve L25 hesabı tutuyor.
 
-## 7. Mockup
-`public/mockups/skill-tree-moments.html` (+ `skill-tree-moments/`). Ev sahibi sayfa: **11 class × 5 varyant** (sıra: warrior, defender, paladin, archer, cutthroat, mage, druid, undead, hexer, antimage, gambler; Warrior'da ek olarak "Ömer's pick" sekmesi ve varsayılan). Class ve varyant seçilince puanlar sıfırlanır. İçerik `variants/<class>.js` dosyalarından gelir (sözleşme: `skill-tree-moments-variants.md` bölüm 3), class seçilince yüklenir; dosya yoksa ya da bozuksa sayfa "Variants coming" gösterir. Satır adları dosyadaki `rows[]` / `ult`ten, ikonlar `classes.js` + `ic/<class>/` (oyundaki v2 ikonlar ve portreler, sıraya göre: pasif, 3 aktif, ult).
-- Adres: `#c=<class>&v=<1-5|pick>&lv=30` (+ `&focus=A-B`, `&clean`). Eski adresler: `#c=w` = Warrior (Ömer'in seçimi), `#c=h` = Hexer v1.
-- Ekran (Ömer düzeltmeleri 2026-10-21 gece): tier başlık bandı (Tier I … Evolve I) yalnızca ağacın en üstünde TEK sefer, kolonlar tüm satırlarla hizalı; Mastery bar altında tier yazısı ve evolve çentiği yok (yalnızca bonus elmasları + hover ipucu); sayaç ve bar = pasif + 3 aktif (ult ayrı).
-- Warrior "Ömer's pick": `picks-warrior.js` (boş yuva = "Open slot"), Mastery adı ve bar eski V6 Moments'tan (`content.js` içinde sabit).
-- Eski geçici Hexer eşlemesi (V3/V5/V6/V7/V8) kaldırıldı; Hexer artık kendi 5 varyantıyla gelir.
-- Test (scratchpad, teste eklenmez): `node moments-test.js [--dir <variants klasörü>]`.
+## 7. Mockup ve oyundaki yeri
+- Ağaç oyunda Gear > Tree sekmesidir (13 sınıf: `data/skill-trees/`, ayrıntı `skill-tree-implementation.md`). Ev sahibi mockup `public/mockups/skill-tree-moments.html` yalnızca referanstır; 2026-10-21 varyant seçimi tarihçesi arşivde (`docs/archive/design/skill-tree-moments-variants.md`, içerik sözleşmesi bölüm 3; eski mockup bölümü `docs/archive/design/skill-tree-moments-mockup-notes.md`).
+- Mockup adresi: `#c=<class>&v=<1-5|pick>&lv=30` (+ `&focus=A-B`, `&clean`).
 
 ## 8. Oyuna eklerken (Ömer kararı 2026-10-22)
 - **Edge'ler (ea / eb) birbirini dışlar:** satırda yalnızca bir yön seçilir; biri alınınca öbür yön (edge + notable + blood price) kilitlenir, geri alınınca açılır. Mockup'a uygulanmadı, yalnızca oyunda böyle olacak.

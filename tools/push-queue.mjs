@@ -1662,8 +1662,9 @@ function numberOpenQuestions(dir) {
   const raw = readFileSync(f, 'utf8');
   if (!/^## Q-NEW\b/m.test(raw)) return [];
   let n = 0;
-  const arch = join(dir, 'docs/design/open-questions-archive.md');
-  for (const text of [raw, existsSync(arch) ? readFileSync(arch, 'utf8') : '']) for (const m of text.matchAll(/^## (\d+)\./gm)) n = Math.max(n, Number(m[1]));
+  // arşiv 2026-11-08'de docs/archive/design/'a taşındı; eski yol da okunur
+  const archs = ['docs/archive/design/open-questions-archive.md', 'docs/design/open-questions-archive.md'].map((p) => join(dir, p));
+  for (const text of [raw, ...archs.map((a) => (existsSync(a) ? readFileSync(a, 'utf8') : ''))]) for (const m of text.matchAll(/^## (\d+)\./gm)) n = Math.max(n, Number(m[1]));
   const first = n + 1;
   writeFileSync(f, raw.replace(/^## Q-NEW\b/gm, () => `## ${++n}`));
   log(`> Açık soru numaraları: ${first}-${n}`);

@@ -20,4 +20,9 @@ describe('skill plate: cost / cooldown direction and Silenced', () => {
     expect(html).not.toContain('tabindex');
     expect(html).toContain('bt-chip v q up');
   });
+  it('foe-turn plate is dimmed (off) and not clickable-looking', () => {
+    const html = skillPlateHtml({ ...base, enabled: false, foe: true, cost: [] }, '');
+    expect(html).toMatch(/class="bp [^"]*foe off/);
+    expect(skillPlateHtml({ ...base, cost: [] }, '')).not.toMatch(/class="bp [^"]*off/);
+  });
 });

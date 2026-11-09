@@ -1,3 +1,4 @@
+> **Ne için:** arch/chat-owners arşivi; güncel değil.
 # Alanlar
 
 Ömer 2026-11-02: alt sohbetler kapandı, tek sohbet Lead (`docs/arch/lead.md`). İş alana göre agente verilir; agent `docs/arch/areas/<dosya>` okuyarak başlar. Eski sohbet adları hafızada ve belgelerde geçerse bu alanları kastediyor.

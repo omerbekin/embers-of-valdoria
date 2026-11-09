@@ -2,7 +2,7 @@
 > **Ne için / Güncel mi (2026-11-08):** opt-in hata raporu (varsayılan kapalı, anonim) ve Worker /diag. evet; npm run diag:pull ve deploy:cf var.
 
 
-> Ömer 2026-10-16 onayı. Kurallar değişmez: varsayılan KAPALI, anonim, yalnızca teknik veri, 30 gün, yalnızca ücretsiz Cloudflare. Varsayımlar: `docs/design/open-questions.md` madde 331.
+> Ömer 2026-10-16 onayı. Kurallar değişmez: varsayılan KAPALI, anonim, yalnızca teknik veri, 30 gün, yalnızca ücretsiz Cloudflare. Varsayımlar: `docs/archive/design/open-questions-archive.md` madde 331.
 
 ## Oyuncu tarafı
 - **İlk açılış:** ana menü hazır olunca BİR KEZ "Error reports" penceresi (kit Diyalog: `src/diag/diag-notice.ts`, CSS `src/diag/diag.css`): kısa gizlilik metni, "Send error reports" anahtarı (Off), Continue. Esc / zemine dokunma = Continue.

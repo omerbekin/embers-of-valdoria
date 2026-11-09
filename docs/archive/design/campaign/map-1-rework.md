@@ -1,3 +1,4 @@
+> **Ne için:** design/campaign/map-1-rework arşivi; güncel değil.
 # Harita 1 (Valdoria) yeniden çizim + genişletme (PLAN; Ömer cevapları 2026-10-22 işlendi)
 
 Durum: **OYUNA UYGULANDI (campaign-dev 2026-10-22, ayrı worktree; notlar 8. bölümde, varsayımlar open-questions 384).** Görsel taslak: `public/mockups/maps-2-3.html#v0` (Map I sekmesi; yeni düğümlerin rozetinde "NEW" etiketi). **Yeni harita görseli (Ömer onayı 2026-10-22):** `assets/source/maps-1/valdoria-map-v2.png` (mockup kopyası `public/mockups/maps-2-3/valdoria-v2-preview.webp`, 1672x940). Mockup'ta 33 düğümün **hepsi** bu görsele göre yeniden yerleştirildi (bölüm 3b); oyuna geçerken `valdoria.json > pos` bu konumlardan alınır.

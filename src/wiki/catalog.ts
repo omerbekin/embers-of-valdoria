@@ -1304,7 +1304,7 @@ function bonusRulesArticle(): WikiArticle {
   ]);
 }
 
-/** Yeni affix turu 2 (Ömer 2026-10-24; item-effects.md): wiki'de yuvalarıyla anılır. */
+/** Yeni affix turu 2 (Ömer 2026-10-24; docs/archive/design/progression/item-effects.md): wiki'de yuvalarıyla anılır. */
 const ROUND2_AFFIXES = ['c_healrecv', 'b_execute', 'b_startshield', 'b_killmp', 'b_killheal', 'b_shred', 'a_manashield', 'a_cdchance', 'a_overkill'];
 
 /** Savaşta işleyen affix kuralları (Ömer 2026-10-24, yeni affix turu 2): Shredded, Mana shield, Overflow ve öldürme / şifa / cooldown affix'leri. Sayılar veriden. */

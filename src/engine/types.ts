@@ -631,7 +631,7 @@ export interface UnitModifiers {
 }
 
 /**
- * Epic item özel etkileri (Ömer onayı 2026-10-10, madde 292; docs/design/progression/item-effects.md). Hepsi isteğe bağlı ve GENEL motor kancaları;
+ * Epic item özel etkileri (Ömer onayı 2026-10-10, madde 292; docs/archive/design/progression/item-effects.md). Hepsi isteğe bağlı ve GENEL motor kancaları;
  * verilmezse birim bugünküyle birebir aynı. Sayılar data/items.json > effects'ten (güç katmanı çevirir).
  */
 export interface ItemEffects {
@@ -781,7 +781,7 @@ export interface ItemEffects {
   /** Sabit duruş (a_steady): üst üste Move yapılmayan eylem başına (en çok 3) verilen skill hasarı bu oran fazla. */
   steadyDamage?: number;
   /*
-   * Yeni affix turu 2 (Ömer 2026-10-24, item-effects.md "Yeni affix turu 2"). Oranlar 0-1; hepsi genel, verilmezse birim aynı.
+   * Yeni affix turu 2 (Ömer 2026-10-24, docs/archive/design/progression/item-effects.md "Yeni affix turu 2"). Oranlar 0-1; hepsi genel, verilmezse birim aynı.
    * Hazır kalkan (b_startshield) mevcut startShieldRatio'yu kullanır.
    */
   /** Gelen şifa (c_healrecv): bu birime yapılan şifa (applyHeal; leech dahil) bu oran fazla. Tur başı düz can yenilenmesi (hpRegen) etkilenmez. */

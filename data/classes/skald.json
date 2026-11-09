@@ -1,8 +1,8 @@
 {
-  "_not": "Thunder Skald (Ömer onayı 2026-11-07, ana kit: scratchpad thunder-skald-kit.md + Ömer seçimleri): çekiçle şimşek çağıran, davulla dostları hızlandıran orta sıra STR kahramanı. War Drum yeni hedef türü self_area (kendi hücresi merkezli 3x3), Hammer Spark bölünmüş hasar (damage.split), pasif Conductor (yalnız şimşek parçasına +%25). Görünüş YER TUTUCU: Defender sprite / avatar / v2 poz gövdesi (poses.json > classAliases), skill ikon / efekt / sesleri ödünç; renk ve logo kendisinin. Statlar PROVİZYON (sim yok), skill ağacı yok (puanlar birikir). Ömer 2026-11-08: Skald \"uzatılmış yakın dövüşçü\", YAKIN DÖVÜŞ grubunda: taban menzil 3 -> 2 (Hammer Spark / Thunder Strike 2), Stormcall skill istisnası 3; frontPriority 3 -> 2 (ön saf; Paladin ile aynı).",
+  "_not": "Thunder Skald (Ömer onayı 2026-11-07, ana kit: scratchpad thunder-skald-kit.md + Ömer seçimleri): çekiçle şimşek çağıran, davulla dostları hızlandıran orta sıra STR kahramanı. War Drum yeni hedef türü self_area (kendi hücresi merkezli 3x3), Hammer Spark bölünmüş hasar (damage.split), pasif Conductor (yalnız şimşek parçasına +%25). Görünüş (2026-11-08): kendi sprite / avatar (skald-v2 idle1 pozundan, spriteId skald) ve v2 poz gövdesi (skald_v2); skill ikonları ödünç, efekt / ses / renk / logo kendisinin. Statlar PROVİZYON (sim yok), skill ağacı yok (puanlar birikir). Ömer 2026-11-08: Skald \"uzatılmış yakın dövüşçü\", YAKIN DÖVÜŞ grubunda: taban menzil 3 -> 2 (Hammer Spark / Thunder Strike 2), Stormcall skill istisnası 3; frontPriority 3 -> 2 (ön saf; Paladin ile aynı).",
   "id": "skald",
   "name": "Thunder Skald",
-  "spriteId": "defender",
+  "spriteId": "skald",
   "color": "#6fa8dc",
   "logo": "warcry",
   "role": "Storm Hammer",
