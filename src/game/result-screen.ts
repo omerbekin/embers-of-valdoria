@@ -302,7 +302,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   plaque.add(title);
   plaque.add(ornamentLine(scene, midX, midY + 18, Math.min(190, midW / 2 - 10), accent.edge, accent.light));
   const sub = o.subtitle ?? (victory ? 'The enemy line is broken' : 'Your party has fallen');
-  plaque.add(fit(elBody(scene, midX, midY + 46, sub, sz(26), accent.text, false).setOrigin(0.5)));
+  plaque.add(fit(elBody(scene, midX, midY + 46, sub, sz(26), accent.text).setOrigin(0.5)));
   // Sağ sütun: Turns / Standing
   {
     const bx = px + plaqueW - 28 - 160;
@@ -483,7 +483,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
         tg.fillStyle(0x2a1405, 1).fillPoints(diamondPts(tagX + 11, tagY, 4.5), true);
         row.add(tg);
         row.add(label.setX(tagX + 22));
-      } else if (!alive) row.add(elBody(scene, tagX, tagY, 'Fallen', tight ? sz(15) : sz(17), '#8d8070', false).setOrigin(0, 0.5));
+      } else if (!alive) row.add(elBody(scene, tagX, tagY, 'Fallen', tight ? sz(15) : sz(17), '#8d8070').setOrigin(0, 0.5));
 
       // Can çubuğu (karakter kartı dili: rakam çubuğun içinde)
       const hpX = nameX + idW + 14;
@@ -564,7 +564,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
       fitText(lab, cw - (tx - cx) - 8);
       area.add(lab);
       area.add(elText(scene, tx, sy + stripH / 2 + (c.note ? 0 : 6), c.val, 29 * (short ? 1.15 : 1), c.color, { em: 0.02, upper: false, weight: '700' }).setOrigin(0, 0.5));
-      if (c.note) area.add(fitText(elBody(scene, tx, sy + stripH / 2 + 24, c.note, 15, EL.MUTED, false).setOrigin(0, 0.5), cw - (tx - cx) - 8));
+      if (c.note) area.add(fitText(elBody(scene, tx, sy + stripH / 2 + 24, c.note, 15, EL.MUTED).setOrigin(0, 0.5), cw - (tx - cx) - 8));
     });
   }
 
@@ -580,7 +580,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   const buttons = scene.add.container(0, 0).setAlpha(0);
   const bw = 420;
   const kitButton = (label: string, run: () => void, x: number, w: number, primary: boolean): ElButton => {
-    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, h: primary ? primaryH : secH, size: primary ? sz(28) : sz(22), ready: true, touch: { growY: 'both', maxW: w + gap - 4 } });
+    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, ready: true, touch: { growY: 'both', maxW: w + gap - 4 } });
     b.root.setPosition(x, barY);
     return b;
   };
@@ -618,7 +618,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
     const matchData = o.matchData;
     const cb = elButton(scene, 'Copy match data', () => {
       void copyMatchData({ get: matchData }).then((r) => cb.setLabel(r.ok ? `Copied (${r.moves} moves)` : 'Copy match data'));
-    }, { kind: 'secondary', w: short ? 330 : 300, h: short ? 120 : 52, size: sz(16), ready: true, icon: ensureIcon(scene, uiIconName('combatLog'), '#ffffff', false), iconSize: sz(24) });
+    }, { kind: 'secondary', sz: 'compact', w: short ? 330 : 300, ready: true, icon: ensureIcon(scene, uiIconName('combatLog'), '#ffffff', false), iconSize: sz(24) });
     cb.root.setPosition(80 + cb.w / 2, barY);
     buttons.add(cb.root);
   }

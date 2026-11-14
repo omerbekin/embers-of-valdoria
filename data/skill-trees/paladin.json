@@ -152,8 +152,7 @@
           "k": "hook",
           "h": "target",
           "smite": {
-            "power": 0.08
-          },
+            "power": 0.08          },
           "rank": true
         }
       ]
@@ -200,14 +199,14 @@
     },
     "0.n0": {
       "name": "No Rest for Evil",
-      "text": "When no ally is wounded, Divine Light smites the weakest enemy for 27% INT holy damage.",
+      "text": "When no ally is wounded, Divine Light smites the weakest enemy for holy damage at the same INT ratio as its heal.",
       "src": "A:V2:0.n0",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "smite": {
-            "idle": 0.27
+            "idle": 1
           }
         }
       ]

@@ -45,7 +45,7 @@
 .dcn-tx { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 .dcn-lbl { display: flex; align-items: center; gap: 8px; font: 600 10px/1 var(--g-disp, Cinzel, Georgia, serif); letter-spacing: 0.2em; text-transform: uppercase; color: var(--dcn-dim); white-space: nowrap; }
 .dcn-pips { display: inline-flex; gap: 5px; }
-.dcn-pips i { width: 8px; height: 8px; transform: rotate(45deg); border: 1px solid var(--dcn-gold); transition: background var(--m-card-hover, 170ms), box-shadow var(--m-card-hover, 170ms); }
+.dcn-pips i { width: 0.5em; height: 0.5em; transform: rotate(45deg); border: 1px solid var(--dcn-gold); transition: background var(--m-card-hover, 170ms), box-shadow var(--m-card-hover, 170ms); }
 .dcn-pips i.on { background: var(--dcn-ember); border-color: var(--dcn-ember2); box-shadow: 0 0 8px rgba(224, 112, 42, 0.8); }
 .dcn-next { font: 15px/1.1 var(--g-body, 'EB Garamond', Georgia, serif); color: var(--dcn-dim); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color var(--m-card-hover, 170ms); }
 
@@ -84,7 +84,7 @@
 .dcn-card.k-gate { --kc: #7fb0e0; }
 .dcn-card.k-market { --kc: #9fd88a; }
 .dcn-card.k-threat { --kc: #e8705a; }
-.dcn-card .dia { width: 9px; height: 9px; flex: none; transform: rotate(45deg); background: var(--kc); box-shadow: 0 0 8px var(--kc); }
+.dcn-card .dia { width: 0.56em; height: 0.56em; flex: none; transform: rotate(45deg); background: var(--kc); box-shadow: 0 0 8px var(--kc); }
 .dcn-card .cx { flex: 1; min-width: 0; }
 .dcn-card .kd { font: 600 10px var(--g-disp, Cinzel, Georgia, serif); letter-spacing: 0.22em; text-transform: uppercase; color: var(--kc); }
 .dcn-card h4 { margin: 0; font: 600 15px var(--g-disp, Cinzel, Georgia, serif); letter-spacing: 0.1em; text-transform: uppercase; color: var(--dcn-gold); }
@@ -92,14 +92,14 @@
 .dcn-card .cn { min-width: 44px; text-align: center; font: 600 24px/1 var(--g-disp, Cinzel, Georgia, serif); color: var(--dcn-gold); }
 .dcn-card .cn small { display: block; margin-top: 3px; font: 600 10px var(--g-disp, Cinzel, Georgia, serif); letter-spacing: 0.18em; text-transform: uppercase; color: var(--dcn-dim); }
 .dcn-inn { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(8, 6, 4, 0.45); border: 1px solid rgba(217, 178, 106, 0.3); font: 16px var(--g-body, 'EB Garamond', Georgia, serif); color: #d9c8a2; }
-.dcn-inn .dia { width: 8px; height: 8px; flex: none; transform: rotate(45deg); background: #6fd0c0; box-shadow: 0 0 8px #6fd0c0; }
+.dcn-inn .dia { width: 0.5em; height: 0.5em; flex: none; transform: rotate(45deg); background: #6fd0c0; box-shadow: 0 0 8px #6fd0c0; }
 .dcn-ft { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(217, 178, 106, 0.16); font: 600 10px var(--g-disp, Cinzel, Georgia, serif); letter-spacing: 0.2em; text-transform: uppercase; color: var(--dcn-dim); }
 
 /* yatay telefon / kısa ekran: Valor bandıyla aynı küçülme */
 html.short .dcn-band { gap: 8px; padding: 2px 6px 2px 10px; }
 html.short .dcn-num { font-size: 20px; }
 html.short .dcn-next { font-size: 13px; max-width: 120px; }
-html.short .dcn-lbl { font-size: 9px; letter-spacing: 0.16em; }
+html.short .dcn-lbl { font-size: 10px; letter-spacing: 0.16em; }
 html.short .dcn-panel { padding: 10px 12px 8px 16px; font-size: 15px; }
 html.short .dcn-big { font-size: 19px; }
 @media (prefers-reduced-motion: reduce) { .dcn-panel, .dcn-bar i, .dcn-pips i { transition: none !important; } }

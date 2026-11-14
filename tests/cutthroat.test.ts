@@ -73,10 +73,10 @@ describe('Cutthroat class verisi', () => {
     const p = ct.passive!;
     expect(p.effect.type).toBe('bonusVsStatus');
     if (p.effect.type !== 'bonusVsStatus') return;
-    expect(p.effect.statuses).toEqual(['wound', 'slow', 'stun', 'wither']); // Ö7 (Hexer): Withering eklendi, Omen eklenmedi
+    expect(p.effect.statuses).toEqual(['wound', 'slow', 'stun', 'wither', 'chilled', 'soaked', 'shocked']); // Ö7 (Hexer): Withering eklendi, Omen eklenmedi; Chilled / Soaked / Shocked Ömer onaylı 2026-11-09
     const text = describePassive(p, ct.stats, content.formulas);
     expect(text).toContain(`${Number((p.effect.bonus * 100).toFixed(2))}% more damage`);
-    expect(text).toMatch(/Wound, Slow, Stun or Wither/);
+    expect(text).toMatch(/Wound, Slow, Stun, Wither, Chilled, Soaked or Shocked/);
   });
 });
 

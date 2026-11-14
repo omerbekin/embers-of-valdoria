@@ -373,8 +373,11 @@ export function partValue(p: AffixPart, ilvl: number, q: number, mult = 1): numb
 /** Parçanın görünür aralığı [en az, en çok] (zarsızda iki uç aynı). */
 export const partRange = (p: AffixPart, ilvl: number, floor = 0, mult = 1): [number, number] => [partValue(p, ilvl, floor, mult), partValue(p, ilvl, 1, mult)];
 
-/** Legendary'nin sabit affix çarpanı (items.json > items[].boost; yoksa 1). */
-export const affixBoost = (d: Pick<ItemDef, 'rarity' | 'boost'> | undefined, id: string): number => (d?.rarity === 'legendary' ? (d.boost?.[id] ?? 1) : 1);
+/**
+ * Legendary'nin ve set parçasının sabit affix çarpanı (items.json > items[].boost / setItems[].boost; yoksa 1). Set parçası (Ömer onaylı 2026-11-09):
+ * üç sabit affix'i (C, C, B) aynı seviyedeki sıradan Epic'in (dört affix) ortalama IP'sine çekmek için.
+ */
+export const affixBoost = (d: Pick<ItemDef, 'rarity' | 'boost' | 'set'> | undefined, id: string): number => (d?.rarity === 'legendary' || d?.set ? (d.boost?.[id] ?? 1) : 1);
 
 /**
  * Nadirliğin zar tabanı (Ömer 2026-10-11): yüksek nadirlik aralığın ÜST kısmından zarlar (tavan aynı). items.json > affixRules.rollFloorByRarity,
@@ -1205,6 +1208,8 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
       const tiers = (d.affixes ?? []).map((id) => data.affixDefs[id]?.tier);
       if (tiers.join() !== 'C,C,B') errors.push(`set item ${d.id}: affixes must be C, C, B`);
       for (const id of d.affixes ?? []) if (data.affixDefs[id]?.slots && !data.affixDefs[id]!.slots!.includes(d.slot)) errors.push(`set item ${d.id}: ${id} cannot roll on ${d.slot}`);
+      for (const [id, m] of Object.entries(d.boost ?? {}))
+        if (!d.affixes?.includes(id) || !(typeof m === 'number' && m >= 0.5 && m <= 3)) errors.push(`set item ${d.id}: boost ${id} must name one of its affixes with a multiplier 0.5-3`);
     }
   }
   for (const s of data.slots) if (!(s.weight > 0) || !s.name) errors.push(`slot ${s.id}: bad weight/name`);

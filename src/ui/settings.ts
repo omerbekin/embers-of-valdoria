@@ -2,6 +2,7 @@ import { lockInput, unlockInput } from './input-lock';
 import { SPEED_STEPS, battleSpeed, battleSpeedLabel, onBattleSpeedChange, setBattleSpeed, speedAt, speedIndex } from './battle-speed';
 import './motion';
 import { onReducedMotionChange, reducedMotion, setReducedMotion } from './motion-pref';
+import { TEXT_LABEL, colorblind, onA11yChange, setColorblind, setTextSize, stepTextSize, textSize } from './a11y-prefs';
 import { openDebugMenu } from './debug-entry';
 import { loadUiSoundLevel, onUiSoundLevelChange, previewUiSound, setUiSoundLevel, uiSound } from './ui-sound';
 import { loadSfxLevel, onSfxLevelChange, setSfxLevel } from './sfx-volume';
@@ -18,6 +19,7 @@ import { accountApi, accountShown, isOnline } from '../cloud/ui/api';
 import { ACCOUNT_SOON_LINE, accountLine } from '../cloud/ui/account-text';
 import { mergeRecord } from './cursor-theme';
 import { mountCursorPanel } from './cursor-settings';
+import { pushClose } from './close-stack';
 
 /**
  * Oyun içi ayarlar ekranı (sefer > Menu (Esc) > Settings, savaş / takım seçimi > Menu (Esc) > Settings). Ömer 2026-10-08: ana menünün SOL
@@ -89,7 +91,7 @@ export class SettingsScreen {
   private open = false;
   private onBack: (() => void) | undefined;
   /** Sayfa başına satırlar (SETTINGS_PAGES sırası). */
-  private readonly rows: Record<SettingsPageKey, SettingsRow[]> = { sound: [], gameplay: [], display: [], ui: [], privacy: [], account: [] };
+  private readonly rows: Record<SettingsPageKey, SettingsRow[]> = { sound: [], gameplay: [], display: [], access: [], ui: [], privacy: [], account: [] };
   private readonly pages = new Map<SettingsPageKey, HTMLElement>();
   private readonly cats = new Map<SettingsPageKey, HTMLElement>();
   /** Sayfanın altındaki kısa not (Replay onayı, iPhone tam ekran ipucu, Copy log / Error reports onayı). */
@@ -97,6 +99,12 @@ export class SettingsScreen {
   private page: SettingsPageKey = settingsPage();
   /** Account satırını yeniden yazar (açılışta; "3 min ago" güncel kalsın). */
   private paintAccount: () => void = () => undefined;
+  /** Ana menüden açıldıysa Account sayfası tam (giriş düğmeleri); `setOpen(..., { fullAccount: true })`. */
+  private fullAccount = false;
+  private accHost: HTMLElement | null = null;
+  private accPage: { destroy(): void } | null = null;
+  /** Sunucu giriş için yanıt vermedi: Account kategorisi gizli kalır. */
+  private accGone = false;
   /** Klavye odağı: kategori sütunu ya da sayfanın satırları. */
   private zone: 'cat' | 'row' = 'cat';
   private sel = -1;
@@ -197,6 +205,14 @@ export class SettingsScreen {
     const motion = el('span', 'st-value', reducedMotion() ? 'On' : 'Off');
     onReducedMotionChange((on) => (motion.textContent = on ? 'On' : 'Off'));
 
+    // --- Accessibility: yazı boyu + renk körlüğü (rarity şekil/harf işareti); src/ui/a11y-prefs.ts ---
+    const tsz = el('span', 'st-value', TEXT_LABEL[textSize()]);
+    const cbv = el('span', 'st-value', colorblind() ? 'On' : 'Off');
+    onA11yChange(() => {
+      tsz.textContent = TEXT_LABEL[textSize()];
+      cbv.textContent = colorblind() ? 'On' : 'Off';
+    });
+
     // --- Tutorials: mentor dersleri açık / kapalı (sefer + Endless; src/tutorial/store.ts, docs/design/tutorial.md) ---
     const tut = el('span', 'st-value', tutorialsOn() ? 'On' : 'Off');
     onTutorialChange(() => (tut.textContent = tutorialsOn() ? 'On' : 'Off'));
@@ -260,6 +276,12 @@ export class SettingsScreen {
           case 'motion':
             add(() => setReducedMotion(!reducedMotion()), [motion]);
             break;
+          case 'textSize':
+            add(() => setTextSize(stepTextSize(textSize(), 1)), [tsz], (d) => setTextSize(stepTextSize(textSize(), d)));
+            break;
+          case 'colorblind':
+            add(() => setColorblind(!colorblind()), [cbv]);
+            break;
           case 'tutorials':
             add(() => {
               setTutorialsOn(!tutorialsOn());
@@ -305,7 +327,9 @@ export class SettingsScreen {
             this.paintAccount = paint;
             paint();
             accountApi().subscribe((e) => (e.type === 'account' || e.type === 'status') && paint());
-            page.append(line);
+            // Ana menüden açılınca tam hesap sayfası (giriş / çıkış / kayıt; OAuth sayfayı yönlendirdiği için yalnızca ana menüde), oyun içinde yalnız bu satır
+            this.accHost = el('div', 'st-acc-host');
+            page.append(line, this.accHost);
             break;
           }
         }
@@ -404,7 +428,7 @@ export class SettingsScreen {
 
   /** Kategori sayfasını gösterir (oturum boyunca hatırlanır: settings-pages.ts). */
   private showPage(key: SettingsPageKey): void {
-    const login = accountShown();
+    const login = accountShown() && !this.accGone;
     if (!pageVisible(key, login)) key = 'sound';
     this.page = key;
     setSettingsPage(key);
@@ -416,6 +440,34 @@ export class SettingsScreen {
     }
     for (const n of this.notes.values()) n.textContent = '';
     this.select(-1);
+    this.unmountAccount();
+    if (key === 'account' && this.fullAccount && this.accHost) this.mountAccount(this.accHost);
+  }
+
+  /** Tam hesap sayfası (ayrı kod parçası, tembel yüklenir); sayfa / ekran kapanınca kalkar. */
+  private mountAccount(host: HTMLElement): void {
+    const line = host.previousElementSibling as HTMLElement | null;
+    if (line) line.hidden = true;
+    void import('../cloud/ui/account-page').then(
+      (m) => {
+        if (!this.open || this.page !== 'account' || this.accPage) return;
+        this.accPage = m.mountAccountPage(host, { onHidden: () => this.accountGone() });
+      },
+      () => line && (line.hidden = false),
+    );
+  }
+
+  private unmountAccount(): void {
+    this.accPage?.destroy();
+    this.accPage = null;
+    const line = this.accHost?.previousElementSibling as HTMLElement | null;
+    if (line) line.hidden = false;
+  }
+
+  /** Giriş kullanılamaz oldu (sunucu yanıt vermiyor): Account kategorisi gizlenir, açıksa Sound'a dönülür. */
+  private accountGone(): void {
+    this.accGone = true;
+    this.showPage(this.page === 'account' ? 'sound' : this.page);
   }
 
   /** − [kaydırıcı] + değer (ortak bileşen; 0..max adım). `fmt` değer yazısı. */
@@ -477,8 +529,11 @@ export class SettingsScreen {
   }
 
   /** Açar (isteğe bağlı: kapanınca çağrılacak geri dönüş) ya da kapatır. */
-  setOpen(open: boolean, onBack?: () => void): void {
-    if (open) this.onBack = onBack;
+  setOpen(open: boolean, onBack?: () => void, opts: { fullAccount?: boolean } = {}): void {
+    if (open) {
+      this.onBack = onBack;
+      this.fullAccount = !!opts.fullAccount;
+    } else this.unmountAccount();
     const was = this.open;
     this.open = open;
     this.overlay.hidden = !open;
@@ -489,6 +544,11 @@ export class SettingsScreen {
     }
     if (open !== was) uiSound(open ? 'open' : 'close'); // parşömen açılır / dürülür (data/audio-ui.json)
     document.documentElement.classList.toggle('settings-open', open);
+    if (open && !was) this.popStack = pushClose({ close: () => this.setOpen(false) });
+    if (!open) {
+      this.popStack?.();
+      this.popStack = undefined;
+    }
     if (open) lockInput('settings');
     else if (was) unlockInput('settings');
     if (was && !open) {
@@ -497,6 +557,8 @@ export class SettingsScreen {
       cb?.();
     }
   }
+
+  private popStack?: () => void;
 
   get isOpen(): boolean {
     return this.open;
@@ -509,8 +571,8 @@ export function registerSettingsScreen(screen: SettingsScreen): void {
   instance = screen;
 }
 /** Ayarlar ekranını aç / kapat; `onBack` ekran kapanınca (Back, Esc) çağrılır. */
-export function setSettingsOpen(open: boolean, onBack?: () => void): void {
-  instance?.setOpen(open, onBack);
+export function setSettingsOpen(open: boolean, onBack?: () => void, opts?: { fullAccount?: boolean }): void {
+  instance?.setOpen(open, onBack, opts);
 }
 /** Master Volume'u değiştir (0-20 adım; ana menü Settings sütunu); `preview` true ise deneme sesi çalar. Ekran yoksa yalnızca saklar. */
 export function setSettingsVolume(level: number, preview = false): void {

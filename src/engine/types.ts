@@ -78,7 +78,7 @@ export interface Stats extends Attributes {
 /** Pasif skill etkileri (her sınıfın 1 pasifi var; düz stat vermez, bir koşulda tetiklenir). */
 /**
  * Faz 5a (C5 smite, Paladin Divine Light): pasifin tur başı kutsal hasarı. Hedef = canı (mevcut) en düşük düşman (katalog 14.3). `power` her tur
- * (Twofold Light, Wrathful Glow), `idle` yalnızca canı eksik dost yokken, şifa yerine (No Rest for Evil), `mirror` verilen şifa x oran (Crusader's
+ * (Twofold Light, Wrathful Glow), `idle` yalnızca canı eksik dost yokken, şifa yerine, pasif gücü x idle (No Rest for Evil idle 1 = şifayla aynı INT oranı, Ömer 2026-11-09), `mirror` verilen şifa x oran (Crusader's
  * Dawn eski hali). Güç = INT gücü x oran x `mul` (Vengeful Light). Bağlantı yeri at 'smite' (C1 kancaları), öldürme yolu (via) 'smite'.
  * `dual` (Crusader's Dawn, Ömer 2026-10-24, open-questions 416): Divine Light her tur HEM şifa HEM smite; şifa x dual, smite = INT gücü x pasif
  * gücü x dual (gerçekleşen şifadan bağımsız, yaralı dost yoksa da), `idle` bunun yerine geçer (üstüne eklenmez); power / mul / 'smite' kancaları işler.
@@ -364,6 +364,8 @@ export interface CombatantData {
    * (tarafında yalnızca inert birimler kalırsa o taraf kaybeder). Hedeflenebilir, alan skill'lerine girer.
    */
   inert?: boolean;
+  /** Kansız birim (iskelet, golem, ruh, bitki, yapı; Ömer onaylı 2026-11-09): ağır fiziksel kritik bu birimde kan zemini bırakmaz. */
+  bloodless?: boolean;
 }
 
 /** Harita 3 boss / elit dokunuşu (maps-2-3.md E1-E3, E6). E4 skill alanı `longSermon`, E5 faz alanı `swapSkills`. Sayılar veride, PROVİZYON. */
@@ -542,6 +544,8 @@ export interface CombatantDef {
   touch?: BossTouch;
   /** Sıra almayan yardımcı nesne (CombatantData.inert aynen). */
   inert?: boolean;
+  /** Kansız birim (CombatantData.bloodless aynen). */
+  bloodless?: boolean;
 }
 
 /** Hibrit ölçek girişi (damage.bonusScale): saldıranın geçerli zırhının / büyü zırhının ya da bir temel statının pct'si. */
@@ -1303,6 +1307,11 @@ export type SkillEffectKind =
    */
   | { type: 'detonate'; status: StatusKind; mult: number; noTransferOnKill?: boolean }
   /**
+   * Tremor Slam (Ömer 2026-11-09): isabet eden hedeflerin hücresindeki SIVI zemini (grounds.json > liquid) 4 yönden komşu hücrelere (1 kare) sıçratır.
+   * Sıçrayan zemin aynı sahip, kalan süre ve hücre gücüyle yeni bir örnektir; yeni hücreler tetik sayılır (zemin tepkimeleri işler).
+   */
+  | { type: 'splashLiquid' }
+  /**
    * Karakter üstü zamanla hasar (DoT; `hot`'un aynası): vurulan hedeflere `status` durumunu `turns` tur verir; tik miktarı uygulama anında sabitlenir
    * (scale x power). Tik: taşıyanın kendi turunun başında, zemin tiklerinden sonra; büyü zırhı/zayıflık uygulanır, isabet/kritik yok, Guard'a
    * aktarılmaz (origin 'status'). Yeniden uygulanınca süre yenilenir, büyük miktar kalır. Element/hasar türü durum tanımının `dot` alanından.
@@ -1671,7 +1680,7 @@ export interface BoltOutcome {
   live: Array<{ board: Side; cells: number[] }>;
   arcs: Array<{ uid: string; damage: number }>;
   /** Patlayan zeminli hücreler ve patlamanın birim başına hasarı. */
-  shatters: Array<{ board: Side; slot: number; reaction: string; label: string }>;
+  shatters: Array<{ board: Side; slot: number; reaction: string; label: string; /** Tepkiyen zemin türü (hücrede birden çok şimşek zemini olabilir). */ ground?: string }>;
   shards: Array<{ uid: string; damage: number }>;
   /** Shocked hedefler: stun = suda olduğu için geri itilmek yerine Stun. */
   shocks: Array<{ uid: string; stun: boolean }>;
@@ -1683,8 +1692,10 @@ export interface BoltOutcome {
 export interface Formulas {
   /** Harita 3 C2 Encased (PROVİZYON): blok canı = birimin maks canı x hpRatio. */
   encased: { hpRatio: number };
+  /** Kan zemini (Ömer onaylı 2026-11-09): ağır fiziksel kritik hedefin hücresine `ground` bırakır, `turns` tur (vuranın turlarıyla). */
+  blood?: { ground: string; turns: number };
   /** Harita 3 şimşek kuralları (data/formulas.json > thunder; PROVİZYON). */
-  thunder: { pushback: number; badge: string; badgeTurns: number; stunTurns: number; wetStatus: string; arcRatio: number; flashHeroTurns: number; flashBlindTurns: number };
+  thunder: { pushback: number; badge: string; badgeTurns: number; stunTurns: number; /** Suda çarpılan birimin durumu (Electrocuted; yoksa eski Stun). */ wetInto?: string; wetStatus: string; arcRatio: number; flashHeroTurns: number; flashBlindTurns: number };
   attributes: {
     hpBase: number;
     hpPerStr: number;
@@ -1776,7 +1787,17 @@ export interface Formulas {
    * (statuses.json > accuracyDelta < 0 ya da critDelta < 0: Blinded, Jinxed) da yemez (CC ile aynı akış, olay `immune`).
    * `omenCrit`: Omen uygulanır (yığın, Doom, patlama aynen) ama yığın başına kritik düşüşü (critDeltaPerStack, Misfortune) hesaba katılmaz.
    */
-  ccImmunity?: { tiers: string[]; taunt: boolean; displacement: boolean; accuracyCrit?: boolean; omenCrit?: boolean };
+  /**
+   * debuffStrength (Ömer 2026-11-09, element formu): CC DIŞI debuff'ların (karşı taraftan gelen) büyüklük çarpanı rütbeye göre (boss 0,25, elit 0,5;
+   * yavaşlatma %, kaçınma/isabet/kritik eki, zırh, verilen/alınan hasar ve şifa çarpanı, Shocked geri itmesi). Süre, DoT tiki ve doğrudan hasar ölçeklenmez.
+   */
+  ccImmunity?: { tiers: string[]; taunt: boolean; displacement: boolean; accuracyCrit?: boolean; omenCrit?: boolean; debuffStrength?: Partial<Record<'boss' | 'elite', number>> };
+  /** Ağır kritik eşiği (Ömer 2026-11-09): fiziksel kritik vuruş hedefin maks canının bu oranından FAZLA hasar verirse ağır kritiktir (kan zemini; bkz. combat.md). */
+  heavyCrit?: { hpRatio: number };
+  /** Ortak sıvı yayılma kuralı (Ömer onaylı 2026-11-09): bitişik rastgele taşma hücresi = alan hücre sayısı x ratio, yuvarlanır, en az min. */
+  liquidSpread?: { ratio: number; min: number };
+  /** Rot (zehir + lanet, Ömer onaylı 2026-11-09): birleşik zemindeki zehir tikinin çarpanı (PROVİZYON, sim gerek). */
+  rot?: { poisonMult: number };
   /** Raise Dead ceset tehlikesi katsayıları (madde 230; battle.corpseChoices). Yoksa varsayılan hpRef 100, çarpanlar 1,5. */
   corpseDanger?: { hpRef: number; reviverMult: number; revivableMult: number; /** Tehdit (stat + hız) ağırlığı (yoksa 1). */ threatMult?: number };
 }
@@ -1799,7 +1820,7 @@ export type Side = 'party' | 'enemy';
  * `laneFirst`: yalnız şeridindeki ilk kahramana (Headlong). `heaviest`: yalnız en yüksek Armor'lu kahramana, eşitlikte küçük yuva (Ring the Anvil; sonrası splash.pattern 'armor').
  */
 export type ReachRule = { kind: 'status'; statuses: string[]; ground?: string } | { kind: 'dark' } | { kind: 'backRows' } | { kind: 'laneFirst' } | { kind: 'heaviest' };
-export type StatusKind = 'banked_coals' | 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'shaken' | 'frozen' | 'overreached' | 'cooling';
+export type StatusKind = 'banked_coals' | 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'shaken' | 'frozen' | 'overreached' | 'cooling' | 'unhallowed';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1822,6 +1843,8 @@ export interface StatusDef {
   freeze?: { into: string; turns: number; sources: StatusOrigin[] };
   /** Bu element hasarı durumu anında kaldırır (Chilled, Frozen: ateş). */
   clearedBy?: string[];
+  /** clearedBy ile kalkınca birim bu durumu alır (Frozen + ateş -> Soaked; Ömer onaylı 2026-11-09, "aşağı çözülür"). */
+  thawsInto?: { status: string; turns: number };
   /** Birim bu zeminlerden birinde (zemin ona işliyorsa) dururken durum tutmaz (Chilled: Burning). */
   refusedOnGround?: string[];
   /** Bu durum sürerken verilen türler tutmaz, uygulanınca taşıyandan kalkar (Frozen: Chilled). */
@@ -1843,7 +1866,7 @@ export interface StatusDef {
   /** true: bu durum bir birime uygulandığı AN o birimin kendi taunt'ı silinir (kontrol/CC durumu; şu an yalnızca Stun). Yeni durum eklemek tek satır. */
   breaksTaunt?: boolean;
   /**
-   * true: kontrol etkisi (crowd control; madde 271): Stun, Slow, Silence. formulas.json > ccImmunity.tiers rütbesindeki birimler (boss) bu durumları
+   * true: kontrol etkisi (crowd control; madde 271): Stun, Frozen, Silence (Slow ve Chilled 2026-11-09 beri CC değil). formulas.json > ccImmunity.tiers rütbesindeki birimler (boss) bu durumları
    * YEMEZ (olay `immune`). Hasar/lanet/DoT/savunma debuff'ları (Wound, Omen, Wither, Overextended) CC değildir. İsabet/kritik düşüren debuff'lar
    * (Blinded, Jinxed) CC değildir ama ccImmunity.accuracyCrit açıkken boss onları da yemez (madde 272; kural accuracyDelta/critDelta < 0'dan okunur).
    */
@@ -1945,6 +1968,8 @@ export interface GroundDef {
   heal?: boolean;
   /** Harita 2 (M-B Flooded): bu zeminin hücrelerindeki listelenen zeminler söner (Flooded -> Burning ground); sönen hücreye yenisi de tutmaz. */
   quenches?: string[];
+  /** true: sıvı zemin (Ömer 2026-11-09): Tremor Slam (`splashLiquid` etkisi) vurduğu hücredeki bu zemini 4 yönden komşu hücrelere sıçratır (su, zehir; kan da sıvı olacak). */
+  liquid?: boolean;
   /** true: ıslatmayan su (Healing Rain): tepkimede bağlantı ve söndürmede su sayılır, Soaked vermez; Live Water / isWaterSkill `soak`a bakar. */
   water?: boolean;
   /**
@@ -1953,6 +1978,8 @@ export interface GroundDef {
    * Skill'in bıraktığı Flooded da Tide suyu gibi davranır (ıslatır, söndürür). Ortam suyunda (Tide / Urn) suyun kendi `soak`'u önce gelir.
    */
   soak?: string;
+  /** Bu zemin hücresindeki listelenen şifa zeminleri kimseyi iyileştirmez (Cursed Ground: Healing Rain; Ömer 2026-11-09). */
+  stopsHeal?: string[];
 }
 
 /** Faz 4c: zeminin tur başı durumu (`mpZero`: yalnızca MP'si 0 olan düşmana). */
@@ -1981,8 +2008,18 @@ export interface GroundReactionDef {
   remove?: string[];
   /** Anlık büyü hasarı (kritiksiz, isabet zarsız; tik kuralı): tutar = `of` listesindeki zeminlerin hücredeki tik tutarı (sum: toplamı, yoksa en büyüğü; `of` yoksa ikisinin güçlüsü) x mult; adjacent: 4 yönden komşu hücrelere çarpan. */
   damage?: { element: Element; of?: string[]; sum?: boolean; mult: number; adjacent?: number; /** Şimşek tetikli tepkime (Shatter): tutar = tahtanın ortalama maks canı x oran (zemin tutarı yok), fiziksel; zırh düşer, taraf ayırmaz. */ hpRatio?: number };
-  /** Hücredeki (tetiği bırakana düşman) birimlere durum. */
-  status?: { status: string; turns: number };
+  /** Hücredeki (tetiği bırakana düşman) birimlere durum. armorRatio (Brittle, Shredded): yığın başı Armor eksiği = taban Armor x oran. */
+  status?: { status: string; turns: number; armorRatio?: number };
+  /** Birim üstü (Chilled venom): birimdeki bu durumun süresi `turns` uzar. */
+  extend?: { status: string; turns: number };
+  /** Birim üstü (Wet venom): 4 yönden komşu hücrelerde `to` durumunu taşıyan (tetiği uygulayana düşman) birimlere `status` (tutar = birimdeki aynı durumun tutarı); zincirlemez. */
+  spreadStatus?: { status: string; turns: number; to: string };
+  /** Tainted blood (Ömer 2026-11-09): hücredeki `from` zeminine 4 yönden bağlı tüm hücreler `into` örneğine katılır; sonra ortak sıvı yayılma kuralı (formulas.json > liquidSpread) ile bitişik rastgele hücrelere taşar (seed'li RNG). */
+  convert?: { from: string[]; into: string };
+  /** Şimşek tetikli (trigger 'lightning'): hücredeki kuru birime Shocked yok (Hexed spark, Ömer 2026-11-09). */
+  noShock?: boolean;
+  /** Şimşek tetikli: kurulum zemini ortak sıvı yayılma kuralıyla yayılır (Spark blaze; formulas.json > liquidSpread). */
+  spreadSelf?: boolean;
   /** Kurulumun sahibinin tarafındaki, hücrede duran birimlerden silinen durumlar. */
   cleanse?: string[];
   /** Süresi baştan başlayan (bırakıldığı süre) zemin türleri; yalnızca bu hücrede (hücre ayrı zemine bölünür). */
@@ -1990,8 +2027,12 @@ export interface GroundReactionDef {
   /** Kalan zeminin bu hücredeki gücü çarpanı (süresince). */
   cellMult?: { ground: string[]; mult: number };
   /** İkisi de hücreden kalkar, yerine yeni zemin: power = güç çarpanı (`of` zeminlerinin, yoksa güçlüsünün hücre tutarı), turns = sayı ya da 'longer'. */
-  becomes?: { ground: string; power: number; of?: string[]; turns: number | 'longer' };
-  /** Listelenen zemin, hücredeki su zeminine 4 yönden bağlı tüm su hücrelerine yayılır (su kalır). */
+  becomes?: { ground: string; power: number; of?: string[]; turns: number | 'longer'; /** Bloody water: güç = tahtanın ortalama maks canı x oran (zemin tutarı yerine). */ hpRatio?: number; /** Rot (Ömer 2026-11-09): güç çarpanı formulas.json'dan (`rot` = formulas.rot.poisonMult); varsa `power` yerine. */ powerFrom?: 'rot' };
+  /** BİRİM ÜSTÜ tepkime (Ömer 2026-11-09): birimde zaten olan durumlar (kurulum) + yeni gelen durum (tetik); `unitRemove` = bu tepkimede birimden kalkan durumlar. Hasar `of` zemininin durumunun kayıtlı tik miktarından (zemin türü -> grounds.json > status). */
+  unitSetup?: string[];
+  unitTrigger?: string[];
+  unitRemove?: string[];
+  /** Listelenen zemin ortak sıvı yayılma kuralıyla (formulas.json > liquidSpread: alan = hücredeki suya bağlı su hücreleri; o sayının oranı kadar bitişik rastgele hücre) taşar; su kalır (Ömer 2026-11-09). */
   spread?: string[];
   /** Tahta koşulu: 'own' = yalnız tetiği bırakanın kendi tahtasında, 'foe' = yalnız karşı tahtada (Holy Water / Evaporates; Ömer 2026-10-28). */
   board?: 'own' | 'foe';
@@ -2302,6 +2343,8 @@ export interface Combatant {
   sermon?: { skill: string; left: number; taken: number; goal: number };
   /** Sıra almayan yardımcı nesne (Iron Mooring; bkz. CombatantData.inert). */
   inert?: boolean;
+  /** Kansız birim (CombatantData.bloodless): ağır fiziksel kritik kan zemini bırakmaz. */
+  bloodless?: boolean;
   /** B3 Break the Totem: hedef nesne (UnitSetup.objective). */
   objective?: boolean;
   /**
@@ -2494,7 +2537,7 @@ type BattleEventBody =
   | { type: 'crash'; source: string; target: string; dir: PushDir; to: number | null; wall: boolean; with?: string; cause: string }
   | { type: 'moved'; actor: string; from: number; to: number; cause?: string; by?: string; /** true: kullanıcının kendi skill'i sonrası ön sıraya geçişi (SkillDef.advanceToFront, Warrior Charge); `cause` skill id. */ advance?: boolean }
   /**
-   * Kontrol bağışıklığı (madde 271): `target` (boss rütbesi, formulas.json > ccImmunity) bu CC durumunu (statuses.json > cc: Stun, Slow, Silence) YEMEDİ;
+   * Kontrol bağışıklığı (madde 271): `target` (boss rütbesi, formulas.json > ccImmunity) bu CC durumunu (statuses.json > cc: Stun, Frozen, Silence) YEMEDİ;
    * durum uygulanmadı. `source` uygulamaya çalışan, `cause` skill etkisinin görsel nedeni (ör. 'vines'). Ardından 'passive' (name 'Immune') yüzen yazı için gelir.
    */
   | { type: 'immune'; target: string; status: StatusKind; source: string; cause?: string }

@@ -3,10 +3,10 @@
  * (`src/ui/settings.ts`) aynı listeyi çizer: solda kategori sütunu (seçili olanın önünde kor elması), sağda o kategorinin satırları.
  * Son seçilen kategori oturum boyunca hatırlanır (sayfa yenilenince Sound). Saf modül: DOM / Phaser yok (`tests/settings-pages.test.ts`).
  */
-export type SettingsPageKey = 'sound' | 'gameplay' | 'display' | 'ui' | 'privacy' | 'account';
+export type SettingsPageKey = 'sound' | 'gameplay' | 'display' | 'access' | 'ui' | 'privacy' | 'account';
 
 /** Satır kimlikleri: her ekran kendi çizimini bu kimliğe bağlar (yeni ayar = buraya + iki çizici). */
-export type SettingsItemKey = 'master' | 'music' | 'sfx' | 'ui' | 'speed' | 'motion' | 'tutorials' | 'perf' | 'fps' | 'fullscreen' | 'reports' | 'copyLog' | 'info' | 'account';
+export type SettingsItemKey = 'master' | 'music' | 'sfx' | 'ui' | 'speed' | 'motion' | 'textSize' | 'colorblind' | 'tutorials' | 'perf' | 'fps' | 'fullscreen' | 'reports' | 'copyLog' | 'info' | 'account';
 
 export interface SettingsPage {
   key: SettingsPageKey;
@@ -16,12 +16,14 @@ export interface SettingsPage {
 
 export const SETTINGS_PAGES: readonly SettingsPage[] = [
   { key: 'sound', label: 'Sound', items: ['master', 'music', 'sfx', 'ui'] },
-  { key: 'gameplay', label: 'Gameplay', items: ['speed', 'motion', 'tutorials'] },
+  { key: 'gameplay', label: 'Gameplay', items: ['speed', 'tutorials'] },
   // Fullscreen eski Gameplay bölümündeydi; görüntüyle ilgili olduğu için burada (API yoksa satır çizilmez)
   { key: 'display', label: 'Display', items: ['perf', 'fps', 'fullscreen'] },
   // UI (Ömer 2026-11-02): imleç seçimi + boyutu + canlı önizleme; satır listesi yok, sayfa tek DOM parçasıdır (src/ui/cursor-settings.ts)
   { key: 'ui', label: 'UI', items: [] },
   { key: 'privacy', label: 'Privacy', items: ['reports', 'copyLog', 'info'] },
+  // Accessibility (Ömer 2026-11-12): yazı boyu, renk körlüğü desteği (rarity şekil + harf), hareketi azalt
+  { key: 'access', label: 'Accessibility', items: ['textSize', 'colorblind', 'motion'] },
   // Hesap / bulut kaydı (accounts-plan.md Faz 1d): ana menüde tam sayfa (src/cloud/ui/account-page.ts), oyun içinde salt okunur satır
   // (OAuth sayfayı yönlendirir). Giriş yoksa (Pages, sunucu kapalı: isLoginAvailable false) kategori hiç görünmez.
   { key: 'account', label: 'Account', items: ['account'] },
@@ -34,7 +36,9 @@ export const SETTINGS_LABELS: Record<SettingsItemKey, string> = {
   sfx: 'Sound Effects',
   ui: 'UI Sounds',
   speed: 'Battle Speed',
-  motion: 'Reduced Motion',
+  motion: 'Reduce Motion',
+  textSize: 'Text Size',
+  colorblind: 'Colorblind Support',
   tutorials: 'Tutorials',
   perf: 'Performance Mode',
   fps: 'Show FPS',

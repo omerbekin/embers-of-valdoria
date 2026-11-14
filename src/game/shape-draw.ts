@@ -1,3 +1,4 @@
+import { NUM_FONT } from '../ui/menu-style';
 import Phaser from 'phaser';
 import type { MiniShape } from '../ui/shape-diagram';
 import { CELL_HUE, cellOutlineEdges, cellStyle, stageAlpha } from './cell-style';
@@ -6,7 +7,7 @@ import { cellQuad } from './shape-geometry';
 import { DISPLAY_FONT } from '../ui/menu-style';
 
 /** Hücre rakamları (aşama, çift vuruş): düz rakamlı serif (yüzen yazılarla aynı aile). */
-const NUM_SERIF = '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif';
+const NUM_SERIF = NUM_FONT;
 const KIT_GOLD = 0xd9b26a;
 
 /**

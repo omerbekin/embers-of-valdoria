@@ -1,0 +1,56 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Hero card unification - mockup</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="elegant.css"><link rel="stylesheet" href="shared.css">
+<style>
+.win{border:1px solid var(--el-line3);background:rgba(10,6,3,.6);padding:14px;min-width:360px}
+.grid{display:flex;flex-wrap:wrap;gap:10px;max-width:760px}
+.pop{position:fixed;z-index:20;pointer-events:none}
+.cgrid{display:grid;grid-template-columns:repeat(3,310px);gap:12px}
+.hc.pk{cursor:pointer;transition:.2s var(--el-ease)}.hc.pk:hover,.hc.on{border-color:var(--el-pri);box-shadow:0 0 14px rgba(224,112,42,.5)}
+.tip{font-size:15px;color:var(--el-dim);margin-top:8px}
+.pick{display:flex;gap:4px;flex-wrap:wrap}
+.pick button{font:600 13px var(--el-display);letter-spacing:.06em;text-transform:uppercase;min-height:44px;padding:0 12px;background:none;border:1px solid var(--el-line1);color:var(--el-muted);cursor:pointer}
+.pick button.on{color:var(--el-pri);border-color:var(--el-gold)}
+</style></head><body>
+<div class="bar">
+ <div class="sw" data-sw="opt"><b>Option</b><button data-v="a">A  One card size</button><button data-v="b">B  Card + tile</button></div>
+ <div class="sw" data-sw="ctx"><b>Screen</b><button data-v="formation">Formation</button><button data-v="choose">Choose hero</button><button data-v="company">Company</button><button data-v="endless">Endless roster</button></div>
+</div>
+<div class="cap" id="cap"></div>
+<div class="stage" id="stage"></div>
+<div class="pop" id="pop" hidden></div>
+<div class="mock">MOCKUP - not the game</div>
+<script src="classes.js"></script><script src="shared.js"></script>
+<script>
+const S={opt:'a',ctx:'formation',pick:'archer'};
+const h0=hashOf();if(h0.b)S.opt='b';if(h0.ctx)S.ctx=h0.ctx;
+const ALL=CLASSES.map(c=>c.id),TEAM=['warrior','archer','mage','paladin','druid'];
+const CAP={a:'A: Her yerde aynı büyük kart; liste ekranlarında kartlar yan yana/alt alta dizilir, yer kaplar ama her yerde aynı görünür.',b:'B: Ayrıntı için büyük kart, listelerde küçük kutucuk (resim + sınıf noktası + isim); kutucuğun üstüne gelince ya da tıklayınca büyük kart açılır.'};
+function render(){
+ ['opt','ctx'].forEach(g=>bindSwitch(g,()=>S[g],v=>{S[g]=v;location.hash=(S.opt==='b'?'b':'a')+'&ctx='+S.ctx;render()}));
+ $('#cap').textContent=CAP[S.opt];
+ const A=S.opt==='a';let h='';
+ const pickBtns=TEAM.map(id=>'<button data-pick="'+id+'" class="'+(S.pick===id?'on':'')+'">'+C[id].name+'</button>').join('');
+ const pk=id=>card(C[id]).replace('class="hc"','class="hc pk'+(S.pick===id?' on':'')+'" data-pick="'+id+'"');
+ if(S.ctx==='formation'){
+  h='<div class="win"><div class="t">Formation: your company</div>'+(A?'<div class="pick">'+pickBtns+'</div><div class="tip">Same full card as everywhere else, shown at the side.</div>':'<div class="grid">'+TEAM.map(id=>tile(C[id],S.pick===id)).join('')+'</div><div class="tip">Hover a tile to preview; click to pin it at the side.</div>')+'</div><div>'+card(C[S.pick])+'</div>';
+ }else if(S.ctx==='choose'){
+  h='<div class="win"><div class="t">Choose hero (Barracks)</div>'+(A?'<div class="cgrid">'+ALL.slice(0,6).map(pk).join('')+'</div><div class="tip">Only 6 of '+ALL.length+' fit on screen; the rest needs scrolling.</div>':'<div class="grid">'+ALL.map(id=>tile(C[id],S.pick===id)).join('')+'</div>')+'</div>'+(A?'':'<div>'+card(C[S.pick])+'</div>');
+ }else if(S.ctx==='company'){
+  h='<div class="win"><div class="t">Company</div>'+(A?'<div class="cgrid">'+TEAM.map(id=>card(C[id])).join('')+'</div>':'<div class="grid">'+TEAM.map(id=>tile(C[id])).join('')+'</div><div class="tip">Hover or click a tile for the full card.</div>')+'</div>';
+ }else{
+  h='<div class="win"><div class="t">Endless roster</div>'+(A?'<div class="cgrid">'+ALL.slice(0,6).map(id=>card(C[id])).join('')+'</div><div class="tip">Only 6 of '+ALL.length+' fit; scroll for the rest.</div>':'<div class="grid">'+ALL.map(id=>tile(C[id])).join('')+'</div><div class="tip">Hover or click a tile for the full card.</div>')+'</div>';
+ }
+ $('#stage').innerHTML=h;wire();
+}
+function wire(){
+ document.querySelectorAll('[data-pick]').forEach(e=>e.onclick=()=>{S.pick=e.dataset.pick;render()});
+ const pop=$('#pop');
+ document.querySelectorAll('[data-tile]').forEach(t=>{
+  const show=()=>{pop.innerHTML=card(C[t.dataset.tile]);pop.hidden=false;const r=t.getBoundingClientRect();pop.style.left=Math.min(r.right+8,innerWidth-330)+'px';pop.style.top=Math.max(8,Math.min(r.top,innerHeight-pop.offsetHeight-8))+'px'};
+  t.onmouseenter=show;t.onmouseleave=()=>{pop.hidden=true};
+  t.onclick=()=>{if(S.ctx==='formation'||S.ctx==='choose'){S.pick=t.dataset.tile;pop.hidden=true;render()}else show()};
+ });
+}
+render();
+</script></body></html>

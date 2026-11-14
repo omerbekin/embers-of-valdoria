@@ -1,7 +1,8 @@
 {
   "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'stonebound_warden' (ChatGPT çizimi, Shieldwarden palet varyantı (taş gri + donuk rün); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): kit yenilendi (Gatestone Slam + Rockfall), STR 24, Bulwark Aura çıktı, pasif P4 Stone Patience (ikon yer tutucu 'bulwark'). Yeni çizim gelecek (spriteId aynı kalır, dosya değişir).",
   "id": "stonebound_warden",
-  "name": "Stonebound Warden",
+  "name": "Stonebound Warden",
+  "bloodless": true,
   "family": "guardians",
   "spriteId": "stonebound_warden",
   "color": "#8c8f8a",

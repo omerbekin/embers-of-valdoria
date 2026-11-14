@@ -2,19 +2,19 @@
  * Multiplayer DOM katmanı (sahneden bağımsız): üstte bağlantı şeridi (kopma geri sayımı, desync), kısa bildirimler,
  * lobi kodu giriş kutusu (yapıştırma desteği için gerçek <input>) ve panoya kopyalama. Metinler İngilizce.
  */
-import { dismissOnBackdrop } from './backdrop';
+import { openElDialog, type ElDialog } from './el-dialog';
+import { showElToast } from './el-toast';
+import { CONFIRM } from './confirm-labels';
 
 const root = (): HTMLElement => document.getElementById('ui-root') ?? document.body;
 
 let banner: HTMLDivElement | null = null;
-let toastEl: HTMLDivElement | null = null;
-let toastTimer = 0;
 
 /** Üst şerit: metin boşsa gizlenir. `kind` rengi belirler. */
 export function setBanner(text: string, kind: 'warn' | 'error' | 'info' = 'warn'): void {
   if (!banner) {
     banner = document.createElement('div');
-    banner.className = 'mp-banner';
+    banner.className = 'el-statusband';
     banner.setAttribute('role', 'status');
     root().appendChild(banner);
   }
@@ -25,15 +25,7 @@ export function setBanner(text: string, kind: 'warn' | 'error' | 'info' = 'warn'
 
 /** Kısa bildirim (birkaç saniye). */
 export function toast(text: string, ms = 3500): void {
-  if (!toastEl) {
-    toastEl = document.createElement('div');
-    toastEl.className = 'mp-toast';
-    root().appendChild(toastEl);
-  }
-  toastEl.textContent = text;
-  toastEl.hidden = false;
-  window.clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => toastEl && (toastEl.hidden = true), ms);
+  showElToast(text, { ms });
 }
 
 /** Panoya kopyala (eski tarayıcıda gizli textarea yedeği). */
@@ -94,18 +86,8 @@ interface PromptOptions {
 
 function promptText(o: PromptOptions): Promise<string | null> {
   return new Promise((resolve) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'mp-modal';
-    const box = document.createElement('div');
-    box.className = 'mp-modal-box';
-    const title = document.createElement('div');
-    title.className = 'mp-modal-title';
-    title.textContent = o.title;
-    const hint = document.createElement('div');
-    hint.className = 'mp-modal-hint';
-    hint.textContent = o.hint;
     const input = document.createElement('input');
-    input.className = o.code ? 'mp-code-input' : 'mp-code-input mp-name-input';
+    input.className = o.code ? 'el-field eld-code' : 'el-field eld-name';
     input.value = o.initial ?? '';
     input.type = 'text';
     input.autocomplete = 'off';
@@ -114,45 +96,36 @@ function promptText(o: PromptOptions): Promise<string | null> {
     input.placeholder = o.placeholder;
     if (o.code) input.setAttribute('autocapitalize', 'characters');
     input.setAttribute('aria-label', o.title);
-    const err = document.createElement('div');
-    err.className = 'mp-modal-err';
-    const row = document.createElement('div');
-    row.className = 'mp-modal-row';
-    const join = document.createElement('button');
-    join.className = 'mp-btn primary';
-    join.textContent = o.button;
-    const cancel = document.createElement('button');
-    cancel.className = 'mp-btn';
-    cancel.textContent = 'Cancel';
-    row.append(cancel, join);
-    box.append(title, hint, input, err);
+    const body: HTMLElement[] = [input];
     if (o.note) {
-      const note = document.createElement('div');
-      note.className = 'mp-modal-hint mp-modal-note';
+      const note = document.createElement('p');
+      note.className = 'eld-lead eld-note';
       note.textContent = o.note;
-      box.append(note);
+      body.push(note);
     }
-    box.append(row);
-    wrap.appendChild(box);
-    root().appendChild(wrap);
-    const done = (v: string | null) => {
-      wrap.remove();
-      resolve(v);
-    };
-    const submit = () => {
+    let dlg: ElDialog | null = null;
+    let result: string | null = null;
+    const submit = (d: ElDialog) => {
       const v = o.validate(input.value);
-      if (v || (o.allowEmpty && v === '')) done(v ?? '');
-      else err.textContent = o.error;
+      if (v || (o.allowEmpty && v === '')) {
+        result = v ?? '';
+        d.close(() => resolve(result));
+      } else d.setStatus(o.error, 'bad');
     };
-    join.onclick = submit;
-    cancel.onclick = () => done(null);
-    input.onkeydown = (e) => {
-      e.stopPropagation(); // oyun kısayolları (debug ` / F2, Enter) çalışmasın
-      if (e.key === 'Enter') submit();
-      else if (e.key === 'Escape') done(null);
-    };
-    input.oninput = () => (err.textContent = '');
-    window.setTimeout(() => input.focus(), 30);
+    dlg = openElDialog({
+      title: o.title,
+      lead: o.hint,
+      body,
+      className: 'eld-confirm',
+      buttons: [
+        { label: CONFIRM.cancel, onClick: (d) => d.close(() => resolve(null)) },
+        { label: o.button, kind: 'primary', onClick: submit },
+      ],
+      onEnter: submit,
+      onDismiss: (d) => d.close(() => resolve(null)),
+      focus: () => input,
+    });
+    input.addEventListener('input', () => dlg?.setStatus(''));
   });
 }
 
@@ -165,51 +138,27 @@ export function openExternal(url: string): void {
  * Pano yoksa yedek: davet metni seçili hâlde gösterilir (oyuncu elle kopyalar). İsteğe bağlı ikinci düğme (ör. Open Discord).
  */
 export function showCopyBox(text: string, extra?: { label: string; run: () => void }): void {
-  const wrap = document.createElement('div');
-  wrap.className = 'mp-modal';
-  const box = document.createElement('div');
-  box.className = 'mp-modal-box';
-  const title = document.createElement('div');
-  title.className = 'mp-modal-title';
-  title.textContent = 'Copy your invite';
-  const hint = document.createElement('div');
-  hint.className = 'mp-modal-hint';
-  hint.textContent = 'Copy the text below and send it to your friend.';
   const area = document.createElement('textarea');
-  area.className = 'mp-share-text';
+  area.className = 'el-field eld-share';
   area.readOnly = true;
   area.value = text;
   area.rows = 3;
   area.setAttribute('aria-label', 'Invite message');
-  const row = document.createElement('div');
-  row.className = 'mp-modal-row';
-  const close = document.createElement('button');
-  close.className = 'mp-btn';
-  close.textContent = 'Close';
-  row.appendChild(close);
-  const done = () => wrap.remove();
-  close.onclick = done;
-  if (extra) {
-    const go = document.createElement('button');
-    go.className = 'mp-btn primary';
-    go.textContent = extra.label;
-    go.onclick = () => {
-      extra.run();
-      done();
-    };
-    row.appendChild(go);
-  }
-  box.append(title, hint, area, row);
-  wrap.appendChild(box);
-  dismissOnBackdrop(wrap, box, done);
-  area.onkeydown = (e) => {
-    e.stopPropagation();
-    if (e.key === 'Escape') done();
-  };
-  root().appendChild(wrap);
+  openElDialog({
+    title: 'Copy your invite',
+    lead: 'Copy the text below and send it to your friend.',
+    body: [area],
+    className: 'eld-confirm',
+    buttons: [
+      { label: 'Close', onClick: (d) => d.close() },
+      ...(extra ? [{ label: extra.label, kind: 'primary' as const, onClick: (d: ElDialog) => (extra.run(), d.close()) }] : []),
+    ],
+    onDismiss: (d) => d.close(),
+    focus: () => area,
+  });
   window.setTimeout(() => {
     area.focus();
     area.select();
     area.setSelectionRange(0, text.length);
-  }, 30);
+  }, 60);
 }

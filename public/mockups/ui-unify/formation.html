@@ -1,0 +1,90 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Formation unification - mockup</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="elegant.css"><link rel="stylesheet" href="shared.css">
+<style>
+.board{display:grid;grid-template-columns:repeat(3,var(--cs));grid-template-rows:repeat(3,var(--cs));gap:6px;padding:10px;border:1px solid var(--el-line3);background:rgba(10,6,3,.6);width:max-content}
+.board.sm{--cs:104px}.board.lg{--cs:150px}
+.cell{position:relative;border:1px solid var(--el-line2);background:rgba(30,20,12,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.2s var(--el-ease);user-select:none}
+.cell:hover{border-color:var(--el-gold)}
+.cell.sel{border-color:var(--el-pri);box-shadow:0 0 14px rgba(224,112,42,.6),inset 0 0 12px rgba(224,112,42,.25)}
+.cell.rng{background:rgba(217,178,106,.16);border-style:dashed}
+.cell.over{border-color:var(--el-ember2);background:rgba(224,112,42,.25)}
+.cell img{width:68%;aspect-ratio:1;object-fit:cover;border:1px solid var(--el-line3);pointer-events:none}
+.board.sm .cell img{width:56%}
+.cell .nm{font:600 12px var(--el-display);letter-spacing:.06em;color:var(--el-on);text-transform:uppercase;margin-top:3px;pointer-events:none}
+.cell .bang{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:var(--el-ember);color:#120d09;font:800 15px/22px var(--el-display);text-align:center;cursor:help}
+.cell.empty::after{content:'empty';color:var(--el-dim);font-size:14px}
+.front{font:600 11px var(--el-display);letter-spacing:.2em;color:var(--el-dim);margin:4px 0 0}
+.line{display:flex;align-items:center;gap:8px;padding:5px 9px;border:1px solid var(--el-line1);margin-top:5px;font-size:15px;background:rgba(0,0,0,.25);min-width:300px}
+.line img{width:28px;height:28px;border:1px solid var(--el-line2)}
+.line .dot{margin-left:4px}.line b{font:600 13px var(--el-display);letter-spacing:.06em;color:var(--el-on);text-transform:uppercase}
+.strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;max-width:520px}
+.rbox{margin-top:8px;border:1px solid var(--el-line2);padding:6px 10px;font-size:15px;color:var(--el-note);width:310px}
+.rbox .m{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:90px;margin-top:5px}.rbox .m i{height:14px;border:1px solid var(--el-line2)}.rbox .m i.y{background:var(--el-gold)}.rbox .m i.h{background:var(--el-ember)}
+.tip{font-size:15px;color:var(--el-dim);margin-top:8px;max-width:420px}
+</style></head><body>
+<div class="bar">
+ <div class="sw" data-sw="opt"><b>Option</b><button data-v="a">A  One board + hero card</button><button data-v="b">B  Two boards side by side</button></div>
+ <div class="sw" data-sw="mode"><b>Mode</b><button data-v="campaign">Campaign</button><button data-v="quick">Quick Battle</button><button data-v="endless">Endless</button></div>
+</div>
+<div class="cap" id="cap"></div>
+<div class="stage" id="stage"></div>
+<div class="mock">MOCKUP - not the game</div>
+<script src="classes.js"></script><script src="shared.js"></script>
+<script>
+const P=['warrior','defender','archer','mage','paladin'],E=['cutthroat','hexer','druid','skald','gambler'];
+const mk=(ids,pos)=>{const b=Array(9).fill(null);ids.forEach((id,i)=>b[pos[i]]=id);return b};
+const S={opt:'a',mode:'campaign',side:'player',sel:null,pend:null,boards:{player:mk(P,[0,3,4,1,7]),enemy:mk(E,[0,3,6,4,7])},reserve:['vesper','antimage','undead','skald'],selTeam:'player'};
+const h0=hashOf();if(h0.b)S.opt='b';if(h0.mode)S.mode=h0.mode;
+const CAP={a:"A: Tek bir 3x3 tahta her modda aynı; Quick Battle'da üstteki sekmeyle Player/Enemy arasında geçersin, bir hücreye tıklayınca kahramanın kartı yanda açılır.",b:'B: İki takım aynı anda ekranda (Quick Battle); hücreler küçük, kart yok, kahraman bilgisi tek satır. Diğer modlarda tek küçük tahta.'};
+function bang(c,i){return (i%3===0&&c.range>=4)?'<span class="bang" title="Ranged hero in the front column: exposed to melee attackers">!</span>':''}
+function board(team,size){
+ const b=S.boards[team];
+ const rng=new Set();const sel=S.selTeam===team?S.sel:null;
+ if(sel!==null&&b[sel]){const r=C[b[sel]].range;const col=sel%3;for(let i=0;i<9;i++){if(i!==sel&&Math.abs(i%3-col)+Math.abs(Math.floor(i/3)-Math.floor(sel/3))<=Math.min(r,2))rng.add(i)}}
+ return '<div><div class="board '+size+'" data-team="'+team+'">'+b.map((id,i)=>{const c=id&&C[id];
+  return '<div class="cell'+(c?'':' empty')+(sel===i?' sel':'')+(rng.has(i)?' rng':'')+'" data-i="'+i+'" data-team="'+team+'" draggable="'+!!c+'">'+(c?'<img src="'+av(id)+'" alt=""><span class="nm">'+c.name+'</span>'+bang(c,i):'')+'</div>'}).join('')+'</div><div class="front">FRONT &larr; &rarr; BACK</div></div>';
+}
+function rbox(c){const col=S.sel%3;return '<div class="rbox">Range box: <b style="color:var(--el-on)">'+c.range+'</b> ('+(c.range>=4?'long':'short')+') <div class="m">'+[0,1,2,3,4,5,6,7,8].map(i=>'<i class="'+(i%3===col?'h':(Math.abs(i%3-col)<=Math.min(c.range,2)?'y':''))+'"></i>').join('')+'</div></div>'}
+function line(c){return c?'<div class="line"><img src="'+av(c.id)+'" alt=""><b>'+c.name+'</b><span class="dot" style="background:'+c.color+'"></span>'+c.role+' &middot; Range '+c.range+' &middot; STR '+c.attr.str+' DEX '+c.attr.dex+' INT '+c.attr.int+'</div>':''}
+function strip(){return '<div class="strip">'+S.reserve.map(id=>'<div draggable="true" data-res="'+id+'">'+tile(C[id],S.pend===id)+'</div>').join('')+'</div>'}
+function render(){
+ ['opt','mode'].forEach(g=>bindSwitch(g,()=>S[g],v=>{S[g]=v;S.sel=null;location.hash=(S.opt==='b'?'b':'a')+'&mode='+S.mode;render()}));
+ $('#cap').textContent=CAP[S.opt];
+ let h='';const q=S.mode==='quick',en=S.mode==='endless';
+ const id=S.sel!==null&&S.boards[S.selTeam][S.sel];
+ if(S.opt==='a'){
+  h+='<div>';
+  if(q)h+='<div class="sw" style="margin-bottom:10px"><button class="tab'+(S.side==='player'?' on':'')+'" data-side="player">Player</button><button class="tab'+(S.side==='enemy'?' on':'')+'" data-side="enemy">Enemy</button></div>';
+  h+=board(S.side,'lg');
+  if(en)h+='<div class="t" style="margin:12px 0 0">Hero strip (click a hero, then a cell)</div>'+strip();
+  h+='</div><div>'+(id?card(C[id])+rbox(C[id]):'<div class="hc" style="opacity:.6"><div class="bl">Click a hero on the board to see the hero card here.</div></div>')+'</div>';
+ }else{
+  if(q)h+='<div><div class="t">Player</div>'+board('player','sm')+'</div><div><div class="t">Enemy</div>'+board('enemy','sm')+'</div>';
+  else h+='<div>'+board('player','sm')+(en?strip():'')+'</div>';
+  h+='<div><div class="t">Selected</div>'+(id?line(C[id]):'<div class="line" style="opacity:.6">Click a hero: one line of info.</div>')+'<div class="t" style="margin-top:14px">All heroes</div>'+(q?['player','enemy']:['player']).map(t=>S.boards[t].filter(Boolean).map(i=>line(C[i])).join('')).join('<div style="height:10px"></div>')+'</div>';
+ }
+ $('#stage').innerHTML=h+'<div class="tip">Try: click a hero, then another cell to swap (or drag). "!" = ranged hero in the front column.</div>';
+ wire();
+}
+function swap(t,a,b){const x=S.boards[t];[x[a],x[b]]=[x[b],x[a]]}
+function place(t,i,res){const b=S.boards[t],old=b[i];b[i]=res;S.reserve=S.reserve.filter(x=>x!==res);if(old)S.reserve.push(old);S.pend=null;render()}
+function wire(){
+ document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{S.side=b.dataset.side;S.selTeam=S.side;S.sel=null;render()});
+ document.querySelectorAll('[data-res]').forEach(r=>{r.onclick=()=>{S.pend=S.pend===r.dataset.res?null:r.dataset.res;render()};r.ondragstart=e=>e.dataTransfer.setData('text/plain','res:'+r.dataset.res)});
+ document.querySelectorAll('.cell').forEach(c=>{
+  const t=c.dataset.team,i=+c.dataset.i;
+  c.onclick=()=>{
+   if(S.pend){place(t,i,S.pend);return}
+   if(S.sel!==null&&S.selTeam===t&&S.sel!==i){swap(t,S.sel,i);S.sel=i}
+   else{S.sel=(S.sel===i&&S.selTeam===t)?null:i;S.selTeam=t}
+   render()};
+  c.ondragstart=e=>e.dataTransfer.setData('text/plain',t+':'+i);
+  c.ondragover=e=>{e.preventDefault();c.classList.add('over')};c.ondragleave=()=>c.classList.remove('over');
+  c.ondrop=e=>{e.preventDefault();const d=e.dataTransfer.getData('text/plain');
+   if(d.startsWith('res:')){place(t,i,d.slice(4));return}
+   const p=d.split(':');if(p[0]===t&&+p[1]!==i){swap(t,+p[1],i);S.sel=i;S.selTeam=t;render()}};
+ });
+}
+render();
+</script></body></html>

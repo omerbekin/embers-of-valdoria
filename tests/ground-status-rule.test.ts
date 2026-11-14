@@ -321,15 +321,25 @@ describe('genel zemin kuralı: her durum', () => {
     expect(st(dry, 'silence')?.fromGround).toBeDefined(); // içeride kalınca sürer
   });
 
-  it('boss CC bağışık: zemin Slow / Chilled vermez, Immune girişte bir kez', () => {
+  it('boss: zemin Slow ve Chilled CC değil (Ömer 2026-11-09; Slow form 3), ikisi de azaltılmış güçle tutar, Immune yok', () => {
     const b = arena([['mage', 1]], [['warrior', 1]]);
     const foe = b.get('enemy-0')!;
     foe.tier = 'boss';
     const from = b.log.length;
+    place(b, 'party-0', 'quaking_ground', 'enemy', [1]);
+    b.syncGroundStatuses(emitOf(b));
+    expect(st(foe, 'slow')?.fromGround).toBeDefined();
+    expect(ofType(b.log.slice(from), 'immune').filter((e) => e.target === foe.uid && e.status === 'slow')).toHaveLength(0);
+    expect(b.statusMult(foe, 'speedMult')).toBeCloseTo(1 + (content.statuses.slow!.speedMult! - 1) * content.formulas.ccImmunity!.debuffStrength!.boss!, 6);
+    foe.statuses = [];
     place(b, 'party-0', 'storm', 'enemy', [1]);
     b.syncGroundStatuses(emitOf(b));
-    expect(st(foe, 'chilled')).toBeUndefined();
-    expect(ofType(b.log.slice(from), 'immune').filter((e) => e.target === foe.uid && e.status === 'chilled')).toHaveLength(1);
+    expect(st(foe, 'chilled')?.fromGround).toBeDefined();
+    // storm aynı hücreye yeni zemin: tepkime ya da üst üste binme sonrası hücrede kalan durumların çarpımı (her biri boss gücünde)
+    const k = content.formulas.ccImmunity!.debuffStrength!.boss!;
+    const want = foe.statuses.reduce((m, s) => m * (1 + ((content.statuses[s.kind]!.speedMult ?? 1) - 1) * k), 1);
+    expect(b.statusMult(foe, 'speedMult')).toBeCloseTo(want, 6);
+    expect(want).toBeLessThan(1);
   });
 
   it('Heat Mirage: saldıranın hücresindeki 1 turluk Burning Ground saldırana o an Burning verir', () => {

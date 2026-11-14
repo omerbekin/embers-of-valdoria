@@ -4,7 +4,8 @@
  * Seçim dokunarak: torbadaki item'e dokun (ya da sağdaki kahraman panelinde takılı bir item'e tek tıkla), istersen torbadan panele sürükle.
  * Temper: önizleme (önce -> sonra: item seviyesi, seviye şartı, silah gücü, affix değerleri), fiyat; altın yetmezse ya da tavan / seviye şartı
  * engellerse düğme pasif ve neden yazar. Reforge (yalnız Epic): ana affix dışındaki bir affix seçilir, aynı kademeden yeniden zarlanır; fiyat her
- * tekrarda artar. Kurallar saf: src/campaign/smith.ts. Oyun içi metinler İngilizce; italik yok (yalnızca kısa flavor satırı).
+ * tekrarda artar. Panel içi = Form 7 seçimi A "Tek kart" (src/ui/blacksmith-panel.ts), eylem animasyonları src/ui/blacksmith-fx.ts (Ömer 2026-11-12).
+ * Kurallar saf: src/campaign/smith.ts. Oyun içi metinler İngilizce; italik yok (yalnızca kısa flavor satırı).
  */
 import './gear.css';
 import './gear-plates.css';
@@ -14,30 +15,25 @@ import {
   COMBINE_COUNT,
   combineItemBlocked,
   combineItems,
-  combinePreview,
   findItem,
-  reforgeBlocked,
   reforgeChoices,
   reforgeItem,
-  reforgePrice,
-  reforgeSlots,
   smithCap,
   temperItem,
-  temperLines,
-  temperPreview,
   temperStonesOf,
   type CampaignState,
 } from '../campaign';
-import { affixDef, affixLines, instanceColor, instanceSubtitle, itemDef, type ItemInstance, type SlotId } from '../progression';
+import { affixDef, itemDef, type ItemInstance, type SlotId } from '../progression';
 import { campaignGearSource, equippedTipNodes, openGear, type GearApi, type GearExt } from './gear-screen';
-import { itemCell } from './inventory';
 import { itemTipNodes } from './item-tip';
 import { uiSound, worldSound } from './ui-sound';
-import { hasUiImage, uiIconName } from './ui-icons';
-import { iconUrl } from './dom-icons';
-import { oddsSlices } from './econ-model';
+import { goldImg } from './ui-icons';
 import { attachBandTip, reasonSpec } from './band-tip-attach';
 import { COMBINE_ICON, REROLL_ICON, TEMPER_STONE_ICON, iconImg, temperStoneImg } from './temper-stone';
+import { reforgeAccepts, reforgePickOnSwitch, reforgeRejectReason } from './blacksmith-rules';
+import { renderSmithPanel, type BsCtx, type BsTab } from './blacksmith-panel';
+import { captureCombine, captureTemperNums, playCombineFx, playReforgeFx, playTemperFx } from './blacksmith-fx';
+import { wantsDebugButton } from './debug-gesture';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -51,14 +47,7 @@ const btn = (cls: string, text: string, run: () => void): HTMLButtonElement => {
   b.addEventListener('click', run);
   return b;
 };
-const goldIcon = (cls = 'gr-price-ico'): HTMLImageElement | null => {
-  if (!hasUiImage('gold')) return null;
-  const i = el('img', cls);
-  i.src = iconUrl(uiIconName('gold'));
-  i.alt = '';
-  i.draggable = false;
-  return i;
-};
+const goldIcon = goldImg;
 
 /** Demircinin kısa satırları (flavor). */
 const LINES = {
@@ -77,15 +66,39 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
   worldSound('door');
   const src = campaignGearSource(get, set);
   let api: GearApi | null = null;
+  /** Temper'in seçimi; Reforge'un ayrı seçimi (yalnız Epic, Ömer 2026-11-12: Epic olmayan Reforge'a alınmaz). */
   let pick = '';
+  let rPick = '';
   let lastBag = '';
   let reforgeAt = -1;
-  type Tab = 'temper' | 'combine' | 'reroll';
+  type Tab = BsTab;
   let tab: Tab = 'temper';
+  const curPick = (): string => (tab === 'reroll' ? rPick : pick);
   let combine: string[] = [];
+  /** Combine'dan yeni çıkan item'in uid'i (yuvalar boşken sonuç kartı yerine onun kartı; yeni seçim / sekme değişimi kaldırır). */
+  let reveal = '';
   let line: keyof typeof LINES = 'idle';
-  const side = el('div', 'gr-panel gr-gear gr-ledger gr-shop bs-smith');
+  const side = el('div', 'gr-panel gr-gear gr-ledger gr-shop bs-smith bsv-on');
   side.dataset['drop'] = 'smith';
+
+  /**
+   * Reforge "Epic only" uyarısı panelin ALTINDA, eylem satırının üstünde kısa bant (Ömer 2026-11-12: "alttan"; tasarım dili 4.4'ün üst orta
+   * bildirim kuralına Ömer'in açık istisnası). Düğüm her çizimde panelin sonuna yeniden eklenir (durumu korunur).
+   */
+  const warnAnchor = el('div', 'bs-warn-anchor');
+  const warn = el('div', 'bs-warn');
+  warn.setAttribute('role', 'status');
+  warnAnchor.append(warn);
+  let warnTimer = 0;
+  const warnLow = (text: string): void => {
+    uiSound('error');
+    warn.textContent = text;
+    warn.classList.remove('on');
+    void warn.offsetWidth;
+    warn.classList.add('on');
+    window.clearTimeout(warnTimer);
+    warnTimer = window.setTimeout(() => warn.classList.remove('on'), 2400);
+  };
 
   /** Seçili item (torbadan seçim Gear'ın kendi seçimi; takılı item paneldeki satırdan). */
   const current = (): ItemInstance | null => {
@@ -94,20 +107,38 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     // torbada yeni bir item seçildiyse (Gear'ın seçimi değişti) demirci onu alır; takılı item seçimi bunu ezmez
     if (bagSel !== lastBag) {
       lastBag = bagSel;
-      if (bagSel && s.inventory.some((x) => x.uid === bagSel)) {
-        pick = bagSel;
-        reforgeAt = -1;
-      }
+      const inst = bagSel ? s.inventory.find((x) => x.uid === bagSel) : undefined;
+      if (inst && tab === 'reroll') {
+        // Reforge: Epic olmayan seçim alınmaz (bildirimi take/choose verir), önceki seçim kalır
+        if (reforgeAccepts(inst)) {
+          rPick = bagSel;
+          reforgeAt = -1;
+        }
+      } else if (inst) pick = bagSel;
     }
-    return pick ? (findItem(s, pick)?.inst ?? null) : null;
+    const uid = curPick();
+    return uid ? (findItem(s, uid)?.inst ?? null) : null;
   };
 
   /** Sağ paneldeki seçili kahramanın `slot:<yuva>` anahtarından takılı item'in uid'i. */
   const equippedUid = (key: string): string => api?.hero()?.equipment[key.slice(5) as SlotId]?.uid ?? '';
 
   const choose = (uid: string): void => {
-    if (pick === uid) return;
-    pick = uid;
+    if (curPick() === uid) return;
+    if (tab === 'reroll') {
+      const why = reforgeRejectReason(findItem(get(), uid)?.inst);
+      if (why) {
+        // torbadaki vurgusu da kalksın: panelde görünmeyen item seçili görünmesin
+        if (api?.selected() === uid) {
+          api.clearSel();
+          lastBag = '';
+          api.rerender();
+        }
+        warnLow(why);
+        return;
+      }
+      rPick = uid;
+    } else pick = uid;
     // takılı item seçilince torbadaki seçim vurgusu kalkar (iki item birden seçili görünmesin)
     if (!get().inventory.some((x) => x.uid === uid)) {
       api?.clearSel();
@@ -120,6 +151,7 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
 
   const doTemper = (): void => {
     if (!pick) return;
+    const nums = captureTemperNums(side);
     try {
       set(temperItem(get(), pick));
     } catch (err) {
@@ -132,12 +164,15 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     line = 'temper';
     api?.flash(`${itemDef(findItem(get(), pick)?.inst.id ?? '')?.name ?? 'Item'} tempered`, true);
     api?.rerender();
+    playTemperFx(side, nums);
   };
 
   const doReforge = (): void => {
-    if (!pick || reforgeAt < 0) return;
+    if (!rPick || reforgeAt < 0) return;
+    const was = findItem(get(), rPick)?.inst;
+    const pool = was ? reforgeChoices(was, reforgeAt).map((id) => affixDef(id)?.name ?? id) : [];
     try {
-      set(reforgeItem(get(), pick, reforgeAt));
+      set(reforgeItem(get(), rPick, reforgeAt));
     } catch (err) {
       line = 'poor';
       api?.flash(err instanceof Error ? err.message : String(err));
@@ -148,19 +183,7 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     line = 'reforge';
     api?.flash('Affix rerolled', true);
     api?.rerender();
-  };
-
-  /** Önce -> sonra satırları. */
-  const diffRows = (rows: Array<{ label: string; from: string; to: string }>): HTMLElement => {
-    const box = el('div', 'bs-diff');
-    for (const r of rows) {
-      const row = el('div', `bs-row${r.from !== r.to ? ' up' : ''}`);
-      if (r.label) row.append(el('span', 'bs-k', r.label));
-      row.append(el('span', 'bs-from', r.from));
-      if (r.from !== r.to) row.append(el('span', 'bs-arrow', '→'), el('span', 'bs-to', r.to));
-      box.append(row);
-    }
-    return box;
+    playReforgeFx(side, pool);
   };
 
   const stoneRow = (stones: number, have: number, gold: number): HTMLElement => {
@@ -179,6 +202,8 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
   };
 
   const doCombine = (): void => {
+    const snap = captureCombine(side);
+    const had = new Set(get().inventory.map((x) => x.uid));
     try {
       set(combineItems(get(), combine));
     } catch (err) {
@@ -188,14 +213,17 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
       return;
     }
     combine = [];
+    reveal = get().inventory.find((x) => !had.has(x.uid))?.uid ?? '';
     uiSound('buy');
     line = 'combine';
     api?.flash('Combined', true);
     api?.rerender();
+    playCombineFx(side, snap);
   };
 
   /** Combine yuvasina ekle / cikar. */
   const toggleCombine = (uid: string): void => {
+    reveal = '';
     if (combine.includes(uid)) combine = combine.filter((x) => x !== uid);
     else {
       const why = combineItemBlocked(get(), uid) ?? (combine.length >= COMBINE_COUNT ? 'All three slots are full' : null);
@@ -213,28 +241,30 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
   /** Torbadaki / takili item'e dokunus: Combine sekmesinde yuvaya, digerlerinde demirciye alir. */
   const take = (uid: string): void => (tab === 'combine' ? toggleCombine(uid) : choose(uid));
 
-  const selectedBlock = (inst: ItemInstance): HTMLElement => {
-    const sel = el('div', 'bs-sel');
-    const cell = itemCell(inst, { tip: `smith:${inst.uid}` });
-    // sağ tık: item demirciden çıkar (Ömer 2026-10-27)
-    cell.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      pick = '';
-      reforgeAt = -1;
-      uiSound('select');
-      renderSide();
-    });
-    sel.append(cell);
-    const t = el('div', 'bs-sel-t');
-    const n = el('div', 'bs-name', itemDef(inst.id)?.name ?? '');
-    n.style.color = instanceColor(inst);
-    t.append(n, el('div', 'bs-subt', instanceSubtitle(inst)));
-    sel.append(t);
-    return sel;
+  /** Seçili item'i demirciden çıkarır (o sekmenin seçimi). */
+  const unpick = (): void => {
+    if (tab === 'reroll') rPick = '';
+    else pick = '';
+    reforgeAt = -1;
+  };
+
+  /** Sekme değişimi: Temper -> Reforge seçimi yalnız Epic ise taşınır; Reforge -> Temper seçimi taşır. */
+  const setTab = (id: Tab): void => {
+    if (tab === id) return;
+    const s = get();
+    if (id === 'reroll') {
+      const next = reforgePickOnSwitch(pick ? (findItem(s, pick)?.inst ?? null) : null, rPick);
+      if (next !== rPick) reforgeAt = -1;
+      rPick = next;
+    } else if (tab === 'reroll' && rPick && id === 'temper') pick = rPick;
+    tab = id;
+    reveal = '';
+    uiSound('select');
+    renderSide();
   };
 
   const actRow = (label: string, blocked: string | null, run: () => void, cost: HTMLElement): HTMLElement => {
-    const b = btn('gr-btn primary', label, run);
+    const b = btn('el-btn primary', label, run);
     b.disabled = !!blocked;
     if (blocked) attachBandTip(b, reasonSpec(label, blocked));
     const wrap = el('div', 'gr-shopact bs-act');
@@ -244,148 +274,89 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     return wrap;
   };
 
-  function pickBox(): HTMLElement {
-    const box = el('div', 'gr-sellbox bs-pickbox');
-    box.dataset['drop'] = 'smith';
-    box.append(el('div', 'gr-sellbox-t', 'Tap an item in the bag or an equipped item, or drag one here.'));
-    return box;
-  }
-
-  function temperPane(pane: HTMLElement, s: CampaignState, inst: ItemInstance | null): void {
-    if (!inst || !itemDef(inst.id)) return void pane.append(pickBox());
-    pane.append(selectedBlock(inst));
-    const tp = temperPreview(s, inst.uid);
-    pane.append(el('div', 'bs-note', 'Raises the item level by 1. Weapon power and every property grow with it; the level needed to wear it rises too.'));
-    if (tp?.after) pane.append(diffRows(temperLines(inst, tp.after)));
-    if (tp) pane.append(actRow('Temper', tp.blocked, doTemper, stoneRow(tp.stones, tp.stonesHave, tp.price)));
-  }
-
-  function combinePane(pane: HTMLElement, s: CampaignState): void {
-    pane.append(el('div', 'bs-note', `Choose ${COMBINE_COUNT} items from the bag. They become one random item of about their average rarity and level.`));
-    combine = combine.filter((u) => s.inventory.some((x) => x.uid === u));
-    const row = el('div', 'bs-comb');
-    for (let i = 0; i < COMBINE_COUNT; i++) {
-      const inst = combine[i] ? findItem(s, combine[i]!)?.inst : undefined;
-      if (i) row.append(el('span', 'op', '+'));
-      if (inst) {
-        const c = itemCell(inst, { tip: `smith:${inst.uid}` });
-        c.addEventListener('click', () => toggleCombine(inst.uid));
-        c.addEventListener('contextmenu', (e) => {
-          e.preventDefault();
-          toggleCombine(inst.uid);
-        });
-        row.append(c);
-      } else row.append(el('div', 'bs-slot', String(i + 1)));
-    }
-    row.append(el('span', 'op', '='), el('div', 'bs-slot void', '?'));
-    pane.append(row);
-    const pv = combinePreview(s, combine);
-    if (pv.items.length === COMBINE_COUNT) {
-      const odds = el('div', 'bs-odds');
-      const bar = el('div', 'bs-bar');
-      for (const sl of oddsSlices(pv.rarityLow, pv.rarityHigh, pv.upChance)) {
-        const seg = el('i', '', `${sl.pct}%`);
-        seg.style.width = `${sl.pct}%`;
-        seg.style.background = sl.color;
-        bar.append(seg);
-      }
-      odds.append(bar);
-      pane.append(odds);
-      pane.append(el('div', 'bs-note', `${pv.sameBase ? 'Three of the same base item give that kind of item with new properties.' : 'Mixed items give a random item.'} Item level ${pv.ilvl}.`));
-    }
-    const wrap = actRow('Combine', pv.blocked, doCombine, stoneRow(0, 0, pv.price));
-    const clear = btn('gr-btn', 'Clear', () => {
-      combine = [];
-      uiSound('select');
-      renderSide();
-    });
-    wrap.insertBefore(clear, wrap.lastElementChild);
-    pane.append(wrap);
-  }
-
-  function rerollPane(pane: HTMLElement, s: CampaignState, inst: ItemInstance | null): void {
-    if (!inst || !itemDef(inst.id)) return void pane.append(pickBox());
-    pane.append(selectedBlock(inst));
-    const slots = reforgeSlots(inst);
-    if (!slots.length) return void pane.append(el('div', 'bs-note', 'Only Epic items can have an affix rerolled.'));
-    pane.append(el('div', 'bs-note', 'Pick a property (not the first one). It is rerolled into a property of the same tier, which may be the same one with a new value. Each reroll of this item costs more.'));
-    const lines = affixLines(inst);
-    const list = el('div', 'bs-affixes');
-    lines.forEach((l, i) => {
-      const can = slots.includes(i);
-      const b = btn(`bs-affix${reforgeAt === i ? ' on' : ''}${can ? '' : ' main'}`, `[${l.tier}] ${l.text}`, () => {
-        if (!can) return;
-        reforgeAt = reforgeAt === i ? -1 : i;
-        uiSound('select');
-        renderSide();
-      });
-      b.disabled = !can;
-      if (!can) attachBandTip(b, reasonSpec('Main property', 'The main property stays'));
-      list.append(b);
-    });
-    pane.append(list);
-    if (reforgeAt >= 0) {
-      const pool = reforgeChoices(inst, reforgeAt).map((id) => affixDef(id)?.name ?? id);
-      pane.append(el('div', 'bs-note', `Can become: ${pool.join(', ')}`));
-    }
-    const why = reforgeAt < 0 ? 'Pick a property first' : reforgeBlocked(s, inst.uid, reforgeAt);
-    pane.append(actRow('Reroll affix', why, doReforge, stoneRow(0, 0, reforgePrice(inst))));
-  }
-
-  function renderSide(): void {
+  /** Taş + altın (çerçevesiz): çanta altındaki Supplies / Purse şeridinde (Ömer 2026-11-11 Form 6; başlıkta değil). */
+  function purseParts(): HTMLElement[] {
     const s = get();
-    const head = el('div', 'gr-head gr-lhead');
-    head.append(el('div', 'gr-title', 'Blacksmith'));
     const purse = el('div', 'gr-gold', String(s.gold));
     const gi = goldIcon('gr-ui-ico');
     if (gi) {
       purse.classList.add('gr-has-ico');
       purse.prepend(gi);
     }
-    purse.title = 'Gold';
+    attachBandTip(purse, { title: 'Gold' });
     const stones = el('div', 'bs-stones');
-    stones.title = 'Temper Stones';
+    attachBandTip(stones, { title: 'Temper Stones' });
     stones.append(temperStoneImg(), String(temperStonesOf(s)));
-    const pr = el('span', 'bs-purse');
-    pr.append(stones, purse);
-    head.append(el('span', 'gr-grow'), pr);
+    return [stones, purse];
+  }
+
+  function renderSide(): void {
+    const s = get();
+    const head = el('div', 'gr-head gr-lhead');
+    head.append(el('div', 'gr-title', 'Blacksmith'));
     const kids: HTMLElement[] = [head];
     kids.push(el('div', 'gr-shop-sub', `${o.sub ? `${o.sub} · ` : ''}Items can be tempered up to item level ${smithCap(s)} in this chapter`));
     kids.push(el('div', 'gr-odo-line bs-line', LINES[line]));
 
     const tabs = el('div', 'bs-tabs');
+    // Temper / Combine / Reforge tek satır (Ömer 2026-11-12): düğmede tek kelime, ipucu YOK (Ömer 2026-11-12: açıklama panelde yazıyor);
+    // Reforge'un Epic şartı sekmenin açıklamasında ve Epic olmayan item bırakılınca çıkan bildirimde. Dördüncü alan = panel açıklaması.
     const defs: Array<[Tab, string, string, string]> = [
-      ['temper', 'Temper', TEMPER_STONE_ICON, ''],
-      ['combine', 'Combine', COMBINE_ICON, ''],
-      ['reroll', 'Reroll affix', REROLL_ICON, 'Epic'],
+      ['temper', 'Temper', TEMPER_STONE_ICON, 'Raise item level by 1'],
+      ['combine', 'Combine', COMBINE_ICON, '3 items become 1'],
+      ['reroll', 'Reforge', REROLL_ICON, 'Epic items only: reroll one property'],
     ];
-    for (const [id, label, icon, tag] of defs) {
+    for (const [id, label, icon, sub] of defs) {
       const b = el('button', `bs-tab${tab === id ? ' on' : ''}`);
       b.type = 'button';
       b.append(iconImg(icon, 'bs-tab-ico'), label);
-      if (tag) b.append(el('i', '', tag));
-      b.addEventListener('click', () => {
-        if (tab === id) return;
-        tab = id;
-        uiSound('select');
-        renderSide();
-      });
+      b.setAttribute('aria-label', `${label}: ${sub}`);
+      b.addEventListener('click', () => setTab(id));
       tabs.append(b);
     }
-    kids.push(tabs);
-
-    const pane = el('div', 'gr-shoppane bs-pane');
     const inst = current();
-    if (tab === 'temper') temperPane(pane, s, inst);
-    else if (tab === 'combine') combinePane(pane, s);
-    else rerollPane(pane, s, inst);
-    kids.push(pane);
-    side.replaceChildren(...kids);
+    // Panel = Form 7 seçimi A "Tek kart" (Ömer 2026-11-12): src/ui/blacksmith-panel.ts; eylem animasyonları blacksmith-fx.ts
+    combine = combine.filter((u) => s.inventory.some((x) => x.uid === u));
+    const rev = reveal ? (findItem(s, reveal)?.inst ?? null) : null;
+    const ctx: BsCtx = {
+      s,
+      tab,
+      tabs,
+      inst,
+      heroClass: inst ? findItem(s, inst.uid)?.hero?.class : undefined,
+      combine: combine.map((u) => findItem(s, u)?.inst).filter((x): x is ItemInstance => !!x),
+      reveal: rev,
+      reforgeAt,
+      setReforgeAt: (i) => {
+        reforgeAt = i;
+        uiSound('select');
+        renderSide();
+      },
+      unpick: () => {
+        unpick();
+        uiSound('select');
+        renderSide();
+      },
+      toggleCombine,
+      clearCombine: () => {
+        combine = [];
+        reveal = '';
+        uiSound('select');
+        renderSide();
+      },
+      doTemper,
+      doReforge,
+      doCombine,
+      actRow,
+      stoneRow,
+    };
+    kids.push(...renderSmithPanel(ctx));
+    side.replaceChildren(...kids, warnAnchor);
   }
 
   const ext: GearExt = {
     side,
-    hideGold: true,
+    purse: purseParts,
     noTrash: true,
     attach: (overlay, a) => {
       api = a;
@@ -423,7 +394,7 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     tipActions: (key) => {
       if (!key.startsWith('smith:')) return null;
       const uid = key.slice(6);
-      return pick === uid && tab !== 'combine' ? [] : [{ label: tab === 'combine' ? (combine.includes(uid) ? 'Remove' : 'Add') : 'Choose', primary: true, run: () => take(uid) }];
+      return curPick() === uid && tab !== 'combine' ? [] : [{ label: tab === 'combine' ? (combine.includes(uid) ? 'Remove' : 'Add') : 'Choose', primary: true, run: () => take(uid) }];
     },
     onTap: (key) => {
       // dokunmatik: takılı item'e ilk dokunuş hemen demirciye alır (ipucu ve Unequip normal kalır)
@@ -438,5 +409,31 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
       return undefined;
     },
   };
-  return openGear(root, src, { ext, onClose: () => o.onClose?.() });
+  const close = openGear(root, src, { ext, onClose: () => o.onClose?.() });
+  // Debug kancası (yalnız ?debug=1): Lead'in çekimleri için sekme / seçim / Combine doldurma (window.__bsDebug)
+  if (typeof window !== 'undefined' && wantsDebugButton(window.location.search)) {
+    const w = window as unknown as { __bsDebug?: unknown };
+    w.__bsDebug = {
+      tab: (t: Tab) => setTab(t),
+      pick: (uid: string) => take(uid),
+      unpick: () => (unpick(), renderSide()),
+      combineFill: () => {
+        const s = get();
+        combine = s.inventory.filter((x) => !combineItemBlocked(s, x.uid)).slice(0, COMBINE_COUNT).map((x) => x.uid);
+        tab = 'combine';
+        renderSide();
+        return combine.slice();
+      },
+      reforgeLine: (i: number) => ((reforgeAt = i), renderSide()),
+      /** Sekmenin eylemini çalıştırır (Temper / Combine / Reforge; animasyonu tetikler). */
+      act: () => (tab === 'temper' ? doTemper() : tab === 'combine' ? doCombine() : doReforge()),
+      firstEpic: () => get().inventory.find((x) => reforgeAccepts(x))?.uid ?? '',
+      firstNonEpic: () => get().inventory.find((x) => !reforgeAccepts(x))?.uid ?? '',
+      state: () => ({ tab, pick, rPick, combine: combine.slice(), reforgeAt }),
+    };
+  }
+  return () => {
+    if (typeof window !== 'undefined') delete (window as unknown as { __bsDebug?: unknown }).__bsDebug;
+    close();
+  };
 }

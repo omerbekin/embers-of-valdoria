@@ -1,0 +1,92 @@
+/* Ortak kahraman seçici (Ömer 2026-11-10; tasarım dili 4.7): Choose your hero, Recruit penceresi, Recruit ve Choose a companion AYNI görünüm. Satır listesi + yanında kahraman kartı. Telefonda (html.short) eski kart görünümü. */
+/* ---- kart penceresi ailesi (.mw-cards) ---- */
+html:not(.short) .mw.hp .mw-split{display:grid;grid-template-columns:var(--pkL) minmax(0,1fr);gap:calc(26*var(--u));align-items:start}
+html:not(.short) .mw.hp .hp-detail{box-sizing:border-box;overflow:hidden}
+html:not(.short) .mw.hp{--pkL:calc(500*var(--u))}
+html:not(.short) .mw.hp .mw-cards{padding-top:0;justify-content:flex-start}
+html:not(.short) .mw.hp .mw-cards{display:flex;flex-direction:column;gap:calc(8*var(--u))}
+html:not(.short) .mw.hp .mw-cards .mw-card{max-width:none;width:auto;flex:none;background:rgba(10,7,5,.75);border:1px solid rgba(217,178,106,.3);padding:0;overflow:visible}
+html:not(.short) .mw.hp .mw-cards .mw-card .pt,html:not(.short) .mw.hp .mw-cards .mw-card>.mw-chips,html:not(.short) .mw.hp .mw-cards .mw-card .ds{display:none}
+html:not(.short) .mw.hp .mw-cards .mw-card .lead{position:absolute;top:6px;right:8px;width:max(18px,calc(30*var(--u)));height:max(18px,calc(30*var(--u)));z-index:3}
+html:not(.short) .mw.hp .mw-cards .mw-card .lead .crown{position:static;width:100%}
+.mw.hp .hp-av{display:block;object-fit:cover;border:1px solid rgba(217,178,106,.45);pointer-events:none;user-select:none}
+.mw.hp .hp-txt{min-width:0}
+.mw.hp .hp-r{display:block;font:400 max(calc(11px * var(--tx, 1)),calc(19*var(--u) * var(--tx, 1)))/1.2 var(--g-body);color:#a8977a}
+.hp .hp-st{display:flex;flex-wrap:nowrap;gap:calc(14*var(--u));margin-top:calc(3*var(--u))}
+.hp .hp-st span{display:flex;align-items:center;gap:calc(4*var(--u));font:400 max(calc(11px * var(--tx, 1)),calc(19*var(--u) * var(--tx, 1)))/1 var(--g-body);color:#8d7f66;padding-bottom:2px;border-bottom:2px solid transparent}
+.hp .hp-st span img{width:max(10px,calc(20*var(--u)));height:max(10px,calc(20*var(--u)));opacity:.5;image-rendering:pixelated}
+.hp .hp-st span.hot{color:#ffb27a;border-bottom-color:#e0702a}
+.hp .hp-st span.hot img{opacity:1}
+.mw.hp .hp-em{flex:none;width:max(20px,calc(46*var(--u)));height:max(20px,calc(46*var(--u)));border-radius:50%;background:#140e09;border:1px solid var(--ac);padding:2px;box-sizing:border-box;object-fit:contain}
+html:not(.short) .mw.hp .mw-cards .mw-card .hp-em{margin-left:auto}
+.mw.hp .hp-m{white-space:nowrap;padding:2px 10px;border:1px solid rgba(217,178,106,.4);font:400 max(calc(11px * var(--tx, 1)),calc(18*var(--u) * var(--tx, 1))) var(--g-body);color:#ffb27a}
+html:not(.short) .mw.hp .mw-cards .mw-card{flex-direction:row;align-items:center;text-align:left;gap:calc(16*var(--u));padding:calc(5*var(--u)) calc(14*var(--u)) calc(5*var(--u)) calc(5*var(--u));border-left:4px solid var(--ac)}
+html:not(.short) .mw.hp .mw-cards .mw-card .hp-av{flex:none;width:calc(88*var(--u));height:calc(88*var(--u))}
+html:not(.short) .mw.hp .mw-cards .mw-card .hp-txt{flex:1}
+html:not(.short) .mw.hp .mw-cards .mw-card .lead{right:auto;left:3px;top:3px;width:max(14px,calc(22*var(--u)));height:max(14px,calc(22*var(--u)));filter:drop-shadow(0 1px 2px #000)}
+html:not(.short) .mw.hp .mw-cards .mw-card .nm{font-size:max(calc(12px * var(--tx, 1)),calc(23*var(--u) * var(--tx, 1)))}
+html:not(.short) .mw.hp .mw-cards .mw-card:hover{border-color:#f3d999}
+html:not(.short) .mw.hp .mw-cards .mw-card.sel{border-color:#f3d999;background:rgba(40,28,16,.85)}
+html:not(.short) .mw.hp .mw-cards .mw-card.sel{border-left-color:var(--ac)}
+html:not(.short) .mw.hp .mw-cards .mw-card::before{display:none}
+.mw.hp .hp-detail{display:flex;gap:calc(24*var(--u));align-items:flex-start;padding:calc(18*var(--u)) calc(22*var(--u));background:linear-gradient(180deg,rgba(26,19,12,.94),rgba(10,7,5,.94));border:1px solid rgba(217,178,106,.4)}
+.mw.hp .hp-detail .hp-big{flex:none;width:calc(220*var(--u));height:calc(220*var(--u));object-fit:cover;border:1px solid rgba(217,178,106,.5)}
+.mw.hp .hp-detail .hp-nm{font:600 max(calc(16px * var(--tx, 1)),calc(34*var(--u) * var(--tx, 1))) var(--g-disp);letter-spacing:.08em;text-transform:uppercase;color:#f3d999}
+.mw.hp .hp-detail .hp-cs{display:flex;flex-wrap:wrap;gap:calc(8*var(--u));margin:calc(10*var(--u)) 0}
+.mw.hp .hp-detail .hp-cs span{padding:2px 12px;border:1px solid rgba(217,178,106,.4);font:400 max(calc(12px * var(--tx, 1)),calc(20*var(--u) * var(--tx, 1))) var(--g-body);color:#d9c8a2}
+.mw.hp .hp-detail .hp-cs span.hot{border-color:#e0702a;color:#ffb27a}
+.mw.hp .hp-detail .hp-ds{margin:0;font:400 max(calc(13px * var(--tx, 1)),calc(23*var(--u) * var(--tx, 1)))/1.35 var(--g-body);color:#cdb88d}
+.mw.hp .hp-detail .hp-tg{margin-top:calc(10*var(--u));font:400 max(calc(12px * var(--tx, 1)),calc(20*var(--u) * var(--tx, 1))) var(--g-body);color:#e0b66a}
+html.short .mw.hp .hp-detail,html.short .mw.hp .hp-split>.hp-detail{display:none}
+html.short .mw.hp .hp-av{display:none}
+html.short .mw.hp .hp-r,html.short .mw.hp .hp-m{display:none}
+html:not(.short) .mw.hp .mw-C,html:not(.short) .mw.hp .mw-C.wide{width:max(min(calc(100vw - 20px), 700px), calc(1160 * var(--u)))}
+
+html.short .mw.hp .hp-st, html.short .mw.hp .hp-em { display: none; }
+
+/* Sağ kart: üstte portre + ad + rol çipleri + açıklama, ALTINDA skill listesi (pasif 1. sırada; gear / ağaç skill plakasının sıkı hali) */
+.mw.hp .hp-detail { flex-direction: column; align-items: stretch; gap: calc(16*var(--u)); }
+.mw.hp .hp-top { display: flex; gap: calc(22*var(--u)); align-items: flex-start; min-height: 0; }
+.mw.hp .hp-sk { --a: #d9b26a; --al: color-mix(in srgb, var(--a) 55%, #fff); position: relative; display: flex; flex-direction: column; align-items: center; gap: calc(6*var(--u)); padding: calc(16*var(--u)) calc(4*var(--u)) calc(8*var(--u)); background: linear-gradient(180deg, color-mix(in srgb, var(--a) 11%, #1d140c), #0d0906); border: 1px solid color-mix(in srgb, var(--a) 40%, rgba(217,178,106,.2)); box-shadow: 0 0 0 2px rgba(8,6,4,.75); }
+.mw.hp .hp-sk.pas { --a: #6fb0a8; }
+.mw.hp .hp-sk.ult { --a: #e0702a; border-color: color-mix(in srgb, var(--a) 75%, #000); }
+.mw.hp .hp-sk .tg { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); padding: 0 .8em; font: 700 max(calc(8px * var(--tx, 1)), calc(11*var(--u) * var(--tx, 1))) / 1.6 var(--g-disp); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; color: #fff4d6; background: color-mix(in srgb, var(--a) 55%, #0c0905); border: 1px solid var(--al); }
+.mw.hp .hp-sk .ic { position: relative; width: calc(64*var(--u)); height: calc(64*var(--u)); background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--a) 30%, #1a110a) 0%, #0d0806 78%); border: 1px solid color-mix(in srgb, var(--a) 62%, #000); box-shadow: 0 0 0 2px rgba(8,6,4,.9), inset 0 0 12px color-mix(in srgb, var(--a) 22%, transparent); }
+.mw.hp .hp-sk .ic img { width: 100%; height: 100%; object-fit: contain; display: block; image-rendering: pixelated; }
+.mw.hp .hp-sk .ic::before, .mw.hp .hp-sk .ic::after { content: ''; position: absolute; width: calc(9*var(--u)); height: calc(9*var(--u)); transform: rotate(45deg); background: #130d07; border: 1px solid var(--al); }
+.mw.hp .hp-sk .ic::before { left: calc(-5*var(--u)); top: calc(-5*var(--u)); }
+.mw.hp .hp-sk .ic::after { right: calc(-5*var(--u)); bottom: calc(-5*var(--u)); }
+.mw.hp .hp-sk .sn { width: 100%; min-height: 2.3em; display: flex; align-items: center; justify-content: center; font: 600 max(calc(9px * var(--tx, 1)), calc(13*var(--u) * var(--tx, 1))) / 1.15 var(--g-disp); letter-spacing: .04em; text-transform: uppercase; text-align: center; color: var(--al); }
+
+/* sabit satır sayısı (Recruit + Choose a companion): kaydırılabilir sütun, "Recommended" etiketi */
+.mw.hp .hp-list.hp-scroll { overflow-y: auto; overscroll-behavior: contain; padding-right: calc(8*var(--u)); scrollbar-width: thin; scrollbar-color: var(--scroll-thumb, #6b5532) transparent; }
+.mw.hp .hp-txt .hp-r { display: flex; align-items: center; white-space: nowrap; }
+.mw.hp .hp-rec { flex: none; margin-left: calc(10*var(--u)); padding: 0 .6em; font: 600 max(calc(8px * var(--tx, 1)), calc(12*var(--u) * var(--tx, 1))) / 1.4 var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: #e0b66a; border: 1px solid rgba(224,182,106,.55); }
+html.short .mw.hp .hp-rec { display: none; }
+
+/* ===== Kahraman kartı (src/ui/hero-card.ts; Ömer 2026-11-11 "Sheet"): portre solda, yassı tek satır stat şeridi, altta skill madalyonları ===== */
+.hc { color: #d9c8a2; font-family: var(--g-body, serif); display: flex; flex-direction: column; gap: calc(14 * var(--u)); width: 100%; min-width: 0; }
+.hc .nm { font: 600 max(calc(16px * var(--tx, 1)), calc(32 * var(--u) * var(--tx, 1))) var(--g-disp, serif); letter-spacing: .08em; text-transform: uppercase; color: #f3d999; }
+.hc .chips { display: flex; gap: calc(8 * var(--u)); flex-wrap: nowrap; }
+.hc .chips span { padding: 1px 12px; border: 1px solid rgba(217,178,106,.4); font: 400 max(calc(11px * var(--tx, 1)), calc(19 * var(--u) * var(--tx, 1))) var(--g-body, serif); color: #d9c8a2; white-space: nowrap; }
+.hc .chips span.hot { border-color: #e0702a; color: #ffb27a; }
+.hc .top { display: flex; gap: calc(22 * var(--u)); }
+.hc .pt { flex: none; width: calc(210 * var(--u)); height: calc(210 * var(--u)); border: 1px solid rgba(217,178,106,.5); border-bottom: 4px solid var(--c); }
+.hc .pt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hc .id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(10 * var(--u)); }
+.hc .hd { display: flex; justify-content: space-between; align-items: baseline; }
+.hc .lv { font: 600 max(calc(12px * var(--tx, 1)), calc(22 * var(--u) * var(--tx, 1))) var(--g-disp, serif); letter-spacing: .1em; color: #e0b66a; }
+.hc-bar { position: relative; height: max(14px, calc(24 * var(--u))); background: #1d150d; border: 1px solid rgba(217,178,106,.22); margin-bottom: calc(4 * var(--u)); }
+.hc-bar i { position: absolute; inset: 0; }
+.hc-bar.hp i { background: linear-gradient(90deg, #4f9a32, #7fbf3f); }
+.hc-bar.mp i { background: linear-gradient(90deg, #2e6fc0, #5aa5f0); }
+.hc-bar b { position: absolute; inset: 0; display: flex; align-items: center; padding-left: calc(10 * var(--u)); font: 700 max(calc(10px * var(--tx, 1)), calc(15 * var(--u) * var(--tx, 1))) var(--g-disp, serif); letter-spacing: .08em; color: #fff4d6; text-shadow: 0 1px 2px #000; }
+/* yassı stat şeridi: tek yatay satır, ikon + sayı, kutu yok; ana stat turuncu altı çizili */
+.hc .stats { display: flex; flex-wrap: nowrap; align-items: center; gap: calc(22 * var(--u)); }
+.hc .stats span { display: inline-flex; align-items: center; gap: calc(6 * var(--u)); padding-bottom: 2px; border-bottom: 2px solid transparent; cursor: help; min-height: 24px; }
+.hc .stats span.hot { border-bottom-color: #e0702a; }
+.hc .stats img { width: max(14px, calc(24 * var(--u))); height: max(14px, calc(24 * var(--u))); image-rendering: pixelated; opacity: .75; }
+.hc .stats span.hot img { opacity: 1; }
+.hc .stats em { font: 600 max(calc(10px * var(--tx, 1)), calc(14 * var(--u) * var(--tx, 1))) var(--g-disp, serif); font-style: normal; letter-spacing: .08em; color: #a8977a; }
+.hc .stats b { font: 600 max(calc(13px * var(--tx, 1)), calc(24 * var(--u) * var(--tx, 1))) var(--g-disp, serif); color: #f3d999; }
+.hc .stats span.hot b { color: #ffb27a; }

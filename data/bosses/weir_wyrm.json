@@ -76,7 +76,7 @@
         "id": "unyielding",
         "name": "Unyielding",
         "icon": "unyielding",
-        "text": "Immune to crowd control: Stun, Slow and Silence do not take hold, taunts do not force its attacks, and it cannot be pulled or pushed. Other ailments last 1 turn less."
+        "text": "Immune to crowd control: Stun and Silence do not take hold, taunts do not force its attacks, and it cannot be pulled or pushed. Other ailments last 1 turn less."
       },
       {
         "id": "slick_hide",

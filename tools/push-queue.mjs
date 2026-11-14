@@ -329,7 +329,7 @@ function hookPrompt() {
       text += `\n[gönderim kuyruğu] BU SOHBETE RAPOR: bunları Ömer'e sade Türkçeyle ilet ve gereğini yap:\n- ${own.join('\n- ')}`;
       delete q.chatNotices[short(sid)];
     }
-    // Koordinatör düzeni (Ömer 2026-11-01): Ömer tek sohbetle konuşur; kural her sohbete bir kez söylenir
+    // Lead düzeni (eski adı Koordinatör; komut adı coordinator kaldı; Ömer 2026-11-01): Ömer tek sohbetle konuşur; kural her sohbete bir kez söylenir
     const coord = q.coordinator;
     if (coord && e.coordOf !== coord) {
       e.coordOf = coord;
@@ -371,7 +371,7 @@ function wtBehindNote(rec, conflicts) {
     }
     if (clash.length && clash.every(isGolden)) return `[gönderim kuyruğu] Kopyan güncel sürümden ${n} gönderim geride. Çakışan yalnız üretilmiş golden kayıtları: ${clash.slice(0, 8).join(', ')}. Elle çözme; dal kuyruktan gönderilince (ready) kayıtlar birleşmiş koddan yeniden üretilir.`;
     const list = clash.length ? `Birleşince çakışacak: ${clash.slice(0, 8).join(', ')}${clash.length > 8 ? ` (+${clash.length - 8})` : ''}.` : 'Şu an çakışma görünmüyor.';
-    return `[gönderim kuyruğu] Kopyan güncel sürümden ${n} gönderim geride, başka sohbetlerin işini görmüyorsun. ${list} Uygun noktada işini commit'leyip kopyanda: git -c user.name=Omer -c user.email=omerbekinn@gmail.com merge origin/main`;
+    return `[gönderim kuyruğu] Kopyan güncel sürümden ${n} gönderim geride, başka sohbetlerin işini görmüyorsun. ${list} Uygun noktada işini commit'leyip kopyanda: git merge origin/main`;
   } catch { return ''; }
 }
 
@@ -945,8 +945,7 @@ async function shipClean(version, groups, files, dry) {
     const tree = git('write-tree', env);
     const summary = version ? `${version}: ${Object.values(groups).flat()[0]}` : `Internal: docs/tools update (${files.length} files)`;
     writeFileSync(join(GAME, '.git', 'RELEASE_MSG'), `${summary}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n`);
-    const who = { GIT_AUTHOR_NAME: 'Omer', GIT_AUTHOR_EMAIL: 'omerbekinn@gmail.com', GIT_COMMITTER_NAME: 'Omer', GIT_COMMITTER_EMAIL: 'omerbekinn@gmail.com' };
-    const sha = git(`commit-tree ${tree} -p ${base} -F ${q_(join(GAME, '.git', 'RELEASE_MSG'))}`, who);
+    const sha = git(`commit-tree ${tree} -p ${base} -F ${q_(join(GAME, '.git', 'RELEASE_MSG'))}`, WHO);
 
     try { writeFileSync(join(PLOCK, 'owner.json'), JSON.stringify({ pid: process.pid, scratch })); } catch {}
     git(`worktree add --detach ${q_(scratch)} ${sha}`);
@@ -1115,7 +1114,9 @@ function ownerAlive(pid) {
 }
 
 // ---- Faz 2: sohbet başına worktree (Ömer 2026-10-31) ----
-const WHO = { GIT_AUTHOR_NAME: 'Omer', GIT_AUTHOR_EMAIL: 'omerbekinn@gmail.com', GIT_COMMITTER_NAME: 'Omer', GIT_COMMITTER_EMAIL: 'omerbekinn@gmail.com' };
+// Commit kimliğini araç vermez; git deponun kendi ayarını kullanır. Araç kimlik bilgisi tutmaz ve okumaz
+// (2026-11-14: kimlik bilgisi yüzünden gizlilik eklentisi Lead'in bu aracı çalıştırmasını reddediyordu).
+const WHO = {};
 const ORIGIN_MAIN = 'refs/remotes/origin/main';
 const gx = (dir, gitArgs, opts = {}) => execFileSync('git', gitArgs, { cwd: dir, encoding: 'utf8', windowsHide: true, maxBuffer: 256 * 1024 * 1024, stdio: [opts.input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'], input: opts.input, env: { ...process.env, ...opts.env } }).replace(/\s+$/, '');
 const gxOk = (dir, gitArgs) => { try { gx(dir, gitArgs); return true; } catch { return false; } };
@@ -1183,8 +1184,8 @@ function branchHasWork(branch, target = ORIGIN_MAIN) {
 
 // Metin değişince artırılır: açık sohbetler bir sonraki istemde yeni kuralları görür
 const WT_RULES_V = 4;
-const COORD_WORKER = `[gönderim kuyruğu] KOORDİNATÖR DÜZENİ: Ömer artık yalnız "Koordinatör" sohbetiyle konuşur. Sana iş ondan gelir. Açık sorunu, karar isteğini, bitti raporunu, engelini SendMessage ile Koordinatör'e yaz: tek mesajda soru, seçenekler, önerin, mockup linki. Kendin form açma, kararı Koordinatör'ün formu alır. "BU SOHBETE RAPOR" notlarını da ona ilet. Ömer sana doğrudan yazarsa normal cevap ver, sonra Koordinatör'e tek satır söyle. Ayrıntı: docs/arch/lead.md`;
-const COORD_SELF = (s) => `[gönderim kuyruğu] Sen Koordinatörsün (oturum ${s}). Kuralların: docs/arch/lead.md. Gönderim raporları yalnız sana gelir.`;
+const COORD_WORKER = `[gönderim kuyruğu] LEAD DÜZENİ: Ömer yalnız "Lead" sohbetiyle konuşur; kayıtlı Lead başka bir oturum. Ömer bu sohbeti yeni Lead olarak açtıysa (hafızadaki lead-handoff bunu söyler) önce çalıştır: node "${TOOL}" coordinator <bu oturum>. Lead değilsen: iş Lead'den gelir; açık sorunu, karar isteğini, bitti raporunu, engelini SendMessage ile Lead'e yaz: tek mesajda soru, seçenekler, önerin, mockup linki. Kendin form açma, kararı Lead'in formu alır. "BU SOHBETE RAPOR" notlarını da ona ilet. Ömer sana doğrudan yazarsa normal cevap ver, sonra Lead'e tek satır söyle. Ayrıntı: docs/arch/lead.md`;
+const COORD_SELF = (s) => `[gönderim kuyruğu] Sen Lead'sin (oturum ${s}). Kuralların: docs/arch/lead.md, açık işler: docs/arch/lead-open.md. Gönderim raporları yalnız sana gelir.`;
 function wtRules(sid, e, rec, first) {
   const s = short(sid);
   const base = `[gönderim kuyruğu] oturum ${s} · mod: ${e.mode}${e.ready ? ' · hazır' : ''}`;
@@ -1197,7 +1198,7 @@ function wtRules(sid, e, rec, first) {
       : `Kendin GitHub'a gönderme; iş bitip doğrulanınca: node "${TOOL}" ready ${s} --fixes "<oyuncuya yönelik İngilizce satır>"; daha önce bir gönderim olursa ona katılır; yoksa ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle gider.`) +
     ` Gönderime ready anındaki hâl girer, sonraki commit'lerin sonrakine kalır. Kopyan her istemde origin/main'e kendiliğinden eşitlenir; çakışma varsa yalnız uyarı görürsün. tests/fixtures/golden çakışmasını elle çözme, gönderim yeniden üretir.` +
     ` Oyuncunun göreceği bir şey değişmediyse --internal ver. Yeni açık soru: docs/design/open-questions.md sonuna "## Q-NEW. Başlık" (numarayı gönderim verir). Agent'ların bu kopyada mutlak yolla çalışır; paralel olanlar için bu daldan: git -C "${rec.path}" worktree add "<game>/.claude/worktrees/agent-<ad>" -b agent/<ad> (isolation kullanma), bitince bu dala merge et. Gönderimden sonra dal yeni main'e taşınır. Sohbet işi tamamen bitince: node "${TOOL}" wt-close ${s}. Başka açık sohbetin konusuna ya da dosyalarına giren işi yapma: SendMessage ile o sohbete devret (adı ListAgents'ta), Ömer'e tek satır söyle; sana devredilen işi normal iş say. Yeni konuya başlamadan docs/arch/lead.md oku.` +
-    (rec.name === 'minor-fixes' ? ` Sen küçük ve sahipsiz işlerin sohbetisin, iş Koordinatör'den gelir.` : '');
+    (rec.name === 'minor-fixes' ? ` Sen küçük ve sahipsiz işlerin sohbetisin, iş Lead'den gelir.` : '');
 }
 
 // Yeni sohbetin yazma koruması: asıl checkout'a (game/) yazamaz; kendi kopyası ve agent kopyaları serbest; game/ dışı ilgi alanımız değil
@@ -1734,7 +1735,7 @@ function integrate(base, picked, gone, dry) {
       const solved = resolveGolden(r, cur);
       if (!solved) {
         const real = r.files.filter((f) => !isGolden(f));
-        stop(e, `Dal bu gönderimden çıkarıldı: şu dosyalar origin/main ile çakışıyor: ${real.slice(0, 8).join(', ')}. Kendi kopyanda: git -c user.name=Omer -c user.email=omerbekinn@gmail.com merge origin/main, çakışmayı çöz, testleri koş, sonra yeniden ready.`);
+        stop(e, `Dal bu gönderimden çıkarıldı: şu dosyalar origin/main ile çakışıyor: ${real.slice(0, 8).join(', ')}. Kendi kopyanda: git merge origin/main, çakışmayı çöz, testleri koş, sonra yeniden ready.`);
         continue;
       }
       log(`> ${rec.branch}: yalnız golden kayıtları çakıştı (${r.files.join(', ')}), dal düşmedi, kayıtlar yeniden üretilecek.`);
@@ -1831,14 +1832,14 @@ function moveBranch(e, rec, shipped) {
   const done = withWtLock(rec, () => moveBranchNow(e, rec, shipped), 20000);
   if (done !== undefined) return done;
   log(`!! ${rec.branch} taşınamadı: kopyada eşitleme sürüyor`);
-  withQueue((q) => { ((q.chatNotices ??= {})[short(e.sid)] ??= []).push(`İşin gönderildi ama ${rec.branch} yeni main'e kendiliğinden taşınamadı (kopya meşguldü). Kopyanda: git -c user.name=Omer -c user.email=omerbekinn@gmail.com merge origin/main`); });
+  withQueue((q) => { ((q.chatNotices ??= {})[short(e.sid)] ??= []).push(`İşin gönderildi ama ${rec.branch} yeni main'e kendiliğinden taşınamadı (kopya meşguldü). Kopyanda: git merge origin/main`); });
   return false;
 }
 function moveBranchNow(e, rec, shipped) {
   const dir = rec.path;
   const miss = (why) => {
     log(`!! ${rec.branch} taşınamadı: ${why}`);
-    withQueue((q) => { ((q.chatNotices ??= {})[short(e.sid)] ??= []).push(`İşin gönderildi ama ${rec.branch} yeni main'e kendiliğinden taşınamadı: ${why}. Kopyanda: git -c user.name=Omer -c user.email=omerbekinn@gmail.com merge origin/main`); });
+    withQueue((q) => { ((q.chatNotices ??= {})[short(e.sid)] ??= []).push(`İşin gönderildi ama ${rec.branch} yeni main'e kendiliğinden taşınamadı: ${why}. Kopyanda: git merge origin/main`); });
     return false;
   };
   if (!existsSync(dir)) return miss('kopya klasörü yok');

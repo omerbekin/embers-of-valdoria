@@ -4,6 +4,7 @@
  * sürükle-bırak kuralları `gear-drop.ts`, sürükleme ve ipucu ekranın denetçisinde (hücreler `data-drag` / `data-tip` taşır).
  * Görünüm: src/ui/gear.css (gr-inv*, gr-item). Oyun içi metinler İngilizce.
  */
+import { rarityMark } from './rarity-mark';
 import { RARITY_IDS, SLOT_IDS, canEquip, instanceColor, instanceRarity, itemDef, rarityIndex, type ItemInstance, type SlotId } from '../progression';
 import { itemDefIcon } from './item-icon-dom';
 import { isDoubleTap } from './gear-drop';
@@ -63,6 +64,7 @@ export function itemCell(inst: ItemInstance, o: CellOptions = {}): HTMLElement {
   const cell = el(o.tag ?? 'button', `gr-item k${rank}${o.selected ? ' on' : ''}${o.unusable ? ' no' : ''}${o.filtered ? ' filtered' : ''}${o.shake ? ' shake' : ''}`);
   if (cell instanceof HTMLButtonElement) cell.type = 'button';
   cell.style.setProperty('--rc', instanceColor(inst));
+  if (d) cell.append(rarityMark(instanceRarity(inst)));
   if (o.drag) cell.dataset['drag'] = o.drag;
   if (o.tip) cell.dataset['tip'] = o.tip;
   cell.dataset['item'] = inst.id;
@@ -112,7 +114,9 @@ export interface InventoryView {
 export function renderInventory(v: InventoryView): HTMLElement {
   const root = el('div', 'gr-inv');
   const head = el('div', 'gr-bag-head');
-  const sec = el('div', 'gr-sec', `${v.title ?? 'Bag'} ${v.items.length} / ${v.size}`);
+  // "Bag" ve sayaç ayrı: çok dar torba sütununda yalnız ikon + sayaç kalır (bag-bar.css), araç satırı tek satır
+  const sec = el('div', 'gr-sec');
+  sec.append(el('span', 'gr-sec-w', v.title ?? 'Bag'), ' ', el('span', 'gr-sec-n', `${v.items.length} / ${v.size}`));
   if (hasUiImage('bag')) {
     const i = el('img', 'gr-ui-ico');
     i.src = iconUrl(uiIconName('bag'));

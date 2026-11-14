@@ -142,7 +142,7 @@ describe('portrait card: no item comparison', () => {
   });
 });
 
-describe('Sheet: Go to skill tree', () => {
+describe('Sheet: Manage skill tree', () => {
   beforeEach(() => {
     vi.stubGlobal('document', { createElement: () => new FakeEl() });
   });
@@ -153,7 +153,7 @@ describe('Sheet: Go to skill tree', () => {
     const b = goToTreeButton(go) as unknown as FakeEl;
     expect(b.className).toBe('gr-ms-go');
     expect(b.type).toBe('button');
-    expect(b.children[0]?.textContent).toBe('Go to skill tree');
+    expect(b.children[0]?.textContent).toBe('Manage skill tree');
     b.listeners['click']?.forEach((f) => f());
     expect(go).toHaveBeenCalledTimes(1);
   });

@@ -7,7 +7,7 @@ import { H, W } from './campaign-ui';
 import { classAvatar } from './menu-ui';
 import { campaignArtKey, hasCampaignArt } from './campaign-art';
 import { cardArt } from './card-art';
-import { EL, diamondPts, elBack, elBody, elButton, elDiamond, elGlow, elPanel, elText, fitW, hGradient, vGradient } from './elegant-ui';
+import { EL, diamondPts, elBack, elBody, elButton, elConfirm, elDiamond, elGlow, elPanel, elText, fitW, hGradient, vGradient } from './elegant-ui';
 import { FULL_W, FULL_X0 } from '../ui/viewport';
 import { onStageResize } from './stage';
 import { stageView } from './stage-view';
@@ -139,7 +139,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
   const artKey = (): string | null => (hasCampaignArt(scene, 'valdoria-bg') ? campaignArtKey('valdoria-bg') : cardArt(scene, 'campaign'));
 
   const button = (label: string, run: () => void, x: number, cy: number, primary = true, w?: number, align: 'left' | 'right' = 'left'): number => {
-    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, h: primary ? 70 : 58, size: primary ? 23 : 19, ready: true, touch: { minPx: 48 } });
+    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, ready: true, touch: { minPx: 48 } });
     b.root.setPosition(align === 'left' ? x + b.w / 2 : x - b.w / 2, cy);
     view.add(b.root);
     return b.w;
@@ -197,7 +197,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     // gövde
     let by = artH + (compact ? 14 : 22);
     if (!s) {
-      c.add(elBody(scene, w / 2, artH + (h - artH) / 2, o.flow === 'new' ? 'A new journey can begin here.' : 'This slot is empty.', compact ? 20 : 24, EL.NOTE, false, w - 60).setOrigin(0.5).setAlign('center'));
+      c.add(elBody(scene, w / 2, artH + (h - artH) / 2, o.flow === 'new' ? 'A new journey can begin here.' : 'This slot is empty.', compact ? 20 : 24, EL.NOTE, w - 60).setOrigin(0.5).setAlign('center'));
     } else {
       if (l) {
         const fs = compact ? 64 : 84;
@@ -224,7 +224,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
         by += (compact ? 64 : 84) + (compact ? 12 : 18);
       }
       if (s.mapChanged) {
-        c.add(elBody(scene, 26, by, 'The Valdoria map has changed; this campaign must restart.', compact ? 17 : 21, MAP_NOTE, false, w - 52).setOrigin(0, 0));
+        c.add(elBody(scene, 26, by, 'The Valdoria map has changed; this campaign must restart.', compact ? 17 : 21, MAP_NOTE, w - 52).setOrigin(0, 0));
       } else if (l) {
         let cx = 26;
         cx += chip(c, cx, by, progressText(l.summary, true)) + 8;
@@ -283,21 +283,10 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     view = bodyC;
   };
 
-  /** Onay kutusu (kırmızımsı ince çerçeve), yatay: solda metin, sağda Cancel + onay düğmesi. Yüksekliği döner. */
-  const confirmBox = (x: number, y: number, w: number, c: Confirm): number => {
-    const text = elBody(scene, x + 28, y + 24, c.text, 22, EL.NOTE, false, w - 560);
-    const h = Math.max(text.height + 48, 116);
-    const g = scene.add.graphics();
-    g.fillStyle(0x280e0a, 0.7).fillRect(x, y, w, h);
-    g.lineStyle(1, 0xe8806a, 0.5).strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-    view.add([g, text]);
-    const cy = y + h / 2;
-    const yw = button(c.yes, () => {
-      st.confirm = null;
-      c.run();
-    }, x + w - 28, cy, true, 220, 'right');
-    button('Cancel', () => ((st.confirm = null), render('body')), x + w - 28 - yw - 28, cy, false, 180, 'right');
-    return h;
+  /** Onay: ortak elConfirm penceresi (Cancel + eylem fiili, sağ üst X, Esc/zemin = Cancel). */
+  const askConfirm = (c: Confirm): void => {
+    st.confirm = null;
+    elConfirm(scene, { text: c.text, yes: c.yes, onYes: c.run });
   };
 
   const kicker = (x: number, y: number, text: string): void => {
@@ -309,7 +298,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     const total = W - EDGE * 2;
     const gap = 20;
     const bw = (total - gap * (opts.length - 1)) / opts.length;
-    const made = opts.map((op) => op.lines.map((l) => elBody(scene, 0, 0, l, 21, '#cdb88d', false, bw - 76).setOrigin(0, 0)));
+    const made = opts.map((op) => op.lines.map((l) => elBody(scene, 0, 0, l, 21, '#cdb88d', bw - 76).setOrigin(0, 0)));
     const h = Math.max(...made.map((ts) => 74 + ts.reduce((a, t) => a + t.height + 6, 0) + 14));
     opts.forEach((op, k) => {
       const on = op.id === cur;
@@ -355,8 +344,8 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
       y = optionRow(y + 34, DIFFS.map((d) => ({ id: d, name: diffName(d), lines: [CONFIG.difficulties[d].text] })), st.diff, (v) => (st.diff = v)) + 44;
       const cy = y + 35;
       button('Back', () => ((st.step = 1), render()), EDGE, cy, false, 200);
-      view.add(elBody(scene, W / 2, cy, `Slot ${st.slot + 1} · Mode and difficulty cannot be changed later.`, 21, EL.MUTED, false, 800).setOrigin(0.5).setAlign('center'));
-      const begin = elButton(scene, 'Begin the journey', () => o.onStart?.(st.mode, st.diff, st.slot), { kind: 'primary', h: 70, size: 23, ready: true, touch: { minPx: 48 } });
+      view.add(elBody(scene, W / 2, cy, `Slot ${st.slot + 1} · Mode and difficulty cannot be changed later.`, 21, EL.MUTED, 800).setOrigin(0.5).setAlign('center'));
+      const begin = elButton(scene, 'Begin the journey', () => o.onStart?.(st.mode, st.diff, st.slot), { kind: 'primary', ready: true, touch: { minPx: 48 } });
       begin.root.setPosition(RIGHT - begin.w / 2, cy);
       view.add(begin.root);
       return;
@@ -364,10 +353,6 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     if (what !== 'body') slotCards(280, 560);
     if (what === 'cards') return;
     const cy = 925;
-    if (st.confirm) {
-      confirmBox(EDGE, 880, W - EDGE * 2, st.confirm);
-      return;
-    }
     if (!s) {
       button('Choose', () => ((st.step = 2), render()), RIGHT, cy, true, 240, 'right');
       return;
@@ -378,12 +363,11 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     }
     const l = s.latest;
     button('Overwrite this slot', () => {
-      st.confirm = {
+      askConfirm({
         text: `Slot ${st.slot + 1} holds a journey (${modeName(s.mode)}, ${l ? `stop ${l.summary.stop}, ${l.summary.node}` : 'not saved yet'}) with ${s.saveCount} save${s.saveCount === 1 ? '' : 's'}. Overwriting deletes it for good.`,
-        yes: 'Accept',
+        yes: 'Overwrite',
         run: () => ((st.step = 2), render()),
-      };
-      render('body');
+      });
     }, RIGHT, cy, true, undefined, 'right');
   };
 
@@ -397,14 +381,12 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     let ph = 120;
     const before = view.length; // panel çerçevesi bu öğelerin arkasına eklenir
     if (!s) {
-      view.add(elBody(scene, px + 32, py + 40, 'This slot is empty.', 26, EL.NOTE, false).setOrigin(0, 0));
-    } else if (st.confirm) {
-      ph = confirmBox(px + 20, py + 20, pw - 40, st.confirm) + 40;
+      view.add(elBody(scene, px + 32, py + 40, 'This slot is empty.', 26, EL.NOTE).setOrigin(0, 0));
     } else {
       kicker(px + 32, py + 26, 'Saves');
       if (!o.onlySlot) {
         button('Delete slot', () => {
-          st.confirm = {
+          askConfirm({
             text: `Delete slot ${st.slot + 1}? The whole journey (${modeName(s.mode)}) and all of its ${s.saveCount} save${s.saveCount === 1 ? '' : 's'} will be lost. This cannot be undone.`,
             yes: 'Delete',
             run: () => {
@@ -413,15 +395,14 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
               o.onChanged?.();
               render('both');
             },
-          };
-          render('body');
+          });
         }, px + pw - 32, py + 36, false, 200, 'right');
       }
       const saves = listSaves(storage(), st.slot);
       const top = py + 76;
       const cw = (pw - 64 - 30) / 2;
       const rowH = 124; // telefonda ~44 gerçek piksel: dokunma alanı komşuya binmez
-      if (!saves.length) view.add(elBody(scene, px + 32, top + 10, 'No saved games in this slot.', 22, EL.MUTED, false).setOrigin(0, 0));
+      if (!saves.length) view.add(elBody(scene, px + 32, top + 10, 'No saved games in this slot.', 22, EL.MUTED).setOrigin(0, 0));
       const g = scene.add.graphics();
       view.add(g);
       saves.forEach((e, k) => {
@@ -431,12 +412,12 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
         const tw = cw - 130 - 110 - 70;
         view.add(elText(scene, x0, ry + 16, `${kindName(e.kind)}${k === 0 ? ' · Newest' : ''}`, 13, KICKER, { em: 0.2 }).setOrigin(0, 0));
         view.add(fitW(elText(scene, x0, ry + 38, `${progressText(e.summary, true)} · ${e.summary.node}`, 21, EL.TXT, { em: 0.04, upper: false }).setOrigin(0, 0), tw));
-        view.add(fitW(elBody(scene, x0, ry + 70, `${e.summary.region} · ${dateText(e.savedAt)}`, 18, EL.MUTED, false).setOrigin(0, 0), tw));
+        view.add(fitW(elBody(scene, x0, ry + 70, `${e.summary.region} · ${dateText(e.savedAt)}`, 18, EL.MUTED).setOrigin(0, 0), tw));
         const cy = ry + rowH / 2;
-        const lb = elButton(scene, 'Load', () => o.onLoad?.(e), { kind: 'primary', w: 130, h: 58, size: 20, ready: true, touch: { maxH: rowH + 8, maxExtraW: 8, minPx: 48 } });
+        const lb = elButton(scene, 'Load', () => o.onLoad?.(e), { kind: 'primary', w: 130, sz: 'compact', ready: true, touch: { maxH: rowH + 8, maxExtraW: 8, minPx: 48 } });
         lb.root.setPosition(x0 + cw - 110 - 22 - 65, cy);
         const db = elButton(scene, 'Delete', () => {
-          st.confirm = {
+          askConfirm({
             text: `Delete the save at stop ${e.summary.stop}, ${e.summary.node}? This cannot be undone.`,
             yes: 'Delete',
             run: () => {
@@ -445,9 +426,8 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
               o.onChanged?.();
               render('both');
             },
-          };
-          render('body');
-        }, { kind: 'secondary', w: 110, h: 50, size: 16, touch: { maxH: rowH + 8, maxExtraW: 20, minPx: 48 } });
+          });
+        }, { kind: 'secondary', sz: 'compact', w: 110, touch: { maxH: rowH + 8, maxExtraW: 20, minPx: 48 } });
         db.root.setPosition(x0 + cw - 55, cy);
         view.add([lb.root, db.root]);
       });

@@ -14,6 +14,7 @@ import { BurnEdge } from './valor-fire';
 import { dismissOnBackdrop } from './backdrop';
 import { lockInput, unlockInput } from './input-lock';
 import { closeDom } from './motion';
+import { mountCloseButton } from './nav-close';
 import { reducedMotion } from './motion-pref';
 import { uiSound, worldSound } from './ui-sound';
 import './valor.css';
@@ -311,7 +312,7 @@ const CROSS_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
  * Savaş dışı Valor diriltmesi, "Nöbet" düzeni (Ömer 2026-10-19; taslak public/mockups/valor-v4.html #v1): iki yanda büyük mangal, ortada bir
  * çubuktan asılı düşmüş kahraman sancakları. Sancağa ~0.9 sn BASILI TUT (fare / dokunma; Enter / Boşluk anında): düzensiz bir yanma çizgisi
  * alttan yükselir, dolunca kahraman diriltilir; erken bırakılırsa iptal. Kurallar aynı: bedel outsideCost, dönüş hpRatio; Valor yetmezse
- * sancak soluk ve basınca neden pencerede yazar; kimse düşmediyse boş çubuk. Close + Esc + zemine dokunma.
+ * sancak soluk ve basınca neden pencerede yazar; kimse düşmediyse boş çubuk. sağ üst X + Esc + zemine dokunma.
  */
 export function openValorRevive(o: ValorReviveOptions): void {
   if (openDialog) return;
@@ -364,10 +365,8 @@ export function openValorRevive(o: ValorReviveOptions): void {
   const wounds = el('div', 'vg-wounds');
   const count = el('div', 'vg-count');
   const msg = el('span', 'vz-msg');
-  const close = el('button', 'el-btn primary', 'Close');
-  close.type = 'button';
   const foot = el('div', 'vz-foot');
-  foot.append(msg, close);
+  foot.append(msg);
   row.append(left, hang, right);
   panel.append(title, row, wounds, count, foot);
   overlay.append(sparks, panel);
@@ -556,6 +555,7 @@ export function openValorRevive(o: ValorReviveOptions): void {
     window.removeEventListener('keydown', onKey, true);
     window.removeEventListener('resize', onResize);
     offBackdrop();
+    unmountX();
     closeDom(overlay, () => {
       meters.forEach((m) => m.destroy());
       overlay.remove();
@@ -581,7 +581,7 @@ export function openValorRevive(o: ValorReviveOptions): void {
     }
   };
   const offBackdrop = dismissOnBackdrop(overlay, panel, finish);
-  close.addEventListener('click', finish);
+  const unmountX = mountCloseButton(overlay, finish);
   window.addEventListener('keydown', onKey, true);
   overlay.addEventListener('mouseup', (e) => e.preventDefault());
   root.append(overlay);

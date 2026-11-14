@@ -611,6 +611,10 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       // gücü 0 olan zemin (Harita 2 Flooded suyu): hasarsız, yalnızca durum
       else if (e.power <= 0) add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns (no damage)${inside ? `: ${inside}` : ''}`);
       else add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'}${skill.target === 'area_any' ? (e.side === 'allies' ? ' (your side only)' : ' (enemy side only)') : ''} for ${e.turns} turns: ${inside ? `${inside}, taking` : 'enemies there take'} ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each of their turns${g?.directTick ? ' from the ground itself' : ''}`, g?.element);
+    } else if (e.type === 'splashLiquid') {
+      // Ömer 2026-11-09 (Tremor Slam): sıvı zemin (grounds.json > liquid) adları veriden
+      const liquids = Object.values(defs.grounds ?? {}).filter((g) => g.liquid).map((g) => g.name);
+      add(`Splashes liquid ground under each target hit (${liquids.join(', ')}) onto the cells around it (one cell, four directions)`);
     } else if (e.type === 'selfDamage') {
       add(`Costs you ${pct(e.ratio)} of your max HP`);
     } else if (e.type === 'guard') {

@@ -299,7 +299,7 @@ export function openCamp(
       ),
     );
     const why = surgeResetBlocked(s);
-    const b = button('', `Ease the Crown · ${price}`, () => {
+    const b = button('sm', `Ease the Crown · ${price}`, () => {
       try {
         const next = resetSurgeUses(get());
         uiSound('buy');
@@ -323,7 +323,7 @@ export function openCamp(
     t.append(el('b', '', `Used: ${USED_NAME[k]}`), el('span', '', CONFIG.texts['campUsed'] ?? 'The camp is cold.'));
     box.append(t);
     const foot = el('div', 'ec-foot');
-    foot.append(button('', 'Gear', () => o.onGear()), button('primary', 'Leave', () => sh.close()));
+    foot.append(button('', 'Gear', () => o.onGear())); // Leave kalktı: pencerenin sağ üst X'i kapatır (Ömer 2026-11-12)
     body.append(box, foot);
     void s;
   }

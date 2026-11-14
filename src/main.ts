@@ -11,6 +11,8 @@ import { lobbyFromSearch } from './net/lobby-code';
 import { installDebugEntry } from './ui/debug-entry';
 import { flowContext, startMainMenu, startNewGame, startTeamSelect } from './game/session-flow';
 import { SettingsScreen } from './ui/settings';
+import { applyA11y } from './ui/a11y-prefs';
+import { installTapExpand } from './ui/tap-expand';
 import { stepFraction } from './ui/volume-steps';
 import { onSfxLevelChange, sfxLevel } from './ui/sfx-volume';
 import { GameMenu, isGameMenuOpen } from './ui/game-menu';
@@ -24,9 +26,10 @@ import { installPerfMode } from './game/perf-apply';
 import { installFpsMeter } from './ui/fps-meter';
 import { installWiki, openWiki } from './wiki/open';
 import { debugState } from './game/debug-state';
-import { menuStyle } from './ui/menu-style';
 import { whenMenuFontsReady } from './ui/menu-fonts';
+import './ui/tokens.css';
 import './style.css';
+import './ui/window-header.css'; // Inn / Recruit / küçük diyalog başlığı (çizgi + karo süsü)
 import { installCursorTheme } from './ui/cursor-theme';
 import { markBootReady, setBootProgress, whenBootReady } from './ui/boot-loader';
 import { installContextLossNotice } from './ui/context-loss';
@@ -56,11 +59,9 @@ initCloud({
 // Modüller yüklendi: açılış ekranı ilerler (sonraki adımlar: ana menünün dosyaları, fontlar; src/ui/boot-loader.ts)
 setBootProgress(0.12);
 
-// Ana menü stili (?menu=new önizleme; varsayılan src/ui/menu-style.ts): zarif stilde fontlar hemen yüklenmeye başlar, oyun içi Settings sütunu CSS sınıfıyla
-if (menuStyle === 'elegant') {
-  document.documentElement.classList.add('menu-elegant');
-  void whenMenuFontsReady();
-}
+// Ana menü fontları hemen yüklenmeye başlar; oyun içi Settings sütunu CSS sınıfıyla (zarif stil tek stil)
+document.documentElement.classList.add('menu-elegant');
+void whenMenuFontsReady();
 
 // Geliştirme sunucusunda sekme adı canlı olmadığını belirtir (canlı sürüm: Embers of Valdoria).
 if (import.meta.env.DEV) document.title = 'Embers of Valdoria (dev - NOT LIVE)';
@@ -77,6 +78,8 @@ const openEndless = !skipSelect && !openCampaign && (params.has('endless') || op
 // (Endless sahnesi ayrı kod parçasında: tüccar hazırlığı bitmeden sahne başlamaz)
 if (openMerchantShortcut) gateScene('EndlessScene', import('./game/endless-session').then((m) => m.prepareMerchant()));
 // ?legendary=1: 10 Legendary önizlemesi (madde 296) Endless torbasına; sefer torbasına Gear açılırken (CampaignMapScene.openGear)
+// Rozet zinciri (nokta yolu + parlayan hedef; src/ui/badges.ts): tembel yüklenir
+void import('./ui/badges').then((m) => m.installBadges());
 if (params.has('legendary')) void import('./game/endless-session').then((m) => m.applyLegendaryPreview());
 // Multiplayer: davet linki (?lobby=KOD) lobiye katılır; yenilenen sekme yarım kalan lobisine döner (docs/design/multiplayer.md)
 const lobbyCode = skipSelect || openCampaign || openEndless ? null : lobbyFromSearch(window.location.search);
@@ -159,6 +162,8 @@ installViewport(game, document.getElementById('stage')!, parseRotateMode(window.
 
 // --- Show FPS (Settings > Gameplay) göstergesi + Auto performans modu için kare ölçümü ---
 installFpsMeter(document.getElementById('ui-root')!);
+applyA11y(); // yazı boyu + renk körlüğü sınıfları (Settings > Accessibility)
+installTapExpand(); // telefonda kesik metne dokununca tam metin
 
 // --- Debug menu (gizli girişler; menünün kodu ilk açılışta indirilir: src/ui/debug-entry.ts) ---
 installDebugEntry(game, document.getElementById('ui-root')!);

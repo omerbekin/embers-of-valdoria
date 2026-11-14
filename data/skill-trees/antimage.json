@@ -518,7 +518,7 @@
     },
     "1.fa": {
       "name": "Drained Dry",
-      "text": "Mana Steal burns 15 MP instead of 10, but deals no damage.",
+      "text": "Mana Steal burns 50% more MP, but deals no damage.",
       "src": "B:V3:1.fa",
       "fx": [
         {
@@ -529,8 +529,8 @@
           "k": "skill",
           "sel": "manaBurn",
           "f": "amount",
-          "op": "base",
-          "v": 15
+          "op": "pct",
+          "v": 0.5
         }
       ]
     },

@@ -1,9 +1,12 @@
 // "Reduced motion" ayarı (Ömer 2026-10-10; Settings ekranı ve ana menü Settings sütunu): açıkken ana menü arka planında paralaks ve
 // parçacık yok, yalnızca sabit görüntü. Kayıt yoksa işletim sisteminin `prefers-reduced-motion` tercihi izlenir; seçim kaydedilince o geçerli.
-const KEY = 'eov.reducedMotion';
+import { patchSettings, readSettingsObject } from './settings-store';
+const KEY = 'eov.reducedMotion'; // eski anahtar (okunur, yazılır); asıl kayıt eov.settings.v1 > reduceMotion
 const listeners = new Set<(on: boolean) => void>();
 
 function stored(): boolean | null {
+  const m = readSettingsObject()['reduceMotion'];
+  if (typeof m === 'boolean') return m;
   try {
     const v = window.localStorage?.getItem(KEY);
     return v === '1' ? true : v === '0' ? false : null;
@@ -20,12 +23,13 @@ function osPrefers(): boolean {
   }
 }
 
-/** Azaltılmış hareket açık mı (kayıtlı seçim, yoksa işletim sistemi tercihi). */
+/** Azaltılmış hareket açık mı (blacksmith-fx ve reward-fx bunu okur) (kayıtlı seçim, yoksa işletim sistemi tercihi). */
 export function reducedMotion(): boolean {
   return stored() ?? osPrefers();
 }
 
 export function setReducedMotion(on: boolean): void {
+  patchSettings({ reduceMotion: on });
   try {
     window.localStorage?.setItem(KEY, on ? '1' : '0');
   } catch {

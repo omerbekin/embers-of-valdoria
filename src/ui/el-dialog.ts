@@ -9,6 +9,9 @@ import { dismissOnBackdrop } from './backdrop';
 import { lockInput, unlockInput } from './input-lock';
 import { closeDom } from './motion';
 import { uiSound } from './ui-sound';
+import { CONFIRM } from './confirm-labels';
+import { navSvg } from './nav-icons';
+import { pushClose } from './close-stack';
 
 export interface ElDialogButton {
   label: string;
@@ -100,6 +103,7 @@ export function openElDialog(opts: ElDialogOpts, root: HTMLElement = document.ge
       if (closed) return;
       closed = true;
       window.removeEventListener('keydown', onKey, true);
+      popStack();
       offBackdrop?.();
       closeDom(overlay, () => {
         overlay.remove();
@@ -137,6 +141,16 @@ export function openElDialog(opts: ElDialogOpts, root: HTMLElement = document.ge
     if (all.length === 1) row.classList.add('single');
     row.append(...all);
     nodes.push(row);
+    // Sağ üst X (Ömer 2026-11-09): zorunlu olmayan (onDismiss'li) pencerede; Esc / zemin ile aynı işi yapar
+    if (opts.onDismiss) {
+      const x = el('button', 'eld-x nav-btn');
+      x.type = 'button';
+      x.setAttribute('aria-label', 'Close');
+      x.title = 'Close';
+      x.innerHTML = navSvg('close');
+      x.addEventListener('click', () => !busy && !closed && opts.onDismiss?.(d));
+      nodes.unshift(x);
+    }
     panel.replaceChildren(...nodes);
   }
 
@@ -157,6 +171,7 @@ export function openElDialog(opts: ElDialogOpts, root: HTMLElement = document.ge
   const offBackdrop = opts.onDismiss ? dismissOnBackdrop(overlay, panel, () => !busy && opts.onDismiss?.(d)) : null;
   overlay.addEventListener('mouseup', (e) => e.preventDefault()); // fare bırakması alttaki Phaser sahnesine gitmesin
   window.addEventListener('keydown', onKey, true);
+  const popStack = pushClose({ close: () => {}, esc: () => { if (opts.onDismiss && !busy) opts.onDismiss(d); } });
   render();
   root.append(overlay);
   lockInput(lockId);
@@ -164,4 +179,25 @@ export function openElDialog(opts: ElDialogOpts, root: HTMLElement = document.ge
   const f = opts.focus?.() ?? panel.querySelector<HTMLButtonElement>('.el-btn.primary:not(:disabled)');
   f?.focus({ preventScroll: true });
   return d;
+}
+
+/**
+ * Onay penceresi (DOM karşılığı Phaser `elConfirm`): Cancel (solda) + eylem fiili (sağda, primary; `danger` kırmızı). Esc / zemin / X = Cancel.
+ * Yalnızca ilerleme ya da eşya kaybolacaksa sorulur. Etiketler `confirm-labels.ts`. Dönen: kapat.
+ */
+export function openElConfirm(o: { title?: string; text: string; verb: string; danger?: boolean; onConfirm: () => void; onCancel?: () => void }, root?: HTMLElement): () => void {
+  const d = openElDialog(
+    {
+      title: o.title ?? CONFIRM.title,
+      lead: o.text,
+      className: 'eld-confirm',
+      buttons: [
+        { label: CONFIRM.cancel, onClick: (x) => x.close(o.onCancel) },
+        { label: o.verb, kind: o.danger ? 'danger' : 'primary', onClick: (x) => x.close(o.onConfirm) },
+      ],
+      onDismiss: (x) => x.close(o.onCancel),
+    },
+    root,
+  );
+  return () => d.close();
 }

@@ -131,7 +131,7 @@ Kod: `src/progression/sets.ts`, `data/items.json > setItems` (parçalar), `battl
 
 ### Kalan 4 set, Sadak, Focus Orb (Lead 2026-11-07, sayılar ÖLÇÜLMEDİ)
 
-- **Kingsfall Regalia** (nötr, Valdoria / Black Cathedral, Helm Armor Ring): 2 parça +12 Max HP +0,25 HP Regen; 3 parça +30 Max HP, +2 Armor, +2 Magic Armor, -0,5 Speed.
+- **Kingsfall Regalia** (nötr, Valdoria / Black Cathedral, Helm Armor Ring): 2 parça +6 Max HP +0,25 HP Regen; 3 parça +6 Max HP, +2 Armor, +2 Magic Armor, -0,5 Speed (Ömer onaylı 2026-11-09, form 3: Ashguard düzeyine indi; eski +12 / +30 Max HP; Warrior tam set HP 108 -> 162 iken 108 -> 132).
 - **Gallows Pact** (Gambler, Hexer; Drowned Reach / Hag's Island): 2 parça +4% Lucky Escape +2% Crit; 3 parça Hexer Ill Omen 2 -> 3 Omen, Gambler Double or Nothing %25 -> %30; 4 parça +20% Crit damage, +6% Lucky Escape, -20 Max HP.
 - **Raven's Shroud** (Cutthroat, Archer, Anti-Mage; Drowned Reach / The Wrecker's Hall): 2 parça +4% Evasion +3% Crit; 3 parça Opportunist %25 -> %30, Sharpshooter 0,05 -> 0,065 / sıra, Spellbreaker 0,10 -> 0,13; 4 parça +0,5 Speed, +6% Evasion, -3 Armor.
 - **Conclave of Embers** (Mage, Druid, Undead, Vesper; The Hollow Crown / Hierarch's Pulpit): 2 parça +12 Max MP +1 MP Regen; 3 parça Heat Mirage 0,361 -> 0,43, Nature's Grudge 0,15 -> 0,18, Vampiric Bite 0,5 -> 0,6, Pealing Bells 0,07 -> 0,085; 4 parça +20 Max MP, +1 MP Regen, -20 Max HP.

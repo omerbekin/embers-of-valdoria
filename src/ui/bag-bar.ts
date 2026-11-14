@@ -28,9 +28,9 @@ export type BagMenu = 'best' | 'kinds' | null;
 
 export interface BagBarOpts {
   /** "All items / Usable by X" düğmesi (bugünkü işlev). */
-  filter?: { on: boolean; label: string; toggle: () => void };
+  filter?: { on: boolean; label: string; /** Dar sütunda / telefonda görünen kısa ad (yoksa label). */ short?: string; toggle: () => void };
   /** Equip best menüsü; yoksa düğme yok. `hero` yoksa (kahraman seçili değil) yalnızca Whole company. */
-  best?: { hero?: { label: string; off?: boolean; title?: string; run: () => void }; all: { title?: string; run: () => void }; label: string };
+  best?: { hero?: { label: string; off?: boolean; title?: string; run: () => void }; all: { title?: string; run: () => void }; label: string; short?: string };
   hidden: ReadonlySet<string>;
   toggleKind: (id: string) => void;
   open: BagMenu;
@@ -104,24 +104,37 @@ function btn(cls: string, text: string, onClick: () => void): HTMLButtonElement 
   return b;
 }
 
+/** Uzun + kısa ad: CSS (bag-bar.css) dar torba sütununda / telefonda kısasını gösterir; araç satırı hiç ikinci satıra inmez. */
+function labelNodes(long: string, short?: string): Node[] {
+  if (!short || short === long) return [document.createTextNode(long)];
+  const l = document.createElement('span');
+  l.className = 'bb-l';
+  l.textContent = long;
+  const s = document.createElement('span');
+  s.className = 'bb-s';
+  s.textContent = short;
+  return [l, s];
+}
+
 /** Torba başlığına konacak düğmeler (soldan sağa). */
 export function bagBarEls(o: BagBarOpts): HTMLElement[] {
   const out: HTMLElement[] = [];
   if (!o.open) lastMenu = null;
   if (o.filter) {
     const f = o.filter;
-    out.push(btn(`gr-chip${f.on ? ' on' : ''}`, f.label, f.toggle));
+    const fb = btn(`gr-chip bb-filter${f.on ? ' on' : ''}`, '', f.toggle);
+    fb.append(...labelNodes(f.label, f.short));
+    out.push(fb);
   }
   if (o.best) {
     const b = o.best;
     const wrap = document.createElement('div');
     wrap.className = 'bb-wrap';
-    const t = btn(`gr-chip bb-trigger${o.open === 'best' ? ' open' : ''}`, b.label, () => o.setOpen(o.open === 'best' ? null : 'best'));
-    t.append(svg(CARET, 'bb-caret'));
+    const t = btn(`gr-chip bb-trigger${o.open === 'best' ? ' open' : ''}`, '', () => o.setOpen(o.open === 'best' ? null : 'best'));
+    t.append(...labelNodes(b.label, b.short), svg(CARET, 'bb-caret'));
     t.dataset['tut'] = 'best'; // mentor dersi vurgusu (data/tutorial.json > gear)
     t.setAttribute('aria-haspopup', 'menu');
     t.setAttribute('aria-expanded', String(o.open === 'best'));
-    attachBandTip(t, { title: 'Equip best', sub: 'Equip the best items' });
     wrap.append(t);
     if (o.open === 'best') {
       const m = document.createElement('div');
@@ -136,7 +149,8 @@ export function bagBarEls(o: BagBarOpts): HTMLElement[] {
           it.run();
         });
         r.setAttribute('role', 'menuitem');
-        if (it.title) attachBandTip(r, reasonSpec(it.label, it.title));
+        // yalnız kapalı seçenekte sebep ipucu (düşmüş kahraman); açık seçenekte ipucu yok (Ömer 2026-11-12)
+        if (it.title && it.off) attachBandTip(r, reasonSpec(it.label, it.title));
         m.append(r);
       }
       wrap.append(m);
@@ -153,7 +167,6 @@ export function bagBarEls(o: BagBarOpts): HTMLElement[] {
   k.setAttribute('aria-label', active ? 'Item type filter (active)' : 'Item type filter');
   k.setAttribute('aria-haspopup', 'menu');
   k.setAttribute('aria-expanded', String(o.open === 'kinds'));
-  attachBandTip(k, { title: 'Item types', sub: 'Show item types' });
   wrap.append(k);
   if (o.open === 'kinds') {
     const m = document.createElement('div');

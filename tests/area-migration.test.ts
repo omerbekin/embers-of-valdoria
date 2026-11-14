@@ -290,7 +290,8 @@ describe('migre edilen alan skill\'leri', () => {
     const listed = Object.values(content.skills).filter((s) => (s.target === 'area_enemies' || s.target === 'area_any') && !content.classes.aoe_tester!.skills.includes(s.id) && !content.classes.storm_tester!.skills.includes(s.id) && (!s.artOf || ownedByBoss(s.id)) && (ownedByBoss(s.id) || !ownedByMob(s.id))); // mob (sıradan) skill'leri Enemies makalelerinde; Pose Tester kopyaları (gizli) tabloda yok; boss skill'i (Ashfall: sanatı ödünç, mob-plan.md 10.6) var
     expect(tbl.rows.map((r) => r[0]).sort()).toEqual(listed.map((s) => s.name).sort());
     for (const id of Object.keys(MIGRATED)) expect(tbl.rows.map((r) => r[0])).toContain(content.skills[id]!.name);
-    expect(tbl.rows.find((r) => r[0] === "Nature's Wrath")).toEqual(["Nature's Wrath", 'Druid', 'Block 2x3', 'row by row']);
+    const nw = content.skills.natures_wrath!.name; // Ömer onaylı 2026-11-09: ad Tidal Wrath
+    expect(tbl.rows.find((r) => r[0] === nw)).toEqual([nw, 'Druid', 'Block 2x3', 'row by row']);
     expect(tbl.rows.find((r) => r[0] === 'Meteor')).toEqual(['Meteor', 'Mage', 'Cross', '-']);
   });
 

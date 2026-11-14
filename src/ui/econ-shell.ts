@@ -11,12 +11,12 @@ import { lockInput, unlockInput } from './input-lock';
 import { dismissOnBackdrop } from './backdrop';
 import { mountCloseButton } from './nav-close';
 import { uiSound } from './ui-sound';
-import { hasUiImage, uiIconName } from './ui-icons';
-import { iconUrl } from './dom-icons';
+import { goldImg } from './ui-icons';
+export { goldImg };
 import { ItemTip } from './item-tip';
 import { avatarUrl } from './character-panel';
 import { bandTipHtml } from './band-tip';
-import { attachBandTip, reasonSpec } from './band-tip-attach';
+import { attachBandTip, positionTip, reasonSpec } from './band-tip-attach';
 import { tipOn as fadeIn, tipOff as fadeOut } from './tip-vis';
 import { woundBandSpec } from './wound-ui';
 import { woundRules } from '../campaign';
@@ -28,9 +28,9 @@ export const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text
   return e;
 };
 
-/** Kit düğmesi (gear.css .gr-btn). `why` doluysa düğme pasif ve neden hem ipucunda hem erişilebilir adda. */
+/** Kit düğmesi (gear.css .el-btn). `why` doluysa düğme pasif ve neden hem ipucunda hem erişilebilir adda. */
 export function button(cls: string, text: string, run: () => void, why?: string | null): HTMLButtonElement {
-  const b = el('button', `gr-btn ${cls}`.trim(), text);
+  const b = el('button', `el-btn ${cls}`.trim(), text);
   b.type = 'button';
   if (why) {
     b.disabled = true;
@@ -41,16 +41,6 @@ export function button(cls: string, text: string, run: () => void, why?: string 
     if (!b.disabled) run();
   });
   return b;
-}
-
-/** Boyalı altın ikonu (yoksa null). */
-export function goldImg(cls = 'gr-price-ico'): HTMLImageElement | null {
-  if (!hasUiImage('gold')) return null;
-  const i = el('img', cls);
-  i.src = iconUrl(uiIconName('gold'));
-  i.alt = '';
-  i.draggable = false;
-  return i;
 }
 
 /** Kahraman yüzü (kare portre; yoksa boş çerçeve). */
@@ -144,15 +134,7 @@ export function openShell(root: HTMLElement, o: { label: string; title: string; 
       target.classList.add('ec-wtip');
       const place = (): void => {
         if (!band) return;
-        const o = overlay.getBoundingClientRect();
-        const r = target.getBoundingClientRect();
-        const tw = band.offsetWidth;
-        const th = band.offsetHeight;
-        const x = r.left - o.left + r.width / 2 - tw / 2;
-        let y = r.top - o.top - th - 8;
-        if (y < 6) y = r.bottom - o.top + 8;
-        band.style.left = `${Math.max(6, Math.min(overlay.clientWidth - tw - 6, x))}px`;
-        band.style.top = `${Math.max(6, y)}px`;
+        positionTip(band, target, { bound: overlay }); // ortak yerleşim (band-tip-attach.ts)
       };
       const show = (): void => {
         band ??= el('div', 'el-tip gr-tip');
@@ -209,7 +191,7 @@ export function openShell(root: HTMLElement, o: { label: string; title: string; 
   let unmountX: (() => void) | null = null;
   const syncX = (): void => {
     const want = o.closable();
-    if (want && !unmountX) unmountX = mountCloseButton(overlay, () => sh.close());
+    if (want && !unmountX) unmountX = mountCloseButton(panel, () => sh.close(), 'Close', 'close', { inPanel: true, float: true });
     else if (!want && unmountX) {
       unmountX();
       unmountX = null;

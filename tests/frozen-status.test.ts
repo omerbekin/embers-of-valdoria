@@ -114,14 +114,14 @@ describe('Frozen: ikinci atış', () => {
     expect(b.log.some((e) => e.type === 'statusEnd' && e.status === 'frozen' && e.target === t.uid)).toBe(true);
   });
 
-  it('boss donmaz, Chilled de tutmaz', () => {
+  it('boss donmaz; Chilled (CC değil, Ömer 2026-11-09) azaltılmış güçle tutar', () => {
     const b = make(P, { 1: 'drowned' });
     const t = of(b, 'drowned');
     t.tier = 'boss'; // bağışıklık rütbeden (statusBlocked)
     expect(b.statusBlocked(t, 'frozen')).toBe(true);
     shot(b, t);
     shot(b, t);
-    expect(has(t, 'chilled')).toBe(false);
+    expect(has(t, 'chilled')).toBe(true);
     expect(has(t, 'frozen')).toBe(false);
   });
 });

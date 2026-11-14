@@ -1,30 +1,29 @@
 {
-  "_not": "Süreli durumlar (buff/debuff). Süre, durumu taşıyanın kendi turlarıyla sayılır. speedMult: hız çarpanı; damageTakenMult: alınan hasar çarpanı; healTakenMult: alınan şifa çarpanı; skipTurn: sıradaki turu pas geçirir. breaksTaunt: bu durum uygulandığı AN taşıyıcının taunt'ı silinir (CC durumu; şu an yalnızca Stun). taunt/guard/regen özel kodlu durumlardır (motorda). Yeni bir durum = buraya bir giriş + skill'de {type:'status'} etkisi. İleride durumların birbiriyle etkileşimi için burası genişletilecek. accuracyDelta / evasionDelta: isabete / kaçınmaya eklenen miktar (battle.effectiveStats; hit şansı yine [0, hit.max] arasına sıkışır; Dex evasionMax sınırı bu eke uygulanmaz). Blinded (debuff, Resilience kısaltabilir) ve Shrouded (buff) Cutthroat Smoke Bomb ile gelir; ikonları blinded (gözü kesen kömür dumanı) ve shrouded (duman perdesinin ardındaki siluet). dispellable: false ise dispel/cleanse (Spell Ward, Mana Barrier) silemez. dark_bond (madde 240): Dark Bond bağı, özel kodlu (iki uçta da durur, süre bağı kuranın turlarıyla; ikon yer tutucu soul); debug ile eklenirse bağ ucu olmadığı için etkisizdir. HEXER: omen: Hexer (docs/design/classes/hexer.md 3.1-3.3, Ömer kararları Ö1-Ö12). Yığılan durum: en çok 3; süre (duration) ilk Omen'le başlar, yeni Omen süreyi YENİLEMEZ; yığın 3'e ulaşınca Doom anında; süre dolunca (taşıyanın tur başı, Wither tikinden sonra) yığın sayısı kadar Doom (burstOnExpire, expireMult balans kolu). Misfortune: yığın başına kritik -%3 (critDeltaPerStack). Doom: LUCK x powerPerStack x yığın x çarpan, büyü/dark, isabet zarı yok, kritik zarı var. İkon yer tutucu: eye (content-designer gerçeğini yapacak: eflatun mühür pulu). Sayılar PROVİZYON. | wither: Hexer Withering Curse: karakter üstü DoT (ilk). Tik taşıyanın tur başında, zemin tiklerinden sonra; miktar uygulama anında sabit (skill'in dot etkisi), büyü zırhı uygulanır, isabet/kritik yok, Guard'a aktarılmaz. Yığılmaz (stack varsayılanı refresh-strongest): yeniden uygulanınca süre max(kalan, yeni), büyük miktar ve kaynağı kalır. Kaynak ölse de sürer (Ö3). İkon yer tutucu: poison (gerçeği: eriyen kara mum). | jinxed: Hexer Jinx: isabet -%20, kritik yok (critDelta -1, 0'a kırpılır); taşıyanın bir sonraki HASAR skill'inin tüm vuruşlarından sonra düşer (endsOnOwnAttack) ya da 2 tur. Backstab'ın garantili kritiğini bozmaz (Ö5). İkon yer tutucu: finger (gerçeği: kırmızı iplik düğümü). | cc (madde 271, Ömer 2026-10-08 'Boss'lar CC yemesin'): kontrol etkisi (Stun, Vine Snare kökü dahil; Slow; Silence). formulas.json > ccImmunity.tiers rütbesindeki birimler (boss) bunları YEMEZ (olay immune, yüzen 'Immune'); taunt'a uymazlar, çekilemezler. Hasar/lanet/DoT/savunma debuff'ları (Wound, Omen, Wither, Overextended) ve isabet/kritik bozan Blinded/Jinxed CC SAYILMAZ (uygulanır; Blinded/Jinxed Ömer'e soruldu). | stack (Ömer 2026-10-10, 'aynı debuff üst üste binmesin, sadece en fazla vuranınki kalsın'; src/engine/status-stack.ts): aynı durum yeniden uygulanınca ne olur. Yazılmazsa: debuff = 'refresh-strongest' (birimde her durumdan TEK örnek; süre = max(kalan, yeni uygulamanın süresi), yani tazelenir ama yeni uygulamanın tam süresini aşmaz; güç (DoT miktarı) yenisi daha güçlüyse yenisinin ve kaynağı onun, eşit/zayıfsa eskisi kalır), maxStacks'li durum = 'stack' (yığın sayacı, Omen), buff = 'replace' (eski davranış: yenisi eskisinin yerine). Açık yazılanlar: omen 'stack' (3 Omen -> Doom, bilinçli yığılma), ash_brand 'replace' (damga kendi telgrafına bağlı). Staggered kendi kuralıyla üst üste binmez, Anchored yığını Mooring sayısıdır (ikisi de addStatus'tan geçmez).",
+  "_not": "Süreli durumlar (buff/debuff). Süre, durumu taşıyanın kendi turlarıyla sayılır. speedMult: hız çarpanı; damageTakenMult: alınan hasar çarpanı; healTakenMult: alınan şifa çarpanı; skipTurn: sıradaki turu pas geçirir. breaksTaunt: bu durum uygulandığı AN taşıyıcının taunt'ı silinir (CC durumu; şu an yalnızca Stun). taunt/guard/regen özel kodlu durumlardır (motorda). Yeni bir durum = buraya bir giriş + skill'de {type:'status'} etkisi. İleride durumların birbiriyle etkileşimi için burası genişletilecek. accuracyDelta / evasionDelta: isabete / kaçınmaya eklenen miktar (battle.effectiveStats; hit şansı yine [0, hit.max] arasına sıkışır; Dex evasionMax sınırı bu eke uygulanmaz). Blinded (debuff, Resilience kısaltabilir) ve Shrouded (buff) Cutthroat Smoke Bomb ile gelir; ikonları blinded (gözü kesen kömür dumanı) ve shrouded (duman perdesinin ardındaki siluet). dispellable: false ise dispel/cleanse (Spell Ward, Mana Barrier) silemez. dark_bond (madde 240): Dark Bond bağı, özel kodlu (iki uçta da durur, süre bağı kuranın turlarıyla; ikon yer tutucu soul); debug ile eklenirse bağ ucu olmadığı için etkisizdir. HEXER: omen: Hexer (docs/design/classes/hexer.md 3.1-3.3, Ömer kararları Ö1-Ö12). Yığılan durum: en çok 3; süre (duration) ilk Omen'le başlar, yeni Omen süreyi YENİLEMEZ; yığın 3'e ulaşınca Doom anında; süre dolunca (taşıyanın tur başı, Wither tikinden sonra) yığın sayısı kadar Doom (burstOnExpire, expireMult balans kolu). Misfortune: yığın başına kritik -%3 (critDeltaPerStack). Doom: LUCK x powerPerStack x yığın x çarpan, büyü/dark, isabet zarı yok, kritik zarı var. İkon yer tutucu: eye (content-designer gerçeğini yapacak: eflatun mühür pulu). Sayılar PROVİZYON. | wither: Hexer Withering Curse: karakter üstü DoT (ilk). Tik taşıyanın tur başında, zemin tiklerinden sonra; miktar uygulama anında sabit (skill'in dot etkisi), büyü zırhı uygulanır, isabet/kritik yok, Guard'a aktarılmaz. Yığılmaz (stack varsayılanı refresh-strongest): yeniden uygulanınca süre max(kalan, yeni), büyük miktar ve kaynağı kalır. Kaynak ölse de sürer (Ö3). İkon yer tutucu: poison (gerçeği: eriyen kara mum). | jinxed: Hexer Jinx: isabet -%20, kritik yok (critDelta -1, 0'a kırpılır); taşıyanın bir sonraki HASAR skill'inin tüm vuruşlarından sonra düşer (endsOnOwnAttack) ya da 2 tur. Backstab'ın garantili kritiğini bozmaz (Ö5). İkon yer tutucu: finger (gerçeği: kırmızı iplik düğümü). | cc (madde 271, Ömer 2026-10-08 'Boss'lar CC yemesin'): kontrol etkisi (Stun, Vine Snare kökü dahil; Silence; Frozen). Slow 2026-11-09'dan beri CC DEĞİL (Ömer onaylı, form 3). formulas.json > ccImmunity.tiers rütbesindeki birimler (boss) bunları YEMEZ (olay immune, yüzen 'Immune'); taunt'a uymazlar, çekilemezler. Hasar/lanet/DoT/savunma debuff'ları (Wound, Omen, Wither, Overextended) ve isabet/kritik bozan Blinded/Jinxed/Shaken CC SAYILMAZ (uygulanır; Ömer onaylı 2026-11-09: boss artık bunlara bağışık değil, boss %25 / elit %50 büyüklükle). Chilled CC DEĞİL (Ömer 2026-11-09; Frozen CC). CC dışı debuff'lar karşı taraftan gelince boss'ta %25, elitte %50 BÜYÜKLÜKLE işler (formulas.json > ccImmunity.debuffStrength; süre ve DoT tiki aynı). | stack (Ömer 2026-10-10, 'aynı debuff üst üste binmesin, sadece en fazla vuranınki kalsın'; src/engine/status-stack.ts): aynı durum yeniden uygulanınca ne olur. Yazılmazsa: debuff = 'refresh-strongest' (birimde her durumdan TEK örnek; süre = max(kalan, yeni uygulamanın süresi), yani tazelenir ama yeni uygulamanın tam süresini aşmaz; güç (DoT miktarı) yenisi daha güçlüyse yenisinin ve kaynağı onun, eşit/zayıfsa eskisi kalır), maxStacks'li durum = 'stack' (yığın sayacı, Omen), buff = 'replace' (eski davranış: yenisi eskisinin yerine). Açık yazılanlar: omen 'stack' (3 Omen -> Doom, bilinçli yığılma), ash_brand 'replace' (damga kendi telgrafına bağlı). Staggered kendi kuralıyla üst üste binmez, Anchored yığını Mooring sayısıdır (ikisi de addStatus'tan geçmez).",
   "slow": {
     "name": "Slow",
     "type": "debuff",
     "icon": "boot",
     "color": "#7fb2ff",
+    "_not": "Ömer onaylı 2026-11-09 (form 3): Slow artık CC DEĞİL (Chilled gibi bir yavaşlatma); boss %25, elit %50 güçte işler (ccImmunity.debuffStrength: hız x0,925 / x0,85).",
     "speedMult": 0.7,
-    "cc": true,
     "text": "30% less Speed"
   },
   "chilled": {
-    "_not": "Ömer 2026-10-31 Frozen: freeze = zaten Chilled olan birime KAYNAĞI sources içinde olan (skill atışı, ağaç düğümü) bir Chilled gelirse into olur; zemin tiki, hava, pasif, startStatuses kaynaksızdır, yalnızca Chilled verir/yeniler. clearedBy: bu element hasarı durumu anında kaldırır. refusedOnGround: bu zeminde durana tutmaz. Ömer 2026-10-29 Mage reworkü (Ice Crater): Slow'dan AYRI buz durumu (ikisi aynı anda olabilir, çarpanlar çarpılır). Ayrım geçici: hız x0,8 ve kaçınma x0,9 (evasionMult, ekler toplandıktan sonra çarpılır). cc: true = Slow gibi boss bağışıklığına girer (madde 271). İkon YER TUTUCU: blizzard (boyalı status:chilled yok). Sayılar PROVİZYON.",
+    "_not": "Ömer 2026-10-31 Frozen: freeze = zaten Chilled olan birime KAYNAĞI sources içinde olan (skill atışı, ağaç düğümü) bir Chilled gelirse into olur; zemin tiki, hava, pasif, startStatuses kaynaksızdır, yalnızca Chilled verir/yeniler. clearedBy: bu element hasarı durumu anında kaldırır. refusedOnGround: bu zeminde durana tutmaz. Ömer 2026-10-29 Mage reworkü (Ice Crater): Slow'dan AYRI buz durumu (ikisi aynı anda olabilir, çarpanlar çarpılır). Ayrım geçici: hız x0,8 ve kaçınma x0,9 (evasionMult, ekler toplandıktan sonra çarpılır). CC DEĞİL (Ömer 2026-11-09, element formu: Chilled bir yavaşlatmadır): boss ve elitlere ccImmunity.debuffStrength gücünde işler (boss %25, elit %50: hız x0,95 / x0,9, kaçınma x0,975 / x0,95); boss Frozen'a bağışık olduğu için ikinci atış yalnız Chilled'ı tazeler. İkon YER TUTUCU: blizzard (boyalı status:chilled yok). Sayılar PROVİZYON.",
     "name": "Chilled",
     "type": "debuff",
     "icon": "blizzard",
     "color": "#9fe3ff",
     "speedMult": 0.8,
     "evasionMult": 0.9,
-    "cc": true,
     "freeze": { "into": "frozen", "turns": 1, "sources": ["skill", "tree"] },
     "clearedBy": ["fire"],
-    "refusedOnGround": ["burning"],
+    "refusedOnGround": ["burning", "black_flame"],
     "text": "20% less Speed and 10% less Evasion"
   },
   "frozen": {
-    "_not": "Ömer 2026-10-31: Chilled'ın ikinci atışı. Stun'ın tur kaybı yolu (skipTurn); yığın yok, tavan yok, Thawed yok. blocks: Frozen sürerken Chilled tutmaz ve Frozen olunca Chilled kalkar, böylece bitince Chilled kalmaz (yeniden donmak iki yeni atış ister). Ateş hasarı anında kaldırır. İkon YER TUTUCU: blizzard. Sayılar PROVİZYON.",
+    "_not": "Ömer 2026-10-31: Chilled'ın ikinci atışı. Ömer onaylı 2026-11-09 (element formu): Soaked + Chilled de doğrudan Frozen (reactions.flash_freeze; boss ccImmunity ile donmaz); ateş hasarı Frozen'ı kaldırınca birim thawsInto (Soaked, süre PROVİZYON 2) alır (Yukarı birleşir, aşağı çözülür). Stun'ın tur kaybı yolu (skipTurn); yığın yok, tavan yok, Thawed yok. blocks: Frozen sürerken Chilled tutmaz ve Frozen olunca Chilled kalkar, böylece bitince Chilled kalmaz (yeniden donmak iki yeni atış ister). Ateş hasarı anında kaldırır. İkon YER TUTUCU: blizzard. Sayılar PROVİZYON.",
     "name": "Frozen",
     "type": "debuff",
     "icon": "blizzard",
@@ -33,7 +32,8 @@
     "cc": true,
     "blocks": ["chilled"],
     "clearedBy": ["fire"],
-    "text": "Skips its next turn. Fire damage thaws it at once"
+    "thawsInto": { "status": "soaked", "turns": 2 },
+    "text": "Skips its next turn. Fire damage thaws it at once and leaves it Soaked"
   },
   "haste": {
     "name": "Haste",
@@ -122,7 +122,7 @@
     "critDeltaPerStack": -0.03,
     "doom": {
       "scale": "luck",
-      "powerPerStack": 0.4,
+      "powerPerStack": 0.38,
       "damageType": "magic",
       "element": "dark",
       "expireMult": 1,
@@ -293,7 +293,7 @@
       "burning"
     ],
     "dispellable": false,
-    "text": "Takes 50% less Fire damage and has 10% less Speed. Puts out Burning at once. In water it lasts while standing there"
+    "text": "Takes 50% less Fire damage and has 10% less Speed. Puts out Burning at once; Burning put on it dries it instead and does not stick. In water it lasts while standing there"
   },
   "spellbound": {
     "_not": "Harita 2 (Ömer onayı 2026-10-25, Omen formu): mobların Omen yerine verdiği durum (Siren Lure; Drowned Queen Lament). Taşıyan kahramanın bir sonraki skill'i %25 zayıf (hasar ya da şifa); skill'i kullanınca düşer (endsOnOwnSkill), kullanmazsa sıradaki turunun sonunda biter (tickAtTurnEnd). YALNIZ MOBLAR VERİR (kahraman sınıfları değil: tests/mob-passives-map2.test.ts). Sayı PROVİZYON.",
@@ -340,6 +340,24 @@
       "element": "nature"
     },
     "text": "Takes nature damage at the start of each of its turns and receives 15% less healing"
+  },
+  "unhallowed": {
+    "_not": "Lanetli zemin (cursed_ground, Hexer Withering Curse; Ömer onaylı 2026-11-09) içindeki düşmana verir. Genel zemin kuralı: içindeyken sürer, çıkınca kalkar. Alınan şifa -%50. İkon YER TUTUCU: poison (Wither'in çizimi).",
+    "name": "Unhallowed",
+    "type": "debuff",
+    "icon": "poison",
+    "color": "#5b3a6e",
+    "healTakenMult": 0.65,
+    "text": "Receives 35% less healing while standing on Cursed Ground"
+  },
+  "blood_cursed": {
+    "_not": "Kan laneti (Ömer onaylı 2026-11-09, element formu): Blood Curse zemininin (kan + lanetli zemin, reactions.blood_curse) içindeki düşmana verdiği durum. Genel zemin kuralı: içindeyken sürer, çıkınca kalkar. Alınan şifa -%70. İkon YER TUTUCU: drop.",
+    "name": "Blood Cursed",
+    "type": "debuff",
+    "icon": "drop",
+    "color": "#6e1f3a",
+    "healTakenMult": 0.3,
+    "text": "Receives 70% less healing while standing on Blood Curse"
   },
   "searing": {
     "_not": "GENEL ZEMİN KURALI (Ömer 2026-10-29): Holy Fire ve Sanctified Flame zemininin verdiği durum (Sanctified'ın gücü tepkimeden, daha güçlü). İçindeyken sürer; tur başında holy hasarı (tek tik). İkon YER TUTUCU: holy (Blessed'ın çizimi).",
@@ -393,6 +411,16 @@
     "color": "#7fc8ff",
     "dispellable": false,
     "text": "Struck by lightning and pushed back on the turn bar"
+  },
+  "electrocuted": {
+    "_not": "Ömer onaylı 2026-11-09 (ikinci element formu): T2 şimşek durumu. Suda (Flooded, kan, Healing Rain) duran ya da Soaked birime şimşek Shocked yerine bunu verir (formulas.json > thunder.wetInto; eski Stun yerine). Uygulanınca birim hemen temel saldırısıyla (ilk skill'i) KENDİ tarafından rastgele bir dosta vurur, sonra sıra çubuğu 0'a iner (Battle.flushElectro). cc: boss bağışık, elit Stun ile aynı ccImmunity. Süre = thunder.stunTurns (yalnız rozet). İkon YER TUTUCU: bolt.",
+    "name": "Electrocuted",
+    "type": "debuff",
+    "icon": "bolt",
+    "color": "#5fb0ff",
+    "cc": true,
+    "dispellable": false,
+    "text": "Lightning through water: it lashes out at a random ally with its basic attack and its turn bar drops to 0"
   },
   "tempered_red_hot": {
     "_not": "Harita 3 C6 Tempering (maps-2-3.md): duruş rozeti; pasif çevirir (süre işlemez). İkon YER TUTUCU. Ek su çarpanı pasifte (waterTaken).",

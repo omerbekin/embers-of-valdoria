@@ -1,6 +1,7 @@
 {
   "id": "treant",
-  "name": "Treant",
+  "name": "Treant",
+  "bloodless": true,
   "spriteId": "treant",
   "color": "#6b4423",
   "logo": "treant",

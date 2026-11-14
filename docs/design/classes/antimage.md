@@ -52,7 +52,7 @@ Veri: `data/skill-trees/antimage.json` (sürüm 5, bar "Warden's Mastery"). Dü�
 
 - **Ley Brand kuralı (Ömer 2026-10-27 / 10-29, arşiv madde 444):** 3x3 alandaki her düşman Branded olur (boss dahil, CC değil), hasar ve isabet zarı yok. MP havuzu olmayan düşman maks canının bir payı kadar "tainted mana" alır (harcayamaz, yenilenme almaz; Mana Steal çalar, Spell Ward yakar, Void Strike eksik manayı sayar); MP'li düşmanın bedelleri 1,5 kat. Branded birimin yakılan / çalınan MP'sinin yarısı büyü hasarı olur; süre doğal bitince kalan tainted mana'nın yarısı damgalayandan patlar. Yeniden atış süreyi tazeler, havuzu doldurmaz. Silence skill'de yok, ağaçta (Hush of the Brand). Sayılar: `data/skills.json > drain_field`.
 - Mana Steal Ley Thread bırakır (2 tur): iplikli hedefte Brand 2 tur uzun, yakım 1,5 kat, iplik tüketilir; Branded hedefe Mana Steal ve Void Strike %40 fazla vurur (Ömer 2026-10-29; `castBurnPct`, `threadBurnMult`, `markDamagePct`). Spell Ward dosta ya da kendine atılır (madde 240).
-- **Açık (Lead kararı):** Drained Dry düğüm metni "burns 15 MP instead of 10" Mana Steal'in 10 MP yaktığını varsayar; veri 7 MP yakıyor. Düğüm metni ya da değer hizalanmalı.
+- **Drained Dry (Ömer 2026-11-09):** sabit 15 yerine "%50 increased": Mana Steal yakımı taban x 1,5 (7 -> 10,5; ağaç derleyicisi tam sayıya yuvarlar: 11), hasar yok. Ağaç `pct` op'u (percentRule mul) kullanıldı; metin "burns 50% more MP, but deals no damage".
 - Ağaçta Mana Overflow düğümlerinin `inactive` temizliği kontrol edilmedi. Ağaç sim ile oturmadı.
 
 ## 6. Tarihçe

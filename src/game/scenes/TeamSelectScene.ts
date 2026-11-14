@@ -1,3 +1,4 @@
+import { CONFIRM } from '../../ui/confirm-labels';
 import Phaser from 'phaser';
 import { motion } from '../../ui/motion';
 import { menuMusic } from '../../ui/music';
@@ -5,11 +6,10 @@ import { classLogoName } from '../../ui/misc-icons';
 import type { UiSoundKind } from '../../ui/ui-sound';
 import layout from '../../../data/battle-layout.json';
 import { skillTags } from '../../ui/skill-tags';
-import { content, describePassive, describeSkill, describeStat, skillCostLabel, placementHintText, placementHintTitle } from '../../engine';
-import type { CombatantDef, PlacementHint, Teams } from '../../engine';
-import { hintBadge, hintColor } from '../formation-hint-ui';
-import { hideReachTip, reachTipOn, showReachTip } from '../reach-tip-dom';
-import { boardRangeUi } from '../../ui/formation-board-data';
+import { content, describePassive, describeSkill, describeStat, skillCostLabel } from '../../engine';
+import type { CombatantDef, Teams } from '../../engine';
+import { mountBoardLegend, type BoardLegend } from '../board-legend';
+import { SCENE_BOARD_H, SCENE_BOARD_W, baseClass, boardCells, classBoardHero, clientToWorld, mountSceneBoard, trackPointer, type SceneBoard } from '../scene-board';
 import { backgroundExists, backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { ensureIcon, ensureSkillIcon } from '../icons';
 import { ownerOfUnit } from '../asset-versions';
@@ -79,7 +79,6 @@ import { bandTip, type BandTipSpec, type PhChip, type PhLine } from '../band-tip
 import { statTipParts } from '../../ui/stat-tips';
 
 const { width: W, height: H, colors } = layout;
-const { rows: ROWS, lanes: LANES } = content.GRID;
 const CELLS = content.CELL_COUNT;
 const hexNum = (hex: string) => Phaser.Display.Color.HexStringToColor(hex).color;
 
@@ -102,13 +101,13 @@ const { TXT, ON, MUTED, NOTE, PRI, EMBER, GOLD: GOLDC, ON_N: ONC, INK, PAD, LINE
 
 // --- Yerleşim (1080 mantıksal yükseklik; kenara yaslananlar stageView.left/right'a göre) ---
 const MID_TOP = 146;
+/** Tahtanın altındaki renk açıklaması: ızgara ile arası (dünya px). */
+const LEGEND_GAP = 3;
 const SIDE_INSET = 84;
-const CELL = 120;
-const CELL_GAP = 12;
-const GRID_W = ROWS * CELL + (ROWS - 1) * CELL_GAP; // 516
-const GRID_H = LANES * CELL + (LANES - 1) * CELL_GAP; // 384
+// Izgara = sefer Formation tahtasının gerçek DOM ızgarası (src/ui/formation-board.ts, src/game/scene-board.ts): hücre 128, aralık 10
+const GRID_W = SCENE_BOARD_W; // 542
+const GRID_H = SCENE_BOARD_H; // 404
 const SIDE_W = GRID_W;
-const SIDE_H = 560;
 const HEAD_CY = 30;
 const GRID_Y = 106;
 const ACTS_CY = GRID_Y + GRID_H + 10 + 30;
@@ -127,16 +126,6 @@ const costChip = (text: string, prefix = ''): PhChip => {
   const m = /^(\d+(?:\.\d+)?)\s*(.*)$/.exec(text);
   return m ? { tone: 'v', num: m[1]!, text: m[2]! } : { tone: 'v', text };
 };
-
-interface CellView {
-  side: Side;
-  i: number;
-  /** Yuvanın taraf kutusundaki yerel sol üst köşesi. */
-  lx: number;
-  ly: number;
-  body: Phaser.GameObjects.Container;
-  hot: Phaser.GameObjects.Container;
-}
 
 interface TileView {
   id: string;
@@ -158,7 +147,6 @@ interface SideView {
   count?: Phaser.GameObjects.Text;
   grow: Phaser.GameObjects.Graphics;
   stepper?: { root: Phaser.GameObjects.Container; value: Phaser.GameObjects.Text; minus: (on: boolean) => void; plus: (on: boolean) => void };
-  cells: Phaser.GameObjects.Container;
   cover?: Phaser.GameObjects.Container;
 }
 
@@ -191,7 +179,13 @@ export class TeamSelectScene extends Phaser.Scene {
   private infoId = '';
   private readonly emptyCells = (): string[] => Array.from({ length: CELLS }, () => '');
   private sides = {} as Record<Side, SideView>;
-  private cellViews: CellView[] = [];
+  private boards: Partial<Record<Side, SceneBoard>> = {};
+  private legends: Partial<Record<Side, BoardLegend>> = {};
+  private setLegendDrag(on: boolean): void {
+    for (const l of Object.values(this.legends)) l?.setDrag(on);
+  }
+  private stopTrack?: () => void;
+  private boardsShown = false;
   private tiles = new Map<string, TileView>();
   private stripRoot?: Phaser.GameObjects.Container;
   private stripGroups: Phaser.GameObjects.Container[] = [];
@@ -207,7 +201,6 @@ export class TeamSelectScene extends Phaser.Scene {
   private banners?: ReadyBanners;
   private bg?: { img?: Phaser.GameObjects.Image };
   private drag?: { kind: 'class' | 'cell'; id: string; side?: Side; from?: number; sx: number; sy: number; moved: boolean; ghost?: Phaser.GameObjects.Container; over: { side: Side; i: number } | null };
-  private pop?: { side: Side; cell: number };
   private tip?: { key: string; container: Phaser.GameObjects.Container };
   private tipTimer?: Phaser.Time.TimerEvent;
   private starting = false;
@@ -234,11 +227,14 @@ export class TeamSelectScene extends Phaser.Scene {
     this.mpOff = null;
     this.mpSent = '';
     this.sides = {} as Record<Side, SideView>;
-    this.cellViews = [];
+    for (const b of Object.values(this.boards)) b?.destroy();
+    this.boards = {};
+    this.stopTrack?.();
+    this.stopTrack = undefined;
+    this.boardsShown = false;
     this.tiles = new Map();
     this.stripGroups = [];
     this.drag = undefined;
-    this.pop = undefined;
     this.tip = undefined;
     this.tipTimer = undefined;
     this.starting = false;
@@ -281,9 +277,12 @@ export class TeamSelectScene extends Phaser.Scene {
       void whenMenuFontsReady().then(() => this.sys.isActive() && !this.built && this.build());
     } else this.build();
 
-    this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => this.onDragMove(worldXY(this, ptr)));
-    this.input.on('pointerup', (ptr: Phaser.Input.Pointer) => this.onDragEnd(worldXY(this, ptr), false));
-    this.input.on('pointerupoutside', (ptr: Phaser.Input.Pointer) => this.onDragEnd(worldXY(this, ptr), true));
+    // Kadro sürüklemesi pencere işaretçisiyle izlenir (DOM tahtanın üstünde Phaser fare olayı almaz): tile pointerdown > trackPointer
+    this.events.once('shutdown', () => {
+      this.stopTrack?.();
+      for (const b of Object.values(this.boards)) b?.destroy();
+      this.boards = {};
+    });
     this.input.keyboard?.on('keydown-ENTER', () => this.built && !elConfirmOpen(this) && this.start());
     // Esc: Menu (Resume / Settings / New Game / Back to Main Menu; src/ui/game-menu.ts)
     this.input.keyboard?.on('keydown-ESC', () => !debugState.uiPaused && !elConfirmOpen(this) && this.built && this.goBack());
@@ -303,6 +302,7 @@ export class TeamSelectScene extends Phaser.Scene {
     this.buildBackground();
     this.buildHeader();
     for (const side of SIDES) this.buildSide(side);
+    for (const side of SIDES) if (this.editable(side)) this.buildBoard(side);
     this.buildCenter();
     this.buildStart();
     if (this.mp) this.banners = new ReadyBanners(this, 11);
@@ -415,7 +415,6 @@ export class TeamSelectScene extends Phaser.Scene {
     if (i < 0) i = freeCellFor(this.teams[side], id);
     if (i < 0) return false;
     this.teams[side][i] = id;
-    this.pop = { side, cell: i };
     this.sel = id;
     this.infoId = id;
     // Dolan taraftan eksik olan diğer tarafa geç
@@ -432,8 +431,8 @@ export class TeamSelectScene extends Phaser.Scene {
     return elText(this, x, y, text, size, color, { em, ...o });
   }
 
-  private gar(x: number, y: number, text: string, size: number, color: string, _italic = false): Phaser.GameObjects.Text {
-    return elBody(this, x, y, text, size, color, false);
+  private gar(x: number, y: number, text: string, size: number, color: string): Phaser.GameObjects.Text {
+    return elBody(this, x, y, text, size, color);
   }
 
   private glow(t: Phaser.GameObjects.Text, on: boolean): void {
@@ -452,7 +451,7 @@ export class TeamSelectScene extends Phaser.Scene {
   private goBack(): void {
     if (this.starting) return;
     if (this.mp) {
-      elConfirm(this, { title: 'Leave the match?', text: 'You will leave the lobby and your opponent will be disconnected.', yes: 'Leave', no: 'Stay', onYes: () => startMainMenu(this.game) });
+      elConfirm(this, { title: 'Leave the match?', text: 'You will leave the lobby and your opponent will be disconnected.', yes: CONFIRM.leave, onYes: () => startMainMenu(this.game) });
       return;
     }
     this.starting = true;
@@ -516,15 +515,15 @@ export class TeamSelectScene extends Phaser.Scene {
       count.x = enemy ? tx0 - 16 : titleW + 16;
       parts.push(count);
     }
-    const view: SideView = { root, title, dia, count, grow, cells: this.add.container(0, 0) };
+    const view: SideView = { root, title, dia, count, grow };
     if (!this.mp) {
       view.stepper = this.makeStepper(side);
       view.stepper.root.setPosition(enemy ? 0 : SIDE_W - 168, HEAD_CY);
       parts.push(view.stepper.root);
     }
     // FRONT etiketi (ön sıra ortaya bakar: Player'da sağ sütun, Enemy'de sol)
-    const front = this.cz(enemy ? CELL / 2 : SIDE_W - CELL / 2, GRID_Y - 30 + 8, 'Front', 13, 'rgba(217,178,106,0.7)', 0.24).setOrigin(0.5);
-    parts.push(front, view.cells);
+    const front = this.cz(enemy ? 64 : SIDE_W - 64, GRID_Y - 30 + 8, 'Front', 13, 'rgba(217,178,106,0.7)', 0.24).setOrigin(0.5);
+    parts.push(front);
     // Random · Clear (yalnızca düzenlenebilen taraf)
     if (this.editable(side)) {
       const r = this.lnk('Random', () => {
@@ -642,7 +641,7 @@ export class TeamSelectScene extends Phaser.Scene {
           this.randomize('party', false);
           this.randomize('enemies');
         },
-        { kind: 'secondary', w, h: RANDOM_BOTH.h, isBusy: () => !!this.drag?.moved, touch: { growY: 'up' } }, // alt komşusu START: yalnızca yukarı büyür
+        { kind: 'secondary', w, isBusy: () => !!this.drag?.moved, touch: { growY: 'up' } }, // alt komşusu START: yalnızca yukarı büyür
       );
       const cy = top - gap - rb.h / 2;
       rb.root.setY(cy);
@@ -657,7 +656,7 @@ export class TeamSelectScene extends Phaser.Scene {
 
   /** START BATTLE (multiplayer: READY): kitin primary düğmesi, sağ alt köşe. */
   private buildStart(): void {
-    const b = elButton(this, this.mp ? 'Ready' : 'Start Battle', () => !this.drag?.moved && this.start(), { kind: 'primary', minLabel: this.mp ? 'Not ready' : undefined, h: START.h, size: START.size, isBusy: () => !!this.drag?.moved, touch: { growY: 'down' } });
+    const b = elButton(this, this.mp ? 'Ready' : 'Start Battle', () => !this.drag?.moved && this.start(), { kind: 'primary', minLabel: this.mp ? 'Not ready' : undefined, isBusy: () => !!this.drag?.moved, touch: { growY: 'down' } });
     b.root.setY(START.cy).setDepth(30);
     this.startUi = b;
     this.toastFn = elToast(this);
@@ -760,15 +759,17 @@ export class TeamSelectScene extends Phaser.Scene {
     });
     x += short ? 12 : 34 - STAT_PAD * 2 + 20;
     // Pasif (en başta, yuvarlak, ayrı) + skill'ler (48 px kutular, bedel köşe rozeti, ulti ember parıltılı)
-    const boxes: Array<{ key: string; icon: string; cost: string; ult: boolean; tip: () => TipSpec }> = def.skills
+    const boxes: Array<{ key: string; icon: string; name: string; cd: number; cost: string; ult: boolean; tip: () => TipSpec }> = def.skills
       .map((sid, idx) => ({ sk: content.skills[sid], idx }))
       .filter((o): o is { sk: NonNullable<typeof o.sk>; idx: number } => !!o.sk)
-      .map(({ sk, idx }) => ({ key: `skill:${def.id}:${sk.id}`, icon: ensureSkillIcon(this, sk), cost: skillCostLabel(sk.cost), ult: idx === 3, tip: () => this.skillTip(def, sk.id) }));
+      .map(({ sk, idx }) => ({ key: `skill:${def.id}:${sk.id}`, icon: ensureSkillIcon(this, sk), name: sk.name, cd: sk.cooldown ?? 0, cost: skillCostLabel(sk.cost), ult: idx === 3, tip: () => this.skillTip(def, sk.id) }));
     if (def.passive) {
       const p = def.passive;
       boxes.unshift({
         key: `passive:${def.id}`,
         icon: ensureIcon(this, p.icon, def.color, false, ownerOfUnit(def.id)),
+        name: p.name,
+        cd: 0,
         cost: '',
         ult: false,
         tip: () => ({ icon: ensureIcon(this, p.icon, def.color, false, ownerOfUnit(def.id)), title: p.name, kind: 'Passive', accent: def.color, lines: [{ text: describePassive(p, def.stats, content.formulas) }] }),
@@ -957,6 +958,11 @@ export class TeamSelectScene extends Phaser.Scene {
     zone.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
       const p = worldXY(this, ptr);
       this.drag = { kind: 'class', id, sx: p.x, sy: p.y, moved: false, over: null };
+      this.stopTrack?.();
+      this.stopTrack = trackPointer(
+        (cx, cy) => this.onDragMove(clientToWorld(cx, cy), cx, cy),
+        (cx, cy) => this.onDragEnd(cx, cy),
+      );
     });
     this.styleTile(tv);
     return tv;
@@ -1019,14 +1025,6 @@ export class TeamSelectScene extends Phaser.Scene {
     return stageView.right - START.right - (this.startUi?.w ?? 380);
   }
 
-  /** Yuvanın taraf kutusundaki yerel konumu: Player'ın ön sırası sağda, Enemy'ninki solda; şerit = satır. */
-  private cellLocal(side: Side, i: number): { lx: number; ly: number } {
-    const row = Math.floor(i / LANES);
-    const lane = i % LANES;
-    const col = side === 'party' ? ROWS - 1 - row : row;
-    return { lx: col * (CELL + CELL_GAP), ly: GRID_Y + lane * (CELL + CELL_GAP) };
-  }
-
   private refresh(): void {
     if (!this.built) return;
     this.hideTip(true);
@@ -1051,7 +1049,6 @@ export class TeamSelectScene extends Phaser.Scene {
       if (ok) this.setStatus('Both teams are ready', ON);
       else this.setStatus(this.missingText(), NOTE);
     }
-    this.pop = undefined;
   }
 
   private updateHeads(): void {
@@ -1069,6 +1066,11 @@ export class TeamSelectScene extends Phaser.Scene {
         v.stepper.plus(this.sizes[side] < CELLS);
       }
       this.drawGrow(side);
+      const bd = this.boards[side];
+      if (bd) {
+        bd.board.el.style.transition = 'opacity 300ms';
+        bd.board.el.style.opacity = this.boardsShown ? (on ? '1' : '0.78') : '0';
+      }
       if (!v.root.getData('entering')) {
         this.tweens.killTweensOf(v.root);
         this.tweens.add({ targets: v.root, alpha: on ? 1 : 0.78, duration: 300 });
@@ -1106,107 +1108,85 @@ export class TeamSelectScene extends Phaser.Scene {
     v.cover = c;
   }
 
+  /** Tahtayı yeniden çizer (takım değişti): sefer Formation tahtasının aynısı (dizilim noktaları, ipucu kutusu, sürükleme puanı). */
   private drawTeam(side: Side): void {
-    const v = this.sides[side];
-    for (const ch of v.cells.list) this.tweens.killTweensOf(ch);
-    v.cells.removeAll(true);
-    this.cellViews = this.cellViews.filter((c) => c.side !== side);
-    const team = this.teams[side];
-    // Dizilim ipuçları (formation-hints.ts; yalnızca öneri, yerleşimi engellemez)
-    const hints = this.editable(side) ? content.placementHintsForCells(team) : [];
-    for (let i = 0; i < CELLS; i++) {
-      const { lx, ly } = this.cellLocal(side, i);
-      const row = Math.floor(i / LANES);
-      const id = this.mp && !this.editable(side) ? '' : team[i];
-      const def = id ? content.classes[id] : undefined;
-      const body = this.drawCell(side, i, lx, ly, def, row === 0, def ? hints[i] : undefined);
-      const hot = this.add.container(lx + CELL / 2, ly + CELL / 2).setVisible(false);
-      const hg = this.add.graphics();
-      hg.lineStyle(2, EMBER, 1).strokeRect(-CELL / 2 + 1, -CELL / 2 + 1, CELL - 2, CELL - 2);
-      hg.lineStyle(1, EMBER, 0.8).strokeRect(-CELL / 2 + 3, -CELL / 2 + 3, CELL - 6, CELL - 6);
-      const hglow = this.add.image(0, 0, ensureGlow(this)).setTint(EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(CELL * 1.6, CELL * 1.6).setAlpha(0.38);
-      hot.add([hglow, hg]);
-      v.cells.add([body, hot]);
-      this.cellViews.push({ side, i, lx, ly, body, hot });
-      if (this.pop && this.pop.side === side && this.pop.cell === i) {
-        body.setScale(0.8).setAlpha(0);
-        this.tweens.add({ targets: body, scale: 1, alpha: 1, duration: 420, ease: easeOut });
-      }
-    }
+    const b = this.boards[side];
+    if (!b) return;
+    b.board.refresh();
+    b.place();
   }
 
-  /** Bir dizilim yuvası (merkezli kap): boşken ince çerçeve + ortada içi boş elmas; doluyken avatar + ad + (hover'da) ×. */
-  private drawCell(side: Side, i: number, lx: number, ly: number, def: CombatantDef | undefined, front: boolean, hint?: PlacementHint): Phaser.GameObjects.Container {
-    const h = CELL / 2;
-    const body = this.add.container(lx + h, ly + h);
-    const g = this.add.graphics();
-    body.add(g);
-    if (!def) {
-      g.fillStyle(INK, 0.38).fillRect(-h, -h, CELL, CELL);
-      const warm = this.add.image(0, h * 0.4, ensureGlow(this)).setTint(GOLDC).setDisplaySize(CELL * 1.1, CELL * 0.9).setAlpha(0.09);
-      const frame = this.add.graphics();
-      frame.lineStyle(1, GOLDC, front ? 0.42 : LINE.a2).strokeRect(-h + 0.5, -h + 0.5, CELL - 1, CELL - 1);
-      frame.lineStyle(1, GOLDC, 0.22).strokePoints(diamondPts(0, 0, 6.4), true);
-      body.add([warm, frame]);
-      const z = this.add.zone(0, 0, CELL, CELL).setInteractive();
-      z.on('pointerup', () => !this.drag?.moved && this.editable(side) && this.setActive(side));
-      body.add(z);
-      return body;
-    }
-    vGradient(g, -h, -h, CELL, CELL, 0x2e2115, [
-      [0, 0.75],
-      [1, 0.75],
-    ]);
-    g.fillGradientStyle(0x0a0705, 0x0a0705, 0x0a0705, 0x0a0705, 0, 0, 0.9, 0.9).fillRect(-h, -h, CELL, CELL);
-    const img = classAvatar(this, def, 0, 0, CELL - 4, side === 'enemies');
-    const shade = this.add.graphics();
-    vGradient(shade, -h, h - 40, CELL, 40, 0x080604, [
-      [0, 0],
-      [1, 0.92],
-    ]);
-    const name = fitWidth(this.cz(0, h - 13, def.name, 13, ON, 0.06).setOrigin(0.5), CELL - 8);
-    const x = this.cz(h - 12, -h + 13, '×', 16, ON, 0).setOrigin(0.5).setAlpha(0);
-    const frame = this.add.graphics();
-    const drawFrame = (hov: boolean) => {
-      frame.clear();
-      frame.lineStyle(2, hov ? ONC : GOLDC, hov ? 1 : 0.62).strokeRect(-h + 1, -h + 1, CELL - 2, CELL - 2);
-    };
-    drawFrame(false);
-    body.add([img, shade, name, x, frame]);
-    if (isTestClass(def)) {
-      const tg = this.add.graphics();
-      tg.fillStyle(0xffb347, 1).fillRect(-h + 4, -h + 4, 34, 13);
-      body.add([tg, this.cz(-h + 21, -h + 10.5, 'Test', 9, '#2a1405', 0.04).setOrigin(0.5).setShadow(0, 0, 'rgba(0,0,0,0)', 0)]);
-    }
-    if (hint) body.add(hintBadge(this, -h + 15, -h + (isTestClass(def) ? 33 : 15), hint, 10));
-    const zone = this.add.zone(0, 0, CELL, CELL).setInteractive({ useHandCursor: this.editable(side) });
-    body.add(zone);
-    zone.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
-      const p = worldXY(this, ptr);
-      if (this.editable(side)) this.drag = { kind: 'cell', id: def.id, side, from: i, sx: p.x, sy: p.y, moved: false, over: null };
-    });
-    zone.on('pointerover', (ptr: Phaser.Input.Pointer) => {
-      if (this.drag?.moved) return;
-      drawFrame(true);
-      this.tweens.add({ targets: x, alpha: 0.9, duration: 180 });
-      this.zoomImg(img, 1.06, CELL - 4);
-      this.showInfo(def.id);
-      // Menzil kutusu: Sefer Formation hover kutusuyla AYNI DOM bileşeni (reach-tip-dom.ts); menzil kapalıysa eski ipucu. Dokunma: açar ve sabitler.
-      const m = body.getWorldTransformMatrix();
-      if (this.editable(side) && reachTipOn()) {
-        this.hideTip(true);
-        showReachTip(this, ptr, { name: def.name, classId: def.id, cell: i, hint, rect: { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL } });
-      } else if (hint) {
-        this.showTip(`hint:${side}:${i}`, { title: placementHintTitle(hint), accent: hintColor(hint), lines: [{ text: placementHintText(def.name, hint) }], width: 420 }, { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL });
+  private teamCells(side: Side): string[] {
+    return boardCells(this.teams[side]);
+  }
+
+  /** Bir tarafın DOM tahtası (sefer Formation ızgarası, panelsiz): veri akışı bu sahnenin kendisi (takım boyutu, Player / Enemy, MP eşitleme). */
+  private buildBoard(side: Side): void {
+    const enemy = side === 'enemies';
+    const sb = mountSceneBoard(
+      this,
+      {
+        heroes: () => this.teamCells(side).flatMap((c) => (c ? [classBoardHero(c)].filter((h): h is NonNullable<typeof h> => !!h) : [])),
+        cells: () => this.teamCells(side),
+        mirror: enemy,
+        move: (id, cell) => {
+          const from = this.teamCells(side).indexOf(id);
+          if (from < 0) return;
+          const r = moveMember(this.teams, this.sizes, { side, i: from }, { side, i: cell });
+          if (r.ok) this.teams = r.teams;
+          this.active = side;
+          this.refresh();
+        },
+        dropOutside: (id, cx, cy) => this.dropFromBoard(side, id, cx, cy),
+        // sağ tık = birimi takımdan çıkar (kadro rafındaki yoluyla aynı; boş takım serbest, Start / Ready yine dolu takım ister)
+        remove: (id) => {
+          const from = this.teamCells(side).indexOf(id);
+          if (from < 0) return;
+          this.teams[side][from] = '';
+          this.active = side;
+          this.refresh();
+        },
+        onHoverHero: (id) => !this.drag?.moved && this.showInfo(baseClass(id)),
+        onDrag: (on) => this.setLegendDrag(on),
+      },
+      () => ({ x: this.sideX(side), y: MID_TOP + GRID_Y }),
+    );
+    sb.board.el.style.opacity = '0';
+    this.boards[side] = sb;
+    // Renk açıklaması tahtanın altında; yalnızca hücre üstüne gelince / kahraman sürüklenirken görünür (src/game/board-legend.ts)
+    const lg = mountBoardLegend(sb, () => ({ x: this.sideX(side), y: MID_TOP + GRID_Y + SCENE_BOARD_H + LEGEND_GAP }), SCENE_BOARD_W, enemy);
+    this.legends[side] = lg;
+    this.events.once('shutdown', () => lg.destroy());
+  }
+
+  /** Tahtadan sürüklenen birim başka tahtaya ya da kadro rafına bırakıldı (tahta kendi hücrelerini kendisi işler). */
+  private dropFromBoard(side: Side, id: string, cx: number, cy: number): boolean {
+    const from = this.teamCells(side).indexOf(id);
+    if (from < 0) return false;
+    const other = this.other(side);
+    const ob = this.boards[other];
+    if (ob) {
+      const cell = ob.board.cellAt(cx, cy);
+      const r = ob.board.el.getBoundingClientRect();
+      const over = cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
+      if (cell >= 0 || over) {
+        const res = cell >= 0 ? moveMember(this.teams, this.sizes, { side, i: from }, { side: other, i: cell }) : moveToSide(this.teams, this.sizes, { side, i: from }, other);
+        if (res.ok) {
+          this.teams = res.teams;
+          this.active = other;
+        } else if (res.reason === 'full') this.toast(`${NAME[other]} team is full`, 'error');
+        this.refresh();
+        return true;
       }
-    });
-    zone.on('pointerout', (ptr: Phaser.Input.Pointer) => {
-      if (!(ptr.wasTouch && this.editable(side) && reachTipOn()) && (hint || boardRangeUi())) this.hideTip();
-      drawFrame(false);
-      this.tweens.add({ targets: x, alpha: 0, duration: 180 });
-      this.zoomImg(img, 1, CELL - 4);
-    });
-    return body;
+    }
+    // kadro rafına bırakılırsa takımdan çıkar
+    if (clientToWorld(cx, cy).y >= STRIP_TOP - 24) {
+      this.teams[side][from] = '';
+      this.active = side;
+      this.refresh();
+      return true;
+    }
+    return false;
   }
 
   // --- Layout (geniş ekran) ---
@@ -1216,6 +1196,8 @@ export class TeamSelectScene extends Phaser.Scene {
     this.hideTip(true);
     this.layoutBackground();
     for (const side of SIDES) this.sides[side].root.setX(this.sideX(side));
+    for (const b of Object.values(this.boards)) b?.place();
+    for (const l of Object.values(this.legends)) l?.place();
     const ax = stageView.right - START.right - (this.startUi?.w ?? 0) / 2;
     this.startUi?.root.setX(ax);
     this.actions?.setX(ax);
@@ -1236,6 +1218,11 @@ export class TeamSelectScene extends Phaser.Scene {
   // --- Entrance animation (taslağın .fu / .fi geçişleri) ---
 
   private playEntrance(): void {
+    // DOM tahtalar ekran geçişinden sonra yumuşakça belirir
+    this.time.delayedCall(350, () => {
+      this.boardsShown = true;
+      this.updateHeads();
+    });
     const fu = (o: Phaser.GameObjects.Container, delay: number, alpha = 1) => {
       const y = o.y;
       o.setData('entering', true);
@@ -1326,7 +1313,6 @@ export class TeamSelectScene extends Phaser.Scene {
   }
 
   private hideTip(now = false): void {
-    hideReachTip();
     this.tipTimer?.remove();
     const kill = () => {
       this.tip?.container.destroy();
@@ -1336,104 +1322,62 @@ export class TeamSelectScene extends Phaser.Scene {
     else this.tipTimer = this.time.delayedCall(70, kill);
   }
 
-  /** Elle bırakılan birim uygunsuz hücredeyse kısa öneri (yalnızca öneri; formation-hints.ts). */
-  private hintToast(side: Side, cell: number): void {
-    const id = this.teams[side][cell];
-    const def = id ? content.classes[id] : undefined;
-    const hint = def && this.editable(side) ? content.placementHintsForCells(this.teams[side])[cell] : undefined;
-    if (def && hint) this.toast(placementHintText(def.name, hint), null);
-  }
-
-  // --- Drag & drop (raf -> yuva; yuva -> yuva; yuva -> diğer takım) ---
-
-  private slotAt(x: number, y: number): CellView | undefined {
-    return this.cellViews.find((c) => {
-      const sx = this.sideX(c.side) + c.lx;
-      const sy = MID_TOP + c.ly;
-      return x >= sx && x <= sx + CELL && y >= sy && y <= sy + CELL && this.editable(c.side);
-    });
-  }
-
-  /** Taraf kutusu (yuvaya değil panelin boş yerine bırakma = o takıma otomatik yerleştir). */
-  private sideAt(x: number, y: number): Side | null {
-    for (const side of SIDES) {
-      const sx = this.sideX(side);
-      if (x >= sx && x <= sx + SIDE_W && y >= MID_TOP && y <= MID_TOP + SIDE_H && this.editable(side)) return side;
-    }
-    return null;
-  }
-
   /** Sürüklenen kart: ortak hayalet (src/game/slot-drag.ts > makeDragGhost; Endless ve sefer Formation da kullanır). */
   private makeGhost(def: CombatantDef, flip: boolean, p: { x: number; y: number }): Phaser.GameObjects.Container {
     return makeDragGhost(this, def, { size: 112, flip, depth: 6000 }).setPosition(p.x, p.y);
   }
 
-  private onDragMove(p: { x: number; y: number }): void {
+  /** Ekran noktasının altındaki tahta (yoksa null). */
+  private boardUnder(cx: number, cy: number): { side: Side; b: SceneBoard } | null {
+    for (const side of SIDES) {
+      const b = this.boards[side];
+      if (!b) continue;
+      const r = b.board.el.getBoundingClientRect();
+      if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) return { side, b };
+    }
+    return null;
+  }
+
+  /** Kadrodan sürüklenen sınıf: tahtada uygunluk noktaları + altındaki hücrenin puan kutusu (sefer tahtasıyla aynı). */
+  private onDragMove(p: { x: number; y: number }, cx: number, cy: number): void {
     const d = this.drag;
-    if (!d) return;
+    if (!d || d.kind !== 'class') return;
     if (!d.moved && Math.hypot(p.x - d.sx, p.y - d.sy) > 8) {
       d.moved = true;
+      this.setLegendDrag(true);
       this.hideTip(true);
-      const def = content.classes[d.id]!;
-      d.ghost = this.makeGhost(def, d.kind === 'cell' && d.side === 'enemies', p);
-      if (d.kind === 'cell') this.cellViews.find((c) => c.side === d.side && c.i === d.from)?.body.setAlpha(0.3);
+      d.ghost = this.makeGhost(content.classes[d.id]!, false, p);
     }
     if (!d.moved) return;
     d.ghost?.setPosition(p.x, p.y);
-    const s = this.slotAt(p.x, p.y);
-    const over = s && !(d.kind === 'cell' && s.side === d.side && s.i === d.from) ? { side: s.side, i: s.i } : null;
-    if (over?.side !== d.over?.side || over?.i !== d.over?.i) {
-      d.over = over;
-      for (const c of this.cellViews) c.hot.setVisible(!!over && c.side === over.side && c.i === over.i);
+    const hero = classBoardHero(`${d.id}~x`);
+    const under = this.boardUnder(cx, cy);
+    const target = under?.side ?? (this.editable(this.active) ? this.active : undefined);
+    for (const side of SIDES) {
+      const b = this.boards[side];
+      if (!b) continue;
+      if (hero && side === target) b.board.extPreview(hero, cx, cy);
+      else b.board.extPreview(null, 0, 0);
     }
   }
 
-  private onDragEnd(p: { x: number; y: number }, outside: boolean): void {
+  private onDragEnd(cx: number, cy: number): void {
     const d = this.drag;
     if (!d) return;
     this.drag = undefined;
+    this.stopTrack = undefined;
     d.ghost?.destroy();
-    for (const c of this.cellViews) c.hot.setVisible(false);
+    for (const b of Object.values(this.boards)) b?.board.extPreview(null, 0, 0);
+    this.setLegendDrag(false);
     if (!d.moved) {
-      if (outside) return;
-      if (d.kind === 'class') {
-        // tıkla = etkin takıma ekle
-        if (!this.addClass(d.id)) this.refresh();
-      } else if (d.side !== undefined && d.from !== undefined) {
-        // tıkla = çıkar
-        this.teams[d.side][d.from] = '';
-        this.active = d.side;
-        this.refresh();
-      }
+      // tıkla = etkin takıma ekle
+      if (!this.addClass(d.id)) this.refresh();
       return;
     }
-    if (outside) return this.refresh();
-    const slot = this.slotAt(p.x, p.y);
-    const side = slot ? slot.side : this.sideAt(p.x, p.y);
-    if (d.kind === 'class') {
-      if (slot) {
-        if (this.addClass(d.id, { side: slot.side, i: slot.i })) this.hintToast(slot.side, slot.i);
-      } else if (side) this.addClass(d.id, { side, i: null });
-      else this.refresh();
-      return;
-    }
-    if (d.side === undefined || d.from === undefined) return this.refresh();
-    const from = { side: d.side, i: d.from };
-    if (slot) {
-      const r = moveMember(this.teams, this.sizes, from, { side: slot.side, i: slot.i });
-      if (r.ok) {
-        this.teams = r.teams;
-        this.pop = { side: slot.side, cell: slot.i };
-        this.hintToast(slot.side, slot.i);
-      } else if (r.reason === 'full') this.toast(`${NAME[slot.side]} team is full`, 'error');
-    } else if (side && side !== d.side) {
-      const r = moveToSide(this.teams, this.sizes, from, side);
-      if (r.ok) {
-        this.teams = r.teams;
-        this.pop = { side, cell: r.cell };
-      } else if (r.reason === 'full') this.toast(`${NAME[side]} team is full`, 'error');
-    }
-    this.refresh();
+    const under = this.boardUnder(cx, cy);
+    if (!under) return this.refresh();
+    const cell = under.b.board.cellAt(cx, cy);
+    this.addClass(d.id, cell >= 0 ? { side: under.side, i: cell } : { side: under.side, i: null });
   }
 }
 

@@ -273,19 +273,21 @@ describe('Chain Hook çekmesi (M6) ve Ash Brand (M4)', () => {
 });
 
 describe('Unyielding (M9)', () => {
-  it('madde 271: Warden CC\'ye bağışık (Stun/Slow/Silence işlemez, Stagger de olmaz); diğer debuff\'lar 1 tur kısa (en az 1)', () => {
+  it('madde 271: Warden CC\'ye bağışık (Stun/Silence işlemez, Stagger de olmaz; Slow 2026-11-09\'dan beri CC değil); diğer debuff\'lar 1 tur kısa (en az 1)', () => {
     const b = make();
     const w = warden(b);
-    for (const k of ['stun', 'slow', 'silence']) {
+    for (const k of ['stun', 'silence']) {
       b.debugAddStatus(w.uid, k, 3);
       expect(w.statuses.some((s) => s.kind === k)).toBe(false);
     }
     expect(w.statuses.some((s) => s.kind === 'staggered')).toBe(false);
     b.debugAddStatus(w.uid, 'wound', 3);
     expect(w.statuses.find((s) => s.kind === 'wound')?.turns).toBe(3 + W.boss!.unyielding!.debuffDurationDelta);
-    // madde 272: Blinded (isabet cezası) artık hiç işlemez; en az 1 kuralı başka bir debuff'la (Overextended) denenir
+    // Ömer onaylı 2026-11-09 (form 3): Slow ve Blinded boss'a da işler (azaltılmış güçle); Unyielding süreyi kısaltır (en az 1)
+    b.debugAddStatus(w.uid, 'slow', 3);
+    expect(w.statuses.find((s) => s.kind === 'slow')?.turns).toBe(3 + W.boss!.unyielding!.debuffDurationDelta);
     b.debugAddStatus(w.uid, 'blinded', 1);
-    expect(w.statuses.some((s) => s.kind === 'blinded')).toBe(false);
+    expect(w.statuses.find((s) => s.kind === 'blinded')?.turns).toBe(1);
     b.debugAddStatus(w.uid, 'overextended', 1);
     expect(w.statuses.find((s) => s.kind === 'overextended')?.turns).toBe(1);
   });

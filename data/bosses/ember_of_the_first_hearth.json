@@ -2,6 +2,7 @@
   "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim A (Söndürme yarışı). Everburning hücre başına %3 (Ömer; belgedeki düz %50 yerine). Statlar eski yer tutucu sınıfın kopyası.",
   "id": "ember_of_the_first_hearth",
   "name": "The Ember of the First Hearth",
+  "bloodless": true,
   "spriteId": "ember_of_the_first_hearth",
   "spriteScale": 1.35,
   "color": "#ff9a3a",
@@ -54,7 +55,7 @@
         "id": "unyielding",
         "name": "Unyielding",
         "icon": "unyielding",
-        "text": "Immune to crowd control: Stun, Slow, Silence and Frozen do not take hold, taunts do not force its attacks, and it cannot be pulled or pushed. Other ailments last 1 turn less."
+        "text": "Immune to crowd control: Stun, Silence and Frozen do not take hold, taunts do not force its attacks, and it cannot be pulled or pushed. Other ailments last 1 turn less."
       },
       {
         "id": "storm_in_the_chimney",

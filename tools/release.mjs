@@ -83,6 +83,6 @@ run('git add -A src data tests tools docs public index.html package.json package
 const summary = filled.flatMap((g) => g.items)[0].replace(/"/g, "'");
 const msg = `${version}: ${summary}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`;
 writeFileSync('.git/RELEASE_MSG', msg);
-run('git -c user.name=Omer -c user.email=omerbekinn@gmail.com commit -q -F .git/RELEASE_MSG');
+run('git commit -q -F .git/RELEASE_MSG'); // kimlik deponun git ayarından (2026-11-14)
 run('git push');
 console.log(`\n> ${version} GitHub'a gönderildi (${out('git rev-parse --short HEAD')}). Pages birkaç dakikada güncellenir.`);

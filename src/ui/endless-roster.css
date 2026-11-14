@@ -1,0 +1,14 @@
+/* Endless "Choose your company": sağdaki kadro paneli (Ömer 2026-11-10, onaylı varyant A): portre karoları, sınıf rengi alt çizgi, "In team" işareti. */
+.er-abs { position: absolute; z-index: 7; transform-origin: 0 0; font-family: var(--font-body); color: #d9c8a2; user-select: none; }
+.er-ros { box-sizing: border-box; height: 100%; padding: 14px 18px 16px; background: linear-gradient(180deg, rgba(26, 19, 12, 0.9), rgba(10, 7, 5, 0.9)); border: 1px solid rgba(217, 178, 106, 0.4); }
+.er-ros .h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; font: 600 15px var(--font-display); letter-spacing: 0.2em; text-transform: uppercase; color: #f3d999; }
+.er-ros .h span { font: 500 17px var(--font-body); letter-spacing: 0.02em; color: #a8977a; text-transform: none; }
+.er-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.er-t { position: relative; cursor: grab; padding: 8px 6px 7px; text-align: center; background: rgba(10, 7, 5, 0.75); border: 1px solid rgba(217, 178, 106, 0.3); border-bottom: 3px solid var(--c); touch-action: none; }
+.er-t:hover { border-color: #f3d999; border-bottom-color: var(--c); background: rgba(40, 28, 16, 0.8); }
+.er-t img { display: block; width: 92px; height: 92px; margin: 0 auto; object-fit: cover; border: 1px solid rgba(217, 178, 106, 0.45); pointer-events: none; user-select: none; }
+.er-t .n { margin-top: 6px; font: 600 16px var(--font-display); letter-spacing: 0.05em; color: #f3d999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.er-t .r { font-size: 15px; color: #a8977a; }
+.er-t.on { opacity: 0.45; }
+.er-t.on::after { content: 'In team'; position: absolute; top: 10px; right: 10px; padding: 1px 8px; background: #e0702a; color: #1a1008; font: 700 12px var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.er-ghost { position: fixed; z-index: 950; width: 96px; height: 96px; object-fit: cover; border: 2px solid #f3d999; opacity: 0.9; pointer-events: none; transform: translate(-50%, -60%); }

@@ -1,5 +1,5 @@
 // Endless sürekli akış (Ömer 2026-10-10, open-questions madde 300): dalga başı "WAVE X" bandı ve yeni düşmanların girişi (tasarım kiti:
-// Cinzel 600 büyük harf + EB Garamond italik alt yazı, ince altın çizgiler, tek kor elmas). Süreler data/ui-motion.json > wave; Reduced motion:
+// Cinzel 600 büyük harf + EB Garamond düz alt yazı, ince altın çizgiler, tek kor elmas). Süreler data/ui-motion.json > wave; Reduced motion:
 // hareket yok (bant anında belirir / kaybolur) ama okunabilsin diye yine holdMs kadar ekranda kalır.
 import Phaser from 'phaser';
 import { MOTION, motion } from '../ui/motion';
@@ -28,7 +28,7 @@ export function showWaveBanner(scene: Phaser.Scene, title: string, sub?: string,
   const dia = elDiamond(scene, 7).setPosition(W / 2, CY - 74);
   const t = elText(scene, W / 2, CY + 2, title, 104, EL.ON, { em: 0.18 }).setOrigin(0.5);
   const parts: Phaser.GameObjects.GameObject[] = [band, lines, dia, t];
-  if (sub) parts.push(elBody(scene, W / 2, CY + 114, sub, 30, EL.NOTE, true).setOrigin(0.5));
+  if (sub) parts.push(elBody(scene, W / 2, CY + 114, sub, 30, EL.NOTE).setOrigin(0.5));
   root.add(parts);
   return new Promise((resolve) => {
     const done = () => {

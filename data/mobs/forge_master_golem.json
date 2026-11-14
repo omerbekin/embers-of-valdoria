@@ -1,7 +1,8 @@
 {
   "_not": "Harita 3 elit / boss kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim B (Tamirci usta). Furnace Core iki kat: 4 tur, tik gücü x2 (dokunuşun core alanı); Ömer 2026-11-01: kahraman tahtasına, aynı hücre + komşuları.",
   "id": "forge_master_golem",
-  "name": "Forge-Master Golem",
+  "name": "Forge-Master Golem",
+  "bloodless": true,
   "family": "bandits",
   "spriteId": "forge_master_golem",
   "spriteScale": 1.2,

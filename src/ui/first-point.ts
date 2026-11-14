@@ -151,7 +151,7 @@ export function createFirstPoint(h: FirstPointHost): FirstPointCoach {
     }
     if (key !== ribKey) {
       ribKey = key;
-      const take = st === 'suggest' || st === 'quiet' ? '<button type="button" class="el-btn fp-take" data-fp="take">Take it</button>' : '';
+      const take = st === 'suggest' || st === 'quiet' ? '<button type="button" class="el-btn sm fp-take" data-fp="take">Take it</button>' : '';
       const own = st === 'suggest' ? '<button type="button" class="el-link fp-own" data-fp="own">I will choose</button>' : '';
       rib.innerHTML = `${face()}<div class="fp-tx"><b class="fp-nm">${MENTOR.name}</b><span class="fp-line"></span></div><div class="fp-btns">${own}${take}</div>`;
       rib.querySelector('.fp-line')!.textContent = firstPointLine(st, a.text);

@@ -1,7 +1,8 @@
 {
   "_not": "Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok; bayrak kapalı. Seçim B (Cold order). Statlar eski yer tutucu Morvane Halberdier kopyası. Kendi idle çizimi; skill sanatı ödünç.",
   "id": "frozen_standard_bearer",
-  "name": "The Frozen Standard-Bearer",
+  "name": "The Frozen Standard-Bearer",
+  "bloodless": true,
   "family": "morvane_army",
   "spriteId": "frozen_standard_bearer",
   "spriteScale": 1.15,

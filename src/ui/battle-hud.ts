@@ -267,6 +267,9 @@ export const HUD_SKILL_SLOTS = 4;
 export const HUD_PLATE_W = 132;
 export const HUD_PLATE_W_PHONE = 146;
 export const HUD_PLATE_GAP = 8;
+/** Pasif sütunu genişliği (masaüstü / telefon): yuvarlak ikon + ince ayraç, skill plakalarının solunda. */
+export const HUD_PAS_W = 108;
+export const HUD_PAS_W_PHONE = 112;
 /** Dokunmatik uzun basma süresi (ms): alt soldaki karakter / düşman sayfası. */
 const OPEN_PRESS_MS = 450;
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -861,6 +864,7 @@ export class BattleHud {
     // (fazladan skill'li birim) bölgeyi iki yana eşit büyütür.
     const phone = document.documentElement.classList.contains('short');
     const PW = phone ? HUD_PLATE_W_PHONE : HUD_PLATE_W; // plaka genişliği (pasif plakası da aynı: 4 skill'in hemen solunda)
+    const PAS_W = phone ? HUD_PAS_W_PHONE : HUD_PAS_W; // pasif dar, ayrı sütun
     const PG = HUD_PLATE_GAP;
     const slots = Math.max(HUD_SKILL_SLOTS, this.model.skills.length);
     const SKW = slots * PW + (slots - 1) * PG;
@@ -886,7 +890,7 @@ export class BattleHud {
       let over = rightOf(sx0) + need + EDGE - W;
       if (over > 0) {
         const actorR = this.actorBox.offsetLeft + this.actorBox.offsetWidth;
-        const room = Math.max(0, sx0 - (PW + PG) - (actorR + 20)); // pasif plakası skill'lerin solunda
+        const room = Math.max(0, sx0 - (PAS_W + PG) - (actorR + 20)); // pasif plakası skill'lerin solunda
         if (hasValor && over > room) {
           tight = true;
           this.valorBox.classList.add('tight');
@@ -898,8 +902,8 @@ export class BattleHud {
     }
     this.rightSlot.classList.toggle('stacked', tight);
     this.skillBox.style.left = `${sx}px`;
-    this.pasBox.style.left = `${sx - (PW + PG)}px`;
-    this.pasBox.style.width = `${PW}px`;
+    this.pasBox.style.left = `${sx - (PAS_W + PG)}px`;
+    this.pasBox.style.width = `${PAS_W}px`;
     const gx = sx + SKW + gSk;
     this.globBox.style.left = `${gx}px`;
     // Valor mangalları global sütunun hemen sağında (yalnızca sefer / Endless); sağ alan onlardan sonra başlar
@@ -1256,25 +1260,28 @@ export class BattleHud {
       this.clearAboveStats();
       return false;
     }
+    // HUD biriminde (root yerel düzlemi; döndürülmüş sahnede de doğru: rectToLocal, ortak ipucu yerleşimiyle aynı çeviri)
     const rr = this.root.getBoundingClientRect();
-    const k = rr.width / this.root.offsetWidth || 1; // gerçek px / HUD birimi
+    const rot = document.documentElement.classList.contains('rotated');
+    const ow = this.root.offsetWidth;
+    const k = (rot ? rr.bottom - rr.top : rr.width) / ow || 1; // gerçek px / HUD birimi
+    const loc = (e: Element) => rectToLocal(e.getBoundingClientRect(), rr, ow, rot);
     let panelTop = Infinity;
     for (const s of sides) {
       const p = this.cardStats[s];
-      panelTop = Math.min(panelTop, (p.querySelector('.bt') ?? p).getBoundingClientRect().top);
+      panelTop = Math.min(panelTop, loc(p.querySelector('.bt') ?? p).y);
     }
     // şeridin sağ sınırı: sıra çubuğu ya da "your turn" yazısı (hangisi daha soldaysa) - 6 px
-    let right = rr.right;
+    let right = ow;
     for (const e of [this.turn, this.turnLbl]) {
-      const r = e.getBoundingClientRect();
-      if (r.width > 0) right = Math.min(right, r.left);
+      const r = loc(e);
+      if (r.w > 0) right = Math.min(right, r.x);
     }
-    const u = (px: number) => (px - rr.top) / k;
     tip.classList.add('above-stats');
     const place = ctipAboveStatsPlace({
-      panelTop: u(panelTop),
+      panelTop,
       stripL: 8 / k,
-      stripR: (right - rr.left - 6) / k,
+      stripR: right - 6 / k,
       minTop: 2 / k,
       gap: 4 / k,
       maxW: 1100,

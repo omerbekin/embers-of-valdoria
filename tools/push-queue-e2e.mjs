@@ -918,10 +918,10 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
     W.run(['coordinator', A]);
     const q = W.q(); q.notices = ['deneme raporu']; writeFileSync(join(W.game, '.git', 'push-queue.json'), JSON.stringify(q));
     const b1 = W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out;
-    has(b1, 'KOORDİNATÖR DÜZENİ'); hasNot(b1, 'deneme raporu');
-    hasNot(W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out, 'KOORDİNATÖR DÜZENİ');
+    has(b1, 'LEAD DÜZENİ'); hasNot(b1, 'deneme raporu');
+    hasNot(W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out, 'LEAD DÜZENİ');
     const a1 = W.hook('hook-prompt', { session_id: A, prompt: 'y' }).out;
-    has(a1, 'Sen Koordinatörsün'); has(a1, 'deneme raporu');
+    has(a1, "Sen Lead'sin"); has(a1, 'deneme raporu');
     W.run(['coordinator', 'off']);
     ok(!W.q().coordinator, 'kaldırıldı');
   },

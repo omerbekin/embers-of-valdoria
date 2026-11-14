@@ -69,7 +69,7 @@ export function showHandoverToast(root: HTMLElement, data: HandoverToastData, on
   }
 
   const foot = el('div', 'gr-foot');
-  const equip = el('button', 'gr-btn primary');
+  const equip = el('button', 'el-btn primary');
   equip.type = 'button';
   equip.title = 'Opens Gear';
   if (hasUiImage('gear')) {

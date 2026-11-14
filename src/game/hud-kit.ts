@@ -1,3 +1,4 @@
+import { NUM_FONT } from '../ui/menu-style';
 import { textRes } from './stage-view';
 import Phaser from 'phaser';
 import { EL, diamondPts, elText, fadeLine, hGradient, vGradient } from './elegant-ui';
@@ -9,7 +10,7 @@ import { EL, diamondPts, elText, fadeLine, hGradient, vGradient } from './elegan
  */
 
 /** Rakamlı küçük yazılar (stat satırları, can / MP): düz rakamlı serif (Cinzel'in rakamları küçük boyda zor okunur). */
-export const HUD_NUM_FONT = "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif";
+export const HUD_NUM_FONT = NUM_FONT;
 
 export type PlateState = 'idle' | 'hot' | 'chosen';
 

@@ -1,0 +1,139 @@
+/* Düğüm kartının içi ve çerçevesi (Tur 14 kararı: Herald H2 Banner + düz Lv + H1 defne elit / görkemli başak boss; src/ui/node-card.ts).
+   Kart konumu / ok ucu / X start-battle.css'te. Ölçü oyun birimiyle calc(N * var(--u)); telefon (html.short) px. Arayüzde italik yok. */
+.sbc-card.nc {
+  --fb: max(calc(12px * var(--tx, 1)), calc(20 * var(--u) * var(--tx, 1)));
+  --fs: max(calc(11px * var(--tx, 1)), calc(17 * var(--u) * var(--tx, 1)));
+  --ink: #d9c8a2; --ink2: #a8977a; --acc: #e6c27a;
+  /* madalyonun iki yanındaki Lv / Company arasında kalan orta sütun (çerçeve süsü genişledikçe açılır) */
+  --lvmid: max(84px, calc(150 * var(--u)));
+  width: max(min(calc(100% - 20px), 350px), calc(580 * var(--u)));
+  gap: max(6px, calc(12 * var(--u)));
+  align-items: center; text-align: center;
+  --pt: max(34px, calc(64 * var(--u)));
+  padding: var(--pt) max(14px, calc(30 * var(--u))) max(12px, calc(24 * var(--u)));
+  background: radial-gradient(ellipse at 50% 0, rgba(217, 178, 106, 0.12), transparent 60%), linear-gradient(180deg, #24180e, #110c07);
+  box-shadow: inset 0 0 0 max(3px, calc(6 * var(--u))) #120c08, inset 0 0 0 max(4px, calc(7 * var(--u))) rgba(217, 178, 106, 0.32), 0 0 0 3px rgba(8, 6, 4, 0.7), 0 calc(18 * var(--u)) calc(40 * var(--u)) rgba(0, 0, 0, 0.6);
+}
+.sbc-card.nc p { margin: 0; }
+.sbc-card.nc [data-tip] { position: relative; outline: none; cursor: default; }
+.nc .sbc-face { box-shadow: none; }
+
+/* madalyon (üst kenarı kırar) ve ad satırı (iki yanı çizgili) */
+.nc .nc-medal { position: absolute; left: 50%; top: calc(-1 * max(26px, calc(48 * var(--u)))); transform: translateX(-50%); z-index: 4; width: max(56px, calc(100 * var(--u))); height: max(56px, calc(100 * var(--u))); border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #3a2a1a, #120c08 70%); border: 2px solid var(--g-gold); box-shadow: 0 0 0 4px #120c08, 0 0 0 5px rgba(217, 178, 106, 0.5), 0 calc(8 * var(--u)) calc(18 * var(--u)) rgba(0, 0, 0, 0.7); }
+.nc .nc-medal img { width: 66%; height: 66%; object-fit: contain; }
+.nc .nc-head { display: flex; align-items: center; width: 100%; justify-content: center; gap: max(8px, calc(14 * var(--u))); }
+.nc .nc-head .rl { flex: 1 1 0; min-width: max(16px, calc(30 * var(--u))); height: 1px; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.7)); position: relative; }
+.nc .nc-head .rl.r { background: linear-gradient(270deg, transparent, rgba(217, 178, 106, 0.7)); }
+.nc .nc-head .rl::after { content: ''; position: absolute; right: -4px; top: -3px; width: 6px; height: 6px; transform: rotate(45deg); border: 1px solid var(--g-gold); background: #120c08; }
+.nc .nc-head .rl.r::after { right: auto; left: -4px; }
+.nc .sbc-t { flex: none; max-width: 80%; text-align: center; }
+
+/* Lv: kartın üst kenarı ile ad satırı arasındaki boşlukta dikeyde ortalı (Ömer 2026-11-14). Madalyonun solunda "Lv N", sağında "Company X.X"; eski kartın düz yazısı (aynı font / boy / renk, çerçeve yok). Zorluk rengi Company'de (satır içi). */
+.nc .nc-lv { position: absolute; left: 0; right: 0; top: 0; height: var(--pt); display: grid; grid-template-columns: 1fr var(--lvmid) 1fr; align-items: baseline; align-content: center; z-index: 4; pointer-events: none; white-space: nowrap; }
+.nc .nc-lv .l { grid-column: 1; justify-self: end; font: 600 max(calc(14px * var(--tx, 1)), calc(24 * var(--u) * var(--tx, 1)))/1.2 var(--g-disp); letter-spacing: 0.08em; color: var(--g-gold); }
+.nc .nc-lv .r { grid-column: 3; justify-self: start; font: 600 max(calc(9px * var(--tx, 1)), calc(13 * var(--u) * var(--tx, 1)))/1.2 var(--g-disp); letter-spacing: 0.1em; color: var(--g-dim); cursor: default; pointer-events: auto; }
+
+/* metinler */
+.nc .nc-lore { font: 400 var(--fb) var(--g-body); color: var(--ink); line-height: 1.28; max-width: 92%; }
+.nc .nc-sub { font: var(--fb) var(--g-body); color: var(--g-ember2); line-height: 1.2; }
+.nc .nc-hidden, .nc .nc-known, .nc .nc-side, .nc .nc-chain, .nc .nc-first, .nc .nc-rule, .nc .nc-news, .nc .nc-lock, .nc .nc-tags, .nc .nc-company { font: 400 var(--fs) var(--g-body); color: var(--ink2); line-height: 1.25; }
+.nc .nc-side { color: #f0a070; }
+.nc .nc-first { color: var(--ink); }
+.nc .nc-lock { color: #f0a070; }
+.nc .nc-tags { font-family: var(--g-disp); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--acc); }
+.nc .nc-company { color: var(--ink); }
+.nc .nc-company b { font: 600 var(--fs) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: #cfe0ee; margin-right: 0.3em; }
+.nc .nc-news { color: #ffd9a0; display: flex; align-items: center; justify-content: center; gap: 0.5em; }
+.nc .nc-news::before { content: ''; flex: none; width: 0.4em; height: 0.4em; transform: rotate(45deg); background: var(--g-ember); }
+.nc .nc-foot { display: flex; width: 100%; justify-content: center; align-items: center; }
+.nc .nc-foot .sbc-acts .el-btn { min-width: calc(var(--btn-dlg-w) * 1.05); }
+.nc .sbc-note { text-align: center; }
+
+/* tür parçaları */
+.nc .nc-kind { justify-content: center; }
+.nc .nc-town, .nc .nc-camp { align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: max(4px, calc(8 * var(--u))); }
+.nc .nc-merchant, .nc .nc-chest, .nc .nc-shrine, .nc .nc-dive, .nc .nc-omen { display: flex; flex-direction: column; align-items: center; text-align: center; gap: max(4px, calc(8 * var(--u))); }
+.nc .nc-merchant p, .nc .nc-chest p { font: 400 var(--fb) var(--g-body); color: var(--ink); }
+.nc .nc-omen p { font: 400 var(--fs) var(--g-body); color: var(--ink2); }
+.nc .nc-sigil { position: relative; flex: none; width: max(52px, calc(104 * var(--u))); height: max(52px, calc(104 * var(--u))); display: grid; place-items: center; }
+.nc .nc-sigil .halo { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(255, 227, 160, 0.42) 0, rgba(255, 190, 90, 0.16) 45%, transparent 70%); animation: nc-glow 2.4s ease-in-out infinite alternate; }
+.nc .nc-sigil img { position: relative; width: 62%; height: 62%; object-fit: contain; filter: drop-shadow(0 0 calc(8 * var(--u)) rgba(255, 220, 140, 0.8)); }
+@keyframes nc-glow { from { opacity: 0.55; transform: scale(0.94); } to { opacity: 1; transform: scale(1.04); } }
+html.reduced-motion .nc .nc-sigil .halo { animation: none; }
+.nc .nc-shrine.earned .nc-sigil { opacity: 0.55; filter: grayscale(0.5); }
+.nc .nc-trial { font: 400 var(--fs) var(--g-body); color: var(--ink); line-height: 1.25; }
+.nc .nc-trial b { font: 600 var(--fs) var(--g-disp); letter-spacing: 0.04em; color: var(--acc); margin-right: 0.3em; }
+.nc .nc-trial .dim { color: var(--ink2); }
+.nc .nc-descent { position: relative; flex: none; display: flex; flex-direction: column; gap: max(3px, calc(6 * var(--u))); padding-left: max(4px, calc(8 * var(--u))); border-left: 1px solid rgba(143, 180, 220, 0.45); }
+.nc .nc-descent .dp { display: block; width: calc(max(30px, calc(60 * var(--u))) + var(--i) * max(12px, calc(26 * var(--u)))); height: max(6px, calc(12 * var(--u))); background: linear-gradient(90deg, rgba(120, 170, 220, 0.55), rgba(20, 40, 70, 0.1)); }
+.nc .nc-descent .dp.now { background: linear-gradient(90deg, #ffb35a, rgba(224, 112, 42, 0.15)); box-shadow: 0 0 calc(10 * var(--u)) rgba(240, 140, 40, 0.6); }
+.nc .nc-descent .dp.done { opacity: 0.4; }
+.nc .nc-dive .nc-rule { color: var(--ink); }
+/* ulaşılamayan: kart sisli ve sönük; yalnız not */
+.sbc-card.nc.veil > :not(.nc-crest):not(.sbc-notch) { filter: saturate(0.45) brightness(0.82); }
+
+/* eşit hücreler: düşmanlar, kamp eylemleri, kasaba yerleri (tek yatay hiza; önder büyüyüp sırayı bozmaz) */
+.nc .nc-cells { --cw: max(70px, calc(150 * var(--u))); --ic: max(34px, calc(66 * var(--u))); --gap: max(4px, calc(8 * var(--u))); display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, min(var(--cw), calc((100% - (var(--n, 4) - 1) * var(--gap)) / var(--n, 4))))); justify-content: center; align-items: start; column-gap: var(--gap); width: 100%; }
+/* kalabalık sıra (5+ grup): adlar biraz küçülür, kelime ortasından bölünmez */
+.nc .nc-cells[style*="--n: 5"] .nm, .nc .nc-cells[style*="--n: 6"] .nm, .nc .nc-cells[style*="--n: 7"] .nm { font-size: max(calc(9px * var(--tx, 1)), calc(13 * var(--u) * var(--tx, 1))); }
+.nc .nc-cell { display: flex; flex-direction: column; align-items: center; gap: max(3px, calc(6 * var(--u))); min-width: 0; outline: none; }
+.nc .nc-cell .ic { display: grid; place-items: center; width: var(--ic); height: var(--ic); }
+.nc .nc-cell .ic img { width: 86%; height: 86%; object-fit: contain; }
+.nc .nc-cell .sbc-face { width: var(--ic); height: var(--ic); border-radius: 50%; overflow: hidden; border: 2px solid var(--g-line2); box-shadow: 0 0 0 3px #120c08, 0 0 0 4px rgba(217, 178, 106, 0.3); }
+.nc .nc-cell.elite .sbc-face { border-color: var(--g-ember); }
+.nc .nc-cell.boss .sbc-face { border-color: var(--g-gold); }
+.nc .nc-cell .nm { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; width: 100%; min-height: 2.2em; font: 600 max(calc(10px * var(--tx, 1)), calc(15 * var(--u) * var(--tx, 1))) var(--g-disp); letter-spacing: 0; line-height: 1.1; color: var(--ink); text-align: center; overflow-wrap: normal; word-break: normal; hyphens: none; }
+.nc .nc-cell .nm em { font-style: normal; color: var(--acc); }
+.nc .nc-cell.elite .nm { color: var(--g-ember2); }
+.nc .nc-cell.boss .nm { color: var(--g-gold); }
+.nc .nc-cell.nc-foe { cursor: default; }
+.nc .nc-cell.nc-foe:focus-visible .sbc-face, .nc .nc-cell.nc-foe:hover .sbc-face { box-shadow: 0 0 0 3px #120c08, 0 0 0 4px rgba(255, 210, 140, 0.8); }
+.nc .places { --ic: max(26px, calc(46 * var(--u))); }
+.nc .acts { --ic: max(28px, calc(52 * var(--u))); }
+/* elit / boss önderi tek büyük madalyon ortada; known iken diğerleri altında küçük sıra */
+.nc .nc-foes-lead { display: flex; flex-direction: column; align-items: center; gap: max(4px, calc(8 * var(--u))); width: 100%; }
+.nc .nc-cells.lead { --cw: max(110px, calc(220 * var(--u))); --ic: max(52px, calc(104 * var(--u))); }
+.nc .nc-cells.lead .nm { min-height: 0; font-size: var(--fb); }
+.nc .nc-cells.small { --cw: max(70px, calc(140 * var(--u))); --ic: max(28px, calc(52 * var(--u))); }
+
+/* tüccar portresi, olay / hazine sahnesi (madalyondaki ikon tekrar edilmez) */
+.nc .nc-por { display: block; width: max(54px, calc(104 * var(--u))); height: max(54px, calc(104 * var(--u))); border-radius: 50%; overflow: hidden; border: 2px solid var(--g-gold); box-shadow: 0 0 0 3px #120c08, 0 0 0 4px rgba(217, 178, 106, 0.35); background: #1a120b; }
+.nc .nc-por img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.nc .nc-vista { position: relative; flex: none; width: 100%; height: max(64px, calc(120 * var(--u))); border-radius: max(3px, calc(6 * var(--u))); background: radial-gradient(ellipse at 50% 40%, #3a2a1a, #120c08) center / cover no-repeat; background-size: cover; border: 1px solid rgba(217, 178, 106, 0.55); box-shadow: 0 0 0 3px #120c08, 0 0 0 4px rgba(217, 178, 106, 0.25), inset 0 0 calc(24 * var(--u)) rgba(0, 0, 0, 0.7); }
+.nc .nc-vista .q { position: absolute; right: 4%; bottom: 6%; font: 600 max(calc(20px * var(--tx, 1)), calc(44 * var(--u) * var(--tx, 1))) var(--g-disp); font-style: normal; color: #e0d0ff; text-shadow: 0 0 calc(12 * var(--u)) rgba(160, 130, 230, 0.95), 0 1px 3px #000; }
+.nc .nc-chest.open .nc-vista { filter: saturate(0.85); }
+
+/* ---- elit / boss çerçevesi: madalyonu saran defne (elit, H1) / yalnız kızıl defne (boss); ad satırı süsün altında başlar ---- */
+.nc-crest { position: absolute; left: 50%; transform: translateX(-50%); display: block; pointer-events: none; z-index: 5; font-style: normal; }
+.nc-crest svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.sbc-card.nc.t-elite { --lvmid: max(150px, calc(196 * var(--u))); --pt: max(40px, calc(80 * var(--u))); padding-top: var(--pt); border-color: var(--g-ember); }
+.sbc-card.nc.t-elite .nc-medal { border-color: var(--g-ember2); box-shadow: 0 0 0 4px #120c08, 0 0 0 5px rgba(255, 179, 90, 0.6), 0 0 calc(20 * var(--u)) rgba(240, 140, 40, 0.5); }
+.nc .nc-crest.elite { top: calc(-1 * max(46px, calc(82 * var(--u)))); width: max(94px, calc(168 * var(--u))); height: max(94px, calc(168 * var(--u))); }
+.sbc-card.nc.t-boss { --lvmid: max(190px, calc(256 * var(--u))); --pt: max(60px, calc(116 * var(--u))); padding-top: var(--pt); border-color: #b8322a; background: radial-gradient(ellipse at 50% 0, rgba(184, 50, 31, 0.28), transparent 60%), linear-gradient(180deg, #24120c, #110907); }
+.sbc-card.nc.t-boss .nc-medal { border-color: #f3d999; box-shadow: 0 0 0 4px #3a0d08, 0 0 0 6px rgba(230, 194, 122, 0.7); }
+.nc .nc-crest.boss { top: calc(-1 * max(60px, calc(108 * var(--u)))); width: max(124px, calc(220 * var(--u))); height: max(124px, calc(220 * var(--u))); }
+
+/* ---- telefon (844x390, html.short): kart sahneye sığsın ---- */
+html.short .sbc-card.nc { --fb: calc(12px * var(--tx, 1)); --fs: calc(11px * var(--tx, 1)); --lvmid: 66px; width: min(calc(100% - 20px), 460px); --pt: 30px; padding: var(--pt) 14px 8px; gap: 4px; }
+html.short .sbc-card.nc .sbc-t { font-size: calc(15px * var(--tx, 1)); }
+html.short .nc .nc-lore { -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+html.short .nc .nc-medal { width: 46px; height: 46px; top: -22px; }
+html.short .nc .nc-lv .l { font-size: calc(13px * var(--tx, 1)); }
+html.short .nc .nc-lv .r { font-size: calc(9px * var(--tx, 1)); letter-spacing: 0.06em; }
+html.short .nc .nc-cells { --cw: 96px; --ic: 30px; --gap: 4px; }
+html.short .nc .places { --ic: 22px; }
+html.short .nc .acts { --ic: 24px; }
+html.short .nc .nc-cell .nm { font-size: 9px; }
+html.short .nc .nc-cells.lead { --cw: 140px; --ic: 44px; }
+html.short .nc .nc-cells.small { --cw: 96px; --ic: 26px; }
+html.short .nc .nc-merchant, html.short .nc .nc-chest, html.short .nc .nc-shrine, html.short .nc .nc-dive, html.short .nc .nc-omen { flex-direction: row; text-align: left; }
+html.short .nc .nc-por { width: 44px; height: 44px; }
+html.short .nc .nc-sigil { width: 44px; height: 44px; }
+html.short .nc .nc-vista { width: 160px; height: 58px; }
+html.short .nc .nc-vista .q { font-size: 18px; }
+html.short .nc .nc-descent .dp { width: calc(26px + var(--i) * 10px); height: 5px; }
+html.short .sbc-card.nc.t-elite { --lvmid: 86px; --pt: 38px; padding-top: var(--pt); }
+html.short .nc .nc-crest.elite { top: -39px; width: 80px; height: 80px; }
+html.short .sbc-card.nc.t-boss { --lvmid: 108px; --pt: 52px; padding-top: var(--pt); }
+html.short .nc .nc-crest.boss { top: -51px; width: 104px; height: 104px; }
+

@@ -35,9 +35,9 @@ const BOSS: Teams['units'] = { enemies: { 1: { tier: 'boss' } } };
 const ELITE: Teams['units'] = { enemies: { 1: { tier: 'elite' } } };
 
 describe('CC bağışıklığı: veri', () => {
-  it('CC listesi statuses.json > cc: Stun, Slow, Silence; Wound/Omen/Wither/Blinded/Jinxed/Overextended/Staggered CC değil', () => {
+  it('CC listesi statuses.json > cc: Stun, Frozen, Silence; Slow/Wound/Omen/Wither/Blinded/Jinxed/Overextended/Staggered CC değil', () => {
     const cc = Object.entries(content.statuses).filter(([, d]) => d.cc).map(([id]) => id).sort();
-    expect(cc).toEqual(['chilled', 'frozen', 'silence', 'slow', 'stun']); // Chilled (Ömer 2026-10-29) Slow gibi CC; Frozen (2026-10-31) Stun gibi
+    expect(cc).toEqual(['electrocuted', 'frozen', 'silence', 'stun']); // Electrocuted (Ömer 2026-11-09): Stun'ın suda yerini alır, aynı CC kuralı // Slow da 2026-11-09 (form 3) CC değil // Frozen (2026-10-31) Stun gibi; Chilled 2026-11-09'dan beri CC DEĞİL (boss %25, elit %50 güç)
     for (const id of ['wound', 'omen', 'wither', 'blinded', 'jinxed', 'overextended', 'staggered', 'ash_brand']) expect(content.statuses[id]!.cc).toBeUndefined();
     expect(IMM.tiers).toEqual(['boss']); // elitler bağışık değil
     expect(IMM.taunt).toBe(true);
@@ -68,14 +68,14 @@ describe('CC bağışıklığı: motor', () => {
     });
   }
 
-  it('boss Slow ve Silence (madde 272: Blinded, Jinxed da) yemez; Wound, Omen, Wither, Overextended uygulanır', () => {
+  it('boss Stun ve Silence yemez; Slow, Blinded, Jinxed (Ömer onaylı 2026-11-09 form 3), Wound, Omen, Wither, Overextended uygulanır', () => {
     const b = grid({ 0: 'warrior' }, { 1: 'defender' }, { units: BOSS });
     const e = at(b, 'enemy', 1);
-    for (const k of ['slow', 'silence', 'stun', 'blinded', 'jinxed']) {
+    for (const k of ['silence', 'stun']) {
       b.debugAddStatus(e.uid, k, 2);
       expect(has(b, e.uid, k)).toBe(false);
     }
-    for (const k of ['wound', 'wither', 'overextended']) {
+    for (const k of ['slow', 'blinded', 'jinxed', 'wound', 'wither', 'overextended']) {
       b.debugAddStatus(e.uid, k, 2);
       expect(has(b, e.uid, k)).toBe(true);
     }

@@ -72,10 +72,6 @@
   padding: 0;
 }
 
-.ho-ov .gr-btn {
-  min-height: 44px;
-}
-
 .ho-gear-ico {
   width: max(18px, calc(26 * var(--u)));
   height: max(18px, calc(26 * var(--u)));

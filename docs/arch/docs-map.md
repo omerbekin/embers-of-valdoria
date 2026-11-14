@@ -11,6 +11,7 @@ Kural: bir konunun TEK sahibi vardır; başka yerde kopyalama, bağlantı ver. K
 | ui-global-rules.md | UI kuralının TEK sahibi: tasarım kiti, Back/Menu hiza, zemin dokunma, sürükle-bırak, üç ekran boyutu (ui-and-stage, src/ui/CLAUDE.md, ui-ux.md yalnız bağlantı verir) |
 | project-layout.md | klasör yapısı |
 | lead.md | Lead düzeni: yetki, kurallar, agent brief |
+| lead-open.md | Lead'in açık iş listesi: dal durumu, bekleyen formlar, Ömer'e sorulacaklar, alan başına tek satır (ayrıntı alan belgesinde; hafızadaki lead-handoff'tan taşındı 2026-11-13) |
 | areas/push-queue.md | gönderim akışının TEK sahibi: "GitHub'a at / canlıya al", kuyruk komutları, sürüm notu, worktree modu, kuyruk sağlamlığı |
 | `~/.claude/projects/C--Users-Omer-Projects-embers-of-valdoria/memory/archive/2026-11-08/` (depoda DEĞİL, yerel) | Lead hafızasından taşınan/birleştirilen dosyaların değiştirilmemiş kopyaları (yalnız geçmiş; güncel karar alan belgesinde) |
 | battle-engine.md | motor mekaniği + Değişiklik reçetesi (skill/status/formül/YZ verisi); oyun kuralı combat.md'de |

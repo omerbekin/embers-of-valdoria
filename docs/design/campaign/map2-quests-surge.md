@@ -4,7 +4,7 @@
 ## Personal Quests (A5)
 - Görev, o sınıftan bir kahraman kadroda (yedek dahil) varken görünür: cep düğümü (`MapNode.quest`) ya da var olan olayın seçeneği (`EventChoice.quest`). Bitince kahramana unvan + seferlik bonus (`Hero.quests`); bonus sınıf pasifinin var olan bir sayısına eklenir (`passive.field += passive.add`). Kod `src/campaign/quests.ts`; test `tests/campaign-quests.test.ts`.
 - Harita 2 görevleri (sayılar `quests.json`): Paladin dr56 (Brann's Bell), Undead dr90 (The Name Beneath the Water), Archer dr91 (The Gull Cliffs Shoot), Cutthroat dr92 (An Old Debt in Saltmere), Gambler dr93 (The Corsairs' Table). Hexer görevi Harita 3'e ayrıldı.
-- Not: Skald ve Vesper (13 sınıflık havuza sonradan girdi) için kişisel görev tanımlı değil; kasıtlı mı Lead'e sorulacak.
+- **Karar:** Skald ve Vesper Harita 2'de kişisel görevsiz kalır, kasıtlı (Ömer 2026-11-09, büyük form).
 
 ## Crown Surge ve Ashen Taint (C1)
 - Takım yeteneği, savaş HUD'ında taç plakası; kullanan kahramanın eylemi harcanır (`data/global-skills.json > ash_surge / salt_surge`, motor `battle.ts > callSurge`, kod `src/campaign/surge.ts`).

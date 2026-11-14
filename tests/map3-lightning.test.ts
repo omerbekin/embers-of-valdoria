@@ -61,7 +61,8 @@ describe('A1 Shocked', () => {
     expect(ev && ev.type === 'shock' && ev.pushed).toBe(Math.round(threshold * T.pushback));
   });
 
-  it.each(MODES)('Flooded hücrede itilmez, Stun yer (%s)', (mode) => {
+  // Ömer 2026-11-09 (ikinci element formu A): suda / Soaked iken şimşek Stun yerine formulas.thunder.wetInto (Electrocuted) verir
+  it.each(MODES)('Flooded hücrede itilmez, Electrocuted (wetInto) yer (%s)', (mode) => {
     const b = make(undefined, P, E, mode);
     const hero = at(b, 'party', 0);
     b.debugPlaceGround(tester(b).uid, 'flooded', 'party', [0], 9, 0);
@@ -69,17 +70,17 @@ describe('A1 Shocked', () => {
     b.useSkill(tester(b).uid, 'storm_test_bolt', hero.uid);
     const ev = b.log.find((e) => e.type === 'shock');
     expect(ev && ev.type === 'shock' && ev.pushed).toBe(0);
-    expect(hero.statuses.some((s) => s.kind === 'stun')).toBe(true);
+    expect(hero.statuses.some((s) => s.kind === (T.wetInto ?? 'stun'))).toBe(true);
     expect(hero.statuses.some((s) => s.kind === T.badge)).toBe(false);
   });
 
-  it.each(MODES)('Soaked (suda değil) da Stun yer (%s)', (mode) => {
+  it.each(MODES)('Soaked (suda değil) da Electrocuted (wetInto) yer (%s)', (mode) => {
     const b = make(undefined, P, E, mode);
     const hero = at(b, 'party', 0);
     b.debugAddStatus(hero.uid, T.wetStatus, 3);
     turnOf(b, tester(b).uid);
     b.useSkill(tester(b).uid, 'storm_test_bolt', hero.uid);
-    expect(hero.statuses.some((s) => s.kind === 'stun')).toBe(true);
+    expect(hero.statuses.some((s) => s.kind === (T.wetInto ?? 'stun'))).toBe(true);
   });
 
   it('shocks alanı yoksa itmez; ıskada itmez', () => {
@@ -398,7 +399,7 @@ describe('metin, önizleme, Codex, debug', () => {
     b.debugPlaceGround(tester(b).uid, 'flooded', 'party', [0, 1], 9, 0);
     const list = previewSkill(b, tester(b).uid, 'storm_test_bolt', at(b, 'party', 0).uid);
     const lines = (uid: string) => list.find((p) => p.uid === uid)?.statuses ?? [];
-    expect(lines(at(b, 'party', 0).uid).some((l) => l.startsWith('Shocked: Stun'))).toBe(true);
+    expect(lines(at(b, 'party', 0).uid).some((l) => l.startsWith(T.wetInto ? `${content.statuses[T.wetInto]!.name}:` : 'Shocked: Stun'))).toBe(true);
     expect(lines(at(b, 'party', 1).uid).some((l) => l.startsWith('Live Water'))).toBe(true);
     expect(b.groundReactionPreview(tester(b).uid, 'storm_test_bolt', undefined, undefined, at(b, 'party', 0).uid).some((r) => r.label === 'Live Water')).toBe(true);
   });

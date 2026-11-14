@@ -20,7 +20,7 @@ Yalnız yeni seferlerde (kayıtta `soloStart: true`); eski kayıt eski yapıda s
 - **Garrick'in cümlesi:** her açılışta bir kart (`tutorial.json > skillUnlocks`), skill başına bir kez, kayıt anahtarı `unlock:<skill>`, ders tavanına girmez. O kararın durum dersi sıradaki karara kalır, seçim dersi aynı kararda çıkabilir. Mill Road'un eski "Stronger Skills" adımı (`f_mp_skill`) kilitli skill'i seçmediği için kendiliğinden düşer.
 - **C1 "It Can Miss":** temel saldırı dışındaki hasar skill'i ilk seçilince çıkar, tavandan muaf; kart açılınca hedeflerin isabet yüzdesi `hitPulseMs` boyunca üstlerinde büyür.
 - **Zorluk:** Ravenwood ve Watchtower'da mob sayısı neredeyse aynı (`ravenwood_solo`, `watchtower_solo`), can ve hasar çarpanla düşük, Bandit Chief'in Taunt'u durur. Mill Road kaybedilemez, diğer ikisi kaybedilebilir. Ashford - King's Bridge düğümlerinde takım boyuna göre çarpan (`soloStart.enemyScale`).
-- **Metin:** Mill Road açılışı sınıfa göre cümle alır (`opening.classLine`); Ashford'da "Your Company" (`company_solo`) ve bölük kurulunca "Garrick's Charge" (`texts.garrickCharge`, adım `briefing`). Metinler Ömer onayı bekliyor.
+- **Metin:** Mill Road açılışı sınıfa göre cümle alır (`opening.classLine`); Ashford'da "Your Company" (`company_solo`) ve bölük kurulunca "Garrick's Charge" (`texts.garrickCharge`, adım `briefing`). Metinler Ömer onaylı (Ömer 2026-11-09, büyük form); `opening.classLine` Skald dahil dört başlangıç sınıfında tamam.
 
 ## Akış
 | Yer | Ders | Ne zaman |

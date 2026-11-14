@@ -45,10 +45,10 @@
 
 .bb-dot {
   position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 7px;
-  height: 7px;
+  top: 0.47em;
+  right: 0.47em;
+  width: 0.47em;
+  height: 0.47em;
   background: var(--hot, #e0702a);
   transform: rotate(45deg);
   box-shadow: 0 0 6px rgba(224, 112, 42, 0.7);
@@ -90,7 +90,7 @@
   border-bottom: 1px solid var(--g-line);
   color: var(--g-text);
   text-align: left;
-  font: 600 max(12px, calc(16 * var(--u))) var(--g-disp);
+  font: 600 max(calc(12px * var(--tx, 1)), calc(16 * var(--u) * var(--tx, 1))) var(--g-disp);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;

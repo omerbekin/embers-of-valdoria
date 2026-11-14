@@ -27,7 +27,7 @@ HEADS = {
     'treant':   (543, 105, 400),
     'undead':   (403, 30, 280),
     'warrior': (623, 0, 265),
-    'skald': (135, -6, 140),  # 2026-11-08: skald-v2 yeni idle1 (3/4 savaş duruşu) pozundan; eski kaynak skald-v2/_old-2026-11-08/idle1.png
+    'skald': (162, -4, 130),  # 2026-11-09: skald-v2 yandan idle1 (tur 3) pozundan; önceki (135, -6, 140) 3/4 idle1 içindi, eski kaynak skald-v2/_old-2026-11-08/idle1.png
     'cutthroat': (550, 0, 285),
     'hexer': (375, 0, 290),
     # King's Bridge boss (2026-10-08): yüz (pas ızgaralı taş baş) + göğüs çatlağı (kor) birlikte

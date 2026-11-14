@@ -8,7 +8,9 @@
 import { content } from '../engine';
 import { createHold } from './stat-hold';
 import { MOTION } from './motion';
-import { heroSkillIconUrl } from './evolve-icon';
+import { heroSkillIconUrl, heroSkillName } from './evolve-icon';
+import { heroSkillRowHtmlFrom, type SkData } from './hero-card-skills';
+import { rarityMark } from './rarity-mark';
 import type { EvolveSource } from '../progression/skill-tree-evolve';
 import { patchedPassive } from '../engine/stats';
 import { loadout } from '../progression/loadout';
@@ -28,6 +30,7 @@ import {
   heroPanel,
   heroStats,
   instanceColor,
+  instanceRarity,
   instanceBaseLines,
   instanceIlvl,
   affixLines,
@@ -56,6 +59,7 @@ import { itemIcon } from './inventory';
 import { woundChipEl, woundPipsEl, woundScarEl } from './wound-ui';
 import { woundHpFactor } from '../progression/wounds';
 import { slotIconUrl } from './slot-icons';
+import { playStatFx } from './reward-fx';
 import { escHtml, type SkillCostChip } from './skill-bar';
 import { tipHtml, type TipContent } from './battle-hud';
 import { iconUrl } from './dom-icons';
@@ -66,7 +70,7 @@ import { nextPointLinesFor, treePatchedSkill } from './skill-tree-preview';
 import { foldSkillRows } from './skill-tip-rule';
 import { skillCostAmount } from '../engine/cost';
 import type { SkillDef } from '../engine';
-import { attachBandTip } from './band-tip-attach';
+import { attachBandTip, positionTip } from './band-tip-attach';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -524,33 +528,56 @@ export function plateLabel(k: SlotId): HTMLElement {
 }
 
 /** Plakanın ikinci satırı: ana stat + iL + en çok 2 affix. */
-function plateL2(inst: ItemInstance, heroClass: string | undefined): HTMLElement {
+function plateL2(inst: ItemInstance, heroClass: string | undefined, ilInline = true): HTMLElement {
   const l2 = el('div', 'gp-l2');
   const main = plateMain(inst);
   if (main) l2.append(main);
-  const il = el('span', 'gp-il', 'iL ');
-  il.append(el('b', '', String(instanceIlvl(inst))));
-  l2.append(il);
+  if (ilInline) {
+    const il = el('span', 'gp-il', 'iL ');
+    il.append(el('b', '', String(instanceIlvl(inst))));
+    l2.append(il);
+  }
   for (const a of affixLines(inst, heroClass).slice(0, 2)) l2.append(el('span', 'gp-aff', a.text));
   return l2;
 }
 
 /**
- * Gear > Hero item plakası, yuva dışında kullanım için (tüccar malları / geri alım): AYNI DOM ve sınıflar (gear-plates.css).
+ * Item satırı plakası (Ömer 2026-11-11: Loot, ödül torbası, tüccar): Gear > Hero plakasının aynısı; alt satırda yalnızca item gücü + tabanın kendi örtük
+ * özelliği (ör. "Power 32  +8% Armor penetration", kalkanda "Block 18%"), Item Level (iL) plakanın SAĞINDA. Affix özeti yok (ipucunda).
  * Sürükle / ipucu / seçim bağları çağırana aittir (data-tip, data-drag); `extra` plakanın sağ kenarına eklenir (ör. fiyat).
  */
-export function itemPlate(inst: ItemInstance, heroClass: string | undefined, extra?: HTMLElement): HTMLButtonElement {
+export function itemPlate(inst: ItemInstance, heroClass: string | undefined, extra?: HTMLElement, rowMode = false): HTMLButtonElement {
   const d = itemDef(inst.id);
   const k = (d?.slot ?? 'weapon') as SlotId;
   const cell = el('button', `gr-slot gr-plate gr-slot-${k}`);
   cell.type = 'button';
   cell.style.setProperty('--rc', instanceColor(inst));
+  if (d) cell.append(rarityMark(instanceRarity(inst)));
   cell.dataset['item'] = inst.id;
   const ico = el('span', 'gp-ico');
   ico.append(itemIcon(inst, k, 1.3));
   const txt = el('div', 'gr-slot-text gp-tx');
-  txt.append(plateLabel(k), el('div', `gr-slot-name${(d ? d.name : inst.id).length >= 22 ? ' long' : ''}`, d ? d.name : inst.id), plateL2(inst, heroClass));
-  cell.append(ico, txt);
+  txt.append(plateLabel(k), el('div', `gr-slot-name${(d ? d.name : inst.id).length >= 22 ? ' long' : ''}`, d ? d.name : inst.id));
+  if (rowMode) {
+    const l2 = el('div', 'gp-l2');
+    const main = plateMain(inst);
+    if (main) l2.append(main);
+    const b = instanceBaseLines(inst);
+    if (b.implicit && (b.power !== undefined || b.block !== undefined)) {
+      const nat = el('span', 'gp-nat');
+      goldNumber(nat, b.implicit.text);
+      l2.append(nat);
+    }
+    txt.append(l2);
+    cell.classList.add('gp-rowmode');
+    cell.append(ico, txt);
+    const il = el('span', 'gp-ilr');
+    il.append('iL ', el('b', '', String(instanceIlvl(inst))));
+    cell.append(il);
+  } else {
+    txt.append(plateL2(inst, heroClass));
+    cell.append(ico, txt);
+  }
   if (extra) cell.append(extra);
   return cell;
 }
@@ -588,7 +615,7 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
       lockedCell.setAttribute('aria-disabled', 'true');
       lockedCell.setAttribute('aria-label', `${PLATE_LABEL[k] ?? k}: ${lockReason}`);
       lockedCell.style.setProperty('--rc', '#5b4a33');
-      lockedCell.dataset['band'] = JSON.stringify({ kind: 'Locked', title: PLATE_LABEL[k] ?? k, accent: '#9a8a6a', lines: [{ text: lockReason }], noKeywords: true });
+      // kilitli yuvada ipucu yok (Ömer 2026-11-12): sebep zaten yuvada yazıyor
       const lockIco = el('span', 'gp-ico');
       lockIco.append(emptySlotIcon(k));
       const lockTxt = el('div', 'gr-slot-text gp-tx');
@@ -600,6 +627,7 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     const cell = el('button', `gr-slot gr-plate${inst ? '' : ' empty'}${blocked ? ' blocked' : ''} gr-slot-${k}`);
     cell.type = 'button';
     cell.style.setProperty('--rc', inst && d ? instanceColor(inst) : '#5b4a33');
+    if (inst && d) cell.append(rarityMark(instanceRarity(inst)));
     const lbl = plateLabel(k);
     const txt = el('div', 'gr-slot-text gp-tx');
     const ico = el('span', 'gp-ico');
@@ -639,11 +667,16 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     ico.append(inst ? itemIcon(inst, k, 1.3) : emptySlotIcon(k));
     txt.append(lbl, el('div', 'gr-slot-name', d ? d.name : 'Empty'));
     if (d && inst) {
-      txt.append(plateL2(inst, hero.class));
+      txt.append(plateL2(inst, hero.class, false)); // iL kartın sağında (Ömer 2026-11-11, Loot satırı gibi)
     } else if (k === 'offhand' && !classUsesOffhand(hero.class)) txt.append(el('div', 'gr-slot-sub', 'No off-hand'));
     cell.append(ico);
     if (dead) cell.append(lockIcon());
     cell.append(txt);
+    if (d && inst) {
+      const ilr = el('span', 'gp-ilr', 'iL ');
+      ilr.append(el('b', '', String(instanceIlvl(inst))));
+      cell.append(ilr);
+    }
     slots.append(cell);
   }
   // A5 Personal Quests: unvanlar sınıf satırının altında küçük satır; bonus A Band ipucunda (sefer)
@@ -744,6 +777,7 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
       if (lv.justSpent?.attr === attr) {
         row.classList.add('done');
         window.setTimeout(() => row.classList.remove('done'), MOTION.statHold.doneMs);
+        window.setTimeout(() => playStatFx(row, String(Number(row.querySelector('.sh-n')?.textContent) - 1)), 0); // ödül anı efekti (reward-fx.ts)
         if (lv.justSpent.focus) window.setTimeout(() => row.isConnected && row.focus({ preventScroll: true }), 0);
       }
       const why = (): string => baseCapReason(hero.class, allocNow, attr, name);
@@ -812,6 +846,57 @@ function skillsNode(hero: HoverHero, stats: Stats, after: Stats | null): HTMLEle
   return sk;
 }
 
+/**
+ * Gear Sheet sekmesinin skill alanı (Ömer 2026-11-12): büyük plakalar yerine Recruit / Choose your hero kartının kompakt skill alanı
+ * (hero-card-skills.ts, aynı bileşen: pasif solda yuvarlak, 4 skill 2x2), statlar kaydırmasız sığsın diye. Ad / ikon ağaçla değişmiş hali; üstüne gelince
+ * (dokunmatikte dokununca) Hero sekmesindeki plakalarla aynı tam ipucu.
+ */
+function skillStrip(hero: HoverHero, stats: Stats, after: Stats | null, passivePatch?: PassivePatch): HTMLElement {
+  const sk = el('div', 'gr-skills gr-skills-strip');
+  sk.append(el('div', 'gr-sec', 'Skills'));
+  const classId = hero.class;
+  const def = content.classes[classId];
+  const rows = gearSkillRows(classId, stats, after, passivePatch, (x) => treePatchedSkill(hero, x));
+  const skillRows = rows.filter((r) => !r.passive);
+  const data: SkData[] = [];
+  for (const r of rows) {
+    if (r.passive && def?.passive) {
+      const p = patchedPassive(def.passive, passivePatch);
+      const ico = iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId));
+      const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: ico, badge: 'Passive', rows: passiveTip(p, stats, after).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
+      data.push({ name: p.name, iconUrl: ico, kind: 'pas', key: 'passive', tip: colorDiffs(tipHtml(tip)) });
+    } else if (r.skill) {
+      const i = skillRows.indexOf(r);
+      if (i > 3) continue;
+      data.push({ name: heroSkillName(hero, r.skill), iconUrl: heroSkillIconUrl(hero, r.skill), kind: i === 3 ? 'ult' : '', ...(r.cost ? { cost: r.cost } : {}), ...(r.cooldown ? { cd: r.cooldown } : {}), key: r.skill.id, tip: colorDiffs(tipHtml(skillTipContent(r.skill, stats, after, hero))) });
+    }
+  }
+  const box = el('div');
+  box.innerHTML = heroSkillRowHtmlFrom(data);
+  const bar = box.firstElementChild as HTMLElement | null;
+  if (!bar) return sk;
+  bar.addEventListener('pointerover', (e) => {
+    if (e.pointerType === 'touch') return;
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.hsk');
+    if (cell && floatTipFor !== cell) showFloatTip(bar, cell);
+  });
+  bar.addEventListener('pointerout', (e) => {
+    if (e.pointerType === 'touch') return;
+    const into = e.relatedTarget instanceof Element ? e.relatedTarget : null;
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.hsk');
+    if (cell && !(into && (cell.contains(into) || floatTip?.contains(into)))) hideFloatTip();
+  });
+  bar.addEventListener('click', (e) => {
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.hsk');
+    const open = floatTipFor === cell;
+    hideFloatTip();
+    if (cell && !open) showFloatTip(bar, cell);
+  });
+  hideFloatTip();
+  sk.append(bar);
+  return sk;
+}
+
 /** Character sayfasının DOM'u (tüccarın Character sekmesi: kahraman kartları | yuvalar + statlar, altta skill'ler). */
 export function renderCharacter(v: CharacterView): CharacterRender {
   const root = el('div', `gr-char${v.compact ? ' compact' : ''}`);
@@ -847,8 +932,8 @@ export function renderLedgerPage(v: CharacterView & { tab: 'hero' | 'sheet'; hpR
     if (v.hint) box.append(el('div', 'gr-hint', v.hint));
     box.append(...slotsBlock(hero0, v));
   } else box.append(...sheetNodes(c, v, box, { hpRatio: v.hpRatio ?? 1 }));
-  // Skill bloğu Hero ve Sheet sekmelerinde aynı yerde (sayfanın altı, tam genişlik; Ömer 2026-10-18)
-  if (c.stats) skills = skillsNode(c.hero, c.stats, c.after);
+  // Skill bloğu Hero ve Sheet sekmelerinde aynı yerde (sayfanın altı, tam genişlik; Ömer 2026-10-18); Sheet'te kompakt Recruit alanı (Ömer 2026-11-12)
+  if (c.stats) skills = v.tab === 'sheet' ? skillStrip(c.hero, c.stats, c.after, loadout(c.hero).passivePatch) : skillsNode(c.hero, c.stats, c.after);
   return { el: box, stats: c.stats, after: c.after, ...(skills ? { skills } : {}) };
 }
 
@@ -896,8 +981,9 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null, evo
   const treeAt = tipRows.findIndex((r) => 'section' in r);
   const cut = treeAt < 0 ? tipRows.length : treeAt;
   const isInitCd = (r: { text: string }): boolean => /^Opens on cooldown/.test(r.text);
+  const evoName = heroSkillName(evo, skill); // evolve onaylıysa ipucu başlığı da plakayla aynı ad (Fire Bolt -> Sunfire)
   return {
-    title: t.title,
+    title: evoName === skill.name ? t.title : evoName,
     titleColor: COLORS.text,
     kind: 'Skill',
     iconUrl: heroSkillIconUrl(evo, skill),
@@ -985,26 +1071,8 @@ function showFloatTip(bar: HTMLElement, cell: HTMLElement): void {
     if (!(into && floatTipFor?.contains(into))) hideFloatTip();
   });
   host.append(wrap);
-  const hr = host.getBoundingClientRect();
-  const cr = cell.getBoundingClientRect();
-  const tr = wrap.getBoundingClientRect();
-  const M = 6;
-  let x = cr.left + cr.width / 2 - tr.width / 2 - hr.left;
-  let y = cr.top - tr.height - 14 - hr.top;
-  if (y < M) y = cr.bottom + 14 - hr.top;
-  x = Math.max(M, Math.min(hr.width - tr.width - M, x));
-  y = Math.max(M, Math.min(hr.height - tr.height - M, y));
-  wrap.style.left = `${Math.round(x)}px`;
-  wrap.style.top = `${Math.round(y)}px`;
-  // "More": zemin kapatma tıklamasına gitmez; ipucu büyüyünce alt kenarı ekranda kalır
-  wrap.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const b = (e.target as Element).closest('.bt-morebtn');
-    if (!b) return;
-    b.closest('.bt')?.classList.toggle('open');
-    const h = wrap.getBoundingClientRect().height;
-    wrap.style.top = `${Math.round(Math.max(M, Math.min(hr.height - h - M, wrap.offsetTop)))}px`;
-  });
+  positionTip(wrap, cell, { bound: host, gap: 14 }); // ortak yerleşim (band-tip-attach.ts)
+  wrap.addEventListener('click', (e) => e.stopPropagation()); // zemin kapatma tıklamasına gitmesin
   floatTip = wrap;
   floatTipFor = cell;
 }
@@ -1034,17 +1102,8 @@ export function showHeroSkillTip(anchor: HTMLElement, classId: string, stats: St
   (tip.style as CSSStyleDeclaration & { zoom: string }).zoom = String(hudScale());
   wrap.append(tip);
   host.append(wrap);
-  const hr = host.getBoundingClientRect();
-  const cr = anchor.getBoundingClientRect();
-  const tr = wrap.getBoundingClientRect();
-  const M = 6;
-  let x = cr.left + cr.width / 2 - tr.width / 2 - hr.left;
-  let y = cr.top - tr.height - 14 - hr.top;
-  if (y < M) y = cr.bottom + 14 - hr.top;
-  x = Math.max(M, Math.min(hr.width - tr.width - M, x));
-  y = Math.max(M, Math.min(hr.height - tr.height - M, y));
-  wrap.style.left = `${Math.round(x)}px`;
-  wrap.style.top = `${Math.round(y)}px`;
+  // #ui-root static ve 0 px yüksek: eski elle hesap ipucunu hep ekranın tepesine (y = 6) sıkıştırıyordu; ortak yerleşim gerçek kaba göre ölçer
+  positionTip(wrap, anchor, { bound: host, gap: 14 });
   floatTip = wrap;
   floatTipFor = anchor;
 }
@@ -1069,7 +1128,7 @@ export function skillBar(classId: string, stats: Stats, after: Stats | null, evo
       return plateHtml('pas', 'passive', p.name, ico, '', numsHtml(r), colorDiffs(tipHtml(tip)), blurbOf(passiveTip(p, stats, null), true), bigNumsHtml(r), idx, intro);
     }
     const skill = r.skill!;
-    return plateHtml(skillRows.indexOf(r) === 3 ? 'ult' : '', skill.id, skill.name, heroSkillIconUrl(evo, skill), plateChips(costChips(skill, stats)), numsHtml(r), colorDiffs(tipHtml(skillTipContent(skill, stats, after, evo))), blurbOf(skillTip(skill, stats, null), false), bigNumsHtml(r), idx, intro);
+    return plateHtml(skillRows.indexOf(r) === 3 ? 'ult' : '', skill.id, heroSkillName(evo, skill), heroSkillIconUrl(evo, skill), plateChips(costChips(skill, stats)), numsHtml(r), colorDiffs(tipHtml(skillTipContent(skill, stats, after, evo))), blurbOf(skillTip(skill, stats, null), false), bigNumsHtml(r), idx, intro);
   });
   bar.innerHTML = html.join('');
   // Açıklama kabın (kaydırmalı sayfa) içinde değil, ekranın en üst katmanında (Gear örtüsü) açılır: hiçbir kap kırpamaz, ekran içinde kalır.

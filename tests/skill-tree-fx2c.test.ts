@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, condHolds, content, type BattleEvent, type BattleMode, type Combatant, type Teams, type UnitSetup } from '../src/engine';
 import type { CondHook, TreeHook } from '../src/engine/tree-hooks';
+import { burnAmountFor } from '../src/engine/mana-burn';
 import { checkTreeFx, compileTree, treeOf } from '../src/progression';
 import type { TreeData } from '../src/progression/skill-tree-data';
 
@@ -83,6 +84,15 @@ describe('Faz 2c: veri', () => {
     // Desperate Sap: zemin yok, ilk şifa %125 güçlü. Deep Spring'in zemin yaması hoşgörülü atlanır, ilk şifa çarpanı kalır.
     const barHeal = (treeOf('druid')!.mastery.bar[3]!.fx![0] as unknown as { v: number }).v;
     expect(heals[0]!.power).toBeCloseTo(0.675 * 2.25 * (1 + barHeal), 5);
+  });
+
+  it('Drained Dry: Mana Steal yakımı %50 artar (taban x 1,5), hasar yok; yakım tam sayıya yuvarlanır', () => {
+    const am = only('antimage', { '1.fa': 1 })!;
+    const base = (content.skills.mana_burn!.effects.find((e) => e.type === 'manaBurn') as { amount: number }).amount;
+    const burn = am.skills!.mana_burn!.effects.find((e) => e.type === 'manaBurn') as { amount: number };
+    expect(burn.amount).toBe(Math.round(base * 1.5)); // derleyici tam sayıya yuvarlar
+    expect(am.skills!.mana_burn!.effects.some((e) => e.type === 'damage')).toBe(false);
+    expect(burnAmountFor({ type: 'manaBurn', amount: burn.amount }, { mp: 100, maxMp: 100 })).toBe(burn.amount);
   });
 
   it('Whiteout (needs Driving Snow): Blizzard Blind şansı x2, süre 2', () => {

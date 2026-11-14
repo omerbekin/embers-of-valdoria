@@ -74,8 +74,8 @@ describe('A5 görev verisi', () => {
     }
     // belgedeki (a) değerleri
     const after = (id: string) => Math.round((questBase(QUESTS[id]!)!.value + QUESTS[id]!.passive.add) * 1000) / 1000;
-    expect([after('paladin_bell'), after('undead_name'), after('archer_shoot'), after('cutthroat_debt'), after('gambler_table')]).toEqual([0.3, 0.6, 0.06, 0.3, 0.28]);
-    expect(questBonusLine(QUESTS['paladin_bell']!)).toBe('Divine Light +3% (27% → 30% of Intelligence healed)');
+    expect([after('paladin_bell'), after('undead_name'), after('archer_shoot'), after('cutthroat_debt'), after('gambler_table')]).toEqual([0.342, 0.6, 0.06, 0.3, 0.28]);
+    expect(questBonusLine(QUESTS['paladin_bell']!)).toBe('Divine Light +3% (31.2% → 34.2% of Intelligence healed)');
   });
 
   it('cepler: dr90-dr93 isteğe bağlı, tek kesik giriş; Paladin dr56 cep değil; karşılaşmalar geçerli ve tek dalga', () => {
@@ -137,7 +137,7 @@ describe('A5 görev akışları ve ödül', () => {
     // sonraki savaşlarda pasif yamalı (skill ağacının pasifi üstüne)
     const setup = {};
     applyQuestBonus(setup, p);
-    expect((setup as { tree?: { passive?: { effect: { power: number } } } }).tree?.passive?.effect.power).toBeCloseTo(0.3, 6);
+    expect((setup as { tree?: { passive?: { effect: { power: number } } } }).tree?.passive?.effect.power).toBeCloseTo(0.342, 6);
   });
 
   it('bonus gerçek savaşta: battlePlan kurulumu -> motor Combatant pasifi', () => {
@@ -152,7 +152,7 @@ describe('A5 görev akışları ve ödül', () => {
     expect(plan.units.party[cell]?.tree?.passive?.effect).toMatchObject({ type: 'divineLight' });
     const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...campaignWaveTeams(plan) }, false));
     const c = b.combatants.find((x) => x.side === 'party' && x.defId === 'paladin')!;
-    expect((c.passive!.effect as { power: number }).power).toBeCloseTo(0.3, 6);
+    expect((c.passive!.effect as { power: number }).power).toBeCloseTo(0.342, 6);
     // görevi olmayan kahramanın pasifi aynen
     const other = b.combatants.find((x) => x.side === 'party' && x.defId !== 'paladin' && x.passive)!;
     expect(other.passive).toEqual(content.classes[other.defId]!.passive);
@@ -242,7 +242,7 @@ describe('A5 görev akışları ve ödül', () => {
     const plan = battlePlan({ ...at, patrol: at.at });
     const setup = plan.units.party[at.active.indexOf(pal.id)]!;
     expect(setup.modifiers?.damageAdd).toBeGreaterThan(0);
-    expect((setup.tree?.passive?.effect as { power: number }).power).toBeCloseTo(0.3, 6);
+    expect((setup.tree?.passive?.effect as { power: number }).power).toBeCloseTo(0.342, 6);
   });
 });
 

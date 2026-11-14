@@ -1,3 +1,4 @@
+import { showElToast } from './el-toast';
 /**
  * "Copy match data": maç kaydını (src/engine/match-log.ts) panoya kopyalar ve kısa bir bildirim (toast) gösterir.
  * Debug dock'taki düğme ve sonuç ekranındaki bağlantı aynı fonksiyonu kullanır. DOM kullanır (motorda DEĞİL).
@@ -28,26 +29,9 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-let toastEl: HTMLDivElement | null = null;
-let toastTimer = 0;
-
-/** Ekranın altında kısa süre görünen bildirim (debug menüsünün de üstünde). */
+/** Kısa bildirim: ortak kit bildirimi (el-toast.ts, üst orta; Ömer 2026-11-09). */
 export function showToast(message: string, ok = true): void {
-  if (typeof document === 'undefined') return;
-  if (!toastEl) {
-    toastEl = document.createElement('div');
-    toastEl.setAttribute('role', 'status');
-    toastEl.style.cssText =
-      'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30000;padding:10px 18px;border-radius:6px;font:600 15px/1.2 system-ui,sans-serif;color:#fff;box-shadow:0 4px 18px rgba(0,0,0,.5);pointer-events:none;max-width:90vw;text-align:center;transition:opacity .2s';
-    (document.getElementById('ui-root') ?? document.body).appendChild(toastEl);
-  }
-  toastEl.textContent = message;
-  toastEl.style.background = ok ? '#2f6b3a' : '#8a2f2f';
-  toastEl.style.opacity = '1';
-  window.clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => {
-    if (toastEl) toastEl.style.opacity = '0';
-  }, 2800);
+  showElToast(message, { bad: !ok });
 }
 
 export interface MatchDataSource {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, chooseAction, content } from '../src/engine';
+import { Battle, chooseAction, content, explainChoice } from '../src/engine';
 import type { AiConfig, BattleMode } from '../src/engine';
 
 /**
@@ -385,5 +385,48 @@ describe('YZ global skill: tam savaşlar (kilitlenme yok, sınırlar korunur)', 
         expect(b.winner, `${p}v${e} seed ${seed}`).not.toBeNull();
       }
     }
+  });
+});
+
+describe('YZ Move Tile: aura komşuluğu (Defender) fazla sık yer değiştirmez', () => {
+  it('ayarlar veride: minAuraGain, auraMinOpportunity, auraCooldown', () => {
+    expect(g.move.minAuraGain).toBeGreaterThan(5);
+    expect(g.move.auraMinOpportunity).toBeGreaterThan(0);
+    expect(g.move.auraCooldown).toBeGreaterThanOrEqual(1);
+  });
+
+  it('actionsSinceMove: hiç Move yoksa sonsuz; Move sonrası 0, sonraki her eylemde artar', () => {
+    const b = until(mk({ 0: 'defender', 1: 'paladin' }, { 0: 'archer' }), 'party-0');
+    expect(b.actionsSinceMove('party-0')).toBe(Infinity);
+    const free = b.freeTiles('party-0')[0]!;
+    expect(b.applyChoice('party-0', { skillId: 'move_tile', slot: free, targetUid: `tile:${free}` }).ok).toBe(true);
+    expect(b.actionsSinceMove('party-0')).toBe(0);
+    until(b, 'party-0');
+    b.skipTurn();
+    expect(b.actionsSinceMove('party-0')).toBeGreaterThanOrEqual(1);
+  });
+
+  it('bekleme sonsuzsa (aura kapalı) 6 savaşta YZ hiç geçersiz/üst üste Move önermez', () => {
+    const noAura: AiConfig = { ...ai, global: { ...g, move: { ...g.move, auraCooldown: 1e9 } } };
+    for (let seed = 1; seed <= 6; seed++) {
+      const b = new Battle(content.battleSetup('random-battle', seed, 'turns', { party: cells({ 0: 'defender', 1: 'paladin', 2: 'archer', 3: 'mage' }), enemies: cells({ 0: 'warrior', 1: 'archer', 2: 'mage' }) }, false));
+      for (let i = 0; i < 40 && !b.winner; i++) {
+        const a = b.currentActor!;
+        if (a.defId === 'defender' && a.side === 'party') {
+          const c = chooseAction(b, a.uid, noAura);
+          expect(c?.skillId === 'move_tile' && b.lastActionOf(a.uid) === 'move').toBe(false);
+        }
+        const ch = chooseAction(b, a.uid, ai);
+        if (!b.applyChoice(a.uid, ch).ok) break;
+      }
+    }
+  });
+});
+
+describe('YZ Taunt değeri: korunan dostlar varken Taunt pozitif değer taşır', () => {
+  it('Defender önde, dostlar arkada, düşman tek hedefli saldırıyor: Taunt adayında protect terimi > 0 (yük Defender zırhıyla ölçülür)', () => {
+    const b = until(mk({ 0: 'defender', 1: 'mage', 2: 'archer', 3: 'paladin' }, { 0: 'warrior', 1: 'warrior', 2: 'archer', 3: 'archer' }), 'party-0');
+    const t = explainChoice(b, 'party-0', ai)!.candidates.find((c) => c.skill === 'taunt');
+    expect(t?.terms?.protect ?? 0).toBeGreaterThan(0);
   });
 });

@@ -1,6 +1,7 @@
 {
   "id": "skeleton",
-  "name": "Skeleton",
+  "name": "Skeleton",
+  "bloodless": true,
   "spriteId": "skeleton",
   "color": "#d9d4c0",
   "logo": "skull",

@@ -249,7 +249,7 @@ describe('eski kayıt: tutorial takım akışı (yeni sefer: tests/solo-start.te
     const step = nextStep(s);
     expect(step).toMatchObject({ kind: 'recruit', node: '1' }); // katılım zaferden sonra, haritaya dönüşte (Ömer 2026-10-27)
     const offer = (step as { offer: string[] }).offer;
-    expect(offer).toHaveLength(3);
+    expect(offer).toHaveLength(4);
     expect(offer).not.toContain('warrior');
     expect(offer.some(isAreaClass)).toBe(true);
     const beforeRecruit = s;
@@ -289,7 +289,7 @@ describe('eski kayıt: tutorial takım akışı (yeni sefer: tests/solo-start.te
     const vol = nextStep(s);
     expect(vol.kind).toBe('volunteer');
     const vOffer = (vol as { offer: string[] }).offer;
-    expect(vOffer).toHaveLength(3);
+    expect(vOffer).toHaveLength(4);
     for (const c of ['druid', 'warrior', 'archer']) expect(vOffer).not.toContain(c);
     expect(partyCap(s)).toBe(3);
     const beforeVolunteer = s;
@@ -331,8 +331,8 @@ describe('eski kayıt: tutorial takım akışı (yeni sefer: tests/solo-start.te
     expect(() => pickHero(fresh(), 'archer')).toThrow(); // eski başlangıç sınıfı yalnız eski kayıtta
   });
 
-  it('Mill Road zaferinden sonraki adaylar ilk kahramana göre sabit (seed fark etmez): Warrior -> Druid/Undead/Gambler, Archer -> Anti-Mage/Cutthroat/Undead', () => {
-    const want: Record<string, string[]> = { warrior: ['druid', 'undead', 'gambler'], archer: ['antimage', 'cutthroat', 'undead'] };
+  it('Mill Road zaferinden sonraki adaylar ilk kahramana göre sabit (seed fark etmez): Warrior -> Druid/Undead/Gambler/Paladin, Archer -> Anti-Mage/Cutthroat/Undead/Mage', () => {
+    const want: Record<string, string[]> = { warrior: ['druid', 'undead', 'gambler', 'paladin'], archer: ['antimage', 'cutthroat', 'undead', 'mage'] };
     for (const [hero, list] of Object.entries(want)) {
       for (const seed of [1, 2, 3, 42, 777]) {
         const s = autoResolve(legacyHero(seed, hero));

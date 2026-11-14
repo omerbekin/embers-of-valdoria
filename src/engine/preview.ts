@@ -97,7 +97,7 @@ export interface TargetPreview {
   };
   /** Karakter üstü DoT (Wither): tik başına hasar (zırh/zayıflık dahil), tur sayısı, toplam. */
   dot?: { status: string; perTick: number; turns: number; total: number };
-  /** Kontrol bağışıklığı (madde 271/272): hedefin YEMEYECEĞİ durumların adları (boss: Stun, Slow, Silence, Blinded, Jinxed); `statuses` satırında 'Immune: Stun'. */
+  /** Kontrol bağışıklığı (madde 271/272): hedefin YEMEYECEĞİ durumların adları (boss: Stun, Frozen, Silence; 2026-11-09 form 3: Slow ve Blinded / Jinxed / Shaken artık %25 güçle); `statuses` satırında 'Immune: Stun'. */
   immune?: string[];
   /** advanceToFront (Warrior Charge; kullanıcının girdisinde): skill sonrası geçeceği ön sıra hücresi (`from` -> `to`); ön sıradaysa ya da yer yoksa tanımsız. */
   advance?: { from: number; to: number };
@@ -176,7 +176,8 @@ function withBoltLines(battle: Battle, actor: Combatant, skill: SkillDef, list: 
   };
   for (const a of out.arcs) line(a.uid, `Live Water: ${a.damage} damage`);
   for (const a of out.shards) line(a.uid, `Shatter: ${a.damage} damage`);
-  for (const s of out.shocks) line(s.uid, s.stun ? `Shocked: Stun ${T.stunTurns} turn` : `Shocked: pushed back ${Math.round(T.pushback * 100)}%`);
+  const wet = T.wetInto ? battle.statusDef(T.wetInto)?.name ?? T.wetInto : null; // Electrocuted (Ömer 2026-11-09)
+  for (const s of out.shocks) line(s.uid, s.stun ? (wet ? `${wet}: hits an ally, turn bar to 0` : `Shocked: Stun ${T.stunTurns} turn`) : `Shocked: pushed back ${Math.round(T.pushback * 100)}%`);
   if (out.blinded) line(out.blinded, `Thunderflash: Blinded ${T.flashBlindTurns} turn`);
   return list;
 }
@@ -367,7 +368,10 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const ch = tm ? Math.max(0, Math.min(1, (effect.chance ?? 1) + tm.chance)) : effect.chance;
         const turns = tm ? Math.max(1, Math.round(effect.turns + tm.turns)) : effect.turns;
         const chance = ch !== undefined && ch < 1 ? ` (${Math.round(ch * 100)}% chance)` : '';
-        e.statuses = [...(e.statuses ?? []), `${def?.name ?? effect.status} ${turns} turns${chance}`];
+        // Boss / elit (Ömer 2026-11-09, ccImmunity.debuffStrength): CC dışı debuff azaltılmış güçle işler
+        const ks = battle.debuffStrength(target, effect.status, actor.side);
+        const weak = ks < 1 ? ` (${Math.round(ks * 100)}% strength)` : '';
+        e.statuses = [...(e.statuses ?? []), `${def?.name ?? effect.status} ${turns} turns${chance}${weak}`];
       } else if (effect.type === 'damage') {
         // Çok hedefli (alan) vuruşta her yeni hedef bir öncekinin falloff katı hasar alır (hedef sırası = vuruş sırası)
         const idx = effect.falloff || skill.splash ? targets.indexOf(target) : 0;

@@ -14,12 +14,11 @@ import { check, counter, rowSpent, ultSpent, ultArm, treeNodes, type TreeNode } 
 import { skillCostAmount } from '../engine/cost';
 import type { SkillDef } from '../engine';
 import { bandTipEl, type BandChip, type BandTipSpec } from './band-tip';
-import { attachBandTip } from './band-tip-attach';
 import { gearSkillRows, passiveTip, skillTip, classSkills } from './gear-skills';
 import { nextPointLines, treePatchedSkill } from './skill-tree-preview';
 import { escHtml } from './skill-bar';
 import { skillIconName } from './mob-icons';
-import { evolveNodeIconUrl, heroSkillIconUrl, nodeArtUrl, SAVE_TREE_MODE } from './evolve-icon';
+import { evolveNodeIconUrl, heroSkillIconUrl, heroSkillName, nodeArtUrl, SAVE_TREE_MODE } from './evolve-icon';
 import { textAtRank } from '../progression/skill-tree-text';
 import { evolvedRows, type EvolveSource } from '../progression/skill-tree-evolve';
 import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
@@ -49,7 +48,9 @@ import {
   type TreeSession,
   perRankTotal,
 } from './tree-tab-model';
-import { buildCols, deadStub, link, type ColsLayout, type Hit } from './tree-tab-layout';
+import { playNodeFx } from './reward-fx';
+import { buildCols, deadStub, link, ULT_X, type ColsLayout, type Hit } from './tree-tab-layout';
+import { tipFrame } from './band-tip-attach';
 
 export type TreeTabHero = HoverHero & TreeHero;
 
@@ -123,12 +124,18 @@ function rowInfos(tree: TreeData, hero?: EvolveSource): RowInfo[] {
     }
     const s = byId(r.skill);
     const base = sk(r.skill);
-    return { icon: s ? heroSkillIconUrl(hero, s) : base, base, name: s?.name ?? r.name, kind: '' as const, ...(s ? { skill: s } : {}) };
+    // ad da ikonla aynı kural: evolve onaylıysa evolve adı (Fire Bolt -> Sunfire; src/ui/evolve-icon.ts > heroSkillName)
+    return { icon: s ? heroSkillIconUrl(hero, s) : base, base, name: s ? heroSkillName(hero, s) : r.name, kind: '' as const, ...(s ? { skill: s } : {}) };
   });
   const us = byId(tree.ult.skill);
   const ub = sk(tree.ult.skill);
   out.push({ icon: ub, base: ub, name: us?.name ?? tree.ult.name, kind: 'ult', ...(us ? { skill: us } : {}) });
   return out;
+}
+
+/** Satırların (pasif, 3 skill, ult) ikon / ad / türü: ağaçtaki plakalarla aynı (Gear > Sheet "Node cards" paneli, gear-screen.ts > masterySummary). */
+export function treeRowHeads(tree: TreeData, hero?: EvolveSource): Array<{ icon: string; name: string; kind: '' | 'pas' | 'ult' }> {
+  return rowInfos(tree, hero).map((r) => ({ icon: r.icon, name: r.name, kind: r.kind }));
 }
 
 /** Düğümün ağaçtaki ikonu (Sheet > Active nodes listesi de bunu kullanır): notable kendi sanatı, evolve evolve sanatı, diğerleri satırın skill ikonu. */
@@ -173,7 +180,6 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   button.type = 'button';
   button.className = 'gr-tab';
   button.setAttribute('role', 'tab');
-  attachBandTip(button, { title: 'Tree', sub: 'Spend skill points' });
   const ico = document.createElement('img');
   ico.className = 'gr-tab-ico';
   ico.alt = '';
@@ -300,12 +306,14 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     deco += `<div class="gt-ucore" data-tt="p:${u}" style="left:${L.core.x}px;top:${L.core.y}px;width:${L.core.d}px;height:${L.core.d}px"><span class="ud"></span><img src="${escHtml(ur.icon)}" alt="${escHtml(ur.name)}"></div>`;
     deco += `<span class="gc-upts" style="left:${L.upts.x}px;top:${L.upts.y}px"><b data-upts>0</b>/${rules.ult.max}</span>`;
     const narrow = L.cw < 130;
+    // ult basamak etiketleri arası boşluk dar (telefonda yan yana pencere): "Lv" düşer, yalnız sayı kalır (etiketler üst üste binmesin)
+    const tight = L.cw * (ULT_X[1]! - ULT_X[0]!) < 44;
     rules.ult.arms.forEach((arm, j) => {
       const w = narrow ? 72 : 100;
       deco += `<span class="gc-arm${narrow ? ' nar' : ''}" data-arm="${arm}" style="left:${L.colX[j]! + L.cw / 2 - w / 2}px;top:${L.ultY0 + (L.short ? 3 : 6)}px;width:${w}px"><i>${narrow ? ARM_NAME[arm]?.[0] : ARM_NAME[arm]}</i><b>0 / ${rules.ult.levels.length}</b></span>`;
       for (let st = 1; st <= rules.ult.levels.length; st++) {
         const P = L.pos[`${u}.${arm}${st}`]!;
-        deco += `<span class="gt-ulv" data-ulv="${u}.${arm}${st}" style="left:${P.x}px;top:${P.y + (L.short ? 11 : st === 3 ? 18 : 14) + L.k * 8}px">Lv ${rules.ult.levels[st - 1]}</span>`;
+        deco += `<span class="gt-ulv" data-ulv="${u}.${arm}${st}" style="left:${P.x}px;top:${P.y + (L.short ? 11 : st === 3 ? 18 : 14) + L.k * 8}px"${tight ? ` title="Level ${rules.ult.levels[st - 1]}"` : ''}>${tight ? '' : 'Lv '}${rules.ult.levels[st - 1]}</span>`;
       }
     });
     return `${bands}<svg class="gt-lines" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${svg}</svg>${tsh}${heads}${deco}${nds}`;
@@ -317,10 +325,11 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const ri = respecInfo(h, ctx.gold());
     const goldImg = `<img src="${escHtml(iconUrl(uiIconName('gold')))}" alt="" draggable="false">`;
     const cost = ri.free ? 'Free' : `${ri.cost}${goldImg}`;
-    return `<span class="sh-ptr" title="${free > 0 ? `${free} skill point${free === 1 ? '' : 's'} to spend` : 'All points placed'}"><span class="sh-medal${free > 0 ? '' : ' empty'}"><span>${free}</span></span><span class="sh-tx">${free > 0 ? `skill point${free === 1 ? '' : 's'} to spend` : 'All points placed'}</span></span><span class="gt-sp"></span>
-      <span class="sh-acts"><button type="button" class="sh-btn rs${ri.spent > 0 ? '' : ' off'}" data-a="respec" data-tt="x:respec">Respec <span class="cost">${cost}</span></button>
-      <button type="button" class="sh-btn${pend > 0 ? '' : ' off'}" data-a="reset">Reset</button>
-      <button type="button" class="sh-btn primary${pend > 0 ? '' : ' off'}" data-a="confirm">Confirm${pend > 0 ? ` (${pend})` : ''}</button></span>`;
+    const none = s.level <= 1 ? 'No points yet - reach level 2' : 'All points placed';
+    return `<span class="sh-ptr" title="${free > 0 ? `${free} skill point${free === 1 ? '' : 's'} to spend` : none}"><span class="sh-medal${free > 0 ? '' : ' empty'}"><span>${free}</span></span><span class="sh-tx">${free > 0 ? `skill point${free === 1 ? '' : 's'} to spend` : none}</span></span><span class="gt-sp"></span>
+      <span class="sh-acts"><button type="button" class="el-btn sm rs${ri.spent > 0 ? '' : ' off'}" data-a="respec" data-tt="x:respec">Respec <span class="cost">${cost}</span></button>
+      <button type="button" class="el-btn sm${pend > 0 ? '' : ' off'}" data-a="reset">Reset</button>
+      <button type="button" class="el-btn sm primary${pend > 0 ? '' : ' off'}" data-a="confirm">Confirm${pend > 0 ? ` (${pend})` : ''}</button></span>`;
   }
 
   const lvlText = (s: TreeSession): string => `Level ${s.level} · ${Math.max(0, s.level - 1)} points`;
@@ -394,7 +403,8 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const chips: BandChip[] = [{ text: KN[nd.kind] ?? nd.kind, tone: 'ac' }];
     if (nd.max > 1) chips.push({ text: `Rank ${st.rank} / ${nd.max}` });
     chips.push(committed > 0 ? { text: 'Taken', tone: 'ok' } : pend > 0 ? { text: 'Pending', tone: 'v' } : { text: 'Not taken' });
-    chips.push({ text: li.tier }, { text: li.lock, ...(li.open ? { tone: 'ok' as const } : {}) });
+    // alınmış evolve düğümünde kilit bilgisi ("Evolve" / "Taken") tür ve durum çipinin aynısıdır: aynı yazılı çip iki kez çıkmaz
+    for (const c of [{ text: li.tier }, { text: li.lock, ...(li.open ? { tone: 'ok' as const } : {}) }]) if (!chips.some((x) => x.text === c.text)) chips.push(c);
     if (st.inert) chips.push({ text: 'Not active yet', tone: 'warn' });
     if (st.st === 'dir') chips.push({ text: st.block?.code === 'ultArm' ? 'Other ult path chosen' : 'Other direction chosen', tone: 'warn' });
     if (st.st === 'new') chips.push({ text: 'Awaiting approval', tone: 'warn' });
@@ -407,10 +417,12 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     if (st.inert) lines.push('Not active yet: you can take it, but the battle engine does not apply it yet.');
     const spec: BandTipSpec = {
       ...(accent ? { accent } : {}),
-      kind: nd.arm ? `Ult ${KN[nd.kind]} · ${row.name}` : `${KN[nd.kind]} · ${row.name}`,
+      // tür satırı temel skill adını taşır ("Evolve · Fire Bolt"): başlık zaten evolve adı
+      kind: nd.arm ? `Ult ${KN[nd.kind]} · ${row.skill?.name ?? row.name}` : `${KN[nd.kind]} · ${row.skill?.name ?? row.name}`,
       title: info.name,
       // notable düğümün kendi görseli ipucunda (Ömer 2026-11-07); görseli olmayan notable satırın skill ikonuna döner (nodeIcon)
-      icon: nd.kind === 'notable' ? nodeIcon(nd) || row.icon : row.icon,
+      // evolve düğümü ipucu başlığı: onaydan bağımsız EVOLVE sanatı (ağaçtaki düğümle aynı)
+      icon: nd.kind === 'notable' || nd.kind === 'evolve' ? nodeIcon(nd) || row.icon : row.icon,
       value: '1',
       valueLabel: nd.max > 1 ? 'POINT / RANK' : 'POINT',
       chips,
@@ -503,46 +515,50 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
 
   function place(el: HTMLElement): void {
     const host2 = ctx.overlay;
-    const sr = host2.getBoundingClientRect();
     tip.style.left = '0px';
     tip.style.top = '0px';
-    const r = (el.classList.contains('gt-mk') ? el.querySelector('i') ?? el : el).getBoundingClientRect();
+    // Koordinatlar ipucunun gerçek konum kabının düzleminde (ortak tipFrame, band-tip-attach.ts): döndürülmüş sahnede de doğru
+    const { loc } = tipFrame(tip);
+    const sr = loc(host2);
+    const r = loc(el.classList.contains('gt-mk') ? el.querySelector('i') ?? el : el);
     const w = tip.offsetWidth;
     const h = tip.offsetHeight;
-    const vh = sr.height;
-    const rl = r.left - sr.left;
-    const rr = r.right - sr.left;
-    const rt = r.top - sr.top;
-    const rb = r.bottom - sr.top;
+    const y0 = sr.top;
+    const y1 = sr.top + sr.height;
+    const rl = r.left;
+    const rr = r.left + r.width;
+    const rt = r.top;
+    const rb = r.top + r.height;
     // Yatay sınır pencerenin kendisi (Ömer 2026-10-27: ipucu Gear penceresinin dışına, haritanın üstüne taşıyordu)
-    const pn = (host2.querySelector('.gr-panel') ?? host2).getBoundingClientRect();
-    const L = pn.left - sr.left + 8;
-    const R = pn.right - sr.left - 8;
+    const pn = loc(host2.querySelector('.gr-panel') ?? host2);
+    const L = pn.left + 8;
+    const R = pn.left + pn.width - 8;
     let x = rr + 12;
     if (x + w > R) x = rl - w - 12;
     if (x < L) x = Math.max(L, Math.min(R - w, rl + r.width / 2 - w / 2));
     let y = rt + r.height / 2 - h / 2;
-    if (x < rr && x + w > rl) y = rt - h - 8 < 8 ? rb + 8 : rt - h - 8;
+    if (x < rr && x + w > rl) y = rt - h - 8 < y0 + 8 ? rb + 8 : rt - h - 8;
     // düğüm ipucu ağacın kendisini örtmesin (playtest B4): ağaç alanının sağına, sığmazsa altına kayar; ikisi de sığmazsa düğümün yanında kalır.
     // Ağaç alanının SOLUNA atma yedeği kaldırıldı (Ömer 2026-10-24): orası Gear'ın kahraman listesi / portreleri; orta genişlikte (ör. 1560x780)
     // ipucu düğümden çok uzakta, listenin üstünde çıkıyordu (Broad Sentence ekran görüntüsü).
     if (el.classList.contains('gt-nd') && treeHost?.isConnected) {
-      const hr = treeHost.getBoundingClientRect();
-      const hrr = hr.right - sr.left;
-      const hb = hr.bottom - sr.top;
+      const hr = loc(treeHost);
+      const hrr = hr.left + hr.width;
+      const hb = hr.top + hr.height;
       if (hrr + 10 + w <= R) {
         x = hrr + 10;
         y = rt + r.height / 2 - h / 2;
-      } else if (hb + 8 + h <= vh - 8) {
+      } else if (hb + 8 + h <= y1 - 8) {
         x = Math.max(L, Math.min(R - w, rl + r.width / 2 - w / 2));
         y = hb + 8;
       }
     }
-    y = Math.max(8, Math.min(vh - h - 8, y));
+    y = Math.max(y0 + 8, Math.min(y1 - h - 8, y));
     // sabit tam ekran düğmesi (sağ üst, z 30) ipucunun sağ üstündeki değeri (POINTS) örtmesin: örtüşüyorsa ipucu düğmenin altına iner
-    const fs = document.querySelector('.settings-toggle.fullscreen-toggle')?.getBoundingClientRect();
-    if (fs && fs.width > 0 && sr.left + x < fs.right && sr.left + x + w > fs.left && sr.top + y < fs.bottom + 4 && sr.top + y + h > fs.top) {
-      y = Math.min(Math.max(y, fs.bottom + 4 - sr.top), Math.max(8, vh - h - 8));
+    const fsEl = document.querySelector('.settings-toggle.fullscreen-toggle');
+    const fs = fsEl && fsEl.getClientRects().length ? loc(fsEl) : null;
+    if (fs && fs.width > 0 && x < fs.left + fs.width && x + w > fs.left && y < fs.top + fs.height + 4 && y + h > fs.top) {
+      y = Math.min(Math.max(y, fs.top + fs.height + 4), Math.max(y0 + 8, y1 - h - 8));
     }
     tip.style.left = `${x}px`;
     tip.style.top = `${y}px`;
@@ -785,6 +801,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     }
     refresh();
     if (!res.ok) shake(key);
+    else if (d > 0) playNodeFx($<HTMLElement>(`.gt-nd[data-key="${key}"]`)); // ödül anı efekti (reward-fx.ts)
   }
   function pulseTree(c: string, ms: number): void {
     const g = $('.gt.q4');
@@ -1047,7 +1064,6 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       const b = document.createElement('span');
       b.className = 'gr-pt sk';
       b.textContent = String(points);
-      b.title = 'Skill points';
       button.append(b);
     }
     if (!on) {

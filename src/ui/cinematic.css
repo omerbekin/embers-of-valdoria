@@ -45,7 +45,7 @@
 .cin-end-go { position: relative; min-height: 44px; padding: 8px 18px 8px max(26px, calc(40 * var(--u))); background: none; border: 0; cursor: pointer;
   font: 600 max(13px, calc(22 * var(--u))) Cinzel, Georgia, serif; letter-spacing: 0.14em; text-transform: uppercase; color: #e8c47e;
   transition: color var(--m-card-hover, 170ms) var(--m-ease, ease-out), translate var(--m-card-hover, 170ms) var(--m-ease, ease-out); }
-.cin-end-go::before { content: ''; position: absolute; left: max(8px, calc(12 * var(--u))); top: 50%; width: 9px; height: 9px; margin-top: -5px; transform: rotate(45deg); background: #e0702a; box-shadow: 0 0 6px rgba(224, 112, 42, 0.7); }
+.cin-end-go::before { content: ''; position: absolute; left: max(8px, calc(12 * var(--u))); top: 50%; width: 0.41em; height: 0.41em; margin-top: -0.23em; transform: rotate(45deg); background: #e0702a; box-shadow: 0 0 6px rgba(224, 112, 42, 0.7); }
 @media (hover: hover) { .cin-end-go:hover { color: #fff6e2; translate: 0 calc(-1 * var(--m-card-lift, 4px)); } }
 @keyframes cin-fade { from { opacity: 0; } to { opacity: 1; } }
 

@@ -16,8 +16,11 @@
     "luck": 18
   },
   "primary": "str",
-  "armor": 12,
+  "armor": 18,
   "magicArmor": 0,
+  "overrides": {
+    "hp": 104
+  },
   "ai": "aggressive",
   "skills": [
     "hammer_spark",

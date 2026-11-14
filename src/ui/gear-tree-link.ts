@@ -1,4 +1,4 @@
-// Gear > Sheet sağ paneli: "Go to skill tree" (Ömer 2026-11-01). Kutusuz Cinzel yazı düğmesi, ince altın çizgiler (gear.css > .gr-ms-go);
+// Gear > Sheet sağ paneli: "Manage skill tree" (Ömer 2026-11-01; yazı Ömer 2026-11-12 Form 7: "Go to skill tree" yerine). Kutusuz Cinzel yazı düğmesi, ince altın çizgiler (gear.css > .gr-ms-go);
 // tıklayınca aynı kahramanla Tree sekmesi açılır (çağıran `go` verir). Ayrı dosya: ekranın geri kalanı olmadan sınanabilsin.
 export function goToTreeButton(go: () => void): HTMLButtonElement {
   const b = document.createElement('button');
@@ -6,7 +6,7 @@ export function goToTreeButton(go: () => void): HTMLButtonElement {
   b.type = 'button';
   b.dataset['go'] = 'tree';
   const t = document.createElement('span');
-  t.textContent = 'Go to skill tree';
+  t.textContent = 'Manage skill tree';
   const arrow = document.createElement('i');
   arrow.textContent = '›';
   b.append(t, arrow);

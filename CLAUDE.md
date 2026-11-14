@@ -46,5 +46,5 @@ Bu dosya YALNIZ her sohbette gereken çekirdektir. Konu bilgisi aşağıdaki diz
 | Sefer, item, level | `docs/design/campaign/`, `docs/design/progression/` |
 | Sınıflar, ağaçlar, YZ, multiplayer, tutorial | `docs/design/classes.md`, `docs/design/classes/`, `ai-priorities.md`, `multiplayer.md`, `tutorial.md` |
 | Açık sorular, fikirler | `docs/design/open-questions.md` (Ömer'e sorular + onaysız varsayımlar; eski maddeler `-archive.md`), `docs/design/future-ideas/` |
-| Kod haritası | `docs/arch/code-map.md` (40 KB+ dosyadan önce; `npm run codemap`) |
-| İş akışı | `docs/arch/lead.md`, `docs/arch/workflow-rules.md`, `docs/arch/project-layout.md` |
+| Kod haritası | `docs/arch/code-map.md` (40 KB+ dosyadan önce; `npm run codemap`). 30 KB üstü belge tam okunmaz: önce Grep, sonra ilgili bölüm. `docs/archive/` aramada gizli, yol açıkça verilir |
+| İş akışı | `docs/arch/lead.md`, `docs/arch/lead-open.md` (Lead açık işler), `docs/arch/workflow-rules.md`, `docs/arch/project-layout.md` |

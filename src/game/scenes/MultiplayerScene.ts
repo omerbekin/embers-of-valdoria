@@ -69,7 +69,7 @@ export class MultiplayerScene extends Phaser.Scene {
     elGo(this, 'MainMenuScene', { view: 'play' });
   }
 
-  /** Yazı (tasarım kiti): `bold: false` = EB Garamond italik açıklama, diğerleri Cinzel. */
+  /** Yazı (tasarım kiti): `bold: false` = EB Garamond düz açıklama, diğerleri Cinzel. */
   private kt(x: number, y: number, text: string, size: number, color: string = EL.TXT, o: { bold?: boolean; stroke?: number; spacing?: number } = {}): Phaser.GameObjects.Text {
     if (o.bold === false) return elBody(this, x, y, text, size + 1, color === '#a8977a' ? EL.MUTED : color);
     return elText(this, x, y, text, Math.round(size * 0.8), color, { em: 0.06, upper: false });
@@ -88,7 +88,7 @@ export class MultiplayerScene extends Phaser.Scene {
 
   private button(x: number, y: number, w: number, label: string, run: () => void, primary = false, enabled = true, icon?: string): void {
     // tasarım kiti düğmesi (primary = START dili); pasifse soluk, dokununca sallanır
-    const b = elButton(this, label, () => (enabled ? run() : b.shake()), { kind: primary ? 'primary' : 'secondary', w, h: primary ? 84 : 68, size: primary ? 28 : 22, ready: enabled, icon: icon && this.textures.exists(icon) ? icon : undefined, iconSize: 30 });
+    const b = elButton(this, label, () => (enabled ? run() : b.shake()), { kind: primary ? 'primary' : 'secondary', w, ready: enabled, icon: icon && this.textures.exists(icon) ? icon : undefined, iconSize: 30 });
     b.root.setPosition(x, y);
     this.layer.add(b.root);
   }
@@ -113,7 +113,7 @@ export class MultiplayerScene extends Phaser.Scene {
   private nameLine(cx: number, y: number): void {
     const { local } = mp.names();
     this.layer.add(this.kt(cx - 30, y, `Name: ${local}`, 26, '#f3e4c4').setOrigin(1, 0.5));
-    const b = elButton(this, 'Change name', () => void this.askName(), { kind: 'secondary', w: 240, h: 52, size: 16 });
+    const b = elButton(this, 'Change name', () => void this.askName(), { kind: 'secondary', sz: 'compact', w: 240 });
     b.root.setPosition(cx + 130, y);
     this.layer.add(b.root);
   }
@@ -180,12 +180,8 @@ export class MultiplayerScene extends Phaser.Scene {
     if (mp.channelMode === 'relay') L.add(this.kt(W / 2, 648, 'Connected through the server (direct link was not possible)', 18, '#9cc4ff', { bold: false, stroke: 2 }).setOrigin(0.5));
     this.nameLine(W / 2, 1024);
     L.add(this.kt(W / 2, 836, s.connected ? 'Both players press Ready to choose teams (4 champions each).' : 'Share the code or the invite link with your friend.', 22, '#a8977a', { bold: false, stroke: 2 }).setOrigin(0.5));
-    // Kit kuralı: ikincil (Leave) solda, birincil (Ready) en sağda
-    this.button(W / 2 - 230, 926, 400, 'Leave', () => {
-      mp.leave();
-      elGo(this, 'MainMenuScene');
-    });
-    this.button(W / 2 + 230, 926, 400, s.ready.local ? 'Not ready' : 'Ready', () => s.setReady(!s.ready.local), !s.ready.local, s.connected || s.ready.local);
+    // Lobiden ayrılmak yalnızca sol üst Back / Esc (Ömer 2026-11-09: elBack ile "Leave" birlikte olmaz); tek birincil eylem ortada
+    this.button(W / 2, 926, 400, s.ready.local ? 'Not ready' : 'Ready', () => s.setReady(!s.ready.local), !s.ready.local, s.connected || s.ready.local);
   }
 
   /**

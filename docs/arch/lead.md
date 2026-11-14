@@ -1,7 +1,7 @@
 # Lead: tek sohbet düzeni (Ömer 2026-11-02)
 > **Ne için / Güncel mi (2026-11-08):** Lead'in yetkisi, kuralları, agent brief biçimi, not düzeni. Güncel. Eski satırlar: `docs/archive/arch/lead.md`.
 
-Ömer > **Lead** (tek sohbet; kuyruk aracı bu role hâlâ "Koordinatör" der, aynı şeydir) > agentlar. Alt sohbet yok. Amaç: token en düşükte, makine yükü en düşükte.
+Ömer > **Lead** (tek sohbet; kuyruk aracında bu rolün komutu `coordinator`, eski adı Koordinatör) > agentlar. Alt sohbet yok. Amaç: token en düşükte, makine yükü en düşükte.
 
 ## Yetki
 - Tüm yetki Lead'de: dağıtır, birleştirir, gönderir, Ömer'e konuşur.
@@ -17,7 +17,9 @@
 - Bir dosyaya tek yazar. Ortak dosyalar (golden, `catalog.ts`, `content.ts`, `patch-notes.json`, `open-questions.md`) tek agentta toplanır ya da sırayla verilir.
 - Birleştirme sırayla, tek noktadan; golden bir kez üretilir.
 - **Ölçen iş, ölçtüğü kodu değiştiren işle aynı anda koşmaz (Ömer 2026-11-08).** Motor/YZ/veri değiştiren agent (ör. skill ağacı YZ değeri) bitmeden denge sim'i başlatılmaz; aynı anda başlarsa sim boşa gider, tekrar ölçülür. Sıra: önce değiştiren iş biter, sonra ölçüm. Brief'te "bu iş YZ/motora dokunur mu" yazılır; dokunuyorsa sim ondan sonra sıraya girer.
-- Durum dosyada tutulur: açık işler hafızadaki Lead devir kaydı (`lead-handoff`), alan bilgisi `docs/arch/areas/<alan>.md`. Sohbet kısalsa da iş sürer.
+- Durum dosyada tutulur: Lead'in açık iş listesi `docs/arch/lead-open.md` (dallar, bekleyen formlar, alan başına tek satır), alan bilgisi `docs/arch/areas/<alan>.md`. Hafızadaki `lead-handoff` yalnız açılış adımlarını tutar, durum tutmaz (2026-11-13). Sohbet kısalsa da iş sürer.
+- **Büyük belge tam okunmaz (2026-11-13):** 30 KB üstü belge (`code-map.md` 81 KB, `skill-tree-fx-reference.md` 61 KB, `battle-engine.md` 45 KB, `combat.md`, `element-class-template.md`) önce Grep ile aranır, sonra yalnız ilgili bölüm `offset`/`limit` ile okunur. Lead de agent da böyle yapar; brief'te "X belgesini oku" yerine "X belgesinde <başlık> bölümünü oku" yazılır.
+- **Arşiv aramada gizli (2026-11-13):** `docs/archive/` `.ignore` ile Grep/Glob'dan gizlidir (23 MB, eski kararlar güncel aramayı kirletiyordu). Arşive bakmak gerekirse yol açıkça verilir (Grep `path: docs/archive/...` ya da Read).
 
 ## Agent brief (6 madde)
 1. Amaç.

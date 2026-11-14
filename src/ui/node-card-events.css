@@ -1,0 +1,41 @@
+/* Olay kartı (E1 Ribbon + olay resmi + tür rozeti; src/ui/node-card-events.ts). Aile rengi --fc / --fc-rgb satır içi gelir.
+   Ölçü oyun birimiyle calc(N * var(--u)); telefon (html.short) px. Arayüzde italik yok. */
+.nc .ev { --eh: max(100px, calc(200 * var(--u))); --w: 100%; display: flex; flex-direction: column; align-items: center; gap: max(6px, calc(12 * var(--u))); width: 100%; }
+.nc .ev .ev-scene { position: relative; flex: none; width: var(--w); height: var(--eh); background: radial-gradient(ellipse at 50% 40%, #3a2a1a, #120c08) center / cover no-repeat; background-size: cover; }
+.nc .ev .ev-scene.plain { background: radial-gradient(ellipse at 50% 40%, #3a2a1a, #120c08); }
+.nc .ev i { font-style: normal; }
+.nc .ev .ev-surprise img { display: block; width: 100%; height: 100%; object-fit: contain; }
+@keyframes ev-pulse { from { box-shadow: 0 0 0 2px #120c08, 0 0 calc(8 * var(--u)) rgba(255, 220, 140, 0.45); } to { box-shadow: 0 0 0 2px #120c08, 0 0 calc(22 * var(--u)) rgba(255, 220, 140, 0.95); } }
+
+/* ---- E1 Ribbon: madalyonda aile sigili; renkli yıkamalı sahne, köşe parantezleri, aile kurdelesi ---- */
+.nc .ev { padding-top: max(6px, calc(10 * var(--u))); }
+.nc .ev .ev-scene { border: 1px solid rgba(var(--fc-rgb), 0.75); border-radius: max(3px, calc(6 * var(--u))); box-shadow: 0 0 0 3px #120c08, 0 0 0 4px rgba(var(--fc-rgb), 0.4), inset 0 0 calc(26 * var(--u)) rgba(0, 0, 0, 0.7); }
+.nc .ev .ev-wash { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(var(--fc-rgb), 0.5), rgba(var(--fc-rgb), 0.06) 45%, rgba(var(--fc-rgb), 0.34)); mix-blend-mode: soft-light; pointer-events: none; }
+.nc .ev .ev-corner { position: absolute; width: max(10px, calc(20 * var(--u))); height: max(10px, calc(20 * var(--u))); border: 0 solid var(--fc); pointer-events: none; }
+.nc .ev .ev-corner.tl { left: 5px; top: 5px; border-width: 2px 0 0 2px; }
+.nc .ev .ev-corner.tr { right: 5px; top: 5px; border-width: 2px 2px 0 0; }
+.nc .ev .ev-corner.bl { left: 5px; bottom: 5px; border-width: 0 0 2px 2px; }
+.nc .ev .ev-corner.br { right: 5px; bottom: 5px; border-width: 0 2px 2px 0; }
+.nc .ev .ev-ribbon { position: absolute; left: 50%; top: calc(-1 * max(8px, calc(15 * var(--u)))); transform: translateX(-50%); z-index: 2; padding: 0.2em 1.6em; white-space: nowrap; font: 600 max(calc(9px * var(--tx, 1)), calc(14 * var(--u) * var(--tx, 1))) var(--g-disp); letter-spacing: 0.16em; text-transform: uppercase; color: #1a1008; background: var(--fc); clip-path: polygon(0 0, 100% 0, calc(100% - 0.7em) 50%, 100% 100%, 0 100%, 0.7em 50%); }
+.nc .ev .ev-surprise { position: absolute; right: max(8px, calc(14 * var(--u))); bottom: max(8px, calc(14 * var(--u))); width: max(26px, calc(48 * var(--u))); height: max(26px, calc(48 * var(--u))); border-radius: 50%; padding: max(4px, calc(8 * var(--u))); box-sizing: border-box; background: radial-gradient(circle, #5a3c14, #1a1008 80%); border: 1px solid #ffe3a0; animation: ev-pulse 1.8s ease-in-out infinite alternate; }
+.sbc-card.nc .nc-medal:has(~ .nc-kind.ev) { border-color: var(--fc, var(--g-gold)); }
+
+html.reduced-motion .nc .ev * { animation: none !important; }
+
+/* olayın kendi resmi: geniş panel (~2.7:1), şeridi baştan sona doldurur (Ömer 2026-11-14) */
+.nc .ev .ev-scene.has-art { background: radial-gradient(ellipse at 50% 45%, rgba(var(--fc-rgb), 0.3), rgba(var(--fc-rgb), 0.08) 55%, transparent 80%), linear-gradient(90deg, #0d0906, #1b130c 50%, #0d0906); }
+.nc .ev .ev-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; border-radius: inherit; pointer-events: none; user-select: none; }
+.nc .ev .ev-wash { z-index: 1; }
+.nc .ev .ev-scene.has-art .ev-wash { background: linear-gradient(90deg, rgba(var(--fc-rgb), 0.16), transparent 30% 70%, rgba(var(--fc-rgb), 0.16)); mix-blend-mode: normal; }
+.nc .ev .ev-corner { z-index: 1; }
+/* tür rozeti (görev: sınıf ikonu, hikâye: taç mühürü): sol alt köşe; blessing sürprizi sağ alt */
+.nc .ev .ev-badge { position: absolute; z-index: 2; left: max(8px, calc(14 * var(--u))); bottom: max(8px, calc(14 * var(--u))); width: max(26px, calc(44 * var(--u))); height: max(26px, calc(44 * var(--u))); border-radius: 50%; box-sizing: border-box; background: radial-gradient(circle, #2a1c0e, #120c08 85%); border: 1px solid var(--fc); box-shadow: 0 0 0 2px #120c08, 0 2px 6px rgba(0, 0, 0, 0.7); overflow: hidden; }
+.nc .ev .ev-badge.quest { padding: max(2px, calc(3 * var(--u))); }
+.nc .ev .ev-badge img, .nc .ev .ev-badge svg { display: block; width: 100%; height: 100%; object-fit: contain; }
+.nc .ev .ev-badge.story { border-color: #e6c675; }
+
+/* ---- telefon (844x390): kısa sahne ---- */
+html.short .nc .ev { --eh: 84px; gap: 4px; }
+html.short .nc .ev .ev-surprise { width: 26px; height: 26px; }
+html.short .nc .ev .ev-badge { width: 26px; height: 26px; }
+html.short .nc .ev .ev-ribbon { font-size: 9px; top: -7px; }

@@ -1,23 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_MENU_STYLE, menuStyleFromSearch } from '../src/ui/menu-style';
 
-describe('menu style preview switch (src/ui/menu-style.ts)', () => {
-  it('?menu=new shows the elegant style, ?menu=old the current one', () => {
-    expect(menuStyleFromSearch('?menu=new')).toBe('elegant');
-    expect(menuStyleFromSearch('?menu=elegant')).toBe('elegant');
-    expect(menuStyleFromSearch('?menu=NEW&seed=1')).toBe('elegant');
-    expect(menuStyleFromSearch('?menu=old', 'elegant')).toBe('classic');
-    expect(menuStyleFromSearch('?menu=classic', 'elegant')).toBe('classic');
-  });
-
-  it('no or unknown parameter falls back to the default', () => {
-    expect(menuStyleFromSearch('')).toBe(DEFAULT_MENU_STYLE);
-    expect(menuStyleFromSearch('?menu=xyz')).toBe(DEFAULT_MENU_STYLE);
-    expect(menuStyleFromSearch('', 'elegant')).toBe('elegant');
-  });
-
+describe('menu fonts (src/ui/menu-style.ts, src/style.css)', () => {
   it('every @font-face in style.css points at a bundled local font file (works offline), latin and latin-ext', () => {
     const css = readFileSync(join(__dirname, '..', 'src', 'style.css'), 'utf8');
     const urls = [...css.matchAll(/@font-face\s*\{[^}]*url\('([^']+)'\)/g)].map((m) => m[1]!);

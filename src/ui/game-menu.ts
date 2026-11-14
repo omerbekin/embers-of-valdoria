@@ -6,6 +6,9 @@ import { isSettingsOpen, setSettingsOpen } from './settings';
 import { lockInput, unlockInput } from './input-lock';
 import './elegant.css';
 import { navSvg } from './nav-icons';
+import { openElConfirm } from './el-dialog';
+import { CONFIRM } from './confirm-labels';
+import { pushClose } from './close-stack';
 
 /**
  * Oyun içi Menu (Ömer 2026-10-08): sağ üstte Menu ikon düğmesi (sıranın en sağı; tam ekran solunda) + Esc.
@@ -68,11 +71,9 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
 export class GameMenu {
   private readonly overlay: HTMLDivElement;
   private readonly list: HTMLDivElement;
-  private readonly confirmBox: HTMLDivElement;
-  private readonly confirmText: HTMLDivElement;
   private readonly toggle: HTMLButtonElement;
   private open = false;
-  private pending: (() => void) | null = null;
+  private closeAsk: (() => void) | null = null;
   private lastCtx: FlowContext | null = null;
 
   constructor(
@@ -91,23 +92,10 @@ export class GameMenu {
     rule.append(el('i', ''));
     box.append(rule);
     this.list = el('div', 'gm-list');
-    this.confirmBox = el('div', 'gm-confirm');
-    this.confirmBox.hidden = true;
-    this.confirmText = el('div', 'gm-confirm-text el-status');
-    const answers = el('div', 'gm-confirm-row');
-    const yes = this.button('Yes', true);
-    const no = this.button('No');
-    yes.addEventListener('click', () => {
-      const action = this.pending;
-      if (action) this.run(action);
-    });
-    no.addEventListener('click', () => this.hideConfirm());
-    answers.append(no, yes); // kit kuralı: ikincil solda, birincil eylem en sağda
-    this.confirmBox.append(this.confirmText, answers);
-    box.append(this.list, this.confirmBox);
+    box.append(this.list);
     this.overlay.append(box);
     // Boş zemine dokunmak menüyü kapatır (Resume ile aynı); onay sorusu açıksa yalnızca soruyu iptal eder (src/ui/backdrop.ts)
-    dismissOnBackdrop(this.overlay, box, () => (this.confirmBox.hidden ? this.setOpen(false) : this.hideConfirm()));
+    dismissOnBackdrop(this.overlay, box, () => this.setOpen(false));
     root.append(this.overlay);
     this.overlay.addEventListener('mouseup', (e) => e.preventDefault()); // bırakma alttaki Phaser düğmelerine gitmesin (+ giriş kilidi)
 
@@ -115,7 +103,7 @@ export class GameMenu {
     window.addEventListener(
       'keydown',
       (e) => {
-        if (!this.open || isSettingsOpen()) return;
+        if (!this.open || isSettingsOpen() || this.closeAsk) return; // onay penceresi açıkken Esc onundur (el-dialog.ts)
         if (e.key === '`' || e.key === 'F2') return; // debug menüsü kısayolu çalışmaya devam eder
         e.stopImmediatePropagation(); // diğer kısayollar (1-4, Enter...) menü açıkken oyuna gitmez
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -126,8 +114,7 @@ export class GameMenu {
         }
         if (e.key !== 'Escape') return;
         e.preventDefault();
-        if (!this.confirmBox.hidden) this.hideConfirm();
-        else this.setOpen(false);
+        this.setOpen(false);
       },
       true,
     );
@@ -135,13 +122,6 @@ export class GameMenu {
     window.setInterval(() => this.sync(), 250);
     this.sync();
     registerGameMenu(this);
-  }
-
-  private button(label: string, primary = false): HTMLButtonElement {
-    // Tasarım kiti (src/ui/elegant.css): Resume / Yes = primary, diğerleri secondary
-    const b = el('button', `gm-btn el-btn${primary ? ' primary' : ''}`, label);
-    b.type = 'button';
-    return b;
   }
 
   /** Etkin sahneye göre Menu düğmesini göster / gizle. */
@@ -170,6 +150,8 @@ export class GameMenu {
     return true;
   }
 
+  private popStack?: () => void;
+
   setOpen(open: boolean): void {
     if (open === this.open) return;
     const spec = open ? menuItems(this.hooks.context(), this.hooks.mapMenu?.()) : null;
@@ -179,6 +161,9 @@ export class GameMenu {
     this.overlay.hidden = !open;
     if (open) lockInput('game-menu');
     else unlockInput('game-menu');
+    this.popStack?.();
+    this.popStack = undefined;
+    if (open) this.popStack = pushClose({ close: () => this.setOpen(false) });
     this.hideConfirm();
     if (spec) this.build(spec);
     if (!open && isSettingsOpen()) setSettingsOpen(false);
@@ -215,8 +200,7 @@ export class GameMenu {
 
   /** Klavye odağını görünen satırlar (ya da onay düğmeleri) arasında bir adım taşır (sonda başa döner). */
   private moveFocus(step: number): void {
-    const host = this.confirmBox.hidden ? this.list : this.confirmBox;
-    const items = [...host.querySelectorAll<HTMLButtonElement>('button')];
+    const items = [...this.list.querySelectorAll<HTMLButtonElement>('button')];
     if (!items.length) return;
     // Odak yoksa başlangıç seçili satırdır (Resume, vurgulu); ilk ↓ ondan sonrakine geçer
     const focused = items.indexOf(document.activeElement as HTMLButtonElement);
@@ -237,32 +221,31 @@ export class GameMenu {
         // Ayarlar ekranı menünün üstünde açılır; Back / Esc onu kapatınca menü yeniden görünür (savaş durmaya devam eder)
         return setSettingsOpen(true);
       case 'newGame':
-        return this.ask(this.hooks.newGame, confirm);
+        return this.ask(this.hooks.newGame, confirm, CONFIRM.start);
       case 'teamSelect':
-        return this.ask(this.hooks.teamSelect, confirm);
+        return this.ask(this.hooks.teamSelect, confirm, CONFIRM.leave);
       case 'retreat':
-        return this.ask(this.hooks.retreat, confirm);
+        return this.ask(this.hooks.retreat, confirm, CONFIRM.retreat);
       case 'save':
         return this.hooks.save ? this.run(this.hooks.save) : undefined;
       case 'load':
-        return this.hooks.load ? this.ask(this.hooks.load, confirm) : undefined;
+        return this.hooks.load ? this.ask(this.hooks.load, confirm, CONFIRM.load) : undefined;
       case 'mainMenu':
-        return this.ask(this.hooks.mainMenu, confirm);
+        return this.ask(this.hooks.mainMenu, confirm, CONFIRM.leave);
     }
   }
 
-  private ask(action: () => void, confirm: string | undefined): void {
+  private ask(action: () => void, confirm: string | undefined, verb: string): void {
     if (!confirm) return this.run(action);
-    this.pending = action;
-    this.confirmText.textContent = confirm;
-    this.list.hidden = true;
-    this.confirmBox.hidden = false;
+    this.closeAsk?.();
+    // Ortak onay (Ömer 2026-11-09): Cancel + eylem fiili; Esc / zemin / X = Cancel (menü açık kalır)
+    const close = openElConfirm({ text: confirm, verb, onConfirm: () => ((this.closeAsk = null), this.run(action)), onCancel: () => (this.closeAsk = null) });
+    this.closeAsk = close;
   }
 
   private hideConfirm(): void {
-    this.pending = null;
-    this.confirmBox.hidden = true;
-    this.list.hidden = false;
+    this.closeAsk?.();
+    this.closeAsk = null;
   }
 
   private run(action: () => void): void {

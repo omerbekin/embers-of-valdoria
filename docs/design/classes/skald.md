@@ -52,7 +52,7 @@ Veri: `data/skill-trees/skald.json` (sürüm 1, bar "Saga Mastery"). Düğüm ad
 
 ## 5. Açık işler / kararlar
 
-- **Altı öneri: onay bekliyor, uygulanmadı** (Ömer 2026-11-08: ağacı henüz görmedi, formla gösterilecek; durumun sahibi `docs/arch/areas/character-design.md` > Açık iş 5): (1) War Drum alanı büyüsün (`self_area` alanı yamalanamıyor; Wild Dance bunun yerine kondu). (2) Conductor durum listesi yaması (pasifin `statuses` alanı ağaçtan değişmiyor). (3) Stormcall +1 sekme (`jumps` yamalanamıyor). (4) Hammer Spark bölünme payı (`split` yamalanamıyor). (5) Tetik `procChance` rank ölçeği (trigger kancasında `rank: 'chance'` ölçmüyor; Mage 0.f3 Rime Touch etkilenebilir, hata adayı). (6) Shocked `statusApplied` olayından geçmiyor (`shock()` doğrudan ekliyor), "Shocked verince" düğümleri yazılamıyor.
+- **Altı öneri ONAYLI (Ömer 2026-11-14, form r17): ağaç böyle kalır, 6 öneri uygulanacak (agent/skald-hooks dalı)** (durumun sahibi `docs/arch/areas/character-design.md` > Açık iş 5): (1) War Drum alanı büyüsün (`self_area` alanı yamalanamıyor; Wild Dance bunun yerine kondu). (2) Conductor durum listesi yaması (pasifin `statuses` alanı ağaçtan değişmiyor). (3) Stormcall +1 sekme (`jumps` yamalanamıyor). (4) Hammer Spark bölünme payı (`split` yamalanamıyor). (5) Tetik `procChance` rank ölçeği (trigger kancasında `rank: 'chance'` ölçmüyor; Mage 0.f3 Rime Touch etkilenebilir, hata adayı). (6) Shocked `statusApplied` olayından geçmiyor (`shock()` doğrudan ekliyor), "Shocked verince" düğümleri yazılamıyor.
 - Ağaç sim'i ve denge turu Ömer onayıyla.
 
 ## 6. Tarihçe

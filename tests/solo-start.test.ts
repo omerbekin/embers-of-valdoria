@@ -124,7 +124,7 @@ describe('yeni sefer: tek kişiyle başla, üç katılım', () => {
     s = walk(s, '7');
     while (nextStep(s).kind !== 'volunteer') s = autoResolve(s);
     const vol = nextStep(s) as { offer: string[] };
-    expect(vol.offer).toHaveLength(3);
+    expect(vol.offer).toHaveLength(4);
     for (const c of ['warrior', 'mage']) expect(vol.offer).not.toContain(c);
     s = recruit(s, vol.offer[0]!);
     expect(s.roster).toHaveLength(3);
@@ -136,7 +136,7 @@ describe('yeni sefer: tek kişiyle başla, üç katılım', () => {
     const after = nextStep(s);
     expect(after.kind).toBe('recruit'); // zaferden sonra aynı üç kart
     const offer = (after as { offer: string[] }).offer;
-    expect(offer).toHaveLength(3);
+    expect(offer).toHaveLength(4);
     for (const h of s.roster) expect(offer).not.toContain(h.class);
     s = recruit(s, offer[0]!);
     expect(s.roster).toHaveLength(4);

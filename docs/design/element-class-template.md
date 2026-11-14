@@ -22,11 +22,11 @@
 |---|---|---|
 | Fiziksel | Silah vuruşu. Kendi başına hal üretmez; ağır kritikte Kan bırakır. | Karar (kan kuralı) |
 | Kan | Hasar türü değil, ZEMİN. Ağır kritik fiziksel vuruşta hedefin karesine düşer. Sıvıdır: donar, elektrik iletir. | Karar |
-| Ateş | Yakar; sıvıları buharlaştırır, buzu eritir, zehir/yağı patlatır. | Taslak |
+| Ateş | Yakar; suda söner (söndürme, buhar yok: Ömer onaylı 2026-11-09), buzu eritir, zehir/yağı patlatır. | Taslak |
 | Buz | Soğutur; sıvıları buz zeminine çevirir, yangını söndürür. | Taslak |
 | Su | Islatır; yangını söndürür, elektriği iletir, buzla donar. | Karar (Druid) |
-| Elektrik | Sarsar; ıslak hedefi sersemletir, sıvıyı ve buharı “yüklü” yapar. | Karar (Anti-Mage) |
-| Buhar | Hasar türü değil, BULUT. Su + ateşten doğar; elektrikle yüklü bulut olur. | Taslak |
+| Elektrik | Sarsar; ıslak hedefi sersemletir, sıvıyı “yüklü” yapar (buhar yok). | Karar (Anti-Mage) |
+| Buhar | **YOK (Ömer onaylı 2026-11-09): buhar bulutu yok, söndürme kalır.** Su + ateş bugünkü söndürme kuralıyla çözülür; bulut katmanı, buhar bulutu ve yüklü bulut yapılmaz. | Karar |
 | Zehir | Zemin (Undead’de zaten var). Ateşle patlar. | Taslak |
 | Yağ | Zemin; üstündekini yavaşlatır, ateşle yangına döner. Tek kaynağı Archer önerisiydi, o kapandı (2026-11-01): şu an veren sınıf yok. | Taslak, kaynaksız |
 | Kutsal | Kutsar; yangını kutsal ateşe, suyu kutsal suya çevirir. | Taslak |
@@ -57,14 +57,14 @@
 
 | Kurulum (zeminde/hedefte olan) | Tetik (gelen) | Sonuç | Durum |
 |---|---|---|---|
-| Su | Ateş | Buhar bulutu (ıslaklık biter) | Taslak |
+| Su | Ateş | Söndürme (Flooded + Burning = ateş söner, 2026-10-27); buhar bulutu YOK (Ömer onaylı 2026-11-09) | Karar |
 | Su | Buz | Buz zemini (kayma) | **Karar (Ömer 2026-10-27):** Flooded + Storm (iki sıra) -> Ice zemini, üstündeki düşman tur başında Slow 1 tur; su kalkar (open-questions-archive 445) |
 | Buz zemini | Ateş | Su zemini | Taslak |
 | Yanan zemin | Su / Buz | Söner | **Karar (Ömer 2026-10-27):** suda söner (eskisi gibi); Storm + Burning (iki sıra) ikisi de söner, hücre Flooded olur (open-questions-archive 445) |
 | Zehir / Yağ zemini | Ateş | Patlama / yangın | **Karar (Ömer 2026-10-27), zehir:** Poison -> Burning = Explosion (hücre + komşulara anlık ateş hasarı, zehir kalkar, ateş kalır); ters sıra Burning -> Poison = Toxic smoke (Blinded 1 tur + bir zehir tiki, zehir buharlaşır). Yağ hâlâ taslak (open-questions-archive 445) |
 | Kan zemini | Buz | Buz zemini | Taslak |
 | Su / Kan zemini | Elektrik | Yüklü zemin (üstündekileri sarsar) | Taslak |
-| Buhar bulutu | Elektrik | Yüklü bulut | Taslak |
+| ~~Buhar bulutu~~ | Elektrik | ~~Yüklü bulut~~: düştü (Ömer onaylı 2026-11-09: buhar bulutu yok, söndürme kalır) | Karar |
 | Yanan zemin | Kutsal | Kutsal ateş | **Karar (Ömer 2026-10-27):** Burning <-> Holy Fire (iki sıra) = Sanctified Flame (güçlünün %30 fazlası, uzun süre) (open-questions-archive 445) |
 | Kutsal ateş | Karanlık | Lanetli ateş | Taslak |
 | Su zemini | Kutsal | Kutsal su | **Karar (Ömer 2026-10-27):** Flooded <-> Holy Fire = Holy Water (tetiği bırakanın dostlarına tur başı şifa, hasar yok) (open-questions-archive 445) |
@@ -77,9 +77,30 @@
 | Kutsal ateş | Zehir | Purified: zehir tutmaz, kutsal ateşin süresi o hücrede baştan başlar | **Karar (Ömer 2026-10-27)** (open-questions-archive 445) |
 | Zehir zemini | Kutsal ateş | Fed: zehir tükenir, kutsal ateş o hücrede %50 fazla vurur | **Karar (Ömer 2026-10-27)** (open-questions-archive 445) |
 | Kök zemini (Root Field) | Ateş (iki sıra) | Roots burn: kök yanar (Slow biter), anlık ateş hasarı, ateş kalır | **Karar (Ömer 2026-10-27)** (open-questions-archive 445) |
-| Su zemini | Zehir (iki sıra) | Zehir suya bağlı tüm su hücrelerine yayılır, su kalır | **Karar (Ömer 2026-10-27)** (open-questions-archive 445) |
+| Su zemini | Zehir (iki sıra) | Zehir ortak sıvı kuralıyla taşar (alanın %33'ü kadar bitişik hücre, en az 1), su kalır | **Karar (Ömer 2026-10-27; yayılma kuralı 2026-11-09)** (open-questions-archive 445) |
 
 Zemin tepkimelerinin genel kuralı (Ömer 2026-10-27, uygulandı): hücredeki zemin kurulum, yeni bırakılan tetik; her ortak hücrede bir kez, tek sonuç; iki tarafın zeminleri de tepkir; etkinin sahibi tetiği bırakan. Veri `data/grounds.json > reactions`, sayılar provizyon (open-questions-archive 445).
+
+### Karar 2026-11-09: element formu (uygulandı)
+
+- **Kademe kuralı: "Yukarı birleşir, aşağı çözülür" (Ömer 2026-11-09).** T1 + T1 = T2 ya da anlık etki. T2 asla yeni bir T2 kurmaz; yalnız silinir (isteğe göre anlık hasarla) ya da T1 kaynağına çözülür. Çözülen T1 normal davranır. Anlık etkiler geride bir şey bırakmaz. Kutsal muaf.
+- **Etkisiz çift kuralı (Ömer 2026-11-09):** "Ömer 2026-11-09: empty (etkisiz) combos are allowed, but they must be spread evenly across elements. No element may have many more empty pairs than another." Bugün etkisiz: ateş + kan, zehir + şimşek (ateş, şimşek, kan, zehir birer boş çift).
+- **Ortak sıvı yayılma kuralı (Ömer 2026-11-09):** her sıvı yayılması (su + zehir, su + lanet, zehir + kan, Spark blaze) tepkimeye giren alanın hücre sayısı x %33 kadar (yuvarlanır, en az 1) rastgele bitişik hücreye taşar. Veri `formulas.json > liquidSpread`. Eski "bağlı tüm su hücrelerine" kuralının yerini aldı.
+- **Electrocuted (T2 şimşek, Ömer 2026-11-09):** Soaked ya da suda (Flooded, Healing Rain, Kan) duran hedefe şimşek Stun yerine Electrocuted verir: birim anında temel saldırısıyla (ilk skill) kendi tarafından rastgele bir dosta vurur, sonra sıra çubuğu 0. Boss bağışık; elit Stun ile aynı CC kuralı. Shocked (T1) aynı kaldı; tepkimeler sonuç olarak Shocked vermez. Veri `formulas.json > thunder.wetInto`, `statuses.json > electrocuted`.
+- **Healing Rain su sayılır (Ömer 2026-11-09):** tüm su kurallarında (tepkime, şimşek iletimi); lanet ona da yayılır, lanetli Healing Rain kimseyi iyileştirmez. Islatmaz (Soaked vermez).
+- Kod: zemin + birim tepkimeleri `data/grounds.json > reactions` (birim üstü olanlarda `unitSetup` / `unitTrigger`), motor `battle.ts > reactGrounds / reactUnit / boltLanded`, YZ `ai.ts > unitReactionValue / groundCreationValue / thunderValue`, test `tests/element-combos.test.ts`. Sayılar provizyon; varsayımlar `open-questions.md` > Q-NEW "Element formu".
+
+Çift matrisi (zemin çiftleri; birim üstü tepkimeler hücrede yazılı):
+
+| | Ateş | Buz / Chill | Şimşek | Zehir | Su (Flooded, Healing Rain) | Kan | Lanet | Kutsal |
+|---|---|---|---|---|---|---|---|---|
+| **Ateş** | - | Söner (Quenched); birimde Frozen + ateş = Soaked | Spark blaze (yanan zemin ortak kuralla yayılır) | Explosion / Toxic smoke | Söndürme; birimde Steam (Soaked + Burning: ikisi kalkar) | **etkisiz (Ömer 2026-11-09)** | Black flame (Burning + Unhallowed) | Sanctified Flame |
+| **Buz / Chill** | | Frozen chill | Ice: Shatter; Chill Ground: Brittle frost (Shredded 1 tur); birimde Brittle | Frost venom (Ice + Chilled + bir zehir tiki); birimde zehir süresi +1 | Ice; birimde Flash freeze (Soaked + Chilled = Frozen) | Ice | Grave frost (Chilled + Unhallowed) | - (kutsal muaf) |
+| **Şimşek** | | | - | **etkisiz (Ömer 2026-11-09)**; birimde Poisoned + Shocked = bir zehir tiki | Live Water + Electrocuted | Electrocuted (kan suyu gibi iletir) | Hexed spark (Jinxed 2 tur, Shocked yok) | - (kutsal muaf) |
+| **Zehir** | | | | - | Spread (ortak sıvı kuralı); birimde Soaked + Poisoned = komşu Soaked'a Poisoned 1 tur | Tainted blood (kan zehre döner, ortak kuralla yayılır) | Rot / çürüme (Poisoned, tik +%25 PROVİZYON + Unhallowed) | Purified / Fed |
+| **Su** | | | | | - | Bloody water (su gibi + Bleeding) | Lanet ortak kuralla yayılır; lanetli Healing Rain iyileştirmez | Holy Water / Evaporate; Holy Water + lanet birbirini siler |
+| **Kan** | | | | | | - | Blood curse (alınan şifa -%70) | - (kutsal muaf) |
+| **Lanet** | | | | | | | - | Birbirini siler (Cleansed) |
 
 ## 5. Sınıf şablonları
 
@@ -111,7 +132,7 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 
 | Skill | Şu anki element | Önerilen element | Uyguladığı durum | Tetiklediği / tükettiği etkileşim | Değişiklik | Pasifle ilişkisi |
 |---|---|---|---|---|---|---|
-| Tremor Slam | Fiziksel | Fiziksel (sarsıntı) | Slow (mevcut) | Taslak: su/kan/zehir zeminini komşu karelere sıçratır. **[ÖNERİ]** buz zeminini kırar (→ su, kayma biter) | küçük | Yok |
+| Tremor Slam | Fiziksel | Fiziksel (sarsıntı) | Slow (mevcut) | **Uygulandı (Ömer onaylı 2026-11-09):** isabet ettiği hücredeki sıvı zemini (su, kan, zehir; `grounds.json > liquid`) 1 kare komşulara sıçratır. **[ÖNERİ]** buz zeminini kırar (→ su, kayma biter) | küçük | Yok |
 | Taunt | — | — | Taunt (mevcut) | Yok | yok | Bulwark Aura ile ilgisiz |
 | Close Ranks | — | — | Guard (mevcut; seçilen dost + sırası) | Yok (Guard’lı müttefikin elektriğini Defender’ın yemesi açık soru) | yok | Bulwark Aura: yanındakiler zaten korunuyor |
 | Fist Crush | Fiziksel | Fiziksel (+Kan) | Ağır kritikte kan | **[ÖNERİ]** Frozen hedefe vurursa buz kırılır: Frozen biter | küçük | Yok |
@@ -191,7 +212,7 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 | Skill | Şu anki element | Önerilen element | Uyguladığı durum | Tetiklediği / tükettiği etkileşim | Değişiklik | Pasifle ilişkisi |
 |---|---|---|---|---|---|---|
 | Thorn Whip | Doğa | Doğa | Wound (mevcut) | Yok | yok | Yok |
-| Nature’s Wrath | Doğa | Doğa veya **[ÖNERİ]** Su (Tidal Wrath) | **[ÖNERİ]** Wet (düşman alanı) | Kurar: ıslak düşman → Blizzard dondurur, elektrik sersemletir, ateş buharlaştırır | rework | Yok |
+| Tidal Wrath (eski Nature’s Wrath; id `natures_wrath`) | Doğa | Doğa (Ömer onaylı 2026-11-09: yalnız ad Tidal Wrath oldu, hasar türü doğa kalır) | **[ÖNERİ]** Wet (düşman alanı) | Kurar: ıslak düşman → Blizzard dondurur, elektrik sersemletir, ateş buharlaştırır | rework | Yok |
 | Healing Rain (eski Rejuvenate) | — (şifa) | Su (KARAR) | Şifa + HoT (mevcut) + müttefiğe Wet (taslak) | Müttefiğin Burning’ini ve yanan zemini söndürür; ama ıslak müttefik elektriğe açık | rework | Yok |
 | Summon Treant | — | Doğa | Treant: Root Smash (fiziksel), Vine Snare (doğa, kök) | Yok | yok | Nature's Grudge (2026-10-20, Verdant Blessing'in yerine): dost kahraman düşünce öldüreni 3 tur Slow + Wither |
 
@@ -320,10 +341,10 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 ## 7. Tüm açık sorular (31)
 
 1. **Genel:** Durum listesi (Wet, Chilled, Frozen, Shocked, Burning, Poisoned) taslaktı; bu haliyle onaylıyor musun?
-2. **Genel:** “Ağır kritik” ne demek? (Öneri: normal kritiğin üstünde ayrı bir eşik, ör. hedefin maks. canının %15’inden büyük kritik vuruş.)
+2. **Genel:** “Ağır kritik” ne demek? (Öneri: normal kritiğin üstünde ayrı bir eşik, ör. hedefin maks. canının %15’inden büyük kritik vuruş.) **Karar (Ömer onaylı 2026-11-09):** eşik %35 (`formulas.json > heavyCrit.hpRatio`).
 3. **Genel:** Kan yalnız zemin mi kalsın, yoksa hedefe ayrıca “Kanıyor” durumu da gelsin mi?
 4. **Genel:** Dost ateşi: element zincirleri kendi takımımızı da etkiler mi? (Ör. Healing Rain ile ıslanan müttefik, kendi Anti-Mage’imizin elektriğiyle sersemler mi?)
-5. **Genel:** Bosslar CC yemiyor; Frozen ve Stunned bossta ne olur? (Öneri: yalnız Chilled/Shocked kalır, hal yine zemine/zincire işler.)
+5. **Genel:** Bosslar CC yemiyor; Frozen ve Stunned bossta ne olur? (Öneri: yalnız Chilled/Shocked kalır, hal yine zemine/zincire işler.) **Karar (Ömer onaylı 2026-11-09):** boss tüm CC'ye bağışık (Frozen dahil); Chilled CC değil; CC dışı debuff'lar boss'ta %25, elitte %50 güç (`combat.md` > Boss / elit debuff gücü).
 6. **Genel:** Karede 1 zemin + 1 bulut kuralı ve “aynı zemin birleşir, süre tazelenir” kuralı onaylı mı?
 7. **Genel:** 1. aşama kapsamı: su, buz, ateş, elektrik, buhar + kan yeterli mi; zehir/yağ/kutsal/lanet 2. aşamaya mı?
 8. **Genel:** Ad çakışması: buz kayması için mevcut “Staggered” adı kullanılabilir mi, yoksa yeni ad mı (ör. “Slipping”)?
@@ -331,7 +352,7 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 10. **Warrior:** Kan zemini tek başına bir şey yapar mı, yoksa yalnız dönüşüm malzemesi mi?
 11. **Defender:** Frozen hedefi kırmak ekstra hasar verir mi, yoksa yalnız donmayı mı bitirir?
 12. **Defender:** Sıçratma kaç kareye (yalnız sağ-sol-ön-arka mı)?
-13. **Defender:** Guard’lanan müttefik ıslakken gelen elektriği Defender mı yer?
+13. **Defender:** Guard’lanan müttefik ıslakken gelen elektriği Defender mı yer? **Karar (Ömer onaylı 2026-11-09):** hayır; Guard yalnız hasarı aktarır, Stun / Shocked asıl hedefte kalır.
 14. **Archer:** KAPANDI (Ömer 2026-11-01, Archer plandan çıktı).
 15. **Archer:** KAPANDI (elektrik yalnız Anti-Mage'de).
 16. **Archer:** KAPANDI (yağın kaynağı kalmadı).
@@ -350,3 +371,13 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 29. **Hexer:** Lanetli zemin ve lanetli ateş ne yapar?
 30. **Hexer:** Hexer zaten Omen ile karmaşık; element katkısı yalnız Withering Curse’te mi kalsın?
 31. **Undead:** Zehir patlaması kendi takımımızı da vurur mu (dost ateşi sorusuyla bağlı)?
+
+## Karar (Ömer 2026-11-09): Explosion hasarı
+
+Explosion anlık hasarı = hücredeki Poison Ground tiki + Burning Ground tiki (toplam; `grounds.json > reactions.explosion.damage.sum`). Poison için hücredeki zemin örneğinin kayıtlı tiki (hücre çarpanı dahil), Burning için tetikleyen skill'in zemin gücü alınır (motor `reactGrounds` / YZ `groundCreationValue` aynı toplamı kullanır); komşu hücreler toplamın `adjacent` oranı. Ters sıra (Burning -> Poison = Toxic smoke) değişmedi. **Birim üstü (uygulandı, Ömer 2026-11-09):** Poisoned birime Burning gelirse Explosion (Poisoned biter, hedef + komşulara ateş hasarı = iki durumun kayıtlı tik miktarlarının toplamı, Burning kalır); Burning'li birime Poisoned = Toxic smoke (Blinded 1 tur + bir zehir tiki, Poisoned buharlaşır). Zemin tepkimesiyle aynı kod ve aynı veri (`grounds.json > reactions > unitSetup / unitTrigger / unitRemove`; `Battle.reactUnit` + `applyReactionFx`). Boss'ta Blinded 2026-11-09'dan beri engelli değil (Ömer onaylı, form 3: `ccImmunity.accuracyCrit` kapalı), boss %25 / elit %50 güçle yer. Zeminin kendi verdiği durumlar zaten hücre tepkimesinden geçtiği için yalnız skill ile gelen durumlar tetikler. YZ: `ai.ts > unitReactionValue` (tepkime hasarı aday hasarına). Test: `tests/unit-reactions.test.ts`.
+
+## Karar (Ömer onaylı 2026-11-09): Kan zemini, lanetli zemin; bulut katmanı yok
+
+- **Kan zemini (uygulandı):** fiziksel kritik vuruş hedefin maks canının `formulas.json > heavyCrit.hpRatio` (0,35) oranından FAZLA can götürürse hedefin hücresine Blood (`grounds.json > blood`) düşer (eski taslaktaki %15 eşiği yerine). Kansız birim (veride `bloodless: true`: iskelet, golem, ruh, bitki, yapı) kan bırakmaz. Kan sıvıdır: içindeki her birim Soaked (Flooded gibi), Tremor Slam sıçratmasında sıvı (`liquid`), kan + buz = Ice (`reactions.frozen`), kan + elektrik = su gibi iletir (Live Water). Motor `battle.ts > spillBlood / bleeds / isHeavyCrit`, YZ `ai.ts > bloodValue`. Test `tests/blood-cursed-ground.test.ts`. Bu, bölüm 7 soru 2, 3 (kan yalnız zemin), 9 (kansızlar bırakmaz) ve 10 (tek başına Soaked verir) cevabıdır.
+- **Lanetli zemin (uygulandı):** Hexer Withering Curse alanına Cursed Ground bırakır; içindeki düşman Unhallowed (`statuses.json > unhallowed`, alınan şifa -%50). Kutsal ateş (Holy Fire / Sanctified Flame) + lanetli zemin = ikisi de kalkar, hücre temiz (`reactions.cleansed`). Bölüm 7 soru 29'un lanetli zemin kısmı; lanetli ateş tanımsız, uygulanmadı.
+- **Buhar / yüklü bulut ve "karede 1 zemin + 1 bulut": DÜŞTÜ (Ömer onaylı 2026-11-09, form 3): buhar bulutu yok, söndürme kalır.** Su + ateş bugünkü söndürme kuralıyla çözülür (Flooded + Burning = ateş söner, 2026-10-27); buhar bulutu, yüklü bulut ve bulut katmanı yapılmaz. Belgedeki eski buhar önerileri (Fire Bolt / Meteor "su -> buhar", Ley Brand "buhar -> yüklü bulut", sinerji satırları) bu kararla geçersizdir.

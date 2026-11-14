@@ -1,3 +1,4 @@
+import { iconUrl } from './dom-icons';
 import type { IconKind } from './icon-kinds';
 import { uiImage } from '../game/icon-image-files';
 
@@ -76,4 +77,15 @@ export function globalIconName(def: { kind: string; icon?: string }): string {
   const k = GLOBAL_UI[def.kind];
   if (k && hasUiImage(k)) return uiIconName(k);
   return def.icon ?? (k ? uiIconName(k) : '');
+}
+
+/** Boyalı altın ikonu (yoksa null): TEK yardımcı (Ömer 2026-11-09); tüccar / demirci / ganimet / kamp / Gear kullanır. */
+export function goldImg(cls = 'gr-price-ico'): HTMLImageElement | null {
+  if (!hasUiImage('gold')) return null;
+  const i = document.createElement('img');
+  i.className = cls;
+  i.src = iconUrl(uiIconName('gold'));
+  i.alt = '';
+  i.draggable = false;
+  return i;
 }

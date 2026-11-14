@@ -50,7 +50,7 @@ Veri: `data/skill-trees/paladin.json` (sürüm 2, bar "Crusade Mastery"). Düğ�
 
 - Radiance: TÜM dostlara şifa + TÜM düşmanlara kutsal hasar, zemin yok (Ömer 2026-10-24; tek hücre / Holy Ground sürümü geri alındı). Judgment tek hücre, iki tahtaya da atılır; düşman hücresine hasar + Holy Fire, dost hücresine şifa + Holy Ground.
 - 2026-11-08 (Ömer): mana reworkü sonrası MP havuzu daraldı; Radiance ve Resurrection MP'si, Judgment düşman hasarı (+%5) veride.
-- **Ömer'e açık soru:** Divine Light veri değeri 2026-10-24 kararındaki %35'ten düşük; Judgment şifa / zemin sayıları da karardakinden farklı. Hangisi kasıtlı, karar kaydı bulunamadı.
+- **Karar (Ömer 2026-11-14, form r17):** Divine Light INT 0,312 kalır (`data/classes/paladin.json > passive.effect.power`); 9 Kasım'daki 0,27 kararının yerine; eski %35 kararı geçersiz. Judgment şifa 0,3, Holy Ground 0,38 (düşman tarafı 0,315 / Holy Fire 0,399) veri ne ise odur; sayı değişmedi, yalnız belge hizalandı.
 - Paladin ölçümde bant altıydı; sonraki denge turu bekliyor (`docs/balance.md`). Ağaç sim'i yok.
 
 ## 6. Tarihçe

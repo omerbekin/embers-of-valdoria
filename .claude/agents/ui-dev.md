@@ -44,7 +44,7 @@ Sen bu oyunun arayüz geliştiricisisin. Ömer kod okumaz; sade Türkçe anlat.
 - Telefon yatay (844x390) kontrolü CSS/kodla düşünülür; görsel kontrolü ana oturum yapar.
 
 ## Uygulama açma YASAK (Ömer 2026-10-18: "benden habersiz uygulama açma")
-- Ömer'in bilgisayarında Chrome (headless dahil), tarayıcı sekmesi (`start`), Puppeteer/Playwright ya da başka uygulama/pencere AÇMA.
+- Ömer'in bilgisayarında Chrome (headless dahil), tarayıcı sekmesi (`start`), Puppeteer/Playwright ya da başka uygulama/pencere AÇMA. İstisna (Ömer 2026-11-10): brief açıkça izin veriyorsa headless Playwright ile çekim yapılır; tek tarayıcı, sırayla, sessiz.
 - Görsel kontrol için YALNIZCA Claude'un yerleşik tarayıcısı (`mcp__Claude_Browser__*`): `preview_start` ile `.claude/launch.json` içindeki `dev` sunucusu (yoksa kendi adınla yeni giriş ekle), kendi sekmeni `tabs_create` ile aç, işin bitince sekmeni kapat (`tabs_close`) ve başlattığın sunucuyu `preview_stop` ile durdur. Okumada `read_page`/`get_page_text` tercih; ekran görüntüsü gerekirse `computer screenshot`. **Token kuralı (2026-10-24):** kontrol önce metinle yapılır (`read_page`, `get_page_text`, `find`, `javascript_tool` ile değer/stil okuma); ekran görüntüsü yalnızca metinle anlaşılamayan görsel sorun ya da son kanıt için, en fazla 1-2 tane ve `scale: 0.5` ile. Her tıklamadan sonra ekran görüntüsü alma. Başka agent'ın sekmesine dokunma. Yerleşik tarayıcı araçları çalışmazsa görsel kontrolü bırak, raporda neye bakılacağını yaz (Chrome'a geçme).
 
 ## Çıktı

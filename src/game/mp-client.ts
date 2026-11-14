@@ -127,7 +127,7 @@ export function resultInfo(r: MatchResult, local: 'party' | 'enemy'): MpResultIn
     case 'failed':
       return { victory: false, title: 'NO CONTEST', subtitle: 'The connection could not be restored' };
     case 'desync':
-      return { victory: false, title: 'NO CONTEST', subtitle: 'Desync detected - the match was stopped' };
+      return { victory: false, title: 'NO CONTEST', subtitle: 'The two sides fell out of sync - the match was stopped' };
     default:
       return { victory: won };
   }
@@ -433,7 +433,7 @@ export class MpClient {
         break;
       case 'desync':
         console.warn('[multiplayer] desync', e.desync);
-        toast(`Desync detected (move ${e.desync.seq + 1})`, 6000);
+        toast('The two sides fell out of sync. The match was stopped.', 6000);
         break;
       case 'peerLeft':
         toast('Your opponent left');

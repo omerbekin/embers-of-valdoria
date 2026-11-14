@@ -9,9 +9,9 @@
 .tt-tip.pin { pointer-events: auto; }
 .tt-tip .gt-ctl { display: none; align-items: stretch; gap: 8px; padding: 8px 12px 10px; border-top: 1px solid rgba(217, 178, 106, .16); background: rgba(0, 0, 0, .24); pointer-events: auto; }
 .tt-tip.pin .gt-ctl { display: flex; }
-.tt-tip .gt-ctl button { flex: 1; min-height: 48px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(217, 178, 106, .3); color: #f3d999; font: 600 24px Cinzel, Georgia, serif; cursor: pointer; touch-action: manipulation; }
+.tt-tip .gt-ctl button { flex: 1; min-height: 48px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(217, 178, 106, .3); color: #f3d999; font: 600 calc(24px * var(--tx, 1)) Cinzel, Georgia, serif; cursor: pointer; touch-action: manipulation; }
 .tt-tip .gt-ctl button:disabled { opacity: .35; }
-.tt-tip .gt-ctl .rk { flex: none; min-width: 72px; display: flex; align-items: center; justify-content: center; font: 600 15px Cinzel, Georgia, serif; letter-spacing: .08em; color: #d9c8a2; }
+.tt-tip .gt-ctl .rk { flex: none; min-width: 72px; display: flex; align-items: center; justify-content: center; font: 600 calc(15px * var(--tx, 1)) Cinzel, Georgia, serif; letter-spacing: .08em; color: #d9c8a2; }
 .tt-tip .bt-foot.lock { color: #ffd99a; }
 .tt-tip .bt-foot.bad { color: #ffb070; border-top-color: rgba(224, 112, 42, .7); background: rgba(224, 112, 42, .12); }
 .tt-tip .bt-foot.pend { color: #ffc98a; }
@@ -19,7 +19,7 @@ html.short .tt-tip { max-height: calc(100% - 12px); overflow: hidden auto; scrol
 html.short .tt-tip .bt::after { display: none; } /* sağ alt köşe elması kutudan taşıp iç dikey kaydırma çıkarıyordu */
 html.short .tt-tip.pin .gt-ctl { position: sticky; bottom: 0; background: #17110a; padding: 6px 10px 8px; }
 html.short .tt-tip .gt-ctl button { min-height: 44px; }
-.gt-none { padding: calc(30 * var(--u)); font: max(14px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); }
+.gt-none { padding: calc(30 * var(--u)); font: max(calc(14px * var(--tx, 1)), calc(20 * var(--u) * var(--tx, 1))) var(--g-body); color: var(--g-dim); }
 
 /* ---------- sayfa kabuğu: Tree sekmesi iki sayfayı birden kaplar ---------- */
 .gt-in { min-width: 0; }
@@ -40,12 +40,12 @@ html.short .tt-tip .gt-ctl button { min-height: 44px; }
 /* ---------- Mastery bar: yalniz bonus elmaslari (hover ipucu); bonus izgarasi / tier yazisi / evolve centigi YOK ---------- */
 .gt-barw { margin: 2px 0 0; }
 .gt-bar-top { display: flex; align-items: baseline; gap: 6px 14px; flex-wrap: wrap; }
-.gt-bnm { font: 600 max(12px, calc(19 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); }
-.gt-bval { font: max(12px, calc(19 * var(--u))) var(--g-body); color: var(--g-dim); }
+.gt-bnm { font: 600 max(calc(12px * var(--tx, 1)), calc(19 * var(--u) * var(--tx, 1))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); }
+.gt-bval { font: max(calc(12px * var(--tx, 1)), calc(19 * var(--u) * var(--tx, 1))) var(--g-body); color: var(--g-dim); }
 .gt-bval b { font: 600 1.1em var(--g-disp); color: #fff4d6; }
 .gt-bval i { font-style: normal; color: #ffb070; margin-left: .4em; }
 .gt-bval i:not(:empty)::after { content: ' pending'; }
-.gt-bar-r { margin-left: auto; font: 600 max(10px, calc(14 * var(--u))) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-dim); }
+.gt-bar-r { margin-left: auto; font: 600 max(calc(10px * var(--tx, 1)), calc(14 * var(--u) * var(--tx, 1))) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-dim); }
 .gt-bar-r b { color: var(--g-gold); font-weight: 600; margin-left: .35em; }
 .gt-barrow { padding: 26px 22px 12px; }
 .gt-track { position: relative; height: 10px; background: #0d0806; border: 1px solid rgba(217, 178, 106, .4); }
@@ -55,7 +55,7 @@ html.short .tt-tip .gt-ctl button { min-height: 44px; }
 .gt-mk { position: absolute; top: 50%; width: 0; cursor: help; -webkit-tap-highlight-color: transparent; }
 .gt-mk::before { content: ''; position: absolute; left: calc(var(--mkw, 44px) / -2); top: -34px; width: var(--mkw, 44px); height: 48px; }
 .gt-mk i { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; transform: rotate(45deg); background: #0d0806; border: 1.5px solid rgba(217, 178, 106, .55); z-index: 1; transition: background .15s, border-color .15s, box-shadow .15s; }
-.gt-mk em { position: absolute; left: -22px; width: 44px; top: -32px; text-align: center; font: normal 600 12px var(--g-disp); color: var(--g-dim); transition: color .15s; }
+.gt-mk em { position: absolute; left: -22px; width: 44px; top: -32px; text-align: center; font: normal 600 calc(12px * var(--tx, 1)) var(--g-disp); color: var(--g-dim); transition: color .15s; }
 .gt-mk.tbd i { border-style: dashed; border-color: rgba(217, 178, 106, .3); }
 .gt-mk:hover i, .gt-mk.pin i { border-color: #fff4d6; }
 .gt-mk:hover em, .gt-mk.pin em { color: #fff4d6; }
@@ -86,15 +86,15 @@ html.short .tt-tip .gt-ctl button { min-height: 44px; }
 .gt-tb.lk { background: rgba(0, 0, 0, .34); border-left-style: dashed; }
 .gt-tb[data-tier=E] { background: rgba(243, 217, 153, .03); }
 .gt-ts { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2px 3px; pointer-events: none; border-bottom: 1px solid var(--g-line2); overflow: hidden; }
-.gt-ts small { font: 600 10px var(--g-disp); letter-spacing: .16em; text-transform: uppercase; color: var(--g-dim); white-space: nowrap; }
-.gt-ts b { display: inline-flex; align-items: center; gap: 5px; font: 600 14px var(--g-disp); letter-spacing: .08em; color: var(--g-gold); margin-top: 1px; white-space: nowrap; }
-.gt-ts b em { font: normal 600 11px var(--g-disp); color: var(--g-dim); letter-spacing: .04em; }
+.gt-ts small { font: 600 calc(10px * var(--tx, 1)) var(--g-disp); letter-spacing: .16em; text-transform: uppercase; color: var(--g-dim); white-space: nowrap; }
+.gt-ts b { display: inline-flex; align-items: center; gap: 5px; font: 600 calc(14px * var(--tx, 1)) var(--g-disp); letter-spacing: .08em; color: var(--g-gold); margin-top: 1px; white-space: nowrap; }
+.gt-ts b em { font: normal 600 calc(11px * var(--tx, 1)) var(--g-disp); color: var(--g-dim); letter-spacing: .04em; }
 .gt-ts .pl { width: 10px; height: 12px; display: none; fill: none; stroke: #8d7f66; stroke-width: 1.6; }
 .gt-ts.lk b { color: #8d7f66; } .gt-ts.lk .pl { display: inline-block; } .gt-ts.lk small { opacity: .75; }
 .gt-ts.evo small { color: #cdbd7e; }
-.gt.cs .gt-ts small { font-size: 8.5px; letter-spacing: .1em; }
-.gt.cs .gt-ts b { font-size: 11px; gap: 3px; letter-spacing: .04em; }
-.gt.cs .gt-ts b em { font-size: 9px; }
+.gt.cs .gt-ts small { font-size: calc(8.5px * var(--tx, 1)); letter-spacing: .1em; }
+.gt.cs .gt-ts b { font-size: calc(11px * var(--tx, 1)); gap: 3px; letter-spacing: .04em; }
+.gt.cs .gt-ts b em { font-size: calc(9px * var(--tx, 1)); }
 .gt.cs .gt-ts .pl { width: 8px; height: 10px; }
 
 /* ---------- dugumler (filler kucuk elmas + rank noktalari, edge kucuk yuvarlak, notable orta ikonlu, blood price damla, evolve buyuk altin) ---------- */
@@ -141,15 +141,15 @@ html.short .tt-tip .gt-ctl button { min-height: 44px; }
 .gt-nd .lkic { position: absolute; right: calc(50% - var(--s) / 2 - 3px); top: calc(50% - var(--s) / 2 - 4px); width: 15px; height: 15px; display: none; align-items: center; justify-content: center; border-radius: 50%; background: #120c08; border: 1px solid rgba(217, 178, 106, .75); z-index: 3; pointer-events: none; }
 .gt-nd .lkic svg { width: 9px; height: 10px; fill: none; stroke: #e8cf8f; stroke-width: 1.7; }
 .gt-nd.st-dir .lkic { display: flex; }
-.gt-nd .pp { position: absolute; left: 50%; top: calc(50% + var(--s) / 2 + 2px); transform: translateX(-50%); font: 600 8px/1 var(--g-disp); letter-spacing: .02em; color: var(--g-dim); white-space: nowrap; pointer-events: none; }
+.gt-nd .pp { position: absolute; left: 50%; top: calc(50% + var(--s) / 2 + 2px); transform: translateX(-50%); font: 600 calc(8px * var(--tx, 1))/1 var(--g-disp); letter-spacing: .02em; color: var(--g-dim); white-space: nowrap; pointer-events: none; }
 .gt-nd .pp .c { color: var(--g-gold); } .gt-nd .pp .p { color: #ffb35a; }
-.gt-nd .lb { position: absolute; left: 50%; transform: translateX(-50%); width: 100px; text-align: center; font: normal 600 10px/1.1 var(--g-disp); letter-spacing: .04em; text-transform: uppercase; color: var(--g-dim); pointer-events: none; }
+.gt-nd .lb { position: absolute; left: 50%; transform: translateX(-50%); width: 100px; text-align: center; font: normal 600 calc(10px * var(--tx, 1))/1.1 var(--g-disp); letter-spacing: .04em; text-transform: uppercase; color: var(--g-dim); pointer-events: none; }
 .gt-nd .lb.dn { top: calc(50% + var(--s) / 2 + 7px); }
 .gt-nd .lb.up { bottom: calc(50% + var(--s) / 2 + 7px); }
 .gt-nd .lb.rt { left: calc(50% + var(--s) / 2 + 6px); transform: none; width: 100px; text-align: left; top: 50%; translate: 0 -50%; }
 .gt-nd.k-v .lb.dn { top: calc(50% + var(--s) / 2 + 13px); color: #cdbd7e; }
 .gt-nd.st-part .lb, .gt-nd.st-max .lb { color: #f3e6b8; }
-.gt.cs .gt-nd .lb { font-size: 8.5px; width: 84px; }
+.gt.cs .gt-nd .lb { font-size: calc(8.5px * var(--tx, 1)); width: 84px; }
 .gt-nd.shake { animation: gt-shk .35s; }
 @keyframes gt-shk { 0%, 100% { translate: 0 0; } 20% { translate: -6px 0; } 40% { translate: 6px 0; } 60% { translate: -4px 0; } 80% { translate: 3px 0; } }
 html.reduced-motion .gt-nd.shake { animation: none; }
@@ -158,38 +158,38 @@ html.reduced-motion .gt-nd.shake { animation: none; }
 .gt-ucore { position: absolute; transform: translate(-50%, -50%); z-index: 2; cursor: help; }
 .gt-ucore .ud { position: absolute; inset: 0; transform: rotate(45deg) scale(.72); border: 2px solid rgba(243, 217, 153, .8); background: radial-gradient(circle, #2a1d10, #0d0806 80%); box-shadow: 0 0 0 2px #080604, 0 0 0 3px rgba(243, 217, 153, .35), 0 0 22px rgba(243, 217, 153, .25); }
 .gt-ucore img { position: absolute; left: 50%; top: 50%; width: 94%; height: 94%; transform: translate(-50%, -50%); border-radius: 50%; object-fit: cover; }
-.gt-ulv { position: absolute; transform: translate(-50%, -50%); z-index: 4; font: 600 9px/1 var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-gold); background: #0d0806; border: 1px solid rgba(217, 178, 106, .4); padding: 2px 5px; pointer-events: none; white-space: nowrap; }
+.gt-ulv { position: absolute; transform: translate(-50%, -50%); z-index: 4; font: 600 calc(9px * var(--tx, 1))/1 var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-gold); background: #0d0806; border: 1px solid rgba(217, 178, 106, .4); padding: 2px 5px; pointer-events: none; white-space: nowrap; }
 .gt-ulv.lk { color: #8d7f66; border-color: rgba(141, 127, 102, .35); }
 .gt-ulv.lk::before { content: ''; display: inline-block; width: 5px; height: 6px; margin-right: 3px; border: 1.2px solid #8d7f66; border-radius: 1px; vertical-align: -1px; }
-.gt.cs .gt-ulv { font-size: 8px; padding: 1px 4px; }
+.gt.cs .gt-ulv { font-size: calc(8px * var(--tx, 1)); padding: 1px 4px; }
 
 /* ================= islem cubugu: Respec · Reset | Confirm (stat sayfasi dili: sh-ptr / sh-medal / sh-btn) ================= */
 .gt-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px calc(12 * var(--u)); padding: 8px 0 6px; margin-top: 6px; border-top: 1px solid var(--g-line); }
 .gt-acts .sh-ptr { margin-left: 0; }
 .gt-acts .sh-medal { cursor: default; }
-.gt-acts .sh-tx { font: max(12px, calc(19 * var(--u))) var(--g-body); }
+.gt-acts .sh-tx { font: max(calc(12px * var(--tx, 1)), calc(19 * var(--u) * var(--tx, 1))) var(--g-body); }
 .gt-acts .gt-sp { flex: 1 1 8px; }
 .gt-acts .sh-acts { gap: calc(10 * var(--u)); flex-wrap: wrap; justify-content: flex-end; min-width: 0; max-width: 100%; } /* dar sutunda Confirm tasip kesilmesin, alt satira iner */
-.gt-acts .sh-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5em; white-space: nowrap; }
-.gt-acts .sh-btn img { width: 1.5em; height: 1.5em; object-fit: contain; }
-.gt-acts .sh-btn:disabled, .gt-acts .sh-btn.off { opacity: .38; cursor: default; pointer-events: auto; }
-.gt-acts .sh-btn.off:hover, .gt-acts .sh-btn:disabled:hover { border-color: var(--g-line2); color: var(--g-text); }
-.gt-acts .sh-btn.primary.off:hover { border-color: #d9b26a; color: var(--g-gold); }
-.gt-acts .sh-btn.rs { color: var(--g-dim); }
-.gt-acts .sh-btn.rs .cost { color: var(--g-gold); }
-.gt-acts .sh-btn[data-tip] { cursor: pointer; }
+.gt-acts .el-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5em; white-space: nowrap; }
+.gt-acts .el-btn img { width: 1.5em; height: 1.5em; object-fit: contain; }
+.gt-acts .el-btn:disabled, .gt-acts .el-btn.off { opacity: .38; cursor: default; pointer-events: auto; }
+.gt-acts .el-btn.off:hover, .gt-acts .el-btn:disabled:hover { border-color: var(--g-line2); color: var(--g-text); }
+.gt-acts .el-btn.primary.off:hover { border-color: #d9b26a; color: var(--g-gold); }
+.gt-acts .el-btn.rs { color: var(--g-dim); }
+.gt-acts .el-btn.rs .cost { color: var(--g-gold); }
+.gt-acts .el-btn[data-tip] { cursor: pointer; }
 .gt-sticky { position: sticky; bottom: 0; z-index: 6; background: linear-gradient(180deg, rgba(14, 10, 7, .0), rgba(14, 10, 7, .96) 18%); padding-top: 10px; margin-top: auto; }
 .gt-acts .sh-medal { cursor: default; touch-action: auto; --sh-fs: max(14px, calc(22 * var(--u))); }
 .gt-acts .sh-ptr { margin-left: 0; }
 
 .gt-treewrap { width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; }
 .gt-in { width: 100%; }
-.gt-lvl { margin-left: auto; font: 600 max(10px, calc(14 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-dim); }
+.gt-lvl { margin-left: auto; font: 600 max(calc(10px * var(--tx, 1)), calc(14 * var(--u) * var(--tx, 1))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-dim); }
 .gt.tight .gt-ts b em { display: none; }
 .gt.tight .gt-ts small { letter-spacing: .04em; }
 .gt-nd, .gt-mk, .gt-rl, .gt-srow, .gr-pl { -webkit-user-select: none; user-select: none; }
 .gr-pl .pl-tag[hidden] { display: none; }
-.gt-acts .sh-btn.rs .cost img { width: 1.25em; height: 1.25em; margin-left: .3em; vertical-align: -.22em; }
+.gt-acts .el-btn.rs .cost img { width: 1.25em; height: 1.25em; margin-left: .3em; vertical-align: -.22em; }
 
 /* ================= KISA EKRAN (html.short: telefon yatay) ================= */
 html.short .gr-ledger.tab-tree .gr-lbody { grid-template-columns: 54px minmax(0, 1fr); }
@@ -206,20 +206,20 @@ html.short .gt-in > .gt { flex: 1 1 0; min-height: 0; display: flex; flex-direct
 /* tier bandi: TEK satir "II · 5 pts" (dar tek kolonlu bantlara da sigar) */
 html.short .gt-ts { flex-direction: row; gap: 4px; padding: 0 2px; }
 html.short .gt-ts small { display: none; }
-html.short .gt-ts::before { content: attr(data-tn); font: 600 9px var(--g-disp); letter-spacing: .06em; text-transform: uppercase; color: var(--g-dim); }
+html.short .gt-ts::before { content: attr(data-tn); font: 600 calc(10px * var(--tx, 1)) var(--g-disp); letter-spacing: .06em; text-transform: uppercase; color: var(--g-dim); }
 html.short .gt-ts.lk::before { opacity: .75; }
 html.short .gt-ts.lk .pl { display: none; }
-html.short .gt-ts b { margin-top: 0; font-size: 10px; gap: 3px; }
+html.short .gt-ts b { margin-top: 0; font-size: calc(10px * var(--tx, 1)); gap: 3px; }
 html.short .gt-ts b em { display: none; }
 .gt-barw.slim { display: flex; align-items: center; gap: 0 10px; margin: 0; min-height: 30px; min-width: 0; }
-.gt-barw.slim .gt-bnm { flex: none; font-size: 11px; letter-spacing: .1em; white-space: nowrap; }
-.gt-barw.slim .gt-bval { flex: none; font-size: 12px; white-space: nowrap; }
+.gt-barw.slim .gt-bnm { flex: none; font-size: calc(11px * var(--tx, 1)); letter-spacing: .1em; white-space: nowrap; }
+.gt-barw.slim .gt-bval { flex: none; font-size: calc(12px * var(--tx, 1)); white-space: nowrap; }
 .gt-barw.slim .gt-bval i::after { content: none; }
 .gt-barw.slim .gt-barrow { flex: 1 1 0; min-width: 140px; padding: 17px 12px 6px 14px; }
 .gt-barw.slim .gt-track { height: 6px; }
 .gt-barw.slim .gt-mk { --mkw: 20px; }
 .gt-barw.slim .gt-mk::before { top: -26px; height: 44px; }
-.gt-barw.slim .gt-mk em { top: -16px; left: -14px; width: 28px; font-size: 9px; }
+.gt-barw.slim .gt-mk em { top: -16px; left: -14px; width: 28px; font-size: calc(9px * var(--tx, 1)); }
 .gt-barw.slim .gt-mk i { left: -5px; top: -5px; width: 10px; height: 10px; border-width: 1px; }
 /* telefon: Evolve düğümünün dış halkası küçük, ult etiketleriyle çakışmasın (Ömer 2026-11-03) */
 html.short .gt-nd.k-v::before { width: calc(var(--s) + 8px); height: calc(var(--s) + 8px); }
@@ -233,7 +233,7 @@ html.short .gt-acts .gt-sp { flex: 1 1 4px; }
 html.short .gt-acts .sh-tx { display: none; }
 html.short .gt-acts .sh-ptr { flex: none; margin: 0; }
 html.short .gt-acts .sh-acts { gap: 6px; margin-left: auto; }
-html.short .gt-acts .sh-btn { white-space: nowrap; }
+html.short .gt-acts .el-btn { white-space: nowrap; }
 html.short .gt-sticky { padding-top: 4px; }
 
 /* ================= V4: sade ağaç (tree4.css) ================= */
@@ -261,14 +261,14 @@ html:not(.short) .gr-ledger.q4.gt-fill .gr-page.r .gr-folio { display: none; }
 .gt-acts.gt-foot .sh-acts { margin-left: auto; }
 /* sayfa uzun ekranda kurulup sonra kısaya dönerse işlemler üst çubukta: alt satırı gizle */
 html.short .gt-acts.gt-foot { display: none; }
-.gt-foot .sh-btn.primary:not(.off) { animation: q4-btn var(--m-panel-ms, 260ms) var(--m-ease, cubic-bezier(0.33, 1, 0.68, 1)); }
+.gt-foot .el-btn.primary:not(.off) { animation: q4-btn var(--m-panel-ms, 260ms) var(--m-ease, cubic-bezier(0.33, 1, 0.68, 1)); }
 @keyframes q4-btn { from { opacity: .45; translate: 0 2px; } }
 
 /* ---- sade gorunum: kutular gider, ince altin cizgi kalir ---- */
 .gt.q4 > .gt-barw.slim { margin: 0 0 calc(6 * var(--u)); }
-.gt.q4 .gt-barw.slim .gt-bnm { font-size: max(11px, calc(16 * var(--u))); }
-.gt.q4 .gt-barw.slim .gt-bval { font-size: max(12px, calc(18 * var(--u))); }
-html:not(.short) .gt.q4 .gt-barw.slim .gt-mk em { font-size: 11px; }
+.gt.q4 .gt-barw.slim .gt-bnm { font-size: max(calc(11px * var(--tx, 1)), calc(16 * var(--u) * var(--tx, 1))); }
+.gt.q4 .gt-barw.slim .gt-bval { font-size: max(calc(12px * var(--tx, 1)), calc(18 * var(--u) * var(--tx, 1))); }
+html:not(.short) .gt.q4 .gt-barw.slim .gt-mk em { font-size: calc(11px * var(--tx, 1)); }
 .gt.q4 .gt-tb { background: none; border-left: 1px solid rgba(217, 178, 106, .07); }
 .gt.q4 .gt-tb[data-tier=E] { background: none; }
 .gt.q4 .gt-tb.lk { background: rgba(0, 0, 0, .2); border-left-style: dashed; border-left-color: rgba(217, 178, 106, .12); transition: background var(--q-t) var(--q-ease); }
@@ -379,13 +379,13 @@ html.reduced-motion .gt.q4 *, html.reduced-motion .gt.q4 *::before, html.reduced
 .gt-body .gt-nd { z-index: 3; }
 .gt-body .gt-ts { z-index: 1; }
 .gt-body .gt-tb { z-index: 0; }
-.gt-body .gt-ulv { z-index: 2; font-size: 9px; padding: 1px 4px; }
+.gt-body .gt-ulv { z-index: 2; font-size: calc(9px * var(--tx, 1)); padding: 1px 4px; }
 .gt-body .gt-ucore { z-index: 3; }
 .gt-body .gt-ucore .ud { box-shadow: 0 0 0 2px #080604, 0 0 10px rgba(243, 217, 153, .3); }
-.gt-body .gt-ts small { font-size: max(9px, calc(11 * var(--u))); }
+.gt-body .gt-ts small { font-size: max(calc(9px * var(--tx, 1)), calc(11 * var(--u) * var(--tx, 1))); }
 html.short .gt-body .gt-ts { padding: 0 1px; }
 html.short .gt-body .gt-ts small { display: none; }
-html.short .gt-body .gt-ulv { font-size: 8px; padding: 0 3px; }
+html.short .gt-body .gt-ulv { font-size: calc(10px * var(--tx, 1)); padding: 0 3px; }
 .gc-vsep { width: 1px; background: linear-gradient(180deg, rgba(217, 178, 106, .22), transparent); pointer-events: none; }
 .gc-hr { left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, .35) 8%, rgba(217, 178, 106, .35) 92%, transparent); pointer-events: none; }
 /* sutun basligi: skill plakasi yatay (ikon solda, ad + cipler ortada, puan sagda); renk/cerceve/kose elmaslari gear.css .gr-pl'den */
@@ -393,36 +393,55 @@ html.short .gt-body .gt-ulv { font-size: 8px; padding: 0 3px; }
 .gt-body .gr-pl.hz .pl-ico { width: auto; height: calc(100% - 4px); max-height: 64px; aspect-ratio: 1; }
 .gt-body .gr-pl.hz .pl-bd { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .gt-body .gr-pl.hz .pl-hd { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.gt-body .gr-pl.hz .pl-nm { flex: 1 1 0; min-width: 0; min-height: 0; justify-content: flex-start; text-align: left; font-size: max(11px, calc(15 * var(--u))); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-.gt-body .gr-pl.hz .pl-chips { flex: none; justify-content: flex-end; flex-wrap: nowrap; min-height: 0; font-size: max(10px, calc(13 * var(--u))); overflow: hidden; }
-.gt-body .gr-pl.hz .pl-tag { position: static; flex: none; transform: none; font-size: max(9px, calc(11 * var(--u))); padding: 0 .5em; line-height: 1.4; }
+.gt-body .gr-pl.hz .pl-nm { flex: 1 1 0; min-width: 0; min-height: 0; justify-content: flex-start; text-align: left; font-size: max(calc(11px * var(--tx, 1)), calc(15 * var(--u) * var(--tx, 1))); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.gt-body .gr-pl.hz .pl-chips { flex: none; justify-content: flex-end; flex-wrap: nowrap; min-height: 0; font-size: max(calc(10px * var(--tx, 1)), calc(13 * var(--u) * var(--tx, 1))); overflow: hidden; }
+.gt-body .gr-pl.hz .pl-tag { position: static; flex: none; transform: none; font-size: max(calc(9px * var(--tx, 1)), calc(11 * var(--u) * var(--tx, 1))); padding: 0 .5em; line-height: 1.4; }
 /* Formation karti skill satirinin zemini + aciklama (uc satir; tamami ipucunda) */
 .gt-body .gr-pl.hz { background: linear-gradient(90deg, color-mix(in srgb, var(--ac) 12%, transparent), rgba(13, 9, 6, .9)); border: 1px solid color-mix(in srgb, var(--ac) 40%, transparent); }
 /* açıklama biçimi: gear.css'te Hero skill listesiyle ORTAK kural (.pl-ds) */
-.gt-pts { flex: none; align-self: flex-end; text-align: right; font: 600 max(14px, calc(18 * var(--u))) var(--g-disp); color: var(--g-gold); line-height: 1; padding-bottom: 2px; }
-.gt-pts small { display: block; font: normal max(9px, calc(11 * var(--u))) var(--g-body); letter-spacing: .06em; text-transform: uppercase; color: var(--g-dim); text-align: right; }
+.gt-pts { flex: none; align-self: flex-end; text-align: right; font: 600 max(calc(14px * var(--tx, 1)), calc(18 * var(--u) * var(--tx, 1))) var(--g-disp); color: var(--g-gold); line-height: 1; padding-bottom: 2px; }
+.gt-pts small { display: block; font: normal max(calc(9px * var(--tx, 1)), calc(11 * var(--u) * var(--tx, 1))) var(--g-body); letter-spacing: .06em; text-transform: uppercase; color: var(--g-dim); text-align: right; }
 .gt-pts b.pd { color: #ffb35a; }
 html.short .gt-body .gr-pl.hz { gap: 5px; padding: 1px 4px 1px 3px; box-shadow: 0 0 0 2px rgba(8, 6, 4, .75); }
 html.short .gt-body .gr-pl.hz .pl-ico { height: 100%; max-height: none; box-shadow: 0 0 0 1px rgba(8, 6, 4, .9); }
-html.short .gt-body .gr-pl.hz .pl-nm { font-size: 10px; letter-spacing: .02em; }
+html.short .gt-body .gr-pl.hz .pl-nm { font-size: calc(11px * var(--tx, 1)); letter-spacing: .02em; }
 html.short .gt-body .gr-pl.hz .pl-tag { display: none; }
-html.short .gt-pts { font-size: 13px; align-self: center; padding: 0; }
+html.short .gt-pts { font-size: calc(13px * var(--tx, 1)); align-self: center; padding: 0; }
 html.short .gt-pts small { display: none; }
 /* ult bandi: kol etiketi + kol puani; solda ult madalyonunun puani */
-.gc-arm { display: flex; align-items: baseline; justify-content: center; gap: 6px; padding: 2px 6px; box-sizing: border-box; border: 1px solid var(--g-line, rgba(217, 178, 106, .16)); background: rgba(255, 255, 255, .02); font: 600 11px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-dim); white-space: nowrap; cursor: default; }
-.gc-arm b { color: var(--g-gold); font-size: 12px; letter-spacing: .04em; }
+.gc-arm { display: flex; align-items: baseline; justify-content: center; gap: 6px; padding: 2px 6px; box-sizing: border-box; border: 1px solid var(--g-line, rgba(217, 178, 106, .16)); background: rgba(255, 255, 255, .02); font: 600 calc(11px * var(--tx, 1)) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-dim); white-space: nowrap; cursor: default; }
+.gc-arm b { color: var(--g-gold); font-size: calc(12px * var(--tx, 1)); letter-spacing: .04em; }
 .gc-arm.full { border-color: rgba(243, 217, 153, .5); background: rgba(217, 178, 106, .1); color: var(--g-text); }
 .gc-arm.off { opacity: .45; border-style: dashed; }
-.gc-arm.off b { color: #8d7f66; font-size: 10px; }
+.gc-arm.off b { color: #8d7f66; font-size: calc(10px * var(--tx, 1)); }
 .gc-arm.nar { gap: 0; padding: 1px 0; } .gc-arm.nar b { display: none; } .gc-arm.nar.off i { text-decoration: line-through; }
-html.short .gc-arm { font-size: 9px; padding: 1px 3px; gap: 3px; letter-spacing: .04em; }
-html.short .gc-arm b { font-size: 9px; }
-.gc-upts { transform: translate(-50%, -50%); font: 600 12px var(--g-disp); color: var(--g-dim); letter-spacing: .04em; white-space: nowrap; pointer-events: none; z-index: 4; }
+html.short .gc-arm { font-size: calc(10px * var(--tx, 1)); padding: 1px 3px; gap: 3px; letter-spacing: .04em; }
+html.short .gc-arm b { font-size: calc(10px * var(--tx, 1)); }
+.gc-upts { transform: translate(-50%, -50%); font: 600 calc(12px * var(--tx, 1)) var(--g-disp); color: var(--g-dim); letter-spacing: .04em; white-space: nowrap; pointer-events: none; z-index: 4; }
 .gc-upts b { color: var(--g-gold); }
 .gc-upts.full b { color: #ffb35a; }
-html.short .gc-upts { font-size: 10px; }
-html.short .gt-tools .gt-acts .sh-btn { min-height: 30px; } /* Ömer 2026-11-03: telefon düğmesi 30 px (dokunma alanı phone-buttons.ts) */
+html.short .gc-upts { font-size: calc(11px * var(--tx, 1)); }
+html.short .gt-tools .gt-acts .el-btn { min-height: 30px; } /* Ömer 2026-11-03: telefon düğmesi 30 px (dokunma alanı phone-buttons.ts) */
 html.short .gt-tools { min-height: 30px; }
 html.short .gt-tools .gt-acts, html.short .gt-tools .gt-acts .sh-acts { flex-wrap: nowrap; }
 html.short .gt-tools .gt-acts .sh-ptr { flex: none; }
 html.short .gt-tools .gt-acts .sh-acts { display: flex; align-items: center; flex: none; max-width: none; }
+
+/* Yan yana pencere (Blacksmith / tüccar yanında dar Gear, Ömer 2026-11-11):
+   - dar sütun başlığında çipler adın ALTINA iner (Gear SKILLS kartlarıyla aynı), ad tek başına bir satır alır; açıklama ipucunda kalır
+   - telefonda işlem satırı (Respec · Reset · Confirm) masaüstündeki gibi ağacın ALTINDA; üst şeritte Mastery çubuğu tek başına (dar sayfada üst üste binmesin) */
+.gt-body .gr-pl.hz { container-type: inline-size; }
+@container (max-width: 330px) {
+  .gt-body .gr-pl.hz .pl-hd { flex-wrap: wrap; row-gap: 3px; }
+  .gt-body .gr-pl.hz .pl-nm { flex: 1 0 100%; }
+  .gt-body .gr-pl.hz .pl-chips { justify-content: flex-start; }
+  .gt-body .gr-pl.hz .pl-ds { display: none; }
+}
+html.short .gr-pair .gt.cols > .gt-tools { display: contents; }
+html.short .gr-pair .gt.cols > .gt-tools > .gt-barw { flex: none; }
+html.short .gr-pair .gt.cols > .gt-tools > .gt-acts.gt-inbar { order: 2; flex: none; margin: 6px 0 0; padding: 5px 0 1px; border-top: 1px solid var(--g-line); }
+
+/* Telefon (Ömer 2026-11-12): Respec / Reset / Confirm sekme boyunda, 30 px düğme kuralı içinde (yazı, boşluk, ikon küçük; çerçeveden taşmaz) */
+html.short .gt-acts .el-btn { font-size: calc(11px * var(--tx, 1)); letter-spacing: .05em; padding: 0 10px; gap: .3em; line-height: 1; max-height: 30px; }
+html.short .gt-acts .el-btn img { width: 1.2em; height: 1.2em; }
+html.short .gt-acts .el-btn .cost { font-size: inherit; }

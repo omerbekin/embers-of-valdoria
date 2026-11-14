@@ -46,10 +46,10 @@ const dlPower = (): number => (content.classes.paladin!.passive!.effect as { pow
 
 describe('Paladin 2026-10-24: veri', () => {
   it('Divine Light %35 INT; No Rest for Evil idle 0,35 ve metni %35; Crusader\'s Dawn smite.dual 1,25 + öldürünce 5 MP', () => {
-    expect(content.classes.paladin!.passive!.effect).toMatchObject({ type: 'divineLight', power: 0.27, scale: 'int' });
+    expect(content.classes.paladin!.passive!.effect).toMatchObject({ type: 'divineLight', power: 0.312, scale: 'int' });
     const n = treeOf('paladin')!.nodes;
-    expect(n['0.n0']!.text).toContain('27% INT');
-    expect(JSON.stringify(n['0.n0']!.fx)).toContain('"idle":0.27');
+    expect(n['0.n0']!.text).toContain('same INT ratio as its heal');
+    expect(JSON.stringify(n['0.n0']!.fx)).toContain('"idle":1');
     expect(n['0.v']!.fx).toEqual([
       { k: 'hook', h: 'target', smite: { dual: 1.25 } },
       { k: 'hook', h: 'trigger', on: 'kill', via: 'smite', do: [{ mp: 5 }] },
@@ -62,7 +62,7 @@ describe('Paladin 2026-10-24: veri', () => {
     expect(r.area).toBeUndefined();
     expect(r.effects.map((e) => e.type)).toEqual(['heal', 'damage']);
     expect(r.effects[0]).toMatchObject({ power: 0.405, missingHpBonus: 0.5 });
-    expect(r.effects[1]).toMatchObject({ power: 0.394, element: 'holy', damageType: 'magic' });
+    expect(r.effects[1]).toMatchObject({ power: 0.414, element: 'holy', damageType: 'magic' });
     expect(r.effects.some((e) => 'side' in e)).toBe(false);
     expect(content.skills.radiance!.effects.some((e) => e.type === 'ground')).toBe(false);
     expect(content.skills.pt_radiance!.target).toBe('everyone');

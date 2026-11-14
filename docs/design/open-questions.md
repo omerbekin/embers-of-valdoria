@@ -11,11 +11,10 @@ Bu dosya iki şey tutar: Ömer'e açık sorular ve agentların Ömer onayı alma
 
 1. **Hukuki metin (madde 415):** gizlilik metnindeki hukuki dayanak ve "13 yaş altı giriş yapmasın" satırı oyunda var (`data/account-notice.json`); avukat kontrolü ve Türkiye veli onayı yaşı bekliyor (oyun kararı değil, dış kontrol).
 
-2. **Kasabada ücretli dinlenme / Fountain dolumu:** ilerleme yol haritası karar 7 (2026-10-09) hâlâ açık: Rest altın istesin mi (ilk dinlenme bedava, sonra bölüm seviyesine göre küçük ücret), elit / boss sonrası Fountain benzeri dolum olsun mu. İlgili fikir satırı: `docs/design/future-ideas/campaign.md` (Hades mantığında can). Eski plan: `docs/archive/design/progression/roadmap-2026-10.md` bölüm 2.3 D ve 2.5.
+2. **Kasabada ücretli dinlenme / Fountain dolumu:** ilerleme yol haritası karar 7 (2026-10-09) hâlâ açık (Ömer 2026-11-09, büyük form: "Sonra sor"; açık kalır, sonra yeniden sorulacak): Rest altın istesin mi (ilk dinlenme bedava, sonra bölüm seviyesine göre küçük ücret), elit / boss sonrası Fountain benzeri dolum olsun mu. İlgili fikir satırı: `docs/design/future-ideas/campaign.md` (Hades mantığında can). Eski plan: `docs/archive/design/progression/roadmap-2026-10.md` bölüm 2.3 D ve 2.5.
 
-3. **Skald ve Vesper kişisel görevi:** 13 sınıflık havuza sonradan girdiler, kişisel görevleri tanımlı değil (`campaign/map2-quests-surge.md`). Kasıtlı mı, görev eklensin mi?
-
-4. **Karakter tier sistemi kapsamı:** `progression/character-tiers.md` dağılımı ilk 9 sınıfı kapsıyor; Skald ve Vesper tier planına girecek mi?
+3. ~~Skald ve Vesper kişisel görevi~~ KAPANDI (Ömer 2026-11-09, büyük form): Harita 2'de görevsiz kalır; karar `campaign/map2-quests-surge.md`'de.
+4. ~~Karakter tier sistemi kapsamı~~ KAPANDI (Ömer 2026-11-14, form r17): Skald ve Vesper için tier satırı yazılmaz, plan konsept kalır; karar `progression/character-tiers.md`'de.
 Eski liste madde 2-16 2026-11-08'de kapandı: bugünkü oyun davranışı Ömer'in cevabı sayıldı. Liste arşivde "2026-11-08 doğrulama: kapanan D/B".
 
 
@@ -51,3 +50,29 @@ Hepsi kodda bugünkü davranış. Ömer onayı bekliyor; itiraz gelirse değişi
 - **518** Thunder Skald: War Drum karesi tahta kenarında kırpılır; bölünmüş vuruş Guard / Phalanx'ta tek vuruş sayılır, hedef ilk parçada düşerse ikinci parça yok (sayılar 2026-11-08 simiyle kapandı).
 - **519** Vesper ağacı v3: bedava Toll düğümleri hedefsiz, Judgement Peal seçicisiz, Long Glare yerine Glaring Peal; sayılar tahmin. Ayrıntı `classes/vesper.md` bölüm 3.
 - **520** Skald ağacı v1: Hammer Spark Slow / Stun koşullu kancayla, War Drum `castCount` dostları sayar, YZ procChance'lı kancaları şansıyla değerler; sayılar tahmin. Ayrıntı `classes/skald.md` bölüm 3.
+
+## 521. Kan / lanetli zemin varsayımları (2026-11-09, engine-dev)
+- Kan zemini süresi 2 tur (vuranın turlarıyla), lanetli zemin süresi 2 tur: Ömer sayı vermedi; diğer tepkime/skill zeminleriyle aynı (`formulas.json > blood.turns`, `skills.json > withering_curse`).
+- Kan yalnız kararlaştırılanı yapar: Soaked (herkese, su gibi), şimşeği iletir (Live Water), Chill/Ice ile Ice, Tremor Slam'de sıvı. Ateşi söndürmez, zehri yaymaz, kutsal ateşle kutsal suya dönmez.
+- Ağır kritik eşiği vuruş başına (çok vuruşlu skill'de her vuruş ayrı); split vuruşta (Hammer Spark) yalnız fiziksel parçanın can kaybı sayılır; hedef ölse de kan düşer.
+- Kansız listesi agent seçimi (görünüşe göre): iskeletler, donmuş iskelet askerler, ruhlar, golem/taş bekçiler, ateş elementali, yapı nesneleri, Skeleton ve Treant çağrıları. Ghoul/Drowned/Wight gibi etli ölüler kanlı.
+- Kutsal ateş + lanet iki sırada da (lanet kutsal ateşin üstüne atılınca da) ikisini siler.
+
+## 522. Boss / elit debuff gücü, Guard, Explosion, Tremor Slam varsayımları (2026-11-09, engine-dev)
+- Yalnız büyüklük ölçeklenir (boss %25, elit %50); süre, DoT tikleri (Burning, Poisoned, Wither, Searing, Bleeding) ve doğrudan hasar aynı (Lead brief'i).
+- Açık/kapalı (sayısız) CC dışı debuff'lar boss'ta TAM işler: Ley Thread, Branded (Ley Brand değerleri brand nesnesinde, ölçeklenmedi), Saltbound (yalnız kahramana), Staggered (boss mekaniği). Spellbound yalnız moblar verir.
+- ~~Slow hâlâ CC~~ CEVAPLANDI (Ömer onaylı 2026-11-09, form 3): Slow CC değil, boss %25 / elit %50.
+- Kendi tarafının verdiği debuff (Warden Overextended, Cooling, Overreached) ve kaynaksız ortam suyu (Tide Soaked) tam güç.
+- ~~Blinded / Jinxed / Shaken boss'ta Immune~~ CEVAPLANDI (Ömer onaylı 2026-11-09, form 3): boss bağışık değil, %25 güçle (elit %50). Misfortune boss'ta hâlâ yok (`omenCrit`), elitte %50.
+- Explosion "iki taraf": kahraman ya da düşman tahtasında patlasa da çalışır, tetiği verenin düşmanlarını vurur (zemin kuralı). Dost ateşi (tetiği verenin kendi takımı) eklenmedi; istenirse ayrı karar.
+- Tremor Slam sıvıları: Poison, Flooded, Flooded Planks, Holy Water, Healing Rain (su sayılır), Blood. Lingering Rain (Bleeding, ok yağmuru) ve Chill Ground / Ice sıvı sayılmadı. Kaynak hücre = isabet eden hedefin hücresi (ıska / boş hücre sıçratmaz). YZ değeri sıçramanın tetikleyeceği tepkimeleri saymaz.
+
+## 523. Element formu varsayımları (2026-11-09, engine-dev)
+- Rot (zehir + lanet, Ömer onaylı çürüme): zehir tiki +%25 `formulas.json > rot.poisonMult` PROVİZYON (sim gerek); Black flame gibi Unhallowed da verir (agent varsayımı), T2.
+- Erime Soaked'ı 2 tur (`statuses.json > frozen.thawsInto`). Frost venom Chilled'ı 2 tur. Brittle / Brittle frost Shredded'ı taban zırhın %20'si, 1 tur (`armorRatio`).
+- Bloody water: Bleeding gücü tahtanın ortalama maks canının %3'ü, su kuralı gibi iki tarafa da; T2, başka tepkimeye girmez. Black flame / Grave frost da başka tepkimeye girmez (söndürülmez).
+- Birim üstü tepkimeler yalnız skill / şimşekle gelen durumda işler (zeminin verdiği durumda değil). Flash freeze yalnız skill / ağaç atışındaki Chilled ile (Frozen kuralı gibi; Hoarfrost pasifi dondurmaz). Steam, Explosion'dan önce bakılır.
+- Wet venom zincirlenmez ve yalnız düşmana geçer. Tepkime durumları (şimşek tepkimeleri dahil) yalnız tetiği verenin düşmanlarına.
+- Healing Rain şimşeği iletir ama hâlâ ıslatmaz. Hexed spark: lanetli sudaki ıslak birim yine Electrocuted olur; yalnız kuru Shocked düşer.
+- Su yayılmasında alan = hücredeki suya bağlı su hücreleri; taşma tepkime hücresinden başlar ve suyla sınırlı değil, her bitişik hücreye gidebilir.
+- Electrocuted 1 tur rozet (`thunder.stunTurns`); birimin ilk skill'i tek hedefli hasar değilse yalnız sıra çubuğu sıfırlanır. Dosta vuruş tam güçte.

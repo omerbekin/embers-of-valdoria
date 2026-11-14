@@ -496,6 +496,34 @@ html.close-btn-on .settings-toggle.menu-toggle {
   display: none !important;
 }
 
+html.close-btn-float .settings-toggle.menu-toggle {
+  display: none !important;
+}
+
+/* Pencerenin SAĞ ÜST köşesindeki X (Ömer 2026-11-12): düğme pencere elemanının içinde (nav-close.ts inPanel); ekranın köşesine değil pencereninkine yaslanır.
+   Eşleşmiş Gear pencereleri tam ekran, köşeye yaslı: inset 0 = Menu'nün tam yeri. Ortadaki pencerede (float) 6 px içeride; telefonda pencere tam ekran (inset 0). Tam ekran düğmesi float modda her boyutta ikinci yuvada. */
+.nav-btn.close-toggle.in-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 6;
+}
+
+html.close-btn-float .nav-btn.close-toggle.in-panel {
+  top: var(--nav-edge-k);
+  right: var(--nav-edge-k);
+}
+
+html.short.close-btn-float .nav-btn.close-toggle.in-panel {
+  top: 0;
+  right: 0;
+}
+
+/* panel içinde yüzen X (Inn, Camp): tam ekran düğmesi haritadaki yerinde (ikinci yuva) kalır, kıpırdamaz */
+html.close-btn-float .settings-toggle.fullscreen-toggle {
+  right: calc(var(--nav-edge-k) + var(--nav-hit-k) + var(--nav-gap-k) + var(--er));
+}
+
 html.close-btn-on .settings-toggle.fullscreen-toggle {
   right: calc(var(--nav-edge-k) + var(--nav-hit-k) + var(--nav-gap-k) + var(--er));
 }
@@ -549,9 +577,11 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
 }
 
 .gm-rule {
+  /* başlık boyu (gm-title): ortadaki karo ve boşluk başlığa oranlı (em), sabit px yok */
+  font-size: 34px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.3em;
   margin: 16px 6px 4px;
 }
 
@@ -569,8 +599,8 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
 
 .gm-rule i {
   flex: none;
-  width: 7px;
-  height: 7px;
+  width: 0.2em;
+  height: 0.2em;
   transform: rotate(45deg);
   background: #140e09;
   box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.85);
@@ -674,32 +704,6 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
   filter: sepia(0.55) saturate(0.85) brightness(0.88) drop-shadow(0 1px 1.5px rgba(12, 8, 5, 0.95));
 }
 
-.gm-btn {
-  width: 100%;
-  min-height: 52px;
-}
-
-.gm-confirm {
-  margin-top: 18px;
-  text-align: center;
-}
-
-.gm-confirm-text {
-  font-size: 22px;
-}
-
-.gm-confirm-row {
-  display: flex;
-  gap: 24px;
-  margin-top: 20px;
-  padding: 0 10px;
-}
-
-.gm-confirm-row .gm-btn {
-  flex: 1;
-  min-width: 0;
-  padding: 0 12px;
-}
 
 /* Ayarlar ekranı (oyun içi; Ömer 2026-10-08): ana menünün sol sütun görünümü (MainMenuScene > Settings). Ölçüler oyun birimiyle:
    --gu = 1 mantıksal birimin CSS pikseli, --menu-x = sütunun oyun alanı solundan uzaklığı (src/ui/viewport.ts); dokunma alanı en az 44px. */
@@ -710,14 +714,12 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
   --u: var(--gu, 1px);
   position: fixed;
   inset: 0;
-  z-index: 19;
+  z-index: 21; /* Ayarlar her pencerenin (19) ve hikâye şeridinin (20) üstünde */
   color: var(--st-text);
   /* Ömer 2026-10-10 (taslak settings-backdrop v2 "Darkening everywhere"): sahne yalnızca kararır (%52, bulanıklık YOK; ana menü
      Settings sütunu da aynı: MainMenuScene > SETTINGS_DARK); soldan sağa açılan gölge sütunun arkasında */
-  background:
-    linear-gradient(90deg, rgba(8, 6, 4, 0.85) 0, rgba(8, 6, 4, 0.85) calc(var(--el) + var(--menu-x, 140px) - 140 * var(--u)),
-      rgba(8, 6, 4, 0.55) calc(var(--el) + var(--menu-x, 140px) + 840 * var(--u)), rgba(8, 6, 4, 0) calc(var(--el) + var(--menu-x, 140px) + 1260 * var(--u))),
-    rgba(0, 0, 0, 0.52);
+  /* Ömer 2026-11-12: arkadaki savaş / ana menü yazıları okunmasın; iki girişte de aynı opak zemin */
+  background: linear-gradient(90deg, rgba(14, 10, 7, 0.995) 0, rgba(9, 7, 5, 0.99) 100%);
 }
 
 .st-col {
@@ -750,6 +752,8 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
 }
 
 .st-diamond {
+  /* seçili satır elması satır yazısına oranlı (em): yazıyla aynı boy (st-label 26u, kategori 30u) */
+  font-size: max(11px, calc(26 * var(--u)));
   width: calc(34 * var(--u));
   flex: none;
   align-self: stretch;
@@ -759,11 +763,11 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
 
 .st-row.on .st-diamond::before {
   content: '';
-  width: calc(12 * var(--u));
-  height: calc(12 * var(--u));
-  margin-left: calc(4 * var(--u));
+  width: 0.46em;
+  height: 0.46em;
+  margin-left: 0.15em;
   background: #e0702a;
-  border: max(1px, calc(2 * var(--u))) solid #ffb35a;
+  border: max(1px, 0.08em) solid #ffb35a;
   transform: rotate(45deg);
 }
 
@@ -810,7 +814,7 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
   position: relative;
   display: flex;
   align-items: center;
-  height: max(44px, calc(132 * var(--u)));
+  height: max(44px, calc(100 * var(--u))); /* 7 kategori tam sığar (ACCOUNT kesilmesin) */
   border-bottom: 1px solid rgba(217, 178, 106, 0.16);
   cursor: pointer;
 }
@@ -820,15 +824,19 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
   outline-offset: -2px;
 }
 
+.st-cat .st-diamond {
+  font-size: max(12px, calc(30 * var(--u))); /* st-cat-label ile aynı boy */
+}
+
 .st-cat.on .st-diamond::before {
   content: '';
-  width: calc(12 * var(--u));
-  height: calc(12 * var(--u));
-  min-width: 6px;
-  min-height: 6px;
-  margin-left: calc(4 * var(--u));
+  width: 0.4em;
+  height: 0.4em;
+  min-width: 0;
+  min-height: 0;
+  margin-left: 0.13em;
   background: #e0702a;
-  border: max(1px, calc(2 * var(--u))) solid #ffb35a;
+  border: max(1px, 0.07em) solid #ffb35a;
   transform: rotate(45deg);
 }
 
@@ -1140,7 +1148,7 @@ html.short .st-pages {
 }
 
 html.short .st-cat {
-  height: 44px;
+  height: 34px; /* 7 kategori telefonda da sığar */
 }
 
 html.short .st-cat-label {
@@ -1195,6 +1203,7 @@ html.short .gm-title {
 }
 
 html.short .gm-rule {
+  font-size: 21px;
   margin: 8px 6px 2px;
 }
 
@@ -1205,19 +1214,6 @@ html.short .gm-list {
 html.short .gm-row {
   min-height: 44px; /* dokunma alanı küçülmez */
   font-size: 13.5px;
-}
-
-html.short .gm-btn {
-  min-height: 44px;
-  font-size: 14.5px;
-}
-
-html.short .gm-confirm-text {
-  font-size: 15.5px;
-}
-
-html.short .gm-confirm-row {
-  margin-top: 12px;
 }
 
 html.compact:not(.short) .gm-row {
@@ -1514,146 +1510,6 @@ html.compact:not(.short) .gm-row {
   width: min(520px, calc(var(--stage-w, 100vw) - 190px - var(--er) - var(--el)));
 }
 
-
-/* --- Multiplayer (src/ui/mp-overlay.ts): bağlantı şeridi, bildirim, kod giriş kutusu --- */
-.mp-banner {
-  position: fixed;
-  top: calc(8px + var(--et));
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: calc(var(--stage-w, 100vw) - 200px);
-  padding: 10px 18px;
-  font: bold 16px Georgia, 'Times New Roman', serif;
-  color: #f3e4c4;
-  background: rgba(40, 24, 10, 0.92);
-  border: 2px solid #c79a3e;
-  border-radius: 6px;
-  z-index: 35;
-  text-align: center;
-  pointer-events: none;
-}
-.mp-banner[data-kind='error'] {
-  border-color: #d9584a;
-  background: rgba(60, 14, 10, 0.94);
-}
-.mp-banner[data-kind='info'] {
-  border-color: #6ec1ff;
-}
-.mp-banner[hidden],
-.mp-toast[hidden] {
-  display: none;
-}
-.mp-toast {
-  position: fixed;
-  bottom: calc(70px + var(--eb));
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 18px;
-  font: bold 15px Georgia, 'Times New Roman', serif;
-  color: #f3e4c4;
-  background: rgba(20, 14, 8, 0.92);
-  border: 1px solid #8a6a32;
-  border-radius: 6px;
-  z-index: 35;
-  pointer-events: none;
-}
-.mp-modal {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(5, 3, 2, 0.6);
-  z-index: 40;
-}
-.mp-modal-box {
-  width: min(440px, calc(var(--stage-w, 100vw) - 32px));
-  padding: 20px;
-  background: linear-gradient(#2e2218, #110b07);
-  border: 2px solid #c79a3e;
-  border-radius: 0;
-  color: #f3e4c4;
-  font-family: Georgia, 'Times New Roman', serif;
-}
-.mp-modal-title {
-  font-size: 26px;
-  font-weight: bold;
-  color: #ffe29a;
-  text-align: center;
-}
-.mp-modal-hint {
-  margin: 8px 0 12px;
-  font-size: 15px;
-  color: #b9a27a;
-  text-align: center;
-}
-.mp-modal-note {
-  margin: 4px 0 10px;
-  font-size: 13px;
-  opacity: 0.85;
-}
-.mp-code-input {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 56px;
-  padding: 0 12px;
-  font: bold 30px monospace;
-  letter-spacing: 6px;
-  text-align: center;
-  text-transform: uppercase;
-  color: #ffe29a;
-  background: #0c0806;
-  border: 2px solid #8a6a32;
-  border-radius: 6px;
-}
-.mp-modal-err {
-  min-height: 20px;
-  margin-top: 6px;
-  font-size: 14px;
-  color: #e08a7a;
-  text-align: center;
-}
-.mp-modal-row {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 10px;
-}
-.mp-btn {
-  min-width: 120px;
-  min-height: 48px;
-  font: bold 18px Georgia, 'Times New Roman', serif;
-  color: #f3e4c4;
-  background: linear-gradient(#5c4128, #24170d);
-  border: 2px solid #8a6a32;
-  border-radius: 6px;
-}
-.mp-btn.primary {
-  background: linear-gradient(#9a6a28, #3f220c);
-  border-color: #e8c47e;
-}
-/* Pano yoksa davet metni (mp-overlay.ts > showCopyBox): seçili gösterilir, elle kopyalanır */
-.mp-share-text {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 96px;
-  padding: 10px 12px;
-  font: 18px 'EB Garamond', Georgia, serif;
-  color: #f3e4c4;
-  background: #0c0806;
-  border: 2px solid #8a6a32;
-  border-radius: 6px;
-  resize: none;
-}
-html.short .mp-share-text {
-  min-height: 72px;
-  font-size: 15px;
-}
-.mp-code-input.mp-name-input {
-  font: bold 24px Georgia, 'Times New Roman', serif;
-  letter-spacing: 1px;
-  text-transform: none;
-}
 
 /* Boyalı görsel ikonlar (stat ikonları, assets/stat-icons): adresleri `#smooth` ile biter (src/game/icon-image-files.ts > smoothUrl).
    Piksel ikonlar için konan `image-rendering: pixelated` boyalı resmi küçültürken tırtıklı yapar: tarayıcının yumuşak küçültmesi kullanılır. */

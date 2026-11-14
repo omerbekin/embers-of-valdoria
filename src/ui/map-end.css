@@ -2,7 +2,7 @@
 .mend {
   --u: var(--gu, 1px);
   --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217, 178, 106, 0.42); --g-line: rgba(217, 178, 106, 0.16); --g-line2: rgba(217, 178, 106, 0.3);
-  --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: Cinzel, Georgia, 'Palatino Linotype', serif; --g-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  --g-ember: #e0702a; --g-ember2: #ffb35a; 
   --f0: max(10px, calc(18 * var(--u))); --f1: max(11px, calc(22 * var(--u))); --f2: max(12px, calc(26 * var(--u))); --f3: max(14px, calc(34 * var(--u))); --f4: max(18px, calc(52 * var(--u)));
   position: fixed; inset: 0; z-index: 19; color: var(--g-text); font-family: var(--g-body); font-style: normal; background: #000;
 }
@@ -46,7 +46,6 @@ html.reduced-motion .me-panel { animation: none; }
 .me-tease .nm { font: 600 var(--f2) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-gold); }
 .me-tease p { margin: 0; font: var(--f1) var(--g-body); color: var(--g-dim); line-height: 1.25; }
 .me-acts { flex: none; display: flex; gap: calc(16 * var(--u)); align-items: center; }
-.me-acts .el-btn { min-height: 44px; font-size: max(13px, calc(22 * var(--u))); padding-left: max(18px, calc(34 * var(--u))); padding-right: max(18px, calc(34 * var(--u))); }
 
 /* telefon yatay (html.short): her şey bir ekrana sığar; hikâye iki satır, teaser resmi ve portre adları gizli */
 html.short .me-panel { padding: 8px 16px; gap: 4px; width: 96%; }
@@ -62,7 +61,7 @@ html.short .me-heroes { gap: 10px; }
 html.short .me-loot { gap: 2px; }
 html.short .me-it .tile { width: 34px; height: 34px; }
 html.short .me-it .tg { display: none; }
-html.short .me-it .nm { font-size: 11px; }
+html.short .me-it .nm { font-size: 12px; }
 html.short .me-tease .art { display: none; }
 html.short .me-tease p { display: none; }
 html.short .me-foot { padding-top: 5px; gap: 10px; }

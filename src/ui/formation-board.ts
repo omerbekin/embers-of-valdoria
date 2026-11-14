@@ -11,13 +11,14 @@ import crownAnchor from '../../data/crown-anchor.json';
 import './formation-board.css';
 import './elegant.css';
 import { bandTipHtml } from './band-tip';
+import { spotLegendHtml } from './spot-legend';
 import { dismissOnBackdrop } from './backdrop';
 import { closeDom } from './motion';
 import { lockInput, unlockInput } from './input-lock';
 import type { BandTipSpec } from './band-tip';
 import { uiSound } from './ui-sound';
-import { NAV_BTN } from './nav-icons';
-import { LANES, ROWS, clientToLocal, dropOnCell, fitOfHint, previewMove, reachBandSpec, reachRows, rowName, rowOfCell, tapCell, type BoardSel, type Fit } from './formation-board-rules';
+import { NAV_BTN, navSvg } from './nav-icons';
+import { LANES, ROWS, clientToLocal, dropOnCell, fitOfHint, previewMove, reachBandSpec, reachRows, removeTarget, rowName, rowOfCell, tapCell, type BoardSel, type Fit } from './formation-board-rules';
 
 export type BoardAttr = 'str' | 'dex' | 'int' | 'luck';
 
@@ -87,6 +88,24 @@ export interface FormationBoardOpts {
   icons: Record<'hp' | 'mp' | BoardAttr, string>;
   /** Izgara altındaki kullanım yazısı (verilmezse varsayılan). */
   howText?: string;
+  /**
+   * Yalnızca ızgara (Quick Battle / Multiplayer / Endless; Ömer 2026-11-10: tahta HER YERDE aynı): kahraman paneli, etiketler ve kullanım yazısı yok; kök ızgara boyutunda (542x404),
+   * ipucu kutusu ekranın görünen alanına sığar. Hücre boyu, noktalar, sürükleme puanı ve ipucu kutusu sefer tahtasıyla BİREBİR aynı.
+   */
+  gridOnly?: boolean;
+  /** Düşman tarafı: ön sıra SOLDA (aynalı). */
+  mirror?: boolean;
+  /** Sürüklenen kahraman hiçbir hücreye bırakılmadıysa (tahta dışı) çağrılır; true = bu işi sahip aldı (başka tahtaya taşıma / kadroya geri). */
+  dropOutside?: (heroId: string, clientX: number, clientY: number) => boolean;
+  /** Fare bir hücredeki kahramanın üstüne gelince (sahnenin bilgi satırı için). */
+  onHoverHero?: (heroId: string) => void;
+  /**
+   * Sağ tık (Ömer 2026-11-10): dizilimdeki kahramanı çıkarır (kadroya geri). Verilmezse sağ tık bir şey yapmaz (sefer: kahramanlar bölükten çıkmaz).
+   * Takımın alt sınırı sahnenin kuralıdır. Dokunmatikte mevcut çıkarma yolları (kadroya sürükle) sürer.
+   */
+  remove?: (heroId: string) => void;
+  /** Tahta içinde sürükleme başladı / bitti (sahne bırakma hedefini, örn. kadro alanını, vurgulasın). */
+  onDrag?: (dragging: boolean) => void;
 }
 
 export interface FormationBoard {
@@ -94,6 +113,13 @@ export interface FormationBoard {
   /** Dışarıda dizilim değişti (Auto arrange gibi): yeniden çiz. */
   refresh: () => void;
   destroy: () => void;
+  /** Ekran noktasındaki hücre (0-11) ya da -1. */
+  cellAt: (clientX: number, clientY: number) => number;
+  /**
+   * Tahta DIŞINDAN sürüklenen kahraman (kadro rafı): `hero` verilirse tüm hücrelerde uygunluk noktaları + üstündeki hücrenin puan kutusu çizilir; null = bitir.
+   * `hero.id` hücrelerdeki id'lerle çakışmamalı (sahne `sınıf~x` verir).
+   */
+  extPreview: (hero: FormationBoardHero | null, clientX: number, clientY: number) => void;
 }
 
 // ---- yerleşim (tahta yerel mantıksal px; kabuk 1360x820 pencerede tahtayı (0,134)'e koyar)
@@ -107,16 +133,15 @@ const DRAG_PX = 10;
 
 const NAMES: Record<BoardAttr, string> = { str: 'Strength', dex: 'Dexterity', int: 'Intelligence', luck: 'Luck' };
 const ORDER: BoardAttr[] = ['str', 'dex', 'int', 'luck'];
-const HOW = 'Drag a hero onto an empty cell to move it, or onto another hero to swap places. Click a hero to select it, then hover a cell to see how far it reaches from there.';
+// Menzil arayüzü açıkken uzun yardım yazısı yok: yerine renk açıklaması (src/ui/spot-legend.ts; Ömer 2026-11-10)
 const HOW_PLAIN = 'Drag a hero onto an empty cell to move it, or onto another hero to swap places.';
-// dokunmatik (telefon): "Click / Hover" yerine dokunma dili
-const HOW_TOUCH = 'Drag a hero onto an empty cell to move it, or onto another hero to swap places. Tap a hero to select it, then tap a cell to see how far it reaches from there.';
 const HOW_PLAIN_TOUCH = 'Drag a hero onto an empty cell to move it, or onto another hero to swap places.';
 const isTouchUi = (): boolean => (typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false);
 
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const num = (v: number): string => (Number.isInteger(v) ? String(v) : (Math.round(v * 10) / 10).toFixed(1));
-const cellPos = (cell: number): { x: number; y: number } => ({ x: GX + (ROWS - 1 - rowOfCell(cell)) * (C + GAP), y: GY + (cell % LANES) * (C + GAP) });
+/** Izgara içi yerel konum (tahta kökünde `gx/gy` kaydırması eklenir). */
+const cellPos0 = (cell: number, mirror: boolean): { x: number; y: number } => ({ x: (mirror ? rowOfCell(cell) : ROWS - 1 - rowOfCell(cell)) * (C + GAP), y: (cell % LANES) * (C + GAP) });
 const hpCls = (r: number): string => (r > 0.6 ? '' : r > 0.3 ? 'mid' : 'low');
 const hpCol = (r: number): string => (r > 0.6 ? 'var(--fb-good)' : r > 0.3 ? '#d9b24a' : '#c4553f');
 const img = (url: string): string => (url ? `<img src="${esc(url)}" alt="" draggable="false">` : '');
@@ -144,8 +169,15 @@ function crownHtml(classId: string | undefined): string {
 
 export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): FormationBoard {
   const root = document.createElement('div');
-  root.className = 'fb';
+  root.className = o.gridOnly ? 'fb fb-gridonly' : 'fb';
   host.append(root);
+  const gx = o.gridOnly ? 0 : GX;
+  const gy = o.gridOnly ? 0 : GY;
+  const cellPos = (cell: number): { x: number; y: number } => {
+    const p = cellPos0(cell, !!o.mirror);
+    return { x: gx + p.x, y: gy + p.y };
+  };
+  let ext: FormationBoardHero | null = null;
   const st: BoardSel = { sel: '', moved: '' };
   let drag: { id: string; ghost: HTMLElement } | null = null;
   let down: { slot: number; id: string; x: number; y: number; pid: number } | null = null;
@@ -154,13 +186,13 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
   let tipTimer = 0;
   let destroyed = false;
 
-  const heroOf = (id: string): FormationBoardHero | undefined => (id ? o.heroes().find((h) => h.id === id) : undefined);
+  const heroOf = (id: string): FormationBoardHero | undefined => (id ? o.heroes().find((h) => h.id === id) ?? (ext && ext.id === id ? ext : undefined) : undefined);
   const focus = (): FormationBoardHero | undefined => {
     const team = o.heroes().filter((h) => o.cells().includes(h.id));
     return heroOf(st.sel) ?? heroOf(st.moved) ?? team.find((h) => h.leader) ?? team[0];
   };
   /** Önizlenen kahraman: sürüklenen, yoksa seçili. */
-  const subject = (): string => drag?.id ?? st.sel;
+  const subject = (): string => drag?.id ?? ext?.id ?? st.sel;
 
   // ---- uygunluk (motor ipucundan): kahraman `id` hücre `cell`'e konursa
   const fitCache = new Map<string, Fit>();
@@ -168,7 +200,9 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     const key = `${id}@${cell}`;
     const hit = fitCache.get(key);
     if (hit) return hit;
-    const next = previewMove(o.cells(), id, cell);
+    const cur = o.cells();
+    // tahta dışından sürüklenen: hücreye konur (doluysa yerini alır)
+    const next = cur.includes(id) ? previewMove(cur, id, cell) : cur.map((c, i) => (i === cell ? id : c));
     const f = fitOfHint(o.hintsFor(next)[next.indexOf(id)]);
     fitCache.set(key, f);
     return f;
@@ -191,13 +225,13 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
         const f = fitAt(subj, slot);
         cls += ` fit-${f}`;
         inner += '<i class="fb-pdot"></i>';
-        if (drag && over === slot) cls += ' hot';
+        if ((drag || ext) && over === slot) cls += ' hot';
       } else if (h && hints[slot]) {
         cls += ` fit-${fitOfHint(hints[slot])} own`;
         inner += '<i class="fb-pdot"></i>';
       }
       if (h) inner += `${img(h.avatar).replace('<img ', '<img class="fb-av" ')}<div class="fb-nm">${esc(h.name)}</div><div class="fb-hp"><i class="${hpCls(h.hpRatio)}" style="width:${Math.round(h.hpRatio * 100)}%"></i></div>${h.leader ? crownHtml(h.classId) : ''}`;
-      out += `<div class="${cls}" data-slot="${slot}" role="button" aria-label="${esc(h ? `${h.name}, ${rowName(row)}` : `Empty cell, ${rowName(row)}`)}" style="left:${p.x - GX}px;top:${p.y - GY}px">${inner}</div>`;
+      out += `<div class="${cls}" data-slot="${slot}" role="button" aria-label="${esc(h ? `${h.name}, ${rowName(row)}` : `Empty cell, ${rowName(row)}`)}" style="left:${p.x - gx}px;top:${p.y - gy}px">${inner}</div>`;
     }
     return out;
   };
@@ -211,7 +245,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
   };
   const panelHtml = (): string => {
     const f = focus();
-    if (!f) return '';
+    if (!f || o.gridOnly) return '';
     const slot = o.cells().indexOf(f.id);
     const rowTxt = slot >= 0 ? rowName(rowOfCell(slot)) : '';
     const chips = `<div class="fb-chips"><span class="fb-chip">${esc(f.role)}</span>${o.rangeUi ? `<span class="fb-chip hot">Range <b>${f.range === null ? 'Global' : f.range}</b></span>` : ''}${rowTxt ? `<span class="fb-chip">${esc(rowTxt)}</span>` : ''}</div>`;
@@ -227,7 +261,13 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
   let gridEl: HTMLElement;
   let panelEl: HTMLElement;
   const build = (): void => {
-    root.innerHTML = `<div class="fb-lbl back">Back</div><div class="fb-vlbl front"><span>Front</span></div><div class="fb-grid"></div><div class="fb-how">${esc(o.howText ?? (isTouchUi() ? (o.rangeUi ? HOW_TOUCH : HOW_PLAIN_TOUCH) : o.rangeUi ? HOW : HOW_PLAIN))}</div><div class="fb-panel"></div>`;
+    if (o.gridOnly) {
+      root.innerHTML = '<div class="fb-grid"></div><div class="fb-panel" hidden></div>';
+      gridEl = root.querySelector('.fb-grid') as HTMLElement;
+      panelEl = root.querySelector('.fb-panel') as HTMLElement;
+      return;
+    }
+    root.innerHTML = `<div class="fb-lbl back">Back</div><div class="fb-vlbl front"><span>Front</span></div><div class="fb-grid"></div><div class="fb-how">${o.howText !== undefined || !o.rangeUi ? esc(o.howText ?? (isTouchUi() ? HOW_PLAIN_TOUCH : HOW_PLAIN)) : spotLegendHtml()}</div><div class="fb-panel"></div>`;
     gridEl = root.querySelector('.fb-grid') as HTMLElement;
     panelEl = root.querySelector('.fb-panel') as HTMLElement;
   };
@@ -241,6 +281,16 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     fitCache.clear();
     drawGrid();
     drawPanel();
+  };
+
+  /** İpucu kutusunun sığacağı alan (kök yerel px): pencere tahtasında kökün kendisi; yalnızca-ızgarada ekranın görünen alanı. */
+  const area = (): { x0: number; y0: number; x1: number; y1: number } => {
+    if (!o.gridOnly) return { x0: 0, y0: 0, x1: BOARD_W, y1: BOARD_H };
+    const box = root.getBoundingClientRect();
+    const rot = document.documentElement.classList.contains('rotated');
+    const p = clientToLocal(0, 0, box, root.offsetWidth, rot);
+    const q = clientToLocal(window.innerWidth, window.innerHeight, box, root.offsetWidth, rot);
+    return { x0: Math.min(p.x, q.x), y0: Math.min(p.y, q.y), x1: Math.max(p.x, q.x), y1: Math.max(p.y, q.y) };
   };
 
   // ---- hover kutusu (Band dili: vurgu kenarı, ad + sıra, menzil cümlesi, 4 sıra çubuğu)
@@ -257,7 +307,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     if (!o.rangeUi || cell < 0) return;
     const cells = o.cells();
     const occ = cells[cell] ?? '';
-    const who = heroOf(drag?.id ?? '') ?? heroOf(st.sel) ?? heroOf(occ) ?? focus();
+    const who = heroOf(drag?.id ?? '') ?? ext ?? heroOf(st.sel) ?? heroOf(occ) ?? focus();
     if (!who) return;
     const here = cells[cell] === who.id;
     const fit = here ? fitOfHint(o.hintsFor(cells.slice())[cell]) : fitAt(who.id, cell);
@@ -271,10 +321,11 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     const th = el.offsetHeight;
     let x = p.x + C * 0.55;
     let y = p.y + C * 0.7;
-    if (y + th > BOARD_H - 4) y = p.y - th - 8;
-    x = Math.max(4, Math.min(BOARD_W - tw - 4, x));
+    const a = area();
+    if (y + th > a.y1 - 4) y = p.y - th - 8;
+    x = Math.max(a.x0 + 4, Math.min(a.x1 - tw - 4, x));
     el.style.left = `${Math.round(x)}px`;
-    el.style.top = `${Math.round(Math.max(4, y))}px`;
+    el.style.top = `${Math.round(Math.max(a.y0 + 4, y))}px`;
     tip = el;
   };
 
@@ -339,6 +390,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
       ghost.innerHTML = h ? img(h.avatar) : '';
       root.append(ghost);
       drag = { id: down.id, ghost };
+      o.onDrag?.(true);
       over = cellAtPoint(e.clientX, e.clientY);
       drawGrid();
     }
@@ -354,6 +406,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     }
   };
   const stopDrag = (): void => {
+    if (drag) o.onDrag?.(false);
     document.removeEventListener('pointermove', onMove);
     document.removeEventListener('pointerup', onUp);
     document.removeEventListener('pointercancel', onCancel);
@@ -370,6 +423,11 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
       drag = null;
       over = -1;
       hideTip();
+      if (cell < 0 && o.dropOutside?.(id, e.clientX, e.clientY)) {
+        st.sel = '';
+        redraw();
+        return;
+      }
       const r = dropOnCell(o.cells(), id, cell);
       st.sel = r.st.sel;
       if (r.st.moved) st.moved = r.st.moved;
@@ -423,6 +481,8 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     const slot = c ? Number(c.dataset['slot']) : -1;
     if (slot === over) return;
     over = slot;
+    const occ = slot >= 0 ? o.cells()[slot] : '';
+    if (occ) o.onHoverHero?.(occ);
     showTip(slot);
   };
   const onLeave = (): void => {
@@ -444,8 +504,24 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     if (f) o.details?.(f.id);
   };
 
+  const onContext = (e: MouseEvent): void => {
+    if (!o.remove) return;
+    const c = (e.target as HTMLElement).closest<HTMLElement>('.fb-cell');
+    if (!c || !root.contains(c)) return;
+    e.preventDefault();
+    if (drag) return;
+    const id = removeTarget(o.cells(), Number(c.dataset['slot']));
+    if (!id) return;
+    hideTip();
+    st.sel = '';
+    uiSound('back');
+    o.remove(id);
+    redraw();
+  };
+
   build();
   redraw();
+  root.addEventListener('contextmenu', onContext);
   root.addEventListener('pointerdown', onDown);
   root.addEventListener('pointermove', onHover);
   root.addEventListener('pointerleave', onLeave);
@@ -453,6 +529,32 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
 
   return {
     el: root,
+    cellAt: (cx, cy) => cellAtPoint(cx, cy),
+    extPreview: (hero, cx, cy) => {
+      if (destroyed) return;
+      if (!hero) {
+        if (!ext) return;
+        ext = null;
+        over = -1;
+        hideTip();
+        redraw();
+        return;
+      }
+      const c = cellAtPoint(cx, cy);
+      if (ext?.id !== hero.id) {
+        ext = hero;
+        over = c;
+        redraw();
+        showTip(c);
+        return;
+      }
+      if (c !== over) {
+        over = c;
+        gridEl.querySelectorAll('.hot').forEach((n) => n.classList.remove('hot'));
+        if (c >= 0) gridEl.querySelector(`[data-slot="${c}"]`)?.classList.add('hot');
+        showTip(c);
+      }
+    },
     refresh: () => {
       if (destroyed) return;
       const cells = o.cells();
@@ -504,6 +606,15 @@ export function openFormationWindow(o: FormationWindowOpts): FormationWindow {
   const win = document.createElement('div');
   win.className = 'fbw-win el-modal-panel';
   win.innerHTML = `<div class="fbw-ttl">${esc(o.title ?? 'Formation')}</div><div class="fbw-sub">${esc(o.subtitle ?? 'The front row faces the enemy.')}</div><div class="fbw-body"></div><div class="fbw-btns">${o.back ? '<button type="button" class="el-btn dlg" data-act="back">Back</button>' : ''}<button type="button" class="el-btn dlg" data-act="auto">Auto arrange</button><button type="button" class="el-btn primary dlg" data-act="done">${esc(o.doneLabel ?? 'Done')}</button></div>`;
+  // Sağ üst X (Ömer 2026-11-09, pencere kuralı): Esc / zemin ile aynı iş (Back varsa Back, yoksa Done)
+  const xb = document.createElement('button');
+  xb.type = 'button';
+  xb.className = 'fbw-x nav-btn';
+  xb.setAttribute('aria-label', 'Close');
+  xb.title = 'Close';
+  xb.innerHTML = navSvg('close');
+  xb.addEventListener('click', () => (o.back ? o.back() : o.done()));
+  win.append(xb);
   pos.append(win);
   overlay.append(pos);
   host.append(overlay);

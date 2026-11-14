@@ -13,6 +13,7 @@ import { addBustWeapons, avatarUrlOf, bustHtml } from './hero-bust';
 import { lockInput, unlockInput } from './input-lock';
 import { mountCloseButton } from './nav-close';
 import { attachBandTip, reasonSpec } from './band-tip-attach';
+import { mountHeroPicker } from './hero-picker';
 
 export type MwTone = 'info' | 'gain' | 'heal' | 'loss' | 'dim';
 export type MwIcon = 'gold' | 'gear' | 'bag' | 'rest' | 'hp' | 'sword' | 'str' | 'dex' | 'int' | 'luck' | 'check';
@@ -55,14 +56,14 @@ export interface MwFallen {
 export type MwBody =
   | { k: 'plates'; plates: MwPlate[]; pick: (id: string) => void }
   | { k: 'chosen'; plate: MwPlate }
-  | { k: 'cards'; cards: MwCard[]; leader?: boolean; onPick?: (id: string) => void }
+  | { k: 'cards'; cards: MwCard[]; leader?: boolean; onPick?: (id: string) => void; /** Listenin görünen satır sayısı (Recruit: 4). */ rows?: number; /** Önerilenler: listede önce, "Recommended" etiketli. */ recommended?: readonly string[] }
   | { k: 'fallen'; rows: MwFallen[] };
 export interface MwAct {
   label: string;
   primary?: boolean;
   /** true: bir kart seçilene dek soluk (kapalı). */
   needPick?: string;
-  run: (picked: string) => void;
+  run: (picked: string, name?: string) => void;
 }
 export interface MwSpec {
   variant: 'A' | 'C';
@@ -72,6 +73,8 @@ export interface MwSpec {
   place?: string;
   region?: string;
   title: string;
+  /** Madalyonun içindeki ikon (misc ikon adı, ör. 'emblem:recruit'); yoksa düğüm türünün ikonu. Çerçeve türden gelir. */
+  icon?: string;
   /** Sahne şeridi (data/map-window.json > art). */
   art?: { file: string; pos: [number, number] } | null;
   paras: string[];
@@ -81,6 +84,8 @@ export interface MwSpec {
   chips?: MwChip[];
   body?: MwBody;
   acts: MwAct[];
+  /** Bölük adı alanı (yalnız seferin başında): düğmelerle aynı satırda solda; değeri `run(picked, name)` ile gelir. */
+  name?: { max: number; suggestions: string[] };
   /** Verilirse pencere kapatılabilir (zemin, X, Esc); yoksa zorunlu. */
   onDismiss?: () => void;
   /** C: düğüm / yerin CSS piksel konumu (+ yarım genişlik); null = ortala. */
@@ -129,7 +134,7 @@ const chipHtml = (c: MwChip, big = false): string => {
 };
 const chipsHtml = (l: MwChip[], big = false): string => `<div class="mw-chips">${l.map((c) => chipHtml(c, big)).join('')}</div>`;
 
-function medal(type: string, px: [number, number]): string {
+function medal(type: string, px: [number, number], icon?: string): string {
   const c = COL[type] ?? COL['battle']!;
   const D = 'url(#mw-disc)';
   const tab = (k: number): string => `<path d="M${k * 30} -7 L${k * 46} 0 L${k * 30} 7 L${k * 34} 0Z" fill="${c}" stroke="rgba(0,0,0,.5)"/>`;
@@ -141,7 +146,9 @@ function medal(type: string, px: [number, number]): string {
     isz = 60;
   } else if (type === 'start' || type === 'battle') b = `<circle r="28" fill="${D}" stroke="${c}" stroke-width="2"/><circle r="31.5" fill="none" stroke="${c}" stroke-opacity=".3"/>`;
   else b = `${tab(-1)}${tab(1)}<circle r="29" fill="${D}" stroke="${c}" stroke-width="3"/><circle r="25" fill="none" stroke="${c}" stroke-opacity=".4"/>`;
-  const url = miscImage(`node:${type}`)?.url;
+  const own = icon ? miscImage(icon)?.url : undefined;
+  if (own) isz = 70; // özel emblem (ör. Recruit) madalyonun içini doldurur
+  const url = own ?? miscImage(`node:${type}`)?.url;
   const size = `width:max(${px[0]}px,calc(${px[1]} * var(--u)));height:max(${px[0]}px,calc(${px[1]} * var(--u)))`;
   return `<svg class="mw-medal" viewBox="-62 -62 124 124" style="${size}">${b}${url ? `<image href="${url}" x="${-isz / 2}" y="${-isz / 2 - 1}" width="${isz}" height="${isz}"/>` : ''}</svg>`;
 }
@@ -173,6 +180,20 @@ const bodyHtml = (b: MwBody | undefined): string => {
   }).join('')}</div>`;
 };
 
+/** medal() gradyanı (`#mw-disc`): üst bilgiyi kullanan her pencerenin içinde bir kez bulunmalı. */
+export const MW_DEFS = '<svg width="0" height="0" style="position:absolute"><defs><radialGradient id="mw-disc" cx="50%" cy="42%" r="65%"><stop offset="0" stop-color="#4a3622"/><stop offset=".7" stop-color="#1c130b"/><stop offset="1" stop-color="#0d0805"/></radialGradient></defs></svg>';
+
+/**
+ * ORTAK pencere üst bilgisi (Ömer 2026-11-10): sol madalyon (düğüm türü ikonu) + başlık + çip satırı (yer / bölge). Başlığı tekrarlayan tür çipi gösterilmez.
+ * Harita pencereleri (A levha: olay, Recruit, Choose your hero...) ve "Choose a companion" aynı üst bilgiyi kullanır.
+ */
+export function mwHeaderHtml(o: { type: string; kind?: string; place?: string; region?: string; title: string; icon?: string }, px: [number, number] = [44, 96]): string {
+  const col = COL[o.type] ?? COL['battle']!;
+  const kind = o.kind && o.kind.trim().toLowerCase() !== o.title.trim().toLowerCase() ? `<span class="mw-chip type" style="--ac:${col}">${esc(o.kind)}</span>` : '';
+  const tags = `<div class="mw-tags">${kind}${o.place ? `<span class="mw-chip dim">${esc(o.place)}</span>` : ''}${o.region ? `<span class="mw-chip dim reg">${esc(o.region)}</span>` : ''}</div>`;
+  return `<div class="mw-hd" style="--ac:${col};--acr:${rgb(col)}">${medal(o.type, px, o.icon)}<div class="tx"><h2 class="mw-t">${esc(o.title)}</h2>${tags}</div></div>`;
+}
+
 export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   const wrap = document.createElement('div');
   wrap.className = `mw mw-in${o.variant === 'C' ? ' anch' : ''}`;
@@ -183,16 +204,17 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   const art = o.art ? `<div class="mw-art" data-art="${esc(o.art.file)}" style="background-position:${Math.round(o.art.pos[0] * 100)}% ${Math.round(o.art.pos[1] * 100)}%"></div>` : '';
   const paras = `<div class="mw-txt">${o.paras.map((p) => `<p>${esc(p)}</p>`).join('')}${o.chain ? `<p class="mw-chain">${esc(o.chain)}</p>` : ''}</div>`;
   const chipBlock = o.chips?.length ? `${o.chipsCap ? `<h3 class="mw-cap">${esc(o.chipsCap)}</h3>` : ''}${chipsHtml(o.chips, body?.k !== 'plates')}` : '';
+  const nameBox = o.name ? `<span class="mw-cname"><span class="mw-cname-box"><input class="el-field mw-cname-in" type="text" maxlength="${o.name.max}" placeholder="Name your company" aria-label="Company name" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done"><span class="mw-cname-n">0 / ${o.name.max}</span></span><button type="button" class="el-btn mw-cname-sug" data-suggest>Suggest</button></span>` : '';
   const acts = o.acts.length
-    ? `<div class="mw-acts">${o.acts.map((a, i) => `<button type="button" class="el-btn${a.primary ? ' primary ready' : ''}" data-act="${i}"${a.needPick ? ' disabled' : ''}>${esc(a.label)}</button>`).join('')}</div>`
+    ? `<div class="mw-acts">${nameBox}${o.acts.map((a, i) => `<button type="button" class="el-btn${a.primary ? ' primary ready' : ''}" data-act="${i}"${a.needPick ? ' disabled' : ''}>${esc(a.label)}</button>`).join('')}</div>`
     : '';
   const inner = `<div class="mw-scroll"><div class="mw-body">${paras}${chipBlock}${bodyHtml(body)}${acts}</div></div>`;
-  const defs = '<svg width="0" height="0" style="position:absolute"><defs><radialGradient id="mw-disc" cx="50%" cy="42%" r="65%"><stop offset="0" stop-color="#4a3622"/><stop offset=".7" stop-color="#1c130b"/><stop offset="1" stop-color="#0d0805"/></radialGradient></defs></svg>';
+  const defs = MW_DEFS;
   let win: string;
   if (o.variant === 'A') {
     const corners = '<i class="mw-corner tl"></i><i class="mw-corner tr"></i><i class="mw-corner bl"></i><i class="mw-corner br"></i>';
     win = `<div class="mw-win mw-center mw-A ${o.type} ${bd}"><div class="mw-panel" style="${acc}">${corners}
-      <div class="mw-hd">${medal(o.type, [44, 96])}<div class="tx"><h2 class="mw-t">${esc(o.title)}</h2>${tags}</div></div>${art}${inner}</div></div>`;
+      ${mwHeaderHtml(o)}${art}${inner}</div></div>`;
   } else {
     const wide = body?.k === 'plates' || body?.k === 'fallen' || (body?.k === 'cards' && body.cards.length > 2);
     win = `<div class="mw-win mw-C${wide ? ' wide' : ''} ${o.type} ${bd}"><div class="mw-panel" style="${acc}"><i class="mw-notch l"></i><i class="mw-notch r"></i>${art}
@@ -256,10 +278,36 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   if (body?.k === 'plates') {
     for (const el of wrap.querySelectorAll<HTMLElement>('[data-plate]')) el.addEventListener('click', () => !done && body.pick(el.dataset['plate'] ?? ''));
   }
+  // bölük adı (yalnız seferin başında): sayaç, Suggest (hazır adı üstüne yazar), yazarken kısayollar çalışmaz
+  const nameIn = wrap.querySelector<HTMLInputElement>('.mw-cname-in');
+  if (nameIn && o.name) {
+    const names = o.name.suggestions;
+    let at = Math.floor(Math.random() * names.length) - 1; // yalnızca görünüm (kayda rastgelelik girmez)
+    const paint = (): void => {
+      const n = wrap.querySelector<HTMLElement>('.mw-cname-n');
+      if (n) n.textContent = `${nameIn.value.length} / ${o.name!.max}`;
+    };
+    nameIn.addEventListener('input', paint);
+    const stop = (e: KeyboardEvent): void => {
+      e.stopPropagation();
+      if (e.type === 'keydown' && (e.key === 'Enter' || e.key === 'Escape')) nameIn.blur();
+    };
+    nameIn.addEventListener('keydown', stop);
+    nameIn.addEventListener('keyup', stop);
+    nameIn.addEventListener('keypress', stop);
+    const sug = wrap.querySelector<HTMLElement>('[data-suggest]');
+    sug?.addEventListener('pointerdown', (e) => e.preventDefault());
+    sug?.addEventListener('click', () => {
+      at = (at + 1) % names.length;
+      if (names[at] === nameIn.value) at = (at + 1) % names.length;
+      nameIn.value = names[at] ?? '';
+      paint();
+    });
+  }
   actBtns.forEach((b, i) =>
     b.addEventListener('click', () => {
       if (done || b.disabled) return;
-      o.acts[i]!.run(picked);
+      o.acts[i]!.run(picked, nameIn?.value ?? '');
     }),
   );
   syncActs();
@@ -303,5 +351,7 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   };
   place();
   requestAnimationFrame(() => !done && place());
+  // Kahraman seçim penceresi: ortak seçici (satır listesi + yanında kart; src/ui/hero-picker.ts)
+  if (body?.k === 'cards') mountHeroPicker(wrap, body.cards, { place, ...(body.rows ? { rows: body.rows } : {}), ...(body.recommended ? { recommended: body.recommended } : {}) });
   return { close, place, el: wrap };
 }

@@ -1,7 +1,7 @@
 # Karakter tier'ları ve açılma (KONSEPT)
 > **Ne için / Güncel mi (2026-11-08):** Karakter kademeleri ve açılma. KONSEPT, uygulanmadı: `data/classes/` içinde tier/kilit alanı yok. Ömer kararları (bölüm 1) canlı, dağılım Claude taslağı ve onaysız. Alan: `docs/arch/areas/character-design.md`.
 
-> Not: aşağıdaki dağılım tablosu ilk 9 karakteri kapsar; Skald, Vesper, Blood Warden vb. için tier satırı yok (Ömer'e sorulacak, uygulanmadı).
+> Karar (Ömer 2026-11-14, form r17): dağılım tablosu ilk 9 karakteri kapsar; Skald ve Vesper için tier satırı YAZILMAYACAK, plan konsept kalır.
 Durum: **konsept, uygulanmadı** (2026-10-24). Ömer'in fikri, Claude'un taslak kararları. Uygulamaya geçmeden önce Ömer'le yeniden konuşulacak. Yeni mekanik içeren kısımlar (MP cost ve bütçe, Endless açılma eşikleri) **onaylanmış mekanik değil**.
 
 ## Ömer'in kararları

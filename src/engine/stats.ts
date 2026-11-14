@@ -178,6 +178,7 @@ export function buildDef(data: CombatantData, formulas: Formulas): CombatantDef 
     ...(data.boss ? { boss: data.boss } : {}),
     ...(data.touch ? { touch: data.touch } : {}),
     ...(data.inert ? { inert: true } : {}),
+    ...(data.bloodless ? { bloodless: true } : {}),
   };
 }
 

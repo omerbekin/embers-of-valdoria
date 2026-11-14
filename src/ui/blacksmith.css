@@ -1,75 +1,14 @@
-/* Demirci ekranı (Ömer 2026-10-18, ilerleme TUR 1 madde 7; src/ui/blacksmith-screen.ts). Yerleşim tüccarın yan paneliyle aynı (.gr-shop),
-   yalnızca seçili item, önce -> sonra satırları, affix seçimi ve takılı item satırları burada. Yazı: Cinzel başlık / EB Garamond düz yazı. */
+/* Demirci ekranı (Ömer 2026-10-18, ilerleme TUR 1 madde 7; src/ui/blacksmith-screen.ts). Yerleşim tüccarın yan paneliyle aynı (.gr-shop).
+   Panel içi = Form 7 seçimi A "Tek kart" (Ömer 2026-11-12; src/ui/blacksmith-panel.ts, .bsv-*), eylem animasyonları src/ui/blacksmith-fx.ts (.bsfx-*).
+   Yazı: Cinzel başlık / EB Garamond düz yazı; italik yok. */
 .bs-smith .bs-line {
   font-style: normal;
   flex: none; /* Equipped bölümü kalkınca satır boşluğu doldurup uzamasın */
 }
 
-.bs-pane {
-  gap: calc(10 * var(--u));
-  flex: none; /* telefonda sıkışıp bölümlerin üstüne binmesin */
-}
-
-.bs-pickbox {
-  font-style: normal;
-  min-height: max(56px, calc(96 * var(--u)));
-}
-
-.bs-sel {
-  display: flex;
-  align-items: center;
-  gap: calc(14 * var(--u));
-}
-
-.bs-sel .gr-item {
-  flex: none;
-  width: max(56px, calc(96 * var(--u)));
-  height: max(56px, calc(96 * var(--u)));
-}
-
-.bs-sel-t {
-  min-width: 0;
-}
-
-.bs-name {
-  font: 600 max(14px, calc(24 * var(--u))) var(--g-disp);
-  letter-spacing: 0.04em;
-}
-
-.bs-subt,
 .bs-note {
-  font: max(12px, calc(19 * var(--u))) var(--g-body);
+  font: max(calc(12px * var(--tx, 1)), calc(19 * var(--u) * var(--tx, 1))) var(--g-body);
   color: var(--g-dim);
-}
-
-.bs-diff {
-  display: flex;
-  flex-direction: column;
-  gap: calc(4 * var(--u));
-  padding: calc(8 * var(--u)) calc(12 * var(--u));
-  background: rgba(8, 6, 4, 0.45);
-  border: 1px solid var(--g-line2);
-}
-
-.bs-row {
-  display: flex;
-  align-items: baseline;
-  gap: calc(8 * var(--u));
-  font: max(12px, calc(20 * var(--u))) var(--g-body);
-  color: var(--g-text);
-}
-
-.bs-row .bs-k {
-  min-width: calc(110 * var(--u));
-  color: var(--g-dim);
-}
-
-.bs-row .bs-arrow {
-  color: var(--g-gold);
-}
-
-.bs-row.up .bs-to {
-  color: #9fd88a;
 }
 
 .bs-act {
@@ -77,8 +16,7 @@
   gap: calc(12 * var(--u));
 }
 
-.bs-act .gr-btn {
-  min-height: 44px;
+.bs-act .el-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -87,34 +25,708 @@
 .bs-why {
   flex: 1;
   text-align: right;
-  font: max(12px, calc(18 * var(--u))) var(--g-body);
+  font: max(calc(12px * var(--tx, 1)), calc(18 * var(--u) * var(--tx, 1))) var(--g-body);
   color: #e0907a;
 }
 
-.bs-affixes {
-  display: flex;
-  flex-direction: column;
-  gap: calc(6 * var(--u));
+/* Temper / Combine / Reforge sekmeleri her boyutta tek satır (Ömer 2026-11-12; taban kural econ.css .bs-tabs). Masaüstünde ikon + yazı eşit üç pay. */
+.bs-tabs .bs-tab {
+  gap: max(4px, calc(6 * var(--u)));
+  padding: 0 max(4px, calc(10 * var(--u)));
 }
 
-.bs-affix {
+/* telefon: sol pencere ≈ %32 (≈ 265 px); sekmeler küçük ikon + 10 px yazı, eylem satırı (bedel + düğme) sığmazsa sebep yazısı alta iner */
+html.short .bs-tabs {
+  gap: 4px;
+}
+
+html.short .bs-tabs .bs-tab {
+  gap: 2px;
+  padding: 0 3px;
+  font-size: calc(10px * var(--tx, 1));
+  letter-spacing: 0.02em;
+}
+
+html.short .bs-tabs .bs-tab img,
+html.short .bs-tabs .bs-tab .bs-tab-ico {
+  width: 14px;
+  height: 14px;
+}
+
+html.short .bs-act {
+  gap: 4px 8px;
+}
+
+html.short .bs-act .bs-why {
+  font-size: calc(10px * var(--tx, 1));
+}
+
+html.short .bs-act .el-btn:not(.sm) {
+  min-width: 0 !important;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+html.short .bs-note {
+  font-size: calc(10px * var(--tx, 1));
+}
+
+/* eylem satırı: sebep yazısı kendi tam satırında (düğmelerin üstünde), bedel + Clear + Combine yan yana */
+.bs-act {
+  flex-wrap: wrap;
+  row-gap: calc(6 * var(--u));
+}
+
+.bs-act .bs-why {
+  order: -1;
+  flex: 1 1 100%;
+  text-align: right;
+}
+
+.bs-act .el-btn:not(.sm):not(.primary) {
+  min-width: 0;
+  padding-left: max(10px, calc(22 * var(--u)));
+  padding-right: max(10px, calc(22 * var(--u)));
+}
+
+/* Demirci önizlemesi item kartında (Ömer 2026-11-12; item-tip.ts > ItemTipState.compare / lineSel, panel src/ui/blacksmith-panel.ts):
+   değişen sayı "13 → 16" (eski soluk, ok altın, yeni yeşil); Reforge'da kartın satırları seçilebilir (44 px dokunma), ana satır soluk, seçili satır kor. */
+.bs-smith .it-card .it-diff-was {
+  color: var(--g-dim);
+}
+
+.bs-smith .it-card .it-diff-ar {
+  color: var(--g-gold);
+  font-weight: 400;
+}
+
+.bs-smith .it-card .it-diff-up {
+  color: #9fd88a;
+  font-weight: 600;
+}
+
+.bs-smith .it-card .it-line.it-pickable {
   min-height: 44px;
+  margin: 0 -0.4em;
+  padding: 0 0.4em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.bs-smith .it-card .it-line.it-pickable:hover,
+.bs-smith .it-card .it-line.it-pickable:focus-visible {
+  border-color: var(--g-line2);
+  background: rgba(217, 178, 106, 0.06);
+  outline: none;
+}
+
+.bs-smith .it-card .it-line.it-picked {
+  border: 1px solid color-mix(in srgb, #f08c28 70%, var(--g-gold));
+  background: rgba(240, 140, 40, 0.12);
+  box-shadow: inset 0 0 0.9em rgba(240, 140, 40, 0.2);
+}
+
+.bs-smith .it-card .it-line.it-locked {
+  opacity: 0.55;
+}
+
+.bs-smith .it-card .it-mystery {
+  font: 600 1.15em var(--g-disp);
+  color: var(--g-gold);
+  letter-spacing: 0.2em;
+}
+
+.bs-smith .it-card .it-pick-note {
+  margin: -0.15em 0 0.2em;
+  padding-left: 0.4em;
+  font-size: 0.86em;
+  color: #e8cf98;
+}
+
+/* Reforge "Epic only" uyarısı (Ömer 2026-11-12, "alttan"; tasarım dili 4.4 üst orta bildiriminin istisnası): panelin görünen alt kenarına yapışık
+   sıfır yükseklikli çapa, bant eylem satırının üstünde; el-toast ailesi (gradyan bant, düz EB Garamond, hafif kırmızımsı yazı), kısa solma. */
+.bs-smith {
+  position: relative;
+}
+
+.bs-smith > .bs-warn-anchor {
+  position: sticky;
+  bottom: 0;
+  flex: none;
+  height: 0;
+  margin-top: auto;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.bs-warn {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(66px, calc(100 * var(--u)));
+  margin: 0 auto;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: max(6px, calc(10 * var(--u))) max(28px, calc(56 * var(--u)));
+  font: 400 max(calc(13px * var(--tx, 1)), calc(19 * var(--u) * var(--tx, 1))) / 1.2 var(--g-body);
+  color: #f0c7bb;
+  text-align: center;
+  background: linear-gradient(90deg, rgba(10, 7, 5, 0), rgba(10, 7, 5, 0.94) 18%, rgba(10, 7, 5, 0.94) 82%, rgba(10, 7, 5, 0));
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.bs-warn.on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html.short .bs-warn {
+  bottom: 40px;
+  padding: 4px 18px;
+  font-size: calc(11px * var(--tx, 1));
+}
+
+/* ---- Panel A "Tek kart" (Form 7): panel kaymaz, yalnız .bsv-scroll kayar; eylem çubuğu ayrı satırda altta; boş yuva, X, kart, Combine plakaları,
+   sonuç kartı; telefonda (html.short, panel ~270 px) demirci sözü gizli, açıklama 2 satır, kart tek sütun. */
+.gr-pair > .gr-panel.gr-gear.gr-ledger.gr-shop.bs-smith.bsv-on,
+.bs-smith.bsv-on {
+  overflow: hidden;
+  background: linear-gradient(180deg, rgb(30, 22, 14), rgb(12, 9, 6));
+}
+
+.bs-smith.bsv-on > * {
+  flex-shrink: 0;
+}
+
+.bs-smith .bsv {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12 * var(--u));
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+.bsv .bsv-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  padding: 4px;
+  margin: -4px;
+  overflow: hidden auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+
+.bsv .bsv-scroll > * {
+  flex-shrink: 0;
+}
+
+.bsv .bsv-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bsv .bsv-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bsv .bsv-scroll::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+}
+
+.bsv .bsv-note {
+  margin: 0;
+}
+
+.bsv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(8 * var(--u));
+  padding: calc(24 * var(--u)) calc(18 * var(--u));
+  text-align: center;
+  border: 1px dashed var(--g-line2);
+  background: radial-gradient(ellipse at 50% 40%, rgba(217, 178, 106, 0.07), rgba(8, 6, 4, 0.5) 70%);
+}
+
+.bsv-empty.card {
+  min-height: calc(380 * var(--u));
+}
+
+.bsv-empty.epic {
+  border-color: color-mix(in srgb, var(--rc) 55%, transparent);
+  background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--rc) 12%, transparent), rgba(8, 6, 4, 0.5) 70%);
+}
+
+.bsv-empty-ico {
+  display: grid;
+  place-items: center;
+  width: max(52px, calc(120 * var(--u)));
+  aspect-ratio: 1;
+  border: 1px dashed var(--g-line2);
+  background: rgba(8, 6, 4, 0.55);
+}
+
+.bsv-empty.epic .bsv-empty-ico {
+  border-color: color-mix(in srgb, var(--rc) 55%, transparent);
+}
+
+.bsv-empty-ico img {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+  opacity: 0.4;
+}
+
+.bsv-empty-t {
+  font: 600 max(calc(12px * var(--tx, 1)), calc(20 * var(--u) * var(--tx, 1))) var(--g-disp);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+  text-align: center;
+}
+
+.bsv-empty-s,
+.bsv-hint,
+.bsv-rnote {
+  font: max(calc(11px * var(--tx, 1)), calc(17 * var(--u) * var(--tx, 1))) / 1.3 var(--g-body);
+  color: var(--g-dim);
+  text-align: center;
+}
+
+.bsv-rnote {
   text-align: left;
-  padding: calc(6 * var(--u)) calc(12 * var(--u));
-  background: rgba(8, 6, 4, 0.45);
-  border: 1px solid var(--g-line2);
-  color: var(--g-text);
-  font: max(12px, calc(20 * var(--u))) var(--g-body);
+  margin-top: calc(8 * var(--u));
+}
+
+.bsv-x {
+  position: absolute;
+  top: calc(4 * var(--u));
+  right: calc(4 * var(--u));
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--g-dim);
   cursor: pointer;
 }
 
-.bs-affix.on {
-  border-color: var(--g-gold);
-  box-shadow: inset 0 0 calc(18 * var(--u)) rgba(240, 140, 40, 0.25);
+.bsv-x:hover {
+  color: var(--g-gold);
 }
 
-.bs-affix.main,
-.bs-affix:disabled {
-  opacity: 0.5;
-  cursor: default;
+.bsv-x.mark {
+  position: static;
+  flex: none;
+  width: max(20px, calc(28 * var(--u)));
+  height: max(20px, calc(28 * var(--u)));
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.bsv-x svg {
+  width: max(16px, calc(22 * var(--u)));
+  height: max(16px, calc(22 * var(--u)));
+}
+
+.bsv-cardw {
+  position: relative;
+  min-width: 0;
+}
+
+.bsv-cardw > .it-card {
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 max(4px, calc(8 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 28%, transparent),
+    inset 0 0 max(14px, calc(30 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 16.5%, transparent);
+}
+
+.bsv .bsv-plates {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+}
+
+.bsv .bsv-plates .gr-slot.gr-plate {
+  min-height: max(48px, calc(84 * var(--u)));
+}
+
+.bsv .bsv-plates .gp-ico {
+  width: max(40px, calc(66 * var(--u)));
+  height: max(40px, calc(66 * var(--u)));
+}
+
+.bsv .bsv-eplate .gp-ico img {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+  opacity: 0.4;
+}
+
+.bsv-down {
+  align-self: center;
+  margin: calc(-4 * var(--u)) 0;
+  font: 600 max(calc(16px * var(--tx, 1)), calc(28 * var(--u) * var(--tx, 1))) var(--g-disp);
+  color: var(--g-gold);
+  opacity: 0.7;
+}
+
+.bsv-result .bsv-q {
+  display: grid;
+  place-items: center;
+  font: 600 max(calc(26px * var(--tx, 1)), calc(56 * var(--u) * var(--tx, 1))) / 1 var(--g-disp);
+  color: var(--rl);
+  text-shadow: 0 0 calc(14 * var(--u)) color-mix(in srgb, var(--rc) 60%, transparent);
+}
+
+.bsv-result.wait {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.bsv .bsv-bar {
+  position: relative;
+  z-index: 4;
+  flex: none;
+  padding: calc(10 * var(--u)) 0 calc(4 * var(--u));
+  border-top: 1px solid var(--g-line2);
+  background: linear-gradient(180deg, rgba(20, 14, 9, 0.92), rgb(14, 10, 6));
+}
+
+.bsv .bsv-bar .el-btn.primary {
+  margin-left: 0.9em;
+}
+
+html.short .bs-smith .bsv {
+  gap: 6px;
+}
+
+html.short .bsv-empty {
+  gap: 4px;
+  padding: 10px 8px;
+}
+
+html.short .bsv-empty.card {
+  min-height: 130px;
+}
+
+html.short .bsv-empty-ico {
+  width: 46px;
+}
+
+html.short .bsv-empty-t {
+  font-size: calc(11px * var(--tx, 1));
+  letter-spacing: 0.04em;
+}
+
+html.short .bsv-empty-s,
+html.short .bsv-hint,
+html.short .bsv-rnote {
+  font-size: calc(10px * var(--tx, 1));
+}
+
+html.short .bsv-x {
+  top: 0;
+  right: 0;
+}
+
+html.short .bsv-x svg {
+  width: 14px;
+  height: 14px;
+}
+
+html.short .bsv-x.mark {
+  width: 18px;
+  height: 18px;
+}
+
+html.short .bsv .it-card {
+  grid-template-columns: minmax(0, 1fr);
+  font-size: calc(11px * var(--tx, 1));
+}
+
+html.short .bsv .it-head {
+  grid-column: auto;
+  grid-row: auto;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 8px;
+  padding: 6px 40px 5px 6px;
+  text-align: left;
+  border-right: 0;
+  border-bottom: 2px solid color-mix(in srgb, var(--rc, #d9b26a) 70%, transparent);
+}
+
+html.short .bsv .it-medal {
+  width: 40px;
+  margin: 0;
+}
+
+html.short .bsv .it-name {
+  margin-top: 0;
+  font-size: calc(11px * var(--tx, 1));
+  overflow-wrap: anywhere;
+}
+
+html.short .bsv .it-rule {
+  display: none;
+}
+
+html.short .bsv .it-kind {
+  margin: 1px 0 0;
+  padding: 0;
+  font-size: calc(9px * var(--tx, 1));
+  background: none;
+  border: 0;
+}
+
+html.short .bsv .it-sub {
+  margin-top: 1px;
+  font-size: calc(10px * var(--tx, 1));
+}
+
+html.short .bsv .it-big {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+html.short .bsv .it-big strong {
+  font-size: 1.5em;
+}
+
+html.short .bsv .it-main,
+html.short .bsv .it-reqrow,
+html.short .bsv .it-heroes {
+  grid-column: auto;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+html.short .bsv .it-rail {
+  display: none;
+}
+
+html.short .bsv .bsv-plates {
+  gap: 4px;
+}
+
+html.short .bsv .bsv-plates .gr-slot.gr-plate {
+  min-height: 44px;
+}
+
+html.short .bsv .bsv-plates .gp-ico {
+  width: 36px;
+  height: 36px;
+}
+
+html.short .bsv-down {
+  font-size: calc(14px * var(--tx, 1));
+  margin: -2px 0;
+}
+
+html.short .bsv-result .bsv-q {
+  font-size: calc(22px * var(--tx, 1));
+}
+
+html.short .bsv .bsv-bar {
+  padding: 4px 0 2px;
+}
+
+html.short .bs-smith.bsv-on .bs-line {
+  display: none;
+}
+
+html.short .bs-smith.bsv-on .gr-shop-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html.short .bsv .bsv-note {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+html.short .bsv-result .bsv-rnote {
+  display: none;
+}
+
+html.short .bsv-a .bsv-plates .gp-lbl,
+html.short .bsv-a .bsv-plates .gp-l2 {
+  display: none;
+}
+
+html.short .bsv-a .bsv-plates .gp-ico {
+  width: 30px;
+  height: 30px;
+}
+
+html.short .bsv-a .bsv-plates .gr-slot.gr-plate {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+html.short .bsv-a .bsv-down {
+  display: none;
+}
+
+html.short .bsv-result .it-main {
+  padding-top: 3px;
+  padding-bottom: 4px;
+}
+
+/* ---- Eylem animasyonları (Ömer 2026-11-12 Form 7, "Bu işlemlere güzel de bir animasyon ekle"; src/ui/blacksmith-fx.ts): kor / ocak hissi,
+   0,6-1,1 sn, zıplama / sallanma yok, girişi kilitlemez. Reduced motion açıkken JS oynatmaz, CSS de kapalı. */
+.bsv-cardw.bsfx-temper::after,
+.bsv-reveal.bsfx-reveal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 22%, rgba(255, 200, 110, 0.6), rgba(240, 120, 30, 0.2) 45%, transparent 72%);
+  mix-blend-mode: screen;
+  animation: bsfx-flash 0.9s ease-out both;
+}
+
+.bsv-reveal.bsfx-reveal::after {
+  animation-delay: 0.42s;
+}
+
+.bsv-cardw.bsfx-temper > .it-card {
+  animation: bsfx-heat 0.9s ease-out;
+}
+
+@keyframes bsfx-flash {
+  0% {
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes bsfx-heat {
+  0% {
+    filter: brightness(1);
+  }
+  14% {
+    filter: brightness(1.45) saturate(1.25);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+.bs-smith .it-card .bsfx-tick {
+  animation: bsfx-tick 0.95s ease-out;
+}
+
+@keyframes bsfx-tick {
+  0%,
+  60% {
+    color: #ffe2a0;
+    text-shadow: 0 0 8px rgba(255, 170, 60, 0.85);
+  }
+  100% {
+    text-shadow: none;
+  }
+}
+
+/* Combine: plakaların hayaletleri (JS ile uçar) ve yeni item kartının belirişi */
+.bs-smith > .bsfx-ghost {
+  position: absolute;
+  z-index: 9;
+  margin: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.bsv-reveal.bsfx-reveal > .it-card {
+  animation: bsfx-reveal 0.7s 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes bsfx-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.88);
+    filter: brightness(2.2);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: brightness(1);
+  }
+}
+
+.bsv-newtag {
+  position: absolute;
+  top: max(6px, calc(10 * var(--u)));
+  left: max(8px, calc(12 * var(--u)));
+  z-index: 3;
+  font: 600 max(calc(9px * var(--tx, 1)), calc(13 * var(--u) * var(--tx, 1))) var(--g-disp);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+  text-shadow: 0 1px 2px #000;
+}
+
+/* Reforge: satırın üstünden ışık geçer, yazı döner, yeni değer parlayarak oturur */
+.bs-smith .it-card .it-line.bsfx-reroll {
+  position: relative;
+  overflow: hidden;
+}
+
+.bs-smith .it-card .it-line.bsfx-reroll::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 214, 150, 0.5) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: bsfx-shimmer 0.9s ease-in-out both;
+}
+
+@keyframes bsfx-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.bs-smith .it-card .bsfx-spin {
+  color: var(--g-gold);
+  opacity: 0.8;
+  filter: blur(0.5px);
+}
+
+.bs-smith .it-card .it-line.bsfx-set .it-text {
+  animation: bsfx-tick 0.6s ease-out;
+}
+
+html.reduced-motion .bs-smith .bsfx-temper::after,
+html.reduced-motion .bs-smith .bsfx-reveal::after,
+html.reduced-motion .bs-smith .bsfx-reroll::after,
+html.reduced-motion .bs-smith .bsfx-ghost {
+  display: none;
+}
+
+html.reduced-motion .bs-smith [class*='bsfx'],
+html.reduced-motion .bs-smith [class*='bsfx'] > .it-card {
+  animation: none !important;
 }

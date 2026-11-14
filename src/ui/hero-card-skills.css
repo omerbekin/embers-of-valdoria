@@ -1,0 +1,38 @@
+/* Kahraman kartı skill alanı (hero-card-skills.ts): solda pasif madalyonu, sağda 2x2 yatay plaka; Ultimate etiketli turuncu-kızıl. Ölçü: --u (.mw penceresi) */
+.hsk { --a: #d9b26a; --al: color-mix(in srgb, var(--a) 55%, #fff); position: relative; min-width: 0; }
+.hsk.pas { --a: #6fb0a8; }
+.hsk.ult { --a: #ff6a2a; }
+.hsk .ic { position: relative; flex: none; width: calc(64 * var(--u)); height: calc(64 * var(--u)); background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--a) 30%, #1a110a), #0d0806 78%); border: 1px solid color-mix(in srgb, var(--a) 62%, #000); box-shadow: 0 0 0 2px rgba(8,6,4,.9), inset 0 0 12px color-mix(in srgb, var(--a) 22%, transparent); }
+.hsk .ic img { width: 100%; height: 100%; object-fit: contain; display: block; image-rendering: pixelated; }
+/* kare plaka: köşe elmasları; pasif: yuvarlak, elmas yok */
+.hsk:not(.pas) .ic::before, .hsk:not(.pas) .ic::after { content: ''; position: absolute; width: calc(9 * var(--u)); height: calc(9 * var(--u)); transform: rotate(45deg); background: #130d07; border: 1px solid var(--al); }
+.hsk:not(.pas) .ic::before { left: calc(-5 * var(--u)); top: calc(-5 * var(--u)); }
+.hsk:not(.pas) .ic::after { right: calc(-5 * var(--u)); bottom: calc(-5 * var(--u)); }
+.hsk.pas .ic, .hsk.pas .ic img { border-radius: 50%; }
+.hsk.ult .ic { box-shadow: 0 0 0 2px rgba(8,6,4,.9), 0 0 calc(12 * var(--u)) color-mix(in srgb, var(--a) 70%, transparent), inset 0 0 12px color-mix(in srgb, var(--a) 30%, transparent); }
+.hsk .tg { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); z-index: 2; padding: 0 .8em; font: 700 max(calc(8px * var(--tx, 1)), calc(11 * var(--u) * var(--tx, 1))) / 1.6 var(--g-disp, serif); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; color: #fff4d6; background: color-mix(in srgb, var(--a) 62%, #0c0905); border: 1px solid var(--al); }
+.hsk .sn { font: 600 max(calc(9px * var(--tx, 1)), calc(13 * var(--u) * var(--tx, 1))) / 1.15 var(--g-disp, serif); letter-spacing: .04em; text-transform: uppercase; color: var(--al); text-align: center; }
+.hsk .cs { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(4 * var(--u)); }
+.hsk .chip { padding: 0 .55em; font: 600 max(calc(9px * var(--tx, 1)), calc(13 * var(--u) * var(--tx, 1))) / 1.5 var(--g-body, serif); color: #e6d6ae; background: rgba(8,6,4,.7); border: 1px solid rgba(217,178,106,.35); white-space: nowrap; }
+.hsk .chip.cd { color: #9ec9e8; border-color: rgba(120,170,210,.45); }
+.hsk .chip.free { color: #a8977a; }
+.hsk .tx { display: flex; flex-direction: column; align-items: center; gap: calc(5 * var(--u)); width: 100%; min-width: 0; }
+
+/* yerleşim (Recruit / Choose your hero kartı ve Gear > Sheet sekmesi .gr-skills-strip, Ömer 2026-11-12): solda pasif (çizgiyle ayrı sütun), sağda 2x2 yatay plakalar (kare ikon solda; ad, bedel, bekleme sağda) */
+.mw.hp .hp-sks, .gr-skills-strip .hp-sks { display: flex; gap: calc(16 * var(--u)); align-items: stretch; margin-top: auto; }
+.hp-sks .g-pas { flex: none; width: calc(128 * var(--u)); padding-right: calc(16 * var(--u)); border-right: 1px solid rgba(217,178,106,.3); display: flex; }
+.hp-sks .g-rest { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: calc(12 * var(--u)); }
+.hp-sks .hsk.pas { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(8 * var(--u)); padding: calc(16 * var(--u)) 0 calc(8 * var(--u)); }
+.hp-sks .hsk.pas .ic { width: calc(76 * var(--u)); height: calc(76 * var(--u)); }
+.hp-sks .hsk:not(.pas) { display: flex; align-items: center; gap: calc(14 * var(--u)); padding: calc(10 * var(--u)) calc(12 * var(--u)) calc(10 * var(--u)) calc(14 * var(--u)); background: linear-gradient(90deg, color-mix(in srgb, var(--a) 14%, #1d140c), #0d0906 75%); border: 1px solid color-mix(in srgb, var(--a) 42%, rgba(217,178,106,.2)); border-left: 4px solid var(--a); }
+.hp-sks .hsk:not(.pas) .ic { width: calc(56 * var(--u)); height: calc(56 * var(--u)); }
+.hp-sks .hsk:not(.pas) .tx { align-items: flex-start; flex: 1; }
+.hp-sks .hsk:not(.pas) .sn { text-align: left; }
+.hp-sks .hsk:not(.pas) .cs { justify-content: flex-start; }
+.hp-sks .hsk:not(.pas) .tg { left: auto; right: calc(8 * var(--u)); transform: translateY(-50%); }
+.hp-sks .hsk.pas .tg { top: calc(2 * var(--u)); }
+.hp-sks .hsk.pas .sn { min-height: 2.3em; display: flex; align-items: center; }
+
+/* telefon: seçici sağ kartı gizli; yalnız skill şeridi listenin altında kalır */
+html.short .mw.hp .hp-split > .hp-detail:has(.hp-sks) { display: flex; }
+html.short .mw.hp .hp-detail:has(.hp-sks) .hp-top { display: none; }

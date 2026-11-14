@@ -1,3 +1,4 @@
+import { NUM_FONT } from '../ui/menu-style';
 import { desktopBadgeSlots } from './badge-layout';
 import { textRes } from './stage-view';
 import Phaser from 'phaser';
@@ -99,7 +100,6 @@ const KIT = { gold: 0xd9b26a, on: 0xf3d999, ember: 0xe0702a, ember2: 0xffb35a, i
 /** Hedef parıltısı: yardımcı = yumuşak yeşil, zararlı = kor kırmızısı (eski saf yeşil / kırmızı yerine). */
 const GLOW = { good: 0x6fe0a2, bad: 0xff5a32 } as const;
 /** Rozet / önizleme rakamları: düz rakamlı serif, koyu kenar + yumuşak gölge. */
-const NUM_FONT = '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif';
 export const numStyle = (px: number, fill: string = colors.text): Phaser.Types.GameObjects.Text.TextStyle => ({
   fontFamily: NUM_FONT,
   fontSize: `${px}px`,

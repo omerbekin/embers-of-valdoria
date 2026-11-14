@@ -11,7 +11,7 @@
 | Stat (STR / INT / DEX / LUCK) | 17 / 11 / 26 / 6, ana stat DEX (toplam 60) |
 | Zırh / büyü zırhı | 10 / 0 |
 | YZ profili | `assassin` (`data/ai.json > profiles.assassin`) |
-| Pasif | **Opportunist**: "Deal 25% more damage to targets suffering Wound, Slow, Stun or Wither." |
+| Pasif | **Opportunist**: "Deal 25% more damage to targets suffering Wound, Slow, Stun, Wither, Chilled, Soaked or Shocked." (Chilled / Soaked / Shocked Ömer onaylı 2026-11-09) |
 
 - Suikastçı: medieval haydut, hayvan teması yok, DEX ana stat, kırılgan ve hızlı.
 - **Güçlü:** durumlu (yaralı, yavaş, sersem, zayıflamış) hedefe fazla hasar (Opportunist); Backstab arka sıraya bile garanti kritik.
@@ -51,7 +51,7 @@ Veri: `data/skill-trees/cutthroat.json` (sürüm 1, bar "Ghost Mastery"). Düğ�
 - Backstab arka hücre kuralı: ceset engellemez (arşiv madde 225). Stat STR 17 / INT 11 (Ömer 2026-10-18, madde 350).
 - Carving Arc: Wound zincirdeki her kesikte, isabet edince uygulanır (Ömer 2026-10-22, madde 394).
 - Kampanya ve Endless varsayılanında ikinci el dolu gelir (Ömer 2026-10-23, madde 401). Silah tipleri reworkünde hançer kritik yerine başka bonus verir (madde 443; ayrıntı arşivde).
-- **Ömer'e açık soru:** Blinded ve Jinxed CC sayılır mı (arşiv madde 271)? Cevap teyit edilmedi.
+- **Karar (Ömer 2026-11-09, büyük form):** Blinded ve Jinxed CC SAYILMAZ (`statuses.json > cc` değil). Boss bağışıklığı yine `ccImmunity.accuracyCrit` ile çalışır (`combat.md`).
 - Tutorial'da Cutthroat için sınıf önerisi yok.
 
 ## 6. Tarihçe

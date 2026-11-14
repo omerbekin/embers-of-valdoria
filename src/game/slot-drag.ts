@@ -3,6 +3,7 @@ import type { CombatantDef } from '../engine';
 import { EL } from './elegant-ui';
 import { classAvatar, ensureGlow } from './menu-ui';
 import { worldXY } from './stage';
+import { clientToWorld } from './scene-board';
 
 /**
  * Yuva doldurma ekranlarının ORTAK sürükle-bırak parçaları (Phaser; CLAUDE.md > Sürükle-bırak, Ömer 2026-10-10; ortak kılavuz
@@ -45,13 +46,33 @@ export interface SlotDragOptions<T> {
   onMove?: (payload: T, at: Pt) => void;
   /** Bırakıldı (yalnızca eşik aşıldıysa). `outside`: işaretçi oyun alanının dışında kalktı. */
   onDrop: (payload: T, at: Pt, outside: boolean) => void;
+  /**
+   * Sürüklerken pencere işaretçisi de dinlenir (fare DOM tahtasının üstüne girince Phaser olay almaz; hayalet donmasın) ve her harekette ekran noktası verilir
+   * (DOM dizilim tahtasının uygunluk önizlemesi için: src/game/scene-board.ts). Verilmezse yalnızca Phaser işaretçisi.
+   */
+  onClientMove?: (client: { x: number; y: number }, payload: T) => void;
   /** Sürükleme bitti ya da iptal edildi (bırakmadan önce çağrılır: hayalet silindi, görsel geri gelsin, vurguyu temizle). */
   onEnd?: (payload: T, moved: boolean) => void;
 }
 
+interface DragState<T> {
+  payload: T;
+  sx: number;
+  sy: number;
+  moved: boolean;
+  ghost?: Phaser.GameObjects.Container;
+}
+
 export class SlotDrag<T> {
-  private cur: { payload: T; sx: number; sy: number; moved: boolean; ghost?: Phaser.GameObjects.Container } | null = null;
+  private cur: DragState<T> | null = null;
   private readonly move = (p: Phaser.Input.Pointer): void => this.onMove(p);
+  private readonly winMove = (e: PointerEvent): void => {
+    const c = this.cur;
+    if (!c || !this.o.onClientMove) return;
+    if (e.buttons === 0 && e.pointerType === 'mouse') return;
+    this.step(c, clientToWorld(e.clientX, e.clientY));
+    if (c.moved) this.o.onClientMove({ x: e.clientX, y: e.clientY }, c.payload);
+  };
   private readonly up = (p: Phaser.Input.Pointer): void => this.onUp(p, false);
   private readonly upOut = (p: Phaser.Input.Pointer): void => this.onUp(p, true);
 
@@ -66,6 +87,7 @@ export class SlotDrag<T> {
     this.cancel();
     const q = this.pt(p);
     this.cur = { payload, sx: q.x, sy: q.y, moved: false };
+    if (this.o.onClientMove) window.addEventListener('pointermove', this.winMove, true);
   }
 
   /** Eşik aşılmış bir sürükleme sürüyor mu (dokunma/tık işleyicileri bunu görünce tıkı yok sayar). */
@@ -82,6 +104,7 @@ export class SlotDrag<T> {
   cancel(): void {
     const c = this.cur;
     this.cur = null;
+    window.removeEventListener('pointermove', this.winMove, true);
     if (!c) return;
     c.ghost?.destroy();
     this.o.onEnd?.(c.payload, c.moved);
@@ -103,7 +126,10 @@ export class SlotDrag<T> {
     const c = this.cur;
     if (!c) return;
     if (!p.isDown) return this.cancel();
-    const q = this.pt(p);
+    this.step(c, this.pt(p));
+  }
+
+  private step(c: DragState<T>, q: Pt): void {
     const lift = this.o.lift ?? 0;
     if (!c.moved) {
       if (Math.hypot(q.x - c.sx, q.y - c.sy) < this.o.threshold) return;

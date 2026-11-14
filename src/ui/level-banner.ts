@@ -7,6 +7,7 @@
  * Şerit açıkken mentor ders kutuları bekler (src/ui/lesson-box.ts > LESSON_BLOCKERS).
  */
 import './camp-hud.css';
+import { playLevelUpFx } from './reward-fx';
 
 export interface LevelBannerLine {
   name: string;
@@ -65,6 +66,7 @@ export function showLevelBanner(root: HTMLElement, lines: LevelBannerLine[], ms 
   }
   if (!box.childElementCount) return () => undefined;
   root.append(box);
+  if (lines.length) playLevelUpFx(box.querySelector<HTMLElement>('.lv-line')); // ödül anı efekti (reward-fx.ts)
   const out = window.setTimeout(() => box.classList.add('out'), ms);
   const gone = window.setTimeout(() => box.remove(), ms + 600);
   return () => {

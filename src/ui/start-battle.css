@@ -1,8 +1,8 @@
-/* "Start battle?" kartı (src/ui/start-battle.ts; taslak public/mockups/start-battle.html #v3). Ölçüler oyun birimiyle: calc(N * var(--u)). */
+/* Düğüm kartının kabuğu (src/ui/start-battle.ts): konum, zemin, ok ucu, düğme, not, ipucu. Kartın içi src/ui/node-card.css. Ölçüler oyun birimiyle: calc(N * var(--u)). */
 .sbc {
   --u: var(--gu, 1px);
   --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217, 178, 106, 0.42); --g-line: rgba(217, 178, 106, 0.16); --g-line2: rgba(217, 178, 106, 0.3);
-  --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: Cinzel, Georgia, 'Palatino Linotype', serif; --g-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  --g-ember: #e0702a; --g-ember2: #ffb35a; 
   position: fixed; inset: 0; z-index: 19; color: var(--g-text); font-family: var(--g-body);
 }
 /* harita daha az kararır; düğümün çevresi açık kalır */
@@ -35,148 +35,24 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 .sbc-notch.l { left: calc(max(10px, calc(20 * var(--u))) / -2 - 1px); border-right: 0; border-top: 0; }
 .sbc-notch.r { right: calc(max(10px, calc(20 * var(--u))) / -2 - 1px); border-left: 0; border-bottom: 0; }
 
-.sbc-head { display: flex; align-items: center; gap: max(8px, calc(16 * var(--u))); }
-.sbc-head .tx { flex: 1; min-width: 0; }
 .sbc-t {
-  font: 600 max(15px, calc(26 * var(--u))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; text-align: left;
+  font: 600 max(calc(15px * var(--tx, 1)), calc(26 * var(--u) * var(--tx, 1))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; text-align: left;
   background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9));
 }
-.sbc-sub { font: max(12px, calc(20 * var(--u))) var(--g-body); color: #cdb88d; margin: 0; text-align: left; }
-.sbc-sub b { font-style: normal; font-weight: 400; color: var(--g-ember2); }
-.sbc-rule { height: 1px; border: 0; margin: 0; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.55), transparent); }
-.sbc-ntile { flex: none; display: grid; place-items: center; width: max(36px, calc(64 * var(--u))); height: max(36px, calc(64 * var(--u))); background: #120c08; border: 1px solid var(--g-line2); position: relative; }
-.sbc-ntile::before { content: ''; position: absolute; inset: 14%; border-radius: 50%; background: #140e09; border: 1px solid rgba(217, 178, 106, 0.7); }
-.sbc-ntile img { position: relative; width: 66%; height: 66%; object-fit: contain; }
-
-.sbc-row { display: flex; flex-wrap: nowrap; gap: max(6px, calc(10 * var(--u))); justify-content: flex-start; align-items: flex-start; }
-.sbc-foe { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: max(48px, calc(96 * var(--u))); outline: none; cursor: default; }
 .sbc-face { position: relative; width: max(40px, calc(84 * var(--u))); height: max(40px, calc(84 * var(--u))); background: #120c08; border: 1px solid var(--g-line2); box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.7); }
 .sbc-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .sbc-face img.logo { object-fit: contain; padding: 14%; box-sizing: border-box; image-rendering: pixelated; }
-.sbc-foe.elite .sbc-face { border-color: var(--g-ember); box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.7), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.55); }
-.sbc-foe.boss .sbc-face { border-color: var(--g-gold); box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.7), 0 0 0 4px rgba(243, 217, 153, 0.35), 0 0 calc(18 * var(--u)) rgba(243, 217, 153, 0.5); }
-.sbc-face .cnt { position: absolute; right: -1px; bottom: -1px; padding: 0 5px; background: rgba(12, 9, 6, 0.92); border: 1px solid var(--g-line2); font: 600 max(11px, calc(18 * var(--u))) var(--g-disp); color: var(--g-gold); font-style: normal; }
-.sbc-face .tg { position: absolute; left: 50%; top: 0; transform: translate(-50%, -55%); padding: 0 7px; white-space: nowrap; font: 600 max(8px, calc(12 * var(--u))) var(--g-disp); letter-spacing: 0.16em; color: #1a0f06; font-style: normal; background: linear-gradient(180deg, var(--g-ember2), var(--g-ember)); }
-.sbc-foe.boss .sbc-face .tg { background: linear-gradient(180deg, #fbe7b0, #c8964a); }
-.sbc-nm { font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: 0.06em; text-align: center; color: var(--g-text); line-height: 1.15; }
-.sbc-lv { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.12em; color: var(--g-dim); }
-.sbc-foe.elite .sbc-nm { color: var(--g-ember2); }
-.sbc-foe.boss .sbc-nm { color: var(--g-gold); }
-
-/* tek bilgi satırı (var olan oyun metni) */
-.sbc-info { margin: 0; font: 400 max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); /* düz yazı: arayüzde italik yok (Ömer 2026-10-23, devriye satırı 2026-10-27) */ line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.sbc-info b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); font-style: normal; margin-right: 0.5em; }
-.sbc-info.quote { color: #cdb88d; }
-.sbc-info.plain { font-style: normal; font-size: max(11px, calc(17 * var(--u))); }
-/* etiket satırı (devriye): ince altın çerçeveli küçük büyük harf etiketler */
-.sbc-tags { display: flex; flex-wrap: wrap; gap: max(4px, calc(8 * var(--u))); }
-.sbc-tag { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; color: var(--g-text); padding: max(2px, calc(4 * var(--u))) max(6px, calc(10 * var(--u))); border: 1px solid var(--g-line2); background: rgba(8, 6, 4, 0.55); white-space: nowrap; }
-.sbc-tag.gold { color: var(--g-gold); border-color: rgba(217, 178, 106, 0.6); background: rgba(217, 178, 106, 0.1); }
-.sbc-tag.dim { color: var(--g-dim); border-style: dashed; }
-.sbc-tag.silver { color: #cfe0ee; border-color: rgba(207, 224, 238, 0.6); background: rgba(140, 185, 230, 0.12); }
-/* Rakip bölük şeridi (Silver Stag; taslak rival-company C): arma + ad + tek satır */
-.sbc-co { display: flex; align-items: center; gap: max(8px, calc(12 * var(--u))); padding: max(5px, calc(10 * var(--u))) max(8px, calc(14 * var(--u))); border: 1px solid rgba(207, 224, 238, 0.35); background: linear-gradient(90deg, rgba(140, 185, 230, 0.12), rgba(8, 6, 4, 0.4)); }
-.sbc-co .bdg { flex: none; display: block; width: max(18px, calc(34 * var(--u))); height: max(21px, calc(39 * var(--u))); }
-.sbc-co b { display: block; font: 600 max(11px, calc(17 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: #cfe0ee; }
-.sbc-co span { font: max(11px, calc(18 * var(--u))) var(--g-body); color: var(--g-text); }
-.sbc-foe.mem .sbc-face { border-color: rgba(207, 224, 238, 0.6); box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.7), 0 0 calc(10 * var(--u)) rgba(140, 185, 230, 0.35); }
-.sbc-foe.mem .sbc-face .cr { position: absolute; left: -1px; top: -1px; width: max(12px, calc(22 * var(--u))); height: max(14px, calc(25 * var(--u))); background: rgba(10, 14, 20, 0.9); display: grid; place-items: center; border: 1px solid rgba(207, 224, 238, 0.6); }
-.sbc-foe.mem .sbc-face .cr svg { width: 80%; height: 80%; }
-
 .sbc-acts { display: flex; justify-content: flex-end; align-items: center; }
 .sbc-acts .el-btn { min-height: calc(var(--btn-dlg-h) * 1.15); min-width: calc(var(--btn-dlg-w) * 1.1); font-size: calc(var(--btn-dlg-fs) * 1.15); padding-left: max(18px, calc(36 * var(--u))); padding-right: max(18px, calc(36 * var(--u))); }
-
-/* alttaki "Then" satırı ve düğmenin yerine geçen düz not (ember elması yok) */
-.sbc-then { margin: 0; font: max(12px, calc(19 * var(--u))) var(--g-body); color: var(--g-dim); line-height: 1.25; }
-.sbc-then b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); margin-right: 0.6em; }
-.sbc-then i { font-style: normal; color: rgba(168, 151, 122, 0.7); }
-.sbc-then .k { font: 600 max(9px, calc(13 * var(--u))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; color: var(--g-ember2); }
-/* "First" satırı (playtest H3 / H2): varıştaki kadro adımı; Then satırından açık renk, kısa ekranda da görünür */
-.sbc-first { color: var(--g-text); }
-.sbc-note { margin: 0; text-align: right; font: 600 max(11px, calc(16 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-dim); }
+.sbc-note { margin: 0; text-align: right; font: 600 max(calc(11px * var(--tx, 1)), calc(16 * var(--u) * var(--tx, 1))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-dim); }
 
 /* üstüne gelince / odakta ipucu: yalnızca CSS */
-.sbc [data-tip]::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 40; padding: 5px 10px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.12s; background: linear-gradient(180deg, rgba(30, 22, 14, 0.98), rgba(12, 9, 6, 0.98)); border: 1px solid var(--g-edge); font: 600 max(11px, calc(15 * var(--u))) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: var(--g-gold); }
+.sbc [data-tip]::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 40; padding: 5px 10px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.12s; background: linear-gradient(180deg, rgba(30, 22, 14, 0.98), rgba(12, 9, 6, 0.98)); border: 1px solid var(--g-edge); font: 600 max(calc(11px * var(--tx, 1)), calc(15 * var(--u) * var(--tx, 1))) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: var(--g-gold); }
 /* dokunmatikte :hover / :focus dokunduktan sonra takılı kalır (Ömer 2026-10-18 hata: ipucu başlık satırının üstünde asılı kaldı):
    yalnızca gerçek fare üstündeyken ve klavye odağında */
 @media (hover: hover) and (pointer: fine) { .sbc [data-tip]:hover::after { opacity: 1; } }
 .sbc [data-tip]:focus-visible::after { opacity: 1; }
 
-/* kısa ekran (telefon yatay): sahneye sığsın; bilgi satırı gizlenir */
+/* kısa ekran (telefon yatay): sahneye sığsın */
 html.short .sbc-card { padding: 8px 12px; gap: 5px; }
 html.short .sbc-acts .el-btn { padding-left: 16px; padding-right: 16px; letter-spacing: 0.06em; }
-html.short .sbc-card:not(.nofoes) .sbc-then:not(.sbc-first) { display: none; }
-/* lore cümlesi telefonda da kalır (Ömer 2026-11-07): 2 satır, küçük punto */
-html.short .sbc-card .sbc-info { -webkit-line-clamp: 2; font-size: 12px; line-height: 1.2; }
-/* portresiz kart (savaşsız düğüm): lore satırı kısa ekranda da görünür, iki satırla sınırlı */
-html.short .sbc-card.nofoes .sbc-info { -webkit-line-clamp: 2; font-size: 12px; }
-
-/* Tehlike satırı (level farkı bandı; Ömer 2026-10-26): "Recommended level 9 · Your company 6.7" + renkli bant adı; italik yok */
-.sbc-threat { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2em 0.9em; font: 500 max(11px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); }
-.sbc-threat b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; }
-.sbc-threat .mk { font-style: normal; display: inline-block; margin-right: 0.45em; }
-/* Yan karşılaşma uyarısı (Ömer 2026-10-27, side-danger.ts): "Stronger than the road ahead" + amber / kızıl etiket; satır metni okunur renkte */
-.sbc-chain { margin: 0; font: 500 max(11px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sbc-threat.side .ln { color: var(--g-text); }
-
-/* Kasaba kartı (Ömer 2026-11-02, taslak town-card A): hizmet plakaları + haber satırı; ipucu A Band */
-.sbc-card.tc { border-top: 3px solid var(--g-ember); }
-.sbc-card.tc.wide { width: max(min(calc(100% - 20px), 440px), calc(760 * var(--u))); }
-.sbc-card .tc-flag { display: flex; align-items: center; gap: max(6px, calc(10 * var(--u))); padding: max(3px, calc(7 * var(--u))) max(7px, calc(12 * var(--u))); border-left: 2px solid var(--g-ember); background: rgba(224, 112, 42, 0.1); font: max(12px, calc(19 * var(--u))) var(--g-body); color: #ffd9a0; }
-.sbc-card .tc-flag::before { content: ''; flex: none; width: max(5px, calc(8 * var(--u))); height: max(5px, calc(8 * var(--u))); transform: rotate(45deg); background: var(--g-ember); }
-/* A: hizmet plakalari */
-.sbc-card .tc-svc { display: flex; gap: max(5px, calc(10 * var(--u))); }
-.sbc-card .tc-svc > button { flex: 1 1 0; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: max(5px, calc(10 * var(--u))); padding: max(3px, calc(8 * var(--u))) max(6px, calc(12 * var(--u))); text-align: left; cursor: default; color: inherit;
-  background: rgba(8, 6, 4, 0.55); border: 1px solid var(--g-line2); position: relative; transition: border-color var(--m-card-hover), box-shadow var(--m-card-hover); }
-.sbc-card .tc-svc > button:hover, .sbc-card .tc-svc > button:focus-visible, .sbc-card .tc-svc > button.pin { outline: none; border-color: var(--g-gold); box-shadow: 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.25); }
-.sbc-card .tc-svc img { width: max(20px, calc(40 * var(--u))); height: max(20px, calc(40 * var(--u))); object-fit: contain; flex: none; }
-.sbc-card .tc-svc b { display: block; font: 600 max(10px, calc(17 * var(--u))) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: var(--g-gold); }
-.sbc-card .tc-svc i { display: block; font-style: normal; font: max(10px, calc(16 * var(--u))) var(--g-body); color: var(--g-dim); }
-
-html.short .sbc-card .tc-flag { font-size: 12px; }
-html.short .sbc-card .tc-svc > button { padding: 3px 7px; }
-html.short .tc-lore-ph { display: none; }
-html.short .sbc-card.tc.wide { width: min(calc(100% - 20px), 500px); }
-.sbc-card .tc-svc span { min-width: 0; }
-.sbc-card .tc-svc b, .sbc-card .tc-svc i { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-html.short .sbc-card .tc-svc { gap: 4px; }
-html.short .sbc-card .tc-svc > button { gap: 4px; padding: 3px 5px; }
-html.short .sbc-card .tc-svc img { width: 18px; height: 18px; }
-html.short .sbc-card .tc-svc b { letter-spacing: 0.03em; font-size: 10px; }
-html.short .sbc-card .tc-svc i { font-size: 11px; }
-/* 4 plaka yan yana (Valdren): ad iki satıra bölünebilir, dar kartta harf aralığı küçülür */
-.sbc-card .tc-svc b { white-space: normal; letter-spacing: 0.05em; }
-.sbc-card .tc-svc img { width: max(16px, calc(32 * var(--u))); height: max(16px, calc(32 * var(--u))); }
-html.short .sbc-card .tc-svc img { width: 18px; height: 18px; }
-.sbc-card .tc-svc > button { padding-left: max(4px, calc(8 * var(--u))); padding-right: max(3px, calc(6 * var(--u))); gap: max(4px, calc(7 * var(--u))); }
-.sbc-card .tc-svc b { letter-spacing: 0.03em; text-overflow: clip; }
-
-/* Anchored card bölümleri (Ömer 2026-11-07, taslak node-views A): başlık hapı, bölüm başlığı + satırlar, dalış basamakları. Ödül yok: yalnız bilinen (tür, derinlik, risk). */
-.sbc-pill { margin-left: auto; flex: none; display: inline-flex; align-items: center; padding: 0 0.7em; height: 1.7em; font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.16em; text-transform: uppercase; color: var(--g-gold); background: rgba(12, 9, 6, 0.9); border: 1px solid var(--g-line2); white-space: nowrap; }
-.sbc-pill.em { color: #1a0f06; background: linear-gradient(180deg, var(--g-ember2), var(--g-ember)); border-color: transparent; }
-.sbc-blk { display: flex; flex-direction: column; gap: max(3px, calc(6 * var(--u))); }
-.sbc-h { display: flex; gap: 8px; align-items: center; padding-bottom: 4px; border-bottom: 1px solid var(--g-line); font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.22em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); }
-.sbc-h .r { margin-left: auto; letter-spacing: 0.06em; color: var(--g-dim); font-weight: 400; }
-.sbc-r { display: flex; gap: max(8px, calc(14 * var(--u))); align-items: center; padding: max(1px, calc(3 * var(--u))) 0; min-width: 0; }
-.sbc-r b { display: block; font: 600 max(11px, calc(18 * var(--u))) var(--g-disp); letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-gold); line-height: 1.1; }
-.sbc-r b + span { display: block; font: 400 max(12px, calc(19 * var(--u))) var(--g-body); color: var(--g-text); line-height: 1.2; }
-.sbc-r.bad b { color: #e8806a; }
-.sbc-rt { flex: none; display: grid; place-items: center; width: max(26px, calc(46 * var(--u))); height: max(26px, calc(46 * var(--u))); background: #120c08; border: 1px solid var(--g-line2); position: relative; }
-.sbc-rt::before { content: ''; position: absolute; inset: 12%; border-radius: 50%; background: #140e09; border: 1px solid rgba(217, 178, 106, 0.7); }
-.sbc-rt img { position: relative; width: 68%; height: 68%; object-fit: contain; }
-.sbc-ladder { display: flex; gap: max(4px, calc(8 * var(--u))); }
-.sbc-step { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: max(3px, calc(6 * var(--u))) 2px; border: 1px solid var(--g-line); text-align: center; opacity: 0.75; }
-.sbc-step.done { opacity: 0.6; }
-.sbc-step.now { border-color: var(--g-ember2); opacity: 1; }
-.sbc-step.now .sbc-rt { border-color: var(--g-ember2); box-shadow: 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.6); }
-.sbc-step b { font: 600 max(10px, calc(17 * var(--u))) var(--g-disp); letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-gold); line-height: 1.1; }
-.sbc-step span:not(.sbc-rt) { font: max(10px, calc(17 * var(--u))) var(--g-body); color: var(--g-dim); }
-html.short .sbc-pill { font-size: 9px; }
-html.short .sbc-h { padding-bottom: 1px; font-size: 9px; }
-html.short .sbc-rt { width: 24px; height: 24px; }
-html.short .sbc-r { padding: 0; }
-html.short .sbc-r b + span { font-size: 11px; }
-html.short .sbc-step { padding: 2px; gap: 0; }
-html.short .sbc-step .sbc-rt { display: none; }
-html.short .sbc-blk { gap: 2px; }
-html.short .sbc-b-carried { display: none; } /* telefonda sığsın: taşınan nimet sayısı kısa ekranda gizli */

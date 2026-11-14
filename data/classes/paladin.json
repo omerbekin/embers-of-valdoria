@@ -31,7 +31,7 @@
     "text": "At the start of your turn, heal the most wounded ally.",
     "effect": {
       "type": "divineLight",
-      "power": 0.27,
+      "power": 0.312,
       "scale": "int"
     }
   }

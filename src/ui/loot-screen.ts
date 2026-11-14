@@ -10,15 +10,14 @@ import { TEMPER_STONE_ICON } from './temper-stone';
 import './gear.css';
 import { acknowledgeLoot, stashLoot, supplyDef, takeLeftover, type CampaignState } from '../campaign';
 import { supplyIconSvg } from './supply-icons';
-import { BAG_SIZE, instanceColor, itemDef, xpToNext, type ItemInstance } from '../progression';
-import { avatarUrl } from './character-panel';
+import { BAG_SIZE, itemDef, xpToNext, type ItemInstance } from '../progression';
+import { avatarUrl, itemPlate } from './character-panel';
 import { motion, ms } from './motion';
-import { iconUrl } from './dom-icons';
-import { hasUiImage, uiIconName } from './ui-icons';
-import { itemCell } from './inventory';
+import { goldImg } from './ui-icons';
 import { itemTipNodes } from './item-tip';
 import { confirmIn, equippedTipNodes, heroTipExtra, openGear, type GearApi, type GearExt, type GearSource } from './gear-screen';
 import { uiSound, worldSound } from './ui-sound';
+import { playLevelUpFx, playRevealFx } from './reward-fx';
 import { dueScreenLessons } from '../tutorial/lessons';
 import { seenLessons } from '../tutorial/store';
 import { dismissLesson, showLesson } from './lesson-box';
@@ -128,14 +127,17 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     const root2 = overlayEl;
     if (!root2 || !uids.size) return;
     let first: HTMLElement | null = null;
+    const shown: HTMLElement[] = [];
     for (const uid of uids) {
       const cell = root2.querySelector<HTMLElement>(`.gr-bag [data-tip="bag:${uid}"]`);
       if (!cell) continue;
       cell.classList.add('gr-new');
       first ??= cell;
+      shown.push(cell);
       window.setTimeout(() => cell.classList.remove('gr-new'), 1600);
     }
     first?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    playRevealFx(shown); // ödül anı efekti (reward-fx.ts)
   };
 
   /** Bir item'i torbaya alır; (isteğe bağlı) kahramana kuşandırır. Hata: kısa uyarı. */
@@ -293,6 +295,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
                 reg.earned = true;
                 syncTags();
                 uiSound('confirm');
+                playLevelUpFx(lv); // ödül anı efekti (reward-fx.ts)
                 later(() => row.classList.remove('lvup'), ms(mo.levelUpMs));
               }
               if (k < segs.length - 1) fill.style.width = '0%';
@@ -320,13 +323,8 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     // altın (yalnızca gösterim: altın zaten kesede) + kahraman başına XP satırı (kalıcı kap: ekran yenilenince animasyon baştan başlamaz)
     if (drop?.gold) {
       const g = el('div', 'gr-loot-gold');
-      if (hasUiImage('gold')) {
-        const im = el('img', 'gr-price-ico');
-        im.src = iconUrl(uiIconName('gold'));
-        im.alt = '';
-        im.draggable = false;
-        g.append(im);
-      }
+      const gi = goldImg();
+      if (gi) g.append(gi);
       g.append(document.createTextNode(`+${drop.gold} gold`));
       const gain = el('div', 'gr-loot-gain');
       gain.append(g);
@@ -363,50 +361,30 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     items.forEach((inst, i) => {
       const d = itemDef(inst.id);
       if (!d) return;
-      const tile = el('button', 'rb-tile gr-loot-tile');
-      tile.type = 'button';
-      tile.dataset['drag'] = `loot:${i}`;
-      tile.dataset['tip'] = `loot:${i}`;
-      tile.dataset['item'] = inst.id;
-      tile.style.setProperty('--rc', instanceColor(inst));
-      const medal = itemCell(inst, { tag: 'span' });
-      medal.classList.add('gr-loot-sq');
-      const lab = el('span', 'rb-label', d.name);
-      lab.style.color = instanceColor(inst);
-      const row = el('span', 'gr-loot-row');
-      row.append(medal, lab);
-      tile.append(row);
-      // Fare üstüne gelince kart addan aşağı açılır (envanter item ipucuyla aynı kart); dokunmatikte tek dokunuş ipucunu sabitler
-      tile.dataset['inlineTip'] = '1';
-      const more = el('span', 'gr-loot-more');
-      const inner = el('span', 'gr-loot-more-in');
-      inner.append(...itemTipNodes(inst, undefined, heroTipExtra(o.gear.heroes(), inst, true)));
-      more.append(inner);
-      tile.append(more);
+      const vr = itemPlate(inst, undefined, undefined, true);
+      vr.dataset['drag'] = `loot:${i}`;
+      vr.dataset['tip'] = `loot:${i}`;
       const ri = rare.indexOf(inst.id);
       if (ri >= 0) {
         rare.splice(ri, 1);
-        tile.classList.add('gr-rare-drop');
-        tile.append(el('span', 'gr-rare-tag', 'Rare drop'));
+        vr.classList.add('gr-rare-drop');
       }
-      // fare: dokununca torbaya alır; dokunmatik: ipucundaki eylemler (denetçi click'i yutar)
-      tile.addEventListener('click', () => take(i));
-      list.append(tile);
+      vr.addEventListener('click', () => take(i));
+      list.append(vr);
     });
     if (!items.length) list.append(el('div', 'gr-card-empty', sawItems ? 'All taken.' : drop?.gold || xpBox ? 'No gear this time.' : 'Nothing here.'));
     side.append(list);
     if (items.length && bagFull()) side.append(el('div', 'gr-card-warn', 'Bag full. Make room first: drag a bag item to the trash.'));
     const foot = el('div', 'gr-foot');
-    const all = btn('gr-btn', 'Take all', takeAll);
+    const all = btn('el-btn', 'Take all', takeAll);
     all.disabled = !items.length;
-    foot.append(all, btn('gr-btn primary', 'Done', () => api?.close()));
+    foot.append(all, btn('el-btn primary', 'Done', () => api?.close()));
     side.append(foot);
   };
 
   const ext: GearExt = {
     side,
     bagOnly: true, // yalnızca ganimet + ortak torba (kahraman sayfası yok; kuşanma sonra Gear'da)
-    hideGold: false,
     attach: (overlay, a) => {
       overlayEl = overlay;
       api = a;
@@ -438,7 +416,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     beforeClose: (proceed) => {
       const left = o.get().pendingLoot?.left?.length ?? 0;
       if (!left || !overlayEl) return false;
-      confirmIn(overlayEl, `Leave ${left} item${left > 1 ? 's' : ''} behind? ${left > 1 ? 'They are' : 'It is'} lost when you continue.`, 'Leave', proceed, true);
+      confirmIn(`Leave ${left} item${left > 1 ? 's' : ''} behind? ${left > 1 ? 'They are' : 'It is'} lost when you continue.`, 'Leave', proceed, true);
       return true;
     },
   };

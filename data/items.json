@@ -4650,7 +4650,7 @@
         "3": { "byClass": {
           "warrior": { "passive": "berserker", "field": "rageOnHurt.perHpPercent", "from": 0.4, "to": 0.5 },
           "defender": { "passive": "bulwark_aura", "field": "pct", "from": 0.4, "to": 0.5 },
-          "paladin": { "passive": "divine_light", "field": "power", "from": 0.27, "to": 0.32 }
+          "paladin": { "passive": "divine_light", "field": "power", "from": 0.312, "to": 0.362 }
         } },
         "4": { "rule": "banked_coals", "name": "Banked Coals", "bankShare": 0.5, "ticks": 3, "stacking": "perHit", "damageType": "inherit", "ignoresStatuses": ["fortified", "blessed"], "canKill": true,
           "note": "Half of damage after armor is banked; each hit has its own even 3-turn tick (40 dmg: 20 now, 6.7 x3); ticks sum and do not reset. Coal damage type is inherited from the hit." }
@@ -4675,9 +4675,10 @@
       "pieceNames": ["Kingsfall Crown", "Kingsfall Mantle", "Kingsfall Signet"],
       "thresholds": [2, 3],
       "bonuses": {
-        "2": { "mods": { "hpAdd": 12, "hpRegenAdd": 0.25 } },
-        "3": { "mods": { "hpAdd": 30, "armorAdd": 2, "magicArmorAdd": 2, "spdAdd": -0.5 }, "rule": "royal_command", "name": "Royal Command" }
+        "2": { "mods": { "hpAdd": 6, "hpRegenAdd": 0.25 } },
+        "3": { "mods": { "hpAdd": 6, "armorAdd": 2, "magicArmorAdd": 2, "spdAdd": -0.5 }, "rule": "royal_command", "name": "Royal Command" }
       },
+      "_statNerf": "Ömer onaylı 2026-11-09 (form 3): stat bonusları Ashguard Vigil düzeyine indi (2 parça hpAdd 12 -> 6; 3 parça hpAdd 30 -> 6; zırh / büyü zırhı / hız / can yenilenmesi aynı). Warrior tam set (ölçüm, zar seed'e göre +-3): HP 108 -> 162 iken 108 -> 132 (Ashguard 108 -> 126-129), zırh 16 -> 32, büyü zırhı 15. Set stat IP'si 16,725 -> 4,725 (Ashguard set stat 1,7 + sınıf satırı 2,5 = 4,2). Royal Command aynen.",
       "_status": "Lead 2026-11-07 (Omer approved finishing sets). 3-piece: heavy regalia stats (sturdier and slower) + 'Royal Command' (Omer pick 2026-11-07 R-Y: once per battle the wearer spends its turn to give an ally an extra turn right away; global action royal_command, ai.json > global.command). Numbers unmeasured."
     },
     {
@@ -4731,30 +4732,31 @@
   ],
   "setValue": { "classRowIP": 2.5, "ruleIP": 4 },
   "_setValue": "Lead 2026-11-07: Equip best set bonusunu bu sayılarla tartar (yalnızca seçim). Stat bonusu = affix IP birimleri (modIP); sınıf satırı (3. parça pasif yaması) ve motor kuralı (4. parça) düz değer. PROVIZYON, sim bekliyor.",
+  "_setBoost": "Ömer onaylı 2026-11-09: Conclave of Embers, Gallows Pact ve Wayfarer's Oath parçalarının sabit affix'leri boost ile aynı seviyedeki sıradan Epic'in (dört affix) ortalama IP'sine çekildi (parça başına tek çarpan, üç affix'e aynı; ölçüm itemIP ortalaması, yuva + ilvl aynı). Gravedigger's Gloves zaten üstündeydi: 0,962. Diğer setler (Ashguard, Kingsfall, Raven) dokunulmadı.",
   "_setItems": "Set parçaları (Ömer 2026-11-03 pilot; motor adımı): ana katalogdan AYRI liste, böylece items havuzları (loot, tüccar, Codex) değişmez; yalnızca nadir düşüş dalı (setsEnabled) ve debug verir. Epic, sabit üç affix (C, C, B), zarlı değer; seviye düğümden gelir, buradaki ilvl önizleme tabanı. Ashguard yalnızca Warrior / Defender / Paladin takar.",
   "setItems": [
     { "id": "ashguard_helm", "name": "Ashguard Helm", "slot": "helm", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_hp", "b_resil"] },
     { "id": "ashguard_hauberk", "name": "Ashguard Hauberk", "slot": "armor", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_hp", "b_thorns"] },
     { "id": "ashguard_gauntlets", "name": "Ashguard Gauntlets", "slot": "gloves", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_acc", "b_leech"] },
     { "id": "ashguard_greaves", "name": "Ashguard Greaves", "slot": "boots", "rarity": "epic", "ilvl": 10, "set": "ashguard_vigil", "usableBy": ["warrior", "defender", "paladin"], "affixes": ["c_armor", "c_hp", "b_wound_soft"] },
-    { "id": "milestone_boots", "name": "Milestone Boots", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_eva", "c_hpregen", "b_speed"] },
-    { "id": "drovers_gloves", "name": "Drover's Gloves", "slot": "gloves", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_acc", "c_eva", "b_crit"] },
-    { "id": "drovers_signet", "name": "Drover's Signet", "slot": "ring", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_hpregen", "c_mp", "b_mpcost"] },
+    { "id": "milestone_boots", "name": "Milestone Boots", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_eva", "c_hpregen", "b_speed"], "boost": { "c_eva": 1.184, "c_hpregen": 1.184, "b_speed": 1.184 } },
+    { "id": "drovers_gloves", "name": "Drover's Gloves", "slot": "gloves", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_acc", "c_eva", "b_crit"], "boost": { "c_acc": 1.608, "c_eva": 1.608, "b_crit": 1.608 } },
+    { "id": "drovers_signet", "name": "Drover's Signet", "slot": "ring", "rarity": "epic", "ilvl": 27, "set": "wayfarers_oath", "affixes": ["c_hpregen", "c_mp", "b_mpcost"], "boost": { "c_hpregen": 1.51, "c_mp": 1.51, "b_mpcost": 1.51 } },
     { "id": "kingsfall_crown", "name": "Kingsfall Crown", "slot": "helm", "rarity": "epic", "ilvl": 10, "set": "kingsfall_regalia", "affixes": ["c_armor", "c_hp", "b_marmor"] },
     { "id": "kingsfall_mantle", "name": "Kingsfall Mantle", "slot": "armor", "rarity": "epic", "ilvl": 10, "set": "kingsfall_regalia", "affixes": ["c_armor", "c_hp", "b_resil"] },
     { "id": "kingsfall_signet", "name": "Kingsfall Signet", "slot": "ring", "rarity": "epic", "ilvl": 10, "set": "kingsfall_regalia", "affixes": ["c_hpregen", "c_mpregen", "b_speed"] },
-    { "id": "hangmans_hood", "name": "Hangman's Hood", "slot": "helm", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_hp", "c_res_dark", "b_resil"] },
-    { "id": "gallows_coat", "name": "Gallows Coat", "slot": "armor", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_hp", "c_hpregen", "b_wound_soft"] },
-    { "id": "gravediggers_gloves", "name": "Gravedigger's Gloves", "slot": "gloves", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_dot", "c_acc", "b_crit"] },
-    { "id": "pallbearers_boots", "name": "Pallbearer's Boots", "slot": "boots", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_eva", "c_hp", "b_initiative"] },
+    { "id": "hangmans_hood", "name": "Hangman's Hood", "slot": "helm", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_hp", "c_res_dark", "b_resil"], "boost": { "c_hp": 1.29, "c_res_dark": 1.29, "b_resil": 1.29 } },
+    { "id": "gallows_coat", "name": "Gallows Coat", "slot": "armor", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_hp", "c_hpregen", "b_wound_soft"], "boost": { "c_hp": 1.335, "c_hpregen": 1.335, "b_wound_soft": 1.335 } },
+    { "id": "gravediggers_gloves", "name": "Gravedigger's Gloves", "slot": "gloves", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_dot", "c_acc", "b_crit"], "boost": { "c_dot": 0.962, "c_acc": 0.962, "b_crit": 0.962 } },
+    { "id": "pallbearers_boots", "name": "Pallbearer's Boots", "slot": "boots", "rarity": "epic", "ilvl": 18, "set": "gallows_pact", "usableBy": ["gambler", "hexer"], "affixes": ["c_eva", "c_hp", "b_initiative"], "boost": { "c_eva": 1.505, "c_hp": 1.505, "b_initiative": 1.505 } },
     { "id": "raven_hood", "name": "Raven Hood", "slot": "helm", "rarity": "epic", "ilvl": 18, "set": "ravens_shroud", "usableBy": ["cutthroat", "archer", "antimage"], "affixes": ["c_hp", "c_res_nature", "b_marmor"] },
     { "id": "raven_mantle", "name": "Raven Mantle", "slot": "armor", "rarity": "epic", "ilvl": 18, "set": "ravens_shroud", "usableBy": ["cutthroat", "archer", "antimage"], "affixes": ["c_hp", "c_res_dark", "b_resil"] },
     { "id": "raven_gloves", "name": "Raven Gloves", "slot": "gloves", "rarity": "epic", "ilvl": 18, "set": "ravens_shroud", "usableBy": ["cutthroat", "archer", "antimage"], "affixes": ["c_acc", "c_eva", "b_crit"] },
     { "id": "raven_boots", "name": "Raven Boots", "slot": "boots", "rarity": "epic", "ilvl": 18, "set": "ravens_shroud", "usableBy": ["cutthroat", "archer", "antimage"], "affixes": ["c_eva", "c_hp", "b_speed"] },
-    { "id": "ember_circlet", "name": "Ember Circlet", "slot": "helm", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mp", "c_hp", "b_mpcost"] },
-    { "id": "ember_robe", "name": "Ember Robe", "slot": "armor", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_hp", "c_hpregen", "b_marmor"] },
-    { "id": "ember_mitts", "name": "Ember Mitts", "slot": "gloves", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mpregen", "c_acc", "b_manaleech"] },
-    { "id": "ember_sandals", "name": "Ember Sandals", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mp", "c_eva", "b_initiative"] }
+    { "id": "ember_circlet", "name": "Ember Circlet", "slot": "helm", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mp", "c_hp", "b_mpcost"], "boost": { "c_mp": 1.44, "c_hp": 1.44, "b_mpcost": 1.44 } },
+    { "id": "ember_robe", "name": "Ember Robe", "slot": "armor", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_hp", "c_hpregen", "b_marmor"], "boost": { "c_hp": 1.216, "c_hpregen": 1.216, "b_marmor": 1.216 } },
+    { "id": "ember_mitts", "name": "Ember Mitts", "slot": "gloves", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mpregen", "c_acc", "b_manaleech"], "boost": { "c_mpregen": 1.733, "c_acc": 1.733, "b_manaleech": 1.733 } },
+    { "id": "ember_sandals", "name": "Ember Sandals", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mp", "c_eva", "b_initiative"], "boost": { "c_mp": 1.463, "c_eva": 1.463, "b_initiative": 1.463 } }
   ],
   "traits": {},
   "_legendary": "Legendary (Ömer onayı 2026-10-10, madde 296): el yapımı benzersiz item, dört sabit affix (C, C, B, A; 2026-10-11) + 1 benzersiz etki. Kahraman başına EN FAZLA 1 Legendary (Gear: 'Only one Legendary per hero'). boost = sabit bir affix'in değer çarpanı (Ömer 2026-10-12, p5: zayıf beş Legendary'nin en zayıf statı; aynı seviyedeki Epic'in ~%10-35 üstü): Crown of the Ashen King a_immunity x2, Helm of the Last Stand a_endure x1,75, Watchman's Boots a_support x1,75, The Gambler's Last Coin ve Bones of the Quarry c_acc x1,25 (bu ikisini asıl a_primary değerlemesi yükseltti). usableBy = yalnızca bu sınıflar takabilir (silah ailesine ek). minChapter = hangi bölümde ortaya çıkabilir (Valdoria = 1: Emberbrand, Mantle of Valdren ve Pilgrim's Road Boots; Ömer 2026-10-10). Normal loot zarı Legendary vermez (loot.legendaryChance = 0); Legendary YALNIZCA ortak nadir düşüş zarından (rareDrop, madde 297) ve Endless tüccarının nadir malından gelir. Seviye (Ömer 2026-10-12): Legendary'nin TABAN SEVİYESİ YOK; düştüğü yerin item seviyesinde zarlanır (sefer: düğümün item seviyesi; Endless: dalganın seviye tavanı ilvlCap, nadir düşüş ve tüccarın nadir malı). Kataloğdaki ilvl yalnızca önizleme / debug değeridir, nerede çıkabileceğini belirlemez (uygunluk yalnızca minChapter ve legendaryFromWave). Önizleme: ?legendary=1 ya da debug > Give all Legendaries.",

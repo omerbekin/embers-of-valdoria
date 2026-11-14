@@ -29,7 +29,7 @@ import { unitWeaponPick, type WeaponItem } from '../pose-weapons';
 import type { WeaponPick } from '../poses';
 import { ensureIcon, ensureSkillIcon, iconTextureUrl, onIconImagesLoaded } from '../icons';
 import { TREE_ICON_PREFIX } from '../icon-image-files';
-import { hasTreeArt, markEvolved } from '../../ui/evolve-icon';
+import { hasTreeArt, heroSkillName, markEvolved } from '../../ui/evolve-icon';
 import { resolveEvolveIcon } from '../../progression/skill-tree-evolve';
 import { TREE_RULES } from '../../progression/skill-tree-data';
 import { initialSeed, initialSizes, newSeed } from '../seed';
@@ -3030,7 +3030,7 @@ export class BattleScene extends Phaser.Scene {
     const summonLine = summonPreviewLine(sp, sp.corpse ? (this.battle.get(sp.corpse.uid)?.name ?? null) : null);
     if (this.battle.needsCorpseChoice(actor.uid, skill.id) && sp.unit) extra.push([`You choose the corpse to consume: empowered ${sp.unit.name} (HP ${sp.unit.stats.hp})`, '#c58bff'], ['Step 1: pick a corpse, step 2: pick the cell (Esc goes back)', colors.muted]);
     else if (summonLine) extra.push([summonLine.text, summonLine.tone === 'empowered' ? '#c58bff' : colors.muted]);
-    const tip = this.makeInfo(info.name, colors.text, undefined, [], 'Skill', meta, skillMiniGrid(skill, content.formulas.formation));
+    const tip = this.makeInfo(this.skillName(actor, skill), colors.text, undefined, [], 'Skill', meta, skillMiniGrid(skill, content.formulas.formation));
     // Skill ipucu A (Ömer 2026-11-02): kısa satırlar + "More" altında tam metin; ağaçtan gelen satırlar (kahraman o düğümü aldıysa) tam metnin sonunda ayrı bölümde
     const asRow = ([text, color]: [string, string?]): FoldRow => ({ text, ...(color ? { color } : {}) });
     const treeRows: FoldRow[] = info.treeLines?.length ? [{ text: TREE_SECTION, section: true }, ...info.treeLines.map((l, i) => ({ text: l, ...(kindColor(info.treeKinds?.[i]) ? { color: kindColor(info.treeKinds?.[i])! } : {}) }))] : [];
@@ -3197,7 +3197,7 @@ export class BattleScene extends Phaser.Scene {
       const chips = this.skillCostChips(c, sk);
       skills.push({
         id,
-        name: sk.name,
+        name: this.skillName(c, sk),
         iconUrl: this.skillIconUrl(c, sk),
         target: skillTargetLabel(sk),
         cost: skillCostAmount(sk.cost, c) > 0 ? (chips[0] ?? null) : null,
@@ -3221,7 +3221,7 @@ export class BattleScene extends Phaser.Scene {
           const heal = pv.heal;
           preview = {
             iconUrl: this.skillIconUrl(this.battle.get(this.selected.actor), sk),
-            skill: sk.name,
+            skill: this.skillName(this.battle.get(this.selected.actor), sk),
             ...(d ? { hit: formatHit(d.hitChance), amount: d.hpLoss === 0 ? 'blocked' : d.min === d.max ? `${d.min} dmg` : `${d.min}–${d.max} dmg` } : {}),
             ...(heal && heal.avg > 0 ? { amount: `+${heal.avg} HP` } : {}),
             ...(pv.shield ? { amount: `+${pv.shield.amount} shield` } : {}),
@@ -5327,6 +5327,11 @@ export class BattleScene extends Phaser.Scene {
     return markEvolved(this.texUrl(r.art ? ensureIcon(this, `${TREE_ICON_PREFIX}${r.art}`, skill.fx, true) : ensureSkillIcon(this, skill)));
   }
 
+  /** Skill'in görünen adı: ikonla aynı kural, evolve'u onaylı skill'de evolve düğümünün adı (Fire Bolt -> Sunfire; src/ui/evolve-icon.ts). */
+  private skillName(actor: Combatant | undefined, skill: SkillDef): string {
+    return actor?.evolved?.includes(skill.id) ? heroSkillName({ class: actor.defId }, skill, undefined, actor.evolved) : skill.name;
+  }
+
   /** Phaser dokusu -> DOM resmi (data URL; önbellekli, sürüm değişince temizlenir). */
   private texUrl(key: string): string {
     const file = iconTextureUrl(key); // boyalı stat ikonu: tam boy dosya (#smooth), doku kopyası değil
@@ -5453,7 +5458,7 @@ export class BattleScene extends Phaser.Scene {
       const wait = turns ? (actor.cooldowns[skill.id] ?? 0) : 0;
       skills.push({
         id: skill.id,
-        name: skill.name,
+        name: this.skillName(actor, skill),
         iconUrl: this.skillIconUrl(actor, skill),
         key: idx + 1,
         cost: this.skillCostChips(actor, skill),
@@ -5794,5 +5799,6 @@ function reactionColor(id: string): string {
   const d = content.groundReactions[id];
   if (!d) return '#e8c47e';
   const stays = [...d.trigger, ...d.setup].find((g) => !d.remove?.includes(g));
-  return content.grounds[d.becomes?.ground ?? stays ?? '']?.color ?? '#e8c47e';
+  // Yalnız birim üstü tepkime (Flash freeze...): ürün durumun, yoksa tetik durumun rengi
+  return content.grounds[d.becomes?.ground ?? stays ?? '']?.color ?? content.statuses[d.status?.status ?? d.unitTrigger?.[0] ?? '']?.color ?? '#e8c47e';
 }

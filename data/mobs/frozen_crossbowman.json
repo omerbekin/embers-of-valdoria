@@ -1,7 +1,8 @@
 {
   "_not": "Harita 3 hc_18 eşlikçisi (maps-2-3.md; Ömer 2026-11-02). Sayılar PROVİZYON, sim yok; bayrak kapalı. Statlar yer tutucu Bandit Crossbowman kopyası, kendi çizimi var (Codex 2026-11-02). Kit belgede Bolt + Ice Bolt; Ice Bolt adında skill yok, en yakın var olan Ice Shot (Chilled) kullanıldı (Q-NEW).",
   "id": "frozen_crossbowman",
-  "name": "Frozen Crossbowman",
+  "name": "Frozen Crossbowman",
+  "bloodless": true,
   "family": "morvane_army",
   "spriteId": "frozen_crossbowman",
   "color": "#7a6a4a",

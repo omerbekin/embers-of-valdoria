@@ -1,7 +1,7 @@
 // Koşu boyu etkiler (battle HUD > Battle info > Effects; saf, Phaser'sız). Oturum (sefer / Endless) savaşı başlatırken
 // `CampaignBattleHooks.battleEffects` kancasıyla bu listeyi verir; ileride yeni sistemler (kutsamalar, lanetler, olaylar) aynı listeye eklenir.
 import { paintedOr } from '../ui/misc-icons';
-import { CONFIG, chapterEnemyMods, type CampaignState, type DifficultyEnemyMods } from '../campaign';
+import { boonList, type CampaignState, type DifficultyEnemyMods } from '../campaign';
 import { relicDef, type EndlessRun } from '../endless';
 
 export interface BattleEffect {
@@ -28,23 +28,19 @@ export function enemyModsText(m: DifficultyEnemyMods | undefined): string {
   return out.join(', ');
 }
 
-/** Sefer savaşının etkileri: genel zorluk (düşman güçlendirmesiyle) ve bölüm ölçeği. */
+/**
+ * Sefer savaşının etkileri: takımın taşıdığı kutsamalar (Wayshrine). Zorluk ve bölüm ölçeği düşman güçlendirmesi olarak savaşta
+ * aynen uygulanır ama bu listede GÖSTERİLMEZ (Ömer 2026-11-14).
+ * İkon: her blessing kendi boyalı ikonu (`blessing:<ad>`, id `dr_shrine_<ad>`); eşleşmeyen yeni blessing genel `blessing:blessing`.
+ */
+export function blessingIcon(id: string): string {
+  const key = id.replace(/^.*_shrine_/, '');
+  return paintedOr('blessing', key, paintedOr('blessing', 'blessing', 'rest'));
+}
+
+/** Sefer savaşının blessing listesi (savaş Effects). */
 export function campaignEffects(s: CampaignState): BattleEffect[] {
-  const out: BattleEffect[] = [];
-  const diff = CONFIG.difficulties[s.difficulty];
-  if (diff) {
-    const enemy = enemyModsText(diff.enemy);
-    const tiers = Object.entries(diff.enemyTier ?? {})
-      .map(([tier, m]) => {
-        const t = enemyModsText(m);
-        return t ? `${tier === 'boss' ? 'Bosses' : 'Elites'} a further ${t}` : '';
-      })
-      .filter(Boolean);
-    out.push({ name: `${diff.name} difficulty`, text: [diff.text, enemy ? `Enemies ${enemy}.` : '', ...tiers.map((t) => `${t}.`)].filter(Boolean).join(' '), group: 'Enemy scaling', color: '#ffb0a0', icon: paintedOr('fx', 'difficulty', 'skull') });
-  }
-  const chapter = enemyModsText(chapterEnemyMods(s.mapId, s.at));
-  if (chapter) out.push({ name: 'Chapter strength', text: `Enemies grow stronger deeper into the journey: ${chapter}.`, group: 'Enemy scaling', color: '#ffb0a0', icon: paintedOr('fx', 'chapter_strength', 'muscle') });
-  return out;
+  return boonList(s).map((b) => ({ name: b.name, text: `${b.effect}. Every hero, every battle.`, icon: blessingIcon(b.id), color: '#ffe3a0', group: 'Blessings' }));
 }
 
 /** Endless savaşının etkileri: koşunun kalıntıları. */

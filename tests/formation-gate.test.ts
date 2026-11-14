@@ -64,7 +64,7 @@ describe('katılım zamanı (Mill Road zaferinden sonra)', () => {
     expect(carriedRecruit(old)).toBe('1');
     const step = nextStep(old) as { kind: string; node: string; offer: string[] };
     expect(step).toMatchObject({ kind: 'recruit', node: '1' });
-    expect(step.offer).toEqual(['druid', 'undead', 'gambler']);
+    expect(step.offer).toEqual(['druid', 'undead', 'gambler', 'paladin']);
     const t = recruit(old, step.offer[0]!);
     expect(t.roster).toHaveLength(2);
     expect(t.at).toBe('2');

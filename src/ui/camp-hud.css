@@ -30,7 +30,7 @@
   background: rgba(8, 6, 4, 0.55);
   border: 1px solid var(--g-line2);
   color: var(--g-gold);
-  font: 600 11px Cinzel, Georgia, serif;
+  font: 600 calc(11px * var(--tx, 1)) Cinzel, Georgia, serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -111,7 +111,7 @@ html.reduced-motion .camp-ib.glow {
   background: linear-gradient(180deg, rgba(30, 22, 14, 0.96), rgba(12, 9, 6, 0.96));
   border: 1px solid rgba(255, 179, 90, 0.65);
   box-shadow: 0 0 calc(18 * var(--u)) rgba(240, 140, 40, 0.35);
-  font: 600 max(13px, calc(20 * var(--u))) Cinzel, Georgia, serif;
+  font: 600 max(calc(13px * var(--tx, 1)), calc(20 * var(--u) * var(--tx, 1))) Cinzel, Georgia, serif;
   letter-spacing: 0.08em;
   text-align: center;
   color: #f3d999;
@@ -124,7 +124,7 @@ html.reduced-motion .camp-ib.glow {
   padding: 6px 18px;
   border-color: rgba(217, 178, 106, 0.42);
   box-shadow: none;
-  font: 500 max(13px, calc(18 * var(--u))) 'EB Garamond', Georgia, serif;
+  font: 500 max(calc(13px * var(--tx, 1)), calc(18 * var(--u) * var(--tx, 1))) 'EB Garamond', Georgia, serif;
   letter-spacing: 0.02em;
   color: #d9c8a2;
 }

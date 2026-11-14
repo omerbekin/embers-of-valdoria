@@ -1,13 +1,11 @@
 /**
- * "Start battle?" kartı (Ömer 2026-10-18, taslak start-battle v3 "Anchored"): seçilen düğümün yanında küçük kart, ok ucu düğümü gösterir
- * (sağa ya da sola otomatik yerleşir); harita daha az kararır, düğüm parlak kalır. İçerik: düğüm adı + tür, düşman portreleri (elit / boss
- * çerçeveli, "N×" gruplu, "Lv N"), TEK bilgi satırı (düğümün lore cümlesi; yoksa önder düşmanın pasifi / boss çığlığı), Fight (birincil).
- * Savaşsız düğümler (kasaba, kamp, tüccar, hazine, olay; Ömer 2026-10-18 "tüm nodelar için") AYNI kartı kullanır: `foes` verilmez (portre satırı yok),
- * `actionLabel` düğümün kendi eylemi (Enter / Rest / Trade / Open / Continue); `onFight` o eylemi çalıştırır.
- * Kapatma: Menu yerindeki ortak X (src/ui/nav-close.ts), Esc (sahne), kararan zemine dokunma. "diğer yollar kapanır" notu YOKTUR
- * (Ömer: haritada geri de gidilecek). Oyun kuralı burada yok: sahne `onFight` / `onCancel` verir.
- * Tek kart, iki adım (Ömer 2026-10-23): `preview` = fareyle üstüne gelince açılan ÖNİZLEME (düğme yok, zemin kararmaz, girdi kilitlenmez,
- * fareyi geçirir, X yok); normal kart = sabitlenmiş (düğme ya da `note`). `then` = alttaki "Then: <sonraki düğüm> TÜR" satırı.
+ * Düğüm kartı (Ömer 2026-10-18, taslak start-battle v3 "Anchored"): seçilen düğümün yanında küçük kart, ok ucu düğümü gösterir (sağa ya da
+ * sola otomatik yerleşir); harita daha az kararır, düğüm parlak kalır. Kartın İÇİ src/ui/node-card.ts (Tur 14 kararı: Herald H2 Banner + düz
+ * Lv + H1 defne elit / görkemli başak boss). Her düğüm türü aynı kartı kullanır; `actionLabel` düğümün kendi eylemi (Fight / Enter / Rest /
+ * Trade / Open / Continue); `onFight` o eylemi çalıştırır.
+ * Kapatma: Menu yerindeki ortak X (src/ui/nav-close.ts), Esc (sahne), kararan zemine dokunma. Oyun kuralı burada yok: sahne `onFight` /
+ * `onCancel` verir. Tek kart, iki adım (Ömer 2026-10-23): `preview` = fareyle üstüne gelince açılan ÖNİZLEME (düğme yok, zemin kararmaz, girdi
+ * kilitlenmez, fareyi geçirir, X yok); normal kart = sabitlenmiş (düğme ya da `note`).
  */
 import './start-battle.css';
 import { content } from '../engine';
@@ -21,78 +19,59 @@ import { lockInput, unlockInput } from './input-lock';
 import { mountCloseButton } from './nav-close';
 import { classLogoName, miscIconName } from './misc-icons';
 import type { FoeGroup } from '../campaign/encounters';
+import { buildNodeCard, type NodeCardFacts } from './node-card';
 
 const avatars = import.meta.glob('../../assets/avatars/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const avatarUrl = (id: string): string | undefined => avatars[`../../assets/avatars/${id}.webp`];
 
-/** Kart bölümü (Ömer 2026-11-07, taslak node-views A "Anchored card"): başlık satırı + satırlar ya da basamak sırası. Ödül gösterilmez: yalnız bilinen (tür, derinlik, risk). */
-export interface SbBlock {
-  h: string;
-  /** Başlığın sağında sönük kısa değer ("Depth 2 of 3"). */
-  r?: string;
-  /** Satırlar: ad + açıklama; icon = düğüm türü (assets/misc-icons/node); bad = risk rengi. */
-  rows?: Array<{ name: string; txt: string; icon?: string; bad?: boolean }>;
-  /** Basamak sırası (dalış derinlikleri): yan yana kutular. */
-  ladder?: Array<{ name: string; txt: string; state: 'done' | 'now' | 'next'; icon?: string }>;
-  /** Düşman satırından sonra çizilir (Risk gibi). */
-  after?: boolean;
-}
-
 export interface StartBattleOpts {
-  /** Başlığın sağındaki hap ("Lv 12", "Elite", "Depth 2 of 3"); em = ember dolgulu (nimet). */
-  tag?: { text: string; em?: boolean };
-  /** Bölümler (Blessing / Trial / Depth / Risk ...). */
-  blocks?: SbBlock[];
-  /** Artık gösterilmez (Ömer 2026-10-27: başlıkta "Start battle?" / "Enter town?" sorusu yok, başlık düğüm adı); çağıranlar için duruyor. */
-  title?: string;
   /** Düğüm adı (kartın başlığı). */
   name: string;
-  /** Tür satırı ("Battle · Outlaw Pack"). */
+  /** Tür satırı ("Battle · Outlaw Pack"); gövdede görünen parça tekrar edilmez (node-card.ts > dedupSubtitle). */
   subtitle: string;
-  /** Düğüm türü (rozet ikonu: assets/misc-icons/node). */
+  /** Düğüm türü (madalyon ikonu: assets/misc-icons/node). */
   nodeType: string;
   level: number;
-  /** Tehlike satırı (level farkı bandı; src/campaign/level-gap.ts): metin, bant adı (Dangerous / Deadly; normalde boş) ve rengi. */
-  threat?: { line: string; band: 'normal' | 'danger' | 'deadly'; name: string; color: string };
-  /** Yan karşılaşma uyarısı (src/campaign/side-danger.ts): "Stronger than the road ahead" satırı + etiket ve rengi. */
-  side?: { line: string; name: string; color: string };
+  /**
+   * Takıma göre zorluk (level farkı bandı; src/campaign/level-gap.ts): bant normal değilse "Company X.X" yazısı bant renginde (eski kart gibi).
+   * Bant adı (Dangerous / Deadly) yazılmaz.
+   */
+  threat?: { band: 'normal' | 'danger' | 'deadly'; color: string; company?: number };
+  /** Takımın ortalama seviyesi (src/campaign/level-gap.ts > companyAvgLevel): "Company X.X"; 0 / yok = gizli. */
+  teamLevel?: number;
+  /** Yan karşılaşma uyarısı (src/campaign/side-danger.ts): "Stronger than the road ahead" satırı. */
+  side?: { line: string };
   /** Arka arkaya savaş bilgisi (src/campaign/chain-info.ts): sakin tek satır, "Depth 3 · no rest since the surface". */
   chain?: string;
-  /** Savaşsız düğümde (kasaba, kamp, tüccar, hazine, olay) boş / verilmez: portre satırı çizilmez. */
+  /** Savaşsız düğümde (kasaba, kamp, tüccar, hazine, olay) boş / verilmez. */
   foes?: FoeGroup[];
+  /** Düğümün türetilmiş bilgisi (tür, known, elit / boss çerçevesi, sahne; CampaignMapScene > designFacts). */
+  design: NodeCardFacts;
   /** Birincil düğme yazısı (varsayılan "Fight"; kasaba "Enter", kamp "Rest" ...). */
   actionLabel?: string;
-  /** who yoksa (düğüm lore'u) yalnızca italik cümle. */
-  info?: { who?: string; text: string; quote?: boolean; plain?: boolean };
-  /** Bilgi satırının üstünde etiketler (Ömer 2026-10-27: devriye PATROL · FULL LOOT · NO VALOR); gold = vurgulu, dim = sönük. Telefonda da görünür. */
-  tags?: Array<{ text: string; tone?: 'gold' | 'dim' | 'silver' }>;
-  /** Rakip bölük (Silver Stag, Ömer 2026-10-28, taslak rival-company C): başlığın altında bölük şeridi, düşmanlar bölük üyesi, gümüş "Rival Company" etiketi, "Their cause" bilgi satırı. */
-  company?: { name: string; line: string; cause: string; waves?: number };
-  /** Düğümün #ui-root içindeki CSS piksel konumu (harita kayarsa / boyut değişirse yeniden sorulur); null = ortala. */
-  /** Alttaki "Then" satırı: sonraki duraklar. */
-  then?: Array<{ name: string; kind: string }>;
+  /** Lore satırı (düğümün lore'u; yoksa önder düşmanın pasifi / kilit / Caravel notu). */
+  info?: { text: string };
+  /** Devriye etiketleri (PATROL · FULL LOOT · NO VALOR): tek düz satır. */
+  tags?: Array<{ text: string }>;
+  /** Rakip bölük (Silver Stag): ad + tek satır; `cause` lore satırının yerine geçer. */
+  company?: { name: string; line: string; cause: string };
   /** Fare önizlemesi: düğmesiz, girdiyi kilitlemez, zemin kararmaz. */
   preview?: boolean;
   /** Verilirse düğmenin yerine düz bu satır (ör. "Not reachable yet"); düğme yok. */
   note?: string;
   /** Önizlemeden sabitlenirken giriş animasyonu tekrar oynamaz. */
   instant?: boolean;
-  /**
-   * Varışta önce gelen kadro adımları (Ömer 2026-10-23, playtest H3 / H2): "First" satırı (ör. "Form your company."); verilirse kartın
-   * sürprizi kalmaz. Düğme yazısını sahne seçer (actionLabel "Continue").
-   */
+  /** Varışta önce gelen kadro adımları (playtest H3 / H2): "Form your company." gibi. */
   first?: string[];
-  /**
-   * Kasaba kartı (taslak town-card, seçenek A "Hizmetler", Ömer 2026-11-02): kasabanın yerleri plaka olarak (ad + fiil); üstüne gelince / dokununca
-   * A Band ipucu (`tip`). Yalnız görünüm: eylemleri kasaba ekranı yapar. `flags` = ember çizgili kısa haber satırları ("A recruit waits at the Barracks").
-   */
-  services?: Array<{ name: string; verb: string; icon?: string; tip: BandTipSpec }>;
+  /** Kasaba kartı: kasabanın yerleri (ad + ikon), üstüne gelince / dokununca A Band ipucu. `flags` = kısa haber satırları. */
+  services?: Array<{ name: string; icon?: string; tip: BandTipSpec }>;
   flags?: string[];
   /**
    * Kararan zemine dokunuş (playtest U8, tek tıkla hızlı yolculuk): zeminin yerel CSS pikseli verilir; true dönerse sahne dokunuşu kullandı
    * (ör. başka bir düğüme yürüdü), kart onCancel çağrılmadan bırakılır. Yoksa / false ise eskisi gibi vazgeç.
    */
   onScrimTap?: (x: number, y: number) => boolean;
+  /** Düğümün #ui-root içindeki CSS piksel konumu (harita kayarsa / boyut değişirse yeniden sorulur); null = ortala. */
   anchor: () => { x: number; y: number } | null;
   onFight: () => void;
   onCancel: () => void;
@@ -114,14 +93,32 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html?: stri
 };
 const esc = (t: string): string => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] ?? c);
 
-/** Geyik armasi (taslak rival-company, #stag): gümüş. */
-const STAG_SVG = '<svg class="bdg" viewBox="0 0 52 60" aria-hidden="true"><path d="M4 4 L26 1 L48 4 L48 34 Q48 50 26 59 Q4 50 4 34 Z" fill="#17222e" stroke="#cfe0ee" stroke-width="2.5"/><g stroke="#e8f2fa" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 30 L16 20 L12 10 M16 20 L9 17 M14 14 L8 8 M31 30 L36 20 L40 10 M36 20 L43 17 M38 14 L44 8"/></g><path d="M20 29 L32 29 L29 43 L26 47 L23 43 Z" fill="#e8f2fa"/><circle cx="23" cy="34" r="1.4" fill="#17222e"/><circle cx="29" cy="34" r="1.4" fill="#17222e"/></svg>';
+const tierName = (f: FoeGroup): string => (f.tier === 'boss' ? 'Boss' : f.tier === 'elite' ? 'Elite' : '');
+const foeTipText = (f: FoeGroup, level: number): string => {
+  const tag = tierName(f);
+  return `${f.name}${f.n > 1 ? ` ×${f.n}` : ''}${tag ? ` · ${tag}` : ''} · Lv ${level}`;
+};
 
-function foeTile(f: FoeGroup, level: number, member = false): HTMLElement {
-  const tag = f.tier === 'boss' ? 'BOSS' : f.tier === 'elite' ? 'ELITE' : '';
-  const tile = el('div', `sbc-foe ${f.tier ?? ''}${member ? ' mem' : ''}`.trim());
-  tile.tabIndex = 0;
-  tile.dataset['tip'] = `${f.name}${f.n > 1 ? ` ×${f.n}` : ''}${tag ? ` · ${tag === 'BOSS' ? 'Boss' : 'Elite'}` : ''} · Lv ${level}`;
+/**
+ * Düşmanın çok kısa bilgisi (düğüm kartı, bilinen düğüm; Ömer 2026-11-14 Tur 14): ad, rol ve tek satır (pasifin var olan açıklaması). Yeni metin yok.
+ */
+function foeBrief(f: FoeGroup, level: number): BandTipSpec {
+  const def = (content.classes[f.cls] ?? encounterUnit(f.cls)) as { role?: string; passive?: { name?: string; text?: string } } | undefined;
+  const kind = [tierName(f), def?.role ?? ''].filter(Boolean).join(' · ');
+  const url = avatarUrl(f.sprite);
+  const first = def?.passive?.text?.split(/(?<=[.!?])\s+/)[0] ?? ''; // tek satır: pasifin ilk cümlesi
+  const line = first ? (def?.passive?.name ? `${def.passive.name}: ${first}` : first) : '';
+  return {
+    ...(kind ? { kind } : {}),
+    title: `${f.name}${f.n > 1 ? ` ×${f.n}` : ''}`,
+    value: `Lv ${level}`,
+    ...(url ? { icon: url, iconShape: 'portrait' as const, iconFlip: true } : {}),
+    ...(line ? { lines: [{ text: line }] } : {}),
+  };
+}
+
+/** Portre kutusu (görsel yoksa sınıf logosu). */
+function foeFace(f: FoeGroup): HTMLElement {
   const face = el('div', 'sbc-face');
   const img = el('img');
   img.alt = '';
@@ -138,11 +135,7 @@ function foeTile(f: FoeGroup, level: number, member = false): HTMLElement {
     img.addEventListener('error', logo, { once: true });
   } else logo();
   face.append(img);
-  if (f.n > 1) face.append(el('i', 'cnt', `${f.n}×`));
-  if (tag) face.append(el('i', 'tg', tag));
-  if (member) face.append(el('div', 'cr', STAG_SVG));
-  tile.append(face, el('span', 'sbc-nm', esc(f.name)), el('span', 'sbc-lv', `Lv ${level}`));
-  return tile;
+  return face;
 }
 
 export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBattleHandle {
@@ -153,71 +146,47 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
   const nl = el('i', 'sbc-notch l');
   const nr = el('i', 'sbc-notch r');
   const badge = miscImage(miscIconName('node', o.nodeType))?.url;
-  const tier = (o.foes ?? []).some((f) => f.tier === 'boss') ? 'Boss' : (o.foes ?? []).some((f) => f.tier === 'elite') ? 'Elite' : '';
-  const tag = o.tag ?? (tier ? { text: tier, em: tier === 'Elite' } : undefined);
-  const head = el('div', 'sbc-head', `<div class="sbc-ntile">${badge ? `<img src="${badge}" alt="" draggable="false">` : ''}</div><div class="tx"><h2 class="sbc-t">${esc(o.name)}</h2><p class="sbc-sub"><b>${esc(o.subtitle)}</b></p></div>${tag ? `<span class="sbc-pill${tag.em ? ' em' : ''}">${esc(tag.text)}</span>` : ''}`);
   const foes = o.foes ?? [];
-  if (!foes.length) card.classList.add('nofoes');
-  card.append(nl, nr, head, el('hr', 'sbc-rule'));
-  const co = o.company;
-  const nodeIco = (t?: string): string => {
-    const u = t ? miscImage(miscIconName('node', t))?.url : undefined;
-    return u ? `<span class="sbc-rt"><img src="${u}" alt="" draggable="false"></span>` : '';
-  };
-  const blockEl = (b: SbBlock): HTMLElement => {
-    const blk = el('div', `sbc-blk sbc-b-${b.h.toLowerCase().replace(/[^a-z]/g, '')}`, `<div class="sbc-h">${esc(b.h)}${b.r ? `<span class="r">${esc(b.r)}</span>` : ''}</div>`);
-    if (b.ladder?.length) {
-      blk.append(el('div', 'sbc-ladder', b.ladder.map((l) => `<div class="sbc-step ${l.state}">${nodeIco(l.icon)}<b>${esc(l.name)}</b><span>${esc(l.txt)}</span></div>`).join('')));
-    }
-    for (const r of b.rows ?? []) blk.append(el('div', `sbc-r${r.bad ? ' bad' : ''}`, `${nodeIco(r.icon)}<div><b>${esc(r.name)}</b><span>${esc(r.txt)}</span></div>`));
-    return blk;
-  };
-  for (const b of o.blocks ?? []) if (!b.after) card.append(blockEl(b));
-  if (co) card.append(el('div', 'sbc-co', `${STAG_SVG}<div><b>${esc(co.name)}</b><span>${esc(co.line)}</span></div>`));
-  if (foes.length) {
-    const row = el('div', 'sbc-row');
-    for (const f of foes) row.append(foeTile(f, o.level, !!co));
-    const blk = el('div', 'sbc-blk', `<div class="sbc-h">Enemies<span class="r">Level ${o.level}</span></div>`);
-    blk.append(row);
-    card.append(blk);
-  }
-  for (const b of o.blocks ?? []) if (b.after) card.append(blockEl(b));
-  if (o.threat) {
-    const t = o.threat;
-    const mark = t.band === 'deadly' ? '☠' : t.band === 'danger' ? '!' : '';
-    card.append(el('p', `sbc-threat ${t.band}`, `<span class="ln">${esc(t.line)}</span>${t.name ? `<b style="color:${esc(t.color)}"><i class="mk" aria-hidden="true">${mark}</i>${esc(t.name)}</b>` : ''}`));
-  }
-  if (o.side) card.append(el('p', 'sbc-threat danger side', `<span class="ln">${esc(o.side.line)}</span><b style="color:${esc(o.side.color)}"><i class="mk" aria-hidden="true">!</i>${esc(o.side.name)}</b>`));
-  if (o.chain) card.append(el('p', 'sbc-chain', esc(o.chain)));
-  const tags = [...(co ? [{ text: 'Rival Company', tone: 'silver' as const }, ...(co.waves ? [{ text: `${co.waves} Waves`, tone: 'gold' as const }] : [])] : []), ...(o.tags ?? [])];
-  if (tags.length) card.append(el('div', 'sbc-tags', tags.map((t) => `<span class="sbc-tag${t.tone ? ` ${t.tone}` : ''}">${esc(t.text)}</span>`).join('')));
-  const info = co ? { who: 'Their cause', text: co.cause, quote: false, plain: false } : o.info;
-  if (info) card.append(el('p', `sbc-info${info.quote ? ' quote' : ''}${info.plain ? ' plain' : ''}`, `${info.who ? `<b>${esc(info.who)}</b> ` : ''}${info.quote ? `“${esc(info.text)}”` : esc(info.text)}`));
-  const tipOffs: Array<() => void> = [];
-  if (o.services?.length) {
-    card.classList.add('tc', 'wide');
-    card.querySelector('.sbc-info')?.classList.add('tc-lore-ph');
-    const row = el('div', 'tc-svc');
-    for (const sv of o.services) {
-      const b = el('button', '', `${sv.icon ? `<img src="${esc(sv.icon)}" alt="" draggable="false">` : ''}<span><b>${esc(sv.name)}</b><i>${esc(sv.verb)}</i></span>`);
-      b.type = 'button';
-      tipOffs.push(attachBandTip(b, sv.tip));
-      row.append(b);
-    }
-    card.append(row);
-  }
-  for (const f of o.flags ?? []) card.append(el('div', 'tc-flag', esc(f)));
-  if (o.first?.length) card.append(el('p', 'sbc-then sbc-first', `<b>First</b> ${o.first.map((t) => esc(t)).join(' ')}`));
-  if (o.then?.length) card.append(el('p', 'sbc-then', `<b>Then</b> ${o.then.map((t) => `${esc(t.name)} <span class="k">${esc(t.kind)}</span>`).join(' <i>or</i> ')}`));
   const preview = !!o.preview;
+  if (!foes.length) card.classList.add('nofoes');
+  card.append(nl, nr);
+
+  // Lv / Company (yalnız savaşlı düğüm): takım ortalaması bir ondalık; zorluk bandı normal değilse Company bant renginde (eski kart gibi)
+  const th = o.threat;
+  const teamLv = o.teamLevel ?? th?.company ?? 0;
+  const coLv = teamLv > 0 ? (Math.round(teamLv * 10) / 10).toFixed(1) : '';
+  const bandColor = th && th.band !== 'normal' ? th.color : '';
+
+  const tipOffs: Array<() => void> = [];
   const fight = el('button', 'el-btn primary ready dlg', esc(o.actionLabel ?? 'Fight'));
   fight.type = 'button';
-  if (o.note && !preview) card.append(el('p', 'sbc-note', esc(o.note)));
-  else if (!preview) {
-    const acts = el('div', 'sbc-acts');
-    acts.append(fight);
-    card.append(acts);
-  } else if (o.note) card.append(el('p', 'sbc-note', esc(o.note)));
+  const noteEl = o.note ? el('p', 'sbc-note', esc(o.note)) : null;
+  const actsEl = !preview && !o.note ? el('div', 'sbc-acts') : null;
+  actsEl?.append(fight);
+
+  const co = o.company;
+  const crest = buildNodeCard(card, {
+    name: o.name,
+    subtitle: o.subtitle,
+    badge,
+    lv: foes.length ? { level: o.level, company: coLv, color: bandColor } : null,
+    foes,
+    lore: co ? co.cause : (o.info?.text ?? ''),
+    side: o.side?.line ?? '',
+    chain: o.chain ?? '',
+    first: o.first ?? [],
+    flags: o.flags ?? [],
+    tags: (o.tags ?? []).map((t) => t.text),
+    company: co ? { name: co.name, line: co.line } : null,
+    services: (o.services ?? []).map((sv) => ({ name: sv.name, tip: sv.tip, ...(sv.icon ? { icon: sv.icon } : {}) })),
+    act: noteEl ?? actsEl,
+    face: (f) => foeFace(f),
+    tip: (f) => foeTipText(f, o.level),
+    foeInfo: (f) => foeBrief(f, o.level),
+    bandTip: (node, spec) => void tipOffs.push(attachBandTip(node, spec)),
+    portrait: (id) => avatarUrl(id),
+    facts: o.design,
+  });
   if (preview) wrap.classList.add('preview');
   if (o.instant) wrap.classList.add('instant');
   if (preview) wrap.append(ring, card);
@@ -249,6 +218,14 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     cancel();
   });
 
+  /** Kartın üstüne taşan süs payı (madalyon / elit-boss çerçevesi); ok ucu (sbc-notch) sayılmaz (telefonda kartı ekranın altına itiyordu). */
+  const overTop = (): number => {
+    const top = card.getBoundingClientRect().top;
+    let m = 0;
+    for (const ch of card.children) if (!ch.classList.contains('sbc-notch')) m = Math.max(m, top - ch.getBoundingClientRect().top);
+    if (crest) m = Math.max(m, top - crest.getBoundingClientRect().top);
+    return Math.ceil(m);
+  };
   const place = (): void => {
     if (done) return;
     const vw = wrap.clientWidth;
@@ -259,7 +236,7 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     const gu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gu')) || 1;
     if (!a) {
       card.style.left = `${Math.max(8, (vw - cw) / 2)}px`;
-      card.style.top = `${Math.max(8, (vh - ch) / 2)}px`;
+      card.style.top = `${Math.max(8 + overTop(), (vh - ch) / 2)}px`;
       nl.style.display = nr.style.display = 'none';
       ring.style.display = 'none';
       scrim.style.background = 'rgba(5,3,2,.5)';
@@ -274,7 +251,22 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
       side = 'r';
     }
     left = Math.max(8, Math.min(vw - cw - 8, left));
-    const top = Math.max(8, Math.min(vh - ch - 8, a.y - ch / 2));
+    const lift = overTop(); // üst kenar süsü kartın üstüne taşar: ekrandan çıkmasın
+    let top = Math.max(8 + lift, Math.min(vh - ch - 8, a.y - ch / 2));
+    // telefon: sağ üstteki X / tam ekran düğmeleri kartın köşesini örtmesin; önce aşağı, sığmazsa sola kaydır
+    const wr = wrap.getBoundingClientRect();
+    if (Math.abs(wr.width - vw) < 2) {
+      for (const b of document.querySelectorAll<HTMLElement>('.nav-btn')) {
+        const r = b.getBoundingClientRect();
+        if (!r.width) continue;
+        const bx = r.left - wr.left;
+        const by = r.top - wr.top;
+        if (left < bx + r.width && left + cw > bx && top < by + r.height && top + ch > by) {
+          if (by + r.height + 6 + ch <= vh - 8) top = by + r.height + 6;
+          else if (bx - 6 - cw >= 8) left = bx - 6 - cw;
+        }
+      }
+    }
     card.style.left = `${left}px`;
     card.style.top = `${top}px`;
     (side === 'l' ? nr : nl).style.display = 'none';
@@ -290,6 +282,9 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     ring.style.width = ring.style.height = `${r * 2}px`;
   };
   place();
-  requestAnimationFrame(() => !done && place()); // yazı tipi / görsel yüklenince boy değişirse
+  requestAnimationFrame(() => {
+    if (done) return;
+    place();
+  }); // yazı tipi / görsel yüklenince boy değişirse
   return { close, place, el: wrap };
 }

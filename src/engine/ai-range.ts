@@ -29,6 +29,8 @@ export interface RangeMoveConfig {
   retreatHpRatio: number;
   minFrontGainShare: number;
   minAuraGain: number;
+  auraMinOpportunity: number;
+  auraCooldown: number;
 }
 
 export interface RangeMovePlan {
@@ -208,7 +210,7 @@ export function bestMoveRange(battle: Battle, actor: Combatant, mv: RangeMoveCon
 
   // 4) Aura komşuluğu: zırh aurası taşıyan birim, saldırı yeteneğini koruyarak daha çok dostun bitişiğine geçer
   const aura = actor.passive?.effect;
-  if (aura?.type === 'armorAura' && battle.living(actor.side).length > 1) {
+  if (aura?.type === 'armorAura' && battle.living(actor.side).length > 1 && battle.actionsSinceMove(actor.uid) >= mv.auraCooldown) {
     const incoming = new Map<string, number>();
     const here = deps.auraBenefit(battle, actor, actor.slot, aura.pct, incoming);
     let top: RangeMovePlan | null = null;
@@ -216,7 +218,7 @@ export function bestMoveRange(battle: Battle, actor: Combatant, mv: RangeMoveCon
       if (canActNow && !canActFrom(battle, actor, s, usable)) continue;
       if (battle.rowOf(s) > battle.rowOf(actor.slot)) continue;
       const gain = deps.auraBenefit(battle, actor, s, aura.pct, incoming) - here;
-      const net = gain - vNow * mv.opportunityShare;
+      const net = gain - Math.max(vNow, mv.auraMinOpportunity) * mv.opportunityShare;
       if (gain >= mv.minAuraGain && net > 0 && (!top || net > top.net || (net === top.net && s < top.slot))) top = { slot: s, net, kind: 'aura adjacency' };
     }
     if (top) plans.push(top);

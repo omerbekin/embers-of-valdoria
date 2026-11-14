@@ -32,6 +32,8 @@ export interface Ledger {
   onHover(cb: (over: boolean) => void): void;
   /** Satırlar şu an dokunulabilir mi (açılış büyük ölçüde bitti). */
   active(): boolean;
+  /** Etkin satır değişince (fare üstü ya da klavye seçimi; -1 = yok). */
+  onActive(cb: (i: number) => void): void;
   /** Klavye seçimi: satır hover gibi görünür (-1 = yok). */
   select(i: number): void;
   selected(): number;
@@ -72,7 +74,29 @@ export function buildLedger(scene: Phaser.Scene, width: number, rows: LedgerRow[
   let sel = -1;
   const draws: Array<(on: boolean) => void> = [];
   const hovered = new Set<number>();
-  const redraw = (i: number) => draws[i]?.(hovered.has(i) || sel === i);
+  const activeCbs: Array<(i: number) => void> = [];
+  // Etkin satır (Ömer 2026-11-09): elmas yalnız etkin satırda; hiçbiri etkin değilse öne çıkan satırda
+  const activeIdx = (): number => (hovered.size ? [...hovered][hovered.size - 1]! : sel);
+  let lastActive = -2;
+  let emitQueued = false;
+  // Etkin satır olayı satır -> satır geçişinde pointerout (-1) ve pointerover (yeni) aynı karede gelir: ara değer yayılmasın (görsel
+  // yarım geri dönüp titremesin), değişim mikro görevde birleştirilip son değer bir kez yayılır.
+  const queueEmit = () => {
+    if (emitQueued) return;
+    emitQueued = true;
+    void Promise.resolve().then(() => {
+      emitQueued = false;
+      const a = activeIdx();
+      if (a === lastActive) return;
+      lastActive = a;
+      activeCbs.forEach((f) => f(a));
+    });
+  };
+  const redrawAll = () => {
+    draws.forEach((d, i) => d(hovered.has(i) || sel === i));
+    if (activeIdx() !== lastActive) queueEmit();
+  };
+  const redraw = (_i: number) => redrawAll();
   rows.forEach((r, i) => {
     const h = heights[i]!;
     const yc = yTop + h / 2;
@@ -86,7 +110,7 @@ export function buildLedger(scene: Phaser.Scene, width: number, rows: LedgerRow[
     const textX = -width / 2 + 34;
     const name = elText(scene, textX, 0, r.name, nameSize, nameColor, { em: 0.1, pad: true }).setOrigin(0, 0.5);
     const meta = elBody(scene, small ? textX : width / 2 - 6, 0, r.meta.replace(/\n/g, ' · '), metaSize, metaColor).setOrigin(small ? 0 : 1, 0.5).setAlign(small ? 'left' : 'right');
-    const dia = elDiamond(scene, small ? 7 : 5);
+    const dia = elDiamond(scene, nameSize * 0.2); // satır adına oranlı (23 boyda r 4.6, telefonda 36-40 boyda 7-8)
     const nameW = () => (name.width - EL.PAD * 2) * name.scaleX;
     const avail = width - 34 - 6;
     dia.setPosition(-width / 2 + 14, small ? -h * 0.2 : 0);
@@ -111,7 +135,7 @@ export function buildLedger(scene: Phaser.Scene, width: number, rows: LedgerRow[
       plate.fillGradientStyle(EL.GOLD, EL.GOLD, EL.GOLD, EL.GOLD, 0, 0.45, 0, 0.45).fillRect(-width / 2, ly, f, 1);
       plate.fillStyle(EL.GOLD, 0.45).fillRect(-width / 2 + f, ly, width - 2 * f, 1);
       plate.fillGradientStyle(EL.GOLD, EL.GOLD, EL.GOLD, EL.GOLD, 0.45, 0, 0.45, 0).fillRect(width / 2 - f, ly, f, 1);
-      dia.setVisible(on || (r.primary && r.enabled)).setAlpha(on ? 1 : 0.75).setScale(on ? 1.2 : 1);
+      dia.setVisible(on || (r.primary && r.enabled && activeIdx() < 0)).setAlpha(on ? 1 : 0.75).setScale(on ? 1.2 : 1);
       name.setColor(on ? EL.ON : nameColor);
       meta.setColor(on ? '#f3dfae' : metaColor);
       elGlow(name, on);
@@ -158,6 +182,11 @@ export function buildLedger(scene: Phaser.Scene, width: number, rows: LedgerRow[
       it.c.setAlpha(a).setY(it.y + (1 - a) * 22).setVisible(a > 0.001);
       if (it.zone.input) it.zone.input.enabled = progress >= 0.6;
     });
+    // Defter kapanırken (giriş kapanınca pointerout gelmez) takılı kalan hover / elmas temizlenir
+    if (progress < 0.6 && hovered.size) {
+      hovered.clear();
+      redrawAll();
+    }
     wash.setAlpha(Math.min(1, progress * 1.6)).setVisible(progress > 0.001);
     onProgress?.(progress);
   };
@@ -168,6 +197,7 @@ export function buildLedger(scene: Phaser.Scene, width: number, rows: LedgerRow[
     isOpen: () => open,
     active: () => progress >= 0.6,
     onHover: (cb) => void hoverCbs.push(cb),
+    onActive: (cb) => void activeCbs.push(cb),
     count: rows.length,
     selected: () => sel,
     select: (i) => {

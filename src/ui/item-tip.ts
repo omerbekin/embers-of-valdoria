@@ -3,7 +3,8 @@
  * (dokunmatikte TEK DOKUNUŞ: item'in yanına sabitlenir, altta eylem düğmeleri; boşluğa dokununca kapanır, Ömer 2026-10-12). İçerik: ad (nadirlik rengi), nadirlik + yuva + item seviyesi, affix satırları (C / B / A kademe etiketi + ikon +
  * değer + zar aralığı), Legendary etkisi, değer. Gear, tüccar ve ödül torbası aynı bileşeni kullanır. Oyun içi metinler İngilizce.
  */
-import { ITEMS, TIER_COLOR, affixCapKeys, affixDef, affixLines, capOf, effectLine, instanceBaseLines, instanceColor, instanceSubtitle, itemDef, itemValue, levelReqMsg, type CapKey, type ItemInstance } from '../progression';
+import { rarityMark } from './rarity-mark';
+import { ITEMS, TIER_COLOR, affixCapKeys, affixDef, affixLines, capOf, effectLine, instanceBaseLines, instanceColor, instanceRarity, instanceSubtitle, itemDef, itemValue, levelReqMsg, type CapKey, type ItemInstance } from '../progression';
 import { setTip } from '../progression/sets';
 import type { Equipment } from '../progression/items';
 import { tipOn, tipOff } from './tip-vis';
@@ -68,6 +69,38 @@ export interface ItemTipState {
   equipped?: boolean;
   /** Karşılaştırma kartında kahraman adı ('Equipped · Warrior'): seçili kahraman yokken (ganimet / ödül torbası) kimin item'i olduğu görünsün. */
   equippedBy?: string;
+  /**
+   * Demirci önizlemesi (Ömer 2026-11-12, Blacksmith varyantları): karşılaştırma örneği. 'arrow' = kart bu item'in, değişen sayılar satır içinde
+   * "13 → 16" (yeni değer yeşil); 'new' = kart yeni item'in, eskisinden farklı sayılar yeşil.
+   */
+  compare?: { other: Pick<ItemInstance, 'id'> & { rolls?: unknown }; mode: 'arrow' | 'new' };
+  /**
+   * Demirci Reforge: kartın affix satırları seçilebilir (`can` = özgün affix sıraları), `on` seçili satır, altına `note`; `mystery` = seçili
+   * satırın yazısı "?" olur (Reforge sonrası kartı). `pick` yoksa satırlar yalnızca vurgulanır.
+   */
+  lineSel?: { can: number[]; on: number; pick?: (i: number) => void; note?: string; mystery?: boolean };
+}
+
+/** Sayı farkı (demirci önizlemesi): `a` (önce) ve `b` (sonra) aynı kalıpta ise değişen sayılar işaretlenir; değilse yeni yazı yeşil. */
+function diffText(a: string, b: string, mode: 'arrow' | 'new'): HTMLElement {
+  const out = el('span', 'it-text');
+  if (a === b) return (out.append(a), out);
+  const num = /(\d+(?:\.\d+)?)/;
+  const pa = a.split(num);
+  const pb = b.split(num);
+  const same = pa.length === pb.length && pa.every((x, i) => i % 2 === 1 || x === pb[i]);
+  if (!same) {
+    if (mode === 'arrow') out.append(a, el('span', 'it-diff-ar', ' → '), el('span', 'it-diff-up', b));
+    else out.append(el('span', 'it-diff-up', b));
+    return out;
+  }
+  const own = mode === 'arrow' ? pa : pb;
+  own.forEach((x, i) => {
+    if (i % 2 === 0 || pa[i] === pb[i]) return void out.append(x);
+    if (mode === 'arrow') out.append(el('span', 'it-diff-was', pa[i]!), el('span', 'it-diff-ar', ' → '), el('span', 'it-diff-up', pb[i]!));
+    else out.append(el('span', 'it-diff-up', x));
+  });
+  return out;
 }
 
 /**
@@ -133,7 +166,14 @@ function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unkn
       i.alt = '';
       row.append(i);
     }
-    row.append(el('span', 'it-text', line === base.heavy ? `${line.name}: ${line.text}` : line.text));
+    const own = line === base.heavy ? `${line.name}: ${line.text}` : line.text;
+    const ob = state?.compare ? instanceBaseLines(state.compare.other) : null;
+    const oLine = ob ? (line === base.heavy ? ob.heavy : ob.implicit) : undefined;
+    const oText = oLine ? (line === base.heavy ? `${oLine.name}: ${oLine.text}` : oLine.text) : undefined;
+    if (state?.compare && oText !== undefined && oText !== own) {
+      const m = state.compare.mode;
+      row.append(diffText(m === 'arrow' ? own : oText, m === 'arrow' ? oText : own, m));
+    } else row.append(el('span', 'it-text', own));
     if (hint) {
       const h = el('span', 'it-text', ` ${hint}`);
       h.style.opacity = '0.55';
@@ -142,12 +182,30 @@ function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unkn
     out.push(row);
   }
   const lines = el('div', 'it-lines');
+  const cmp = state?.compare;
+  const otherLines = cmp ? affixLines(cmp.other, classId) : null;
+  const sel = state?.lineSel;
   // sıra: kademe yüksekten düşüğe (A, B, C); eşitlikte zar sırası. "Etkisiz" işareti özgün sıra numarasıyla eşlenir.
   const ls = affixLines(inst, classId).map((l, i) => ({ l, i }));
   ls.sort((x, y) => (TIER_ORDER[x.l.tier] ?? 9) - (TIER_ORDER[y.l.tier] ?? 9) || x.i - y.i);
   for (const { l, i } of ls) {
     const off = !!state?.inactive?.has(i);
     const row = el('div', `it-line${off ? ' off' : ''}`);
+    const can = !!sel?.can.includes(i);
+    const picked = sel?.on === i;
+    const mystery = picked && !!sel?.mystery;
+    if (sel) row.classList.add(can ? 'it-pickable' : 'it-locked');
+    if (picked) row.classList.add('it-picked');
+    if (sel?.pick && can) {
+      row.setAttribute('role', 'button');
+      row.tabIndex = 0;
+      row.addEventListener('click', () => sel.pick?.(i));
+      row.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        sel.pick?.(i);
+      });
+    }
     const tag = el('span', 'it-tier', l.tier);
     tag.style.setProperty('--tc', TIER_COLOR[l.tier]);
     row.append(tag);
@@ -158,13 +216,19 @@ function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unkn
       im.alt = '';
       row.append(im);
     } else row.append(el('i', 'it-dia'));
-    row.append(el('span', 'it-text', l.text));
+    const other = otherLines?.[i]?.text;
+    const changed = !!cmp && other !== undefined && other !== l.text;
+    if (mystery) row.append(el('span', 'it-text it-mystery', '?'));
+    else if (changed && cmp) row.append(cmp.mode === 'arrow' ? diffText(l.text, other!, 'arrow') : diffText(other!, l.text, 'new'));
+    else row.append(el('span', 'it-text', l.text));
     // tavan dolu (fazlası kaybolur) ya da A affix sınırı (aynı A affix'i en çok 2 item'de sayılır)
     const capKey = off ? undefined : affixCapKeys(affixDef(l.id) ?? { parts: [] }).find((k) => state?.capped?.has(k));
     if (capKey) row.append(el('span', 'it-cap', capLabel(capKey)));
     // zar göstergesi: mücevher rayı (değerin aralıktaki yeri), üstüne gelince aralık
     const pos = l.range ? rollPos(l.text, l.range) : null;
-    if (l.range && pos !== null) {
+    if (changed || mystery) {
+      // demirci önizlemesi: değişen / bilinmeyen satırda zar rayı yok (eski değerin yeri yanıltır)
+    } else if (l.range && pos !== null) {
       const g = el('span', 'it-rail');
       g.style.setProperty('--p', String(pos));
       g.title = `Roll range ${l.range}`;
@@ -172,6 +236,7 @@ function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unkn
       row.append(g);
     } else if (l.range) row.append(el('span', 'it-range', `(${l.range})`));
     lines.append(row);
+    if (picked && sel?.note) lines.append(el('div', 'it-pick-note', sel.note));
     if (off) lines.append(el('div', 'it-off-note', `Inactive: only ${ITEMS.caps.aAffixCopies ?? 2} of this affix count`));
   }
   if (lines.childElementCount) out.push(lines);
@@ -242,7 +307,7 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
   const medal = el('span', 'it-medal');
   medal.append(itemDefIcon(d, d.slot, color, 'gr-svg gr-px'));
   const id = el('div', 'it-id');
-  id.append(el('strong', 'it-name', d.name));
+  id.append(el('strong', 'it-name', d.name), rarityMark(instanceRarity(inst)));
   const sub = instanceSubtitle(inst).split(' · ');
   const grip = sub.slice(1, -1).join(' · ');
   const ilvl = sub.length > 1 ? (sub[sub.length - 1] ?? '') : '';
@@ -250,8 +315,28 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
   id.append(el('div', 'it-rule'));
   id.append(el('div', 'it-kind', (sub[0] ?? '').replace(' ', ' · ')));
   const line = [grip, ilvl].filter(Boolean).join(' · ');
-  if (line) id.append(el('div', 'it-sub', line));
+  // demirci önizlemesi (compare): alt satırdaki item seviyesi, büyük güç / blok ve şart satırı da önce -> sonra
+  const cmp = state?.compare;
+  const ob = cmp ? instanceBaseLines(cmp.other) : null;
+  const oSub = cmp ? instanceSubtitle(cmp.other).split(' · ') : null;
+  const oLine = oSub ? [oSub.slice(1, -1).join(' · '), oSub.length > 1 ? (oSub[oSub.length - 1] ?? '') : ''].filter(Boolean).join(' · ') : '';
+  const pair = (own: string, other: string): HTMLElement => (cmp!.mode === 'arrow' ? diffText(own, other, 'arrow') : diffText(other, own, 'new'));
+  if (line) {
+    const subEl = el('div', 'it-sub');
+    if (cmp && oLine !== line) subEl.append(pair(line, oLine));
+    else subEl.textContent = line;
+    id.append(subEl);
+  }
   const big = bigNode(base, state?.implicitHint);
+  if (big && cmp && ob) {
+    const st = big.querySelector<HTMLElement>('.it-big-power strong, .it-big-n strong');
+    const own = base.power !== undefined ? String(base.power) : base.block !== undefined ? `${Math.round(base.block * 10) / 10}%` : '';
+    const oth = ob.power !== undefined ? String(ob.power) : ob.block !== undefined ? `${Math.round(ob.block * 10) / 10}%` : '';
+    if (st && oth && oth !== own) {
+      if (cmp.mode === 'arrow') st.append(el('span', 'it-diff-ar', ' → '), el('span', 'it-diff-up', oth));
+      else st.classList.add('it-diff-up');
+    }
+  }
   if (big) id.append(big);
   head.append(medal, id);
   card.append(head);
@@ -264,7 +349,9 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
   // ---- şart (solda, karşılanmıyorsa kırmızı) + değer (sağda)
   const unmet = state?.level !== undefined && state.level < base.req;
   const foot = el('div', 'it-reqrow');
-  foot.append(el('span', `it-req${unmet ? ' unmet' : ''}`, base.req > 1 || unmet ? levelReqMsg(base.req) : ''));
+  const reqEl = el('span', `it-req${unmet ? ' unmet' : ''}`, base.req > 1 || unmet ? levelReqMsg(base.req) : '');
+  if (cmp && ob && ob.req !== base.req) reqEl.replaceChildren(pair(levelReqMsg(base.req), levelReqMsg(ob.req)));
+  foot.append(reqEl);
   const val = el('span', 'it-val');
   if (hasUiImage('gold')) {
     const c = el('img', 'it-coin');
@@ -297,6 +384,43 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
 }
 
 /**
+ * Telefonun karşılaştırma şeridi (Ömer 2026-11-12): yan yana iki tam kart 844x390'a sığmaz; takılı item ikinci kart yerine üstteki kartın altında
+ * tek satır: "vs Equipped" + küçük ikon + ad + fark ("Power 11 → 15", "+4 ARM"). Masaüstü tam kartı kullanır (gear-screen.ts > equippedTipNodes).
+ */
+export function itemVsNode(equipped: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }, label: string, parts: ItemTipLine[], hovered?: Pick<ItemInstance, 'id'> & { rolls?: unknown }): HTMLElement {
+  const row = el('div', 'it-vs');
+  const d = itemDef(equipped.id);
+  const color = instanceColor(equipped);
+  row.style.setProperty('--rc', color);
+  row.append(el('span', 'it-vs-k', label));
+  if (d) {
+    const ic = el('span', 'it-vs-ico');
+    ic.append(itemDefIcon(d, d.slot, color, 'gr-svg gr-px'));
+    row.append(ic, el('strong', 'it-vs-n', d.name));
+  }
+  const v = el('span', 'it-vs-v');
+  if (hovered) {
+    const a = instanceBaseLines(equipped);
+    const b = instanceBaseLines(hovered);
+    const pair = a.power !== undefined && b.power !== undefined ? ([a.power, b.power, 'Power', ''] as const) : a.block !== undefined && b.block !== undefined ? ([Math.round(a.block * 10) / 10, Math.round(b.block * 10) / 10, 'Block', '%'] as const) : null;
+    if (pair && pair[0] !== pair[1]) v.append(el('span', `it-chip it-${pair[1] > pair[0] ? 'up' : 'down'}`, `${pair[2]} ${pair[0]}${pair[3]} → ${pair[1]}${pair[3]}`));
+  }
+  for (const p of parts) v.append(el('span', `it-chip${p.dir ? ` it-${p.dir}` : ''}`, p.text));
+  row.append(v);
+  return row;
+}
+
+/** Telefon şeridi (`.it-vs`) ayrı düğüm gelir; ilk kartın içine (eylem düğmelerinden önce) alınır. */
+function mergeVs(nodes: HTMLElement[]): HTMLElement[] {
+  const card = nodes[0]?.classList.contains('it-card') ? nodes[0] : null;
+  if (!card) return nodes;
+  const vs = nodes.filter((n) => n.classList.contains('it-vs'));
+  if (!vs.length) return nodes;
+  card.append(...vs);
+  return nodes.filter((n) => !vs.includes(n));
+}
+
+/**
  * Yüzen ipucu denetçisi: `host` içinde konumlanır (döndürülmüş / ölçekli sahnede de: istemci koordinatı host'un ölçeğine bölünür).
  * `showAt` imlecin sağ altına koyar (taşarsa sola / yukarı çevirir); `follow` fare hareketiyle taşır.
  */
@@ -325,6 +449,7 @@ export class ItemTip {
   }
   show(key: string, nodes: HTMLElement[], clientX: number, clientY: number): void {
     if (!nodes.length) return this.hide();
+    nodes = mergeVs(nodes);
     if (key !== this.key || this.isPinned) this.box.replaceChildren(...nodes);
     this.markDuo(nodes);
     this.setPinned(false);
@@ -338,11 +463,12 @@ export class ItemTip {
    */
   pin(key: string, nodes: HTMLElement[], anchor: HTMLElement, actions: ItemTipAction[] = []): void {
     if (!nodes.length) return this.hide();
+    nodes = mergeVs(nodes);
     const acts: HTMLElement[] = [];
     if (actions.length) {
       const row = el('div', 'it-acts');
       for (const a of actions) {
-        const b = el('button', `gr-btn sm${a.primary === false ? '' : ' primary'}`, a.label);
+        const b = el('button', `el-btn sm${a.primary === false ? '' : ' primary'}`, a.label);
         b.type = 'button';
         b.disabled = !!a.disabled;
         b.addEventListener('click', (e) => {
@@ -366,17 +492,18 @@ export class ItemTip {
     const ah = anchor.offsetHeight;
     const W = this.host.clientWidth;
     const H = this.host.clientHeight;
-    const tw = this.box.offsetWidth;
-    const th = this.fitHeight(H);
+    const { tw, th } = this.fit(W, H);
     const gap = 8;
     let left: number;
     let top: number;
+    this.box.classList.remove('flip');
     if (p.x + aw + gap + tw <= W - 6) {
       left = p.x + aw + gap;
       top = p.y + ah / 2 - th / 2;
     } else if (p.x - gap - tw >= 6) {
       left = p.x - gap - tw;
       top = p.y + ah / 2 - th / 2;
+      this.box.classList.add('flip');
     } else {
       left = p.x + aw / 2 - tw / 2;
       top = p.y + ah + gap + th <= H - 6 ? p.y + ah + gap : p.y - gap - th;
@@ -384,16 +511,31 @@ export class ItemTip {
     this.box.style.left = `${Math.max(6, Math.min(W - tw - 6, left))}px`;
     this.box.style.top = `${Math.max(6, Math.min(H - th - 6, top))}px`;
   }
-  /** İpucu görünür alandan uzunsa yüksekliği sınırlar ve içinde kaydırır (telefonda üst satırlar kesilmesin); yeni yüksekliği verir. */
-  private fitHeight(H: number): number {
-    this.box.style.maxHeight = '';
-    this.box.style.overflowY = '';
-    const max = H - 12;
-    if (this.box.offsetHeight > max) {
-      this.box.style.maxHeight = `${max}px`;
-      this.box.style.overflowY = 'auto';
+  /**
+   * İpucu görünür alana sığsın, KAYDIRMA ÇUBUĞU ASLA (Ömer 2026-11-12): taşarsa önce sıkı düzen (`fit`: küçük madalyon, dar boşluklar; gear.css),
+   * yine taşarsa kutu sol üst köşeden orantılı küçülür (transform). Ekranda kaplanan genişlik / yükseklik döner.
+   */
+  private fit(W: number, H: number): { tw: number; th: number } {
+    const b = this.box;
+    b.style.transform = '';
+    b.classList.remove('fit');
+    const mw = W - 12;
+    const mh = H - 12;
+    let tw = b.offsetWidth;
+    let th = b.offsetHeight;
+    if (tw > mw || th > mh) {
+      b.classList.add('fit');
+      tw = b.offsetWidth;
+      th = b.offsetHeight;
     }
-    return this.box.offsetHeight;
+    const s = Math.min(1, mw / Math.max(1, tw), mh / Math.max(1, th));
+    if (s < 1) {
+      b.style.transformOrigin = '0 0';
+      b.style.transform = `scale(${s})`;
+      tw *= s;
+      th *= s;
+    }
+    return { tw, th };
   }
   /** İki kart yan yana (çanta item'i + kuşanılmış karşılaştırma kartı): kutu genişliği kartlardan gelir (gear.css .item-tip.duo). */
   private markDuo(nodes: HTMLElement[]): void {
@@ -409,12 +551,14 @@ export class ItemTip {
     const { x, y } = clientToLocal(clientX, clientY, this.host.getBoundingClientRect(), this.host.offsetWidth, !!document.documentElement?.classList.contains('rotated'));
     const W = this.host.clientWidth;
     const H = this.host.clientHeight;
-    const tw = this.box.offsetWidth;
-    const th = this.fitHeight(H);
+    const { tw, th } = this.fit(W, H);
     const gap = 18;
     let left = x + gap;
     let top = y + gap;
-    if (left + tw > W - 6) left = x - gap - tw;
+    // karşılaştırma kartları yan yana: üstüne gelinen kart imlece yakın, takılı kart uzak tarafta (sola açılınca sıra ters: gear.css .item-tip.duo.flip)
+    const flip = left + tw > W - 6 && x - gap - tw >= 6;
+    this.box.classList.toggle('flip', flip);
+    if (flip) left = x - gap - tw;
     if (top + th > H - 6) top = y - gap - th;
     this.box.style.left = `${Math.max(6, Math.min(W - tw - 6, left))}px`;
     this.box.style.top = `${Math.max(6, Math.min(H - th - 6, top))}px`;

@@ -129,7 +129,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(217, 178, 106, 0.3) transparent;
+  scrollbar-color: var(--scroll-thumb-soft) transparent;
 }
 
 .cx-navrow {
@@ -153,8 +153,8 @@
 }
 
 .cx-navrow .el-dia {
-  width: max(7px, calc(10 * var(--u)));
-  height: max(7px, calc(10 * var(--u)));
+  width: 0.5em;
+  height: 0.5em;
   opacity: 0;
   transform: rotate(45deg) scale(0.4);
   transition: opacity 0.18s, transform 0.18s var(--el-ease);
@@ -258,7 +258,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(217, 178, 106, 0.3) transparent;
+  scrollbar-color: var(--scroll-thumb-soft) transparent;
 }
 
 .cx-group + .cx-group {
@@ -500,8 +500,8 @@
 
 .cx-filters > summary::before {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: 0.57em;
+  height: 0.57em;
   transform: rotate(45deg);
   box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.55);
   transition: background 0.18s;
@@ -572,7 +572,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(217, 178, 106, 0.3) transparent;
+  scrollbar-color: var(--scroll-thumb-soft) transparent;
   animation: cx-fu 0.6s var(--el-ease) both 0.2s;
 }
 
@@ -664,8 +664,8 @@
   position: absolute;
   left: 2px;
   top: 0.62em;
-  width: 6px;
-  height: 6px;
+  width: 0.35em;
+  height: 0.35em;
   transform: rotate(45deg);
   background: var(--el-ember);
   box-shadow: 0 0 0 1px var(--el-ember2);
@@ -884,6 +884,11 @@
   font-size: max(13px, calc(19 * var(--u)));
 }
 
+/* pasif her yerde yuvarlak (Ömer 2026-11-12) */
+.cx-passive .cx-ico.big {
+  border-radius: 50%;
+}
+
 /* Skill satırı (class maddesinde ve Skills maddesinde) */
 .cx-skill {
   display: flex;
@@ -953,8 +958,8 @@
 
 .cx-meta .cx-tag + .cx-tag::before {
   content: '';
-  width: 4px;
-  height: 4px;
+  width: 0.25em;
+  height: 0.25em;
   margin-right: max(10px, calc(16 * var(--u)));
   margin-left: calc(-1 * max(5px, calc(8 * var(--u))));
   transform: rotate(45deg) translateX(-50%);

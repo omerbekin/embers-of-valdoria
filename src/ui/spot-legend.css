@@ -1,0 +1,12 @@
+/* Dizilim tahtası renk açıklaması (Ömer 2026-11-10, tasarım dili 4.6): altın saç çizgisi + elmas işaretler + Cinzel küçük harf.
+   Tek bileşen: Quick Battle / Multiplayer (hover / sürükleme sırasında), sefer Formation penceresi ve Endless seçimi (hep görünür). */
+.spot-lg { display: flex; align-items: center; gap: 14px; white-space: nowrap; font: 600 13px/1 var(--font-display, Cinzel, Georgia, serif); letter-spacing: 0.2em; text-transform: uppercase; color: #cdb88d; user-select: none; }
+.spot-lg .ln { flex: 1; height: 1px; min-width: 18px; background: linear-gradient(90deg, rgba(217, 178, 106, 0.55), transparent); }
+.spot-lg.mirror .ln { background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.55)); }
+.spot-lg .it { display: flex; align-items: center; gap: 9px; cursor: default; }
+.spot-lg .it i { flex: none; width: 0.7em; height: 0.7em; transform: rotate(45deg); background: currentColor; box-shadow: 0 0 7px currentColor; }
+.spot-lg .it span { color: #cdb88d; }
+
+/* Tahtanın altına yerleşen sürüm (sahne dünya noktasında): kısa solma, hover / sürükleme dışında gizli */
+.spot-lg-abs { position: absolute; z-index: 7; transform-origin: 0 0; pointer-events: none; opacity: 0; transition: opacity var(--m-tooltip, 140ms) ease-out; }
+.spot-lg-abs.on { opacity: 1; }

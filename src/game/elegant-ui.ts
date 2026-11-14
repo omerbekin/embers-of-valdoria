@@ -1,6 +1,6 @@
 import { textRes } from './stage-view';
 import Phaser from 'phaser';
-import { BODY_FONT, DISPLAY_FONT } from '../ui/menu-style';
+import { BODY_FONT, DISPLAY_FONT, NUM_FONT } from '../ui/menu-style';
 import { ensureGlow } from './menu-text';
 import { onStageResize, stageView } from './stage';
 import { FULL_W, FULL_X0 } from '../ui/viewport';
@@ -9,11 +9,12 @@ import { motion, MOTION } from '../ui/motion';
 import { uiSound, type UiSoundKind } from '../ui/ui-sound';
 import { screenGo } from './screen-go';
 import { growTouchZone, type TouchZoneOpts } from './touch-hit';
+import { CONFIRM } from '../ui/confirm-labels';
 import { backPlacement, NAV_BTN, NAV_COLOR, NAV_STROKE } from '../ui/nav-icons';
 
 /**
  * ZARİF TASARIM KİTİ (Phaser tarafı; Ömer 2026-10-09: ana menü + Quick Battle "Twin Formations" dili HER ekranda).
- * Dil: Cinzel 600 büyük harf başlık/düğme yazısı + EB Garamond italik açıklama, ince altın çizgiler (alfa .16 / .3 / .55), kor elmaslar,
+ * Dil: Cinzel 600 büyük harf başlık/düğme yazısı + EB Garamond düz açıklama, ince altın çizgiler (alfa .16 / .3 / .55), kor elmaslar,
  * kutusuz yazı düğmeleri (hover: elmas + kor parıltısı + 4 px sağa), yumuşak geçişler (Cubic.easeOut 180-350 ms).
  * DOM ekranları için aynı dilin CSS sınıfları: `src/ui/elegant.css` (`el-*`). Kullanım kuralları CLAUDE.md > "Tasarım kiti".
  *
@@ -55,7 +56,6 @@ export const EL = {
   EASE: 'Cubic.easeOut',
 } as const;
 
-const NUM_FONT = "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif";
 
 // --- Çizim parçaları ---
 
@@ -119,8 +119,8 @@ export function elText(scene: Phaser.Scene, x: number, y: number, text: string, 
   return t;
 }
 
-/** EB Garamond (varsayılan italik); hafif koyu gölge. */
-export function elBody(scene: Phaser.Scene, x: number, y: number, text: string, size: number, color: string = EL.NOTE, _italic = false, wrap?: number): Phaser.GameObjects.Text {
+/** EB Garamond, düz yazı (arayüzde italik yok); hafif koyu gölge. */
+export function elBody(scene: Phaser.Scene, x: number, y: number, text: string, size: number, color: string = EL.NOTE, wrap?: number): Phaser.GameObjects.Text {
   const t = scene.add
     .text(x, y, text, { fontFamily: BODY_FONT, fontSize: `${size}px`, fontStyle: 'normal', color, ...(wrap ? { wordWrap: { width: wrap, useAdvancedWrap: true } } : {}) })
     .setResolution(textRes())
@@ -161,7 +161,8 @@ export function elLink(
 ): ElLink {
   const size = o.size ?? 21;
   const root = scene.add.container(0, 0);
-  const dia = elDiamond(scene, 7).setPosition(11, 0).setAlpha(0).setScale(0.4);
+  // hover elması yazıya oranlı (Ömer 2026-11-11: süs karoları yanındaki öğeye oranlı, sabit px yok): varsayılan 21 boyda r = 7
+  const dia = elDiamond(scene, size / 3).setPosition(11, 0).setAlpha(0).setScale(0.4);
   // isteğe bağlı ikon (doku anahtarı; ör. boyalı arayüz ikonu Gear / Formation): elmasın sağında, yazının solunda
   const isz = o.iconSize ?? Math.round(size * 1.5);
   const icon = o.icon ? scene.add.image(28 + isz / 2, 0, o.icon).setDisplaySize(isz, isz) : null;
@@ -314,6 +315,14 @@ export interface ElButton {
 /** Telefonda her çerçeveli düğmenin görünen yüksekliği (gerçek px); DOM karşılığı src/ui/phone-buttons.css. */
 export const PHONE_BTN_PX = 30;
 
+/** Ortak düğme boyları (Ömer 2026-11-09 A; DOM karşılığı elegant.css --btn-scr-h / --btn-dlg-h / --btn-cmp-h): Screen 64, Dialog 48, Compact 44. */
+export const BTN_SIZE = {
+  screen: { h: 64, size: 24 },
+  dialog: { h: 48, size: 19 },
+  compact: { h: 44, size: 16 },
+} as const;
+export type BtnSize = keyof typeof BTN_SIZE;
+
 /**
  * Çerçeveli düğme. primary (START BATTLE dili): 84 px, Cinzel 30, iki yanda elmas; hazır değilken soluk, hazırken altın + nefes alan kor.
  * secondary (Random both dili): 56 px, Cinzel 21, ince soluk çerçeve, içi boş elmaslar. Genişlik verilmezse yazıya göre (`minLabel` en uzun yazı).
@@ -323,17 +332,20 @@ export function elButton(
   scene: Phaser.Scene,
   label: string,
   run: () => void,
-  o: { kind?: 'primary' | 'secondary'; w?: number; h?: number; size?: number; minLabel?: string; isBusy?: () => boolean; ready?: boolean; icon?: string | undefined; iconSize?: number; /** Telefonda dokunma alanını 44 gerçek piksele büyüt (görünüm aynı; touch-hit.ts). */ touch?: TouchZoneOpts | true } = {},
+  o: { kind?: 'primary' | 'secondary'; /** Adlı boy (BTN_SIZE); verilmezse primary = screen, secondary = dialog. */ sz?: BtnSize; w?: number; minLabel?: string; isBusy?: () => boolean; ready?: boolean; icon?: string | undefined; iconSize?: number; /** Telefonda dokunma alanını 44 gerçek piksele büyüt (görünüm aynı; touch-hit.ts). */ touch?: TouchZoneOpts | true } = {},
 ): ElButton {
   const primary = (o.kind ?? 'primary') === 'primary';
-  const size = o.size ?? (primary ? 30 : 21);
+  const preset = BTN_SIZE[o.sz ?? (primary ? 'screen' : 'dialog')];
+  const size = preset.size;
   const em = primary ? 0.12 : 0.1;
   const probe = elText(scene, 0, 0, o.minLabel && o.minLabel.length > label.length ? o.minLabel : label, size, EL.DIM, { em });
   const w = o.w ?? Math.ceil(probe.width + (primary ? 112 : 80));
   probe.destroy();
   // Telefon (html.short, Ömer 2026-11-02): görünen çerçeve her düğmede 36 gerçek piksel; dokunma alanı growTouchZone ile >= 44 kalır.
   const phoneH = document.documentElement.classList.contains('short') ? Math.ceil(PHONE_BTN_PX / (stageView.cssScale > 0 ? stageView.cssScale : 1)) : 0;
-  const h = phoneH || (o.h ?? (primary ? 84 : 56));
+  const h = phoneH || preset.h;
+  // yan elmaslar çerçeve yüksekliğine oranlı (masaüstü 1, telefonda 30 px çerçeveyle küçülür)
+  const dk = h / preset.h;
   const root = scene.add.container(0, 0);
   const breath = scene.add.image(0, 0, ensureGlow(scene)).setTint(EL.EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(w * 1.35, h * 2.6).setAlpha(0);
   const plate = scene.add.graphics();
@@ -371,12 +383,12 @@ export function elButton(
       for (const sx of [-1, 1]) {
         const cx = sx * (w / 2 + 2);
         if (ready) {
-          plate.fillStyle(EL.EMBER, 0.3).fillPoints(diamondPts(cx, 0, 13), true);
-          plate.fillStyle(EL.EMBER, 1).fillPoints(diamondPts(cx, 0, 8.5), true);
-          plate.lineStyle(1, EL.EMBER2, 1).strokePoints(diamondPts(cx, 0, 8.5), true);
+          plate.fillStyle(EL.EMBER, 0.3).fillPoints(diamondPts(cx, 0, 13 * dk), true);
+          plate.fillStyle(EL.EMBER, 1).fillPoints(diamondPts(cx, 0, 8.5 * dk), true);
+          plate.lineStyle(1, EL.EMBER2, 1).strokePoints(diamondPts(cx, 0, 8.5 * dk), true);
         } else {
-          plate.fillStyle(0x3a2d20, 1).fillPoints(diamondPts(cx, 0, 8.5), true);
-          plate.lineStyle(1, EL.GOLD, 0.35).strokePoints(diamondPts(cx, 0, 8.5), true);
+          plate.fillStyle(0x3a2d20, 1).fillPoints(diamondPts(cx, 0, 8.5 * dk), true);
+          plate.lineStyle(1, EL.GOLD, 0.35).strokePoints(diamondPts(cx, 0, 8.5 * dk), true);
         }
       }
       text.setColor(ready ? EL.ON : EL.DIM);
@@ -388,8 +400,8 @@ export function elButton(
       plate.lineStyle(1, on ? EL.ON_N : EL.GOLD, on ? 0.9 : EL.LINE.a2).strokeRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1);
       for (const sx of [-1, 1]) {
         const dx = sx * (w / 2 + 1);
-        plate.fillStyle(0x1a130c, 1).fillPoints(diamondPts(dx, 0, 6), true);
-        plate.lineStyle(1, on ? EL.EMBER2 : EL.GOLD, on ? 1 : 0.45).strokePoints(diamondPts(dx, 0, 6), true);
+        plate.fillStyle(0x1a130c, 1).fillPoints(diamondPts(dx, 0, 6 * dk), true);
+        plate.lineStyle(1, on ? EL.EMBER2 : EL.GOLD, on ? 1 : 0.45).strokePoints(diamondPts(dx, 0, 6 * dk), true);
       }
       text.setColor(!ready ? EL.DIM : on ? EL.ON : EL.TXT);
       elGlow(text, on);
@@ -516,9 +528,11 @@ export function elHeading(scene: Phaser.Scene, x: number, y: number, text: strin
   const orn = scene.add.graphics();
   if (len > 0)
     for (const dir of [-1, 1]) {
-      const d0 = half + 22;
-      orn.lineStyle(1, EL.GOLD, 0.8).strokePoints(diamondPts(dir * (d0 + 4), 0, 5.6), true);
-      fadeLine(orn, dir * (d0 + 16 + len), dir * (d0 + 16), 0, EL.GOLD, 0.6, 'in');
+      // süs başlığa oranlı (40 boyda: boşluk 22, elmas r 5.6, çizgi başı 16)
+      const k = size / 40;
+      const d0 = half + 22 * k;
+      orn.lineStyle(1, EL.GOLD, 0.8).strokePoints(diamondPts(dir * (d0 + 4 * k), 0, 5.6 * k), true);
+      fadeLine(orn, dir * (d0 + 16 * k + len), dir * (d0 + 16 * k), 0, EL.GOLD, 0.6, 'in');
     }
   c.add([orn, t]);
   return c;
@@ -527,7 +541,7 @@ export function elHeading(scene: Phaser.Scene, x: number, y: number, text: strin
 export type ElTone = 'ok' | 'note' | 'warn' | 'bad';
 const TONE: Record<ElTone, string> = { ok: EL.ON, note: EL.NOTE, warn: EL.PRI, bad: EL.BAD };
 
-/** Durum satırı (EB Garamond italik); `set` tonu ve isteğe bağlı nabzı ayarlar. ' · ' ile ayrılmış uyarılar `split` ile alt alta. */
+/** Durum satırı (EB Garamond, düz); `set` tonu ve isteğe bağlı nabzı ayarlar. ' · ' ile ayrılmış uyarılar `split` ile alt alta. */
 export function elStatus(scene: Phaser.Scene, x: number, y: number, o: { size?: number; origin?: [number, number]; align?: 'left' | 'center' | 'right'; split?: boolean } = {}): { text: Phaser.GameObjects.Text; set(msg: string, tone?: ElTone | string, pulse?: boolean): void } {
   const t = elBody(scene, x, y, '', o.size ?? 20, EL.NOTE).setOrigin(...(o.origin ?? [0.5, 0.5])).setAlign(o.align ?? 'center').setLineSpacing(-2);
   let tw: Phaser.Tweens.Tween | undefined;
@@ -590,13 +604,13 @@ export function elBackdropTap(scene: Phaser.Scene, shade: Phaser.GameObjects.Rec
 
 /**
  * Onay penceresi (yalnızca ilerleme kaybolacaksa: savaşın ortasında çıkmak, koşuyu bırakmak; CLAUDE.md > "Geri / Menu kuralı").
- * Tüm görünür alanı kaplayan koyu örtü + ince çerçeveli panel + Yes (primary) / No (secondary). Esc ve örtüye dokunmak = No.
+ * Tüm görünür alanı kaplayan koyu örtü + ince çerçeveli panel + sağ üst X + Cancel (secondary) / eylem fiili (primary). Esc, X ve örtüye dokunmak = Cancel. Etiketler: src/ui/confirm-labels.ts.
  */
-export function elConfirm(scene: Phaser.Scene, o: { title?: string; text: string; yes?: string; no?: string; onYes: () => void; onNo?: () => void }): { close(): void } {
+export function elConfirm(scene: Phaser.Scene, o: { title?: string; text: string; yes: string; onYes: () => void; onNo?: () => void }): { close(): void } {
   const root = scene.add.container(0, 0).setDepth(7000);
   const shade = scene.add.rectangle(FULL_X0, 0, FULL_W, 1080, 0x050302, 0.62).setOrigin(0, 0).setInteractive();
   const w = 620;
-  const body = elBody(scene, 960, 0, o.text, 22, EL.NOTE, false, w - 80).setOrigin(0.5, 0).setAlign('center');
+  const body = elBody(scene, 960, 0, o.text, 22, EL.NOTE, w - 80).setOrigin(0.5, 0).setAlign('center');
   const titleH = o.title ? 56 : 0;
   const h = 40 + titleH + body.height + 36 + 64 + 34;
   const y0 = 540 - h / 2;
@@ -620,8 +634,8 @@ export function elConfirm(scene: Phaser.Scene, o: { title?: string; text: string
     elModalOut(scene, root, () => root.destroy());
   };
   const by = y0 + h - 34 - 32;
-  const yes = elButton(scene, o.yes ?? 'Yes', () => (close(), o.onYes()), { kind: 'primary', h: 64, size: 24, w: 220, ready: true });
-  const no = elButton(scene, o.no ?? 'No', () => (close(), o.onNo?.()), { kind: 'secondary', h: 64, size: 22, w: 220 });
+  const yes = elButton(scene, o.yes, () => (close(), o.onYes()), { kind: 'primary', sz: 'dialog', w: 220, ready: true });
+  const no = elButton(scene, CONFIRM.cancel, () => (close(), o.onNo?.()), { kind: 'secondary', sz: 'dialog', w: 220 });
   // Düğme sırası (kit kuralı): ikincil (No / Cancel) solda, birincil eylem en sağda
   no.root.setPosition(960 - 130, by);
   yes.root.setPosition(960 + 130, by);
@@ -630,6 +644,13 @@ export function elConfirm(scene: Phaser.Scene, o: { title?: string; text: string
     close();
     o.onNo?.();
   };
+  // Sağ üst X (Ömer 2026-11-09): Cancel ile aynı
+  const xz = scene.add.zone(960 + w / 2 - 28, y0 + 28, 44, 44).setInteractive({ useHandCursor: true });
+  const xg = scene.add.graphics();
+  const drawX = (hot: boolean) => xg.clear().lineStyle(2, hot ? EL.ON_N : EL.GOLD, hot ? 1 : 0.7).beginPath().moveTo(960 + w / 2 - 36, y0 + 20).lineTo(960 + w / 2 - 20, y0 + 36).moveTo(960 + w / 2 - 20, y0 + 20).lineTo(960 + w / 2 - 36, y0 + 36).strokePath();
+  drawX(false);
+  xz.on('pointerover', () => drawX(true)).on('pointerout', () => drawX(false)).on('pointerup', () => (close(), o.onNo?.()));
+  root.add([xg, xz]);
   scene.input.keyboard?.on('keydown-ESC', onEsc);
   // Zemine dokunmak = No (iptal); panelin içinde başlayan sürükleme kapatmaz
   elBackdropTap(scene, shade, { x: 960 - w / 2, y: y0, w, h }, () => (close(), o.onNo?.()));
@@ -715,7 +736,7 @@ export function elBadge(scene: Phaser.Scene, tone: ElBadgeTone, r = 12): { c: Ph
   return badge;
 }
 
-/** Üst ortada kısa bildirim (iki yana saydamlaşan koyu bant, EB Garamond italik); dönen fonksiyon mesajı gösterir. */
+/** Üst ortada kısa bildirim (iki yana saydamlaşan koyu bant, EB Garamond düz); dönen fonksiyon mesajı gösterir. */
 export function elToast(scene: Phaser.Scene, y = 145, parent?: Phaser.GameObjects.Container): (msg: string, sound?: UiSoundKind | null) => void {
   const band = scene.add.graphics();
   const text = elBody(scene, 0, 0, '', 23, EL.ON).setOrigin(0.5);

@@ -5,8 +5,8 @@
 // animasyonlu olur (Gear, savaş HUD'ı, ipuçları, formasyon kartları). Phaser'da çizilen skill ikonu yok (savaş HUD'ı DOM): Phaser eşdeğeri gerekmez.
 import './evolve-icon.css';
 import type { SkillDef } from '../engine';
-import { evolveArtFor, resolveEvolveIcon, type EvolveSource } from '../progression/skill-tree-evolve';
-import type { TreeMode } from '../progression/skill-tree-data';
+import { evolveArtFor, evolveKeys, resolveEvolveIcon, type EvolveSource } from '../progression/skill-tree-evolve';
+import { treeOf, type TreeMode } from '../progression/skill-tree-data';
 import { treeImage, TREE_ICON_PREFIX } from '../game/icon-image-files';
 import { ownerOfSkill } from '../game/asset-versions';
 import { iconUrl } from './dom-icons';
@@ -39,6 +39,20 @@ export function heroSkillIconUrl(h: EvolveSource | undefined, skill: SkillDef, m
   if (!r.evolved) return base();
   return markEvolved(r.art ? iconUrl(`${TREE_ICON_PREFIX}${r.art}`, skill.fx) : base());
 }
+
+/**
+ * Skill'in görünen adı: evolve aktifse evolve düğümünün adı (ör. Fire Bolt -> Sunfire), değilse skill adı. İkonla aynı kural (resolveEvolveIcon).
+ * `evolvedIds`: savaştaki birimin onaylı evolve listesi (Combatant.evolved; BattleScene > skillIconUrl ile aynı kaynak); verilmezse kahramanın ağacı.
+ */
+export function heroSkillName(h: EvolveSource | undefined, skill: SkillDef, mode: TreeMode | undefined = SAVE_TREE_MODE, evolvedIds?: readonly string[]): string {
+  if (!h || !evolveActive(h, skill.id, mode, evolvedIds)) return skill.name;
+  const tree = treeOf(h.class);
+  const key = [...evolveKeys()].find(([row]) => tree?.rows[row]?.skill === skill.id)?.[1];
+  return (key && tree?.nodes[key]?.name) || skill.name;
+}
+
+const evolveActive = (h: EvolveSource, skillId: string, mode: TreeMode | undefined, evolvedIds?: readonly string[]): boolean =>
+  resolveEvolveIcon(h, skillId, mode, hasTreeArt, undefined, evolvedIds).evolved;
 
 /** Evolve düğümünün kendi görseli (Tree ekranı): sanat varsa o, yoksa null. İşaret onaylıysa (confirmed) konur. */
 export function evolveNodeIconUrl(classId: string, skillId: string): string | null {

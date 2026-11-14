@@ -158,7 +158,7 @@
   "_legacyStart": "Eski kayıtların Harita 1 başlangıcı (kayıtta soloStart yok): valdoria.json düğümlerinin üstüne yazılır (src/campaign/data.ts > mapFor; null = alan yok). Tutorial kahramanı, Mill Road sonrası yoldaş, Ashford vedası ve 3 kişilik bölük bu kayıtlarda aynen sürer. Bu kayıtlar bitince silinebilir.",
   "legacyStart": {
     "valdoria": {
-      "1": { "recruit": { "offer": 3, "pick": 1, "when": "after", "requireArea": true, "byFirstHero": { "warrior": ["druid", "undead", "gambler"], "archer": ["antimage", "cutthroat", "undead"] } } },
+      "1": { "recruit": { "offer": 4, "pick": 1, "when": "after", "requireArea": true, "byFirstHero": { "warrior": ["druid", "undead", "gambler", "paladin"], "archer": ["antimage", "cutthroat", "undead", "mage"] } } },
       "2": { "encounter": "ravenwood_pack", "partyCap": 2 },
       "3": { "encounter": "watchtower_tutorial" },
       "4": { "partyCap": 3, "farewell": true, "newCompany": { "size": 3, "leader": "firstPick" }, "briefing": null },
@@ -236,7 +236,7 @@
     "stepCompanyJoin": "Choose a companion.",
     "slotLocked.trinket": "Opens at Reedgate",
     "slotOpened.trinket": "Trinket slot opened: every hero can now wear a Trinket.",
-    "companyJoinTitle": "Choose a companion",
+    "companyJoinTitle": "Recruit",
     "companyJoinSub": "Choose one hero to walk north with you. You still lead the company.",
     "briefingTitle": "Garrick's Charge",
     "garrickCharge": "Your word is delivered, and Ashford will look to its own walls. I will see to that. {leader}, {companion}: the road north runs to Castle Morvane, and the ash will not stop until someone stops it there.",

@@ -1,7 +1,8 @@
 {
   "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'will_o_wisp' (ChatGPT çizimi, süzülür: sprite altında boşluk var, gövde yerden yüksekte; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): kit aynı, pasif P8 Flicker (ikon yer tutucu 'feather').",
   "id": "will_o_wisp",
-  "name": "Will-o'-Wisp",
+  "name": "Will-o'-Wisp",
+  "bloodless": true,
   "family": "hexes",
   "spriteId": "will_o_wisp",
   "color": "#6fc9b8",

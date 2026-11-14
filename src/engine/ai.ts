@@ -1,5 +1,5 @@
 import { PUSH_DIRS, tileUid, type Battle } from './battle';
-import { statusCounts } from './status-count';
+import { statusCounts, statusCountsAny } from './status-count';
 import { shapeLabel } from './area-shape';
 import { skillCostAmount, skillCostPay } from './cost';
 import { betStakeParts } from './gamble';
@@ -8,7 +8,7 @@ import { previewForTargets } from './preview';
 import { splitParts } from './spec';
 import { bellsOfSkill, effFirst, effFlag, manaShieldNeed, type TriggerAction } from './tree-hooks';
 import { armorReduction, attributePower, dotOutgoingMult, hitChance } from './stats';
-import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet, StatusDef } from './types';
+import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet, Status, StatusDef } from './types';
 import { capBurn, castBurnAmount, groundBurnAmount } from './mana-burn';
 import { isHealSkillGround, DEFAULT_VALUE, ValueContext, coverageOf, pAtLeast, scoredMpCost, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
 
@@ -103,6 +103,10 @@ export interface AiGlobalConfig {
     minFrontGainShare: number;
     /** Aura komşuluğu: kazanılan beklenen hasar azalması (can-eşdeğer) en az bu kadar olmalı. */
     minAuraGain: number;
+    /** Aura komşuluğu: fırsat bedeli = max(şimdiki hamle değeri, bu referans) x opportunityShare (düşük değerli hamlesi olan birim aura için kolayca yer değiştirmesin). */
+    auraMinOpportunity: number;
+    /** Aura komşuluğu: son Move'dan sonra en az bu kadar kendi eylemi geçmeden yeniden aura hareketi yapılmaz. */
+    auraCooldown: number;
   };
   /**
    * Valor diriltmesi (Ömer 2026-10-13, yalnızca Valor'u olan taraf = oyuncu vekili): diriltmenin terazi değeri (Resurrection'ın revive terimiyle aynı:
@@ -1163,6 +1167,9 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
     }
     if (g > 0) o.mpGain = Math.round(g);
   }
+  unitReactionValue(battle, actor, skill, o, targets); // birim üstü tepkime (Poisoned + Burning = Explosion...)
+  bloodValue(battle, actor, skill, previews, o); // ağır fiziksel kritiğin bırakacağı kan zemini (Ömer onaylı 2026-11-09)
+  splashLiquidValue(battle, actor, skill, o, targets); // Tremor Slam: sıvı zemin komşu hücrelere sıçrar (Ömer 2026-11-09)
   // Yerde kalan etki (zehir, yanan zemin, holy fire): alandaki (şeklin TÜM hücreleri; boş anchor dahil) düşmanların turlar boyunca alacağı beklenen hasar.
   // Tek hedefli skill'de (D7, Tainted Bait) zemin hedefin hücresine konur
   const groundCells = areaCells ?? (skill.target === 'single_enemy' && targets[0] && targets[0].side !== actor.side ? [targets[0].slot] : undefined);
@@ -1497,9 +1504,10 @@ function statusMitigation(battle: Battle, actor: Combatant, skill: SkillDef, tar
       if (t.hp <= 0 || !battle.effectAppliesTo(skill, e, t, actor)) continue;
       if (battle.statusBlocked(t, e.status)) continue; // boss Blinded/Jinxed yemez (madde 272): isabet/kritik bozma değeri 0
       const pot = actor.treeHooks ? battle.treeMods(actor, t, skill, e)?.potency : undefined;
-      const acc = acc0 + (pot?.accuracyDelta ?? 0);
+      const ks = battle.debuffStrength(t, e.status, actor.side); // boss / elit: CC dışı debuff büyüklüğü (Ömer 2026-11-09)
+      const acc = (acc0 + (pot?.accuracyDelta ?? 0)) * ks;
       const eva = eva0 + (pot?.evasionDelta ?? 0);
-      const critD = critD0 + (pot?.critDelta ?? 0);
+      const critD = (critD0 + (pot?.critDelta ?? 0)) * ks;
       if (acc >= 0 && eva <= 0 && critD >= 0) continue;
       const has = t.statuses.find((s) => s.kind === e.status);
       // endsOnOwnAttack (Jinxed): yalnızca hedefin SONRAKİ saldırısı etkilenir (1 tur değer; zaten taşıyorsa 0); ağaç potency: ek saldırı (attacks) + düşmeme şansı (keepChance) beklentisi
@@ -1828,6 +1836,9 @@ function controlValue(ctx: ValueContext, o: Option): number {
       if (p <= 0) continue;
       const own = Math.min(turns, ctx.turnsWithin(t));
       const tv = ctx.turnValue(t);
+      // Boss / elit (Ömer 2026-11-09, ccImmunity.debuffStrength): CC dışı debuff'ın BÜYÜKLÜK değerleri (hız, kaçınma, zayıflatma, şifa, element) x pm
+      const ks = battle.debuffStrength(t, se.status, actor.side);
+      const pm = p * ks;
       if (def.skipTurn && t.side !== actor.side) {
         // Sersemletme: hedefin kaçırdığı hamle(ler) + o hamle tehlikedeki bir dostu öldürecek idiyse kurtarma
         let val = Math.min(1, own) * tv + Math.max(0, own - 1) * tv * 0.5;
@@ -1839,7 +1850,7 @@ function controlValue(ctx: ValueContext, o: Option): number {
       }
       if (def.speedMult !== undefined && def.speedMult !== 1) {
         const delta = Math.abs(def.speedMult - 1) * own * tv;
-        if ((def.speedMult < 1) === (t.side !== actor.side)) v += p * delta; // düşmanı yavaşlatmak / dostu hızlandırmak
+        if ((def.speedMult < 1) === (t.side !== actor.side)) v += pm * delta; // düşmanı yavaşlatmak / dostu hızlandırmak
       }
       // Skald ağacı (Taut Skin, War Song, Battle Rhythm; 2026-11-08): dosta verilen buff'ın ağaç eki (statusPotency + "bu durumu taşıyan dostum daha
       // az hasar alır" C4 kancası) statusEffectWorth farkıyla; kancasız birimde 0 (ifade aynı)
@@ -1851,7 +1862,7 @@ function controlValue(ctx: ValueContext, o: Option): number {
         if (eva > 0) {
           const allies = battle.living(actor.side).filter((a) => !a.inert);
           const foes = Math.max(1, battle.living(t.side).filter((f) => !f.inert).length);
-          v += (p * sum(allies.map((a) => hitGain(battle, a, t, eva * (1 - def.evasionMult!)))) * own) / foes;
+          v += (p * sum(allies.map((a) => hitGain(battle, a, t, eva * (1 - def.evasionMult!) * ks))) * own) / foes;
         }
       }
       // Silenced (düz skill etkisiyle; Clutch, Hag's Mark): engellenen MP'li hamle (Drain Field onEmpty ile aynı ölçü, ValueContext.silenceDenial)
@@ -1859,7 +1870,7 @@ function controlValue(ctx: ValueContext, o: Option): number {
       // Mire-Bound (YM7): durum, yaşayan bir dost cadının mireBound durumuysa hedefi yavaşlatır (Saltbound); değer Slow ile aynı ölçü (en güçlü cadı)
       if (t.side !== actor.side) {
         // Soaked: kendi takımımızın ateşi hedefe yarıya iner ve üstündeki Burning söner (ikisi de bizim bedelimiz).
-        v -= p * (ownElementLoss(ctx, t, def, own) + cleansedDotLoss(ctx, t, def));
+        v -= pm * ownElementLoss(ctx, t, def, own) + p * cleansedDotLoss(ctx, t, def);
         let mire = 1;
         for (const a of battle.living(actor.side)) {
           const pe = a.passive?.effect;
@@ -1890,7 +1901,7 @@ function controlValue(ctx: ValueContext, o: Option): number {
           }
         }
         // Spellbound / Weakened (damageDealtMult < 1): hedefin sıradaki skill'inin (endsOnOwnSkill) ya da süre boyunca turlarının kaybı
-        if (def.damageDealtMult !== undefined && def.damageDealtMult < 1) v += p * (ds?.weaken ?? 1) * (1 - def.damageDealtMult) * tv * (def.endsOnOwnSkill ? Math.min(1, own) : own);
+        if (def.damageDealtMult !== undefined && def.damageDealtMult < 1) v += pm * (ds?.weaken ?? 1) * (1 - def.damageDealtMult) * tv * (def.endsOnOwnSkill ? Math.min(1, own) : own);
       }
       if (def.healTakenMult !== undefined && def.healTakenMult < 1 && t.side !== actor.side) {
         // Wound: düşman takımının bu süre içinde hedefe yapacağı beklenen şifanın azalması (şifacıların tur başı ham şifası / düşman sayısı)
@@ -1899,7 +1910,7 @@ function controlValue(ctx: ValueContext, o: Option): number {
           const sk = battle.skill(id, f);
           return sk ? skillRawHeal(battle, sk, f) : 0;
         })), 0) / Math.max(1, foes.length);
-        v += p * (1 - def.healTakenMult) * healPerTurn * own * ctx.vc.contributionShare;
+        v += pm * (1 - def.healTakenMult) * healPerTurn * own * ctx.vc.contributionShare;
       }
       // Kendi Fortify'ı yalnızca Taunt / Guard skill'inde (saf self-buff buffValue'da); taunt'ta yönlenen hasar da azalır (protectValue riski ayrıca)
       if (def.damageTakenMult !== undefined && def.damageTakenMult < 1 && t.side === actor.side && (!se.self || o.taunt || o.guard)) {
@@ -2050,7 +2061,7 @@ function kitPassiveValue(ctx: ValueContext, o: Option, cfg: NonNullable<AiValueC
       if (e.status === 'staggered' && !t.statuses.some((s) => s.kind === e.status)) v += cfg.stagger * ctx.turnValue(t) * previewHitChance(o, t);
       // Hollow Glyph: Sunder'ın zırh açığı; zaten Sunder'lı hedefe boşa gider. Yalnız mob (kahraman ağaç skill'leri kendi değerini taşır).
       const armorMult = battle.statusDef(e.status)?.armorMult;
-      if (battle.isMobUnit(actor) && armorMult !== undefined && armorMult > 0 && armorMult < 1 && !t.statuses.some((s) => s.kind === e.status) && !battle.statusBlocked(t, e.status)) v += cfg.sunder * (1 - armorMult) * ctx.turnValue(actor) * previewHitChance(o, t);
+      if (battle.isMobUnit(actor) && armorMult !== undefined && armorMult > 0 && armorMult < 1 && !t.statuses.some((s) => s.kind === e.status) && !battle.statusBlocked(t, e.status)) v += cfg.sunder * (1 - armorMult) * battle.debuffStrength(t, e.status, actor.side) * ctx.turnValue(actor) * previewHitChance(o, t);
       // Sodden Hex + Hoarfrost: her tur Chilled kaynağı
       if (own?.type === 'hoarfrost' && e.status === own.wet && !t.statuses.some((s) => s.kind === own.wet) && !battle.statusBlocked(t, own.status)) v += cfg.hoarfrost * ctx.turnValue(t) * previewHitChance(o, t);
     }
@@ -2256,6 +2267,22 @@ function signatureValue(ctx: ValueContext, o: Option): number {
  * Harita 3 şimşek skill'inin kural değeri (can-eşdeğer; ayarlar ai.json > value.thunder): ark ve buz patlaması taraf ayırmaz (düşmana artı, kendi birimine eksi: Live Water'da kendi birimini vurmama),
  * su canlı kalır, Shocked geri itme / Stun, Thunderflash'ın bedeli (kısıtlı taraf bir tur serbest). Etiketsiz skill'de 0.
  */
+/**
+ * Electrocuted (Ömer onaylı 2026-11-09; motor Battle.flushElectro) birimin tarafına bedeli (artı = vurana iyi): sıra çubuğu 0'a iner (biriken payın tur
+ * değeri) + temel saldırısıyla kendi dostlarından birine (ortalama) vuruş. Bağışık (boss, cc) birimde 0.
+ */
+function electroWorth(ctx: ValueContext, u: Combatant): number {
+  const battle = ctx.battle;
+  const kind = battle.formulas.thunder.wetInto;
+  if (!kind || battle.statusBlocked(u, kind as never)) return 0;
+  const th = battle.formulas.turn.threshold;
+  let v = ctx.turnValue(u) * Math.max(0, Math.min(1, th > 0 ? u.turnCounter / th : 0));
+  const allies = battle.combatants.filter((o) => o.hp > 0 && !o.inert && o.side === u.side && o.uid !== u.uid);
+  const sk = u.skills[0] ? battle.skill(u.skills[0], u) : undefined;
+  if (allies.length && sk && sk.target === 'single_enemy' && sk.effects.some((e) => e.type === 'damage')) v += sum(allies.map((a) => Math.min(a.hp, bestAttackAvg(battle, u, a)))) / allies.length;
+  return v;
+}
+
 function thunderValue(ctx: ValueContext, o: Option): number {
   const cfg = ctx.vc.thunder;
   if (!cfg || !o.skill.thunder) return 0;
@@ -2276,7 +2303,35 @@ function thunderValue(ctx: ValueContext, o: Option): number {
     const u = battle.get(s.uid);
     if (!u) continue;
     const hit = previewHitChance(o, u);
-    v += s.stun ? -statusEffectWorth(ctx, u, 'stun', 1) * hit : cfg.pushShare * ctx.turnValue(u) * battle.formulas.thunder.pushback * hit;
+    v += s.stun ? (battle.formulas.thunder.wetInto ? electroWorth(ctx, u) : -statusEffectWorth(ctx, u, 'stun', 1)) * hit : cfg.pushShare * ctx.turnValue(u) * battle.formulas.thunder.pushback * battle.debuffStrength(u, battle.formulas.thunder.badge, actor.side) * hit;
+  }
+  // Şimşek zemin tepkimeleri (Ömer 2026-11-09): Brittle frost / Hexed spark durumu hücredeki düşmana; Spark blaze yanan zemini yayar (beklenen
+  // değer: taşma halkasındaki birimlerin zemin değeri x seçilme olasılığı; YZ zar atmaz)
+  for (const s of out.shatters) {
+    const def = battle.groundReactionDef(s.reaction);
+    if (!def) continue;
+    if (def.status)
+      for (const u of battle.combatants) {
+        if (u.hp <= 0 || u.inert || u.board !== s.board || u.slot !== s.slot || u.side === actor.side || battle.statusBlocked(u, def.status.status as never)) continue;
+        v -= statusEffectWorth(ctx, u, def.status.status, Math.min(def.status.turns, ctx.turnsWithin(u)), { from: actor.side });
+        if (def.status.armorRatio) {
+          const armor = Math.max(0, battle.effectiveStats(u).armor);
+          const red = (x: number) => armorReduction(Math.max(0, x), battle.formulas);
+          v += Math.max(0, red(armor) - red(armor - Math.round(Math.max(0, u.stats.armor) * def.status.armorRatio))) * incomingOf(ctx, u) * elementShare(ctx, u, 'physical') * Math.min(def.status.turns, ctx.turnsWithin(u));
+        }
+      }
+    if (def.spreadSelf && s.ground) {
+      const g = battle.ground.find((x) => x.board === s.board && x.ground === s.ground && x.slots.includes(s.slot));
+      if (!g) continue;
+      const area = battle.convertAreaCells(s.board, s.slot, [g.ground]);
+      const ring = battle.spreadRing(s.board, g.ground, area);
+      const p = ring.length ? Math.min(1, battle.liquidSpreadCount(area.length) / ring.length) : 0;
+      for (const u of battle.combatants) {
+        if (u.hp <= 0 || u.inert || u.board !== s.board || !ring.includes(u.slot)) continue;
+        const w = groundUnitWorth(ctx, u, g.ground, g.noDamage ? 0 : g.amount, g.turns, g.sourceSide);
+        v += (u.side === actor.side ? w : -w) * p;
+      }
+    }
   }
   if (out.flash) {
     const d = battle.darkRule();
@@ -2337,7 +2392,7 @@ function frostValue(ctx: ValueContext, o: Option): number {
         if (!def?.clearedBy?.includes('fire')) continue;
         const own = Math.min(st.turns, ctx.turnsWithin(t));
         if (def.skipTurn) v -= cfg.thaw * tv * Math.min(1, own) * hit;
-        else if (def.speedMult !== undefined && def.speedMult < 1) v -= cfg.thaw * (1 - def.speedMult) * own * tv * hit;
+        else if (def.speedMult !== undefined && def.speedMult < 1) v -= cfg.thaw * (1 - def.speedMult) * battle.debuffStrength(t, st) * own * tv * hit;
       }
   }
   return v;
@@ -2381,7 +2436,7 @@ function cleanseValue(ctx: ValueContext, profile: AiProfile, o: Option): number 
         const def = battle.statusDef(st.kind);
         const own = Math.min(st.turns, ctx.turnsWithin(t));
         if (def?.skipTurn) v += ctx.turnValue(t) * Math.min(1, own) + ctx.turnValue(t) * Math.max(0, own - 1) * 0.5;
-        else if (def?.speedMult !== undefined && def.speedMult < 1) v += (1 - def.speedMult) * own * ctx.turnValue(t);
+        else if (def?.speedMult !== undefined && def.speedMult < 1) v += (1 - def.speedMult) * battle.debuffStrength(t, st) * own * ctx.turnValue(t);
         else v += st.turns * (profile.cleanseValuePerTurn ?? 0);
       }
     }
@@ -2662,6 +2717,7 @@ function protectValue(ctx: ValueContext, o: Option): number {
   const defHp = actor.hp + actor.shield + actor.magicShield + (o.shieldBy[actor.uid] ?? 0);
   const selfThreat = ctx.round.get(actor.uid) ?? 0;
   let redirected = 0;
+  let onDefender = 0; // yönlenen hasarın Defender zırhıyla ölçeklenmiş hali (yalnız Taunt; Guard'da redirected)
   let saves = 0;
   let turns = 1;
   if (o.taunt) {
@@ -2676,6 +2732,11 @@ function protectValue(ctx: ValueContext, o: Option): number {
       // Yalnızca tek hedefli saldırıyla gelen hasar yönlenir; alan skill'i olan düşmanın payı yarım sayılır
       const single = foe?.skills.some((id) => battle.skill(id, foe)?.target === 'single_enemy') ? 1 : 0.5;
       redirected += i.hit * single;
+      // Defender'a gerçekte inen hasar: dostun zırhıyla hesaplanan vuruş, Defender'ın (daha yüksek) zırhıyla yeniden ölçeklenir (yalnız azalır)
+      const ally = battle.get(i.target);
+      const redA = ally ? armorReduction(Math.max(0, battle.effectiveStats(ally).armor), battle.formulas) : 0;
+      const redD = armorReduction(Math.max(0, battle.effectiveStats(actor).armor), battle.formulas);
+      onDefender += i.hit * single * Math.min(1, (1 - redD) / Math.max(0.05, 1 - redA));
       if (i.before) pulled.set(i.target, (pulled.get(i.target) ?? 0) + i.hit * single);
     }
     // Kurtarma: dosta bir sonraki turumuzdan önce gelecek ve Defender'a yönlenecek TOPLAM vuruş düşülünce dost yaşıyor mu
@@ -2701,7 +2762,7 @@ function protectValue(ctx: ValueContext, o: Option): number {
   let selfMult = 1;
   for (const e of o.skill.effects) if (e.type === 'status' && e.self) selfMult *= Math.min(1, battle.statusDef(e.status)?.damageTakenMult ?? 1);
   // Defender riski: bir tur dolusu kendi + yönlenen hasar canını + kalkanını geçiyorsa
-  const load = (selfThreat + redirected) * selfMult;
+  const load = (selfThreat + (o.taunt ? onDefender : redirected)) * selfMult;
   const risk = load >= defHp ? Math.min(1, load / Math.max(1, defHp)) * (ctx.contribution(actor) + actor.hp) : 0;
   let extra = 0;
   if (o.taunt) {
@@ -3015,7 +3076,7 @@ function bestMoveLegacy(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNo
 
   // 3) Aura komşuluğu: zırh aurası taşıyan birim, daha çok dostun bitişiğine geçerek ve melee yeteneğini koruyarak beklenen hasarı azaltır
   const aura = actor.passive?.effect;
-  if (aura?.type === 'armorAura' && battle.living(actor.side).length > 1) {
+  if (aura?.type === 'armorAura' && battle.living(actor.side).length > 1 && battle.actionsSinceMove(actor.uid) >= g.move.auraCooldown) {
     const incoming = new Map<string, number>();
     const here = auraBenefit(battle, actor, actor.slot, aura.pct, incoming);
     const canMeleeNow = meleeSkills.some((s) => battle.canMeleeFrom(actor.uid, actor.slot, battle.reachOf(actor, s)));
@@ -3024,7 +3085,7 @@ function bestMoveLegacy(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNo
       if (canMeleeNow && !meleeSkills.some((sk) => battle.canMeleeFrom(actor.uid, s, battle.reachOf(actor, sk)))) continue; // melee yeteneğini kaybetme
       if (battle.rowOf(s) > battle.rowOf(actor.slot)) continue; // geriye çekilme: ön sıradaki dostlar korumasız kalır
       const gain = auraBenefit(battle, actor, s, aura.pct, incoming) - here;
-      const net = gain - vNow * g.move.opportunityShare;
+      const net = gain - Math.max(vNow, g.move.auraMinOpportunity) * g.move.opportunityShare;
       if (gain >= g.move.minAuraGain && net > 0 && (!top || net > top.net || (net === top.net && s < top.slot))) top = { slot: s, net };
     }
     if (top) plans.push(top);
@@ -3575,18 +3636,21 @@ function elementShare(ctx: ValueContext, u: Combatant, element: string): number 
  * aynı ölçü). `opt.pot`: ağaç statusPotency eki (uygulanacak örneğin büyüklüğü, statuses.json alanına düz ek; Lingering Ears, Searing Flash).
  * `opt.noHitLoss`: isabet / kritik cezası çağıranda (statusMitigation) sayılıyor, burada sayılmaz.
  */
-function statusEffectWorth(ctx: ValueContext, u: Combatant, kind: string, k: number, opt?: { pot?: Readonly<Record<string, number>>; noHitLoss?: boolean }): number {
+function statusEffectWorth(ctx: ValueContext, u: Combatant, kind: string, k: number, opt?: { pot?: Readonly<Record<string, number>>; noHitLoss?: boolean; from?: Side | null }): number {
   const battle = ctx.battle;
   const def = battle.statusDef(kind);
   if (!def || k <= 0) return 0;
   const pot = opt?.pot;
-  const add = (key: string) => pot?.[key] ?? 0;
-  const mult = (base: number | undefined, key: string) => (pot?.[key] !== undefined ? Math.max(0, (base ?? 1) + pot[key]!) : base);
+  // Boss / elit (Ömer 2026-11-09, ccImmunity.debuffStrength): kaynağın tarafı `from` (yoksa u'nun karşı tarafı; null = kaynaksız, tam güç)
+  const m = opt?.from === null ? 1 : battle.debuffStrength(u, kind, opt?.from ?? (u.side === 'party' ? 'enemy' : 'party'));
+  const add = (key: string) => (pot?.[key] ?? 0) * m;
+  const scaled = (x: number | undefined) => (x === undefined || m === 1 ? x : 1 + (x - 1) * m);
+  const mult = (base: number | undefined, key: string) => scaled(pot?.[key] !== undefined ? Math.max(0, (base ?? 1) + pot[key]!) : base);
   const speedMult = mult(def.speedMult, 'speedMult');
   const dealtMult = mult(def.damageDealtMult, 'damageDealtMult');
   const takenMult = mult(def.damageTakenMult, 'damageTakenMult');
   const healMult = mult(def.healTakenMult, 'healTakenMult');
-  const evaDelta = (def.evasionDelta ?? 0) + add('evasionDelta');
+  const evaDelta = (def.evasionDelta ?? 0) * m + add('evasionDelta');
   const tv = ctx.turnValue(u);
   let v = 0;
   if (def.skipTurn) v -= tv * Math.min(1, k) + tv * Math.max(0, k - 1) * 0.5;
@@ -3594,9 +3658,9 @@ function statusEffectWorth(ctx: ValueContext, u: Combatant, kind: string, k: num
   if (dealtMult !== undefined && dealtMult !== 1) v += (dealtMult - 1) * k * tv;
   const inc = incomingOf(ctx, u);
   if (takenMult !== undefined && takenMult !== 1) v += (1 - takenMult) * inc * k;
-  if (def.evasionMult !== undefined && def.evasionMult < 1) v -= (1 - def.evasionMult) * battle.effectiveStats(u).evasion * inc * k;
+  if (def.evasionMult !== undefined && def.evasionMult < 1) v -= (1 - def.evasionMult) * m * battle.effectiveStats(u).evasion * inc * k;
   if (evaDelta) v += evaDelta * inc * k;
-  if (def.elementTakenMult) for (const [el, m] of Object.entries(def.elementTakenMult)) if (m !== undefined && m !== 1) v += (1 - m) * inc * elementShare(ctx, u, el) * k;
+  if (def.elementTakenMult) for (const [el, em] of Object.entries(def.elementTakenMult)) if (em !== undefined && em !== 1) v += (1 - em) * m * inc * elementShare(ctx, u, el) * k;
   if (healMult !== undefined && healMult < 1) v -= (1 - healMult) * teamHealPerTurn(ctx, u.side) * k;
   if (def.blocksMpSkills && u.maxMp > 0) v -= (ctx.vc.debuffShare?.silence ?? 1) * ctx.silenceDenial(u, u.mp, Math.max(1, Math.round(k)));
   for (const c of def.cleanses ?? []) {
@@ -3606,13 +3670,13 @@ function statusEffectWorth(ctx: ValueContext, u: Combatant, kind: string, k: num
   // İsabet / kritik cezası (ağaç tetiklerinin verdiği Shaken / Blinded dahil): taşıyanın karşı taraftaki canlı birimlere en iyi saldırısının beklenen
   // hasar azalması, birimlerin ORTALAMASI (her turda birine vurur) x tur. endsOnOwnAttack (Jinxed): yalnız sıradaki saldırı(lar): 1 + ek saldırı
   // (potency attacks) ve düşmeme şansı (keepChance) beklentisi.
-  const acc = (def.accuracyDelta ?? 0) + add('accuracyDelta');
-  const critD = (def.critDelta ?? 0) + add('critDelta');
+  const acc = (def.accuracyDelta ?? 0) * m + add('accuracyDelta');
+  const critD = (def.critDelta ?? 0) * m + add('critDelta');
   if (!opt?.noHitLoss && (acc < 0 || critD < 0)) {
     const victims = battle.living(u.side === 'party' ? 'enemy' : 'party').filter((f) => !f.inert);
     if (victims.length) {
-      const keep = Math.min(0.9, Math.max(0, add('keepChance')));
-      const turns = def.endsOnOwnAttack ? Math.min(1, k) * (Math.max(0, add('attacks')) + 1 / (1 - keep)) : k;
+      const keep = Math.min(0.9, Math.max(0, pot?.keepChance ?? 0));
+      const turns = def.endsOnOwnAttack ? Math.min(1, k) * (Math.max(0, pot?.attacks ?? 0) + 1 / (1 - keep)) : k;
       v -= (sum(victims.map((f) => (critD < 0 ? hitCritLoss(battle, u, f, acc, critD) : hitLoss(battle, u, f, acc, 0)))) / victims.length) * turns;
     }
   }
@@ -3691,7 +3755,7 @@ function groundUnitWorth(ctx: ValueContext, u: Combatant, groundId: string, amou
         if (extra?.parts) extra.parts.tick += d;
       }
     }
-    v += statusEffectWorth(ctx, u, gr.kind, k);
+    v += statusEffectWorth(ctx, u, gr.kind, k, { from: sourceSide });
   }
   if (battle.groundDirectTick(groundId) && sourceSide !== u.side && amount > 0) {
     const d = Math.min(extra?.left ?? u.hp, battle.groundTickDamage(groundId, amount, u) * k);
@@ -3734,7 +3798,7 @@ function cellWorth(ctx: ValueContext, u: Combatant, board: Side, slot: number, s
       if (battle.isHealGround(w.g.ground)) v += Math.min(battle.groundTickHeal(w.amount, u) * k, Math.max(0, u.maxHp - u.hp) + incomingOf(ctx, u) * Math.max(0, k - 1));
       else v -= Math.min(u.hp, battle.groundTickDamage(w.g.ground, w.amount, u) * k);
     }
-    v += statusEffectWorth(ctx, u, kind, k);
+    v += statusEffectWorth(ctx, u, kind, k, { from: w.g.source === 'env' ? null : w.g.sourceSide });
   }
   return v;
 }
@@ -3750,6 +3814,145 @@ function cellDelta(ctx: ValueContext | null, u: Combatant, board: Side, slot: nu
 /** Zemin tepkimesi (Explosion, Steam...) hücresindeki tetik zeminini siliyor mu (yaratma değeri o hücrede sayılmaz)? */
 function reactionEatsTrigger(def: GroundReactionDef | undefined, trigger: string): boolean {
   return !!def && (!!def.becomes || !!def.remove?.includes(trigger));
+}
+
+/**
+ * Birim üstü tepkime (grounds.json > reactions > unitSetup / unitTrigger; Poisoned + Burning = Explosion, Burning + Poisoned = Toxic smoke): skill'in
+ * durum etkisi hedefte kurulum durumuyla buluşursa tepkimenin anlık hasarı (hedef + komşular, kalan canla sınırlı; durum şansı x isabet) o.damage'a.
+ * Motorla aynı hesap (Battle.unitReactionFor). Durum etkisi / tepkime yoksa dokunmaz.
+ */
+function unitReactionValue(battle: Battle, actor: Combatant, skill: SkillDef, o: Option, targets: readonly Combatant[]): void {
+  // Verilen durumlar: status / dot etkileri + şimşeğin Shocked rozeti (thunder.shocks; ıslak hedefte Stun olur, rozet yok)
+  const gives: Array<{ status: string; turns: number; chance: number; amount?: number; e?: SkillDef['effects'][number] }> = [];
+  for (const e of skill.effects) {
+    if ((e.type !== 'status' && e.type !== 'dot') || (e.type === 'status' && e.self)) continue;
+    const amount = e.type === 'dot' ? Math.round(attributePower(actor.stats, e.scale, battle.formulas) * e.power * dotOutgoingMult(actor.stats)) : battle.dotAmountFor(actor, e.status);
+    gives.push({ status: e.status, turns: e.turns, chance: e.type === 'status' ? e.chance ?? 1 : 1, ...(amount !== undefined ? { amount } : {}), e });
+  }
+  const T = battle.formulas.thunder;
+  if (skill.thunder?.shocks && T) gives.push({ status: T.badge, turns: T.badgeTurns, chance: 1 });
+  for (const g of gives) {
+    const e = g.e;
+    const amount = g.amount;
+    const chance = g.chance;
+    for (const t of targets) {
+      if (t.hp <= 0 || t.side === actor.side || (e && !battle.effectAppliesTo(skill, e, t, actor)) || battle.statusBlocked(t, g.status as never)) continue;
+      if (!e && t.statuses.some((s) => s.kind === T.wetStatus)) continue; // ıslak hedefte şimşek Stun verir, Shocked rozeti yok
+      const r = battle.unitReactionFor(t, { kind: g.status as never, turns: g.turns, source: actor.uid, origin: 'skill', ...(amount !== undefined ? { amount } : {}) });
+      if (!r) continue;
+      const odds = chance * (o.targets.includes(t) ? previewHitChance(o, t) : 1);
+      unitReactionSideValue(battle, actor, o, t, r, g, odds);
+      if (!r.def.damage || r.dmg <= 0) continue;
+      const left = (c: Combatant) => Math.max(0, c.hp - (o.dmgBy[c.uid] ?? 0));
+      const part = (c: Combatant, raw: number) => Math.min(left(c), battle.tickDamage(r.def.damage!.element, 'magic', raw, c));
+      let v = part(t, r.dmg);
+      const adj = r.def.damage.adjacent;
+      if (adj) for (const c of battle.combatants) if (c.hp > 0 && c.uid !== t.uid && c.board === t.board && c.side === t.side && Math.abs(battle.rowOf(c.slot) - battle.rowOf(t.slot)) + Math.abs(battle.laneOf(c.slot) - battle.laneOf(t.slot)) === 1) v += part(c, Math.round(r.dmg * adj));
+      o.damage += v * odds;
+      if (o.notes.length < 6) o.notes.push(`${r.def.label} on ${t.name ?? t.uid}: +${r1(v * odds)}`);
+    }
+  }
+}
+
+/**
+ * Birim üstü tepkimenin hasar dışı değeri (Ömer onaylı 2026-11-09 element formu; motor Battle.reactUnit): ürün durum (Flash freeze: Frozen, Brittle:
+ * Shredded), süre uzatma (Chilled venom), komşu ıslaklara yayılan zehir (Wet venom) ve tetiği yiyen tepkime (Steam: Burning tutmaz, verdiğimiz DoT
+ * kaybolur). Değer x odds, o.reactionFx'e (coverage.reactionShare). Bağlamsız dokunmaz.
+ */
+function unitReactionSideValue(battle: Battle, actor: Combatant, o: Option, t: Combatant, r: NonNullable<ReturnType<Battle['unitReactionFor']>>, g: { status: string; turns: number; amount?: number }, odds: number): void {
+  const ctx = activeCtx;
+  if (!ctx || odds <= 0) return;
+  const def = r.def;
+  const k = (turns: number) => Math.min(turns, ctx.turnsWithin(t));
+  let v = 0;
+  if (def.status) {
+    v -= statusEffectWorth(ctx, t, def.status.status, k(def.status.turns), { from: actor.side });
+    if (def.status.armorRatio) {
+      // Shredded: Armor eksiğinin fiziksel gelen hasara etkisi (zırh indirimi farkı x gelen x fiziksel pay)
+      const armor = Math.max(0, battle.effectiveStats(t).armor);
+      const loss = Math.round(Math.max(0, t.stats.armor) * def.status.armorRatio);
+      const red = (x: number) => armorReduction(Math.max(0, x), battle.formulas);
+      v += Math.max(0, red(armor) - red(armor - loss)) * incomingOf(ctx, t) * elementShare(ctx, t, 'physical') * k(def.status.turns);
+    }
+  }
+  if (def.extend) {
+    // Uzayan durum: gelen durumsa onun tutarı, değilse birimdekinin tiki (bir tur fazlası)
+    const ext = def.extend;
+    const st: Status | undefined = g.status === ext.status ? { kind: g.status as Status['kind'], turns: g.turns, source: actor.uid, ...(g.amount !== undefined ? { amount: g.amount } : {}) } : t.statuses.find((s) => s.kind === ext.status);
+    if (st) v += battle.statusTickDamage(t, st) * ext.turns;
+  }
+  if (def.spreadStatus) {
+    const amt = g.status === def.spreadStatus.status ? g.amount ?? 0 : t.statuses.find((s) => s.kind === def.spreadStatus!.status)?.amount ?? 0;
+    const dot = battle.statusDef(def.spreadStatus.status)?.dot;
+    if (amt > 0 && dot)
+      for (const c of battle.combatants) {
+        if (c.hp <= 0 || c.inert || c === t || c.board !== t.board || c.side === actor.side || !c.statuses.some((s) => s.kind === def.spreadStatus!.to)) continue;
+        if (Math.abs(battle.rowOf(c.slot) - battle.rowOf(t.slot)) + Math.abs(battle.laneOf(c.slot) - battle.laneOf(t.slot)) !== 1) continue;
+        v += Math.min(c.hp, battle.tickDamage(dot.element, dot.damageType, amt, c)) * Math.min(def.spreadStatus.turns, ctx.turnsWithin(c));
+      }
+  }
+  // Tetiği yiyen tepkime (Steam): verdiğimiz durum tutmaz; DoT ise tiki kayıp, kurulum durumu da silinir (Soaked: hedefin fayda/zararı geri döner)
+  if (def.unitRemove?.includes(g.status)) {
+    const dot = battle.statusDef(g.status)?.dot;
+    if (dot && (g.amount ?? 0) > 0) v -= Math.min(t.hp, battle.tickDamage(dot.element, dot.damageType, g.amount!, t)) * k(g.turns);
+    if (def.unitRemove.includes(r.setup.kind)) v += statusEffectWorth(ctx, t, r.setup.kind, k(Math.max(1, r.setup.turns)), { from: actor.side });
+  }
+  if (v === 0) return;
+  o.reactionFx = (o.reactionFx ?? 0) + v * odds * coverageOf(ctx.vc).reactionShare;
+  if (o.notes.length < 6) o.notes.push(`${def.label} on ${unitLabel(t)}: ${v >= 0 ? '+' : ''}${r1(v * odds)}`);
+}
+
+/**
+ * Sıvı sıçraması (Ömer 2026-11-09; skill etkisi splashLiquid, motor Battle.splashLiquid): isabet eden hedefin hücresindeki sıvı zemin (grounds.json >
+ * liquid) komşu hücrelere kopyalanır. Değer: yeni hücrelerde duran birimlerin groundUnitWorth'ü (zeminin sahibi ve gücüyle; düşmandaki bedel bizim
+ * kazancımız, dostumuza etkisi eksi) x kaynak hedefin isabet şansı, o.groundFx'e. Sıçramanın tetikleyeceği zemin tepkimeleri sayılmaz. Bağlamsız dokunmaz.
+ */
+function splashLiquidValue(battle: Battle, actor: Combatant, skill: SkillDef, o: Option, targets: readonly Combatant[]): void {
+  const ctx = activeCtx;
+  if (!ctx || !skill.effects.some((e) => e.type === 'splashLiquid') || battle.ground.length === 0) return;
+  let v = 0;
+  for (const t of targets) {
+    if (t.hp <= 0) continue;
+    const hit = t.side === actor.side ? 1 : previewHitChance(o, t);
+    if (hit <= 0) continue;
+    for (const p of battle.splashLiquidPlan([{ board: t.board, slot: t.slot }])) {
+      for (const u of battle.combatants) {
+        if (u.hp <= 0 || u.inert || u.board !== p.from.board || !p.slots.includes(u.slot)) continue;
+        const w = groundUnitWorth(ctx, u, p.from.ground, p.from.noDamage ? 0 : p.amount, p.from.turns, p.from.sourceSide);
+        v += (u.side === actor.side ? w : -w) * hit;
+      }
+    }
+  }
+  if (v === 0) return;
+  o.groundFx = (o.groundFx ?? 0) + v;
+  if (o.notes.length < 6) o.notes.push(`liquid splash: ${r1(v)}`);
+}
+
+/**
+ * Kan zemini (Ömer onaylı 2026-11-09; motor Battle.spillBlood): fiziksel hasar skill'i kanlı hedefte ağır kritik (kritik can kaybı > maks can x
+ * formulas.json > heavyCrit.hpRatio) yaparsa hedefin hücresine kan düşer; içindeki birim Soaked (groundUnitWorth: Soaked'ın yan etkileri). Değer
+ * isabet x kritik şansı x hayatta kalma ihtimaliyle o.groundFx'e (düşmandaki bedel bizim kazancımız). Kan zemininin ileriki tepkime malzemesi
+ * (buz / şimşek) sayılmaz. Bağlam yoksa ya da veri yoksa dokunmaz.
+ */
+function bloodValue(battle: Battle, actor: Combatant, skill: SkillDef, previews: ReturnType<typeof previewForTargets>, o: Option): void {
+  const ctx = activeCtx;
+  const b = battle.formulas.blood;
+  if (!ctx || !b || !battle.groundDef(b.ground)) return;
+  if (!skill.effects.some((e) => e.type === 'damage' && e.damageType === 'physical' && (e.element ?? 'physical') === 'physical')) return;
+  const hits = Math.max(1, skill.effects.filter((e) => e.type === 'damage').length); // kan vuruş başına: çok vuruşlu skill'de tek vuruşun payı
+  for (const p of previews) {
+    const d = p.damage;
+    const t = battle.get(p.uid);
+    if (!d || !t || t.hp <= 0 || !battle.bleeds(t) || d.critChance <= 0) continue;
+    const critLoss = Math.min(t.hp, Math.max(0, (d.avg / hits) * (d.critMult ?? actor.stats.critMult) - t.shield));
+    if (!battle.isHeavyCrit(t, critLoss)) continue;
+    const odds = d.hitChance * d.critChance * (1 - (o.killP[t.uid] ?? 0));
+    const w = groundUnitWorth(ctx, t, b.ground, 0, b.turns, actor.side);
+    const v = (t.side === actor.side ? w : -w) * odds;
+    if (v === 0) continue;
+    o.groundFx = (o.groundFx ?? 0) + v;
+    if (o.notes.length < 6) o.notes.push(`blood on ${unitLabel(t)}: ${r1(v)}`);
+  }
 }
 
 /**
@@ -3843,16 +4046,36 @@ function groundCreationValue(battle: Battle, actor: Combatant, skill: SkillDef, 
         const amt = fromSetup ? cellAmt(setup) : trigAmt;
         const turns = fromSetup ? setup.turns : trig.turns;
         const side = fromSetup ? setup.sourceSide : actor.side;
-        for (const s of battle.reactionWaterNetwork(r.board, r.slot, placedWater)) {
-          if (s === r.slot || (!fromSetup && placed.includes(s)) || battle.ground.some((g) => g.board === r.board && g.ground === liquid.ground && g.slots.includes(s))) continue;
+        // Ortak sıvı kuralı (Ömer 2026-11-09): tepkime hücresinin çevresindeki halkadan liquidSpreadCount(su alanı) kadar rastgele hücre; beklenen değer = halka
+        // hücresinin seçilme olasılığı x oradaki birimin zemin değeri (yalnız ilk halka; YZ zar atmaz)
+        const areaSize = Math.max(1, battle.reactionWaterNetwork(r.board, r.slot, placedWater).length);
+        const ring = battle.spreadRing(r.board, liquid.ground, [r.slot]).filter((s) => fromSetup || !placed.includes(s));
+        const p = ring.length ? Math.min(1, battle.liquidSpreadCount(areaSize) / ring.length) : 0;
+        for (const s of ring) {
           for (const c of battle.combatants) {
             if (c.hp <= 0 || c.inert || c.board !== r.board || c.slot !== s) continue;
-            v += (c.side === actor.side ? 1 : -1) * groundUnitWorth(ctx, c, liquid.ground, amt, turns, side);
+            v += (c.side === actor.side ? 1 : -1) * groundUnitWorth(ctx, c, liquid.ground, amt, turns, side) * p;
           }
         }
       }
     }
     if (def.status) for (const c of foesAt(r.slot)) if (!battle.statusBlocked(c, def.status.status)) v -= statusEffectWorth(ctx, c, def.status.status, Math.min(def.status.turns, ctx.turnsWithin(c)));
+    // Tainted blood (convert): bağlı kan hücreleri zehre döner; oradaki (tepkime hücresi hariç) birimler zehrin etkisini alır. Rastgele taşma
+    // hücreleri sayılmaz (motor RNG'si; YZ zar atmaz).
+    if (def.convert) {
+      const intoSetup = !!setup && setup.ground === def.convert.into;
+      const amt = intoSetup ? cellAmt(setup) : trig.ground === def.convert.into ? trigAmt : 0;
+      const turns = intoSetup ? setup.turns : trig.turns;
+      const side = intoSetup ? setup.sourceSide : actor.side;
+      for (const s of battle.convertAreaCells(r.board, r.slot, def.convert.from)) {
+        if (s === r.slot) continue;
+        for (const c of battle.combatants) {
+          if (c.hp <= 0 || c.inert || c.board !== r.board || c.slot !== s) continue;
+          const sign = c.side === actor.side ? 1 : -1;
+          v += sign * (groundUnitWorth(ctx, c, def.convert.into, amt, turns, side) + cellWorth(ctx, c, r.board, s, (g) => def.convert!.from.includes(g.ground)) - cellWorth(ctx, c, r.board, s));
+        }
+      }
+    }
     // Hücrede duranlar: silinen kurulum zemininin etkisi kalkar (fark), dönüşen zemin yenisini verir
     for (const c of battle.combatants) {
       if (c.hp <= 0 || c.inert || c.board !== r.board || c.slot !== r.slot) continue;
@@ -3861,7 +4084,8 @@ function groundCreationValue(battle: Battle, actor: Combatant, skill: SkillDef, 
       if (def.becomes) {
         const base = Math.max(0, ...pick(def.becomes.of));
         const turns = def.becomes.turns === 'longer' ? Math.max(setup?.turns ?? 0, trig.turns) : def.becomes.turns;
-        v += sign * groundUnitWorth(ctx, c, def.becomes.ground, Math.round(base * def.becomes.power), turns, actor.side);
+        const amt = def.becomes.hpRatio ? Math.max(1, Math.round(battle.boardMeanHp(r.board) * def.becomes.hpRatio)) : Math.round(base * battle.becomesPower(def.becomes)); // Bloody water; Rot formulas.rot
+        v += sign * groundUnitWorth(ctx, c, def.becomes.ground, amt, turns, actor.side);
       }
       if (def.cellMult && setup && def.cellMult.ground.includes(setup.ground) && battle.groundAffects(setup, c) && !battle.isHealGround(setup.ground)) {
         const extraAmt = Math.round(cellAmt(setup) * (def.cellMult.mult - 1));
@@ -4177,6 +4401,20 @@ function opportunistSetup(ctx: ValueContext, o: Option): number {
         const pe = a.passive!.effect as Extract<PassiveEffect, { type: 'bonusVsStatus' }>;
         if (!pe.statuses.includes(e.status as never)) continue;
         v += (p * pe.bonus * bestAttackAvg(battle, a, t) * Math.min(1, e.turns)) / (a.uid === actor.uid ? 1 : foes);
+      }
+    }
+  }
+  // Ömer onaylı 2026-11-09 (form 3): Shocked da Opportunist'i açar; thunder.shocks durum etkisi değil, ayrı sayılır (rozet thunder.badgeTurns tur)
+  if (o.skill.thunder?.shocks) {
+    const T = battle.formulas.thunder;
+    for (const t of o.targets) {
+      if (t.hp <= 0 || t.side === actor.side || battle.statusBlocked(t, T.badge as never)) continue;
+      const p = previewHitChance(o, t) * (1 - (o.killP[t.uid] ?? 0));
+      const foes = Math.max(1, battle.living(t.side).filter((f) => !f.inert).length);
+      for (const a of opp) {
+        const pe = a.passive!.effect as Extract<PassiveEffect, { type: 'bonusVsStatus' }>;
+        if (!pe.statuses.includes(T.badge as never) || t.statuses.some((s) => statusCountsAny(s, pe.statuses))) continue;
+        v += (p * pe.bonus * bestAttackAvg(battle, a, t) * Math.min(1, T.badgeTurns)) / (a.uid === actor.uid ? 1 : foes);
       }
     }
   }

@@ -105,7 +105,7 @@ describe('Set pilot data (Ömer 2026-11-01 plan, 2026-11-03 picks; no engine yet
     expect(a!.bonuses['3']!.byClass).toEqual({
       warrior: { passive: 'berserker', field: 'rageOnHurt.perHpPercent', from: 0.4, to: 0.5 },
       defender: { passive: 'bulwark_aura', field: 'pct', from: 0.4, to: 0.5 },
-      paladin: { passive: 'divine_light', field: 'power', from: 0.27, to: 0.32 },
+      paladin: { passive: 'divine_light', field: 'power', from: 0.312, to: 0.362 },
     });
     expect(a!.bonuses['4']).toMatchObject({ rule: 'banked_coals', bankShare: 0.5, ticks: 3, stacking: 'perHit', damageType: 'inherit', ignoresStatuses: ['fortified', 'blessed'], canKill: true });
     expect(w!.pieceNames).toEqual(['Milestone Boots', "Drover's Gloves", "Drover's Signet"]);

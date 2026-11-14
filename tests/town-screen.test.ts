@@ -240,7 +240,7 @@ describe('town screen flow', () => {
     const s = at('7', 'town');
     const offer = townRecruitOffer(s);
     expect(offer).toEqual(recruitOffer(s, '7'));
-    expect(offer.length).toBe(3);
+    expect(offer.length).toBe(4);
     const size = s.roster.length;
     const t = recruitInTown(s, offer[1]!);
     expect(t.roster.length).toBe(size + 1);

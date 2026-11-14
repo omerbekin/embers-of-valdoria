@@ -11,6 +11,7 @@ import { growTouchZone } from './touch-hit';
 import { ensureIcon } from './icons';
 import { loadTownArt, townArtKey } from './town-art';
 import { reducedMotion } from '../ui/motion-pref';
+import { townBadge } from '../ui/badges-town';
 
 /**
  * Kasaba ekranı (Ömer 2026-10-12, future-ideas "SIRADA" (1)): kasabaya girince tam ekran kasaba görseli (Ashford köy meydanı, Valdren Keep
@@ -274,7 +275,8 @@ export class TownScreen {
     text.setPosition(tx, ly);
     tap.setPosition(lx, ly + ph / 2 + 4);
     this.root.add([plate, text, tap]);
-    if (h.id === this.recruitSpot) this.addRecruitBadge(lx + pw / 2 - ph * 0.2, ly - ph / 2, ph);
+    // Rozet (C): alınabilir yerin plakasının kenarı parlar (src/ui/badges-town.ts)
+    townBadge(s, this.root, { action: h.action, recruit: h.id === this.recruitSpot, state: this.hooks.state(), plate: { x: lx - pw / 2, y: ly - ph / 2, w: pw, h: ph } });
     if (icoSize) this.root.add(s.add.image(lx - pw / 2 + icoSize * 0.62, ly, ensureIcon(s, 'town:inn', '#ffffff', false)).setDisplaySize(icoSize, icoSize));
     const zone = s.add.zone(r.x, r.y, r.w, r.h).setOrigin(0, 0).setInteractive({ useHandCursor: true });
     // Etiket plakası da aynı yere götürür (telefonda küçük nesneler için daha büyük hedef)
@@ -289,21 +291,6 @@ export class TownScreen {
       tap.setAlpha(on && this.selected === id ? 1 : 0);
     });
     for (const z of [zone, labelZone]) this.bindTap(z, id, () => this.onSpot(h));
-  }
-
-  /** Aday rozeti: etiket plakasının sağ üst köşesinde kor yuvarlak + "!"; hafif nabız (Reduced motion: yok). Değerler campaign.json > townScreen.recruitBadge. */
-  private addRecruitBadge(x: number, y: number, ph: number): void {
-    const s = this.scene;
-    const bd = CONFIG.townScreen.recruitBadge;
-    const r = (ph * bd.size) / 2;
-    const c = s.add.container(x, y);
-    const g = s.add.graphics();
-    g.fillStyle(0x0c0906, 0.95).fillCircle(0, 0, r + 2);
-    g.fillStyle(EL.EMBER, 1).fillCircle(0, 0, r);
-    g.lineStyle(1.5, EL.ON_N, 0.95).strokeCircle(0, 0, r);
-    c.add([g, elText(s, 0, 1, '!', Math.round(r * 1.5), '#1a0f08', { em: 0 }).setOrigin(0.5)]);
-    this.root.add(c);
-    if (!reducedMotion()) s.tweens.add({ targets: c, scale: bd.pulseScale, duration: bd.pulseMs, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 
   /** Party düğmesinin ekrandaki yeri (etiketler buna binmesin): merkez + boyut, ya da takımsızsa null. */
@@ -332,7 +319,7 @@ export class TownScreen {
       this.select(null);
       this.hooks.hero((leaderOf(st) ?? team[0]!).id);
     };
-    const btn = elButton(this.scene, 'Party', open, { kind: 'secondary', w: r.w, h: r.h, size: this.hooks.compact() ? 30 : 22, isBusy: () => this.busy(), touch: true });
+    const btn = elButton(this.scene, 'Party', open, { kind: 'secondary', sz: 'compact', w: r.w, isBusy: () => this.busy(), touch: true });
     btn.root.setPosition(W / 2, r.y);
     this.root.add(btn.root);
   }

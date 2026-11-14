@@ -893,6 +893,17 @@ const GROUND_LOOK: Record<string, GroundLook> = {
   // Chill Ground (iç id storm; Ömer 2026-10-29 Mage reworkü): soğuk HAVA, donmuş yüzey değil: saydam soluk camgöbeği, yumuşak kenar; yerde yatan
   // kayan sis + ince kırağı tozu + yükselen soğuk nefes tülleri (Ice'tan açıkça daha hafif)
   storm: { base: [0x9fd6e4, 0.18], mid: [0xd8f4fa, 0.2], rim: [0xd6f2fa, 0.08], edge: [0xbfe8f4, 0.16], shadow: [0x0a1420, 0.06] },
+  // Kan zemini (Ömer onaylı 2026-11-09; YER TUTUCU görünüm, kendi çizimi yok): koyu kızıl sıvı birikintisi, ıslak parlak kenar
+  blood: { base: [0x4a0a0c, 0.5], mid: [0xa8242a, 0.5], rim: [0xd04a4a, 0.3], edge: [0xb02a2a, 0.8], shadow: [0x120203, 0.32] },
+  // Cursed Ground (Hexer Withering Curse, Ömer onaylı 2026-11-09; YER TUTUCU): soluk mor-yeşil lanetli toprak, sönük kenar
+  cursed_ground: { base: [0x2a1a33, 0.42], mid: [0x7a5a8e, 0.4], rim: [0x9cab3c, 0.22], edge: [0x8a6aa0, 0.7], shadow: [0x0a050e, 0.3] },
+  // Element formu tepkime zeminleri (Ömer onaylı 2026-11-09; YER TUTUCU görünüm): Blood Curse = koyu kan-mor, Black Flame = mor kor, Grave Frost =
+  // soluk mor-mavi kırağı, Bloody Water = kızıla çalan su
+  blood_curse: { base: [0x2e0814, 0.5], mid: [0x7a1a3e, 0.46], rim: [0xa04a7a, 0.26], edge: [0x8a2a5a, 0.78], shadow: [0x0e0206, 0.32] },
+  black_flame: { base: [0x1a0a22, 0.52], mid: [0x8a3ab0, 0.6], rim: [0xc07ae0, 0.38], edge: [0xa05ad0, 0.88], shadow: [0x08030c, 0.32] },
+  grave_frost: { base: [0x4a4f78, 0.36], mid: [0xc8cef0, 0.36], rim: [0xb0a0d8, 0.3], edge: [0xa8a8e0, 0.72], shadow: [0x0a0a18, 0.26] },
+  rot: { base: [0x2a3014, 0.5], mid: [0x6a7a2a, 0.55], rim: [0x9a8ab0, 0.34], edge: [0x8a9a3a, 0.84], shadow: [0x0a0c04, 0.3] }, // Rot (zehir + lanet) geçici görünüm
+  bloody_water: { base: [0x3a1a2a, 0.46], mid: [0x9a4a5a, 0.42], rim: [0xc87a8a, 0.3], edge: [0xa85a6a, 0.76], shadow: [0x10060a, 0.3] },
 };
 
 const rgba = (rgb: number, a: number) => `rgba(${(rgb >> 16) & 255},${(rgb >> 8) & 255},${rgb & 255},${Math.max(0, Math.min(1, a))})`;

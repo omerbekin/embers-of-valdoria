@@ -381,7 +381,9 @@
       "meleeOpportunityShare": 1,
       "retreatHpRatio": 0.35,
       "minFrontGainShare": 0.3,
-      "minAuraGain": 5
+      "minAuraGain": 12,
+      "auraMinOpportunity": 24,
+      "auraCooldown": 2
     },
     "_valor": "VALOR DİRİLTMESİ (Ömer 2026-10-13; yalnızca Valor'u olan taraf: sefer/Endless oyuncu vekili): değer = Resurrection'ın revive terimi x valueShare (Valor savaşlar arası kıt kaynak); net = değer - şimdiki class hamlesi, net en az değer x minNetShare olmalı (açıkça değer). Savaş belliyse 0.",
     "valor": {

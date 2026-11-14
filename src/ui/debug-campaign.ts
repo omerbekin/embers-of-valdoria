@@ -6,8 +6,8 @@ import type Phaser from 'phaser';
 import { CINEMATIC_IDS, CONFIG, debugOpenSlot, autoResolve, acknowledgeLoot, advanceDay, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, grantPilotSets, debugTeleport, debugWinNode, debugRequireFormation, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
+import { EVENT_FAMILIES, type EventFamilyId } from './node-card-events';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
-import { menuStyle } from './menu-style';
 import { setTreeTabDebug, treeTabDebug, treeTabEnabled } from './tree-tab-model';
 import { LESSONS, TUTORIAL } from '../tutorial/lessons';
 import { isLessonSeen, resetTutorials, setTutorialsOn, tutorialsOn } from '../tutorial/store';
@@ -61,7 +61,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Map',
     icon: 'helm',
     label: 'Start battle card (elite)',
-    hint: 'Same card for the first Elite node (elite frame + tag).',
+    hint: 'Same card for the first Elite node (Elite tag).',
     run: startCard(true),
   });
   // Savaşsız düğümler için aynı kart (Ömer 2026-10-18): her tür için ilk düğümde açılır
@@ -86,6 +86,52 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
   placeCard('treasure', 'Start card (treasure)', 'dice', 'Open');
   placeCard('event', 'Start card (event)', 'feather', 'Continue');
   placeCard('boss', 'Start card (boss)', 'burst', 'Fight');
+  // Düğüm kartı (Ömer 2026-11-14 Tur 14 kararı, src/ui/node-card.ts): seçilen türün ilk düğümünde kart; "done before" = known gibi çizilir, kayıt değişmez
+  const NODE_KINDS: Array<[string, string, string]> = [
+    ['battle', 'Battle', 'sword'], ['battle-known', 'Battle (done before)', 'sword'], ['elite', 'Elite', 'helm'], ['elite-known', 'Elite (done before)', 'helm'], ['boss', 'Boss', 'burst'], ['boss-known', 'Boss (done before)', 'burst'], ['treasure', 'Treasure (guarded)', 'dice'], ['treasure-open', 'Treasure (open)', 'dice'],
+    ['event', 'Event', 'feather'], ['town', 'Town', 'shield'], ['rest', 'Camp', 'flame'], ['merchant', 'Merchant', 'clover'], ['shrine', 'Wayshrine', 'book'], ['dive', 'Salvage Dive', 'dice'], ['ahead', 'Not reachable', 'boot'],
+  ];
+  for (const [kind, label, icon] of NODE_KINDS)
+    debug.register({
+      id: `campaign.nodecard.${kind}`,
+      tab: CAMPAIGN_TAB,
+      section: 'Node card',
+      icon,
+      label: `Node card (${label})`,
+      hint: kind === 'battle-known' ? 'Center the map on a battle stop you have already cleared (enemies show on the card) and open its card. The action does nothing.' : kind.endsWith('-known') ? `Open the first ${label.toLowerCase().replace(' (done before)', '')} stop's card as if you had already cleared it (every enemy shows, hover one for a short note). Card only; the save does not change.` : `Center the map on the first ${label.toLowerCase()} stop of this map and open its card. The action does nothing.`,
+      run: () => {
+        ensureState();
+        const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { debugNodeCardKind?: (k: string) => void }) : undefined;
+        if (scene?.debugNodeCardKind) scene.debugNodeCardKind(kind);
+        else reload();
+      },
+    });
+  // Olay kartı örnekleri (Ömer 2026-11-14: E1 + olay resmi + tür rozeti)
+  const EVENT_SAMPLES: Array<[EventFamilyId, string, string, string]> = [
+    ['shrine', 'dr_saltspray_shrine', 'Sacred', 'The Saltspray Shrine'],
+    ['shrine', 'dr_wayshrine', 'Sacred + blessing surprise', 'Wayshrine (the only event whose data gives a blessing)'],
+    ['bargain', 'witchs_hut', 'Wager', "The Hedge Witch's Bargain"],
+    ['folk', 'shepherds_fold', 'Wayfarers', 'The Scattered Flock'],
+    ['toll', 'hc_stone_gate', 'Passage', 'The Stone Gate'],
+    ['storm', 'hc_white_dark', 'Tempest', 'The White Dark'],
+    ['lore', 'dr_flooded_library', 'Ruin + story seal', 'The Flooded Library (no choices: crown seal badge)'],
+    ['folk', 'dr_quest_roost', 'Wayfarers + quest badge', "The Gull Cliffs (Archer's quest: class icon badge)"],
+  ];
+  for (const [fam, evId, label, ev] of EVENT_SAMPLES)
+    debug.register({
+      id: `campaign.eventcard.${evId}`,
+      tab: CAMPAIGN_TAB,
+      section: 'Node card',
+      icon: 'feather',
+      label: `Event card - ${label}`,
+      hint: `Open the first event stop's card as "${ev}" (${EVENT_FAMILIES[fam].tag} family). The action does nothing.`,
+      run: () => {
+        ensureState();
+        const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { debugEventCard?: (id: string) => void }) : undefined;
+        if (scene?.debugEventCard) scene.debugEventCard(evId);
+        else reload();
+      },
+    });
   // Harita pencereleri (Ömer 2026-10-19, taslak map-events): örnek veriyle açılır, kayıt değişmez
   const mapWindow = (kind: string, label: string, icon: string, hint: string) =>
     debug.register({
@@ -110,7 +156,6 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
   mapWindow('rest', 'Rest window', 'flame', 'Rest plaque with two sample fallen heroes (Gear left, Rest right).');
   mapWindow('hearth', 'Campfire note', 'flame', 'Small anchored card next to the campfire (shows next to the spot when the town screen is open).');
   mapWindow('board', 'Notice board note', 'dice', 'Small anchored card for the notice board.');
-  mapWindow('barracks', 'Barracks card', 'shield', 'Small anchored card with recruit cards.');
   // Hikâye sinematikleri (src/ui/cinematic.ts; Ömer 2026-10-23): sefer durumuna DOKUNMADAN oynatır (görüldü işareti yazılmaz).
   // Lider satırları yüklü seferin liderinin sınıfıyla, sefer yoksa başlangıç havuzunun ilk sınıfıyla.
   for (const id of CINEMATIC_IDS)
@@ -509,6 +554,25 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       );
     },
   });
+  // Ödül anı efektleri (Tur 8; src/ui/reward-fx.ts): açık ekrandaki gerçek öğeler üstünde oynar (önce Gear / Sheet / Tree ya da Loot açık olmalı)
+  const fxDebug: Array<[string, string, string, string, (m: typeof import('./reward-fx'), q: (s: string) => HTMLElement[]) => void]> = [
+    ['level', 'Reward FX - level up', 'Open Gear first (Hero or Sheet tab): the level text glows and sparks, with the ember sound. Visual only, nothing changes.', 'burst', (m, q) => m.playLevelUpFx(q('.sh-head .sh-lt, .gp-chip.cls')[0])],
+    ['node', 'Reward FX - skill node', 'Open Gear > Tree first: the first node glows and sparks. Visual only.', 'muscle', (m, q) => m.playNodeFx(q('.gt-nd')[0])],
+    ['equip', 'Reward FX - item equipped', 'Open Gear > Hero first: every filled slot plate glows. Visual only.', 'dice', (m, q) => q('.gr-slot.gr-plate:not(.empty)').forEach((e) => m.playEquipFx(e))],
+    ['loot', 'Reward FX - loot reveal', 'Open Gear or Loot first: the first bag items appear with a glow and sparks. Visual only.', 'dice', (m, q) => m.playRevealFx(q('.gr-bag [data-tip^="bag:"]'))],
+    ['stat', 'Reward FX - stat point', 'Open Gear > Sheet first: the four main stat boxes count up from one less and glow. Visual only.', 'muscle', (m, q) => q('.sh-row.sh-tile').forEach((e) => m.playStatFx(e, String(Number(e.querySelector('.sh-n')?.textContent) - 1)))],
+  ];
+  for (const [id, label, hint, icon, play] of fxDebug) {
+    debug.register({
+      id: `campaign.rewardfx-${id}`,
+      tab: CAMPAIGN_TAB,
+      section: 'Items',
+      icon,
+      label,
+      hint,
+      run: () => void import('./reward-fx').then((m) => play(m, (sel) => Array.from(document.querySelectorAll<HTMLElement>(sel)))),
+    });
+  }
   debug.register({
     id: 'campaign.loot',
     tab: CAMPAIGN_TAB,
@@ -596,6 +660,32 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       const root = document.getElementById('ui-root');
       if (!root) return;
       void import('./blacksmith-screen').then((m) => m.openBlacksmith(root, () => current() ?? s, (x) => setState(x), { sub: 'Debug' }));
+    },
+  });
+  // Demirci çekimleri (Ömer 2026-11-12, Blacksmith paneli + animasyonlar): torbaya her nadirlikten 2 farklı item (set değil; en az 2 Epic),
+  // bol altın + Temper taşı (düğmeler etkin görünsün). Demirci açıkken ?debug=1 ile window.__bsDebug kancası da var (blacksmith-screen.ts).
+  debug.register({
+    id: 'campaign.blacksmith-fill',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'muscle',
+    label: 'Blacksmith test items',
+    hint: 'Put 2 different items of every rarity (Common to Epic, no set pieces) into the bag, plus 2000 gold and 10 Temper Stones, for testing the Blacksmith',
+    run: () => {
+      let s = ensureState();
+      for (const r of RARITY_IDS.filter((x) => x !== 'legendary')) {
+        const pool = ITEMS.items.filter((d) => d.rarity === r && !d.set);
+        const rng = rngFor(s.seed, 'debug-smith', r, s.nextItemId);
+        const picked = new Set<string>();
+        for (let i = 0; i < 2 && pool.length && bagHasRoom(s); i++) {
+          let d = pool[rng.int(0, pool.length - 1)]!;
+          for (let k = 0; k < 6 && picked.has(d.id); k++) d = pool[rng.int(0, pool.length - 1)]!;
+          picked.add(d.id);
+          s = addItem(s, d.id).state;
+        }
+      }
+      setState({ ...s, gold: s.gold + 2000, temperStones: (s.temperStones ?? 0) + 10 });
+      document.dispatchEvent(new CustomEvent('gear:refresh'));
     },
   });
   // Inn (Ömer 2026-10-26): kasaba adımında Inn ekranı (kasabaya ışınlanınca; kasaba ekranındaki Inn yeri ile aynı)
@@ -812,7 +902,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
   soloJump('raven', 'Solo at Ravenwood', 'New run at Ravenwood: second skill open, the next one opens when wave 2 arrives', soloAt('2'));
   soloJump('watch', 'Solo at Watchtower', 'New run at the Ruined Watchtower: every skill open, can be lost', soloAt('3'));
   soloJump('ashford', 'Solo at Ashford join', 'New run at Ashford: choose one companion from every class (one is marked Suggested for the missing role; hover it for the reason), then Garrick gives the charge', soloAt('4'));
-  soloJump('valdren', 'Solo at Valdren barracks', 'New run at Valdren Keep with an auto-picked Ashford companion: open the Barracks in town for the three candidates (one may be marked Suggested)', soloAt('7'));
+  soloJump('valdren', 'Solo at Valdren Keep', 'New run at Valdren Keep with an auto-picked Ashford companion: open the Recruit window in town for the four candidates (one may be marked Suggested)', soloAt('7'));
   soloJump('bridge', "Solo at King's Bridge join", "New run past the King's Bridge boss: the three candidate cards of the third companion", (s) => {
     let t = soloAt('9')(s);
     while (nextStep(t).kind !== 'recruit' && nextStep(t).kind !== 'move' && nextStep(t).kind !== 'complete') t = autoResolve(t);
@@ -928,20 +1018,5 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
   for (const [view, label, icon, hint] of views) {
     debug.register({ id: `menu.${view}`, tab: CAMPAIGN_TAB, section: 'Main menu', icon, label, hint, run: () => openMenu(view) });
   }
-  // Menü stili önizlemesi (src/ui/menu-style.ts): ?menu=new zarif stil, ?menu=old mevcut stil; sayfa yeniden yüklenir
-  debug.register({
-    id: 'menu.style',
-    tab: CAMPAIGN_TAB,
-    section: 'Main menu',
-    icon: 'swap',
-    label: () => `Menu style: ${menuStyle === 'elegant' ? 'new' : 'old'}`,
-    on: () => menuStyle === 'elegant',
-    hint: 'Switch the main menu look between the current style and the new elegant preview (Cinzel / EB Garamond). Reloads the page with ?menu=new or ?menu=old',
-    run: () => {
-      const q = new URLSearchParams(window.location.search);
-      q.set('menu', menuStyle === 'elegant' ? 'old' : 'new');
-      window.location.search = q.toString();
-    },
-  });
   registerMaps23Debug(debug, reload, ensureState); // Harita 2-3 test grubu (maps-2-3.md 9.1)
 }

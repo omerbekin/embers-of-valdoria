@@ -83,6 +83,15 @@ export function dropOnCell(cells: readonly string[], id: string, cell: number): 
   return { st: { sel: '', moved: id }, move: { id, cell } };
 }
 
+/**
+ * Sağ tık ile çıkarma (Ömer 2026-11-10): dolu hücredeki kahramanın kimliği; boş / geçersiz hücrede '' (hiçbir şey yapılmaz).
+ * Takımın alt sınırı (boş takım olur mu) sahnenin kuralıdır; tahta yalnızca "çıkar" der.
+ */
+export function removeTarget(cells: readonly string[], cell: number): string {
+  if (cell < 0 || cell >= cells.length) return '';
+  return cells[cell] ?? '';
+}
+
 /** Kahraman `id` hücre `cell`'e konursa (boşsa taşınır, doluysa yer değiştirir) yeni hücre listesi (uygunluk önizlemesi için; girdiyi değiştirmez). */
 export function previewMove(cells: readonly string[], id: string, cell: number): string[] {
   const out = cells.slice();

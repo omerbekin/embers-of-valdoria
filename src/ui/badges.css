@@ -1,0 +1,74 @@
+/* Rozet zinciri (src/ui/badges.ts): yolda kor nokta, hedefte nabız atan kor kenar; sayı yok. Eski turuncu sayı rozetleri (.gr-pt) hep gizli. */
+
+/* eski turuncu sayı rozetleri (sekme / yer imi / ağaç başlığı) yerine nokta + parlayan hedef */
+html.vb-on .gr-headtabs .gr-tab > .gr-pt,
+html.vb-on .gr-tabs .gr-tab > .gr-pt,
+html.vb-on .gr-mark > .gr-pt {
+  display: none;
+}
+
+html.vb-on .gr-tree-head .gr-pt,
+html.vb-on .gt-tab .gr-pt {
+  display: none;
+}
+
+html.vb-on .gr-tab,
+html.vb-on .gr-mark,
+html.vb-on .sh-row,
+html.vb-on .gr-item,
+html.vb-on .camp-ib {
+  position: relative;
+}
+
+html.vb-on .vb {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+/* nokta: küçük kor elmas-yuvarlak, sayı yok */
+html.vb-on .vb-dot {
+  top: max(3px, calc(5 * var(--u, 1px)));
+  right: max(3px, calc(5 * var(--u, 1px)));
+  width: max(9px, calc(13 * var(--u, 1px)));
+  height: max(9px, calc(13 * var(--u, 1px)));
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffd08a, #e0702a 70%);
+  box-shadow: 0 0 0 2px rgba(10, 7, 4, 0.85), 0 0 8px rgba(240, 140, 40, 0.75);
+}
+
+html.vb-on .gr-tab > .vb-dot {
+  top: 0.35em;
+  right: 0.2em;
+}
+
+/* C: hedefin kenarı kor ışıkla nabız atar */
+@keyframes vb-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(255, 179, 90, 0.55), 0 0 0 1px rgba(240, 140, 40, 0.35), 0 0 6px rgba(240, 140, 40, 0.25);
+  }
+
+  50% {
+    box-shadow: inset 0 0 0 1.5px rgba(255, 200, 120, 0.95), 0 0 0 1px rgba(255, 179, 90, 0.8), 0 0 18px rgba(240, 140, 40, 0.7);
+  }
+}
+
+html.vb-on .vb-glow {
+  animation: vb-pulse 1.6s ease-in-out infinite;
+}
+
+html.vb-on .gt-nd.vb-glow {
+  animation: none;
+}
+
+html.vb-on .gt-nd.vb-glow .dm {
+  animation: vb-pulse 1.6s ease-in-out infinite;
+}
+
+html.vb-rm .vb-glow,
+html.vb-rm .gt-nd.vb-glow .dm {
+  animation: none;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 200, 120, 0.95), 0 0 12px rgba(240, 140, 40, 0.6);
+}

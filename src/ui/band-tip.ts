@@ -4,7 +4,7 @@
 // Stil: band-tip.css (`.bt`); Phaser eşi: src/game/band-tip.ts. Metni değiştirmez, yalnızca görünümü kurar (ayrıştırma: band-rich.ts).
 // Item ipucu (item-tip.ts, v3) ayrıdır ve bu bileşene bağlanmaz.
 import './band-tip.css';
-import { MORE_MARK, richSegs, splitNow, type RichSeg } from './band-rich';
+import { richSegs, splitNow, type RichSeg } from './band-rich';
 
 export interface BandChip {
   text: string;
@@ -129,15 +129,12 @@ export function bandTipHtml(s: BandTipSpec): string {
         ? `<div class="bt-ln has-now"><div class="main">${txt}</div><span class="now bt-chip v">${bandRichHtml(sp.now, undefined, false)}</span></div>`
         : `<div class="bt-ln">${txt}</div>`;
   };
-  // Skill ipucu A (Ömer 2026-11-02): MORE_MARK satırından önceki satırlar KISA ipucu, sonrakiler "More" ile açılan tam metin (kısanın yerini alır)
-  const all = s.lines ?? [];
-  const cut = all.findIndex((l) => l.section && l.text === MORE_MARK);
-  const lines = cut < 0 ? all.map(lineHtml).join('') : `<div class="bt-short">${all.slice(0, cut).map(lineHtml).join('')}</div><div class="bt-full">${all.slice(cut + 1).map(lineHtml).join('')}</div>`;
-  const more = cut < 0 ? '' : '<div class="bt-morerow"><button class="bt-morebtn" type="button"><span class="dia"></span><span class="m">More</span><span class="l">Less</span></button></div>';
+  // Katlama YOK (Ömer 2026-11-09, ipucu B): More / Less kalktı; uzun ayrıntı Codex'te, ipucu kısa kalır
+  const lines = (s.lines ?? []).map(lineHtml).join('');
   const body = lines || s.bodyHtml ? `<div class="bt-div"></div><div class="bt-body">${lines}${s.bodyHtml ?? ''}</div>` : '';
   const foot = s.foot ? `<div class="bt-foot"><span class="dia"></span><span class="tx">${esc(s.foot)}</span></div>` : '';
   const ac = s.accent ? ` style="--ac:${css(s.accent)}"` : '';
-  return `<div class="bt${s.nowrapTitle ? ' nw' : ''}"${ac}>${head}${chips}${body}${more}${foot}</div>`;
+  return `<div class="bt${s.nowrapTitle ? ' nw' : ''}"${ac}>${head}${chips}${body}${foot}</div>`;
 }
 
 /** Aynı ipucu DOM düğümü olarak. */
@@ -150,12 +147,4 @@ export function bandTipEl(s: BandTipSpec): HTMLElement {
 /** Kahraman madalyası altındaki 7 yuvalık elmas sırası (dolu / boş). */
 export function bandPipsHtml(filled: number, total: number): string {
   return `<span class="bt-pips">${Array.from({ length: total }, (_, i) => `<i class="${i < filled ? 'on' : ''}"></i>`).join('')}</span>`;
-}
-
-// "More" düğmesi: ipucunun kendi sınıfını çevirir (.open = tam metin). Tek, belge düzeyinde dinleyici; HUD ipucunu yeniden kurarsa kısa hâle döner.
-if (typeof document !== 'undefined') {
-  document.addEventListener('click', (e) => {
-    const b = (e.target as Element | null)?.closest?.('.bt-morebtn');
-    if (b) b.closest('.bt')?.classList.toggle('open');
-  });
 }

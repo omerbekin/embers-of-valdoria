@@ -77,7 +77,9 @@ export function openInn(root: HTMLElement, get: () => CampaignState, set: (s: Ca
     body.replaceChildren();
 
     const pct = Math.round(rate.healPerDay * 100);
-    body.append(el('p', 'ec-rule', `Leave a hero here and they leave your company. Each day they recover ${pct}% health and ${rate.woundsPerDay} wound${rate.woundsPerDay === 1 ? '' : 's'}, and earn no experience. Only this town's inn can give them back.`));
+    const per = completionsPerDay();
+    const dayNote = per === 1 ? 'A day passes for every battle you win.' : `A day passes for every ${per} battles you win.`;
+    body.append(el('p', 'ec-rule', `Leave a hero here and they leave your company. Each day they recover ${pct}% health and ${rate.woundsPerDay} wound${rate.woundsPerDay === 1 ? '' : 's'}, and earn no experience. Only this town's inn can give them back. ${dayNote}`));
 
     const grid = el('div', 'ec-grid2');
 
@@ -125,11 +127,6 @@ export function openInn(root: HTMLElement, get: () => CampaignState, set: (s: Ca
       }
       body.append(r);
     }
-
-    const foot = el('div', 'ec-foot');
-    const per = completionsPerDay();
-    foot.append(el('span', 'ec-note', per === 1 ? 'A day passes for every battle you win.' : `A day passes for every ${per} battles you win.`), button('primary', 'Done', () => sh.close()));
-    body.append(foot);
   }
 
   render();

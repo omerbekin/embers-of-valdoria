@@ -13,8 +13,8 @@ import './gear.css';
 import './gear-plates.css';
 import { instanceColor, instanceRarity, instanceSubtitle, itemDef, rarityIndex, type ItemInstance, type SlotId } from '../progression';
 import { dismissOnBackdrop } from './backdrop';
-import { iconUrl } from './dom-icons';
-import { hasUiImage, uiIconName } from './ui-icons';
+import { goldImg } from './ui-icons';
+import { attachBandTip } from './band-tip-attach';
 import { avatarUrl, itemPlate } from './character-panel';
 import { itemCell } from './inventory';
 import { itemTipBody, itemTipNodes, type ItemTipAction } from './item-tip';
@@ -35,15 +35,7 @@ const btn = (cls: string, text: string, run: () => void): HTMLButtonElement => {
   b.addEventListener('click', run);
   return b;
 };
-/** Boyalı altın ikonu (yoksa ikonsuz). */
-const goldIcon = (cls = 'gr-price-ico'): HTMLImageElement | null => {
-  if (!hasUiImage('gold')) return null;
-  const i = el('img', cls);
-  i.src = iconUrl(uiIconName('gold'));
-  i.alt = '';
-  i.draggable = false;
-  return i;
-};
+const goldIcon = goldImg;
 
 export interface MerchantWare {
   inst: ItemInstance;
@@ -211,26 +203,30 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       if (gi) tag.append(gi);
       tag.append(String(price));
     }
-    const b = itemPlate(inst, curHero()?.class, tag);
+    const b = itemPlate(inst, curHero()?.class, tag, true);
     b.dataset['tip'] = tip;
     if (drag) b.dataset['drag'] = tip;
     if (selected) b.classList.add('on');
     return b;
   };
 
-  // --- tezgâh paneli
-  function renderSide(): void {
-    const phone = phoneLayout();
-    const head = el('div', 'gr-head gr-lhead');
-    head.append(el('div', 'gr-title', src.name));
+  /** Çerçevesiz altın sayısı: çanta altındaki Supplies / Purse şeridinde (Ömer 2026-11-11 Form 6; başlıkta değil). */
+  function goldChip(): HTMLElement {
     const purse = el('div', 'gr-gold', String(src.gold()));
     const gi = goldIcon('gr-ui-ico');
     if (gi) {
       purse.classList.add('gr-has-ico');
       purse.prepend(gi);
     }
-    purse.title = 'Gold';
-    head.append(el('span', 'gr-grow'), purse);
+    attachBandTip(purse, { title: 'Gold' });
+    return purse;
+  }
+
+  // --- tezgâh paneli
+  function renderSide(): void {
+    const phone = phoneLayout();
+    const head = el('div', 'gr-head gr-lhead');
+    head.append(el('div', 'gr-title', src.name));
     const kids: HTMLElement[] = [head];
     if (!phone) kids.push(el('div', 'gr-shop-sub', src.sub));
     // konuşma satırı (kafa portresi + balon)
@@ -264,7 +260,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     if (tab === 'sell') {
       // mallar (satılmış soluk, yetmeyen altın kırmızı fiyat) + yenileme (simge + küçük fiyat)
       const sec = el('div', 'gr-sec gr-wares-head', 'Wares');
-      const reroll = el('button', 'gr-btn sm gr-reroll');
+      const reroll = el('button', 'el-btn sm gr-reroll');
       reroll.type = 'button';
       reroll.dataset['hint'] = 'Reroll wares';
       reroll.setAttribute('aria-label', 'Reroll wares');
@@ -337,7 +333,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
         const short = w.price - src.gold();
         const full = src.bag().length >= src.bagSize;
         const index = sel.index;
-        const b = btn('gr-btn primary', short > 0 ? `Need ${short} more` : full ? 'Bag full' : `Buy · ${w.price}`, () => doBuy(index));
+        const b = btn('el-btn sm primary', short > 0 ? `Need ${short} more` : full ? 'Bag full' : `Buy · ${w.price}`, () => doBuy(index));
         b.disabled = short > 0 || full;
         strip.append(b);
       }
@@ -345,7 +341,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       const e = src.buyback()[sel.index];
       const index = sel.index;
       if (e) {
-        const b = btn('gr-btn primary', src.gold() < e.price ? `Need ${e.price - src.gold()} more` : `Buy back · ${e.price}`, () => doBuyBack(index));
+        const b = btn('el-btn sm primary', src.gold() < e.price ? `Need ${e.price - src.gold()} more` : `Buy back · ${e.price}`, () => doBuyBack(index));
         b.disabled = src.gold() < e.price;
         strip.append(b);
       }
@@ -403,7 +399,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       stats.append(...itemTipBody(best.inst));
       card.append(hl, stats);
     }
-    card.append(btn('gr-btn primary mw-go', 'Browse wares', dismissWelcome));
+    card.append(btn('el-btn primary mw-go', 'Browse wares', dismissWelcome));
     half.append(fig, card);
     w.append(half);
     overlay.append(w);
@@ -418,7 +414,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
 
   const ext: GearExt = {
     side,
-    hideGold: true,
+    purse: () => [goldChip()],
     noTrash: true,
     attach: (overlay, a) => {
       overlayEl = overlay;

@@ -25,7 +25,7 @@
     },
     {
       "skill": "natures_wrath",
-      "name": "Nature's Wrath",
+      "name": "Tidal Wrath",
       "karma": "B"
     },
     {
@@ -74,7 +74,7 @@
       {
         "at": 15,
         "name": "Tight Weave",
-        "text": "Nature's Wrath deals 3% increased damage.",
+        "text": "Tidal Wrath deals 3% increased damage.",
         "src": "B:V4:bar3",
         "fx": [
           {
@@ -629,7 +629,7 @@
     },
     "2.f1": {
       "name": "Grasping Earth",
-      "text": "Nature's Wrath has a 5% chance per rank to Slow each enemy hit for 2 turns.",
+      "text": "Tidal Wrath has a 5% chance per rank to Slow each enemy hit for 2 turns.",
       "src": "B:V4:2.f2",
       "fx": [
         {
@@ -660,7 +660,7 @@
     },
     "2.f2": {
       "name": "Tangleroot",
-      "text": "Nature's Wrath has a 3% chance per rank to Stun each enemy hit for 1 turn.",
+      "text": "Tidal Wrath has a 3% chance per rank to Stun each enemy hit for 1 turn.",
       "src": "B:V4:2.f1",
       "fx": [
         {
@@ -703,7 +703,7 @@
     },
     "2.f3": {
       "name": "Pollen Drift",
-      "text": "Enemies hit by Nature's Wrath deal 3% less damage per rank on their next turn.",
+      "text": "Enemies hit by Tidal Wrath deal 3% less damage per rank on their next turn.",
       "src": "B:V3:2.f2",
       "fx": [
         {
@@ -740,7 +740,7 @@
     },
     "2.n0": {
       "name": "Root Field",
-      "text": "Nature's Wrath leaves a root field for 2 turns: enemies standing in it are Slowed while inside.",
+      "text": "Tidal Wrath leaves a root field for 2 turns: enemies standing in it are Slowed while inside.",
       "src": "B:V4:2.n0",
       "fx": [
         {
@@ -757,7 +757,7 @@
     },
     "2.r": {
       "name": "Deep Tangle",
-      "text": "Stuns from Nature's Wrath have a 5% chance per rank to last 1 turn longer.",
+      "text": "Stuns from Tidal Wrath have a 5% chance per rank to last 1 turn longer.",
       "src": "B:V4:2.r",
       "fx": [
         {
@@ -788,7 +788,7 @@
     },
     "2.eb": {
       "name": "Grasp and Drag",
-      "text": "Nature's Wrath pulls each enemy in its back row one row forward.",
+      "text": "Tidal Wrath pulls each enemy in its back row one row forward.",
       "src": "B:V4:2.ea",
       "fx": [
         {
@@ -826,7 +826,7 @@
     },
     "2.fa": {
       "name": "Mire",
-      "text": "The root field lasts 4 turns and Nature's Wrath deals 15% increased damage to enemies standing in it, but its cooldown is 3 → 5.",
+      "text": "The root field lasts 4 turns and Tidal Wrath deals 15% increased damage to enemies standing in it, but its cooldown is 3 → 5.",
       "src": "B:V4:2.fb",
       "fx": [
         {
@@ -856,11 +856,11 @@
           "v": 5
         }
       ],
-      "_not": "content-designer 2026-10-29: 'Slows on impact' kalktı (genel zemin kuralı: kök tarlası içindekine o an Slow veriyor, çift oldu); yerine tarladakilere +%15 Nature's Wrath (open-questions 457)."
+      "_not": "content-designer 2026-10-29: 'Slows on impact' kalktı (genel zemin kuralı: kök tarlası içindekine o an Slow veriyor, çift oldu); yerine tarladakilere +%15 Tidal Wrath (open-questions 457)."
     },
     "2.fb": {
       "name": "Briar Prison",
-      "text": "Nature's Wrath Stuns its first row for 1 turn, but deals no damage.",
+      "text": "Tidal Wrath Stuns its first row for 1 turn, but deals no damage.",
       "src": "B:V4:2.fa",
       "fx": [
         {
@@ -883,7 +883,7 @@
     },
     "2.mb": {
       "name": "Strangling Grove",
-      "text": "Nature's Wrath Stuns every Slowed enemy it hits for 1 turn.",
+      "text": "Tidal Wrath Stuns every Slowed enemy it hits for 1 turn.",
       "src": "B:V4:2.ma",
       "fx": [
         {
@@ -903,7 +903,7 @@
     },
     "2.v": {
       "name": "Thicket Wave",
-      "text": "Nature's Wrath strikes the same cells again at the start of your next turn: 25% damage and a 1-turn Stun (Rooted).",
+      "text": "Tidal Wrath strikes the same cells again at the start of your next turn: 25% damage and a 1-turn Stun (Rooted).",
       "src": "B:V4:2.v",
       "new": true,
       "approved": true,

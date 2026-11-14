@@ -15,9 +15,8 @@
   --ember2: #ffb35a;
   --party: #4fa3ff;
   --enemy: #ff5a5a;
-  --cin: Cinzel, Georgia, 'Palatino Linotype', serif;
-  --gar: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
-  --num: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  --cin: var(--font-display);
+  --num: var(--font-num);
   --ease: cubic-bezier(0.33, 1, 0.68, 1);
   --panel: linear-gradient(180deg, rgb(31, 23, 15), rgb(12, 9, 6));
   /* 1 gerçek ekran pikseli kaç oyun birimi (telefonda HUD ~0,36 ölçekli: kısa ekran yazıları bununla en az okunur boyuta çıkar; BattleHud.layout --bh-inv verir) */
@@ -2137,6 +2136,9 @@ html.short .bh-ctip.at-top:not(.at-many) .bt-title {
   width: 38px;
   height: 38px;
   object-fit: contain;
+  border-radius: 50%;
+  border: 1px solid rgba(111, 176, 168, 0.6);
+  background: radial-gradient(circle at 50% 42%, rgba(111, 176, 168, 0.25), #0d0806 78%);
 }
 
 .bh-cpas .tx b {
@@ -2638,6 +2640,56 @@ html.short .bh-right.stacked .bh-pl-ico {
   --ac: #6fb0a8;
   width: 100%;
   cursor: help;
+}
+
+/* pasif: skill plakalarının solunda dar ayrı sütun, yuvarlak ikon, altta küçük ad, sağ kenarda ince altın ayraç (Ömer 2026-11-11, eski V3 pasifi).
+   Kutu yüksekliği plakalarla aynı (alt hizalı); PASSIVE etiketi üst kenarda yarım dışarı taşar, kesilmez. */
+.bh-pasv .bp.pas {
+  height: 100%;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 2px 6px;
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+  border: 0;
+  border-right: 1px solid rgba(217, 178, 106, 0.3);
+}
+
+.bh-pasv .bp.pas .bp-ico {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+}
+
+.bh-pasv .bp.pas .bp-ico::before,
+.bh-pasv .bp.pas .bp-ico::after {
+  display: none;
+}
+
+.bh-pasv .bp.pas .bp-ico .bh-ico {
+  border-radius: 50%;
+}
+
+.bh-pasv .bp.pas .bp-nm {
+  min-height: 0;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  text-align: center;
+}
+
+.bh-pasv .bp.pas .bp-chips {
+  display: none;
+}
+
+.bh-pasv .bp.pas:hover {
+  transform: none;
 }
 
 .bp.ult {
@@ -3209,12 +3261,20 @@ html.short .bp .cdv {
   font-size: calc(18 * var(--rp));
 }
 
-html.short .bh-pasv {
-  width: 146px;
+html.short .bh-pasv .bp.pas {
+  width: 100%;
+  padding: 12px 2px 6px;
+  gap: 3px;
 }
 
-html.short .bh-pasv .bp {
-  gap: 4px;
+/* telefon: yuvarlak ikon plaka ikonuyla aynı 76 birim, ad gizli (ipucunda), etiket "PAS" */
+html.short .bh-pasv .bp.pas .bp-ico {
+  width: 86px;
+  height: 86px;
+}
+
+html.short .bh-pasv .bp.pas .bp-nm {
+  display: none;
 }
 
 /* karakter bloğu: tek satır ad, üç çubuk yan yana (değer üstte), stat karoları tek satır (yalnızca ikon + değer) */

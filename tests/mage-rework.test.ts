@@ -36,9 +36,10 @@ describe('Mage kiti (Ömer 2026-10-29)', () => {
 });
 
 describe('Chilled', () => {
-  it('Slow\'dan ayrı: hız x0.8, kaçınma x0.9, cc (boss yemez); Slow ile birlikte durur', () => {
+  it('Slow\'dan ayrı: hız x0.8, kaçınma x0.9, CC değil (Ömer 2026-11-09); Slow ile birlikte durur', () => {
     const def = content.statuses.chilled!;
-    expect(def).toMatchObject({ name: 'Chilled', type: 'debuff', speedMult: 0.8, evasionMult: 0.9, cc: true });
+    expect(def).toMatchObject({ name: 'Chilled', type: 'debuff', speedMult: 0.8, evasionMult: 0.9 });
+    expect(def.cc).toBeFalsy(); // Ömer 2026-11-09: Chilled CC değil (boss %25, elit %50 güç)
     const b = sure(arena([['mage', 7]], [['warrior', 1]]));
     const foe = b.get('enemy-0')!;
     foe.stats.evasion = 0.2;
@@ -50,10 +51,12 @@ describe('Chilled', () => {
     expect(foe.statuses.map((s) => s.kind).sort()).toEqual(['chilled', 'slow']);
     expect(b.statusMult(foe, 'speedMult')).toBeCloseTo(0.8 * 0.7, 6);
     expect(b.speedOf(foe)).toBeLessThan(spd);
-    // Boss rütbesi CC bağışık: Slow gibi Chilled da işlemez
+    // Boss rütbesi: Chilled ve Slow engellenmez (azaltılmış güç; Slow Ömer onaylı 2026-11-09 form 3), Frozen (CC) engellenir
     foe.statuses = [];
     foe.tier = 'boss';
-    expect(b.statusBlocked(foe, 'chilled')).toBe(true);
+    expect(b.statusBlocked(foe, 'chilled')).toBe(false);
+    expect(b.statusBlocked(foe, 'slow')).toBe(false);
+    expect(b.statusBlocked(foe, 'frozen')).toBe(true);
   });
 
   it('Chill Ground (storm) içinde tur başlatan Chilled alır, Ice hâlâ Slow', () => {

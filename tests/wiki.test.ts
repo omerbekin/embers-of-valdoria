@@ -318,8 +318,12 @@ describe('Codex: Ground reactions (Ömer 2026-10-27)', () => {
     const art = wiki.mechanics.find((a) => a.id === 'ground-reactions');
     expect(art).toBeDefined();
     const table = art!.blocks.find((b): b is Extract<WikiBlock, { kind: 'table' }> => b.kind === 'table')!;
-    expect(table.rows).toHaveLength(Object.keys(content.groundReactions).length);
-    for (const r of Object.values(content.groundReactions)) {
+    // Element formu (Ömer 2026-11-09): birim üstü tepkimeler (zemin kurulumu yok) ayrı "Unit reactions" tablosunda
+    const groundOnes = Object.values(content.groundReactions).filter((r) => r.setup.length && r.trigger.length);
+    expect(table.rows).toHaveLength(groundOnes.length);
+    const unitTable = art!.blocks.filter((b): b is Extract<WikiBlock, { kind: 'table' }> => b.kind === 'table')[1];
+    for (const r of Object.values(content.groundReactions).filter((x) => !x.setup.length)) expect(unitTable?.rows.some((x) => x.includes(r.label)), r.label).toBe(true);
+    for (const r of groundOnes) {
       // iki tepkime aynı etiketi taşıyabilir (Holy water: Holy Fire + su / Holy Ground + su); satır metinden bulunur
       const row = table.rows.find((x) => x[3] === r.text);
       expect(row, r.label).toBeDefined();

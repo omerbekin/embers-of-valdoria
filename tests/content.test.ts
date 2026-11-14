@@ -177,7 +177,7 @@ describe('skill verisi', () => {
             expect(e.turns).toBeGreaterThan(0);
             expect(ATTRIBUTES).toContain(e.scale);
             // Gücü 0 yalnızca su zemininde (Flooded; Harita 2 Call the Tide / Surge: hasarsız su, maps-2-3.md)
-            if (content.grounds[e.ground]?.quenches || e.ground === 'storm') expect(e.power).toBeGreaterThanOrEqual(0); // storm = Chill Ground: yalnız Chilled, Snowdrift hasarsız
+            if (content.grounds[e.ground]?.quenches || e.ground === 'storm' || e.ground === 'cursed_ground') expect(e.power).toBeGreaterThanOrEqual(0); // storm = Chill Ground: yalnız Chilled, Snowdrift hasarsız; cursed_ground (Withering Curse, 2026-11-09): yalnız Unhallowed, hasarsız
             else expect(e.power).toBeGreaterThan(0);
             break;
           case 'selfDamage':
@@ -231,6 +231,11 @@ describe('skill verisi', () => {
             expect(s.effects.some((x) => x.type === 'damage'), key).toBe(true);
             expect(e.crashPower).toBeGreaterThanOrEqual(0);
             expect(ATTRIBUTES).toContain(e.scale);
+            break;
+          case 'splashLiquid':
+            // Tremor Slam (Ömer 2026-11-09): sıvı zemin sıçraması isabet eden vuruşa bağlı; en az bir sıvı zemin tanımlı
+            expect(s.effects.some((x) => x.type === 'damage'), key).toBe(true);
+            expect(Object.values(content.grounds).some((g) => g.liquid), key).toBe(true);
             break;
           default:
             throw new Error(`${key}: bilinmeyen etki türü ${(e as { type: string }).type}`);

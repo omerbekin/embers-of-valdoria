@@ -1,0 +1,37 @@
+/* Haritanın eski pencereleri (map-confirm.ts): alt başlık başlığın altında, açıklama satır sonlarını korur */
+.el-dialog.map-confirm .eld-sub {
+  margin: 6px 0 0;
+  text-align: center;
+  font: 20px/1.3 var(--el-body);
+  color: var(--el-muted, #a8977a);
+}
+.el-dialog.map-confirm .eld-note {
+  white-space: pre-line;
+  max-width: 52ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+html.short .el-dialog.map-confirm .eld-sub {
+  font-size: 15px;
+}
+
+/* Farewell: kahraman yüzleri (yuvarlak, altın çerçeve) */
+.el-dialog.map-confirm .mc-faces {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 14px 0 6px;
+}
+.el-dialog.map-confirm .mc-face {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(217, 178, 106, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  background: #1a130d;
+}
+html.short .el-dialog.map-confirm .mc-face {
+  width: 56px;
+  height: 56px;
+}

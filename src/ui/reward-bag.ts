@@ -7,9 +7,9 @@
  * Oyun içi metinler İngilizce.
  */
 import './gear.css';
-import { instanceColor, itemDef, type ItemInstance } from '../progression';
+import { type ItemInstance } from '../progression';
 import { iconUrl } from './dom-icons';
-import { itemIcon } from './inventory';
+import { itemPlate } from './character-panel';
 import { itemTipNodes } from './item-tip';
 import { equippedTipNodes, heroTipExtra, openGear, type GearApi, type GearExt, type GearSource } from './gear-screen';
 
@@ -69,16 +69,20 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
     side.append(head);
     const list = el('div', 'gr-loot-list');
     tiles.forEach((t, i) => {
+      if (t.inst) {
+        const vr = itemPlate(t.inst, undefined, undefined, true);
+        vr.dataset['tip'] = `rw:${i}`;
+        if (t.blocked) vr.classList.add('blocked');
+        vr.addEventListener('click', () => takeTile(i));
+        list.append(vr);
+        return;
+      }
       const tile = el('button', `rb-tile gr-loot-tile${t.blocked ? ' blocked' : ''}`);
       tile.type = 'button';
       tile.dataset['tip'] = `rw:${i}`;
       tile.style.setProperty('--i', String(i));
       const medal = el('span', 'rb-medal');
-      if (t.inst) {
-        medal.style.setProperty('--rc', instanceColor(t.inst));
-        const d = itemDef(t.inst.id);
-        if (d) medal.append(itemIcon(t.inst, d.slot));
-      } else if (t.icon) {
+      if (t.icon) {
         medal.style.setProperty('--rc', t.accent ?? '#e8c47e');
         const im = el('img', 'rb-emblem');
         im.src = iconUrl(t.icon, t.accent ?? '#e8c47e');
@@ -87,14 +91,13 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
         medal.append(im);
       }
       const lab = el('span', 'rb-label', t.label);
-      if (t.inst) lab.style.color = instanceColor(t.inst);
       tile.append(medal, lab);
       tile.addEventListener('click', () => takeTile(i));
       list.append(tile);
     });
     side.append(list);
     const foot = el('div', 'gr-foot');
-    const close = el('button', 'gr-btn primary', 'Close bag');
+    const close = el('button', 'el-btn primary', 'Close bag');
     close.type = 'button';
     close.addEventListener('click', () => api?.close());
     foot.append(close);
@@ -104,7 +107,6 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
   const ext: GearExt = {
     side,
     bagOnly: true, // yalnızca ödüller + ortak torba (kahraman sayfası yok)
-    hideGold: false,
     attach: (_overlay, a) => {
       api = a;
     },

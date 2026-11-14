@@ -2,14 +2,14 @@
 .cur-panel {
   --u: var(--gu, 1px);
   padding: 0 12px 10px 0;
-  font: max(15px, calc(22 * var(--u))) / 1.3 var(--el-body);
+  font: max(calc(15px * var(--tx, 1)), calc(22 * var(--u) * var(--tx, 1))) / 1.3 var(--el-body);
   color: var(--el-txt);
 }
 
 .cur-sec {
   margin: calc(18 * var(--u)) 0 8px;
   padding-bottom: 5px;
-  font: 600 max(12px, calc(17 * var(--u))) var(--el-display);
+  font: 600 max(calc(12px * var(--tx, 1)), calc(17 * var(--u) * var(--tx, 1))) var(--el-display);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(236, 200, 130, 0.95);
@@ -62,10 +62,10 @@
 .cur-plate.on::before {
   content: '';
   position: absolute;
-  top: 5px;
-  left: 6px;
-  width: 7px;
-  height: 7px;
+  top: 0.31em;
+  left: 0.38em;
+  width: 0.44em;
+  height: 0.44em;
   transform: rotate(45deg);
   background: var(--el-ember);
   box-shadow: 0 0 0 1px var(--el-ember2), 0 0 8px rgba(240, 140, 40, 0.6);
@@ -76,7 +76,7 @@
 }
 
 .cur-plate-name {
-  font: 600 max(9px, calc(11 * var(--u))) var(--el-display);
+  font: 600 max(calc(9px * var(--tx, 1)), calc(11 * var(--u) * var(--tx, 1))) var(--el-display);
   letter-spacing: 0;
   text-transform: uppercase;
   text-align: center;
@@ -103,7 +103,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font: bold max(22px, calc(36 * var(--u))) var(--el-display);
+  font: bold max(calc(22px * var(--tx, 1)), calc(36 * var(--u) * var(--tx, 1))) var(--el-display);
   color: var(--el-on);
   text-shadow: 0 2px 0 #0c0805;
   border: 1px solid var(--el-line2);
@@ -128,7 +128,7 @@
 .cur-size-val {
   min-width: 3.6em;
   text-align: center;
-  font: bold max(16px, calc(30 * var(--u))) var(--el-display);
+  font: bold max(calc(16px * var(--tx, 1)), calc(30 * var(--u) * var(--tx, 1))) var(--el-display);
   color: var(--el-on);
   text-shadow: 0 0 3px #0c0805, 0 2px 0 #0c0805;
 }
@@ -144,7 +144,7 @@
 }
 
 .cur-toggle-name {
-  font: 600 max(11px, calc(17 * var(--u))) var(--el-display);
+  font: 600 max(calc(11px * var(--tx, 1)), calc(17 * var(--u) * var(--tx, 1))) var(--el-display);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--el-txt);
@@ -158,7 +158,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font: bold max(14px, calc(26 * var(--u))) var(--el-display);
+  font: bold max(calc(14px * var(--tx, 1)), calc(26 * var(--u) * var(--tx, 1))) var(--el-display);
   color: var(--el-on);
   border: 1px solid var(--el-line2);
   background: linear-gradient(180deg, rgba(30, 22, 14, 0.7), rgba(12, 9, 6, 0.8));
@@ -225,7 +225,7 @@
 }
 
 .cur-chip-name {
-  font: 600 max(9px, calc(13 * var(--u))) var(--el-display);
+  font: 600 max(calc(9px * var(--tx, 1)), calc(13 * var(--u) * var(--tx, 1))) var(--el-display);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--el-muted);
@@ -276,7 +276,7 @@
 
 .cur-z-name {
   padding: 3px 8px;
-  font: 600 max(10px, calc(14 * var(--u))) var(--el-display);
+  font: 600 max(calc(10px * var(--tx, 1)), calc(14 * var(--u) * var(--tx, 1))) var(--el-display);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--el-on);

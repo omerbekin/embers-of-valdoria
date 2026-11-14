@@ -6,10 +6,6 @@ html.short .el-btn,
 html.short .el-btn.primary,
 html.short .el-btn.sm,
 html.short .el-btn.danger,
-html.short .gr-btn,
-html.short .gr-btn.sm,
-html.short .gr-btn.primary,
-html.short .gr-btn.danger,
 html.short .gr-tab,
 html.short .ct-b,
 html.short .bs-tab,
@@ -45,20 +41,10 @@ html.short .el-btn.primary.ready:not(:disabled) {
   }
 }
 
+/* elmas boyu em ile yazıya oranlı (elegant.css): telefonda yazıyla birlikte küçülür; burada yalnız parıltı kısılır */
 html.short .el-btn.primary::before,
 html.short .el-btn.primary::after {
-  width: 9px;
-  height: 9px;
-  margin-top: -5px;
   box-shadow: 0 0 0 1px var(--el-ember2), 0 0 8px rgba(240, 140, 40, 0.8);
-}
-
-html.short .el-btn.primary::before {
-  left: -6px;
-}
-
-html.short .el-btn.primary::after {
-  right: -6px;
 }
 
 html.short .el-btn.primary:disabled::before,

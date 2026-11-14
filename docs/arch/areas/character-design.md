@@ -35,7 +35,7 @@ Son kararlar (2026-11-08, Ömer): Paladin Radiance 18 / Resurrection 14 MP kald�
 2. **Druid muafiyeti** `PENDING_BALANCE`'ta (bir grup 56,5): görsel rework bitince 5000 ile yeniden bakılır, sayıya şimdilik dokunulmaz (Ömer).
 3. **Healing Rain görseli:** tüm Druid skilleri + Treant + skilleri rework'ü Character vfx alanında. `src/game/vfx.ts` zemin rengi geçici.
 4. **Healing Rain tarayıcı kontrolü:** 16:9'da hedef seçimi, zemin, ipucu, ağaç metinleri geçti, konsol hatası yok. Doğrulanmadı: zemin ipucu ve hedef seçimi 21:9 ve telefonda, şifa sayısının çıkması, ağacın üst kademeleri.
-5. **Skald ağacı v1** (2026-11-08): `data/skill-trees/skald.json`, tablo + 6 öneri `docs/design/classes/skald.md` bölüm 3; sayılar sim bekler. 6 önerinin durumu: onay bekliyor (belgeler çelişiyordu, onay doğrulanmadı; uygulanmadı).
+5. **Skald ağacı v1** (2026-11-08): `data/skill-trees/skald.json`, tablo + 6 öneri `docs/design/classes/skald.md` bölüm 3; sayılar sim bekler. 6 öneri ONAYLANDI (Ömer 2026-11-14, form r17): ağaç böyle kalır, öneriler agent/skald-hooks dalında uygulanıyor.
 6. **Skald menzil değişti, ölçüldü (53,4 / 53,5, bantta)** (Ömer 2026-11-08): yakın dövüş grubu, taban menzil 3 -> 2, Stormcall istisnası 3, frontPriority 3 -> 2, yoldaş önerisi ön saf. Yakın dövüş eşiği `range.meleeMax` 2 (Range 2 moblar da YZ'de yakın dövüşçü).
 7. **Vesper Thunder After (2026-11-08):** Blind'lı düşman ıskalayınca 1 çan (`enemyMissed`). Ağaç düğümü: QB sim'i ölçmez (ağaçsız); sefer sim'inde görünür.
 

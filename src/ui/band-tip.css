@@ -4,14 +4,12 @@
   --bu: var(--u, 1px);
   --ac: #d9b26a;
   --acl: color-mix(in srgb, var(--ac) 52%, #fff);
-  --fs: max(13px, calc(19 * var(--bu)));
-  --fs-s: max(11px, calc(15 * var(--bu)));
+  --fs: max(calc(13px * var(--tx, 1)), calc(19 * var(--bu) * var(--tx, 1)));
+  --fs-s: max(calc(11px * var(--tx, 1)), calc(15 * var(--bu) * var(--tx, 1)));
   --bt-line: rgba(217, 178, 106, 0.16);
   --bt-line2: rgba(217, 178, 106, 0.3);
   --bt-gold: #f3d999;
   --bt-dim: #a8977a;
-  --bt-disp: Cinzel, Georgia, serif;
-  --bt-body: 'EB Garamond', Georgia, serif;
   position: relative;
   box-sizing: border-box;
   width: max-content;
@@ -67,8 +65,8 @@
 .bt::after {
   content: '';
   position: absolute;
-  width: max(8px, calc(11 * var(--bu)));
-  height: max(8px, calc(11 * var(--bu)));
+  width: 0.58em;
+  height: 0.58em;
   transform: rotate(45deg);
   background: #130d07;
   border: 1px solid var(--acl);
@@ -110,7 +108,7 @@
 }
 
 .bt-title {
-  font: 600 max(16px, calc(26 * var(--bu))) var(--bt-disp);
+  font: 600 max(calc(16px * var(--tx, 1)), calc(26 * var(--bu) * var(--tx, 1))) var(--bt-disp);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--acl);
@@ -196,14 +194,14 @@
 }
 
 .bt-big {
-  font: 600 max(22px, calc(36 * var(--bu))) / 1 var(--bt-disp);
+  font: 600 max(calc(22px * var(--tx, 1)), calc(36 * var(--bu) * var(--tx, 1))) / 1 var(--bt-disp);
   color: #f8ebc9;
   text-shadow: 0 0 12px color-mix(in srgb, var(--ac) 50%, transparent);
 }
 
 .bt-big small {
   display: block;
-  font: 600 max(10px, calc(13 * var(--bu))) var(--bt-disp);
+  font: 600 max(calc(10px * var(--tx, 1)), calc(13 * var(--bu) * var(--tx, 1))) var(--bt-disp);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--bt-dim);
@@ -225,7 +223,7 @@
   width: max(9px, calc(14 * var(--bu)));
   height: max(9px, calc(14 * var(--bu)));
   background: #2a2016;
-  font: 700 max(7px, calc(9 * var(--bu))) / max(9px, calc(14 * var(--bu))) var(--bt-disp);
+  font: 700 max(calc(7px * var(--tx, 1)), calc(9 * var(--bu) * var(--tx, 1))) / max(calc(9px * var(--tx, 1)), calc(14 * var(--bu) * var(--tx, 1))) var(--bt-disp);
   text-align: center;
   color: #2a1405;
 }
@@ -323,8 +321,8 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 7px;
-  height: 7px;
+  width: 0.37em;
+  height: 0.37em;
   transform: translate(-50%, -50%) rotate(45deg);
   background: #130d07;
   border: 1px solid var(--acl);
@@ -346,7 +344,7 @@
 }
 
 .bt-sec span {
-  font: 600 max(10px, calc(13 * var(--bu))) var(--g-disp, 'Cinzel', serif);
+  font: 600 max(calc(10px * var(--tx, 1)), calc(13 * var(--bu) * var(--tx, 1))) var(--g-disp, 'Cinzel', serif);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--acl);
@@ -470,8 +468,8 @@
 }
 
 .bt-pips i {
-  width: max(9px, calc(13 * var(--bu)));
-  height: max(9px, calc(13 * var(--bu)));
+  width: 0.68em;
+  height: 0.68em;
   transform: rotate(45deg);
   border: 1px solid rgba(217, 178, 106, 0.6);
   background: #0d0a06;
@@ -625,76 +623,4 @@ button:disabled[data-bt] {
 .bt .bt-d {
   color: var(--bt-dim, #a8977a);
   font-weight: 500;
-}
-
-.bt-short,
-.bt-full {
-  display: contents;
-}
-
-.bt:not(.open) .bt-full,
-.bt.open .bt-short {
-  display: none;
-}
-
-.bt-morerow {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 max(12px, calc(18 * var(--bu))) max(8px, calc(10 * var(--bu)));
-}
-
-.bt-morebtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5em;
-  min-height: max(34px, calc(44 * var(--rp, 1px)));
-  padding: 0 1.1em;
-  background: rgba(30, 22, 14, 0.9);
-  border: 1px solid var(--bt-line2);
-  color: #e0702a;
-  font: 600 max(11px, calc(13 * var(--bu))) var(--bt-disp);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  pointer-events: auto;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-
-.bt-morebtn:hover {
-  border-color: #e0702a;
-  background: rgba(224, 112, 42, 0.16);
-}
-
-.bt-morebtn .dia {
-  width: 0.55em;
-  height: 0.55em;
-  transform: rotate(45deg);
-  background: #e0702a;
-}
-
-.bt-morebtn .l,
-.bt.open .bt-morebtn .m {
-  display: none;
-}
-
-.bt.open .bt-morebtn .l {
-  display: inline;
-}
-
-/* More düğmesi kalktı (Ömer 2026-11-07): skill ipucu tıklanmaz; fare skill çubuğundan çıkınca kapanır (ipucunun üstüne geçmek açık tutmaz) */
-
-/* tıklanamayan kaplarda (kart yanı yüzen ipucu, bağlam ipucu) düğme yok: tam metin hep açık */
-.bh-ftip .bt-morerow,
-.bh-ctip .bt-morerow {
-  display: none;
-}
-
-.bh-ftip .bt .bt-full,
-.bh-ctip .bt .bt-full {
-  display: contents;
-}
-
-.bh-ftip .bt .bt-short,
-.bh-ctip .bt .bt-short {
-  display: none;
 }

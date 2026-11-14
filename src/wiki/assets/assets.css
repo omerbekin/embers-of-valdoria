@@ -1005,8 +1005,8 @@
 .wk-assets .chip.on::before {
   content: '';
   flex: none;
-  width: 7px;
-  height: 7px;
+  width: 0.58em;
+  height: 0.58em;
   transform: rotate(45deg);
   background: var(--k-ember);
   box-shadow: 0 0 0 1px var(--k-ember2), 0 0 6px rgba(240, 140, 40, 0.6);

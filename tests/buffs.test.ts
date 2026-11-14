@@ -48,12 +48,14 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
       if (id === 'ley_thread') continue;
       // Shocked (maps-2-3.md A1): yalnız rozet, etkisi anlık (formulas.thunder)
       if (id === 'shocked') continue;
+      // Electrocuted (Ömer 2026-11-09, ikinci element formu): etkisi motor kuralı (anlık dosta temel saldırı + sıra çubuğu 0; formulas.thunder.wetInto)
+      if (id === 'electrocuted') continue;
       expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.armorMult !== undefined || def.damageDealtMult !== undefined || def.magicDealtMult !== undefined || def.rooted === true || def.noEvasion === true || def.armorLossFromAmount === true, id).toBe(true);
     }
   });
 
   it('yer etkileri (zehir, yanan zemin) tanımlı', () => {
-    expect(Object.keys(content.grounds).sort()).toEqual(['burning', 'field_of_shafts', 'flooded', 'flooded_planks', 'hall_of_silence', 'healing_rain', 'holy_fire', 'holy_ground', 'holy_water', 'ice_ground', 'lingering_rain', 'poison', 'quaking_ground', 'root_field', 'sanctified_flame', 'storm']);
+    expect(Object.keys(content.grounds).sort()).toEqual(['black_flame', 'blood', 'blood_curse', 'bloody_water', 'burning', 'cursed_ground', 'field_of_shafts', 'flooded', 'flooded_planks', 'grave_frost', 'hall_of_silence', 'healing_rain', 'holy_fire', 'holy_ground', 'holy_water', 'ice_ground', 'lingering_rain', 'poison', 'quaking_ground', 'root_field', 'rot', 'sanctified_flame', 'storm']);
   });
 });
 

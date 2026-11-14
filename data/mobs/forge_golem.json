@@ -1,7 +1,8 @@
 {
   "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Komşu: slagcart_golem. Kendi çizimi. Forgeborn: Slagcart emsali, aile guardians, rol metni Forgeborn (yeni aile kuralı yok).",
   "id": "forge_golem",
-  "name": "Forge Golem",
+  "name": "Forge Golem",
+  "bloodless": true,
   "family": "guardians",
   "spriteId": "forge_golem",
   "spriteScale": 0.97,

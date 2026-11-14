@@ -1,7 +1,8 @@
 {
   "_not": "Lantern (Harita 3 Darkness, M-F; maps-2-3.md 5): oyuncu tarafındaki kırılabilir ışık nesnesi. Inert: sıra almaz, skill i yok. Maks can gerçekte battle-rules.json > lanterns.lantern.hpRatio ile tarafın ortalama maks canından gelir (overrides.hp yalnızca taban). Sanat YER TUTUCU: sprite yok, BattleScene kodla çizer.",
   "id": "lantern",
-  "name": "Lantern",
+  "name": "Lantern",
+  "bloodless": true,
   "spriteId": "lantern",
   "color": "#e8b64c",
   "logo": "ironmooring",

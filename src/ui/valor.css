@@ -172,8 +172,6 @@ html.short .vl-corner .vl-lbl {
   --g-dim: #a8977a;
   --g-ember: #e0702a;
   --g-ember2: #ffb35a;
-  --g-disp: Cinzel, Georgia, serif;
-  --g-body: 'EB Garamond', Georgia, serif;
   z-index: 20;
   overflow: hidden;
   background: radial-gradient(ellipse at 50% 108%, rgba(224, 112, 42, 0.24), transparent 58%), #0a0605; /* opak: harita düğüm adları arkadan görünmesin (UI dili) */
@@ -229,8 +227,8 @@ html.reduced-motion .vz-sparks {
 
 .vz-dia {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 0.5em;
+  height: 0.5em;
   transform: rotate(45deg);
   background: var(--g-ember);
   border: 1px solid var(--g-ember2);
@@ -562,11 +560,6 @@ html.reduced-motion .vg-bn.can:not(.holding) {
   font: 600 max(11px, calc(16px * var(--k))) var(--g-disp);
   letter-spacing: 0.06em;
   color: var(--g-ember2);
-}
-
-.vz-foot .el-btn.primary {
-  min-height: 44px;
-  font-size: max(15px, calc(22px * var(--k)));
 }
 
 html.short .vz-foot {

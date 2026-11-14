@@ -25,7 +25,8 @@ import { balance, simulate, skillCategory, skillShare, ultReadyRate, winRate } f
 // 2026-11-02: 2 x 5000'de Paladin %48,1 / %49,4, Mage %50,7 / %49,7, Vesper %48,6 / %49,6, AM %47,3 / %49,3 -> Ömer kararıyla çıkarıldı. Druid muaf: görsel rework sonrası bakılacak.
 // 2026-11-07: skald = yeni class Thunder Skald (Ömer onayı), değerler PROVİZYON; sim Ömer onayıyla sonra.
 // 2026-11-08 Skald denge turu (Ömer onayı): 2 x 5000'de %48,9 / %51,3, skill payları bantta -> çıkarıldı.
-export const PENDING_BALANCE: readonly string[] = ['druid'];
+// 2026-11-11: Druid 5000'de %51,2 (bantta) -> Ömer kararıyla çıkarıldı. Hexer %56,4 -> Doom gücü (omen powerPerStack) %5 azaltıldı 0,4 -> 0,38 (Ömer).
+export const PENDING_BALANCE: readonly string[] = [];
 
 /**
  * BANDI BEKLEYEN SKILL'LER (kullanım payı / ultimate oranı): Ömer onayı bekleyen yeniden tasarım önerisi olanlar; ölçülür, uyarı yazılır.

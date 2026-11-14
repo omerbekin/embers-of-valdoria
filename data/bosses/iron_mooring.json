@@ -1,7 +1,8 @@
 {
   "_not": "Iron Mooring: Bridge Warden'ın bağlı yardımcı nesnesi (inert: sıra almaz, eylemi yok, şifa/kalkan almaz, ceset bırakmaz, savaş bitişinde sayılmaz). Canı PROVİZYON.",
   "id": "iron_mooring",
-  "name": "Iron Mooring",
+  "name": "Iron Mooring",
+  "bloodless": true,
   "spriteId": "iron_mooring",
   "color": "#8a4a25",
   "logo": "ironmooring",

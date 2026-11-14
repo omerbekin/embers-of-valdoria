@@ -1,0 +1,169 @@
+/*
+ * Pencere başlığı, Gear ailesi dışındaki pencereler (Ömer 2026-11-11 Form 6: "tüm benzer başlıklar tek yapı"; eski deneme window-header C kalıcı oldu):
+ * Inn / Camp (`.ec-head`), Recruit / Choose your hero (`.mw.hp .mw-hd`) ve küçük diyaloglar (`.eld-title`). Ortada Cinzel 600 büyük harf altın başlık,
+ * iki yanda ince altın çizgi + uçta küçük karo (Gear / Blacksmith / tüccar başlığıyla aynı süs, src/ui/gear.css sonu), altında soluk alt yazı.
+ * Rozet / madalyon / renk çubuğu YOK. Süs başlık yazısına oranlı (em; ui-global-rules.md).
+ */
+html {
+  --uvh-line: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.7));
+  --uvh-dia: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Crect x='2' y='2' width='6' height='6' transform='rotate(45 5 5)' fill='%23140e09' stroke='%23d9b26a' stroke-opacity='.85'/%3E%3C/svg%3E");
+}
+
+/* ---- ortak süs: çizgi + elmas (sol ::before, sağ ::after aynalı) ---- */
+html .gr-head:not(.gr-lhead) > .gr-title::before,
+html .gr-head:not(.gr-lhead) > .gr-title::after,
+html .eld-title::before,
+html .eld-title::after,
+html .mw.hp .mw-hd .mw-t::before,
+html .mw.hp .mw-hd .mw-t::after {
+  content: '';
+  flex: 0 1 auto;
+  width: var(--uvh-w, 2.4em);
+  min-width: 1.1em;
+  height: 0.32em;
+  background: var(--uvh-dia) right center / 0.32em 0.32em no-repeat, var(--uvh-line) left center / calc(100% - 0.26em) max(1px, 0.03em) no-repeat;
+}
+html .gr-head:not(.gr-lhead) > .gr-title::after,
+html .eld-title::after,
+html .mw.hp .mw-hd .mw-t::after {
+  transform: scaleX(-1);
+}
+
+/* ---- büyük pencereler: başlık şeridin ortasında ---- */
+html .gr-head:not(.gr-lhead) {
+  position: relative;
+  align-items: center;
+  min-height: max(46px, calc(64 * var(--u, 1px)));
+}
+html .gr-head:not(.gr-lhead) > .gr-title {
+  --uvh-w: 2.1em;
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  font-size: max(calc(20px * var(--tx, 1)), calc(40 * var(--u, 1px)));
+  letter-spacing: 0.14em;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* Inn / Camp (Ömer 2026-11-12): başlık kendi satırında, alt yazı (kasaba adı) HEMEN altında kendi satırında, ortada, soluk; üst üste binmez.
+   Başlık akışta (mutlak değil): her ekran boyutunda aynı düzen. Sağ üstte pencereye yaslı X için iki yana eşit pay (başlık ortada kalır). */
+html .ec-panel .ec-head {
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  min-height: 0;
+  row-gap: calc(4 * var(--u, 1px));
+  padding-bottom: calc(8 * var(--u, 1px));
+  padding-left: calc(var(--nav-hit-k, 44px) + 8px);
+  padding-right: calc(var(--nav-hit-k, 44px) + 8px);
+}
+html .ec-panel .ec-head > .gr-title {
+  position: relative;
+  left: auto;
+  top: auto;
+  bottom: auto;
+  height: auto;
+  transform: none;
+  flex: 0 0 100%;
+  justify-content: center;
+}
+html .ec-panel .ec-head > .ec-sub {
+  flex: 0 0 100%;
+  text-align: center;
+  font: 400 max(calc(12px * var(--tx, 1)), calc(22 * var(--u, 1px))) / 1.2 var(--g-body, serif);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--g-dim, #a8977a);
+}
+html .ec-head > .ec-head-ico {
+  display: none;
+}
+html.short .ec-panel .ec-head {
+  row-gap: 2px;
+  padding-bottom: 0;
+  padding-left: calc(2 * var(--nav-hit-k, 44px) + var(--nav-gap-k, 16px) + 8px);
+}
+html.short .ec-panel .ec-head > .ec-sub {
+  font-size: 12px;
+}
+
+/* ---- Recruit / Choose your hero (.mw-hd): madalyon ve renk çubuğu gider, başlık ortada, çipler altında ---- */
+html .mw.hp .mw-hd {
+  justify-content: center;
+  background: none;
+  padding-top: max(10px, calc(22 * var(--u, 1px)));
+  padding-bottom: max(6px, calc(12 * var(--u, 1px)));
+  border-bottom: 0;
+}
+html .mw.hp .mw-hd::before,
+html .mw.hp .mw-hd > .mw-medal {
+  display: none;
+}
+html .mw.hp .mw-hd > .tx {
+  align-items: center;
+}
+html .mw.hp .mw-hd .mw-t {
+  --uvh-w: 2.6em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  letter-spacing: 0.14em;
+  filter: none;
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: #f3d999;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.9);
+}
+html .mw.hp .mw-hd .mw-chip.type {
+  display: none;
+}
+/* yan yana iki soluk çip (yer + bölge) tek alt yazı olur: araya ayraç */
+html .mw.hp .mw-hd .mw-chip.dim + .mw-chip.dim::before {
+  content: '·';
+  margin-right: 0.5em;
+}
+html .mw.hp .mw-hd .mw-chip.dim {
+  border: 0;
+  padding: 0;
+  font: 400 max(calc(12px * var(--tx, 1)), calc(22 * var(--u, 1px))) var(--g-body, serif);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+/* ---- küçük diyaloglar (fixed px: --u yok) ---- */
+html .eld-title {
+  --uvh-w: 4em;
+  gap: 0.65em;
+  font-size: 30px;
+  letter-spacing: 0.14em;
+}
+html .eld-title::before,
+html .eld-title::after {
+  width: var(--uvh-w);
+}
+html .el-dialog .eld-sub,
+html .el-dialog .eld-lead:first-of-type {
+  color: var(--el-muted, #a8977a);
+}
+
+html.short .eld-title {
+  --uvh-w: 2.2em;
+  gap: 0.55em;
+  font-size: 18px;
+}
+html.short .gr-head:not(.gr-lhead) > .gr-title {
+  --uvh-w: 1.2em;
+  gap: 0.4em;
+  font-size: 15px;
+}
+html.short .mw.hp .mw-hd .mw-t {
+  --uvh-w: 1.2em;
+  font-size: 15px;
+}

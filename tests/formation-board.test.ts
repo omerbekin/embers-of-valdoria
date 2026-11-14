@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clientToLocal, rectToLocal, dropOnCell, fitOfHint, previewMove, reachRows, reachText, rowName, tapCell } from '../src/ui/formation-board-rules';
+import { removeTarget, clientToLocal, rectToLocal, dropOnCell, fitOfHint, previewMove, reachRows, reachText, rowName, tapCell } from '../src/ui/formation-board-rules';
 
 // 12 hücre: 1 = Warrior (ön sıra), 10 = Undead (arka sıra)
 const cells = (): string[] => {
@@ -88,5 +88,15 @@ describe('formation board kuralları (Formation A)', () => {
     const r = { left: 600, top: 400, right: 800, bottom: 600 };
     expect(rectToLocal(r, rr, 1360, true)).toEqual({ x: 200, y: 200, w: 100, h: 100 });
     expect(clientToLocal(r.right, r.top, rr, 1360, true)).toEqual({ x: 200, y: 200 });
+  });
+});
+
+describe('sağ tık ile çıkarma (removeTarget)', () => {
+  it('dolu hücre: kahraman kimliği; boş / geçersiz hücre: boş yazı (hiçbir şey yapılmaz)', () => {
+    expect(removeTarget(cells(), 1)).toBe('warrior');
+    expect(removeTarget(cells(), 10)).toBe('undead');
+    expect(removeTarget(cells(), 4)).toBe('');
+    expect(removeTarget(cells(), -1)).toBe('');
+    expect(removeTarget(cells(), 12)).toBe('');
   });
 });

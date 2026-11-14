@@ -314,8 +314,8 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
       const a = Math.min(1, Math.min(t, 1 - t) / 0.12);
       dv.lineStyle(1, EL.GOLD, 0.3 * a).lineBetween(px + ((w - px * 2) * i) / 24, y, px + ((w - px * 2) * (i + 1)) / 24, y);
     }
-    dv.fillStyle(0x130d07, 1).fillPoints(diamondPts(w / 2, y, 4.5), true);
-    dv.lineStyle(1, mix(accent, 0xffffff, 0.52), 1).strokePoints(diamondPts(w / 2, y, 4.5), true);
+    dv.fillStyle(0x130d07, 1).fillPoints(diamondPts(w / 2, y, 4.5 * s), true);
+    dv.lineStyle(1, mix(accent, 0xffffff, 0.52), 1).strokePoints(diamondPts(w / 2, y, 4.5 * s), true);
     items.push(dv);
     y += Math.round(12 * s);
   }
@@ -397,7 +397,7 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
     const fhh = ft.height + Math.round(14 * s);
     const fg = scene.add.graphics();
     fg.fillStyle(0x000000, 0.24).fillRect(0, y, w, fhh).lineStyle(1, EL.GOLD, 0.16).lineBetween(0, y, w, y);
-    fg.fillStyle(mix(accent, 0xffffff, 0.52), 1).fillPoints(diamondPts(px + 5, y + fhh / 2, 3.5), true);
+    fg.fillStyle(mix(accent, 0xffffff, 0.52), 1).fillPoints(diamondPts(px + Math.round(5 * s), y + fhh / 2, 3.5 * s), true);
     ft.y = y + fhh / 2;
     items.push(fg, ft);
     h = y + fhh;
@@ -412,8 +412,8 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
   back.lineStyle(1, mix(accent, 0xd9b26a, 0.4), 0.9).strokeRect(0.5, 0.5, w - 1, h - 1);
   const corner = scene.add.graphics();
   for (const [cx, cy] of [[0, 0], [w, h]] as const) {
-    corner.fillStyle(0x130d07, 1).fillPoints(diamondPts(cx, cy, 6), true);
-    corner.lineStyle(1, mix(accent, 0xffffff, 0.52), 1).strokePoints(diamondPts(cx, cy, 6), true);
+    corner.fillStyle(0x130d07, 1).fillPoints(diamondPts(cx, cy, 6 * s), true);
+    corner.lineStyle(1, mix(accent, 0xffffff, 0.52), 1).strokePoints(diamondPts(cx, cy, 6 * s), true);
   }
   return { container: scene.add.container(0, 0, [back, bandG, ...items, corner]).setDepth(5000), width: w, height: h };
 }

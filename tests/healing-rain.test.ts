@@ -226,12 +226,16 @@ describe('Healing Rain: su sayılır (tepkime tablosu)', () => {
     return { b, me: P(b, 1).uid };
   };
 
-  it('Spread: zehir yağmurun bağlı hücrelerine akar, yağmur kalır (kurulum ve tetik)', () => {
+  it('Spread: zehir yağmurdan ortak sıvı kuralıyla taşar, yağmur kalır (kurulum ve tetik)', () => {
     const s = arena();
     place(s.b, s.me, 'healing_rain', 'party', [0, 1, 2]);
     place(s.b, E(s.b).uid, 'poison', 'party', [1]);
     expect(reactions(s.b)).toEqual(['spread']);
-    for (const c of [0, 1, 2]) expect(typesAt(s.b, 'party', c), `cell ${c}`).toEqual(['healing_rain', 'poison']);
+    expect(typesAt(s.b, 'party', 1)).toEqual(['healing_rain', 'poison']);
+    // Ortak kural (Ömer 2026-11-09): alan 3 hücre -> liquidSpreadCount(3) bitişik hücre
+    const pc = s.b.ground.filter((g) => g.ground === 'poison' && g.board === 'party').flatMap((g) => g.slots);
+    expect(pc).toHaveLength(1 + s.b.liquidSpreadCount(3));
+    for (const c of [0, 1, 2]) expect(typesAt(s.b, 'party', c)).toContain('healing_rain');
     const t = arena();
     place(t.b, E(t.b).uid, 'poison', 'party', [1]);
     place(t.b, t.me, 'healing_rain', 'party', [1]);
@@ -241,8 +245,9 @@ describe('Healing Rain: su sayılır (tepkime tablosu)', () => {
     const m = arena();
     place(m.b, m.me, 'healing_rain', 'party', [0]);
     place(m.b, m.me, 'flooded', 'party', [1]);
+    expect(m.b.reactionWaterNetwork('party', 0)).toEqual([0, 1]);
     place(m.b, E(m.b).uid, 'poison', 'party', [0]);
-    expect(typesAt(m.b, 'party', 1)).toContain('poison');
+    expect(reactions(m.b)).toEqual(['spread']);
   });
 
   it('Frozen: Chill Ground yağmuru buza çevirir, iki yönde', () => {
@@ -286,12 +291,12 @@ describe('Healing Rain: su sayılır (tepkime tablosu)', () => {
     }
   });
 
-  it('isWaterSkill ve Live Water yağmuru su saymaz: ıslatmaz, şimşek zincirlemez', () => {
+  it('isWaterSkill yağmuru su saymaz (ıslatmaz); ama şimşek için su sayılır (Ömer 2026-11-09, ikinci element formu D)', () => {
     const b = make({ 0: 'druid', 1: 'warrior' }, { 0: 'warrior' });
     place(b, P(b).uid, 'healing_rain', 'party', [1]);
     expect(has(P(b, 1), 'soaked')).toBe(false);
     expect(reactions(b)).toEqual([]);
-    expect((b as unknown as { conductingCells(s: string): Set<number> }).conductingCells('party').size).toBe(0);
+    expect([...(b as unknown as { conductingCells(s: string): Set<number> }).conductingCells('party')]).toEqual([1]);
   });
 });
 

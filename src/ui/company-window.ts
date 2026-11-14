@@ -9,11 +9,12 @@ import './company-window.css';
 import { addBustWeapons, avatarUrlOf, bustHtml } from './hero-bust';
 import { bandTipHtml } from './band-tip';
 import { dismissOnBackdrop } from './backdrop';
+import { navSvg } from './nav-icons';
 import { lockInput, unlockInput } from './input-lock';
 import { holdViewportForKeyboard } from './viewport';
 import { miscImage, statImage } from '../game/icon-image-files';
 import type { MwCard } from './map-window';
-import { attachBandTip, reasonSpec } from './band-tip-attach';
+import { attachBandTip, positionTip, reasonSpec } from './band-tip-attach';
 
 export interface CompanySpec {
   size: number;
@@ -124,15 +125,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
     wrap.append(t);
     tipEl = t;
     tipFor = target;
-    const r = target.getBoundingClientRect();
-    const w = wrap.getBoundingClientRect();
-    const tw = t.offsetWidth;
-    const th = t.offsetHeight;
-    const x = Math.max(8, Math.min(w.width - tw - 8, r.left - w.left + r.width / 2 - tw / 2));
-    let y = r.top - w.top - th - 14;
-    if (y < 8) y = r.bottom - w.top + 14;
-    t.style.left = `${x}px`;
-    t.style.top = `${y}px`;
+    positionTip(t, target, { bound: wrap, gap: 14, pad: 8 }); // ortak yerleşim (band-tip-attach.ts)
     requestAnimationFrame(() => t.classList.add('on'));
   };
   const hoverTip = (el: HTMLElement, id: string): void => {
@@ -363,6 +356,15 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
   if (o.onCancel) {
     const cancel = o.onCancel;
     wrap.querySelector<HTMLElement>('[data-no]')?.addEventListener('click', () => !done && cancel());
+    // Sağ üst X (pencere kuralı): yalnız kapatılabilir pencerede (Kışla); Esc / zemin / Not now ile aynı iş. Zorunlu seçimde yok.
+    const xb = document.createElement('button');
+    xb.type = 'button';
+    xb.className = 'cw-x nav-btn';
+    xb.setAttribute('aria-label', 'Close');
+    xb.title = 'Close';
+    xb.innerHTML = navSvg('close');
+    xb.addEventListener('click', () => !done && cancel());
+    win.append(xb);
     dismissOnBackdrop(wrap, win, () => !done && cancel());
   }
 

@@ -26,7 +26,8 @@ const hpOf = (b: Battle, uid: string) => b.get(uid)!.hp;
 describe('zemin tepkimeleri: veri', () => {
   it('reactions bloğu zemin değil; her tepkimenin zeminleri ve yeni zeminleri tanımlı, etiketi ve metni var', () => {
     expect(content.grounds.reactions).toBeUndefined();
-    expect(Object.keys(R).sort()).toEqual(['evaporate', 'explosion', 'feed', 'frozen', 'frozen_chill', 'holy_water', 'holy_water_ground', 'purge', 'quenched', 'roots_burn', 'sanctified', 'shatter', 'spread', 'toxic_smoke']);
+    // Element formu (Ömer 2026-11-09): yeni zemin + birim üstü tepkimeler (ayrıntı tests/element-combos.test.ts)
+    expect(Object.keys(R).sort()).toEqual(['black_flame', 'blood_curse', 'bloody_water', 'brittle', 'brittle_frost', 'chilled_venom', 'cleansed', 'cleansed_water', 'cursed_water', 'evaporate', 'explosion', 'feed', 'flash_freeze', 'frost_venom', 'frozen', 'frozen_chill', 'grave_frost', 'hexed_spark', 'holy_water', 'holy_water_ground', 'jolted_flame', 'jolted_venom', 'purge', 'quenched', 'roots_burn', 'rot', 'sanctified', 'shatter', 'spark_blaze', 'spread', 'steam', 'tainted_blood', 'toxic_smoke', 'wet_venom']);
     for (const [id, d] of Object.entries(R)) {
       expect(d.label, id).toBeTruthy();
       expect(d.text, id).toBeTruthy();
@@ -186,21 +187,26 @@ describe('zemin tepkimeleri: motor', () => {
     }
   });
 
-  it('8 Spread (su <-> zehir): zehir suya bağlı tüm su hücrelerine yayılır, su kalır', () => {
+  it('8 Spread (su <-> zehir): ortak sıvı kuralı (Ömer 2026-11-09) - zehir, bağlı su alanının %33\'ü kadar (yuvarlanır, en az 1) bitişik hücreye taşar, su kalır', () => {
     {
       const { b, me } = mk();
       place(b, me.uid, 'flooded', 'enemy', [0, 1, 2, 4]);
       place(b, me.uid, 'poison', 'enemy', [0]);
       expect(reactions(b).map((e) => e.reaction)).toEqual(['spread']);
       const poison = b.ground.find((g) => g.ground === 'poison')!;
-      expect(poison.slots).toEqual([0, 1, 2, 4]);
+      expect(poison.slots).toHaveLength(1 + b.liquidSpreadCount(4));
+      expect(poison.slots).toContain(0);
+      for (const s of poison.slots) if (s !== 0) expect(b.touchingSlots([0]).concat(b.touchingSlots(poison.slots))).toContain(s);
       expect(b.ground.find((g) => g.ground === 'flooded')!.slots).toEqual([0, 1, 2, 4]);
     }
     {
       const { b, me } = mk();
       place(b, me.uid, 'poison', 'enemy', [1]);
-      place(b, me.uid, 'flooded', 'enemy', [1, 2, 5, 9]); // 9 bağlı değil
-      expect(b.ground.find((g) => g.ground === 'poison')!.slots).toEqual([1, 2, 5]);
+      place(b, me.uid, 'flooded', 'enemy', [1, 2, 5, 9]); // 9 bağlı değil: alan 3 hücre
+      const poison = b.ground.find((g) => g.ground === 'poison')!;
+      expect(poison.slots).toHaveLength(1 + b.liquidSpreadCount(3));
+      expect(poison.slots).toContain(1);
+      for (const s of poison.slots) if (s !== 1) expect(b.touchingSlots([1])).toContain(s);
     }
   });
 

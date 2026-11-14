@@ -25,6 +25,8 @@ import { newSeed } from '../game/seed';
 import { DEFAULT_VARIANT, SPRITE_VARIANTS, getSpriteVariant, setSpriteVariant, variantLabel } from '../game/sprite-variants';
 import { debugButton, debugHeading, debugSection, type DebugMenu } from './debug-menu';
 import { QUICK_TAB } from './debug-layout';
+import { setSettingsOpen } from './settings';
+import { setSettingsPage } from './settings-pages';
 import { UNIT_SELECT_EVENT } from '../game/unit-select';
 import { DEFAULT_TEST_SIZE, buildTestBattleData, clampTeam, placeClass, removeSlot, resizeTeam, setTestSwitches, testClassIds, testMode, testModeSummary, type TestSide } from '../game/test-mode';
 import { copyMatchData } from './match-copy';
@@ -38,6 +40,7 @@ import { registerMultiplayerDebug } from './debug-mp';
 import { registerEndlessDebug } from './debug-endless';
 import { registerDiagDebug } from './debug-diag';
 import { registerCloudDebug } from './debug-cloud';
+import { registerBadgeDebug } from './badge-debug';
 import { getRotateMode, setRotateMode } from './viewport';
 import { simulateContextLoss } from './context-loss';
 import { stageView } from '../game/stage-view';
@@ -101,6 +104,8 @@ export function registerDebugTools({ game, debug }: Ctx): void {
   registerDiagDebug(debug);
   // Bulut kaydı: Data > Cloud (src/cloud/cloud.ts)
   registerCloudDebug(game, debug);
+  // Campaign > Badge demo state (src/ui/badge-debug.ts)
+  registerBadgeDebug(game, debug);
   /** The battle scene, only while a battle is actually running (not on the team selection screen). */
   // (yer tutucu sahne açıkken, src/game/lazy-scenes.ts, gerçek savaş yok sayılır)
   const battle = (): BattleScene | null => {
@@ -116,6 +121,18 @@ export function registerDebugTools({ game, debug }: Ctx): void {
   // A Ctrl+click selection change refreshes the open Unit tab (the highlighted units)
   if (typeof window !== 'undefined') window.addEventListener(UNIT_SELECT_EVENT, () => debug.refresh());
 
+  debug.register({
+    id: 'ui.settings-access',
+    icon: 'eye',
+    tab: 'Quick',
+    section: 'Screens',
+    label: 'Settings: Accessibility',
+    hint: 'Open Settings on the Accessibility page (text size, colorblind marks, reduce motion)',
+    run: () => {
+      setSettingsPage('access');
+      setSettingsOpen(true);
+    },
+  });
   // ===== Battle =====
   debug.register({
     id: 'scene.team-select',

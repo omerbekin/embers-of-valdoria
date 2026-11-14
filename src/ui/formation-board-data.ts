@@ -11,7 +11,7 @@ import { statBandSpec, statTip } from './stat-tips';
 import { gearSkillRows } from './gear-skills';
 import { treePatchedSkill } from './skill-tree-preview';
 import { iconUrl } from './dom-icons';
-import { heroSkillIconUrl } from './evolve-icon';
+import { heroSkillIconUrl, heroSkillName } from './evolve-icon';
 import { uiIconName } from './ui-icons';
 import { STAT_COLOR, statIconName } from './stat-icons';
 import { ownerOfUnit } from '../game/asset-versions';
@@ -63,7 +63,7 @@ export function boardHero(h: BoardHeroSource): FormationBoardHero | null {
     skills: rows
       .filter((r) => !r.passive && r.skill)
       // Ulti: veride ayrı işaret yok; savaş HUD'ı / karakter paneliyle aynı kural, 4. skill yuvası
-      .map((r, i) => ({ id: r.skill!.id, name: r.skill!.name, icon: heroSkillIconUrl(h, r.skill!), cost: costOf(r.skill!), ...(i === 3 ? { ult: true } : {}) })),
+      .map((r, i) => ({ id: r.skill!.id, name: heroSkillName(h, r.skill!), icon: heroSkillIconUrl(h, r.skill!), cost: costOf(r.skill!), ...(i === 3 ? { ult: true } : {}) })),
   };
 }
 

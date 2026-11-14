@@ -9,10 +9,11 @@ const read = (f: string): string => readFileSync(new URL(`../${f}`, import.meta.
 // (src/ui/settings-pages.ts), ana menü sütunu ve oyun içi DOM ekranı aynısını çizer.
 describe('Settings sayfaları', () => {
   it('kategoriler ve satırlar istenen sırada', () => {
-    expect(SETTINGS_PAGES.map((p) => p.label)).toEqual(['Sound', 'Gameplay', 'Display', 'UI', 'Privacy', 'Account']);
+    expect(SETTINGS_PAGES.map((p) => p.label)).toEqual(['Sound', 'Gameplay', 'Display', 'UI', 'Privacy', 'Accessibility', 'Account']);
     const labels = (k: Parameters<typeof pageOf>[0]) => pageOf(k).items.map((i) => SETTINGS_LABELS[i]);
     expect(labels('sound')).toEqual(['Master Volume', 'Music', 'Sound Effects', 'UI Sounds']);
-    expect(labels('gameplay')).toEqual(['Battle Speed', 'Reduced Motion', 'Tutorials']);
+    expect(labels('gameplay')).toEqual(['Battle Speed', 'Tutorials']);
+    expect(labels('access')).toEqual(['Text Size', 'Colorblind Support', 'Reduce Motion']);
     expect(labels('display')).toEqual(['Performance Mode', 'Show FPS', 'Fullscreen']);
     expect(labels('ui')).toEqual([]); // UI sayfası tek DOM parçasıdır (imleç; src/ui/cursor-settings.ts)
     expect(labels('privacy')).toEqual(['Error Reports', 'Copy Log', 'Privacy Info']);
@@ -33,11 +34,11 @@ describe('Settings sayfaları', () => {
     expect(settingsPage()).toBe('privacy');
     setSettingsPage('nope' as never);
     expect(settingsPage()).toBe('privacy');
-    expect(stepPage('privacy', 1)).toBe('account');
+    expect(stepPage('privacy', 1)).toBe('access');
     expect(stepPage('sound', -1)).toBe('account');
     // Giriş yokken (Pages / sunucu kapalı) Account atlanır
-    expect(stepPage('privacy', 1, false)).toBe('sound');
-    expect(stepPage('sound', -1, false)).toBe('privacy');
+    expect(stepPage('privacy', 1, false)).toBe('access');
+    expect(stepPage('sound', -1, false)).toBe('access');
     expect(stepPage('account', 1, false)).toBe('sound');
     expect(stepPage('gameplay', 1)).toBe('display');
     expect(pageIndex('display')).toBe(2);
@@ -48,15 +49,13 @@ describe('Settings sayfaları', () => {
     expect(pageVisible('account', false)).toBe(false);
     expect(pageVisible('account', true)).toBe(true);
     expect(pageVisible('privacy', false)).toBe(true);
-    expect(visiblePages(false).map((p) => p.key)).toEqual(['sound', 'gameplay', 'display', 'ui', 'privacy']);
-    expect(visiblePages(true).map((p) => p.key)).toEqual(['sound', 'gameplay', 'display', 'ui', 'privacy', 'account']);
+    expect(visiblePages(false).map((p) => p.key)).toEqual(['sound', 'gameplay', 'display', 'ui', 'privacy', 'access']);
+    expect(visiblePages(true).map((p) => p.key)).toEqual(['sound', 'gameplay', 'display', 'ui', 'privacy', 'access', 'account']);
   });
 
   it('Account: ana menü DOM sayfasını kurar, oyun içi salt okunur satır; giriş yokken kategori gizli', () => {
     const menu = read('src/game/scenes/MainMenuScene.ts');
-    expect(menu).toMatch(/import\('\.\.\/\.\.\/cloud\/ui\/account-page'\)/);
-    expect(menu).toMatch(/pageVisible\(pg\.key, login\)/);
-    expect(menu).toMatch(/const login = accountShown\(\)/);
+    expect(menu).toMatch(/fullAccount: true/); // tek Settings ekranı (Ömer 2026-11-11): ana menü aynı DOM ekranını tam hesap sayfasıyla açar
     const dom = read('src/ui/settings.ts');
     expect(dom).toMatch(/accountLine\(/);
     expect(dom).toMatch(/cat\.hidden = !pageVisible\(k, login\)/);
@@ -80,9 +79,10 @@ describe('Settings sayfaları', () => {
     expect(read('data/cloud.json')).toMatch(/"enabled": (true|false)/);
   });
 
-  it('iki ekran da listeyi settings-pages.ts\'ten çizer ve her satırı işler', () => {
+  it('Settings ekranı listeyi settings-pages.ts ekrani çizer ve her satırı işler (Phaser kopyası yok)', () => {
     const keys = Object.keys(SETTINGS_LABELS) as SettingsItemKey[];
-    for (const f of ['src/ui/settings.ts', 'src/game/scenes/MainMenuScene.ts']) {
+    expect(read('src/game/scenes/MainMenuScene.ts')).not.toMatch(/SETTINGS_PAGES/);
+    for (const f of ['src/ui/settings.ts']) {
       const src = read(f);
       expect(src, f).toMatch(/SETTINGS_PAGES/);
       expect(src, f).toMatch(/from '(\.\.\/)*(\.\/)?(ui\/)?settings-pages'|from '\.\/settings-pages'|from '\.\.\/\.\.\/ui\/settings-pages'/);
@@ -98,6 +98,6 @@ describe('Settings sayfaları', () => {
     const css = read('src/style.css');
     expect(css).toMatch(/\.st-page \.st-row \{\s*margin-left: calc\(30 \* var\(--u\)\)/);
     expect(css).toMatch(/html\.short \.st-row \{\s*height: 44px/);
-    expect(css).toMatch(/html\.short \.st-cat \{\s*height: 44px/);
+    expect(css).toMatch(/html\.short \.st-cat \{\s*height: 34px/);
   });
 });

@@ -3,12 +3,13 @@
 // > .el-dialog / .el-panel / .el-title / .el-heading), ortak pencere hareketi (.el-modal; Reduced motion = 0 ms), kapatma = Close + Esc +
 // zemine dokunma. Liste kendi içinde kayar; en yeni sürüm açık, eskiler başlığa dokununca açılır/kapanır. Ayrı kod parçası (MainMenuScene
 // dynamic import; menü hazır olunca boşta önceden indirilir, tıklayınca yükleme ekranı çıkmaz): menü paketine yük olmaz.
-// Sayfalama (Ömer 2026-10-16): sayfa başına en yeni PAGE_SIZE sürüm, altta Newer / "Page x / y" / Older + Close (birincil en sağda).
+// Sayfalama (Ömer 2026-10-16): sayfa başına en yeni PAGE_SIZE sürüm, altta Newer / "Page x / y" / Older ; kapatma sağ üst X.
 // Saf yardımcılar (releaseGroups, formatPatchDate, compareVersions, patchPage) testlidir.
 import notes from '../../data/patch-notes.json';
 import { dismissOnBackdrop } from './backdrop';
 import { lockInput, unlockInput } from './input-lock';
 import { closeDom } from './motion';
+import { mountCloseButton } from './nav-close';
 import { uiSound } from './ui-sound';
 import './patch-notes.css';
 
@@ -116,18 +117,16 @@ export function openPatchNotes(onClose?: () => void): void {
     return sec;
   };
 
-  // Alt sıra: Newer · Page x / y · Older (ikinciller) ... Close (birincil, en sağda)
+  // Alt sıra: Newer · Page x / y · Older (hepsi Compact boy); kapatma sağ üst X (ui-design-language 4.2)
   const row = el('div', 'el-row pn-row');
   const pager = el('div', 'pn-pager');
-  const newer = el('button', 'el-btn pn-page-btn', 'Newer');
+  const newer = el('button', 'el-btn sm pn-page-btn', 'Newer');
   newer.type = 'button';
   const count = el('span', 'pn-count');
-  const older = el('button', 'el-btn pn-page-btn', 'Older');
+  const older = el('button', 'el-btn sm pn-page-btn', 'Older');
   older.type = 'button';
   pager.append(newer, count, older);
-  const close = el('button', 'el-btn primary', 'Close');
-  close.type = 'button';
-  row.append(pager, close);
+  row.append(pager);
 
   let page = 0;
   const show = (to: number): void => {
@@ -158,6 +157,7 @@ export function openPatchNotes(onClose?: () => void): void {
     closing = true;
     window.removeEventListener('keydown', onKey, true);
     offBackdrop();
+    unmountX();
     closeDom(overlay, () => {
       overlay.remove();
       openOverlay = null;
@@ -180,7 +180,7 @@ export function openPatchNotes(onClose?: () => void): void {
     }
   };
   const offBackdrop = dismissOnBackdrop(overlay, panel, finish);
-  close.addEventListener('click', finish);
+  const unmountX = mountCloseButton(overlay, finish);
   window.addEventListener('keydown', onKey, true);
   // Fare bırakması alttaki Phaser sahnesine gitmesin; asıl güvence giriş kilidi
   overlay.addEventListener('mouseup', (e) => e.preventDefault());
@@ -189,7 +189,6 @@ export function openPatchNotes(onClose?: () => void): void {
   openOverlay = overlay;
   lockInput('patch-notes');
   uiSound('open');
-  close.focus({ preventScroll: true });
 }
 
 export const isPatchNotesOpen = (): boolean => !!openOverlay;

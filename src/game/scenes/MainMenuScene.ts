@@ -1,49 +1,35 @@
 import Phaser from 'phaser';
-import { loadSfxLevel, onSfxLevelChange, setSfxLevel } from '../../ui/sfx-volume';
-import { loadUiSoundLevel, onUiSoundLevelChange, previewUiSound, setUiSoundLevel, uiSound } from '../../ui/ui-sound';
-import { loadMusicLevel, menuMusic, onMusicLevelChange, setMusicLevel } from '../../ui/music';
+import { menuMusic } from '../../ui/music';
 import type { SaveEntry } from '../../campaign';
 import { backgroundKey, hasBackground, loadRestInBackground, preloadAssets } from '../assets';
 import { campaignArtKey, hasCampaignArt, preloadCampaignArt } from '../campaign-art';
 import { cardArt, hasCardArtFile, preloadCardArt } from '../card-art';
 import { MenuBackdrop, hasMenuLayers, preloadMenuLayers } from '../menu-backdrop';
-import { onReducedMotionChange, reducedMotion, setReducedMotion } from '../../ui/motion-pref';
+import { onReducedMotionChange, reducedMotion } from '../../ui/motion-pref';
 import { motion } from '../../ui/motion';
-import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from '../../ui/perf-mode';
-import { onTutorialChange, resetTutorials, setTutorialsOn, tutorialsOn } from '../../tutorial/store';
 import { blurredTexture, edgeFillers, mapArt } from '../map-art';
 import { coverShift, focusCrop, placeArt } from '../wide-map';
 import layout from '../../../data/battle-layout.json';
-import { onStageResize, stageView, worldXY } from '../stage';
+import { onStageResize, stageView } from '../stage';
 import { FULL_W, FULL_X0, MENU_COL_X, menuColumnShift } from '../../ui/viewport';
 import type { Modal } from '../campaign-ui';
 import { storage } from '../kv-storage';
 import { subscribe as onCloudEvent } from '../../cloud/cloud';
 import { ensureGlow, fitText, goldText, serif } from '../menu-text';
-import { GOLD } from '../ui-frame';
 import { mp, MP_SCENE } from '../mp-client';
 import { addLogo, hasLogo, preloadLogo } from '../branding';
-import { loadVolume, setSettingsVolume } from '../../ui/settings';
-import { mountCursorPanel } from '../../ui/cursor-settings';
-import { VOLUME_STEPS, volumeLabel } from '../../ui/volume-steps';
+import { setSettingsOpen } from '../../ui/settings';
 import { DISPLAY_VERSION } from '../../ui/display-version';
-import { SPEED_STEPS, battleSpeed, battleSpeedLabel, onBattleSpeedChange, setBattleSpeed, speedAt, speedIndex } from '../../ui/battle-speed';
-import { openDebugMenu } from '../../ui/debug-entry';
-import { currentSupport, IOS_HINT, isStandalone, onFullscreenChange, toggleFullscreen } from '../../ui/fullscreen';
 import { isInputLocked, lockInput, unlockInput } from '../../ui/input-lock';
 import { promptCode } from '../../ui/mp-overlay';
 import { normalizeLobbyCode } from '../../net/lobby-code';
 import { openWiki } from '../../wiki/open';
-import { BODY_FONT, DISPLAY_FONT, menuStyle } from '../../ui/menu-style';
+import { BODY_FONT, DISPLAY_FONT } from '../../ui/menu-style';
 import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { markBootReady, setBootProgress } from '../../ui/boot-loader';
 import { buildLedger, ledgerHeight, type Ledger, type LedgerRow } from '../menu-ledger';
-import { EL, elBack, elGo, elScreenIn, elText, elBody } from '../elegant-ui';
+import { EL, elBack, elGo, elScreenIn, elBody } from '../elegant-ui';
 import { trackChunkLoad } from '../../ui/boot-loader';
-import { copyDiagLog, diagConsent, diagReportId, onDiagConsentChange, setDiagConsent } from '../../diag/diag';
-import { openDiagNotice } from '../../diag/diag-notice';
-import { PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, pageOf, pageVisible, setSettingsPage, settingsPage, stepPage } from '../../ui/settings-pages';
-import { accountApi, accountShown } from '../../cloud/ui/api';
 import type { LazySceneKey } from '../lazy-scenes';
 import { MAIN_ITEMS, backTarget, backdropFor, campaignButtons, endlessBestWave, initialView, moveSelection, timeAgo, type MenuItemKey, type MenuView } from '../main-menu-flow';
 
@@ -105,43 +91,28 @@ function prefetchPatchNotes(): void {
 }
 const COL_X = MENU_COL_X; // sol sütunun yazı başlangıcı (ayarlar ekranı DOM sütunu da aynı: src/ui/viewport.ts)
 const COL_W = 560; // ana menü yazı satırlarının genişliği
-const PANEL_W = 760; // Settings / Multiplayer satırlarının genişliği (sağda değer/denetim)
 const SHADE_W = 980; // soldan sağa açılan gölge
 /** Ana menü logosunun kutusu (orta x/y, en fazla genişlik/yükseklik; oran korunur). */
 const LOGO_BOX = { x: COL_X + 153, y: 372, w: 408, h: 263 }; // Ömer 2026-10-13: taç logosu (680x440'tan %30, %20 küçük, sonra %7 büyük); sol kenarı satırların elmasıyla hizalı, alt kenarı ile Play arasında ~70 birim
-/** Settings açıkken sahnenin genel koyuluğu (settings-backdrop v2; DOM .st-overlay ile aynı). */
-const SETTINGS_DARK = 0.52;
-/** Settings yerleşimi (Ömer 2026-10-16, sayfalı düzen; DOM style.css > html.menu-elegant .st-col / .st-cats / .st-page aynı ölçüler):
- *  başlık ortası y, kategori sütunu ve sayfanın üst kenarı, satır yüksekliği (telefonda ~44 px dokunma), kategori sütunu genişliği + boşluk,
- *  sayfa başlığı yüksekliği, satırların başlıktan içeri kayması, kategori / satır / başlık yazı boyları, satır yazısı rengi (başlıktan yumuşak). */
-const SETTINGS_LAYOUT = { titleY: 140, top: 222, rowH: 132, catW: 360, gap: 40, headH: 90, indent: 30, catSize: 30, rowSize: 26, headSize: 34, rowColor: '#c4b18b' };
-/** Settings açıkken sütun gölgesinin genişliği (sayfa satırları kategori sütununun sağında). */
-const SETTINGS_SHADE_W = 1400;
-/**
- * Görünüm stili (src/ui/menu-style.ts): 'classic' bugünkü menü; 'elegant' ilk taslağın zarif stili (?menu=new önizleme). Onaylanınca
- * yalnızca DEFAULT_MENU_STYLE değişir; aşağıdaki ölçüler aynı kalır (önizleme = onaylanan görünüm).
- */
-const ELEGANT = menuStyle === 'elegant';
-const LOOK = ELEGANT
-  ? {
-      rowH: 92, // ince satırlar (dokunma alanı satırın tamamı)
-      itemY0: 600, // logo v3 (2026-10-13) ~1,56:1 ve uzun: satırlar logonun altına iner
-      mainSize: 30, // Cinzel 600, büyük harf, harf aralığı 0,05em
-      panelSize: 28,
-      panelY0: 470,
-      titleY: 350,
-      titleSize: 52,
-      valueSize: 26,
-      stepSize: 34,
-      backSize: 30,
-      cardTitle: 40,
-      cardLine: 26,
-    }
-  : { rowH: 112, itemY0: 600, mainSize: 50, panelSize: 38, panelY0: 470, titleY: 330, titleSize: 66, valueSize: 32, stepSize: 40, backSize: 36, cardTitle: 50, cardLine: 24 };
+/** Menü ölçüleri (zarif stil: Cinzel + EB Garamond; eski "classic" dal 2026-11-09'da silindi). */
+const LOOK = {
+  rowH: 92, // ince satırlar (dokunma alanı satırın tamamı)
+  itemY0: 600, // logo v3 (2026-10-13) ~1,56:1 ve uzun: satırlar logonun altına iner
+  mainSize: 30, // Cinzel 600, büyük harf, harf aralığı 0,05em
+  panelSize: 28,
+  panelY0: 470,
+  titleY: 350,
+  titleSize: 52,
+  valueSize: 26,
+  stepSize: 34,
+  backSize: 30,
+  cardTitle: 40,
+  cardLine: 26,
+};
 const ROW_H = LOOK.rowH; // satır aralığı = dokunma alanı yüksekliği (telefonda ~40-44 gerçek px)
 const ITEM_Y0 = LOOK.itemY0;
 /** Zarif stilde satır yazısının iç boşluğu (parıltı gölgesi kesilmesin); yazı x'i bu kadar sola alınır. */
-const TPAD = ELEGANT ? 18 : 0;
+const TPAD = 18;
 const SHADOW_DARK = 'rgba(12,8,5,0.95)';
 /** Ana menünün açılışta istediği arka planlar (Play kartları; yedekleriyle). */
 /** Play kartları artık kendi görsellerini kullanır (assets/cards, src/game/card-art.ts): menü açılışında arena arka planı yüklenmez. */
@@ -224,24 +195,6 @@ export class MainMenuScene extends Phaser.Scene {
   private menuCol!: Phaser.GameObjects.Container;
   private menuRows: Row[] = [];
   private menuSel = 0;
-  private panel: Phaser.GameObjects.Container | null = null;
-  private panelRows: Row[] = [];
-  private panelSel = 0;
-  /** Sütunda bir sonraki öğenin üst kenarı (satır ROW_H, bölüm başlığı SETTINGS_LAYOUT.heading yer kaplar). */
-  private panelTop = 0;
-  /** Sütun satır yüksekliği (Settings: SETTINGS_LAYOUT.rowH; Multiplayer ROW_H). */
-  private panelRowH = ROW_H;
-  /** Sütun satırlarının x'i (Multiplayer COL_X; Settings sayfası kategori sütununun sağında, başlıktan içeride). */
-  private panelX = COL_X;
-  /** Settings: kategori satırları (SETTINGS_PAGES sırası), açık sayfa, sayfa kabı, klavye odağı (kategori / satır). */
-  private catRows: Row[] = [];
-  /** catRows sırasıyla sayfa anahtarları (giriş yokken Account satırı yok). */
-  private catKeys: SettingsPageKey[] = [];
-  private settingsKey: SettingsPageKey = 'sound';
-  private pageBox: Phaser.GameObjects.Container | null = null;
-  private panelZone: 'cat' | 'row' = 'row';
-  /** Açık panelin / sayfanın olay aboneliklerinden çıkış (sayfa değişince ve panel kapanınca). */
-  private panelOffs: Array<() => void> = [];
   private back!: Phaser.GameObjects.Container;
   /** Sağ alttaki küçük sürüm yazısı (DISPLAY_VERSION). */
   private version: Phaser.GameObjects.Text | null = null;
@@ -268,12 +221,6 @@ export class MainMenuScene extends Phaser.Scene {
     this.view = 'menu';
     this.cameFrom = null;
     this.menuRows = [];
-    this.panel = null;
-    this.panelRows = [];
-    this.catRows = [];
-    this.catKeys = [];
-    this.pageBox = null;
-    this.panelOffs = [];
     this.cards = [];
     this.outsideTapBound = false;
     this.menuSel = 0;
@@ -301,7 +248,7 @@ export class MainMenuScene extends Phaser.Scene {
 
   create(): void {
     // Zarif stil: Phaser yazıları çizildiği andaki fontla kalır; fontlar hazır değilse bekle ve sahneyi yeniden kur (yedek fontla çizilmesin)
-    if (ELEGANT && !menuFontsReady()) {
+    if (!menuFontsReady()) {
       this.cameras.main.setBackgroundColor('#0d0a07');
       setBootProgress(0.92);
       void whenMenuFontsReady().then(() => {
@@ -341,7 +288,6 @@ export class MainMenuScene extends Phaser.Scene {
     this.events.once('shutdown', () => {
       for (const fn of this.cleanups) fn();
       this.cleanups = [];
-      this.flushPanelOffs();
       if (this.promptOpen) unlockInput('main-menu-prompt');
     });
 
@@ -427,7 +373,6 @@ export class MainMenuScene extends Phaser.Scene {
     this.vignette.setDisplaySize(viewW, H);
     this.colX = menuColumnShift(left); // sütun ekranın soluna yaklaşır ama kenara yapışmaz (16:9'da 0)
     if (!this.tweens.isTweening(this.menuCol)) this.menuCol.setX(this.view === 'menu' ? this.colX : this.hiddenColX());
-    if (this.panel && !this.tweens.isTweening(this.panel)) this.panel.setX(this.colX);
     this.version?.setPosition(right - 34, H - 22);
     this.applyLook();
   }
@@ -490,31 +435,22 @@ export class MainMenuScene extends Phaser.Scene {
     return this.add.rectangle(-800, 0, 800, H, 0x080604, 0.85).setOrigin(0, 0);
   }
 
-  // ------------------------------------------------------------ yazı stilleri (classic / elegant)
+  // ------------------------------------------------------------ yazı stilleri 
 
   /** Satır yazısı (menü maddesi, ayar satırı): classic kalın serif + kontur; elegant Cinzel 600, büyük harf, 0,05em, koyu gölge (seçilince kor parıltısı). */
   private rowText(x: number, y: number, label: string, size: number, color: string): Phaser.GameObjects.Text {
-    if (!ELEGANT) return serif(this, x, y, label, size, color, { spacing: 2, stroke: 3 });
     return serif(this, x - TPAD, y, label.toUpperCase(), size, color, { font: DISPLAY_FONT, weight: '600', spacing: size * 0.05, stroke: 0 })
       .setPadding(TPAD, TPAD, TPAD, TPAD)
       .setShadow(0, 2, SHADOW_DARK, 4, false, true);
   }
 
-  /** Sağdaki değer yazısı (ses, Enter/Exit, ad, Host/Join). Elegant: Cinzel 600 (küçük harfler Cinzel'de küçük büyük harftir). */
-  private valueText(x: number, y: number, text: string, color: string, size = LOOK.valueSize): Phaser.GameObjects.Text {
-    if (!ELEGANT) return serif(this, x, y, text, size, color, { stroke: 3 });
-    return serif(this, x, y, text, size, color, { font: DISPLAY_FONT, weight: '600', spacing: size * 0.05, stroke: 0 }).setShadow(0, 2, SHADOW_DARK, 4, false, true);
-  }
-
   /** Açıklama / alt yazı: classic ince serif; elegant EB Garamond. */
   private noteText(x: number, y: number, text: string, size: number, color: string): Phaser.GameObjects.Text {
-    if (!ELEGANT) return serif(this, x, y, text, size, color, { bold: false, stroke: 2 });
     return serif(this, x, y, text, size + 2, color, { font: BODY_FONT, weight: 'normal', stroke: 0 }).setShadow(0, 1, SHADOW_DARK, 3, false, true);
   }
 
   /** Altın başlık (Settings / Multiplayer sütunu, kart başlıkları). */
-  private titleText(x: number, y: number, text: string, size: number, spacing: number, weight = '600'): Phaser.GameObjects.Text {
-    if (!ELEGANT) return goldText(this, x, y, text, size, spacing);
+  private titleText(x: number, y: number, text: string, size: number, _spacing: number, weight = '600'): Phaser.GameObjects.Text {
     return goldText(this, x, y, text.toUpperCase(), size, size * 0.05, { font: DISPLAY_FONT, weight, stroke: Math.max(2, Math.round(size / 16)) });
   }
 
@@ -545,11 +481,6 @@ export class MainMenuScene extends Phaser.Scene {
       text.setColor(!enabled ? '#7d705a' : v ? TXT_ON : base);
       this.tweens.killTweensOf(glow);
       this.tweens.add({ targets: glow, alpha: v && enabled ? 0.22 : 0, duration: 150 });
-      if (!ELEGANT) {
-        text.x = v ? 44 : 34;
-        glow.x = text.x + text.width / 2;
-        return;
-      }
       // Elegant: seçili satır hafif sağa kayar (taslaktaki padding-left geçişi) + kor parıltısı (yazı gölgesi)
       if (isOn !== v) text.setShadow(0, v && enabled ? 0 : 2, v && enabled ? SHADOW_GLOW : SHADOW_DARK, v && enabled ? 14 : 4, false, true);
       const first = isOn === null;
@@ -666,6 +597,15 @@ export class MainMenuScene extends Phaser.Scene {
   private setView(next: MenuView, instant = false): void {
     // Ayrı Multiplayer sütunu kaldırıldı (Ömer 2026-11-08): Host / Join Multiplayer kartının defterinde; eski 'mp' isteği kartlara düşer
     if (next === 'mp') next = 'play';
+    // Settings: tek DOM ekranı (src/ui/settings.ts, sol sütun görünümü); menü sola çekilir, kapanınca geri gelir. Account sayfası burada tam (giriş düğmeleri)
+    if (next === 'settings') {
+      this.slideMenu(false, false);
+      this.tweenLook('settings', false);
+      return void setSettingsOpen(true, () => {
+        this.slideMenu(true, false);
+        this.tweenLook('menu', false);
+      }, { fullAccount: true });
+    }
     const prev = this.view;
     if (prev === next && !instant) return;
     if (next !== 'menu' && next !== 'play') this.cameFrom = prev;
@@ -675,7 +615,6 @@ export class MainMenuScene extends Phaser.Scene {
     this.tweenLook(next, instant);
     this.slideMenu(next === 'menu', instant);
     this.showCards(next === 'play', instant);
-    this.showPanel(next === 'settings' ? next : null, instant);
     this.showBack(next !== 'menu', instant);
     if (next === 'menu') this.selectMain(this.menuSel);
   }
@@ -721,7 +660,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.back = elBack(this, () => this.ready() && this.goBack()).root.setAlpha(0).setVisible(false);
   }
 
-  /** Sağ alt köşede küçük sürüm yazısı (tasarım kiti: soluk EB Garamond italik; konum layoutStage'de, görünen alanın sağ kenarına göre). */
+  /** Sağ alt köşede küçük sürüm yazısı (tasarım kiti: soluk EB Garamond düz; konum layoutStage'de, görünen alanın sağ kenarına göre). */
   private buildVersion(): void {
     const v = DISPLAY_VERSION; // patch notes'un en üst sürümü (alt sürüm olabilir: 0.6.11.1; src/ui/display-version.ts)
     if (!v) return;
@@ -822,8 +761,8 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
     };
     // Kart görselleri (Ömer 2026-10-10): assets/cards (Quick Battle gündüz / Endless mode açıkken alacakaranlık, Multiplayer ay ışığı);
     // dosya yoksa eski arena arka planları. Kart görseli (`card:`) kart için çizildi: daha az karartılır.
-    const specs: Array<{ name: string; art: string | null; altArt?: string | null; line?: string; endless?: boolean; buttons?: typeof camp; rows?: LedgerRow[]; run: () => void }> = [
-      { name: 'Campaign', art: campaignArt, buttons: camp, rows: campRows, line: latest ? latestLine : 'Begin a new campaign', run: () => runCamp(camp[0]!.id) },
+    const specs: Array<{ name: string; art: string | null; altArt?: string | null; rowArt?: Array<string | null>; line?: string; endless?: boolean; buttons?: typeof camp; rows?: LedgerRow[]; run: () => void }> = [
+      { name: 'Campaign', art: campaignArt, buttons: camp, rows: campRows, rowArt: camp.map((b) => (b.id === 'new' ? cardArt(this, 'new-campaign') : null)), line: latest ? latestLine : 'Begin a new campaign', run: () => runCamp(camp[0]!.id) },
       {
         name: 'Quick Battle',
         art: cardArt(this, 'quick-battle') ?? art('proving-grounds-sunny-afternoon') ?? art('castle-hall'),
@@ -831,23 +770,29 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
         line: 'Pick two teams',
         endless: true,
         rows: qbRows,
+        rowArt: [cardArt(this, 'quick-battle'), cardArt(this, 'quick-battle-endless')],
         run: () => (this.endlessOn() ? elGo(this, ENDLESS_SCENE) : elGo(this, 'TeamSelectScene')),
       },
-      { name: 'Multiplayer', art: cardArt(this, 'multiplayer') ?? art('duelling-ring-moon') ?? art('kings-bridge'), line: 'Fight a friend online', rows: mpRows, run: () => (mpOk ? mp.host() : undefined) },
+      { name: 'Multiplayer', art: cardArt(this, 'multiplayer') ?? art('duelling-ring-moon') ?? art('kings-bridge'), line: 'Fight a friend online', rows: mpRows, rowArt: [cardArt(this, 'mp-host'), cardArt(this, 'mp-join')], run: () => (mpOk ? mp.host() : undefined) },
     ];
     specs.forEach((s, i) => {
       const cx = W / 2 + (i - 1) * (CARD_W + CARD_GAP);
       const outer = this.add.container(cx, CARD_CY).setDepth(30).setAlpha(0).setVisible(false);
-      // Elegant: kart içeriği iç kapta (hover'da hafif yükselir); classic'te doğrudan dış kap
-      const c = ELEGANT ? this.add.container(0, 0) : outer;
-      if (ELEGANT) outer.add(c);
+      // Kart içeriği iç kapta (hover'da hafif yükselir)
+      const c = this.add.container(0, 0);
+      outer.add(c);
       const hw = CARD_W / 2;
       const hh = CARD_H / 2;
       const base = this.add.rectangle(0, 0, CARD_W, CARD_H, 0x241a11, 1);
       c.add(base);
       /** Görsel yakınlaşması (elegant hover): kırpma bölgesi merkezde daralır, ölçek aynı oranda büyür (kart dışına taşmaz). */
       const zooms: Array<(k: number) => void> = [];
-      const zoomImg = (k: number) => zooms.forEach((z) => z(k));
+      let curZoom = 1;
+      const extra = new Map<Phaser.GameObjects.Image, number>(); // görsel değişiminde yeni görselin oturma ölçeği
+      const zoomImg = (k: number) => {
+        curZoom = k;
+        zooms.forEach((z) => z(k));
+      };
       /** Kart görseli: odak noktası (battle-layout.json > backgrounds.cardFocus) kartın ortasında, kart boşluksuz dolar. */
       const addArt = (key: string): Phaser.GameObjects.Image => {
         const img = this.add.image(0, 0, key).setAlpha(key.startsWith('card:') ? 0.92 : 0.6);
@@ -855,30 +800,94 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
         img.setCrop(fc.cropX, fc.cropY, fc.cropW, fc.cropH).setScale(fc.scale);
         img.setOrigin((fc.cropX + fc.cropW / 2) / img.width, (fc.cropY + fc.cropH / 2) / img.height);
         c.add(img);
-        zooms.push((k) => {
+        zooms.push((k0) => {
+          const k = k0 * (extra.get(img) ?? 1);
           const w = fc.cropW / k;
           const h = fc.cropH / k;
           img.setCrop(fc.cropX + (fc.cropW - w) / 2, fc.cropY + (fc.cropH - h) / 2, w, h).setScale(fc.scale * k);
         });
         return img;
       };
-      const mainImg = s.art ? addArt(s.art) : null;
-      // Endless mode açıkken Quick Battle kartı alacakaranlık görseline yumuşakça geçer (çapraz geçiş)
-      const altImg = s.altArt ? addArt(s.altArt) : null;
-      const baseAlpha = (img: Phaser.GameObjects.Image | null) => (img?.texture.key.startsWith('card:') ? 0.92 : 0.6);
-      const showAlt = (on: boolean, animate: boolean) => {
-        if (!altImg || !mainImg) return;
-        this.tweens.killTweensOf([mainImg, altImg]);
-        const a = on ? baseAlpha(altImg) : 0;
-        const m = on ? 0 : baseAlpha(mainImg);
-        if (!animate) {
-          altImg.setAlpha(a);
-          mainImg.setAlpha(m);
+      // Görsel seti (Ömer 2026-11-09): her satırın kendi kart görseli; hover / odakta kısa çapraz geçiş, dosya yoksa kartın varsayılanı.
+      // Dinlenme görseli: Endless mode açıkken Quick Battle'da alacakaranlık, değilse varsayılan.
+      const imgs = new Map<string, Phaser.GameObjects.Image>();
+      const imgFor = (key: string | null | undefined) => {
+        if (!key) return null;
+        let im = imgs.get(key);
+        if (!im) imgs.set(key, (im = addArt(key).setAlpha(0)));
+        return im;
+      };
+      const mainImg = imgFor(s.art);
+      imgFor(s.altArt);
+      (s.rowArt ?? []).forEach((k) => imgFor(k));
+      const baseAlpha = (img: Phaser.GameObjects.Image) => (img.texture.key.startsWith('card:') ? 0.92 : 0.6);
+      let restKey: string | null = s.art;
+      let hoverKey: string | null = null;
+      let artTw: Phaser.Tweens.Tween | null = null;
+      let shownKey: string | null = null;
+      const applyArt = (animate: boolean) => {
+        const next = hoverKey ?? restKey;
+        // Hedef zaten bu (sürüyor ya da bitti): dokunma. (Önceden tween önce durdurulup sonra çıkılıyordu: Continue/New/Load arasında hızlı
+        // geçişte aynı görsel için gelen ikinci çağrı yarım solmayı donduruyordu.)
+        if (next === shownKey && animate) return;
+        artTw?.stop();
+        artTw = null;
+        const m = motion('cardArt');
+        const prev = shownKey;
+        shownKey = next;
+        const set = (a: Map<Phaser.GameObjects.Image, number>) => {
+          for (const [im, v] of a) im.setAlpha(v);
+        };
+        // Hedef durum: yeni görsel tam, gerisi 0. Geçişte: yeni önce belirir (0..0.75), eski bir miktar sonra söner (0.25..1);
+        // ikisi birden görünür, aradan karanlık (arka zemin) geçmez. İptal güvenli: her çağrı mevcut alfa değerlerinden devam eder.
+        const from = new Map<Phaser.GameObjects.Image, number>();
+        const to = new Map<Phaser.GameObjects.Image, number>();
+        for (const [k, im] of imgs) {
+          from.set(im, im.alpha);
+          to.set(im, k === next ? baseAlpha(im) : 0);
+        }
+        const inc = next ? imgs.get(next) : undefined;
+        if (!animate || m.ms <= 0 || !prev) {
+          set(to);
+          extra.clear();
+          zoomImg(curZoom);
           return;
         }
-        this.tweens.add({ targets: altImg, alpha: a, duration: 420, ease: 'Sine.easeInOut' });
-        this.tweens.add({ targets: mainImg, alpha: m, duration: 420, ease: 'Sine.easeInOut' });
+        if (inc) extra.set(inc, m.scaleFrom);
+        for (const im of [...extra.keys()]) if (im !== inc) extra.delete(im);
+        const sFrom = inc ? extra.get(inc) ?? 1 : 1;
+        const ease = Phaser.Math.Easing.Sine.InOut;
+        const clamp = (v: number) => Math.min(1, Math.max(0, v));
+        artTw = this.tweens.addCounter({
+          from: 0,
+          to: 1,
+          duration: m.ms,
+          onUpdate: (tw) => {
+            if (!c.active) return void tw.stop();
+            const t = tw.getValue() ?? 1;
+            for (const [im, a0] of from) {
+              const a1 = to.get(im)!;
+              if (a1 === a0) continue;
+              const u = a1 > a0 ? clamp(t / 0.75) : clamp((t - 0.25) / 0.75);
+              im.setAlpha(a0 + (a1 - a0) * ease(u));
+            }
+            if (inc) extra.set(inc, sFrom + (1 - sFrom) * ease(t));
+            zoomImg(curZoom);
+          },
+          onComplete: () => {
+            artTw = null;
+            set(to);
+            extra.clear();
+            if (c.active) zoomImg(curZoom);
+          },
+        });
       };
+      const showAlt = (on: boolean, animate: boolean) => {
+        if (!s.altArt || !mainImg) return;
+        restKey = on ? s.altArt : s.art;
+        applyArt(animate);
+      };
+      applyArt(false);
       if (s.endless) showAlt(this.endlessOn(), false);
       const shadeKey = canvasTex(this, 'mm-cardshade', 4, 256, (ctx) => {
         const g = ctx.createLinearGradient(0, 0, 0, 256);
@@ -908,14 +917,9 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
       const frame = this.add.graphics();
       const drawFrame = (on: boolean) => {
         frame.clear();
-        if (ELEGANT) {
-          // Tasarım kiti: 1 px ince altın çerçeve (odakta açık altın) + içte ince koyu çizgi
-          frame.lineStyle(1, 0x1b120a, 0.9).strokeRect(-hw + 2.5, -hh + 2.5, CARD_W - 5, CARD_H - 5);
-          frame.lineStyle(1, on ? EL.ON_N : EL.GOLD, on ? 1 : EL.LINE.a3).strokeRect(-hw + 0.5, -hh + 0.5, CARD_W - 1, CARD_H - 1);
-          return;
-        }
-        frame.lineStyle(4, 0x1b120a, 1).strokeRect(-hw + 4, -hh + 4, CARD_W - 8, CARD_H - 8);
-        frame.lineStyle(on ? 4 : 2, on ? GOLD.bright : 0xd9b26a, 1).strokeRect(-hw, -hh, CARD_W, CARD_H);
+        // Tasarım kiti: 1 px ince altın çerçeve (odakta açık altın) + içte ince koyu çizgi
+        frame.lineStyle(1, 0x1b120a, 0.9).strokeRect(-hw + 2.5, -hh + 2.5, CARD_W - 5, CARD_H - 5);
+        frame.lineStyle(1, on ? EL.ON_N : EL.GOLD, on ? 1 : EL.LINE.a3).strokeRect(-hw + 0.5, -hh + 0.5, CARD_W - 1, CARD_H - 1);
       };
       drawFrame(false);
       c.add(frame);
@@ -926,7 +930,7 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
       const zone = this.add.zone(0, 0, CARD_W, CARD_H).setInteractive({ useHandCursor: true });
       c.add(zone);
       let lineText: Phaser.GameObjects.Text | null = null;
-      if (s.line) c.add((lineText = (ELEGANT ? this.noteText(0, hh - 52, s.line, LOOK.cardLine - 2, '#cdb88d') : serif(this, 0, hh - 50, s.line, 24, '#cdb88d', { bold: false, stroke: 3 })).setOrigin(0.5)));
+      if (s.line) c.add((lineText = this.noteText(0, hh - 52, s.line, LOOK.cardLine - 2, '#cdb88d').setOrigin(0.5)));
       let toggleEndless: (() => void) | null = null;
       if (s.endless) {
         // Endless durumu (Ömer 2026-11-08: kartın üstündeki Endless sekmesi kaldırıldı; seçim artık defterdeki Quick Battle / Endless
@@ -997,6 +1001,11 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
           cardHover = false;
           refresh();
         });
+        lg.onActive((ri) => {
+          const k = ri >= 0 ? s.rowArt?.[ri] ?? null : null;
+          hoverKey = k && imgs.has(k) ? k : ri >= 0 ? s.art : null;
+          applyArt(true);
+        });
         lg.onHover((over) => {
           rowHover = over;
           refresh();
@@ -1027,8 +1036,7 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
         this.tweens.killTweensOf([glow, cardLight]);
         this.tweens.add({ targets: glow, alpha: on ? 0.12 : 0, duration: 160 });
         this.tweens.add({ targets: cardLight, alpha: on ? 1 : 0, duration: on ? 260 : 200, ease: 'Sine.easeOut' });
-        if (!ELEGANT) return;
-        // Elegant: odaklanan kart hafif yükselir, görseli hafif yakınlaşır
+        // Odaklanan kart hafif yükselir, görseli hafif yakınlaşır
         lookTw?.stop();
         const from = { ...look };
         const to = { lift: on ? -10 : 0, zoom: on ? 1.04 : 1 };
@@ -1089,374 +1097,6 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
     if (shown) this.focusCard(this.cardSel);
   }
 
-  // ------------------------------------------------------------ Settings / Multiplayer sütunu
-
-  private showPanel(kind: 'settings' | null, instant: boolean): void {
-    const old = this.panel;
-    this.panel = null;
-    this.panelRows = [];
-    this.catRows = [];
-    this.catKeys = [];
-    this.pageBox = null;
-    this.flushPanelOffs();
-    if (old) {
-      this.tweens.killTweensOf(old);
-      if (instant) old.destroy(true);
-      else this.tweens.add({ targets: old, alpha: 0, x: old.x - 30, duration: 220, onComplete: () => old.destroy(true) });
-    }
-    if (!kind) return;
-    const p = (this.panel = this.add.container(this.colX, 0).setDepth(25));
-    // Settings zemini (Ömer 2026-10-10, taslak settings-backdrop v2 "Darkening everywhere"): her yerde aynı, bulanıklık yok; sahne
-    // %52 kararır + sütunun arkasında soldan sağa açılan gölge (oyun içi DOM Settings'le aynı: style.css > .st-overlay)
-    if (kind === 'settings') p.add(this.add.rectangle(FULL_X0 - this.colX - 200, 0, FULL_W + 400, H, 0x000000, SETTINGS_DARK).setOrigin(0, 0));
-    const settings = kind === 'settings';
-    p.add([this.shadeExtension(), this.columnShade(settings ? SETTINGS_SHADE_W : SHADE_W)]);
-    this.panelTop = settings ? SETTINGS_LAYOUT.top : LOOK.panelY0 - ROW_H / 2;
-    this.panelRowH = settings ? SETTINGS_LAYOUT.rowH : ROW_H;
-    this.panelX = COL_X;
-    p.add(this.titleText(COL_X, SETTINGS_LAYOUT.titleY, 'Settings', LOOK.titleSize, 3).setOrigin(0, 0.5));
-    this.buildSettings(p);
-    if (instant) return;
-    p.setAlpha(0).setX(this.colX - 30);
-    this.tweens.add({ targets: p, alpha: 1, x: this.colX, duration: 450, delay: 250, ease: 'Cubic.easeOut' });
-  }
-
-  private selectPanel(i: number): void {
-    this.panelSel = i;
-    if (i >= 0) this.panelZone = 'row';
-    this.panelRows.forEach((r, k) => r.setOn(k === i));
-  }
-
-  private flushPanelOffs(): void {
-    for (const fn of this.panelOffs.splice(0)) fn();
-  }
-
-  private addPanelRow(p: Phaser.GameObjects.Container, label: string, run: () => void, o: { right?: Phaser.GameObjects.GameObject[]; enabled?: boolean; adjust?: (d: number) => void } = {}): Row {
-    const i = this.panelRows.length;
-    const inSettings = this.view === 'settings';
-    const row = this.makeRow(this.panelTop + this.panelRowH / 2, label, inSettings ? SETTINGS_LAYOUT.rowSize : LOOK.panelSize, run, {
-      ...o,
-      width: PANEL_W,
-      h: this.panelRowH,
-      x: this.panelX,
-      color: inSettings ? SETTINGS_LAYOUT.rowColor : undefined,
-      onHover: () => this.selectPanel(i),
-    });
-    this.panelTop += this.panelRowH;
-    row.adjust = o.adjust;
-    p.add(row.root);
-    this.panelRows.push(row);
-    return row;
-  }
-
-  /** Sayfa başlığı (Sound / Gameplay / Display / Privacy): kor tonunda Cinzel büyük harf + sağa sönen ince çizgi; satırlar ondan içeride
-   *  (DOM .st-page-head ile aynı). */
-  private pageHeading(p: Phaser.GameObjects.Container, x: number, label: string): void {
-    const L = SETTINGS_LAYOUT;
-    const base = L.top + L.headH - 14;
-    const t = elText(this, x, base, label, L.headSize, '#e0904a', { em: 0.14 }).setOrigin(0, 1);
-    const x0 = t.x + t.width + 16;
-    const right = x + L.indent + PANEL_W;
-    const line = this.add.graphics();
-    line.fillGradientStyle(0xe0904a, 0xe0904a, 0xe0904a, 0xe0904a, 0.55, 0, 0.55, 0).fillRect(x0, base - 13, Math.max(0, right - x0), 1);
-    p.add([line, t]);
-  }
-
-  /** Seviye satırı (− [kaydırıcı] + değer; 0..max adım): tüm Settings kaydırıcıları aynı görünüm ve dokunma alanları. */
-  private levelRow(p: Phaser.GameObjects.Container, label: string, initial: number, apply: (n: number, preview: boolean) => void, fmt: (n: number) => string, onChange?: (fn: (n: number) => void) => () => void, max = 10): void {
-    let level = initial;
-    const trackX = 410; // değer yazısı "100%" / "0.25x" + düğmesine binmesin
-    const trackW = 200;
-    const g = this.add.graphics();
-    const value = this.valueText(PANEL_W - 6, 0, fmt(level), TXT_ON).setOrigin(1, 0.5);
-    const draw = () => {
-      g.clear();
-      g.fillStyle(0x120c07, 0.9).fillRect(trackX, -5, trackW, 10);
-      g.fillStyle(0xd9b26a, 1).fillRect(trackX, -5, (trackW * level) / max, 10);
-      g.lineStyle(1, GOLD.edge, 1).strokeRect(trackX - 0.5, -5.5, trackW + 1, 11);
-      g.fillStyle(0xf3d999, 1).fillCircle(trackX + (trackW * level) / max, 0, 13);
-      g.lineStyle(2, 0x5a3a10, 1).strokeCircle(trackX + (trackW * level) / max, 0, 13);
-      value.setText(fmt(level));
-    };
-    const set = (v: number, preview: boolean) => {
-      const n = Math.min(max, Math.max(0, Math.round(v)));
-      if (n === level && !preview) return;
-      level = n;
-      apply(n, preview);
-      draw();
-    };
-    const step = (t: string, x: number, d: number) => {
-      const tx = this.valueText(x, 0, t, TXT_ON, LOOK.stepSize).setOrigin(0.5);
-      const z = this.add.zone(x, 0, 64, this.panelRowH - 8).setInteractive({ useHandCursor: true });
-      z.on('pointerup', () => set(level + d, true));
-      return [tx, z];
-    };
-    const track = this.add.zone(trackX + trackW / 2, 0, trackW + 40, this.panelRowH - 8).setInteractive({ useHandCursor: true });
-    const fromPointer = (ptr: Phaser.Input.Pointer) => {
-      let ox = 0;
-      for (let c: Phaser.GameObjects.Container | null = track.parentContainer; c; c = c.parentContainer) ox += c.x;
-      const lx = worldXY(this, ptr).x - ox - trackX;
-      set((lx / trackW) * max, false);
-    };
-    let dragging = false;
-    track.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
-      dragging = true;
-      fromPointer(ptr);
-    });
-    track.on('pointermove', (ptr: Phaser.Input.Pointer) => dragging && ptr.isDown && fromPointer(ptr));
-    const stopDrag = () => {
-      if (dragging) apply(level, true); // bırakınca deneme sesi
-      dragging = false;
-    };
-    track.on('pointerup', stopDrag);
-    track.on('pointerout', stopDrag);
-    draw();
-    if (onChange) {
-      const off = onChange((n) => {
-        if (!g.active) return;
-        level = n;
-        draw();
-      });
-      this.panelOffs.push(off);
-    }
-    this.addPanelRow(p, label, () => undefined, { right: [g, ...step('−', trackX - 46, -1), track, ...step('+', trackX + trackW + 42, 1), value], adjust: (d) => set(level + d, true) });
-  }
-
-  /** Ayarlar (Ömer 2026-10-16, sayfalı düzen; oyun içi DOM Settings ile aynı liste: src/ui/settings-pages.ts): solda kategori sütunu
-   *  (Sound · Gameplay · Display · Privacy; seçili olanın önünde kor elması, en altta soluk Developer tools), sağda o sayfanın satırları.
-   *  Son seçilen sayfa oturum boyunca hatırlanır (DOM ekranıyla ortak). Değerler aynı yerde saklanır. */
-  private buildSettings(p: Phaser.GameObjects.Container): void {
-    const L = SETTINGS_LAYOUT;
-    // Account kategorisi giriş kullanılabilirken ya da özellik kapalıyken ('coming soon', her ana makinede); açıkken Pages / sunucu kapalı: yok; sunucu yoklaması sonra gizleyebilir (accountGone)
-    const login = accountShown();
-    for (const pg of SETTINGS_PAGES) {
-      if (!pageVisible(pg.key, login)) continue;
-      const i = this.catRows.length;
-      const row = this.makeRow(L.top + L.rowH / 2 + i * L.rowH, pg.label, L.catSize, () => {
-        if (this.settingsKey !== pg.key) uiSound('tab');
-        this.showSettingsPage(pg.key);
-        this.panelZone = 'cat';
-      }, { width: L.catW, h: L.rowH });
-      p.add(row.root);
-      this.catRows.push(row);
-      this.catKeys.push(pg.key);
-    }
-    if (login && accountApi().cloudEnabled()) void accountApi().checkLoginAvailable().then((ok) => !ok && this.accountGone());
-    // Gizli debug girişinin yedeği (src/ui/debug-gesture.ts): kategori sütununun altında küçük, soluk "Developer tools"
-    // Account satırıyla 6 satırda alt kenara (1080) yapışıyordu: en çok 1036'ya kadar iner (satırların altına sığar, 66'lık dokunma alanı da ekran içinde kalır)
-    const dev = elBody(this, COL_X, Math.min(L.top + this.catRows.length * L.rowH + 50, 1036), 'Developer tools', 26, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
-    dev.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-10, -(66 - dev.height) / 2, dev.width + 20, 66), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
-    dev.on('pointerover', () => dev.setColor(EL.NOTE));
-    dev.on('pointerout', () => dev.setColor('rgba(168,151,122,0.55)'));
-    dev.on('pointerup', () => openDebugMenu());
-    p.add(dev);
-    this.panelZone = 'cat';
-    this.showSettingsPage(settingsPage(), true);
-  }
-
-  /** Giriş kullanılamaz oldu (sunucu yanıt vermiyor): Account kategorisi gizlenir, açıksa Sound'a dönülür. */
-  private accountGone(): void {
-    if (!this.panel || this.view !== 'settings') return;
-    const i = this.catKeys.indexOf('account');
-    if (i < 0) return;
-    this.catRows[i]!.root.setVisible(false);
-    if (this.settingsKey === 'account') this.showSettingsPage('sound', true);
-  }
-
-  /** Settings sayfasını kurar (eski sayfa kısa solmayla gider). */
-  private showSettingsPage(key: SettingsPageKey, instant = false): void {
-    const p = this.panel;
-    if (!p) return;
-    const L = SETTINGS_LAYOUT;
-    if (!this.catKeys.includes(key) || (key === 'account' && !this.catRows[this.catKeys.indexOf(key)]!.root.visible)) key = 'sound';
-    this.settingsKey = key;
-    setSettingsPage(key);
-    this.catRows.forEach((r, i) => r.setOn(this.catKeys[i] === key));
-    this.flushPanelOffs();
-    this.pageBox?.destroy(true);
-    this.panelRows = [];
-    this.panelSel = -1;
-    const box = (this.pageBox = this.add.container(0, 0));
-    p.add(box);
-    const x0 = COL_X + L.catW + L.gap;
-    this.pageHeading(box, x0, pageOf(key).label);
-    this.panelX = x0 + L.indent;
-    this.panelTop = L.top + L.headH;
-    this.panelRowH = L.rowH;
-    // Satırların altında tek kısa not (Replay onayı, iPhone tam ekran ipucu, Copy log / Error reports onayı)
-    const note = this.noteText(this.panelX + 34, 0, '', 22, '#cdb88d').setOrigin(0, 0.5);
-    const val = (text: string, color = TXT_ON): Phaser.GameObjects.Text => this.valueText(PANEL_W - 6, 0, text, color).setOrigin(1, 0.5);
-    for (const item of pageOf(key).items) {
-      const label = SETTINGS_LABELS[item];
-      switch (item) {
-        case 'master':
-          // Master Volume: skill sesleri, arayüz sesleri ve müzik bununla çarpılır (setSettingsVolume -> DOM Settings applyVolume)
-          this.levelRow(box, label, loadVolume(), (n, preview) => setSettingsVolume(n, preview), volumeLabel, undefined, VOLUME_STEPS);
-          break;
-        case 'music':
-          // Music: ana menü müziği (0 = tamamen kapalı; src/ui/music.ts). Burada canlı duyulur
-          this.levelRow(box, label, loadMusicLevel(), (n) => setMusicLevel(n), volumeLabel, onMusicLevelChange, VOLUME_STEPS);
-          break;
-        case 'sfx':
-          // Sound Effects: savaş / skill sesleri (0 = kapalı; src/ui/sfx-volume.ts; Master ile çarpılır). Bırakınca deneme sesi
-          this.levelRow(box, label, loadSfxLevel(), (n, preview) => {
-            setSfxLevel(n);
-            if (preview) setSettingsVolume(loadVolume(), true);
-          }, volumeLabel, onSfxLevelChange, VOLUME_STEPS);
-          break;
-        case 'ui':
-          // UI sounds: menü sesleri (0 = kapalı; src/ui/ui-sound.ts)
-          this.levelRow(box, label, loadUiSoundLevel(), (n, preview) => {
-            setUiSoundLevel(n);
-            if (preview) previewUiSound('select');
-          }, volumeLabel, onUiSoundLevelChange, VOLUME_STEPS);
-          break;
-        case 'speed':
-          // Battle speed: 20 adım 0.25x-4x (1x çevresinde ince; src/ui/battle-speed.ts)
-          this.levelRow(box, label, speedIndex(battleSpeed()), (i) => setBattleSpeed(speedAt(i)), (i) => battleSpeedLabel(speedAt(i)), (fn) => onBattleSpeedChange((v) => fn(speedIndex(v))), SPEED_STEPS);
-          break;
-        case 'motion': {
-          // Reduced motion: ana menü sahnesinde paralaks ve parçacık yok (src/ui/motion-pref.ts; kayıt yoksa işletim sistemi tercihi)
-          const motion = val(reducedMotion() ? 'On' : 'Off');
-          this.panelOffs.push(onReducedMotionChange((on) => motion.active && motion.setText(on ? 'On' : 'Off')));
-          this.addPanelRow(box, label, () => setReducedMotion(!reducedMotion()), { right: [motion] });
-          break;
-        }
-        case 'tutorials': {
-          // Tutorials: mentor dersleri açık / kapalı (src/tutorial/store.ts). Replay (Ömer 2026-10-14, b_reset): görülen dersleri unutur,
-          // dersleri açar; onay yok, kısa onay yazısı
-          const tut = val(tutorialsOn() ? 'On' : 'Off');
-          this.panelOffs.push(onTutorialChange(() => tut.active && tut.setText(tutorialsOn() ? 'On' : 'Off')));
-          const replay = this.textLink(PANEL_W - 96, 'Replay', () => {
-            resetTutorials();
-            replay.setVisible(false);
-            replayed.setVisible(true);
-            this.time.delayedCall(2600, () => {
-              if (!replay.active) return;
-              replayed.setVisible(false);
-              replay.setVisible(true);
-            });
-          });
-          const replayed = this.noteText(PANEL_W - 96, 0, 'Tutorials will play again.', 22, '#cdb88d').setOrigin(1, 0.5).setVisible(false);
-          this.addPanelRow(box, label, () => setTutorialsOn(!tutorialsOn()), { right: [tut, replay, replayed] });
-          break;
-        }
-        case 'perf': {
-          // Performance mode: Auto / On / Off (src/ui/perf-mode.ts; DOM Settings ile aynı kaynak)
-          const perf = val(perfSettingLabel(perfSetting()));
-          this.panelOffs.push(onPerfSettingChange((v) => perf.active && perf.setText(perfSettingLabel(v))));
-          const stepPerf = (d: number): void => setPerfSetting(cyclePerfSetting(perfSetting(), d));
-          this.addPanelRow(box, label, () => stepPerf(1), { right: [perf], adjust: stepPerf });
-          break;
-        }
-        case 'fps': {
-          // Show FPS: sol üstte küçük FPS göstergesi (varsayılan kapalı; src/ui/fps-meter.ts)
-          const fps = val(showFps() ? 'On' : 'Off');
-          this.panelOffs.push(onShowFpsChange((on) => fps.active && fps.setText(on ? 'On' : 'Off')));
-          this.addPanelRow(box, label, () => setShowFps(!showFps()), { right: [fps] });
-          break;
-        }
-        case 'fullscreen': {
-          // Fullscreen (API yoksa satır yok; iPhone'da ipucu)
-          const support = currentSupport();
-          if (support === 'none' || isStandalone()) break;
-          const state = val('Enter');
-          this.panelOffs.push(onFullscreenChange((on) => state.active && state.setText(on ? 'Exit' : 'Enter')));
-          this.addPanelRow(box, label, () => {
-            if (support === 'ios') note.setText(IOS_HINT);
-            else void toggleFullscreen();
-          }, { right: [state] });
-          break;
-        }
-        case 'reports': {
-          // Error reports (Ömer 2026-10-16; src/diag/; DOM Settings ile aynı kaynak): opt-in, varsayılan Off
-          const rep = val(diagConsent() ? 'On' : 'Off');
-          this.panelOffs.push(onDiagConsentChange((on) => rep.active && rep.setText(on ? 'On' : 'Off')));
-          this.addPanelRow(box, label, () => {
-            setDiagConsent(!diagConsent());
-            note.setText(diagConsent() ? 'Crash reports on. Kept 30 days.' : '');
-          }, { right: [rep] });
-          break;
-        }
-        case 'copyLog':
-          // Copy log: izleri panoya (onay kapalıyken de çalışır, bir şey göndermez)
-          this.addPanelRow(box, label, () => void copyDiagLog().then((ok) => note.active && note.setText(ok ? 'Log copied.' : 'Could not copy the log.')), { right: [val('Copy', TXT)] });
-          break;
-        case 'info':
-          // Info: gizlilik metni + aynı anahtar (DOM penceresi src/diag/diag-notice.ts)
-          this.addPanelRow(box, label, () => openDiagNotice('info'), { right: [val('Open', TXT)] });
-          break;
-        case 'account':
-          // Account (Faz 1d, taslak account.html v1): satırlar DOM kutusunda (onay kutusu, bağlantı, düğmeler, kayma), başlık Phaser
-          this.mountAccountPage();
-          break;
-      }
-    }
-    if (key === 'ui') this.mountCursorPage();
-    let y = this.panelTop + 30;
-    if (key === 'privacy') {
-      box.add(this.noteText(this.panelX + 34, y, PRIVACY_LINE, 22, '#a8977a').setOrigin(0, 0.5));
-      y += 40;
-      // Raporlar açıkken rapor kimliği (kısa; KVKK başvurusunda raporları bulmak için)
-      const idText = this.noteText(this.panelX + 34, y, reportIdLine(diagReportId()), 22, '#cdb88d').setOrigin(0, 0.5);
-      this.panelOffs.push(onDiagConsentChange(() => idText.active && idText.setText(reportIdLine(diagReportId()))));
-      box.add(idText);
-      y += 44;
-    }
-    note.setY(y);
-    box.add(note);
-    if (instant) return;
-    box.setAlpha(0);
-    this.tweens.add({ targets: box, alpha: 1, duration: 160, ease: 'Cubic.easeOut' });
-  }
-
-  /** Settings > UI: imleç seçimi + boyut + önizleme (src/ui/cursor-settings.ts; oyun içi DOM Settings ile aynı parça), sayfa başlığının altında DOM kutusu. */
-  private mountCursorPage(): void {
-    const host = document.createElement('div');
-    host.className = 'cur-host';
-    host.setAttribute('role', 'region');
-    host.setAttribute('aria-label', 'UI');
-    (document.getElementById('ui-root') ?? document.body).append(host);
-    const page = mountCursorPanel(host);
-    this.panelOffs.push(() => {
-      page.destroy();
-      host.remove();
-    });
-  }
-
-  /** Settings > Account: DOM sayfası (src/cloud/ui/account-page.ts, ayrı kod parçası) sayfa başlığının altına; sayfa / panel kapanınca kalkar. */
-  private mountAccountPage(): void {
-    const host = document.createElement('div');
-    host.className = 'acc-host';
-    host.setAttribute('role', 'region');
-    host.setAttribute('aria-label', 'Account');
-    (document.getElementById('ui-root') ?? document.body).append(host);
-    let page: { destroy(): void } | null = null;
-    let gone = false;
-    this.panelOffs.push(() => {
-      gone = true;
-      page?.destroy();
-      host.remove();
-    });
-    void import('../../cloud/ui/account-page').then(
-      (m) => {
-        if (gone || !this.sys.isActive()) return host.remove();
-        page = m.mountAccountPage(host, { onHidden: () => this.accountGone() });
-      },
-      () => host.remove(),
-    );
-  }
-
-  /** Satırın sağındaki küçük yazı düğmesi (Replay): satır boyunda dokunma alanı. */
-  private textLink(rightX: number, label: string, run: () => void): Phaser.GameObjects.Text {
-    const t = this.valueText(rightX, 0, label, TXT).setOrigin(1, 0.5).setAlpha(0.8);
-    t.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-14, -(this.panelRowH - 8) / 2 + t.height / 2, t.width + 28, this.panelRowH - 8), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
-    t.on('pointerover', () => t.setAlpha(1).setColor(TXT_ON));
-    t.on('pointerout', () => t.setAlpha(0.8).setColor(TXT));
-    t.on('pointerup', run);
-    return t;
-  }
-
   /** DOM giriş kutusu açıkken sahne tıklama/tuş almaz. */
   private async withPrompt<T>(ask: () => Promise<T>): Promise<T> {
     this.promptOpen = true;
@@ -1505,22 +1145,6 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
       }
       else if (k === 'e' || k === 'E') this.cards[this.cardSel]?.toggle?.(); // Quick Battle odaktayken Endless anahtarı
       else if (enter) this.cards[this.cardSel]?.run();
-    } else if (this.view === 'settings' && (this.panelZone === 'cat' || k === 'Tab')) {
-      // Kategori sütunu: yukarı/aşağı sayfa değiştirir, sağ / Enter satırlara geçer; Tab her yerde sonraki sayfa
-      if (k === 'Tab' || up || down) {
-        e.preventDefault();
-        uiSound('tab');
-        this.showSettingsPage(stepPage(this.settingsKey, k === 'Tab' ? (e.shiftKey ? -1 : 1) : up ? -1 : 1, this.catKeys.includes('account') && this.catRows[this.catKeys.indexOf('account')]!.root.visible));
-        this.panelZone = 'cat';
-      } else if ((right || enter) && this.panelRows.length) this.selectPanel(0);
-    } else {
-      const row = this.panelRows[this.panelSel];
-      if (this.view === 'settings' && left && !row?.adjust) {
-        this.selectPanel(-1);
-        this.panelZone = 'cat';
-      } else if (up || down) this.selectPanel(this.panelSel < 0 ? 0 : moveSelection(this.panelSel, up ? -1 : 1, this.panelRows.length));
-      else if ((left || right) && row?.adjust) row.adjust(left ? -1 : 1);
-      else if (enter) row?.run();
     }
   }
 

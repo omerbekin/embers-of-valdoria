@@ -1,7 +1,8 @@
 {
   "_not": "Harita 3 Hollow Crown, 4. dilim (maps-2-3.md; Ömer seçimi). Sayılar PROVİZYON, sim yok; komşu mob: morvane_halberdier. Kendi çizimi var (Codex 2026-11-02).",
   "id": "shardwalker",
-  "name": "Shardwalker",
+  "name": "Shardwalker",
+  "bloodless": true,
   "family": "undead",
   "spriteId": "shardwalker",
   "color": "#8fc0dc",

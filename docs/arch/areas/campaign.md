@@ -40,6 +40,7 @@ Kapsam: sefer haritaları, düğümler/karşılaşmalar, mob kitleri (Harita 2-3
 `docs/design/campaign/maps-2-3.md` (karar tabloları) + `docs/archive/design/campaign/map3-art-status.md`; sim için `docs/balance.md` "Harita 2 eğrisi" ve `src/sim/campaign-grind-report.ts` başlığı (bayraklar). Sim koşu komutu: `npm run sim:campaign -- 300 1 medium good --map=drowned-reach --wall-cap=medium:10 --overgrind=0 --jobs=3 --json=<dosya>`.
 
 ## Kararlar (geçerli kurallar; tam tarihçe `docs/archive/arch/areas/campaign.md`)
+- **2026-11-10 Ömer:** tüm Recruit pencereleri 4 aday sunar.
 - **Diyalog cevapları:** veride `"reply"` olarak; Ash on the Wind hayatta kalanlar ve iki warden sorusu bilerek AÇIK.
 - **Harita 2-3 planı onaylı** (2026-10-20): Drowned Reach, Hollow Crown (86 düğüm, 4 boss), iki taç hikâyesi; plan ve sayılar `docs/design/campaign/maps-2-3.md`, geçerli sayı `data/campaign/*.json`. Hero Oath Harita 3'te de bozulabilmeli.
 - **Sim:** düz sefer simi KALIR (kasmasız taban); hedef ölçü kasma simi. Sim hedefleri ve ekonomi seçimleri (repeat=off, tüccar ve düşüşler kalır, dinlenme +%25): `docs/design/campaign/` ve `data/campaign/balance.json`.

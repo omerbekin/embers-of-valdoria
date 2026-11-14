@@ -1,3 +1,4 @@
+@import './tokens.css';
 /* ZARİF TASARIM KİTİ (DOM tarafı; Phaser karşılığı src/game/elegant-ui.ts; kurallar CLAUDE.md > "Tasarım kiti").
    Ana menü + Quick Battle "Twin Formations" dili: Cinzel 600 büyük harf + EB Garamond italik, ince altın çizgiler, kor elmaslar, yumuşak geçişler.
    Fontlar src/style.css @font-face (yerel dosyalar). Sınıflar `el-` ile başlar; birleştirilebilir (ör. <button class="el-btn primary">).
@@ -19,11 +20,13 @@
   /* ORTAK DÜĞME BOY GRUPLARI (Ömer 2026-11-03; tablo docs/design/ui-reference.md > "Düğme boy grupları"). Aynı işi gören düğmeler ekrana özel sayı değil bu
      jetonlardan boy alır. --btn-k = düğmenin içinde durduğu ölçekli kabın ölçeği (Formation penceresi `.fbw-pos` yazar; yoksa 1): gerçek piksel = jeton. */
   --btn-k: 1;
+  --btn-scr-h: 64px; /* Ekran eylemi (Ömer 2026-11-09 A): ekranın tek büyük düğmesi, .el-btn.scr (Phaser: BTN.screen) */
+  --btn-scr-fs: 23px;
   --btn-dlg-h: 48px; /* Diyalog eylemi: pencere / diyalog alt-üst şeridi (Auto arrange, Done, Hero details, onay düğmeleri) */
   --btn-dlg-w: 240px; /* Diyalog eylemi, sırada duran düğmenin en az genişliği */
   --btn-dlg-fs: 19px;
   --btn-cmp-h: 44px; /* Kompakt / satır içi: .el-btn.sm, kart içi eylemler */
-  --btn-tab-h: 44px; /* Sekme: .gr-tab, .bs-tab */
+  --btn-tab-h: 44px; /* Sekme: .gr-tab */
   --el-txt: #d9c8a2;
   --el-on: #f3d999;
   --el-muted: #a8977a;
@@ -40,16 +43,13 @@
   --el-ease: cubic-bezier(0.33, 1, 0.68, 1);
   --el-sh: 0 2px 4px rgba(12, 8, 5, 0.95);
   --el-glow: 0 0 14px rgba(240, 140, 40, 0.85);
-  --el-display: Cinzel, Georgia, 'Palatino Linotype', serif;
-  --el-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
-  --el-num: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
 }
 
 .el-dia {
   display: inline-block;
   flex: none;
-  width: 11px;
-  height: 11px;
+  width: 0.55em;
+  height: 0.55em;
   transform: rotate(45deg);
   background: var(--el-ember);
   box-shadow: 0 0 0 1px var(--el-ember2), 0 0 10px rgba(240, 140, 40, 0.6);
@@ -66,7 +66,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
+  min-height: var(--btn-dlg-h); /* Diyalog = varsayılan boy */
   padding: 0 34px 0 calc(34px + 0.1em); /* harf aralığı son harften sonra da eklenir: yazı tam ortada dursun */
   font: 600 19px var(--el-display);
   letter-spacing: 0.1em;
@@ -87,9 +87,9 @@
   content: '';
   position: absolute;
   top: 50%;
-  width: 9px;
-  height: 9px;
-  margin-top: -5px;
+  width: 0.47em;
+  height: 0.47em;
+  margin-top: -0.26em;
   transform: rotate(45deg);
   background: #1a130c;
   box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.45);
@@ -97,11 +97,11 @@
 }
 
 .el-btn::before {
-  left: -6px;
+  left: -0.32em;
 }
 
 .el-btn::after {
-  right: -6px;
+  right: -0.32em;
 }
 
 .el-btn:hover:not(:disabled) {
@@ -126,9 +126,7 @@
 }
 
 .el-btn.primary {
-  min-height: 60px;
-  padding: 0 46px 0 calc(46px + 0.12em);
-  font-size: 23px;
+  padding: 0 40px 0 calc(40px + 0.12em);
   letter-spacing: 0.12em;
   color: var(--el-on);
   border: 2px solid var(--el-gold);
@@ -138,19 +136,19 @@
 
 .el-btn.primary::before,
 .el-btn.primary::after {
-  width: 12px;
-  height: 12px;
-  margin-top: -6px;
+  width: 0.63em;
+  height: 0.63em;
+  margin-top: -0.32em;
   background: var(--el-ember);
   box-shadow: 0 0 0 1px var(--el-ember2), 0 0 12px rgba(240, 140, 40, 0.8);
 }
 
 .el-btn.primary::before {
-  left: -8px;
+  left: -0.42em;
 }
 
 .el-btn.primary::after {
-  right: -8px;
+  right: -0.42em;
 }
 
 .el-btn.primary:hover:not(:disabled) {
@@ -184,6 +182,8 @@
 
 /* Diyalog eylemi grubu (.el-btn.dlg): tek boy, tek yazı boyu; masaüstünde jeton, telefonda 30 px (jetonlar html.short'ta değişir) */
 html.short {
+  --btn-scr-h: 30px;
+  --btn-scr-fs: 12px;
   --btn-dlg-h: 30px;
   --btn-dlg-w: 150px;
   --btn-dlg-fs: 11px;
@@ -223,8 +223,8 @@ html.short {
 .el-link::before {
   content: '';
   flex: none;
-  width: 10px;
-  height: 10px;
+  width: 0.53em;
+  height: 0.53em;
   transform: rotate(45deg) scale(0.4);
   background: var(--el-ember);
   box-shadow: 0 0 0 1px var(--el-ember2);
@@ -325,8 +325,8 @@ html.short {
   content: '';
   position: absolute;
   top: -5px;
-  width: 9px;
-  height: 9px;
+  width: calc(9 * var(--u, 1px));
+  height: calc(9 * var(--u, 1px));
   transform: rotate(45deg);
   background: #140e09;
   box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.7);
@@ -556,31 +556,38 @@ html.reduced-motion .el-modal .el-modal-panel {
      .el-btn.danger  geri alınamaz eylem (kırmızı yazı, kırmızımsı çerçeve; kor elmas yok)
      .el-check       onay kutusu: <label class="el-check"><input type="checkbox"><span class="box"></span><span>yazı</span></label>
      .el-field       tek satır yazı kutusu */
+.el-btn.scr,
+.el-btn.primary.scr {
+  min-height: var(--btn-scr-h);
+  padding: 0 46px 0 calc(46px + 0.12em);
+  font-size: var(--btn-scr-fs);
+}
+
 .el-btn.sm {
-  min-height: 44px;
+  min-height: var(--btn-cmp-h);
   padding: 0 20px 0 calc(20px + 0.1em);
   font-size: 15px;
 }
 
 .el-btn.sm.primary {
-  min-height: 46px;
+  min-height: var(--btn-cmp-h);
   padding: 0 26px 0 calc(26px + 0.12em);
   font-size: 16px;
 }
 
 .el-btn.sm.primary::before,
 .el-btn.sm.primary::after {
-  width: 9px;
-  height: 9px;
-  margin-top: -5px;
+  width: 0.56em;
+  height: 0.56em;
+  margin-top: -0.3em;
 }
 
 .el-btn.sm.primary::before {
-  left: -6px;
+  left: -0.38em;
 }
 
 .el-btn.sm.primary::after {
-  right: -6px;
+  right: -0.38em;
 }
 
 .el-btn.danger {
@@ -634,8 +641,8 @@ html.reduced-motion .el-modal .el-modal-panel {
 
 .el-check input:checked + .box::after {
   content: '';
-  width: 11px;
-  height: 11px;
+  width: 0.58em;
+  height: 0.58em;
   transform: rotate(45deg);
   background: var(--el-ember);
   box-shadow: 0 0 0 1px var(--el-ember2), 0 0 8px rgba(240, 140, 40, 0.6);
@@ -764,4 +771,120 @@ html.short .eld-foot {
 html.short .eld-foot .el-btn {
   flex: 1 1 auto;
   padding: 0 10px;
+}
+
+/* Onay penceresi (openElConfirm) Gear / Menu gibi pencerelerin ÜSTÜNDE açılır; sağ üst X (zorunlu olmayan her DOM diyalogda) */
+.el-dialog.eld-confirm {
+  z-index: 60;
+}
+
+.eld-panel {
+  position: relative;
+}
+
+.eld-x {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+}
+
+/* --- DOM bildirimi (src/ui/el-toast.ts): Phaser elToast ile aynı yer (üst orta) ve görünüm --- */
+.el-toast {
+  position: fixed;
+  top: calc(var(--et, 0px) + 120px);
+  left: calc(50% + (var(--el, 0px) - var(--er, 0px)) / 2);
+  transform: translate(-50%, -10px);
+  max-width: min(90vw, 1000px);
+  padding: 14px 96px;
+  box-sizing: border-box;
+  font: 400 23px/1.2 var(--el-body);
+  color: var(--el-on);
+  text-align: center;
+  background: linear-gradient(90deg, rgba(10, 7, 5, 0), rgba(10, 7, 5, 0.92) 18%, rgba(10, 7, 5, 0.92) 82%, rgba(10, 7, 5, 0));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 30000;
+}
+
+.el-toast.on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.el-toast.bad {
+  color: #f0c7bb;
+}
+
+/* Bağlantı durum bandı (Multiplayer): ince bant + solda elmas; renk yalnızca elmasta */
+.el-statusband {
+  position: fixed;
+  top: calc(var(--et, 0px) + 8px);
+  left: calc(50% + (var(--el, 0px) - var(--er, 0px)) / 2);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(var(--stage-w, 100vw) - 200px);
+  padding: 6px 22px 6px 18px;
+  font: 600 16px var(--el-body);
+  color: var(--el-txt);
+  background: rgba(10, 7, 5, 0.9);
+  border-top: 1px solid rgba(217, 178, 106, 0.3);
+  border-bottom: 1px solid rgba(217, 178, 106, 0.3);
+  z-index: 35;
+  pointer-events: none;
+}
+
+.el-statusband[hidden] {
+  display: none;
+}
+
+.el-statusband::before {
+  content: '';
+  flex: none;
+  width: 0.56em;
+  height: 0.56em;
+  transform: rotate(45deg);
+  background: var(--el-gold, #d9b26a);
+}
+
+.el-statusband[data-kind='error']::before {
+  background: var(--el-bad, #e8806a);
+}
+
+.el-statusband[data-kind='info']::before {
+  background: var(--el-ember, #e0702a);
+}
+
+/* Multiplayer penceresi alanları (mp-overlay.ts): .el-field + küçük varyantlar */
+.el-field.eld-code {
+  min-height: 56px;
+  font: 600 28px var(--el-display);
+  letter-spacing: 0.2em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.el-field.eld-name {
+  text-align: center;
+}
+
+.el-field.eld-share {
+  min-height: 96px;
+  padding: 10px 14px;
+  resize: none;
+  font-weight: 400;
+}
+
+.eld-note {
+  margin: 8px 0 0;
+  font-size: 15px;
+  opacity: 0.85;
+}
+
+html.short .el-field.eld-share {
+  min-height: 72px;
+  font-size: 15px;
 }

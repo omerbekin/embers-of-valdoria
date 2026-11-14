@@ -24,6 +24,17 @@
         "--host"
       ],
       "port": 5000
+    },
+    {
+      "name": "chat-bigform-picks",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "5175",
+        "--strictPort"
+      ],
+      "port": 5175
     }
   ]
 }

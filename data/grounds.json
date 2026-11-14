@@ -1,6 +1,7 @@
 {
-  "_not": "Yerde kalan etkiler (hücrelere bırakılır). GENEL ZEMİN KURALI (Ömer 2026-10-29, open-questions 453): zemin kendi durumunu (status; su zemininde soak) İÇİNDE DURAN birime verir: giren (yürüyerek, Move, itilerek/çekilerek) o an alır, içindeyken durumun süresi işlemez, çıkınca ya da zemin bitince o an kalkar. Hasar/şifa zeminden değil DURUMDAN gelir: durum birimin tur başında BİR kez tikler (güç = zeminin hücredeki gücü, element = zeminin elementi, büyü; yeniden kazanmak tik atmaz). Aynı türden skill durumu ile çakışınca güçlü olan geçer, zayıf skill örneği altta bekler ve zeminden çıkınca kalan süresiyle döner. directTick (Flooded Planks) = istisna: zemin kendi küçük hasarını doğrudan vurur. Eski metin: üstünde duran düşman birimler kendi turlarının başında hasar alır. Süre, etkiyi bırakanın kendi turlarıyla sayılır (o ölürse etki biter). Hasar, bırakıldığı andaki güce göre sabittir; büyü hasarıdır (kritik/dodge yok). Faz 4c (skill ağacı zeminleri): statuses = içinde tur başlatan düşmana durum (süre durumlarından sonra), manaBurnPct = tur başı maks MP yakma; gücü 0 olan zemin hasar vermez. heal: true = şifa zemini: düşmana değil, bırakanın tarafındaki birime tur başı şifa (Holy Ground: Judgment kendi tarafına atılınca, open-questions 416/8).",
+  "_not": "Yerde kalan etkiler (hücrelere bırakılır). GENEL ZEMİN KURALI (Ömer 2026-10-29, open-questions 453): zemin kendi durumunu (status; su zemininde soak) İÇİNDE DURAN birime verir: giren (yürüyerek, Move, itilerek/çekilerek) o an alır, içindeyken durumun süresi işlemez, çıkınca ya da zemin bitince o an kalkar. Hasar/şifa zeminden değil DURUMDAN gelir: durum birimin tur başında BİR kez tikler (güç = zeminin hücredeki gücü, element = zeminin elementi, büyü; yeniden kazanmak tik atmaz). Aynı türden skill durumu ile çakışınca güçlü olan geçer, zayıf skill örneği altta bekler ve zeminden çıkınca kalan süresiyle döner. directTick (Flooded Planks) = istisna: zemin kendi küçük hasarını doğrudan vurur. Eski metin: üstünde duran düşman birimler kendi turlarının başında hasar alır. Süre, etkiyi bırakanın kendi turlarıyla sayılır (o ölürse etki biter). Hasar, bırakıldığı andaki güce göre sabittir; büyü hasarıdır (kritik/dodge yok). Faz 4c (skill ağacı zeminleri): statuses = içinde tur başlatan düşmana durum (süre durumlarından sonra), manaBurnPct = tur başı maks MP yakma; gücü 0 olan zemin hasar vermez. heal: true = şifa zemini: düşmana değil, bırakanın tarafındaki birime tur başı şifa (Holy Ground: Judgment kendi tarafına atılınca, open-questions 416/8). liquid: true = sıvı zemin (Ömer 2026-11-09): Defender Tremor Slam vurduğu hücredeki sıvı zemini 4 yönden komşu hücrelere sıçratır (aynı sahip, kalan süre ve güç; yeni hücreler tetik sayılır, tepkimeler işler). Bugün: poison, healing_rain, flooded_planks, flooded, holy_water, blood (Ömer onaylı 2026-11-09).",
   "poison": {
+    "liquid": true,
     "name": "Poison",
     "text": "Enemies standing here are Poisoned: they take nature damage at the start of their turn and receive 15% less healing. Lasts while they stay in the cell.",
     "color": "#6fcf4b",
@@ -35,9 +36,10 @@
     "heal": true
   },
   "healing_rain": {
+    "liquid": true,
     "_not": "Healing Rain (Druid, Ömer 2026-11-01): ŞİFA zemini + su. Durum yeni değil: Hallowed (regen statuses.json'da tanımlı değil, addStatus / tur tikinde id'ye bağlı dalları var; Hallowed genel zemin yolundan geçiyor). water: true = tepkime ve söndürmede su sayılır (spread, frozen, holy_water, holy_water_ground, evaporate; zehir bağlantılı yağmur hücrelerine akar), ama Soaked VERMEZ, yalnız dostu iyileştirir; Live Water / Shocked (conductingCells) ve isWaterSkill bunu su saymaz (soak'a bakar).",
     "name": "Healing Rain",
-    "text": "Allies standing here are Hallowed: they heal at the start of their turn. This rain is water: it puts out Burning Ground and reacts with other grounds as water does, but it does not soak. Harms no one.",
+    "text": "Allies standing here are Hallowed: they heal at the start of their turn. This rain is water: it puts out Burning Ground, carries lightning and reacts as water does, but it does not soak. Harms no one.",
     "color": "#7dff9b",
     "element": "nature",
     "icon": "rejuvenate",
@@ -49,6 +51,7 @@
     ]
   },
   "flooded_planks": {
+    "liquid": true,
     "name": "Flooded Planks",
     "text": "Enemies standing here take physical damage at the start of their turn and are Soaked: 50% less fire damage, 10% less Speed.",
     "color": "#2f6f73",
@@ -114,6 +117,7 @@
     "status": "bleeding"
   },
   "flooded": {
+    "liquid": true,
     "_not": "Harita 2 (M-B): su. Hasar vermez; içindeki HER birim Soaked olur (çevre etkisi: direnç zarı yok; genel zemin kuralı 2026-10-29: suda kaldıkça sürer, çıkınca o an kalkar, eski soakTurns kalktı); Burning Ground bu hücrelerde söner (quenches). Tide / Urn suyu süresini savaş turuyla sayar (data/battle-rules.json). Skill'in bıraktığı Flooded (Call the Tide, Surge, Deluge, High Tide, The Reach Drowns, Requiem of Salt) Ömer 2026-10-27 kararıyla AYNI davranır (soak buradan; open-questions 437).",
     "name": "Flooded",
     "text": "Every unit standing here, friend or foe, is Soaked: 50% less fire damage, 10% less Speed. Puts out Burning Ground in the cell. Deals no damage.",
@@ -135,6 +139,7 @@
     "status": "searing"
   },
   "holy_water": {
+    "liquid": true,
     "_not": "Zemin tepkimesi (Ömer 2026-10-27): su + Holy Fire. Şifa zemini (heal): hasar vermez; içindeki, tepkimeyi tetikleyenin tarafındaki birim Hallowed alır ve tur başında tik kadar iyileşir. Islatmaz.",
     "name": "Holy Water",
     "text": "Allies of whoever made it, standing here, are Hallowed: they heal at the start of their turn. Harms no one and does not soak.",
@@ -153,8 +158,95 @@
     "icon": "blizzard",
     "status": "slow"
   },
+  "blood": {
+    "_not": "Kan zemini (Ömer onaylı 2026-11-09): ağır FİZİKSEL kritik (formulas.json > heavyCrit, blood) hedefin hücresine bırakır; kansız birim (bloodless) bırakmaz. Sıvıdır: soak = su gibi içindeki HER birim Soaked olur (Flooded ile aynı yol), şimşeği su gibi iletir (Live Water), Chill/Ice ile Ice olur (reactions.frozen), Tremor Slam sıçratmasında sıvı sayılır (liquid). Ateşi söndürmez, zehir yaymaz, kutsal suya dönmez (Ömer söylemedi). Hasar vermez.",
+    "name": "Blood",
+    "text": "Spilled by a heavy physical crit. Every unit standing here, friend or foe, is Soaked: 50% less fire damage, 10% less Speed. It is a liquid: it carries lightning like water and freezes into Ice. Deals no damage.",
+    "color": "#8a1c1c",
+    "element": "physical",
+    "icon": "drop",
+    "soak": "soaked",
+    "liquid": true
+  },
+  "cursed_ground": {
+    "_not": "Lanetli zemin (Ömer onaylı 2026-11-09): Hexer Withering Curse alanına bırakır. İçindeki düşman (bırakanın düşmanı) Unhallowed alır: alınan şifa -%35 (statuses.json > unhallowed; Ömer onaylı 2026-11-09 element formu: 0,5 -> 0,65). Hasar vermez. Holy Fire / Sanctified Flame ile karşılaşınca ikisi de söner (reactions.cleansed).",
+    "name": "Cursed Ground",
+    "text": "Enemies standing here are Unhallowed: they receive 35% less healing. Holy fire or Holy Water and this curse cancel each other out. Deals no damage.",
+    "color": "#5b3a6e",
+    "element": "dark",
+    "icon": "poison",
+    "status": "unhallowed",
+    "stopsHeal": ["healing_rain"]
+  },
+  "blood_curse": {
+    "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09, element formu): kan + lanetli zemin (reactions.blood_curse). T2: sıvı değil, ıslatmaz. İçindeki düşman (tetiği bırakanın düşmanı) Blood Cursed: alınan şifa -%70. Hasar vermez.",
+    "name": "Blood Curse",
+    "text": "Enemies standing here are Blood Cursed: they receive 70% less healing. Made by blood and a curse merging. Deals no damage.",
+    "color": "#5a1030",
+    "element": "dark",
+    "icon": "drop",
+    "status": "blood_cursed"
+  },
+  "black_flame": {
+    "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09): ateş + lanetli zemin tek zemin olur (reactions.black_flame). İçindeki düşman Burning (gücü Burning Ground'dan) + Unhallowed alır. T2: başka tepkime kurmaz.",
+    "name": "Black Flame",
+    "text": "Enemies standing here are Burning and Unhallowed: they take fire damage at the start of their turn and receive 35% less healing. Made by fire and a curse merging.",
+    "color": "#4a1a5a",
+    "element": "fire",
+    "icon": "flame",
+    "status": "burning",
+    "statuses": [{ "status": "unhallowed" }]
+  },
+  "rot": {
+    "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09, çürüme): zehir + lanetli zemin tek zemin olur (reactions.rot). İçindeki düşman Poisoned (gücü Poison zemininin formulas.rot.poisonMult katı, PROVİZYON) + Unhallowed. T2: başka tepkime kurmaz.",
+    "name": "Rot",
+    "text": "Enemies standing here are Poisoned and Unhallowed: their poison ticks are 25% stronger and they receive 35% less healing. Made by poison and a curse merging.",
+    "color": "#5a6a2a",
+    "element": "nature",
+    "icon": "poison",
+    "status": "poisoned",
+    "statuses": [
+      {
+        "status": "unhallowed"
+      }
+    ]
+  },
+  "grave_frost": {
+    "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09): Chill Ground + lanetli zemin tek zemin olur (reactions.grave_frost). İçindeki düşman Chilled (gücü Chill Ground'dan) + Unhallowed alır. T2: başka tepkime kurmaz.",
+    "name": "Grave Frost",
+    "text": "Enemies standing here are Chilled and Unhallowed: 20% less Speed, 10% less Evasion, ice damage at the start of their turn and 35% less healing. Made by chill and a curse merging.",
+    "color": "#6f7fa8",
+    "element": "ice",
+    "icon": "blizzard",
+    "status": "chilled",
+    "statuses": [{ "status": "unhallowed" }]
+  },
+  "bloody_water": {
+    "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09): su (Flooded) + kan (reactions.bloody_water). Su gibi davranır (soak: herkes Soaked, şimşeği iletir, ateşi söndürür); ek olarak içindeki HER birim Bleeding (su kuralı: taraf ayırmaz). Bleeding tik gücü tepkime anında tahtanın ortalama maks canı x becomes.hpRatio (PROVİZYON, Ömer sayı söylemedi). T2: başka tepkime kurmaz. Sıvıdır (Tremor Slam sıçratır).",
+    "name": "Bloody Water",
+    "text": "Water mixed with blood. Every unit here, friend or foe, is Soaked and Bleeding: 50% less fire damage, 10% less Speed, physical damage each turn. Puts out Burning Ground and carries lightning.",
+    "color": "#6a2a3a",
+    "element": "physical",
+    "icon": "drop",
+    "status": "bleeding",
+    "soak": "soaked",
+    "statuses": [{ "status": "soaked" }],
+    "quenches": ["burning"],
+    "liquid": true
+  },
   "reactions": {
     "_not": "ZEMİN TEPKİMELERİ (Ömer 2026-10-27 'uygula'; sayılar PROVİZYON, sim yok; open-questions 445). Hücrede zaten olan zemin = KURULUM (setup), yeni bırakılan zemin = TETİK (trigger). Bırakılırken her ortak hücrede tepkime BİR KEZ olur ve hücrede TEK sonuç kalır; sıra önemlidir (either: true = iki sıra da aynı tepkime). Her iki tarafın zeminleri tepkir. Tepkimenin hasarı/etkisi tetiği bırakanındır; hasar ve durum yalnızca ona düşman birimlere, şifa yalnızca onun tarafına. Aynı türden zemin bugünkü gibi (üst üste / Fire on Fire). Alanlar: remove = hücreden kalkan zemin türleri; damage = anlık büyü hasarı (of: tutarı veren zemin türleri, yoksa ikisinin güçlüsü; mult; adjacent = 4 yönden komşu hücrelere çarpan; element); status = hücredeki düşmanlara durum; cleanse = kurulumun sahibinin tarafındaki birimlerden silinen durumlar; refresh = süresi baştan başlayan zemin türleri; cellMult = tutulan zeminin bu hücredeki gücü çarpanı (süresince); becomes = ikisi de kalkar, yerine yeni zemin (power: güç çarpanı, of: gücün geldiği zemin türleri / yoksa güçlüsü; turns: sayı ya da 'longer'); spread = listelenen zemin, hücredeki suya bağlı (4 yönden komşu) tüm su hücrelerine yayılır; board = tahta koşulu ('own': yalnız tetiği bırakanın kendi tahtasında, 'foe': yalnız karşı tahtada; Holy Water / Evaporates, Ömer 2026-10-28).",
+    "steam": {
+      "_not": "Ömer onaylı 2026-11-09 (element formu; Yukarı birleşir, aşağı çözülür): Soaked birime Burning gelirse Soaked kalkar, Burning tutmaz (ikisi de söner; anlık etki, geride bir şey kalmaz). Yalnız birim üstü. Explosion'dan ÖNCE (tabloda ilk eşleşen işler).",
+      "label": "Steam",
+      "result": "Dries off, no burn",
+      "text": "Burning put on a Soaked unit turns to steam: the unit dries off and the Burning does not stick.",
+      "setup": [],
+      "trigger": [],
+      "unitSetup": ["soaked"],
+      "unitTrigger": ["burning"],
+      "unitRemove": ["soaked", "burning"]
+    },
     "explosion": {
       "label": "Explosion",
       "result": "Fire damage around",
@@ -162,6 +254,9 @@
       "setup": ["poison"],
       "trigger": ["burning"],
       "remove": ["poison"],
+      "unitSetup": ["poisoned"],
+      "unitTrigger": ["burning"],
+      "unitRemove": ["poisoned"],
       "damage": { "element": "fire", "of": ["poison", "burning"], "sum": true, "mult": 1, "adjacent": 0.5 }
     },
     "toxic_smoke": {
@@ -171,6 +266,9 @@
       "setup": ["burning"],
       "trigger": ["poison"],
       "remove": ["poison"],
+      "unitSetup": ["burning"],
+      "unitTrigger": ["poisoned"],
+      "unitRemove": ["poisoned"],
       "damage": { "element": "nature", "of": ["poison"], "mult": 1 },
       "status": { "status": "blinded", "turns": 1 }
     },
@@ -223,8 +321,8 @@
     },
     "spread": {
       "label": "Spreads",
-      "result": "Poison spreads in water",
-      "text": "Poison meets water: the poison flows into every water cell connected to it; the water stays.",
+      "result": "Poison seeps out",
+      "text": "Poison meets water: the poison seeps into a few random cells next to it (a third of the water's size, at least one); the water stays.",
       "setup": ["flooded", "healing_rain"],
       "trigger": ["poison"],
       "either": true,
@@ -264,8 +362,8 @@
     "frozen": {
       "label": "Frozen",
       "result": "Water freezes to ice",
-      "text": "Chill or Ice freezes water into Ice: enemies standing on it are Slowed until they leave it; the water is gone.",
-      "setup": ["flooded", "healing_rain"],
+      "text": "Chill or Ice freezes water or blood into Ice: enemies standing on it are Slowed until they leave it; the liquid is gone.",
+      "setup": ["flooded", "healing_rain", "blood"],
       "trigger": ["storm", "ice_ground"],
       "either": true,
       "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 }
@@ -280,6 +378,16 @@
       "remove": ["ice_ground"],
       "damage": { "element": "physical", "hpRatio": 0.08, "mult": 1, "adjacent": 0.5 }
     },
+    "cleansed": {
+      "_not": "Ömer onaylı 2026-11-09: kutsal ateş + lanetli zemin birbirini iptal eder, hücre temizlenir (iki sıra; ikisi de kalkar).",
+      "label": "Cleansed",
+      "result": "Both are gone",
+      "text": "Holy fire and a curse cancel each other out: both are gone and the cell is clean.",
+      "setup": ["cursed_ground"],
+      "trigger": ["holy_fire", "sanctified_flame"],
+      "either": true,
+      "remove": ["cursed_ground", "holy_fire", "sanctified_flame"]
+    },
     "frozen_chill": {
       "_not": "Ömer 2026-10-29 (445): zaten Chill Ground olan hücreye yeniden Chill Ground bırakılınca Ice olur (aynı türden tepkime; setup = trigger). Güç / süre frozen ile aynı.",
       "label": "Frozen solid",
@@ -288,6 +396,191 @@
       "setup": ["storm"],
       "trigger": ["storm"],
       "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 }
+    },
+    "cleansed_water": {
+      "_not": "ELEMENT FORMU (Ömer onaylı 2026-11-09). Kademe kuralı 'Yukarı birleşir, aşağı çözülür' (docs/design/combat.md): T1 + T1 -> T2 ya da anlık etki; T2 yeni T2 kurmaz, yalnız silinir (isteğe bağlı anlık hasarla) ya da T1 kaynağına çözülür; anlık etki geride bir şey bırakmaz; kutsal muaf. Sayılar PROVİZYON (sim yok). Birim üstü tepkimelerde either = iki sıra. Shocked tetiği Battle.shock rozetinden (addStatus'tan geçmez, reactUnit ayrıca çağrılır). Bu giriş: kutsal su + lanetli zemin birbirini iptal eder (ikisi de kalkar).",
+      "label": "Cleansed",
+      "result": "Both are gone",
+      "text": "Holy Water and a curse cancel each other out: both are gone and the cell is clean.",
+      "setup": ["cursed_ground"],
+      "trigger": ["holy_water"],
+      "either": true,
+      "remove": ["cursed_ground", "holy_water"]
+    },
+    "blood_curse": {
+      "label": "Blood curse",
+      "result": "Healing -70% here",
+      "text": "Blood and a curse merge into Blood Curse: enemies of whoever made it standing there receive 70% less healing.",
+      "setup": ["blood"],
+      "trigger": ["cursed_ground"],
+      "either": true,
+      "becomes": { "ground": "blood_curse", "power": 0, "turns": "longer" }
+    },
+    "black_flame": {
+      "label": "Black flame",
+      "result": "Burns and curses",
+      "text": "Fire and a curse merge into Black Flame: enemies of whoever made it standing there are Burning and Unhallowed.",
+      "setup": ["cursed_ground"],
+      "trigger": ["burning"],
+      "either": true,
+      "becomes": { "ground": "black_flame", "power": 1, "of": ["burning"], "turns": "longer" }
+    },
+    "grave_frost": {
+      "label": "Grave frost",
+      "result": "Chills and curses",
+      "text": "Chill and a curse merge into Grave Frost: enemies of whoever made it standing there are Chilled and Unhallowed.",
+      "setup": ["cursed_ground"],
+      "trigger": ["storm"],
+      "either": true,
+      "becomes": { "ground": "grave_frost", "power": 1, "of": ["storm"], "turns": "longer" }
+    },
+    "rot": {
+      "_not": "Çürüme (Ömer onaylı 2026-11-09): zehir + lanet tek zemin; güç çarpanı formulas.json > rot.poisonMult (PROVİZYON, sim gerek).",
+      "label": "Rot",
+      "result": "Rots and curses",
+      "text": "Poison and a curse merge into Rot: enemies of whoever made it standing there are Poisoned, with 25% stronger ticks, and Unhallowed.",
+      "setup": ["cursed_ground"],
+      "trigger": ["poison"],
+      "either": true,
+      "becomes": { "ground": "rot", "power": 1, "powerFrom": "rot", "of": ["poison"], "turns": "longer" }
+    },
+    "cursed_water": {
+      "_not": "Su + lanet: lanet ortak sıvı yayılma kuralıyla (formulas.json > liquidSpread) taşar; su kalır. Healing Rain de su (Ömer 2026-11-09, ikinci form): lanet ona da yayılır; lanetli Healing Rain kimseyi iyileştirmez (cursed_ground > stopsHeal).",
+      "label": "Cursed water",
+      "result": "Curse seeps out",
+      "text": "A curse meets water: the curse seeps into a few random cells next to it (a third of the water's size, at least one); the water stays. Cursed Healing Rain heals no one.",
+      "setup": ["flooded", "healing_rain"],
+      "trigger": ["cursed_ground"],
+      "either": true,
+      "spread": ["cursed_ground"]
+    },
+    "bloody_water": {
+      "label": "Bloody water",
+      "result": "Soaks and bleeds",
+      "text": "Water and blood mix into Bloody Water: it soaks like water and everyone standing in it, friend or foe, is also Bleeding.",
+      "setup": ["flooded", "healing_rain"],
+      "trigger": ["blood"],
+      "either": true,
+      "becomes": { "ground": "bloody_water", "power": 0, "hpRatio": 0.03, "turns": "longer" }
+    },
+    "frost_venom": {
+      "label": "Frozen venom",
+      "result": "Ice, chill, poison tick",
+      "text": "Poison and chill freeze into Ice: enemies of whoever made it standing there are Chilled for 2 turns and take one poison tick at once.",
+      "setup": ["storm"],
+      "trigger": ["poison"],
+      "either": true,
+      "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 },
+      "damage": { "element": "nature", "of": ["poison"], "mult": 1 },
+      "status": { "status": "chilled", "turns": 2 }
+    },
+    "tainted_blood": {
+      "_not": "Zehir + kan: hücredeki kana 4 yönden bağlı tüm kan hücreleri zehre döner (zehir örneğine katılır), ardından ortak sıvı yayılma kuralıyla (formulas.json > liquidSpread) alana bitişik rastgele hücrelere (seed'li RNG; engelli / zaten zehirli hücre hariç) taşar.",
+      "label": "Tainted blood",
+      "result": "Blood turns to poison",
+      "text": "Poison meets blood: all the connected blood turns to poison, and the poison spills into a few random cells next to it (a third of the blood's size, at least one).",
+      "setup": ["blood"],
+      "trigger": ["poison"],
+      "either": true,
+      "convert": { "from": ["blood"], "into": "poison" }
+    },
+    "flash_freeze": {
+      "_not": "Birim üstü: Soaked + Chilled (iki sıra) -> doğrudan Frozen (Soaked kalkar; Frozen Chilled'ı kaldırır). Frozen tutmayacaksa (boss ccImmunity) tepkime hiç olmaz.",
+      "label": "Flash freeze",
+      "result": "Frozen solid",
+      "text": "Chilled on a Soaked unit (or the other way round) freezes it at once: the unit is Frozen. Bosses do not freeze.",
+      "setup": [],
+      "trigger": [],
+      "unitSetup": ["soaked"],
+      "unitTrigger": ["chilled"],
+      "either": true,
+      "unitRemove": ["soaked"],
+      "status": { "status": "frozen", "turns": 1 }
+    },
+    "brittle": {
+      "_not": "Birim üstü: Chilled + Shocked (iki sıra) -> 1 tur Shredded; yığın başı Armor eksiği = taban Armor x armorRatio (PROVİZYON). Var olan Shredded'ın yığını ve büyük tutarı korunur.",
+      "label": "Brittle",
+      "result": "Armor shredded",
+      "text": "Lightning on a Chilled unit (or chill on a Shocked one) makes it brittle: Shredded for 1 turn.",
+      "setup": [],
+      "trigger": [],
+      "unitSetup": ["chilled"],
+      "unitTrigger": ["shocked"],
+      "either": true,
+      "status": { "status": "shredded", "turns": 1, "armorRatio": 0.2 }
+    },
+    "chilled_venom": {
+      "label": "Chilled venom",
+      "result": "Poison lasts longer",
+      "text": "Chill on a Poisoned unit (or poison on a Chilled one) slows the venom: Poisoned lasts 1 turn longer.",
+      "setup": [],
+      "trigger": [],
+      "unitSetup": ["poisoned"],
+      "unitTrigger": ["chilled"],
+      "either": true,
+      "extend": { "status": "poisoned", "turns": 1 }
+    },
+    "jolted_venom": {
+      "label": "Jolted venom",
+      "result": "Poison ticks now",
+      "text": "Lightning on a Poisoned unit (or poison on a Shocked one): one poison tick fires at once.",
+      "setup": [],
+      "trigger": [],
+      "unitSetup": ["poisoned"],
+      "unitTrigger": ["shocked"],
+      "either": true,
+      "damage": { "element": "nature", "of": ["poison"], "mult": 1 }
+    },
+    "jolted_flame": {
+      "label": "Jolted flame",
+      "result": "Burn ticks now",
+      "text": "Lightning on a Burning unit (or Burning on a Shocked one): one Burning tick fires at once.",
+      "setup": [],
+      "trigger": [],
+      "unitSetup": ["burning"],
+      "unitTrigger": ["shocked"],
+      "either": true,
+      "damage": { "element": "fire", "of": ["burning"], "mult": 1 }
+    },
+    "brittle_frost": {
+      "_not": "Ömer onaylı 2026-11-09 (ikinci form B): Chill Ground + şimşek: hücredeki (atana düşman) birimler 1 tur Shredded (Brittle ile aynı Armor oranı). Zemin kalır, şimşeği keser mi: hayır (yalnız Ice keser).",
+      "label": "Brittle frost",
+      "result": "Armor shredded",
+      "text": "Lightning on Chill Ground: enemies standing there turn brittle and are Shredded for 1 turn.",
+      "setup": ["storm"],
+      "trigger": ["lightning"],
+      "status": { "status": "shredded", "turns": 1, "armorRatio": 0.2 }
+    },
+    "hexed_spark": {
+      "_not": "Ömer onaylı 2026-11-09 (ikinci form C): şimşek + lanetli zemin: hücredeki (atana düşman) birimler 2 tur Jinxed, Shocked YOK (noShock; suda duran yine Electrocuted).",
+      "label": "Hexed spark",
+      "result": "Jinxed, no shock",
+      "text": "Lightning on Cursed Ground: enemies standing there are Jinxed for 2 turns instead of Shocked.",
+      "setup": ["cursed_ground"],
+      "trigger": ["lightning"],
+      "noShock": true,
+      "status": { "status": "jinxed", "turns": 2 }
+    },
+    "spark_blaze": {
+      "_not": "Ömer onaylı 2026-11-09 (düzeltme): şimşek + yanan zemin: yanan zemin ortak sıvı yayılma kuralıyla (formulas.json > liquidSpread; alan = hücreye bağlı yanan hücreler) bitişik rastgele hücrelere yayılır. ETKİSİZ ÇİFTLER (Ömer 2026-11-09): ateş + kan ve zehir + şimşek tepkime kurmaz (bilerek; her elementte birer boş çift).",
+      "label": "Spark blaze",
+      "result": "Fire spreads",
+      "text": "Lightning on Burning Ground fans the flames: the fire spreads into a few random cells next to it (a third of the fire's size, at least one).",
+      "setup": ["burning"],
+      "trigger": ["lightning"],
+      "spreadSelf": true
+    },
+    "wet_venom": {
+      "_not": "Birim üstü: Soaked + Poisoned (iki sıra) -> 4 yönden komşu hücrelerdeki Soaked birimler (tetiği uygulayanın düşmanları) 1 tur Poisoned (tutar = bu birimin Poisoned tutarı). Zincirlemez: yayılan zehir yeniden yaymaz.",
+      "label": "Wet venom",
+      "result": "Poison seeps to wet foes",
+      "text": "Poison on a Soaked unit (or water on a Poisoned one) seeps through the wet: Soaked units next to it are Poisoned for 1 turn.",
+      "setup": [],
+      "trigger": [],
+      "unitSetup": ["soaked"],
+      "unitTrigger": ["poisoned"],
+      "either": true,
+      "spreadStatus": { "status": "poisoned", "turns": 1, "to": "soaked" }
     }
   }
 }

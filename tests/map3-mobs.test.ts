@@ -226,20 +226,21 @@ describe.each(MODES)('%s modu', (mode) => {
     expect(res.ok && res.events.some((e) => e.type === 'shock' && e.target === w.uid)).toBe(true);
   });
 
-  it('Clan Stormcaller: Fork Soaked hedefe Stun; kuruya Stun yok; Eye of the Storm ve Rolling Thunder kitte', () => {
+  it('Clan Stormcaller: Fork Soaked hedefe Electrocuted (wetInto, Ömer 2026-11-09); kuruya yok; Eye of the Storm ve Rolling Thunder kitte', () => {
+    const wetInto = content.formulas.thunder.wetInto ?? 'stun';
     const b = make(undefined, P, { 6: 'clan_stormcaller' }, mode);
     const s = at(b, 'enemy', 6);
     const h = at(b, 'party', 0);
     turnOf(b, s.uid);
     expect(b.useSkill(s.uid, 'fork', h.uid).ok).toBe(true);
-    expect(has(h, 'stun')).toBe(false);
+    expect(has(h, wetInto)).toBe(false);
     const c = make(undefined, P, { 6: 'clan_stormcaller' }, mode);
     const s2 = at(c, 'enemy', 6);
     const h2 = at(c, 'party', 0);
     c.debugAddStatus(h2.uid, 'soaked', 3);
     turnOf(c, s2.uid);
     expect(c.useSkill(s2.uid, 'fork', h2.uid).ok).toBe(true);
-    expect(has(h2, 'stun')).toBe(true);
+    expect(has(h2, wetInto)).toBe(true);
     expect(s.passive?.effect.type).toBe('eyeOfStorm');
     expect(s.skills).toContain('rolling_thunder');
   });

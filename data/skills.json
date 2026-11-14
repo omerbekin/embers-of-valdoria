@@ -85,7 +85,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.627,
+        "power": 0.652,
         "element": "holy"
       }
     ],
@@ -122,7 +122,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.394,
+        "power": 0.414,
         "element": "holy"
       }
     ],
@@ -424,7 +424,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.67,
+        "power": 0.65,
         "element": "dark"
       },
       {
@@ -674,7 +674,7 @@
   },
   "natures_wrath": {
     "id": "natures_wrath",
-    "name": "Nature's Wrath",
+    "name": "Tidal Wrath",
     "icon": "roots",
     "target": "area_enemies",
     "area": {
@@ -1133,8 +1133,8 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.5,
-        "powerPerRage": 0.025
+        "power": 0.465,
+        "powerPerRage": 0.023
       }
     ],
     "vfx": "headsman",
@@ -1197,11 +1197,11 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.221,
+        "power": 0.232,
         "bonusScale": [
           {
             "stat": "armor",
-            "pct": 0.105
+            "pct": 0.11
           }
         ]
       },
@@ -1209,6 +1209,9 @@
         "type": "status",
         "status": "slow",
         "turns": 2
+      },
+      {
+        "type": "splashLiquid"
       }
     ],
     "vfx": "tremor2",
@@ -1727,7 +1730,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.86
+        "power": 0.834
       },
       {
         "type": "omen",
@@ -1742,7 +1745,7 @@
     ]
   },
   "withering_curse": {
-    "_not": "Hexer alan laneti: rect 2x3 (Nature's Wrath şekli), aşamalı önden arkaya (Ö6). Her vurulana hasar + Wither 3 tur (LUCK x 0,2 / tur, karakter üstü DoT) + 1 Omen (kritikse 2). İkon/vfx/ses YER TUTUCU (ödünç: ikon drainfield, vfx wail, ses graveMoan + voidSuction); gerçekleri: witheringcurse ikon/vfx, candleGutter + rotSeep. Sayılar PROVİZYON.",
+    "_not": "Ömer onaylı 2026-11-09: alanına Cursed Ground bırakır (grounds.json > cursed_ground; içindeki düşman Unhallowed, alınan şifa -%50; süre 2 PROVİZYON). Hexer alan laneti: rect 2x3 (Tidal Wrath şekli), aşamalı önden arkaya (Ö6). Her vurulana hasar + Wither 3 tur (LUCK x 0,2 / tur, karakter üstü DoT) + 1 Omen (kritikse 2). İkon/vfx/ses YER TUTUCU (ödünç: ikon drainfield, vfx wail, ses graveMoan + voidSuction); gerçekleri: witheringcurse ikon/vfx, candleGutter + rotSeep. Sayılar PROVİZYON.",
     "id": "withering_curse",
     "name": "Withering Curse",
     "icon": "drainfield",
@@ -1780,6 +1783,13 @@
         "type": "omen",
         "stacks": 1,
         "critStacks": 2
+      },
+      {
+        "type": "ground",
+        "ground": "cursed_ground",
+        "turns": 2,
+        "scale": "luck",
+        "power": 0
       }
     ],
     "vfx": "wail",
@@ -2239,6 +2249,9 @@
         "type": "status",
         "status": "slow",
         "turns": 2
+      },
+      {
+        "type": "splashLiquid"
       }
     ],
     "vfx": "tremor2",
@@ -3022,9 +3035,9 @@
     "note": "Pose test: plays the Thrust pose."
   },
   "pt_natures_wrath": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Nature's Wrath kopyası; gerçek efekt/ses/hedef (artOf natures_wrath), v2 poz takımında 'overhead'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Tidal Wrath kopyası; gerçek efekt/ses/hedef (artOf natures_wrath), v2 poz takımında 'overhead'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_natures_wrath",
-    "name": "Nature's Wrath",
+    "name": "Tidal Wrath",
     "icon": "roots",
     "target": "area_enemies",
     "area": {
@@ -3665,6 +3678,13 @@
         "type": "omen",
         "stacks": 1,
         "critStacks": 2
+      },
+      {
+        "type": "ground",
+        "ground": "cursed_ground",
+        "turns": 2,
+        "scale": "luck",
+        "power": 0
       }
     ],
     "vfx": "wail",
@@ -12313,7 +12333,7 @@
     "skyFx": "light",
     "fx": "#bfe3ff",
     "effects": [
-      { "type": "damage", "damageType": "magic", "scale": "str", "power": 0.85, "element": "lightning" }
+      { "type": "damage", "damageType": "magic", "scale": "str", "power": 0.795, "element": "lightning" }
     ],
     "vfx": "judgment",
     "sfx": ["skaldCall", "boltCrack"]

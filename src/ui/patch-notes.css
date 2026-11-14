@@ -27,7 +27,7 @@
   overscroll-behavior: contain;
   padding-right: 6px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 
 .pn-rel {
@@ -112,10 +112,10 @@
 .pn-items li::before {
   content: '';
   position: absolute;
-  left: 2px;
+  left: 0.1em;
   top: 0.72em;
-  width: 5px;
-  height: 5px;
+  width: 0.26em;
+  height: 0.26em;
   transform: rotate(45deg);
   background: rgba(217, 178, 106, 0.55);
 }
@@ -126,7 +126,7 @@
   align-items: center;
 }
 
-/* Sayfalama (Ömer 2026-10-16): Newer · Page x / y · Older solda, Close (birincil) en sağda */
+/* Sayfalama (Ömer 2026-10-16): Newer · Page x / y · Older (Compact); Close = sağ üst X */
 .el-dialog .pn-row {
   justify-content: space-between;
 }
@@ -139,11 +139,6 @@
 
 .pn-pager[hidden] {
   display: none;
-}
-
-.pn-page-btn.el-btn {
-  padding: 0 20px 0 calc(20px + 0.1em);
-  font-size: 15px;
 }
 
 .pn-count {
@@ -193,19 +188,6 @@ html.short .pn-items li {
 
 html.short .pn-row {
   margin-top: 8px !important;
-}
-
-/* Telefonda Close daha alçak (liste için yer; dokunma alanı yine 44 px) */
-html.short .pn-row .el-btn {
-  height: 44px;
-  min-height: 44px;
-  font-size: 17px;
-  padding: 0 34px;
-}
-
-html.short .pn-row .pn-page-btn.el-btn {
-  font-size: 14px;
-  padding: 0 16px;
 }
 
 html.short .pn-pager {

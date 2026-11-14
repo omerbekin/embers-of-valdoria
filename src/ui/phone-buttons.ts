@@ -6,7 +6,7 @@ import './phone-buttons.css';
  * en çok 44 px'e genişletilmiş bir düğme kutusunun içine düşüyorsa o düğmeye yönlendirilir. Üstte başka bir öğe varsa (pencere, ipucu) yönlendirmez.
  */
 export const PHONE_HIT_PX = 44;
-const SEL = '.el-btn,.gr-btn,.gr-chip,.bb-trigger,.ct-b,.bs-tab,.gr-tab';
+const SEL = '.el-btn,.gr-chip,.bb-trigger,.ct-b,.bs-tab,.gr-tab';
 
 /** Saf: kutuyu her iki yönde en az `min` px olacak şekilde ortadan büyütür. */
 export function growBox(r: { left: number; top: number; width: number; height: number }, min = PHONE_HIT_PX) {

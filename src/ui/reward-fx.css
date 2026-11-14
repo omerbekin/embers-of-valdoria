@@ -1,0 +1,60 @@
+/* Ödül anı efektleri (src/ui/reward-fx.ts); kıvılcım demeti Demirci animasyonlarıyla ortaktır (eskiden blacksmith.css). Reduced motion: JS oynatmaz. */
+.rfx-sparks {
+  --r: max(46px, calc(110 * var(--u)));
+  position: absolute;
+  z-index: 5;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.rfx-sparks i {
+  position: absolute;
+  left: -2px;
+  top: -2px;
+  width: max(3px, calc(5 * var(--u)));
+  height: max(3px, calc(5 * var(--u)));
+  border-radius: 50%;
+  background: #ffd28a;
+  box-shadow: 0 0 6px 2px rgba(255, 140, 40, 0.85);
+  animation: rfx-spark 0.75s cubic-bezier(0.2, 0.7, 0.4, 1) both;
+}
+
+@keyframes rfx-spark {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--dx) * var(--r)), calc(var(--dy) * var(--r) + 18px)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+
+html.reduced-motion .rfx-sparks {
+  display: none;
+}
+
+html.short .rfx-sparks {
+  --r: 44px;
+}
+
+/* Sayaç çalışırken sayı kor renginde parlar (Demirci kartındaki .bs-smith kuralının genel hâli) */
+.sh-n.bsfx-tick {
+  animation: rfx-tick 0.95s ease-out;
+}
+
+@keyframes rfx-tick {
+  0%,
+  60% {
+    color: #ffe2a0;
+    text-shadow: 0 0 8px rgba(255, 170, 60, 0.85);
+  }
+  100% {
+    text-shadow: none;
+  }
+}

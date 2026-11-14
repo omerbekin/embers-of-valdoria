@@ -78,12 +78,21 @@
     "_not": "Harita 3 C2 Encased (maps-2-3.md; PROVİZYON, sim yok): buz bloğunun canı = birimin maks canı x hpRatio. Onarım koşulda (battle-rules.json > conditions.blizzard.encasedRepair).",
     "hpRatio": 0.4
   },
+  "heavyCrit": { "hpRatio": 0.35 },
+  "liquidSpread": { "_not": "ORTAK SIVI YAYILMA KURALI (Ömer onaylı 2026-11-09, ikinci element formu): zehir + su, lanet + su, zehir + kan (Tainted blood) ve şimşek + yanan zemin (Spark blaze) aynı kuralı kullanır: alan hücre sayısı x ratio (yuvarlanır, en az min) kadar alana BİTİŞİK rastgele (seed'li) hücreye taşar. Eski \"bağlı tüm su hücreleri\" kuralının yerine.", "ratio": 0.33, "min": 1 },
+  "rot": { "_not": "PROVİZYON (sim gerek). Rot / çürüme (Ömer onaylı 2026-11-09): zehir + lanetli zemin tek zemin olur (grounds.json > reactions.rot); içindeki düşmanın zehir tiki Poison zemininin gücünün poisonMult katı (+%25) + Unhallowed.", "poisonMult": 1.25 },
+  "blood": {
+    "_not": "Kan zemini (Ömer onaylı 2026-11-09): ağır kritik = FİZİKSEL kritik vuruşun hedefin canından götürdüğü pay, hedefin maks canının eşik oranından BÜYÜK (eşik heavyCrit.hpRatio, üstteki anahtar; boss/elit işiyle ortak). Hedefin hücresine ground zemini bırakır (sahibi vuran, süre turns vuranın turlarıyla). Kansız birim (veride bloodless: true) bırakmaz. turns PROVİZYON (Ömer söylemedi; tepkime zeminleriyle aynı 2).",
+    "ground": "blood",
+    "turns": 2
+  },
   "thunder": {
-    "_not": "Harita 3 şimşek kuralları (maps-2-3.md A1, A2, A5, A6; skill alanı thunder; PROVİZYON, sim yok). pushback = eşiğin oranı olarak sıra çubuğunda anında geri itme; badge = yalnız görünüş rozeti; stunTurns = suda geri itme yerine Stun; wetStatus = Stun koşulu durumu (ya da su hücresi); arcRatio = Live Water ark hasarı, tahtanın ortalama maks canının oranı; flashHeroTurns = Thunderflash kaç kahraman turu aydınlatır; flashBlindTurns = en yakın kahramanın Blinded süresi.",
+    "_not": "Harita 3 şimşek kuralları (maps-2-3.md A1, A2, A5, A6; skill alanı thunder; PROVİZYON, sim yok). pushback = eşiğin oranı olarak sıra çubuğunda anında geri itme; badge = yalnız görünüş rozeti; stunTurns = suda geri itme yerine verilen durumun süresi; wetInto = o durum (Ömer onaylı 2026-11-09: Electrocuted, T2; yoksa eski Stun); wetStatus = Stun koşulu durumu (ya da su hücresi); arcRatio = Live Water ark hasarı, tahtanın ortalama maks canının oranı; flashHeroTurns = Thunderflash kaç kahraman turu aydınlatır; flashBlindTurns = en yakın kahramanın Blinded süresi.",
     "pushback": 0.2,
     "badge": "shocked",
     "badgeTurns": 1,
     "stunTurns": 1,
+    "wetInto": "electrocuted",
     "wetStatus": "soaked",
     "arcRatio": 0.06,
     "flashHeroTurns": 1,
@@ -397,12 +406,15 @@
     "revivableMult": 1.5
   },
   "ccImmunity": {
-    "_not": "Madde 271 (Ömer 2026-10-08: 'Boss'lar CC yemesin. Ama Omen, Wound, ignite gibi skill'leri yesin'): tiers rütbesindeki birimler (UnitSetup.tier; data/bosses boss tanımlı birimler de) statuses.json > cc: true durumlarını (Stun, Slow, Silence) yemez; taunt: true = taunt'a uymaz; displacement: true = çekilemez/itilemez. Elitler bağışık DEĞİL (yalnızca boss). Warden'ın kendi Staggered mekaniği (Mooring kırılınca) CC değildir, aynen işler. Madde 272 (Ömer 2026-10-08: 'İsabeti-kritiği bozan etkiler de boss'a işlemesin. Hexer'in Omen'indeki kritik düşürme (Misfortune) de boss'a işlemesin'): accuracyCrit: true = isabet ya da kritik düşüren debuff'lar (statuses.json > accuracyDelta < 0 ya da critDelta < 0: Blinded, Jinxed) da yemez (CC ile aynı 'Immune' akışı). omenCrit: true = Omen uygulanır (yığın, Doom, patlama aynen) ama yığın başına kritik düşüşü (critDeltaPerStack) yok sayılır.",
+    "_not": "Madde 271 (Ömer 2026-10-08: 'Boss'lar CC yemesin. Ama Omen, Wound, ignite gibi skill'leri yesin'): tiers rütbesindeki birimler (UnitSetup.tier; data/bosses boss tanımlı birimler de) statuses.json > cc: true durumlarını (Stun, Frozen, Silence; Chilled ve Slow 2026-11-09'dan beri CC değil) yemez; taunt: true = taunt'a uymaz; displacement: true = çekilemez/itilemez. Elitler bağışık DEĞİL (yalnızca boss). Warden'ın kendi Staggered mekaniği (Mooring kırılınca) CC değildir, aynen işler. Madde 272 (Ömer 2026-10-08: 'İsabeti-kritiği bozan etkiler de boss'a işlemesin. Hexer'in Omen'indeki kritik düşürme (Misfortune) de boss'a işlemesin'): accuracyCrit: true = isabet ya da kritik düşüren debuff'lar (statuses.json > accuracyDelta < 0 ya da critDelta < 0: Blinded, Jinxed) da yemez (CC ile aynı 'Immune' akışı). omenCrit: true = Omen uygulanır (yığın, Doom, patlama aynen) ama yığın başına kritik düşüşü (critDeltaPerStack) yok sayılır.",
     "tiers": ["boss"],
     "taunt": true,
     "displacement": true,
-    "accuracyCrit": true,
-    "omenCrit": true
+    "accuracyCrit": false,
+    "_accuracyCrit": "Ömer onaylı 2026-11-09 (form 3): madde 272 kaldırıldı; boss Blinded/Jinxed/Shaken'e artık bağışık DEĞİL. Bu debuff'lar diğer CC dışı debuff'lar gibi debuffStrength büyüklüğüyle işler (boss %25, elit %50: Blinded isabet -%7,5 / -%15, Jinxed isabet -%5 / -%10 ve kritik -%25 / -%50, Shaken isabet -%2,5 / -%5). Slow da 2026-11-09'dan beri CC değil.",
+    "omenCrit": true,
+    "_debuffStrength": "Ömer 2026-11-09 (element formu; eski 'boss yalnız Chilled/Shocked yer' önerisinin yerine): boss CC'ye (statuses.json > cc: true; Stun, Frozen, Silence) tamamen bağışık; Chilled artık CC değil. CC DIŞI debuff'lar karşı taraftan gelince BÜYÜKLÜKLE ölçeklenir: boss 0,25, elit 0,5 (Chilled %20 yavaşlatma: boss %5, elit %10; Ömer'in örneği %40 -> %10 / %20). Ölçeklenen: hız, kaçınma/isabet/kritik eki ve çarpanı, zırh çarpanı / Shredded eksiği, alınan / verilen hasar ve şifa çarpanı, element çarpanı (Soaked), Shocked geri itmesi. Ölçeklenmeyen: süre, DoT tiki (Burning, Poisoned, Wither), doğrudan hasar, açık/kapalı etkiler (Ley Thread, Branded, Saltbound, Staggered) ve kendi tarafının verdiği durumlar. omenCrit boss istisnası aynen; accuracyCrit 2026-11-09 (form 3) kapandı: Blinded/Jinxed/Shaken boss %25 / elit %50. Slow artık CC değil (boss %25 / elit %50).",
+    "debuffStrength": { "boss": 0.25, "elite": 0.5 }
   },
   "turn": {
     "threshold": 200,

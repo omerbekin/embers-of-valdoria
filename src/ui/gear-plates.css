@@ -17,7 +17,7 @@
   padding: 0 0.8em 0 0.45em;
   border: 1px solid rgba(217, 178, 106, 0.42);
   background: rgba(8, 6, 4, 0.6);
-  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  font: 600 max(calc(11px * var(--tx, 1)), calc(16 * var(--u) * var(--tx, 1))) var(--g-disp);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #d9c8a2;
@@ -54,7 +54,7 @@
 .gr-title-line {
   font-family: 'Cinzel', serif;
   font-weight: 600;
-  font-size: max(12px, calc(17 * var(--u)));
+  font-size: max(calc(12px * var(--tx, 1)), calc(17 * var(--u) * var(--tx, 1)));
   letter-spacing: 0.06em;
   color: var(--g-gold);
   opacity: 0.9;
@@ -84,8 +84,8 @@
 .gr-slot.gr-plate::after {
   content: '';
   position: absolute;
-  width: max(7px, calc(10 * var(--u)));
-  height: max(7px, calc(10 * var(--u)));
+  width: max(4px, calc(10 * var(--u)));
+  height: max(4px, calc(10 * var(--u)));
   transform: rotate(45deg);
   background: #130d07;
   border: 1px solid color-mix(in srgb, var(--rc) 70%, #fff);
@@ -164,7 +164,7 @@
   display: flex;
   align-items: center;
   gap: 0.4em;
-  font: 600 max(10px, calc(13 * var(--u))) var(--g-disp);
+  font: 600 max(calc(10px * var(--tx, 1)), calc(13 * var(--u) * var(--tx, 1))) var(--g-disp);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--g-dim);
@@ -182,14 +182,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: max(12px, calc(21 * var(--u)));
+  font-size: max(calc(12px * var(--tx, 1)), calc(21 * var(--u) * var(--tx, 1)));
   letter-spacing: 0.05em;
   line-height: 1.2;
 }
 
 /* Çok uzun item adı (22+ harf, ör. Clapper of the Sunken Bell) "…" ile kesilmesin: biraz küçük + sıkı (telefonda 10px kuralı geçerli) */
 html:not(.short) .gr-slot.gr-plate .gr-slot-name.long {
-  font-size: max(11px, calc(19 * var(--u)));
+  font-size: max(calc(11px * var(--tx, 1)), calc(19 * var(--u) * var(--tx, 1)));
   letter-spacing: 0.02em;
 }
 
@@ -211,7 +211,7 @@ html:not(.short) .gr-slot.gr-plate .gr-slot-name.long {
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0 0.9em;
-  font: max(11px, calc(16 * var(--u)))/1.2 var(--g-body);
+  font: max(calc(11px * var(--tx, 1)), calc(16 * var(--u) * var(--tx, 1)))/1.2 var(--g-body);
   color: var(--g-dim);
 }
 
@@ -246,7 +246,7 @@ html:not(.short) .gr-slot.gr-plate .gr-slot-name.long {
   top: 0;
   z-index: 3;
   padding: 1px 0.7em;
-  font: 700 max(9px, calc(12 * var(--u))) var(--g-disp);
+  font: 700 max(calc(9px * var(--tx, 1)), calc(12 * var(--u) * var(--tx, 1))) var(--g-disp);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   background: var(--drag-rc, var(--g-gold));
@@ -281,8 +281,7 @@ html:not(.short) .gr-slot.gr-plate .gr-slot-name.long {
 }
 
 /* yatay telefon (html.short): kompakt plaka, en çok 1 affix; iki sütun korunur (dokunma hedefi >= 44 px) */
-html.short .gr-slots,
-html.short .gr-overlay .gr-gear.gr-phone .gr-char .gr-slots {
+html.short .gr-slots {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: minmax(44px, auto);
   gap: 4px 8px;
@@ -300,7 +299,7 @@ html.short .gp-ico {
 }
 
 html.short .gp-lbl {
-  font-size: 8px;
+  font-size: calc(8px * var(--tx, 1));
   letter-spacing: 0.1em;
 }
 
@@ -310,12 +309,12 @@ html.short .gp-lbl img {
 }
 
 html.short .gr-slot.gr-plate .gr-slot-name {
-  font-size: 10px;
+  font-size: calc(10px * var(--tx, 1));
   letter-spacing: 0;
 }
 
 html.short .gp-l2 {
-  font-size: 10px;
+  font-size: calc(10px * var(--tx, 1));
   gap: 0 0.6em;
   flex-wrap: nowrap;
   overflow: hidden;
@@ -334,16 +333,12 @@ html.short .gp-aff ~ .gp-aff {
 
 html.short .gp-chip {
   min-height: 22px;
-  font-size: 9px;
+  font-size: calc(9px * var(--tx, 1));
 }
 
 /* Sheet: stat puanı satırı solda / önde, skill puanı çipi sağda / arkada (Ömer 2026-10-18) */
 .sh-ptr {
   margin-left: 0;
-}
-
-.sh-chip {
-  margin-left: auto;
 }
 
 /* Skill plakası değer satırı: önizlemede de TEK satır, plaka yüksekliği değişmez (yeni değer vurgulu + küçük "(+2)"; ad uzunsa "…") */
@@ -403,7 +398,7 @@ html .gr-shop .gr-bb-row.gr-wplates {
   align-items: center;
   gap: 0.3em;
   margin-left: auto;
-  font: 600 max(13px, calc(24 * var(--u))) var(--g-disp);
+  font: 600 max(calc(13px * var(--tx, 1)), calc(24 * var(--u) * var(--tx, 1))) var(--g-disp);
   color: var(--g-gold);
   white-space: nowrap;
 }
@@ -535,17 +530,17 @@ html.compact .gr-ledger .gr-leaf-hero .gp-chip {
 }
 
 html.compact .gr-ledger .gr-leaf-hero .gp-lbl {
-  font-size: 8px;
+  font-size: calc(8px * var(--tx, 1));
   letter-spacing: 0.1em;
 }
 
 html.compact .gr-ledger .gr-leaf-hero .gr-slot.gr-plate .gr-slot-name {
-  font-size: 11px;
+  font-size: calc(11px * var(--tx, 1));
   letter-spacing: 0;
 }
 
 html.compact .gr-ledger .gr-leaf-hero .gp-l2 {
-  font-size: 10px;
+  font-size: calc(10px * var(--tx, 1));
   gap: 0 0.6em;
 }
 
@@ -553,19 +548,41 @@ html.compact .gr-ledger .gr-leaf-hero .gp-ico {
   min-height: 36px;
 }
 
-/* Torba başlığı (BAG n / 30 + Best + filtre düğmeleri): dar genişlikte başlık tam görünür, düğmeler sağa hizalı alt satıra iner */
-.gr-ledger .gr-bag-head {
-  flex-wrap: wrap;
-  row-gap: 4px;
-}
-
+/* Torba başlığı (BAG n / 30 + Best + filtre düğmeleri): HEP tek satır (Ömer 2026-11-11 Form 6); dar sütunda kısa adlar gear.css sonundaki çanta araç satırı kuralında */
 .gr-ledger .gr-bag-head .gr-sec {
-  flex: 1 0 auto;
-  min-width: max-content;
   overflow: visible;
   text-overflow: clip;
 }
 
 .gr-ledger .gr-bag-head .gr-sec + * {
   margin-left: auto;
+}
+
+/* Item satırı (Loot / ödül torbası / tüccar): iL sağda, alt satırda güç + tabanın örtük özelliği */
+.gr-plate .gp-ilr {
+  flex: none;
+  margin-left: auto;
+  align-self: center;
+  white-space: nowrap;
+  font: max(calc(11px * var(--tx, 1)), calc(16 * var(--u) * var(--tx, 1))) / 1.2 var(--g-body);
+  color: var(--g-dim);
+}
+.gr-plate .gp-ilr b {
+  color: var(--g-gold);
+  font: 700 1.1em var(--g-disp);
+}
+.gr-plate.gp-rowmode .gp-price {
+  margin-left: 0;
+}
+.gp-nat {
+  color: #cdbf9c;
+  flex: none;
+  white-space: nowrap;
+}
+.gp-nat b {
+  color: var(--g-gold);
+  font: 700 1.05em var(--g-disp);
+}
+html.compact .gr-ledger .gr-leaf-hero .gp-ilr {
+  font-size: calc(10px * var(--tx, 1));
 }
