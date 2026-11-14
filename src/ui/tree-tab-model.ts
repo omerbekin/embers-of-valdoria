@@ -82,6 +82,19 @@ export function resetPending(s: TreeSession): void {
 /** Confirm'in kaynağa göndereceği TAM dağılım (onaylı + bekleyen). */
 export const confirmAlloc = (s: TreeSession): TreeAlloc => effective(s);
 
+/**
+ * Basılı tutma dolunca (Ömer 2026-11-14: Confirm adımı kalktı, stat puanı gibi): düğüme 1 rank, HEMEN kaynağa yazılacak TAM dağılım. Kural aynı:
+ * önce ağaç kuralı (check: ön koşul, satır / tier kilidi, yön, puan), sonra kahramanın kayıt kuralı (treeChangeBlocked). Ekran durumunu değiştirmez.
+ */
+export function spendOne(h: TreeHero, s: TreeSession, key: string, rules: TreeRules = TREE_RULES): { ok: true; alloc: TreeAlloc } | { ok: false; reason: string; block?: TreeBlock } {
+  const base = effective(s);
+  const b = check(s.tree, s.level, base, key, {}, rules);
+  if (b) return { ok: false, reason: b.text, block: b };
+  const alloc: TreeAlloc = { v: base.v, r: { ...base.r, [key]: rankOf(base, key) + 1 } };
+  const why = treeChangeBlocked(h, alloc, rules);
+  return why ? { ok: false, reason: why } : { ok: true, alloc };
+}
+
 /** Confirm yapılabilir mi (yoksa null): bekleyen puan var ve kahramanın kayıt kuralı (skill-tree-hero.ts > treeChangeBlocked) kabul ediyor. */
 export function confirmBlocked(h: TreeHero, s: TreeSession, rules: TreeRules = TREE_RULES): string | null {
   if (!pendingCount(s)) return 'No pending points';

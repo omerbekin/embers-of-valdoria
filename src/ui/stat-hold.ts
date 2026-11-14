@@ -17,6 +17,8 @@ export interface HoldClock {
 }
 
 export const HOLD_TIMES: HoldTimes = cfg.statHold;
+/** Geri bildirim süreleri (bitiş parıltısı, rakam büyümesi, '+1' süzülmesi, reddetme kenarı): stat kutusu ve skill ağacı düğümü AYNI değerleri kullanır. */
+export const HOLD_FEEDBACK: { doneMs: number; bumpMs: number; riseMs: number; nopeMs: number } = cfg.statHold;
 
 const browserClock = (): HoldClock => ({
   now: () => performance.now(),
@@ -114,4 +116,79 @@ export function createHold(o: HoldOpts): Hold {
     progress: () => prog,
     holding: () => active,
   };
+}
+
+/**
+ * Basılı tutma hareketleri, ORTAK (stat kutusu: character-panel.ts; skill ağacı düğümü: tree-tab.ts, Ömer 2026-11-14 "statların mantığına çevir").
+ * Stat kutusu (Ömer 2026-11-01, mockup gear-primary-hold B "Ray"): BASILI TUTMA (fare / dokunma / Enter-Space) `hold` sayacını sürer;
+ * ray `--h` ile soldan sağa dolar, dolunca `onSpend`. Erken bırakma, imleç kutudan çıkması, işaretçi iptali ya da odak kaybı geri sarar (puan yok).
+ * Kısa tık / dokunuş ve fare hover'ı `onPreview(true)` ile 1 puanlık önizlemeyi açar (harcamaz); fare gidince, başka yere dokununca kapanır.
+ * Tutarken sayfa kaydırması (touch-action), metin seçimi (user-select) ve uzun dokunma menüsü (contextmenu) araya girmez.
+ */
+export function attachHoldSpend(row: HTMLElement, o: { canStart: () => boolean; onRefuse: () => void; onSpend: (viaKey: boolean) => void; onPreview: (on: boolean) => void; swallowClick: () => boolean }): void {
+  let viaKey = false;
+  const hold = createHold({
+    canStart: o.canStart,
+    onProgress: (p) => row.style.setProperty('--h', p.toFixed(4)),
+    onHolding: (on) => row.classList.toggle('holding', on),
+    onRefuse: () => {
+      row.classList.add('nope');
+      window.setTimeout(() => row.classList.remove('nope'), HOLD_FEEDBACK.nopeMs);
+      o.onRefuse();
+    },
+    onDone: () => o.onSpend(viaKey),
+  });
+  row.addEventListener('pointerdown', (e) => {
+    if (e.button > 0) return;
+    viaKey = false;
+    if (o.canStart()) {
+      try {
+        row.setPointerCapture(e.pointerId);
+      } catch {
+        /* yakalama yok */
+      }
+    }
+    o.onPreview(true);
+    hold.down();
+  });
+  row.addEventListener('pointerenter', (e) => {
+    if (e.pointerType === 'mouse') o.onPreview(true);
+  });
+  row.addEventListener('pointerleave', (e) => {
+    if (e.pointerType === 'mouse') {
+      o.onPreview(false);
+      hold.up(); // yakalama varken imleç dışarı çıkarsa da geri sarar (aşağıdaki sınır denetimi)
+    }
+  });
+  // Yakalanmış işaretçi kutu dışına çıkınca pointerleave gelmez: sınır denetimi
+  row.addEventListener('pointermove', (e) => {
+    if (!hold.holding()) return;
+    const r = row.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) hold.up();
+  });
+  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) row.addEventListener(t, () => hold.up());
+  row.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  row.addEventListener('dragstart', (e) => e.preventDefault());
+  row.addEventListener('click', (e) => {
+    // Kısa tık puan harcamaz; önizleme açık kalır. Puan varken dokunmatikte stat ipucunu sabitlemesin diye yutulur; puan yokken olağan ipucu kuralı (bugünkü gibi).
+    if (o.swallowClick()) e.stopPropagation();
+  });
+  row.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) {
+      e.preventDefault();
+      viaKey = true;
+      o.onPreview(true);
+      hold.down();
+    } else if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+  });
+  row.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') hold.up();
+  });
+  row.addEventListener('blur', () => {
+    hold.up();
+    o.onPreview(false);
+  });
 }

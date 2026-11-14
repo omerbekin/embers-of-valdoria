@@ -401,7 +401,7 @@ export const shopKey = (mapId: string, nodeId: string): string => `${mapId}:${no
 
 /** Tezgâhı kapatır (Leave ya da yola çıkış): raflar kayda döner, yeniden açılınca aynı mallar gelir (geri alım listesi ziyarete özel, silinir). */
 export function closeShop(t: CampaignState): void {
-  if (t.shop) t.merchantStock = { ...(t.merchantStock ?? {}), [shopKey(t.mapId, t.shop.node)]: { wares: t.shop.wares, rerolls: t.shop.rerolls, day: t.shop.day ?? 0 } };
+  if (t.shop) t.merchantStock = { ...(t.merchantStock ?? {}), [shopKey(t.mapId, t.shop.node)]: { wares: t.shop.wares, rerolls: t.shop.rerolls, day: t.shop.day ?? 0, ...(t.shop.supplies?.length ? { supplies: t.shop.supplies } : {}) } };
   delete t.shop;
 }
 

@@ -427,6 +427,20 @@ html.short .gt-tools .gt-acts, html.short .gt-tools .gt-acts .sh-acts { flex-wra
 html.short .gt-tools .gt-acts .sh-ptr { flex: none; }
 html.short .gt-tools .gt-acts .sh-acts { display: flex; align-items: center; flex: none; max-width: none; }
 
+/* Basili tutarak puan (Omer 2026-11-14): stat kutusunun B Ray geri bildirimi (gear.css > .sh-tile) dugumde. --h (0-1) JS'ten (stat-hold.ts > attachHoldSpend); sureler data/ui-motion.json > statHold (--m-hold-*). */
+.gt-nd { touch-action: none; user-select: none; -webkit-user-select: none; }
+.gt-nd .hb { position: absolute; left: 50%; top: calc(50% + var(--s) / 2 + 4px); width: calc(var(--s) * 1.15 * var(--h, 0)); height: 3px; transform: translateX(-50%); border-radius: 2px; background: linear-gradient(90deg, var(--g-ember, #e0702a), #ffd76a); box-shadow: 0 0 8px rgba(255, 179, 90, .7); pointer-events: none; z-index: 4; transition: opacity .3s; }
+.gt-nd.done .hb { opacity: 0; }
+.gt-nd.holding .dm, .gt-nd.holding .drop { filter: brightness(1.25); }
+.gt-nd.holding { scale: .96; }
+.gt-nd.nope .dm, .gt-nd.nope .drop { box-shadow: 0 0 0 2px rgba(232, 128, 106, .7); }
+.gt-nd .hplus { position: absolute; left: 50%; bottom: calc(50% + var(--s) / 2 + 2px); transform: translateX(-50%); font: 600 max(12px, calc(18 * var(--u, 1px))) var(--g-disp, 'Cinzel', serif); color: #ffd76a; text-shadow: 0 0 6px rgba(255, 179, 90, .8); opacity: 0; pointer-events: none; z-index: 5; }
+.gt-nd.done .hplus { animation: gt-hrise var(--m-hold-rise, 550ms) ease-out; }
+.gt-nd.done .dm, .gt-nd.done .drop { animation: gt-hedge var(--m-hold-done, 480ms) ease-out; }
+@keyframes gt-hrise { 0% { opacity: 0; translate: 0 6px; } 25% { opacity: 1; } 100% { opacity: 0; translate: 0 calc(-24 * var(--u, 1px)); } }
+@keyframes gt-hedge { 0% { box-shadow: 0 0 0 2px #ffd76a, 0 0 12px rgba(255, 215, 106, .8); } 100% { box-shadow: 0 0 0 0 transparent; } }
+html.reduced-motion .gt-nd.done .hplus, html.reduced-motion .gt-nd.done .dm, html.reduced-motion .gt-nd.done .drop { animation: none; }
+
 /* Yan yana pencere (Blacksmith / tüccar yanında dar Gear, Ömer 2026-11-11):
    - dar sütun başlığında çipler adın ALTINA iner (Gear SKILLS kartlarıyla aynı), ad tek başına bir satır alır; açıklama ipucunda kalır
    - telefonda işlem satırı (Respec · Reset · Confirm) masaüstündeki gibi ağacın ALTINDA; üst şeritte Mastery çubuğu tek başına (dar sayfada üst üste binmesin) */

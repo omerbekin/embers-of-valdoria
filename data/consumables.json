@@ -4,9 +4,14 @@
     { "id": "heal", "name": "Healing Draught", "text": "Restores {heal}% of a hero's max HP.", "heal": 0.4 },
     { "id": "greater_heal", "name": "Greater Healing Draught", "text": "Restores {heal}% of a hero's max HP and cures a wound if the hero has one.", "heal": 0.8, "cureWound": true },
     { "id": "cure_wound", "name": "Wound Salve", "text": "Cures one wound.", "cureWound": true },
-    { "id": "revive_ally", "name": "Revive Ally", "text": "Raises a fallen hero with {revive}% of their max HP.", "revive": 0.5 }
+    { "id": "revive_ally", "name": "Revive Ally", "text": "Raises a fallen hero with {revive}% of their max HP.", "revive": 0.5 },
+    { "id": "tome_of_unlearning", "name": "Tome of Unlearning", "text": "Resets a hero's skill tree. Every spent skill point returns.", "resetTree": true, "rarity": "rare", "rarityTo": "epic", "rarityBlend": 0.7, "from": { "boss": ["rare", "epic"], "merchant": ["rare", "epic"] } },
+    { "id": "draught_of_rebirth", "name": "Draught of Rebirth", "text": "Returns every stat point a hero has spent.", "resetStats": true, "rarity": "epic", "from": { "boss": ["epic"], "merchant": ["epic"] } }
   ],
-  "_drops": "Düşüş zarı (seed'li, kendi tuzu 'supply': loot/rare zarına dokunmaz), yalnız düğümün İLK zaferi / ilk sandığı (devriye vermez). chance = türün şansı; weights = hangisi (ağırlık). Ömer 2026-11-07 (revband): revive_ally ağırlığı her tabloda x2 (1/2/3/2 -> 2/4/6/4), chance aynı.",
+  "_respec": "Respec malzemeleri (Ömer 2026-11-14): Tome of Unlearning = seçilen kahramanın skill ağacının tamamı sıfırlanır; Draught of Rebirth = dağıtılmış stat puanlarının tamamı geri gelir. YALNIZ boss loot'u (ilk zafer, kendi seed'li zarı) ve tüccar stoğu (her raf kurulumu: ilk varış, günlük yenileme, Reroll) verir; aşağıdaki drops tablosuna GİRMEZ (savaş / elit / sandık vermez). from.<kaynak> = nadirlik listesi: şans = data/items.json > dropRarity tablosunda düğümün item seviyesinde (boss: 'boss' kayması; tüccar: rafların 'normal' zarı) bu nadirliklerin olasılıklarının ORTALAMASI (Tome: rare ile epic'in ortası, Draught: epic). Tüccar fiyatı = aynı nadirliklerin item fiyatlarının ortalaması (campaign.json > merchant.priceBase x (1 + pricePerIlvl x ilvl), düğümün fiyat çarpanıyla). Çerçeve rengi: rarity rengi; rarityTo varsa iki rengin karışımı (rarityBlend = rarityTo payı, 0.7 = epic'e yakın). YZ / sim bu ikisini kullanmaz. Yeni sayı yok, hepsi var olan tablolardan türer (provizyon kuralı; balance-tester).",
+  "respecEliteMult": 0.5,
+  "_respecEliteMult": "Ömer 2026-11-14 (form r17): her ELİT zaferinde (devriye dahil, her zaferde zar) respec malzemesi düşer; şans = aynı düğüm seviyesindeki BOSS şansı x bu çarpan (iki malzeme ayrı ayrı zarlanır). Boss de artık her zaferde zarlanır. Normal savaş / sandık vermez.",
+  "_drops":"Düşüş zarı (seed'li, kendi tuzu 'supply': loot/rare zarına dokunmaz), yalnız düğümün İLK zaferi / ilk sandığı (devriye vermez). chance = türün şansı; weights = hangisi (ağırlık). Ömer 2026-11-07 (revband): revive_ally ağırlığı her tabloda x2 (1/2/3/2 -> 2/4/6/4), chance aynı.",
   "drops": {
     "battle": { "chance": 0.08, "weights": { "heal": 5, "cure_wound": 3, "revive_ally": 2 } },
     "elite": { "chance": 0.3, "weights": { "heal": 4, "cure_wound": 3, "revive_ally": 4, "greater_heal": 1 } },

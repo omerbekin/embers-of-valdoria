@@ -1233,8 +1233,25 @@ html.rotated .gr-loot-tile.rb-tile {
   align-content: start;
 }
 
+/* Boş çanta mesajı ızgaranın ortasında, okunur boyda (Ömer 2026-11-14, form r18 u10) */
+.gr-inv {
+  position: relative;
+}
+
 .gr-inv .gr-card-empty {
-  margin-top: calc(8 * var(--u));
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  width: min(86%, calc(640 * var(--u)));
+  padding: calc(14 * var(--u)) calc(22 * var(--u));
+  text-align: center;
+  font-size: max(calc(15px * var(--tx, 1)), calc(26 * var(--u) * var(--tx, 1)));
+  color: #e8dcc0;
+  background: rgba(10, 7, 4, 0.82);
+  border: 1px solid rgba(217, 178, 106, 0.45);
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* nadirlik çerçevesi (tüccar kartlarıyla aynı dil): sıra büyüdükçe kalın çerçeve + iç ton + köşebent; Epic / Legendary dört köşede */
@@ -6617,6 +6634,14 @@ html.reduced-motion .gr-item.gr-new {
 .gr-supply:hover, .gr-supply:focus-visible { border-color: rgba(243, 217, 153, 0.55); background: rgba(243, 217, 153, 0.08); outline: none; }
 .gr-supply-ic { display: inline-flex; width: 36px; height: 36px; }
 .gr-supply-ic svg { width: 100%; height: 100%; }
+/* Respec malzemeleri (Omer 2026-11-14): nadirlik cercevesi (--rc: Tome rare-epic karisimi, Draught epic) */
+.gr-supply.rar { border-color: color-mix(in srgb, var(--rc) 75%, transparent); background: color-mix(in srgb, var(--rc) 14%, transparent); box-shadow: inset 0 0 10px color-mix(in srgb, var(--rc) 35%, transparent); }
+.gr-supply.rar:hover, .gr-supply.rar:focus-visible { border-color: var(--rc); background: color-mix(in srgb, var(--rc) 24%, transparent); }
+
+/* Tuccar malzeme rafi (respec malzemeleri, Omer 2026-11-14): mal plakasiyla ayni kalip, baslik tum satiri kaplar */
+.gr-wares .gr-supply-head { grid-column: 1 / -1; flex-basis: 100%; margin-top: 6px; }
+.gr-supply-plate .gp-ico svg, .gr-supply-plate .gp-ico img { width: 80%; height: 80%; }
+.gr-supply-plate .gp-l2 { white-space: normal; line-height: 1.15; }
 .gr-supply-n { font-size: calc(16px * var(--tx, 1)); }
 
 /* Çift pencerede (Demirci / tüccar yanında) dar Gear başlığı: sekmeler küçülüp "Tree" yazısını yutmasın (Ömer 2026-11-11 ekran denetimi) */

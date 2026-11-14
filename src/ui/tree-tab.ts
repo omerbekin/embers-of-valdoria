@@ -1,8 +1,11 @@
 // Gear > Tree sekmesi (Ömer'in seçtiği taslak public/mockups/skill-tree-compact.html#v1 "Columns", 2026-10-31). Her skill DİKEY SÜTUN: tepede
 // oyunun skill plakası (Gear Hero sekmesindeki .gr-pl, yatay düzende: ikon + ad + çipler; pasif 1. sırada), altında tier'lar aşağı iner; solda tek
-// ortak tier bandı, altta geniş ult bandı (4 kol); sayfa kaymaz. Üstte Mastery bar; altta Respec / Reset / Confirm. Yan sütun, puan kutusu,
+// ortak tier bandı, altta geniş ult bandı (4 kol); sayfa kaymaz. Üstte Mastery bar; altta puan kutusu (+ Endless'ta Respec). Yan sütun, puan kutusu,
 // düğüm adı, kademe kutusu YOK: sayılar ve kilitler üstüne gelince / dokununca A Band ipucunda. Sakin hareketler (puan, yol, kilit, evolve,
-// Confirm / Reset, Blood Price damlası); Reduced motion = hareket yok.
+// Blood Price damlası); Reduced motion = hareket yok.
+// Puan verme (Ömer 2026-11-14, "statların mantığına çevir"): düğümü BASILI TUT = 1 puan hemen işlenir (stat kutusuyla aynı sayaç, süre ve geri bildirim:
+// stat-hold.ts > attachHoldSpend, data/ui-motion.json > statHold). Confirm / Reset / bekleyen puan YOK; verilen puan geri alınmaz (stat gibi). Seferde
+// Respec düğmesi yok (sıfırlama = Tome of Unlearning malzemesi); Endless kendi altınlı Respec'ini `ctx.respec` ile verir.
 // Kurallar ve kayıt: src/progression/skill-tree*.ts (çağrılır, burada yeniden yazılmaz); ekran durumu tree-tab-model.ts; yerleşim (sütunlar, dokunma kutuları) tree-tab-layout.ts.
 // Gear'a bağı tek kanca: gear-screen.ts `createTreeTab(...)` (sekme düğmesi + sağ sayfaya render). Görünüm: tree-tab.css.
 import './tree-tab.css';
@@ -28,11 +31,9 @@ import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
 import { blurbOf, className } from './character-panel';
 import { reducedMotion } from './motion-pref';
 import { uiSound } from './ui-sound';
+import { attachHoldSpend, HOLD_FEEDBACK } from './stat-hold';
 import type { HoverHero } from './gear-hover';
 import {
-  addPending,
-  confirmAlloc,
-  confirmBlocked,
   effective,
   freePoints,
   lockInfo,
@@ -40,9 +41,9 @@ import {
   nodeOf,
   nodeStatus,
   pendingCount,
-  removePending,
   resetPending,
   respecInfo,
+  spendOne,
   stripState,
   treeTabEnabled,
   type TreeSession,
@@ -61,8 +62,8 @@ export interface TreeTabCtx {
   gold(): number;
   /** Onay (Gear kaynağı: setTree); geçersizse Error fırlatır. */
   setTree(heroId: string, alloc: { v: number; r: Record<string, number> }): void;
-  /** Respec (Gear kaynağı: respecTree); geçersizse Error fırlatır. */
-  respec(heroId: string): void;
+  /** Respec (Gear kaynağı: respecTree; yalnız Endless). Verilmezse Respec düğmesi çizilmez (sefer: Tome of Unlearning). Geçersizse Error fırlatır. */
+  respec?(heroId: string): void;
   toast(text: string, ok?: boolean): void;
   /** Onay kutusu (Gear'ın confirmIn'i). */
   ask(text: string, ok: string, run: () => void, danger?: boolean): void;
@@ -198,10 +199,9 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   let plates: PlateData[] = [];
   let entered = false;
   let lastPtr = 'mouse';
-  let lpT = 0;
-  let lpX = 0;
-  let lpY = 0;
   let suppress = false;
+  /** Az önce puan verilen düğüm (yeniden çizimden sonra bitiş geri bildirimi). */
+  let justKey = '';
   let failT = 0;
   let fail: { key: string; msg: string } | null = null;
   let ro: ResizeObserver | null = null;
@@ -250,7 +250,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     else inner = '<span class="dm"></span>';
     const pp = k === 'f' ? '<span class="pp"></span>' : '';
     const fx = '<span class="fx"></span>' + (k === 'v' ? '<span class="evx"><i></i><i></i><i></i><i></i></span>' : '');
-    return `<button type="button" class="gt-nd k-${k}" data-key="${nd.key}" data-tt="n:${nd.key}" aria-label="${escHtml(name)}" style="left:${p.x}px;top:${p.y}px${hit ? `;--hw:${hit.w}px;--hh:${hit.h}px` : ''}">${fx}<span class="lkic">${LOCK}</span>${inner}${pp}</button>`;
+    return `<button type="button" class="gt-nd k-${k}" data-key="${nd.key}" data-tt="n:${nd.key}" aria-label="${escHtml(name)}" style="left:${p.x}px;top:${p.y}px${hit ? `;--hw:${hit.w}px;--hh:${hit.h}px` : ''}">${fx}<span class="lkic">${LOCK}</span>${inner}${pp}<span class="hb"></span><span class="hplus">+1</span></button>`;
   }
 
   function barHTML(slim: boolean, s: TreeSession): string {
@@ -321,15 +321,13 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
 
   function actsHTML(h: TreeTabHero, s: TreeSession): string {
     const free = freePoints(s);
-    const pend = pendingCount(s);
     const ri = respecInfo(h, ctx.gold());
     const goldImg = `<img src="${escHtml(iconUrl(uiIconName('gold')))}" alt="" draggable="false">`;
     const cost = ri.free ? 'Free' : `${ri.cost}${goldImg}`;
+    const respec = ctx.respec ? `<span class="sh-acts"><button type="button" class="el-btn sm rs${ri.spent > 0 ? '' : ' off'}" data-a="respec" data-tt="x:respec">Respec <span class="cost">${cost}</span></button></span>` : '';
     const none = s.level <= 1 ? 'No points yet - reach level 2' : 'All points placed';
     return `<span class="sh-ptr" title="${free > 0 ? `${free} skill point${free === 1 ? '' : 's'} to spend` : none}"><span class="sh-medal${free > 0 ? '' : ' empty'}"><span>${free}</span></span><span class="sh-tx">${free > 0 ? `skill point${free === 1 ? '' : 's'} to spend` : none}</span></span><span class="gt-sp"></span>
-      <span class="sh-acts"><button type="button" class="el-btn sm rs${ri.spent > 0 ? '' : ' off'}" data-a="respec" data-tt="x:respec">Respec <span class="cost">${cost}</span></button>
-      <button type="button" class="el-btn sm${pend > 0 ? '' : ' off'}" data-a="reset">Reset</button>
-      <button type="button" class="el-btn sm primary${pend > 0 ? '' : ' off'}" data-a="confirm">Confirm${pend > 0 ? ` (${pend})` : ''}</button></span>`;
+      ${respec}`;
   }
 
   const lvlText = (s: TreeSession): string => `Level ${s.level} · ${Math.max(0, s.level - 1)} points`;
@@ -434,15 +432,10 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     if (failMsg) f = foot(failMsg, 'bad');
     else if (st.rank === 0 && st.block?.code === 'points') f = foot('No points left', '');
     else if (st.rank === 0 && st.block) f = foot((['ultCap', 'ultArm', 'direction', 'unapproved'].includes(st.block.code) ? '' : 'Locked: ') + st.block.text, 'lock');
-    else if (pend > 0) f = foot(touch ? `Pending +${pend}: Confirm keeps it, − takes it back` : `Pending +${pend}: Confirm keeps it, right-click takes it back`, 'pend');
-    else if (committed > 0) f = foot('Confirmed: only a respec takes it back', '');
-    else f = foot(touch ? 'Tap again to add 1 pending point' : 'Click to add 1 pending point', '');
+    else if (!st.block) f = foot(touch ? 'Hold the node to spend 1 point' : 'Hold to spend 1 point', '');
+    else if (committed > 0) f = foot(ctx.respec ? 'Spent: only a respec takes it back' : 'Spent: a Tome of Unlearning resets the tree', '');
+    else f = foot(st.block.text, '');
     el.append(f);
-    const canAdd = !st.block;
-    const ctl = document.createElement('div');
-    ctl.className = 'gt-ctl';
-    ctl.innerHTML = `<button type="button" data-act="-1" aria-label="Take back a pending point"${pend > 0 ? '' : ' disabled'}>−</button><span class="rk">${st.rank} / ${nd.max}</span><button type="button" data-act="1" aria-label="Add a pending point"${canAdd ? '' : ' disabled'}>+</button>`;
-    el.append(ctl);
     return el;
   }
 
@@ -494,11 +487,11 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const h = ctx.hero()!;
     const ri = respecInfo(h, ctx.gold(), rules);
     const chips: BandChip[] = [{ text: ri.free ? 'free this once' : 'gold', ...(ri.free ? { tone: 'ok' as const } : { num: String(ri.cost), tone: 'v' as const }) }, { text: ri.spent ? `${ri.spent} points return` : 'Nothing spent', ...(ri.spent ? {} : { tone: 'warn' as const }) }];
-    const lines = ['Takes every confirmed point back, so the tree can be spent again. Pending points are dropped too.'];
+    const lines = ['Takes every spent point back, so the tree can be spent again.'];
     if (ri.free) lines.push('Free this once: the skill tree changed since you spent these points.');
     else lines.push(`Cost: ${rules.respec?.base ?? 0} gold plus ${rules.respec?.perLevel ?? 0} per level.`);
     const el = bandTipEl({ kind: 'Skill tree', title: 'Respec', icon: iconUrl(uiIconName('gold')), value: ri.free ? '0' : String(ri.cost), valueLabel: 'GOLD', chips, lines: lines.map((text) => ({ text })) });
-    el.append(foot(!ri.spent ? 'No confirmed points to take back' : ri.blocked ?? 'Opens a confirmation first', !ri.spent || ri.blocked ? 'lock' : ''));
+    el.append(foot(!ri.spent ? 'No spent points to take back' : ri.blocked ?? 'Opens a confirmation first', !ri.spent || ri.blocked ? 'lock' : ''));
     return el;
   }
 
@@ -649,7 +642,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     $$<FxEl>('.gt-nd').forEach((el) => {
       const key = el.dataset['key']!;
       const st = nodeStatus(s, key, rules);
-      const keep = (el.className.match(/anim-\S+/g) ?? []).join(' ');
+      const keep = (el.className.match(/anim-\S+|\bholding\b|\bnope\b|\bdone\b/g) ?? []).join(' ');
       const base = el.dataset['base'] ?? (el.dataset['base'] = el.className.replace(/\s*(st-\S+|pend|pin|anim-\S+)/g, ''));
       const pn = s.pending[key] ?? 0;
       el.className = `${base} st-${st.st}${pn > 0 ? ' pend' : ''}${TIP.pinned === el ? ' pin' : ''}${keep ? ` ${keep}` : ''}`;
@@ -783,73 +776,82 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       n.classList.add('shake');
     });
   }
-  function act(key: string, d: number): void {
-    const s = session();
-    if (!s) return;
-    const res = d > 0 ? addPending(s, key, rules) : removePending(s, key, rules);
-    if (res.ok) {
+  /** Hata ipucu + sallanma (kural reddetti). */
+  function refuse(key: string, reason: string): void {
+    fail = { key, msg: reason };
+    toast(reason);
+    window.clearTimeout(failT);
+    failT = window.setTimeout(() => {
       fail = null;
-      uiSound('select');
-    } else {
-      fail = { key, msg: res.reason };
-      toast(res.reason);
-      window.clearTimeout(failT);
-      failT = window.setTimeout(() => {
-        fail = null;
-        refreshTip();
-      }, 2600);
-    }
+      refreshTip();
+    }, 2600);
     refresh();
-    if (!res.ok) shake(key);
-    else if (d > 0) playNodeFx($<HTMLElement>(`.gt-nd[data-key="${key}"]`)); // ödül anı efekti (reward-fx.ts)
+    shake(key);
   }
-  function pulseTree(c: string, ms: number): void {
-    const g = $('.gt.q4');
-    if (!g || reduced()) return;
-    const x = g as HTMLElement & { _pt?: number };
-    g.classList.remove('q4-confirm', 'q4-reset');
-    void g.offsetWidth;
-    g.classList.add(c);
-    window.clearTimeout(x._pt);
-    x._pt = window.setTimeout(() => g.classList.remove(c), ms);
-  }
-  function doConfirm(): void {
+  /** Bitmiş tutuş: 1 puan HEMEN işlenir (stat kutusu gibi; Confirm yok). Garrick şeridinin "Take it"i de buradan geçer. */
+  function spend(key: string): void {
     const h = ctx.hero();
     const s = session();
     if (!h || !s) return;
-    const why = confirmBlocked(h, s, rules);
-    if (why) return toast(why);
-    const n = pendingCount(s);
+    const res = spendOne(h, s, key, rules);
+    if (!res.ok) return refuse(key, res.reason);
     try {
-      ctx.setTree(h.id, confirmAlloc(s));
+      ctx.setTree(h.id, res.alloc);
     } catch (e) {
-      return toast(e instanceof Error ? e.message : 'Could not confirm');
+      return refuse(key, e instanceof Error ? e.message : 'Could not spend the point');
     }
+    fail = null;
     uiSound('confirm');
-    resetPending(s);
-    pulseTree('q4-confirm', 1100);
-    ctx.toast(`${n} point${n === 1 ? '' : 's'} confirmed`, true);
+    justKey = key;
     ctx.rerender();
   }
-  function doReset(): void {
-    const s = session();
-    if (!s) return;
-    resetPending(s);
-    fail = null;
-    uiSound('select');
-    refresh();
-    pulseTree('q4-reset', 700);
+  /** Bitiş geri bildirimi (stat kutusunun 'done' sınıfıyla aynı: parıltı, '+1' süzülmesi), yeniden çizimden sonra yeni düğüm öğesine. */
+  function playDone(): void {
+    const key = justKey;
+    justKey = '';
+    if (!key) return;
+    $$(`.gt-nd[data-key="${key}"]`).forEach((n) => {
+      n.classList.remove('done');
+      void n.offsetWidth;
+      n.classList.add('done');
+      playNodeFx(n); // ödül anı efekti (reward-fx.ts)
+      window.setTimeout(() => n.classList.remove('done'), HOLD_FEEDBACK.doneMs);
+    });
+  }
+  /** Düğüme basılı tutma sayacı (ortak attachHoldSpend): kural izin vermiyorsa sayaç başlamaz, reddetme kenarı + neden. */
+  function wireHolds(root: HTMLElement): void {
+    root.querySelectorAll<HTMLElement>('.gt-nd').forEach((n) => {
+      const key = n.dataset['key']!;
+      const can = (): boolean => {
+        const s = session();
+        return !!s && !nodeStatus(s, key, rules).block;
+      };
+      attachHoldSpend(n, {
+        canStart: can,
+        onRefuse: () => {
+          const s = session();
+          const b = s ? nodeStatus(s, key, rules).block : null;
+          if (b && b.code !== 'points') refuse(key, b.text);
+          else shake(key);
+        },
+        onSpend: () => spend(key),
+        onPreview: () => undefined, // ayrıntı düğüm ipucunda (hover / dokunuş)
+        swallowClick: () => false,
+      });
+    });
   }
   function doRespec(): void {
     const h = ctx.hero();
     if (!h) return;
     const ri = respecInfo(h, ctx.gold(), rules);
-    if (!ri.spent) return toast('No confirmed points to take back');
+    if (!ri.spent) return toast('No spent points to take back');
     if (ri.blocked) return toast(ri.blocked);
     const cost = ri.free ? 'It is free this once: the skill tree changed.' : `It costs ${ri.cost} gold.`;
-    ctx.ask(`Respec ${className(h.class)}? All ${ri.spent} confirmed points return to the pool and pending points are dropped. ${cost}`, 'Respec', () => {
+    const run = ctx.respec;
+    if (!run) return;
+    ctx.ask(`Respec ${className(h.class)}? All ${ri.spent} spent points return to the pool. ${cost}`, 'Respec', () => {
       try {
-        ctx.respec(h.id);
+        run(h.id);
       } catch (e) {
         return toast(e instanceof Error ? e.message : 'Could not respec');
       }
@@ -866,18 +868,8 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   function onPointerDown(e: PointerEvent): void {
     lastPtr = e.pointerType || 'mouse';
     suppress = false;
-    window.clearTimeout(lpT);
     const t = e.target as HTMLElement;
     if (!t.closest('[data-tt]') && !t.closest('.tt-tip')) hideTip();
-    const nd = t.closest<HTMLElement>('.gt-nd');
-    if (nd && lastPtr !== 'mouse') {
-      lpX = e.clientX;
-      lpY = e.clientY;
-      lpT = window.setTimeout(() => {
-        suppress = true;
-        act(nd.dataset['key']!, -1);
-      }, 520);
-    }
   }
   function onPointerOver(e: PointerEvent): void {
     if (e.pointerType !== 'mouse' || TIP.pinned) return;
@@ -897,11 +889,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const t = e.target as HTMLElement;
     const ab = t.closest<HTMLElement>('[data-a]');
     if (ab) {
-      if (ab.classList.contains('off') && ab.dataset['a'] !== 'respec') return;
-      const a = ab.dataset['a'];
-      if (a === 'confirm') doConfirm();
-      else if (a === 'reset') doReset();
-      else if (a === 'respec') doRespec();
+      if (ab.dataset['a'] === 'respec') doRespec();
       return;
     }
     const tt = t.closest<HTMLElement>('[data-tt]');
@@ -910,42 +898,14 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       suppress = false;
       return;
     }
-    const isNode = tt.classList.contains('gt-nd');
-    if (lastPtr !== 'mouse') {
-      if (TIP.pinned !== tt) {
-        hideTip();
-        TIP.pinned = tt;
-        tt.classList.add('pin');
-        showTip(tt, true);
-        return;
-      }
-      if (isNode) act(tt.dataset['key']!, 1);
-      return;
-    }
-    if (isNode) act(tt.dataset['key']!, 1);
-  }
-  function onTipClick(e: MouseEvent): void {
-    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-act]');
-    if (b && TIP.ref && TIP.ref[0] === 'n' && !b.disabled) act(TIP.ref.slice(2), +b.dataset['act']!);
-  }
-  function onContext(e: MouseEvent): void {
-    const nd = (e.target as HTMLElement).closest<HTMLElement>('.gt-nd');
-    if (!nd) return;
-    e.preventDefault();
-    if (lastPtr === 'mouse') act(nd.dataset['key']!, -1);
-  }
-  function onKeyDown(e: KeyboardEvent): void {
-    const nd = (e.target as HTMLElement).closest<HTMLElement>('.gt-nd');
-    if (nd && (e.key === 'Delete' || e.key === 'Backspace')) {
-      e.preventDefault();
-      e.stopPropagation();
-      act(nd.dataset['key']!, -1);
+    // Dokunmatik: kısa dokunuş ipucunu sabitler (puan basılı tutmayla); fare: ipucu hover'da, tık bir şey yapmaz
+    if (lastPtr !== 'mouse' && TIP.pinned !== tt) {
+      hideTip();
+      TIP.pinned = tt;
+      tt.classList.add('pin');
+      showTip(tt, true);
     }
   }
-  function onMove(e: PointerEvent): void {
-    if (e.pointerType !== 'mouse' && Math.hypot(e.clientX - lpX, e.clientY - lpY) > 12) window.clearTimeout(lpT);
-  }
-  const onUp = (): void => window.clearTimeout(lpT);
   const onDocDown = (e: PointerEvent): void => {
     if (!ctx.overlay.isConnected) return destroy();
     const t = e.target as HTMLElement;
@@ -957,17 +917,11 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
 
   function wire(p: HTMLElement): void {
     p.addEventListener('pointerdown', onPointerDown, true);
-    p.addEventListener('pointerup', onUp, true);
-    p.addEventListener('pointercancel', onUp, true);
-    p.addEventListener('pointermove', onMove, true);
     p.addEventListener('pointerover', onPointerOver);
     p.addEventListener('pointerout', onPointerOut);
     p.addEventListener('click', onClick);
-    p.addEventListener('contextmenu', onContext);
-    p.addEventListener('keydown', onKeyDown);
     p.addEventListener('scroll', onScroll, true);
   }
-  tip.addEventListener('click', onTipClick);
   document.addEventListener('pointerdown', onDocDown, true);
 
   function mountTree(s: TreeSession): void {
@@ -985,6 +939,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     ro?.observe(body);
     g.style.cssText += `;--sF:${L.sz.F}px;--sE:${L.sz.E}px;--sB:${L.sz.B}px;--sN:${L.sz.N}px;--sV:${L.sz.V}px;--hit:${Math.min(L.pitch, 44)}px`;
     body.innerHTML = bodyHTML(L);
+    wireHolds(body);
     if (!entered && !reduced()) {
       g.classList.add('enter');
       window.setTimeout(() => g.classList.remove('enter'), 1200);
@@ -1033,6 +988,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       }
     }
     refresh();
+    playDone();
   }
 
   /** Gövde (ve kutu) ölçüsü kurulumdan sonra değişirse (pencere, yazı tipi yüklenmesi, işlem satırı sarması) ağaç yeniden yerleştirilir. */
@@ -1076,7 +1032,6 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   function destroy(): void {
     ro?.disconnect();
     window.clearTimeout(roT);
-    window.clearTimeout(lpT);
     window.clearTimeout(failT);
     document.removeEventListener('pointerdown', onDocDown, true);
     tip.remove();
@@ -1096,7 +1051,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       const s = session();
       return !!s && !!treeNodes(rules).by.get(key) && !check(s.tree, s.level, effective(s), key, {}, rules);
     },
-    take: (key) => act(key, 1),
+    take: (key) => spend(key),
     node: (key) => (page ? $<HTMLElement>(`.gt-nd[data-key="${key}"]`) : null),
     head: () => (page ? $<HTMLElement>('.gt-head') : null),
   };

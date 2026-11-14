@@ -59,7 +59,9 @@ import { goToTreeButton } from './gear-tree-link';
 import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, equippedAgainst, heroFallen, heroItemLine } from './gear-hover';
 import { heroOath, oathMinusText, oathPlusText } from '../campaign/oath';
 import { heroQuests, questBonusLine } from '../campaign/quests';
-import { boonList, respecHeroTree, respecTreeBlocked, slotLocks, supplyList, supplyText, useSupply } from '../campaign';
+import { respecSpent, supplyColor, supplyRarityName } from '../campaign';
+import { openRespecChooser, type RespecKind } from './supply-respec';
+import { boonList, slotLocks, supplyList, supplyText, useSupply } from '../campaign';
 import { supplyIconSvg } from './supply-icons';
 import { bandTipHtml } from './band-tip';
 import { attachBandTip, positionTip } from './band-tip-attach';
@@ -153,12 +155,14 @@ export interface GearSource {
   allocate?(heroId: string, add: StatAlloc): void;
   /** Skill ağacı onayı (Faz 1b kaynak bağlantısı; ekranı Faz 3b): `alloc` = onaylanacak TAM dağılım (onaylı + yeni puanlar). Geçersizse Error. */
   setTree?(heroId: string, alloc: TreeAlloc): void;
-  /** Tree sekmesi > Respec: ağacın tamamı geri, bedel kaynağın altınından. Geçersizse Error. */
+  /** Tree sekmesi > Respec: ağacın tamamı geri, bedel kaynağın altınından (yalnız Endless; seferde yok). Geçersizse Error. */
   respecTree?(heroId: string): void;
   /** A1 Wayshrine nimetleri (takımın tek listesi; sefer). Yoksa / boşsa başlıkta görünmez. */
   blessings?(): Array<{ name: string; effect: string }>;
   /** Savaş dışı malzemeler (Ömer 2026-11-07; sefer): eldekiler + kullanım. Yoksa şerit görünmez. */
-  supplies?(): Array<{ id: string; name: string; text: string; count: number }>;
+  supplies?(): Array<{ id: string; name: string; text: string; count: number; color?: string; rarityName?: string; respec?: RespecKind }>;
+  /** Respec malzemesinin bu kahramanda geri vereceği puan (kahraman seçme penceresinin kartları; Ömer 2026-11-14). */
+  respecSpent?(supplyId: string, heroId: string): number;
   /** Malzemeyi kahramana kullanır; engel varsa Error (iletisi toast). */
   useSupply?(id: string, heroId: string): void;
 }
@@ -197,14 +201,19 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
         return setHeroTree(x, heroId, alloc);
       }),
     blessings: () => boonList(get()),
-    supplies: () => supplyList(get()).map((x) => ({ id: x.def.id, name: x.def.name, text: supplyText(x.def), count: x.count })),
-    useSupply: (id, heroId) => apply((x) => useSupply(x, id, heroId)),
-    respecTree: (heroId) =>
-      apply((x) => {
-        const why = respecTreeBlocked(x, heroId);
-        if (why) throw new Error(why);
-        return respecHeroTree(x, heroId);
+    supplies: () =>
+      supplyList(get()).map((x) => {
+        const color = supplyColor(x.def);
+        const rarityName = supplyRarityName(x.def);
+        const respec: RespecKind | undefined = x.def.resetTree ? 'tree' : x.def.resetStats ? 'stats' : undefined;
+        return { id: x.def.id, name: x.def.name, text: supplyText(x.def), count: x.count, ...(color ? { color } : {}), ...(rarityName ? { rarityName } : {}), ...(respec ? { respec } : {}) };
       }),
+    respecSpent: (id, heroId) => {
+      const h = get().roster.find((x) => x.id === heroId);
+      return h ? respecSpent(h, id) : 0;
+    },
+    useSupply: (id, heroId) => apply((x) => useSupply(x, id, heroId)),
+    // Seferde altınlı Respec YOK (Ömer 2026-11-14): skill ağacı Tome of Unlearning malzemesiyle sıfırlanır (respecTree verilmez = düğme çizilmez).
   };
 }
 
@@ -749,7 +758,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   boonsEl.addEventListener('click', () => showBoons());
   if (bagOnly) tabsBox.hidden = true;
   // Tree sekmesi (Faz 3b; src/ui/tree-tab.ts): yalnızca ağaç şalteri açıkken; çift pencerede de (Blacksmith / tüccar) aynı üç sekme (Ömer 2026-11-11), yalnız-torba görünümünde yok
-  const treeTab = createTreeTab({ overlay, hero: () => curHero(), gold: () => src.gold(), setTree: (id, a) => src.setTree?.(id, a), onChange: () => firstPoint?.sync(), respec: (id) => src.respecTree?.(id), toast: (t, ok) => showToast(t, ok), ask: (t, ok, run, danger) => ask(t, ok, run, danger), rerender: () => renderAll() });
+  const treeTab = createTreeTab({ overlay, hero: () => curHero(), gold: () => src.gold(), setTree: (id, a) => src.setTree?.(id, a), onChange: () => firstPoint?.sync(), ...(src.respecTree ? { respec: (id) => src.respecTree!(id) } : {}), toast: (t, ok) => showToast(t, ok), ask: (t, ok, run, danger) => ask(t, ok, run, danger), rerender: () => renderAll() });
   const treeOn = treeTab.enabled && !bagOnly && !!src.setTree;
   // Garrick şeridi (Ömer 2026-11-01, C5): ağaç / stat ekranı ilk kez puanla açılınca (yalnız sefer Gear'ı; src/ui/first-point.ts)
   firstPoint = o.firstPoint && !ext
@@ -1088,6 +1097,36 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       const ic = el('span', 'gr-supply-ic');
       ic.innerHTML = supplyIconSvg(sp.id);
       b.append(ic, el('span', 'gr-supply-n', `${sp.count}`));
+      if (sp.color) {
+        b.classList.add('rar');
+        b.style.setProperty('--rc', sp.color);
+      }
+      if (sp.respec) {
+        // Respec malzemesi (Ömer 2026-11-14): dokun = kahraman seçme penceresi (seçili kahramana doğrudan kullanılmaz)
+        b.dataset['respec'] = sp.respec;
+        attachBandTip(b, () => ({ kind: sp.rarityName ? `Supply · ${sp.rarityName}` : 'Supply', title: sp.name, ...(sp.color ? { accent: sp.color } : {}), sub: 'Tap to choose a hero', lines: [{ text: sp.text }] }));
+        b.addEventListener('click', () => {
+          const root = overlay.parentElement ?? document.body;
+          const heroes = src.heroes().map((h) => ({ id: h.id, class: h.class, level: h.level ?? 1, spent: src.respecSpent?.(sp.id, h.id) ?? 0, ...(heroFallen(h) ? { fallen: true } : {}) }));
+          openRespecChooser(root, {
+            supply: { id: sp.id, name: sp.name, text: sp.text, kind: sp.respec!, ...(sp.rarityName ? { rarityName: sp.rarityName } : {}) },
+            heroes,
+            use: (heroId) => {
+              const h = src.heroes().find((x) => x.id === heroId);
+              try {
+                src.useSupply?.(sp.id, heroId);
+                uiSound('confirm');
+                flashText = `${sp.name} used on ${h ? className(h.class) : 'the hero'}: points returned`;
+              } catch (e) {
+                flashText = (e as Error).message;
+              }
+            },
+            onClose: () => renderAll(),
+          });
+        });
+        cells.append(b);
+        continue;
+      }
       attachBandTip(b, () => ({ title: sp.name, sub: curHero() ? `Tap to use on ${className(curHero()!.class)}` : 'Pick a hero first', lines: [{ text: sp.text }] }));
       b.addEventListener('click', () => {
         const h = curHero();

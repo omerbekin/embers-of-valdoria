@@ -19,6 +19,7 @@ import { avatarUrl, itemPlate } from './character-panel';
 import { itemCell } from './inventory';
 import { itemTipBody, itemTipNodes, type ItemTipAction } from './item-tip';
 import { isDoubleTap } from './gear-drop';
+import { supplyIconSvg } from './supply-icons';
 import { equippedTipNodes, heroTipExtra, openGear, phoneLayout, type GearApi, type GearExt, type GearSource } from './gear-screen';
 import { affixContext } from '../progression';
 import odoFull from '../../assets/sprites/merchant/idle.png?url';
@@ -43,6 +44,16 @@ export interface MerchantWare {
   sold: boolean;
 }
 
+export interface MerchantSupplyWare {
+  id: string;
+  name: string;
+  text: string;
+  price: number;
+  sold: boolean;
+  color?: string;
+  rarityName?: string;
+}
+
 export type MerchantLine = 'idle' | 'poor' | 'buy' | 'sell' | 'sold' | 'buyback' | 'reroll' | 'bagFull' | 'empty';
 
 /** Tüccar ekranının kaynağı (Endless adaptörü: src/game/endless-merchant.ts). İşlemler hata durumunda Error fırlatır. */
@@ -52,6 +63,10 @@ export interface MerchantSource extends GearSource {
   sellPrice(inst: ItemInstance): number;
   rerollCost: number;
   buy(index: number): void;
+  /** Malzeme rafı (sefer; respec malzemeleri, Ömer 2026-11-14). Yoksa / boşsa bölüm çizilmez. */
+  supplyWares?(): MerchantSupplyWare[];
+  /** Malzeme rafından al (çanta yeri tutmaz); hata Error. */
+  buySupply?(index: number): void;
   sell(uid: string): void;
   buyBack(index: number): void;
   reroll(): void;
@@ -67,7 +82,7 @@ export interface MerchantSource extends GearSource {
   note?: string;
 }
 
-type ShopSel = { kind: 'ware'; index: number } | { kind: 'bb'; index: number } | null;
+type ShopSel = { kind: 'ware'; index: number } | { kind: 'bb'; index: number } | { kind: 'sup'; index: number } | null;
 type EquipTo = { heroId: string; slot?: SlotId };
 
 /** Karşılamanın selamı (Odo). */
@@ -141,6 +156,62 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     flash(`${name} added to your bag`, true);
     afterAcquire(before, equip);
     api?.rerender();
+  };
+  const doBuySupply = (index: number): void => {
+    const w = src.supplyWares?.()[index];
+    if (!w || w.sold) return;
+    if (src.gold() < w.price) {
+      line = 'poor';
+      uiSound('error');
+      api?.rerender();
+      return;
+    }
+    try {
+      src.buySupply?.(index);
+    } catch (err) {
+      flash(err instanceof Error ? err.message : String(err));
+      return;
+    }
+    uiSound('buy');
+    line = 'buy';
+    if (sel?.kind === 'sup' && sel.index === index) sel = null;
+    flash(`${w.name} added to your supplies`, true);
+    api?.rerender();
+  };
+  /** Malzeme plakası: item plakasıyla aynı kalıp (gr-plate, nadirlik rengi --rc, köşe elmasları), ikon + "Supply" etiketi + ad + kısa metin, sağda fiyat. */
+  const supplyPlateFor = (w: MerchantSupplyWare, i: number): HTMLButtonElement => {
+    const b = el('button', 'gr-slot gr-plate gr-supply-plate');
+    b.type = 'button';
+    if (w.color) b.style.setProperty('--rc', w.color);
+    const ico = el('span', 'gp-ico');
+    ico.innerHTML = supplyIconSvg(w.id);
+    const tx = el('div', 'gr-slot-text gp-tx');
+    tx.append(el('div', 'gp-lbl', w.rarityName ? `Supply · ${w.rarityName}` : 'Supply'), el('div', 'gr-slot-name', w.name), el('div', 'gp-l2', w.text));
+    const poor = !w.sold && src.gold() < w.price;
+    const tag = el('span', `gp-price${poor ? ' bad' : ''}`);
+    if (w.sold) tag.textContent = 'SOLD';
+    else {
+      const gi = goldIcon('gp-price-ico');
+      if (gi) tag.append(gi);
+      tag.append(String(w.price));
+    }
+    b.append(ico, tx, tag);
+    if (w.sold) b.classList.add('sold');
+    if (sel?.kind === 'sup' && sel.index === i) b.classList.add('on');
+    attachBandTip(b, () => ({ kind: w.rarityName ? `Supply · ${w.rarityName}` : 'Supply', title: w.name, ...(w.color ? { accent: w.color } : {}), lines: [{ text: w.text }, { text: 'Use it from the Supplies row in Gear.' }] }));
+    b.addEventListener('click', () => {
+      const now = performance.now();
+      if (isDoubleTap(lastWareTap, `sup:${i}`, now) && !w.sold) {
+        lastWareTap = null;
+        doBuySupply(i);
+        return;
+      }
+      lastWareTap = { key: `sup:${i}`, at: now };
+      sel = { kind: 'sup', index: i };
+      line = poor ? 'poor' : 'idle';
+      renderSide();
+    });
+    return b;
   };
   const doSell = (uid: string): void => {
     const inst = src.bag().find((x) => x.uid === uid);
@@ -292,6 +363,12 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
         wares.append(b);
       });
       if (!src.wares().length) wares.append(el('div', 'gr-card-empty', src.lines.empty));
+      // malzeme rafı (respec malzemeleri; varsa): mallarla aynı plaka, aynı seçim / çift dokunuş
+      const sups = src.supplyWares?.() ?? [];
+      if (sups.length) {
+        wares.append(el('div', 'gr-sec gr-wares-head gr-supply-head', 'Supplies'));
+        sups.forEach((w, i) => wares.append(supplyPlateFor(w, i)));
+      }
       // satış kutusu: torba item'ini buraya sürükle (ya da seç + dokun)
       const box = el('div', 'gr-sellbox');
       box.dataset['drop'] = 'wares';
@@ -335,6 +412,15 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
         const index = sel.index;
         const b = btn('el-btn sm primary', short > 0 ? `Need ${short} more` : full ? 'Bag full' : `Buy · ${w.price}`, () => doBuy(index));
         b.disabled = short > 0 || full;
+        strip.append(b);
+      }
+    } else if (sel?.kind === 'sup') {
+      const w = src.supplyWares?.()[sel.index];
+      const index = sel.index;
+      if (w && !w.sold) {
+        const short = w.price - src.gold();
+        const b = btn('gr-btn primary', short > 0 ? `Need ${short} more` : `Buy · ${w.price}`, () => doBuySupply(index));
+        b.disabled = short > 0;
         strip.append(b);
       }
     } else if (sel?.kind === 'bb') {

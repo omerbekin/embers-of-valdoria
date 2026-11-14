@@ -481,7 +481,7 @@
       "id": "first_skill_point",
       "group": "On the Road",
       "title": "Your First Skill Point",
-      "text": "When a hero first has a skill point, I point at a node worth taking. Take it or choose your own; nothing is final until you press Confirm.",
+      "text": "When a hero first has a skill point, I point at a node worth taking. Take it, or hold any open node to spend the point yourself; it is placed the moment the bar fills.",
       "trigger": {
         "gate": "first_point"
       }

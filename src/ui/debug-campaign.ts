@@ -765,7 +765,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Items',
     icon: 'clover',
     label: 'Give supplies',
-    hint: 'Add 2 of each out-of-combat supply (Healing Draught, Greater Healing Draught, Wound Salve, Revive Ally). Use them from the Gear screen on the selected hero',
+    hint: 'Add 2 of each out-of-combat supply (Healing Draught, Greater Healing Draught, Wound Salve, Revive Ally, Tome of Unlearning, Draught of Rebirth). Use them from the Gear screen on the selected hero',
     run: () => {
       void import('../campaign').then((m) => {
         const t = JSON.parse(JSON.stringify(ensureState())) as CampaignState;
@@ -775,6 +775,25 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       });
     },
   });
+  // Respec malzemeleri (Ömer 2026-11-14): Supplies'ta dokun = kahraman seçme penceresi
+  for (const [sid, nm] of [['tome_of_unlearning', 'Tome of Unlearning'], ['draught_of_rebirth', 'Draught of Rebirth']] as const) {
+    debug.register({
+      id: `campaign.give-${sid}`,
+      tab: CAMPAIGN_TAB,
+      section: 'Items',
+      icon: 'clover',
+      label: `Give ${nm}`,
+      hint: `Add 1 ${nm} (respec supply; normally only from bosses and merchants). Use it from Gear > Supplies: tap it to choose a hero`,
+      run: () => {
+        void import('../campaign').then((m) => {
+          const t = JSON.parse(JSON.stringify(ensureState())) as CampaignState;
+          m.addSupply(t, sid, 1);
+          setState(t);
+          document.dispatchEvent(new CustomEvent('gear:refresh'));
+        });
+      },
+    });
+  }
   debug.register({
     id: 'campaign.give-gold',
     tab: CAMPAIGN_TAB,

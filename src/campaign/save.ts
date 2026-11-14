@@ -17,8 +17,8 @@ import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
 import { dropLegacySpdRoll } from '../progression/loadout';
 import { clampValor } from '../engine/valor';
-import { normalizeSupplies } from './supplies';
-import type { CampaignMode, CampaignShop, CampaignState, Difficulty, Hero, MerchantStall, ShopWare } from './types';
+import { normalizeSupplies, supplyDef } from './supplies';
+import type { CampaignMode, CampaignShop, CampaignState, Difficulty, Hero, MerchantStall, ShopSupply, ShopWare } from './types';
 
 /**
  * Sefer kaydı (campaign.md 5.2-5.3 + madde 256): tarayıcıda tek anahtar, sürümlü JSON. Depolama dışarıdan verilir (tarayıcıda localStorage, testte bellek).
@@ -149,6 +149,10 @@ const isItem = (it: unknown): it is ItemInstance =>
 const cleanWares = (x: unknown): ShopWare[] =>
   (Array.isArray(x) ? x : []).filter((w): w is ShopWare => !!w && typeof w === 'object' && typeof w.itemId === 'string' && !!itemDef(w.itemId) && typeof w.price === 'number' && Number.isFinite(w.price) && w.price >= 1 && (w.rolls === undefined || (typeof w.rolls === 'object' && w.rolls !== null)));
 
+/** Kayıttaki malzeme rafı (respec malzemeleri; isteğe bağlı alan, sürüm değişmez): bilinmeyen id / bozuk fiyat atılır. */
+const cleanSupplyWares = (x: unknown): ShopSupply[] =>
+  (Array.isArray(x) ? x : []).filter((w): w is ShopSupply => !!w && typeof w === 'object' && typeof w.id === 'string' && !!supplyDef(w.id) && typeof w.price === 'number' && Number.isFinite(w.price) && w.price >= 1).map((w) => ({ id: w.id, price: w.price, ...(w.sold === true ? { sold: true } : {}) }));
+
 /** Sürüm 13 (yerinde, idempotent): eski kapanan tezgâh kayda taşınır, eski `merchantSold` silinir, `merchantStock`un bozuk girdileri atılır. */
 function normalizeShopStock(s: CampaignState): void {
   const count = (v: unknown): number => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : 0);
@@ -157,13 +161,19 @@ function normalizeShopStock(s: CampaignState): void {
   if (raw && typeof raw === 'object' && !Array.isArray(raw))
     for (const [k, v] of Object.entries(raw as Record<string, Partial<MerchantStall> | null>)) {
       const wares = cleanWares(v?.wares);
-      if (wares.length) stock[k] = { wares, rerolls: count(v?.rerolls), day: count(v?.day) };
+      const sup = cleanSupplyWares(v?.supplies);
+      if (wares.length) stock[k] = { wares, rerolls: count(v?.rerolls), day: count(v?.day), ...(sup.length ? { supplies: sup } : {}) };
     }
   const old = s.closedShop as Partial<CampaignShop> | undefined;
   if (old && typeof old === 'object' && typeof old.node === 'string') {
     const wares = cleanWares(old.wares);
     const k = `${s.mapId}:${old.node}`;
     if (wares.length && !stock[k]) stock[k] = { wares, rerolls: count(old.rerolls), day: count(old.day) };
+  }
+  if (s.shop && typeof s.shop === 'object' && s.shop.supplies !== undefined) {
+    const sup = cleanSupplyWares(s.shop.supplies);
+    if (sup.length) s.shop.supplies = sup;
+    else delete s.shop.supplies;
   }
   delete s.closedShop;
   delete (s as { merchantSold?: unknown }).merchantSold;

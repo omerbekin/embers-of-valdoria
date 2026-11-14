@@ -67,6 +67,8 @@ html.reduced-motion .mw-in .mw-panel, html.reduced-motion .mw-in .mw-scrim { ani
 .mw-cname-in.el-field { display: block; min-height: 46px; height: max(46px, calc(62 * var(--u))); padding: 0 max(46px, calc(78 * var(--u))) 0 max(10px, calc(16 * var(--u))); font-size: max(calc(16px * var(--tx, 1)), calc(23 * var(--u) * var(--tx, 1))); }
 .mw-cname-n { position: absolute; right: max(8px, calc(14 * var(--u))); top: 50%; translate: 0 -50%; font: 400 max(calc(11px * var(--tx, 1)), calc(17 * var(--u) * var(--tx, 1))) var(--g-body); color: var(--g-dim); pointer-events: none; white-space: nowrap; }
 .mw-cname-sug.el-btn { flex: none; min-width: 0; padding-left: max(14px, calc(28 * var(--u))); padding-right: max(14px, calc(28 * var(--u))); }
+.mw-pickhint { color: #b8a888; font: max(calc(13px * var(--tx, 1)), calc(20 * var(--u) * var(--tx, 1))) 'EB Garamond', serif; text-align: right; }
+.mw-pickhint[hidden] { display: none; }
 .mw-acts .el-btn:disabled { opacity: .5; cursor: not-allowed; }
 .mw-acts .el-btn img { width: 1.3em; height: 1.3em; margin-right: .5em; object-fit: contain; }
 .mw-acts.mid { justify-content: center; }
@@ -207,3 +209,13 @@ html.short .mw-A.bd-cards .mw-txt, html.short .mw-C.bd-cards .mw-txt { font-size
 html.short .mw-A.bd-cards .mw-body { gap: 4px; padding-top: 6px; }
 html.short .mw-A.bd-cards .mw-hd { padding-top: 4px; padding-bottom: 4px; }
 html.short .mw-A.bd-cards .mw-acts, html.short .mw-C.bd-cards .mw-acts { position: static; background: none; padding: 2px 0 0; }
+
+/* Secilemez kart (respec malzemesi: sifirlanacak puan yok; Omer 2026-11-14) + onay satiri */
+.mw-card.off { cursor: default; border-color: var(--g-line); }
+.mw-card.off > * { opacity: .4; filter: saturate(.2); } /* kartin kendisinde opacity giris animasyonunun (fill both) altinda kalir */
+@media (hover: hover) { .mw-card.off:hover { translate: none; box-shadow: none; border-color: var(--g-line2); } }
+.mw-confirm { margin: max(8px, calc(16 * var(--u))) 0 0; text-align: center; font: 600 max(13px, calc(24 * var(--u))) var(--g-disp); color: var(--g-gold); }
+html.short .mw-confirm { margin-top: 4px; font-size: 12px; }
+/* Respec penceresi: harcanan puan etiketi telefonda da gorunur (ana bilgi); portre biraz kisalir */
+html.short .mw-respec .mw-card .mw-chip.dim, html.compact .mw-respec .mw-card .mw-chip.dim { display: inline-flex; }
+html.short .mw-respec .mw-card .pt { width: clamp(90px, calc((100vh - 310px) / .85), 200px); }

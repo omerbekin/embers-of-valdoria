@@ -45,7 +45,9 @@ describe('Ortak envanter (Gear, v3 Ledger)', () => {
     expect(panel).not.toContain('onReset');
     expect(panel).not.toContain("'Confirm'");
     expect(panel).toContain('onSpend');
-    expect(panel).toContain("'contextmenu'");
+    // basılı tutma hareketleri ortak parçada (stat-hold.ts > attachHoldSpend; skill ağacı da kullanır, Ömer 2026-11-14)
+    expect(panel).toContain('attachHoldSpend(row');
+    expect(readFileSync('src/ui/stat-hold.ts', 'utf8')).toContain("'contextmenu'");
     expect(gearCss).not.toContain('sh-pmb');
     expect(gearCss).not.toContain('has-pend');
   });

@@ -46,6 +46,8 @@ export interface MwCard {
   blurb?: string;
   /** Ek etiket çipi (ör. "Area attacks", "Played in the tutorial"). */
   tag?: string;
+  /** Seçilemez (soluk; ör. respec malzemesinde sıfırlanacak puanı olmayan kahraman). */
+  off?: boolean;
 }
 export interface MwFallen {
   classId: string;
@@ -165,7 +167,7 @@ function cardHtml(c: MwCard, i = 0): string {
   if (c.role) chips.push({ tone: 'info', text: c.role });
   if (c.stat) chips.push({ tone: 'gain', icon: c.stat as MwIcon, text: c.stat.toUpperCase() });
   if (c.tag) chips.push({ tone: 'dim', text: c.tag });
-  return `<button type="button" class="mw-card" data-card="${esc(c.id)}" style="--i:${i};--ac:${c.color};--acl:${lighten(c.color)}"><div class="pt">${bustHtml(c.classId, c.spriteId)}${logo ? `<img class="em" src="${logo}" alt="" draggable="false">` : ''}<span class="lead"></span></div>
+  return `<button type="button" class="mw-card${c.off ? ' off' : ''}" data-card="${esc(c.id)}"${c.off ? ' aria-disabled="true"' : ''} style="--i:${i};--ac:${c.color};--acl:${lighten(c.color)}"><div class="pt">${bustHtml(c.classId, c.spriteId)}${logo ? `<img class="em" src="${logo}" alt="" draggable="false">` : ''}<span class="lead"></span></div>
     <span class="nm">${esc(c.name)}</span>${chips.length ? chipsHtml(chips) : ''}${c.blurb ? `<p class="ds">${esc(c.blurb)}</p>` : ''}</button>`;
 }
 
@@ -206,7 +208,7 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   const chipBlock = o.chips?.length ? `${o.chipsCap ? `<h3 class="mw-cap">${esc(o.chipsCap)}</h3>` : ''}${chipsHtml(o.chips, body?.k !== 'plates')}` : '';
   const nameBox = o.name ? `<span class="mw-cname"><span class="mw-cname-box"><input class="el-field mw-cname-in" type="text" maxlength="${o.name.max}" placeholder="Name your company" aria-label="Company name" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done"><span class="mw-cname-n">0 / ${o.name.max}</span></span><button type="button" class="el-btn mw-cname-sug" data-suggest>Suggest</button></span>` : '';
   const acts = o.acts.length
-    ? `<div class="mw-acts">${nameBox}${o.acts.map((a, i) => `<button type="button" class="el-btn${a.primary ? ' primary ready' : ''}" data-act="${i}"${a.needPick ? ' disabled' : ''}>${esc(a.label)}</button>`).join('')}</div>`
+    ? `<div class="mw-acts">${nameBox}${o.acts.map((a, i) => `${a.needPick ? `<span class="mw-pickhint" data-pickhint="${i}">${esc(a.needPick)}</span>` : ''}<button type="button" class="el-btn${a.primary ? ' primary ready' : ''}" data-act="${i}"${a.needPick ? ' disabled' : ''}>${esc(a.label)}</button>`).join('')}</div>`
     : '';
   const inner = `<div class="mw-scroll"><div class="mw-body">${paras}${chipBlock}${bodyHtml(body)}${acts}</div></div>`;
   const defs = MW_DEFS;
@@ -255,6 +257,7 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
       const b = actBtns[i];
       if (b && a.needPick) {
         b.disabled = !picked;
+        wrap.querySelector<HTMLElement>(`[data-pickhint="${i}"]`)?.toggleAttribute('hidden', !!picked); // görünür neden (Ömer 2026-11-14, form r18 u06)
         // pasif nedeni A Band ipucu (ilk kurulumda bağlanır; ipucu üretici seçime bakar)
         if (!b.dataset['bt']) attachBandTip(b, () => (picked ? null : reasonSpec(a.label, a.needPick!)));
       }
@@ -263,7 +266,7 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   const cards = [...wrap.querySelectorAll<HTMLElement>('[data-card]')];
   for (const el of cards) {
     el.addEventListener('click', () => {
-      if (done) return;
+      if (done || el.classList.contains('off')) return;
       picked = el.dataset['card'] ?? '';
       for (const c of cards) {
         const on = c === el;

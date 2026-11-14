@@ -118,7 +118,9 @@ function dockToWindow(wrap: HTMLElement): void {
   }
   const a = offsetIn(hd, host);
   const b = offsetIn(panel, host);
-  wrap.style.top = `${Math.round(a.y + hd.offsetHeight + 6)}px`;
+  // Recruit (Ömer 2026-11-14, form r18 u05): ipucu listenin ilk kahramanını örtmesin; pencerenin ÜSTÜNDE durur (sığmazsa eski yer)
+  const above = panel.querySelector('.hp-split') ? b.y - wrap.offsetHeight - 8 : -1;
+  wrap.style.top = above >= 4 ? `${Math.round(above)}px` : `${Math.round(a.y + hd.offsetHeight + 6)}px`;
   wrap.style.left = `${Math.round(b.x + 10)}px`;
   wrap.style.maxWidth = `${panel.offsetWidth - 20}px`;
 }

@@ -8,7 +8,7 @@ import { CONFIG, getMap } from './data';
 import { chapterOf, nodeIlvl } from './power';
 import { rngFor } from './seed';
 import { noDropSlots, slotLocks } from './slots';
-import { rollSupplyDrop } from './supplies';
+import { rollRespecDrop, rollSupplyDrop } from './supplies';
 import type { CampaignState, Hero, LootDrop } from './types';
 
 function mergeSupplies(a?: Record<string, number>, b?: Record<string, number>): Record<string, number> {
@@ -108,7 +108,9 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
   const stones = replay === 0 && (kind === 'boss' || kind === 'elite') ? rollTemperStones(rngFor(t.seed, t.mapId, nodeId, 'temper-stones', kind), kind) : 0;
   if (stones) t.temperStones = (t.temperStones ?? 0) + stones;
   // Malzeme düşüşü (Ömer 2026-11-07): kendi seed'li zarı, yalnız ilk zafer / ilk sandık
-  const supplies = rollSupplyDrop(t, nodeId, kind, replay, opts?.tag);
+  const common = rollSupplyDrop(t, nodeId, kind, replay, opts?.tag);
+  // Respec malzemeleri (Ömer 2026-11-14): boss + elit her zaferde (elit = boss şansının yarısı), şans item nadirlik tablosundan (supplies.ts > respecChance)
+  const supplies = mergeSupplies(common, opts?.tag ? {} : rollRespecDrop(t, nodeId, kind, replay, nodeIlvl(t.mapId, nodeId)));
   const drop: LootDrop = { node: nodeId, kind, items: items.map((i) => i.uid), gold: res.gold, ...(Object.keys(supplies).length ? { supplies } : {}), ...(left.length ? { left, leftRolls } : {}), ...(rare.length ? { rare } : {}), ...(stones ? { stones } : {}) };
   // Aynı düğümde savaş + sandık (korunan hazine): tek kartta birleşir
   const prev = t.pendingLoot;

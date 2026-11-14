@@ -20,7 +20,7 @@ const give = (s: CampaignState, id: string): CampaignState => {
 
 describe('supplies', () => {
   it('data: four supplies, none is for sale and every drop id exists', () => {
-    expect(SUPPLIES.map((d) => d.id)).toEqual(['heal', 'greater_heal', 'cure_wound', 'revive_ally']);
+    expect(SUPPLIES.map((d) => d.id)).toEqual(['heal', 'greater_heal', 'cure_wound', 'revive_ally', 'tome_of_unlearning', 'draught_of_rebirth']); // son ikisi respec malzemesi (tests/respec-supplies.test.ts)
     for (const row of Object.values(consumables.drops)) for (const id of Object.keys(row.weights)) expect(supplyDef(id), id).toBeTruthy();
   });
 

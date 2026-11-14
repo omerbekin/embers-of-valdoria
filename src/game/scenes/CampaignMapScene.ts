@@ -2270,6 +2270,19 @@ export class CampaignMapScene extends Phaser.Scene {
     const d = elBody(this, mode.width + 8, yy + 96, `·  ${diff}`, 17, EL.MUTED).setOrigin(0, 0.5);
     const g = elText(this, w, yy + 96, `${s.gold}`, 20, EL.ON, { em: 0.04 }).setOrigin(1, 0.5);
     col.add([mode, d, this.coin(w - g.width - 18, yy + 96, 26), g]);
+    // Okunurluk perdesi (Ömer 2026-11-14, form r18 u04: "çok hafif"): sütunun arkasında soldan sönen çok hafif koyu şerit; yazı denizin / kayaların üstünde soluk kalmasın
+    const veil = this.add.graphics();
+    const vx0 = -x / k; // ekranın sol kenarı
+    const vx1 = w + 44;
+    const vy0 = -26;
+    const vh = yy + 96 + 34 - vy0;
+    const STEPS = 10;
+    for (let i = 0; i < STEPS; i++) {
+      // soldan sağa: ilk dilim en koyu, son dilimlere doğru sönüyor
+      const sx = vx0 + ((vx1 - vx0) * i) / STEPS;
+      veil.fillStyle(0x0a0705, 0.42 * (1 - i / STEPS) ** 1.3).fillRect(sx, vy0, (vx1 - vx0) / STEPS + 1, vh);
+    }
+    col.addAt(veil, 0);
   }
 
   /** Harita girdisi meşgul mü (yürüyüş, pencere, menü, kasaba, ayarlar). */

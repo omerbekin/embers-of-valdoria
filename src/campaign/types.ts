@@ -731,9 +731,18 @@ export interface ShopWare {
   since?: number;
 }
 
+/** Tüccarda satılan malzeme (yalnız respec malzemeleri; data/consumables.json > from.merchant). */
+export interface ShopSupply {
+  id: string;
+  price: number;
+  sold?: boolean;
+}
+
 /** Kapalı tezgâhın kayıttaki hâli (CampaignState.merchantStock): raflar, o günkü yenileme sayısı, rafların en son bakıldığı gün. */
 export interface MerchantStall {
   wares: ShopWare[];
+  /** Respec malzemeleri rafı (Ömer 2026-11-14; merchant.ts > campaignSupplyStock). Eski kayıtta yok = boş (sürüm değişmez). */
+  supplies?: ShopSupply[];
   rerolls: number;
   day: number;
 }
@@ -742,6 +751,8 @@ export interface MerchantStall {
 export interface CampaignShop {
   node: string;
   wares: ShopWare[];
+  /** Respec malzemeleri rafı (bkz. MerchantStall.supplies). */
+  supplies?: ShopSupply[];
   buyback: Array<{ item: ItemInstance; price: number }>;
   rerolls: number;
   /** Stoğun günü (CampaignState.day; Ömer 2026-10-26: tüccar stoğu günlük yenilenir). Eski kayıtta yok = 0. */

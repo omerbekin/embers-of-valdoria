@@ -13,7 +13,8 @@ import { node } from './graph';
 import { shopSlotWeight } from './reach';
 import { noDropSlots } from './slots';
 import { marketPriceMult, marketRerollMult, withRarityFloor } from './hollow-crown';
-import type { CampaignShop, CampaignState, MerchantStall, ShopWare } from './types';
+import { addSupply, respecChance, respecSupplies, supplyDef, type SupplyDef } from './supplies';
+import type { CampaignShop, CampaignState, MerchantStall, ShopSupply, ShopWare } from './types';
 
 /** Seferin günü (campaign-dev'in CampaignState.day alanı; Inn / kamp / dinlenme ilerletir). Alan yoksa (eski kayıt ya da henüz eklenmediyse) 0. */
 export const campaignDay = (s: CampaignState): number => Math.max(0, Math.floor((s as CampaignState & { day?: number }).day ?? 0));
@@ -133,6 +134,46 @@ function pickWeighted<T>(pool: T[], weight: (x: T) => number, rng: { next(): num
   return pool[pool.length - 1]!;
 }
 
+/**
+ * Respec malzemesinin tüccar fiyatı (Ömer 2026-11-14; varsayım, open-questions): `from.merchant` nadirliklerinin item fiyatlarının ortalaması
+ * (rarityPrice: priceBase x (1 + pricePerIlvl x ilvl)), düğümün fiyat çarpanıyla; yuvarlanır, en az 1.
+ */
+export function respecSupplyPrice(d: SupplyDef, ilvl: number, mult = 1): number {
+  const rs = d.from?.merchant ?? [];
+  if (!rs.length) return 0;
+  const base = rs.reduce((a, r) => a + rarityPrice(r, ilvl), 0) / rs.length;
+  return Math.max(1, Math.round(base * mult));
+}
+
+/**
+ * Tezgâhın respec malzemesi rafı (seed'li; her raf kurulumunda: ilk varış, günlük yenileme, Reroll). Her malzeme kendi zarıyla, şansı item nadirlik
+ * tablosundan (supplies.ts > respecChance, rafların 'normal' zarı, düğümün item seviyesi). Normal mal zarlarına dokunmaz (tuz 'shop-supply').
+ */
+export function campaignSupplyStock(s: CampaignState, nodeId: string = s.at, reroll = 0): ShopSupply[] {
+  const ilvl = Math.max(1, nodeIlvl(s.mapId, nodeId));
+  const mult = marketPriceMult(node(mapOf(s), nodeId), s);
+  const day = campaignDay(s);
+  const out: ShopSupply[] = [];
+  for (const d of respecSupplies('merchant')) {
+    if (rngFor(s.seed, s.mapId, nodeId, 'shop-supply', reroll, 'day', day, d.id).next() >= respecChance(d, 'merchant', ilvl)) continue;
+    out.push({ id: d.id, price: respecSupplyPrice(d, ilvl, mult) });
+  }
+  return out;
+}
+
+/** Malzeme rafından satın al: altın yeterse malzeme eklenir (çanta yeri tutmaz), satır "sold". */
+export function buySupplyWare(s: CampaignState, index: number): CampaignState {
+  const w = shopOf(s).supplies?.[index];
+  if (!w || w.sold || !supplyDef(w.id)) throw new Error('Sold out');
+  if (s.gold < w.price) throw new Error('Not enough gold');
+  const t = clone(s);
+  const tw = t.shop!.supplies![index]!;
+  t.gold -= tw.price;
+  addSupply(t, tw.id, 1);
+  tw.sold = true;
+  return t;
+}
+
 /** Burada tüccar açılabilir mi: tüccar adımı ya da tüccarlı kasabanın kasaba adımı (T1; kasaba Leave'i tezgâhı kapatır). */
 export function merchantHere(s: CampaignState): boolean {
   const step = nextStep(s);
@@ -150,11 +191,12 @@ export function openCampaignShop(s: CampaignState): CampaignState {
   const t = clone(s);
   if (t.shop && t.shop.node !== t.at) closeShop(t); // başka düğümde açık kalmış tezgâh kaydına döner
   const key = shopKey(t.mapId, t.at);
-  const open = t.shop ? { wares: t.shop.wares, rerolls: t.shop.rerolls, day: t.shop.day ?? 0 } : undefined;
+  const open: MerchantStall | undefined = t.shop ? { wares: t.shop.wares, rerolls: t.shop.rerolls, day: t.shop.day ?? 0, ...(t.shop.supplies ? { supplies: t.shop.supplies } : {}) } : undefined;
   const stall = open ?? t.merchantStock?.[key];
-  if (!stall) t.shop = { node: t.at, wares: campaignStock(t), buyback: [], rerolls: 0, day };
-  else if (stall.day >= day) t.shop = { node: t.at, wares: stall.wares, buyback: [], rerolls: stall.rerolls, day };
-  else t.shop = { node: t.at, wares: restockWares(t, t.at, stall), buyback: [], rerolls: 0, day };
+  const sup = (x: ShopSupply[] | undefined): { supplies?: ShopSupply[] } => (x?.length ? { supplies: x } : {});
+  if (!stall) t.shop = { node: t.at, wares: campaignStock(t), buyback: [], rerolls: 0, day, ...sup(campaignSupplyStock(t)) };
+  else if (stall.day >= day) t.shop = { node: t.at, wares: stall.wares, buyback: [], rerolls: stall.rerolls, day, ...sup(stall.supplies) };
+  else t.shop = { node: t.at, wares: restockWares(t, t.at, stall), buyback: [], rerolls: 0, day, ...sup(campaignSupplyStock(t)) };
   if (t.merchantStock?.[key]) {
     delete t.merchantStock[key];
     if (!Object.keys(t.merchantStock).length) delete t.merchantStock;
@@ -238,6 +280,9 @@ export function rerollCampaignShop(s: CampaignState): CampaignState {
   t.gold -= cost;
   t.shop!.rerolls = shop.rerolls + 1;
   t.shop!.wares = campaignStock(t, t.at, t.shop!.rerolls);
+  const sup = campaignSupplyStock(t, t.at, t.shop!.rerolls);
+  if (sup.length) t.shop!.supplies = sup;
+  else delete t.shop!.supplies;
   return t;
 }
 

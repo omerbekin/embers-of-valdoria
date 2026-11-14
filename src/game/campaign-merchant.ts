@@ -1,4 +1,4 @@
-import { campaignRerollCost, mapOf, node, campaignSellValue, markMerchantIntroSeen, merchantIntroSeen, buyBackItem, buyWare, rerollCampaignShop, sellToMerchant, type CampaignState } from '../campaign';
+import { buySupplyWare, supplyColor, supplyDef, supplyRarityName, supplyText, campaignRerollCost, mapOf, node, campaignSellValue, markMerchantIntroSeen, merchantIntroSeen, buyBackItem, buyWare, rerollCampaignShop, sellToMerchant, type CampaignState } from '../campaign';
 import { UI_TEXT as T } from '../endless/ui-text';
 import { campaignGearSource } from '../ui/gear-screen';
 import { openMerchant, type MerchantSource } from '../ui/merchant-screen';
@@ -20,6 +20,16 @@ export function campaignMerchantSource(get: () => CampaignState, set: (s: Campai
     sellPrice: (inst) => campaignSellValue(inst),
     rerollCost: campaignRerollCost(get()),
     buy: (i) => apply((s) => buyWare(s, i)),
+    // Respec malzemeleri rafı (Ömer 2026-11-14): yalnız sefer tüccarında
+    supplyWares: () =>
+      (get().shop?.supplies ?? []).flatMap((w) => {
+        const d = supplyDef(w.id);
+        if (!d) return [];
+        const color = supplyColor(d);
+        const rarityName = supplyRarityName(d);
+        return [{ id: w.id, name: d.name, text: supplyText(d), price: w.price, sold: !!w.sold, ...(color ? { color } : {}), ...(rarityName ? { rarityName } : {}) }];
+      }),
+    buySupply: (i) => apply((s) => buySupplyWare(s, i)),
     sell: (uid) => apply((s) => sellToMerchant(s, uid)),
     buyBack: (i) => apply((s) => buyBackItem(s, i)),
     reroll: () => apply((s) => rerollCampaignShop(s)),

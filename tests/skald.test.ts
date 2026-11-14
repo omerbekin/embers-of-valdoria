@@ -38,9 +38,9 @@ function cast(b: Battle, skill: string, target?: string): BattleEvent[] {
 /** Skald'ın şimşek / fiziksel vuruşlarının toplamı (debug zarı sabit: aynı seed). */
 const sumBy = (ev: BattleEvent[], el: string) => ofType(ev, 'damage').filter((d) => (d.element ?? 'physical') === el).reduce((a, d) => a + d.amount + d.absorbed, 0);
 
-describe('Thunder Skald class verisi', () => {
+describe('Skald class verisi', () => {
   it('STR kahramanı, 4 skill, Conductor pasifi, çekiç / gürz / kalkan aileleri, başlangıç çekici + kalkan, Quick Battle havuzunda', () => {
-    expect(SK.name).toBe('Thunder Skald');
+    expect(SK.name).toBe('Skald');
     expect(SK.primary).toBe('str');
     expect(SK.skills).toEqual(['hammer_spark', 'thunder_strike', 'war_drum', 'stormcall']);
     expect(pe).toEqual({ type: 'conductor', element: 'lightning', statuses: ['slow', 'stun', 'shocked'], bonus: 0.25 });

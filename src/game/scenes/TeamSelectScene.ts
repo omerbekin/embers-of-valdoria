@@ -744,9 +744,9 @@ export class TeamSelectScene extends Phaser.Scene {
       }
       const ic = this.add.image(x + 11, 0, ensureIcon(this, statIconName(k), STAT_COLOR[k], false)).setDisplaySize(22, 22);
       x += 22 + 7;
-      const lb = this.cz(x, 1, STAT_LABEL[k], fs(12, 10), pri ? '#ffb98a' : MUTED, 0.16).setOrigin(0, 0.5);
+      const lb = this.cz(x, 1, STAT_LABEL[k], fs(15, 11), pri ? '#ffb98a' : MUTED, 0.16).setOrigin(0, 0.5);
       x += lb.width + 7;
-      const v = this.cz(x, 0, String(def.stats[k]), fs(22, 12), pri ? '#ffd2a0' : TXT, 0).setOrigin(0, 0.5);
+      const v = this.cz(x, 0, String(def.stats[k]), fs(25, 13), pri ? '#ffd2a0' : TXT, 0).setOrigin(0, 0.5);
       x += v.width;
       const zw = x - sx;
       const lw = Math.max(6, Math.min(Math.min(LINE_MAX, zw), (def.stats[k] / 30) * LINE_MAX));
@@ -907,7 +907,7 @@ export class TeamSelectScene extends Phaser.Scene {
     const accent = this.add.graphics();
     accent.fillStyle(hexNum(groupHex), 0.55).fillRect(0, 0, size, 2);
     const frame = this.add.graphics();
-    const name = fitWidth(this.cz(size / 2, size + 8 + 10, def.name, 15, TXT, 0.06).setOrigin(0.5), size + 14);
+    const name = fitWidth(this.cz(size / 2, size + 8 + 10, def.name, 17, TXT, 0.06).setOrigin(0.5), size + 14);
     const parts: Phaser.GameObjects.GameObject[] = [shadow, bg, img, accent];
     if (isTestClass(def)) {
       const tg = this.add.graphics();

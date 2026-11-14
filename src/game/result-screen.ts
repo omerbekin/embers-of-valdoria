@@ -612,7 +612,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   };
   if (actions) place(actions.map((a) => ({ label: a.label, run: a.run, primary: !!a.primary, ...(a.view ? { view: a.view } : {}), ...(a.note ? { note: a.note } : {}) })));
   else if (o.preview) place([{ label: 'Team Select', run: teamSelect, primary: false }, { label: 'Close preview', run: () => destroy(), primary: true }]);
-  else place([{ label: 'Team Select', run: teamSelect, primary: false }, { label: 'New Game', run: newGame, primary: true }]);
+  else place([{ label: 'Team Select', run: teamSelect, primary: false }, { label: 'New Random Battle', run: newGame, primary: true }]);
   // "Copy match data": solda küçük ikincil düğme (kısa ipucu = yazının kendisi)
   if (o.matchData) {
     const matchData = o.matchData;
