@@ -645,7 +645,7 @@ export async function mooringbreak(c: VfxCtx, k: Kit): Promise<void> {
  *  'brand' : kor turuncusu, merkez (slots[0]) daha parlak, komşular soluk (Ash Brand'in plus alanı; damgalı yer değiştirince yeniden çağrılır).
  * Container döner; söndürmek için destroy().
  */
-export function telegraphCells(k: Kit, scene: Phaser.Scene, kind: 'span' | 'fall' | 'brand', board: Board, slots: number[], keystones: number[] = []): Phaser.GameObjects.Container {
+export function telegraphCells(k: Kit, scene: Phaser.Scene, kind: 'span' | 'fall' | 'brand', board: Board, slots: number[], keystones: number[] = [], platesOwned = false): Phaser.GameObjects.Container {
   const plate = scene.add.graphics();
   const crack = scene.add.graphics();
   const keys: Phaser.GameObjects.Image[] = [];
@@ -660,7 +660,9 @@ export function telegraphCells(k: Kit, scene: Phaser.Scene, kind: 'span' | 'fall
     if (!box.active) return;
     const p = 0.5 + 0.5 * Math.sin(scene.time.now / 420);
     plate.clear();
-    if (kind === 'span') k.fillCells(plate, board, slots, { fill: 0x8a4a25, fillA: 0.16 + 0.14 * p, edge: 0xe0702a, edgeA: 0.55 + 0.4 * p, edgeW: 3 });
+    if (platesOwned) {
+      // plaka sahnenin zemin çiziminde (vfx.ts > wardenTelegraphCells); burada yalnız çatlak + Keystone
+    } else if (kind === 'span') k.fillCells(plate, board, slots, { fill: 0x8a4a25, fillA: 0.16 + 0.14 * p, edge: 0xe0702a, edgeA: 0.55 + 0.4 * p, edgeW: 3 });
     else if (kind === 'fall') k.fillCells(plate, board, slots, { fill: 0x8e1f2c, fillA: 0.16 + 0.14 * p, edge: 0xe0702a, edgeA: 0.5 + 0.4 * p, edgeW: 3 });
     else {
       k.fillCells(plate, board, slots, { fill: 0xe0702a, fillA: 0.08 + 0.08 * p, edge: 0xe0702a, edgeA: 0.35 + 0.3 * p, edgeW: 2 });

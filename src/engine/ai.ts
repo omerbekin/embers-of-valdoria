@@ -6,7 +6,7 @@ import { betStakeParts } from './gamble';
 import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
 import { splitParts } from './spec';
-import { bellsOfSkill, effFirst, effFlag, manaShieldNeed, type TriggerAction } from './tree-hooks';
+import { bellsOfSkill, bounceHitAt, effFirst, effFlag, manaShieldNeed, type TriggerAction } from './tree-hooks';
 import { armorReduction, attributePower, dotOutgoingMult, hitChance } from './stats';
 import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillModeSet, Status, StatusDef } from './types';
 import { capBurn, castBurnAmount, groundBurnAmount } from './mana-burn';
@@ -4161,13 +4161,19 @@ function trigEventValue(ctx: ValueContext, owner: Combatant, ev: Parameters<Batt
   for (const tr of ctx.battle.aiTriggers(owner, ev)) {
     const proc = (tr.hook.procChance ?? 1) / Math.max(1, tr.hook.every ?? 1);
     for (const a of tr.hook.do) {
-      const r = tr.recipients(a);
-      for (const rec of r.units) {
+      // Hexer Lasting Jinx (zincir sekme): her zar tutsa izlenecek sıra; i. sekme ihtimali proc^(i+1)
+      const start = a.bounce ? (ev.subject ?? ev.target) : undefined;
+      const r = start ? { units: ctx.battle.aiBounceChain(owner, start).slice(0, a.bounceMax ?? Infinity), weight: 1 } : tr.recipients(a);
+      r.units.forEach((rec, i) => {
         const w = trigActionWorth(ctx, owner, a, tr.scale, rec, { ...(ev.amount !== undefined ? { amount: ev.amount } : {}), ...(o ? { o } : {}) });
         // cast: değer sahibin tarafına (alıcı işaretinden bağımsız)
         const sign = a.cast !== undefined ? 1 : rec.side === ctx.actor.side ? 1 : -1;
-        v += (a.cast !== undefined ? (owner.side === ctx.actor.side ? w : -w) : sign * w) * r.weight * proc * weight;
-      }
+        const chain = start ? proc ** i : 1;
+        v += (a.cast !== undefined ? (owner.side === ctx.actor.side ? w : -w) : sign * w) * r.weight * proc * chain * weight;
+        // Tur 22: seken vuruşun hasarı (strike değeriyle aynı ölçü)
+        const frac = start ? bounceHitAt(a, i) : 0;
+        if (frac > 0) v += sign * trigActionWorth(ctx, owner, { strike: frac }, 1, rec, o ? { o } : {}) * proc * chain * weight;
+      });
     }
   }
   return v;
@@ -4227,6 +4233,19 @@ function treeTriggerValue(ctx: ValueContext, o: Option): { own: number; retaliat
           if (battle.statusBlocked(t, s.status)) continue;
           own += trigEventValue(ctx, actor, { on: 'statusApplied', target: t, status: s.status, skill: sid, castTargets: cast }, previewHitChance(o, t) * (1 - (o.killP[t.uid] ?? 0)) * (s.chance ?? 1), o);
         }
+      }
+    }
+    // Şimşek Shocked'ı (thunder.shocks; Skald önerisi 6, 2026-11-14): motor rozeti verince 'statusApplied shocked' işler; suda Shocked yerine
+    // wetInto (yoksa Stun) addStatus'tan geçer. Hangisi olacağı motorun kendi kararından (boltOutcome; thunderValue ile aynı)
+    if (o.skill.thunder?.shocks && actor.treeHooks.some((h) => h.h === 'trigger' && h.on === 'statusApplied')) {
+      const T = battle.formulas.thunder;
+      const feet = o.cells ? [{ board: o.board ?? (actor.side === 'party' ? ('enemy' as Side) : ('party' as Side)), cells: o.cells }] : battle.boltFeetOf(o.targets);
+      for (const s of battle.boltOutcome(actor, o.skill, feet, o.targets).shocks) {
+        const t = battle.get(s.uid);
+        if (!t || t.hp <= 0 || t.side === actor.side) continue;
+        const status = s.stun ? (T.wetInto ?? 'stun') : T.badge;
+        if (s.stun && battle.statusBlocked(t, status)) continue;
+        own += trigEventValue(ctx, actor, { on: 'statusApplied', target: t, status, skill: sid, castTargets: cast }, previewHitChance(o, t) * (1 - (o.killP[t.uid] ?? 0)), o);
       }
     }
     // Ley Brand bir Ley Thread'i tüketirse (önizlemenin threaded işareti) sahibin 'threadConsumed' tetikleri (AM 0.mb Snapping Thread)

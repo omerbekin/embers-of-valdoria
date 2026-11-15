@@ -46,6 +46,8 @@ export interface MwCard {
   blurb?: string;
   /** Ek etiket çipi (ör. "Area attacks", "Played in the tutorial"). */
   tag?: string;
+  /** Sağdaki kahraman kartında görünen level (yoksa 1). */
+  level?: number;
   /** Seçilemez (soluk; ör. respec malzemesinde sıfırlanacak puanı olmayan kahraman). */
   off?: boolean;
 }

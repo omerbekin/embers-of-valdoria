@@ -43,7 +43,7 @@ const nameOf = (cls: string): string => content.classes[cls]?.name ?? cls;
 export function openRespecChooser(root: HTMLElement, o: { supply: RespecSupplyView; heroes: RespecHeroView[]; use: (heroId: string) => void; onClose: () => void }): MwHandle {
   const cards: MwCard[] = o.heroes.map((h) => {
     const d = content.classes[h.class];
-    return { id: h.id, classId: h.class, spriteId: d?.spriteId ?? h.class, name: nameOf(h.class), color: d?.color ?? '#cdb67f', tag: respecCardTag(h, o.supply.kind), ...(h.spent > 0 && !h.fallen ? {} : { off: true }) };
+    return { id: h.id, classId: h.class, spriteId: d?.spriteId ?? h.class, name: nameOf(h.class), color: d?.color ?? '#cdb67f', tag: respecCardTag(h, o.supply.kind), level: h.level, ...(h.spent > 0 && !h.fallen ? {} : { off: true }) };
   });
   const any = o.heroes.some((h) => h.spent > 0 && !h.fallen);
   let handle: MwHandle | null = null;

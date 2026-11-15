@@ -8,6 +8,7 @@
  */
 import './reward-fx.css';
 import { reducedMotion } from './motion-pref';
+import { motion } from './motion';
 import { worldSound } from './ui-sound';
 
 const NUM = /-?\d+(?:\.\d+)?/;
@@ -134,4 +135,148 @@ export function playStatFx(row: HTMLElement | null | undefined, from?: string): 
   const val = row.querySelector<HTMLElement>('.sh-n');
   if (val && from) countUp(val, from, 600);
   burst(row, 8, 34);
+}
+
+// ---- Altın sayacı ve uçuş (Ömer 2026-11-15, Tur 20: a05 / a06 / a13) ----
+
+/** Son gösterilen altın (anahtar = kese yeri: 'gear-purse', 'merchant-purse'); kese yeniden çizilince eski değerden yeniye sayılır. */
+const lastGold = new Map<string, number>();
+/** Kesenin "şu an gösterilen" değerini önceden ayarlar (ör. ganimet: altın zaten kesede, ekran eski değerden saymaya başlasın). */
+export function seedGold(key: string, value: number): void {
+  lastGold.set(key, value);
+}
+/** Anahtarı unutur (yeni oturumda eski değerden saymasın). */
+export function forgetGold(key: string): void {
+  lastGold.delete(key);
+}
+
+/** Altın kutusundaki sayı 500 ms sayaç gibi döner: artışta kısa altın parıltısı, azalışta hafif sönük. Kutu "...sayı" yazan son metin düğümünü kullanır (ikon korunur). */
+export function goldCount(chip: HTMLElement, value: number, key: string): void {
+  const prev = lastGold.get(key);
+  lastGold.set(key, value);
+  if (prev === undefined || prev === value || reducedMotion()) return;
+  let node: Text | null = null;
+  for (const n of Array.from(chip.childNodes)) if (n.nodeType === 3) node = n as Text;
+  if (!node) return;
+  const t = node;
+  const up = value > prev;
+  const t0 = performance.now();
+  const dur = 500;
+  chip.classList.add(up ? 'rfx-gold-up' : 'rfx-gold-down');
+  const step = (now: number): void => {
+    const k = Math.min(1, (now - t0) / dur);
+    const v = Math.round(prev + (value - prev) * (1 - Math.pow(1 - k, 3)));
+    if (k < 1 && chip.isConnected) {
+      t.nodeValue = (t.nodeValue ?? '').replace(/\d+/, String(v));
+      requestAnimationFrame(step);
+    } else {
+      t.nodeValue = (t.nodeValue ?? '').replace(/\d+/, String(value));
+      chip.classList.remove('rfx-gold-up', 'rfx-gold-down');
+    }
+  };
+  requestAnimationFrame(step);
+}
+
+export interface FlyOpts {
+  ms?: number;
+  delay?: number;
+  /** Varınca (ya da hareket azaltılmışsa hemen) çağrılır. */
+  onLand?: () => void;
+}
+
+/**
+ * Bir simgeyi (`icon`'un kopyası) `from` dikdörtgeninden `to` öğesine yumuşak yayla uçurur. `host` konumlu olmalı (ekran kaplaması).
+ * Reduced motion: uçuş yok, `onLand` hemen. Girişi kilitlemez.
+ */
+export function flyIcon(host: HTMLElement, from: DOMRect, icon: Element | null, to: HTMLElement | null, o: FlyOpts = {}): void {
+  const land = o.onLand ?? ((): void => undefined);
+  if (reducedMotion() || !icon || !to || !host.animate) return land();
+  const hr = host.getBoundingClientRect();
+  const k = host.offsetWidth / (hr.width || 1);
+  const tr = to.getBoundingClientRect();
+  const clone = icon.cloneNode(true) as HTMLElement;
+  clone.classList.add('rfx-fly');
+  const w = from.width * k;
+  const h = from.height * k;
+  clone.style.left = `${(from.left - hr.left) * k}px`;
+  clone.style.top = `${(from.top - hr.top) * k}px`;
+  clone.style.width = `${w}px`;
+  clone.style.height = `${h}px`;
+  const dx = (tr.left + tr.width / 2 - (from.left + from.width / 2)) * k;
+  const dy = (tr.top + tr.height / 2 - (from.top + from.height / 2)) * k;
+  const sc = Math.min(1, Math.max(0.3, (tr.width * k) / (w || 1)));
+  host.append(clone);
+  const a = clone.animate(
+    [
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 26 * k}px) scale(${(1 + sc) / 2 + 0.1})`, opacity: 1, offset: 0.5 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${sc})`, opacity: 0.9 },
+    ],
+    { duration: o.ms ?? 320, delay: o.delay ?? 0, easing: 'cubic-bezier(0.33, 1, 0.68, 1)', fill: 'both' },
+  );
+  let done = false;
+  const end = (): void => {
+    if (done) return;
+    done = true;
+    clone.remove();
+    land();
+  };
+  a.onfinish = end;
+  a.oncancel = end;
+  window.setTimeout(end, (o.ms ?? 320) + (o.delay ?? 0) + 1200); // gizli sekmede zaman çizelgesi durursa simge takılı kalmasın
+}
+
+/** Altın satırından keseye küçük sikke uçurur (300 ms). */
+export function coinFly(host: HTMLElement, fromEl: HTMLElement | null, purse: HTMLElement | null, delay = 0): void {
+  if (!fromEl || !purse) return;
+  const ico = document.createElement('span');
+  ico.className = 'rfx-coin';
+  const r = fromEl.getBoundingClientRect();
+  const s = Math.min(r.height || 18, 22);
+  const rect = new DOMRect(r.left + 4, r.top + (r.height - s) / 2, s, s);
+  flyIcon(host, rect, ico, purse, { ms: 300, delay, onLand: () => glow(purse, 500, 0.6) });
+}
+
+/** Satış: çantadaki öğenin kopyası satıcı listesine doğru söner, sonra kese sikke parıltısı verir. */
+export function fadeToward(host: HTMLElement, from: DOMRect | null, icon: Element | null, to: HTMLElement | null, purse: HTMLElement | null): void {
+  if (!from) return;
+  flyIcon(host, from, icon, to, { ms: 280, onLand: () => purse && glow(purse, 500, 0.7) });
+}
+
+/** Kese yetersiz altında 2 kez hafif kızarır (titreme yok). */
+export function purseBlush(purse: HTMLElement | null): void {
+  if (!purse || reducedMotion() || !purse.animate) return;
+  purse.animate(
+    [{ color: 'inherit' }, { color: '#ff7a6a', textShadow: '0 0 8px rgba(255,90,70,0.7)' }, { color: 'inherit' }, { color: '#ff7a6a', textShadow: '0 0 8px rgba(255,90,70,0.7)' }, { color: 'inherit' }],
+    { duration: 720, easing: 'ease-in-out' },
+  );
+}
+
+/** Gövde geçişi (Ömer 2026-11-15, a08/a14/a20): yeni içerik 'swap' ön ayarıyla (150 ms, 6 px) yükselerek gelir. Azaltılmış harekette yok. */
+export function bodyIn(node: HTMLElement | null | undefined): void {
+  if (!node) return;
+  node.classList.remove('gr-body-in');
+  void node.offsetWidth;
+  node.classList.add('gr-body-in');
+}
+
+/** Sayfanın şimdiki içeriğinin kopyasını üstüne bırakır; dönen işlev (yeniden çizimden SONRA çağrılır) kopyayı ekleyip söndürür ve kaldırır. */
+export function ghostOf(page: HTMLElement | null | undefined): (() => void) | null {
+  if (!page || reducedMotion() || !page.firstElementChild || !page.animate) return null;
+  const old = page.firstElementChild;
+  const g = old.cloneNode(true) as HTMLElement;
+  const top = page.scrollTop;
+  const w = (old as HTMLElement).offsetWidth;
+  return () => {
+    if (!page.isConnected) return;
+    g.classList.add('gr-ghost');
+    g.style.top = `${top}px`;
+    g.style.width = `${w}px`;
+    if (getComputedStyle(page).position === 'static') page.style.position = 'relative';
+    page.append(g);
+    const a = g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: motion('swap').ms, easing: 'ease-out', fill: 'forwards' });
+    a.onfinish = () => g.remove();
+    a.oncancel = () => g.remove();
+    window.setTimeout(() => g.remove(), motion('swap').ms + 1200);
+  };
 }

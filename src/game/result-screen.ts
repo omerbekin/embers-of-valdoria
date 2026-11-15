@@ -481,8 +481,18 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
         vGradient(tg, tagX, tagY - th / 2, tw, th, 0xf0a85a, [[0, 1], [1, 1]]);
         tg.fillGradientStyle(0xf0a85a, 0xf0a85a, 0xe0702a, 0xe0702a, 1).fillRect(tagX, tagY - th / 2, tw, th);
         tg.fillStyle(0x2a1405, 1).fillPoints(diamondPts(tagX + 11, tagY, 4.5), true);
-        row.add(tg);
-        row.add(label.setX(tagX + 22));
+        label.setX(tagX + 22);
+        // etiket satırdan ayrı: satırlar bitince 200 ms'de altın parlamayla oturur (a17)
+        const tagBox = scene.add.container(0, 0);
+        const halo = scene.add.rectangle(tagX + tw / 2, tagY, tw + 16, th + 12, 0xf0a85a, 0.55).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
+        tagBox.add([halo, tg, label]);
+        area.add(tagBox);
+        if (rm.rowMs > 0) {
+          const t0 = rm.rowDelayMs + rm.rowStaggerMs * 4 + rm.rowMs;
+          tagBox.setAlpha(0);
+          scene.tweens.add({ targets: tagBox, alpha: 1, duration: rm.mvpMs, delay: t0 });
+          scene.tweens.add({ targets: halo, alpha: { from: 0.9, to: 0 }, duration: rm.mvpMs * 3, delay: t0, ease: 'Sine.easeOut' });
+        }
       } else if (!alive) row.add(elBody(scene, tagX, tagY, 'Fallen', tight ? sz(15) : sz(17), '#8d8070').setOrigin(0, 0.5));
 
       // Can çubuğu (karakter kartı dili: rakam çubuğun içinde)
@@ -563,7 +573,14 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
       const lab = elText(scene, tx, sy + stripH / 2 - (c.note ? 22 : 18), c.label, sz(11), EL.MUTED, { em: 0.18 }).setOrigin(0, 0.5);
       fitText(lab, cw - (tx - cx) - 8);
       area.add(lab);
-      area.add(elText(scene, tx, sy + stripH / 2 + (c.note ? 0 : 6), c.val, 29 * (short ? 1.15 : 1), c.color, { em: 0.02, upper: false, weight: '700' }).setOrigin(0, 0.5));
+      const num = elText(scene, tx, sy + stripH / 2 + (c.note ? 0 : 6), c.val, 29 * (short ? 1.15 : 1), c.color, { em: 0.02, upper: false, weight: '700' }).setOrigin(0, 0.5);
+      area.add(num);
+      // Sayılar satırlarla aynı anda 0'dan döner (a17, Tur 20); sıfır olanlar dönmez; Reduced motion: son değer hemen
+      const to = Number(c.val);
+      if (rm.rowMs > 0 && to > 0) {
+        num.setText('0');
+        scene.tweens.addCounter({ from: 0, to, duration: d(rm.countMs), delay: rm.rowDelayMs, ease: 'Cubic.easeOut', onUpdate: (t) => num.setText(String(Math.round(t.getValue() ?? 0))), onComplete: () => num.setText(c.val) });
+      }
       if (c.note) area.add(fitText(elBody(scene, tx, sy + stripH / 2 + 24, c.note, 15, EL.MUTED).setOrigin(0, 0.5), cw - (tx - cx) - 8));
     });
   }

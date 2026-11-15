@@ -23,5 +23,25 @@ Geçerli sayı: `data/balance.json > bands`. `npm run sim` raporu, `tests/balanc
 3. Yeniden ölç (5000 x 2), yüzdeler en çok 3 ondalık, tüm sınıflar birleşik.
 4. Belge: ölçüm ve karar `docs/arch/areas/character-design.md` Durum; sınıf kararı `docs/design/classes/<id>.md`; oyuncu satırı `data/patch-notes.json`.
 
+## Ağaçlı ölçüm 2026-11-15 (r19: Rime Touch / Hexer rank başına şans)
+Ne değişti: Mage 0.f3 Rime Touch %6 sabit -> %6 x rank; Hexer 2.r Rot Contagion ve 3.r Rumour Mill %5 sabit -> %5 x rank (veride `rank: 'chance'`). Denge değeri değişmedi; yalnız ölçüm.
+Komut: `npx tsx src/sim/cli.ts 300 1 --tree a --level 20 --side both --only=<sınıf> --rows=<satırlar>`, ÖNCE = main 0.9.11.4, SONRA = agent/r19-bal, aynı seed 1..300. Ön ayar satırları düğümü alacak şekilde seçildi (varsayılan 1+2 bu düğümleri L30 öncesi almaz): Mage 0+1 (Rime Touch rank 5), Hexer 2+3 (Rot Contagion rank 3), Hexer 3+1 (Rumour Mill rank 3).
+
+| Ölçüm | Ağaçsız | Ağaçlı ÖNCE | Ağaçlı SONRA | Düğüm tetiklenmesi önce -> sonra |
+|---|---|---|---|---|
+| Mage (satır 0+1), 113 savaş | %45,1 | %62,8 | %62,8 | Rime Touch 7 -> 26 |
+| Hexer (satır 2+3), 130 savaş | %55,4 | %89,2 | %90,0 | Rot Contagion 19 -> 50 |
+| Hexer (satır 3+1), 130 savaş | %55,4 | %67,7 | %67,7 | Rumour Mill 13 -> 59 |
+
+- Mage: Rime Touch 3,7 kat sık tetiklense de 300 savaşta hiçbir sonuç dönmedi (ort. hamle 64,197 -> 64,22); etkisi bu ölçekte görünmez.
+- Varsayılan satırlar (1+2; sefer / Endless vekili) bu üç düğümü L30 öncesi almaz: vekil build'leri değişikliği görmez.
+- Ağaçsız referans main ile dalda birebir aynı (birleşme taban davranışı değiştirmedi). Fark 300 savaşta gürültü içinde (sınıf başına 113-130 savaş, ±8-9 puan): bant kararı bu ölçümle verilmez.
+- Ağaçsız sim (`npm run sim`) bu değişikliği hiç görmez; Hexer %63,1 / Paladin %43,0 (main son ağaçsız sim) bu tabloyla kıyaslanmaz.
+- Bilinen zayıf nokta: Hexer satır 2+3 ağaçla +33,8..+34,6 puan (hedef +20..+25), değişiklikten bağımsız; Ömer'e sorulacak (değer değişmedi).
+- Ham çıktılar (geçici, scratchpad): `r19bal/{main,br}-{mage,hex23,hex31}.{txt,json}`.
+
+## Sefer düğüm süresi 2026-11-15 (r19, yalnız ölçüm)
+`npm run sim:campaign -- 240 1 medium good` (kasma simi, Harita 1, ağaçsız, Medium YZ + iyi oyuncu; koşuların %57,5'i duvara vurdu, bitirme %42,5). "Tur" = tek birim hamlesi (`battle.turnsTaken`, her birimin her eylemi +1, pas dahil; tam tur değil: 4'e 4'te bir tam tur kabaca 8 hamle). Düğüm ortalaması yalnız o düğümün kendi denemeleri (ilk deneme + yenilgi sonrası tekrar), devriye / kasma savaşları HARİÇ; "75+" yüzdeleri ise devriyeleri de sayar. Tüm savaş ortalaması 37,7. Seçilenler: Grave Field 42, Pilgrim Road 28, Black Cathedral (elit) 44 (savaşların %22,6'sı 75+), King's Bridge (boss) 56 (%17,5'i 75+), Siege Line 67, Gate of Cinders 71, Castle Morvane (boss) 106 (%83'ü 75+). Olay savaşları (cadı düellosu) simde oynanmaz.
+
 ## Geçici muafiyet
 Sınıf bandı muafiyeti `tests/balance-checks.ts > PENDING_BALANCE` (bugün: `druid`, Ömer kararıyla sayıya dokunulmaz); skill muafiyeti `PENDING_SKILLS`. Tek doğru kaynak testin kendisidir.

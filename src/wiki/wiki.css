@@ -1440,3 +1440,8 @@
   color: #f3d999;
 }
 
+
+/* Madde kartı geçişi (a14): eski içerik söner (kopya, view.ts > renderArticle), yenisi 'swap' ön ayarıyla yükselir; eski 0,35 sn solma yerini ona bırakır */
+.cx-art.cx-fade.gr-body-in {
+  animation: gr-body-in var(--m-swap, 150ms) var(--m-ease, ease-out) both;
+}

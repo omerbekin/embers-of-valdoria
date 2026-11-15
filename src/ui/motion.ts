@@ -6,7 +6,7 @@ import cfg from '../../data/ui-motion.json';
 import { onReducedMotionChange, reducedMotion } from './motion-pref';
 import { uiSound } from './ui-sound';
 
-export type MotionPreset = 'screen' | 'modal' | 'panel' | 'toast' | 'tooltip' | 'card' | 'result' | 'wave' | 'lootXp' | 'endlessTab' | 'mapRegion' | 'cinematic' | 'statHold' | 'cardArt';
+export type MotionPreset = 'screen' | 'modal' | 'panel' | 'swap' | 'toast' | 'tooltip' | 'card' | 'result' | 'wave' | 'lootXp' | 'endlessTab' | 'mapRegion' | 'cinematic' | 'statHold' | 'cardArt' | 'nodeEnter' | 'hereSwap' | 'fogOpen' | 'levelUp' | 'companionJoin' | 'townAmbient' | 'mapToBattle' | 'goldCount';
 
 /** Başlık ölçeği (oyun birimi; data/ui-motion.json > type). */
 export const TYPE = cfg.type;
@@ -40,6 +40,8 @@ export function applyMotionCss(): void {
     root.style.setProperty('--m-modal-rise', `${r ? 0 : cfg.modal.rise}px`);
     root.style.setProperty('--m-panel', v(cfg.panel.ms));
     root.style.setProperty('--m-panel-offset', `${r ? 0 : cfg.panel.offset}px`);
+    root.style.setProperty('--m-swap', v(cfg.swap.ms));
+    root.style.setProperty('--m-swap-offset', `${r ? 0 : cfg.swap.offset}px`);
     root.style.setProperty('--m-tooltip', v(cfg.tooltip.inMs));
     root.style.setProperty('--m-card-hover', v(cfg.card.hoverMs));
     root.style.setProperty('--m-card-lift', `${r ? 0 : cfg.card.lift}px`);

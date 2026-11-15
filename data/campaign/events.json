@@ -47,10 +47,11 @@
         {
           "id": "pay",
           "label": "Pay her price",
-          "hint": "Pay 60 gold. She gives you an item from her chest and keeps the coins.",
+          "hint": "Pay 60 gold. She gives you a Rare item from her chest (8% chance it is Epic) and keeps the coins.",
           "cost": 60,
           "chest": true,
           "chestItems": 1,
+          "chestRarity": { "rarity": "rare", "upgrade": { "rarity": "epic", "chance": 0.08 } },
           "result": "The witch weighs the coins, grins, and rummages in the chest. She tosses you a piece. \"That's what your gold buys.\""
         },
         {

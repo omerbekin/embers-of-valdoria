@@ -46,7 +46,7 @@ export function rollTemperStones(rng: { next(): number }, kind: LootKind, table:
  * Düğümün loot'unu verir: item'ler torbaya (doluysa sığmayanlar kartta `left`: oyuncu yer açıp alabilir), altın kesesine; `pendingLoot` haritada gösterilecek
  * "Spoils" kartıdır (arayüz onaylayınca `acknowledgeLoot`). Aynı düğümün kaçıncı zaferi olduğu `lootState.clears`'ta sayılır.
  */
-export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, party: Hero[], opts?: { maxItems?: number; itemsDelta?: number; gold?: number; /** Aynı düğümde ayrı sayılan ödül (The Fighting Pit kademe sandığı: 'pit3'): kendi sayaç anahtarı ve zarı. */ tag?: string }): LootDrop {
+export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, party: Hero[], opts?: { maxItems?: number; itemsDelta?: number; gold?: number; /** Aynı düğümde ayrı sayılan ödül (The Fighting Pit kademe sandığı: 'pit3'): kendi sayaç anahtarı ve zarı. */ tag?: string; /** Sandık item'lerinin nadirliği sabit (zarın nadirliği yerine; Witch's Hut). */ rarity?: RarityId }): LootDrop {
   const key = `${nodeId}:${opts?.tag ?? (kind === 'treasure' ? 'treasure' : 'battle')}`;
   const replay = t.lootState.clears[key] ?? 0;
   const res = rollLoot({
@@ -68,6 +68,7 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     res.rarities.length = Math.min(res.rarities.length, cap);
     res.forClass.length = Math.min(res.forClass.length, cap);
   }
+  if (opts?.rarity) res.rarities = res.rarities.map(() => opts.rarity!); // Witch's Hut (Ömer 2026-11-15 r19): item tabanı zardan, nadirlik sabit
   if (opts?.gold !== undefined) res.gold = Math.round(opts.gold * (CONFIG.mapLootScale?.[t.mapId]?.gold ?? 1));
   t.lootState.rarePity = res.pity;
   t.lootState.clears[key] = replay + 1;

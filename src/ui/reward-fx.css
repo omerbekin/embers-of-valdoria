@@ -58,3 +58,88 @@ html.short .rfx-sparks {
     text-shadow: none;
   }
 }
+
+/* Altın sayacı (goldCount): artışta altın parıltı, azalışta sönük */
+.rfx-gold-up {
+  color: #ffe2a0;
+  text-shadow: 0 0 8px rgba(255, 190, 70, 0.85);
+}
+
+.rfx-gold-down {
+  opacity: 0.72;
+}
+
+/* Uçan simge (flyIcon): ekran kaplamasında mutlak, girişi tutmaz */
+.rfx-fly,
+.gp-ico.rfx-fly {
+  /* .gp-ico { position: relative } (gear-plates.css) eziyordu: item kopyası ekran dışına uçuyordu (r20 çekim) */
+  position: absolute;
+  z-index: 60;
+  pointer-events: none;
+  margin: 0;
+  will-change: transform;
+}
+
+.rfx-fly > * {
+  pointer-events: none;
+}
+
+/* Sikke: küçük altın disk (altın ikonu yoksa da görünür) */
+.rfx-coin {
+  display: block;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe9a8, #d9a53a 60%, #8a5a12);
+  box-shadow: 0 0 6px rgba(255, 190, 70, 0.8);
+}
+
+html.reduced-motion .rfx-fly {
+  display: none;
+}
+
+/* Gövde geçişi: Gear sekmeleri (a08), Codex maddesi (a14), Settings sayfası (a20) (a08, Ömer 2026-11-15 Tur 20): yalnız gövde; eski içerik söner (kopya), yenisi 6 px yükselerek gelir (data/ui-motion.json > swap) */
+.gr-body-in {
+  animation: gr-body-in var(--m-swap, 150ms) var(--m-ease, ease-out) both;
+}
+
+@keyframes gr-body-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--m-swap-offset, 6px);
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.gr-ghost {
+  position: absolute;
+  left: auto;
+  pointer-events: none;
+  z-index: 3;
+}
+
+html.reduced-motion .gr-body-in {
+  animation: none;
+}
+
+/* Kahraman değişince yeni portre karesi kısa altın kenar parlaması */
+.rfx-edge {
+  animation: rfx-edge 700ms ease-out 1;
+}
+
+@keyframes rfx-edge {
+  0%,
+  35% {
+    box-shadow: 0 0 0 2px var(--g-gold, #d9b26a), 0 0 18px rgba(240, 180, 80, 0.75);
+  }
+
+  100% {
+    box-shadow: 0 0 0 2px transparent, 0 0 0 rgba(240, 180, 80, 0);
+  }
+}
+
+html.reduced-motion .rfx-edge {
+  animation: none;
+}

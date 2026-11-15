@@ -17,6 +17,7 @@ describe('olay seçeneği çipleri', () => {
   });
   it('bedelli seçenek: altın / can kaybı / sandık / altın', () => {
     expect(choiceChips({ cost: 60, chest: true, chestItems: 1, gold: 25 }).map((x) => x.text)).toEqual(['60 gold', '1 item', '25 gold']);
+    expect(choiceChips({ cost: 60, chest: true, chestItems: 1, chestRarity: { rarity: 'rare', upgrade: { rarity: 'epic', chance: 0.08 } } }).map((x) => x.text)).toEqual(['60 gold', '1 Rare item (8% Epic)']);
     expect(choiceChips({ hpLoss: 0.2, chest: true, chestItems: 1, gold: 25 }).map((x) => x.text)).toEqual(['-20% HP, every hero', '1 item', '25 gold']);
     expect(choiceChips({ cost: 40, restHeal: 1 }).map((x) => x.text)).toEqual(['40 gold', 'Rest heals 100%']);
   });

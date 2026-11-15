@@ -850,7 +850,10 @@ export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
   }
   const small = !!c.chest && c.chestItems !== undefined; // küçük sandık: altın sandığın kartında
   if (!small) earnGold(t, c.gold ?? 0);
-  if (c.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t), small ? { maxItems: c.chestItems!, gold: c.gold ?? 0 } : undefined);
+  // Sabit nadirlik (Witch's Hut, Ömer 2026-11-15 r19): yükseltme zarı sefer + harita + düğüm + seçenek seed'li tek zar (deneme / yükleme sayısından bağımsız)
+  const cr = c.chestRarity;
+  const rarity = cr ? (cr.upgrade && rngFor(t.seed, t.mapId, t.at, 'chest-rarity', `choice-${c.id}`).next() < cr.upgrade.chance ? cr.upgrade.rarity : cr.rarity) : undefined;
+  if (c.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t), small || rarity ? { ...(small ? { maxItems: c.chestItems!, gold: c.gold ?? 0 } : {}), ...(rarity ? { rarity } : {}) } : undefined);
   if (c.gift) grantGift(t, t.at, activeHeroes(t), `choice-${c.id}`, c.gift.rarity ?? 'common', c.gift.slots); // Monk's Isle relic (M-L)
   if (c.faction && !t.faction) t.faction = c.faction; // M-L: bir kez, geri alınmaz
   if (c.stoneOath && !t.stoneOath) t.stoneOath = c.stoneOath; // Harita 3 Hall of Oaths (open-questions 454 a): bir kez, geri alınmaz

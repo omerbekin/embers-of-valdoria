@@ -23,7 +23,7 @@ import {
   storyLikes,
   type CampaignState,
 } from '../src/campaign';
-import { BAG_SIZE, ITEMS, makeItem } from '../src/progression';
+import { BAG_SIZE, ITEMS, instanceRarity, makeItem } from '../src/progression';
 
 // Seçenekli olaylar (N2), kasaba tüccarı (T1), kasaba sahnesi + diyalog (T5; sis açma YOK). fill-plan.md 4.2 ve 5.
 
@@ -55,6 +55,29 @@ describe("Witch's Hut choice event", () => {
     expect(t.pendingLoot?.items.length).toBe(1);
     expect(t.gold).toBe(rich.gold - 60);
     expect(nextStep(t).kind).toBe('move');
+  });
+
+  it('Pay her price: always Rare, a small seeded chance of Epic (Ömer 2026-11-15 r19, %8)', () => {
+    const pay = EVENTS['witchs_hut']!.choices!.find((c) => c.id === 'pay')!;
+    expect(pay.chestRarity).toEqual({ rarity: 'rare', upgrade: { rarity: 'epic', chance: 0.08 } });
+    expect(pay.chest).toBe(true); // sandık yolu kalır (malzeme zarı dahil); yalnız nadirlik sabit
+    const N = 300;
+    let epic = 0;
+    const hut = atHut();
+    for (let seed = 1; seed <= N; seed++) {
+      const s = { ...hut, seed }; // zar sefer seed'inden: aynı düğümde seed değiştirmek yeni sefer gibi
+      const t = chooseEvent({ ...s, gold: 500, pendingLoot: undefined }, 'pay');
+      expect(t.pendingLoot?.items.length).toBe(1);
+      const inst = t.inventory.find((x) => x.uid === t.pendingLoot!.items[0])!;
+      const r = instanceRarity(inst);
+      expect(['rare', 'epic']).toContain(r);
+      if (r === 'epic') epic++;
+      // aynı seed = aynı sonuç (save-scum yok)
+      if (seed <= 3) expect(instanceRarity(chooseEvent({ ...s, gold: 500, pendingLoot: undefined }, 'pay').inventory.find((x) => x.uid === t.pendingLoot!.items[0])!)).toBe(r);
+    }
+    // %8 beklenen: 300 seed'de ~24; geniş pay (binom 3 sigma ~ 14)
+    expect(epic).toBeGreaterThan(8);
+    expect(epic).toBeLessThan(45);
   });
 
   it('Pay in blood takes 20% of current HP from every living hero, nobody dies, no gold spent', () => {

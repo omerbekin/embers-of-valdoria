@@ -86,8 +86,11 @@ export interface PassiveFx {
   k: 'passive';
   f: string;
   op: TreeFxOp;
+  /** Liste alanında (skill-tree-compile.ts > PASSIVE_LIST_FIELDS: statuses) yok sayılır. */
   v: number;
   rank?: boolean;
+  /** Liste alanı yaması (2026-11-14, Conductor statuses): op 'add' / 'remove' ile eklenen / silinen durum. */
+  status?: string;
 }
 
 /**
@@ -249,12 +252,13 @@ export interface RageFx {
 
 /**
  * Faz 4a: C3 tetik kancası (olay -> eylem). Alanlar motorun TriggerHook'uyla aynı (src/engine/tree-hooks.ts; tam sözlük belgede "Faz 4a notları");
- * `skill` yoksa satırın skill'i (pasif satırı ve bar: her skill; '*' = her skill). `rank: true` = eylem sayıları ve procChance x rank.
+ * `skill` yoksa satırın skill'i (pasif satırı ve bar: her skill; '*' = her skill). `rank: true` = eylem sayıları x rank (procChance ÇARPILMAZ:
+ * derleyici bugün böyle; Hexer 2.r / 3.r metni "per rank" diyor, open-questions Q-NEW Skald yama yolları); `rank: 'chance'` (2026-11-14) = yalnızca procChance x rank.
  */
 export interface TriggerFx extends Omit<TriggerHook, 'h' | 'node'> {
   k: 'hook';
   h: 'trigger';
-  rank?: boolean;
+  rank?: boolean | 'chance';
   drop?: string;
 }
 

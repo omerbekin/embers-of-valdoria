@@ -77,6 +77,8 @@ export interface EventChoice {
   chest?: boolean;
   /** Küçük sandık: sandık zarından yalnızca bu kadar item; o zaman `gold` sandığın altını olarak Spoils kartında görünür (cadının bedelli seçenekleri). */
   chestItems?: number;
+  /** Sandık item'lerinin nadirliği zardan değil sabit (Witch's Hut "Pay her price": Rare, %8 Epic; Ömer 2026-11-15 r19). `upgrade`: tek seed'li zar tutarsa o nadirlik. */
+  chestRarity?: { rarity: RarityId; upgrade?: { rarity: RarityId; chance: number } };
   restHeal?: number;
   battle?: string[];
   win?: { gold?: number; chest?: boolean };

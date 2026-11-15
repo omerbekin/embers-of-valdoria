@@ -29,6 +29,8 @@
 Agent kendi çalışma ağacında çalışır (`areas/push-queue.md` > Worktree modu), alan dosyasını okuyarak başlar. Model rolün tanımındadır; kritik iş `model: opus`.
 5. Ağır komutlar (vitest, sim, anim-capture, codex) `node tools/agent-tag.mjs <agent> -- <komut>` ile çalıştırılır; yük izleyici (port 5199) CPU/RAM'i agent adına yazar.
 6. **Süre ve kapsam (Ömer 2026-11-08):** düzeltme işi "tümünü denetle" diye verilmez; bozuk olan tek tek yazılır. Brief'e süre sınırı yazılır (çoğu iş 1 saat); Lead ~30 dakikada bir kontrol eder, süre dolunca agent kapatılır, kalan iş kısa brief'le TAZE küçük agent'a verilir (uzun yaşayan agentın bağlamı şişer ve yavaşlar).
+8. **Ad ve model (Ömer 2026-11-15, "agentların adı için bir kuralımız olması lazım"):** agent açıklaması (panelde görünen ad) = `<rol> <model>: <iş>`, rol `.claude/agents/` adıdır (ui-dev, engine-dev, campaign-dev, balance-tester, content-designer, bug-hunter, frame-check, gate-check, text-qa), model o agentın gerçekten koştuğu model (haiku / sonnet / opus; Ömer 2026-11-15 ekledi), iş 2-5 kelime Türkçe. Örnek: `ui-dev sonnet: Recruit tüm kahramanlar`, `balance-tester opus: Hexer rank simi`. Tur numarası ("r19:") ya da takma ad konmaz. Agent kopyası ve dalı: `agent-<rol>-<kısa-iş>` / `agent/<rol>-<kısa-iş>`. Model: ui-dev ve campaign-dev Sonnet (inceleme/mockup dahil); Opus yalnız motor kuralı, denge değeri, kayıt şeması.
+9. Ekran görüntüsü = `tools/ui-shot.mjs` (görünmez tarayıcı); uygulama paneli yalnız Lead/Ömer içindir (`debug-wiki.md` > Ekran görüntüsü aracı).
 7. **İlerleme işareti (Ömer 2026-11-09):** Agent uzun işte her adım bitince metnine `İLERLEME n/m: <adım>` satırı yazar; 5199 Progress sekmesi bunu çubuk yapar (Ömer 2026-11-09).
 
 ## Gönderim

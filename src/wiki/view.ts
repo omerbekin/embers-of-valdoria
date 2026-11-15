@@ -11,6 +11,7 @@ import { classLogoName, paintedOr } from '../ui/misc-icons';
 import { passiveIconName, skillIconName } from '../ui/mob-icons';
 import { content } from '../engine';
 import { uiSound, worldSound } from '../ui/ui-sound';
+import { bodyIn, ghostOf } from '../ui/reward-fx';
 import { previewMusic } from '../ui/music';
 import layout from '../../data/battle-layout.json';
 import castleHall from '../../assets/backgrounds/castle-hall.webp?url';
@@ -458,7 +459,11 @@ export class WikiPanel {
 
   private renderArticle(sec: CodexSectionId, id: string | null): void {
     clearTips();
-    this.articleCol.dataset['key'] = `${sec}:${id}`;
+    const key = `${sec}:${id}`;
+    const changed = this.articleCol.dataset['key'] !== undefined && this.articleCol.dataset['key'] !== key;
+    // a14: eski madde söner, yenisi 6 px yükselir (150 ms, 'swap' ön ayarı); yalnızca madde değişince
+    const ghost = changed ? ghostOf(this.articleCol) : null;
+    this.articleCol.dataset['key'] = key;
     this.articleCol.scrollTop = 0;
     if (!id) {
       const none = sec === 'lessons' ? 'Lessons from your mentor appear here once you have seen them in the campaign.' : 'Nothing here yet.';
@@ -471,7 +476,12 @@ export class WikiPanel {
     else if (sec === 'statuses') body = this.grounds.has(id) ? this.groundArticle(this.grounds.get(id)!) : this.statusArticle(this.statuses.get(id)!);
     else if (sec === 'elements') body = id === WEAKNESS_TABLE_ID ? this.weaknessArticle() : this.elementArticle(this.elements.get(id)!);
     else body = this.textArticle(this.articles.get(id)!);
-    this.articleCol.replaceChildren(h('div', { class: 'cx-art cx-fade' }, body));
+    const art = h('div', { class: 'cx-art cx-fade' }, body);
+    this.articleCol.replaceChildren(art);
+    if (ghost) {
+      ghost();
+      bodyIn(art);
+    }
   }
 
   private blocks(list: WikiBlock[]): HTMLElement[] {
@@ -538,7 +548,7 @@ export class WikiPanel {
     const legend = a.legendaries?.length
       ? h('div', { class: 'cx-slots cx-legend' }, ...a.legendaries.map((d) => hv(d.name, null, 'div', { class: 'cx-rarity cx-legend-item', style: { '--c': d.color } }, h('span', { class: 'cx-slotbox' }, itemDefIcon(d, d.slot, d.color, 'cx-slot-svg')), h('span', { text: d.name }))))
       : null;
-    return h('div', {}, articleHead(articlePortrait(a) ? portrait(articlePortrait(a)!, 'cx-bigportrait') : pic(a.icon, a.accent, 'cx-ico head', a.owner, true), a.title, a.group), gear, legend, ...this.blocks(a.blocks), shapes);
+    return h('div', {}, articleHead(articlePortrait(a) ? portrait(articlePortrait(a)!, 'cx-bigportrait') : a.icon ? pic(a.icon, a.accent, 'cx-ico head', a.owner, true) : null, a.title, a.group), gear, legend, ...this.blocks(a.blocks), shapes);
   }
 
   /** Skill kartı çipleri V2 (src/ui/skill-chips.ts): menzil / bedel / bekleme ikon + sayı, tam anlam balonda; sayıya inmeyenler eski yazılı çip. */

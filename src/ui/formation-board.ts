@@ -14,6 +14,7 @@ import { bandTipHtml } from './band-tip';
 import { spotLegendHtml } from './spot-legend';
 import { dismissOnBackdrop } from './backdrop';
 import { closeDom } from './motion';
+import { reducedMotion } from './motion-pref';
 import { lockInput, unlockInput } from './input-lock';
 import type { BandTipSpec } from './band-tip';
 import { uiSound } from './ui-sound';
@@ -271,8 +272,34 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     gridEl = root.querySelector('.fb-grid') as HTMLElement;
     panelEl = root.querySelector('.fb-panel') as HTMLElement;
   };
+  let firstGrid = true;
   const drawGrid = (): void => {
     gridEl.innerHTML = gridHtml();
+    if (reducedMotion()) {
+      firstGrid = false;
+      return;
+    }
+    // a16: ızgara çerçevesi ilk karede durur; portreler hazır oldukça karolar 40 ms arayla belirir, hazır olmayanlar nefes alır
+    let n = 0;
+    gridEl.querySelectorAll<HTMLImageElement>('.fb-av').forEach((im) => {
+      const cell = im.closest<HTMLElement>('.fb-cell');
+      if (!cell) return;
+      if (im.complete && im.naturalWidth > 0) {
+        if (firstGrid) cell.style.setProperty('--fb-d', `${n++ * 40}ms`), cell.classList.add('fb-in');
+        return;
+      }
+      cell.classList.add('fb-wait');
+      im.style.opacity = '0';
+      const ready = (): void => {
+        cell.classList.remove('fb-wait');
+        im.style.opacity = '';
+        cell.style.setProperty('--fb-d', `${(n++ % 8) * 40}ms`);
+        cell.classList.add('fb-in');
+      };
+      im.addEventListener('load', ready, { once: true });
+      im.addEventListener('error', () => cell.classList.remove('fb-wait'), { once: true });
+    });
+    firstGrid = false;
   };
   const drawPanel = (): void => {
     panelEl.innerHTML = panelHtml();

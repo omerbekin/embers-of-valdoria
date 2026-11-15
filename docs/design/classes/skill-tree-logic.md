@@ -21,6 +21,7 @@ Bu belge "düğüme ne yazılır" sorusunu cevaplar.
 - Genel stat item'ın işi. Set bonusu pasifin işi.
 - "Skill'lerin +%X hasar" gibi koşulsuz düğüm yazılmaz.
 - Her güç ekinin bir **koşulu**, **ölçeği** ya da **bedeli** vardır.
+- Evolve olmayan düğüm en çok 2 özellik verir; karmaşıklaştırma yok (Ömer 2026-11-15).
 
 ## 2. Satır şekli (her skill satırı)
 

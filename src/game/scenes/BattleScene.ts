@@ -37,6 +37,7 @@ import { clampSize } from '../team-select-model';
 import { EL, elGo, elScreenIn, elText } from '../elegant-ui';
 import { MOTION, motion } from '../../ui/motion';
 import { enemiesEnter, showWaveBanner } from '../wave-banner';
+import { playFinalBlow } from '../final-blow';
 import { debugActive } from '../../ui/debug-entry';
 import { storage } from '../kv-storage';
 import { formatHit } from '../hit-format';
@@ -102,6 +103,7 @@ import { backgroundPlacement, battleBackground } from '../battle-background';
 import { playLuckyEscape, prewarmLuckyEscape } from '../lucky-escape-fx';
 import { playRegenTick } from '../regen-fx';
 import { betweenTurnEvents, hpTickPlan, regenTickEvents, type HpChip } from '../regen-ticks';
+import { closeAllLessons } from '../../ui/lesson-box';
 import { BattleTutorial, CAN_MISS_LESSON, PROTECTED_LESSON } from '../battle-tutorial';
 import { SkillChoicePanel, SkillChoicePrompt, type SkillChoiceCard } from '../../ui/skill-choice';
 import { TUTORIAL, type BattleLessonCtx } from '../../tutorial/lessons';
@@ -178,6 +180,8 @@ export interface CampaignBattleHooks {
   seamless?: boolean;
   /** Dalga başı: HUD gizli, "WAVE X" bandı (~3 sn), yeni düşmanlar girer, sonra savaş başlar. */
   intro?: { title: string; subtitle?: string };
+  /** Sefer savaşının açılış bandı başlığı (düğüm adı); yoksa (Quick Battle) bant yok, yalnız giriş kayması. */
+  openTitle?: string;
   /** true: ara verme (kayıttan devam / geri çekilme): savaş kurulur ama başlamaz; düşmanlar görünmez, HUD gizli; `onPause` çağrılır. */
   intermission?: boolean;
   /** Zafer: true dönerse sonuç ekranı açılmaz (endless: toparlanma + ara verme panelleri savaş alanının üstünde). */
@@ -340,6 +344,8 @@ export class BattleScene extends Phaser.Scene {
   private statusSnaps = new WeakMap<BattleEvent, Map<string, Combatant['statuses']>>();
   private idleStatuses: Map<string, Combatant['statuses']> | null = null;
   private pendingEvents = 0;
+  /** Resilience / Iron Will debuff'ı kısalttı, hedefin 'status' olayı henüz oynamadı (uid). */
+  private shortenedFor = new Set<string>();
   private stats!: BattleStats;
   /** Maç kaydı (hamleler + AI gerekçeleri; Debug > Copy match data ve sonuç ekranı kullanır). */
   private matchLog?: MatchLog;
@@ -3647,6 +3653,12 @@ export class BattleScene extends Phaser.Scene {
           const by = e.type === 'status' ? this.views.get(e.source) : this.views.get(e.source ?? this.currentUsage?.used.actor ?? this.uiActor ?? '');
           if (tv && key) await this.runEventFx(statusOwner(e.status) ?? this.ownerOfView(by), key, { actor: by ?? tv, targets: [tv], event: e });
         }
+        // Resilience kısalttıysa: yeni rozet çizildikten sonra tur sayısı vurgulanır
+        if (e.type === 'status' && this.shortenedFor.delete(e.target)) {
+          await this.wait(slow(90));
+          this.views.get(e.target)?.flashBadge(e.status);
+          await this.wait(slow(120));
+        }
         if (e.type === 'statusEnd' && e.broken) {
           this.views.get(e.target)?.floatText('Taunt broken', colors.targetHighlight, 40);
           this.views.get(e.target)?.ring(colors.targetHighlight, 0.8);
@@ -3676,9 +3688,10 @@ export class BattleScene extends Phaser.Scene {
         // Hexer: Omen yığını; "+1 Omen" (kritikte "+2 Omen!"), Ill Omen geçişinde alıcıda "Omen x2 (Ill Omen)"
         const v = this.views.get(e.target);
         const hex = content.statuses['omen']?.color ?? '#b04fa8';
-        if (e.cause === 'transfer') v?.floatText(`Omen x${e.stacks} (Ill Omen)`, hex, 34, false, { kind: 'resource' });
-        else if (e.delta > 0) v?.floatText(`+${e.delta} Omen${e.crit ? '!' : ''}`, e.crit ? colors.crit : hex, e.crit ? 42 : 34, e.crit, { kind: 'resource' });
-        await this.wait(slow(60));
+        // Ömer 2026-11-15 (tur 20): uçan yazı yok; yeni elmas(lar) rozette yerinde parlar (kritik: altın, arka arkaya). Ill Omen geçişinde yazı da parlama da yok (kendi ruh efekti var)
+        if (e.cause !== 'transfer' && e.delta > 0) v?.glowSeals(Math.max(0, e.stacks - e.delta), e.delta, !!e.crit);
+        void hex;
+        await this.wait(slow(60 + (e.cause !== 'transfer' && e.delta > 1 ? (e.delta - 1) * 220 : 0)));
         return;
       }
       case 'doom': {
@@ -3816,6 +3829,11 @@ export class BattleScene extends Phaser.Scene {
       case 'passive': {
         const view = this.views.get(e.actor);
         if (e.passive === 'primary_luck') return; // Lucky Escape: its own moment already named it (lucky-escape-fx.ts)
+        // Resilience / Iron Will (Ömer 2026-11-15, tur 20): yazı yok; ardından gelen 'status' olayında rozetteki tur sayısı vurgulanır, Combat Log'a satır girer
+        if (e.passive === 'primary_str' || e.passive === 'iron_will') {
+          this.shortenedFor.add(e.actor);
+          return;
+        }
         view?.floatText(e.name, colors.targetHighlight, 34);
         // v2 pasif efekti (passive_<id>, sahibin dosyasında varsa; Heat Mirage, Spellbreaker's Instinct) halkanın yerine oynar
         if (!(view && (await this.runEventFx(this.ownerOfView(view), EVENT_FX.passive(e.passive), { actor: view, targets: [view], event: e })))) view?.ring(colors.targetHighlight, 0.9);
@@ -4052,9 +4070,24 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'battleEnd':
         if (this.endlessPaused) return; // endless ara verme: savaş alanı yalnızca görüntü (debug ile düşman ölse de sonuç ekranı yok)
+        this.tut?.end(); // savaş bitti: açık ders kutusu sonuç/loot ekranının üstünde kalmasın
         this.endBattleAudio(e.winner === this.localSide);
         if (e.winner === this.localSide && this.campaign?.onVictory?.(this.battle)) return; // endless: toparlanma + ara verme (sonuç ekranı yok)
-        this.showResult(e.winner === this.localSide);
+        {
+          // son vuruş nefesi (a03): kısa ağır çekim + kenar koyulaşması + bekleme, sonra sonuç ekranı
+          const base = effectiveTimeScale(debugState);
+          const fb = await playFinalBlow(this, e.winner === this.localSide, {
+            setScale: (m) => {
+              this.tweens.timeScale = base * m;
+              this.time.timeScale = base * m;
+            },
+            wait: (ms) => this.wait(ms),
+          });
+          if (!this.sys.isActive()) return;
+          this.applyDebugTiming();
+          this.showResult(e.winner === this.localSide);
+          fb.release();
+        }
         return;
       case 'waveCleared':
         // dalga bitti: kısa nefes (son dalgada ardından battleEnd gelir; sonuç ekranı kendi girişini yapar)
@@ -4731,17 +4764,19 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
-   * "Unblockable" rozeti (Ömer 2026-10-18): bloklanamayan telgrafın (src/engine/unblockable.ts) işaretli hücrelerinin altında kırık kalkan + ad.
-   * Zemin katmanında (birimlerin altında) durur; telgraf çözülünce / iptal olunca silinir. Bloklanabilir telgrafta (yoksa) çizilmez.
+   * "Unblockable" rozeti (Ömer 2026-10-18): bloklanamayan telgrafın (src/engine/unblockable.ts) en ön hücresinin içinde kırık kalkan + ad (skill çubuğunun altına düşmez).
+   * Birimlerin üstünde durur; telgraf çözülünce / iptal olunca silinir. Bloklanabilir telgrafta (yoksa) çizilmez.
    */
   private unblockableBadge(skillId: string, board: 'party' | 'enemy', cells: number[]): Phaser.GameObjects.Container | undefined {
     if (!isUnblockableSkill(content.skills[skillId]) || cells.length === 0) return undefined;
     try {
       const pts = cells.map((c) => this.cellPos(board, c));
-      const x = pts.reduce((t, p) => t + p.x, 0) / pts.length;
-      const y = Math.max(...pts.map((p) => p.y)) + 52;
+      // En ön hücre (karşı tahtaya en yakın sütun; eşitlikte en alttaki): rozet alt skill çubuğunun altında kalmasın, alanın içinde görünsün
+      const front = pts.reduce((a, p) => (Math.abs(p.x - a.x) < 1 ? (p.y > a.y ? p : a) : (board === 'party' ? p.x > a.x : p.x < a.x) ? p : a));
+      const x = front.x;
+      const y = front.y + 6;
       const col = Phaser.Display.Color.HexStringToColor(UNBLOCKABLE_COLOR).color;
-      const label = elText(this, 0, 0, UNBLOCKABLE_LABEL, 22, UNBLOCKABLE_COLOR, { em: 0.12 }).setOrigin(0, 0.5);
+      const label = elText(this, 0, 0, UNBLOCKABLE_LABEL, 28, UNBLOCKABLE_COLOR, { em: 0.12 }).setOrigin(0, 0.5);
       // Kırık kalkan: kalkan gövdesi + ortadan zikzak çatlak (iki yarı hafifçe ayrık)
       const g = this.add.graphics();
       const shield = (dx: number, half: -1 | 1): void => {
@@ -4761,7 +4796,12 @@ export class BattleScene extends Phaser.Scene {
       const w = 30 + label.width;
       g.setPosition(14, 0);
       label.setPosition(34, 0);
-      const box = this.add.container(x - w / 2, y, [g, label]).setDepth(51);
+      // Koyu plaka: yazı çatlak çizgilerinin / zeminin üstünde de okunur
+      const plate = this.add.graphics();
+      plate.fillStyle(0x140a07, 0.86).fillRoundedRect(-8, -24, w + 16, 48, 10);
+      plate.lineStyle(2, col, 0.9).strokeRoundedRect(-8, -24, w + 16, 48, 10);
+      // Derinlik 4250: birimler (3500, hamlede 3500+), poz/silah/durum katmanları ve eylem yapan birim dahil hepsinin üstünde (telefonda kahraman arkasına girmesin)
+      const box = this.add.container(x - w / 2, y, [plate, g, label]).setDepth(4250);
       box.setAlpha(0);
       this.tweens.add({ targets: box, alpha: 1, duration: slow(240) });
       return box;
@@ -5666,6 +5706,7 @@ export class BattleScene extends Phaser.Scene {
   /** create sonu: dalga girişi ya da ara verme kurulduysa true (savaş henüz başlamaz). */
   private endlessStart(): boolean {
     const hooks = this.campaign;
+    if (!this.mp && !hooks?.intro && !hooks?.intermission && this.battle.round === 1 && this.shownWave === 0) return this.openingEntrance();
     if (!hooks || this.mp || (!hooks.intro && !hooks.intermission)) return false;
     const enemies = [...this.views.values()].filter((v) => v.combatant.side !== 'party').map((v) => v.container);
     for (const c of enemies) c.setAlpha(0);
@@ -5679,6 +5720,32 @@ export class BattleScene extends Phaser.Scene {
     const intro = hooks.intro!;
     void showWaveBanner(this, intro.title, intro.subtitle)
       .then(() => (this.sys.isActive() ? enemiesEnter(this, enemies) : undefined))
+      .then(() => {
+        if (!this.sys.isActive()) return;
+        this.setBattleHudHidden(false);
+        this.busy = false;
+        this.settle();
+      });
+    return true;
+  }
+
+  /**
+   * Savaş açılışı (Ömer 2026-11-15, a01): ilk dalgada da bant (düğüm adı + "Round 1 / N"; boss'ta kızıl) ve dostlar soldan, düşmanlar sağdan
+   * kayarak girer; alt bar ancak girişten sonra belirir. Quick Battle'da bant yok, yalnız giriş. Reduced motion: kısa bekleme, hareket yok.
+   */
+  private openingEntrance(): boolean {
+    const side = (party: boolean) => [...this.views.values()].filter((v) => (v.combatant.side === 'party') === party && v.combatant.hp > 0).map((v) => v.container);
+    const allies = side(true);
+    const enemies = side(false);
+    if (!allies.length && !enemies.length) return false;
+    for (const c of [...allies, ...enemies]) c.setAlpha(0);
+    this.setBattleHudHidden(true);
+    this.busy = true;
+    const title = this.campaign?.openTitle;
+    const total = this.battle.waveCount;
+    const banner = title ? showWaveBanner(this, title, total > 1 ? `Round 1 / ${total}` : undefined, MOTION.wave.openHoldMs, { boss: this.isBossBattle() }) : Promise.resolve();
+    void banner
+      .then(() => (this.sys.isActive() ? Promise.all([enemiesEnter(this, enemies), enemiesEnter(this, allies, -1)]) : undefined))
       .then(() => {
         if (!this.sys.isActive()) return;
         this.setBattleHudHidden(false);
@@ -5770,6 +5837,7 @@ export class BattleScene extends Phaser.Scene {
 
   showResult(victory: boolean, preview = false, mpInfo?: MpResultInfo): void {
     this.resultScreen?.destroy();
+    closeAllLessons(); // sonuç/loot ekranı açılırken kalan savaş dersi kutuları kapanır
     this.setBattleHudHidden(true);
     const mp = this.mp && !preview ? this.mp : undefined;
     const info = mpInfo ?? (mp ? mp.result() : null);

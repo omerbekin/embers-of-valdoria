@@ -10,14 +10,15 @@ import { TEMPER_STONE_ICON } from './temper-stone';
 import './gear.css';
 import { acknowledgeLoot, stashLoot, supplyDef, takeLeftover, type CampaignState } from '../campaign';
 import { supplyIconSvg } from './supply-icons';
-import { BAG_SIZE, itemDef, xpToNext, type ItemInstance } from '../progression';
+import { BAG_SIZE, RARITY_IDS, instanceRarity, itemDef, xpToNext, type ItemInstance } from '../progression';
 import { avatarUrl, itemPlate } from './character-panel';
 import { motion, ms } from './motion';
+import { reducedMotion } from './motion-pref';
 import { goldImg } from './ui-icons';
 import { itemTipNodes } from './item-tip';
 import { confirmIn, equippedTipNodes, heroTipExtra, openGear, type GearApi, type GearExt, type GearSource } from './gear-screen';
 import { uiSound, worldSound } from './ui-sound';
-import { playLevelUpFx, playRevealFx } from './reward-fx';
+import { coinFly, flyIcon, playLevelUpFx, playRevealFx, seedGold } from './reward-fx';
 import { dueScreenLessons } from '../tutorial/lessons';
 import { seenLessons } from '../tutorial/store';
 import { dismissLesson, showLesson } from './lesson-box';
@@ -114,6 +115,8 @@ export interface LootHandle {
 /** Ganimet ekranını açar. */
 export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
   o.set(stashLoot(o.get()));
+  const dropGold = o.get().pendingLoot?.gold ?? 0;
+  if (dropGold) seedGold('gear-purse', Math.max(0, o.gear.gold() - dropGold)); // altın zaten kesede: kese ekran açılınca eski değerden sayar
   let aborted = false;
   if (!o.quiet) worldSound('loot_reveal'); // sandık kapağı gıcırdar, içinde sikkeler kayar
   let api: GearApi | null = null;
@@ -123,7 +126,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
   const instAt = (i: number): ItemInstance | undefined => lootItems(o.get())[i];
   const bagFull = (): boolean => o.get().inventory.length >= BAG_SIZE;
   /** Torbaya yeni giren item'i görünür yapar (telefonda 4 satır görünür; yeni item sıralamada aşağıda kalıp "gelmedi" gibi duruyordu): kaydırır ve kısa süre parlatır. */
-  const reveal = (uids: Set<string>): void => {
+  const reveal = (uids: Set<string>, from: Array<{ rect: DOMRect; ico: Element | null }> = []): void => {
     const root2 = overlayEl;
     if (!root2 || !uids.size) return;
     let first: HTMLElement | null = null;
@@ -131,13 +134,30 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     for (const uid of uids) {
       const cell = root2.querySelector<HTMLElement>(`.gr-bag [data-tip="bag:${uid}"]`);
       if (!cell) continue;
-      cell.classList.add('gr-new');
       first ??= cell;
       shown.push(cell);
-      window.setTimeout(() => cell.classList.remove('gr-new'), 1600);
     }
     first?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    playRevealFx(shown); // ödül anı efekti (reward-fx.ts)
+    // a06: simge listeden çanta hücresine uçar (320 ms, Take all'da 80 ms arayla sırayla); varınca mevcut kıvılcım + parıltı oynar
+    shown.forEach((cell, j) => {
+      const land = (): void => {
+        cell.style.visibility = '';
+        cell.classList.add('gr-new');
+        window.setTimeout(() => cell.classList.remove('gr-new'), 1600);
+        playRevealFx([cell]); // ödül anı efekti (reward-fx.ts)
+      };
+      const f = from[j];
+      if (!f) return land();
+      cell.style.visibility = 'hidden';
+      flyIcon(root2, f.rect, f.ico, cell, { ms: 320, delay: j * 80, onLand: land });
+    });
+  };
+  /** Ganimet satırlarının simgesi + ekrandaki yeri (uçuşun çıkış noktası). */
+  const rowFrom = (i: number): { rect: DOMRect; ico: Element | null } | null => {
+    const r = side.querySelector<HTMLElement>(`[data-drag="loot:${i}"]`);
+    if (!r) return null;
+    const ico = r.querySelector('.gp-ico') ?? r;
+    return { rect: ico.getBoundingClientRect(), ico };
   };
 
   /** Bir item'i torbaya alır; (isteğe bağlı) kahramana kuşandırır. Hata: kısa uyarı. */
@@ -149,6 +169,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       return false;
     }
     const before = new Set(o.get().inventory.map((i) => i.uid));
+    const f0 = rowFrom(index);
     o.set(takeLeftover(o.get(), index));
     uiSound('confirm');
     dismissLesson('first_loot');
@@ -157,11 +178,17 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       if (added) api?.equip(equip.heroId, added.uid, equip.slot);
     }
     api?.rerender();
-    reveal(new Set(o.get().inventory.map((i) => i.uid).filter((u) => !before.has(u))));
+    reveal(new Set(o.get().inventory.map((i) => i.uid).filter((u) => !before.has(u))), f0 ? [f0] : []);
     return true;
   };
   const takeAll = (): void => {
     const before = new Set(o.get().inventory.map((i) => i.uid));
+    const froms: Array<{ rect: DOMRect; ico: Element | null }> = [];
+    const total = o.get().pendingLoot?.left?.length ?? 0;
+    for (let i = 0; i < total; i++) {
+      const f = rowFrom(i);
+      if (f) froms.push(f);
+    }
     let n = 0;
     while ((o.get().pendingLoot?.left?.length ?? 0) > 0 && !bagFull()) {
       o.set(takeLeftover(o.get(), 0));
@@ -173,7 +200,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     }
     if ((o.get().pendingLoot?.left?.length ?? 0) > 0) api?.flash('The bag is full. Make room first: drag an item to the trash.');
     api?.rerender();
-    reveal(new Set(o.get().inventory.map((i) => i.uid).filter((u) => !before.has(u))));
+    reveal(new Set(o.get().inventory.map((i) => i.uid).filter((u) => !before.has(u))), froms);
   };
 
   // ---- XP satırları ----
@@ -205,6 +232,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       },
     });
   };
+  let xpEndMs = 0; // XP dolumunun bittiği an (ekran açılışından ms); item satırları bundan sonra belirir
   const buildXp = (): HTMLElement | null => {
     const rows = o.xp ?? [];
     if (!rows.length) return null;
@@ -304,11 +332,13 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
         }, at);
         at += dur + (k < segs.length - 1 ? ms(mo.levelUpMs) * 0.35 : 0);
       });
+      xpEndMs = Math.max(xpEndMs, at);
     });
     return box;
   };
   const xpBox = buildXp();
 
+  let introPlayed = false; // satır girişi (a07) ve sikke uçuşu (a05) yalnızca ilk çizimde oynar
   let sawItems = false; // listede hiç item görüldüyse boş liste "hepsi alındı" demektir
   const renderSide = (): void => {
     const s = o.get();
@@ -316,6 +346,8 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     const items = lootItems(s);
     if (items.length) sawItems = true;
     const rare = [...(drop?.rare ?? [])];
+    const intro = !introPlayed && !reducedMotion();
+    introPlayed = true;
     side.replaceChildren();
     const head = el('div', 'gr-head gr-lhead');
     head.append(el('div', 'gr-title', 'Loot'));
@@ -329,6 +361,8 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       const gain = el('div', 'gr-loot-gain');
       gain.append(g);
       side.append(gain);
+      // a05: "+N gold" satırından keseye küçük sikke (300 ms); kese sayacı eski değerden yeniye döner (gear-purse)
+      if (intro) later(() => coinFly(overlayEl ?? side, g, (overlayEl ?? side).querySelector<HTMLElement>('.gr-gold')), 150);
     }
     if (drop?.stones) {
       // Temper taşı (Ömer 2026-10-26): boss / elite zaferinde; kesede
@@ -370,6 +404,19 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
         vr.classList.add('gr-rare-drop');
       }
       vr.addEventListener('click', () => take(i));
+      if (intro) {
+        // a07: satırlar XP dolumu bitince 90 ms arayla aşağıdan 8 px kayarak belirir; rare+ satırda nadirlik renginde bir kez ışık süpürmesi (legendary 2 kez)
+        const delay = xpEndMs + i * 90;
+        vr.classList.add('gr-lt-in');
+        vr.style.setProperty('--lt-d', `${delay}ms`);
+        const rank = RARITY_IDS.indexOf(instanceRarity(inst));
+        if (rank >= RARITY_IDS.indexOf('rare')) {
+          const sw = el('i', 'gr-lt-sweep');
+          sw.style.setProperty('--lt-d', `${delay + 260}ms`);
+          sw.style.setProperty('--lt-n', rank >= RARITY_IDS.indexOf('legendary') ? '2' : '1');
+          vr.append(sw);
+        }
+      }
       list.append(vr);
     });
     if (!items.length) list.append(el('div', 'gr-card-empty', sawItems ? 'All taken.' : drop?.gold || xpBox ? 'No gear this time.' : 'Nothing here.'));

@@ -11,6 +11,7 @@ import { playSfx } from './audio';
 import { ensureIcon } from './icons';
 import { cellOutlineEdges } from './cell-style';
 import { cellQuad } from './shape-geometry';
+import { reducedMotion } from '../ui/motion-pref';
 import * as WARDEN from './vfx-warden';
 import { CONTACT_EDGE_RATIO } from './vfx-scale';
 import { ensureVfxSheets, sheetDone, vfxSheet } from './vfx-sheets';
@@ -902,6 +903,8 @@ const GROUND_LOOK: Record<string, GroundLook> = {
   blood_curse: { base: [0x2e0814, 0.5], mid: [0x7a1a3e, 0.46], rim: [0xa04a7a, 0.26], edge: [0x8a2a5a, 0.78], shadow: [0x0e0206, 0.32] },
   black_flame: { base: [0x1a0a22, 0.52], mid: [0x8a3ab0, 0.6], rim: [0xc07ae0, 0.38], edge: [0xa05ad0, 0.88], shadow: [0x08030c, 0.32] },
   grave_frost: { base: [0x4a4f78, 0.36], mid: [0xc8cef0, 0.36], rim: [0xb0a0d8, 0.3], edge: [0xa8a8e0, 0.72], shadow: [0x0a0a18, 0.26] },
+  // Boss telgraf alanı (Ömer 2026-11-15, tur 20 seçenek 2): zemin etkileriyle aynı dilde kor kırmızısı plaka (gerçek zemin değil; wardenTelegraphCells kullanır)
+  danger_zone: { base: [0x4a0a0e, 0.52], mid: [0xff4a2e, 0.58], rim: [0xff8a50, 0.5], edge: [0xff6a38, 0.95], shadow: [0x120203, 0.32] },
   rot: { base: [0x2a3014, 0.5], mid: [0x6a7a2a, 0.55], rim: [0x9a8ab0, 0.34], edge: [0x8a9a3a, 0.84], shadow: [0x0a0c04, 0.3] }, // Rot (zehir + lanet) geçici görünüm
   bloody_water: { base: [0x3a1a2a, 0.46], mid: [0x9a4a5a, 0.42], rim: [0xc87a8a, 0.3], edge: [0xa85a6a, 0.76], shadow: [0x10060a, 0.3] },
 };
@@ -5354,8 +5357,41 @@ export const WARDEN_EVENT_FX: Readonly<Record<string, (c: VfxCtx) => Promise<voi
  *  wardenTelegraphCells(scene, 'span' | 'fall' | 'brand', board, slots, keystones?)  çatlak plaka nabzı (+ Keystone altın kemer taşları)
  *  wardenBrandMark(scene, view)                                                      birimin göğsünde nabız atan Ash Brand damgası
  */
-export const wardenTelegraphCells = (scene: Phaser.Scene, kind: 'span' | 'fall' | 'brand', board: 'party' | 'enemy', slots: number[], keystones: number[] = []) =>
-  WARDEN.telegraphCells(VFX_BASE_KIT, scene, kind, board, slots, keystones);
+export const wardenTelegraphCells = (scene: Phaser.Scene, kind: 'span' | 'fall' | 'brand', board: 'party' | 'enemy', slots: number[], keystones: number[] = []) => {
+  if (kind === 'brand' || slots.length === 0) return WARDEN.telegraphCells(VFX_BASE_KIT, scene, kind, board, slots, keystones);
+  // Seçenek 2: zemin plakası (groundArea dili, kor kırmızısı) + dış kenardan yükselen ışık perdesi (kahramanlar plakayı örtse de sınır görünür);
+  // çatlaklar ve Keystone taşları eski göstergeden (plakasız) gelir
+  const ground = groundArea(scene, 'danger_zone', board, slots);
+  ground?.setDepth(FLOOR_FX + 1);
+  const rm = reducedMotion();
+  const curtain = scene.add.graphics().setDepth(1100).setBlendMode(Phaser.BlendModes.ADD);
+  const edges = outlineOf(board, slots);
+  const drawCurtain = () => {
+    if (!curtain.active) return;
+    const pulse = rm ? 0.7 : 0.62 + 0.38 * (0.5 + 0.5 * Math.sin(scene.time.now / 380));
+    const h = 130; // perde boyu (sahne pikseli; telefonda da seçilsin diye sabit)
+    curtain.clear();
+    const bands = 9;
+    for (const [a, b] of edges) {
+      for (let i = 0; i < bands; i++) {
+        const t0 = i / bands;
+        const t1 = (i + 1) / bands;
+        const al = 0.8 * pulse * (1 - t0) ** 1.2;
+        curtain.fillStyle(0xff5a34, al).fillPoints([{ x: a.x, y: a.y - h * t0 }, { x: b.x, y: b.y - h * t0 }, { x: b.x, y: b.y - h * t1 }, { x: a.x, y: a.y - h * t1 }] as Phaser.Types.Math.Vector2Like[], true);
+      }
+      curtain.lineStyle(5, 0xffc89a, 0.95 * pulse).lineBetween(a.x, a.y, b.x, b.y);
+    }
+  };
+  drawCurtain();
+  const loop = rm ? null : scene.time.addEvent({ delay: 60, loop: true, callback: drawCurtain });
+  const marks = WARDEN.telegraphCells(VFX_BASE_KIT, scene, kind, board, slots, keystones, true);
+  const box = scene.add.container(0, 0, [...(ground ? [ground] : []), marks]).setDepth(FLOOR_FX + 1); // perde ayrı derinlikte (kahramanların üstünde), kutuyla birlikte söner
+  box.once('destroy', () => {
+    loop?.remove(false);
+    curtain.destroy();
+  });
+  return box;
+};
 export const wardenBrandMark = (scene: Phaser.Scene, view: CombatantView) => WARDEN.brandMark(VFX_BASE_KIT, scene, view);
 
 /** Yerden yükselen toz bulutu: kabaran, yükselen, sönen gri-kahve dumanlar. */

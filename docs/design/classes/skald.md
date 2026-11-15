@@ -52,7 +52,14 @@ Veri: `data/skill-trees/skald.json` (sürüm 1, bar "Saga Mastery"). Düğüm ad
 
 ## 5. Açık işler / kararlar
 
-- **Altı öneri ONAYLI (Ömer 2026-11-14, form r17): ağaç böyle kalır, 6 öneri uygulanacak (agent/skald-hooks dalı)** (durumun sahibi `docs/arch/areas/character-design.md` > Açık iş 5): (1) War Drum alanı büyüsün (`self_area` alanı yamalanamıyor; Wild Dance bunun yerine kondu). (2) Conductor durum listesi yaması (pasifin `statuses` alanı ağaçtan değişmiyor). (3) Stormcall +1 sekme (`jumps` yamalanamıyor). (4) Hammer Spark bölünme payı (`split` yamalanamıyor). (5) Tetik `procChance` rank ölçeği (trigger kancasında `rank: 'chance'` ölçmüyor; Mage 0.f3 Rime Touch etkilenebilir, hata adayı). (6) Shocked `statusApplied` olayından geçmiyor (`shock()` doğrudan ekliyor), "Shocked verince" düğümleri yazılamıyor.
+- **Altı öneri: Ömer onayladı (2026-11-14), yama YOLLARI açıldı (engine-dev, dal agent/skald-hooks); ağaçtaki 60 düğüm DEĞİŞMEDİ.** Ayrıntı `docs/arch/battle-engine.md` > Thunder Skald kuralları > Ağaç yama yolları; test `tests/skald-tree-paths.test.ts` (sentetik fx), `tests/ai-coverage.test.ts` 7d.
+  1. War Drum alanı: `h: 'target'` `area` artık `self_area`'da çalışır. Asıl düğüm tasarımı yazılı değil (eski belgede yalnız "3x3 -> 3x5 gibi"; tahta 4x3 olduğu için büyük kare = `rows: 4`, tüm tahta): **Wild Dance (3.fa) yerinde kaldı**; yeni düğüm Ömer kararı.
+  2. Conductor durum listesi: `{k:'passive', f:'statuses', op:'add'|'remove', status}`. Düğüm yok (ör. Chilled eklemek Ömer kararı).
+  3. Stormcall sıçraması: `{k:'skill', sel:'self', f:'splash.jumps', op:'add', v:1}`. Düğüm yok.
+  4. Hammer Spark payı: `{k:'skill', sel:'damage', f:'split.share', op:'add', v}`; pay (0, 1). Düğüm yok, sayı yok.
+  5. Tetik `rank: 'chance'`: procChance x rank. **Mage 0.f3 Rime Touch davranışı değişti:** rank'tan bağımsız %6 -> %6 x rank (rank 5'te %30), metniyle ("6% chance per rank") artık uyumlu. Hexer 2.r Rot Contagion / 3.r Rumour Mill da aynı yolla düzeldi (Ömer 2026-11-15 r19): veride `rank: 'chance'`, %5 x rank (rank 5'te %25); test `tests/skald-tree-paths.test.ts`.
+  6. Shocked artık `statusApplied` / `statusGained` (`status: 'shocked'`) tetiklerini işletir. Bugün veride bunu dinleyen düğüm yok (tüm statusApplied / statusGained tetikleri başka durum süzgeçli), davranış değişmedi. YZ thunder.shocks skill'inde bu tetiği (ve suda wetInto / Stun tetiğini) değerler.
+- Tahmin sayı yok (hiçbir düğüm eklenmedi); yeni düğüm sayıları gelince sim Ömer onayıyla.
 - Ağaç sim'i ve denge turu Ömer onayıyla.
 
 ## 6. Tarihçe

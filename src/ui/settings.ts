@@ -12,6 +12,7 @@ import { VOLUME_DEFAULTS, VOLUME_STEPS, clampStep, readStepLevel, stepRecord, vo
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from './perf-mode';
 import { onTutorialChange, resetTutorials, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 import { navSvg } from './nav-icons';
+import { bodyIn } from './reward-fx';
 import { copyDiagLog, diagConsent, diagReportId, onDiagConsentChange, setDiagConsent } from '../diag/diag';
 import { isDiagNoticeOpen, openDiagNotice } from '../diag/diag-notice';
 import { pageVisible, PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, setSettingsPage, settingsPage, stepPage } from './settings-pages';
@@ -94,6 +95,8 @@ export class SettingsScreen {
   private readonly rows: Record<SettingsPageKey, SettingsRow[]> = { sound: [], gameplay: [], display: [], access: [], ui: [], privacy: [], account: [] };
   private readonly pages = new Map<SettingsPageKey, HTMLElement>();
   private readonly cats = new Map<SettingsPageKey, HTMLElement>();
+  /** Sol sütundaki kor elmas (a20): yeni bölüme 160 ms kayar. */
+  private flame: HTMLElement | null = null;
   /** Sayfanın altındaki kısa not (Replay onayı, iPhone tam ekran ipucu, Copy log / Error reports onayı). */
   private readonly notes = new Map<SettingsPageKey, HTMLElement>();
   private page: SettingsPageKey = settingsPage();
@@ -120,6 +123,9 @@ export class SettingsScreen {
     col.append(el('div', 'st-title', 'Settings'));
     const body = el('div', 'st-body');
     const nav = el('div', 'st-cats');
+    nav.classList.add('flame');
+    this.flame = el('i', 'st-flame');
+    nav.append(this.flame);
     nav.setAttribute('role', 'tablist');
     const pagesBox = el('div', 'st-pages');
     body.append(nav, pagesBox);
@@ -131,7 +137,7 @@ export class SettingsScreen {
       cat.append(el('span', 'st-diamond'), el('span', 'st-cat-label', pg.label));
       cat.addEventListener('click', () => {
         if (this.page !== pg.key) uiSound('tab');
-        this.showPage(pg.key);
+        this.showPage(pg.key, true);
         this.zone = 'cat';
       });
       nav.append(cat);
@@ -391,13 +397,13 @@ export class SettingsScreen {
     } else if (k === 'Tab') {
       e.preventDefault();
       uiSound('tab');
-      this.showPage(stepPage(this.page, e.shiftKey ? -1 : 1, accountShown()));
+      this.showPage(stepPage(this.page, e.shiftKey ? -1 : 1, accountShown()), true);
       this.zone = 'cat';
     } else if (this.zone === 'cat') {
       if (up || down) {
         e.preventDefault();
         uiSound('tab');
-        this.showPage(stepPage(this.page, up ? -1 : 1, accountShown()));
+        this.showPage(stepPage(this.page, up ? -1 : 1, accountShown()), true);
       } else if (this.page === 'ui' && (k === 'ArrowRight' || k === 'Enter')) {
         e.preventDefault();
         const first = this.pages.get('ui')?.querySelector<HTMLElement>('.cur-plate.on, .cur-plate');
@@ -427,21 +433,42 @@ export class SettingsScreen {
   }
 
   /** Kategori sayfasını gösterir (oturum boyunca hatırlanır: settings-pages.ts). */
-  private showPage(key: SettingsPageKey): void {
+  private showPage(key: SettingsPageKey, animate = false): void {
     const login = accountShown() && !this.accGone;
     if (!pageVisible(key, login)) key = 'sound';
+    const prevPage = this.pages.get(this.page);
+    // a20: sağ sayfada karşılıklı geçiş (eski söner, yenisi 6 px yükselir)
+    const ghost = animate && key !== this.page && prevPage && !prevPage.hidden ? ghostPage(prevPage) : null;
     this.page = key;
     setSettingsPage(key);
-    for (const [k, page] of this.pages) page.hidden = k !== key;
+    // Kor elmas ve sağ sayfa AYNI kare başlar (a20): önce kategori satırları + elmas, sonra içerik değişimi
     for (const [k, cat] of this.cats) {
       cat.hidden = !pageVisible(k, login);
       cat.classList.toggle('on', k === key);
       cat.setAttribute('aria-selected', String(k === key));
     }
+    this.moveFlame(animate);
+    for (const [k, page] of this.pages) page.hidden = k !== key;
+    if (ghost) {
+      const nowPage = this.pages.get(key);
+      prevPage!.parentElement?.append(ghost.node);
+      ghost.run();
+      if (nowPage) bodyIn(nowPage);
+    }
     for (const n of this.notes.values()) n.textContent = '';
     this.select(-1);
     this.unmountAccount();
     if (key === 'account' && this.fullAccount && this.accHost) this.mountAccount(this.accHost);
+  }
+
+  /** Kor elması etkin kategoriye taşır (animate = 160 ms kayar; değilse anında). */
+  private moveFlame(animate: boolean): void {
+    const f = this.flame;
+    const cat = this.cats.get(this.page);
+    if (!f || !cat) return;
+    f.style.transition = animate && !reducedMotion() ? '' : 'none';
+    f.style.top = `${cat.offsetTop + cat.offsetHeight / 2}px`;
+    f.hidden = cat.offsetHeight === 0 && !this.open;
   }
 
   /** Tam hesap sayfası (ayrı kod parçası, tembel yüklenir); sayfa / ekran kapanınca kalkar. */
@@ -541,6 +568,7 @@ export class SettingsScreen {
       this.paintAccount();
       this.showPage(settingsPage()); // ana menü sütununda seçilen sayfa burada da açılır
       this.zone = 'cat';
+      requestAnimationFrame(() => this.moveFlame(false)); // pencere görününce ölçülür
     }
     if (open !== was) uiSound(open ? 'open' : 'close'); // parşömen açılır / dürülür (data/audio-ui.json)
     document.documentElement.classList.toggle('settings-open', open);
@@ -584,4 +612,25 @@ export function setSettingsVolume(level: number, preview = false): void {
 }
 export function isSettingsOpen(): boolean {
   return instance?.isOpen ?? false;
+}
+
+/** Eski sayfanın kopyası (üstte söner, 140 ms); `node` sayfa kabına eklenir, `run` sönmeyi başlatır ve kopyayı kaldırır. Azaltılmış harekette null. */
+function ghostPage(page: HTMLElement): { node: HTMLElement; run: () => void } | null {
+  if (reducedMotion() || !page.animate) return null;
+  const node = page.cloneNode(true) as HTMLElement;
+  node.hidden = false;
+  node.classList.add('gr-ghost');
+  node.style.top = `${page.offsetTop}px`;
+  node.style.left = `${page.offsetLeft}px`;
+  node.style.width = `${page.offsetWidth}px`;
+  node.setAttribute('aria-hidden', 'true');
+  return {
+    node,
+    run: () => {
+      const a = node.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: 'ease-out', fill: 'forwards' });
+      a.onfinish = () => node.remove();
+      a.oncancel = () => node.remove();
+      window.setTimeout(() => node.remove(), 1200);
+    },
+  };
 }

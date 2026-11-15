@@ -219,3 +219,23 @@ html.short .mw-confirm { margin-top: 4px; font-size: 12px; }
 /* Respec penceresi: harcanan puan etiketi telefonda da gorunur (ana bilgi); portre biraz kisalir */
 html.short .mw-respec .mw-card .mw-chip.dim, html.compact .mw-respec .mw-card .mw-chip.dim { display: inline-flex; }
 html.short .mw-respec .mw-card .pt { width: clamp(90px, calc((100vh - 310px) / .85), 200px); }
+
+/* Telefon (Tur 20 düzeltme): çok kartlı seçim (Recruit / yoldaş, 12 kahraman) sıkışıp üst üste binmesin; kartlar okunur genişlikte kalır, satır yatay kayar */
+html.short .mw-cards { overflow-x: auto; overflow-y: hidden; justify-content: safe center; -webkit-overflow-scrolling: touch; scrollbar-width: thin; padding-bottom: 6px; }
+html.short .mw-cards .mw-card { flex: 0 0 128px; min-width: 128px; max-width: 128px; }
+html.short .mw-cards .mw-card .pt { width: 100%; }
+html.short .mw-cards .mw-card .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; padding: 0 4px; box-sizing: border-box; }
+/* Telefon: seçici pencerenin gövdesi dikey kayar (kartlar + kahraman skill şeridi + düğmeler 378 px'e sığmıyor); portre kutusu biraz basık */
+html.short .mw.hp .mw-body { min-height: 0; max-height: 318px; overflow-y: auto; overscroll-behavior: contain; }
+html.short .mw.hp .mw-cards .mw-card .pt { aspect-ratio: 1 / .62; }
+
+/* Telefon, kahraman seçici (Tur 20 telefon düzeltmesi): gövde kayıyor ama "Begin the journey" kaydırmadan görünmüyordu, alt kısım kesik sanılıyordu.
+   Düğme satırı kayan gövdenin altına yapışık (sticky) kalır, altına ince koyu geçiş: kaydırılacak içerik olduğu da belli olur. */
+html.short .mw.hp .mw-body .mw-acts {
+  position: sticky;
+  bottom: -8px;
+  z-index: 3;
+  margin-top: 0;
+  padding: 8px 0 8px;
+  background: linear-gradient(180deg, rgba(12, 9, 6, 0), rgba(12, 9, 6, 0.96) 35%);
+}

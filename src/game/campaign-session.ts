@@ -359,6 +359,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     tutorial: { node: plan.nodeId, region: node(getMap(st.mapId), plan.nodeId).region, encounter: plan.encounterId, defeats: session.attempts.get(st.at) ?? 0, unlocks: leaderUnlocks(st, plan.nodeId) },
     campaign: {
       resultActions: (victory, battle) => resultActions(game, plan, victory, battle),
+      openTitle: node(getMap(st.mapId), plan.nodeId).name, // açılış bandı (BattleScene.openingEntrance)
       resultSubtitle: (victory, battle) => fallenNote(plan, victory, battle),
       battleEffects: () => campaignEffects(st),
       music: mapSceneTrack(getMap(st.mapId).music, 'battle'), // haritanın kendi savaş müziği (Harita 2: battle_reach)

@@ -496,6 +496,26 @@
       }
     },
     {
+      "id": "stat_point_hint",
+      "group": "On the Road",
+      "title": "Stat Points",
+      "text": "Hold a stat box until its bar fills, or drag the diamond onto a stat. The point is placed at once.",
+      "place": "bottom",
+      "trigger": {
+        "gate": "point_hint"
+      }
+    },
+    {
+      "id": "tree_point_hint",
+      "group": "On the Road",
+      "title": "Skill Points",
+      "text": "Hold a skill node until its ring fills to spend a point. Tap a node to read it.",
+      "place": "bottom",
+      "trigger": {
+        "gate": "point_hint"
+      }
+    },
+    {
       "id": "formation_new_hero",
       "group": "On the Road",
       "title": "A New Companion",

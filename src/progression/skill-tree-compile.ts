@@ -13,9 +13,10 @@ import { barReached, focusBuild, rankOf, spent, treeNodes, validate, type TreeAl
 /** Seçici türü -> yamalanabilir alanlar (beyaz liste; bilinmeyen seçici / alan = derleme hatası, veri testi kırmızı). */
 export const FX_FIELDS: Record<string, readonly string[]> = {
   /** Skill'in kendisi. */
-  self: ['cost.amount', 'cost.ofCurrent', 'cost.hpFallback', 'cooldown', 'initialCooldown', 'count', 'turnCost', 'ringsBell'],
+  self: ['cost.amount', 'cost.ofCurrent', 'cost.hpFallback', 'cooldown', 'initialCooldown', 'count', 'turnCost', 'ringsBell', 'splash.jumps'],
   /** Tüm hasar etkileri ('damage') ya da N. hasar etkisi ('damage:1', 0 tabanlı). */
-  damage: ['power', 'lifesteal', 'ignoreDefense', 'critBonus', 'powerPerRage', 'executeBonus', 'falloff', 'repeatChance', 'powerPerBell'],
+  /** 'split.share' (Skald önerisi 4, 2026-11-14): bölünmüş vuruşun ikinci parçasının payı (Hammer Spark şimşek payı), (0, 1) içinde kalmalı. */
+  damage: ['power', 'lifesteal', 'ignoreDefense', 'critBonus', 'powerPerRage', 'executeBonus', 'falloff', 'repeatChance', 'powerPerBell', 'split.share'],
   /** 'status:<durum>' (ör. status:slow). */
   status: ['turns', 'chance'],
   taunt: ['turns', 'breakRatio', 'allyDamageMult'],
@@ -52,6 +53,8 @@ const FLAG_FIELDS = new Set(['permanent', 'spread']);
 const PASSIVE_ALIAS: Record<string, string> = { dotTurns: 'turns', selfPct: 'pct' };
 /** Faz 2c: op 'remove' ile silinebilen pasif alanları (Black Mold: Nature's Grudge'ın Slow'u). */
 const PASSIVE_REMOVABLE = new Set(['status']);
+/** Skald önerisi 2 (2026-11-14): pasifin durum LİSTESİ alanları (Conductor statuses): op 'add' / 'remove' + `status` (durum adı; `v` yok sayılır). */
+export const PASSIVE_LIST_FIELDS: ReadonlySet<string> = new Set(['statuses']);
 /** Faz 4c: pasifte hiç olmayan alanın başlangıç değeri (Exposed Perch: Sharpshooter extraRows 0). */
 const PASSIVE_DEFAULTS: Record<string, number> = { extraRows: 0 };
 
@@ -90,7 +93,7 @@ const FX_DEFAULTS: Record<string, number> = {
 };
 
 /** Tam sayı alanlar (sonuç yuvarlanır, en az 0). */
-const INT_FIELDS = new Set(['cost.amount', 'cooldown', 'initialCooldown', 'count', 'turns', 'stacks', 'critStacks', 'lifespan', 'onEmpty.turns', 'amount', 'silenceOnEmpty', 'ringsBell']);
+const INT_FIELDS = new Set(['splash.jumps', 'cost.amount', 'cooldown', 'initialCooldown', 'count', 'turns', 'stacks', 'critStacks', 'lifespan', 'onEmpty.turns', 'amount', 'silenceOnEmpty', 'ringsBell']);
 
 export class TreeFxError extends Error {}
 
@@ -231,6 +234,9 @@ function patchSkill(def: SkillDef, fx: Extract<TreeFx, { k: 'skill' }>, rank: nu
   // Faz 5c: yedek can bedeli yalnızca MP bedelli skill'de, ek can bahsi yalnızca MP bahsinde; oran (0, 1)
   if (fx.f === 'cost.hpFallback' && (def.cost.resource !== 'mp' || !((def.cost.hpFallback ?? 0) > 0 && def.cost.hpFallback! < 1))) throw new TreeFxError('cost.hpFallback needs an MP cost and a ratio in (0, 1)');
   if (fx.f === 'hpStake' && targets.some((t) => t.resource !== 'mp' || !((t.hpStake as number) > 0 && (t.hpStake as number) < 1))) throw new TreeFxError('hpStake needs an MP bet and a ratio in (0, 1)');
+  // Skald önerileri 3 / 4 (2026-11-14): sıçrama en az 1 (pattern chain / armor; diğer kalıplar jumps okumaz), bölünme payı iki parçayı da korur
+  if (fx.f === 'splash.jumps' && (!['chain', 'armor'].includes(String(def.splash?.pattern)) || !((def.splash?.jumps ?? 0) >= 1))) throw new TreeFxError('splash.jumps needs a chain / armor splash and stays >= 1');
+  if (fx.f === 'split.share' && targets.some((t) => !(((t.split as Bag).share as number) > 0 && ((t.split as Bag).share as number) < 1))) throw new TreeFxError('split.share must stay in (0, 1)');
 }
 
 /**
@@ -239,6 +245,19 @@ function patchSkill(def: SkillDef, fx: Extract<TreeFx, { k: 'skill' }>, rank: nu
  */
 function patchPassive(p: PassiveDef, fx: Extract<TreeFx, { k: 'passive' }>, rank: number, rules: TreeRules): void {
   const eff = p.effect as unknown as Bag;
+  if (PASSIVE_LIST_FIELDS.has(fx.f)) {
+    const list = eff[fx.f];
+    if (!Array.isArray(list)) throw new TreeFxError(`passive ${p.id} has no list field "${fx.f}"`);
+    if (fx.op !== 'add' && fx.op !== 'remove') throw new TreeFxError(`list field "${fx.f}" only takes op "add" / "remove"`);
+    if (!knownStatus(fx.status)) throw new TreeFxError(`${fx.f}: unknown status "${String(fx.status)}"`);
+    if (fx.op === 'add') {
+      if (!list.includes(fx.status)) list.push(fx.status);
+    } else {
+      if (!list.includes(fx.status)) throw new TreeFxError(`passive ${p.id} ${fx.f} has no "${fx.status}"`);
+      eff[fx.f] = list.filter((x) => x !== fx.status);
+    }
+    return;
+  }
   if (fx.op === 'remove') {
     if (!PASSIVE_REMOVABLE.has(fx.f) || eff[fx.f] === undefined) throw new TreeFxError(`passive ${p.id} field "${fx.f}" cannot be removed`);
     delete eff[fx.f];
@@ -800,7 +819,8 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
         return;
       }
       if (fx.h === 'trigger') {
-        acc.hooks.push(compileTrigger(tree, fx, node, r, scope));
+        // Skald önerisi 5 (2026-11-14): rank 'chance' tetikte de procChance x rank (eylem sayıları çarpılmaz; Mage 0.f3 Rime Touch)
+        acc.hooks.push(compileTrigger(tree, fx, node, r, scope, fx.rank === 'chance' ? p.rank : 1));
         return;
       }
       if (fx.h === 'heal') {
@@ -1087,7 +1107,8 @@ function applyTarget(fx: Extract<TreeFx, { h: 'target' }>, acc: Acc, def: SkillD
       delete d.areaByPhase;
     } else {
       if (!fx.area || typeof fx.area !== 'object') throw new TreeFxError('area must be an object or null');
-      if (d.target !== 'area_enemies' && d.target !== 'area_any') throw new TreeFxError(`${d.id} is not an area skill`);
+      // Skald önerisi 1 (Ömer 2026-11-14): self_area (War Drum) alanı da büyüyebilir; kullananın hücresinde ortalanır (Battle.selfAreaCells)
+      if (d.target !== 'area_enemies' && d.target !== 'area_any' && d.target !== 'self_area') throw new TreeFxError(`${d.id} is not an area skill`);
       const next = { ...(d.area ?? {}), ...clone(fx.area) } as Bag;
       if (next.shape !== 'rect') {
         delete next.rows;
@@ -1235,7 +1256,7 @@ const TRIGGER_FILTERS: Record<string, readonly TriggerEvent[]> = {
 const ACTION_KEYS: Record<string, readonly string[]> = {
   heal: ['of'],
   shield: ['of', 'turns', 'magic'],
-  status: ['turns', 'stacks', 'chance', 'power', 'stat', 'permanent'],
+  status: ['turns', 'stacks', 'chance', 'power', 'stat', 'permanent', 'bounce', 'bounceMax', 'bounceHit', 'bounceFalloff'],
   removeStatus: ['node'],
   damage: ['of', 'stat', 'damageType', 'element', 'crit', 'passive', 'summoner'],
   rage: [],
@@ -1274,7 +1295,7 @@ const ELEMENTS: ReadonlySet<string> = new Set(['physical', 'fire', 'ice', 'holy'
 const finiteNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 /** C3 tetik fx'i -> motor TriggerHook (doğrulama + rank ölçeklemesi: eylem sayıları x r; süre / şans / yığın / eşik çarpılmaz). */
-function compileTrigger(tree: TreeData, fx: Extract<TreeFx, { h: 'trigger' }>, node: string, r: number, scope: (s: string | undefined) => string | undefined): TriggerHook {
+function compileTrigger(tree: TreeData, fx: Extract<TreeFx, { h: 'trigger' }>, node: string, r: number, scope: (s: string | undefined) => string | undefined, chanceRank = 1): TriggerHook {
   const cls = classes[tree.class]!;
   if (!(TRIGGER_EVENTS as readonly string[]).includes(fx.on as string)) throw new TreeFxError(`unknown trigger event "${String(fx.on)}"`);
   const on = fx.on;
@@ -1298,6 +1319,11 @@ function compileTrigger(tree: TreeData, fx: Extract<TreeFx, { h: 'trigger' }>, n
   if (fx.once !== undefined && !([true, 'perTarget', 'perTurn', 'perShield'] as unknown[]).includes(fx.once)) throw new TreeFxError(`unknown once "${String(fx.once)}"`);
   if (fx.once === 'perShield' && on !== 'shieldAbsorb') throw new TreeFxError('once "perShield" is only for shieldAbsorb');
   if (fx.procChance !== undefined && !(finiteNum(fx.procChance) && fx.procChance > 0 && fx.procChance <= 1)) throw new TreeFxError('procChance must be in (0, 1]');
+  if (fx.rank === 'chance' && fx.procChance === undefined) throw new TreeFxError('rank "chance" needs "procChance"');
+  if (fx.addChanceOf !== undefined) {
+    if (fx.procChance === undefined) throw new TreeFxError('addChanceOf needs "procChance"');
+    if (!Array.isArray(fx.addChanceOf) || !fx.addChanceOf.length || fx.addChanceOf.some((k) => typeof k !== 'string' || !tree.nodes[k])) throw new TreeFxError('addChanceOf lists node keys of this tree');
+  }
   if (fx.skill !== undefined && !SKILL_EVENTS.has(on)) throw new TreeFxError(`"skill" does not fit event "${on}"`);
   const skill = SKILL_EVENTS.has(on) ? scope(fx.skill) : undefined;
   if (!Array.isArray(fx.do) || !fx.do.length) throw new TreeFxError('trigger needs a non-empty "do" list');
@@ -1323,7 +1349,8 @@ function compileTrigger(tree: TreeData, fx: Extract<TreeFx, { h: 'trigger' }>, n
     ...(fx.every !== undefined ? { every: fx.every } : {}),
     ...(fx.perCast !== undefined ? { perCast: fx.perCast } : {}),
     ...(fx.once !== undefined ? { once: fx.once } : {}),
-    ...(fx.procChance !== undefined ? { procChance: fx.procChance } : {}),
+    ...(fx.procChance !== undefined ? { procChance: Math.min(1, r6(fx.procChance * chanceRank)) } : {}),
+    ...(fx.addChanceOf ? { addChanceOf: fx.addChanceOf.map((k) => `${tree.class}:${k}`) } : {}),
     ...(fx.when ? { when: clone(fx.when) } : {}),
     ...(fx.scale ? { scale: clone(fx.scale) } : {}),
     do: acts,
@@ -1345,7 +1372,12 @@ function compileAction(tree: TreeData, cls: (typeof classes)[string], a: Trigger
   if (a.turns !== undefined && !(Number.isInteger(a.turns) && a.turns >= 1)) throw new TreeFxError('turns must be an integer >= 1');
   if (a.count !== undefined && !(Number.isInteger(a.count) && a.count >= 1 && COUNT_TARGETS.has(a.to as string))) throw new TreeFxError('count is an integer >= 1, only with to nearestEnemies / outsideArea / randomInCast');
   if (a.rows !== undefined && !(Number.isInteger(a.rows) && a.rows >= 1 && a.to === 'enemyFront')) throw new TreeFxError('rows is an integer >= 1, only with to enemyFront');
-  for (const k of ['crit', 'noChain', 'permanent', 'node', 'passive', 'pierce', 'summoner', 'rollStatus'] as const) if (a[k] !== undefined && a[k] !== true) throw new TreeFxError(`${k} must be true`);
+  for (const k of ['crit', 'noChain', 'permanent', 'node', 'passive', 'pierce', 'summoner', 'rollStatus', 'bounce'] as const) if (a[k] !== undefined && a[k] !== true) throw new TreeFxError(`${k} must be true`);
+  if (a.bounce && a.to !== 'adjacentEnemy') throw new TreeFxError('bounce needs to: adjacentEnemy');
+  if ((a.bounceMax !== undefined || a.bounceHit !== undefined || a.bounceFalloff !== undefined) && !a.bounce) throw new TreeFxError('bounceMax / bounceHit / bounceFalloff need bounce');
+  if (a.bounceMax !== undefined && !(Number.isInteger(a.bounceMax) && a.bounceMax >= 1)) throw new TreeFxError('bounceMax must be an integer >= 1');
+  if (a.bounceHit !== undefined && !(finiteNum(a.bounceHit) && a.bounceHit > 0)) throw new TreeFxError('bounceHit must be a positive number');
+  if (a.bounceFalloff !== undefined && !(finiteNum(a.bounceFalloff) && a.bounceFalloff > 0 && a.bounceHit !== undefined)) throw new TreeFxError('bounceFalloff must be a positive number (with bounceHit)');
   if (a.wide !== undefined && a.wide !== 'beside') throw new TreeFxError('wide must be "beside"');
   const out: Bag = clone(a) as unknown as Bag;
   const scaleNum = (k: keyof TriggerAction) => {
@@ -1577,7 +1609,26 @@ function applyBellOnly(acc: Acc, clsId: string): void {
 }
 
 /** Birikim -> TreeSetup (boş kanallar yazılmaz); hiçbir şey yoksa undefined. */
+/**
+ * Hexer Lasting Jinx (Ömer 2026-11-15 Tur 22): `addChanceOf` taşıyan tetik kancası, adı geçen düğümlerin tetik kancalarının (alınmışsa, rank'lı)
+ * procChance'ını kendi şansına ekler (en çok 1) ve o kancaları listeden çıkarır (aynı olayda iki ayrı zar / iki ayrı sekme olmaz).
+ */
+function absorbChances(hooks: TreeHook[]): TreeHook[] {
+  const takers = hooks.filter((h): h is TriggerHook => h.h === 'trigger' && !!h.addChanceOf?.length);
+  if (!takers.length) return hooks;
+  const gone = new Set<TreeHook>();
+  for (const t of takers) {
+    for (const h of hooks) {
+      if (h === t || h.h !== 'trigger' || !t.addChanceOf!.includes(h.node) || gone.has(h)) continue;
+      t.procChance = Math.min(1, r6((t.procChance ?? 1) + (h.procChance ?? 1)));
+      gone.add(h);
+    }
+  }
+  return hooks.filter((h) => !gone.has(h));
+}
+
 function setupOf(acc: Acc): TreeSetup | undefined {
+  acc.hooks = absorbChances(acc.hooks);
   // Faz 8: biçimler önce (Double Deal + Cold Deck skill'in kendi tanımını da yamalar)
   const modes = acc.modes ? buildModes(acc, !!acc.lenient) : undefined;
   const skills = Object.keys(acc.skills).length > 0;
@@ -1640,7 +1691,8 @@ export function checkTreeFx(tree: TreeData, rules: TreeRules = TREE_RULES): stri
     for (const f of fx) {
       if (f.k === 'skill' || f.k === 'passive' || f.k === 'stat') {
         if (!['add', 'mul', 'pct', 'set', 'base', 'remove', 'on'].includes(f.op)) out.push(`${tree.class} ${label}: unknown op "${f.op}"`);
-        if (f.op !== 'remove' && f.op !== 'on' && (typeof f.v !== 'number' || !Number.isFinite(f.v))) out.push(`${tree.class} ${label}: value must be a number`);
+        const listField = f.k === 'passive' && PASSIVE_LIST_FIELDS.has(f.f);
+        if (!listField && f.op !== 'remove' && f.op !== 'on' && (typeof f.v !== 'number' || !Number.isFinite(f.v))) out.push(`${tree.class} ${label}: value must be a number`);
       }
       const fr = (f as { rank?: unknown }).rank;
       if (fr !== undefined && typeof fr !== 'boolean' && !(fr === 'chance' && f.k === 'hook')) out.push(`${tree.class} ${label}: rank must be true, "chance" (hook) or absent`);

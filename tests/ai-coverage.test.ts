@@ -350,6 +350,56 @@ describe('7c. Skald ağacı: her tetik / etki terazide', () => {
   });
 });
 
+describe('7d. Skald ağacı yama yolları (2026-11-14): YZ yamalı tanımı ve yeni Shocked tetiğini görür', () => {
+  // Ömer onayı 2026-11-14 (docs/design/classes/skald.md bölüm 5): ağaçta düğüm değişmedi; sentetik fx ile kopya ağaç (tests/skald-tree-paths.test.ts)
+  const T = treeOf('skald')!;
+  const withFx = (key: string, fx: Array<Record<string, unknown>>): TreeData => {
+    const t = JSON.parse(JSON.stringify(T)) as TreeData;
+    t.nodes[key]!.fx = fx as unknown as TreeData['nodes'][string]['fx'];
+    return t;
+  };
+  const K = (b: Battle) => b.combatants.find((c) => c.side === 'party' && c.defId === 'skald')!;
+  const fight = (t: TreeData | null, r: Record<string, number>, enemies: Record<number, string> = { 1: 'warrior' }, allies: Record<number, string> = {}) => {
+    const tree = t ? compileTree(t, { v: t.version, r }) : undefined;
+    const b = withTrees({ 4: 'skald', ...allies }, enemies, { party: tree ? { 4: { tree } } : {} });
+    for (const c of b.combatants) c.hp = c.maxHp = 5000;
+    K(b).mp = Math.max(0, K(b).maxMp - 8);
+    return b;
+  };
+  const term = (b: Battle, skill: string, k: string) => Math.max(0, ...cand(b, K(b).uid, skill).map((c) => c.terms?.[k] ?? 0));
+  it('öneri 6: "statusApplied shocked" tetiği Thunder Strike\'ta tree artı; Shocked vermeyen Hammer Spark\'ta ve tetiksiz 0', () => {
+    const t = withFx('0.f2', [{ k: 'hook', h: 'trigger', on: 'statusApplied', status: 'shocked', do: [{ mp: 3 }] }]);
+    const lowMp = (b: Battle) => ((K(b).mp = 10), b);
+    expect(term(lowMp(fight(t, { '0.f2': 1 })), 'thunder_strike', 'tree')).toBeGreaterThan(0);
+    expect(term(lowMp(fight(t, { '0.f2': 1 })), 'hammer_spark', 'tree')).toBe(0);
+    expect(term(lowMp(fight(null, {})), 'thunder_strike', 'tree')).toBe(0);
+  });
+  it('öneri 1: büyüyen War Drum alanı arka sıradaki dostu da kapsar (control artar)', () => {
+    const t = withFx('3.f1', [{ k: 'hook', h: 'target', area: { rows: content.formulas.formation.rows } }]);
+    const far = content.formulas.formation.rows * content.formulas.formation.lanes - 2;
+    const ctl = (x: TreeData | null) => term(fight(x, { '3.f1': 1 }, { 1: 'warrior' }, { [far]: 'warrior' }), 'war_drum', 'control');
+    expect(ctl(t)).toBeGreaterThan(ctl(null));
+  });
+  it('öneri 2 / 3 / 4: Conductor listesi (Chilled), +1 sıçrama, büyük şimşek payı hasar terimine girer', () => {
+    const dmg = (x: TreeData | null, r: Record<string, number>, skill: string, prep?: (b: Battle) => void, enemies?: Record<number, string>) => {
+      const b = fight(x, r, enemies);
+      prep?.(b);
+      return term(b, skill, 'damage');
+    };
+    const chill = (b: Battle) => b.combatants.filter((c) => c.side === 'enemy').forEach((c) => b.debugAddStatus(c.uid, 'chilled', 2));
+    const cond = withFx('0.f1', [{ k: 'passive', f: 'statuses', op: 'add', status: 'chilled' }]);
+    // Hammer Spark Shocked vermez: bonus yalnız hedefteki durumdan (Thunder Strike'ta thunder.shocks zaten açar)
+    expect(dmg(cond, { '0.f1': 1 }, 'hammer_spark', chill)).toBeGreaterThan(dmg(null, {}, 'hammer_spark', chill));
+    const four = { 0: 'warrior', 1: 'warrior', 2: 'warrior', 4: 'warrior', 5: 'warrior' };
+    const jumps = withFx('4.u1', [{ k: 'skill', sel: 'self', f: 'splash.jumps', op: 'add', v: 1 }]);
+    const sc = (b: Battle) => (K(b).mp = K(b).maxMp);
+    expect(dmg(jumps, { '4.u1': 1 }, 'stormcall', sc, four)).toBeGreaterThan(dmg(null, {}, 'stormcall', sc, four));
+    // Warrior zırhı büyü zırhından yüksek: şimşek (büyü) payı büyüyünce Hammer Spark daha çok vurur
+    const share = withFx('1.f1', [{ k: 'skill', sel: 'damage', f: 'split.share', op: 'add', v: 0.2 }]);
+    expect(dmg(share, { '1.f1': 1 }, 'hammer_spark')).not.toBe(dmg(null, {}, 'hammer_spark'));
+  });
+});
+
 describe('8. küçük kalemler', () => {
   it('Soul Drain: Undead vuruşu selfHeal (yaralıyken)', () => {
     const b = arena([['undead', 0]], [['warrior', 0]]);

@@ -10,7 +10,7 @@ import { closeDom } from './motion';
 import { itemSoundKind, uiSound, WORLD_AUDIO, worldSound } from './ui-sound';
 import './gear.css';
 import './gear-plates.css';
-import { playEquipFx, playLevelUpFx } from './reward-fx';
+import { bodyIn, ghostOf, goldCount, once, playEquipFx, playLevelUpFx } from './reward-fx';
 import { allocateStats, heroTreeBlocked, setHeroTree, activeHeroes, woundRules, discardItem, discardNeedsConfirm, equipBest, equipItem, moveEquipped, unequipItem, type CampaignState, type Hero } from '../campaign';
 import { woundCount } from '../progression/wounds';
 import type { WoundCfg } from './wound-ui';
@@ -71,6 +71,7 @@ import { createTreeTab, treeNodeIconUrl, treeNodeSheetTip, treeRowHeads } from '
 import { nodeOf } from './tree-tab-model';
 import { textAtRank } from '../progression/skill-tree-text';
 import { createFirstPoint, type FirstPointCoach } from './first-point';
+import { showLesson } from './lesson-box';
 import { treeOf } from '../progression/skill-tree-data';
 import { treePool } from '../progression/skill-tree';
 import { treeSpent } from '../progression/skill-tree-hero';
@@ -575,9 +576,11 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     if (k === tab) return;
     tab = k;
     bagMenu = null;
+    const ghosts = [pageL, pageR].map((pg) => ghostOf(pg)); // eski içerik söner (yalnız gövde; sekme başlığı ve pencere sabit)
     renderAll();
-    swapIn(pageL);
-    swapIn(pageR);
+    ghosts.forEach((g) => g?.());
+    bodyIn(pageL);
+    bodyIn(pageR);
   };
   const onKey = (e: KeyboardEvent): void => {
     if (ext?.onKey?.(e)) return;
@@ -785,6 +788,13 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         },
       })
     : null;
+  // Ömer 2026-11-15 (form r19): ilk stat / skill puanında tek seferlik "nasıl harcanır" kutusu (yalnız sefer Gear'ı; kayıt = ders görüldü)
+  function pointHint(): void {
+    if (!o.firstPoint || ext) return;
+    if (panel.querySelector('.fp-rib')) return; // Garrick şeridi açıkken ikinci kutu çıkmaz (şerit kalkınca sonraki çizimde gelir)
+    if (tab === 'sheet' && (curHero()?.statPoints ?? 0) > 0) showLesson('stat_point_hint');
+    else if (tab === 'tree' && treeOn && treeTab.coach.free() > 0) showLesson('tree_point_hint');
+  }
   if (treeOn) {
     tabsBox.append(treeTab.button);
     treeTab.button.addEventListener('click', () => setTab('tree'));
@@ -839,16 +849,20 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     boonsEl.hidden = !boons.length;
     boonsEl.textContent = boons.length ? `${boons.length} ${boons.length === 1 ? 'Blessing' : 'Blessings'}` : '';
   }
+  /** Kahraman değişimi (a08): yeni portre karesi bir kez altın kenarla parlar; kök baştan kurulmaz. */
+  function switchHero(id: string): void {
+    const changed = id !== heroId;
+    heroId = id;
+    renderAll();
+    if (changed) once(overlay.querySelector<HTMLElement>('.gr-hero.on .gr-face'), 'rfx-edge', 750);
+  }
   function renderMarks(): void {
     if (bagOnly) return;
     marksBox.replaceChildren(
       heroMarks({
         heroes: src.heroes(),
         heroId,
-        onHero: (id) => {
-          heroId = id;
-          renderAll();
-        },
+        onHero: (id) => switchHero(id),
       }),
     );
   }
@@ -862,10 +876,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       heroId,
       focus: focusInst(),
       ...(hero && (hero.hpRatio !== undefined || hero.alive === false) ? { hpRatio: hero.alive === false ? 0 : (hero.hpRatio ?? 1) } : {}),
-      onHero: (id) => {
-        heroId = id;
-        renderAll();
-      },
+      onHero: (id) => switchHero(id),
       ...(src.allocate
         ? {
             level: {
@@ -1157,6 +1168,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const g = el('div', 'gr-gold', String(src.gold()));
     withUiIcon(g, 'gold');
     attachBandTip(g, { title: 'Gold' });
+    goldCount(g, src.gold(), 'gear-purse'); // sayaç dönüşü (reward-fx.ts)
     return [g];
   }
   function renderRight(): void {
@@ -1252,6 +1264,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     renderRight();
     ext?.render();
     firstPoint?.sync();
+    pointHint();
     rewardFx();
     if (flashText) {
       showToast(flashText);

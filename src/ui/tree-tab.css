@@ -231,7 +231,7 @@ html.short .gt-tools .gt-acts.gt-inbar { flex: none; margin: 0; padding: 0; bord
 html.short .gt-acts { padding: 3px 0 1px; margin-top: 2px; gap: 4px 8px; } /* flex-wrap kalir: cok dar pencerede Confirm kesilmez, alt satira iner */
 html.short .gt-acts .gt-sp { flex: 1 1 4px; }
 html.short .gt-acts .sh-tx { display: none; }
-html.short .gt-acts .sh-ptr { flex: none; margin: 0; }
+html.short .gt-acts .sh-ptr { display: flex; flex: none; margin: 0; } /* gear.css'in Sheet icin koydugu 'html.short .sh-ptr {display:none}' Tree sayacini gizlemesin */
 html.short .gt-acts .sh-acts { gap: 6px; margin-left: auto; }
 html.short .gt-acts .el-btn { white-space: nowrap; }
 html.short .gt-sticky { padding-top: 4px; }

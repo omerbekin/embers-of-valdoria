@@ -90,7 +90,7 @@ html.reduced-motion .camp-ib.glow {
   --u: var(--gu, 1px);
   position: fixed;
   left: 50%;
-  top: calc(var(--et, 0px) + max(52px, calc(112 * var(--u))));
+  top: calc(var(--et, 0px) + max(52px, calc(152 * var(--u)))); /* başlık + alt yazı bloğunun altı (kasaba alt yazısı y~104-124; Tur 20 a12) */
   transform: translateX(-50%);
   z-index: 17;
   display: flex;

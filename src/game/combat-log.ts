@@ -175,6 +175,15 @@ export class CombatLog {
         if (!h.statuses.includes(name)) h.statuses.push(name);
         return true;
       }
+      case 'passive': {
+        // Resilience / Iron Will (Ömer 2026-11-15, tur 20): debuff 1 tur kısaldı; sahnede yazı yok, günlükte satır
+        if (e.passive !== 'primary_str' && e.passive !== 'iron_will') return false;
+        const who = this.names.unit(e.actor)?.name ?? '';
+        if (!who) return false;
+        if (this.cur) this.cur.notes.push(`${who} ${e.name} (debuff -1 turn)`);
+        else this.line([this.who(e.actor), { t: ` ${e.name} (debuff -1 turn)` }]);
+        return true;
+      }
       case 'death': {
         if (this.cur && this.cur.hits.some((h) => h.uid === e.target)) this.hit(e.target).ko = true;
         else this.line([this.who(e.target), { t: ' fell', k: 'ko' }]);

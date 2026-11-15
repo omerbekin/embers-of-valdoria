@@ -178,9 +178,9 @@ describe('bağlantı (kaynak denetimi)', () => {
     const { readFileSync } = await import('node:fs');
     const src = readFileSync('src/game/scenes/CampaignMapScene.ts', 'utf8');
     const calls = src.match(/startCampaignBattle\(this\)/g) ?? [];
-    expect(calls).toHaveLength(2); // ikisi de launchBattle içinde
+    expect(calls).toHaveLength(1); // tek çağrı, launchBattle içinde (geçiş animasyonu zoomIntoBattle ile sarılı)
     const body = src.slice(src.indexOf('private launchBattle(): void {'), src.indexOf('private playStoryCinematic('));
-    expect(body.match(/startCampaignBattle\(this\)/g)).toHaveLength(2);
+    expect(body.match(/startCampaignBattle\(this\)/g)).toHaveLength(1);
     const { navSvg, SKIP_PATH } = await import('../src/ui/nav-icons');
     expect(navSvg('skip')).toContain(SKIP_PATH);
     expect(readFileSync('src/ui/cinematic.ts', 'utf8')).toMatch(/mountCloseButton\(el, skip, 'Skip', 'skip'\)/);

@@ -1,6 +1,6 @@
 import './lesson-box.css';
 import { MENTOR, TUTORIAL, lessonById, lessonPages, lessonWhisperText, type LessonVars } from '../tutorial/lessons';
-import { isLessonSeen, markLessonSeen, setTutorialsOn, tutorialsOn } from '../tutorial/store';
+import { isLessonSeen, markLessonSeen, onTutorialChange, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 import { uiSound } from './ui-sound';
 import { offsetIn } from './item-tip';
 
@@ -155,9 +155,7 @@ function render(p: Pending): void {
   const off = el('button', 'el-link tut-off', "Don't show again");
   off.type = 'button';
   off.addEventListener('click', () => {
-    setTutorialsOn(false);
-    closeAllLessons();
-    for (const fn of offListeners) fn();
+    setTutorialsOn(false); // onTutorialChange dinleyicisi (aşağıda) kutuları kapatır ve zorunlu adımları serbest bırakır
   });
   head.append(title);
   const side = el('div', 'tut-side');
@@ -440,6 +438,17 @@ export function closeAllLessons(): void {
     current = null;
   }
 }
+
+// Dersler kapanınca (Don't show again, Settings, debug "Tutorials: off") açık kutu/Whisper hemen kalkar, zorunlu adımlar serbest kalır
+let wasOn = tutorialsOn();
+onTutorialChange(() => {
+  const on = tutorialsOn();
+  if (wasOn && !on) {
+    closeAllLessons();
+    for (const fn of [...offListeners]) fn();
+  }
+  wasOn = on;
+});
 
 /** "Don't show again" basılınca (zorunlu adımlar serbest kalsın). */
 export function onLessonsTurnedOff(fn: () => void): () => void {

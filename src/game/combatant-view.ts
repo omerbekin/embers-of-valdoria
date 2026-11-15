@@ -1,6 +1,7 @@
 import { NUM_FONT } from '../ui/menu-style';
 import { desktopBadgeSlots } from './badge-layout';
 import { textRes } from './stage-view';
+import { fitCamera } from './stage';
 import Phaser from 'phaser';
 import { reducedMotion } from '../ui/motion-pref';
 import { paintedOr } from '../ui/misc-icons';
@@ -160,6 +161,11 @@ export class CombatantView {
   private readonly magicShieldFill: Phaser.GameObjects.Rectangle;
   private readonly statusBox: Phaser.GameObjects.Container;
   private readonly sealBox: Phaser.GameObjects.Container;
+  /** Mühür parlaması ve rozet vurgusu için ayrı katmanlar (rozet / mühür yeniden çizilince silinmez). */
+  private readonly sealFx: Phaser.GameObjects.Container;
+  private readonly badgeFx: Phaser.GameObjects.Container;
+  /** Son çizilen rozetlerin yeri (statusBox uzayında) ve yazısı: rozet vurgusu için. */
+  private badgeRects = new Map<string, { x: number; y: number; size: number; text: string }>();
   private glowFx?: SpriteGlow;
   private glowKey = '';
   /** Sırası gelen birim: adın üstünde küçük kor elmas (eski sarı ok yerine). */
@@ -384,6 +390,8 @@ export class CombatantView {
     this.statusBox = scene.add.container(0, this.hpY);
     // Yığılan durum (Omen) mühür yuvaları: can çubuğunun SOL ucunun hemen üstünde
     this.sealBox = scene.add.container(-hpBar.width / 2, this.hpY - hpBar.height / 2 - 9);
+    this.sealFx = scene.add.container(-hpBar.width / 2, this.hpY - hpBar.height / 2 - 9);
+    this.badgeFx = scene.add.container(0, this.hpY);
 
     this.container = scene.add.container(x, y, [
       ...(shadow ? [shadow] : []),
@@ -403,13 +411,15 @@ export class CombatantView {
       this.magicShieldFill,
       this.statusBox,
       this.sealBox,
+      this.sealFx,
+      this.badgeFx,
       name,
       ...tierBadge,
       this.marker,
       this.selFrame,
     ]);
     this.container.setDepth(y); // öndeki sıra arkadakinin üstünde çizilir
-    this.overlayParts = [this.hpBox, mpBack, this.mpGhost, this.mpFill, this.speedBox, this.shieldFill, this.blockBack, this.blockFill, this.touchBack, this.touchFill, this.magicShieldFill, this.statusBox, this.sealBox, name, ...tierBadge, this.marker, this.footRing, this.selFrame] as Array<Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha>;
+    this.overlayParts = [this.hpBox, mpBack, this.mpGhost, this.mpFill, this.speedBox, this.shieldFill, this.blockBack, this.blockFill, this.touchBack, this.touchFill, this.magicShieldFill, this.statusBox, this.sealBox, this.sealFx, this.badgeFx, name, ...tierBadge, this.marker, this.footRing, this.selFrame] as Array<Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha>;
     this.setHp(combatant.hp, false);
     this.setMp(combatant.mp, false);
     this.setShield(combatant.shield, combatant.magicShield, false);
@@ -703,8 +713,9 @@ export class CombatantView {
    * Can çubuğunun yanındaki rozetler: durumlar (buff/debuff), üzerinde durulan yer etkileri (zehir, yanan zemin, holy fire)
    * ve zırh aurası gibi etkilerden gelen zırh bonusu. Her rozet ikon + kalan tur / değer.
    */
-  setBadges(badges: Array<{ icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>, sizes: { left: number; right: number } = { left: layout.statusIcon.size, right: layout.statusIcon.size }, perRow = 4): void {
+  setBadges(badges: Array<{ id?: string; icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>, sizes: { left: number; right: number } = { left: layout.statusIcon.size, right: layout.statusIcon.size }, perRow = 4): void {
     this.statusBox.removeAll(true);
+    this.badgeRects.clear();
     const gapBar = layout.statusIcon.gapBar;
     const gapItem = layout.statusIcon.gapItem;
     const hourglass = ensureIcon(this.scene, 'hourglass', '#d9c9a3', false);
@@ -719,6 +730,7 @@ export class CombatantView {
       const icon = this.scene.add.image(cx, cy, ensureIcon(this.scene, bd.icon, bd.color, false, bd.owner ?? SHARED_KEY)).setDisplaySize(size, size); // durum/zemin rozeti: sahibi (sınıfa özgü durum) ya da Shared sürümü
       const label = this.scene.add.text(cx + size / 2, cy + size / 2, bd.text, numStyle(Math.round(18 * k), bd.color)).setOrigin(1, 0.5);
       this.statusBox.add([icon, label]);
+      if (bd.id) this.badgeRects.set(bd.id, { x: cx, y: cy, size, text: bd.text });
       if (bd.turns) this.statusBox.add(this.scene.add.image(label.x - label.width - 8 * k, label.y, hourglass).setDisplaySize(15 * k, 15 * k));
     });
   }
@@ -727,8 +739,9 @@ export class CombatantView {
    * TELEFON rozetleri (Ömer 2026-10-11, taslak B; plan src/game/badge-layout.ts > solvePhoneBadges): öncelik sırasındaki ilk `plan.shown` durum
    * planın yuvalarında, kalanı sonraki yuvada "+N" sayacı (rozetle aynı boy ve kit dili: koyu madalyon + ince altın halka; düğme değil).
    */
-  setPhoneBadges(badges: Array<{ icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>, plan: { size: number; left: SidePlan; right: SidePlan }): void {
+  setPhoneBadges(badges: Array<{ id?: string; icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>, plan: { size: number; left: SidePlan; right: SidePlan }): void {
     this.statusBox.removeAll(true);
+    this.badgeRects.clear();
     const { size } = plan;
     const k = size / layout.statusIcon.size;
     const gapBar = layout.statusIcon.gapBar;
@@ -749,6 +762,7 @@ export class CombatantView {
           const icon = this.scene.add.image(cx, cy, ensureIcon(this.scene, bd.icon, bd.color, false, bd.owner ?? SHARED_KEY)).setDisplaySize(size, size);
           const label = this.scene.add.text(cx + size / 2, cy + size / 2, bd.text, numStyle(Math.round(18 * k), bd.color)).setOrigin(1, 0.5);
           this.statusBox.add([icon, label]);
+          if (bd.id) this.badgeRects.set(bd.id, { x: cx, y: cy, size, text: bd.text });
           if (bd.turns) this.statusBox.add(this.scene.add.image(label.x - label.width - 8 * k, label.y, hourglass).setDisplaySize(15 * k, 15 * k));
         });
       const last = side.slots[side.shown];
@@ -805,6 +819,66 @@ export class CombatantView {
     }
     const turns = this.scene.add.text(r + s.max * step - 2, 0, String(s.turns), numStyle(14, '#e9dfc4')).setOrigin(0, 0.5);
     this.sealBox.add([g, turns]);
+  }
+
+  /**
+   * Omen kazanımı (Ömer 2026-11-15, tur 20 seçenek 1): uçan yazı yok; yeni elmas(lar) kendi yerinde parlar. Kritikte altın, elmaslar arka arkaya.
+   * `from` ilk parlayacak elmasın sırası. Telefonda parlama daha büyük; kritikte iki elmas 420 ms arayla. Reduce Motion: büyüme yok, kısa sabit parıltı.
+   */
+  glowSeals(from: number, count: number, crit: boolean): void {
+    const phone = document.documentElement.classList.contains('short');
+    const rm = reducedMotion();
+    const col = crit ? 0xffd23f : 0xe3a8ff;
+    const k = phone ? 1.7 : 1.25; // 1280'de ~2 px, telefonda ~1 px olan elmas için büyük parlama
+    for (let n = 0; n < count; n++) {
+      const x = 6 + (from + n) * 15;
+      this.scene.time.delayedCall(70 + n * (rm ? 0 : 420), () => {
+        if (!this.sealFx.active) return;
+        const g = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD).setPosition(x, 0);
+        g.fillStyle(col, 0.22).fillCircle(0, 0, 30 * k);
+        g.fillStyle(col, 0.4).fillCircle(0, 0, 18 * k);
+        g.lineStyle(3 * k, col, 0.9).strokeCircle(0, 0, 24 * k);
+        g.fillStyle(col, 1).fillPoints([new Phaser.Math.Vector2(0, -14 * k), new Phaser.Math.Vector2(14 * k, 0), new Phaser.Math.Vector2(0, 14 * k), new Phaser.Math.Vector2(-14 * k, 0)], true);
+        g.fillStyle(0xffffff, 1).fillRect(-4 * k, -4 * k, 8 * k, 8 * k);
+        this.sealFx.add(g);
+        if (rm) {
+          g.setAlpha(1);
+          this.scene.tweens.add({ targets: g, alpha: 0, delay: 300, duration: 300, onComplete: () => g.destroy() });
+          return;
+        }
+        g.setScale(0.4).setAlpha(0);
+        this.scene.tweens.add({ targets: g, scale: 1, alpha: 1, duration: 140, ease: 'Back.easeOut', onComplete: () => this.scene.tweens.add({ targets: g, scale: 1.25, alpha: 0, delay: 380, duration: 420, ease: 'Quad.easeIn', onComplete: () => g.destroy() }) });
+      });
+    }
+  }
+
+  /**
+   * Resilience / Iron Will: debuff kısaldı; ilgili rozetteki tur sayısı kısa süre gümüş halkayla vurgulanır (rozet yeni sayıyı zaten gösterir).
+   * Rozet yoksa (Omen gibi mühürde tutulan durum) bir şey çizilmez.
+   */
+  flashBadge(id: string): void {
+    const r = this.badgeRects.get(id);
+    if (!r) return;
+    const rm = reducedMotion();
+    const g = this.scene.add.graphics().setPosition(r.x, r.y);
+    const rad = r.size * 0.62;
+    g.lineStyle(3, 0xdfe8f2, 0.95).strokeCircle(0, 0, rad);
+    g.lineStyle(7, 0xaebfd2, 0.3).strokeCircle(0, 0, rad);
+    const t = this.scene.add.text(r.x + r.size / 2, r.y + r.size / 2, r.text, numStyle(Math.round(18 * (r.size / layout.statusIcon.size)), '#ffffff')).setOrigin(1, 0.5);
+    this.badgeFx.add([g, t]);
+    const done = () => {
+      g.destroy();
+      t.destroy();
+    };
+    if (rm) {
+      this.scene.time.delayedCall(450, done);
+      return;
+    }
+    t.setScale(1.7);
+    this.scene.tweens.add({ targets: t, scale: 1, duration: 220, ease: 'Back.easeOut' });
+    g.setScale(1.5).setAlpha(0.9);
+    this.scene.tweens.add({ targets: g, scale: 0.9, duration: 260, ease: 'Quad.easeOut' });
+    this.scene.tweens.add({ targets: [g, t], alpha: 0, delay: 380, duration: 320, onComplete: done });
   }
 
   /**
@@ -1937,18 +2011,64 @@ export class CombatantView {
     this.setGlow(null);
     this.setActive(false);
     this.clearPreview();
+    const grand = this.combatant.tier === 'boss' ? 'boss' : this.combatant.tier === 'elite' ? 'elite' : null;
+    if (grand && !reducedMotion()) this.emberDeath(grand);
     return new Promise((resolve) => {
       this.scene.tweens.add({
         targets: this.container,
         alpha: 0,
         y: this.container.y + (this.rig ? 6 : 20),
-        duration: timing.deathFadeMs,
+        duration: grand && !reducedMotion() ? slow(grand === 'boss' ? 1200 : 700) : timing.deathFadeMs,
         ...(this.rig ? { ease: 'Quad.easeIn' } : {}), // pozlu: diz çökme pozu sönmeden önce okunur (süre aynı)
         onComplete: () => {
           this.fallen = true;
           resolve();
         },
       });
+    });
+  }
+
+  /**
+   * Boss / elit ölümü (Ömer 2026-11-15, Tur 20 a04): gövde kor kıvılcımlarına dağılır; boss'ta kamera 400 ms durup hafifçe yakınlaşır
+   * ve geri döner (elitte kamera sabit). Sıradan düşman değişmez. Süre die() içindeki sönmeyle (boss ~1,2 sn, elit ~0,7 sn) aynı.
+   */
+  private emberDeath(kind: 'boss' | 'elite'): void {
+    const sc = this.scene;
+    const n = Math.round((kind === 'boss' ? 48 : 20) * (perfLite() ? 0.5 : 1));
+    const total = kind === 'boss' ? 1200 : 700;
+    const cx = this.container.x;
+    const baseY = this.container.y;
+    const depth = this.container.depth + 5;
+    for (let i = 0; i < n; i++) {
+      const hex = i % 3 === 0 ? 0xffd25a : i % 3 === 1 ? 0xff9a2a : 0xff5a14;
+      const sz = (kind === 'boss' ? 13 : 9) + Math.random() * (kind === 'boss' ? 11 : 6); // gün batımı zemininde de seçilsin
+      const p = sc.add.rectangle(cx + (Math.random() - 0.5) * this.w * 0.7, baseY - Math.random() * this.h * 0.9, sz, sz, hex, 1).setRotation(Math.PI / 4).setDepth(depth).setStrokeStyle(2, 0x3a0e00, 0.9).setAlpha(0); // normal karışım + koyu kenar: ADD gün batımı zeminde beyaza kaçıp kayboluyordu
+      const delay = Math.random() * total * 0.55;
+      sc.tweens.add({ targets: p, alpha: { from: 0, to: 1 }, duration: slow(120), delay: slow(delay), yoyo: false });
+      sc.tweens.add({
+        targets: p,
+        x: p.x + (Math.random() - 0.3) * 70,
+        y: p.y - 60 - Math.random() * 140,
+        scale: 0.5,
+        duration: slow(total * 0.7 + Math.random() * 300),
+        delay: slow(delay),
+        ease: 'Sine.easeOut',
+        onUpdate: (tw) => p.setAlpha(Math.max(0, 1 - tw.progress * tw.progress)),
+        onComplete: () => p.destroy(),
+      });
+    }
+    if (kind !== 'boss') return;
+    const cam = sc.cameras.main;
+    const k = { z: 1 };
+    sc.tweens.add({
+      targets: k,
+      z: 1.06,
+      duration: slow(400),
+      ease: 'Sine.easeOut',
+      yoyo: true,
+      hold: slow(400),
+      onUpdate: () => fitCamera(cam, k.z),
+      onComplete: () => fitCamera(cam),
     });
   }
 

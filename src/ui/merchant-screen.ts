@@ -14,6 +14,7 @@ import './gear-plates.css';
 import { instanceColor, instanceRarity, instanceSubtitle, itemDef, rarityIndex, type ItemInstance, type SlotId } from '../progression';
 import { dismissOnBackdrop } from './backdrop';
 import { goldImg } from './ui-icons';
+import { fadeToward, flyIcon, forgetGold, goldCount, purseBlush } from './reward-fx';
 import { attachBandTip } from './band-tip-attach';
 import { avatarUrl, itemPlate } from './character-panel';
 import { itemCell } from './inventory';
@@ -97,6 +98,7 @@ const REROLL_SVG =
  * Dönen: kapat (görünüm değişince çağıran kapatır). Kapatma (X / Esc / zemin) = `onLeave`.
  */
 export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcome?: boolean; onLeave: () => void; leaveLabel?: string }): () => void {
+  forgetGold('merchant-purse');
   worldSound('coin_count'); // tezgâh açılır: sikkeler meşe tezgâha sayılır
   let api: GearApi | null = null;
   let overlayEl: HTMLElement | null = null;
@@ -127,6 +129,25 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
   };
   const equipOf = (heroId: string | undefined, slot: SlotId | undefined): EquipTo | undefined => (heroId ? { heroId, ...(slot ? { slot } : {}) } : undefined);
 
+  // ---- Alım / satım animasyonları (a13; reward-fx.ts ortak parçalar) ----
+  const icoRect = (key: string): { rect: DOMRect; ico: Element | null } | null => {
+    const c = overlayEl?.querySelector<HTMLElement>(`[data-tip="${key}"]`);
+    if (!c) return null;
+    const ico = c.querySelector('.gp-ico, .gr-item-ico, img, svg') ?? c;
+    return { rect: ico.getBoundingClientRect(), ico };
+  };
+  const purseEl = (): HTMLElement | null => overlayEl?.querySelector<HTMLElement>('.gr-gold') ?? null;
+  /** Alınan item satıcı satırından çantadaki yeni hücresine uçar (300 ms). */
+  const flyToBag = (from: { rect: DOMRect; ico: Element | null } | null, before: Set<string>): void => {
+    if (!from || !overlayEl) return;
+    const added = src.bag().find((i) => !before.has(i.uid));
+    const cell = added ? overlayEl.querySelector<HTMLElement>(`.gr-bag [data-tip="bag:${added.uid}"]`) : null;
+    if (!cell) return;
+    cell.style.visibility = 'hidden';
+    flyIcon(overlayEl, from.rect, from.ico, cell, { ms: 300, onLand: () => (cell.style.visibility = '') });
+  };
+  const blush = (): void => purseBlush(purseEl());
+
   const doBuy = (index: number, equip?: EquipTo): void => {
     const w = src.wares()[index];
     if (!w || w.sold) return;
@@ -134,6 +155,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       line = 'poor';
       uiSound('error');
       api?.rerender();
+      blush();
       return;
     }
     if (src.bag().length >= src.bagSize) {
@@ -144,6 +166,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     }
     const name = itemDef(w.inst.id)?.name ?? '';
     const before = new Set(src.bag().map((i) => i.uid));
+    const from = icoRect(`ware:${index}`);
     try {
       src.buy(index);
     } catch (err) {
@@ -156,6 +179,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     flash(`${name} added to your bag`, true);
     afterAcquire(before, equip);
     api?.rerender();
+    flyToBag(from, before);
   };
   const doBuySupply = (index: number): void => {
     const w = src.supplyWares?.()[index];
@@ -164,6 +188,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       line = 'poor';
       uiSound('error');
       api?.rerender();
+      blush();
       return;
     }
     try {
@@ -218,6 +243,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     if (!inst) return;
     const price = src.sellPrice(inst);
     const name = itemDef(inst.id)?.name ?? '';
+    const from = icoRect(`bag:${uid}`);
     try {
       src.sell(uid);
     } catch (err) {
@@ -229,6 +255,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     api?.clearSel();
     flash(`Sold ${name} for ${price} gold`, true);
     api?.rerender();
+    if (overlayEl && from) fadeToward(overlayEl, from.rect, from.ico, side, purseEl());
   };
   const doBuyBack = (index: number, equip?: EquipTo): void => {
     const e = src.buyback()[index];
@@ -237,10 +264,12 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       line = 'poor';
       uiSound('error');
       api?.rerender();
+      blush();
       return;
     }
     sel = null;
     const before = new Set(src.bag().map((i) => i.uid));
+    const from = icoRect(`bb:${index}`);
     try {
       src.buyBack(index);
     } catch (err) {
@@ -251,6 +280,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     line = 'buyback';
     afterAcquire(before, equip);
     api?.rerender();
+    flyToBag(from, before);
   };
   const doReroll = (): void => {
     try {
@@ -290,6 +320,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       purse.prepend(gi);
     }
     attachBandTip(purse, { title: 'Gold' });
+    goldCount(purse, src.gold(), 'merchant-purse'); // sayaç dönüşü (reward-fx.ts)
     return purse;
   }
 

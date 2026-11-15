@@ -1025,6 +1025,11 @@ export type TriggerBase = (typeof TRIGGER_BASES)[number];
  * C3 eylemi: TEK ana anahtar (heal / shield / status / removeStatus / damage / rage / mp / hpLoss / cooldown / sooner / buff / free / clear / charge)
  * + yardımcı alanlar. Sayılar derleyicide rank'la çarpılmış (fx rank: true). Alıcı `to` (yoksa self).
  */
+/** bounce: i. sekmenin (0 = ilk) vuruş oranı = bounceHit - i x bounceFalloff (en az 0); bounceHit yoksa 0 (Tur 22). */
+export function bounceHitAt(a: TriggerAction, i: number): number {
+  return a.bounceHit === undefined ? 0 : Math.max(0, a.bounceHit - i * (a.bounceFalloff ?? 0));
+}
+
 export interface TriggerAction {
   to?: TriggerTarget;
   /** Şifa: taban x oran (taban `of`, yoksa alıcının maks canı). */
@@ -1036,6 +1041,21 @@ export interface TriggerAction {
   magic?: boolean;
   /** Durum ekle (kaynak = sahip; `turns`, `chance`, yığılan durumda `stacks`; DoT'ta `power` x `stat` miktarı). */
   status?: string;
+  /**
+   * status + to 'adjacentEnemy' (Hexer Lasting Jinx, Ömer 2026-11-15 Tur 22): durum zincirle seker. İlk sekme kancanın procChance zarıyla (fireTrig),
+   * sonra her sekmeden sonra AYNI şansla son sekilenin yanındaki (dört yön, en küçük yuva) henüz sekilmemiş düşmana; olayın hedefi ve sekilenler bir
+   * daha seçilmez, aday bitince ya da zar tutmayınca durur (güvenlik sınırı düşman sayısı). Olayın skill'i bu durumu veriyorsa durum o skill'in
+   * etkisiyle uygulanır (ağaç güçleri: Wobbly Aim, Clinging Jinx, Double Jinx sekenlerde de işler); yoksa yalın.
+   */
+  bounce?: boolean;
+  /** bounce: en çok kaç sekme (yoksa sınırsız; Ömer 2026-11-15 Tur 22 seçenek 1-2: 1). */
+  bounceMax?: number;
+  /**
+   * bounce: seken vuruş, olayın skill'inin İLK hasar etkisiyle gerçek vuruş (isabet / kritik / zırh; strike gibi) x bu oran (ilk sekme). Sonraki her
+   * sekmede oran `bounceFalloff` düşer (en az 0; 0'da vuruş yok, durum yine bırakılır).
+   */
+  bounceHit?: number;
+  bounceFalloff?: number;
   stacks?: number;
   chance?: number;
   power?: number;
@@ -1177,6 +1197,11 @@ export interface TriggerHook {
   /** Faz 5a: kullanım başına en çok N ateş (Endless Knives: 2). */
   perCast?: number;
   procChance?: number;
+  /**
+   * Hexer Lasting Jinx (Ömer 2026-11-15 Tur 22): bu düğümlerin (`'<class>:<anahtar>'`) tetik kancalarının procChance'ı bu kancaya EKLENİR ve o kancalar
+   * düşer (derleyici yapar; Rumour Mill %10 / rank Lasting Jinx'in %50 zincir şansına katılır). Motor okumaz.
+   */
+  addChanceOf?: string[];
   when?: CondWhen;
   scale?: CondScale;
   do: TriggerAction[];

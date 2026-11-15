@@ -83,3 +83,32 @@ Hepsi kodda bugünkü davranış. Ömer onayı bekliyor; itiraz gelirse değişi
 - Healing Rain şimşeği iletir ama hâlâ ıslatmaz. Hexed spark: lanetli sudaki ıslak birim yine Electrocuted olur; yalnız kuru Shocked düşer.
 - Su yayılmasında alan = hücredeki suya bağlı su hücreleri; taşma tepkime hücresinden başlar ve suyla sınırlı değil, her bitişik hücreye gidebilir.
 - Electrocuted 1 tur rozet (`thunder.stunTurns`); birimin ilk skill'i tek hedefli hasar değilse yalnız sıra çubuğu sıfırlanır. Dosta vuruş tam güçte.
+
+## 528. İlk skill puanı ipucu: düğüme tıklamak mı, basılı tutmak mı? (2026-11-15, form r19) — KAPANDI: 0.9.11.5'te basılı tutma geldi; `tree_point_hint` buna göre yazıldı.
+## 529. Witch's Hut Rare / Epic ve r19 kapanışı varsayımları (2026-11-15, balance-tester)
+- Nadirlik sabitlenince sandık zarı yine atılır: item tabanı, malzeme zarı (%40) ve Rare pity sayacı zarın KENDİ nadirliğine göre işler (oyuncu Rare alsa da zar Common attıysa pity artar).
+- Epic zarı sefer + harita + düğüm + seçenek seed'li tek zar (yükleme / tekrar deneme değiştirmez). 5000 seed'de %8,48.
+- Yeni İngilizce metinler: ipucu "Pay 60 gold. She gives you a Rare item from her chest (8% chance it is Epic) and keeps the coins.", harita penceresi "Pay 60 gold. A Rare item from her chest, 8% chance of Epic." (eski metin "two items" diyordu), çip "1 Rare item (8% Epic)" (veriden). İki metinde "8%" elle yazılı: oran değişirse metin de değişmeli. Sonuç çipi genel kaldı ("1 item from the chest").
+- Skald yama yolları maddesi arşive taşındı: Shocked tetiği ve `split.share` / `splash.jumps` sınırları için Ömer ayrıca cevap vermedi, bugünkü davranış olarak kaldı.
+## 530. Hexer ağacı ve Castle Morvane öneri varsayımları (2026-11-15, balance-tester, Tur 20; Ömer r21'de cevapladı: Hexer kabul, Leeching Rot %4 kaldı, Jinx süre/bekleme denendi; Morvane ara değer)
+- "Yol A / Yol B" = ilk doldurulan satır: A = Withering Curse satırı (rows 2,3), B = Jinx satırı (rows 3,1); L20'de odaklı kurulum 16 puanın hepsini ilk satıra verir, ikinci satır boş kalır. Ölçü 300 savaş (Hexer n=130, gürültü ±8 puan): yön gösterir, karar değil.
+- Yol B sayılarla +16'da doyuyor (Jinx tek hedef, savaş başına ~1,6-1,8 kez tetikleniyor); +20'ye çıkmak için süre / bekleme (Jinx cooldown, Lasting Jinx, Clinging Jinx `keepChance`) gerekir: bunlar süre sayıldığı için değiştirilmedi, Ömer'e soru.
+- Ağaç `version` artırılmadı (artarsa herkese bedava respec gider); sayılar değişince oyuncunun ağacı aynen kalır.
+- Castle Morvane yalnız düğüm 12 karşılaşma çarpanlarıyla (`encounters.json > castle_morvane`) ayarlandı; boss taban statları, Crown of Ash oranı, faz eşikleri, süreler aynen. Endless'ın eski `lord_morvane`'ı etkilenmez.
+## 531. Hexer Yol B ve Castle Morvane Tur 21 varsayımları (2026-11-15, balance-tester)
+- Yol B için yalnız ağaç düğümleri değişti (Clinging Jinx keepChance %10 -> %25 / rank, en çok 3 rank = %75; Lasting Jinx 3 -> 5 tur). Jinx'in temel bekleme (3) ve süresi (2) DEĞİŞMEDİ: temel skill Quick Battle dengesini, ağaçsız referansı ve Yol A'yı da oynatırdı. Rumour Mill'in yaydığı Jinxed (2 tur) ve Doom Mark düğümünün Jinxed'i (2 tur) Ömer'in saydığı düğümler dışında olduğu için aynen kaldı.
+- Yol A +28,5 (hedef +20..+25 üstü) Leeching Rot'un %4'e dönmesinin sonucu; kabul edilen dört değere dokunulmadı. Fark 6,2 (hedef <=5). Ölçü 300 savaş, Hexer n=130, gürültü ±8: karar için büyük ölçüm gerekebilir.
+- Varsayılan focus (satır 1+2) yanlışlıkla bir kez koşuldu (+10,0); deneme sayılmadı.
+- Morvane'de iki deneme: veride deneme 1 kaldı (sim bandı Ömer'in açık şartı; deneme 2 testi yeşile çevirdi ama ilk denemeyi %63,5'e çıkardı). Düz model testi bu yüzden kırmızı; sınır indirilmedi.
+## 532. Lasting Jinx sekmesi varsayımları (2026-11-15, balance-tester, Tur 22)
+- Sekme Jinx kullanılınca her seferinde olur; Jinx ıskalasa da yandaki düşman Jinxlenir (tetik `skillUse`, isabete bakmaz; Rumour Mill ile aynı). İsabette sekmesi istenirse yeni koşul gerekir.
+- Sekmeyle gelen Jinxed yalın: Clinging Jinx, Wobbly Aim, Double Jinx güçleri yalnız asıl hedefteki Jinxed'e işler (motor tetikle eklenen durumlara ağaç gücü koymaz). Bu yüzden Yol B +15,4'te kaldı; sekmenin de ağaç gücünü taşıması motor işi (engine-dev), Ömer'e soru.
+- Komşu seçimi `adjacentEnemy`: hedefin yanındaki en küçük yuvalı tek düşman. Rumour Mill de aynı düşmanı seçer; Lasting Jinx alınınca (3.ea Rumour Mill'i ister) Rumour Mill'in rankları boşa gider. Çift Jinx zararsız: tek durum kalır, test var.
+- Düğüm adı "Lasting Jinx" artık davranışı anlatmıyor; ad değişmedi (Ömer kararı). Metin: "Jinx also Jinxes an enemy next to the target."
+- Görsel: sekme Rumour Mill ile aynı yoldan durum ekler (durum rozeti/olayı); ikinci hedefte ayrıca Jinx atış efekti yok, tarayıcıda bakılmadı.
+## 533. Lasting Jinx zincir sekmesi varsayımları (2026-11-15, balance-tester, Tur 22 ikinci karar)
+- Seken Jinx, Jinx'in kendi etkisiyle iner: Wobbly Aim, Clinging Jinx, Double Jinx sekende de işler ("seken Jinx = aynı Jinx"). Yalın sekme istenirse veri değil motor satırı değişir.
+- Zincir sırası: her adımda son sekilenin dört yön komşularından en küçük yuvalı, henüz sekilmemiş düşman (hedefe geri dönmez). Jinx ıskalasa da sekme zarı atılır (tetik `skillUse`).
+- Geçerli hâl (seçenek 2): tek sekme, seken Jinx tam hasar vurur (isabet / kritik zarı ayrı atılır, Omen vermez) ve Jinxler; hedef sekmede ölürse Jinxed bırakılmaz.
+- Rumour Mill şansı yalnız Lasting Jinx alınınca eklenir; Lasting Jinx yokken Rumour Mill eskisi gibi tek sekme (%10 / rank) yapar. Şans toplamı en çok %100.
+- YZ zinciri her zar tutsa izlenecek sırayla değerler (i. sekme ağırlığı şans^i); sekenin ağaç güçlerini değil yalın Jinxed değerini sayar (az değerleme, güvenli taraf).

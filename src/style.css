@@ -1182,6 +1182,7 @@ html.short .st-note {
 
 html.short .st-dev {
   margin-top: 6px;
+  margin-left: 14px; /* sol alttaki DEBUG düğmesinin (?debug=1) altında kalmasın */
 }
 
 
@@ -1545,3 +1546,39 @@ html.short .st-replay.el-link {
 
 /* No italics in UI (design language #5): reset browser default for em/i/cite text. */
 em, i, cite, address, dfn, var { font-style: normal; }
+
+/* Ayarlar (a20): sol sütundaki kor elmas tek parça, etkin kategoriye 160 ms kayar; sağ sayfa geçişi reward-fx.css (.gr-body-in / .gr-ghost) */
+.st-cats.flame {
+  position: relative;
+}
+
+.st-cats.flame .st-cat.on .st-diamond::before {
+  display: none;
+}
+
+.st-flame {
+  position: absolute;
+  left: calc(30 * var(--u) * 0.13);
+  top: 0;
+  width: calc(30 * var(--u) * 0.4);
+  height: calc(30 * var(--u) * 0.4);
+  min-width: 5px;
+  min-height: 5px;
+  background: #e0702a;
+  border: max(1px, calc(30 * var(--u) * 0.07)) solid #ffb35a;
+  transform: translateY(-50%) rotate(45deg);
+  transition: top 160ms cubic-bezier(0.33, 1, 0.68, 1);
+  pointer-events: none;
+}
+
+html.reduced-motion .st-flame {
+  transition: none;
+}
+
+.st-pages {
+  position: relative;
+}
+/* Haritadan savaşa küçük yükleme göstergesi (Tur 20 a02; src/ui/boot-loader.ts > bootMiniNext): kor tonlu koyu zemin, ortada küçük taç */
+html #boot.boot-mini { background: #0a0502; }
+html #boot.boot-mini .boot-bg { opacity: 0.3; }
+html #boot.boot-mini .boot-badge { width: clamp(56px, 9vmin, 84px) !important; right: auto !important; bottom: auto !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; }

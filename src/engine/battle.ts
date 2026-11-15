@@ -16,7 +16,7 @@ import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range'
 import { levelGapBonus, applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, dotOutgoingMult, hitOutcome, paceKey, patchedPassive, roundSpeed, speedMin, speedRoll } from './stats';
 import type { Attribute, Attributes, BrandSpec, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect, PushDir } from './types';
 import { advanceTurn, predictQueue, snapCounter, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
-import { bellsOfSkill, condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, isPoolDamage, manaShieldPay, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
+import { bellsOfSkill, bounceHitAt, condHolds, defaultSel, elemResistOf, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, isPoolDamage, manaShieldPay, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
 import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BattleObjective, BattleRules, BetSpec, Combatant, CombatantDef, FloodRule, Formulas, GlobalSkillDef, UrnRule, GroundDef, GroundEffect, GroundReactionDef, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup, BossTouch, DarknessRule, BoltOutcome, LiveWater, NoiseRule, CaveInRule, Hazard, HeatRule, StatusOrigin } from './types';
 
 export interface BattleSetup {
@@ -2112,6 +2112,77 @@ export class Battle {
     return 0;
   }
 
+  /** Zincir sekmede `cur`un yanındaki (dört yön), `seen`de olmayan, en küçük yuvalı canlı düşman (sahibin karşı tarafı). */
+  private bounceNext(owner: Combatant, cur: Combatant, seen: ReadonlySet<string>): Combatant | undefined {
+    return this.living(opposite(owner.side))
+      .filter((c) => !c.inert && c.hp > 0 && !seen.has(c.uid) && this.condHost.nextTo(cur, c))
+      .sort((x, y) => x.slot - y.slot)[0];
+  }
+  /**
+   * YZ (SALT OKUNUR; Hexer Lasting Jinx): `start`tan başlayan zincir sekmenin her zar tutsa izleyeceği sıra (ilk eleman = ilk sekme). Gerçek yolla
+   * (trigBounce) aynı seçim; zar atmaz, savaşı değiştirmez.
+   */
+  aiBounceChain(owner: Combatant, start: Combatant): Combatant[] {
+    const seen = new Set<string>([start.uid]);
+    const out: Combatant[] = [];
+    let cur = start;
+    for (let next = this.bounceNext(owner, cur, seen); next; next = this.bounceNext(owner, cur, seen)) {
+      seen.add(next.uid);
+      out.push(next);
+      cur = next;
+    }
+    return out;
+  }
+  /**
+   * TriggerAction.bounce (Hexer Lasting Jinx, Ömer 2026-11-15 Tur 22): ilk sekme kancanın zarı tuttuğu için burada (fireTrig attı); sonra her sekmeden
+   * sonra aynı şansla (procChance) bir sonraki yan düşmana. Olayın hedefi ve sekilenler tekrar seçilmez. Olayın skill'i bu durumu veriyorsa o etkiyle
+   * (applyTreeStatus: ağaç güçleri sekende de), yoksa yalın durum.
+   */
+  private trigBounce(owner: Combatant, h: TriggerHook, a: TriggerAction, ev: TrigEv, emit: Emit): void {
+    const start = ev.subject ?? ev.target;
+    if (!start || a.status === undefined) return;
+    const chance = h.procChance ?? 1;
+    const def = ev.skill ? this.skill(ev.skill, owner.uid) : null;
+    const eff = def?.effects.find((e) => e.type === 'status' && e.status === a.status);
+    const kind = a.status as Status['kind'];
+    const seen = new Set<string>([start.uid]);
+    const cap = Math.min(this.living(opposite(owner.side)).length, a.bounceMax ?? Infinity);
+    const dmg = def?.effects.find((e) => e.type === 'damage') as DamageEffect | undefined;
+    let cur = start;
+    for (let i = 0; i < cap; i++) {
+      if (i > 0 && chance < 1 && !(this.rng.next() < chance)) break;
+      const next = this.bounceNext(owner, cur, seen);
+      if (!next) break;
+      seen.add(next.uid);
+      // Tur 22 seçenekleri: seken vuruş (strike gibi gerçek vuruş; aynı düğüm kendini yeniden tetiklemez)
+      const frac = bounceHitAt(a, i);
+      if (frac > 0 && dmg && def && owner.hp > 0) {
+        const prevSkill = this.castingSkill;
+        if (!prevSkill) this.castingSkill = def;
+        const nk = `${owner.uid}|${h.node}`;
+        const had = this.noChain.has(nk);
+        this.noChain.add(nk);
+        const prevCause = this.hitCause;
+        this.hitCause = h.node;
+        try {
+          this.strike(owner, next, dmg, emit, frac, false);
+        } finally {
+          this.hitCause = prevCause;
+          if (!had) this.noChain.delete(nk);
+          this.castingSkill = prevSkill;
+        }
+      }
+      if (next.hp <= 0) {
+        cur = next;
+        continue;
+      }
+      const turns = a.turns ?? (eff?.type === 'status' ? eff.turns : 1);
+      if (def && eff) this.applyTreeStatus(owner, next, def, eff, kind, turns, 1, emit, h.node);
+      else this.addStatus(next, { kind, turns, source: owner.uid, cause: h.node, ...this.shotOrigin(a.status, 'tree') }, emit, h.node);
+      cur = next;
+    }
+  }
+
   private runTrigAction(owner: Combatant, h: TriggerHook, a: TriggerAction, ev: TrigEv, s: number, emit: Emit): void {
     const f = this.setup.formulas;
     // Faz 4c: alıcısız / hücreli eylemler (bedava kullanım, zemin, Mana Overflow)
@@ -2132,6 +2203,7 @@ export class Battle {
       if (ls) this.passiveSmite(owner, ls.scale, ls.sm, ls.healed, emit);
       return;
     }
+    if (a.bounce && a.status !== undefined) return this.trigBounce(owner, h, a, ev, emit);
     for (const rec of this.trigRecipients(owner, a, ev)) {
       if (rec.hp <= 0) continue;
       if (a.strike !== undefined) {
@@ -10701,6 +10773,13 @@ export class Battle {
     emit({ type: 'status', target: c.uid, status: T.badge as Status['kind'], turns: T.badgeTurns, source: actor.uid, cause: skill.id });
     emit({ type: 'shock', source: actor.uid, target: c.uid, skill: skill.id, pushed, stunned: false });
     this.reactUnit(c, badge, emit); // birim üstü tepkime (Ömer onaylı 2026-11-09): Chilled -> Brittle, Poisoned / Burning -> anlık tik
+    // Skald önerisi 6 (Ömer 2026-11-14): rozet doğrudan eklenir (addStatus'un bağışıklık / yığın kuralı yok) ama durum tetikleri addStatus'la AYNI
+    // (kazanan: statusGained, uygulayan: statusApplied "shocked"); "Shocked verince" ağaç düğümleri bununla yazılır. Suda dal addStatus'tan geçer.
+    if (this.trigOn) {
+      const sk = actor === this.castingActor && this.castingSkill ? this.castingSkill.id : undefined;
+      this.trig([c], { on: 'statusGained', target: actor, subject: c, source: actor, status: badge.kind, statusSource: actor.uid }, emit);
+      this.trig([actor], { on: 'statusApplied', target: c, subject: c, source: actor, status: badge.kind, statusSource: actor.uid, ...(sk ? { skill: sk } : {}) }, emit);
+    }
   }
 
   private arcHit(c: Combatant, emit: Emit): void {

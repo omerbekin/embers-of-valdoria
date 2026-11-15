@@ -12,6 +12,8 @@ import { ensureIcon } from './icons';
 import { loadTownArt, townArtKey } from './town-art';
 import { reducedMotion } from '../ui/motion-pref';
 import { townBadge } from '../ui/badges-town';
+import { motion } from '../ui/motion';
+import cfgMotion from '../../data/ui-motion.json';
 
 /**
  * Kasaba ekranı (Ömer 2026-10-12, future-ideas "SIRADA" (1)): kasabaya girince tam ekran kasaba görseli (Ashford köy meydanı, Valdren Keep
@@ -146,6 +148,7 @@ export class TownScreen {
         s.tweens.add({ targets: img, alpha: 1, duration: 320, ease: EL.EASE });
       }
     } else cover = townCover(FALLBACK_SIZE, view, def?.focusY);
+    if (def && s.textures.exists(key)) this.addAmbient(def.background, cover);
     // Okunurluk: üstte başlık, altta takım adları için yumuşak koyulaşma
     const shade = s.add.graphics();
     vGradient(shade, left, 0, right - left, 190, 0x080604, [
@@ -190,6 +193,60 @@ export class TownScreen {
     this.addParty();
     // Seçim yeniden çizimden sonra korunur (ör. ekran döndürülünce)
     if (this.selected) this.painters.get(this.selected)?.(true);
+  }
+
+  /**
+   * Kasaba canlılığı (Tur 20 a11): ateşlerde yavaş kor ışığı (additive, ~%10 parlaklık, 2-3 sn döngü), fenerlerde hafif nefes, ateşlerden az kül
+   * parçacığı. Konumlar data/ui-motion.json > townAmbient.spots (görsel kesri). Reduced Motion'da hiçbiri yok.
+   */
+  private addAmbient(background: string, cover: Cover): void {
+    const spots = (cfgMotion.townAmbient.spots as Record<string, { fires: number[][]; lamps: number[][] }>)[background];
+    const m = motion('townAmbient');
+    if (!spots || reducedMotion() || m.glowMs <= 0) return;
+    const s = this.scene;
+    const key = 'town-glow';
+    if (!s.textures.exists(key)) {
+      const tex = s.textures.createCanvas(key, 128, 128);
+      if (tex) {
+        const ctx = tex.getContext();
+        const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        g.addColorStop(0, 'rgba(255,190,100,1)');
+        g.addColorStop(0.35, 'rgba(255,140,50,0.45)');
+        g.addColorStop(1, 'rgba(255,120,30,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 128, 128);
+        tex.refresh();
+      }
+    }
+    const at = (fx: number, fy: number) => ({ x: cover.x + fx * cover.w, y: cover.y + fy * cover.h });
+    const glow = (x: number, y: number, size: number, base: number, dur: number, delay: number): void => {
+      const im = s.add.image(x, y, key).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(size, size).setAlpha(base);
+      this.root.add(im);
+      s.tweens.add({ targets: im, alpha: base + m.glowAlpha, scale: im.scale * 1.08, duration: dur, delay, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    };
+    spots.fires.forEach(([fx, fy, fr], i) => {
+      const p = at(fx!, fy!);
+      glow(p.x, p.y, fr! * cover.w * 3.2, 0.12, m.glowMs, i * 400);
+    });
+    spots.lamps.forEach(([fx, fy], i) => {
+      const p = at(fx!, fy!);
+      glow(p.x, p.y, cover.w * 0.05, 0.1, m.glowMs * 1.4, i * 330);
+    });
+    // kül parçacıkları: ateşler arasında paylaştırılır; deterministik, hafif (kare, tek tween)
+    const hash = (i: number, k: number): number => {
+      const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453;
+      return x - Math.floor(x);
+    };
+    for (let i = 0; i < m.embers && spots.fires.length; i++) {
+      const [fx, fy, fr] = spots.fires[i % spots.fires.length]!;
+      const p = at(fx!, fy!);
+      const dur = m.emberMinMs + hash(i, 1) * (m.emberMaxMs - m.emberMinMs);
+      const sx = p.x + (hash(i, 2) - 0.5) * fr! * cover.w;
+      const px = Math.max(2, Math.round(cover.w * 0.0013 * (1 + hash(i, 3))));
+      const e = s.add.rectangle(sx, p.y, px, px, hash(i, 4) < 0.4 ? 0xffc27a : 0xffe2b0, 1).setAlpha(0);
+      this.root.add(e);
+      s.tweens.add({ targets: e, y: p.y - cover.h * (0.14 + hash(i, 5) * 0.1), x: sx + (hash(i, 6) - 0.5) * cover.w * 0.05, alpha: { from: 0.85, to: 0 }, duration: dur, delay: hash(i, 7) * dur, repeat: -1, ease: 'Sine.easeOut' });
+    }
   }
 
   /** Yerin merkezi (arayüz katmanı koordinatı) ya da null. */

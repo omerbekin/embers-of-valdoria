@@ -625,7 +625,7 @@
     },
     "2.f2": {
       "name": "Fog of Ill Luck",
-      "text": "Withered enemies have -3% accuracy per rank.",
+      "text": "Withered enemies have -1% accuracy per rank.",
       "src": "B:V3:2.f3",
       "fx": [
         {
@@ -634,7 +634,7 @@
           "sel": "status:wither",
           "mod": {
             "statusPotency": {
-              "accuracyDelta": -0.03
+              "accuracyDelta": -0.01
             }
           },
           "rank": true
@@ -685,7 +685,7 @@
           "h": "trigger",
           "on": "skillUse",
           "procChance": 0.05,
-          "rank": true,
+          "rank": "chance",
           "do": [
             {
               "status": "wither",
@@ -855,7 +855,7 @@
     },
     "3.f1": {
       "name": "Clinging Jinx",
-      "text": "Jinxed has a 10% chance per rank not to end after the target's attack.",
+      "text": "Jinxed has a 25% chance per rank not to end after the target's attack.",
       "src": "B:V3:3.f1",
       "fx": [
         {
@@ -864,7 +864,7 @@
           "sel": "status:jinxed",
           "mod": {
             "statusPotency": {
-              "keepChance": 0.1
+              "keepChance": 0.25
             }
           },
           "rank": true
@@ -873,7 +873,7 @@
     },
     "3.f2": {
       "name": "Wobbly Aim",
-      "text": "Jinxed lowers accuracy by 3% more per rank (-20% → -35%).",
+      "text": "Jinxed lowers accuracy by 5% more per rank (-20% → -45%).",
       "src": "B:V3:3.f2",
       "fx": [
         {
@@ -882,7 +882,7 @@
           "sel": "status:jinxed",
           "mod": {
             "statusPotency": {
-              "accuracyDelta": -0.03
+              "accuracyDelta": -0.05
             }
           },
           "rank": true
@@ -891,7 +891,7 @@
     },
     "3.f3": {
       "name": "Hex Ward",
-      "text": "While any enemy is Jinxed, you take 4% less damage per rank.",
+      "text": "While any enemy is Jinxed, you take 5% less damage per rank.",
       "src": "B:V5:3.r",
       "fx": [
         {
@@ -901,7 +901,7 @@
           "when": {
             "anyEnemyStatus": "jinxed"
           },
-          "mul": -0.04,
+          "mul": -0.05,
           "rank": true
         }
       ]
@@ -925,15 +925,15 @@
     },
     "3.r": {
       "name": "Rumour Mill",
-      "text": "Jinx has a 5% chance per rank to also Jinx an enemy next to the target.",
+      "text": "Jinx has a 10% chance per rank to also Jinx an enemy next to the target.",
       "src": "B:V4:3.r",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
           "on": "skillUse",
-          "procChance": 0.05,
-          "rank": true,
+          "procChance": 0.1,
+          "rank": "chance",
           "do": [
             {
               "status": "jinxed",
@@ -946,15 +946,27 @@
     },
     "3.ea": {
       "name": "Lasting Jinx",
-      "text": "Jinxed lasts 3 turns instead of 2.",
+      "text": "Jinx may jump to an enemy next to the target (50%, plus Rumour Mill), Jinxing it and dealing its full damage.",
       "src": "B:V3:3.ea",
       "fx": [
         {
-          "k": "skill",
-          "sel": "status:jinxed",
-          "f": "turns",
-          "op": "set",
-          "v": 3
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "procChance": 0.5,
+          "addChanceOf": [
+            "3.r"
+          ],
+          "do": [
+            {
+              "status": "jinxed",
+              "turns": 2,
+              "to": "adjacentEnemy",
+              "bounce": true,
+              "bounceMax": 1,
+              "bounceHit": 1
+            }
+          ]
         }
       ]
     },

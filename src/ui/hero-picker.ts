@@ -12,6 +12,8 @@ import { miscImage, statImage } from '../game/icon-image-files';
 import { avatarUrl } from './character-panel';
 import type { MwCard } from './map-window';
 import { heroCardHtml, bindHeroCardTips } from './hero-card';
+import { ms } from './motion';
+import { once } from './reward-fx';
 
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] ?? c);
 
@@ -99,9 +101,28 @@ export function mountHeroPicker(wrap: HTMLElement, cards: readonly MwCard[], o: 
       detail.innerHTML = '<div class="hp-ds">Choose a hero to see them here.</div>';
       return;
     }
-    detail.innerHTML = heroCardHtml({ classId: c.classId, name: c.name, ...(c.role ? { role: c.role } : {}), color: c.color });
+    const oldSrc = detail.querySelector<HTMLImageElement>('.hc .pt img')?.src;
+    detail.innerHTML = heroCardHtml({ classId: c.classId, name: c.name, ...(c.role ? { role: c.role } : {}), color: c.color, ...(c.level ? { level: c.level } : {}) });
     bindHeroCardTips(detail, c.classId);
+    // a15: yalnız büyük portre karşılıklı geçer (180 ms; ad ve skill'ler anında değişir, okunabilirlik)
+    const pt = detail.querySelector<HTMLElement>('.hc .pt');
+    const nImg = pt?.querySelector('img');
+    const dur = ms(180);
+    if (dur > 0 && pt && nImg && oldSrc && oldSrc !== nImg.src && nImg.animate) {
+      const ghost = document.createElement('img');
+      ghost.src = oldSrc;
+      ghost.alt = '';
+      ghost.draggable = false;
+      ghost.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none';
+      pt.style.position = 'relative';
+      pt.append(ghost);
+      const a = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: dur, easing: 'ease-in-out', fill: 'forwards' });
+      a.onfinish = () => ghost.remove();
+      a.oncancel = () => ghost.remove();
+      nImg.animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur, easing: 'ease-in-out' });
+    }
   };
+  let lastSel = '';
   const selected = (): string => list.querySelector<HTMLElement>('.mw-card.sel')?.dataset['card'] ?? '';
   const firstShown = (): string => list.querySelector<HTMLElement>('.mw-card')?.dataset['card'] ?? cards[0]?.id ?? '';
   let hover = '';
@@ -118,7 +139,16 @@ export function mountHeroPicker(wrap: HTMLElement, cards: readonly MwCard[], o: 
     hover = '';
     paint(focus());
   });
-  list.addEventListener('click', () => window.setTimeout(() => paint(focus()), 0));
+  list.addEventListener('click', () =>
+    window.setTimeout(() => {
+      paint(focus());
+      // a15: seçili satır değişince portrenin altın kenarı bir kez parlar
+      const now = selected();
+      if (now && now !== lastSel && lastSel) once(detail.querySelector<HTMLElement>('.hc .pt'), 'rfx-edge', 750);
+      lastSel = now;
+    }, 0),
+  );
+  lastSel = selected();
   const paintFit = paint;
   paint = (id: string): void => {
     paintFit(id);
@@ -126,6 +156,13 @@ export function mountHeroPicker(wrap: HTMLElement, cards: readonly MwCard[], o: 
   };
   // sağdaki kart = soldaki satırların toplam yüksekliği (az satırda içeriği sığdırmak için en az doğal yüksekliği)
   const fit = (): void => {
+    // Telefon (html.short): kartlar yatay kayan sütunlar, sağ kart yok; satır yüksekliği ölçümü kendi kendini büyütüyordu (kartlar 33 milyon px)
+    if (document.documentElement.classList.contains('short')) {
+      list.style.height = '';
+      detail.style.height = '';
+      o.place?.();
+      return;
+    }
     if (visibleRows) {
       const rs = list.querySelectorAll<HTMLElement>('.mw-card');
       if (rs.length) {

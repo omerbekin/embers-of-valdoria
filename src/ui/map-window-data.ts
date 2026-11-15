@@ -11,6 +11,7 @@ export interface ChoiceFx {
   heal?: number;
   chest?: boolean;
   chestItems?: number;
+  chestRarity?: { rarity: string; upgrade?: { rarity: string; chance: number } };
   restHeal?: number;
   battle?: unknown;
   win?: { gold?: number; chest?: boolean };
@@ -74,6 +75,10 @@ function reachChips(c: ChoiceFx, done: boolean): MwChip[] {
 
 const pct = (v: number): number => Math.round(v * 100);
 const items = (n: number): string => `${n} item${n === 1 ? '' : 's'}`;
+const capR = (r: string): string => r.charAt(0).toUpperCase() + r.slice(1);
+/** Sabit nadirlikli sandık (Witch's Hut): "1 Rare item (8% Epic)". */
+const rarityItems = (n: number, r: NonNullable<ChoiceFx['chestRarity']>): string =>
+  `${n} ${capR(r.rarity)} item${n === 1 ? '' : 's'}${r.upgrade ? ` (${Math.round(r.upgrade.chance * 1000) / 10}% ${capR(r.upgrade.rarity)})` : ''}`;
 
 /** Seçenek plakasındaki çipler (ne olacak). */
 export function choiceChips(c: ChoiceFx): MwChip[] {
@@ -87,7 +92,7 @@ export function choiceChips(c: ChoiceFx): MwChip[] {
   if (c.cost) out.push({ tone: 'loss', icon: 'gold', text: `${c.cost} gold` });
   if (c.hpLoss) out.push({ tone: 'loss', icon: 'hp', text: `-${pct(c.hpLoss)}% HP, every hero` });
   if (c.heal) out.push({ tone: 'heal', icon: 'hp', text: `Heal ${pct(c.heal)}% HP` });
-  if (c.chest) out.push({ tone: 'gain', icon: 'gear', text: c.chestItems !== undefined ? items(c.chestItems) : 'Chest' });
+  if (c.chest) out.push({ tone: 'gain', icon: 'gear', text: c.chestItems !== undefined ? (c.chestRarity ? rarityItems(c.chestItems, c.chestRarity) : items(c.chestItems)) : 'Chest' });
   if (c.gold) out.push({ tone: 'gain', icon: 'gold', text: `${c.gold} gold` });
   if (c.restHeal !== undefined) out.push({ tone: 'heal', icon: 'rest', text: `Rest heals ${pct(c.restHeal)}%` });
   out.push(...reachChips(c, false));

@@ -10,6 +10,7 @@ import { navSvg } from './nav-icons';
 import { rectToLocal } from './formation-board-rules';
 import { bandRichHtml, bandTipHtml, type BandChip, type BandTipSpec } from './band-tip';
 import { MOTION } from './motion';
+import { reducedMotion } from './motion-pref';
 
 /**
  * SAVAŞ HUD'ı (Ömer 2026-10-09, taslak public/mockups/battle-hud.html?v=2 "Slim bar, sheet rises"): DOM katmanı, oyun biriminde çizilir ve
@@ -828,7 +829,65 @@ export class BattleHud {
     this.turn.style.translate = t > 0 ? `${-Math.round(t * cell * 10) / 10}px 0` : '';
   }
 
+  /** Şeritteki hücrelerin sahne içi sol konumu (oyun birimi; kök kaymasız, ata dönüşünden bağımsız) ve sırası; anahtar = uid#kaçıncı. */
+  private queueLayout(): Map<string, { x: number; y: number; rank: number; el: HTMLElement }> {
+    const out = new Map<string, { x: number; y: number; rank: number; el: HTMLElement }>();
+    const base = (parseFloat(this.turn.style.left) || 0) + (parseFloat((this.turn.style.translate || '').split(' ')[0] ?? '') || 0);
+    const seen = new Map<string, number>();
+    let rank = 0;
+    for (const el of Array.from(this.turn.querySelectorAll<HTMLElement>('.bh-cell[data-uid]'))) {
+      const uid = el.dataset.uid!;
+      const n = seen.get(uid) ?? 0;
+      seen.set(uid, n + 1);
+      const past = el.classList.contains('past');
+      out.set(`${uid}#${n}`, { x: base + el.offsetLeft, y: el.offsetTop, rank: past ? -1 : rank++, el });
+    }
+    return out;
+  }
+
+  /**
+   * FLIP (Ömer 2026-11-15, Tur 20 a09): sıra yeniden dizilince portreler eski yerinden yenisine kayar (data/ui-motion.json > turnStrip);
+   * öne geçen kısa yeşil, geri düşen kısa gri kenar; düşen birimin portresi söner. Bekleme kayması (setQueueSlide) etkilenmez:
+   * eski konum kayma dahil ölçülür, normal tur ilerlemesinde fark ~0 kalır. Reduced motion: yok.
+   */
+  private flipQueue(before: Map<string, { x: number; y: number; rank: number; el: HTMLElement }>): void {
+    if (reducedMotion() || !before.size || typeof HTMLElement.prototype.animate !== 'function') return;
+    const after = this.queueLayout();
+    const ms = MOTION.turnStrip.ms;
+    const deltas: number[] = [];
+    for (const [k, a] of after) {
+      const b = before.get(k);
+      if (b && b.rank >= 0 && a.rank >= 0) deltas.push(a.rank - b.rank);
+    }
+    // normal tur ilerlemesinde herkes aynı kadar öne kayar (mod); ondan fazla öne geçen = yeşil, geri kalan = gri
+    const freq = new Map<number, number>();
+    for (const d of deltas) freq.set(d, (freq.get(d) ?? 0) + 1);
+    const mode = [...freq.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] ?? 0;
+    for (const [k, a] of after) {
+      const b = before.get(k);
+      if (!b) continue;
+      const dx = b.x - a.x;
+      if (Math.abs(dx) >= 2) a.el.animate([{ transform: `translateX(${dx}px)` }, { transform: 'translateX(0)' }], { duration: ms, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' });
+      if (b.rank >= 0 && a.rank >= 0 && Math.abs(dx) >= 2 && a.rank - b.rank !== mode) {
+        const cls = a.rank - b.rank < mode ? 'flip-up' : 'flip-down';
+        a.el.classList.add(cls);
+        window.setTimeout(() => a.el.classList.remove(cls), MOTION.turnStrip.tintMs);
+      }
+    }
+    // düşen birim (sıradan çıktı; geçmiş hücre değil): eski portre hayalet olarak sönerek kalkar
+    const uidsNow = new Set([...after.keys()].map((k) => k.split('#')[0]));
+    for (const [k, b] of before) {
+      if (after.has(k) || b.rank < 0 || uidsNow.has(k.split('#')[0]!)) continue;
+      const ghost = b.el.cloneNode(true) as HTMLElement;
+      ghost.removeAttribute('data-uid');
+      ghost.style.cssText += `;position:absolute;top:${b.y}px;left:${b.x - (parseFloat(this.turn.style.left) || 0)}px;pointer-events:none`;
+      this.turn.append(ghost);
+      ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: MOTION.turnStrip.fadeMs, fill: 'forwards' }).onfinish = () => ghost.remove();
+    }
+  }
+
   setQueue(cells: HudQueueCell[] | null, testLabel = ''): void {
+    const before = !testLabel && cells ? this.queueLayout() : null;
     this.turn.style.translate = '';
     this.queue = cells;
     this.testLabel = testLabel;
@@ -838,13 +897,14 @@ export class BattleHud {
       this.turn.innerHTML = cells
         .map(
           (c, i) =>
-            `<div class="bh-cell ${c.enemy ? 'enemy' : ''} ${c.state}" role="listitem" aria-label="${esc(queueCellLabel(c))}" ${this.reg(`q:${i}:${c.uid}`, c.tip)}>${img(c.avatarUrl, 'bh-portrait', c.flip ? 'style="transform:scaleX(-1)"' : '')}${
+            `<div class="bh-cell ${c.enemy ? 'enemy' : ''} ${c.state}" data-uid="${esc(c.uid)}" role="listitem" aria-label="${esc(queueCellLabel(c))}" ${this.reg(`q:${i}:${c.uid}`, c.tip)}>${img(c.avatarUrl, 'bh-portrait', c.flip ? 'style="transform:scaleX(-1)"' : '')}${
               c.tag ? `<span class="bh-ctag" style="color:${c.tag.color};border-color:${c.tag.color}">${esc(c.tag.text)}</span>` : ''
             }</div>`,
         )
         .join('');
     } else this.turn.innerHTML = '';
     this.place();
+    if (before) this.flipQueue(before);
   }
 
   // ------------------------------------------------------------------ yerleşim (oyun birimi)

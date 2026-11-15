@@ -30,9 +30,19 @@ export function setBootProgress(p: number, label?: string): void {
   }
 }
 
+/**
+ * Haritadan savaşa geçiş (Tur 20 a02): sıradaki gösterim küçük ve sıcak tonlu olur (#boot.boot-mini, src/style.css): ortada küçük taç göstergesi,
+ * arka plan kor tonunda koyu; harita kararırken başlayan geçişten sonra ekran düz siyah ya da tam bulanık yükleme ekranı olmaz. Kutu kapanınca sıfırlanır.
+ */
+let miniNext = false;
+export function bootMiniNext(): void {
+  miniNext = true;
+}
+
 function show(label: string): void {
   const root = el();
   if (!root) return;
+  if (miniNext) root.classList.add('boot-mini');
   // Önceki kapanış (ör. sahnenin kod parçası indi, hemen ardından sahnenin dosyaları inmeye başladı) yeni gösterimi gizlemesin:
   // 0.8.3.8'de savaşın poz dosyaları inerken kutu 420 ms sonra kapanıyor, dakikalarca siyah ekran kalıyordu.
   for (const t of hideTimers.splice(0)) window.clearTimeout(t);
@@ -50,7 +60,13 @@ function hide(): void {
   hideTimers.push(
     window.setTimeout(() => {
       root.classList.add('boot-off');
-      hideTimers.push(window.setTimeout(() => root.classList.add('boot-hidden'), 420));
+      hideTimers.push(
+        window.setTimeout(() => {
+          root.classList.add('boot-hidden');
+          root.classList.remove('boot-mini');
+          miniNext = false;
+        }, 420),
+      );
     }, wait),
   );
 }

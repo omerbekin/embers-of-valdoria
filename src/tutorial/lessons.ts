@@ -74,8 +74,8 @@ export interface Lesson {
   whisper?: { text: string; variants?: Record<string, string> };
   /** Zorunlu ekran dersi (kapı): düğme yerine bu bekleme yazısı; kutu beklenen eylem yapılınca dışarıdan kapanır. */
   awaitText?: string;
-  /** gate: oyunun kendisi açar ('formation' = Zorunlu Formation kapısı, CampaignMapScene; 'first_point' = Garrick şeridi, src/ui/first-point.ts); ekran / savaş tetiği yok. */
-  trigger: { battle?: BattleTrigger; gate?: 'formation' | 'first_point' } & Partial<ScreenTrigger>;
+  /** gate: oyunun kendisi açar ('formation' = Zorunlu Formation kapısı, CampaignMapScene; 'first_point' = Garrick şeridi, src/ui/first-point.ts; 'point_hint' = ilk stat / skill puanında tek seferlik nasıl harcanır kutusu, src/ui/gear-screen.ts); ekran / savaş tetiği yok. */
+  trigger: { battle?: BattleTrigger; gate?: 'formation' | 'first_point' | 'point_hint' } & Partial<ScreenTrigger>;
 }
 
 /** Garrick şeridinin (C5) sınıf verisi: önerilen düğüm ve temel stat. */
