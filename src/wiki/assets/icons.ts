@@ -175,7 +175,7 @@ export function mountIcons(cat: Catalog): SectionApi {
 
   // Boyalı oyun ikonları (assets/misc-icons/<grup>/<ad>.png): durum rozetleri, element, zemin, kalıntı, amblem, sınıf logoları, harita düğümleri
   const misc = h('div', { class: 'cards icons' });
-  for (const a of cat.miscArt) {
+  for (const a of cat.miscArt.filter((m) => !m.retired)) { // emekli durum rozetleri Legacy'de
     const url = a.url ? iconUrl(a.id) : '';
     misc.append(
       searchable(
@@ -296,7 +296,7 @@ export function mountIcons(cat: Catalog): SectionApi {
     h('h3', { class: 'sub', text: `Empty slot icons (${Object.keys(SLOT_ICON_FILES).length})` }),
     h('p', { class: 'note', text: 'Painted empty-slot icons (assets/ui-icons/slots, from assets/source/ui-icons/gear-slots-sheet.png). Gear shows them faded in empty slots; without one the slot keeps its pixel silhouette.' }),
     slotArt,
-    h('h3', { class: 'sub', text: `Game icons (${cat.miscArt.filter((a) => a.url && !a.unlinked).length})` }),
+    h('h3', { class: 'sub', text: `Game icons (${cat.miscArt.filter((a) => a.url && !a.unlinked && !a.retired).length})` }),
     h('p', { class: 'note', text: 'Painted game icons (assets/misc-icons, cut by tools/make-misc-icons.mjs from assets/source/misc-icons; the checkerboard ChatGPT baked into two sheets is removed there). Status badges, element and ground icons, Endless relics and reward emblems, class logos, campaign map nodes, the corpse marker and the crit burst use these; without an image they fall back to the pixel icon.' }),
     misc,
     h('h3', { class: 'sub', text: `Skill tree icons (${cat.treeArt.length})` }),

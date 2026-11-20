@@ -175,7 +175,7 @@
     },
     "0.f3": {
       "name": "Static Charge",
-      "text": "Your skills have +2% critical chance per rank against Slowed, Stunned or Shocked enemies.",
+      "text": "Your skills have +2% critical chance per rank against Hobbled, Stunned or Shocked enemies.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -197,7 +197,7 @@
     },
     "0.n0": {
       "name": "First Spark",
-      "text": "Your first hit on each enemy Slows it for 1 turn.",
+      "text": "Your first hit on each enemy Hobbles it for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -217,7 +217,7 @@
     },
     "0.r": {
       "name": "Pressure Front",
-      "text": "Your skills deal 3% more damage per rank to Slowed enemies.",
+      "text": "Your skills deal 3% more damage per rank to Hobbled enemies.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -256,7 +256,7 @@
     },
     "0.ma": {
       "name": "Storm Tempo",
-      "text": "Once per turn, when you hit a Slowed enemy, lower Thunder Strike's cooldown by 1 turn.",
+      "text": "Once per turn, when you hit a Hobbled enemy, lower Thunder Strike's cooldown by 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -306,7 +306,7 @@
     },
     "0.eb": {
       "name": "Thunderclap",
-      "text": "Your hits on Slowed enemies have a 10% chance to Stun them for 1 turn.",
+      "text": "Your hits on Hobbled enemies have a 10% chance to Stun them for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -379,7 +379,7 @@
     },
     "0.v": {
       "name": "Living Storm",
-      "text": "Conductor bonus +10%. Once per cast, when you kill a Slowed, Stunned or Shocked enemy, cast a free Thunder Strike at 50% power on a random enemy.",
+      "text": "Conductor bonus +10%. Once per cast, when you kill a Hobbled, Stunned or Shocked enemy, cast a free Thunder Strike at 50% power on a random enemy.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -449,7 +449,7 @@
     },
     "1.f3": {
       "name": "Iron Drag",
-      "text": "Hammer Spark has a 3% chance per rank to Slow the target for 1 turn.",
+      "text": "Hammer Spark has a 3% chance per rank to Hobble the target for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -673,7 +673,7 @@
     },
     "2.f2": {
       "name": "Sky Mark",
-      "text": "Thunder Strike has +3% critical chance per rank against Slowed or Stunned enemies.",
+      "text": "Thunder Strike has +3% critical chance per rank against Hobbled or Stunned enemies.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -727,7 +727,7 @@
     },
     "2.r": {
       "name": "Earthed Bolt",
-      "text": "When Thunder Strike hits a Slowed enemy, restore 2 MP per rank.",
+      "text": "When Thunder Strike hits a Hobbled enemy, restore 2 MP per rank.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -749,7 +749,7 @@
     },
     "2.ea": {
       "name": "Thunderhead",
-      "text": "Thunder Strike Slows every enemy it hits for 1 turn.",
+      "text": "Thunder Strike Hobbles every enemy it hits for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -765,7 +765,7 @@
     },
     "2.ma": {
       "name": "Storm Lock",
-      "text": "Thunder Strike has a 30% chance to Stun already Slowed enemies for 1 turn.",
+      "text": "Thunder Strike has a 30% chance to Stun already Hobbled enemies for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -786,7 +786,7 @@
     },
     "2.fa": {
       "name": "Iron Sky",
-      "text": "Thunderhead's Slow lasts 2 turns (instead of 1). Thunder Strike's cooldown is 1 turn longer.",
+      "text": "Thunderhead's Hobble lasts 2 turns (instead of 1). Thunder Strike's cooldown is 1 turn longer.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -991,14 +991,15 @@
     },
     "3.ea": {
       "name": "Dancing Steps",
-      "text": "War Drum also gives Fleet for 2 turns.",
+      "text": "War Drum also lightly Shrouds (+10% Evasion) for 2 turns.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
           "k": "addEffect",
           "effect": {
             "type": "status",
-            "status": "fleet",
+            "status": "shrouded",
+            "strength": 0.5,
             "turns": 2
           }
         }
@@ -1027,12 +1028,12 @@
     },
     "3.fa": {
       "name": "Wild Dance",
-      "text": "Dancing Steps' Fleet lasts 4 turns (instead of 2). War Drum costs 6 more MP.",
+      "text": "Dancing Steps' Shrouded lasts 4 turns (instead of 2). War Drum costs 6 more MP.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
           "k": "skill",
-          "sel": "status:fleet",
+          "sel": "status:shrouded",
           "f": "turns",
           "op": "add",
           "v": 2,
@@ -1236,7 +1237,7 @@
     },
     "4.d1": {
       "name": "Heavy Air",
-      "text": "Stormcall Slows every enemy it hits for 1 turn.",
+      "text": "Stormcall Hobbles every enemy it hits for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1252,7 +1253,7 @@
     },
     "4.d2": {
       "name": "Overload",
-      "text": "Stormcall has a 25% chance to Stun already Slowed enemies for 1 turn.",
+      "text": "Stormcall has a 25% chance to Stun already Hobbled enemies for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {

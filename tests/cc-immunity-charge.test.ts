@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, content, describeSkill, explainChoice, previewSkill } from '../src/engine';
-import type { BattleEvent, BattleMode, SkillDef, Teams } from '../src/engine';
+import type { BattleEvent, BattleMode, Teams } from '../src/engine';
 import { describeEvent } from '../src/engine/match-log';
 
 /**
@@ -35,10 +35,10 @@ const BOSS: Teams['units'] = { enemies: { 1: { tier: 'boss' } } };
 const ELITE: Teams['units'] = { enemies: { 1: { tier: 'elite' } } };
 
 describe('CC bağışıklığı: veri', () => {
-  it('CC listesi statuses.json > cc: Stun, Frozen, Silence; Slow/Wound/Omen/Wither/Blinded/Jinxed/Overextended/Staggered CC değil', () => {
+  it('CC listesi statuses.json > cc: Stun, Frozen, Silence; Slow/Wound/Omen/Wither/Blinded/Jinxed/Overextended CC değil (Staggered Stun ile birleşti, 2026-11-16)', () => {
     const cc = Object.entries(content.statuses).filter(([, d]) => d.cc).map(([id]) => id).sort();
     expect(cc).toEqual(['electrocuted', 'frozen', 'silence', 'stun']); // Electrocuted (Ömer 2026-11-09): Stun'ın suda yerini alır, aynı CC kuralı // Slow da 2026-11-09 (form 3) CC değil // Frozen (2026-10-31) Stun gibi; Chilled 2026-11-09'dan beri CC DEĞİL (boss %25, elit %50 güç)
-    for (const id of ['wound', 'omen', 'wither', 'blinded', 'jinxed', 'overextended', 'staggered', 'ash_brand']) expect(content.statuses[id]!.cc).toBeUndefined();
+    for (const id of ['wound', 'omen', 'wither', 'blinded', 'jinxed', 'overextended', 'slow', 'ash_brand']) expect(content.statuses[id]!.cc).toBeUndefined();
     expect(IMM.tiers).toEqual(['boss']); // elitler bağışık değil
     expect(IMM.taunt).toBe(true);
     expect(IMM.displacement).toBe(true);
@@ -83,24 +83,18 @@ describe('CC bağışıklığı: motor', () => {
     expect(e.statuses.find((s) => s.kind === 'omen')?.stacks).toBe(1);
   });
 
-  it('Ley Brand (2026-10-27): boss da Branded olur (CC değil); Hush of the Brand susturması boss\'ta Immune, normal düşmanda işler', () => {
-    // Hush of the Brand ağaç düğümünün etkisi (silenceOnEmpty 1) doğrudan skill kopyasında
-    const hush: Record<string, SkillDef> = { drain_field: { ...content.skills.drain_field!, effects: content.skills.drain_field!.effects.map((x) => (x.type === 'brand' ? { ...x, silenceOnEmpty: 1 } : x)) } };
+  it('Blood Brand (Redtithe, 2026-11-17): boss da işaretlenir (CC değil: immune yok); MP bedel artışı bosta da işler', () => {
     for (const units of [BOSS, undefined]) {
       const base = content.battleSetup('random-battle', 1, 'test', { party: cells({ 4: 'antimage' }), enemies: cells({ 1: 'mage' }), ...(units ? { units } : {}) }, false);
-      const b = new Battle({ ...base, skills: { ...base.skills, ...hush } });
+      const b = new Battle(base);
       b.debugClearCooldowns();
       for (const c of b.combatants) { Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0, surviveChance: 0, resilience: 0 }); c.hp = c.maxHp = 5000; }
-      const am = at(b, 'party', 4);
+      const rt = at(b, 'party', 4);
       const m = at(b, 'enemy', 1);
-      act(b, am.uid, 'drain_field', m.uid);
-      expect(has(b, m.uid, 'branded')).toBe(true); // boss dahil
-      m.mp = 2; // Mana Steal bunu 0'a indirir
-      b.debugClearCooldowns();
-      const ev = act(b, am.uid, 'mana_burn', m.uid);
-      expect(m.mp).toBe(0);
-      expect(has(b, m.uid, 'silence')).toBe(!units);
-      expect(ofType(ev, 'immune').length).toBe(units ? 1 : 0);
+      const ev = act(b, rt.uid, 'drain_field', m.uid);
+      expect(has(b, m.uid, 'blood_brand')).toBe(true); // boss dahil
+      expect(ofType(ev, 'immune').length).toBe(0);
+      expect(content.statuses.blood_brand!.cc).toBeFalsy();
     }
   });
 

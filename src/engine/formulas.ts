@@ -99,7 +99,7 @@ export function missingHpHealMult(bonus: number | undefined, hp: number, maxHp: 
   return 1 + bonus * Math.min(1, Math.max(0, (maxHp - hp) / maxHp));
 }
 
-/** Kalkan miktarı: sabit (sapma ve kritik YOK). */
-export function shieldAmount(caster: Stats, scale: Attribute, power: number, formulas: Formulas): number {
-  return Math.round(attributePower(caster, scale, formulas) * power);
+/** Kalkan miktarı: sabit (sapma ve kritik YOK). `flat`: düz ek (Mirror Vein: 6 + INT x 0,5); yoksa 0. */
+export function shieldAmount(caster: Stats, scale: Attribute, power: number, formulas: Formulas, flat = 0): number {
+  return Math.round((flat ?? 0) + attributePower(caster, scale, formulas) * power);
 }

@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Heavy Hand",
-        "text": "Your first skill each battle Slows its target for 1 turn.",
+        "text": "Your first skill each battle Hobbles its target for 1 turn.",
         "src": "B:V4:bar0",
         "fx": [
           {
@@ -81,7 +81,7 @@
       {
         "at": 15,
         "name": "Crushing Weight",
-        "text": "Your skills deal 3% increased damage to Stunned, Slowed or Staggered enemies.",
+        "text": "Your skills deal 3% increased damage to Stunned or Hobbled enemies.",
         "src": "B:V4:bar2",
         "fx": [
           {
@@ -90,8 +90,7 @@
             "when": {
               "targetStatusAny": [
                 "stun",
-                "slow",
-                "staggered"
+                "slow"
               ]
             },
             "mod": {
@@ -322,7 +321,7 @@
     },
     "0.fb": {
       "name": "Iron Will",
-      "text": "Stun and Slow on you last 1 turn shorter, but healing you receive is 20% lower.",
+      "text": "Stun and Hobble on you last 1 turn shorter, but healing you receive is 20% lower.",
       "src": "B:V3:0.fb",
       "fx": [
         {
@@ -383,7 +382,7 @@
     },
     "1.f1": {
       "name": "Knee Cutter",
-      "text": "Double Strike has a 5% chance per rank to Slow the target for 1 turn.",
+      "text": "Double Strike has a 5% chance per rank to Hobble the target for 1 turn.",
       "src": "B:V4:1.f2",
       "fx": [
         {
@@ -428,7 +427,7 @@
     },
     "1.f3": {
       "name": "Hard Knocks",
-      "text": "Double Strike's second hit +4% critical chance per rank against Slowed targets.",
+      "text": "Double Strike's second hit +4% critical chance per rank against Hobbled targets.",
       "src": "B:V4:1.f3",
       "fx": [
         {
@@ -492,7 +491,7 @@
     },
     "1.ea": {
       "name": "Hamstring",
-      "text": "Double Strike's second hit Slows the target for 1 turn.",
+      "text": "Double Strike's second hit Hobbles the target for 1 turn.",
       "src": "B:V4:1.eb",
       "fx": [
         {
@@ -523,7 +522,7 @@
     },
     "1.ma": {
       "name": "Hobble",
-      "text": "Double Strike on a Slowed target extends the Slow by 1 turn and deals 5% increased damage.",
+      "text": "Double Strike on a Hobbled target extends the Hobble by 1 turn and deals 5% increased damage.",
       "src": "B:V4:1.mb",
       "fx": [
         {
@@ -554,7 +553,7 @@
     },
     "1.fa": {
       "name": "Crippling Pair",
-      "text": "Double Strike's Slow lasts 2 turns, but Double Strike deals 15% less damage.",
+      "text": "Double Strike's Hobble lasts 2 turns, but Double Strike deals 15% less damage.",
       "src": "B:V4:1.fb",
       "fx": [
         {
@@ -624,7 +623,7 @@
     },
     "1.v": {
       "name": "Skull and Knee",
-      "text": "Double Strike evolves: the first hit Slows for 1 turn, the second Stuns a Slowed target for 1 turn; it gains a 2-turn cooldown.",
+      "text": "Double Strike evolves: the first hit Hobbles for 1 turn, the second Stuns a Hobbled target for 1 turn; it gains a 2-turn cooldown.",
       "src": "B:V4:1.v",
       "fx": [
         {
@@ -790,7 +789,7 @@
     },
     "2.fa": {
       "name": "Glass Cyclone",
-      "text": "Whirlwind lifesteal +12%, but you take 15% more damage until your next turn.",
+      "text": "Whirlwind lifesteal +12%, but you are Exposed until your next turn (hits against you have +15% critical chance).",
       "src": "A:V3:2.fa",
       "fx": [
         {
@@ -1010,7 +1009,7 @@
     },
     "3.fa": {
       "name": "Martyr's Rush",
-      "text": "Charge Taunts every enemy for 1 turn, but you take 15% more damage until your next turn.",
+      "text": "Charge Taunts every enemy for 1 turn, but you are Exposed until your next turn (hits against you have +15% critical chance).",
       "src": "A:V3:3.fb",
       "fx": [
         {

@@ -38,6 +38,12 @@ describe('kullanılmayan mana yok: kim etkilenir', () => {
     for (const d of Object.values(content.classes)) {
       if (d.testOnly) continue;
       const c = unit(arena([[d.id, 0]], [['skeleton', 0]]), 'party-0');
+      // Redtithe (kan barı, 2026-11-17): bilerek manasız; kaynağı kan barı
+      if (d.maxBlood !== undefined) {
+        noPool(c);
+        expect(c.maxBlood, d.id).toBeGreaterThan(0);
+        continue;
+      }
       expect(c.maxMp, d.id).toBeGreaterThan(0);
       expect(c.mp, d.id).toBe(c.maxMp);
     }
@@ -137,24 +143,25 @@ describe('MP havuzu olmayan birim savaşta', () => {
     noPool(unit(b, ev.combatant.uid));
   });
 
-  it('Mana Steal: yakma yok, Anti-Mage MP kazanmaz, boşalma zarı atılmaz', () => {
+  it('Tithe Cut: manasız hedefte yakma yok, yalnız isabet başına kan (hitGain), boşalma zarı atılmaz', () => {
     const b = arena([['antimage', 0]], [['risen_skeleton', 0]]);
-    const am = unit(b, 'party-0');
+    const rt = unit(b, 'party-0');
     const sk = unit(b, 'enemy-0');
-    const price = content.skills.mana_burn!.cost.amount;
     sk.hp = sk.maxHp = 50000;
     let hit = false;
     for (let i = 0; i < 30 && !hit; i++) {
-      am.cooldowns.mana_burn = 0;
-      am.mp = price;
-      expect(b.useSkill(am.uid, 'mana_burn', sk.uid).ok).toBe(true);
-      hit = sk.statuses.some((s) => s.kind === 'ley_thread');
-      if (hit) expect(am.mp).toBe(0); // bedeli ödedi, geri kazanç yok
+      rt.cooldowns.mana_burn = 0;
+      rt.blood = 0;
+      const before = b.log.length;
+      expect(b.useSkill(rt.uid, 'mana_burn', sk.uid).ok).toBe(true);
+      hit = b.log.slice(before).some((e) => e.type === 'damage' && e.target === sk.uid && e.amount > 0);
+      if (hit) expect(rt.blood).toBe(content.formulas.bloodBar!.hitGain); // MP sökülmedi: yalnız isabet kanı
     }
-    expect(hit).toBe(true); // iplik manadan bağımsız kalır (ek ödül yok: YZ değeri aşağıda)
+    expect(hit).toBe(true);
     expect(ofType(b, 'manaBurn')).toHaveLength(0);
     expect(ofType(b, 'emptyProc')).toHaveLength(0);
     noPool(sk);
+    noPool(rt);
   });
 
   it('boş mana kuralı (onEmpty) tetiklenmez, önizleme de yakma göstermez', () => {
@@ -187,18 +194,6 @@ describe('MP havuzu olmayan birim savaşta', () => {
     expect(turns).toBeGreaterThan(0);
     expect(ofType(b, 'mpRegen').filter((e) => e.actor === sk.uid)).toHaveLength(0);
     noPool(sk);
-  });
-
-  it('Ley Brand (madde 444): tainted havuz açılır, MP kazanamaz', () => {
-    const b = arena([['antimage', 0]], [['risen_skeleton', 0]]);
-    const am = unit(b, 'party-0');
-    const sk = unit(b, 'enemy-0');
-    am.mp = am.maxMp;
-    const r = b.useSkill(am.uid, 'drain_field', undefined, sk.slot, 'enemy');
-    expect(r.ok, JSON.stringify(r)).toBe(true);
-    expect(sk.taint).toBeGreaterThan(0);
-    expect(sk.maxMp).toBe(sk.taint);
-    expect(b.mpRoom(sk)).toBe(0);
   });
 
   it('determinizm: aynı seed aynı durum özeti, NaN yok', () => {

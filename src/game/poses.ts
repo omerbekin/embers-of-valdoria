@@ -396,14 +396,16 @@ export const itemOverride = (def: PoseClassDef, family: string, pose: string, sl
  * Bir eşyanın bu pozdaki yerleşimi (`slot` = ana el silahı ya da ikinci el eşyası); çizilmiyorsa (pozun `hidden`'ı, ayarın `hidden`'ı,
  * el noktası yok, görsel ölçüsü yok) null.
  */
-export function itemPlacement(def: PoseClassDef, name: string, item: { family: string; look: string }, slot: 'main' | 'off'): ItemPlacement | null {
+export function itemPlacement(def: PoseClassDef, name: string, item: { family: string; look: string }, slot: 'main' | 'off', swapped = false): ItemPlacement | null {
   const p = def.poses[name];
   const fam = POSES.weapons[item.family];
   const look = fam?.looks[item.look];
   if (!p || !fam || !look || p.hidden) return null;
-  const o = itemOverride(def, item.family, name, slot);
+  // yer değiştirme (poseItems): ana eşya ön ele geçtiyse ikinci el eşyası ana ele (arka yumruk) geçer; ayar eşyanın kendi ana-el ayarından gelir
+  const eff = swapped ? 'main' : slot;
+  const o = itemOverride(def, item.family, name, eff);
   if (o.hidden) return null;
-  const hand = o.hand ?? slot;
+  const hand = swapped ? 'main' : (o.hand ?? slot);
   const h = hand === 'main' ? p.anchor : p.offhand ? { x: p.offhand.x, y: p.offhand.y, angle: p.offhand.angle ?? p.anchor.angle } : null;
   if (!h) return null;
   const angle = o.angle ?? (fam.upright ? 0 : h.angle);
@@ -418,8 +420,8 @@ export function itemPlacement(def: PoseClassDef, name: string, item: { family: s
     hy: h.y,
     angle,
     k: weaponScale(fam, look, def) * (o.scale ?? 1),
-    flip: o.flip ?? (slot === 'main' && !!p.flip) !== edgeFlip(def, fam, item.look, angle),
-    back: o.back ?? (slot === 'main' ? !!p.back : false),
+    flip: o.flip ?? (eff === 'main' && !!p.flip) !== edgeFlip(def, fam, item.look, angle),
+    back: o.back ?? (eff === 'main' ? !!p.back : false),
     w: look.w,
     h: look.h,
     grip: look.grip,
@@ -478,7 +480,8 @@ export function poseItems(def: PoseClassDef, name: string, w: WeaponPick | null)
   const main = itemPlacement(def, name, w, 'main');
   if (main) out.push(main);
   if (w.offhand && !gripBlocksOffhand(w.grip)) {
-    const off = itemPlacement(def, name, w.offhand, 'off');
+    // ana eşya `hand: 'off'` ile ön ele geçtiyse ikinci el eşyası (hançer / kalkan) ana ele geçer (Lead 2026-11-17)
+    const off = itemPlacement(def, name, w.offhand, 'off', main?.hand === 'off');
     if (off) out.push(off);
   }
   const quiver = w.quiver && w.grip === 'bow' ? quiverPlacement(def, name, w.quiver) : null;

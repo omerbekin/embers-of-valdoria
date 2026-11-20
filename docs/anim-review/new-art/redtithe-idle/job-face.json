@@ -1,0 +1,17 @@
+{
+ "name": "redtithe-idle-face",
+ "outDir": "docs/anim-review/new-art/redtithe-idle/face",
+ "rules": "docs/anim-review/new-art/redtithe-idle/PROMPT.md",
+ "maxRounds": 3,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle1",
+   "file": "idle1.png",
+   "refs": ["docs/anim-review/new-art/redtithe-idle/refs/redtithe-idle1-v1.png", "docs/anim-review/new-art/redtithe-idle/refs/redtithe-B-look.png", "docs/anim-review/new-art/redtithe-idle/refs/warrior-idle1-face-ref.png"],
+   "checkRefs": ["docs/anim-review/new-art/redtithe-idle/refs/redtithe-idle1-v1.png", "docs/anim-review/new-art/redtithe-idle/refs/warrior-idle1-face-ref.png"],
+   "task": "Image 1 = the current Redtithe idle (keep EXACTLY: pose, body, both fists, legs, feet pixels, clothes, braid, canvas 450x412, scale, soles y~406). Image 2 = Redtithe's identity (woman, shaved sides, long dark braid, eyebrow scar). Image 3 = the Warrior idle: copy ITS FACE READABILITY. PROBLEM: in image 1 the face is almost in profile; at game size (figure ~190 px tall, head ~25 px) the far eye disappears and a hair lock sits near it. FIX ONLY THE HEAD: turn the face a little more toward the viewer into a clear 3/4 view like image 3 (BOTH eyes visible with clear dark eye shapes and dark brows, nose and mouth clear), warm lit skin clearly lighter than the dark hair, hair pulled back tight off the face into the braid (no loose lock over the eyes or cheek), the thin scar over one eyebrow kept, crisp dark outline separating face from hair. Head size and position stay the same (head top y~24). Real alpha, PNG 450x412.",
+   "checkRules": "- Image 1 is the new draw; image 2 is the previous Redtithe idle (pose reference); image 3 is the Warrior face-readability reference.\n- Pose, body, fists, feet, clothes, braid, canvas 450x412 and scale identical to image 2 (only the head may change).\n- Face readable at game size: imagine the figure shrunk to ~190 px tall (head ~25 px): BOTH eyes, nose and mouth must still read. Face in 3/4 view toward the viewer, skin warm and clearly lighter than the dark hair, no hair lock or shadow over the eyes, clear dark outline around the face.\n- Same young woman with shaved sides, long dark braid and eyebrow scar.\n- No weapon, no props. Real transparent background, no checkerboard, no halo."
+  }
+ ]
+}

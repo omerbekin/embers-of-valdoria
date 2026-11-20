@@ -7,14 +7,15 @@ import { reducedMotion } from '../../ui/motion-pref';
 import { uiSound, worldSound } from '../../ui/ui-sound';
 import { battleTrack, phaseTrack, sceneMusic, type MusicTrack } from '../../ui/music';
 import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-layout';
+import { PHONE_PCT_PX, pctTextWidth, statusPercentText, statusTipText } from '../status-pct';
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
 import { planGroundBadges, groundTurnsText, groundCardText, type GroundBadgeIn } from '../ground-badges';
-import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, TREE_SECTION, describeStat, groundReactionHint, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
+import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describeBlood, describePassive, describeRage, describeSkill, TREE_SECTION, describeStat, groundReactionHint, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
 import type { AreaStage, BattleEvent, BattleMode, Combatant, PushDir, SkillDef, SkillModeSet, StatKind, Teams, TargetPreview } from '../../engine';
 import { type DamageTags } from '../float-text';
 import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-columns';
-import { PRIMARY_GOLD, RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
+import { BLOOD_COLOR, PRIMARY_GOLD, RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
 import { globalIconName, uiIconName } from '../../ui/ui-icons';
 import { passiveIconName } from '../../ui/mob-icons';
 import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBackground, MENU_ONLY_TEXTURES, preloadAssets, releaseTextures } from '../assets';
@@ -57,6 +58,7 @@ import { BattleHud, type HudActor, type HudGlobal, type HudModel, type HudQueueC
 import { playSceneSfxDef, playSfx } from '../audio';
 import { MOB_SFX, mobSfxSession } from '../mob-sfx';
 import { BattleStats, showResultScreen } from '../result-screen';
+import { logBattleEnd } from '../battle-diag';
 import type { ResultAction, ResultScreen } from '../result-screen';
 import { debugState, effectiveTimeScale, tweaksSummary } from '../debug-state';
 import { testMode, testModeSummary } from '../test-mode';
@@ -517,6 +519,7 @@ export class BattleScene extends Phaser.Scene {
     this.partySize = this.battle.combatants.filter((c) => c.side === 'party' && !c.summoned).length || this.partySize;
     this.enemySize = this.battle.combatants.filter((c) => c.side === 'enemy' && !c.summoned).length || this.enemySize;
     for (const c of this.battle.combatants) if (c.maxRage !== undefined) this.rageShown.set(c.uid, c.rage ?? 0);
+    for (const c of this.battle.combatants) if (c.maxBlood !== undefined) this.rageShown.set(c.uid, c.blood ?? 0); // Redtithe kan barı aynı gösterim haritasında
     // Debug/Test Mode switches never leak into campaign or multiplayer battles (normal costs and cooldowns there; multiplayer would desync)
     if (!this.mp) {
       this.battle.freeMp = !this.campaign && BattleScene.freeMp;
@@ -625,26 +628,31 @@ export class BattleScene extends Phaser.Scene {
     this.showResult(info.victory, false, info);
   }
 
+  /** Telefon rozet yuvaları arası boşluk (yüzde yazısı için açılmış olabilir; son çözümle aynı). */
+  private phoneGap = layout.statusIcon.gapItem;
   private badgeMemo: { key: string; plans: Map<string, PhoneBadgePlan> } | null = null;
 
   /** Telefon boyutunda (html.short / html.compact) birim başına rozet planı (taslak B); masaüstünde null (bugünkü düzen). Girdi değişmedikçe yeniden çözülmez. */
-  private phoneBadgePlans(units: Array<{ view: CombatantView; left: number; right: number }>): Map<string, PhoneBadgePlan> | null {
+  private phoneBadgePlans(units: Array<{ view: CombatantView; left: number; right: number }>, pctWidth = 0): Map<string, PhoneBadgePlan> | null {
     const cls = document.documentElement.classList;
     if (!cls.contains('short') && !cls.contains('compact')) return null;
     const si = layout.statusIcon;
     const input = units.map(({ view }) => ({ id: view.combatant.uid, left: 0, right: 0, ...view.badgeGeometry() }));
     const counts = new Map(units.map(({ view, left, right }) => [view.combatant.uid, { left, right }]));
     // anahtar geometriyi de içerir: yazı tipi geç yüklenip ad genişliği değişince yeniden çözülür
-    const key = JSON.stringify(input.map((u) => [u.id, JSON.stringify(counts.get(u.id)), u.parts.map((p) => [p.x0, p.y0, p.x1, p.y1].map(Math.round))]));
+    const gapItem = Math.max(si.gapItem, pctWidth + 4 - si.phoneSize); // yüzde yazısı rozetten genişse yuvalar arası açılır
+    this.phoneGap = gapItem;
+    const key = JSON.stringify([gapItem, input.map((u) => [u.id, JSON.stringify(counts.get(u.id)), u.parts.map((p) => [p.x0, p.y0, p.x1, p.y1].map(Math.round))])]);
     if (this.badgeMemo?.key === key) return this.badgeMemo.plans;
-    const plans = solvePhoneBadges(input, counts, { size: si.phoneSize, gapBar: si.gapBar, gapItem: si.gapItem, margin: si.margin, perSide: si.phonePerSide, top: si.size / 2 });
+    const plans = solvePhoneBadges(input, counts, { size: si.phoneSize, gapBar: si.gapBar, gapItem, margin: si.margin, perSide: si.phonePerSide, top: si.size / 2 });
     this.badgeMemo = { key, plans };
+    this.phoneGap = gapItem;
     return plans;
   }
 
   /** Per-unit badge refresh (statuses, ground effects underfoot, armor from auras): cheap, only redraws when something changed. */
   private refreshBadges(): void {
-    type BadgeList = Array<{ id: string; left: number; icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>;
+    type BadgeList = Array<{ id: string; left: number; icon: string; owner?: string; color: string; text: string; pct?: string; debuff: boolean; turns: boolean }>;
     const lists: Array<{ view: CombatantView; c: Combatant; list: BadgeList; seals: { stacks: number; max: number; turns: number; color: string } | null }> = [];
     for (const view of this.views.values()) {
       const c = this.battle.get(view.combatant.uid);
@@ -654,6 +662,11 @@ export class BattleScene extends Phaser.Scene {
       // Burrow (tune.bury): Fortified görünürken birim zemine gömülü durur (durum rozetiyle aynı an batar / çıkar)
       const buried = buryDepth(c.skills, this.statusesShown(c).map((st) => st.kind));
       if (buried > 0 || !view.buryHeld) view.setBuried(buried);
+      // Ana etkinin yüzdesi (src/game/status-pct.ts): motorun etkin değerinden (boss / elit ölçeği dahil); yüzdesiz durumda alan yok
+      const pctOf = (st: (typeof c.statuses)[number]): { pct?: string } => {
+        const t = statusPercentText(this.battle, c, st);
+        return t ? { pct: t } : {};
+      };
       for (const st of this.statusesShown(c)) {
         const def = content.statuses[st.kind];
         const fallback = { taunt: ['finger', '#ff9f43'], guard: ['guardian', '#6ec1ff'], regen: ['leaf', '#7dff9b'] }[st.kind as 'taunt' | 'guard' | 'regen'] ?? ['roar', '#ffffff'];
@@ -666,7 +679,7 @@ export class BattleScene extends Phaser.Scene {
           seals = { stacks: st.stacks, max, turns: st.turns, color: def?.color ?? '#b04fa8' };
           continue;
         }
-        list.push({ id: st.kind, left: st.turns, icon: art.name, owner: art.owner, color: def?.color ?? fallback[1]!, text: max > 1 && st.stacks ? `x${st.stacks}` : String(st.turns), debuff: def?.type === 'debuff', turns: !(max > 1 && st.stacks) });
+        list.push({ id: st.kind, left: st.turns, icon: art.name, owner: art.owner, color: def?.color ?? fallback[1]!, text: max > 1 && st.stacks ? `x${st.stacks}` : String(st.turns), ...pctOf(st), debuff: def?.type === 'debuff', turns: !(max > 1 && st.stacks) });
       }
       // Zemin rozeti: verdiği durum görünüyorsa kendi rozeti yok (ad durumun EFFECTS satırında "from ..."; src/game/ground-badges.ts)
       for (const g of this.underfootGrounds(c, this.statusesShown(c)).badges) {
@@ -681,13 +694,13 @@ export class BattleScene extends Phaser.Scene {
     // Telefon (taslak B, Ömer 2026-10-11): öncelikli rozetler + "+N" sayacı, hiçbir şeye binmez (src/game/badge-layout.ts); masaüstünde bugünkü düzen
     const prio = layout.statusIcon.phonePriority as string[];
     const sorted = new Map(lists.map(({ c, list }) => [c.uid, sortByPriority(list.map((b) => ({ ...b, hourglass: b.turns, turns: b.left })), prio)]));
-    const plans = this.phoneBadgePlans(lists.map(({ view, c }) => ({ view, left: sorted.get(c.uid)!.filter((b) => !b.debuff).length, right: sorted.get(c.uid)!.filter((b) => b.debuff).length })));
+    const plans = this.phoneBadgePlans(lists.map(({ view, c }) => ({ view, left: sorted.get(c.uid)!.filter((b) => !b.debuff).length, right: sorted.get(c.uid)!.filter((b) => b.debuff).length })), lists.reduce((m, { list }) => list.reduce((n, b) => Math.max(n, b.pct ? pctTextWidth(b.pct, PHONE_PCT_PX) : 0), m), 0));
     for (const { view, c, list, seals } of lists) {
       const plan = plans?.get(c.uid) ?? null;
-      const key = JSON.stringify([list, seals, plan]);
+      const key = JSON.stringify([list, seals, plan, this.phoneGap]);
       if (this.badgeKeys.get(c.uid) === key) continue;
       this.badgeKeys.set(c.uid, key);
-      if (plan) view.setPhoneBadges(sorted.get(c.uid)!.map((b) => ({ ...b, turns: b.hourglass })), plan);
+      if (plan) view.setPhoneBadges(sorted.get(c.uid)!.map((b) => ({ ...b, turns: b.hourglass })), { ...plan, gapItem: this.phoneGap });
       else view.setBadges(list);
       view.setSeals(seals);
     }
@@ -3013,7 +3026,9 @@ export class BattleScene extends Phaser.Scene {
     const meta: InfoMeta[] = [];
     const costNow = skillCostAmount(skill.cost, actor); // proportional costs (Wail of the Dead: 20% of current HP) show the real amount right now
     const ratio = isRatioCost(skill.cost);
-    if (skill.cost.resource === 'rage' && costNow > 0) {
+    if (skill.cost.resource === 'blood' && costNow > 0) {
+      meta.push({ icon: ensureIcon(this, 'drop', BLOOD_COLOR, false), text: `BLOOD ${costNow}${ratio ? ` (${skillCostLabel(skill.cost)})` : ''}`, hex: BLOOD_COLOR, ...(this.costDir(actor, skill) ? { dir: this.costDir(actor, skill)! } : {}) });
+    } else if (skill.cost.resource === 'rage' && costNow > 0) {
       meta.push({ icon: ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false), text: `RAGE ${costNow}${ratio ? ` (${skillCostLabel(skill.cost)})` : ''}`, hex: RAGE_COLOR, ...(this.costDir(actor, skill) ? { dir: this.costDir(actor, skill)! } : {}) });
     } else if (costNow > 0) {
       const kind = skill.cost.resource === 'mp' ? 'mp' : 'hp';
@@ -3049,7 +3064,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** Stat açıklaması (formulas.json / stat-info.ts anlamları); ACC / EVA o anki değer ve kaynağı. */
   private statTip(kind: StatKind, actor: Combatant): TipContent {
-    const stats = isDeltaStat(kind) ? this.battle.effectiveStats(actor) : actor.stats;
+    // Büyü zırhı da anlık değerle (Redtithe: tamamı kan barından, Ömer 2026-11-18; aura / zemin ekleri dahil)
+    const stats = isDeltaStat(kind) || kind === 'magicArmor' ? this.battle.effectiveStats(actor) : actor.stats;
     const info = describeStat(kind, stats, content.formulas);
     const rows = info.lines.map((l): [string, string?] => [l]);
     if (isDeltaStat(kind)) {
@@ -3100,7 +3116,7 @@ export class BattleScene extends Phaser.Scene {
   private hudStat(kind: StatKind, actor: Combatant, withTip = true): HudStat {
     const s = this.battle.effectiveStats(actor);
     const dir = isDeltaStat(kind) ? statDir(actor.stats[kind], s[kind]) : null;
-    const info = describeStat(kind, actor.stats, content.formulas);
+    const info = describeStat(kind, kind === 'magicArmor' ? s : actor.stats, content.formulas);
     const tip = withTip ? this.statTip(kind, actor) : { title: info.title, rows: [] };
     return {
       kind,
@@ -3176,7 +3192,8 @@ export class BattleScene extends Phaser.Scene {
         name: sd?.name ?? st.kind,
         color: sd?.color ?? colors.targetHighlight,
         turns: `${st.turns} turn${st.turns === 1 ? '' : 's'}`,
-        text: groundSrc.has(st.kind) ? `${statusCardText(sd)} (from ${groundSrc.get(st.kind)})` : statusCardText(sd),
+        // ipucundaki sayı gerçek değerle (örnek gücü, ağaç eki, boss / elit ölçeği; rozet yüzdesiyle aynı yardımcı, status-pct.ts)
+        text: groundSrc.has(st.kind) ? `${statusTipText(this.battle, c, st, statusCardText(sd, st))} (from ${groundSrc.get(st.kind)})` : statusTipText(this.battle, c, st, statusCardText(sd, st)),
         ...(iconUrl ? { iconUrl } : {}),
         ...(sd?.type ? { debuff: sd.type === 'debuff' } : {}),
         ...(maxStacks > 1 && st.stacks ? { stacks: st.stacks } : {}),
@@ -3246,10 +3263,10 @@ export class BattleScene extends Phaser.Scene {
       flip: c.side === 'enemy',
       hp: { value: c.hp, max: c.maxHp },
       mp: c.maxMp > 0 ? { value: c.mp, max: c.maxMp } : null,
-      rage: c.maxRage !== undefined ? { value: Math.round(this.rageShown.get(uid) ?? c.rage ?? 0), max: c.maxRage } : null,
+      rage: c.maxRage !== undefined ? { value: Math.round(this.rageShown.get(uid) ?? c.rage ?? 0), max: c.maxRage } : c.maxBlood !== undefined ? { value: Math.round(this.rageShown.get(uid) ?? c.blood ?? 0), max: c.maxBlood, blood: true } : null,
       hpIcon: this.texUrl(ensureIcon(this, statIconName('hp'), STAT_COLOR.hp, false)),
       mpIcon: this.texUrl(ensureIcon(this, statIconName('mp'), STAT_COLOR.mp, false)),
-      rageIcon: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)),
+      rageIcon: c.maxBlood !== undefined ? this.texUrl(ensureIcon(this, 'drop', BLOOD_COLOR, false)) : this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)),
       role: def?.role ?? (c.summoned ? 'Summon' : ''),
       primary: c.stats.primary ? { name: primaryName, iconUrl: icon(c.stats.primary) } : null,
       ...(c.summoned && c.level === undefined ? {} : { level: c.level ?? 1 }),
@@ -3571,6 +3588,14 @@ export class BattleScene extends Phaser.Scene {
         await this.wait(slow(60));
         return;
       }
+      case 'blood': {
+        // Redtithe kan barı: kazanç / harcama yazısı + çubuk animasyonu (Rage ile aynı yol); candan ödenen kısım ayrı 'resource' can olayıyla gelir
+        const view = this.views.get(e.actor);
+        if (e.delta !== 0) view?.floatText(`${e.delta > 0 ? '+' : ''}${e.delta} Blood`, BLOOD_COLOR, e.delta > 0 ? 38 : 44, false, { kind: 'resource' });
+        this.tweenRage(e.actor, e.after);
+        await this.wait(slow(60));
+        return;
+      }
       case 'globalUsed': {
         const actor = this.battle.get(e.actor);
         const view = this.views.get(e.actor);
@@ -3775,7 +3800,7 @@ export class BattleScene extends Phaser.Scene {
       case 'revive':
         this.uiCorpses.delete(e.target); // revived: its corpse mark is gone
         this.refreshCorpseMarks();
-        if (this.rageShown.has(e.target)) this.setRageShown(e.target, 0);
+        if (this.rageShown.has(e.target) && this.battle.get(e.target)?.maxRage !== undefined) this.setRageShown(e.target, 0); // kan barı dirilişte sıfırlanmaz
         {
           // Madde 257: Resurrection may raise the ally on another (empty) cell than its corpse
           const back = this.battle.get(e.target);
@@ -4008,11 +4033,14 @@ export class BattleScene extends Phaser.Scene {
       // Harita 3 şimşek kuralları: YER TUTUCU efektler (sanat yok)
       case 'shock': {
         const view = this.views.get(e.target);
-        view?.floatText(e.stunned ? 'Shocked: Stunned' : e.pushed > 0 ? 'Shocked' : 'Shock resisted', SHOCK_HEX, 34);
+        view?.floatText(e.stunned ? 'Electrocuted' : 'Shocked', SHOCK_HEX, 34);
         view?.ring(SHOCK_HEX, 0.9);
         await this.wait(slow(180));
         return;
       }
+      // Islak devre kıvılcımı (Ömer 2026-11-15): VFX sonra (ui-dev); bugün görsel yok, hasar olayı ayrıca gelir
+      case 'thunderSpark':
+        return;
       case 'liveWater':
         this.drawLiveWater(e.id, e.board, e.cells);
         this.reactionFloat(e.board, e.cells[0]!, 'Live Water', SHOCK_HEX);
@@ -4072,6 +4100,7 @@ export class BattleScene extends Phaser.Scene {
         if (this.endlessPaused) return; // endless ara verme: savaş alanı yalnızca görüntü (debug ile düşman ölse de sonuç ekranı yok)
         this.tut?.end(); // savaş bitti: açık ders kutusu sonuç/loot ekranının üstünde kalmasın
         this.endBattleAudio(e.winner === this.localSide);
+        logBattleEnd(e.winner === this.localSide ? 'victory' : 'defeat', this.battle); // hata raporu izi
         if (e.winner === this.localSide && this.campaign?.onVictory?.(this.battle)) return; // endless: toparlanma + ara verme (sonuç ekranı yok)
         {
           // son vuruş nefesi (a03): kısa ağır çekim + kenar koyulaşması + bekleme, sonra sonuç ekranı
@@ -5442,7 +5471,7 @@ export class BattleScene extends Phaser.Scene {
       t.value = k === 'hp' ? `${actor.hp} / ${actor.maxHp}` : `${actor.mp} / ${actor.maxMp}`;
       return t;
     };
-    const rageVal = this.rageShown.get(actor.uid) ?? actor.rage ?? 0;
+    const rageVal = this.rageShown.get(actor.uid) ?? actor.rage ?? actor.blood ?? 0;
     const notes: HudActor['notes'] = [];
     let bonus: { text: string } | null = null;
     if (primary) {
@@ -5474,7 +5503,15 @@ export class BattleScene extends Phaser.Scene {
               iconUrl: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)),
               tip: this.makeInfo('Rage', RAGE_COLOR, ensureIcon(this, uiIconName('rage'), RAGE_COLOR, true), [[`Rage ${Math.round(rageVal)} / ${actor.maxRage}`, colors.text], ...describeRage(f).map((l): [string, string?] => [l, colors.muted])], 'Resource'),
             }
-          : null,
+          : actor.maxBlood !== undefined
+            ? {
+                value: rageVal,
+                max: actor.maxBlood,
+                blood: true,
+                iconUrl: this.texUrl(ensureIcon(this, 'drop', BLOOD_COLOR, false)),
+                tip: this.makeInfo('Blood', BLOOD_COLOR, ensureIcon(this, 'drop', BLOOD_COLOR, true), [[`Blood ${Math.round(rageVal)} / ${actor.maxBlood}`, colors.text], ...describeBlood(f, Math.round(rageVal), actor.maxBlood, actor.stats.int).map((l): [string, string?] => [l, colors.muted])], 'Resource'),
+              }
+            : null,
       role: def?.role ?? (actor.summoned ? 'Summon' : ''),
       primary: primary ? { name: primaryName, iconUrl: this.texUrl(ensureIcon(this, statIconName(primary), STAT_COLOR[primary], false)) } : null,
       ...(actor.summoned && actor.level === undefined ? {} : { level: actor.level ?? 1 }),
@@ -5562,7 +5599,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** Yetersiz kaynak (plaka bedel çipini kırmızı gösterir): bekleme sürerken de ölçülür; yalnızca MP / Rage / HP bedeli. */
-  private skillLack(actor: Combatant, skill: SkillDef): { lack?: 'mp' | 'rage' | 'hp' } {
+  private skillLack(actor: Combatant, skill: SkillDef): { lack?: 'mp' | 'rage' | 'blood' | 'hp' } {
     const amount = skillCostAmount(skill.cost, actor);
     if (amount <= 0) return {};
     const b = this.battle;
@@ -5570,6 +5607,8 @@ export class BattleScene extends Phaser.Scene {
     if (skill.cost.resource === 'mp' && skillCostPay(skill.cost, actor, undefined, b.freeMp).resource === 'hp') return {};
     if (skill.cost.resource === 'mp') return !b.freeMp && actor.mp < amount ? { lack: 'mp' } : {};
     if (skill.cost.resource === 'rage') return !b.freeRage && (actor.rage ?? 0) < amount ? { lack: 'rage' } : {};
+    // Redtithe: eksik kan candan ödenebiliyorsa eksik değil (motor canUse ile aynı: bloodSplitFor)
+    if (skill.cost.resource === 'blood') return !b.freeRage && !b.bloodSplitFor(actor, skill, amount).ok ? { lack: 'blood' } : {};
     if (skill.cost.resource === 'hp') return actor.hp <= amount ? { lack: 'hp' } : {};
     return {};
   }
@@ -5609,7 +5648,8 @@ export class BattleScene extends Phaser.Scene {
     const costNow = pay.amount;
     const cdir = this.costDir(actor, skill);
     const cdDir = turns ? this.cooldownDir(actor, skill) : null;
-    if (costNow > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)), text: `RAGE ${costNow}`, color: RAGE_COLOR, kind: 'rage', ...(cdir ? { dir: cdir } : {}) });
+    if (costNow > 0 && skill.cost.resource === 'blood') out.push({ iconUrl: this.texUrl(ensureIcon(this, 'drop', BLOOD_COLOR, false)), text: `BLOOD ${costNow}`, color: BLOOD_COLOR, kind: 'blood', ...(cdir ? { dir: cdir } : {}) });
+    else if (costNow > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)), text: `RAGE ${costNow}`, color: RAGE_COLOR, kind: 'rage', ...(cdir ? { dir: cdir } : {}) });
     else if (costNow > 0) {
       const kind = pay.resource === 'mp' ? 'mp' : 'hp';
       out.push({ iconUrl: this.texUrl(ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false)), text: String(costNow), kind, ...(cdir && pay.resource === skill.cost.resource ? { dir: cdir } : {}) });
@@ -5793,7 +5833,7 @@ export class BattleScene extends Phaser.Scene {
       c.mp = Math.round(c.maxMp * u.mpRatio);
       c.statuses = fallen ? [] : c.statuses.filter((st) => content.statuses[st.kind]?.type !== 'debuff');
       if (fallen) {
-        if (this.rageShown.has(c.uid)) this.setRageShown(c.uid, 0);
+        if (this.rageShown.has(c.uid) && c.maxRage !== undefined) this.setRageShown(c.uid, 0);
         c.rage = c.maxRage !== undefined ? 0 : c.rage;
         this.uiCorpses.delete(c.uid);
         view.revive(c.hp, c.mp);

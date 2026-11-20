@@ -3,7 +3,7 @@
  * değişimi, boss / gönüllü katılımı, Oath kahraman seçimi) ve "Choose a companion" önerisi AYNI bileşeni kullanır; birinde değişiklik hepsine uyar.
  * Görünüm: solda satır listesi (portre, ad, rol, STR / DEX / INT / LCK ana stat vurgulu, sınıf amblemi), sağda satırların toplam yüksekliğinde kahraman kartı
  * (büyük portre, ad, rol / menzil çipleri, açıklama; ALTINDA skill listesi: pasif 1. sırada, gerçek skill ikonları). Oyun mantığı değişmez: var olan
- * `.mw-card` düğmeleri (tıklama + seçim) aynen çalışır, bu dosya yalnızca onları yeniden giydirir ve yanına kartı koyar. Telefonda (html.short) eski kart görünümü.
+ * `.mw-card` düğmeleri (tıklama + seçim) aynen çalışır, bu dosya yalnızca onları yeniden giydirir ve yanına kartı koyar. Telefonda da aynı pencere (ölçek küçülür).
  * Stil: src/ui/hero-picker.css (kapsam `.mw.hp`).
  */
 import './hero-picker.css';
@@ -156,27 +156,39 @@ export function mountHeroPicker(wrap: HTMLElement, cards: readonly MwCard[], o: 
   };
   // sağdaki kart = soldaki satırların toplam yüksekliği (az satırda içeriği sığdırmak için en az doğal yüksekliği)
   const fit = (): void => {
-    // Telefon (html.short): kartlar yatay kayan sütunlar, sağ kart yok; satır yüksekliği ölçümü kendi kendini büyütüyordu (kartlar 33 milyon px)
-    if (document.documentElement.classList.contains('short')) {
-      list.style.height = '';
-      detail.style.height = '';
-      o.place?.();
-      return;
-    }
     if (visibleRows) {
       const rs = list.querySelectorAll<HTMLElement>('.mw-card');
       if (rs.length) {
         const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
-        const rowH = Math.min(...[...rs].map((r) => r.getBoundingClientRect().height));
+        // offsetHeight: döndürülmüş sahnede (dikey telefon) getBoundingClientRect eksenleri değiştirir
+        const rowH = Math.min(...[...rs].map((r) => r.offsetHeight));
         list.style.height = `${Math.ceil(rowH * visibleRows + gap * (visibleRows - 1))}px`;
       }
     }
     detail.style.height = 'auto';
-    detail.style.height = `${Math.max(detail.offsetHeight, list.getBoundingClientRect().height)}px`;
+    detail.style.height = `${Math.max(detail.offsetHeight, list.offsetHeight)}px`;
     o.place?.();
   };
-  new ResizeObserver(fit).observe(list);
+  // Telefon (html.short): pencere masaüstü ölçüsünde, ekrana EŞİT ölçekle (zoom) sığdırılır; oran bozulmaz
+  const scaleToFit = (): void => {
+    if (!document.documentElement.classList.contains('short')) return;
+    const panel = wrap.querySelector<HTMLElement>('.mw-panel');
+    const host = wrap.querySelector<HTMLElement>('.mw-center') ?? wrap.closest<HTMLElement>('.mw-center');
+    if (!panel || !host) return;
+    panel.style.setProperty('--hp-zoom', '1');
+    const natW = panel.offsetWidth;
+    const natH = panel.offsetHeight;
+    const k = Math.min((host.clientWidth - 12) / natW, (host.clientHeight - 12) / natH, 1);
+    const z = String(Math.max(0.2, Math.floor(k * 1000) / 1000));
+    panel.style.setProperty('--hp-zoom', z);
+  };
+  new ResizeObserver(() => {
+    fit();
+    scaleToFit();
+  }).observe(list);
+  window.addEventListener('resize', scaleToFit);
   fit();
+  scaleToFit();
   window.requestAnimationFrame(fit);
   return () => paint(focus());
 }

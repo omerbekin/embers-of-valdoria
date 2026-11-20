@@ -23,11 +23,11 @@ export interface AiValueConfig {
   /** M-F Darkness: ateş skill'inin aydınlatma payı ve Lantern'e vurmanın payı (kısıtlı tarafın toplam tur değerinin oranı). Yoksa 0. */
   darkness?: { fireLight: number; lanternBreak: number };
   /** Harita 3 şimşek kuralları (ai.ts > thunderValue, thunderCellWorth). Yoksa 0. */
-  thunder?: { pushShare: number; liveStay: number; flashCost: number; cellRisk: number; ironRisk: number };
+  thunder?: { shockShare: number; shieldShare: number; liveStay: number; flashCost: number; cellRisk: number; ironRisk: number };
   /** Harita 3 4. dilim mob kitleri (ai.ts > mobKitValue). Yoksa 0. */
   mobKit?: { sunder: number; wardEtch: number; lastEmber: number; exposure: number; diveSafe: number; spentTurn: number; coolTurn: number; coolArmor: number; reach: number; stormhide: number; stagger: number; furnace: number; chant: number; fury: number; lightDark: number; kindle: number; graveCold: number; hoarfrost: number };
   /** Set kuralları (ai.ts > setRuleValue, Banked Coals; ai.json > value.setRules). Yoksa 0. */
-  setRules?: { coalDelay: number; coalDoomed: number; coalCover: number; unseenGift?: number; ropeFortify?: number; counterCost?: number };
+  setRules?: { coalDelay: number; coalDoomed: number; coalCover: number; unseenGift?: number; ropeFortify?: number; counterCost?: number; refrainGift?: number; refrainSeed?: number; bequestCost?: number; burdenShare?: number };
   /** Harita 3 boss / elit dokunuşları (ai.ts > bossTouchValue). Yoksa 0. */
   bossTouch?: { heat: number; whiteout: number; sermon: number; sermonTurn: number; sermonBreak: number; packHeal: number; packKill: number; vault: number; frostbound: number; caveMark: number; fervour: number; everburn: number; quench: number; nave: number; crown: number; shepherd: number; douse: number; command: number; ranks: number; oath: number; coreBurn: number };
   /** Harita 3 imza mekanikleri (ai.ts > signatureValue, rodChoice). Yoksa 0. */
@@ -72,6 +72,12 @@ export interface AiValueConfig {
   /** Spellbreaker's Instinct (open-questions 456): MP bedelli skill rakip AM'in takımını kapsıyorsa bedel = advance x AM'in tur değeri x bu pay (yoksa 1). */
   instinctShare?: number;
   /**
+   * Redtithe kan barı (Ömer 2026-11-17; PROVİZYON, sim YOK): costShare = bir kanın can-eşdeğeri (maks can x hpPerBlood x bu; kan yenilenir, can
+   * yenilenmez); gainShare = kan kazancının payı (Tithe Cut; Mirror Vein kalkanlarının büyü emişinden beklenen kan da bu payla,
+   * 2026-11-18); brandTickShare = Blood Brand'in skill başı ek Bleeding tikinin payı; brandCostShare = işaretlinin MP bedel artışının payı.
+   */
+  blood?: { costShare: number; gainShare: number; brandTickShare: number; brandCostShare: number };
+  /**
    * Boşuna çağrı öldürme (Undead aynası tıkanması, 2026-10-10): çağrının tarafında onu ufuk içinde YENİDEN çağırabilecek canlı bir çağırıcı varsa
    * (skill'i cooldown'dan çıkıyor, MP'si yetiyor) o çağrıyı öldürmenin/ona baskının değeri bu payla çarpılır; hedef seçimi çağırıcıya kayar. Yoksa 1 (eski davranış).
    */
@@ -98,9 +104,9 @@ export interface AiValueConfig {
    */
   tauntPull?: number;
   /** Düz skill debuff'larının değer çarpanları (1 = ham ölçü): silence = Silenced'ın engellenen MP'li hamlesi (Clutch, Hag's Mark), mire = Mire-Bound
-   * yavaşlatması (Saltbound). Ölçüm: Hag's Mark seçimi Omen'li eski davranışa yakın (content-designer 2026-10-25). noEvasion = Saltbound'un kaçınma 0'ının
+   * Saltbound ek turunun sayılan payı (Tur 26). Ölçüm: Hag's Mark seçimi Omen'li eski davranışa yakın (content-designer 2026-10-25). noEvasion = Saltbound'un kaçınma 0'ının
    * dostlara isabet kazancı, rooted = bekleyen telgraftan kaçamamanın değeri, weaken = Spellbound / damageDealtMult kaybı, pin = Saltbound hedefi kaçamaz: dostların ona beklenen hasarı x pay (engine-dev 2026-10-27, PROVİZYON). */
-  debuffShare?: Partial<{ silence: number; mire: number; noEvasion: number; rooted: number; weaken: number; pin: number }>;
+  debuffShare?: Partial<{ silence: number; mire: number; curse: number; noEvasion: number; rooted: number; weaken: number; pin: number }>;
   /**
    * Ley Brand değer ayarları (open-questions 444, PROVİZYON): poolShare = tainted mana hasar potansiyelinin sayılan payı, costShare = MP'li hedefin
    * elindeki MP'nin yakım hasarı payı, freshTurns = hedefte bu kadar ya da daha az tur kalmışsa yeniden atış refreshShare kadar değerli (fazlası 0).
@@ -131,6 +137,14 @@ export interface AiCoverageConfig {
   omenTransferShare: number;
   grudgeShare: number;
   dispelBuffShare: number;
+  /**
+   * Lucky Streak (Gambler, 2026-11-18, PROVİZYON): spendShare = dolu seriyi harcayan skill'e brüt değerin eki (seri 3'te 2./3./4. skill öne),
+   * riskShare = seriyi silebilecek bahsin bedeli (kayıp ihtimali x seri / tavan x brüt), lossShare = All In'in düşük seride (1-2) sildiği seri ilerlemesinin bedeli (seri / tavan x brüt; düşük seriyle
+   * kazanma ihtimalinin azlığı zaten brüt değerde),
+   * buildShare = seri kazandırma ihtimalinin değeri (ihtimal x brüt), recastShare = Card Trick yeniden kullanımının değeri (ihtimal x brüt),
+   * fillShare = All In kazanınca dolan serinin değeri (2026-11-19, winFillsStreak; kazanma ihtimali x (tavan - seri) / tavan x brüt).
+   */
+  streak: { spendShare: number; riskShare: number; lossShare: number; buildShare: number; recastShare: number; fillShare: number };
 }
 
 export const DEFAULT_COVERAGE: AiCoverageConfig = {
@@ -147,6 +161,7 @@ export const DEFAULT_COVERAGE: AiCoverageConfig = {
   omenTransferShare: 1,
   grudgeShare: 1,
   dispelBuffShare: 1,
+  streak: { spendShare: 0.25, riskShare: 0.3, lossShare: 0.1, buildShare: 0.1, recastShare: 1, fillShare: 0.3 },
 };
 
 const covCache = new WeakMap<AiValueConfig, AiCoverageConfig>();
@@ -163,7 +178,7 @@ export function coverageOf(vc: AiValueConfig): AiCoverageConfig {
   let r = covCache.get(vc);
   if (!r) {
     const c = vc.aiCov ?? {};
-    r = { ...DEFAULT_COVERAGE, ...c, bell: { ...DEFAULT_COVERAGE.bell, ...(c.bell ?? {}) }, push: { ...DEFAULT_COVERAGE.push, ...(c.push ?? {}) }, tree: { ...DEFAULT_COVERAGE.tree, ...(c.tree ?? {}) } };
+    r = { ...DEFAULT_COVERAGE, ...c, bell: { ...DEFAULT_COVERAGE.bell, ...(c.bell ?? {}) }, push: { ...DEFAULT_COVERAGE.push, ...(c.push ?? {}) }, tree: { ...DEFAULT_COVERAGE.tree, ...(c.tree ?? {}) }, streak: { ...DEFAULT_COVERAGE.streak, ...(c.streak ?? {}) } };
     covCache.set(vc, r);
   }
   return r;

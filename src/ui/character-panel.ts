@@ -63,7 +63,7 @@ import { playStatFx } from './reward-fx';
 import { escHtml, type SkillCostChip } from './skill-bar';
 import { tipHtml, type TipContent } from './battle-hud';
 import { iconUrl } from './dom-icons';
-import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
+import { BLOOD_COLOR, RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
 import { skillMiniGrid } from './shape-diagram';
 import { passiveTip, skillTip } from './gear-skills';
 import { nextPointLinesFor, treePatchedSkill } from './skill-tree-preview';
@@ -880,7 +880,8 @@ const colorDiffs = (html: string): string => html.replace(/\(([+-])(\d+(?:\.\d+)
 function costChips(skill: SkillDef, stats: Stats): SkillCostChip[] {
   const out: SkillCostChip[] = [];
   const amount = skillCostAmount(skill.cost, { hp: stats.hp, mp: stats.mp, rage: 0 } as never);
-  if (amount > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: iconUrl(uiIconName('rage'), RAGE_COLOR), text: `RAGE ${amount}`, color: RAGE_COLOR });
+  if (amount > 0 && skill.cost.resource === 'blood') out.push({ iconUrl: iconUrl('drop', BLOOD_COLOR), text: `BLOOD ${amount}`, color: BLOOD_COLOR });
+  else if (amount > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: iconUrl(uiIconName('rage'), RAGE_COLOR), text: `RAGE ${amount}`, color: RAGE_COLOR });
   else if (amount > 0) {
     const kind = skill.cost.resource === 'mp' ? 'mp' : 'hp';
     out.push({ iconUrl: iconUrl(statIconName(kind), STAT_COLOR[kind]), text: String(amount) });
@@ -895,7 +896,8 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null, evo
   // meta satırı savaşla aynı: bedel (Rage / MP / HP ikonuyla ya da "Free"), cooldown (kum saati)
   const meta: NonNullable<TipContent['meta']> = [];
   const amount = skillCostAmount(skill.cost, { hp: stats.hp, mp: stats.mp, rage: 0 } as never);
-  if (amount > 0 && skill.cost.resource === 'rage') meta.push({ iconUrl: iconUrl(uiIconName('rage'), RAGE_COLOR), text: `RAGE ${amount}`, color: RAGE_COLOR });
+  if (amount > 0 && skill.cost.resource === 'blood') meta.push({ iconUrl: iconUrl('drop', BLOOD_COLOR), text: `BLOOD ${amount}`, color: BLOOD_COLOR });
+  else if (amount > 0 && skill.cost.resource === 'rage') meta.push({ iconUrl: iconUrl(uiIconName('rage'), RAGE_COLOR), text: `RAGE ${amount}`, color: RAGE_COLOR });
   else if (amount > 0) {
     const kind = skill.cost.resource === 'mp' ? 'mp' : 'hp';
     meta.push({ iconUrl: iconUrl(statIconName(kind), STAT_COLOR[kind]), text: t.meta[0] ?? String(amount), color: COLORS.text });

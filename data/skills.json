@@ -16,13 +16,13 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.35
+        "power": 0.33
       },
       {
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.35
+        "power": 0.33
       }
     ],
     "vfx": "doublestrike",
@@ -57,7 +57,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.45,
+        "power": 0.437,
         "lifesteal": 0.2
       }
     ],
@@ -457,7 +457,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 0.42
+        "power": 0.399
       },
       {
         "type": "status",
@@ -494,10 +494,18 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 0.605,
-        "falloff": 0.7
+        "power": 0.575,
+        "falloff": 0.85
+      },
+      {
+        "type": "dot",
+        "status": "bleeding",
+        "scale": "dex",
+        "power": 0.1,
+        "turns": 2
       }
     ],
+    "_not": "Ömer 2026-11-16 Tur 28-29: 'Kanatan ok': vurduğu her düşmana 2 tur Bleeding; hedef başı azalma 0,7 -> 0,85. Kanama gücü 0,1 DEX / tik PROVİZYON (Ömer sayı vermedi; open-questions Q-NEW Tur 28-29).",
     "vfx": "pierce",
     "sfx": [
       "heavyTwang",
@@ -518,7 +526,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 16
+      "amount": 12
     },
     "cooldown": 3,
     "motion": "sky",
@@ -662,7 +670,7 @@
       {
         "type": "summon",
         "unit": "treant",
-        "lifespan": 3
+        "lifespan": 4
       }
     ],
     "vfx": "summonroots",
@@ -696,7 +704,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.64,
+        "power": 0.672,
         "element": "nature"
       },
       {
@@ -729,7 +737,8 @@
         "type": "taunt",
         "turns": 2,
         "breakRatio": 0.3,
-        "allyDamageMult": 0.9
+        "allyDamageMult": 0.9,
+        "armorBonus": 20
       }
     ],
     "vfx": "taunt2",
@@ -739,7 +748,7 @@
     ]
   },
   "close_ranks": {
-    "_not": "Ömer 2026-10-20: Defender'da Guard'ın yerine. Seçilen dost + onun SIRASINDAKİ dostlar (splash 'row', Tremor Slam'ın row şekli; Defender hariç) 3 tur (her taşıyanın kendi turları, eski Guard sayımı) Guard alır: aldıkları hasarın %50'si Defender'a geçer (Guard makinesi; aktarılan pay Defender zırhıyla yeniden azalmaz; Defender ölünce aktarım durur; bir birimde tek Guard, yenisi eskisinin yerine geçer). Menzil 2 seçilen dosta bakar; yarım turn Guard'la aynı; cooldown 5 (Ömer: %35 değersizse %50 + cooldown 5); bedel 8 MP (ilk yazım 10 MP idi; güncel değer cost.amount). İkon/vfx/ses Guard'ınki.",
+    "_not": "Ömer 2026-10-20: Defender'da Guard'ın yerine. Seçilen dost + onun SIRASINDAKİ dostlar (splash 'row', Tremor Slam'ın row şekli; Defender hariç) 3 tur (her taşıyanın kendi turları, eski Guard sayımı) Guard alır: aldıkları hasarın %50'si Defender'a geçer (Guard makinesi; aktarılan pay Defender zırhıyla yeniden azalmaz; Defender ölünce aktarım durur; bir birimde tek Guard, yenisi eskisinin yerine geçer). Menzil 2 seçilen dosta bakar; yarım turn Guard'la aynı; cooldown 4 (Ömer 2026-11-18; önce 5); bedel 8 MP (güncel değer cost.amount). Ömer 2026-11-18: Guard sürdükçe Guard'lı her dost Defender'ın Bulwark Aura payının auraShare (0,25) katını alır (pasif %40 iken Defender zırhının %10'u; ağaçla güçlenen anlık pay ile ölçeklenir); komşu olup pasifi zaten alan dost iki kez almaz (büyük olan); Defender düşünce kalkar. İkon/vfx/ses Guard'ınki.",
     "id": "close_ranks",
     "name": "Close Ranks",
     "icon": "closeranks2",
@@ -753,7 +762,7 @@
       "resource": "mp",
       "amount": 8
     },
-    "cooldown": 5,
+    "cooldown": 4,
     "turnCost": 0.5,
     "motion": "cast",
     "fx": "#7fb8e8",
@@ -761,7 +770,8 @@
       {
         "type": "guard",
         "turns": 3,
-        "share": 0.5
+        "share": 0.5,
+        "auraShare": 0.25
       }
     ],
     "vfx": "guard2",
@@ -771,14 +781,14 @@
     ]
   },
   "mana_burn": {
-    "_not": "Görünüm (Ömer 2026-10-18, Anti-Mage kadın hançer fırlatan): motor ve yapay zeka `motion: melee` görür (menzil kuralı, yapay zeka değeri DEĞİŞMEZ). `viewMotion: ranged` YALNIZCA savaş görünümünde okunur (src/game/pose-timing.ts > viewMotion): Anti-Mage hedefe koşmaz, yerinden hançer fırlatır.",
+    "_not": "Tithe Cut (Redtithe, Ömer 2026-11-17; eski Mana Steal, id AYNI: kayıt / ağaç / sprite uyumu). Fiziksel DEX bıçak vuruşu; isabet edince hedefin MP'sini söker (amount), söktüğü her MP için bloodPerMp kan + isabet başına formulas.bloodBar.hitGain kan (MP'siz hedef: yalnız hitGain). Görünüm: motor/YZ motion melee görür, viewMotion ranged yalnız savaş görünümünde (hançer fırlatır). Sayılar PROVİZYON.",
     "id": "mana_burn",
-    "name": "Mana Steal",
+    "name": "Tithe Cut",
     "icon": "manaburn",
     "target": "single_enemy",
     "range": 4,
     "cost": {
-      "resource": "mp",
+      "resource": "blood",
       "amount": 0
     },
     "motion": "melee",
@@ -787,20 +797,14 @@
     "effects": [
       {
         "type": "damage",
-        "damageType": "magic",
-        "scale": "int",
-        "power": 0.665,
-        "element": "arcane"
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.665
       },
       {
         "type": "manaBurn",
         "amount": 7,
-        "gainRatio": 0.5
-      },
-      {
-        "type": "status",
-        "status": "ley_thread",
-        "turns": 2
+        "bloodPerMp": 2
       }
     ],
     "vfx": "manasteal",
@@ -810,45 +814,40 @@
     ]
   },
   "drain_field": {
-    "_not": "Ley Brand (Ömer 2026-10-27, open-questions 444; eski Drain Field'ın yerine, id kayıt / ağaç / YZ uyumu için AYNI kaldı). 3x3 alandaki her düşmana Branded (turns). MP havuzu olmayan düşman maks canının taintPct'i kadar DOLU tainted mana alır (harcayamaz; Brand bitince silinir); MP'si olan düşmanın MP bedelleri costMult katı (yukarı yuvarlanır). Branded düşmanın yakılan/çalınan her MP'si yakana burnDamagePct x MP büyü hasarı (isabet/kritik yok, büyü zırhı işler); süre doğal bitince kalan tainted mana explodePct x kalan büyü hasarıyla patlar. Silence artık skill'de değil, ağaçta (Hush of the Brand). Ömer 2026-10-29 (open-questions 444): castBurnPct = Branded birim MP bedelli skill kullanınca ödediği (costMult'lu) bedelin bu oranı kadar EK MP yanar (yetmezse olanı), yanan MP yakım sayılır (burnDamagePct hasar, damgalayan AM'den); markDamagePct = markSkills (Mana Steal, Void Strike) Branded hedefe bu oranda fazla (çarpımsal, 'X% more') hasar. Sayılar PROVİZYON. Ley Thread (Ömer 2026-10-29): Mana Steal isabet ettiği hedefe 2 tur ley_thread bırakır; Brand iplikli hedefte threadTurns tur daha uzun sürer ve castBurnPct x threadBurnMult olur, iplik o anda tüketilir (Ömer 2026-11-02: castBurnPct 0,5 ve threadBurnMult 1,5 kesin).",
+    "_not": "Blood Brand (Redtithe, Ömer 2026-11-17; eski Ley Brand, id AYNI). Tek hedefe Bleeding (dot, 3 tur) + blood_brand işareti: işaretli herhangi bir class skill'i kullanınca Bleeding'den hemen ticks ek tik (süre azalmaz); MP bedelleri costMult katı (Ömer %50 / %100 sonra seçecek: tek sayı); markSkills (Tithe Cut, Exsanguinate) işaretliye markDamagePct fazla (eski Ley Brand kuralı). Bleeding gücü (dex 0,2) Lead varsayımı. Sayılar PROVİZYON.",
     "id": "drain_field",
-    "name": "Ley Brand",
+    "name": "Blood Brand",
     "icon": "drainfield",
-    "target": "area_enemies",
+    "target": "single_enemy",
     "range": 4,
-    "area": {
-      "shape": "rect",
-      "rows": 3,
-      "cols": 3,
-      "anchor": "bottom_left"
-    },
     "cost": {
-      "resource": "mp",
-      "amount": 12
+      "resource": "blood",
+      "amount": 25
     },
     "cooldown": 3,
     "motion": "sky",
+    "skyFx": "void",
     "fx": "#9b59d0",
     "effects": [
       {
-        "type": "brand",
+        "type": "dot",
+        "status": "bleeding",
+        "scale": "dex",
+        "power": 0.214,
+        "turns": 3
+      },
+      {
+        "type": "bloodBrand",
         "turns": 3,
-        "taintPct": 0.2,
         "costMult": 1.5,
-        "burnDamagePct": 0.49,
-        "explodePct": 0.49,
-        "castBurnPct": 0.5,
+        "ticks": 1,
         "markDamagePct": 0.4,
         "markSkills": [
           "mana_burn",
           "void_strike"
-        ],
-        "threadTurns": 2,
-        "threadBurnMult": 1.5,
-        "element": "arcane"
+        ]
       }
     ],
-    "skyFx": "void",
     "vfx": "drainfield",
     "sfx": [
       "voidSuction",
@@ -857,13 +856,15 @@
     ]
   },
   "void_strike": {
+    "_not": "Exsanguinate (Redtithe, Ömer 2026-11-17; eski Void Strike, id AYNI). En az 40 kan ister (Ömer 2026-11-20 form r33: 50 -> 40), barın TAMAMINI harcar (spendAll; candan ödenmez); hasar x(1 + bloodSpentBonus x harcanan kan); hedefin eksik MP'si başına bonusPerMissingMana. Fiziksel: ağır kritik kan zemini kuralı kendiliğinden işler. Sayılar PROVİZYON.",
     "id": "void_strike",
-    "name": "Void Strike",
+    "name": "Exsanguinate",
     "icon": "voidstrike",
     "target": "single_enemy",
     "cost": {
-      "resource": "mp",
-      "amount": 28
+      "resource": "blood",
+      "amount": 30,
+      "spendAll": true
     },
     "cooldown": 3,
     "initialCooldown": 3,
@@ -872,31 +873,28 @@
     "effects": [
       {
         "type": "damage",
-        "damageType": "magic",
-        "scale": "int",
-        "power": 0.95,
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 1.05,
         "bonusPerMissingMana": 1,
-        "element": "arcane"
+        "bloodSpentBonus": 0.01
       }
     ],
     "vfx": "voidstrike",
     "sfx": [
       "voidPulse",
       "implode"
-    ],
-    "ai": {
-      "reserveMp": 2
-    }
+    ]
   },
   "spell_ward": {
     "id": "spell_ward",
-    "name": "Spell Ward",
-    "_not": "Madde 240 (Ömer): artık dosta ya da kendine atılır (single_ally, excludeSelf YOK). Büyü kalkanı Int x 0,75 (Ömer 2026-11-08, 0,6 sonra 0,75: kalan MP payı kaldırıldı, güç INT'e kaydı; eskisi Int x 0,15 + kalan MP x 0,6). Kalkan bir skill vuruşunu emdiği HER darbede (madde 241) saldıranın MP'sinden burnMana yakar ve saldıranın üstünde buff varsa dispelChance ihtimalle RASTGELE bir buff'ını siler. Yer etkisi tiki tetiklemez. Sayılar PROVİZYON.",
+    "name": "Mirror Vein",
+    "_not": "Mirror Vein = Kan Örtüsü (Redtithe; Ömer 2026-11-18 yeniden tasarım, eski tek dost / ilk büyüyü emip Bleeding yansıtma etkisi KALKTI; id AYNI). Bütün takıma (yaşayan dostlar + kendisi, all_allies) 2 tur kalkan: birim başına flat + INT x power = 6 + INT x 0,5 (Redtithe'in INT'i; Shield power affix'i ikisini de çarpar). Kalkan her hasarı emer; süresi taşıyanın kendi tur başında düşer, yeniden atılınca süre yenilenir. Bu kalkanlardan biri bir BÜYÜ (magic hasarlı, düşman skill vuruşu) emince Redtithe kan kazanır: onAbsorb.giveBlood = base + perDex x DEX = 2 + DEX x 0,2 (vuruş başına, üst sınır yok; Lead varsayımı). Bedel 20 kan (Ömer 2026-11-20 form r34: 20 -> 15), bekleme 3. Sayılar Ömer'in (sim yok).",
     "icon": "spellward",
-    "target": "single_ally",
+    "target": "all_allies",
     "cost": {
-      "resource": "mp",
-      "amount": 12
+      "resource": "blood",
+      "amount": 15
     },
     "cooldown": 3,
     "motion": "cast",
@@ -905,11 +903,14 @@
       {
         "type": "shield",
         "scale": "int",
-        "power": 0.75,
-        "shieldType": "magic",
+        "flat": 6,
+        "power": 0.5,
+        "turns": 2,
         "onAbsorb": {
-          "burnMana": 8,
-          "dispelChance": 0.25
+          "giveBlood": {
+            "base": 2,
+            "perDex": 0.2
+          }
         }
       }
     ],
@@ -935,7 +936,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "int",
-        "power": 0.575
+        "power": 0.664
       }
     ],
     "vfx": "rootfall",
@@ -970,7 +971,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.225,
+        "power": 0.26,
         "element": "nature",
         "falloff": 0.8
       },
@@ -1097,7 +1098,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.675
+        "power": 0.635
       },
       {
         "type": "status",
@@ -1133,7 +1134,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.465,
+        "power": 0.451,
         "powerPerRage": 0.023
       }
     ],
@@ -1197,7 +1198,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.232,
+        "power": 0.3,
         "bonusScale": [
           {
             "stat": "armor",
@@ -1271,7 +1272,7 @@
     "target": "dead_ally",
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 12
     },
     "cooldown": 5,
     "motion": "cast",
@@ -1310,8 +1311,14 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "luck",
-        "power": 0.735,
-        "repeatChance": 0.25
+        "power": 0.794,
+        "dice": {
+          "count": 2,
+          "sides": 6,
+          "mean": 7,
+          "doubleGain": 1
+        },
+        "_not": "Gambler rework (Ömer 2026-11-18; sayılar PROVİZYON): iki zar (1-6, seed'li), hasar = power x (toplam / 7); çift gelirse Lucky Streak +1. Tekrar şansı (eski repeatChance 0,25) artık pasifte (Lucky Streak chance)."
       }
     ],
     "vfx": "loadeddice",
@@ -1347,6 +1354,15 @@
         }
       }
     ],
+    "streak": {
+      "betWinGain": 1,
+      "betLoseReset": true,
+      "full": {
+        "betWin": true,
+        "lifesteal": 0.5
+      }
+    },
+    "_not": "Gambler rework (Ömer 2026-11-18; sayılar PROVİZYON): bahis kazanırsa Lucky Streak +1, kaybederse 0. Dolu seride (3) atılırsa seri harcanır: bahis kesin kazanılır + verilen hasarın %50'si can emme.",
     "vfx": "duelbet",
     "sfx": [
       "duelDraw",
@@ -1372,7 +1388,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "luck",
-        "power": 0.635
+        "power": 0.686
       },
       {
         "type": "randomStatus",
@@ -1395,6 +1411,29 @@
         ]
       }
     ],
+    "streak": {
+      "repeat": "recast",
+      "full": {
+        "count": 3,
+        "sure": {
+          "status": "stun",
+          "turns": 1
+        },
+        "others": [
+          {
+            "status": "slow",
+            "turns": 2,
+            "weight": 1
+          },
+          {
+            "status": "wound",
+            "turns": 2,
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "_not": "Gambler rework (Ömer 2026-11-18; sayılar PROVİZYON): dolu seride (3) atılırsa seri harcanır: 3 rastgele düşman, biri (rastgele) kesin Stun 1 tur, diğerleri Slow ya da Wound 2 tur (eşit). Pasif tekrarı (repeat recast) yeni rastgele hedeflerle aynı biçimde bir kez daha atar.",
     "vfx": "cardfan",
     "sfx": [
       "cardFlick",
@@ -1423,13 +1462,25 @@
         "bet": {
           "resource": "mp",
           "ratio": 1,
-          "winChance": 0.75,
-          "winMult": 1.8,
-          "loseMult": 0.6,
-          "perStake": 0.0667
+          "winChance": 0.5,
+          "winMult": 2.2,
+          "loseMult": 0,
+          "perStake": 0.0667,
+          "loseHpRatio": 0.1
         }
       }
     ],
+    "streak": {
+      "winChanceByStreak": [
+        0.5,
+        0.65,
+        0.8,
+        1
+      ],
+      "winFillsStreak": true,
+      "fullStreakMore": 0.3
+    },
+    "_not": "Gambler rework (Ömer 2026-11-18, 'her şey masaya'; sayılar PROVİZYON): tüm MP ve tüm seri yatırılır; kazanma ihtimali seriye göre (0/1/2/3 = %50/%65/%80/%100; bet.winChance = seri 0 değeri). Kaybederse hasar 0, MP 0, maks canın %10'u gider (en az 1 can kalır), seri 0. Seri ödülü (Ömer 2026-11-19): seri 0-2'de kazanırsa seri 3'e (dolu) çıkar (winFillsStreak); seri 3'te atılırsa kesin kazanır, kazanç x1,3 ayrı çarpan (fullStreakMore 0,3, havuza girmez) ve seri 0'lanır.",
     "vfx": "allin",
     "sfx": [
       "heartbeatRise",
@@ -1730,7 +1781,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.834
+        "power": 0.722
       },
       {
         "type": "omen",
@@ -1770,13 +1821,13 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.3
+        "power": 0.285
       },
       {
         "type": "dot",
         "status": "wither",
         "scale": "luck",
-        "power": 0.1,
+        "power": 0.095,
         "turns": 3
       },
       {
@@ -1817,7 +1868,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.73,
+        "power": 0.776,
         "critBonus": 0.25
       },
       {
@@ -1858,7 +1909,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.73
+        "power": 0.694
       },
       {
         "type": "omen",
@@ -2596,7 +2647,14 @@
         "damageType": "physical",
         "scale": "dex",
         "power": 0.02,
-        "falloff": 0.7
+        "falloff": 0.85
+      },
+      {
+        "type": "dot",
+        "status": "bleeding",
+        "scale": "dex",
+        "power": 0.02,
+        "turns": 2
       }
     ],
     "vfx": "pierce",
@@ -3288,9 +3346,9 @@
     "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_mana_burn": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mana Steal kopyası; gerçek efekt/ses/hedef (artOf mana_burn), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Tithe Cut kopyası; gerçek efekt/ses/hedef (artOf mana_burn), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_mana_burn",
-    "name": "Mana Steal",
+    "name": "Tithe Cut",
     "icon": "manaburn",
     "target": "single_enemy",
     "range": 4,
@@ -3304,20 +3362,14 @@
     "effects": [
       {
         "type": "damage",
-        "damageType": "magic",
-        "scale": "int",
-        "power": 0.02,
-        "element": "arcane"
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02
       },
       {
         "type": "manaBurn",
-        "amount": 10,
-        "gainRatio": 0.5
-      },
-      {
-        "type": "status",
-        "status": "ley_thread",
-        "turns": 2
+        "amount": 7,
+        "bloodPerMp": 2
       }
     ],
     "vfx": "manasteal",
@@ -3330,44 +3382,39 @@
     "note": "Pose test: plays the Throw pose."
   },
   "pt_drain_field": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Ley Brand (eski Drain Field) kopyası; gerçek efekt/ses/hedef (artOf drain_field), v2 poz takımında 'raise'. Bedel 0, cooldown yok.",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Blood Brand kopyası; gerçek efekt/ses/hedef (artOf drain_field), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_drain_field",
-    "name": "Ley Brand",
+    "name": "Blood Brand",
     "icon": "drainfield",
-    "target": "area_enemies",
+    "target": "single_enemy",
     "range": 4,
-    "area": {
-      "shape": "rect",
-      "rows": 3,
-      "cols": 3,
-      "anchor": "bottom_left"
-    },
     "cost": {
       "resource": "mp",
       "amount": 0
     },
     "motion": "sky",
+    "skyFx": "void",
     "fx": "#9b59d0",
     "effects": [
       {
-        "type": "brand",
+        "type": "dot",
+        "status": "bleeding",
+        "scale": "dex",
+        "power": 0.02,
+        "turns": 3
+      },
+      {
+        "type": "bloodBrand",
         "turns": 3,
-        "taintPct": 0.2,
         "costMult": 1.5,
-        "burnDamagePct": 0.49,
-        "explodePct": 0.49,
-        "castBurnPct": 0.5,
+        "ticks": 1,
         "markDamagePct": 0.4,
         "markSkills": [
           "mana_burn",
           "void_strike"
-        ],
-        "threadTurns": 2,
-        "threadBurnMult": 1.5,
-        "element": "arcane"
+        ]
       }
     ],
-    "skyFx": "void",
     "vfx": "drainfield",
     "sfx": [
       "voidSuction",
@@ -3379,11 +3426,11 @@
     "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_spell_ward": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Spell Ward kopyası; gerçek efekt/ses/hedef (artOf spell_ward), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mirror Vein kopyası; gerçek efekt/ses/hedef (artOf spell_ward), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_spell_ward",
-    "name": "Spell Ward",
+    "name": "Mirror Vein",
     "icon": "spellward",
-    "target": "single_ally",
+    "target": "all_allies",
     "cost": {
       "resource": "mp",
       "amount": 0
@@ -3394,12 +3441,14 @@
       {
         "type": "shield",
         "scale": "int",
+        "flat": 6,
         "power": 0.02,
-        "shieldType": "magic",
-        "bonusPerMana": 0.6,
+        "turns": 2,
         "onAbsorb": {
-          "burnMana": 8,
-          "dispelChance": 0.25
+          "giveBlood": {
+            "base": 2,
+            "perDex": 0.2
+          }
         }
       }
     ],
@@ -3412,9 +3461,9 @@
     "note": "Pose test: plays the Channel pose."
   },
   "pt_void_strike": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Void Strike kopyası; gerçek efekt/ses/hedef (artOf void_strike), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Exsanguinate kopyası; gerçek efekt/ses/hedef (artOf void_strike), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_void_strike",
-    "name": "Void Strike",
+    "name": "Exsanguinate",
     "icon": "voidstrike",
     "target": "single_enemy",
     "cost": {
@@ -3426,11 +3475,11 @@
     "effects": [
       {
         "type": "damage",
-        "damageType": "magic",
-        "scale": "int",
+        "damageType": "physical",
+        "scale": "dex",
         "power": 0.02,
         "bonusPerMissingMana": 1,
-        "element": "arcane"
+        "bloodSpentBonus": 0.01
       }
     ],
     "vfx": "voidstrike",
@@ -3438,9 +3487,6 @@
       "voidPulse",
       "implode"
     ],
-    "ai": {
-      "reserveMp": 2
-    },
     "pose": "point",
     "artOf": "void_strike",
     "note": "Pose test: plays the Point pose."
@@ -9416,6 +9462,8 @@
     "area": {
       "shape": "row"
     },
+    "_thunder": "Ömer 2026-11-16 Tur 28-29: iletken şimşek etiketi (Rolling Thunder / Ring the Anvil gibi, shocks YOK): sıvıya düşerse Islak devre (iki tahtada sıvıdaki herkes, Vesper'ın kendi takımı dahil), zemin tepkimeleri (Shatter, Brittle, Hexed spark, Spark blaze) işler; Shocked / Electrocuted vermez.",
+    "thunder": {},
     "ringsBell": true,
     "cost": {
       "resource": "mp",
@@ -9669,7 +9717,7 @@
       },
       {
         "type": "status",
-        "status": "overreached",
+        "status": "overextended",
         "turns": 1,
         "self": true
       }
@@ -9730,7 +9778,7 @@
       "dive": true,
       "endsTurn": true,
       "whiff": {
-        "status": "staggered",
+        "status": "stun",
         "turns": 1
       }
     },
@@ -10243,7 +10291,7 @@
       "rule": {
         "id": "kingsmaul",
         "name": "Kingsmaul",
-        "text": "Marked cells collapse at the start of the next Round. Anyone standing there takes damage and is Slowed, and the cell stays closed for the rest of the battle.",
+        "text": "Marked cells collapse at the start of the next Round. Anyone standing there takes damage and is Hobbled, and the cell stays closed for the rest of the battle.",
         "everyRounds": 0,
         "cells": 1,
         "boards": [
@@ -10637,7 +10685,7 @@
     "effects": [
       {
         "type": "status",
-        "status": "staggered",
+        "status": "stun",
         "turns": 1
       }
     ],
@@ -11643,7 +11691,7 @@
     ]
   },
   "roar": {
-    "_not": "Snowfather: tüm kahramanlar 1 tur Slow. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "_not": "Snowfather: tüm kahramanlar 1 tur Chilled (Ömer 2026-11-16 Tur 24; eski Slow/Hobbled hız kesmediği için). Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
     "id": "roar",
     "name": "Roar",
     "target": "all_enemies",
@@ -11661,7 +11709,7 @@
     "effects": [
       {
         "type": "status",
-        "status": "slow",
+        "status": "chilled",
         "turns": 1
       }
     ],
@@ -11710,7 +11758,7 @@
       "rule": {
         "id": "bring_down_the_hall",
         "name": "Bring Down the Hall",
-        "text": "Marked cells collapse at the start of the next Round. Anyone standing there takes damage and is Slowed, and the cell stays closed for the rest of the battle.",
+        "text": "Marked cells collapse at the start of the next Round. Anyone standing there takes damage and is Hobbled, and the cell stays closed for the rest of the battle.",
         "everyRounds": 0,
         "cells": 3,
         "boards": [
@@ -11797,7 +11845,7 @@
     ]
   },
   "forge_chains": {
-    "_not": "Hearthwarden: tek hedef, 2 tur Slow + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
+    "_not": "Hearthwarden: tek hedef, 1 tur Saltbound (Ömer 2026-11-16 Tur 24; eski 2 tur Slow) + 2 tur Burning. Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
     "id": "forge_chains",
     "name": "Forge Chains",
     "target": "single_enemy",
@@ -11821,8 +11869,8 @@
       },
       {
         "type": "status",
-        "status": "slow",
-        "turns": 2
+        "status": "saltbound",
+        "turns": 1
       },
       {
         "type": "dot",

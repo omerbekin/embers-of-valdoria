@@ -52,6 +52,8 @@ export interface SideBadgePlan {
 /** Telefonda bir birimin rozet planı: buff'lar HEP çubuğun solunda (`left`), debuff'lar HEP sağında (`right`; Ömer 2026-11-03). */
 export interface PhoneBadgePlan {
   size: number;
+  /** Çözümde kullanılan rozetler arası boşluk (yüzde yazısı için açılmış olabilir). */
+  gapItem?: number;
   left: SideBadgePlan;
   right: SideBadgePlan;
 }

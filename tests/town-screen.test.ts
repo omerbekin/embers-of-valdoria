@@ -25,6 +25,7 @@ import {
   type CampaignState,
   type TownAction,
 } from '../src/campaign';
+import { itSource } from './asset-source';
 
 // Kasaba ekranı (Ömer 2026-10-12, future-ideas "SIRADA" (1)): eski kasaba penceresi (Formation / Gear / Trade / Leave) yerine tam ekran kasaba,
 // resimdeki yerler (valdoria.json > nodes[].scene). Kurallar ve geometri src/campaign/town.ts, çizim src/game/town-screen.ts.
@@ -66,7 +67,7 @@ describe('town scene data (valdoria.json > scene)', () => {
     }
   });
 
-  it('backgrounds are optimized webp game assets with their sources in assets/source/backgrounds-v2', () => {
+  itSource('backgrounds are optimized webp game assets with their sources in assets/source/backgrounds-v2', () => {
     const onDisk = readdirSync('assets/towns');
     for (const n of towns) {
       const bg = townScene(n)!.background;

@@ -28,6 +28,7 @@ export interface UnitSnap {
   mp: number;
   maxMp: number;
   rage?: number;
+  blood?: number;
   shield: number;
   magicShield: number;
   armor: number;
@@ -77,6 +78,7 @@ export function snapshotUnit(battle: Battle, c: Combatant): UnitSnap {
     mp: c.mp,
     maxMp: c.maxMp,
     ...(c.maxRage !== undefined ? { rage: c.rage ?? 0 } : {}),
+    ...(c.maxBlood !== undefined ? { blood: c.blood ?? 0 } : {}),
     shield: c.shield,
     magicShield: c.magicShield,
     armor: Math.round(battle.effectiveStats(c).armor),
@@ -114,6 +116,12 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return null;
     case 'resource':
       return `${L(e.actor)} pays ${e.amount} ${e.resource} (now ${e.after})`;
+    case 'blood':
+      return `${L(e.actor)} blood ${e.delta >= 0 ? '+' : ''}${e.delta} (now ${e.after}/${e.max})${e.hp ? ` [+${e.hp} HP paid]` : ''}`;
+    case 'dice':
+      return `${L(e.actor)} rolls ${e.values.join(' + ')} = ${e.values.reduce((a, b) => a + b, 0)} at ${L(e.target)}${e.double ? ' (DOUBLES)' : ''}`;
+    case 'streak':
+      return `${L(e.actor)} Streak ${e.before} -> ${e.after}/${e.max} (${e.reason === 'double' ? 'doubles' : e.reason === 'betWin' ? 'bet won' : e.reason === 'betLoss' ? 'bet lost' : e.reason === 'fill' ? 'All In won: Streak filled' : 'spent'})`;
     case 'rage':
       return `${L(e.actor)} rage ${e.delta >= 0 ? '+' : ''}${e.delta} (now ${e.after}/${e.max})${e.cause === 'hurt' ? ' [Berserker: hurt]' : ''}`;
     case 'damage':
@@ -150,7 +158,7 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
     case 'status':
       return `${L(e.target)} +${e.status}${e.stacks !== undefined ? ` x${e.stacks}` : ''} ${e.turns}t (from ${L(e.source)})${e.stacks !== undefined ? ` [omen timer ${e.turns}]` : ''}${e.partner ? ` bond with ${L(e.partner)}` : ''}${e.cause ? ` [${e.cause}]` : ''}`;
     case 'statusEnd':
-      return `${L(e.target)} -${e.status}${e.broken ? ' (ended early: broken / control)' : e.dispelled ? ` (DISPELLED by ${e.source ? L(e.source) : '?'}${e.cause ? ` [${e.cause}]` : ''})` : e.cause === 'bond_broken' ? ' (bond broken)' : e.cause === 'doom' ? ' (burst into Doom)' : e.cause === 'ill_omen' ? ' (passed on by Ill Omen)' : e.cause === 'erased' ? ' (erased: Doom Mark kill, no Ill Omen)' : e.consumed ? ' (used up by its own attack)' : ' (expired)'}`;
+      return `${L(e.target)} -${e.status}${e.broken ? ' (ended early: broken / control)' : e.dispelled ? ` (DISPELLED by ${e.source ? L(e.source) : '?'}${e.cause ? ` [${e.cause}]` : ''})` : e.cause === 'bond_broken' ? ' (bond broken)' : e.cause === 'doom' ? ' (burst into Doom)' : e.cause === 'ill_omen' ? ' (passed on by Ill Omen)' : e.cause === 'erased' ? ' (erased: Doom Mark kill, no Ill Omen)' : e.cause === 'pilgrims_burden' ? " (shortened away by Pilgrim's Burden)" : e.consumed ? ' (used up by its own attack)' : ' (expired)'}`;
     case 'summon':
       return `${L(e.actor)} summons ${unitLabel(e.combatant)}${e.empowered === true ? ' EMPOWERED (fed: corpse consumed)' : e.empowered === false ? ' unfed (no corpse to consume)' : ''} (hp ${e.combatant.hp}, str ${e.combatant.stats.str}, int ${e.combatant.stats.int}, own board cell ${e.combatant.slot})`;
     case 'corpseConsumed':
@@ -262,7 +270,9 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
     case 'tempered':
       return `TEMPERING ${L(e.target)}: ${e.stance === 'hot' ? 'Red-hot' : 'Quenched'} (${e.cause})`;
     case 'shock':
-      return e.stunned ? `SHOCKED ${L(e.target)}: in water, stunned (${e.skill})` : e.pushed > 0 ? `SHOCKED ${L(e.target)}: pushed back ${e.pushed} on the turn bar (${e.skill})` : `SHOCKED ${L(e.target)}: stun did not take (${e.skill})`;
+      return e.stunned ? `SHOCKED ${L(e.target)}: in water, electrocuted (${e.skill})` : `SHOCKED ${L(e.target)}: grounded, less Magic Armor, lightning hits shields harder (${e.skill})`;
+    case 'thunderSpark':
+      return `SPARK ${e.kind} by ${L(e.source)} (${e.skill}): ${e.from.board} cell ${e.from.slot} -> ${L(e.target)} (${e.board} cell ${e.slot})`;
     case 'liveWater':
       return `LIVE WATER by ${L(e.source)}: ${e.board} cells ${e.cells.join(', ')}${e.hit.length ? ` arcs through ${e.hit.map(L).join(', ')}` : ''}`;
     case 'liveWaterEnd':

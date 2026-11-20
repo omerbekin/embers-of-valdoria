@@ -6,7 +6,6 @@ import { RULES_TESTS, rulesTestBattleData } from '../src/game/rules-test-battle'
 import { buildMechanics } from '../src/wiki/catalog';
 
 const T = content.formulas.thunder;
-const threshold = content.formulas.turn.threshold;
 const cells = (at: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => at[i] ?? '');
 const MODES: BattleMode[] = ['turns', 'test'];
 
@@ -30,9 +29,10 @@ const tester = (b: Battle): Combatant => at(b, 'enemy', 6);
 describe('etiket kapısı', () => {
   it('yalnız test skill\'leri etiketli: oyuncu ve sefer şimşek skill\'leri değişmedi', () => {
     const owners = Object.values(content.skills).filter((s) => s.thunder || s.effects.some((e) => e.type === 'damage' && e.ironBolt));
-    expect(owners.map((s) => s.id).sort()).toEqual(['anvil_strike', 'flare_storm', 'fork', 'gloam_bite', 'ring_the_anvil', 'rolling_thunder', 'storm_test_bolt', 'storm_test_iron', 'storm_test_row', 'stormcall', 'thunder_strike', 'thundersnow']); // Thunder Skald (Ömer 2026-11-07): Thunder Strike + Stormcall Shocked verir (thunder.shocks). 4. dilim moblarının şimşekleri + test
+    expect(owners.map((s) => s.id).sort()).toEqual(['anvil_strike', 'flare_storm', 'fork', 'gloam_bite', 'ring_the_anvil', 'rolling_thunder', 'storm_test_bolt', 'storm_test_iron', 'storm_test_row', 'stormcall', 'thunder_strike', 'thunderpeal', 'thundersnow']); // Thunder Skald (Ömer 2026-11-07): Thunder Strike + Stormcall Shocked verir (thunder.shocks). 4. dilim moblarının şimşekleri + test
     expect(content.classes.storm_tester!.testOnly).toBe(true);
-    for (const id of ['thunderpeal', 'great_bell_of_valdoria', 'bog_spark', 'wisp_spark', 'rune_spark']) expect(content.skills[id]?.thunder).toBeUndefined();
+    expect(content.skills.thunderpeal!.thunder?.shocks).toBeUndefined(); // Tur 28-29: Thunderpeal iletken, Shocked vermez
+    for (const id of ['great_bell_of_valdoria', 'bog_spark', 'wisp_spark', 'rune_spark']) expect(content.skills[id]?.thunder).toBeUndefined();
     expect(content.randomPool).not.toContain('storm_tester');
   });
 
@@ -48,17 +48,18 @@ describe('etiket kapısı', () => {
 });
 
 describe('A1 Shocked', () => {
-  it.each(MODES)('kuru hücrede sıra sayacı anında veri oranı kadar düşer, rozet çıkar, Stun yok (%s)', (mode) => {
+  // Ömer 2026-11-15 (Topraklama): sıra çubuğu geri itmesi KALKTI; Shocked durumu büyü zırhını düşürür (formulas.thunder.magicArmorMult)
+  it.each(MODES)('kuru hücrede sıra sayacı değişmez, Shocked durumu çıkar, Stun yok (%s)', (mode) => {
     const b = make(undefined, P, E, mode);
     const hero = at(b, 'party', 0);
     turnOf(b, tester(b).uid);
     const before = hero.turnCounter;
     expect(b.useSkill(tester(b).uid, 'storm_test_bolt', hero.uid).ok).toBe(true);
-    if (mode === 'test') expect(hero.turnCounter).toBe(before - Math.round(threshold * T.pushback)); // turns modunda sıra ilerlemesi de ekler; ikizle karşılaştırma aşağıda
+    if (mode === 'test') expect(hero.turnCounter).toBe(before);
     expect(hero.statuses.some((s) => s.kind === T.badge)).toBe(true);
     expect(hero.statuses.some((s) => s.kind === 'stun')).toBe(false);
     const ev = b.log.find((e) => e.type === 'shock');
-    expect(ev && ev.type === 'shock' && ev.pushed).toBe(Math.round(threshold * T.pushback));
+    expect(ev && ev.type === 'shock' && ev.stunned).toBe(false);
   });
 
   // Ömer 2026-11-09 (ikinci element formu A): suda / Soaked iken şimşek Stun yerine formulas.thunder.wetInto (Electrocuted) verir
@@ -69,7 +70,7 @@ describe('A1 Shocked', () => {
     turnOf(b, tester(b).uid);
     b.useSkill(tester(b).uid, 'storm_test_bolt', hero.uid);
     const ev = b.log.find((e) => e.type === 'shock');
-    expect(ev && ev.type === 'shock' && ev.pushed).toBe(0);
+    expect(ev && ev.type === 'shock' && ev.stunned).toBe(true);
     expect(hero.statuses.some((s) => s.kind === (T.wetInto ?? 'stun'))).toBe(true);
     expect(hero.statuses.some((s) => s.kind === T.badge)).toBe(false);
   });
@@ -83,32 +84,28 @@ describe('A1 Shocked', () => {
     expect(hero.statuses.some((s) => s.kind === (T.wetInto ?? 'stun'))).toBe(true);
   });
 
-  it('shocks alanı yoksa itmez; ıskada itmez', () => {
+  it('shocks alanı yoksa Shocked yok; ıskada Shocked yok', () => {
     const a = make(undefined, P, E);
     const h1 = at(a, 'party', 0);
-    const c1 = h1.turnCounter;
     a.useSkill(tester(a).uid, 'storm_test_iron', h1.uid);
-    expect(h1.turnCounter).toBe(c1);
+    expect(h1.statuses.some((s) => s.kind === T.badge)).toBe(false);
     const m = make(undefined, P, E);
     m.debug.dodge = 'always';
     const h2 = at(m, 'party', 0);
-    const c2 = h2.turnCounter;
     m.useSkill(tester(m).uid, 'storm_test_bolt', h2.uid);
-    expect(h2.turnCounter).toBe(c2);
+    expect(h2.statuses.some((s) => s.kind === T.badge)).toBe(false);
   });
 
-  it('geri itilen kahraman sıra tahmininde geriye düşer', () => {
+  it('Shocked kahraman sıra tahmininde geriye düşmez (geri itme kalktı, Ömer 2026-11-15)', () => {
     const run = (skill: string) => {
       const b = make(undefined, P, E, 'turns');
       const hero = at(b, 'party', 0);
       turnOf(b, tester(b).uid);
+      const c0 = hero.turnCounter;
       b.useSkill(tester(b).uid, skill, hero.uid);
-      return { counter: hero.turnCounter, at: b.turnQueue(12).indexOf(hero.uid) };
+      return hero.turnCounter - c0;
     };
-    const shocked = run('storm_test_bolt');
-    const plain = run('storm_test_iron');
-    expect(shocked.counter).toBeLessThan(plain.counter);
-    expect(shocked.at).toBeGreaterThanOrEqual(plain.at);
+    expect(run('storm_test_bolt')).toBe(run('storm_test_iron'));
   });
 });
 
@@ -134,14 +131,16 @@ describe('A2 Live Water', () => {
     expect(a.hp).toBeLessThan(hp.get(a.uid)!);
   });
 
-  it('Ice iletmez: buz zinciri keser; buza dönen hücrede ark yok', () => {
-    const b = make(undefined, { 0: 'warrior', 2: 'archer' }, E);
-    const far = at(b, 'party', 2);
-    b.debugPlaceGround(tester(b).uid, 'flooded', 'party', [0, 2], 9, 0);
+  // Islak devre (Ömer 2026-11-15): iletim bağlı ağla sınırlı değil (sıvıdaki herkes); canlı kalan su yine yalnız bağlı ağ. Ice iletmez.
+  it('Ice iletmez: buz hücresindeki ark yemez; buzla ayrılmış su iletimi alır ama canlı kalmaz', () => {
+    const b = make(undefined, { 0: 'warrior', 1: 'druid', 2: 'archer' }, E);
+    const [iced, far] = [at(b, 'party', 1), at(b, 'party', 2)];
+    b.debugPlaceGround(tester(b).uid, 'flooded', 'party', [0, 1, 2], 9, 0);
     b.debugPlaceGround(tester(b).uid, 'ice_ground', 'party', [1], 9, 0);
-    const hp = far.hp;
+    const [hi, hf] = [iced.hp, far.hp];
     b.useSkill(tester(b).uid, 'storm_test_iron', at(b, 'party', 0).uid);
-    expect(far.hp).toBe(hp);
+    expect(iced.hp).toBe(hi);
+    expect(far.hp).toBeLessThan(hf);
     expect(b.onLiveWater('party', 2)).toBe(false);
     expect(b.onLiveWater('party', 0)).toBe(true);
   });

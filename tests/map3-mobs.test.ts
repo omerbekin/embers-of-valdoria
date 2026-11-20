@@ -55,12 +55,12 @@ describe.each(MODES)('%s modu', (mode) => {
     expect(b.useSkill(v.uid, 'pole_vault', back.uid).ok).toBe(true);
     expect(back.hp).toBeLessThan(hp);
     expect(has(back, 'stun')).toBe(false);
-    expect(has(v, 'overreached')).toBe(true);
+    expect(has(v, 'overextended')).toBe(true);
     expect(v.slot).toBe(0); // öne yerleşmez, yerine döner
-    expect(content.statuses['overreached']!.damageTakenMult).toBe(1.25);
+    expect(content.statuses['overextended']!.damageTakenMult).toBe(1.25);
     if (mode === 'turns') {
       turnOf(b, v.uid);
-      expect(has(v, 'overreached')).toBe(false); // sonraki turuna kadar
+      expect(has(v, 'overextended')).toBe(false); // sonraki turuna kadar
     }
   });
 
@@ -108,7 +108,7 @@ describe.each(MODES)('%s modu', (mode) => {
     } else nextActionOf(b, d);
     expect(d.underground).toBeUndefined();
     expect(hero.hp).toBeLessThan(hpBefore);
-    expect(has(d, 'staggered')).toBe(false);
+    expect(has(d, 'stun')).toBe(false);
   });
 
   it('Hollow Delver: hedef kaçarsa boşa çıkar ve Staggered olur', () => {
@@ -128,7 +128,7 @@ describe.each(MODES)('%s modu', (mode) => {
     }
     expect(d.underground).toBeUndefined();
     expect(hero.hp).toBe(hp);
-    if (mode === 'turns') expect(has(d, 'staggered')).toBe(true);
+    if (mode === 'turns') expect(has(d, 'stun')).toBe(true);
   });
 
   it('Gloamstalker: karanlıkta her sıra, aydınlıkta yalnız yakın; ateşle kapanır', () => {
@@ -474,7 +474,7 @@ describe('içerik', () => {
   });
   it('Codex yeni kuralları anlatır; test içeriği yok', () => {
     const text = JSON.stringify(buildMechanics());
-    for (const w of ['Burrowers', 'Charges', 'Moving foes', 'Overreached', 'Cooling']) expect(text).toContain(w);
+    for (const w of ['Burrowers', 'Charges', 'Moving foes', 'Overextended', 'Cooling']) expect(text).toContain(w);
     expect(text).not.toContain('Test Bolt');
   });
   it('skill kartı kuralları yazar', () => {

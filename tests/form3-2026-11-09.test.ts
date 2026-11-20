@@ -33,15 +33,20 @@ const give = (b: Battle, uid: string, kind: string, by: string) =>
   (b as unknown as Priv).addStatus(b.get(uid)!, { kind: kind as Status['kind'], turns: 3, source: by }, (b as unknown as Priv).debugEmit);
 
 describe('form 3: Slow CC değil', () => {
-  it('veri: Slow cc değil; boss ve elit Slow yer, hız büyüklüğü debuffStrength kadar; YZ gücü aynı', () => {
+  // Ömer 2026-11-16: Slow -> Hobbled; hız yerine kaçınma keser (evasionMult); ölçek aynı kural
+  it('veri: Slow (Hobbled) cc değil; boss ve elit yer, kaçınma büyüklüğü debuffStrength kadar; YZ gücü aynı', () => {
     expect(content.statuses.slow!.cc).toBeFalsy();
     const b = mk({ 0: 'warrior' }, { 0: 'warrior', 1: 'warrior', 2: 'warrior' }, { 0: { tier: 'boss' }, 1: { tier: 'elite' } });
-    const m = content.statuses.slow!.speedMult!;
-    for (const uid of ['enemy-0', 'enemy-1', 'enemy-2']) give(b, uid, 'slow', 'party-0');
+    const m = content.statuses.slow!.evasionMult!;
+    for (const uid of ['enemy-0', 'enemy-1', 'enemy-2']) {
+      b.get(uid)!.stats.evasion = 0.2;
+      give(b, uid, 'slow', 'party-0');
+    }
     expect(b.statusBlocked(b.get('enemy-0')!, 'slow')).toBe(false);
-    expect(b.statusMult(b.get('enemy-0')!, 'speedMult')).toBeCloseTo(1 + (m - 1) * STR.boss!, 6);
-    expect(b.statusMult(b.get('enemy-1')!, 'speedMult')).toBeCloseTo(1 + (m - 1) * STR.elite!, 6);
-    expect(b.statusMult(b.get('enemy-2')!, 'speedMult')).toBeCloseTo(m, 6);
+    expect(b.effectiveStats(b.get('enemy-0')!).evasion).toBeCloseTo(0.2 * (1 + (m - 1) * STR.boss!), 4);
+    expect(b.effectiveStats(b.get('enemy-1')!).evasion).toBeCloseTo(0.2 * (1 + (m - 1) * STR.elite!), 4);
+    expect(b.effectiveStats(b.get('enemy-2')!).evasion).toBeCloseTo(0.2 * m, 4);
+    expect(b.statusMult(b.get('enemy-2')!, 'speedMult')).toBe(1);
     expect(b.debuffStrength(b.get('enemy-0')!, 'slow', 'party')).toBe(STR.boss);
     // Stun hâlâ CC: boss yemez
     give(b, 'enemy-0', 'stun', 'party-0');

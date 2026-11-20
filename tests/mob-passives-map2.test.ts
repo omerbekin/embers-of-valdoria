@@ -120,19 +120,23 @@ describe('Lure (Siren)', () => {
 });
 
 describe('Spellbound (durum; yalnız moblar verir)', () => {
-  it('sonraki skill hasarı ve şifası x0,75; skill sonrası düşer', () => {
+  // Ömer 2026-11-16: Spellbound yalnız büyü hasarını ve şifayı düşürür (fiziksel hasarı Weakened düşürür)
+  it('sonraki skill BÜYÜ hasarı ve şifası x0,75 (fiziksel aynı); skill sonrası düşer', () => {
     const def = content.statuses.spellbound!;
-    expect(def.damageDealtMult).toBe(0.75);
+    expect(def.damageDealtMult).toBeUndefined();
+    expect(def.magicDealtMult).toBe(0.75);
     expect(def.healDealtMult).toBe(0.75);
-    const dmg = (sb: boolean) => {
-      const b = sure(make({ party: cells({ 6: 'archer' }), enemies: cells({ 0: 'salt_crab' }) }));
+    const dmg = (sb: boolean, cls: string, skill: string) => {
+      const b = sure(make({ party: cells({ 6: cls }), enemies: cells({ 0: 'salt_crab' }) }));
+      unit(b, 'party-0').mp = unit(b, 'party-0').maxMp;
       if (sb) unit(b, 'party-0').statuses.push({ kind: 'spellbound', turns: 1, source: 'enemy-0' });
       const n = b.log.length;
-      b.useSkill('party-0', 'quick_shot', 'enemy-0');
+      b.useSkill('party-0', skill, 'enemy-0');
       expect(unit(b, 'party-0').statuses.some((s) => s.kind === 'spellbound')).toBe(false);
       return ofType(b.log.slice(n), 'damage').filter((x) => x.target === 'enemy-0').reduce((t, x) => t + x.amount, 0);
     };
-    expect(Math.abs(dmg(true) - dmg(false) * 0.75)).toBeLessThanOrEqual(1);
+    expect(dmg(true, 'archer', 'quick_shot')).toBe(dmg(false, 'archer', 'quick_shot'));
+    expect(Math.abs(dmg(true, 'mage', 'fire_bolt') - dmg(false, 'mage', 'fire_bolt') * def.magicDealtMult!)).toBeLessThanOrEqual(1);
     const heal = (sb: boolean) => {
       const b = sure(make({ party: cells({ 0: 'druid', 1: 'warrior' }), enemies: cells({ 0: 'salt_crab' }) }));
       b.debug.crit = 'never';
@@ -229,7 +233,7 @@ describe('Undertow (Reef Wrecker)', () => {
     expect(unit(w.b, 'party-0').statuses.find((s) => s.kind === e.status)?.turns).toBe(e.turns);
     const d = hit(false);
     expect(ofType(d.b.log.slice(d.n), 'passive').some((x) => x.passive === 'undertow')).toBe(false);
-    expect(describe2('reef_wrecker')).toContain('Slow');
+    expect(describe2('reef_wrecker')).toContain('Hobbl');
   });
 });
 
@@ -258,11 +262,12 @@ describe('Saltbound (durum; Harita 1 cadıları ve Salt Hag, Omen yerine)', () =
     const b = sure(make({ party: cells({ 0: 'warrior' }), enemies: cells({ 6: 'fen_witchling' }) }));
     b.useSkill('enemy-0', 'hex_bolt', 'party-0');
     const st = unit(b, 'party-0').statuses.find((s) => s.kind === 'saltbound');
-    expect(st?.turns).toBe(1);
+    const mire = content.mobs.fen_witchling!.passive!.effect; // Mire-Bound (Tur 26): cadı yaşarken Saltbound ek tur sürer
+    expect(st?.turns).toBe(1 + (mire.type === 'mireBound' ? mire.extraTurns : 0));
     expect(unit(b, 'party-0').statuses.some((s) => s.kind === 'omen')).toBe(false);
   });
 
-  it('Saltbound kahraman Move, Charge ve Backstab kullanamaz (neden gösterilir); kaçınması 0', () => {
+  it('Saltbound kahraman Move, Charge ve Backstab kullanamaz (neden gösterilir); kaçınması aynı (Ömer 2026-11-16)', () => {
     const b = sure(make({ party: cells({ 3: 'warrior', 6: 'cutthroat' }), enemies: cells({ 0: 'salt_crab', 7: 'salt_crab' }) }));
     const w = unit(b, 'party-0');
     const ct = unit(b, 'party-1');
@@ -280,7 +285,8 @@ describe('Saltbound (durum; Harita 1 cadıları ve Salt Hag, Omen yerine)', () =
     expect(why(ch)).toContain('Saltbound');
     expect(why(b.canUse(ct.uid, 'backstab'))).toContain('Saltbound');
     expect(why(b.canUse(ct.uid, 'venom_edge'))).not.toContain('Saltbound'); // taşımayan skill Saltbound'dan etkilenmez
-    expect(b.effectiveStats(w).evasion).toBe(0);
+    expect(b.effectiveStats(w).evasion).toBeCloseTo(0.3, 6); // Ömer 2026-11-16: Saltbound yalnız kök (kaçınmayı Hobbled keser)
+    expect(content.statuses.saltbound!.noEvasion).toBeUndefined();
     // global eylem listesi (UI) Move'u kullanılamaz gösterir
     const acts = b.listActions(w.uid);
     expect(acts.find((o) => o.id === 'move_tile')?.ok).toBe(false);

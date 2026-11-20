@@ -6,6 +6,7 @@ import { bonusScaleRaw, splitParts } from './spec';
 import { bellsOfSkill } from './tree-hooks';
 import { rangeEnabled, rangeLabel } from './range';
 import { applySummonerScale, applySummonVariant, attributePower, dotOutgoingMult, outgoingDamageMult } from './stats';
+import { shieldAmount } from './formulas';
 /** Test skill'leri (Pose Tester pt_*, Geometer shape_*): başka skill'in ipucuna satır eklemez. */
 const isTestSkillId = (id: string): boolean => /^(pt|shape)_/.test(id);
 import type { UrnRule, AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
@@ -127,10 +128,14 @@ export const ATTRIBUTE_NAME: Record<Attribute, string> = { str: 'STR', int: 'INT
 /** Hibrit ölçek (damage.bonusScale) stat adları. */
 const BONUS_STAT_NAME: Record<Attribute | 'armor' | 'magicArmor', string> = { ...ATTRIBUTE_NAME, armor: 'Armor', magicArmor: 'Magic armor' };
 
+/** Yüzde, en çok 3 ondalık (kan başına %0,5 gibi yarım değerler yuvarlanmasın). */
+const pctF = (v: number) => `${Number((v * 100).toFixed(3))}%`;
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 /** Mob pasif metinleri için küçük yardımcılar (describePassive). */
 const turnsText = (n: number) => `${n} turn${n > 1 ? 's' : ''}`;
-const cap = (id: string) => id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, ' ');
+/** Oyuncu adı id'den farklı olan durumlar (Ömer 2026-11-16: 'slow' id'si korunur, adı Hobbled; statuses.json > slow.name ile aynı, tests/status-merge.test.ts denetler). */
+export const STATUS_NAME_OVERRIDE: Record<string, string> = { slow: 'Hobbled' };
+const cap = (id: string) => STATUS_NAME_OVERRIDE[id] ?? id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, ' ');
 const groundName = (id: string) => (id === 'burning' ? 'burning ground' : id.replace(/_/g, ' '));
 /** Ölçekli sayı (statın gücü x oran, yuvarlanmış): tooltip satırlarındaki "(24)" ve `skillNumbers` AYNI hesaptan. */
 const scaled = (stats: Stats, scale: Attribute, power: number, formulas: Formulas): number => Math.round(attributePower(stats, scale, formulas) * power);
@@ -146,6 +151,9 @@ const damageAmount = (e: DamageEffect, stats: Stats, formulas: Formulas): number
 };
 /** Item affix çarpanlı güç (şifa / kalkan / DoT; motorla aynı): çarpan yoksa güç aynen. */
 const withMult = (power: number, m: number | undefined): number => (m !== undefined && m !== 1 ? power * m : power);
+/** Kalkan etkisinin sayısı (motorla aynı: battle.ts shield; düz ek + stat x güç, ikisi de Shield power affix'iyle). */
+const shieldShown = (e: Extract<SkillEffect, { type: 'shield' }>, stats: Stats, formulas: Formulas): number =>
+  shieldAmount(stats, e.scale, withMult(e.power, stats.shieldPowerMult), formulas, e.flat ? withMult(e.flat, stats.shieldPowerMult) : 0);
 /** Aynı hasar etkisi art arda tekrar ediyorsa (Double Strike: iki vuruş) tek kayıt + tekrar sayısı. */
 function groupEffects(skill: SkillDef): Array<{ e: SkillEffect; times: number }> {
   const out: Array<{ e: SkillEffect; times: number }> = [];
@@ -181,6 +189,12 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     }
     case 'spellEcho':
       return `Damaging spells with a cooldown have a ${pct(e.chance)} chance to be ready again immediately.`;
+    case 'luckyStreak': {
+      const ord = ['1st', '2nd', '3rd', '4th'];
+      const list = e.skills.map((i) => ord[i] ?? `${i + 1}th`);
+      const which = list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}` : (list[0] ?? '');
+      return `Build a Streak of up to ${e.max} (it starts at 0 each battle; past ${e.max} it is wasted). Rolling doubles and winning a bet add 1; losing a High Stakes bet resets it. At a full Streak, your other skills spend it for a stronger effect (shown on each skill); All In always bets the whole Streak. Your ${which} skill${list.length > 1 ? 's have' : ' has'} a ${pct(e.chance)} chance to go once more (a repeat costs nothing and changes no Streak).`;
+    }
     case 'heatMirage': {
       // Ömer 2026-10-29: pasifin genel küçük etkisi (Frost Skin) aynı metinde
       const res = Object.entries(e.elemResist ?? {}).filter(([, v]) => (v ?? 0) > 0);
@@ -199,6 +213,12 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'manaOverflow':
       return `Magic damage blocked by your magic armor builds up; every ${e.threshold} blocked, your whole team gains ${e.mana} MP.`;
     case 'spellbreakerInstinct':
+      // Blood Tithe (Redtithe, Ömer 2026-11-18): bar dolu kayma = bloodAdvance + bloodAdvancePerDex x DEX (formül görünür); advance = ağacın düz eki
+      if (e.bloodAdvance && e.bloodAdvancePerDex) {
+        const peak = e.bloodAdvance + e.bloodAdvancePerDex * stats.dex;
+        return `When an enemy uses a skill that costs MP on your team (you included), your turn bar jumps ahead by (${pct(e.bloodAdvance)} + DEX x${Math.round(e.bloodAdvancePerDex * 10000) / 100}%) x your blood fill: ${pct(peak)} of a turn with a full bar (${pct(peak / 2)} at half)${e.advance > 0 ? ` plus ${pct(e.advance)}` : ''}, so your next turn comes sooner. At most once between your turns.`;
+      }
+      if (e.bloodAdvance) return `When an enemy uses a skill that costs MP on your team (you included), your turn bar jumps ahead by up to ${pct(e.bloodAdvance)} of a turn with a full blood bar (${pct(e.bloodAdvance / 2)} at half)${e.advance > 0 ? ` plus ${pct(e.advance)}` : ''}, so your next turn comes sooner. At most once between your turns.`;
       return `When an enemy uses a skill that costs MP on your team (you included), your turn bar jumps ${pct(e.advance)} of a turn ahead, so your next turn comes sooner. At most once between your turns.`;
     case 'armorAura':
       return `You and the allies right next to you (front, back, left, right) gain bonus armor equal to ${pct(e.pct)} of your own armor (+${Math.round(stats.armor * e.pct)} now). A unit benefits from at most ${e.maxStacks} such auras.`;
@@ -223,7 +243,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'wardEtcher':
       return `After each skill that costs MP, the ally with the lowest armor (yourself only if alone) gains a magic shield of ${e.perMp}x the MP spent for ${turnsText(e.turns)}.`;
     case 'mireBound':
-      return `While you live, ${cap(e.status)} enemies have ${multText(e.speedMult)} speed (it does not stack with other such witches).`;
+      return `While you live, ${cap(e.status)} applied to enemies lasts ${turnsText(e.extraTurns)} longer (it does not stack with other such witches).`;
     case 'flicker':
       return `When an enemy skill hits you, gain ${cap(e.status)} for ${turnsText(e.turns)}; at most once between your turns.`;
     case 'corpseHunger':
@@ -306,7 +326,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'hollow':
       return `In Darkness it takes ${pct(1 - e.darkTakenMult)} less damage.`;
     case 'stormhide':
-      return 'A hero that hits this unit with a melee skill is Shocked. If that hero stands in water, it is Stunned instead.';
+      return 'A hero that hits this unit with a melee skill is Shocked. If that hero stands in water, it is Electrocuted instead.';
     case 'touchLabel':
       return passive.text;
     case 'conductor': {
@@ -422,12 +442,61 @@ export function describeRage(f: Formulas): string[] {
   ];
 }
 
+/** Redtithe kan barı ipucu (HUD çubuğu): kural + şu anki etkisi (motorla aynı doğrusal formül: (max - kan) / max). */
+/** `int`: birimin anlık INT'i (büyü zırhı formülü; verilmezse "şu an" satırı yalnız formülü yazar). */
+export function describeBlood(f: Formulas, value: number, max: number, int?: number): string[] {
+  const b = f.bloodBar;
+  if (!b) return [];
+  const low = max > 0 ? Math.max(0, Math.min(1, (max - value) / max)) : 0;
+  const p = (v: number) => `${Math.round(v * 1000) / 10}%`;
+  const n = (v: number) => (Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10));
+  return [
+    `Right now: ${int !== undefined ? `+${n(Math.round((b.magicArmorBase + b.magicArmorPerInt * int) * low * 100) / 100)} Magic armor` : `${p(low)} of the full Magic armor`} and ${p(b.lifestealMax * low)} life steal on skill hits`,
+    `Blood: a bar from 0 to ${max}; you start every battle with ${b.start} and have no mana`,
+    `Magic armor up to ${n(b.magicArmorBase)} + INT x${n(b.magicArmorPerInt)}${int !== undefined ? ` (${n(b.magicArmorBase + b.magicArmorPerInt * int)})` : ''}: full at 0 blood, none at ${max} blood`,
+    `The lower the bar, the more life steal (up to ${p(b.lifestealMax)} at 0)`,
+    `Missing blood is paid with HP (${p(b.hpPerBlood)} of max HP per blood); a skill cannot take you below 1 HP`,
+    'Blood gives no speed or damage on its own',
+  ];
+}
+
 /** `ownerRange`: skill sahibinin (sınıf/mob/çağrı) taban menzili (CombatantDef.range); verilmezse skill `range` ya da varsayılan. */
 /** Çağrının bu çağıranla (statları) tanımı: summonerScale varsa çağıranın item hariç temel statından türer (motorla aynı: applySummonerScale). */
 function summonUnitFor(unit: CombatantDef | undefined, stats: Stats, formulas: Formulas): CombatantDef | undefined {
   if (!unit?.summonerScale) return unit;
   const base = stats.summonBase ?? { str: stats.str, int: stats.int, dex: stats.dex, luck: stats.luck };
   return applySummonerScale(unit, base, formulas, stats.primary);
+}
+
+/** Lucky Streak (Gambler pasifi) satırları: bahis -> seri, dolu seri biçimi, All In ihtimal tablosu, yeniden kullanım (sayılar veriden). */
+function streakText(skill: SkillDef, defs: EffectDefs): string[] {
+  const st = skill.streak;
+  if (!st) return [];
+  const out: string[] = [];
+  const name = (id: string) => defs.statuses?.[id]?.name ?? id;
+  if (st.betWinGain || st.betLoseReset) out.push(`Streak: a won bet adds ${st.betWinGain ?? 0}${st.betLoseReset ? '; a lost bet resets your Streak to 0' : ''}`);
+  const f = st.full;
+  if (f) {
+    const parts: string[] = [];
+    if (f.betWin) parts.push('the bet always wins');
+    if (f.lifesteal) parts.push(`you heal for ${pct(f.lifesteal)} of the damage dealt`);
+    if (f.count !== undefined) parts.push(`it hits ${f.count} random enemies`);
+    if (f.sure) {
+      const others = (f.others ?? []).map((o) => `${name(o.status)} (${o.turns} turn${o.turns > 1 ? 's' : ''})`).join(' or ');
+      parts.push(`one of them (random) always gets ${name(f.sure.status)} for ${f.sure.turns} turn${f.sure.turns > 1 ? 's' : ''}${others ? `, the others get ${others}` : ''}`);
+    }
+    out.push(`At full Streak: spends it, and ${parts.join('; ')}`);
+  }
+  if (st.winChanceByStreak?.length) {
+    const t = st.winChanceByStreak;
+    const top = t.length - 1;
+    out.push(st.winFillsStreak
+      ? `Also bets your whole Streak: win chance ${t.map((c) => pct(c)).join(' / ')} at ${t.map((_, i) => i).join(' / ')} Streak. A win below ${top} Streak fills your Streak to ${top}; a loss resets it to 0`
+      : `Also bets your whole Streak: win chance ${t.map((c) => pct(c)).join(' / ')} at ${t.map((_, i) => i).join(' / ')} Streak. Your Streak is always reset to 0`);
+    if (st.winFillsStreak || st.fullStreakMore) out.push(`At ${top} Streak: spends it${st.fullStreakMore ? `, and the win deals ${pct(st.fullStreakMore)} more damage` : ''}`);
+  }
+  if (st.repeat === 'recast') out.push('If Lucky Streak makes it go once more, it picks new random targets (same rules, nothing is spent again)');
+  return out;
 }
 
 export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas, units: Record<string, CombatantDef> = {}, defs: EffectDefs = {}, ownerRange?: number): SkillInfo {
@@ -456,8 +525,10 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   if (skill.rollingThunder) {
     add("A lightning token enters the turn bar and the target's row glows");
     add(`When the token reaches the front the row is struck for ${pct(skill.rollingThunder.ratio)} of the side's average max HP (reduced by Armor)`);
-    add('Haste and Slow do not change the token, and defeating the caster does not stop it. Step out of the row');
+    add('Speed, Haste and Chilled do not change the token, and defeating the caster does not stop it. Step out of the row');
   }
+  // Lucky Streak (Gambler pasifi; Ömer 2026-11-18): skill'in seri bağlantısı (sayılar veriden)
+  const streakLines = streakText(skill, defs);
   // Aynı etki art arda tekrar ediyorsa (Double Strike: iki vuruş) tek satır + 'x2'
   for (const { e, times } of groupEffects(skill)) {
     fromTree = !!e.treeNode;
@@ -487,8 +558,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.bonusVsStatus) add(`${multText(e.bonusVsStatus.multiplier)} damage against ${cap(e.bonusVsStatus.status)} targets`);
       if (e.ironBolt) add(`Iron Draws the Bolt: bonus damage equal to ${pct(e.ironBolt)} of the target's Armor`);
       if (skill.thunder) {
-        if (skill.thunder.shocks) add(`Shocked: pushes the target back ${pct(formulas.thunder.pushback)} on the turn bar; in water or Soaked it is Stunned for ${formulas.thunder.stunTurns} turn instead`);
-        add('Live Water: striking a Flooded cell arcs through all water connected to it and hits everyone standing there, either side; the water stays live for 1 turn');
+        if (skill.thunder.shocks) add(`Shocked: the target has ${pct(1 - formulas.thunder.magicArmorMult)} less Magic Armor and lightning deals +${pct(formulas.thunder.shieldBonus)} to its shields; in water or Soaked it is Electrocuted instead`);
+        add('Live Water: striking water or blood sends the bolt through every unit standing in water or blood on both sides, your own too; the struck water stays live for 1 turn');
         add('Shatter: striking an Ice cell blows the ice apart, hurting the unit there and the cells around it');
       }
       if (e.falloff) add(`Each target hit takes ${multText(e.falloff)} damage than the previous one`);
@@ -504,7 +575,18 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.powerPerBell) add(`+${pct(e.powerPerBell)} ${ATTRIBUTE_NAME[e.scale]} for every bell rung this battle (${damageAmount({ ...e, power: e.power + e.powerPerBell * 5 }, stats, formulas)} after 5 bells)`, element);
       if (e.executeBonus) add(`Hits harder the more HP the target is missing: up to ${moreText(e.executeBonus)} damage against a nearly dead target`, element);
       if (e.bonusPerMissingMana) add(`+${e.bonusPerMissingMana} per missing mana of the target`, element);
+      // Exsanguinate (bloodSpentBonus): harcanan kanla (spec.ts > damageSpecFor ile aynı formül)
+      if (e.bloodSpentBonus) {
+        const lo = skill.cost.resource === 'blood' ? skill.cost.amount : 0;
+        const hi = formulas.bloodBar?.max ?? 0;
+        add(`${pct(e.bloodSpentBonus)} more damage per blood spent${hi > lo ? ` (${multText(1 + e.bloodSpentBonus * lo)} at ${lo} blood, ${multText(1 + e.bloodSpentBonus * hi)} at ${hi} blood)` : ''}`, element);
+      }
       if (e.repeatChance) add(`${pct(e.repeatChance)} chance to hit twice`, element);
+      // Lucky Streak zarı (Loaded Dice): hasar x toplam / ortalama; çift seri kazandırır
+      if (e.dice) {
+        const d = e.dice;
+        add(`Rolls ${d.count} dice (1-${d.sides}) on every throw: damage x (total / ${d.mean}), from ${multText(Number((d.count / d.mean).toFixed(2)))} to ${multText(Number(((d.count * d.sides) / d.mean).toFixed(2)))}${d.doubleGain ? `. Doubles add ${d.doubleGain} Streak` : ''}`, element);
+      }
       if (e.critBonus && !e.guaranteedCrit) add(`+${pct(e.critBonus)} crit chance`, element);
       if (e.bet) {
         const b = e.bet;
@@ -516,6 +598,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const win = b.perStake ? `${multText(Number(b.winMult.toFixed(1)))} damage, +${b.perStake} per ${b.resource.toUpperCase()} bet` : `${multText(Number(m.win.toFixed(1)))} damage`;
         const lose = m.lose <= 0 ? 'you miss' : `${multText(Number(m.lose.toFixed(1)))} damage`;
         add(`Bet ${what}: ${pct(b.winChance)} chance for ${win}; otherwise ${lose} and you lose the bet`, element);
+        if (b.loseHpRatio) add(`If the bet is lost you also lose ${pct(b.loseHpRatio)} of your max HP (never below 1 HP)`);
       }
       if (e.bonusFromShield) add(`+${pct(e.bonusFromShield.ratio)} of your shield${e.bonusFromShield.consume ? ' (consumed)' : ''}`, element);
     } else if (e.type === 'heal') {
@@ -530,12 +613,18 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       add(`Heal ${raw(e.scale, withMult(e.power, stats.healPowerMult))} per turn for ${e.turns} turns`);
     } else if (e.type === 'shield') {
       const magic = e.shieldType === 'magic';
-      add(`${magic ? 'Magic shield' : 'Shield'} ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.shieldPowerMult))})${e.self ? ' on you' : ''}`, magic ? 'magicShield' : 'shield');
+      const sk = magic ? 'magicShield' : 'shield';
+      const forTurns = e.turns ? ` for ${e.turns} turn${e.turns > 1 ? 's' : ''}` : '';
+      // Düz ekli kalkan (Mirror Vein, Ömer 2026-11-18): formül görünür "Shield 6 + INT x0.5 (11)"
+      const r2 = (v: number) => Math.round(v * 100) / 100;
+      if (e.flat) add(`${magic ? 'Magic shield' : 'Shield'} ${r2(e.flat)} + ${ATTRIBUTE_NAME[e.scale]} x${r2(e.power)} (${shieldShown(e, stats, formulas)})${e.self ? ' on you' : skill.target === 'all_allies' ? ' on every ally (you included)' : ''}${forTurns}`, sk);
+      else add(`${magic ? 'Magic shield' : 'Shield'} ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.shieldPowerMult))})${e.self ? ' on you' : ''}${forTurns}`, sk);
       if (e.bonusPerMana) add(`+${e.bonusPerMana} per MP left after casting`, magic ? 'magicShield' : 'shield');
       const hook = e.onAbsorb;
       if (hook?.burnMana) add(`Every hit the shield absorbs burns ${hook.burnMana} MP from the attacker`, magic ? 'magicShield' : 'shield');
       if (hook?.dispelChance) add(`Every hit the shield absorbs has a ${pct(hook.dispelChance)} chance to remove a random buff from the attacker`, magic ? 'magicShield' : 'shield');
       if (hook?.giveMana) add(`Every hit the shield absorbs gives the shielded unit ${hook.giveMana} MP`, magic ? 'magicShield' : 'shield');
+      if (hook?.giveBlood) add(`Each spell (magic hit) one of these shields absorbs gives you ${hook.giveBlood.base} + DEX x${hook.giveBlood.perDex} (${Math.round(hook.giveBlood.base + hook.giveBlood.perDex * stats.dex)}) blood`, sk);
       if (hook?.burnMana || hook?.dispelChance) add('Only direct attacks trigger it (not ground effects)');
     } else if (e.type === 'summon') {
       // Çağrı çağıranla büyür (Ömer 2026-10-18): statlar çağıranın item hariç temel statından (Stats.summonBase ?? kendi statları)
@@ -562,7 +651,9 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       // Madde 260: sabit miktar ya da hedefin maks MP'sinin yüzdesi (pctMax)
       const what = e.pctMax !== undefined ? `${e.amount ? `${e.amount} MP + ` : ''}${pct(e.pctMax)} of each target's max MP` : `${e.amount ?? 0} MP`;
       const onHit = skill.effects.some((x) => x.type === 'damage') ? ' on hit (none if the attack misses)' : '';
-      add(e.gainRatio ? `Steals ${what}${onHit}: you gain ${pct(e.gainRatio)} of it` : `Burns ${what}${onHit}`);
+      // Tithe Cut (bloodPerMp): sökülen MP kana döner, isabet başına sabit kan (formulas.bloodBar.hitGain)
+      if (e.bloodPerMp !== undefined) add(`Tears out ${what}${onHit}: you gain ${e.bloodPerMp} blood per MP torn out${formulas.bloodBar ? `, plus ${formulas.bloodBar.hitGain} blood per hit (a target with no MP gives only the ${formulas.bloodBar.hitGain})` : ''}`);
+      else add(e.gainRatio ? `Steals ${what}${onHit}: you gain ${pct(e.gainRatio)} of it` : `Burns ${what}${onHit}`);
       const em = e.onEmpty;
       if (em) {
         const def = defs.statuses?.[em.status];
@@ -584,13 +675,22 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.silenceOnEmpty) add(`A Branded enemy whose mana reaches 0 is ${defs.statuses?.silence?.name ?? 'Silenced'} for ${e.silenceOnEmpty} turn${e.silenceOnEmpty > 1 ? 's' : ''}`);
       if (e.spread) add('When a Brand runs out, it leaps once to an unbranded enemy next to its bearer with a fresh Brand');
       add('Casting it again refreshes the Brand but does not refill tainted mana');
+    } else if (e.type === 'bloodBrand') {
+      // Blood Brand (Redtithe): işaret metni; sayılar veriden
+      const def = defs.statuses?.['blood_brand'];
+      const bleed = defs.statuses?.['bleeding']?.name ?? 'Bleeding';
+      add(`Marks the target for ${e.turns} turn${e.turns > 1 ? 's' : ''}${def ? ` (${def.name})` : ''}: each skill it uses makes its ${bleed} tick ${e.ticks === 1 ? 'once' : `${e.ticks} times`} more at once, without shortening it`);
+      add(`The marked enemy pays ${pct(e.costMult - 1)} more MP for its skills (rounded up)`);
+      add('Casting it again refreshes the mark');
     } else if (e.type === 'taunt') {
       add(`Taunt ${e.turns} turns: enemies must target you${e.breakRatio ? ` (ends after losing ${pct(e.breakRatio)} HP)` : ''}`);
       const cc = Object.values(defs.statuses ?? {}).filter((d) => d.breaksTaunt).map((d) => d.name);
       if (cc.length > 0) add(`Ends at once if you get ${cc.join(' or ')}`);
       if (e.allyDamageMult !== undefined) add(`Your allies take ${multText(e.allyDamageMult)} damage while it lasts`);
+      if (e.armorBonus) add(`You gain +${e.armorBonus} armor while it lasts`); // Ömer 2026-11-16 Tur 26
     } else if (e.type === 'status') {
-      const def = defs.statuses?.[e.status];
+      const def0 = defs.statuses?.[e.status];
+      const def = def0 && e.strength !== undefined && e.strength !== 1 ? { ...def0, text: strengthText(def0, e.strength) } : def0; // örnek gücü (Ömer 2026-11-16)
       const how = e.cause === 'vines' ? ' (rooted by vines)' : '';
       if (e.chance !== undefined && e.chance < 1) add(`${pct(e.chance)} chance per target hit (rolled separately) to apply ${def?.name ?? e.status} for ${e.turns} turn${e.turns > 1 ? 's' : ''}${how}${def ? `: ${def.text}` : ''}`, undefined);
       else add(`${e.self ? 'You gain' : 'Applies'} ${def?.name ?? e.status}${skill.target === 'area_any' ? who : ''} for ${e.turns} turn${e.turns > 1 ? 's' : ''}${how}${def ? `: ${def.text}` : ''}`, undefined);
@@ -620,6 +720,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     } else if (e.type === 'guard') {
       if (skill.splash?.pattern === 'row') add(`Guard ${e.turns} turns: allies in the chosen row pass ${pct(e.share)} of the damage they take to you`);
       else add(`Guard ${e.turns} turns: take ${pct(e.share)} of the damage ally takes`);
+      // Close Ranks (Ömer 2026-11-18): auranın dışındaki Guard'lı dostlar aura payının auraShare katını alır
+      if (e.auraShare) add(`While guarded, allies outside your armor aura gain ${pct(e.auraShare)} of its armor bonus (allies already in the aura keep the full bonus)`);
       if (skill.excludeSelf) add('Cannot target yourself');
     } else if (e.type === 'dispel') {
       const names = Object.values(defs.statuses ?? {}).filter((d) => d.type === e.status && d.dispellable !== false).map((d) => d.name);
@@ -655,6 +757,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     }
   }
   fromTree = false;
+  for (const l of streakLines) add(l);
   // Boss skill kuralları (The Bridge Warden): çekme, telgraf (gecikmeli saldırı), faz ve yardımcı şartları
   // Ice Crater (Ömer 2026-10-29): seçilen yönde itme / çarpma
   for (const e of skill.effects) {
@@ -697,7 +800,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     else add('Always starts on the hero with the most Armor');
   }
   if (skill.allyNames) add(`Only on: ${skill.allyNames.join(', ')}`);
-  if (skill.caveIn) add(skill.caveIn.onTarget ? "The target's cell collapses at the start of the next Round and stays closed. Anyone there takes damage and is Slowed" : `${skill.caveIn.rule.cells} cells collapse at the start of the next Round and stay closed. Anyone there takes damage and is Slowed`);
+  if (skill.caveIn) add(skill.caveIn.onTarget ? "The target's cell collapses at the start of the next Round and stays closed. Anyone there takes damage and is Hobbled" : `${skill.caveIn.rule.cells} cells collapse at the start of the next Round and stay closed. Anyone there takes damage and is Slowed`);
   if (skill.quench) add(`Puts out every ${defs.grounds?.[skill.quench.ground]?.name ?? skill.quench.ground} cell on the field and heals ${pct(skill.quench.healRatio)} of its max HP for each`);
   if (skill.kindleNave) add(`Only after the sermon is done. Its own row becomes ${defs.grounds?.[skill.kindleNave.ground]?.name ?? skill.kindleNave.ground}: Ashborn allies there heal, others burn`);
   if (skill.anchorGround) add(`Cast only on a cell with ${defs.grounds?.[skill.anchorGround]?.name ?? skill.anchorGround}: it spreads to the cells right next to it`);
@@ -726,8 +829,15 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   // Oranlı bedel (Wail of the Dead: mevcut canın %20'si): açıklama satırı; başlık skillCostLabel
   // Bedelin kendisi başlıkta (skillCostLabel: "All RAGE (min 30)" / "20% of current HP"); satırda yalnızca başlıkta olmayan kural
   if (!skill.cost.spendAll && isRatioCost(skill.cost)) add(`Rounded, at least 1${skill.cost.resource === 'hp' ? '; it can never bring you below 1 HP' : ''}`);
+  // Kan bedeli (Redtithe): eksik kan candan; spendAll candan ödenmez
+  if (skill.cost.resource === 'blood' && skill.cost.amount > 0 && formulas.bloodBar) {
+    add(skill.cost.spendAll ? `Needs at least ${skill.cost.amount} blood and spends all of it; HP cannot pay for it` : `Missing blood is paid with HP: ${pctF(formulas.bloodBar.hpPerBlood)} of your max HP per blood (rounded up); it cannot be used if that would bring you below 1 HP`);
+  }
   // Ley Brand ortakları (Ömer 2026-11-07): Brand'in işaretlediği skill'ler ve Ley Thread bırakan skill kendi ipucunda kendi satırını taşır
   for (const [otherId, other] of Object.entries(defs.skills ?? {})) {
+    // Blood Brand ortakları (Redtithe): işaretliye fazla vuran skill'ler kendi ipucunda
+    const bb = other.effects?.find((x): x is Extract<SkillEffect, { type: 'bloodBrand' }> => x.type === 'bloodBrand');
+    if (bb && otherId !== skill.id && !isTestSkillId(otherId) && bb.markDamagePct && bb.markSkills?.includes(skill.id)) add(`Deals ${pct(bb.markDamagePct)} more damage to enemies marked by ${other.name}`);
     const br = other.effects?.find((x): x is Extract<SkillEffect, { type: 'brand' }> => x.type === 'brand');
     if (!br || otherId === skill.id || isTestSkillId(otherId)) continue;
     if (br.markDamagePct && br.markSkills?.includes(skill.id)) add(`Deals ${pct(br.markDamagePct)} more damage to enemies Branded by ${other.name}`);
@@ -788,7 +898,7 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
     else if (e.type === 'damage') num('Damage', damageAmount(e, stats, formulas), e.element ?? 'physical', times);
     else if (e.type === 'heal') num('Heal', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
     else if (e.type === 'hot') num('Heal / turn', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
-    else if (e.type === 'shield') num(e.shieldType === 'magic' ? 'Magic shield' : 'Shield', raw(e.scale, withMult(e.power, stats.shieldPowerMult)), e.shieldType === 'magic' ? 'magicShield' : 'shield');
+    else if (e.type === 'shield') num(e.shieldType === 'magic' ? 'Magic shield' : 'Shield', shieldShown(e, stats, formulas), e.shieldType === 'magic' ? 'magicShield' : 'shield');
     else if (e.type === 'manaBurn' && e.onEmpty?.damage) num('Damage at 0 MP', raw(e.onEmpty.damage.scale, withMult(e.onEmpty.damage.power, outgoingDamageMult(stats, e.onEmpty.damage.element))), e.onEmpty.damage.element ?? 'physical');
     else if (e.type === 'ground' && e.power > 0) num(`${defs.grounds?.[e.ground]?.name ?? 'Ground'} / turn`, raw(e.scale, e.power), defs.grounds?.[e.ground]?.heal ? 'heal' : defs.grounds?.[e.ground]?.element);
     else if (e.type === 'dot') {
@@ -806,8 +916,14 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
       const def = defs.statuses?.[e.status];
       const name = def?.name ?? e.status;
       fixed(name, e.chance !== undefined && e.chance < 1 ? `${pct(e.chance)}, ${turnsText(e.turns)}` : turnsText(e.turns));
-    } else if (e.type === 'taunt') fixed('Taunt', turnsText(e.turns));
-    else if (e.type === 'guard') fixed('Guard', turnsText(e.turns));
+    } else if (e.type === 'taunt') {
+      fixed('Taunt', turnsText(e.turns));
+      if (e.armorBonus) fixed('Armor while taunting', `+${e.armorBonus}`); // Ömer 2026-11-16 Tur 26
+    }
+    else if (e.type === 'guard') {
+      fixed('Guard', turnsText(e.turns));
+      if (e.auraShare) fixed('Aura share while guarded', pct(e.auraShare)); // Close Ranks (Ömer 2026-11-18)
+    }
     else if (e.type === 'bond') fixed(defs.statuses?.dark_bond?.name ?? 'Dark Bond', turnsText(e.turns));
     else if (e.type === 'revive') fixed('Revives with', `${pct(e.hpRatio)} HP`);
     else if (e.type === 'summon' && units[e.unit]) {
@@ -836,6 +952,8 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       return e.rageOnHurt ? [...fixed('Max bonus', moreText(e.maxBonus)), ...fixed('Rage per 1% HP lost', String(Math.round(e.rageOnHurt.perHpPercent * 100) / 100))] : fixed('Max bonus', moreText(e.maxBonus));
     case 'spellEcho':
       return fixed('Chance', pct(e.chance));
+    case 'luckyStreak':
+      return [...fixed('Max Streak', String(e.max)), ...fixed('Repeat chance', pct(e.chance))];
     case 'heatMirage': {
       const res = Object.entries(e.elemResist ?? {}).filter(([, v]) => (v ?? 0) > 0);
       return [...num('Burning Ground / turn', scaled(stats, e.scale, e.power, formulas), 'fire'), ...res.flatMap(([k, v]) => fixed(`${cap(k)} damage taken`, `-${pct(v!)}`))];
@@ -853,7 +971,7 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     case 'manaOverflow':
       return fixed(`Team MP per ${e.threshold} blocked`, `+${e.mana}`);
     case 'spellbreakerInstinct':
-      return fixed('Turn bar ahead', pct(e.advance));
+      return e.bloodAdvance ? fixed('Turn bar ahead (full blood)', pct(e.advance + e.bloodAdvance + (e.bloodAdvancePerDex ?? 0) * stats.dex)) : fixed('Turn bar ahead', pct(e.advance));
     case 'omenTransfer':
       return fixed('Omens passed', `up to ${e.maxOnArrival}`);
     case 'cutAndRun':
@@ -869,7 +987,7 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     case 'wardEtcher':
       return fixed('Shield per MP', `x${e.perMp}`);
     case 'mireBound':
-      return fixed('Speed', multText(e.speedMult));
+      return fixed(`${cap(e.status)} duration`, `+${turnsText(e.extraTurns)}`);
     case 'corpseHunger':
       return fixed('Heal', pct(e.ratio));
     case 'boneWard':
@@ -910,4 +1028,20 @@ export function groundReactionHint(groundId: string, reactions: Record<string, G
     parts.push(`${d.label} (with ${others.map((g) => grounds[g]?.name ?? cap(g)).join(' or ')})`);
   }
   return parts.length ? `Ground reactions: ${parts.join(', ')}` : null;
+}
+
+/**
+ * Örnek gücüyle (Status.strength; Ömer 2026-11-16: eski Fleet kaynağı yarım Shrouded, eski Shaken kaynağı 1/3 Blinded) verilen durumun kısa metni:
+ * büyüklük alanlarından üretilir (Evasion +10%, Accuracy -10%...); üretilecek alan yoksa tanımın metni.
+ */
+export function strengthText(def: StatusDef, strength: number): string {
+  const pc = (v: number) => `${Math.round(Math.abs(v) * 1000) / 10}%`;
+  const parts: string[] = [];
+  if (def.accuracyDelta) parts.push(`Accuracy ${def.accuracyDelta < 0 ? '-' : '+'}${pc(def.accuracyDelta * strength)}`);
+  if (def.evasionDelta) parts.push(`Evasion ${def.evasionDelta < 0 ? '-' : '+'}${pc(def.evasionDelta * strength)}`);
+  if (def.evasionMult !== undefined) parts.push(`${pc((1 - def.evasionMult) * strength)} ${def.evasionMult < 1 ? 'less' : 'more'} Evasion`);
+  if (def.speedMult !== undefined) parts.push(`${pc((1 - def.speedMult) * strength)} ${def.speedMult < 1 ? 'less' : 'more'} Speed`);
+  if (def.armorMult !== undefined) parts.push(`${pc((1 - def.armorMult) * strength)} ${def.armorMult < 1 ? 'less' : 'more'} Armor`);
+  if (def.healTakenMult !== undefined) parts.push(`Receives ${pc((1 - def.healTakenMult) * strength)} ${def.healTakenMult < 1 ? 'less' : 'more'} healing`);
+  return parts.length ? parts.join(', ') : def.text;
 }

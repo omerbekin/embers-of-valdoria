@@ -52,6 +52,7 @@ Kural: bir konunun TEK sahibi vardır; başka yerde kopyalama, bağlantı ver. K
 | campaign/*.md, bosses/*.md, waves.md, tutorial.md | sefer, boss, dalga, tutorial. campaign.md = geçerli kurallar; maps-2-3 / mob-plan / map2-quests-surge = kısa özet, tarihçe `archive/design/campaign/`; silver-stag-arc `future-ideas/`; tutorial sıra ölçümü `archive/design/tutorial-order.md`. Geçerli sayı `data/` |
 | progression/ (items, item-design-plan, levels, character-tiers) | item, level, ilerleme. Arşiv: `archive/design/progression/` (item-effects, roadmap, tarihçeler), `archive/design/economy-d8-proposal.md` |
 | classes/skill-tree-logic.md | düğüm tasarım kuralı (CANLI sahip) |
+| classes/retired-classes.md | emekli sınıfların tam eski hâli (tasarım belgesi + veri anlık görüntüsü + testler); sahibi character-design / sınıf tasarımı; ilk giriş: Anti-Mage (Redtithe öncesi) |
 | skill-tree-moments.md | ağaç şekli / kilit şeması (canlı) |
 | skill-tree-implementation.md | veri şeması / kural modülü / kayıt / motor |
 | skill-tree-fx-reference.md | fx sözlüğü + "yeni düğüm ekleme" adımları |

@@ -3,7 +3,7 @@ import { giveManaBarrier } from './mage-legacy-helpers';
 import { oldLayoutSetup } from './range-helpers';
 import { Battle, attributePower, content, describeClass, describeSkill, describeStat, nominalBurn, previewSkill } from '../src/engine';
 import type { BattleEvent, SkillDef, StatKind } from '../src/engine';
-import { installLegacySkills } from './legacy-skills';
+import { installLegacySkill, installLegacySkills } from './legacy-skills';
 
 installLegacySkills();
 
@@ -217,9 +217,11 @@ describe('önizleme: şifa, kalkan, tur bazlı şifa, mana yakma, durumlar', () 
     b.useSkill(E_WARRIOR, 'shield_wall');
     expect(b.get(E_WARRIOR)!.shield).toBe(self.shield!.amount);
 
-    const am = testBattle(1, { party: ['antimage', 'warrior', 'archer', 'mage'], enemies: ['warrior', 'archer', 'mage', 'druid'] });
-    const amUid = am.combatants.find((c) => c.side === 'party' && c.defId === 'antimage')!.uid;
-    expect(previewSkill(am, amUid, 'spell_ward', amUid)[0]!.shield!.magic).toBe(true); // madde 240: tek dost (kendisi dahil)
+    // büyü kalkanı: eski Spell Ward (2026-11-17'den beri kit dışı, sentetik; motor kuralı duruyor), Mage'e takılı
+    installLegacySkill('legacy_spell_ward', 'mage');
+    const am = testBattle(1, { party: ['mage', 'warrior', 'archer', 'druid'], enemies: ['warrior', 'archer', 'mage', 'druid'] });
+    const amUid = am.combatants.find((c) => c.side === 'party' && c.defId === 'mage')!.uid;
+    expect(previewSkill(am, amUid, 'legacy_spell_ward', amUid)[0]!.shield!.magic).toBe(true); // madde 240: tek dost (kendisi dahil)
   });
 
   it('tur bazlı şifa (Rejuvenate): tur başına miktar, tur sayısı ve eksik canla sınırlı toplam', () => {
@@ -240,22 +242,20 @@ describe('önizleme: şifa, kalkan, tur bazlı şifa, mana yakma, durumlar', () 
     const b = testBattle(1, teams);
     const am = b.combatants.find((c) => c.side === 'party' && c.defId === 'antimage')!.uid;
     const target = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'warrior')!;
-    expect(previewSkill(b, am, 'mana_burn', target.uid)[0]!.burn).toBe(7); // Ömer 2026-11-08: 10 -> 8 -> 7
+    expect(previewSkill(b, am, 'mana_burn', target.uid)[0]!.burn).toBe((content.skills.mana_burn!.effects.find((e) => e.type === 'manaBurn') as { amount: number }).amount);
     target.mp = 3;
     expect(previewSkill(b, am, 'mana_burn', target.uid)[0]!.burn).toBe(3);
-    const center = b.livingByDepth('enemy')[0]!;
-    const field = previewSkill(b, am, 'drain_field', center.uid);
-    expect(field).toHaveLength(b.areaWindow(am, 'drain_field', center.uid).length);
-    // Madde 260: yakım hedefin maks MP'sinin yüzdesi (nominalBurn), mevcut manayla sınırlı
-    const eff = content.skills.drain_field!.effects[0] as Parameters<typeof nominalBurn>[0];
-    for (const x of field) expect(x.burn ?? 0).toBe(Math.min(b.get(x.uid)!.mp, nominalBurn(eff, b.get(x.uid)!)));
+    // Madde 260 yüzde yakımı (nominalBurn) genel motor kuralı: mevcut manayla sınırlı (Drain Field kitten çıktı, sentetik efekt)
+    const eff = { type: 'manaBurn', pctMax: 0.55 } as Parameters<typeof nominalBurn>[0];
+    expect(nominalBurn(eff, { maxMp: 50 })).toBe(Math.round(50 * 0.55));
   });
 
   it('taunt ve guard durum metni verir', () => {
     const b = testBattle(1, { party: ['defender', 'warrior', 'archer', 'mage'], enemies: ['warrior', 'archer', 'mage', 'druid'] });
     const d = b.combatants.find((c) => c.side === 'party' && c.defId === 'defender')!;
     const w = b.combatants.find((c) => c.side === 'party' && c.defId === 'warrior')!;
-    expect(previewSkill(b, d.uid, 'taunt')[0]!.statuses).toEqual(['Taunt 2 turns']);
+    const tb = (content.skills.taunt!.effects.find((e) => e.type === 'taunt') as { armorBonus?: number }).armorBonus; // Tur 26 taunt zırhı
+    expect(previewSkill(b, d.uid, 'taunt')[0]!.statuses).toEqual(['Taunt 2 turns', ...(tb ? [`+${tb} armor while taunting`] : [])]);
     expect(previewSkill(b, d.uid, 'guard', w.uid)[0]!.statuses).toEqual(['Guard 3 turns']);
     expect(previewSkill(b, d.uid, 'taunt')[0]!.shield).toBeUndefined(); // Taunt kalkan vermez (Ömer 2026-10-10)
   });
@@ -297,7 +297,7 @@ describe('skill açıklaması (tooltip)', () => {
   it('özel kurallar: zırh yok sayma, arkaya sıçrama, can emme, undead bonusu, eksik mana, tüketilen kalkan', () => {
     expect(text('aimed_shot')).toContain('Ignores 50% of armor');
     expect(text('piercing_arrow')).not.toContain('Ignores');
-    expect(text('piercing_arrow')).toContain('30% less damage than the previous one');
+    expect(text('piercing_arrow')).toContain('15% less damage than the previous one'); // Tur 28-29: falloff 0,85
     expect(text('judgment')).toContain('Leaves');
     expect(text('void_strike')).toContain('missing mana of the target');
   });
@@ -310,13 +310,14 @@ describe('skill açıklaması (tooltip)', () => {
     expect(rain).toContain('allies standing there are Hallowed');
     expect(rain).toContain('healing at the start of each of their turns');
     expect(text('shield_wall')).toContain('Shield 110% STR');
-    expect(text('spell_ward')).toContain('Magic shield');
+    installLegacySkill('legacy_spell_ward');
+    expect(text('legacy_spell_ward')).toContain('Magic shield');
     expect(text('summon_treant')).toContain('Summons Treant');
-    expect(text('summon_treant')).toContain('for 3 turns');
+    expect(text('summon_treant')).toContain(`for ${(content.skills.summon_treant!.effects.find((e) => e.type === 'summon') as { lifespan: number }).lifespan} turns`);
     expect(text('summon_treant')).not.toContain('Summons take'); // x2 hasar kuralı Codex Summons makalesinde
     expect(text('taunt')).toContain('must target you');
     expect(text('guard')).toContain(`take ${Math.round((content.skills.guard!.effects.find((e) => e.type === 'guard') as { share: number }).share * 100)}% of the damage`);
-    expect(text('mana_burn')).toContain('Steals 7 MP'); // Ömer 2026-11-08: 10 -> 8 -> 7; Mana Steal: kısmen kendine geçer
+    expect(text('mana_burn')).toMatch(/Tears out \d+ MP.*blood per MP/); // Redtithe Tithe Cut: sökülen MP kana döner
   });
 
   it('yakın dövüş skill\'leri menzil kuralını söyler; menzilli olanlar söylemez (menzil KAPALI: eski satır)', () => {
@@ -406,7 +407,8 @@ describe('stat açıklaması (tooltip)', () => {
     expect(text('armor')).toContain('Reduces physical damage taken by');
     expect(text('armor')).not.toContain('Diminishing');
     expect(text('magicArmor')).toContain('No magic armor');
-    const am = content.classes.antimage!.stats;
+    // Redtithe'in büyü zırhı kan barından (class taban 0, Ömer 2026-11-18); büyü zırhlı stat örneği
+    const am = { ...content.classes.antimage!.stats, magicArmor: f.bloodBar!.magicArmorBase };
     expect(describeStat('magicArmor', am, f).lines.join('\n')).toContain('Reduces magic damage taken by');
   });
 
@@ -417,7 +419,8 @@ describe('stat açıklaması (tooltip)', () => {
     expect(t).toContain(`STR ${content.classes.defender!.attributes.str}`);
     expect(t).toContain('Skills: Tremor Slam, Taunt, Close Ranks, Fist Crush');
     expect(t).toContain(`Armor ${content.classes.defender!.stats.armor}`);
-    expect(describeClass(content.classes.antimage!, content.skills, f).lines.join('\n')).toContain(`Magic armor ${content.classes.antimage!.stats.magicArmor}`);
+    // Redtithe: büyü zırhı formülü kan barı satırında (Ömer 2026-11-18)
+    expect(describeClass(content.classes.antimage!, content.skills, f).lines.join('\n')).toContain(`Magic armor up to ${f.bloodBar!.magicArmorBase} + INT x${f.bloodBar!.magicArmorPerInt}`);
   });
 });
 

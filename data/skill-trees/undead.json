@@ -85,7 +85,7 @@
       {
         "at": 15,
         "name": "Tomb Frost",
-        "text": "Your first Bone Throw each battle Slows for 1 extra turn.",
+        "text": "Your first Bone Throw each battle Hobbles for 1 extra turn.",
         "src": "A:V5:bar0",
         "fx": [
           {
@@ -392,7 +392,7 @@
     },
     "1.f1": {
       "name": "Knee Breaker",
-      "text": "Bone Throw deals 6% increased damage per rank against Slowed targets.",
+      "text": "Bone Throw deals 6% increased damage per rank against Hobbled targets.",
       "src": "A:V5:1.f1",
       "fx": [
         {
@@ -410,7 +410,7 @@
     },
     "1.f2": {
       "name": "Marrow Leech",
-      "text": "Vampiric Bite heals 6% more per rank from Bone Throw hits on Slowed targets.",
+      "text": "Vampiric Bite heals 6% more per rank from Bone Throw hits on Hobbled targets.",
       "src": "A:V1:1.f2",
       "fx": [
         {
@@ -428,7 +428,7 @@
     },
     "1.f3": {
       "name": "Skull Rattle",
-      "text": "Bone Throw has a 3% chance per rank to Stagger its target (it loses its next action).",
+      "text": "Bone Throw has a 3% chance per rank to Stun its target for 1 turn.",
       "src": "A:V5:1.f3",
       "fx": [
         {
@@ -437,31 +437,31 @@
           "byRank": [
             {
               "type": "status",
-              "status": "staggered",
+              "status": "stun",
               "turns": 1,
               "chance": 0.03
             },
             {
               "type": "status",
-              "status": "staggered",
+              "status": "stun",
               "turns": 1,
               "chance": 0.06
             },
             {
               "type": "status",
-              "status": "staggered",
+              "status": "stun",
               "turns": 1,
               "chance": 0.09
             },
             {
               "type": "status",
-              "status": "staggered",
+              "status": "stun",
               "turns": 1,
               "chance": 0.12
             },
             {
               "type": "status",
-              "status": "staggered",
+              "status": "stun",
               "turns": 1,
               "chance": 0.15
             }
@@ -471,7 +471,7 @@
     },
     "1.n0": {
       "name": "Crippling Bone",
-      "text": "Bone Throw's Slow lasts 3 turns instead of 2.",
+      "text": "Bone Throw's Hobble lasts 3 turns instead of 2.",
       "src": "A:V5:1.n0",
       "fx": [
         {
@@ -485,7 +485,7 @@
     },
     "1.r": {
       "name": "Numb Joints",
-      "text": "Bone Throw deals 4% increased damage per rank against Staggered, Stunned or Silenced targets.",
+      "text": "Bone Throw deals 4% increased damage per rank against Stunned or Silenced targets.",
       "src": "A:V5:1.r",
       "fx": [
         {
@@ -493,7 +493,6 @@
           "h": "cond",
           "when": {
             "targetStatusAny": [
-              "staggered",
               "stun",
               "silence"
             ]
@@ -507,7 +506,7 @@
     },
     "1.ea": {
       "name": "Shattered Shin",
-      "text": "Bone Throw on an already Slowed target has a 12% chance to Stagger it.",
+      "text": "Bone Throw on an already Hobbled target has a 12% chance to Stun it.",
       "src": "A:V5:1.ea",
       "fx": [
         {
@@ -518,7 +517,7 @@
           },
           "mod": {
             "addStatus": {
-              "status": "staggered",
+              "status": "stun",
               "turns": 1,
               "chance": 0.12
             }
@@ -545,7 +544,7 @@
     },
     "1.ma": {
       "name": "Grave Shackle",
-      "text": "Bone Throw Stuns a Slowed target below 50% HP for 1 turn (each enemy once per battle).",
+      "text": "Bone Throw Stuns a Hobbled target below 50% HP for 1 turn (each enemy once per battle).",
       "src": "A:V5:1.ma",
       "fx": [
         {
@@ -578,7 +577,7 @@
           },
           "mod": {
             "addStatus": {
-              "status": "staggered",
+              "status": "stun",
               "turns": 1,
               "chance": 0.318182
             }
@@ -595,7 +594,7 @@
     },
     "1.fb": {
       "name": "Mute Marrow",
-      "text": "Skull Cracker's chance 20% → 50%, but Bone Throw no longer Slows.",
+      "text": "Skull Cracker's chance 20% → 50%, but Bone Throw no longer Hobbles.",
       "src": "A:V5:1.fb",
       "fx": [
         {
@@ -614,7 +613,7 @@
     },
     "1.mb": {
       "name": "Jaw Breaker",
-      "text": "Bone Throw on a Silenced target also Jinxes it (accuracy -20%, no crits on its next attack).",
+      "text": "Bone Throw on a Silenced target also Jinxes it (no crits on its next attack).",
       "src": "A:V5:1.mb",
       "fx": [
         {
@@ -634,7 +633,7 @@
     },
     "1.v": {
       "name": "Femur Chain",
-      "text": "Bone Throw evolves: it hits its target and the enemy behind it, Slowing both for 3 turns.",
+      "text": "Bone Throw evolves: it hits its target and the enemy behind it, Hobbling both for 3 turns.",
       "src": "A:V5:1.v",
       "fx": [
         {
@@ -1152,7 +1151,7 @@
     },
     "4.u1": {
       "name": "Grasping Hands",
-      "text": "Your Skeleton's hits Slow the target for 1 turn.",
+      "text": "Your Skeleton's hits Hobble the target for 1 turn.",
       "src": "B:V5:4.u1",
       "fx": [
         {
@@ -1172,7 +1171,7 @@
     },
     "4.u2": {
       "name": "Cold Grip",
-      "text": "Your Skeleton deals 15% increased damage to Slowed targets.",
+      "text": "Your Skeleton deals 15% increased damage to Hobbled targets.",
       "src": "B:V5:4.u2",
       "fx": [
         {

@@ -31,25 +31,29 @@ describe('Mage kiti (Ömer 2026-10-29)', () => {
     expect(content.classes.mage!.skills).toEqual(['fire_bolt', 'blizzard', 'ice_crater', 'meteor']);
     expect(content.classes.mage!.passive!.id).toBe('heat_mirage');
     expect(content.skills.mana_barrier).toBeDefined();
-    expect(content.classes.gambler!.passive!.effect.type).toBe('spellEcho');
+    // Spell Echo (spellEcho) türü motorda ve test sınıflarında duruyor; Gambler 2026-11-18'den beri Lucky Streak
+    expect(Object.values(content.classes).some((c) => c.passive?.effect.type === 'spellEcho')).toBe(true);
   });
 });
 
 describe('Chilled', () => {
   it('Slow\'dan ayrı: hız x0.8, kaçınma x0.9, CC değil (Ömer 2026-11-09); Slow ile birlikte durur', () => {
     const def = content.statuses.chilled!;
-    expect(def).toMatchObject({ name: 'Chilled', type: 'debuff', speedMult: 0.8, evasionMult: 0.9 });
+    // Ömer 2026-11-16: hızı yalnız Chilled keser, kaçınmayı yalnız Hobbled (eski Slow); ikisi ayrı işler
+    expect(def).toMatchObject({ name: 'Chilled', type: 'debuff', speedMult: 0.8 });
+    expect(def.evasionMult).toBeUndefined();
     expect(def.cc).toBeFalsy(); // Ömer 2026-11-09: Chilled CC değil (boss %25, elit %50 güç)
     const b = sure(arena([['mage', 7]], [['warrior', 1]]));
     const foe = b.get('enemy-0')!;
     foe.stats.evasion = 0.2;
     const spd = b.speedOf(foe);
     b.debugAddStatus('enemy-0', 'chilled', 2);
-    expect(b.effectiveStats(foe).evasion).toBeCloseTo(0.18, 6);
+    expect(b.effectiveStats(foe).evasion).toBeCloseTo(0.2, 6);
     expect(b.statusMult(foe, 'speedMult')).toBeCloseTo(0.8, 6);
     b.debugAddStatus('enemy-0', 'slow', 2);
     expect(foe.statuses.map((s) => s.kind).sort()).toEqual(['chilled', 'slow']);
-    expect(b.statusMult(foe, 'speedMult')).toBeCloseTo(0.8 * 0.7, 6);
+    expect(b.statusMult(foe, 'speedMult')).toBeCloseTo(0.8, 6);
+    expect(b.effectiveStats(foe).evasion).toBeCloseTo(0.2 * content.statuses.slow!.evasionMult!, 6);
     expect(b.speedOf(foe)).toBeLessThan(spd);
     // Boss rütbesi: Chilled ve Slow engellenmez (azaltılmış güç; Slow Ömer onaylı 2026-11-09 form 3), Frozen (CC) engellenir
     foe.statuses = [];

@@ -85,14 +85,15 @@ describe('M-B Tide: Flooded + Soaked', () => {
       }
     });
 
-  it('Soaked: alınan ateş hasarı veri çarpanıyla, hız düşer, Burning söner; diğer elementler aynı', () => {
+  it('Soaked: alınan ateş hasarı veri çarpanıyla, hız düşmez (Ömer 2026-11-16: hızı yalnız Chilled düşürür), Burning söner; diğer elementler aynı', () => {
     const b = make(3, 'turns', teams);
     const wet = b.combatants.find((c) => c.statuses.some((s) => s.kind === TIDE.soak))!;
     const def = content.statuses[TIDE.soak]!;
     expect(b.statusElementMult(wet, 'fire')).toBe(def.elementTakenMult!.fire);
     expect(b.statusElementMult(wet, 'holy')).toBe(1);
     expect(b.damageTakenMult(wet, undefined, 'magic', null, 'fire') / b.damageTakenMult(wet, undefined, 'magic', null, 'ice')).toBeCloseTo(def.elementTakenMult!.fire!, 6);
-    expect(b.statusMult(wet, 'speedMult')).toBeCloseTo(def.speedMult!, 6);
+    expect(def.speedMult).toBeUndefined();
+    expect(b.statusMult(wet, 'speedMult')).toBe(1);
     expect(def.cleanses).toContain('burning');
   });
 

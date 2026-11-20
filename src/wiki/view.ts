@@ -18,7 +18,7 @@ import castleHall from '../../assets/backgrounds/castle-hall.webp?url';
 import { h, isolateKeys, openLightbox } from '../gallery/dom';
 import { bindIcon, bindStatusIcon } from '../ui/dom-icons';
 import { SHARED_KEY, ownerOfLogo, ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
-import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from '../ui/stat-icons';
+import { BLOOD_COLOR, RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from '../ui/stat-icons';
 import { uiIconName } from '../ui/ui-icons';
 import { cooldownChipOf, costChipOf, rangeChipOf } from '../ui/skill-chips';
 import type { MiniShape } from '../ui/shape-diagram';
@@ -560,7 +560,7 @@ export class WikiPanel {
     const cd = cooldownChipOf(s.cooldown);
     return [
       rg ? q(uiIconName('range'), '#e8e2d0', rg.num, rg.tip) : s.rangeLabel ? chip(s.rangeLabel) : null,
-      cost ? q(cost.res === 'rage' ? uiIconName('rage') : statIconName(cost.res), cost.res === 'rage' ? RAGE_COLOR : STAT_COLOR[cost.res], cost.num, cost.tip) : chip(`Cost ${s.cost}`),
+      cost ? cost.res === 'blood' ? q('drop', BLOOD_COLOR, cost.num, cost.tip) : q(cost.res === 'rage' ? uiIconName('rage') : statIconName(cost.res), cost.res === 'rage' ? RAGE_COLOR : STAT_COLOR[cost.res], cost.num, cost.tip) : chip(`Cost ${s.cost}`),
       cd ? q(uiIconName('cooldown'), UI_COLOR, cd.num, cd.tip) : s.cooldown !== 'None' ? chip(`Cooldown ${s.cooldown}`) : null,
     ];
   }

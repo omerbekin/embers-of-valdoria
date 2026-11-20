@@ -318,7 +318,7 @@ describe('stat okları: Blinded / Shrouded (effectiveStats)', () => {
   });
 
   it('EFFECTS açıklaması durumun cümlesidir, kimliği değil; her durumun cümlesi var', () => {
-    expect(statusCardText(content.statuses.ley_thread)).toContain('next Ley Brand');
+    expect(statusCardText(content.statuses.ley_thread)).toContain('next Brand'); // 2026-11-17: Ley Brand kitten çıktı, metin genel
     for (const [kind, def] of Object.entries(content.statuses)) {
       expect(statusCardText(def), kind).not.toBe('');
       expect(statusCardText(def), kind).not.toBe(kind);

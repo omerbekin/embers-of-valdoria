@@ -120,4 +120,16 @@ describe('Codex düzeni (sol menü + liste + madde)', () => {
     const wiki = buildWiki(files());
     expect(wiki.statuses.some((s) => s.id === 'banked_coals')).toBe(RARE.setsEnabled);
   });
+  it('Focused ve Empowered (kaynakları yalnız set bonusu) bayrak kapalıyken gizli, açılınca görünür', () => {
+    const was = RARE.setsEnabled;
+    try {
+      RARE.setsEnabled = false;
+      expect(buildWiki(files()).statuses.some((s) => s.id === 'focused' || s.id === 'empowered')).toBe(false);
+      RARE.setsEnabled = true;
+      const ids = buildWiki(files()).statuses.map((s) => s.id);
+      for (const id of ['focused', 'empowered', 'banked_coals']) expect(ids, id).toContain(id);
+    } finally {
+      RARE.setsEnabled = was;
+    }
+  });
 });

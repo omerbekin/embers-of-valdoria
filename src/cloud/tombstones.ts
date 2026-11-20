@@ -70,15 +70,32 @@ export function killedBy(t: Tombstone, slot: number, sd: { campaignId?: unknown;
   return !Number.isFinite(started) || started <= Date.parse(t.deletedAt);
 }
 
+/** Okuyucunun (campaign/save.ts > readSaves) kabul ettiği yuva biçimi; tanınmayan yuva okunamamıştır, silme sayılmaz (sağlamlık A1). */
+const readableSlot = (s: unknown): s is { campaignId: string } => {
+  const x = s as { campaignId?: unknown; mode?: unknown; saves?: unknown } | null;
+  return !!x && typeof x === 'object' && typeof x.campaignId === 'string' && Array.isArray(x.saves) && (x.mode === 'normal' || x.mode === 'ironman');
+};
+
 /** Ham sefer dosyasındaki yuva seferleri (yuva sırası; boş / tanınmayan = null). Sürüm 1 (yuvasız) dosyada boş liste. */
 function slotIds(raw: string | null): Array<string | null> {
   if (!raw) return [];
   try {
     const p = JSON.parse(raw) as { slots?: unknown } | null;
     if (!p || !Array.isArray(p.slots)) return [];
-    return p.slots.map((s) => (s && typeof s === 'object' && typeof (s as { campaignId?: unknown }).campaignId === 'string' ? (s as { campaignId: string }).campaignId : null));
+    return p.slots.map((s) => (readableSlot(s) ? s.campaignId : null));
   } catch {
     return [];
+  }
+}
+
+/** Ham dosyanın sürüm numarası (sayı değilse / okunamazsa null). save.ts'i içe almaz (hafif modül). */
+function fileVersion(raw: string | null): number | null {
+  if (!raw) return null;
+  try {
+    const v = (JSON.parse(raw) as { version?: unknown } | null)?.version;
+    return typeof v === 'number' && Number.isFinite(v) ? v : null;
+  } catch {
+    return null;
   }
 }
 
@@ -88,6 +105,12 @@ export function deletedSlots(prev: string | null, next: string | null, now: stri
   const b = next === null ? [] : slotIds(next);
   // Sonraki dosya okunamıyorsa (yuvasız/bozuk ama null değil) silme sayılmaz
   if (next !== null && !b.length && a.length) return [];
+  // Önceki dosya sürümsüz ya da yazandan YENİ sürümse (eski sekme, sağlamlık taraması A1) yazan onu okuyamamıştır: silme sayılmaz
+  if (next !== null && a.length) {
+    const pv = fileVersion(prev);
+    const nv = fileVersion(next);
+    if (pv === null || nv === null || pv > nv) return [];
+  }
   const out: Tombstone[] = [];
   a.forEach((id, i) => {
     if (id !== null && b[i] !== id) out.push({ slot: i, campaignId: id, deletedAt: now });
@@ -95,12 +118,14 @@ export function deletedSlots(prev: string | null, next: string | null, now: stri
   return out;
 }
 
-/** Sarılı depo kancası: sefer dosyası yazıldı / silindi. Asla fırlatmaz (kayıt yazımını bozmaz). */
-export function noteCampaignWrite(ls: KV, prev: string | null, next: string | null, now: string = new Date().toISOString()): void {
+/** Sarılı depo kancası: sefer dosyası yazıldı / silindi. Yazılan işaretlerin yuvaları döner (tanılama izi). Asla fırlatmaz (kayıt yazımını bozmaz). */
+export function noteCampaignWrite(ls: KV, prev: string | null, next: string | null, now: string = new Date().toISOString()): number[] {
   try {
     const add = deletedSlots(prev, next, now);
     if (add.length) writeTombstones(ls, [...readTombstones(ls), ...add]);
+    return add.map((t) => t.slot);
   } catch {
     /* işaret yazılamadı: senkron eskisi gibi */
+    return [];
   }
 }

@@ -147,7 +147,7 @@ describe('stat tooltip metinleri (veriden)', () => {
   });
   it('Luck: puan başına isabet ve kritik şansı yazar', () => {
     expect(lines('luck')).toContain(`Accuracy: +${(f.attributes.accuracyPerLuck * 100).toFixed(1)}% per point`);
-    expect(lines('luck')).toContain(`Crit chance: +${(f.attributes.critChancePerLuck * 100).toFixed(1)}% per point`);
+    expect(lines('luck')).toContain(`Crit chance: +${Number((f.attributes.critChancePerLuck * 100).toFixed(3))}% per point`);
   });
   it('Str/Int: yenilenme sayıları veriden', () => {
     expect(lines('str')).toContain(`+${f.attributes.hpRegenPerStr} per point`);
@@ -158,8 +158,8 @@ describe('stat tooltip metinleri (veriden)', () => {
 describe('stat dağılımı ve taban isabet', () => {
   const classes = Object.values(content.classes);
   const LOW_DEX = ['warrior', 'defender', 'paladin', 'mage', 'undead', 'druid']; // çevik olmayanlar: az ama sıfır olmayan dex
-  it('taban isabet %80 (global), sınıf override alanı varsayılan olarak yok', () => {
-    expect(f.attributes.accuracyBase).toBe(0.8);
+  it('taban isabet %85 (global, Tur 28-29), sınıf override alanı varsayılan olarak yok', () => {
+    expect(f.attributes.accuracyBase).toBe(0.85); // Ömer 2026-11-16 Tur 28-29: %80 -> %85
     for (const c of Object.values(content.classes)) expect('accuracyBase' in c).toBe(false);
   });
   it('hiçbir class dex 0 değil (en az 1); toplam 30; primary en yüksek', () => {

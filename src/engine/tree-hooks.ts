@@ -21,7 +21,7 @@ export const UNIT_FX_KEYS = [
   'retortStatus', 'critStatuses', 'killRush', 'lastStand', 'openerStatus', 'restBlessing', 'vengeance', 'tierStatus',
   'elemResist', 'thorns', 'frontRowDamage', 'backRowDamage', 'tierDamageTakenReduce', 'columnGuard', 'pierceBehind', 'steadyDamage',
   'healReceived', 'executeDamage', 'killMp', 'killHeal', 'armorShred', 'manaShield', 'cdChance', 'overkillSpill', 'bankedCoals', 'roadHound',
-  'dodgeCrit', 'escapeStatus', 'counterAttack', 'allyTurn', 'basicRepeat',
+  'dodgeCrit', 'escapeStatus', 'counterAttack', 'allyTurn', 'basicRepeat', 'refrain', 'deathBequest', 'healShorten',
 ] as const satisfies readonly (keyof ItemEffects)[];
 type MissingKey = Exclude<keyof ItemEffects, (typeof UNIT_FX_KEYS)[number]>;
 const _allKeys: [MissingKey] extends [never] ? true : MissingKey = true;
@@ -732,6 +732,8 @@ export interface ModStatus {
   chance?: number;
   /** true: alıcı sahibin kendisi (Hedged Bet: kendine Fortified). */
   self?: boolean;
+  /** Örnek gücü (Status.strength; Ömer 2026-11-16: eski Shaken kaynağı Blinded 1/3). */
+  strength?: number;
 }
 export interface ModExtend {
   /** Uzatılacak durum; '*' = hedefteki debuff'lardan seed'li rastgele biri (Let It Ride). */
@@ -782,6 +784,11 @@ export interface CondMod {
   chance?: number;
   /** Uygulanan durumun büyüklük eki (soru 14.7 cevabı): statuses.json alanına düz ek (accuracyDelta, critDelta, damageTakenMult, speedMult, healTakenMult, evasionDelta; Jinxed: attacks, keepChance). */
   statusPotency?: Record<string, number>;
+  /**
+   * Uygulanan durumla BİRLİKTE verilen eş durum (Ömer 2026-11-16 Tur 24: Hexer Wobbly Aim / Feeble Jinx / Fog of Ill Luck isabet eki yerine Blinded):
+   * `status` aynı sürede, aynı kaynaktan, örnek gücü `strength` (rank ile çarpılır; Status.strength, 1 ve üstü tam güç). Tek iş tek durum.
+   */
+  withStatus?: { status: string; strength: number };
   /** Uygulanan durum süresiz (permanent bayrağı; soru 14.16). */
   permanent?: boolean;
   // vuruş sonrası (isabet eden hedef başına)
@@ -850,6 +857,7 @@ export const MOD_SPEC: Record<keyof CondMod, { t: 'num' | 'bool' | 'obj' | 'str'
   turns: { t: 'num', g: 'status' },
   chance: { t: 'num', g: 'status' },
   statusPotency: { t: 'obj', g: 'status' },
+  withStatus: { t: 'obj', g: 'status' },
   permanent: { t: 'bool', g: 'status' },
   addStatus: { t: 'obj', g: 'proc', at: ['hit', 'passiveHeal', 'smite'] },
   removeStatus: { t: 'str', g: 'proc' },
@@ -877,7 +885,7 @@ export const MOD_SPEC: Record<keyof CondMod, { t: 'num' | 'bool' | 'obj' | 'str'
 export const SET_MODS: ReadonlySet<string> = new Set(['cooldownSet', 'echoSet', 'winSet', 'emptySet', 'omenSet', 'turnCost']);
 /** Uygulanan durum büyüklüğünün (statusPotency) izinli alanları. */
 // Altıncı tur (Weakened): damageDealtMult / magicDealtMult (verilen hasar çarpanlarına düz ek), oneAttack (> 0: bu örnek taşıyanın sıradaki hasar skill'inden sonra düşer)
-export const POTENCY_FIELDS: ReadonlySet<string> = new Set(['accuracyDelta', 'evasionDelta', 'critDelta', 'damageTakenMult', 'speedMult', 'healTakenMult', 'armorMult', 'attacks', 'keepChance', 'damageDealtMult', 'magicDealtMult', 'oneAttack']);
+export const POTENCY_FIELDS: ReadonlySet<string> = new Set(['accuracyDelta', 'evasionDelta', 'evasionMult', 'critDelta', 'damageTakenMult', 'magicTakenMult', 'speedMult', 'healTakenMult', 'armorMult', 'attacks', 'keepChance', 'damageDealtMult', 'magicDealtMult', 'physicalDealtMult', 'oneAttack']);
 
 export interface CondHook {
   h: 'cond';
@@ -987,6 +995,8 @@ export const TRIGGER_EVENTS = [
   'crash', 'instinct', 'threadConsumed',
   // Vesper ağacı: sahibin bir çanı çaldı (çan başına bir kez, kaynak fark etmez: skill, tetik, savaş başı; Long Echo, Quickening Peal)
   'bellRung',
+  // Lucky Streak (Gambler, Ömer 2026-11-18): seri arttı (miktar = yeni seri), dolu seri harcandı (miktar = harcanan), zar çift geldi (miktar = zarın yüzü)
+  'streakGain', 'streakSpend', 'doubles',
 ] as const;
 export type TriggerEvent = (typeof TRIGGER_EVENTS)[number];
 
@@ -1056,6 +1066,8 @@ export interface TriggerAction {
    */
   bounceHit?: number;
   bounceFalloff?: number;
+  /** status: örnek gücü (Status.strength; Ömer 2026-11-16: eski Fleet kaynağı Shrouded 0,5). */
+  strength?: number;
   stacks?: number;
   chance?: number;
   power?: number;
@@ -1362,6 +1374,8 @@ export interface TreeModAcc {
   turns: number;
   chance: number;
   potency?: Record<string, number>;
+  /** Eş durumlar (withStatus): durum -> toplam örnek gücü. */
+  withStatus?: Record<string, number>;
   permanent: boolean;
   nodes: string[];
 }

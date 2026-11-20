@@ -15,6 +15,7 @@ import { holdViewportForKeyboard } from './viewport';
 import { miscImage, statImage } from '../game/icon-image-files';
 import type { MwCard } from './map-window';
 import { attachBandTip, positionTip, reasonSpec } from './band-tip-attach';
+import { pushClose } from './close-stack';
 
 export interface CompanySpec {
   size: number;
@@ -61,6 +62,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
   let leader: string | null = null;
   const shown: Array<string | null> = Array.from({ length: SIZE }, () => null);
   let done = false;
+  let popStack: (() => void) | null = null;
 
   const wrap = document.createElement('div');
   wrap.className = 'mw cw mw-in';
@@ -366,6 +368,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
     xb.addEventListener('click', () => !done && cancel());
     win.append(xb);
     dismissOnBackdrop(wrap, win, () => !done && cancel());
+    popStack = pushClose({ close: () => !done && cancel() }); // Esc / Android geri
   }
 
   sync();
@@ -378,6 +381,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
       hideTip();
       stopKeepingName();
       holdViewportForKeyboard(false);
+      popStack?.();
       wrap.remove();
       unlockInput('company-window');
     },

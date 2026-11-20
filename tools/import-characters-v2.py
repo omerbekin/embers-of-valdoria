@@ -16,7 +16,7 @@ MARGIN = 0.015
 
 # id: (cx, top, size)  -> içerik kutusunun sol-üstüne göre, orijinal (1254px) piksel; kare kafa+boyun kutusu
 HEADS = {
-    'antimage': (318, 0, 275),  # 2026-10-18: yeni kadın Anti-Mage (antimage-v3-themes/final-idle-2.png); eskisi antimage-old-v2.png
+    'antimage': (138, -4, 100),  # 2026-11-17b: Redtithe idle1 yeniden çizimi (redtithe-idle-v2); önceki (104, -4, 100) ilk Redtithe idle1, kaynak antimage-old-2026-11-17b.png; daha önceki (318, 0, 275) kadın Anti-Mage, antimage-old-2026-11-17.png
     'archer': (170, -12, 132),  # 2026-11-08: archer-v3 idle1 pozundan (yeni Archer, idle-g); eskisi archer-old-2026-11-03.png
     'defender': (500, 0, 250),
     'druid':    (168, -8, 145),  # 2026-11-08: druid-v2 idle1 pozundan (boyali figur); eskisi druid-old-2026-11-03.png

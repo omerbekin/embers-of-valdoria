@@ -24,7 +24,7 @@ Harita 1 (Kül) Crown of Ash'i bırakır: taç yanmaz ve kırılmaz, Morvane ü�
 | Chilled / Frozen, Blizzard (M-D, M-E) | Harita 3 buz durumu. Geçerli kural: kit tablosu, Chill yığını yok; Snowfather'ın kendi bonusu `data/bosses/snowfather.json` | `src/campaign/hollow-crown.ts` |
 | Darkness + Lantern (M-F) | Hedefleme kısıtı; ateş skill'i tahtayı aydınlatır; Lantern kırılınca kalkar | `data/bosses/lantern.json` |
 | Cave-in, Heat, kapalı hücreler (M-G, M-H, M-I) | Telgraflı çöküş, Round başı Burning sırası, `blocked` hücreler (güverte) | `hollow-crown.ts`, `reach.ts` |
-| Shocked, Live Water, Iron Draws the Bolt, Thunderflash, Shatter (A1-A6) | Şimşek etkileşimleri; Soaked/Flooded/Ice/Darkness ile birleşir | `data/campaign/*`, `src/engine/` |
+| Shocked, Live Water, Iron Draws the Bolt, Thunderflash, Shatter (A1-A6) | Şimşek etkileşimleri; Soaked/Flooded/Ice/Darkness ile birleşir. 2026-11-15: A1 Shocked = Topraklama (geri itme yok; büyü zırhı %50 less, şimşek kalkana 2 kat), A2 Live Water = Islak devre (sıvıya düşen şimşek iki tahtada sıvıdaki herkese); kural `docs/design/combat.md` > Şimşek kimliği | `data/campaign/*`, `src/engine/` |
 | Sea lanes + Crossing (M-J) | `crossing` düğümü (güverte savaşı); deniz kenarı Charter olayına kadar kapalı | `reach.ts` |
 | Black Caravel (M-K) | Gezici elit; her oyuncu hamlesinde ilerler; yenilince Gallows Cove açılır; düğümde madalyon + "The Black Caravel is here" | `reach.ts` |
 | Faction Order / Guild (M-L) | Saltmere'de tek seçim, kayıtta bayrak | `reach.ts`, `save.ts` |

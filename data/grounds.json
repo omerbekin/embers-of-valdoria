@@ -3,7 +3,7 @@
   "poison": {
     "liquid": true,
     "name": "Poison",
-    "text": "Enemies standing here are Poisoned: they take nature damage at the start of their turn and receive 15% less healing. Lasts while they stay in the cell.",
+    "text": "Enemies standing here are Poisoned: they take nature damage at the start of their turn; more poison adds a stack (up to 3, each stack ticks). Lasts while they stay in the cell.",
     "color": "#6fcf4b",
     "element": "nature",
     "icon": "poison",
@@ -53,7 +53,7 @@
   "flooded_planks": {
     "liquid": true,
     "name": "Flooded Planks",
-    "text": "Enemies standing here take physical damage at the start of their turn and are Soaked: 50% less fire damage, 10% less Speed.",
+    "text": "Enemies standing here take physical damage at the start of their turn and are Soaked: 50% less fire damage.",
     "color": "#2f6f73",
     "element": "physical",
     "icon": "floodedplanks",
@@ -62,7 +62,7 @@
   },
   "quaking_ground": {
     "name": "Quaking Ground",
-    "text": "Enemies standing here are Slowed (30% less Speed) while in the cell and take physical damage at the start of their turn.",
+    "text": "Enemies standing here are Hobbled (30% less Evasion) while in the cell and take physical damage at the start of their turn.",
     "color": "#a0805a",
     "element": "physical",
     "icon": "tremor2",
@@ -70,7 +70,7 @@
   },
   "field_of_shafts": {
     "name": "Field of Shafts",
-    "text": "Enemies standing here are Slowed (30% less Speed) while in the cell and take physical damage at the start of their turn.",
+    "text": "Enemies standing here are Hobbled (30% less Evasion) while in the cell and take physical damage at the start of their turn.",
     "color": "#b9a27a",
     "element": "physical",
     "icon": "arrows",
@@ -78,7 +78,7 @@
   },
   "root_field": {
     "name": "Root Field",
-    "text": "Enemies standing here are Slowed (30% less Speed) while in the cell and take nature damage at the start of their turn. Fire burns the roots away.",
+    "text": "Enemies standing here are Hobbled (30% less Evasion) while in the cell and take nature damage at the start of their turn. Fire burns the roots away.",
     "color": "#5f8f3a",
     "element": "nature",
     "icon": "roots",
@@ -87,7 +87,7 @@
   "storm": {
     "_not": "Oyuncuya görünen ad Chill Ground (Ömer 2026-10-29); iç id storm kaldı (skill ağacı + testler). Hava koşulu Storm (battle-rules) ayrı şeydir. Ömer 2026-10-29 (Mage reworkü): içindeki Slow değil Chilled alır (genel zemin kuralı: içindeyken sürer); Ice (ice_ground) Slow vermeye devam eder.",
     "name": "Chill Ground",
-    "text": "Enemies standing here are Chilled (20% less Speed, 10% less Evasion) while in the cell and take ice damage at the start of their turn.",
+    "text": "Enemies standing here are Chilled (20% less Speed) while in the cell and take ice damage at the start of their turn.",
     "color": "#9fd8ff",
     "element": "ice",
     "icon": "blizzard",
@@ -120,7 +120,7 @@
     "liquid": true,
     "_not": "Harita 2 (M-B): su. Hasar vermez; içindeki HER birim Soaked olur (çevre etkisi: direnç zarı yok; genel zemin kuralı 2026-10-29: suda kaldıkça sürer, çıkınca o an kalkar, eski soakTurns kalktı); Burning Ground bu hücrelerde söner (quenches). Tide / Urn suyu süresini savaş turuyla sayar (data/battle-rules.json). Skill'in bıraktığı Flooded (Call the Tide, Surge, Deluge, High Tide, The Reach Drowns, Requiem of Salt) Ömer 2026-10-27 kararıyla AYNI davranır (soak buradan; open-questions 437).",
     "name": "Flooded",
-    "text": "Every unit standing here, friend or foe, is Soaked: 50% less fire damage, 10% less Speed. Puts out Burning Ground in the cell. Deals no damage.",
+    "text": "Every unit standing here, friend or foe, is Soaked: 50% less fire damage. Puts out Burning Ground in the cell. Deals no damage.",
     "color": "#3d7f9a",
     "element": "physical",
     "icon": "floodedplanks",
@@ -152,7 +152,7 @@
   "ice_ground": {
     "_not": "Zemin tepkimesi (Ömer 2026-10-27): su + Chill Ground donar (chill + chill de Ice olur: reactions.frozen_chill). Hasar vermez; içindeki (tetikleyenin düşmanı) birim Slow alır (genel zemin kuralı: içindeyken sürer). Su bu hücreden kalkar.",
     "name": "Ice",
-    "text": "Enemies standing here are Slowed (30% less Speed) while in the cell. Deals no damage.",
+    "text": "Enemies standing here are Hobbled (30% less Evasion) while in the cell. Deals no damage.",
     "color": "#d6f1ff",
     "element": "ice",
     "icon": "blizzard",
@@ -161,7 +161,7 @@
   "blood": {
     "_not": "Kan zemini (Ömer onaylı 2026-11-09): ağır FİZİKSEL kritik (formulas.json > heavyCrit, blood) hedefin hücresine bırakır; kansız birim (bloodless) bırakmaz. Sıvıdır: soak = su gibi içindeki HER birim Soaked olur (Flooded ile aynı yol), şimşeği su gibi iletir (Live Water), Chill/Ice ile Ice olur (reactions.frozen), Tremor Slam sıçratmasında sıvı sayılır (liquid). Ateşi söndürmez, zehir yaymaz, kutsal suya dönmez (Ömer söylemedi). Hasar vermez.",
     "name": "Blood",
-    "text": "Spilled by a heavy physical crit. Every unit standing here, friend or foe, is Soaked: 50% less fire damage, 10% less Speed. It is a liquid: it carries lightning like water and freezes into Ice. Deals no damage.",
+    "text": "Spilled by a heavy physical crit. Every unit standing here, friend or foe, is Soaked: 50% less fire damage. It is a liquid: it carries lightning like water and freezes into Ice. Deals no damage.",
     "color": "#8a1c1c",
     "element": "physical",
     "icon": "drop",
@@ -171,7 +171,7 @@
   "cursed_ground": {
     "_not": "Lanetli zemin (Ömer onaylı 2026-11-09): Hexer Withering Curse alanına bırakır. İçindeki düşman (bırakanın düşmanı) Unhallowed alır: alınan şifa -%35 (statuses.json > unhallowed; Ömer onaylı 2026-11-09 element formu: 0,5 -> 0,65). Hasar vermez. Holy Fire / Sanctified Flame ile karşılaşınca ikisi de söner (reactions.cleansed).",
     "name": "Cursed Ground",
-    "text": "Enemies standing here are Unhallowed: they receive 35% less healing. Holy fire or Holy Water and this curse cancel each other out. Deals no damage.",
+    "text": "Enemies standing here are Unhallowed: new debuffs on them last 1 more turn. Holy fire or Holy Water and this curse cancel each other out. Deals no damage.",
     "color": "#5b3a6e",
     "element": "dark",
     "icon": "poison",
@@ -179,18 +179,19 @@
     "stopsHeal": ["healing_rain"]
   },
   "blood_curse": {
-    "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09, element formu): kan + lanetli zemin (reactions.blood_curse). T2: sıvı değil, ıslatmaz. İçindeki düşman (tetiği bırakanın düşmanı) Blood Cursed: alınan şifa -%70. Hasar vermez.",
+    "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09, element formu): kan + lanetli zemin (reactions.blood_curse). T2: sıvı değil, ıslatmaz. İçindeki düşman (tetiği bırakanın düşmanı) Blood Cursed: alınan şifa -%70. Hasar vermez. Ömer 2026-11-16 (form Tur 23): Blood Cursed Wound ile birleşti; zemin Wound'u statusStrength 1,4 ile verir (0,5 taban -> %70 az şifa).",
     "name": "Blood Curse",
-    "text": "Enemies standing here are Blood Cursed: they receive 70% less healing. Made by blood and a curse merging. Deals no damage.",
+    "text": "Enemies standing here are Wounded: they receive 70% less healing. Made by blood and a curse merging. Deals no damage.",
     "color": "#5a1030",
     "element": "dark",
     "icon": "drop",
-    "status": "blood_cursed"
+    "status": "wound",
+    "statusStrength": 1.4
   },
   "black_flame": {
     "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09): ateş + lanetli zemin tek zemin olur (reactions.black_flame). İçindeki düşman Burning (gücü Burning Ground'dan) + Unhallowed alır. T2: başka tepkime kurmaz.",
     "name": "Black Flame",
-    "text": "Enemies standing here are Burning and Unhallowed: they take fire damage at the start of their turn and receive 35% less healing. Made by fire and a curse merging.",
+    "text": "Enemies standing here are Burning and Unhallowed: they take fire damage at the start of their turn and new debuffs on them last 1 more turn. Made by fire and a curse merging.",
     "color": "#4a1a5a",
     "element": "fire",
     "icon": "flame",
@@ -200,7 +201,7 @@
   "rot": {
     "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09, çürüme): zehir + lanetli zemin tek zemin olur (reactions.rot). İçindeki düşman Poisoned (gücü Poison zemininin formulas.rot.poisonMult katı, PROVİZYON) + Unhallowed. T2: başka tepkime kurmaz.",
     "name": "Rot",
-    "text": "Enemies standing here are Poisoned and Unhallowed: their poison ticks are 25% stronger and they receive 35% less healing. Made by poison and a curse merging.",
+    "text": "Enemies standing here are Poisoned and Unhallowed: their poison ticks are 25% stronger and new debuffs on them last 1 more turn. Made by poison and a curse merging.",
     "color": "#5a6a2a",
     "element": "nature",
     "icon": "poison",
@@ -214,7 +215,7 @@
   "grave_frost": {
     "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09): Chill Ground + lanetli zemin tek zemin olur (reactions.grave_frost). İçindeki düşman Chilled (gücü Chill Ground'dan) + Unhallowed alır. T2: başka tepkime kurmaz.",
     "name": "Grave Frost",
-    "text": "Enemies standing here are Chilled and Unhallowed: 20% less Speed, 10% less Evasion, ice damage at the start of their turn and 35% less healing. Made by chill and a curse merging.",
+    "text": "Enemies standing here are Chilled and Unhallowed: 20% less Speed, ice damage at the start of their turn, and new debuffs on them last 1 more turn. Made by chill and a curse merging.",
     "color": "#6f7fa8",
     "element": "ice",
     "icon": "blizzard",
@@ -224,7 +225,7 @@
   "bloody_water": {
     "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09): su (Flooded) + kan (reactions.bloody_water). Su gibi davranır (soak: herkes Soaked, şimşeği iletir, ateşi söndürür); ek olarak içindeki HER birim Bleeding (su kuralı: taraf ayırmaz). Bleeding tik gücü tepkime anında tahtanın ortalama maks canı x becomes.hpRatio (PROVİZYON, Ömer sayı söylemedi). T2: başka tepkime kurmaz. Sıvıdır (Tremor Slam sıçratır).",
     "name": "Bloody Water",
-    "text": "Water mixed with blood. Every unit here, friend or foe, is Soaked and Bleeding: 50% less fire damage, 10% less Speed, physical damage each turn. Puts out Burning Ground and carries lightning.",
+    "text": "Water mixed with blood. Every unit here, friend or foe, is Soaked and Bleeding: 50% less fire damage, physical damage each turn. Puts out Burning Ground and carries lightning.",
     "color": "#6a2a3a",
     "element": "physical",
     "icon": "drop",
@@ -303,7 +304,7 @@
     "roots_burn": {
       "label": "Roots burn",
       "result": "Roots burn, fire damage",
-      "text": "Fire and roots meet: the roots burn away (no more Slow) and whoever stands there takes instant fire damage; the fire stays.",
+      "text": "Fire and roots meet: the roots burn away (no more Hobbled) and whoever stands there takes instant fire damage; the fire stays.",
       "setup": ["root_field"],
       "trigger": ["burning"],
       "either": true,
@@ -362,7 +363,7 @@
     "frozen": {
       "label": "Frozen",
       "result": "Water freezes to ice",
-      "text": "Chill or Ice freezes water or blood into Ice: enemies standing on it are Slowed until they leave it; the liquid is gone.",
+      "text": "Chill or Ice freezes water or blood into Ice: enemies standing on it are Hobbled until they leave it; the liquid is gone.",
       "setup": ["flooded", "healing_rain", "blood"],
       "trigger": ["storm", "ice_ground"],
       "either": true,
@@ -392,7 +393,7 @@
       "_not": "Ömer 2026-10-29 (445): zaten Chill Ground olan hücreye yeniden Chill Ground bırakılınca Ice olur (aynı türden tepkime; setup = trigger). Güç / süre frozen ile aynı.",
       "label": "Frozen solid",
       "result": "Freezes into ice",
-      "text": "Chill on chill freezes into Ice: enemies standing on it are Slowed until they leave it.",
+      "text": "Chill on chill freezes into Ice: enemies standing on it are Hobbled until they leave it.",
       "setup": ["storm"],
       "trigger": ["storm"],
       "becomes": { "ground": "ice_ground", "power": 0, "turns": 2 }
@@ -501,13 +502,13 @@
       "_not": "Birim üstü: Chilled + Shocked (iki sıra) -> 1 tur Shredded; yığın başı Armor eksiği = taban Armor x armorRatio (PROVİZYON). Var olan Shredded'ın yığını ve büyük tutarı korunur.",
       "label": "Brittle",
       "result": "Armor shredded",
-      "text": "Lightning on a Chilled unit (or chill on a Shocked one) makes it brittle: Shredded for 1 turn.",
+      "text": "Lightning on a Chilled unit (or chill on a Shocked one) makes it brittle: Sunder for 1 turn.",
       "setup": [],
       "trigger": [],
       "unitSetup": ["chilled"],
       "unitTrigger": ["shocked"],
       "either": true,
-      "status": { "status": "shredded", "turns": 1, "armorRatio": 0.2 }
+      "status": { "status": "sunder", "turns": 1 }
     },
     "chilled_venom": {
       "label": "Chilled venom",
@@ -546,10 +547,10 @@
       "_not": "Ömer onaylı 2026-11-09 (ikinci form B): Chill Ground + şimşek: hücredeki (atana düşman) birimler 1 tur Shredded (Brittle ile aynı Armor oranı). Zemin kalır, şimşeği keser mi: hayır (yalnız Ice keser).",
       "label": "Brittle frost",
       "result": "Armor shredded",
-      "text": "Lightning on Chill Ground: enemies standing there turn brittle and are Shredded for 1 turn.",
+      "text": "Lightning on Chill Ground: enemies standing there turn brittle and are Sundered for 1 turn.",
       "setup": ["storm"],
       "trigger": ["lightning"],
-      "status": { "status": "shredded", "turns": 1, "armorRatio": 0.2 }
+      "status": { "status": "sunder", "turns": 1 }
     },
     "hexed_spark": {
       "_not": "Ömer onaylı 2026-11-09 (ikinci form C): şimşek + lanetli zemin: hücredeki (atana düşman) birimler 2 tur Jinxed, Shocked YOK (noShock; suda duran yine Electrocuted).",

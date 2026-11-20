@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Battle, content, describeSkill, explainChoice, previewSkill } from '../src/engine';
 import type { BattleEvent, BattleMode, Teams } from '../src/engine';
 import { isAccuracyCritDebuff } from '../src/engine/cc-immunity';
+import { scaleDelta } from '../src/engine/status-stack';
 import { buildWiki } from '../src/wiki/catalog';
 
 /**
@@ -39,7 +40,8 @@ describe('Boss isabet/kritik debuffları: veri (form 3, 2026-11-09)', () => {
     expect(IMM.accuracyCrit).toBe(false);
     expect(IMM.omenCrit).toBe(true);
     const picked = Object.entries(content.statuses).filter(([, d]) => isAccuracyCritDebuff(d)).map(([id]) => id).sort();
-    for (const id of ['blinded', 'jinxed', 'shaken']) expect(picked).toContain(id);
+    for (const id of ['blinded', 'jinxed']) expect(picked).toContain(id); // Ömer 2026-11-16: Shaken Blinded ile birleşti (çan kaynağı 1/3 güçte Blinded)
+    expect(content.statuses['shaken']).toBeUndefined();
     for (const id of picked) {
       const d = content.statuses[id]!;
       expect(d.type).toBe('debuff');
@@ -74,17 +76,20 @@ describe('Boss isabet/kritik debuffları: motor', () => {
 
   it('Blinded / Jinxed / Shaken büyüklüğü: boss %25, elit %50, normal tam (isabet ve kritik eki)', () => {
     for (const [units, k] of [[BOSS, STR.boss!], [ELITE, STR.elite!], [undefined, 1]] as const) {
-      for (const kind of ['blinded', 'jinxed', 'shaken']) {
+      // Ömer 2026-11-16: eski Shaken = örnek gücü 0,333 olan Blinded; boss / elit ölçeği güçten sonra çarpılır
+      for (const [kind, sg] of [['blinded', 1], ['jinxed', 1], ['blinded', 0.333]] as const) {
         const b = grid({ 0: 'hexer' }, { 1: 'warrior' }, units ? { units } : {});
         const e = at(b, 'enemy', 1);
         Object.assign(e.stats, { accuracy: 1, critChance: 0.5 });
         const d = content.statuses[kind]!;
         b.debugAddStatus(e.uid, kind, 2);
         expect(has(b, e.uid, kind)).toBe(true);
-        e.statuses.find((s) => s.kind === kind)!.source = 'party-0'; // karşı taraftan
+        const s = e.statuses.find((x) => x.kind === kind)!;
+        s.source = 'party-0'; // karşı taraftan
+        if (sg !== 1) s.strength = sg;
         const st = b.effectiveStats(e);
-        expect(st.accuracy).toBeCloseTo(1 + (d.accuracyDelta ?? 0) * k, 4);
-        expect(st.critChance).toBeCloseTo(Math.max(0, 0.5 + (d.critDelta ?? 0) * k), 4);
+        expect(st.accuracy).toBeCloseTo(1 + scaleDelta(d.accuracyDelta ?? 0, sg) * k, 4);
+        expect(st.critChance).toBeCloseTo(Math.max(0, 0.5 + scaleDelta(d.critDelta ?? 0, sg) * k), 4);
       }
     }
   });

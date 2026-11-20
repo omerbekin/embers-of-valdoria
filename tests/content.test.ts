@@ -35,7 +35,7 @@ describe('skill verisi', () => {
       expect(SKILL_TARGETS).toContain(s.target);
       expect(MOTIONS).toContain(s.motion);
       expect(s.fx).toMatch(HEX);
-      expect(['mp', 'hp', 'rage']).toContain(s.cost.resource);
+      expect(['mp', 'hp', 'rage', 'blood']).toContain(s.cost.resource);
       expect(s.cost.amount).toBeGreaterThanOrEqual(0);
       // Oranlı bedel (ofCurrent: mevcut kaynağın oranı; Wail of the Dead): 0 < oran < 1
       if (s.cost.ofCurrent !== undefined) {
@@ -101,7 +101,7 @@ describe('skill verisi', () => {
             if (e.onAbsorb) {
               // kalkan kancaları (madde 240): en az bir kanca; sayılar geçerli aralıkta
               const h = e.onAbsorb;
-              expect(Object.keys(h).every((k) => ['burnMana', 'dispelChance', 'giveMana'].includes(k)), `${key} onAbsorb alanları`).toBe(true);
+              expect(Object.keys(h).every((k) => ['burnMana', 'dispelChance', 'giveMana', 'giveBlood'].includes(k)), `${key} onAbsorb alanları`).toBe(true);
               expect(Object.keys(h).length, `${key} onAbsorb boş`).toBeGreaterThan(0);
               if (h.burnMana !== undefined) expect(h.burnMana).toBeGreaterThan(0);
               if (h.dispelChance !== undefined) {
@@ -113,7 +113,16 @@ describe('skill verisi', () => {
                 expect(h.giveMana).toBeGreaterThan(0);
                 expect(Number.isInteger(h.giveMana)).toBe(true);
               }
+              if (h.giveBlood !== undefined) {
+                // Mirror Vein (Ömer 2026-11-18): büyü emişi başına kalkanı atana base + perDex x DEX kan; yalnız kan bedelli skill'de anlamlı
+                expect(h.giveBlood.base).toBeGreaterThanOrEqual(0);
+                expect(h.giveBlood.perDex).toBeGreaterThanOrEqual(0);
+                expect(h.giveBlood.base + h.giveBlood.perDex, key).toBeGreaterThan(0);
+              }
             }
+            // Düz ek / süre (Mirror Vein): verilirse pozitif, süre tam sayı
+            if (e.flat !== undefined) expect(e.flat, key).toBeGreaterThan(0);
+            if (e.turns !== undefined) expect(Number.isInteger(e.turns) && e.turns > 0, key).toBe(true);
             break;
           case 'dispel':
             expect(['buff', 'debuff']).toContain(e.status);
@@ -236,6 +245,15 @@ describe('skill verisi', () => {
             // Tremor Slam (Ömer 2026-11-09): sıvı zemin sıçraması isabet eden vuruşa bağlı; en az bir sıvı zemin tanımlı
             expect(s.effects.some((x) => x.type === 'damage'), key).toBe(true);
             expect(Object.values(content.grounds).some((g) => g.liquid), key).toBe(true);
+            break;
+          case 'bloodBrand':
+            // Redtithe Blood Brand (2026-11-17): işaret süresi, MP bedel çarpanı (>= 1), skill başına ek Bleeding tiki; aynı skill Bleeding bırakır
+            expect(e.turns).toBeGreaterThan(0);
+            expect(e.costMult).toBeGreaterThanOrEqual(1);
+            expect(e.ticks).toBeGreaterThan(0);
+            expect(content.statuses.blood_brand, key).toBeDefined();
+            expect(s.effects.some((x) => x.type === 'dot' && x.status === 'bleeding'), key).toBe(true);
+            if (e.markSkills) for (const id of e.markSkills) expect(content.skills[id], `${key} markSkill ${id}`).toBeDefined();
             break;
           default:
             throw new Error(`${key}: bilinmeyen etki türü ${(e as { type: string }).type}`);

@@ -24,6 +24,8 @@ export interface LessonCard {
   more?: boolean;
   /** Kutu altta (varsayılan üst orta). */
   bottom?: boolean;
+  /** Harita dersi: kutu sol Party sütununun sağında durur (sütunu örtmesin). */
+  map?: boolean;
   /** Spot ışığı (zorunlu adımlar, Boss): ekran yumuşakça kararır, yalnızca vurgulanan öğe ve kutu aydınlık kalır. Girdi engellenmez. */
   spotlight?: boolean;
 }
@@ -120,7 +122,10 @@ function dockToWindow(wrap: HTMLElement): void {
   const b = offsetIn(panel, host);
   // Recruit (Ömer 2026-11-14, form r18 u05): ipucu listenin ilk kahramanını örtmesin; pencerenin ÜSTÜNDE durur (sığmazsa eski yer)
   const above = panel.querySelector('.hp-split') ? b.y - wrap.offsetHeight - 8 : -1;
-  wrap.style.top = above >= 4 ? `${Math.round(above)}px` : `${Math.round(a.y + hd.offsetHeight + 6)}px`;
+  // Telefonda Recruit penceresi ekranı doldurur, üstte yer yok: kutu başlık bloğunun ÜSTÜNE biner (başlık okunmaz ama aday kartları açık kalır; Onboarding denetimi 2026-11-17)
+  const cls = document.documentElement.classList;
+  const overHead = above < 4 && !!panel.querySelector('.hp-split') && (cls.contains('short') || cls.contains('compact'));
+  wrap.style.top = above >= 4 ? `${Math.round(above)}px` : overHead ? `${Math.round(b.y + 4)}px` : `${Math.round(a.y + hd.offsetHeight + 6)}px`;
   wrap.style.left = `${Math.round(b.x + 10)}px`;
   wrap.style.maxWidth = `${panel.offsetWidth - 20}px`;
 }
@@ -134,7 +139,7 @@ function removeCurrent(c: NonNullable<typeof current>): void {
 
 function render(p: Pending): void {
   const host = document.getElementById('ui-root') ?? document.body;
-  const wrap = el('div', `tut-wrap${p.card.bottom ? ' bottom' : ''}`);
+  const wrap = el('div', `tut-wrap${p.card.bottom ? ' bottom' : ''}${p.card.map ? ' map' : ''}`);
   const box = el('div', 'tut-box el-panel corners');
   box.setAttribute('role', 'dialog');
   box.setAttribute('aria-label', `${MENTOR.name}: ${p.card.title}`);
@@ -284,6 +289,7 @@ export function showLesson(id: string, o: { force?: boolean; onClose?: () => voi
         text: pg.text,
         ...(pg.focus ? { focus: focusFor(pg.focus, o.skill) } : {}),
         ...(l.place === 'bottom' ? { bottom: true } : {}),
+        ...(l.trigger?.screen === 'map' ? { map: true } : {}),
         ...(l.spotlight ? { spotlight: true } : {}),
         ...(pages.length > 1 ? { page: `${i + 1} / ${pages.length}`, more: i < pages.length - 1 } : {}),
       },

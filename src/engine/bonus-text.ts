@@ -55,7 +55,8 @@ export const ADDITIVE_LABEL = {
 export type AdditiveKey = keyof typeof ADDITIVE_LABEL;
 
 /**
- * Ayrı çarpan veren pasif türleri (battle.ts > passiveDealtMult / passiveTakenMult / mireSpeedMult / effectiveStats, spec.ts > damageSpecFor):
- * açıklamaları "×" yazar (tests/bonus-text.test.ts kilitler; Codex "How bonuses combine" listesi).
+ * Ayrı çarpan veren pasif türleri (battle.ts > passiveDealtMult / passiveTakenMult / effectiveStats, spec.ts > damageSpecFor):
+ * açıklamaları "×" yazar (tests/bonus-text.test.ts kilitler; Codex "How bonuses combine" listesi). Mire-Bound 2026-11-16 (Tur 24) çıktı: artık
+ * çarpanı yok; Tur 26'dan beri Saltbound süresini uzatır (metni durum adını ve ek turu yazar).
  */
-export const MULT_PASSIVES = ['rage', 'longshot', 'bonusVsStatus', 'grudge', 'packTactics', 'sharesOfDead', 'bloodScent', 'boneWard', 'flockShield', 'closeRanks', 'frozenRanks', 'mireBound', 'shell'] as const;
+export const MULT_PASSIVES = ['rage', 'longshot', 'bonusVsStatus', 'grudge', 'packTactics', 'sharesOfDead', 'bloodScent', 'boneWard', 'flockShield', 'closeRanks', 'frozenRanks', 'shell'] as const;

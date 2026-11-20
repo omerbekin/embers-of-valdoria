@@ -26,7 +26,7 @@ Bu dosya YALNIZ her sohbette gereken çekirdektir. Konu bilgisi aşağıdaki diz
 
 ## Kalite
 - Her motor değişikliği testle gelir; yeşil değilse iş bitmemiştir.
-- İterasyonda `npm run test:fast` + dokunulan test; denge/veri değişince `npm run test:slow`. Push öncesi tam `npm test` + `npm run build`.
+- İterasyonda `npm run test:fast` + dokunulan test; denge/veri değişince `npm run test:slow`. Push öncesi test seçimini kuyruk yapar (değişen dosyaya göre tam ya da hızlı, kural `docs/arch/areas/push-queue.md`; CI hep tam) + `npm run build`.
 - Denge değişikliği `npm run sim` raporuna dayanır, tahmine değil.
 
 ## Komutlar

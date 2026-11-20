@@ -8,6 +8,7 @@
 // Tek kayıt biçimi: yarım savaş kaydı (eylem günlüğü) yine planın üzerine oynatılır; plan taşınan durumu içerdiği için devam birebir aynıdır.
 import type { Battle } from '../engine';
 import { statuses as STATUS_DEFS, summons as SUMMON_DEFS } from '../engine/content';
+import { migrateStatus } from '../engine/status-stack';
 import type { Combatant, ShieldHook, Status, UnitSetup } from '../engine/types';
 import type { CarriedSummon, UnitCarry } from './data';
 
@@ -46,6 +47,7 @@ function carryOf(c: Combatant, ref: (uid: string | undefined) => string | undefi
   }
   if (statuses.length) out.statuses = statuses;
   if (c.rage !== undefined && c.rage > 0) out.rage = c.rage;
+  if (c.maxBlood !== undefined && c.blood !== undefined) out.blood = c.blood;
   if (c.shield > 0) out.shield = c.shield;
   if (c.magicShield > 0) out.magicShield = c.magicShield;
   if (c.shieldHooks?.length) out.shieldHooks = c.shieldHooks.map((h): ShieldHook => ({ ...h, caster: ref(h.caster) ?? self, onAbsorb: { ...h.onAbsorb } }));
@@ -111,6 +113,7 @@ export function carrySetup(carry: UnitCarry | undefined, selfUid: string, uidOf:
   }
   if (statuses.length) out.startStatuses = statuses;
   if (carry.rage) out.startRage = carry.rage;
+  if (carry.blood !== undefined) out.startBlood = carry.blood;
   if (carry.shield) out.startShield = carry.shield;
   if (carry.magicShield) out.startMagicShield = carry.magicShield;
   if (carry.shieldHooks?.length) out.startShieldHooks = carry.shieldHooks.map((h) => ({ ...h, caster: uidOf(h.caster) ?? selfUid, onAbsorb: { ...h.onAbsorb } }));
@@ -127,6 +130,7 @@ export function cleanCarry(v: unknown): UnitCarry | undefined {
   const out: UnitCarry = {};
   if (num(c.mpRatio)) out.mpRatio = Math.min(1, c.mpRatio);
   if (num(c.rage)) out.rage = c.rage;
+  if (num(c.blood)) out.blood = c.blood;
   if (num(c.shield)) out.shield = c.shield;
   if (num(c.magicShield)) out.magicShield = c.magicShield;
   if (c.corpse === 'consumed') out.corpse = 'consumed';
@@ -135,7 +139,7 @@ export function cleanCarry(v: unknown): UnitCarry | undefined {
     if (cd.length) out.cooldowns = Object.fromEntries(cd);
   }
   if (Array.isArray(c.statuses)) {
-    const st = c.statuses.filter((s) => s && typeof s.kind === 'string' && num(s.turns) && typeof s.source === 'string');
+    const st = c.statuses.filter((s) => s && typeof s.kind === 'string' && num(s.turns) && typeof s.source === 'string').map((s) => migrateStatus(s)); // Ömer 2026-11-16: eski durum id'leri (Fleet -> yarım Shrouded)
     if (st.length) out.statuses = st;
   }
   if (Array.isArray(c.shieldHooks)) {

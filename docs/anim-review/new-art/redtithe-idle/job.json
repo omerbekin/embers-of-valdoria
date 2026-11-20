@@ -1,0 +1,24 @@
+{
+ "name": "redtithe-idle",
+ "outDir": "docs/anim-review/new-art/redtithe-idle",
+ "rules": "docs/anim-review/new-art/redtithe-idle/PROMPT.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle1",
+   "file": "idle1.png",
+   "refs": [
+    "docs/anim-review/new-art/redtithe-idle/refs/redtithe-B-look.png",
+    "docs/anim-review/new-art/redtithe-idle/refs/pose-template-idle1.png",
+    "docs/anim-review/new-art/redtithe-idle/refs/skald-idle1-style.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/redtithe-idle/refs/redtithe-B-look.png",
+    "docs/anim-review/new-art/redtithe-idle/refs/pose-template-idle1.png"
+   ],
+   "task": "Image 1 = Redtithe's LOOK (concept art: face, braid, shaved sides, eyebrow scar, sleeveless dark brown leather vest, rust-red linen shirt, bandaged forearms, red waist sash and cloth panels, belt pouch and vials, dark trousers, tall buckled boots, palette). Ignore its pose, its sickle and its open hand. Image 2 = the combat idle POSE template of this hero slot, already at the right canvas (450x412), scale and in-game rendering style. Image 3 = another hero's idle at game style, for rendering quality only (do not copy that character). Draw Redtithe from image 1 in the EXACT pose of image 2: side view facing right, body slightly turned toward the viewer, legs apart in a ready fighting stance, knees slightly bent; the rear arm hangs down-forward with a clenched fist low beside the hip (around x~142,y~232 like image 2); the front arm is bent with a clenched fist raised in front of the chest (around x~279,y~151 like image 2). Both fists EMPTY, no weapon. Head turned slightly toward the viewer so both eyes, nose and mouth read at game size; the long braid hangs behind the back. Same body scale and feet pixels as image 2 (head top y~24, soles y~406, figure about 208 px wide x 382 px tall). Save PNG 450x412 with real alpha.",
+   "checkRules": "- Image 1 is the new draw; image 2 is Redtithe's concept look; image 3 is the pose template.\n- Character identical to image 2: woman, long tight dark braid, shaved sides, eyebrow scar, sleeveless dark brown leather vest over rust-red linen shirt, pale bandaged forearms, red waist sash, dark trousers, tall buckled boots. Strictly medieval, no gore.\n- Belt extras (small vials, pouch, tithe bowl) may be simplified or omitted; do not score on them.\n- Pose matches image 3: side view facing right, ready stance, rear fist low by the hip, front fist raised in front of the chest, at roughly the same pixels as image 3.\n- Both hands are CLENCHED FISTS and EMPTY: no sickle, knife or any weapon/prop in hand, no open palm, no floating blood droplet.\n- Face readable at game size (~190 px figure): both eyes, nose and mouth distinguishable, head slightly turned toward the viewer, hair does not shadow the face.\n- Canvas 450x412, same scale as image 3, soles at y~406.\n- Real transparent background: no white/grey background, no checkerboard, no halo or dark fringe on the outline, no ground shadow. Clean, noise-free."
+  }
+ ]
+}

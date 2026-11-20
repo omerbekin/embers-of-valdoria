@@ -46,11 +46,13 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
       if (id === 'hallowed') continue;
       // Ley Thread (Ömer 2026-10-29): etkisi Ley Brand'de motor kuralı (threadTurns / threadBurnMult; skills.json > drain_field)
       if (id === 'ley_thread') continue;
+      // Blood Brand / Mirror Vein (Redtithe, 2026-11-17): etkileri motor kuralı (Status.bloodBrand / Status.vein; skills.json > drain_field / spell_ward)
+      if (id === 'blood_brand') continue;
       // Shocked (maps-2-3.md A1): yalnız rozet, etkisi anlık (formulas.thunder)
       if (id === 'shocked') continue;
       // Electrocuted (Ömer 2026-11-09, ikinci element formu): etkisi motor kuralı (anlık dosta temel saldırı + sıra çubuğu 0; formulas.thunder.wetInto)
       if (id === 'electrocuted') continue;
-      expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.armorMult !== undefined || def.damageDealtMult !== undefined || def.magicDealtMult !== undefined || def.rooted === true || def.noEvasion === true || def.armorLossFromAmount === true, id).toBe(true);
+      expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.armorMult !== undefined || def.damageDealtMult !== undefined || def.magicDealtMult !== undefined || def.rooted === true || def.noEvasion === true || def.armorLossFromAmount === true || def.evasionMult !== undefined || def.magicTakenMult !== undefined || def.physicalDealtMult !== undefined || def.critTakenDelta !== undefined || def.elementTakenMult !== undefined || def.debuffExtraTurns !== undefined, id).toBe(true);
     }
   });
 
@@ -68,12 +70,18 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
     expect(b.speedOf(b.get('party-0')!)).toBeGreaterThan(b.get('party-0')!.stats.spd);
   });
 
-  it('Bone Throw vurulan düşmana Slow verir; hız düşer, hedef sırada geriye gider', () => {
+  // Ömer 2026-11-16: Slow -> Hobbled; hız yerine kaçınma keser (hızı yalnız Chilled düşürür)
+  it('Bone Throw vurulan düşmana Hobbled verir; kaçınma veri çarpanıyla düşer, hız aynı', () => {
     const b = calm(grid(cells({ 0: 'undead' }), cells({ 0: 'mage' })));
-    const before = b.speedOf(b.get('enemy-0')!);
+    const foe = b.get('enemy-0')!;
+    const before = b.speedOf(foe);
     act(b, 'party-0', 'bone_throw', 'enemy-0');
     expect(hasStatus(b, 'enemy-0', 'slow')).toBe(true);
-    expect(b.speedOf(b.get('enemy-0')!)).toBeLessThan(before);
+    expect(content.statuses.slow!.name).toBe('Hobbled');
+    expect(content.statuses.slow!.speedMult).toBeUndefined();
+    expect(b.speedOf(foe)).toBe(before);
+    foe.stats.evasion = 0.2;
+    expect(b.effectiveStats(foe).evasion).toBeCloseTo(0.2 * content.statuses.slow!.evasionMult!, 6);
   });
 
   it('kaçırılan (iska) vuruşta debuff uygulanmaz', () => {
@@ -83,10 +91,10 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
     expect(hasStatus(b, 'enemy-0', 'slow')).toBe(false);
   });
 
-  it('Slow, tur sırasında etkili: yavaşlayan birim daha az oynar', () => {
+  it('Chilled, tur sırasında etkili: yavaşlayan birim daha az oynar (Ömer 2026-11-16: hızı yalnız Chilled düşürür)', () => {
     const turns = (slowed: boolean) => {
       const b = grid(cells({ 0: 'warrior' }), cells({ 0: 'warrior' }), 'turns', 7);
-      if (slowed) b.get('enemy-0')!.statuses.push({ kind: 'slow', turns: 99, source: 'party-0' });
+      if (slowed) b.get('enemy-0')!.statuses.push({ kind: 'chilled', turns: 99, source: 'party-0' });
       let n = 0;
       for (let i = 0; i < 60; i++) {
         if (b.currentUid === 'enemy-0') n++;
@@ -97,7 +105,7 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
     expect(turns(true)).toBeLessThan(turns(false));
   });
 
-  it('Thorn Whip hedefe 2 tur Wound verir: aldığı şifa %25 azalır', () => {
+  it('Thorn Whip hedefe 2 tur Wound verir: aldığı şifa veri çarpanıyla azalır (Ömer 2026-11-16: %50)', () => {
     const b = calm(grid(cells({ 0: 'druid' }), cells({ 0: 'paladin', 2: 'warrior' })));
     act(b, 'party-0', 'thorn_whip', 'enemy-0');
     expect(b.get('enemy-0')!.statuses.find((s) => s.kind === 'wound')?.turns).toBe(2);
@@ -110,7 +118,7 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
     };
     const normal = heal(false);
     const reduced = heal(true);
-    expect(reduced).toBe(Math.round(normal * 0.75));
+    expect(reduced).toBe(Math.round(normal * content.statuses.wound!.healTakenMult!));
   });
 
   it('Fortified durumu generic olarak hâlâ alınan hasarı ~yarıya indirir (hiçbir skill vermiyor; debug ile eklenebilir)', () => {
@@ -126,7 +134,7 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
     expect(ratio).toBeLessThan(0.6);
   });
 
-  it('Blessing (Paladin): dosta 3 tur %30 daha az hasar', () => {
+  it('Blessing (Paladin): dosta 3 tur %30 daha az BÜYÜ hasarı; fiziksel aynı (Ömer 2026-11-16)', () => {
     installLegacySkill('blessing', 'paladin'); // oyundan kaldırıldı, blessed durumu hâlâ test ediliyor
     const b = calm(grid(cells({ 0: 'paladin', 2: 'warrior' }), cells({ 0: 'archer' })));
     act(b, 'party-0', 'blessing', 'party-1');
@@ -137,8 +145,16 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
       if (blessed) c.get('party-1')!.statuses.push({ kind: 'blessed', turns: 3, source: 'party-0' });
       return dmgTo(act(c, 'enemy-0', 'quick_shot', 'party-1'), 'party-1');
     };
-    expect(hit(true) / hit(false)).toBeGreaterThan(0.62);
-    expect(hit(true) / hit(false)).toBeLessThan(0.8); // küçük hasarlarda yuvarlama payı
+    expect(hit(true) / hit(false)).toBe(1); // fiziksel (Quick Shot) azalmaz
+    const magic = (blessed: boolean) => {
+      const c = calm(grid(cells({ 0: 'paladin', 2: 'warrior' }), cells({ 0: 'mage' })));
+      c.get('enemy-0')!.stats.int = 200;
+      if (blessed) c.get('party-1')!.statuses.push({ kind: 'blessed', turns: 3, source: 'party-0' });
+      return dmgTo(act(c, 'enemy-0', 'fire_bolt', 'party-1'), 'party-1');
+    };
+    const m = content.statuses.blessed!.magicTakenMult!;
+    expect(magic(true) / magic(false)).toBeGreaterThan(m - 0.05);
+    expect(magic(true) / magic(false)).toBeLessThan(m + 0.05); // küçük hasarlarda yuvarlama payı
   });
 
   it('Stun: sersemlemiş birim sıradaki turunu oynamaz (turnSkipped stunned), sonra durum biter', () => {
@@ -362,10 +378,10 @@ describe('sınıf verisi (bu turun düzenlemeleri)', () => {
     expect(content.skills.thorn_whip!.motion).toBe('whip');
   });
 
-  it('Treant can 105, iskelet can 78, hız 17 (D2, 2026-10-18: 75; Ömer: can -%5 -> 71, sonra +%10 -> 78, hız 12 -> 17; beslenmiş hâl); Treant hasar statı INT 27 (x2 ölçek; eski 13,5; madde 222: eski STR 13,5 çıktısı korunur); Treant türü nature', () => {
+  it('Treant can 110 (Ömer 2026-11-20 form r33: 105 -> 110), iskelet can 78, hız 17 (D2, 2026-10-18: 75; Ömer: can -%5 -> 71, sonra +%10 -> 78, hız 12 -> 17; beslenmiş hâl); Treant hasar statı INT 27 (x2 ölçek; eski 13,5; madde 222: eski STR 13,5 çıktısı korunur); Treant türü nature', () => {
     expect(content.summons.skeleton!.stats.hp).toBe(78);
     expect(content.summons.skeleton!.stats.spd).toBe(17);
-    expect(content.summons.treant!.stats.hp).toBe(105);
+    expect(content.summons.treant!.stats.hp).toBe(110);
     expect(content.summons.treant!.stats.int).toBe(27); // x2 stat ölçeği (eski 13,5)
     expect(content.summons.treant!.tags).toContain('nature');
   });
@@ -395,6 +411,7 @@ describe('Taunt: dostları korur', () => {
       const b = calm(grid(cells({ 0: 'defender', 2: 'warrior' }), cells({ 0: 'archer' })));
       b.get('party-0')!.maxHp = b.get('party-0')!.hp = 100000; // taunt hasar eşiğiyle bozulmasın (kırılma eşiği maks candan hesaplanır)
       if (taunt) act(b, 'party-0', 'taunt');
+      for (const s of b.get('party-0')!.statuses) if (s.kind === 'taunt') delete s.armorBonus; // Taunt zırhı (Tur 26) ayrı testte (tur26-taunt-armor)
       for (const c of b.combatants) c.stats.armor = 0; // aynı çarpan: yalnızca koruma farkı ölçülsün
       b.get('party-0')!.shield = 0;
       b.get('enemy-0')!.stats.dex = 200; // büyük sayılar: yuvarlama farkı gizlemesin

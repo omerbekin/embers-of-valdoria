@@ -110,7 +110,7 @@ describe('Codex: How bonuses combine', () => {
     expect(text).toContain('87.5% more');
     expect(text).toContain(ADDITIVE_LABEL.damageAdd);
     expect(text).toContain('Fire damage');
-    expect(text).toContain('Slow');
+    expect(text).toContain(content.statuses.slow!.name); // Hobbled (Ömer 2026-11-16)
     expect(text).toContain('Blessing of Stone');
     expect(text).not.toMatch(/undefined|NaN|: \./);
   });

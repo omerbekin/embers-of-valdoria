@@ -205,7 +205,7 @@ describe('Skip Turn', () => {
     expect(idx).toBeLessThanOrEqual(plain.turnQueue(80).indexOf(p0));
   });
 
-  it('Haste/Slow ile toplamsal: speedOf = spd x (durum çarpanı + bonus); durumsuz x2', () => {
+  it('Haste/Chilled ile toplamsal: speedOf = spd x (durum çarpanı + bonus); durumsuz x2 (Ömer 2026-11-16: hızı yalnız Chilled düşürür)', () => {
     const { b, actor } = mkSlow();
     const c = b.get(actor)!;
     b.useGlobal(actor, 'skip_turn');
@@ -214,8 +214,8 @@ describe('Skip Turn', () => {
     expect(b.speedOf(c)).toBe(Math.max(speedMin(content.formulas), roundSpeed(c.stats.spd * (1 + bonus), content.formulas)));
     c.statuses = [{ kind: 'haste', turns: 3, source: actor }];
     expect(b.speedOf(c)).toBe(Math.max(speedMin(content.formulas), roundSpeed(c.stats.spd * (mult('haste') + bonus), content.formulas)));
-    c.statuses = [{ kind: 'slow', turns: 3, source: actor }];
-    expect(b.speedOf(c)).toBe(Math.max(speedMin(content.formulas), roundSpeed(c.stats.spd * (mult('slow') + bonus), content.formulas)));
+    c.statuses = [{ kind: 'chilled', turns: 3, source: actor }];
+    expect(b.speedOf(c)).toBe(Math.max(speedMin(content.formulas), roundSpeed(c.stats.spd * (mult('chilled') + bonus), content.formulas)));
   });
 
   it('cooldown ve MP yenilenmesi normal işler (birim tekrar sıraya gelince bir azalır)', () => {

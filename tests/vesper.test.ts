@@ -27,6 +27,7 @@ import { previewSkill } from '../src/engine';
 import { skillCostAmount } from '../src/engine/cost';
 import { checkTreeFx, compileTree } from '../src/progression/skill-tree-compile';
 import { applyOutcome, battleFor, fightWave, newRun, outcomeFromBattle, wavePlan, type EndlessRun } from '../src/endless';
+import { scaleDelta } from '../src/engine/status-stack';
 
 // Vesper (Ömer onayı 2026-10-28, docs/design/classes/vesper.md): çan sayacı (Pealing Bells), Great Bell, dr19 Sunken Chapel buluşması,
 // Clapper of the Sunken Bell ve kışla-yedek kuralı. Sayılar veriden okunur.
@@ -602,7 +603,7 @@ describe('Vesper ağacı: Toll satırı (seri ve en zayıf)', () => {
     expect(c[2]! / a[2]!).toBeCloseTo(1 + powerMulOf('1.f1') * 3 * 2, 2);
   });
   it('Ringing Ears: rank başı Shaken şansı (byRank), Toll\'a eklenir', () => {
-    const eff = (r: number) => setupFor({ '1.f2': r })!.skills!.toll!.effects.find((e) => e.type === 'status' && e.status === 'shaken') as { chance?: number; turns: number };
+    const eff = (r: number) => setupFor({ '1.f2': r })!.skills!.toll!.effects.find((e) => e.type === 'status' && e.status === 'blinded') as { chance?: number; turns: number };
     expect(eff(1).chance).toBeCloseTo(0.03, 6);
     expect(eff(5).chance).toBeCloseTo(0.15, 6);
     expect(eff(5).turns).toBe(1);
@@ -610,7 +611,7 @@ describe('Vesper ağacı: Toll satırı (seri ve en zayıf)', () => {
   it('Dread Peal: Shaken düşmana daha çok, öbürüne aynı', () => {
     const b = treed({ '1.f3': 5 }, { 1: 'warrior', 4: 'warrior' });
     noArmor(b);
-    b.debugAddStatus(foeAt(b, 4).uid, 'shaken', 2);
+    b.debugAddStatus(foeAt(b, 4).uid, 'blinded', 2);
     const ev = vcast(b, 'toll');
     expect(dealt(ev, foeAt(b, 4).uid) / dealt(ev, foeAt(b, 1).uid)).toBeCloseTo(1 + powerMulOf('1.f3') * 5, 2);
   });
@@ -625,20 +626,20 @@ describe('Vesper ağacı: Toll satırı (seri ve en zayıf)', () => {
   it('Lingering Ears: Toll\'un Shaken\'ı isabeti daha çok düşürür', () => {
     const b = treed({ '1.f2': 5, '1.r': 3 }, { 1: 'warrior' });
     const d = b.skill('toll', vesper(b))!;
-    for (const e of d.effects) if (e.type === 'status' && e.status === 'shaken') (e as { chance?: number }).chance = 1;
+    for (const e of d.effects) if (e.type === 'status' && e.status === 'blinded') (e as { chance?: number }).chance = 1;
     const f = foeAt(b, 1);
     const acc = b.effectiveStats(f).accuracy;
     vcast(b, 'toll');
-    expect(has(f, 'shaken')).toBe(true);
-    expect(b.effectiveStats(f).accuracy).toBeCloseTo(acc + content.statuses.shaken!.accuracyDelta! - 0.02 * 3, 6);
+    expect(has(f, 'blinded')).toBe(true);
+    expect(b.effectiveStats(f).accuracy).toBeCloseTo(acc + scaleDelta(content.statuses.blinded!.accuracyDelta!, 0.333) - 0.02 * 3, 6);
   });
   it('Unbroken Rope: üçüncü art arda Toll\'dan itibaren herkese Shaken', () => {
     const b = treed({ '1.ea': 1 }, { 1: 'warrior' });
     vcast(b, 'toll');
     vcast(b, 'toll');
-    expect(has(foeAt(b, 1), 'shaken')).toBe(false);
+    expect(has(foeAt(b, 1), 'blinded')).toBe(false);
     vcast(b, 'toll');
-    expect(has(foeAt(b, 1), 'shaken')).toBe(true);
+    expect(has(foeAt(b, 1), 'blinded')).toBe(true);
   });
   it('Knell: en düşük canlıya daha çok; önizleme uyuşur', () => {
     const b = treed({ '1.eb': 1 }, { 0: 'warrior', 1: 'warrior', 2: 'warrior' });
@@ -912,7 +913,7 @@ describe('Vesper ağacı: Great Bell kolları', () => {
   it('d: Shaking Peal 2 tur Shaken; Last Peal yarı canın altındakine daha çok', () => {
     const b = treed({ '4.d1': 1 }, { 1: 'warrior' });
     vcast(b, GB);
-    expect(statusOf(foeAt(b, 1), 'shaken')!.turns).toBe(2);
+    expect(statusOf(foeAt(b, 1), 'blinded')!.turns).toBe(2);
     const l = treed({ '4.d2': 1 }, { 1: 'warrior', 4: 'warrior' });
     noArmor(l);
     foeAt(l, 4).hp = 20000;

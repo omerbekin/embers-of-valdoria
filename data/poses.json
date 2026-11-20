@@ -6658,9 +6658,6 @@
           "off:throw": {
             "hidden": true
           },
-          "main:idle1": {
-            "angle": 45
-          },
           "main:step1": {
             "angle": 45
           },
@@ -6674,6 +6671,24 @@
           },
           "off:throw": {
             "hidden": true
+          },
+          "main:idle1": {
+            "hand": "off"
+          }
+        },
+        "axes": {
+          "main:idle1": {
+            "hand": "off"
+          }
+        },
+        "maces": {
+          "main:idle1": {
+            "hand": "off"
+          }
+        },
+        "hammers": {
+          "main:idle1": {
+            "hand": "off"
           }
         }
       },
@@ -6690,19 +6705,19 @@
       "poses": {
         "idle1": {
           "anchor": {
-            "x": 142,
-            "y": 232,
-            "angle": 15.78
+            "x": 131,
+            "y": 225,
+            "angle": 110
           },
           "offhand": {
-            "x": 279,
-            "y": 151,
-            "angle": 10
+            "x": 319,
+            "y": 163,
+            "angle": 30
           },
           "box": {
-            "x": 115,
+            "x": 98,
             "y": 24,
-            "w": 208,
+            "w": 253,
             "h": 382
           },
           "src": "antimage-v2/narrow.png"

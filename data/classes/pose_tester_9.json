@@ -1,9 +1,9 @@
 {
-  "_not": "Debug test sınıfı (Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Anti-Mage skill'lerinin pt_* kopyaları, Warrior v2 poz kütüphanesi + silah katmanıyla çizilir (data/poses.json > classAliases). testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı.",
+  "_not": "Debug test sınıfı (Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Redtithe skill'lerinin pt_* kopyaları, Warrior v2 poz kütüphanesi + silah katmanıyla çizilir (data/poses.json > classAliases). testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı.",
   "id": "pose_tester_9",
-  "name": "Pose Tester IX (Anti-Mage)",
+  "name": "Pose Tester IX (Redtithe)",
   "spriteId": "warrior",
-  "color": "#9b59d0",
+  "color": "#a3192e",
   "logo": "manaburn",
   "role": "Pose Test",
   "testOnly": true,

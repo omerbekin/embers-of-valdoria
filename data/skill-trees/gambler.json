@@ -1,6 +1,6 @@
 {
   "class": "gambler",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "a",
@@ -14,7 +14,7 @@
   "rows": [
     {
       "skill": "double_or_nothing",
-      "name": "Double or Nothing",
+      "name": "Lucky Streak",
       "passive": true,
       "karma": "A"
     },
@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Warm Hands",
-        "text": "Your first skill with a cooldown each battle has +8% Double or Nothing chance.",
+        "text": "Your first skill with a cooldown each battle has +8% Lucky Streak repeat chance.",
         "src": "A:V3:bar0",
         "fx": [
           {
@@ -56,10 +56,11 @@
               "firstCooldownSkill": true
             },
             "mod": {
-              "echoChance": 0.08
+              "repeatChance": 0.08
             }
           }
-        ]
+        ],
+        "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
       },
       {
         "at": 10,
@@ -104,13 +105,13 @@
       {
         "at": 20,
         "name": "Winning Run",
-        "text": "Each Double or Nothing trigger gives your skills +4% damage until your next Bust.",
+        "text": "Each time your Streak grows, your skills deal +4% damage until your next Bust.",
         "src": "A:V3:bar3",
         "fx": [
           {
             "k": "hook",
             "h": "trigger",
-            "on": "echo",
+            "on": "streakGain",
             "do": [
               {
                 "buff": {
@@ -131,7 +132,8 @@
               }
             ]
           }
-        ]
+        ],
+        "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
       },
       {
         "at": 25,
@@ -156,7 +158,7 @@
   "nodes": {
     "0.f1": {
       "name": "Hot Hand",
-      "text": "After a Jackpot, Double or Nothing +4% chance per rank on your next skill.",
+      "text": "After a Jackpot, your next skill has +4% Lucky Streak repeat chance per rank.",
       "src": "A:V3:0.f2",
       "fx": [
         {
@@ -167,16 +169,17 @@
           "do": [
             {
               "buff": {
-                "echoChance": 0.04
+                "repeatChance": 0.04
               }
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "0.f2": {
       "name": "Cornered Dog",
-      "text": "While below 50% HP, Double or Nothing +4% chance per rank.",
+      "text": "While below 50% HP, Lucky Streak repeat chance +4% per rank.",
       "src": "A:V2:0.f1",
       "fx": [
         {
@@ -186,21 +189,22 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "echoChance": 0.04
+            "repeatChance": 0.04
           },
           "rank": true
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "0.f3": {
       "name": "Quick Shuffle",
-      "text": "When Double or Nothing triggers, your next turn comes 4% sooner per rank.",
+      "text": "Each time your Streak grows, your next turn comes 4% sooner per rank.",
       "src": "A:V3:0.f3",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echo",
+          "on": "streakGain",
           "rank": true,
           "do": [
             {
@@ -208,17 +212,18 @@
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "0.n0": {
       "name": "Chain Reaction",
-      "text": "When Double or Nothing triggers, your other cooldowns drop by 1 too.",
+      "text": "When you spend a full Streak, your other cooldowns drop by 1.",
       "src": "A:V3:0.n0",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echo",
+          "on": "streakSpend",
           "do": [
             {
               "cooldown": -1,
@@ -226,11 +231,12 @@
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "0.r": {
       "name": "Scar Gambler",
-      "text": "Each Bust that costs HP gives Double or Nothing +2% chance per rank until your next Jackpot.",
+      "text": "Each Bust that costs HP gives +2% Lucky Streak repeat chance per rank until your next Jackpot.",
       "src": "A:V2:0.r",
       "fx": [
         {
@@ -242,7 +248,7 @@
           "do": [
             {
               "buff": {
-                "echoChance": 0.02
+                "repeatChance": 0.02
               },
               "uses": 0,
               "stack": true
@@ -259,11 +265,12 @@
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "0.ea": {
-      "name": "Streak",
-      "text": "Each Double or Nothing trigger in a row adds +8% to the next roll; a failed roll resets it.",
+      "name": "Lucky Run",
+      "text": "Each Lucky Streak repeat in a row adds +8% to the next repeat roll; a failed roll resets it.",
       "src": "A:V3:0.ea",
       "new": true,
       "approved": true,
@@ -271,11 +278,11 @@
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echo",
+          "on": "repeat",
           "do": [
             {
               "buff": {
-                "echoChance": 0.08
+                "repeatChance": 0.08
               },
               "uses": 0,
               "stack": true
@@ -285,14 +292,15 @@
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echoFail",
+          "on": "repeatFail",
           "do": [
             {
               "clear": true
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "0.eb": {
       "name": "Charmed Life",
@@ -314,14 +322,16 @@
     },
     "0.ma": {
       "name": "Unbroken Run",
-      "text": "After 3 Double or Nothing triggers in a row, your next skill is a sure critical hit.",
+      "text": "When your Streak becomes full, your next skill is a sure critical hit.",
       "src": "A:V3:0.ma",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echo",
-          "every": 3,
+          "on": "streakGain",
+          "when": {
+            "eventAmount": 3
+          },
           "do": [
             {
               "buff": {
@@ -329,22 +339,13 @@
               }
             }
           ]
-        },
-        {
-          "k": "hook",
-          "h": "trigger",
-          "on": "echoFail",
-          "do": [
-            {
-              "clear": true
-            }
-          ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "0.fa": {
       "name": "All or Nothing",
-      "text": "Double or Nothing chance 25% → 40%, but when it fails, that cooldown is 1 turn longer.",
+      "text": "Lucky Streak repeat chance 25% → 40%, but a lost bet makes that skill's cooldown 1 turn longer.",
       "src": "A:V3:0.fa",
       "fx": [
         {
@@ -356,14 +357,15 @@
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echoFail",
+          "on": "bust",
           "do": [
             {
               "cooldown": 1
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "0.fb": {
       "name": "Coin Toss Life",
@@ -390,7 +392,7 @@
     },
     "0.mb": {
       "name": "Borrowed Time",
-      "text": "After Lucky Escape saves you, Double or Nothing triggers on every skill for 2 turns.",
+      "text": "After Lucky Escape saves you, your Lucky Streak repeats always trigger for 2 turns.",
       "src": "A:V2:0.mb",
       "fx": [
         {
@@ -400,18 +402,19 @@
           "do": [
             {
               "buff": {
-                "echoSet": 1
+                "repeatChance": 1
               },
               "uses": 0,
               "turns": 2
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "0.v": {
       "name": "Run It Back",
-      "text": "When Double or Nothing triggers, the skill also fires again at once at 40% power.",
+      "text": "When you spend a full Streak, that skill also fires again at once at 40% power.",
       "src": "A:V3:0.v",
       "new": true,
       "approved": true,
@@ -419,7 +422,7 @@
         {
           "k": "hook",
           "h": "trigger",
-          "on": "echo",
+          "on": "streakSpend",
           "do": [
             {
               "cast": "event",
@@ -427,7 +430,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "1.f1": {
       "name": "Steady Wrist",
@@ -530,15 +534,15 @@
     },
     "1.ea": {
       "name": "Hot Dice",
-      "text": "Loaded Dice Double Hit chance 25% → 30%; each repeat throw deals 5% increased damage over the last (+5%, +10%, ...).",
+      "text": "Loaded Dice Double Hit chance +5%; each repeat throw deals 5% increased damage over the last (+5%, +10%, ...).",
       "src": "A:V3:1.ea",
       "fx": [
         {
           "k": "skill",
           "sel": "damage",
           "f": "repeatChance",
-          "op": "base",
-          "v": 0.3
+          "op": "add",
+          "v": 0.05
         },
         {
           "k": "hook",
@@ -550,7 +554,8 @@
             "powerMul": 0.05
           }
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "1.eb": {
       "name": "Loaded Corner",
@@ -571,15 +576,17 @@
     },
     "1.ma": {
       "name": "Boxcars",
-      "text": "If Loaded Dice throws 3 or more times, it also hits a random other enemy once.",
+      "text": "Rolling double 6 with Loaded Dice also hits a random other enemy once.",
       "src": "A:V3:1.ma",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "repeat",
+          "on": "doubles",
           "when": {
-            "eventAmount": 2
+            "eventAmount": {
+              "eq": 6
+            }
           },
           "perCast": 1,
           "do": [
@@ -590,7 +597,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "1.fa": {
       "name": "Fever Dice",
@@ -642,18 +650,23 @@
     },
     "1.mb": {
       "name": "Snake Eyes",
-      "text": "When Loaded Dice lands a critical hit, your next wager gets +5% Jackpot chance.",
+      "text": "Rolling double 1 with Loaded Dice gives your next wager +15% Jackpot chance.",
       "src": "A:V1:1.ma",
       "syn": "High Stakes / All In",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "crit",
+          "on": "doubles",
+          "when": {
+            "eventAmount": {
+              "eq": 1
+            }
+          },
           "do": [
             {
               "buff": {
-                "winChance": 0.05
+                "winChance": 0.15
               },
               "uses": 0
             }
@@ -681,7 +694,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "1.v": {
       "name": "Dice Storm",
@@ -802,7 +816,7 @@
     },
     "2.ea": {
       "name": "Knockout Bet",
-      "text": "A High Stakes Jackpot Slows the target for 2 turns.",
+      "text": "A High Stakes Jackpot Hobbles the target for 2 turns.",
       "src": "B:V4:2.eb",
       "fx": [
         {
@@ -843,7 +857,7 @@
     },
     "2.ma": {
       "name": "Haymaker",
-      "text": "A High Stakes Jackpot against a Slowed target Stuns it for 1 turn.",
+      "text": "A High Stakes Jackpot against a Hobbled target Stuns it for 1 turn.",
       "src": "B:V4:2.mb",
       "fx": [
         {
@@ -1005,7 +1019,7 @@
     },
     "3.f3": {
       "name": "Swift Suit",
-      "text": "Card Trick Slow odds +5% per rank.",
+      "text": "Card Trick Hobble odds +5% per rank.",
       "src": "B:V3:3.r",
       "fx": [
         {
@@ -1118,7 +1132,7 @@
     },
     "3.n0": {
       "name": "Crippling Ace",
-      "text": "Card Trick always deals Stun to a Slowed target.",
+      "text": "Card Trick always deals Stun to a Hobbled target.",
       "src": "B:V1:3.n0",
       "syn": "High Stakes",
       "fx": [
@@ -1156,7 +1170,7 @@
     },
     "3.ea": {
       "name": "Stacked Deck",
-      "text": "Before Card Trick, choose its status: Slow, Wound or Stun (Stun lands on the first target only).",
+      "text": "Before Card Trick, choose its status: Hobbled, Wound or Stun (Stun lands on the first target only).",
       "src": "B:V1:3.ea",
       "new": true,
       "approved": true,
@@ -1164,14 +1178,16 @@
         {
           "k": "mode",
           "statusPick": true,
-          "firstOnly": ["stun"],
+          "firstOnly": [
+            "stun"
+          ],
           "title": "Pick the status for both cards."
         }
       ]
     },
     "3.eb": {
       "name": "Distracting Fan",
-      "text": "Enemies hit by Card Trick deal 15% less damage on their next attack.",
+      "text": "Enemies hit by Card Trick deal 15% less physical damage on their next attack.",
       "src": "B:V4:3.eb",
       "fx": [
         {
@@ -1387,17 +1403,18 @@
     },
     "4.d1": {
       "name": "Ride the Wave",
-      "text": "All In +8% Double or Nothing chance.",
+      "text": "All In +8% Jackpot chance.",
       "src": "A:V3:4.u1",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "echoChance": 0.08
+            "winChance": 0.08
           }
         }
-      ]
+      ],
+      "_not": "Gambler rework (Ömer 2026-11-18): eski Double or Nothing / repeatChance bağı yeni Lucky Streak sistemine uyarlandı; Ömer onayı bekliyor (open-questions Q-NEW Gambler ağaç uyarlaması). Sayılar PROVİZYON."
     },
     "4.d2": {
       "name": "Fast Break",

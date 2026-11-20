@@ -22,7 +22,7 @@ export interface SkillCostChip {
 // ---------------------------------------------------------------------------------------------------------------------
 
 /** Bedel çipinin türü (plaka yetersiz kaynağı bu türdeki çipte kırmızı gösterir). */
-export type SkillChipKind = 'mp' | 'rage' | 'hp' | 'cd';
+export type SkillChipKind = 'mp' | 'rage' | 'blood' | 'hp' | 'cd';
 
 export interface SkillPlateChip extends SkillCostChip {
   kind?: SkillChipKind;
@@ -46,8 +46,8 @@ export interface SkillPlateView {
   silenced?: boolean;
   /** Düşman turu: plaka sönük ('off') ve tıklanmaz; imleç ipucu verir (hover ipucu okunur kalır). */
   foe?: boolean;
-  /** Yetersiz kaynak: bu türdeki bedel çipi kırmızı olur ("Not enough MP / Rage / HP"). */
-  lack?: 'mp' | 'rage' | 'hp';
+  /** Yetersiz kaynak: bu türdeki bedel çipi kırmızı olur ("Not enough MP / Rage / HP / Blood"). */
+  lack?: 'mp' | 'rage' | 'blood' | 'hp';
 }
 
 /** "RAGE 30" -> sözcük + sayı (telefonda sözcük gizlenir, ikon yeter); salt sayı -> yalnızca sayı. */
@@ -55,8 +55,8 @@ function plateChip(c: SkillPlateChip, lack: SkillPlateView['lack']): string {
   const m = /^(\D*?)\s*(\d+)$/.exec(c.text.trim());
   const word = m && m[1] ? `<span class="w">${escHtml(m[1])}</span>` : '';
   const num = m ? `<b>${escHtml(m[2]!)}</b>` : `<b>${escHtml(c.text)}</b>`;
-  const kind = c.kind ?? (/^RAGE/i.test(c.text) ? 'rage' : '');
-  const cls = [kind === 'rage' ? 'rage' : '', kind === 'cd' ? 'cd' : '', lack && kind === lack ? 'low' : '', c.dir ?? ''].filter(Boolean).join(' ');
+  const kind = c.kind ?? (/^RAGE/i.test(c.text) ? 'rage' : /^BLOOD/i.test(c.text) ? 'blood' : '');
+  const cls = [kind === 'rage' ? 'rage' : '', kind === 'blood' ? 'blood' : '', kind === 'cd' ? 'cd' : '', lack && kind === lack ? 'low' : '', c.dir ?? ''].filter(Boolean).join(' ');
   return `<span class="bp-chip ${cls}">${img(c.iconUrl ?? '', 'bh-ico')}${word}${num}</span>`;
 }
 

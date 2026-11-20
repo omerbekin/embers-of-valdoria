@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, armorReduction, chooseAction, content, describePassive, explainChoice, roundSpeed, skillCostAmount } from '../src/engine';
+import { Battle, armorReduction, chooseAction, content, describePassive, explainChoice, skillCostAmount } from '../src/engine';
 import type { BattleEvent, Combatant, CombatantDef, PassiveEffect } from '../src/engine';
 
 // Sefer mob pasifleri YM1-YM13 ve doğrulama maddeleri D1-D6 (Bölge II, docs/design/campaign/mob-plan.md 2.2 / 5; Ömer onayı 2026-10-16).
@@ -192,19 +192,48 @@ describe('YM6 Ward-Etcher (Deep Runecaller)', () => {
 });
 
 describe('YM7 Mire-Bound (Fen Witchling, Morwen)', () => {
-  it('Saltbound taşıyan düşman yavaşlar; birden çok cadıda tek uygulanır; cadı ölünce kalkar', () => {
+  // Ömer 2026-11-16 Tur 26: hız etkisi kalktı; cadı yaşarken uygulanan Saltbound extraTurns tur uzun sürer (birden çok cadı yığılmaz)
+  const turnsOf = (c: Combatant, kind: string) => c.statuses.find((s) => s.kind === kind)?.turns;
+  it('cadı yaşarken Saltbound ek tur sürer; birden çok cadı tek sayılır; hız değişmez', () => {
     const e = effectOf('fen_witchling', 'mireBound');
     expect(content.mobs.hedge_witch_morwen!.passive!.id).toBe('mire_bound');
-    const b = arena([['warrior', 1]], [['fen_witchling', 6], ['hedge_witch_morwen', 8]]);
+    expect(e.status).toBe('saltbound');
+    expect(e.extraTurns).toBeGreaterThan(0);
+    const b = sure(arena([['warrior', 1]], [['fen_witchling', 6], ['hedge_witch_morwen', 8]]));
     const w = unit(b, 'party-0');
     const plain = b.baseSpeedOf(w);
-    expect(e.status).toBe('saltbound');
-    b.debugAddStatus('party-0', e.status);
-    expect(b.baseSpeedOf(w)).toBe(Math.max(f.attributes.spdMin ?? 1, roundSpeed(w.stats.spd * e.speedMult * b.paceOf(w), f))); // x bu turun hız zarı
+    expect(b.mireExtraTurns(w, e.status)).toBe(e.extraTurns);
+    b.debugAddStatus('party-0', e.status, 1);
+    expect(turnsOf(w, e.status)).toBe(1 + e.extraTurns);
+    expect(b.baseSpeedOf(w)).toBe(plain); // Chilled hız eki yok
+    expect(w.statuses.some((s) => s.kind === 'chilled')).toBe(false);
+  });
+  it('cadı ölüyken ek yok; cadı sonradan ölünce süre kısalmaz; başka durumlara ve cadının kendi tarafına ek yok', () => {
+    const e = effectOf('fen_witchling', 'mireBound');
+    const b = sure(arena([['warrior', 1], ['mage', 4]], [['fen_witchling', 6], ['moor_raider', 7]]));
+    const w = unit(b, 'party-0');
+    b.debugAddStatus('party-0', e.status, 1);
+    expect(turnsOf(w, e.status)).toBe(1 + e.extraTurns);
     b.debugKill('enemy-0', false);
-    expect(b.baseSpeedOf(w)).toBeLessThan(plain); // Morwen hâlâ yaşıyor
-    b.debugKill('enemy-1', false);
-    expect(b.baseSpeedOf(w)).toBe(plain);
+    expect(turnsOf(w, e.status)).toBe(1 + e.extraTurns);
+    b.debugAddStatus('party-1', e.status, 1);
+    expect(turnsOf(unit(b, 'party-1'), e.status)).toBe(1);
+    const b2 = sure(arena([['warrior', 1]], [['fen_witchling', 6], ['moor_raider', 7]]));
+    b2.debugAddStatus('party-0', 'chilled', 1);
+    expect(turnsOf(unit(b2, 'party-0'), 'chilled')).toBe(1);
+    b2.debugAddStatus('enemy-1', e.status, 1);
+    expect(turnsOf(unit(b2, 'enemy-1'), e.status)).toBe(1);
+  });
+  it('turns modu: 1 turluk Saltbound kahramanın 1 + extraTurns kendi turu boyunca sürer', () => {
+    const e = effectOf('fen_witchling', 'mireBound');
+    const b = sure(arena([['warrior', 1]], [['fen_witchling', 6]], 'turns'));
+    b.debugAddStatus('party-0', e.status, 1);
+    for (let i = 0; i < 1 + e.extraTurns; i++) {
+      expect(turnsOf(unit(b, 'party-0'), e.status), `tur ${i}`).toBeDefined();
+      until(b, 'party-0');
+      b.skipTurn();
+    }
+    expect(turnsOf(unit(b, 'party-0'), e.status)).toBeUndefined();
   });
 });
 

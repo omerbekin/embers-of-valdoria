@@ -412,7 +412,7 @@
     },
     "1.f2": {
       "name": "Ringing Ears",
-      "text": "Toll has a 3% chance per rank to Shake each enemy hit for 1 turn.",
+      "text": "Toll has a 3% chance per rank to lightly Blind each enemy hit (-10% accuracy) for 1 turn.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -420,31 +420,36 @@
           "byRank": [
             {
               "type": "status",
-              "status": "shaken",
+              "status": "blinded",
+              "strength": 0.333,
               "turns": 1,
               "chance": 0.03
             },
             {
               "type": "status",
-              "status": "shaken",
+              "status": "blinded",
+              "strength": 0.333,
               "turns": 1,
               "chance": 0.06
             },
             {
               "type": "status",
-              "status": "shaken",
+              "status": "blinded",
+              "strength": 0.333,
               "turns": 1,
               "chance": 0.09
             },
             {
               "type": "status",
-              "status": "shaken",
+              "status": "blinded",
+              "strength": 0.333,
               "turns": 1,
               "chance": 0.12
             },
             {
               "type": "status",
-              "status": "shaken",
+              "status": "blinded",
+              "strength": 0.333,
               "turns": 1,
               "chance": 0.15
             }
@@ -454,14 +459,14 @@
     },
     "1.f3": {
       "name": "Dread Peal",
-      "text": "Toll deals 4% more damage per rank to Shaken enemies.",
+      "text": "Toll deals 4% more damage per rank to Blinded enemies.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "when": {
-            "targetStatus": "shaken"
+            "targetStatus": "blinded"
           },
           "mod": {
             "powerMul": 0.04
@@ -490,13 +495,13 @@
     },
     "1.r": {
       "name": "Lingering Ears",
-      "text": "Shaken from Toll lowers accuracy by a further 2% per rank.",
+      "text": "Blinded from Toll lowers accuracy by a further 2% per rank.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
-          "sel": "status:shaken",
+          "sel": "status:blinded",
           "mod": {
             "statusPotency": {
               "accuracyDelta": -0.02
@@ -508,7 +513,7 @@
     },
     "1.ea": {
       "name": "Unbroken Rope",
-      "text": "From the third Toll in a row, Toll Shakes every enemy hit for 1 turn.",
+      "text": "From the third Toll in a row, Toll lightly Blinds every enemy hit (-10% accuracy) for 1 turn.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -522,7 +527,8 @@
           },
           "mod": {
             "addStatus": {
-              "status": "shaken",
+              "status": "blinded",
+              "strength": 0.333,
               "turns": 1
             }
           }
@@ -1244,15 +1250,16 @@
       ]
     },
     "4.d1": {
-      "name": "Shaking Peal",
-      "text": "Great Bell of Valdoria Shakes every enemy hit for 2 turns.",
+      "name": "Blinding Peal",
+      "text": "Great Bell of Valdoria lightly Blinds every enemy hit (-10% accuracy) for 2 turns.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
           "k": "addEffect",
           "effect": {
             "type": "status",
-            "status": "shaken",
+            "status": "blinded",
+            "strength": 0.333,
             "turns": 2
           }
         }

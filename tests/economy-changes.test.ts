@@ -13,7 +13,8 @@ describe('mana ekonomisi', () => {
   it('mpBase 30; her class\'ın MP\'si mpBase + mpPerInt x INT (class bazlı MP override yok); skill bedelleri değişmedi', () => {
     expect(a.mpBase).toBe(30);
     for (const [id, def] of Object.entries(content.classes)) {
-      expect(def.stats.mp, id).toBe(Math.round(a.mpBase + a.mpPerInt * def.attributes.int));
+      // kan barlı class (Redtithe): mana yok (resource 'blood' -> MP 0)
+      expect(def.stats.mp, id).toBe(def.maxBlood !== undefined ? 0 : Math.round(a.mpBase + a.mpPerInt * def.attributes.int));
     }
     // class verisinde MP override'ı yok (yalnızca çağrılan birimlerin MP'si elle 0)
     for (const mod of Object.values(import.meta.glob('../data/classes/*.json', { eager: true }))) {
@@ -28,7 +29,7 @@ describe('mana ekonomisi', () => {
 
   it('INT başına MP yenilenmesi ~0,33 (eski 0,25\'ten arttı); yenilenme = round(INT x mpRegenPerInt)', () => {
     expect(a.mpRegenPerInt).toBe(0.15); // Ömer 2026-11-07 (önce 0,165)
-    for (const [id, def] of Object.entries(content.classes)) expect(def.stats.mpRegen, id).toBe(Math.round(def.attributes.int * a.mpRegenPerInt));
+    for (const [id, def] of Object.entries(content.classes)) expect(def.stats.mpRegen, id).toBe(def.maxBlood !== undefined ? 0 : Math.round(def.attributes.int * a.mpRegenPerInt));
   });
 
   it('stat tooltip\'i "Max MP = taban + int başına" yazar (sayılar veriden)', () => {
@@ -56,8 +57,8 @@ describe('skill değişiklikleri (veri)', () => {
     expect(mk('test').get('party-0')!.cooldowns.aimed_shot).toBeUndefined();
   });
 
-  it('Resurrection MP bedeli 14 (Ömer 2026-10-18 denge turu 1: 20 -> 16; 2026-11-08 Paladin mana turu: 16 -> 14; cooldown 5: Ömer 2026-10-17 classtune, 6 -> 5)', () => {
-    expect(content.skills.resurrection!.cost).toEqual({ resource: 'mp', amount: 14 });
+  it('Resurrection MP bedeli 12 (Ömer 2026-10-18 denge turu 1: 20 -> 16; 2026-11-08 Paladin mana turu: 16 -> 14; 2026-11-20 form r32: 14 -> 12; cooldown 5: Ömer 2026-10-17 classtune, 6 -> 5)', () => {
+    expect(content.skills.resurrection!.cost).toEqual({ resource: 'mp', amount: 12 });
     expect(content.skills.resurrection!.cooldown).toBe(5);
   });
 

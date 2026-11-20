@@ -1105,19 +1105,21 @@
     "b_shred": {
       "tier": "B",
       "name": "Armor shred",
-      "text": "Your hits lower enemy Armor by {0} for 2 turns, up to 3 stacks",
+      "text": "Your hits add a stack of Sunder for 2 turns: each stack is a third of a full Sunder, up to 3 stacks",
       "slots": [
         "weapon"
       ],
-      "desc": "Damaging skill hits apply Shredded. Each new stack refreshes the 2 turns.",
+      "desc": "Damaging skill hits add a Sunder stack. Each new stack refreshes the 2 turns.",
+      "_not": "Ömer 2026-11-16 (form Tur 23): Shredded Sunder ile birleşti; yığın gücü veriden (statuses.json > sunder), affix değeri yalnız açar (fixed 1; ip 1,2 = eski ilvl 10 orta değeri 3 x 0,4, varsayım open-questions).",
       "icon": "shred",
       "parts": [
         {
-          "base": 1.1,
-          "perIlvl": 0.2,
+          "base": 1,
+          "perIlvl": 0,
           "step": 1,
-          "ip": 0.4,
-          "to": "fx:armorShred"
+          "ip": 1.2,
+          "to": "fx:armorShred",
+          "fixed": true
         }
       ]
     },
@@ -4456,12 +4458,13 @@
     },
     "pilgrims_stride": {
       "name": "Pilgrim's Stride",
-      "text": "Move costs half a turn and grants Fleet (+10% evasion) for {turns} turns.",
+      "text": "Move costs half a turn and grants a light Shrouded (+10% evasion) for {turns} turns.",
       "ip": 3,
       "hook": "moveStride",
       "value": {
         "turnCost": 0.5,
-        "status": "fleet",
+        "status": "shrouded",
+        "strength": 0.5,
         "turns": 3
       }
     },
@@ -4474,7 +4477,7 @@
     },
     "retort": {
       "name": "Iron Retort",
-      "text": "Enemies who hit you in melee are Slowed for {turns} turns.",
+      "text": "Enemies who hit you in melee are Hobbled for {turns} turns.",
       "ip": 2.5,
       "hook": "retortStatus",
       "value": {
@@ -4706,7 +4709,7 @@
         "3": { "byClass": {
           "cutthroat": { "passive": "opportunist", "field": "bonus", "from": 0.25, "to": 0.3 },
           "archer": { "passive": "sharpshooter", "field": "perRow", "from": 0.05, "to": 0.065 },
-          "antimage": { "passive": "spellbreaker_instinct", "field": "advance", "from": 0.1, "to": 0.13 }
+          "antimage": { "passive": "spellbreaker_instinct", "field": "bloodAdvance", "from": 0.1, "to": 0.16 }
         } },
         "4": { "mods": { "spdAdd": 0.5, "evasionAdd": 0.06, "armorAdd": -3 }, "rule": "unseen", "name": "Unseen" }
       },
@@ -4721,16 +4724,52 @@
         "2": { "mods": { "mpAdd": 12, "mpRegenAdd": 1 } },
         "3": { "byClass": {
           "mage": { "passive": "heat_mirage", "field": "power", "from": 0.361, "to": 0.43 },
-          "druid": { "passive": "natures_grudge", "field": "power", "from": 0.15, "to": 0.18 },
+          "druid": { "passive": "natures_grudge", "field": "power", "from": 0.165, "to": 0.198 },
           "undead": { "passive": "vampiric_bite", "field": "ratio", "from": 0.5, "to": 0.6 },
           "vesper": { "passive": "pealing_bells", "field": "perBell", "from": 0.07, "to": 0.085 }
         } },
         "4": { "mods": { "mpAdd": 20, "mpRegenAdd": 1, "hpAdd": -20 }, "rule": "conclave_answers", "name": "The Conclave Answers", "power": 0.5, "perTurn": 1 }
       },
       "_status": "Lead 2026-11-07. 4-piece: deeper mana, less health + 'The Conclave Answers' (Omer pick 2026-11-07 C-Y: an enemy skill on the wearer is answered by a free basic attack at 50% power, once between the wearer's turns). Numbers unmeasured."
+    },
+    {
+      "id": "stormhall_saga", "name": "Stormhall Saga", "kind": "class", "map": "The Hollow Crown", "dropper": "Chief's Hall",
+      "slots": ["helm", "armor", "gloves", "boots"],
+      "pieceNames": ["Stormhall Helm", "Saga Mail", "Stormhall Gauntlets", "Thunder-Road Boots"],
+      "thresholds": [2, 3, 4],
+      "bonuses": {
+        "2": { "mods": { "hpAdd": 8, "critAdd": 0.02 } },
+        "3": { "byClass": {
+          "skald": { "passive": "conductor", "field": "bonus", "from": 0.25, "to": 0.3 }
+        } },
+        "4": { "mods": { "spdAdd": 0.5, "armorAdd": -2 }, "rule": "refrain", "name": "Refrain", "status": "empowered", "turns": 2 }
+      },
+      "_status": "Ömer 2026-11-16 Tur 28-29: yalnız Skald. 4 parça: hızlı, az zırhlı + 'Refrain' (Skald'ın şimşeği bir düşmanı Shocked yapınca o düşmana sonra vuran İLK dost 2 tur Empowered; her Shocked uygulamasında bir kez; Shocked tüketilmez). Harita / düşüren elit Lead varsayımı (open-questions Q-NEW Tur 28-29). Sayılar ölçülmedi."
+    },
+    {
+      "id": "relics_of_saint_odran", "name": "Relics of Saint Odran", "kind": "neutral", "map": "Drowned Reach", "dropper": "The Bishop's Chapel",
+      "slots": ["offhand", "ring", "trinket"],
+      "pieceNames": ["Odran's Censer", "Odran's Ring", "Odran's Reliquary"],
+      "thresholds": [2, 3],
+      "bonuses": {
+        "2": { "mods": { "mpRegenAdd": 1, "critAdd": 0.02 } },
+        "3": { "rule": "martyrs_bequest", "name": "Martyr's Bequest", "statuses": ["empowered", "focused"], "turns": 2 }
+      },
+      "_status": "Ömer 2026-11-16 Tur 28-29: nötr, 3 parça (büyülü offhand Focus Orb ailesi, kalkan değil; ring; trinket). 3 parça 'Martyr's Bequest': taşıyan ölünce en yakın yaşayan dost Empowered + Focused (2'şer tur). Offhand ailesi yüzünden tam seti yalnız orb taşıyan sınıflar giyer (açık soru). Sayılar ölçülmedi."
+    },
+    {
+      "id": "almoners_vestments", "name": "Almoner's Vestments", "kind": "neutral", "map": "Valdoria", "dropper": "Thornwood Hollow",
+      "slots": ["helm", "armor", "boots"],
+      "pieceNames": ["Almoner's Cowl", "Almoner's Robe", "Mendicant's Sandals"],
+      "thresholds": [2, 3],
+      "bonuses": {
+        "2": { "mods": { "magicArmorAdd": 2, "mpRegenAdd": 1 } },
+        "3": { "rule": "pilgrims_burden", "name": "Pilgrim's Burden", "turns": 1 }
+      },
+      "_status": "Ömer 2026-11-16 Tur 28-29: nötr, şifacıya göre. 3 parça 'Pilgrim's Burden': taşıyan skill şifasıyla bir dostu iyileştirince o dostun en uzun süreli silinebilir debuff'ı 1 tur kısalır (1 turu kalan biter; Lead varsayımı). Sayılar ölçülmedi."
     }
   ],
-  "setValue": { "classRowIP": 2.5, "ruleIP": 4 },
+  "setValue": { "classRowIP": 2.5, "ruleIP": 4, "ruleNeedsHeal": ["pilgrims_burden"] },
   "_setValue": "Lead 2026-11-07: Equip best set bonusunu bu sayılarla tartar (yalnızca seçim). Stat bonusu = affix IP birimleri (modIP); sınıf satırı (3. parça pasif yaması) ve motor kuralı (4. parça) düz değer. PROVIZYON, sim bekliyor.",
   "_setBoost": "Ömer onaylı 2026-11-09: Conclave of Embers, Gallows Pact ve Wayfarer's Oath parçalarının sabit affix'leri boost ile aynı seviyedeki sıradan Epic'in (dört affix) ortalama IP'sine çekildi (parça başına tek çarpan, üç affix'e aynı; ölçüm itemIP ortalaması, yuva + ilvl aynı). Gravedigger's Gloves zaten üstündeydi: 0,962. Diğer setler (Ashguard, Kingsfall, Raven) dokunulmadı.",
   "_setItems": "Set parçaları (Ömer 2026-11-03 pilot; motor adımı): ana katalogdan AYRI liste, böylece items havuzları (loot, tüccar, Codex) değişmez; yalnızca nadir düşüş dalı (setsEnabled) ve debug verir. Epic, sabit üç affix (C, C, B), zarlı değer; seviye düğümden gelir, buradaki ilvl önizleme tabanı. Ashguard yalnızca Warrior / Defender / Paladin takar.",
@@ -4756,7 +4795,17 @@
     { "id": "ember_circlet", "name": "Ember Circlet", "slot": "helm", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mp", "c_hp", "b_mpcost"], "boost": { "c_mp": 1.44, "c_hp": 1.44, "b_mpcost": 1.44 } },
     { "id": "ember_robe", "name": "Ember Robe", "slot": "armor", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_hp", "c_hpregen", "b_marmor"], "boost": { "c_hp": 1.216, "c_hpregen": 1.216, "b_marmor": 1.216 } },
     { "id": "ember_mitts", "name": "Ember Mitts", "slot": "gloves", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mpregen", "c_acc", "b_manaleech"], "boost": { "c_mpregen": 1.733, "c_acc": 1.733, "b_manaleech": 1.733 } },
-    { "id": "ember_sandals", "name": "Ember Sandals", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mp", "c_eva", "b_initiative"], "boost": { "c_mp": 1.463, "c_eva": 1.463, "b_initiative": 1.463 } }
+    { "id": "ember_sandals", "name": "Ember Sandals", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "conclave_of_embers", "usableBy": ["mage", "druid", "undead", "vesper"], "affixes": ["c_mp", "c_eva", "b_initiative"], "boost": { "c_mp": 1.463, "c_eva": 1.463, "b_initiative": 1.463 } },
+    { "id": "stormhall_helm", "name": "Stormhall Helm", "slot": "helm", "rarity": "epic", "ilvl": 27, "set": "stormhall_saga", "usableBy": ["skald"], "affixes": ["c_hp", "c_res_light", "b_marmor"] },
+    { "id": "saga_mail", "name": "Saga Mail", "slot": "armor", "rarity": "epic", "ilvl": 27, "set": "stormhall_saga", "usableBy": ["skald"], "affixes": ["c_armor", "c_hp", "b_resil"] },
+    { "id": "stormhall_gauntlets", "name": "Stormhall Gauntlets", "slot": "gloves", "rarity": "epic", "ilvl": 27, "set": "stormhall_saga", "usableBy": ["skald"], "affixes": ["c_acc", "c_armor", "b_crit"] },
+    { "id": "thunder_road_boots", "name": "Thunder-Road Boots", "slot": "boots", "rarity": "epic", "ilvl": 27, "set": "stormhall_saga", "usableBy": ["skald"], "affixes": ["c_hp", "c_eva", "b_speed"] },
+    { "id": "odrans_censer", "name": "Odran's Censer", "slot": "offhand", "family": "orbs", "rarity": "epic", "ilvl": 18, "set": "relics_of_saint_odran", "affixes": ["c_hpregen", "c_res_holy", "b_marmor"] },
+    { "id": "odrans_ring", "name": "Odran's Ring", "slot": "ring", "rarity": "epic", "ilvl": 18, "set": "relics_of_saint_odran", "affixes": ["c_mp", "c_mpregen", "b_mpcost"] },
+    { "id": "odrans_reliquary", "name": "Odran's Reliquary", "slot": "trinket", "rarity": "epic", "ilvl": 18, "set": "relics_of_saint_odran", "affixes": ["c_healrecv", "c_shield", "b_startshield"] },
+    { "id": "almoners_cowl", "name": "Almoner's Cowl", "slot": "helm", "rarity": "epic", "ilvl": 10, "set": "almoners_vestments", "affixes": ["c_mp", "c_res_holy", "b_mpcost"] },
+    { "id": "almoners_robe", "name": "Almoner's Robe", "slot": "armor", "rarity": "epic", "ilvl": 10, "set": "almoners_vestments", "affixes": ["c_hp", "c_hpregen", "b_marmor"] },
+    { "id": "mendicants_sandals", "name": "Mendicant's Sandals", "slot": "boots", "rarity": "epic", "ilvl": 10, "set": "almoners_vestments", "affixes": ["c_mp", "c_hp", "b_initiative"] }
   ],
   "traits": {},
   "_legendary": "Legendary (Ömer onayı 2026-10-10, madde 296): el yapımı benzersiz item, dört sabit affix (C, C, B, A; 2026-10-11) + 1 benzersiz etki. Kahraman başına EN FAZLA 1 Legendary (Gear: 'Only one Legendary per hero'). boost = sabit bir affix'in değer çarpanı (Ömer 2026-10-12, p5: zayıf beş Legendary'nin en zayıf statı; aynı seviyedeki Epic'in ~%10-35 üstü): Crown of the Ashen King a_immunity x2, Helm of the Last Stand a_endure x1,75, Watchman's Boots a_support x1,75, The Gambler's Last Coin ve Bones of the Quarry c_acc x1,25 (bu ikisini asıl a_primary değerlemesi yükseltti). usableBy = yalnızca bu sınıflar takabilir (silah ailesine ek). minChapter = hangi bölümde ortaya çıkabilir (Valdoria = 1: Emberbrand, Mantle of Valdren ve Pilgrim's Road Boots; Ömer 2026-10-10). Normal loot zarı Legendary vermez (loot.legendaryChance = 0); Legendary YALNIZCA ortak nadir düşüş zarından (rareDrop, madde 297) ve Endless tüccarının nadir malından gelir. Seviye (Ömer 2026-10-12): Legendary'nin TABAN SEVİYESİ YOK; düştüğü yerin item seviyesinde zarlanır (sefer: düğümün item seviyesi; Endless: dalganın seviye tavanı ilvlCap, nadir düşüş ve tüccarın nadir malı). Kataloğdaki ilvl yalnızca önizleme / debug değeridir, nerede çıkabileceğini belirlemez (uygunluk yalnızca minChapter ve legendaryFromWave). Önizleme: ?legendary=1 ya da debug > Give all Legendaries.",

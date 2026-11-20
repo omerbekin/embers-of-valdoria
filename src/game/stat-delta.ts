@@ -2,7 +2,7 @@
  * Durumların stat'a etkisi (Blinded: isabet -%30, Shrouded: kaçınma +%20) için SAF yardımcılar: alt barda yön oku, stat tooltip'inde kaynak satırı,
  * hover önizlemesinde 'Blinded -30% hit' metni. Değerler `statuses.json > accuracyDelta/evasionDelta`; geçerli stat `battle.effectiveStats(c)`.
  */
-import type { StatKind, StatusDef } from '../engine';
+import type { StatKind, Status, StatusDef } from '../engine';
 
 /** Okla gösterilen stat'lar (durum eki alabilenler). */
 export type DeltaStat = 'accuracy' | 'evasion';
@@ -50,6 +50,8 @@ export function previewStatusText(line: string, defs: Record<string, StatusDef |
 }
 
 /** Birim kartı EFFECTS satırının açıklaması: durumun kendi cümlesi (kimliği değil). */
-export function statusCardText(def: StatusDef | undefined): string {
+export function statusCardText(def: StatusDef | undefined, inst?: Pick<Status, 'kind' | 'armorBonus'>): string {
+  // Taunt'ın statuses.json tanımı yok; zırh eki (Ömer 2026-11-16 Tur 26) örnekten yazılır
+  if (inst?.kind === 'taunt' && inst.armorBonus) return `+${inst.armorBonus} armor while taunting`;
   return (def as { text?: string } | undefined)?.text ?? '';
 }

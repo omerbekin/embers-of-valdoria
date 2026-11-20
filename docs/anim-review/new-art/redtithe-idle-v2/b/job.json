@@ -1,0 +1,22 @@
+{
+ "name": "redtithe-idle-v2b",
+ "outDir": "docs/anim-review/new-art/redtithe-idle-v2/b",
+ "rules": "docs/anim-review/new-art/redtithe-idle-v2/b/PROMPT.md",
+ "maxRounds": 2,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle1",
+   "file": "idle1.png",
+   "refs": [
+    "docs/anim-review/new-art/redtithe-idle-v2/refs/redtithe-B-look.png",
+    "docs/anim-review/new-art/redtithe-idle-v2/refs/warrior-head-style.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/redtithe-idle-v2/refs/redtithe-B-look.png"
+   ],
+   "task": "Image 1 = Redtithe's LOOK (concept art: face, braid, shaved sides, eyebrow scar, vest, rust-red shirt, bandaged forearms, red sash and panels, belt vials, pouch and brass bowl, trousers, boots, palette). Ignore its pose, its sickle and its open hand. Image 2 = a crop of another hero, ONLY for rendering quality and how a readable 3/4 face looks at game size (do not copy that character or his arms). Draw Redtithe as a NEW full-body combat idle on a 450x412 canvas: side view facing right, body slightly turned toward the viewer, legs apart in a ready knife-fighter stance, knees slightly bent, weight low, stance not wider than about 210 px. Head top y~24, chin y~88, soles y~406, figure 382 px tall. Arms and fists exactly as in HAND / GRIP ANATOMY: front elbow low at the ribs, front forearm sloping forward-DOWN to a low fist in front of the belt (~300,195); rear arm hanging, fist beside the hip (~150,236) with thumb at the front. Both fists EMPTY and clearly closed, finger stack readable. The face stays completely free. Save PNG 450x412 with real alpha. In NOTES.md write each fist centre and each forearm direction.",
+   "checkRules": "- Image 1 is the new draw; image 2 is Redtithe's concept look.\n- Character identical to image 2: woman, long tight dark braid, shaved sides, eyebrow scar, sleeveless dark brown leather vest over rust-red linen shirt, pale bandaged forearms, red waist sash, dark trousers, tall buckled boots. Strictly medieval, no gore. Belt extras may be simplified; do not score on them.\n- Side view facing right, ready stance, canvas 450x412, soles at y~406, figure ~382 px tall.\n- HAND RULES (any one failing = first line KALDI and PUAN at most 6). Blade direction of a fist = its forearm direction turned 90 degrees toward the thumb (the grip tunnel runs across the hand):\n  a) Both hands are CLENCHED FISTS and EMPTY (no weapon, prop, open palm, blood drop).\n  b) FRONT fist is LOW: in front of the belt / sash, clearly below the chest, far from the face. Its forearm slopes forward-DOWN from a low elbow (a level forearm with an upright fist fails; a fist at chest/shoulder/chin height fails).\n  c) From that forearm, a dagger in the front fist would point forward and somewhat up toward the right, and a 90 px blade on that line does not cross the face, hair or braid.\n  d) REAR fist hangs low beside the hip with the thumb at the front, so a dagger would point forward or forward-down; its pommel side exits the back of the fist into empty space, not into the wrist.\n- Do NOT estimate angles in degrees; answer the hand rules as yes/no with a short reason each.\n- Face readable at game size (~190 px figure): both eyes, nose and mouth distinguishable, head slightly turned toward the viewer, hair does not shadow the face.\n- Real transparent background: no white/grey background, no checkerboard, no halo or dark fringe, no ground shadow. Clean, noise-free."
+  }
+ ]
+}

@@ -51,7 +51,7 @@ describe('çağrı statları çağırandan türer (veri)', () => {
     expect(sk.stats.str / 40).toBeLessThanOrEqual(1.23);
     const tr = applySummonerScale(content.summons.treant!, content.classes.druid!.attributes, f);
     expect(tr.stats.int).toBe(27);
-    expect(tr.stats.hp).toBe(105);
+    expect(tr.stats.hp).toBe(110); // Ömer 2026-11-20 form r33: can +%5 (105 -> 110)
     expect(tr.stats.hpRegen).toBeCloseTo(3.375, 2);
   });
 

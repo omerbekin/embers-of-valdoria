@@ -15,6 +15,12 @@
   z-index: 26;
 }
 
+/* Harita dersleri: sol Party sütununu (36 + 360 birim) örtmesin, sütunun sağında üst ortada durur (Onboarding denetimi 2026-11-17) */
+.tut-wrap.map {
+  left: calc(var(--el, 0px) + max(10px, calc(430 * var(--u))));
+  top: calc(var(--et, 0px) + max(56px, calc(150 * var(--u))));
+}
+
 /* Gear: torbayı ve stat panelini kapatmasın: alt ortada (pencerenin düğme sırasının üstünde) */
 .tut-wrap.bottom {
   left: var(--el, 0px);
@@ -28,7 +34,7 @@
   display: flex;
   gap: max(8px, calc(16 * var(--u)));
   align-items: center;
-  width: max(340px, calc(760 * var(--u)));
+  width: max(340px, calc(900 * var(--u))); /* 760 iken "Garrick · Old Border Commander" uzun başlıkta (Your First Skill Point) iki satıra kırılıyordu */
   max-width: calc(1800 * var(--u)); /* sahne genişliğinden dar (vw döndürülmüş sahnede yanlış ölçer) */
   padding: max(8px, calc(14 * var(--u))) max(10px, calc(18 * var(--u)));
   pointer-events: auto;
@@ -67,6 +73,7 @@
 .tut-title {
   flex: 1 1 auto;
   min-width: 0;
+  white-space: nowrap;
   font: 600 max(calc(13px * var(--tx, 1)), calc(22 * var(--u) * var(--tx, 1))) / 1.2 var(--el-display);
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -74,6 +81,7 @@
 }
 
 .tut-who {
+  white-space: nowrap;
   margin-left: 0.6em;
   font: max(calc(11px * var(--tx, 1)), calc(17 * var(--u) * var(--tx, 1))) / 1.2 var(--el-body);
   letter-spacing: 0;
@@ -153,9 +161,22 @@ html.short .tut-wrap:not(.bottom) {
   top: calc(var(--et, 0px) + 50px);
 }
 
+/* Telefonda sütun 1,45 kat büyür: kutu onun sağında, kalan genişliğe sığar */
+html.short .tut-wrap.map,
+html.compact .tut-wrap.map {
+  left: calc(var(--el, 0px) + 600 * var(--u));
+  top: calc(var(--et, 0px) + 50px);
+}
+
+html.short .tut-wrap.map .tut-box,
+html.compact .tut-wrap.map .tut-box {
+  width: calc(1180 * var(--u));
+}
+
+/* Telefon: kutu geniş ve alçak (dar-uzun kutu savaşanları örtüyordu; Onboarding denetimi 2026-11-17): savaşanların başı ile sıra çubuğu arasındaki gökyüzü bandına yatar */
 html.short .tut-box,
 html.compact .tut-box {
-  width: min(400px, calc(1800 * var(--u)));
+  width: min(640px, calc(1800 * var(--u)));
   gap: 8px;
   padding: 6px 10px 6px 8px;
 }

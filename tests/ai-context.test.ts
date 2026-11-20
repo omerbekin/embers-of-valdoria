@@ -74,6 +74,7 @@ describe('YZ bağlam: Archer - Aimed Shot', () => {
 });
 
 describe('YZ bağlam: Defender - Fist Crush', () => {
+  const evasive = (b: Battle) => { for (const c of b.combatants) if (c.side === 'enemy') c.stats.evasion = 0.15; };
   const taunting = (b: Battle) => b.get('party-0')!.statuses.push({ kind: 'taunt', turns: 3, source: 'party-0' });
 
   it('karşıda en az 3 düşman varsa Fist Crush seçilir (Tremor Slam\'in Slow\'u zaten varken)', () => {
@@ -86,6 +87,7 @@ describe('YZ bağlam: Defender - Fist Crush', () => {
   it('karşıda 3\'ten az düşman varsa seçilmez', () => {
     const b = mk({ 0: 'defender', 1: 'warrior' }, { 0: 'warrior', 1: 'mage' });
     taunting(b);
+    evasive(b); // Ömer 2026-11-16: Tremor Slam'in Hobbled'ı kaçınma keser; kaçınmasız (mk) hedefte değeri 0 olurdu
     expect(choose(b)?.skillId).not.toBe('fist_crush');
   });
 });
@@ -156,13 +158,22 @@ describe('YZ bağlam: Gambler - All In', () => {
   };
   const longBattle = () => 11; // (eski minBattleTurns 10 ipucu madde 258'de silindi; terazi savaş turuna bakmaz)
 
-  it('MP yüksek ve savaş uzadıysa All In seçilir', () => {
-    expect(choose(gambler(1, longBattle()))).toMatchObject({ skillId: 'all_in' });
+  // 2026-11-18 YZ düzeltmesi: eski "seri 0 iken seçilmez" kuralı kalktı (Lead: MP yüksekken seri 0-2'de de makul seçilsin); seri 0'da All In
+  // terazide gerçek beklenen değeriyle yarışır, puanı seriyle artar (ai-coverage "All In puanı seriyle artar")
+  it('MP yüksek ve seri dolu (Lucky Streak 3: kesin kazanç) ise All In seçilir; seri 0 iken puanı dolu seriden düşük (Ömer 2026-11-18 rework)', () => {
+    const max = (content.classes.gambler!.passive!.effect as { max: number }).max;
+    const full = gambler(1, longBattle());
+    full.get('party-0')!.streak = max;
+    expect(choose(full)).toMatchObject({ skillId: 'all_in' });
+    const best = (b: ReturnType<typeof gambler>) => Math.max(...explainChoice(b, 'party-0', ai)!.candidates.filter((c) => c.skill === 'all_in').map((c) => c.score ?? -Infinity));
+    expect(best(gambler(1, longBattle()))).toBeLessThan(best(full));
   });
 
   it('MP düşükken seçilmez (bahis küçük kalır)', () => {
     const low = (content.skills.all_in!.ai!.reserveMinMpRatio ?? 0.6) - 0.2;
-    expect(choose(gambler(low, longBattle()))?.skillId).not.toBe('all_in');
+    const b = gambler(low, longBattle());
+    for (const c of b.combatants) if (c.side === 'enemy') c.stats.evasion = 0.15; // Ömer 2026-11-16: Card Trick'in Hobbled'ı kaçınma keser (mk kaçınmayı 0'lar)
+    expect(choose(b)?.skillId).not.toBe('all_in');
   });
 
   it('MP bahsinin beklenen kaybı bedele eklenir (terazi: bahis değeri kendinden; savaş turu koşulu yok)', () => {
@@ -172,13 +183,20 @@ describe('YZ bağlam: Gambler - All In', () => {
   });
 });
 
-describe('YZ bağlam: Anti-Mage - Void Strike', () => {
-  it('hedefin manası eksikse (mana yakılmış) Void Strike seçilir; mana doluyken seçilmez', () => {
-    const drained = mk({ 0: 'antimage' }, { 0: 'mage' });
+describe('YZ bağlam: Redtithe - Exsanguinate', () => {
+  // Redtithe (2026-11-17): Exsanguinate kan barının tamamını harcar (en az cost.amount); eksik mana eki (bonusPerMissingMana) sürer
+  const ready = (b: Battle) => {
+    const rt = b.get('party-0')!;
+    rt.blood = rt.maxBlood;
+    rt.cooldowns.void_strike = 0; // initialCooldown
+    return b;
+  };
+  it('hedefin manası eksikse (mana yakılmış) Exsanguinate seçilir; mana doluyken değeri belirgin düşük', () => {
+    const drained = ready(mk({ 0: 'antimage' }, { 0: 'mage' }));
     drained.get('enemy-0')!.hp = drained.get('enemy-0')!.maxHp = 5000; // mana yakılmış hedef öldürülmesin: bağlam "tactic" olarak sınanır
     drained.get('enemy-0')!.mp = 0;
     expect(choose(drained)).toMatchObject({ skillId: 'void_strike' });
-    const full = mk({ 0: 'antimage' }, { 0: 'mage' });
+    const full = ready(mk({ 0: 'antimage' }, { 0: 'mage' }));
     full.get('enemy-0')!.hp = full.get('enemy-0')!.maxHp = 5000;
     // madde 258: eski minMissingManaShare ipucu silindi; terazide mana doluyken Void Strike'ın değeri belirgin düşük (eksik mana eki yok)
     const vs = (b: Battle) => Math.max(...explainChoice(b, 'party-0', ai)!.candidates.filter((c) => c.skill === 'void_strike').map((c) => c.score ?? 0));
@@ -283,7 +301,7 @@ describe('YZ bağlam: MP ayırma ve genel özellikler', () => {
       for (const k of Object.keys(sk.ai)) expect(allowed.has(k), `${sk.id}.ai.${k}`).toBe(true);
       if (sk.ai.scoreCost === undefined) expect(sk.ai.reserveMp, sk.id).toBeGreaterThan(0);
     }
-    for (const id of ['meteor', 'aimed_shot', 'void_strike', 'all_in', 'doom_mark']) expect(content.skills[id]!.ai?.reserveMp, id).toBeDefined();
+    for (const id of ['meteor', 'aimed_shot', 'all_in', 'doom_mark']) expect(content.skills[id]!.ai?.reserveMp, id).toBeDefined();
     expect(content.skills.judgment!.ai).toBeUndefined();
     for (const p of Object.values(ai.profiles)) expect(p).not.toHaveProperty('ultimateWeight');
   });

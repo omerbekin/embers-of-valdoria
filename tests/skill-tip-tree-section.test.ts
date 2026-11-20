@@ -22,7 +22,7 @@ describe('skill tip: From Skill Tree section', () => {
     expect(mixed.lines).toEqual(own.lines);
     expect(mixed.kinds).toEqual(own.kinds);
     expect(mixed.treeLines?.length).toBe(1);
-    expect(mixed.treeLines![0]).toMatch(/Slow/);
+    expect(mixed.treeLines![0]).toMatch(/Hobbled/); // Ömer 2026-11-16: Slow -> Hobbled
   });
   it('no tree node, no section', () => {
     expect(describeSkill(base, st, f, content.summons, defs).treeLines).toBeUndefined();

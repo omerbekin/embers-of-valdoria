@@ -32,7 +32,7 @@ function costOf(skill: { cost: { resource: string; amount: number; ofCurrent?: n
   const pct = (c.ofCurrent ?? 0) > 0 ? `${Math.round(c.ofCurrent! * 100)}%` : '';
   if (c.amount <= 0 && !pct) return { kind: 'free' };
   const text = pct ? `${c.amount > 0 ? `${c.amount}+` : ''}${pct}` : String(c.amount);
-  return { kind: c.resource === 'rage' ? 'rage' : c.resource === 'mp' ? 'mp' : 'hp', text };
+  return { kind: c.resource === 'rage' ? 'rage' : c.resource === 'blood' ? 'blood' : c.resource === 'mp' ? 'mp' : 'hp', text };
 }
 
 /** Bir kahramanın tahta verisi (sınıf yoksa null). */

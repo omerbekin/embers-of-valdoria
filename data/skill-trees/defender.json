@@ -66,7 +66,7 @@
       {
         "at": 10,
         "name": "First Tremor",
-        "text": "Your first Tremor Slam of each battle Slows for 1 extra turn.",
+        "text": "Your first Tremor Slam of each battle Hobbles for 1 extra turn.",
         "src": "A:V2:bar0",
         "fx": [
           {
@@ -105,7 +105,7 @@
       {
         "at": 20,
         "name": "Fault Line",
-        "text": "Enemies you Stun are Slowed for 1 turn after the Stun ends.",
+        "text": "Enemies you Stun are Hobbled for 1 turn after the Stun ends.",
         "src": "A:V2:bar3",
         "fx": [
           {
@@ -377,7 +377,7 @@
     },
     "1.f1": {
       "name": "Deep Stomp",
-      "text": "Tremor Slam's Slow lasts 1 turn longer, 8% chance per rank.",
+      "text": "Tremor Slam's Hobble lasts 1 turn longer, 8% chance per rank.",
       "src": "A:V2:1.f1",
       "fx": [
         {
@@ -394,7 +394,7 @@
     },
     "1.f2": {
       "name": "Shockwave",
-      "text": "Tremor Slam has 6% increased power per rank against enemies already Slowed.",
+      "text": "Tremor Slam has 6% increased power per rank against enemies already Hobbled.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -454,7 +454,7 @@
     },
     "1.n0": {
       "name": "Rolling Quake",
-      "text": "Tremor Slam also hits the row behind for 25% damage, without Slow.",
+      "text": "Tremor Slam also hits the row behind for 25% damage, without Hobbled.",
       "src": "A:V2:1.n0",
       "fx": [
         {
@@ -491,7 +491,7 @@
     },
     "1.ea": {
       "name": "Skull Rattler",
-      "text": "Tremor Slam has a 10% chance to Stun each enemy that is already Slowed.",
+      "text": "Tremor Slam has a 10% chance to Stun each enemy that is already Hobbled.",
       "src": "A:V2:1.ea",
       "fx": [
         {
@@ -512,7 +512,7 @@
     },
     "1.eb": {
       "name": "Aftershock Ground",
-      "text": "Tremor Slam leaves quaking ground where it hits for 2 turns: enemies there are Slowed while inside.",
+      "text": "Tremor Slam leaves quaking ground where it hits for 2 turns: enemies there are Hobbled while inside.",
       "src": "A:V2:1.eb*",
       "fx": [
         {
@@ -549,7 +549,7 @@
     },
     "1.fa": {
       "name": "Heavy Landing",
-      "text": "Tremor Slam Slows for 3 turns instead of 2, but it no longer scales with Armor.",
+      "text": "Tremor Slam Hobbles for 3 turns instead of 2, but it no longer scales with Armor.",
       "src": "A:V1:1.fa",
       "fx": [
         {
@@ -607,7 +607,7 @@
     },
     "1.v": {
       "name": "Earthsplitter",
-      "text": "Tremor Slam evolves: it strikes a cross, its whole row plus its column front to back past reach, and Slows 3 turns.",
+      "text": "Tremor Slam evolves: it strikes a cross, its whole row plus its column front to back past reach, and Hobbles 3 turns.",
       "src": "A:V2:1.v*",
       "fx": [
         {
@@ -1055,7 +1055,7 @@
     },
     "3.mb": {
       "name": "Steady Them",
-      "text": "Close Ranks clears Stun and Slow from guarded allies.",
+      "text": "Close Ranks clears Stun and Hobble from guarded allies.",
       "src": "A:V2:3.mb",
       "fx": [
         {

@@ -41,10 +41,10 @@ describe('yeni tetik olayları: veri', () => {
   it('ağaçlar temiz derlenir, sürümler arttı (bedava respec), düğüm metinleri', () => {
     for (const c of ['mage', 'antimage']) expect(checkTreeFx(treeOf(c)!), c).toEqual([]);
     expect(treeOf('mage')!.version).toBe(5);
-    expect(treeOf('antimage')!.version).toBe(5);
+    expect(treeOf('antimage')!.version).toBe(6); // Redtithe eşlemesi (2026-11-17)
     expect(treeOf('mage')!.nodes['3.fa']!.text).toMatch(/Stuns its target/);
     expect(treeOf('antimage')!.nodes['0.ma']!.name).toBe('Ready Reflexes');
-    expect(treeOf('antimage')!.nodes['0.mb']!.name).toBe('Snapping Thread');
+    expect(treeOf('antimage')!.nodes['0.mb']!.inactive).toBe(true); // Snapping Thread: Ley Thread kitten çıktı (Redtithe, 2026-11-17)
   });
 });
 
@@ -107,52 +107,23 @@ describe('instinct -> Ready Reflexes (AM 0.ma)', () => {
     expect(b.useSkill(foe.uid, 'fire_bolt', target).ok).toBe(true);
   };
 
-  it('Instinct işleyince AM 1 tur Fleet alır; tur başına bir (ikinci MP skill yeniden vermez)', () => {
+  it('Instinct işleyince AM 1 tur hafif Shrouded alır (eski Fleet, Ömer 2026-11-16); tur başına bir (ikinci MP skill yeniden vermez)', () => {
     const { b, foe, am } = setup([...AM_ROW, '0.ea', '0.ma']);
     fireBolt(b, foe, P(b, 1).uid);
-    const fleet = am.statuses.filter((s) => s.kind === 'fleet');
+    const fleet = am.statuses.filter((s) => s.kind === 'shrouded');
     expect(fleet).toHaveLength(1);
     expect(fleet[0]!.turns).toBe(1);
+    expect(fleet[0]!.strength).toBe(0.5); // yarım güç: +%10 kaçınma
     const n = b.log.length;
     fireBolt(b, foe, am.uid);
-    expect(b.log.slice(n).some((e) => e.type === 'status' && (e as { status?: string }).status === 'fleet')).toBe(false);
+    expect(b.log.slice(n).some((e) => e.type === 'status' && (e as { status?: string }).status === 'shrouded')).toBe(false);
   });
 
-  it('düğümsüz AM Fleet almaz', () => {
+  it('düğümsüz AM Shrouded almaz', () => {
     const { b, foe, am } = setup([...AM_ROW, '0.ea']);
     fireBolt(b, foe, am.uid);
-    expect(am.statuses.some((s) => s.kind === 'fleet')).toBe(false);
+    expect(am.statuses.some((s) => s.kind === 'shrouded')).toBe(false);
   });
 });
 
-describe('threadConsumed -> Snapping Thread (AM 0.mb)', () => {
-  const brandAt = (b: Battle, me: Combatant, slot: number) => {
-    me.cooldowns.drain_field = 0;
-    me.mp = me.maxMp;
-    expect(b.useSkill(me.uid, 'drain_field', undefined, slot).ok).toBe(true);
-  };
-  const run = (steps: string[], threaded: boolean) => {
-    const b = make({ 7: 'antimage' }, { 4: 'warrior', 3: 'warrior' }, { 7: { tree: tree('antimage', steps) } });
-    const me = P(b);
-    const a = at(b, 4);
-    const other = at(b, 3);
-    if (threaded) a.statuses.push({ kind: 'ley_thread', turns: 2, source: me.uid });
-    const hpA = a.hp;
-    const hpO = other.hp;
-    brandAt(b, me, 4);
-    return { lostA: hpA - a.hp, lostO: hpO - other.hp, a };
-  };
-
-  it('Brand ipliği tüketince yalnızca iplikli hedef hasar alır (INT arcane); iplik gider, Brand kalır', () => {
-    const r = run([...AM_ROW, '0.eb', '0.mb'], true);
-    expect(r.lostA).toBeGreaterThan(0);
-    expect(r.lostO).toBe(0);
-    expect(r.a.statuses.some((s) => s.kind === 'ley_thread')).toBe(false);
-    expect(r.a.statuses.some((s) => s.kind === 'branded')).toBe(true);
-  });
-
-  it('iplik yoksa ya da düğüm alınmadıysa hasar yok', () => {
-    expect(run([...AM_ROW, '0.eb', '0.mb'], false).lostA).toBe(0);
-    expect(run([...AM_ROW, '0.eb'], true).lostA).toBe(0);
-  });
-});
+// threadConsumed -> Snapping Thread (AM 0.mb): Ley Thread kitten çıktı, düğüm pasif; tetik olayı motorda kalır (kullanan veri yok)

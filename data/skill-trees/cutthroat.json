@@ -1064,7 +1064,7 @@
     },
     "3.r": {
       "name": "Coughing Fit",
-      "text": "Smoke Bomb has a 4% chance per rank to Slow each enemy in it for 1 turn.",
+      "text": "Smoke Bomb has a 4% chance per rank to Hobble each enemy in it for 1 turn.",
       "src": "A:V5:3.f2",
       "fx": [
         {
@@ -1131,7 +1131,7 @@
     },
     "3.ma": {
       "name": "Lost in Smoke",
-      "text": "A Blinded enemy that misses an attack is Staggered and loses its next action.",
+      "text": "A Blinded enemy that misses an attack is Stunned (it skips its next turn).",
       "src": "A:V2:3.mb",
       "fx": [
         {
@@ -1143,7 +1143,7 @@
           },
           "do": [
             {
-              "status": "staggered",
+              "status": "stun",
               "turns": 1,
               "to": "target"
             }
@@ -1224,7 +1224,7 @@
     },
     "3.v": {
       "name": "Brimstone Jar",
-      "text": "Smoke Bomb becomes a brimstone jar: enemies in it are Blinded and Silenced for 2 turns and Slowed for 1.",
+      "text": "Smoke Bomb becomes a brimstone jar: enemies in it are Blinded and Silenced for 2 turns and Hobbled for 1.",
       "src": "A:V5:3.v",
       "fx": [
         {
@@ -1281,7 +1281,8 @@
     },
     "4.u3": {
       "name": "Shadow Return",
-      "text": "After Backstab, you and every ally beside you are Shrouded for 2 turns and gain Fleet.",
+      "text": "After Backstab, you and every ally beside you are Shrouded for 2 turns.",
+      "_not": "Ömer 2026-11-16 (form Tur 23): Fleet Shrouded ile birleşti; düğümün ikinci (Fleet) durumu tam Shrouded'a eklenmeyeceği için kalktı (eski toplam +%30 kaçınma, şimdi +%20).",
       "src": "B:V2:4.u3",
       "fx": [
         {
@@ -1291,11 +1292,6 @@
           "do": [
             {
               "status": "shrouded",
-              "turns": 2,
-              "to": "selfBeside"
-            },
-            {
-              "status": "fleet",
               "turns": 2,
               "to": "selfBeside"
             }

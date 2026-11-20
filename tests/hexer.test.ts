@@ -357,8 +357,9 @@ describe('Wither (karakter üstü DoT)', () => {
     const big = w2.statuses.find((s) => s.kind === 'wither')!.amount!;
     w2.statuses.find((s) => s.kind === 'wither')!.turns = 1;
     h2.stats.luck = 1;
+    const extra = b2.curseExtraTurns(w2, 'wither'); // Tur 27 (Lanet uzar): ilk atışın lanetli zemininde Unhallowed
     cast(b2, h2.uid, 'withering_curse', undefined, 0);
-    expect(w2.statuses.find((s) => s.kind === 'wither')).toMatchObject({ amount: big, turns: dot.turns });
+    expect(w2.statuses.find((s) => s.kind === 'wither')).toMatchObject({ amount: big, turns: dot.turns + extra });
   });
 
   it('Hexer ölse de Wither ve Omen sürer (Ö3); Opportunist Wither\'lı hedefe bonus verir, yalnız Omen\'li hedefe vermez (Ö7)', () => {
@@ -395,7 +396,7 @@ describe('Misfortune ve Jinxed (kritik ekleri)', () => {
     expect(pv.critChance).toBeCloseTo(b.effectiveStats(g).critChance);
   });
 
-  it('Jinxed: isabet -%20 ve kritik 0; taşıyanın sonraki hasar skill\'inin TÜM vuruşlarından sonra düşer (consumed); Backstab yine kritik (Ö5)', () => {
+  it('Jinxed (Ömer 2026-11-16: yalnız kritik keser, isabet aynı): kritik 0; taşıyanın sonraki hasar skill\'inin TÜM vuruşlarından sonra düşer (consumed); Backstab yine kritik (Ö5)', () => {
     const b = sure(arena([['hexer', 4]], [['warrior', 0]]));
     const h = P(b, 4);
     const w = E(b, 0);
@@ -403,7 +404,8 @@ describe('Misfortune ve Jinxed (kritik ekleri)', () => {
     w.stats.accuracy = 0.9;
     cast(b, h.uid, 'jinx', w.uid);
     const j = content.statuses.jinxed!;
-    expect(b.effectiveStats(w).accuracy).toBeCloseTo(0.9 + j.accuracyDelta!);
+    expect(j.accuracyDelta).toBeUndefined();
+    expect(b.effectiveStats(w).accuracy).toBeCloseTo(0.9);
     expect(b.effectiveStats(w).critChance).toBe(0);
     b.debug.dodge = 'never';
     const ev = cast(b, w.uid, 'melee_attack', h.uid);
@@ -574,14 +576,17 @@ describe('Yapay zeka (hexer profili)', () => {
     expect(eye.kills.length).toBe(1); // bedelsiz Evil Eye + otomatik Doom öldürür (aday terazide; alan skill'i de öldürüp daha çok vurabilir)
   });
 
-  it('(3) ön sırada 2+ düşman -> Withering Curse; tek düşman -> seçilmez', () => {
+  // Ömer 2026-11-16: Cursed Ground'un Unhallowed'ı artık +%35 karanlık hasar (Hexer'in kendi elementi); tek düşmanda da zemin değeri taşır,
+  // bu yüzden "tek düşmanda seçilmez" yerine alan skill'inin puanı düşman sayısıyla büyür
+  it('(3) ön sırada 2+ düşman -> Withering Curse; tek düşmanda puanı çok daha düşük', () => {
     const b = big(sure(arena([['hexer', 4]], [['warrior', 0], ['warrior', 1], ['warrior', 2]]), 500));
     expect(chooseAction(b, P(b, 4).uid, NO_GLOBAL)?.skillId).toBe('withering_curse');
     const one = big(sure(arena([['hexer', 4]], [['warrior', 0]]), 500));
-    expect(chooseAction(one, P(one, 4).uid, NO_GLOBAL)?.skillId).not.toBe('withering_curse');
+    const wc = (x: Battle) => Math.max(...explainChoice(x, P(x, 4).uid, NO_GLOBAL)!.candidates.filter((c) => c.skill === 'withering_curse').map((c) => c.score!));
+    expect(wc(one)).toBeLessThan(wc(b) * 0.6);
   });
 
-  it('(4) güçlü büyücüye (Mage) Jinx; yalnızca düşük hasarlı rakip varsa Jinx seçilmez', () => {
+  it('(4) güçlü büyücüye (Mage) Jinx önleme değeri yüksek; düşük hasarlı rakipte önleme seçimi sürüklemez', () => {
     const b = big(sure(arena([['hexer', 4]], [['mage', 9]]), 500));
     Object.assign(E(b, 9).stats, { accuracy: content.classes.mage!.stats.accuracy, critChance: content.classes.mage!.stats.critChance }); // gerçek isabet/kritik: Jinx'in önleyeceği değer
     // Terazi: Jinx'in değeri önlediği beklenen hasardır (mitigation); güçlü büyücüde zayıfa göre çok daha yüksek
@@ -592,7 +597,10 @@ describe('Yapay zeka (hexer profili)', () => {
     Object.assign(E(weak, 9).stats, { int: 1, str: 1, dex: 1, accuracy: content.classes.mage!.stats.accuracy, critChance: content.classes.mage!.stats.critChance });
     const weakJinx = explainChoice(weak, P(weak, 4).uid, NO_GLOBAL)!.candidates.find((x) => x.skill === 'jinx')!;
     expect(strongJinx.terms!.mitigation!).toBeGreaterThan((weakJinx.terms?.mitigation ?? 0) * 3);
-    expect(chooseAction(weak, P(weak, 4).uid, NO_GLOBAL)?.skillId).not.toBe('jinx');
+    // Tur 26 (Ömer 2026-11-16): Jinx hasar gücü Evil Eye'ı geçti (veri); zayıf rakipte seçimi artık hasar belirler, önleme değil. Ölçüt: Jinx'in
+    // zayıf rakipteki önleme payı toplam puanının küçük bir parçası (seçimi mitigation sürüklemez)
+    const wj = weakJinx.terms ?? {};
+    expect(wj.mitigation ?? 0).toBeLessThan((wj.damage ?? 0) * 0.5);
   });
 
   it('(5) taunt\'lı Defender: tek hedefli skill\'ler ona gider', () => {

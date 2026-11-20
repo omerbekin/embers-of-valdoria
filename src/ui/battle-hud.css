@@ -3629,3 +3629,40 @@ html.short .bh-right.has-crown .bh-pl-t {
 .bh-gl.foe {
   cursor: help;
 }
+
+/* Redtithe kan barı (engine-dev 2026-11-17): Rage hücresiyle aynı yer ve biçim, koyu kırmızı (.blood) */
+.bh-bar.rage.blood i,
+.bh-hpmp .bh-bar.rage.blood i,
+.bh-cb .bh-bar.rage.blood i {
+  background: linear-gradient(90deg, #5a0a14, #a3192e);
+}
+
+.bp-chip.blood {
+  color: #ff8a96;
+  border-color: rgba(163, 25, 46, 0.7);
+  background: rgba(163, 25, 46, 0.2);
+}
+
+.bp-chip.blood b {
+  color: #ffc2c8;
+}
+
+/* Telefon: savaşta skill uzun basış ipucu savaş alanının alt çeyreğini kapatıyordu (Onboarding denetimi 2026-11-17, Ömer kararı): skill çubuğunun
+   hemen üstüne oturur (boşluk 4) ve iç boşlukları sıkı durur (daha alçak). Gear ekranı (.gr-skillbar) bu kuralı almaz. */
+html.short .bh-root .bp .bh-sktip {
+  bottom: calc(100% + 4px);
+}
+
+html.short .bh-root .bp .bh-sktip .bt-head {
+  padding: 6px 12px;
+}
+
+html.short .bh-root .bp .bh-sktip .bt-body {
+  padding: 6px 12px;
+  gap: 3px;
+}
+
+html.short .bh-root .bp .bh-sktip .bt-meta {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}

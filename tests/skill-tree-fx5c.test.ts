@@ -61,17 +61,17 @@ describe('Faz 5c: Paladin 2.n0 Soul Exchange', () => {
     ally.hp = 0;
     return { b, me, ally };
   };
-  it('etiket ve bedel: "14 MP or 25% of current HP" (2026-11-08: 16 -> 14); MP yetiyorsa MP, yetmiyorsa mevcut canın %25\'i', () => {
+  it('etiket ve bedel: "12 MP or 25% of current HP" (2026-11-08: 16 -> 14; 2026-11-20 form r32: 14 -> 12); MP yetiyorsa MP, yetmiyorsa mevcut canın %25\'i', () => {
     const { b, me } = setup(true);
     const sk = b.skill('resurrection', me.uid)!;
     expect(sk.cost.hpFallback).toBe(0.25);
-    expect(skillCostLabel(sk.cost)).toBe('14 MP or 25% of current HP');
-    expect(skillCostLabel(content.skills.resurrection!.cost)).toBe('14 MP');
-    me.mp = 14;
-    expect(skillCostPay(sk.cost, me)).toEqual({ resource: 'mp', amount: 14 });
-    me.mp = 13;
+    expect(skillCostLabel(sk.cost)).toBe('12 MP or 25% of current HP');
+    expect(skillCostLabel(content.skills.resurrection!.cost)).toBe('12 MP');
+    me.mp = 12;
+    expect(skillCostPay(sk.cost, me)).toEqual({ resource: 'mp', amount: 12 });
+    me.mp = 11;
     expect(skillCostPay(sk.cost, me)).toEqual({ resource: 'hp', amount: Math.round(me.hp * 0.25), fallback: true });
-    expect(skillCostPay(sk.cost, me, undefined, true)).toEqual({ resource: 'mp', amount: 14 }); // Unlimited MP debug'ı
+    expect(skillCostPay(sk.cost, me, undefined, true)).toEqual({ resource: 'mp', amount: 12 }); // Unlimited MP debug'ı
   });
   it('ağaçsız: MP yetmezse kullanılamaz; ağaçlı: candan öder, MP aynen kalır, dost dirilir', () => {
     const plain = setup(false);
@@ -96,7 +96,7 @@ describe('Faz 5c: Paladin 2.n0 Soul Exchange', () => {
     const hp0 = me.hp;
     use(b, me, 'resurrection', ally);
     expect(me.hp).toBe(hp0);
-    expect(me.mp).toBe(me.maxMp - 14);
+    expect(me.mp).toBe(me.maxMp - 12);
     const r = setup(true);
     r.me.mp = 0;
     r.me.hp = 1;
@@ -155,15 +155,18 @@ describe('Faz 5c: Gambler 3.v Returning Cards', () => {
     }
     expect(checked).toBeGreaterThan(0);
   });
-  it('ağaçsız Card Trick: tek vuruş, tek zar', () => {
+  it('ağaçsız Card Trick: tek vuruş, tek zar (Lucky Streak yeniden kullanımı ayrı kullanım sayılır)', () => {
     for (let seed = 1; seed < 30; seed++) {
       const b = make({ 0: 'gambler' }, { 0: 'warrior', 1: 'warrior' }, {}, seed);
       const me = P(b);
       me.mp = me.maxMp;
       const evs = use(b, me, 'card_trick');
-      const per = new Map<string, number>();
-      for (const e of evs) if (e.type === 'damage' && e.source === me.uid) per.set(e.target, (per.get(e.target) ?? 0) + 1);
-      for (const n of per.values()) expect(n).toBe(1);
+      let per = new Map<string, number>();
+      for (const e of evs) {
+        if (e.type === 'skillUsed' && e.actor === me.uid) per = new Map();
+        if (e.type === 'damage' && e.source === me.uid) per.set(e.target, (per.get(e.target) ?? 0) + 1);
+        for (const n of per.values()) expect(n).toBe(1);
+      }
     }
   });
 });
@@ -190,7 +193,9 @@ describe('Faz 5c: Gambler 4.u2 Mortgage', () => {
       if (bust) {
         lost = true;
         expect(me.mp).toBe(0);
-        expect(hp0 - me.hp).toBe(Math.min(hp0 - 1, Math.round(me.maxHp * 0.1)));
+        // Mortgage can bahsi + All In'in kayıp can bedeli (Lucky Streak rework, bet.loseHpRatio)
+        const extra = Math.round(me.maxHp * ((content.skills.all_in!.effects[0] as { bet: { loseHpRatio?: number } }).bet.loseHpRatio ?? 0));
+        expect(hp0 - me.hp).toBe(Math.min(hp0 - 1, Math.round(me.maxHp * 0.1) + extra));
       } else {
         won = true;
         expect(me.hp).toBe(hp0);

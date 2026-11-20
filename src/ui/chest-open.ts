@@ -22,6 +22,7 @@ import { lootItems } from './loot-screen';
 import { reducedMotion } from './motion-pref';
 import { hasUiImage, uiIconName } from './ui-icons';
 import { uiSound, worldSound } from './ui-sound';
+import { pushClose } from './close-stack';
 
 const EASE = 'cubic-bezier(0.33, 1, 0.68, 1)';
 const SESSION_KEY = 'eov.chestPlayed';
@@ -381,6 +382,7 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
       dead = true;
       ov.remove();
       document.removeEventListener('keydown', onKey, true);
+      popStack();
       ix.destroy();
       if (claimedAll) o.onClaimed();
       else o.onOpenLoot();
@@ -413,6 +415,7 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
     else tap();
   };
   document.addEventListener('keydown', onKey, true);
+  const popStack = pushClose({ close: () => (flow.phase === 'shown' ? leave() : tap()) }); // Android geri / Esc: Enter ile aynı iş
   anim(chest, [{ opacity: 0, transform: `translateY(${120 * U}px)` }, { opacity: 1, transform: 'none' }], { duration: 420 });
 
   return {
@@ -425,6 +428,7 @@ export function playChestOpen(root: HTMLElement, o: ChestOptions): ChestHandle {
       for (const t of timers) window.clearTimeout(t);
       window.clearInterval(countTimer);
       document.removeEventListener('keydown', onKey, true);
+      popStack();
       ix.destroy();
       ov.remove();
     },

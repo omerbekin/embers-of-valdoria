@@ -99,7 +99,7 @@ export interface HudSkill {
   /** Düşman turu: plaka okunur kalır (sönük değil), tıklanmaz. */
   foe?: boolean;
   /** Yetersiz kaynak türü (bekleme sürerken de verilir; plaka o bedel çipini kırmızı gösterir). */
-  lack?: 'mp' | 'rage' | 'hp';
+  lack?: 'mp' | 'rage' | 'blood' | 'hp';
   tip: TipContent;
 }
 export interface HudGlobal {
@@ -144,7 +144,8 @@ export interface HudActor {
   nameColor?: string;
   hp: HudBar;
   mp: HudBar | null;
-  rage: (HudBar & { iconUrl: string }) | null;
+  /** Üçüncü kaynak çubuğu: Warrior Rage'i ya da Redtithe kan barı (blood: koyu kırmızı çizim). */
+  rage: (HudBar & { iconUrl: string; blood?: boolean }) | null;
   main: HudStat[];
   groups: Array<{ title: string; stats: HudStat[] }>;
   passive: { name: string; text: string; iconUrl: string } | null;
@@ -213,7 +214,7 @@ export interface UnitCard {
   tag?: { text: string; color: string };
   hp: { value: number; max: number };
   mp: { value: number; max: number } | null;
-  rage: { value: number; max: number } | null;
+  rage: { value: number; max: number; blood?: boolean } | null;
   /** Çubuk ikonları (HP / MP / Rage). */
   hpIcon?: string;
   mpIcon?: string;
@@ -299,7 +300,7 @@ function metaBare(m: NonNullable<TipContent['meta']>[number]): BandChip | null {
   const cd = cooldownChipOf(m.text);
   if (cd) return { text: '', num: cd.num, bare: true, tone: 'v', ...icon, tip: cd.tip, ...(m.dir ? { dir: m.dir } : {}) };
   const cost = m.iconUrl ? costChipOf(m.text) : null;
-  if (cost) return { text: '', num: cost.num, bare: true, tone: 'v', ...icon, tip: cost.tip, ...(m.dir ? { dir: m.dir } : {}), ...(m.color && cost.res === 'rage' ? { color: m.color } : {}) };
+  if (cost) return { text: '', num: cost.num, bare: true, tone: 'v', ...icon, tip: cost.tip, ...(m.dir ? { dir: m.dir } : {}), ...(m.color && (cost.res === 'rage' || cost.res === 'blood') ? { color: m.color } : {}) };
   return null;
 }
 
@@ -656,7 +657,7 @@ export class BattleHud {
     // Üçüncü kaynak (Warrior'ın Rage'i): HP/MP ile AYNI hücre (ikon + "0 / 50" + ince çubuk), aynı ızgarada üçüncü sütun;
     // ayrı geniş satır yok (Ömer 2026-10-12: satır taşıyor, stat satırını itiyordu)
     const rage = a.rage
-      ? `<div class="bh-hpmp rage" ${this.reg('b:rage', a.rage.tip)}><div class="bh-num">${img(a.rage.iconUrl)}<span class="v">${Math.round(a.rage.value)}</span><span class="of">/ ${a.rage.max}</span></div><div class="bh-bar rage"><i style="width:${pct(a.rage.value, a.rage.max)}"></i></div></div>`
+      ? `<div class="bh-hpmp rage${a.rage.blood ? ' blood' : ''}" ${this.reg('b:rage', a.rage.tip)}><div class="bh-num">${img(a.rage.iconUrl)}<span class="v">${Math.round(a.rage.value)}</span><span class="of">/ ${a.rage.max}</span></div><div class="bh-bar rage${a.rage.blood ? ' blood' : ''}"><i style="width:${pct(a.rage.value, a.rage.max)}"></i></div></div>`
       : '';
     // Kahraman sayfası = A-Band ipucu (ortak bileşen): başlık şeridi + rol / primary çipleri + 3 sütun + alt bilgi çubuğu (primary bonusu). Pasif burada YOK (skill'ler anlatıyor).
     const notes = a.notes.map((n) => `<div class="bt-ln"><span class="dia"></span><div class="tx"${n.color ? ` style="color:${n.color}"` : ''}>${esc(n.text)}</div></div>`).join('');
@@ -1146,8 +1147,8 @@ export class BattleHud {
     const side: Side = c.enemy ? 'enemy' : 'party';
     const lab = (t: string, cls = '') => `<div class="bh-cl${cls ? ` ${cls}` : ''}">${esc(t)}</div>`;
     const div = '<div class="bt-div"></div>';
-    const bar = (kind: 'hp' | 'mp' | 'rage', iconUrl: string, b: { value: number; max: number }) =>
-      `<div class="bh-cb ${kind}"><div class="bh-cb-v">${img(iconUrl)}<b>${b.value}</b><span class="of">/ ${b.max}</span></div><div class="bh-bar ${kind}${kind === 'hp' && c.enemy ? ' en' : ''}"><i style="width:${pct(b.value, b.max)}"></i></div></div>`;
+    const bar = (kind: 'hp' | 'mp' | 'rage', iconUrl: string, b: { value: number; max: number; blood?: boolean }) =>
+      `<div class="bh-cb ${kind}"><div class="bh-cb-v">${img(iconUrl)}<b>${b.value}</b><span class="of">/ ${b.max}</span></div><div class="bh-bar ${kind}${kind === 'hp' && c.enemy ? ' en' : ''}${b.blood ? ' blood' : ''}"><i style="width:${pct(b.value, b.max)}"></i></div></div>`;
     const bars = [bar('hp', c.hpIcon ?? '', c.hp), c.mp ? bar('mp', c.mpIcon ?? '', c.mp) : '', c.rage ? bar('rage', c.rageIcon ?? '', c.rage) : ''].join('');
     // Aktif buff / debuff'lar (ayrı bölüm): ikon, ad, yığın, kalan tur; altında kısa açıklama
     const fxRow = (e: UnitCard['effects'][number]) =>

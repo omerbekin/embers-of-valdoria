@@ -141,6 +141,8 @@ export interface UnitCarry {
   /** MP oranı (0-1; yoksa tam). */
   mpRatio?: number;
   rage?: number;
+  /** Kan barı (Redtithe; 0 dahil taşınır, yoksa savaş başı değeri). */
+  blood?: number;
   /** Buff'lar (debuff'lar dalga arasında silinir). */
   statuses?: Status[];
   shield?: number;

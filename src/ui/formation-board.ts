@@ -29,7 +29,7 @@ export interface BoardSkill {
   name: string;
   icon: string;
   /** Bedel çipi: free = 'Free'; rage = 'Rage N'; mp / hp = ikon (mp) + sayı. `text` sayı / yüzde. */
-  cost: { kind: 'free' | 'rage' | 'mp' | 'hp'; text?: string };
+  cost: { kind: 'free' | 'rage' | 'blood' | 'mp' | 'hp'; text?: string };
   /** Ulti (4. skill yuvası; savaş HUD'ıyla aynı kural): turuncu çerçeve + ULTIMATE şeridi. */
   ult?: boolean;
 }
@@ -241,6 +241,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
   const costChip = (c: BoardSkill['cost']): string => {
     if (c.kind === 'free') return '<span class="fb-chip free">Free</span>';
     if (c.kind === 'rage') return `<span class="fb-chip rage">Rage <b>${esc(c.text ?? '')}</b></span>`;
+    if (c.kind === 'blood') return `<span class="fb-chip rage blood">Blood <b>${esc(c.text ?? '')}</b></span>`;
     if (c.kind === 'hp') return `<span class="fb-chip">HP <b>${esc(c.text ?? '')}</b></span>`;
     return `<span class="fb-chip">${img(o.icons.mp)}<b>${esc(c.text ?? '')}</b></span>`;
   };

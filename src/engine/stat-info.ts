@@ -26,6 +26,8 @@ export interface PrimaryBonusInfo {
 
 import { moreText, multText } from './bonus-text';
 
+/** Yüzde, en çok 3 ondalık, sondaki sıfırlar atılır (0,25%). */
+const pctF = (v: number) => `${Number((v * 100).toFixed(3))}%`;
 const pct = (v: number, digits = 0) => `${(v * 100).toFixed(digits)}%`;
 // 3 basamağa kadar (x2 stat ölçeği: puan başı 0,125 / 0,165 gibi katsayılar tam görünsün), sondaki sıfırlar atılır
 const num = (v: number) => (Number.isInteger(v) ? String(v) : String(Number(v.toFixed(3))));
@@ -108,7 +110,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
       return {
         title: `Luck ${stats.luck}`,
         lines: [
-          `Crit chance: +${pct(a.critChancePerLuck, 1)} per point. You have ${pct(stats.critChance, 1)} crit chance.`,
+          `Crit chance: +${pctF(a.critChancePerLuck)} per point. You have ${pctF(stats.critChance)} crit chance.`,
           `Accuracy: +${pct(a.accuracyPerLuck, 1)} per point (base ${pct(a.accuracyBase)}, now ${pct(stats.accuracy)}); your attacks miss less often`,
           `A crit always deals ${multText(a.critMult)} damage; this does not depend on Luck`,
           'Crits are the final multiplier of damage and healing',
@@ -127,7 +129,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
         ],
       };
     case 'critChance':
-      return { title: `Crit chance ${pct(stats.critChance, 1)}`, lines: [`Base ${pct(a.critChanceBase)}, +${pct(a.critChancePerLuck, 1)} per Luck`, `A crit always deals ${multText(a.critMult)} damage or healing (fixed)`, 'Applies to damage and healing'] };
+      return { title: `Crit chance ${pctF(stats.critChance)}`, lines: [`Base ${pct(a.critChanceBase)}, +${pctF(a.critChancePerLuck)} per Luck`, `A crit always deals ${multText(a.critMult)} damage or healing (fixed)`, 'Applies to damage and healing'] };
     case 'critMult':
       return {
         title: `Crit damage ${Math.round((stats.critMult ?? a.critMult) * 1000) / 10}%`,
@@ -192,6 +194,12 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
 }
 
 /** Takım seçim ekranındaki class kartı için özet (İngilizce). */
+/** Kan barı (Redtithe) kural satırı (İngilizce; sınıf ipucu, wiki). Sayılar formulas.bloodBar'dan. */
+export function bloodBarText(b: NonNullable<Formulas['bloodBar']>, max = b.max): string {
+  const p = (v: number) => `${Math.round(v * 1000) / 10}%`;
+  return `Blood ${b.start}/${max} at the start of battle: no mana. Magic armor up to ${b.magicArmorBase} + INT x${b.magicArmorPerInt}: full at 0 blood, none at ${max} blood. The lower the bar, the more life your skill hits steal (up to ${p(b.lifestealMax)} of the damage at 0). Missing blood is paid with HP (${p(b.hpPerBlood)} of max HP per blood)`;
+}
+
 export function describeClass(def: CombatantDef, skills: Record<string, SkillDef>, f: Formulas): StatInfo {
   const s = def.stats;
   const names = def.skills.map((id) => skills[id]?.name ?? id).join(', ');
@@ -199,6 +207,7 @@ export function describeClass(def: CombatantDef, skills: Record<string, SkillDef
     `STR ${s.str}   DEX ${s.dex}   INT ${s.int}   LUCK ${s.luck}`,
     `HP ${s.hp}   MP ${s.mp}   SPD ${speedText(s.spd, f)}   Armor ${num1(s.armor)}${s.magicArmor > 0 ? `   Magic armor ${num1(s.magicArmor)}` : ''}   Crit ${pct(s.critChance, 1)}   ACC ${pct(s.accuracy)}   EVA ${pct(s.evasion)}`,
     ...(def.maxRage !== undefined ? [`Rage 0/${def.maxRage}: gained by damaging with skills (+${f.rage.hitBase} to +${f.rage.perHitCap} per hit), spent by Rage skills`] : []),
+    ...(def.maxBlood !== undefined && f.bloodBar ? [`${bloodBarText(f.bloodBar, def.maxBlood)}`] : []),
     ...(def.passive ? [`Passive - ${def.passive.name}: ${describePassive(def.passive, def.stats, f)}`] : []),
     `Skills: ${names}`,
   ];

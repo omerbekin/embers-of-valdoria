@@ -210,6 +210,7 @@ Her grup için hangi değişikliklerin olduğu ve nerede çalıştıkları.
 - `statusPotency: { alan: ek }`: durumun gücüne ek.
   - Alanlar: `accuracyDelta`, `evasionDelta`, `critDelta`, `damageTakenMult`, `speedMult`, `healTakenMult`.
   - Jinxed için ayrıca: `attacks` (düşmeden önceki ek saldırı sayısı) ve `keepChance` (düşmeme şansı).
+- `withStatus: { status, strength }`: durumla BİRLİKTE aynı sürede, aynı kaynaktan bir eş durum verir; `strength` örnek gücü (Status.strength), rank ile çarpılır (Ömer 2026-11-16 Tur 24: Hexer isabet düğümleri Blinded). YZ eş durumun isabet ekini `statusMitigation`'a katar.
 - `permanent: true`: durum süresiz olur.
 
 **Vuruş sonrası** (isabet eden hedef başına; `hit` noktası, `addStatus` ayrıca `passiveHeal`)

@@ -15,7 +15,7 @@
     "luck": 2
   },
   "primary": "int",
-  "armor": 16,
+  "armor": 21,
   "magicArmor": 0,
   "ai": "support",
   "skills": [
@@ -28,12 +28,12 @@
     "id": "natures_grudge",
     "name": "Nature's Grudge",
     "icon": "leaves",
-    "text": "When an ally falls, its killer is gripped by roots: Slow and Wither for 3 turns.",
+    "text": "When an ally falls, its killer is gripped by roots: Hobbled and Wither for 3 turns.",
     "effect": {
       "type": "naturesGrudge",
       "status": "slow",
       "dot": "wither",
-      "power": 0.15,
+      "power": 0.165,
       "scale": "int",
       "turns": 3
     }

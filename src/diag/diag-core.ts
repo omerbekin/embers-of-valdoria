@@ -329,3 +329,17 @@ export function crumbsText(crumbs: Crumb[], header: Record<string, string>): str
   });
   return [...head, '', ...lines].join('\n');
 }
+
+/** Düşük bellek eşiği: kullanılan JS yığını / yığın sınırı (performance.memory, yalnız Chromium). */
+export const HEAP_HIGH_RATIO = 0.85;
+
+/**
+ * Düşük bellek izi metni: yığın eşiği geçtiyse kısa ileti (MB), yoksa null. Oturumda bir kez çağıran tutar (diag.ts). Ölçü yoksa null.
+ */
+export function heapHighNote(pm: { usedJSHeapSize: number; jsHeapSizeLimit: number } | null | undefined): string | null {
+  if (!pm || !(pm.jsHeapSizeLimit > 0) || !(pm.usedJSHeapSize >= 0)) return null;
+  const r = pm.usedJSHeapSize / pm.jsHeapSizeLimit;
+  if (r < HEAP_HIGH_RATIO) return null;
+  const mb = (n: number) => Math.round(n / 1048576);
+  return `heap high ${mb(pm.usedJSHeapSize)}/${mb(pm.jsHeapSizeLimit)} MB (${Math.round(r * 100)}%)`;
+}

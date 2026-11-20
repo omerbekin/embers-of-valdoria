@@ -1,6 +1,6 @@
 // Set item kuralları (Ömer 2026-11-03, docs/design/progression/item-design-plan.md "Set kuralları"; pilot: Ashguard Vigil + Wayfarer's Oath). Saf.
 // Tüm sayılar data/items.json > sets. Bonuslar parçayı taşıyan herkeste çalışır; setsEnabled yalnızca düşüşü ve Codex'i açar (parçalar bugün yalnızca debug'dan gelir).
-import { classes, statuses } from '../engine/content';
+import { classes, skills, statuses } from '../engine/content';
 import type { ItemEffects, PassivePatch } from '../engine/types';
 import { ITEMS, SLOT_IDS, canEquip, itemDef, type Equipment, type ItemDef } from './items';
 
@@ -15,7 +15,7 @@ export interface SetClassRow {
 export interface SetBonus {
   mods?: Record<string, number>;
   byClass?: Record<string, SetClassRow>;
-  rule?: 'banked_coals' | 'road_hound' | 'unseen' | 'hangmans_rope' | 'conclave_answers' | 'royal_command';
+  rule?: 'banked_coals' | 'road_hound' | 'unseen' | 'hangmans_rope' | 'conclave_answers' | 'royal_command' | 'refrain' | 'martyrs_bequest' | 'pilgrims_burden';
   name?: string;
   bankShare?: number;
   ticks?: number;
@@ -26,6 +26,8 @@ export interface SetBonus {
   /** Hangman's Rope: Lucky Escape sonrası durum ve süresi. */
   status?: string;
   turns?: number;
+  /** Martyr's Bequest (Tur 28-29): taşıyan ölünce en yakın dosta verilen durumlar (`turns` tur). */
+  statuses?: string[];
   /** The Conclave Answers: karşılığın hasar çarpanı ve taşıyanın turları arası sınırı. */
   power?: number;
   perTurn?: number;
@@ -77,7 +79,7 @@ export function activeSetBonuses(equipment: Partial<Equipment> | undefined): Arr
 }
 
 /** Güç katmanına giden set katkısı: düz stat ekleri + motor kuralları + sınıfın pasif yaması. */
-export type SetEffects = Pick<ItemEffects, 'bankedCoals' | 'roadHound' | 'dodgeCrit' | 'escapeStatus' | 'counterAttack' | 'allyTurn'>;
+export type SetEffects = Pick<ItemEffects, 'bankedCoals' | 'roadHound' | 'dodgeCrit' | 'escapeStatus' | 'counterAttack' | 'allyTurn' | 'refrain' | 'deathBequest' | 'healShorten'>;
 export function setContribution(equipment: Partial<Equipment> | undefined, classId: string): { mods: Record<string, number>; effects: SetEffects; passivePatch?: PassivePatch } {
   const mods: Record<string, number> = {};
   const effects: SetEffects = {};
@@ -92,6 +94,9 @@ export function setContribution(equipment: Partial<Equipment> | undefined, class
     if (bonus.rule === 'hangmans_rope' && bonus.status) effects.escapeStatus = { status: bonus.status, turns: bonus.turns ?? 1 };
     if (bonus.rule === 'conclave_answers') effects.counterAttack = { power: bonus.power ?? 1, perTurn: bonus.perTurn ?? 1 };
     if (bonus.rule === 'royal_command') effects.allyTurn = true;
+    if (bonus.rule === 'refrain' && bonus.status) effects.refrain = { status: bonus.status, turns: bonus.turns ?? 1 };
+    if (bonus.rule === 'martyrs_bequest' && bonus.statuses?.length) effects.deathBequest = { statuses: [...bonus.statuses], turns: bonus.turns ?? 1 };
+    if (bonus.rule === 'pilgrims_burden') effects.healShorten = { turns: bonus.turns ?? 1 };
   }
   return { mods, effects, ...(passivePatch ? { passivePatch } : {}) };
 }
@@ -142,11 +147,14 @@ function classRowText(classId: string, row: SetClassRow): string {
   if (key === 'natures_grudge.power') return `${head}: the Wither it spreads hits for ${pctText(row.from)} → ${pctText(row.to)} of INT`;
   if (key === 'vampiric_bite.ratio') return `${head}: drains ${pctText(row.from)} → ${pctText(row.to)}`;
   if (key === 'pealing_bells.perBell') return `${head}: each bell adds ${pctText(row.from)} → ${pctText(row.to)}`;
-  if (key === 'opportunist.bonus') return `${head}: ${pctText(row.from)} → ${pctText(row.to)} more damage against Wounded, Slowed, Stunned or Withered targets`;
+  if (key === 'opportunist.bonus') return `${head}: ${pctText(row.from)} → ${pctText(row.to)} more damage against Wounded, Hobbled, Stunned or Withered targets`;
   if (key === 'sharpshooter.perRow') return `${head}: ${pctText(row.from)} → ${pctText(row.to)} more damage per row of distance`;
+  // Blood Tithe (Ömer 2026-11-18): bloodAdvance tabandır, üstüne DEX payı gelir (DEX payı değişmez)
+  if (key === 'spellbreaker_instinct.bloodAdvance') return `${head}: +${pctText(row.to - row.from)} turn bar jump at a full blood bar (base ${pctText(row.from)} → ${pctText(row.to)}, plus the DEX part)`;
   if (key === 'spellbreaker_instinct.advance') return `${head}: your next turn comes ${pctText(row.from)} → ${pctText(row.to)} sooner`;
   if (key === 'ill_omen.maxOnArrival') return `${head}: passed Omens arrive up to ${row.from} → ${row.to}`;
-  if (key === 'double_or_nothing.chance') return `${head}: ${pctText(row.from)} → ${pctText(row.to)} chance to be ready again`;
+  if (key === 'conductor.bonus') return `${head}: your lightning deals ${pctText(row.from)} → ${pctText(row.to)} more damage to Hobbled, Stunned or Shocked targets`;
+  if (key === 'double_or_nothing.chance') return `${head}: ${pctText(row.from)} → ${pctText(row.to)} chance for a skill to go once more`;
   return `${head}: ${row.from} → ${row.to}`;
 }
 
@@ -181,6 +189,24 @@ export function royalCommandText(b: SetBonus): string {
   return `${b.name}: Once per battle, spend your turn to give an ally an extra turn right away. Their own next turn still comes as usual.`;
 }
 
+/** Refrain metni (ipucu + Codex). `statusName`: durumun oyun içi adı. */
+export function refrainText(b: SetBonus, statusName = 'Empowered'): string {
+  const n = b.turns ?? 1;
+  return `${b.name}: When your lightning makes an enemy Shocked, the first ally to hit that enemy next becomes ${statusName} for ${n} turn${n === 1 ? '' : 's'}. Once per Shocked.`;
+}
+
+/** Martyr's Bequest metni (ipucu + Codex). `names`: durumların oyun içi adları. */
+export function martyrsBequestText(b: SetBonus, names: string[] = b.statuses ?? []): string {
+  const n = b.turns ?? 1;
+  return `${b.name}: When you fall, your nearest living ally becomes ${names.join(' and ')} for ${n} turn${n === 1 ? '' : 's'}.`;
+}
+
+/** Pilgrim's Burden metni (ipucu + Codex). */
+export function pilgrimsBurdenText(b: SetBonus): string {
+  const n = b.turns ?? 1;
+  return `${b.name}: When your skill heals an ally, their longest-lasting debuff that can be removed lasts ${n} turn${n === 1 ? '' : 's'} less (one with ${n === 1 ? '1 turn' : `${n} turns`} left ends).`;
+}
+
 export interface SetTipRow {
   text: string;
   /** Bu eşik (ve sınıf satırında bu sınıf) etkin mi. */
@@ -204,6 +230,9 @@ function thresholdRows(set: SetDef, t: number, count: number, classId?: string):
   if (b.rule === 'hangmans_rope') out.push({ text: `(${t}) ${hangmansRopeText(b, statuses[b.status ?? '']?.name)}`, on: reached });
   if (b.rule === 'conclave_answers') out.push({ text: `(${t}) ${conclaveAnswersText(b)}`, on: reached });
   if (b.rule === 'royal_command') out.push({ text: `(${t}) ${royalCommandText(b)}`, on: reached });
+  if (b.rule === 'refrain') out.push({ text: `(${t}) ${refrainText(b, statuses[b.status ?? '']?.name)}`, on: reached });
+  if (b.rule === 'martyrs_bequest') out.push({ text: `(${t}) ${martyrsBequestText(b, (b.statuses ?? []).map((x) => statuses[x]?.name ?? x))}`, on: reached });
+  if (b.rule === 'pilgrims_burden') out.push({ text: `(${t}) ${pilgrimsBurdenText(b)}`, on: reached });
   return out;
 }
 
@@ -222,17 +251,26 @@ export function modIP(key: string, value: number): number {
   return 0;
 }
 
+/** Sınıfın kitinde dosta şifa veren skill var mı (Pilgrim's Burden değeri). */
+function healsAllies(classId: string): boolean {
+  return (classes[classId]?.skills ?? []).some((id) => {
+    const sk = skills[id];
+    return !!sk && sk.target !== 'self' && sk.effects.some((e) => e.type === 'heal');
+  });
+}
+
 /**
  * Takılı set bonuslarının sınıfa değeri (Item Points; Equip best): stat bonusları affix IP'leriyle, sınıfın pasif satırı ve motor kuralı
  * items.json > setValue düz değerleriyle. Yalnızca seçim içindir (güç loadout'tan gelir).
  */
 export function setBonusScore(equipment: Partial<Equipment> | undefined, classId: string): number {
-  const v = ITEMS.setValue ?? { classRowIP: 0, ruleIP: 0 };
+  const v: { classRowIP: number; ruleIP: number; ruleNeedsHeal?: string[] } = ITEMS.setValue ?? { classRowIP: 0, ruleIP: 0 };
   let ip = 0;
   for (const { bonus } of activeSetBonuses(equipment)) {
     for (const [k, x] of Object.entries(bonus.mods ?? {})) ip += modIP(k, x);
     if (bonus.byClass?.[classId]) ip += v.classRowIP;
-    if (bonus.rule) ip += v.ruleIP;
+    // Pilgrim's Burden gibi şifa kuralı (setValue.ruleNeedsHeal): dosta şifa skill'i olmayan sınıfa değersiz
+    if (bonus.rule && (!v.ruleNeedsHeal?.includes(bonus.rule) || healsAllies(classId))) ip += v.ruleIP;
   }
   return Math.round(ip * 1000) / 1000;
 }

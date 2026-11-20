@@ -47,6 +47,11 @@ import {
   nextTaintGain,
   taintOf,
   addPlayTime,
+  onSaveFail,
+  onSaveNote,
+  NEWER_SAVE_TEXT,
+  SAVE_FAILED_TEXT,
+  type SaveFailReason,
 } from '../campaign';
 import type { LootXp } from '../ui/loot-screen';
 import type { ResultAction } from './result-screen';
@@ -67,10 +72,12 @@ const BATTLE_SCENE = 'BattleScene';
 export { storage } from './kv-storage';
 import { storage } from './kv-storage';
 import { partyWeapons } from './pose-weapons';
-import { logEvent } from '../diag/diag';
+import { logEvent, report } from '../diag/diag';
 import { totalXpFor, trackKills, type KillRecord } from '../progression/levels';
 import { maps23On } from '../ui/maps23-flag';
 import { mapSceneTrack } from '../ui/music';
+import { showElToast } from '../ui/el-toast';
+import { logBattleEnd } from './battle-diag';
 
 // Harita 2 test bayrağı (maps-2-3.md 9.1): debug anahtarı ya da ?maps=1 açıksa bu oturumda Drowned Reach geçişi görünür
 // Harita 3 (The Hollow Crown, iskelet) aynı bayrakla açılır: Harita 2 sonunda "Continue to The Hollow Crown"
@@ -78,6 +85,25 @@ if (maps23On()) {
   setMapOverride(DROWNED_REACH, true);
   setMapOverride(HOLLOW_CROWN, true);
 }
+
+// Kayıt yazılamadı (sağlamlık taraması A1/A3, 2026-11-15): 'storage' (depo dolu / kapalı) oturumda BİR kez uyarır (spam yok); 'newer' (dosya
+// daha yeni sürümün, eski sekme yazmaz; src/campaign/save.ts > write) her kayıt reddinde ama en çok dakikada bir (oyuncu yenilemeyi unutmasın).
+const NEWER_WARN_GAP_MS = 60_000;
+const warnedAt = new Map<SaveFailReason, number>();
+// Kayıt deposu izi (yalnız kısa kod; src/campaign/save.ts > onSaveNote) ve oturumdaki İLK yazma hatası bir kez rapor (onay açıksa gider)
+onSaveNote((code) => logEvent('save', code));
+let saveFailReported = false;
+onSaveFail((why) => {
+  if (!saveFailReported) {
+    saveFailReported = true;
+    report('error', `save write failed: ${why}`);
+  }
+  const now = Date.now();
+  const last = warnedAt.get(why);
+  if (last !== undefined && (why === 'storage' || now - last < NEWER_WARN_GAP_MS)) return;
+  warnedAt.set(why, now);
+  showElToast(why === 'newer' ? NEWER_SAVE_TEXT : SAVE_FAILED_TEXT, { bad: true, ms: 6000 });
+});
 
 // Sefer defteri oynama süresi (Ömer 2026-11-07 endstats): aynı seferin her durum değişiminde son değişimden bu yana geçen gerçek süre eklenir
 // (adım başına en çok PLAY_STEP_CAP_MS; başka sefer ya da ilk yükleme saymaz). Kural src/campaign/ledger.ts > addPlayTime.
@@ -214,6 +240,7 @@ export function retreatToMap(): CampaignState | null {
   if (!s) return null;
   const rec = recording;
   stopRecording();
+  if (rec && !rec.battle.winner) logBattleEnd('retreat', rec.battle);
   if (rec && !rec.battle.winner && rec.plan.nodeId === s.at) {
     session.state = withSuspended(s, pauseRecord(rec.plan, rec.battle, rec.log));
     writePauseSave(storage(), session.state);
@@ -232,6 +259,7 @@ export function retreatPatrolToMap(): CampaignState | null {
   // Savaşta ne olduysa kalır (Ömer 2026-10-19): geri çekilme anındaki kahraman canları / düşenler / kalan Valor
   const rec = recording;
   const now = rec && !rec.battle.winner ? battleOutcomeOf(rec.plan, rec.battle, false) : undefined;
+  if (rec && !rec.battle.winner) logBattleEnd('patrol-retreat', rec.battle);
   stopRecording();
   const r = retreatPatrol(s, now);
   session.state = r.state;
@@ -255,6 +283,7 @@ export function endPitRun(victory = false): CampaignState | null {
   if (!s?.pit) return s ?? null;
   const rec = recording;
   const now = rec && !rec.battle.winner ? battleOutcomeOf(rec.plan, rec.battle, false) : undefined;
+  if (rec && !rec.battle.winner) logBattleEnd('pit-yield', rec.battle);
   stopRecording();
   session.state = losePit(s, now);
   save('auto');

@@ -29,7 +29,7 @@ import endlessJson from '../../data/endless.json';
 import levelsJson from '../../data/levels.json';
 import { BATTLE_SPEEDS } from '../ui/battle-speed';
 import layout from '../../data/battle-layout.json';
-import { applySummonVariant, content, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, skillCostLabel, speedText, TARGET_TEXT } from '../engine';
+import { applySummonVariant, content, describeBlood, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, skillCostLabel, speedText, TARGET_TEXT } from '../engine';
 import { TARGET_BADGE } from '../engine/skill-info';
 import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../engine/unblockable';
 import { isAccuracyCritDebuff } from '../engine/cc-immunity';
@@ -63,7 +63,9 @@ function tierStrengthText(): string {
   const ex = slow !== undefined && t.boss !== undefined && t.elite !== undefined ? ` (${chill!.name}'s ${pct(slow)} slow is ${pct(slow * t.boss, 1)} on a boss, ${pct(slow * t.elite, 1)} on an elite)` : '';
   return ` Every other debuff from the other side works on ${parts} of its strength${ex}; how long it lasts and damage over time are unchanged.`;
 }
-const num = (v: number): string => (Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100));
+/** Yüzde, en çok 3 ondalık, sondaki sıfırlar atılır (0,25% / 12,5% / 3%). */
+const pctF = (v: number): string => `${Number((v * 100).toFixed(3))}%`;
+const num = (v: number): string => (Number.isInteger(v) ? String(v) : String(Number(v.toFixed(3))));
 /** Demirci ayarları (campaign.json > blacksmith; TUR 1 madde 7). */
 const SMITH_CFG = (campaignConfig as unknown as { blacksmith: { ilvlPerChapter: number; temper: { legendaryMult: number; stones?: number; highStones?: number; highAbove?: number }; reforge: { growth: number } } }).blacksmith;
 
@@ -464,7 +466,7 @@ export function buildGettingStarted(): WikiArticle[] {
     article('turns', 'Basics', 'Turn order and the SPD counter', cx('gs_turns', 'hourglass'), [
       p(`Every unit has a SPD (speed) stat: ${num(a.spdBase)} + ${num(a.spdPerDex)} per point of Dexterity. On top of that, speed varies a little every turn, just like damage: each turn a unit's speed is up to ${num(Math.round((a.spdVariance ?? 0) * 100))}% faster or slower (rolled again for its next turn; the turn bar already shows the result). Each tick, every unit's action counter fills by its SPD; the first one to reach ${f.turn.threshold} acts, then its counter restarts.`),
       p(`Speed keeps its decimals: 15 SPD with 10% less Speed is 13.5, not a rounded number, so every speed bonus and penalty counts in full. Speed never drops below ${num(a.spdMin ?? 1)}.`),
-      p(`Faster units therefore act more often, not just first. The bar at the top shows the next ${f.turn.queueLength} units in order, and it updates live when speed changes (for example Haste or Slow).`),
+      p(`Faster units therefore act more often, not just first. The bar at the top shows the next ${f.turn.queueLength} units in order, and it updates live when speed changes (for example Haste or Chilled).`),
       p('A stunned unit skips its next turn. Status durations count down on the turns of the unit that carries them.'),
       p(debuffStackingText()),
       p(turnTimingText()),
@@ -476,7 +478,7 @@ export function buildGettingStarted(): WikiArticle[] {
         : [p(`Melee skills can only reach the first ${f.formation.meleeRows === 1 ? 'occupied row' : `${f.formation.meleeRows} occupied rows`} of the enemy team, so the units in front shield the ones behind them. Ranged and magic skills reach anyone. Some melee skills say they charge or reach further; their description tells you.`)]),
       p(
         f.range?.enabled
-          ? 'Automatic formations (Randomize, Auto arrange, random enemy waves) follow range: every unit starts where its main attack reaches the enemy front from the first turn. Melee fighters and taunting tanks stand in front, spearmen (range 2) just behind them, casters and Anti-Mage in the middle rows, the Mage behind them and the Archer at the very back. Fragile units keep behind sturdier ones, a Guard user stays close to the allies it can protect, and when the enemy has area skills the fragile units spread out instead of crowding one row or lane. Hand-placed campaign and boss formations never change.'
+          ? 'Automatic formations (Randomize, Auto arrange, random enemy waves) follow range: every unit starts where its main attack reaches the enemy front from the first turn. Melee fighters and taunting tanks stand in front, spearmen (range 2) just behind them, casters and Redtithe in the middle rows, the Mage behind them and the Archer at the very back. Fragile units keep behind sturdier ones, a Guard user stays close to the allies it can protect, and when the enemy has area skills the fragile units spread out instead of crowding one row or lane. Hand-placed campaign and boss formations never change.'
           : 'Melee classes are placed in front. A melee unit only stands in a back row once the rows before it are full, so fighters in front, archers and mages behind is the normal picture.',
       ),
       p('Area skills hit a group of cells around the cell you pick, in a fixed shape (a whole row, a whole column, a block or a cross; see Area shapes in the Mechanics section). You can pick an empty cell too, as long as the shape still covers an enemy.'),
@@ -613,6 +615,34 @@ function brandArticle(): WikiArticle | null {
   ], st?.color ?? '#7a3fb8');
 }
 
+/**
+ * "Blood" makalesi (Redtithe, engine-dev 2026-11-17; docs/design/classes/antimage.md): kan barı, candan ödeme, Blood Brand / Mirror Vein /
+ * Exsanguinate / Blood Tithe kuralları. Sayılar veriden (formulas.bloodBar, skill etkileri, pasif).
+ */
+function bloodArticle(f: Formulas): WikiArticle | null {
+  const owners = Object.values(content.classes).filter((c) => !c.testOnly && c.maxBlood !== undefined);
+  if (!owners.length || !f.bloodBar) return null;
+  const b = f.bloodBar;
+  const max = owners[0]!.maxBlood!;
+  const lines: string[] = [...describeBlood(f, b.start, max).slice(1)];
+  for (const s of allSkills()) {
+    for (const e of s.effects) {
+      if (e.type === 'manaBurn' && e.bloodPerMp !== undefined) lines.push(`${s.name}: tears out ${e.amount ?? 0} MP and gives ${num(e.bloodPerMp)} blood per MP torn out, plus ${num(b.hitGain)} blood for every hit that lands (a target without mana gives only the ${num(b.hitGain)}).`);
+      if (e.type === 'bloodBrand') lines.push(`${s.name}: while Branded, the enemy pays ${pct(e.costMult - 1)} more MP for its skills, and each skill it uses makes its Bleeding tick ${e.ticks === 1 ? 'once more' : `${e.ticks} more times`} without shortening it${e.markDamagePct && e.markSkills?.length ? `; ${e.markSkills.map((id) => content.skills[id]?.name ?? id).join(' and ')} deal ${pct(e.markDamagePct)} more damage to it` : ''}.`);
+      if (e.type === 'shield' && e.onAbsorb?.giveBlood) lines.push(`${s.name}: shields every ally (you included) for ${e.flat ?? 0} + INT x${num(e.power)} for ${e.turns ?? 1} turns; each spell (magic hit) one of these shields absorbs gives you ${num(e.onAbsorb.giveBlood.base)} + DEX x${num(e.onAbsorb.giveBlood.perDex)} blood.`);
+      if (e.type === 'damage' && e.bloodSpentBonus && s.cost.resource === 'blood') lines.push(`${s.name}: needs at least ${s.cost.amount} blood and spends the whole bar (HP cannot pay for it); it deals ${pct(e.bloodSpentBonus)} more damage per blood spent.`);
+    }
+  }
+  for (const o of owners) {
+    const pe = o.passive?.effect;
+    if (pe?.type === 'spellbreakerInstinct' && pe.bloodAdvance) lines.push(`${o.passive!.name} (${o.name}): when an enemy uses a skill that costs MP, the next turn comes sooner by up to ${pct(pe.bloodAdvance)}${pe.bloodAdvancePerDex ? ` + DEX x${pct(pe.bloodAdvancePerDex, 2)}` : ''} (scaled by the bar: full bar = full bonus). This is the only speed the bar gives.`);
+  }
+  return article('blood', 'Special rules', 'Blood', 'drop', [
+    p(`Some classes have a Blood bar instead of mana: ${owners.map((c) => c.name).join(', ')}.`),
+    list(...lines),
+  ], '#a3192e');
+}
+
 /** "Bells" makalesi (Vesper, 2026-10-28; docs/design/classes/vesper.md): çan sayacı, Pealing Bells, Great Bell. Sayılar veriden. */
 function bellsArticle(): WikiArticle | null {
   const owner = Object.values(content.classes).find((c) => !c.testOnly && c.passive?.effect.type === 'pealingBells');
@@ -659,11 +689,23 @@ function rageSpendLines(): WikiBlock[] {
     p(`${s.name}: ${s.cost.spendAll ? `spends ALL your Rage (at least ${s.cost.amount}); ` : ''}${e.powerPerRage ? `deals ${pct(e.power)} ${e.scale.toUpperCase()} plus ${pct(e.powerPerRage)} ${e.scale.toUpperCase()} for every Rage spent` : `deals ${pct(e.power)} ${e.scale.toUpperCase()}`}${e.executeBonus ? `, and up to ${moreText(e.executeBonus)} damage the more HP the target is missing (counted before the hit)` : ''}. Waiting for more Rage, or for a wounded target, makes it hit harder.`)));
 }
 
+/** "A", "A and B", "A, B and C". */
+const listJoin = (xs: string[]): string => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+/** Dispel makalesi listeleri: boş liste satırı gösterilmez. */
+function dispelSkills(): { cleanse: string[]; strip: string[] } {
+  return { cleanse: skillsWith((e) => e.type === 'dispel' && e.status === 'debuff'), strip: skillsWith((e) => e.type === 'shield' && !!e.onAbsorb?.dispelChance) };
+}
+function dispelListBlocks(): WikiBlock[] {
+  const { cleanse, strip } = dispelSkills();
+  return [...(cleanse.length ? [p(`Remove debuffs: ${cleanse.join(', ')}.`)] : []), ...(strip.length ? [p(`Remove an attacker's buff: ${strip.join(', ')}.`)] : [])];
+}
+
 function debuffStackingText(): string {
-  const debuffs = Object.values(content.statuses).filter((d) => d.type === 'debuff');
+  const debuffs = Object.values(content.statuses).filter((d) => d.type === 'debuff' && !d.retired); // emekli durumlar (Branded...) sayılmaz
   const stacking = debuffs.filter((d) => statusStackMode(d) === 'stack').map((d) => d.name);
   const replacing = debuffs.filter((d) => statusStackMode(d) === 'replace').map((d) => d.name);
-  return `The same debuff never stacks: a unit carries at most one of each. Applying it again sets its duration to the longer of what is left and the new duration, and keeps only the strongest one (for damage over time, the bigger amount).${stacking.length ? ` Exception: ${stacking.join(', ')} stacks on purpose (see Curses).` : ''}${replacing.length ? ` ${replacing.join(', ')} is simply replaced by the new one.` : ''}`;
+  return `The same debuff never stacks: a unit carries at most one of each. Applying it again sets its duration to the longer of what is left and the new duration, and keeps only the strongest one (for damage over time, the bigger amount).${stacking.length ? ` Exception: ${listJoin(stacking)} ${stacking.length === 1 ? 'stacks' : 'stack'} on purpose (see Curses).` : ''}${replacing.length ? ` ${listJoin(replacing)} ${replacing.length === 1 ? 'is' : 'are'} simply replaced by the new one.` : ''}`;
 }
 
 /** Turlar arası görsel bekleme ve Battle speed ayarı (battle-layout.json > animation.turnWait, src/ui/battle-speed.ts). */
@@ -772,13 +814,13 @@ export function buildMechanics(): WikiArticle[] {
           .filter((s) => s.armorMult !== undefined || s.damageTakenMult !== undefined)
           .map((s) => `${s.name} (${s.armorMult !== undefined ? `${multText(s.armorMult)} Armor` : `takes ${multText(s.damageTakenMult!)} damage`})`)
           .join(', ')}. They multiply the target's current armor or the damage it takes; several stack by multiplying.`,
-        // Altıncı tur: verilen hasarı azaltan durumlar (statuses.json damageDealtMult / magicDealtMult; Weakened)
+        // Altıncı tur: verilen hasarı azaltan durumlar (statuses.json damageDealtMult / magicDealtMult / physicalDealtMult; Ömer 2026-11-16: Weakened yalnız fiziksel, Spellbound yalnız büyü)
         `Damage-dealt effects: ${Object.values(content.statuses)
-          .filter((s) => s.damageDealtMult !== undefined || s.magicDealtMult !== undefined)
-          .map((s) => `${s.name} (deals ${multText(s.damageDealtMult ?? s.magicDealtMult!)} damage unless its source says otherwise; some sources weaken only magic damage)`)
+          .filter((s) => s.damageDealtMult !== undefined || s.magicDealtMult !== undefined || s.physicalDealtMult !== undefined)
+          .map((s) => `${s.name} (deals ${multText(s.damageDealtMult ?? s.physicalDealtMult ?? s.magicDealtMult!)} ${s.damageDealtMult !== undefined ? '' : s.physicalDealtMult !== undefined ? 'physical ' : 'magic '}damage unless its source says otherwise)`)
           .join(', ')}. They multiply the damage the affected unit deals, in the battle preview too.`,
         `Weaknesses: ${wk.join(' ')} See the Elements section.`,
-        `Crit: a crit deals ${multText(a.critMult)} damage (chance ${pct(a.critChanceBase)} + ${pct(a.critChancePerLuck, 1)} per Luck). This bonus never changes; Luck only adds chance. Crits also apply to healing, never to shields.`,
+        `Crit: a crit deals ${multText(a.critMult)} damage (chance ${pct(a.critChanceBase)} + ${pctF(a.critChancePerLuck)} per Luck). This bonus never changes; Luck only adds chance. Crits also apply to healing, never to shields.`,
         `Summoned units take ${multText(f.summon.damageTakenMultiplier)} damage.`,
       ),
     ]),
@@ -810,15 +852,15 @@ export function buildMechanics(): WikiArticle[] {
       // Kan zemini (Ömer onaylı 2026-11-09): formulas.json > heavyCrit / blood, grounds.json > blood
       ...(content.formulas.blood && content.grounds[content.formulas.blood.ground] && content.formulas.heavyCrit ? [p(`Blood: a physical critical hit that takes more than ${pct(content.formulas.heavyCrit.hpRatio)} of the target's max HP spills ${content.grounds[content.formulas.blood.ground]!.name} on the target's cell for ${content.formulas.blood.turns} of the attacker's turns. Bloodless foes (skeletons, golems, spirits, plants, constructs) never bleed. Blood is a liquid: every unit standing in it, friend or foe, is ${content.statuses['soaked']?.name ?? 'Soaked'}; it carries lightning like water and freezes into Ice.`)] : []),
       // Lanetli zemin (Ömer onaylı 2026-11-09): grounds.json > cursed_ground
-      ...(content.grounds['cursed_ground'] ? [p(`${content.grounds['cursed_ground'].name}: Withering Curse leaves it on the cursed area. Enemies standing on it are ${content.statuses['unhallowed']?.name ?? 'Unhallowed'} and receive ${pct(1 - (content.statuses['unhallowed']?.healTakenMult ?? 1))} less healing. Holy fire or Holy Water and the curse cancel each other out: both are gone and the cell is clean.`)] : []),
+      ...(content.grounds['cursed_ground'] ? [p(`${content.grounds['cursed_ground'].name}: Withering Curse leaves it on the cursed area. Enemies standing on it are ${content.statuses['unhallowed']?.name ?? 'Unhallowed'} and every new timed debuff on them lasts ${content.statuses['unhallowed']?.debuffExtraTurns ?? 0} more turn (Stun included; stacking Omen and the curse itself are not extended). Holy fire or Holy Water and the curse cancel each other out: both are gone and the cell is clean.`)] : []),
     ], '#ff7a1a'),
     // Zemin tepkimeleri (Ömer 2026-10-27, open-questions 445): tablo veriden (grounds.json > reactions)
     // Harita 3 şimşek kuralları (maps-2-3.md A1, A2, A4, A5, A6): sayılar veriden
     article('lightning-rules', 'Damage', 'Lightning rules', cx('mech_lightning', 'bolt'), [
       p('Some lightning skills of The Hollow Crown follow extra rules; their skill text says so. Other lightning damage is plain damage.'),
       list(
-        `${content.statuses['shocked']?.name ?? 'Shocked'}: the target is pushed back ${pct(f.thunder.pushback)} on the turn bar at once and shows a blue spark. If it stands in water (Flooded, Healing Rain or Blood) or is ${content.statuses['soaked']?.name ?? 'Soaked'}, it is ${f.thunder.wetInto ? (content.statuses[f.thunder.wetInto]?.name ?? f.thunder.wetInto) : 'Stunned'} instead of being pushed back${f.thunder.wetInto ? `: at once it hits a random ally of its own with its basic attack, then its turn bar drops to 0. Bosses are immune` : ` for ${f.thunder.stunTurns} turn`}.`,
-        `Live Water: a bolt on a Flooded cell arcs through all water connected to it (four directions) and hits everyone standing there, either side, for ${pct(f.thunder.arcRatio)} of that board's average HP. Until the caster's next turn ends, anyone who ends a turn in that water takes another arc: step out in time. Tide, skill and Tidewater Urn water all carry it. Ice does not.`,
+        `${content.statuses['shocked']?.name ?? 'Shocked'} (grounded): for ${f.thunder.badgeTurns} turn the target has ${pct(1 - f.thunder.magicArmorMult)} less Magic Armor, and lightning damage that hits its shields counts ${1 + f.thunder.shieldBonus}x against them. Elites and bosses feel it less. If it stands in water (Flooded, Healing Rain or Blood) or is ${content.statuses['soaked']?.name ?? 'Soaked'}, it is ${f.thunder.wetInto ? (content.statuses[f.thunder.wetInto]?.name ?? f.thunder.wetInto) : 'Stunned'} instead${f.thunder.wetInto ? `: at once it hits a random ally of its own with its basic attack. Bosses are immune` : ` for ${f.thunder.stunTurns} turn`}.`,
+        `Live Water: a bolt that lands on water or blood runs through every unit standing in water or blood on BOTH sides of the field, your own team too, for ${pct(f.thunder.arcRatio)} of that board's average HP. The struck water stays live: until the caster's next turn ends, anyone who ends a turn in that connected water takes another arc, so step out in time. Tide, skill and Tidewater Urn water all carry it. Ice does not.`,
         `Iron Draws the Bolt: only marked skills. They deal bonus damage based on the target's Armor (the skill text gives the share), so heavy armor is a cost against them.`,
         `Thunderflash: when an enemy throws such a bolt in Darkness, the field is lit for ${f.thunder.flashHeroTurns} hero turn and the limit is lifted; the hero nearest to the bolt is ${content.statuses['blinded']?.name ?? 'Blinded'} for ${f.thunder.flashBlindTurns} turn.`,
         `${content.groundReactions.shatter?.label ?? 'Shatter'}: ${content.groundReactions.shatter?.text ?? ''}`,
@@ -839,6 +881,39 @@ export function buildMechanics(): WikiArticle[] {
   );
   // Özel mekanikler
   const bets = betLines();
+  /** Lucky Streak (Gambler pasifi, Ömer 2026-11-18): seri sayacı, zar, seri harcama ve tekrar kuralı (sayılar veriden). */
+  const luckyStreakBlocks = (): WikiBlock[] => {
+    const owner = Object.values(content.classes).find((c) => c.passive?.effect.type === 'luckyStreak');
+    const e = owner?.passive?.effect;
+    if (!owner || e?.type !== 'luckyStreak') return [];
+    const sk = (i: number) => content.skills[owner.skills[i] ?? '']?.name ?? '?';
+    const all = owner.skills.map((id) => content.skills[id]).filter((x): x is NonNullable<typeof x> => !!x);
+    const lines: string[] = [];
+    for (const s of all) {
+      const d = s.effects.find((x) => x.type === 'damage' && x.dice);
+      if (d && d.type === 'damage' && d.dice) lines.push(`${s.name}: rolls ${d.dice.count} dice (1-${d.dice.sides}) on every throw; damage x (total / ${d.dice.mean}). Doubles add ${d.dice.doubleGain ?? 0} Streak.`);
+      const st = s.streak;
+      if (!st) continue;
+      if (st.betWinGain || st.betLoseReset) lines.push(`${s.name}: a won bet adds ${st.betWinGain ?? 0} Streak${st.betLoseReset ? ', a lost bet resets it to 0' : ''}.`);
+      if (st.full) {
+        const f = st.full;
+        const bits = [f.betWin ? 'the bet always wins' : '', f.lifesteal ? `heals for ${Math.round(f.lifesteal * 100)}% of the damage dealt` : '', f.count !== undefined ? `hits ${f.count} random enemies` : '', f.sure ? `one of them always gets ${content.statuses[f.sure.status]?.name ?? f.sure.status} for ${f.sure.turns} turn${f.sure.turns > 1 ? 's' : ''}, the others ${(f.others ?? []).map((o) => content.statuses[o.status]?.name ?? o.status).join(' or ')}` : ''].filter(Boolean);
+        lines.push(`${s.name} at full Streak: spends it; ${bits.join('; ')}.`);
+      }
+      if (st.winChanceByStreak?.length) {
+        const top = st.winChanceByStreak.length - 1;
+        const tail = st.winFillsStreak
+          ? `a win below ${top} Streak fills the Streak to ${top}, a loss resets it to 0; at ${top} Streak it spends the Streak${st.fullStreakMore ? ` and the win deals ${Math.round(st.fullStreakMore * 100)}% more damage` : ''}`
+          : 'the Streak always resets to 0';
+        lines.push(`${s.name}: bets the whole Streak too; win chance ${st.winChanceByStreak.map((c) => `${Math.round(c * 100)}%`).join(' / ')} at ${st.winChanceByStreak.map((_, i) => i).join(' / ')} Streak; ${tail}.`);
+      }
+    }
+    return [
+      p(`${owner.name}'s passive ${owner.passive!.name} keeps a Streak counter from 0 to ${e.max} (0 at the start of each battle; gains past ${e.max} are wasted). At a full Streak the player picks which skill spends it; the basic attack never spends it. Free repeats and casts change no Streak.`),
+      p(`${e.skills.map(sk).join(', ')} have a ${Math.round(e.chance * 100)}% chance to go once more (${sk(0)} rolls new dice; ${sk(1)} keeps the first bet's result and pays no HP again; ${all.find((x) => x.streak?.repeat === 'recast')?.name ?? 'a random-target skill'} picks new random targets). A repeat costs no MP and does not touch cooldowns. ${sk(owner.skills.length - 1)} never repeats.`),
+      list(...lines),
+    ];
+  };
   out.push(
     article('enemy-passives', 'Special rules', 'Enemy passives', cx('mech_enemy_passives', 'skull'), [
       p('Campaign enemies have passives of their own: each reacts to something in the fight (a hit, a death, low HP, a summon, MP, its lane or its neighbours, its pack or its cover, the start of battle). Hover an enemy in battle to read its passive; the Enemies articles list them by family.'),
@@ -847,6 +922,7 @@ export function buildMechanics(): WikiArticle[] {
     article('gamble', 'Special rules', 'Bets (Gambler)', cx('mech_gamble', 'dice'), [
       p('A bet skill puts part of the caster\'s HP or MP at stake before the hit, then rolls a die. On a win the hit is multiplied (and may grow with the stake); on a loss the hit is weaker or misses, and the stake is lost. A won bet keeps the stake.'),
       list(...bets.map((b) => b.text)),
+      ...luckyStreakBlocks(),
     ], '#b8892e'),
     article('rage', 'Special rules', 'Rage', 'ui:rage', [
       p(`Some classes have a Rage bar next to their HP and MP: ${Object.values(content.classes).filter((c) => c.maxRage !== undefined).map((c) => c.name).join(', ') || 'none yet'}.`),
@@ -874,7 +950,9 @@ export function buildMechanics(): WikiArticle[] {
       p('Besides its four skills, every unit can use three global actions. They cost nothing and each ends the turn. In the campaign and in Endless your heroes have a fourth, Revive, paid with Valor (see Valor).'),
       list(...Object.values(content.globalSkills).filter((d) => d.kind !== 'valor' && d.kind !== 'urn' && d.kind !== 'surge' && d.kind !== 'rod' && d.kind !== 'command').map((d) => { // Royal Command: set bonusu (Kingsfall Regalia), herkesin eylemi değil
         const info = describeGlobalSkill(d, f);
-        return `${info.name}: ${[info.summary, ...info.lines].map((s) => s.replace(/\.$/, '')).join('. ')}.`;
+        // Skip Turn ve Move: türetilmiş satır zaten aynı cümleyi söyler (sayılarla), özet tekrar yazılmaz
+        const sayTwice = d.kind === 'skip' || d.kind === 'move';
+        return `${info.name}: ${[...(sayTwice ? [] : [info.summary]), ...info.lines].map((s) => s.replace(/\.$/, '')).join('. ')}.`;
       })),
       p(`The enemy team uses these actions too: it rests when a strong skill is out of MP, waits when nothing useful can be done, ${f.range?.enabled ? 'moves fragile units out of enemy range, and steps closer when none of its skills can reach an enemy' : 'moves fragile units out of melee reach'}.`),
     ], '#9ec5e8'),
@@ -937,17 +1015,19 @@ export function buildMechanics(): WikiArticle[] {
                 h.burnMana ? `burns ${h.burnMana} MP from the attacker` : '',
                 h.dispelChance ? `${pct(h.dispelChance)} chance to remove a random buff from the attacker` : '',
                 h.giveMana ? `gives the shielded unit ${h.giveMana} MP (never above its maximum)` : '',
+                h.giveBlood ? `gives its caster ${num(h.giveBlood.base)} + DEX x${num(h.giveBlood.perDex)} blood if the hit was a spell (magic damage)` : '',
               ].filter(Boolean);
               return `${s.name} (${e.shieldType === 'magic' ? 'magic shield' : 'shield'}): when it absorbs a hit, it ${parts.join('; ')}.`;
             }),
         ),
       ),
     ]),
+    ...(dispelSkills().cleanse.length || dispelSkills().strip.length ? [
     article('dispel', 'Special rules', 'Removing buffs and debuffs', 'manabarrier', [
-      p('Some skills remove statuses: a cleanse wipes the debuffs from an ally (Slow, Wound, Stun, Blinded...), a dispel strips a buff from an enemy. A shield that strips a buff from an attacker picks a random one; a skill that removes only some debuffs removes the longest-lasting first. A few special statuses (such as Dark Bond) can never be removed.'),
-      p(`Remove debuffs: ${skillsWith((e) => e.type === 'dispel' && e.status === 'debuff').join(', ') || 'none'}. Remove an attacker's buff: ${skillsWith((e) => e.type === 'shield' && !!e.onAbsorb?.dispelChance).join(', ') || 'none'}.`),
+      p(`Some skills remove statuses: a cleanse wipes the debuffs from an ally (${content.statuses['slow']?.name ?? 'Hobbled'}, Wound, Stun, Blinded...), a dispel strips a buff from an enemy. A shield that strips a buff from an attacker picks a random one; a skill that removes only some debuffs removes the longest-lasting first. A few special statuses (such as Dark Bond) can never be removed.`),
+      ...dispelListBlocks(),
       p('Removing a Stun from a taunting unit does not bring its taunt back: a Stun ends the taunt the moment it lands.'),
-    ], '#6ec1ff'),
+    ], '#6ec1ff')] : []), // liste boşsa satır yok, ikisi de boşsa makale gizli (skill eklenince geri gelir)
     article('dark-bond', 'Special rules', 'Dark Bond and life steal', 'darkbond', [
       p('Life steal heals the attacker for part of the damage it deals (a passive such as Vampiric Bite, or a skill that says so). Damage dealt by a summon counts for its owner.'),
       p('A dark bond links the caster to one other ally for a number of the caster\'s own turns. While it lasts, every time the caster heals from life steal, the bonded ally is healed too (a share of that heal, listed below; it can be more than 100%); the caster\'s own healing is not reduced. Only what the caster really heals is shared: at full HP the caster steals no life, so the ally gets nothing; the ally is never healed above its maximum.'),
@@ -968,7 +1048,7 @@ export function buildMechanics(): WikiArticle[] {
       list(...allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'heal' }> => e.type === 'heal' && !!e.missingHpBonus).map((e) => `${s.name}: up to ${moreText(e.missingHpBonus!)} healing on a nearly dead ally.`))),
     ], '#fff0a0'),
     article('half-turn', 'Special rules', 'Half-turn skills', cx('mech_half_turn', 'hourglass'), [
-      p(`Using a skill normally takes a whole turn: the unit's action counter drops by ${f.turn.threshold}. A half-turn skill only takes half of that, so the unit's next turn comes in half the usual time (Haste, Slow and the Skip Turn boost still change how fast the counter fills). The turn bar shows this as soon as the skill is used.`),
+      p(`Using a skill normally takes a whole turn: the unit's action counter drops by ${f.turn.threshold}. A half-turn skill only takes half of that, so the unit's next turn comes in half the usual time (Haste, Chilled and the Skip Turn boost still change how fast the counter fills). The turn bar shows this as soon as the skill is used.`),
       p('Cooldown and MP work as usual, and a half-turn skill always has a cooldown, so it cannot be chained. In test mode there is no turn order, so this has no effect there.'),
       p(`Half-turn skills: ${allSkills().filter((s) => s.turnCost !== undefined && s.turnCost < 1).map((s) => s.name).join(', ') || 'none yet'}.`),
     ], '#c9a227'),
@@ -978,14 +1058,14 @@ export function buildMechanics(): WikiArticle[] {
       p('Daze is not a control effect: it cannot be resisted and does not stop the target from acting, it only makes its next turn come later. The battle shows "Dazed" over the target. In test mode there is no turn order, so Daze does nothing there.'),
     ], '#c9a227'),
     article('control', 'Special rules', 'Taunt, guard and mana burn', 'taunt2', [
-      p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit is hit by a control status: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself); only damage passes on: the hit's statuses and reactions (Stun, Shocked, thawing) stay on the guarded ally; a guard that covers a row (Close Ranks) protects every ally in the chosen ally's row (the user excluded). A unit holds one guard at a time (a new one replaces the old), the share passes on as it is (the protector's armor does not cut it again) and it stops while the protector is down. Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
+      p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit is hit by a control status: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself); only damage passes on: the hit's statuses and reactions (Stun, Shocked, thawing) stay on the guarded ally; a guard that covers a row (Close Ranks) protects every ally in the chosen ally's row (the user excluded). ${(() => { const g = content.skills.close_ranks?.effects.find((e) => e.type === 'guard'); return g && g.type === 'guard' && g.auraShare ? `While Close Ranks guards an ally that is not next to the Defender, that ally gains ${Math.round(g.auraShare * 100)}% of the Bulwark Aura armor bonus (it scales with the aura; an ally already in the aura keeps the full bonus, never both; it stops while the Defender is down). ` : ''; })()}A unit holds one guard at a time (a new one replaces the old), the share passes on as it is (the protector's armor does not cut it again) and it stops while the protector is down. Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
       p(`Taunt: ${skillsWith((e) => e.type === 'taunt').join(', ') || 'none'}. Guard: ${skillsWith((e) => e.type === 'guard').join(', ') || 'none'}. Mana burn: ${skillsWith((e) => e.type === 'manaBurn').join(', ') || 'none'}.`),
-      p('Every mana burn follows one rule, whatever causes it (a skill, Spell Ward, a Hall of Silence ground, a Branded unit casting): the unit loses that much MP at once, never below 0, and "-N MP" shows over it. A unit with no mana loses nothing.'),
+      p('Every mana burn follows one rule, whatever causes it (a skill, a Hall of Silence ground): the unit loses that much MP at once, never below 0, and "-N MP" shows over it. A unit with no mana loses nothing.'),
       p('Some mana burns take a share of the target\'s maximum MP instead of a fixed amount: a big mana pool loses more. See Silence for what happens when a target runs dry.'),
       p(`A mana burn that is part of an attack only works if the attack hits: on a miss or a dodge no MP is burned or stolen${allSkills().some((s) => s.name === 'Mana Steal') ? ' (Mana Steal gains nothing)' : ''}.`),
     ]),
     silenceArticle(),
-    ...[brandArticle()].filter((a): a is WikiArticle => a !== null),
+    ...[brandArticle(), bloodArticle(f)].filter((a): a is WikiArticle => a !== null),
     ...[bellsArticle()].filter((a): a is WikiArticle => a !== null),
     multiplayerArticle(),
   );
@@ -1210,8 +1290,8 @@ export function battleRulesArticle(): WikiArticle {
       ...(blizzard?.encasedRepair ? [`Encased: soldiers of the Frozen Legion can start a battle inside a block of ice. They take no turns and nothing but damage reaches them, and the block has its own health bar (${pct(f.encased.hpRatio)} of the unit's maximum HP). Damage hits the block first; what is left over goes through. Fire shatters the block at once and the whole hit lands. In a ${blizzard.name} the blocks mend ${pct(blizzard.encasedRepair)} of their health every turn.`] : []),
       ...(noiseRule ? [`${noiseRule.name}: ${noiseRule.text} A critical hit adds ${noiseRule.points.crit}, an explosion ${noiseRule.points.explosion}, an area skill ${noiseRule.points.area}; the counter holds ${noiseRule.goal}. It can happen ${noiseRule.maxRises} times in a battle. The counter sits on the rule line under the Round plate.`] : []),
       `Thunder Rod: an enemy drives an iron rod into an empty cell on your side. The cell closes. At the start of every turn lightning strikes the rod and arcs to heroes right next to it (in front, behind, above or below). A hero next to the rod can spend their turn on Topple Rod. The rod stays until toppled, even if the enemy who planted it falls.`,
-      `Rolling Thunder: an enemy calls a bolt that enters the turn bar as its own lightning token, and the row it aims at glows. When the token reaches the front, that row takes a heavy hit. Speed and Slow do not change the token, and defeating the enemy does not stop it: step out of the row.`,
-      `Moving foes: some enemies do not stay in melee range. Some reach any row if the target is ${content.statuses['chilled']?.name ?? 'Chilled'} or ${content.statuses['burning']?.name ?? 'Burning'}, or while the field is dark. Some leap over your front row and pay for it: ${content.statuses['overreached']?.name ?? 'Overreached'}: ${content.statuses['overreached']?.text ?? ''}.`,
+      `Rolling Thunder: an enemy calls a bolt that enters the turn bar as its own lightning token, and the row it aims at glows. When the token reaches the front, that row takes a heavy hit. Speed, Haste and Chilled do not change the token, and defeating the enemy does not stop it: step out of the row.`,
+      `Moving foes: some enemies do not stay in melee range. Some reach any row if the target is ${content.statuses['chilled']?.name ?? 'Chilled'} or ${content.statuses['burning']?.name ?? 'Burning'}, or while the field is dark. Some leap over your front row and pay for it: ${content.statuses['overextended']?.name ?? 'Overextended'}: ${content.statuses['overextended']?.text ?? ''}.`,
       `Burrowers: an enemy that dives underground cannot be targeted and nothing reaches it, and a crack marks a hero's cell. It bursts out on its next turn. Move away and it comes up for nothing and loses its next action.`,
       `Charges: an enemy can mark a whole row and run along it on its next turn. Leave the row to avoid it. After the charge it is ${content.statuses['cooling']?.name ?? 'Cooling'}: ${content.statuses['cooling']?.text ?? ''}.`,
       `Highland and deep foes: a Cave Crawler always goes for the nearest hero and bites harder in Darkness. A Clan Axeman cannot be Chilled or Frozen and hits harder once below half HP. A Clan Skald gives Haste to allies in its row each turn and its Mock costs a hero the next action. A Hollow Warden takes less damage in Darkness: bring light.`,
@@ -1230,7 +1310,7 @@ export function battleRulesArticle(): WikiArticle {
       'Overheat: the Forge-Master Golem has a Heat bar. Every action fills it, fire hits fill it faster, ice hits and water drain it. When it is full the Golem must Vent: it loses its next turn and has 0 Armor until then.',
       'Thundersnow: below half HP the Snowfather marks a random lane on your side at the start of each Round, and lightning strikes it at the start of the next. Heavier armor draws more of the bolt. In a Whiteout the strike lights the board for your heroes. The Snowfather and other bosses cannot be Frozen.',
       'Pack Rotation: at the start of each Round the most wounded wolf of the Pack-Mother falls back and a healthier wolf behind it takes its place. Her attacks heal every wounded wolf by a little.',
-      'The Long Sermon: the Ashborn Hierarch preaches for 3 Rounds and does nothing else. A bar shows the damage it takes. Enough damage breaks the sermon and staggers it; Silence and Stun do not. If it finishes, Burning ground heals the Ashborn instead of hurting them for the rest of the battle.',
+      'The Long Sermon: the Ashborn Hierarch preaches for 3 Rounds and does nothing else. A bar shows the damage it takes. Enough damage breaks the sermon and stuns it (it skips its next turn, even though it is a boss); Silence and Stun do not break it. If it finishes, Burning ground heals the Ashborn instead of hurting them for the rest of the battle.',
       'Storm in the Chimney: in its last phase the Ember of the First Hearth throws lightning instead of fire. Water on the board conducts it, and that includes the water of the Tidewater Urn.',
       'The King Hears: in the Hollow King\'s battle, each time the Noise counter fills he calls the vault for free and one more Hollow Warden rises, as long as he stands.',
       ...(caveIn ? [`${caveIn.name}: ${caveIn.text} It happens on both boards; a unit caught there is thrown to the nearest open cell. Closed cells work like the masts on a ship's deck.`] : []),
@@ -1293,7 +1373,7 @@ function bonusRulesArticle(): WikiArticle {
   const oathAdd = OATHS.filter((o) => [o.plus, o.minus].some((e) => e.damageAdd || e.critAdd)).map((o) => o.name);
   const oathMult = OATHS.filter((o) => [o.plus, o.minus].some((e) => (e.hpMult ?? 1) !== 1 || (e.restHealMult ?? 1) !== 1 || (e.victoryHealMult ?? 1) !== 1)).map((o) => o.name);
   const shrineBy = (mult: boolean) => Object.values(WAYSHRINES).filter((w) => Object.keys(w.mods ?? {}).some((k) => k.endsWith('Mult') === mult)).map((w) => `${w.name} (${w.effect})`);
-  const MULT_KEYS = ['speedMult', 'damageTakenMult', 'healTakenMult', 'armorMult', 'damageDealtMult', 'magicDealtMult', 'healDealtMult'] as const;
+  const MULT_KEYS = ['speedMult', 'damageTakenMult', 'magicTakenMult', 'healTakenMult', 'armorMult', 'evasionMult', 'damageDealtMult', 'magicDealtMult', 'physicalDealtMult', 'healDealtMult'] as const;
   const statusMults = Object.values(content.statuses)
     .filter((s) => MULT_KEYS.some((k) => s[k] !== undefined) || s.elementTakenMult)
     .map((s) => s.name);
@@ -1337,15 +1417,15 @@ function bonusRulesArticle(): WikiArticle {
 /** Yeni affix turu 2 (Ömer 2026-10-24; docs/archive/design/progression/item-effects.md): wiki'de yuvalarıyla anılır. */
 const ROUND2_AFFIXES = ['c_healrecv', 'b_execute', 'b_startshield', 'b_killmp', 'b_killheal', 'b_shred', 'a_manashield', 'a_cdchance', 'a_overkill'];
 
-/** Savaşta işleyen affix kuralları (Ömer 2026-10-24, yeni affix turu 2): Shredded, Mana shield, Overflow ve öldürme / şifa / cooldown affix'leri. Sayılar veriden. */
+/** Savaşta işleyen affix kuralları (Ömer 2026-10-24, yeni affix turu 2; Ömer 2026-11-16 Shredded -> Sunder yığını): Armor shred, Mana shield, Overflow ve öldürme / şifa / cooldown affix'leri. Sayılar veriden. */
 function affixRulesArticle(): WikiArticle {
-  const sh = content.statuses.shredded;
+  const sh = content.statuses.sunder;
   const name = (id: string, fb: string) => ITEM_DATA.affixDefs[id]?.name ?? fb;
   const below = ITEM_DATA.affixDefs.b_execute?.parts[0]?.below ?? 0.3;
   return article('item-affix-rules', 'Special rules', 'Item effects in battle', sh?.icon ?? 'guardian', [
     p('Some item affixes change how a battle plays out, not just your numbers.'),
     list(
-      `${sh?.name ?? 'Shredded'} (${name('b_shred', 'Armor shred')}): each damaging skill hit lowers the enemy's Armor by the affix's amount, for ${sh?.duration ?? 2} turns. Every hit counts, so a two-hit attack adds two stacks at once. It stacks up to ${sh?.stackLimit ?? 3} times; every new stack refreshes the ${sh?.duration ?? 2} turns. Armor never goes below 0. It is a debuff: debuff resistance and immunities stop it, and cleansing removes it.`,
+      `${name('b_shred', 'Armor shred')}: each damaging skill hit adds a stack of ${sh?.name ?? 'Sunder'} to the enemy for ${sh?.duration ?? 2} turns. Each stack is a third of a full ${sh?.name ?? 'Sunder'} (${sh?.text ?? ''}); ${sh?.stackLimit ?? 3} stacks make a full one. Every hit counts, so a two-hit attack adds two stacks at once, and every new stack refreshes the ${sh?.duration ?? 2} turns. A full ${sh?.name ?? 'Sunder'} from a skill does not stack further. It is a debuff: debuff resistance and immunities stop it, and cleansing removes it.`,
       `${name('a_manashield', 'Mana shield')}: a share of the damage you take is paid with MP instead of HP. It is taken after armor and shields; when your MP runs out, the rest hits your HP. The damage preview and enemy kill estimates count it too.`,
       `${name('a_overkill', 'Overflow')}: when one of your skill hits kills an enemy, a share of the damage beyond that enemy's remaining HP hits the nearest living enemy on the same side. Armor does not reduce it, it never chains, and it does not trigger life leech or other on-hit effects.`,
       `${name('b_execute', 'Executioner')}: bonus damage (added to the damage pool) to an enemy below ${Math.round(below * 100)}% HP; the HP is checked before your hit lands.`,
@@ -1626,7 +1706,7 @@ function bossArticles(): WikiArticle[] {
           'A single attack can cross only one phase threshold; extra damage stops just above the next one.',
           // Madde 271/272: CC + isabet/kritik cezaları (Blinded, Jinxed) + Omen'in Misfortune'u; adlar veriden
           `Bosses are immune to crowd control (${ccNames.join(', ')}, Taunt, pulls and pushes)${accCritNames.length ? ` and to accuracy/crit penalties (${accCritNames.join(', ')})` : ''}: the hit still lands, the effect does not ("Immune").${content.formulas.ccImmunity?.omenCrit ? ' Omens still stack and Doom still strikes, but Misfortune does not lower a boss\'s crit chance.' : ''} Damage-over-time and curses (Wound, Omen, Withering, burning ground) still work.${tierStrengthText()}`,
-          ...(b.anchor ? [`Each standing ${anchor?.name ?? b.anchor.unit} gives +${b.anchor.armorAdd} armor and +${b.anchor.magicArmorAdd} magic armor.${b.anchor.stagger ? ` Breaking one staggers ${def.name} (it loses its next action)` : ''}${b.anchor.cancel.length ? `${b.anchor.stagger ? ' and' : ' Breaking one'} cancels a pending ${b.anchor.cancel.map((s) => content.skills[s]?.name ?? s).join(' / ')}` : ''}${b.anchor.stagger || b.anchor.cancel.length ? '.' : ''}`] : []),
+          ...(b.anchor ? [`Each standing ${anchor?.name ?? b.anchor.unit} gives +${b.anchor.armorAdd} armor and +${b.anchor.magicArmorAdd} magic armor.${b.anchor.stagger ? ` Breaking one stuns ${def.name} (it skips its next turn, even though it is a boss)` : ''}${b.anchor.cancel.length ? `${b.anchor.stagger ? ' and' : ' Breaking one'} cancels a pending ${b.anchor.cancel.map((s) => content.skills[s]?.name ?? s).join(' / ')}` : ''}${b.anchor.stagger || b.anchor.cancel.length ? '.' : ''}`] : []),
           ...(over ? [`${over.name}: after a collapse ${def.name} ${over.text.charAt(0).toLowerCase()}${over.text.slice(1)}.`] : []),
           ...(b.passives ?? []).map((x) => `${x.name}: ${x.text}`),
         ),
@@ -1707,9 +1787,12 @@ export function statusItemSources(statusId: string): string[] {
   return items.map((d) => `${d.name} (${cap(d.rarity)} item)`);
 }
 
+/** Kaynakları yalnız set bonusu olan durumlar: setsEnabled kapalıyken Codex'te yok (Banked Coals, Focused, Empowered). */
+export const SET_ONLY_STATUSES: readonly string[] = ['banked_coals', 'focused', 'empowered'];
+
 export function buildWikiStatuses(): WikiStatus[] {
   const skills = allSkills();
-  return buildStatuses().filter((s) => RARE.setsEnabled || s.id !== 'banked_coals').map((s: StatusEntry) => { // Banked Coals set bonusu: bayrak kapalıyken Codex'te yok
+  return buildStatuses().filter((s) => (RARE.setsEnabled || !SET_ONLY_STATUSES.includes(s.id)) && !content.statuses[s.id]?.retired).map((s: StatusEntry) => { // Banked Coals set bonusu: bayrak kapalıyken Codex'te yok
     const usedBySkills = skills.filter((k) => skillStatusIds(k).includes(s.id)).map(skillRefOf);
     const usedByItems = statusItemSources(s.id);
     return { id: s.id, name: s.name, type: s.type, icon: s.icon, color: s.color, text: s.text, usedBy: s.usedBy.map((u) => u.name), usedBySkills, usedByItems, search: searchText(s.name, s.type, s.text, ...s.usedBy.map((u) => u.name), ...usedBySkills.map((u) => u.name), ...usedByItems) };

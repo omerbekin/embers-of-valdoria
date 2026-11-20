@@ -21,19 +21,21 @@ describe('ground texts (data/grounds.json > text)', () => {
     const chilled = statuses['chilled']!;
     const soaked = statuses['soaked']!;
     const poisoned = statuses['poisoned']!;
-    for (const id of ['quaking_ground', 'field_of_shafts', 'root_field', 'ice_ground']) expect(groundText(grounds[id]), id).toContain(`${pct(slow.speedMult!)} less Speed`);
+    // Ömer 2026-11-16: Hobbled (slow) kaçınma keser; hızı yalnız Chilled düşürür (Soaked hız kesmez); Poisoned şifa kesmez, yığılır
+    for (const id of ['quaking_ground', 'field_of_shafts', 'root_field', 'ice_ground']) expect(groundText(grounds[id]), id).toContain(`${pct(slow.evasionMult!)} less Evasion`);
     expect(groundText(grounds['storm'])).toContain(`${pct(chilled.speedMult!)} less Speed`);
-    expect(groundText(grounds['storm'])).toContain(`${pct(chilled.evasionMult!)} less Evasion`);
+    expect(groundText(grounds['storm'])).not.toContain('Evasion');
     for (const id of ['flooded', 'flooded_planks']) {
-      expect(groundText(grounds[id]), id).toContain(`${pct(soaked.speedMult!)} less Speed`);
+      expect(groundText(grounds[id]), id).not.toContain('Speed');
       expect(groundText(grounds[id]), id).toContain(`${pct(soaked.elementTakenMult!['fire']!)} less fire damage`);
     }
-    expect(groundText(grounds['poison'])).toContain(`${pct(poisoned.healTakenMult!)} less healing`);
+    expect(groundText(grounds['poison'])).not.toContain('healing');
+    expect(groundText(grounds['poison'])).toContain(`up to ${poisoned.dotStacks}`);
     expect(groundText(grounds['hall_of_silence'])).toContain(`${Math.round(grounds['hall_of_silence']!.manaBurnPct! * 100)}% of their max MP`);
   });
 
   it('the status named in a text is the status the ground grants', () => {
-    const named: Record<string, string> = { poison: 'Poisoned', burning: 'Burning', holy_fire: 'Seared', sanctified_flame: 'Seared', holy_ground: 'Hallowed', holy_water: 'Hallowed', lingering_rain: 'Bleeding', storm: 'Chilled', flooded: 'Soaked', flooded_planks: 'Soaked', quaking_ground: 'Slowed', field_of_shafts: 'Slowed', root_field: 'Slowed', ice_ground: 'Slowed' };
+    const named: Record<string, string> = { poison: 'Poisoned', burning: 'Burning', holy_fire: 'Seared', sanctified_flame: 'Seared', holy_ground: 'Hallowed', holy_water: 'Hallowed', lingering_rain: 'Bleeding', storm: 'Chilled', flooded: 'Soaked', flooded_planks: 'Soaked', quaking_ground: 'Hobbled', field_of_shafts: 'Hobbled', root_field: 'Hobbled', ice_ground: 'Hobbled' };
     for (const [id, word] of Object.entries(named)) {
       const g = grounds[id]!;
       const status = g.status ?? g.soak;

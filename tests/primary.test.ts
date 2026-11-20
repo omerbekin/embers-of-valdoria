@@ -181,7 +181,7 @@ describe('Str: düz can yenilenmesi, Int: MP yenilenmesi (turns modu)', () => {
 
   it("class'larda sabit mpRegen alanı yok: her class'ın mpRegen'i Int'inden türer", () => {
     for (const def of classes) {
-      expect(def.stats.mpRegen, def.id).toBe(Math.round(def.attributes.int * f.attributes.mpRegenPerInt));
+      expect(def.stats.mpRegen, def.id).toBe(def.maxBlood !== undefined ? 0 : Math.round(def.attributes.int * f.attributes.mpRegenPerInt)); // kan barlı class: mana yok
       expect(def.stats.hpRegen, def.id).toBeCloseTo(def.attributes.str * f.attributes.hpRegenPerStr, 10);
     }
   });
@@ -376,10 +376,10 @@ describe("Dex primary: Hunter's Mark savaşta", () => {
     }
   });
 
-  it('geçerli hız sayılır: hedef Slow olunca bonus başlar', () => {
+  it('geçerli hız sayılır: hedef Chilled olunca bonus başlar (Ömer 2026-11-16: hızı yalnız Chilled düşürür)', () => {
     const x = setup('test', f.primaryBonus.dex.hunterMarkMult, 8, 9);
     expect(x.b.hunterMarkMult(x.attacker, x.victim)).toBe(1);
-    x.b.debugAddStatus(x.victim.uid, 'slow', 3);
+    x.b.debugAddStatus(x.victim.uid, 'chilled', 3);
     expect(x.b.speedOf(x.victim)).toBeLessThan(x.b.speedOf(x.attacker));
     expect(x.b.hunterMarkMult(x.attacker, x.victim)).toBeCloseTo(mult, 10);
   });

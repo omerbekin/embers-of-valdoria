@@ -68,8 +68,11 @@ describe('genel zemin kuralı: veri', () => {
     expect((content.grounds.flooded as { soakTurns?: number }).soakTurns).toBeUndefined();
   });
 
-  it('yeni durumlar: Poisoned (nature DoT + 15% less healing), Searing (holy), Bleeding (physical), Hallowed (buff)', () => {
-    expect(content.statuses.poisoned).toMatchObject({ type: 'debuff', healTakenMult: 0.85, dot: { element: 'nature' } });
+  // Ömer 2026-11-16: Poisoned şifa kesmez (Wound'un işi), yığılır (dotStacks)
+  it('yeni durumlar: Poisoned (nature DoT, yığılır), Searing (holy), Bleeding (physical), Hallowed (buff)', () => {
+    expect(content.statuses.poisoned).toMatchObject({ type: 'debuff', dot: { element: 'nature' } });
+    expect(content.statuses.poisoned!.healTakenMult).toBeUndefined();
+    expect(content.statuses.poisoned!.dotStacks).toBeGreaterThan(1);
     expect(content.statuses.searing).toMatchObject({ type: 'debuff', dot: { element: 'holy' } });
     expect(content.statuses.bleeding).toMatchObject({ type: 'debuff', dot: { element: 'physical' } });
     expect(content.statuses.hallowed).toMatchObject({ type: 'buff' });
@@ -218,12 +221,12 @@ describe('genel zemin kuralı: skill durumu ile çakışma', () => {
 });
 
 describe('genel zemin kuralı: her durum', () => {
-  it('Poison -> Poisoned: nature tiki ve 15% less healing', () => {
+  it('Poison -> Poisoned: nature tiki, şifa kesintisi yok (Ömer 2026-11-16)', () => {
     const b = arena([['mage', 1]], [['warrior', 1]], 'turns', 2);
     const foe = b.get('enemy-0')!;
     const g = place(b, 'party-0', 'poison', 'enemy', [1], 9);
     expect(st(foe, 'poisoned')?.amount).toBe(g.amount);
-    expect(b.statusMult(foe, 'healTakenMult')).toBeCloseTo(0.85, 6);
+    expect(b.statusMult(foe, 'healTakenMult')).toBe(1);
     const hits = groundHits(nextTurnOf(b, foe), foe.uid);
     expect(hits).toHaveLength(1);
     expect(hits[0]!.element).toBe('nature');
@@ -321,16 +324,19 @@ describe('genel zemin kuralı: her durum', () => {
     expect(st(dry, 'silence')?.fromGround).toBeDefined(); // içeride kalınca sürer
   });
 
-  it('boss: zemin Slow ve Chilled CC değil (Ömer 2026-11-09; Slow form 3), ikisi de azaltılmış güçle tutar, Immune yok', () => {
+  it('boss: zemin Slow (Hobbled) ve Chilled CC değil (Ömer 2026-11-09; Slow form 3), ikisi de azaltılmış güçle tutar, Immune yok', () => {
     const b = arena([['mage', 1]], [['warrior', 1]]);
     const foe = b.get('enemy-0')!;
     foe.tier = 'boss';
+    foe.stats.evasion = 0.2;
     const from = b.log.length;
     place(b, 'party-0', 'quaking_ground', 'enemy', [1]);
     b.syncGroundStatuses(emitOf(b));
     expect(st(foe, 'slow')?.fromGround).toBeDefined();
     expect(ofType(b.log.slice(from), 'immune').filter((e) => e.target === foe.uid && e.status === 'slow')).toHaveLength(0);
-    expect(b.statusMult(foe, 'speedMult')).toBeCloseTo(1 + (content.statuses.slow!.speedMult! - 1) * content.formulas.ccImmunity!.debuffStrength!.boss!, 6);
+    // Ömer 2026-11-16: Hobbled kaçınma keser (hız aynı)
+    expect(b.statusMult(foe, 'speedMult')).toBe(1);
+    expect(b.effectiveStats(foe).evasion).toBeCloseTo(0.2 * (1 + (content.statuses.slow!.evasionMult! - 1) * content.formulas.ccImmunity!.debuffStrength!.boss!), 4);
     foe.statuses = [];
     place(b, 'party-0', 'storm', 'enemy', [1]);
     b.syncGroundStatuses(emitOf(b));

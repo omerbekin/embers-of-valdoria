@@ -54,10 +54,13 @@ describe('boss / elit debuff gücü (Ömer 2026-11-09)', () => {
     expect(b.statusMult(b.get('enemy-1')!, 'speedMult')).toBeCloseTo(scaled(m, STR.elite!), 6);
     expect(b.statusMult(b.get('enemy-2')!, 'speedMult')).toBeCloseTo(m, 6);
     for (const uid of ['enemy-0', 'enemy-1', 'enemy-2']) expect(b.get(uid)!.statuses.find((s) => s.kind === 'chilled')!.turns).toBe(3);
-    // kaçınma çarpanı da aynı ölçekle
+    // Ömer 2026-11-16: Chilled artık kaçınma kesmez (kaçınmayı Hobbled keser); Hobbled kaçınma çarpanı aynı ölçekle
+    expect(S.chilled!.evasionMult).toBeUndefined();
     const e0 = b.get('enemy-0')!;
     e0.stats.evasion = 0.2;
-    expect(b.effectiveStats(e0).evasion).toBeCloseTo(0.2 * scaled(S.chilled!.evasionMult!, STR.boss!), 4);
+    expect(b.effectiveStats(e0).evasion).toBeCloseTo(0.2, 4);
+    give(b, 'enemy-0', 'slow', 'party-0');
+    expect(b.effectiveStats(e0).evasion).toBeCloseTo(0.2 * scaled(S.slow!.evasionMult!, STR.boss!), 4);
   });
 
   it('boss CC yemez (Stun, Frozen); iki Chilled atışı boss\'u dondurmaz, Chilled kalır; elit donar', () => {
@@ -82,29 +85,33 @@ describe('boss / elit debuff gücü (Ömer 2026-11-09)', () => {
     give(b, 'enemy-1', 'weakened', 'party-0');
     give(b, 'enemy-1', 'wound', 'party-0');
     expect(b.effectiveStats(el).armor).toBeCloseTo(40 * scaled(S.sunder!.armorMult!, STR.elite!), 3);
-    expect(b.weakenedMult(el)).toBeCloseTo(scaled(S.weakened!.damageDealtMult!, STR.elite!), 6);
+    expect(b.weakenedMult(el, 'physical')).toBeCloseTo(scaled(S.weakened!.physicalDealtMult!, STR.elite!), 6); // Ömer 2026-11-16: yalnız fiziksel
     expect(b.statusMult(el, 'healTakenMult')).toBeCloseTo(scaled(S.wound!.healTakenMult!, STR.elite!), 6);
   });
 
-  it('kendi tarafının verdiği debuff (kendine Overreached) elitte tam güç; DoT tiki ölçeklenmez', () => {
+  it('kendi tarafının verdiği debuff (kendine Overextended; eski Overreached) elitte tam güç; DoT tiki ölçeklenmez', () => {
     const b = mk({ units: { 1: { tier: 'elite' } } });
-    give(b, 'enemy-1', 'overreached', 'enemy-1');
-    expect(b.statusMult(b.get('enemy-1')!, 'damageTakenMult')).toBeCloseTo(S.overreached!.damageTakenMult!, 6);
+    give(b, 'enemy-1', 'overextended', 'enemy-1');
+    expect(b.statusMult(b.get('enemy-1')!, 'damageTakenMult')).toBeCloseTo(S.overextended!.damageTakenMult!, 6);
     give(b, 'enemy-1', 'burning', 'party-0', { amount: 40 });
     give(b, 'enemy-2', 'burning', 'party-0', { amount: 40 });
     const st = (uid: string) => b.get(uid)!.statuses.find((s) => s.kind === 'burning')!;
     expect(b.statusTickDamage(b.get('enemy-1')!, st('enemy-1'))).toBe(b.statusTickDamage(b.get('enemy-2')!, st('enemy-2')));
   });
 
-  it('Shocked geri itmesi boss\'ta debuffStrength.boss kadar', () => {
+  // Ömer 2026-11-15 (Topraklama): geri itme kalktı; Shocked'ın büyü zırhı düşüşü ve kalkan çarpanı boss'ta debuffStrength.boss kadar
+  it('Shocked büyü zırhı ve kalkan çarpanı boss\'ta debuffStrength.boss kadar; sıra çubuğu değişmez', () => {
     const b = mk({ units: { 0: { tier: 'boss' } } });
     const T = content.formulas.thunder;
-    const full = Math.round(content.formulas.turn.threshold * T.pushback);
+    for (const uid of ['enemy-0', 'enemy-1']) b.get(uid)!.stats.magicArmor = 40;
     const before = [b.get('enemy-0')!.turnCounter, b.get('enemy-1')!.turnCounter];
     b.debugBolt('enemy-0');
     b.debugBolt('enemy-1');
-    expect(before[0]! - b.get('enemy-0')!.turnCounter).toBe(Math.round(content.formulas.turn.threshold * T.pushback * STR.boss!));
-    expect(before[1]! - b.get('enemy-1')!.turnCounter).toBe(full);
+    expect([b.get('enemy-0')!.turnCounter, b.get('enemy-1')!.turnCounter]).toEqual(before);
+    expect(b.effectiveStats(b.get('enemy-0')!).magicArmor).toBeCloseTo(40 * scaled(T.magicArmorMult, STR.boss!), 4);
+    expect(b.effectiveStats(b.get('enemy-1')!).magicArmor).toBeCloseTo(40 * T.magicArmorMult, 4);
+    expect(b.shieldHitMult(b.get('enemy-0')!, 'lightning')).toBeCloseTo(1 + T.shieldBonus * STR.boss!, 6);
+    expect(b.shieldHitMult(b.get('enemy-1')!, 'lightning')).toBeCloseTo(1 + T.shieldBonus, 6);
   });
 
   it('önizleme gücü yazar; YZ boss\'ta Chilled değerini düşük görür', () => {

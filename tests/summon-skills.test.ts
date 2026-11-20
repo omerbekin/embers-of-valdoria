@@ -240,9 +240,10 @@ describe('Treant (madde 222): uzak menzilli doğa kontrolcüsü', () => {
     const a = t.attributes;
     expect((Object.keys(a) as Attribute[]).reduce((m, k) => (a[k] > a[m] ? k : m))).toBe('int');
     expect(smashDmg.scale).toBe('int');
-    expect(attributePower(t.stats, smashDmg.scale, f) * smashDmg.power).toBeCloseTo(OLD_ROOT_SMASH_RAW, 6);
+    // Ömer 2026-11-18: Treant hasarı +%5 (0,575 -> 0,604); 2026-11-20 form r33: +%10 daha (0,604 -> 0,664)
+    expect(attributePower(t.stats, smashDmg.scale, f) * smashDmg.power).toBeCloseTo(OLD_ROOT_SMASH_RAW * 1.155, 1);
     expect(t.stats.hp).toBeGreaterThanOrEqual(100); // dayanıklı ağaç
-    expect(content.skills.summon_treant!.effects.find((e) => e.type === 'summon')).toMatchObject({ unit: 'treant', lifespan: 3 });
+    expect(content.skills.summon_treant!.effects.find((e) => e.type === 'summon')).toMatchObject({ unit: 'treant', lifespan: 4 }); // Ömer 2026-11-18: 3 -> 4
   });
 
   it('Root Smash uzak menzilli (havadan): melee değil, reach yok, arka sıradaki düşmana da vurur (menzil 4: ön sıradan en arka sıraya 0+3+1=4)', () => {

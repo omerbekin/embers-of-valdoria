@@ -4,14 +4,22 @@ import { Battle, chooseAction, content, describeSkill, explainChoice, predictQue
 import type { AiConfig, BattleEvent, BattleMode, Combatant, SkillDef } from '../src/engine';
 
 /**
- * Madde 240 (Ömer): Anti-Mage Spell Ward (dosta/kendine, saldıranın MP'sini yakar, %25 buff siler), Mage Mana Barrier (debuff siler, emdikçe MP verir),
+ * Madde 240 (Ömer): eski Anti-Mage Spell Ward (dosta/kendine, saldıranın MP'sini yakar, %25 buff siler; 2026-11-17'den beri yalnız test kurulumu), Mage Mana Barrier (debuff siler, emdikçe MP verir),
  * generic kalkan kancaları (shield.onAbsorb), Undead lifesteal %35, Dark Bond (lifesteal kopyası) ve yarım turn (turnCost 0,5). Sayılar veriden okunur.
  */
 const S = content.skills;
+/**
+ * Redtithe (2026-11-17): Anti-Mage'in Spell Ward'ı kitten çıktı (aynı id artık Mirror Vein). Generic kalkan kancası (shield.onAbsorb: burnMana,
+ * dispelChance) motorda sürdüğü için bu dosya eski Spell Ward'ı (bedeli 0 MP; Redtithe'in manası yok) test kurulumunda aynı id ile geri verir (mk).
+ */
+const LEGACY_WARD: SkillDef = {
+  id: 'spell_ward', name: 'Spell Ward', icon: 'spellward', target: 'single_ally', cost: { resource: 'mp', amount: 0 }, cooldown: 3, motion: 'cast', fx: '#b36bff',
+  effects: [{ type: 'shield', scale: 'int', power: 0.75, shieldType: 'magic', onAbsorb: { burnMana: 8, dispelChance: 0.25 } }],
+};
 const ai: AiConfig = { ...content.aiConfig, global: undefined };
 const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i) => map[i] ?? '');
 const ofType = <T extends BattleEvent['type']>(events: BattleEvent[], type: T) => events.filter((e): e is Extract<BattleEvent, { type: T }> => e.type === type);
-const ward = S.spell_ward!.effects.find((e) => e.type === 'shield')!;
+const ward = LEGACY_WARD.effects.find((e) => e.type === 'shield')!;
 const wardHook = (ward as Extract<SkillDef['effects'][number], { type: 'shield' }>).onAbsorb!;
 const barrier = S.mana_barrier!.effects.find((e) => e.type === 'shield') as Extract<SkillDef['effects'][number], { type: 'shield' }>;
 const bondEffect = S.dark_bond!.effects.find((e) => e.type === 'bond') as Extract<SkillDef['effects'][number], { type: 'bond' }>;
@@ -19,6 +27,7 @@ const bondEffect = S.dark_bond!.effects.find((e) => e.type === 'bond') as Extrac
 /** Hücre listeli savaş; kritik, Mana Echo kapalı; isabet tam, kaçınma yok; canlar en az 100 (senaryolar ölmeden sürsün). */
 function mk(party: Record<number, string>, enemies: Record<number, string>, mode: BattleMode = 'test', seed = 1, tweak?: (setup: ReturnType<typeof content.battleSetup>) => void): Battle {
   const setup = content.battleSetup('random-battle', seed, mode, { party: cells(party), enemies: cells(enemies) }, false);
+  setup.skills = { ...setup.skills, spell_ward: LEGACY_WARD };
   tweak?.(setup);
   const b = new Battle(setup);
   for (const c of b.combatants) {
@@ -40,13 +49,8 @@ function until(b: Battle, uid: string): void {
   expect(b.currentUid).toBe(uid);
 }
 
-describe('Spell Ward (Anti-Mage): dosta ya da kendine, kancalar', () => {
-  it('hedef türü single_ally, excludeSelf YOK: hem kendine hem dosta atılır; kalkan formülü Int x 0,75 (Ömer 2026-11-08, kalan MP payı yok)', () => {
-    expect(S.spell_ward!.target).toBe('single_ally');
-    expect(S.spell_ward!.excludeSelf).toBeUndefined();
-    expect(ward).toMatchObject({ scale: 'int', power: 0.75, shieldType: 'magic' }); // Ömer 2026-11-08: güç kalan MP'den INT'e kaydı (0,6 sonra 0,75)
-    expect((ward as { bonusPerMana?: number }).bonusPerMana).toBeUndefined();
-    expect(wardHook).toEqual({ burnMana: 8, dispelChance: 0.25 });
+describe('Spell Ward (eski Anti-Mage kalkanı, test kurulumu): dosta ya da kendine, kancalar', () => {
+  it('hedef türü single_ally, excludeSelf YOK: hem kendine hem dosta atılır; büyü kalkanı + kanca örneği', () => {
     const b = mk({ 0: 'warrior', 1: 'antimage' }, { 0: 'mage' });
     const am = at(b, 'party', 1);
     const w = at(b, 'party', 0);
@@ -523,7 +527,6 @@ describe('yapay zeka (madde 240)', () => {
   });
 
   it('Anti-Mage: yaralı dosta Spell Ward atar; sağlam dosta atmaz (terazi; madde 258: eski maxTargetHpRatio ipucu silindi)', () => {
-    expect(S.spell_ward!.ai).toBeUndefined();
     const limit = 0.45;
     const run = (ratio: number) => {
       const b = mk({ 0: 'warrior', 1: 'antimage' }, { 0: 'mage' });
@@ -584,7 +587,7 @@ describe('açıklama ve önizleme', () => {
   const info = (id: string, cls: string) => describeSkill(S[id]!, stats(cls), content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds });
 
   it('Spell Ward / Mana Barrier / Dark Bond tooltip satırları veriden', () => {
-    const sw = info('spell_ward', 'antimage').lines.join(' | ');
+    const sw = describeSkill(LEGACY_WARD, stats('antimage'), content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds }).lines.join(' | ');
     expect(sw).toContain(`Every hit the shield absorbs burns ${wardHook.burnMana} MP from the attacker`);
     expect(sw).toContain(`${wardHook.dispelChance! * 100}% chance to remove a random buff from the attacker`);
     expect(sw).toContain('not ground effects');
@@ -603,7 +606,7 @@ describe('açıklama ve önizleme', () => {
     const [w, m, am, u] = [0, 1, 2, 3].map((s) => at(b, 'party', s));
     b.debugAddStatus(w!.uid, 'slow', 2);
     const mb = previewSkill(b, m!.uid, 'mana_barrier', w!.uid)[0]!;
-    expect(mb.dispel).toEqual(['Slow']);
+    expect(mb.dispel).toEqual([content.statuses.slow!.name]); // Hobbled (Ömer 2026-11-16)
     expect(mb.shield!.amount).toBeGreaterThan(0);
     const sw = previewSkill(b, am!.uid, 'spell_ward', w!.uid)[0]!;
     expect(sw.shield).toMatchObject({ magic: true, onAbsorb: wardHook });
@@ -617,7 +620,8 @@ describe('wiki ve Legacy (madde 240)', () => {
     const { buildMechanics } = await import('../src/wiki/catalog');
     const arts = buildMechanics();
     const text = (id: string) => JSON.stringify(arts.find((a) => a.id === id)?.blocks ?? null);
-    expect(text('shields')).toContain(`Spell Ward (magic shield): when it absorbs a hit, it burns ${wardHook.burnMana} MP`);
+    // Redtithe (2026-11-17): oyunda kancalı Spell Ward kalmadı; makale veriden türediği için onu listelemez
+    expect(text('shields')).not.toContain('Spell Ward');
     // Mana Barrier emekli (Mage reworkü 2026-10-29): Codex onu artık listelemez
     expect(text('shields')).not.toContain('Mana Barrier');
     expect(text('dispel')).not.toContain('Mana Barrier');

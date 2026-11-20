@@ -20,15 +20,19 @@
 //   cutover                          : mevcut oturumları "eski akış" diye kaydeder; bundan sonra açılan sohbetler worktree modunda (bu çalışana kadar her şey eskisi gibi)
 //   wt-open <oturum> [ad]            : game/.claude/worktrees/chat-<ad> + chat/<ad> dalı + kendi npm ci + kendi port (5174+)
 //   wt-close <oturum>                : gönderilmemiş iş yoksa worktree, dal, port, launch kaydını siler
+// Disk (Ömer 2026-11-18): agent kopyaları birikip C:'yi doldurdu
+//   wt-open-agent <ad> [--from <dal|kopya>] [--full] : .claude/worktrees/agent-<ad> + agent/<ad> dalı; varsayılan hafif (sparse, LIGHT_PATTERNS), --full tam kopya (çizim/VFX), node_modules ana kopyaya junction
+//   wt-sweep [--yes] [--force] [--idle <dk>]         : işi bitmiş agent kopyalarını listeler; --yes ile siler (önce junction, dal SİLİNMEZ). Gönderim sonunda ve Lead açılışında çalışır
 //   legacy-merged <oturum> <dosya..> : eski akış sohbeti dosyayı origin/main ile elle birleştirdi, durdurma kalkar
 // Koordinasyon (Ömer 2026-10-31): ready ucu mühürler (readySha), kopya istemde kendiliğinden eşitlenir, hazırdan 3 saat sonra otomatik gönderim,
 // başka kopyada değişen dosyaya erken uyarı, golden kayıtları gönderimde yeniden üretilir, denge dosyası gidince arka planda 300 savaşlık sim.
 //   wt-sync / wt-files / auto-wait / auto-ship / sim-run : kancaların ve gönderimin başlattığı arka plan süreçleri (elle çağrılmaz)
 import { execFileSync, execSync as execSyncRaw, spawn, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readdirSync, lstatSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, appendFileSync, openSync } from 'node:fs';
-import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
+import { cpSync, existsSync, mkdirSync, readdirSync, lstatSync, readFileSync, renameSync, rmSync, statSync, statfsSync, writeFileSync, appendFileSync, openSync, closeSync, readSync, readlinkSync, rmdirSync, unlinkSync } from 'node:fs';
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
+import { selectTests } from './test-select.mjs';
 import { homedir, tmpdir } from 'node:os';
 // Arka plan süreçlerinin konsolu yok: gizlenmeyen her komut Windows'ta kendi penceresini açar (Ömer 2026-11-01). Gizli konsolu alt süreçler de paylaşır (npm, npx, vitest, wrangler).
 const execSync = (cmd, opts) => execSyncRaw(cmd, { windowsHide: true, ...opts });
@@ -64,6 +68,7 @@ const E2E = !!ENVV.EOV_E2E;
 const CMD = {
   tsc: ENVV.EOV_CMD_TSC ?? 'npx tsc --noEmit',
   test: ENVV.EOV_CMD_TEST ?? 'npm test',
+  testFast: ENVV.EOV_CMD_TESTFAST ?? 'npm run test:fast', // yalnız arayüz/belge değişince (tools/test-select.mjs)
   build: ENVV.EOV_CMD_BUILD ?? 'npm run build',
   deploy: ENVV.EOV_CMD_DEPLOY ?? 'npm run deploy:cf',
   npmci: ENVV.EOV_CMD_NPMCI ?? 'npm ci',
@@ -83,6 +88,15 @@ const WT_CACHE = (ENVV.EOV_WT_CACHE_S !== undefined ? Number(ENVV.EOV_WT_CACHE_S
 const WT_FILES = join(GAME, '.git', 'push-queue.wtfiles.json');
 const SIMS = join(GAME, '.git', 'push-queue-sims');
 const NOTES_DIR = join(GAME, '.git', 'push-queue-notes');
+// Disk (Ömer 2026-11-18, C: 658 MB'a inmişti): oyunun durduğu sürücüde boş yer bu sınırın altındaysa status / ready / push açık uyarı satırı verir
+const DISK_WARN_GB = ENVV.EOV_DISK_WARN_GB !== undefined ? Number(ENVV.EOV_DISK_WARN_GB) : 20;
+// wt-sweep: agent kopyası en az bu kadar dakikadır dokunulmamış olmalı (dosya/git zamanı, oturum kaydında anılması); çalışan agent'ın taze kopyası silinmesin
+const SWEEP_IDLE_MIN = ENVV.EOV_SWEEP_IDLE_MIN !== undefined ? Number(ENVV.EOV_SWEEP_IDLE_MIN) : 60;
+// Hafif agent kopyası (wt-open-agent, --full olmadan): sparse-checkout --no-cone kalıpları (2026-11-18 denendi).
+// assets/source da dışarıda (Ömer 2026-11-19): asıl dosyaya bakan 17 test (7 dosya) tests/asset-source.ts > itSource ile YALNIZ sparse kopyada atlanır; tam kopyada ve gönderimde koşar.
+// docs/anim-review'dan board.md kalır: src/ui/debug-vfx-battle.ts onu ?raw içe aktarır, yoksa build kırılır.
+const LIGHT_PATTERNS = ['/*', '!/assets/source/', '!/docs/anim-review/', '/docs/anim-review/board.md'];
+const LIGHT_TEXT = 'assets/source ve docs/anim-review yok (board.md hariç)';
 const SIM_LIMIT = 15 * 60000;
 const RETEST_LIMIT = 15 * 60000;
 // Üretilen kayıtlar: elle çözülmez, gönderimde yeniden üretilir (Ömer 2026-10-31; dal düşmesinin baş sebebiydi)
@@ -94,6 +108,8 @@ const BALANCE_PATHS = /^(src\/engine\/|src\/progression\/|src\/sim\/simulate\.ts
 const SESSIONS_DIR = ENVV.EOV_SESSIONS_DIR ?? join(homedir(), '.claude', 'projects', 'C--Users-Omer-Projects-embers-of-valdoria');
 // Kuyruğa girmeyen yollar: ham görseller (yayına elle eklenir), agent kopyaları, derleme çıktıları
 const SKIP = (rel) => /^(\.git\/|assets\/source\/|\.claude\/worktrees\/|node_modules\/|dist\/)/.test(rel);
+// Komutun çağrıldığı klasör (wt-sweep çağıranın kendi kopyasını silmesin diye; chdir'den önce alınır)
+const START_CWD = process.cwd();
 process.chdir(GAME);
 
 const MODES = { kritik: 'kritik', 'eşlik': 'eşlik', eslik: 'eşlik', 'günsonu': 'eşlik', gunsonu: 'eşlik' };
@@ -465,8 +481,21 @@ function hookBashPost() {
   if (warn) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: warn } }));
 }
 const unclaimed = (q) => { const own = new Set(Object.values(q.sessions).flatMap((e) => e.files)); return Object.keys(dirtyMap()).filter((p) => !own.has(p) && !q.shippedBlobs?.[p]); };
+// Boş yer (GB); EOV_DISK_FREE_GB yalnız testte ölçümün yerine geçer
+function diskFreeGB(dir = GAME) {
+  if (ENVV.EOV_DISK_FREE_GB !== undefined) return Number(ENVV.EOV_DISK_FREE_GB);
+  try { const s = statfsSync(dir); return (Number(s.bavail) * Number(s.bsize)) / 1024 ** 3; } catch { return null; }
+}
+function diskWarning() {
+  const gb = diskFreeGB();
+  if (gb === null || !(gb < DISK_WARN_GB)) return null;
+  const drive = /^[a-z]:/i.test(GAME) ? GAME.slice(0, 2).toUpperCase() : GAME;
+  return `!! DİSK UYARISI: ${drive} boş yer ${gb.toFixed(1).replace('.', ',')} GB (sınır ${DISK_WARN_GB} GB). Bitmiş agent kopyalarını sil: node "${TOOL}" wt-sweep (liste), sonra wt-sweep --yes; yeni agent kopyasını hafif aç (wt-open-agent, --full yalnız çizim/VFX).`;
+}
 function statusText(q) {
   const lines = [];
+  const disk = diskWarning();
+  if (disk) lines.push(disk);
   const ids = Object.keys(q.sessions);
   if (!ids.length) lines.push('Kuyruk boş.');
   for (const sid of ids) {
@@ -560,6 +589,8 @@ async function push(trigger, args) {
   try {
     // Kilidin sahibi yazılır (doctor çalışan gönderimin kopyasına dokunmasın), sonra bakım (Ömer 2026-10-30, F2/F8)
     try { writeFileSync(join(PLOCK, 'owner.json'), JSON.stringify({ pid: process.pid })); } catch {}
+    // Disk dolarsa test/build yarıda kalır: gönderim yine dener ama uyarı günlüğe ve kuyruk raporuna düşer (Ömer 2026-11-18)
+    if (!dry) { const disk = diskWarning(); if (disk) { log(disk); notice(disk); } }
     if (!E2E) try { doctor({ inPush: true }); } catch (e) { log('!! Bakım (doctor) hata verdi, gönderim sürüyor: ' + firstLine(e)); }
     // Tetikleyen worktree sohbetinin ağacı commit'lenir (ready ile aynı kural)
     // ve o an mühürlenir: gönderim bu ucu alır, sonraki commit'ler sonraki gönderime kalır (Ömer 2026-10-31)
@@ -1012,6 +1043,7 @@ function makeGate(scratch, files, branchOwner) {
     throw Object.assign(new Error(red), { red, hits: [...parseRed(r.out).keys()] });
   };
 }
+let lastTestSel = ''; // son gönderimin test seçimi satırı (günlük ve rapor)
 async function runGates(scratch, files, gate) {
   // Önce tip kontrolü (Ömer 2026-10-24): parça parça gelen dosyalar (bir sohbetin yarısı) en hızlı burada yakalanır
   log('> Temiz kopyada tip kontrolü');
@@ -1027,9 +1059,13 @@ async function runGates(scratch, files, gate) {
       : await gate('ön test', process.execPath, [join('node_modules', 'vitest', 'vitest.mjs'), 'related', '--run', '--passWithNoTests', ...related], RELATED_LIMIT);
     if (r.timedOut) log(`> Ön test ${RELATED_LIMIT / 1000} sn'ye sığmadı, kesildi; tam test zaten hepsini koşacak`);
   }
-  // Tam npm test göndermeden önce yerelde (Ömer 2026-10-25): yalnız hızlı testle 0.9.8.4/0.9.8.5 GitHub'a gidip CI'da kırmızı kalmıştı
-  log('> Temiz kopyada tam test + build');
-  await gate('tam test', CMD.test);
+  // Test seçimi değişen dosyaya göre (Ömer 2026-11-15; 2026-10-25 "her zaman tam test" kuralının yerini aldı, CI tam testi koşmaya devam eder).
+  // 0.9.8.4/0.9.8.5 data/ + src/engine değiştirdiği için yeni kural da tam test seçerdi. EOV_CMD_TEST verilmişse (e2e) eskisi gibi öncelikli.
+  const sel = ENVV.EOV_CMD_TEST ? { mode: 'full', text: 'test: tam (sebep: EOV_CMD_TEST)' } : selectTests(files);
+  lastTestSel = sel.text;
+  log(`> ${sel.text}`);
+  log(`> Temiz kopyada ${sel.mode === 'full' ? 'tam' : 'hızlı'} test + build`);
+  await gate(sel.mode === 'full' ? 'tam test' : 'hızlı test', sel.mode === 'full' ? CMD.test : CMD.testFast);
   await gate('build', CMD.build);
 }
 // 5000 yalnız test + build yeşilse yenilenir (Ömer 2026-10-30, F5): gönderilmeyecek sürüm 5000'de görünmesin
@@ -1176,14 +1212,16 @@ function resolveGolden(r, side) {
 }
 // Dalın origin/main'e göre gönderilmemiş içeriği var mı (gönderim squash'lıdır, ata kontrolü yetmez: içerik karşılaştırılır)
 function branchHasWork(branch, target = ORIGIN_MAIN) {
-  const tip = revOf(`refs/heads/${branch}`);
+  return revHasWork(revOf(`refs/heads/${branch}`), target);
+}
+function revHasWork(tip, target = ORIGIN_MAIN) {
   if (isAncestor(tip, target)) return false;
   const r = mergeTree(gx(GAME, ['merge-base', target, tip]), target, tip);
   return !r.ok || r.tree !== revOf(`${target}^{tree}`);
 }
 
 // Metin değişince artırılır: açık sohbetler bir sonraki istemde yeni kuralları görür
-const WT_RULES_V = 4;
+const WT_RULES_V = 5;
 const COORD_WORKER = `[gönderim kuyruğu] LEAD DÜZENİ: Ömer yalnız "Lead" sohbetiyle konuşur; kayıtlı Lead başka bir oturum. Ömer bu sohbeti yeni Lead olarak açtıysa (hafızadaki lead-handoff bunu söyler) önce çalıştır: node "${TOOL}" coordinator <bu oturum>. Lead değilsen: iş Lead'den gelir; açık sorunu, karar isteğini, bitti raporunu, engelini SendMessage ile Lead'e yaz: tek mesajda soru, seçenekler, önerin, mockup linki. Kendin form açma, kararı Lead'in formu alır. "BU SOHBETE RAPOR" notlarını da ona ilet. Ömer sana doğrudan yazarsa normal cevap ver, sonra Lead'e tek satır söyle. Ayrıntı: docs/arch/lead.md`;
 const COORD_SELF = (s) => `[gönderim kuyruğu] Sen Lead'sin (oturum ${s}). Kuralların: docs/arch/lead.md, açık işler: docs/arch/lead-open.md. Gönderim raporları yalnız sana gelir.`;
 function wtRules(sid, e, rec, first) {
@@ -1197,7 +1235,7 @@ function wtRules(sid, e, rec, first) {
       ? `İş bitip doğrulanınca Ömer'e tek satır "GitHub'a gönderiyorum" de, teyit BEKLEME: node "${TOOL}" push ${s} --fixes "<oyuncuya yönelik İngilizce satır>" (arka planda, sonuç kuyruk raporunda); bitince 5000 + Pages linkini ver.`
       : `Kendin GitHub'a gönderme; iş bitip doğrulanınca: node "${TOOL}" ready ${s} --fixes "<oyuncuya yönelik İngilizce satır>"; daha önce bir gönderim olursa ona katılır; yoksa ilk hazırdan ${AUTO_TEXT} sonra otomatik gönderimle gider.`) +
     ` Gönderime ready anındaki hâl girer, sonraki commit'lerin sonrakine kalır. Kopyan her istemde origin/main'e kendiliğinden eşitlenir; çakışma varsa yalnız uyarı görürsün. tests/fixtures/golden çakışmasını elle çözme, gönderim yeniden üretir.` +
-    ` Oyuncunun göreceği bir şey değişmediyse --internal ver. Yeni açık soru: docs/design/open-questions.md sonuna "## Q-NEW. Başlık" (numarayı gönderim verir). Agent'ların bu kopyada mutlak yolla çalışır; paralel olanlar için bu daldan: git -C "${rec.path}" worktree add "<game>/.claude/worktrees/agent-<ad>" -b agent/<ad> (isolation kullanma), bitince bu dala merge et. Gönderimden sonra dal yeni main'e taşınır. Sohbet işi tamamen bitince: node "${TOOL}" wt-close ${s}. Başka açık sohbetin konusuna ya da dosyalarına giren işi yapma: SendMessage ile o sohbete devret (adı ListAgents'ta), Ömer'e tek satır söyle; sana devredilen işi normal iş say. Yeni konuya başlamadan docs/arch/lead.md oku.` +
+    ` Oyuncunun göreceği bir şey değişmediyse --internal ver. Yeni açık soru: docs/design/open-questions.md sonuna "## Q-NEW. Başlık" (numarayı gönderim verir). Agent'ların bu kopyada mutlak yolla çalışır; paralel olanlar için bu daldan: node "${TOOL}" wt-open-agent <rol-iş> --from ${rec.branch} (isolation kullanma; hafif kopya, çizim/VFX işi için --full), bitince bu dala merge et; kopya iş gidince wt-sweep ile kalkar. Aynı alanın işleri o alanın mevcut agent kopyasını kullanır; yeni kopya yalnız paralel iki iş aynı dosyalara dokunacaksa. Gönderimden sonra dal yeni main'e taşınır. Sohbet işi tamamen bitince: node "${TOOL}" wt-close ${s}. Başka açık sohbetin konusuna ya da dosyalarına giren işi yapma: SendMessage ile o sohbete devret (adı ListAgents'ta), Ömer'e tek satır söyle; sana devredilen işi normal iş say. Yeni konuya başlamadan docs/arch/lead.md oku.` +
     (rec.name === 'minor-fixes' ? ` Sen küçük ve sahipsiz işlerin sohbetisin, iş Lead'den gelir.` : '');
 }
 
@@ -1327,8 +1365,7 @@ async function wtOpen(sidArg, rawName) {
   if (!isNewChat(q0, sidArg)) throw new Error('Bu sohbet eski akışta: paylaşılan kopyada bitirir (P1), worktree açılmaz.');
   const key = short(sidArg);
   if (wtOf(q0, key)) return wtPrint(wtOf(q0, key));
-  const trMap = { ı: 'i', ğ: 'g', ü: 'u', ş: 's', ö: 'o', ç: 'c', İ: 'i' };
-  const slug = String(rawName ?? key).replace(/[ıığüşöçİ]/g, (c) => trMap[c]).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || key;
+  const slug = slugify(rawName ?? key) || key;
   // Taze taban; ağ yoksa bilinen origin/main ile açılır (gönderim zaten tazesinin üstüne birleştirir)
   try { await netGit(['fetch', 'origin', 'main'], 'fetch'); } catch (e) {
     if (!gxOk(GAME, ['rev-parse', '--verify', '-q', ORIGIN_MAIN])) throw e;
@@ -1386,7 +1423,7 @@ async function wtClose(sidArg) {
   if (await portBusy(rec.port)) throw new Error(`Kapatılmadı: ${rec.port} portunda sunucu açık; önce kapat (preview_stop).`);
   if (existsSync(rec.path)) {
     // Bağlantılar önce silinir (2026-10-18 olayı): silme hiçbir zaman bağlantının içine yürümez
-    for (const l of findLinks(rec.path)) { try { ps(`(Get-Item -LiteralPath '${l}' -Force).Delete()`); } catch {} }
+    for (const l of findLinks(rec.path)) dropLink(l);
     const left = findLinks(rec.path);
     if (left.length) throw new Error(`Kapatılmadı: bağlantı silinemedi (${left[0]}).`);
     gx(GAME, ['worktree', 'remove', '--force', rec.path]);
@@ -1951,6 +1988,8 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
       scratch = join(tmpdir(), `eov-push-${Date.now()}`);
       try { writeFileSync(join(PLOCK, 'owner.json'), JSON.stringify({ pid: process.pid, scratch })); } catch {}
       gx(GAME, ['worktree', 'add', '-q', '--detach', scratch, I.commit]);
+      // Temiz kopya TAM olmalı (Ömer 2026-11-19): hafif (sparse) kopyada assets/source testleri atlanır, gönderim testinde hiçbiri atlanmasın
+      if (gxOk(scratch, ['config', '--get', '--bool', 'core.sparseCheckout']) && gx(scratch, ['config', '--get', '--bool', 'core.sparseCheckout']) === 'true') throw new Error('gönderim kopyası sparse açıldı (tam olmalı; assets/source testleri atlanırdı)');
       const version = hasNotes(groups) ? forced ?? nextVersion(scratch) : null;
       log(`> ${version ?? 'Sürümsüz iç güncelleme'} hazırlanıyor: ${live.map((e) => `${short(e.sid)}/${e.mode}`).join(', ')} · ${I.changed.length} dosya · taban ${base.slice(0, 7)}${dry ? ' (deneme)' : ''}`);
       const paths = [];
@@ -1985,6 +2024,7 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
           log(`> Golden kayıtları ${I.regenGolden ? 'yeniden üretildi' : 'değişti'}: ${names}`);
         }
         await runGates(scratch, I.changed, gate);
+        goldenText += ` ${lastTestSel}.`;
       } catch (err) {
         if (!err.red || retested) throw err;
         const culprits = culpritsOf(err.hits, I.owners);
@@ -2023,6 +2063,8 @@ async function pushIntegrated(picked, trigger, { dry, forced, started }) {
       if (version) try { deployLive(scratch, version); } catch (e) { notice(`${version} GitHub'a gitti ama canlı yayın hata verdi: ${firstLine(e)}`); }
       if (!E2E) spawn(process.execPath, [SELF, 'pages-check', sha, version ?? 'iç güncelleme'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
       try { maybeSim(sha, version, I.changed); } catch (e) { log(`!! denge simi başlatılamadı: ${firstLine(e)}`); }
+      // İşi gönderilen agent kopyaları (Ömer 2026-11-18): temiz, içeriği main'de, dokunulmayan kopyalar silinir; dal kalır
+      if (!E2E || ENVV.EOV_SWEEP_IN_PUSH) try { wtSweep(['--yes'], { say: log }); } catch (e) { log(`!! wt-sweep: ${firstLine(e)}`); if (e instanceof SweepStop) notice(`Gönderim sonu agent kopyası süpürmesi DURDU: ${firstLine(e)}. Kopyalar yerinde; asıl node_modules'a bak.`); }
       return 0;
     }
   } finally {
@@ -2061,6 +2103,357 @@ function clearEntries(list, started, sha) {
       } else delete q.sessions[e.sid];
     }
   });
+}
+
+// ---- Agent kopyaları: hafif açılış ve süpürme (Ömer 2026-11-18; C: 48 kopyayla dolmuştu, kopya başına ~2,6 GB) ----
+const WT_DIR = join(GAME, '.claude', 'worktrees');
+const mainModsOk = () => !existsSync(join(GAME, 'package.json')) || existsSync(join(GAME, 'node_modules', '.bin', 'vitest'));
+function slugify(raw, max = 30) {
+  const trMap = { ı: 'i', ğ: 'g', ü: 'u', ş: 's', ö: 'o', ç: 'c', İ: 'i' };
+  return String(raw ?? '').replace(/[ıığüşöçİ]/g, (c) => trMap[c]).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, max);
+}
+function worktreeList() {
+  const out = [];
+  let cur = null;
+  for (const l of gx(GAME, ['worktree', 'list', '--porcelain']).split(/\r?\n/)) {
+    if (l.startsWith('worktree ')) out.push((cur = { path: resolve(l.slice(9).trim()) }));
+    else if (!cur) continue;
+    else if (l.startsWith('HEAD ')) cur.head = l.slice(5).trim();
+    else if (l.startsWith('branch ')) cur.branch = l.slice(7).trim().replace(/^refs\/heads\//, '');
+    else if (l.startsWith('locked')) cur.locked = l.slice(6).trim() || 'kilitli';
+    else if (l.startsWith('prunable')) cur.prunable = true;
+  }
+  return out;
+}
+// Bağlantıyı (junction/symlink) YALNIZ bağlantı olarak kaldırır: rmdir /s OLMADAN, hedefin içine hiç yürümez (2026-10-18 ve 2026-11-18 olayları)
+// Sıra: fs.rmdirSync (kabuk yok, gerçek dolu klasörde ENOTEMPTY verir; 2026-11-19 denendi), sonra cmd rmdir (/s YOK), sonra unlink. Bağlantı değilse hiçbir şey yapmaz.
+// Sonucu çağıran findLinksStrict ile doğrular; doğrulanmadan worktree remove çalışmaz.
+// cmd'nin özel saydığı karakter içeren yol cmd'ye hiç verilmez (Node yalnız boşlukta tırnaklar; & ^ % ( ) tırnaksız gider)
+const cmdSafe = (p) => !/[&|<>^%()!"]/.test(p);
+const isLink = (p) => { try { return lstatSync(p).isSymbolicLink(); } catch { return false; } };
+function dropLink(p) {
+  if (!isLink(p)) return;
+  try { rmdirSync(p); } catch {}
+  if (isLink(p) && process.platform === 'win32' && cmdSafe(p)) { try { execFileSync('cmd', ['/d', '/c', 'rmdir', p], { stdio: 'ignore', windowsHide: true }); } catch {} }
+  if (isLink(p)) { try { unlinkSync(p); } catch {} }
+}
+// findLinks'in sıkı hâli (süpürme için): okunamayan klasör/öğe "bağlantı yok" sayılmaz, hata olarak döner (kapalı başarısız)
+function findLinksStrict(dir) {
+  const links = [];
+  const errors = [];
+  const walk = (d) => {
+    let names;
+    try { names = readdirSync(d); } catch (e) { errors.push(`${d} okunamadı (${e.code ?? firstLine(e)})`); return; }
+    for (const n of names) {
+      const p = join(d, n);
+      let st;
+      try { st = lstatSync(p); } catch (e) { errors.push(`${p} okunamadı (${e.code ?? firstLine(e)})`); continue; }
+      if (st.isSymbolicLink()) links.push(p);
+      else if (st.isDirectory() && n !== '.git') walk(p);
+    }
+  };
+  walk(dir);
+  return { links, errors };
+}
+// Bağlantı hedeflerinin ve asıl node_modules'un parmak izi: var mı, üst düzey öğe sayısı, klasör zamanı. Süpürmenin her adımında karşılaştırılır, değişirse süpürme DURUR.
+function dirPrint(p) {
+  try { const st = statSync(p); let n = -1; try { n = readdirSync(p).length; } catch {} return `${st.isDirectory() ? 'd' : 'f'}:${n}:${Math.floor(st.mtimeMs)}`; } catch { return 'yok'; }
+}
+class SweepStop extends Error {}
+function sweepGuard(links, insideOf) {
+  const targets = new Map();
+  const mainMods = join(GAME, 'node_modules');
+  targets.set(normPath(mainMods), mainMods);
+  for (const l of links) {
+    let t;
+    // Hedefi okunamayan bağlantı parmak izsiz kalmasın: kopyaya hiç dokunulmaz (çağıran yakalar)
+    try { t = resolve(dirname(l), readlinkSync(l)); } catch (e) { throw new Error(`bağlantı hedefi okunamadı (${l}: ${e.code ?? firstLine(e)}), dokunulmadı`); }
+    t = t.replace(/^\\\\\?\\/, '');
+    if (insideOf && (normPath(t) + '\\').startsWith(normPath(insideOf) + '\\')) continue;
+    targets.set(normPath(t), t);
+  }
+  const snap = new Map([...targets].map(([k, t]) => [k, dirPrint(t)]));
+  const vitestOk = mainModsOk();
+  return (when) => {
+    if (vitestOk && !mainModsOk()) throw new SweepStop(`ASIL node_modules EKSİK (${when}); süpürme durdu, npm install gerekebilir`);
+    for (const [k, t] of targets) {
+      const now = dirPrint(t);
+      if (now !== snap.get(k)) throw new SweepStop(`bağlantı hedefi değişti (${when}): ${t} [${snap.get(k)} -> ${now}]; süpürme durdu, elle bak`);
+    }
+  };
+}
+// Kopyadaki en yeni dosya zamanı (bağlantılar, .git ve node_modules hariç)
+function newestMtime(dir) {
+  let max = 0;
+  const walk = (d) => {
+    let names;
+    try { names = readdirSync(d); } catch { return; }
+    for (const n of names) {
+      if (n === '.git' || n === 'node_modules') continue;
+      const p = join(d, n);
+      let st;
+      try { st = lstatSync(p); } catch { continue; }
+      if (st.isSymbolicLink()) continue;
+      if (st.mtimeMs > max) max = st.mtimeMs;
+      if (st.isDirectory()) walk(p);
+    }
+  };
+  walk(dir);
+  return max;
+}
+// Son pencerede yazılmış agent oturum kayıtları (subagents/*.jsonl; son 1 MB) bu kopyanın yolunu anıyor mu. Ana sohbet kaydı sayılmaz:
+// Lead wt-sweep çıktısını okuyunca her adı anar, süpürme hiç çalışmazdı. Lead'in kendi işi kirli/gönderilmemiş dosya olarak zaten korunur.
+function transcriptHits(names, sinceMs) {
+  const hits = new Map();
+  if (!names.length || !existsSync(SESSIONS_DIR)) return hits;
+  const files = [];
+  const walk = (d, depth) => {
+    let list;
+    try { list = readdirSync(d); } catch { return; }
+    for (const n of list) {
+      const p = join(d, n);
+      let st;
+      try { st = statSync(p); } catch { continue; }
+      if (st.isDirectory()) { if (depth < 3) walk(p, depth + 1); }
+      else if (n.endsWith('.jsonl') && basename(d) === 'subagents' && st.mtimeMs >= sinceMs) files.push([p, st.size]);
+    }
+  };
+  walk(SESSIONS_DIR, 0);
+  for (const [p, size] of files) {
+    let text = '';
+    try {
+      const len = Math.min(size, 1 << 20);
+      const buf = Buffer.alloc(len);
+      const fd = openSync(p, 'r');
+      try { readSync(fd, buf, 0, len, size - len); } finally { closeSync(fd); }
+      text = buf.toString('utf8').toLowerCase().replace(/\\\\/g, '/').replace(/\\/g, '/');
+    } catch { continue; }
+    for (const n of names) {
+      if (hits.has(n)) continue;
+      const key = `.claude/worktrees/${n.toLowerCase()}`;
+      for (let i = text.indexOf(key); i >= 0; i = text.indexOf(key, i + 1)) {
+        const c = text[i + key.length];
+        if (!c || !/[a-z0-9_.-]/.test(c)) { hits.set(n, p); break; }
+      }
+    }
+  }
+  return hits;
+}
+// Kendiliğinden üretilen ve silinmesi iş kaybettirmeyen yoksayılmış yollar; geri kalanı (ör. *.log) --force olmadan kopyayı korur
+const REGEN_IGNORED = /^(cloudflare\/)?(node_modules|dist|\.vite|\.wrangler)(\/|$)/;
+function sweepCheck(w, ctx) {
+  const name = basename(w.path);
+  const r = { name, path: w.path, branch: w.branch ?? '(dalsız)', keep: [], note: [] };
+  if (w.locked) r.keep.push(`git worktree kilidi (${w.locked})`);
+  // Bu süreç (ya da aracın kendisi) bu kopyanın içinden çalışıyorsa asla silinmez: süreç denetimi kendi pid'ini saymıyor
+  const inside = (p) => (normPath(p) + '\\').startsWith(normPath(w.path) + '\\');
+  if (inside(START_CWD) || inside(TOOL_GAME)) r.keep.push('bu komut bu kopyanın içinden çalışıyor');
+  if (!existsSync(w.path)) { r.gone = true; return r; }
+  // (a) temizlik: değişiklik ve izlenmeyen dosya yok; yoksayılmışlar listelenir
+  let st = [];
+  try { st = gx(w.path, ['--no-optional-locks', 'status', '--porcelain', '-z', '--ignored=matching', '--untracked-files=normal']).split('\0').filter(Boolean); }
+  catch (e) { r.keep.push(`git status olmadı (${firstLine(e)})`); }
+  const dirty = [];
+  const ignored = [];
+  for (let k = 0; k < st.length; k++) {
+    const x = st[k];
+    // -z biçiminde ad değişikliği/kopya girdisinin ardından eski ad ayrı alan olarak gelir: o alan atlanır
+    if (/[RC]/.test(x.slice(0, 2))) k++;
+    const p = x.slice(3).replace(/\/$/, '');
+    if (/^\.claude\/worktrees(\/|$)/.test(p)) continue;
+    if (x.startsWith('!! ')) { if (!REGEN_IGNORED.test(p)) ignored.push(p); }
+    else if (x[1] !== ' ' || x[0] !== ' ') dirty.push(p);
+  }
+  if (dirty.length) r.keep.push(`değişiklik/izlenmeyen dosya: ${dirty.slice(0, 5).join(', ')}${dirty.length > 5 ? ` +${dirty.length - 5}` : ''}`);
+  if (ignored.length) {
+    const t = `yoksayılmış dosya: ${ignored.slice(0, 5).join(', ')}${ignored.length > 5 ? ` +${ignored.length - 5}` : ''}`;
+    if (ctx.force) r.note.push(`${t} (--force: silinir)`); else r.keep.push(`${t} (silmek için --force)`);
+  }
+  for (const s of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply', 'index.lock']) {
+    try { if (existsSync(resolve(w.path, gx(w.path, ['rev-parse', '--git-path', s])))) r.keep.push(`yarım git işlemi (${s})`); } catch {}
+  }
+  // (b) iş gitmiş mi: uç origin/main'e, main'e ya da bir chat/* veya lead/* dalına dahil; ya da main'e birleştirmek hiçbir şey eklemiyor (gönderim squash'lıdır)
+  const tip = w.head;
+  let merged = null;
+  if (tip) {
+    for (const ref of ctx.refs) if (isAncestor(tip, ref)) { merged = ref.replace(/^refs\/(heads|remotes)\//, ''); break; }
+    if (!merged) try { if (!revHasWork(tip)) merged = 'içeriği origin/main\'de'; } catch {}
+    if (!merged) try {
+      const changed = diffNames(gx(GAME, ['merge-base', ORIGIN_MAIN, tip]), tip);
+      if (changed.every((f) => blobAt(tip, f) === blobAt(ORIGIN_MAIN, f))) merged = 'değişen her dosya origin/main\'deki ile aynı';
+    } catch {}
+  }
+  if (merged) r.note.push(`iş gitmiş: ${merged}`);
+  else r.keep.push('dalda gönderilmemiş/birleştirilmemiş iş var');
+  // (c) kullanılmıyor: son dokunuş, agent oturum kaydı, çalışan süreç
+  let gitdir = null;
+  try { gitdir = resolve(w.path, gx(w.path, ['rev-parse', '--git-dir'])); } catch {}
+  const times = [];
+  for (const p of [w.path, gitdir, gitdir && join(gitdir, 'HEAD'), gitdir && join(gitdir, 'index'), gitdir && join(gitdir, 'logs', 'HEAD')]) {
+    if (!p) continue;
+    try { times.push(statSync(p).mtimeMs); } catch {}
+  }
+  times.push(newestMtime(w.path));
+  const last = Math.max(0, ...times);
+  const idle = Math.max(0, Math.floor((ctx.now - last) / 60000));
+  r.idleMin = idle;
+  if (ctx.now - last < ctx.idleMin * 60000) r.keep.push(`son dokunuş ${idle} dk önce (< ${ctx.idleMin} dk)`);
+  if (ctx.tx.has(name.toLowerCase())) r.keep.push(`son ${ctx.idleMin} dk'da bir agent oturumu bu kopyayı andı (${basename(ctx.tx.get(name.toLowerCase()))})`);
+  if (!ctx.procsOk) r.keep.push('süreç listesi alınamadı');
+  else {
+    const me = normPath(w.path);
+    const p = ctx.procs.find((x) => { if (x.id === process.pid || x.id === process.ppid) return false; const c = normPath(x.cmd ?? ''); const i = c.indexOf(me); return i >= 0 && !/[a-z0-9_.-]/.test(c[i + me.length] ?? ''); });
+    if (p) r.keep.push(`çalışan süreç: pid ${p.id}`);
+  }
+  return r;
+}
+// Tek kopyayı güvenli siler: önce bağlantılar (yalnız bağlantı), kaldığı doğrulanır, sonra worktree remove; her adımda asıl node_modules denetlenir. DAL SİLİNMEZ.
+// Bağlantı hedefi ya da asıl node_modules herhangi bir adımda değişirse SweepStop atılır ve tüm süpürme durur (Ömer 2026-11-19).
+// git worktree remove --force ALMAZ: git'in kendi "kirli/izlenmeyen dosya var" reddi ikinci emniyet olarak kalır (yoksayılmış dosyaları zaten siler).
+function removeAgentCopy(path) {
+  if (normPath(dirname(path)) !== normPath(WT_DIR) || !/^agent-/i.test(basename(path))) return `agent kopyası klasörü değil (${path}), dokunulmadı`;
+  const scan = findLinksStrict(path);
+  if (scan.errors.length) return `kopya tam okunamadı (${scan.errors[0]}), dokunulmadı`;
+  let guard;
+  try { guard = sweepGuard(scan.links, path); } catch (e) { return firstLine(e); }
+  guard('başlamadan');
+  // Kullanımda mı: Windows'ta cwd'si ya da açık dosyası bu kopyada olan süreç varken klasör taşınamaz (2026-11-19 denendi: EBUSY/EPERM).
+  // Komut satırı denetiminin göremediği süreçler (elle açılmış sunucu, kabuk) için; taşınamazsa kopya kalır
+  const probe = `${path}.sweep-probe`;
+  if (existsSync(probe)) return `deneme klasörü zaten var (${probe}), dokunulmadı`;
+  try { renameSync(path, probe); } catch (e) { return `kopya kullanımda (klasör taşınamadı: ${e.code ?? firstLine(e)}), dokunulmadı`; }
+  try { renameSync(probe, path); } catch (e) { throw new SweepStop(`kopya ${probe} adına taşındı ama geri alınamadı (${e.code ?? firstLine(e)}); elle eski adına çevir`); }
+  for (const l of scan.links) { dropLink(l); guard(`bağlantı kaldırılınca: ${l}`); }
+  const after = findLinksStrict(path);
+  if (after.errors.length || after.links.length) return `bağlantı silinemedi ya da doğrulanamadı (${after.links[0] ?? after.errors[0]}), worktree remove çalışmadı`;
+  try { gx(GAME, ['worktree', 'remove', path]); } catch (e) { if (existsSync(path)) { guard('worktree remove hatası sonrası'); return `git worktree remove olmadı (${firstLine(e)})`; } }
+  guard('worktree remove sonrası');
+  if (existsSync(path)) {
+    const again = findLinksStrict(path);
+    if (again.errors.length || again.links.length) return 'remove sonrası bağlantı ya da okunamayan öğe çıktı, klasör yerinde bırakıldı';
+    try { rmSync(path, { recursive: true, force: true }); } catch {}
+    guard('klasör silinince');
+  }
+  return existsSync(path) ? 'klasör kısmen kaldı (kilitli dosya?)' : null;
+}
+function wtSweep(argv = [], { say = console.log } = {}) {
+  const yes = argv.includes('--yes');
+  const force = argv.includes('--force');
+  const ii = argv.indexOf('--idle');
+  const idleMin = ii >= 0 ? Number(argv[ii + 1]) : SWEEP_IDLE_MIN;
+  if (!Number.isFinite(idleMin) || idleMin < 0) throw new Error('kullanım: wt-sweep [--yes] [--force] [--idle <dk>]');
+  const regd = worktreeList().filter((w) => normPath(dirname(w.path)) === normPath(WT_DIR) && /^agent-/i.test(basename(w.path)));
+  const known = new Set(regd.map((w) => basename(w.path).toLowerCase()));
+  const loose = existsSync(WT_DIR) ? readdirSync(WT_DIR).filter((n) => /^agent-/i.test(n) && !known.has(n.toLowerCase()) && (() => { try { return lstatSync(join(WT_DIR, n)).isDirectory(); } catch { return false; } })()) : [];
+  if (!regd.length && !loose.length) { say('> wt-sweep: agent kopyası yok.'); return []; }
+  const now = Date.now();
+  const refs = [ORIGIN_MAIN, 'refs/heads/main'];
+  try { refs.push(...gx(GAME, ['for-each-ref', '--format=%(refname)', 'refs/heads/chat', 'refs/heads/lead']).split(/\r?\n/).filter(Boolean)); } catch {}
+  const procList = () => {
+    if (E2E) return { procs: [], procsOk: true };
+    try { return { procs: [].concat(psJson('@(Get-CimInstance Win32_Process | ForEach-Object { [pscustomobject]@{ id=[int]$_.ProcessId; cmd=[string]$_.CommandLine } }) | ConvertTo-Json -Compress') ?? []), procsOk: true }; }
+    catch { return { procs: [], procsOk: false }; }
+  };
+  const ctx = { now, idleMin, force, ...procList(), refs: refs.filter((x) => gxOk(GAME, ['rev-parse', '--verify', '-q', x])), tx: transcriptHits([...known], now - idleMin * 60000) };
+  const rows = regd.map((w) => sweepCheck(w, ctx));
+  const dele = rows.filter((r) => !r.keep.length);
+  const kept = rows.filter((r) => r.keep.length);
+  say(`> wt-sweep${yes ? '' : ' (liste; silmek için --yes)'}: ${rows.length} agent kopyası, ${dele.length} silinebilir, ${kept.length} kalıyor${loose.length ? `, ${loose.length} kayıtsız klasör` : ''}. Dallar silinmez.`);
+  const done = [];
+  for (const r of dele) {
+    let why = r.gone ? 'klasörü yok (git kaydı temizlenir)' : `${r.note.join('; ')}; ${r.idleMin} dk dokunulmamış`;
+    if (!yes) { say(`  SİLİNİR  ${r.name} [${r.branch}] · ${why}`); continue; }
+    if (r.gone) { done.push(r.name); say(`  silindi  ${r.name} [${r.branch}] · ${why}`); continue; }
+    // Silmeden hemen önce aynı denetim yeniden: listeden bu yana agent başlamış, dosya yazmış ya da süreç açmış olabilir
+    const w = worktreeList().find((x) => normPath(x.path) === normPath(r.path));
+    if (!w) { say(`  !! ${r.name}: git kaydı kayboldu, dokunulmadı`); continue; }
+    const fresh = sweepCheck(w, { ...ctx, now: Date.now(), ...procList(), tx: transcriptHits([basename(r.path).toLowerCase()], Date.now() - idleMin * 60000) });
+    if (fresh.keep.length || fresh.gone) { say(`  KALIR    ${r.name} [${r.branch}] · son denetimde: ${fresh.gone ? 'klasör kayboldu' : fresh.keep.join('; ')}`); continue; }
+    why = `${fresh.note.join('; ')}; ${fresh.idleMin} dk dokunulmamış`;
+    let err;
+    try { err = removeAgentCopy(r.path); } catch (e) { if (e instanceof SweepStop) { say(`  !! DURDU ${r.name}: ${e.message}`); throw e; } err = `beklenmeyen hata, sonraki kopyaya geçildi: ${firstLine(e)}`; }
+    if (err) say(`  !! ${r.name}: ${err}`);
+    else { done.push(r.name); say(`  silindi  ${r.name} [${r.branch}] · ${why}`); }
+  }
+  for (const r of kept) say(`  KALIR    ${r.name} [${r.branch}] · ${r.keep.join('; ')}${r.note.length ? ` (${r.note.join('; ')})` : ''}`);
+  for (const n of loose) {
+    const p = join(WT_DIR, n);
+    let inside = null;
+    try { inside = readdirSync(p); } catch {}
+    const scan = findLinksStrict(p);
+    const empty = inside !== null && !scan.errors.length && inside.length === scan.links.length && scan.links.every((l) => dirname(l) === p);
+    if (!yes || !empty) { say(`  ${empty ? 'SİLİNİR ' : 'KALIR   '} ${n} · git kaydı yok${empty ? ', boş klasör' : inside === null || scan.errors.length ? ', okunamadı (elle bak)' : `, içinde ${inside.length} öğe (elle bak)`}`); continue; }
+    let guard;
+    try { guard = sweepGuard(scan.links, p); } catch (e) { say(`  !! ${n}: ${firstLine(e)}`); continue; }
+    try {
+      guard('başlamadan');
+      for (const l of scan.links) { dropLink(l); guard(`bağlantı kaldırılınca: ${l}`); }
+    } catch (e) { say(`  !! DURDU ${n}: ${e.message}`); throw e; }
+    const after = findLinksStrict(p);
+    if (after.links.length || after.errors.length) { say(`  !! ${n}: bağlantı silinemedi ya da doğrulanamadı`); continue; }
+    try { rmdirSync(p); } catch {}
+    try { if (existsSync(p) && cmdSafe(p)) execFileSync('cmd', ['/d', '/c', 'rmdir', p], { stdio: 'ignore', windowsHide: true }); } catch {}
+    if (existsSync(p)) say(`  !! ${n}: boş klasör silinemedi (başka bir program tutuyor olabilir)`);
+    else { done.push(n); say(`  silindi  ${n} · boş kayıtsız klasör`); }
+  }
+  if (yes) gxOk(GAME, ['worktree', 'prune']);
+  if (yes && !mainModsOk()) say('!! UYARI: asıl node_modules eksik görünüyor, npm install gerekebilir');
+  const disk = diskWarning();
+  if (disk) say(disk);
+  return done;
+}
+
+// Agent kopyası (Ömer 2026-11-18): varsayılan hafif (sparse; LIGHT_PATTERNS dışı yollar checkout edilmez, commit'te silinmiş görünmez), --full tam kopya
+function wtOpenAgent(argv) {
+  const name = slugify(argv.find((a, i) => !a.startsWith('--') && argv[i - 1] !== '--from'), 40);
+  if (!name) throw new Error('kullanım: wt-open-agent <ad> [--from <dal|kopya-yolu>] [--full]');
+  const full = argv.includes('--full');
+  const fi = argv.indexOf('--from');
+  const from = fi >= 0 ? argv[fi + 1] : null;
+  if (fi >= 0 && !from) throw new Error('--from bir dal ya da kopya yolu ister');
+  let base;
+  let baseName;
+  if (!from) {
+    if (!gxOk(GAME, ['rev-parse', '--verify', '-q', ORIGIN_MAIN])) throw new Error('origin/main yok; --from ver');
+    base = revOf(ORIGIN_MAIN); baseName = 'origin/main';
+  } else if (existsSync(from) && statSync(from).isDirectory()) {
+    base = revOf('HEAD', from); baseName = `${from} (HEAD)`;
+  } else {
+    try { base = gx(GAME, ['rev-parse', '--verify', `${from}^{commit}`]); } catch { throw new Error(`taban bulunamadı: ${from}`); }
+    baseName = from;
+  }
+  const path = join(WT_DIR, `agent-${name}`);
+  const branch = `agent/${name}`;
+  if (existsSync(path)) throw new Error(`kopya zaten var: ${path}`);
+  if (gxOk(GAME, ['rev-parse', '--verify', '-q', `refs/heads/${branch}`])) throw new Error(`dal zaten var: ${branch} (başka ad ver ya da eski kopyayı kullan)`);
+  mkdirSync(WT_DIR, { recursive: true });
+  if (full) gx(GAME, ['worktree', 'add', '-q', '-b', branch, path, base]);
+  else {
+    gx(GAME, ['worktree', 'add', '-q', '--no-checkout', '-b', branch, path, base]);
+    try {
+      // Sıra önemli: boş index'le commit atılırsa her dosya silinmiş görünür. Önce kalıp, sonra index + dosyalar, sonra doğrulama
+      gx(path, ['sparse-checkout', 'set', '--no-cone', ...LIGHT_PATTERNS]);
+      gx(path, ['read-tree', '-mu', 'HEAD']);
+      gx(path, ['sparse-checkout', 'reapply']);
+      const st = gx(path, ['--no-optional-locks', 'status', '--porcelain']);
+      if (st) throw new Error(`hafif kopya temiz değil: ${st.split(/\r?\n/).slice(0, 3).join(' | ')}`);
+      if (existsSync(join(GAME, 'package.json')) && !existsSync(join(path, 'package.json'))) throw new Error('hafif kopyada package.json yok');
+    } catch (e) {
+      try { gx(GAME, ['worktree', 'remove', '--force', path]); } catch {}
+      gxOk(GAME, ['branch', '-D', branch]);
+      throw new Error(`hafif kopya kurulamadı, geri alındı: ${firstLine(e)}`);
+    }
+  }
+  let linked = false;
+  if (existsSync(join(GAME, 'node_modules'))) {
+    try {
+      if (process.platform === 'win32') execFileSync('cmd', ['/d', '/c', 'mklink', '/J', join(path, 'node_modules'), join(GAME, 'node_modules')], { stdio: 'ignore', windowsHide: true });
+      else execFileSync('ln', ['-s', join(GAME, 'node_modules'), join(path, 'node_modules')], { stdio: 'ignore' });
+      linked = lexists(join(path, 'node_modules'));
+    } catch {}
+  }
+  console.log(`Agent kopyası hazır (${full ? 'tam' : `hafif: ${LIGHT_TEXT}`}): ${path}\nDal: ${branch} · taban: ${baseName} ${base.slice(0, 8)}\nnode_modules: ${linked ? 'ana kopyaya junction' : 'YOK (npm ci gerekir)'}\nBitince: kendi dalına commit; Lead dalı birleştirir. Kopya iş gidince wt-sweep ile kalkar (dal kalır). Silmeden önce junction kaldırılır, elle rm -rf YAPMA.`);
+  return { path, branch, base };
 }
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -2110,6 +2503,8 @@ const main = {
         : q.autoShipAt ? `Otomatik gönderim ${clock(q.autoShipAt)}, daha önce bir gönderim olursa ona katılır.` : 'Süren gönderim bitince sıradaki otomatik gönderime girer.';
       console.log(`Hazır (${e.mode}, ${rec ? rec.branch : e.files.length + ' dosya'}). ${when}`);
     });
+    const disk = diskWarning();
+    if (disk) console.log(disk);
     try { autoShipKick(); } catch {}
   },
   // Hazır girdinin sürüm notunu değiştirir (eklemez); isteğe bağlı, düzenlenmeyen not da gönderimi durdurmaz
@@ -2163,6 +2558,8 @@ const main = {
   cutover,
   'wt-open': () => wtOpen(args[0], args[1]),
   'wt-close': () => wtClose(args[0]),
+  'wt-open-agent': () => { wtOpenAgent(args); },
+  'wt-sweep': () => { wtSweep(args); },
   'wt-sync': () => wtSync(args[0]),
   'wt-files': () => wtFilesRefresh(),
   'auto-wait': async () => process.exit(await autoWait()),
@@ -2172,7 +2569,7 @@ const main = {
   push: async () => process.exit(background('push', args) ? 0 : await push(args[0], args.slice(1))),
   eod: async () => process.exit(background('eod', args) ? 0 : await push('eod', args)),
 }[cmd];
-if (!main) { console.error('Komut: status | mode | add | ready | notes | retry | seal | hold | push | eod | doctor | drop | cutover | wt-open | wt-close | legacy-merged'); process.exit(1); }
+if (!main) { console.error('Komut: status | mode | add | ready | notes | retry | seal | hold | push | eod | doctor | drop | cutover | wt-open | wt-close | wt-open-agent | wt-sweep | legacy-merged'); process.exit(1); }
 try { await main(); } catch (e) {
   // Hook'lar açık kalır: iç hata hiçbir araç çağrısını engellemez
   if (cmd.startsWith('hook-')) { try { appendFileSync(LOG, `[${new Date().toISOString()}] !! ${cmd} iç hata: ${firstLine(e)}\n`); } catch {} process.exit(0); }

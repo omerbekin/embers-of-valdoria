@@ -1,22 +1,23 @@
 {
   "id": "antimage",
-  "name": "Anti-Mage",
+  "name": "Redtithe",
   "spriteId": "antimage",
-  "color": "#9b59d0",
+  "color": "#a3192e",
   "logo": "nullsphere",
-  "role": "Mana Hunter",
-  "blurb": "Mana hunter who burns enemy spellpower and strikes faster when enemies cast on her team.",
+  "role": "Blood Hunter",
+  "blurb": "Blood hunter who turns torn-out mana into blood and pays in life when the bar runs dry.",
   "frontPriority": 3.5,
   "range": 4,
   "attributes": {
-    "str": 8,
-    "int": 26,
-    "dex": 12,
+    "str": 14,
+    "int": 10,
+    "dex": 22,
     "luck": 14
   },
-  "primary": "int",
+  "primary": "dex",
   "armor": 12,
-  "magicArmor": 40,
+  "magicArmor": 0,
+  "_magicArmor": "Ömer 2026-11-18: taban büyü zırhı 0; büyü zırhı TAMAMEN kan barından = (formulas.bloodBar.magicArmorBase + INT x magicArmorPerInt) x (maks - kan) / maks (25 + INT x 1,5 — Ömer 2026-11-18 ikinci düzeltme; kan 0'da tam, 100'de 0). Item / ağaç düz büyü zırhı üstüne eklenir.",
   "ai": "antimage",
   "skills": [
     "mana_burn",
@@ -26,13 +27,16 @@
   ],
   "passive": {
     "id": "spellbreaker_instinct",
-    "name": "Spellbreaker's Instinct",
+    "name": "Blood Tithe",
     "icon": "spellbreaker",
-    "_not": "Ömer 2026-10-29: Mana Overflow'un yerine (manaOverflow efekt kodu motorda duruyor, AM kitinden çıktı; ağaçtaki Mana Overflow düğümleri inactive). Bir düşman AM'in takımından birine MP ödediği bir skill atınca AM'in sıra sayacı eşiğin advance oranı kadar öne kayar; AM'in iki turu arasında en çok bir kez. İkon YER TUTUCU (overflow, eski pasifin ikonu; ödünç). Sayı PROVİZYON.",
-    "text": "When an enemy uses a skill that costs MP on your team, your next turn comes 10% sooner (once per round).",
+    "_not": "Redtithe (Ömer 2026-11-17): eski Spellbreaker's Instinct'in yerine, iç id AYNI (kayıt / ağaç uyumu). Bir düşman Redtithe'in takımından birine MP ödediği bir skill atınca sıra sayacı eşiğin advance + (bloodAdvance + bloodAdvancePerDex x DEX) x kan / maks kan oranı kadar öne kayar; iki turu arasında en çok bir kez. Ömer 2026-11-18: kan payı DEX ile doğrusal (0,1 + DEX x 0,0045; DEX 22'de ~0,2, eskisiyle aynı). Hız YALNIZ buradan. advance = ağaç düğümlerinin düz eki (taban 0; barla ölçeklenmez, Lead varsayımı). İkon YER TUTUCU (eski Instinct ikonu, ödünç).",
+    "text": "When an enemy uses a skill that costs MP on your team, your next turn comes sooner: (10% + DEX x0.45%) x your blood fill (about 20% at a full bar with 22 DEX; once per round). Magic armor up to 25 + INT x1.5: full at 0 blood, none at 100 blood.",
     "effect": {
       "type": "spellbreakerInstinct",
-      "advance": 0.1
+      "advance": 0,
+      "bloodAdvance": 0.1,
+      "bloodAdvancePerDex": 0.0045
     }
-  }
+  },
+  "resource": "blood"
 }

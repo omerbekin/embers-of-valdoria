@@ -22,6 +22,7 @@ export function stateHash(battle: Battle): string {
     c.hp,
     c.mp,
     c.rage ?? null,
+    ...(c.maxBlood !== undefined ? [c.blood ?? 0] : []), // kan barı (yalnız kan barlı birim; diğerlerinde dizi aynı)
     c.shield,
     c.magicShield,
     c.board,

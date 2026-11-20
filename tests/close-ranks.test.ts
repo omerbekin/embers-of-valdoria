@@ -27,14 +27,14 @@ const PARTY = cells({ 0: 'defender', 1: 'warrior', 2: 'archer', 4: 'mage', 5: 'p
 const ENEMY = cells({ 0: 'warrior', 1: 'warrior', 2: 'warrior' });
 
 describe('Close Ranks', () => {
-  it('veri: Defender Guard yerine Close Ranks taşır; %50, 3 tur, sıra (row); menzil 2, 10 MP, cooldown 5', () => {
+  it('veri: Defender Guard yerine Close Ranks taşır; %50, 3 tur, sıra (row); menzil 2, MP bedeli, cooldown 4', () => {
     expect(content.classes.defender!.skills.slice(0, 4)).toEqual(['tremor_slam', 'taunt', 'close_ranks', 'fist_crush']);
     const cr = content.skills.close_ranks!;
     expect(cr).toMatchObject({ name: 'Close Ranks', target: 'single_ally', excludeSelf: true, splash: { pattern: 'row' } });
     expect(share()).toMatchObject({ share: 0.5, turns: 3 });
     // eski Guard'ın menzil ve yarım turn'ü (tests/legacy-skills.ts > guard); Ömer 2026-10-20: cooldown 4 -> 5, bedel 2 -> 10 MP
     // bedel değeri veriden (balance-tester 2026-10-24 mana turu: 10 -> 12)
-    expect([cr.range, cr.cost.resource, cr.cooldown, cr.turnCost]).toEqual([2, 'mp', 5, 0.5]);
+    expect([cr.range, cr.cost.resource, cr.cooldown, cr.turnCost]).toEqual([2, 'mp', 4, 0.5]); // Ömer 2026-11-18: cooldown 5 -> 4
     expect(cr.cost.amount).toBeGreaterThan(0);
     expect(content.skills.guard).toBeUndefined(); // oyundan kalktı (Thane of the Deep'in shield_wall kopyası kendi verisiyle sürer)
     expect(describeSkill(cr, at(grid(PARTY, ENEMY), 'party', 0).stats, content.formulas).lines.join(' ')).toMatch(/allies in the chosen row pass 50%/);
@@ -63,6 +63,8 @@ describe('Close Ranks', () => {
       const guarded = grid(PARTY, ENEMY, seed);
       const def = at(guarded, 'party', 0);
       act(guarded, def.uid, 'close_ranks', at(guarded, 'party', 1).uid);
+      // Ömer 2026-11-18: Guard'lı Archer (Defender'a komşu değil) aura payı zırhı alır; karşılaştırma aynı geçerli zırhla (plain Archer'a aynı ek)
+      at(plain, 'party', 2).stats.armor += guarded.auraArmor(at(guarded, 'party', 2));
       // komşu Archer'a (yuva 2) vuruş
       const hit = (b: Battle) => act(b, at(b, 'enemy', 0).uid, 'melee_attack', at(b, 'party', 2).uid);
       const sum = (ev: BattleEvent[], uid: string) => ev.filter((e): e is Extract<BattleEvent, { type: 'damage' }> => e.type === 'damage' && e.target === uid).reduce((s, e) => s + e.amount + e.absorbed, 0);

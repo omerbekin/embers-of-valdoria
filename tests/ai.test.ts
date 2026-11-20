@@ -330,10 +330,10 @@ describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
     expect(ex.candidates.find((c) => c.verdict === 'chosen')!.score).toBe(top);
   });
 
-  it('Ley Brand: hedeflerin hepsi daha birkaç tur Branded ise brand terimi 0 (yeniden basmaya değer vermez)', () => {
+  it('Blood Brand: hedeflerin hepsi daha birkaç tur Blood Branded ise brand terimi 0 (yeniden basmaya değer vermez)', () => {
     const b = make(['antimage', 'warrior', 'archer', 'mage'], ['warrior', 'mage', 'druid', 'archer']);
     const am = uid(b, 'party', 'antimage');
-    for (const e of b.living('enemy')) e.statuses.push({ kind: 'branded', turns: 3, source: am, brand: { turns: 3, pool: 0, pct: 0.2, costMult: 1.5, burnPct: 0.5, explodePct: 0.5, element: 'arcane' } });
+    for (const e of b.living('enemy')) e.statuses.push({ kind: 'blood_brand', turns: 3, source: am });
     const ex = explainChoice(b, am, ai)!;
     const brand = ex.candidates.filter((c) => c.skill === 'drain_field');
     expect(brand.length).toBeGreaterThan(0);
@@ -341,28 +341,83 @@ describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
   });
 
   it('düşmanların manası yoksa ve hepsi zaten taze Branded ise Ley Brand seçmez; hasar skill\'ine geçer', () => {
-    // 2026-10-29: Ley Brand MP'siz düşmana tainted mana açar ve işaret (markDamagePct) verir; taze Brand'li düşmana yeniden basmanın değeri 0 olmalı
+    // 2026-11-17 Redtithe: taze Blood Brand'li düşmana yeniden basmanın değeri 0 olmalı
     const b = make(['antimage', 'warrior', 'archer', 'mage'], ['warrior', 'mage', 'druid', 'archer']);
     const am = uid(b, 'party', 'antimage');
     for (const c of b.living('enemy')) {
       c.maxMp = 0;
       c.mp = 0; // yakılacak mana yok (ve eksik mana bonusu da yok)
-      c.statuses.push({ kind: 'branded', turns: 3, source: am, brand: { turns: 3, pool: 0, pct: 0.2, costMult: 1.5, burnPct: 0.5, explodePct: 0.5, element: 'arcane' } });
+      c.statuses.push({ kind: 'blood_brand', turns: 3, source: am });
     }
+    b.get(am)!.skills = b.get(am)!.skills.filter((id) => id !== 'spell_ward'); // Mirror Vein (takım kalkanı) bu testin konusu değil
     const choice = chooseAction(b, am, ai);
     expect(choice?.skillId).not.toBe('drain_field');
     expect(choice?.reason).toBe('damage');
   });
 
-  it('Anti-Mage canı azken kendine büyü kalkanı basar', () => {
+  it('Mirror Vein: büyü atabilecek düşman varken vein (kan) terimi > 0; hiç büyü tehdidi yoksa ya da dostlar zaten bu kalkanı taşıyorsa 0', () => {
     const b = make(['antimage', 'warrior', 'archer', 'mage'], ['warrior', 'mage', 'druid', 'archer']);
-    // burn ve eksik-mana (kill) önceliği devreye girmesin; düşman Mage'in MP'si kalır (büyü kalkanının karşılayacağı büyü tehdidi; madde 261:
-    // Double Strike zayıflayınca yalnızca fiziksel tehdit Spell Ward'a değer kazandırmıyor, ki doğru: büyü kalkanı fiziksel hasarı emmez)
-    for (const c of b.living('enemy')) if (c.defId !== 'mage') { c.maxMp = 0; c.mp = 0; }
-    const am = b.get(uid(b, 'party', 'antimage'))!;
-    am.hp = Math.round(am.maxHp * 0.35); // madde 241: eşik veride 0,45 (ölçümle düşürüldü)
-    am.skills = am.skills.filter((s) => s !== 'drain_field'); // madde 261: güçlenen Drain Field (Silence) MP'li Mage'e karşı ayrı bir yarış; burada kalkan ile saldırı kıyaslanır
-    expect(chooseAction(b, am.uid, ai)).toMatchObject({ skillId: 'spell_ward', targetUid: am.uid, reason: 'shield' });
+    const rt = b.get(uid(b, 'party', 'antimage'))!;
+    rt.blood = content.formulas.bloodBar!.start; // bedeli ödenebilsin, kazanılan kana yer olsun
+    const vein = () => {
+      const c = explainChoice(b, rt.uid, ai)!.candidates.filter((x) => x.skill === 'spell_ward');
+      return Math.max(0, ...c.map((x) => x.terms?.vein ?? 0));
+    };
+    expect(vein()).toBeGreaterThan(0);
+    for (const a of b.living('party')) a.shieldHooks = [{ skill: 'spell_ward', caster: rt.uid, magic: false, amount: 5, onAbsorb: {}, turns: 2 }];
+    expect(vein()).toBe(0);
+    for (const a of b.living('party')) delete a.shieldHooks;
+    for (const c of b.living('enemy')) c.skills = c.skills.filter((id) => !content.skills[id]!.effects.some((e) => e.type === 'damage' && e.damageType === 'magic')); // büyü vuruşu kalmadı
+    expect(vein()).toBe(0);
+  });
+
+  describe('Mirror Vein kan değeri modeli (2026-11-18: dost başına en çok bir büyü emişi, 1 - Π(1 - q))', () => {
+    const isMagic = (id: string) => content.skills[id]!.effects.some((e) => e.type === 'damage' && e.damageType === 'magic');
+    const setup = () => {
+      const b = make(['antimage', 'warrior', 'archer', 'mage'], ['warrior', 'mage', 'druid', 'archer']);
+      const rt = b.get(uid(b, 'party', 'antimage'))!;
+      rt.blood = content.formulas.bloodBar!.start;
+      return { b, rt };
+    };
+    const veinOn = (b: ReturnType<typeof make>, actor: string, target?: string) => {
+      const c = explainChoice(b, actor, ai)!.candidates.filter((x) => x.skill === 'spell_ward' && (!target || x.target === target));
+      return Math.max(0, ...c.map((x) => x.terms?.vein ?? 0));
+    };
+    const casters = (b: ReturnType<typeof make>) => b.living('enemy').filter((c) => c.skills.some(isMagic));
+
+    it('birden çok büyücü varken değer tek büyücüden yüksek', () => {
+      const { b, rt } = setup();
+      const all = casters(b);
+      expect(all.length).toBeGreaterThan(1); // kurulum: en az iki büyü atabilen düşman
+      const many = veinOn(b, rt.uid);
+      for (const c of all.slice(1)) c.skills = c.skills.filter((id) => !isMagic(id));
+      const one = veinOn(b, rt.uid);
+      expect(one).toBeGreaterThan(0);
+      expect(many).toBeGreaterThan(one);
+    });
+
+    it('büyü atabilecek düşman yokken 0', () => {
+      const { b, rt } = setup();
+      expect(veinOn(b, rt.uid)).toBeGreaterThan(0);
+      for (const c of b.living('enemy')) c.skills = c.skills.filter((id) => !isMagic(id));
+      expect(veinOn(b, rt.uid)).toBe(0);
+    });
+
+    it('kan değeri bar boşluğuyla sınırlı: bar doluyken (bedel sonrası boşluk = bedel) değer bar boşken olandan büyük değil', () => {
+      const { b, rt } = setup();
+      rt.blood = content.skills.spell_ward!.cost.amount;
+      const low = veinOn(b, rt.uid);
+      rt.blood = content.formulas.bloodBar!.max;
+      const full = veinOn(b, rt.uid);
+      expect(low).toBeGreaterThan(0);
+      expect(full).toBeLessThanOrEqual(low);
+    });
+
+    it('kalkanın kendisi genel shield teriminde (dostlara gelen hasar varken > 0)', () => {
+      const { b, rt } = setup();
+      const c = explainChoice(b, rt.uid, ai)!.candidates.filter((x) => x.skill === 'spell_ward');
+      expect(Math.max(0, ...c.map((x) => x.terms?.shield ?? 0))).toBeGreaterThan(0);
+    });
   });
 
   it('yakın dövüşçü yalnızca menzildeki hedefleri seçer, öldürülebilecek biri menzil dışındaysa ona gitmez', () => {

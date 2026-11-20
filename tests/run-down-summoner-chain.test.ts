@@ -80,44 +80,5 @@ describe('YZ: çağıranı öldürmek çağrılarını da öldürür', () => {
     expect(hit!.terms!.summonsLost).toBeGreaterThan(0);
   });
 
-  it('Ley Brand: bedel yakımı Brand\'li çağıranı öldürecekse Brand değeri artar; çağıran o çağrıyı yaparsa kayıp (selfLoss), çağrı değeri 0', () => {
-    const mk = (hp: number) => {
-      const b = arena([['antimage', cell(0, 1)]], [['grave_chanter', cell(1, 1)]]);
-      const am = b.get('party-0')!;
-      am.mp = am.maxMp;
-      expect(b.useSkill('party-0', 'drain_field', undefined, cell(1, 1)).ok).toBe(true);
-      const ch = b.get('enemy-0')!;
-      expect(ch.statuses.some((s) => s.kind === 'branded')).toBe(true);
-      ch.hp = hp;
-      // 0.9.11 mana (mpPerInt 0,2): Brand'li Call the Buried bedeli (30 x costMult) Chanter'ın havuzunu aşar; senaryo çağrının YZ değerini ölçer
-      ch.maxMp = Math.max(ch.maxMp, 60);
-      ch.mp = ch.maxMp;
-      return b;
-    };
-    const low = explainChoice(mk(1), 'enemy-0', ai)!.candidates.find((c) => c.skill === 'call_the_buried');
-    expect(low).toBeDefined();
-    expect(low!.terms?.selfLoss ?? 0).toBeLessThan(0);
-    expect(low!.terms?.summon ?? 0).toBe(0);
-    const full = mk(10000);
-    full.get('enemy-0')!.maxHp = 10000;
-    const high = explainChoice(full, 'enemy-0', ai)!.candidates.find((c) => c.skill === 'call_the_buried');
-    expect(high!.terms?.selfLoss).toBeUndefined();
-  });
-
-  it('AM tarafı: Brand bedel yakımı düşük canlı çağıranı öldürecekse Brand terimi büyür (çağrının katkısı dahil)', () => {
-    const build = (hp?: number) => {
-      const b = arena([['antimage', cell(0, 1)]], [['grave_chanter', cell(1, 1)]]);
-      expect(b.useSkill('enemy-0', 'call_the_buried').ok).toBe(true);
-      b.debugClearCooldowns();
-      const ch = b.get('enemy-0')!;
-      ch.hp = hp ?? ch.maxHp;
-      ch.mp = ch.maxMp;
-      b.get('party-0')!.mp = b.get('party-0')!.maxMp;
-      const c = explainChoice(b, 'party-0', ai)!.candidates.filter((x) => x.skill === 'drain_field').map((x) => x.terms?.brand ?? 0);
-      return Math.max(0, ...c);
-    };
-    const lethal = build(1);
-    const safe = build();
-    expect(lethal).toBeGreaterThan(safe);
-  });
+  // 2026-11-17: Ley Brand bedel yakımı (castBurn) testleri kalktı: Redtithe Blood Brand bedel yakmaz (open-questions Q-NEW Redtithe)
 });

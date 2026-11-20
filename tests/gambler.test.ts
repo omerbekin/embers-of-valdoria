@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, betMultipliers, chooseAction, content, describeSkill, previewSkill } from '../src/engine';
+import { Battle, chooseAction, content, describeSkill, previewSkill } from '../src/engine';
+import { describeEvent } from '../src/engine/match-log';
+import { compileTree, treeOf } from '../src/progression';
+import type { TreeData } from '../src/progression/skill-tree-data';
 import type { AiConfig, BattleEvent, BattleMode, SkillDef, SkillEffect } from '../src/engine';
 
 // Gambler class'ı ve onun yeni motor kuralları: çifte vuruş (repeatChance), bahis (bet), rastgele durum (randomStatus).
@@ -81,41 +84,148 @@ describe('Gambler: class verisi', () => {
   });
 });
 
-describe('çifte vuruş (damage.repeatChance)', () => {
-  const dice = (chance: number) => ({ loaded_dice: withEffect('loaded_dice', (e) => (e.type === 'damage' ? { ...e, repeatChance: chance } : e)) });
+/** Gambler'ın Lucky Streak pasifi (veriden). */
+const lucky = content.classes.gambler!.passive!.effect as { type: 'luckyStreak'; chance: number; max: number; skills: number[] };
+/** Pasif tekrar şansını bu birimde değiştirir (yalnız test). */
+const setRepeat = (b: Battle, chance: number) => {
+  const me = b.get(G)!;
+  me.passive = { ...me.passive!, effect: { ...lucky, chance } };
+};
+const diceOf = (events: BattleEvent[]) => events.filter((e): e is Extract<BattleEvent, { type: 'dice' }> => e.type === 'dice');
+const streakEv = (events: BattleEvent[]) => events.filter((e): e is Extract<BattleEvent, { type: 'streak' }> => e.type === 'streak');
 
-  it('ihtimal 1: hedefe iki vuruş ve "Double Hit" yazısı; ihtimal 0: tek vuruş', () => {
-    const two = run(duel({ overrides: dice(1) }), 'loaded_dice');
+describe('Lucky Streak: pasif tekrar (eski Loaded Dice repeatChance)', () => {
+  it('pasif verisi: tekrar şansı, seri tavanı, tekrar eden skill sıraları (1., 2., 3.; ult hariç)', () => {
+    expect(lucky.type).toBe('luckyStreak');
+    expect(lucky.skills).not.toContain(content.classes.gambler!.skills.indexOf('all_in'));
+    expect((content.skills.loaded_dice!.effects[0] as { repeatChance?: number }).repeatChance).toBeUndefined();
+  });
+
+  it('ihtimal 1: hedefe iki vuruş, "Double Hit" yazısı, her vuruş yeni zar; ihtimal 0: tek vuruş', () => {
+    const b2 = duel();
+    setRepeat(b2, 1);
+    const two = run(b2, 'loaded_dice');
     expect(dmgTo(two, E)).toHaveLength(2);
+    expect(diceOf(two)).toHaveLength(2);
     expect(passives(two, 'gamble_double')).toHaveLength(1);
-    const one = run(duel({ overrides: dice(0) }), 'loaded_dice');
+    const b1 = duel();
+    setRepeat(b1, 0);
+    const one = run(b1, 'loaded_dice');
     expect(dmgTo(one, E)).toHaveLength(1);
     expect(passives(one, 'gamble_double')).toHaveLength(0);
   });
 
-  it('gerçek veri: ihtimal skill verisinden gelir ve uzun vadede ona yakındır (seed\'li)', () => {
-    const chance = (content.skills.loaded_dice!.effects[0] as { repeatChance: number }).repeatChance;
+  it('gerçek veri: tekrar oranı pasifin şansına yakın (seed\'li)', () => {
     let doubles = 0;
     const N = 600;
     for (let seed = 1; seed <= N; seed++) if (dmgTo(run(duel({ seed }), 'loaded_dice'), E).length === 2) doubles++;
-    expect(doubles / N).toBeGreaterThan(chance - 0.07);
-    expect(doubles / N).toBeLessThan(chance + 0.07);
+    expect(doubles / N).toBeGreaterThan(lucky.chance - 0.07);
+    expect(doubles / N).toBeLessThan(lucky.chance + 0.07);
   });
 
-  it('ikinci vuruş birincinin tekrarıdır (aynı güç aralığı, ayrı zar)', () => {
-    const ev = dmgTo(run(duel({ overrides: dice(1) }), 'loaded_dice'), E);
-    expect(Math.abs(ev[0]!.amount - ev[1]!.amount)).toBeLessThanOrEqual(Math.ceil(Math.max(ev[0]!.amount, ev[1]!.amount) * 0.25));
+  it('High Stakes tekrarı yeni bahis atmaz: tek Jackpot/Bust, can bedeli bir kez, seri bir kez değişir', () => {
+    const b = duel({ overrides: { high_stakes: withEffect('high_stakes', (e) => (e.type === 'damage' && e.bet ? { ...e, bet: { ...e.bet, winChance: 0 } } : e)) } });
+    setRepeat(b, 1);
+    const me = b.get(G)!;
+    me.streak = 2;
+    const hp0 = me.hp;
+    const ev = run(b, 'high_stakes');
+    expect(dmgTo(ev, E)).toHaveLength(2);
+    expect(passives(ev, 'gamble_lose')).toHaveLength(1);
+    const bet = (content.skills.high_stakes!.effects[0] as { bet: { ratio: number } }).bet;
+    expect(hp0 - me.hp).toBe(Math.round(me.maxHp * bet.ratio));
+    expect(streakEv(ev).map((e) => e.reason)).toEqual(['betLoss']);
+  });
+
+  it('All In tekrar etmez (ihtimal 1 olsa da)', () => {
+    const b = duel();
+    setRepeat(b, 1);
+    b.get(G)!.mp = b.get(G)!.maxMp;
+    const ev = run(b, 'all_in');
+    expect(passives(ev, 'gamble_double')).toHaveLength(0);
+    expect(ev.filter((e) => e.type === 'skillUsed')).toHaveLength(1);
+    expect(dmgTo(ev, E).length).toBeLessThanOrEqual(1);
   });
 
   it('aynı seed + aynı girdi = birebir aynı olay akışı (iki modda da)', () => {
     for (const mode of ['test', 'turns'] as const) {
-      const play = () => {
-        const b = duel({ seed: 7, mode });
-        const actor = mode === 'turns' ? b.currentUid! : G;
-        return b.useSkill(actor, 'loaded_dice', mode === 'turns' ? b.living(b.get(actor)!.side === 'party' ? 'enemy' : 'party')[0]!.uid : E);
-      };
-      expect(JSON.stringify(play())).toBe(JSON.stringify(play()));
+      for (const skill of ['loaded_dice', 'high_stakes', 'card_trick', 'all_in']) {
+        const play = () => {
+          const b = duel({ seed: 7, mode });
+          const actor = mode === 'turns' ? b.currentUid! : G;
+          b.get(actor)!.mp = b.get(actor)!.maxMp;
+          if (b.get(actor)!.streak !== undefined) b.get(actor)!.streak = 2;
+          return b.useSkill(actor, actor === G ? skill : b.get(actor)!.skills[0]!, mode === 'turns' ? b.living(b.get(actor)!.side === 'party' ? 'enemy' : 'party')[0]!.uid : E);
+        };
+        expect(JSON.stringify(play()), `${mode} ${skill}`).toBe(JSON.stringify(play()));
+      }
     }
+  });
+});
+
+describe('Lucky Streak: Loaded Dice zarları', () => {
+  const dice = (content.skills.loaded_dice!.effects[0] as { dice: { count: number; sides: number; mean: number; doubleGain: number } }).dice;
+
+  it('iki zar 1..yüz arası; hasar zar toplamıyla orantılı (toplam / ortalama)', () => {
+    const rows: { sum: number; dmg: number }[] = [];
+    for (let seed = 1; seed <= 200; seed++) {
+      const b = duel({ seed });
+      setRepeat(b, 0);
+      const ev = run(b, 'loaded_dice');
+      const d = diceOf(ev);
+      expect(d).toHaveLength(1);
+      expect(d[0]!.values).toHaveLength(dice.count);
+      for (const v of d[0]!.values) {
+        expect(v).toBeGreaterThanOrEqual(1);
+        expect(v).toBeLessThanOrEqual(dice.sides);
+      }
+      expect(d[0]!.double).toBe(d[0]!.values.every((v) => v === d[0]!.values[0]));
+      rows.push({ sum: d[0]!.values.reduce((a, b) => a + b, 0), dmg: sumDmg(ev, E) });
+    }
+    const avg = (k: number) => {
+      const r = rows.filter((x) => x.sum === k);
+      return r.reduce((a, x) => a + x.dmg, 0) / r.length;
+    };
+    expect(avg(12) / avg(dice.mean)).toBeGreaterThan((12 / dice.mean) * 0.8);
+    expect(avg(12) / avg(dice.mean)).toBeLessThan((12 / dice.mean) * 1.2);
+    expect(avg(2)).toBeLessThan(avg(dice.mean));
+  });
+
+  it('çift gelirse seri +1 (olay: streak double); seri tavanda kalır', () => {
+    let seen = 0;
+    for (let seed = 1; seed <= 200 && seen < 3; seed++) {
+      const b = duel({ seed });
+      setRepeat(b, 0);
+      const me = b.get(G)!;
+      expect(me.streak).toBe(0); // savaş başı 0
+      const ev = run(b, 'loaded_dice');
+      if (!diceOf(ev)[0]!.double) {
+        expect(me.streak).toBe(0);
+        continue;
+      }
+      seen++;
+      expect(me.streak).toBe(dice.doubleGain);
+      expect(streakEv(ev)).toMatchObject([{ before: 0, after: dice.doubleGain, max: lucky.max, reason: 'double' }]);
+      // tavanda: kazanç boşa, olay yok
+      const b2 = duel({ seed });
+      setRepeat(b2, 0);
+      b2.get(G)!.streak = lucky.max;
+      const ev2 = run(b2, 'loaded_dice');
+      expect(b2.get(G)!.streak).toBe(lucky.max);
+      expect(streakEv(ev2)).toHaveLength(0);
+    }
+    expect(seen).toBeGreaterThan(0);
+  });
+
+  it('1. skill seriyi harcamaz; debug oynatması seriyi değiştirmez', () => {
+    const b = duel();
+    const me = b.get(G)!;
+    me.streak = lucky.max;
+    run(b, 'loaded_dice');
+    expect(me.streak).toBe(lucky.max);
+    me.streak = lucky.max;
+    b.debugCast(G, 'high_stakes', E);
+    expect(me.streak).toBe(lucky.max);
   });
 });
 
@@ -171,37 +281,195 @@ describe('bahis (damage.bet): can', () => {
   });
 });
 
-describe('bahis (damage.bet): MP', () => {
-  const ai_ = (winChance: number) => ({ all_in: withEffect('all_in', (e) => (e.type === 'damage' && e.bet ? { ...e, bet: { ...e.bet, winChance } } : e)) });
-  const skill = content.skills.all_in!;
-  const bet = (skill.effects[0] as { bet: { winChance: number; winMult: number; loseMult?: number; perStake: number } }).bet;
+describe('Lucky Streak: High Stakes', () => {
+  const hs = (winChance: number) => ({ high_stakes: withEffect('high_stakes', (e) => (e.type === 'damage' && e.bet ? { ...e, bet: { ...e.bet, winChance } } : e)) });
+  const full = content.skills.high_stakes!.streak!.full!;
 
-  it('kayıp: hasar loseMult katı (0 ise iska; madde 230: 0,6 = yarım-zayıf vuruş), bedelden SONRA kalan tüm MP gider', () => {
+  it('bahis kazanırsa seri +1, kaybederse 0', () => {
+    const w = duel({ overrides: hs(1) });
+    setRepeat(w, 0);
+    w.get(G)!.streak = 1;
+    const ev = run(w, 'high_stakes');
+    expect(w.get(G)!.streak).toBe(1 + content.skills.high_stakes!.streak!.betWinGain!);
+    expect(streakEv(ev)[0]!.reason).toBe('betWin');
+    const l = duel({ overrides: hs(0) });
+    setRepeat(l, 0);
+    l.get(G)!.streak = 2;
+    run(l, 'high_stakes');
+    expect(l.get(G)!.streak).toBe(0);
+  });
+
+  it('seri doluyken: seri harcanır (0), bahis kesin kazanılır, verilen hasarın bir kısmı can emme', () => {
+    const b = duel({ overrides: hs(0) }); // şans 0 olsa da dolu seri kesin kazanır
+    setRepeat(b, 0);
+    const me = b.get(G)!;
+    me.streak = lucky.max;
+    me.hp = Math.round(me.maxHp / 2);
+    const hp0 = me.hp;
+    // biçim: önizleme ve YZ aynı tanımı görür
+    const def = b.skill('high_stakes', G)!;
+    expect((def.effects[0] as { bet: { winChance: number } }).bet.winChance).toBe(1);
+    expect((def.effects[0] as { lifesteal?: number }).lifesteal).toBe(full.lifesteal);
+    const ev = run(b, 'high_stakes');
+    expect(passives(ev, 'gamble_win')).toHaveLength(1);
+    expect(streakEv(ev)).toMatchObject([{ before: lucky.max, after: 0, reason: 'spend' }]);
+    expect(me.streak).toBe(0);
+    const healed = ev.filter((e) => e.type === 'heal' && e.target === G && e.cause === 'lifesteal').reduce((a, e) => a + (e.type === 'heal' ? e.amount : 0), 0);
+    expect(healed).toBe(Math.round(sumDmg(ev, E) * full.lifesteal!));
+    expect(me.hp).toBe(hp0 + healed);
+    // seri harcandı: sonraki High Stakes normal biçim
+    expect((b.skill('high_stakes', G)!.effects[0] as { lifesteal?: number }).lifesteal).toBeUndefined();
+  });
+});
+
+describe('Lucky Streak: All In (her şey masaya)', () => {
+  const skill = content.skills.all_in!;
+  const bet = (skill.effects[0] as { bet: { winChance: number; winMult: number; loseMult?: number; perStake: number; loseHpRatio: number } }).bet;
+  const table = skill.streak!.winChanceByStreak!;
+  const ai_ = (winChance: number) => ({ all_in: { ...skill, streak: { ...skill.streak!, winChanceByStreak: table.map(() => winChance) }, effects: skill.effects.map((e) => (e.type === 'damage' && e.bet ? { ...e, bet: { ...e.bet, winChance } } : e)) } });
+
+  it('kazanma ihtimali seriye göre tablo (önizleme / YZ / gerçek aynı tanım); seri 0 değeri bet.winChance', () => {
+    expect(table).toHaveLength(lucky.max + 1);
+    expect(table[0]).toBe(bet.winChance);
+    expect(table[lucky.max]).toBe(1);
+    const b = duel();
+    for (let s = 0; s <= lucky.max; s++) {
+      b.get(G)!.streak = s;
+      expect((b.skill('all_in', G)!.effects[0] as { bet: { winChance: number } }).bet.winChance, `streak ${s}`).toBe(table[s]);
+    }
+  });
+
+  it('uzun vadede kazanma oranı tablodaki ihtimale yakın (seri 1)', () => {
+    let won = 0;
+    const N = 400;
+    for (let seed = 1; seed <= N; seed++) {
+      const b = duel({ seed });
+      b.get(G)!.mp = b.get(G)!.maxMp;
+      b.get(G)!.streak = 1;
+      if (passives(run(b, 'all_in'), 'gamble_win').length) won++;
+    }
+    expect(won / N).toBeGreaterThan(table[1]! - 0.08);
+    expect(won / N).toBeLessThan(table[1]! + 0.08);
+  });
+
+  it('kayıp: hasar 0, MP 0, seri 0, maks canın loseHpRatio\'su gider (en az 1 can kalır)', () => {
     const b = duel({ overrides: ai_(0) });
     const me = b.get(G)!;
     me.mp = me.maxMp;
+    me.streak = 2;
+    const hp0 = me.hp;
     const ev = run(b, 'all_in');
     expect(passives(ev, 'gamble_lose')).toHaveLength(1);
-    const lose = bet.loseMult ?? 1;
-    if (lose <= 0) expect(dmgTo(ev, E)).toHaveLength(0);
-    else {
-      const luck = content.classes.gambler!.stats.luck;
-      const power = (skill.effects[0] as { power: number }).power;
-      const d = sumDmg(ev, E);
-      expect(d).toBeGreaterThan(0);
-      expect(d).toBeLessThan(luck * power * lose * 1.15 * 1.5); // zırh/kritik payı
-    }
+    expect(dmgTo(ev, E)).toHaveLength(0);
     expect(me.mp).toBe(0);
+    expect(me.streak).toBe(0);
+    expect(hp0 - me.hp).toBe(Math.round(me.maxHp * bet.loseHpRatio));
+    const b2 = duel({ overrides: ai_(0) });
+    b2.get(G)!.mp = b2.get(G)!.maxMp;
+    b2.get(G)!.hp = 2;
+    run(b2, 'all_in');
+    expect(b2.get(G)!.hp).toBe(1);
   });
 
-  it('All In daha az şansa dayalı (madde 230): beklenen çarpan eskisiyle aynı (0,5 x (3 + 0,1 x bahis)), yayılım (kazanç - kayıp) daha dar', () => {
-    for (const stake of [0, 10, 22, 40]) {
-      const m = betMultipliers(bet as never, stake);
-      expect(m.expected).toBeCloseTo(0.5 * (3 + 0.1 * stake), 1);
-      expect(m.win - m.lose).toBeLessThan(3 + 0.1 * stake); // eski yayılım: kazanç 3+0,1s, kayıp 0
+  it('seri ödülü (Ömer 2026-11-19): seri 0 / 1 / 2 iken kazanırsa seri dolar (tek olay, sebep fill); veride winFillsStreak', () => {
+    expect(skill.streak!.winFillsStreak).toBe(true);
+    for (let s = 0; s < lucky.max; s++) {
+      const b = duel({ overrides: ai_(1) });
+      const me = b.get(G)!;
+      me.mp = me.maxMp;
+      me.streak = s;
+      const ev = run(b, 'all_in');
+      expect(passives(ev, 'gamble_win'), `seri ${s}`).toHaveLength(1);
+      expect(me.streak, `seri ${s}`).toBe(lucky.max);
+      expect(streakEv(ev), `seri ${s}`).toMatchObject([{ before: s, after: lucky.max, reason: 'fill' }]);
+      // Maç kaydı satırı yeni sebebi yazar
+      expect(describeEvent(b, streakEv(ev)[0]!)).toMatch(/All In won: Streak filled/);
     }
-    expect(bet.winChance).toBeGreaterThan(0.5);
-    expect(bet.loseMult ?? 1).toBeGreaterThan(0);
+  });
+
+  it('seri ödülü + ağaç (Unbroken Run, streakGain miktar 3): dolum tetiği o kullanımın vuruşunu değil sonraki skill\'i kritik yapar (High Stakes kazancıyla aynı sıra)', () => {
+    const tree = (() => {
+      const t = JSON.parse(JSON.stringify(treeOf('gambler')!)) as TreeData;
+      for (const k of Object.keys(t.nodes)) if (k !== '0.ma') t.nodes[k]!.fx = null;
+      for (const bar of t.mastery.bar) bar.fx = null;
+      return compileTree(t, { v: t.version, r: { '0.ma': 1 } });
+    })();
+    const sure = (id: string): SkillDef => {
+      const s = content.skills[id]!;
+      return { ...s, ...(s.streak?.winChanceByStreak ? { streak: { ...s.streak, winChanceByStreak: s.streak.winChanceByStreak.map(() => 1) } } : {}), effects: s.effects.map((e) => (e.type === 'damage' && e.bet ? { ...e, bet: { ...e.bet, winChance: 1 } } : e)) };
+    };
+    const crits = (sk: string, lv: number) => {
+      const setup = content.battleSetup('random-battle', 1, 'test', { party: cells({ 0: 'gambler' }), enemies: cells({ 0: 'warrior', 3: 'warrior' }), units: { party: { 0: { tree } }, enemies: {} } }, false);
+      const b = new Battle({ ...setup, skills: { ...setup.skills, [sk]: sure(sk) } });
+      for (const c of b.combatants) {
+        c.hp = c.maxHp = 100000;
+        Object.assign(c.stats, { accuracy: 10, evasion: 0, critChance: 0 });
+      }
+      const me = b.get(G)!;
+      me.mp = me.maxMp;
+      me.streak = lv;
+      me.cooldowns = {};
+      const first = dmgTo(run(b, sk), E).map((e) => e.crit);
+      me.mp = me.maxMp;
+      me.cooldowns = {};
+      const next = dmgTo(run(b, 'loaded_dice'), E).map((e) => e.crit);
+      return { first, next };
+    };
+    const allIn = crits('all_in', 0);
+    expect(allIn.first).toEqual([false]);
+    expect(allIn.next.every(Boolean)).toBe(true);
+    expect(crits('high_stakes', lucky.max - 1)).toEqual({ first: [false], next: allIn.next.map(() => true) });
+  });
+
+  it('seri ödülü: kayıpta seri 0 (seri 0 iken olay yok, seri 1-2 iken sebep betLoss)', () => {
+    for (let s = 0; s < lucky.max; s++) {
+      const b = duel({ overrides: ai_(0) });
+      const me = b.get(G)!;
+      me.mp = me.maxMp;
+      me.streak = s;
+      const ev = run(b, 'all_in');
+      expect(me.streak, `seri ${s}`).toBe(0);
+      expect(streakEv(ev), `seri ${s}`).toEqual(s === 0 ? [] : [expect.objectContaining({ before: s, after: 0, reason: 'betLoss' })]);
+    }
+  });
+
+  it('seri 3: kesin kazanç, seri harcanır (0, sebep spend; döngü kırılır), kazanç x(1 + fullStreakMore) ayrı çarpan', () => {
+    const more = skill.streak!.fullStreakMore!;
+    expect(more).toBeGreaterThan(0);
+    const play = (overrides?: Record<string, SkillDef>) => {
+      const b = duel({ seed: 7, ...(overrides ? { overrides } : {}) });
+      const me = b.get(G)!;
+      me.mp = me.maxMp;
+      me.streak = lucky.max;
+      const ev = run(b, 'all_in');
+      return { ev, me, dmg: sumDmg(ev, E) };
+    };
+    const full = play();
+    expect(passives(full.ev, 'gamble_win')).toHaveLength(1);
+    expect(full.me.streak).toBe(0);
+    expect(streakEv(full.ev)).toMatchObject([{ before: lucky.max, after: 0, reason: 'spend' }]);
+    // Aynı seed, ayrı çarpan 0: oran = 1 + more (yuvarlama payı)
+    const plain = play({ all_in: { ...skill, streak: { ...skill.streak!, fullStreakMore: 0 } } });
+    expect(full.dmg / plain.dmg).toBeGreaterThan((1 + more) * 0.98);
+    expect(full.dmg / plain.dmg).toBeLessThan((1 + more) * 1.02);
+    // Önizleme / YZ aynı tanımı görür: seri 3 biçiminde kazanç dalında ayrı çarpan, seri 2'de yok
+    const b = duel();
+    b.get(G)!.streak = lucky.max;
+    expect((b.skill('all_in', G)!.effects[0] as { bet: { winMore?: number } }).bet.winMore).toBe(more);
+    b.get(G)!.streak = lucky.max - 1;
+    expect((b.skill('all_in', G)!.effects[0] as { bet: { winMore?: number } }).bet.winMore).toBeUndefined();
+  });
+
+  it('seri ödülü seed tekrarı: aynı seed + aynı girdi = birebir aynı olay akışı (iki modda da)', () => {
+    const play = (seed: number, mode: BattleMode) => {
+      const { initialCooldown: _ic, ...noOpen } = skill; // turns modunda ilk bekleme olmasın
+      const b = duel({ seed, mode, overrides: { all_in: noOpen } });
+      const me = b.get(G)!;
+      me.mp = me.maxMp;
+      me.streak = 2;
+      return JSON.stringify(run(b, 'all_in')) + '|' + me.streak;
+    };
+    for (const mode of ['test', 'turns'] as BattleMode[]) for (const seed of [3, 11, 29]) expect(play(seed, mode)).toBe(play(seed, mode));
   });
 
   it('kazanç: hasar winMult + perStake x bahis katı, MP bedelden sonra kalan miktarda kalır; bahis büyüdükçe hasar artar', () => {
@@ -226,11 +494,95 @@ describe('bahis (damage.bet): MP', () => {
     expect(big.dmg / small.dmg).toBeLessThan(expectedRatio * 1.15);
   });
 
-  it('MP yoksa canUse reddeder (bedel); freeMp açıkken bahis 0 olsa da oynanır', () => {
+  it('MP yoksa canUse reddeder (bedel)', () => {
     const b = duel();
-    const me = b.get(G)!;
-    me.mp = 0;
+    b.get(G)!.mp = 0;
     expect(b.canUse(G, 'all_in').ok).toBe(false);
+  });
+});
+
+/** 4 düşmanlı arena (Card Trick seri biçimi 3 hedef ister). */
+function crowd(seed = 1): Battle {
+  const setup = content.battleSetup('random-battle', seed, 'test', { party: cells({ 0: 'gambler' }), enemies: cells({ 0: 'warrior', 1: 'warrior', 2: 'warrior', 3: 'warrior' }) }, false);
+  const b = new Battle(setup);
+  for (const c of b.combatants) {
+    c.hp = c.maxHp = 100000;
+    Object.assign(c.stats, { accuracy: 10, evasion: 0 });
+    c.stats.surviveChance = 0;
+  }
+  b.debug.crit = 'never';
+  b.get(G)!.mp = b.get(G)!.maxMp;
+  return b;
+}
+/** Olayları kullanım başına böler (skillUsed sınırı). */
+const perCast = (events: BattleEvent[]): BattleEvent[][] => {
+  const out: BattleEvent[][] = [];
+  for (const e of events) {
+    if (e.type === 'skillUsed') out.push([]);
+    out[out.length - 1]?.push(e);
+  }
+  return out;
+};
+
+describe('Lucky Streak: Card Trick', () => {
+  const full = content.skills.card_trick!.streak!.full!;
+
+  it('seri doluyken: seri harcanır, 3 rastgele düşman; biri kesin Stun, diğerleri Slow ya da Wound', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const b = crowd(seed);
+      setRepeat(b, 0);
+      b.get(G)!.streak = lucky.max;
+      const ev = b.useSkill(G, 'card_trick');
+      if (!ev.ok) throw new Error(ev.reason);
+      const used = ev.events.find((e) => e.type === 'skillUsed')!;
+      expect(used.type === 'skillUsed' && used.targets).toHaveLength(full.count!);
+      const st = ev.events.filter((e): e is Extract<BattleEvent, { type: 'status' }> => e.type === 'status');
+      expect(st).toHaveLength(full.count!);
+      expect(st.filter((x) => x.status === full.sure!.status)).toHaveLength(1);
+      for (const x of st.filter((y) => y.status !== full.sure!.status)) expect(full.others!.map((o) => o.status)).toContain(x.status);
+      expect(b.get(G)!.streak).toBe(0);
+    }
+  });
+
+  it('pasif tekrarı: yeni rastgele hedeflerle bir kez daha (MP / bekleme yok, seri tekrar harcanmaz); seride atıldıysa tekrar da seri kuralıyla', () => {
+    const b = crowd(4);
+    setRepeat(b, 1);
+    const me = b.get(G)!;
+    me.streak = lucky.max;
+    const mp0 = me.mp;
+    const r = b.useSkill(G, 'card_trick');
+    if (!r.ok) throw new Error(r.reason);
+    const casts = perCast(r.events);
+    expect(casts).toHaveLength(2); // tekrar kendi tekrarını atmaz
+    expect(passives(r.events, 'gamble_double')).toHaveLength(1);
+    for (const c of casts) {
+      const used = c[0]!;
+      expect(used.type === 'skillUsed' && used.targets).toHaveLength(full.count!);
+      expect(c.filter((e) => e.type === 'status' && e.status === full.sure!.status)).toHaveLength(1);
+    }
+    expect(streakEv(r.events)).toHaveLength(1);
+    expect(mp0 - me.mp).toBe(content.skills.card_trick!.cost.amount);
+    // seri dışı: 2 hedef, eski rastgele durum
+    const n = crowd(4);
+    setRepeat(n, 1);
+    const r2 = n.useSkill(G, 'card_trick');
+    if (!r2.ok) throw new Error(r2.reason);
+    for (const c of perCast(r2.events)) expect(c[0]!.type === 'skillUsed' && c[0]!.targets).toHaveLength(content.skills.card_trick!.count!);
+  });
+
+  it('boss / elit ccImmunity: kesin Stun da normal bağışıklık kuralından geçer', () => {
+    const b = crowd(2);
+    setRepeat(b, 0);
+    const foes = b.combatants.filter((c) => c.side === 'enemy');
+    for (const c of foes) c.tier = 'boss';
+    expect(b.ccImmune(foes[0]!)).toBe(true);
+    b.get(G)!.streak = lucky.max;
+    const r = b.useSkill(G, 'card_trick');
+    if (!r.ok) throw new Error(r.reason);
+    const stunned = r.events.filter((e) => e.type === 'status' && e.status === 'stun');
+    const immune = r.events.filter((e) => e.type === 'immune' && e.status === 'stun');
+    expect(stunned).toHaveLength(0);
+    expect(immune).toHaveLength(1);
   });
 });
 
@@ -241,12 +593,13 @@ describe('rastgele durum (randomStatus): Card Trick', () => {
   it('rastgele 2 farklı düşmana vurur; her vurulana seçeneklerden tam 1 durum verilir', () => {
     for (let seed = 1; seed <= 40; seed++) {
       const b = duel({ seed });
-      const ev = run(b, 'card_trick');
-      const hit = [...new Set(dmgTo(ev, E).concat(dmgTo(ev, 'enemy-1')).map((e) => e.target))];
-      expect(hit.length).toBeLessThanOrEqual(trick.count!);
-      const st = ev.filter((e): e is Extract<BattleEvent, { type: 'status' }> => e.type === 'status');
-      expect(st).toHaveLength(hit.length);
-      for (const s of st) expect(options.map((o) => o.status)).toContain(s.status);
+      for (const ev of perCast(run(b, 'card_trick'))) {
+        const hit = [...new Set(dmgTo(ev, E).concat(dmgTo(ev, 'enemy-1')).map((e) => e.target))];
+        expect(hit.length).toBeLessThanOrEqual(trick.count!);
+        const st = ev.filter((e): e is Extract<BattleEvent, { type: 'status' }> => e.type === 'status');
+        expect(st).toHaveLength(hit.length);
+        for (const s of st) expect(options.map((o) => o.status)).toContain(s.status);
+      }
     }
   });
 
@@ -295,6 +648,30 @@ describe('önizleme ve açıklama', () => {
     expect(previewSkill(b, G, 'card_trick')).toEqual([]); // hedefler rastgele: önizleme yok
   });
 
+  it('önizleme bahis dalları (2026-11-18 YZ düzeltmesi): iki dallı bahiste kazanç/kayıp aralığı ayrı; seri 3 All In kesin kazanç (en az 0 görünmez)', () => {
+    const table = content.skills.all_in!.streak!.winChanceByStreak!;
+    const max = (content.classes.gambler!.passive!.effect as { max: number }).max;
+    const b = duel();
+    const me = b.get(G)!;
+    me.mp = me.maxMp;
+    const a0 = previewSkill(b, G, 'all_in', E)[0]!.damage!;
+    expect(a0.bet!.winChance).toBe(table[0]);
+    expect(a0.bet!.win.min).toBeGreaterThan(a0.bet!.lose.max);
+    if ((allInBet.loseMult ?? 1) <= 0) expect(a0.bet!.lose.max).toBe(0);
+    me.streak = max;
+    const a3 = previewSkill(b, G, 'all_in', E)[0]!.damage!;
+    expect(table[max]).toBe(1);
+    expect(a3.bet).toBeUndefined();
+    expect(a3.min).toBeGreaterThan(0);
+    // High Stakes: tekrar vuruşu (Lucky Streak) ayrı alan; tek vuruş en çoğu iki katlı en çoktan küçük
+    me.streak = 0;
+    const hs = previewSkill(b, G, 'high_stakes', E)[0]!.damage!;
+    const lucky = (content.classes.gambler!.passive!.effect as { chance: number }).chance;
+    expect(hs.repeat!.chance).toBe(lucky);
+    expect(hs.repeat!.max).toBeLessThan(hs.max);
+    expect(hs.bet!.win.max).toBeGreaterThan(hs.bet!.lose.max);
+  });
+
   it('önizleme ve gerçek vuruş tutarlı: gerçek hasar önizleme aralığının içinde', () => {
     for (const skill of ['loaded_dice', 'high_stakes', 'all_in']) {
       for (let seed = 1; seed <= 30; seed++) {
@@ -311,7 +688,15 @@ describe('önizleme ve açıklama', () => {
   it('skill-info: her skill\'in açıklaması yeni kuralı sade İngilizceyle anlatır', () => {
     const stats = content.classes.gambler!.stats;
     const info = (id: string) => describeSkill(content.skills[id]!, stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds });
-    expect(info('loaded_dice').lines.join('\n')).toMatch(/chance to hit twice/);
+    expect(info('loaded_dice').lines.join('\n')).toMatch(/Rolls 2 dice .*Doubles add 1 Streak/);
+    expect(info('high_stakes').lines.join('\n')).toMatch(/At full Streak: spends it, and the bet always wins/);
+    expect(info('card_trick').lines.join('\n')).toMatch(/At full Streak: .*hits 3 random enemies.*always gets Stun/);
+    expect(info('card_trick').lines.join('\n')).toMatch(/new random targets/);
+    expect(info('all_in').lines.join('\n')).toMatch(/whole Streak: win chance 50% \/ 65% \/ 80% \/ 100%/);
+    expect(info('all_in').lines.join('\n')).toMatch(/lose 10% of your max HP/);
+    const top = lucky.max;
+    expect(info('all_in').lines.join('\n')).toMatch(new RegExp(`A win below ${top} Streak fills your Streak to ${top}; a loss resets it to 0`));
+    expect(info('all_in').lines.join('\n')).toMatch(new RegExp(`At ${top} Streak: spends it, and the win deals ${Math.round(content.skills.all_in!.streak!.fullStreakMore! * 100)}% more damage`));
     expect(info('high_stakes').lines.join('\n')).toMatch(/Bet .*max HP/);
     expect(info('all_in').lines.join('\n')).toMatch(/Bet all your remaining MP/);
     expect(info('all_in').lines.join('\n')).toMatch((allInBet.loseMult ?? 1) <= 0 ? /you miss/ : new RegExp(`otherwise ${Math.round(Math.abs(1 - allInBet.loseMult!) * 100)}% ${allInBet.loseMult! >= 1 ? 'more' : 'less'} damage`));

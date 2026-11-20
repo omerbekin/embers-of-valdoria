@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, content, explainChoice } from '../src/engine';
 import type { BattleEvent, Combatant, Status } from '../src/engine';
+import { scaleMult } from '../src/engine/status-stack';
 
 const R = content.groundReactions;
 const S = content.statuses;
@@ -35,10 +36,17 @@ const place = (b: Battle, ground: string, slots: number[], by = 'party-0', board
 const MODES = ['turns', 'test'] as const;
 
 describe('element formu: veri', () => {
-  it('Unhallowed %35, Blood Cursed %70 şifa kesintisi; Frozen ateşle Soaked bırakır', () => {
-    expect(S['unhallowed']!.healTakenMult).toBe(0.65);
-    expect(S['unhallowed']!.text).toContain('35%');
-    expect(S['blood_cursed']!.healTakenMult).toBe(0.3);
+  // Ömer 2026-11-16 Tur 27: Unhallowed karanlık hasar çarpanı kalktı, yeni debuff 1 tur uzun (Lanet uzar; şifa kesmez); Blood Cursed Wound ile birleşti: Blood Curse zemini 1,4 güçte Wound (%70 şifa kesintisi)
+  it('Unhallowed lanet uzar (element çarpanı yok); Blood Curse zemini güçlü Wound (%70 şifa kesintisi); Frozen ateşle Soaked bırakır', () => {
+    expect(S['unhallowed']!.healTakenMult).toBeUndefined();
+    expect(S['unhallowed']!.elementTakenMult).toBeUndefined();
+    expect(S['unhallowed']!.debuffExtraTurns).toBeGreaterThan(0);
+    expect(S['unhallowed']!.text).toContain(`${S['unhallowed']!.debuffExtraTurns} more turn`);
+    expect(S['blood_cursed']).toBeUndefined();
+    const bc = content.grounds['blood_curse']!;
+    expect(bc.status).toBe('wound');
+    expect(scaleMult(S['wound']!.healTakenMult!, bc.statusStrength!)).toBeCloseTo(0.3, 6);
+    expect(S['wound']!.healTakenMult).toBe(0.5);
     expect(S['frozen']!.thawsInto?.status).toBe('soaked');
     for (const id of ['blood_curse', 'black_flame', 'grave_frost', 'bloody_water', 'rot']) expect(content.grounds[id], id).toBeTruthy();
   });
@@ -55,7 +63,7 @@ describe('element formu: veri', () => {
 });
 
 describe('element formu: zemin tepkimeleri', () => {
-  it('kan + lanet = Blood Curse: içindeki düşman Blood Cursed (şifa çarpanı veriden); iki sıra, iki mod', () => {
+  it('kan + lanet = Blood Curse: içindeki düşman güçlü Wound alır (şifa çarpanı veriden); iki sıra, iki mod', () => {
     for (const mode of MODES)
       for (const [a, c] of [['blood', 'cursed_ground'], ['cursed_ground', 'blood']] as const) {
         const b = mk(mode);
@@ -64,7 +72,8 @@ describe('element formu: zemin tepkimeleri', () => {
         expect(reacted(b, 'blood_curse'), `${mode} ${a}`).toBe(true);
         expect(groundAt(b, 'blood_curse', 0)).toBe(true);
         expect(groundAt(b, 'blood', 0) || groundAt(b, 'cursed_ground', 0)).toBe(false);
-        expect(has(b, 'enemy-0', 'blood_cursed')).toBe(true);
+        expect(has(b, 'enemy-0', 'wound')).toBe(true);
+        expect(b.statusMult(b.get('enemy-0')!, 'healTakenMult')).toBeCloseTo(scaleMult(S['wound']!.healTakenMult!, content.grounds['blood_curse']!.statusStrength!), 6);
         expect(has(b, 'enemy-0', 'soaked')).toBe(false); // T2: ıslatmaz
       }
   });
@@ -208,16 +217,18 @@ describe('element formu: birim üstü', () => {
     expect(has(boss, 'enemy-0', 'soaked')).toBe(true);
   });
 
-  it('Chilled + Shocked = Brittle: 1 tur Shredded, Armor eksiği = taban Armor x oran', () => {
+  // Ömer 2026-11-16: Shredded Sunder ile birleşti; Brittle 1 tur tam Sunder verir (Armor x sunder.armorMult)
+  it('Chilled + Shocked = Brittle: 1 tur Sunder, Armor veri çarpanıyla düşer', () => {
     const b = mk();
     const t = b.get('enemy-0')!;
     t.stats.armor = 50;
     give(b, 'enemy-0', 'chilled');
     expect(b.debugBolt('enemy-0').ok).toBe(true);
     expect(reacted(b, 'brittle')).toBe(true);
-    const sh = st(b, 'enemy-0', 'shredded')!;
+    const sh = st(b, 'enemy-0', 'sunder')!;
+    expect(R.brittle!.status!.status).toBe('sunder');
     expect(sh.turns).toBe(R.brittle!.status!.turns);
-    expect(sh.amount).toBe(Math.round(50 * R.brittle!.status!.armorRatio!));
+    expect(b.effectiveStats(t).armor).toBeCloseTo(50 * S['sunder']!.armorMult!, 3);
   });
 
   it('Poisoned + Chilled: zehir süresi +1 (iki sıra)', () => {
@@ -306,7 +317,7 @@ describe('element formu: yapay zeka', () => {
 
 describe('ikinci element formu (Ömer 2026-11-09)', () => {
   const into = content.formulas.thunder.wetInto!;
-  it('Electrocuted: Soaked birime şimşek Shocked / Stun yerine Electrocuted; temel saldırıyla kendi dostuna vurur, sıra çubuğu 0; iki mod', () => {
+  it('Electrocuted: Soaked birime şimşek Shocked / Stun yerine Electrocuted; temel saldırıyla kendi dostuna vurur; sıra çubuğu artık sıfırlanmaz (Ömer 2026-11-15); iki mod', () => {
     expect(into).toBe('electrocuted');
     expect(S[into]!.cc).toBe(true);
     for (const mode of MODES) {
@@ -321,7 +332,7 @@ describe('ikinci element formu (Ömer 2026-11-09)', () => {
       const friendly = b.log.filter((e): e is Extract<BattleEvent, { type: 'damage' }> => e.type === 'damage' && e.source === 'enemy-0');
       expect(friendly.length, mode).toBeGreaterThan(0);
       expect(friendly.every((d) => d.target.startsWith('enemy') && d.target !== 'enemy-0')).toBe(true);
-      expect(t.turnCounter).toBe(0);
+      expect(t.turnCounter).toBe(50);
     }
   });
 
@@ -339,7 +350,7 @@ describe('ikinci element formu (Ömer 2026-11-09)', () => {
     expect(boss.log.some((e) => e.type === 'damage' && e.source === 'enemy-0')).toBe(false);
   });
 
-  it('Chill Ground + şimşek = Brittle frost (Shredded 1 tur); lanet + şimşek = Hexed spark (Jinxed 2 tur, Shocked yok)', () => {
+  it('Chill Ground + şimşek = Brittle frost (Sunder 1 tur; eski Shredded); lanet + şimşek = Hexed spark (Jinxed 2 tur, Shocked yok)', () => {
     const b = mk();
     b.get('enemy-0')!.stats.armor = 40;
     place(b, 'storm', [0]);
@@ -347,9 +358,10 @@ describe('ikinci element formu (Ömer 2026-11-09)', () => {
     b.debugBolt('enemy-0');
     b.debugBolt('enemy-1');
     expect(reacted(b, 'brittle_frost')).toBe(true);
-    expect(st(b, 'enemy-0', 'shredded')?.turns).toBe(R.brittle_frost!.status!.turns);
+    expect(st(b, 'enemy-0', 'sunder')?.turns).toBe(R.brittle_frost!.status!.turns);
     expect(reacted(b, 'hexed_spark')).toBe(true);
-    expect(st(b, 'enemy-1', 'jinxed')?.turns).toBe(R.hexed_spark!.status!.turns);
+    // Tur 27 (Lanet uzar): hedef lanetli zeminde Unhallowed, tepkimenin Jinxed'i de ek tur sürer (zemin örneği değil, tepkime örneği)
+    expect(st(b, 'enemy-1', 'jinxed')?.turns).toBe(R.hexed_spark!.status!.turns + (content.statuses['unhallowed']!.debuffExtraTurns ?? 0));
     expect(has(b, 'enemy-1', 'shocked')).toBe(false);
     expect(groundAt(b, 'storm', 0) && groundAt(b, 'cursed_ground', 1)).toBe(true); // zeminler kalır
   });

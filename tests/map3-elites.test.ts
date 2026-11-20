@@ -260,9 +260,12 @@ describe.each(MODES)('%s modu', (mode) => {
       const c = make({ 1: 'snowfather' }, mode);
       const s2 = at(c, 'enemy', 1);
       turnOf(c, s2.uid);
+      // Ömer 2026-11-16 Tur 24: Roar Chilled verir (veriden okunur)
+      const roarStatus = (content.skills.roar!.effects.find((e) => e.type === 'status') as { status: string }).status;
+      expect(roarStatus).toBe('chilled');
       const roar = c.useSkill(s2.uid, 'roar');
       expect(roar.ok).toBe(true);
-      for (const h of c.combatants.filter((x) => x.side === 'party')) expect(roar.ok && roar.events.some((e) => e.type === 'status' && e.target === h.uid && e.status === 'slow'), h.name).toBe(true);
+      for (const h of c.combatants.filter((x) => x.side === 'party')) expect(roar.ok && roar.events.some((e) => e.type === 'status' && e.target === h.uid && e.status === roarStatus), h.name).toBe(true);
     });
   });
 
@@ -343,13 +346,14 @@ describe.each(MODES)('%s modu', (mode) => {
       expect(b.groundCellCount('burning')).toBe(0);
       expect(w.hp).toBe(100 + Math.round(w.maxHp * content.skills['quench']!.quench!.healRatio * n));
     });
-    it('Forge Chains: Slow + Burning; Temper the Crown: güvenli hücre yok', () => {
+    it('Forge Chains: Saltbound + Burning; Temper the Crown: güvenli hücre yok', () => {
       const b = make({ 4: 'hearthwarden', 0: 'forge_golem' }, mode);
       const w = at(b, 'enemy', 4);
       const h = at(b, 'party', 3);
       turnOf(b, w.uid);
       expect(b.useSkill(w.uid, 'forge_chains', h.uid).ok).toBe(true);
-      expect(has(h, 'slow')).toBe(true);
+      expect(has(h, 'saltbound')).toBe(true); // Ömer 2026-11-16 Tur 24: Slow yerine 1 tur Saltbound
+      expect(has(h, 'slow')).toBe(false);
       expect(has(h, 'burning')).toBe(true);
       turnOf(b, w.uid);
       w.mp = w.maxMp;
@@ -529,6 +533,7 @@ describe('YZ', () => {
     ['forge_master_golem', { 1: 'forge_master_golem', 0: 'forge_golem', 2: 'forge_golem' }, ['sledge', 'reforge', 'rivet_plate']],
     ['ashborn_hierarch', { 7: 'ashborn_hierarch', 6: 'pyre_witch', 8: 'cinder_knight' }, ['long_sermon', 'fervour']],
     ['cinder_warden', { 1: 'cinder_warden', 7: 'pyre_witch' }, ['searing_bash', 'warden_hold_gate', 'slag_wall']],
+    // Ömer 2026-11-16 Tur 24: Roar Chilled, Forge Chains Saltbound verir (Tur 23'te Hobbled ile imza listesinden çıkmışlardı)
     ['snowfather', { 4: 'snowfather', 0: 'snow_wolf' }, ['avalanche', 'roar', 'whiteout']],
     ['hollow_king', { 4: 'hollow_king', 0: 'hollow_warden' }, ['kingsmaul', 'decree_of_stone', 'bring_down_the_hall']],
     ['hearthwarden', { 4: 'hearthwarden', 0: 'forge_golem' }, ['hammerfall', 'forge_chains', 'temper_the_crown', 'quench']],

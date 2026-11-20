@@ -36,8 +36,8 @@ describe('statuses.json > stack (veri)', () => {
     for (const [id, d] of Object.entries(content.statuses)) {
       const mode = statusStackMode(d);
       if (id === 'omen') expect(mode, id).toBe('stack');
-      else if (id === 'ash_brand' || id === 'branded') expect(mode, id).toBe('replace'); // Ley Brand: son damgalayanın değerleri, süre tazelenir
-      else if (id === 'shredded') expect(mode, id).toBe('replace'); // Zırh yırtan (b_shred): yığını motor sayar (stackLimit), her yeni yığın süreyi tazeler
+      else if (id === 'ash_brand' || id === 'branded' || id === 'blood_brand') expect(mode, id).toBe('replace'); // Ley Brand / Blood Brand: son damgalayanın değerleri, süre tazelenir
+      else if (id === 'shrouded') expect(mode, id).toBe('refresh-strongest'); // Ömer 2026-11-16: Fleet birleşti; güçlü örnek (tam Shrouded) zayıfı (Fleet kaynağı) ezmez
       else expect(mode, id).toBe(d.type === 'debuff' ? 'refresh-strongest' : 'replace');
       expect(mode === 'stack', `${id}: stack <=> maxStacks`).toBe(!!d.maxStacks);
     }
@@ -97,9 +97,11 @@ describe('aynı debuff yığılmaz (motor)', () => {
     const strongAmount = w.amount!;
     // weaker reapply only refreshes: miktar ve kaynak güçlününki kalır, süre tazelenir
     one(t, 'wither').turns = 1;
+    // Tur 27 (Lanet uzar): hedef ilk atışın lanetli zemininde Unhallowed, yeni Wither ek tur sürer
+    const cursed = turns + b.curseExtraTurns(t, 'wither');
     cast(b, weak.uid, 'withering_curse', undefined, t.slot);
-    expect(one(t, 'wither')).toMatchObject({ amount: strongAmount, source: strong.uid, turns });
-    expect(b.log.filter((e) => e.type === 'status' && e.status === 'wither').at(-1)).toMatchObject({ source: strong.uid, turns });
+    expect(one(t, 'wither')).toMatchObject({ amount: strongAmount, source: strong.uid, turns: cursed });
+    expect(b.log.filter((e) => e.type === 'status' && e.status === 'wither').at(-1)).toMatchObject({ source: strong.uid, turns: cursed });
   });
 
   it('omen still stacks: Bad Omen yığını artar (tek örnek, stacks sayacı), 3\'te Doom', () => {

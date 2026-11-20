@@ -1,6 +1,7 @@
 import type { KV } from '../campaign';
 import { isSyncKey } from '../cloud/keys';
 import { noteCampaignWrite } from '../cloud/tombstones';
+import { logEvent } from '../diag/diag';
 
 const CAMPAIGN_KEY = 'eov.campaign.v1';
 
@@ -17,6 +18,11 @@ function mark(key: string): void {
   for (const fn of listeners) fn(key);
 }
 
+/** Silme işareti yazıldı: hata raporu izi (yalnız yuva no + neden). */
+function logTombs(slots: number[], why: string): void {
+  for (const n of slots) logEvent('save', `tombstone slot ${n} (${why})`);
+}
+
 /** Bir depoyu sarar: okuma aynen, senkron anahtarına değişen yazım / silme `dirty` işaretler. Aynı depo için aynı sarmalayıcı döner. */
 export function wrapKV(ls: KV): KV {
   let w = wrapped.get(ls);
@@ -28,14 +34,14 @@ export function wrapKV(ls: KV): KV {
       const changed = isSyncKey(k) && prev !== v;
       ls.setItem(k, v); // hata (kota) yukarı gider; yazılmayan değer işaretlemez
       if (!changed) return;
-      if (k === CAMPAIGN_KEY) noteCampaignWrite(ls, prev, v); // kaybolan yuva seferi -> silme işareti (cloud/tombstones.ts)
+      if (k === CAMPAIGN_KEY) logTombs(noteCampaignWrite(ls, prev, v), 'campaign gone'); // kaybolan yuva seferi -> silme işareti (cloud/tombstones.ts)
       mark(k);
     },
     removeItem: (k) => {
       const prev = isSyncKey(k) ? ls.getItem(k) : null;
       ls.removeItem(k);
       if (prev === null) return;
-      if (k === CAMPAIGN_KEY) noteCampaignWrite(ls, prev, null);
+      if (k === CAMPAIGN_KEY) logTombs(noteCampaignWrite(ls, prev, null), 'file removed');
       mark(k);
     },
   };

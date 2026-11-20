@@ -515,13 +515,16 @@ describe('balta ağzı / çekiç yüzü öne bakar (Ömer 2026-10-13 "Warrior ba
 
 describe('hazır tutuş: ağızlı silah YUKARI ve hafif öne (Ömer 2026-10-13 "tek elli kılıç böyle mi tutulur"; hançer istisna: ucu öne)', () => {
   const v2 = Object.entries(POSES.classes).filter(([, d]) => d.grips);
-  it('tek el: axes / swords / maces / hammers idle1, step1, guard1 açısı 15..50 (yukarı-öne); daggers 40..90 (ucu öne-yukarı)', () => {
+  // Hançer bandı 40..120 (Ömer 2026-11-17: "ben kılıç için demişim abicim kuralı. kız hançer tutuyor"): "yukarı ve hafif öne" kuralı
+  // kılıç / balta / topuz / çekiç içindir (15..50, değişmedi); hançerde istisna "ucu öne": yukarı-öneden (40) öne-hafif aşağıya (120) kadar.
+  // Redtithe (antimage_v2) idle1 arka yumruğu kalçada sarkar, tutuş ekseni ölçüldü: 110 (ucu öne, hafif aşağı).
+  it('tek el: axes / swords / maces / hammers idle1, step1, guard1 açısı 15..50 (yukarı-öne); daggers 40..120 (ucu öne)', () => {
     for (const [id, def] of v2)
       for (const family of ['axes', 'swords', 'maces', 'hammers', 'daggers'])
         for (const pose of ['idle1', 'step1', 'guard1']) {
           const look = POSES.weapons[family]!.order[0]!;
           const pl = itemPlacement(def, pose, { family, look }, 'main')!;
-          const [lo, hi] = family === 'daggers' ? [40, 90] : [14, 50]; // 14: Warrior baltası (Ömer 2026-10-18: kural 15 +-1 içinde kalır)
+          const [lo, hi] = family === 'daggers' ? [40, 120] : [14, 50]; // 14: Warrior baltası (Ömer 2026-10-18: kural 15 +-1 içinde kalır)
           expect(pl.angle, `${id} ${family} ${pose}`).toBeGreaterThanOrEqual(lo);
           expect(pl.angle, `${id} ${family} ${pose}`).toBeLessThanOrEqual(hi);
         }
@@ -545,5 +548,22 @@ describe('eller yer değiştirmez: main = SAĞ el (arkadaki kol, resimde solda),
         const p = def.poses[pose]!;
         expect(p.anchor.x, `${id} ${pose}`).toBeLessThan(p.offhand!.x);
       }
+  });
+});
+
+describe('yer değiştirme: ana eşya hand "off" ile ön ele geçince ikinci el eşyası ana ele (arka yumruk) geçer', () => {
+  const def = POSES.classes['antimage_v2']!;
+  it('kılıç + hançer idle1: kılıç ön yumrukta, hançer arka yumrukta (110); kalkan da arka yumrukta; çift hançer değişmez', () => {
+    const items = poseItems(def, 'idle1', { family: 'swords', look: POSES.weapons['swords']!.order[0]!, offhand: { family: 'daggers', look: POSES.weapons['daggers']!.order[0]! } });
+    const sw = items.find((p) => p.slot === 'main')!;
+    const dg = items.find((p) => p.slot === 'off')!;
+    expect(sw.hand).toBe('off');
+    expect(dg.hand).toBe('main');
+    expect([dg.hx, dg.hy]).toEqual([def.poses['idle1']!.anchor.x, def.poses['idle1']!.anchor.y]);
+    expect(dg.angle).toBe(def.poses['idle1']!.anchor.angle);
+    const sh = poseItems(def, 'idle1', { family: 'axes', look: POSES.weapons['axes']!.order[0]!, offhand: { family: 'shields', look: POSES.weapons['shields']!.order[0]! } }).find((p) => p.slot === 'off')!;
+    expect(sh.hand).toBe('main');
+    const duo = poseItems(def, 'idle1', { family: 'daggers', look: POSES.weapons['daggers']!.order[0]!, offhand: { family: 'daggers', look: POSES.weapons['daggers']!.order[0]! } });
+    expect(duo.map((p) => p.hand)).toEqual(['main', 'off']);
   });
 });

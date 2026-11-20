@@ -1,5 +1,5 @@
 # Alan: Minor Fixes (küçük / sahipsiz işler)
-> **Ne için / Güncel mi (2026-11-08):** küçük/sahipsiz işler ve bekleyen düzeltmeler. bekleyen düzeltme yok.
+> **Ne için / Güncel mi (2026-11-15):** küçük/sahipsiz işler ve bekleyen düzeltmeler. 1.0 öncesi sağlamlık taramasının bulguları "Açık işler"de (düzeltme planı onay bekliyor).
 
 
 Bekleyen düzeltme listesi bu dosyadadır (eski `pending-fixes.md` buraya birleştirildi, kopyası `docs/archive/design/pending-fixes.md`; tablo boştu).
@@ -15,6 +15,25 @@ Bekleyen düzeltme listesi bu dosyadadır (eski `pending-fixes.md` buraya birle�
 - Emberbrand tür/görsel uyumsuzluğu → Item Design. Çekiç/gürz ikon + isim tutarsızlığı → Item Design.
 - Ley Thread / ikinci mana yakma → Combat Design (Ley 1,5, Ömer'in son kararı).
 - `assets/source/ui-icons/ring-slot.png` izlenmeyen dosya, bu alana ait değil; commit'e sokma.
+
+## Açık işler: 1.0 öncesi sağlamlık taraması (bug-hunter 2026-11-15; kayıt kaybı maddeleri düzeldi, gönderim bekliyor)
+- **DÜZELDİ (2026-11-15, bug-hunter, dal agent/bug-hunter-kayit-kaybi, gönderilmedi).** Okunamayan sefer dosyası artık ezilmiyor.
+  - `save.ts > write`: dosya daha yeni sürümse (ör. v15) hiç yazılmaz; oyuncuya "This save was made by a newer version. Reload to update." (ana menü notu + reddedilen kayıtta uyarı, dakikada en çok bir).
+  - Yarım / bozuk dosya: üstüne yazmadan önce ham dizgi `eov.campaign.corrupt.v1`e kopyalanır (senkronlanmaz); kopya yazılamazsa yazılmaz.
+  - `tombstones.ts > deletedSlots`: önceki dosya sürümsüz ya da yazandan yeniyse, ya da yuva okuyucunun tanımadığı biçimdeyse silme işareti yok.
+  - Test: `tests/save-unreadable-guard.test.ts`.
+  - Açık kalan küçük nokta: eski sekmede (v15 yerel dosya) temiz cihaz bulut indirmesi yerel dosyayı yine ezebilir; yalnız `eov.cloud.backup.v1`e yedeklenir.
+- **DÜZELDİ (2026-11-15).** Çevrimdışı açılışta oynanan ilerleme kalıcı `meta.dirty` alır (`cloud.ts > watchDirtyOffline / persistDirty`); sonraki açılışta normal çakışma sorusu gelir. Test: `cloud-client.test.ts` "sağlamlık A2".
+- **DÜZELDİ (2026-11-15).** Kayıt yazılamazsa (kota / depo kapalı) oturumda bir kez "Progress could not be saved on this device." (`campaign-session.ts`, `save.ts > onSaveFail`). Test: `tests/save-fail-warning.test.ts`.
+- **Soru (Ömer).** Sefer savaşı ortasında sekme kapanırsa savaş baştan başlar; duraklatma kaydı yalnız Retreat'te. Ironman'da sekme kapatıp yenilgiden kaçılabilir. Gizlenince kayıt yazılsın mı?
+- **DÜZELDİ (2026-11-15).** `stale-build.ts`: çevrimdışıyken (`navigator.onLine` false ya da sayfa sunucusu yanıt vermiyor) yenileme yok, "No connection. Reconnect and try again." uyarısı; oyunda kalınır. Test: `stale-build.test.ts`.
+- **Küçük.** Hata raporu deposunun 38/45'i agent tarayıcısı (localhost, UA `Claude/`); localhost raporları ayrılmalı.
+  - Gerçek telefon: 6 `previous_session_crashed`, hidden izi yok, bellek düşük, sebep belirsiz.
+  - Öneri: `freeze` olayı da iz + temiz sayılsın.
+- **Küçük.** İlk yüklemede `debug-state` parçası (241 KB) var.
+  - `public/mockups` (98 MB) canlıya gidiyor.
+  - Menü 4 x 2580x1080 katman telefonda da tam boy (42 MB doku).
+- Tam rapor ve ölçümler: bug-hunter sağlamlık raporu (scratchpad); kare süresi ölçülemedi (gizli panel, Playwright yasak).
 
 ## Tuzaklar
 - Golden: motor olay akışı değişince kırmızı olur; gönderim yeniden üretir, elle düzeltme.

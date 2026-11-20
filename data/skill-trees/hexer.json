@@ -625,7 +625,8 @@
     },
     "2.f2": {
       "name": "Fog of Ill Luck",
-      "text": "Withered enemies have -1% accuracy per rank.",
+      "text": "Wither also Blinds the enemy: -1% accuracy per rank.",
+      "_not": "Ömer 2026-11-16 Tur 24: isabet eki yerine aynı güçte Blinded (withStatus; güç = -0,01 / Blinded -0,3 = 1/30 rank başına, 0,0333).",
       "src": "B:V3:2.f3",
       "fx": [
         {
@@ -633,8 +634,9 @@
           "h": "cond",
           "sel": "status:wither",
           "mod": {
-            "statusPotency": {
-              "accuracyDelta": -0.01
+            "withStatus": {
+              "status": "blinded",
+              "strength": 0.0333
             }
           },
           "rank": true
@@ -873,7 +875,8 @@
     },
     "3.f2": {
       "name": "Wobbly Aim",
-      "text": "Jinxed lowers accuracy by 5% more per rank (-20% → -45%).",
+      "text": "Jinx also Blinds the enemy: -5% accuracy per rank (up to -25%).",
+      "_not": "Ömer 2026-11-16 Tur 24: isabet eki yerine aynı güçte Blinded (withStatus; güç = -0,05 / Blinded -0,3 = 1/6 rank başına).",
       "src": "B:V3:3.f2",
       "fx": [
         {
@@ -881,8 +884,9 @@
           "h": "cond",
           "sel": "status:jinxed",
           "mod": {
-            "statusPotency": {
-              "accuracyDelta": -0.05
+            "withStatus": {
+              "status": "blinded",
+              "strength": 0.167
             }
           },
           "rank": true
@@ -1007,7 +1011,7 @@
           },
           "do": [
             {
-              "status": "staggered",
+              "status": "stun",
               "turns": 1,
               "to": "target"
             }
@@ -1040,7 +1044,8 @@
     },
     "3.fb": {
       "name": "Feeble Jinx",
-      "text": "Jinxed lowers accuracy by 40%, but Jinx deals no damage.",
+      "text": "Jinx also Blinds the enemy for -20% accuracy, but deals no damage.",
+      "_not": "Ömer 2026-11-16 Tur 24: isabet eki yerine aynı güçte Blinded (withStatus; güç = -0,2 / Blinded -0,3 = 2/3).",
       "src": "B:V3:3.fa",
       "fx": [
         {
@@ -1052,8 +1057,9 @@
           "h": "cond",
           "sel": "status:jinxed",
           "mod": {
-            "statusPotency": {
-              "accuracyDelta": -0.2
+            "withStatus": {
+              "status": "blinded",
+              "strength": 0.667
             }
           }
         }

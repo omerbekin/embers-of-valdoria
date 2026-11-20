@@ -3,6 +3,7 @@ import { Battle, content, manaShieldNeed, manaShieldPay, previewSkill, type Batt
 import { affixLines } from '../src/progression/item-text';
 import { ITEMS, affixDef, affixValues, validateItems, type ItemInstance } from '../src/progression/items';
 import { loadout } from '../src/progression/loadout';
+import { scaleMult } from '../src/engine/status-stack';
 
 // Yeni affix turu 2 (Ömer 2026-10-24, docs/archive/design/progression/item-effects.md "Yeni affix turu 2"): 9 affix, veri eşlemesi (loadout) + motor kancaları. Sayılar provizyon;
 // testler kuralı denetler (iska kapalı; sayılar veriden).
@@ -37,7 +38,7 @@ describe('affix turu 2: veri', () => {
       b_startshield: { tier: 'B', slots: ['offhand', 'armor', 'trinket'], mid: 8 },
       b_killmp: { tier: 'B', slots: ['gloves', 'trinket'], mid: 4, needs: 'mp' },
       b_killheal: { tier: 'B', slots: ['armor', 'trinket'], mid: 3 },
-      b_shred: { tier: 'B', slots: ['weapon'], mid: 5 },
+      b_shred: { tier: 'B', slots: ['weapon'], mid: 1 }, // Ömer 2026-11-16: sabit (fixed) parça; yığın gücü Sunder verisinden
       a_manashield: { tier: 'A', slots: ['armor', 'helm'], mid: 7, needs: 'mp' },
       a_cdchance: { tier: 'A', slots: ['helm', 'gloves', 'trinket'], mid: 12 },
       a_overkill: { tier: 'A', slots: ['weapon'], mid: 40 },
@@ -67,9 +68,11 @@ describe('affix turu 2: veri', () => {
     expect(affixLines(inst('work_gloves', 'b_killmp'))[0]!.text).toBe(`+${v('b_killmp')} MP when your skill kills an enemy`);
   });
 
-  it('Shredded durumu veride: debuff, yığın sınırı ve süre; Omen yığını değil (maxStacks yok)', () => {
-    const d = content.statuses.shredded!;
-    expect(d.name).toBe('Shredded');
+  // Ömer 2026-11-16: Shredded Sunder ile birleşti; Armor shred Sunder yığını verir (3 yığın = tam Sunder)
+  it('Sunder yığını veride: debuff, yığın sınırı ve süre; Omen yığını değil (maxStacks yok)', () => {
+    expect(content.statuses.shredded).toBeUndefined();
+    const d = content.statuses.sunder!;
+    expect(d.name).toBe('Sunder');
     expect(d.type).toBe('debuff');
     expect(d.stackLimit).toBe(3);
     expect(d.duration).toBe(2);
@@ -144,25 +147,30 @@ describe('affix turu 2: motor kancaları', () => {
     expect(h[0]!.amount).toBe(Math.round(unit(b, 'party-0').maxHp * 0.04));
   });
 
-  it('Zırh yırtan: her isabet eden vuruş bir Shredded yığını (iki darbeli temel saldırı 2 yığın; en çok 3); direnç durdurur', () => {
+  it('Zırh yırtan: her isabet eden vuruş bir Sunder yığını (iki darbeli temel saldırı 2 yığın; 3 yığın = tam Sunder); direnç durdurur', () => {
     const hits = content.skills[warriorAttack]!.effects.filter((e) => e.type === 'damage').length;
     expect(hits).toBeGreaterThanOrEqual(2); // Warrior temel saldırısı iki darbeli
-    const limit = content.statuses.shredded!.stackLimit!;
+    const sd = content.statuses.sunder!;
+    const limit = sd.stackLimit!;
+    const armorAt = (base: number, n: number) => base * scaleMult(sd.armorMult!, n / limit);
     const b = make({ 0: 'warrior' }, { 0: 'mage' }, { 0: fx({ armorShred: 5 }) }, { 0: { modifiers: { hpMult: 20, armorAdd: 20 } } });
     const e = unit(b, 'enemy-0');
     const base = b.effectiveStats(e).armor;
     b.useSkill('party-0', warriorAttack, 'enemy-0');
-    const st = () => e.statuses.find((s) => s.kind === 'shredded');
-    expect(st()?.stacks).toBe(Math.min(limit, hits));
-    expect(ofType(b, 'status').filter((x) => (x as { status?: string }).status === 'shredded').length).toBeGreaterThanOrEqual(Math.min(limit, hits));
-    expect(st()?.turns).toBe(content.statuses.shredded!.duration);
-    expect(b.effectiveStats(e).armor).toBe(Math.max(0, base - 5 * Math.min(limit, hits)));
+    const st = () => e.statuses.find((s) => s.kind === 'sunder');
+    const n = Math.min(limit, hits);
+    if (n < limit) expect(st()?.strength).toBeCloseTo(n / limit, 6);
+    else expect(st()?.strength).toBeUndefined();
+    expect(ofType(b, 'status').filter((x) => (x as { status?: string }).status === 'sunder').length).toBeGreaterThanOrEqual(1);
+    expect(st()?.turns).toBe(sd.duration);
+    expect(b.effectiveStats(e).armor).toBeCloseTo(armorAt(base, n), 1);
     for (let i = 0; i < 3; i++) b.useSkill('party-0', warriorAttack, 'enemy-0');
-    expect(st()?.stacks).toBe(limit);
-    expect(b.effectiveStats(e).armor).toBe(Math.max(0, base - 5 * limit));
+    expect(st()?.strength).toBeUndefined(); // dolu yığın = tam Sunder
+    expect(e.statuses.filter((s) => s.kind === 'sunder')).toHaveLength(1);
+    expect(b.effectiveStats(e).armor).toBeCloseTo(armorAt(base, limit), 1);
     const r = make({ 0: 'warrior' }, { 0: 'defender' }, { 0: fx({ armorShred: 5 }) }, { 0: fx({ debuffAvoid: 1 }) });
     r.useSkill('party-0', warriorAttack, 'enemy-0');
-    expect(unit(r, 'enemy-0').statuses.some((s) => s.kind === 'shredded')).toBe(false);
+    expect(unit(r, 'enemy-0').statuses.some((s) => s.kind === 'sunder')).toBe(false);
   });
 
   it('Mana kalkanı: kalkanlardan sonra kalan hasarın oranı MP\'den; MP bitince kalanı cana', () => {

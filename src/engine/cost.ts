@@ -6,6 +6,10 @@ import { costCondEffect, effNum, type CostEnv } from './tree-hooks';
  * amount + round(mevcut x ofCurrent), en az 1 (Wail of the Dead: mevcut canın %20'si). Yuvarlama: en yakın tam sayı (0,5 yukarı).
  * Kullanıcı verilmezse (tooltip/wiki: savaş dışı) sabit kısım döner. Motor (canUse, ödeme), YZ, önizleme ve maç kaydı bu fonksiyonu kullanır.
  */
+/** Bedelin kaynağının kullanıcıdaki mevcut miktarı (hp / mp / rage / blood). */
+const currentOf = (cost: SkillCost, user: Pick<Combatant, 'hp' | 'mp' | 'rage'> & Partial<Combatant>): number =>
+  cost.resource === 'hp' ? user.hp : cost.resource === 'mp' ? user.mp : cost.resource === 'blood' ? (user.blood ?? 0) : (user.rage ?? 0);
+
 export function skillCostAmount(cost: SkillCost, user?: Pick<Combatant, 'hp' | 'mp' | 'rage'> & Partial<Combatant>, env?: CostEnv): number {
   // Faz 4a: tetiğin verdiği "sonraki skill bedelsiz" (TreeBuff.free; yalnızca ağaçlı birimde, sürmekte olan kullanımda kazanılan sayılmaz)
   if (user?.treeBuffs?.some((b) => b.free && !b.pending)) return 0;
@@ -16,12 +20,9 @@ export function skillCostAmount(cost: SkillCost, user?: Pick<Combatant, 'hp' | '
   const cc = cost.cond ? costCondEffect(cost, user as Combatant | undefined, env) : undefined;
   let amount = cc ? Math.max(0, cost.amount + cc.add) : cost.amount;
   // spendAll (Headsman's Blow): kaynağın TAMAMI; amount en az gereken (Rage: 30). Kullanıcı yoksa (tooltip/wiki) en az miktar
-  if (cost.spendAll && user) {
-    const current = cost.resource === 'hp' ? user.hp : cost.resource === 'mp' ? user.mp : (user.rage ?? 0);
-    amount = Math.max(amount, current);
-  }
+  if (cost.spendAll && user) amount = Math.max(amount, currentOf(cost, user));
   if (ratio > 0 && user) {
-    const current = cost.resource === 'hp' ? user.hp : cost.resource === 'mp' ? user.mp : (user.rage ?? 0);
+    const current = currentOf(cost, user);
     amount = Math.max(1, amount + Math.round(current * ratio));
   }
   // MP cost -% (item affix, Ömer 2026-10-11): MP bedeli indirimi, yuvarlanır, en az 1; etki yoksa bedel aynen
@@ -37,7 +38,22 @@ export function skillCostAmount(cost: SkillCost, user?: Pick<Combatant, 'hp' | '
 /** Ley Brand: birimin üstündeki Branded'ın MP bedel çarpanı (yoksa 1). Saf. */
 export function brandCostMult(user?: Partial<Pick<Combatant, 'statuses'>>): number {
   const st = user?.statuses?.find((s) => s.kind === 'branded');
-  return st?.brand?.costMult ?? 1;
+  // Blood Brand (Redtithe): işaretlinin MP bedelleri de costMult katı (iki işaret birden varsa çarpılır)
+  const bb = user?.statuses?.find((s) => s.kind === 'blood_brand');
+  return (st?.brand?.costMult ?? 1) * (bb?.bloodBrand?.costMult ?? 1);
+}
+
+/**
+ * Kan bedelinin bölünmesi (Redtithe, Ömer 2026-11-17): önce kan; eksik kısım candan, 1 kan = maks canın `hpPerBlood` oranı (yukarı yuvarlanır).
+ * `ok` false: ödeme canı 1'in altına indirir (kendini öldüremez) ya da spendAll bedelin en azı kanla karşılanmıyor (spendAll candan ödenmez).
+ * Motor (canUse, ödeme), YZ, önizleme ve HUD aynı fonksiyonu kullanır. Saf.
+ */
+export function bloodSplit(cost: SkillCost, amount: number, user: Pick<Combatant, 'hp' | 'maxHp'> & Partial<Pick<Combatant, 'blood'>>, hpPerBlood: number, freeBlood = false): { blood: number; hp: number; ok: boolean } {
+  const have = Math.max(0, user.blood ?? 0);
+  if (freeBlood || amount <= have) return { blood: freeBlood ? 0 : amount, hp: 0, ok: true };
+  if (cost.spendAll) return { blood: have, hp: 0, ok: false };
+  const hp = Math.max(1, Math.ceil((amount - have) * user.maxHp * hpPerBlood - 1e-9));
+  return { blood: have, hp, ok: user.hp - hp >= 1 };
 }
 
 /** Soul Exchange (SkillCost.hpFallback): yedek can bedelinin miktarı = round(mevcut can x oran), en az 1. Yedek yoksa 0. */

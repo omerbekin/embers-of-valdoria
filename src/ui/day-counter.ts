@@ -6,11 +6,13 @@
  */
 import './day-counter.css';
 import type { CampaignState } from '../campaign';
+import { pushClose } from './close-stack';
 import { DAY_KIND_NAME, countdown, dayView, type DayView } from './day-counter-model';
 
 const esc = (t: string): string => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] ?? c);
 
 export class DayCounter {
+  private popStack: (() => void) | null = null;
   readonly el: HTMLElement;
   private readonly band: HTMLButtonElement;
   private readonly panel: HTMLElement;
@@ -53,6 +55,7 @@ export class DayCounter {
     this.band.setAttribute('aria-expanded', 'true');
     document.addEventListener('keydown', this.onKey, true);
     document.addEventListener('pointerdown', this.onDown, true);
+    this.popStack = pushClose({ close: () => this.close() }); // Esc / Android geri
   }
 
   close(): void {
@@ -62,6 +65,8 @@ export class DayCounter {
     this.band.setAttribute('aria-expanded', 'false');
     document.removeEventListener('keydown', this.onKey, true);
     document.removeEventListener('pointerdown', this.onDown, true);
+    this.popStack?.();
+    this.popStack = null;
   }
 
   /** Durumdan yeniden çizer (yalnız görünür veri değiştiyse); `hidden`: başka pencere / menü açıkken gizle ve paneli kapat. */

@@ -474,6 +474,33 @@ describe('bulut istemcisi (src/cloud/cloud.ts)', () => {
     expect(metaOf(raw)).toMatchObject({ rev: 1, dirty: false });
   });
 
+  it('çevrimdışı açılışta oynanan ilerleme kalıcı kirli; sonra bulut değişse de sormadan ezilmez (sağlamlık A2)', async () => {
+    const raw = memoryKV();
+    progress(raw, 1);
+    raw.setItem(CLOUD_META_KEY, JSON.stringify({ userId: 'u-1', rev: 1, hash: null, dirty: false, lastSyncAt: null }));
+    // 1) Çevrimdışı açılış: oyuncu Slot 2'de oynar, uygulamayı kapatır (bellekteki kirli işaret gider)
+    ctx = setup({ raw });
+    ctx.server.s.offline = true;
+    await ctx.client.init();
+    expect(ctx.client.getStatus()).toBe('offline');
+    progress(ctx.kv, 4, 1);
+    expect(metaOf(raw)?.dirty).toBe(true);
+    ctx.client.dispose();
+    clearCloudDirty();
+    // 2) Bu arada öbür cihaz yükledi (Slot 3'te başka sefer)
+    ctx = setup({ raw });
+    seedServer(ctx.server.s, 3, (kv) => {
+      progress(kv, 1);
+      progress(kv, 8, 2);
+    });
+    await ctx.client.init();
+    await ctx.client.whenIdle();
+    // 3) Sessiz indirme YOK: yerel Slot 2 durur, çakışma sorusu gelir
+    expect(ctx.logs.some((l) => l.includes('clean device'))).toBe(false);
+    expect(readSaves(raw).file.slots[1]?.campaignId).toBe('c4');
+    expect(ctx.events.some((e) => e.type === 'pending' && e.pending)).toBe(true);
+  });
+
   it('başka cihaz yükledi, bu cihaz temiz: açılışta indirilir', async () => {
     const raw = memoryKV();
     progress(raw, 1);

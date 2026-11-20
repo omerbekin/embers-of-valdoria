@@ -8,12 +8,13 @@ const L = F.formation.lanes;
 const BACK = (F.formation.rows - 1) * L;
 const cells = (map: Record<number, string>) => Array.from({ length: F.formation.rows * L }, (_, i) => map[i] ?? '');
 
-function decide(enemies: Record<number, string>, slot: number, hp: number) {
+function decide(enemies: Record<number, string>, slot: number, hp: number, drop: string[] = []) {
   const b = new Battle(rangeOn(content.battleSetup('random-battle', 1, 'test', { party: cells({ [BACK]: 'druid' }), enemies: cells(enemies) }, false)));
   const w = b.combatants.find((c) => c.side === 'enemy' && c.slot === slot)!;
   w.maxHp = 24;
   w.hp = 24 * hp;
   b.debugClearCooldowns();
+  w.skills = w.skills.filter((s) => !drop.includes(s));
   return { b, ch: chooseAction(b, w.uid, content.aiConfig) };
 }
 
@@ -40,7 +41,8 @@ describe('yakın dövüşçü: tek vuran geri çekilmez', () => {
   });
 
   it('önde vuran başka dost varken eski değerlendirme sürer: yaralı kurt geri çekilebilir', () => {
-    const { b, ch } = decide({ 0: 'grey_wolf', 1: 'grey_wolf' }, 0, 0.3);
+    // Ömer 2026-11-16: Wound %50 (Rend'in Druid'e kontrol değeri iki katı, kalmayı değerli kılar); geri çekilme kuralı Rend'siz ölçülür
+    const { b, ch } = decide({ 0: 'grey_wolf', 1: 'grey_wolf' }, 0, 0.3, ['rend']);
     expect(ch?.skillId).toBe('move_tile');
     expect(b.rowOf(ch!.slot!)).toBeGreaterThan(0);
   });

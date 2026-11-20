@@ -28,9 +28,11 @@ export const FX_FIELDS: Record<string, readonly string[]> = {
   // Faz 2a+ (a*): diğer etki türlerinin sayıları
   heal: ['power', 'missingHpBonus'],
   hot: ['power', 'turns'],
-  shield: ['power', 'bonusPerMana'],
+  shield: ['power', 'bonusPerMana', 'flat', 'turns'],
   revive: ['hpRatio', 'mpRatio'],
-  manaBurn: ['amount', 'pctMax', 'gainRatio', 'onEmpty.chance', 'onEmpty.turns', 'onEmpty.damage.power', 'onEmpty.damage'],
+  manaBurn: ['amount', 'pctMax', 'gainRatio', 'bloodPerMp', 'onEmpty.chance', 'onEmpty.turns', 'onEmpty.damage.power', 'onEmpty.damage'],
+  /** Redtithe (engine-dev 2026-11-17): Blood Brand işaret süresi / MP bedel çarpanı / ek tik / işaret hasarı. */
+  bloodBrand: ['turns', 'costMult', 'ticks', 'markDamagePct'],
   /** Ley Brand (open-questions 444): süre, havuz oranı, bedel çarpanı, yakım / patlama hasar payı; ağaç alanları silenceOnEmpty, centerTaintMul, spread (bayrak). */
   brand: ['turns', 'taintPct', 'costMult', 'burnDamagePct', 'explodePct', 'silenceOnEmpty', 'centerTaintMul', 'spread'],
   /** Hasar etkilerinin bahsi (damage.bet). */
@@ -93,7 +95,7 @@ const FX_DEFAULTS: Record<string, number> = {
 };
 
 /** Tam sayı alanlar (sonuç yuvarlanır, en az 0). */
-const INT_FIELDS = new Set(['splash.jumps', 'cost.amount', 'cooldown', 'initialCooldown', 'count', 'turns', 'stacks', 'critStacks', 'lifespan', 'onEmpty.turns', 'amount', 'silenceOnEmpty', 'ringsBell']);
+const INT_FIELDS = new Set(['splash.jumps', 'cost.amount', 'cooldown', 'initialCooldown', 'count', 'turns', 'ticks', 'bleedTurns', 'stacks', 'critStacks', 'lifespan', 'onEmpty.turns', 'amount', 'silenceOnEmpty', 'ringsBell']);
 
 export class TreeFxError extends Error {}
 
@@ -129,6 +131,7 @@ function resolve(def: SkillDef, sel: string): { kind: string; targets: Bag[] } {
     case 'revive':
     case 'manaBurn':
     case 'brand':
+    case 'bloodBrand':
     case 'omen':
     case 'dot':
     case 'bond':
@@ -438,12 +441,20 @@ function checkMod(k: string, t: 'num' | 'bool' | 'obj' | 'str', v: unknown, r: n
     if (!Object.keys(out).length) throw new TreeFxError('statusPotency is empty');
     return out;
   }
+  if (k === 'withStatus') {
+    // Ömer 2026-11-16 Tur 24: eş durum (Hexer isabet ekleri Blinded oldu); güç rank ile çarpılır
+    if (!knownStatus(o.status)) throw new TreeFxError(`withStatus: unknown status "${String(o.status)}"`);
+    if (typeof o.strength !== 'number' || !(o.strength > 0)) throw new TreeFxError('withStatus.strength must be > 0');
+    for (const f of Object.keys(o)) if (!['status', 'strength'].includes(f)) throw new TreeFxError(`withStatus: unknown field "${f}"`);
+    return { status: o.status, strength: r6(o.strength * r) };
+  }
   if (k === 'addStatus' || k === 'extendStatus') {
     if (!(k === 'extendStatus' && o.status === '*') && !knownStatus(o.status)) throw new TreeFxError(`${k}: unknown status "${String(o.status)}"`);
     if (typeof o.turns !== 'number' || !Number.isFinite(o.turns) || o.turns <= 0) throw new TreeFxError(`${k} needs "turns"`);
     if (o.chance !== undefined && (typeof o.chance !== 'number' || o.chance < 0 || o.chance > 1)) throw new TreeFxError(`${k}.chance must be 0-1`);
     if (o.self !== undefined && (k !== 'addStatus' || typeof o.self !== 'boolean')) throw new TreeFxError(`${k}.self is not allowed`);
-    for (const f of Object.keys(o)) if (!['status', 'turns', 'chance', 'self'].includes(f)) throw new TreeFxError(`${k}: unknown field "${f}"`);
+    if (o.strength !== undefined && (k !== 'addStatus' || typeof o.strength !== 'number' || !(o.strength > 0))) throw new TreeFxError(`${k}.strength must be > 0`); // Ömer 2026-11-16: örnek gücü
+    for (const f of Object.keys(o)) if (!['status', 'turns', 'chance', 'self', 'strength'].includes(f)) throw new TreeFxError(`${k}: unknown field "${f}"`);
     return clone(o);
   }
   throw new TreeFxError(`mod ${k} has no checker`);
@@ -1256,7 +1267,7 @@ const TRIGGER_FILTERS: Record<string, readonly TriggerEvent[]> = {
 const ACTION_KEYS: Record<string, readonly string[]> = {
   heal: ['of'],
   shield: ['of', 'turns', 'magic'],
-  status: ['turns', 'stacks', 'chance', 'power', 'stat', 'permanent', 'bounce', 'bounceMax', 'bounceHit', 'bounceFalloff'],
+  status: ['turns', 'stacks', 'chance', 'power', 'stat', 'permanent', 'bounce', 'bounceMax', 'bounceHit', 'bounceFalloff', 'strength'],
   removeStatus: ['node'],
   damage: ['of', 'stat', 'damageType', 'element', 'crit', 'passive', 'summoner'],
   rage: [],

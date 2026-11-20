@@ -142,15 +142,18 @@ describe('Faz 4c: bedava kullanım (freeCast) ve gecikmeli vuruş', () => {
     });
   });
 
-  it('Run It Back: Double or Nothing tetiklenince skill hemen %60 güçle yeniden', () => {
-    seeds('Run It Back', (seed) => {
-      const b = make({ 0: 'gambler' }, { 0: 'warrior' }, withTree(0, only('gambler', { '0.v': 1 })), seed, 'turns');
-      const me = P(b);
-      const evs = cast(b, me, 'all_in', E(b));
-      if (!evs.some((e) => e.type === 'passive' && e.actor === me.uid && e.passive === 'double_or_nothing')) return false;
-      expect(uses(evs, me, 'all_in')).toBe(2);
-      return true;
-    });
+  it('Run It Back: dolu seri harcanınca skill hemen %40 güçle yeniden (bedava kullanım seriyi değiştirmez)', () => {
+    const b = make({ 0: 'gambler' }, { 0: 'warrior' }, withTree(0, only('gambler', { '0.v': 1 })), 11, 'turns');
+    const me = P(b);
+    E(b).hp = E(b).maxHp = 99999;
+    me.streak = 3;
+    const evs = cast(b, me, 'all_in', E(b));
+    expect(uses(evs, me, 'all_in')).toBe(2);
+    expect(evs.filter((e) => e.type === 'streak').map((e) => e.type === 'streak' && e.after)).toEqual([0]);
+    expect(me.streak).toBe(0);
+    // seri dolu değilken tetik yok
+    const evs2 = cast(b, me, 'all_in', E(b));
+    expect(uses(evs2, me, 'all_in')).toBe(1);
   });
 
   it('Twin Meteors: bir tur sonra aynı hücrelere %50 ikinci meteor (zincirlenmez)', () => {
@@ -391,28 +394,7 @@ describe('Faz 4c: hata düzeltmeleri', () => {
     expect(has(E(b, 8), 'wither')).toBe(false);
   });
 
-  it('Second Ward: Spell Ward kırılınca en düşük canlı dosta kırılan kalkanın ilk boyunun %50\'si', () => {
-    seeds('Second Ward', (seed) => {
-      const b = make({ 0: 'antimage', 1: 'warrior', 2: 'mage' }, { 0: 'mage' }, withTree(0, only('antimage', { '3.ma': 1 })), seed);
-      const me = P(b);
-      const tank = P(b, 1);
-      const low = P(b, 2);
-      low.hp = 5;
-      cast(b, me, 'spell_ward', tank);
-      const hook = tank.shieldHooks!.find((h) => h.skill === 'spell_ward')!;
-      const size = hook.size!;
-      expect(size).toBe(hook.amount);
-      const w = E(b);
-      const ms0 = low.magicShield;
-      // kalkanı neredeyse tüket: sonraki vuruş kırar
-      tank.magicShield -= hook.amount - 1;
-      hook.amount = 1;
-      const evs = cast(b, w, 'fire_bolt', tank);
-      if (!evs.some((e) => e.type === 'damage' && e.target === tank.uid && e.absorbed > 0)) return false;
-      expect(low.magicShield - ms0).toBe(Math.round(size * num('antimage', '3.ma', '0.do.0.shield')));
-      return true;
-    });
-  });
+  // Second Ward (3.ma) Redtithe eşlemesinde pasif (Mirror Vein kalkan değil, kırılma olayı yok)
 });
 
 interface Priv2 {
@@ -810,7 +792,7 @@ describe('Faz 4c: çağrı aktarımı (Treant / Skeleton)', () => {
     const b = make({ 3: 'druid' }, { 0: 'warrior' }, withTree(3, only('druid', { '4.r1': 1, '4.r2': 1 })));
     const t = spawn(b, P(b, 3), 'summon_treant');
     const rs = t.skillDefs!.root_smash!.effects.find((e) => e.type === 'damage') as { power: number };
-    expect(rs.power).toBeCloseTo(0.575 * (1 + num('druid', '4.r1', '0.v')), 4);
+    expect(rs.power).toBeCloseTo((content.skills.root_smash!.effects.find((e) => e.type === 'damage') as { power: number }).power * (1 + num('druid', '4.r1', '0.v')), 4);
     expect(t.treeHooks).toEqual([expect.objectContaining({ h: 'cond', skill: 'root_smash', mod: { powerMul: num('druid', '4.r2', '0.mod.powerMul') } })]);
   });
 

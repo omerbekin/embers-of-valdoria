@@ -280,7 +280,7 @@ describe('Faz 4b: Druid', () => {
 
   it('Grief\'s Toll: Withering gücü x2; her dost düşüşünde maks canın %10\'u kaybedilir', () => {
     const t = only('druid', { '0.fb': 1 });
-    expect(t!.passive!.effect).toMatchObject({ power: 0.3 });
+    expect(t!.passive!.effect).toMatchObject({ power: 0.33 }); // 0,165 x 2 (taban 2026-11-20 form r34)
     const b = make({ 0: 'druid', 1: 'warrior' }, { 0: 'warrior' }, withTree(0, t));
     const hp = P(b).hp;
     expect(b.debugKill(P(b, 1).uid, false).ok).toBe(true);
@@ -368,7 +368,7 @@ describe('Faz 4b: Cutthroat', () => {
       expect(b.useSkill(E(b).uid, 'melee_attack', P(b).uid).ok).toBe(true);
       const evs = b.log.slice(from);
       if (!evs.some((e) => (e.type === 'miss' || e.type === 'dodge') && e.target === P(b).uid)) return false;
-      expect(has(E(b), 'staggered')).toBe(true);
+      expect(has(E(b), 'stun')).toBe(true);
       expect(procs(b, 'cutthroat:3.ma')).toBeGreaterThan(0);
       return true;
     }, 200);

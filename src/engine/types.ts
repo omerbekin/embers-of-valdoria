@@ -156,6 +156,12 @@ export type PassiveEffect =
   /** Cooldown'lu bir hasar skill'i kullanınca `chance` ihtimalle o skill'in cooldown'u sıfırlanır. */
   | { type: 'spellEcho'; chance: number }
   /**
+   * Lucky Streak (Gambler, Ömer 2026-11-18; sayılar PROVİZYON): seri sayacı 0..`max` (savaş başı 0; doluyken yeni kazanç boşa). Sayaç artışı / harcanması
+   * skill verisinde (`SkillDef.streak`, hasar etkisinin `dice`'ı). `skills`: bu sıradaki (actor.skills indeksi) skill'ler vuruşta `chance` ihtimalle bir
+   * kez daha atılır (1. ve 2. skill: hedef başına tekrar vuruş; `streak.repeat: 'recast'` olan skill: yeni hedeflerle bedava tekrar kullanım).
+   */
+  | { type: 'luckyStreak'; chance: number; max: number; skills: number[] }
+  /**
    * Heat Mirage (Mage, Ömer 2026-10-29; sayılar geçici): bir düşman Mage'e YAKIN DÖVÜŞ skill'iyle (motion 'melee') vurunca saldıranın hücresinde
    * `turns` tur `ground` (tik = Mage'in scale gücü x power; süre saldıranın turlarıyla, Last Ember kalıbı). Mage'in kendi turları arasında en çok bir kez
    * (Combatant.mirageUsed, Mage'in eylemi bitince sıfırlanır). `elemResist`: pasifin genel küçük etkisi (Frost Skin): bu elementlerden alınan hasar
@@ -167,7 +173,17 @@ export type PassiveEffect =
    * MP ödediği bir skill atınca taşıyanın sıra sayacı eşiğin `advance` oranı kadar öne kayar (Daze'in tersi). Taşıyanın iki turu arasında en çok bir kez
    * (Combatant.instinctUsed, taşıyanın eylemi bitince sıfırlanır). Yalnızca turns modunda. Rastgele sayı tüketmez.
    */
-  | { type: 'spellbreakerInstinct'; advance: number }
+  | {
+      type: 'spellbreakerInstinct';
+      advance: number;
+      /**
+       * Blood Tithe (Redtithe, Ömer 2026-11-17; sayı PROVİZYON): kan barlı taşıyanda kayma ek olarak bloodAdvance x (kan / maks kan) (bar 50 = yarısı).
+       * `advance` ağaç düğümlerinin düz ekidir (barla ölçeklenmez). Yoksa yalnız `advance`.
+       * Ömer 2026-11-18: kan payı DEX ile doğrusal: (bloodAdvance + bloodAdvancePerDex x DEX) x (kan / maks kan); DEX birimin anlık statı (item / ağaç dahil).
+       */
+      bloodAdvance?: number;
+      bloodAdvancePerDex?: number;
+    }
   /** Kullanıcı ile hedef arasındaki her sıra mesafesi için hasar +perRow (mesafe = kullanıcının sırası + hedefin sırası). */
   | { type: 'longshot'; perRow: number; /** Faz 4c (Exposed Perch): bonus için sayılan ek sıra mesafesi. */ extraRows?: number }
   /**
@@ -220,8 +236,11 @@ export type PassiveEffect =
   | { type: 'deepHoard'; mpRatio: number }
   /** YM6 Ward-Etcher: MP harcayan her skill'den sonra zırhı en düşük dosta (kendisi hariç; yalnızsa kendisi) harcanan MP x `perMp` büyü kalkanı, `turns` tur (taşıyanın turları). */
   | { type: 'wardEtcher'; perMp: number; turns: number }
-  /** YM7 Mire-Bound: bu birim yaşadıkça üstünde en az 1 `status` (Omen) yığını olan DÜŞMANLARININ hızı x`speedMult` (birden çok kaynakta tek, en güçlüsü). */
-  | { type: 'mireBound'; status: StatusKind; speedMult: number }
+  /**
+   * YM7 Mire-Bound (Ömer 2026-11-16 Tur 26; Tur 24'ün Chilled eki kalktı): bu birim yaşarken bir DÜŞMANA uygulanan `status` (Saltbound)
+   * `extraTurns` tur uzun sürer (uygulama anında bakılır; cadı sonradan ölse de kısalmaz). Hız etkisi yok. Birden çok cadı yığılmaz (en büyüğü).
+   */
+  | { type: 'mireBound'; status: StatusKind; extraTurns: number }
   /** YM8 Flicker: düşman skill vuruşu isabet edince `turns` tur `status` (Shrouded); kendi turu başına en çok bir kez. */
   | { type: 'flicker'; status: StatusKind; turns: number }
   /** YM9 Corpse Hunger: herhangi bir taraftaki çağrı olmayan bir birim ölünce maks canın `ratio` kadarı şifa (Wound gibi alınan şifa çarpanları uygulanır). */
@@ -333,8 +352,8 @@ export interface CombatantData {
   family?: string;
   /** true: test amaçlı class (AOE şekil test karakteri): rastgele takım havuzundan ve denge simülasyonundan HARİÇ; takım seçiminde/debug'da seçilebilir, wiki/galeride görünür. */
   testOnly?: boolean;
-  /** Sınıfın özel kaynağı: 'rage' ise birim Rage barıyla (0-formulas.rage.max) savaşa başlar; yoksa Rage yoktur. */
-  resource?: 'rage';
+  /** Sınıfın özel kaynağı: 'rage' ise birim Rage barıyla (0-formulas.rage.max) savaşa başlar; 'blood' ise kan barıyla (formulas.bloodBar; MP 0); yoksa yoktur. */
+  resource?: 'rage' | 'blood';
   armor: number;
   magicArmor: number;
   /** Sınıfa özel taban isabet (yoksa formulas.json > attributes.accuracyBase; şu an hiçbir class'ta tanımlı değil). */
@@ -526,6 +545,10 @@ export interface CombatantDef {
   stats: Stats;
   /** Rage'li class: Rage barının üst sınırı (formulas.json > rage.max); Rage'siz class'ta tanımsız. */
   maxRage?: number;
+  /** Kan barlı class (Redtithe): barın üst sınırı (formulas.json > bloodBar.max); diğerlerinde tanımsız. */
+  maxBlood?: number;
+  /** Kan barlı class: savaş başı kan (formulas.json > bloodBar.start). */
+  bloodStart?: number;
   skills: string[];
   tags?: string[];
   ai?: string;
@@ -654,6 +677,12 @@ export interface ItemEffects {
   counterAttack?: { power: number; perTurn: number };
   /** Royal Command (Kingsfall Regalia 3 parça; R-Y): savaşta bir kez taşıyan turunu harcayıp bir dosta hemen ek tur verir (global 'command'). */
   allyTurn?: boolean;
+  /** Refrain (Stormhall Saga 4 parça; Ömer 2026-11-16 Tur 28-29): taşıyanın şimşeği bir düşmanı Shocked yapınca o düşmana sonra vuran İLK dost (taşıyan hariç) `status` alır (`turns` tur); Shocked örneği başına bir kez, Shocked tüketilmez. */
+  refrain?: { status: string; turns: number };
+  /** Martyr's Bequest (Relics of Saint Odran 3 parça; Tur 28-29): taşıyan ölünce en yakın canlı dost (çağrı değil) `statuses` alır (`turns` tur). */
+  deathBequest?: { statuses: string[]; turns: number };
+  /** Pilgrim's Burden (Almoner's Vestments 3 parça; Tur 28-29): taşıyanın skill şifası bir dostu iyileştirince o dostun en uzun süreli silinebilir debuff'ı `turns` kısalır (0'a inen biter). */
+  healShorten?: { turns: number };
   /** Spare Arrow (Sadak imza affix'i; SA-E): 0 bedelli temel saldırının (ilk skill) her hedefe vuruşu bu ihtimalle bir kez daha (repeatChance'e eklenir). */
   basicRepeat?: number;
   /** Opening Ward: savaş başında maks canın bu oranı kalkan (UnitSetup.startShieldRatio ile toplanır). */
@@ -698,7 +727,7 @@ export interface ItemEffects {
   /** Mantle of Valdren: savaş başı kalkan maks canın `start` oranı; can `below` altına inince bir kez maks canın `ratio` oranı kalkan. */
   shieldRefresh?: { start: number; below: number; ratio: number };
   /** Pilgrim's Road Boots: Move `turnCost` tur harcar ve `turns` tur `status` (kaçınma buff'ı) verir. */
-  moveStride?: { turnCost: number; status: string; turns: number };
+  moveStride?: { turnCost: number; status: string; turns: number; /** Örnek gücü (Ömer 2026-11-16: eski Fleet = Shrouded 0,5). */ strength?: number };
   /** Heart of the Forge: kritik vuruşta en yaralı dost (canı en düşük oran) verilen can kaybının bu oranı kadar iyileşir. */
   critHealAlly?: number;
   /*
@@ -886,6 +915,8 @@ export interface UnitSetup {
    */
   /** Başlangıç Rage'i (Rage'li class; [0, maks Rage]). */
   startRage?: number;
+  /** Başlangıç kanı (kan barlı class; [0, maks kan]); verilmezse formulas.bloodBar.start. */
+  startBlood?: number;
   /** Başlangıç durumları (taşınan buff'lar; süreleri kalan haliyle). */
   startStatuses?: Status[];
   /** Encased (Harita 3 C2): savaşa buz bloğu içinde başlar (blok canı formulas.encased). */
@@ -1101,6 +1132,56 @@ export interface BetSpec {
    * (perStake) için MP sayılır, kaybedilirse candan düşer. Bkz. gamble.ts > betStakeParts.
    */
   hpStake?: number;
+  /** Lucky Streak (All In): kaybedince kullanıcı maks canının bu oranını kaybeder (canı en az 1 bırakır). */
+  loseHpRatio?: number;
+  /**
+   * Kazanç dalına ayrı çarpan ("more", hasar havuzuna girmez): kazanç çarpanı (winMult + perStake x bahis) x (1 + winMore). Veride yazılmaz;
+   * Lucky Streak dolu seri All In biçimi (StreakSpec.fullStreakMore) ekler. Savaş, önizleme ve YZ aynı betMultipliers'tan görür.
+   */
+  winMore?: number;
+}
+
+/**
+ * Lucky Streak skill verisi (Gambler, Ömer 2026-11-18; sayılar PROVİZYON). Sayaç yalnız `luckyStreak` pasifli birimde işler; bedava (tetik) ve debug
+ * kullanımlar sayacı değiştirmez.
+ */
+export interface StreakSpec {
+  /** Bahis kazanınca seri +n (seri harcanan kullanımda değil). */
+  betWinGain?: number;
+  /** Bahis kaybedince seri 0. */
+  betLoseReset?: boolean;
+  /** Seri doluyken atılırsa seri harcanır (0) ve bu değişiklikler o kullanımda çalışır. */
+  full?: StreakFullSpec;
+  /** All In: bahis kazanma ihtimali seriye göre (indeks = seri, 0..max). */
+  winChanceByStreak?: number[];
+  /**
+   * All In seri ödülü (Ömer 2026-11-19): seri tavanın altındayken bahis KAZANILIRSA seri tavana (dolu) çıkar, kaybedilirse 0. Yoksa eski kural
+   * (atınca seri her durumda 0). Seri doluyken atılırsa seri harcanır (0).
+   */
+  winFillsStreak?: boolean;
+  /** All In: seri doluyken atılınca kazanç çarpanına ayrı çarpan ("more", havuza girmez): x(1 + bu). Bkz. BetSpec.winMore. */
+  fullStreakMore?: number;
+  /** Pasif tekrarının biçimi: 'recast' = yeni hedeflerle bedava tekrar kullanım (Card Trick); yoksa hedef başına tekrar vuruş. */
+  repeat?: 'recast';
+}
+export interface StreakFullSpec {
+  /** Bahis kesin kazanılır. */
+  betWin?: boolean;
+  /** Hasar etkilerine can emme eki (verilen hasarın oranı). */
+  lifesteal?: number;
+  /** random_enemies hedef sayısı. */
+  count?: number;
+  /** randomStatus yerine: hedeflerden BİRİ (rastgele) kesin `sure`, diğerleri `others` arasından ağırlıklı zar. */
+  sure?: { status: StatusKind; turns: number };
+  others?: RandomStatusOption[];
+}
+
+/** Zar (Loaded Dice): `count` adet 1..`sides` zar; hasar x (toplam / `mean`). Hepsi aynı gelirse (çift) Lucky Streak +`doubleGain`. */
+export interface DiceSpec {
+  count: number;
+  sides: number;
+  mean: number;
+  doubleGain?: number;
 }
 
 /**
@@ -1164,12 +1245,19 @@ export type SkillEffectKind =
        * (bedel spendAll ise vuruş anında harcanan TÜM Rage; önizleme/YZ'de kullanıcının o anki Rage'i).
        */
       powerPerRage?: number;
+      /**
+       * Exsanguinate (Redtithe, Ömer 2026-11-17; PROVİZYON): harcanan kan başına hasar çarpanı: x(1 + bloodSpentBonus x harcanan kan)
+       * (spendAll bedelde vuruş anında harcanan TÜM kan; önizleme/YZ'de o anki kan).
+       */
+      bloodSpentBonus?: number;
       /** Headsman's Blow: hedefin eksik can oranıyla artan hasar: x(1 + executeBonus x (1 - can / maks can)), vuruştan önceki cana göre. */
       executeBonus?: number;
       /** Kullanıcının kalkanından eklenen hasar (ratio) ve kalkanın tüketilip tüketilmeyeceği. */
       bonusFromShield?: { ratio: number; consume: boolean };
       /** 0-1: her hedefe vuruştan sonra bu ihtimalle AYNI vuruş bir kez daha tekrarlanır (çifte vuruş; seed'li RNG). */
       repeatChance?: number;
+      /** Lucky Streak zarı (Loaded Dice): her vuruşta yeniden atılır, hasar x (toplam / ortalama). */
+      dice?: DiceSpec;
       /** Bahis: kaynak harcayarak daha fazla hasar (yukarıda BetSpec). */
       bet?: BetSpec;
       /** true: bu hasarın HER vuruşu kritiktir (kritik zarı atılmaz, kritik çarpanı uygulanır); isabet zarı normal atılır (iska olabilir). Backstab. */
@@ -1224,6 +1312,10 @@ export type SkillEffectKind =
       self?: boolean;
       /** Kalkan hasar EMDİKÇE tetiklenen kancalar (Spell Ward, Mana Barrier; bkz. OnAbsorbSpec). Yoksa kalkan sıradan kalkandır. */
       onAbsorb?: OnAbsorbSpec;
+      /** Düz kalkan eki (Mirror Vein, Ömer 2026-11-18): miktar = flat + stat x power (ikisi de Shield power affix'iyle çarpılır). Yoksa 0. */
+      flat?: number;
+      /** Süreli kalkan (Mirror Vein): taşıyanın `turns` tur başında biter (ShieldHook.turns; yeniden atılınca süre yenilenir). Yoksa süresiz. */
+      turns?: number;
     }
   /**
    * Hedefteki durumları siler (dispel/cleanse): `status` 'debuff' = kötü durumlar (statuses.json type debuff), 'buff' = iyi durumlar.
@@ -1248,7 +1340,13 @@ export type SkillEffectKind =
    * Mana yakma: hedef başına `amount` (sabit) + `pctMax` (hedefin MAKSİMUM MP'sinin oranı, yuvarlanır; ikisi birden varsa toplanır: Deep Cut) kadar, mevcut MP'yle
    * sınırlı (miktar: src/engine/mana-burn.ts > burnAmountFor). `onEmpty`: bkz. ManaEmptySpec (Drain Field).
    */
-  | { type: 'manaBurn'; amount?: number; pctMax?: number; /** Yakılan mananın bu oranı kullanıcıya geri verilir. */ gainRatio?: number; onEmpty?: ManaEmptySpec }
+  | { type: 'manaBurn'; amount?: number; pctMax?: number; /** Yakılan mananın bu oranı kullanıcıya geri verilir. */ gainRatio?: number; onEmpty?: ManaEmptySpec; /** Tithe Cut (Redtithe): kan barlı kullanıcı yakılan her MP için bu kadar kan kazanır; isabet eden her hedef ayrıca formulas.bloodBar.hitGain. */ bloodPerMp?: number }
+  /**
+   * Blood Brand (Redtithe, Ömer 2026-11-17; PROVİZYON): hedefe `turns` tur 'blood_brand' işareti. İşaretli birim herhangi bir class skill'i kullanınca
+   * Bleeding'i varsa hemen `ticks` ek tik yer (Bleeding süresi azalmaz); MP bedelleri `costMult` katı (yukarı yuvarlanır); `markSkills` işaretliye
+   * x(1 + markDamagePct) hasar. Bleeding ayrı 'dot' etkisiyle gelir.
+   */
+  | { type: 'bloodBrand'; turns: number; costMult: number; ticks: number; markDamagePct?: number; markSkills?: string[] }
   /**
    * Ley Brand (Anti-Mage, Ömer 2026-10-27, open-questions 444): hedefe `turns` tur Branded (statuses.json > branded). MP havuzu OLMAYAN (maxMp 0) hedef
    * maks canının `taintPct` oranı (round) kadar DOLU "tainted mana" havuzu alır (harcayamaz; Brand bitince havuz silinir). MP havuzu olan hedefin MP bedelli
@@ -1259,9 +1357,9 @@ export type SkillEffectKind =
    */
   | { type: 'brand'; turns: number; taintPct: number; costMult: number; burnDamagePct: number; explodePct: number; element?: Element; silenceOnEmpty?: number; centerTaintMul?: number; spread?: boolean; /** Ömer 2026-10-29: Branded birim MP bedelli skill kullanınca ödediği bedelin bu oranı kadar EK MP yanar (yakım sayılır: burnDamagePct hasar). */ castBurnPct?: number; /** Ömer 2026-10-29: `markSkills` Branded hedefe x(1 + bu) hasar ('X% more'). */ markDamagePct?: number; markSkills?: string[]; /** Ley Thread (Ömer 2026-10-29): hedefte 'ley_thread' varsa bu Brand o hedefte +threadTurns tur sürer ve castBurnPct x threadBurnMult olur; iplik o anda tüketilir. */ threadTurns?: number; threadBurnMult?: number }
   /** Kullanıcı `turns` tur boyunca düşmanların tek hedefli skill'lerinin hedefi olmak zorunda. */
-  | { type: 'taunt'; turns: number; /** Taunt'lı karakter maks canının bu oranı kadar can kaybederse taunt biter. */ breakRatio?: number; /** Taunt sürerken taunt'lı olmayan dostların aldığı hasar bu çarpanla çarpılır (ör. 0.5 = yarı hasar). */ allyDamageMult?: number }
+  | { type: 'taunt'; turns: number; /** Taunt'lı karakter maks canının bu oranı kadar can kaybederse taunt biter. */ breakRatio?: number; /** Taunt sürerken taunt'lı olmayan dostların aldığı hasar bu çarpanla çarpılır (ör. 0.5 = yarı hasar). */ allyDamageMult?: number; /** Taunt sürerken taunt'lı birimin düz zırh eki (Ömer 2026-11-16 Tur 26; taunt bitince / kırılınca kalkar). */ armorBonus?: number }
   /** Hedef dost `turns` tur boyunca aldığı hasarın `share` kadarını kullanıcıya aktarır. */
-  | { type: 'guard'; turns: number; share: number; /** Faz 2c (Blood Oath): guard kullanıcının Dark Bond'una bağlı: yalnızca bağlı dosta, bağ sürdükçe (süresiz), bağ bitince kalkar. */ bond?: boolean; /** Faz 5a (Interlocked): korunana korumacının zırhının bu oranı kadar zırh. */ armorPct?: number; /** Faz 5a (Second Chain): kullanıcının kendi sırasındaki dostlar da korunur (ikinci Guard kümesi). */ ownRow?: boolean }
+  | { type: 'guard'; turns: number; share: number; /** Faz 2c (Blood Oath): guard kullanıcının Dark Bond'una bağlı: yalnızca bağlı dosta, bağ sürdükçe (süresiz), bağ bitince kalkar. */ bond?: boolean; /** Faz 5a (Interlocked): korunana korumacının zırhının bu oranı kadar zırh. */ armorPct?: number; /** Faz 5a (Second Chain): kullanıcının kendi sırasındaki dostlar da korunur (ikinci Guard kümesi). */ ownRow?: boolean; /** Close Ranks (Ömer 2026-11-18): Guard sürdükçe korunan, korumacının zırh aurası (armorAura) anlık payının bu katını alır (komşuysa tam pay, büyük olan). */ auraShare?: number }
   /**
    * Hasar alan (hedefler arasında vurulan) birimlere ya da `self` ise kullanıcıya süreli durum (buff/debuff) verir.
    * `chance` (0-1, yoksa 1): her alıcı için BAĞIMSIZ zar (seed'li RNG; alıcı başına bir sayı). `cause`: durumun görsel nedeni, `status` olayına aynen yazılır
@@ -1269,7 +1367,7 @@ export type SkillEffectKind =
    */
   | { type: 'status'; status: StatusKind; turns: number; self?: boolean; chance?: number; cause?: string }
   /** Vurulan (hasar yoksa tüm) hedeflerin HER BİRİNE ağırlıklı zarla seçilen tek bir durum verir (seed'li RNG). */
-  | { type: 'randomStatus'; options: RandomStatusOption[] }
+  | { type: 'randomStatus'; options: RandomStatusOption[]; /** Lucky Streak (Card Trick serisi): hedeflerden biri kesin bu durum, diğerleri `options`. */ sureOne?: { status: StatusKind; turns: number } }
   /** Skill'in kapsadığı hücrelere `turns` turluk yer etkisi (zehir, yanan zemin...) bırakır. */
   | {
       type: 'ground';
@@ -1351,11 +1449,14 @@ export type PushDir = 'forward' | 'back' | 'lanePrev' | 'laneNext';
  * - dispelChance: saldıranın üstünde silinebilir bir BUFF (statuses.json type buff) varsa bu ihtimalle (seed'li RNG) RASTGELE birini siler
  *   (seed'li). Zar yalnızca buff varken atılır. HER darbede (madde 241).
  * - giveMana: kalkanın emdiği HER darbede kalkanın sahibine (taşıyana) bu kadar SABİT MP verir (madde 241; MP maks'ı aşmaz).
+ * - giveBlood (Mirror Vein, Ömer 2026-11-18): kalkan bir BÜYÜ (magic hasarlı) vuruşunu emdiğinde kalkanı ATANA (kan barlı, canlı) base + perDex x DEX kan
+ *   (atanın o anki DEX'i; yuvarlanır, bar maks'ı aşmaz). Vuruş başına; üst sınır yok.
  */
 export interface OnAbsorbSpec {
   burnMana?: number;
   dispelChance?: number;
   giveMana?: number;
+  giveBlood?: { base: number; perDex: number };
 }
 
 /** Kancalı kalkan katmanı (Combatant.shieldHooks): hangi skill, kim attı, hangi havuz (magic), havuzdaki kalan payı ve kancalar. */
@@ -1386,6 +1487,11 @@ export type SkillEffect = SkillEffectKind & {
   preHit?: boolean;
   /** Skill ağacı: uygulanan durum / zemin süresiz (katalog 14.16 cevabı: `permanent` bayrağı). */
   permanent?: boolean;
+  /**
+   * Ömer 2026-11-16 ("aynı amaca hizmet eden iki modifier olmaz"): 'status' etkisinde uygulanan örneğin gücü (Status.strength; 1 = tam, yoksa 1).
+   * Eski Fleet kaynakları Shrouded'ı 0,5, eski Shaken kaynakları Blinded'ı 1/3 güçle verir.
+   */
+  strength?: number;
   /** Skill ağacının eklediği / değiştirdiği etki (addEffect / replaceEffect): düğüm kimliği '<class>:<anahtar>' (ölçüm; kural değiştirmez). */
   treeNode?: string;
   /**
@@ -1398,8 +1504,8 @@ export type SkillEffect = SkillEffectKind & {
 };
 
 export interface SkillCost {
-  /** mp: mana; hp: can; rage: Rage barı (yalnızca Rage'li class'lar; yetmiyorsa kullanılamaz). */
-  resource: 'mp' | 'hp' | 'rage';
+  /** mp: mana; hp: can; rage: Rage barı (yalnızca Rage'li class'lar; yetmiyorsa kullanılamaz); blood: kan barı (Redtithe; yetmeyen kısım candan, bkz. cost.ts > bloodPay). */
+  resource: 'mp' | 'hp' | 'rage' | 'blood';
   /** Sabit bedel (ofCurrent varsa sabit kısım; genelde 0). */
   amount: number;
   /**
@@ -1460,6 +1566,8 @@ export interface SkillDef {
    * İSABET ZARI ister: düşman hedeflere kullanım başında hasarsız isabet zarı atılır, yalnızca isabet edenler etkilenir. skills.json'da YOK.
    */
   treeHitRoll?: boolean;
+  /** Lucky Streak (Gambler pasifi) bağlantısı: seri kazanma / harcama / tekrar biçimi (StreakSpec). */
+  streak?: StreakSpec;
   /**
    * Faz 5a (C5, YALNIZCA ağaç kopyasında; skills.json'da YOK): rastgele hedef önceliği (random_enemies: önce bu düşmanlar, kalan yer rastgele).
    * 'hitMe' = sahibin son turundan beri ona vuranlar (Payback Fist), 'armor' = en zırhlılar (Plate Hunter), 'hurtMe' = savaşta ona en çok hasar veren.
@@ -1682,8 +1790,10 @@ export interface BoltOutcome {
   /** Patlayan zeminli hücreler ve patlamanın birim başına hasarı. */
   shatters: Array<{ board: Side; slot: number; reaction: string; label: string; /** Tepkiyen zemin türü (hücrede birden çok şimşek zemini olabilir). */ ground?: string }>;
   shards: Array<{ uid: string; damage: number }>;
-  /** Shocked hedefler: stun = suda olduğu için geri itilmek yerine Stun. */
+  /** Shocked hedefler (yalnız isabet edilen; Ömer 2026-11-15: yayılma yok): stun = suda / ıslak olduğu için Shocked yerine wetInto (Electrocuted). */
   shocks: Array<{ uid: string; stun: boolean }>;
+  /** Islak devre (Ömer 2026-11-15): iletimin çıktığı sıvı hücre (arcs'taki her birime bir kıvılcım). */
+  conduct?: { board: Side; slot: number };
   /** Thunderflash olur mu; Blinded olacak kahraman. */
   flash: boolean;
   blinded?: string;
@@ -1695,7 +1805,14 @@ export interface Formulas {
   /** Kan zemini (Ömer onaylı 2026-11-09): ağır fiziksel kritik hedefin hücresine `ground` bırakır, `turns` tur (vuranın turlarıyla). */
   blood?: { ground: string; turns: number };
   /** Harita 3 şimşek kuralları (data/formulas.json > thunder; PROVİZYON). */
-  thunder: { pushback: number; badge: string; badgeTurns: number; stunTurns: number; /** Suda çarpılan birimin durumu (Electrocuted; yoksa eski Stun). */ wetInto?: string; wetStatus: string; arcRatio: number; flashHeroTurns: number; flashBlindTurns: number };
+  thunder: {
+    badge: string;
+    badgeTurns: number;
+    /** Ömer 2026-11-15 (Topraklama): Shocked'lı birimin büyü zırhı çarpanı; boss / elitte debuffStrength ile ölçeklenir. */
+    magicArmorMult: number;
+    /** Shocked'lı birime şimşek hasarının kalkana giden kısmı x(1 + shieldBonus); boss / elitte ölçeklenir. */
+    shieldBonus: number;
+    stunTurns: number; /** Suda çarpılan birimin durumu (Electrocuted; yoksa eski Stun). */ wetInto?: string; wetStatus: string; arcRatio: number; flashHeroTurns: number; flashBlindTurns: number };
   attributes: {
     hpBase: number;
     hpPerStr: number;
@@ -1740,6 +1857,13 @@ export interface Formulas {
    * (çok hedefli skill'de hedef sayısı kazancı artırmaz), perCastCap'i geçemez. Rage zamanla azalmaz; yalnızca skill hasarıyla kazanılır (alınan hasarla DEĞİL).
    */
   rage: { max: number; hitBase: number; perHpPercent: number; perHitCap: number; perCastCap: number };
+  /**
+   * Kan barı (Redtithe, Ömer 2026-11-17; Rage'den AYRI kaynak; sayılar PROVİZYON). `formulas.blood` kan ZEMİNİ kuralıdır, bu ayrı blok.
+   * max / start: bar sınırı ve savaş başı değeri. hitGain: Tithe Cut isabeti başına kan. Bar düştükçe (doğrusal, (max - bar) / max):
+   * büyü zırhı (magicArmorBase + INT x magicArmorPerInt; Ömer 2026-11-18: büyü zırhı TAMAMEN bara bağlı, bar dolu = 0), skill vuruşlarında verilen hasarın lifestealMax oranı can emme. Kan yetmezse eksik kan candan ödenir:
+   * 1 kan = maks canın hpPerBlood oranı (yukarı yuvarlanır); ödeme canı 1'in altına indirecekse skill kullanılamaz. spendAll bedel candan ödenmez.
+   */
+  bloodBar?: { max: number; start: number; hitGain: number; magicArmorBase: number; magicArmorPerInt: number; lifestealMax: number; hpPerBlood: number };
   /** Primary stat pasif bonusları (yalnızca class'ın en yüksek statı primary ise aktif). */
   primaryBonus: {
     str: { resilienceChance: number };
@@ -1820,7 +1944,7 @@ export type Side = 'party' | 'enemy';
  * `laneFirst`: yalnız şeridindeki ilk kahramana (Headlong). `heaviest`: yalnız en yüksek Armor'lu kahramana, eşitlikte küçük yuva (Ring the Anvil; sonrası splash.pattern 'armor').
  */
 export type ReachRule = { kind: 'status'; statuses: string[]; ground?: string } | { kind: 'dark' } | { kind: 'backRows' } | { kind: 'laneFirst' } | { kind: 'heaviest' };
-export type StatusKind = 'banked_coals' | 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'shaken' | 'frozen' | 'overreached' | 'cooling' | 'unhallowed';
+export type StatusKind = 'banked_coals' | 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'blood_brand' | 'shaken' | 'frozen' | 'overreached' | 'cooling' | 'unhallowed' | 'empowered' | 'focused';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1839,6 +1963,8 @@ export interface DoomDef {
 
 /** data/statuses.json girişi: veriyle tanımlı buff/debuff. */
 export interface StatusDef {
+  /** Kitten çıkmış durum (veride kullanan skill yok, motor yolu duruyor; ör. eski Ley Brand 'branded', 'ley_thread'): Codex durum listesinde gösterilmez. */
+  retired?: boolean;
   /** Ömer 2026-10-31 (Chilled): taşıyana kaynağı `sources` içinde olan yeni bir uygulama gelirse `into` olur (`turns`). Kaynaksız uygulama (zemin, hava, pasif, startStatuses) yalnızca verir / yeniler. */
   freeze?: { into: string; turns: number; sources: StatusOrigin[] };
   /** Bu element hasarı durumu anında kaldırır (Chilled, Frozen: ateş). */
@@ -1862,6 +1988,21 @@ export interface StatusDef {
   /** Altıncı tur (Weakened): taşıyanın VERDİĞİ hasar çarpanı (tüm hasar) ve yalnızca büyü hasarı çarpanı (Battle.dealtDamageMult; önizleme / YZ aynı yol). */
   damageDealtMult?: number;
   magicDealtMult?: number;
+  /** Ömer 2026-11-16: yalnız FİZİKSEL verilen hasar çarpanı (Weakened 0,85; büyü hasarı Spellbound'un magicDealtMult'u). */
+  physicalDealtMult?: number;
+  /** Ömer 2026-11-16: yalnız BÜYÜ hasarı için alınan hasar çarpanı (Blessed 0,7; her hasar Fortify'ın damageTakenMult'u). damageTakenMult ile aynı yol: skill vuruşu ve Doom dahil, DoT / zemin tiki dahil değil. */
+  magicTakenMult?: number;
+  /** Ömer 2026-11-16: taşıyana VURANIN kritik şansı eki (Exposed +0,15; skill vuruşu, önizleme, YZ aynı yol: Battle.critTakenBonus). */
+  critTakenDelta?: number;
+  /**
+   * Ömer 2026-11-16 (yeni DoT kuralları, onaylı): `dotStacks` = DoT üst üste biner, en çok bu kadar yığın; tik = miktar x yığın (Poisoned).
+   * `moveTickMult` = taşıyan kendi hareket ettiği (Move / yer değiştirme / kendini taşıyan skill) turda bir ek tik daha alır (Bleeding; tur başına bir).
+   * `drainToSource` = tik hasarının bu oranı kaynağa şifa (Wither). `dispelBuffs` = her tikte taşıyanın bu kadar silinebilir buff'ı silinir (Searing).
+   */
+  dotStacks?: number;
+  moveTickMult?: number;
+  drainToSource?: number;
+  dispelBuffs?: number;
   skipTurn?: boolean;
   /** true: bu durum bir birime uygulandığı AN o birimin kendi taunt'ı silinir (kontrol/CC durumu; şu an yalnızca Stun). Yeni durum eklemek tek satır. */
   breaksTaunt?: boolean;
@@ -1935,6 +2076,12 @@ export interface StatusDef {
    * DoT tiki, Doom aynı yoldan (Battle.statusElementMult). Yoksa çarpan 1.
    */
   elementTakenMult?: Partial<Record<Element, number>>;
+  /**
+   * Lanet uzar (Unhallowed; Ömer 2026-11-16 Tur 27): taşıyana uygulanan her YENİ süreli debuff bu kadar tur uzun sürer (uygulama anında; Stun dahil).
+   * Hariç: bu alanı taşıyan durumun kendisi, zeminden gelen örnek, yığılan (maxStacks: Omen), kuralla süren (untilResolved) ve kalıcı örnek.
+   * Battle.curseExtraTurns tek kaynak (motor, YZ, önizleme).
+   */
+  debuffExtraTurns?: number;
   /** Uygulandığı AN taşıyandan silinen durumlar (Soaked: Burning söner). */
   cleanses?: string[];
 }
@@ -1955,6 +2102,8 @@ export interface GroundDef {
    * tikine gider: hasar (zeminin elementi, büyü; tek tik) ya da şifa zemininde (heal) iyileşme. Su zemininde `soak` aynı işi görür.
    */
   status?: string;
+  /** Ana durumun örnek gücü (Status.strength; Ömer 2026-11-16: Blood Curse zemini Wound'u 1,4 güçle verir, %70 az şifa). Yoksa 1. */
+  statusStrength?: number;
   /** true (Flooded Planks istisnası): zemin kendi tik hasarını doğrudan vurmaya devam eder; ana durum ise gücü taşımaz. */
   directTick?: boolean;
   /** Ek durumlar (Hall of Silence Silence'ı; `mpZero`: yalnızca MP'si 0 olan birim girer). Genel kuralla: içindeyken sürer, süre (`turns`) yok sayılır. */
@@ -2096,10 +2245,14 @@ export interface Status {
   turns: number;
   /** Durumu uygulayan birimin uid'si. */
   source: string;
+  /** Refrain (Stormhall Saga 4, Tur 28-29): bu Shocked örneğini koyan taşıyanın uid'si; o tarafın ilk vuran dostu Empowered alınca silinir. */
+  refrain?: string;
   /** regen: tur başına iyileştirme miktarı. */
   amount?: number;
   /** taunt: taunt'lı olmayan dostların aldığı hasarın çarpanı (taunt sürerken). */
   allyMult?: number;
+  /** taunt: taunt sürerken taşıyanın düz zırh eki (effect.armorBonus; Ömer 2026-11-16 Tur 26). */
+  armorBonus?: number;
   /** taunt: bu kadar can kaybedilirse (`taken` toplamı) taunt silinir. */
   breakAt?: number;
   taken?: number;
@@ -2107,6 +2260,8 @@ export interface Status {
   share?: number;
   /** Faz 5a (Interlocked): guard sürerken korunan, korumacının zırhının bu oranı kadar zırh alır. */
   armorPct?: number;
+  /** guard (Close Ranks, Ömer 2026-11-18): korumacının zırh aurası payının bu katı korunana (effect.auraShare). */
+  auraShare?: number;
   /** regen: iyileştirenin kritik değerleri (her tikte kritik zarı atılır). */
   critChance?: number;
   critMult?: number;
@@ -2135,6 +2290,12 @@ export interface Status {
    * saldırıdan sonra düşmeme şansı. Yalnızca ağaçlı uygulayanın durumunda.
    */
   potency?: Record<string, number>;
+  /**
+   * Örnek gücü (Ömer 2026-11-16, "aynı amaca hizmet eden iki modifier olmaz"): statuses.json'daki büyüklük bu kadarla ölçeklenir (çarpanlar
+   * 1 + (v - 1) x güç, ekler v x güç; ağaç `potency` eki ayrıca DÜZ eklenir), sonra boss / elit debuffStrength. Yoksa 1 (tam). Eski Fleet kaynağı
+   * Shrouded 0,5; eski Shaken kaynağı Blinded 1/3; Blood Curse zemini Wound 1,4 (%70); Sunder yığını yığın / stackLimit.
+   */
+  strength?: number;
   /** Yığılan durum (Omen): süreye eklenmek yerine Doom bonusuna çevrilen tur sayısı (doom.bonusPerExtraTurn; yalnızca uzatma gelince yazılır). */
   extraTurns?: number;
   /** Yığın (Omen) Ill Omen ile geçti: konakta geçmiş Omen var (koşul omenFromTransfer; yalnızca ağaçlı savaşta yazılır). */
@@ -2148,6 +2309,8 @@ export interface Status {
   leap?: boolean;
   /** Ley Brand (branded): damgalayanın bu uygulamadaki çözülmüş değerleri (ağaç yamaları dahil). Yalnızca 'branded' örneğinde. */
   brand?: BrandSpec;
+  /** Blood Brand (blood_brand): işaretin çözülmüş değerleri. */
+  bloodBrand?: { costMult: number; ticks: number; markPct?: number; markSkills?: string[] };
   /**
    * GENEL ZEMİN KURALI (Ömer 2026-10-29): bu örneği veren zemin (GroundEffect.id). Varsa durum zemin kaynaklıdır: süresi işlemez (`turns` yalnızca
    * gösterim: zeminin kalan süresi), birim zeminden çıkınca / zemin bitince kalkar, dispel silemez. `amount` = zeminin bu hücredeki tik gücü.
@@ -2267,6 +2430,11 @@ export interface Combatant {
   /** Rage (yalnızca Rage'li class'ta; diğerlerinde tanımsız): mevcut değer ve üst sınır. Savaş başında 0. */
   rage?: number;
   maxRage?: number;
+  /** Lucky Streak sayacı (yalnızca luckyStreak pasifli birimde; savaş başı 0). */
+  streak?: number;
+  /** Kan barı (yalnızca kan barlı class'ta, Redtithe): mevcut değer ve üst sınır. Savaş başında formulas.bloodBar.start. */
+  blood?: number;
+  maxBlood?: number;
   /** Savaş kurulumundan özel ad (UnitSetup.displayName; ör. 'Bandit Chief'). Arayüz varsa bunu, yoksa `name`'i gösterir. */
   displayName?: string;
   /** Savaş kurulumundan rütbe (UnitSetup.tier). */
@@ -2509,7 +2677,7 @@ type BattleEventBody =
    * kancalı kalkanın emdiği hasar. Sonuç alanları: `burned` saldırandan yakılan MP, `dispelled` saldırandan silinen buff, `mana` taşıyana verilen MP.
    * Ayrıntı olayları hemen ARKASINDAN gelir: manaBurn {cause}, statusEnd {dispelled}, mpRegen {cause}.
    */
-  | { type: 'shieldTrigger'; bearer: string; caster: string; attacker: string; skill: string; absorbed: number; burned?: number; dispelled?: StatusKind; mana?: number }
+  | { type: 'shieldTrigger'; bearer: string; caster: string; attacker: string; skill: string; absorbed: number; burned?: number; dispelled?: StatusKind; mana?: number; /** Mirror Vein: kalkanı atanın kazandığı kan (ayrıca blood olayı). */ blood?: number }
   /** `empowered`: yalnızca ceset tüketen çağrıda (Raise Dead): true = ceset tüketildi, beslenmiş (fed) çağrı; false = beslenmemiş (unfed). `combatant.empowered` aynı. */
   | { type: 'summon'; actor: string; combatant: Combatant; empowered?: boolean }
   /** Bir ceset tüketildi (Raise Dead): `uid` ölü birim, `by` tüketen, `slot` cesedin yuvası, `side` cesedin tarafı. Ceset artık `consumed`: diriltilemez, yuvası rezerve değil. */
@@ -2528,6 +2696,12 @@ type BattleEventBody =
   | { type: 'mpRegen'; actor: string; amount: number; after: number; cause?: string }
   /** Rage değişimi (yalnızca Rage'li birim): delta + = kazanç (skill hasar verince; cause 'hurt' = Berserker: can kaybedince), - = bedel (Headsman's Blow: tüm Rage); after = yeni değer, max = üst sınır. */
   | { type: 'rage'; actor: string; delta: number; after: number; max: number; cause?: 'hurt' }
+  /** Lucky Streak zarı (Loaded Dice): `actor` `target`a atarken gelen zarlar; `double` = hepsi aynı (seri +1). */
+  | { type: 'dice'; actor: string; target: string; values: number[]; double: boolean }
+  /** Lucky Streak sayacı değişti: before -> after; sebep: çift zar, bahis kazancı / kaybı, harcama (dolu seri ya da All In). */
+  | { type: 'streak'; actor: string; before: number; after: number; max: number; reason: 'double' | 'betWin' | 'betLoss' | 'spend' | 'fill' }
+  /** Kan barı değişimi (yalnızca kan barlı birim, Redtithe): delta + = kazanç (Tithe Cut), - = bedel; `hp` = bu bedelin candan ödenen kısmı (can olayı ayrıca gelir). */
+  | { type: 'blood'; actor: string; delta: number; after: number; max: number; hp?: number }
   /** Global skill kullanıldı (rest / skip_turn / move_tile); ayrıntı olayları (mpRegen, turnSkipped, moved) hemen arkasından gelir. */
   | { type: 'globalUsed'; actor: string; id: string }
   /** Crown Surge çağrıldı (global 'surge'): çağıran, taraf, global id; takım etkileri (status / shield) hemen arkasından gelir. */
@@ -2608,8 +2782,12 @@ type BattleEventBody =
   | { type: 'cellsClosed'; board: Side; slots: number[] }
   /** M-F Darkness: aydınlık değişti (`lit`); `cause`: skill id, 'lantern', 'lantern_broken', 'fade' ya da ileride Thunderflash; `until`: aydınlığın bittiği Round (nesne yoksa). */
   | { type: 'light'; lit: boolean; cause: string; until?: number }
-  // Harita 3 şimşek kuralları: A1 Shocked (pushed: sıra sayacından düşen; stunned: suda Stun yedi), A2 Live Water, A5 Thunderflash
-  | { type: 'shock'; source: string; target: string; skill: string; pushed: number; stunned: boolean }
+  // Harita 3 şimşek kuralları: A1 Shocked (stunned: suda Electrocuted / Stun yedi), A2 Live Water, A5 Thunderflash
+  | { type: 'shock'; source: string; target: string; skill: string; stunned: boolean }
+  /**
+   * Şimşek kıvılcımı (Ömer 2026-11-15; render sonra dinler): her iletimde bir olay. kind 'conduct' = Islak devre, şimşeğin düştüğü sıvı hücreden sıvıdaki birime (iki tahta da). `from`: çıkış hücresi, `board` / `slot`: hedefin hücresi.
+   */
+  | { type: 'thunderSpark'; kind: 'conduct'; source: string; skill: string; from: { board: Side; slot: number }; target: string; board: Side; slot: number }
   | { type: 'liveWater'; id: string; source: string; board: Side; cells: number[]; hit: string[] }
   | { type: 'liveWaterEnd'; id: string }
   | { type: 'thunderflash'; source: string; skill: string; blinded?: string }

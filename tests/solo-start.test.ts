@@ -127,6 +127,7 @@ describe('yeni sefer: tek kişiyle başla, üç katılım', () => {
     expect(vol.offer).toHaveLength(4);
     for (const c of ['warrior', 'mage']) expect(vol.offer).not.toContain(c);
     s = recruit(s, vol.offer[0]!);
+    expect(s.formationDue).toBeUndefined(); // Formation kapısı yalnız ilk katılımda (Ashford); sonraki katılımlarda yok
     expect(s.roster).toHaveLength(3);
     expect(partyCap(s)).toBe(3);
     s = walk(s, '9');
@@ -139,6 +140,7 @@ describe('yeni sefer: tek kişiyle başla, üç katılım', () => {
     expect(offer).toHaveLength(4);
     for (const h of s.roster) expect(offer).not.toContain(h.class);
     s = recruit(s, offer[0]!);
+    expect(s.formationDue).toBeUndefined();
     expect(s.roster).toHaveLength(4);
     expect(partyCap(s)).toBe(4);
     expect(s.roster.some((h) => h.tutorial)).toBe(false);

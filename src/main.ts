@@ -2,6 +2,7 @@ import './storage-scope'; // en ilk import: /maps23/ test kopyasinda depo anahta
 import './storage-migrate'; // ilk import: eski proto./protomedi. depo anahtarlarını eov.* altına taşır (her şeyden önce)
 import Phaser from 'phaser';
 import { installLoopGuard } from './ui/loop-guard';
+import { installBackGuard } from './ui/close-stack';
 import layout from '../data/battle-layout.json';
 import type { BattleScene } from './game/scenes/BattleScene';
 import { MainMenuScene } from './game/scenes/MainMenuScene';
@@ -164,6 +165,7 @@ installViewport(game, document.getElementById('stage')!, parseRotateMode(window.
 installFpsMeter(document.getElementById('ui-root')!);
 applyA11y(); // yazı boyu + renk körlüğü sınıfları (Settings > Accessibility)
 installTapExpand(); // telefonda kesik metne dokununca tam metin
+installBackGuard(); // Android geri tuşu oyunu kapatmaz (src/ui/close-stack.ts)
 
 // --- Debug menu (gizli girişler; menünün kodu ilk açılışta indirilir: src/ui/debug-entry.ts) ---
 installDebugEntry(game, document.getElementById('ui-root')!);

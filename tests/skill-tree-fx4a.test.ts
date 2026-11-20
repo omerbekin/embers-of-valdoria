@@ -475,7 +475,7 @@ describe('Faz 4a: öbür sınıflar', () => {
       expect(b.useSkill(E(b).uid, 'melee_attack', P(b).uid).ok).toBe(true);
       const evs = b.log.slice(from);
       if (!evs.some((e) => (e.type === 'miss' || e.type === 'dodge') && e.target === P(b).uid)) return false;
-      expect(has(E(b), 'staggered')).toBe(true);
+      expect(has(E(b), 'stun')).toBe(true);
       return true;
     }, 200);
   });

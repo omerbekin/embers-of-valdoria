@@ -32,7 +32,7 @@
     "id": "conductor",
     "name": "Conductor",
     "icon": "judgebeam",
-    "text": "Your lightning deals 25% more damage to targets that are Slowed, Stunned or Shocked, or that your own hit Shocks, Slows or Stuns.",
+    "text": "Your lightning deals 25% more damage to targets that are Hobbled, Stunned or Shocked, or that your own hit Shocks, Hobbles or Stuns.",
     "effect": {
       "type": "conductor",
       "element": "lightning",

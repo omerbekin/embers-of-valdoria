@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, content, previewForTargets, skillCostAmount, type BattleEvent, type Combatant, type SkillEffect, type Teams } from '../src/engine';
+import { Battle, content, type BattleEvent, type Combatant, type Teams } from '../src/engine';
 import { capBurn, castBurnAmount, groundBurnAmount } from '../src/engine/mana-burn';
 
 // Tek mana yakma kuralı (Ömer 2026-10-31): skill, Spell Ward, Hall of Silence ve Branded bedel yakımı aynı yoldan: mevcut MP ile sınırlı, her zaman `manaBurn` olayı
@@ -12,7 +12,6 @@ const make = (party: Record<number, string>, enemies: Record<number, string>, mo
 };
 const P = (b: Battle): Combatant => b.combatants.find((c) => c.side === 'party')!;
 const E = (b: Battle): Combatant => b.combatants.find((c) => c.side === 'enemy')!;
-const BRAND = content.skills.drain_field!.effects.find((e) => e.type === 'brand') as Extract<SkillEffect, { type: 'brand' }>;
 const burns = (b: Battle, from = 0) => b.log.slice(from).filter((e): e is Extract<BattleEvent, { type: 'manaBurn' }> => e.type === 'manaBurn');
 
 /** Hedefin turu başlayana kadar ilerletir (zemin tur başı işlemi çalışır). */
@@ -52,20 +51,6 @@ describe('ortak kural: her kaynak aynı olayı verir', () => {
     expect(b.log.slice(from).some((e) => e.type === 'resource' && e.actor === foe.uid)).toBe(false);
   });
 
-  it('Hall of Silence Branded hedefte Mana Steal ile aynı hasarı verir (burnDamagePct)', () => {
-    const b = make({ 0: 'antimage' }, { 0: 'warrior' }, 'turns');
-    const me = P(b);
-    const foe = E(b);
-    foe.hp = foe.maxHp = 50000;
-    expect(b.debugPlaceGround(me.uid, 'hall_of_silence', 'enemy', [foe.slot], 9, 0.5).ok).toBe(true);
-    foe.statuses.push({ kind: 'branded', turns: 9, source: me.uid, brand: { burnPct: BRAND.burnDamagePct, costMult: BRAND.costMult, explodePct: BRAND.explodePct, element: 'arcane', pool: 0 } } as never);
-    const from = b.log.length;
-    untilTurnOf(b, foe);
-    const mb = burns(b, from).find((e) => e.target === foe.uid)!;
-    expect(b.log.slice(from).some((e) => e.type === 'damage' && e.target === foe.uid && e.status === 'branded')).toBe(true);
-    expect(mb.source).toBe(me.uid);
-  });
-
   it('MP havuzu olmayana hiçbir kaynak yakmaz', () => {
     const b = make({ 0: 'mage' }, { 0: 'risen_skeleton' }, 'turns');
     const foe = E(b);
@@ -74,31 +59,5 @@ describe('ortak kural: her kaynak aynı olayı verir', () => {
     untilTurnOf(b, foe);
     expect(burns(b)).toHaveLength(0);
   });
-
-  it('Branded bedel yakımı: olay + "Brand Burn" yazısı, önizleme gerçekle aynı', () => {
-    const b = make({ 0: 'antimage' }, { 0: 'mage' });
-    const me = P(b);
-    const foe = E(b);
-    me.mp = me.maxMp;
-    expect(b.useSkill(me.uid, 'drain_field', undefined, foe.slot, 'enemy').ok).toBe(true);
-    foe.mp = foe.maxMp;
-    foe.cooldowns.fire_bolt = 0;
-    const paid = skillCostAmount(b.skill('fire_bolt', foe.uid)!.cost, foe);
-    const pv = previewForTargets(b, foe, 'fire_bolt', [me]).find((x) => x.uid === foe.uid);
-    const from = b.log.length;
-    expect(b.useSkill(foe.uid, 'fire_bolt', me.uid).ok).toBe(true);
-    const mb = burns(b, from).find((e) => e.target === foe.uid)!;
-    expect(mb.amount).toBe(castBurnAmount(paid, BRAND.castBurnPct!, foe.maxMp - paid));
-    expect(pv?.castBurn?.mp).toBe(mb.amount);
-    expect(b.log.slice(from).some((e) => e.type === 'passive' && e.name === 'Brand Burn')).toBe(true);
-  });
-});
-
-describe('Ley Brand yakımı azaldı (Ömer 2026-10-31)', () => {
-  it('veri: alan aynı, yakım az; durum yazısı veriyle uyumlu', () => {
-    expect(content.skills.drain_field!.area).toMatchObject({ shape: 'rect', rows: 3, cols: 3 });
-    expect(BRAND.castBurnPct).toBe(0.5);
-    expect(BRAND.threadBurnMult).toBe(1.5);
-    expect(content.statuses.ley_thread!.text).toContain(`${Math.round((BRAND.threadBurnMult! - 1) * 100)}% more mana`);
-  });
+  // Ley Brand (Branded) yakım testleri: kural kitten çıktı (Redtithe, 2026-11-17), motor kodu atıl
 });

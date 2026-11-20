@@ -9,7 +9,7 @@
 | id / rol | `druid` / Nature Summoner |
 | Ön sıra önceliği, menzil | 5, menzil 5 |
 | Stat (STR / INT / DEX / LUCK) | 22 / 26 / 10 / 2, ana stat INT (toplam 60) |
-| Zırh / büyü zırhı | 16 / 0 |
+| Zırh / büyü zırhı | 21 / 0 (Ömer 2026-11-18: 16 -> 21) |
 | YZ profili | `support` (`data/ai.json > profiles.support`) |
 | Pasif | **Nature's Grudge**: "When an ally falls, its killer is gripped by roots: Slow and Wither for 3 turns." |
 
@@ -27,13 +27,14 @@
 | Thorn Whip (`thorn_whip`) | Tek hedef, doğa büyüsü + Wound | 0 / yok | sınıf (5) | hasar magic/nature INT 0,88; status: status=wound, turns=2 |
 | Tidal Wrath (`natures_wrath`; eski ad Nature's Wrath, Ömer onaylı 2026-11-09, hasar doğa kalır) | 2x3 alana sarmaşık, önce ön sıra; Soaked verir | 17 / 3 | sınıf (5) | hasar magic/nature INT 0,64; status: status=soaked, turns=1; area={shape:rect, rows:2, cols:3, anchor:bottom_left, stages:row} |
 | Healing Rain (`rejuvenate`) | Tek hücreye (boş hücre de olur, yalnız kendi tahtası) şifa + 3 tur şifa zemini; su sayılır, ıslatmaz | 12 / 3 | sınıf (5) | heal: scale=int, power=0,675, side=allies; ground: ground=healing_rain, turns=3, scale=int, power=0,225, side=allies; area={shape:rect, rows:1, cols:1, emptyOwn:true} |
-| Summon Treant (`summon_treant`) | Önde duran Treant çağırır | 18 / 5, ilk 1 | sınıf (5) | summon: unit=treant, lifespan=3 |
+| Summon Treant (`summon_treant`) | Önde duran Treant çağırır | 18 / 5, ilk 1 | sınıf (5) | summon: unit=treant, lifespan=4 (Ömer 2026-11-18: 3 -> 4) |
 
 Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-druid.test.ts`) ve bu tablo birlikte güncellenir.
 
 ### Treant (`data/summons/treant.json`)
 - Çağıranın item hariç INT'inden türer (INT, maks can, can yenilenmesi için çarpanlar summon dosyasında). Menzil 4, YZ `vinewarden`, etiket `nature`, MP yok.
-- Skill'leri: Root Smash (kendi yumruğu, tek hedef, bedava) ve Vine Snare (zincir sıçrama, doğa büyüsü, düşüş, Stun şansı). Treant uzak menzilli (arşiv madde 222).
+- Skill'leri: Root Smash (kendi yumruğu, tek hedef, bedava; güç 0,604) ve Vine Snare (zincir sıçrama, doğa büyüsü, düşüş, Stun şansı; güç 0,236). Treant uzak menzilli (arşiv madde 222).
+- Ömer 2026-11-18: Treant hasarı +%5 (Root Smash 0,575 -> 0,604, Vine Snare 0,225 -> 0,236; 3 ondalık). Druid statları ve kendi skill'leri aynı. Sim yok (Lead atar).
 
 ## 3. Ağaç
 

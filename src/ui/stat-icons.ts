@@ -90,3 +90,5 @@ export const UI_COLOR = '#d9c9a3';
 /** Rage kaynağı (Warrior): skill maliyeti ve bar için alev ikonu + kırmızı-turuncu renk (data/battle-layout.json > colors.rage ile aynı). */
 export const RAGE_ICON: IconKind = 'flame';
 export const RAGE_COLOR = '#ff7a2f';
+/** Redtithe kan barı rengi (koyu kırmızı; sınıf rengiyle aynı). */
+export const BLOOD_COLOR = '#c0283c';

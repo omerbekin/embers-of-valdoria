@@ -37,7 +37,7 @@ const MIGRATED: Record<string, { owner: string; area: Record<string, unknown> }>
   tremor_slam: { owner: 'defender', area: { shape: 'row' } },
   piercing_arrow: { owner: 'archer', area: { shape: 'column', stages: 'row' } },
   arrow_rain: { owner: 'archer', area: { shape: 'rect', rows: 3, cols: 3 } },
-  drain_field: { owner: 'antimage', area: { shape: 'rect', rows: 3, cols: 3 } },
+  // drain_field (Ley Brand 3x3) çıktı: Redtithe Blood Brand tek hedef (2026-11-17)
 };
 
 /** Madde 220'den sonra doğrudan şekil modeliyle eklenen alan skill'leri (migrasyon değil): Cutthroat Saltire Cut (x) ve Smoke Bomb (area_any), Druid Vine Snare. */
@@ -171,9 +171,9 @@ describe('aşamalı vuruş: savaşta olay akışı', () => {
 
   it('aşamalı = aşamasız: aynı seed, aynı hedefler, hedef başına AYNI hasar (toplam değişmez); önizleme de aynı', () => {
     for (const [id, anchor] of [['natures_wrath', 0], ['natures_wrath', 4], ['piercing_arrow', 7], ['wail_of_the_dead', 4]] as const) {
-      // Nature's Wrath'in Soaked zarı aşamalar arasına girer: burada ölçülen hasar sırası, o yüzden yalnız hasar etkisiyle karşılaştırılır
+      // Nature's Wrath'in Soaked zarı ve Piercing Arrow'un Bleeding'i (Tur 28-29) aşamalar arasına girer: burada ölçülen hasar sırası, o yüzden yalnız hasar etkisiyle karşılaştırılır
       const sk0 = content.skills[id]!;
-      const sk: SkillDef = id === 'natures_wrath' ? { ...sk0, effects: sk0.effects.filter((e) => e.type === 'damage') } : sk0;
+      const sk: SkillDef = id === 'natures_wrath' || id === 'piercing_arrow' ? { ...sk0, effects: sk0.effects.filter((e) => e.type === 'damage') } : sk0;
       const flat: SkillDef = { ...sk, area: { ...sk.area!, stages: undefined } };
       const owner = MIGRATED[id]!.owner;
       for (let seed = 1; seed <= 15; seed++) {

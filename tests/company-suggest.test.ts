@@ -18,7 +18,7 @@ describe('yoldaş önerisi (suggest.ts)', () => {
     expect(sug(['archer'])?.role).toBe('front'); // hepsi eksik, ön saf önce
     expect(sug(['warrior'])?.role).toBe('back'); // ön saf var, arka saf eksik
     expect(sug(['warrior', 'archer'])?.role).toBe('feed');
-    expect(sug(['warrior', 'archer'])?.heroes).toEqual(['druid', 'paladin', 'antimage']); // besleyenlerin hepsi, veri sırasında
+    expect(sug(['warrior', 'archer'])?.heroes).toEqual(['druid', 'paladin']); // besleyenlerin hepsi, veri sırasında (Redtithe 2026-11-17: kalkan/MP verme yok, besleyen değil)
     expect(sug(['mage'])?.heroes).toEqual(['warrior', 'defender', 'paladin', 'skald']); // aynı rolde birden çok aday: hepsi
     expect(sug(['druid'])?.heroes).toEqual(['warrior', 'defender', 'paladin', 'skald']); // Ömer'in örneği: Druid için tek ön saf Warrior değil
     expect(sug(['warrior'])?.heroes).toEqual(['archer', 'mage', 'hexer', 'vesper']); // yalnız ilk eksik rol

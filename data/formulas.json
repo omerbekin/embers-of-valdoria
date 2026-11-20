@@ -16,9 +16,9 @@
     "critMult": 1.5,
     "hpRegenPerStr": 0.125,
     "mpRegenPerInt": 0.15,
-    "accuracyBase": 0.8,
+    "accuracyBase": 0.85,
     "accuracyPerLuck": 0.005,
-    "dexPerEvasionStep": 10,
+    "dexPerEvasionStep": 5,
     "evasionPerStep": 0.02,
     "evasionMax": 0.75
   },
@@ -34,6 +34,16 @@
     "perHpPercent": 0.45,
     "perHitCap": 15,
     "perCastCap": 20
+  },
+  "bloodBar": {
+    "_not": "Redtithe kan barı (Ömer 2026-11-17; Warrior Rage'inden AYRI kaynak; aşağıdaki \"blood\" bloğu kan ZEMİNİ kuralıdır, bununla ilgisi yok). Sayılar PROVİZYON (sim yok). max/start: bar sınırı, savaş başı. hitGain: Tithe Cut isabeti başına kan (Lead varsayımı). Bar düştükçe doğrusal ((max - bar) / max): büyü zırhı = (magicArmorBase + INT x magicArmorPerInt) x bu oran (Ömer 2026-11-18: büyü zırhı TAMAMEN bara bağlı; bar 0 = tam, INT 10'da 40; bar dolu = 0; eski +magicArmorMax 15 kuralı ve class taban büyü zırhı KALKTI; item / ağaç düz büyü zırhı üstüne), skill vuruşları verilen hasarın lifestealMax oranı can emer. Kan yetmezse eksik kısım candan: 1 kan = maks canın hpPerBlood oranı (yukarı yuvarlanır); can 1'in altına inecekse skill kullanılamaz. Barın düz hız / hasar bonusu YOK.",
+    "max": 100,
+    "start": 50,
+    "hitGain": 5,
+    "magicArmorBase": 25,
+    "magicArmorPerInt": 1.5,
+    "lifestealMax": 0.2,
+    "hpPerBlood": 0.005
   },
   "scaling": {
     "str": 1,
@@ -87,10 +97,11 @@
     "turns": 2
   },
   "thunder": {
-    "_not": "Harita 3 şimşek kuralları (maps-2-3.md A1, A2, A5, A6; skill alanı thunder; PROVİZYON, sim yok). pushback = eşiğin oranı olarak sıra çubuğunda anında geri itme; badge = yalnız görünüş rozeti; stunTurns = suda geri itme yerine verilen durumun süresi; wetInto = o durum (Ömer onaylı 2026-11-09: Electrocuted, T2; yoksa eski Stun); wetStatus = Stun koşulu durumu (ya da su hücresi); arcRatio = Live Water ark hasarı, tahtanın ortalama maks canının oranı; flashHeroTurns = Thunderflash kaç kahraman turu aydınlatır; flashBlindTurns = en yakın kahramanın Blinded süresi.",
-    "pushback": 0.2,
+    "_not": "Harita 3 şimşek kuralları (maps-2-3.md A1, A2, A5, A6; skill alanı thunder; PROVİZYON, sim yok). Ömer 2026-11-15 şimşek kimliği: Shocked = Topraklama (sıra çubuğu geri itmesi KALKTI). badge = Shocked durumu; badgeTurns = süresi; magicArmorMult = Shocked'lı birimin büyü zırhı çarpanı (%50 less, tek hedef; Quenched zırh kırmasıyla aynı; Ömer kesin 2026-11-16); shieldBonus = Shocked'lı birime şimşek hasarının kalkana giden kısmı x(1 + bonus) (+%100); ikisi de boss / elitte ccImmunity.debuffStrength ile ölçeklenir; stunTurns = suda verilen durumun süresi; wetInto = o durum (Electrocuted: rastgele dosta temel saldırı; 2026-11-15'ten beri sıra çubuğunu 0'a çekmez); wetStatus = ıslaklık durumu (ya da su hücresi); arcRatio = Islak devre / Live Water iletim hasarı, tahtanın ortalama maks canının oranı (şimşek suya düşünce iki tahtada da su / kandaki herkese); flashHeroTurns = Thunderflash kaç kahraman turu aydınlatır; flashBlindTurns = en yakın kahramanın Blinded süresi.",
     "badge": "shocked",
     "badgeTurns": 1,
+    "magicArmorMult": 0.5,
+    "shieldBonus": 1,
     "stunTurns": 1,
     "wetInto": "electrocuted",
     "wetStatus": "soaked",

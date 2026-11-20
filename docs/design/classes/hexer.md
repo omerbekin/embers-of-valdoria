@@ -43,10 +43,10 @@
 
 | Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
 |---|---|---|---|---|
-| Evil Eye (`evil_eye`) | Ana saldırı: tek hedefe karanlık büyü hasarı, +1 Omen (kritikse +2). | 0 / yok | sınıf (5) | hasar magic/dark LUCK 0,86; omen: stacks=1, critStacks=2 |
-| Withering Curse (`withering_curse`) | Düşman alanına (2 sıra x 3 şerit, önden arkaya aşamalı) hasar + Wither (zamanla hasar) + her vurulana 1 Omen. | 14 / 3 | sınıf (5) | hasar magic/dark LUCK 0,3; dot: status=wither, scale=luck, power=0,1, turns=3; omen: stacks=1, critStacks=2; area={shape:rect, rows:2, cols:3, anchor:bottom_left, stages:row} |
-| Jinx (`jinx`) | Tek hedefe hasar + Jinxed (isabet düşer, kritik yok) + 1 Omen. | 2 / 3 | sınıf (5) | hasar magic/dark LUCK 0,73, critBonus=0,25; status: status=jinxed, turns=2; omen: stacks=1, critStacks=2, critDoomOnCrit=true |
-| Doom Mark (`doom_mark`) | Ult: vurur, +1 Omen, sonra yığın kaç olursa olsun Doom'u hemen patlatır (güçlendirilmiş). Iskada hiçbir şey olmaz. | 14 / 4, ilk 3 | sınıf (5) | hasar magic/dark LUCK 0,73; omen: stacks=1, critStacks=2; detonate: status=omen, mult=1,65, noTransferOnKill=true |
+| Evil Eye (`evil_eye`) | Ana saldırı: tek hedefe karanlık büyü hasarı, +1 Omen (kritikse +2). | 0 / yok | sınıf (5) | hasar magic/dark LUCK 0,722 (Tur 27, 2026-11-16: x0,95); omen: stacks=1, critStacks=2 |
+| Withering Curse (`withering_curse`) | Düşman alanına (2 sıra x 3 şerit, önden arkaya aşamalı) hasar + Wither (zamanla hasar) + her vurulana 1 Omen. | 14 / 3 | sınıf (5) | hasar magic/dark LUCK 0,285 (Tur 27, 2026-11-16: x0,95); dot: status=wither, scale=luck, power=0,095, turns=3; omen: stacks=1, critStacks=2; area={shape:rect, rows:2, cols:3, anchor:bottom_left, stages:row} |
+| Jinx (`jinx`) | Tek hedefe hasar + Jinxed (isabet düşer, kritik yok) + 1 Omen. | 2 / 3 | sınıf (5) | hasar magic/dark LUCK 0,808 (Tur 27, 2026-11-16: x0,95), critBonus=0,25; status: status=jinxed, turns=2; omen: stacks=1, critStacks=2, critDoomOnCrit=true |
+| Doom Mark (`doom_mark`) | Ult: vurur, +1 Omen, sonra yığın kaç olursa olsun Doom'u hemen patlatır (güçlendirilmiş). Iskada hiçbir şey olmaz. | 14 / 4, ilk 3 | sınıf (5) | hasar magic/dark LUCK 0,694 (Tur 27, 2026-11-16: x0,95); omen: stacks=1, critStacks=2; detonate: status=omen, mult=1,65, noTransferOnKill=true |
 
 Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-hexer.test.ts`) ve bu tablo birlikte güncellenir.
 

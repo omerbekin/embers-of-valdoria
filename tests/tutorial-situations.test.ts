@@ -124,10 +124,13 @@ describe('yeni durumlar (Ömer 2026-10-14)', () => {
     const rain = whens(selectSituations(b, uid, 'rejuvenate')); // Healing Rain hücreye düşer: alan dersi
     expect(rain).toContain('area');
     expect(rain).not.toContain('preview');
+    // tek dost seçen skill (Close Ranks); Mirror Vein artık bütün takıma (all_allies, Ömer 2026-11-18): dost seçimi dersi yok
+    const df = battleAt({ 1: 'defender', 2: 'warrior' }, { 1: 'warrior' }, 1);
+    const ally = whens(selectSituations(df.b, df.uid, 'close_ranks'));
+    expect(ally).toContain('ally');
+    expect(ally).not.toContain('preview');
     const am = battleAt({ 1: 'antimage', 2: 'warrior' }, { 1: 'warrior' }, 1);
-    const heal = whens(selectSituations(am.b, am.uid, 'spell_ward'));
-    expect(heal).toContain('ally');
-    expect(heal).not.toContain('preview');
+    expect(whens(selectSituations(am.b, am.uid, 'spell_ward'))).not.toContain('ally');
   });
 
   it('Fallen Heroes: oyuncunun bir kahramanı düşünce; Valor açık savaşta metin seçeneği valor', () => {

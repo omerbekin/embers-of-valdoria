@@ -26,12 +26,19 @@
   ],
   "passive": {
     "id": "double_or_nothing",
-    "name": "Double or Nothing",
+    "name": "Lucky Streak",
     "icon": "doubleornothing",
-    "text": "Damaging skills with a cooldown have a 25% chance to be ready again immediately.",
+    "text": "Build a Streak of up to 3: rolling doubles with Loaded Dice or winning a High Stakes bet adds 1, losing that bet resets it. Winning All In below 3 Streak fills it to 3. At 3 Streak, High Stakes, Card Trick or All In spends it for a stronger effect. Loaded Dice, High Stakes and Card Trick have a 25% chance to go once more.",
     "effect": {
-      "type": "spellEcho",
-      "chance": 0.25
-    }
+      "type": "luckyStreak",
+      "chance": 0.25,
+      "max": 3,
+      "skills": [
+        0,
+        1,
+        2
+      ]
+    },
+    "_not": "Gambler rework (Ömer 2026-11-18; sayılar PROVİZYON): eski Double or Nothing (spellEcho) yerine Lucky Streak. id double_or_nothing korunur (ağaç satırı, Gallows Pact set satırı 'chance', kayıtlar). chance = 1./2./3. skill tekrar şansı (eski Loaded Dice repeatChance buraya taşındı; All In tekrar etmez), max = seri tavanı."
   }
 }

@@ -2,9 +2,15 @@ import type { Battle } from './battle';
 import { damageRange, healRange, missingHpHealMult } from './formulas';
 import { betMultipliers, betStakeParts } from './gamble';
 import { burnAmountFor, castBurnAmount, emptyProcApplies } from './mana-burn';
-import { skillCostPay } from './cost';
+import { skillCostAmount, skillCostPay } from './cost';
 import { damageSpecFor, splitParts, type DamageEffect } from './spec';
-import { slotOfTileUid } from './battle';
+import { shieldAbsorb, slotOfTileUid } from './battle';
+
+/** Önizleme: kalkan havuzundan (önce büyü kalkanı, büyü vuruşunda) `rest` hasarın düşüreceği kalkan (Shocked çarpanı m; havuz değişmez). Saf. */
+function shieldTake(p: { shield: number; magicShield: number }, rest: number, m: number, magic: boolean): number {
+  const a = magic ? shieldAbsorb(p.magicShield, rest, m) : { used: 0, covered: 0 };
+  return a.used + shieldAbsorb(p.shield, rest - a.covered, m).used;
+}
 import { attributePower, dotOutgoingMult, hitChance } from './stats';
 import type { Combatant, GroundEffect, OnAbsorbSpec, PushDir, Side, SkillDef, SkillEffect } from './types';
 import { manaShieldPay } from './tree-hooks';
@@ -46,6 +52,13 @@ export interface TargetPreview {
     expected: number;
     /** Arkadaki birime sıçrayan kısmî hasar (ana hedef değil). */
     splash: boolean;
+    /**
+     * İki dallı bahis (High Stakes, All In; kazanma ihtimali 0 ile 1 arasında): kazanç ve kayıp dalının aralığı (kritik hariç; tekrar vuruşu dahil, üstteki
+     * min/max/avg ile aynı kural). YZ öldürme ihtimalini dal dal hesaplar. Kesin sonuçta (ihtimal 0 / 1) yok: üstteki aralık tek daldır.
+     */
+    bet?: { winChance: number; win: { min: number; max: number; avg: number }; lose: { min: number; max: number; avg: number } };
+    /** Tekrar vuruşu ihtimali ve TEK vuruşun aralığı (kritik hariç; critMax tek vuruşun kritik en çoğu). min/max/critMax tekrarla iki katlıdır, bu alan değil. */
+    repeat?: { chance: number; min: number; max: number; critMax: number };
   };
   heal?: { min: number; max: number; avg: number; critChance: number; critMax: number };
   /** Tur bazlı şifa: tur başına miktar, tur sayısı, toplam (eksik canla sınırlı). */
@@ -177,7 +190,13 @@ function withBoltLines(battle: Battle, actor: Combatant, skill: SkillDef, list: 
   for (const a of out.arcs) line(a.uid, `Live Water: ${a.damage} damage`);
   for (const a of out.shards) line(a.uid, `Shatter: ${a.damage} damage`);
   const wet = T.wetInto ? battle.statusDef(T.wetInto)?.name ?? T.wetInto : null; // Electrocuted (Ömer 2026-11-09)
-  for (const s of out.shocks) line(s.uid, s.stun ? (wet ? `${wet}: hits an ally, turn bar to 0` : `Shocked: Stun ${T.stunTurns} turn`) : `Shocked: pushed back ${Math.round(T.pushback * 100)}%`);
+  // Shocked / Topraklama (Ömer 2026-11-15): büyü zırhı azalır, şimşek kalkanı kat kat yer; boss / elitte güç oranı (statusLine gibi)
+  for (const s of out.shocks) {
+    const u = battle.get(s.uid);
+    const k = u ? battle.debuffStrength(u, T.badge, actor.side) : 1;
+    const str = k < 1 ? ` (${Math.round(k * 100)}% strength)` : '';
+    line(s.uid, s.stun ? (wet ? `${wet}: hits an ally` : `Shocked: Stun ${T.stunTurns} turn`) : `Shocked: -${Math.round((1 - T.magicArmorMult) * 100)}% Magic Armor, lightning +${Math.round(T.shieldBonus * 100)}% to shields${str}`);
+  }
   if (out.blinded) line(out.blinded, `Thunderflash: Blinded ${T.flashBlindTurns} turn`);
   return list;
 }
@@ -270,6 +289,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     let lo = 1;
     let hi = 1;
     let ex = 1;
+    let betBr: { p: number; win: number; lose: number } | null = null; // iki dallı bahis (YZ öldürme ihtimali ve can kaybı dal dal)
     if (effect.bet) {
       const mpLeft = skill.cost.resource === 'mp' && !battle.freeMp ? actor.mp - skill.cost.amount : actor.mp;
       // Skill ağacı bahis yaması (winChance / stakeMul): gerçek zarla aynı tanım
@@ -278,11 +298,22 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       // Mortgage (bet.hpStake): ek can bahsi kazanç çarpanında MP sayılır (betStakeParts; stakeMul her parçaya ayrı, gerçek zarla aynı)
       const sp = betStakeParts(bet, actor.maxHp, actor.hp, mpLeft, tb?.stakeMul ?? 1);
       const m = betMultipliers(bet, sp.main + sp.hp);
-      lo = m.lose;
-      hi = Math.max(m.win, m.lose);
+      // Kesin sonuç (Lucky Streak dolu seri / All In seri 3: winChance 1; ya da 0): tek dal, aralık o dalın (en az 0 görünmez)
+      const wc = Math.max(0, Math.min(1, bet.winChance));
+      lo = wc >= 1 ? m.win : m.lose;
+      hi = wc <= 0 ? m.lose : wc >= 1 ? m.win : Math.max(m.win, m.lose);
       ex = m.expected;
+      if (wc > 0 && wc < 1) betBr = { p: wc, win: m.win, lose: m.lose };
     }
-    const again = Math.min(1, (effect.repeatChance ?? 0) + battle.basicRepeatOf(actor, skill)); // Spare Arrow: temel saldırıya ek
+    // Lucky Streak zarı (Loaded Dice): en düşük / en yüksek / ortalama toplam ÷ ortalama (gerçek vuruşla aynı çarpan; ortalama 7 / 7 = 1)
+    if (effect.dice) {
+      const d = effect.dice;
+      lo *= d.count / d.mean;
+      hi *= (d.count * d.sides) / d.mean;
+      ex *= (d.count * (d.sides + 1)) / 2 / d.mean;
+      if (betBr) betBr = { ...betBr, win: (betBr.win * d.count * (d.sides + 1)) / 2 / d.mean, lose: (betBr.lose * d.count * (d.sides + 1)) / 2 / d.mean };
+    }
+    const again = Math.min(1, (effect.repeatChance ?? 0) + battle.basicRepeatOf(actor, skill) + battle.luckyRepeatOf(actor, skill)); // Spare Arrow / Lucky Streak: tekrar şansı
     // Garantili kritik (Backstab): her vuruş kritik; aralık kritik çarpanıyla verilir (critChance 1)
     // Ağaç: kritik çarpanı (critDmgMul) ve noCrit; kancasızda actor.stats.critMult
     const cmult = actor.treeHooks ? battle.critMultFor(actor, target, skill, base, tq) : actor.stats.critMult;
@@ -301,7 +332,10 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     const hit = (tm?.sureHit ? 1 : hitChance(battle.hitStats(actor, skill, target), stats, f)) * (1 - battle.blockChance(actor, target, blockOf ?? effect, skill)); // split: blok tüm vuruşa (ilk parçanın türü), gerçek vuruşla aynı
     const p = pool(target);
     // Bu hasarı emebilecek havuz: büyü hasarını iki kalkan da, fizikseli yalnızca genel kalkan emer
-    const soak = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
+    const soakShield = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
+    // Shocked / Topraklama (Ömer 2026-11-15): şimşek kalkanı x(1 + bonus) yer; kalkanın emdiği HASAR kalkan / çarpan (motorla aynı: shieldAbsorb)
+    const sm = battle.shieldHitMult(target, effect.element);
+    const soak = sm === 1 ? soakShield : (effect.damageType === 'magic' ? Math.ceil(p.magicShield / sm) : 0) + Math.ceil(p.shield / sm); // motorla aynı iki adım
     // Mana kalkanı: kalkanlardan sonra kalanın oranı MP'den (MP yettiğince), gerçek vuruşla aynı yardımcı
     // Banked Coals: düşman vuruşunda payı ertelenir (motorla aynı yuvarlama)
     const coalShare = target.side !== actor.side ? (target.itemEffects?.bankedCoals?.share ?? 0) : 0;
@@ -310,8 +344,17 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       const rest = Math.max(0, coalNow(v) - soak);
       return Math.min(p.hp, rest - manaShieldPay(target, rest, p.mp));
     };
-    const hpLoss = loss(r.avg);
-    const absorbed = Math.min(soak, coalNow(r.avg));
+    // Bahis dalları (Ömer 2026-11-18 YZ düzeltmesi): kazanç ve kayıp aralığı ayrı (tek düz aralık [kayıp en az, kazanç en çok] öldürme ihtimalini bozar);
+    // can kaybı dal dal kalan canla sınırlanır (kazançta fazla vuruş boşa gider)
+    // Dal aralığı TEK vuruş (tekrar ayrı: `repeat`); ortalama tekrar dahil (üstteki avg ile aynı)
+    const branch = (mult: number) => {
+      if (mult <= 0) return { min: 0, max: 0, avg: 0 }; // All In kaybı: hasar yok (motorla aynı)
+      const x = sureC ? critR(mult) : range(mult);
+      return { min: mult <= 0 ? 0 : Math.round(x.min), max: Math.round(x.max), avg: Math.round(x.avg * (1 + again)) };
+    };
+    const bb = betBr ? { winChance: betBr.p, win: branch(betBr.win), lose: branch(betBr.lose) } : null;
+    const hpLoss = bb ? bb.winChance * loss(bb.win.avg) + (1 - bb.winChance) * loss(bb.lose.avg) : loss(r.avg);
+    const absorbed = sm === 1 ? Math.min(soak, coalNow(r.avg)) : shieldTake(p, coalNow(r.avg), sm, effect.damageType === 'magic'); // kalkandan düşen (motorla aynı iki adım)
     const e = entry(target.uid);
     const prev = e.damage;
     e.damage = {
@@ -324,23 +367,27 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       hpLossMin: (prev?.hpLossMin ?? 0) + loss(r.min),
       hpLossMax: (prev?.hpLossMax ?? 0) + loss(r.max),
       lethal: null,
-      critChance: noCrit ? 0 : effect.guaranteedCrit ? 1 : battle.effectiveStats(actor, (effect.critBonus ?? 0) + battle.levelGap(actor, target).crit).critChance, // critBonus: Jinx; level farkı bonusu gerçek vuruşla aynı
+      critChance: noCrit ? 0 : effect.guaranteedCrit ? 1 : battle.effectiveStats(actor, (effect.critBonus ?? 0) + battle.critVs(actor, target)).critChance, // critBonus: Jinx; level farkı bonusu gerçek vuruşla aynı
       critMax: (prev?.critMax ?? 0) + (sureC || noCrit ? r.max : actor.treeHooks ? Math.round(critR(hi).max) * (again > 0 ? 2 : 1) : Math.round(r.max * actor.stats.critMult)),
       ...(actor.treeHooks ? { critMult: cmult } : {}),
       hitChance: hit,
       expected: (prev?.expected ?? 0) + r.avg * hit,
       splash: prev ? prev.splash && splash : splash,
+      ...(bb ? { bet: bb } : prev?.bet ? { bet: prev.bet } : {}),
+      // Tekrar vuruşu (Lucky Streak, Spare Arrow, ağaç repeatChance): ihtimal ve TEK vuruş aralığı (kritik hariç; kritik tek vuruş en çoğu): YZ öldürme
+      // ihtimalini "tek vuruş / iki vuruş" dallarıyla hesaplar (düz [en az, 2 x en çok] aralığı yerine). Önceki etkiyle birleşen girdide yazılmaz
+      ...(again > 0 && !prev ? { repeat: { chance: again, min: Math.round((sureC ? critR(lo) : range(lo)).min), max: Math.round((sureC ? critR(hi) : range(hi)).max), critMax: sureC || noCrit ? Math.round((sureC ? critR(hi) : range(hi)).max) : actor.treeHooks ? Math.round(critR(hi).max) : Math.round(range(hi).max * actor.stats.critMult) } } : {}),
     };
     // Sonraki etkiler için havuzları güncelle (magic: önce büyü kalkanı)
     let rest = coalNow(r.avg);
     if (effect.damageType === 'magic') {
-      const a = Math.min(p.magicShield, rest);
-      p.magicShield -= a;
-      rest -= a;
+      const a = shieldAbsorb(p.magicShield, rest, sm);
+      p.magicShield -= a.used;
+      rest -= a.covered;
     }
-    const b = Math.min(p.shield, rest);
-    p.shield -= b;
-    rest -= b;
+    const b = shieldAbsorb(p.shield, rest, sm);
+    p.shield -= b.used;
+    rest -= b.covered;
     const paid = manaShieldPay(target, rest, p.mp);
     p.mp -= paid;
     rest -= paid;
@@ -366,12 +413,20 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         // Skill ağacı C1 (Faz 2a): koşullu süre / şans eki gerçek uygulamayla aynı (kancasızda null, metin aynı)
         const tm = actor.treeHooks ? battle.treeMods(actor, target, skill, effect) : null;
         const ch = tm ? Math.max(0, Math.min(1, (effect.chance ?? 1) + tm.chance)) : effect.chance;
-        const turns = tm ? Math.max(1, Math.round(effect.turns + tm.turns)) : effect.turns;
+        // Lanet uzar (Tur 27): Unhallowed hedefte yeni süreli debuff +curseExtraTurns tur (motorla aynı: Battle.curseExtraTurns)
+        const turns = (tm ? Math.max(1, Math.round(effect.turns + tm.turns)) : effect.turns) + battle.curseExtraTurns(target, effect.status);
         const chance = ch !== undefined && ch < 1 ? ` (${Math.round(ch * 100)}% chance)` : '';
         // Boss / elit (Ömer 2026-11-09, ccImmunity.debuffStrength): CC dışı debuff azaltılmış güçle işler
-        const ks = battle.debuffStrength(target, effect.status, actor.side);
+        const ks = battle.debuffStrength(target, effect.status, actor.side) * (effect.strength ?? 1); // örnek gücü (Ömer 2026-11-16)
         const weak = ks < 1 ? ` (${Math.round(ks * 100)}% strength)` : '';
         e.statuses = [...(e.statuses ?? []), `${def?.name ?? effect.status} ${turns} turns${chance}${weak}`];
+        // Eş durum (ağaç withStatus, Ömer 2026-11-16 Tur 24: Hexer düğümlerinin Blinded'ı): aynı süre, örnek gücü x boss / elit
+        for (const [k, g] of Object.entries(tm?.withStatus ?? {})) {
+          const wd = battle.statusDef(k);
+          if (!wd || battle.statusBlocked(target, k)) continue;
+          const wk = battle.debuffStrength(target, k, actor.side) * Math.min(1, Math.round(g * 1000) / 1000);
+          e.statuses = [...e.statuses, `${wd.name ?? k} ${turns} turns${chance}${wk < 1 ? ` (${Math.round(wk * 100)}% strength)` : ''}`];
+        }
       } else if (effect.type === 'damage') {
         // Çok hedefli (alan) vuruşta her yeni hedef bir öncekinin falloff katı hasar alır (hedef sırası = vuruş sırası)
         const idx = effect.falloff || skill.splash ? targets.indexOf(target) : 0;
@@ -385,7 +440,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const thrownHit = !!skill.treeThrown && battle.openBehindProblem(target) !== null;
         const hiOf = (k: number): HitInfo | undefined => (actor.treeHooks ? { index: idx, ...(isC !== undefined ? { center: isC } : {}), ...(isC ? { centerHit: k + 1 } : {}), mpBefore: target.mp, ...(thrownHit ? { thrown: true } : {}) } : undefined);
         const fa = actor.treeHooks && effect.falloff ? (battle.treeMods(actor, target, skill, effect, { hit: hiOf(0)! })?.falloffAdd ?? 0) : 0;
-        const fo = effect.falloff ? effect.falloff + fa : effect.falloff;
+        const fo = effect.falloff ? Math.min(1, effect.falloff + fa) : effect.falloff; // motorla aynı: en çok 1
         // Bölünmüş hasar (damage.split, Hammer Spark): parça başına ayrı tür / element, gerçek vuruşla aynı (ekler yalnız ilk parçada); split yoksa tek parça
         const parts = splitParts(effect);
         for (let k = 0; k < times; k++) for (let pi = 0; pi < parts.length; pi++) addDamage(target, parts[pi]!.effect, (fo ? Math.pow(fo, idx) : 1) * (side ? skill.splash!.mult ?? 1 : 1) * parts[pi]!.share, idx > 0 || k > 0 || pi > 0, hiOf(k), pi > 0 ? parts[0]!.effect : undefined);
@@ -428,7 +483,8 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         }
         const recipient = effect.self ? actor : target;
         const mpLeft = skill.cost.resource === 'mp' ? actor.mp - skill.cost.amount : actor.mp;
-        const amount0 = Math.round(attributePower(actor.stats, effect.scale, f) * pw(effect.power, actor.stats.shieldPowerMult)) + Math.round((effect.bonusPerMana ?? 0) * mpLeft);
+        // Düz ek (Mirror Vein): motorla aynı (flat + stat x güç, ikisi de Shield power affix'iyle)
+        const amount0 = Math.round((effect.flat ? pw(effect.flat, actor.stats.shieldPowerMult) : 0) + attributePower(actor.stats, effect.scale, f) * pw(effect.power, actor.stats.shieldPowerMult)) + Math.round((effect.bonusPerMana ?? 0) * mpLeft);
         // Faz 4a C4 (shieldDealt): gerçek kalkanla aynı çarpan; kancasızda aynı miktar
         const shm = battle.treeShieldMult(actor, recipient, skill);
         const amount = shm !== 1 ? Math.max(0, Math.round(amount0 * shm)) : amount0;
@@ -470,9 +526,19 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         e.brand = { turns, pool, costMult: effect.costMult, current, castBurnPct, markPct: effect.markDamagePct ?? 0, ...(thread ? { threaded: true } : {}) };
         const name = battle.statusDef('branded')?.name ?? 'Branded';
         e.statuses = [...(e.statuses ?? []), `${name} ${turns} turns${thread ? ` (${battle.statusDef('ley_thread')?.name ?? 'Ley Thread'} used up)` : ''}`, pool > 0 ? `Tainted mana ${pool}` : target.maxMp > 0 && target.taint === undefined ? `MP costs ${Math.round((effect.costMult - 1) * 100)}% higher` : 'Tainted mana kept', ...(castBurnPct && target.maxMp > 0 && target.taint === undefined ? [`MP skills burn ${Math.round(castBurnPct * 100)}% extra`] : [])];
+      } else if (effect.type === 'bloodBrand') {
+        // Blood Brand (Redtithe): işaret süresi, MP bedel çarpanı (MP havuzu olan hedefte), skill başına ek Bleeding tiki
+        const e = entry(target.uid);
+        const name = battle.statusDef('blood_brand')?.name ?? 'Blood Brand';
+        e.statuses = [...(e.statuses ?? []), `${name} ${effect.turns} turns`, ...(target.maxMp > 0 && target.taint === undefined ? [`MP costs ${Math.round((effect.costMult - 1) * 100)}% higher`] : []), `Each skill it uses: +${effect.ticks} ${battle.statusDef('bleeding')?.name ?? 'Bleeding'} tick`];
       } else if (effect.type === 'manaBurn') {
         const e = entry(target.uid);
         e.burn = (e.burn ?? 0) + burnAmountFor(effect, target);
+        // Tithe Cut (bloodPerMp): kullanıcının kazanacağı kan (isabet edince; bar sınırına kırpılır)
+        if (effect.bloodPerMp !== undefined && actor.maxBlood !== undefined && f.bloodBar) {
+          const gain = Math.min(actor.maxBlood - (actor.blood ?? 0), burnAmountFor(effect, target) * effect.bloodPerMp + f.bloodBar.hitGain);
+          if (gain > 0) entry(actor.uid).statuses = [...(entry(actor.uid).statuses ?? []), `On hit: +${gain} blood`];
+        }
         // Ley Brand: Branded hedefin yanan MP'si yakana hasar (gerçek vuruşla aynı: tickDamage)
         const bs = target.statuses.find((x) => x.kind === 'branded')?.brand;
         const lost = burnAmountFor(effect, target);
@@ -488,20 +554,24 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
             status: spec.status,
             statusName: battle.statusDef(spec.status)?.name ?? spec.status,
             turns: spec.turns,
-            ...(r ? { damage: { min: r.min, max: r.max, avg: r.avg, critChance: battle.effectiveStats(actor, battle.levelGap(actor, target).crit).critChance, critMax: Math.round(r.max * actor.stats.critMult) } } : {}),
+            ...(r ? { damage: { min: r.min, max: r.max, avg: r.avg, critChance: battle.effectiveStats(actor, battle.critVs(actor, target)).critChance, critMax: Math.round(r.max * actor.stats.critMult) } } : {}),
           };
         }
       } else if (effect.type === 'taunt') {
         const e = entry(target.uid);
-        e.statuses = [...(e.statuses ?? []), `Taunt ${effect.turns} turns`];
+        // Taunt zırhı (Ömer 2026-11-16 Tur 26) ayrı satır: "Taunt N turns" satırı rozet olarak ayrışmaya devam eder (preview-format.ts)
+        e.statuses = [...(e.statuses ?? []), `Taunt ${effect.turns} turns`, ...(effect.armorBonus ? [`+${effect.armorBonus} armor while taunting`] : [])];
       } else if (effect.type === 'guard') {
         const e = entry(target.uid);
-        e.statuses = [...(e.statuses ?? []), `Guard ${effect.turns} turns`];
+        // Close Ranks aura payı (Ömer 2026-11-18): auranın ulaşmadığı dostun Guard süresince kazanacağı zırh
+        const gain = effect.auraShare ? Math.round(battle.guardAuraGain(actor, target, effect.auraShare)) : 0;
+        e.statuses = [...(e.statuses ?? []), `Guard ${effect.turns} turns`, ...(gain > 0 ? [`+${gain} armor while guarded`] : [])];
       } else if (effect.type === 'dot') {
         const amount = Math.round(attributePower(actor.stats, effect.scale, f) * effect.power * dotOutgoingMult(actor.stats));
         const old = target.statuses.find((s) => s.kind === effect.status)?.amount ?? 0;
         const perTick = battle.dotTickDamage(effect.status, Math.max(amount, old), target);
-        entry(target.uid).dot = { status: effect.status, perTick, turns: effect.turns, total: perTick * effect.turns };
+        const dturns = effect.turns + battle.curseExtraTurns(target, effect.status, effect.permanent ? { permanent: true } : undefined); // Lanet uzar (Tur 27)
+        entry(target.uid).dot = { status: effect.status, perTick, turns: dturns, total: perTick * dturns };
       } else if (effect.type === 'omen') {
         const o = omenPreview(battle, actor, skill, target, effect.status ?? 'omen', effect.stacks, effect.critStacks ?? effect.stacks, pool(target), effect.critDoomOnCrit === true);
         if (o) entry(target.uid).omen = o;
@@ -520,6 +590,13 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     }
   }
 
+  // Kan bedeli (Redtithe): eksik kan candan ödenir; önizleme can bedelini ayrı satırla gösterir (motorla aynı: Battle.bloodSplitFor)
+  if (skill.cost.resource === 'blood' && actor.maxBlood !== undefined) {
+    const amount = skillCostAmount(skill.cost, actor);
+    const sp = amount > 0 ? battle.bloodSplitFor(actor, skill, amount) : null;
+    if (sp && sp.blood > 0) entry(actor.uid).statuses = [...(entry(actor.uid).statuses ?? []), `Spends ${sp.blood} blood`];
+    if (sp && sp.hp > 0) entry(actor.uid).statuses = [...(entry(actor.uid).statuses ?? []), `Not enough blood: pays ${sp.hp} HP`];
+  }
   // Ley Brand bedel yakımı (Ömer 2026-10-29): Branded kullanıcı MP öderse ödediği x castBurnPct ek MP yanar (ödemeden sonra kalanla sınırlı), yanan MP x burnPct kendine hasar
   const cb = actor.statuses.find((x) => x.kind === 'branded')?.brand;
   if (cb?.castBurnPct) {

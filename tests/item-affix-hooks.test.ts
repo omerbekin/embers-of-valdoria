@@ -23,10 +23,11 @@ const warriorAttack = content.classes.warrior!.skills[0]!;
 
 describe('affix statları: skill sayıları (motor = skill-info = önizleme)', () => {
   it('Element hasarı / Global damage: yalnızca o elementin skill hasarı büyür; önizleme ve Gear sayısı aynı çarpanı görür', () => {
-    const base = make({ 0: 'warrior' }, { 0: 'defender' });
-    const phys = make({ 0: 'warrior' }, { 0: 'defender' }, { 0: mod({ elemDamageAdd: { physical: 0.2 } }) });
-    const fire = make({ 0: 'warrior' }, { 0: 'defender' }, { 0: mod({ elemDamageAdd: { fire: 0.2 } }) });
-    const glob = make({ 0: 'warrior' }, { 0: 'defender' }, { 0: mod({ damageAdd: 0.2 }) });
+    // hedef Mage (düşük zırh): Double Strike 0,33'te (Ömer 2026-11-18) Defender zırhı +%20'yi yuvarlamada yutuyordu
+    const base = make({ 0: 'warrior' }, { 0: 'mage' });
+    const phys = make({ 0: 'warrior' }, { 0: 'mage' }, { 0: mod({ elemDamageAdd: { physical: 0.2 } }) });
+    const fire = make({ 0: 'warrior' }, { 0: 'mage' }, { 0: mod({ elemDamageAdd: { fire: 0.2 } }) });
+    const glob = make({ 0: 'warrior' }, { 0: 'mage' }, { 0: mod({ damageAdd: 0.2 }) });
     const avg = (b: Battle) => previewSkill(b, 'party-0', warriorAttack, 'enemy-0')[0]!.damage!.avg;
     expect(avg(phys)).toBeGreaterThan(avg(base));
     expect(avg(fire)).toBe(avg(base)); // warrior fiziksel vurur

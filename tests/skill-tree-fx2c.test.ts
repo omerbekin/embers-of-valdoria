@@ -106,7 +106,7 @@ describe('Faz 2c: veri', () => {
     const t = only('druid', { '0.fa': 1 }, 0)!;
     const e = t.passive!.effect as { status?: string; power: number; turns: number; dotTurns?: number };
     expect(e.status).toBeUndefined();
-    expect(e.power).toBeCloseTo(0.195, 9);
+    expect(e.power).toBeCloseTo(0.2145, 9); // 0,165 x 1,3 (taban 2026-11-20 form r34: 0,15 -> 0,165)
     expect(e.turns).toBe(3);
     expect(e.dotTurns).toBe(4);
   });
@@ -166,14 +166,19 @@ describe('Faz 2c: durum kancası (DoT, rastgele durum, boşalma durumu)', () => 
     });
   });
 
-  it('Fog of Ill Luck: Withering Curse\'ün Wither\'ı isabet -%2 x rank taşır', () => {
+  it('Fog of Ill Luck: Withering Curse\'ün Wither\'ı ile Blinded (güç x rank; Tur 24)', () => {
     const b = make({ 0: 'hexer' }, { 0: 'warrior' }, withTree(0, only('hexer', { '2.f2': 3 })), 3);
     E(b).hp = E(b).maxHp = 99999;
     seeds('Wither', () => {
       cast(b, P(b), 'withering_curse', E(b));
       const w = E(b).statuses.find((s) => s.kind === 'wither');
       if (!w) return false;
-      expect(w.potency?.accuracyDelta).toBeCloseTo(3 * (fxOf('hexer', '2.f2') as unknown as { mod: { statusPotency: { accuracyDelta: number } } }).mod.statusPotency.accuracyDelta, 9); // değer veriden (D9 2026-10-23)
+      // Ömer 2026-11-16 Tur 24: isabet eki yerine aynı güçte Blinded (withStatus); güç veriden x rank, süre Wither'la aynı
+      const g = 3 * (fxOf('hexer', '2.f2') as unknown as { mod: { withStatus: { strength: number } } }).mod.withStatus.strength;
+      const bl = E(b).statuses.find((s) => s.kind === 'blinded');
+      expect(w.potency?.accuracyDelta).toBeUndefined();
+      expect(bl?.strength).toBeCloseTo(Math.round(g * 1000) / 1000, 9);
+      expect(bl?.turns ?? 0).toBeGreaterThanOrEqual(w.turns); // uygulandığı an aynı süre (Wither aynı vuruşta bir tik yemiş olabilir)
       return true;
     }, 10);
   });
@@ -251,11 +256,12 @@ describe('Faz 2c: Anti-Mage', () => {
     });
   });
 
-  it('Ward Taunt: Spell Ward kendine atılınca taunt, dosta atılınca yok', () => {
+  it('Ward Taunt: Mirror Vein seni de kalkanlayınca taunt (takım skill\'i: her atışta); ağaçsız taunt yok', () => {
     const t = withTree(0, only('antimage', { '3.eb': 1 }));
+    const plain = make({ 0: 'antimage', 1: 'warrior' }, { 0: 'mage' });
+    cast(plain, P(plain), 'spell_ward', P(plain));
+    expect(has(P(plain), 'taunt')).toBe(false);
     const b = make({ 0: 'antimage', 1: 'warrior' }, { 0: 'mage' }, t);
-    cast(b, P(b), 'spell_ward', P(b, 1));
-    expect(has(P(b), 'taunt')).toBe(false);
     cast(b, P(b), 'spell_ward', P(b));
     expect(has(P(b), 'taunt')).toBe(true);
   });
@@ -359,9 +365,11 @@ describe('Faz 2c: Defender', () => {
     expect(armorOf(b, P(b)) - base).toBeCloseTo(base * (0.4 + 2 * fxOf('defender', '0.f3').mod.auraPct), 6);
     const f1 = make({ 0: 'defender' }, { 0: 'mage' }, withTree(0, only('defender', { '0.f1': 3 })));
     cast(f1, P(f1), 'taunt');
+    for (const s of P(f1).statuses) if (s.kind === 'taunt') delete s.armorBonus; // Taunt zırhı (Tur 26) ayrı testte: yalnız aura payı ölçülür
     expect(armorOf(f1, P(f1)) - base).toBeCloseTo(base * (0.4 + 3 * fxOf('defender', '0.f1').mod.auraPct), 6);
     const ea = make({ 0: 'defender' }, { 0: 'mage' }, withTree(0, only('defender', { '0.ea': 1 })));
     for (let i = 0; i < 6; i++) cast(ea, P(ea), 'taunt');
+    for (const s of P(ea).statuses) if (s.kind === 'taunt') delete s.armorBonus; // Taunt zırhı (Tur 26) ayrı testte
     expect(armorOf(ea, P(ea)) - base).toBeCloseTo(base * (0.4 + 4 * fxOf('defender', '0.ea').mod.auraPct), 6); // seri en çok 4
   });
 
@@ -444,7 +452,9 @@ describe('Faz 2c: Paladin, Archer, Warrior', () => {
     const b = make({ 0: 'warrior' }, { 0: 'mage' }, withTree(0, only('warrior', { '2.fa': 1, '3.fa': 1 })));
     cast(b, P(b), 'whirlwind', E(b));
     expect(has(P(b), 'exposed')).toBe(true);
-    expect(b.statusMult(P(b), 'damageTakenMult')).toBeCloseTo(1.15, 9);
+    // Ömer 2026-11-16: Exposed alınan hasarı artırmaz (Overextended'in işi), karşı vuruşlara kritik şansı ekler
+    expect(b.statusMult(P(b), 'damageTakenMult')).toBe(1);
+    expect(b.critVs(E(b), P(b))).toBeCloseTo(b.critVs(E(b), E(b)) + content.statuses.exposed!.critTakenDelta!, 9);
     P(b).statuses = [];
     cast(b, P(b), 'charge', E(b));
     expect(has(P(b), 'taunt')).toBe(true);

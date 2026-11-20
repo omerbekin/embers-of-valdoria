@@ -28,7 +28,7 @@
     "id": "undertow",
     "name": "Undertow",
     "icon": "boot",
-    "text": "Its skill hits on a hero standing in Flooded water also Slow them for 1 turn.",
+    "text": "Its skill hits on a hero standing in Flooded water also Hobble them for 1 turn.",
     "effect": {
       "type": "undertow",
       "ground": "flooded",

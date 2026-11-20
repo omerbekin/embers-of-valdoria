@@ -4,6 +4,7 @@ import { UI_ICON_FALLBACK, UI_ICON_KINDS, globalIconName, uiIconFallback, uiIcon
 import { UI_IMAGE_FILES, uiImage } from '../src/game/icon-image-files';
 import { resolveSprite } from '../src/game/art-registry';
 import { content } from '../src/engine';
+import { itSource } from './asset-source';
 
 // Boyalı arayüz ikonları (Ömer 2026-10-10): assets/ui-icons/<ad>.png (+ small/), tek kaynak uiIconName -> art-registry 'ui:<ad>'.
 describe('Arayüz ikonları: her kavram boyalı görselle, kodla çizilen yedek korunur', () => {
@@ -42,7 +43,7 @@ describe('Arayüz ikonları: her kavram boyalı görselle, kodla çizilen yedek 
 });
 
 describe('Yükleme ekranı arka planı (public/loading)', () => {
-  it('webp ~1600 px ve 200 KB altında; index.html satır içi bulanık yer tutucu ve ön yükleme taşıyor', () => {
+  itSource('webp ~1600 px ve 200 KB altında; index.html satır içi bulanık yer tutucu ve ön yükleme taşıyor', () => {
     const f = 'public/loading/loading-bg.webp';
     expect(existsSync(f)).toBe(true);
     expect(statSync(f).size).toBeLessThan(200 * 1024);

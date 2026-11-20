@@ -645,7 +645,7 @@
     },
     "2.f1": {
       "name": "Biting Gale",
-      "text": "Blizzard has an 8% chance per rank to Slow each enemy hit for 1 turn.",
+      "text": "Blizzard has an 8% chance per rank to Hobble each enemy hit for 1 turn.",
       "src": "A:V2:2.f1",
       "fx": [
         {
@@ -676,7 +676,7 @@
     },
     "2.f2": {
       "name": "Numbing Cold",
-      "text": "Blizzard deals 6% increased damage per rank against Slowed or Chilled enemies.",
+      "text": "Blizzard deals 6% increased damage per rank against Hobbled or Chilled enemies.",
       "src": "A:V2:2.f2",
       "fx": [
         {
@@ -741,7 +741,7 @@
     },
     "2.n0": {
       "name": "Hard Frost",
-      "text": "Blizzard always Slows the enemies in the front row of its area for 1 turn.",
+      "text": "Blizzard always Hobbles the enemies in the front row of its area for 1 turn.",
       "src": "A:V2:2.n0",
       "fx": [
         {
@@ -778,7 +778,7 @@
     },
     "2.ea": {
       "name": "Flash Freeze",
-      "text": "Each enemy already Slowed or Chilled when Blizzard hits has a 35% chance to be Stunned for 1 turn.",
+      "text": "Each enemy already Hobbled or Chilled when Blizzard hits has a 35% chance to be Stunned for 1 turn.",
       "src": "A:V2:2.ea",
       "fx": [
         {
@@ -1267,14 +1267,14 @@
     },
     "4.r3": {
       "name": "Earthshaker",
-      "text": "Each enemy Meteor hits has a 35% chance to be Staggered: it loses its next action.",
+      "text": "Each enemy Meteor hits has a 35% chance to be Stunned for 1 turn.",
       "src": "A:V2:4.r3",
       "fx": [
         {
           "k": "addEffect",
           "effect": {
             "type": "status",
-            "status": "staggered",
+            "status": "stun",
             "turns": 1,
             "chance": 0.35
           },

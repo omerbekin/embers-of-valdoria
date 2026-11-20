@@ -9,7 +9,7 @@
 | id / rol | `defender` / Tank |
 | Ön sıra önceliği, menzil | 0, menzil 1 |
 | Stat (STR / INT / DEX / LUCK) | 24 / 24 / 6 / 6, ana stat STR (toplam 60) |
-| Zırh / büyü zırhı | 38 / 0, can 140 (override) |
+| Zırh / büyü zırhı | 38 / 0, can 160 (override; Ömer 2026-11-18: 140 -> 160) |
 | YZ profili | `tank` (`data/ai.json > profiles.tank`) |
 | Pasif | **Bulwark Aura**: "You and the allies right next to you (front, back, left, right) gain bonus armor equal to 40% of your own armor." |
 
@@ -25,8 +25,8 @@
 | Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
 |---|---|---|---|---|
 | Tremor Slam (`tremor_slam`) | Hedef sırayı (row) vurur, Slow verir. Fiziksel, STR + zırh payı | 0 / yok | sınıf (1) | hasar physical STR 0,221, bonusScale=[{stat:armor, pct:0.105}]; status: status=slow, turns=2; area={shape:row} |
-| Taunt (`taunt`) | Kendine; düşmanları kendine vurmaya zorlar. Kaybedilen can eşiği geçince kırılır | 16 / 4 | sınıf (1) | taunt: turns=2, breakRatio=0,3, allyDamageMult=0,9 |
-| Close Ranks (`close_ranks`) | Seçilen dost + sırasındaki dostlar (Defender hariç) Guard alır: aldıkları hasarın yarısı Defender'a geçer | 8 / 5 | 2 | guard: turns=3, share=0,5; splash={pattern:row}; turnCost=0,5 |
+| Taunt (`taunt`) | Kendine; düşmanları kendine vurmaya zorlar. Kaybedilen can eşiği geçince kırılır | 16 / 4 | sınıf (1) | taunt: turns=2, breakRatio=0,3, allyDamageMult=0,9, armorBonus=20 (Tur 26: 10, Tur 27 2026-11-16: 20) |
+| Close Ranks (`close_ranks`) | Seçilen dost + sırasındaki dostlar (Defender hariç) Guard alır: aldıkları hasarın yarısı Defender'a geçer; Guard sürdükçe Bulwark Aura payının dörtte birini alır | 8 / 4 | 2 | guard: turns=3, share=0,5, auraShare=0,25; splash={pattern:row}; turnCost=0,5 |
 | Fist Crush (`fist_crush`) | Gökten 3 rastgele düşmana yumruk, fiziksel | 22 / 4, ilk 3 | sınıf (1) | hasar physical STR 0,71, bonusScale=[{stat:armor, pct:0.05}]; count=3 |
 
 Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-defender.test.ts`) ve bu tablo birlikte güncellenir.
@@ -51,7 +51,9 @@ Veri: `data/skill-trees/defender.json` (sürüm 1, bar "Rampart Mastery"). Düğ
 ## 5. Açık işler / kararlar
 
 - Son hâl (Ömer): can override, zırh, Taunt kırılma oranı, Close Ranks payı ve beklemesi veride; ara değerler (zırh 38 -> 36 -> 38, can 145 -> 140) arşivde.
-- Close Ranks Guard'ın yerine geldi (Ömer 2026-10-20); Defender hariç dostlar Guard alır. `data/skills.json > close_ranks._not` metni 10 MP diyor, veri 8 MP: veri notu bayat, düzeltilmeli (veri işi).
+- Close Ranks Guard'ın yerine geldi (Ömer 2026-10-20); Defender hariç dostlar Guard alır. Veri notu 8 MP olarak düzeltildi (2026-11-18).
+- **Close Ranks aura payı (Ömer 2026-11-18, kural):** Close Ranks'in Guard verdiği her dost (seçilen + sırası; ağaçla Second Chain'in kendi sıra dostları da), Guard sürdükçe Bulwark Aura'nın anlık payının `auraShare` (0,25) katını alır: pasif %40 iken Defender zırhının %10'u. Ağaç aura payını artırırsa (Tight Formation vb.) pay onunla ölçeklenir. Komşu olup aurayı zaten alan dost iki kez almaz (tam pay). Defender düşünce zırh hemen kalkar (Guard durumu mevcut kuralla süresi bitene kadar durur; Defender dirilirse Guard sürdükçe zırh geri gelir). Aktarılan hasar payı Defender zırhıyla yeniden azalmaz (değişmedi); dostun yeni zırhı hasarı paylaşımdan önce azaltır. Motor `Battle.auraArmor`, test `tests/close-ranks-aura.test.ts`.
+- Ömer 2026-11-18: can 140 -> 160, Close Ranks bekleme 5 -> 4. Sim yok (Lead atar).
 - Kampanya ve Endless varsayılanında Defender'ın ikinci eli dolu gelir (Iron Buckler; Ömer 2026-10-23).
 - Tutorial sınıf önerisi (Bellow + Strength) Ömer onayı bekliyor (arşiv madde 481).
 

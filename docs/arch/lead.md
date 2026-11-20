@@ -38,6 +38,7 @@ Tek sahip `docs/arch/areas/push-queue.md`. Lead agent işlerini kendi dalında t
 
 ## Yeni Lead açılışı
 Ömer sohbeti değiştirince yeni sohbet, kuyruk raporları ona gelsin diye bir kez çalıştırır (oturum kimliği her istemdeki kuyruk satırında yazar): `node <game>/tools/push-queue.mjs coordinator <oturum>`
+Her Lead açılışında (Ömer 2026-11-18, disk): `node <game>/tools/push-queue.mjs wt-sweep` listesine bak, sonra `wt-sweep --yes` ile işi bitmiş agent kopyalarını sil (dal kalır; kural `areas/push-queue.md` > Agent kopyaları ve disk). `status`'ta `!! DİSK UYARISI` varsa önce bunu yap.
 
 ## Not düzeni (Ömer 2026-11-08)
 Ömer'in "unutma / not al" dediği her karar o konunun sahibi belgeye yazılır; katmanlar ve kural kök `CLAUDE.md` > "Not nereye yazılır"da. Ek: Lead hafıza arşivi depoya DEĞİL `memory/archive/`e gider. Agent bitince alan belgesinin "Durum" ve "Açık işler" bölümünü günceller; Lead raporu okuyunca alan belgesinde iz var mı bakar.

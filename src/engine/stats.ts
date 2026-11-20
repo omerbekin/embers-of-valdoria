@@ -143,7 +143,13 @@ export function deriveStats(data: CombatantData, formulas: Formulas): Stats {
     spellPowerMult: 1,
     surviveChance: active && data.primary === 'luck' ? bonus.luck.surviveChance : 0,
   };
-  return { ...derived, ...(data.overrides ?? {}) };
+  const out = { ...derived, ...(data.overrides ?? {}) };
+  // Kan barlı class (Redtithe, Ömer 2026-11-17): mana yok; MP ve MP yenilenmesi kaynaktan (resource 'blood') 0, veride override yok
+  if (data.resource === 'blood') {
+    out.mp = 0;
+    out.mpRegen = 0;
+  }
+  return out;
 }
 
 /** Veriden çalışma zamanı tanımı üretir. */
@@ -167,6 +173,7 @@ export function buildDef(data: CombatantData, formulas: Formulas): CombatantDef 
     ...(data.family ? { family: data.family } : {}),
     stats: deriveStats(data, formulas),
     ...(data.resource === 'rage' ? { maxRage: formulas.rage.max } : {}),
+    ...(data.resource === 'blood' && formulas.bloodBar ? { maxBlood: formulas.bloodBar.max, bloodStart: formulas.bloodBar.start } : {}),
     skills: [...data.skills],
     ...(data.tags ? { tags: [...data.tags] } : {}),
     ...(data.ai ? { ai: data.ai } : {}),
@@ -264,6 +271,11 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
   };
   // Affix ekleri (Ömer 2026-10-11): alan verilmezse stat hiç yazılmaz (bugünkü birimler birebir aynı)
   if (mods.mpMult !== undefined && mods.mpMult !== 1) stats.mp = Math.max(0, Math.round(stats.mp * mods.mpMult));
+  // Kan barlı class (Redtithe, Ömer 2026-11-17): mana YOK; item MP ekleri de MP açmaz (deriveStats taban MP'yi zaten 0 yapar)
+  if (def.maxBlood !== undefined) {
+    stats.mp = 0;
+    stats.mpRegen = 0;
+  }
   // İsabet çarpanı (Ömer 2026-10-27, topuz örtüğü): toplam isabete (taban + accuracyAdd) oransal
   if (mods.accuracyMult !== undefined && mods.accuracyMult !== 1) stats.accuracy = Math.max(0, r4(stats.accuracy * mods.accuracyMult));
   if (mods.spdMult !== undefined && mods.spdMult !== 1) stats.spd = Math.max(speedMin(formulas), roundSpeed(stats.spd * mods.spdMult, formulas));

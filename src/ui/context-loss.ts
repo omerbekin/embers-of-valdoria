@@ -6,6 +6,7 @@
  * + `.el-btn primary` (src/ui/elegant.css). Debug > Speed & View > Display > Simulate graphics reset.
  */
 import type Phaser from 'phaser';
+import { logEvent, report } from '../diag/diag';
 
 /** Bağlam dönmezse Reload düğmesi bu kadar ms sonra görünür. */
 const RELOAD_AFTER_MS = 6000;
@@ -57,12 +58,30 @@ function hide(): void {
   note = null;
 }
 
+/** Hata raporu izi + rapor (docs/arch/diagnostics.md): kayıp anı ve geri gelme süresi (ms). */
+let lostAt = 0;
+export function noteContextLost(now = Date.now()): void {
+  lostAt = now;
+  logEvent('gl', 'webglcontextlost');
+  report('webglcontextlost', 'renderer lost WebGL context');
+}
+export function noteContextRestored(now = Date.now()): void {
+  logEvent('gl', `webglcontextrestored after ${lostAt ? now - lostAt : -1} ms`);
+  lostAt = 0;
+}
+
 /** main.ts: oyun kurulduktan sonra bir kez. WebGL değilse (Canvas yedeği) bir şey yapmaz. */
 export function installContextLossNotice(game: Phaser.Game): void {
   const r = game.renderer as unknown as Emitter;
   if (!r?.gl) return;
-  r.on('losewebgl', show); // Phaser.Renderer.Events.LOSE_WEBGL
-  r.on('restorewebgl', hide); // Phaser.Renderer.Events.RESTORE_WEBGL
+  r.on('losewebgl', () => {
+    noteContextLost();
+    show();
+  }); // Phaser.Renderer.Events.LOSE_WEBGL
+  r.on('restorewebgl', () => {
+    noteContextRestored();
+    hide();
+  }); // Phaser.Renderer.Events.RESTORE_WEBGL
 }
 
 /** Debug: bağlamı bilerek düşürür, `ms` sonra geri getirir (WEBGL_lose_context). Desteklenmiyorsa false. */

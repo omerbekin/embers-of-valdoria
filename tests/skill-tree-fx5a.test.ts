@@ -416,18 +416,18 @@ describe('Faz 5a: ek sözlük (hitsEach, merkez kritikleri, tekrar sırası, ta�
     }
   });
 
-  it('Boxcars: Loaded Dice 3+ kez atınca başka bir düşmana bir vuruş (yalnız o kullanımlarda)', () => {
-    const b = make({ 0: 'gambler' }, { 0: 'warrior', 1: 'warrior' }, withTree(0, only('gambler', { '1.n0': 1, '1.ma': 1 })), 5);
+  it('Boxcars: Loaded Dice çift 6 atınca başka bir düşmana bir vuruş (yalnız o kullanımlarda, kullanım başına bir)', () => {
+    const b = make({ 0: 'gambler' }, { 0: 'warrior', 1: 'warrior' }, withTree(0, only('gambler', { '1.ma': 1 })), 5);
     tank(b);
     Object.assign(b.debug, { miss: 'never', dodge: 'never' });
     const me = P(b);
     let big = 0;
-    for (let i = 0; i < 150; i++) {
+    for (let i = 0; i < 300; i++) {
       const evs = cast(b, me, 'loaded_dice', E(b, 0));
-      const throws = acts(evs, me, E(b, 0));
-      const other = acts(evs, me, E(b, 1));
-      expect(other, `cast ${i}: ${throws} throws`).toBe(throws >= 3 ? 1 : 0);
-      if (throws >= 3) big++;
+      const sixes = evs.filter((e) => e.type === 'dice' && e.target === E(b, 0).uid && e.double && e.values[0] === 6).length;
+      const other = evs.filter((e) => e.type === 'dice' && e.target === E(b, 1).uid).length;
+      expect(other, `cast ${i}: ${sixes} double sixes`).toBe(sixes > 0 ? 1 : 0);
+      if (sixes > 0) big++;
     }
     expect(big).toBeGreaterThan(0);
   });

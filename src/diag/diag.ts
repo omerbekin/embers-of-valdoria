@@ -15,6 +15,7 @@ import {
   buildReport,
   crumbsText,
   heartbeat,
+  heapHighNote,
   loadCrumbs,
   loadPrefs,
   markClean,
@@ -371,6 +372,16 @@ export function attachDiagGame(game: Phaser.Game): void {
 }
 
 /** main.ts: bir kez, açılışın en başında (oyun kurulmadan önceki hatalar da yakalanır). */
+/** Düşük bellek işareti (yığın sınırının %85'i): oturumda bir kez iz (diag-core.ts > heapHighNote). */
+let heapNoted = false;
+function checkHeap(): void {
+  if (heapNoted) return;
+  const msg = heapHighNote((performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory);
+  if (!msg) return;
+  heapNoted = true;
+  logEvent('mem', msg);
+}
+
 export function installDiag(): void {
   if (state.installed || typeof window === 'undefined') return;
   state.installed = true;
@@ -406,6 +417,7 @@ export function installDiag(): void {
   // Canlılık: görünürken işaret düzenli tazelenir (aynı anda açık başka bir sekme bu sekmeyi çökmüş saymasın)
   window.setInterval(() => {
     if (document.visibilityState !== 'hidden') heartbeat(kv(), state.session, Date.now());
+    checkHeap();
   }, DIAG.heartbeatMs);
   for (const c of state.crashed) logEvent('info', `previous session ${c.id} did not close cleanly (last scene ${c.scene ?? '?'})`);
   // Biraz sonra (açılışı yavaşlatmasın); onay kapalıysa hiçbir şey gönderilmez. Az önce kapanmış (henüz bayatlamamış) oturum ikinci denetimde

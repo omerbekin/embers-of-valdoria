@@ -521,7 +521,8 @@ export class MainMenuScene extends Phaser.Scene {
     m.migrateSaves(storage()); // eski tek-liste kayıtlar Slot 1'e taşınır
     const col = this.menuCol;
     const saves = m.readSaves(storage());
-    if (col && saves.corrupt) col.add(this.noteText(COL_X, H - 60, 'A damaged save file was ignored.', 22, '#d88a7e').setOrigin(0, 0.5));
+    // Daha yeni sürümün kaydı (eski sekme): okunmaz ve yazılmaz (save.ts > write); "damaged" değil, yenileme önerisi
+    if (col && saves.corrupt) col.add(fitText(this.noteText(COL_X, H - 60, saves.newer ? m.NEWER_SAVE_TEXT : 'A damaged save file was ignored.', 22, '#d88a7e').setOrigin(0, 0.5), 600));
     // Valdoria A1-x (kayıt sürümü 6): eski haritanın seferleri yeniden başlar; yuva kalır, yeni sefer kaydedilene kadar uyarı (campaign/save.ts)
     if (col && saves.file.slots.some((sd) => sd?.mapChanged))
       col.add(fitText(this.noteText(COL_X, saves.corrupt ? H - 96 : H - 60, 'The Valdoria map has changed; this campaign must restart.', 22, '#d8b27e').setOrigin(0, 0.5), 600));

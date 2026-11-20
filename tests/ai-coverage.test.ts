@@ -84,6 +84,9 @@ describe('1. zemin konumlanması (genel zemin kuralı)', () => {
   it('Slow / Chilled durumu birim için eksi; Soaked üstündeki Burning\'i söndürür (artı pay)', () => {
     const b = arena([['archer', 0]], [['warrior', 0]]);
     const me = P(b);
+    // Ömer 2026-11-16: Hobbled (slow) kaçınma keser; kaçınması olmayan / %100 isabetle vurulan birimde değeri 0 olurdu
+    me.stats.evasion = 0.2;
+    E(b).stats.accuracy = 0.95;
     const ctx = ctxOf(b, me);
     expect(AC.statusEffectWorth(ctx, me, 'slow', 2)).toBeLessThan(0);
     expect(AC.statusEffectWorth(ctx, me, 'chilled', 2)).toBeLessThan(0);
@@ -114,12 +117,11 @@ describe('1. zemin konumlanması (genel zemin kuralı)', () => {
 });
 
 describe('2. zemin bırakmanın değeri: gerçek tik + durum yan etkileri + tepkime', () => {
-  it('Poison zemini (Wail): şifacısı olan düşmanda Poisoned şifa kesintisi ground terimi; şifacı yoksa yok', () => {
-    const heal = arena([['undead', 0]], [['paladin', 0], ['warrior', 1]]);
-    const w = cand(heal, P(heal).uid, 'wail_of_the_dead').filter((c) => (c.terms?.damage ?? 0) > 0);
-    expect(w.some((c) => (c.terms?.ground ?? 0) > 0)).toBe(true);
-    const none = arena([['undead', 0]], [['warrior', 0], ['warrior', 1]]);
-    expect(cand(none, P(none).uid, 'wail_of_the_dead').every((c) => !c.terms?.ground)).toBe(true);
+  // Ömer 2026-11-16: Poisoned artık şifa kesmez (yığılır); şifacının varlığı Wail'in zemin değerini değiştirmez
+  it('Poison zemini (Wail): Poisoned şifa kesintisi yok; şifacılı ve şifacısız düşmanda ground terimi aynı ölçü', () => {
+    expect(content.statuses.poisoned!.healTakenMult).toBeUndefined();
+    const ground = (enemies: [string, number][]) => Math.max(0, ...cand(arena([['undead', 0]], enemies), 'party-0', 'wail_of_the_dead').map((c) => c.terms?.ground ?? 0));
+    expect(ground([['paladin', 0], ['warrior', 1]])).toBeCloseTo(ground([['warrior', 0], ['warrior', 1]]), 0);
   });
 
   it('Meteor (Burning) Poison zeminine: Explosion tepkimesi reaction terimi; zehir yoksa yok', () => {
@@ -185,14 +187,15 @@ describe('5. Divine Light: tur değeri ve Paladin şifası', () => {
   });
 });
 
-describe('6. Spell Ward saldıran tarafından', () => {
+describe('6. Kancalı kalkan (eski Spell Ward kuralı) saldıran tarafından', () => {
   it('kancalı büyü kalkanına büyü vuruşu: ward eksi; kanca yoksa yok', () => {
+    // Redtithe (2026-11-17): oyunda kancalı büyü kalkanı veren skill kalmadı; generic kanca (shield.onAbsorb) elle kurulur
     const b = arena([['mage', 0]], [['warrior', 0], ['antimage', 1]]);
     const am = E(b, 1);
     const foe = E(b, 0);
     expect(cand(b, P(b).uid, 'fire_bolt').find((c) => c.target?.includes('Warrior'))?.terms?.ward).toBeUndefined();
-    expect(b.useSkill(am.uid, 'spell_ward', foe.uid).ok).toBe(true);
-    expect(foe.shieldHooks?.length ?? 0).toBeGreaterThan(0);
+    foe.magicShield = 60;
+    foe.shieldHooks = [{ skill: 'test_ward', caster: am.uid, magic: true, amount: 60, onAbsorb: { burnMana: 8, dispelChance: 0.25 } }];
     const t = cand(b, P(b).uid, 'fire_bolt').find((c) => c.terms && c.terms.ward !== undefined);
     expect(t?.terms?.ward ?? 0).toBeLessThan(0);
   });
@@ -238,6 +241,8 @@ describe('7c. Skald ağacı: her tetik / etki terazide', () => {
   const lowMp = (b: Battle) => (K(b).mp = 10); // MP kazancı ancak MP azken değerli
   const cd = (skill: string, n = 3) => (b: Battle) => (K(b).cooldowns[skill] = n);
   const both = (...fs: Array<(b: Battle) => void>) => (b: Battle) => fs.forEach((f) => f(b));
+  // Ömer 2026-11-16: Hobbled (eski Slow) kaçınma keser; isabet %100'de (fight: accuracy 10) değeri 0 olurdu
+  const dodgy = (b: Battle) => b.combatants.forEach((c) => (c.side === 'enemy' ? (c.stats.evasion = 0.2) : (c.stats.accuracy = 0.95)));
 
   it('ağaçsız Skald: tree terimi yok', () => {
     for (const s of ['hammer_spark', 'thunder_strike', 'war_drum', 'stormcall']) expect(treeOn({}, s, foesWith('slow')), s).toBe(0);
@@ -257,7 +262,7 @@ describe('7c. Skald ağacı: her tetik / etki terazide', () => {
     }
   });
   it('First Spark: ilk vuruş Slow tree artı', () => {
-    expect(treeOn({ '0.n0': 1 }, 'hammer_spark')).toBeGreaterThan(0);
+    expect(treeOn({ '0.n0': 1 }, 'hammer_spark', dodgy)).toBeGreaterThan(0);
   });
   it('kill tetikleri (Living Storm durumlu ölüde, Grounding, Storm Breaker, Final Verse): öldürme ihtimalinde artı, yoksa 0', () => {
     expect(treeOn({ '0.v': 1 }, 'hammer_spark', lowFoes)).toBe(0); // durumsuz ölü: koşul tutmaz
@@ -330,7 +335,7 @@ describe('7c. Skald ağacı: her tetik / etki terazide', () => {
       return term(b, skill, 'treeStatus');
     };
     expect(ts({}, 'hammer_spark')).toBe(0);
-    expect(ts({ '1.f3': 5 }, 'hammer_spark')).toBeGreaterThan(0);
+    expect(ts({ '1.f3': 5 }, 'hammer_spark', dodgy)).toBeGreaterThan(0); // Hobbled kaçınma keser: isabet payı olan rakipte değerli
     expect(ts({ '0.eb': 1 }, 'hammer_spark')).toBe(0);
     expect(ts({ '0.eb': 1 }, 'hammer_spark', foesWith('slow'))).toBeGreaterThan(0);
     expect(ts({ '1.mb': 1 }, 'hammer_spark')).toBe(0);
@@ -666,7 +671,7 @@ describe('7b. Vesper ağacı: her tetik / etki terazide', () => {
     };
     const half = (b: Battle) => { E(b, 0).hp = 20000; E(b, 1).hp = 20000; };
     const elite = (b: Battle) => { E(b, 0).tier = 'elite'; E(b, 1).tier = 'elite'; V(b).bells = 10; };
-    const shake = (b: Battle) => b.combatants.filter((c) => c.side === 'enemy').forEach((c) => b.debugAddStatus(c.uid, 'shaken', 2));
+    const shake = (b: Battle) => b.combatants.filter((c) => c.side === 'enemy').forEach((c) => b.debugAddStatus(c.uid, 'blinded', 2)); // Ömer 2026-11-16: Shaken Blinded ile birleşti
     expect(dmg({ '1.eb': 1 }, 'toll')).toBeGreaterThan(dmg({}, 'toll'));
     expect(dmg({ '1.f3': 5 }, 'toll', shake)).toBeGreaterThan(dmg({}, 'toll', shake));
     expect(dmg({ '0.r': 3 }, 'toll')).toBeGreaterThan(dmg({}, 'toll'));
@@ -718,13 +723,13 @@ describe('10. YZ düzeltmeleri (2026-11-08): cast işareti, ağaç durumlarını
     for (const c of b.combatants) if (c.side === 'enemy') c.stats.accuracy = 0.8; // isabet cezası ancak %100'ün altında işe yarar
     const ctx = ctxOf(b, hero(b));
     const foe = E(b, 0);
-    const shaken = AC.statusEffectWorth(ctx, foe, 'shaken', 1);
+    const shaken = AC.statusEffectWorth(ctx, foe, 'blinded', 1, { strength: 0.333 }); // Ömer 2026-11-16: eski Shaken = 1/3 güçte Blinded
     const blinded = AC.statusEffectWorth(ctx, foe, 'blinded', 1);
     expect(shaken).toBeLessThan(0);
     expect(blinded).toBeLessThan(shaken); // -%30 > -%10
-    expect(AC.statusEffectWorth(ctx, foe, 'shaken', 1, { pot: { accuracyDelta: -0.1 } })).toBeLessThan(shaken);
-    expect(AC.statusEffectWorth(ctx, foe, 'shaken', 1, { noHitLoss: true })).toBe(0);
-    expect(AC.statusEffectWorth(ctx, foe, 'shaken', 2)).toBeCloseTo(shaken * 2, 5);
+    expect(AC.statusEffectWorth(ctx, foe, 'blinded', 1, { strength: 0.333, pot: { accuracyDelta: -0.1 } })).toBeLessThan(shaken);
+    expect(AC.statusEffectWorth(ctx, foe, 'blinded', 1, { strength: 0.333, noHitLoss: true })).toBe(0);
+    expect(AC.statusEffectWorth(ctx, foe, 'blinded', 2, { strength: 0.333 })).toBeCloseTo(shaken * 2, 5);
   });
 
   it('statusPotency: Lingering Ears (1.r) Toll Shaken, Searing Flash (2.f3) Thunderpeal Blind mitigation değerini büyütür', () => {
@@ -777,6 +782,8 @@ describe('YZ: Healing Rain (Ömer 2026-11-01)', () => {
     const b = setup();
     const hurt = P(b, 1);
     hurt.hp = 300;
+    // Treant ömrü 4 (Ömer 2026-11-18) Summon Treant'ı öne geçirebilir; bu test yalnız Healing Rain'i sınar
+    P(b).cooldowns = { summon_treant: 5 };
     expect(foeBoard(b)).toEqual([]);
     expect(rainAt(b, hurt.slot)!.score!).toBeGreaterThan(0);
     expect(chooseAction(b, P(b).uid, ai)).toMatchObject({ skillId: 'rejuvenate' });
@@ -855,5 +862,160 @@ describe('YZ: Soaked Burning söndürür (Ömer 2026-11-01)', () => {
     expect(AC.cleansedDotLoss(ctx, foe, soaked)).toBeGreaterThan(0);
     const slow = b.statusDef('slow')!;
     expect(AC.cleansedDotLoss(ctx, foe, slow)).toBe(0);
+  });
+});
+
+describe('Lucky Streak (Gambler rework 2026-11-18): YZ terimleri ve ağaç tetikleri', () => {
+  const MAX = (content.classes.gambler!.passive!.effect as { max: number }).max;
+  const W = coverageOf(vcOf()).streak;
+  const at = (streak: number, setup?: (b: Battle) => void): Battle => {
+    const b = arena([['gambler', 0]], [['warrior', 0], ['warrior', 1], ['warrior', 2]]);
+    setup?.(b);
+    P(b).streak = streak;
+    for (const c of b.combatants) if (c.side === 'enemy') c.hp = c.maxHp = 9999;
+    return b;
+  };
+  const term = (b: Battle, skill: string, k: string) => Math.max(-Infinity, ...cand(b, P(b).uid, skill).map((c) => c.terms?.[k] ?? 0));
+  const low = (b: Battle, skill: string, k: string) => Math.min(...cand(b, P(b).uid, skill).map((c) => c.terms?.[k] ?? 0));
+  function onlyTree(ranks: Record<string, number>): UnitSetup['tree'] {
+    const t = JSON.parse(JSON.stringify(treeOf('gambler')!)) as TreeData;
+    for (const k of Object.keys(t.nodes)) if (!(k in ranks)) t.nodes[k]!.fx = null;
+    for (const bar of t.mastery.bar) bar.fx = null;
+    return compileTree(t, { v: t.version, r: ranks });
+  }
+  const withTree = (ranks: Record<string, number>, streak: number): Battle => {
+    const b = withTrees({ 0: 'gambler' }, { 0: 'warrior', 1: 'warrior', 2: 'warrior' }, { party: { 0: { tree: onlyTree(ranks) } } });
+    P(b).streak = streak;
+    P(b).mp = P(b).maxMp;
+    for (const c of b.combatants) if (c.side === 'enemy') c.hp = c.maxHp = 9999;
+    return b;
+  };
+
+  it('ağırlıklar veriden (value.aiCov.streak)', () => {
+    expect(W.spendShare).toBe((content.aiConfig.value!.aiCov as { streak: { spendShare: number } }).streak.spendShare);
+  });
+
+  it('seri doluyken High Stakes / Card Trick / All In streakSpend alır (öne geçer); Loaded Dice ve boş seri almaz', () => {
+    const full = at(MAX);
+    for (const s of ['high_stakes', 'card_trick', 'all_in']) expect(term(full, s, 'streakSpend'), s).toBeGreaterThan(0);
+    expect(term(full, 'loaded_dice', 'streakSpend')).toBe(0);
+    const empty = at(0);
+    for (const s of ['high_stakes', 'card_trick', 'all_in']) expect(term(empty, s, 'streakSpend'), s).toBe(0);
+  });
+
+  it('seri 2 iken High Stakes kaybı seriyi siler: streakRisk bedeli; seri 0 iken yok', () => {
+    expect(low(at(2), 'high_stakes', 'streakRisk')).toBeLessThan(0);
+    expect(low(at(0), 'high_stakes', 'streakRisk')).toBe(0);
+    expect(low(at(2), 'high_stakes', 'streakRisk')).toBeLessThan(low(at(1), 'high_stakes', 'streakRisk'));
+  });
+
+  it('All In düşük seride (1-2) seri ilerlemesi streakLoss bedeli taşır, seri ödülüyle yalnız kayıp dalında (x kayıp ihtimali); seri 0 ve dolu seride yok', () => {
+    expect(W.lossShare).toBe((content.aiConfig.value!.aiCov as { streak: { lossShare: number } }).streak.lossShare);
+    expect(content.skills.all_in!.streak!.winFillsStreak).toBe(true);
+    expect(low(at(0), 'all_in', 'streakLoss')).toBe(0);
+    expect(low(at(1), 'all_in', 'streakLoss')).toBeLessThan(0);
+    expect(low(at(MAX), 'all_in', 'streakLoss')).toBe(0);
+    // Kayıp ihtimaliyle ölçeklenir: seri 1'de bedel / (seri / tavan) > seri 2'deki (kazanma ihtimali seriyle artar)
+    const per = (s: number) => -low(at(s), 'all_in', 'streakLoss') / s;
+    expect(per(2)).toBeLessThan(per(1));
+    // Eski streakLow (kazanma ihtimalini ikinci kez sayan bedel) kalktı
+    for (const s of [0, 1, 2]) expect(low(at(s), 'all_in', 'streakLow')).toBe(0);
+  });
+
+  it('All In seri ödülü (Ömer 2026-11-19): kazanınca dolan seri streakFill değeri alır (ağırlık veriden); dolu seride yok, başka skill almaz', () => {
+    expect(W.fillShare).toBe((content.aiConfig.value!.aiCov as { streak: { fillShare: number } }).streak.fillShare);
+    expect(W.fillShare).toBeGreaterThan(0);
+    for (let s = 0; s < MAX; s++) expect(term(at(s), 'all_in', 'streakFill'), `seri ${s}`).toBeGreaterThan(0);
+    expect(term(at(MAX), 'all_in', 'streakFill')).toBe(0);
+    for (const s of ['loaded_dice', 'high_stakes', 'card_trick']) expect(term(at(0), s, 'streakFill'), s).toBe(0);
+  });
+
+  it('seri 3 All In: kazanç dalındaki ayrı çarpan (fullStreakMore) önizlemeden YZ brüt değerine girer', () => {
+    const st = content.skills.all_in!.streak!;
+    const more = st.fullStreakMore!;
+    const look = () => {
+      const b = at(MAX);
+      P(b).mp = P(b).maxMp;
+      const pv = previewSkill(b, P(b).uid, 'all_in', E(b).uid)[0]!.damage!;
+      const best = Math.max(...cand(b, P(b).uid, 'all_in').map((c) => c.score ?? -Infinity));
+      return { avg: pv.avg, best };
+    };
+    const withMore = look();
+    st.fullStreakMore = 0;
+    let plain: { avg: number; best: number };
+    try {
+      plain = look();
+    } finally {
+      st.fullStreakMore = more;
+    }
+    expect(withMore.avg / plain.avg).toBeGreaterThan((1 + more) * 0.97);
+    expect(withMore.avg / plain.avg).toBeLessThan((1 + more) * 1.03);
+    expect(withMore.best).toBeGreaterThan(plain.best);
+  });
+
+  it('All In puanı seriyle artar (kazanma ihtimali seri tablosundan brüt değere girer)', () => {
+    const best = (s: number) => Math.max(...cand(at(s), P(at(s)).uid, 'all_in').map((c) => c.score ?? -Infinity));
+    for (let s = 0; s < MAX; s++) expect(best(s + 1), `seri ${s} -> ${s + 1}`).toBeGreaterThan(best(s));
+  });
+
+  it('düşük canda All In kapanmaz (kayıp maks canın oranı, öldürmez): can kaybı bedeli can azaldıkça ağırlaşır, değer silinmez', () => {
+    const prof = content.aiConfig.profiles.gambler!;
+    const lowHp = (b: Battle) => (P(b).hp = Math.max(2, Math.floor(P(b).maxHp * prof.minHpRatioForHpCost * 0.5)));
+    const full = cand(at(0), P(at(0)).uid, 'all_in')[0]!;
+    const hurt = cand(at(0, lowHp), P(at(0, lowHp)).uid, 'all_in')[0]!;
+    expect(full.tags).not.toContain('hpCost');
+    expect(hurt.tags).not.toContain('hpCost');
+    expect(hurt.score!).toBeGreaterThan(0);
+    // Bedel: kayıpta giden can (ihtimal x oran x maks can) düşük canda daha ağır sayılır
+    expect(hurt.cost).toBeGreaterThan(full.cost);
+    // High Stakes gerçek can bahsi: düşük can kuralı (yalnızca öldürüyorsa) sürer
+    expect(cand(at(0, lowHp), P(at(0, lowHp)).uid, 'high_stakes')[0]!.tags).toContain('hpCost');
+  });
+
+  it('bahsin öldürme ihtimali dal dal: hedef canı = kazanç dalının en azı ise ihtimal = kazanma ihtimali x isabet (düz [0, en çok] aralığı değil)', () => {
+    const b = at(0);
+    const foe = E(b);
+    const pv = previewSkill(b, P(b).uid, 'all_in', foe.uid)[0]!.damage!;
+    expect(pv.bet).toBeDefined();
+    foe.hp = pv.bet!.win.min;
+    const c = cand(b, P(b).uid, 'all_in').find((x) => x.perTarget?.some((t) => t.killChance !== undefined))!;
+    const kc = c.perTarget!.find((t) => t.killChance !== undefined)!.killChance!;
+    expect(kc).toBeCloseTo(pv.bet!.winChance * pv.hitChance, 1);
+  });
+
+  it('tekrar vuruşunun öldürme ihtimali: tek vuruş en çoğunun üstündeki canı yalnız tekrar dalı öldürür (Loaded Dice)', () => {
+    const b = at(0);
+    const foe = E(b);
+    const pv = previewSkill(b, P(b).uid, 'loaded_dice', foe.uid)[0]!.damage!;
+    expect(pv.repeat).toBeDefined();
+    foe.hp = pv.repeat!.max + 1;
+    const c = cand(b, P(b).uid, 'loaded_dice').find((x) => x.perTarget?.some((t) => t.killChance !== undefined));
+    const kc = c?.perTarget!.find((t) => t.killChance !== undefined)!.killChance ?? 0;
+    expect(kc).toBeLessThanOrEqual(pv.repeat!.chance * pv.hitChance + 0.01);
+  });
+
+  it('seri kazandırma (çift zar / bahis kazancı) streakBuild; seri doluyken yok. Card Trick yeniden kullanımı luckyRepeat', () => {
+    expect(term(at(0), 'loaded_dice', 'streakBuild')).toBeGreaterThan(0);
+    expect(term(at(0), 'high_stakes', 'streakBuild')).toBeGreaterThan(0);
+    expect(term(at(MAX), 'loaded_dice', 'streakBuild')).toBe(0);
+    expect(term(at(0), 'card_trick', 'luckyRepeat')).toBeGreaterThan(0);
+    expect(term(at(0), 'all_in', 'luckyRepeat')).toBe(0);
+  });
+
+  it('ağaç tetikleri: streakSpend (Chain Reaction), streakGain (Quick Shuffle), doubles (Boxcars) YZ değeri alır', () => {
+    const tr = (b: Battle, s: string) => term(b, s, 'tree');
+    // Chain Reaction: seri doluyken High Stakes'in öbür cooldown'ları düşer -> değer; seri boşken yok
+    const cr = (s: number) => {
+      const b = withTree({ '0.n0': 1 }, s);
+      P(b).cooldowns = { card_trick: 3 };
+      return tr(b, 'high_stakes');
+    };
+    expect(cr(MAX)).toBeGreaterThan(cr(0));
+    // Quick Shuffle: seri artma ihtimali (çift zar) -> erken tur değeri; seri doluyken yok
+    expect(tr(withTree({ '0.f3': 1 }, 0), 'loaded_dice')).toBeGreaterThan(tr(withTree({ '0.f3': 1 }, MAX), 'loaded_dice'));
+    // All In seri ödülü: kazanırsa seri tek seferde dolar -> 'streakGain' kancası (Quick Shuffle) All In'de de değer alır; seri doluyken yok
+    expect(tr(withTree({ '0.f3': 1 }, 1), 'all_in')).toBeGreaterThan(tr(withTree({ '0.f3': 1 }, MAX), 'all_in'));
+    // Boxcars: çift 6 ihtimaliyle başka düşmana vuruş
+    expect(tr(withTree({ '1.ma': 1 }, 0), 'loaded_dice')).toBeGreaterThan(0);
   });
 });

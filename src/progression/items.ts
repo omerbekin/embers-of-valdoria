@@ -277,7 +277,7 @@ export interface ItemsData {
   uniques: unknown[];
   sets: unknown[];
   /** Equip best'in set bonusu değerlemesi (Item Points; yalnızca seçim, güç değil): sınıf satırı (3. parça) ve motor kuralı (4. parça) başına düz değer. Stat bonusları affix IP'lerinden. */
-  setValue?: { classRowIP: number; ruleIP: number };
+  setValue?: { classRowIP: number; ruleIP: number; ruleNeedsHeal?: string[] };
   /** Set parçaları (Ömer 2026-11-03 pilot): ana katalogdan ayrı; havuzlara girmez, yalnızca nadir düşüşün set dalı ve debug verir. */
   setItems?: ItemDef[];
   traits: Record<string, unknown>;
@@ -1197,6 +1197,12 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
   const kinds = data.offhandKinds ?? [];
   const slotIds = data.slots.map((s) => s.id);
   if (slotIds.join() !== SLOT_IDS.join()) errors.push(`slots must be ${SLOT_IDS.join(', ')}`);
+  // Kimlik tekil (Tur 28-29): set parçası aynı kimlikle eski bir item'i sessizce ezmesin
+  const seenIds = new Set<string>();
+  for (const d of [...data.items, ...(data.setItems ?? [])]) {
+    if (seenIds.has(d.id)) errors.push(`item ${d.id}: duplicate id`);
+    seenIds.add(d.id);
+  }
   // Set parçaları (Ömer 2026-11-03): adı ve yuvası sete uyar, Epic, sabit C + C + B, affix o yuvada çıkabilir
   const setDefs = (data.sets ?? []) as Array<{ id: string; slots: string[]; pieceNames: string[] }>;
   for (const s of setDefs) {

@@ -24,7 +24,7 @@ function wearing(ids: string[]): Equipment {
 describe('altı set: veri', () => {
   it('altı set, doğrulama temiz, her parça ana katalogda', () => {
     expect(SETS.map((s) => s.id)).toEqual(expect.arrayContaining(['ashguard_vigil', 'wayfarers_oath', ...NEW_IDS]));
-    expect(SETS).toHaveLength(6);
+    expect(SETS).toHaveLength(9); // Tur 28-29: Stormhall Saga, Relics of Saint Odran, Almoner's Vestments
     expect(validateItems()).toEqual([]);
     for (const s of SETS) {
       expect(setPieces(s.id).map((d) => d.name), s.id).toEqual(s.pieceNames);

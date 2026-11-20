@@ -31,7 +31,7 @@ Sıra: `data/classes` (id), ana stat / menzil, stat (STR/INT/DEX/LUCK), pasif (v
 | druid | Druid | Nature Summoner | INT / 5 | 22/26/10/2 | Nature's Grudge: When an ally falls, its killer is gripped by roots: Slow and Wither for 3 turns. | 3 | [`classes/druid.md`](classes/druid.md) |
 | hexer | Hexer | Curse Caster | LUCK / 5 | 18/10/6/26 | Ill Omen: When a cursed enemy dies, its Omens pass to the nearest enemy (at most 2). If Doom or Doom Mark kills it, nothing passes on. Passed Omens never trigger Doom. | 1 | [`classes/hexer.md`](classes/hexer.md) |
 | undead | Undead | Dark Mage | INT / 5 | 26/26/4/4 | Vampiric Bite: Heal for 50% of the damage you deal. Your Skeleton's hits heal you the same way. | 1 | [`classes/undead.md`](classes/undead.md) |
-| gambler | Gambler | Risk Taker | LUCK / 5 | 16/6/14/24 | Double or Nothing: Damaging skills with a cooldown have a 25% chance to be ready again immediately. | 1 | [`classes/gambler.md`](classes/gambler.md) |
+| gambler | Gambler | Risk Taker | LUCK / 5 | 16/6/14/24 | Lucky Streak (2026-11-18, PROVİZYON): seri 0-3; doluyken 2./3./4. skill seriyi harcar; 1-3. skill %25 bir kez daha. | 1 | [`classes/gambler.md`](classes/gambler.md) |
 | vesper | Vesper | Bell Caster | INT / 6 | 21/26/5/8 | Pealing Bells: Every Toll or Thunderpeal you ring makes your bells 7% stronger for the rest of the battle (no limit). | 3 | [`classes/vesper.md`](classes/vesper.md) |
 | skald | Thunder Skald | Storm Hammer | STR / 2 | 24/10/8/18 | Conductor: Your lightning deals 25% more damage to targets that are Slowed, Stunned or Shocked, or that your own hit Shocks, Slows or Stuns. | 1 | [`classes/skald.md`](classes/skald.md) |
 

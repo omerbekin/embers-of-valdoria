@@ -820,12 +820,14 @@ export class CloudClient {
       // 404/502: Worker yolu yok ya da ulaşılamıyor (ör. yerelde worker kapalı); giriş gizlenir
       this.availability = 'down';
       if (this.readMeta()) {
+        this.watchDirtyOffline();
         this.setStatus('offline');
         this.scheduleRetry();
       }
       return;
     }
     if (r.status !== 200 || !isObj(r.body)) {
+      if (this.readMeta()) this.watchDirtyOffline();
       this.setStatus('error', `me-${r.status}`);
       this.scheduleRetry();
       return;
@@ -1179,10 +1181,31 @@ export class CloudClient {
     this.setStatus('error', error || `put-${r.status}`);
   }
 
+  /**
+   * Hesap henüz doğrulanamadı (çevrimdışı açılış / sunucu hatası) ama bu cihaz girişli (meta var): ilerleme kalıcı kirli işaretlenir
+   * (sağlamlık taraması A2, 2026-11-15). Yoksa uygulama kapanınca bellekteki işaret gider; sonraki açılışta öbür cihazın yüklemesi bu cihazı
+   * "temiz" sanıp sormadan indirirdi. Yükleme / debounce yine yalnız girişliyken.
+   */
+  private watchDirtyOffline(): void {
+    this.installListeners();
+    if (cloudDirty()) this.persistDirty();
+  }
+
+  /** meta.dirty'yi kullanıcıdan bağımsız yazar (meta yalnız girişli cihazda vardır; girişsiz oyuncuda anahtar oluşmaz). */
+  private persistDirty(): void {
+    const m = this.readMeta();
+    if (!m || m.dirty) return;
+    try {
+      this.kv()?.setItem(CLOUD_META_KEY, JSON.stringify({ ...m, dirty: true }));
+    } catch {
+      /* depo dolu: bellekteki işaret kalır */
+    }
+  }
+
   private onDirty(): void {
     if (this.applying || this.disposed) return;
     this.gen++;
-    if (!this.user) return;
+    if (!this.user) return this.persistDirty();
     const m = this.readMeta();
     if (m && !m.dirty) this.writeMeta({ ...m, dirty: true });
     if (this.blocked) return;

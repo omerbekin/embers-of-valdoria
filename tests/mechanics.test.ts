@@ -279,7 +279,7 @@ describe('dizilim ve menzil', () => {
     expect(dmg).not.toContain(eAt(b, 7).uid);
   });
 
-  it('Piercing Arrow seçilen şeritteki herkese vurur; her yeni hedef bir öncekinden %30 az hasar alır', () => {
+  it('Piercing Arrow seçilen şeritteki herkese vurur; her yeni hedef bir öncekinden %15 az hasar alır (Tur 28-29: falloff 0.85)', () => {
     let r1 = 0;
     let r2 = 0;
     const seeds = 40;
@@ -293,10 +293,11 @@ describe('dizilim ve menzil', () => {
       r1 += total(events, 'enemy-2') / total(events, 'enemy-0');
       r2 += total(events, 'enemy-3') / total(events, 'enemy-2');
     }
-    expect(r1 / seeds).toBeGreaterThan(0.65);
-    expect(r1 / seeds).toBeLessThan(0.75);
-    expect(r2 / seeds).toBeGreaterThan(0.65);
-    expect(r2 / seeds).toBeLessThan(0.75);
+    const fo = (content.skills.piercing_arrow!.effects.find((e) => e.type === 'damage') as { falloff: number }).falloff;
+    expect(r1 / seeds).toBeGreaterThan(fo - 0.05);
+    expect(r1 / seeds).toBeLessThan(fo + 0.05);
+    expect(r2 / seeds).toBeGreaterThan(fo - 0.05);
+    expect(r2 / seeds).toBeLessThan(fo + 0.05);
   });
 
   it('Piercing Arrow zırhı görmezden gelmez; Aimed Shot zırhın %50\'sini görmezden gelir', () => {
@@ -494,13 +495,14 @@ describe('Druid: tur bazlı şifa ve çağrı süresi', () => {
     expect(heals.slice(1)).toEqual([perTurn, perTurn, perTurn]); // ilk eleman başlangıç şifası, sonrası tikler
   });
 
-  it('Summon Treant: çağrılan birim 3 turunu oynar ve sonra sahneden kalkar (despawn)', () => {
+  it('Summon Treant: çağrılan birim lifespan turunu oynar ve sonra sahneden kalkar (despawn)', () => {
     const b = make(TDR, { mode: 'turns' });
     const druid = unit(b, 'party', 'druid');
     skipUntil(b, druid.uid);
     b.debugClearCooldowns(druid.uid); // Raise Dead/Summon Treant initialCooldown 1 (2026-10-17): ilk turda kapalı; bu test başlangıç beklemesini sınamıyor
     const uid = ofType(act(b, druid.uid, 'summon_treant'), 'summon')[0]!.combatant.uid;
-    expect(b.get(uid)!.lifespan).toBe(3);
+    const life = (content.skills.summon_treant!.effects.find((e) => e.type === 'summon') as { lifespan: number }).lifespan; // Ömer 2026-11-18: 3 -> 4
+    expect(b.get(uid)!.lifespan).toBe(life);
     let acted = 0;
     let despawned = false;
     for (let i = 0; i < 600 && !despawned; i++) {
@@ -510,7 +512,7 @@ describe('Druid: tur bazlı şifa ve çağrı süresi', () => {
       if (r.ok && r.events.some((e) => e.type === 'death' && e.target === uid)) throw new Error('despawn "death" olarak bildirilmemeli');
     }
     expect(despawned).toBe(true);
-    expect(acted).toBe(3);
+    expect(acted).toBe(life);
     expect(b.get(uid)!.hp).toBe(0);
     expect(b.turnQueue(40)).not.toContain(uid);
   });
@@ -539,7 +541,7 @@ describe('Druid: tur bazlı şifa ve çağrı süresi', () => {
   });
 });
 
-describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () => {
+describe('Redtithe (id antimage): mana sökme, eksik manaya göre hasar, Mirror Vein', () => {
   const TA: Teams = { party: ['antimage', 'warrior', 'archer', 'mage'], enemies: ['warrior', 'mage', 'druid', 'archer'] };
 
   /** Anti-Mage artık melee: hedefi öne al (otomatik dizilimde Mage arkada). */
@@ -549,17 +551,20 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
     t.slot = 0;
   };
 
-  it('Mana Burn hedefin manasından 10 yakar ve hasar verir; mana 10\'dan azsa kalanı yakar', () => {
+  it('Tithe Cut hedefin manasından amount kadar söker ve hasar verir; mana azsa kalanı söker; MP kazancı yok, kan kazancı var', () => {
     const b = make(TA);
     const am = unit(b, 'party', 'antimage');
     expect(content.skills[am.skills[0]!]?.id).toBe('mana_burn'); // varsayılan ilk skill
+    const burn = content.skills.mana_burn!.effects.find((e) => e.type === 'manaBurn') as { amount: number; bloodPerMp: number };
+    const bb = content.formulas.bloodBar!;
     toFront(b, 'mage');
     const mage = unit(b, 'enemy', 'mage');
     const before = mage.mp;
-    am.mp = 0;
+    am.blood = 0;
     const events = act(b, am.uid, 'mana_burn', mage.uid);
-    expect(ofType(events, 'manaBurn')[0]).toMatchObject({ target: mage.uid, amount: 7, mpAfter: before - 7 }); // Ömer 2026-11-08: 10 -> 8 -> 7
-    expect(am.mp).toBe(3); // yaktığının %50'si kendine (7 -> 3, aşağı yuvarlanır)
+    expect(ofType(events, 'manaBurn')[0]).toMatchObject({ target: mage.uid, amount: burn.amount, mpAfter: before - burn.amount });
+    expect(am.mp).toBe(0); // Redtithe'in manası yok
+    expect(am.blood).toBe(Math.round(burn.amount * burn.bloodPerMp + bb.hitGain));
     expect(ofType(events, 'damage')).toHaveLength(1);
     mage.hp = mage.maxHp; // hasar yükselse de hedef ölmesin
     mage.mp = 4;
@@ -568,20 +573,10 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
     expect(ofType(act(b, am.uid, 'mana_burn', mage.uid), 'manaBurn')).toHaveLength(0);
   });
 
-  it('Anti-Mage: ilk skill (Mana Burn) melee, Void Strike menzilli; Spell Ward kalkanı kalan MP ile büyür', () => {
+  it('Redtithe: Tithe Cut ve Exsanguinate hareketi; menzil sınıf tabanı', () => {
     expect(content.skills.mana_burn!.motion).toBe('melee');
-    expect(content.skills.void_strike!.motion).toBe('cast'); // Void Strike artık menzilli
-    const shield = (mp: number) => {
-      const b = make(TA);
-      const am = unit(b, 'party', 'antimage');
-      am.mp = mp;
-      return ofType(act(b, am.uid, 'spell_ward', am.uid), 'shield')[0]!.amount; // madde 240: tek dost (kendisi dahil)
-    };
-    const wardCost = content.skills.spell_ward!.cost.amount; // bedel veriden (2026-10-24 mana turu: 10 -> 16; 2026-11-08: 12)
-    // Ömer 2026-11-08: kalkan artık yalnız INT ile ölçeklenir (kalan MP payı kaldırıldı; ağaçta Deep Reserve geri ekleyebilir)
-    expect(shield(wardCost + 34)).toBe(shield(wardCost + 5));
-    expect(shield(wardCost + 5)).toBeGreaterThan(0);
-    // Menzil (range.md onaylı tablo): Anti-Mage uzak sınıf, tüm skill'leri sınıf menzili (4); ön sıradan en arka sıraya ulaşır (0+3+1=4)
+    expect(content.skills.void_strike!.motion).toBe('cast'); // Exsanguinate menzilli
+    // Menzil (range.md onaylı tablo): Redtithe uzak sınıf, tüm skill'leri sınıf menzili (4); ön sıradan en arka sıraya ulaşır (0+3+1=4)
     const b = make(TA);
     const am = unit(b, 'party', 'antimage');
     const back = b.livingByDepth('enemy').at(-1)!;
@@ -596,13 +591,14 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
     expect(content.skills.mana_burn!.cost.amount).toBe(0);
   });
 
-  it('Ley Brand (2026-10-27, Drain Field yerine) alandaki her düşmanı Branded yapar; MP yakmaz, hasar vermez', () => {
+  it('Blood Brand tek düşmana işaret + Bleeding bırakır; MP yakmaz, atışta hasar vermez', () => {
     const b = make(TA);
     const am = unit(b, 'party', 'antimage');
-    const center = b.livingByDepth('enemy')[0]!;
-    const hit = b.areaWindow(am.uid, 'drain_field', center.uid);
-    const events = act(b, am.uid, 'drain_field', center.uid);
-    for (const c of hit) expect(c.statuses.some((s) => s.kind === 'branded'), c.uid).toBe(true);
+    const t = b.validTargets(am.uid, 'drain_field')[0]!;
+    const events = act(b, am.uid, 'drain_field', t.uid);
+    expect(t.statuses.some((s) => s.kind === 'blood_brand')).toBe(true);
+    expect(t.statuses.some((s) => s.kind === 'bleeding')).toBe(true);
+    expect(b.combatants.filter((c) => c.side === 'enemy' && c.statuses.some((s) => s.kind === 'blood_brand'))).toHaveLength(1);
     expect(ofType(events, 'manaBurn')).toHaveLength(0);
     expect(ofType(events, 'damage')).toHaveLength(0);
   });
@@ -613,7 +609,10 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
       toFront(b, 'mage');
       const target = unit(b, 'enemy', 'mage');
       target.mp = mp;
-      return total(act(b, unit(b, 'party', 'antimage').uid, 'void_strike', target.uid), target.uid);
+      const rt = unit(b, 'party', 'antimage');
+      rt.blood = content.skills.void_strike!.cost.amount; // Exsanguinate en az bu kadar kan ister (hep aynı: eksik mana eki ölçülsün)
+      rt.cooldowns.void_strike = 0;
+      return total(act(b, rt.uid, 'void_strike', target.uid), target.uid);
     };
     const full = run(unit(make(TA), 'enemy', 'mage').maxMp);
     const half = run(unit(make(TA), 'enemy', 'mage').maxMp / 2);
@@ -628,42 +627,47 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
     expect(empty - full).toBeLessThan(expected * 1.2);
   });
 
-  it('Spell Ward kendine büyü kalkanı basar: yalnızca büyü hasarını emer, fizikseli emmez', () => {
+  it('Mirror Vein: bütün takıma kalkan; büyü emişi Redtithe\'e kan verir, fiziksel emiş vermez', () => {
     const b = make({ party: ['antimage', 'warrior', 'archer', 'mage'], enemies: ['warrior', 'mage', 'druid', 'archer'] });
     const am = unit(b, 'party', 'antimage');
-    const ev = ofType(act(b, am.uid, 'spell_ward', am.uid), 'shield')[0]!;
-    expect(ev.magic).toBe(true);
-    expect(am.magicShield).toBe(ev.amount);
-    expect(am.shield).toBe(0);
-
-    const phys = ofType(act(b, unit(b, 'enemy', 'archer').uid, 'quick_shot', am.uid), 'damage')[0]!;
-    expect(phys.absorbed).toBe(0);
-    expect(am.magicShield).toBe(ev.amount); // dokunulmadı
-
-    const mag = ofType(act(b, unit(b, 'enemy', 'mage').uid, 'fire_bolt', am.uid), 'damage')[0]!;
-    expect(mag.absorbed).toBeGreaterThan(0);
-    expect(mag.magicShieldAfter).toBe(ev.amount - mag.absorbed < 0 ? 0 : ev.amount - mag.absorbed);
+    am.hp = am.maxHp = 5000;
+    am.blood = content.formulas.bloodBar!.max;
+    act(b, am.uid, 'spell_ward');
+    for (const a of b.living('party')) expect(a.shield, a.uid).toBeGreaterThan(0);
+    am.blood = 0;
+    const phys = ofType(act(b, unit(b, 'enemy', 'archer').uid, 'quick_shot', am.uid), 'damage').filter((d) => d.target === am.uid);
+    if (phys.some((d) => (d.absorbed ?? 0) > 0)) expect(am.blood).toBe(0); // fiziksel emiş kan vermez
+    const mag = ofType(act(b, unit(b, 'enemy', 'mage').uid, 'fire_bolt', am.uid), 'damage').filter((d) => d.target === am.uid);
+    if (mag.some((d) => (d.absorbed ?? 0) > 0)) expect(am.blood).toBeGreaterThan(0);
   });
 
-  it('büyü zırhı yalnızca Anti-Mage\'de; diğer class\'larda 0', () => {
+  it('class taban büyü zırhı her class\'ta 0; Redtithe\'inki yalnız kan barından (Ömer 2026-11-18)', () => {
     for (const def of Object.values(content.classes)) {
       // Büyü zırhı yalnızca class verisinden gelir (primary bonusu büyü zırhı vermez)
       const raw = JSON.parse(readFileSync(`data/classes/${def.id}.json`, 'utf8')) as { magicArmor: number };
       expect(def.stats.magicArmor, def.id).toBe(raw.magicArmor);
-      if (def.id === 'antimage') expect(def.stats.magicArmor, def.id).toBeGreaterThan(0);
-      else expect(def.stats.magicArmor, def.id).toBe(0);
+      expect(def.stats.magicArmor, def.id).toBe(0);
     }
+    const b = make({ party: ['antimage', 'warrior', 'archer', 'mage'], enemies: ['warrior', 'mage', 'druid', 'archer'] });
+    const am = unit(b, 'party', 'antimage');
+    expect(am.blood).toBeLessThan(am.maxBlood!);
+    expect(b.effectiveStats(am).magicArmor).toBeGreaterThan(0);
   });
 
   it('büyü zırhı büyü hasarını yüzdesel azaltır, fiziksel hasarı azaltmaz', () => {
-    const dmg = (def: string, skill: string, attacker: string) => {
+    const dmg = (def: string, skill: string, attacker: string, noMagicArmor = false) => {
       const b = make({ party: [attacker, 'warrior', 'archer', 'paladin'], enemies: [def, 'warrior', 'archer', 'paladin'] }, { seed: 3 });
       for (const c of b.combatants) delete c.passive; // pasifler (ör. Sharpshooter mesafesi) ölçümü bozmasın
+      if (noMagicArmor) {
+        unit(b, 'enemy', def).stats.magicArmor = 0;
+        const u = unit(b, 'enemy', def);
+        if (u.maxBlood !== undefined) u.blood = u.maxBlood; // kan barı büyü zırhı (Redtithe): bar dolu = 0
+      }
       return total(act(b, unit(b, 'party', attacker).uid, skill, unit(b, 'enemy', def).uid), unit(b, 'enemy', def).uid);
     };
-    // Anti-Mage (büyü zırhı 20) ve Mage (0): ikisinin fiziksel zırhı da 4
-    expect(dmg('antimage', 'fire_bolt', 'mage')).toBeLessThan(dmg('mage', 'fire_bolt', 'mage') * 0.75);
-    expect(dmg('antimage', 'quick_shot', 'archer')).toBe(dmg('mage', 'quick_shot', 'archer'));
+    // Redtithe (büyü zırhı veriden + kan barı eki) ve aynı birim büyü zırhı 0: büyü hasarı azalır, fiziksel aynı
+    expect(dmg('antimage', 'fire_bolt', 'mage')).toBeLessThan(dmg('antimage', 'fire_bolt', 'mage', true) * 0.9);
+    expect(dmg('antimage', 'quick_shot', 'archer')).toBe(dmg('antimage', 'quick_shot', 'archer', true));
   });
 });
 
@@ -684,19 +688,19 @@ describe('class verisi: yeni sınıflar ve dizilim', () => {
     expect(content.classes.antimage!.skills).toEqual(['mana_burn', 'drain_field', 'spell_ward', 'void_strike']);
   });
 
-  it('Druid: Healing Rain şifa + 3 turluk zemin, Summon Treant 3 tur kalır', () => {
+  it('Druid: Healing Rain şifa + 3 turluk zemin, Summon Treant 4 tur kalır (Ömer 2026-11-18)', () => {
     expect(content.skills.rejuvenate!.name).toBe('Healing Rain');
     expect(content.skills.rejuvenate!.effects.find((e) => e.type === 'ground')).toMatchObject({ ground: 'healing_rain', turns: 3 });
     // başlangıç şifası: tur başına şifa x tik sayısı
     const hotE = content.skills.rejuvenate!.effects.find((e) => e.type === 'ground') as { power: number; turns: number };
     const healE = content.skills.rejuvenate!.effects.find((e) => e.type === 'heal') as { power: number };
     expect(healE.power).toBeCloseTo(hotE.power * hotE.turns, 3);
-    expect(content.skills.summon_treant!.effects[0]).toMatchObject({ type: 'summon', lifespan: 3 });
+    expect(content.skills.summon_treant!.effects[0]).toMatchObject({ type: 'summon', lifespan: 4 });
   });
 
   it('Archer: Piercing Arrow seçilen şeride vurur, her yeni hedef %30 az', () => {
     expect(content.skills.piercing_arrow!).toMatchObject({ target: 'area_enemies', area: { shape: 'column', stages: 'row' } });
-    expect(content.skills.piercing_arrow!.effects[0]).toMatchObject({ type: 'damage', falloff: 0.7 });
+    expect(content.skills.piercing_arrow!.effects[0]).toMatchObject({ type: 'damage', falloff: 0.85 }); // Tur 28-29 (Ömer 2026-11-16)
   });
 
   it('her hasar/şifa/kalkan etkisi bir temel özelliğe (str/int/dex/luck) bağlı', () => {
@@ -830,6 +834,7 @@ describe('Boş hücreye alan atışı ve Shield Bash', () => {
   it('Piercing Arrow boş şeride atılırsa şeridin en öndeki birimi ana hedef (tam hasar), diğerleri %50', () => {
     const b = grid(cells({ 0: 'archer' }), cells({ 1: 'warrior', 4: 'warrior' }));
     for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0 });
+    b.combatants.find((c) => c.uid === 'party-0')!.stats.dex = 60; // güç 0,575: düşüş yuvarlamada kaybolmasın
     const events = act(b, 'party-0', 'piercing_arrow', undefined, 10); // şerit 1'in boş sıra-3 hücresi
     const first = total(events, 'enemy-0');
     const second = total(events, 'enemy-1');
@@ -978,7 +983,7 @@ describe('Pasif skill\'ler', () => {
       expect(def.passive, id).toBeDefined();
       expect(def.passive!.name.length, id).toBeGreaterThan(0);
       expect(describePassive(def.passive!, def.stats, content.formulas).length, id).toBeGreaterThan(20); // açıklama değerleri de yazar
-      expect(['rage', 'divineLight', 'spellEcho', 'heatMirage', 'longshot', 'naturesGrudge', 'soulDrain', 'spellbreakerInstinct', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells', 'eyeOfStorm', 'tempering', 'conductor'], id).toContain(def.passive!.effect.type);
+      expect(['rage', 'divineLight', 'spellEcho', 'heatMirage', 'longshot', 'naturesGrudge', 'soulDrain', 'spellbreakerInstinct', 'armorAura', 'bonusVsStatus', 'omenTransfer', 'pealingBells', 'eyeOfStorm', 'tempering', 'conductor', 'luckyStreak'], id).toContain(def.passive!.effect.type);
     }
   });
 
@@ -1079,14 +1084,15 @@ describe('Pasif skill\'ler', () => {
     expect(phys(true)).toBeLessThan(phys(false));
   });
 
-  it('Anti-Mage - Mana Overflow: büyü zırhının engellediği hasar eşiğe ulaşınca tüm takıma mana', () => {
+  it('Mana Overflow (Redtithe taşıyıcı): büyü zırhının engellediği hasar eşiğe ulaşınca tüm takıma mana', () => {
     const b = calm(grid(cells({ 0: 'antimage', 3: 'warrior', 1: 'mage' }), cells({ 0: 'mage' })));
     const am = b.get('party-0')!;
     giveManaOverflow(b, am.uid, 5); // Ömer 2026-10-29: Mana Overflow AM kitinden çıktı, motor kuralı duruyor
     for (const c of b.living('party')) c.mp = 0;
     const events = act(b, 'enemy-0', 'fire_bolt', am.uid);
     expect(ofType(events, 'passive').some((e) => e.passive === 'mana_overflow')).toBe(true);
-    expect(b.living('party').every((c) => c.mp > 0)).toBe(true);
+    // Redtithe'in (id antimage) manası yok (maxMp 0); manası olan herkes kazanır
+    expect(b.living('party').filter((c) => c.maxMp > 0).every((c) => c.mp > 0)).toBe(true);
   });
 
   it('Mana Overflow fiziksel hasarda tetiklenmez', () => {

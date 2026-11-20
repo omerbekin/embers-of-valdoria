@@ -13,7 +13,7 @@ const S = content.skills;
 /** Eski Drain Field verisi (2026-10-26 hâli); yalnızca test, savaşa `drain_field` id'siyle enjekte edilir (arena varsayılanı). */
 const LEGACY: SkillDef = {
   id: 'drain_field', name: 'Drain Field', icon: 'drainfield', target: 'area_enemies', range: 4,
-  area: { shape: 'rect', rows: 3, cols: 3, anchor: 'bottom_left' }, cost: { resource: 'mp', amount: 14 }, cooldown: 3,
+  area: { shape: 'rect', rows: 3, cols: 3, anchor: 'bottom_left' }, cost: { resource: 'mp', amount: 0 }, cooldown: 3, // 2026-11-17: taşıyıcı Redtithe'in (id antimage) manası yok; bedel 0
   effects: [{ type: 'manaBurn', pctMax: 0.55, onEmpty: { chance: 0.5, status: 'silence', turns: 1, damage: { damageType: 'magic', element: 'arcane', scale: 'int', power: 0.725 } } }],
 } as SkillDef;
 type ManaBurn = Extract<SkillDef['effects'][number], { type: 'manaBurn' }>;
@@ -54,13 +54,13 @@ function nextTurnOf(b: Battle, uid: string): void {
 const sureDrain = (): Record<string, SkillDef> => ({ drain_field: { ...LEGACY, effects: [{ ...DF, onEmpty: { ...EMPTY, chance: 1 } }] } });
 
 describe('Drain Field verisi (madde 260)', () => {
-  it('yakım maks MP yüzdesi; onEmpty: zar, susturan durum, Anti-Mage statıyla (INT) ölçekli büyü hasarı', () => {
+  it('yakım maks MP yüzdesi; onEmpty: zar, susturan durum, eski (INT) ölçekli büyü hasarı', () => {
     expect(DF.pctMax).toBeGreaterThan(0);
     expect(DF.pctMax).toBeLessThanOrEqual(1);
     expect(EMPTY.chance).toBeGreaterThan(0);
     expect(EMPTY.chance).toBeLessThanOrEqual(1);
     expect(EMPTY.turns).toBeGreaterThanOrEqual(1);
-    expect(EMPTY.damage!.scale).toBe(content.classes.antimage!.primary); // hasar ölçekleme kuralı: skill sahibinin statı
+    expect(EMPTY.damage!.scale).toBe('int'); // eski Anti-Mage INT ana statlıydı (sentetik veri; Redtithe DEX)
     expect(EMPTY.damage!.power).toBeGreaterThan(0);
     expect(SIL.type).toBe('debuff');
     expect(SIL.blocksMpSkills).toBe(true);
@@ -265,7 +265,8 @@ describe('Drain Field: önizleme, YZ, açıklama, kayıt, wiki', () => {
     const art = wiki.mechanics.find((a) => a.id === 'silence');
     expect(art).toBeDefined();
     const text = art!.blocks.flatMap((x) => (x.kind === 'p' ? [x.text] : x.kind === 'list' ? x.items : [])).join(' ');
-    expect(text).toContain(S.drain_field!.name); // Ley Brand (Hush of the Brand düğümü Silence'ı geri getirir)
+    // 2026-11-17: Ley Brand kitten çıktı (Redtithe Blood Brand susturmaz); makale doğrudan susturan skill'leri listeler
+    expect(text).toContain(S.writ_of_silence!.name);
     expect(text).toContain(SIL.name);
   });
 });

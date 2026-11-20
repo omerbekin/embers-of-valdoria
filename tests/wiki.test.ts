@@ -2,8 +2,8 @@ import { classGroupRank, sortByPrimary } from '../src/game/class-order';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { content } from '../src/engine';
-import { battleRulesArticle, buildWiki, hiddenSetSkill, drownedReachArticle, drownedReachShown, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
+import { content, describeStat } from '../src/engine';
+import { battleRulesArticle, buildWiki, hiddenSetSkill, SET_ONLY_STATUSES, drownedReachArticle, drownedReachShown, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
 import { UI_ICONS } from '../src/ui/dom-icons';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
 import { ITEMS, itemDef, weaponPowerOf } from '../src/progression';
@@ -97,7 +97,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
   });
 
   it('tüm durumlar ve zeminler ikon, renk ve açıklamayla listelenir', () => {
-    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => id !== 'banked_coals').sort()); // Banked Coals: setsEnabled kapalıyken gizli
+    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => !SET_ONLY_STATUSES.includes(id) && !content.statuses[id]!.retired).sort()); // Banked Coals: setsEnabled kapalıyken gizli; retired (kitten çıkmış) durumlar gizli
     expect(wiki.grounds.map((g) => g.id).sort()).toEqual(Object.keys(content.grounds).sort());
     for (const s of wiki.statuses) {
       expect(s.icon).not.toBe('');
@@ -147,7 +147,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     for (const d of Object.values(content.globalSkills).filter((x) => x.kind !== 'urn' && x.kind !== 'rod' && x.kind !== 'surge' && x.kind !== 'command')) expect(text('actions'), d.id).toContain(d.name);
     expect(text('battle-rules')).toContain(content.globalSkills.tidewater_urn!.name);
     expect(text('actions')).toContain(`${content.globalSkills.rest!.mp} MP`);
-    expect(text('actions')).toContain('next turn arrives in half the time');
+    expect(text('actions')).toContain('speed meter fills twice as fast');
     const hit = text('hit-chance');
     expect(hit).toContain('Dodge');
     expect(hit).toContain('MISS');
@@ -178,6 +178,21 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(text('mana')).toContain('"+2 MP"');
     const st = (id: string) => wiki.statuses.find((s) => s.id === id)!;
     for (const id of ['burning', 'fleet']) if (content.statuses[id]) expect(st(id).usedByItems.length, id).toBeGreaterThan(0);
+  });
+
+  it('Lucky Streak (Gambler pasifi) Mechanics > Bets içinde veriden yazılıdır', () => {
+    const text = wiki.mechanics.find((a) => a.id === 'gamble')!.blocks.flatMap(blockText).join('\n');
+    const g = content.classes.gambler!;
+    const e = g.passive!.effect as { max: number; chance: number };
+    expect(text).toContain(g.passive!.name);
+    expect(text).toContain(`from 0 to ${e.max}`);
+    expect(text).toContain(`${Math.round(e.chance * 100)}% chance to go once more`);
+    expect(text).toMatch(/All In: bets the whole Streak too; win chance 50% \/ 65% \/ 80% \/ 100%/);
+    // All In seri ödülü (Ömer 2026-11-19): sayılar veriden
+    const more = content.skills.all_in!.streak!.fullStreakMore!;
+    expect(text).toContain(`a win below ${e.max} Streak fills the Streak to ${e.max}, a loss resets it to 0; at ${e.max} Streak it spends the Streak and the win deals ${Math.round(more * 100)}% more damage`);
+    expect(text).toMatch(/Card Trick at full Streak: spends it; hits 3 random enemies; one of them always gets Stun/);
+    expect(text).toMatch(/Loaded Dice: rolls 2 dice/);
   });
 
   it('bahis (gamble) skilleri Mechanics içinde yazılıdır', () => {
@@ -331,5 +346,55 @@ describe('Codex: Ground reactions (Ömer 2026-10-27)', () => {
       expect(row![1]).toContain(content.grounds[r.trigger[0]!]?.name ?? 'A lightning strike'); // Shatter: tetik zemin değil şimşek
       expect(row![2]).toBe(r.label);
     }
+  });
+});
+
+describe('Wiki metin denetimi (2026-11-17)', () => {
+  const mech = (id: string) => wiki.mechanics.find((a) => a.id === id);
+  const allMech = [...wiki.gettingStarted, ...wiki.lessons, ...wiki.mechanics].flatMap((a) => a.blocks.flatMap(blockText)).join(' | ');
+  const stats = () => ({ ...content.classes.warrior!.stats });
+
+  it('kritik şansı Luck başına formüldeki gibi gösterilir (%0,25)', () => {
+    expect(content.formulas.attributes.critChancePerLuck).toBe(0.0025);
+    expect(allMech).toContain('0.25% per Luck');
+    expect(allMech).not.toMatch(/\b0\.3% per Luck/);
+    expect(describeStat('luck', stats(), content.formulas).lines.join(' ')).toContain('+0.25% per point');
+    expect(describeStat('critChance', stats(), content.formulas).lines.join(' ')).toContain('+0.25% per Luck');
+  });
+
+  it('can yenilenmesi Strength x 0,125 (üç ondalık)', () => {
+    expect(content.formulas.attributes.hpRegenPerStr).toBe(0.125);
+    expect(allMech).toContain('Strength x 0.125');
+    expect(describeStat('hp', stats(), content.formulas).lines.join(' ')).toContain('Strength x 0.125');
+  });
+
+  it('kan bedeli satırı kan başına %0,5 der (Blood Brand / Mirror Vein)', () => {
+    expect(content.formulas.bloodBar!.hpPerBlood).toBe(0.005);
+    const bloodSkills = wiki.skills.filter((s) => content.skills[s.id]?.cost.resource === 'blood' && content.skills[s.id]!.cost.amount > 0 && !content.skills[s.id]!.cost.spendAll);
+    expect(bloodSkills.length).toBeGreaterThan(0);
+    for (const s of bloodSkills) expect(s.lines.join(' '), s.id).toContain('0.5% of your max HP per blood');
+  });
+
+  it('debuff yığılma metni emekli durumları saymaz, dilbilgisi doğru', () => {
+    const text = [...wiki.gettingStarted, ...wiki.lessons, ...wiki.mechanics].flatMap((a) => a.blocks.flatMap(blockText)).find((x) => x.startsWith('The same debuff never stacks')) ?? '';
+    expect(text).toContain('The same debuff never stacks');
+    for (const d of Object.values(content.statuses).filter((x) => x.retired)) expect(text).not.toContain(d.name);
+    expect(text).not.toMatch(/Exception: [^.]*, [^.]* stacks on purpose/);
+  });
+
+  it('dispel makalesi: boş liste satırı yok, "none" yazmaz', () => {
+    const art = mech('dispel');
+    if (!art) return; // iki liste de boşsa makale gizli
+    expect(art.blocks.flatMap(blockText).join(' ')).not.toMatch(/: none\b/);
+  });
+
+  it('Actions makalesi Skip Turn ve Move için aynı cümleyi iki kez yazmaz; sayılar durur', () => {
+    const items = mech('actions')!.blocks.flatMap((b) => (b.kind === 'list' ? b.items : []));
+    const skip = items.find((i) => i.startsWith(`${content.globalSkills.skip_turn!.name}:`))!;
+    const move = items.find((i) => i.startsWith(`${content.globalSkills.move_tile!.name}:`))!;
+    expect(skip).toContain('+100% speed');
+    expect(skip.match(/Pass the turn/g)?.length).toBe(1);
+    expect(skip).not.toContain('Your speed is doubled');
+    expect(move.match(/empty cell of your own side/gi)?.length).toBe(1);
   });
 });

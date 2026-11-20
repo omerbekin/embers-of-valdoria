@@ -142,8 +142,9 @@ describe('Hexer ağacı (Faz 2b)', () => {
     expect(got).toEqual(chain.slice(0, EA[0].do[0].bounceMax ?? chain.length).map((c) => c.uid));
     expect(got).not.toContain(t!.uid);
     for (const c of foes(b)) expect(jinxOf(c).length).toBeLessThanOrEqual(1);
-    const wob = 5 * ((H.nodes['3.f2']!.fx![0] as unknown as { mod: { statusPotency: { accuracyDelta: number } } }).mod.statusPotency.accuracyDelta);
-    for (const uid of got) expect(jinxOf(b.get(uid)!)[0]!.potency?.accuracyDelta).toBeCloseTo(wob, 6);
+    // Ömer 2026-11-16 Tur 24: Wobbly Aim isabet eki yerine Blinded (withStatus, güç x rank); sekenler de taşır
+    const wob = Math.round(5 * (H.nodes['3.f2']!.fx![0] as unknown as { mod: { withStatus: { strength: number } } }).mod.withStatus.strength * 1000) / 1000;
+    for (const uid of got) expect(b.get(uid)!.statuses.find((s) => s.kind === 'blinded')?.strength).toBeCloseTo(wob, 6);
   });
 
   it('motor: bounceMax yokken zincir tüm yan yana düşmanlara gider; bounceMax 1 ise yalnız ilk', () => {

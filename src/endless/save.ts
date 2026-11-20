@@ -175,7 +175,7 @@ export function parseRun(raw: string | null): EndlessRun | null {
         r.summons = r.summons
           .filter((x) => x && typeof x.unit === 'string' && Number.isInteger(x.slot) && x.slot >= 0 && x.slot < CELL_COUNT && isNum(x.hp) && x.hp > 0)
           .map((x) => {
-            const { statuses: _s, shieldHooks: _h, mpRatio: _m, rage: _r, shield: _sh, magicShield: _ms, ...rest } = x;
+            const { statuses: _s, shieldHooks: _h, mpRatio: _m, rage: _r, blood: _b, shield: _sh, magicShield: _ms, ...rest } = x;
             return { ...rest, ...cleanCarry(x) };
           });
     }

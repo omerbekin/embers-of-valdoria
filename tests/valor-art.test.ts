@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
 import { BRAZIER_FRAMES, BRAZIER_READY, brazierIconUrl, brazierLooks, brazierUrl } from '../src/ui/valor-braziers';
+import { itSource } from './asset-source';
 
 // Valor mangalları boyalı karelerle (Ömer 2026-10-14): assets/valor, kesim tools/make-valor-icons.mjs, asıl assets/source/valor/brazier-sheet.png
 const R = content.valorRules;
@@ -50,7 +51,7 @@ describe('Valor mangal kareleri (assets/valor)', () => {
     expect(ready.height!).toBeGreaterThan(sizes[0]!.height!);
   });
 
-  it('asıl sayfa ve kesim aracı yerinde (assets/source oyuna yüklenmez)', () => {
+  itSource('asıl sayfa ve kesim aracı yerinde (assets/source oyuna yüklenmez)', () => {
     expect(existsSync('assets/source/valor/brazier-sheet.png')).toBe(true);
     expect(existsSync('tools/make-valor-icons.mjs')).toBe(true);
   });

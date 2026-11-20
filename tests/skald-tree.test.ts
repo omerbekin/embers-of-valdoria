@@ -50,7 +50,7 @@ type Priv = { speedBoostOf: (u: string) => number; delayedFree: Array<{ skill: s
 const priv = (b: Battle) => b as unknown as Priv;
 /** Şans zarlarını hep tutturur (isabet 10, kritik kapalı, zar sapması yok: yalnız durum şansları etkilenir). */
 const lucky = (b: Battle) => (priv(b).rng.next = () => 0);
-const statusEff = (def: SkillDef, status: string) => def.effects.find((e) => e.type === 'status' && e.status === status) as { turns: number; self?: boolean } | undefined;
+const statusEff = (def: SkillDef, status: string) => def.effects.find((e) => e.type === 'status' && e.status === status) as { turns: number; self?: boolean; strength?: number } | undefined;
 const skaldTurn = (b: Battle) => {
   for (let i = 0; i < 300 && b.currentUid !== skald(b).uid; i++) b.skipTurn();
   expect(b.currentUid).toBe(skald(b).uid);
@@ -89,7 +89,8 @@ describe('Skald ağacı: veri', () => {
     expect(statusEff(iron, 'slow')!.turns).toBe(2);
     expect(iron.cooldown).toBe((S.thunder_strike!.cooldown ?? 0) + 1);
     const wild = sk({ '3.ea': 1, '3.fa': 1 }, 'war_drum');
-    expect(statusEff(wild, 'fleet')!.turns).toBe(4);
+    expect(statusEff(wild, 'shrouded')!.turns).toBe(4); // Ömer 2026-11-16: Fleet -> yarım güçte Shrouded
+    expect(statusEff(wild, 'shrouded')!.strength).toBe(0.5);
     expect(wild.cost.amount).toBe(S.war_drum!.cost.amount + 6);
     expect(dmg(sk({ '4.u1': 1 }, 'stormcall')).falloff).toBeCloseTo((dmg(S.stormcall!).falloff ?? 0) + 0.1, 6);
     expect(sk({ '4.r1': 1 }, 'stormcall').initialCooldown).toBe((S.stormcall!.initialCooldown ?? 0) - 1);
@@ -186,10 +187,10 @@ describe('Skald ağacı: savaşta', () => {
     expect(cd({ 1: 'warrior', 7: 'mage' })).toBe(0);
     expect(cd({ 1: 'warrior' })).toBe(3);
   });
-  it('Dancing Steps (3.ea): War Drum Fleet de verir', () => {
+  it('Dancing Steps (3.ea): War Drum hafif Shrouded da verir (eski Fleet; Ömer 2026-11-16)', () => {
     const b = treed({ '3.ea': 1 }, { 1: 'warrior' }, { 1: 'warrior' });
     cast(b, 'war_drum');
-    for (const c of b.combatants.filter((x) => x.side === 'party')) expect(has(c, 'fleet'), c.defId).toBe(true);
+    for (const c of b.combatants.filter((x) => x.side === 'party')) expect(c.statuses.some((s) => s.kind === 'shrouded' && s.strength === 0.5), c.defId).toBe(true);
   });
   it('Thunder Drum (3.fb): War Drum yalnız Skald\'a, Stormcall cooldown 2 kısalır (Storm Drum yerine)', () => {
     const b = treed({ '3.eb': 1, '3.fb': 1 }, { 1: 'warrior' }, { 1: 'warrior' });

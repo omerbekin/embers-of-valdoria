@@ -3,7 +3,7 @@
   "conditions": {
     "tide": {
       "name": "Tide",
-      "text": "The tide floods both front rows at the start of every Round and again every 4 turns; the water stays for 2 turns. Anyone standing in it is Soaked: they take 50% less fire damage, have 10% less Speed, and Burning is put out. Flooded cells also put out Burning Ground.",
+      "text": "The tide floods both front rows at the start of every Round and again every 4 turns; the water stays for 2 turns. Anyone standing in it is Soaked: they take 50% less fire damage and Burning is put out. Flooded cells also put out Burning Ground.",
       "flood": { "ground": "flooded", "onWave": true, "everyRounds": 4, "rows": [0], "boards": ["party", "enemy"], "rounds": 2, "soak": "soaked" }
     },
     "storm": {
@@ -62,8 +62,8 @@
   "hazards": {
     "_not": "M-G Cave-in: koşuldan BAĞIMSIZ (Darkness ile birlikte olabilir); karşılaşma alanı caveIn: anahtar. everyRounds Round'da bir, her boards tahtasında cells hücre işaretlenir (aimAtUnits: ilk hücre üstünde birim olan bir hücre), sonraki Round başında çöker: üstündeki birim damageRatio x tahtadaki ortalama maks can hasar + status (statusTurns tur), hücre savaş boyunca kapalı (M-I ile aynı kural, birim en yakın açık hücreye atılır). maxClosed: tahta başına kapalı hücre sınırı; savaşanlara yer kalmayacaksa işaretlenmez. Hollow King ultu aynı kancayı kullanacak (Battle.warnCaveIn). Sayılar PROVİZYON."
     ,
-    "cave_in": { "name": "Cave-in", "text": "The roof is giving way: marked cells collapse at the start of the next turn. Anyone standing there takes damage and is Slowed, and the cell stays closed for the rest of the battle.", "everyRounds": 3, "cells": 1, "boards": ["party", "enemy"], "damageRatio": 0.1, "status": "slow", "statusTurns": 2, "maxClosed": 3, "aimAtUnits": true },
-    "cave_in_heavy": { "name": "Cave-in", "text": "The whole gallery is coming down: marked cells collapse at the start of the next turn. Anyone standing there takes damage and is Slowed, and the cell stays closed for the rest of the battle.", "everyRounds": 2, "cells": 2, "boards": ["party", "enemy"], "damageRatio": 0.12, "status": "slow", "statusTurns": 2, "maxClosed": 5, "aimAtUnits": true }
+    "cave_in": { "name": "Cave-in", "text": "The roof is giving way: marked cells collapse at the start of the next turn. Anyone standing there takes damage and is Hobbled, and the cell stays closed for the rest of the battle.", "everyRounds": 3, "cells": 1, "boards": ["party", "enemy"], "damageRatio": 0.1, "status": "slow", "statusTurns": 2, "maxClosed": 3, "aimAtUnits": true },
+    "cave_in_heavy": { "name": "Cave-in", "text": "The whole gallery is coming down: marked cells collapse at the start of the next turn. Anyone standing there takes damage and is Hobbled, and the cell stays closed for the rest of the battle.", "everyRounds": 2, "cells": 2, "boards": ["party", "enemy"], "damageRatio": 0.12, "status": "slow", "statusTurns": 2, "maxClosed": 5, "aimAtUnits": true }
   },
   "noise": {
     "_not": "C5 Wake the Halls (maps-2-3.md; Harita 3 Deep Halls; karşılaşma alanı noise: anahtar). sides tarafının kritiği, reactions patlaması ve alan skill'i sayacı points kadar doldurur; goal dolunca sayaç sıfırlanır, unit kalkar (tercih edilen hücre doluysa en yakın boş), en çok maxRises kez. İleride Hollow King'in bedava çağrısı Battle.noiseFull kancasına bağlanacak (kit yazılmadı). Sayılar PROVİZYON.",
@@ -78,7 +78,7 @@
     "tidewater_urn": {
       "_not": "M-N3 (maps-2-3.md 5): oyuncu tarafında duran etkileşimli nesne. side tahtasının slot hücresi o tahtada kapalı (kimse giremez, hedeflenmez). Artı şeklinde bitişik kahraman global eylem 'tidewater_urn' ile eylemini harcar: kendi tahtasında seçilen sıra rounds savaş turu Flooded (Tide suyuyla aynı süre), sudaki birim Soaked. uses kullanım. ai: sıra puanı = Burning zemin hücresi x burningCell + o sıradaki Burning kahraman x burningHero; puan >= minScore ise YZ kullanır. Sayılar PROVİZYON (open-questions 430).",
       "name": "Tidewater Urn",
-      "text": "A great urn of seawater. A hero standing next to it can spend their turn to tip it: one row of your side is Flooded for 2 turns (Soaked: 50% less fire damage taken, 10% less Speed, Burning put out; Burning Ground there goes out).",
+      "text": "A great urn of seawater. A hero standing next to it can spend their turn to tip it: one row of your side is Flooded for 2 turns (Soaked: 50% less fire damage taken, Burning put out; Burning Ground there goes out).",
       "side": "party",
       "slot": 4,
       "uses": 3,

@@ -104,7 +104,7 @@ describe.each(MODES)('%s modu', (mode) => {
     const mock = b.useSkill(s.uid, 'mock', h.uid);
     expect(mock.ok).toBe(true);
     // olaydan: hedef hemen sıradaysa Staggered o turda harcanır (sıra seed + tur zarına bağlı)
-    expect(mock.ok && mock.events.some((e) => e.type === 'status' && e.target === h.uid && e.status === 'staggered')).toBe(true);
+    expect(mock.ok && mock.events.some((e) => e.type === 'status' && e.target === h.uid && e.status === 'stun')).toBe(true);
     s.cooldowns = {};
     if (mode === 'turns') turnOf(b, s.uid);
     s.mp = s.maxMp; // 0.9.11 mana (mpPerInt 0,2): Mock + Chant aynı havuzdan çıkmaz; senaryo Chant'ın etkisini ölçer
@@ -256,8 +256,8 @@ describe('tur başı pasifleri (yalnız turns: test modunda tur başı yok)', ()
     expect(b.useSkill(s.uid, 'mock', h.uid).ok).toBe(true);
     const log: { type: string; actor?: string }[] = [];
     b.on((e) => log.push(e));
-    for (let i = 0; i < 40 && has(h, 'staggered'); i++) b.skipTurn();
-    expect(has(h, 'staggered')).toBe(false);
+    for (let i = 0; i < 40 && has(h, 'stun'); i++) b.skipTurn();
+    expect(has(h, 'stun')).toBe(false);
   });
 });
 
@@ -285,7 +285,7 @@ describe('YZ', () => {
     turnOf(b, s.uid);
     s.cooldowns['chant'] = 5;
     expect(ai(b, s)).toMatchObject({ skillId: 'mock', targetUid: h.uid });
-    b.debugAddStatus(h.uid, 'staggered', 1);
+    b.debugAddStatus(h.uid, 'stun', 1);
     expect(skillOf(b, s)).toBe('sling_stone');
   });
   it('Skald Chant\'i dostlar Haste\'sizken kullanır, hepsi Haste\'liyken kullanmaz', () => {

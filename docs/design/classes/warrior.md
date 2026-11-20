@@ -22,10 +22,10 @@
 
 | Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
 |---|---|---|---|---|
-| Double Strike (`melee_attack`) | Tek hedefe iki fiziksel vuruş; Rage üretir | 0 / yok | sınıf (1) | hasar physical STR 0,35; hasar physical STR 0,35 |
-| Whirlwind (`whirlwind`) | İlk iki düşman sırasını süpürür (rect 2x3); verdiği hasarın bir kısmı can olur | 8 / 3 | sınıf (1) | hasar physical STR 0,45, lifesteal=0,2; area={shape:rect, rows:2, cols:3, anchor:bottom_left} |
-| Charge (`charge`) | Arka sıradaki dahil tek hedefe atılır, hasar + Stun | 10 / 4 | 4 | hasar physical STR 0,675; status: status=stun, turns=2; ignoreFrontRow=true |
-| Headsman's Blow (`headsmans_blow`) | Tüm Rage'i (en az 30) harcayıp tek dev balta darbesi | 30 rage (hepsi) / 5, ilk 1 | sınıf (1) | hasar physical STR 0,5, powerPerRage=0,025 |
+| Double Strike (`melee_attack`) | Tek hedefe iki fiziksel vuruş; Rage üretir | 0 / yok | sınıf (1) | hasar physical STR 0,33; hasar physical STR 0,33 (Tur 27, 2026-11-16: x0,97; Ömer 2026-11-18: 0,34 -> 0,33) |
+| Whirlwind (`whirlwind`) | İlk iki düşman sırasını süpürür (rect 2x3); verdiği hasarın bir kısmı can olur | 8 / 3 | sınıf (1) | hasar physical STR 0,437 (Tur 27, 2026-11-16: x0,97), lifesteal=0,2; area={shape:rect, rows:2, cols:3, anchor:bottom_left} |
+| Charge (`charge`) | Arka sıradaki dahil tek hedefe atılır, hasar + Stun | 10 / 4 | 4 | hasar physical STR 0,635 (Tur 27, 2026-11-16: x0,97; Ömer 2026-11-18: 0,655 -> 0,635); status: status=stun, turns=2; ignoreFrontRow=true |
+| Headsman's Blow (`headsmans_blow`) | Tüm Rage'i (en az 30) harcayıp tek dev balta darbesi | 30 rage (hepsi) / 5, ilk 1 | sınıf (1) | hasar physical STR 0,451 (Tur 27, 2026-11-16: x0,97), powerPerRage=0,023 (değişmedi) |
 
 Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-warrior.test.ts`) ve bu tablo birlikte güncellenir.
 
@@ -52,6 +52,7 @@ Veri: `data/skill-trees/warrior.json` (sürüm 1, bar "Iron Mastery"). Düğüm 
 - Berserker kararı (Ömer 2026-10-17): kalkansız iki elli balta; can kaybı Rage verir, Rage yalnız vurarak gelmez. Whirlwind ilk iki düşman sırasını süpürür (Ömer 2026-10-20).
 - Zırh ve Double Strike gücü 2026-11-08 akşamı indirildi (Ömer "şimdilik değiştirme" demişti); bu son hâl için sim yok.
 - Ağaç düğüm sayıları tahmin; ağaç sim'i Ömer onayıyla.
+- Ömer 2026-11-18: Double Strike iki vuruş 0,34 -> 0,33, Charge 0,655 -> 0,635 (%3). Sim yok (Lead atar).
 
 ## 6. Tarihçe
 

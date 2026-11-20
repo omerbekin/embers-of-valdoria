@@ -266,21 +266,7 @@ describe('Faz 5b: savaşta tetiklenme (class başına en az bir düğüm)', () =
     expect(targeted(evs, me).size).toBe(3);
   });
 
-  it('Anti-Mage Cloistered Ward: kendine Spell Ward %60 büyük (MP payı dahil), dosta atılamaz', () => {
-    const ward = (ranks: Record<string, number> | null): { shield: number; allyOk: boolean } => {
-      const b = make({ 0: 'antimage', 1: 'warrior' }, { 0: 'warrior' }, ranks ? withTree(0, only('antimage', ranks)) : {});
-      const me = P(b);
-      const allyOk = b.validTargets(me.uid, 'spell_ward').some((c) => c.uid === P(b, 1).uid);
-      cast(b, me, 'spell_ward', me);
-      return { shield: me.magicShield, allyOk };
-    };
-    const plain = ward(null);
-    const cw = ward({ '3.fb': 1 });
-    expect(plain.allyOk).toBe(true);
-    expect(cw.allyOk).toBe(false);
-    expect(cw.shield / plain.shield).toBeCloseTo(1 + (treeOf('antimage')!.nodes['3.fb']!.fx![1] as unknown as { mul: number }).mul, 1);
-  });
-
+  // Cloistered Ward (3.fb) Redtithe eşlemesiyle değişti: tests/skill-tree-fx-antimage.test.ts
   it('Undead Banshee\'s Toll: Wail tahtadaki her düşmana, bedel mevcut canın %30\'u', () => {
     const b = make({ 0: 'undead' }, { 0: 'warrior', 5: 'warrior', 10: 'warrior' }, withTree(0, only('undead', { '2.v': 1 })));
     tough(E(b, 0), E(b, 5), E(b, 10));

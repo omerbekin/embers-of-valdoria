@@ -9,11 +9,12 @@ import { ASSET_NAV, WIKI_ALIASES } from '../src/wiki/assets/nav';
 import { buildLegacy, type LegacyFiles } from '../src/wiki/assets/legacy-catalog';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
 import { BACKUP_VFX, VFX_KINDS } from '../src/ui/vfx-kinds';
-import { buildWiki } from '../src/wiki/catalog';
+import { buildWiki, SET_ONLY_STATUSES } from '../src/wiki/catalog';
 import { ITEM_ICON_NAMES, REWARD_ICON } from '../src/game/item-icons';
 import { inScope, versionKeys } from '../src/game/asset-versions';
 import { VFX_SHEET_FILES } from '../src/game/vfx-sheet-files';
 import { buildVersions } from '../src/wiki/assets/versions-catalog';
+import { itSource } from './asset-source';
 
 /** assets/ altındaki .png dosyalarını sayfadaki `import.meta.glob` ile aynı şekle (yol -> yol) çevirir. */
 function scan(dir: string, depth: 1 | 2): Record<string, string> {
@@ -151,7 +152,7 @@ describe('Wiki > Assets: ortak katalog (src/gallery/catalog.ts)', () => {
   it('tüm durumlar ve zeminler listelenir (Wiki > Statuses & Grounds ile aynı veri)', () => {
     expect(catalog.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).sort());
     expect(catalog.grounds.map((g) => g.id).sort()).toEqual(Object.keys(content.grounds).sort());
-    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => id !== 'banked_coals').sort()); // Banked Coals: setsEnabled kapalıyken gizli
+    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => !SET_ONLY_STATUSES.includes(id) && !content.statuses[id]!.retired).sort()); // Banked Coals: setsEnabled kapalıyken gizli; retired durumlar gizli
   });
 });
 
@@ -184,7 +185,7 @@ describe('Wiki > Legacy: kullanılmayan / eski her şey OTOMATİK türetilir', (
 
   it('eski hayvan başlı karakter sanatı (2026-10-12 kaldırıldı) diske ve Legacy ye geri dönmez', () => {
     for (const dir of ['characters-pool', 'concepts/paladin']) expect(existsSync(join(__dirname, '..', 'assets', dir)), dir).toBe(false);
-    expect(legacy.groups.map((g) => g.kind).every((k) => ['orphan', 'icon', 'vfx', 'sound'].includes(k))).toBe(true);
+    expect(legacy.groups.map((g) => g.kind).every((k) => ['orphan', 'icon', 'vfx', 'sound', 'art'].includes(k))).toBe(true);
   });
 
   it('her Legacy öğesi neden legacy etiketi taşır (Replaced by / Unused / Backup)', () => {
@@ -208,7 +209,7 @@ describe('Wiki sol menüsü: Assets ve Legacy bölümleri', () => {
 });
 
 describe('Play kartı görselleri (assets/cards)', () => {
-  it('her kart görseli bağlı: odak verisi var (battle-layout.json > backgrounds.cardFocus) ve aslı assets/source/cards altında', async () => {
+  itSource('her kart görseli bağlı: odak verisi var (battle-layout.json > backgrounds.cardFocus) ve aslı assets/source/cards altında', async () => {
     const layout = (await import('../data/battle-layout.json')).default as unknown as { backgrounds: { cardFocus: Record<string, unknown> } };
     for (const f of readdirSync('assets/cards')) {
       const id = f.replace(/\.[^.]+$/, '');
@@ -249,7 +250,7 @@ describe('Sprite sheet efektleri (assets/vfx) bağlı; assets/source yalnızca k
     }
   });
 
-  it('assets/source kaynak/asıl dosyalardır: oyun kodu yüklemez, Legacy / bağlantısız listesine düşmez; her sheet sahibinin aslı assets/source/<sahip>-vfx altında', () => {
+  itSource('assets/source kaynak/asıl dosyalardır: oyun kodu yüklemez, Legacy / bağlantısız listesine düşmez; her sheet sahibinin aslı assets/source/<sahip>-vfx altında', () => {
     const srcRoot = join(__dirname, '..', 'src');
     const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : /\.ts$/.test(e.name) ? [join(d, e.name)] : []));
     for (const file of walk(srcRoot)) {
@@ -261,7 +262,7 @@ describe('Sprite sheet efektleri (assets/vfx) bağlı; assets/source yalnızca k
     for (const owner of new Set(onDisk.map((f) => f.owner))) expect(existsSync(join(__dirname, '..', 'assets', 'source', `${owner}-vfx`)), `assets/source/${owner}-vfx yok`).toBe(true);
   });
 
-  it('görsel v2 ikonları (assets/icons-v2/<sahip>) bağlı; asılları assets/source/<sahip>-icons altında kaynak olarak durur (Defender)', () => {
+  itSource('görsel v2 ikonları (assets/icons-v2/<sahip>) bağlı; asılları assets/source/<sahip>-icons altında kaynak olarak durur (Defender)', () => {
     const iconsRoot = join(__dirname, '..', 'assets', 'icons-v2');
     const owners = existsSync(iconsRoot) ? readdirSync(iconsRoot) : [];
     expect(owners).toContain('defender');
@@ -277,7 +278,7 @@ describe('Sprite sheet efektleri (assets/vfx) bağlı; assets/source yalnızca k
 });
 
 describe('Ana menü katmanlı sahnesi (assets/menu)', () => {
-  it('her dosya kullanılıyor (data/menu-scene.json katmanları + efekt sayfası), asılları assets/source/menu-layers altında, konumlar görselin içinde', async () => {
+  itSource('her dosya kullanılıyor (data/menu-scene.json katmanları + efekt sayfası), asılları assets/source/menu-layers altında, konumlar görselin içinde', async () => {
     const cfg = (await import('../data/menu-scene.json')).default as unknown as { layers: string[]; fire: { flames: Array<{ x: number; y: number }>; glow: { x: number; y: number } }; smoke: { origin: { x: number; y: number } }; frames: Record<string, unknown> };
     const used = new Set([...cfg.layers, 'fx']);
     for (const f of readdirSync('assets/menu')) expect(used.has(f.replace(/\.[^.]+$/, '')), `${f} bağlantısız`).toBe(true);
@@ -298,7 +299,7 @@ describe('Ana menü katmanlı sahnesi (assets/menu)', () => {
 });
 
 describe('Item ikon görselleri (assets/items) bağlı; asılları assets/source/item-icons', () => {
-  it('assets/items altındaki her görsel bir item e ait, oyunun listesinde ve Codex > Icons ta; görseli olmayan item piksel ikona düşer', async () => {
+  itSource('assets/items altındaki her görsel bir item e ait, oyunun listesinde ve Codex > Icons ta; görseli olmayan item piksel ikona düşer', async () => {
     const { ITEM_IMAGE_FILES, itemImageUrl } = await import('../src/game/item-icon-files');
     const json = (await import('../data/items.json')).default;
     const items = [...json.items, ...json.setItems] as Array<{ id: string }>;
@@ -315,7 +316,7 @@ describe('Item ikon görselleri (assets/items) bağlı; asılları assets/source
 });
 
 describe('Stat ikonu görselleri (assets/stat-icons) bağlı; asılları assets/source/stat-icons', () => {
-  it('her dosya bir stat a ait ve Codex > Icons > Stat icons ta; small/ eşleri var; asıl sayfa ve kesim aracı duruyor', () => {
+  itSource('her dosya bir stat a ait ve Codex > Icons > Stat icons ta; small/ eşleri var; asıl sayfa ve kesim aracı duruyor', () => {
     const onDisk = readdirSync('assets/stat-icons').filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')).sort();
     expect(onDisk.length).toBe(16);
     const small = readdirSync('assets/stat-icons/small').filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')).sort();
@@ -330,7 +331,7 @@ describe('Stat ikonu görselleri (assets/stat-icons) bağlı; asılları assets/
 });
 
 describe('Arayüz ikonu görselleri (assets/ui-icons) bağlı; asılları assets/source/ui-icons', () => {
-  it('her dosya bir arayüz ikonuna ait ve Codex > Icons > UI icons ta; small/ eşleri var; asıl sayfa ve kesim aracı duruyor', () => {
+  itSource('her dosya bir arayüz ikonuna ait ve Codex > Icons > UI icons ta; small/ eşleri var; asıl sayfa ve kesim aracı duruyor', () => {
     const onDisk = readdirSync('assets/ui-icons').filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')).sort();
     expect(onDisk.length).toBe(19);
     const small = readdirSync('assets/ui-icons/small').filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')).sort();
@@ -345,7 +346,7 @@ describe('Arayüz ikonu görselleri (assets/ui-icons) bağlı; asılları assets
 });
 
 describe('Oyun ikonu görselleri (assets/misc-icons) bağlı; asılları assets/source/misc-icons', () => {
-  it('her dosya beklenen bir ikon ve Codex > Icons > Game icons ta; small/ eşleri var; asıl sayfalar ve kesim aracı duruyor', () => {
+  itSource('her dosya beklenen bir ikon ve Codex > Icons > Game icons ta; small/ eşleri var; asıl sayfalar ve kesim aracı duruyor', () => {
     const onDisk = readdirSync('assets/misc-icons').flatMap((g) => readdirSync(`assets/misc-icons/${g}`).filter((f) => f.endsWith('.png')).map((f) => `${g}:${f.replace(/\.png$/, '')}`)).sort();
     expect(onDisk.length).toBe(145);
     const small = readdirSync('assets/misc-icons').flatMap((g) => readdirSync(`assets/misc-icons/${g}/small`).filter((f) => f.endsWith('.png')).map((f) => `${g}:${f.replace(/\.png$/, '')}`)).sort();
@@ -353,7 +354,11 @@ describe('Oyun ikonu görselleri (assets/misc-icons) bağlı; asılları assets/
     const rows = catalog.miscArt;
     expect(rows.filter((r) => r.unlinked).map((r) => r.id), 'beklenmeyen dosya').toEqual([]);
     expect(rows.filter((r) => r.url).map((r) => r.id).sort()).toEqual(onDisk);
-    expect(legacyItems.some((i) => /assets\/misc-icons\//.test(`${i.id} ${i.label}`))).toBe(false);
+    // yalnız emekli durumların rozetleri Legacy'de (dosya silinmez); diğerleri Codex > Icons'ta
+    const legacyArt = legacyItems.filter((i) => i.kind === 'art').map((i) => i.id).sort();
+    expect(legacyArt).toEqual(Object.keys(content.statuses).filter((id) => content.statuses[id]!.retired && onDisk.includes(`status:${id}`)).map((id) => `status:${id}`).sort());
+    expect(legacyArt).toEqual(expect.arrayContaining(['status:branded', 'status:ley_thread']));
+    expect(legacyItems.some((i) => i.kind !== 'art' && /assets\/misc-icons\//.test(`${i.id} ${i.label}`))).toBe(false);
     for (const f of ['status-sheet.png', 'world-sheet.png', 'class-node-sheet.png', 'smith-town-sheet.png']) expect(existsSync(`assets/source/misc-icons/${f}`), f).toBe(true);
     expect(existsSync('tools/make-misc-icons.mjs')).toBe(true);
   });

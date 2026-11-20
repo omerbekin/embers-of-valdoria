@@ -20,7 +20,7 @@
 
 /* yerleşim (Recruit / Choose your hero kartı ve Gear > Sheet sekmesi .gr-skills-strip, Ömer 2026-11-12): solda pasif (çizgiyle ayrı sütun), sağda 2x2 yatay plakalar (kare ikon solda; ad, bedel, bekleme sağda) */
 .mw.hp .hp-sks, .gr-skills-strip .hp-sks { display: flex; gap: calc(16 * var(--u)); align-items: stretch; margin-top: auto; }
-.hp-sks .g-pas { flex: none; width: calc(128 * var(--u)); padding-right: calc(16 * var(--u)); border-right: 1px solid rgba(217,178,106,.3); display: flex; }
+.hp-sks .g-pas { flex: none; width: max(84px, calc(128 * var(--u))); padding-right: calc(16 * var(--u)); border-right: 1px solid rgba(217,178,106,.3); display: flex; }
 .hp-sks .g-rest { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: calc(12 * var(--u)); }
 .hp-sks .hsk.pas { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(8 * var(--u)); padding: calc(16 * var(--u)) 0 calc(8 * var(--u)); }
 .hp-sks .hsk.pas .ic { width: calc(76 * var(--u)); height: calc(76 * var(--u)); }

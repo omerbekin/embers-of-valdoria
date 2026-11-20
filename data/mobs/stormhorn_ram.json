@@ -27,7 +27,7 @@
     "id": "stormhide",
     "name": "Stormhide",
     "icon": "bolt",
-    "text": "A hero that hits this unit with a melee skill is Shocked. If that hero stands in water, it is Stunned instead.",
+    "text": "A hero that hits this unit with a melee skill is Shocked. If that hero stands in water, it is Electrocuted instead.",
     "effect": {
       "type": "stormhide"
     }

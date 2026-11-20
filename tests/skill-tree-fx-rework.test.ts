@@ -43,14 +43,15 @@ const ROW = ['f1*3', 'f2*5', 'f3*5'];
 describe('Mage / AM / Druid ağaç yenilemesi: veri', () => {
   it('üç ağaç temiz derlenir, Mage / AM ağacında inactive düğüm kalmadı, sürüm artışı (bedava respec)', () => {
     for (const c of ['mage', 'antimage', 'druid']) expect(checkTreeFx(treeOf(c)!), c).toEqual([]);
-    for (const c of ['mage', 'antimage']) {
+    // antimage (Redtithe, 2026-11-17): eski kite bağlı düğümler bilerek inactive (Ömer kararı bekler; tests/skill-tree-fx-antimage.test.ts)
+    for (const c of ['mage']) {
       const t = treeOf(c)!;
       for (const [k, n] of Object.entries(t.nodes)) expect(n.inactive, `${c} ${k}`).toBeFalsy();
       for (const bar of t.mastery.bar) expect(bar.inactive, `${c} ${bar.name}`).toBeFalsy();
       expect(JSON.stringify(t.nodes)).not.toMatch(/Spell Echo|Mana Barrier|Mana Overflow/);
     }
     expect(treeOf('mage')!.version).toBe(5);
-    expect(treeOf('antimage')!.version).toBe(5);
+    expect(treeOf('antimage')!.version).toBe(6); // Redtithe eşlemesi (2026-11-17)
     expect(treeOf('druid')!.version).toBe(3);
     // Mire: 'Slows on impact' kalktı (kök tarlası içindekine o an Slow veriyor)
     expect(JSON.stringify(treeOf('druid')!.nodes['2.fa']!.fx)).not.toMatch(/"slow"/);
@@ -114,22 +115,7 @@ describe('Mage / AM: tetikler savaşta', () => {
     });
   });
 
-  it('Threaded Void (4.d3): Void Strike hedefe Ley Thread bırakır', () => {
-    const b = make({ 7: 'antimage' }, { 4: 'warrior' }, { 7: { tree: tree('antimage', ['4.d1', '4.d2', '4.d3']) } });
-    const am = P(b);
-    am.cooldowns.void_strike = 0;
-    am.mp = am.maxMp;
-    expect(b.useSkill(am.uid, 'void_strike', 'enemy-0').ok).toBe(true);
-    expect(b.get('enemy-0')!.statuses.find((s) => s.kind === 'ley_thread')?.turns).toBe(2);
-  });
-
-  it('Twin Thread (0.eb): Mana Steal yanındaki bir düşmana da iplik', () => {
-    const steps = ['0.f1*3', '0.f2*5', '0.f3*5', '0.n0', '0.r', '0.eb'];
-    const b = make({ 7: 'antimage' }, { 4: 'warrior', 5: 'warrior' }, { 7: { tree: tree('antimage', steps) } });
-    expect(b.useSkill(P(b).uid, 'mana_burn', 'enemy-0').ok).toBe(true);
-    const threaded = b.combatants.filter((c) => c.side === 'enemy' && c.statuses.some((s) => s.kind === 'ley_thread'));
-    expect(threaded).toHaveLength(2);
-  });
+  // Threaded Void / Twin Thread (Ley Thread) kitten çıktı: Redtithe ağaç testleri tests/skill-tree-fx-antimage.test.ts
 });
 
 describe('Mage / AM: pasif satırı yamaları', () => {

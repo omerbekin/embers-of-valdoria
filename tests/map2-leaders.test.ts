@@ -9,6 +9,7 @@ import { MOB_IMAGE_FILES } from '../src/game/icon-image-files';
 import { mobSheetId, vfxSheetFile } from '../src/game/vfx-sheet-files';
 import { selectSkillVfx } from '../src/game/vfx-select';
 import { MOB_POSES } from '../src/game/mob-poses';
+import { itSource } from './asset-source';
 
 // Harita 2 elit ve boss önderlerinin KENDİ kitleri (maps-2-3.md 3.3, Ömer onayı 2026-10-27; sayılar provizyon: open-questions 435)
 // + M-N2 zorla hareket (Boarding Hook: kahramanı kendi şeridinin ön sıra hücresine çeker; hücre doluysa çekme yok; elit/boss çekilmez).
@@ -60,7 +61,7 @@ describe('Harita 2 önderleri: veri', () => {
     }
   });
 
-  it('her önder skill ikonu ve efekti KENDİ sanatı: ödünç efekte düşemez (Ömer 2026-10-27, Harita 2 de ödünç sanat yok)', () => {
+  itSource('her önder skill ikonu ve efekti KENDİ sanatı: ödünç efekte düşemez (Ömer 2026-10-27, Harita 2 de ödünç sanat yok)', () => {
     for (const [id, kit] of Object.entries(KITS)) {
       for (const s of kit) {
         const spec = MOB_VFX_SPECS[s];
@@ -78,7 +79,7 @@ describe('Harita 2 önderleri: veri', () => {
     }
   });
 
-  it('Pit Champion Gorr ve Inquisitor-Captain Vell kendi çizimini kullanır (ödünç Bandit Chief / Oathsworn yok)', () => {
+  itSource('Pit Champion Gorr ve Inquisitor-Captain Vell kendi çizimini kullanır (ödünç Bandit Chief / Oathsworn yok)', () => {
     for (const id of ['pit_champion_gorr', 'inquisitor_captain_vell']) {
       expect(content.mobs[id]!.spriteId, id).toBe(id);
       for (const f of [`assets/sprites/${id}/idle.png`, `assets/avatars/${id}.png`, `assets/sprites/${id}/poses.png`, `assets/source/mobs/${id}.png`, `assets/source/mob-poses/${id}.png`]) expect(existsSync(f), f).toBe(true);

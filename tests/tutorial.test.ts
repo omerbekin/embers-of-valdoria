@@ -155,7 +155,7 @@ describe('ekran tetikleri ve Codex', () => {
     expect(ids(dueScreenLessons('map', { path: ['1', '2', '3', '4'], partySize: 2 }, none))).toEqual(['roads']);
     expect(ids(dueScreenLessons('gear', { bagSize: 1 }, none))).toEqual(['gear']);
     expect(ids(dueScreenLessons('gear', {}, none))).toEqual([]); // boş torba: sürükleme dersi yok
-    expect(lessonPages(lessonById('gear')!)).toHaveLength(3);
+    expect(lessonPages(lessonById('gear')!)).toHaveLength(2); // sürükle + karşılaştır tek sayfa, sonra Equip best (Onboarding denetimi 2026-11-17)
     expect(lessonPages(lessonById('endless')!)).toHaveLength(3);
     expect(ids(dueScreenLessons('gear', { bagSize: 1 }, new Set(['gear'])))).toEqual([]);
   });

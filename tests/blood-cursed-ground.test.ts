@@ -142,11 +142,12 @@ describe('kan zemini: motor', () => {
 });
 
 describe('lanetli zemin (Withering Curse)', () => {
-  it('Withering Curse alanına Cursed Ground bırakır; içindeki düşman Unhallowed, alınan şifa veri çarpanıyla azalır', () => {
+  // Ömer 2026-11-16: Unhallowed şifa kesmez (Wound'la aynı işti); Tur 27: karanlık hasar çarpanı yok (lanet uzar: tests/tur27-curse-lingers)
+  it('Withering Curse alanına Cursed Ground bırakır; içindeki düşman Unhallowed, karanlık hasar ve şifa aynı', () => {
     const eff = content.skills['withering_curse']!.effects.find((e) => e.type === 'ground');
     expect(eff && eff.type === 'ground' && eff.ground).toBe('cursed_ground');
-    const mult = content.statuses['unhallowed']!.healTakenMult!;
-    expect(mult).toBeLessThan(1);
+    expect(content.statuses['unhallowed']!.healTakenMult).toBeUndefined();
+    expect(content.statuses['unhallowed']!.elementTakenMult).toBeUndefined();
     for (const mode of ['turns', 'test'] as const) {
       const b = arena([['hexer', 4]], [['warrior', 0]], mode);
       const t = E(b, 0);
@@ -155,7 +156,9 @@ describe('lanetli zemin (Withering Curse)', () => {
       cast(b, P(b, 4).uid, 'withering_curse', undefined, t.slot);
       expect(b.ground.some((g) => g.ground === 'cursed_ground' && g.board === 'enemy' && g.slots.includes(t.slot)), mode).toBe(true);
       expect(t.statuses.some((s) => s.kind === 'unhallowed'), mode).toBe(true);
-      expect(b.groundTickHeal(100, t)).toBe(Math.round(before * mult));
+      expect(b.groundTickHeal(100, t)).toBe(before);
+      expect(b.statusElementMult(t, 'dark')).toBe(1);
+      expect(b.statusElementMult(t, 'fire')).toBe(1);
     }
   });
 

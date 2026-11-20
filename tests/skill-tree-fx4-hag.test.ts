@@ -47,7 +47,6 @@ function seeds(what: string, fn: (seed: number) => boolean, n = 120): void {
   for (let s = 1; s <= n; s++) if (fn(s)) return;
   throw new Error(`${what}: hiçbir seed'de olmadı`);
 }
-const landed = (evs: BattleEvent[], uid: string): boolean => evs.some((e) => e.type === 'damage' && e.target === uid && e.origin === 'skill');
 function untilTurn(b: Battle, c: Combatant, max = 30): BattleEvent[] {
   const from = b.log.length;
   for (let i = 0; i < max && b.currentActor !== c; i++) expect(b.skipTurn().ok).toBe(true);
@@ -218,41 +217,33 @@ describe('Faz 4b: Anti-Mage', () => {
     expect(healBy(evs, 'antimage:3.f2')).toBe(Math.round(ally.maxHp * 3 * num('antimage', '3.f2', '0.do.0.heal')));
   });
 
-  it('Mirror Ward: Spell Ward\'ın emdiği büyü vuruşunun %50\'si saldırana döner', () => {
-    seeds('Fire Bolt on ward', (s) => {
-      const b = make({ 0: 'antimage', 1: 'warrior' }, { 0: 'mage' }, withTree(0, only('antimage', { '3.v': 1 })), s);
-      const ally = P(b, 1);
-      const foe = E(b);
-      cast(b, P(b), 'spell_ward', ally);
-      const hp0 = foe.hp;
-      const evs = cast(b, foe, 'fire_bolt', ally);
-      if (!landed(evs, ally.uid)) return false;
-      const absorbed = evs.reduce((n, e) => n + (e.type === 'damage' && e.target === ally.uid ? e.absorbed : 0), 0);
-      if (absorbed <= 0) return false;
-      expect(hp0 - foe.hp).toBe(Math.max(1, Math.round(absorbed * num('antimage', '3.v', '0.do.0.damage'))));
-      expect(procs(b, 'antimage:3.v')).toBe(1);
-      return true;
-    });
-  });
-
-  it('Bastion of Null / Warded Steps: alınan fiziksel hasar çarpanı (büyüye işlemez)', () => {
-    const b = make({ 0: 'antimage', 1: 'warrior' }, { 0: 'warrior' }, withTree(0, only('antimage', { '3.mb': 1 }, 3)));
+  // Mirror Ward (3.v) ve Warded Steps (bar[3]) Redtithe eşlemesinde pasif (inactive; tests/skill-tree-fx-antimage.test.ts)
+  it('Bastion of Null (Redtithe eşlemesi): Mirror Vein + taunt varken alınan fiziksel hasar çarpanı (büyüye işlemez)', () => {
+    const b = make({ 0: 'antimage', 1: 'warrior' }, { 0: 'warrior' }, withTree(0, only('antimage', { '3.mb': 1 })));
     const me = P(b);
-    const ally = P(b, 1);
-    expect(b.treeTakenMult(ally, E(b), 'physical')).toBe(1);
-    cast(b, me, 'spell_ward', ally);
-    expect(b.treeTakenMult(ally, E(b), 'physical')).toBeCloseTo(1 + num('antimage', 'bar3', '0.mul'), 9);
-    expect(b.treeTakenMult(ally, E(b), 'magic')).toBe(1);
+    expect(b.treeTakenMult(me, E(b), 'physical')).toBe(1);
     cast(b, me, 'spell_ward', me);
-    expect(b.treeTakenMult(me, E(b), 'physical')).toBeCloseTo(1 + num('antimage', 'bar3', '0.mul'), 9); // taunt yok: yalnız Warded Steps
+    expect(me.shieldHooks?.some((h) => h.skill === 'spell_ward' && h.amount > 0)).toBe(true);
+    expect(b.treeTakenMult(me, E(b), 'physical')).toBe(1); // taunt yok
     me.statuses.push({ kind: 'taunt', turns: 2, source: me.uid });
-    expect(b.treeTakenMult(me, E(b), 'physical')).toBeCloseTo((1 + num('antimage', 'bar3', '0.mul')) * 0.7, 9);
+    expect(b.treeTakenMult(me, E(b), 'physical')).toBeCloseTo(1 + num('antimage', '3.mb', '0.mul'), 9);
+    expect(b.treeTakenMult(me, E(b), 'magic')).toBe(1);
   });
 });
 
 describe('Faz 4b: Gambler', () => {
-  it('All or Nothing: Double or Nothing şansı %25 -> %40 (taban)', () => {
-    expect(only('gambler', { '0.fa': 1 })!.passive!.effect).toMatchObject({ type: 'spellEcho', chance: 0.4 });
+  it('All or Nothing: Lucky Streak tekrar şansı %25 -> %40 (taban); kaybedilen bahis o skill\'in cooldown\'unu 1 uzatır', () => {
+    expect(only('gambler', { '0.fa': 1 })!.passive!.effect).toMatchObject({ type: 'luckyStreak', chance: num('gambler', '0.fa', '0.v') });
+    seeds('High Stakes bust', (s) => {
+      const b = make({ 0: 'gambler' }, { 0: 'warrior' }, withTree(0, only('gambler', { '0.fa': 1 })), s, 'turns');
+      const me = P(b);
+      untilTurn(b, me);
+      E(b).hp = E(b).maxHp = 99999;
+      const evs = cast(b, me, 'high_stakes', E(b));
+      if (!evs.some((e) => e.type === 'passive' && e.passive === 'gamble_lose')) return false;
+      expect(me.cooldowns.high_stakes).toBe((content.skills.high_stakes!.cooldown ?? 0) + 1);
+      return true;
+    });
   });
 
   it('Run the Table: All In öldürürse cooldown\'u biter (ağaçsız kalır)', () => {
@@ -296,30 +287,39 @@ describe('Faz 4b: Gambler', () => {
     expect(cleared).toBe(true);
   });
 
-  it('Chain Reaction + Quick Shuffle: Double or Nothing tutunca öbür cooldown\'lar 1 azalır ve sıradaki tur %3 x rank erken', () => {
-    seeds('echo', (s) => {
-      const b = make({ 0: 'gambler' }, { 0: 'warrior' }, withTree(0, only('gambler', { '0.n0': 1, '0.f3': 2 })), s, 'turns');
-      const me = P(b);
-      untilTurn(b, me);
-      E(b).hp = E(b).maxHp = 99999;
-      me.cooldowns = { card_trick: 3 };
-      cast(b, me, 'high_stakes', E(b));
-      if (me.cooldowns.high_stakes !== undefined) return false; // yankı yok
-      expect(me.cooldowns.card_trick).toBe(2);
-      expect(b.speedBoostOf(me.uid)).toBeCloseTo(2 * num('gambler', '0.f3', '0.do.0.sooner'), 9); // değer veriden (D9 2026-10-23)
-      expect(procs(b, 'gambler:0.n0')).toBe(1);
-      return true;
+  it('Chain Reaction: dolu seri harcanınca öbür cooldown\'lar 1 azalır; Quick Shuffle: seri artınca sıradaki tur %4 x rank erken', () => {
+    const b = make({ 0: 'gambler' }, { 0: 'warrior' }, withTree(0, only('gambler', { '0.n0': 1, '0.f3': 2 })), 11, 'turns');
+    const me = P(b);
+    untilTurn(b, me);
+    E(b).hp = E(b).maxHp = 99999;
+    me.streak = 3;
+    me.cooldowns = { card_trick: 3 };
+    cast(b, me, 'high_stakes', E(b));
+    expect(me.cooldowns.card_trick).toBe(2);
+    expect(procs(b, 'gambler:0.n0')).toBe(1);
+    // seri 2 -> bahis kazancı: +1 seri, Quick Shuffle tutar
+    const b2 = make({ 0: 'gambler' }, { 0: 'warrior' }, withTree(0, only('gambler', { '0.f3': 2 })), 11, 'turns');
+    const g = P(b2);
+    E(b2).hp = E(b2).maxHp = 99999;
+    seeds('High Stakes win', () => {
+      untilTurn(b2, g);
+      g.hp = g.maxHp;
+      g.streak = 1;
+      const evs = cast(b2, g, 'high_stakes', E(b2));
+      return evs.some((e) => e.type === 'streak' && e.reason === 'betWin');
     });
+    expect(b2.speedBoostOf(g.uid)).toBeCloseTo(2 * num('gambler', '0.f3', '0.do.0.sooner'), 9);
   });
 
-  it('Snake Eyes: Loaded Dice kritik vurunca sonraki bahis +%10 Jackpot şansı; bahis sonuçlanınca silinir', () => {
-    seeds('Loaded Dice crit', (s) => {
+  it('Snake Eyes: Loaded Dice çift 1 atınca sonraki bahis Jackpot şansı artar; bahis sonuçlanınca silinir', () => {
+    seeds('Loaded Dice double 1', (s) => {
       const b = make({ 0: 'gambler' }, { 0: 'warrior' }, withTree(0, only('gambler', { '1.mb': 1 })), s);
       const me = P(b);
       const foe = E(b);
       foe.hp = foe.maxHp = 99999;
       const evs = cast(b, me, 'loaded_dice', foe);
-      if (!evs.some((e) => e.type === 'damage' && e.target === foe.uid && e.crit)) return false;
+      if (!evs.some((e) => e.type === 'dice' && e.double && e.values[0] === 1)) return false;
+      if (evs.filter((e) => e.type === 'dice').length > 1) return false; // tekrar atışı olmayan kullanım (sade)
       expect((me.treeBuffs ?? []).find((x) => x.node === 'gambler:1.mb')?.mod).toMatchObject({ winChance: num('gambler', '1.mb', '0.do.0.buff.winChance') });
       // bahissiz skill buff'ı harcamaz
       cast(b, me, 'loaded_dice', foe);

@@ -139,15 +139,15 @@ describe('Iron Mooring kırılması (M8)', () => {
     expect(ev.find((e) => e.type === 'anchorBroken')).toMatchObject({ anchor: m.uid, owner: w.uid, stagger: true, left: 1 });
     expect(ev.find((e) => e.type === 'telegraphCancel')).toMatchObject({ skill: 'breaking_span', cause: 'anchor' });
     expect(b.telegraphs).toHaveLength(0);
-    expect(w.statuses.some((s) => s.kind === 'staggered')).toBe(true);
+    expect(w.statuses.some((s) => s.kind === 'stun')).toBe(true);
     expect(b.effectiveStats(w).armor).toBe(w.stats.armor + W.boss!.anchor!.armorAdd);
     expect(ev.some((e) => e.type === 'death' && e.target === m.uid && e.corpse)).toBe(false); // ceset bırakmaz
     // Warden'ın kalan eylemi yanar (Stagger tek eylem)
     b.skipTurn();
     const n2 = b.log.length;
     toWarden(b);
-    expect(since(b, n2).some((e) => e.type === 'staggered' && e.actor === w.uid)).toBe(true);
-    expect(w.statuses.some((s) => s.kind === 'staggered')).toBe(false);
+    expect(since(b, n2).some((e) => e.type === 'turnSkipped' && e.actor === w.uid && e.stunned)).toBe(true);
+    expect(w.statuses.some((s) => s.kind === 'stun')).toBe(false);
   });
 
   it('Chain Hook en az bir Mooring ister; ikisi de kırılınca kullanılamaz', () => {
@@ -199,7 +199,7 @@ describe('fazlar ve faz kilidi (M7)', () => {
     // Mooring'ler kopar (Stagger yok), Fall telgrafı anında: şerit başına 1 Keystone, üçü aynı sırada değil
     expect(moorings(b).every((m) => m.hp <= 0)).toBe(true);
     expect(b.log.filter((e) => e.type === 'anchorBroken').every((e) => e.type === 'anchorBroken' && !e.stagger)).toBe(true);
-    expect(w.statuses.some((s) => s.kind === 'staggered')).toBe(false);
+    expect(w.statuses.some((s) => s.kind === 'stun')).toBe(false);
     const fall = b.telegraphs.find((t) => t.skill === 'fall_of_kings_bridge')!;
     expect(fall.safeCells).toHaveLength(content.formulas.formation.lanes);
     expect(new Set(fall.safeCells!.map((s) => s % 3)).size).toBe(3);
@@ -280,7 +280,7 @@ describe('Unyielding (M9)', () => {
       b.debugAddStatus(w.uid, k, 3);
       expect(w.statuses.some((s) => s.kind === k)).toBe(false);
     }
-    expect(w.statuses.some((s) => s.kind === 'staggered')).toBe(false);
+    expect(w.statuses.some((s) => s.kind === 'stun')).toBe(false);
     b.debugAddStatus(w.uid, 'wound', 3);
     expect(w.statuses.find((s) => s.kind === 'wound')?.turns).toBe(3 + W.boss!.unyielding!.debuffDurationDelta);
     // Ömer onaylı 2026-11-09 (form 3): Slow ve Blinded boss'a da işler (azaltılmış güçle); Unyielding süreyi kısaltır (en az 1)
@@ -297,7 +297,7 @@ describe('Unyielding (M9)', () => {
     const w = warden(b);
     expect(w.tier).toBeUndefined();
     b.debugAddStatus(w.uid, 'stun', 2);
-    expect(w.statuses.some((s) => s.kind === 'stun' || s.kind === 'staggered')).toBe(false);
+    expect(w.statuses.some((s) => s.kind === 'stun')).toBe(false);
   });
 });
 

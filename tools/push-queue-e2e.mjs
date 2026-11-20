@@ -2,9 +2,9 @@
 // Gönderim kuyruğu faz 2 uçtan uca testi (Ömer 2026-10-31): geçici depo + geçici bare origin; gerçek repo, gerçek test/build/deploy ÇALIŞMAZ.
 // Kullanım: node tools/push-queue-e2e.mjs [senaryo-adı-parçası]   Çıkış kodu 0 = hepsi geçti.
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const TOOL = join(dirname(fileURLToPath(import.meta.url)), 'push-queue.mjs');
@@ -62,6 +62,9 @@ function world() {
   const g = (...a) => execFileSync('git', [...ID, ...a], { cwd: game, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   g('init', '-q', '-b', 'main');
   g('config', 'core.autocrlf', 'true');
+  // Araç kimlik vermez (2026-11-14), deponun kendi ayarını kullanır: geçici depoya da yerel kimlik
+  g('config', 'user.name', 'T');
+  g('config', 'user.email', 't@t');
   g('remote', 'add', 'origin', join(w, 'origin.git'));
   const put = (f, s) => { mkdirSync(dirname(join(game, f)), { recursive: true }); writeFileSync(join(game, f), CRLF(s)); };
   put('.gitignore', 'node_modules/\ndist/\n');
@@ -73,6 +76,8 @@ function world() {
   put('src/b.ts', 'export const b = 1;\n');
   put('src/shared.ts', SHARED);
   put('tests/t.test.ts', 'ok\n');
+  // Gönderim golden'ı yeniden üretip `git add -- tests/fixtures/golden` yapar; klasör yoksa add düşer ve her gönderim senaryosu kalır (2026-11-19)
+  put('tests/fixtures/golden/g.json', '{}\n');
   put('docs/design/open-questions.md', '# Sorular\n\n## 458. Son madde\n- not\n');
   mkdirSync(join(game, 'node_modules', '.bin'), { recursive: true });
   writeFileSync(join(game, 'node_modules', '.bin', 'vitest'), '');
@@ -82,12 +87,12 @@ function world() {
   g('push', '-q', '-u', 'origin', 'main');
   const env = {
     ...process.env, EOV_GAME: game, EOV_ROOT: join(w, 'outer'), EOV_SESSIONS_DIR: join(w, 'sessions'), EOV_E2E: '1', EOV_W: w, TEMP: join(w, 'tmp'), TMP: join(w, 'tmp'),
-    EOV_CMD_TSC: 'node -e 0', EOV_CMD_TEST: `node "${join(w, 'fake-test.mjs')}"`, EOV_CMD_BUILD: 'node -e 0', EOV_CMD_DEPLOY: 'node -e 0', EOV_CMD_NPMCI: 'node -e 0',
+    EOV_CMD_TSC: 'node -e 0', EOV_CMD_TEST: `node "${join(w, 'fake-test.mjs')}"`, EOV_CMD_BUILD: 'node -e 0', EOV_CMD_DEPLOY: 'node -e 0', EOV_CMD_NPMCI: 'node -e 0', EOV_CMD_GOLDEN: 'node -e 0',
     EOV_NET_WAITS: '0,0,0', EOV_LOCK_POLL_MS: '200', EOV_GIT_WRAP: '', GIT_AUTHOR_NAME: undefined,
   };
   delete env.EOV_GIT_WRAP;
-  const run = (args, input, extra = {}) => {
-    const r = spawnSync(process.execPath, [TOOL, ...args], { env: { ...env, ...extra }, input: input ?? '', encoding: 'utf8', windowsHide: true });
+  const run = (args, input, extra = {}, cwd = undefined) => {
+    const r = spawnSync(process.execPath, [TOOL, ...args], { cwd, env: { ...env, ...extra }, input: input ?? '', encoding: 'utf8', windowsHide: true });
     return { code: r.status, out: (r.stdout ?? '') + (r.stderr ?? '') };
   };
   const W = {
@@ -1159,8 +1164,11 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
     setQ(W, (q) => { q.sessions[B].rulesV = 1; });
     has(W.hook('hook-prompt', { session_id: B, prompt: 'y' }).out, 'SendMessage');
     hasNot(W.hook('hook-prompt', { session_id: B, prompt: 'z' }).out, 'SendMessage');
-    const owners = readFileSync(join(dirname(TOOL), '..', 'docs', 'arch', 'lead.md'), 'utf8');
-    for (const [n, k] of [['Character Design', 'vesper-tree'], ['Mekanik & Rework', 'mob-mana'], ['Campaign', 'campaign'], ['Character vfx', 'character-vfx'], ['Minor Fixes', 'minor-fixes']]) has(owners, `| ${n} | ${k} |`);
+    // Sahip listesi 2026-11-08'den beri tek yerde: docs-map.md > Alan belgeleri; lead.md > Alanlar oraya bağlantı verir
+    const arch = join(dirname(TOOL), '..', 'docs', 'arch');
+    has(readFileSync(join(arch, 'lead.md'), 'utf8'), 'docs/arch/docs-map.md', 'lead.md sahip listesine bağlantı vermeli');
+    const owners = readFileSync(join(arch, 'docs-map.md'), 'utf8');
+    for (const [n, k] of [['Character Design', 'character-design'], ['Campaign', 'campaign'], ['Character vfx', 'character-vfx'], ['Combat Design', 'combat-design'], ['Minor Fixes', 'minor-fixes']]) has(owners, `| ${n} | areas/${k}.md |`);
   },
   'ic is yalniz notsuz girdide': (W) => {
     W.cutover();
@@ -1175,6 +1183,176 @@ execFileSync('git', ['-c','user.name=T','-c','user.email=t@t','commit','-q','-m'
     ok(!ent(W, A).internal, 'not kaldıkça iç değil');
     hasNot(W.run(['status']).out, 'HAZIR (iç)');
     has(W.run(['status']).out, 'HAZIR');
+  },
+  // ---- Agent kopyaları (Ömer 2026-11-18): hafif açılış, süpürme, disk uyarısı ----
+  'wt-open-agent hafif: sparse, commit/merge haric dosyayi silmez': (W) => {
+    W.upstream('docs/anim-review/big.md', 'buyuk\n');
+    W.upstream('docs/anim-review/board.md', 'pano\n');
+    W.upstream('assets/source/s.png', 'png\n');
+    W.g('fetch', '-q', 'origin');
+    const r = W.run(['wt-open-agent', 'ui-dev Hafif']);
+    ok(r.code === 0, 'açılmalı: ' + r.out);
+    has(r.out, 'hafif');
+    const p = join(W.game, '.claude', 'worktrees', 'agent-ui-dev-hafif');
+    const wg = (...a) => execFileSync('git', [...ID, ...a], { cwd: p, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+    ok(wg('rev-parse', '--abbrev-ref', 'HEAD') === 'agent/ui-dev-hafif', 'dal');
+    ok(!existsSync(join(p, 'docs', 'anim-review', 'big.md')), 'anim-review checkout edilmemeli');
+    ok(existsSync(join(p, 'docs', 'anim-review', 'board.md')), 'board.md kalmalı (build içe aktarır)');
+    ok(!existsSync(join(p, 'assets', 'source', 's.png')), 'assets/source checkout edilmemeli (testleri itSource ile atlanır)');
+    ok(existsSync(join(p, 'src', 'a.ts')) && existsSync(join(p, 'package.json')), 'kalan dosyalar var');
+    ok(lstatSync(join(p, 'node_modules')).isSymbolicLink(), 'node_modules junction');
+    ok(existsSync(join(p, 'node_modules', '.bin', 'vitest')), 'junction hedefi görünür');
+    ok(!wg('status', '--porcelain'), 'hafif kopya temiz');
+    // commit: hariç dosya silinmiş görünmez
+    writeFileSync(join(p, 'src', 'a.ts'), 'export const a = 7;\n');
+    writeFileSync(join(p, 'src', 'n.ts'), 'export const n = 1;\n');
+    wg('add', '-A');
+    wg('commit', '-q', '-m', 'agent işi');
+    ok(wg('diff', '--name-only', 'HEAD~1', 'HEAD').split(/\r?\n/).sort().join(',') === 'src/a.ts,src/n.ts', 'commit yalnız iki dosya: ' + wg('diff', '--name-only', 'HEAD~1', 'HEAD'));
+    has(wg('ls-tree', '-r', '--name-only', 'HEAD'), 'docs/anim-review/big.md', 'ağaçta hariç dosya durmalı');
+    has(wg('ls-tree', '-r', '--name-only', 'HEAD'), 'assets/source/s.png', 'ağaçta assets/source durmalı');
+    // merge: hafif kopyaya main'den gelen birleştirme de hariç dosyayı silmez; tam kopyaya birleştirince dosya yerinde
+    W.upstream('src/b.ts', 'export const b = 3;\n');
+    wg('fetch', '-q', 'origin');
+    wg('merge', '-q', '--no-edit', 'origin/main');
+    has(wg('ls-tree', '-r', '--name-only', 'HEAD'), 'docs/anim-review/big.md', 'merge sonrası ağaçta');
+    const m = join(W.w, 'merge-full');
+    W.g('worktree', 'add', '-q', '-b', 'tmp/merge', m, 'refs/remotes/origin/main');
+    execFileSync('git', [...ID, 'merge', '-q', '--no-edit', 'agent/ui-dev-hafif'], { cwd: m, stdio: 'ignore' });
+    ok(existsSync(join(m, 'docs', 'anim-review', 'big.md')) && existsSync(join(m, 'src', 'n.ts')), 'tam kopyada birleşme');
+    // --full ve --from
+    const f = W.run(['wt-open-agent', 'tam', '--full', '--from', 'agent/ui-dev-hafif']);
+    ok(f.code === 0, 'full: ' + f.out);
+    const fp = join(W.game, '.claude', 'worktrees', 'agent-tam');
+    ok(existsSync(join(fp, 'docs', 'anim-review', 'big.md')) && existsSync(join(fp, 'assets', 'source', 's.png')), 'tam kopyada anim-review ve assets/source var');
+    ok(existsSync(join(fp, 'src', 'n.ts')), '--from tabanı');
+    ok(W.run(['wt-open-agent', 'tam']).code !== 0, 'aynı ad ikinci kez açılmaz');
+  },
+  'wt-sweep: biten kopya silinir, dal ve junction hedefi kalir': (W) => {
+    writeFileSync(join(W.game, 'node_modules', 'sentinel.txt'), 'kal');
+    const other = join(W.w, 'other-mods');
+    mkdirSync(other, { recursive: true });
+    writeFileSync(join(other, 'sentinel.txt'), 'kal');
+    ok(W.run(['wt-open-agent', 'bitti']).code === 0, 'aç');
+    const p = join(W.game, '.claude', 'worktrees', 'agent-bitti');
+    mkdirSync(join(p, 'cloudflare'), { recursive: true });
+    execFileSync('cmd', ['/d', '/c', 'mklink', '/J', join(p, 'cloudflare', 'node_modules'), other], { stdio: 'ignore' });
+    mkdirSync(join(p, 'dist'), { recursive: true });
+    writeFileSync(join(p, 'dist', 'x.js'), 'x');
+    const dry = W.run(['wt-sweep', '--idle', '0']);
+    ok(dry.code === 0, dry.out);
+    has(dry.out, 'SİLİNİR  agent-bitti');
+    ok(existsSync(p), 'liste kopyaya dokunmaz');
+    const y = W.run(['wt-sweep', '--yes', '--idle', '0']);
+    has(y.out, 'silindi  agent-bitti');
+    ok(!existsSync(p), 'kopya silinmeli: ' + y.out);
+    ok(W.g('rev-parse', '--verify', '-q', 'refs/heads/agent/bitti'), 'dal kalmalı');
+    ok(readFileSync(join(W.game, 'node_modules', 'sentinel.txt'), 'utf8') === 'kal', 'asıl node_modules sağlam');
+    ok(existsSync(join(W.game, 'node_modules', '.bin', 'vitest')), 'asıl .bin sağlam');
+    ok(readFileSync(join(other, 'sentinel.txt'), 'utf8') === 'kal', 'iç junction hedefi sağlam');
+    hasNot(W.g('worktree', 'list'), 'agent-bitti', 'git kaydı temizlenmeli');
+  },
+  'wt-sweep: kirli, gonderilmemis, taze, anilan, log dosyali kopya kalir': (W) => {
+    const open = (n) => { const r = W.run(['wt-open-agent', n]); if (r.code) throw new Error(r.out); return join(W.game, '.claude', 'worktrees', `agent-${n}`); };
+    const wg = (p, ...a) => execFileSync('git', [...ID, ...a], { cwd: p, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+    // Zamanı geri al: kopyanın dosyaları ve git kaydı 2 saat önce dokunulmuş gibi
+    const age = (p) => {
+      const t = new Date(Date.now() - 2 * 3600000);
+      const walk = (d) => { for (const n of readdirSync(d)) { const x = join(d, n); const s = lstatSync(x); if (s.isSymbolicLink() || n === 'node_modules') continue; if (s.isDirectory()) walk(x); utimesSync(x, t, t); } utimesSync(d, t, t); };
+      walk(p);
+      walk(join(W.game, '.git', 'worktrees', basename(p)));
+    };
+    const dirty = open('kirli'); writeFileSync(join(dirty, 'src', 'yeni.ts'), 'x\n'); age(dirty);
+    const work = open('isli'); writeFileSync(join(work, 'src', 'a.ts'), 'export const a = 42;\n'); wg(work, 'commit', '-qam', 'iş'); age(work);
+    const young = open('taze');
+    const talked = open('anilan'); age(talked);
+    mkdirSync(join(W.w, 'sessions', 's1', 'subagents'), { recursive: true });
+    writeFileSync(join(W.w, 'sessions', 's1', 'subagents', 'agent-1.jsonl'), JSON.stringify({ text: `cd ${talked}` }) + '\n');
+    const logged = open('loglu'); writeFileSync(join(W.game, '.git', 'info', 'exclude'), '.claude/worktrees/\n*.log\n'); writeFileSync(join(logged, 'run.log'), 'l'); age(logged);
+    // squash gönderim: dalın değişikliği origin/main'e başka commit'le girmiş -> silinir
+    const shipped = open('gitti'); writeFileSync(join(shipped, 'src', 'b.ts'), 'export const b = 5;\n'); wg(shipped, 'commit', '-qam', 'iş'); age(shipped);
+    W.upstream('src/b.ts', 'export const b = 5;\n');
+    W.g('fetch', '-q', 'origin');
+    mkdirSync(join(W.game, '.claude', 'worktrees', 'agent-bos'));
+    mkdirSync(join(W.game, '.claude', 'worktrees', 'agent-dolu'));
+    writeFileSync(join(W.game, '.claude', 'worktrees', 'agent-dolu', 'f.txt'), 'x');
+    const y = W.run(['wt-sweep', '--yes']);
+    ok(y.code === 0, y.out);
+    for (const [p, why] of [[dirty, 'izlenmeyen'], [work, 'gönderilmemiş'], [young, 'son dokunuş'], [talked, 'agent oturumu'], [logged, 'run.log']]) {
+      ok(existsSync(p), `${basename(p)} kalmalı: ${y.out}`);
+      ok(y.out.split('\n').some((l) => l.includes(`KALIR    ${basename(p)} `) && l.includes(why)), `${basename(p)} sebebi "${why}": ${y.out}`);
+    }
+    ok(!existsSync(shipped), 'içeriği main\'de olan kopya silinmeli: ' + y.out);
+    ok(!existsSync(join(W.game, '.claude', 'worktrees', 'agent-bos')), 'boş kayıtsız klasör silinmeli');
+    ok(existsSync(join(W.game, '.claude', 'worktrees', 'agent-dolu', 'f.txt')), 'dolu kayıtsız klasör kalmalı');
+    // --force yoksayılmış log dosyasını siler
+    const f = W.run(['wt-sweep', '--yes', '--force']);
+    ok(!existsSync(logged), '--force ile loglu kopya silinmeli: ' + f.out);
+    ok(existsSync(dirty) && existsSync(work), '--force kirli/gönderilmemişi silmez');
+    ok(existsSync(join(W.game, 'node_modules', '.bin', 'vitest')), 'asıl node_modules sağlam');
+  },
+  'wt-sweep: komutun calistigi kopya silinmez': (W) => {
+    ok(W.run(['wt-open-agent', 'kendi']).code === 0, 'aç');
+    const p = join(W.game, '.claude', 'worktrees', 'agent-kendi');
+    const y = W.run(['wt-sweep', '--yes', '--idle', '0'], undefined, {}, join(p, 'src'));
+    ok(existsSync(p), 'içinden çalışılan kopya kalmalı: ' + y.out);
+    has(y.out, 'içinden çalışıyor');
+    const z = W.run(['wt-sweep', '--yes', '--idle', '0']);
+    ok(!existsSync(p), 'dışarıdan çalışınca silinir: ' + z.out);
+    ok(existsSync(join(W.game, 'node_modules', '.bin', 'vitest')), 'asıl node_modules sağlam');
+  },
+  'wt-sweep: kullanimdaki kopya (cwd) silinmez': (W) => {
+    ok(W.run(['wt-open-agent', 'kullanimda']).code === 0, 'aç');
+    const p = join(W.game, '.claude', 'worktrees', 'agent-kullanimda');
+    const c = spawn(process.execPath, ['-e', 'setTimeout(()=>{},60000)'], { cwd: join(p, 'src'), stdio: 'ignore' });
+    try {
+      execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},500)']);
+      const y = W.run(['wt-sweep', '--yes', '--idle', '0']);
+      ok(existsSync(join(p, 'src', 'a.ts')), 'kullanımdaki kopya bütün kalmalı: ' + y.out);
+      has(y.out, 'kullanımda');
+      ok(!existsSync(`${p}.sweep-probe`), 'deneme klasörü kalmamalı');
+    } finally { c.kill(); }
+    execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},800)']);
+    const z = W.run(['wt-sweep', '--yes', '--idle', '0']);
+    ok(!existsSync(p), 'süreç kapanınca silinir: ' + z.out);
+  },
+  'wt-sweep: baglanti hedefi degisirse tum supurme durur': (W) => {
+    ok(W.run(['wt-open-agent', 'a-dur']).code === 0, 'aç a');
+    ok(W.run(['wt-open-agent', 'b-kalan']).code === 0, 'aç b');
+    const a = join(W.game, '.claude', 'worktrees', 'agent-a-dur');
+    const b = join(W.game, '.claude', 'worktrees', 'agent-b-kalan');
+    // a'nın bağlantısı kopyaların durduğu klasörü gösterir: a silinince hedef değişir, koruma devreye girer
+    mkdirSync(join(a, 'cloudflare'), { recursive: true });
+    execFileSync('cmd', ['/d', '/c', 'mklink', '/J', join(a, 'cloudflare', 'node_modules'), join(W.game, '.claude', 'worktrees')], { stdio: 'ignore' });
+    const y = W.run(['wt-sweep', '--yes', '--idle', '0']);
+    ok(y.code !== 0, 'süpürme hata koduyla durmalı: ' + y.out);
+    has(y.out, 'DURDU');
+    ok(existsSync(join(b, 'src', 'a.ts')), 'ikinci kopyaya dokunulmamalı: ' + y.out);
+    hasNot(y.out, 'silindi  agent-b-kalan');
+    ok(existsSync(join(W.game, 'node_modules', '.bin', 'vitest')), 'asıl node_modules sağlam');
+    ok(W.g('rev-parse', '--verify', '-q', 'refs/heads/agent/a-dur'), 'dal kalır');
+  },
+  'wt-sweep gonderim sonunda + disk uyarisi': (W) => {
+    W.cutover();
+    const a = W.open(A, 'a');
+    const r = W.run(['wt-open-agent', 'parca', '--from', a.branch]);
+    ok(r.code === 0, r.out);
+    const p = join(W.game, '.claude', 'worktrees', 'agent-parca');
+    writeFileSync(join(p, 'src', 'a.ts'), 'export const a = 11;\n');
+    execFileSync('git', [...ID, 'commit', '-qam', 'parça'], { cwd: p });
+    W.wg(a, 'merge', '-q', '--no-edit', 'agent/parca');
+    W.ready(A);
+    W.push(A, { EOV_SWEEP_IN_PUSH: '1', EOV_SWEEP_IDLE_MIN: '0' });
+    has(W.origin('src/a.ts'), 'a = 11');
+    ok(!existsSync(p), 'gönderimden sonra agent kopyası silinmeli: ' + W.log().slice(-1500));
+    has(W.log(), 'silindi  agent-parca');
+    ok(W.g('rev-parse', '--verify', '-q', 'refs/heads/agent/parca'), 'dal kalır');
+    // Disk uyarısı: sınırın altında status ve ready uyarır, üstünde susar
+    has(W.run(['status'], undefined, { EOV_DISK_FREE_GB: '5' }).out, 'DİSK UYARISI');
+    hasNot(W.run(['status'], undefined, { EOV_DISK_FREE_GB: '50' }).out, 'DİSK UYARISI');
+    W.wput(a, 'docs/d.md', 'd\n');
+    has(W.run(['ready', 'bbbbbbbb', '--internal'], undefined, { EOV_DISK_FREE_GB: '5' }).out, 'DİSK UYARISI');
+    has(W.run(['status'], undefined, { EOV_DISK_FREE_GB: '19', EOV_DISK_WARN_GB: '20' }).out, '19,0 GB');
   },
 });
 

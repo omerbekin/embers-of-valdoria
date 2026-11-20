@@ -27,7 +27,7 @@ import { evolvedRows, type EvolveSource } from '../progression/skill-tree-evolve
 import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import { iconUrl } from './dom-icons';
 import { uiIconName } from './ui-icons';
-import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
+import { BLOOD_COLOR, RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
 import { blurbOf, className } from './character-panel';
 import { reducedMotion } from './motion-pref';
 import { uiSound } from './ui-sound';
@@ -372,7 +372,8 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const out: string[] = [];
     const amount = skillCostAmount(skill.cost, { hp: stats.hp, mp: stats.mp, rage: 0 } as never);
     const chip = (icon: string, text: string, cls = ''): string => `<span class="pl-chip${cls}">${icon ? `<img class="bh-ico" src="${escHtml(icon)}" alt="" draggable="false">` : ''}${escHtml(text)}</span>`;
-    if (amount > 0 && skill.cost.resource === 'rage') out.push(chip(iconUrl(uiIconName('rage'), RAGE_COLOR), `RAGE ${amount}`, ' rage'));
+    if (amount > 0 && skill.cost.resource === 'blood') out.push(chip(iconUrl('drop', BLOOD_COLOR), `BLOOD ${amount}`, ' rage blood'));
+    else if (amount > 0 && skill.cost.resource === 'rage') out.push(chip(iconUrl(uiIconName('rage'), RAGE_COLOR), `RAGE ${amount}`, ' rage'));
     else if (amount > 0) {
       const kind = skill.cost.resource === 'mp' ? 'mp' : 'hp';
       out.push(chip(iconUrl(statIconName(kind), STAT_COLOR[kind]), String(amount)));

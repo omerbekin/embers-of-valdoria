@@ -57,6 +57,8 @@ export function damageSpecFor(
   // Opportunist (bonusVsStatus): hedefte listedeki durumlardan biri (Wound/Slow/Stun) varsa hasar x(1 + bonus); kritik ayrıca son çarpandır
   if (pe?.type === 'bonusVsStatus' && target.statuses.some((s) => statusCountsAny(s, pe.statuses))) passiveMult *= 1 + pe.bonus;
   // executeBonus (Headsman's Blow): hedefin eksik can oranıyla x(1 + executeBonus x eksik oran); alan yoksa çarpan yok (determinizm)
+  // Exsanguinate (bloodSpentBonus): harcanan kanla x(1 + bonus x kan); vuruşta ödenen, önizleme/YZ'de o anki kan
+  if (effect.bloodSpentBonus) passiveMult *= 1 + effect.bloodSpentBonus * Math.max(0, rageSpent ?? actor.blood ?? 0);
   if (effect.executeBonus && target.maxHp > 0) passiveMult *= 1 + effect.executeBonus * Math.max(0, 1 - target.hp / target.maxHp);
   // Pealing Bells (Vesper): çan vuruşu, bu savaşta çalınan her çan için x(1 + perBell); sayaç yoksa çarpan yok (determinizm)
   const bells = actor.bells ?? 0;

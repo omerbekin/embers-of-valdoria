@@ -546,6 +546,11 @@ export function registerDebugTools({ game, debug }: Ctx): void {
         const rage = (label: string, preset: ResourcePreset): HTMLElement => debugButton(label, act((u) => b.debugSetResource(u.uid, 'rage', resourceValue(u.maxRage ?? 0, preset))), { icon: 'flame', title: `Set this unit's Rage (${label})` });
         el.append(...debugSection('Rage', rage('Rage 0', 'zero'), rage('Rage 50%', 'half'), rage('Rage full', 'full')));
       }
+      if (unit?.maxBlood !== undefined) {
+        // Redtithe kan barı (engine-dev 2026-11-17)
+        const blood = (label: string, preset: ResourcePreset): HTMLElement => debugButton(label, act((u) => b.debugSetResource(u.uid, 'blood', resourceValue(u.maxBlood ?? 0, preset))), { icon: 'droplet', title: `Set this unit's Blood (${label})` });
+        el.append(...debugSection('Blood', blood('Blood 0', 'zero'), blood('Blood 50%', 'half'), blood('Blood full', 'full')));
+      }
 
       const numberRow = (placeholder: string, get: () => string, set: (v: string) => void, apply: (n: number) => (u: Combatant) => { ok: boolean; reason?: string }): HTMLElement => {
         const input = document.createElement('input');

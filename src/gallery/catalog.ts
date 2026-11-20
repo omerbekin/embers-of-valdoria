@@ -624,11 +624,13 @@ export interface MiscArtEntry {
   unused: boolean;
   /** Dosya beklenen listede değil (yanlış ad). */
   unlinked?: boolean;
+  /** Emekli (retired) bir durumun rozeti: Codex > Icons'ta değil, Legacy'de. */
+  retired?: boolean;
 }
 
 /** Beklenen her oyun ikonu + listede olmayan dosyalar (yeni dosya kendiliğinden listelenir). */
 export function buildMiscArt(): MiscArtEntry[] {
-  const rows: MiscArtEntry[] = MISC_GROUPS.flatMap((g) => MISC_ICONS[g].map((n) => ({ id: `${g}:${n}`, group: g, name: n, url: MISC_IMAGE_FILES[`${g}:${n}`]?.url ?? null, unused: MISC_UNUSED.includes(`${g}:${n}`) })));
+  const rows: MiscArtEntry[] = MISC_GROUPS.flatMap((g) => MISC_ICONS[g].map((n) => ({ id: `${g}:${n}`, group: g, name: n, url: MISC_IMAGE_FILES[`${g}:${n}`]?.url ?? null, unused: MISC_UNUSED.includes(`${g}:${n}`), ...(g === 'status' && content.statuses[n]?.retired ? { retired: true } : {}) })));
   for (const [id, f] of Object.entries(MISC_IMAGE_FILES)) if (!rows.some((r) => r.id === id)) rows.push({ id, group: id.split(':')[0] ?? '', name: id.split(':')[1] ?? '', url: f.url, unused: true, unlinked: true });
   return rows;
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, content, previewSkill, type BattleEvent, type BattleMode, type Combatant, type Teams, type UnitSetup } from '../src/engine';
+import { Battle, content, explainChoice, previewSkill, type BattleEvent, type BattleMode, type Combatant, type Teams, type UnitSetup } from '../src/engine';
 import { scaleOf } from '../src/engine/tree-hooks';
+import { scaleDelta } from '../src/engine/status-stack';
 import type { GroundEffect } from '../src/engine/types';
 import { checkTreeFx, compileTree, treeOf } from '../src/progression';
 import type { TreeData } from '../src/progression/skill-tree-data';
@@ -51,39 +52,80 @@ const X = (b: Battle): Priv => b as unknown as Priv;
 const add = (b: Battle, t: Combatant, s: Partial<Combatant['statuses'][number]> & { kind: string; turns: number; source: string }): void =>
   X(b).addStatus(t, s as Combatant['statuses'][number], (e) => X(b).record(e));
 const procs = (b: Battle, node: string): number => b.treeProcs().find((p) => p.node === node)?.count ?? 0;
-type Eff = { type: string; bet?: { ratio?: number; winMult?: number }; gainRatio?: number; power?: number };
+type Eff = { type: string; bet?: { ratio?: number; winMult?: number }; gainRatio?: number; bloodPerMp?: number; power?: number };
 const effs = (tree: UnitSetup['tree'], skill: string): Eff[] => (tree!.skills![skill]!.effects as unknown as Eff[]);
 
 describe('Altıncı tur: "A → B" = yeni taban, öteki düğümler üstüne eklenir', () => {
   it('Penny Ante / Called Game / Siphon Vein: B taban; aynı alana ek yapan düğüm B\'nin üstüne biner', () => {
-    const plus = (key: string, f: string, v: number) => (t: TreeData) => (t.nodes[key]!.fx = [{ k: 'skill', sel: f === 'gainRatio' ? 'manaBurn' : 'bet', f, op: 'add', v }] as TreeData['nodes'][string]['fx']);
+    const plus = (key: string, f: string, v: number) => (t: TreeData) => (t.nodes[key]!.fx = [{ k: 'skill', sel: f === 'bloodPerMp' ? 'manaBurn' : 'bet', f, op: 'add', v }] as TreeData['nodes'][string]['fx']);
     const bet = (tree: UnitSetup['tree']) => effs(tree, 'high_stakes').find((e) => e.bet)!.bet!;
     expect(bet(only('gambler', { '2.fb': 1 }))).toMatchObject({ ratio: 0.05, winMult: 1.6 });
     expect(bet(only('gambler', { '2.fb': 1, '2.f1': 1 }, plus('2.f1', 'ratio', 0.02))).ratio).toBeCloseTo(0.07, 9);
     expect(bet(only('gambler', { '2.v': 1 })).ratio).toBe(0.08);
     expect(bet(only('gambler', { '2.v': 1, '2.f1': 1 }, plus('2.f1', 'ratio', 0.02))).ratio).toBeCloseTo(0.1, 9);
-    const gain = (tree: UnitSetup['tree']) => effs(tree, 'mana_burn').find((e) => e.gainRatio !== undefined)!.gainRatio!;
+    // Redtithe (2026-11-17): Siphon Vein = Tithe Cut'ın MP başına kanı (bloodPerMp) tabanı
+    const gain = (tree: UnitSetup['tree']) => effs(tree, 'mana_burn').find((e) => e.bloodPerMp !== undefined)!.bloodPerMp!;
     const ea = (treeOf('antimage')!.nodes['1.ea']!.fx![0] as unknown as { v: number }).v; // Siphon Vein tabanı veriden
     expect(gain(only('antimage', { '1.ea': 1 }))).toBe(ea);
-    expect(gain(only('antimage', { '1.ea': 1, '1.f1': 1 }, plus('1.f1', 'gainRatio', 0.1)))).toBeCloseTo(ea + 0.1, 9);
+    expect(gain(only('antimage', { '1.ea': 1, '1.f1': 1 }, plus('1.f1', 'bloodPerMp', 0.2)))).toBeCloseTo(ea + 0.2, 9);
   });
 
-  it('Feeble Jinx: Jinxed isabet -%40 (tanımın -%20\'si + düğümün -%20\'si), Jinx hasarsız', () => {
+  it('Feeble Jinx: Jinx ile 2/3 güçte Blinded (-%20 isabet; Tur 24), Jinx hasarsız', () => {
     const b = make({ 0: 'hexer' }, { 0: 'warrior' }, withTree(0, only('hexer', { '3.fb': 1 })));
     sure(b);
     const foe = E(b);
     const acc0 = b.effectiveStats(foe).accuracy;
     const evs = cast(b, P(b), 'jinx', foe);
     expect(evs.some((e) => e.type === 'damage' && e.source === P(b).uid)).toBe(false);
-    expect(foe.statuses.find((s) => s.kind === 'jinxed')?.potency?.accuracyDelta).toBeCloseTo(-0.2, 9);
-    expect(acc0 - b.effectiveStats(foe).accuracy).toBeCloseTo(0.4, 6);
+    // Ömer 2026-11-16 Tur 24: isabet eki Jinxed'te değil, eş Blinded'da (güç veriden; Blinded -%30 tabanı x güç = eski -%20)
+    expect(foe.statuses.find((s) => s.kind === 'jinxed')?.potency?.accuracyDelta).toBeUndefined();
+    const g = (treeOf('hexer')!.nodes['3.fb']!.fx![1] as unknown as { mod: { withStatus: { strength: number } } }).mod.withStatus.strength;
+    expect(foe.statuses.find((s) => s.kind === 'blinded')?.strength).toBeCloseTo(g, 9);
+    expect(acc0 - b.effectiveStats(foe).accuracy).toBeCloseTo(-scaleDelta(content.statuses.blinded!.accuracyDelta!, g), 6);
+    expect(scaleDelta(content.statuses.blinded!.accuracyDelta!, g)).toBeCloseTo(-0.2, 3);
+  });
+
+  it('Feeble Jinx YZ: eş Blinded isabet kaybı mitigation teriminde (düğümsüz Jinx değerinden büyük); hedef zaten tam Blinded ise eklenmez', () => {
+    const mit = (tree: boolean, pre = false) => {
+      const b = tree ? make({ 0: 'hexer' }, { 0: 'warrior' }, withTree(0, only('hexer', { '3.fb': 1 }))) : make({ 0: 'hexer' }, { 0: 'warrior' });
+      if (pre) b.debugAddStatus(E(b).uid, 'blinded', 3);
+      const ex = explainChoice(b, P(b).uid, content.aiConfig)!;
+      return Math.max(...ex.candidates.filter((c) => c.skill === 'jinx').map((c) => (c.terms as Record<string, number>).mitigation ?? 0));
+    };
+    expect(mit(true)).toBeGreaterThan(mit(false) + 1e-6);
+    expect(mit(true, true)).toBeCloseTo(mit(false, true), 6);
+  });
+
+  it('Feeble Jinx önizleme: Jinxed satırının yanında eş Blinded satırı (güç yüzdesiyle)', () => {
+    const b = make({ 0: 'hexer' }, { 0: 'warrior' }, withTree(0, only('hexer', { '3.fb': 1 })));
+    const lines = previewSkill(b, P(b).uid, 'jinx', E(b).uid)[0]!.statuses ?? [];
+    const g = (treeOf('hexer')!.nodes['3.fb']!.fx![1] as unknown as { mod: { withStatus: { strength: number } } }).mod.withStatus.strength;
+    expect(lines.some((l) => l.startsWith(content.statuses.jinxed!.name!))).toBe(true);
+    expect(lines.some((l) => l.startsWith(content.statuses.blinded!.name!) && l.includes(`${Math.round(g * 100)}% strength`))).toBe(true);
+    const plain = make({ 0: 'hexer' }, { 0: 'warrior' });
+    expect((previewSkill(plain, P(plain).uid, 'jinx', E(plain).uid)[0]!.statuses ?? []).some((l) => l.startsWith(content.statuses.blinded!.name!))).toBe(false);
+  });
+
+  it('Fog of Ill Luck YZ: Withering Curse’in Wither’ı ile gelen Blinded mitigation terimine girer', () => {
+    const mit = (tree: boolean) => {
+      const b = tree ? make({ 0: 'hexer' }, { 0: 'warrior' }, withTree(0, only('hexer', { '2.f2': 3 }))) : make({ 0: 'hexer' }, { 0: 'warrior' });
+      P(b).mp = P(b).maxMp;
+      const ex = explainChoice(b, P(b).uid, content.aiConfig)!;
+      const cs = ex.candidates.filter((c) => c.skill === 'withering_curse');
+      expect(cs.length).toBeGreaterThan(0);
+      return Math.max(...cs.map((c) => (c.terms as Record<string, number>).mitigation ?? 0));
+    };
+    expect(mit(true)).toBeGreaterThan(mit(false) + 1e-6);
   });
 });
 
 describe('Altıncı tur: Weakened (verilen hasar azalır)', () => {
   it('statuses.json tanımı, Wiki hasar formülü listesi; ağaçsız birimde çarpan 1', () => {
     const d = content.statuses.weakened!;
-    expect(d).toMatchObject({ name: 'Weakened', type: 'debuff', damageDealtMult: 0.85, tickAtTurnEnd: true });
+    // Ömer 2026-11-16: Weakened yalnız fiziksel hasarı düşürür (physicalDealtMult); büyü hasarı Spellbound'un
+    expect(d).toMatchObject({ name: 'Weakened', type: 'debuff', tickAtTurnEnd: true });
+    expect(d.damageDealtMult).toBeUndefined();
+    expect(d.physicalDealtMult).toBeLessThan(1);
     const dmg = buildMechanics().find((a) => a.id === 'damage-formula')!;
     expect(JSON.stringify(dmg)).toContain('Weakened');
     const b = make({ 0: 'mage' }, { 0: 'warrior' });
@@ -106,8 +148,9 @@ describe('Altıncı tur: Weakened (verilen hasar azalır)', () => {
     };
     const a = hit(false);
     const w = hit(true);
-    expect(w.prev / a.prev).toBeCloseTo(0.85, 2);
-    expect(w.real / a.real).toBeCloseTo(0.85, 1);
+    const pm = content.statuses.weakened!.physicalDealtMult!;
+    expect(w.prev / a.prev).toBeCloseTo(pm, 2);
+    expect(w.real / a.real).toBeCloseTo(pm, 1);
   });
 
   it('Druid Pollen Drift: Nature\'s Wrath vurduğu düşmana sıradaki turu için rank başına -%2', () => {
@@ -117,9 +160,11 @@ describe('Altıncı tur: Weakened (verilen hasar azalır)', () => {
     cast(b, P(b), 'natures_wrath', foe);
     const st = foe.statuses.find((s) => s.kind === 'weakened')!;
     expect(st.turns).toBe(1);
-    const per = (treeOf('druid')!.nodes['2.f3']!.fx![2] as unknown as { mod: { statusPotency: { damageDealtMult: number } } }).mod.statusPotency.damageDealtMult; // değer veriden (D9 2026-10-23)
-    expect(b.weakenedMult(foe)).toBeCloseTo(1 + 3 * per, 9);
-    expect(b.weakenedMult(foe, 'magic')).toBeCloseTo(1 + 3 * per, 9);
+    const per = (treeOf('druid')!.nodes['2.f3']!.fx![2] as unknown as { mod: { statusPotency: { physicalDealtMult: number } } }).mod.statusPotency.physicalDealtMult; // değer veriden (D9 2026-10-23)
+    // Ömer 2026-11-16: Weakened yalnız fiziksel; kaynaksız (tanım) çarpan + düğüm eki
+    const base = content.statuses.weakened!.physicalDealtMult! + (treeOf('druid')!.nodes['2.f3']!.fx![1] as unknown as { mod: { statusPotency: { physicalDealtMult: number } } }).mod.statusPotency.physicalDealtMult;
+    expect(b.weakenedMult(foe, 'physical')).toBeCloseTo(Math.round((base + 3 * per) * 1e6) / 1e6, 6);
+    expect(b.weakenedMult(foe, 'magic')).toBe(1);
     expect(procs(b, 'druid:2.f3')).toBeGreaterThan(0);
   });
 
@@ -128,7 +173,8 @@ describe('Altıncı tur: Weakened (verilen hasar azalır)', () => {
     sure(b);
     const foe = E(b);
     cast(b, P(b), 'card_trick', foe);
-    expect(b.weakenedMult(foe)).toBeCloseTo(0.85, 9);
+    expect(b.weakenedMult(foe, 'physical')).toBeLessThan(1); // Ömer 2026-11-16: yalnız fiziksel
+    expect(b.weakenedMult(foe, 'magic')).toBe(1);
     expect(foe.statuses.find((s) => s.kind === 'weakened')?.potency?.oneAttack).toBe(1);
     const evs = cast(b, foe, foe.skills[0]!, P(b));
     expect(evs.some((e) => e.type === 'statusEnd' && e.status === 'weakened' && e.consumed)).toBe(true);
@@ -234,24 +280,7 @@ describe('Altıncı tur: düğüm cevapları', () => {
     expect(ally.mp).toBe(0);
   });
 
-  it('Anti-Mage Split Ward: ikinci kalkan hedeften BAŞKA en az MP\'li dosta; başka dost yoksa ikinci kopya yok', () => {
-    const b = make({ 0: 'antimage', 1: 'mage', 2: 'druid' }, { 0: 'warrior' }, withTree(0, only('antimage', { '3.ea': 1 })));
-    const me = P(b);
-    const mage = P(b, 1);
-    const druid = P(b, 2);
-    mage.mp = 0;
-    druid.mp = 1;
-    cast(b, me, 'spell_ward', mage);
-    const plain = make({ 0: 'antimage', 1: 'mage', 2: 'druid' }, { 0: 'warrior' });
-    P(plain, 1).mp = 0;
-    cast(plain, P(plain), 'spell_ward', P(plain, 1));
-    expect(mage.magicShield).toBe(P(plain, 1).magicShield);
-    expect(druid.magicShield).toBeGreaterThan(0);
-    const solo = make({ 0: 'antimage' }, { 0: 'warrior' }, withTree(0, only('antimage', { '3.ea': 1 })));
-    const evs = cast(solo, P(solo), 'spell_ward', P(solo));
-    expect(evs.filter((e) => e.type === 'skillUsed' && e.skill === 'spell_ward').length).toBe(1);
-  });
-
+  // Split Ward (3.ea) Redtithe eşlemesinde pasif (inactive)
   it('Druid Verdant Link: ikinci kopya hedeften başka (ve Druid dışı) canı en düşük dosta', () => {
     const b = make({ 0: 'druid', 1: 'warrior', 2: 'mage' }, { 0: 'warrior' }, withTree(0, only('druid', { '3.v': 1 })));
     const me = P(b);

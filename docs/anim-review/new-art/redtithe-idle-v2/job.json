@@ -1,0 +1,22 @@
+{
+ "name": "redtithe-idle-v2",
+ "outDir": "docs/anim-review/new-art/redtithe-idle-v2",
+ "rules": "docs/anim-review/new-art/redtithe-idle-v2/PROMPT.md",
+ "maxRounds": 3,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle1",
+   "file": "idle1.png",
+   "refs": [
+    "docs/anim-review/new-art/redtithe-idle-v2/refs/redtithe-B-look.png",
+    "docs/anim-review/new-art/redtithe-idle-v2/refs/warrior-head-style.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/redtithe-idle-v2/refs/redtithe-B-look.png"
+   ],
+   "task": "Image 1 = Redtithe's LOOK (concept art: face, braid, shaved sides, eyebrow scar, vest, rust-red shirt, bandaged forearms, red sash and panels, belt vials, pouch and brass bowl, trousers, boots, palette). Ignore its pose, its sickle and its open hand. Image 2 = a crop of another hero, ONLY for rendering quality and how a readable 3/4 face looks at game size (do not copy that character or his arms). Draw Redtithe as a NEW full-body combat idle on a 450x412 canvas: side view facing right, body slightly turned toward the viewer, legs apart in a ready fighting stance, knees slightly bent, weight low. Head top y~24, chin y~88, soles y~406, figure about 200 px wide and 382 px tall. Hands exactly as in the HAND / GRIP LOGIC rules: front fist LOW at belt height near (300,190), thumb side pointing forward-up 25-40 degrees above horizontal; rear fist low beside and slightly behind the hip near (148,236), held a little off the thigh, thumb side pointing down and slightly forward. Both fists EMPTY and clearly closed. The face stays completely free: no hand, arm or fist in front of or near the face. Save PNG 450x412 with real alpha. In NOTES.md write the pixel centre of each fist and the direction of each grip axis in degrees (0 = straight up, clockwise, 90 = pointing right).",
+   "checkRules": "- Image 1 is the new draw; image 2 is Redtithe's concept look.\n- Character identical to image 2: woman, long tight dark braid, shaved sides, eyebrow scar, sleeveless dark brown leather vest over rust-red linen shirt, pale bandaged forearms, red waist sash, dark trousers, tall buckled boots. Strictly medieval, no gore. Belt extras may be simplified; do not score on them.\n- Side view facing right, ready fighting stance, legs apart, canvas 450x412, soles at y~406, figure ~382 px tall.\n- HAND RULES (any one failing = first line KALDI and PUAN at most 6):\n  a) Both hands are CLENCHED FISTS and EMPTY (no weapon, prop, open palm, blood drop).\n  b) FRONT fist (right one) is LOW, at belt / lower-rib height, centre within ~20 px of (300,190), clearly in front of the body and at least ~80 px away from the face. A fist at chest, shoulder or chin height fails.\n  c) FRONT fist grip axis (line through the tunnel of the closed fingers, blade leaves on the thumb side) points forward-up, 45-70 degrees in the convention 0 = up, clockwise, 90 = right. Imagine a 90 px dagger along it: it must not cross the face, hair or braid.\n  d) REAR fist (left one) is low beside / slightly behind the hip, centre within ~20 px of (148,236); its axis points down or down-forward (150-200 degrees in the same convention). Imagine a 90 px dagger along it: it must not cross the face and should not lie across the thigh or sash.\n- In your answer give, as numbers: each fist centre (x,y) and each grip axis angle (0 = up, clockwise), and for each a yes/no to 'would a dagger on this axis cover the face?'.\n- Face readable at game size (~190 px figure): both eyes, nose and mouth distinguishable, head slightly turned toward the viewer, hair does not shadow the face.\n- Real transparent background: no white/grey background, no checkerboard, no halo or dark fringe, no ground shadow. Clean, noise-free."
+  }
+ ]
+}

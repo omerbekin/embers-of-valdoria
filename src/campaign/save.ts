@@ -556,15 +556,83 @@ export function peekVersion(raw: string | null): number | null {
   }
 }
 
-/** Kayıt dosyasını okur. Hiç kayıt yoksa boş; okunamazsa boş + corrupt. Eski sürüm yuvalara taşınır (`migrated`). */
-export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; migrated: boolean } {
+/**
+ * Okunamayan kayıt dosyasının ham kopyası (sağlamlık taraması A1, 2026-11-15): yarım / bozuk dosyanın üstüne yazılmadan önce ham dizgi AYNEN
+ * buraya kopyalanır (kopya yazılamazsa üstüne yazılmaz). Senkron anahtarı değildir (cloud/keys.ts > SYNC_KEYS), yalnız bu cihazda durur.
+ */
+export const CORRUPT_KEY = 'eov.campaign.corrupt.v1';
+
+/** Kayıt yazılamadı: 'newer' = dosya bu sürümden yeni (eski sekme yazmaz), 'storage' = depo kapalı / dolu. */
+export type SaveFailReason = 'newer' | 'storage';
+export const NEWER_SAVE_TEXT = 'This save was made by a newer version. Reload to update.';
+export const SAVE_FAILED_TEXT = 'Progress could not be saved on this device.';
+const failListeners = new Set<(why: SaveFailReason) => void>();
+/** Yazılamayan kayıt bildirimi (arayüz uyarısı; campaign-session.ts). Dinlemeyi bırakan işlev döner. */
+export function onSaveFail(fn: (why: SaveFailReason) => void): () => void {
+  failListeners.add(fn);
+  return () => void failListeners.delete(fn);
+}
+const noteListeners = new Set<(code: string) => void>();
+/**
+ * Kayıt deposu tanılama notları (hata raporu izi; campaign-session.ts > logEvent('save', ...)). Kısa kod + sayı, kayıt içeriği YOK:
+ * `read unreadable v<N|?>`, `read newer v<N>`, `corrupt backup`, `write refused newer`, `write failed storage`, `slot <N> deleted`,
+ * `slot <N> replaced`. Dinlemeyi bırakan işlev döner.
+ */
+export function onSaveNote(fn: (code: string) => void): () => void {
+  noteListeners.add(fn);
+  return () => void noteListeners.delete(fn);
+}
+function note(code: string): void {
+  for (const fn of noteListeners) {
+    try {
+      fn(code);
+    } catch {
+      /* tanılama kaydı bozmaz */
+    }
+  }
+}
+/** Okunamayan dosya notu ham dizgi başına bir kez (readSaves sık çağrılır: iz halkası dolmasın). */
+let notedUnreadable: string | null = null;
+
+function failed(why: SaveFailReason): false {
+  note(why === 'newer' ? 'write refused newer' : 'write failed storage');
+  for (const fn of failListeners) {
+    try {
+      fn(why);
+    } catch {
+      /* uyarı çökmesi kaydı bozmaz */
+    }
+  }
+  return false;
+}
+
+type ReadResult = { file: SaveFile; corrupt: boolean; migrated: boolean; newer: boolean };
+/** Son okunan ham dizginin sonucu (yazma denetimi aynı dosyayı yeniden ayrıştırmasın). */
+let lastRead: { raw: string; corrupt: boolean } | null = null;
+
+/**
+ * Kayıt dosyasını okur. Hiç kayıt yoksa boş; okunamazsa boş + corrupt. Eski sürüm yuvalara taşınır (`migrated`). Dosya bu sürümden yeniyse
+ * `newer` (+ corrupt): okunamaz ve yazılmaz (write).
+ */
+export function readSaves(kv: KV | null): ReadResult {
   let raw: string | null = null;
   try {
     raw = kv?.getItem(SAVE_KEY) ?? null;
   } catch {
-    return { file: empty(), corrupt: true, migrated: false };
+    return { file: empty(), corrupt: true, migrated: false, newer: false };
   }
-  if (!raw) return { file: empty(), corrupt: false, migrated: false };
+  if (!raw) return { file: empty(), corrupt: false, migrated: false, newer: false };
+  const v = peekVersion(raw);
+  const r = { ...parseSaves(raw), newer: v !== null && v > SAVE_VERSION };
+  lastRead = { raw, corrupt: r.corrupt };
+  if (r.corrupt && notedUnreadable !== raw) {
+    notedUnreadable = raw;
+    note(r.newer ? `read newer v${v}` : `read unreadable v${v ?? '?'}`);
+  }
+  return r;
+}
+
+function parseSaves(raw: string): Omit<ReadResult, 'newer'> {
   try {
     const parsed = JSON.parse(raw) as Partial<SaveFile> & { saves?: unknown[] };
     if (!parsed || typeof parsed !== 'object') return { file: empty(), corrupt: true, migrated: false };
@@ -649,12 +717,36 @@ function restartForNewMap(file: SaveFile): SaveFile {
   return { ...file, slots: file.slots.map((sd) => (sd ? { ...sd, saves: [], mapChanged: true } : null)) };
 }
 
+/**
+ * Kayıt dosyasını yazar. Koruma (sağlamlık taraması A1): yerindeki dosya bu sürümden yeniyse YAZMAZ ('newer'); okunamıyorsa (yarım JSON,
+ * bozuk yuva) önce ham dizgi CORRUPT_KEY'e kopyalanır, kopya yazılamazsa üstüne yazılmaz. Yazılamazsa `onSaveFail` dinleyicileri çağrılır.
+ */
 function write(kv: KV | null, file: SaveFile): boolean {
+  if (!kv) return failed('storage');
+  let raw: string | null;
   try {
-    kv?.setItem(SAVE_KEY, JSON.stringify(file));
-    return !!kv;
+    raw = kv.getItem(SAVE_KEY);
   } catch {
-    return false;
+    return failed('storage');
+  }
+  if (raw) {
+    const v = peekVersion(raw);
+    if (v !== null && v > SAVE_VERSION) return failed('newer');
+    const corrupt = lastRead?.raw === raw ? lastRead.corrupt : parseSaves(raw).corrupt;
+    if (corrupt) {
+      try {
+        kv.setItem(CORRUPT_KEY, raw);
+      } catch {
+        return failed('storage');
+      }
+      note('corrupt backup');
+    }
+  }
+  try {
+    kv.setItem(SAVE_KEY, JSON.stringify(file));
+    return true;
+  } catch {
+    return failed('storage');
   }
 }
 
@@ -695,9 +787,12 @@ export const canSaveManually = (s: CampaignState): boolean => s.mode === 'normal
  */
 export function claimSlot(kv: KV | null, s: CampaignState, now: string = new Date().toISOString()): boolean {
   const { file } = readSaves(kv);
+  const old = file.slots[s.slot];
   file.slots[s.slot] = { campaignId: s.campaignId, mode: s.mode, difficulty: s.difficulty, startedAt: now, lastPlayed: now, saves: [] };
   file.lastSlot = s.slot;
-  return write(kv, file);
+  const ok = write(kv, file);
+  if (ok && old && old.campaignId !== s.campaignId) note(`slot ${s.slot} replaced`);
+  return ok;
 }
 
 /**
@@ -709,6 +804,7 @@ export function writeSave(kv: KV | null, s: CampaignState, kind: SaveKind, now: 
   if (s.slot < 0 || s.slot >= SLOT_COUNT) return { entry: null, replaced: [], ok: false };
   const { file } = readSaves(kv);
   let slot = file.slots[s.slot];
+  const replacing = !!slot && slot.campaignId !== s.campaignId;
   if (!slot || slot.campaignId !== s.campaignId) slot = { campaignId: s.campaignId, mode: s.mode, difficulty: s.difficulty, startedAt: now, lastPlayed: now, saves: [] };
   const entry: SaveEntry = { id: `s${++file.counter}`, kind, savedAt: now, mode: s.mode, campaignId: s.campaignId, summary: summarize(s), state: clone(s) };
   slot.saves.push(entry);
@@ -718,7 +814,9 @@ export function writeSave(kv: KV | null, s: CampaignState, kind: SaveKind, now: 
   while (slot.saves.length > maxFor(s.mode)) replaced.push(slot.saves.shift()!);
   file.slots[s.slot] = slot;
   file.lastSlot = s.slot;
-  return { entry, replaced, ok: write(kv, file) };
+  const ok = write(kv, file);
+  if (ok && replacing) note(`slot ${s.slot} replaced`);
+  return { entry, replaced, ok };
 }
 
 /**
@@ -866,9 +964,10 @@ export function deleteSave(kv: KV | null, slot: number, id: string): void {
 /** Yuvayı tamamen boşaltır (sefer ve tüm kayıtları). */
 export function deleteSlot(kv: KV | null, slot: number): void {
   const { file } = readSaves(kv);
+  const had = !!file.slots[slot];
   file.slots[slot] = null;
   if (file.lastSlot === slot) file.lastSlot = null;
-  write(kv, file);
+  if (write(kv, file) && had) note(`slot ${slot} deleted`);
 }
 
 export function wipeSaves(kv: KV | null): void {

@@ -17,14 +17,14 @@ export { accuracyOf, applySummonerScale, applySummonVariant, applyUnitModifiers,
 export type { HitOutcome } from './stats';
 export { damageSpecFor } from './spec';
 export { betMultipliers, betStake, betStakeParts } from './gamble';
-export { hpFallbackAmount, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay } from './cost';
+export { bloodSplit, hpFallbackAmount, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay } from './cost';
 export { COND, SCALE, SELF_CONDS, SELF_SCALES, UNIT_FX_KEYS, FX_THRESHOLD_FIELDS, TRIGGER_EVENTS, TRIGGER_TARGETS, TRIGGER_BASES, HEAL_POINTS, condHolds, effArr, effFlag, effList, effMult, effNum, fxBags, manaShieldNeed, manaShieldPay, mergeFxValue, scaleOf } from './tree-hooks';
 export type { CastInfo, CondCtx, CondHook, CondMod, HitInfo, HookAt, ModGroup, TickInfo, CondScale, CondWhen, CostCond, RageHook, RuleHook, RuleKind, TreeHook, TreeProcEvent, TriggerHook, TriggerAction, TriggerEvent, TriggerTarget, TriggerBase, HealHook, HealPoint, TreeBuff } from './tree-hooks';
 export { burnAmountFor, emptyProcApplies, nominalBurn } from './mana-burn';
 export { previewForTargets, previewSkill } from './preview';
 export { UNBLOCKABLE_LABEL, isUnblockableHit, isUnblockableSkill } from './unblockable';
 export type { DoomPreview, TargetPreview } from './preview';
-export { ATTRIBUTE_NAME, describeGlobalSkill, describePassive, describeRage, describeSkill, groundReactionHint, TARGET_TEXT, TREE_SECTION } from './skill-info';
+export { ATTRIBUTE_NAME, describeGlobalSkill, describeBlood, describePassive, describeRage, describeSkill, groundReactionHint, TARGET_TEXT, TREE_SECTION } from './skill-info';
 export { rangeEnabled, rangeLabel, rangeLine, skillRangeFor, cellDistance } from './range';
 export { placementHintText, placementHintTitle, type PlacementHint } from './formation-hints';
 export type { EffectDefs, GlobalSkillInfo } from './skill-info';

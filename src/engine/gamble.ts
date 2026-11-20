@@ -23,7 +23,9 @@ export function betStakeParts(bet: BetSpec, maxHp: number, hp: number, mpLeft: n
 
 /** Bahsin hasar çarpanları: kazanç, kayıp ve beklenen (olasılıkla ağırlıklı) çarpan. */
 export function betMultipliers(bet: BetSpec, stake: number): { win: number; lose: number; expected: number } {
-  const win = bet.winMult + (bet.perStake ?? 0) * stake;
+  // winMore: kazanç dalına ayrı çarpan (Lucky Streak dolu seri All In; yoksa 1, eski hesap birebir)
+  const base = bet.winMult + (bet.perStake ?? 0) * stake;
+  const win = bet.winMore ? base * (1 + bet.winMore) : base;
   const lose = bet.loseMult ?? 1;
   return { win, lose, expected: bet.winChance * win + (1 - bet.winChance) * lose };
 }

@@ -23,6 +23,11 @@ const LEGACY: Record<string, SkillDef> = {
     id: 'blessing', name: 'Blessing', icon: 'cross', target: 'single_ally', cost: { resource: 'mp', amount: 12 }, cooldown: 3,
     motion: 'cast', fx: '#fff0a0', effects: [{ type: 'status', status: 'blessed', turns: 3 }],
   },
+  // Spell Ward (eski Anti-Mage, 2026-11-17'de Redtithe Mirror Vein oldu): büyü kalkanı önizleme/açıklama testleri için
+  legacy_spell_ward: {
+    id: 'legacy_spell_ward', name: 'Spell Ward', icon: 'spellward', target: 'single_ally', cost: { resource: 'mp', amount: 0 }, cooldown: 3,
+    motion: 'cast', fx: '#b36bff', effects: [{ type: 'shield', scale: 'int', power: 0.75, shieldType: 'magic' }],
+  },
   // Guard (Defender, Ömer 2026-10-20'de Close Ranks ile değişti): tek dost, 3 tur, %60 pay; eski Guard testleri için
   guard: {
     id: 'guard', name: 'Guard', icon: 'guard2', target: 'single_ally', range: 2, excludeSelf: true, cost: { resource: 'mp', amount: 2 }, cooldown: 4, turnCost: 0.5,

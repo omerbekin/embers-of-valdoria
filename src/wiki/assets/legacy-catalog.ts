@@ -12,7 +12,7 @@ import { avatarMap } from '../../gallery/catalog';
 /** Legacy bölümünün dosya tabloları (Vite `import.meta.glob`; testte fs). */
 export type LegacyFiles = AssetFiles;
 
-export type LegacyKind = 'orphan' | 'icon' | 'vfx' | 'sound';
+export type LegacyKind = 'orphan' | 'icon' | 'vfx' | 'sound' | 'art';
 
 export interface LegacyItem {
   kind: LegacyKind;
@@ -58,6 +58,7 @@ export const LEGACY_TITLES: Record<LegacyKind, { title: string; note: string }> 
   orphan: { title: 'Unlinked sprite and avatar files', note: 'Files in assets/sprites or assets/avatars that no class or summon points to.' },
   icon: { title: 'Spare icons', note: 'Pixel icons (src/ui/icon-kinds.ts) that no skill, class, stat, status, ground or UI button shows.' },
   vfx: { title: 'Spare animations', note: 'Effect kinds (src/ui/vfx-kinds.ts) that no skill uses. Backups can be brought back by setting a skill\'s vfx.' },
+  art: { title: 'Retired game art', note: 'Painted game icons (assets/misc-icons) of statuses that were taken out of the game (marked retired in data/statuses.json).' },
   sound: { title: 'Unused sounds', note: 'Sounds (data/audio.json) that are in no skill\'s sfx list. Some are UI sounds played from code.' },
 };
 
@@ -81,6 +82,9 @@ export function buildLegacy(cat: Catalog, files: LegacyFiles): LegacyCatalog {
   // --- yedek ikonlar ---
   add('icon', cat.icons.filter((i) => i.category === 'spare').map((i) =>
     item('icon', i.name, i.name, null, cat.fxSprites.includes(i.name) ? 'Unused: no skill, class, stat or status shows it (an animation may still draw it as an effect sprite)' : 'Unused: nothing shows it', 'src/ui/icon-kinds.ts')));
+
+  // --- emekli durumların boyalı rozetleri (statuses.json > retired): dosya silinmez, Legacy'de durur ---
+  add('art', cat.miscArt.filter((a) => a.retired && a.url).map((a) => item('art', a.id, a.id, a.url, 'Unused: the status was taken out of the game (retired)', `assets/misc-icons/${a.group}/${a.name}.png`)));
 
   // --- yedek animasyon türleri ---
   add('vfx', cat.vfxKinds.filter((k) => k.usedBy.length === 0).map((k) =>

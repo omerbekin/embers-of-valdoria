@@ -121,6 +121,8 @@ export function bestMoves(hero: { class: string; equipment: Equipment; level?: n
         for (const inst of bag) {
           const d = itemDef(inst.id);
           if (!d || d.set !== set.id || d.slot !== slot || tk.has(inst.uid) || !canEquip(hero.class, d) || (hero.level !== undefined && !meetsLevel(hero.level, inst)) || legendaryConflict(eq, d, slot)) continue;
+          // İkinci el set parçası (Odran's Censer, Tur 28-29): takılı silahla uyumlu olmalı (çift el ikinci el almaz; açgözlü yolla aynı kural)
+          if (slot === 'offhand' && (!offhandCompatible(eq.weapon ? itemDef(eq.weapon.id) : undefined, d) || (!eq.weapon && offhandOnlyFor(hero.class, d)))) continue;
           const sc = slotScore(hero.class, eq, inst, slot);
           if (sc > pickScore && !primaryCheck({ class: hero.class, equipment: eq }, { equip: inst, slot }).lost) {
             pick = inst;

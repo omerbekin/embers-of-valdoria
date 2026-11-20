@@ -54,6 +54,7 @@ export function blockedByCost(battle: Battle, c: Combatant, sk: SkillDef): boole
   if (battle.mode === 'turns' && !battle.noCooldowns && (c.cooldowns[sk.id] ?? 0) > 0) return true;
   if (sk.cost.resource === 'mp' && !battle.freeMp && c.mp < sk.cost.amount) return true;
   if (sk.cost.resource === 'rage' && !battle.freeRage && (c.rage ?? 0) < sk.cost.amount) return true;
+  if (sk.cost.resource === 'blood' && sk.cost.spendAll && !battle.freeRage && (c.blood ?? 0) < sk.cost.amount) return true; // Exsanguinate: en az kan
   return false;
 }
 

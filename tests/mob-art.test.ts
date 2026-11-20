@@ -8,6 +8,7 @@ import { MOB_VFX_SHEET_FILES, mobSheetId, vfxSheetFile } from '../src/game/vfx-s
 import { MOB_VFX_SPECS } from '../src/game/mob-vfx';
 import { selectSkillVfx } from '../src/game/vfx-select';
 import { MOB_POSES, mobPoseFrame } from '../src/game/mob-poses';
+import { itSource } from './asset-source';
 
 // Sefer mobu sanatı (Bölge II, ChatGPT 2026-10-16): boyalı skill/pasif ikonları (assets/mob-icons), 8 karelik efekt sheet'leri (assets/mob-vfx),
 // poz sayfaları (assets/sprites/<id>/poses.png + data/mob-poses.json). İçe aktarma: tools/import-mob-art.mjs (+ tools/import-mobs.py çizimler).
@@ -53,7 +54,7 @@ describe('mob ikonları (assets/mob-icons)', () => {
     }
   });
 
-  it('her dosya bir mob skill\'ine ya da pasifine bağlı; ikonu olmayan skill verideki ikonu korur; aslı assets/source/mob-icons', () => {
+  itSource('her dosya bir mob skill\'ine ya da pasifine bağlı; ikonu olmayan skill verideki ikonu korur; aslı assets/source/mob-icons', () => {
     for (const id of Object.keys(MOB_IMAGE_FILES)) expect(mobSkillIds.has(id) || mobPassiveIds.has(id), `${id} bağlantısız`).toBe(true);
     expect(skillIconName(content.skills['melee_attack']!)).toBe(content.skills['melee_attack']!.icon);
     expect(passiveIconName({ id: 'nope', icon: 'eye' })).toBe('eye');
@@ -65,7 +66,7 @@ describe('mob ikonları (assets/mob-icons)', () => {
 describe('mob efekt sheet\'leri (assets/mob-vfx)', () => {
   const onDisk = readdirSync('assets/mob-vfx').flatMap((mob) => readdirSync(`assets/mob-vfx/${mob}`).filter((f) => f.endsWith('.png')).map((f) => mobSheetId(mob, f.replace(/\.png$/, ''))));
 
-  it('diskteki her sheet listede, metası 8 kare x 256 ve bir MOB_VFX_SPECS satırına bağlı; aslı assets/source/mob-vfx', () => {
+  itSource('diskteki her sheet listede, metası 8 kare x 256 ve bir MOB_VFX_SPECS satırına bağlı; aslı assets/source/mob-vfx', () => {
     expect(MOB_VFX_SHEET_FILES.map((f) => f.id).sort()).toEqual([...onDisk].sort());
     for (const f of MOB_VFX_SHEET_FILES) {
       expect(f.meta.frames, f.id).toBe(8);

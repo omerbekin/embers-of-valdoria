@@ -34,7 +34,7 @@
     "natures_wrath": "Tidal Wrath is yours now: roots tear through the two front enemy rows at once and leave them Soaked.",
     "rejuvenate": "Healing Rain is ready: call it down on your own cell. It heals you now and the rain keeps healing for three turns while you stay in it.",
     "summon_treant": "Summon Treant is yours now, but it starts every battle on cooldown. Once it is up, it calls a treant to fight beside you for a few turns.",
-    "thunder_strike": "Thunder Strike is yours now: call a bolt down on one enemy. Shocked pushes them back in the turn order.",
+    "thunder_strike": "Thunder Strike is yours now: call a bolt down on one enemy. Shocked strips half their Magic Armor and lets lightning tear through shields.",
     "war_drum": "War Drum is ready: beat it around your own cell and everyone beside you is Hasted for three turns.",
     "stormcall": "Stormcall is yours now, but it starts every battle on cooldown. Once it is up, lightning leaps from one enemy to the most armored ones nearby and Shocks them all."
   },
@@ -336,7 +336,7 @@
       "whisper": {"text":"Icons beside a health bar are statuses, so tap the unit to read what they do."},
       "group": "In Battle",
       "title": "Statuses",
-      "text": "Icons beside a health bar are statuses, like Slow or Wound. Tap the unit to read what they do.",
+      "text": "Icons beside a health bar are statuses, like Hobbled or Wound. Tap the unit to read what they do.",
       "trigger": {
         "battle": {
           "when": "status"
@@ -363,12 +363,8 @@
       "place": "bottom",
       "pages": [
         {
-          "text": "Drag an item from the bag onto a hero or one of their slots to equip it.",
+          "text": "Drag an item from the bag onto a hero or one of their slots to equip it. Hover or select it first: the stats show how that hero would change.",
           "focus": ".gr-bag .gr-item:not(.empty)"
-        },
-        {
-          "text": "Hover or select an item: the stats show how that hero would change before you commit.",
-          "focus": ".gr-stats"
         },
         {
           "text": "In a hurry? Equip best picks the strongest items for the whole company.",
@@ -519,8 +515,8 @@
       "id": "formation_new_hero",
       "group": "On the Road",
       "title": "A New Companion",
-      "text": "A companion walks with you now, so set your formation before the next fight. Drag heroes into cells: the front row takes the hits, the back row keeps archers and casters safer.",
-      "awaitText": "Open Formation",
+      "text": "Your companion needs a place in the line before the next fight. Drag heroes into cells: the front row takes the hits, the back row keeps archers and casters safer.",
+      "awaitText": "Open Formation to go on",
       "focus": ".camp-formation",
       "place": "bottom",
       "spotlight": true,

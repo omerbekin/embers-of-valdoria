@@ -322,6 +322,7 @@ describe('anahtar listesi anlık görüntüsü (yeni eov.* anahtarı bilinçli k
   const NEVER_SYNC = [
     'eov.assetVersions',
     'eov.battleSpeed',
+    'eov.campaign.corrupt.v1', // okunamayan sefer dosyasının ham kopyası (campaign/save.ts > write), yalnız bu cihazda
     'eov.chestPlayed', // aynı sandığın sahnesi yeniden oynamasın (sessionStorage), ilerleme değil
     'eov.cloud.backup.v1',
     'eov.cloud.v1', // bulut istemcisinin senkron meta'sı (src/cloud/cloud.ts), yalnızca girişliyken

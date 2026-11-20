@@ -1,5 +1,6 @@
 import { NUM_FONT } from '../ui/menu-style';
 import { desktopBadgeSlots } from './badge-layout';
+import { PHONE_PCT_PX, pctTextWidth } from './status-pct';
 import { textRes } from './stage-view';
 import { fitCamera } from './stage';
 import Phaser from 'phaser';
@@ -713,23 +714,36 @@ export class CombatantView {
    * Can çubuğunun yanındaki rozetler: durumlar (buff/debuff), üzerinde durulan yer etkileri (zehir, yanan zemin, holy fire)
    * ve zırh aurası gibi etkilerden gelen zırh bonusu. Her rozet ikon + kalan tur / değer.
    */
-  setBadges(badges: Array<{ id?: string; icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>, sizes: { left: number; right: number } = { left: layout.statusIcon.size, right: layout.statusIcon.size }, perRow = 4): void {
+  /** Rozetin altına ana etki yüzdesi (status-pct.ts; "-30%"): küçük, rozet renginde, ikonun ortasında. */
+  private addPct(bd: { pct?: string; color: string }, cx: number, cy: number, size: number, px: number): void {
+    if (!bd.pct) return;
+    const t = this.scene.add.text(cx, cy + size / 2 + 1, bd.pct, numStyle(px, bd.color)).setOrigin(0.5, 0);
+    this.statusBox.add(t);
+  }
+
+  setBadges(badges: Array<{ id?: string; icon: string; owner?: string; color: string; text: string; pct?: string; debuff: boolean; turns: boolean }>, sizes: { left: number; right: number } = { left: layout.statusIcon.size, right: layout.statusIcon.size }, perRow = 4): void {
     this.statusBox.removeAll(true);
     this.badgeRects.clear();
     const gapBar = layout.statusIcon.gapBar;
-    const gapItem = layout.statusIcon.gapItem;
     const hourglass = ensureIcon(this.scene, 'hourglass', '#d9c9a3', false);
+    // Yüzde yazısı rozetten genişse rozetler arası boşluk açılır (yazılar birbirine değmez)
+    const kMax = Math.max(sizes.left, sizes.right) / layout.statusIcon.size;
+    const pctPx = Math.round(14 * kMax);
+    const pctW = badges.reduce((m, bd) => Math.max(m, bd.pct ? Math.ceil(pctTextWidth(bd.pct, pctPx) * 1.3) : 0), 0); // gerçek yazı kontur + % ile tahminden geniş: 1.3x
+    const gapItem = Math.max(layout.statusIcon.gapItem, pctW + 10 - Math.min(sizes.left, sizes.right));
     // Buffs on the left of the HP bar, debuffs (and harmful ground effects) on the right; `perRow` per row (desktop 4, phone one row); badge-layout.ts > desktopBadgeSlots
     const slots = desktopBadgeSlots(badges.map((bd) => bd.debuff), perRow);
+    const pctPad = badges.some((bd) => bd.pct) ? Math.round(14 * (Math.max(sizes.left, sizes.right) / layout.statusIcon.size)) : 0; // yüzde yazısı için satır aralığı
     badges.forEach((bd, n) => {
       const { dir, col, row } = slots[n]!;
       const size = dir === 1 ? sizes.right : sizes.left; // telefonda büyüyen rozet (badge-layout.ts): yazı ve kum saati de aynı oranda
       const k = size / layout.statusIcon.size;
       const cx = dir * (hpBar.width / 2 + gapBar + size / 2 + col * (size + gapItem));
-      const cy = row * (size + 4) + (size - layout.statusIcon.size) / 2; // büyüyen rozet aşağı uzar (üst kenar yerinde: adın altında)
+      const cy = row * (size + 4 + pctPad) + (size - layout.statusIcon.size) / 2; // büyüyen rozet aşağı uzar (üst kenar yerinde: adın altında)
       const icon = this.scene.add.image(cx, cy, ensureIcon(this.scene, bd.icon, bd.color, false, bd.owner ?? SHARED_KEY)).setDisplaySize(size, size); // durum/zemin rozeti: sahibi (sınıfa özgü durum) ya da Shared sürümü
       const label = this.scene.add.text(cx + size / 2, cy + size / 2, bd.text, numStyle(Math.round(18 * k), bd.color)).setOrigin(1, 0.5);
       this.statusBox.add([icon, label]);
+      this.addPct(bd, cx, cy, size, pctPx);
       if (bd.id) this.badgeRects.set(bd.id, { x: cx, y: cy, size, text: bd.text });
       if (bd.turns) this.statusBox.add(this.scene.add.image(label.x - label.width - 8 * k, label.y, hourglass).setDisplaySize(15 * k, 15 * k));
     });
@@ -739,13 +753,13 @@ export class CombatantView {
    * TELEFON rozetleri (Ömer 2026-10-11, taslak B; plan src/game/badge-layout.ts > solvePhoneBadges): öncelik sırasındaki ilk `plan.shown` durum
    * planın yuvalarında, kalanı sonraki yuvada "+N" sayacı (rozetle aynı boy ve kit dili: koyu madalyon + ince altın halka; düğme değil).
    */
-  setPhoneBadges(badges: Array<{ id?: string; icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>, plan: { size: number; left: SidePlan; right: SidePlan }): void {
+  setPhoneBadges(badges: Array<{ id?: string; icon: string; owner?: string; color: string; text: string; pct?: string; debuff: boolean; turns: boolean }>, plan: { size: number; gapItem?: number; left: SidePlan; right: SidePlan }): void {
     this.statusBox.removeAll(true);
     this.badgeRects.clear();
     const { size } = plan;
     const k = size / layout.statusIcon.size;
     const gapBar = layout.statusIcon.gapBar;
-    const gapItem = layout.statusIcon.gapItem;
+    const gapItem = plan.gapItem ?? layout.statusIcon.gapItem;
     const hourglass = ensureIcon(this.scene, 'hourglass', '#d9c9a3', false);
     const cy = size / 2 - layout.statusIcon.size / 2; // üst kenar masaüstü rozetinin üst kenarında, büyük rozet aşağı uzar (badge-layout.ts > slotRect)
     const cxOf = (s: { dir: -1 | 1; i: number }) => s.dir * (hpBar.width / 2 + gapBar + size / 2 + s.i * (size + gapItem));
@@ -762,6 +776,7 @@ export class CombatantView {
           const icon = this.scene.add.image(cx, cy, ensureIcon(this.scene, bd.icon, bd.color, false, bd.owner ?? SHARED_KEY)).setDisplaySize(size, size);
           const label = this.scene.add.text(cx + size / 2, cy + size / 2, bd.text, numStyle(Math.round(18 * k), bd.color)).setOrigin(1, 0.5);
           this.statusBox.add([icon, label]);
+          this.addPct(bd, cx, cy, size, PHONE_PCT_PX);
           if (bd.id) this.badgeRects.set(bd.id, { x: cx, y: cy, size, text: bd.text });
           if (bd.turns) this.statusBox.add(this.scene.add.image(label.x - label.width - 8 * k, label.y, hourglass).setDisplaySize(15 * k, 15 * k));
         });

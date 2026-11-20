@@ -35,7 +35,7 @@ Sahip: Lead; alan belgesi `docs/arch/areas/item-design.md`. Bu belge `items.md` 
 
 ## Set (tek blok; durum 2026-11-08)
 
-**Durum:** 6 set, 22 parça (`data/items.json > setItems`, bonuslar `> sets`); motor yapıldı (`src/progression/sets.ts`, `battle.ts`); parçalar Debug > Campaign > Give pilot sets ile gelir. Düşüş bayrağı `data/items.json > rareDrop.setsEnabled` KAPALI: oyuncu setleri görmez, Codex yazısı da bayrakla açılır. **Sayılar ölçülmedi** (simde denenmedi); bayrak açılmadan önce ölçülür. Aşağıda: set kuralları, set tablosu, pilot setler, kalan 4 set.
+**Durum:** 9 set, 32 parça (Tur 28-29 ile +3) (`data/items.json > setItems`, bonuslar `> sets`); motor yapıldı (`src/progression/sets.ts`, `battle.ts`); parçalar Debug > Campaign > Give pilot sets ile gelir. Düşüş bayrağı `data/items.json > rareDrop.setsEnabled` KAPALI: oyuncu setleri görmez, Codex yazısı da bayrakla açılır. **Sayılar ölçülmedi** (simde denenmedi); bayrak açılmadan önce ölçülür. Aşağıda: set kuralları, set tablosu, pilot setler, kalan 4 set.
 
 ### Set kuralları (S1-S8, 2026-11-01)
 
@@ -141,6 +141,11 @@ Kod: `src/progression/sets.ts`, `data/items.json > setItems` (parçalar), `battl
   - **The Conclave Answers** (Conclave of Embers 4, `counterAttack`): düşman taşıyana skill kullanınca taşıyan temel saldırısıyla (ilk skill, tek hedefli hasar) %50 güçte bedava karşılık verir; taşıyanın turları arasında 1 kez; menzil / ön sıra / taunt normal; sersem, buzda, yerin altında ya da Silence'ta (MP bedelli temel) karşılık yok.
   - **Royal Command** (Kingsfall Regalia 3, `allyTurn`): savaşta bir kez global eylem: taşıyanın turu harcanır, seçilen dost hemen ek tur alır (sayacı değişmez). test modunda yalnız hak harcanır.
 - Eski not: başlangıçta yeni mekanik yoktu; yalnız mevcut stat anahtarları ve mevcut pasif alanları.
+- **Tur 28-29 setleri (Ömer 2026-11-16; sayılar ÖLÇÜLMEDİ, yerler Lead varsayımı):**
+  - **Stormhall Saga** (yalnız Skald; The Hollow Crown / Chief's Hall; Stormhall Helm, Saga Mail, Stormhall Gauntlets, Thunder-Road Boots): 2 parça +8 Max HP +%2 kritik; 3 parça Conductor %25 -> %30; 4 parça +0,5 hız, -2 zırh + **Refrain** (`refrain`): Skald'ın şimşeği bir düşmanı Shocked yapınca o düşmana sonra isabet ettiren İLK dost (Skald değil) 2 tur Empowered; her Shocked örneğinde bir kez, Shocked tüketilmez, Shocked bitince fırsat biter.
+  - **Relics of Saint Odran** (nötr; Drowned Reach / The Bishop's Chapel; Odran's Censer (Focus Orb ailesi offhand), Odran's Ring, Odran's Reliquary (trinket)): 2 parça +1 MP yenilenme +%2 kritik; 3 parça **Martyr's Bequest** (`deathBequest`): taşıyan ölünce en yakın canlı dost Empowered + Focused (2'şer tur).
+  - **Almoner's Vestments** (nötr, şifacı; Valdoria / Thornwood Hollow; Almoner's Cowl, Almoner's Robe, Mendicant's Sandals): 2 parça +2 büyü zırhı +1 MP yenilenme; 3 parça **Pilgrim's Burden** (`healShorten`): taşıyanın skill şifası bir dostu iyileştirince o dostun en uzun süreli silinebilir debuff'ı 1 tur kısalır, 1 turu kalan biter.
+  - Equip best: Pilgrim's Burden kural değeri yalnız dosta şifa skill'i olan sınıfa (`setValue.ruleNeedsHeal`); ikinci el set parçası çift elli silahla zorlanmaz.
 - **Sadak / Focus Orb:** ikinci el item'i, `pairs` alanı (`bow` / `charm`), ailesi silahınki (bows / charms). Yay yalnız Sadak, tılsım yalnız Focus Orb, çift el hiçbirini almaz; uymayan ikinci el silah değişiminde torbaya çıkar. Sadak yalnız Archer, Focus Orb Gambler + Hexer. 4'er taban (Common -> Epic), örtük stat yok, Block affix'i çıkmaz. İmza affix'lerden **Spare Arrow** yapıldı (Ömer 2026-11-07 C1, `b_sparearrow`, B kademe, yalnız Sadak: `pairsOnly: bow`; 0 MP temel saldırının vuruşu %8-12 (ilvl 1 -> 41) şansla aynı hedefe bir kez daha, `fx:basicRepeat`); diğerleri (Long Fletching, Weighted Odds, Ill Portent, Grave Wick) YAPILMADI. Sırtta sadak çizimi (poz bağlantı noktası) yapılmadı.
 - **Equip best:** torba ya da ekipmanda set parçası varsa her set için "setin en iyi parçaları + kalanı açgözlü" planı denenir, toplam puan (yuva puanları + `setBonusScore`) yüksekse seçilir. Değerleme `items.json > setValue` (sınıf satırı 2,5 IP, kural 4 IP, statlar affix IP'leriyle), PROVIZYON.
 

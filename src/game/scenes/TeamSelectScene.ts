@@ -13,7 +13,7 @@ import { SCENE_BOARD_H, SCENE_BOARD_W, baseClass, boardCells, classBoardHero, cl
 import { backgroundExists, backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { ensureIcon, ensureSkillIcon } from '../icons';
 import { ownerOfUnit } from '../asset-versions';
-import { RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
+import { BLOOD_COLOR, RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
 import { uiIconName } from '../../ui/ui-icons';
 import { cooldownChipOf, costChipOf, rangeChipOf } from '../../ui/skill-chips';
 import { initialSizes, newSeed } from '../seed';
@@ -1284,7 +1284,7 @@ export class TeamSelectScene extends Phaser.Scene {
     // menzil / bedel / bekleme: ikon + sayı (V2, src/ui/skill-chips.ts); sayıya inmeyen bedel eski yazılı çip
     const cost = costChipOf(info.cost);
     if (cost) {
-      const icon = cost.res === 'rage' ? ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false) : ensureIcon(this, statIconName(cost.res), STAT_COLOR[cost.res], false);
+      const icon = cost.res === 'rage' ? ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false) : cost.res === 'blood' ? ensureIcon(this, 'drop', BLOOD_COLOR, false) : ensureIcon(this, statIconName(cost.res), STAT_COLOR[cost.res], false);
       chips.push({ text: '', num: cost.num, bare: true, tone: 'v', icon, tip: cost.tip });
     } else chips.push(costChip(info.cost, 'Cost '));
     if ((skill.cooldown ?? 0) > 0) {

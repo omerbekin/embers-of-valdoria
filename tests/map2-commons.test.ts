@@ -9,6 +9,7 @@ import reach from '../data/campaign/drowned-reach.json';
 import { MOB_SKILL_SOUNDS, mobSoundsOf } from '../src/game/mob-sfx';
 import { MUSIC_TRACK_IDS, trackConfig, type MusicTrackId } from '../src/game/music';
 import { battleTrack, mapSceneTrack } from '../src/ui/music';
+import { itSource } from './asset-source';
 
 // Harita 2 sıradan mobları kendi id'leriyle (content-designer 2026-10-27; Ömer: "Harita 2'de ödünç hiçbir şey kalmasın"; open-questions 442).
 // yeni id -> [Harita 1 karşılığı, görünen ad, kit]
@@ -160,13 +161,13 @@ describe('Harita 2 sıradan mobları kendi id / kit / sesleriyle', () => {
 });
 
 describe('Harita 2 sıradan mob sanatı: kendi sprite / avatar / ikon / VFX (ödünç yok)', () => {
-  it('6 mobun kendi idle + avatar dosyası ve kaynağı var', () => {
+  itSource('6 mobun kendi idle + avatar dosyası ve kaynağı var', () => {
     for (const id of OWN_ART) {
       for (const f of [`assets/sprites/${id}/idle.png`, `assets/avatars/${id}.png`, `assets/source/mobs/${id}.png`]) expect(existsSync(f), f).toBe(true);
     }
   });
 
-  it('34 skill: kendi VFX sayfası (8 kare) + kaynak + ikon, kendi mob satırı, v2 seçilir, artOf yok', () => {
+  itSource('34 skill: kendi VFX sayfası (8 kare) + kaynak + ikon, kendi mob satırı, v2 seçilir, artOf yok', () => {
     expect(OWN_ART_SKILLS).toHaveLength(34);
     for (const s of OWN_ART_SKILLS) {
       const spec = MOB_VFX_SPECS[s];
